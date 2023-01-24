@@ -453,8 +453,8 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 		);
 
 		this.electronService.ipcRenderer.on('logout', (event, arg) =>
-			this._ngZone.run(() => {
-				if (this.start) this.stopTimer();
+			this._ngZone.run(async () => {
+				if (this.start) await this.stopTimer();
 			})
 		);
 
@@ -607,9 +607,57 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 		this.electronService.ipcRenderer.on(
 			'latest_screenshots',
 			(event, args) => {
-				this._mappingScreenshots(args);
+				this._ngZone.run(() => {
+					this._mappingScreenshots(args);
+				});
 			}
 		);
+
+		this.electronService.ipcRenderer.on('sync-timer', (event, timers) => {
+			this._ngZone.run(() => {
+				timers.forEach(async (timer) => {
+					try {
+						let latest: any;
+						const paramsTimeStart = {
+							token: this.token,
+							note: this.note,
+							organizationId: this.userOrganization.id,
+							tenantId: this.userData.tenantId,
+							organizationContactId: this.organizationContactId,
+							apiHost: this.apiHost,
+						};
+
+						if (
+							(timer.startedAt === null && timer.stoppedAt) ||
+							(timer.startedAt && timer.stoppedAt)
+						) {
+							latest =
+								await this.timeTrackerService.toggleApiStop({
+									...paramsTimeStart,
+									...timer,
+								});
+						} else if (
+							timer.startedAt &&
+							timer.stoppedAt === null
+						) {
+							latest =
+								await this.timeTrackerService.toggleApiStart({
+									...paramsTimeStart,
+									...timer,
+								});
+						}
+						if (latest) {
+							event.sender.send('update-synced-timer', {
+								lastTimer: latest,
+								...timer,
+							});
+						}
+					} catch (error) {
+						console.log('[ERRORSYNC]', error);
+					}
+				});
+			});
+		});
 
 		this.electronService.ipcRenderer.send('time_tracker_ready');
 	}
@@ -617,60 +665,6 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 	async toggleStart(val) {
 		if (this.loading) {
 			return;
-		}
-
-		if (!this._passedAllAuthorizations()) return;
-
-		this.loading = true;
-
-		if (this.validationField()) {
-			if (val) {
-				if (!this.start) {
-					try {
-						const paramsTimeStart = {
-							token: this.token,
-							note: this.note,
-							projectId: this.projectSelect,
-							taskId: this.taskSelect,
-							organizationId: this.userOrganization.id,
-							tenantId: this.userData.tenantId,
-							organizationContactId: this.organizationContactId,
-							apiHost: this.apiHost,
-						};
-						this.startTime(
-							this._isOffline
-								? null
-								: await this.timeTrackerService.toggleApiStart(
-										paramsTimeStart
-								  )
-						);
-					} catch (error) {
-						this.loading = false;
-						let messageError = error.message;
-						if (messageError.includes('Http failure response')) {
-							messageError = `Can't connect to api server`;
-						} else {
-							messageError = 'Internal server error';
-						}
-						this.toastrService.show(messageError, `Warning`, {
-							status: 'danger',
-						});
-						log.info(
-							`Timer Toggle Catch: ${moment().format()}`,
-							error
-						);
-					}
-				} else {
-					this.loading = false;
-					console.log('Error', 'Timer is already running');
-				}
-			} else {
-				console.log('stop tracking');
-				this.stopTimer();
-			}
-		} else {
-			this.loading = false;
-			console.log('Error', 'validation failed');
 		}
 	}
 
@@ -754,18 +748,34 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 		this.loading = false;
 	}
 
-	stopTimer() {
-		this.electronService.ipcRenderer.send('stop_timer', {
-			quitApp: this.quitApp,
-		});
-		this.electronService.ipcRenderer.send('update_tray_stop');
-		this.timeRun.next({
-			second: '00',
-			minute: '00',
-			hours: '00',
-		});
-		this.start$.next(false);
-		this.loading = false;
+	async stopTimer() {
+		try {
+			this.electronService.ipcRenderer.send('stop_timer', {
+				quitApp: this.quitApp,
+			});
+			this.electronService.ipcRenderer.send('update_tray_stop');
+			this.timeRun.next({
+				second: '00',
+				minute: '00',
+				hours: '00',
+			});
+			if (!this._isOffline) {
+				await this.timeTrackerService.toggleApiStop({
+					token: this.token,
+					note: this.note,
+					projectId: this.projectSelect,
+					taskId: this.taskSelect,
+					organizationId: this.userOrganization.id,
+					tenantId: this.userData.tenantId,
+					organizationContactId: this.organizationContactId,
+					apiHost: this.apiHost,
+				});
+			}
+			this.start$.next(false);
+			this.loading = false;
+		} catch (error) {
+			console.log('[ERRORSTOPTIMER]', error);
+		}
 	}
 
 	async getTask(arg) {
@@ -958,6 +968,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 	}
 
 	getTodayTime(arg) {
+		if (this._isOffline) return;
 		this.timeTrackerService.getTimeLogs(arg).then((res: any) => {
 			if (res && res.todayDuration && res.weekDuration) {
 				this.countDuration(res);
@@ -1156,7 +1167,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 						default:
 							break;
 					}
-				} else this.stopTimer();
+				} else await this.stopTimer();
 			});
 	}
 

@@ -190,10 +190,9 @@ export class TimerService {
 			isBillable,
 			organizationId,
 			startedAt,
-			stoppedAt,
 		} = request;
+
 		const timeStarted = startedAt ? startedAt : moment.utc().toDate();
-		const timeStopped = stoppedAt ? stoppedAt : moment.utc().toDate();
 
 		return await this.commandBus.execute(
 			new TimeLogCreateCommand({
@@ -201,7 +200,7 @@ export class TimerService {
 				tenantId,
 				employeeId,
 				startedAt: timeStarted,
-				stoppedAt: timeStopped,
+				stoppedAt: timeStarted,
 				duration: 0,
 				source: source || TimeLogSourceEnum.WEB_TIMER,
 				projectId: projectId || null,

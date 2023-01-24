@@ -214,7 +214,8 @@
 					<nb-card-body>
 						<div class="row">
 							<div class="col-12 search">
-								<button nbButton class="mb-2" status="success" (click)="addTask()">
+								<button nbButton [disabled]="isOffline$ | async" class="mb-2" status="success"
+									(click)="addTask()">
 									<nb-icon icon="plus" pack="font-awesome"></nb-icon>Add
 								</button>
 							</div>
@@ -271,7 +272,7 @@
 			<nb-badge class="sync-badge" position="top right" size="small" status="info"
 				[text]="(inQueue$ | async)?.queue"></nb-badge>
 			<nb-icon size="tiny" class="sync" [ngClass]="{spin: (inQueue$ | async)?.isSyncing }" icon="sync-alt"
-				pack="font-awesome" (click)="refresh()"></nb-icon>
+				pack="font-awesome" (click)="refreshTimer()"></nb-icon>
 		</div>
 		<button #dialogOpenBtn (click)="
 				open(dialog, {

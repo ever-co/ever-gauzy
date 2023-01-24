@@ -759,8 +759,5 @@ async function latestScreenshots(window: BrowserWindow): Promise<void> {
 async function syncTimerQueue(window: BrowserWindow) {
 	await offlineMode.connectivity();
 	if (offlineMode.enabled) return;
-	const timers = await timerService.findNoSynced();
-	timers.forEach((timer: TimerTO) => {
-		window.webContents.send('sync-timer', timer);
-	});
+	window.webContents.send('sync-timer', await timerService.findNoSynced());
 }

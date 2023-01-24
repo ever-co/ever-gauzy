@@ -208,14 +208,14 @@ export default class TimerHandler {
 		this.timeSlotStart = moment();
 	}
 
-	startTimerIntervalPeriod(setupWindow, knex, timeTrackerWindow) {
+	async startTimerIntervalPeriod(setupWindow, knex, timeTrackerWindow) {
 		const appSetting = LocalStore.getStore('appSetting');
 		const updatePeriod = appSetting.timer.updatePeriod;
 		console.log('Update Period:', updatePeriod, 60 * 1000 * updatePeriod);
 
 		this.timeSlotStart = moment();
 		console.log('Timeslot Start Time', this.timeSlotStart);
-		this._timerService.update(
+		await this._timerService.update(
 			new Timer({
 				id: this.lastTimer.id,
 				startedAt: new Date(),
@@ -283,7 +283,7 @@ export default class TimerHandler {
 			this._activities = [];
 			clearInterval(this.intervalTimer);
 			clearInterval(this.intervalUpdateTime);
-			this._timerService.update(
+			await this._timerService.update(
 				new Timer({
 					id: this.lastTimer.id,
 					stoppedAt: new Date(),
@@ -635,7 +635,7 @@ export default class TimerHandler {
 		const info = LocalStore.beforeRequestParams();
 		try {
 			await TimerData.createTimer(knex, {
-				day: new Date(moment().format('YYYY-MM-DD')),
+				day: this.todayLocalTimezone,
 				duration: 0,
 				projectId: project.projectId,
 				employeeId: info.employeeId,
@@ -650,6 +650,13 @@ export default class TimerHandler {
 		} catch (error) {
 			console.log('Error create timer', error);
 		}
+	}
+
+	/* Returning the current date and time in the local timezone. */
+	public get todayLocalTimezone() {
+		const date = new Date();
+		date.setHours(0, 0, 0, 0);
+		return date;
 	}
 
 	/*
