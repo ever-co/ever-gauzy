@@ -1,7 +1,7 @@
 import { DeleteResult, Repository } from 'typeorm';
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { IStatus } from '@gauzy/contracts';
+import { ITaskPriority } from '@gauzy/contracts';
 import { TenantAwareCrudService } from './../../core/crud';
 import { TaskPriority } from './priority.entity';
 
@@ -21,7 +21,7 @@ export class TaskPriorityService extends TenantAwareCrudService<TaskPriority> {
 	 * @param id
 	 * @returns
 	 */
-	async delete(id: IStatus['id']): Promise<DeleteResult> {
+	async delete(id: ITaskPriority['id']): Promise<DeleteResult> {
 		return await super.delete(id, {
 			where: {
 				isSystem: false,
