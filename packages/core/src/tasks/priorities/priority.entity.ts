@@ -1,13 +1,13 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Column, Entity, Index, ManyToOne, RelationId } from 'typeorm';
-import { IOrganizationProject, IPriority } from '@gauzy/contracts';
+import { IOrganizationProject, ITaskPriority } from '@gauzy/contracts';
 import {
 	OrganizationProject,
 	TenantOrganizationBaseEntity,
-} from '../core/entities/internal';
+} from './../../core/entities/internal';
 
-@Entity('priority')
-export class Priority extends TenantOrganizationBaseEntity implements IPriority {
+@Entity('task_priority')
+export class TaskPriority extends TenantOrganizationBaseEntity implements ITaskPriority {
 
 	@ApiProperty({ type: () => String })
 	@Index()
@@ -49,7 +49,7 @@ export class Priority extends TenantOrganizationBaseEntity implements IPriority 
 	})
 	project?: IOrganizationProject;
 
-	@RelationId((it: Priority) => it.project)
+	@RelationId((it: TaskPriority) => it.project)
 	@Index()
 	@Column({ nullable: true })
 	projectId?: IOrganizationProject['id'];

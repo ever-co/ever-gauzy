@@ -117,6 +117,7 @@ export * from '../../role/role.entity';
 export * from '../../skills/skill.entity';
 export * from '../../tags/tag.entity';
 export * from '../../tasks/task.entity';
+export * from '../../tasks/priorities/priority.entity';
 export * from '../../tenant/tenant-setting/tenant-setting.entity';
 export * from '../../tenant/tenant.entity';
 export * from '../../time-off-policy/time-off-policy.entity';
@@ -133,7 +134,6 @@ export * from '../../warehouse/warehouse-product-variant.entity';
 export * from '../../warehouse/warehouse-product.entity';
 export * from '../../warehouse/warehouse.entity';
 export * from '../../password-reset/password-reset.entity';
-export * from '../../priorities/priority.entity';
 export * from '../../statuses/status.entity';
 
 export * from './../../export-import/import-record/import-record.entity';

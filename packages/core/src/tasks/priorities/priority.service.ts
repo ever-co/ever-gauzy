@@ -2,21 +2,21 @@ import { DeleteResult, Repository } from 'typeorm';
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { IStatus } from '@gauzy/contracts';
-import { TenantAwareCrudService } from '../core/crud';
-import { Priority } from './priority.entity';
+import { TenantAwareCrudService } from './../../core/crud';
+import { TaskPriority } from './priority.entity';
 
 @Injectable()
-export class PriorityService extends TenantAwareCrudService<Priority> {
+export class TaskPriorityService extends TenantAwareCrudService<TaskPriority> {
 
 	constructor(
-		@InjectRepository(Priority)
-		protected readonly priorityRepository: Repository<Priority>
+		@InjectRepository(TaskPriority)
+		protected readonly taskPriorityRepository: Repository<TaskPriority>
 	) {
-		super(priorityRepository);
+		super(taskPriorityRepository);
 	}
 
 	/**
-	 * Few priorities can't be removed/delete because they are global
+	 * Few task priorities can't be removed/delete because they are global
 	 *
 	 * @param id
 	 * @returns
