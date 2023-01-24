@@ -1,5 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Column, Entity, Index, ManyToOne, RelationId } from 'typeorm';
+import { IsNotEmpty, IsString } from 'class-validator';
 import { IOrganizationProject, ITaskSize } from '@gauzy/contracts';
 import {
 	OrganizationProject,
@@ -10,6 +11,8 @@ import {
 export class TaskSize extends TenantOrganizationBaseEntity implements ITaskSize {
 
 	@ApiProperty({ type: () => String })
+	@IsNotEmpty()
+	@IsString()
 	@Index()
 	@Column()
 	name: string;
