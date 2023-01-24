@@ -666,6 +666,60 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 		if (this.loading) {
 			return;
 		}
+
+		if (!this._passedAllAuthorizations()) return;
+
+		this.loading = true;
+
+		if (this.validationField()) {
+			if (val) {
+				if (!this.start) {
+					try {
+						const paramsTimeStart = {
+							token: this.token,
+							note: this.note,
+							projectId: this.projectSelect,
+							taskId: this.taskSelect,
+							organizationId: this.userOrganization.id,
+							tenantId: this.userData.tenantId,
+							organizationContactId: this.organizationContactId,
+							apiHost: this.apiHost,
+						};
+						this.startTime(
+							this._isOffline
+								? null
+								: await this.timeTrackerService.toggleApiStart(
+										paramsTimeStart
+								  )
+						);
+					} catch (error) {
+						this.loading = false;
+						let messageError = error.message;
+						if (messageError.includes('Http failure response')) {
+							messageError = `Can't connect to api server`;
+						} else {
+							messageError = 'Internal server error';
+						}
+						this.toastrService.show(messageError, `Warning`, {
+							status: 'danger',
+						});
+						log.info(
+							`Timer Toggle Catch: ${moment().format()}`,
+							error
+						);
+					}
+				} else {
+					this.loading = false;
+					console.log('Error', 'Timer is already running');
+				}
+			} else {
+				console.log('stop tracking');
+				this.stopTimer();
+			}
+		} else {
+			this.loading = false;
+			console.log('Error', 'validation failed');
+		}
 	}
 
 	setTime(value) {
