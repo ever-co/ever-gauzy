@@ -714,7 +714,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 				}
 			} else {
 				console.log('stop tracking');
-				this.stopTimer();
+				await this.stopTimer();
 			}
 		} else {
 			this.loading = false;
