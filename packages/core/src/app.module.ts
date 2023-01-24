@@ -28,6 +28,7 @@ import { CandidateSkillModule } from './candidate-skill/candidate-skill.module';
 import { InvoiceModule } from './invoice/invoice.module';
 import { InvoiceItemModule } from './invoice-item/invoice-item.module';
 import { TagModule } from './tags/tag.module';
+import { PriorityModule } from './priorities/priority.module';
 import { StatusModule } from './statuses/status.module';
 import { SkillModule } from './skills/skill.module';
 import { LanguageModule } from './language/language.module';
@@ -143,6 +144,7 @@ import { GauzyCloudModule } from './gauzy-cloud/gauzy-cloud.module';
 import { ContactModule } from './contact/contact.module';
 import { PublicShareModule } from './public-share/public-share.module';
 import { TransformInterceptor } from './core/interceptors';
+
 
 const { unleashConfig } = environment;
 
@@ -306,6 +308,7 @@ if (process.env.DB_TYPE === 'postgres') {
 		TagModule,
 		SkillModule,
 		StatusModule,
+		PriorityModule,
 		LanguageModule,
 		InvoiceModule,
 		InvoiceItemModule,
