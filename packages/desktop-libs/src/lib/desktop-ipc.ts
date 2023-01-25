@@ -593,39 +593,56 @@ export function ipcTimer(
 	});
 
 	ipcMain.on('expand', (event, arg) => {
-		const isLinux = process.platform === 'linux';
+		try {
+			resizeWindow(timeTrackerWindow, arg);
+			event.sender.send('expand', arg);
+		} catch (error) {
+			console.log('error on change window width', error);
+		}
+	});
+
+	function resizeWindow(window: BrowserWindow, isExpanded: boolean): void {
 		const display = screen.getPrimaryDisplay();
-		const { height } = display.workArea;
+		const { height, width } = display.workArea;
 		const maxHeight = height <= 768 ? height - 20 : 768;
 		const maxWidth = height < 768 ? 360 - 50 : 360;
 		const widthLarge = height < 768 ? 1024 - 50 : 1024;
-		if (arg) {
-			try {
-				isLinux
-					? resizeLinux(timeTrackerWindow, arg)
-					: timeTrackerWindow.setSize(widthLarge, maxHeight, true);
-				timeTrackerWindow.center();
-			} catch (error) {
-				console.log('error on change window width', error);
-			}
-		} else {
-			try {
-				isLinux
-					? resizeLinux(timeTrackerWindow, arg)
-					: timeTrackerWindow.setSize(maxWidth, maxHeight, true);
-			} catch (error) {
-				console.log('error on change window width', error);
-			}
+		switch (process.platform) {
+			case 'linux':
+				{
+					const wx = isExpanded ? 1024 : 360;
+					const hx = 748;
+					window.setMinimumSize(wx, hx);
+					window.setSize(wx, hx, true);
+					window.setResizable(false);
+				}
+				break;
+			case 'darwin':
+				{
+					window.setSize(
+						isExpanded ? widthLarge : maxWidth,
+						maxHeight,
+						true
+					);
+					if (isExpanded) window.center();
+				}
+				break;
+			default:
+				{
+					window.setBounds(
+						{
+							width: isExpanded ? widthLarge : maxWidth,
+							height: maxHeight,
+							x:
+								(width - (isExpanded ? widthLarge : maxWidth)) *
+								0.5,
+							y: (height - maxHeight) * 0.5,
+						},
+						true
+					);
+				}
+				break;
 		}
-		event.sender.send('expand', arg);
-	});
-
-	function resizeLinux(window: BrowserWindow, isExpanded: boolean): void {
-		const width = isExpanded ? 1024 : 360;
-		const height = 748;
-		window.setMinimumSize(width, height);
-		window.setSize(width, height, true);
-		window.setResizable(false);
 	}
 
 	ipcMain.on('timer_stopped', (event, arg) => {
