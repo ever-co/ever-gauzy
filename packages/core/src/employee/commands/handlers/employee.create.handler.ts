@@ -43,7 +43,8 @@ export class EmployeeCreateHandler
 				name: RolesEnum.EMPLOYEE,
 				tenantId: RequestContext.currentTenantId()
 			});
-			//1. Create user to relative tenant.
+
+			// 1. Create user to relative tenant.
 			const user = await this._commandBus.execute(
 				new UserCreateCommand({
 					...input.user,
@@ -53,17 +54,22 @@ export class EmployeeCreateHandler
 					preferredComponentLayout: ComponentLayoutStyleEnum.TABLE
 				})
 			);
-			//2. Create employee for specific user
+
+			// 2. Create employee for specific user
 			const employee = await this._employeeService.create({
 				...input,
 				user
 			});
-			//3. Assign organizations to the employee user
-			await this._userOrganizationService.addUserToOrganization(
-				employee.user,
-				employee.organizationId
-			);
-			//4. Send welcome email to user register employee
+
+			// 3. Assign organizations to the employee user
+			if (employee.organizationId) {
+				await this._userOrganizationService.addUserToOrganization(
+					employee.user,
+					employee.organizationId
+				);
+			}
+
+			// 4. Send welcome email to user register employee
 			this._emailService.welcomeUser(
 				employee.user,
 				languageCode,
