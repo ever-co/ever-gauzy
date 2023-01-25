@@ -30,7 +30,6 @@ import {
 	IntervalService,
 	Timer,
 	TimerService,
-	TimerTO,
 	User,
 	UserService,
 } from './offline';
