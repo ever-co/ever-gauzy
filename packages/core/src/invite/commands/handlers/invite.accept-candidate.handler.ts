@@ -10,11 +10,7 @@ import {
 import { AuthService } from '../../../auth/auth.service';
 import { InviteService } from '../../invite.service';
 import { InviteAcceptCandidateCommand } from '../invite.accept-candidate.command';
-import {
-	Candidate,
-	Organization,
-	User
-} from './../../../core/entities/internal'
+import { Candidate, User } from './../../../core/entities/internal'
 import { BadRequestException } from '@nestjs/common';
 
 /**
@@ -29,7 +25,6 @@ export class InviteAcceptCandidateHandler implements ICommandHandler<InviteAccep
 		private readonly inviteService: InviteService,
 		private readonly authService: AuthService,
 		@InjectRepository(User) private readonly userRepository: Repository<User>,
-		@InjectRepository(Organization) private readonly organizationRepository: Repository<Organization>,
 		@InjectRepository(Candidate) private readonly candidateRepository: Repository<Candidate>
 	) {}
 
@@ -43,18 +38,15 @@ export class InviteAcceptCandidateHandler implements ICommandHandler<InviteAccep
 			relations: {
 				departments: {
 					candidates: true
-				}
+				},
+				organization: true
 			}
 		});
 		if (!invite) {
 			throw Error('Invite does not exist');
 		}
 
-		const { organizationId, tenantId } = invite;
-		const organization = await this.organizationRepository.findOneBy({
-			id: organizationId,
-			tenantId
-		});
+		const { organization } = invite;
 		if (!organization.invitesAllowed) {
 			throw Error('Organization no longer allows invites');
 		}
@@ -78,6 +70,7 @@ export class InviteAcceptCandidateHandler implements ICommandHandler<InviteAccep
 				}
 			});
 		} catch (error) {
+			const { id: organizationId, tenantId } = organization;
 			/**
 			 * User register after accept invitation
 			 */
@@ -87,7 +80,7 @@ export class InviteAcceptCandidateHandler implements ICommandHandler<InviteAccep
 					user: {
 						...input.user,
 						tenant: {
-							id: organization.tenantId
+							id: tenantId
 						}
 					},
 					organizationId
@@ -96,7 +89,7 @@ export class InviteAcceptCandidateHandler implements ICommandHandler<InviteAccep
 			);
 			try {
 				/**
-				 * Create candiate after create user
+				 * Create candidate after create user
 				 */
 				const create = this.candidateRepository.create({
 					user,

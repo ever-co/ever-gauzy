@@ -33,7 +33,7 @@ export class CandidateCreateHandler
 				name: RolesEnum.CANDIDATE
 			});
 
-			//1. Create user to relative candidate for specific tenant.
+			// 1. Create user to relative candidate for specific tenant.
 			const user = await this._commandBus.execute(
 				new UserCreateCommand({
 					...input.user,
@@ -44,19 +44,21 @@ export class CandidateCreateHandler
 				})
 			);
 
-			//2. Create candidate for specific user
+			// 2. Create candidate for specific user
 			const candidate = await this._candidateService.create({
 				...input,
 				user
 			});
 
-			//3. Assign organization to the candidate user
-			await this._userOrganizationService.addUserToOrganization(
-				user,
-				candidate.organizationId
-			);
+			// 3. Assign organization to the candidate user
+			if (candidate.organizationId) {
+				await this._userOrganizationService.addUserToOrganization(
+					user,
+					candidate.organizationId
+				);
+			}
 
-			//4. Send welcome email to candidate user
+			// 4. Send welcome email to candidate user
 			this._emailService.welcomeUser(
 				user,
 				languageCode,
