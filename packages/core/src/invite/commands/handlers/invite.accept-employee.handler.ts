@@ -9,7 +9,8 @@ import {
 	IOrganizationDepartment,
 	IOrganizationProject,
 	IOrganizationTeam,
-	IUser
+	IUser,
+	RolesEnum
 } from '@gauzy/contracts';
 import { AuthService } from '../../../auth/auth.service';
 import { InviteService } from '../../invite.service';
@@ -81,7 +82,10 @@ export class InviteAcceptEmployeeHandler implements ICommandHandler<InviteAccept
 			user = await this.userRepository.findOneOrFail({
 				where: {
 					email,
-					tenantId
+					tenantId,
+					role: {
+						name: RolesEnum.EMPLOYEE
+					}
 				},
 				relations: {
 					employee: true
