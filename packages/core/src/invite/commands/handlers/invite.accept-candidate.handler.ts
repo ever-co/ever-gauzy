@@ -96,7 +96,7 @@ export class InviteAcceptCandidateHandler implements ICommandHandler<InviteAccep
 			);
 			try {
 				/**
-				 * Create candiate after create user
+				 * Create candidate after create user
 				 */
 				const create = this.candidateRepository.create({
 					user,

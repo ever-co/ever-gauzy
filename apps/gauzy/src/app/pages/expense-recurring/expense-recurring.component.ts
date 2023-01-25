@@ -259,7 +259,7 @@ export class ExpenseRecurringComponent
 			).items;
 		} catch (error) {
 			console.log(
-				'Error while retriving organization recurring expenses',
+				'Error while retrieving organization recurring expenses',
 				error
 			);
 		} finally {

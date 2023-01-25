@@ -53,7 +53,7 @@ export class EmailConfirmationService {
                 } : {}),
             });
 
-            // send email verfication link
+            // send email verification link
             return this.emailService.emailVerification(user, url, verificationCode, integration);
         } catch (error) {
             console.log(error, 'Error while sending verification email');

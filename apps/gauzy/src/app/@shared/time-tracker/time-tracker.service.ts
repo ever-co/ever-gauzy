@@ -317,7 +317,7 @@ export class TimeTrackerService implements OnDestroy {
 			this._worker = new Worker(
 				new URL('./time-tracker.worker', import.meta.url)
 			);
-			// // retreive message post from time tracker worker
+			// // retrieve message post from time tracker worker
 			this._worker.onmessage = ({ data }) => {
 				this.currentSessionDuration = data.session;
 				this.duration = data.todayWorked;

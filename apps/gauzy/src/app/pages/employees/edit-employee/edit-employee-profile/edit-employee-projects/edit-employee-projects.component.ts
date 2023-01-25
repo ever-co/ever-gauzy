@@ -90,7 +90,7 @@ export class EditEmployeeProjectsComponent extends TranslationBaseComponent
 	}
 
 	/**
-	 * Load organization & employee assinged projects
+	 * Load organization & employee assigned projects
 	 */
 	private async loadProjects() {
 		await this.loadSelectedEmployeeProjects();
