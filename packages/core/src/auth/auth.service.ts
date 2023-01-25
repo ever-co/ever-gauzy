@@ -238,6 +238,9 @@ export class AuthService extends SocialAuthService {
 			tenant = creatingUser.tenant;
 		}
 
+		/**
+		 * Register new user
+		 */
 		const create = this.userRepository.create({
 			...input.user,
 			tenant,
@@ -253,7 +256,17 @@ export class AuthService extends SocialAuthService {
 				: {}),
 		});
 		const entity = await this.userRepository.save(create);
-		const user = await this.userRepository.findOneBy({ id: entity.id });
+		/**
+		 * Find latest register user with role
+		 */
+		const user =  await this.userRepository.findOne({
+			where: {
+				id: entity.id
+			},
+			relations: {
+				role: true
+			}
+		});
 
 		if (input.organizationId) {
 			await this.userOrganizationService.addUserToOrganization(
