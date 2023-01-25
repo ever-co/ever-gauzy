@@ -398,7 +398,7 @@ export default class TimerHandler {
 			})
 			.filter((item) => !!item);
 
-		// formating aw
+		// formatting aw
 		awActivities = awActivities.map((item) => {
 			idsAw.push(item.id);
 			const dataParse = JSON.parse(item.data);
@@ -419,7 +419,7 @@ export default class TimerHandler {
 			};
 		});
 
-		//formating wakatime
+		//formatting wakatime
 		wakatimeHeartbeats = wakatimeHeartbeats.map((item) => {
 			idsWakatime.push(item.id);
 			const activityMetadata = {

@@ -126,7 +126,11 @@
         "sluggable",
         "kurkle",
         "Quer",
-        "Alexi"
+        "Alexi",
+        "fontawesome",
+        "fullcalendar",
+        "daterangepicker",
+        "timestamptz"
     ],
     "useGitignore": true,
     "ignorePaths": [

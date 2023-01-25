@@ -744,22 +744,22 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 		});
 
 		this.todayDuration$.next({
-			hours: this.formatingDuration(
+			hours: this.formattingDuration(
 				'hours',
 				moment.duration(instantaneaous, 'seconds').hours()
 			),
-			minutes: this.formatingDuration(
+			minutes: this.formattingDuration(
 				'minutes',
 				moment.duration(instantaneaous, 'seconds').minutes()
 			),
 		});
 
 		this.weeklyDuration$.next({
-			minutes: this.formatingDuration(
+			minutes: this.formattingDuration(
 				'minutes',
 				moment.duration(instantaneousWeek, 'seconds').minutes()
 			),
-			hours: this.formatingDuration(
+			hours: this.formattingDuration(
 				'hours',
 				Math.floor(
 					parseInt(
@@ -1039,15 +1039,15 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 				.duration(count.todayDuration, 'seconds')
 				.hours();
 			this.todayDuration$.next({
-				hours: this.formatingDuration('hours', hours),
-				minutes: this.formatingDuration('minutes', minutes),
+				hours: this.formattingDuration('hours', hours),
+				minutes: this.formattingDuration('minutes', minutes),
 			});
 			this.weeklyDuration$.next({
-				minutes: this.formatingDuration(
+				minutes: this.formattingDuration(
 					'minutes',
 					moment.duration(count.weekDuration, 'seconds').minutes()
 				),
-				hours: this.formatingDuration(
+				hours: this.formattingDuration(
 					'hours',
 					Math.floor(
 						parseInt(
@@ -1077,7 +1077,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 		}
 	}
 
-	formatingDuration(timeEntity, val) {
+	formattingDuration(timeEntity, val) {
 		switch (timeEntity) {
 			case 'hours': {
 				return val.toString().length > 1 ? `${val}` : `0${val}`;
