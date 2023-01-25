@@ -117,6 +117,18 @@
 								<ng-select [class]="errors.task ? 'error-border' : ''" [clearable]="true"
 									placeholder="Task" [(ngModel)]="taskSelect" [items]="tasks$ | async" bindValue="id"
 									bindLabel="title" (ngModelChange)="setTask($event)">
+									<ng-template ng-option-tmp let-item="item">
+										<span>
+											{{item?.taskNumber}} {{ item?.title }}
+										</span>
+									</ng-template>
+									<ng-template ng-label-tmp let-item="item">
+										<div class="selector-template">
+											<span>
+												{{item?.taskNumber}} {{ item?.title }}
+											</span>
+										</div>
+									</ng-template>
 								</ng-select>
 							</div>
 						</div>
