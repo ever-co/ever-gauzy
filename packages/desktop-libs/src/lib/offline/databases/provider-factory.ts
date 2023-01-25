@@ -48,7 +48,7 @@ export class ProviderFactory implements IDatabaseProvider {
 
 	private get _dialect(): string {
 		const cfg = LocalStore.getApplicationConfig().config;
-		return cfg.db;
+		return cfg && cfg.db ? cfg.db : '';
 	}
 
 	private async _migrate(): Promise<void> {
