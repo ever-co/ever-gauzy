@@ -87,6 +87,7 @@
 							<div class="row d-flex flex-column">
 								<div class="col-7">
 									<nb-toggle [(ngModel)]="screenshotNotification"
+										[disabled]="appSetting?.timerStarted"
 										(ngModelChange)="toggleNotificationChange($event)" status="basic"> Detailed
 										Notification
 									</nb-toggle>
@@ -100,7 +101,7 @@
 							</div>
 							<div class="row mt-2 d-flex flex-column">
 								<div class="col-7">
-									<nb-toggle [checked]="!screenshotNotification"
+									<nb-toggle [checked]="!screenshotNotification" [disabled]="appSetting?.timerStarted"
 										(checkedChange)="toggleSimpleNotificationChange($event)" status="basic"> Simple
 										Notification
 									</nb-toggle>
@@ -130,8 +131,8 @@
 				<div class="col-10">
 					<nb-card>
 						<nb-card-body>
-							<nb-toggle [checked]="muted" (checkedChange)="toggleNotificationSoundChange($event)"
-								status="basic"> Muted
+							<nb-toggle [checked]="muted" [disabled]="appSetting?.timerStarted"
+								(checkedChange)="toggleNotificationSoundChange($event)" status="basic"> Muted
 								Notification
 							</nb-toggle>
 						</nb-card-body>
