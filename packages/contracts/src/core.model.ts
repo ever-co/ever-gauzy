@@ -41,3 +41,32 @@ export interface IListQueryInput<T> {
 	readonly findInput?: T | any;
 	readonly where?: any;
 }
+
+/**
+ * Describes generic pagination params
+ */
+export interface IPaginationParam extends IOptionParams {
+	/**
+	 * Limit (paginated) - max number of entities should be taken.
+	 */
+	readonly take: number;
+	/**
+	 * Offset (paginated) where from entities should be taken.
+	 */
+	readonly skip: number;
+}
+
+export interface IOptionParams {
+	/**
+	 * Order, in which entities should be ordered.
+	 */
+	readonly order: any;
+	/**
+	 * Simple condition that should be applied to match entities.
+	 */
+	readonly where: any;
+	/**
+	* Indicates if soft-deleted rows should be included in entity result.
+	*/
+	readonly withDeleted: boolean;
+}

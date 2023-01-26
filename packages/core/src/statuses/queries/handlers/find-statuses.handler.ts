@@ -5,7 +5,10 @@ import { FindStatusesQuery } from '../find-statuses.query';
 
 @QueryHandler(FindStatusesQuery)
 export class FindStatusesHandler implements IQueryHandler<FindStatusesQuery> {
-	constructor(private readonly statusService: StatusService) {}
+
+	constructor(
+		private readonly statusService: StatusService
+	) {}
 
 	async execute(query: FindStatusesQuery): Promise<IPagination<IStatus>> {
 		const { options } = query;
