@@ -14,7 +14,7 @@ export interface ITaskSize extends IBasePerTenantAndOrganizationEntityModel  {
 
 export interface ITaskSizeCreateInput extends Omit<ITaskSize, 'isSystem'>, Omit<ITaskSize, 'value'> {}
 
-export interface ITaskSizeUpdateInput extends ITaskSizeCreateInput {
+export interface ITaskSizeUpdateInput extends Partial<ITaskSizeCreateInput> {
 	id?: string;
 }
 

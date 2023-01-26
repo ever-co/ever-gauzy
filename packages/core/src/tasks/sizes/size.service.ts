@@ -1,12 +1,12 @@
-import { DeleteResult, Repository } from 'typeorm';
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { ITaskSize } from '@gauzy/contracts';
-import { TenantAwareCrudService } from './../../core/crud';
+import { DeleteResult, Repository } from 'typeorm';
+import { IPagination, ITaskSize, ITaskSizeFindInput } from '@gauzy/contracts';
+import { SharedPrioritySizeService } from './../../tasks/shared-priority-size.service';
 import { TaskSize } from './size.entity';
 
 @Injectable()
-export class TaskSizeService extends TenantAwareCrudService<TaskSize> {
+export class TaskSizeService extends SharedPrioritySizeService<TaskSize> {
 
 	constructor(
 		@InjectRepository(TaskSize)
@@ -27,5 +27,18 @@ export class TaskSizeService extends TenantAwareCrudService<TaskSize> {
 				isSystem: false,
 			},
 		});
+	}
+
+	/**
+	 * GET task sizes by filters
+	 * If parameters not match, retrieve global task sizes
+	 *
+	 * @param params
+	 * @returns
+	 */
+	async findTaskSizes(
+		params: ITaskSizeFindInput
+	): Promise<IPagination<ITaskSize>> {
+		return await this.findAllTaskShared(params);
 	}
 }
