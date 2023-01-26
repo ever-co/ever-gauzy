@@ -225,6 +225,12 @@ nb-card-body {
   }
 }
 
+.work-duration-container {
+  display: flex;
+  flex-direction: row-reverse;
+  gap: 4px;
+}
+
 .user-label {
   font-size: 12px;
   text-transform: uppercase;

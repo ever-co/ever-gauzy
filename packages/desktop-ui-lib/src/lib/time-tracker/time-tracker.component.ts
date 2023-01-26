@@ -775,6 +775,11 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 			),
 		});
 
+		this.electronService.ipcRenderer.send('update_tray_time_update', {
+			minutes: this.todayDuration.minutes,
+			hours: this.todayDuration.hours,
+		});
+
 		if (seconds % 5 === 0) {
 			this.pingAw(null);
 			if (this.lastScreenCapture.createdAt) {
@@ -1035,7 +1040,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 	}
 
 	countDuration(count) {
-		if (count) {
+		if (count && !this.start) {
 			const minutes = moment
 				.duration(count.todayDuration, 'seconds')
 				.minutes();
@@ -1062,22 +1067,19 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 					)
 				),
 			});
+
 			this.electronService.ipcRenderer.send('update_tray_time_update', {
-				minutes: this.todayDuration$.getValue().minutes,
-				hours: this.todayDuration$.getValue().hours,
+				minutes: this.todayDuration.minutes,
+				hours: this.todayDuration.hours,
 			});
-			if (!this.start) {
-				this._lastTotalWorkedToday = count.todayDuration;
-				this._lastTotalWorkedWeek = count.weekDuration;
-				this.electronService.ipcRenderer.send(
-					'update_tray_time_title',
-					{
-						timeRun: moment
-							.duration(this._lastTotalWorkedToday, 'seconds')
-							.format('hh:mm:ss', { trim: false }),
-					}
-				);
-			}
+
+			this._lastTotalWorkedToday = count.todayDuration;
+			this._lastTotalWorkedWeek = count.weekDuration;
+			this.electronService.ipcRenderer.send('update_tray_time_title', {
+				timeRun: moment
+					.duration(this._lastTotalWorkedToday, 'seconds')
+					.format('hh:mm:ss', { trim: false }),
+			});
 		}
 	}
 
@@ -1792,5 +1794,15 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 			console.log('screenshots from db', screenshots);
 			this.localImage(this.lastScreenCapture);
 		}
+	}
+
+	/**
+	 * It takes a date and returns a string
+	 * @param {Date} date - The date to humanize
+	 * @returns A string
+	 */
+
+	public humanize(date: Date): string {
+		return moment(date).fromNow();
 	}
 }
