@@ -18,8 +18,8 @@ import {
 } from '@nestjs/common';
 import { DeleteResult } from 'typeorm';
 import { IPagination, IStatus } from '@gauzy/contracts';
-import { UUIDValidationPipe } from './../shared/pipes';
-import { TenantPermissionGuard } from './../shared/guards';
+import { UUIDValidationPipe } from './../../shared/pipes';
+import { TenantPermissionGuard } from './../../shared/guards';
 import { StatusService } from './status.service';
 import { FindStatusesQuery } from './queries';
 import { CreateStatusDTO, StatusQuerDTO, UpdatesStatusDTO } from './dto';

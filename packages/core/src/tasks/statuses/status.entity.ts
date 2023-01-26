@@ -4,10 +4,10 @@ import { IOrganizationProject, IStatus } from '@gauzy/contracts';
 import {
 	OrganizationProject,
 	TenantOrganizationBaseEntity,
-} from '../core/entities/internal';
+} from '../../core/entities/internal';
 
-@Entity('status')
-export class Status extends TenantOrganizationBaseEntity implements IStatus {
+@Entity('task_status')
+export class TaskStatus extends TenantOrganizationBaseEntity implements IStatus {
 	@ApiProperty({ type: () => String })
 	@Index()
 	@Column()
@@ -48,7 +48,7 @@ export class Status extends TenantOrganizationBaseEntity implements IStatus {
 	})
 	project?: IOrganizationProject;
 
-	@RelationId((it: Status) => it.project)
+	@RelationId((it: TaskStatus) => it.project)
 	@Index()
 	@Column({ nullable: true })
 	projectId?: IOrganizationProject['id'];

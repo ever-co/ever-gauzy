@@ -9,18 +9,18 @@ import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { IOrganization, IOrganizationProject, IPagination, IStatus, IStatusFindInput, ITenant } from '@gauzy/contracts';
 import { isNotEmpty } from '@gauzy/common';
-import { TenantAwareCrudService } from '../core/crud';
-import { RequestContext } from './../core/context';
-import { Status } from './status.entity';
+import { TenantAwareCrudService } from '../../core/crud';
+import { RequestContext } from './../../core/context';
+import { TaskStatus } from './status.entity';
 import { DEFAULT_GLOBAL_STATUSES } from './default-global-statuses';
 
 @Injectable()
-export class StatusService extends TenantAwareCrudService<Status> {
+export class StatusService extends TenantAwareCrudService<TaskStatus> {
 	constructor(
-		@InjectRepository(Status)
-		protected readonly statusRepository: Repository<Status>
+		@InjectRepository(TaskStatus)
+		protected readonly taskStatusRepository: Repository<TaskStatus>
 	) {
-		super(statusRepository);
+		super(taskStatusRepository);
 	}
 
 	/**
@@ -32,13 +32,13 @@ export class StatusService extends TenantAwareCrudService<Status> {
 	 */
 	async findAllStatuses(
 		params: IStatusFindInput
-	): Promise<IPagination<Status>> {
+	): Promise<IPagination<TaskStatus>> {
 		try {
 			/**
 			 * Find at least one record or get global statuses
 			 */
 			const cqb = this.repository.createQueryBuilder(this.alias);
-			cqb.where((qb: SelectQueryBuilder<Status>) => {
+			cqb.where((qb: SelectQueryBuilder<TaskStatus>) => {
 				this.getFilterStatusQuery(qb, params);
 			});
 			await cqb.getOneOrFail();
@@ -47,7 +47,7 @@ export class StatusService extends TenantAwareCrudService<Status> {
 			 * Find statuses for given params
 			 */
 			const query = this.repository.createQueryBuilder(this.alias);
-			query.where((qb: SelectQueryBuilder<Status>) => {
+			query.where((qb: SelectQueryBuilder<TaskStatus>) => {
 				this.getFilterStatusQuery(qb, params);
 			});
 			const [items, total] = await query.getManyAndCount();
@@ -78,7 +78,7 @@ export class StatusService extends TenantAwareCrudService<Status> {
 	 */
 	async getGlobalStatuses(): Promise<IPagination<IStatus>> {
 		const query = this.repository.createQueryBuilder(this.alias);
-		query.where((qb: SelectQueryBuilder<Status>) => {
+		query.where((qb: SelectQueryBuilder<TaskStatus>) => {
 			qb.andWhere(
 				new Brackets((bck: WhereExpressionBuilder) => {
 					bck.andWhere(`"${qb.alias}"."organizationId" IS NULL`);
@@ -102,7 +102,7 @@ export class StatusService extends TenantAwareCrudService<Status> {
 	 * @returns
 	 */
 	getFilterStatusQuery(
-		query: SelectQueryBuilder<Status>,
+		query: SelectQueryBuilder<TaskStatus>,
 		request: IStatusFindInput
 	) {
 		const { tenantId, organizationId, projectId } = request;
@@ -147,11 +147,11 @@ export class StatusService extends TenantAwareCrudService<Status> {
 	 *
 	 * @param tenants '
 	 */
-	async bulkCreateTenantsStatus(tenants: ITenant[]): Promise<IStatus[] & Status[]> {
+	async bulkCreateTenantsStatus(tenants: ITenant[]): Promise<IStatus[] & TaskStatus[]> {
 		const statuses: IStatus[] = [];
 		for (const tenant of tenants) {
 			for (const status of DEFAULT_GLOBAL_STATUSES) {
-				statuses.push(new Status({ ...status, isSystem: false, tenant }));
+				statuses.push(new TaskStatus({ ...status, isSystem: false, tenant }));
 			}
 		}
 		return await this.repository.save(statuses);
@@ -162,7 +162,7 @@ export class StatusService extends TenantAwareCrudService<Status> {
 	 *
 	 * @param organization
 	 */
-	async bulkCreateOrganizationStatus(organization: IOrganization): Promise<IStatus[] & Status[]> {
+	async bulkCreateOrganizationStatus(organization: IOrganization): Promise<IStatus[] & TaskStatus[]> {
 		try {
 			const statuses: IStatus[] = [];
 
@@ -171,7 +171,7 @@ export class StatusService extends TenantAwareCrudService<Status> {
 
 			for (const item of items) {
 				const { tenantId, name, value, description, icon, color } = item;
-				const status = new Status({
+				const status = new TaskStatus({
 					tenantId,
 					name,
 					value,
@@ -195,7 +195,7 @@ export class StatusService extends TenantAwareCrudService<Status> {
 	 * @param project
 	 * @returns
 	 */
-	async bulkCreateOrganizationProjectStatus(project: IOrganizationProject): Promise<IStatus[] & Status[]> {
+	async bulkCreateOrganizationProjectStatus(project: IOrganizationProject): Promise<IStatus[] & TaskStatus[]> {
 		try {
 			const { tenantId, organizationId } = project;
 
@@ -204,7 +204,7 @@ export class StatusService extends TenantAwareCrudService<Status> {
 
 			for (const item of items) {
 				const { name, value, description, icon, color } = item;
-				const status = new Status({
+				const status = new TaskStatus({
 					tenantId,
 					organizationId,
 					name,

@@ -6,15 +6,15 @@ import {
 } from 'typeorm';
 import { faker } from '@ever-co/faker';
 import { sluggable } from '@gauzy/common';
-import { Status } from './status.entity';
+import { TaskStatus } from './status.entity';
 
 @EventSubscriber()
-export class StatusSubscriber implements EntitySubscriberInterface<Status> {
+export class TaskStatusSubscriber implements EntitySubscriberInterface<TaskStatus> {
 	/**
-	 * Indicates that this subscriber only listen to Status events.
+	 * Indicates that this subscriber only listen to TaskStatus events.
 	 */
 	listenTo() {
-		return Status;
+		return TaskStatus;
 	}
 
 	/**
@@ -24,8 +24,8 @@ export class StatusSubscriber implements EntitySubscriberInterface<Status> {
 	 * @param event
 	 */
 	afterLoad(
-		entity: Status | Partial<Status>,
-		event?: LoadEvent<Status>
+		entity: TaskStatus | Partial<TaskStatus>,
+		event?: LoadEvent<TaskStatus>
 	): void | Promise<any> {}
 
 	/**
@@ -33,7 +33,7 @@ export class StatusSubscriber implements EntitySubscriberInterface<Status> {
 	 *
 	 * @param event
 	 */
-	beforeInsert(event: InsertEvent<Status>) {
+	beforeInsert(event: InsertEvent<TaskStatus>) {
 		try {
 			if (event) {
 				const { entity } = event;
