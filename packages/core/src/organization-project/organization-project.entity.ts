@@ -10,23 +10,25 @@ import {
 	JoinTable,
 } from 'typeorm';
 import {
-	IOrganizationProject,
 	CurrenciesEnum,
-	TaskListTypeEnum,
-	IOrganizationContact,
-	IInvoiceItem,
-	ITag,
-	ITask,
-	ITimeLog,
+	IActivity,
 	IEmployee,
+	IExpense,
+	IInvoiceItem,
+	IOrganizationContact,
+	IOrganizationProject,
 	IOrganizationSprint,
 	IPayment,
+	IStatus,
+	ITag,
+	ITask,
+	ITaskPriority,
+	ITaskSize,
+	ITimeLog,
 	OrganizationProjectBudgetTypeEnum,
-	IExpense,
-	IActivity,
 	ProjectBillingEnum,
 	ProjectOwnerEnum,
-	IStatus,
+	TaskListTypeEnum,
 } from '@gauzy/contracts';
 import {
 	Activity,
@@ -39,15 +41,16 @@ import {
 	Status,
 	Tag,
 	Task,
+	TaskPriority,
+	TaskSize,
 	TenantOrganizationBaseEntity,
 	TimeLog,
 } from '../core/entities/internal';
 
 @Entity('organization_project')
-export class OrganizationProject
-	extends TenantOrganizationBaseEntity
-	implements IOrganizationProject
-{
+export class OrganizationProject extends TenantOrganizationBaseEntity
+	implements IOrganizationProject {
+
 	@Index()
 	@Column()
 	name: string;
@@ -189,6 +192,18 @@ export class OrganizationProject
 	 */
 	@OneToMany(() => Status, (status) => status.project)
 	statuses?: IStatus[];
+
+	/**
+	 * Project Priorities
+	 */
+	@OneToMany(() => TaskPriority, (status) => status.project)
+	priorities?: ITaskPriority[];
+
+	/**
+	 * Project Sizes
+	 */
+	@OneToMany(() => TaskSize, (size) => size.project)
+	sizes?: ITaskSize[];
 
 	/*
     |--------------------------------------------------------------------------
