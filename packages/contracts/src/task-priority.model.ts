@@ -14,7 +14,7 @@ export interface ITaskPriority extends IBasePerTenantAndOrganizationEntityModel 
 
 export interface ITaskPriorityCreateInput extends Omit<ITaskPriority, 'isSystem'>, Omit<ITaskPriority, 'value'> {}
 
-export interface ITaskPriorityUpdateInput extends ITaskPriorityCreateInput {
+export interface ITaskPriorityUpdateInput extends Partial<ITaskPriorityCreateInput> {
 	id?: string;
 }
 
