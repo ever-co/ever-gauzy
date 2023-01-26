@@ -17,9 +17,7 @@ import { EmployeeModule } from './../employee/employee.module';
 		RouterModule.forRoutes([
 			{ path: '/tasks', module: TaskModule }
 		]),
-		TypeOrmModule.forFeature([
-			Task
-		]),
+		TypeOrmModule.forFeature([ Task ]),
 		TenantModule,
 		UserModule,
 		RoleModule,

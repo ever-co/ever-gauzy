@@ -12,7 +12,7 @@ import { CountQueryDTO } from './../../shared/dto';
 import { TenantPermissionGuard } from './../../shared/guards';
 import { TaskSizeService } from './size.service';
 import { TaskSize } from './size.entity';
-import { CreateTaskSizeDTO, SizeQuerDTO, UpdateTaskSizeDTO } from './dto';
+import { CreateTaskSizeDTO, TaskSizeQuerDTO, UpdateTaskSizeDTO } from './dto';
 
 @UseGuards(TenantPermissionGuard)
 @Controller()
@@ -44,7 +44,7 @@ export class TaskSizeController extends CrudFactory<
 	@Get()
 	@UsePipes(new ValidationPipe({ whitelist: true }))
 	async findTaskSizes(
-		@Query() params: SizeQuerDTO
+		@Query() params: TaskSizeQuerDTO
 	): Promise<IPagination<ITaskSize>> {
 		return await this.taskSizeService.findTaskSizes(params);
 	}

@@ -12,7 +12,7 @@ import { TenantPermissionGuard } from './../../shared/guards';
 import { CountQueryDTO } from './../../shared/dto';
 import { TaskPriority } from './priority.entity';
 import { TaskPriorityService } from './priority.service';
-import { CreateTaskPriorityDTO, PriorityQuerDTO, UpdateTaskPriorityDTO } from './dto';
+import { CreateTaskPriorityDTO, TaskPriorityQuerDTO, UpdateTaskPriorityDTO } from './dto';
 
 @UseGuards(TenantPermissionGuard)
 @Controller()
@@ -44,7 +44,7 @@ export class TaskPriorityController extends CrudFactory<
 	@Get()
 	@UsePipes(new ValidationPipe({ whitelist: true }))
 	async findTaskPriorities(
-		@Query() params: PriorityQuerDTO
+		@Query() params: TaskPriorityQuerDTO
 	): Promise<IPagination<ITaskPriority>> {
 		return await this.taskPriorityService.findTaskPriorities(params);
 	}
