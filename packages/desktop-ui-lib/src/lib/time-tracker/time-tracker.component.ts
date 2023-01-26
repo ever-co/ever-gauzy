@@ -173,6 +173,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 	}
 	private _isOffline$: BehaviorSubject<boolean> = new BehaviorSubject(false);
 	private _inQueue$: BehaviorSubject<number> = new BehaviorSubject(0);
+	private _isRefresh$: BehaviorSubject<boolean> = new BehaviorSubject(false);
 
 	constructor(
 		private electronService: ElectronService,
@@ -284,6 +285,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 							this.getLastTimeSlotImage(arg);
 						}
 					})();
+					this._isRefresh$.next(false);
 				})
 		);
 
@@ -608,7 +610,9 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 			'latest_screenshots',
 			(event, args) => {
 				this._ngZone.run(() => {
-					this._mappingScreenshots(args);
+					if (this._isOffline) {
+						this._mappingScreenshots(args);
+					}
 				});
 			}
 		);
@@ -1634,6 +1638,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 	}
 
 	refreshTimer() {
+		this._isRefresh$.next(true);
 		this.electronService.ipcRenderer.send('refresh-timer');
 	}
 
@@ -1761,6 +1766,10 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 
 	public get inQueue$(): Observable<number> {
 		return this._inQueue$.asObservable();
+	}
+
+	public get isRefresh$(): Observable<boolean> {
+		return this._isRefresh$.asObservable();
 	}
 
 	private _mappingScreenshots(args: any[]) {

@@ -55,10 +55,6 @@
 										</nb-icon>
 									</button>
 								</div>
-								<button class="refresh-button mt-1" nbButton ghost (click)="refreshTimer()">
-									<nb-icon icon="refresh-outline">
-									</nb-icon>
-								</button>
 							</div>
 						</div>
 						<div class="row">
@@ -267,30 +263,29 @@
 		</div>
 	</nb-layout-column>
 	<nb-layout-footer fixed class="no-padding-fotter footer-fixed">
-		<button class="footer-button" nbButton ghost *ngIf="userData && userData.name" size="small"
+		<div class="footer-button" nbButton ghost *ngIf="userData && userData.name" size="small"
 			(click)="openSetting()">
-			<nb-icon icon="settings-2-outline"></nb-icon>
-			{{ userData?.name }}
-		</button>
+			<nb-icon class="icon pointable" icon="cog" pack="font-awesome"></nb-icon>
+			<span class="user-label pointable">{{ userData?.name }}</span>
+		</div>
+		<nb-icon *ngIf="isRefresh$ | async" class="icon ml-2 mr-2 sync spin" icon="loader-outline"></nb-icon>
+		<nb-icon *ngIf="!(isRefresh$ | async)" class="icon ml-2 mr-2 pointable" (click)="refreshTimer()" icon="redo-alt"
+			pack="font-awesome">
+		</nb-icon>
 		<div class="state-container" [ngClass]="{offline: isOffline$ | async}">
 			<div class="state" [ngClass]="{offline: isOffline$ | async}"></div>
 			{{(isOffline$ | async)
 			? 'Offline' : 'Online'}}
 		</div>
-		<div *ngIf="(inQueue$ | async)?.queue === 0" class="ml-3 sync-container">
+		<div *ngIf="(inQueue$ | async)?.queue === 0" class="sync-container">
 			<nb-icon class="sync-check" size="tiny" status="success" icon="check-circle" pack="font-awesome"></nb-icon>
 		</div>
-		<div *ngIf="(inQueue$ | async)?.queue" class="ml-3 sync-container">
+		<div *ngIf="(inQueue$ | async)?.queue" class="sync-container">
 			<nb-badge class="sync-badge" position="top right" size="small" status="info"
 				[text]="(inQueue$ | async)?.queue"></nb-badge>
 			<nb-icon size="tiny" class="sync" [ngClass]="{spin: (inQueue$ | async)?.isSyncing }" icon="sync-alt"
-				pack="font-awesome" (click)="refreshTimer()"></nb-icon>
+				pack="font-awesome"></nb-icon>
 		</div>
-		<button #dialogOpenBtn (click)="
-				open(dialog, {
-					type: 'timeTrackingOption'
-				})
-			" style="display: none"></button>
 	</nb-layout-footer>
 </nb-layout>
 
@@ -315,3 +310,9 @@
 		</nb-card-footer>
 	</nb-card>
 </ng-template>
+
+<button #dialogOpenBtn (click)="
+				open(dialog, {
+					type: 'timeTrackingOption'
+				})
+			" style="display: none"></button>

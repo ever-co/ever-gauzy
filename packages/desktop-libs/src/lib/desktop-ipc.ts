@@ -658,12 +658,12 @@ export function ipcTimer(
 			'Last Capture Time Start Tracking Time (Desktop Try):',
 			lastTime
 		);
+		await syncIntervalQueue(timeTrackerWindow);
+		await latestScreenshots(timeTrackerWindow);
 		event.sender.send('timer_tracker_show', {
 			...LocalStore.beforeRequestParams(),
 			timeSlotId: lastTime ? lastTime.timeslotId : null,
 		});
-		await syncIntervalQueue(timeTrackerWindow);
-		await latestScreenshots(timeTrackerWindow);
 	});
 
 	ipcMain.on('aw_status', (event, arg) => {

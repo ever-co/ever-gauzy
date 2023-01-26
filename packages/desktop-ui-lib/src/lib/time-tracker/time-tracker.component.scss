@@ -35,7 +35,7 @@
 .timer {
   min-width: 360px !important;
   width: auto;
-  height: calc(100vh - 3rem);
+  height: calc(100vh - 2.5rem);
   overflow: hidden;
 
   &.expanded {
@@ -204,6 +204,9 @@ nb-card-body {
   position: relative;
   color: var(--gauzy-text-color-2) !important;
   top: 0px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
 }
 
 .last-screenshot-time {
@@ -211,6 +214,20 @@ nb-card-body {
     font-size: 12px;
     font-weight: 600;
   }
+}
+
+.pointable {
+  cursor: pointer;
+
+  &.icon {
+    color: var(--gauzy-text-color-2);
+    font-size: 14px;
+  }
+}
+
+.user-label {
+  font-size: 12px;
+  text-transform: uppercase;
 }
 
 .timer-max {
@@ -274,6 +291,9 @@ nb-card-body {
 
 .no-padding-fotter {
   padding: 0px !important;
+  display: flex;
+  align-items: center;
+  gap: 4px;
 }
 
 :host {
@@ -282,6 +302,7 @@ nb-card-body {
       display: flex;
       align-items: center;
       justify-content: center;
+      gap: 4px;
     }
 
     nb-toggle {
@@ -479,15 +500,6 @@ img {
   align-items: center;
   position: relative;
 
-  .sync {
-    color: var(--gauzy-text-color-2);
-    font-size: 14px;
-
-    &.spin {
-      animation: rotate 1s ease-in-out 0s infinite;
-    }
-  }
-
   .sync-badge {
     right: -16px;
     font-size: 9px;
@@ -498,6 +510,15 @@ img {
 
 .sync-check {
   font-size: 14px;
+}
+
+.sync {
+  color: var(--gauzy-text-color-2);
+  font-size: 14px;
+
+  &.spin {
+    animation: rotate 1s ease-in-out 0s infinite;
+  }
 }
 
 @keyframes rotate {
