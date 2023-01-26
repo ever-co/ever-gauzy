@@ -1,18 +1,29 @@
-import { Controller, Get, Query, UseGuards, UsePipes, ValidationPipe } from '@nestjs/common';
+import {
+	Controller,
+	Get,
+	Query,
+	UseGuards,
+	UsePipes,
+	ValidationPipe,
+} from '@nestjs/common';
 import {
 	IPagination,
 	IPaginationParam,
 	ITaskPriority,
 	ITaskPriorityCreateInput,
 	ITaskPriorityFindInput,
-	ITaskPriorityUpdateInput
+	ITaskPriorityUpdateInput,
 } from '@gauzy/contracts';
 import { CrudFactory, PaginationParams } from './../../core/crud';
 import { TenantPermissionGuard } from './../../shared/guards';
 import { CountQueryDTO } from './../../shared/dto';
 import { TaskPriority } from './priority.entity';
 import { TaskPriorityService } from './priority.service';
-import { CreateTaskPriorityDTO, TaskPriorityQuerDTO, UpdateTaskPriorityDTO } from './dto';
+import {
+	CreateTaskPriorityDTO,
+	TaskPriorityQuerDTO,
+	UpdateTaskPriorityDTO,
+} from './dto';
 
 @UseGuards(TenantPermissionGuard)
 @Controller()
@@ -28,11 +39,8 @@ export class TaskPriorityController extends CrudFactory<
 	PaginationParams,
 	CountQueryDTO
 ) {
-
-	constructor(
-		protected readonly taskPriorityService: TaskPriorityService
-	) {
-		super(taskPriorityService)
+	constructor(protected readonly taskPriorityService: TaskPriorityService) {
+		super(taskPriorityService);
 	}
 
 	/**

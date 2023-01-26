@@ -1,7 +1,7 @@
 import { IBasePerTenantAndOrganizationEntityModel } from './base-entity.model';
 import { IOrganizationProject } from './organization-projects.model';
 
-export interface ITaskSize extends IBasePerTenantAndOrganizationEntityModel  {
+export interface ITaskSize extends IBasePerTenantAndOrganizationEntityModel {
 	name: string;
 	value: string;
 	description?: string;
@@ -12,13 +12,17 @@ export interface ITaskSize extends IBasePerTenantAndOrganizationEntityModel  {
 	projectId?: IOrganizationProject['id'];
 }
 
-export interface ITaskSizeCreateInput extends Omit<ITaskSize, 'isSystem'>, Omit<ITaskSize, 'value'> {}
+export interface ITaskSizeCreateInput
+	extends Omit<ITaskSize, 'isSystem'>,
+		Omit<ITaskSize, 'value'> {}
 
 export interface ITaskSizeUpdateInput extends Partial<ITaskSizeCreateInput> {
 	id?: string;
 }
 
-export interface ITaskSizeFindInput extends IBasePerTenantAndOrganizationEntityModel, Pick<ITaskSize, 'projectId'> {}
+export interface ITaskSizeFindInput
+	extends IBasePerTenantAndOrganizationEntityModel,
+		Pick<ITaskSize, 'projectId'> {}
 
 /**
  * Default task sizes
@@ -28,5 +32,5 @@ export enum TaskSizeEnum {
 	LARGE = 'large',
 	MEDIUM = 'medium',
 	SMALL = 'small',
-	TINY = 'tiny'
+	TINY = 'tiny',
 }

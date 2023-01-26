@@ -1,13 +1,16 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { DeleteResult, Repository } from 'typeorm';
-import { IPagination, ITaskPriority, ITaskPriorityFindInput } from '@gauzy/contracts';
+import {
+	IPagination,
+	ITaskPriority,
+	ITaskPriorityFindInput,
+} from '@gauzy/contracts';
 import { SharedPrioritySizeService } from './../../tasks/shared-priority-size.service';
 import { TaskPriority } from './priority.entity';
 
 @Injectable()
 export class TaskPriorityService extends SharedPrioritySizeService<TaskPriority> {
-
 	constructor(
 		@InjectRepository(TaskPriority)
 		protected readonly taskPriorityRepository: Repository<TaskPriority>

@@ -10,7 +10,7 @@ import {
 	FindOneOptions,
 	FindOptionsWhere,
 	Repository,
-	UpdateResult
+	UpdateResult,
 } from 'typeorm';
 import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
 import * as moment from 'moment';
@@ -22,8 +22,8 @@ import { ICrudService } from './icrud.service';
 import { ITryRequest } from './try-request';
 
 export abstract class CrudService<T extends BaseEntity>
-	implements ICrudService<T> {
-
+	implements ICrudService<T>
+{
 	/**
 	 * Alias (default we used table name) for pagination crud
 	 */
@@ -31,9 +31,7 @@ export abstract class CrudService<T extends BaseEntity>
 		return this.repository.metadata.tableName;
 	}
 
-	protected constructor(
-		protected readonly repository: Repository<T>
-	) {}
+	protected constructor(protected readonly repository: Repository<T>) {}
 
 	/**
 	 * Counts entities that match given options.
@@ -65,7 +63,9 @@ export abstract class CrudService<T extends BaseEntity>
 	 * @param options
 	 * @returns
 	 */
-	public async findAll(options?: FindManyOptions<T>): Promise<IPagination<T>> {
+	public async findAll(
+		options?: FindManyOptions<T>
+	): Promise<IPagination<T>> {
 		const total = await this.repository.count(options);
 		const items = await this.repository.find(options);
 		return { items, total };
@@ -89,44 +89,49 @@ export abstract class CrudService<T extends BaseEntity>
 	 * @param options
 	 * @returns
 	 */
-	public async paginate(options?: FindManyOptions<T>): Promise<IPagination<T>> {
+	public async paginate(
+		options?: FindManyOptions<T>
+	): Promise<IPagination<T>> {
 		try {
 			const query = this.repository.createQueryBuilder(this.alias);
 			query.setFindOptions({
-				skip: options && options.skip ? (options.take * (options.skip - 1)) : 0,
-				take: options && options.take ? (options.take) : 10
+				skip:
+					options && options.skip
+						? options.take * (options.skip - 1)
+						: 0,
+				take: options && options.take ? options.take : 10,
 			});
 			query.setFindOptions({
-				...(
-					(options && options.select) ? {
-						select: options.select
-					} : {}
-				),
-				...(
-					(options && options.relations) ? {
-						relations: options.relations
-					} : {}
-				),
+				...(options && options.select
+					? {
+							select: options.select,
+					  }
+					: {}),
+				...(options && options.relations
+					? {
+							relations: options.relations,
+					  }
+					: {}),
 				/**
 				 * Specifies what relations should be loaded.
 				 *
 				 * @deprecated
 				 */
-				...(
-					(options && options.join) ? {
-						join: options.join
-					} : {}
-				),
-				...(
-					(options && options.where) ? {
-						where: options.where
-					} : {}
-				),
-				...(
-					(options && options.order) ? {
-						order: options.order
-					} : {}
-				),
+				...(options && options.join
+					? {
+							join: options.join,
+					  }
+					: {}),
+				...(options && options.where
+					? {
+							where: options.where,
+					  }
+					: {}),
+				...(options && options.order
+					? {
+							order: options.order,
+					  }
+					: {}),
 			});
 			console.log(options, moment().format('DD.MM.YYYY HH:mm:ss'));
 			const [items, total] = await query.getManyAndCount();
@@ -157,36 +162,34 @@ export abstract class CrudService<T extends BaseEntity>
 	): Promise<ITryRequest<T>> {
 		try {
 			const record = await this.repository.findOneOrFail({
-				...(
-					(options && options.select) ? {
-						select: options.select
-					} : {}
-				),
+				...(options && options.select
+					? {
+							select: options.select,
+					  }
+					: {}),
 				where: {
 					id,
-					...(
-						(options && options.where) ? options.where : {}
-					)
+					...(options && options.where ? options.where : {}),
 				},
-				...(
-					(options && options.relations) ? {
-						relations: options.relations
-					} : []
-				),
-				...(
-					(options && options.order) ? {
-						order: options.order
-					} : {}
-				),
+				...(options && options.relations
+					? {
+							relations: options.relations,
+					  }
+					: []),
+				...(options && options.order
+					? {
+							order: options.order,
+					  }
+					: {}),
 			} as FindOneOptions<T>);
 			return {
 				success: true,
-				record
+				record,
 			};
 		} catch (error) {
 			return {
 				success: false,
-				error
+				error,
 			};
 		}
 	}
@@ -202,17 +205,15 @@ export abstract class CrudService<T extends BaseEntity>
 		options: FindOneOptions<T>
 	): Promise<ITryRequest<T>> {
 		try {
-			const record = await this.repository.findOneOrFail(
-				options
-			);
+			const record = await this.repository.findOneOrFail(options);
 			return {
 				success: true,
-				record
+				record,
 			};
 		} catch (error) {
 			return {
 				success: false,
-				error
+				error,
 			};
 		}
 	}
@@ -228,17 +229,15 @@ export abstract class CrudService<T extends BaseEntity>
 		options: FindOptionsWhere<T>
 	): Promise<ITryRequest<T>> {
 		try {
-			const record = await this.repository.findOneByOrFail(
-				options
-			);
+			const record = await this.repository.findOneByOrFail(options);
 			return {
 				success: true,
-				record
+				record,
 			};
 		} catch (error) {
 			return {
 				success: false,
-				error
+				error,
 			};
 		}
 	}
@@ -261,27 +260,25 @@ export abstract class CrudService<T extends BaseEntity>
 		options?: FindOneOptions<T>
 	): Promise<T> {
 		const record = await this.repository.findOne({
-			...(
-				(options && options.select) ? {
-					select: options.select
-				} : {}
-			),
+			...(options && options.select
+				? {
+						select: options.select,
+				  }
+				: {}),
 			where: {
 				id,
-				...(
-					(options && options.where) ? options.where : {}
-				)
+				...(options && options.where ? options.where : {}),
 			},
-			...(
-				(options && options.relations) ? {
-					relations: options.relations
-				} : []
-			),
-			...(
-				(options && options.order) ? {
-					order: options.order
-				} : {}
-			),
+			...(options && options.relations
+				? {
+						relations: options.relations,
+				  }
+				: []),
+			...(options && options.order
+				? {
+						order: options.order,
+				  }
+				: {}),
 		} as FindOneOptions<T>);
 		if (!record) {
 			throw new NotFoundException(`The requested record was not found`);
@@ -299,9 +296,7 @@ export abstract class CrudService<T extends BaseEntity>
 	public async findOneByOptions(
 		options: FindOneOptions<T>
 	): Promise<T | null> {
-		const record = await this.repository.findOne(
-			options
-		);
+		const record = await this.repository.findOne(options);
 		if (!record) {
 			throw new NotFoundException(`The requested record was not found`);
 		}
@@ -318,9 +313,7 @@ export abstract class CrudService<T extends BaseEntity>
 	public async findOneByWhereOptions(
 		options: FindOptionsWhere<T>
 	): Promise<T | null> {
-		const record = await this.repository.findOneBy(
-			options
-		);
+		const record = await this.repository.findOneBy(options);
 		if (!record) {
 			throw new NotFoundException(`The requested record was not found`);
 		}
@@ -375,11 +368,11 @@ export abstract class CrudService<T extends BaseEntity>
 	}
 
 	/**
-     * Deletes entities by a given criteria.
-     * Unlike save method executes a primitive operation without cascades, relations and other operations included.
-     * Executes fast and efficient DELETE query.
-     * Does not check if entity exist in the database.
-     *
+	 * Deletes entities by a given criteria.
+	 * Unlike save method executes a primitive operation without cascades, relations and other operations included.
+	 * Executes fast and efficient DELETE query.
+	 * Does not check if entity exist in the database.
+	 *
 	 * @param criteria
 	 * @param options
 	 * @returns
@@ -391,7 +384,7 @@ export abstract class CrudService<T extends BaseEntity>
 		try {
 			return await this.repository.delete(criteria);
 		} catch (error) {
-			console.log(error)
+			console.log(error);
 			throw new NotFoundException(`The record was not found`, error);
 		}
 	}
@@ -404,10 +397,11 @@ export abstract class CrudService<T extends BaseEntity>
 			stream$.pipe(
 				mergeMap((signal) => {
 					if (!signal) {
-						return throwError(() =>
-							new NotFoundException(
-								`The requested record was not found`
-							)
+						return throwError(
+							() =>
+								new NotFoundException(
+									`The requested record was not found`
+								)
 						);
 					}
 					return observableOf(signal);

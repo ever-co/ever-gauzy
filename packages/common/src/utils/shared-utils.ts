@@ -6,7 +6,7 @@ import slugify from 'slugify';
  * @returns {boolean}
  */
 export function isFunction(item: any): boolean {
-	return (item && typeof item === 'function' && !Array.isArray(item));
+	return item && typeof item === 'function' && !Array.isArray(item);
 }
 
 /**
@@ -16,7 +16,7 @@ export function isFunction(item: any): boolean {
  * From https://stackoverflow.com/a/34749873/772859
  */
 export function isObject(item: any) {
-	return (item && typeof item === 'object' && !Array.isArray(item));
+	return item && typeof item === 'object' && !Array.isArray(item);
 }
 
 /**
@@ -135,8 +135,10 @@ export function removeDuplicates(data: string[]) {
  * @param obj
  * @returns
  */
-export function isNullOrUndefined<T>(string: T | null | undefined): string is null | undefined {
-	return typeof string === "undefined" || string === null
+export function isNullOrUndefined<T>(
+	string: T | null | undefined
+): string is null | undefined {
+	return typeof string === 'undefined' || string === null;
 }
 
 /**
@@ -151,9 +153,7 @@ export function chunks(items: any[], size: number): any[] {
 	const chunks = [];
 	items = [].concat(...items);
 	while (items.length) {
-		chunks.push(
-			items.splice(0, size)
-		)
+		chunks.push(items.splice(0, size));
 	}
 	return chunks;
 }
@@ -180,6 +180,6 @@ export function sluggable(string: string, replacement: any = '-'): string {
 		replacement: replacement, // replace spaces with replacement character, defaults to `-`
 		remove: /[*+~()'"!:@,.]/g, // remove characters that match regex, defaults to `undefined`
 		lower: true, // convert to lower case, defaults to `false`
-		trim: true // trim leading and trailing replacement chars, defaults to `true`
+		trim: true, // trim leading and trailing replacement chars, defaults to `true`
 	}).replace(/[_]/g, replacement);
 }

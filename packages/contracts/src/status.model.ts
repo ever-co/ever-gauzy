@@ -12,10 +12,14 @@ export interface IStatus extends IBasePerTenantAndOrganizationEntityModel {
 	projectId?: IOrganizationProject['id'];
 }
 
-export interface IStatusCreateInput extends Omit<IStatus, 'isSystem'>, Omit<IStatus, 'value'> {}
+export interface IStatusCreateInput
+	extends Omit<IStatus, 'isSystem'>,
+		Omit<IStatus, 'value'> {}
 
 export interface IStatusUpdateInput extends IStatusCreateInput {
 	id?: string;
 }
 
-export interface IStatusFindInput extends IBasePerTenantAndOrganizationEntityModel, Pick<IStatus, 'projectId'> {}
+export interface IStatusFindInput
+	extends IBasePerTenantAndOrganizationEntityModel,
+		Pick<IStatus, 'projectId'> {}

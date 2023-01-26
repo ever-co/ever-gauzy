@@ -9,21 +9,13 @@ import { TaskPriorityService } from './priority.service';
 @Module({
 	imports: [
 		RouterModule.forRoutes([
-			{ path: '/task-priorities', module: TaskPriorityModule }
+			{ path: '/task-priorities', module: TaskPriorityModule },
 		]),
-		TypeOrmModule.forFeature([
-			TaskPriority
-		]),
-		TenantModule
+		TypeOrmModule.forFeature([TaskPriority]),
+		TenantModule,
 	],
-	controllers: [
-		TaskPriorityController
-	],
-	providers: [
-		TaskPriorityService
-	],
-	exports: [
-		TaskPriorityService
-	],
+	controllers: [TaskPriorityController],
+	providers: [TaskPriorityService],
+	exports: [TaskPriorityService],
 })
 export class TaskPriorityModule {}

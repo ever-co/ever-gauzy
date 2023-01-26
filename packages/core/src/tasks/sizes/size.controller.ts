@@ -1,11 +1,18 @@
-import { Controller, Get, Query, UseGuards, UsePipes, ValidationPipe, } from '@nestjs/common';
+import {
+	Controller,
+	Get,
+	Query,
+	UseGuards,
+	UsePipes,
+	ValidationPipe,
+} from '@nestjs/common';
 import {
 	IPagination,
 	IPaginationParam,
 	ITaskSize,
 	ITaskSizeCreateInput,
 	ITaskSizeFindInput,
-	ITaskSizeUpdateInput
+	ITaskSizeUpdateInput,
 } from '@gauzy/contracts';
 import { CrudFactory, PaginationParams } from './../../core/crud';
 import { CountQueryDTO } from './../../shared/dto';
@@ -22,17 +29,9 @@ export class TaskSizeController extends CrudFactory<
 	ITaskSizeUpdateInput,
 	IPaginationParam,
 	ITaskSizeFindInput
->(
-	CreateTaskSizeDTO,
-	UpdateTaskSizeDTO,
-	PaginationParams,
-	CountQueryDTO
-) {
-
-	constructor(
-		protected readonly taskSizeService: TaskSizeService
-	) {
-		super(taskSizeService)
+>(CreateTaskSizeDTO, UpdateTaskSizeDTO, PaginationParams, CountQueryDTO) {
+	constructor(protected readonly taskSizeService: TaskSizeService) {
+		super(taskSizeService);
 	}
 
 	/**

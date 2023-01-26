@@ -4,7 +4,5 @@ import { IStatusFindInput } from '@gauzy/contracts';
 export class FindStatusesQuery implements IQuery {
 	static readonly type = '[Statuses] Query All';
 
-	constructor(
-		public readonly options: IStatusFindInput
-	) {}
+	constructor(public readonly options: IStatusFindInput) {}
 }

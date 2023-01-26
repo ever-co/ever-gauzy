@@ -614,9 +614,15 @@ export class SeedDataService {
 
 		await this.tryExecute('Languages', createLanguages(this.dataSource));
 
-		await this.tryExecute('Statuses', createDefaultStatuses(this.dataSource));
+		await this.tryExecute(
+			'Statuses',
+			createDefaultStatuses(this.dataSource)
+		);
 
-		await this.tryExecute('Priorities', createDefaultPriorities(this.dataSource));
+		await this.tryExecute(
+			'Priorities',
+			createDefaultPriorities(this.dataSource)
+		);
 
 		await this.tryExecute('Sizes', createDefaultSizes(this.dataSource));
 

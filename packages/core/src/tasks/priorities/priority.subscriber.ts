@@ -9,7 +9,9 @@ import { sluggable } from '@gauzy/common';
 import { TaskPriority } from './priority.entity';
 
 @EventSubscriber()
-export class TaskPrioritySubscriber implements EntitySubscriberInterface<TaskPriority> {
+export class TaskPrioritySubscriber
+	implements EntitySubscriberInterface<TaskPriority>
+{
 	/**
 	 * Indicates that this subscriber only listen to TaskPriority events.
 	 */
@@ -45,7 +47,10 @@ export class TaskPrioritySubscriber implements EntitySubscriberInterface<TaskPri
 				}
 			}
 		} catch (error) {
-			console.log('Error while creating task priority : subscriber : ', error);
+			console.log(
+				'Error while creating task priority : subscriber : ',
+				error
+			);
 		}
 	}
 }

@@ -146,7 +146,6 @@ import { ContactModule } from './contact/contact.module';
 import { PublicShareModule } from './public-share/public-share.module';
 import { TransformInterceptor } from './core/interceptors';
 
-
 const { unleashConfig } = environment;
 
 if (unleashConfig.url) {

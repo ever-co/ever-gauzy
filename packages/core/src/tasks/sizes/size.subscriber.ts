@@ -45,7 +45,10 @@ export class TaskSizeSubscriber implements EntitySubscriberInterface<TaskSize> {
 				}
 			}
 		} catch (error) {
-			console.log('Error while creating task size : subscriber : ', error);
+			console.log(
+				'Error while creating task size : subscriber : ',
+				error
+			);
 		}
 	}
 }

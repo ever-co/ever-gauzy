@@ -8,8 +8,10 @@ import {
 } from './../../core/entities/internal';
 
 @Entity('task_size')
-export class TaskSize extends TenantOrganizationBaseEntity implements ITaskSize {
-
+export class TaskSize
+	extends TenantOrganizationBaseEntity
+	implements ITaskSize
+{
 	@ApiProperty({ type: () => String })
 	@IsNotEmpty()
 	@IsString()

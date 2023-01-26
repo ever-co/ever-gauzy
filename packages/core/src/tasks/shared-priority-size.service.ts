@@ -1,18 +1,27 @@
-import { isNotEmpty } from "@gauzy/common";
-import { Injectable } from "@nestjs/common";
-import { IPagination, ITaskPriorityFindInput, ITaskSizeFindInput } from "@gauzy/contracts";
-import { Brackets, Repository, SelectQueryBuilder, WhereExpressionBuilder } from "typeorm";
-import { TenantBaseEntity } from "./../core/entities/internal";
-import { RequestContext } from "../core/context";
-import { TenantAwareCrudService } from "../core/crud";
+import { isNotEmpty } from '@gauzy/common';
+import { Injectable } from '@nestjs/common';
+import {
+	IPagination,
+	ITaskPriorityFindInput,
+	ITaskSizeFindInput,
+} from '@gauzy/contracts';
+import {
+	Brackets,
+	Repository,
+	SelectQueryBuilder,
+	WhereExpressionBuilder,
+} from 'typeorm';
+import { TenantBaseEntity } from './../core/entities/internal';
+import { RequestContext } from '../core/context';
+import { TenantAwareCrudService } from '../core/crud';
 
 @Injectable()
-export class SharedPrioritySizeService<BaseEntity extends TenantBaseEntity> extends TenantAwareCrudService<BaseEntity> {
-    constructor(
-        protected readonly repository: Repository<BaseEntity>
-    ) {
-        super(repository);
-    }
+export class SharedPrioritySizeService<
+	BaseEntity extends TenantBaseEntity
+> extends TenantAwareCrudService<BaseEntity> {
+	constructor(protected readonly repository: Repository<BaseEntity>) {
+		super(repository);
+	}
 
 	async findAllTaskShared(
 		params: ITaskPriorityFindInput | ITaskSizeFindInput
@@ -41,7 +50,7 @@ export class SharedPrioritySizeService<BaseEntity extends TenantBaseEntity> exte
 		}
 	}
 
-    /**
+	/**
 	 * GET global system statuses/priorities/sizes
 	 *
 	 * @returns
@@ -64,7 +73,7 @@ export class SharedPrioritySizeService<BaseEntity extends TenantBaseEntity> exte
 		return { items, total };
 	}
 
-    /**
+	/**
 	 * GET status filter query
 	 *
 	 * @param query
@@ -90,9 +99,12 @@ export class SharedPrioritySizeService<BaseEntity extends TenantBaseEntity> exte
 		 * GET by organization level
 		 */
 		if (isNotEmpty(organizationId)) {
-			query.andWhere(`"${query.alias}"."organizationId" = :organizationId`, {
-                organizationId,
-            });
+			query.andWhere(
+				`"${query.alias}"."organizationId" = :organizationId`,
+				{
+					organizationId,
+				}
+			);
 		} else {
 			query.andWhere(`"${query.alias}"."organizationId" IS NULL`);
 		}

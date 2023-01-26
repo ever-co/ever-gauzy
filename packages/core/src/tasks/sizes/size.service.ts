@@ -7,7 +7,6 @@ import { TaskSize } from './size.entity';
 
 @Injectable()
 export class TaskSizeService extends SharedPrioritySizeService<TaskSize> {
-
 	constructor(
 		@InjectRepository(TaskSize)
 		protected readonly taskSizeRepository: Repository<TaskSize>

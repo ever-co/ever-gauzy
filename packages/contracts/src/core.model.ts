@@ -13,11 +13,11 @@ export interface IPaginationInput {
  */
 export type IOptionsSelect<T> = {
 	[P in keyof T]?: NonNullable<T[P]> | boolean;
-}
+};
 
 /**
-* Generic pagination interface
-*/
+ * Generic pagination interface
+ */
 export interface IPagination<T> {
 	/**
 	 * Items included in the current listing
@@ -31,8 +31,8 @@ export interface IPagination<T> {
 }
 
 /*
-* Common query parameter
-*/
+ * Common query parameter
+ */
 export interface IListQueryInput<T> {
 	/**
 	 * Model entity defined relations
@@ -66,7 +66,7 @@ export interface IOptionParams {
 	 */
 	readonly where: any;
 	/**
-	* Indicates if soft-deleted rows should be included in entity result.
-	*/
+	 * Indicates if soft-deleted rows should be included in entity result.
+	 */
 	readonly withDeleted: boolean;
 }

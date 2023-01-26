@@ -9,21 +9,13 @@ import { RouterModule } from 'nest-router';
 @Module({
 	imports: [
 		RouterModule.forRoutes([
-			{ path: '/task-sizes', module: TaskSizeModule }
+			{ path: '/task-sizes', module: TaskSizeModule },
 		]),
-		TypeOrmModule.forFeature([
-			TaskSize
-		]),
-		TenantModule
+		TypeOrmModule.forFeature([TaskSize]),
+		TenantModule,
 	],
-	controllers: [
-		TaskSizeController
-	],
-	providers: [
-		TaskSizeService
-	],
-	exports: [
-		TaskSizeService
-	],
+	controllers: [TaskSizeController],
+	providers: [TaskSizeService],
+	exports: [TaskSizeService],
 })
 export class TaskSizeModule {}

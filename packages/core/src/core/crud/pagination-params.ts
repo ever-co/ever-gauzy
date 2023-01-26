@@ -3,9 +3,20 @@
 // Copyright (c) 2018 Sumanth Chinthagunta
 
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { FindOptionsOrder, FindOptionsRelations, FindOptionsSelect, FindOptionsWhereProperty } from 'typeorm';
+import {
+	FindOptionsOrder,
+	FindOptionsRelations,
+	FindOptionsSelect,
+	FindOptionsWhereProperty,
+} from 'typeorm';
 import { Transform, TransformFnParams, Type } from 'class-transformer';
-import { IsNotEmpty, IsOptional, Max, Min, ValidateNested } from 'class-validator';
+import {
+	IsNotEmpty,
+	IsOptional,
+	Max,
+	Min,
+	ValidateNested,
+} from 'class-validator';
 import { isClassInstance, isObject, parseToBoolean } from '@gauzy/common';
 import { TenantOrganizationBaseDTO } from './../../core/dto';
 
@@ -13,18 +24,18 @@ import { TenantOrganizationBaseDTO } from './../../core/dto';
  * Specifies what columns should be retrieved.
  */
 export class OptionsSelect<T = any> {
-
 	@ApiPropertyOptional({ type: 'object' })
 	@IsOptional()
-	@Transform(({ value }: TransformFnParams) => parseObject(value, parseToBoolean))
+	@Transform(({ value }: TransformFnParams) =>
+		parseObject(value, parseToBoolean)
+	)
 	readonly select?: FindOptionsSelect<T>;
 }
 
 /**
  * Indicates what relations of entity should be loaded (simplified left join form).
-*/
+ */
 export class OptionsRelations<T = any> extends OptionsSelect<T> {
-
 	@ApiPropertyOptional({ type: 'object' })
 	@IsOptional()
 	readonly relations?: FindOptionsRelations<T>;
@@ -50,11 +61,13 @@ export class OptionParams<T> extends OptionsRelations<T> {
 	};
 
 	/**
-	* Indicates if soft-deleted rows should be included in entity result.
-	*/
+	 * Indicates if soft-deleted rows should be included in entity result.
+	 */
 	@ApiPropertyOptional({ type: 'boolean' })
 	@IsOptional()
-	@Transform(({ value }: TransformFnParams) => value ? parseToBoolean(value) : false)
+	@Transform(({ value }: TransformFnParams) =>
+		value ? parseToBoolean(value) : false
+	)
 	readonly withDeleted: boolean;
 }
 
@@ -96,7 +109,7 @@ export function parseObject(source: Object, callback: Function) {
 					parseObject(source[key], callback);
 				}
 			} else {
-				Object.assign(source, { [key]: callback(source[key]) })
+				Object.assign(source, { [key]: callback(source[key]) });
 			}
 		}
 	}

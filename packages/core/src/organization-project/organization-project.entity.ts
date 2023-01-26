@@ -48,9 +48,10 @@ import {
 } from '../core/entities/internal';
 
 @Entity('organization_project')
-export class OrganizationProject extends TenantOrganizationBaseEntity
-	implements IOrganizationProject {
-
+export class OrganizationProject
+	extends TenantOrganizationBaseEntity
+	implements IOrganizationProject
+{
 	@Index()
 	@Column()
 	name: string;

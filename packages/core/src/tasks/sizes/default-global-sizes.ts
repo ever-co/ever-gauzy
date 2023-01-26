@@ -10,7 +10,7 @@ export const DEFAULT_GLOBAL_SIZES: ITaskSize[] = [
 		color: '#ff3d71',
 		isSystem: true,
 	},
-    {
+	{
 		name: ucFirst(TaskSizeEnum.LARGE),
 		value: TaskSizeEnum.LARGE,
 		description: 'Bigger size than average.',
@@ -18,7 +18,7 @@ export const DEFAULT_GLOBAL_SIZES: ITaskSize[] = [
 		color: '#ffaa00',
 		isSystem: true,
 	},
-    {
+	{
 		name: ucFirst(TaskSizeEnum.MEDIUM),
 		value: TaskSizeEnum.MEDIUM,
 		description: 'Neither large nor small.',
@@ -26,7 +26,7 @@ export const DEFAULT_GLOBAL_SIZES: ITaskSize[] = [
 		color: '#0095ff',
 		isSystem: true,
 	},
-    {
+	{
 		name: ucFirst(TaskSizeEnum.SMALL),
 		value: TaskSizeEnum.SMALL,
 		description: 'Little size or slight dimensions.',
@@ -34,7 +34,7 @@ export const DEFAULT_GLOBAL_SIZES: ITaskSize[] = [
 		color: '#3366ff',
 		isSystem: true,
 	},
-    {
+	{
 		name: ucFirst(TaskSizeEnum.TINY),
 		value: TaskSizeEnum.TINY,
 		description: 'Below average in size.',
