@@ -3,8 +3,8 @@
     "language": "en",
     "$schema": "https://raw.githubusercontent.com/streetsidesoftware/cspell/main/cspell.schema.json",
     "words": [
-		"Buildable",
-		"cacheable",
+        "Buildable",
+        "cacheable",
         "ngcc",
         "jasminewd",
         "ngtools",
