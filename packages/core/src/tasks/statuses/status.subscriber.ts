@@ -26,7 +26,7 @@ export class TaskStatusSubscriber implements EntitySubscriberInterface<TaskStatu
 	afterLoad(
 		entity: TaskStatus | Partial<TaskStatus>,
 		event?: LoadEvent<TaskStatus>
-	): void | Promise<any> {}
+	): void | Promise<any> { }
 
 	/**
 	 * Called before entity is inserted to the database.

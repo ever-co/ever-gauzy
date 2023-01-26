@@ -8,6 +8,7 @@ import {
 
 @Entity('task_status')
 export class TaskStatus extends TenantOrganizationBaseEntity implements IStatus {
+
 	@ApiProperty({ type: () => String })
 	@Index()
 	@Column()
@@ -35,10 +36,10 @@ export class TaskStatus extends TenantOrganizationBaseEntity implements IStatus 
 	isSystem?: boolean;
 
 	/*
-    |--------------------------------------------------------------------------
-    | @ManyToOne
-    |--------------------------------------------------------------------------
-    */
+	|--------------------------------------------------------------------------
+	| @ManyToOne
+	|--------------------------------------------------------------------------
+	*/
 
 	/**
 	 * Organization Project
