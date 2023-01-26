@@ -7,7 +7,7 @@ import { API_PREFIX } from "../../constants";
 @Injectable()
 export class StatusesService extends CrudService<IStatus> {
 
-    static readonly API_URL = `${API_PREFIX}/statuses`;
+    static readonly API_URL = `${API_PREFIX}/task-statuses`;
 
     constructor(
         protected readonly http: HttpClient

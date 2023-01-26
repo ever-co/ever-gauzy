@@ -10,7 +10,7 @@ import {
 } from '@angular/core';
 import { NG_VALUE_ACCESSOR } from '@angular/forms';
 import { BehaviorSubject } from 'rxjs/internal/BehaviorSubject';
-import { combineLatest, firstValueFrom, Subject } from 'rxjs';
+import { combineLatest, debounceTime, firstValueFrom, Subject } from 'rxjs';
 import { filter, map, tap } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
 import { IOrganization, IOrganizationProject, IPagination, IStatus, IStatusFindInput, TaskStatusEnum } from '@gauzy/contracts';
@@ -35,7 +35,6 @@ export class TaskStatusSelectComponent extends TranslationBaseComponent
 	implements AfterViewInit, OnInit, OnDestroy {
 
 	private subject$: Subject<boolean> = new Subject();
-	public selectedProjectId: IOrganizationProject['id'];
 	public organization: IOrganization;
 	public statuses$: BehaviorSubject<IStatus[]> = new BehaviorSubject([]);
 
@@ -68,6 +67,18 @@ export class TaskStatusSelectComponent extends TranslationBaseComponent
 			value: sluggable(TaskStatusEnum.COMPLETED),
 		},
 	];
+
+	/*
+	* Getter & Setter for selected organization project
+	*/
+	private _projectId: IOrganizationProject['id'];
+	get projectId(): IOrganizationProject['id'] {
+		return this._projectId;
+	}
+	@Input() set projectId(value: IOrganizationProject['id']) {
+		this._projectId = value;
+		this.subject$.next(true);
+	}
 
 	/*
 	* Getter & Setter for dynamic add tag option
@@ -121,6 +132,7 @@ export class TaskStatusSelectComponent extends TranslationBaseComponent
 	ngOnInit(): void {
 		this.subject$
 			.pipe(
+				debounceTime(200),
 				tap(() => this.getStatuses()),
 				untilDestroyed(this)
 			)
@@ -136,7 +148,7 @@ export class TaskStatusSelectComponent extends TranslationBaseComponent
 				filter(([organization]) => !!organization),
 				tap(([organization, project]) => {
 					this.organization = organization;
-					this.selectedProjectId = project ? project.id : null;
+					this.projectId = project ? project.id : null;
 				}),
 				tap(() => this.subject$.next(true)),
 				untilDestroyed(this)
@@ -174,9 +186,9 @@ export class TaskStatusSelectComponent extends TranslationBaseComponent
 		this.statusesService.get<IStatusFindInput>({
 			tenantId,
 			organizationId,
-			...(this.selectedProjectId
+			...(this.projectId
 				? {
-					projectId: this.selectedProjectId
+					projectId: this.projectId
 				  }
 				: {}),
 		}).pipe(
@@ -205,9 +217,9 @@ export class TaskStatusSelectComponent extends TranslationBaseComponent
 				tenantId,
 				organizationId,
 				name,
-				...(this.selectedProjectId
+				...(this.projectId
 					? {
-						projectId: this.selectedProjectId
+						projectId: this.projectId
 					  }
 					: {}),
 			});
