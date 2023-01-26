@@ -130,7 +130,9 @@
         "fontawesome",
         "fullcalendar",
         "daterangepicker",
-        "timestamptz"
+        "timestamptz",
+        "icrud",
+        "metatype"
     ],
     "useGitignore": true,
     "ignorePaths": [

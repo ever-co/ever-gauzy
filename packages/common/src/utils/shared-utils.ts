@@ -103,7 +103,7 @@ export const ArraySum = function (t, n) {
  */
 export function retrieveNameFromEmail(email: string): string {
 	if (email) {
-		return ucFirst(email.substring(0, email.lastIndexOf('@')), true);
+		return ucFirst(email.substring(0, email.lastIndexOf('@')));
 	}
 	return;
 }
@@ -111,7 +111,7 @@ export function retrieveNameFromEmail(email: string): string {
 /*
  * Capitalize the first letter of a string being
  */
-export function ucFirst(str: string, force: boolean): string {
+export function ucFirst(str: string, force: boolean = true): string {
 	str = force ? str.toLowerCase() : str;
 	return str.replace(/(\b)([a-zA-Z])/, function (firstLetter: string) {
 		return firstLetter.toUpperCase();
