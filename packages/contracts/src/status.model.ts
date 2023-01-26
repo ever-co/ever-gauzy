@@ -18,7 +18,4 @@ export interface IStatusUpdateInput extends IStatusCreateInput {
 	id?: string;
 }
 
-export interface IStatusFindInput
-	extends IBasePerTenantAndOrganizationEntityModel {
-	projectId?: IOrganizationProject['id'];
-}
+export interface IStatusFindInput extends IBasePerTenantAndOrganizationEntityModel, Pick<IStatus, 'projectId'> {}
