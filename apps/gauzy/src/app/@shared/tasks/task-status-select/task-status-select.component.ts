@@ -13,10 +13,21 @@ import { BehaviorSubject } from 'rxjs/internal/BehaviorSubject';
 import { combineLatest, debounceTime, firstValueFrom, Subject } from 'rxjs';
 import { filter, map, tap } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
-import { IOrganization, IOrganizationProject, IPagination, ITaskStatus, ITaskStatusFindInput, TaskStatusEnum } from '@gauzy/contracts';
+import {
+	IOrganization,
+	IOrganizationProject,
+	IPagination,
+	ITaskStatus,
+	ITaskStatusFindInput,
+	TaskStatusEnum,
+} from '@gauzy/contracts';
 import { distinctUntilChange, sluggable } from '@gauzy/common-angular';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { TaskStatusesService, Store, ToastrService } from '../../../@core/services';
+import {
+	TaskStatusesService,
+	Store,
+	ToastrService,
+} from '../../../@core/services';
 import { TranslationBaseComponent } from '../../language-base/translation-base.component';
 
 @UntilDestroy({ checkProperties: true })
@@ -31,9 +42,10 @@ import { TranslationBaseComponent } from '../../language-base/translation-base.c
 		},
 	],
 })
-export class TaskStatusSelectComponent extends TranslationBaseComponent
-	implements AfterViewInit, OnInit, OnDestroy {
-
+export class TaskStatusSelectComponent
+	extends TranslationBaseComponent
+	implements AfterViewInit, OnInit, OnDestroy
+{
 	private subject$: Subject<boolean> = new Subject();
 	public organization: IOrganization;
 	public statuses$: BehaviorSubject<ITaskStatus[]> = new BehaviorSubject([]);
@@ -69,8 +81,8 @@ export class TaskStatusSelectComponent extends TranslationBaseComponent
 	];
 
 	/*
-	* Getter & Setter for selected organization project
-	*/
+	 * Getter & Setter for selected organization project
+	 */
 	private _projectId: IOrganizationProject['id'];
 	get projectId(): IOrganizationProject['id'] {
 		return this._projectId;
@@ -81,8 +93,8 @@ export class TaskStatusSelectComponent extends TranslationBaseComponent
 	}
 
 	/*
-	* Getter & Setter for dynamic add tag option
-	*/
+	 * Getter & Setter for dynamic add tag option
+	 */
 	private _addTag: boolean = true;
 	get addTag(): boolean {
 		return this._addTag;
@@ -183,20 +195,24 @@ export class TaskStatusSelectComponent extends TranslationBaseComponent
 		const { tenantId } = this.store.user;
 		const { id: organizationId } = this.organization;
 
-		this.taskStatusesService.get<ITaskStatusFindInput>({
-			tenantId,
-			organizationId,
-			...(this.projectId
-				? {
-					projectId: this.projectId
-				  }
-				: {}),
-		}).pipe(
-			map(({ items, total }: IPagination<ITaskStatus>) => total > 0 ? items : this._statuses),
-			tap((statuses: ITaskStatus[]) => this.statuses$.next(statuses)),
-			untilDestroyed(this)
-		)
-		.subscribe();
+		this.taskStatusesService
+			.get<ITaskStatusFindInput>({
+				tenantId,
+				organizationId,
+				...(this.projectId
+					? {
+							projectId: this.projectId,
+					  }
+					: {}),
+			})
+			.pipe(
+				map(({ items, total }: IPagination<ITaskStatus>) =>
+					total > 0 ? items : this._statuses
+				),
+				tap((statuses: ITaskStatus[]) => this.statuses$.next(statuses)),
+				untilDestroyed(this)
+			)
+			.subscribe();
 	}
 
 	/**
@@ -219,7 +235,7 @@ export class TaskStatusSelectComponent extends TranslationBaseComponent
 				name,
 				...(this.projectId
 					? {
-						projectId: this.projectId
+							projectId: this.projectId,
 					  }
 					: {}),
 			});
@@ -227,7 +243,7 @@ export class TaskStatusSelectComponent extends TranslationBaseComponent
 		} catch (error) {
 			this.toastrService.error(error);
 		} finally {
-			this.subject$.next(true)
+			this.subject$.next(true);
 		}
 	};
 

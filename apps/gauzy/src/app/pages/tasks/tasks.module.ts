@@ -21,7 +21,7 @@ import {
 	NbTabsetModule,
 	NbActionsModule,
 	NbContextMenuModule,
-	NbTooltipModule
+	NbTooltipModule,
 } from '@nebular/theme';
 import { NgxPermissionsModule } from 'ngx-permissions';
 import { ThemeModule } from '../../@theme/theme.module';
@@ -60,7 +60,7 @@ import { TaskSizeSelectModule } from '../../@shared/tasks/task-size-select/task-
 		TaskSettingsComponent,
 		ProjectViewComponent,
 		TasksSprintViewComponent,
-		SprintTaskComponent
+		SprintTaskComponent,
 	],
 	imports: [
 		NbTooltipModule,
@@ -106,7 +106,7 @@ import { TaskSizeSelectModule } from '../../@shared/tasks/task-size-select/task-
 		TaskStatusSelectModule,
 		GauzyButtonActionModule,
 		TaskNumberFieldModule,
-		NgxPermissionsModule.forChild()
-	]
+		NgxPermissionsModule.forChild(),
+	],
 })
 export class TasksModule {}

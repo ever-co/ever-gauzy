@@ -19,11 +19,15 @@ import {
 	IPagination,
 	ITaskSize,
 	ITaskSizeFindInput,
-	TaskSizeEnum
+	TaskSizeEnum,
 } from '@gauzy/contracts';
 import { distinctUntilChange, sluggable } from '@gauzy/common-angular';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { Store, TaskSizesService, ToastrService } from '../../../@core/services';
+import {
+	Store,
+	TaskSizesService,
+	ToastrService,
+} from '../../../@core/services';
 import { TranslationBaseComponent } from '../../language-base/translation-base.component';
 
 @UntilDestroy({ checkProperties: true })
@@ -38,9 +42,10 @@ import { TranslationBaseComponent } from '../../language-base/translation-base.c
 		},
 	],
 })
-export class TaskSizeSelectComponent extends TranslationBaseComponent
-	implements AfterViewInit, OnInit, OnDestroy {
-
+export class TaskSizeSelectComponent
+	extends TranslationBaseComponent
+	implements AfterViewInit, OnInit, OnDestroy
+{
 	private subject$: Subject<boolean> = new Subject();
 	public organization: IOrganization;
 	public sizes$: BehaviorSubject<ITaskSize[]> = new BehaviorSubject([]);
@@ -51,29 +56,29 @@ export class TaskSizeSelectComponent extends TranslationBaseComponent
 	private _sizes: Array<{ name: string; value: TaskSizeEnum & any }> = [
 		{
 			name: TaskSizeEnum.X_LARGE,
-			value: sluggable(TaskSizeEnum.X_LARGE)
+			value: sluggable(TaskSizeEnum.X_LARGE),
 		},
 		{
 			name: TaskSizeEnum.LARGE,
-			value: sluggable(TaskSizeEnum.LARGE)
+			value: sluggable(TaskSizeEnum.LARGE),
 		},
 		{
 			name: TaskSizeEnum.MEDIUM,
-			value: sluggable(TaskSizeEnum.MEDIUM)
+			value: sluggable(TaskSizeEnum.MEDIUM),
 		},
 		{
 			name: TaskSizeEnum.SMALL,
-			value: sluggable(TaskSizeEnum.SMALL)
+			value: sluggable(TaskSizeEnum.SMALL),
 		},
 		{
 			name: TaskSizeEnum.TINY,
-			value: sluggable(TaskSizeEnum.TINY)
+			value: sluggable(TaskSizeEnum.TINY),
 		},
 	];
 
 	/*
-	* Getter & Setter for selected organization project
-	*/
+	 * Getter & Setter for selected organization project
+	 */
 	private _projectId: IOrganizationProject['id'];
 	get projectId(): IOrganizationProject['id'] {
 		return this._projectId;
@@ -84,8 +89,8 @@ export class TaskSizeSelectComponent extends TranslationBaseComponent
 	}
 
 	/*
-	* Getter & Setter for dynamic add tag option
-	*/
+	 * Getter & Setter for dynamic add tag option
+	 */
 	private _addTag: boolean = true;
 	get addTag(): boolean {
 		return this._addTag;
@@ -118,8 +123,8 @@ export class TaskSizeSelectComponent extends TranslationBaseComponent
 		return this._size;
 	}
 
-	onChange: any = () => { };
-	onTouched: any = () => { };
+	onChange: any = () => {};
+	onTouched: any = () => {};
 
 	@Output() onChanged = new EventEmitter<string>();
 
@@ -186,20 +191,24 @@ export class TaskSizeSelectComponent extends TranslationBaseComponent
 		const { tenantId } = this.store.user;
 		const { id: organizationId } = this.organization;
 
-		this.taskSizesService.get<ITaskSizeFindInput>({
-			tenantId,
-			organizationId,
-			...(this.projectId
-				? {
-					projectId: this.projectId
-				}
-				: {}),
-		}).pipe(
-			map(({ items, total }: IPagination<ITaskSize>) => total > 0 ? items : this._sizes),
-			tap((sizes: ITaskSize[]) => this.sizes$.next(sizes)),
-			untilDestroyed(this)
-		)
-		.subscribe();
+		this.taskSizesService
+			.get<ITaskSizeFindInput>({
+				tenantId,
+				organizationId,
+				...(this.projectId
+					? {
+							projectId: this.projectId,
+					  }
+					: {}),
+			})
+			.pipe(
+				map(({ items, total }: IPagination<ITaskSize>) =>
+					total > 0 ? items : this._sizes
+				),
+				tap((sizes: ITaskSize[]) => this.sizes$.next(sizes)),
+				untilDestroyed(this)
+			)
+			.subscribe();
 	}
 
 	/**
@@ -222,8 +231,8 @@ export class TaskSizeSelectComponent extends TranslationBaseComponent
 				name,
 				...(this.projectId
 					? {
-						projectId: this.projectId
-					}
+							projectId: this.projectId,
+					  }
 					: {}),
 			});
 			const size: ITaskSize = await firstValueFrom(source);
@@ -237,5 +246,5 @@ export class TaskSizeSelectComponent extends TranslationBaseComponent
 		}
 	};
 
-	ngOnDestroy(): void { }
+	ngOnDestroy(): void {}
 }

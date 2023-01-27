@@ -37,9 +37,10 @@ const initialTaskValue = {
 	templateUrl: './team-task-dialog.component.html',
 	styleUrls: ['./team-task-dialog.component.scss'],
 })
-export class TeamTaskDialogComponent extends TranslationBaseComponent
-	implements OnInit {
-
+export class TeamTaskDialogComponent
+	extends TranslationBaseComponent
+	implements OnInit
+{
 	form: FormGroup;
 	selectedTaskId: string;
 	projects: IOrganizationProject[];

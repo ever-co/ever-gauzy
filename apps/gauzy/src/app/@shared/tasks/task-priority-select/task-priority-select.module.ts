@@ -8,21 +8,15 @@ import { TranslateModule } from '../../translate/translate.module';
 import { SharedModule } from '../../shared.module';
 
 @NgModule({
-	declarations: [
-		TaskPrioritySelectComponent
-	],
-	exports: [
-		TaskPrioritySelectComponent
-	],
+	declarations: [TaskPrioritySelectComponent],
+	exports: [TaskPrioritySelectComponent],
 	imports: [
 		CommonModule,
 		FormsModule,
 		TranslateModule,
 		NgSelectModule,
-		SharedModule
+		SharedModule,
 	],
-	providers: [
-		TaskPrioritiesService
-	]
+	providers: [TaskPrioritiesService],
 })
-export class TaskPrioritySelectModule { }
+export class TaskPrioritySelectModule {}

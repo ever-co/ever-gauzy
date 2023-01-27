@@ -8,21 +8,15 @@ import { SharedModule } from '../../shared.module';
 import { TaskStatusesService } from '../../../@core/services';
 
 @NgModule({
-	declarations: [
-		TaskStatusSelectComponent
-	],
-	exports: [
-		TaskStatusSelectComponent
-	],
+	declarations: [TaskStatusSelectComponent],
+	exports: [TaskStatusSelectComponent],
 	imports: [
 		CommonModule,
 		FormsModule,
 		TranslateModule,
 		NgSelectModule,
-		SharedModule
+		SharedModule,
 	],
-	providers: [
-		TaskStatusesService
-	]
+	providers: [TaskStatusesService],
 })
-export class TaskStatusSelectModule { }
+export class TaskStatusSelectModule {}

@@ -12,7 +12,7 @@ import {
 	NbSelectModule,
 	NbDatepickerModule,
 	NbInputModule,
-	NbButtonModule
+	NbButtonModule,
 } from '@nebular/theme';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { TagsColorInputModule } from '../../tags/tags-color-input/tags-color-input.module';
@@ -48,7 +48,7 @@ import { TaskNumberFieldModule } from '../task-number/task-number-field.module';
 		TaskStatusSelectModule,
 		TaskPrioritySelectModule,
 		TaskSizeSelectModule,
-		TaskNumberFieldModule
-	]
+		TaskNumberFieldModule,
+	],
 })
 export class AddTaskDialogModule {}

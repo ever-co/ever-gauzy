@@ -8,21 +8,15 @@ import { TranslateModule } from '../../translate/translate.module';
 import { SharedModule } from '../../shared.module';
 
 @NgModule({
-	declarations: [
-		TaskSizeSelectComponent
-	],
-	exports: [
-		TaskSizeSelectComponent
-	],
+	declarations: [TaskSizeSelectComponent],
+	exports: [TaskSizeSelectComponent],
 	imports: [
 		CommonModule,
 		FormsModule,
 		TranslateModule,
 		NgSelectModule,
-		SharedModule
+		SharedModule,
 	],
-	providers: [
-		TaskSizesService
-	]
+	providers: [TaskSizesService],
 })
-export class TaskSizeSelectModule { }
+export class TaskSizeSelectModule {}
