@@ -398,8 +398,9 @@
 	}
 }
 
-// input fields color
-@include input-fields-color;
+:host {
+	@include input-fields-color;
+}
 
 ::ng-deep .remember-me .text {
 
