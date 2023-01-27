@@ -70,6 +70,7 @@ export class AddTaskDialogComponent extends TranslationBaseComponent
 			projectId: [],
 			status: [TaskStatusEnum.OPEN, Validators.required],
 			priority: [],
+			size: [],
 			members: [],
 			estimateDays: [],
 			estimateHours: [null, [Validators.min(0), Validators.max(23)]],
