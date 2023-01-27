@@ -117,6 +117,7 @@ export class MyTaskDialogComponent extends TranslationBaseComponent
 			projectId: project ? project.id : null,
 			status: [status ? status : TaskStatusEnum.OPEN],
 			priority: [],
+			size: [],
 			members: [members],
 			estimateDays: [duration.days() || ''],
 			estimateHours: [
