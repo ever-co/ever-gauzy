@@ -110,7 +110,18 @@
 						></ga-task-priority-select>
 					</div>
 				</div>
-				<div class="col-sm-6"></div>
+				<div class="col-sm-6">
+					<div class="form-group">
+						<label class="label">
+							{{ 'TASKS_PAGE.TASK_SIZE' | translate }}
+						</label>
+						<ga-task-priority-select
+							[projectId]="form.get('projectId').value"
+							formControlName="size"
+							[placeholder]="'TASKS_PAGE.TASK_SIZE' | translate"
+						></ga-task-priority-select>
+					</div>
+				</div>
 				<div class="col-sm-12">
 					<div class="form-group">
 						<ga-tags-color-input
