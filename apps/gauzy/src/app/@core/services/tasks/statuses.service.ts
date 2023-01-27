@@ -5,13 +5,13 @@ import { CrudService } from "../crud/crud.service";
 import { API_PREFIX } from "../../constants";
 
 @Injectable()
-export class StatusesService extends CrudService<ITaskStatus> {
+export class TaskStatusesService extends CrudService<ITaskStatus> {
 
     static readonly API_URL = `${API_PREFIX}/task-statuses`;
 
     constructor(
         protected readonly http: HttpClient
     ) {
-        super(http, StatusesService.API_URL);
+        super(http, TaskStatusesService.API_URL);
     }
 }
