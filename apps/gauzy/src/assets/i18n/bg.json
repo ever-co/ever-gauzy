@@ -2396,6 +2396,7 @@
 		"ESTIMATE_HOURS": "Hours",
 		"ESTIMATE_MINUTES": "Mins",
 		"TASKS_STATUS": "Статус",
+		"TASK_PRIORITY": "Приоритет",
 		"TODO": "Todo",
 		"IN_PROGRESS": "In Progress",
 		"FOR_TESTING": "For Testing",
