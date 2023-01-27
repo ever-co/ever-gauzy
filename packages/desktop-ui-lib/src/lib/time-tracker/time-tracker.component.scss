@@ -451,6 +451,12 @@ $height: 42px;
     .ng-select .ng-select-container .ng-value-container {
       align-items: center;
       padding-left: 10px;
+
+      span {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
     }
   }
 }

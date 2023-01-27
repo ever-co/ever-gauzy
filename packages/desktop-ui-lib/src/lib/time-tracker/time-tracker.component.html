@@ -266,25 +266,27 @@
 	<nb-layout-footer fixed class="no-padding-fotter footer-fixed">
 		<div class="footer-button" nbButton ghost *ngIf="userData && userData.name" size="small"
 			(click)="openSetting()">
-			<nb-icon class="icon pointable" icon="cog" pack="font-awesome"></nb-icon>
+			<nb-icon nbTooltip="Open settings" class="icon pointable" icon="cog" pack="font-awesome"></nb-icon>
 			<span class="user-label pointable">{{ userData?.name }}</span>
 		</div>
 		<nb-icon *ngIf="isRefresh$ | async" class="icon ml-2 mr-2 sync spin" icon="loader-outline"></nb-icon>
-		<nb-icon *ngIf="!(isRefresh$ | async)" class="icon ml-2 mr-2 pointable" (click)="refreshTimer()" icon="redo-alt"
-			pack="font-awesome">
+		<nb-icon nbTooltip="Refresh" *ngIf="!(isRefresh$ | async)" class="icon ml-2 mr-2 pointable"
+			(click)="refreshTimer()" icon="redo-alt" pack="font-awesome">
 		</nb-icon>
-		<div class="state-container" [ngClass]="{offline: isOffline$ | async}">
+		<div [nbTooltip]="(isOffline$ | async) ? 'Api connectivity is down': 'Api connectivity\'s established'"
+			class="state-container" [ngClass]="{offline: isOffline$ | async}">
 			<div class="state" [ngClass]="{offline: isOffline$ | async}"></div>
 			{{(isOffline$ | async)
 			? 'Offline' : 'Online'}}
 		</div>
-		<div *ngIf="(inQueue$ | async)?.queue === 0" class="sync-container">
+		<div *ngIf="(inQueue$ | async)?.queue === 0" nbTooltip="Synced" class="sync-container">
 			<nb-icon class="sync-check" size="tiny" status="success" icon="check-circle" pack="font-awesome"></nb-icon>
 		</div>
 		<div *ngIf="(inQueue$ | async)?.queue" class="sync-container">
 			<nb-badge class="sync-badge" position="top right" size="small" status="info"
 				[text]="(inQueue$ | async)?.queue"></nb-badge>
-			<nb-icon size="tiny" class="sync" [ngClass]="{spin: (inQueue$ | async)?.isSyncing }" icon="sync-alt"
+			<nb-icon [nbTooltip]="(inQueue$ | async).isSyncing ? 'Synced in progess':' Waiting for synced'" size="tiny"
+				class="sync" [ngClass]="{spin: (inQueue$ | async)?.isSyncing }" icon="sync-alt"
 				pack="font-awesome"></nb-icon>
 		</div>
 	</nb-layout-footer>
