@@ -848,7 +848,6 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 
 	async getProjects(arg) {
 		this._projects$.next(await this.timeTrackerService.getProjects(arg));
-		console.log('projects', this._projects$.getValue());
 	}
 
 	async getClient(arg) {
@@ -1804,5 +1803,16 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 
 	public humanize(date: Date): string {
 		return moment(date).fromNow();
+	}
+
+	/**
+	 * It returns the project that matches the projectSelect value
+	 * @returns The project that matches the projectSelect id.
+	 */
+	public get selectedProject() {
+		const projects = this._projects$.getValue();
+		return projects.filter(
+			(project) => project.id === this.projectSelect
+		)[0];
 	}
 }

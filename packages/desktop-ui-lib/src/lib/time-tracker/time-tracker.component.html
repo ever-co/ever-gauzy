@@ -257,8 +257,9 @@
 						</div>
 					</nb-card-body>
 				</nb-card>
-				<ngx-tasks *ngIf="isAddTask" [userData]="argFromMain" [employee]="userData"
-					(isAddTask)="cloasAddTask($event)" (newTaskCallback)="callbackNewTask($event)"></ngx-tasks>
+				<ngx-tasks *ngIf="isAddTask" [selectedProject]="selectedProject" [userData]="argFromMain"
+					[employee]="userData" (isAddTask)="cloasAddTask($event)"
+					(newTaskCallback)="callbackNewTask($event)"></ngx-tasks>
 			</div>
 		</div>
 	</nb-layout-column>

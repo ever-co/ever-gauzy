@@ -23,7 +23,7 @@ Object.assign(console, log.functions);
 export class TasksComponent implements OnInit {
 	@Input() userData: IUserOrganization;
 	@Input() employee: IEmployee;
-
+	@Input() selectedProject: IOrganizationProject;
 	@Output() isAddTask: EventEmitter<boolean> = new EventEmitter();
 	@Output() newTaskCallback: EventEmitter<{
 		isSuccess: boolean;
@@ -87,7 +87,7 @@ export class TasksComponent implements OnInit {
 			]),
 			members: new FormControl([]),
 			organizationId: new FormControl(this.userData.organizationId),
-			project: new FormControl(null),
+			project: new FormControl(this.selectedProject),
 			projectId: new FormControl(null),
 			status: new FormControl(TaskStatusEnum.OPEN),
 			tags: new FormControl([]),
