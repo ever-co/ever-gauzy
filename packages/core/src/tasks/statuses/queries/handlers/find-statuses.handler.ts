@@ -1,17 +1,17 @@
 import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
-import { IPagination, IStatus } from '@gauzy/contracts';
-import { StatusService } from '../../status.service';
+import { IPagination, ITaskStatus } from '@gauzy/contracts';
+import { TaskStatusService } from '../../status.service';
 import { FindStatusesQuery } from '../find-statuses.query';
 
 @QueryHandler(FindStatusesQuery)
 export class FindStatusesHandler implements IQueryHandler<FindStatusesQuery> {
 
 	constructor(
-		private readonly statusService: StatusService
+		private readonly taskStatusService: TaskStatusService
 	) {}
 
-	async execute(query: FindStatusesQuery): Promise<IPagination<IStatus>> {
+	async execute(query: FindStatusesQuery): Promise<IPagination<ITaskStatus>> {
 		const { options } = query;
-		return await this.statusService.findAllStatuses(options);
+		return await this.taskStatusService.findAllStatuses(options);
 	}
 }

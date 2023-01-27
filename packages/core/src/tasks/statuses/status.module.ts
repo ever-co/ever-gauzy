@@ -4,22 +4,22 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { RouterModule } from 'nest-router';
 import { TenantModule } from '../../tenant/tenant.module';
 import { TaskStatus } from './status.entity';
-import { StatusController } from './status.controller';
-import { StatusService } from './status.service';
+import { TaskStatusController } from './status.controller';
+import { TaskStatusService } from './status.service';
 import { CommandHandlers } from './commands/handlers';
 import { QueryHandlers } from './queries/handlers';
 
 @Module({
 	imports: [
 		RouterModule.forRoutes([
-			{ path: '/task-statuses', module: StatusModule }
+			{ path: '/task-statuses', module: TaskStatusModule }
 		]),
 		TypeOrmModule.forFeature([ TaskStatus ]),
 		TenantModule,
 		CqrsModule,
 	],
-	controllers: [StatusController],
-	providers: [StatusService, ...QueryHandlers, ...CommandHandlers],
-	exports: [StatusService],
+	controllers: [TaskStatusController],
+	providers: [TaskStatusService, ...QueryHandlers, ...CommandHandlers],
+	exports: [TaskStatusService],
 })
-export class StatusModule {}
+export class TaskStatusModule {}

@@ -1,9 +1,9 @@
-import { IStatusFindInput } from '@gauzy/contracts';
+import { ITaskStatusFindInput } from '@gauzy/contracts';
 import { IntersectionType, PartialType, PickType } from '@nestjs/swagger';
 import { TenantOrganizationBaseDTO } from './../../../core/dto';
-import { StatusDTO } from './status.dto';
+import { TaskStatus } from './../status.entity';
 
 export class StatusQuerDTO extends IntersectionType(
 	PartialType(TenantOrganizationBaseDTO),
-	PickType(StatusDTO, ['projectId'])
-) implements IStatusFindInput {}
+	PickType(TaskStatus, ['projectId'])
+) implements ITaskStatusFindInput {}

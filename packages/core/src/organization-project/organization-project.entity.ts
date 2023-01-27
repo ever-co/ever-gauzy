@@ -19,11 +19,11 @@ import {
 	IOrganizationProject,
 	IOrganizationSprint,
 	IPayment,
-	IStatus,
 	ITag,
 	ITask,
 	ITaskPriority,
 	ITaskSize,
+	ITaskStatus,
 	ITimeLog,
 	OrganizationProjectBudgetTypeEnum,
 	ProjectBillingEnum,
@@ -190,7 +190,7 @@ export class OrganizationProject extends TenantOrganizationBaseEntity
 	 * Project Statuses
 	 */
 	@OneToMany(() => TaskStatus, (status) => status.project)
-	statuses?: IStatus[];
+	statuses?: ITaskStatus[];
 
 	/**
 	 * Project Priorities

@@ -1,7 +1,7 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-import { IStatus } from '@gauzy/contracts';
+import { ITaskStatus } from '@gauzy/contracts';
 import { OrganizationStatusBulkCreateCommand } from './../organization-status-bulk-create.command';
-import { StatusService } from './../../status.service';
+import { TaskStatusService } from './../../status.service';
 import { TaskStatus } from './../../status.entity';
 
 @CommandHandler(OrganizationStatusBulkCreateCommand)
@@ -9,11 +9,11 @@ export class OrganizationStatusBulkCreateHandler
 	implements ICommandHandler<OrganizationStatusBulkCreateCommand> {
 
 	constructor(
-		private readonly statusService: StatusService
+		private readonly taskStatusService: TaskStatusService
 	) {}
 
-	public async execute(command: OrganizationStatusBulkCreateCommand): Promise<IStatus[] | TaskStatus[]> {
+	public async execute(command: OrganizationStatusBulkCreateCommand): Promise<ITaskStatus[] | TaskStatus[]> {
 		const { input } = command;
-		return await this.statusService.bulkCreateOrganizationStatus(input);
+		return await this.taskStatusService.bulkCreateOrganizationStatus(input);
 	}
 }

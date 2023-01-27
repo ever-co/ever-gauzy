@@ -1,37 +1,49 @@
 import { QueryBus } from '@nestjs/cqrs';
 import {
-	BadRequestException,
-	Body,
 	Controller,
-	Delete,
-	ForbiddenException,
 	Get,
-	HttpCode,
-	HttpStatus,
-	Param,
-	Post,
-	Put,
 	Query,
 	UseGuards,
 	UsePipes,
 	ValidationPipe,
 } from '@nestjs/common';
-import { DeleteResult } from 'typeorm';
-import { IPagination, IStatus } from '@gauzy/contracts';
-import { UUIDValidationPipe } from './../../shared/pipes';
+import {
+	IPagination,
+	IPaginationParam,
+	ITaskStatus,
+	ITaskStatusCreateInput,
+	ITaskStatusFindInput,
+	ITaskStatusUpdateInput
+} from '@gauzy/contracts';
 import { TenantPermissionGuard } from './../../shared/guards';
-import { StatusService } from './status.service';
+import { CountQueryDTO } from './../../shared/dto';
+import { CrudFactory, PaginationParams } from './../../core/crud';
+import { TaskStatusService } from './status.service';
+import { TaskStatus } from './status.entity';
 import { FindStatusesQuery } from './queries';
 import { CreateStatusDTO, StatusQuerDTO, UpdatesStatusDTO } from './dto';
 
 @UseGuards(TenantPermissionGuard)
 @Controller()
-export class StatusController {
+export class TaskStatusController extends CrudFactory<
+	TaskStatus,
+	ITaskStatusCreateInput,
+	ITaskStatusUpdateInput,
+	IPaginationParam,
+	ITaskStatusFindInput
+>(
+	CreateStatusDTO,
+	UpdatesStatusDTO,
+	PaginationParams,
+	CountQueryDTO
+) {
 
 	constructor(
 		private readonly queryBus: QueryBus,
-		private readonly statusService: StatusService
-	) {}
+		protected readonly taskStatusService: TaskStatusService
+	) {
+		super(taskStatusService)
+	}
 
 	/**
 	 * GET statuses by filters
@@ -44,66 +56,9 @@ export class StatusController {
 	@UsePipes(new ValidationPipe({ whitelist: true }))
 	async findAllStatuses(
 		@Query() params: StatusQuerDTO
-	): Promise<IPagination<IStatus>> {
+	): Promise<IPagination<ITaskStatus>> {
 		return await this.queryBus.execute(
 			new FindStatusesQuery(params)
 		);
-	}
-
-	/**
-	 * CREATED new status
-	 *
-	 * @param entity
-	 * @returns
-	 */
-	@HttpCode(HttpStatus.CREATED)
-	@Post()
-	@UsePipes(new ValidationPipe({ whitelist: true }))
-	async create(@Body() entity: CreateStatusDTO): Promise<IStatus> {
-		try {
-			return await this.statusService.create(entity);
-		} catch (error) {
-			throw new BadRequestException(error);
-		}
-	}
-
-	/**
-	 * UPDATED existing status by id
-	 *
-	 * @param entity
-	 * @returns
-	 */
-	@HttpCode(HttpStatus.ACCEPTED)
-	@Put(':id')
-	@UsePipes(new ValidationPipe({ whitelist: true }))
-	async update(
-		@Param('id', UUIDValidationPipe) id: IStatus['id'],
-		@Body() entity: UpdatesStatusDTO
-	): Promise<IStatus> {
-		try {
-			return await this.statusService.create({
-				id,
-				...entity,
-			});
-		} catch (error) {
-			throw new BadRequestException(error);
-		}
-	}
-
-	/**
-	 * DELETE status by id
-	 *
-	 * @param id
-	 * @returns
-	 */
-	@Delete(':id')
-	async delete(
-		@Param('id', UUIDValidationPipe) id: IStatus['id']
-	): Promise<DeleteResult> {
-		try {
-			return await this.statusService.delete(id);
-		} catch (error) {
-			throw new ForbiddenException();
-		}
 	}
 }
