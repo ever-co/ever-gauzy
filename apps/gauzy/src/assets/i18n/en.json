@@ -2404,6 +2404,7 @@
 		"ESTIMATE_MINUTES": "Mins",
 		"TASKS_STATUS": "Status",
 		"TASK_PRIORITY": "Priority",
+		"TASK_SIZE": "Size",
 		"TODO": "Todo",
 		"OPEN": "Open",
 		"READY_FOR_REVIEW": "Ready for review",

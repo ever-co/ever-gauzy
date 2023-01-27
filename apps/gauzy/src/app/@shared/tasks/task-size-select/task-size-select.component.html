@@ -4,8 +4,8 @@
 	[clearable]="true"
 	(change)="selectSize($event); select.blur();"
 	(clear)="select.blur();"
-	[(ngModel)]="priority"
-	[placeholder]="placeholder || 'TASKS_PAGE.TASK_PRIORITY' | translate"
+	[(ngModel)]="size"
+	[placeholder]="placeholder || 'TASKS_PAGE.TASK_SIZE' | translate"
 	appendTo="body"
 >
 	<ng-option

@@ -23,7 +23,7 @@ import {
 } from '@gauzy/contracts';
 import { distinctUntilChange, sluggable } from '@gauzy/common-angular';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { PrioritiesService, Store, TaskSizesService, ToastrService } from '../../../@core/services';
+import { Store, TaskSizesService, ToastrService } from '../../../@core/services';
 import { TranslationBaseComponent } from '../../language-base/translation-base.component';
 
 @UntilDestroy({ checkProperties: true })
