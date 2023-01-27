@@ -48,10 +48,9 @@
 							'TASKS_PAGE.TASKS_STATUS' | translate
 						}}</label>
 						<ga-task-status-select
+							[projectId]="form.get('projectId').value"
 							formControlName="status"
-							[placeholder]="
-								'TASKS_PAGE.TASKS_STATUS' | translate
-							"
+							[placeholder]="'TASKS_PAGE.TASKS_STATUS' | translate"
 						></ga-task-status-select>
 					</div>
 				</div>

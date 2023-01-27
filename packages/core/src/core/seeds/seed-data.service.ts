@@ -307,7 +307,7 @@ import {
 	createDefaultMerchants,
 } from './../../merchant/merchant.seed';
 import { createRandomWarehouses } from './../../warehouse/warehouse.seed';
-import { createDefaultStatuses } from './../../statuses/status.seed';
+import { createDefaultStatuses } from './../../tasks/statuses/status.seed';
 import { createDefaultPriorities } from './../../tasks/priorities/priority.seed';
 import { createDefaultSizes } from './../../tasks/sizes/size.seed';
 

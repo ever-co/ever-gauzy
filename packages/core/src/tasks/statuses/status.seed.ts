@@ -1,7 +1,7 @@
-import { IStatus } from '@gauzy/contracts';
+import { ITaskStatus } from '@gauzy/contracts';
 import { DataSource } from 'typeorm';
 import { DEFAULT_GLOBAL_STATUSES } from './default-global-statuses';
-import { Status } from './status.entity';
+import { TaskStatus } from './status.entity';
 
 /**
  * Default global system status
@@ -11,10 +11,10 @@ import { Status } from './status.entity';
  */
 export const createDefaultStatuses = async (
 	dataSource: DataSource
-): Promise<IStatus[]> => {
-	let statuses: IStatus[] = [];
+): Promise<ITaskStatus[]> => {
+	let statuses: ITaskStatus[] = [];
 	for await (const status of DEFAULT_GLOBAL_STATUSES) {
-		statuses.push(new Status({ ...status }));
+		statuses.push(new TaskStatus({ ...status }));
 	}
 	return await dataSource.manager.save(statuses);
 };
