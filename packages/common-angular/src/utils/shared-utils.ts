@@ -89,7 +89,7 @@ export function toFormData(obj: any, form?: any, namespace?: any) {
 				formKey = property;
 			}
 
-			// if the property is an object, but not a File, use recursivity.
+			// if the property is an object, but not a File, use recursively.
 			if (obj[property] instanceof Date) {
 				fd.append(formKey, obj[property].toISOString());
 			} else if (

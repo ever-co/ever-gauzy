@@ -307,7 +307,9 @@ import {
 	createDefaultMerchants,
 } from './../../merchant/merchant.seed';
 import { createRandomWarehouses } from './../../warehouse/warehouse.seed';
-import { createDefaultStatuses } from './../../statuses/status.seed';
+import { createDefaultStatuses } from './../../tasks/statuses/status.seed';
+import { createDefaultPriorities } from './../../tasks/priorities/priority.seed';
+import { createDefaultSizes } from './../../tasks/sizes/size.seed';
 
 export enum SeederTypeEnum {
 	ALL = 'all',
@@ -612,10 +614,11 @@ export class SeedDataService {
 
 		await this.tryExecute('Languages', createLanguages(this.dataSource));
 
-		await this.tryExecute(
-			'Statuses',
-			createDefaultStatuses(this.dataSource)
-		);
+		await this.tryExecute('Statuses', createDefaultStatuses(this.dataSource));
+
+		await this.tryExecute('Priorities', createDefaultPriorities(this.dataSource));
+
+		await this.tryExecute('Sizes', createDefaultSizes(this.dataSource));
 
 		// default and internal tenant
 		const tenantName =
@@ -647,7 +650,7 @@ export class SeedDataService {
 			)
 		)) as IOrganization[];
 
-		//default organization set as main orgnaization
+		// default organization set as main organization
 		this.defaultOrganization = this.organizations.find(
 			(organization: IOrganization) => organization.isDefault
 		);

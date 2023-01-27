@@ -6,6 +6,8 @@
 		{
 			"files": ["src/plugins/index.ts"],
 			"rules": {
+				"comma-dangle": "off",
+				"@typescript-eslint/comma-dangle": "off",
 				"@typescript-eslint/no-var-requires": "off",
 				"no-undef": "off"
 			}

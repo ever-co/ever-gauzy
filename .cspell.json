@@ -3,19 +3,21 @@
     "language": "en",
     "$schema": "https://raw.githubusercontent.com/streetsidesoftware/cspell/main/cspell.schema.json",
     "words": [
-		"ngcc",
-		"jasminewd",
-		"ngtools",
-		"devkit",
-		"napi",
-		"nstudio",
-		"xplat",
-		"cloc",
-		"codelyzer",
-		"esbuild",
-		"packagr",
-		"snyk",
-		"stylelint",
+        "Buildable",
+        "cacheable",
+        "ngcc",
+        "jasminewd",
+        "ngtools",
+        "devkit",
+        "napi",
+        "nstudio",
+        "xplat",
+        "cloc",
+        "codelyzer",
+        "esbuild",
+        "packagr",
+        "snyk",
+        "stylelint",
         "adminer",
         "AGPL",
         "autobuild",
@@ -122,7 +124,11 @@
         "Wakatime",
         "webapp",
         "websockets",
-        "xpack"
+        "xpack",
+        "sluggable",
+        "kurkle",
+        "Quer",
+        "Alexi"
     ],
     "useGitignore": true,
     "ignorePaths": [
@@ -147,6 +153,8 @@
         "**/node_modules/**",
         "**/vscode-extension/**",
         "package-lock.json",
-        "yarn.lock"
+        "yarn.lock",
+        "**/assets/i18n/*.json",
+        "**/migrations/**"
     ]
 }
