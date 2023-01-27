@@ -19,11 +19,11 @@ import {
 	IOrganizationProject,
 	IOrganizationSprint,
 	IPayment,
-	IStatus,
 	ITag,
 	ITask,
 	ITaskPriority,
 	ITaskSize,
+	ITaskStatus,
 	ITimeLog,
 	OrganizationProjectBudgetTypeEnum,
 	ProjectBillingEnum,
@@ -38,11 +38,11 @@ import {
 	OrganizationContact,
 	OrganizationSprint,
 	Payment,
-	Status,
 	Tag,
 	Task,
 	TaskPriority,
 	TaskSize,
+	TaskStatus,
 	TenantOrganizationBaseEntity,
 	TimeLog,
 } from '../core/entities/internal';
@@ -184,19 +184,18 @@ export class OrganizationProject extends TenantOrganizationBaseEntity
 	 * Activity
 	 */
 	@OneToMany(() => Activity, (activity) => activity.project)
-	@JoinColumn()
 	activities?: IActivity[];
 
 	/**
 	 * Project Statuses
 	 */
-	@OneToMany(() => Status, (status) => status.project)
-	statuses?: IStatus[];
+	@OneToMany(() => TaskStatus, (status) => status.project)
+	statuses?: ITaskStatus[];
 
 	/**
 	 * Project Priorities
 	 */
-	@OneToMany(() => TaskPriority, (status) => status.project)
+	@OneToMany(() => TaskPriority, (priority) => priority.project)
 	priorities?: ITaskPriority[];
 
 	/**

@@ -1,6 +1,6 @@
-import { IStatus, TaskStatusEnum } from '@gauzy/contracts';
+import { ITaskStatus, TaskStatusEnum } from '@gauzy/contracts';
 
-export const DEFAULT_GLOBAL_STATUSES: IStatus[] = [
+export const DEFAULT_GLOBAL_STATUSES: ITaskStatus[] = [
 	{
 		name: TaskStatusEnum.OPEN,
 		value: TaskStatusEnum.OPEN,

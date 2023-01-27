@@ -3,7 +3,7 @@ import { CommandBus, CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { IOrganizationProject } from '@gauzy/contracts';
 import { OrganizationProjectCreateCommand } from '../organization-project.create.command';
 import { OrganizationProjectService } from '../../organization-project.service';
-import { OrganizationProjectStatusBulkCreateCommand } from './../../../statuses/commands';
+import { OrganizationProjectStatusBulkCreateCommand } from './../../../tasks/statuses/commands';
 
 @CommandHandler(OrganizationProjectCreateCommand)
 export class OrganizationProjectCreateHandler
