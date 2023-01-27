@@ -1,0 +1,17 @@
+<ng-select
+	#select
+	[addTag]="addTag ? createNew : null"
+	[clearable]="true"
+	(change)="selectSize($event); select.blur();"
+	(clear)="select.blur();"
+	[(ngModel)]="priority"
+	[placeholder]="placeholder || 'TASKS_PAGE.TASK_PRIORITY' | translate"
+	appendTo="body"
+>
+	<ng-option
+		*ngFor="let item of sizes$ | async"
+		[value]="item.value"
+	>
+		{{ item.name | replace: '_':' ' | replace: '-':' ' | titlecase }}
+	</ng-option>
+</ng-select>

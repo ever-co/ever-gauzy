@@ -2,17 +2,17 @@ import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { FormsModule } from '@angular/forms';
-import { TaskPrioritiesService } from '../../../@core/services';
-import { TaskPrioritySelectComponent } from './task-priority-select.component';
+import { TaskSizesService } from '../../../@core/services';
+import { TaskSizeSelectComponent } from './task-size-select.component';
 import { TranslateModule } from '../../translate/translate.module';
 import { SharedModule } from '../../shared.module';
 
 @NgModule({
 	declarations: [
-		TaskPrioritySelectComponent
+		TaskSizeSelectComponent
 	],
 	exports: [
-		TaskPrioritySelectComponent
+		TaskSizeSelectComponent
 	],
 	imports: [
 		CommonModule,
@@ -22,7 +22,7 @@ import { SharedModule } from '../../shared.module';
 		SharedModule
 	],
 	providers: [
-		TaskPrioritiesService
+		TaskSizesService
 	]
 })
-export class TaskPrioritySelectModule { }
+export class TaskSizeSelectModule { }

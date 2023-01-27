@@ -17,53 +17,57 @@ import {
 	IOrganization,
 	IOrganizationProject,
 	IPagination,
-	ITaskPriority,
-	ITaskPriorityFindInput,
-	TaskPriorityEnum
+	ITaskSize,
+	ITaskSizeFindInput,
+	TaskSizeEnum
 } from '@gauzy/contracts';
 import { distinctUntilChange, sluggable } from '@gauzy/common-angular';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { Store, TaskPrioritiesService, ToastrService } from '../../../@core/services';
+import { PrioritiesService, Store, TaskSizesService, ToastrService } from '../../../@core/services';
 import { TranslationBaseComponent } from '../../language-base/translation-base.component';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ga-task-priority-select',
-	templateUrl: './task-priority-select.component.html',
+	selector: 'ga-task-size-select',
+	templateUrl: './task-size-select.component.html',
 	providers: [
 		{
 			provide: NG_VALUE_ACCESSOR,
-			useExisting: forwardRef(() => TaskPrioritySelectComponent),
+			useExisting: forwardRef(() => TaskSizeSelectComponent),
 			multi: true,
 		},
 	],
 })
-export class TaskPrioritySelectComponent extends TranslationBaseComponent
+export class TaskSizeSelectComponent extends TranslationBaseComponent
 	implements AfterViewInit, OnInit, OnDestroy {
 
 	private subject$: Subject<boolean> = new Subject();
 	public organization: IOrganization;
-	public priorities$: BehaviorSubject<ITaskPriority[]> = new BehaviorSubject([]);
+	public sizes$: BehaviorSubject<ITaskSize[]> = new BehaviorSubject([]);
 
 	/**
-	 * Default global task priorities
+	 * Default global task sizes
 	 */
-	private _priorities: Array<{ name: string; value: TaskPriorityEnum & any }> = [
+	private _sizes: Array<{ name: string; value: TaskSizeEnum & any }> = [
 		{
-			name: TaskPriorityEnum.URGENT,
-			value: sluggable(TaskPriorityEnum.URGENT)
+			name: TaskSizeEnum.X_LARGE,
+			value: sluggable(TaskSizeEnum.X_LARGE)
 		},
 		{
-			name: TaskPriorityEnum.HIGH,
-			value: sluggable(TaskPriorityEnum.HIGH)
+			name: TaskSizeEnum.LARGE,
+			value: sluggable(TaskSizeEnum.LARGE)
 		},
 		{
-			name: TaskPriorityEnum.MEDIUM,
-			value: sluggable(TaskPriorityEnum.MEDIUM)
+			name: TaskSizeEnum.MEDIUM,
+			value: sluggable(TaskSizeEnum.MEDIUM)
 		},
 		{
-			name: TaskPriorityEnum.LOW,
-			value: sluggable(TaskPriorityEnum.LOW)
+			name: TaskSizeEnum.SMALL,
+			value: sluggable(TaskSizeEnum.SMALL)
+		},
+		{
+			name: TaskSizeEnum.TINY,
+			value: sluggable(TaskSizeEnum.TINY)
 		},
 	];
 
@@ -102,16 +106,16 @@ export class TaskPrioritySelectComponent extends TranslationBaseComponent
 	}
 
 	/*
-	 * Getter & Setter for priority
+	 * Getter & Setter for size
 	 */
-	private _priority: TaskPriorityEnum | string;
-	set priority(val: TaskPriorityEnum | string) {
-		this._priority = val;
+	private _size: TaskSizeEnum | string;
+	set size(val: TaskSizeEnum | string) {
+		this._size = val;
 		this.onChange(val);
 		this.onTouched(val);
 	}
-	get priority(): TaskPriorityEnum | string {
-		return this._priority;
+	get size(): TaskSizeEnum | string {
+		return this._size;
 	}
 
 	onChange: any = () => { };
@@ -122,7 +126,7 @@ export class TaskPrioritySelectComponent extends TranslationBaseComponent
 	constructor(
 		public readonly translateService: TranslateService,
 		public readonly store: Store,
-		public readonly taskPrioritiesService: TaskPrioritiesService,
+		public readonly taskSizesService: TaskSizesService,
 		private readonly toastrService: ToastrService
 	) {
 		super(translateService);
@@ -132,7 +136,7 @@ export class TaskPrioritySelectComponent extends TranslationBaseComponent
 		this.subject$
 			.pipe(
 				debounceTime(200),
-				tap(() => this.getTaskPriorities()),
+				tap(() => this.getTaskSizes()),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -155,8 +159,8 @@ export class TaskPrioritySelectComponent extends TranslationBaseComponent
 			.subscribe();
 	}
 
-	writeValue(value: TaskPriorityEnum) {
-		this._priority = value;
+	writeValue(value: TaskSizeEnum) {
+		this._size = value;
 	}
 
 	registerOnChange(fn: (rating: number) => void): void {
@@ -167,14 +171,14 @@ export class TaskPrioritySelectComponent extends TranslationBaseComponent
 		this.onTouched = fn;
 	}
 
-	selectPriority(event: { label: string; value: TaskPriorityEnum }) {
+	selectSize(event: { label: string; value: TaskSizeEnum }) {
 		this.onChanged.emit(event ? event.value : null);
 	}
 
 	/**
-	 * Get task priorities based organization & project
+	 * Get task sizes based organization & project
 	 */
-	getTaskPriorities() {
+	getTaskSizes() {
 		if (!this.organization) {
 			return;
 		}
@@ -182,7 +186,7 @@ export class TaskPrioritySelectComponent extends TranslationBaseComponent
 		const { tenantId } = this.store.user;
 		const { id: organizationId } = this.organization;
 
-		this.taskPrioritiesService.get<ITaskPriorityFindInput>({
+		this.taskSizesService.get<ITaskSizeFindInput>({
 			tenantId,
 			organizationId,
 			...(this.projectId
@@ -191,15 +195,15 @@ export class TaskPrioritySelectComponent extends TranslationBaseComponent
 				}
 				: {}),
 		}).pipe(
-			map(({ items, total }: IPagination<ITaskPriority>) => total > 0 ? items : this._priorities),
-			tap((priorities: ITaskPriority[]) => this.priorities$.next(priorities)),
+			map(({ items, total }: IPagination<ITaskSize>) => total > 0 ? items : this._sizes),
+			tap((sizes: ITaskSize[]) => this.sizes$.next(sizes)),
 			untilDestroyed(this)
 		)
 		.subscribe();
 	}
 
 	/**
-	 * Create new priority from ng-select tag
+	 * Create new size from ng-select tag
 	 *
 	 * @param name
 	 * @returns
@@ -212,7 +216,7 @@ export class TaskPrioritySelectComponent extends TranslationBaseComponent
 			const { tenantId } = this.store.user;
 			const { id: organizationId } = this.organization;
 
-			const source = this.taskPrioritiesService.create({
+			const source = this.taskSizesService.create({
 				tenantId,
 				organizationId,
 				name,
@@ -222,9 +226,9 @@ export class TaskPrioritySelectComponent extends TranslationBaseComponent
 					}
 					: {}),
 			});
-			const priority: ITaskPriority = await firstValueFrom(source);
-			if (priority.value) {
-				this.priority = priority.value;
+			const size: ITaskSize = await firstValueFrom(source);
+			if (size.value) {
+				this.size = size.value;
 			}
 		} catch (error) {
 			this.toastrService.error(error);

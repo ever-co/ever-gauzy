@@ -115,6 +115,7 @@ export * from './tasks-store.service';
 export * from './tasks.service';
 export * from './tasks/statuses.service';
 export * from './tasks/priorities.service';
+export * from './tasks/sizes.service';
 export * from './team-tasks-store.service';
 export * from './tenant.service';
 export * from './time-off.service';
