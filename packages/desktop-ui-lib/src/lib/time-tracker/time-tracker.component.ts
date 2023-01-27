@@ -1815,4 +1815,35 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 			(project) => project.id === this.projectSelect
 		)[0];
 	}
+
+	/* Adding a new project to the list of projects. */
+	public addProject = async (name: string) => {
+		try {
+			const { tenantId, organizationContactId } = this.userData;
+			const organizationId = this.userOrganization.id;
+			const request = {
+				name,
+				organizationId,
+				tenantId,
+				...(organizationContactId
+					? { contactId: organizationContactId }
+					: {}),
+			};
+
+			request['members'] = [{ ...this.userData.employee }];
+
+			console.log('Request', request);
+			const project = await this.timeTrackerService.createNewProject(
+				request,
+				{ ...this.userData, token: this.token, apiHost: this.apiHost }
+			);
+			const projects = this._projects$.getValue();
+			this._projects$.next(projects.concat([project]));
+			this.projectSelect = project.id;
+			this.toastrService.success('Project added successfully');
+		} catch (error) {
+			console.log(error);
+			this.toastrService.danger(error);
+		}
+	};
 }
