@@ -14,7 +14,7 @@ import {
 import { ConfigService, IEnvironment } from '@gauzy/config';
 import { TenantFeatureOrganizationCreateCommand } from './commands';
 import { TenantRoleBulkCreateCommand } from '../role/commands';
-import { TenantStatusBulkCreateCommand } from './../statuses/commands';
+import { TenantStatusBulkCreateCommand } from './../tasks/statuses/commands';
 import { ImportRecordUpdateOrCreateCommand } from './../export-import/import-record';
 import { Role, User } from './../core/entities/internal';
 import { TenantSettingSaveCommand } from './tenant-setting/commands';

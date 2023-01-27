@@ -13,58 +13,57 @@ import { BehaviorSubject } from 'rxjs/internal/BehaviorSubject';
 import { combineLatest, debounceTime, firstValueFrom, Subject } from 'rxjs';
 import { filter, map, tap } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
-import { IOrganization, IOrganizationProject, IPagination, ITaskStatus, ITaskStatusFindInput, TaskStatusEnum } from '@gauzy/contracts';
+import {
+	IOrganization,
+	IOrganizationProject,
+	IPagination,
+	ITaskPriority,
+	ITaskPriorityFindInput,
+	TaskPriorityEnum
+} from '@gauzy/contracts';
 import { distinctUntilChange, sluggable } from '@gauzy/common-angular';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { TaskStatusesService, Store, ToastrService } from '../../../@core/services';
+import { Store, TaskPrioritiesService, ToastrService } from '../../../@core/services';
 import { TranslationBaseComponent } from '../../language-base/translation-base.component';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ga-task-status-select',
-	templateUrl: './task-status-select.component.html',
+	selector: 'ga-task-priority-select',
+	templateUrl: './task-priority-select.component.html',
 	providers: [
 		{
 			provide: NG_VALUE_ACCESSOR,
-			useExisting: forwardRef(() => TaskStatusSelectComponent),
+			useExisting: forwardRef(() => TaskPrioritySelectComponent),
 			multi: true,
 		},
 	],
 })
-export class TaskStatusSelectComponent extends TranslationBaseComponent
+export class TaskPrioritySelectComponent extends TranslationBaseComponent
 	implements AfterViewInit, OnInit, OnDestroy {
 
 	private subject$: Subject<boolean> = new Subject();
 	public organization: IOrganization;
-	public statuses$: BehaviorSubject<ITaskStatus[]> = new BehaviorSubject([]);
+	public priorities$: BehaviorSubject<ITaskPriority[]> = new BehaviorSubject([]);
 
 	/**
-	 * Default global task statuses
+	 * Default global task priorities
 	 */
-	private _statuses: Array<{ name: string; value: TaskStatusEnum & any }> = [
+	private _priorities: Array<{ name: string; value: TaskPriorityEnum & any }> = [
 		{
-			name: TaskStatusEnum.OPEN,
-			value: sluggable(TaskStatusEnum.OPEN),
+			name: TaskPriorityEnum.URGENT,
+			value: sluggable(TaskPriorityEnum.URGENT)
 		},
 		{
-			name: TaskStatusEnum.IN_PROGRESS,
-			value: sluggable(TaskStatusEnum.IN_PROGRESS),
+			name: TaskPriorityEnum.HIGH,
+			value: sluggable(TaskPriorityEnum.HIGH)
 		},
 		{
-			name: TaskStatusEnum.READY_FOR_REVIEW,
-			value: sluggable(TaskStatusEnum.READY_FOR_REVIEW),
+			name: TaskPriorityEnum.MEDIUM,
+			value: sluggable(TaskPriorityEnum.MEDIUM)
 		},
 		{
-			name: TaskStatusEnum.IN_REVIEW,
-			value: sluggable(TaskStatusEnum.IN_REVIEW),
-		},
-		{
-			name: TaskStatusEnum.BLOCKED,
-			value: sluggable(TaskStatusEnum.BLOCKED),
-		},
-		{
-			name: TaskStatusEnum.COMPLETED,
-			value: sluggable(TaskStatusEnum.COMPLETED),
+			name: TaskPriorityEnum.LOW,
+			value: sluggable(TaskPriorityEnum.LOW)
 		},
 	];
 
@@ -103,27 +102,27 @@ export class TaskStatusSelectComponent extends TranslationBaseComponent
 	}
 
 	/*
-	 * Getter & Setter for status
+	 * Getter & Setter for priority
 	 */
-	private _status: TaskStatusEnum;
-	set status(val: TaskStatusEnum) {
-		this._status = val;
+	private _priority: TaskPriorityEnum | string;
+	set priority(val: TaskPriorityEnum | string) {
+		this._priority = val;
 		this.onChange(val);
 		this.onTouched(val);
 	}
-	get status(): TaskStatusEnum {
-		return this._status;
+	get priority(): TaskPriorityEnum | string {
+		return this._priority;
 	}
 
-	onChange: any = () => {};
-	onTouched: any = () => {};
+	onChange: any = () => { };
+	onTouched: any = () => { };
 
 	@Output() onChanged = new EventEmitter<string>();
 
 	constructor(
 		public readonly translateService: TranslateService,
 		public readonly store: Store,
-		public readonly taskStatusesService: TaskStatusesService,
+		public readonly taskPrioritiesService: TaskPrioritiesService,
 		private readonly toastrService: ToastrService
 	) {
 		super(translateService);
@@ -133,7 +132,7 @@ export class TaskStatusSelectComponent extends TranslationBaseComponent
 		this.subject$
 			.pipe(
 				debounceTime(200),
-				tap(() => this.getStatuses()),
+				tap(() => this.getTaskPriorities()),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -156,8 +155,8 @@ export class TaskStatusSelectComponent extends TranslationBaseComponent
 			.subscribe();
 	}
 
-	writeValue(value: TaskStatusEnum) {
-		this._status = value;
+	writeValue(value: TaskPriorityEnum) {
+		this._priority = value;
 	}
 
 	registerOnChange(fn: (rating: number) => void): void {
@@ -168,14 +167,14 @@ export class TaskStatusSelectComponent extends TranslationBaseComponent
 		this.onTouched = fn;
 	}
 
-	selectStatus(event: { label: string; value: TaskStatusEnum }) {
+	selectPriority(event: { label: string; value: TaskPriorityEnum }) {
 		this.onChanged.emit(event ? event.value : null);
 	}
 
 	/**
-	 * Get task statuses based organization & project
+	 * Get task priorities based organization & project
 	 */
-	getStatuses() {
+	getTaskPriorities() {
 		if (!this.organization) {
 			return;
 		}
@@ -183,24 +182,24 @@ export class TaskStatusSelectComponent extends TranslationBaseComponent
 		const { tenantId } = this.store.user;
 		const { id: organizationId } = this.organization;
 
-		this.taskStatusesService.get<ITaskStatusFindInput>({
+		this.taskPrioritiesService.get<ITaskPriorityFindInput>({
 			tenantId,
 			organizationId,
 			...(this.projectId
 				? {
 					projectId: this.projectId
-				  }
+				}
 				: {}),
 		}).pipe(
-			map(({ items, total }: IPagination<ITaskStatus>) => total > 0 ? items : this._statuses),
-			tap((statuses: ITaskStatus[]) => this.statuses$.next(statuses)),
+			map(({ items, total }: IPagination<ITaskPriority>) => total > 0 ? items : this._priorities),
+			tap((priorities: ITaskPriority[]) => this.priorities$.next(priorities)),
 			untilDestroyed(this)
 		)
 		.subscribe();
 	}
 
 	/**
-	 * Create new status from ng-select tag
+	 * Create new priority from ng-select tag
 	 *
 	 * @param name
 	 * @returns
@@ -213,23 +212,26 @@ export class TaskStatusSelectComponent extends TranslationBaseComponent
 			const { tenantId } = this.store.user;
 			const { id: organizationId } = this.organization;
 
-			const source = this.taskStatusesService.create({
+			const source = this.taskPrioritiesService.create({
 				tenantId,
 				organizationId,
 				name,
 				...(this.projectId
 					? {
 						projectId: this.projectId
-					  }
+					}
 					: {}),
 			});
-			await firstValueFrom(source);
+			const priority: ITaskPriority = await firstValueFrom(source);
+			if (priority.value) {
+				this.priority = priority.value;
+			}
 		} catch (error) {
 			this.toastrService.error(error);
 		} finally {
-			this.subject$.next(true)
+			this.subject$.next(true);
 		}
 	};
 
-	ngOnDestroy(): void {}
+	ngOnDestroy(): void { }
 }

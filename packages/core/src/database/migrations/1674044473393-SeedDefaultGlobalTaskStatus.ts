@@ -1,7 +1,7 @@
 
 import { MigrationInterface, QueryRunner } from "typeorm";
 import { v4 as uuidV4 } from 'uuid';
-import { DEFAULT_GLOBAL_STATUSES } from "./../../statuses/default-global-statuses";
+import { DEFAULT_GLOBAL_STATUSES } from "./../../tasks/statuses/default-global-statuses";
 
 export class SeedDefaultGlobalTaskStatus1674044473393 implements MigrationInterface {
 

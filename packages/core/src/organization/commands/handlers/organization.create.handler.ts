@@ -13,7 +13,7 @@ import { RequestContext } from '../../../core/context';
 import { UserOrganization } from './../../../core/entities/internal';
 import { Organization } from './../../organization.entity';
 import { ImportRecordUpdateOrCreateCommand } from './../../../export-import/import-record';
-import { OrganizationStatusBulkCreateCommand } from 'statuses/commands';
+import { OrganizationStatusBulkCreateCommand } from './../../../tasks/statuses/commands';
 
 @CommandHandler(OrganizationCreateCommand)
 export class OrganizationCreateHandler

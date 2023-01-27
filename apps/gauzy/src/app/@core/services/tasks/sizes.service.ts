@@ -1,17 +1,17 @@
 import { HttpClient } from "@angular/common/http";
 import { Injectable } from "@angular/core";
-import { IStatus } from "@gauzy/contracts";
+import { ITaskSize } from "@gauzy/contracts";
 import { CrudService } from "../crud/crud.service";
 import { API_PREFIX } from "../../constants";
 
 @Injectable()
-export class StatusesService extends CrudService<IStatus> {
+export class TaskSizesService extends CrudService<ITaskSize> {
 
-    static readonly API_URL = `${API_PREFIX}/statuses`;
+    static readonly API_URL = `${API_PREFIX}/task-sizes`;
 
     constructor(
         protected readonly http: HttpClient
     ) {
-        super(http, StatusesService.API_URL);
+        super(http, TaskSizesService.API_URL);
     }
 }

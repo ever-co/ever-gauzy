@@ -9,6 +9,7 @@ import { IOrganizationSprint } from './organization-sprint.model';
 import { IOrganizationTeam } from './organization-team-model';
 import { ITag } from './tag-entity.model';
 import { IUser } from './user.model';
+import { TaskStatusEnum } from './task-status.model';
 
 export interface ITask extends IBasePerTenantAndOrganizationEntityModel {
 	title: string;
@@ -40,18 +41,6 @@ export interface IGetTaskByEmployeeOptions extends IBaseRelationsEntityModel {
 }
 
 export interface IGetSprintsOptions extends IGetTaskOptions {}
-
-/**
- * Default task statuses
- */
-export enum TaskStatusEnum {
-	OPEN = 'open',
-	IN_PROGRESS = 'in-progress',
-	READY_FOR_REVIEW = 'ready-for-review',
-	IN_REVIEW = 'in-review',
-	BLOCKED = 'blocked',
-	COMPLETED = 'completed',
-}
 
 export enum TaskParticipantEnum {
 	EMPLOYEES = 'employees',

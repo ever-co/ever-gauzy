@@ -13,58 +13,61 @@ import { BehaviorSubject } from 'rxjs/internal/BehaviorSubject';
 import { combineLatest, debounceTime, firstValueFrom, Subject } from 'rxjs';
 import { filter, map, tap } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
-import { IOrganization, IOrganizationProject, IPagination, ITaskStatus, ITaskStatusFindInput, TaskStatusEnum } from '@gauzy/contracts';
+import {
+	IOrganization,
+	IOrganizationProject,
+	IPagination,
+	ITaskSize,
+	ITaskSizeFindInput,
+	TaskSizeEnum
+} from '@gauzy/contracts';
 import { distinctUntilChange, sluggable } from '@gauzy/common-angular';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { TaskStatusesService, Store, ToastrService } from '../../../@core/services';
+import { Store, TaskSizesService, ToastrService } from '../../../@core/services';
 import { TranslationBaseComponent } from '../../language-base/translation-base.component';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ga-task-status-select',
-	templateUrl: './task-status-select.component.html',
+	selector: 'ga-task-size-select',
+	templateUrl: './task-size-select.component.html',
 	providers: [
 		{
 			provide: NG_VALUE_ACCESSOR,
-			useExisting: forwardRef(() => TaskStatusSelectComponent),
+			useExisting: forwardRef(() => TaskSizeSelectComponent),
 			multi: true,
 		},
 	],
 })
-export class TaskStatusSelectComponent extends TranslationBaseComponent
+export class TaskSizeSelectComponent extends TranslationBaseComponent
 	implements AfterViewInit, OnInit, OnDestroy {
 
 	private subject$: Subject<boolean> = new Subject();
 	public organization: IOrganization;
-	public statuses$: BehaviorSubject<ITaskStatus[]> = new BehaviorSubject([]);
+	public sizes$: BehaviorSubject<ITaskSize[]> = new BehaviorSubject([]);
 
 	/**
-	 * Default global task statuses
+	 * Default global task sizes
 	 */
-	private _statuses: Array<{ name: string; value: TaskStatusEnum & any }> = [
+	private _sizes: Array<{ name: string; value: TaskSizeEnum & any }> = [
 		{
-			name: TaskStatusEnum.OPEN,
-			value: sluggable(TaskStatusEnum.OPEN),
+			name: TaskSizeEnum.X_LARGE,
+			value: sluggable(TaskSizeEnum.X_LARGE)
 		},
 		{
-			name: TaskStatusEnum.IN_PROGRESS,
-			value: sluggable(TaskStatusEnum.IN_PROGRESS),
+			name: TaskSizeEnum.LARGE,
+			value: sluggable(TaskSizeEnum.LARGE)
 		},
 		{
-			name: TaskStatusEnum.READY_FOR_REVIEW,
-			value: sluggable(TaskStatusEnum.READY_FOR_REVIEW),
+			name: TaskSizeEnum.MEDIUM,
+			value: sluggable(TaskSizeEnum.MEDIUM)
 		},
 		{
-			name: TaskStatusEnum.IN_REVIEW,
-			value: sluggable(TaskStatusEnum.IN_REVIEW),
+			name: TaskSizeEnum.SMALL,
+			value: sluggable(TaskSizeEnum.SMALL)
 		},
 		{
-			name: TaskStatusEnum.BLOCKED,
-			value: sluggable(TaskStatusEnum.BLOCKED),
-		},
-		{
-			name: TaskStatusEnum.COMPLETED,
-			value: sluggable(TaskStatusEnum.COMPLETED),
+			name: TaskSizeEnum.TINY,
+			value: sluggable(TaskSizeEnum.TINY)
 		},
 	];
 
@@ -103,27 +106,27 @@ export class TaskStatusSelectComponent extends TranslationBaseComponent
 	}
 
 	/*
-	 * Getter & Setter for status
+	 * Getter & Setter for size
 	 */
-	private _status: TaskStatusEnum;
-	set status(val: TaskStatusEnum) {
-		this._status = val;
+	private _size: TaskSizeEnum | string;
+	set size(val: TaskSizeEnum | string) {
+		this._size = val;
 		this.onChange(val);
 		this.onTouched(val);
 	}
-	get status(): TaskStatusEnum {
-		return this._status;
+	get size(): TaskSizeEnum | string {
+		return this._size;
 	}
 
-	onChange: any = () => {};
-	onTouched: any = () => {};
+	onChange: any = () => { };
+	onTouched: any = () => { };
 
 	@Output() onChanged = new EventEmitter<string>();
 
 	constructor(
 		public readonly translateService: TranslateService,
 		public readonly store: Store,
-		public readonly taskStatusesService: TaskStatusesService,
+		public readonly taskSizesService: TaskSizesService,
 		private readonly toastrService: ToastrService
 	) {
 		super(translateService);
@@ -133,7 +136,7 @@ export class TaskStatusSelectComponent extends TranslationBaseComponent
 		this.subject$
 			.pipe(
 				debounceTime(200),
-				tap(() => this.getStatuses()),
+				tap(() => this.getTaskSizes()),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -156,8 +159,8 @@ export class TaskStatusSelectComponent extends TranslationBaseComponent
 			.subscribe();
 	}
 
-	writeValue(value: TaskStatusEnum) {
-		this._status = value;
+	writeValue(value: TaskSizeEnum) {
+		this._size = value;
 	}
 
 	registerOnChange(fn: (rating: number) => void): void {
@@ -168,14 +171,14 @@ export class TaskStatusSelectComponent extends TranslationBaseComponent
 		this.onTouched = fn;
 	}
 
-	selectStatus(event: { label: string; value: TaskStatusEnum }) {
+	selectSize(event: { label: string; value: TaskSizeEnum }) {
 		this.onChanged.emit(event ? event.value : null);
 	}
 
 	/**
-	 * Get task statuses based organization & project
+	 * Get task sizes based organization & project
 	 */
-	getStatuses() {
+	getTaskSizes() {
 		if (!this.organization) {
 			return;
 		}
@@ -183,24 +186,24 @@ export class TaskStatusSelectComponent extends TranslationBaseComponent
 		const { tenantId } = this.store.user;
 		const { id: organizationId } = this.organization;
 
-		this.taskStatusesService.get<ITaskStatusFindInput>({
+		this.taskSizesService.get<ITaskSizeFindInput>({
 			tenantId,
 			organizationId,
 			...(this.projectId
 				? {
 					projectId: this.projectId
-				  }
+				}
 				: {}),
 		}).pipe(
-			map(({ items, total }: IPagination<ITaskStatus>) => total > 0 ? items : this._statuses),
-			tap((statuses: ITaskStatus[]) => this.statuses$.next(statuses)),
+			map(({ items, total }: IPagination<ITaskSize>) => total > 0 ? items : this._sizes),
+			tap((sizes: ITaskSize[]) => this.sizes$.next(sizes)),
 			untilDestroyed(this)
 		)
 		.subscribe();
 	}
 
 	/**
-	 * Create new status from ng-select tag
+	 * Create new size from ng-select tag
 	 *
 	 * @param name
 	 * @returns
@@ -213,23 +216,26 @@ export class TaskStatusSelectComponent extends TranslationBaseComponent
 			const { tenantId } = this.store.user;
 			const { id: organizationId } = this.organization;
 
-			const source = this.taskStatusesService.create({
+			const source = this.taskSizesService.create({
 				tenantId,
 				organizationId,
 				name,
 				...(this.projectId
 					? {
 						projectId: this.projectId
-					  }
+					}
 					: {}),
 			});
-			await firstValueFrom(source);
+			const size: ITaskSize = await firstValueFrom(source);
+			if (size.value) {
+				this.size = size.value;
+			}
 		} catch (error) {
 			this.toastrService.error(error);
 		} finally {
-			this.subject$.next(true)
+			this.subject$.next(true);
 		}
 	};
 
-	ngOnDestroy(): void {}
+	ngOnDestroy(): void { }
 }

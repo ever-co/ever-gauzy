@@ -1,14 +1,18 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Column, Entity, Index, ManyToOne, RelationId } from 'typeorm';
-import { IOrganizationProject, IStatus } from '@gauzy/contracts';
+import { IOrganizationProject, ITaskStatus } from '@gauzy/contracts';
+import { IsNotEmpty, IsOptional, IsString, IsUUID } from 'class-validator';
 import {
 	OrganizationProject,
-	TenantOrganizationBaseEntity,
-} from '../core/entities/internal';
+	TenantOrganizationBaseEntity
+} from '../../core/entities/internal';
 
-@Entity('status')
-export class Status extends TenantOrganizationBaseEntity implements IStatus {
+@Entity('task_status')
+export class TaskStatus extends TenantOrganizationBaseEntity implements ITaskStatus {
+
 	@ApiProperty({ type: () => String })
+	@IsNotEmpty()
+	@IsString()
 	@Index()
 	@Column()
 	name: string;
@@ -19,14 +23,17 @@ export class Status extends TenantOrganizationBaseEntity implements IStatus {
 	value: string;
 
 	@ApiPropertyOptional({ type: () => String })
+	@IsOptional()
 	@Column({ nullable: true })
 	description?: string;
 
 	@ApiPropertyOptional({ type: () => String })
+	@IsOptional()
 	@Column({ nullable: true })
 	icon?: string;
 
 	@ApiPropertyOptional({ type: () => String })
+	@IsOptional()
 	@Column({ nullable: true })
 	color?: string;
 
@@ -35,10 +42,10 @@ export class Status extends TenantOrganizationBaseEntity implements IStatus {
 	isSystem?: boolean;
 
 	/*
-    |--------------------------------------------------------------------------
-    | @ManyToOne
-    |--------------------------------------------------------------------------
-    */
+	|--------------------------------------------------------------------------
+	| @ManyToOne
+	|--------------------------------------------------------------------------
+	*/
 
 	/**
 	 * Organization Project
@@ -48,7 +55,10 @@ export class Status extends TenantOrganizationBaseEntity implements IStatus {
 	})
 	project?: IOrganizationProject;
 
-	@RelationId((it: Status) => it.project)
+	@ApiPropertyOptional({ type: () => String })
+	@IsOptional()
+	@IsUUID()
+	@RelationId((it: TaskStatus) => it.project)
 	@Index()
 	@Column({ nullable: true })
 	projectId?: IOrganizationProject['id'];
