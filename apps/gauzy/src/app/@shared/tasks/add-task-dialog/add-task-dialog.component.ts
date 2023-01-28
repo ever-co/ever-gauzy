@@ -8,7 +8,7 @@ import {
 	TaskParticipantEnum,
 	IOrganization,
 	TaskStatusEnum,
-	ISelectedEmployee,
+	ISelectedEmployee
 } from '@gauzy/contracts';
 import { FormGroup, FormBuilder, Validators } from '@angular/forms';
 import { NbDialogRef } from '@nebular/theme';
@@ -69,6 +69,8 @@ export class AddTaskDialogComponent extends TranslationBaseComponent
 			project: [],
 			projectId: [],
 			status: [TaskStatusEnum.OPEN, Validators.required],
+			priority: [],
+			size: [],
 			members: [],
 			estimateDays: [],
 			estimateHours: [null, [Validators.min(0), Validators.max(23)]],

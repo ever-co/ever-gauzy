@@ -2,17 +2,17 @@ import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { FormsModule } from '@angular/forms';
-import { TaskStatusSelectComponent } from './task-status-select.component';
+import { TaskSizesService } from '../../../@core/services';
+import { TaskSizeSelectComponent } from './task-size-select.component';
 import { TranslateModule } from '../../translate/translate.module';
 import { SharedModule } from '../../shared.module';
-import { TaskStatusesService } from '../../../@core/services';
 
 @NgModule({
 	declarations: [
-		TaskStatusSelectComponent
+		TaskSizeSelectComponent
 	],
 	exports: [
-		TaskStatusSelectComponent
+		TaskSizeSelectComponent
 	],
 	imports: [
 		CommonModule,
@@ -22,7 +22,7 @@ import { TaskStatusesService } from '../../../@core/services';
 		SharedModule
 	],
 	providers: [
-		TaskStatusesService
+		TaskSizesService
 	]
 })
-export class TaskStatusSelectModule { }
+export class TaskSizeSelectModule { }
