@@ -1,13 +1,4 @@
-import {
-	Controller,
-	Get,
-	HttpCode,
-	HttpStatus,
-	Query,
-	UseGuards,
-	UsePipes,
-	ValidationPipe,
-} from '@nestjs/common';
+import { Controller, Get, HttpCode, HttpStatus, Query, UseGuards, UsePipes, ValidationPipe } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import {
 	IPagination,
@@ -33,15 +24,8 @@ export class TaskSizeController extends CrudFactory<
 	ITaskSizeCreateInput,
 	ITaskSizeUpdateInput,
 	ITaskSizeFindInput
->(
-	PaginationParams,
-	CreateTaskSizeDTO,
-	UpdateTaskSizeDTO,
-	CountQueryDTO
-) {
-	constructor(
-		protected readonly taskSizeService: TaskSizeService
-	) {
+>(PaginationParams, CreateTaskSizeDTO, UpdateTaskSizeDTO, CountQueryDTO) {
+	constructor(protected readonly taskSizeService: TaskSizeService) {
 		super(taskSizeService);
 	}
 
