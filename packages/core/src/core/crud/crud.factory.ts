@@ -1,15 +1,13 @@
 import { IPagination } from "@gauzy/contracts";
 import { Body, Delete, Get, HttpCode, HttpStatus, Param, Post, Put, Query, Type, UsePipes } from "@nestjs/common";
 import { ApiOperation, ApiResponse } from "@nestjs/swagger";
-import { DeepPartial, FindOptionsWhere } from "typeorm";
+import { DeepPartial, DeleteResult, FindOptionsWhere, UpdateResult } from "typeorm";
 import { QueryDeepPartialEntity } from "typeorm/query-builder/QueryPartialEntity";
 import { BaseEntity } from "./../../core/entities/base.entity";
 import { AbstractValidationPipe, UUIDValidationPipe } from "./../../shared/pipes";
-import { ICrudController } from "./icrud.controller";
+import { ConstructorType, ICrudController } from "./icrud.controller";
 import { ICrudService } from "./icrud.service";
 import { PaginationParams } from "./pagination-params";
-
-export type ClassType<T> = new (...args: any[]) => T;
 
 /**
  * Base crud controller
@@ -18,16 +16,16 @@ export type ClassType<T> = new (...args: any[]) => T;
  * @param updateDTO
  * @returns
  */
-export function CrudFactory<T, C, U, Q, CQ>(
-	createDTO?: Type<C>,
-	updateDTO?: Type<U>,
-	queryDTO?: Type<Q>,
-	countQueryDTO?: Type<CQ>,
-): ClassType<ICrudController<T>> {
-	class BaseCrudController<T extends BaseEntity> implements ICrudController<T> {
+export function CrudFactory<BaseType, QueryType, CreateType, UpdateType, CountQueryType>(
+	queryDTO?: Type<QueryType>,
+	createDTO?: Type<CreateType>,
+	updateDTO?: Type<UpdateType>,
+	countQueryDTO?: Type<CountQueryType>,
+): ConstructorType<ICrudController<BaseType>> {
+	class BaseCrudController<BaseType extends BaseEntity> implements ICrudController<BaseType> {
 
 		constructor(
-			public readonly crudService: ICrudService<T>
+			public readonly crudService: ICrudService<BaseType>
 		) { }
 
 		/**
@@ -44,7 +42,7 @@ export function CrudFactory<T, C, U, Q, CQ>(
 		@Get('count')
 		@UsePipes(new AbstractValidationPipe({ transform: true, whitelist: true }, { query: countQueryDTO }))
 		async getCount(
-			@Query() options?: FindOptionsWhere<T>,
+			@Query() options?: FindOptionsWhere<BaseType>,
 		): Promise<number | void> {
 			return await this.crudService.countBy(options);
 		}
@@ -64,9 +62,9 @@ export function CrudFactory<T, C, U, Q, CQ>(
 		@Get('pagination')
 		@UsePipes(new AbstractValidationPipe({ transform: true, whitelist: true }, { query: queryDTO }))
 		async pagination(
-			@Query() filter?: PaginationParams<T>,
+			@Query() filter?: PaginationParams<BaseType>,
 			...options: any[]
-		): Promise<IPagination<T>> {
+		): Promise<IPagination<BaseType>> {
 			return await this.crudService.paginate(filter);
 		}
 
@@ -85,9 +83,9 @@ export function CrudFactory<T, C, U, Q, CQ>(
 		@Get()
 		@UsePipes(new AbstractValidationPipe({ transform: true, whitelist: true }, { query: queryDTO }))
 		async findAll(
-			@Query() filter?: PaginationParams<T>,
+			@Query() filter?: PaginationParams<BaseType>,
 			...options: any[]
-		): Promise<IPagination<T>> {
+		): Promise<IPagination<BaseType>> {
 			return await this.crudService.findAll(filter);
 		}
 
@@ -109,9 +107,9 @@ export function CrudFactory<T, C, U, Q, CQ>(
 		@HttpCode(HttpStatus.OK)
 		@Get(':id')
 		async findById(
-			@Param('id', UUIDValidationPipe) id: T['id'],
+			@Param('id', UUIDValidationPipe) id: BaseType['id'],
 			...options: any[]
-		): Promise<T> {
+		): Promise<BaseType> {
 			return await this.crudService.findOneByIdString(id);
 		}
 
@@ -133,8 +131,8 @@ export function CrudFactory<T, C, U, Q, CQ>(
 		@Post()
 		@UsePipes(new AbstractValidationPipe({ transform: true, whitelist: true }, { body: createDTO }))
 		async create(
-			@Body() entity: DeepPartial<T>
-		): Promise<T> {
+			@Body() entity: DeepPartial<BaseType>
+		): Promise<BaseType> {
 			return await this.crudService.create(entity);
 		}
 
@@ -161,9 +159,9 @@ export function CrudFactory<T, C, U, Q, CQ>(
 		@Put(':id')
 		@UsePipes(new AbstractValidationPipe({ transform: true, whitelist: true }, { body: updateDTO }))
 		async update(
-			@Param('id', UUIDValidationPipe) id: T['id'],
-			@Body() entity: QueryDeepPartialEntity<T>,
-		): Promise<any> {
+			@Param('id', UUIDValidationPipe) id: BaseType['id'],
+			@Body() entity: QueryDeepPartialEntity<BaseType>,
+		): Promise<BaseType | UpdateResult> {
 			return await this.crudService.update(id, entity);
 		}
 
@@ -184,8 +182,8 @@ export function CrudFactory<T, C, U, Q, CQ>(
 		@HttpCode(HttpStatus.ACCEPTED)
 		@Delete(':id')
 		async delete(
-			@Param('id', UUIDValidationPipe) id: T['id']
-		): Promise<any> {
+			@Param('id', UUIDValidationPipe) id: BaseType['id']
+		): Promise<DeleteResult> {
 			return await this.crudService.delete(id);
 		}
 	}
