@@ -10,6 +10,7 @@ import {
 } from '@gauzy/contracts';
 import { NbToastrService } from '@nebular/theme';
 import { Color, rgbString } from '@kurkle/color';
+import * as moment from 'moment';
 
 const log = window.require('electron-log');
 console.log = log.log;
@@ -74,7 +75,10 @@ export class TasksComponent implements OnInit {
 		})();
 		this.form = new FormGroup({
 			description: new FormControl(null),
-			dueDate: new FormControl(null, Validators.required),
+			dueDate: new FormControl(
+				moment().add(1, 'day').utc().toDate(),
+				Validators.required
+			),
 			estimate: new FormControl(null),
 			estimateDays: new FormControl(null, [Validators.min(0)]),
 			estimateHours: new FormControl(null, [
@@ -186,8 +190,7 @@ export class TasksComponent implements OnInit {
 			);
 
 			this.projects = this.projects.concat([project]);
-
-			this.toastrService.success('Project added successfully');
+			this.toastrService.success('Project added successfully', 'Gauzy');
 		} catch (error) {
 			this.toastrService.danger(error);
 		}
