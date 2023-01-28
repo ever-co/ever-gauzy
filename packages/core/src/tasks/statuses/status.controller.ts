@@ -26,16 +26,8 @@ export class TaskStatusController extends CrudFactory<
 	ITaskStatusCreateInput,
 	ITaskStatusUpdateInput,
 	ITaskStatusFindInput
->(
-	PaginationParams,
-	CreateStatusDTO,
-	UpdatesStatusDTO,
-	CountQueryDTO
-) {
-	constructor(
-		private readonly queryBus: QueryBus,
-		protected readonly taskStatusService: TaskStatusService
-	) {
+>(PaginationParams, CreateStatusDTO, UpdatesStatusDTO, CountQueryDTO) {
+	constructor(private readonly queryBus: QueryBus, protected readonly taskStatusService: TaskStatusService) {
 		super(taskStatusService);
 	}
 
@@ -54,9 +46,7 @@ export class TaskStatusController extends CrudFactory<
 	@HttpCode(HttpStatus.OK)
 	@Get()
 	@UsePipes(new ValidationPipe({ whitelist: true }))
-	async findTaskStatuses(
-		@Query() params: StatusQuerDTO
-	): Promise<IPagination<ITaskStatus>> {
+	async findTaskStatuses(@Query() params: StatusQuerDTO): Promise<IPagination<ITaskStatus>> {
 		return await this.queryBus.execute(new FindStatusesQuery(params));
 	}
 }

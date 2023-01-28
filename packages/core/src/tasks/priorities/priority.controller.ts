@@ -24,15 +24,8 @@ export class TaskPriorityController extends CrudFactory<
 	ITaskPriorityCreateInput,
 	ITaskPriorityUpdateInput,
 	ITaskPriorityFindInput
->(
-	PaginationParams,
-	CreateTaskPriorityDTO,
-	UpdateTaskPriorityDTO,
-	CountQueryDTO
-) {
-	constructor(
-		protected readonly taskPriorityService: TaskPriorityService
-	) {
+>(PaginationParams, CreateTaskPriorityDTO, UpdateTaskPriorityDTO, CountQueryDTO) {
+	constructor(protected readonly taskPriorityService: TaskPriorityService) {
 		super(taskPriorityService);
 	}
 

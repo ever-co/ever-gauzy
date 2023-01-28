@@ -1,6 +1,6 @@
-import { IPagination } from "@gauzy/contracts";
-import { DeepPartial, DeleteResult, FindManyOptions, FindOptionsWhere, UpdateResult } from "typeorm";
-import { QueryDeepPartialEntity } from "typeorm/query-builder/QueryPartialEntity";
+import { IPagination } from '@gauzy/contracts';
+import { DeepPartial, DeleteResult, FindManyOptions, FindOptionsWhere, UpdateResult } from 'typeorm';
+import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
 
 export type ConstructorType<T = {}> = new (...args: any[]) => T;
 
@@ -10,7 +10,7 @@ export interface ICrudController<T> {
 	 *
 	 * @param options
 	 */
-	getCount(options: FindOptionsWhere<T>): Promise<number | void>
+	getCount(options: FindOptionsWhere<T>): Promise<number | void>;
 
 	/**
 	 * Finds entities that match given find options.

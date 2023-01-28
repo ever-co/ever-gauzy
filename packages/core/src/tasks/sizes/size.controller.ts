@@ -24,15 +24,8 @@ export class TaskSizeController extends CrudFactory<
 	ITaskSizeCreateInput,
 	ITaskSizeUpdateInput,
 	ITaskSizeFindInput
->(
-	PaginationParams,
-	CreateTaskSizeDTO,
-	UpdateTaskSizeDTO,
-	CountQueryDTO
-) {
-	constructor(
-		protected readonly taskSizeService: TaskSizeService
-	) {
+>(PaginationParams, CreateTaskSizeDTO, UpdateTaskSizeDTO, CountQueryDTO) {
+	constructor(protected readonly taskSizeService: TaskSizeService) {
 		super(taskSizeService);
 	}
 
