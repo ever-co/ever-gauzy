@@ -1,4 +1,4 @@
-import { Controller, Get, HttpCode, HttpStatus, Query, UseGuards, UsePipes, ValidationPipe, } from '@nestjs/common';
+import { Controller, Get, HttpCode, HttpStatus, Query, UseGuards, UsePipes, ValidationPipe } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import {
 	IPagination,
@@ -24,17 +24,9 @@ export class TaskSizeController extends CrudFactory<
 	ITaskSizeUpdateInput,
 	IPaginationParam,
 	ITaskSizeFindInput
->(
-	CreateTaskSizeDTO,
-	UpdateTaskSizeDTO,
-	PaginationParams,
-	CountQueryDTO
-) {
-
-	constructor(
-		protected readonly taskSizeService: TaskSizeService
-	) {
-		super(taskSizeService)
+>(CreateTaskSizeDTO, UpdateTaskSizeDTO, PaginationParams, CountQueryDTO) {
+	constructor(protected readonly taskSizeService: TaskSizeService) {
+		super(taskSizeService);
 	}
 
 	/**
@@ -52,9 +44,7 @@ export class TaskSizeController extends CrudFactory<
 	@HttpCode(HttpStatus.OK)
 	@Get()
 	@UsePipes(new ValidationPipe({ whitelist: true }))
-	async findTaskSizes(
-		@Query() params: TaskSizeQuerDTO
-	): Promise<IPagination<ITaskSize>> {
+	async findTaskSizes(@Query() params: TaskSizeQuerDTO): Promise<IPagination<ITaskSize>> {
 		return await this.taskSizeService.findTaskSizes(params);
 	}
 }
