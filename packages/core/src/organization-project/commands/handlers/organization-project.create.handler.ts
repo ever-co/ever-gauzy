@@ -4,6 +4,8 @@ import { IOrganizationProject } from '@gauzy/contracts';
 import { OrganizationProjectCreateCommand } from '../organization-project.create.command';
 import { OrganizationProjectService } from '../../organization-project.service';
 import { OrganizationProjectStatusBulkCreateCommand } from './../../../tasks/statuses/commands';
+import { OrganizationProjectPriorityBulkCreateCommand } from './../../../tasks/priorities/commands';
+import { OrganizationProjectSizeBulkCreateCommand } from './../../../tasks/sizes/commands';
 
 @CommandHandler(OrganizationProjectCreateCommand)
 export class OrganizationProjectCreateHandler
@@ -12,7 +14,7 @@ export class OrganizationProjectCreateHandler
 	constructor(
 		private readonly commandBus: CommandBus,
 		private readonly organizationProjectService: OrganizationProjectService
-	) {}
+	) { }
 
 	public async execute(
 		command: OrganizationProjectCreateCommand
@@ -24,6 +26,16 @@ export class OrganizationProjectCreateHandler
 			// 1. Create task statuses for relative organization project.
 			await this.commandBus.execute(
 				new OrganizationProjectStatusBulkCreateCommand(project)
+			);
+
+			// 2. Create task priorities for relative organization project.
+			await this.commandBus.execute(
+				new OrganizationProjectPriorityBulkCreateCommand(project)
+			);
+
+			// 3. Create task sizes for relative organization project.
+			await this.commandBus.execute(
+				new OrganizationProjectSizeBulkCreateCommand(project)
 			);
 
 			return project;;

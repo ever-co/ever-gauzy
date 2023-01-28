@@ -1,7 +1,7 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { DeleteResult, Repository } from 'typeorm';
-import { IPagination, ITaskPriority, ITaskPriorityFindInput } from '@gauzy/contracts';
+import { IOrganizationProject, IPagination, ITaskPriority, ITaskPriorityFindInput } from '@gauzy/contracts';
 import { SharedPrioritySizeService } from './../../tasks/shared-priority-size.service';
 import { TaskPriority } from './priority.entity';
 
@@ -40,5 +40,43 @@ export class TaskPriorityService extends SharedPrioritySizeService<TaskPriority>
 		params: ITaskPriorityFindInput
 	): Promise<IPagination<ITaskPriority>> {
 		return await this.findAllTaskShared(params);
+	}
+
+	/**
+	 * Create bulk task priorities for specific organization project
+	 *
+	 * @param project
+	 * @returns
+	 */
+	async bulkCreateOrganizationProjectPriority(project: IOrganizationProject): Promise<ITaskPriority[]> {
+		try {
+			const { tenantId, organizationId } = project;
+
+			const priorities: ITaskPriority[] = [];
+			const { items = [] } = await this.findAllTaskShared({
+				tenantId,
+				organizationId
+			});
+
+			for (const item of items) {
+				const { name, value, description, icon, color } = item;
+
+				const create = this.repository.create({
+					tenantId,
+					organizationId,
+					name,
+					value,
+					description,
+					icon,
+					color,
+					project,
+					isSystem: false
+				});
+				priorities.push(create);
+			}
+			return await this.repository.save(priorities);
+		} catch (error) {
+			throw new BadRequestException(error);
+		}
 	}
 }
