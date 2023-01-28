@@ -1689,7 +1689,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 		this.isAddTask = true;
 	}
 
-	cloasAddTask(e) {
+	closeAddTask(e) {
 		this.isAddTask = false;
 		this.electronService.ipcRenderer.send('refresh-timer');
 	}
@@ -1853,14 +1853,14 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 	/* Adding a new project to the list of projects. */
 	public addProject = async (name: string) => {
 		try {
-			const { tenantId, organizationContactId } = this.userData;
+			const { tenantId } = this.userData;
 			const organizationId = this.userOrganization.id;
 			const request = {
 				name,
 				organizationId,
 				tenantId,
-				...(organizationContactId
-					? { contactId: organizationContactId }
+				...(this.organizationContactId
+					? { contactId: this.organizationContactId }
 					: {}),
 			};
 

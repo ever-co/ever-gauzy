@@ -171,7 +171,8 @@
 							<div class="col-12 center-text">
 								<nb-card>
 									<nb-card-header class="p-0 mb-1">
-										<div class="screen-capture-label-left">
+										<div *ngIf="(lastScreenCapture$ | async)?.recordedAt"
+											class="screen-capture-label-left">
 											<span>Last screen capture taken </span>
 											<span>{{humanize((lastScreenCapture$ | async)?.recordedAt)}}</span>
 										</div>
@@ -266,7 +267,7 @@
 				</nb-card>
 				<ngx-tasks *ngIf="isAddTask" [hasProjectPermission]="(hasProjectPermission$ | async)"
 					[selectedProject]="selectedProject" [userData]="argFromMain" [employee]="userData"
-					(isAddTask)="cloasAddTask($event)" (newTaskCallback)="callbackNewTask($event)"></ngx-tasks>
+					(isAddTask)="closeAddTask($event)" (newTaskCallback)="callbackNewTask($event)"></ngx-tasks>
 			</div>
 		</div>
 	</nb-layout-column>
