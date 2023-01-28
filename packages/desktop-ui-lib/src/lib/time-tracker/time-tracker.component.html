@@ -111,9 +111,10 @@
 						<div class="row">
 							<div class="col-12 form-group" *ngIf="!isExpand">
 								<label>Task</label>
-								<ng-select [class]="errors.task ? 'error-border' : ''" [clearable]="true"
-									placeholder="Task" [(ngModel)]="taskSelect" [items]="tasks$ | async" bindValue="id"
-									bindLabel="title" (ngModelChange)="setTask($event)">
+								<ng-select [addTag]="addNewTask" addTagText="Add task"
+									[class]="errors.task ? 'error-border' : ''" [clearable]="true" placeholder="Task"
+									[(ngModel)]="taskSelect" [items]="tasks$ | async" bindValue="id" bindLabel="title"
+									(ngModelChange)="setTask($event)">
 									<ng-template ng-option-tmp let-item="item">
 										<span>
 											{{item?.taskNumber}} {{ item?.title }}

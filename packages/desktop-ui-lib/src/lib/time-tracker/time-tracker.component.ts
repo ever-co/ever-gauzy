@@ -24,6 +24,7 @@ import { BehaviorSubject, Observable, tap } from 'rxjs';
 import { ElectronService } from '../electron/services';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import 'moment-duration-format';
+import { ITask, TaskStatusEnum } from 'packages/contracts/dist';
 
 // Import logging for electron and override default console logging
 const log = window.require('electron-log');
@@ -1840,10 +1841,58 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 			const projects = this._projects$.getValue();
 			this._projects$.next(projects.concat([project]));
 			this.projectSelect = project.id;
-			this.toastrService.success('Project added successfully');
+			this.toastrService.success('Project added successfully', 'Gauzy');
 		} catch (error) {
 			console.log(error);
-			this.toastrService.danger(error);
+			this.toastrService.danger(
+				'An error occured',
+				'Gauzy Desktop Timer'
+			);
+		}
+	};
+
+	/* Adding a new task to the list of tasks. */
+	public addNewTask = async (title: ITask['title']) => {
+		if (!title) {
+			return;
+		}
+		const { tenantId } = this.userData;
+		const organizationId = this.userOrganization.id;
+		const data = {
+			tenantId,
+			organizationId,
+			token: this.token,
+			apiHost: this.apiHost,
+			projectId: this.projectSelect,
+		};
+
+		try {
+			const member: any = { ...this.userData.employee };
+			const task: any = await this.timeTrackerService.saveNewTask(data, {
+				title,
+				organizationId,
+				tenantId,
+				status: TaskStatusEnum.IN_PROGRESS,
+				dueDate: moment().add(1, 'day').utc().toDate(),
+				estimate: 3600,
+				...(member.id && { members: [member] }),
+				...(this.projectSelect && {
+					projectId: this.projectSelect,
+					project: this.selectedProject,
+				}),
+			});
+			const tasks = this._tasks$.getValue();
+			this._tasks$.next(tasks.concat(task));
+			this.taskSelect = task.id;
+			this.toastrService.success(
+				'Task added successfully',
+				'Gauzy Desktop Timer'
+			);
+		} catch (error) {
+			this.toastrService.danger(
+				'An error occured',
+				'Gauzy Desktop Timer'
+			);
 		}
 	};
 }
