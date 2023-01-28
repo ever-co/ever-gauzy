@@ -20,12 +20,11 @@ import * as _ from 'underscore';
 import { CustomRenderComponent } from './custom-render-cell.component';
 import { LocalDataSource, Ng2SmartTableComponent } from 'ng2-smart-table';
 import { DomSanitizer } from '@angular/platform-browser';
-import { async, BehaviorSubject, filter, Observable, Subject, tap } from 'rxjs';
+import { BehaviorSubject, Observable, Subject, tap } from 'rxjs';
 import { ElectronService } from '../electron/services';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import 'moment-duration-format';
 import {
-	IContact,
 	IOrganizationContact,
 	ITask,
 	PermissionsEnum,
