@@ -78,7 +78,7 @@ export class CandidateSourceController extends CrudController<CandidateSource> {
 	}
 
 	/**
-	 * CREATE candiate source
+	 * CREATE candidate source
 	 *
 	 * @param entity
 	 * @returns

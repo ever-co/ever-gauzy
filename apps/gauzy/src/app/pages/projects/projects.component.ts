@@ -413,7 +413,7 @@ export class ProjectsComponent extends PaginationFilterBaseComponent
 						onComponentInitFunction: (instance: any) => {
 							instance.visibilityChange.subscribe({
 								next: (visibility: boolean) => {
-									this.updateProjectVisiblility(
+									this.updateProjectVisibility(
 										instance.rowData.id,
 										visibility
 									);
@@ -518,7 +518,7 @@ export class ProjectsComponent extends PaginationFilterBaseComponent
 			.subscribe();
 	}
 
-	private async updateProjectVisiblility(
+	private async updateProjectVisibility(
 		projectId: string,
 		visibility: boolean
 	) {

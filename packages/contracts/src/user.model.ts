@@ -69,7 +69,7 @@ export interface IUserRegistrationInput {
 }
 
 /**
- * email verfication token payload
+ * email verification token payload
  */
 export interface IVerificationTokenPayload extends IUserEmailInput {
 	id: string;

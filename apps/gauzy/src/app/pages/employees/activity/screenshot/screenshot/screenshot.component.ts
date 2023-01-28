@@ -242,7 +242,7 @@ export class ScreenshotComponent extends BaseSelectorFilterComponent
 					);
 					timeSlots = ['00', '10', '20', '30', '40', '50'].map((key) => {
 						/**
-						 * Calculate employess work on same time slots by minutes
+						 * Calculate employees work on same time slots by minutes
 						 */
 						if (key in byMinutes) {
 							byMinutes[key]['employees'] = chain(groupByMinutes[key])

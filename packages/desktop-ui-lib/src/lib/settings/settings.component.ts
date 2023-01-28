@@ -5,7 +5,7 @@ import {
 	ViewChild,
 	ElementRef,
 	NgZone,
-	AfterViewInit
+	AfterViewInit,
 } from '@angular/core';
 import { TimeTrackerService } from '../time-tracker/time-tracker.service';
 import { NbDialogService, NbToastrService } from '@nebular/theme';
@@ -22,8 +22,8 @@ import { AboutComponent } from '../dialogs/about/about.component';
 			:host nb-tab {
 				padding: 1rem;
 			}
-		`
-	]
+		`,
+	],
 })
 export class SettingsComponent implements OnInit, AfterViewInit {
 	@ViewChild('selectRef') selectProjectElement: ElementRef;
@@ -50,7 +50,13 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 	menus =
 		this.appName === 'gauzy-server'
 			? ['Update', 'Advanced Setting', 'About']
-			: ['Screen Capture', 'Timer', 'Update', 'Advanced Setting', 'About'];
+			: [
+					'Screen Capture',
+					'Timer',
+					'Update',
+					'Advanced Setting',
+					'About',
+			  ];
 	gauzyIcon =
 		this.appName === 'gauzy-desktop-timer' ||
 		this.appName === 'gauzy-server'
@@ -63,7 +69,7 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 			title: 'Capture All Monitors',
 			subtitle: 'All connected monitors',
 			accent: 'basic',
-			status: 'basic'
+			status: 'basic',
 		},
 		{
 			value: 'active-only',
@@ -71,8 +77,8 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 			subtitle: 'Monitor current pointer position',
 			iconStyle: 'all-monitor_icon',
 			accent: 'basic',
-			status: 'basic'
-		}
+			status: 'basic',
+		},
 	];
 
 	thirdPartyConfig = [
@@ -82,34 +88,34 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 				{
 					name: 'UNLEASH_APP_NAME',
 					field: 'UNLEASH_APP_NAME',
-					value: ''
+					value: '',
 				},
 				{
 					name: 'UNLEASH_API_URL',
 					field: 'UNLEASH_API_URL',
-					value: ''
+					value: '',
 				},
 				{
 					name: 'UNLEASH_INSTANCE_ID',
 					field: 'UNLEASH_INSTANCE_ID',
-					value: ''
+					value: '',
 				},
 				{
 					name: 'UNLEASH_REFRESH_INTERVAL',
 					field: 'UNLEASH_REFRESH_INTERVAL',
-					value: 15000
+					value: 15000,
 				},
 				{
 					name: 'UNLEASH_METRICS_INTERVAL',
 					field: 'UNLEASH_METRICS_INTERVAL',
-					value: 60000
+					value: 60000,
 				},
 				{
 					name: 'UNLEASH_API_KEY',
 					field: 'UNLEASH_API_KEY',
-					value: ''
-				}
-			]
+					value: '',
+				},
+			],
 		},
 		{
 			title: 'Twitter',
@@ -117,19 +123,19 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 				{
 					name: 'TWITTER_CLIENT_ID',
 					field: 'TWITTER_CLIENT_ID',
-					value: ''
+					value: '',
 				},
 				{
 					name: 'TWITTER_CLIENT_SECRET',
 					field: 'TWITTER_CLIENT_SECRET',
-					value: ''
+					value: '',
 				},
 				{
 					name: 'TWITTER_CALLBACK_URL',
 					field: 'TWITTER_CALLBACK_URL',
-					value: 'http://localhost:3000/api/auth/twitter/callback'
-				}
-			]
+					value: 'http://localhost:3000/api/auth/twitter/callback',
+				},
+			],
 		},
 		{
 			title: 'Google',
@@ -137,19 +143,19 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 				{
 					name: 'GOOGLE_CLIENT_ID',
 					field: 'GOOGLE_CLIENT_ID',
-					value: ''
+					value: '',
 				},
 				{
 					name: 'GOOGLE_CLIENT_SECRET',
 					field: 'GOOGLE_CLIENT_SECRET',
-					value: ''
+					value: '',
 				},
 				{
 					name: 'GOOGLE_CALLBACK_URL',
 					field: 'GOOGLE_CALLBACK_URL',
-					value: 'http://localhost:3000/api/auth/google/callback'
-				}
-			]
+					value: 'http://localhost:3000/api/auth/google/callback',
+				},
+			],
 		},
 		{
 			title: 'Facebook',
@@ -157,24 +163,24 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 				{
 					name: 'FACEBOOK_CLIENT_ID',
 					field: 'FACEBOOK_CLIENT_ID',
-					value: ''
+					value: '',
 				},
 				{
 					name: 'FACEBOOK_CLIENT_SECRET',
 					field: 'FACEBOOK_CLIENT_SECRET',
-					value: ''
+					value: '',
 				},
 				{
 					name: 'FACEBOOK_CALLBACK_URL',
 					field: 'FACEBOOK_CALLBACK_URL',
-					value: ''
+					value: '',
 				},
 				{
 					name: 'FACEBOOK_GRAPH_VERSION',
 					field: 'FACEBOOK_GRAPH_VERSION',
-					value: ''
-				}
-			]
+					value: '',
+				},
+			],
 		},
 		{
 			title: 'Github',
@@ -182,19 +188,19 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 				{
 					name: 'GITHUB_CLIENT_ID',
 					field: 'GITHUB_CLIENT_ID',
-					value: ''
+					value: '',
 				},
 				{
 					name: 'GITHUB_CLIENT_SECRET',
 					field: 'GITHUB_CLIENT_SECRET',
-					value: ''
+					value: '',
 				},
 				{
 					name: 'GITHUB_CALLBACK_URL',
 					field: 'GITHUB_CALLBACK_URL',
-					value: ''
-				}
-			]
+					value: '',
+				},
+			],
 		},
 		{
 			title: 'LinkedIn',
@@ -202,19 +208,19 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 				{
 					name: 'LINKEDIN_CLIENT_ID',
 					field: 'LINKEDIN_CLIENT_ID',
-					value: ''
+					value: '',
 				},
 				{
 					name: 'LINKEDIN_CLIENT_SECRET',
 					field: 'LINKEDIN_CLIENT_SECRET',
-					value: ''
+					value: '',
 				},
 				{
 					name: 'LINKEDIN_CALLBACK_URL',
 					field: 'LINKEDIN_CALLBACK_URL',
-					value: ''
-				}
-			]
+					value: '',
+				},
+			],
 		},
 		{
 			title: 'Microsoft',
@@ -222,29 +228,29 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 				{
 					name: 'MICROSOFT_CLIENT_ID',
 					field: 'MICROSOFT_CLIENT_ID',
-					value: ''
+					value: '',
 				},
 				{
 					name: 'MICROSOFT_CLIENT_SECRET',
 					field: 'MICROSOFT_CLIENT_SECRET',
-					value: ''
+					value: '',
 				},
 				{
 					name: 'MICROSOFT_RESOURCE',
 					field: 'MICROSOFT_RESOURCE',
-					value: ''
+					value: '',
 				},
 				{
 					name: 'MICROSOFT_TENANT',
 					field: 'MICROSOFT_TENANT',
-					value: ''
+					value: '',
 				},
 				{
 					name: 'MICROSOFT_CALLBACK_URL',
 					field: 'MICROSOFT_CALLBACK_URL',
-					value: ''
-				}
-			]
+					value: '',
+				},
+			],
 		},
 		{
 			title: 'Fiverr',
@@ -252,14 +258,14 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 				{
 					name: 'FIVERR_CLIENT_ID',
 					field: 'FIVERR_CLIENT_ID',
-					value: ''
+					value: '',
 				},
 				{
 					name: 'FIVERR_CLIENT_SECRET',
 					field: 'FIVERR_CLIENT_SECRET',
-					value: ''
-				}
-			]
+					value: '',
+				},
+			],
 		},
 		{
 			title: 'Auth0',
@@ -267,19 +273,19 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 				{
 					name: 'AUTH0_CLIENT_ID',
 					field: 'AUTH0_CLIENT_ID',
-					value: ''
+					value: '',
 				},
 				{
 					name: 'AUTH0_CLIENT_SECRET',
 					field: 'AUTH0_CLIENT_SECRET',
-					value: ''
+					value: '',
 				},
 				{
 					name: 'AUTH0_DOMAIN',
 					field: 'AUTH0_DOMAIN',
-					value: ''
-				}
-			]
+					value: '',
+				},
+			],
 		},
 		{
 			title: 'Keycloak',
@@ -287,29 +293,29 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 				{
 					name: 'KEYCLOAK_REALM',
 					field: 'KEYCLOAK_REALM',
-					value: ''
+					value: '',
 				},
 				{
 					name: 'KEYCLOAK_CLIENT_ID',
 					field: 'KEYCLOAK_CLIENT_ID',
-					value: ''
+					value: '',
 				},
 				{
 					name: 'KEYCLOAK_SECRET',
 					field: 'KEYCLOAK_SECRET',
-					value: ''
+					value: '',
 				},
 				{
 					name: 'KEYCLOAK_AUTH_SERVER_URL',
 					field: 'KEYCLOAK_AUTH_SERVER_URL',
-					value: ''
+					value: '',
 				},
 				{
 					name: 'KEYCLOAK_COOKIE_KEY',
 					field: 'KEYCLOAK_COOKIE_KEY',
-					value: ''
-				}
-			]
+					value: '',
+				},
+			],
 		},
 		{
 			title: 'Other',
@@ -317,18 +323,19 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 				{
 					name: 'SENTRY_DSN',
 					field: 'SENTRY_DSN',
-					value: ''
+					value: '',
 				},
 				{
 					name: 'GOOGLE_MAPS_API_KEY',
 					field: 'GOOGLE_MAPS_API_KEY',
-					value: ''
-				}
-			]
-		}
+					value: '',
+				},
+			],
+		},
 	];
 
-	selectedMenu = this.appName === 'gauzy-server' ? 'Update' : 'Screen Capture';
+	selectedMenu =
+		this.appName === 'gauzy-server' ? 'Update' : 'Screen Capture';
 
 	monitorOptionSelected = null;
 	appSetting = null;
@@ -340,7 +347,7 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 	version = '0.0.0';
 	message = {
 		text: 'Application Update',
-		status: 'basic'
+		status: 'basic',
 	};
 	downloadFinish = false;
 	progressDownload = 0;
@@ -352,7 +359,7 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 	serverTypes = {
 		integrated: 'Integrated',
 		localNetwork: 'Local Network',
-		live: 'Live'
+		live: 'Live',
 	};
 	waitRestart = false;
 	serverIsRunning = false;
@@ -363,13 +370,13 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 			: [
 					this.serverTypes.integrated,
 					this.serverTypes.localNetwork,
-					this.serverTypes.live
+					this.serverTypes.live,
 			  ];
 
-	driverOptions = ['sqlite', 'postgres'];
+	driverOptions = ['sqlite', 'postgres', 'mysql'];
 	muted: boolean;
 
-	private _loading$ : BehaviorSubject<boolean>;
+	private _loading$: BehaviorSubject<boolean>;
 	private _automaticUpdate$: BehaviorSubject<boolean>;
 	private _available$: BehaviorSubject<boolean>;
 	private _updaterServer$: BehaviorSubject<any>;
@@ -381,16 +388,16 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 		private _ngZone: NgZone,
 		private readonly timeTrackerService: TimeTrackerService,
 		private toastrService: NbToastrService,
-		private _dialogService: NbDialogService,
+		private _dialogService: NbDialogService
 	) {
 		this._loading$ = new BehaviorSubject(false);
 		this._automaticUpdate$ = new BehaviorSubject(false);
 		this._available$ = new BehaviorSubject(false);
-		this._file$ = new BehaviorSubject({uri: null});
+		this._file$ = new BehaviorSubject({ uri: null });
 		this._updaterServer$ = new BehaviorSubject({
 			github: false,
 			digitalOcean: true,
-			local: false
+			local: false,
 		});
 		this._prerelease$ = new BehaviorSubject(false);
 	}
@@ -414,7 +421,7 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 					: null;
 				this.serverConnectivity();
 				this.selectMonitorOption({
-					value: setting.monitor.captured
+					value: setting.monitor.captured,
 				});
 				this.screenshotNotification = setting.screenshotNotification;
 				this.muted = setting.mutedNotification;
@@ -425,7 +432,7 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 				this._updaterServer$ = new BehaviorSubject({
 					github: setting.cdnUpdater.github,
 					digitalOcean: setting.cdnUpdater.digitalOcean,
-					local: false
+					local: false,
 				});
 				this.selectPeriod(setting.timer.updatePeriod);
 				if (this.appName !== 'gauzy-server') {
@@ -448,7 +455,7 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 				this._available$.next(false);
 				this.message = {
 					text: 'Update Not Available',
-					status: 'basic'
+					status: 'basic',
 				};
 				this.logContents = this.message.text;
 				this.scrollToBottom();
@@ -460,8 +467,8 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 			this._ngZone.run(() => {
 				this._available$.next(false);
 				this.message = {
-					text:  'Update Error',
-					status: 'danger'
+					text: 'Update Error',
+					status: 'danger',
 				};
 				this.logContents = this.message.text;
 				this.logContents = `error message: ${arg}`;
@@ -475,8 +482,8 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 				this._available$.next(true);
 				this._loading$.next(false);
 				this.message = {
-					text:  'Update Available',
-					status: 'primary'
+					text: 'Update Available',
+					status: 'primary',
 				};
 				this.logContents = this.message.text;
 				this.scrollToBottom();
@@ -488,7 +495,7 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 				this._available$.next(true);
 				this.message = {
 					text: 'Update Download Completed',
-					status: 'success'
+					status: 'success',
 				};
 				this.logContents = this.message.text;
 				this.scrollToBottom();
@@ -507,7 +514,7 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 					this.showProgressBar = true;
 					this.message = {
 						text: 'Update Downloading',
-						status: 'warning'
+						status: 'warning',
 					};
 					this.progressDownload = Math.floor(Number(arg.percent));
 					this.logContents = `Downloading update ${Math.floor(
@@ -555,17 +562,20 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 			})
 		);
 
-		this.electronService.ipcRenderer.on('update_files_directory', (event, arg) => {
-			this._ngZone.run(() => {
-				this._file$.next(arg);
-			})
-		} )
+		this.electronService.ipcRenderer.on(
+			'update_files_directory',
+			(event, arg) => {
+				this._ngZone.run(() => {
+					this._file$.next(arg);
+				});
+			}
+		);
 
 		this.electronService.ipcRenderer.on('show_about', () => {
 			this._ngZone.run(() => {
 				this._dialogService.open(AboutComponent);
-			})
-		})
+			});
+		});
 	}
 
 	mappingAdditionalSetting(values) {
@@ -600,7 +610,7 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 	updateSetting(value, type) {
 		this.appSetting[type] = value;
 		this.electronService.ipcRenderer.send('update_app_setting', {
-			values: this.appSetting
+			values: this.appSetting,
 		});
 	}
 
@@ -629,7 +639,7 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 		this.updateSetting(value, 'autoLaunch');
 		this.electronService.ipcRenderer.send('launch_on_startup', {
 			autoLaunch: value,
-			hidden: this.minimizeOnStartup
+			hidden: this.minimizeOnStartup,
 		});
 	}
 
@@ -637,7 +647,7 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 		this.updateSetting(value, 'minimizeOnStartup');
 		this.electronService.ipcRenderer.send('minimize_on_startup', {
 			autoLaunch: this.autoLaunch,
-			hidden: value
+			hidden: value,
 		});
 	}
 
@@ -654,6 +664,8 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 	restartApp() {
 		if (this.appName === 'gauzy-server' && this.serverIsRunning) {
 			this.restartDisable = true;
+		} else {
+			this.logout();
 		}
 		const thConfig = {};
 		this.thirdPartyConfig.forEach((item) => {
@@ -662,7 +674,7 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 			});
 		});
 		const newConfig: any = {
-			...this.config
+			...this.config,
 		};
 		if (this.config.timeTrackerWindow)
 			newConfig.awHost = `http://localhost:${this.config.awPort}`;
@@ -683,6 +695,9 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 			} else {
 				this.restartDisable = false;
 			}
+		}
+		if (type === 'db') {
+			console.log('Port change', val);
 		}
 	}
 
@@ -739,7 +754,7 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 		const request = {
 			...this.authSetting,
 			...this.config,
-			apiHost: this.config.serverUrl
+			apiHost: this.config.serverUrl,
 		};
 		if (this.authSetting) {
 			this.timeTrackerService.getUserDetail(request).then((res) => {
@@ -790,6 +805,9 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 			case 'postgres':
 				this.config.db = 'postgres';
 				break;
+			case 'mysql':
+				this.config.db = 'mysql';
+				break;
 			default:
 				break;
 		}
@@ -831,7 +849,7 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 		this.updateSetting(event, 'preventDisplaySleep');
 	}
 
-	public openLink(){
+	public openLink() {
 		const url = 'https://gauzy.co';
 		this.electronService.shell.openExternal(url);
 	}
@@ -842,7 +860,7 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 
 	public get available$() {
 		return this._available$.asObservable();
-	};
+	}
 
 	public get automaticUpdate$(): Observable<boolean> {
 		return this._automaticUpdate$.asObservable();
@@ -874,28 +892,37 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 		this._updaterServer$.next({
 			github: event,
 			digitalOcean: !event,
-			local: false
-		})
+			local: false,
+		});
 		this.updateSetting(this._updaterServer$.getValue(), 'cdnUpdater');
-		this.electronService.ipcRenderer.send('change_update_strategy', this._updaterServer$.getValue());
+		this.electronService.ipcRenderer.send(
+			'change_update_strategy',
+			this._updaterServer$.getValue()
+		);
 	}
 
 	public toggleDigitalOceanDefaultServer(event: boolean) {
 		this._updaterServer$.next({
 			github: !event,
 			digitalOcean: event,
-			local: false
+			local: false,
 		});
 		this.updateSetting(this._updaterServer$.getValue(), 'cdnUpdater');
-		this.electronService.ipcRenderer.send('change_update_strategy', this._updaterServer$.getValue());
+		this.electronService.ipcRenderer.send(
+			'change_update_strategy',
+			this._updaterServer$.getValue()
+		);
 	}
 
 	public toggleLocalServer(event: boolean) {
 		this._file$.next({});
 		this._updaterServer$.next({
 			...this._updaterServer$.getValue(),
-			local: event
+			local: event,
 		});
-		this.electronService.ipcRenderer.send('change_update_strategy', this._updaterServer$.getValue());
+		this.electronService.ipcRenderer.send(
+			'change_update_strategy',
+			this._updaterServer$.getValue()
+		);
 	}
 }

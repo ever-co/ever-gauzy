@@ -29,18 +29,21 @@ log.catchErrors({
 				message: error.message,
 				detail: error.stack,
 				type: 'error',
-				buttons: ['Ignore', 'Report', 'Exit']
+				buttons: ['Ignore', 'Report', 'Exit'],
 			})
 			.then((result) => {
 				if (result.response === 1) {
-					submitIssue('https://github.com/ever-co/ever-gauzy-desktop-timer/issues/new', {
-						title: `Automatic error report for Desktop Timer App ${versions.app}`,
-						body:
-							'Error:\n```' +
-							error.stack +
-							'\n```\n' +
-							`OS: ${versions.os}`
-					});
+					submitIssue(
+						'https://github.com/ever-co/ever-gauzy-desktop-timer/issues/new',
+						{
+							title: `Automatic error report for Desktop Timer App ${versions.app}`,
+							body:
+								'Error:\n```' +
+								error.stack +
+								'\n```\n' +
+								`OS: ${versions.os}`,
+						}
+					);
 					return;
 				}
 
@@ -50,7 +53,7 @@ log.catchErrors({
 				}
 				return;
 			});
-	}
+	},
 });
 
 require('module').globalPaths.push(path.join(__dirname, 'node_modules'));
@@ -73,14 +76,15 @@ import {
 	AppMenu,
 	DesktopUpdater,
 	removeMainListener,
-	removeTimerListener
+	removeTimerListener,
+	ProviderFactory,
 } from '@gauzy/desktop-libs';
 import {
 	createSetupWindow,
 	createTimeTrackerWindow,
 	createSettingsWindow,
 	createUpdaterWindow,
-	createImageViewerWindow
+	createImageViewerWindow,
 } from '@gauzy/desktop-window';
 import { fork } from 'child_process';
 import { autoUpdater } from 'electron-updater';
@@ -99,22 +103,8 @@ log.info(`GAUZY_USER_PATH: ${process.env.GAUZY_USER_PATH}`);
 const sqlite3filename = `${process.env.GAUZY_USER_PATH}/gauzy.sqlite3`;
 log.info(`Sqlite DB path: ${sqlite3filename}`);
 
-const knex = require('knex')({
-	client: 'sqlite3',
-	connection: {
-		filename: sqlite3filename
-	},
-	pool: {
-		min: 2,
-		max: 15,
-		createTimeoutMillis: 3000,
-		acquireTimeoutMillis: 60 * 1000 * 2,
-		idleTimeoutMillis: 30000,
-		reapIntervalMillis: 1000,
-		createRetryIntervalMillis: 100
-	},
-	useNullAsDefault: true
-});
+const provider = ProviderFactory.instance;
+const knex = provider.connection;
 
 const exeName = path.basename(process.execPath);
 
@@ -126,7 +116,7 @@ const serverGauzy = null;
 const updater = new DesktopUpdater({
 	repository: 'ever-gauzy-desktop-timer',
 	owner: 'ever-co',
-	typeRelease: 'releases'
+	typeRelease: 'releases',
 });
 args.some((val) => val === '--serve');
 let gauzyWindow: BrowserWindow = null;
@@ -149,11 +139,11 @@ console.log(
 );
 
 const pathWindow = {
-	timeTrackerUi: path.join(__dirname, './index.html')
+	timeTrackerUi: path.join(__dirname, './index.html'),
 };
 
 LocalStore.setFilePath({
-	iconPath: path.join(__dirname, 'icons', 'icon.png')
+	iconPath: path.join(__dirname, 'icons', 'icon.png'),
 });
 // Instance detection
 const gotTheLock = app.requestSingleInstanceLock();
@@ -171,30 +161,31 @@ if (!gotTheLock) {
 }
 
 async function startServer(value, restart = false) {
-	await knex.raw(`pragma journal_mode = WAL;`).then((res) => console.log(res));
 	const dataModel = new DataModel();
 	await dataModel.createNewTable(knex);
 	try {
 		const config: any = {
 			...value,
-			isSetup: true
+			isSetup: true,
 		};
 		const aw = {
 			host: value.awHost,
-			isAw: value.aw
+			isAw: value.aw,
 		};
 		const projectConfig = store.get('project');
 		store.set({
 			configs: config,
-			project: projectConfig ? projectConfig : {
-				projectId: null,
-				taskId: null,
-				note: null,
-				aw,
-				organizationContactId: null
-			}
+			project: projectConfig
+				? projectConfig
+				: {
+						projectId: null,
+						taskId: null,
+						note: null,
+						aw,
+						organizationContactId: null,
+				  },
 		});
-	} catch (error) { }
+	} catch (error) {}
 
 	/* create main window */
 	if (value.serverConfigConnected || !value.isLocalServer) {
@@ -231,12 +222,7 @@ async function startServer(value, restart = false) {
 		settingsWindow,
 		{ ...environment },
 		pathWindow,
-		path.join(
-			__dirname,
-			'assets',
-			'icons',
-			'icon.png'
-		),
+		path.join(__dirname, 'assets', 'icons', 'icon.png'),
 		gauzyWindow
 	);
 
@@ -245,7 +231,7 @@ async function startServer(value, restart = false) {
 		if (!isAlreadyRun && value && !restart) {
 			onWaitingServer = true;
 			setupWindow.webContents.send('server_ping', {
-				host: getApiBaseUrl(value)
+				host: getApiBaseUrl(value),
 			});
 		}
 	});
@@ -272,7 +258,9 @@ app.on('ready', async () => {
 	const configs: any = store.get('configs');
 	const settings: any = store.get('appSetting');
 	const autoLaunch: boolean =
-		settings && typeof settings.autoLaunch === 'boolean' ? settings.autoLaunch : true;
+		settings && typeof settings.autoLaunch === 'boolean'
+			? settings.autoLaunch
+			: true;
 	launchAtStartup(autoLaunch, false);
 	Menu.setApplicationMenu(
 		Menu.buildFromTemplate([
@@ -282,9 +270,9 @@ app.on('ready', async () => {
 					{ role: 'about', label: 'About' },
 					{ type: 'separator' },
 					{ type: 'separator' },
-					{ role: 'quit', label: 'Exit' }
-				]
-			}
+					{ role: 'quit', label: 'Exit' },
+				],
+			},
 		])
 	);
 
@@ -292,7 +280,7 @@ app.on('ready', async () => {
 	// default global
 	global.variableGlobal = {
 		API_BASE_URL: getApiBaseUrl({}),
-		IS_INTEGRATED_DESKTOP: false
+		IS_INTEGRATED_DESKTOP: false,
 	};
 	timeTrackerWindow = createTimeTrackerWindow(
 		timeTrackerWindow,
@@ -313,7 +301,7 @@ app.on('ready', async () => {
 	if (configs && configs.isSetup) {
 		global.variableGlobal = {
 			API_BASE_URL: getApiBaseUrl(configs),
-			IS_INTEGRATED_DESKTOP: configs.isLocalServer
+			IS_INTEGRATED_DESKTOP: configs.isLocalServer,
 		};
 		setupWindow = createSetupWindow(
 			setupWindow,
@@ -335,7 +323,13 @@ app.on('ready', async () => {
 	updater.checkUpdate();
 
 	removeMainListener();
-	ipcMainHandler(store, startServer, knex, { ...environment }, timeTrackerWindow);
+	ipcMainHandler(
+		store,
+		startServer,
+		knex,
+		{ ...environment },
+		timeTrackerWindow
+	);
 });
 
 app.on('window-all-closed', quit);
@@ -347,13 +341,11 @@ ipcMain.on('server_is_ready', () => {
 	const appConfig = LocalStore.getStore('configs');
 	appConfig.serverConfigConnected = true;
 	store.set({
-		configs: appConfig
+		configs: appConfig,
 	});
 	onWaitingServer = false;
 	if (!isAlreadyRun) {
-		serverDesktop = fork(
-			path.join(__dirname, './desktop-api/main.js')
-		);
+		serverDesktop = fork(path.join(__dirname, './desktop-api/main.js'));
 		removeTimerListener();
 		ipcTimer(
 			store,
@@ -398,15 +390,23 @@ ipcMain.on('restart_app', (event, arg) => {
 			const configs = LocalStore.getStore('configs');
 			global.variableGlobal = {
 				API_BASE_URL: getApiBaseUrl(configs),
-				IS_INTEGRATED_DESKTOP: configs.isLocalServer
+				IS_INTEGRATED_DESKTOP: configs.isLocalServer,
 			};
 			await startServer(configs, !!tray);
 			removeMainListener();
-			ipcMainHandler(store, startServer, knex, { ...environment }, timeTrackerWindow);
+			ipcMainHandler(
+				store,
+				startServer,
+				knex,
+				{ ...environment },
+				timeTrackerWindow
+			);
 			setupWindow.webContents.send('server_ping_restart', {
-				host: getApiBaseUrl(configs)
+				host: getApiBaseUrl(configs),
 			});
 		}
+		app.relaunch({ args: process.argv.slice(1).concat(['--relaunch']) });
+		app.exit(0);
 	}, 100);
 });
 
@@ -438,23 +438,23 @@ ipcMain.on('restart_and_update', () => {
 
 ipcMain.on('check_database_connection', async (event, arg) => {
 	let databaseOptions;
-	if (arg.db == 'postgres') {
+	if (arg.db === 'postgres' || arg.db === 'mysql') {
 		databaseOptions = {
-			client: 'pg',
+			client: arg.db === 'postgres' ? 'pg' : 'mysql',
 			connection: {
 				host: arg.dbHost,
 				user: arg.dbUsername,
 				password: arg.dbPassword,
 				database: arg.dbName,
-				port: arg.dbPort
-			}
+				port: arg.dbPort,
+			},
 		};
 	} else {
 		databaseOptions = {
 			client: 'sqlite',
 			connection: {
-				filename: sqlite3filename
-			}
+				filename: sqlite3filename,
+			},
 		};
 	}
 	const dbConn = require('knex')(databaseOptions);
@@ -465,12 +465,14 @@ ipcMain.on('check_database_connection', async (event, arg) => {
 			message:
 				arg.db === 'postgres'
 					? 'Connection to PostgresSQL DB Succeeds'
-					: 'Connection to SQLITE DB Succeeds'
+					: arg.db === 'mysql'
+					? 'Connection to MySQL DB Succeeds'
+					: 'Connection to SQLITE DB Succeeds',
 		});
 	} catch (error) {
 		event.sender.send('database_status', {
 			status: false,
-			message: error.message
+			message: error.message,
 		});
 	}
 });
@@ -512,14 +514,14 @@ app.on('before-quit', (e) => {
 		setTimeout(() => {
 			willQuit = true;
 			timeTrackerWindow.webContents.send('stop_from_tray', {
-				quitApp: true
+				quitApp: true,
 			});
 		}, 1000);
 	} else {
 		// soft download cancellation
 		try {
 			updater.cancel();
-		} catch (e) { }
+		} catch (e) {}
 		app.exit(0);
 		if (serverDesktop) serverDesktop.kill();
 		if (serverGauzy) serverGauzy.kill();
@@ -539,7 +541,7 @@ function launchAtStartup(autoLaunch, hidden) {
 		case 'darwin':
 			app.setLoginItemSettings({
 				openAtLogin: autoLaunch,
-				openAsHidden: hidden
+				openAsHidden: hidden,
 			});
 			break;
 		case 'win32':
@@ -549,18 +551,22 @@ function launchAtStartup(autoLaunch, hidden) {
 				path: app.getPath('exe'),
 				args: hidden
 					? [
-						'--processStart',
-						`"${exeName}"`,
-						'--process-start-args',
-						`"--hidden"`
-					]
-					: ['--processStart', `"${exeName}"`, '--process-start-args']
+							'--processStart',
+							`"${exeName}"`,
+							'--process-start-args',
+							`"--hidden"`,
+					  ]
+					: [
+							'--processStart',
+							`"${exeName}"`,
+							'--process-start-args',
+					  ],
 			});
 			break;
 		case 'linux':
 			app.setLoginItemSettings({
 				openAtLogin: autoLaunch,
-				openAsHidden: hidden
+				openAsHidden: hidden,
 			});
 			break;
 		default:
@@ -569,54 +575,51 @@ function launchAtStartup(autoLaunch, hidden) {
 }
 
 app.on('web-contents-created', (e, contents) => {
-	contents.on(
-		'will-redirect',
-		async (e, url) => {
-			const defaultBrowserConfig: any = {
-				title: '',
-				width: 1280,
-				height: 600,
-				webPreferences: {
-					allowRunningInsecureContent: false,
-					contextIsolation: true,
-					enableRemoteModule: true,
-					javascript: true,
-					webSecurity: false,
-					webviewTag: false
-				}
-			};
-			if (
-				[
-					'https://www.linkedin.com/oauth',
-					'https://accounts.google.com'
-				].findIndex((str) => url.indexOf(str) > -1) > -1
-			) {
-				e.preventDefault();
-				await showPopup(url, defaultBrowserConfig);
-				return;
-			}
-
-			if (url.indexOf('sign-in/success?jwt') > -1) {
-				if (popupWin) popupWin.destroy();
-				const urlParse = Url.parse(url, true);
-				const urlParsed = Url.parse(
-					urlFormat(urlParse.hash, urlParse.host),
-					true
-				);
-				const query = urlParsed.query;
-				const params = LocalStore.beforeRequestParams();
-				timeTrackerWindow.webContents.send('social_auth_success', {
-					...params,
-					token: query.jwt,
-					userId: query.userId
-				});
-			}
-
-			if (url.indexOf('/auth/register') > -1) {
-				await shell.openExternal(url);
-			}
+	contents.on('will-redirect', async (e, url) => {
+		const defaultBrowserConfig: any = {
+			title: '',
+			width: 1280,
+			height: 600,
+			webPreferences: {
+				allowRunningInsecureContent: false,
+				contextIsolation: true,
+				enableRemoteModule: true,
+				javascript: true,
+				webSecurity: false,
+				webviewTag: false,
+			},
+		};
+		if (
+			[
+				'https://www.linkedin.com/oauth',
+				'https://accounts.google.com',
+			].findIndex((str) => url.indexOf(str) > -1) > -1
+		) {
+			e.preventDefault();
+			await showPopup(url, defaultBrowserConfig);
+			return;
 		}
-	);
+
+		if (url.indexOf('sign-in/success?jwt') > -1) {
+			if (popupWin) popupWin.destroy();
+			const urlParse = Url.parse(url, true);
+			const urlParsed = Url.parse(
+				urlFormat(urlParse.hash, urlParse.host),
+				true
+			);
+			const query = urlParsed.query;
+			const params = LocalStore.beforeRequestParams();
+			timeTrackerWindow.webContents.send('social_auth_success', {
+				...params,
+				token: query.jwt,
+				userId: query.userId,
+			});
+		}
+
+		if (url.indexOf('/auth/register') > -1) {
+			await shell.openExternal(url);
+		}
+	});
 });
 
 const urlFormat = (hash: string, host: string) => {

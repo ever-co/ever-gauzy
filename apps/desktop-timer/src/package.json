@@ -116,7 +116,11 @@
 			"menuCategory": true
 		},
 		"extraResources": [
-			"./data/**/*"
+			"./data/**/*",
+			"databaseDir"
+		],
+		"extraFiles": [
+			"./**/desktop-libs/**/migrations/*"
 		]
 	},
 	"dependencies": {

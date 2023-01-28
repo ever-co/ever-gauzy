@@ -48,7 +48,7 @@ export class AccountingTemplateController extends CrudController<AccountingTempl
 	}
 
 	/**
-	 * GET count for accouting template
+	 * GET count for accounting template
 	 *
 	 * @param options
 	 * @returns
@@ -63,7 +63,7 @@ export class AccountingTemplateController extends CrudController<AccountingTempl
 	}
 
 	/**
-	 * GET accouting templates using pagination params
+	 * GET accounting templates using pagination params
 	 *
 	 * @param options
 	 * @returns
@@ -78,7 +78,7 @@ export class AccountingTemplateController extends CrudController<AccountingTempl
 	}
 
 	/**
-	 * GET accouting template
+	 * GET accounting template
 	 *
 	 * @param options
 	 * @param themeLanguage
@@ -97,7 +97,7 @@ export class AccountingTemplateController extends CrudController<AccountingTempl
 		description: 'Record not found'
 	})
 	@Get('template')
-	async getAccoutingTemplate(
+	async getAccountingTemplate(
 		@Query(new ValidationPipe({
 			transform: true,
 			whitelist: true
