@@ -1,14 +1,5 @@
 import { QueryBus } from '@nestjs/cqrs';
-import {
-	Controller,
-	Get,
-	HttpCode,
-	HttpStatus,
-	Query,
-	UseGuards,
-	UsePipes,
-	ValidationPipe,
-} from '@nestjs/common';
+import { Controller, Get, HttpCode, HttpStatus, Query, UseGuards, UsePipes, ValidationPipe } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import {
 	IPagination,
@@ -16,7 +7,7 @@ import {
 	ITaskStatus,
 	ITaskStatusCreateInput,
 	ITaskStatusFindInput,
-	ITaskStatusUpdateInput,
+	ITaskStatusUpdateInput
 } from '@gauzy/contracts';
 import { TenantPermissionGuard } from './../../shared/guards';
 import { CountQueryDTO } from './../../shared/dto';
@@ -24,11 +15,7 @@ import { CrudFactory, PaginationParams } from './../../core/crud';
 import { TaskStatusService } from './status.service';
 import { TaskStatus } from './status.entity';
 import { FindStatusesQuery } from './queries';
-import {
-	CreateStatusDTO,
-	StatusQuerDTO,
-	UpdatesStatusDTO,
-} from './dto';
+import { CreateStatusDTO, StatusQuerDTO, UpdatesStatusDTO } from './dto';
 
 @UseGuards(TenantPermissionGuard)
 @ApiTags('Task Status')
@@ -39,16 +26,8 @@ export class TaskStatusController extends CrudFactory<
 	ITaskStatusCreateInput,
 	ITaskStatusUpdateInput,
 	ITaskStatusFindInput
->(
-	PaginationParams,
-	CreateStatusDTO,
-	UpdatesStatusDTO,
-	CountQueryDTO
-) {
-	constructor(
-		private readonly queryBus: QueryBus,
-		protected readonly taskStatusService: TaskStatusService
-	) {
+>(PaginationParams, CreateStatusDTO, UpdatesStatusDTO, CountQueryDTO) {
+	constructor(private readonly queryBus: QueryBus, protected readonly taskStatusService: TaskStatusService) {
 		super(taskStatusService);
 	}
 
@@ -67,9 +46,7 @@ export class TaskStatusController extends CrudFactory<
 	@HttpCode(HttpStatus.OK)
 	@Get()
 	@UsePipes(new ValidationPipe({ whitelist: true }))
-	async findTaskStatuses(
-		@Query() params: StatusQuerDTO
-	): Promise<IPagination<ITaskStatus>> {
+	async findTaskStatuses(@Query() params: StatusQuerDTO): Promise<IPagination<ITaskStatus>> {
 		return await this.queryBus.execute(new FindStatusesQuery(params));
 	}
 }

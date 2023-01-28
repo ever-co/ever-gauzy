@@ -1,13 +1,4 @@
-import {
-	Controller,
-	Get,
-	HttpCode,
-	HttpStatus,
-	Query,
-	UseGuards,
-	UsePipes,
-	ValidationPipe,
-} from '@nestjs/common';
+import { Controller, Get, HttpCode, HttpStatus, Query, UseGuards, UsePipes, ValidationPipe } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import {
 	IPagination,
@@ -22,11 +13,7 @@ import { TenantPermissionGuard } from './../../shared/guards';
 import { CountQueryDTO } from './../../shared/dto';
 import { TaskPriority } from './priority.entity';
 import { TaskPriorityService } from './priority.service';
-import {
-	CreateTaskPriorityDTO,
-	TaskPriorityQuerDTO,
-	UpdateTaskPriorityDTO,
-} from './dto';
+import { CreateTaskPriorityDTO, TaskPriorityQuerDTO, UpdateTaskPriorityDTO } from './dto';
 
 @UseGuards(TenantPermissionGuard)
 @ApiTags('Task Priority')
@@ -37,15 +24,8 @@ export class TaskPriorityController extends CrudFactory<
 	ITaskPriorityCreateInput,
 	ITaskPriorityUpdateInput,
 	ITaskPriorityFindInput
->(
-	PaginationParams,
-	CreateTaskPriorityDTO,
-	UpdateTaskPriorityDTO,
-	CountQueryDTO
-) {
-	constructor(
-		protected readonly taskPriorityService: TaskPriorityService
-	) {
+>(PaginationParams, CreateTaskPriorityDTO, UpdateTaskPriorityDTO, CountQueryDTO) {
+	constructor(protected readonly taskPriorityService: TaskPriorityService) {
 		super(taskPriorityService);
 	}
 
