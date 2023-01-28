@@ -86,10 +86,11 @@
 						<div class="row">
 							<div class="col-12 form-group">
 								<label>Project</label>
-								<ng-select [addTag]="addProject" addTagText="Add project"
-									[class]="errors.project ? 'error-border' : ''" [clearable]="true"
-									placeholder="Project" [(ngModel)]="projectSelect" [items]="projects$ | async"
-									bindValue="id" bindLabel="name" (ngModelChange)="setProject($event)">
+								<ng-select [addTag]="(hasProjectPermission$ | async) ? addProject: null"
+									addTagText="Add project" [class]="errors.project ? 'error-border' : ''"
+									[clearable]="true" placeholder="Project" [(ngModel)]="projectSelect"
+									[items]="projects$ | async" bindValue="id" bindLabel="name"
+									(ngModelChange)="setProject($event)">
 									<ng-template ng-option-tmp let-item="item" let-index="index">
 										<img *ngIf="item.imageUrl" [src]="item?.imageUrl" width="20px" height="20px" />
 										<span>
@@ -111,10 +112,10 @@
 						<div class="row">
 							<div class="col-12 form-group" *ngIf="!isExpand">
 								<label>Task</label>
-								<ng-select [addTag]="addNewTask" addTagText="Add task"
-									[class]="errors.task ? 'error-border' : ''" [clearable]="true" placeholder="Task"
-									[(ngModel)]="taskSelect" [items]="tasks$ | async" bindValue="id" bindLabel="title"
-									(ngModelChange)="setTask($event)">
+								<ng-select [addTag]="(hasTaskPermission$ | async)  ? addNewTask: null"
+									addTagText="Add task" [class]="errors.task ? 'error-border' : ''" [clearable]="true"
+									placeholder="Task" [(ngModel)]="taskSelect" [items]="tasks$ | async" bindValue="id"
+									bindLabel="title" (ngModelChange)="setTask($event)">
 									<ng-template ng-option-tmp let-item="item">
 										<span>
 											{{item?.taskNumber}} {{ item?.title }}
@@ -224,8 +225,11 @@
 					<nb-card-body>
 						<div class="row">
 							<div class="col-12 search">
-								<button nbButton [disabled]="isOffline$ | async" class="mb-2" status="success"
-									(click)="addTask()">
+								<button nbButton nbTooltipStatus="warning"
+									nbTooltip="Request authorization from the organization administrator"
+									nbTooltipStatus="warning" [nbTooltipDisabled]="(hasTaskPermission$ | async) "
+									[disabled]="(isOffline$ | async) || !(hasTaskPermission$ | async) " class="mb-2"
+									status="success" (click)="addTask()">
 									<nb-icon icon="plus" pack="font-awesome"></nb-icon>Add
 								</button>
 							</div>
@@ -259,9 +263,9 @@
 						</div>
 					</nb-card-body>
 				</nb-card>
-				<ngx-tasks *ngIf="isAddTask" [selectedProject]="selectedProject" [userData]="argFromMain"
-					[employee]="userData" (isAddTask)="cloasAddTask($event)"
-					(newTaskCallback)="callbackNewTask($event)"></ngx-tasks>
+				<ngx-tasks *ngIf="isAddTask" [hasProjectPermission]="(hasProjectPermission$ | async)"
+					[selectedProject]="selectedProject" [userData]="argFromMain" [employee]="userData"
+					(isAddTask)="cloasAddTask($event)" (newTaskCallback)="callbackNewTask($event)"></ngx-tasks>
 			</div>
 		</div>
 	</nb-layout-column>

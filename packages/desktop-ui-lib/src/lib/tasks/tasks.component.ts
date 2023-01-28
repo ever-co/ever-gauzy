@@ -24,6 +24,7 @@ Object.assign(console, log.functions);
 export class TasksComponent implements OnInit {
 	@Input() userData: IUserOrganization;
 	@Input() employee: IEmployee;
+	@Input() hasProjectPermission: boolean;
 	@Input() selectedProject: IOrganizationProject;
 	@Output() isAddTask: EventEmitter<boolean> = new EventEmitter();
 	@Output() newTaskCallback: EventEmitter<{

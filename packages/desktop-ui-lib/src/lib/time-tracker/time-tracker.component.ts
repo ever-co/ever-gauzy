@@ -20,11 +20,15 @@ import * as _ from 'underscore';
 import { CustomRenderComponent } from './custom-render-cell.component';
 import { LocalDataSource, Ng2SmartTableComponent } from 'ng2-smart-table';
 import { DomSanitizer } from '@angular/platform-browser';
-import { BehaviorSubject, Observable, tap } from 'rxjs';
+import { BehaviorSubject, filter, Observable, Subject, tap } from 'rxjs';
 import { ElectronService } from '../electron/services';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import 'moment-duration-format';
-import { ITask, TaskStatusEnum } from 'packages/contracts/dist';
+import {
+	ITask,
+	PermissionsEnum,
+	TaskStatusEnum,
+} from 'packages/contracts/dist';
 
 // Import logging for electron and override default console logging
 const log = window.require('electron-log');
@@ -175,6 +179,13 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 	private _isOffline$: BehaviorSubject<boolean> = new BehaviorSubject(false);
 	private _inQueue$: BehaviorSubject<number> = new BehaviorSubject(0);
 	private _isRefresh$: BehaviorSubject<boolean> = new BehaviorSubject(false);
+	private _permissions$: Subject<any> = new Subject();
+
+	public hasTaskPermission$: BehaviorSubject<boolean> = new BehaviorSubject(
+		false
+	);
+	public hasProjectPermission$: BehaviorSubject<boolean> =
+		new BehaviorSubject(false);
 
 	constructor(
 		private electronService: ElectronService,
@@ -189,6 +200,18 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 			packClass: 'fas',
 			iconClassPrefix: 'fa',
 		});
+		this._permissions$
+			.pipe(
+				tap((permissions: any[]) => {
+					this.hasTaskPermission$.next(
+						permissions.includes(PermissionsEnum.ORG_TASK_ADD)
+					);
+					this.hasProjectPermission$.next(
+						permissions.includes(PermissionsEnum.ORG_PROJECT_ADD)
+					);
+				})
+			)
+			.subscribe();
 	}
 
 	public get start(): boolean {
@@ -1174,10 +1197,13 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 		this.timeTrackerService.getUserDetail(arg).then(async (res: any) => {
 			if (res.employee && res.employee.organization) {
 				this.userData = res;
-				if (res.role && res.role.userPermission) {
-					this.userPermission = res.role.userPermission.map(
-						(permission) => permission.permission
-					);
+				if (res.role && res.role.rolePermissions) {
+					this.userPermission = res.role.rolePermissions
+						.map((permission) =>
+							permission.enabled ? permission.permission : null
+						)
+						.filter((permission) => !!permission);
+					this._permissions$.next(this.userPermission);
 				}
 				this.userOrganization$.next(res.employee.organization);
 				this.electronService.ipcRenderer.send(
@@ -1865,7 +1891,6 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 			apiHost: this.apiHost,
 			projectId: this.projectSelect,
 		};
-
 		try {
 			const member: any = { ...this.userData.employee };
 			const task: any = await this.timeTrackerService.saveNewTask(data, {

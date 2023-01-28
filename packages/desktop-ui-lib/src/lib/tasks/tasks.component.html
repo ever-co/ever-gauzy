@@ -9,8 +9,9 @@
 			<div class="col-sm-6">
 				<div class="form-group">
 					<label class="label">Projects</label>
-					<ng-select [addTag]="addProject" addTagText="Add project" [clearable]="true" placeholder="Project"
-						[items]="projects" bindLabel="name" formControlName="project">
+					<ng-select [addTag]="hasProjectPermission ? addProject: null" addTagText="Add project"
+						[clearable]="true" placeholder="Project" [items]="projects" bindLabel="name"
+						formControlName="project">
 						<ng-template ng-option-tmp let-item="item" let-index="index">
 							<img *ngIf="item.imageUrl" [src]="item.imageUrl" width="20px" height="20px" />
 							<span>
