@@ -25,6 +25,7 @@ import { ElectronService } from '../electron/services';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import 'moment-duration-format';
 import {
+	ContactType,
 	IOrganizationContact,
 	ITask,
 	PermissionsEnum,
@@ -1932,10 +1933,13 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 		try {
 			const { tenantId } = this.userData;
 			const { id: organizationId } = this.userOrganization;
+			const member: any = { ...this.userData.employee };
 			const payload = {
 				name,
 				organizationId,
 				tenantId,
+				contactType: ContactType.CLIENT,
+				...(member.id && { members: [member] }),
 			};
 			const contact = await this.timeTrackerService.createNewContact(
 				payload,
