@@ -22,14 +22,14 @@ import { CreateStatusDTO, StatusQuerDTO, UpdatesStatusDTO } from './dto';
 @Controller()
 export class TaskStatusController extends CrudFactory<
 	TaskStatus,
+	IPaginationParam,
 	ITaskStatusCreateInput,
 	ITaskStatusUpdateInput,
-	IPaginationParam,
 	ITaskStatusFindInput
 >(
+	PaginationParams,
 	CreateStatusDTO,
 	UpdatesStatusDTO,
-	PaginationParams,
 	CountQueryDTO
 ) {
 	constructor(

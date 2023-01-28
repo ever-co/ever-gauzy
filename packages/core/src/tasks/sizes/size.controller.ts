@@ -20,12 +20,19 @@ import { CreateTaskSizeDTO, TaskSizeQuerDTO, UpdateTaskSizeDTO } from './dto';
 @Controller()
 export class TaskSizeController extends CrudFactory<
 	TaskSize,
+	IPaginationParam,
 	ITaskSizeCreateInput,
 	ITaskSizeUpdateInput,
-	IPaginationParam,
 	ITaskSizeFindInput
->(CreateTaskSizeDTO, UpdateTaskSizeDTO, PaginationParams, CountQueryDTO) {
-	constructor(protected readonly taskSizeService: TaskSizeService) {
+>(
+	PaginationParams,
+	CreateTaskSizeDTO,
+	UpdateTaskSizeDTO,
+	CountQueryDTO
+) {
+	constructor(
+		protected readonly taskSizeService: TaskSizeService
+	) {
 		super(taskSizeService);
 	}
 

@@ -20,12 +20,19 @@ import { CreateTaskPriorityDTO, TaskPriorityQuerDTO, UpdateTaskPriorityDTO } fro
 @Controller()
 export class TaskPriorityController extends CrudFactory<
 	TaskPriority,
+	IPaginationParam,
 	ITaskPriorityCreateInput,
 	ITaskPriorityUpdateInput,
-	IPaginationParam,
 	ITaskPriorityFindInput
->(CreateTaskPriorityDTO, UpdateTaskPriorityDTO, PaginationParams, CountQueryDTO) {
-	constructor(protected readonly taskPriorityService: TaskPriorityService) {
+>(
+	PaginationParams,
+	CreateTaskPriorityDTO,
+	UpdateTaskPriorityDTO,
+	CountQueryDTO
+) {
+	constructor(
+		protected readonly taskPriorityService: TaskPriorityService
+	) {
 		super(taskPriorityService);
 	}
 
