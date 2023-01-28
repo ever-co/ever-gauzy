@@ -128,7 +128,8 @@
         "sluggable",
         "kurkle",
         "Quer",
-        "Alexi"
+        "Alexi",
+        "icrud"
     ],
     "useGitignore": true,
     "ignorePaths": [
