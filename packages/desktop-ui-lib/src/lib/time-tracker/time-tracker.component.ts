@@ -20,11 +20,13 @@ import * as _ from 'underscore';
 import { CustomRenderComponent } from './custom-render-cell.component';
 import { LocalDataSource, Ng2SmartTableComponent } from 'ng2-smart-table';
 import { DomSanitizer } from '@angular/platform-browser';
-import { BehaviorSubject, filter, Observable, Subject, tap } from 'rxjs';
+import { async, BehaviorSubject, filter, Observable, Subject, tap } from 'rxjs';
 import { ElectronService } from '../electron/services';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import 'moment-duration-format';
 import {
+	IContact,
+	IOrganizationContact,
 	ITask,
 	PermissionsEnum,
 	TaskStatusEnum,
@@ -186,6 +188,8 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 	);
 	public hasProjectPermission$: BehaviorSubject<boolean> =
 		new BehaviorSubject(false);
+	public hasContactPermission$: BehaviorSubject<boolean> =
+		new BehaviorSubject(false);
 
 	constructor(
 		private electronService: ElectronService,
@@ -208,6 +212,9 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 					);
 					this.hasProjectPermission$.next(
 						permissions.includes(PermissionsEnum.ORG_PROJECT_ADD)
+					);
+					this.hasContactPermission$.next(
+						permissions.includes(PermissionsEnum.ORG_CONTACT_EDIT)
 					);
 				})
 			)
@@ -1918,6 +1925,33 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 				'An error occured',
 				'Gauzy Desktop Timer'
 			);
+		}
+	};
+
+	/* Creating a new contact for the organization. */
+	public addContact = async (name: IOrganizationContact['name']) => {
+		try {
+			const { tenantId } = this.userData;
+			const { id: organizationId } = this.userOrganization;
+			const payload = {
+				name,
+				organizationId,
+				tenantId,
+			};
+			const contact = await this.timeTrackerService.createNewContact(
+				payload,
+				{
+					...this.userData,
+					token: this.token,
+					apiHost: this.apiHost,
+				}
+			);
+			const contacts = this._organizationContacts$.getValue();
+			this._organizationContacts$.next(contacts.concat([contact]));
+			this.organizationContactId = contact.id;
+			this.toastrService.success('Client added successfully', 'Gauzy');
+		} catch (error) {
+			this.toastrService.danger('An error occured', 'Gauzy');
 		}
 	};
 }

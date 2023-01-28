@@ -9,6 +9,8 @@ import {
 	TimeLogType,
 	IOrganizationProjectsCreateInput,
 	IOrganizationProject,
+	IOrganizationContactCreateInput,
+	IOrganizationContact,
 } from '@gauzy/contracts';
 
 // Import logging for electron and override default console logging
@@ -740,6 +742,34 @@ export class TimeTrackerService {
 					headers: headers,
 				}
 			)
+		);
+	}
+
+	createNewContact(
+		input: IOrganizationContactCreateInput,
+		values
+	): Promise<IOrganizationContact> {
+		const headers = new HttpHeaders({
+			Authorization: `Bearer ${values.token}`,
+			'Tenant-Id': values.tenantId,
+		});
+		return firstValueFrom(
+			this.http
+				.post<IOrganizationContact>(
+					`${values.apiHost}/api/organization-contact`,
+					input,
+					{
+						headers: headers,
+					}
+				)
+				.pipe(
+					catchError((error) => {
+						error.error = {
+							...error.error,
+						};
+						return throwError(() => new Error(error));
+					})
+				)
 		);
 	}
 }

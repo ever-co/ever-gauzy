@@ -60,7 +60,8 @@
 						<div class="row">
 							<div class="col-12 form-group tp-padding">
 								<label>Client</label>
-								<ng-select [class]="
+								<ng-select [addTag]=" (hasContactPermission$ | async) ? addContact: null"
+									addTagText="Add contact" [class]="
 										errors.client ? 'error-border' : ''
 									" [clearable]="true" placeholder="Client" [(ngModel)]="organizationContactId"
 									[items]="organizationContacts$ | async" bindValue="id" bindLabel="name"
