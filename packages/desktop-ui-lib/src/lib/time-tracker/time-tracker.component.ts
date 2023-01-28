@@ -29,6 +29,7 @@ import {
 	IOrganizationContact,
 	ITask,
 	PermissionsEnum,
+	ProjectOwnerEnum,
 	TaskStatusEnum,
 } from 'packages/contracts/dist';
 
@@ -1859,8 +1860,9 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 				name,
 				organizationId,
 				tenantId,
+				owner: ProjectOwnerEnum.CLIENT,
 				...(this.organizationContactId
-					? { contactId: this.organizationContactId }
+					? { organizationContactId: this.organizationContactId }
 					: {}),
 			};
 
