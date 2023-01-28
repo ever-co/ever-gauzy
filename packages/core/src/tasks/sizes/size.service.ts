@@ -1,9 +1,10 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { DeleteResult, Repository } from 'typeorm';
-import { IOrganizationProject, IPagination, ITaskSize, ITaskSizeFindInput } from '@gauzy/contracts';
+import { IOrganizationProject, IPagination, ITaskSize, ITaskSizeFindInput, ITenant } from '@gauzy/contracts';
 import { SharedPrioritySizeService } from './../../tasks/shared-priority-size.service';
 import { TaskSize } from './size.entity';
+import { DEFAULT_GLOBAL_SIZES } from './default-global-sizes';
 
 @Injectable()
 export class TaskSizeService extends SharedPrioritySizeService<TaskSize> {
@@ -40,6 +41,26 @@ export class TaskSizeService extends SharedPrioritySizeService<TaskSize> {
 		params: ITaskSizeFindInput
 	): Promise<IPagination<ITaskSize>> {
 		return await this.findAllTaskShared(params);
+	}
+
+	/**
+	 * Create bulk task sizes for specific tenants
+	 *
+	 * @param tenants '
+	 */
+	async bulkCreateTenantsTaskSizes(tenants: ITenant[]): Promise<ITaskSize[]> {
+		const sizes: ITaskSize[] = [];
+		for (const tenant of tenants) {
+			for (const size of DEFAULT_GLOBAL_SIZES) {
+				const create = this.repository.create({
+					...size,
+					tenant,
+					isSystem: false
+				});
+				sizes.push(create);
+			}
+		}
+		return await this.repository.save(sizes);
 	}
 
 	/**
