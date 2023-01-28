@@ -168,6 +168,9 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 	};
 	tableData = [];
 	private _sourceData$: BehaviorSubject<LocalDataSource>;
+	private get _sourceData(): LocalDataSource {
+		return this._sourceData$.getValue();
+	}
 	public get sourceData$(): Observable<LocalDataSource> {
 		return this._sourceData$.asObservable();
 	}
@@ -278,7 +281,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 						}
 					}
 					this.tableData = tasks;
-					await this._sourceData$.getValue().load(this.tableData);
+					await this._sourceData.load(this.tableData);
 				}),
 				untilDestroyed(this)
 			)
@@ -1326,7 +1329,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 
 	onSearch(query: string = '') {
 		if (query) {
-			this._sourceData$.getValue().setFilter(
+			this._sourceData.setFilter(
 				[
 					{
 						field: 'title',
@@ -1336,8 +1339,8 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 				false
 			);
 		} else {
-			this._sourceData$.getValue().reset();
-			this._sourceData$.getValue().refresh();
+			this._sourceData.reset();
+			this._sourceData.refresh();
 		}
 	}
 

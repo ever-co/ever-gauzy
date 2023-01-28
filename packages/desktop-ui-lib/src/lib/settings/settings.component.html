@@ -1,7 +1,7 @@
 <nb-layout>
 	<nb-sidebar>
 		<nb-list>
-			<nb-list-item *ngFor="let menu of menus" (click)="selectMenu(menu)" [class]="
+			<nb-list-item *ngFor="let menu of menus;" (click)="selectMenu(menu)" [class]="
 					selectedMenu === menu
 						? 'menu-item menu-item-active'
 						: 'menu-item'
@@ -478,17 +478,18 @@
 												<p>Activity Watch Port</p>
 											</div>
 											<div class="col-7 form-group">
-												<input [(ngModel)]="config.awPort" type="text" nbInput fullWidth
-													status="basic" [disabled]="true" />
+												<input [disabled]="appSetting?.timerStarted" [(ngModel)]="config.awPort"
+													type="text" nbInput fullWidth status="basic" [disabled]="true" />
 											</div>
 											<div class="col-12">
-												<nb-toggle [(ngModel)]="appSetting.visibleAwOption"
+												<nb-toggle [disabled]="appSetting?.timerStarted"
+													[(ngModel)]="appSetting.visibleAwOption"
 													(ngModelChange)="toggleAwView($event)" status="basic">Visible
 													Activity Watch option on window
 												</nb-toggle>
 											</div>
 											<div class="col-12">
-												<nb-toggle [(ngModel)]="
+												<nb-toggle [disabled]="appSetting?.timerStarted" [(ngModel)]="
 													appSetting.visibleWakatimeOption
 												" (ngModelChange)="toggleWakatimeView($event)" status="basic">Visible Wakatime option on window
 												</nb-toggle>
@@ -503,6 +504,7 @@
 										<div class="row">
 											<div class="col-12">
 												<nb-toggle [(ngModel)]="autoLaunch"
+													[disabled]="appSetting?.timerStarted"
 													(ngModelChange)="toggleAutoLaunch($event)" status="basic">Automatic
 													Launch
 												</nb-toggle>
@@ -510,7 +512,7 @@
 											<div class="col-12">
 												<nb-toggle [(ngModel)]="minimizeOnStartup" (ngModelChange)="
 													toggleMinimizeOnStartup($event)
-												" status="basic" [disabled]="!autoLaunch">Minimize On Startup
+												" status="basic" [disabled]="!autoLaunch || appSetting?.timerStarted">Minimize On Startup
 												</nb-toggle>
 											</div>
 										</div>
