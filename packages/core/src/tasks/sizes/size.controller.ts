@@ -1,4 +1,5 @@
-import { Controller, Get, Query, UseGuards, UsePipes, ValidationPipe, } from '@nestjs/common';
+import { Controller, Get, HttpCode, HttpStatus, Query, UseGuards, UsePipes, ValidationPipe, } from '@nestjs/common';
+import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import {
 	IPagination,
 	IPaginationParam,
@@ -15,6 +16,7 @@ import { TaskSize } from './size.entity';
 import { CreateTaskSizeDTO, TaskSizeQuerDTO, UpdateTaskSizeDTO } from './dto';
 
 @UseGuards(TenantPermissionGuard)
+@ApiTags('Task Size')
 @Controller()
 export class TaskSizeController extends CrudFactory<
 	TaskSize,
@@ -37,10 +39,17 @@ export class TaskSizeController extends CrudFactory<
 
 	/**
 	 * GET task sizes by filters
+	 * If parameters not match, retrieve global task sizes
 	 *
 	 * @param params
 	 * @returns
 	 */
+	@ApiOperation({ summary: 'Find task sizes by filters.' })
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'Found task sizes by filters.'
+	})
+	@HttpCode(HttpStatus.OK)
 	@Get()
 	@UsePipes(new ValidationPipe({ whitelist: true }))
 	async findTaskSizes(
