@@ -358,7 +358,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 			this._ngZone.run(() => {
 				log.info(`Take Screenshot:`, arg);
 
-				const thumbSize = this.determineScreenshot(arg.screensize);
+				const thumbSize = this.determineScreenshot(arg.screenSize);
 				this.electronService.desktopCapturer
 					.getSources({
 						types: ['screen'],
@@ -466,7 +466,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 			}
 		);
 
-		this.electronService.ipcRenderer.on('device_wakeup', () =>
+		this.electronService.ipcRenderer.on('device_wake_up', () =>
 			this._ngZone.run(() => {
 				const elBtn: HTMLElement = this.btnDialogOpen.nativeElement;
 				elBtn.click();
@@ -692,7 +692,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 							});
 						}
 					} catch (error) {
-						console.log('[ERRORSYNC]', error);
+						console.log('[ERROR_SYNC]', error);
 					}
 				});
 			});
@@ -872,7 +872,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 			this.start$.next(false);
 			this.loading = false;
 		} catch (error) {
-			console.log('[ERRORSTOPTIMER]', error);
+			console.log('[ERROR_STOP_TIMER]', error);
 		}
 	}
 
@@ -1050,12 +1050,12 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 			this.errors.note = true;
 	}
 
-	doshoot() {
+	doShoot() {
 		this.electronService.ipcRenderer.send('screen_shoot');
 	}
 
-	determineScreenshot(screensize) {
-		const maxDimension = Math.max(screensize.width, screensize.height);
+	determineScreenshot(screenSize) {
+		const maxDimension = Math.max(screenSize.width, screenSize.height);
 		console.log(maxDimension);
 
 		return {
@@ -1345,7 +1345,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 	}
 
 	async getScreenshot(arg, isThumb: boolean | null = false) {
-		let thumbSize = this.determineScreenshot(arg.screensize);
+		let thumbSize = this.determineScreenshot(arg.screenSize);
 		if (isThumb)
 			thumbSize = {
 				width: 320,
@@ -1387,7 +1387,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 				return screens;
 			})
 			.catch((err) => {
-				console.log('screenshot elecctron render error', err);
+				console.log('screenshot electron render error', err);
 				return [];
 			});
 	}
@@ -1398,7 +1398,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 		let firefoxEvent: any = [];
 		try {
 			// window event
-			windowEvents = await this.timeTrackerService.collectevents(
+			windowEvents = await this.timeTrackerService.collectEvents(
 				arg.tpURL,
 				arg.tp,
 				arg.start,
@@ -1489,8 +1489,8 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 		this.screenshotNotify(arg, thumbScreenshotImg);
 
 		// updateActivities to api
-		const afktime: number = await this.getAfk(arg);
-		const duration = arg.timeUpdatePeriode * 60 - afktime;
+		const afkTime: number = await this.getAfk(arg);
+		const duration = arg.timeUpdatePeriod * 60 - afkTime;
 		let activities = null;
 		if (!arg.activities) {
 			activities = await this.getActivities(arg);
@@ -1883,7 +1883,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 		} catch (error) {
 			console.log(error);
 			this.toastrService.danger(
-				'An error occured',
+				'An error occurred',
 				'Gauzy Desktop Timer'
 			);
 		}
@@ -1927,7 +1927,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 			);
 		} catch (error) {
 			this.toastrService.danger(
-				'An error occured',
+				'An error occurred',
 				'Gauzy Desktop Timer'
 			);
 		}
@@ -1959,7 +1959,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 			this.organizationContactId = contact.id;
 			this.toastrService.success('Client added successfully', 'Gauzy');
 		} catch (error) {
-			this.toastrService.danger('An error occured', 'Gauzy');
+			this.toastrService.danger('An error occurred', 'Gauzy');
 		}
 	};
 }

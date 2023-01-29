@@ -216,7 +216,7 @@ nb-card-body {
   }
 }
 
-.pointable {
+.pointed {
   cursor: pointer;
 
   &.icon {
@@ -295,7 +295,7 @@ nb-card-body {
   overflow-y: auto;
 }
 
-.no-padding-fotter {
+.no-padding-footer {
   padding: 0px !important;
   display: flex;
   align-items: center;

@@ -271,14 +271,14 @@
 			</div>
 		</div>
 	</nb-layout-column>
-	<nb-layout-footer fixed class="no-padding-fotter footer-fixed">
+	<nb-layout-footer fixed class="no-padding-footer footer-fixed">
 		<div class="footer-button" nbButton ghost *ngIf="userData && userData.name" size="small"
 			(click)="openSetting()">
-			<nb-icon nbTooltip="Open settings" class="icon pointable" icon="cog" pack="font-awesome"></nb-icon>
-			<span class="user-label pointable">{{ userData?.name }}</span>
+			<nb-icon nbTooltip="Open settings" class="icon pointed" icon="cog" pack="font-awesome"></nb-icon>
+			<span class="user-label pointed">{{ userData?.name }}</span>
 		</div>
 		<nb-icon *ngIf="isRefresh$ | async" class="icon ml-2 mr-2 sync spin" icon="loader-outline"></nb-icon>
-		<nb-icon nbTooltip="Refresh" *ngIf="!(isRefresh$ | async)" class="icon ml-2 mr-2 pointable"
+		<nb-icon nbTooltip="Refresh" *ngIf="!(isRefresh$ | async)" class="icon ml-2 mr-2 pointed"
 			(click)="refreshTimer()" icon="redo-alt" pack="font-awesome">
 		</nb-icon>
 		<div [nbTooltip]="(isOffline$ | async) ? 'Api connectivity is down': 'Api connectivity\'s established'"
@@ -293,7 +293,7 @@
 		<div *ngIf="(inQueue$ | async)?.queue" class="sync-container">
 			<nb-badge class="sync-badge" position="top right" size="small" status="info"
 				[text]="(inQueue$ | async)?.queue"></nb-badge>
-			<nb-icon [nbTooltip]="(inQueue$ | async).isSyncing ? 'Synced in progess':' Waiting for synced'" size="tiny"
+			<nb-icon [nbTooltip]="(inQueue$ | async).isSyncing ? 'Synced in progress':' Waiting for synced'" size="tiny"
 				class="sync" [ngClass]="{spin: (inQueue$ | async)?.isSyncing }" icon="sync-alt"
 				pack="font-awesome"></nb-icon>
 		</div>

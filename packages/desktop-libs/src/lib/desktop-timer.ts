@@ -507,7 +507,7 @@ export default class TimerHandler {
 				timeTrackerWindow.webContents.send(
 					'prepare_activities_screenshot',
 					{
-						screensize: screen.getPrimaryDisplay().workAreaSize,
+						screenSize: screen.getPrimaryDisplay().workAreaSize,
 						type: 'ElectronDesktopCapturer',
 						displays: null,
 						start: lastTimeSlot.utc().format(),
@@ -518,7 +518,7 @@ export default class TimerHandler {
 						organizationId: userInfo.organizationId,
 						projectId: userInfo.projectId,
 						organizationContactId: userInfo.organizationContactId,
-						timeUpdatePeriode: appSetting.timer.updatePeriod,
+						timeUpdatePeriod: appSetting.timer.updatePeriod,
 						employeeId: userInfo.employeeId,
 						...userInfo,
 						timerId: lastTimerId,
@@ -550,7 +550,7 @@ export default class TimerHandler {
 				timeTrackerWindow.webContents.send(
 					'prepare_activities_screenshot',
 					{
-						screensize: screen.getPrimaryDisplay().workAreaSize,
+						screenSize: screen.getPrimaryDisplay().workAreaSize,
 						type: 'ScreenshotDesktopLib',
 						displays,
 						start: lastTimeSlot.utc().format(),
@@ -562,7 +562,7 @@ export default class TimerHandler {
 						projectId: userInfo.projectId,
 						organizationContactId: userInfo.organizationContactId,
 						employeeId: userInfo.employeeId,
-						timeUpdatePeriode: appSetting.timer.updatePeriod,
+						timeUpdatePeriod: appSetting.timer.updatePeriod,
 						...userInfo,
 						timerId: lastTimerId,
 						timeLogId: timeLogId,

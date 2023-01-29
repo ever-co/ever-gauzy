@@ -27,14 +27,14 @@ import { AboutComponent } from '../dialogs/about/about.component';
 })
 export class SettingsComponent implements OnInit, AfterViewInit {
 	@ViewChild('selectRef') selectProjectElement: ElementRef;
-	@ViewChild('logbox', { read: ElementRef })
+	@ViewChild('logBox', { read: ElementRef })
 	set logobox(content: ElementRef) {
 		if (content) {
-			this._logbox = content;
+			this._logBox = content;
 		}
 	}
 	@ViewChild('logUpdate') logAccordion;
-	private _logbox: ElementRef;
+	private _logBox: ElementRef;
 	private _logContents$: BehaviorSubject<any[]> = new BehaviorSubject([]);
 	public get logContents$(): Observable<any[]> {
 		return this._logContents$.asObservable();
@@ -839,9 +839,9 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 	}
 
 	private scrollToBottom() {
-		if (this.logIsOpen && this._logbox) {
-			this._logbox.nativeElement.scrollTop =
-				this._logbox.nativeElement.scrollHeight;
+		if (this.logIsOpen && this._logBox) {
+			this._logBox.nativeElement.scrollTop =
+				this._logBox.nativeElement.scrollHeight;
 		}
 	}
 

@@ -437,7 +437,7 @@ export function ipcTimer(
 				case 'ElectronDesktopCapturer':
 					timeTrackerWindow.webContents.send('take_screenshot', {
 						timeSlotId: arg.timeSlotId,
-						screensize: screen.getPrimaryDisplay().workAreaSize
+						screenSize: screen.getPrimaryDisplay().workAreaSize
 					});
 					break;
 				case 'ScreenshotDesktopLib':

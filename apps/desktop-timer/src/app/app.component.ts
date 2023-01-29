@@ -17,7 +17,7 @@ Object.assign(console, log.functions);
 @Component({
 	selector: 'gauzy-root',
 	template: '<router-outlet></router-outlet>',
-	styleUrls: ['./app.component.scss']
+	styleUrls: ['./app.component.scss'],
 })
 export class AppComponent implements OnInit, AfterViewInit {
 	constructor(
@@ -70,12 +70,12 @@ export class AppComponent implements OnInit, AfterViewInit {
 		this.electronService.ipcRenderer.on('collect_data', (event, arg) =>
 			this._ngZone.run(() => {
 				this.appService
-					.collectevents(arg.tpURL, arg.tp, arg.start, arg.end)
+					.collectEvents(arg.tpURL, arg.tp, arg.start, arg.end)
 					.then((res) => {
 						event.sender.send('data_push_activity', {
 							timerId: arg.timerId,
 							windowEvent: res,
-							type: 'APP'
+							type: 'APP',
 						});
 					});
 			})
@@ -89,7 +89,7 @@ export class AppComponent implements OnInit, AfterViewInit {
 						event.sender.send('data_push_activity', {
 							timerId: arg.timerId,
 							windowEvent: res,
-							type: 'AFK'
+							type: 'AFK',
 						});
 					});
 			})
@@ -109,7 +109,7 @@ export class AppComponent implements OnInit, AfterViewInit {
 							event.sender.send('data_push_activity', {
 								timerId: arg.timerId,
 								windowEvent: res,
-								type: 'URL'
+								type: 'URL',
 							});
 						});
 				})
@@ -129,7 +129,7 @@ export class AppComponent implements OnInit, AfterViewInit {
 							event.sender.send('data_push_activity', {
 								timerId: arg.timerId,
 								windowEvent: res,
-								type: 'URL'
+								type: 'URL',
 							});
 						});
 				})
@@ -143,7 +143,7 @@ export class AppComponent implements OnInit, AfterViewInit {
 						event.sender.send('return_time_sheet', {
 							timerId: arg.timerId,
 							timeSheetId: res.id,
-							timeLogId: result.id
+							timeLogId: result.id,
 						});
 					});
 				});
@@ -173,14 +173,14 @@ export class AppComponent implements OnInit, AfterViewInit {
 								timerId: arg.timerId,
 								timeSlotId: res.id,
 								quitApp: arg.quitApp,
-								timeLogs: timeLogs
+								timeLogs: timeLogs,
 							});
 						}
 					})
 					.catch((e) => {
 						event.sender.send('failed_save_time_slot', {
 							params: e.error.params,
-							message: e.message
+							message: e.message,
 						});
 					});
 			})
@@ -196,7 +196,7 @@ export class AppComponent implements OnInit, AfterViewInit {
 			this._ngZone.run(() => {
 				this.appService.pushToActivity(arg).then((res: any) => {
 					event.sender.send('return_activity', {
-						activityIds: arg.sourceIds
+						activityIds: arg.sourceIds,
 					});
 				});
 			})
@@ -215,7 +215,7 @@ export class AppComponent implements OnInit, AfterViewInit {
 				this.appService.setTimeLog(arg).then((res: any) => {
 					event.sender.send('return_time_log', {
 						timerId: arg.timerId,
-						timeLogId: res.id
+						timeLogId: res.id,
 					});
 				});
 			})
@@ -235,7 +235,7 @@ export class AppComponent implements OnInit, AfterViewInit {
 				this.appService.stopTimer(arg).then((res) => {
 					event.sender.send('return_toggle_api', {
 						result: res,
-						timerId: arg.timerId
+						timerId: arg.timerId,
 					});
 				});
 			})
@@ -359,7 +359,7 @@ export class AppComponent implements OnInit, AfterViewInit {
 					...arg,
 					token: arg.token,
 					userId: arg.userId,
-					tenantId: jwtParsed.tenantId
+					tenantId: jwtParsed.tenantId,
 				});
 				this.electronService.ipcRenderer.send('auth_success', {
 					token: arg.token,
@@ -368,14 +368,14 @@ export class AppComponent implements OnInit, AfterViewInit {
 					tenantId: jwtParsed.tenantId,
 					organizationId: user.employee
 						? user.employee.organizationId
-						: null
+						: null,
 				});
 			} else {
 				this.toastrService.show(
 					'Your account is not an employee',
 					`Warning`,
 					{
-						status: 'danger'
+						status: 'danger',
 					}
 				);
 			}

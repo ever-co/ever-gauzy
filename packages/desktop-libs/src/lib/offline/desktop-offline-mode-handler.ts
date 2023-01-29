@@ -63,7 +63,7 @@ export class DesktopOfflineModeHandler
 					: console.log('Waiting...'); // or waiting
 			}
 		} catch (error) {
-			console.log('CONNECTIVITYERROR', error);
+			console.log('CONNECTIVITY_ERROR', error);
 		}
 	}
 	/**

@@ -538,7 +538,7 @@ export class TimeTrackerService {
 		});
 	}
 
-	async collectevents(tpURL, tp, start, end): Promise<any> {
+	async collectEvents(tpURL, tp, start, end): Promise<any> {
 		if (!this.buckets.windowBucket) {
 			const allBuckets = await this.getAwBuckets(tpURL);
 			this.parseBuckets(allBuckets);
