@@ -11,8 +11,8 @@
 							<div class="col-12">
 								<span class="org-name">
 									{{
-									(userOrganization$ | async).name
-									? (userOrganization$ | async).name
+									(userOrganization$ | async)?.name
+									? (userOrganization$ | async)?.name
 									: 'UNKNOWN'
 									}}
 								</span>
@@ -62,19 +62,19 @@
 								<label>Client</label>
 								<ng-select [addTag]=" (hasContactPermission$ | async) ? addContact: null"
 									addTagText="Add contact" [class]="
-										errors.client ? 'error-border' : ''
+										errors?.client ? 'error-border' : ''
 									" [clearable]="true" placeholder="Client" [(ngModel)]="organizationContactId"
 									[items]="organizationContacts$ | async" bindValue="id" bindLabel="name"
 									(ngModelChange)="setClient($event, dialog)">
 									<ng-template ng-option-tmp let-item="item" let-index="index">
-										<img *ngIf="item.imageUrl" [src]="item.imageUrl" width="20px" height="20px" />
+										<img *ngIf="item?.imageUrl" [src]="item?.imageUrl" width="20px" height="20px" />
 										<span>
 											{{ item?.name }}
 										</span>
 									</ng-template>
 									<ng-template ng-label-tmp let-item="item">
 										<div class="selector-template">
-											<img *ngIf="item.imageUrl" [src]="item?.imageUrl" width="20px"
+											<img *ngIf="item?.imageUrl" [src]="item?.imageUrl" width="20px"
 												height="20px" />
 											<span>
 												{{ item?.name }}
@@ -88,19 +88,19 @@
 							<div class="col-12 form-group">
 								<label>Project</label>
 								<ng-select [addTag]="(hasProjectPermission$ | async) ? addProject: null"
-									addTagText="Add project" [class]="errors.project ? 'error-border' : ''"
+									addTagText="Add project" [class]="errors?.project ? 'error-border' : ''"
 									[clearable]="true" placeholder="Project" [(ngModel)]="projectSelect"
 									[items]="projects$ | async" bindValue="id" bindLabel="name"
 									(ngModelChange)="setProject($event)">
 									<ng-template ng-option-tmp let-item="item" let-index="index">
-										<img *ngIf="item.imageUrl" [src]="item?.imageUrl" width="20px" height="20px" />
+										<img *ngIf="item?.imageUrl" [src]="item?.imageUrl" width="20px" height="20px" />
 										<span>
 											{{ item?.name }}
 										</span>
 									</ng-template>
 									<ng-template ng-label-tmp let-item="item">
 										<div class="selector-template">
-											<img *ngIf="item.imageUrl" [src]="item?.imageUrl" width="20px"
+											<img *ngIf="item?.imageUrl" [src]="item?.imageUrl" width="20px"
 												height="20px" />
 											<span>
 												{{ item?.name }}
@@ -114,9 +114,10 @@
 							<div class="col-12 form-group" *ngIf="!isExpand">
 								<label>Task</label>
 								<ng-select [addTag]="(hasTaskPermission$ | async)  ? addNewTask: null"
-									addTagText="Add task" [class]="errors.task ? 'error-border' : ''" [clearable]="true"
-									placeholder="Task" [(ngModel)]="taskSelect" [items]="tasks$ | async" bindValue="id"
-									bindLabel="title" (ngModelChange)="setTask($event)">
+									addTagText="Add task" [class]="errors?.task ? 'error-border' : ''"
+									[clearable]="true" placeholder="Task" [(ngModel)]="taskSelect"
+									[items]="tasks$ | async" bindValue="id" bindLabel="title"
+									(ngModelChange)="setTask($event)">
 									<ng-template ng-option-tmp let-item="item">
 										<span>
 											{{item?.taskNumber}} {{ item?.title }}
@@ -136,14 +137,14 @@
 							<div class="col-12 form-group">
 								<label>Working on:</label>
 								<textarea nbInput fullWidth placeholder="Note" status="basic" [(ngModel)]="note"
-									[status]="errors.note ? 'danger' : 'basic'"
+									[status]="errors?.note ? 'danger' : 'basic'"
 									(ngModelChange)="descriptionChange($event)"></textarea>
 							</div>
 						</div>
 						<div class="row">
 							<div class="col-12" *ngIf="
 																	(appSetting$ | async) &&
-																	(appSetting$ | async).visibleAwOption
+																	(appSetting$ | async)?.visibleAwOption
 																">
 								<div class="row">
 									<div class="col-8">
@@ -158,7 +159,7 @@
 							</div>
 							<div class="col-12" *ngIf="
 																(appSetting$ | async) &&
-																(appSetting$ | async).visibleWakatimeOption
+																(appSetting$ | async)?.visibleWakatimeOption
 																">
 								<div class="row">
 									<div class="col-8">
@@ -272,7 +273,7 @@
 		</div>
 	</nb-layout-column>
 	<nb-layout-footer fixed class="no-padding-footer footer-fixed">
-		<div class="footer-button" nbButton ghost *ngIf="userData && userData.name" size="small"
+		<div class="footer-button" nbButton ghost *ngIf="userData && userData?.name" size="small"
 			(click)="openSetting()">
 			<nb-icon nbTooltip="Open settings" class="icon pointed" icon="cog" pack="font-awesome"></nb-icon>
 			<span class="user-label pointed">{{ userData?.name }}</span>
@@ -293,8 +294,8 @@
 		<div *ngIf="(inQueue$ | async)?.queue" class="sync-container">
 			<nb-badge class="sync-badge" position="top right" size="small" status="info"
 				[text]="(inQueue$ | async)?.queue"></nb-badge>
-			<nb-icon [nbTooltip]="(inQueue$ | async).isSyncing ? 'Synced in progress':' Waiting for synced'" size="tiny"
-				class="sync" [ngClass]="{spin: (inQueue$ | async)?.isSyncing }" icon="sync-alt"
+			<nb-icon [nbTooltip]="(inQueue$ | async)?.isSyncing ? 'Synced in progress':' Waiting for synced'"
+				size="tiny" class="sync" [ngClass]="{spin: (inQueue$ | async)?.isSyncing }" icon="sync-alt"
 				pack="font-awesome"></nb-icon>
 		</div>
 	</nb-layout-footer>
@@ -308,12 +309,12 @@
 		<nb-card-footer>
 			<div class="row">
 				<div class="col-3">
-					<button status="primary" nbButton (click)="ref.close(false)">
+					<button status="primary" nbButton (click)="ref?.close(false)">
 						No
 					</button>
 				</div>
 				<div class="col-3">
-					<button status="danger" nbButton (click)="ref.close(true)">
+					<button status="danger" nbButton (click)="ref?.close(true)">
 						Yes
 					</button>
 				</div>

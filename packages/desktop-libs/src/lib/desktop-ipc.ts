@@ -137,7 +137,8 @@ export function ipcMainHandler(
 		}
 		try {
 			const user = await userService.retrieve();
-			if (auth && auth.userId !== user.remoteId) {
+			console.log('Current User', user);
+			if (!user || (auth && auth.userId !== user.remoteId)) {
 				timeTrackerWindow.webContents.send('logout');
 			}
 		} catch (error) {
@@ -151,7 +152,7 @@ export function ipcMainHandler(
 				await countIntervalQueue(timeTrackerWindow, false);
 				await latestScreenshots(timeTrackerWindow);
 			} catch (error) {
-				console.log('[ERROROFFLINECHECK001]', error);
+				console.log('[ERROR_OFFLINE_CHECK]', error);
 			}
 		}, 7000);
 	});

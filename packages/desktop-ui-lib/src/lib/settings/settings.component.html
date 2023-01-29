@@ -36,8 +36,8 @@
 											<nb-icon class="all-monitor_icon" icon="monitor-outline"
 												[status]="item?.status">
 											</nb-icon>
-											<nb-icon *ngIf="item.value === 'all'" class="all-monitor_icon monitor-many"
-												icon="monitor-outline" [status]="item.status">
+											<nb-icon *ngIf="item?.value === 'all'" class="all-monitor_icon monitor-many"
+												icon="monitor-outline" [status]="item?.status">
 											</nb-icon>
 										</div>
 										<div class="col-12">
@@ -46,7 +46,7 @@
 													? 'title-tile selected'
 													: 'title-tile'
 											">
-												{{ item.title }}
+												{{ item?.title }}
 											</span>
 										</div>
 										<div class="col-12">
@@ -413,10 +413,10 @@
 													</nb-option>
 												</nb-select>
 											</div>
-											<div class="col-5 centered-text" *ngIf="config.isLocalServer">
+											<div class="col-5 centered-text" *ngIf="config?.isLocalServer">
 												<p>Local API Port</p>
 											</div>
-											<div class="col-7 form-group" *ngIf="config.isLocalServer">
+											<div class="col-7 form-group" *ngIf="config?.isLocalServer">
 												<input [(ngModel)]="config.port" type="number" nbInput fullWidth
 													[disabled]="appSetting?.timerStarted" status="basic"
 													(ngModelChange)="portChange($event, 'api')" />
@@ -428,14 +428,14 @@
 												<input [(ngModel)]="config.portUi" type="number" nbInput fullWidth
 													[disabled]="appSetting?.timerStarted" status="basic" />
 											</div>
-											<div class="col-5 centered-text" *ngIf="!config.isLocalServer">
+											<div class="col-5 centered-text" *ngIf="!config?.isLocalServer">
 												<p>Server URL</p>
 											</div>
-											<div class="col-7 form-group" *ngIf="!config.isLocalServer">
+											<div class="col-7 form-group" *ngIf="!config?.isLocalServer">
 												<input [(ngModel)]="config.serverUrl" type="text" nbInput fullWidth
 													[disabled]="
 													appSetting?.timerStarted ||
-													config.serverType === serverTypes.live
+													config?.serverType === serverTypes?.live
 												" status="basic" />
 											</div>
 										</div>
@@ -467,7 +467,7 @@
 									</nb-card-body>
 								</nb-card>
 							</div>
-							<div class="col-12" *ngIf="config.timeTrackerWindow">
+							<div class="col-12" *ngIf="config?.timeTrackerWindow">
 								<nb-card>
 									<nb-card-body>
 										<div class="row">
@@ -498,7 +498,7 @@
 									</nb-card-body>
 								</nb-card>
 							</div>
-							<div class="col-12" *ngIf="config.timeTrackerWindow">
+							<div class="col-12" *ngIf="config?.timeTrackerWindow">
 								<nb-card>
 									<nb-card-body>
 										<div class="row">
@@ -538,7 +538,7 @@
 														[class]="('fab fa-'+item?.title)|lowercase"></i>{{item?.title}}
 												</p>
 											</div>
-											<div class="col-12" *ngFor="let field of item.fields">
+											<div class="col-12" *ngFor="let field of item?.fields">
 												<div class="row">
 													<div class="col-5 centered-text">
 														<p>{{field?.name.replaceAll('_', ' ')}}</p>
@@ -597,7 +597,7 @@
 </nb-layout>
 
 <ng-template #databaseConfig let-provider="providerConfig">
-	<ng-container *ngIf="provider.db !== 'sqlite'">
+	<ng-container *ngIf="provider?.db !== 'sqlite'">
 		<div class="col-5 centered-text">
 			<p>DB Host</p>
 		</div>
