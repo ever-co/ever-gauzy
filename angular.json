@@ -829,7 +829,10 @@
               "node_modules/leaflet/dist/leaflet.css",
               "apps/server/src/assets/styles/styles.scss"
             ],
-            "scripts": []
+            "scripts": [],
+            "stylePreprocessorOptions": {
+              "includePaths": ["apps/server/src/assets/styles"]
+            }
           },
           "configurations": {
             "production": {
