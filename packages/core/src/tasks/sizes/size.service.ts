@@ -41,7 +41,11 @@ export class TaskSizeService extends TaskStatusPrioritySizeService<TaskSize> {
 	async findTaskSizes(
 		params: ITaskSizeFindInput
 	): Promise<IPagination<ITaskSize>> {
-		return await this.findAllEntities(params);
+		try {
+			return await this.findEntitiesByParams(params);
+		} catch (error) {
+			throw new BadRequestException(error);
+		}
 	}
 
 	/**
@@ -50,18 +54,22 @@ export class TaskSizeService extends TaskStatusPrioritySizeService<TaskSize> {
 	 * @param tenants
 	 */
 	async bulkCreateTenantsTaskSizes(tenants: ITenant[]): Promise<ITaskSize[]> {
-		const sizes: ITaskSize[] = [];
-		for (const tenant of tenants) {
-			for (const size of DEFAULT_GLOBAL_SIZES) {
-				const create = this.repository.create({
-					...size,
-					tenant,
-					isSystem: false
-				});
-				sizes.push(create);
+		try {
+			const sizes: ITaskSize[] = [];
+			for (const tenant of tenants) {
+				for (const size of DEFAULT_GLOBAL_SIZES) {
+					const create = this.repository.create({
+						...size,
+						tenant,
+						isSystem: false
+					});
+					sizes.push(create);
+				}
 			}
+			return await this.repository.save(sizes);
+		} catch (error) {
+			throw new BadRequestException(error);
 		}
-		return await this.repository.save(sizes);
 	}
 
 	/**
@@ -71,10 +79,10 @@ export class TaskSizeService extends TaskStatusPrioritySizeService<TaskSize> {
 	 */
 	async bulkCreateOrganizationTaskSizes(organization: IOrganization): Promise<ITaskSize[]> {
 		try {
-			const sizes: ITaskSize[] = [];
-
 			const tenantId = RequestContext.currentTenantId();
-			const { items = [] } = await this.findAllEntities({ tenantId });
+
+			const sizes: ITaskSize[] = [];
+			const { items = [] } = await this.findEntitiesByParams({ tenantId });
 
 			for (const item of items) {
 				const { tenantId, name, value, description, icon, color } = item;
@@ -105,10 +113,10 @@ export class TaskSizeService extends TaskStatusPrioritySizeService<TaskSize> {
 	 */
 	async bulkCreateOrganizationProjectSizes(project: IOrganizationProject): Promise<ITaskSize[]> {
 		try {
-			const sizes: ITaskSize[] = [];
-
 			const { tenantId, organizationId } = project;
-			const { items = [] } = await this.findAllEntities({ tenantId, organizationId });
+
+			const sizes: ITaskSize[] = [];
+			const { items = [] } = await this.findEntitiesByParams({ tenantId, organizationId });
 
 			for (const item of items) {
 				const { name, value, description, icon, color } = item;

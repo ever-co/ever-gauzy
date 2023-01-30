@@ -79,9 +79,9 @@ export class TaskPriorityService extends TaskStatusPrioritySizeService<TaskPrior
 	 */
 	async bulkCreateOrganizationTaskPriorities(organization: IOrganization): Promise<ITaskPriority[]> {
 		try {
-			const priorities: ITaskPriority[] = [];
-
 			const tenantId = RequestContext.currentTenantId();
+
+			const priorities: ITaskPriority[] = [];
 			const { items = [] } = await this.findEntitiesByParams({ tenantId });
 
 			for (const item of items) {
