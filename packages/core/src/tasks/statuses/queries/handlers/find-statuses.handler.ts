@@ -8,10 +8,10 @@ export class FindStatusesHandler implements IQueryHandler<FindStatusesQuery> {
 
 	constructor(
 		private readonly taskStatusService: TaskStatusService
-	) {}
+	) { }
 
 	async execute(query: FindStatusesQuery): Promise<IPagination<ITaskStatus>> {
 		const { options } = query;
-		return await this.taskStatusService.findAllStatuses(options);
+		return await this.taskStatusService.findTaskStatuses(options);
 	}
 }

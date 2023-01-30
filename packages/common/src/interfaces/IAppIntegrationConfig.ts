@@ -3,4 +3,5 @@ export interface IAppIntegrationConfig {
 	readonly appLogo?: string;
 	readonly appSignature?: string;
 	readonly appLink?: string;
+	readonly appEmailConfirmationUrl?: string;
 }

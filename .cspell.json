@@ -134,6 +134,11 @@
         "daterangepicker",
         "timestamptz",
         "icrud",
+		"wasabisys",
+		"FIVERR",
+		"KEYCLOAK",
+		"fbstate",
+		"IAWS",
         "metatype"
     ],
     "useGitignore": true,
