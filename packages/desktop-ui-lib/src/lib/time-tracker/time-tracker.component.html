@@ -21,8 +21,8 @@
 						<div class="row d-flex justify-content-between">
 							<div class="col-9 timer-box mt-2 pr-0 mb-2">
 								<div class="timer-container">
-									{{ (timeRun | async)?.hours }}:{{ (timeRun | async)?.minute }}:{{
-									(timeRun | async)?.second
+									{{ (timeRun$ | async)?.hours }}:{{ (timeRun$ | async)?.minute }}:{{
+									(timeRun$ | async)?.second
 									}}
 								</div>
 								<div class="mt-3 d-flex justify-content-between">

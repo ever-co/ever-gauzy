@@ -61,11 +61,14 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 		}
 	}
 	public start$: BehaviorSubject<boolean> = new BehaviorSubject(false);
-	timeRun: BehaviorSubject<any> = new BehaviorSubject({
+	private _timeRun$: BehaviorSubject<any> = new BehaviorSubject({
 		second: '00',
 		minute: '00',
 		hours: '00',
 	});
+	public get timeRun$(): Observable<any> {
+		return this._timeRun$.asObservable();
+	}
 	userData: any;
 
 	private _projects$: BehaviorSubject<any> = new BehaviorSubject([]);
@@ -768,7 +771,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 		const instantaneaous = this._lastTotalWorkedToday + value.second;
 		const instantaneousWeek = this._lastTotalWorkedWeek + value.second;
 
-		this.timeRun.next({
+		this._timeRun$.next({
 			second:
 				seconds.toString().length > 1 ? `${seconds}` : `0${seconds}`,
 			minute:
@@ -852,11 +855,6 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 				quitApp: this.quitApp,
 			});
 			this.electronService.ipcRenderer.send('update_tray_stop');
-			this.timeRun.next({
-				second: '00',
-				minute: '00',
-				hours: '00',
-			});
 			if (!this._isOffline) {
 				await this.timeTrackerService.toggleApiStop({
 					token: this.token,
@@ -871,6 +869,11 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 			}
 			this.start$.next(false);
 			this.loading = false;
+			this._timeRun$.next({
+				second: '00',
+				minute: '00',
+				hours: '00',
+			});
 		} catch (error) {
 			console.log('[ERROR_STOP_TIMER]', error);
 		}
