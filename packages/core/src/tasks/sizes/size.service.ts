@@ -44,7 +44,7 @@ export class TaskSizeService extends SharedPrioritySizeService<TaskSize> {
 	}
 
 	/**
-	 * Create bulk task sizes for specific tenants
+	 * Create bulk task sizes for tenants
 	 *
 	 * @param tenants '
 	 */
@@ -64,12 +64,12 @@ export class TaskSizeService extends SharedPrioritySizeService<TaskSize> {
 	}
 
 	/**
-	 * Create bulk task sizes for specific organization project
+	 * Create bulk task sizes for organization project
 	 *
 	 * @param project
 	 * @returns
 	 */
-	async bulkCreateOrganizationProjectSize(project: IOrganizationProject): Promise<ITaskSize[]> {
+	async bulkCreateOrganizationProjectSizes(project: IOrganizationProject): Promise<ITaskSize[]> {
 		try {
 			const sizes: ITaskSize[] = [];
 

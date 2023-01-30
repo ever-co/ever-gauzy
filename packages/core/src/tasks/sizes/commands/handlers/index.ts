@@ -1,7 +1,7 @@
-import { OrganizationProjectSizeBulkCreateHandler } from './organization-project-size-bulk-create.handler';
-import { TenantSizeBulkCreateHandler } from './tenant-size-bulk-create.handler';
+import { OrganizationTaskProjectSizeBulkCreateHandler } from './organization-project-task-size-bulk-create.handler';
+import { TenantTaskSizeBulkCreateHandler } from './tenant-task-size-bulk-create.handler';
 
 export const CommandHandlers = [
-    OrganizationProjectSizeBulkCreateHandler,
-    TenantSizeBulkCreateHandler
+    OrganizationTaskProjectSizeBulkCreateHandler,
+    TenantTaskSizeBulkCreateHandler
 ];

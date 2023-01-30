@@ -4,8 +4,8 @@ import { IOrganizationProject } from '@gauzy/contracts';
 import { OrganizationProjectCreateCommand } from '../organization-project.create.command';
 import { OrganizationProjectService } from '../../organization-project.service';
 import { OrganizationProjectStatusBulkCreateCommand } from './../../../tasks/statuses/commands';
-import { OrganizationProjectPriorityBulkCreateCommand } from './../../../tasks/priorities/commands';
-import { OrganizationProjectSizeBulkCreateCommand } from './../../../tasks/sizes/commands';
+import { OrganizationProjectTaskPriorityBulkCreateCommand } from './../../../tasks/priorities/commands';
+import { OrganizationProjectTaskSizeBulkCreateCommand } from './../../../tasks/sizes/commands';
 
 @CommandHandler(OrganizationProjectCreateCommand)
 export class OrganizationProjectCreateHandler
@@ -30,15 +30,15 @@ export class OrganizationProjectCreateHandler
 
 			// 2. Create task priorities for relative organization project.
 			await this.commandBus.execute(
-				new OrganizationProjectPriorityBulkCreateCommand(project)
+				new OrganizationProjectTaskPriorityBulkCreateCommand(project)
 			);
 
 			// 3. Create task sizes for relative organization project.
 			await this.commandBus.execute(
-				new OrganizationProjectSizeBulkCreateCommand(project)
+				new OrganizationProjectTaskSizeBulkCreateCommand(project)
 			);
 
-			return project;;
+			return project;
 		} catch (error) {
 			throw new BadRequestException(error);
 		}
