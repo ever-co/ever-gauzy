@@ -6,7 +6,7 @@ import { FileStorageProviderEnum } from '@gauzy/contracts';
 import {
 	IAppIntegrationConfig,
 	IAuth0Config,
-	IAWSConfig,
+	IAwsConfig,
 	IFacebookConfig,
 	IFiverrConfig,
 	IGithubConfig,
@@ -91,7 +91,7 @@ export interface IEnvironment {
 	THROTTLE_LIMIT?: number;
 
 	fileSystem: FileSystem;
-	awsConfig?: IAWSConfig;
+	awsConfig?: IAwsConfig;
 	wasabiConfig?: IWasabiConfig;
 
 	facebookConfig: IFacebookConfig;

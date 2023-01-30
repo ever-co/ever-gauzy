@@ -5,7 +5,7 @@ export * from './IGraphql';
 export * from './IPlugin';
 export * from './IConfig';
 
-export * from './IAWSConfig';
+export * from './IAwsConfig';
 export * from './IWasabiConfig';
 export * from './IAuth0Config';
 export * from './IFacebookConfig';
