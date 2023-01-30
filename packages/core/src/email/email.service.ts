@@ -571,7 +571,6 @@ export class EmailService extends TenantAwareCrudService<EmailEntity> {
 				...integration
 			}
 		};
-		console.log(sendOptions);
 
 		try {
 			const body = {
@@ -634,7 +633,6 @@ export class EmailService extends TenantAwareCrudService<EmailEntity> {
 				host: env.clientBaseUrl
 			}
 		};
-		console.log(sendOptions);
 
 		try {
 			const body = {
