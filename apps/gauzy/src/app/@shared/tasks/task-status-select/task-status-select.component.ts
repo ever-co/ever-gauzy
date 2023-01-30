@@ -16,7 +16,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { IOrganization, IOrganizationProject, IPagination, ITaskStatus, ITaskStatusFindInput, TaskStatusEnum } from '@gauzy/contracts';
 import { distinctUntilChange, sluggable } from '@gauzy/common-angular';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { StatusesService, Store, ToastrService } from '../../../@core/services';
+import { TaskStatusesService, Store, ToastrService } from '../../../@core/services';
 import { TranslationBaseComponent } from '../../language-base/translation-base.component';
 
 @UntilDestroy({ checkProperties: true })
@@ -123,7 +123,7 @@ export class TaskStatusSelectComponent extends TranslationBaseComponent
 	constructor(
 		public readonly translateService: TranslateService,
 		public readonly store: Store,
-		public readonly statusesService: StatusesService,
+		public readonly taskStatusesService: TaskStatusesService,
 		private readonly toastrService: ToastrService
 	) {
 		super(translateService);
@@ -183,7 +183,7 @@ export class TaskStatusSelectComponent extends TranslationBaseComponent
 		const { tenantId } = this.store.user;
 		const { id: organizationId } = this.organization;
 
-		this.statusesService.get<ITaskStatusFindInput>({
+		this.taskStatusesService.get<ITaskStatusFindInput>({
 			tenantId,
 			organizationId,
 			...(this.projectId
@@ -213,7 +213,7 @@ export class TaskStatusSelectComponent extends TranslationBaseComponent
 			const { tenantId } = this.store.user;
 			const { id: organizationId } = this.organization;
 
-			const source = this.statusesService.create({
+			const source = this.taskStatusesService.create({
 				tenantId,
 				organizationId,
 				name,

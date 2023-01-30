@@ -1,12 +1,6 @@
 import { QueryBus } from '@nestjs/cqrs';
-import {
-	Controller,
-	Get,
-	Query,
-	UseGuards,
-	UsePipes,
-	ValidationPipe,
-} from '@nestjs/common';
+import { Controller, Get, HttpCode, HttpStatus, Query, UseGuards, UsePipes, ValidationPipe } from '@nestjs/common';
+import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import {
 	IPagination,
 	IPaginationParam,
@@ -24,25 +18,17 @@ import { FindStatusesQuery } from './queries';
 import { CreateStatusDTO, StatusQuerDTO, UpdatesStatusDTO } from './dto';
 
 @UseGuards(TenantPermissionGuard)
+@ApiTags('Task Status')
 @Controller()
 export class TaskStatusController extends CrudFactory<
 	TaskStatus,
+	IPaginationParam,
 	ITaskStatusCreateInput,
 	ITaskStatusUpdateInput,
-	IPaginationParam,
 	ITaskStatusFindInput
->(
-	CreateStatusDTO,
-	UpdatesStatusDTO,
-	PaginationParams,
-	CountQueryDTO
-) {
-
-	constructor(
-		private readonly queryBus: QueryBus,
-		protected readonly taskStatusService: TaskStatusService
-	) {
-		super(taskStatusService)
+>(PaginationParams, CreateStatusDTO, UpdatesStatusDTO, CountQueryDTO) {
+	constructor(private readonly queryBus: QueryBus, protected readonly taskStatusService: TaskStatusService) {
+		super(taskStatusService);
 	}
 
 	/**
@@ -52,13 +38,15 @@ export class TaskStatusController extends CrudFactory<
 	 * @param params
 	 * @returns
 	 */
+	@ApiOperation({ summary: 'Find task statuses by filters.' })
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'Found task statuses by filters.'
+	})
+	@HttpCode(HttpStatus.OK)
 	@Get()
 	@UsePipes(new ValidationPipe({ whitelist: true }))
-	async findAllStatuses(
-		@Query() params: StatusQuerDTO
-	): Promise<IPagination<ITaskStatus>> {
-		return await this.queryBus.execute(
-			new FindStatusesQuery(params)
-		);
+	async findTaskStatuses(@Query() params: StatusQuerDTO): Promise<IPagination<ITaskStatus>> {
+		return await this.queryBus.execute(new FindStatusesQuery(params));
 	}
 }

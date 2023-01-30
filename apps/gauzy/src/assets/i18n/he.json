@@ -2396,6 +2396,8 @@
 		"ESTIMATE_HOURS": "Hours",
 		"ESTIMATE_MINUTES": "Mins",
 		"TASKS_STATUS": "עבודה",
+		"TASK_PRIORITY": "עדיפות",
+		"TASK_SIZE": "גודל",
 		"TODO": "Todo",
 		"IN_PROGRESS": "In Progress",
 		"FOR_TESTING": "For Testing",
