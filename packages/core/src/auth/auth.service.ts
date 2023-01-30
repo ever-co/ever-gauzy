@@ -1,4 +1,12 @@
-import { environment } from '@gauzy/config';
+import { CommandBus } from '@nestjs/cqrs';
+import {
+	BadRequestException,
+	Injectable,
+	InternalServerErrorException,
+	UnauthorizedException
+} from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { In, MoreThanOrEqual, Repository } from 'typeorm';
 import {
 	IUserRegistrationInput,
 	LanguagesEnum,
@@ -11,15 +19,7 @@ import {
 	IUserInviteCodeConfirmationInput,
 	PermissionsEnum
 } from '@gauzy/contracts';
-import { CommandBus } from '@nestjs/cqrs';
-import {
-	BadRequestException,
-	Injectable,
-	InternalServerErrorException,
-	UnauthorizedException
-} from '@nestjs/common';
-import { In, MoreThanOrEqual, Repository } from 'typeorm';
-import { InjectRepository } from '@nestjs/typeorm';
+import { environment } from '@gauzy/config';
 import { SocialAuthService } from '@gauzy/auth';
 import { IAppIntegrationConfig, isNotEmpty } from '@gauzy/common';
 import * as bcrypt from 'bcrypt';
@@ -246,20 +246,20 @@ export class AuthService extends SocialAuthService {
 			tenant,
 			...(input.password
 				? {
-						hash: await this.getPasswordHash(input.password)
-				  }
+					hash: await this.getPasswordHash(input.password)
+				}
 				: {}),
 			...(input.inviteId
 				? {
-						emailVerifiedAt: freshTimestamp()
-					}
+					emailVerifiedAt: freshTimestamp()
+				}
 				: {}),
 		});
 		const entity = await this.userRepository.save(create);
 		/**
 		 * Find latest register user with role
 		 */
-		const user =  await this.userRepository.findOne({
+		const user = await this.userRepository.findOne({
 			where: {
 				id: entity.id
 			},
@@ -291,13 +291,14 @@ export class AuthService extends SocialAuthService {
 		/**
 		 * Email verification
 		 */
-		const { appName, appLogo, appSignature, appLink } = input;
+		const { appName, appLogo, appSignature, appLink, appEmailConfirmationUrl } = input;
 		if (!user.emailVerifiedAt) {
 			await this.emailConfirmationService.sendEmailVerification(user, {
 				appName,
 				appLogo,
 				appSignature,
-				appLink
+				appLink,
+				appEmailConfirmationUrl
 			});
 		}
 		this.emailService.welcomeUser(
@@ -440,7 +441,7 @@ export class AuthService extends SocialAuthService {
 	public async getJwtAccessToken(request: Partial<IUser>) {
 		try {
 			const userId = request.id;
-			const user =  await this.userService.findOneByIdString(userId, {
+			const user = await this.userService.findOneByIdString(userId, {
 				relations: {
 					employee: true,
 					role: {
@@ -475,11 +476,11 @@ export class AuthService extends SocialAuthService {
 				payload.role = null;
 			}
 			const accessToken = sign(payload, environment.JWT_SECRET, {})
-        	return accessToken;
+			return accessToken;
 		} catch (error) {
 			console.log('Error while getting jwt access token', error);
 		}
-    }
+	}
 
 	/**
 	 * Get JWT refresh token
@@ -502,7 +503,7 @@ export class AuthService extends SocialAuthService {
 		} catch (error) {
 			console.log('Error while getting jwt refresh token', error);
 		}
-    }
+	}
 
 	/**
 	 * Get JWT access token from JWT refresh token
