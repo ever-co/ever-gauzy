@@ -1,7 +1,8 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { DeleteResult, Repository } from 'typeorm';
-import { IOrganizationProject, IPagination, ITaskPriority, ITaskPriorityFindInput, ITenant } from '@gauzy/contracts';
+import { IOrganization, IOrganizationProject, IPagination, ITaskPriority, ITaskPriorityFindInput, ITenant } from '@gauzy/contracts';
+import { RequestContext } from './../../core/context';
 import { SharedPrioritySizeService } from './../../tasks/shared-priority-size.service';
 import { TaskPriority } from './priority.entity';
 import { DEFAULT_GLOBAL_PRIORITIES } from './default-global-priorities';
@@ -32,7 +33,7 @@ export class TaskPriorityService extends SharedPrioritySizeService<TaskPriority>
 
 	/**
 	 * GET priorities by filters
-	 * If parameters not match, retrieve global task sizes
+	 * If parameters not match, retrieve global task priorities
 	 *
 	 * @param params
 	 * @returns
@@ -44,12 +45,12 @@ export class TaskPriorityService extends SharedPrioritySizeService<TaskPriority>
 	}
 
 	/**
-	 * Create bulk task sizes for tenants
+	 * Create bulk task priorities for tenants
 	 *
 	 * @param tenants '
 	 */
 	async bulkCreateTenantsTaskPriorities(tenants: ITenant[]): Promise<ITaskPriority[]> {
-		const sizes: ITaskPriority[] = [];
+		const priorities: ITaskPriority[] = [];
 		for (const tenant of tenants) {
 			for (const priority of DEFAULT_GLOBAL_PRIORITIES) {
 				const create = this.repository.create({
@@ -57,10 +58,43 @@ export class TaskPriorityService extends SharedPrioritySizeService<TaskPriority>
 					tenant,
 					isSystem: false
 				});
-				sizes.push(create);
+				priorities.push(create);
 			}
 		}
-		return await this.repository.save(sizes);
+		return await this.repository.save(priorities);
+	}
+
+	/**
+	 * Create bulk task priorities for organization
+	 *
+	 * @param organization
+	 */
+	async bulkCreateOrganizationTaskPriorities(organization: IOrganization): Promise<ITaskPriority[]> {
+		try {
+			const priorities: ITaskPriority[] = [];
+
+			const tenantId = RequestContext.currentTenantId();
+			const { items = [] } = await this.findAllTaskShared({ tenantId });
+
+			for (const item of items) {
+				const { tenantId, name, value, description, icon, color } = item;
+
+				const create = this.repository.create({
+					tenantId,
+					name,
+					value,
+					description,
+					icon,
+					color,
+					organization,
+					isSystem: false
+				});
+				priorities.push(create);
+			}
+			return await this.repository.save(priorities);
+		} catch (error) {
+			throw new BadRequestException(error);
+		}
 	}
 
 	/**
@@ -74,10 +108,7 @@ export class TaskPriorityService extends SharedPrioritySizeService<TaskPriority>
 			const { tenantId, organizationId } = project;
 
 			const priorities: ITaskPriority[] = [];
-			const { items = [] } = await this.findAllTaskShared({
-				tenantId,
-				organizationId
-			});
+			const { items = [] } = await this.findAllTaskShared({ tenantId, organizationId });
 
 			for (const item of items) {
 				const { name, value, description, icon, color } = item;

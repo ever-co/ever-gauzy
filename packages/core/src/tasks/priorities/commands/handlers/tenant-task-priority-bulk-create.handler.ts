@@ -11,10 +11,12 @@ export class TenantTaskPriorityBulkCreateHandler
 		private readonly taskPriorityService: TaskPriorityService
 	) { }
 
-	public async execute(command: TenantTaskPriorityBulkCreateCommand): Promise<ITaskPriority[]> {
+	public async execute(
+		command: TenantTaskPriorityBulkCreateCommand
+	): Promise<ITaskPriority[]> {
 		const { tenants } = command;
 
-		//1. Create task priorities of the tenant.
+		// Create task priorities of the tenant.
 		return await this.taskPriorityService.bulkCreateTenantsTaskPriorities(tenants);
 	}
 }

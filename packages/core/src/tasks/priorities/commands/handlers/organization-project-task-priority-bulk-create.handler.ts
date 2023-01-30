@@ -16,7 +16,7 @@ export class OrganizationProjectTaskPriorityBulkCreateHandler
 	): Promise<ITaskPriority[]> {
 		const { input } = command;
 
-		//1. Create task priorities of the organization project.
+		// Create task priorities of the organization project.
 		return await this.taskPriorityService.bulkCreateOrganizationProjectTaskPriorities(input);
 	}
 }

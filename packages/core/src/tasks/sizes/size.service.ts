@@ -1,7 +1,8 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { DeleteResult, Repository } from 'typeorm';
-import { IOrganizationProject, IPagination, ITaskSize, ITaskSizeFindInput, ITenant } from '@gauzy/contracts';
+import { IOrganization, IOrganizationProject, IPagination, ITaskSize, ITaskSizeFindInput, ITenant } from '@gauzy/contracts';
+import { RequestContext } from './../../core/context';
 import { SharedPrioritySizeService } from './../../tasks/shared-priority-size.service';
 import { TaskSize } from './size.entity';
 import { DEFAULT_GLOBAL_SIZES } from './default-global-sizes';
@@ -46,7 +47,7 @@ export class TaskSizeService extends SharedPrioritySizeService<TaskSize> {
 	/**
 	 * Create bulk task sizes for tenants
 	 *
-	 * @param tenants '
+	 * @param tenants
 	 */
 	async bulkCreateTenantsTaskSizes(tenants: ITenant[]): Promise<ITaskSize[]> {
 		const sizes: ITaskSize[] = [];
@@ -61,6 +62,39 @@ export class TaskSizeService extends SharedPrioritySizeService<TaskSize> {
 			}
 		}
 		return await this.repository.save(sizes);
+	}
+
+	/**
+	 * Create bulk task sizes for organization
+	 *
+	 * @param organization
+	 */
+	async bulkCreateOrganizationTaskSizes(organization: IOrganization): Promise<ITaskSize[]> {
+		try {
+			const sizes: ITaskSize[] = [];
+
+			const tenantId = RequestContext.currentTenantId();
+			const { items = [] } = await this.findAllTaskShared({ tenantId });
+
+			for (const item of items) {
+				const { tenantId, name, value, description, icon, color } = item;
+
+				const create = this.repository.create({
+					tenantId,
+					name,
+					value,
+					description,
+					icon,
+					color,
+					organization,
+					isSystem: false
+				});
+				sizes.push(create);
+			}
+			return await this.repository.save(sizes);
+		} catch (error) {
+			throw new BadRequestException(error);
+		}
 	}
 
 	/**
