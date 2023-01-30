@@ -78,7 +78,6 @@ export interface IEnvironment {
 	 */
 	JWT_VERIFICATION_TOKEN_SECRET?: string;
 	JWT_VERIFICATION_TOKEN_EXPIRATION_TIME?: number;
-	EMAIL_CONFIRMATION_URL?: string;
 
 	/**
 	 * Password Less Authentication Configuration
