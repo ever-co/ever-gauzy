@@ -1,3 +1,5 @@
 import { FindStatusesHandler } from './find-statuses.handler';
 
-export const QueryHandlers = [FindStatusesHandler];
+export const QueryHandlers = [
+    FindStatusesHandler
+];

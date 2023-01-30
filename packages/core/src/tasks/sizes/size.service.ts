@@ -3,12 +3,12 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { DeleteResult, Repository } from 'typeorm';
 import { IOrganization, IOrganizationProject, IPagination, ITaskSize, ITaskSizeFindInput, ITenant } from '@gauzy/contracts';
 import { RequestContext } from './../../core/context';
-import { SharedPrioritySizeService } from './../../tasks/shared-priority-size.service';
+import { TaskStatusPrioritySizeService } from '../task-status-priority-size.service';
 import { TaskSize } from './size.entity';
 import { DEFAULT_GLOBAL_SIZES } from './default-global-sizes';
 
 @Injectable()
-export class TaskSizeService extends SharedPrioritySizeService<TaskSize> {
+export class TaskSizeService extends TaskStatusPrioritySizeService<TaskSize> {
 
 	constructor(
 		@InjectRepository(TaskSize)
@@ -41,7 +41,7 @@ export class TaskSizeService extends SharedPrioritySizeService<TaskSize> {
 	async findTaskSizes(
 		params: ITaskSizeFindInput
 	): Promise<IPagination<ITaskSize>> {
-		return await this.findAllTaskShared(params);
+		return await this.findAllEntities(params);
 	}
 
 	/**
@@ -74,7 +74,7 @@ export class TaskSizeService extends SharedPrioritySizeService<TaskSize> {
 			const sizes: ITaskSize[] = [];
 
 			const tenantId = RequestContext.currentTenantId();
-			const { items = [] } = await this.findAllTaskShared({ tenantId });
+			const { items = [] } = await this.findAllEntities({ tenantId });
 
 			for (const item of items) {
 				const { tenantId, name, value, description, icon, color } = item;
@@ -108,7 +108,7 @@ export class TaskSizeService extends SharedPrioritySizeService<TaskSize> {
 			const sizes: ITaskSize[] = [];
 
 			const { tenantId, organizationId } = project;
-			const { items = [] } = await this.findAllTaskShared({ tenantId, organizationId });
+			const { items = [] } = await this.findAllEntities({ tenantId, organizationId });
 
 			for (const item of items) {
 				const { name, value, description, icon, color } = item;
