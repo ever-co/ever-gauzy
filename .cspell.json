@@ -132,7 +132,9 @@
 		"icrud",
 		"wasabisys",
 		"FIVERR",
-		"KEYCLOAK"
+		"KEYCLOAK",
+		"fbstate",
+		"IAWS"
 	],
 	"useGitignore": true,
 	"ignorePaths": [

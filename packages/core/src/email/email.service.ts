@@ -848,7 +848,7 @@ export class EmailService extends TenantAwareCrudService<EmailEntity> {
 	}
 
 	/**
-	 * Passwordless Authentication
+	 * Password Less Authentication
 	 *
 	 * @param user
 	 * @param languageCode
