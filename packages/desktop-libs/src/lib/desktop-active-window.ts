@@ -1,11 +1,10 @@
-import {EventEmitter} from "events";
-import {ICurrentApplication} from "./interfaces";
-import {CurrentApplication, DataApplication} from "./contexts";
-import moment from "moment";
-import {LocalStore} from "./desktop-store";
+import { EventEmitter } from 'events';
+import { ICurrentApplication } from './interfaces';
+import { CurrentApplication, DataApplication } from './contexts';
+import moment from 'moment';
+import { LocalStore } from './desktop-store';
 
 const activeWindow = require('active-win');
-
 
 export class DesktopActiveWindow extends EventEmitter {
 	/**
@@ -31,12 +30,7 @@ export class DesktopActiveWindow extends EventEmitter {
 		this._currentApplication = new CurrentApplication(
 			moment(new Date()).format(),
 			0,
-			new DataApplication(
-				null,
-				null,
-				null,
-				null
-			)
+			new DataApplication(null, null, null, null)
 		);
 	}
 
@@ -96,11 +90,15 @@ export class DesktopActiveWindow extends EventEmitter {
 		try {
 			const window = await activeWindow();
 			// Detect changes
-			if (window && window.owner
-				&& (window.owner.path !== this._currentApplication.data.executable)
-				|| (window.title !== this._currentApplication.data.title)
-				|| (window.url !== this._currentApplication.data.url)
-				|| anyway) {
+			if (
+				window &&
+				((window.owner &&
+					window.owner.path !==
+						this._currentApplication.data.executable) ||
+					window.title !== this._currentApplication.data.title ||
+					window.url !== this._currentApplication.data.url ||
+					anyway)
+			) {
 				this.applyNewWindow(window);
 			}
 		} catch (e) {
@@ -111,6 +109,8 @@ export class DesktopActiveWindow extends EventEmitter {
 	private get isActivityWatch(): boolean {
 		const project = LocalStore.getStore('project');
 		const setting = LocalStore.getStore('appSetting');
-		return project && project.aw && project.aw.isAw && setting.awIsConnected;
+		return (
+			project && project.aw && project.aw.isAw && setting.awIsConnected
+		);
 	}
 }

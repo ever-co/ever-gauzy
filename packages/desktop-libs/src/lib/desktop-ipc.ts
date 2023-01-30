@@ -256,7 +256,7 @@ export function ipcTimer(
 				})
 			);
 		} catch (error) {
-			console.log('[UPDATESYNCEDTIMERROR]', error);
+			console.log('[UPDATE_SYNCED_TIME_ERROR]', error);
 		}
 	});
 
