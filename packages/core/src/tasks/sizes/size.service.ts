@@ -1,12 +1,14 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { DeleteResult, Repository } from 'typeorm';
-import { IPagination, ITaskSize, ITaskSizeFindInput } from '@gauzy/contracts';
-import { SharedPrioritySizeService } from './../../tasks/shared-priority-size.service';
+import { IOrganization, IOrganizationProject, IPagination, ITaskSize, ITaskSizeFindInput, ITenant } from '@gauzy/contracts';
+import { RequestContext } from './../../core/context';
+import { TaskStatusPrioritySizeService } from '../task-status-priority-size.service';
 import { TaskSize } from './size.entity';
+import { DEFAULT_GLOBAL_SIZES } from './default-global-sizes';
 
 @Injectable()
-export class TaskSizeService extends SharedPrioritySizeService<TaskSize> {
+export class TaskSizeService extends TaskStatusPrioritySizeService<TaskSize> {
 
 	constructor(
 		@InjectRepository(TaskSize)
@@ -39,6 +41,102 @@ export class TaskSizeService extends SharedPrioritySizeService<TaskSize> {
 	async findTaskSizes(
 		params: ITaskSizeFindInput
 	): Promise<IPagination<ITaskSize>> {
-		return await this.findAllTaskShared(params);
+		try {
+			return await this.findEntitiesByParams(params);
+		} catch (error) {
+			throw new BadRequestException(error);
+		}
+	}
+
+	/**
+	 * Create bulk task sizes for tenants
+	 *
+	 * @param tenants
+	 */
+	async bulkCreateTenantsTaskSizes(tenants: ITenant[]): Promise<ITaskSize[]> {
+		try {
+			const sizes: ITaskSize[] = [];
+			for (const tenant of tenants) {
+				for (const size of DEFAULT_GLOBAL_SIZES) {
+					const create = this.repository.create({
+						...size,
+						tenant,
+						isSystem: false
+					});
+					sizes.push(create);
+				}
+			}
+			return await this.repository.save(sizes);
+		} catch (error) {
+			throw new BadRequestException(error);
+		}
+	}
+
+	/**
+	 * Create bulk task sizes for organization
+	 *
+	 * @param organization
+	 */
+	async bulkCreateOrganizationTaskSizes(organization: IOrganization): Promise<ITaskSize[]> {
+		try {
+			const tenantId = RequestContext.currentTenantId();
+
+			const sizes: ITaskSize[] = [];
+			const { items = [] } = await this.findEntitiesByParams({ tenantId });
+
+			for (const item of items) {
+				const { tenantId, name, value, description, icon, color } = item;
+
+				const create = this.repository.create({
+					tenantId,
+					name,
+					value,
+					description,
+					icon,
+					color,
+					organization,
+					isSystem: false
+				});
+				sizes.push(create);
+			}
+			return await this.repository.save(sizes);
+		} catch (error) {
+			throw new BadRequestException(error);
+		}
+	}
+
+	/**
+	 * Create bulk task sizes for organization project
+	 *
+	 * @param project
+	 * @returns
+	 */
+	async bulkCreateOrganizationProjectSizes(project: IOrganizationProject): Promise<ITaskSize[]> {
+		try {
+			const { tenantId, organizationId } = project;
+
+			const sizes: ITaskSize[] = [];
+			const { items = [] } = await this.findEntitiesByParams({ tenantId, organizationId });
+
+			for (const item of items) {
+				const { name, value, description, icon, color } = item;
+
+				const create = this.repository.create({
+					tenantId,
+					organizationId,
+					name,
+					value,
+					description,
+					icon,
+					color,
+					project,
+					isSystem: false
+				});
+				sizes.push(create);
+			}
+			return await this.repository.save(sizes);
+		} catch (error) {
+			throw new BadRequestException(error);
+		}
 	}
 }
