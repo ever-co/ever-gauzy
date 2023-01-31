@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { FileStorageProviderEnum, ITenantSetting, IUser, IWasabiFileStorageProviderConfig, PermissionsEnum } from '@gauzy/contracts';
+import { FileStorageProviderEnum, ITenantSetting, IUser, IWasabiFileStorageProviderConfig, PermissionsEnum, SMTPSecureEnum } from '@gauzy/contracts';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
 import { isNotEmpty } from '@gauzy/common-angular';
@@ -19,6 +19,10 @@ import { HttpStatusCode } from '@angular/common/http';
 export class FileStorageComponent extends TranslationBaseComponent
 	implements OnInit {
 
+	secureOptions = [
+		{ label: SMTPSecureEnum.TRUE, value: "true" },
+		{ label: SMTPSecureEnum.FALSE, value: "false" }
+	];
 	PermissionsEnum = PermissionsEnum;
 	FileStorageProviderEnum = FileStorageProviderEnum;
 	user: IUser;
@@ -108,7 +112,8 @@ export class FileStorageComponent extends TranslationBaseComponent
 			properties.push(...[
 				'cloudinary_cloud_name',
 				'cloudinary_api_key',
-				'cloudinary_api_secret'
+				'cloudinary_api_secret',
+				'cloudinary_api_secure'
 			]);
 		} else {
 			settings = {
@@ -139,4 +144,11 @@ export class FileStorageComponent extends TranslationBaseComponent
 			wasabi_aws_bucket: 'gauzy'
 		}
 	}
+
+	/**
+	 * On changed file storage provider
+	 *
+	 * @param provider
+	 */
+	onProviderChanged(provider: FileStorageProviderEnum) {}
 }

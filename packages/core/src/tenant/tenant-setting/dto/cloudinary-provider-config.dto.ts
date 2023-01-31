@@ -1,5 +1,5 @@
 import { ApiProperty } from "@nestjs/swagger";
-import { IsNotEmpty, ValidateIf } from "class-validator";
+import { IsNotEmpty, IsOptional, ValidateIf } from "class-validator";
 import { FileStorageProviderEnum, ICloudinaryFileStorageProviderConfig } from "@gauzy/contracts";
 import { Transform, TransformFnParams } from "class-transformer";
 import { IsSecret } from "./../../../core/decorators";
@@ -28,4 +28,9 @@ export class CloudinaryProviderConfigDTO implements ICloudinaryFileStorageProvid
     @IsNotEmpty()
     @IsSecret()
     readonly cloudinary_api_secret: string;
+
+    @ApiProperty({ type: () => String })
+    @ValidateIf((it) => it.fileStorageProvider === FileStorageProviderEnum.CLOUDINARY)
+    @IsOptional()
+    readonly cloudinary_api_secure: string;
 }

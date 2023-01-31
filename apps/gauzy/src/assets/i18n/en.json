@@ -3910,12 +3910,14 @@
 			"LABELS": {
 				"CLOUD_NAME": "Cloudinary name",
 				"ACCESS_API_KEY": "Access key id",
-				"ACCESS_API_SECRET": "Secret access key"
+				"ACCESS_API_SECRET": "Secret access key",
+				"SECURE": "Secure"
 			},
 			"PLACEHOLDERS": {
 				"CLOUD_NAME": "Cloudinary name",
 				"ACCESS_API_KEY": "Access key id",
-				"ACCESS_API_SECRET": "Secret access key"
+				"ACCESS_API_SECRET": "Secret access key",
+				"SECURE": "Secure"
 			}
 		}
 	},

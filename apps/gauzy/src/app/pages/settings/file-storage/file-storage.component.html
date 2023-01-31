@@ -7,7 +7,9 @@
 				</h4>
 			</nb-card-header>
 			<nb-card-body>
-				<file-provider-selector [settings]="settings"></file-provider-selector>
+				<file-provider-selector
+					[settings]="settings"
+				></file-provider-selector>
 				<ng-container [ngSwitch]="settings.fileStorageProvider">
 					<ng-container
 						*ngSwitchCase="FileStorageProviderEnum.S3"
@@ -302,6 +304,32 @@
 						"
 						required
 					/>
+				</div>
+			</div>
+			<div class="form-group row">
+				<label class="label col-3 col-xl-2" for="cloudinary_api_secure">
+					{{ 'SETTINGS_FILE_STORAGE.CLOUDINARY.LABELS.SECURE' | translate }}
+				</label>
+				<div class="col-9 col-xl-4">
+					<nb-select
+						id="cloudinary_api_secure"
+						name="cloudinary_api_secure"
+						[(ngModel)]="settings.cloudinary_api_secure"
+						fullWidth
+						class="w-100"
+						[placeholder]="
+							'SETTINGS_FILE_STORAGE.CLOUDINARY.PLACEHOLDERS.SECURE'
+								| translate
+						"
+						required
+					>
+						<nb-option
+							*ngFor="let secure of secureOptions"
+							[value]="secure.value"
+						>
+							{{ secure.label | titlecase }}
+						</nb-option>
+					</nb-select>
 				</div>
 			</div>
 		</nb-card-body>

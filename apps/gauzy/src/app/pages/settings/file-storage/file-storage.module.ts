@@ -1,6 +1,6 @@
 import { NgModule } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { NbButtonModule, NbCardModule, NbInputModule } from '@nebular/theme';
+import { NbButtonModule, NbCardModule, NbInputModule, NbSelectModule } from '@nebular/theme';
 import { NgxPermissionsModule } from 'ngx-permissions';
 import { FileProviderModule } from '../../../@shared/selectors/file-provider/file-provider.module';
 import { SharedModule } from '../../../@shared/shared.module';
@@ -20,6 +20,7 @@ import { FileStorageComponent } from './file-storage.component';
 		NbButtonModule,
 		NbCardModule,
 		NbInputModule,
+		NbSelectModule,
 		FileProviderModule
 	],
 	declarations: [
