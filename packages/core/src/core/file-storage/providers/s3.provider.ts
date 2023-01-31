@@ -27,8 +27,6 @@ export class S3Provider extends Provider<S3Provider> {
 	config: IS3Config;
 	defaultConfig: IS3Config;
 
-	fetchSetting = false;
-
 	constructor() {
 		super();
 		this.config = this.defaultConfig = {
