@@ -7,6 +7,7 @@ import {
 	IAppIntegrationConfig,
 	IAuth0Config,
 	IAwsConfig,
+	ICloudinaryConfig,
 	IFacebookConfig,
 	IFiverrConfig,
 	IGithubConfig,
@@ -93,6 +94,7 @@ export interface IEnvironment {
 	fileSystem: FileSystem;
 	awsConfig?: IAwsConfig;
 	wasabiConfig?: IWasabiConfig;
+	cloudinaryConfig?: ICloudinaryConfig;
 
 	facebookConfig: IFacebookConfig;
 	googleConfig: IGoogleConfig;
