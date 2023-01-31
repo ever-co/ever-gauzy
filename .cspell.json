@@ -215,7 +215,8 @@
         "ionicons",
         "echarts",
         "roboto",
-        "fontface"
+        "fontface",
+        "gauzydesktop"
     ],
     "useGitignore": true,
     "ignorePaths": [
