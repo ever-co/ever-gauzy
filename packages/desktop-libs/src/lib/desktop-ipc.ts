@@ -679,8 +679,8 @@ export function ipcTimer(
 
 	ipcMain.on('auth_success', async (event, arg) => {
 		try {
-			const user = new User(arg.user);
-			user.remoteId = arg.user.id;
+			const user = new User({ ...arg, ...arg.user });
+			user.remoteId = arg.userId;
 			user.organizationId = arg.organizationId;
 			await userService.save(user.toObject());
 			await latestScreenshots(timeTrackerWindow);

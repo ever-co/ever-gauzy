@@ -47,19 +47,11 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 	logIsOpen: boolean = false;
 
 	appName: string = this.electronService.remote.app.getName();
-	menus =
-		this.appName === 'gauzy-server'
-			? ['Update', 'Advanced Setting', 'About']
-			: [
-					'Screen Capture',
-					'Timer',
-					'Update',
-					'Advanced Setting',
-					'About',
-			  ];
+	menus = this.isServer
+		? ['Update', 'Advanced Setting', 'About']
+		: ['Screen Capture', 'Timer', 'Update', 'Advanced Setting', 'About'];
 	gauzyIcon =
-		this.appName === 'gauzy-desktop-timer' ||
-		this.appName === 'gauzy-server'
+		this.isDesktopTimer || this.isServer
 			? './assets/images/logos/logo_Gauzy.svg'
 			: '../assets/images/logos/logo_Gauzy.svg';
 
@@ -334,8 +326,7 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 		},
 	];
 
-	selectedMenu =
-		this.appName === 'gauzy-server' ? 'Update' : 'Screen Capture';
+	selectedMenu = this.isServer ? 'Update' : 'Screen Capture';
 
 	monitorOptionSelected = null;
 	appSetting = null;
@@ -364,16 +355,19 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 	waitRestart = false;
 	serverIsRunning = false;
 
-	serverOptions =
-		this.appName === 'gauzy-desktop-timer'
-			? [this.serverTypes.localNetwork, this.serverTypes.live]
-			: [
-					this.serverTypes.integrated,
-					this.serverTypes.localNetwork,
-					this.serverTypes.live,
-			  ];
+	serverOptions = this.isDesktopTimer
+		? [this.serverTypes.localNetwork, this.serverTypes.live]
+		: [
+				this.serverTypes.integrated,
+				this.serverTypes.localNetwork,
+				this.serverTypes.live,
+		  ];
 
-	driverOptions = ['sqlite', 'postgres', 'mysql'];
+	driverOptions = [
+		'sqlite',
+		'postgres',
+		...(this.isDesktopTimer ? ['mysql'] : []),
+	];
 	muted: boolean;
 
 	private _loading$: BehaviorSubject<boolean>;
@@ -435,7 +429,7 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 					local: false,
 				});
 				this.selectPeriod(setting.timer.updatePeriod);
-				if (this.appName !== 'gauzy-server') {
+				if (!this.isServer) {
 					this.getUserDetails();
 				}
 			})
@@ -534,7 +528,7 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 
 		this.electronService.ipcRenderer.on('goto_top_menu', () =>
 			this._ngZone.run(() => {
-				if (this.appName === 'gauzy-server') {
+				if (this.isServer) {
 					this.selectMenu('Advanced Setting');
 				} else this.selectMenu('Screen Capture');
 			})
@@ -662,7 +656,7 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 	}
 
 	restartApp() {
-		if (this.appName === 'gauzy-server' && this.serverIsRunning) {
+		if (this.isServer && this.serverIsRunning) {
 			this.restartDisable = true;
 		} else {
 			this.logout();
@@ -924,5 +918,17 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 			'change_update_strategy',
 			this._updaterServer$.getValue()
 		);
+	}
+
+	public get isDesktopTimer(): boolean {
+		return this.appName === 'gauzy-desktop-timer';
+	}
+
+	public get isDesktop(): boolean {
+		return this.appName === 'gauzy-desktop';
+	}
+
+	public get isServer(): boolean {
+		return this.appName === 'gauzy-server';
 	}
 }

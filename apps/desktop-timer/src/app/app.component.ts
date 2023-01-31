@@ -362,6 +362,7 @@ export class AppComponent implements OnInit, AfterViewInit {
 					tenantId: jwtParsed.tenantId,
 				});
 				this.electronService.ipcRenderer.send('auth_success', {
+					user: user,
 					token: arg.token,
 					userId: arg.userId,
 					employeeId: jwtParsed.employeeId,
