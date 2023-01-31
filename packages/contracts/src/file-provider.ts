@@ -45,7 +45,7 @@ export interface IWasabiFileStorageProviderConfig {
 }
 
 export interface ICloudinaryFileStorageProviderConfig {
-	cloudinary_cloud_name: string;
-	cloudinary_api_key: string;
-	cloudinary_api_secret: string;
+	cloudinary_cloud_name?: string;
+	cloudinary_api_key?: string;
+	cloudinary_api_secret?: string;
 }

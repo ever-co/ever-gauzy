@@ -6,7 +6,7 @@
         <nb-select
             class="d-block"
             size="medium"
-            [(selected)]="settings.fileStorageProvider"
+            [(ngModel)]="provider"
             (selectedChange)="onSelectionChange($event)"
         >
             <nb-option

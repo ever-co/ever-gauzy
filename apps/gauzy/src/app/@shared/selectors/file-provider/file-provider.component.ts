@@ -1,27 +1,40 @@
-import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
+import { Component, EventEmitter, forwardRef, Input, OnInit, Output } from '@angular/core';
+import { NG_VALUE_ACCESSOR } from '@angular/forms';
 import { UntilDestroy } from '@ngneat/until-destroy';
-import { FileStorageProviderEnum, ITenantSetting } from '@gauzy/contracts';
+import { FileStorageProviderEnum } from '@gauzy/contracts';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'file-provider-selector',
 	templateUrl: './file-provider.component.html',
-	styleUrls: ['./file-provider.component.scss']
+	styleUrls: ['./file-provider.component.scss'],
+	providers: [
+		{
+			provide: NG_VALUE_ACCESSOR,
+			useExisting: forwardRef(() => FileProviderComponent),
+			multi: true
+		}
+	]
 })
 export class FileProviderComponent implements OnInit {
 
 	public fileStorageProviders: { label: FileStorageProviderEnum; value: any }[] = [];
 
-	/*
-	* Getter & Setter for dynamic settings element
-	*/
-	private _settings: ITenantSetting;
-	public get settings(): ITenantSetting {
-		return this._settings;
+	/**
+	 * Getter & Setter for dynamic provider
+	 */
+	private _provider: FileStorageProviderEnum;
+	set provider(val: FileStorageProviderEnum) {
+		this._provider = val;
+		this.onChange(val);
+		this.onTouched(val);
 	}
-	@Input() public set settings(settings: ITenantSetting) {
-		this._settings = settings;
+	@Input() get provider(): FileStorageProviderEnum {
+		return this._provider;
 	}
+
+	onChange: any = () => {};
+	onTouched: any = () => {};
 
 	@Output() onSelectionChanged = new EventEmitter();
 
@@ -35,11 +48,37 @@ export class FileProviderComponent implements OnInit {
 	}
 
 	/**
+	 *
+	 * @param value
+	 */
+	writeValue(value: FileStorageProviderEnum): void {
+		if (value) {
+			this._provider = value;
+		}
+	}
+
+	/**
+	 *
+	 * @param fn
+	 */
+	registerOnChange(fn: (rating: number) => void): void {
+		this.onChange = fn;
+	}
+
+	/**
+	 *
+	 * @param fn
+	 */
+	registerOnTouched(fn: () => void): void {
+		this.onTouched = fn;
+	}
+
+	/**
 	 * On changed file storage provider
 	 *
 	 * @param provider
 	 */
-	onSelectionChange(provider: FileStorageProviderEnum) {
+	onSelectionChange(provider: FileStorageProviderEnum): void {
 		if (provider) {
 			this.onSelectionChanged.emit(provider);
 		}
