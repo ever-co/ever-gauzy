@@ -8,6 +8,7 @@
 			</nb-card-header>
 			<nb-card-body>
 				<file-provider-selector
+					(onSelectionChanged)="onProviderChanged($event)"
 					[settings]="settings"
 				></file-provider-selector>
 				<ng-container [ngSwitch]="settings.fileStorageProvider">

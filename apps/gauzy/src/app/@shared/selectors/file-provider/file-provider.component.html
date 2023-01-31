@@ -3,7 +3,12 @@
         <label class="label">
             {{ 'SETTINGS_FILE_STORAGE.FILE_PROVIDER' | translate }}
         </label>
-        <nb-select class="d-block" size="medium" [(selected)]="settings.fileStorageProvider">
+        <nb-select
+            class="d-block"
+            size="medium"
+            [(selected)]="settings.fileStorageProvider"
+            (selectedChange)="onSelectionChange($event)"
+        >
             <nb-option
                 *ngFor="let providerName of fileStorageProviders"
                 [value]="providerName.value | uppercase"

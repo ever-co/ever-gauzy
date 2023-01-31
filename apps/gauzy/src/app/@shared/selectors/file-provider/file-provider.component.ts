@@ -1,4 +1,4 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { UntilDestroy } from '@ngneat/until-destroy';
 import { FileStorageProviderEnum, ITenantSetting } from '@gauzy/contracts';
 
@@ -23,6 +23,8 @@ export class FileProviderComponent implements OnInit {
 		this._settings = settings;
 	}
 
+	@Output() onSelectionChanged = new EventEmitter();
+
 	ngOnInit(): void {
 		this.fileStorageProviders = Object.keys(FileStorageProviderEnum).map(
 			(label: FileStorageProviderEnum) => ({
@@ -30,5 +32,16 @@ export class FileProviderComponent implements OnInit {
 				value: FileStorageProviderEnum[label]
 			})
 		);
+	}
+
+	/**
+	 * On changed file storage provider
+	 *
+	 * @param provider
+	 */
+	onSelectionChange(provider: FileStorageProviderEnum) {
+		if (provider) {
+			this.onSelectionChanged.emit(provider);
+		}
 	}
 }
