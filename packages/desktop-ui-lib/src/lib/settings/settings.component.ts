@@ -28,7 +28,7 @@ import { AboutComponent } from '../dialogs/about/about.component';
 export class SettingsComponent implements OnInit, AfterViewInit {
 	@ViewChild('selectRef') selectProjectElement: ElementRef;
 	@ViewChild('logBox', { read: ElementRef })
-	set logobox(content: ElementRef) {
+	set logBox(content: ElementRef) {
 		if (content) {
 			this._logBox = content;
 		}
