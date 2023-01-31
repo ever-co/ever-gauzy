@@ -178,7 +178,7 @@ export function ipcMainHandler(
 	ipcMain.on('request_permission', async (event) => {
 		try {
 			if (process.platform === 'darwin') {
-				if (isScreenUnauthorised()) {
+				if (isScreenUnauthorized()) {
 					event.sender.send('stop_from_tray', {
 						quitApp: true,
 					});
@@ -188,7 +188,7 @@ export function ipcMainHandler(
 							types: ['screen'],
 						});
 					} catch (_) {
-						// softfail
+						// soft fail
 					}
 				}
 			}
@@ -199,7 +199,7 @@ export function ipcMainHandler(
 
 	ipcMain.on('reset_permissions', () => {
 		if (process.platform === 'darwin') {
-			if (isScreenUnauthorised()) {
+			if (isScreenUnauthorized()) {
 				const name = app.getName().split('-').join('');
 				resetPermissions({ bundleId: 'com.ever.' + name });
 			}
@@ -215,7 +215,7 @@ export function ipcMainHandler(
 	);
 }
 
-function isScreenUnauthorised() {
+function isScreenUnauthorized() {
 	return systemPreferences.getMediaAccessStatus('screen') !== 'granted';
 }
 

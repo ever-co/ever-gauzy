@@ -4,7 +4,7 @@ import { TimerData } from './desktop-timer-activity';
 import { metaData } from './desktop-wakatime';
 import { LocalStore } from './desktop-store';
 import NotificationDesktop from './desktop-notifier';
-import { detectActiveWindow, getScreeshot } from './desktop-screenshot';
+import { detectActiveWindow, getScreenshot } from './desktop-screenshot';
 import log from 'electron-log';
 import { ActivityType, TimeLogSourceEnum } from '@gauzy/contracts';
 import { DesktopEventCounter } from './desktop-event-counter';
@@ -183,7 +183,7 @@ export default class TimerHandler {
 					}
 				}
 			} catch (error) {
-				console.log('errr', error);
+				console.log('error', error);
 			}
 		}, 1000);
 	}
@@ -351,7 +351,7 @@ export default class TimerHandler {
 		const lastTimerId = this.lastTimer ? this.lastTimer.id : null;
 		let awActivities = await TimerData.getWindowEvent(knex, lastTimerId);
 
-		// get waktime heartbeats
+		// get wakatime heartbeats
 		let wakatimeHeartbeats = await metaData.getActivity(knex, {
 			start: lastTimeSlot.utc().format('YYYY-MM-DD HH:mm:ss'),
 			end: moment().utc().format('YYYY-MM-DD HH:mm:ss'),
@@ -546,7 +546,7 @@ export default class TimerHandler {
 				);
 				break;
 			case 'ScreenshotDesktopLib':
-				const displays = await getScreeshot();
+				const displays = await getScreenshot();
 				timeTrackerWindow.webContents.send(
 					'prepare_activities_screenshot',
 					{
@@ -664,7 +664,7 @@ export default class TimerHandler {
 	 */
 	async makeScreenshot(setupWindow, knex, timeTrackerWindow, quitApp) {
 		console.log(
-			`Time Slot Start/End At ${quitApp ? 'End' : 'Begining'}`,
+			`Time Slot Start/End At ${quitApp ? 'End' : 'Beginning'}`,
 			this.timeSlotStart
 		);
 		if (this.timeSlotStart) {
