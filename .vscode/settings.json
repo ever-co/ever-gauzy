@@ -4,6 +4,7 @@
 	"typescript.tsdk": "node_modules/typescript/lib",
 	"typescript.enablePromptUseWorkspaceTsdk": true,
 	"npm.packageManager": "yarn",
+	"prettier.trailingComma": "none",
 	"editor.formatOnSave": true,
 	"eslint.format.enable": true,
 	"editor.tabSize": 4,
