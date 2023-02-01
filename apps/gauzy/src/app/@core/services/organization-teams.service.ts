@@ -23,7 +23,7 @@ export class OrganizationTeamsService {
 	// TODO: Implement logic to proceed the following requests:
 	// 1) Get all employees of selected Organization and put in in the select as options;
 	// 2) Create a team with name and members (employees involved);
-	// 3) Edit team- simillar with create;
+	// 3) Edit team- similar with create;
 	// 4) Delete a team
 	// 5) Display all teams: show team name and members - avatar + full name for each member;
 

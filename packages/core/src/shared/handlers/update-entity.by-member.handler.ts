@@ -55,7 +55,7 @@ export abstract class UpdateEntityByMembersHandler {
 			}
 			return true;
 		} catch (error) {
-			console.log('Error whilw updating entity by member', error);
+			console.log('Error while updating entity by member', error);
 			throw new BadRequestException(error);
 		}
 	}

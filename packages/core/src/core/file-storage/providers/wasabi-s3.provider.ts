@@ -61,7 +61,7 @@ export class WasabiS3Provider extends Provider<WasabiS3Provider> {
 			});
 			return url;
 		} catch (error) {
-			console.log('Error while retriving singed URL:', error);
+			console.log('Error while retrieving singed URL:', error);
 		}
 	}
 
@@ -217,7 +217,7 @@ export class WasabiS3Provider extends Provider<WasabiS3Provider> {
 				endpoint: endpoint
 			});
 		} catch (error) {
-			console.log(`Error while retriving ${FileStorageProviderEnum.WASABI} instance:`, error);
+			console.log(`Error while retrieving ${FileStorageProviderEnum.WASABI} instance:`, error);
 		}
 	}
 

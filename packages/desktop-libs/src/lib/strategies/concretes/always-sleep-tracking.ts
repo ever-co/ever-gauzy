@@ -1,5 +1,5 @@
-import {BrowserWindow} from "electron";
-import {SleepTrackingStrategy} from "../abstracts/sleep-tracking-strategy";
+import { BrowserWindow } from 'electron';
+import { SleepTrackingStrategy } from '../abstracts/sleep-tracking-strategy';
 
 export class AlwaysSleepTracking extends SleepTrackingStrategy {
 	constructor(window: BrowserWindow) {
@@ -10,6 +10,6 @@ export class AlwaysSleepTracking extends SleepTrackingStrategy {
 	 * @override
 	 */
 	resume(): void {
-		this._window.webContents.send('device_wakeup');
+		this._window.webContents.send('device_wake_up');
 	}
 }

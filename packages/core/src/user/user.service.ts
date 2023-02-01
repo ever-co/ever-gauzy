@@ -316,7 +316,7 @@ export class UserService extends TenantAwareCrudService<User> {
 	}
 
 	/**
-	 * Find current loggin user details
+	 * Find current logging user details
 	 *
 	 * @param relations
 	 * @returns

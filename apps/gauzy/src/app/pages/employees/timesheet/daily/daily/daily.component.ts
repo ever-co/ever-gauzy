@@ -168,7 +168,7 @@ export class DailyComponent extends BaseSelectorFilterComponent
 				'employee.user'
 			]);
 		} catch (error) {
-			console.log('Error while retriving daily time logs entries', error);
+			console.log('Error while retrieving daily time logs entries', error);
 			this.toastrService.error(error);
 		} finally {
 			this.loading = false;

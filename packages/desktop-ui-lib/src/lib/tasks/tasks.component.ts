@@ -10,6 +10,7 @@ import {
 } from '@gauzy/contracts';
 import { NbToastrService } from '@nebular/theme';
 import { Color, rgbString } from '@kurkle/color';
+import * as moment from 'moment';
 
 const log = window.require('electron-log');
 console.log = log.log;
@@ -23,7 +24,8 @@ Object.assign(console, log.functions);
 export class TasksComponent implements OnInit {
 	@Input() userData: IUserOrganization;
 	@Input() employee: IEmployee;
-
+	@Input() hasProjectPermission: boolean;
+	@Input() selectedProject: IOrganizationProject;
 	@Output() isAddTask: EventEmitter<boolean> = new EventEmitter();
 	@Output() newTaskCallback: EventEmitter<{
 		isSuccess: boolean;
@@ -74,7 +76,10 @@ export class TasksComponent implements OnInit {
 		})();
 		this.form = new FormGroup({
 			description: new FormControl(null),
-			dueDate: new FormControl(null, Validators.required),
+			dueDate: new FormControl(
+				moment().add(1, 'day').utc().toDate(),
+				Validators.required
+			),
 			estimate: new FormControl(null),
 			estimateDays: new FormControl(null, [Validators.min(0)]),
 			estimateHours: new FormControl(null, [
@@ -87,7 +92,7 @@ export class TasksComponent implements OnInit {
 			]),
 			members: new FormControl([]),
 			organizationId: new FormControl(this.userData.organizationId),
-			project: new FormControl(null),
+			project: new FormControl(this.selectedProject),
 			projectId: new FormControl(null),
 			status: new FormControl(TaskStatusEnum.OPEN),
 			tags: new FormControl([]),
@@ -186,8 +191,7 @@ export class TasksComponent implements OnInit {
 			);
 
 			this.projects = this.projects.concat([project]);
-
-			this.toastrService.success('Project added successfully');
+			this.toastrService.success('Project added successfully', 'Gauzy');
 		} catch (error) {
 			this.toastrService.danger(error);
 		}

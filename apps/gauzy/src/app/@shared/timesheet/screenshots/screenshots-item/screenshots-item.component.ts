@@ -78,7 +78,7 @@ export class ScreenshotsItemComponent implements OnInit, OnDestroy {
 				isAllowDelete: this.isEnableDelete(timeSlot),
 				screenshots: this.screenshots
 			});
-			screenshots = _.sortBy(screenshots, 'createdAt').reverse();
+			screenshots = _.sortBy(screenshots, 'recordedAt').reverse();
 			if (screenshots.length) {
 				const [last] = screenshots;
 				this.lastScreenshot = last;

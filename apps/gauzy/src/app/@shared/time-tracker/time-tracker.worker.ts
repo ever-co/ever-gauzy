@@ -2,7 +2,7 @@
 
 // Intialize interval to null
 let interval = null;
-// retreive message post from time tracker service
+// retrieve message post from time tracker service
 addEventListener('message', ({ data }) => {
 	// if timer running, start counter
 	if (data.isRunning) {
