@@ -12,7 +12,7 @@ import {
 	IInvite,
 	IOrganizationTeam,
 	ICandidate,
-	IEmail,
+	IEmail
 } from '@gauzy/contracts';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Exclude } from 'class-transformer';
@@ -26,7 +26,7 @@ import {
 	ManyToMany,
 	JoinTable,
 	OneToOne,
-	OneToMany,
+	OneToMany
 } from 'typeorm';
 import {
 	Candidate,
@@ -37,12 +37,11 @@ import {
 	Role,
 	Tag,
 	TenantBaseEntity,
-	UserOrganization,
+	UserOrganization
 } from '../core/entities/internal';
 
 @Entity('user')
 export class User extends TenantBaseEntity implements IUser {
-
 	@ApiPropertyOptional({ type: () => String })
 	@Index()
 	@Column({ nullable: true })
@@ -96,7 +95,7 @@ export class User extends TenantBaseEntity implements IUser {
 		type: 'simple-enum',
 		nullable: true,
 		default: ComponentLayoutStyleEnum.TABLE,
-		enum: ComponentLayoutStyleEnum,
+		enum: ComponentLayoutStyleEnum
 	})
 	preferredComponentLayout?: ComponentLayoutStyleEnum;
 
@@ -136,7 +135,7 @@ export class User extends TenantBaseEntity implements IUser {
 	@ApiPropertyOptional({ type: () => Role })
 	@ManyToOne(() => Role, (role) => role.users, {
 		nullable: true,
-		onDelete: 'CASCADE',
+		onDelete: 'CASCADE'
 	})
 	@JoinColumn()
 	role?: IRole;
@@ -175,10 +174,10 @@ export class User extends TenantBaseEntity implements IUser {
 	// Tags
 	@ManyToMany(() => Tag, (tag) => tag.users, {
 		onUpdate: 'CASCADE',
-		onDelete: 'CASCADE',
+		onDelete: 'CASCADE'
 	})
 	@JoinTable({
-		name: 'tag_user',
+		name: 'tag_user'
 	})
 	tags?: ITag[];
 
@@ -192,13 +191,9 @@ export class User extends TenantBaseEntity implements IUser {
 	 * UserOrganization
 	 */
 	@ApiProperty({ type: () => UserOrganization, isArray: true })
-	@OneToMany(
-		() => UserOrganization,
-		(userOrganization) => userOrganization.user,
-		{
-			cascade: true,
-		}
-	)
+	@OneToMany(() => UserOrganization, (userOrganization) => userOrganization.user, {
+		cascade: true
+	})
 	@JoinColumn()
 	organizations?: IOrganization[];
 
@@ -218,7 +213,7 @@ export class User extends TenantBaseEntity implements IUser {
 	 * User belongs to teams
 	 */
 	@OneToMany(() => OrganizationTeam, (it) => it.createdBy, {
-		onDelete: 'CASCADE',
+		onDelete: 'CASCADE'
 	})
 	teams?: IOrganizationTeam[];
 }
