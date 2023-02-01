@@ -27,6 +27,7 @@ import {
 	EmployeeAppointment,
 	EmployeeAward,
 	EmployeeLevel,
+	EmployeePhone,
 	EmployeeProposalTemplate,
 	EmployeeRecurringExpense,
 	EmployeeSetting,
@@ -129,7 +130,7 @@ import {
 	UserOrganization,
 	Warehouse,
 	WarehouseProduct,
-	WarehouseProductVariant,
+	WarehouseProductVariant
 } from './internal';
 
 export const coreEntities = [
@@ -161,6 +162,7 @@ export const coreEntities = [
 	EmployeeAppointment,
 	EmployeeAward,
 	EmployeeLevel,
+	EmployeePhone,
 	EmployeeProposalTemplate,
 	EmployeeRecurringExpense,
 	EmployeeSetting,
@@ -263,5 +265,5 @@ export const coreEntities = [
 	UserOrganization,
 	Warehouse,
 	WarehouseProduct,
-	WarehouseProductVariant,
+	WarehouseProductVariant
 ];

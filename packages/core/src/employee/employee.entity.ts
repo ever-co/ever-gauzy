@@ -76,10 +76,9 @@ import {
 import { EmployeePhone } from 'employee-phone';
 
 @Entity('employee')
-export class Employee
-	extends TenantOrganizationBaseEntity
-	implements IEmployee
-{
+export class Employee extends TenantOrganizationBaseEntity
+	implements IEmployee {
+
 	@ApiPropertyOptional({ type: () => Date })
 	@Column({ nullable: true })
 	valueDate?: Date;
@@ -291,10 +290,10 @@ export class Employee
 	isDeleted?: boolean;
 
 	/*
-    |--------------------------------------------------------------------------
-    | @OneToOne
-    |--------------------------------------------------------------------------
-    */
+	|--------------------------------------------------------------------------
+	| @OneToOne
+	|--------------------------------------------------------------------------
+	*/
 
 	/**
 	 * User
@@ -337,10 +336,10 @@ export class Employee
 	@OneToOne(() => Candidate, (candidate) => candidate.employee)
 	candidate?: ICandidate;
 	/*
-    |--------------------------------------------------------------------------
-    | @ManyToOne
-    |--------------------------------------------------------------------------
-    */
+	|--------------------------------------------------------------------------
+	| @ManyToOne
+	|--------------------------------------------------------------------------
+	*/
 
 	// Employee Organization Position
 	@ApiProperty({ type: () => OrganizationPosition })
@@ -355,10 +354,10 @@ export class Employee
 	readonly organizationPositionId?: string;
 
 	/*
-    |--------------------------------------------------------------------------
-    | @OneToMany
-    |--------------------------------------------------------------------------
-    */
+	|--------------------------------------------------------------------------
+	| @OneToMany
+	|--------------------------------------------------------------------------
+	*/
 
 	// Employee Teams
 	@ApiPropertyOptional({
@@ -446,16 +445,14 @@ export class Employee
 	 * Phone Numbers
 	 */
 	@ApiPropertyOptional({ type: () => EmployeePhone, isArray: true })
-	@OneToMany(() => EmployeePhone, (it) => it.employee, {
-		onDelete: 'SET NULL',
-	})
+	@OneToMany(() => EmployeePhone, (it) => it.employee)
 	phoneNumbers?: IEmployeePhone[];
 
 	/*
-    |--------------------------------------------------------------------------
-    | @ManyToMany
-    |--------------------------------------------------------------------------
-    */
+	|--------------------------------------------------------------------------
+	| @ManyToMany
+	|--------------------------------------------------------------------------
+	*/
 
 	/**
 	 * Employee Organization Projects
