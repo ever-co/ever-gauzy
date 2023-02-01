@@ -65,7 +65,7 @@
 										errors?.client ? 'error-border' : ''
 									" [clearable]="true" placeholder="Client" [(ngModel)]="organizationContactId"
 									[items]="organizationContacts$ | async" bindValue="id" bindLabel="name"
-									(ngModelChange)="setClient($event, dialog)">
+									(ngModelChange)="setClient($event, dialog)" (clear)="refreshTimer()">
 									<ng-template ng-option-tmp let-item="item" let-index="index">
 										<img *ngIf="item?.imageUrl" [src]="item?.imageUrl" width="20px" height="20px" />
 										<span>
@@ -91,7 +91,7 @@
 									addTagText="Add project" [class]="errors?.project ? 'error-border' : ''"
 									[clearable]="true" placeholder="Project" [(ngModel)]="projectSelect"
 									[items]="projects$ | async" bindValue="id" bindLabel="name"
-									(ngModelChange)="setProject($event)">
+									(ngModelChange)="setProject($event)" (clear)="refreshTimer()">
 									<ng-template ng-option-tmp let-item="item" let-index="index">
 										<img *ngIf="item?.imageUrl" [src]="item?.imageUrl" width="20px" height="20px" />
 										<span>
@@ -117,7 +117,7 @@
 									addTagText="Add task" [class]="errors?.task ? 'error-border' : ''"
 									[clearable]="true" placeholder="Task" [(ngModel)]="taskSelect"
 									[items]="tasks$ | async" bindValue="id" bindLabel="title"
-									(ngModelChange)="setTask($event)">
+									(ngModelChange)="setTask($event)" (clear)="refreshTimer()">
 									<ng-template ng-option-tmp let-item="item">
 										<span>
 											{{item?.taskNumber}} {{ item?.title }}
