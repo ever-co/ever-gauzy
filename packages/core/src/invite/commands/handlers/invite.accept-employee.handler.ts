@@ -9,14 +9,14 @@ import {
 	IOrganizationDepartment,
 	IOrganizationProject,
 	IOrganizationTeam,
-	IUser
+	IUser,
+	RolesEnum
 } from '@gauzy/contracts';
 import { AuthService } from '../../../auth/auth.service';
 import { InviteService } from '../../invite.service';
 import { InviteAcceptEmployeeCommand } from '../invite.accept-employee.command';
 import {
 	Employee,
-	Organization,
 	OrganizationContact,
 	OrganizationDepartment,
 	OrganizationProject,
@@ -37,7 +37,6 @@ export class InviteAcceptEmployeeHandler implements ICommandHandler<InviteAccept
 		private readonly inviteService: InviteService,
 		private readonly authService: AuthService,
 		@InjectRepository(User) private readonly userRepository: Repository<User>,
-		@InjectRepository(Organization) private readonly organizationRepository: Repository<Organization>,
 		@InjectRepository(Employee) private readonly employeeRepository: Repository<Employee>,
 		@InjectRepository(OrganizationProject) private readonly organizationProjectRepository: Repository<OrganizationProject>,
 		@InjectRepository(OrganizationContact) private readonly organizationContactRepository: Repository<OrganizationContact>,
@@ -64,18 +63,15 @@ export class InviteAcceptEmployeeHandler implements ICommandHandler<InviteAccept
 				},
 				teams: {
 					members: true
-				}
+				},
+				organization: true
 			}
 		});
 		if (!invite) {
 			throw Error('Invite does not exist');
 		}
 
-		const { organizationId, tenantId } = invite;
-		const organization = await this.organizationRepository.findOneBy({
-			id: organizationId,
-			tenantId
-		});
+		const { organization } = invite;
 		if (!organization.invitesAllowed) {
 			throw Error('Organization no longer allows invites');
 		}
@@ -86,7 +82,10 @@ export class InviteAcceptEmployeeHandler implements ICommandHandler<InviteAccept
 			user = await this.userRepository.findOneOrFail({
 				where: {
 					email,
-					tenantId
+					tenantId,
+					role: {
+						name: RolesEnum.EMPLOYEE
+					}
 				},
 				relations: {
 					employee: true
@@ -97,6 +96,7 @@ export class InviteAcceptEmployeeHandler implements ICommandHandler<InviteAccept
 			});
 			await this.updateEmployeeMemberships(invite, user.employee);
 		} catch (error) {
+			const { id: organizationId, tenantId } = organization;
 			/**
 			 * User register after accept invitation
 			 */
@@ -106,7 +106,7 @@ export class InviteAcceptEmployeeHandler implements ICommandHandler<InviteAccept
 					user: {
 						...input.user,
 						tenant: {
-							id: organization.tenantId
+							id: tenantId
 						}
 					},
 					organizationId

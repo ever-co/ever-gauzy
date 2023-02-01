@@ -10,23 +10,25 @@ import {
 	JoinTable,
 } from 'typeorm';
 import {
-	IOrganizationProject,
 	CurrenciesEnum,
-	TaskListTypeEnum,
-	IOrganizationContact,
-	IInvoiceItem,
-	ITag,
-	ITask,
-	ITimeLog,
+	IActivity,
 	IEmployee,
+	IExpense,
+	IInvoiceItem,
+	IOrganizationContact,
+	IOrganizationProject,
 	IOrganizationSprint,
 	IPayment,
+	ITag,
+	ITask,
+	ITaskPriority,
+	ITaskSize,
+	ITaskStatus,
+	ITimeLog,
 	OrganizationProjectBudgetTypeEnum,
-	IExpense,
-	IActivity,
 	ProjectBillingEnum,
 	ProjectOwnerEnum,
-	IStatus,
+	TaskListTypeEnum,
 } from '@gauzy/contracts';
 import {
 	Activity,
@@ -36,18 +38,19 @@ import {
 	OrganizationContact,
 	OrganizationSprint,
 	Payment,
-	Status,
 	Tag,
 	Task,
+	TaskPriority,
+	TaskSize,
+	TaskStatus,
 	TenantOrganizationBaseEntity,
 	TimeLog,
 } from '../core/entities/internal';
 
 @Entity('organization_project')
-export class OrganizationProject
-	extends TenantOrganizationBaseEntity
-	implements IOrganizationProject
-{
+export class OrganizationProject extends TenantOrganizationBaseEntity
+	implements IOrganizationProject {
+
 	@Index()
 	@Column()
 	name: string;
@@ -181,14 +184,25 @@ export class OrganizationProject
 	 * Activity
 	 */
 	@OneToMany(() => Activity, (activity) => activity.project)
-	@JoinColumn()
 	activities?: IActivity[];
 
 	/**
 	 * Project Statuses
 	 */
-	@OneToMany(() => Status, (status) => status.project)
-	statuses?: IStatus[];
+	@OneToMany(() => TaskStatus, (status) => status.project)
+	statuses?: ITaskStatus[];
+
+	/**
+	 * Project Priorities
+	 */
+	@OneToMany(() => TaskPriority, (priority) => priority.project)
+	priorities?: ITaskPriority[];
+
+	/**
+	 * Project Sizes
+	 */
+	@OneToMany(() => TaskSize, (size) => size.project)
+	sizes?: ITaskSize[];
 
 	/*
     |--------------------------------------------------------------------------

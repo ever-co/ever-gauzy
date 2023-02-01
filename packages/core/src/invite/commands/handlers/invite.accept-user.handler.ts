@@ -34,11 +34,7 @@ export class InviteAcceptUserHandler implements ICommandHandler<InviteAcceptUser
 			throw Error('Invite does not exist');
 		}
 
-		const organization = await this.organizationService.findOneByIdString(invite.organizationId, {
-			relations: {
-				tenant: true
-			}
-		});
+		const organization = await this.organizationService.findOneByIdString(invite.organizationId);
 		if (!organization.invitesAllowed) {
 			throw Error('Organization no longer allows invites');
 		}
@@ -56,14 +52,20 @@ export class InviteAcceptUserHandler implements ICommandHandler<InviteAcceptUser
 				}
 			});
 		} catch (error) {
+			const { id: organizationId, tenantId } = organization;
+			/**
+			 * User register after accept invitation
+			 */
 			user = await this.authService.register(
 				{
 					...input,
 					user: {
 						...input.user,
-						tenant: organization.tenant
+						tenant: {
+							id: tenantId
+						}
 					},
-					organizationId: organization.id
+					organizationId
 				},
 				languageCode
 			);

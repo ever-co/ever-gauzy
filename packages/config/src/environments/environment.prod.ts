@@ -24,14 +24,13 @@ export const environment: IEnvironment = {
 	USER_PASSWORD_BCRYPT_SALT_ROUNDS: 12,
 	JWT_SECRET: process.env.JWT_SECRET || 'secretKey',
 	JWT_REFRESH_TOKEN_SECRET: process.env.JWT_REFRESH_TOKEN_SECRET || 'refreshSecretKey',
-    JWT_REFRESH_TOKEN_EXPIRATION_TIME: parseInt(process.env.JWT_REFRESH_TOKEN_EXPIRATION_TIME) || 60 * 60 * 24,
+	JWT_REFRESH_TOKEN_EXPIRATION_TIME: parseInt(process.env.JWT_REFRESH_TOKEN_EXPIRATION_TIME) || 60 * 60 * 24,
 
 	/**
 	 * Email verification options
 	 */
 	JWT_VERIFICATION_TOKEN_SECRET: process.env.JWT_VERIFICATION_TOKEN_SECRET || 'verificationSecretKey',
 	JWT_VERIFICATION_TOKEN_EXPIRATION_TIME: parseInt(process.env.JWT_VERIFICATION_TOKEN_EXPIRATION_TIME) || 86400 * 7, // default verification expire token time (7 days)
-	EMAIL_CONFIRMATION_URL: process.env.EMAIL_CONFIRMATION_URL || 'https://app.gauzy.co/#/auth/confirm-email',
 
 	/**
 	 * Password Less Authentication Configuration
@@ -195,7 +194,8 @@ export const environment: IEnvironment = {
 		appName: process.env.APP_NAME || 'Gauzy',
 		appLogo: process.env.APP_LOGO || `${process.env.CLIENT_BASE_URL}/assets/images/logos/logo_Gauzy.png`,
 		appSignature: process.env.APP_SIGNATURE || 'Gauzy Team',
-		appLink: process.env.APP_LINK || 'https://app.gauzy.co/'
+		appLink: process.env.APP_LINK || 'https://app.gauzy.co/',
+		appEmailConfirmationUrl: process.env.APP_EMAIL_CONFIRMATION_URL || 'https://app.gauzy.co/#/auth/confirm-email'
 	},
 
 	demo: process.env.DEMO === 'true' ? true : false,

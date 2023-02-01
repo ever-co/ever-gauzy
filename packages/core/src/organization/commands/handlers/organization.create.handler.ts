@@ -13,7 +13,9 @@ import { RequestContext } from '../../../core/context';
 import { UserOrganization } from './../../../core/entities/internal';
 import { Organization } from './../../organization.entity';
 import { ImportRecordUpdateOrCreateCommand } from './../../../export-import/import-record';
-import { OrganizationStatusBulkCreateCommand } from 'statuses/commands';
+import { OrganizationStatusBulkCreateCommand } from './../../../tasks/statuses/commands';
+import { OrganizationTaskSizeBulkCreateCommand } from './../../../tasks/sizes/commands';
+import { OrganizationTaskPriorityBulkCreateCommand } from './../../../tasks/priorities/commands';
 
 @CommandHandler(OrganizationCreateCommand)
 export class OrganizationCreateHandler
@@ -26,7 +28,7 @@ export class OrganizationCreateHandler
 		private readonly userService: UserService,
 		@InjectRepository(Organization) private readonly organizationRepository: Repository<Organization>,
 		@InjectRepository(UserOrganization) private readonly userOrganizationRepository: Repository<UserOrganization>,
-	) {}
+	) { }
 
 	public async execute(
 		command: OrganizationCreateCommand
@@ -130,7 +132,17 @@ export class OrganizationCreateHandler
 				new OrganizationStatusBulkCreateCommand(organization)
 			);
 
-			// 8. Create Import Records while migrating for relative organization.
+			// 8. Create task sizes for relative organization.
+			await this.commandBus.execute(
+				new OrganizationTaskSizeBulkCreateCommand(organization)
+			);
+
+			// 9. Create task priorities for relative organization.
+			await this.commandBus.execute(
+				new OrganizationTaskPriorityBulkCreateCommand(organization)
+			);
+
+			// 10. Create Import Records while migrating for relative organization.
 			if (isImporting && sourceId) {
 				const { sourceId } = input;
 				await this.commandBus.execute(

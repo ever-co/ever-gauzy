@@ -27,7 +27,9 @@ export abstract class CrudService<T extends BaseEntity>
 	/**
 	 * Alias (default we used table name) for pagination crud
 	 */
-	protected alias: string = this.repository.metadata.tableName;
+	protected get alias(): string {
+		return this.repository.metadata.tableName;
+	}
 
 	protected constructor(
 		protected readonly repository: Repository<T>

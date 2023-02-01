@@ -6,7 +6,7 @@ import { FileStorageProviderEnum } from '@gauzy/contracts';
 import {
 	IAppIntegrationConfig,
 	IAuth0Config,
-	IAWSConfig,
+	IAwsConfig,
 	IFacebookConfig,
 	IFiverrConfig,
 	IGithubConfig,
@@ -78,7 +78,6 @@ export interface IEnvironment {
 	 */
 	JWT_VERIFICATION_TOKEN_SECRET?: string;
 	JWT_VERIFICATION_TOKEN_EXPIRATION_TIME?: number;
-	EMAIL_CONFIRMATION_URL?: string;
 
 	/**
 	 * Password Less Authentication Configuration
@@ -92,7 +91,7 @@ export interface IEnvironment {
 	THROTTLE_LIMIT?: number;
 
 	fileSystem: FileSystem;
-	awsConfig?: IAWSConfig;
+	awsConfig?: IAwsConfig;
 	wasabiConfig?: IWasabiConfig;
 
 	facebookConfig: IFacebookConfig;

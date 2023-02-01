@@ -13,10 +13,9 @@ import {
 import { TenantBaseDTO } from './tenant-base.dto';
 import { IsOrganizationBelongsToUser } from './../../shared/validators';
 
-export class TenantOrganizationBaseDTO
-	extends TenantBaseDTO
-	implements IBasePerTenantAndOrganizationEntityModel
-{
+export class TenantOrganizationBaseDTO extends TenantBaseDTO
+	implements IBasePerTenantAndOrganizationEntityModel {
+
 	@ApiProperty({ type: () => Object })
 	@ValidateIf((it) => !it.organizationId && !it.sentTo)
 	@IsObject()
