@@ -121,6 +121,11 @@ export class User extends TenantBaseEntity implements IUser {
 	name?: string;
 	employeeId?: string;
 
+	@ApiProperty({ type: () => String, minLength: 4, maxLength: 12 })
+	@Index()
+	@Column({ nullable: true })
+	phoneNumber?: string;
+
 	/*
     |--------------------------------------------------------------------------
     | @ManyToOne

@@ -27,6 +27,7 @@ export * from './email-template.model';
 export * from './email.model';
 export * from './employee-appointment.model';
 export * from './employee-award.model';
+export * from './employee-phone.model';
 export * from './employee-job.model';
 export * from './employee-proposal-template.model';
 export * from './employee-recurring-expense.model';
