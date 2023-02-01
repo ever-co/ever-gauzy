@@ -10,17 +10,12 @@ import { TranslationBaseComponent } from '../../@shared/language-base/translatio
 @Component({
 	templateUrl: './confirm-email.component.html'
 })
-export class ConfirmEmailComponent extends TranslationBaseComponent
-	implements OnInit {
-
+export class ConfirmEmailComponent extends TranslationBaseComponent implements OnInit {
 	loading: boolean = true;
 	errorMessage: string;
 	successMessage: string;
 
-	constructor(
-		private readonly route: ActivatedRoute,
-		public readonly translateService: TranslateService
-	) {
+	constructor(private readonly route: ActivatedRoute, public readonly translateService: TranslateService) {
 		super(translateService);
 	}
 
@@ -29,7 +24,7 @@ export class ConfirmEmailComponent extends TranslationBaseComponent
 			.pipe(
 				filter((data) => !!data && !!data.resolver),
 				tap(({ resolver }) => this.verifiedEmail(resolver)),
-				untilDestroyed(this),
+				untilDestroyed(this)
 			)
 			.subscribe();
 	}

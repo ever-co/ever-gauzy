@@ -1,18 +1,11 @@
-import {
-	Component,
-	OnInit,
-	ViewChild,
-	ElementRef,
-	ChangeDetectorRef,
-	ChangeDetectionStrategy,
-} from '@angular/core';
+import { Component, OnInit, ViewChild, ElementRef, ChangeDetectorRef, ChangeDetectionStrategy } from '@angular/core';
 import { ElectronService } from '../electron/services';
 
 @Component({
 	selector: 'ngx-server-dashboard',
 	templateUrl: './server-dashboard.component.html',
 	styleUrls: ['./server-dashboard.component.scss'],
-	changeDetection: ChangeDetectionStrategy.OnPush,
+	changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class ServerDashboardComponent implements OnInit {
 	@ViewChild('logBox') logBox: ElementRef;
@@ -23,25 +16,22 @@ export class ServerDashboardComponent implements OnInit {
 	loading = false;
 	btn: any = {
 		name: 'Start',
-		icon: 'play-circle-outline',
+		icon: 'play-circle-outline'
 	};
 	logContents: any = [];
 	isExpandWindow = false;
 	logIsOpen: boolean = false;
 	styles = {
 		btnStart: 'button-small',
-		icon: 'margin-icon-small',
+		icon: 'margin-icon-small'
 	};
 
-	constructor(
-		private electronService: ElectronService,
-		private _cdr: ChangeDetectorRef
-	) {
+	constructor(private electronService: ElectronService, private _cdr: ChangeDetectorRef) {
 		this.electronService.ipcRenderer.on('running_state', (event, arg) => {
 			this.loading = false;
 			this.btn = {
 				name: arg ? 'Stop' : 'Start',
-				icon: arg ? 'stop-circle-outline' : 'play-circle-outline',
+				icon: arg ? 'stop-circle-outline' : 'play-circle-outline'
 			};
 			this.running = arg;
 			event.sender.send('running_state', arg);
@@ -81,8 +71,7 @@ export class ServerDashboardComponent implements OnInit {
 	}
 
 	private scrollToBottom() {
-		this.logBox.nativeElement.scrollTop =
-			this.logBox.nativeElement.scrollHeight;
+		this.logBox.nativeElement.scrollTop = this.logBox.nativeElement.scrollHeight;
 	}
 
 	runServer() {
@@ -90,7 +79,7 @@ export class ServerDashboardComponent implements OnInit {
 		this.loading = true;
 		this.btn = {
 			name: '',
-			icon: '',
+			icon: ''
 		};
 		this.logIsOpen = true;
 		this.electronService.ipcRenderer.send('run_gauzy_server');
@@ -105,7 +94,7 @@ export class ServerDashboardComponent implements OnInit {
 		this.loading = true;
 		this.btn = {
 			name: '',
-			icon: '',
+			icon: ''
 		};
 		this.logIsOpen = true;
 		this.electronService.ipcRenderer.send('stop_gauzy_server');

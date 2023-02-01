@@ -20,12 +20,8 @@ export class ProjectService implements IProjectService<ProjectTO> {
 	public async findOne(project: Partial<ProjectTO>): Promise<ProjectTO> {
 		return this._projectDAO.findOneById(project.id);
 	}
-	public async findByClient(
-		options: IClientFilterOption
-	): Promise<ProjectTO[]> {
-		const client = new Client(
-			await this._clientDAO.findOneByOptions(options)
-		);
+	public async findByClient(options: IClientFilterOption): Promise<ProjectTO[]> {
+		const client = new Client(await this._clientDAO.findOneByOptions(options));
 		return await this._projectDAO.findByClient(client.id);
 	}
 	public async remove(project: Partial<ProjectTO>): Promise<void> {

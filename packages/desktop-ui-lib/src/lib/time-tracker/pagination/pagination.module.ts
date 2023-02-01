@@ -7,6 +7,6 @@ import { NbIconModule, NbSelectModule } from '@nebular/theme';
 @NgModule({
 	declarations: [PaginationComponent],
 	imports: [CommonModule, Ng2SmartTableModule, NbIconModule, NbSelectModule],
-	exports: [PaginationComponent],
+	exports: [PaginationComponent]
 })
 export class PaginationModule {}

@@ -13,27 +13,19 @@ export class ProjectDAO implements DAO<ProjectTO> {
 	}
 
 	public async findAll(): Promise<ProjectTO[]> {
-		return await this._provider
-			.connection<ProjectTO>(TABLE_NAME_PROJECTS)
-			.select('*');
+		return await this._provider.connection<ProjectTO>(TABLE_NAME_PROJECTS).select('*');
 	}
 	public async save(value: ProjectTO): Promise<void> {
 		await this._trx.create(value);
 	}
 	public async findOneById(id: number): Promise<ProjectTO> {
-		return await this._provider
-			.connection<ProjectTO>(TABLE_NAME_PROJECTS)
-			.select('*')
-			.where('id', '=', id)[0];
+		return await this._provider.connection<ProjectTO>(TABLE_NAME_PROJECTS).select('*').where('id', '=', id)[0];
 	}
 	public async update(id: number, value: Partial<ProjectTO>): Promise<void> {
 		await this._trx.update(id, value);
 	}
 	public async delete(value: Partial<ProjectTO>): Promise<void> {
-		await this._provider
-			.connection<ProjectTO>(TABLE_NAME_PROJECTS)
-			.where('id', '=', value.id)
-			.del();
+		await this._provider.connection<ProjectTO>(TABLE_NAME_PROJECTS).where('id', '=', value.id).del();
 	}
 
 	public async findByClient(clientId: number): Promise<ProjectTO[]> {

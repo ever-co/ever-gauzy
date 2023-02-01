@@ -1,13 +1,7 @@
 import { Component, Input, OnInit, Output, EventEmitter } from '@angular/core';
 import { FormGroup, FormControl, Validators } from '@angular/forms';
 import { TimeTrackerService } from '../time-tracker/time-tracker.service';
-import {
-	IEmployee,
-	IOrganizationProject,
-	ITag,
-	IUserOrganization,
-	TaskStatusEnum,
-} from '@gauzy/contracts';
+import { IEmployee, IOrganizationProject, ITag, IUserOrganization, TaskStatusEnum } from '@gauzy/contracts';
 import { NbToastrService } from '@nebular/theme';
 import { Color, rgbString } from '@kurkle/color';
 import * as moment from 'moment';
@@ -19,7 +13,7 @@ Object.assign(console, log.functions);
 @Component({
 	selector: 'ngx-tasks',
 	templateUrl: './tasks.component.html',
-	styleUrls: ['./tasks.component.scss'],
+	styleUrls: ['./tasks.component.scss']
 })
 export class TasksComponent implements OnInit {
 	@Input() userData: IUserOrganization;
@@ -39,34 +33,31 @@ export class TasksComponent implements OnInit {
 	statuses = [
 		{
 			id: TaskStatusEnum.OPEN,
-			name: TaskStatusEnum.OPEN,
+			name: TaskStatusEnum.OPEN
 		},
 		{
 			id: TaskStatusEnum.IN_PROGRESS,
-			name: TaskStatusEnum.IN_PROGRESS,
+			name: TaskStatusEnum.IN_PROGRESS
 		},
 		{
 			id: TaskStatusEnum.READY_FOR_REVIEW,
-			name: TaskStatusEnum.READY_FOR_REVIEW,
+			name: TaskStatusEnum.READY_FOR_REVIEW
 		},
 		{
 			id: TaskStatusEnum.IN_REVIEW,
-			name: TaskStatusEnum.IN_REVIEW,
+			name: TaskStatusEnum.IN_REVIEW
 		},
 		{
 			id: TaskStatusEnum.BLOCKED,
-			name: TaskStatusEnum.BLOCKED,
+			name: TaskStatusEnum.BLOCKED
 		},
 		{
 			id: TaskStatusEnum.COMPLETED,
-			name: TaskStatusEnum.COMPLETED,
-		},
+			name: TaskStatusEnum.COMPLETED
+		}
 	];
 
-	constructor(
-		private timeTrackerService: TimeTrackerService,
-		private toastrService: NbToastrService
-	) {}
+	constructor(private timeTrackerService: TimeTrackerService, private toastrService: NbToastrService) {}
 
 	ngOnInit() {
 		(async () => {
@@ -76,20 +67,11 @@ export class TasksComponent implements OnInit {
 		})();
 		this.form = new FormGroup({
 			description: new FormControl(null),
-			dueDate: new FormControl(
-				moment().add(1, 'day').utc().toDate(),
-				Validators.required
-			),
+			dueDate: new FormControl(moment().add(1, 'day').utc().toDate(), Validators.required),
 			estimate: new FormControl(null),
 			estimateDays: new FormControl(null, [Validators.min(0)]),
-			estimateHours: new FormControl(null, [
-				Validators.min(0),
-				Validators.max(23),
-			]),
-			estimateMinutes: new FormControl(null, [
-				Validators.min(0),
-				Validators.max(59),
-			]),
+			estimateHours: new FormControl(null, [Validators.min(0), Validators.max(23)]),
+			estimateMinutes: new FormControl(null, [Validators.min(0), Validators.max(59)]),
 			members: new FormControl([]),
 			organizationId: new FormControl(this.userData.organizationId),
 			project: new FormControl(this.selectedProject),
@@ -98,7 +80,7 @@ export class TasksComponent implements OnInit {
 			tags: new FormControl([]),
 			teams: new FormControl([]),
 			tenantId: new FormControl(this.userData.tenantId),
-			title: new FormControl(null, Validators.required),
+			title: new FormControl(null, Validators.required)
 		});
 	}
 
@@ -106,10 +88,7 @@ export class TasksComponent implements OnInit {
 		try {
 			this.projects = await this.timeTrackerService.getProjects(user);
 		} catch (error) {
-			console.error(
-				'[error]',
-				"can't get employee project::" + error.message
-			);
+			console.error('[error]', "can't get employee project::" + error.message);
 		}
 	}
 
@@ -137,8 +116,7 @@ export class TasksComponent implements OnInit {
 
 	public async save(): Promise<void> {
 		if (this.form.invalid) return;
-		const { estimateDays, estimateHours, estimateMinutes, project } =
-			this.form.value;
+		const { estimateDays, estimateHours, estimateMinutes, project } = this.form.value;
 		const days = estimateDays ? estimateDays * 24 * 3600 : 0;
 		const hours = estimateHours ? estimateHours * 3600 : 1;
 		const minutes = estimateMinutes ? estimateMinutes * 60 : 0;
@@ -147,23 +125,20 @@ export class TasksComponent implements OnInit {
 			this.form.patchValue({
 				members: [...this.employees],
 				estimate: days + hours + minutes,
-				projectId: project ? project.id : null,
+				projectId: project ? project.id : null
 			});
 
-			await this.timeTrackerService.saveNewTask(
-				this.userData,
-				this.form.value
-			);
+			await this.timeTrackerService.saveNewTask(this.userData, this.form.value);
 			this.isAddTask.emit(false);
 			this.newTaskCallback.emit({
 				isSuccess: true,
-				message: 'Added successfully',
+				message: 'Added successfully'
 			});
 		} catch (error) {
 			console.log(error);
 			this.newTaskCallback.emit({
 				isSuccess: false,
-				message: error.message,
+				message: error.message
 			});
 		}
 	}
@@ -178,17 +153,12 @@ export class TasksComponent implements OnInit {
 				name,
 				organizationId,
 				tenantId,
-				...(organizationContactId
-					? { contactId: organizationContactId }
-					: {}),
+				...(organizationContactId ? { contactId: organizationContactId } : {})
 			};
 
 			request['members'] = [...this.employees];
 
-			const project = await this.timeTrackerService.createNewProject(
-				request,
-				data
-			);
+			const project = await this.timeTrackerService.createNewProject(request, data);
 
 			this.projects = this.projects.concat([project]);
 			this.toastrService.success('Project added successfully', 'Gauzy');
@@ -207,9 +177,7 @@ export class TasksComponent implements OnInit {
 		color = color.valid ? color : new Color(this._hex2rgb(bgColor));
 		const MIN_THRESHOLD = 128;
 		const MAX_THRESHOLD = 186;
-		const contrast = color.rgb
-			? color.rgb.r * 0.299 + color.rgb.g * 0.587 + color.rgb.b * 0.114
-			: null;
+		const contrast = color.rgb ? color.rgb.r * 0.299 + color.rgb.g * 0.587 + color.rgb.b * 0.114 : null;
 		if (contrast < MIN_THRESHOLD) {
 			return '#ffffff';
 		} else if (contrast > MAX_THRESHOLD) {
@@ -223,7 +191,7 @@ export class TasksComponent implements OnInit {
 			r: parseInt(hex.slice(1, 3), 16),
 			g: parseInt(hex.slice(3, 5), 16),
 			b: parseInt(hex.slice(5, 7), 16),
-			a: 1,
+			a: 1
 		});
 	}
 

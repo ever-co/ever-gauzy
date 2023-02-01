@@ -11,27 +11,19 @@ export class IntervalTransaction implements IIntervalTransaction {
 
 	public async create(value: IntervalTO): Promise<void> {
 		try {
-			await this._databaseProvider.connection.transaction(
-				async (trx: Knex.Transaction) => {
-					trx.insert(value)
-						.into(TABLE_NAME_INTERVALS)
-						.then(() => {
-							trx.commit;
-							console.log(
-								'[trx]: ',
-								'insertion transaction committed...'
-							);
-						})
-						.catch((error) => {
-							trx.rollback;
-							console.log(
-								'[trx]: ',
-								'insertion transaction rollback...'
-							);
-							console.warn('[trx]: ', error);
-						});
-				}
-			);
+			await this._databaseProvider.connection.transaction(async (trx: Knex.Transaction) => {
+				trx.insert(value)
+					.into(TABLE_NAME_INTERVALS)
+					.then(() => {
+						trx.commit;
+						console.log('[trx]: ', 'insertion transaction committed...');
+					})
+					.catch((error) => {
+						trx.rollback;
+						console.log('[trx]: ', 'insertion transaction rollback...');
+						console.warn('[trx]: ', error);
+					});
+			});
 		} catch (error) {
 			console.log('[trx]: ', error);
 		}
@@ -39,24 +31,15 @@ export class IntervalTransaction implements IIntervalTransaction {
 
 	public async update(id: number, value: IntervalTO): Promise<void> {
 		try {
-			await this._databaseProvider.connection.transaction(
-				async (trx: Knex.Transaction) => {
-					await trx(TABLE_NAME_INTERVALS)
-						.where('id', '=', id)
-						.update(value)
-						.then(trx.commit)
-						.catch(trx.rollback);
-				}
-			);
+			await this._databaseProvider.connection.transaction(async (trx: Knex.Transaction) => {
+				await trx(TABLE_NAME_INTERVALS).where('id', '=', id).update(value).then(trx.commit).catch(trx.rollback);
+			});
 		} catch (error) {
 			console.log('[trx]: ', error);
 		}
 	}
 
-	public async synced(
-		offlineStartAt: Date,
-		offlineEndAt: Date
-	): Promise<void> {
+	public async synced(offlineStartAt: Date, offlineEndAt: Date): Promise<void> {
 		try {
 			await this._databaseProvider.connection
 				.transaction(async (trx: Knex.Transaction) => {
@@ -66,9 +49,7 @@ export class IntervalTransaction implements IIntervalTransaction {
 						.whereBetween('startAt', [offlineStartAt, offlineEndAt])
 						.then((intervals: IntervalTO[]) => {
 							intervals.forEach(async (interval: IntervalTO) => {
-								await trx
-									.update('synced', true)
-									.where('id', interval.id);
+								await trx.update('synced', true).where('id', interval.id);
 							});
 						})
 						.then(trx.commit)

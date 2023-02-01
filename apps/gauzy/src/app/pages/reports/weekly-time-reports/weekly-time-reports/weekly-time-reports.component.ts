@@ -1,15 +1,5 @@
-import {
-	AfterViewInit,
-	ChangeDetectorRef,
-	Component,
-	OnInit,
-	ViewChild
-} from '@angular/core';
-import {
-	IGetTimeLogReportInput,
-	ITimeLogFilters,
-	ReportDayData
-} from '@gauzy/contracts';
+import { AfterViewInit, ChangeDetectorRef, Component, OnInit, ViewChild } from '@angular/core';
+import { IGetTimeLogReportInput, ITimeLogFilters, ReportDayData } from '@gauzy/contracts';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { BehaviorSubject, Observable } from 'rxjs';
 import { filter, tap } from 'rxjs/operators';
@@ -32,9 +22,7 @@ import { TimesheetFilterService } from './../../../../@shared/timesheet';
 	templateUrl: './weekly-time-reports.component.html',
 	styleUrls: ['./weekly-time-reports.component.scss']
 })
-export class WeeklyTimeReportsComponent extends BaseSelectorFilterComponent
-	implements OnInit, AfterViewInit {
-
+export class WeeklyTimeReportsComponent extends BaseSelectorFilterComponent implements OnInit, AfterViewInit {
 	filters: ITimeLogFilters;
 	weekLogs: ReportDayData[] = [];
 	weekDays: string[] = [];
@@ -89,12 +77,7 @@ export class WeeklyTimeReportsComponent extends BaseSelectorFilterComponent
 		if (isEmpty(this.request) || isEmpty(this.filters)) {
 			return;
 		}
-		const appliedFilter = pick(
-			this.filters,
-			'source',
-			'activityLevel',
-			'logType'
-		);
+		const appliedFilter = pick(this.filters, 'source', 'activityLevel', 'logType');
 		const request: IGetTimeLogReportInput = {
 			...appliedFilter,
 			...this.getFilterRequest(this.request)
@@ -116,10 +99,7 @@ export class WeeklyTimeReportsComponent extends BaseSelectorFilterComponent
 	}
 
 	updateWeekDays() {
-		const {
-			startDate = moment().startOf('week'),
-			endDate = moment().endOf('week')
-		} = this.request;
+		const { startDate = moment().startOf('week'), endDate = moment().endOf('week') } = this.request;
 
 		const start = moment(moment(startDate).format('YYYY-MM-DD'));
 		const end = moment(moment(endDate).format('YYYY-MM-DD'));
@@ -153,9 +133,9 @@ export class WeeklyTimeReportsComponent extends BaseSelectorFilterComponent
 	}
 
 	/**
-	* Weekly reports for employee logs
-	* @param logs
-	*/
+	 * Weekly reports for employee logs
+	 * @param logs
+	 */
 	private _mapLogs(logs: ReportDayData[]) {
 		let employees = [];
 		const datasets = [];
@@ -169,7 +149,7 @@ export class WeeklyTimeReportsComponent extends BaseSelectorFilterComponent
 			employees = Object.keys(log.dates);
 			datasets.push({
 				label: log.employee.fullName,
-				data: pluck(log.dates, 'sum').map((val) => val ? parseFloat((val / 3600).toFixed(1)) : 0),
+				data: pluck(log.dates, 'sum').map((val) => (val ? parseFloat((val / 3600).toFixed(1)) : 0)),
 				borderColor: color,
 				backgroundColor: ChartUtil.transparentize(color, 1),
 				borderWidth: 1,
@@ -185,7 +165,7 @@ export class WeeklyTimeReportsComponent extends BaseSelectorFilterComponent
 		};
 	}
 
-	public getStatus(value: number){
+	public getStatus(value: number) {
 		return progressStatus(value);
 	}
 }

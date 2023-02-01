@@ -1,26 +1,16 @@
-import {
-	Component,
-	OnInit,
-	ChangeDetectionStrategy,
-	ViewChild,
-	ElementRef,
-	NgZone,
-} from '@angular/core';
+import { Component, OnInit, ChangeDetectionStrategy, ViewChild, ElementRef, NgZone } from '@angular/core';
 import { ElectronService } from '../electron/services';
 
 @Component({
 	selector: 'ngx-updater',
 	templateUrl: './updater.component.html',
 	styleUrls: ['./updater.component.scss'],
-	changeDetection: ChangeDetectionStrategy.OnPush,
+	changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class UpdaterComponent implements OnInit {
 	@ViewChild('logBox') logBox: ElementRef;
 	@ViewChild('logUpdate') logAccordion;
-	constructor(
-		private electronService: ElectronService,
-		private _ngZone: NgZone
-	) {}
+	constructor(private electronService: ElectronService, private _ngZone: NgZone) {}
 	version = '0.0.0';
 	loading = false;
 	notAvailable = false;
@@ -59,17 +49,13 @@ export class UpdaterComponent implements OnInit {
 			})
 		);
 
-		this.electronService.ipcRenderer.on(
-			'download_on_progress',
-			(event, arg) =>
-				this._ngZone.run(() => {
-					this.notAvailable = true;
-					this.message = `Update Downloading ${
-						arg.percent ? Math.floor(Number(arg.percent)) : 0
-					}%`;
-					this.logContents.push(this.message);
-					this.scrollToBottom();
-				})
+		this.electronService.ipcRenderer.on('download_on_progress', (event, arg) =>
+			this._ngZone.run(() => {
+				this.notAvailable = true;
+				this.message = `Update Downloading ${arg.percent ? Math.floor(Number(arg.percent)) : 0}%`;
+				this.logContents.push(this.message);
+				this.scrollToBottom();
+			})
 		);
 		this.version = this.electronService.remote.app.getVersion();
 	}
@@ -92,7 +78,6 @@ export class UpdaterComponent implements OnInit {
 	}
 
 	private scrollToBottom() {
-		this.logBox.nativeElement.scrollTop =
-			this.logBox.nativeElement.scrollHeight;
+		this.logBox.nativeElement.scrollTop = this.logBox.nativeElement.scrollHeight;
 	}
 }

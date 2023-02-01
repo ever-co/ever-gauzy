@@ -10,42 +10,28 @@ export class TimerTransaction implements ITimerTransaction {
 	}
 	public async create(value: TimerTO): Promise<void> {
 		try {
-			await this._databaseProvider.connection.transaction(
-				async (trx: Knex.Transaction) => {
-					trx.insert(value)
-						.into(TABLE_NAME_TIMERS)
-						.then(() => {
-							trx.commit;
-							console.log(
-								'[TIMERTRX]: ',
-								'insertion transaction committed...'
-							);
-						})
-						.catch((error) => {
-							trx.rollback;
-							console.log(
-								'[TIMERTRXER]: ',
-								'insertion transaction rollback...'
-							);
-							console.warn('[TIMERTRXER]: ', error);
-						});
-				}
-			);
+			await this._databaseProvider.connection.transaction(async (trx: Knex.Transaction) => {
+				trx.insert(value)
+					.into(TABLE_NAME_TIMERS)
+					.then(() => {
+						trx.commit;
+						console.log('[TIMERTRX]: ', 'insertion transaction committed...');
+					})
+					.catch((error) => {
+						trx.rollback;
+						console.log('[TIMERTRXER]: ', 'insertion transaction rollback...');
+						console.warn('[TIMERTRXER]: ', error);
+					});
+			});
 		} catch (error) {
 			console.log('[TIMERTRXER]: ', error);
 		}
 	}
 	public async update(id: number, value: Partial<TimerTO>): Promise<void> {
 		try {
-			await this._databaseProvider.connection.transaction(
-				async (trx: Knex.Transaction) => {
-					await trx(TABLE_NAME_TIMERS)
-						.where('id', '=', id)
-						.update(value)
-						.then(trx.commit)
-						.catch(trx.rollback);
-				}
-			);
+			await this._databaseProvider.connection.transaction(async (trx: Knex.Transaction) => {
+				await trx(TABLE_NAME_TIMERS).where('id', '=', id).update(value).then(trx.commit).catch(trx.rollback);
+			});
 		} catch (error) {
 			console.log('[TIMERTRXERUPDATE]: ', error);
 		}

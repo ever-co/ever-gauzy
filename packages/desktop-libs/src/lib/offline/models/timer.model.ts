@@ -109,7 +109,7 @@ export class Timer implements TimerTO, Serializable<TimerTO> {
 			timesheetId: this._timesheetId,
 			timeslotId: this._timeslotId,
 			startedAt: this._startedAt,
-			stoppedAt: this._stoppedAt,
+			stoppedAt: this._stoppedAt
 		};
 	}
 }

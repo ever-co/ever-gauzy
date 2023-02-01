@@ -1,4 +1,4 @@
-import { IClientFilterOption } from "./i-client-filter-option";
+import { IClientFilterOption } from './i-client-filter-option';
 
 export interface IProjectService<T> {
 	save(project: T): Promise<void>;

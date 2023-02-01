@@ -4,7 +4,15 @@
 
 import { ForbiddenException, Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, InsertResult, SelectQueryBuilder, Brackets, WhereExpressionBuilder, In, UpdateResult } from 'typeorm';
+import {
+	Repository,
+	InsertResult,
+	SelectQueryBuilder,
+	Brackets,
+	WhereExpressionBuilder,
+	In,
+	UpdateResult
+} from 'typeorm';
 import * as bcrypt from 'bcrypt';
 import { JwtPayload } from 'jsonwebtoken';
 import { ComponentLayoutStyleEnum, IUser, LanguagesEnum, PermissionsEnum, RolesEnum } from '@gauzy/contracts';
@@ -17,7 +25,6 @@ import { freshTimestamp } from './../core/utils';
 
 @Injectable()
 export class UserService extends TenantAwareCrudService<User> {
-
 	constructor(
 		@InjectRepository(User)
 		private readonly userRepository: Repository<User>
@@ -32,12 +39,15 @@ export class UserService extends TenantAwareCrudService<User> {
 	 * @returns
 	 */
 	public async markEmailAsVerified(id: IUser['id']) {
-		return await this.userRepository.update({ id }, {
-		  	emailVerifiedAt: freshTimestamp(),
-			emailToken: null,
-			code: null,
-			codeExpireAt: null
-		});
+		return await this.userRepository.update(
+			{ id },
+			{
+				emailVerifiedAt: freshTimestamp(),
+				emailToken: null,
+				code: null,
+				codeExpireAt: null
+			}
+		);
 	}
 
 	/**
@@ -121,10 +131,7 @@ export class UserService extends TenantAwareCrudService<User> {
 	/*
 	 * Update user profile
 	 */
-	async updateProfile(
-		id: string | number,
-		entity: User,
-	): Promise<IUser> {
+	async updateProfile(id: string | number, entity: User): Promise<IUser> {
 		/**
 		 * If user has only own profile edit permission
 		 */
@@ -138,7 +145,7 @@ export class UserService extends TenantAwareCrudService<User> {
 		}
 		let user: IUser;
 		try {
-			if (typeof(id) == 'string') {
+			if (typeof id == 'string') {
 				user = await this.findOneByIdString(id, {
 					relations: {
 						role: true
@@ -175,14 +182,12 @@ export class UserService extends TenantAwareCrudService<User> {
 				alias: 'user',
 				leftJoin: {
 					role: 'user.role'
-				},
+				}
 			},
 			where: {
 				tenantId,
 				role: {
-					name: In([
-						RolesEnum.SUPER_ADMIN, RolesEnum.ADMIN
-					])
+					name: In([RolesEnum.SUPER_ADMIN, RolesEnum.ADMIN])
 				}
 			}
 		});
@@ -191,9 +196,7 @@ export class UserService extends TenantAwareCrudService<User> {
 	/*
 	 * Update user preferred language
 	 */
-	async updatePreferredLanguage(
-		preferredLanguage: LanguagesEnum
-	): Promise<IUser | UpdateResult> {
+	async updatePreferredLanguage(preferredLanguage: LanguagesEnum): Promise<IUser | UpdateResult> {
 		try {
 			return await this.update(RequestContext.currentUserId(), {
 				preferredLanguage
@@ -227,7 +230,7 @@ export class UserService extends TenantAwareCrudService<User> {
 	async setCurrentRefreshToken(refreshToken: string, userId: string) {
 		try {
 			if (refreshToken) {
-				refreshToken = await bcrypt.hash(refreshToken, 10)
+				refreshToken = await bcrypt.hash(refreshToken, 10);
 			}
 			return await this.repository.update(userId, {
 				refreshToken: refreshToken
@@ -250,9 +253,12 @@ export class UserService extends TenantAwareCrudService<User> {
 			const tenantId = RequestContext.currentTenantId();
 
 			try {
-				await this.repository.update({ id: userId, tenantId }, {
-					refreshToken: null
-				});
+				await this.repository.update(
+					{ id: userId, tenantId },
+					{
+						refreshToken: null
+					}
+				);
 			} catch (error) {
 				console.log('Error while remove refresh token', error);
 			}
@@ -304,7 +310,7 @@ export class UserService extends TenantAwareCrudService<User> {
 			if (isRefreshTokenMatching) {
 				return user;
 			} else {
-				throw new UnauthorizedException()
+				throw new UnauthorizedException();
 			}
 		} catch (error) {
 			throw new UnauthorizedException();
@@ -324,6 +330,6 @@ export class UserService extends TenantAwareCrudService<User> {
 	public async findMe(relations: string[]): Promise<IUser> {
 		return await this.findOneByIdString(RequestContext.currentUserId(), {
 			relations
-		})
+		});
 	}
 }

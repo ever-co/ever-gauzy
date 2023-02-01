@@ -27,9 +27,7 @@ import { CreateCandidateSourceDTO, UpdateCandidateSourceDTO } from './dto';
 @Permissions(PermissionsEnum.ORG_CANDIDATES_EDIT)
 @Controller()
 export class CandidateSourceController extends CrudController<CandidateSource> {
-	constructor(
-		private readonly candidateSourceService: CandidateSourceService
-	) {
+	constructor(private readonly candidateSourceService: CandidateSourceService) {
 		super(candidateSourceService);
 	}
 
@@ -42,9 +40,7 @@ export class CandidateSourceController extends CrudController<CandidateSource> {
 	@Permissions(PermissionsEnum.ORG_CANDIDATES_VIEW)
 	@Get('pagination')
 	@UsePipes(new ValidationPipe({ transform: true }))
-	async pagination(
-		@Query() params: PaginationParams<CandidateSource>
-	): Promise<IPagination<ICandidateSource>> {
+	async pagination(@Query() params: PaginationParams<CandidateSource>): Promise<IPagination<ICandidateSource>> {
 		return await this.candidateSourceService.paginate(params);
 	}
 
@@ -69,9 +65,7 @@ export class CandidateSourceController extends CrudController<CandidateSource> {
 	@Permissions(PermissionsEnum.ORG_CANDIDATES_VIEW)
 	@Get()
 	@UsePipes(new ValidationPipe())
-	async findAll(
-		@Query() params: PaginationParams<CandidateSource>
-	): Promise<IPagination<ICandidateSource>> {
+	async findAll(@Query() params: PaginationParams<CandidateSource>): Promise<IPagination<ICandidateSource>> {
 		return await this.candidateSourceService.findAll({
 			where: params.where
 		});
@@ -96,10 +90,8 @@ export class CandidateSourceController extends CrudController<CandidateSource> {
 		description: 'Record not found'
 	})
 	@Post()
-	@UsePipes(new ValidationPipe({ transform : true, whitelist: true }))
-	async create(
-		@Body() entity: CreateCandidateSourceDTO
-	): Promise<ICandidateSource> {
+	@UsePipes(new ValidationPipe({ transform: true, whitelist: true }))
+	async create(@Body() entity: CreateCandidateSourceDTO): Promise<ICandidateSource> {
 		return await this.candidateSourceService.create(entity);
 	}
 

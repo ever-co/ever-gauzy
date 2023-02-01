@@ -13,5 +13,5 @@ export const metaData = {
 			.del()
 			.then((res) => res)
 			.catch((error) => console.log(error));
-	},
+	}
 };

@@ -10,29 +10,18 @@ export class TagDAO implements DAO<TagTO> {
 	}
 
 	public async findAll(): Promise<TagTO[]> {
-		return await this._provider
-			.connection<TagTO>(TABLE_NAME_TAGS)
-			.select('*');
+		return await this._provider.connection<TagTO>(TABLE_NAME_TAGS).select('*');
 	}
 	public async save(value: TagTO): Promise<void> {
 		await this._provider.connection<TagTO>(TABLE_NAME_TAGS).insert(value);
 	}
 	public async findOneById(id: number): Promise<TagTO> {
-		return await this._provider
-			.connection<TagTO>(TABLE_NAME_TAGS)
-			.select('*')
-			.where('id', id)[0];
+		return await this._provider.connection<TagTO>(TABLE_NAME_TAGS).select('*').where('id', id)[0];
 	}
 	public async update(id: number, value: Partial<TagTO>): Promise<void> {
-		await this._provider
-			.connection<TagTO>(TABLE_NAME_TAGS)
-			.where('id', '=', id)
-			.update(value);
+		await this._provider.connection<TagTO>(TABLE_NAME_TAGS).where('id', '=', id).update(value);
 	}
 	public async delete(value: Partial<TagTO>): Promise<void> {
-		await this._provider
-			.connection(TABLE_NAME_TAGS)
-			.where('id', '=', value.id)
-			.del();
+		await this._provider.connection(TABLE_NAME_TAGS).where('id', '=', value.id).del();
 	}
 }

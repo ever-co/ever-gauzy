@@ -2,10 +2,7 @@ import { Serializable } from '../../interfaces';
 import { IntervalTO } from '../dto/interval.dto';
 import { Base } from './base.model';
 
-export class Interval
-	extends Base
-	implements IntervalTO, Serializable<IntervalTO>
-{
+export class Interval extends Base implements IntervalTO, Serializable<IntervalTO> {
 	private _activities: any;
 	private _duration: number;
 	private _employeeId: string;
@@ -21,12 +18,7 @@ export class Interval
 	private _version: string;
 
 	constructor(interval: IntervalTO) {
-		super(
-			interval.id,
-			interval.organizationId,
-			interval.remoteId,
-			interval.tenantId
-		);
+		super(interval.id, interval.organizationId, interval.remoteId, interval.tenantId);
 		this._activities = interval.activities;
 		this._duration = interval.duration;
 		this._employeeId = interval.employeeId;

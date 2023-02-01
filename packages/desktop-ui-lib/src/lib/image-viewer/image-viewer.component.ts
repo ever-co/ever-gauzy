@@ -1,29 +1,23 @@
-import {
-	Component,
-	OnInit,
-	ViewChild,
-	ElementRef,
-	NgZone,
-} from '@angular/core';
+import { Component, OnInit, ViewChild, ElementRef, NgZone } from '@angular/core';
 import { transition, trigger, style, animate } from '@angular/animations';
 import { ElectronService } from '../electron/services';
 export const fadeInOutAnimation = trigger('fadeInOut', [
 	transition(':enter', [
 		// :enter is alias to 'void => *'
 		style({ opacity: 0 }),
-		animate(300, style({ opacity: 1 })),
+		animate(300, style({ opacity: 1 }))
 	]),
 	transition(':leave', [
 		// :leave is alias to '* => void'
-		animate(300, style({ opacity: 0 })),
-	]),
+		animate(300, style({ opacity: 0 }))
+	])
 ]);
 
 @Component({
 	selector: 'ngx-image-viewer',
 	templateUrl: './image-viewer.component.html',
 	styleUrls: ['./image-viewer.component.scss'],
-	animations: [fadeInOutAnimation],
+	animations: [fadeInOutAnimation]
 })
 export class ImageViewerComponent implements OnInit {
 	active_index: any;
@@ -61,10 +55,7 @@ export class ImageViewerComponent implements OnInit {
 
 	next($event) {
 		$event.stopPropagation();
-		this.active_index = Math.min(
-			this.active_index + 1,
-			this.items.length - 1
-		);
+		this.active_index = Math.min(this.active_index + 1, this.items.length - 1);
 		this.item = this.items[this.active_index];
 		this.updateActiveIndex();
 	}
@@ -77,9 +68,7 @@ export class ImageViewerComponent implements OnInit {
 	}
 
 	setFocus(selectedItem) {
-		const foundItem = this.items.find(
-			(item) => item.fullUrl === selectedItem.fullUrl
-		);
+		const foundItem = this.items.find((item) => item.fullUrl === selectedItem.fullUrl);
 		if (this.item) {
 			const index = this.items.indexOf(this.item);
 			this.active_index = index;
@@ -91,21 +80,18 @@ export class ImageViewerComponent implements OnInit {
 	}
 
 	updateActiveIndex() {
-		const activeItem =
-			this.customScroll.nativeElement.querySelector('.thumb-item-active');
+		const activeItem = this.customScroll.nativeElement.querySelector('.thumb-item-active');
 		if (activeItem) {
 			const position = activeItem.getBoundingClientRect();
 			if (position) {
 				const left: any = position.left;
 				const right: any = position.left + activeItem.clientWidth;
-				const scrollRight: any =
-					this.customScroll.nativeElement.clientWidth;
-				const scrollLeft: any =
-					this.customScroll.nativeElement.scrollLeft;
+				const scrollRight: any = this.customScroll.nativeElement.clientWidth;
+				const scrollLeft: any = this.customScroll.nativeElement.scrollLeft;
 
 				if (left < Math.abs(scrollLeft) || right > scrollRight) {
 					this.customScroll.nativeElement.scrollTo({
-						left: left,
+						left: left
 					});
 				}
 			}

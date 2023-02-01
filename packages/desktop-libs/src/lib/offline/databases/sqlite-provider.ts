@@ -15,10 +15,7 @@ export class SqliteProvider implements IDatabaseProvider {
 		return {
 			client: 'sqlite3',
 			connection: {
-				filename: path.resolve(
-					app.getPath('userData'),
-					'gauzy.sqlite3'
-				),
+				filename: path.resolve(app.getPath('userData'), 'gauzy.sqlite3')
 			},
 			pool: {
 				min: 2,
@@ -27,14 +24,14 @@ export class SqliteProvider implements IDatabaseProvider {
 				acquireTimeoutMillis: 60 * 1000 * 2,
 				idleTimeoutMillis: 30000,
 				reapIntervalMillis: 1000,
-				createRetryIntervalMillis: 100,
+				createRetryIntervalMillis: 100
 			},
 			migrations: {
-				directory: __dirname + '/migrations',
+				directory: __dirname + '/migrations'
 			},
 			useNullAsDefault: true,
 			debug: true,
-			asyncStackTraces: true,
+			asyncStackTraces: true
 		};
 	}
 

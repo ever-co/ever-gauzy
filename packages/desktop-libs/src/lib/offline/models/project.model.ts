@@ -2,10 +2,7 @@ import { Serializable } from '../../interfaces';
 import { ProjectTO } from '../dto/project.dto';
 import { Base } from './base.model';
 
-export class Project
-	extends Base
-	implements ProjectTO, Serializable<ProjectTO>
-{
+export class Project extends Base implements ProjectTO, Serializable<ProjectTO> {
 	private _contactId: string;
 	private _description: string;
 	private _imageUrl?: string;
@@ -13,12 +10,7 @@ export class Project
 	private _organizationContactId?: string;
 
 	constructor(project: ProjectTO) {
-		super(
-			project.id,
-			project.organizationId,
-			project.remoteId,
-			project.tenantId
-		);
+		super(project.id, project.organizationId, project.remoteId, project.tenantId);
 		this._contactId = project.contactId;
 		this._description = project.description;
 		this._imageUrl = project.imageUrl;

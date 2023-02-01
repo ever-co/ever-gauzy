@@ -19,28 +19,23 @@ import { EmployeeStatisticsService } from './../../employee-statistics.service';
  * If month is not specified, finds from the start of time till now.
  */
 @QueryHandler(AggregatedEmployeeStatisticQuery)
-export class AggregateOrganizationQueryHandler
-	implements IQueryHandler<AggregatedEmployeeStatisticQuery>
-{
+export class AggregateOrganizationQueryHandler implements IQueryHandler<AggregatedEmployeeStatisticQuery> {
 	constructor(
 		private employeeService: EmployeeService,
 		private employeeStatisticsService: EmployeeStatisticsService
 	) {}
 
-	public async execute(
-		command: AggregatedEmployeeStatisticQuery
-	): Promise<IAggregatedEmployeeStatistic> {
+	public async execute(command: AggregatedEmployeeStatisticQuery): Promise<IAggregatedEmployeeStatistic> {
 		const { input } = command;
 		const { organizationId, startDate, endDate } = input;
-		const { items: employees } =
-			await this.employeeService.findWorkingEmployees(
-				organizationId,
-				{
-					startDate,
-					endDate
-				},
-				true
-			);
+		const { items: employees } = await this.employeeService.findWorkingEmployees(
+			organizationId,
+			{
+				startDate,
+				endDate
+			},
+			true
+		);
 		const employeeMap: Map<string, IEmployeeStatisticSum> = new Map();
 
 		employees.forEach((employee) => {
@@ -72,19 +67,17 @@ export class AggregateOrganizationQueryHandler
 		}
 
 		const employeeStats = [...employeeMap.values()];
-		const total: IStatisticSum = employeeStats.reduce(
-			this._aggregateEmployeeStats,
-			{ income: 0, expense: 0, bonus: 0, profit: 0 }
-		);
+		const total: IStatisticSum = employeeStats.reduce(this._aggregateEmployeeStats, {
+			income: 0,
+			expense: 0,
+			bonus: 0,
+			profit: 0
+		});
 
 		return {
 			total,
 			employees: employeeStats,
-			chart: await this._loadChartData(
-				employees,
-				searchInput,
-				organizationId
-			)
+			chart: await this._loadChartData(employees, searchInput, organizationId)
 		};
 	}
 
@@ -145,37 +138,17 @@ export class AggregateOrganizationQueryHandler
 		organizationId: string
 	) {
 		// 1.Load Income and Direct Bonus in employeeMap
-		await this._loadIncomeAndDirectBonus(
-			searchInput,
-			employeeMap,
-			organizationId
-		);
+		await this._loadIncomeAndDirectBonus(searchInput, employeeMap, organizationId);
 
 		// 2. Populate Expenses(One time, Recurring, and split expenses) in employeeMap
-		await this._loadEmployeeExpenses(
-			searchInput,
-			employeeMap,
-			organizationId
-		);
+		await this._loadEmployeeExpenses(searchInput, employeeMap, organizationId);
 
 		/**
 		 * Load Recurring/Split Expenses for organization/employees
 		 */
-		await this._loadEmployeeRecurringExpenses(
-			searchInput,
-			employeeMap,
-			organizationId
-		);
-		await this._loadOrganizationSplitExpenses(
-			searchInput,
-			employeeMap,
-			organizationId
-		);
-		await this._loadOrganizationRecurringSplitExpenses(
-			searchInput,
-			employeeMap,
-			organizationId
-		);
+		await this._loadEmployeeRecurringExpenses(searchInput, employeeMap, organizationId);
+		await this._loadOrganizationSplitExpenses(searchInput, employeeMap, organizationId);
+		await this._loadOrganizationRecurringSplitExpenses(searchInput, employeeMap, organizationId);
 
 		// 3. Populate Profit in employeeMap
 		this._calculateProfit(employeeMap);
@@ -190,19 +163,16 @@ export class AggregateOrganizationQueryHandler
 		organizationId: string
 	) {
 		// Fetch employees' incomes for past N months from given date
-		const { items: incomes } =
-			await this.employeeStatisticsService.employeeIncomeInNMonths(
-				[...employeeMap.keys()],
-				searchInput.rangeDate,
-				organizationId
-			);
+		const { items: incomes } = await this.employeeStatisticsService.employeeIncomeInNMonths(
+			[...employeeMap.keys()],
+			searchInput.rangeDate,
+			organizationId
+		);
 		incomes.forEach((income: IIncome) => {
 			const stat = employeeMap.get(income.employeeId);
 			const amount = Number(income.amount);
 			stat.income = Number((stat.income + amount).toFixed(2));
-			stat.bonus = income.isBonus
-				? Number((stat.bonus + amount).toFixed(2))
-				: stat.bonus;
+			stat.bonus = income.isBonus ? Number((stat.bonus + amount).toFixed(2)) : stat.bonus;
 		});
 	}
 
@@ -212,12 +182,11 @@ export class AggregateOrganizationQueryHandler
 		organizationId: string
 	) {
 		// Fetch employees' expenses for past N months from given date
-		const { items: expenses } =
-			await this.employeeStatisticsService.employeeExpenseInNMonths(
-				[...employeeMap.keys()],
-				searchInput.rangeDate,
-				organizationId
-			);
+		const { items: expenses } = await this.employeeStatisticsService.employeeExpenseInNMonths(
+			[...employeeMap.keys()],
+			searchInput.rangeDate,
+			organizationId
+		);
 		expenses.forEach((expense: IExpense) => {
 			const stat = employeeMap.get(expense.employeeId);
 			const amount = Number(expense.amount);
@@ -231,12 +200,11 @@ export class AggregateOrganizationQueryHandler
 		organizationId: string
 	) {
 		// Fetch employees' recurring expenses for past N months from given date
-		const { items: employeeRecurringExpenses } =
-			await this.employeeStatisticsService.employeeRecurringExpenses(
-				[...employeeMap.keys()],
-				searchInput.rangeDate,
-				organizationId
-			);
+		const { items: employeeRecurringExpenses } = await this.employeeStatisticsService.employeeRecurringExpenses(
+			[...employeeMap.keys()],
+			searchInput.rangeDate,
+			organizationId
+		);
 
 		const { startDate, endDate } = searchInput.rangeDate;
 		/**
@@ -257,10 +225,7 @@ export class AggregateOrganizationQueryHandler
 			 * OR
 			 * past N months to each month's expense, whichever is more recent
 			 */
-			const requiredStartDate =
-				expense.startDate > inputStartDate
-					? expense.startDate
-					: inputStartDate;
+			const requiredStartDate = expense.startDate > inputStartDate ? expense.startDate : inputStartDate;
 
 			for (
 				const date = new Date(requiredStartDate);
@@ -286,24 +251,19 @@ export class AggregateOrganizationQueryHandler
 
 		// Fetch split expenses and the number of employees the expense need to be split among for each month
 		// TODO: Handle case when searchInput.months > 1
-		const expenses =
-			await this.employeeStatisticsService.employeeSplitExpenseInNMonths(
-				employeeIds[0], // split expenses are fetched at organization level, 1st Employee
-				searchInput.rangeDate,
-				organizationId
-			);
+		const expenses = await this.employeeStatisticsService.employeeSplitExpenseInNMonths(
+			employeeIds[0], // split expenses are fetched at organization level, 1st Employee
+			searchInput.rangeDate,
+			organizationId
+		);
 
 		//Since we are only calculating for one month, we only expect one value here.
-		const monthSplitExpense: IMonthAggregatedSplitExpense = expenses
-			.values()
-			.next().value;
+		const monthSplitExpense: IMonthAggregatedSplitExpense = expenses.values().next().value;
 
 		if (monthSplitExpense) {
 			// Add split expense share to each employee's expenses
 			employeeMap.forEach((emp) => {
-				emp.expense = Number(
-					(emp.expense + monthSplitExpense.splitExpense).toFixed(2)
-				);
+				emp.expense = Number((emp.expense + monthSplitExpense.splitExpense).toFixed(2));
 			});
 		}
 	}
@@ -324,17 +284,13 @@ export class AggregateOrganizationQueryHandler
 			);
 
 		//Since we are only calculating for one month, we only expect one value here.
-		const monthSplitExpense: IMonthAggregatedSplitExpense =
-			organizationRecurringSplitExpenses.values().next().value;
+		const monthSplitExpense: IMonthAggregatedSplitExpense = organizationRecurringSplitExpenses
+			.values()
+			.next().value;
 
 		if (monthSplitExpense) {
 			employeeMap.forEach(
-				(emp) =>
-					(emp.expense = Number(
-						(emp.expense + monthSplitExpense.splitExpense).toFixed(
-							2
-						)
-					))
+				(emp) => (emp.expense = Number((emp.expense + monthSplitExpense.splitExpense).toFixed(2)))
 			);
 		}
 	}
@@ -345,9 +301,7 @@ export class AggregateOrganizationQueryHandler
 		});
 	}
 
-	private async _loadEmployeeBonus(
-		employeeMap: Map<string, IEmployeeStatisticSum>
-	) {
+	private async _loadEmployeeBonus(employeeMap: Map<string, IEmployeeStatisticSum>) {
 		const employeeIds = [...employeeMap.keys()];
 		const {
 			organization: { bonusType, bonusPercentage }
@@ -366,22 +320,11 @@ export class AggregateOrganizationQueryHandler
 		});
 	}
 
-	private _aggregateEmployeeStats(
-		accumulator: IStatisticSum,
-		value: IStatisticSum
-	): IStatisticSum {
-		accumulator.income = Number(
-			(accumulator.income + value.income).toFixed(2)
-		);
-		accumulator.expense = Number(
-			(accumulator.expense + value.expense).toFixed(2)
-		);
-		accumulator.profit = Number(
-			(accumulator.profit + value.profit).toFixed(2)
-		);
-		accumulator.bonus = Number(
-			(accumulator.bonus + value.bonus).toFixed(2)
-		);
+	private _aggregateEmployeeStats(accumulator: IStatisticSum, value: IStatisticSum): IStatisticSum {
+		accumulator.income = Number((accumulator.income + value.income).toFixed(2));
+		accumulator.expense = Number((accumulator.expense + value.expense).toFixed(2));
+		accumulator.profit = Number((accumulator.profit + value.profit).toFixed(2));
+		accumulator.bonus = Number((accumulator.bonus + value.bonus).toFixed(2));
 		return accumulator;
 	}
 }

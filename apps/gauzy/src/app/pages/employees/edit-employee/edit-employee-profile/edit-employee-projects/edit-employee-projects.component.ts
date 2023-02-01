@@ -21,15 +21,13 @@ import { TranslationBaseComponent } from './../../../../../@shared/language-base
 	styles: [
 		`
 			:host {
-        		overflow-y: auto;
+				overflow-y: auto;
 				height: calc(100vh - 20.5rem);
 			}
 		`
 	]
 })
-export class EditEmployeeProjectsComponent extends TranslationBaseComponent
-	implements OnInit, OnDestroy {
-
+export class EditEmployeeProjectsComponent extends TranslationBaseComponent implements OnInit, OnDestroy {
 	private subject$: Subject<boolean> = new Subject();
 	public organizationProjects: IOrganizationProject[] = [];
 	public employeeProjects: IOrganizationProject[] = [];
@@ -74,14 +72,10 @@ export class EditEmployeeProjectsComponent extends TranslationBaseComponent
 	async submitForm(formInput: IEditEntityByMemberInput, removed: boolean) {
 		try {
 			if (formInput.member) {
-				await this.organizationProjectsService.updateByEmployee(
-					formInput
-				);
+				await this.organizationProjectsService.updateByEmployee(formInput);
 				this.loadProjects();
 				this.toastrService.success(
-					removed
-						? 'TOASTR.MESSAGE.EMPLOYEE_PROJECT_REMOVED'
-						: 'TOASTR.MESSAGE.EMPLOYEE_PROJECT_ADDED'
+					removed ? 'TOASTR.MESSAGE.EMPLOYEE_PROJECT_REMOVED' : 'TOASTR.MESSAGE.EMPLOYEE_PROJECT_ADDED'
 				);
 			}
 		} catch (error) {
@@ -97,9 +91,8 @@ export class EditEmployeeProjectsComponent extends TranslationBaseComponent
 		const organizationProjects = await this.getOrganizationProjects();
 
 		this.organizationProjects = organizationProjects.filter(
-			(item: IOrganizationProject) => !this.employeeProjects.some(
-				(project: IOrganizationProject) => project.id === item.id
-			)
+			(item: IOrganizationProject) =>
+				!this.employeeProjects.some((project: IOrganizationProject) => project.id === item.id)
 		);
 	}
 
@@ -109,10 +102,10 @@ export class EditEmployeeProjectsComponent extends TranslationBaseComponent
 	 * @returns
 	 */
 	private async loadSelectedEmployeeProjects() {
-		if (!this.organization || !this.store.hasAnyPermission(
-			PermissionsEnum.ALL_ORG_VIEW,
-			PermissionsEnum.ORG_PROJECT_VIEW
-		)) {
+		if (
+			!this.organization ||
+			!this.store.hasAnyPermission(PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.ORG_PROJECT_VIEW)
+		) {
 			return;
 		}
 
@@ -120,13 +113,10 @@ export class EditEmployeeProjectsComponent extends TranslationBaseComponent
 		const { id: organizationId } = this.organization;
 		const { id: selectedEmployeeId } = this.selectedEmployee;
 
-		this.employeeProjects = await this.organizationProjectsService.getAllByEmployee(
-			selectedEmployeeId,
-			{
-				organizationId,
-				tenantId
-			}
-		);
+		this.employeeProjects = await this.organizationProjectsService.getAllByEmployee(selectedEmployeeId, {
+			organizationId,
+			tenantId
+		});
 	}
 
 	/**
@@ -135,22 +125,21 @@ export class EditEmployeeProjectsComponent extends TranslationBaseComponent
 	 * @returns
 	 */
 	private async getOrganizationProjects(): Promise<IOrganizationProject[]> {
-		if (!this.organization || !this.store.hasAnyPermission(
-			PermissionsEnum.ALL_ORG_VIEW,
-			PermissionsEnum.ORG_PROJECT_VIEW
-		)) {
+		if (
+			!this.organization ||
+			!this.store.hasAnyPermission(PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.ORG_PROJECT_VIEW)
+		) {
 			return;
 		}
 
 		const { tenantId } = this.store.user;
 		const { id: organizationId } = this.organization;
 
-		return (await this.organizationProjectsService.getAll(
-			[],
-			{
+		return (
+			await this.organizationProjectsService.getAll([], {
 				organizationId,
 				tenantId
-			}
-		)).items;
+			})
+		).items;
 	}
 }

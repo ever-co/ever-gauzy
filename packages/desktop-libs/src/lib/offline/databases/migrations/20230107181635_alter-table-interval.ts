@@ -1,17 +1,10 @@
-import { Knex } from "knex";
-import { TABLE_NAME_INTERVALS } from "../../../offline";
-
+import { Knex } from 'knex';
+import { TABLE_NAME_INTERVALS } from '../../../offline';
 
 export async function up(knex: Knex): Promise<void> {
-    await knex.schema.alterTable(
-		TABLE_NAME_INTERVALS,
-		(table: Knex.TableBuilder) => {
-			table.json('screenshots').nullable().alter();
-		}
-	);
+	await knex.schema.alterTable(TABLE_NAME_INTERVALS, (table: Knex.TableBuilder) => {
+		table.json('screenshots').nullable().alter();
+	});
 }
 
-
-export async function down(knex: Knex): Promise<void> {
-}
-
+export async function down(knex: Knex): Promise<void> {}

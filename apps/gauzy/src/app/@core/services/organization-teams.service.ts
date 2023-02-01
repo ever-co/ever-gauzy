@@ -15,10 +15,7 @@ import { API_PREFIX } from '../constants/app.constants';
 	providedIn: 'root'
 })
 export class OrganizationTeamsService {
-
-	constructor(
-		private readonly http: HttpClient
-	) {}
+	constructor(private readonly http: HttpClient) {}
 
 	// TODO: Implement logic to proceed the following requests:
 	// 1) Get all employees of selected Organization and put in in the select as options;
@@ -28,15 +25,10 @@ export class OrganizationTeamsService {
 	// 5) Display all teams: show team name and members - avatar + full name for each member;
 
 	create(body: IOrganizationTeamCreateInput): Promise<IOrganizationTeam> {
-		return firstValueFrom(
-			this.http.post<IOrganizationTeam>(`${API_PREFIX}/organization-team`, body)
-		);
+		return firstValueFrom(this.http.post<IOrganizationTeam>(`${API_PREFIX}/organization-team`, body));
 	}
 
-	getAll(
-		relations: string[] = [],
-		where?: IOrganizationTeamFindInput
-	): Promise<IPagination<IOrganizationTeam>> {
+	getAll(relations: string[] = [], where?: IOrganizationTeamFindInput): Promise<IPagination<IOrganizationTeam>> {
 		return firstValueFrom(
 			this.http.get<IPagination<IOrganizationTeam>>(`${API_PREFIX}/organization-team`, {
 				params: toParams({ where, relations })
@@ -44,25 +36,15 @@ export class OrganizationTeamsService {
 		);
 	}
 
-	update(
-		id: IOrganizationTeam['id'],
-		body: IOrganizationTeamUpdateInput
-	): Promise<any> {
-		return firstValueFrom(
-			this.http.put(`${API_PREFIX}/organization-team/${id}`, body)
-		);
+	update(id: IOrganizationTeam['id'], body: IOrganizationTeamUpdateInput): Promise<any> {
+		return firstValueFrom(this.http.put(`${API_PREFIX}/organization-team/${id}`, body));
 	}
 
 	delete(id: IOrganizationTeam['id']): Promise<any> {
-		return firstValueFrom(
-			this.http.delete(`${API_PREFIX}/organization-team/${id}`)
-		);
+		return firstValueFrom(this.http.delete(`${API_PREFIX}/organization-team/${id}`));
 	}
 
-	getMyTeams(
-		where?: IOrganizationTeamFindInput,
-		relations: string[] = [],
-	): Promise<IPagination<IOrganizationTeam>> {
+	getMyTeams(where?: IOrganizationTeamFindInput, relations: string[] = []): Promise<IPagination<IOrganizationTeam>> {
 		return firstValueFrom(
 			this.http.get<IPagination<IOrganizationTeam>>(`${API_PREFIX}/organization-team/me`, {
 				params: toParams({ where, relations })

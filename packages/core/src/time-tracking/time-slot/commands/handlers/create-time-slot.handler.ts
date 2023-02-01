@@ -6,18 +6,14 @@ import { omit } from 'underscore';
 import { ITimeSlot, PermissionsEnum, TimeLogSourceEnum, TimeLogType } from '@gauzy/contracts';
 import { isEmpty, isNotEmpty } from '@gauzy/common';
 import { RequestContext } from '../../../../core/context';
-import {
-	Employee,
-	TimeLog
-} from './../../../../core/entities/internal';
+import { Employee, TimeLog } from './../../../../core/entities/internal';
 import { TimeSlot } from './../../time-slot.entity';
 import { CreateTimeSlotCommand } from '../create-time-slot.command';
 import { BulkActivitiesSaveCommand } from '../../../activity/commands';
 import { TimeSlotMergeCommand } from './../time-slot-merge.command';
 
 @CommandHandler(CreateTimeSlotCommand)
-export class CreateTimeSlotHandler
-	implements ICommandHandler<CreateTimeSlotCommand> {
+export class CreateTimeSlotHandler implements ICommandHandler<CreateTimeSlotCommand> {
 	constructor(
 		@InjectRepository(TimeSlot)
 		private readonly timeSlotRepository: Repository<TimeSlot>,
@@ -45,9 +41,7 @@ export class CreateTimeSlotHandler
 		/**
 		 * Check logged user does not have employee selection permission
 		 */
-		if (!RequestContext.hasPermission(
-			PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
-		)) {
+		if (!RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE)) {
 			try {
 				let employee = await this.employeeRepository.findOneByOrFail({
 					userId: user.id,
@@ -60,8 +54,8 @@ export class CreateTimeSlotHandler
 			}
 		} else {
 			/*
-			* If employeeId not send from desktop timer request payload
-			*/
+			 * If employeeId not send from desktop timer request payload
+			 */
 			if (isEmpty(employeeId) && RequestContext.currentEmployeeId()) {
 				employeeId = RequestContext.currentEmployeeId();
 			}
@@ -77,10 +71,7 @@ export class CreateTimeSlotHandler
 			organizationId = employee ? employee.organizationId : null;
 		}
 
-		input.startedAt = moment(input.startedAt)
-			.utc()
-			.set('millisecond', 0)
-			.toDate();
+		input.startedAt = moment(input.startedAt).utc().set('millisecond', 0).toDate();
 
 		const minDate = input.startedAt;
 		const maxDate = input.startedAt;
@@ -163,7 +154,10 @@ export class CreateTimeSlotHandler
 					qb.andWhere(`"${qb.alias}"."id" IN (:...timeLogIds)`, {
 						timeLogIds
 					});
-					console.log(qb.getQueryAndParameters(), `Timelog query for timeLog IDs for employee (${user.name})`);
+					console.log(
+						qb.getQueryAndParameters(),
+						`Timelog query for timeLog IDs for employee (${user.name})`
+					);
 				});
 				const timeLogs = await query.getMany();
 				console.log(timeLogs, `Found recent time logs using timelog ids for employee (${user.name})`);
@@ -203,15 +197,10 @@ export class CreateTimeSlotHandler
 		console.log(`Timeslot save first time before bulk activities save for employee (${user.name})`, { timeSlot });
 		await this.timeSlotRepository.save(timeSlot);
 		/*
-		* Merge timeSlots into 10 minutes slots
-		*/
+		 * Merge timeSlots into 10 minutes slots
+		 */
 		let [mergedTimeSlot] = await this.commandBus.execute(
-			new TimeSlotMergeCommand(
-				organizationId,
-				employeeId,
-				minDate,
-				maxDate
-			)
+			new TimeSlotMergeCommand(organizationId, employeeId, minDate, maxDate)
 		);
 		if (mergedTimeSlot) {
 			timeSlot = mergedTimeSlot;
@@ -219,7 +208,7 @@ export class CreateTimeSlotHandler
 
 		console.log(`Final merged timeSlot for employee (${user.name})`, { timeSlot });
 		return await this.timeSlotRepository.findOne({
-			where : {
+			where: {
 				id: timeSlot.id
 			},
 			relations: {

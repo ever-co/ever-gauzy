@@ -5,7 +5,7 @@ import { catchError } from 'rxjs/operators';
 import { throwError } from 'rxjs';
 
 @Injectable({
-	providedIn: 'root',
+	providedIn: 'root'
 })
 export class AppService {
 	AW_HOST = environment.AWHost;
@@ -22,19 +22,13 @@ export class AppService {
 				timestamp: new Date(),
 				data: {
 					running: true,
-					label: '',
-				},
-			},
+					label: ''
+				}
+			}
 		];
 
 		if (id) defaultValue[0].id = id;
-		return this.http
-			.post(
-				`${this.AW_HOST}/api/0/buckets/aw-stopwatch/events`,
-				defaultValue
-			)
-			.pipe()
-			.toPromise();
+		return this.http.post(`${this.AW_HOST}/api/0/buckets/aw-stopwatch/events`, defaultValue).pipe().toPromise();
 	}
 
 	stopTime(historyTime): Promise<any> {
@@ -43,16 +37,13 @@ export class AppService {
 				timestamp: new Date(),
 				data: {
 					running: false,
-					label: '',
+					label: ''
 				},
-				id: historyTime.id,
-			},
+				id: historyTime.id
+			}
 		];
 		return this.http
-			.post(
-				`${this.AW_HOST}/api/0/buckets/aw-stopwatch/events`,
-				defaultStopParams
-			)
+			.post(`${this.AW_HOST}/api/0/buckets/aw-stopwatch/events`, defaultStopParams)
 			.pipe()
 			.toPromise();
 	}
@@ -98,9 +89,7 @@ export class AppService {
 	collectChromeActivityFromAW(tpURL, start, end): Promise<any> {
 		if (!this.buckets.chromeBucket) return Promise.resolve([]);
 		return this.http
-			.get(
-				`${tpURL}/api/0/buckets/${this.buckets.chromeBucket.id}/events?start=${start}&end=${end}&limit=-1`
-			)
+			.get(`${tpURL}/api/0/buckets/${this.buckets.chromeBucket.id}/events?start=${start}&end=${end}&limit=-1`)
 			.pipe()
 			.toPromise();
 	}
@@ -108,9 +97,7 @@ export class AppService {
 	collectFirefoxActivityFromAw(tpURL, start, end): Promise<any> {
 		if (!this.buckets.firefoxBucket) return Promise.resolve([]);
 		return this.http
-			.get(
-				`${tpURL}/api/0/buckets/${this.buckets.firefoxBucket.id}/events?start=${start}&end=${end}&limit=-1`
-			)
+			.get(`${tpURL}/api/0/buckets/${this.buckets.firefoxBucket.id}/events?start=${start}&end=${end}&limit=-1`)
 			.pipe()
 			.toPromise();
 	}
@@ -121,26 +108,19 @@ export class AppService {
 	collectFromAW(tpURL, start, end) {
 		if (!this.buckets.windowBucket) return Promise.resolve([]);
 		return this.http
-			.get(
-				`${tpURL}/api/0/buckets/${this.buckets.windowBucket.id}/events?start=${start}&end=${end}&limit=-1`
-			)
+			.get(`${tpURL}/api/0/buckets/${this.buckets.windowBucket.id}/events?start=${start}&end=${end}&limit=-1`)
 			.pipe()
 			.toPromise();
 	}
 
 	collectAfkFromAW(tpURL, start, end) {
 		if (!this.buckets.afkBucket) return Promise.resolve([]);
-		return this.http
-			.get(
-				`${tpURL}/api/0/buckets/${this.buckets.afkBucket.id}/events?limit=1`
-			)
-			.pipe()
-			.toPromise();
+		return this.http.get(`${tpURL}/api/0/buckets/${this.buckets.afkBucket.id}/events?limit=1`).pipe().toPromise();
 	}
 
 	pushToTimeSlot(values) {
 		const headers = new HttpHeaders({
-			Authorization: `Bearer ${values.token}`,
+			Authorization: `Bearer ${values.token}`
 		});
 		const params = {
 			employeeId: values.employeeId,
@@ -154,17 +134,17 @@ export class AppService {
 			timeLogId: values.timeLogId,
 			organizationId: values.organizationId,
 			tenantId: values.tenantId,
-			organizationContactId: values.organizationContactId,
+			organizationContactId: values.organizationContactId
 		};
 		return this.http
 			.post(`${values.apiHost}/api/timesheet/time-slot`, params, {
-				headers: headers,
+				headers: headers
 			})
 			.pipe(
 				catchError((error) => {
 					error.error = {
 						...error.error,
-						params: JSON.stringify(params),
+						params: JSON.stringify(params)
 					};
 					return throwError(error);
 				})
@@ -174,7 +154,7 @@ export class AppService {
 
 	pushTotimesheet(values) {
 		const headers = new HttpHeaders({
-			Authorization: `Bearer ${values.token}`,
+			Authorization: `Bearer ${values.token}`
 		});
 		return this.http
 			.post(
@@ -191,10 +171,10 @@ export class AppService {
 					stoppedAt: values.stoppedAt,
 					organizationId: values.organizationId,
 					tenantId: values.tenantId,
-					organizationContactId: values.organizationContactId,
+					organizationContactId: values.organizationContactId
 				},
 				{
-					headers: headers,
+					headers: headers
 				}
 			)
 			.pipe()
@@ -203,7 +183,7 @@ export class AppService {
 
 	updateToTimeSheet(values) {
 		const headers = new HttpHeaders({
-			Authorization: `Bearer ${values.token}`,
+			Authorization: `Bearer ${values.token}`
 		});
 		return this.http
 			.put(
@@ -213,10 +193,10 @@ export class AppService {
 					keyboard: values.keyboard,
 					mouse: values.mouse,
 					overall: values.overall,
-					stoppedAt: values.stoppedAt,
+					stoppedAt: values.stoppedAt
 				},
 				{
-					headers: headers,
+					headers: headers
 				}
 			)
 			.pipe()
@@ -225,7 +205,7 @@ export class AppService {
 
 	updateToTimeSlot(values) {
 		const headers = new HttpHeaders({
-			Authorization: `Bearer ${values.token}`,
+			Authorization: `Bearer ${values.token}`
 		});
 		return this.http
 			.put(
@@ -235,10 +215,10 @@ export class AppService {
 					keyboard: values.keyboard,
 					mouse: values.mouse,
 					overall: values.overall,
-					activities: values.activities,
+					activities: values.activities
 				},
 				{
-					headers: headers,
+					headers: headers
 				}
 			)
 			.pipe()
@@ -247,16 +227,16 @@ export class AppService {
 
 	pushToActivity(values) {
 		const headers = new HttpHeaders({
-			Authorization: `Bearer ${values.token}`,
+			Authorization: `Bearer ${values.token}`
 		});
 		return this.http
 			.post(
 				`${values.apiHost}/api/timesheet/activity/bulk`,
 				{
-					activities: values.activities,
+					activities: values.activities
 				},
 				{
-					headers: headers,
+					headers: headers
 				}
 			)
 			.pipe()
@@ -265,16 +245,16 @@ export class AppService {
 
 	updateToActivity(values) {
 		const headers = new HttpHeaders({
-			Authorization: `Bearer ${values.token}`,
+			Authorization: `Bearer ${values.token}`
 		});
 		return this.http
 			.put(
 				`${values.apiHost}/api/timesheet/activity/${values.activityId}`,
 				{
-					duration: values.duration,
+					duration: values.duration
 				},
 				{
-					headers: headers,
+					headers: headers
 				}
 			)
 			.pipe()
@@ -283,7 +263,7 @@ export class AppService {
 
 	setTimeLog(values) {
 		const headers = new HttpHeaders({
-			Authorization: `Bearer ${values.token}`,
+			Authorization: `Bearer ${values.token}`
 		});
 		return this.http
 			.post(
@@ -297,10 +277,10 @@ export class AppService {
 					stoppedAt: values.stoppedAt,
 					isBillable: true,
 					logType: 'TRACKED',
-					source: 'DESKTOP',
+					source: 'DESKTOP'
 				},
 				{
-					headers: headers,
+					headers: headers
 				}
 			)
 			.pipe()
@@ -309,17 +289,17 @@ export class AppService {
 
 	updateTimeLog(values) {
 		const headers = new HttpHeaders({
-			Authorization: `Bearer ${values.token}`,
+			Authorization: `Bearer ${values.token}`
 		});
 		return this.http
 			.put(
 				`${values.apiHost}/api/timesheet/time-log/${values.timeLogId}`,
 				{
 					startedAt: values.startedAt,
-					stoppedAt: values.stoppedAt,
+					stoppedAt: values.stoppedAt
 				},
 				{
-					headers: headers,
+					headers: headers
 				}
 			)
 			.pipe()
@@ -328,7 +308,7 @@ export class AppService {
 
 	stopTimer(values) {
 		const headers = new HttpHeaders({
-			Authorization: `Bearer ${values.token}`,
+			Authorization: `Bearer ${values.token}`
 		});
 
 		return this.http
@@ -344,10 +324,10 @@ export class AppService {
 					manualTimeSlot: values.manualTimeSlot,
 					organizationId: values.organizationId,
 					tenantId: values.tenantId,
-					organizationContactId: values.organizationContactId,
+					organizationContactId: values.organizationContactId
 				},
 				{
-					headers: headers,
+					headers: headers
 				}
 			)
 			.pipe()
@@ -356,7 +336,7 @@ export class AppService {
 
 	uploadScreenCapture(values) {
 		const headers = new HttpHeaders({
-			Authorization: `Bearer ${values.token}`,
+			Authorization: `Bearer ${values.token}`
 		});
 		const formData = new FormData();
 		const fileUpload: File = values.fileStream;
@@ -366,7 +346,7 @@ export class AppService {
 		console.log(values);
 		return this.http
 			.post(`${values.apiHost}/api/timesheet/screenshot`, formData, {
-				headers: headers,
+				headers: headers
 			})
 			.pipe()
 			.toPromise();

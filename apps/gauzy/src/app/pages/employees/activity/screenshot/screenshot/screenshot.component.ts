@@ -31,9 +31,7 @@ import { GauzyFiltersComponent } from './../../../../../@shared/timesheet/gauzy-
 	templateUrl: './screenshot.component.html',
 	styleUrls: ['./screenshot.component.scss']
 })
-export class ScreenshotComponent extends BaseSelectorFilterComponent
-	implements OnInit, OnDestroy {
-
+export class ScreenshotComponent extends BaseSelectorFilterComponent implements OnInit, OnDestroy {
 	payloads$: BehaviorSubject<ITimeLogFilters> = new BehaviorSubject(null);
 	screenshots$: Subject<boolean> = new Subject();
 
@@ -105,23 +103,12 @@ export class ScreenshotComponent extends BaseSelectorFilterComponent
 		if (isEmpty(this.request) || isEmpty(this.filters)) {
 			return;
 		}
-		const appliedFilter = pick(
-			this.filters,
-			'source',
-			'activityLevel',
-			'logType'
-		);
+		const appliedFilter = pick(this.filters, 'source', 'activityLevel', 'logType');
 		const request: IGetTimeSlotInput = {
 			...appliedFilter,
 			...this.getFilterRequest(this.request),
 			relations: [
-				...(
-					this.store.hasPermission(
-						PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
-					)
-					? ['employee.user']
-					: []
-				),
+				...(this.store.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE) ? ['employee.user'] : []),
 				'screenshots',
 				'timeLogs'
 			]
@@ -169,11 +156,8 @@ export class ScreenshotComponent extends BaseSelectorFilterComponent
 	}
 
 	updateSelections() {
-		this.selectedIdsCount = Object.values(this.selectedIds).filter(
-			(val) => val === true
-		).length;
-		this.allSelected =
-			this.selectedIdsCount === Object.values(this.selectedIds).length;
+		this.selectedIdsCount = Object.values(this.selectedIds).filter((val) => val === true).length;
+		this.allSelected = this.selectedIdsCount === Object.values(this.selectedIds).length;
 	}
 
 	deleteSlot() {
@@ -195,7 +179,7 @@ export class ScreenshotComponent extends BaseSelectorFilterComponent
 					const request = {
 						ids,
 						organizationId
-					}
+					};
 					this.timesheetService.deleteTimeSlots(request).then(() => {
 						this._deleteScreenshotGallery(ids);
 						this.screenshots$.next(true);
@@ -228,44 +212,40 @@ export class ScreenshotComponent extends BaseSelectorFilterComponent
 				return timeSlot;
 			})
 			.groupBy((timeSlot) => moment(timeSlot.localStartedAt).format('HH'))
-			.mapObject(
-				(hourTimeSlots: ITimeSlot[], hour): IScreenshotMap => {
-					const groupByMinutes = chain(hourTimeSlots)
-						.groupBy((timeSlot) => moment(timeSlot.localStartedAt).format('mm'))
-						.value();
+			.mapObject((hourTimeSlots: ITimeSlot[], hour): IScreenshotMap => {
+				const groupByMinutes = chain(hourTimeSlots)
+					.groupBy((timeSlot) => moment(timeSlot.localStartedAt).format('mm'))
+					.value();
+				/**
+				 * First sort by screenshots then after index by of hoursTimeSlots
+				 * So, we can display screenshots in UI
+				 */
+				const byMinutes = indexBy(sortBy(hourTimeSlots, 'screenshots'), (timeSlot) =>
+					moment(timeSlot.localStartedAt).format('mm')
+				);
+				timeSlots = ['00', '10', '20', '30', '40', '50'].map((key) => {
 					/**
-					 * First sort by screenshots then after index by of hoursTimeSlots
-					 * So, we can display screenshots in UI
+					 * Calculate employees work on same time slots by minutes
 					 */
-					const byMinutes = indexBy(sortBy(hourTimeSlots, 'screenshots'), (timeSlot) =>
-						moment(timeSlot.localStartedAt).format('mm')
-					);
-					timeSlots = ['00', '10', '20', '30', '40', '50'].map((key) => {
-						/**
-						 * Calculate employees work on same time slots by minutes
-						 */
-						if (key in byMinutes) {
-							byMinutes[key]['employees'] = chain(groupByMinutes[key])
-								.groupBy((timeSlot: ITimeSlot) => timeSlot.employeeId)
-								.values()
-								.flatten()
-								.map((timeSlot: ITimeSlot) => timeSlot.employee)
-								.value();
-						}
-						return byMinutes[key] || null;
-					});
+					if (key in byMinutes) {
+						byMinutes[key]['employees'] = chain(groupByMinutes[key])
+							.groupBy((timeSlot: ITimeSlot) => timeSlot.employeeId)
+							.values()
+							.flatten()
+							.map((timeSlot: ITimeSlot) => timeSlot.employee)
+							.value();
+					}
+					return byMinutes[key] || null;
+				});
 
-					const time = moment().set('hour', parseInt(hour, 0)).set('minute', 0);
-					const startTime = time.format('HH:mm');
-					const endTime = time.add(1, 'hour').format('HH:mm');
+				const time = moment().set('hour', parseInt(hour, 0)).set('minute', 0);
+				const startTime = time.format('HH:mm');
+				const endTime = time.add(1, 'hour').format('HH:mm');
 
-					return { startTime, endTime, timeSlots };
-				}
-			)
+				return { startTime, endTime, timeSlots };
+			})
 			.values()
-			.sortBy(({ startTime }) =>
-				moment(startTime, 'HH:mm').toDate().getTime()
-			)
+			.sortBy(({ startTime }) => moment(startTime, 'HH:mm').toDate().getTime())
 			.value();
 		this.updateSelections();
 		return groupTimeSlots;
@@ -275,15 +255,13 @@ export class ScreenshotComponent extends BaseSelectorFilterComponent
 		if (this.originalTimeSlots.length) {
 			this.originalTimeSlots.forEach((timeSlot: ITimeSlot) => {
 				if (timeSlotIds.includes(timeSlot.id)) {
-					const galleryItems = timeSlot.screenshots.map(
-						(screenshot: IScreenshot) => {
-							return {
-								thumbUrl: screenshot.thumbUrl,
-								fullUrl: screenshot.fullUrl,
-								...screenshot
-							};
-						}
-					);
+					const galleryItems = timeSlot.screenshots.map((screenshot: IScreenshot) => {
+						return {
+							thumbUrl: screenshot.thumbUrl,
+							fullUrl: screenshot.fullUrl,
+							...screenshot
+						};
+					});
 					this.galleryService.removeGalleryItems(galleryItems);
 				}
 			});

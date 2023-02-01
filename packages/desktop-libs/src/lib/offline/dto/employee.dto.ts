@@ -1,5 +1,5 @@
 export interface EmployeeTO {
-    id? : string;
+	id?: string;
 	endWork?: Date;
 	startedWorkOn?: Date;
 	isActive: boolean;

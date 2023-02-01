@@ -13,17 +13,13 @@ export class UserDAO implements DAO<UserTO> {
 	}
 
 	public async findAll(): Promise<UserTO[]> {
-		return await this._provider
-			.connection<UserTO>(TABLE_NAME_USERS)
-			.select('*');
+		return await this._provider.connection<UserTO>(TABLE_NAME_USERS).select('*');
 	}
 	public async save(value: UserTO): Promise<void> {
 		await this._trx.create(value);
 	}
 	public async findOneById(id: number): Promise<UserTO> {
-		return await this._provider
-			.connection<UserTO>(TABLE_NAME_USERS)
-			.where('id', '=', id)[0];
+		return await this._provider.connection<UserTO>(TABLE_NAME_USERS).where('id', '=', id)[0];
 	}
 	public async update(id: number, value: Partial<UserTO>): Promise<void> {
 		await this._trx.update(id, value);
@@ -33,10 +29,7 @@ export class UserDAO implements DAO<UserTO> {
 	}
 
 	public async current(): Promise<UserTO> {
-		const [user] = await this._provider
-			.connection<UserTO>(TABLE_NAME_USERS)
-			.orderBy('id', 'desc')
-			.limit(1);
+		const [user] = await this._provider.connection<UserTO>(TABLE_NAME_USERS).orderBy('id', 'desc').limit(1);
 		return user;
 	}
 }

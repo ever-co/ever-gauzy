@@ -17,7 +17,7 @@ Object.assign(console, log.functions);
 @Component({
 	selector: 'gauzy-root',
 	template: '<router-outlet></router-outlet>',
-	styleUrls: ['./app.component.scss'],
+	styleUrls: ['./app.component.scss']
 })
 export class AppComponent implements OnInit, AfterViewInit {
 	constructor(
@@ -34,105 +34,76 @@ export class AppComponent implements OnInit, AfterViewInit {
 	ngOnInit(): void {
 		console.log('On Init');
 		this.electronService.ipcRenderer.send('app_is_init');
-		this.store.systemLanguages$
-			.pipe(untilDestroyed(this))
-			.subscribe((languages) => {
-				//Returns the language code name from the browser, e.g. "en", "bg", "he", "ru"
-				const browserLang = this.translate.getBrowserLang() as string;
+		this.store.systemLanguages$.pipe(untilDestroyed(this)).subscribe((languages) => {
+			//Returns the language code name from the browser, e.g. "en", "bg", "he", "ru"
+			const browserLang = this.translate.getBrowserLang() as string;
 
-				//Gets default enum laguages, e.g. "en", "bg", "he", "ru"
-				const defaultLanguages = Object.values(LanguagesEnum);
+			//Gets default enum laguages, e.g. "en", "bg", "he", "ru"
+			const defaultLanguages = Object.values(LanguagesEnum);
 
-				//Gets system laguages
-				const systemLanguages: string[] = _.pluck(
-					languages,
-					'code'
-				) as string[];
-				systemLanguages.concat(defaultLanguages);
+			//Gets system laguages
+			const systemLanguages: string[] = _.pluck(languages, 'code') as string[];
+			systemLanguages.concat(defaultLanguages);
 
-				//Sets the default language to use as a fallback, e.g. "en"
-				this.translate.setDefaultLang(LanguagesEnum.ENGLISH);
+			//Sets the default language to use as a fallback, e.g. "en"
+			this.translate.setDefaultLang(LanguagesEnum.ENGLISH);
 
-				//Use browser language as a primary language, if not found then use system default language, e.g. "en"
-				this.translate.use(
-					systemLanguages.includes(browserLang)
-						? browserLang
-						: LanguagesEnum.ENGLISH
-				);
+			//Use browser language as a primary language, if not found then use system default language, e.g. "en"
+			this.translate.use(systemLanguages.includes(browserLang) ? browserLang : LanguagesEnum.ENGLISH);
 
-				// this.translate.onLangChange.subscribe(() => {
-				// 	this.loading = false;
-				// });
-			});
+			// this.translate.onLangChange.subscribe(() => {
+			// 	this.loading = false;
+			// });
+		});
 	}
 
 	ngAfterViewInit(): void {
 		this.electronService.ipcRenderer.on('collect_data', (event, arg) =>
 			this._ngZone.run(() => {
-				this.appService
-					.collectEvents(arg.tpURL, arg.tp, arg.start, arg.end)
-					.then((res) => {
-						event.sender.send('data_push_activity', {
-							timerId: arg.timerId,
-							windowEvent: res,
-							type: 'APP',
-						});
+				this.appService.collectEvents(arg.tpURL, arg.tp, arg.start, arg.end).then((res) => {
+					event.sender.send('data_push_activity', {
+						timerId: arg.timerId,
+						windowEvent: res,
+						type: 'APP'
 					});
+				});
 			})
 		);
 
 		this.electronService.ipcRenderer.on('collect_afk', (event, arg) =>
 			this._ngZone.run(() => {
-				this.appService
-					.collectAfk(arg.tpURL, arg.tp, arg.start, arg.end)
-					.then((res) => {
-						event.sender.send('data_push_activity', {
-							timerId: arg.timerId,
-							windowEvent: res,
-							type: 'AFK',
-						});
+				this.appService.collectAfk(arg.tpURL, arg.tp, arg.start, arg.end).then((res) => {
+					event.sender.send('data_push_activity', {
+						timerId: arg.timerId,
+						windowEvent: res,
+						type: 'AFK'
 					});
+				});
 			})
 		);
 
-		this.electronService.ipcRenderer.on(
-			'collect_chrome_activities',
-			(event, arg) =>
-				this._ngZone.run(() => {
-					this.appService
-						.collectChromeActivityFromAW(
-							arg.tpURL,
-							arg.start,
-							arg.end
-						)
-						.then((res) => {
-							event.sender.send('data_push_activity', {
-								timerId: arg.timerId,
-								windowEvent: res,
-								type: 'URL',
-							});
-						});
-				})
+		this.electronService.ipcRenderer.on('collect_chrome_activities', (event, arg) =>
+			this._ngZone.run(() => {
+				this.appService.collectChromeActivityFromAW(arg.tpURL, arg.start, arg.end).then((res) => {
+					event.sender.send('data_push_activity', {
+						timerId: arg.timerId,
+						windowEvent: res,
+						type: 'URL'
+					});
+				});
+			})
 		);
 
-		this.electronService.ipcRenderer.on(
-			'collect_firefox_activities',
-			(event, arg) =>
-				this._ngZone.run(() => {
-					this.appService
-						.collectFirefoxActivityFromAw(
-							arg.tpURL,
-							arg.start,
-							arg.end
-						)
-						.then((res) => {
-							event.sender.send('data_push_activity', {
-								timerId: arg.timerId,
-								windowEvent: res,
-								type: 'URL',
-							});
-						});
-				})
+		this.electronService.ipcRenderer.on('collect_firefox_activities', (event, arg) =>
+			this._ngZone.run(() => {
+				this.appService.collectFirefoxActivityFromAw(arg.tpURL, arg.start, arg.end).then((res) => {
+					event.sender.send('data_push_activity', {
+						timerId: arg.timerId,
+						windowEvent: res,
+						type: 'URL'
+					});
+				});
+			})
 		);
 
 		this.electronService.ipcRenderer.on('set_time_sheet', (event, arg) =>
@@ -143,7 +114,7 @@ export class AppComponent implements OnInit, AfterViewInit {
 						event.sender.send('return_time_sheet', {
 							timerId: arg.timerId,
 							timeSheetId: res.id,
-							timeLogId: result.id,
+							timeLogId: result.id
 						});
 					});
 				});
@@ -158,9 +129,7 @@ export class AppComponent implements OnInit, AfterViewInit {
 			})
 		);
 
-		this.electronService.ipcRenderer.on('set_auth_user', (event, arg) =>
-			this._ngZone.run(() => {})
-		);
+		this.electronService.ipcRenderer.on('set_auth_user', (event, arg) => this._ngZone.run(() => {}));
 
 		this.electronService.ipcRenderer.on('set_time_slot', (event, arg) =>
 			this._ngZone.run(() => {
@@ -173,14 +142,14 @@ export class AppComponent implements OnInit, AfterViewInit {
 								timerId: arg.timerId,
 								timeSlotId: res.id,
 								quitApp: arg.quitApp,
-								timeLogs: timeLogs,
+								timeLogs: timeLogs
 							});
 						}
 					})
 					.catch((e) => {
 						event.sender.send('failed_save_time_slot', {
 							params: e.error.params,
-							message: e.message,
+							message: e.message
 						});
 					});
 			})
@@ -196,18 +165,16 @@ export class AppComponent implements OnInit, AfterViewInit {
 			this._ngZone.run(() => {
 				this.appService.pushToActivity(arg).then((res: any) => {
 					event.sender.send('return_activity', {
-						activityIds: arg.sourceIds,
+						activityIds: arg.sourceIds
 					});
 				});
 			})
 		);
 
-		this.electronService.ipcRenderer.on(
-			'update_to_activity',
-			(event, arg) =>
-				this._ngZone.run(() => {
-					this.appService.updateToActivity(arg);
-				})
+		this.electronService.ipcRenderer.on('update_to_activity', (event, arg) =>
+			this._ngZone.run(() => {
+				this.appService.updateToActivity(arg);
+			})
 		);
 
 		this.electronService.ipcRenderer.on('set_time_log', (event, arg) =>
@@ -215,19 +182,17 @@ export class AppComponent implements OnInit, AfterViewInit {
 				this.appService.setTimeLog(arg).then((res: any) => {
 					event.sender.send('return_time_log', {
 						timerId: arg.timerId,
-						timeLogId: res.id,
+						timeLogId: res.id
 					});
 				});
 			})
 		);
 
-		this.electronService.ipcRenderer.on(
-			'update_time_log_stop',
-			(event, arg) =>
-				this._ngZone.run(() => {
-					console.log('Time Log Stopped');
-					this.appService.updateTimeLog(arg);
-				})
+		this.electronService.ipcRenderer.on('update_time_log_stop', (event, arg) =>
+			this._ngZone.run(() => {
+				console.log('Time Log Stopped');
+				this.appService.updateTimeLog(arg);
+			})
 		);
 
 		this.electronService.ipcRenderer.on('time_toggle', (event, arg) =>
@@ -235,28 +200,26 @@ export class AppComponent implements OnInit, AfterViewInit {
 				this.appService.stopTimer(arg).then((res) => {
 					event.sender.send('return_toggle_api', {
 						result: res,
-						timerId: arg.timerId,
+						timerId: arg.timerId
 					});
 				});
 			})
 		);
 
-		this.electronService.ipcRenderer.on(
-			'update_toggle_timer',
-			(event, arg) =>
-				this._ngZone.run(() => {
-					console.log('event toggle stopped', arg);
-					this.appService
-						.stopTimer(arg)
-						.then((res) => {
-							event.sender.send('timer_stopped');
-							console.log('success stopped timer', res);
-						})
-						.catch((e) => {
-							console.log('failed stoped timer', e);
-							event.sender.send('timer_stopped');
-						});
-				})
+		this.electronService.ipcRenderer.on('update_toggle_timer', (event, arg) =>
+			this._ngZone.run(() => {
+				console.log('event toggle stopped', arg);
+				this.appService
+					.stopTimer(arg)
+					.then((res) => {
+						event.sender.send('timer_stopped');
+						console.log('success stopped timer', res);
+					})
+					.catch((e) => {
+						console.log('failed stoped timer', e);
+						event.sender.send('timer_stopped');
+					});
+			})
 		);
 
 		this.electronService.ipcRenderer.on('server_ping', (event, arg) =>
@@ -276,8 +239,7 @@ export class AppComponent implements OnInit, AfterViewInit {
 								clearInterval(pinghost);
 							}
 
-							const userDetail =
-								localStorage.getItem('userDetail');
+							const userDetail = localStorage.getItem('userDetail');
 							if (userDetail) {
 								event.sender.send('server_is_ready');
 								clearInterval(pinghost);
@@ -287,43 +249,38 @@ export class AppComponent implements OnInit, AfterViewInit {
 			})
 		);
 
-		this.electronService.ipcRenderer.on(
-			'upload_screen_shot',
-			(event, arg) =>
-				this._ngZone.run(() => {
-					this.appService.uploadScreenCapture(arg).then((res) => {
-						console.log('Screenshot Uploaded', res);
-					});
-				})
+		this.electronService.ipcRenderer.on('upload_screen_shot', (event, arg) =>
+			this._ngZone.run(() => {
+				this.appService.uploadScreenCapture(arg).then((res) => {
+					console.log('Screenshot Uploaded', res);
+				});
+			})
 		);
 
-		this.electronService.ipcRenderer.on(
-			'server_ping_restart',
-			(event, arg) =>
-				this._ngZone.run(() => {
-					const pinghost = setInterval(() => {
-						this.appService
-							.pingServer(arg)
-							.then((res) => {
-								console.log('server found');
+		this.electronService.ipcRenderer.on('server_ping_restart', (event, arg) =>
+			this._ngZone.run(() => {
+				const pinghost = setInterval(() => {
+					this.appService
+						.pingServer(arg)
+						.then((res) => {
+							console.log('server found');
+							event.sender.send('server_already_start');
+							clearInterval(pinghost);
+						})
+						.catch((e) => {
+							console.log('ping status result', e.status);
+							if (e.status === 404) {
 								event.sender.send('server_already_start');
 								clearInterval(pinghost);
-							})
-							.catch((e) => {
-								console.log('ping status result', e.status);
-								if (e.status === 404) {
-									event.sender.send('server_already_start');
-									clearInterval(pinghost);
-								}
-								const userDetail =
-									localStorage.getItem('userDetail');
-								if (userDetail) {
-									event.sender.send('server_is_ready');
-									clearInterval(pinghost);
-								}
-							});
-					}, 3000);
-				})
+							}
+							const userDetail = localStorage.getItem('userDetail');
+							if (userDetail) {
+								event.sender.send('server_is_ready');
+								clearInterval(pinghost);
+							}
+						});
+				}, 3000);
+			})
 		);
 
 		this.electronService.ipcRenderer.on('logout_timer', (event, arg) =>
@@ -340,14 +297,12 @@ export class AppComponent implements OnInit, AfterViewInit {
 			})
 		);
 
-		this.electronService.ipcRenderer.on(
-			'social_auth_success',
-			(event, arg) =>
-				this._ngZone.run(() => {
-					localStorage.setItem('token', arg.token);
-					localStorage.setItem('_userId', arg.userId);
-					this.authFromSocial(arg);
-				})
+		this.electronService.ipcRenderer.on('social_auth_success', (event, arg) =>
+			this._ngZone.run(() => {
+				localStorage.setItem('token', arg.token);
+				localStorage.setItem('_userId', arg.userId);
+				this.authFromSocial(arg);
+			})
 		);
 	}
 
@@ -359,7 +314,7 @@ export class AppComponent implements OnInit, AfterViewInit {
 					...arg,
 					token: arg.token,
 					userId: arg.userId,
-					tenantId: jwtParsed.tenantId,
+					tenantId: jwtParsed.tenantId
 				});
 				this.electronService.ipcRenderer.send('auth_success', {
 					user: user,
@@ -367,27 +322,19 @@ export class AppComponent implements OnInit, AfterViewInit {
 					userId: arg.userId,
 					employeeId: jwtParsed.employeeId,
 					tenantId: jwtParsed.tenantId,
-					organizationId: user.employee
-						? user.employee.organizationId
-						: null,
+					organizationId: user.employee ? user.employee.organizationId : null
 				});
 			} else {
-				this.toastrService.show(
-					'Your account is not an employee',
-					`Warning`,
-					{
-						status: 'danger',
-					}
-				);
+				this.toastrService.show('Your account is not an employee', `Warning`, {
+					status: 'danger'
+				});
 			}
 		}
 	}
 
 	async jwtDecode(token) {
 		try {
-			return JSON.parse(
-				Buffer.from(token.split('.')[1], 'base64').toString()
-			);
+			return JSON.parse(Buffer.from(token.split('.')[1], 'base64').toString());
 		} catch (e) {
 			return null;
 		}

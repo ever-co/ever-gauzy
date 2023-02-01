@@ -92,9 +92,7 @@ export class DesktopActiveWindow extends EventEmitter {
 			// Detect changes
 			if (
 				window &&
-				((window.owner &&
-					window.owner.path !==
-						this._currentApplication.data.executable) ||
+				((window.owner && window.owner.path !== this._currentApplication.data.executable) ||
 					window.title !== this._currentApplication.data.title ||
 					window.url !== this._currentApplication.data.url ||
 					anyway)
@@ -109,8 +107,6 @@ export class DesktopActiveWindow extends EventEmitter {
 	private get isActivityWatch(): boolean {
 		const project = LocalStore.getStore('project');
 		const setting = LocalStore.getStore('appSetting');
-		return (
-			project && project.aw && project.aw.isAw && setting.awIsConnected
-		);
+		return project && project.aw && project.aw.isAw && setting.awIsConnected;
 	}
 }

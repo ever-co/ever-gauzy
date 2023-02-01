@@ -4,11 +4,8 @@ import { IEditEntityByMemberInput } from '@gauzy/contracts';
 import { CrudService } from '../../core/crud';
 
 export abstract class UpdateEntityByMembersHandler {
-
 	//TODO: Change CrudService<any> to be more specific
-	constructor(
-		private readonly crudService: CrudService<any>
-	) {}
+	constructor(private readonly crudService: CrudService<any>) {}
 
 	public async executeCommand(input: IEditEntityByMemberInput): Promise<any> {
 		try {

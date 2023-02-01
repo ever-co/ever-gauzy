@@ -4,10 +4,7 @@ import { LocalStore } from '../desktop-store';
 import { IOfflineMode } from '../interfaces';
 import { ApiServerConnectivity } from '../states';
 
-export class DesktopOfflineModeHandler
-	extends EventEmitter
-	implements IOfflineMode
-{
+export class DesktopOfflineModeHandler extends EventEmitter implements IOfflineMode {
 	private static _instance: IOfflineMode;
 	private _isEnabled: boolean;
 	private _pingTimer: any;
@@ -41,9 +38,7 @@ export class DesktopOfflineModeHandler
 	public async connectivity(): Promise<void> {
 		try {
 			// Check connectivity
-			const networkContext = new NetworkStateManager(
-				new ApiServerConnectivity()
-			);
+			const networkContext = new NetworkStateManager(new ApiServerConnectivity());
 			const connectivityEstablished = await networkContext.established();
 			console.log('[NetworkContext]: ', connectivityEstablished);
 			// If connection is not restored
@@ -52,10 +47,7 @@ export class DesktopOfflineModeHandler
 					// Notify that offline mode is enabled
 					this.emit('offline');
 				}
-				console.log(
-					'[OfflineModeHandler]:',
-					'Connection still not restored'
-				);
+				console.log('[OfflineModeHandler]:', 'Connection still not restored');
 			} else {
 				// Check again before restore
 				(await networkContext.established())

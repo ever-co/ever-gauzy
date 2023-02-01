@@ -21,7 +21,7 @@ import {
 	NbToastrService,
 	NbFormFieldModule,
 	NbTooltipModule,
-	NbBadgeModule,
+	NbBadgeModule
 } from '@nebular/theme';
 import { NbEvaIconsModule } from '@nebular/eva-icons';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
@@ -31,11 +31,7 @@ import { PaginationModule } from './pagination/pagination.module';
 import { NoDataMessageComponent } from './no-data-message/no-data-message.component';
 
 @NgModule({
-	declarations: [
-		TimeTrackerComponent,
-		CustomRenderComponent,
-		NoDataMessageComponent,
-	],
+	declarations: [TimeTrackerComponent, CustomRenderComponent, NoDataMessageComponent],
 	imports: [
 		CommonModule,
 		NbLayoutModule,
@@ -60,14 +56,9 @@ import { NoDataMessageComponent } from './no-data-message/no-data-message.compon
 		NbToggleModule,
 		NbBadgeModule,
 		PaginationModule,
-		NbTooltipModule,
+		NbTooltipModule
 	],
-	providers: [
-		NbSidebarService,
-		TimeTrackerService,
-		NbDialogService,
-		NbToastrService,
-	],
-	exports: [TimeTrackerComponent],
+	providers: [NbSidebarService, TimeTrackerService, NbDialogService, NbToastrService],
+	exports: [TimeTrackerComponent]
 })
 export class TimeTrackerModule {}

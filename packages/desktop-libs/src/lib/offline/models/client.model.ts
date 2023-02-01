@@ -7,12 +7,7 @@ export class Client extends Base implements ClientTO, Serializable<ClientTO> {
 	private _name: string;
 
 	constructor(client: ClientTO) {
-		super(
-			client.id,
-			client.organizationId,
-			client.remoteId,
-			client.tenantId
-		);
+		super(client.id, client.organizationId, client.remoteId, client.tenantId);
 		this._imageUrl = client.imageUrl;
 		this._name = client.name;
 	}

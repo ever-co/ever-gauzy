@@ -5,5 +5,5 @@ export interface ITaskService<T> {
 	findAll(): Promise<T[]>;
 	findById(task: Partial<T>): Promise<T>;
 	findByOption(options: ITaskFilterOption): Promise<T[]>;
-    remove(task: Partial<T>): Promise<void>;
+	remove(task: Partial<T>): Promise<void>;
 }

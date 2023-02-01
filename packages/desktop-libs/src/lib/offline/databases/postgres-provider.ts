@@ -20,7 +20,7 @@ export class PostgresProvider implements IDatabaseProvider {
 				port: cfg.dbPort,
 				user: cfg.dbUsername,
 				password: cfg.dbPassword,
-				database: 'db_gauzy_timer',
+				database: 'db_gauzy_timer'
 			},
 			pool: {
 				min: 2,
@@ -29,13 +29,13 @@ export class PostgresProvider implements IDatabaseProvider {
 				acquireTimeoutMillis: 60 * 1000 * 2,
 				idleTimeoutMillis: 30000,
 				reapIntervalMillis: 1000,
-				createRetryIntervalMillis: 100,
+				createRetryIntervalMillis: 100
 			},
 			migrations: {
-				directory: __dirname + '/migrations',
+				directory: __dirname + '/migrations'
 			},
 			useNullAsDefault: true,
-			asyncStackTraces: true,
+			asyncStackTraces: true
 		};
 	}
 

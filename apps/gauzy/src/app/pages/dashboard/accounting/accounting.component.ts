@@ -6,12 +6,7 @@ import { filter, tap } from 'rxjs/operators';
 import { Subject } from 'rxjs/internal/Subject';
 import { pluck } from 'underscore';
 import { TranslateService } from '@ngx-translate/core';
-import {
-	IAggregatedEmployeeStatistic,
-	IDateRangePicker,
-	IOrganization,
-	ISelectedEmployee
-} from '@gauzy/contracts';
+import { IAggregatedEmployeeStatistic, IDateRangePicker, IOrganization, ISelectedEmployee } from '@gauzy/contracts';
 import { distinctUntilChange, isEmpty } from '@gauzy/common-angular';
 import { ALL_EMPLOYEES_SELECTED } from '../../../@theme/components/header/selectors/employee';
 import {
@@ -29,14 +24,9 @@ import { TranslationBaseComponent } from '../../../@shared/language-base';
 @Component({
 	selector: 'ga-dashboard-accounting',
 	templateUrl: './accounting.component.html',
-	styleUrls: [
-		'../../organizations/edit-organization/edit-organization.component.scss',
-		'./accounting.component.scss'
-	]
+	styleUrls: ['../../organizations/edit-organization/edit-organization.component.scss', './accounting.component.scss']
 })
-export class AccountingComponent extends TranslationBaseComponent
-	implements AfterViewInit, OnInit, OnDestroy {
-
+export class AccountingComponent extends TranslationBaseComponent implements AfterViewInit, OnInit, OnDestroy {
 	aggregatedEmployeeStatistics: IAggregatedEmployeeStatistic;
 	selectedDateRange: IDateRangePicker;
 	public organization: IOrganization;
@@ -116,14 +106,12 @@ export class AccountingComponent extends TranslationBaseComponent
 
 			this.loading = true;
 			this.aggregatedEmployeeStatistics =
-				await this.employeeStatisticsService.getAggregateStatisticsByOrganizationId(
-					{
-						organizationId,
-						tenantId,
-						startDate,
-						endDate
-					}
-				);
+				await this.employeeStatisticsService.getAggregateStatisticsByOrganizationId({
+					organizationId,
+					tenantId,
+					startDate,
+					endDate
+				});
 			do {
 				this.generateDataForChart();
 			} while (!this.aggregatedEmployeeStatistics.chart.length);
@@ -149,68 +137,30 @@ export class AccountingComponent extends TranslationBaseComponent
 			datasets: [
 				{
 					label: this.getTranslation('INCOME_PAGE.INCOME'),
-					data: pluck(
-						pluck(
-							this.aggregatedEmployeeStatistics.chart,
-							'statistics'
-						),
-						'income'
-					),
+					data: pluck(pluck(this.aggregatedEmployeeStatistics.chart, 'statistics'), 'income'),
 					borderColor: ChartUtil.CHART_COLORS.blue,
-					backgroundColor: ChartUtil.transparentize(
-						ChartUtil.CHART_COLORS.blue,
-						1
-					),
+					backgroundColor: ChartUtil.transparentize(ChartUtil.CHART_COLORS.blue, 1),
 					...commonOptions
 				},
 				{
-					label: this.getTranslation(
-						'DASHBOARD_PAGE.PROFIT_HISTORY.EXPENSES'
-					),
-					data: pluck(
-						pluck(
-							this.aggregatedEmployeeStatistics.chart,
-							'statistics'
-						),
-						'expense'
-					),
+					label: this.getTranslation('DASHBOARD_PAGE.PROFIT_HISTORY.EXPENSES'),
+					data: pluck(pluck(this.aggregatedEmployeeStatistics.chart, 'statistics'), 'expense'),
 					borderColor: ChartUtil.CHART_COLORS.red,
-					backgroundColor: ChartUtil.transparentize(
-						ChartUtil.CHART_COLORS.red,
-						1
-					),
+					backgroundColor: ChartUtil.transparentize(ChartUtil.CHART_COLORS.red, 1),
 					...commonOptions
 				},
 				{
 					label: this.getTranslation('DASHBOARD_PAGE.CHARTS.PROFIT'),
-					data: pluck(
-						pluck(
-							this.aggregatedEmployeeStatistics.chart,
-							'statistics'
-						),
-						'profit'
-					),
+					data: pluck(pluck(this.aggregatedEmployeeStatistics.chart, 'statistics'), 'profit'),
 					borderColor: ChartUtil.CHART_COLORS.yellow,
-					backgroundColor: ChartUtil.transparentize(
-						ChartUtil.CHART_COLORS.yellow,
-						1
-					),
+					backgroundColor: ChartUtil.transparentize(ChartUtil.CHART_COLORS.yellow, 1),
 					...commonOptions
 				},
 				{
 					label: this.getTranslation('DASHBOARD_PAGE.CHARTS.BONUS'),
-					data: pluck(
-						pluck(
-							this.aggregatedEmployeeStatistics.chart,
-							'statistics'
-						),
-						'bonus'
-					),
+					data: pluck(pluck(this.aggregatedEmployeeStatistics.chart, 'statistics'), 'bonus'),
 					borderColor: ChartUtil.CHART_COLORS.green,
-					backgroundColor: ChartUtil.transparentize(
-						ChartUtil.CHART_COLORS.green,
-						1
-					),
+					backgroundColor: ChartUtil.transparentize(ChartUtil.CHART_COLORS.green, 1),
 					...commonOptions
 				}
 			]
@@ -218,9 +168,7 @@ export class AccountingComponent extends TranslationBaseComponent
 	}
 
 	async selectEmployee(employee: ISelectedEmployee) {
-		const people = await firstValueFrom(
-			this.employeesService.getEmployeeById(employee.id, ['user'])
-		);
+		const people = await firstValueFrom(this.employeesService.getEmployeeById(employee.id, ['user']));
 		this.store.selectedEmployee = employee.id
 			? ({
 					id: people.id,
