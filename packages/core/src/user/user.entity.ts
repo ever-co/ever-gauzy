@@ -42,6 +42,7 @@ import {
 
 @Entity('user')
 export class User extends TenantBaseEntity implements IUser {
+
 	@ApiPropertyOptional({ type: () => String })
 	@Index()
 	@Column({ nullable: true })
@@ -61,6 +62,11 @@ export class User extends TenantBaseEntity implements IUser {
 	@Index({ unique: false })
 	@Column({ nullable: true })
 	email?: string;
+
+	@ApiProperty({ type: () => String, minLength: 4, maxLength: 12 })
+	@Index()
+	@Column({ nullable: true })
+	phoneNumber?: string;
 
 	@ApiPropertyOptional({ type: () => String, minLength: 3, maxLength: 20 })
 	@Index({ unique: false })
@@ -122,10 +128,10 @@ export class User extends TenantBaseEntity implements IUser {
 	employeeId?: string;
 
 	/*
-    |--------------------------------------------------------------------------
-    | @ManyToOne
-    |--------------------------------------------------------------------------
-    */
+	|--------------------------------------------------------------------------
+	| @ManyToOne
+	|--------------------------------------------------------------------------
+	*/
 	// Role
 	@ApiPropertyOptional({ type: () => Role })
 	@ManyToOne(() => Role, (role) => role.users, {
@@ -142,10 +148,10 @@ export class User extends TenantBaseEntity implements IUser {
 	readonly roleId?: string;
 
 	/*
-    |--------------------------------------------------------------------------
-    | @OneToOne
-    |--------------------------------------------------------------------------
-    */
+	|--------------------------------------------------------------------------
+	| @OneToOne
+	|--------------------------------------------------------------------------
+	*/
 
 	/**
 	 * Employee
@@ -162,10 +168,10 @@ export class User extends TenantBaseEntity implements IUser {
 	candidate?: ICandidate;
 
 	/*
-    |--------------------------------------------------------------------------
-    | @ManyToMany
-    |--------------------------------------------------------------------------
-    */
+	|--------------------------------------------------------------------------
+	| @ManyToMany
+	|--------------------------------------------------------------------------
+	*/
 	// Tags
 	@ManyToMany(() => Tag, (tag) => tag.users, {
 		onUpdate: 'CASCADE',
@@ -177,10 +183,10 @@ export class User extends TenantBaseEntity implements IUser {
 	tags?: ITag[];
 
 	/*
-    |--------------------------------------------------------------------------
-    | @OneToMany
-    |--------------------------------------------------------------------------
-    */
+	|--------------------------------------------------------------------------
+	| @OneToMany
+	|--------------------------------------------------------------------------
+	*/
 
 	/**
 	 * UserOrganization

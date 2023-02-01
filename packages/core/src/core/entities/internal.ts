@@ -38,6 +38,7 @@ export * from '../../employee-job-preset/job-search-occupation/job-search-occupa
 export * from '../../employee-job/employee-job.entity';
 export * from '../../employee-job/jobPost.entity';
 export * from '../../employee-level/employee-level.entity';
+export * from '../../employee-phone/employee-phone.entity';
 export * from '../../employee-proposal-template/employee-proposal-template.entity';
 export * from '../../employee-recurring-expense/employee-recurring-expense.entity';
 export * from '../../employee-setting/employee-setting.entity';
