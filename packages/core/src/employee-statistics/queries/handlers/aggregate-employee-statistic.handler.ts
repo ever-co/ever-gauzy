@@ -159,7 +159,7 @@ export class AggregateOrganizationQueryHandler
 		);
 
 		/**
-		 * Load Recurring/Split Expenses for organization/employess
+		 * Load Recurring/Split Expenses for organization/employees
 		 */
 		await this._loadEmployeeRecurringExpenses(
 			searchInput,

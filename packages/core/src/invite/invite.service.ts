@@ -53,7 +53,7 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 		@InjectRepository(Invite)
 		protected readonly inviteRepository: Repository<Invite>,
 
-		private readonly configSerice: ConfigService,
+		private readonly configService: ConfigService,
 		private readonly emailService: EmailService,
 		private readonly organizationContactService: OrganizationContactService,
 		private readonly organizationDepartmentService: OrganizationDepartmentService,
@@ -75,7 +75,7 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 		emailInvites: ICreateEmailInvitesInput,
 		languageCode: LanguagesEnum
 	): Promise<ICreateEmailInvitesOutput> {
-		const originUrl = this.configSerice.get('clientBaseUrl') as string;
+		const originUrl = this.configService.get('clientBaseUrl') as string;
 		const {
 			emailIds,
 			roleId,
@@ -296,7 +296,7 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 		input: IInviteResendInput,
 		languageCode: LanguagesEnum
 	) {
-		const originUrl = this.configSerice.get('clientBaseUrl') as string;
+		const originUrl = this.configService.get('clientBaseUrl') as string;
 		const { inviteId, inviteType, callbackUrl } = input;
 		/**
 		 * Invitation

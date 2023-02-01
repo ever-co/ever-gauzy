@@ -171,7 +171,7 @@ export class CreateTimeSlotHandler
 			}
 		}
 
-		console.log(`Found timelogs for timeslots range employee (${user.name})`, { timeLogs: timeSlot.timeLogs });
+		console.log(`Found timelogs for time slots range employee (${user.name})`, { timeLogs: timeSlot.timeLogs });
 		/**
 		 * Update TimeLog Entry Every TimeSlot Request From Desktop Timer
 		 */

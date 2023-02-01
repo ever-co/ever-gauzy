@@ -428,7 +428,7 @@ export class EditOrganizationOtherSettingsComponent extends NotesWithTagsCompone
 			return;
 		}
 		this.organizationEditStore.selectedOrganization = this.organization;
-		this._setDefaultAccoutingTemplates();
+		this._setDefaultAccountingTemplates();
 
 		this.form.patchValue({
 			name: this.organization.name,
@@ -473,7 +473,7 @@ export class EditOrganizationOtherSettingsComponent extends NotesWithTagsCompone
 		this.form.updateValueAndValidity();
 
 		/**
-		 * Default selected accouting templates dropdowns
+		 * Default selected accounting templates dropdowns
 		 */
 	 	const invoiceTemplateControl = this.form.get('invoiceTemplate') as FormControl;
 		invoiceTemplateControl.setValue(this.selectedInvoiceTemplate ? this.selectedInvoiceTemplate.id : null);
@@ -489,11 +489,11 @@ export class EditOrganizationOtherSettingsComponent extends NotesWithTagsCompone
 	}
 
 	/**
-	 * Set default organization selected accouting templates
+	 * Set default organization selected accounting templates
 	 *
 	 * @returns
 	 */
-	private _setDefaultAccoutingTemplates() {
+	private _setDefaultAccountingTemplates() {
 		if (!this.organization || isEmpty(this.organization.accountingTemplates)) {
 			return;
 		}

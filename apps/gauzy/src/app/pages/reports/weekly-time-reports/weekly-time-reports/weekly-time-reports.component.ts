@@ -146,7 +146,7 @@ export class WeeklyTimeReportsComponent extends BaseSelectorFilterComponent
 			this.weekLogs = logs;
 			this._mapLogs(logs);
 		} catch (error) {
-			console.log('Error while retriving weekly time logs reports', error);
+			console.log('Error while retrieving weekly time logs reports', error);
 		} finally {
 			this.loading = false;
 		}

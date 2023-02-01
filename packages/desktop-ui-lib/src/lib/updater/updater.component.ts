@@ -4,7 +4,7 @@ import {
 	ChangeDetectionStrategy,
 	ViewChild,
 	ElementRef,
-	NgZone
+	NgZone,
 } from '@angular/core';
 import { ElectronService } from '../electron/services';
 
@@ -12,10 +12,10 @@ import { ElectronService } from '../electron/services';
 	selector: 'ngx-updater',
 	templateUrl: './updater.component.html',
 	styleUrls: ['./updater.component.scss'],
-	changeDetection: ChangeDetectionStrategy.OnPush
+	changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class UpdaterComponent implements OnInit {
-	@ViewChild('logbox') logbox: ElementRef;
+	@ViewChild('logBox') logBox: ElementRef;
 	@ViewChild('logUpdate') logAccordion;
 	constructor(
 		private electronService: ElectronService,
@@ -92,7 +92,7 @@ export class UpdaterComponent implements OnInit {
 	}
 
 	private scrollToBottom() {
-		this.logbox.nativeElement.scrollTop =
-			this.logbox.nativeElement.scrollHeight;
+		this.logBox.nativeElement.scrollTop =
+			this.logBox.nativeElement.scrollHeight;
 	}
 }

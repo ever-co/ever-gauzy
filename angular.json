@@ -62,7 +62,8 @@
             "scripts": [
               "node_modules/echarts/dist/echarts.min.js",
               "node_modules/echarts/dist/extension/bmap.min.js",
-              "node_modules/chart.js/dist/Chart.min.js"
+              "node_modules/chart.js/dist/Chart.min.js",
+              "node_modules/@fortawesome/fontawesome-free/js/all.js"
             ],
             "allowedCommonJsDependencies": [
               "underscore.string",
@@ -828,7 +829,10 @@
               "node_modules/leaflet/dist/leaflet.css",
               "apps/server/src/assets/styles/styles.scss"
             ],
-            "scripts": []
+            "scripts": [],
+            "stylePreprocessorOptions": {
+              "includePaths": ["apps/server/src/assets/styles"]
+            }
           },
           "configurations": {
             "production": {

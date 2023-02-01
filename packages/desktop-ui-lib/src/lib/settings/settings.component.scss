@@ -225,6 +225,7 @@
 
   p {
     font-size: 14px;
+    font-weight: 400;
   }
 
   .monitors,
@@ -238,6 +239,7 @@
       border-radius: var(--border-radius);
       display: flex;
       flex-direction: column;
+      gap: 4px;
     }
 
   }
@@ -249,6 +251,7 @@
       div.checked+span.text {
         color: var(--text-primary-color) !important;
       }
+
       .toggle-label {
         margin-bottom: 0;
       }
@@ -256,7 +259,7 @@
   }
 }
 
-.file{
+.file {
   gap: 5px;
 }
 
@@ -276,6 +279,8 @@ nb-card {
 
 nb-card-body {
   padding: 1rem;
+  background: var(--gauzy-card-2);
+  border-radius: var(--border-radius);
 }
 
 .main-layout {

@@ -28,13 +28,13 @@ export class ConfirmEmailComponent extends TranslationBaseComponent
 		this.route.data
 			.pipe(
 				filter((data) => !!data && !!data.resolver),
-				tap(({ resolver }) => this.verfiedEmail(resolver)),
+				tap(({ resolver }) => this.verifiedEmail(resolver)),
 				untilDestroyed(this),
 			)
 			.subscribe();
 	}
 
-	async verfiedEmail(response: HttpErrorResponse) {
+	async verifiedEmail(response: HttpErrorResponse) {
 		try {
 			if ('status' in response && response.status === HttpStatusCode.BadRequest) {
 				this.errorMessage = this.getTranslation('TOASTR.MESSAGE.EMAIL_VERIFICATION_NOT_VALID');
