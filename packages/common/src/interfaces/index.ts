@@ -7,7 +7,7 @@ export * from './IConfig';
 
 export * from './IAppIntegrationConfig';
 export * from './IAuth0Config';
-export * from './IS3Config';
+export * from './IAwsConfig';
 export * from './IFacebookConfig';
 export * from './IFiverrConfig';
 export * from './IGithubConfig';
