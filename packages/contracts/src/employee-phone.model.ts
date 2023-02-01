@@ -6,8 +6,8 @@ export interface IEmployeePhone extends IBasePerTenantAndOrganizationEntityModel
 	phoneNumber: string;
 }
 
-export interface IEmployeePhoneFindInput extends Partial<IEmployeePhone>, IRelationalEmployee { }
+export interface IEmployeePhoneFindInput extends Partial<IEmployeePhone>, IRelationalEmployee {}
 
-export interface IEmployeePhoneCreateInput extends IEmployeePhone, IRelationalEmployee { }
+export interface IEmployeePhoneCreateInput extends IEmployeePhone, IRelationalEmployee {}
 
-export interface IEmployeePhoneUpdateInput extends IEmployeePhoneCreateInput { }
+export interface IEmployeePhoneUpdateInput extends IEmployeePhoneCreateInput {}
