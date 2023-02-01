@@ -134,7 +134,12 @@
 		"FIVERR",
 		"KEYCLOAK",
 		"fbstate",
-		"IAWS"
+		"IAWS",
+		"billrate",
+		"payperiod",
+		"stackoverflow",
+		"timestamptz",
+		"sharings"
 	],
 	"useGitignore": true,
 	"ignorePaths": [

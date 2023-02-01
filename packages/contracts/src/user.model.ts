@@ -17,6 +17,7 @@ export interface IUser extends IBasePerTenantEntityModel {
 	firstName?: string;
 	lastName?: string;
 	email?: string;
+	phoneNumber?: string;
 	username?: string;
 	role?: IRole;
 	roleId?: IRole['id'];
@@ -75,7 +76,7 @@ export interface IVerificationTokenPayload extends IUserEmailInput {
 	id: string;
 }
 
-export interface IUserInviteCodeConfirmationInput extends IUserEmailInput, IUserCodeInput { }
+export interface IUserInviteCodeConfirmationInput extends IUserEmailInput, IUserCodeInput {}
 
 export interface IUserEmailInput {
 	email: string;
@@ -93,7 +94,7 @@ export interface IUserCodeInput {
 	code: number;
 }
 
-export interface IUserLoginInput extends IUserEmailInput, IUserPasswordInput { }
+export interface IUserLoginInput extends IUserEmailInput, IUserPasswordInput {}
 
 export interface IAuthResponse {
 	user: IUser;
