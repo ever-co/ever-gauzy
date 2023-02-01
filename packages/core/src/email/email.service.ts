@@ -20,7 +20,7 @@ import * as Handlebars from 'handlebars';
 import * as nodemailer from 'nodemailer';
 import { Repository, IsNull, FindManyOptions } from 'typeorm';
 import { environment as env } from '@gauzy/config';
-import { IAppIntegrationConfig, ISMTPConfig } from '@gauzy/common';
+import { deepMerge, IAppIntegrationConfig, ISMTPConfig } from '@gauzy/common';
 import { TenantAwareCrudService } from './../core/crud';
 import { RequestContext } from '../core/context';
 import { EmailTemplate, Organization } from './../core/entities/internal';
@@ -252,7 +252,7 @@ export class EmailService extends TenantAwareCrudService<EmailEntity> {
 				to: `${email}`,
 				attachments: [
 					{
-						filename: `${ isEstimate ? 'Estimate' : 'Invoice' }-${invoiceNumber}.pdf`,
+						filename: `${isEstimate ? 'Estimate' : 'Invoice'}-${invoiceNumber}.pdf`,
 						content: base64,
 						encoding: 'base64'
 					}
@@ -541,7 +541,7 @@ export class EmailService extends TenantAwareCrudService<EmailEntity> {
 		languageCode: LanguagesEnum,
 		organizationId?: string,
 		originUrl?: string,
-		thirdPartyIntegration?: IAppIntegrationConfig
+		integration?: IAppIntegrationConfig
 	) {
 		let organization: Organization;
 		if (organizationId) {
@@ -552,9 +552,11 @@ export class EmailService extends TenantAwareCrudService<EmailEntity> {
 		const tenantId = (organization) ? organization.tenantId : RequestContext.currentTenantId();
 
 		/**
-		 * Override third party app integrations for email templates
-		 */
-		const integration = Object.assign({}, env.appIntegrationConfig, thirdPartyIntegration);
+		* Override the default config by merging in the provided values.
+		*
+		*/
+		deepMerge(integration, env.appIntegrationConfig);
+
 		const sendOptions = {
 			template: 'welcome-user',
 			message: {
@@ -569,6 +571,7 @@ export class EmailService extends TenantAwareCrudService<EmailEntity> {
 				...integration
 			}
 		};
+
 		try {
 			const body = {
 				templateName: sendOptions.template,
@@ -583,12 +586,12 @@ export class EmailService extends TenantAwareCrudService<EmailEntity> {
 					const send = await (await this.getEmailInstance(organizationId, tenantId)).send(sendOptions);
 					body['message'] = send.originalMessage;
 				} catch (error) {
-					console.error(error);
+					console.log('Error while get email instance during welcome user', error);
 				}
 			}
 			await this.createEmailRecord(body);
 		} catch (error) {
-			console.error(error);
+			console.log('Error while sending welcome user', error);
 		}
 	}
 
@@ -608,8 +611,9 @@ export class EmailService extends TenantAwareCrudService<EmailEntity> {
 		const name = [firstName, lastName].filter(Boolean).join(' ');
 
 		/**
-		 * Override third party app integrations for email templates
-		 */
+		* Override the default config by merging in the provided values.
+		*
+		*/
 		const integration = Object.assign({}, env.appIntegrationConfig, thirdPartyIntegration);
 		/**
 		 * Email template email options
@@ -629,6 +633,7 @@ export class EmailService extends TenantAwareCrudService<EmailEntity> {
 				host: env.clientBaseUrl
 			}
 		};
+
 		try {
 			const body = {
 				templateName: sendOptions.template,
@@ -843,7 +848,7 @@ export class EmailService extends TenantAwareCrudService<EmailEntity> {
 	}
 
 	/**
-	 * Passwordless Authentication
+	 * Password Less Authentication
 	 *
 	 * @param user
 	 * @param languageCode

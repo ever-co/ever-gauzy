@@ -1,21 +1,17 @@
 import {
-	Brackets,
 	DeleteResult,
-	Repository,
-	SelectQueryBuilder,
-	WhereExpressionBuilder,
+	Repository
 } from 'typeorm';
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { IOrganization, IOrganizationProject, IPagination, ITaskStatus, ITaskStatusFindInput, ITenant } from '@gauzy/contracts';
-import { isNotEmpty } from '@gauzy/common';
-import { TenantAwareCrudService } from '../../core/crud';
+import { TaskStatusPrioritySizeService } from '../task-status-priority-size.service';
 import { RequestContext } from './../../core/context';
 import { TaskStatus } from './status.entity';
 import { DEFAULT_GLOBAL_STATUSES } from './default-global-statuses';
 
 @Injectable()
-export class TaskStatusService extends TenantAwareCrudService<TaskStatus> {
+export class TaskStatusService extends TaskStatusPrioritySizeService<TaskStatus> {
 	constructor(
 		@InjectRepository(TaskStatus)
 		protected readonly taskStatusRepository: Repository<TaskStatus>
@@ -30,30 +26,13 @@ export class TaskStatusService extends TenantAwareCrudService<TaskStatus> {
 	 * @param params
 	 * @returns
 	 */
-	async findAllStatuses(
+	async findTaskStatuses(
 		params: ITaskStatusFindInput
 	): Promise<IPagination<TaskStatus>> {
 		try {
-			/**
-			 * Find at least one record or get global statuses
-			 */
-			const cqb = this.repository.createQueryBuilder(this.alias);
-			cqb.where((qb: SelectQueryBuilder<TaskStatus>) => {
-				this.getFilterStatusQuery(qb, params);
-			});
-			await cqb.getOneOrFail();
-
-			/**
-			 * Find statuses for given params
-			 */
-			const query = this.repository.createQueryBuilder(this.alias);
-			query.where((qb: SelectQueryBuilder<TaskStatus>) => {
-				this.getFilterStatusQuery(qb, params);
-			});
-			const [items, total] = await query.getManyAndCount();
-			return { items, total };
+			return await this.findEntitiesByParams(params);
 		} catch (error) {
-			return await this.getGlobalStatuses();
+			throw new BadRequestException(error);
 		}
 	}
 
@@ -69,77 +48,6 @@ export class TaskStatusService extends TenantAwareCrudService<TaskStatus> {
 				isSystem: false,
 			},
 		});
-	}
-
-	/**
-	 * GET global system statuses
-	 *
-	 * @returns
-	 */
-	async getGlobalStatuses(): Promise<IPagination<ITaskStatus>> {
-		const query = this.repository.createQueryBuilder(this.alias);
-		query.where((qb: SelectQueryBuilder<TaskStatus>) => {
-			qb.andWhere(
-				new Brackets((bck: WhereExpressionBuilder) => {
-					bck.andWhere(`"${qb.alias}"."organizationId" IS NULL`);
-					bck.andWhere(`"${qb.alias}"."tenantId" IS NULL`);
-					bck.andWhere(`"${qb.alias}"."projectId" IS NULL`);
-					bck.andWhere(`"${qb.alias}"."isSystem" = :isSystem`, {
-						isSystem: true,
-					});
-				})
-			);
-		});
-		const [items, total] = await query.getManyAndCount();
-		return { items, total };
-	}
-
-	/**
-	 * GET status filter query
-	 *
-	 * @param query
-	 * @param request
-	 * @returns
-	 */
-	getFilterStatusQuery(
-		query: SelectQueryBuilder<TaskStatus>,
-		request: ITaskStatusFindInput
-	) {
-		const { tenantId, organizationId, projectId } = request;
-		/**
-		 * GET statuses by tenant level
-		 */
-		if (isNotEmpty(tenantId)) {
-			query.andWhere(`"${query.alias}"."tenantId" = :tenantId`, {
-				tenantId: RequestContext.currentTenantId(),
-			});
-		} else {
-			query.andWhere(`"${query.alias}"."tenantId" IS NULL`);
-		}
-		/**
-		 * GET statuses by organization level
-		 */
-		if (isNotEmpty(organizationId)) {
-			query.andWhere(
-				`"${query.alias}"."organizationId" = :organizationId`,
-				{
-					organizationId,
-				}
-			);
-		} else {
-			query.andWhere(`"${query.alias}"."organizationId" IS NULL`);
-		}
-		/**
-		 * GET statuses by project level
-		 */
-		if (isNotEmpty(projectId)) {
-			query.andWhere(`"${query.alias}"."projectId" = :projectId`, {
-				projectId,
-			});
-		} else {
-			query.andWhere(`"${query.alias}"."projectId" IS NULL`);
-		}
-		return query;
 	}
 
 	/**
@@ -167,7 +75,7 @@ export class TaskStatusService extends TenantAwareCrudService<TaskStatus> {
 			const statuses: ITaskStatus[] = [];
 
 			const tenantId = RequestContext.currentTenantId();
-			const { items = [] } = await this.findAllStatuses({ tenantId });
+			const { items = [] } = await this.findEntitiesByParams({ tenantId });
 
 			for (const item of items) {
 				const { tenantId, name, value, description, icon, color } = item;
@@ -200,7 +108,7 @@ export class TaskStatusService extends TenantAwareCrudService<TaskStatus> {
 			const { tenantId, organizationId } = project;
 
 			const statuses: ITaskStatus[] = [];
-			const { items = [] } = await this.findAllStatuses({ tenantId, organizationId });
+			const { items = [] } = await this.findEntitiesByParams({ tenantId, organizationId });
 
 			for (const item of items) {
 				const { name, value, description, icon, color } = item;
