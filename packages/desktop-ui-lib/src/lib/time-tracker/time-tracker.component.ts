@@ -193,6 +193,9 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 	public hasTaskPermission$: BehaviorSubject<boolean> = new BehaviorSubject(
 		false
 	);
+	private get _hasTaskPermission(): boolean {
+		return this.hasTaskPermission$.getValue();
+	}
 	public hasProjectPermission$: BehaviorSubject<boolean> =
 		new BehaviorSubject(false);
 	public hasContactPermission$: BehaviorSubject<boolean> =
@@ -623,7 +626,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 					this._isOffline$.next(isOffline);
 					this.toastrService.show(
 						isOffline
-							? 'Offline mode triggered'
+							? 'You switched to offline mode now'
 							: 'Your api connection is established',
 						`Warning`,
 						{
@@ -972,6 +975,8 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 
 	descriptionChange(e) {
 		if (e) this.errors.note = false;
+		this.setTask(null);
+		this._clearItem();
 		this.electronService.ipcRenderer.send('update_project_on', {
 			note: this.note,
 		});
@@ -1338,6 +1343,10 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 						field: 'title',
 						search: query,
 					},
+					{
+						field: 'taskNumber',
+						search: query,
+					},
 				],
 				false
 			);
@@ -1693,7 +1702,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 	}
 
 	addTask() {
-		this.isAddTask = true;
+		this.isAddTask = !this._isOffline && this._hasTaskPermission;
 	}
 
 	closeAddTask(e) {
@@ -1778,7 +1787,6 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 				tap(() => {
 					if (this.taskSelect) {
 						this._taskTable.grid.dataSet.getRows().map((row) => {
-							console.log(row.getData());
 							if (row.getData().id === this.taskSelect) {
 								return this._taskTable.grid.dataSet.selectRow(
 									row

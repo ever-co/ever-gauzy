@@ -32,8 +32,8 @@
 			<div class="col-sm-6">
 				<div class="form-group">
 					<label class="label">Status</label>
-					<ng-select [clearable]="true" placeholder="Status" [items]="statuses" bindValue="id"
-						bindLabel="name" formControlName="status">
+					<ng-select [searchable]="false" [clearable]="true" placeholder="Status" [items]="statuses"
+						bindValue="id" bindLabel="name" formControlName="status">
 					</ng-select>
 				</div>
 			</div>

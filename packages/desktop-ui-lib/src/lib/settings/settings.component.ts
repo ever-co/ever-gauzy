@@ -330,7 +330,7 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 
 	monitorOptionSelected = null;
 	appSetting = null;
-	periodOption = [1, 3, 5, 10, 20];
+	periodOption = [1, 3, 5, 10];
 	selectedPeriod = 5;
 	screenshotNotification = null;
 	config = null;
