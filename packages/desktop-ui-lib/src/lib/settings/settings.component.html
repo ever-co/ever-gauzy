@@ -586,7 +586,7 @@
 			</div>
 		</ng-container>
 	</nb-layout-column>
-	<nb-layout-footer fixed *ngIf="isDesktopTimer">
+	<nb-layout-footer fixed *ngIf="isDesktopTimer && (currentUser$ | async)">
 		<span>
 			<p class="m-0">
 				Signed in as {{ (currentUser$ | async)?.name }} ({{(currentUser$ | async)?.email}}) -
