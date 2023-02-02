@@ -20,48 +20,48 @@ export class AuthStrategy extends NbAuthStrategy {
 		login: {
 			redirect: {
 				success: '/',
-				failure: null
+				failure: null,
 			},
 			defaultErrors: [
-				'Login/Email combination is not correct, please try again.'
+				'Login/Email combination is not correct, please try again.',
 			],
-			defaultMessages: ['You have been successfully logged in.']
+			defaultMessages: ['You have been successfully logged in.'],
 		},
 		register: {
 			redirect: {
 				success: '/',
-				failure: null
+				failure: null,
 			},
 			defaultErrors: ['Something went wrong, please try again.'],
-			defaultMessages: ['You have been successfully registered.']
+			defaultMessages: ['You have been successfully registered.'],
 		},
 		logout: {
 			redirect: {
 				success: '/',
-				failure: null
+				failure: null,
 			},
 			defaultErrors: ['Something went wrong, please try again.'],
-			defaultMessages: ['You have been successfully logged out.']
+			defaultMessages: ['You have been successfully logged out.'],
 		},
 		requestPass: {
 			redirect: {
 				success: '/',
-				failure: null
+				failure: null,
 			},
 			defaultErrors: ['Something went wrong, please try again.'],
 			defaultMessages: [
-				'Reset password instructions have been sent to your email.'
-			]
+				'Reset password instructions have been sent to your email.',
+			],
 		},
 		resetPass: {
 			redirect: {
 				success: '/',
-				failure: null
+				failure: null,
 			},
 			resetPasswordTokenKey: 'reset_password_token',
 			defaultErrors: ['Password Reset Failed.'],
-			defaultMessages: ['Your password has been successfully changed.']
-		}
+			defaultMessages: ['Your password has been successfully changed.'],
+		},
 	};
 
 	logout$: Subject<boolean> = new Subject();
@@ -80,9 +80,9 @@ export class AuthStrategy extends NbAuthStrategy {
 			.pipe(
 				distinctUntilChange(),
 				filter(() => !!this.store.token),
-				tap(() => this._preLogout()),
+				tap(() => this._preLogout())
 			)
-			.subscribe()
+			.subscribe();
 	}
 
 	static setup(options: { name: string }): [NbAuthStrategyClass, any] {
@@ -93,10 +93,8 @@ export class AuthStrategy extends NbAuthStrategy {
 		const { email, password } = data;
 		return this.login({
 			email,
-			password
-		}).pipe(
-			tap(() => this.rememberMe(data))
-		);
+			password,
+		}).pipe(tap(() => this.rememberMe(data)));
 	}
 
 	/**
@@ -114,19 +112,13 @@ export class AuthStrategy extends NbAuthStrategy {
 	}
 
 	register(data?: any): Observable<NbAuthResult> {
-		const {
-			email,
-			fullName,
-			password,
-			confirmPassword,
-			tenant,
-			tags
-		} = data;
+		const { email, fullName, password, confirmPassword, tenant, tags } =
+			data;
 
 		if (password !== confirmPassword) {
 			return of(
 				new NbAuthResult(false, null, null, [
-					"The passwords don't match."
+					"The passwords don't match.",
 				])
 			);
 		}
@@ -141,21 +133,21 @@ export class AuthStrategy extends NbAuthStrategy {
 					: null,
 				email,
 				tenant,
-				tags
+				tags,
 			},
 			password,
-			confirmPassword
+			confirmPassword,
 		};
 		return this.authService.register(registerInput).pipe(
 			switchMap((res: IUser | any) => {
 				if (res.status === 400) {
-					throw new Error(res.message)
+					throw new Error(res.message);
 				}
 				const user: IUser = res;
 				if (isNotEmpty(user)) {
 					return this.login({
 						email,
-						password
+						password,
 					});
 				}
 			}),
@@ -188,11 +180,11 @@ export class AuthStrategy extends NbAuthStrategy {
 		const { email } = data;
 		return this.authService
 			.requestPassword({
-				email
+				email,
 			})
 			.pipe(
 				map((value: any) => {
-					if (typeof(value) === 'boolean') {
+					if (typeof value === 'boolean') {
 						return new NbAuthResult(
 							true,
 							value,
@@ -205,7 +197,8 @@ export class AuthStrategy extends NbAuthStrategy {
 						false,
 						value.response,
 						false,
-						value.message || AuthStrategy.config.requestPass.defaultErrors
+						value.message ||
+							AuthStrategy.config.requestPass.defaultErrors
 					);
 				}),
 				catchError((error) => {
@@ -229,40 +222,42 @@ export class AuthStrategy extends NbAuthStrategy {
 		if (password !== confirmPassword) {
 			return of(
 				new NbAuthResult(false, null, null, [
-					"The password and confirmation password do not match."
+					'The password and confirmation password do not match.',
 				])
 			);
 		}
 
-		return this.authService.resetPassword({
-			token,
-			password,
-			confirmPassword
-		}).pipe(
-			map((res: any) => {
-				if (res.status === 400) {
-					throw new Error(res.message)
-				}
-				return new NbAuthResult(
-					true,
-					res,
-					AuthStrategy.config.resetPass.redirect.success,
-					[],
-					AuthStrategy.config.resetPass.defaultMessages
-				);
-			}),
-			catchError((err) => {
-				return of(
-					new NbAuthResult(
-						false,
-						err,
-						false,
-						AuthStrategy.config.resetPass.defaultErrors,
-						[AuthStrategy.config.resetPass.defaultErrors]
-					)
-				);
+		return this.authService
+			.resetPassword({
+				token,
+				password,
+				confirmPassword,
 			})
-		);
+			.pipe(
+				map((res: any) => {
+					if (res.status === 400) {
+						throw new Error(res.message);
+					}
+					return new NbAuthResult(
+						true,
+						res,
+						AuthStrategy.config.resetPass.redirect.success,
+						[],
+						AuthStrategy.config.resetPass.defaultMessages
+					);
+				}),
+				catchError((err) => {
+					return of(
+						new NbAuthResult(
+							false,
+							err,
+							false,
+							AuthStrategy.config.resetPass.defaultErrors,
+							[AuthStrategy.config.resetPass.defaultErrors]
+						)
+					);
+				})
+			);
 	}
 
 	refreshToken(data?: any): Observable<NbAuthResult> {
@@ -332,7 +327,8 @@ export class AuthStrategy extends NbAuthStrategy {
 				return new NbAuthResult(
 					true,
 					res,
-					this.route.snapshot.queryParams['returnUrl'] || AuthStrategy.config.login.redirect.success,
+					this.route.snapshot.queryParams['returnUrl'] ||
+						AuthStrategy.config.login.redirect.success,
 					[],
 					AuthStrategy.config.login.defaultMessages
 				);
@@ -356,13 +352,14 @@ export class AuthStrategy extends NbAuthStrategy {
 		try {
 			if (this.electronService.isElectronApp) {
 				this.electronService.ipcRenderer.send('auth_success', {
+					user: user,
 					token: token,
 					userId: user.id,
 					employeeId: user.employee ? user.employee.id : null,
 					organizationId: user.employee
 						? user.employee.organizationId
 						: null,
-					tenantId: user.tenantId ? user.tenantId : null
+					tenantId: user.tenantId ? user.tenantId : null,
 				});
 			}
 		} catch (error) {

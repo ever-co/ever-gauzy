@@ -26,7 +26,8 @@ import {
 	IGoal,
 	ICandidate,
 	IEmployeeAward,
-	IEquipmentSharing
+	IEquipmentSharing,
+	IEmployeePhone
 } from '@gauzy/contracts';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { ColumnNumericTransformerPipe } from './../shared/pipes';
@@ -72,11 +73,10 @@ import {
 	TimeSlot,
 	User
 } from '../core/entities/internal';
+import { EmployeePhone } from 'employee-phone';
 
 @Entity('employee')
-export class Employee extends TenantOrganizationBaseEntity
-	implements IEmployee {
-
+export class Employee extends TenantOrganizationBaseEntity implements IEmployee {
 	@ApiPropertyOptional({ type: () => Date })
 	@Column({ nullable: true })
 	valueDate?: Date;
@@ -288,10 +288,10 @@ export class Employee extends TenantOrganizationBaseEntity
 	isDeleted?: boolean;
 
 	/*
-    |--------------------------------------------------------------------------
-    | @OneToOne
-    |--------------------------------------------------------------------------
-    */
+	|--------------------------------------------------------------------------
+	| @OneToOne
+	|--------------------------------------------------------------------------
+	*/
 
 	/**
 	 * User
@@ -334,10 +334,10 @@ export class Employee extends TenantOrganizationBaseEntity
 	@OneToOne(() => Candidate, (candidate) => candidate.employee)
 	candidate?: ICandidate;
 	/*
-    |--------------------------------------------------------------------------
-    | @ManyToOne
-    |--------------------------------------------------------------------------
-    */
+	|--------------------------------------------------------------------------
+	| @ManyToOne
+	|--------------------------------------------------------------------------
+	*/
 
 	// Employee Organization Position
 	@ApiProperty({ type: () => OrganizationPosition })
@@ -352,13 +352,16 @@ export class Employee extends TenantOrganizationBaseEntity
 	readonly organizationPositionId?: string;
 
 	/*
-    |--------------------------------------------------------------------------
-    | @OneToMany
-    |--------------------------------------------------------------------------
-    */
+	|--------------------------------------------------------------------------
+	| @OneToMany
+	|--------------------------------------------------------------------------
+	*/
 
 	// Employee Teams
-	@ApiPropertyOptional({ type: () => OrganizationTeamEmployee, isArray: true })
+	@ApiPropertyOptional({
+		type: () => OrganizationTeamEmployee,
+		isArray: true
+	})
 	@OneToMany(() => OrganizationTeamEmployee, (it) => it.employee)
 	teams?: IOrganizationTeam[];
 
@@ -436,23 +439,30 @@ export class Employee extends TenantOrganizationBaseEntity
 	})
 	awards?: IEmployeeAward[];
 
+	/**
+	 * Phone Numbers
+	 */
+	@ApiPropertyOptional({ type: () => EmployeePhone, isArray: true })
+	@OneToMany(() => EmployeePhone, (it) => it.employee)
+	phoneNumbers?: IEmployeePhone[];
+
 	/*
-    |--------------------------------------------------------------------------
-    | @ManyToMany
-    |--------------------------------------------------------------------------
-    */
+	|--------------------------------------------------------------------------
+	| @ManyToMany
+	|--------------------------------------------------------------------------
+	*/
 
 	/**
 	 * Employee Organization Projects
 	 */
 	@ManyToMany(() => OrganizationProject, (it) => it.members, {
-        onUpdate: 'CASCADE',
+		onUpdate: 'CASCADE',
 		onDelete: 'CASCADE'
-    })
-    @JoinTable({
+	})
+	@JoinTable({
 		name: 'organization_project_employee'
 	})
-    projects?: IOrganizationProject[];
+	projects?: IOrganizationProject[];
 
 	/**
 	 * Employee Tags
@@ -471,10 +481,10 @@ export class Employee extends TenantOrganizationBaseEntity
 	 */
 	@ApiProperty({ type: () => Skill })
 	@ManyToMany(() => Skill, (skill) => skill.employees, {
-        onUpdate: 'CASCADE',
+		onUpdate: 'CASCADE',
 		onDelete: 'CASCADE'
-    })
-    skills: ISkill[];
+	})
+	skills: ISkill[];
 
 	/**
 	 * Organization Departments
@@ -507,10 +517,10 @@ export class Employee extends TenantOrganizationBaseEntity
 	 * Employee Organization Contacts
 	 */
 	@ManyToMany(() => OrganizationContact, (it) => it.members, {
-        onUpdate: 'CASCADE',
+		onUpdate: 'CASCADE',
 		onDelete: 'CASCADE'
-    })
-    organizationContacts?: IOrganizationContact[];
+	})
+	organizationContacts?: IOrganizationContact[];
 
 	/**
 	 * TimeOffPolicy

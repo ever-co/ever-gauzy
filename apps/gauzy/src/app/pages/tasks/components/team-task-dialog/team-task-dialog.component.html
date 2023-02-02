@@ -48,10 +48,9 @@
 							'TASKS_PAGE.TASKS_STATUS' | translate
 						}}</label>
 						<ga-task-status-select
+							[projectId]="form.get('projectId').value"
 							formControlName="status"
-							[placeholder]="
-								'TASKS_PAGE.TASKS_STATUS' | translate
-							"
+							[placeholder]="'TASKS_PAGE.TASKS_STATUS' | translate"
 						></ga-task-status-select>
 					</div>
 				</div>
@@ -97,6 +96,30 @@
 								'FORM.PLACEHOLDERS.ADD_TITLE' | translate
 							}}"
 						/>
+					</div>
+				</div>
+				<div class="col-sm-6">
+					<div class="form-group">
+						<label class="label">
+							{{ 'TASKS_PAGE.TASK_PRIORITY' | translate }}
+						</label>
+						<ga-task-priority-select
+							[projectId]="form.get('projectId').value"
+							formControlName="priority"
+							[placeholder]="'TASKS_PAGE.TASK_PRIORITY' | translate"
+						></ga-task-priority-select>
+					</div>
+				</div>
+				<div class="col-sm-6">
+					<div class="form-group">
+						<label class="label">
+							{{ 'TASKS_PAGE.TASK_SIZE' | translate }}
+						</label>
+						<ga-task-size-select
+							[projectId]="form.get('projectId').value"
+							formControlName="size"
+							[placeholder]="'TASKS_PAGE.TASK_SIZE' | translate"
+						></ga-task-size-select>
 					</div>
 				</div>
 				<div class="col-sm-12">

@@ -104,7 +104,7 @@ export class TaskService extends TenantAwareCrudService<Task> {
 					}
 				})
 			);
-			const [ items, total ] = await query.getManyAndCount();
+			const [items, total] = await query.getManyAndCount();
 			return { items, total };
 		} catch (error) {
 			throw new BadRequestException(error);
@@ -177,7 +177,7 @@ export class TaskService extends TenantAwareCrudService<Task> {
 	 */
 	async findTeamTasks(
 		options: PaginationParams<Task>
-	): Promise<IPagination<ITask>>  {
+	): Promise<IPagination<ITask>> {
 		try {
 			const { where } = options;
 			const { status, teams = [], title, prefix, organizationSprintId = null } = where;
@@ -263,7 +263,7 @@ export class TaskService extends TenantAwareCrudService<Task> {
 					}
 				})
 			);
-			const [ items, total ] = await query.getManyAndCount();
+			const [items, total] = await query.getManyAndCount();
 			return { items, total };
 		} catch (error) {
 			throw new BadRequestException(error);
@@ -327,6 +327,7 @@ export class TaskService extends TenantAwareCrudService<Task> {
 			} else {
 				query.andWhere(`"${query.alias}"."projectId" IS NULL`);
 			}
+
 			const { maxTaskNumber } = await query.getRawOne();
 			return maxTaskNumber;
 		} catch (error) {

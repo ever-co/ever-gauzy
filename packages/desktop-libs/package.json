@@ -22,7 +22,8 @@
 	},
 	"scripts": {
 		"build": "rimraf dist && yarn run compile",
-		"compile": "tsc -p tsconfig.build.json"
+		"compile": "tsc -p tsconfig.build.json",
+		"knex": "./node_modules/.bin/knex --knexfile src/lib/offline/databases/knexfile.ts"
 	},
 	"keywords": [],
 	"dependencies": {
@@ -35,11 +36,14 @@
 		"embedded-queue": "^0.0.11",
 		"express": "^4.18.2",
 		"form-data": "^3.0.0",
+		"knex": "^2.4.0",
 		"mac-screen-capture-permissions": "^2.0.0",
 		"moment": "^2.29.4",
+		"mysql": "^2.18.1",
 		"node-notifier": "^8.0.0",
 		"screenshot-desktop": "^1.12.7",
 		"sound-play": "1.1.0",
+		"sqlite3": "^5.1.4",
 		"underscore": "^1.13.3"
 	},
 	"devDependencies": {

@@ -20,15 +20,22 @@ import {
 	NbDialogModule,
 	NbToastrService,
 	NbFormFieldModule,
-	NbTooltipModule
+	NbTooltipModule,
+	NbBadgeModule,
 } from '@nebular/theme';
 import { NbEvaIconsModule } from '@nebular/eva-icons';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { TasksModule } from '../tasks/tasks.module';
+import { PaginationModule } from './pagination/pagination.module';
+import { NoDataMessageComponent } from './no-data-message/no-data-message.component';
 
 @NgModule({
-	declarations: [TimeTrackerComponent, CustomRenderComponent],
+	declarations: [
+		TimeTrackerComponent,
+		CustomRenderComponent,
+		NoDataMessageComponent,
+	],
 	imports: [
 		CommonModule,
 		NbLayoutModule,
@@ -49,14 +56,18 @@ import { TasksModule } from '../tasks/tasks.module';
 		NbFormFieldModule,
 		Ng2SmartTableModule,
 		NbTooltipModule,
-		TasksModule
+		TasksModule,
+		NbToggleModule,
+		NbBadgeModule,
+		PaginationModule,
+		NbTooltipModule,
 	],
 	providers: [
 		NbSidebarService,
 		TimeTrackerService,
 		NbDialogService,
-		NbToastrService
+		NbToastrService,
 	],
-	exports: [TimeTrackerComponent]
+	exports: [TimeTrackerComponent],
 })
 export class TimeTrackerModule {}

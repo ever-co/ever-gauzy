@@ -28,7 +28,7 @@ import { CandidateSkillModule } from './candidate-skill/candidate-skill.module';
 import { InvoiceModule } from './invoice/invoice.module';
 import { InvoiceItemModule } from './invoice-item/invoice-item.module';
 import { TagModule } from './tags/tag.module';
-import { StatusModule } from './statuses/status.module';
+import { TaskStatusModule } from './tasks/statuses/status.module';
 import { SkillModule } from './skills/skill.module';
 import { LanguageModule } from './language/language.module';
 import { AppController } from './app.controller';
@@ -73,6 +73,8 @@ import { EmployeeLevelModule } from './employee-level/employee-level.module';
 import { ExportAllModule } from './export-import/export/export-all.module';
 import { ImportAllModule } from './export-import/import/import-all.module';
 import { TaskModule } from './tasks/task.module';
+import { TaskPriorityModule } from './tasks/priorities/priority.module';
+import { TaskSizeModule } from './tasks/sizes/size.module';
 import { EquipmentSharingModule } from './equipment-sharing/equipment-sharing.module';
 import { OrganizationEmploymentTypeModule } from './organization-employment-type/organization-employment-type.module';
 import { TimeTrackingModule } from './time-tracking/time-tracking.module';
@@ -143,6 +145,7 @@ import { GauzyCloudModule } from './gauzy-cloud/gauzy-cloud.module';
 import { ContactModule } from './contact/contact.module';
 import { PublicShareModule } from './public-share/public-share.module';
 import { TransformInterceptor } from './core/interceptors';
+
 
 const { unleashConfig } = environment;
 
@@ -305,7 +308,6 @@ if (process.env.DB_TYPE === 'postgres') {
 		TenantSettingModule,
 		TagModule,
 		SkillModule,
-		StatusModule,
 		LanguageModule,
 		InvoiceModule,
 		InvoiceItemModule,
@@ -326,6 +328,9 @@ if (process.env.DB_TYPE === 'postgres') {
 		EquipmentModule,
 		EquipmentSharingModule,
 		TaskModule,
+		TaskPriorityModule,
+		TaskSizeModule,
+		TaskStatusModule,
 		OrganizationEmploymentTypeModule,
 		TimeTrackingModule,
 		FeatureModule,

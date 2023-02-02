@@ -9,8 +9,9 @@
 			<div class="col-sm-6">
 				<div class="form-group">
 					<label class="label">Projects</label>
-					<ng-select [addTag]="addProject" addTagText="Add project" [clearable]="true" placeholder="Project"
-						[items]="projects" bindLabel="name" formControlName="project">
+					<ng-select [addTag]="hasProjectPermission ? addProject: null" addTagText="Add project"
+						[clearable]="true" placeholder="Project" [items]="projects" bindLabel="name"
+						formControlName="project">
 						<ng-template ng-option-tmp let-item="item" let-index="index">
 							<img *ngIf="item.imageUrl" [src]="item.imageUrl" width="20px" height="20px" />
 							<span>
@@ -31,8 +32,8 @@
 			<div class="col-sm-6">
 				<div class="form-group">
 					<label class="label">Status</label>
-					<ng-select [clearable]="true" placeholder="Status" [items]="statuses" bindValue="id"
-						bindLabel="name" formControlName="status">
+					<ng-select [searchable]="false" [clearable]="true" placeholder="Status" [items]="statuses"
+						bindValue="id" bindLabel="name" formControlName="status">
 					</ng-select>
 				</div>
 			</div>
@@ -49,8 +50,8 @@
 					Tags
 				</label>
 				<div class="form-group">
-					<ng-select [clearable]="true" placeholder="Tags" formControlName="tags" [items]="tags" bindLabel="name"
-						[multiple]="true">
+					<ng-select [clearable]="true" placeholder="Tags" formControlName="tags" [items]="tags"
+						bindLabel="name" [multiple]="true">
 						<ng-template ng-option-tmp let-tag="item" let-tag$="item$">
 							<div class="d-flex align-items-center">
 								<ng-container *ngIf="multiple">
@@ -60,10 +61,11 @@
 								<span class="text">{{ tag.name }}</span>
 							</div>
 						</ng-template>
-					
+
 						<ng-template ng-label-tmp let-tag="item" let-clear="clear">
 							<nb-badge class="tag-color tag-label" [style.background]="background(tag.color)"
-								[style.color]="backgroundContrast(tag.color)" [text]="tag.name" (click)="clear(tag)"></nb-badge>
+								[style.color]="backgroundContrast(tag.color)" [text]="tag.name"
+								(click)="clear(tag)"></nb-badge>
 						</ng-template>
 					</ng-select>
 				</div>
@@ -99,7 +101,7 @@
 		</div>
 	</nb-card-body>
 	<nb-card-footer>
-		<button status="danger" class=" cancel mr-3" outline nbButton (click)="close()">
+		<button status="basic" outline nbButton (click)="close()">
 			Cancel
 		</button>
 		<button [disabled]="form?.invalid" status="success" nbButton (click)="save()">

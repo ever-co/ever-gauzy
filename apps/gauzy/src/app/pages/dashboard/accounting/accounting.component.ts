@@ -129,7 +129,7 @@ export class AccountingComponent extends TranslationBaseComponent
 			} while (!this.aggregatedEmployeeStatistics.chart.length);
 			this.loading = false;
 		} catch (error) {
-			console.log('Error while retriving employee aggregate statistics', error);
+			console.log('Error while retrieving employee aggregate statistics', error);
 			this.toastrService.danger(error);
 		}
 	}

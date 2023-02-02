@@ -148,7 +148,7 @@ export class InviteController {
 	@ApiOperation({ summary: 'Accept employee/user/candidate invite.' })
 	@ApiResponse({
 		status: HttpStatus.CREATED,
-		description: 'The record has been successfully exceuted.'
+		description: 'The record has been successfully executed.'
 	})
 	@ApiResponse({
 		status: HttpStatus.BAD_REQUEST,

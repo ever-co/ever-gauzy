@@ -1,7 +1,7 @@
 import { BadRequestException, HttpStatus, Injectable } from '@nestjs/common';
 import { IsNull, MoreThanOrEqual } from 'typeorm';
-import { ConfigService, environment } from '@gauzy/config';
-import { IAppIntegrationConfig } from '@gauzy/common';
+import { environment } from '@gauzy/config';
+import { deepMerge, IAppIntegrationConfig } from '@gauzy/common';
 import { FeatureEnum, IBasePerTenantEntityModel, IUser, IUserCodeInput, IUserEmailInput, IUserTokenInput, IVerificationTokenPayload } from '@gauzy/contracts';
 import { JwtPayload, sign, verify } from 'jsonwebtoken';
 import * as bcrypt from 'bcrypt';
@@ -16,11 +16,10 @@ import { generateRandomInteger } from './../core/utils';
 export class EmailConfirmationService {
 
     constructor(
-        private readonly configService: ConfigService,
         private readonly emailService: EmailService,
         private readonly userService: UserService,
         private readonly featureFlagService: FeatureService
-    ) {}
+    ) { }
 
     /**
      * Send confirmation email link & code
@@ -41,10 +40,17 @@ export class EmailConfirmationService {
             const token = sign(payload, environment.JWT_VERIFICATION_TOKEN_SECRET, {
                 expiresIn: `${environment.JWT_VERIFICATION_TOKEN_EXPIRATION_TIME}s`
             });
-            const url = `${this.configService.get('EMAIL_CONFIRMATION_URL')}?email=${email}&token=${token}`;
+
+            /**
+            * Override the default config by merging in the provided values.
+            *
+            */
+            deepMerge(integration, environment.appIntegrationConfig);
+
+            const url = `${integration.appEmailConfirmationUrl}?email=${email}&token=${token}`;
+            const verificationCode = generateRandomInteger(6);
 
             // update email token field for user
-            const verificationCode = generateRandomInteger(6);
             await this.userService.update(id, {
                 emailToken: await bcrypt.hash(token, 10),
                 code: verificationCode,
@@ -53,7 +59,7 @@ export class EmailConfirmationService {
                 } : {}),
             });
 
-            // send email verfication link
+            // send email verification link
             return this.emailService.emailVerification(user, url, verificationCode, integration);
         } catch (error) {
             console.log(error, 'Error while sending verification email');
@@ -79,9 +85,9 @@ export class EmailConfirmationService {
             }
             await this.sendEmailVerification(user, config);
             return new Object({
-				status: HttpStatus.OK,
-				message: `OK`
-			});
+                status: HttpStatus.OK,
+                message: `OK`
+            });
         } catch (error) {
             throw new BadRequestException(error?.message);
         }
@@ -133,7 +139,7 @@ export class EmailConfirmationService {
      * @returns
      */
     public async confirmationByCode(
-        payload : IUserEmailInput & IUserCodeInput & IBasePerTenantEntityModel
+        payload: IUserEmailInput & IUserCodeInput & IBasePerTenantEntityModel
     ): Promise<IUser> {
         if (!await this.featureFlagService.isFeatureEnabled(
             FeatureEnum.FEATURE_EMAIL_VERIFICATION
@@ -186,9 +192,9 @@ export class EmailConfirmationService {
             await this.userService.markEmailAsVerified(user['id']);
         } finally {
             return new Object({
-				status: HttpStatus.OK,
-				message: `OK`
-			});
+                status: HttpStatus.OK,
+                message: `OK`
+            });
         }
     }
 }

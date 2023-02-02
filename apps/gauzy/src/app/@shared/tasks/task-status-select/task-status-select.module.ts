@@ -5,7 +5,7 @@ import { FormsModule } from '@angular/forms';
 import { TaskStatusSelectComponent } from './task-status-select.component';
 import { TranslateModule } from '../../translate/translate.module';
 import { SharedModule } from '../../shared.module';
-import { StatusesService } from '../../../@core/services';
+import { TaskStatusesService } from '../../../@core/services';
 
 @NgModule({
 	declarations: [
@@ -22,7 +22,7 @@ import { StatusesService } from '../../../@core/services';
 		SharedModule
 	],
 	providers: [
-		StatusesService
+		TaskStatusesService
 	]
 })
 export class TaskStatusSelectModule { }

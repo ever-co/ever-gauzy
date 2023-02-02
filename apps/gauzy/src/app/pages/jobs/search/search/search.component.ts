@@ -478,7 +478,7 @@ export class SearchComponent extends PaginationFilterBaseComponent
 				}
 			});
 		} catch (error) {
-			console.log('Error while retriving employee Job searches', error);
+			console.log('Error while retrieving employee Job searches', error);
 		}
 	}
 

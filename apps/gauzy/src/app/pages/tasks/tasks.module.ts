@@ -49,6 +49,8 @@ import { ProjectSelectModule } from '../../@shared/project-select/project-select
 import { TaskStatusSelectModule } from '../../@shared/tasks/task-status-select/task-status-select.module';
 import { GauzyButtonActionModule } from '../../@shared/gauzy-button-action/gauzy-button-action.module';
 import { TaskNumberFieldModule } from '../../@shared/tasks/task-number/task-number-field.module';
+import { TaskPrioritySelectModule } from '../../@shared/tasks/task-priority-select/task-priority-select.module';
+import { TaskSizeSelectModule } from '../../@shared/tasks/task-size-select/task-size-select.module';
 
 @NgModule({
 	declarations: [
@@ -99,6 +101,8 @@ import { TaskNumberFieldModule } from '../../@shared/tasks/task-number/task-numb
 		TableFiltersModule,
 		PaginationModule,
 		ProjectSelectModule,
+		TaskPrioritySelectModule,
+		TaskSizeSelectModule,
 		TaskStatusSelectModule,
 		GauzyButtonActionModule,
 		TaskNumberFieldModule,
