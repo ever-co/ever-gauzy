@@ -623,7 +623,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 					this._isOffline$.next(isOffline);
 					this.toastrService.show(
 						isOffline
-							? 'Offline mode triggered'
+							? 'You switched to offline mode now'
 							: 'Your api connection is established',
 						`Warning`,
 						{
