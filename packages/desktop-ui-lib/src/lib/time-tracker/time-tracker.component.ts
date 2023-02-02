@@ -193,6 +193,9 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 	public hasTaskPermission$: BehaviorSubject<boolean> = new BehaviorSubject(
 		false
 	);
+	private get _hasTaskPermission(): boolean {
+		return this.hasTaskPermission$.getValue();
+	}
 	public hasProjectPermission$: BehaviorSubject<boolean> =
 		new BehaviorSubject(false);
 	public hasContactPermission$: BehaviorSubject<boolean> =
@@ -1693,7 +1696,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 	}
 
 	addTask() {
-		this.isAddTask = true;
+		this.isAddTask = !this._isOffline && this._hasTaskPermission;
 	}
 
 	closeAddTask(e) {
