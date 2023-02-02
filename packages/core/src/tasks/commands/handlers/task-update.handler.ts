@@ -6,10 +6,7 @@ import { TaskUpdateCommand } from '../task-update.command';
 
 @CommandHandler(TaskUpdateCommand)
 export class TaskUpdateHandler implements ICommandHandler<TaskUpdateCommand> {
-
-	constructor(
-		private readonly _taskService: TaskService
-	) { }
+	constructor(private readonly _taskService: TaskService) {}
 
 	public async execute(command: TaskUpdateCommand): Promise<ITask> {
 		const { id, input } = command;
@@ -23,10 +20,7 @@ export class TaskUpdateHandler implements ICommandHandler<TaskUpdateCommand> {
 	 * @param request
 	 * @returns
 	 */
-	public async update(
-		id: string,
-		request: ITaskUpdateInput
-	): Promise<ITask> {
+	public async update(id: string, request: ITaskUpdateInput): Promise<ITask> {
 		try {
 			const task = await this._taskService.findOneByIdString(id);
 			if ('projectId' in request) {

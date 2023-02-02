@@ -52,9 +52,7 @@ export class TaskService extends TenantAwareCrudService<Task> {
 					});
 				}
 				query.setFindOptions({
-					...(
-						(options.relations) ? { relations: options.relations } : {}
-					)
+					...(options.relations ? { relations: options.relations } : {})
 				});
 			}
 			query.andWhere((qb: SelectQueryBuilder<Task>) => {
@@ -62,9 +60,7 @@ export class TaskService extends TenantAwareCrudService<Task> {
 				subQuery.select('"task_employee"."taskId"').from('task_employee', 'task_employee');
 
 				// If user have permission to change employee
-				if (RequestContext.hasPermission(
-					PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
-				)) {
+				if (RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE)) {
 					if (isNotEmpty(members) && isNotEmpty(members['id'])) {
 						const employeeId = members['id'];
 						subQuery.andWhere('"task_employee"."employeeId" = :employeeId', { employeeId });
@@ -76,7 +72,7 @@ export class TaskService extends TenantAwareCrudService<Task> {
 						subQuery.andWhere('"task_employee"."employeeId" = :employeeId', { employeeId });
 					}
 				}
-				return ('"task_members"."taskId" IN ' + subQuery.distinct(true).getQuery());
+				return '"task_members"."taskId" IN ' + subQuery.distinct(true).getQuery();
 			});
 			query.andWhere(
 				new Brackets((qb: WhereExpressionBuilder) => {
@@ -118,10 +114,7 @@ export class TaskService extends TenantAwareCrudService<Task> {
 	 * @param filter
 	 * @returns
 	 */
-	async getAllTasksByEmployee(
-		employeeId: IEmployee['id'],
-		options: PaginationParams<Task>
-	) {
+	async getAllTasksByEmployee(employeeId: IEmployee['id'], options: PaginationParams<Task>) {
 		try {
 			const query = this.taskRepository.createQueryBuilder(this.alias);
 			query.leftJoin(`${query.alias}.members`, 'members');
@@ -130,11 +123,11 @@ export class TaskService extends TenantAwareCrudService<Task> {
 			 * If additional options found
 			 */
 			query.setFindOptions({
-				...(
-					(isNotEmpty(options) && isNotEmpty(options.where)) ? {
-						where: options.where
-					} : {}
-				)
+				...(isNotEmpty(options) && isNotEmpty(options.where)
+					? {
+							where: options.where
+					  }
+					: {})
 			});
 			query.andWhere(
 				new Brackets((qb: WhereExpressionBuilder) => {
@@ -148,7 +141,7 @@ export class TaskService extends TenantAwareCrudService<Task> {
 						const subQuery = qb.subQuery();
 						subQuery.select('"task_employee"."taskId"').from('task_employee', 'task_employee');
 						subQuery.andWhere('"task_employee"."employeeId" = :employeeId', { employeeId });
-						return ('"task_members"."taskId" IN ' + subQuery.distinct(true).getQuery());
+						return '"task_members"."taskId" IN ' + subQuery.distinct(true).getQuery();
 					});
 					web.orWhere((qb: SelectQueryBuilder<Task>) => {
 						const subQuery = qb.subQuery();
@@ -159,7 +152,7 @@ export class TaskService extends TenantAwareCrudService<Task> {
 							'"organization_team_employee"."organizationTeamId" = "task_team"."organizationTeamId"'
 						);
 						subQuery.andWhere('"organization_team_employee"."employeeId" = :employeeId', { employeeId });
-						return ('"task_teams"."taskId" IN ' + subQuery.distinct(true).getQuery());
+						return '"task_teams"."taskId" IN ' + subQuery.distinct(true).getQuery();
 					});
 				})
 			);
@@ -175,9 +168,7 @@ export class TaskService extends TenantAwareCrudService<Task> {
 	 * @param options
 	 * @returns
 	 */
-	async findTeamTasks(
-		options: PaginationParams<Task>
-	): Promise<IPagination<ITask>> {
+	async findTeamTasks(options: PaginationParams<Task>): Promise<IPagination<ITask>> {
 		try {
 			const { where } = options;
 			const { status, teams = [], title, prefix, organizationSprintId = null } = where;
@@ -196,15 +187,9 @@ export class TaskService extends TenantAwareCrudService<Task> {
 					});
 				}
 				query.setFindOptions({
-					...(
-						(options.select) ? { select: options.select } : {}
-					),
-					...(
-						(options.relations) ? { relations: options.relations } : {}
-					),
-					...(
-						(options.order) ? { order: options.order } : {}
-					)
+					...(options.select ? { select: options.select } : {}),
+					...(options.relations ? { relations: options.relations } : {}),
+					...(options.order ? { order: options.order } : {})
 				});
 			}
 			query.andWhere((qb: SelectQueryBuilder<Task>) => {
@@ -216,9 +201,7 @@ export class TaskService extends TenantAwareCrudService<Task> {
 					'"organization_team_employee"."organizationTeamId" = "task_team"."organizationTeamId"'
 				);
 				// If user have permission to change employee
-				if (RequestContext.hasPermission(
-					PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
-				)) {
+				if (RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE)) {
 					if (isNotEmpty(members) && isNotEmpty(members['id'])) {
 						const employeeId = members['id'];
 						subQuery.andWhere('"organization_team_employee"."employeeId" = :employeeId', { employeeId });
@@ -276,9 +259,7 @@ export class TaskService extends TenantAwareCrudService<Task> {
 	 * @param options
 	 * @returns
 	 */
-	public async pagination(
-		options: PaginationParams<Task>
-	): Promise<IPagination<ITask>> {
+	public async pagination(options: PaginationParams<Task>): Promise<IPagination<ITask>> {
 		if ('where' in options) {
 			const { where } = options;
 			if ('title' in where) {
@@ -304,15 +285,13 @@ export class TaskService extends TenantAwareCrudService<Task> {
 	 *
 	 * @param options
 	 */
-	public async getMaxTaskNumberByProject(
-		options: IGetTaskOptions
-	) {
+	public async getMaxTaskNumberByProject(options: IGetTaskOptions) {
 		try {
 			const tenantId = RequestContext.currentTenantId();
 			const { organizationId, projectId } = options;
 
 			const query = this.taskRepository.createQueryBuilder(this.alias);
-			query.select(`COALESCE(MAX("${query.alias}"."number"), 0)`, "maxTaskNumber");
+			query.select(`COALESCE(MAX("${query.alias}"."number"), 0)`, 'maxTaskNumber');
 			query.andWhere(
 				new Brackets((qb: WhereExpressionBuilder) => {
 					qb.andWhere(`"${query.alias}"."organizationId" =:organizationId`, { organizationId });
