@@ -1343,6 +1343,10 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 						field: 'title',
 						search: query,
 					},
+					{
+						field: 'taskNumber',
+						search: query,
+					},
 				],
 				false
 			);
@@ -1783,7 +1787,6 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 				tap(() => {
 					if (this.taskSelect) {
 						this._taskTable.grid.dataSet.getRows().map((row) => {
-							console.log(row.getData());
 							if (row.getData().id === this.taskSelect) {
 								return this._taskTable.grid.dataSet.selectRow(
 									row
