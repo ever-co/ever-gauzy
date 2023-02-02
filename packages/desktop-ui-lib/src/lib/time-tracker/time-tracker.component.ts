@@ -975,6 +975,8 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 
 	descriptionChange(e) {
 		if (e) this.errors.note = false;
+		this.setTask(null);
+		this._clearItem();
 		this.electronService.ipcRenderer.send('update_project_on', {
 			note: this.note,
 		});
