@@ -283,17 +283,7 @@ export function ipcTimer(
 		try {
 			timeTrackerWindow.webContents.send('offline-handler', false);
 			await countIntervalQueue(timeTrackerWindow, false);
-			await syncTimerQueue(timeTrackerWindow);
-			const intervals = await intervalService.backedUpAllNoSynced();
-			intervals.forEach((interval: IntervalTO) => {
-				interval.activities = JSON.parse(interval.activities as any);
-				interval.screenshots = JSON.parse(interval.screenshots as any);
-				const intervalToSync = new Interval(interval);
-				timeTrackerWindow.webContents.send('backup-no-synced', {
-					...intervalToSync.toObject(),
-					id: intervalToSync.id,
-				});
-			});
+			await sequentialSyncQueue(timeTrackerWindow);
 		} catch (error) {
 			console.log('Error', error);
 		}
@@ -400,7 +390,7 @@ export function ipcTimer(
 		if (powerManagerPreventSleep) powerManagerPreventSleep.stop();
 		if (powerManagerDetectInactivity)
 			powerManagerDetectInactivity.stopInactivityDetection();
-		await syncIntervalQueue(timeTrackerWindow);
+		await sequentialSyncQueue(timeTrackerWindow);
 	});
 
 	ipcMain.on('return_time_slot', async (event, arg) => {
@@ -659,6 +649,7 @@ export function ipcTimer(
 			'Last Capture Time Start Tracking Time (Desktop Try):',
 			lastTime
 		);
+		await sequentialSyncQueue(timeTrackerWindow);
 		await syncIntervalQueue(timeTrackerWindow);
 		await latestScreenshots(timeTrackerWindow);
 		event.sender.send('timer_tracker_show', {
@@ -739,6 +730,43 @@ export function removeTimerListener() {
 	});
 }
 
+async function sequentialSyncQueue(window: BrowserWindow) {
+	try {
+		await offlineMode.connectivity();
+		if (offlineMode.enabled) return;
+		const timers = await timerService.findToSynced();
+		timers.forEach(async (timer) => {
+			const sequence = await timer;
+			syncTimerQueue(window, {
+				isStart: true,
+				timer: sequence.timer,
+			}).then(async () => {
+				sequence.intervals.forEach((interval: IntervalTO) => {
+					interval.activities = JSON.parse(
+						interval.activities as any
+					);
+					interval.screenshots = JSON.parse(
+						interval.screenshots as any
+					);
+					const intervalToSync = new Interval(interval);
+					window.webContents.send('backup-no-synced', {
+						...intervalToSync.toObject(),
+						id: intervalToSync.id,
+					});
+				});
+				setTimeout(async () => {
+					await syncTimerQueue(window, {
+						isStart: false,
+						timer: sequence.timer,
+					});
+				}, 0);
+			});
+		});
+	} catch (error) {
+		console.log('Error', error);
+	}
+}
+
 async function syncIntervalQueue(window: BrowserWindow) {
 	try {
 		await offlineMode.connectivity();
@@ -773,8 +801,8 @@ async function latestScreenshots(window: BrowserWindow): Promise<void> {
 	);
 }
 
-async function syncTimerQueue(window: BrowserWindow) {
+async function syncTimerQueue(window: BrowserWindow, timer) {
 	await offlineMode.connectivity();
 	if (offlineMode.enabled) return;
-	window.webContents.send('sync-timer', await timerService.findNoSynced());
+	window.webContents.send('sync-timer', timer);
 }
