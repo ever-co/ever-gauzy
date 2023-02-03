@@ -1,5 +1,5 @@
 import { ITenantSetting, IWasabiFileStorageProviderConfig } from '@gauzy/contracts';
-import { BadRequestException, ForbiddenException, HttpStatus, Injectable } from '@nestjs/common';
+import { HttpStatus, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { FindManyOptions, In, Repository } from 'typeorm';
 import { indexBy, keys, object, pluck } from 'underscore';
