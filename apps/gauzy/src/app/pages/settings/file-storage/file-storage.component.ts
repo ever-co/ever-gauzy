@@ -149,17 +149,6 @@ export class FileStorageComponent extends TranslationBaseComponent
 	}
 
 	/**
-	 * On changed file storage provider
-	 *
-	 * @param provider
-	 */
-	onProviderChanged(provider: FileStorageProviderEnum) {
-		if (provider) {
-			this.subject$.next(true);
-		}
-	}
-
-	/**
 	 * Set file storage provider for formcontrol
 	 *
 	 * @param provider

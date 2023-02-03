@@ -17,7 +17,6 @@
 			<nb-card-body>
 				<file-provider-selector
 					formControlName="fileStorageProvider"
-					(onSelectionChanged)="onProviderChanged($event)"
 				></file-provider-selector>
 				<ng-container [ngSwitch]="fileStorageProvider">
 					<ng-container *ngSwitchCase="FileStorageProviderEnum.S3">
