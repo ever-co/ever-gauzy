@@ -25,19 +25,23 @@ export class TagService extends CrudService<Tag> {
 	}
 
 	/**
-	 * GET tenant/organization level tags
+	 * GET tags by tenant or organization level
 	 *
 	 * @param input
 	 * @param relations
 	 * @returns
 	 */
-	async findAllTags(
+	async findTagsByLevel(
 		input: ITagFindInput,
-		relations: string[]
+		relations: string[] = []
 	): Promise<IPagination<ITag>> {
-		const query = this.tagRepository.createQueryBuilder();
+		const query = this.tagRepository.createQueryBuilder(this.alias);
 		query.setFindOptions({
-			relations
+			...(
+				(relations) ? {
+					relations: relations
+				} : {}
+			),
 		});
 		query.where((qb: SelectQueryBuilder<Tag>) => {
 			qb.andWhere(
@@ -57,9 +61,8 @@ export class TagService extends CrudService<Tag> {
 			);
 			qb.andWhere(
 				new Brackets((web: WhereExpressionBuilder) => {
-					const tenantId = RequestContext.currentTenantId();
 					web.andWhere(`"${qb.alias}"."tenantId" = :tenantId`, {
-						tenantId
+						tenantId: RequestContext.currentTenantId()
 					});
 				})
 			);
@@ -67,7 +70,7 @@ export class TagService extends CrudService<Tag> {
 				isSystem: false
 			});
 		});
-		const [ items, total ] = await query.getManyAndCount();
+		const [items, total] = await query.getManyAndCount();
 		return { items, total };
 	}
 
@@ -82,7 +85,7 @@ export class TagService extends CrudService<Tag> {
 		input: ITagFindInput,
 		relations: string[]
 	): Promise<IPagination<ITag>> {
-		const query = this.tagRepository.createQueryBuilder('tag');
+		const query = this.tagRepository.createQueryBuilder(this.alias);
 		query
 			.leftJoin(`tag.candidates`, 'candidate')
 			.leftJoin('tag.employees', 'employee')
@@ -159,13 +162,12 @@ export class TagService extends CrudService<Tag> {
 				);
 				query.andWhere(
 					new Brackets((qb: WhereExpressionBuilder) => {
-						const tenantId = RequestContext.currentTenantId();
-						qb.andWhere(`"tag"."tenantId" = :tenantId`, {
-							tenantId
+						qb.andWhere(`"${query.alias}"."tenantId" = :tenantId`, {
+							tenantId: RequestContext.currentTenantId()
 						});
 					})
 				);
-				query.andWhere(`"tag"."isSystem" = :isSystem`, {
+				query.andWhere(`"${query.alias}"."isSystem" = :isSystem`, {
 					isSystem: false
 				});
 			})
