@@ -108,6 +108,7 @@ input {
 
 [nbInput] {
   box-shadow: var(--gauzy-shadow) inset;
+  padding: 10px;
 }
 
 :host ::ng-deep {
