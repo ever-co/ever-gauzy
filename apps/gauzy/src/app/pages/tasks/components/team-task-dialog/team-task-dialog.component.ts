@@ -98,6 +98,8 @@ export class TeamTaskDialogComponent extends TranslationBaseComponent
 		estimate,
 		dueDate,
 		tags,
+		priority,
+		size
 	}: ITask) {
 		const duration = moment.duration(estimate, 'seconds');
 		this.selectedTeams = (teams || []).map((team) => team.id);
@@ -116,8 +118,8 @@ export class TeamTaskDialogComponent extends TranslationBaseComponent
 			project: [project],
 			projectId: project ? project.id : null,
 			status: [status ? status : TaskStatusEnum.OPEN],
-			priority: [],
-			size: [],
+			priority: [priority ? priority : null],
+			size: [size ? size : null],
 			members: [members],
 			estimateDays: [duration.days() || ''],
 			estimateHours: [
