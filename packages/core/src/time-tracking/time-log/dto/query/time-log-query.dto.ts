@@ -11,17 +11,17 @@ export class TimeLogQueryDTO extends IntersectionType(
     IntersectionType(SelectorsQueryDTO, RelationsQueryDTO)
 ) implements IGetTimeLogReportInput {
 
-    @ApiPropertyOptional({ type: () => Array, enum: ReportGroupFilterEnum, readOnly: true })
+    @ApiPropertyOptional({ type: () => Array, enum: ReportGroupFilterEnum })
     @IsOptional()
     @IsEnum(ReportGroupFilterEnum)
     readonly groupBy: ReportGroupFilterEnum;
 
-    @ApiPropertyOptional({ type: () => String, readOnly: true })
+    @ApiPropertyOptional({ type: () => String })
     @IsOptional()
     @IsUUID()
     readonly timesheetId: ITimesheet['id'];
 
-    @ApiPropertyOptional({ type: () => String, readOnly: true })
+    @ApiPropertyOptional({ type: () => String })
     @IsOptional()
     @IsUUID()
     readonly teamId: IOrganizationTeam['id'];

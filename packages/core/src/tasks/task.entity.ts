@@ -21,6 +21,8 @@ import {
 	ITask,
 	ITimeLog,
 	IUser,
+	TaskPriorityEnum,
+	TaskSizeEnum,
 	TaskStatusEnum,
 } from '@gauzy/contracts';
 import {
@@ -38,7 +40,9 @@ import {
 
 @Entity('task')
 @Index('taskNumber', ['projectId', 'number'], { unique: true })
-export class Task extends TenantOrganizationBaseEntity implements ITask {
+export class Task extends TenantOrganizationBaseEntity
+	implements ITask {
+
 	@ApiProperty({ type: () => Number })
 	@Column({ nullable: true })
 	number?: number;
@@ -59,6 +63,14 @@ export class Task extends TenantOrganizationBaseEntity implements ITask {
 	@Column({ nullable: true })
 	status?: TaskStatusEnum;
 
+	@ApiProperty({ type: () => String })
+	@Column({ nullable: true })
+	priority?: TaskPriorityEnum;
+
+	@ApiProperty({ type: () => String })
+	@Column({ nullable: true })
+	size?: TaskSizeEnum;
+
 	@ApiProperty({ type: () => Number })
 	@Column({ nullable: true })
 	estimate?: number;
@@ -70,10 +82,10 @@ export class Task extends TenantOrganizationBaseEntity implements ITask {
 	taskNumber?: string;
 
 	/*
-    |--------------------------------------------------------------------------
-    | @ManyToOne
-    |--------------------------------------------------------------------------
-    */
+	|--------------------------------------------------------------------------
+	| @ManyToOne
+	|--------------------------------------------------------------------------
+	*/
 	/**
 	 * Organization Project
 	 */
@@ -122,10 +134,10 @@ export class Task extends TenantOrganizationBaseEntity implements ITask {
 	organizationSprintId?: IOrganizationSprint['id'];
 
 	/*
-    |--------------------------------------------------------------------------
-    | @OneToMany
-    |--------------------------------------------------------------------------
-    */
+	|--------------------------------------------------------------------------
+	| @OneToMany
+	|--------------------------------------------------------------------------
+	*/
 	/**
 	 * InvoiceItem
 	 */
@@ -151,10 +163,10 @@ export class Task extends TenantOrganizationBaseEntity implements ITask {
 	activities?: IActivity[];
 
 	/*
-    |--------------------------------------------------------------------------
-    | @ManyToMany
-    |--------------------------------------------------------------------------
-    */
+	|--------------------------------------------------------------------------
+	| @ManyToMany
+	|--------------------------------------------------------------------------
+	*/
 
 	/**
 	 * Tags

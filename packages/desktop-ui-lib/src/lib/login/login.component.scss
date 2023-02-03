@@ -1,10 +1,441 @@
-::ng-deep nb-auth-block {
-	max-width: 35rem;
-}
-nb-accordion-item-header {
-	padding: 5px
-}
+@import "./reusable";
 
 .login-container {
+	width: 765px;
 	position: relative;
+	display: flex;
+	justify-content: space-between;
+	height: 100%;
+
+	& .login-wrapper {
+		background: var(--gauzy-card-2);
+		border-radius: var(--border-radius);
+		box-sizing: border-box;
+		padding: 30px;
+		width: 476px;
+		display: flex;
+		flex-direction: column;
+		align-items: flex-start;
+		justify-content: space-between;
+		height: 100%;
+
+		&>* {
+			padding-left: 15px;
+			padding-right: 15px;
+		}
+
+		& .svg-wrapper {
+			display: flex;
+			justify-content: space-between;
+
+			& .ever-logo-svg {
+				margin-bottom: 47px;
+				height: 25px;
+			}
+		}
+
+		& .headings {
+			display: flex;
+			justify-content: space-between;
+			position: relative;
+
+			& .headings-inner {
+				& .title {
+
+					font-size: 24px;
+					font-style: normal;
+					font-weight: 700;
+					line-height: 30px;
+					letter-spacing: 0em;
+					margin-bottom: 18px;
+					text-align: start;
+					color: var(--gauzy-text-color-1);
+				}
+
+				& .sub-title {
+
+					font-size: 14px;
+					font-style: normal;
+					font-weight: 400;
+					line-height: 11px;
+					letter-spacing: 0em;
+					margin-bottom: 26px;
+					text-align: start;
+					color: var(--gauzy-text-color-2);
+				}
+			}
+		}
+
+		& .hr-div-strong {
+			@include hr-div-strong;
+		}
+
+		& .hr-div-soft {
+			@include hr-div-soft;
+		}
+	}
+
+	& form {
+		margin-top: 0px;
+		margin-bottom: 10px;
+
+		& .submit-btn-wrapper {
+			display: flex;
+			justify-content: space-between;
+			align-items: center;
+
+			& .forgot-password {
+				color: $button-color;
+				font-size: 14px;
+				font-style: normal;
+				font-weight: 500;
+				line-height: 17px;
+				letter-spacing: -0.01em;
+				text-align: left;
+
+				@include mobile-screen {
+					display: none;
+				}
+			}
+
+			& .forgot-password-big {
+				display: block;
+
+				@include mobile-screen {
+					display: none;
+				}
+			}
+
+			& .forgot-password-small {
+				display: none;
+			}
+
+			& .submit-inner-wrapper {
+				display: inline-flex;
+				flex-direction: column;
+				align-items: center;
+			}
+
+			& .submit-btn {
+				@include submit-btn;
+				padding: 13px 59px;
+			}
+		}
+
+		& .accept-group {
+			margin-bottom: 20px;
+
+			@include mobile-screen {
+				display: flex;
+				justify-content: flex-start;
+			}
+		}
+	}
+
+	& .links {
+		margin-top: 10px;
+		@include social-links-style;
+
+		& .socials {
+			margin-top: 15px;
+			margin-bottom: 25px;
+		}
+	}
+
+	& .another-action {
+		@include another-action;
+		margin-top: 10px;
+	}
+}
+
+.features-wrapper {
+	width: 260px;
+
+	// demo side container
+	& .card-body {
+		padding: 38px 15px;
+		background: var(--color-primary-transparent-default);
+		border-radius: var(--border-radius);
+
+		&.dark {
+			background: var(--color-primary-700);
+
+			& .custom-btn {
+				color: white;
+				background: #6E49E8;
+				border: 1px solid #6E49E8;
+			}
+		}
+	}
+
+	// non-demo side container
+	& .features-card {
+		border: none;
+		background: var(--color-primary-transparent-default);
+		border-radius: var(--border-radius);
+		width: 100%;
+	}
+
+	& .title {
+
+		font-size: 16px;
+		font-style: normal;
+		font-weight: 600;
+		line-height: 19px;
+		letter-spacing: -0.009em;
+		text-align: left;
+		padding-left: 13px;
+	}
+
+	& .sub-title {
+
+		font-size: 14px;
+		font-style: normal;
+		font-weight: 400;
+		line-height: 17px;
+		letter-spacing: 0em;
+		text-align: left;
+		margin-bottom: 20px;
+		padding-left: 13px;
+		color: var(--gauzy-text-color-2);
+	}
+
+	& .custom-btn {
+		-webkit-box-shadow: 3px 11px 30px -17px #3366ff;
+		box-shadow: 3px 11px 30px -17px #3366ff;
+		width: auto;
+		padding: 13px 28px;
+		display: inline-flex;
+		justify-content: flex-start;
+		background-color: white;
+		color: var(--color-primary-500);
+		border: 1px solid white;
+		//styleName: Button label;
+
+		font-size: 15px;
+		font-style: normal;
+		font-weight: 700;
+		line-height: 16px;
+		letter-spacing: -0.009em;
+		text-align: left;
+
+		&>nb-icon {
+			width: 16px;
+			height: 14px;
+		}
+
+		@include small-laptop-screen {
+			padding: 10px 20px;
+		}
+
+		@include tablet-screen {
+			padding: 15px 25px;
+		}
+
+		&:hover {
+			background-color: #fafafa;
+			border: 1px solid #fafafa;
+		}
+	}
+}
+
+.demo-credentials-select {
+	width: 200px;
+	position: absolute;
+	top: 0;
+	right: 0;
+	border-radius: var(--button-rectangle-border-radius);
+
+	& * {
+		z-index: 6;
+	}
+
+	&,
+	.demo-credentials-select-item {
+		border-radius: var(--button-rectangle-border-radius);
+		box-sizing: border-box;
+	}
+
+	& .demo-credentials-select-item {
+		width: 200px;
+		position: relative;
+		z-index: 5;
+		background: var(--background-basic-color-2);
+		color: var(--text-basic-color);
+	}
+
+	& .demo-credentials-header {
+		padding: 5px 5px 5px 15px;
+		box-sizing: border-box;
+		display: flex;
+		justify-content: space-between;
+		width: 100%;
+		background: var(--background-basic-color-2);
+		color: var(--text-basic-color);
+		border-radius: 20px;
+
+		& .demo-text-span {
+			@include mobile-screen {
+				display: none;
+			}
+		}
+	}
+}
+
+@include tablet-screen {
+	.login-container {
+		flex-direction: column;
+		align-items: center;
+
+		& .another-action {
+			margin-top: 0;
+		}
+	}
+
+	.features-wrapper {
+		width: 476px;
+		margin-top: 30px;
+
+		& .demo-credentials-buttons {
+			& * {
+				text-align: center;
+			}
+
+			& .title,
+			.sub-title {
+				text-align: center;
+			}
+		}
+	}
+}
+
+@include mobile-screen {
+	.login-container {
+		width: 100%;
+
+		& .login-wrapper {
+			width: 100%;
+			padding: 20px 2px;
+
+			& .headings {
+				& .headings-inner {
+					width: 100%;
+
+					& .title,
+					.sub-title {
+						width: 100%;
+						text-align: left;
+					}
+				}
+			}
+
+			& .headings.headings-demo {
+				height: 135px;
+				align-items: flex-start;
+			}
+		}
+
+		& form {
+			margin-bottom: 10px;
+
+			& .submit-btn-wrapper {
+				justify-content: flex-start;
+
+				& .submit-inner-wrapper {
+					justify-content: flex-start;
+				}
+
+				& .submit-btn {
+					margin-bottom: 0;
+				}
+			}
+
+			& .form-control-group {
+				margin-bottom: 13px;
+			}
+
+			& .links {
+				margin-bottom: 10px;
+			}
+		}
+	}
+
+	.features-wrapper {
+		width: 100%;
+	}
+
+	.demo-credentials-select {
+		top: 83px;
+		left: 50%;
+		transform: translate(-50%);
+		z-index: 6;
+	}
+}
+
+@include small-mobile-screen {
+	.features-wrapper {
+		& .demo-credentials-buttons {
+			& * {
+				text-align: left;
+			}
+
+			& .title,
+			.sub-title {
+				text-align: left;
+			}
+		}
+	}
+}
+
+.hr-div-soft {
+	@include hr-div-soft;
+	margin-bottom: 12px;
+}
+
+.theme-switch {
+	@include not-mobile-screen {
+		display: none;
+	}
+}
+
+:host {
+	@include input-fields-color;
+}
+
+::ng-deep .remember-me .text {
+
+	font-size: 13px;
+	font-style: normal;
+	font-weight: 600;
+	line-height: 13px;
+	letter-spacing: 0em;
+	text-align: left;
+	color: var(--text-primary-color);
+}
+
+// changing the demo select border radius when its expanded, because color change, new border radiuses had to be introduced.
+::ng-deep .accordion-item-header-expanded {
+	border-bottom-left-radius: 0 !important;
+	border-bottom-right-radius: 0 !important;
+	border-bottom: 1px solid transparent;
+}
+
+
+::ng-deep {
+	nb-card-body {
+		padding: 1rem;
+	}
+
+	nb-card-header {
+		display: none;
+	}
+
+	nb-auth-block {
+		height: 100%;
+	}
+
+	label {
+		color: var(--gauzy-text-color-2) !important;
+		font-weight: 600 !important;
+	}
 }

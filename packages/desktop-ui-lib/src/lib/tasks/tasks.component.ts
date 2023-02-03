@@ -10,6 +10,7 @@ import {
 } from '@gauzy/contracts';
 import { NbToastrService } from '@nebular/theme';
 import { Color, rgbString } from '@kurkle/color';
+import * as moment from 'moment';
 
 const log = window.require('electron-log');
 console.log = log.log;
@@ -23,7 +24,8 @@ Object.assign(console, log.functions);
 export class TasksComponent implements OnInit {
 	@Input() userData: IUserOrganization;
 	@Input() employee: IEmployee;
-
+	@Input() hasProjectPermission: boolean;
+	@Input() selectedProject: IOrganizationProject;
 	@Output() isAddTask: EventEmitter<boolean> = new EventEmitter();
 	@Output() newTaskCallback: EventEmitter<{
 		isSuccess: boolean;
@@ -37,27 +39,27 @@ export class TasksComponent implements OnInit {
 	statuses = [
 		{
 			id: TaskStatusEnum.OPEN,
-			name: TaskStatusEnum.OPEN,
+			name: this._formatStatus(TaskStatusEnum.OPEN),
 		},
 		{
 			id: TaskStatusEnum.IN_PROGRESS,
-			name: TaskStatusEnum.IN_PROGRESS,
+			name: this._formatStatus(TaskStatusEnum.IN_PROGRESS),
 		},
 		{
 			id: TaskStatusEnum.READY_FOR_REVIEW,
-			name: TaskStatusEnum.READY_FOR_REVIEW,
+			name: this._formatStatus(TaskStatusEnum.READY_FOR_REVIEW),
 		},
 		{
 			id: TaskStatusEnum.IN_REVIEW,
-			name: TaskStatusEnum.IN_REVIEW,
+			name: this._formatStatus(TaskStatusEnum.IN_REVIEW),
 		},
 		{
 			id: TaskStatusEnum.BLOCKED,
-			name: TaskStatusEnum.BLOCKED,
+			name: this._formatStatus(TaskStatusEnum.BLOCKED),
 		},
 		{
 			id: TaskStatusEnum.COMPLETED,
-			name: TaskStatusEnum.COMPLETED,
+			name: this._formatStatus(TaskStatusEnum.COMPLETED),
 		},
 	];
 
@@ -74,7 +76,10 @@ export class TasksComponent implements OnInit {
 		})();
 		this.form = new FormGroup({
 			description: new FormControl(null),
-			dueDate: new FormControl(null, Validators.required),
+			dueDate: new FormControl(
+				moment().add(1, 'day').utc().toDate(),
+				Validators.required
+			),
 			estimate: new FormControl(null),
 			estimateDays: new FormControl(null, [Validators.min(0)]),
 			estimateHours: new FormControl(null, [
@@ -87,7 +92,7 @@ export class TasksComponent implements OnInit {
 			]),
 			members: new FormControl([]),
 			organizationId: new FormControl(this.userData.organizationId),
-			project: new FormControl(null),
+			project: new FormControl(this.selectedProject),
 			projectId: new FormControl(null),
 			status: new FormControl(TaskStatusEnum.OPEN),
 			tags: new FormControl([]),
@@ -186,8 +191,7 @@ export class TasksComponent implements OnInit {
 			);
 
 			this.projects = this.projects.concat([project]);
-
-			this.toastrService.success('Project added successfully');
+			this.toastrService.success('Project added successfully', 'Gauzy');
 		} catch (error) {
 			this.toastrService.danger(error);
 		}
@@ -231,5 +235,12 @@ export class TasksComponent implements OnInit {
 			hex = '#' + hex;
 			return regex.test(hex) ? hex : '#000000';
 		}
+	}
+
+	private _formatStatus(name: string): string {
+		return name
+			.split('-')
+			.join(' ')
+			.replace(/(^\w{1})|(\s+\w{1})/g, (letter) => letter.toUpperCase());
 	}
 }

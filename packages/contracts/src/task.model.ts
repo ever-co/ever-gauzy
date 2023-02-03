@@ -10,6 +10,8 @@ import { IOrganizationTeam } from './organization-team-model';
 import { ITag } from './tag-entity.model';
 import { IUser } from './user.model';
 import { TaskStatusEnum } from './task-status.model';
+import { TaskPriorityEnum } from './task-priority.model';
+import { TaskSizeEnum } from './task-size.model';
 
 export interface ITask extends IBasePerTenantAndOrganizationEntityModel {
 	title: string;
@@ -17,6 +19,8 @@ export interface ITask extends IBasePerTenantAndOrganizationEntityModel {
 	prefix?: string;
 	description?: string;
 	status?: TaskStatusEnum;
+	priority?: TaskPriorityEnum;
+	size?: TaskSizeEnum;
 	dueDate?: Date;
 	estimate?: number;
 	project?: IOrganizationProject;
@@ -40,14 +44,14 @@ export interface IGetTaskByEmployeeOptions extends IBaseRelationsEntityModel {
 	where?: IGetTaskOptions;
 }
 
-export interface IGetSprintsOptions extends IGetTaskOptions {}
+export interface IGetSprintsOptions extends IGetTaskOptions { }
 
 export enum TaskParticipantEnum {
 	EMPLOYEES = 'employees',
 	TEAMS = 'teams',
 }
 
-export interface ITaskCreateInput extends ITask {}
+export interface ITaskCreateInput extends ITask { }
 
 export interface ITaskUpdateInput extends ITaskCreateInput {
 	id?: string;

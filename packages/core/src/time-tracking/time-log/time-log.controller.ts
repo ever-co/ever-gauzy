@@ -39,7 +39,7 @@ export class TimeLogController {
 
 	constructor(
 		private readonly timeLogService: TimeLogService
-	) {}
+	) { }
 
 	@ApiOperation({ summary: 'Get Timer Logs Conflict' })
 	@ApiResponse({
@@ -64,7 +64,7 @@ export class TimeLogController {
 		description: 'Record not found'
 	})
 	@Get('report/daily')
-	@UsePipes(new ValidationPipe({ whitelist: true }))
+	@UsePipes(new ValidationPipe({ whitelist: true, transform: true }))
 	async getDailyReport(
 		@Query() options: TimeLogQueryDTO
 	) {
@@ -99,7 +99,7 @@ export class TimeLogController {
 			'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@Get('report/owed-report')
-	@UsePipes(new ValidationPipe({ whitelist: true }))
+	@UsePipes(new ValidationPipe({ whitelist: true, transform: true }))
 	async getOwedAmountReport(
 		@Query() options: TimeLogQueryDTO
 	): Promise<any> {
@@ -117,7 +117,7 @@ export class TimeLogController {
 			'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@Get('report/owed-chart-data')
-	@UsePipes(new ValidationPipe({ whitelist: true }))
+	@UsePipes(new ValidationPipe({ whitelist: true, transform: true }))
 	async getOwedAmountReportChartData(
 		@Query() options: TimeLogQueryDTO
 	): Promise<any> {
@@ -134,7 +134,7 @@ export class TimeLogController {
 		description: 'Record not found'
 	})
 	@Get('report/weekly')
-	@UsePipes(new ValidationPipe({ whitelist: true }))
+	@UsePipes(new ValidationPipe({ whitelist: true, transform: true }))
 	async getWeeklyReport(
 		@Query() options: TimeLogQueryDTO
 	) {
@@ -156,7 +156,7 @@ export class TimeLogController {
 		description: 'Found records'
 	})
 	@Get('time-limit')
-	@UsePipes(new ValidationPipe({ whitelist: true }))
+	@UsePipes(new ValidationPipe({ whitelist: true, transform: true }))
 	async getTimeLimitReport(
 		@Query() options: TimeLogLimitQueryDTO
 	) {
@@ -178,7 +178,7 @@ export class TimeLogController {
 		description: 'Found records'
 	})
 	@Get('project-budget-limit')
-	@UsePipes(new ValidationPipe({ whitelist: true }))
+	@UsePipes(new ValidationPipe({ whitelist: true, transform: true }))
 	async projectBudgetLimit(
 		@Query() options: TimeLogQueryDTO
 	) {
@@ -200,7 +200,7 @@ export class TimeLogController {
 		description: 'Found records'
 	})
 	@Get('client-budget-limit')
-	@UsePipes(new ValidationPipe({ whitelist: true }))
+	@UsePipes(new ValidationPipe({ whitelist: true, transform: true }))
 	async clientBudgetLimit(
 		@Query() options: TimeLogQueryDTO
 	) {
@@ -214,7 +214,7 @@ export class TimeLogController {
 			'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@Get()
-	@UsePipes(new ValidationPipe({ whitelist: true }))
+	@UsePipes(new ValidationPipe({ whitelist: true, transform: true }))
 	async getLogs(
 		@Query() options: TimeLogQueryDTO
 	): Promise<ITimeLog[]> {
@@ -223,7 +223,7 @@ export class TimeLogController {
 
 	@Get(':id')
 	async findById(
-		@Param('id', UUIDValidationPipe) id: string,
+		@Param('id', UUIDValidationPipe) id: ITimeLog['id'],
 		@Query() options: FindOneOptions
 	): Promise<ITimeLog> {
 		return this.timeLogService.findOneByIdString(id, options);
@@ -281,7 +281,7 @@ export class TimeLogController {
 	@UseGuards(OrganizationPermissionGuard)
 	@Permissions(PermissionsEnum.ALLOW_DELETE_TIME)
 	@Delete()
-	@UsePipes(new ValidationPipe())
+	@UsePipes(new ValidationPipe({ transform: true }))
 	async deleteTimeLog(
 		@Query() query: DeleteTimeLogDTO
 	): Promise<DeleteResult | UpdateResult> {

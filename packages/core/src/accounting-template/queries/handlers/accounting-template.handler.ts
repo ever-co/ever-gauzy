@@ -4,7 +4,7 @@ import { AccountingTemplateService } from '../../accounting-template.service';
 import { AccountingTemplateQuery } from '../accounting-template.query';
 
 @QueryHandler(AccountingTemplateQuery)
-export class AccoutingTemplateHandler
+export class AccountingTemplateHandler
     implements IQueryHandler<AccountingTemplateQuery> {
 
     constructor(
