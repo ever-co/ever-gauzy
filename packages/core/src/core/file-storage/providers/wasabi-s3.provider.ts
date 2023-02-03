@@ -178,7 +178,7 @@ export class WasabiS3Provider extends Provider<WasabiS3Provider> {
 						.then((res) => res.ContentLength);
 
 					const file = {
-						originalname: fileName, // orignal file name
+						originalname: fileName, // original file name
 						size: size, // files in bytes
 						filename: fileName,
 						path: key, // Full path of the file

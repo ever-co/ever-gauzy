@@ -46,14 +46,14 @@ export class CloudinaryProvider extends Provider<CloudinaryProvider> {
         try {
             return path;
         } catch (error) {
-            console.log('Error while retriving singed URL:', error);
+            console.log('Error while retrieving singed URL:', error);
         }
     }
     path(path: string): string {
         try {
             return path;
         } catch (error) {
-            console.log('Error while retriving singed URL:', error);
+            console.log('Error while retrieving singed URL:', error);
         }
     }
 

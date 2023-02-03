@@ -20,7 +20,7 @@ export enum FileStorageProviderEnum {
 export interface UploadedFile {
 	fieldname: string;
 	key: string; // path of the file in storage
-	originalname: string; // orignal file name
+	originalname: string; // original file name
 	size: number; // files in bytes
 	encoding?: string;
 	mimetype?: string;

@@ -23,7 +23,7 @@ export class TenantSettingService extends TenantAwareCrudService<TenantSetting> 
 		return object(pluck(settings, 'name'), pluck(settings, 'value'));
 	}
 
-	async saveSettngs(
+	async saveSettings(
 		input: ITenantSetting,
 		tenantId: string
 	): Promise<ITenantSetting> {
@@ -95,7 +95,7 @@ export class TenantSettingService extends TenantAwareCrudService<TenantSetting> 
 				} else {
 					resolve({
 						status: HttpStatus.CREATED,
-						message: `${entity.wasabi_aws_bucket} is created succesfully in ${entity.wasabi_aws_default_region}`,
+						message: `${entity.wasabi_aws_bucket} is created successfully in ${entity.wasabi_aws_default_region}`,
 						data
 					});
 				}
