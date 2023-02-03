@@ -382,7 +382,6 @@ export class TimeTrackerService {
 			tenantId: values.tenantId,
 			organizationContactId: values.organizationContactId,
 			isRunning: false,
-			...(values.startedAt ? { startedAt: values.startedAt } : {}),
 			...(values.stoppedAt ? { stoppedAt: values.stoppedAt } : {}),
 		};
 		return firstValueFrom(

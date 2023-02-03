@@ -658,48 +658,31 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 			}
 		);
 
-		this.electronService.ipcRenderer.on('sync-timer', (event, timers) => {
-			this._ngZone.run(() => {
-				timers.forEach(async (timer) => {
-					try {
-						let latest: any;
-						const paramsTimeStart = {
-							token: this.token,
-							note: this.note,
-							organizationId: this.userOrganization.id,
-							tenantId: this.userData.tenantId,
-							organizationContactId: this.organizationContactId,
-							apiHost: this.apiHost,
-						};
-
-						if (
-							(timer.startedAt === null && timer.stoppedAt) ||
-							(timer.startedAt && timer.stoppedAt)
-						) {
-							latest =
-								await this.timeTrackerService.toggleApiStop({
-									...paramsTimeStart,
-									...timer,
-								});
-						} else if (
-							timer.startedAt &&
-							timer.stoppedAt === null
-						) {
-							latest =
-								await this.timeTrackerService.toggleApiStart({
-									...paramsTimeStart,
-									...timer,
-								});
-						}
-						if (latest) {
-							event.sender.send('update-synced-timer', {
-								lastTimer: latest,
-								...timer,
-							});
-						}
-					} catch (error) {
-						console.log('[ERROR_SYNC]', error);
-					}
+		this.electronService.ipcRenderer.on('sync-timer', (event, arg) => {
+			this._ngZone.run(async () => {
+				let latest: any;
+				const params = {
+					token: this.token,
+					note: this.note,
+					organizationId: this.userOrganization.id,
+					tenantId: this.userData.tenantId,
+					organizationContactId: this.organizationContactId,
+					apiHost: this.apiHost,
+				};
+				if (arg.isStart) {
+					latest = await this.timeTrackerService.toggleApiStart({
+						...params,
+						...arg.timer,
+					});
+				} else {
+					latest = await this.timeTrackerService.toggleApiStop({
+						...params,
+						...arg.timer,
+					});
+				}
+				event.sender.send('update-synced-timer', {
+					lastTimer: latest,
+					...arg.timer,
 				});
 			});
 		});
