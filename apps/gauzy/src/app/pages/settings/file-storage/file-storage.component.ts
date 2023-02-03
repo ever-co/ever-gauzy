@@ -17,12 +17,10 @@ import { environment } from './../../../../environments/environment';
 	styleUrls: ['./file-storage.component.scss'],
 	providers: [FileStorageService, TenantService]
 })
-export class FileStorageComponent extends TranslationBaseComponent
-	implements OnInit {
-
+export class FileStorageComponent extends TranslationBaseComponent implements OnInit {
 	secureOptions = [
-		{ label: SMTPSecureEnum.TRUE, value: "true" },
-		{ label: SMTPSecureEnum.FALSE, value: "false" }
+		{ label: SMTPSecureEnum.TRUE, value: 'true' },
+		{ label: SMTPSecureEnum.FALSE, value: 'false' }
 	];
 	PermissionsEnum = PermissionsEnum;
 	FileStorageProviderEnum = FileStorageProviderEnum;
@@ -32,7 +30,10 @@ export class FileStorageComponent extends TranslationBaseComponent
 	public readonly form: FormGroup = FileStorageComponent.buildForm(this.fb);
 	static buildForm(fb: FormBuilder): FormGroup {
 		const form = fb.group({
-			fileStorageProvider: [(environment.FILE_PROVIDER).toUpperCase() as FileStorageProviderEnum || FileStorageProviderEnum.LOCAL, Validators.required],
+			fileStorageProvider: [
+				(environment.FILE_PROVIDER.toUpperCase() as FileStorageProviderEnum) || FileStorageProviderEnum.LOCAL,
+				Validators.required
+			],
 			// Aws Configuration
 			S3: fb.group({
 				aws_access_key_id: [],
@@ -54,7 +55,7 @@ export class FileStorageComponent extends TranslationBaseComponent
 				cloudinary_api_key: [],
 				cloudinary_api_secret: [],
 				cloudinary_api_secure: []
-			}),
+			})
 		});
 		return form;
 	}
@@ -62,8 +63,8 @@ export class FileStorageComponent extends TranslationBaseComponent
 	public subject$: Subject<boolean> = new Subject();
 
 	/*
-	* Getter for file storage provider
-	*/
+	 * Getter for file storage provider
+	 */
 	get fileStorageProvider() {
 		return this.form.get('fileStorageProvider').value;
 	}
@@ -74,7 +75,7 @@ export class FileStorageComponent extends TranslationBaseComponent
 		private readonly fileStorageService: FileStorageService,
 		private readonly toastrService: ToastrService,
 		private readonly store: Store,
-		private readonly fb: FormBuilder,
+		private readonly fb: FormBuilder
 	) {
 		super(translate);
 	}
@@ -109,7 +110,9 @@ export class FileStorageComponent extends TranslationBaseComponent
 				this.form.get(fileStorageProvider).updateValueAndValidity();
 			}
 		} else {
-			this.setFileStorageProvider((environment.FILE_PROVIDER.toUpperCase() as FileStorageProviderEnum) || FileStorageProviderEnum.LOCAL);
+			this.setFileStorageProvider(
+				(environment.FILE_PROVIDER.toUpperCase() as FileStorageProviderEnum) || FileStorageProviderEnum.LOCAL
+			);
 		}
 	}
 
@@ -133,11 +136,11 @@ export class FileStorageComponent extends TranslationBaseComponent
 			settings = {
 				fileStorageProvider,
 				...filesystem[fileStorageProvider]
-			}
+			};
 		} else {
 			settings = {
 				fileStorageProvider: FileStorageProviderEnum.LOCAL
-			}
+			};
 		}
 
 		try {

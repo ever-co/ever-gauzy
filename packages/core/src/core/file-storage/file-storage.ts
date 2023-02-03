@@ -34,18 +34,16 @@ export class FileStorage {
 			if (request && isNotEmpty(request['tenantSettings'])) {
 				const provider = request['tenantSettings']['fileStorageProvider'] as FileStorageProviderEnum;
 				if (isEmpty(provider) || !providers.includes(provider)) {
-					this.config.provider = (
-						environment.fileSystem.name.toUpperCase() as FileStorageProviderEnum ||
-						FileStorageProviderEnum.LOCAL
-					);
+					this.config.provider =
+						(environment.fileSystem.name.toUpperCase() as FileStorageProviderEnum) ||
+						FileStorageProviderEnum.LOCAL;
 				} else {
 					this.config.provider = provider.toUpperCase() as FileStorageProviderEnum;
 				}
 			} else {
-				this.config.provider = (
-					environment.fileSystem.name.toUpperCase() as FileStorageProviderEnum ||
-					FileStorageProviderEnum.LOCAL
-				);
+				this.config.provider =
+					(environment.fileSystem.name.toUpperCase() as FileStorageProviderEnum) ||
+					FileStorageProviderEnum.LOCAL;
 			}
 		} else {
 			if (providers.includes(providerName)) {

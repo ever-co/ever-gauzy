@@ -117,15 +117,7 @@ export class S3Provider extends Provider<S3Provider> {
 					dir = dest;
 				}
 				const user = RequestContext.currentUser();
-				callback(
-					null,
-					join(
-						this.config.rootPath,
-						dir,
-						user ? user.tenantId : uuid(),
-						fileNameString
-					)
-				);
+				callback(null, join(this.config.rootPath, dir, user ? user.tenantId : uuid(), fileNameString));
 			}
 		});
 	}

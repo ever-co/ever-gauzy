@@ -17,7 +17,6 @@ import { FileStorageProviderEnum } from '@gauzy/contracts';
 	]
 })
 export class FileProviderComponent implements OnInit {
-
 	public fileStorageProviders: { label: FileStorageProviderEnum; value: any }[] = [];
 
 	/**
@@ -39,12 +38,10 @@ export class FileProviderComponent implements OnInit {
 	@Output() onSelectionChanged = new EventEmitter();
 
 	ngOnInit(): void {
-		this.fileStorageProviders = Object.keys(FileStorageProviderEnum).map(
-			(label: FileStorageProviderEnum) => ({
-				label,
-				value: FileStorageProviderEnum[label]
-			})
-		);
+		this.fileStorageProviders = Object.keys(FileStorageProviderEnum).map((label: FileStorageProviderEnum) => ({
+			label,
+			value: FileStorageProviderEnum[label]
+		}));
 	}
 
 	/**
