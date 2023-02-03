@@ -1,5 +1,5 @@
 import { UserService } from '.';
-import { IntervalDAO, IntervalTO, Timer, TimerDAO, TimerTO } from '..';
+import { IntervalDAO, Timer, TimerDAO, TimerTO } from '..';
 import { ITimerService } from '../../interfaces';
 
 export class TimerService implements ITimerService<TimerTO> {
@@ -16,7 +16,7 @@ export class TimerService implements ITimerService<TimerTO> {
 			const user = await this._userService.retrieve();
 			return await this._timerDAO.lastTimer(user.employeeId);
 		} catch (error) {
-			console.error('[ERRORSERVICETIMER]', error);
+			console.error('[ERROR_SERVICE_TIMER]', error);
 		}
 	}
 	public async findLastCapture(): Promise<TimerTO> {
@@ -24,21 +24,21 @@ export class TimerService implements ITimerService<TimerTO> {
 			const user = await this._userService.retrieve();
 			return await this._timerDAO.lastCapture(user.employeeId);
 		} catch (error) {
-			console.error('[ERRORSERVICETIMER]', error);
+			console.error('[ERROR_SERVICE_TIMER]', error);
 		}
 	}
 	public async update(timer: Partial<Timer>): Promise<void> {
 		try {
 			await this._timerDAO.update(timer.id, timer.toObject());
 		} catch (error) {
-			console.error('[ERRORSERVICETIMER]', error);
+			console.error('[ERROR_SERVICE_TIMER]', error);
 		}
 	}
 	public async findAll(): Promise<TimerTO[]> {
 		try {
 			return await this._timerDAO.findAll();
 		} catch (error) {
-			console.error('[ERRORSERVICETIMER]', error);
+			console.error('[ERROR_SERVICE_TIMER]', error);
 		}
 	}
 	public async findById(timer: Partial<Timer>): Promise<TimerTO> {
@@ -50,7 +50,7 @@ export class TimerService implements ITimerService<TimerTO> {
 		try {
 			await this._timerDAO.delete(timer);
 		} catch (error) {
-			console.error('[ERRORSERVICETIMER]', error);
+			console.error('[ERROR_SERVICE_TIMER]', error);
 		}
 	}
 
@@ -58,7 +58,7 @@ export class TimerService implements ITimerService<TimerTO> {
 		try {
 			await this._timerDAO.save(timer.toObject());
 		} catch (error) {
-			console.error('[TIMERERROR]: ', error);
+			console.error('[TIMER_ERROR]: ', error);
 		}
 	}
 
@@ -67,7 +67,7 @@ export class TimerService implements ITimerService<TimerTO> {
 			const user = await this._userService.retrieve();
 			return await this._timerDAO.findAllNoSynced(user);
 		} catch (error) {
-			console.error('[NOSYNCEDTIMERERROR]: ', error);
+			console.error('[NO_SYNCED_TIMER_ERROR]: ', error);
 		}
 	}
 
