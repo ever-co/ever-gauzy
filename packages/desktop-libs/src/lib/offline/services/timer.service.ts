@@ -1,12 +1,14 @@
 import { UserService } from '.';
-import { Timer, TimerDAO, TimerTO } from '..';
+import { IntervalDAO, IntervalTO, Timer, TimerDAO, TimerTO } from '..';
 import { ITimerService } from '../../interfaces';
 
 export class TimerService implements ITimerService<TimerTO> {
 	private _timerDAO: TimerDAO;
 	private _userService: UserService;
+	private _intervalDAO: IntervalDAO;
 	constructor() {
 		this._timerDAO = new TimerDAO();
+		this._intervalDAO = new IntervalDAO();
 		this._userService = new UserService();
 	}
 	public async findLastOne(): Promise<TimerTO> {
@@ -66,6 +68,26 @@ export class TimerService implements ITimerService<TimerTO> {
 			return await this._timerDAO.findAllNoSynced(user);
 		} catch (error) {
 			console.error('[NOSYNCEDTIMERERROR]: ', error);
+		}
+	}
+
+	public async findToSynced() {
+		try {
+			const user = await this._userService.retrieve();
+			const noSyncedTimers = await this.findNoSynced();
+			return noSyncedTimers.map(async (timer) => {
+				const intervals = await this._intervalDAO.backedUpNoSynced(
+					timer.startedAt,
+					timer.stoppedAt,
+					user
+				);
+				return {
+					timer: timer,
+					intervals: intervals,
+				};
+			});
+		} catch (error) {
+			console.log('ERROR_TO_SYNCED', error);
 		}
 	}
 }
