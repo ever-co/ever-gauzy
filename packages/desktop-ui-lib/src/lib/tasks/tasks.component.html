@@ -29,7 +29,7 @@
 					</ng-select>
 				</div>
 			</div>
-			<div class="col-sm-6">
+			<div class="col-sm-6 pl-0">
 				<div class="form-group">
 					<label class="label">Status</label>
 					<ng-select [searchable]="false" [clearable]="true" placeholder="Status" [items]="statuses"
@@ -80,7 +80,7 @@
 					<nb-datepicker #taskDueDatePicker></nb-datepicker>
 				</div>
 			</div>
-			<div class="col-sm-6">
+			<div class="col-sm-6 pl-0">
 				<label for="estimate" class="label">Estimate</label>
 				<div class="estimate-inputs">
 					<input formControlName="estimateDays" type="number" [min]="0" nbInput placeholder="Days" />
@@ -88,7 +88,7 @@
 					<input formControlName="estimateHours" type="number" min="0" max="23" nbInput placeholder="Hours" />
 
 					<input formControlName="estimateMinutes" type="number" [min]="0" min="0" max="59" nbInput
-						placeholder="Minutes" />
+						placeholder="Mins" />
 				</div>
 			</div>
 		</div>

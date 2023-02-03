@@ -10,6 +10,7 @@ import {
 	getApiBaseUrl,
 } from '@gauzy/desktop-window';
 import TitleOptions = Electron.TitleOptions;
+import { User, UserService } from './offline';
 
 export class TrayIcon {
 	tray: Tray;
@@ -354,9 +355,17 @@ export class TrayIcon {
 			this.tray.setTitle(arg ? arg.timeRun : '00:00:00', options);
 		});
 
-		ipcMain.on('auth_success', (event, arg) => {
+		ipcMain.on('auth_success', async (event, arg) => {
 			console.log('Auth Success:', arg);
-
+			try {
+				const userService = new UserService();
+				const user = new User({ ...arg, ...arg.user });
+				user.remoteId = arg.userId;
+				user.organizationId = arg.organizationId;
+				await userService.save(user.toObject());
+			} catch (error) {
+				console.log('Error on save user', error);
+			}
 			const appConfig = LocalStore.getStore('configs');
 			//check last auth
 			const lastUser = store.get('auth');

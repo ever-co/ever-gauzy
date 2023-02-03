@@ -7,6 +7,7 @@ import {
 } from '@angular/core';
 import { transition, trigger, style, animate } from '@angular/animations';
 import { ElectronService } from '../electron/services';
+import { DomSanitizer } from '@angular/platform-browser';
 export const fadeInOutAnimation = trigger('fadeInOut', [
 	transition(':enter', [
 		// :enter is alias to 'void => *'
@@ -37,7 +38,8 @@ export class ImageViewerComponent implements OnInit {
 	constructor(
 		// private dialogRef: NbDialogRef<any>
 		private electronService: ElectronService,
-		private readonly _ngZone: NgZone
+		private readonly _ngZone: NgZone,
+		private readonly _sanitize: DomSanitizer
 	) {}
 
 	ngOnInit(): void {
@@ -110,5 +112,9 @@ export class ImageViewerComponent implements OnInit {
 				}
 			}
 		}
+	}
+
+	sanitizeImgUrl(img: string) {
+		return this._sanitize.bypassSecurityTrustUrl(img);
 	}
 }
