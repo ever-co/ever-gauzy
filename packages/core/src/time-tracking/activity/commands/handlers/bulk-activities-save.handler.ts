@@ -2,7 +2,7 @@ import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { IActivity, PermissionsEnum } from '@gauzy/contracts';
-import { isEmpty } from '@gauzy/common';
+import { isEmpty, isNotEmpty } from '@gauzy/common';
 import { Activity } from '../../activity.entity';
 import { BulkActivitiesSaveCommand } from '../bulk-activities-save.command';
 import { RequestContext } from '../../../../core/context';
@@ -18,7 +18,7 @@ export class BulkActivitiesSaveHandler
 
 		@InjectRepository(Employee)
 		private readonly employeeRepository: Repository<Employee>
-	) {}
+	) { }
 
 	public async execute(command: BulkActivitiesSaveCommand): Promise<IActivity[]> {
 		const { input } = command;
@@ -80,7 +80,7 @@ export class BulkActivitiesSaveHandler
 		});
 
 		console.log(`Activities should be insert into database for employee (${user.name})`, { activities });
-		if (activities.length > 0) {
+		if (isNotEmpty(activities)) {
 			return await this.activityRepository.save(activities);
 		} else {
 			return [];

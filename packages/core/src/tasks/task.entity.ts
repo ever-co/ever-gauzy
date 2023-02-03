@@ -21,6 +21,8 @@ import {
 	ITask,
 	ITimeLog,
 	IUser,
+	TaskPriorityEnum,
+	TaskSizeEnum,
 	TaskStatusEnum,
 } from '@gauzy/contracts';
 import {
@@ -60,6 +62,14 @@ export class Task extends TenantOrganizationBaseEntity
 	@ApiProperty({ type: () => String })
 	@Column({ nullable: true })
 	status?: TaskStatusEnum;
+
+	@ApiProperty({ type: () => String })
+	@Column({ nullable: true })
+	priority?: TaskPriorityEnum;
+
+	@ApiProperty({ type: () => String })
+	@Column({ nullable: true })
+	size?: TaskSizeEnum;
 
 	@ApiProperty({ type: () => Number })
 	@Column({ nullable: true })

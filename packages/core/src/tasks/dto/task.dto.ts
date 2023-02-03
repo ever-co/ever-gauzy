@@ -2,6 +2,8 @@ import {
     IEmployee,
     IOrganizationProject,
     IOrganizationTeam,
+    TaskPriorityEnum,
+    TaskSizeEnum,
     TaskStatusEnum
 } from "@gauzy/contracts";
 import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
@@ -17,7 +19,7 @@ import { TenantOrganizationBaseDTO } from "./../../core/dto";
 
 export class TaskDTO extends TenantOrganizationBaseDTO {
 
-    @ApiProperty({ type : () => String })
+    @ApiProperty({ type: () => String })
     @IsNotEmpty()
     @IsString()
     readonly title: string;
@@ -26,6 +28,16 @@ export class TaskDTO extends TenantOrganizationBaseDTO {
     @IsNotEmpty()
     @IsString()
     readonly status: TaskStatusEnum;
+
+    @ApiProperty({ type: () => String })
+    @IsOptional()
+    @IsString()
+    readonly priority: TaskPriorityEnum;
+
+    @ApiProperty({ type: () => String })
+    @IsOptional()
+    @IsString()
+    readonly size: TaskSizeEnum;
 
     @ApiPropertyOptional({ type: () => String })
     @IsOptional()
@@ -52,12 +64,12 @@ export class TaskDTO extends TenantOrganizationBaseDTO {
     @IsArray()
     readonly teams: IOrganizationTeam[];
 
-    @ApiPropertyOptional({ type : () => Object })
+    @ApiPropertyOptional({ type: () => Object })
     @IsOptional()
     @IsObject()
     readonly project: IOrganizationProject;
 
-    @ApiPropertyOptional({ type : () => String })
+    @ApiPropertyOptional({ type: () => String })
     @IsOptional()
     @IsString()
     readonly projectId: IOrganizationProject['id'];
