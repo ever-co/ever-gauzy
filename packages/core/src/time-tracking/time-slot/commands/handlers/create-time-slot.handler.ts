@@ -4,7 +4,7 @@ import { Brackets, Repository, SelectQueryBuilder, WhereExpressionBuilder } from
 import * as moment from 'moment';
 import { omit } from 'underscore';
 import { ITimeSlot, PermissionsEnum, TimeLogSourceEnum, TimeLogType } from '@gauzy/contracts';
-import { isEmpty, isNotEmpty } from '@gauzy/common';
+import { isEmpty } from '@gauzy/common';
 import { RequestContext } from '../../../../core/context';
 import {
 	Employee,
@@ -29,7 +29,7 @@ export class CreateTimeSlotHandler
 		private readonly employeeRepository: Repository<Employee>,
 
 		private readonly commandBus: CommandBus
-	) {}
+	) { }
 
 	public async execute(command: CreateTimeSlotCommand): Promise<TimeSlot> {
 		const { input } = command;
@@ -183,22 +183,21 @@ export class CreateTimeSlotHandler
 			}
 		}
 
-		if (isNotEmpty(activities)) {
-			console.log(`Bulk activities save parameters employee (${user.name})`, {
+		console.log(`Bulk activities save parameters employee (${user.name})`, {
+			organizationId,
+			employeeId,
+			projectId: input.projectId,
+			activities: activities
+		});
+
+		timeSlot.activities = await this.commandBus.execute(
+			new BulkActivitiesSaveCommand({
 				organizationId,
 				employeeId,
 				projectId: input.projectId,
 				activities: activities
-			});
-			timeSlot.activities = await this.commandBus.execute(
-				new BulkActivitiesSaveCommand({
-					organizationId,
-					employeeId,
-					projectId: input.projectId,
-					activities: activities
-				})
-			);
-		}
+			})
+		);
 
 		console.log(`Timeslot save first time before bulk activities save for employee (${user.name})`, { timeSlot });
 		await this.timeSlotRepository.save(timeSlot);
@@ -219,7 +218,7 @@ export class CreateTimeSlotHandler
 
 		console.log(`Final merged timeSlot for employee (${user.name})`, { timeSlot });
 		return await this.timeSlotRepository.findOne({
-			where : {
+			where: {
 				id: timeSlot.id
 			},
 			relations: {
