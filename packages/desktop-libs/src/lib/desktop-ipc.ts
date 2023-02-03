@@ -125,6 +125,23 @@ export function ipcMainHandler(
 	ipcMain.on('time_tracker_ready', async (event, arg) => {
 		const auth = LocalStore.getStore('auth');
 		if (auth && auth.userId) {
+			try {
+				const user = await userService.retrieve();
+				console.log('Current User', user);
+				if (!user || auth.userId !== user.remoteId) {
+					timeTrackerWindow.webContents.send('logout');
+				}
+			} catch (error) {
+				try {
+					const userService = new UserService();
+					const user = new User({ ...auth });
+					user.remoteId = auth.userId;
+					user.organizationId = auth.organizationId;
+					await userService.save(user.toObject());
+				} catch (error) {
+					timeTrackerWindow.webContents.send('logout');
+				}
+			}
 			const lastTime = await TimerData.getLastCaptureTimeSlot(
 				knex,
 				LocalStore.beforeRequestParams()
@@ -134,15 +151,6 @@ export function ipcMainHandler(
 				...LocalStore.beforeRequestParams(),
 				timeSlotId: lastTime ? lastTime.timeslotId : null,
 			});
-		}
-		try {
-			const user = await userService.retrieve();
-			console.log('Current User', user);
-			if (!user || (auth && auth.userId !== user.remoteId)) {
-				timeTrackerWindow.webContents.send('logout');
-			}
-		} catch (error) {
-			timeTrackerWindow.webContents.send('logout');
 		}
 
 		// check connectivity five seconds after start
@@ -675,18 +683,6 @@ export function ipcTimer(
 
 	ipcMain.on('update_timer_auth_config', (event, arg) => {
 		LocalStore.updateAuthSetting({ ...arg });
-	});
-
-	ipcMain.on('auth_success', async (event, arg) => {
-		try {
-			const user = new User({ ...arg, ...arg.user });
-			user.remoteId = arg.userId;
-			user.organizationId = arg.organizationId;
-			await userService.save(user.toObject());
-			await latestScreenshots(timeTrackerWindow);
-		} catch (error) {
-			console.log('Error on save user', error);
-		}
 	});
 }
 
