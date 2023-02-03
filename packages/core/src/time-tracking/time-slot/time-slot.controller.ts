@@ -37,7 +37,7 @@ export class TimeSlotController {
 	constructor(
 		private readonly timeSlotService: TimeSlotService,
 		private readonly commandBus: CommandBus
-	) {}
+	) { }
 
 	@ApiOperation({ summary: 'Get Time Slots' })
 	@ApiResponse({
@@ -45,7 +45,7 @@ export class TimeSlotController {
 		description: 'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@Get()
-	@UsePipes(new ValidationPipe({ whitelist: true }))
+	@UsePipes(new ValidationPipe({ whitelist: true, transform: true }))
 	async findAll(
 		@Query() options: TimeSlotQueryDTO
 	): Promise<ITimeSlot[]> {

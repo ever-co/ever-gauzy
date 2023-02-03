@@ -230,10 +230,9 @@
 						<div class="row">
 							<div class="col-12 search">
 								<button nbButton nbTooltipStatus="warning"
-									nbTooltip="Request authorization from the organization administrator"
-									nbTooltipStatus="warning" [nbTooltipDisabled]="(hasTaskPermission$ | async) "
-									[disabled]="(isOffline$ | async) || !(hasTaskPermission$ | async) " class="mb-2"
-									status="success" (click)="addTask()">
+									[nbTooltip]="!(hasTaskPermission$ | async) ?'Request permission from the organization administrator': (isOffline$ | async) ? 'Return online': null"
+									[nbTooltipDisabled]="(hasTaskPermission$ | async) && !(isOffline$ | async)"
+									nbTooltipStatus="warning" class="mb-2" status="success" (click)="addTask()">
 									<nb-icon icon="plus" pack="font-awesome"></nb-icon>Add
 								</button>
 							</div>

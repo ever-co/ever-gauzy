@@ -1,15 +1,15 @@
-import { ITask, ITaskUpdateInput } from '@gauzy/contracts';
+import { BadRequestException } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-import { RequestContext } from './../../../core/context';
+import { ITask, ITaskUpdateInput } from '@gauzy/contracts';
 import { TaskService } from '../../task.service';
 import { TaskUpdateCommand } from '../task-update.command';
-import { BadRequestException } from '@nestjs/common';
 
 @CommandHandler(TaskUpdateCommand)
 export class TaskUpdateHandler implements ICommandHandler<TaskUpdateCommand> {
+
 	constructor(
 		private readonly _taskService: TaskService
-	) {}
+	) { }
 
 	public async execute(command: TaskUpdateCommand): Promise<ITask> {
 		const { id, input } = command;
@@ -28,18 +28,26 @@ export class TaskUpdateHandler implements ICommandHandler<TaskUpdateCommand> {
 		request: ITaskUpdateInput
 	): Promise<ITask> {
 		try {
-			const tenantId = RequestContext.currentTenantId();
-			const { organizationId, project } = request;
-			const projectId = (project) ? project.id : null;
-
-			const maxNumber = await this._taskService.getMaxTaskNumberByProject({
-				tenantId,
-				organizationId,
-				projectId
-			});
+			const task = await this._taskService.findOneByIdString(id);
+			if ('projectId' in request) {
+				const { projectId } = request;
+				/**
+				 * If, project changed for task, just update latest task number
+				 */
+				if (projectId !== task.projectId) {
+					const { organizationId } = task;
+					const maxNumber = await this._taskService.getMaxTaskNumberByProject({
+						organizationId,
+						projectId
+					});
+					await this._taskService.update(id, {
+						projectId,
+						number: maxNumber + 1
+					});
+				}
+			}
 			return await this._taskService.create({
 				...request,
-				number: maxNumber + 1,
 				id
 			});
 		} catch (error) {
