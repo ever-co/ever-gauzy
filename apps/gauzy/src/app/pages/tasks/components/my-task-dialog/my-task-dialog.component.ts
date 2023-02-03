@@ -97,6 +97,8 @@ export class MyTaskDialogComponent extends TranslationBaseComponent
 		estimate,
 		dueDate,
 		tags,
+		priority,
+		size
 	}: ITask) {
 		const duration = moment.duration(estimate, 'seconds');
 		// select members from database of default value
@@ -116,8 +118,8 @@ export class MyTaskDialogComponent extends TranslationBaseComponent
 			project: [project],
 			projectId: project ? project.id : null,
 			status: [status ? status : TaskStatusEnum.OPEN],
-			priority: [],
-			size: [],
+			priority: [priority ? priority : null],
+			size: [size ? size : null],
 			members: [members],
 			estimateDays: [duration.days() || ''],
 			estimateHours: [

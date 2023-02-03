@@ -156,6 +156,8 @@ export class AddTaskDialogComponent extends TranslationBaseComponent
 				tags,
 				teams,
 				title,
+				priority,
+				size
 			} = this.selectedTask;
 			const duration = moment.duration(estimate, 'seconds');
 
@@ -171,6 +173,8 @@ export class AddTaskDialogComponent extends TranslationBaseComponent
 				project,
 				projectId: project ? project.id : null,
 				status,
+				priority,
+				size,
 				estimateDays: duration.days(),
 				estimateHours: duration.hours(),
 				estimateMinutes: duration.minutes(),
