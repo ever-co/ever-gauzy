@@ -419,10 +419,14 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 						fullUrl: this.sanitize.bypassSecurityTrustUrl(
 							arg.fullUrl
 						),
+						thumbUrl: this.sanitize.bypassSecurityTrustUrl(
+							arg.fullUrl
+						),
 						textTime: moment().fromNow(),
 						createdAt: Date.now(),
 						recordedAt: Date.now(),
 					});
+					this.screenshots$.next([...this.screenshots]);
 				})
 		);
 
