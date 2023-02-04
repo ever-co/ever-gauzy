@@ -19,20 +19,10 @@ export const TimerData = {
 				.onConflict('eventId')
 				.merge(['duration', 'data', 'updated_at', 'type']);
 		} catch (error) {
-			if (
-				error.message
-					.toLowerCase()
-					.indexOf(
-						'Knex: Timeout acquiring a connection'.toLowerCase()
-					) > -1
-			) {
+			if (error.message.toLowerCase().indexOf('Knex: Timeout acquiring a connection'.toLowerCase()) > -1) {
 				if (retry < 3) {
 					await TimerData.wait(3000);
-					return await TimerData.insertWindowEvent(
-						knex,
-						query,
-						retry + 1
-					);
+					return await TimerData.insertWindowEvent(knex, query, retry + 1);
 				}
 			}
 			console.log('error on insert window-events', error);
@@ -40,16 +30,12 @@ export const TimerData = {
 		}
 	},
 	updateWindowEventUpload: async (knex, data) => {
-		return await knex('window-events')
-			.where('eventId', data.eventId)
-			.update({
-				activityId: data.activityId,
-			});
+		return await knex('window-events').where('eventId', data.eventId).update({
+			activityId: data.activityId
+		});
 	},
 	deleteWindowEventAfterSended: async (knex, data) => {
-		return await knex('window-events')
-			.whereIn('id', data.activityIds)
-			.del();
+		return await knex('window-events').whereIn('id', data.activityIds).del();
 	},
 	updateTimerUpload: async (knex, data) => {
 		const timer = new Timer(data);
@@ -61,23 +47,23 @@ export const TimerData = {
 	getAfk: async (knex, timerId) => {
 		return await knex('window-events').where({
 			timerId: timerId,
-			type: 'AFK',
+			type: 'AFK'
 		});
 	},
 	deleteAfk: async (knex, data) => {
 		return await knex('afk-events')
 			.where({
-				id: data.idAfk,
+				id: data.idAfk
 			})
 			.del();
 	},
 	getWindowEvent: async (knex, timerId) => {
 		return await knex('window-events')
 			.whereNot({
-				type: 'AFK',
+				type: 'AFK'
 			})
 			.andWhere({
-				timerId: timerId,
+				timerId: timerId
 			});
 	},
 	insertAfkEvent: async (knex: Knex, query, retry = 0) => {
@@ -85,29 +71,12 @@ export const TimerData = {
 			await knex('afk-events')
 				.insert(query)
 				.onConflict('eventId')
-				.merge([
-					'duration',
-					'timerId',
-					'data',
-					'updated_at',
-					'timeSlotId',
-					'timeSheetId'
-				]);
+				.merge(['duration', 'timerId', 'data', 'updated_at', 'timeSlotId', 'timeSheetId']);
 		} catch (error) {
-			if (
-				error.message
-					.toLowerCase()
-					.indexOf(
-						'Knex: Timeout acquiring a connection'.toLowerCase()
-					) > -1
-			) {
+			if (error.message.toLowerCase().indexOf('Knex: Timeout acquiring a connection'.toLowerCase()) > -1) {
 				if (retry < 3) {
 					await TimerData.wait(3000);
-					return await TimerData.insertAfkEvent(
-						knex,
-						query,
-						retry + 1
-					);
+					return await TimerData.insertAfkEvent(knex, query, retry + 1);
 				}
 			}
 			console.log('error on insert afk-events', error);
@@ -127,12 +96,12 @@ export const TimerData = {
 				params: value.params,
 				errorMessage: value.message,
 				created_at: moment(),
-				updated_at: moment(),
+				updated_at: moment()
 			},
 			['id']
 		);
 	},
 	wait(ms: number) {
 		return new Promise((resolve) => setTimeout(resolve, ms));
-	},
+	}
 };
