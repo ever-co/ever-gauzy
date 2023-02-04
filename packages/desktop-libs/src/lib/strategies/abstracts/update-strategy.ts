@@ -23,14 +23,13 @@ export abstract class UpdateStrategy implements IDesktopUpdate {
 			autoUpdater.setFeedURL({
 				channel: 'latest',
 				provider: 'generic',
-				url: this.url,
+				url: this.url
 			});
 			autoUpdater
 				.checkForUpdatesAndNotify()
 				.then((downloadPromise) => {
 					if (this._cancellationToken) {
-						this._cancellationToken =
-							downloadPromise.cancellationToken;
+						this._cancellationToken = downloadPromise.cancellationToken;
 					} else {
 						this._isUpdateTriggered = true;
 					}
@@ -47,7 +46,7 @@ export abstract class UpdateStrategy implements IDesktopUpdate {
 			autoUpdater.setFeedURL({
 				channel: 'latest',
 				provider: 'generic',
-				url: this.url,
+				url: this.url
 			});
 			await autoUpdater.checkForUpdates();
 		} catch (e) {
