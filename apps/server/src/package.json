@@ -38,7 +38,7 @@
 		]
 	},
 	"build": {
-		"appId": "com.company.gauzyserver",
+		"appId": "com.ever.gauzyserver",
 		"artifactName": "${name}-${version}.${ext}",
 		"productName": "Gauzy Server",
 		"copyright": "Copyright © 2019-Present. Ever Co. LTD",

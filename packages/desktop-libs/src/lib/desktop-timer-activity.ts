@@ -1,3 +1,4 @@
+import { Knex } from 'knex';
 import moment from 'moment';
 import { Timer, TimerService } from './offline';
 
@@ -11,18 +12,12 @@ export const TimerData = {
 		const timer = new Timer(query);
 		await timerService.update(timer);
 	},
-	insertWindowEvent: async (knex, query, retry = 0) => {
+	insertWindowEvent: async (knex: Knex, query, retry = 0) => {
 		try {
-			const sql = `${await knex('window-events').insert(query).toQuery()} 
-			ON CONFLICT (eventId) 
-			DO UPDATE SET
-			timerId=EXCLUDED.timerId,
-			duration=EXCLUDED.duration,
-			data=EXCLUDED.data,
-			updated_at=EXCLUDED.updated_at,
-			type=EXCLUDED.type
-			;`;
-			return await knex.raw(sql);
+			await knex('window-events')
+				.insert(query)
+				.onConflict('eventId')
+				.merge(['duration', 'data', 'updated_at', 'type']);
 		} catch (error) {
 			if (
 				error.message
@@ -40,7 +35,7 @@ export const TimerData = {
 					);
 				}
 			}
-			console.log('error on insert window-events');
+			console.log('error on insert window-events', error);
 			throw error;
 		}
 	},
@@ -85,19 +80,19 @@ export const TimerData = {
 				timerId: timerId,
 			});
 	},
-	insertAfkEvent: async (knex, query, retry = 0) => {
+	insertAfkEvent: async (knex: Knex, query, retry = 0) => {
 		try {
-			const sql = `${await knex('afk-events').insert(query).toQuery()} 
-			ON CONFLICT (eventId) 
-			DO UPDATE SET
-			duration=EXCLUDED.duration,
-			timerId=EXCLUDED.timerId,
-			data=EXCLUDED.data,
-			updated_at=EXCLUDED.updated_at,
-			timeSlotId=EXCLUDED.timeSlotId,
-			timeSheetId=EXCLUDED.timeSheetId
-			;`;
-			await knex.raw(sql);
+			await knex('afk-events')
+				.insert(query)
+				.onConflict('eventId')
+				.merge([
+					'duration',
+					'timerId',
+					'data',
+					'updated_at',
+					'timeSlotId',
+					'timeSheetId'
+				]);
 		} catch (error) {
 			if (
 				error.message
@@ -115,7 +110,7 @@ export const TimerData = {
 					);
 				}
 			}
-			console.log('error on insert afk-events');
+			console.log('error on insert afk-events', error);
 			throw error;
 		}
 	},

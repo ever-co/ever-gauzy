@@ -160,6 +160,11 @@ if (!gotTheLock) {
 	});
 }
 
+/* Setting the app user model id for the app. */
+if (process.platform === 'win32') {
+	app.setAppUserModelId('com.ever.gauzydesktoptimer');
+}
+
 async function startServer(value, restart = false) {
 	const dataModel = new DataModel();
 	await dataModel.createNewTable(knex);
