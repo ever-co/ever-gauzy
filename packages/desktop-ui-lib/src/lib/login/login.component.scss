@@ -92,6 +92,7 @@
 				line-height: 17px;
 				letter-spacing: -0.01em;
 				text-align: left;
+				cursor: pointer;
 
 				@include mobile-screen {
 					display: none;
@@ -107,13 +108,14 @@
 			}
 
 			& .forgot-password-small {
-				display: none;
+				display: block;
 			}
 
 			& .submit-inner-wrapper {
-				display: inline-flex;
-				flex-direction: column;
+				display: flex;
 				align-items: center;
+				flex-direction: row;
+				width: 100%;
 			}
 
 			& .submit-btn {
@@ -342,7 +344,7 @@
 				justify-content: flex-start;
 
 				& .submit-inner-wrapper {
-					justify-content: flex-start;
+					justify-content: space-between;
 				}
 
 				& .submit-btn {
@@ -438,4 +440,8 @@
 		color: var(--gauzy-text-color-2) !important;
 		font-weight: 600 !important;
 	}
+}
+
+.text-link {
+	cursor: pointer;
 }
