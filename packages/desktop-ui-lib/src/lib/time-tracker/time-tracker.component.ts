@@ -518,6 +518,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 
 		this.electronService.ipcRenderer.on('logout', (event, arg) =>
 			this._ngZone.run(async () => {
+				if (this.isExpand) this.expand();
 				if (this.start) await this.stopTimer();
 			})
 		);
