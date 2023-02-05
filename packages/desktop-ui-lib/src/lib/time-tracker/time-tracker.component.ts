@@ -201,6 +201,10 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 		new BehaviorSubject(false);
 	public hasContactPermission$: BehaviorSubject<boolean> =
 		new BehaviorSubject(false);
+	private _activityWatchLog$: BehaviorSubject<string> = new BehaviorSubject(null);
+	public get activityWatchLog$(): Observable<string> {
+		return this._activityWatchLog$.asObservable();
+	};
 
 	constructor(
 		private electronService: ElectronService,
@@ -1010,16 +1014,19 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 				this.iconAw$.next('checkmark-square-outline');
 				this.statusIcon$.next('success');
 				this.electronService.ipcRenderer.send('aw_status', true);
+				this._activityWatchLog$.next('Activity Watch\'s connected');
 			})
 			.catch((e) => {
 				if (e.status === 200) {
 					this.iconAw$.next('checkmark-square-outline');
 					this.statusIcon$.next('success');
 					this.electronService.ipcRenderer.send('aw_status', true);
+					this._activityWatchLog$.next('Activity Watch\'s connected');
 				} else {
 					this.iconAw$.next('close-square-outline');
 					this.statusIcon$.next('danger');
 					this.electronService.ipcRenderer.send('aw_status', false);
+					this._activityWatchLog$.next('Activity Watch\'s Discconnected');
 				}
 			});
 	}
