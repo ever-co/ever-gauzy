@@ -28,7 +28,9 @@ export class TimeTrackerService {
 	employeeId = '';
 	buckets: any = {};
 
-	constructor(private http: HttpClient) {}
+	constructor(
+		private readonly http: HttpClient
+	) { }
 
 	createAuthorizationHeader(headers: Headers) {
 		headers.append('Authorization', 'Basic ' + btoa('username:password'));
@@ -60,8 +62,8 @@ export class TimeTrackerService {
 				tenantId: values.tenantId,
 				...(values.projectId
 					? {
-							projectId: values.projectId,
-					  }
+						projectId: values.projectId,
+					}
 					: {}),
 			},
 		};
@@ -141,17 +143,10 @@ export class TimeTrackerService {
 		return firstValueFrom(
 			this.http.get(`${values.apiHost}/api/tags/level`, {
 				headers: headers,
-				params: values.organizationId
-					? this.toParams({
-							data: JSON.stringify({
-								relations: ['organization'],
-								findInput: {
-									organizationId: values.organizationId,
-									tenantId: values.tenantId,
-								},
-							}),
-					  })
-					: this.toParams({}),
+				params: values.organizationId ? this.toParams({
+					organizationId: values.organizationId,
+					tenantId: values.tenantId,
+				}) : this.toParams({}),
 			})
 		);
 	}
@@ -187,9 +182,9 @@ export class TimeTrackerService {
 						tenantId: values.tenantId,
 						...(values.organizationContactId
 							? {
-									organizationContactId:
-										values.organizationContactId,
-							  }
+								organizationContactId:
+									values.organizationContactId,
+							}
 							: {}),
 					}),
 				}
