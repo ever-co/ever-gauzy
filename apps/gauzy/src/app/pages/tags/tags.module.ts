@@ -20,6 +20,7 @@ import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { UserFormsModule } from '../../@shared/user/forms/user-forms.module';
 import { Ng2SmartTableModule } from 'ng2-smart-table';
 import { NgSelectModule } from '@ng-select/ng-select';
+import { NgxPermissionsModule } from 'ngx-permissions';
 import { TagsRoutingModule } from './tags-routing.module';
 import { TagsMutationModule } from '../../@shared/tags/tags-mutation.module';
 import { ColorPickerModule } from 'ngx-color-picker';
@@ -58,8 +59,9 @@ import { PaginationModule } from '../../@shared/pagination/pagination.module';
 		NbSpinnerModule,
 		HeaderTitleModule,
 		GauzyButtonActionModule,
-		PaginationModule
+		PaginationModule,
+		NgxPermissionsModule.forChild()
 	],
 	declarations: [TagsComponent, TagsColorComponent]
 })
-export class TagsModule {}
+export class TagsModule { }
