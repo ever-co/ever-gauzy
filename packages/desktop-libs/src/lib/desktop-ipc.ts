@@ -62,8 +62,8 @@ export function ipcMainHandler(
 			API_BASE_URL: arg.serverUrl
 				? arg.serverUrl
 				: arg.port
-				? `http://localhost:${arg.port}`
-				: `http://localhost:${config.API_DEFAULT_PORT}`,
+					? `http://localhost:${arg.port}`
+					: `http://localhost:${config.API_DEFAULT_PORT}`,
 			IS_INTEGRATED_DESKTOP: arg.isLocalServer,
 		};
 		startServer(arg);
@@ -733,6 +733,16 @@ export function ipcTimer(
 	ipcMain.on('update_timer_auth_config', (event, arg) => {
 		LocalStore.updateAuthSetting({ ...arg });
 	});
+
+	ipcMain.on('set_tp_aw', (event, arg) => {
+		const projectInfo = LocalStore.getStore('project');
+		store.set({
+			project: {
+				...projectInfo,
+				aw: arg
+			},
+		});
+	})
 }
 
 export function removeMainListener() {
