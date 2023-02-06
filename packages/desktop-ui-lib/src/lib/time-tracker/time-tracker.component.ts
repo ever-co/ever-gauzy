@@ -183,9 +183,6 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 	sound: any = null;
 	private _lastTotalWorkedToday = 0;
 	private _lastTotalWorkedWeek = 0;
-	private get _isOffline(): boolean {
-		return this._isOffline$.getValue();
-	}
 	private _isOffline$: BehaviorSubject<boolean> = new BehaviorSubject(false);
 	private _inQueue$: BehaviorSubject<number> = new BehaviorSubject(0);
 	private _isRefresh$: BehaviorSubject<boolean> = new BehaviorSubject(false);
@@ -205,6 +202,9 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 	public get activityWatchLog$(): Observable<string> {
 		return this._activityWatchLog$.asObservable();
 	};
+	private get _isOffline(): boolean {
+		return this._isOffline$.getValue();
+	}
 
 	constructor(
 		private electronService: ElectronService,
@@ -1027,7 +1027,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 					this.iconAw$.next('close-square-outline');
 					this.statusIcon$.next('danger');
 					this.electronService.ipcRenderer.send('aw_status', false);
-					this._activityWatchLog$.next('Activity Watch\'s Discconnected');
+					this._activityWatchLog$.next('Activity Watch\'s Disconnected');
 				}
 			});
 	}
@@ -1143,9 +1143,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 	}
 
 	getLastTimeSlotImage(arg) {
-		if (this._isOffline) {
-			return;
-		}
+		if (this._isOffline) return;
 		this.timeTrackerService
 			.getTimeSlot(arg)
 			.then((res: any) => {
