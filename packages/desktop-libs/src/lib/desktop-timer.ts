@@ -27,7 +27,7 @@ export default class TimerHandler {
 	configs: any;
 	notificationDesktop = new NotificationDesktop();
 	timeSlotStart = null;
-	isPaused = false;
+	isPaused = true;
 	listener = false;
 	nextScreenshot = 0;
 	queue: any = null;
@@ -313,7 +313,7 @@ export default class TimerHandler {
 	async getSetTimeSlot(setupWindow, knex) {
 		const id = this.lastTimer ? this.lastTimer.id : null;
 		await TimerData.getTimer(knex, id).then(async (timerD) => {
-			await TimerData.getAfk(knex, id).then((afk) => {});
+			await TimerData.getAfk(knex, id).then((afk) => { });
 		});
 	}
 
@@ -373,27 +373,27 @@ export default class TimerHandler {
 			.map((item) => {
 				return item.data
 					? {
-							title: item.data.app || item.data.title,
-							date: moment(item.timestamp)
-								.utc()
-								.format('YYYY-MM-DD'),
-							time: moment(item.timestamp)
-								.utc()
-								.format('HH:mm:ss'),
-							duration: Math.floor(item.duration),
-							type: item.data.url
-								? ActivityType.URL
-								: ActivityType.APP,
-							taskId: userInfo.taskId,
-							projectId: userInfo.projectId,
-							organizationContactId:
-								userInfo.organizationContactId,
-							organizationId: userInfo.organizationId,
-							employeeId: userInfo.employeeId,
-							source: TimeLogSourceEnum.DESKTOP,
-							recordedAt: moment(item.timestamp).utc().toDate(),
-							metaData: item.data,
-					  }
+						title: item.data.app || item.data.title,
+						date: moment(item.timestamp)
+							.utc()
+							.format('YYYY-MM-DD'),
+						time: moment(item.timestamp)
+							.utc()
+							.format('HH:mm:ss'),
+						duration: Math.floor(item.duration),
+						type: item.data.url
+							? ActivityType.URL
+							: ActivityType.APP,
+						taskId: userInfo.taskId,
+						projectId: userInfo.projectId,
+						organizationContactId:
+							userInfo.organizationContactId,
+						organizationId: userInfo.organizationId,
+						employeeId: userInfo.employeeId,
+						source: TimeLogSourceEnum.DESKTOP,
+						recordedAt: moment(item.timestamp).utc().toDate(),
+						metaData: item.data,
+					}
 					: null;
 			})
 			.filter((item) => !!item);
@@ -500,8 +500,8 @@ export default class TimerHandler {
 		// Check api connectivity before to take a screenshot
 		await this._offlineMode.connectivity();
 		switch (
-			appSetting.SCREENSHOTS_ENGINE_METHOD ||
-			config.SCREENSHOTS_ENGINE_METHOD
+		appSetting.SCREENSHOTS_ENGINE_METHOD ||
+		config.SCREENSHOTS_ENGINE_METHOD
 		) {
 			case 'ElectronDesktopCapturer':
 				timeTrackerWindow.webContents.send(
@@ -628,25 +628,36 @@ export default class TimerHandler {
 				...LocalStore.beforeRequestParams(),
 			});
 		})();
+		this.isPaused = true;
 	}
 
 	async createTimer(knex, timeLog) {
-		const project = LocalStore.getStore('project');
-		const info = LocalStore.beforeRequestParams();
 		try {
-			await TimerData.createTimer(knex, {
-				day: this.todayLocalTimezone,
-				duration: 0,
-				projectId: project.projectId,
-				employeeId: info.employeeId,
-				timesheetId: timeLog ? timeLog.timesheetId : null,
-				timelogId: timeLog ? timeLog.id : null,
-			});
+			const project = LocalStore.getStore('project');
+			const info = LocalStore.beforeRequestParams();
+			this.isPaused
+				? await TimerData.createTimer(knex, {
+					day: this.todayLocalTimezone,
+					duration: 0,
+					projectId: project.projectId,
+					employeeId: info.employeeId,
+					timesheetId: timeLog ? timeLog.timesheetId : null,
+					timelogId: timeLog ? timeLog.id : null
+				})
+				: await TimerData.updateDurationOfTimer(knex, {
+					projectId: project.projectId,
+					employeeId: info.employeeId,
+					timesheetId: timeLog ? timeLog.timesheetId : null,
+					timelogId: timeLog ? timeLog.id : null
+				});
 
 			const lastSavedTimer = await TimerData.getLastTimer(knex, info);
+
 			if (lastSavedTimer) {
 				this.lastTimer = lastSavedTimer;
 			}
+
+			this.isPaused = false;
 		} catch (error) {
 			console.log('Error create timer', error);
 		}
