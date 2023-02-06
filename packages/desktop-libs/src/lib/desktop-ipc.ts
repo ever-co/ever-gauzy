@@ -62,46 +62,58 @@ export function ipcMainHandler(
 			API_BASE_URL: arg.serverUrl
 				? arg.serverUrl
 				: arg.port
-				? `http://localhost:${arg.port}`
-				: `http://localhost:${config.API_DEFAULT_PORT}`,
+					? `http://localhost:${arg.port}`
+					: `http://localhost:${config.API_DEFAULT_PORT}`,
 			IS_INTEGRATED_DESKTOP: arg.isLocalServer,
 		};
 		startServer(arg);
 	});
 
 	ipcMain.on('remove_afk_local_Data', async (event, arg) => {
-		await TimerData.deleteAfk(knex, {
-			idAfk: arg.idAfk,
-		});
+		try {
+			await TimerData.deleteAfk(knex, {
+				idAfk: arg.idAfk,
+			});
+		} catch (error) {
+			console.log('ERROR', error);
+		}
 	});
 
 	ipcMain.on('return_time_sheet', async (event, arg) => {
-		await timerHandler.createQueue(
-			'sqlite-queue',
-			{
-				type: 'update-timer-time-slot',
-				data: {
-					id: arg.timerId,
-					timeSheetId: arg.timeSheetId,
-					timeLogId: arg.timeLogId,
+		try {
+			await timerHandler.createQueue(
+				'sqlite-queue',
+				{
+					type: 'update-timer-time-slot',
+					data: {
+						id: arg.timerId,
+						timeSheetId: arg.timeSheetId,
+						timeLogId: arg.timeLogId,
+					},
 				},
-			},
-			knex
-		);
+				knex
+			);
+		} catch (error) {
+			console.log('ERROR', error);
+		}
 	});
 
 	ipcMain.on('return_toggle_api', async (event, arg) => {
-		await timerHandler.createQueue(
-			'sqlite-queue',
-			{
-				type: 'update-timer-time-slot',
-				data: {
-					id: arg.timerId,
-					timeLogId: arg.result.id,
+		try {
+			await timerHandler.createQueue(
+				'sqlite-queue',
+				{
+					type: 'update-timer-time-slot',
+					data: {
+						id: arg.timerId,
+						timeLogId: arg.result.id,
+					},
 				},
-			},
-			knex
-		);
+				knex
+			);
+		} catch (error) {
+			console.log('ERROR', error);
+		}
 	});
 
 	ipcMain.on('failed_synced_timeslot', async (event, arg) => {
@@ -125,6 +137,23 @@ export function ipcMainHandler(
 	ipcMain.on('time_tracker_ready', async (event, arg) => {
 		const auth = LocalStore.getStore('auth');
 		if (auth && auth.userId) {
+			try {
+				const user = await userService.retrieve();
+				console.log('Current User', user);
+				if (!user || auth.userId !== user.remoteId) {
+					timeTrackerWindow.webContents.send('logout');
+				}
+			} catch (error) {
+				try {
+					const userService = new UserService();
+					const user = new User({ ...auth });
+					user.remoteId = auth.userId;
+					user.organizationId = auth.organizationId;
+					await userService.save(user.toObject());
+				} catch (error) {
+					timeTrackerWindow.webContents.send('logout');
+				}
+			}
 			const lastTime = await TimerData.getLastCaptureTimeSlot(
 				knex,
 				LocalStore.beforeRequestParams()
@@ -134,15 +163,6 @@ export function ipcMainHandler(
 				...LocalStore.beforeRequestParams(),
 				timeSlotId: lastTime ? lastTime.timeslotId : null,
 			});
-		}
-		try {
-			const user = await userService.retrieve();
-			console.log('Current User', user);
-			if (!user || (auth && auth.userId !== user.remoteId)) {
-				timeTrackerWindow.webContents.send('logout');
-			}
-		} catch (error) {
-			timeTrackerWindow.webContents.send('logout');
 		}
 
 		// check connectivity five seconds after start
@@ -339,40 +359,52 @@ export function ipcTimer(
 			};
 		});
 		if (collections.length > 0) {
-			await timerHandler.createQueue(
-				'sqlite-queue',
-				{
-					data: collections,
-					type: 'window-events',
-				},
-				knex
-			);
+			try {
+				await timerHandler.createQueue(
+					'sqlite-queue',
+					{
+						data: collections,
+						type: 'window-events',
+					},
+					knex
+				);
+			} catch (error) {
+				console.log('ERROR', error);
+			}
 		}
 	});
 
 	ipcMain.on('remove_aw_local_data', async (event, arg) => {
-		if (arg.idsAw && arg.idsAw.length > 0) {
-			await timerHandler.createQueue(
-				'sqlite-queue',
-				{
-					type: 'remove-window-events',
-					data: arg.idsAw,
-				},
-				knex
-			);
+		try {
+			if (arg.idsAw && arg.idsAw.length > 0) {
+				await timerHandler.createQueue(
+					'sqlite-queue',
+					{
+						type: 'remove-window-events',
+						data: arg.idsAw,
+					},
+					knex
+				);
+			}
+		} catch (error) {
+			console.log('ERROR', error);
 		}
 	});
 
 	ipcMain.on('remove_wakatime_local_data', async (event, arg) => {
-		if (arg.idsWakatime && arg.idsWakatime.length > 0) {
-			await timerHandler.createQueue(
-				'sqlite-queue',
-				{
-					type: 'remove-wakatime-events',
-					data: arg.idsWakatime,
-				},
-				knex
-			);
+		try {
+			if (arg.idsWakatime && arg.idsWakatime.length > 0) {
+				await timerHandler.createQueue(
+					'sqlite-queue',
+					{
+						type: 'remove-wakatime-events',
+						data: arg.idsWakatime,
+					},
+					knex
+				);
+			}
+		} catch (error) {
+			console.log('ERROR', error);
 		}
 	});
 
@@ -394,31 +426,43 @@ export function ipcTimer(
 	});
 
 	ipcMain.on('return_time_slot', async (event, arg) => {
-		console.log(
-			`Return To Timeslot Last Timeslot ID: ${arg.timeSlotId} and Timer ID: ${arg.timerId}`
-		);
-		timerHandler.createQueue(
-			'sqlite-queue',
-			{
-				data: {
-					id: arg.timerId,
-					timeSlotId: arg.timeSlotId,
+		try {
+			console.log(
+				`Return To Timeslot Last Timeslot ID: ${arg.timeSlotId} and Timer ID: ${arg.timerId}`
+			);
+			await timerHandler.createQueue(
+				'sqlite-queue',
+				{
+					data: {
+						id: arg.timerId,
+						timeSlotId: arg.timeSlotId,
+					},
+					type: 'update-timer-time-slot',
 				},
-				type: 'update-timer-time-slot',
-			},
-			knex
-		);
+				knex
+			);
+			timeTrackerWindow.webContents.send(
+				'refresh_time_log',
+				LocalStore.beforeRequestParams()
+			);
+			// after update time slot do upload screenshot
+			// check config
+			const appSetting = LocalStore.getStore('appSetting');
+			log.info(`App Setting: ${moment().format()}`, appSetting);
+			log.info(`Config: ${moment().format()}`, config);
+			if (!arg.quitApp) {
+				console.log('TimeLogs:', arg.timeLogs);
 
-		timeTrackerWindow.webContents.send(
-			'refresh_time_log',
-			LocalStore.beforeRequestParams()
-		);
-		// after update time slot do upload screenshot
-		// check config
-		const appSetting = LocalStore.getStore('appSetting');
-		log.info(`App Setting: ${moment().format()}`, appSetting);
-		log.info(`Config: ${moment().format()}`, config);
+				// create new timer entry after create timeslot
+				let timeLogs = arg.timeLogs;
+				timeLogs = _.sortBy(timeLogs, 'recordedAt').reverse();
 
+				const [timeLog] = timeLogs;
+				await timerHandler.createTimer(knex, timeLog);
+			}
+		} catch (error) {
+			console.log('ERROR', error);
+		}
 		/* TODO: was removed, why? moved to func takeScreenshotActivities on desktop-timer
 			this fix notify popup screenshot on time
 		switch (
@@ -445,17 +489,6 @@ export function ipcTimer(
 					break;
 			}
 		*/
-
-		if (!arg.quitApp) {
-			console.log('TimeLogs:', arg.timeLogs);
-
-			// create new timer entry after create timeslot
-			let timeLogs = arg.timeLogs;
-			timeLogs = _.sortBy(timeLogs, 'recordedAt').reverse();
-
-			const [timeLog] = timeLogs;
-			await timerHandler.createTimer(knex, timeLog);
-		}
 	});
 
 	ipcMain.on('show_screenshot_notif_window', (event, arg) => {
@@ -476,15 +509,19 @@ export function ipcTimer(
 		}
 	});
 
-	ipcMain.on('save_screen_shoot', (event, arg) => {
-		takeshot(
-			timeTrackerWindow,
-			arg,
-			notificationWindow,
-			false,
-			windowPath,
-			soundPath
-		);
+	ipcMain.on('save_screen_shoot', async (event, arg) => {
+		try {
+			await takeshot(
+				timeTrackerWindow,
+				arg,
+				notificationWindow,
+				false,
+				windowPath,
+				soundPath
+			);
+		} catch (error) {
+			console.log('ERROR_TAKE_SHOT', error);
+		}
 	});
 
 	ipcMain.on('show_image', (event, arg) => {
@@ -497,41 +534,53 @@ export function ipcTimer(
 	});
 
 	ipcMain.on('failed_save_time_slot', async (event, arg) => {
-		/* save failed request time slot */
-		await timerHandler.createQueue(
-			'sqlite-queue',
-			{
-				type: 'save-failed-request',
-				data: {
-					type: 'timeslot',
-					params: arg.params,
-					message: arg.message,
+		try {
+			/* save failed request time slot */
+			await timerHandler.createQueue(
+				'sqlite-queue',
+				{
+					type: 'save-failed-request',
+					data: {
+						type: 'timeslot',
+						params: arg.params,
+						message: arg.message,
+					},
 				},
-			},
-			knex
-		);
+				knex
+			);
+		} catch (error) {
+			console.error('ERROR_ON_CREATE_QUEUE', error);
+		}
 	});
 
 	ipcMain.on('save_temp_screenshot', async (event, arg) => {
-		takeshot(
-			timeTrackerWindow,
-			arg,
-			notificationWindow,
-			true,
-			windowPath,
-			soundPath
-		);
+		try {
+			await takeshot(
+				timeTrackerWindow,
+				arg,
+				notificationWindow,
+				true,
+				windowPath,
+				soundPath
+			);
+		} catch (error) {
+			console.log('ERROR_ON_TAKE_SHOT', error);
+		}
 	});
 
 	ipcMain.on('save_temp_img', async (event, arg) => {
-		await timerHandler.createQueue(
-			'sqlite-queue',
-			{
-				type: 'save-failed-request',
-				data: arg,
-			},
-			knex
-		);
+		try {
+			await timerHandler.createQueue(
+				'sqlite-queue',
+				{
+					type: 'save-failed-request',
+					data: arg,
+				},
+				knex
+			);
+		} catch (error) {
+			console.log('ERROR_ON_CREATE_QUEUE', error);
+		}
 	});
 
 	ipcMain.on('open_setting_window', (event, arg) => {
@@ -641,21 +690,29 @@ export function ipcTimer(
 	});
 
 	ipcMain.on('refresh-timer', async (event) => {
-		const lastTime = await TimerData.getLastCaptureTimeSlot(
-			knex,
-			LocalStore.beforeRequestParams()
-		);
-		console.log(
-			'Last Capture Time Start Tracking Time (Desktop Try):',
-			lastTime
-		);
-		await sequentialSyncQueue(timeTrackerWindow);
-		await syncIntervalQueue(timeTrackerWindow);
-		await latestScreenshots(timeTrackerWindow);
-		event.sender.send('timer_tracker_show', {
-			...LocalStore.beforeRequestParams(),
-			timeSlotId: lastTime ? lastTime.timeslotId : null,
-		});
+		try {
+			const lastTime = await TimerData.getLastCaptureTimeSlot(
+				knex,
+				LocalStore.beforeRequestParams()
+			);
+			console.log(
+				'Last Capture Time Start Tracking Time (Desktop Try):',
+				lastTime
+			);
+			await sequentialSyncQueue(timeTrackerWindow);
+			await syncIntervalQueue(timeTrackerWindow);
+			await latestScreenshots(timeTrackerWindow);
+			event.sender.send('timer_tracker_show', {
+				...LocalStore.beforeRequestParams(),
+				timeSlotId: lastTime ? lastTime.timeslotId : null,
+			});
+		} catch (error) {
+			event.sender.send('timer_tracker_show', {
+				...LocalStore.beforeRequestParams(),
+				timeSlotId: null,
+			});
+			console.log('ERROR_ON_REFRESH', error);
+		}
 	});
 
 	ipcMain.on('aw_status', (event, arg) => {
@@ -668,17 +725,15 @@ export function ipcTimer(
 		LocalStore.updateAuthSetting({ ...arg });
 	});
 
-	ipcMain.on('auth_success', async (event, arg) => {
-		try {
-			const user = new User({ ...arg, ...arg.user });
-			user.remoteId = arg.userId;
-			user.organizationId = arg.organizationId;
-			await userService.save(user.toObject());
-			await latestScreenshots(timeTrackerWindow);
-		} catch (error) {
-			console.log('Error on save user', error);
-		}
-	});
+	ipcMain.on('set_tp_aw', (event, arg) => {
+		const projectInfo = LocalStore.getStore('project');
+		store.set({
+			project: {
+				...projectInfo,
+				aw: arg
+			},
+		});
+	})
 }
 
 export function removeMainListener() {

@@ -567,7 +567,7 @@ img {
   flex-direction: column;
   padding: 8px 4px 0px;
   border-radius: var(--border-radius);
-  height: 550px;
+  height: calc(100vh - 11.4rem);
 
   .table-scroll-container {
     flex-grow: 10;

@@ -92,13 +92,14 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 	taskSelect = '';
 	errors: any = {};
 	note: String = '';
-	aw$: BehaviorSubject<boolean> = new BehaviorSubject(false);
-	loadingAw$: BehaviorSubject<boolean> = new BehaviorSubject(false);
+	private _aw$: BehaviorSubject<boolean> = new BehaviorSubject(false);
+	public get aw$(): Observable<boolean> {
+		return this._aw$.asObservable();
+	}
 	iconAw$: BehaviorSubject<string> = new BehaviorSubject(
 		'close-square-outline'
 	);
 	statusIcon$: BehaviorSubject<string> = new BehaviorSubject('success');
-	awCheck$: BehaviorSubject<boolean> = new BehaviorSubject(false);
 	defaultAwAPI = 'http:localhost:5600';
 	public todayDuration$: BehaviorSubject<any> = new BehaviorSubject({
 		hours: '00',
@@ -182,9 +183,6 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 	sound: any = null;
 	private _lastTotalWorkedToday = 0;
 	private _lastTotalWorkedWeek = 0;
-	private get _isOffline(): boolean {
-		return this._isOffline$.getValue();
-	}
 	private _isOffline$: BehaviorSubject<boolean> = new BehaviorSubject(false);
 	private _inQueue$: BehaviorSubject<number> = new BehaviorSubject(0);
 	private _isRefresh$: BehaviorSubject<boolean> = new BehaviorSubject(false);
@@ -200,6 +198,13 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 		new BehaviorSubject(false);
 	public hasContactPermission$: BehaviorSubject<boolean> =
 		new BehaviorSubject(false);
+	private _activityWatchLog$: BehaviorSubject<string> = new BehaviorSubject(null);
+	public get activityWatchLog$(): Observable<string> {
+		return this._activityWatchLog$.asObservable();
+	};
+	private get _isOffline(): boolean {
+		return this._isOffline$.getValue();
+	}
 
 	constructor(
 		private electronService: ElectronService,
@@ -229,6 +234,17 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 				})
 			)
 			.subscribe();
+		this.aw$
+			.pipe(
+				tap((isChecked: boolean) => {
+					this.pingAw(null);
+					this.electronService.ipcRenderer.send('set_tp_aw', {
+						host: this.defaultAwAPI,
+						isAw: isChecked
+					});
+				})
+			)
+			.subscribe();
 	}
 
 	public get start(): boolean {
@@ -236,7 +252,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 	}
 
 	public get aw(): boolean {
-		return this.aw$.getValue();
+		return this._aw$.getValue();
 	}
 
 	public get iconAw(): string {
@@ -312,7 +328,8 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 					this.organizationContactId = arg.organizationContactId;
 					this.token = arg.token;
 					this.note = arg.note;
-					this.aw$.next(arg.aw && arg.aw.isAw ? arg.aw.isAw : false);
+					this._aw$.next(arg.aw && arg.aw.isAw ? arg.aw.isAw : false);
+					this.pingAw(null);
 					this.appSetting$.next(arg.settings);
 					(async () => {
 						await this.getClient(arg);
@@ -337,7 +354,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 					this.taskSelect = arg.taskId;
 					this.projectSelect = arg.projectId;
 					this.note = arg.note;
-					this.aw$.next(arg.aw && arg.aw.isAw ? arg.aw.isAw : false);
+					this._aw$.next(arg.aw && arg.aw.isAw ? arg.aw.isAw : false);
 					this.getUserInfo(arg, true);
 				})
 		);
@@ -356,7 +373,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 					await this.setProject(arg.projectId);
 					this.setTask(arg.taskId);
 					this.note = arg.note;
-					this.aw$.next(arg.aw && arg.aw.isAw ? arg.aw.isAw : false);
+					this._aw$.next(arg.aw && arg.aw.isAw ? arg.aw.isAw : false);
 				})
 		);
 
@@ -419,10 +436,14 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 						fullUrl: this.sanitize.bypassSecurityTrustUrl(
 							arg.fullUrl
 						),
+						thumbUrl: this.sanitize.bypassSecurityTrustUrl(
+							arg.fullUrl
+						),
 						textTime: moment().fromNow(),
 						createdAt: Date.now(),
 						recordedAt: Date.now(),
 					});
+					this.screenshots$.next([...this.screenshots]);
 				})
 		);
 
@@ -497,6 +518,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 
 		this.electronService.ipcRenderer.on('logout', (event, arg) =>
 			this._ngZone.run(async () => {
+				if (this.isExpand) this.expand();
 				if (this.start) await this.stopTimer();
 			})
 		);
@@ -717,8 +739,8 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 							this._isOffline
 								? null
 								: await this.timeTrackerService.toggleApiStart(
-										paramsTimeStart
-								  )
+									paramsTimeStart
+								)
 						);
 					} catch (error) {
 						this.loading = false;
@@ -966,50 +988,29 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 	}
 
 	setAW(checked: boolean) {
-		if (checked) {
-			this.aw$.next(true);
-			this.electronService.ipcRenderer.send('set_tp_aw', {
-				host: this.defaultAwAPI,
-				isAw: true,
-			});
-		} else {
-			this.electronService.ipcRenderer.send('set_tp_aw', {
-				host: this.defaultAwAPI,
-				isAw: false,
-			});
-			this.aw$.next(false);
-		}
-
-		if (this.aw) this.pingAw(null);
-		else {
-			this.awCheck$.next(false);
-		}
+		this._aw$.next(checked);
 	}
 
 	pingAw(host) {
-		this.loadingAw$.next(true);
-		this.awCheck$.next(false);
 		this.timeTrackerService
 			.pingAw(`${host || this.defaultAwAPI}/api`)
 			.then((res) => {
 				this.iconAw$.next('checkmark-square-outline');
-				this.awCheck$.next(true);
 				this.statusIcon$.next('success');
 				this.electronService.ipcRenderer.send('aw_status', true);
+				this._activityWatchLog$.next('Activity Watch\'s connected');
 			})
 			.catch((e) => {
 				if (e.status === 200) {
 					this.iconAw$.next('checkmark-square-outline');
-					this.awCheck$.next(true);
 					this.statusIcon$.next('success');
 					this.electronService.ipcRenderer.send('aw_status', true);
-					this.loadingAw$.next(false);
+					this._activityWatchLog$.next('Activity Watch\'s connected');
 				} else {
-					this.loadingAw$.next(false);
 					this.iconAw$.next('close-square-outline');
-					this.awCheck$.next(true);
 					this.statusIcon$.next('danger');
 					this.electronService.ipcRenderer.send('aw_status', false);
+					this._activityWatchLog$.next('Activity Watch\'s Disconnected');
 				}
 			});
 	}
@@ -1125,9 +1126,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 	}
 
 	getLastTimeSlotImage(arg) {
-		if (this._isOffline) {
-			return;
-		}
+		if (this._isOffline) return;
 		this.timeTrackerService
 			.getTimeSlot(arg)
 			.then((res: any) => {
@@ -1175,7 +1174,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 					recordedAt: Date.now(),
 				})
 			);
-		} catch (error) {}
+		} catch (error) { }
 	}
 
 	updateImageUrl(e) {
@@ -1545,7 +1544,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 						);
 					})
 				);
-			} catch (error) {}
+			} catch (error) { }
 			const remoteId = resActivities.id;
 			this.electronService.ipcRenderer.send('create-synced-interval', {
 				...paramActivity,
@@ -1644,9 +1643,8 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 	}
 
 	fileNameFormat(imgs) {
-		let fileName = `screenshot-${moment().format('YYYYMMDDHHmmss')}-${
-			imgs.name
-		}.png`;
+		let fileName = `screenshot-${moment().format('YYYYMMDDHHmmss')}-${imgs.name
+			}.png`;
 		return this.convertToSlug(fileName);
 	}
 
