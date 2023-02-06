@@ -1313,7 +1313,8 @@
 			"TOTAL_HOURS": "Total Hours",
 			"RATE": "Почасово",
 			"VETTED": "Vetted",
-			"HR": "hr"
+			"HR": "hr",
+			"SETTINGS": "Настройки"
 		},
 		"ADD_EMPLOYEES": {
 			"STEP_1": "Step 1",
