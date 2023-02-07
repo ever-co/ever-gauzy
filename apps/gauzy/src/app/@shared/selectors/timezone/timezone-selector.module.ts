@@ -3,11 +3,11 @@ import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { TranslateModule } from '../../translate/translate.module';
-import { TimeZoneContactSelectorComponent } from './timezone-selector.component';
+import { TimeZoneSelectorComponent } from './timezone-selector.component';
 
 @NgModule({
-	declarations: [TimeZoneContactSelectorComponent],
-	exports: [TimeZoneContactSelectorComponent],
+	declarations: [TimeZoneSelectorComponent],
+	exports: [TimeZoneSelectorComponent],
 	imports: [
 		CommonModule,
 		FormsModule,

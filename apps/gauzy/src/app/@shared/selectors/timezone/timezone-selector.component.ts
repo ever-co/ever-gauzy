@@ -11,12 +11,12 @@ import * as timezone from 'moment-timezone';
 	providers: [
 		{
 			provide: NG_VALUE_ACCESSOR,
-			useExisting: forwardRef(() => TimeZoneContactSelectorComponent),
+			useExisting: forwardRef(() => TimeZoneSelectorComponent),
 			multi: true
 		}
 	]
 })
-export class TimeZoneContactSelectorComponent implements OnInit, OnDestroy {
+export class TimeZoneSelectorComponent implements OnInit, OnDestroy {
 
 	listOfZones = timezone.tz.names().filter((zone) => zone.includes('/'));
 	onChange: any = () => {};
