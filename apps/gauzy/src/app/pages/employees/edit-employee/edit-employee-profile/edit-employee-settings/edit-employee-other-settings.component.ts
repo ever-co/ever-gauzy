@@ -4,7 +4,6 @@ import { filter, tap } from 'rxjs/operators';
 import { NbAccordionComponent, NbAccordionItemComponent } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import * as moment from 'moment';
-import * as timezone from 'moment-timezone';
 import { IEmployee } from '@gauzy/contracts';
 import { EmployeeStore } from './../../../../../@core/services';
 
@@ -17,8 +16,6 @@ import { EmployeeStore } from './../../../../../@core/services';
 export class EditEmployeeOtherSettingsComponent implements OnInit, OnDestroy {
 
 	selectedEmployee: IEmployee;
-	listOfZones = timezone.tz.names().filter((zone) => zone.includes('/'));
-
 	/**
 	 * Nebular Accordion Main Component
 	 */
@@ -51,6 +48,9 @@ export class EditEmployeeOtherSettingsComponent implements OnInit, OnDestroy {
 		private readonly employeeStore: EmployeeStore
 	) { }
 
+	/**
+	 *
+	 */
 	ngOnInit(): void {
 		this.employeeStore.selectedEmployee$
 			.pipe(
@@ -64,16 +64,11 @@ export class EditEmployeeOtherSettingsComponent implements OnInit, OnDestroy {
 			.subscribe();
 	}
 
-	getTimeWithOffset(zone: string) {
-		let cutZone = zone;
-		if (zone.includes('/')) {
-			cutZone = zone.split('/')[1];
-		}
-
-		const offset = timezone.tz(zone).format('zZ');
-		return '(' + offset + ') ' + cutZone;
-	}
-
+	/**
+	 *
+	 * @param employee
+	 * @returns
+	 */
 	private _patchFormValue(employee: IEmployee) {
 		if (!employee) {
 			return;
@@ -85,6 +80,11 @@ export class EditEmployeeOtherSettingsComponent implements OnInit, OnDestroy {
 		this.form.updateValueAndValidity();
 	}
 
+	/**
+	 *
+	 * @param form
+	 * @returns
+	 */
 	onSubmit(form: NgForm) {
 		if (form.invalid) {
 			return;
@@ -92,6 +92,9 @@ export class EditEmployeeOtherSettingsComponent implements OnInit, OnDestroy {
 		this.employeeStore.userForm = this.form.getRawValue();
 	}
 
+	/**
+	 *
+	 */
 	ngOnDestroy(): void {
 	}
 }

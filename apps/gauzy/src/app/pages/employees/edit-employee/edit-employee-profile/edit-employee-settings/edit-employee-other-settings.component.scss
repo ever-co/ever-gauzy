@@ -203,19 +203,6 @@ nb-accordion {
 }
 //end of nb-overrides
 
-//start of ::ng-deep selectors for selecting nested nebular stuff.
-:host ::ng-deep .ng-placeholder, ::ng-deep .ng-value {
-    z-index: 2;
-}
-:host ::ng-deep nb-select {
-    & ::ng-deep button {
-        margin-right: 10px;
-        background-color: nb-theme(background-basic-color-1) !important;
-        border-radius: nb-theme(border-radius) !important;
-    }
-}
-//end of ::ng-deep
-
 //media queries
 @include respond(lg) {
     .row {
