@@ -42,7 +42,6 @@ import {
 
 @Entity('user')
 export class User extends TenantBaseEntity implements IUser {
-
 	@ApiPropertyOptional({ type: () => String })
 	@Index()
 	@Column({ nullable: true })

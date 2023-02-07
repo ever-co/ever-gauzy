@@ -36,18 +36,13 @@ import {
 import { BehaviorSubject, combineLatest, firstValueFrom, of, Subject, Subscription, switchMap, timer } from 'rxjs';
 import { debounceTime, filter, tap } from 'rxjs/operators';
 import { indexBy, range, reduce } from 'underscore';
-import {
-	distinctUntilChange,
-	isNotEmpty,
-	progressStatus,
-	toUTC
-} from '@gauzy/common-angular';
+import { distinctUntilChange, isNotEmpty, progressStatus, toUTC } from '@gauzy/common-angular';
 import * as moment from 'moment';
 import { NgxPermissionsService } from 'ngx-permissions';
 import { TranslateService } from '@ngx-translate/core';
-import { SwiperComponent } from "swiper/angular";
+import { SwiperComponent } from 'swiper/angular';
 // import Swiper core and required modules
-import SwiperCore, { Virtual, Pagination, Navigation } from "swiper";
+import SwiperCore, { Virtual, Pagination, Navigation } from 'swiper';
 import { TimesheetStatisticsService } from '../../../@shared/timesheet/timesheet-statistics.service';
 import {
 	DateRangePickerBuilderService,
@@ -80,9 +75,7 @@ export enum RangePeriod {
 	templateUrl: './time-tracking.component.html',
 	styleUrls: ['./time-tracking.component.scss']
 })
-export class TimeTrackingComponent extends TranslationBaseComponent
-	implements AfterViewInit, OnInit, OnDestroy {
-
+export class TimeTrackingComponent extends TranslationBaseComponent implements AfterViewInit, OnInit, OnDestroy {
 	user: IUser;
 	timeSlotEmployees: ITimeSlotStatistics[] = [];
 	activities: IActivitiesStatistics[] = [];
@@ -258,11 +251,7 @@ export class TimeTrackingComponent extends TranslationBaseComponent
 		if (!this.organization) {
 			return;
 		}
-		const {
-			employeeIds,
-			projectIds,
-			selectedDateRange
-		} = this;
+		const { employeeIds, projectIds, selectedDateRange } = this;
 		const { id: organizationId } = this.organization;
 		const { tenantId } = this.store.user;
 		const { startDate, endDate } = getAdjustDateRangeFutureAllowed(selectedDateRange);
@@ -274,8 +263,12 @@ export class TimeTrackingComponent extends TranslationBaseComponent
 			endDate: toUTC(endDate).format('YYYY-MM-DD HH:mm:ss')
 		};
 
-		if (isNotEmpty(employeeIds)) { request['employeeIds'] = employeeIds; }
-		if (isNotEmpty(projectIds)) { request['projectIds'] = projectIds; }
+		if (isNotEmpty(employeeIds)) {
+			request['employeeIds'] = employeeIds;
+		}
+		if (isNotEmpty(projectIds)) {
+			request['projectIds'] = projectIds;
+		}
 
 		this.payloads$.next(request);
 	}
@@ -324,12 +317,7 @@ export class TimeTrackingComponent extends TranslationBaseComponent
 		try {
 			this.activitiesLoading = true;
 			const activities = await this.timesheetStatisticsService.getActivities(request);
-			const sum = reduce(
-				activities,
-				(memo, activity) =>
-					memo + parseInt(activity.duration + '', 10),
-				0
-			);
+			const sum = reduce(activities, (memo, activity) => memo + parseInt(activity.duration + '', 10), 0);
 			this.activities = activities.map((activity) => {
 				activity.durationPercentage = (activity.duration * 100) / sum;
 				return activity;
@@ -382,9 +370,7 @@ export class TimeTrackingComponent extends TranslationBaseComponent
 	}
 
 	async getMembers() {
-		if (!await this.ngxPermissionsService.hasPermission(
-			PermissionsEnum.CHANGE_SELECTED_EMPLOYEE)
-		) {
+		if (!(await this.ngxPermissionsService.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE))) {
 			return;
 		}
 		const request: IGetMembersStatistics = this.payloads$.getValue();
@@ -394,11 +380,7 @@ export class TimeTrackingComponent extends TranslationBaseComponent
 
 			this.members = members.map((member) => {
 				const week: any = indexBy(member.weekHours, 'day');
-				const sum = reduce(
-					member.weekHours,
-					(memo, day: any) => memo + parseInt(day.duration + '', 10),
-					0
-				);
+				const sum = reduce(member.weekHours, (memo, day: any) => memo + parseInt(day.duration + '', 10), 0);
 				member.weekHours = range(0, 7).map((day) => {
 					if (week[day]) {
 						week[day].duration = (week[day].duration * 100) / sum;
@@ -494,14 +476,8 @@ export class TimeTrackingComponent extends TranslationBaseComponent
 		}
 		const { startDate, endDate } = this.selectedDateRange as IDateRangePicker;
 		return (
-			(
-				moment(startDate).format('YYYY-MM-DD') ===
-				moment().startOf('week').format('YYYY-MM-DD')
-			) &&
-			(
-				moment(endDate).format('YYYY-MM-DD') ===
-				moment().endOf('week').format('YYYY-MM-DD')
-			)
+			moment(startDate).format('YYYY-MM-DD') === moment().startOf('week').format('YYYY-MM-DD') &&
+			moment(endDate).format('YYYY-MM-DD') === moment().endOf('week').format('YYYY-MM-DD')
 		);
 	}
 
@@ -543,19 +519,18 @@ export class TimeTrackingComponent extends TranslationBaseComponent
 			return;
 		}
 		try {
-			const people = await firstValueFrom(this.employeesService.getEmployeeById(
-				employee.id,
-				['user']
-			));
-			this.store.selectedEmployee = (employee.id) ? {
-				id: people.id,
-				firstName: people.user.firstName,
-				lastName: people.user.lastName,
-				imageUrl: people.user.imageUrl,
-				employeeLevel: people.employeeLevel,
-				fullName: people.user.name,
-				shortDescription: people.short_description
-			} as ISelectedEmployee : ALL_EMPLOYEES_SELECTED;
+			const people = await firstValueFrom(this.employeesService.getEmployeeById(employee.id, ['user']));
+			this.store.selectedEmployee = employee.id
+				? ({
+						id: people.id,
+						firstName: people.user.firstName,
+						lastName: people.user.lastName,
+						imageUrl: people.user.imageUrl,
+						employeeLevel: people.employeeLevel,
+						fullName: people.user.name,
+						shortDescription: people.short_description
+				  } as ISelectedEmployee)
+				: ALL_EMPLOYEES_SELECTED;
 			if (this.store.selectedEmployee) {
 				this._router.navigate([`/pages/employees/activity/screenshots`]);
 			}
@@ -583,8 +558,8 @@ export class TimeTrackingComponent extends TranslationBaseComponent
 			const { startDate, endDate } = this.selectedDateRange as IDateRangePicker;
 			this._router.navigate(['/pages/reports/manual-time-edits'], {
 				queryParams: {
-					date: moment(startDate).format("MM-DD-YYYY"),
-					date_end: moment(endDate).format("MM-DD-YYYY")
+					date: moment(startDate).format('MM-DD-YYYY'),
+					date_end: moment(endDate).format('MM-DD-YYYY')
 				}
 			});
 		} catch (error) {
@@ -600,8 +575,8 @@ export class TimeTrackingComponent extends TranslationBaseComponent
 			const { startDate, endDate } = this.selectedDateRange as IDateRangePicker;
 			this._router.navigate(['/pages/reports/apps-urls'], {
 				queryParams: {
-					date: moment(startDate).format("MM-DD-YYYY"),
-					date_end: moment(endDate).format("MM-DD-YYYY")
+					date: moment(startDate).format('MM-DD-YYYY'),
+					date_end: moment(endDate).format('MM-DD-YYYY')
 				}
 			});
 		} catch (error) {
@@ -623,9 +598,10 @@ export class TimeTrackingComponent extends TranslationBaseComponent
 		const { tenantId } = this.store.user;
 		const { id: organizationId } = this.organization;
 
-		this.employeesService.getCount({ organizationId, tenantId })
+		this.employeesService
+			.getCount({ organizationId, tenantId })
 			.pipe(
-				tap((count: number) => this.employeesCount = count),
+				tap((count: number) => (this.employeesCount = count)),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -702,9 +678,7 @@ export class TimeTrackingComponent extends TranslationBaseComponent
 				widgetsTitles[5] = 'TIMESHEET.ACTIVITY_FOR_DAY';
 				break;
 			default:
-				widgetsTitles[4] = this.isCurrentWeek()
-					? 'TIMESHEET.WORKED_THIS_WEEK'
-					: 'TIMESHEET.WORKED_FOR_WEEK';
+				widgetsTitles[4] = this.isCurrentWeek() ? 'TIMESHEET.WORKED_THIS_WEEK' : 'TIMESHEET.WORKED_FOR_WEEK';
 				widgetsTitles[5] = 'TIMESHEET.ACTIVITY_FOR_WEEK';
 				break;
 		}
@@ -724,9 +698,7 @@ export class TimeTrackingComponent extends TranslationBaseComponent
 	}
 
 	public undo(isWindow?: boolean) {
-		isWindow
-			? this.windowService.undoDrag()
-			: this.widgetService.undoDrag();
+		isWindow ? this.windowService.undoDrag() : this.widgetService.undoDrag();
 	}
 
 	public slideNext(swiper: SwiperComponent) {

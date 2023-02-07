@@ -14,7 +14,6 @@ import { EmployeeStore } from './../../../../../@core/services';
 	styleUrls: ['./edit-employee-other-settings.component.scss']
 })
 export class EditEmployeeOtherSettingsComponent implements OnInit, OnDestroy {
-
 	selectedEmployee: IEmployee;
 	/**
 	 * Nebular Accordion Main Component
@@ -46,7 +45,7 @@ export class EditEmployeeOtherSettingsComponent implements OnInit, OnDestroy {
 		private readonly cdr: ChangeDetectorRef,
 		private readonly fb: FormBuilder,
 		private readonly employeeStore: EmployeeStore
-	) { }
+	) {}
 
 	/**
 	 *
@@ -95,6 +94,5 @@ export class EditEmployeeOtherSettingsComponent implements OnInit, OnDestroy {
 	/**
 	 *
 	 */
-	ngOnDestroy(): void {
-	}
+	ngOnDestroy(): void {}
 }

@@ -8,12 +8,6 @@ import { TimeZoneSelectorComponent } from './timezone-selector.component';
 @NgModule({
 	declarations: [TimeZoneSelectorComponent],
 	exports: [TimeZoneSelectorComponent],
-	imports: [
-		CommonModule,
-		FormsModule,
-		ReactiveFormsModule,
-		TranslateModule,
-		NgSelectModule
-	]
+	imports: [CommonModule, FormsModule, ReactiveFormsModule, TranslateModule, NgSelectModule]
 })
 export class TimeZoneSelectorModule {}
