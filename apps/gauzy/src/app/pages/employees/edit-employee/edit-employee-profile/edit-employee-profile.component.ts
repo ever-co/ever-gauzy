@@ -29,8 +29,7 @@ import {
 	],
 	providers: [EmployeeStore]
 })
-export class EditEmployeeProfileComponent
-	extends TranslationBaseComponent
+export class EditEmployeeProfileComponent extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
 
 	routeParams: Params;
@@ -88,6 +87,9 @@ export class EditEmployeeProfileComponent
 				untilDestroyed(this)
 			)
 			.subscribe();
+	}
+
+	ngAfterViewInit() {
 		this._applyTranslationOnTabs();
 	}
 
@@ -98,49 +100,37 @@ export class EditEmployeeProfileComponent
 	loadTabs() {
 		this.tabs = [
 			{
-				title: this.getTranslation(
-					'EMPLOYEES_PAGE.EDIT_EMPLOYEE.ACCOUNT'
-				),
+				title: this.getTranslation('EMPLOYEES_PAGE.EDIT_EMPLOYEE.ACCOUNT'),
 				icon: 'person-outline',
 				responsive: true,
 				route: this.getRoute('account')
 			},
 			{
-				title: this.getTranslation(
-					'EMPLOYEES_PAGE.EDIT_EMPLOYEE.NETWORKS'
-				),
+				title: this.getTranslation('EMPLOYEES_PAGE.EDIT_EMPLOYEE.NETWORKS'),
 				icon: 'at-outline',
 				responsive: true,
 				route: this.getRoute('networks')
 			},
 			{
-				title: this.getTranslation(
-					'EMPLOYEES_PAGE.EDIT_EMPLOYEE.EMPLOYMENT'
-				),
+				title: this.getTranslation('EMPLOYEES_PAGE.EDIT_EMPLOYEE.EMPLOYMENT'),
 				icon: 'browser-outline',
 				responsive: true,
 				route: this.getRoute('employment')
 			},
 			{
-				title: this.getTranslation(
-					'EMPLOYEES_PAGE.EDIT_EMPLOYEE.HIRING'
-				),
+				title: this.getTranslation('EMPLOYEES_PAGE.EDIT_EMPLOYEE.HIRING'),
 				icon: 'map-outline',
 				responsive: true,
 				route: this.getRoute('hiring')
 			},
 			{
-				title: this.getTranslation(
-					'EMPLOYEES_PAGE.EDIT_EMPLOYEE.LOCATION'
-				),
+				title: this.getTranslation('EMPLOYEES_PAGE.EDIT_EMPLOYEE.LOCATION'),
 				icon: 'pin-outline',
 				responsive: true,
 				route: this.getRoute('location')
 			},
 			{
-				title: this.getTranslation(
-					'EMPLOYEES_PAGE.EDIT_EMPLOYEE.RATES'
-				),
+				title: this.getTranslation('EMPLOYEES_PAGE.EDIT_EMPLOYEE.RATES'),
 				icon: 'pricetags-outline',
 				responsive: true,
 				route: this.getRoute('rates')
@@ -152,12 +142,16 @@ export class EditEmployeeProfileComponent
 				route: this.getRoute('projects')
 			}] : []),
 			{
-				title: this.getTranslation(
-					'EMPLOYEES_PAGE.EDIT_EMPLOYEE.CONTACTS'
-				),
+				title: this.getTranslation('EMPLOYEES_PAGE.EDIT_EMPLOYEE.CONTACTS'),
 				icon: 'book-open-outline',
 				responsive: true,
 				route: this.getRoute('contacts')
+			},
+			{
+				title: this.getTranslation('EMPLOYEES_PAGE.EDIT_EMPLOYEE.SETTINGS'),
+				icon: 'settings-outline',
+				responsive: true,
+				route: this.getRoute('settings')
 			}
 		];
 	}

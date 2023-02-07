@@ -112,7 +112,7 @@
 		"mjml": "^4.7.0",
 		"moment": "^2.29.4",
 		"moment-range": "^4.0.2",
-		"moment-timezone": "^0.5.37",
+		"moment-timezone": "^0.5.40",
 		"mqtt": "^4.3.7",
 		"multer-s3": "^2.9.0",
 		"mysql": "^2.18.1",

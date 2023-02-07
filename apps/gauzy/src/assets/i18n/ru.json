@@ -1313,7 +1313,9 @@
 			"TOTAL_HOURS": "Всего часов",
 			"RATE": "Ставка",
 			"VETTED": "Ограблен",
-			"HR": "час"
+			"HR": "час",
+			"SETTINGS": "Настройки",
+			"GENERAL_SETTINGS": "общие настройки"
 		},
 		"ADD_EMPLOYEES": {
 			"STEP_1": "Шаг 1",

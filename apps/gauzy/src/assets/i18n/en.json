@@ -1312,7 +1312,9 @@
 			"TOTAL_HOURS": "Total Hours",
 			"RATE": "Rate",
 			"VETTED": "Vetted",
-			"HR": "hr"
+			"HR": "hr",
+			"SETTINGS": "Settings",
+			"GENERAL_SETTINGS": "General Settings"
 		},
 		"ADD_EMPLOYEES": {
 			"STEP_1": "Step 1",

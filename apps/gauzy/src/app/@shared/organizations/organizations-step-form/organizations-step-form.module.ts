@@ -25,6 +25,7 @@ import { CountryModule } from '../../country/country.module';
 import { LocationFormModule } from '../../forms/location';
 import { LeafletMapModule } from '../../forms/maps/leaflet/leaflet.module';
 import { TranslateModule } from '../../translate/translate.module';
+import { TimeZoneSelectorModule } from '../../selectors';
 
 @NgModule({
 	imports: [
@@ -50,7 +51,8 @@ import { TranslateModule } from '../../translate/translate.module';
 		CurrencyModule,
 		CountryModule,
 		LocationFormModule,
-		LeafletMapModule
+		LeafletMapModule,
+		TimeZoneSelectorModule
 	],
 	declarations: [OrganizationsStepFormComponent],
 	providers: [OrganizationDepartmentsService],
