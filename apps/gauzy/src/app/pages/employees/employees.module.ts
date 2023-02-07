@@ -1,6 +1,7 @@
 import { NgModule } from '@angular/core';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import {
+	NbAccordionModule,
 	NbActionsModule,
 	NbBadgeModule,
 	NbButtonModule,
@@ -35,7 +36,8 @@ import {
 	EditEmployeeMainComponent,
 	EditEmployeeProjectsComponent,
 	EditEmployeeRatesComponent,
-	EditEmployeeProfileComponent
+	EditEmployeeProfileComponent,
+	EditEmployeeOtherSettingsComponent
 } from './edit-employee/edit-employee-profile';
 import { EditEmployeeComponent } from './edit-employee/edit-employee.component';
 import { EmployeesRoutingModule } from './employees-routing.module';
@@ -90,7 +92,8 @@ const COMPONENTS = [
 	EditEmployeeHiringComponent,
 	EditEmployeeLocationComponent,
 	EditEmployeeEmploymentComponent,
-	EditEmployeeNetworksComponent
+	EditEmployeeNetworksComponent,
+	EditEmployeeOtherSettingsComponent
 ];
 
 @NgModule({
@@ -102,6 +105,7 @@ const COMPONENTS = [
 		NbCardModule,
 		FormsModule,
 		ReactiveFormsModule,
+		NbAccordionModule,
 		NbButtonModule,
 		NbInputModule,
 		NbIconModule,
@@ -136,8 +140,8 @@ const COMPONENTS = [
 		GauzyButtonActionModule,
 		NbTabsetModule,
 		NbToggleModule,
-    	PaginationModule,
-   	 	CardGridModule
+		PaginationModule,
+		CardGridModule,
 	],
 	declarations: [...COMPONENTS],
 	providers: [
@@ -148,4 +152,4 @@ const COMPONENTS = [
 		SkillsService
 	]
 })
-export class EmployeesModule {}
+export class EmployeesModule { }
