@@ -1314,7 +1314,8 @@
 			"RATE": "Почасово",
 			"VETTED": "Vetted",
 			"HR": "hr",
-			"SETTINGS": "Настройки"
+			"SETTINGS": "Настройки",
+			"GENERAL_SETTINGS": "Основни настройки"
 		},
 		"ADD_EMPLOYEES": {
 			"STEP_1": "Step 1",

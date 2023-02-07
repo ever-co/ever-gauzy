@@ -1314,7 +1314,8 @@
 			"RATE": "ציון",
 			"VETTED": "Vetted",
 			"HR": "hr",
-			"SETTINGS": "הגדרות"
+			"SETTINGS": "הגדרות",
+			"GENERAL_SETTINGS": "הגדרות כלליות"
 		},
 		"ADD_EMPLOYEES": {
 			"STEP_1": "Step 1",

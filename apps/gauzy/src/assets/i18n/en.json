@@ -1313,7 +1313,8 @@
 			"RATE": "Rate",
 			"VETTED": "Vetted",
 			"HR": "hr",
-			"SETTINGS": "Settings"
+			"SETTINGS": "Settings",
+			"GENERAL_SETTINGS": "General Settings"
 		},
 		"ADD_EMPLOYEES": {
 			"STEP_1": "Step 1",

@@ -1314,7 +1314,8 @@
 			"RATE": "Ставка",
 			"VETTED": "Ограблен",
 			"HR": "час",
-			"SETTINGS": "Настройки"
+			"SETTINGS": "Настройки",
+			"GENERAL_SETTINGS": "общие настройки"
 		},
 		"ADD_EMPLOYEES": {
 			"STEP_1": "Шаг 1",
