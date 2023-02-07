@@ -13,6 +13,7 @@ import {
 	EditEmployeeLocationComponent,
 	EditEmployeeMainComponent,
 	EditEmployeeNetworksComponent,
+	EditEmployeeOtherSettingsComponent,
 	EditEmployeeProjectsComponent,
 	EditEmployeeRatesComponent
 } from './edit-employee/edit-employee-profile';
@@ -156,6 +157,17 @@ const routes: Routes = [
 						date: false
 					}
 				}
+			},
+			{
+				path: 'settings',
+				component: EditEmployeeOtherSettingsComponent,
+				data: {
+					selectors: {
+						project: false,
+						organization: false,
+						date: false
+					}
+				}
 			}
 		]
 	},
@@ -194,4 +206,4 @@ const routes: Routes = [
 	imports: [RouterModule.forChild(routes)],
 	exports: [RouterModule]
 })
-export class EmployeesRoutingModule {}
+export class EmployeesRoutingModule { }

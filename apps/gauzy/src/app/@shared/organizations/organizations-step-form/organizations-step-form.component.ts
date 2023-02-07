@@ -34,7 +34,6 @@ import { LatLng } from 'leaflet';
 import { filter, tap } from 'rxjs/operators';
 import { retrieveNameFromEmail } from '@gauzy/common-angular';
 import * as moment from 'moment';
-import * as timezone from 'moment-timezone';
 import { LocationFormComponent } from '../../forms/location';
 import { LeafletMapComponent } from '../../forms/maps';
 import { environment as ENV } from './../../../../environments/environment';
@@ -67,7 +66,6 @@ export class OrganizationsStepFormComponent
 	countries: ICountry[] = [];
 	defaultValueDateTypes: string[] = Object.values(DefaultValueDateTypeEnum);
 	defaultBonusTypes: string[] = Object.values(BonusTypeEnum);
-	listOfZones = timezone.tz.names().filter((zone) => zone.includes('/'));
 	weekdays: string[] = Object.values(WeekDaysEnum);
 	regionCodes = Object.keys(RegionsEnum);
 	regionCode: string;
@@ -75,7 +73,7 @@ export class OrganizationsStepFormComponent
 	listOfDateFormats = DEFAULT_DATE_FORMATS;
 
 	user: IUser;
-	retriveEmail: string;
+	retrieveEmail: string;
 	dummyImage = DUMMY_PROFILE_IMAGE;
 
 	@Output() createOrganization = new EventEmitter();
@@ -188,14 +186,14 @@ export class OrganizationsStepFormComponent
 		private readonly store: Store,
 		private readonly _activatedRoute: ActivatedRoute,
 		private readonly location: Location
-	) {}
+	) { }
 
 	ngOnInit() {
 		this.store.user$
 			.pipe(
 				filter((user) => !!user),
 				tap((user: IUser) => (this.user = user)),
-				tap(({ email }) => (this.retriveEmail = email)),
+				tap(({ email }) => (this.retrieveEmail = email)),
 				tap(() => this._setFormValues()),
 				filter(() => !!this.location.getState()),
 				tap(() =>
@@ -206,7 +204,7 @@ export class OrganizationsStepFormComponent
 		this._activatedRoute.queryParams
 			.pipe(
 				filter(({ email }) => !!email),
-				tap(({ email }) => (this.retriveEmail = email)),
+				tap(({ email }) => (this.retrieveEmail = email)),
 				tap(() => this._setFormValues()),
 				untilDestroyed(this)
 			)
@@ -273,7 +271,7 @@ export class OrganizationsStepFormComponent
 
 	private _setFormValues() {
 		this.orgMainForm.patchValue({
-			name: retrieveNameFromEmail(this.user?.email || this.retriveEmail)
+			name: retrieveNameFromEmail(this.user?.email || this.retrieveEmail)
 		});
 		this.orgMainForm.updateValueAndValidity();
 	}
@@ -338,17 +336,6 @@ export class OrganizationsStepFormComponent
 		return moment().format(format);
 	}
 
-	getTimeWithOffset(zone: string) {
-		let cutZone = zone;
-		if (zone.includes('/')) {
-			cutZone = zone.split('/')[1];
-		}
-
-		const offset = timezone.tz(zone).format('zZ');
-
-		return '(' + offset + ') ' + cutZone;
-	}
-
 	addOrganization() {
 		const location = this.locationFormDirective.getValue();
 		const { coordinates } = location['loc'];
@@ -390,7 +377,7 @@ export class OrganizationsStepFormComponent
 	/*
 	 * On Changed Currency Event Emitter
 	 */
-	currencyChanged($event: ICurrency) {}
+	currencyChanged($event: ICurrency) { }
 
 	/*
 	 * Google Place and Leaflet Map Coordinates Changed Event Emitter
@@ -436,8 +423,8 @@ export class OrganizationsStepFormComponent
 	 * @param state
 	 */
 	patchUsingLocationState(state: {
-        [key: string]: any;
-    }) {
+		[key: string]: any;
+	}) {
 		if (!this.orgMainForm) {
 			return;
 		}
@@ -448,11 +435,11 @@ export class OrganizationsStepFormComponent
 	/*
 	 * Google Place Geometry Changed Event Emitter
 	 */
-	onGeometrySend(geometry: any) {}
+	onGeometrySend(geometry: any) { }
 
 	close() {
 		this.closeForm.emit();
 	}
 
-	ngOnDestroy() {}
+	ngOnDestroy() { }
 }

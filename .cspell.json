@@ -216,7 +216,8 @@
         "echarts",
         "roboto",
         "fontface",
-        "gauzydesktop"
+        "gauzydesktop",
+        "latlng"
     ],
     "useGitignore": true,
     "ignorePaths": [

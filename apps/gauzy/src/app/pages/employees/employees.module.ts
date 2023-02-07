@@ -1,6 +1,7 @@
 import { NgModule } from '@angular/core';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import {
+	NbAccordionModule,
 	NbActionsModule,
 	NbBadgeModule,
 	NbButtonModule,
@@ -35,7 +36,8 @@ import {
 	EditEmployeeMainComponent,
 	EditEmployeeProjectsComponent,
 	EditEmployeeRatesComponent,
-	EditEmployeeProfileComponent
+	EditEmployeeProfileComponent,
+	EditEmployeeOtherSettingsComponent
 } from './edit-employee/edit-employee-profile';
 import { EditEmployeeComponent } from './edit-employee/edit-employee.component';
 import { EmployeesRoutingModule } from './employees-routing.module';
@@ -71,6 +73,7 @@ import { GauzyButtonActionModule } from '../../@shared/gauzy-button-action/gauzy
 import { NbTabsetModule, NbToggleModule } from '@nebular/theme';
 import { PaginationModule } from '../../@shared/pagination/pagination.module';
 import { CardGridModule } from '../../@shared/card-grid/card-grid.module';
+import { TimeZoneSelectorModule } from '../../@shared/selectors';
 
 const COMPONENTS = [
 	EmployeesComponent,
@@ -90,7 +93,8 @@ const COMPONENTS = [
 	EditEmployeeHiringComponent,
 	EditEmployeeLocationComponent,
 	EditEmployeeEmploymentComponent,
-	EditEmployeeNetworksComponent
+	EditEmployeeNetworksComponent,
+	EditEmployeeOtherSettingsComponent
 ];
 
 @NgModule({
@@ -102,6 +106,7 @@ const COMPONENTS = [
 		NbCardModule,
 		FormsModule,
 		ReactiveFormsModule,
+		NbAccordionModule,
 		NbButtonModule,
 		NbInputModule,
 		NbIconModule,
@@ -136,8 +141,9 @@ const COMPONENTS = [
 		GauzyButtonActionModule,
 		NbTabsetModule,
 		NbToggleModule,
-    	PaginationModule,
-   	 	CardGridModule
+		PaginationModule,
+		CardGridModule,
+		TimeZoneSelectorModule
 	],
 	declarations: [...COMPONENTS],
 	providers: [
@@ -148,4 +154,4 @@ const COMPONENTS = [
 		SkillsService
 	]
 })
-export class EmployeesModule {}
+export class EmployeesModule { }

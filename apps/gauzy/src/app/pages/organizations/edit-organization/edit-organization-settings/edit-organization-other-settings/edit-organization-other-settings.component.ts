@@ -3,7 +3,6 @@ import { FormBuilder, FormControl, FormGroup, Validators } from '@angular/forms'
 import { ActivatedRoute, Router } from '@angular/router';
 import { formatDate } from '@angular/common';
 import * as moment from 'moment';
-import * as timezone from 'moment-timezone';
 import {
 	AccountingTemplateTypeEnum,
 	AlignmentOptions,
@@ -64,7 +63,6 @@ export class EditOrganizationOtherSettingsComponent extends NotesWithTagsCompone
 	selectedEstimateTemplate: IAccountingTemplate;
 	selectedReceiptTemplate: IAccountingTemplate;
 
-	listOfZones = timezone.tz.names().filter((zone) => zone.includes('/'));
 	listOfDateFormats = DEFAULT_DATE_FORMATS;
 	listOfTimeFormats = DEFAULT_TIME_FORMATS;
 	listOfInactivityLimits = DEFAULT_INACTIVITY_TIME_LIMITS;
@@ -236,16 +234,6 @@ export class EditOrganizationOtherSettingsComponent extends NotesWithTagsCompone
 				}),
 				untilDestroyed(this)
 			).subscribe();
-	}
-
-	getTimeWithOffset(zone: string) {
-		let cutZone = zone;
-		if (zone.includes('/')) {
-			cutZone = zone.split('/')[1];
-		}
-
-		const offset = timezone.tz(zone).format('zZ');
-		return '(' + offset + ') ' + cutZone;
 	}
 
 	dateFormatPreview(format: string) {

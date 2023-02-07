@@ -19,6 +19,7 @@ export interface IUser extends IBasePerTenantEntityModel {
 	email?: string;
 	phoneNumber?: string;
 	username?: string;
+	timeZone?: string;
 	role?: IRole;
 	roleId?: IRole['id'];
 	hash?: string;
@@ -113,6 +114,7 @@ export interface IUserCreateInput {
 	tags?: ITag[];
 	preferredLanguage?: LanguagesEnum;
 	preferredComponentLayout?: ComponentLayoutStyleEnum;
+	timeZone?: string;
 }
 
 export interface IUserUpdateInput extends IUserCreateInput {

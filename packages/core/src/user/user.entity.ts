@@ -42,6 +42,7 @@ import {
 
 @Entity('user')
 export class User extends TenantBaseEntity implements IUser {
+
 	@ApiPropertyOptional({ type: () => String })
 	@Index()
 	@Column({ nullable: true })
@@ -71,6 +72,9 @@ export class User extends TenantBaseEntity implements IUser {
 	@Index({ unique: false })
 	@Column({ nullable: true })
 	username?: string;
+
+	@Column({ nullable: true })
+	timeZone?: string;
 
 	@ApiProperty({ type: () => String })
 	@Exclude({ toPlainOnly: true })
