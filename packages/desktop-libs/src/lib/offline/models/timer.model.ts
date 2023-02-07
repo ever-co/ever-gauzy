@@ -13,6 +13,7 @@ export class Timer implements TimerTO, Serializable<TimerTO> {
 	private _timeslotId: string;
 	private _stoppedAt: Date;
 	private _startedAt: Date;
+	private _synced: boolean;
 
 	constructor(timer: TimerTO) {
 		this._id = timer.id;
@@ -26,6 +27,14 @@ export class Timer implements TimerTO, Serializable<TimerTO> {
 		this._timeslotId = timer.timeslotId;
 		this._stoppedAt = timer.stoppedAt;
 		this._startedAt = timer.startedAt;
+		this._synced = timer.synced;
+	}
+
+	public get synced(): boolean {
+		return this._synced;
+	}
+	public set synced(value: boolean) {
+		this._synced = value;
 	}
 
 	public get startedAt(): Date {
@@ -104,12 +113,13 @@ export class Timer implements TimerTO, Serializable<TimerTO> {
 			duration: this._duration,
 			employeeId: this._employeeId,
 			projectId: this._projectId,
+			startedAt: this._startedAt,
+			stoppedAt: this._stoppedAt,
+			synced: this._synced,
 			taskId: this._taskId,
 			timelogId: this._timelogId,
 			timesheetId: this._timesheetId,
-			timeslotId: this._timeslotId,
-			startedAt: this._startedAt,
-			stoppedAt: this._stoppedAt,
+			timeslotId: this._timeslotId
 		};
 	}
 }

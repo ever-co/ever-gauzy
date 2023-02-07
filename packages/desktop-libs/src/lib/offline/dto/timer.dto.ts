@@ -10,6 +10,7 @@ export interface TimerTO {
 	timeslotId?: string;
 	startedAt?: Date;
 	stoppedAt?: Date;
+	synced?: boolean;
 }
 
 export const TABLE_NAME_TIMERS: string = 'timers';
