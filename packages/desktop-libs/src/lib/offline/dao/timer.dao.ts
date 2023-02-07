@@ -12,28 +12,20 @@ export class TimerDAO implements DAO<TimerTO> {
 		this._trx = new TimerTransaction(this._provider);
 	}
 	public async findAll(): Promise<TimerTO[]> {
-		return await this._provider
-			.connection<TimerTO>(TABLE_NAME_TIMERS)
-			.select('*');
+		return await this._provider.connection<TimerTO>(TABLE_NAME_TIMERS).select('*');
 	}
 	public async save(value: TimerTO): Promise<void> {
 		await this._trx.create(value);
 	}
 	public async findOneById(id: number): Promise<TimerTO> {
-		const [timer] = await this._provider
-			.connection<TimerTO>(TABLE_NAME_TIMERS)
-			.select('*')
-			.where('id', '=', id);
+		const [timer] = await this._provider.connection<TimerTO>(TABLE_NAME_TIMERS).select('*').where('id', '=', id);
 		return timer;
 	}
 	public async update(id: number, value: Partial<TimerTO>): Promise<void> {
 		await this._trx.update(id, value);
 	}
 	public async delete(value: Partial<TimerTO>): Promise<void> {
-		await this._provider
-			.connection<TimerTO>(TABLE_NAME_TIMERS)
-			.where('id', '=', value.id)
-			.del();
+		await this._provider.connection<TimerTO>(TABLE_NAME_TIMERS).where('id', '=', value.id).del();
 	}
 
 	public async lastCapture(employeeId: string): Promise<TimerTO> {
