@@ -81,7 +81,7 @@ export default class TimerHandler {
 			 * Start time interval for get set activities and screenshots
 			 */
 			if (!appSetting.randomScreenshotTime) {
-				this.startTimerIntervalPeriod(
+				await this.startTimerIntervalPeriod(
 					setupWindow,
 					knex,
 					timeTrackerWindow
@@ -120,7 +120,7 @@ export default class TimerHandler {
 						data: {
 							id: this.lastTimer ? this.lastTimer.id : null,
 							duration: moment().diff(
-								moment(this.timeSlotStart),
+								moment(this.timeStart),
 								'milliseconds'
 							),
 						},
@@ -217,8 +217,9 @@ export default class TimerHandler {
 		console.log('Timeslot Start Time', this.timeSlotStart);
 		await this._timerService.update(
 			new Timer({
-				id: this.lastTimer.id,
+				id: this.lastTimer ? this.lastTimer.id : null,
 				startedAt: new Date(),
+				synced: !this._offlineMode.enabled
 			})
 		);
 		this.intervalUpdateTime = setInterval(async () => {
@@ -285,9 +286,9 @@ export default class TimerHandler {
 			clearInterval(this.intervalUpdateTime);
 			await this._timerService.update(
 				new Timer({
-					id: this.lastTimer.id,
+					id: this.lastTimer ? this.lastTimer.id : null,
 					stoppedAt: new Date(),
-					...(this._offlineMode.enabled ? { timesheetId: null } : {}),
+					synced: !this._offlineMode.enabled
 				})
 			);
 		} catch (error) {
@@ -635,21 +636,20 @@ export default class TimerHandler {
 		try {
 			const project = LocalStore.getStore('project');
 			const info = LocalStore.beforeRequestParams();
+			const payload = {
+				projectId: project.projectId,
+				employeeId: info.employeeId,
+				timesheetId: timeLog ? timeLog.timesheetId : null,
+				timelogId: timeLog ? timeLog.id : null
+			}
 			this.isPaused
 				? await TimerData.createTimer(knex, {
+					...payload,
 					day: this.todayLocalTimezone,
 					duration: 0,
-					projectId: project.projectId,
-					employeeId: info.employeeId,
-					timesheetId: timeLog ? timeLog.timesheetId : null,
-					timelogId: timeLog ? timeLog.id : null
+					synced: !this._offlineMode.enabled
 				})
-				: await TimerData.updateDurationOfTimer(knex, {
-					projectId: project.projectId,
-					employeeId: info.employeeId,
-					timesheetId: timeLog ? timeLog.timesheetId : null,
-					timelogId: timeLog ? timeLog.id : null
-				});
+				: await TimerData.updateDurationOfTimer(knex, payload);
 
 			const lastSavedTimer = await TimerData.getLastTimer(knex, info);
 

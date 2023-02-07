@@ -620,16 +620,19 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 						...params,
 						...arg.timer
 					});
+					latest = arg.timer.stoppedAt ? null : latest;
 				} else {
 					latest = await this.timeTrackerService.toggleApiStop({
 						...params,
 						...arg.timer
 					});
 				}
-				event.sender.send('update-synced-timer', {
-					lastTimer: latest,
-					...arg.timer
-				});
+				if (latest) {
+					event.sender.send('update-synced-timer', {
+						lastTimer: latest,
+						...arg.timer
+					});
+				}
 			});
 		});
 
@@ -1039,7 +1042,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 					recordedAt: Date.now()
 				})
 			);
-		} catch (error) {}
+		} catch (error) { }
 	}
 
 	updateImageUrl(e) {
@@ -1354,7 +1357,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 						return await this.uploadsScreenshot(arg, img, resActivities.id);
 					})
 				);
-			} catch (error) {}
+			} catch (error) { }
 			const remoteId = resActivities.id;
 			this.electronService.ipcRenderer.send('create-synced-interval', {
 				...paramActivity,
