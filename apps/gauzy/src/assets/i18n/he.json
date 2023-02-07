@@ -1313,7 +1313,9 @@
 			"TOTAL_HOURS": "Total Hours",
 			"RATE": "ציון",
 			"VETTED": "Vetted",
-			"HR": "hr"
+			"HR": "hr",
+			"SETTINGS": "הגדרות",
+			"GENERAL_SETTINGS": "הגדרות כלליות"
 		},
 		"ADD_EMPLOYEES": {
 			"STEP_1": "Step 1",
