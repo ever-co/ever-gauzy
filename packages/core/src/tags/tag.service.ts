@@ -25,19 +25,23 @@ export class TagService extends CrudService<Tag> {
 	}
 
 	/**
-	 * GET tenant/organization level tags
+	 * GET tags by tenant or organization level
 	 *
 	 * @param input
 	 * @param relations
 	 * @returns
 	 */
-	async findAllTags(
+	async findTagsByLevel(
 		input: ITagFindInput,
-		relations: string[]
+		relations: string[] = []
 	): Promise<IPagination<ITag>> {
-		const query = this.tagRepository.createQueryBuilder();
+		const query = this.tagRepository.createQueryBuilder(this.alias);
 		query.setFindOptions({
-			relations
+			...(
+				(relations) ? {
+					relations: relations
+				} : {}
+			),
 		});
 		query.where((qb: SelectQueryBuilder<Tag>) => {
 			qb.andWhere(
@@ -57,9 +61,8 @@ export class TagService extends CrudService<Tag> {
 			);
 			qb.andWhere(
 				new Brackets((web: WhereExpressionBuilder) => {
-					const tenantId = RequestContext.currentTenantId();
 					web.andWhere(`"${qb.alias}"."tenantId" = :tenantId`, {
-						tenantId
+						tenantId: RequestContext.currentTenantId()
 					});
 				})
 			);
@@ -67,7 +70,7 @@ export class TagService extends CrudService<Tag> {
 				isSystem: false
 			});
 		});
-		const [ items, total ] = await query.getManyAndCount();
+		const [items, total] = await query.getManyAndCount();
 		return { items, total };
 	}
 
@@ -82,7 +85,7 @@ export class TagService extends CrudService<Tag> {
 		input: ITagFindInput,
 		relations: string[]
 	): Promise<IPagination<ITag>> {
-		const query = this.tagRepository.createQueryBuilder('tag');
+		const query = this.tagRepository.createQueryBuilder(this.alias);
 		query
 			.leftJoin(`tag.candidates`, 'candidate')
 			.leftJoin('tag.employees', 'employee')
@@ -98,7 +101,7 @@ export class TagService extends CrudService<Tag> {
 			.leftJoin('tag.organizationContacts', 'organizationContact')
 			.leftJoin('tag.organizationDepartments', 'organizationDepartment')
 			.leftJoin('tag.organizationEmploymentTypes', 'organizationEmploymentType')
-			.leftJoin('tag.expenseCategories', 'expenseCategorie')
+			.leftJoin('tag.expenseCategories', 'expenseCategory')
 			.leftJoin('tag.organizationPositions', 'organizationPosition')
 			.leftJoin('tag.organizationProjects', 'organizationProject')
 			.leftJoin('tag.organizationTeams', 'organizationTeam')
@@ -125,7 +128,7 @@ export class TagService extends CrudService<Tag> {
 			.addSelect(`COUNT("organizationContact"."id")`, `organization_contact_counter`)
 			.addSelect(`COUNT("organizationDepartment"."id")`, `organization_department_counter`)
 			.addSelect(`COUNT("organizationEmploymentType"."id")`, `organization_employment_type_counter`)
-			.addSelect(`COUNT("expenseCategorie"."id")`, `expense_category_counter`)
+			.addSelect(`COUNT("expenseCategory"."id")`, `expense_category_counter`)
 			.addSelect(`COUNT("organizationPosition"."id")`, `organization_position_counter`)
 			.addSelect(`COUNT("organizationProject"."id")`, `organization_project_counter`)
 			.addSelect(`COUNT("organizationTeam"."id")`, `organization_team_counter`)
@@ -159,13 +162,12 @@ export class TagService extends CrudService<Tag> {
 				);
 				query.andWhere(
 					new Brackets((qb: WhereExpressionBuilder) => {
-						const tenantId = RequestContext.currentTenantId();
-						qb.andWhere(`"tag"."tenantId" = :tenantId`, {
-							tenantId
+						qb.andWhere(`"${query.alias}"."tenantId" = :tenantId`, {
+							tenantId: RequestContext.currentTenantId()
 						});
 					})
 				);
-				query.andWhere(`"tag"."isSystem" = :isSystem`, {
+				query.andWhere(`"${query.alias}"."isSystem" = :isSystem`, {
 					isSystem: false
 				});
 			})

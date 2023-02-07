@@ -5,8 +5,6 @@
     height: 100%;
 }
 
-// !important exclusively for overriding Bootstrap and Nebular styles, which cannot be touched otherwise.
-
 // main sections
 :host .main-form {
     width: 100%;
@@ -19,56 +17,13 @@
     overflow: hidden;
     height: calc(100vh - 19.25rem);
 }
-.aside-nav {
-    width: 180px;
-    background-color: nb-theme(gauzy-card-3);
-    padding: 13px 18px;
-    border-radius: nb-theme(border-radius);
-    height: fit-content;
-    & .settings-section-header {
-        font-size: 14px;
-        font-style: normal;
-        font-weight: 600;
-        line-height: 17px;
-        letter-spacing: 0em;
-        text-align: left;
-        margin-bottom: 18px;
-    }
-    ul {
-        padding-left: 0;
-        padding-right: 0;
-        display: inline-flex;
-        flex-direction: column;
-        height: fit-content;
-        & li {
-            display: inline-flex;
-            padding: 10px 15px;
-            margin-bottom: 10px;
-            font-size: 13px;
-            font-style: normal;
-            font-weight: 400;
-            line-height: 16px;
-            letter-spacing: 0em;
-            text-align: left;
-            background: nb-theme(gauzy-sidebar-background-3);
-            border-radius: nb-theme(button-rectangle-border-radius);
-            list-style: none;
-            cursor: pointer;
-            box-shadow: 0px 1px 1px rgba(0, 0, 0, 0.15);
-            &.active {
-                background: nb-theme(background-basic-color-1);
-                box-shadow: 0px 1px 1px rgba(0, 0, 0, 0.15) inset;
-            }
-        }
-    }
-}
 .actions {
     margin-bottom: 20px;
 }
 .fields-section {
     width: calc(100% - 230px);
 }
-:host .accordion-section{
+:host .accordion-section {
     overflow: auto;
     max-height: calc(100% - 3rem);
     @include nb-ltr(padding-right, 8px);
@@ -86,10 +41,6 @@
     padding-right: 10px;
     max-width: 49% !important;
 }
-.active {
-    background: #FFFFFF;
-}
-
 
 // start of nb-overrides
 nb-accordion {
@@ -116,8 +67,8 @@ nb-accordion {
         padding-right: 15px;
     }
 
-    // separate accordion styles for each one because of input fields colors, layouts, etc.
-    // some media queries here,... too much useless nesting otherwise
+    //separate accordion styles for each one because of input fields colors, layouts, etc.
+    //some media queries here,... too much useless nesting otherwise
     nb-accordion-item {
         border-radius: 0.5rem;
         margin-bottom: 20px;
@@ -252,48 +203,6 @@ nb-accordion {
 }
 //end of nb-overrides
 
-//start of ::ng-deep selectors for selecting nested nebular stuff.
-:host ::ng-deep .ng-placeholder, ::ng-deep .ng-value {
-    z-index: 2;
-}
-:host ::ng-deep nb-select {
-    & ::ng-deep button {
-        margin-right: 10px;
-        background-color: nb-theme(background-basic-color-1) !important;
-        border-radius: nb-theme(border-radius) !important;
-    }
-}
-:host ::ng-deep nb-toggle {
-    padding: 10px;
-    border: 1px solid nb-theme(gauzy-border-default-color);
-    border-radius: nb-theme(border-radius);
-    & > label {
-        margin-bottom: 0;
-    }
-}
-:host ::ng-deep .toggle {
-    border: 1px solid #7E7E8F !important;
-    background-color: #7E7E8F !important;
-    &.checked {
-        background-color: nb-theme(text-primary-color) !important;
-        border: 1px solid nb-theme(text-primary-color) !important;
-        & + span {
-            color: nb-theme(text-primary-color);
-        }
-    }
-}
-:host ::ng-deep .ng-trigger {
-    overflow: visible !important;
-    & .item-body {
-        overflow: visible !important;
-        overflow-x: visible !important;
-    }
-}
-:host ::ng-deep .select-button {
-    margin: 0;
-}
-//end of ::ng-deep
-
 //media queries
 @include respond(lg) {
     .row {
@@ -312,22 +221,7 @@ nb-accordion {
             padding-right: 0;
         }
         nb-accordion-item {
-            &:first-of-type {
-                ::ng-deep .date-picker-form ng-select {
-                    width: 100%;
-                }
-                .fields {
-                    width: 100%;
-                }
-                .time-format-select {
-                    width: 100%;
-                }
-            }
             &:nth-of-type(2) {
-                .color-pick {
-                    max-width: 100%;
-                    min-width: 100%;
-                }
                 .select-wrapper {
                     width: 100%;
                     display: flex;
@@ -348,18 +242,6 @@ nb-accordion {
     }
     .main-form {
         flex-direction: column;
-    }
-    .aside-nav {
-        width: 100%;
-        margin-bottom: 20px;
-
-        ul {
-            display: inline;
-            height: auto;
-            & li {
-                margin-right: 7px;
-            }
-        }
     }
     .fields-section {
         width: 100%;
@@ -382,26 +264,5 @@ nb-accordion {
     }
     .row {
         width: 100%;
-    }
-}
-
-//old  styles
-.invite-toggle {
-    nb-toggle {
-        display: flex;
-        ::ng-deep .toggle-label {
-            display: flex;
-            justify-content: space-between;
-            flex-grow: 1;
-        }
-    }
-}
-#temporary {
-    padding-bottom: 215px;
-}
-
-:host {
-    nb-card-body {
-        overflow: visible;
     }
 }

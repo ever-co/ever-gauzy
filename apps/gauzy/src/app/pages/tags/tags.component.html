@@ -39,7 +39,7 @@
 				<div class="gauzy-action">
 					<ngx-gauzy-button-action
 						[componentName]="viewComponentName"
-						[buttonTemplateVisible]="visible"
+						[buttonTemplateVisible]="visibleButton"
 						[buttonTemplate]="actionButtons"
 						[isDisable]="disableButton"
 					></ngx-gauzy-button-action>
@@ -76,7 +76,7 @@
 					</ng-container>
 				</ng-template>
 				<ng-template #gridLayout>
-					<ga-card-grid 
+					<ga-card-grid
 						[totalItems]="pagination?.totalItems"
 						[settings]="settingsSmartTable"
 						[source]="tags"
@@ -118,15 +118,17 @@
 		</ng-template>
 	</div>
 </div>
-
-<ng-template #visible>
-	<button
-		nbButton
-		class="action"
-		status="success"
-		size="small"
-		(click)="add()"
-	>
-		<nb-icon icon="plus-outline"></nb-icon>{{ 'BUTTONS.ADD' | translate }}
-	</button>
+<ng-template #visibleButton>
+	<ng-template ngxPermissionsOnly="ORG_TAGS_EDIT">
+		<button
+			nbButton
+			class="action"
+			status="success"
+			size="small"
+			(click)="add()"
+		>
+			<nb-icon icon="plus-outline"></nb-icon>
+			{{ 'BUTTONS.ADD' | translate }}
+		</button>
+	</ng-template>
 </ng-template>

@@ -30,7 +30,7 @@
 	"dependencies": {
 		"@angular/common": "13.2.2",
 		"moment": "^2.29.4",
-		"moment-timezone": "^0.5.37",
+		"moment-timezone": "^0.5.40",
 		"rxjs": "^7.4.0",
 		"slugify": "^1.6.5"
 	},

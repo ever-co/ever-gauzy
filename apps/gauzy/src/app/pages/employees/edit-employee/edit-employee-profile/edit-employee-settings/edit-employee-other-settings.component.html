@@ -1,0 +1,32 @@
+<form class="main-form" #ngForm="ngForm" [formGroup]="form" (ngSubmit)="onSubmit(ngForm)" novalidate>
+	<section class="fields-section">
+		<div class="actions">
+			<button
+				nbButton
+				status="success"
+			>
+				{{ 'BUTTONS.SAVE' | translate }}
+			</button>
+		</div>
+		<div class="accordion-section">
+			<nb-accordion #accordion>
+				<nb-accordion-item #general [expanded]="true">
+					<nb-accordion-item-header>
+						{{ 'EMPLOYEES_PAGE.EDIT_EMPLOYEE.GENERAL_SETTINGS' | translate }}
+					</nb-accordion-item-header>
+					<nb-accordion-item-body>
+						<div class="fields">
+							<div class="row">
+								<div class="col-6">
+									<ga-timezone-selector
+										formControlName="timeZone"
+									></ga-timezone-selector>
+								</div>
+							</div>
+						</div>
+					</nb-accordion-item-body>
+				</nb-accordion-item>
+			</nb-accordion>
+		</div>
+	</section>
+</form>
