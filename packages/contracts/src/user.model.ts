@@ -114,6 +114,7 @@ export interface IUserCreateInput {
 	tags?: ITag[];
 	preferredLanguage?: LanguagesEnum;
 	preferredComponentLayout?: ComponentLayoutStyleEnum;
+	timeZone?: string;
 }
 
 export interface IUserUpdateInput extends IUserCreateInput {

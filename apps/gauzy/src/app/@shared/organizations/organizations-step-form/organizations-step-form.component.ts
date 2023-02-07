@@ -34,7 +34,6 @@ import { LatLng } from 'leaflet';
 import { filter, tap } from 'rxjs/operators';
 import { retrieveNameFromEmail } from '@gauzy/common-angular';
 import * as moment from 'moment';
-import * as timezone from 'moment-timezone';
 import { LocationFormComponent } from '../../forms/location';
 import { LeafletMapComponent } from '../../forms/maps';
 import { environment as ENV } from './../../../../environments/environment';
@@ -67,7 +66,6 @@ export class OrganizationsStepFormComponent
 	countries: ICountry[] = [];
 	defaultValueDateTypes: string[] = Object.values(DefaultValueDateTypeEnum);
 	defaultBonusTypes: string[] = Object.values(BonusTypeEnum);
-	listOfZones = timezone.tz.names().filter((zone) => zone.includes('/'));
 	weekdays: string[] = Object.values(WeekDaysEnum);
 	regionCodes = Object.keys(RegionsEnum);
 	regionCode: string;
@@ -336,17 +334,6 @@ export class OrganizationsStepFormComponent
 
 		moment.locale(this.regionCode);
 		return moment().format(format);
-	}
-
-	getTimeWithOffset(zone: string) {
-		let cutZone = zone;
-		if (zone.includes('/')) {
-			cutZone = zone.split('/')[1];
-		}
-
-		const offset = timezone.tz(zone).format('zZ');
-
-		return '(' + offset + ') ' + cutZone;
 	}
 
 	addOrganization() {
