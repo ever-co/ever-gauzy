@@ -146,7 +146,7 @@ export class TimeTrackingComponent extends TranslationBaseComponent
 		private readonly changeRef: ChangeDetectorRef,
 		private readonly _router: Router,
 		private readonly employeesService: EmployeesService,
-    	private readonly projectService: OrganizationProjectsService,
+		private readonly projectService: OrganizationProjectsService,
 		private readonly toastrService: ToastrService,
 		private readonly widgetService: WidgetService,
 		private readonly windowService: WindowService
@@ -270,9 +270,11 @@ export class TimeTrackingComponent extends TranslationBaseComponent
 		const request: ITimeLogFilters = {
 			tenantId,
 			organizationId,
-			startDate: toUTC(startDate).format('YYYY-MM-DD HH:mm'),
-			endDate: toUTC(endDate).format('YYYY-MM-DD HH:mm')
+			startDate: toUTC(startDate).format('YYYY-MM-DD HH:mm:ss'),
+			endDate: toUTC(endDate).format('YYYY-MM-DD HH:mm:ss')
 		};
+		console.log(toUTC(startDate).format('YYYY-MM-DD HH:mm:ss'));
+		console.log(moment().format('YYYY-MM-DD HH:mm:ss'), this.user);
 
 		if (isNotEmpty(employeeIds)) { request['employeeIds'] = employeeIds; }
 		if (isNotEmpty(projectIds)) { request['projectIds'] = projectIds; }
@@ -543,7 +545,7 @@ export class TimeTrackingComponent extends TranslationBaseComponent
 			return;
 		}
 		try {
-			const people  = await firstValueFrom(this.employeesService.getEmployeeById(
+			const people = await firstValueFrom(this.employeesService.getEmployeeById(
 				employee.id,
 				['user']
 			));
@@ -613,7 +615,7 @@ export class TimeTrackingComponent extends TranslationBaseComponent
 	 * Get employee counts
 	 *
 	 */
-  	private async loadEmployeesCount() {
+	private async loadEmployeesCount() {
 		if (this.user && this.user.employeeId) {
 			return;
 		}
@@ -631,7 +633,7 @@ export class TimeTrackingComponent extends TranslationBaseComponent
 			.subscribe();
 	}
 
-  	private async loadProjectsCount() {
+	private async loadProjectsCount() {
 		if (!this.organization) {
 			return;
 		}
@@ -723,7 +725,7 @@ export class TimeTrackingComponent extends TranslationBaseComponent
 		this.widgetService.save();
 	}
 
-	public undo(isWindow?: boolean){
+	public undo(isWindow?: boolean) {
 		isWindow
 			? this.windowService.undoDrag()
 			: this.widgetService.undoDrag();

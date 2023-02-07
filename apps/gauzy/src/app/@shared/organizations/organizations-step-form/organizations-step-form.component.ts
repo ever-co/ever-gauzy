@@ -73,7 +73,7 @@ export class OrganizationsStepFormComponent
 	listOfDateFormats = DEFAULT_DATE_FORMATS;
 
 	user: IUser;
-	retriveEmail: string;
+	retrieveEmail: string;
 	dummyImage = DUMMY_PROFILE_IMAGE;
 
 	@Output() createOrganization = new EventEmitter();
@@ -186,14 +186,14 @@ export class OrganizationsStepFormComponent
 		private readonly store: Store,
 		private readonly _activatedRoute: ActivatedRoute,
 		private readonly location: Location
-	) {}
+	) { }
 
 	ngOnInit() {
 		this.store.user$
 			.pipe(
 				filter((user) => !!user),
 				tap((user: IUser) => (this.user = user)),
-				tap(({ email }) => (this.retriveEmail = email)),
+				tap(({ email }) => (this.retrieveEmail = email)),
 				tap(() => this._setFormValues()),
 				filter(() => !!this.location.getState()),
 				tap(() =>
@@ -204,7 +204,7 @@ export class OrganizationsStepFormComponent
 		this._activatedRoute.queryParams
 			.pipe(
 				filter(({ email }) => !!email),
-				tap(({ email }) => (this.retriveEmail = email)),
+				tap(({ email }) => (this.retrieveEmail = email)),
 				tap(() => this._setFormValues()),
 				untilDestroyed(this)
 			)
@@ -271,7 +271,7 @@ export class OrganizationsStepFormComponent
 
 	private _setFormValues() {
 		this.orgMainForm.patchValue({
-			name: retrieveNameFromEmail(this.user?.email || this.retriveEmail)
+			name: retrieveNameFromEmail(this.user?.email || this.retrieveEmail)
 		});
 		this.orgMainForm.updateValueAndValidity();
 	}
@@ -377,7 +377,7 @@ export class OrganizationsStepFormComponent
 	/*
 	 * On Changed Currency Event Emitter
 	 */
-	currencyChanged($event: ICurrency) {}
+	currencyChanged($event: ICurrency) { }
 
 	/*
 	 * Google Place and Leaflet Map Coordinates Changed Event Emitter
@@ -423,8 +423,8 @@ export class OrganizationsStepFormComponent
 	 * @param state
 	 */
 	patchUsingLocationState(state: {
-        [key: string]: any;
-    }) {
+		[key: string]: any;
+	}) {
 		if (!this.orgMainForm) {
 			return;
 		}
@@ -435,11 +435,11 @@ export class OrganizationsStepFormComponent
 	/*
 	 * Google Place Geometry Changed Event Emitter
 	 */
-	onGeometrySend(geometry: any) {}
+	onGeometrySend(geometry: any) { }
 
 	close() {
 		this.closeForm.emit();
 	}
 
-	ngOnDestroy() {}
+	ngOnDestroy() { }
 }
