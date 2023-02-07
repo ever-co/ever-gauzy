@@ -273,8 +273,6 @@ export class TimeTrackingComponent extends TranslationBaseComponent
 			startDate: toUTC(startDate).format('YYYY-MM-DD HH:mm:ss'),
 			endDate: toUTC(endDate).format('YYYY-MM-DD HH:mm:ss')
 		};
-		console.log(toUTC(startDate).format('YYYY-MM-DD HH:mm:ss'));
-		console.log(moment().format('YYYY-MM-DD HH:mm:ss'), this.user);
 
 		if (isNotEmpty(employeeIds)) { request['employeeIds'] = employeeIds; }
 		if (isNotEmpty(projectIds)) { request['projectIds'] = projectIds; }
