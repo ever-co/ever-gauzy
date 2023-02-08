@@ -26,7 +26,7 @@ export const createRandomIntegrationSetting = async (
 		for (const integrationTenant of integrationTenants) {
 			const integrationSetting = new IntegrationSetting();
 			integrationSetting.integration = integrationTenant;
-			integrationSetting.organization = faker.random.arrayElement(
+			integrationSetting.organization = faker.helpers.arrayElement(
 				organizations
 			);
 			integrationSetting.tenant = tenant;

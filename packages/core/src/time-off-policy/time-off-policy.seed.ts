@@ -54,8 +54,8 @@ export const createRandomTimeOffPolicies = async (
 				policy.name = name;
 				policy.organization = organization;
 				policy.tenant = tenant;
-				policy.paid = faker.random.arrayElement([true, false]);
-				policy.requiresApproval = faker.random.arrayElement([
+				policy.paid = faker.helpers.arrayElement([true, false]);
+				policy.requiresApproval = faker.helpers.arrayElement([
 					true,
 					false
 				]);

@@ -93,19 +93,19 @@ async function invoiceItemForInvoiceType(
 
 			switch (invoice.invoiceType) {
 				case InvoiceTypeEnum.BY_EMPLOYEE_HOURS:
-					invoiceItem.employee = faker.random.arrayElement(employees);
+					invoiceItem.employee = faker.helpers.arrayElement(employees);
 					break;
 				case InvoiceTypeEnum.BY_PROJECT_HOURS:
-					invoiceItem.project = faker.random.arrayElement(projects);
+					invoiceItem.project = faker.helpers.arrayElement(projects);
 					break;
 				case InvoiceTypeEnum.BY_TASK_HOURS:
-					invoiceItem.task = faker.random.arrayElement(tasks);
+					invoiceItem.task = faker.helpers.arrayElement(tasks);
 					break;
 				case InvoiceTypeEnum.BY_PRODUCTS:
-					invoiceItem.product = faker.random.arrayElement(products);
+					invoiceItem.product = faker.helpers.arrayElement(products);
 					break;
 				case InvoiceTypeEnum.BY_EXPENSES:
-					invoiceItem.expense = faker.random.arrayElement(expenses);
+					invoiceItem.expense = faker.helpers.arrayElement(expenses);
 					break;
 			}
 

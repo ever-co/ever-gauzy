@@ -24,7 +24,7 @@ export const createDefaultEquipments = async (
 	equipment.initialCost = 40000;
 	equipment.currency = env.defaultCurrency;
 	equipment.maxSharePeriod = 7;
-	equipment.tags = [faker.random.arrayElement(tags)];
+	equipment.tags = [faker.helpers.arrayElement(tags)];
 	equipment.tenant = tenant;
 	equipment.organization = organization;
 	equipment.autoApproveShare = true;
@@ -59,11 +59,11 @@ export const createRandomEquipments = async (
 		});
 		for (let i = 0; i < noOfEquipmentsPerTenant; i++) {
 			const equipment = new Equipment();
-			const randomElement = faker.random.arrayElement(
+			const randomElement = faker.helpers.arrayElement(
 				DEFAULT_RANDOM_EQUIPMENTS
 			);
 			equipment.type = randomElement.key;
-			equipment.name = faker.random.arrayElement(randomElement.value);
+			equipment.name = faker.helpers.arrayElement(randomElement.value);
 			equipment.serialNumber = faker.datatype.uuid();
 			equipment.manufacturedYear = faker.datatype.number({
 				min: 2000,
@@ -76,9 +76,9 @@ export const createRandomEquipments = async (
 
 			equipment.currency = env.defaultCurrency;
 			equipment.maxSharePeriod = faker.datatype.number({ min: 1, max: 15 });
-			equipment.tags = [faker.random.arrayElement(tags)];
+			equipment.tags = [faker.helpers.arrayElement(tags)];
 			equipment.tenant = tenant;
-			(equipment.organization = faker.random.arrayElement(organizations)),
+			(equipment.organization = faker.helpers.arrayElement(organizations)),
 				(equipment.autoApproveShare = faker.datatype.boolean());
 			equipments.push(equipment);
 		}

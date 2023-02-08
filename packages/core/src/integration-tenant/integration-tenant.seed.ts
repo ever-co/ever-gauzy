@@ -25,7 +25,7 @@ export const createRandomIntegrationTenant = async (
 		integrationTenant.name = faker.company.companyName();
 		integrationTenant.entitySettings = [];
 		integrationTenant.tenant = tenant;
-		integrationTenant.organization = faker.random.arrayElement(organizations);
+		integrationTenant.organization = faker.helpers.arrayElement(organizations);
 		integrationTenants.push(integrationTenant);
 	}
 	await dataSource.manager.save(integrationTenants);

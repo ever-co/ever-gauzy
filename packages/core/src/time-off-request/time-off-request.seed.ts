@@ -37,12 +37,12 @@ export const createDefaultEmployeeTimeOff = async (
 				.values()
 				.value();
 			request.description = 'Time off';
-			request.isHoliday = faker.random.arrayElement([true, false]);
-			request.isArchived = faker.random.arrayElement([true, false]);
+			request.isHoliday = faker.helpers.arrayElement([true, false]);
+			request.isArchived = faker.helpers.arrayElement([true, false]);
 			request.start = faker.date.future(0.5);
 			request.end = addDays(request.start, faker.datatype.number(7));
 			request.requestDate = faker.date.recent();
-			request.status = faker.random.arrayElement(status);
+			request.status = faker.helpers.arrayElement(status);
 			request.documentUrl = '';
 
 			const timeOffRequest = await dataSource.manager.save(request);
@@ -86,12 +86,12 @@ export const createRandomEmployeeTimeOff = async (
 						.values()
 						.value();
 					request.description = 'Time off';
-					request.isHoliday = faker.random.arrayElement([true, false]);
-					request.isArchived = faker.random.arrayElement([true, false]);
+					request.isHoliday = faker.helpers.arrayElement([true, false]);
+					request.isArchived = faker.helpers.arrayElement([true, false]);
 					request.start = faker.date.future(0.5);
 					request.end = addDays(request.start, faker.datatype.number(7));
 					request.requestDate = faker.date.recent();
-					request.status = faker.random.arrayElement(status);
+					request.status = faker.helpers.arrayElement(status);
 					request.documentUrl = '';
 
 					const timeOffRequest = await dataSource.manager.save(request);

@@ -63,7 +63,7 @@ export const createRandomCandidateDocuments = async (
 				name: document.name,
 				documentUrl: document.documentUrl,
 				candidateId: candidateId,
-				organization: faker.random.arrayElement(organizations),
+				organization: faker.helpers.arrayElement(organizations),
 				tenantId: tenantId
 			}));
 			candidateDocumentsMap.set(candidate, documents);

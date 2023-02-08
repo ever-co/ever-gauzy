@@ -44,7 +44,7 @@ export const createDefaultKeyResultUpdates = async (
 				keyResultUpdate.keyResult = keyResult;
 				keyResultUpdate.tenant = tenant;
 				keyResultUpdate.organization = organization;
-				keyResultUpdate.status = faker.random.arrayElement(
+				keyResultUpdate.status = faker.helpers.arrayElement(
 					Object.values(KeyResultUpdateStatusEnum)
 				);
 				keyResultUpdate.update = faker.datatype.number({

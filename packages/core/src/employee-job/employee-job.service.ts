@@ -129,25 +129,25 @@ export class EmployeeJobPostService {
 
 		const employeesJobs: EmployeeJobPost[] = [];
 		for (let i = 0; i < limit; i++) {
-			const employee = faker.random.arrayElement(employees);
+			const employee = faker.helpers.arrayElement(employees);
 			const jobPostEmployee = new EmployeeJobPost({
 				employeeId: employee ? employee.id : null,
 				employee: employee
 			});
 
 			const job = new JobPost({
-				country: faker.random.arrayElement(countries).isoCode,
+				country: faker.helpers.arrayElement(countries).isoCode,
 				category: faker.name.jobTitle(),
 				title: faker.lorem.sentence(),
 				description: faker.lorem.sentences(3),
 				jobDateCreated: faker.date.past(0.1),
-				jobStatus: faker.random.arrayElement(
+				jobStatus: faker.helpers.arrayElement(
 					Object.values(JobPostStatusEnum)
 				),
-				jobSource: faker.random.arrayElement(
+				jobSource: faker.helpers.arrayElement(
 					Object.values(JobPostSourceEnum)
 				),
-				jobType: faker.random.arrayElement(Object.values(JobPostTypeEnum))
+				jobType: faker.helpers.arrayElement(Object.values(JobPostTypeEnum))
 			});
 
 			jobPostEmployee.jobPost = job;

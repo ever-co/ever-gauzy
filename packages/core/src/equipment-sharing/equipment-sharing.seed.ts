@@ -32,7 +32,7 @@ export const createDefaultEquipmentSharing = async (
 				faker.datatype.number(15)
 			);
 			sharing.status = faker.datatype.number({ min: 1, max: 3 });
-			sharing.employees = [faker.random.arrayElement(defaultEmployees)];
+			sharing.employees = [faker.helpers.arrayElement(defaultEmployees)];
 			sharing.organization = organization;
 			sharing.tenant = tenant;
 
@@ -76,7 +76,7 @@ export const createRandomEquipmentSharing = async (
 						faker.datatype.number(15)
 					);
 					sharing.status = faker.datatype.number({ min: 1, max: 3 });
-					sharing.employees = [faker.random.arrayElement(employees)];
+					sharing.employees = [faker.helpers.arrayElement(employees)];
 					sharing.organization = organization;
 					sharing.tenant = tenant;
 

@@ -27,12 +27,12 @@ export const createRandomIntegrationMap = async (
 		for (const integrationTenant of integrationTenants) {
 			const integrationMap = new IntegrationMap();
 			integrationMap.integration = integrationTenant;
-			integrationMap.organization = faker.random.arrayElement(
+			integrationMap.organization = faker.helpers.arrayElement(
 				organizations
 			);
 			integrationMap.tenant = tenant;
 			//todo: need to understand real values here
-			integrationMap.entity = faker.random.arrayElement(
+			integrationMap.entity = faker.helpers.arrayElement(
 				Object.values(IntegrationEntity)
 			);
 			integrationMap.sourceId = faker.datatype.number({ min: 10000000, max: 99999999999 });

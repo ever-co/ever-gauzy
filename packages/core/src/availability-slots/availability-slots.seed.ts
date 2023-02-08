@@ -61,8 +61,8 @@ const dataOperation = async (
 	for (let i = 0; i < noOfAvailabilitySlotsPerOrganization; i++) {
 		const slot = new AvailabilitySlot();
 		slot.allDay = faker.datatype.boolean();
-		slot.employee = faker.random.arrayElement([
-			faker.random.arrayElement(employees),
+		slot.employee = faker.helpers.arrayElement([
+			faker.helpers.arrayElement(employees),
 			null
 		]);
 		slot.organization = organization;
@@ -75,7 +75,7 @@ const dataOperation = async (
 			slot.startTime,
 			moment(slot.startTime).add(7, 'hours').toDate()
 		);
-		slot.type = faker.random.arrayElement(
+		slot.type = faker.helpers.arrayElement(
 			Object.values(AvailabilitySlotType)
 		);
 		slots.push(slot);

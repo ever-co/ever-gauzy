@@ -143,7 +143,7 @@ export const createRandomIncomes = async (
 					income.employee = employee;
 					income.amount = faker.datatype.number({ min: 10, max: 9999 });
 					if (organizationContacts.length) {
-						income.client = faker.random.arrayElement(organizationContacts);
+						income.client = faker.helpers.arrayElement(organizationContacts);
 					}
 					income.currency = employee.organization.currency || env.defaultCurrency;
 					income.valueDate = moment(

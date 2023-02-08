@@ -44,17 +44,17 @@ export const createRandomRequestApproval = async (
 			}
 			);
 			for (let i = 0; i < noOfRequestsPerOrganizations; i++) {
-				const tenantPolicy = faker.random.arrayElement(policies);
+				const tenantPolicy = faker.helpers.arrayElement(policies);
 				const specificEmployees = employees
 					.sort(() => Math.random() - Math.random())
 					.slice(0, 3);
 
 				const requestApproval = new RequestApproval();
-				requestApproval.name = faker.random.arrayElement(approvalTypes);
+				requestApproval.name = faker.helpers.arrayElement(approvalTypes);
 				requestApproval.status = faker.datatype.number({ min: 1, max: 3 });
 				requestApproval.approvalPolicy = tenantPolicy;
 				requestApproval.min_count = faker.datatype.number({ min: 1, max: 56 });
-				requestApproval.createdBy = faker.random.arrayElement(specificEmployees).id;
+				requestApproval.createdBy = faker.helpers.arrayElement(specificEmployees).id;
 
 				const requestApprovalEmployees: RequestApprovalEmployee[] = [];
 				for await (const employee of specificEmployees) {

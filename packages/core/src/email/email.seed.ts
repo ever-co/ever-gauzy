@@ -73,11 +73,11 @@ const dataOperation = async (
 		const sentEmail = new Email();
 		sentEmail.organization = organization;
 		sentEmail.email = faker.internet.exampleEmail();
-		sentEmail.emailTemplate = faker.random.arrayElement(emailTemplates);
+		sentEmail.emailTemplate = faker.helpers.arrayElement(emailTemplates);
 		sentEmail.name = sentEmail.emailTemplate.name.split('/')[0];
 		sentEmail.content = sentEmail.emailTemplate.hbs;
 		sentEmail.tenant = tenant;
-		sentEmail.user = faker.random.arrayElement(users);
+		sentEmail.user = faker.helpers.arrayElement(users);
 		sentEmails.push(sentEmail);
 	}
 	await dataSource.manager.save(sentEmails);

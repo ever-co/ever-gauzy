@@ -70,7 +70,7 @@ export const createRandomScreenshot = async (
 		index < randomSeedConfig.noOfScreenshotPerTimeSlot;
 		index++
 	) {
-		const sourceFile = faker.random.arrayElement(fileList);
+		const sourceFile = faker.helpers.arrayElement(fileList);
 		const sourceName = 'screenshot-' + moment().unix() + faker.datatype.number(999) + '.png';
 		const destFile = path.join(destDir, sourceName);
 		const sourceFilePath = path.join(dir, sourceFile);

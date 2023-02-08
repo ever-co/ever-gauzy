@@ -45,7 +45,7 @@ export const createRandomCandidateInterview = async (
 		const organizations = await dataSource.manager.findBy(Organization, {
 			tenantId
 		});
-		const organization = faker.random.arrayElement(organizations);
+		const organization = faker.helpers.arrayElement(organizations);
 		const tenantCandidates = tenantCandidatesMap.get(tenant);
 		for (const tenantCandidate of tenantCandidates) {
 			candidates = await dataOperation(

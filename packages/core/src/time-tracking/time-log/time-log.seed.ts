@@ -73,10 +73,10 @@ export const createRandomTimeLogs = async (
 				) {
 					const { startedAt, stoppedAt } = range[rangeIndex];
 					if (moment.utc().isAfter(moment.utc(stoppedAt))) {
-						const project = faker.random.arrayElement(projects);
-						const task = faker.random.arrayElement(project.tasks);
+						const project = faker.helpers.arrayElement(projects);
+						const task = faker.helpers.arrayElement(project.tasks);
 
-						const source: TimeLogSourceEnum = faker.random.arrayElement(
+						const source: TimeLogSourceEnum = faker.helpers.arrayElement(
 							Object.keys(TimeLogSourceEnum)
 						) as TimeLogSourceEnum;
 
@@ -103,7 +103,7 @@ export const createRandomTimeLogs = async (
 						});
 						timeLog.organizationContact = project.organizationContact;
 						timeLog.description = faker.lorem.sentence(faker.datatype.number(10));
-						timeLog.isBillable = faker.random.arrayElement([true, false]);
+						timeLog.isBillable = faker.helpers.arrayElement([true, false]);
 						timeLog.deletedAt = null;
 						timeLog.isRunning = false;
 						timeLogs.push(timeLog);

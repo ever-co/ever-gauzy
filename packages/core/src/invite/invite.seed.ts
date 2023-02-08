@@ -27,10 +27,10 @@ export const createDefaultEmployeeInviteSent = async (
 				new Date(),
 				moment(new Date()).add(30, 'days').toDate()
 			);
-			invitee.invitedBy = faker.random.arrayElement(SuperAdmin);
+			invitee.invitedBy = faker.helpers.arrayElement(SuperAdmin);
 			invitee.organizationId = organization.id;
-			invitee.role = faker.random.arrayElement(roles);
-			invitee.status = faker.random.arrayElement(invitationStatus);
+			invitee.role = faker.helpers.arrayElement(roles);
+			invitee.status = faker.helpers.arrayElement(invitationStatus);
 			invitee.token = createToken(invitee.email);
 			invitee.tenant = tenant;
 			totalInvites.push(invitee);
@@ -64,10 +64,10 @@ export const createRandomEmployeeInviteSent = async (
 					new Date(),
 					moment(new Date()).add(30, 'days').toDate()
 				);
-				invitee.invitedBy = faker.random.arrayElement(admins);
+				invitee.invitedBy = faker.helpers.arrayElement(admins);
 				invitee.organizationId = organization.id;
-				invitee.role = faker.random.arrayElement(roles);
-				invitee.status = faker.random.arrayElement(invitationStatus);
+				invitee.role = faker.helpers.arrayElement(roles);
+				invitee.status = faker.helpers.arrayElement(invitationStatus);
 				invitee.token = createToken(invitee.email);
 				invitee.tenant = tenant;
 				totalInvites.push(invitee);

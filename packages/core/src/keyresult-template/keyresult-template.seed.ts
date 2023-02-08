@@ -31,7 +31,7 @@ export const createDefaultKeyResultTemplates = async (
 					keyResult.targetValue = 1;
 				} else {
 					if (keyResult.type === KeyResultTypeEnum.KPI) {
-						keyResult.kpi = faker.random.arrayElement(
+						keyResult.kpi = faker.helpers.arrayElement(
 							goalKPITemplates
 						);
 					}

@@ -95,7 +95,7 @@ const dataOperation = async (
 		const candidate = new CandidateInterviewers();
 
 		candidate.interviewId = interview.id;
-		candidate.employeeId = faker.random.arrayElement(tenantEmployees).id;
+		candidate.employeeId = faker.helpers.arrayElement(tenantEmployees).id;
 
 		candidate.tenant = tenant;
 		candidate.organization = organization;

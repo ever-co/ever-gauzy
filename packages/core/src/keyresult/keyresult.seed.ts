@@ -47,8 +47,8 @@ export const createDefaultKeyResults = async (
 					keyResult.hardDeadline = null;
 					keyResult.softDeadline = null;
 				}
-				keyResult.owner = faker.random.arrayElement(employees);
-				keyResult.lead = faker.random.arrayElement(employees);
+				keyResult.owner = faker.helpers.arrayElement(employees);
+				keyResult.lead = faker.helpers.arrayElement(employees);
 				keyResult.type = keyResultData.type;
 
 				if (keyResult.type === KeyResultTypeEnum.TRUE_OR_FALSE) {
@@ -56,7 +56,7 @@ export const createDefaultKeyResults = async (
 					keyResult.targetValue = 1;
 				} else {
 					if (keyResultData.type === KeyResultTypeEnum.KPI) {
-						keyResult.kpi = faker.random.arrayElement(goalKPIs);
+						keyResult.kpi = faker.helpers.arrayElement(goalKPIs);
 					}
 					keyResult.initialValue = keyResultData.initialValue;
 					keyResult.targetValue = keyResultData.targetValue;
@@ -72,7 +72,7 @@ export const createDefaultKeyResults = async (
 				keyResult.update = keyResult.initialValue;
 				keyResult.status = 'none';
 				keyResult.description = ' ';
-				keyResult.weight = faker.random.arrayElement([
+				keyResult.weight = faker.helpers.arrayElement([
 					KeyResultWeightEnum.DEFAULT,
 					KeyResultWeightEnum.INCREASE_BY_2X,
 					KeyResultWeightEnum.INCREASE_BY_4X
@@ -155,7 +155,7 @@ export const createRandomKeyResult = async (
 			for (const goal of goals) {
 				const keyResult = new KeyResult();
 
-				keyResult.deadline = faker.random.arrayElement(
+				keyResult.deadline = faker.helpers.arrayElement(
 					Object.keys(KeyResultDeadlineEnum)
 				);
 				if (
@@ -177,9 +177,9 @@ export const createRandomKeyResult = async (
 					keyResult.hardDeadline = null;
 					keyResult.softDeadline = null;
 				}
-				keyResult.owner = faker.random.arrayElement(organizationEmployees);
-				keyResult.lead = faker.random.arrayElement(organizationEmployees);
-				keyResult.type = faker.random.arrayElement(
+				keyResult.owner = faker.helpers.arrayElement(organizationEmployees);
+				keyResult.lead = faker.helpers.arrayElement(organizationEmployees);
+				keyResult.type = faker.helpers.arrayElement(
 					Object.keys(KeyResultTypeEnum)
 				);
 
@@ -193,7 +193,7 @@ export const createRandomKeyResult = async (
 					);
 				}
 
-				keyResult.unit = faker.random.arrayElement([
+				keyResult.unit = faker.helpers.arrayElement([
 					'signups',
 					'publications',
 					'interviews',
@@ -209,7 +209,7 @@ export const createRandomKeyResult = async (
 				keyResult.update = keyResult.initialValue;
 				keyResult.status = 'none';
 				keyResult.description = ' ';
-				keyResult.weight = faker.random.arrayElement([
+				keyResult.weight = faker.helpers.arrayElement([
 					KeyResultWeightEnum.DEFAULT,
 					KeyResultWeightEnum.INCREASE_BY_2X,
 					KeyResultWeightEnum.INCREASE_BY_4X

@@ -65,7 +65,7 @@ export const createRandomCandidateEducations = async (
 					completionDate: education.completionDate,
 					field: education.field,
 					candidateId: candidateId,
-					organization: faker.random.arrayElement(organizations),
+					organization: faker.helpers.arrayElement(organizations),
 					tenantId: tenantId,
 					notes: faker.lorem.sentence()
 				})

@@ -36,8 +36,8 @@ export const createRandomOrganizationTeamEmployee = async (
 				tenantId
 			});
 			const roles = await dataSource.manager.find(Role, {});
-			const team = faker.random.arrayElement(organizationTeams);
-			const employee = faker.random.arrayElement(tenantEmployees);
+			const team = faker.helpers.arrayElement(organizationTeams);
+			const employee = faker.helpers.arrayElement(tenantEmployees);
 
 			const orgTeamEmployee = new OrganizationTeamEmployee();
 
@@ -47,7 +47,7 @@ export const createRandomOrganizationTeamEmployee = async (
 			orgTeamEmployee.employee = employee;
 			orgTeamEmployee.organizationId = organizationId;
 			orgTeamEmployee.tenantId = tenantId;
-			orgTeamEmployee.role = faker.random.arrayElement(roles);
+			orgTeamEmployee.role = faker.helpers.arrayElement(roles);
 
 			orgTeamEmployees.push(orgTeamEmployee);
 		}

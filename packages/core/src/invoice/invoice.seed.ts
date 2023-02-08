@@ -111,12 +111,12 @@ const generateInvoice = async (
 		.toDate();
 
 	if (organizationContacts.length) {
-		invoice.organizationContactId = faker.random.arrayElement(organizationContacts).id;
+		invoice.organizationContactId = faker.helpers.arrayElement(organizationContacts).id;
 	}
 
 	invoice.sentTo = organization.id;
 	invoice.fromOrganization = organization;
-	invoice.toContact = faker.random.arrayElement(organizationContacts);
+	invoice.toContact = faker.helpers.arrayElement(organizationContacts);
 	invoice.currency = organization.currency;
 	invoice.discountValue = faker.datatype.number({ min: 1, max: 10 });
 	invoice.paid = faker.datatype.boolean();
@@ -127,15 +127,15 @@ const generateInvoice = async (
 
 	if (invoice.isEstimate) {
 		invoice.isAccepted = faker.datatype.boolean();
-		invoice.status = faker.random.arrayElement(Object.values(EstimateStatusTypesEnum));
+		invoice.status = faker.helpers.arrayElement(Object.values(EstimateStatusTypesEnum));
 	} else {
-		invoice.status = faker.random.arrayElement(Object.values(InvoiceStatusTypesEnum));
+		invoice.status = faker.helpers.arrayElement(Object.values(InvoiceStatusTypesEnum));
 	}
 
-	invoice.discountType = faker.random.arrayElement(Object.values(DiscountTaxTypeEnum));
-	invoice.taxType = faker.random.arrayElement(Object.values(DiscountTaxTypeEnum));
-	invoice.tax2Type = faker.random.arrayElement(Object.values(DiscountTaxTypeEnum));
-	invoice.invoiceType = faker.random.arrayElement(Object.values(InvoiceTypeEnum));
+	invoice.discountType = faker.helpers.arrayElement(Object.values(DiscountTaxTypeEnum));
+	invoice.taxType = faker.helpers.arrayElement(Object.values(DiscountTaxTypeEnum));
+	invoice.tax2Type = faker.helpers.arrayElement(Object.values(DiscountTaxTypeEnum));
+	invoice.invoiceType = faker.helpers.arrayElement(Object.values(InvoiceTypeEnum));
 
 	invoice.organization = organization;
 	invoice.tenant = tenant;
@@ -171,7 +171,7 @@ const generateInvoiceHistory = async (
 
 	historyRecords.push(
 		new InvoiceEstimateHistory({
-			user: faker.random.arrayElement(users),
+			user: faker.helpers.arrayElement(users),
 			action: invoice.isEstimate ? 'Estimated Added' : 'Invoice Added',
 			tenant,
 			organization
@@ -184,7 +184,7 @@ const generateInvoiceHistory = async (
 	}); i++) {
 		historyRecords.push(
 			new InvoiceEstimateHistory({
-				user: faker.random.arrayElement(users),
+				user: faker.helpers.arrayElement(users),
 				action: faker.name.jobTitle(),
 				tenant,
 				organization

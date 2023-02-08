@@ -44,7 +44,7 @@ export const createRandomWarehouses = async (
                 warehouse.products = [];
 
                 for (let i = 0; i <= Math.floor(Math.random() * 2); i++) {
-                    const product = faker.random.arrayElement(products);
+                    const product = faker.helpers.arrayElement(products);
 
                     let warehouseProduct = new WarehouseProduct();
                     warehouseProduct.product = product;
@@ -97,7 +97,7 @@ const applyRandomProperties = (
     contact.address = faker.address.streetAddress();
     contact.address2 = faker.address.secondaryAddress();
     contact.city = faker.address.city();
-    contact.country = faker.random.arrayElement(countries).isoCode;
+    contact.country = faker.helpers.arrayElement(countries).isoCode;
     contact.fax = faker.datatype.number(8).toString();
     contact.longitude = +faker.address.longitude();
     contact.latitude = +faker.address.latitude();

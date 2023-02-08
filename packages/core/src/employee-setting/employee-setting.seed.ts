@@ -35,7 +35,7 @@ export const createRandomEmployeeSetting = async (
 				employee.value = Math.floor(Math.random() * 999) + 1;
 				employee.currency = env.defaultCurrency;
 				employee.employee = tenantEmployee;
-				employee.organization = faker.random.arrayElement(organizations);
+				employee.organization = faker.helpers.arrayElement(organizations);
 				employee.tenant = tenant;
 				employees.push(employee);
 			}

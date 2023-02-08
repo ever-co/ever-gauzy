@@ -52,7 +52,7 @@ export const createRandomOrganizationLanguage = async (
 	for (const tenant of tenants) {
 		const tenantOrganization = tenantOrganizationsMap.get(tenant);
 		for (const tenantOrg of tenantOrganization) {
-			const language = faker.random.arrayElement(allLanguage);
+			const language = faker.helpers.arrayElement(allLanguage);
 			const organization = new OrganizationLanguage();
 			organization.organization = tenantOrg;
 			organization.tenant = tenant;

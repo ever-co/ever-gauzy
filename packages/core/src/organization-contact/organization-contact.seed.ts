@@ -94,8 +94,8 @@ const generateOrganizationContact = async (
 	orgContact.organization = organization;
 	orgContact.tenant = tenant;
 	orgContact.contact = contact;
-	orgContact.contactType = faker.random.arrayElement(Object.values(ContactType));
-	orgContact.budgetType = faker.random.arrayElement(
+	orgContact.contactType = faker.helpers.arrayElement(Object.values(ContactType));
+	orgContact.budgetType = faker.helpers.arrayElement(
 		Object.values(OrganizationContactBudgetTypeEnum)
 	);
 	orgContact.budget =
@@ -105,7 +105,7 @@ const generateOrganizationContact = async (
 
 	const email = faker.internet.exampleEmail(contact.firstName, contact.lastName);
 	orgContact.emailAddresses = [email];
-	orgContact.inviteStatus = faker.random.arrayElement(Object.values(ContactOrganizationInviteStatus));
+	orgContact.inviteStatus = faker.helpers.arrayElement(Object.values(ContactOrganizationInviteStatus));
 
 	const phone = faker.phone.phoneNumber();
 	orgContact.primaryEmail = email;

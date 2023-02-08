@@ -28,7 +28,7 @@ export const createRandomOrganizationSprint = async (
 				tenantId,
 				organizationId
 			});
-			let project = faker.random.arrayElement(projects);
+			let project = faker.helpers.arrayElement(projects);
 
 			const { id: projectId } = project;
 			const tasks = await dataSource.getRepository(Task).findBy({

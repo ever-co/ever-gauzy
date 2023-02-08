@@ -37,17 +37,17 @@ export const createDefaultOrganizationProjects = async (
 		const project = new OrganizationProject();
 		project.tags = [tag];
 		project.name = name;
-		project.organizationContact = faker.random.arrayElement(organizationContacts);
+		project.organizationContact = faker.helpers.arrayElement(organizationContacts);
 		project.organization = organization;
 		project.tenant = tenant;
-		project.budgetType = faker.random.arrayElement(
+		project.budgetType = faker.helpers.arrayElement(
 			Object.values(OrganizationProjectBudgetTypeEnum)
 		);
 		project.budget =
 			project.budgetType == OrganizationProjectBudgetTypeEnum.COST
 				? faker.datatype.number({ min: 500, max: 5000 })
 				: faker.datatype.number({ min: 40, max: 400 });
-		project.taskListType = faker.random.arrayElement(
+		project.taskListType = faker.helpers.arrayElement(
 			Object.values(TaskListTypeEnum)
 		);
 		// TODO: this seed creates default projects without tenantId.
@@ -100,7 +100,7 @@ export const createRandomOrganizationProjects = async (
 				tenantId,
 				organizationId
 			});
-			const organizationContact = faker.random.arrayElement(organizationContacts);
+			const organizationContact = faker.helpers.arrayElement(organizationContacts);
 
 			const projects: OrganizationProject[] = [];
 			for (let i = 0; i < projectsPerOrganization; i++) {
@@ -110,7 +110,7 @@ export const createRandomOrganizationProjects = async (
 				project.organizationContact = organizationContact;
 				project.organization = organization;
 				project.tenant = tenant;
-				project.budgetType = faker.random.arrayElement(
+				project.budgetType = faker.helpers.arrayElement(
 					Object.values(OrganizationProjectBudgetTypeEnum)
 				);
 				project.budget =

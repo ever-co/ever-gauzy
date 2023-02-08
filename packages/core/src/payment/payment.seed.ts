@@ -53,7 +53,7 @@ export const createDefaultPayment = async (
 			});
 			payment.note = faker.name.jobDescriptor();
 			payment.currency = organization.currency || env.defaultCurrency;
-			payment.paymentMethod = faker.random.arrayElement(
+			payment.paymentMethod = faker.helpers.arrayElement(
 				Object.keys(PaymentMethodEnum)
 			) as PaymentMethodEnum;
 			payment.overdue = faker.datatype.boolean();
@@ -65,10 +65,10 @@ export const createDefaultPayment = async (
 				.values()
 				.value();
 			payment.organizationContact = invoice.toContact;
-			payment.employeeId = faker.random.arrayElement(employees).id;
-			payment.recordedBy = faker.random.arrayElement(users);
+			payment.employeeId = faker.helpers.arrayElement(employees).id;
+			payment.recordedBy = faker.helpers.arrayElement(users);
 
-			const project = faker.random.arrayElement(projects);
+			const project = faker.helpers.arrayElement(projects);
 			if (project) {
 				payment.projectId = project.id;
 			}
@@ -137,7 +137,7 @@ export const createRandomPayment = async (
 				});
 				payment.note = faker.name.jobDescriptor();
 				payment.currency = organization.currency || env.defaultCurrency;
-				payment.paymentMethod = faker.random.arrayElement(
+				payment.paymentMethod = faker.helpers.arrayElement(
 					Object.keys(PaymentMethodEnum)
 				) as PaymentMethodEnum;
 				payment.overdue = faker.datatype.boolean();
@@ -149,10 +149,10 @@ export const createRandomPayment = async (
 					.values()
 					.value();
 				payment.organizationContact = invoice.toContact;
-				payment.employeeId = faker.random.arrayElement(tenantEmployees).id;
-				payment.recordedBy = faker.random.arrayElement(users);
+				payment.employeeId = faker.helpers.arrayElement(tenantEmployees).id;
+				payment.recordedBy = faker.helpers.arrayElement(users);
 
-				const project = faker.random.arrayElement(projects);
+				const project = faker.helpers.arrayElement(projects);
 				if (project) {
 					payment.projectId = project.id;
 				}

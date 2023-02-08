@@ -86,19 +86,19 @@ export const createDefaultOrganizations = async (
 		defaultOrganization.show_employees_count = true;
 		defaultOrganization.banner = faker.name.jobDescriptor();
 		defaultOrganization.skills = organizationSkills;
-		defaultOrganization.brandColor = faker.random.arrayElement([
+		defaultOrganization.brandColor = faker.helpers.arrayElement([
 			'#FF0000',
 			'#008000',
 			'#0000FF',
 			'#FFA500',
 			'#FFFF00'
 		]);
-		defaultOrganization.contact = faker.random.arrayElement(contacts);
-		defaultOrganization.timeZone = faker.random.arrayElement(
+		defaultOrganization.contact = faker.helpers.arrayElement(contacts);
+		defaultOrganization.timeZone = faker.helpers.arrayElement(
 			timezone.tz.names().filter((zone) => zone.includes('/'))
 		);
-		defaultOrganization.dateFormat = faker.random.arrayElement(DEFAULT_DATE_FORMATS);
-		defaultOrganization.defaultAlignmentType = faker.random.arrayElement(
+		defaultOrganization.dateFormat = faker.helpers.arrayElement(DEFAULT_DATE_FORMATS);
+		defaultOrganization.defaultAlignmentType = faker.helpers.arrayElement(
 			Object.keys(AlignmentOptions)
 		);
 		defaultOrganization.fiscalStartDate = moment(new Date())
@@ -111,7 +111,7 @@ export const createDefaultOrganizations = async (
 			.toDate();
 		defaultOrganization.futureDateAllowed = true;
 		defaultOrganization.inviteExpiryPeriod = faker.datatype.number(50);
-		defaultOrganization.numberFormat = faker.random.arrayElement([
+		defaultOrganization.numberFormat = faker.helpers.arrayElement([
 			'USD',
 			'BGN',
 			'ILS'
@@ -192,19 +192,19 @@ export const createRandomOrganizations = async (
 				);
 
 				organization.skills = organizationSkills;
-				organization.brandColor = faker.random.arrayElement([
+				organization.brandColor = faker.helpers.arrayElement([
 					'#FF0000',
 					'#008000',
 					'#0000FF',
 					'#FFA500',
 					'#FFFF00'
 				]);
-				organization.contact = faker.random.arrayElement(contacts);
-				organization.timeZone = faker.random.arrayElement(
+				organization.contact = faker.helpers.arrayElement(contacts);
+				organization.timeZone = faker.helpers.arrayElement(
 					timezone.tz.names().filter((zone) => zone.includes('/'))
 				);
-				organization.dateFormat = faker.random.arrayElement(DEFAULT_DATE_FORMATS);
-				organization.defaultAlignmentType = faker.random.arrayElement(
+				organization.dateFormat = faker.helpers.arrayElement(DEFAULT_DATE_FORMATS);
+				organization.defaultAlignmentType = faker.helpers.arrayElement(
 					Object.keys(AlignmentOptions)
 				);
 				organization.fiscalStartDate = moment(new Date())
@@ -217,7 +217,7 @@ export const createRandomOrganizations = async (
 					.toDate();
 				organization.futureDateAllowed = true;
 				organization.inviteExpiryPeriod = faker.datatype.number(50);
-				organization.numberFormat = faker.random.arrayElement([
+				organization.numberFormat = faker.helpers.arrayElement([
 					'USD',
 					'BGN',
 					'ILS'

@@ -82,7 +82,7 @@ export const createRandomProductType = async (
 				const productType = new ProductType();
 				const productTypeTranslation: ProductTypeTranslation[] = [];
 
-				productType.icon = faker.random.arrayElement(
+				productType.icon = faker.helpers.arrayElement(
 					Object.keys(ProductTypesIconsEnum)
 				);
 				productType.products = products;

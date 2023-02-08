@@ -106,7 +106,7 @@ const dataOperation = async (
 			.add(1, 'hours')
 			.toDate();
 		employeesAppointment.invitees = invitees;
-		employeesAppointment.agenda = faker.random.arrayElement(AGENDAS);
+		employeesAppointment.agenda = faker.helpers.arrayElement(AGENDAS);
 		employeesAppointment.tenant = tenant;
 		employeesAppointments.push(employeesAppointment);
 	}

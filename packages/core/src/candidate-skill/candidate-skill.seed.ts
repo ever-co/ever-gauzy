@@ -54,7 +54,7 @@ export const createRandomCandidateSkills = async (
 			const skills = DEFAULT_CANDIDATE_SKILLS.map((skill) => ({
 				name: skill.name,
 				candidateId: candidate.id,
-				organization: faker.random.arrayElement(organizations),
+				organization: faker.helpers.arrayElement(organizations),
 				tenant: tenant
 			}));
 			candidateSkillsMap.set(candidate, skills);

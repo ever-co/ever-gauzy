@@ -52,9 +52,9 @@ export const createRandomActivities = async (
 				i++
 			) {
 				const appName = appNames[i];
-				const project = faker.random.arrayElement(projects);
-				const task = faker.random.arrayElement(project.tasks);
-				const timeSlot = faker.random.arrayElement(employeeTimeSlots);
+				const project = faker.helpers.arrayElement(projects);
+				const task = faker.helpers.arrayElement(project.tasks);
+				const timeSlot = faker.helpers.arrayElement(employeeTimeSlots);
 
 				const activity = new Activity();
 				activity.organizationId = employee.organizationId;
@@ -86,9 +86,9 @@ export const createRandomActivities = async (
 					j < faker.datatype.number({ min: 5, max: 10 });
 					j++
 				) {
-					const project = faker.random.arrayElement(projects);
-					const task = faker.random.arrayElement(project.tasks);
-					const timeSlot = faker.random.arrayElement(
+					const project = faker.helpers.arrayElement(projects);
+					const task = faker.helpers.arrayElement(project.tasks);
+					const timeSlot = faker.helpers.arrayElement(
 						employeeTimeSlots
 					);
 

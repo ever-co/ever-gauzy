@@ -32,7 +32,7 @@ export const createDefaultTimeSheet = async (
 			const stoppedAt = moment(date).endOf('week').toDate();
 
 			for await (const employee of employees) {
-				const status = faker.random.arrayElement(
+				const status = faker.helpers.arrayElement(
 					Object.keys(TimesheetStatus)
 				);
 
@@ -47,7 +47,7 @@ export const createDefaultTimeSheet = async (
 					approvedAt = null;
 					submittedAt = faker.date.between(startedAt, new Date());
 				} else if (TimesheetStatus[status] === TimesheetStatus.APPROVED) {
-					isBilled = faker.random.arrayElement([true, false]);
+					isBilled = faker.helpers.arrayElement([true, false]);
 					approvedAt = faker.date.between(startedAt, new Date());
 					submittedAt = faker.date.between(startedAt, approvedAt);
 				}
@@ -133,7 +133,7 @@ export const createRandomTimesheet = async (
 					.shuffle()
 					.take(faker.datatype.number(employees.length))
 					.each((employee) => {
-						const status = faker.random.arrayElement(
+						const status = faker.helpers.arrayElement(
 							Object.keys(TimesheetStatus)
 						);
 
@@ -152,7 +152,7 @@ export const createRandomTimesheet = async (
 						} else if (
 							TimesheetStatus[status] === TimesheetStatus.APPROVED
 						) {
-							isBilled = faker.random.arrayElement([true, false]);
+							isBilled = faker.helpers.arrayElement([true, false]);
 							approvedAt = faker.date.between(startedAt, new Date());
 							submittedAt = faker.date.between(startedAt, approvedAt);
 						}

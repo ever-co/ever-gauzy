@@ -37,7 +37,7 @@ export const createDefaultEmployees = async (
 				.endWork
 		);
 		// TODO: check below value as its correct or not, and into frontend too
-		employee.payPeriod = faker.random.arrayElement(
+		employee.payPeriod = faker.helpers.arrayElement(
 			Object.keys(PayPeriodEnum)
 		);
 		employee.billRateValue = faker.datatype.number({ min: 15, max: 40 });
@@ -69,7 +69,7 @@ export const createRandomEmployees = async (
 				employee.isActive = true;
 				employee.endWork = null;
 				employee.startedWorkOn = new Date(moment(faker.date.past()).format('YYYY-MM-DD hh:mm:ss'));
-				employee.payPeriod = faker.random.arrayElement(
+				employee.payPeriod = faker.helpers.arrayElement(
 					Object.keys(PayPeriodEnum)
 				);
 				employee.billRateValue = faker.datatype.number({ min: 15, max: 40 });

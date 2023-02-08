@@ -46,7 +46,7 @@ export const createRandomCandidateFeedbacks = async (
 		const organizations = await dataSource.manager.findBy(Organization, {
 			tenantId
 		});
-		const organization = faker.random.arrayElement(organizations);
+		const organization = faker.helpers.arrayElement(organizations);
 		const candidates = tenantCandidatesMap.get(tenant);
 		candidateFeedbacksMap = await dataOperation(
 			dataSource,
@@ -85,7 +85,7 @@ const dataOperation = async (
 		const candidateInterviews = await dataSource.manager.findBy(CandidateInterview, {
 			candidateId
 		});
-		const interview = faker.random.arrayElement(candidateInterviews);
+		const interview = faker.helpers.arrayElement(candidateInterviews);
 		const feedbacks = DEFAULT_CANDIDATE_FEEDBACKS.map((feedback) => ({
 			description: feedback.description,
 			rating: feedback.rating,
@@ -93,7 +93,7 @@ const dataOperation = async (
 			interviewId: interview.id,
 			tenant: tenant,
 			organization: organization,
-			status: faker.random.arrayElement(Object.keys(CandidateStatusEnum))
+			status: faker.helpers.arrayElement(Object.keys(CandidateStatusEnum))
 		}));
 		candidateFeedbacksMap.set(candidate, feedbacks);
 		candidateFeedbacks = [...candidateFeedbacks, ...feedbacks];

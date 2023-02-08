@@ -28,14 +28,14 @@ export const createDefaultGoals = async (
 			goal.level = goalData.level;
 
 			if (goal.level === GoalLevelEnum.EMPLOYEE) {
-				goal.ownerEmployee = faker.random.arrayElement(employees);
+				goal.ownerEmployee = faker.helpers.arrayElement(employees);
 			} else if (goal.level === GoalLevelEnum.TEAM) {
-				goal.ownerTeam = faker.random.arrayElement(orgTeams);
+				goal.ownerTeam = faker.helpers.arrayElement(orgTeams);
 			}
 
-			goal.lead = faker.random.arrayElement(employees);
+			goal.lead = faker.helpers.arrayElement(employees);
 			goal.description = faker.name.jobDescriptor();
-			goal.deadline = faker.random.arrayElement(goalTimeFrames).name;
+			goal.deadline = faker.helpers.arrayElement(goalTimeFrames).name;
 			goal.tenant = tenant;
 			goal.organization = organization;
 			defaultGoals.push(goal);
@@ -127,17 +127,17 @@ export const createRandomGoal = async (
 			const goal = new Goal();
 			goal.name = faker.name.jobTitle();
 			goal.progress = 0;
-			goal.level = faker.random.arrayElement(Object.values(GoalLevelEnum));
+			goal.level = faker.helpers.arrayElement(Object.values(GoalLevelEnum));
 
 			if (goal.level === GoalLevelEnum.EMPLOYEE) {
-				goal.ownerEmployee = faker.random.arrayElement(tenantEmployees);
+				goal.ownerEmployee = faker.helpers.arrayElement(tenantEmployees);
 			} else if (goal.level === GoalLevelEnum.TEAM) {
-				goal.ownerTeam = faker.random.arrayElement(organizationTeams);
+				goal.ownerTeam = faker.helpers.arrayElement(organizationTeams);
 			}
 
-			goal.lead = faker.random.arrayElement(tenantEmployees);
+			goal.lead = faker.helpers.arrayElement(tenantEmployees);
 			goal.description = faker.name.jobDescriptor();
-			goal.deadline = faker.random.arrayElement(goalTimeFrames).name;
+			goal.deadline = faker.helpers.arrayElement(goalTimeFrames).name;
 			goal.tenant = tenant;
 			goal.organization = organization;
 			goals.push(goal);
