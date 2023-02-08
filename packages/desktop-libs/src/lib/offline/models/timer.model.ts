@@ -14,6 +14,8 @@ export class Timer implements TimerTO, Serializable<TimerTO> {
 	private _stoppedAt: Date;
 	private _startedAt: Date;
 	private _synced: boolean;
+	private _isStartedOffline: boolean;
+	private _isStoppedOffline: boolean;
 
 	constructor(timer: TimerTO) {
 		this._id = timer.id;
@@ -28,6 +30,22 @@ export class Timer implements TimerTO, Serializable<TimerTO> {
 		this._stoppedAt = timer.stoppedAt;
 		this._startedAt = timer.startedAt;
 		this._synced = timer.synced;
+		this._isStartedOffline = timer.isStartedOffline;
+		this._isStoppedOffline = timer.isStoppedOffline;
+	}
+
+	public get isStoppedOffline(): boolean {
+		return this._isStoppedOffline;
+	}
+	public set isStoppedOffline(value: boolean) {
+		this._isStoppedOffline = value;
+	}
+
+	public get isStartedOffline(): boolean {
+		return this._isStartedOffline;
+	}
+	public set isStartedOffline(value: boolean) {
+		this._isStartedOffline = value;
 	}
 
 	public get synced(): boolean {
@@ -119,7 +137,9 @@ export class Timer implements TimerTO, Serializable<TimerTO> {
 			taskId: this._taskId,
 			timelogId: this._timelogId,
 			timesheetId: this._timesheetId,
-			timeslotId: this._timeslotId
+			timeslotId: this._timeslotId,
+			isStartedOffline: this._isStartedOffline,
+			isStoppedOffline: this._isStoppedOffline
 		};
 	}
 }

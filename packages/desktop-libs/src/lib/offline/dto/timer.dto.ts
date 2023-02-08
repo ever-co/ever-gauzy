@@ -11,6 +11,8 @@ export interface TimerTO {
 	startedAt?: Date;
 	stoppedAt?: Date;
 	synced?: boolean;
+	isStartedOffline?: boolean;
+	isStoppedOffline?: boolean;
 }
 
 export const TABLE_NAME_TIMERS: string = 'timers';
