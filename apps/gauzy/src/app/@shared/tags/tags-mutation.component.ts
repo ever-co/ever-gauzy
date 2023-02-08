@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, Input, OnInit } from '@angular/core';
 import { NbDialogRef, NbThemeService } from '@nebular/theme';
 import { FormGroup, FormBuilder, Validators } from '@angular/forms';
 import { firstValueFrom } from 'rxjs';
@@ -14,9 +14,6 @@ import { NotesWithTagsComponent } from '../table-components';
 })
 export class TagsMutationComponent extends NotesWithTagsComponent implements OnInit {
 
-	public tag: ITag;
-	private isTenantLevelChecked = false;
-
 	/**
 	 * Tag mutation form
 	 */
@@ -25,9 +22,21 @@ export class TagsMutationComponent extends NotesWithTagsComponent implements OnI
 		return fb.group({
 			name: [null, Validators.required],
 			color: [null, Validators.required],
-			isTenantLevel: [],
+			isTenantLevel: [false],
 			description: []
 		});
+	}
+
+	/*
+	* Getter & Setter for tag to edit
+	*/
+	_tag: ITag;
+	get tag(): ITag {
+		return this._tag;
+	}
+	@Input() public set tag(tag: ITag) {
+		this._tag = tag;
+		this._patchFormValue();
 	}
 
 	/**
@@ -48,91 +57,76 @@ export class TagsMutationComponent extends NotesWithTagsComponent implements OnI
 		super(themeService, translateService);
 	}
 
-	ngOnInit() {
-		this.initializeForm();
-	}
+	ngOnInit(): void { }
 
 	async addTag() {
+		if (!this.store.selectedOrganization) {
+			return;
+		}
 		const { tenantId } = this.store.user;
 		const { id: organizationId } = this.store.selectedOrganization;
+		const { name, description, color, isTenantLevel } = this.form.getRawValue();
 
-		const { name, description, color } = this.form.getRawValue();
-
-		if (this.isTenantLevelChecked) {
-			const tagWithTenantLevel = await firstValueFrom(this.tagsService.create(
-				Object.assign({
-					name,
-					description,
-					color,
-					tenantId,
-					organizationId: null
-				})
-			));
-			this.closeDialog(tagWithTenantLevel);
-		} else {
-			const tagWithoutTenantLevel = await firstValueFrom(this.tagsService.create(
-				Object.assign({
-					name,
-					description,
-					color,
-					tenantId,
-					organizationId
-				})
-			));
-			this.closeDialog(tagWithoutTenantLevel);
-		}
+		const tag = await firstValueFrom(
+			this.tagsService.create({
+				name,
+				description,
+				color,
+				tenantId,
+				...(isTenantLevel
+					? {
+						organizationId: null
+					}
+					: {
+						organizationId
+					})
+			})
+		);
+		this.closeDialog(tag);
 	}
 
 	async editTag() {
+		if (!this.store.selectedOrganization) {
+			return;
+		}
+
 		const { tenantId } = this.store.user;
 		const { id: organizationId } = this.store.selectedOrganization;
 
-		const { name, description, color } = this.form.getRawValue();
+		const { name, description, color, isTenantLevel } = this.form.getRawValue();
 
-		if (this.isTenantLevelChecked) {
-			const tagWithTenantLevel = await firstValueFrom(this.tagsService.update(
-				this.tag.id,
-				{
-					name,
-					description,
-					color,
-					organizationId: null,
-					tenantId
-				}
-			));
-			this.closeDialog(tagWithTenantLevel);
-		} else {
-			const tagWithoutTenantLevel = await firstValueFrom(this.tagsService.update(
-				this.tag.id,
-				{
-					name,
-					description,
-					color,
-					organizationId,
-					tenantId
-				}
-			));
-			this.closeDialog(tagWithoutTenantLevel);
-		}
+		const tag = await firstValueFrom(
+			this.tagsService.update(this.tag.id, {
+				name,
+				description,
+				color,
+				tenantId,
+				...(isTenantLevel
+					? {
+						organizationId: null
+					}
+					: {
+						organizationId
+					})
+			})
+		);
+		this.closeDialog(tag);
 	}
 
 	async closeDialog(tag?: ITag) {
 		this.dialogRef.close(tag);
 	}
 
-	initializeForm() {
+	private _patchFormValue() {
 		if (this.tag) {
+			const { name, color, description, organizationId } = this.tag;
 			this.form.patchValue({
-				name: this.tag.name,
-				color: this.tag.color,
-				description: this.tag.description,
-				isTenantLevel: this.tag.organizationId ? false : true
+				name,
+				color,
+				description,
+				isTenantLevel: organizationId ? false : true
 			});
 		}
-	}
-
-	isChecked(checked: boolean) {
-		this.isTenantLevelChecked = checked;
 	}
 
 	/**
