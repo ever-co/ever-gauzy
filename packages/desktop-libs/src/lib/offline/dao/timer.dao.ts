@@ -51,7 +51,7 @@ export class TimerDAO implements DAO<TimerTO> {
 		return await this._provider
 			.connection<TimerTO>(TABLE_NAME_TIMERS)
 			.where('employeeId', user.employeeId)
-			.andWhere('synced', false)
+			.where((qb) => qb.andWhere('synced', false).orWhereNull('timelogId'))
 			.orderBy('id', 'asc');
 	}
 }
