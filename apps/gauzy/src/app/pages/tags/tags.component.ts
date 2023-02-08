@@ -5,6 +5,7 @@ import {
 	ViewChild,
 	AfterViewInit
 } from '@angular/core';
+import { ActivatedRoute } from '@angular/router';
 import { NbDialogService } from '@nebular/theme';
 import { LocalDataSource, Ng2SmartTableComponent } from 'ng2-smart-table';
 import { debounceTime, filter, tap } from 'rxjs/operators';
@@ -26,7 +27,6 @@ import {
 	IPaginationBase,
 	PaginationFilterBaseComponent
 } from '../../@shared/pagination/pagination-filter-base.component';
-import { ActivatedRoute } from '@angular/router';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -208,8 +208,7 @@ export class TagsComponent extends PaginationFilterBaseComponent
 
 			if (result) {
 				const { id, name } = this.selectedTag;
-				await this.tagsService
-					.delete(id)
+				await firstValueFrom(this.tagsService.delete(id))
 					.then(() => {
 						this.toastrService.success(
 							'TAGS_PAGE.TAGS_DELETE_TAG',

@@ -1,7 +1,8 @@
 import { Component, OnInit } from '@angular/core';
 import { NbDialogRef, NbThemeService } from '@nebular/theme';
 import { FormGroup, FormBuilder, Validators } from '@angular/forms';
-import { ITag, ITagCreateInput, ITagUpdateInput } from '@gauzy/contracts';
+import { firstValueFrom } from 'rxjs';
+import { ITag } from '@gauzy/contracts';
 import { TranslateService } from '@ngx-translate/core';
 import { Store, TagsService } from '../../@core/services';
 import { NotesWithTagsComponent } from '../table-components';
@@ -58,7 +59,7 @@ export class TagsMutationComponent extends NotesWithTagsComponent implements OnI
 		const { name, description, color } = this.form.getRawValue();
 
 		if (this.isTenantLevelChecked) {
-			const tagWithTenantLevel = await this.tagsService.create(
+			const tagWithTenantLevel = await firstValueFrom(this.tagsService.create(
 				Object.assign({
 					name,
 					description,
@@ -66,10 +67,10 @@ export class TagsMutationComponent extends NotesWithTagsComponent implements OnI
 					tenantId,
 					organizationId: null
 				})
-			);
+			));
 			this.closeDialog(tagWithTenantLevel);
 		} else {
-			const tagWithoutTenantLevel = await this.tagsService.create(
+			const tagWithoutTenantLevel = await firstValueFrom(this.tagsService.create(
 				Object.assign({
 					name,
 					description,
@@ -77,7 +78,7 @@ export class TagsMutationComponent extends NotesWithTagsComponent implements OnI
 					tenantId,
 					organizationId
 				})
-			);
+			));
 			this.closeDialog(tagWithoutTenantLevel);
 		}
 	}
@@ -89,7 +90,7 @@ export class TagsMutationComponent extends NotesWithTagsComponent implements OnI
 		const { name, description, color } = this.form.getRawValue();
 
 		if (this.isTenantLevelChecked) {
-			const tagWithTenantLevel = await this.tagsService.update(
+			const tagWithTenantLevel = await firstValueFrom(this.tagsService.update(
 				this.tag.id,
 				{
 					name,
@@ -98,10 +99,10 @@ export class TagsMutationComponent extends NotesWithTagsComponent implements OnI
 					organizationId: null,
 					tenantId
 				}
-			);
+			));
 			this.closeDialog(tagWithTenantLevel);
 		} else {
-			const tagWithoutTenantLevel = await this.tagsService.update(
+			const tagWithoutTenantLevel = await firstValueFrom(this.tagsService.update(
 				this.tag.id,
 				{
 					name,
@@ -110,12 +111,12 @@ export class TagsMutationComponent extends NotesWithTagsComponent implements OnI
 					organizationId,
 					tenantId
 				}
-			);
+			));
 			this.closeDialog(tagWithoutTenantLevel);
 		}
 	}
 
-	async closeDialog(tag?: ITagCreateInput | ITagUpdateInput) {
+	async closeDialog(tag?: ITag) {
 		this.dialogRef.close(tag);
 	}
 

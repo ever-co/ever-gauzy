@@ -1,21 +1,20 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
-import { IPagination, ITag, ITagCreateInput, ITagFindInput, ITagUpdateInput } from '@gauzy/contracts';
+import { IPagination, ITag, ITagFindInput } from '@gauzy/contracts';
 import { toParams } from '@gauzy/common-angular';
 import { API_PREFIX } from '../constants/app.constants';
+import { CrudService } from './crud/crud.service';
 
 @Injectable()
-export class TagsService {
+export class TagsService extends CrudService<ITag> {
+
+	static readonly API_URL = `${API_PREFIX}/tags`;
 
 	constructor(
-		private readonly http: HttpClient
-	) { }
-
-	create(tag: ITagCreateInput): Promise<ITag> {
-		return firstValueFrom(
-			this.http.post<ITagCreateInput>(`${API_PREFIX}/tags`, tag)
-		);
+		protected readonly http: HttpClient
+	) {
+		super(http, TagsService.API_URL);
 	}
 
 	/**
@@ -52,18 +51,6 @@ export class TagsService {
 			this.http.get<IPagination<ITag>>(`${API_PREFIX}/tags/level`, {
 				params: toParams({ ...where, relations })
 			})
-		);
-	}
-
-	delete(id: ITag['id']): Promise<any> {
-		return firstValueFrom(
-			this.http.delete(`${API_PREFIX}/tags/${id}`)
-		);
-	}
-
-	update(id: ITag['id'], tag: ITagUpdateInput): Promise<ITagUpdateInput> {
-		return firstValueFrom(
-			this.http.put<ITagUpdateInput>(`${API_PREFIX}/tags/${id}`, tag)
 		);
 	}
 }
