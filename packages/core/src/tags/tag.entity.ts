@@ -63,25 +63,25 @@ import {
 @Entity('tag')
 export class Tag extends TenantOrganizationBaseEntity implements ITag {
 
-	@ApiProperty({ type: () => String })
+	@ApiProperty({ type: () => String, required: true })
 	@IsNotEmpty()
 	@IsString()
 	@Column()
 	name: string;
 
-	@ApiProperty({ type: () => String })
+	@ApiProperty({ type: () => String, required: true })
 	@IsNotEmpty()
 	@IsString()
 	@Column()
 	color: string;
 
-	@ApiPropertyOptional({ type: () => String })
+	@ApiPropertyOptional({ type: () => String, required: false })
 	@IsOptional()
 	@IsString()
 	@Column({ nullable: true })
 	description?: string;
 
-	@ApiProperty({ type: () => Boolean, default: false })
+	@ApiPropertyOptional({ type: () => Boolean, default: false, required: false })
 	@Column({ default: false })
 	isSystem?: boolean;
 
