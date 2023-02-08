@@ -350,7 +350,7 @@ export class TimeTrackerService {
 			organizationContactId: values.organizationContactId,
 			...(values.startedAt ? { startedAt: values.startedAt } : {}),
 		};
-		log.info(`Toggle Timer Request: ${moment().format()}`, body);
+		log.info(`Toggle Start Timer Request: ${moment().format()}`, body);
 		return firstValueFrom(
 			this.http.post(
 				`${values.apiHost}/api/timesheet/timer/start`,
@@ -380,6 +380,7 @@ export class TimeTrackerService {
 			...(values.startedAt ? { startedAt: values.startedAt } : {}),
 			...(values.stoppedAt ? { stoppedAt: values.stoppedAt } : {}),
 		};
+		log.info(`Toggle Stop Timer Request: ${moment().format()}`, body);
 		return firstValueFrom(
 			this.http.post(
 				`${values.apiHost}/api/timesheet/timer/stop`,
