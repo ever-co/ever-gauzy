@@ -31,7 +31,7 @@ export const createRandomTenants = async (
 	const randomTenants: Tenant[] = [];
 	for (let i = 0; i < noOfTenants; i++) {
 		const tenant = new Tenant();
-		tenant.name = faker.company.companyName();
+		tenant.name = faker.company.name();
 		randomTenants.push(tenant);
 	}
 

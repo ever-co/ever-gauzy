@@ -44,7 +44,7 @@ export const createRandomProductOption = async (
 						for (let i = 0; i <= numberOfOptionPerProduct; i++) {
 							const productOption = new ProductOption();
 
-							productOption.name = faker.company.companyName();
+							productOption.name = faker.company.name();
 							productOption.code = product.code;
 							productOption.tenant = tenant;
 							productOption.organization = tenantOrg;
@@ -91,7 +91,7 @@ export const createRandomProductOptionGroups = async (
 				for (const product of products) {
 					for (let i = 0; i <= numberOfOptionGroupPerProduct; i++) {
 						const productOptionGroup = new ProductOptionGroup();
-						productOptionGroup.name = faker.company.companyName();
+						productOptionGroup.name = faker.company.name();
 						productOptionGroup.tenant = tenant;
 						productOptionGroup.organization = tenantOrg;
 						productOptionGroup.product = product;

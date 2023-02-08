@@ -54,11 +54,11 @@ const applyRandomProperties = (
     countries: ICountry[]
 ) => {
     const merchant = new Merchant()
-    merchant.name = faker.company.companyName();
+    merchant.name = faker.company.name();
     merchant.code = faker.random.alphaNumeric();
     merchant.email = faker.internet.exampleEmail(merchant.name);
     merchant.description = faker.lorem.words();
-    merchant.phone = faker.phone.phoneNumber();
+    merchant.phone = faker.phone.number();
     merchant.organization = organization;
     merchant.tenant = tenant;
 
@@ -78,7 +78,7 @@ const applyRandomProperties = (
     contact.tenant = tenant;
 
     const logo = new ImageAsset();
-    logo.name = faker.name.title();
+    logo.name = faker.company.name();
     logo.url = faker.image.imageUrl();
     logo.organization = organization;
     logo.tenant = tenant;

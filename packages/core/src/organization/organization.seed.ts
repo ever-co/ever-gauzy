@@ -116,7 +116,7 @@ export const createDefaultOrganizations = async (
 			'BGN',
 			'ILS'
 		]);
-		defaultOrganization.officialName = faker.company.companyName();
+		defaultOrganization.officialName = faker.company.name();
 		defaultOrganization.separateInvoiceItemTaxAndDiscount = faker.datatype.boolean();
 		defaultOrganization.startWeekOn = WeekDaysEnum.MONDAY;
 		defaultOrganization.tenant = tenant;
@@ -155,7 +155,7 @@ export const createRandomOrganizations = async (
 					.values()
 					.value();
 				const organization: IOrganization = new Organization();
-				const companyName = faker.company.companyName();
+				const companyName = faker.company.name();
 
 				const logoAbbreviation = _extractLogoAbbreviation(companyName);
 
@@ -222,7 +222,7 @@ export const createRandomOrganizations = async (
 					'BGN',
 					'ILS'
 				]);
-				organization.officialName = faker.company.companyName();
+				organization.officialName = faker.company.name();
 				organization.separateInvoiceItemTaxAndDiscount = faker.datatype.boolean();
 				organization.startWeekOn = WeekDaysEnum.MONDAY;
 				organization.tenant = tenant;

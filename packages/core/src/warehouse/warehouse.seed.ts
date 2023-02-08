@@ -81,7 +81,7 @@ const applyRandomProperties = (
     countries: ICountry[]
 ) => {
     const warehouse = new Warehouse()
-    warehouse.name = faker.company.companyName();
+    warehouse.name = faker.company.name();
     warehouse.code = faker.datatype.uuid();
     warehouse.email = faker.internet.exampleEmail(warehouse.name);
     warehouse.description = faker.lorem.words();
@@ -105,7 +105,7 @@ const applyRandomProperties = (
     contact.tenant = tenant;
 
     const logo = new ImageAsset();
-    logo.name = faker.name.title();
+    logo.name = faker.company.name();
     logo.url = faker.image.imageUrl();
     logo.organization = organization;
     logo.tenant = tenant;

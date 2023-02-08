@@ -23,7 +23,7 @@ export const createDefaultEquipmentSharing = async (
 	for (let i = 0; i < noOfEquipmentSharingPerTenant; i++) {
 		for await (const equipment of equipments) {
 			const sharing = new EquipmentSharing();
-			sharing.name = faker.company.companyName();
+			sharing.name = faker.company.name();
 			sharing.equipment = equipment;
 			sharing.shareRequestDay = faker.date.recent(30);
 			sharing.shareStartDay = faker.date.future(0.5);
@@ -67,7 +67,7 @@ export const createRandomEquipmentSharing = async (
 				for await (const equipment of equipments) {
 
 					const sharing = new EquipmentSharing();
-					sharing.name = faker.company.companyName();
+					sharing.name = faker.company.name();
 					sharing.equipment = equipment;
 					sharing.shareRequestDay = faker.date.recent(30);
 					sharing.shareStartDay = faker.date.future(0.5);

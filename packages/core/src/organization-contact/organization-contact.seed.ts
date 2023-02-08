@@ -107,7 +107,7 @@ const generateOrganizationContact = async (
 	orgContact.emailAddresses = [email];
 	orgContact.inviteStatus = faker.helpers.arrayElement(Object.values(ContactOrganizationInviteStatus));
 
-	const phone = faker.phone.phoneNumber();
+	const phone = faker.phone.number();
 	orgContact.primaryEmail = email;
 	orgContact.primaryPhone = phone;
 	orgContact.imageUrl = getDummyImage(330, 300, (orgContact.name || faker.name.firstName()).charAt(0).toUpperCase());

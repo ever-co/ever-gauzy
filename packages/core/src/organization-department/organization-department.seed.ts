@@ -13,7 +13,7 @@ export const createDefaultOrganizationDepartments = async (
 	const tag = dataSource.getRepository(Tag).create({
 		name: 'API',
 		description: '',
-		color: faker.commerce.color()
+		color: faker.color.human()
 	});
 	const departments: OrganizationDepartment[] = [];
 	for (const organization of organizations) {

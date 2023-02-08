@@ -386,9 +386,8 @@ const generateRandomUser = async (
 	role: IRole,
 	tenant: ITenant
 ): Promise<IUser> => {
-	const gender = faker.datatype.number(1);
-	const firstName = faker.name.firstName(gender);
-	const lastName = faker.name.lastName(gender);
+	const firstName = faker.name.firstName();
+	const lastName = faker.name.lastName();
 	const username = faker.internet.userName(firstName, lastName);
 	const email = faker.internet.exampleEmail(firstName, lastName);
 	const avatar = faker.image.avatar();

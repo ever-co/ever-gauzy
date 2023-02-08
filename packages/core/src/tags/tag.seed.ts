@@ -16,7 +16,7 @@ export const createDefaultTags = async (
 				const orgTags = new Tag();
 				orgTags.name = name;
 				orgTags.description = '';
-				orgTags.color = faker.commerce.color();
+				orgTags.color = faker.color.human();
 				if (orgTags.color === 'white') {
 					orgTags.color = 'red';
 				}
@@ -36,7 +36,7 @@ export const createTags = async (dataSource: DataSource): Promise<Tag[]> => {
 		const tag = new Tag();
 		tag.name = name;
 		tag.description = '';
-		tag.color = faker.commerce.color();
+		tag.color = faker.color.human();
 		if (tag.color === 'white') {
 			tag.color = 'red';
 		}
@@ -69,7 +69,7 @@ export const createRandomOrganizationTags = async (
 				const orgTags = new Tag();
 				orgTags.name = name;
 				orgTags.description = '';
-				orgTags.color = faker.commerce.color();
+				orgTags.color = faker.color.human();
 				orgTags.organization = org;
 				orgTags.tenant = tenant;
 				if (orgTags.color === 'white') {

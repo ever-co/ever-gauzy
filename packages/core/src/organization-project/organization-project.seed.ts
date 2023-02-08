@@ -24,7 +24,7 @@ export const createDefaultOrganizationProjects = async (
 	const tag = await dataSource.getRepository(Tag).save({
 		name: 'Web',
 		description: '',
-		color: faker.commerce.color()
+		color: faker.color.human()
 	});
 
 	const projects: IOrganizationProject[] = [];
@@ -106,7 +106,7 @@ export const createRandomOrganizationProjects = async (
 			for (let i = 0; i < projectsPerOrganization; i++) {
 				const project = new OrganizationProject();
 				project.tags = [tags[Math.floor(Math.random() * tags.length)]];
-				project.name = faker.company.companyName();
+				project.name = faker.company.name();
 				project.organizationContact = organizationContact;
 				project.organization = organization;
 				project.tenant = tenant;

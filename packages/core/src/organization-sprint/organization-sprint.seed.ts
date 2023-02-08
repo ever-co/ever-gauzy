@@ -37,7 +37,7 @@ export const createRandomOrganizationSprint = async (
 			for (let i = 0; i <= faker.datatype.number(10); i++) {
 				const sprint = new OrganizationSprint();
 
-				sprint.name = faker.company.companyName();
+				sprint.name = faker.company.name();
 				sprint.projectId = project.id;
 				sprint.length = faker.datatype.number({ min: 1, max: 9 });
 				sprint.startDate = faker.date.past();

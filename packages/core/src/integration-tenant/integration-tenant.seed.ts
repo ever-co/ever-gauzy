@@ -22,7 +22,7 @@ export const createRandomIntegrationTenant = async (
 		});
 		const integrationTenant = new IntegrationTenant();
 		//todo:change name with some real values;
-		integrationTenant.name = faker.company.companyName();
+		integrationTenant.name = faker.company.name();
 		integrationTenant.entitySettings = [];
 		integrationTenant.tenant = tenant;
 		integrationTenant.organization = faker.helpers.arrayElement(organizations);
