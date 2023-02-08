@@ -2726,6 +2726,11 @@
   resolved "https://registry.yarnpkg.com/@ever-co/faker/-/faker-6.0.0-alpha.5.tgz#76f2f4bbd189f9c699eaa870336ab2d31a3bb181"
   integrity sha512-hzhX8SfKZT9Bd94Y+A77JHKX0ynEVes/efnUEgt+ywOQa0C+9tJfsuWpXe1W8Rax5Il6kUd4ZvGHC0K8eymkiQ==
 
+"@faker-js/faker@^7.6.0":
+  version "7.6.0"
+  resolved "https://registry.yarnpkg.com/@faker-js/faker/-/faker-7.6.0.tgz#9ea331766084288634a9247fcd8b84f16ff4ba07"
+  integrity sha512-XK6BTq1NDMo9Xqw/YkYyGjSsg44fbNwYRx7QK2CuoQgyy+f1rrTDHoExVM5PsyXCtfl2vs2vVJ0MN0yN6LppRw==
+
 "@fastify/accepts@^3.0.0":
   version "3.0.0"
   resolved "https://registry.yarnpkg.com/@fastify/accepts/-/accepts-3.0.0.tgz#9e2cc101d61b89593941c0b8b13abced72d2b30e"
