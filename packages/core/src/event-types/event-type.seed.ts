@@ -1,6 +1,6 @@
 import { DataSource } from 'typeorm';
 import { IEmployee, IOrganization, ITenant } from '@gauzy/contracts';
-import { faker } from '@ever-co/faker';
+import { faker } from '@faker-js/faker';
 import { EventType, Tag } from './../core/entities/internal';
 
 export const createRandomEventType = async (

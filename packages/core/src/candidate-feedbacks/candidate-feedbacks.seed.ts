@@ -1,6 +1,6 @@
 import { DataSource } from 'typeorm';
 import { ICandidate, CandidateStatusEnum, ICandidateFeedback, IOrganization, ITenant } from '@gauzy/contracts';
-import { faker } from '@ever-co/faker';
+import { faker } from '@faker-js/faker';
 import { DEFAULT_CANDIDATE_FEEDBACKS } from './default-candidate-feedbacks';
 import { CandidateFeedback, CandidateInterview, Organization } from './../core/entities/internal';
 

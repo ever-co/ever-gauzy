@@ -1,6 +1,6 @@
 import { environment as env } from '@gauzy/config';
 import { Injectable } from '@nestjs/common';
-import { faker } from '@ever-co/faker';
+import { faker } from '@faker-js/faker';
 import { GauzyAIService } from '@gauzy/integration-ai';
 import {
 	IApplyJobPostInput,
@@ -26,7 +26,7 @@ export class EmployeeJobPostService {
 		private readonly employeeService: EmployeeService,
 		private readonly gauzyAIService: GauzyAIService,
 		private readonly countryService: CountryService
-	) {}
+	) { }
 
 	/**
 	 * Updates job visibility
@@ -125,7 +125,7 @@ export class EmployeeJobPostService {
 		page = 0,
 		limit = 10
 	): Promise<IPagination<IEmployeeJobPost>> {
-		const { items : countries = [] as ICountry[] } = await this.countryService.findAll();
+		const { items: countries = [] as ICountry[] } = await this.countryService.findAll();
 
 		const employeesJobs: EmployeeJobPost[] = [];
 		for (let i = 0; i < limit; i++) {

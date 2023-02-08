@@ -1,6 +1,6 @@
 import { DataSource } from 'typeorm';
 import { Invoice } from './invoice.entity';
-import { faker } from '@ever-co/faker';
+import { faker } from '@faker-js/faker';
 import * as moment from 'moment';
 import { chain } from 'underscore';
 import {
@@ -99,16 +99,16 @@ const generateInvoice = async (
 			faker.date.past(0.3)
 		)
 	)
-	.startOf('day')
-	.toDate();
+		.startOf('day')
+		.toDate();
 	invoice.dueDate = moment(
 		faker.date.between(
 			new Date(),
 			faker.date.future(0.3)
 		)
 	)
-	.startOf('day')
-	.toDate();
+		.startOf('day')
+		.toDate();
 
 	if (organizationContacts.length) {
 		invoice.organizationContactId = faker.random.arrayElement(organizationContacts).id;

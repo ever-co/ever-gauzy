@@ -2,7 +2,7 @@ import { DataSource } from 'typeorm';
 import { IOrganization } from '@gauzy/contracts';
 import { ProductCategory } from './product-category.entity';
 import * as seed from './product-category.seed.json';
-import { faker } from '@ever-co/faker';
+import { faker } from '@faker-js/faker';
 import { ProductCategoryTranslation } from './product-category-translation.entity';
 
 export const createDefaultProductCategories = async (

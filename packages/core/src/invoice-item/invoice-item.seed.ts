@@ -1,6 +1,6 @@
 import { DataSource } from 'typeorm';
 import { InvoiceItem } from './invoice-item.entity';
-import { faker } from '@ever-co/faker';
+import { faker } from '@faker-js/faker';
 import {
 	IEmployee,
 	IExpense,

@@ -1,5 +1,5 @@
 import { DataSource } from 'typeorm';
-import { faker } from '@ever-co/faker';
+import { faker } from '@faker-js/faker';
 import {
 	IOrganization,
 	IEmployee,
@@ -63,8 +63,8 @@ export const createDefaultIncomes = async (
 							moment().add(10, 'days').calendar()
 						)
 					)
-					.startOf('day')
-					.toDate();
+						.startOf('day')
+						.toDate();
 
 					const payload = {
 						name: `Client ${seedIncome.clientName}`,
@@ -152,8 +152,8 @@ export const createRandomIncomes = async (
 							moment().add(10, 'days').calendar()
 						)
 					)
-					.startOf('day')
-					.toDate();
+						.startOf('day')
+						.toDate();
 					income.notes = notes[currentIndex];
 					income.tags = chain(tags)
 						.shuffle()

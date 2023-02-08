@@ -1,5 +1,5 @@
 import { DataSource } from 'typeorm';
-import { faker } from '@ever-co/faker';
+import { faker } from '@faker-js/faker';
 import * as moment from 'moment';
 import { AvailabilitySlotType, IEmployee, IOrganization, ITenant } from '@gauzy/contracts';
 import { AvailabilitySlot } from './availability-slots.entity';

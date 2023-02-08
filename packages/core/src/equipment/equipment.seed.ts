@@ -1,5 +1,5 @@
 import { DataSource } from 'typeorm';
-import { faker } from '@ever-co/faker';
+import { faker } from '@faker-js/faker';
 import { IOrganization, ITenant } from '@gauzy/contracts';
 import { environment as env } from '@gauzy/config';
 import { DEFAULT_RANDOM_EQUIPMENTS } from './default-equipments';

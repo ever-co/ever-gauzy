@@ -6,7 +6,7 @@ import {
 	IUser,
 	PayPeriodEnum
 } from '@gauzy/contracts';
-import { faker } from '@ever-co/faker';
+import { faker } from '@faker-js/faker';
 import { environment as env } from '@gauzy/config';
 import * as moment from 'moment';
 import { Employee } from './../core/entities/internal';

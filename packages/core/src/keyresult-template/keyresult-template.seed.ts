@@ -3,7 +3,7 @@ import { ITenant, KeyResultTypeEnum } from '@gauzy/contracts';
 import { KeyResultTemplate } from './keyresult-template.entity';
 import { GoalTemplate } from '../goal-template/goal-template.entity';
 import { GoalKPITemplate } from '../goal-kpi-template/goal-kpi-template.entity';
-import { faker } from '@ever-co/faker';
+import { faker } from '@faker-js/faker';
 import { DEFAULT_KEY_RESULT_TEMPLATES } from './default-keyresult-templates';
 
 export const createDefaultKeyResultTemplates = async (

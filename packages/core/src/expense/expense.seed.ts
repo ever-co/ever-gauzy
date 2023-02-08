@@ -1,5 +1,5 @@
 import { DataSource } from 'typeorm';
-import { faker } from '@ever-co/faker';
+import { faker } from '@faker-js/faker';
 import {
 	IOrganization,
 	IEmployee,
@@ -79,8 +79,8 @@ export const createDefaultExpenses = async (
 							moment().add(10, 'days').calendar()
 						)
 					)
-					.startOf('day')
-					.toDate();
+						.startOf('day')
+						.toDate();
 					return expense;
 				});
 				await insertExpense(dataSource, defaultExpenses);
@@ -144,7 +144,7 @@ export const createRandomExpenses = async (
 					expense.amount = faker.datatype.number({ min: 10, max: 999 });
 					expense.vendor =
 						organizationVendors[
-							currentIndex % organizationVendors.length
+						currentIndex % organizationVendors.length
 						];
 					expense.category = categories[currentIndex % categories.length];
 					expense.currency = employee.organization.currency || env.defaultCurrency;
@@ -155,8 +155,8 @@ export const createRandomExpenses = async (
 							moment().add(10, 'days').calendar()
 						)
 					)
-					.startOf('day')
-					.toDate();
+						.startOf('day')
+						.toDate();
 					randomExpenses.push(expense);
 				}
 				await insertExpense(dataSource, randomExpenses);

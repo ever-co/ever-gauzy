@@ -1,6 +1,6 @@
 import { Goal } from './goal.entity';
 import { DataSource } from 'typeorm';
-import { faker } from '@ever-co/faker';
+import { faker } from '@faker-js/faker';
 import { GoalTimeFrame } from '../goal-time-frame/goal-time-frame.entity';
 import { GoalLevelEnum, IEmployee, IOrganization, ITenant } from '@gauzy/contracts';
 import { OrganizationTeam } from '../organization-team/organization-team.entity';

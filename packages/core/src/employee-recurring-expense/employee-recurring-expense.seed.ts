@@ -5,7 +5,7 @@ import {
 	ITenant,
 	RecurringExpenseDefaultCategoriesEnum
 } from '@gauzy/contracts';
-import { faker } from '@ever-co/faker';
+import { faker } from '@faker-js/faker';
 import * as moment from 'moment';
 import { environment as env } from '@gauzy/config';
 import { EmployeeRecurringExpense } from './employee-recurring-expense.entity';
@@ -31,7 +31,7 @@ export const createRandomEmployeeRecurringExpense = async (
 	const employeeRecurringExpenses: EmployeeRecurringExpense[] = [];
 	for await (const tenant of tenants) {
 		const organizations = tenantOrganizationsMap.get(tenant);
-		for await(const organization of organizations) {
+		for await (const organization of organizations) {
 			const tenantEmployees = organizationEmployeesMap.get(organization);
 			for (const [index, tenantEmployee] of tenantEmployees.entries()) {
 				const employeeRecurringExpense = new EmployeeRecurringExpense();

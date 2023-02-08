@@ -1,5 +1,5 @@
 import { DataSource } from 'typeorm';
-import { faker } from '@ever-co/faker';
+import { faker } from '@faker-js/faker';
 import { addDays } from 'date-fns';
 import { IEmployee, IEquipmentSharing, IOrganization, ITenant } from '@gauzy/contracts';
 import { EquipmentSharing } from './equipment-sharing.entity';

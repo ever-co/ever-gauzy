@@ -1,6 +1,6 @@
 import { DataSource } from 'typeorm';
 import { OrganizationAward } from './organization-award.entity';
-import { faker } from '@ever-co/faker';
+import { faker } from '@faker-js/faker';
 import { DEFAULT_ORGANIZATION_AWARDS } from './default-organization-awards';
 import { IOrganization, IOrganizationAward, ITenant } from '@gauzy/contracts';
 

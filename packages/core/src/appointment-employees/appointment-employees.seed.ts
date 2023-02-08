@@ -1,7 +1,7 @@
 import { DataSource } from 'typeorm';
 import { IAppointmentEmployee, IEmployee, IOrganization, ITenant } from '@gauzy/contracts';
 import { AppointmentEmployee } from './appointment-employees.entity';
-import { faker } from '@ever-co/faker';
+import { faker } from '@faker-js/faker';
 
 export const createRandomAppointmentEmployees = async (
 	dataSource: DataSource,

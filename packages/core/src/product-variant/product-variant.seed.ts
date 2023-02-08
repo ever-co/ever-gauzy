@@ -1,6 +1,6 @@
 import { DataSource, In } from 'typeorm';
 import { BillingInvoicingPolicyEnum, IOrganization, ITenant } from '@gauzy/contracts';
-import { faker } from '@ever-co/faker';
+import { faker } from '@faker-js/faker';
 import * as _ from 'underscore';
 import { ProductVariant } from './product-variant.entity';
 import {
@@ -48,10 +48,10 @@ export const createRandomProductVariant = async (
 					});
 					const productOptionGroupsIds = _.pluck(productOptionGroups, 'id');
 					const productOptions = await dataSource.manager.find(ProductOption, {
-							where: {
-								group: In(productOptionGroupsIds),
-							}
+						where: {
+							group: In(productOptionGroupsIds),
 						}
+					}
 					);
 					for (let i = 0; i < numberOfVariantPerProduct; i++) {
 						const productVariant = new ProductVariant();

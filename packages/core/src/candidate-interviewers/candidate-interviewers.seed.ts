@@ -1,6 +1,6 @@
 import { DataSource } from 'typeorm';
 import { ICandidate, ICandidateInterview, ICandidateInterviewers, IEmployee, IOrganization, ITenant } from '@gauzy/contracts';
-import { faker } from '@ever-co/faker';
+import { faker } from '@faker-js/faker';
 import { CandidateInterview, CandidateInterviewers } from './../core/entities/internal';
 
 export const createDefaultCandidateInterviewers = async (

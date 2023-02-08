@@ -1,5 +1,5 @@
 import { DataSource } from 'typeorm';
-import { faker } from '@ever-co/faker';
+import { faker } from '@faker-js/faker';
 import { InviteStatusEnum, IOrganization, ITenant, IUser } from '@gauzy/contracts';
 import { sign } from 'jsonwebtoken';
 import { environment as env } from '@gauzy/config';

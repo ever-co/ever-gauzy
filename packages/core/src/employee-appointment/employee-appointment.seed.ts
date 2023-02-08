@@ -1,6 +1,6 @@
 import { DataSource } from 'typeorm';
 import { IEmployee, IOrganization, ITenant } from '@gauzy/contracts';
-import { faker } from '@ever-co/faker';
+import { faker } from '@faker-js/faker';
 import * as moment from 'moment';
 import { EmployeeAppointment } from './employee-appointment.entity';
 import { AGENDAS } from './default-employee-appointment';

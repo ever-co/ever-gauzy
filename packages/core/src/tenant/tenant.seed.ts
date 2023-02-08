@@ -1,6 +1,6 @@
 import { DataSource } from 'typeorm';
 import { Tenant } from './tenant.entity';
-import { faker } from '@ever-co/faker';
+import { faker } from '@faker-js/faker';
 import { DEFAULT_EVER_TENANT } from './default-tenants';
 import { ITenant } from '@gauzy/contracts';
 

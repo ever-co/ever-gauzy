@@ -1,5 +1,5 @@
 import { DataSource } from 'typeorm';
-import { faker } from '@ever-co/faker';
+import { faker } from '@faker-js/faker';
 import { chain } from 'underscore';
 import { OrganizationProject } from './organization-project.entity';
 import {
@@ -53,12 +53,12 @@ export const createDefaultOrganizationProjects = async (
 		// TODO: this seed creates default projects without tenantId.
 		projects.push(project);
 	}
- 	await dataSource.manager.save(projects);
+	await dataSource.manager.save(projects);
 
 	/**
 	* Seeder for assign organization project to the employee of the specific organization
 	*/
- 	await assignOrganizationProjectToEmployee(
+	await assignOrganizationProjectToEmployee(
 		dataSource,
 		tenant,
 		organization
@@ -199,7 +199,7 @@ export async function seedProjectMembersCount(
 			/**
 			 * GET member counts for organization project
 			 */
-			const [ members ] = await dataSource.manager.query(`
+			const [members] = await dataSource.manager.query(`
 				SELECT
 					COUNT("organization_project_employee"."employeeId") AS count
 				FROM "organization_project_employee"
@@ -209,7 +209,7 @@ export async function seedProjectMembersCount(
 					"organization_project" ON "organization_project"."id"="organization_project_employee"."organizationProjectId"
 				WHERE
 					"organization_project_employee"."organizationProjectId" = $1
-			`, [ projectId ]);
+			`, [projectId]);
 
 			const count = members['count'];
 

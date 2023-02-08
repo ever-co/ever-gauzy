@@ -1,7 +1,7 @@
 import { DataSource } from 'typeorm';
 import { IEmployee, IOrganization, ITenant, PaymentMethodEnum } from '@gauzy/contracts';
 import { Payment } from './payment.entity';
-import { faker } from '@ever-co/faker';
+import { faker } from '@faker-js/faker';
 import * as moment from 'moment';
 import { environment as env } from '@gauzy/config';
 import { Invoice, OrganizationProject, Tag, User } from './../core/entities/internal';
@@ -45,8 +45,8 @@ export const createDefaultPayment = async (
 					moment(new Date()).add(1, 'month').toDate()
 				)
 			)
-			.startOf('day')
-			.toDate();
+				.startOf('day')
+				.toDate();
 			payment.amount = faker.datatype.number({
 				min: 500,
 				max: 5000
@@ -60,10 +60,10 @@ export const createDefaultPayment = async (
 			payment.organization = organization;
 			payment.tenant = tenant;
 			payment.tags = _.chain(tags)
-					.shuffle()
-					.take(faker.datatype.number({ min: 1, max: 3 }))
-					.values()
-					.value();
+				.shuffle()
+				.take(faker.datatype.number({ min: 1, max: 3 }))
+				.values()
+				.value();
 			payment.organizationContact = invoice.toContact;
 			payment.employeeId = faker.random.arrayElement(employees).id;
 			payment.recordedBy = faker.random.arrayElement(users);
@@ -129,8 +129,8 @@ export const createRandomPayment = async (
 						moment(new Date()).add(1, 'month').toDate()
 					)
 				)
-				.startOf('day')
-				.toDate();
+					.startOf('day')
+					.toDate();
 				payment.amount = faker.datatype.number({
 					min: 500,
 					max: 5000

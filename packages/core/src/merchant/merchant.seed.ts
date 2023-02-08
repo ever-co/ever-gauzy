@@ -1,6 +1,6 @@
 import { DataSource } from 'typeorm';
 import { Merchant, Contact, ImageAsset, Country } from './../core/entities/internal';
-import { faker } from '@ever-co/faker';
+import { faker } from '@faker-js/faker';
 import { ICountry, IMerchant, IOrganization, ITenant } from '@gauzy/contracts';
 
 export const createRandomMerchants = async (
@@ -64,7 +64,7 @@ const applyRandomProperties = (
 
     const contact = new Contact();
     contact.firstName = faker.name.firstName();
-	contact.lastName = faker.name.lastName();
+    contact.lastName = faker.name.lastName();
     contact.name = contact.firstName + ' ' + contact.lastName;
     contact.website = faker.internet.url();
     contact.address = faker.address.streetAddress();

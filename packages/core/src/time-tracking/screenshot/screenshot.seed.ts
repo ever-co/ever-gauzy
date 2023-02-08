@@ -1,6 +1,6 @@
 import { readdir, mkdirSync, copyFileSync } from 'fs';
 import * as path from 'path';
-import { faker } from '@ever-co/faker';
+import { faker } from '@faker-js/faker';
 import * as moment from 'moment';
 import { IPluginConfig } from '@gauzy/common';
 import { environment as env } from '@gauzy/config';

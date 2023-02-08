@@ -1,6 +1,6 @@
 import { DataSource } from 'typeorm';
 import { ProductCategory } from './product-category.entity';
-import { faker } from '@ever-co/faker';
+import { faker } from '@faker-js/faker';
 import * as seed from './product-category.seed.json';
 import { ProductCategoryTranslation } from './product-category-translation.entity';
 import { IOrganization, ITenant } from '@gauzy/contracts';

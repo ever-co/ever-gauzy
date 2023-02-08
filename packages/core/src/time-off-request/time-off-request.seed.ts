@@ -1,5 +1,5 @@
 import { DataSource } from 'typeorm';
-import { faker } from '@ever-co/faker';
+import { faker } from '@faker-js/faker';
 import { addDays } from 'date-fns';
 import * as _ from 'underscore';
 import { IEmployee, IOrganization, ITenant, ITimeOff as ITimeOffRequest, StatusTypesEnum } from '@gauzy/contracts';

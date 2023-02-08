@@ -1,5 +1,5 @@
 import { DataSource } from 'typeorm';
-import { faker } from '@ever-co/faker';
+import { faker } from '@faker-js/faker';
 import { IOrganization, IPipeline, ITenant } from '@gauzy/contracts';
 import { Pipeline } from './pipeline.entity';
 

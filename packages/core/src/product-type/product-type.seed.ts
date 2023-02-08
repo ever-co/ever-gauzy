@@ -3,7 +3,7 @@ import { DataSource } from 'typeorm';
 import { Tenant } from '../tenant/tenant.entity';
 import { IOrganization, ProductTypesIconsEnum } from '@gauzy/contracts';
 import { ProductType } from './product-type.entity';
-import { faker } from '@ever-co/faker';
+import { faker } from '@faker-js/faker';
 import { ProductCategory } from '../product-category/product-category.entity';
 import { Product } from '../product/product.entity';
 import { ProductTypeTranslation } from './product-type-translation.entity';

@@ -1,7 +1,7 @@
 import { DataSource } from 'typeorm';
 import { IOrganization, ITenant } from '@gauzy/contracts';
 import { ProductOption } from './product-option.entity';
-import { faker } from '@ever-co/faker';
+import { faker } from '@faker-js/faker';
 import { ProductCategory } from '../product-category/product-category.entity';
 import { Product } from '../product/product.entity';
 import { ProductOptionGroup } from './product-option-group.entity';
@@ -35,10 +35,10 @@ export const createRandomProductOption = async (
 				for (const product of products) {
 					const productOptionGroups = await dataSource.manager.find(
 						ProductOptionGroup, {
-							where: {
-								productId: product.id
-							}
+						where: {
+							productId: product.id
 						}
+					}
 					);
 					for (let group of productOptionGroups) {
 						for (let i = 0; i <= numberOfOptionPerProduct; i++) {

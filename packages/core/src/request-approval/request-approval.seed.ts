@@ -1,5 +1,5 @@
 import { DataSource } from 'typeorm';
-import { faker } from '@ever-co/faker';
+import { faker } from '@faker-js/faker';
 import { IEmployee, IOrganization, ITenant } from '@gauzy/contracts';
 import { RequestApproval } from './request-approval.entity';
 import { RequestApprovalEmployee } from '../request-approval-employee/request-approval-employee.entity';
@@ -37,11 +37,11 @@ export const createRandomRequestApproval = async (
 		for await (const organization of organizations) {
 			const employees = organizationEmployeesMap.get(organization);
 			const policies: ApprovalPolicy[] = await dataSource.manager.find(ApprovalPolicy, {
-					where: {
-						tenantId,
-						organizationId: organization.id
-					}
+				where: {
+					tenantId,
+					organizationId: organization.id
 				}
+			}
 			);
 			for (let i = 0; i < noOfRequestsPerOrganizations; i++) {
 				const tenantPolicy = faker.random.arrayElement(policies);

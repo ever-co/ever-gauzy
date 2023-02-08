@@ -1,6 +1,6 @@
 import { IOrganization, ITenant } from '@gauzy/contracts';
 import { DataSource } from 'typeorm';
-import { faker } from '@ever-co/faker';
+import { faker } from '@faker-js/faker';
 import { DEFAULT_SKILLS } from './default-skills';
 import { Skill } from './skill.entity';
 
@@ -22,6 +22,6 @@ export const createDefaultSkills = async (
 		}
 		return await dataSource.manager.save(skills);
 	} catch (error) {
-		console.log({error})
+		console.log({ error })
 	}
 };

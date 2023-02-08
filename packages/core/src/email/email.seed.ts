@@ -1,6 +1,6 @@
 import { DataSource, ILike, Not } from 'typeorm';
 import { Email } from './email.entity';
-import { faker } from '@ever-co/faker';
+import { faker } from '@faker-js/faker';
 import { IEmail, IEmailTemplate, IOrganization, ITenant, IUser } from '@gauzy/contracts';
 import { EmailTemplate, User } from './../core/entities/internal';
 

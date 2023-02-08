@@ -1,6 +1,6 @@
 import { DataSource } from 'typeorm';
 import { ICandidate, ICandidateInterview, ICandidatePersonalQualities, IOrganization, ITenant } from '@gauzy/contracts';
-import { faker } from '@ever-co/faker';
+import { faker } from '@faker-js/faker';
 import { CandidatePersonalQualities } from './candidate-personal-qualities.entity';
 import { CandidateInterview } from '../candidate-interview/candidate-interview.entity';
 

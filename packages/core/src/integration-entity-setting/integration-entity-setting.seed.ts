@@ -1,5 +1,5 @@
 import { DataSource } from 'typeorm';
-import { faker } from '@ever-co/faker';
+import { faker } from '@faker-js/faker';
 import { DEFAULT_ENTITY_SETTINGS } from '@gauzy/integration-hubstaff';
 import { IIntegrationEntitySetting, IIntegrationEntitySettingTied, ITenant } from '@gauzy/contracts';
 import { IntegrationEntitySetting } from './integration-entity-setting.entity';

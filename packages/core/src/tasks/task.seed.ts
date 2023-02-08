@@ -1,5 +1,5 @@
 import { Brackets, DataSource, WhereExpressionBuilder } from 'typeorm';
-import { faker } from '@ever-co/faker';
+import { faker } from '@faker-js/faker';
 import { filter, uniq } from 'underscore';
 import { lastValueFrom, map } from 'rxjs';
 import { isNotEmpty } from '@gauzy/common';

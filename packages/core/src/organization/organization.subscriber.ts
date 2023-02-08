@@ -1,5 +1,5 @@
 import { EntitySubscriberInterface, EventSubscriber, InsertEvent } from "typeorm";
-import { faker } from '@ever-co/faker';
+import { faker } from '@faker-js/faker';
 import { sluggable } from "@gauzy/common";
 import { Organization } from "./organization.entity";
 import { getOrganizationDummyImage } from "./../core/utils";
@@ -23,7 +23,7 @@ export class OrganizationSubscriber implements EntitySubscriberInterface<Organiz
         try {
             if (event) {
                 const { entity } = event;
-                if(entity.name || entity.officialName) {
+                if (entity.name || entity.officialName) {
                     entity.profile_link = sluggable(`${entity.name || entity.officialName}`);
                 }
                 if (!entity.imageUrl) {
