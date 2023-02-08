@@ -34,10 +34,9 @@ import { ActivatedRoute } from '@angular/router';
 	templateUrl: './tags.component.html',
 	styleUrls: ['./tags.component.scss']
 })
-export class TagsComponent
-	extends PaginationFilterBaseComponent
-	implements AfterViewInit, OnInit, OnDestroy
-{
+export class TagsComponent extends PaginationFilterBaseComponent
+	implements AfterViewInit, OnInit, OnDestroy {
+
 	settingsSmartTable: object;
 	loading: boolean;
 	smartTableSource = new LocalDataSource();
@@ -443,5 +442,5 @@ export class TagsComponent
 		}
 	}
 
-	ngOnDestroy() {}
+	ngOnDestroy() { }
 }

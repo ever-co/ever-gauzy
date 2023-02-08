@@ -1,9 +1,9 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { IPagination, ITag, ITagFindInput } from '@gauzy/contracts';
 import { firstValueFrom } from 'rxjs';
+import { IPagination, ITag, ITagCreateInput, ITagFindInput, ITagUpdateInput } from '@gauzy/contracts';
+import { toParams } from '@gauzy/common-angular';
 import { API_PREFIX } from '../constants/app.constants';
-import { toParams } from 'packages/common-angular/dist';
 
 @Injectable()
 export class TagsService {
@@ -12,22 +12,22 @@ export class TagsService {
 		private readonly http: HttpClient
 	) { }
 
-	insertTags(createTags: ITag[]): Promise<ITag[]> {
+	create(tag: ITagCreateInput): Promise<ITag> {
 		return firstValueFrom(
-			this.http
-				.post<ITag[]>(`${API_PREFIX}/tags`, createTags)
+			this.http.post<ITagCreateInput>(`${API_PREFIX}/tags`, tag)
 		);
 	}
 
-	insertTag(createTag: ITag): Promise<ITag> {
-		return firstValueFrom(
-			this.http.post<ITag>(`${API_PREFIX}/tags`, createTag)
-		);
-	}
-
+	/**
+	 * Get tags
+	 *
+	 * @param relations
+	 * @param findInput
+	 * @returns
+	 */
 	getTags(
 		relations?: string[],
-		findInput?: ITag
+		findInput?: ITagFindInput
 	): Promise<IPagination<ITag>> {
 		const data = JSON.stringify({ relations, findInput });
 		return firstValueFrom(
@@ -61,15 +61,9 @@ export class TagsService {
 		);
 	}
 
-	update(id: string, updateInput: ITag) {
+	update(id: ITag['id'], tag: ITagUpdateInput): Promise<ITagUpdateInput> {
 		return firstValueFrom(
-			this.http.put(`${API_PREFIX}/tags/${id}`, updateInput)
-		);
-	}
-
-	findByName(name: string): Promise<{ item: ITag }> {
-		return firstValueFrom(
-			this.http.get<{ item: ITag }>(`${API_PREFIX}/tags/getByName/${name}`)
+			this.http.put<ITagUpdateInput>(`${API_PREFIX}/tags/${id}`, tag)
 		);
 	}
 }

@@ -1,10 +1,9 @@
 import { Component, OnInit } from '@angular/core';
 import { NbDialogRef, NbThemeService } from '@nebular/theme';
 import { FormGroup, FormBuilder, Validators } from '@angular/forms';
-import { TagsService } from '../../@core/services/tags.service';
-import { ITag } from '@gauzy/contracts';
+import { ITag, ITagCreateInput, ITagUpdateInput } from '@gauzy/contracts';
 import { TranslateService } from '@ngx-translate/core';
-import { Store } from '../../@core/services/store.service';
+import { Store, TagsService } from '../../@core/services';
 import { NotesWithTagsComponent } from '../table-components';
 
 @Component({
@@ -12,35 +11,37 @@ import { NotesWithTagsComponent } from '../table-components';
 	templateUrl: './tags-mutation.component.html',
 	styleUrls: ['./tags-mutation.component.scss']
 })
-export class TagsMutationComponent
-	extends NotesWithTagsComponent
-	implements OnInit
-{
-	tag: ITag;
+export class TagsMutationComponent extends NotesWithTagsComponent implements OnInit {
 
+	public tag: ITag;
 	private isTenantLevelChecked = false;
-	public color = '';
 
 	/**
-	 * Build Form
-	 *
+	 * Tag mutation form
 	 */
 	public form: FormGroup = TagsMutationComponent.buildForm(this.fb);
 	static buildForm(fb: FormBuilder): FormGroup {
 		return fb.group({
-			name: ['', Validators.required],
-			color: [],
+			name: [null, Validators.required],
+			color: [null, Validators.required],
 			isTenantLevel: [],
 			description: []
 		});
+	}
+
+	/**
+	 * Getter for color form control
+	 */
+	get color() {
+		return this.form.get('color').value || '';
 	}
 
 	constructor(
 		protected readonly dialogRef: NbDialogRef<TagsMutationComponent>,
 		private readonly tagsService: TagsService,
 		private readonly fb: FormBuilder,
-		readonly translateService: TranslateService,
-		readonly themeService: NbThemeService,
+		public readonly translateService: TranslateService,
+		public readonly themeService: NbThemeService,
 		private readonly store: Store
 	) {
 		super(themeService, translateService);
@@ -54,25 +55,25 @@ export class TagsMutationComponent
 		const { tenantId } = this.store.user;
 		const { id: organizationId } = this.store.selectedOrganization;
 
-		const { name, description } = this.form.getRawValue();
+		const { name, description, color } = this.form.getRawValue();
 
 		if (this.isTenantLevelChecked) {
-			const tagWithTenantLevel = await this.tagsService.insertTag(
+			const tagWithTenantLevel = await this.tagsService.create(
 				Object.assign({
 					name,
 					description,
-					color: this.color,
+					color,
 					tenantId,
-					organization: null
+					organizationId: null
 				})
 			);
 			this.closeDialog(tagWithTenantLevel);
 		} else {
-			const tagWithoutTenantLevel = await this.tagsService.insertTag(
+			const tagWithoutTenantLevel = await this.tagsService.create(
 				Object.assign({
 					name,
 					description,
-					color: this.color,
+					color,
 					tenantId,
 					organizationId
 				})
@@ -85,42 +86,41 @@ export class TagsMutationComponent
 		const { tenantId } = this.store.user;
 		const { id: organizationId } = this.store.selectedOrganization;
 
-		const { name, description } = this.form.getRawValue();
+		const { name, description, color } = this.form.getRawValue();
 
 		if (this.isTenantLevelChecked) {
 			const tagWithTenantLevel = await this.tagsService.update(
 				this.tag.id,
-				Object.assign({
+				{
 					name,
 					description,
-					color: this.color,
+					color,
 					organizationId: null,
 					tenantId
-				})
+				}
 			);
 			this.closeDialog(tagWithTenantLevel);
 		} else {
 			const tagWithoutTenantLevel = await this.tagsService.update(
 				this.tag.id,
-				Object.assign({
+				{
 					name,
 					description,
-					color: this.color,
+					color,
 					organizationId,
 					tenantId
-				})
+				}
 			);
 			this.closeDialog(tagWithoutTenantLevel);
 		}
 	}
 
-	async closeDialog(tag?: ITag) {
+	async closeDialog(tag?: ITagCreateInput | ITagUpdateInput) {
 		this.dialogRef.close(tag);
 	}
 
 	initializeForm() {
 		if (this.tag) {
-			this.color = this.tag.color;
 			this.form.patchValue({
 				name: this.tag.name,
 				color: this.tag.color,
@@ -132,5 +132,15 @@ export class TagsMutationComponent
 
 	isChecked(checked: boolean) {
 		this.isTenantLevelChecked = checked;
+	}
+
+	/**
+	 * On changed color input
+	 *
+	 * @param color
+	 */
+	onChangeColor(color: ITag['color']) {
+		this.form.get('color').setValue(color);
+		this.form.get('color').updateValueAndValidity();
 	}
 }
