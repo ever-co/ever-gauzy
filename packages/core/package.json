@@ -37,7 +37,6 @@
 	"keywords": [],
 	"dependencies": {
 		"@apollo/client": "^3.6.2",
-		"@ever-co/faker": "^6.0.0-alpha.5",
 		"@faker-js/faker": "^7.6.0",
 		"@gauzy/auth": "^0.1.0",
 		"@gauzy/common": "^0.1.0",
