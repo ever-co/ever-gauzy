@@ -1,5 +1,6 @@
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Entity, Column, ManyToMany } from 'typeorm';
-import { ApiProperty } from '@nestjs/swagger';
+import { IsNotEmpty, IsOptional, IsString } from 'class-validator';
 import {
 	ICandidate,
 	IEmployee,
@@ -61,27 +62,34 @@ import {
 
 @Entity('tag')
 export class Tag extends TenantOrganizationBaseEntity implements ITag {
-	@ApiProperty({ type: () => String })
-	@Column()
-	name?: string;
 
 	@ApiProperty({ type: () => String })
+	@IsNotEmpty()
+	@IsString()
+	@Column()
+	name: string;
+
+	@ApiProperty({ type: () => String })
+	@IsNotEmpty()
+	@IsString()
+	@Column()
+	color: string;
+
+	@ApiPropertyOptional({ type: () => String })
+	@IsOptional()
+	@IsString()
 	@Column({ nullable: true })
 	description?: string;
-
-	@ApiProperty({ type: () => String })
-	@Column()
-	color?: string;
 
 	@ApiProperty({ type: () => Boolean, default: false })
 	@Column({ default: false })
 	isSystem?: boolean;
 
 	/*
-    |--------------------------------------------------------------------------
-    | @ManyToMany 
-    |--------------------------------------------------------------------------
-    */
+	|--------------------------------------------------------------------------
+	| @ManyToMany
+	|--------------------------------------------------------------------------
+	*/
 
 	/**
 	 * Candidate
@@ -315,5 +323,5 @@ export class Tag extends TenantOrganizationBaseEntity implements ITag {
 	@ManyToMany(() => Organization, (organization) => organization.tags, {
 		onDelete: 'CASCADE'
 	})
-    organizations?: IOrganization[];
+	organizations?: IOrganization[];
 }
