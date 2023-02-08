@@ -3,7 +3,7 @@
 // Copyright (c) 2018 Sumanth Chinthagunta
 
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { FindOptionsOrder, FindOptionsRelations, FindOptionsSelect, FindOptionsWhereProperty } from 'typeorm';
+import { FindOptionsOrder, FindOptionsRelations, FindOptionsSelect, FindOptionsWhere } from 'typeorm';
 import { Transform, TransformFnParams, Type } from 'class-transformer';
 import { IsNotEmpty, IsOptional, Max, Min, ValidateNested } from 'class-validator';
 import { isClassInstance, isObject, parseToBoolean } from '@gauzy/common';
@@ -45,9 +45,7 @@ export class OptionParams<T> extends OptionsRelations<T> {
 	@IsNotEmpty()
 	@ValidateNested({ each: true })
 	@Type(() => TenantOrganizationBaseDTO)
-	readonly where: {
-		[P in keyof T]?: FindOptionsWhereProperty<NonNullable<T[P]>>;
-	};
+	readonly where: FindOptionsWhere<T>;
 
 	/**
 	* Indicates if soft-deleted rows should be included in entity result.

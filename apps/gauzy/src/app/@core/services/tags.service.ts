@@ -25,13 +25,12 @@ export class TagsService extends CrudService<ITag> {
 	 * @returns
 	 */
 	getTags(
-		relations?: string[],
-		findInput?: ITagFindInput
+		where: ITagFindInput,
+		relations: string[] = [],
 	): Promise<IPagination<ITag>> {
-		const data = JSON.stringify({ relations, findInput });
 		return firstValueFrom(
 			this.http.get<IPagination<ITag>>(`${API_PREFIX}/tags`, {
-				params: { data }
+				params: toParams({ where, relations })
 			})
 		);
 	}

@@ -1,5 +1,5 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-import { IPagination, ITag } from '@gauzy/contracts';
+import { IPagination, ITag, ITagFindInput } from '@gauzy/contracts';
 import { TagService } from './../../tag.service';
 import { TagListCommand } from './../tag.list.command';
 
@@ -12,7 +12,10 @@ export class TagListHandler
 	) { }
 
 	public async execute(command: TagListCommand): Promise<IPagination<ITag>> {
-		const { input, relations } = command;
-		return await this.tagService.findTags(input, relations);
+		const { input, relations = [] } = command;
+		return await this.tagService.findTags(
+			input as ITagFindInput,
+			relations
+		);
 	}
 }

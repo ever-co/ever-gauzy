@@ -308,7 +308,7 @@ export class TagsComponent extends PaginationFilterBaseComponent
 		const { tenantId } = this.store.user;
 		const { id: organizationId } = this.organization;
 
-		const { items } = await this.tagsService.getTags(['organization'], {
+		const { items } = await this.tagsService.getTags({
 			tenantId,
 			organizationId
 		});
