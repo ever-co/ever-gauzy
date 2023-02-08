@@ -6,4 +6,4 @@ import { Tag } from './../tag.entity';
 export class UpdateTagDTO extends IntersectionType(
     PartialType(TenantOrganizationBaseDTO),
     PartialType(Tag),
-) implements ITagUpdateInput {}
+) implements ITagUpdateInput { }

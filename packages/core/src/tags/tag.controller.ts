@@ -81,11 +81,10 @@ export class TagController extends CrudController<Tag> {
 	@UseGuards(PermissionGuard)
 	@Permissions(PermissionsEnum.ORG_TAGS_EDIT)
 	@Post()
-	@UsePipes(new ValidationPipe({ transform: true, whitelist: true }))
+	@UsePipes(new ValidationPipe({ whitelist: true }))
 	async create(
 		@Body() entity: CreateTagDTO
 	): Promise<ITag> {
-		console.log({ entity });
 		return await this.tagService.create(entity);
 	}
 
@@ -100,7 +99,7 @@ export class TagController extends CrudController<Tag> {
 	@UseGuards(PermissionGuard)
 	@Permissions(PermissionsEnum.ORG_TAGS_EDIT)
 	@Put(':id')
-	@UsePipes(new ValidationPipe({ transform : true, whitelist: true }))
+	@UsePipes(new ValidationPipe({ whitelist: true }))
 	async update(
 		@Param('id', UUIDValidationPipe) id: ITag['id'],
 		@Body() entity: UpdateTagDTO
