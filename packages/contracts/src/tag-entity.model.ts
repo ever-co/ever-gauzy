@@ -8,8 +8,9 @@ export interface ITag extends IBasePerTenantAndOrganizationEntityModel {
 }
 
 export interface ITagFindInput extends IBasePerTenantAndOrganizationEntityModel {
-	isSystem?: boolean;
 	name?: string;
+	color?: string;
+	description?: string;
 }
 
 export interface ITagCreateInput extends ITag { }

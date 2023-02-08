@@ -5,6 +5,7 @@ import { IPagination, ITag, ITagFindInput } from '@gauzy/contracts';
 import { RequestContext } from '../core/context';
 import { TenantAwareCrudService } from '../core/crud';
 import { Tag } from './tag.entity';
+import { isNotEmpty } from '@gauzy/common';
 
 @Injectable()
 export class TagService extends TenantAwareCrudService<Tag> {
@@ -159,9 +160,16 @@ export class TagService extends TenantAwareCrudService<Tag> {
 		query: SelectQueryBuilder<Tag>,
 		request: ITagFindInput
 	): SelectQueryBuilder<Tag> {
+		const { organizationId, name, color, description } = request;
 		query.andWhere(
 			new Brackets((qb: WhereExpressionBuilder) => {
-				const { organizationId } = request;
+				qb.andWhere(`"${query.alias}"."tenantId" = :tenantId`, {
+					tenantId: RequestContext.currentTenantId()
+				});
+			})
+		);
+		query.andWhere(
+			new Brackets((qb: WhereExpressionBuilder) => {
 				qb.where(
 					[
 						{
@@ -174,16 +182,27 @@ export class TagService extends TenantAwareCrudService<Tag> {
 				);
 			})
 		);
-		query.andWhere(
-			new Brackets((qb: WhereExpressionBuilder) => {
-				qb.andWhere(`"${query.alias}"."tenantId" = :tenantId`, {
-					tenantId: RequestContext.currentTenantId()
-				});
-			})
-		);
 		query.andWhere(`"${query.alias}"."isSystem" = :isSystem`, {
 			isSystem: false
 		});
+		/**
+		 * Additionally you can add parameters used in where expression.
+		 */
+		if (isNotEmpty(name)) {
+			query.andWhere(`"${query.alias}"."name" ILIKE :name`, {
+				name: `%${name}%`
+			});
+		}
+		if (isNotEmpty(color)) {
+			query.andWhere(`"${query.alias}"."color" ILIKE :color`, {
+				color: `%${color}%`
+			});
+		}
+		if (isNotEmpty(description)) {
+			query.andWhere(`"${query.alias}"."description" ILIKE :description`, {
+				description: `%${description}%`
+			});
+		}
 		return query;
 	}
 }
