@@ -15,17 +15,17 @@ export const createDefaultCandidateInterview = async (
 		);
 		return;
 	}
-	let candidateInterviewes: ICandidateInterview[] = [];
+	let candidateInterviews: ICandidateInterview[] = [];
 	for (const tenantCandidate of candidates) {
-		candidateInterviewes = await dataOperation(
+		candidateInterviews = await dataOperation(
 			dataSource,
-			candidateInterviewes,
+			candidateInterviews,
 			tenantCandidate,
 			tenant,
 			organization
 		);
 	}
-	return candidateInterviewes;
+	return candidateInterviews;
 };
 
 export const createRandomCandidateInterview = async (

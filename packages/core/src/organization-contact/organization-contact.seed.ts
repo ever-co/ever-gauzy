@@ -53,7 +53,7 @@ const createOrganizationContact = async (
 		},
 		relations: ['employees']
 	});
-	const allCrganizationContacts: IOrganizationContact[] = [];
+	const allOrganizationContacts: IOrganizationContact[] = [];
 	for await (const organization of organizations) {
 		const { id: organizationId } = organization;
 		const { employees } = organization;
@@ -77,9 +77,9 @@ const createOrganizationContact = async (
 			organization,
 			employees
 		);
-		allCrganizationContacts.push(...organizationContacts);
+		allOrganizationContacts.push(...organizationContacts);
 	}
-	return allCrganizationContacts;
+	return allOrganizationContacts;
 }
 
 const generateOrganizationContact = async (

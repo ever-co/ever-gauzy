@@ -217,7 +217,10 @@
         "roboto",
         "fontface",
         "gauzydesktop",
-        "latlng"
+        "latlng",
+        "Flickr",
+        "KPIS",
+        "Freemont"
     ],
     "useGitignore": true,
     "ignorePaths": [
