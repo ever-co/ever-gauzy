@@ -1,20 +1,9 @@
-import { ApiProperty } from '@nestjs/swagger';
-import { IsNotEmpty, IsOptional, IsString } from 'class-validator';
-import { ICreateTag } from '@gauzy/contracts';
+import { IntersectionType, PartialType, PickType } from '@nestjs/swagger';
+import { ITagCreateInput } from '@gauzy/contracts';
+import { TenantOrganizationBaseDTO } from './../../core/dto';
+import { Tag } from './../tag.entity';
 
-export class CreateTagDTO implements ICreateTag {
-
-    @ApiProperty({ type: () => String })
-	@IsNotEmpty()
-	readonly name: string;
-
-	@ApiProperty({ type: () => String })
-	@IsNotEmpty()
-	@IsString()
-	readonly color: string;
-
-	@ApiProperty({ type: () => String })
-	@IsOptional()
-	@IsString()
-	readonly description?: string;
-}
+export class CreateTagDTO extends IntersectionType(
+	PartialType(TenantOrganizationBaseDTO),
+	PickType(Tag, ['name', 'description', 'color'])
+) implements ITagCreateInput { }

@@ -33,7 +33,7 @@ export abstract class CrudService<T extends BaseEntity>
 
 	protected constructor(
 		protected readonly repository: Repository<T>
-	) {}
+	) { }
 
 	/**
 	 * Counts entities that match given options.
@@ -138,10 +138,10 @@ export abstract class CrudService<T extends BaseEntity>
 	}
 
 	/*
-    |--------------------------------------------------------------------------
-    | @FindOneOrFail
-    |--------------------------------------------------------------------------
-    */
+	|--------------------------------------------------------------------------
+	| @FindOneOrFail
+	|--------------------------------------------------------------------------
+	*/
 
 	/**
 	 * Finds first entity by a given find options.
@@ -244,10 +244,10 @@ export abstract class CrudService<T extends BaseEntity>
 	}
 
 	/*
-    |--------------------------------------------------------------------------
-    | @FindOne
-    |--------------------------------------------------------------------------
-    */
+	|--------------------------------------------------------------------------
+	| @FindOne
+	|--------------------------------------------------------------------------
+	*/
 	/**
 	 * Finds first entity by a given find options.
 	 * If entity was not found in the database - returns null.
@@ -375,11 +375,11 @@ export abstract class CrudService<T extends BaseEntity>
 	}
 
 	/**
-     * Deletes entities by a given criteria.
-     * Unlike save method executes a primitive operation without cascades, relations and other operations included.
-     * Executes fast and efficient DELETE query.
-     * Does not check if entity exist in the database.
-     *
+	 * Deletes entities by a given criteria.
+	 * Unlike save method executes a primitive operation without cascades, relations and other operations included.
+	 * Executes fast and efficient DELETE query.
+	 * Does not check if entity exist in the database.
+	 *
 	 * @param criteria
 	 * @param options
 	 * @returns
