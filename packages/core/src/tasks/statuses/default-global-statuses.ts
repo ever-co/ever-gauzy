@@ -7,7 +7,7 @@ export const DEFAULT_GLOBAL_STATUSES: ITaskStatus[] = [
 		description:
 			'The issue/task has been reported and is waiting for the team to action it.',
 		icon: null,
-		color: '#f7f9fc',
+		color: '#D6E4F9',
 		isSystem: true,
 	},
 	{
@@ -16,7 +16,7 @@ export const DEFAULT_GLOBAL_STATUSES: ITaskStatus[] = [
 		description:
 			'This issue/task is being actively worked on at the moment by the assignee.',
 		icon: null,
-		color: '#0095ff',
+		color: '#ECE8FC',
 		isSystem: true,
 	},
 	{
@@ -25,7 +25,7 @@ export const DEFAULT_GLOBAL_STATUSES: ITaskStatus[] = [
 		description:
 			'At this point the merge request / pull request is ready to be reviewed for issue/task.',
 		icon: null,
-		color: '#0095ff',
+		color: '#F5F1CB',
 		isSystem: true,
 	},
 	{
@@ -34,7 +34,7 @@ export const DEFAULT_GLOBAL_STATUSES: ITaskStatus[] = [
 		description:
 			'It needs peer review issue/task before being considered done.',
 		icon: null,
-		color: '#0095ff',
+		color: '#F3D8B0',
 		isSystem: true,
 	},
 	{
@@ -43,7 +43,7 @@ export const DEFAULT_GLOBAL_STATUSES: ITaskStatus[] = [
 		description:
 			'The issue/task is missing information, wait for customer decision, etc.',
 		icon: null,
-		color: '#ff0000',
+		color: '#F5B8B8',
 		isSystem: true,
 	},
 	{
@@ -52,7 +52,7 @@ export const DEFAULT_GLOBAL_STATUSES: ITaskStatus[] = [
 		description:
 			'The issue/task is considered finished. The resolution is correct.',
 		icon: null,
-		color: '#00d68f',
+		color: '#D4EFDF',
 		isSystem: true,
 	},
 ];
