@@ -12,13 +12,11 @@ export const createDefaultProductCategories = async (
 	const seedProductCategories = [];
 
 	organizations.forEach(async (organization) => {
-		let image = faker.image.url();
 		seed.forEach(async (seedProductCategory) => {
-			const newCategory = new ProductCategory();
-			image =
-				faker.image[seedProductCategory.fakerImageCategory]() ||
-				faker.image.url();
+			const { category } = seedProductCategory;
+			const image = faker.image.urlLoremFlickr({ category });
 
+			const newCategory = new ProductCategory();
 			newCategory.imageUrl = image;
 			newCategory.organization = organization;
 			newCategory.translations = [];
