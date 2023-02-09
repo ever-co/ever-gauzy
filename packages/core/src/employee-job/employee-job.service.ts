@@ -140,7 +140,7 @@ export class EmployeeJobPostService {
 				category: faker.person.jobTitle(),
 				title: faker.lorem.sentence(),
 				description: faker.lorem.sentences(3),
-				jobDateCreated: faker.date.past(0.1),
+				jobDateCreated: faker.date.past({ years: 0.1 }),
 				jobStatus: faker.helpers.arrayElement(
 					Object.values(JobPostStatusEnum)
 				),

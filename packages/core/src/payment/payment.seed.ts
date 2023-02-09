@@ -40,10 +40,10 @@ export const createDefaultPayment = async (
 			const payment = new Payment();
 			payment.invoice = invoice;
 			payment.paymentDate = moment(
-				faker.date.between(
-					new Date(),
-					moment(new Date()).add(1, 'month').toDate()
-				)
+				faker.date.between({
+					from: new Date(),
+					to: moment(new Date()).add(1, 'month').toDate()
+				})
 			)
 				.startOf('day')
 				.toDate();

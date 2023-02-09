@@ -36,7 +36,7 @@ export const createRandomIntegrationMap = async (
 				Object.values(IntegrationEntity)
 			);
 			integrationMap.sourceId = faker.number.int({ min: 10000000, max: 99999999999 });
-			integrationMap.gauzyId = faker.datatype.uuid();
+			integrationMap.gauzyId = faker.string.uuid();
 			integrationMaps.push(integrationMap);
 		}
 	}

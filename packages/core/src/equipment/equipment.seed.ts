@@ -64,7 +64,7 @@ export const createRandomEquipments = async (
 			);
 			equipment.type = randomElement.key;
 			equipment.name = faker.helpers.arrayElement(randomElement.value);
-			equipment.serialNumber = faker.datatype.uuid();
+			equipment.serialNumber = faker.string.uuid();
 			equipment.manufacturedYear = faker.number.int({
 				min: 2000,
 				max: 2020

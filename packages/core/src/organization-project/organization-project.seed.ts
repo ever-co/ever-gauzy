@@ -118,8 +118,8 @@ export const createRandomOrganizationProjects = async (
 						? faker.number.int({ min: 500, max: 5000 })
 						: faker.number.int({ min: 40, max: 400 });
 
-				project.startDate = faker.date.past(5);
-				project.endDate = faker.date.past(2);
+				project.startDate = faker.date.past({ years: 5 });
+				project.endDate = faker.date.past({ years: 2 });
 				projects.push(project);
 			}
 			await dataSource.manager.save(projects);

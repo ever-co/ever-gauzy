@@ -67,14 +67,14 @@ const dataOperation = async (
 		]);
 		slot.organization = organization;
 		slot.tenant = tenant;
-		slot.startTime = faker.date.between(
-			new Date(),
-			moment(new Date()).add(2, 'months').toDate()
-		);
-		slot.endTime = faker.date.between(
-			slot.startTime,
-			moment(slot.startTime).add(7, 'hours').toDate()
-		);
+		slot.startTime = faker.date.between({
+			from: new Date(),
+			to: moment(new Date()).add(2, 'months').toDate()
+		});
+		slot.endTime = faker.date.between({
+			from: slot.startTime,
+			to: moment(slot.startTime).add(7, 'hours').toDate()
+		});
 		slot.type = faker.helpers.arrayElement(
 			Object.values(AvailabilitySlotType)
 		);

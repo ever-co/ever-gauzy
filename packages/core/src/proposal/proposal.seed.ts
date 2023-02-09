@@ -32,7 +32,7 @@ export const createDefaultProposals = async (
 			proposal.organization = organization;
 			proposal.status = faker.helpers.arrayElement(Object.values(ProposalStatusEnum));
 			proposal.tags = [faker.helpers.arrayElement(tags)];
-			proposal.valueDate = moment(faker.date.recent(0.5)).startOf('day').toDate();
+			proposal.valueDate = moment(faker.date.recent({ days: 0.5 })).startOf('day').toDate();
 			proposal.proposalContent = faker.person.jobDescriptor();
 			proposal.tenant = tenant;
 			if (organizationContacts.length) {
@@ -74,7 +74,7 @@ export const createRandomProposals = async (
 				proposal.organization = organization;
 				proposal.status = faker.helpers.arrayElement(Object.values(ProposalStatusEnum));
 				proposal.tags = [faker.helpers.arrayElement(tags)];
-				proposal.valueDate = moment(faker.date.recent(0.5)).startOf('day').toDate();
+				proposal.valueDate = moment(faker.date.recent({ days: 0.5 })).startOf('day').toDate();
 				proposal.proposalContent = faker.person.jobDescriptor();
 				proposal.tenant = tenant;
 				if (organizationContacts.length) {

@@ -96,7 +96,7 @@ const generateInvoice = async (
 	invoice.invoiceDate = moment(
 		faker.date.between({
 			from: new Date(),
-			to: faker.date.past(0.3)
+			to: faker.date.past({ years: 0.3 })
 		})
 	)
 		.startOf('day')
@@ -104,7 +104,7 @@ const generateInvoice = async (
 	invoice.dueDate = moment(
 		faker.date.between({
 			from: new Date(),
-			to: faker.date.future(0.3)
+			to: faker.date.future({ years: 0.3 })
 		})
 	)
 		.startOf('day')

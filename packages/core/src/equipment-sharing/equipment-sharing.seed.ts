@@ -25,8 +25,8 @@ export const createDefaultEquipmentSharing = async (
 			const sharing = new EquipmentSharing();
 			sharing.name = faker.company.name();
 			sharing.equipment = equipment;
-			sharing.shareRequestDay = faker.date.recent(30);
-			sharing.shareStartDay = faker.date.future(0.5);
+			sharing.shareRequestDay = faker.date.recent({ days: 30 });
+			sharing.shareStartDay = faker.date.future({ years: 0.5 });
 			sharing.shareEndDay = addDays(
 				sharing.shareStartDay,
 				faker.number.int(15)
@@ -69,8 +69,8 @@ export const createRandomEquipmentSharing = async (
 					const sharing = new EquipmentSharing();
 					sharing.name = faker.company.name();
 					sharing.equipment = equipment;
-					sharing.shareRequestDay = faker.date.recent(30);
-					sharing.shareStartDay = faker.date.future(0.5);
+					sharing.shareRequestDay = faker.date.recent({ days: 30 });
+					sharing.shareStartDay = faker.date.future({ years: 0.5 });
 					sharing.shareEndDay = addDays(
 						sharing.shareStartDay,
 						faker.number.int(15)

@@ -15,7 +15,7 @@ export const createCategories = async (
 	for (const organization of organizations) {
 		for (const seedProductCategory of seed) {
 			const newCategory = new ProductCategory();
-			const image = faker.image[seedProductCategory.fakerImageCategory]() || faker.image.abstract();
+			const image = faker.image[seedProductCategory.fakerImageCategory]() || faker.image.url();
 
 			newCategory.imageUrl = image;
 			newCategory.organization = organization;
@@ -55,7 +55,7 @@ export const createRandomProductCategories = async (
 				const newCategory = new ProductCategory();
 				const image =
 					faker.image[seedProductCategory.fakerImageCategory]() ||
-					faker.image.abstract();
+					faker.image.url();
 
 				newCategory.imageUrl = image;
 				newCategory.organization = organization;
