@@ -43,9 +43,7 @@ export const createRandomAwards = async (
 			for (let i = 0; i < awardsData.length; i++) {
 				const award = new OrganizationAward();
 				award.name = awardsData[i];
-				award.year = faker.datatype
-					.number({ min: 1990, max: 2020 })
-					.toString();
+				award.year = faker.number.int({ min: 1990, max: 2020 }).toString();
 				award.organization = organization;
 				award.tenant = tenant;
 				awards.push(award);

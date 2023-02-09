@@ -61,10 +61,10 @@ export const createDefaultKeyResultUpdates = async (
 						to: endDate
 					});
 				} else {
-					keyResultUpdate.createdAt = faker.date.between(
-						startDate,
-						keyResult.hardDeadline
-					);
+					keyResultUpdate.createdAt = faker.date.between({
+						from: startDate,
+						to: keyResult.hardDeadline
+					});
 				}
 
 				if (keyResult.type !== KeyResultTypeEnum.TRUE_OR_FALSE) {

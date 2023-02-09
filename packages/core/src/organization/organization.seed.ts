@@ -71,7 +71,7 @@ export const createDefaultOrganizations = async (
 		defaultOrganization.invitesAllowed = true;
 		defaultOrganization.bonusType = BonusTypeEnum.REVENUE_BASED_BONUS;
 		defaultOrganization.bonusPercentage = 10;
-		defaultOrganization.registrationDate = faker.date.past(5);
+		defaultOrganization.registrationDate = faker.date.past({ years: 5 });
 		defaultOrganization.overview = faker.person.jobDescriptor();
 		defaultOrganization.short_description = faker.person.jobDescriptor();
 		defaultOrganization.client_focus = faker.person.jobDescriptor();
@@ -187,9 +187,9 @@ export const createRandomOrganizations = async (
 				const { bonusType, bonusPercentage } = randomBonus();
 				organization.bonusType = bonusType;
 				organization.bonusPercentage = bonusPercentage;
-				organization.registrationDate = faker.date.past(
-					Math.floor(Math.random() * 10) + 1
-				);
+				organization.registrationDate = faker.date.past({
+					years: Math.floor(Math.random() * 10) + 1
+				});
 
 				organization.skills = organizationSkills;
 				organization.brandColor = faker.helpers.arrayElement([
