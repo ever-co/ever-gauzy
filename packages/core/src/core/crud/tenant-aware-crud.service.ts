@@ -31,7 +31,7 @@ export abstract class TenantAwareCrudService<T extends TenantBaseEntity> extends
 		super(repository);
 	}
 
-	private findConditionsWithEmployeeByUser(): FindOptionsWhere<T>{
+	private findConditionsWithEmployeeByUser(): FindOptionsWhere<T> {
 		const employeeId = RequestContext.currentEmployeeId();
 		return (
 			/**
@@ -49,13 +49,13 @@ export abstract class TenantAwareCrudService<T extends TenantBaseEntity> extends
 					},
 					employeeId: employeeId
 				} : {}
-			: {}
+				: {}
 		) as FindOptionsWhere<T>
 	}
 
 	private findConditionsWithTenantByUser(
 		user: IUser
-	): FindOptionsWhere<T>{
+	): FindOptionsWhere<T> {
 		return {
 			...(
 				this.repository.metadata.hasColumnWithPropertyPath('tenantId')
@@ -209,10 +209,10 @@ export abstract class TenantAwareCrudService<T extends TenantBaseEntity> extends
 	}
 
 	/*
-    |--------------------------------------------------------------------------
-    | @FindOneOrFail
-    |--------------------------------------------------------------------------
-    */
+	|--------------------------------------------------------------------------
+	| @FindOneOrFail
+	|--------------------------------------------------------------------------
+	*/
 
 	/**
 	 * Finds first entity by a given find options with current tenant.
@@ -265,10 +265,10 @@ export abstract class TenantAwareCrudService<T extends TenantBaseEntity> extends
 	}
 
 	/*
-    |--------------------------------------------------------------------------
-    | @FindOne
-    |--------------------------------------------------------------------------
-    */
+	|--------------------------------------------------------------------------
+	| @FindOne
+	|--------------------------------------------------------------------------
+	*/
 	/**
 	 * Finds first entity by a given find options with current tenant.
 	 * If entity was not found in the database - returns null.
@@ -356,7 +356,7 @@ export abstract class TenantAwareCrudService<T extends TenantBaseEntity> extends
 						},
 						employeeId: employeeId
 					} : {}
-				: {}
+					: {}
 			)
 		});
 	}

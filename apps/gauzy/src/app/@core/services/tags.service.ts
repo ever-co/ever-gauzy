@@ -1,38 +1,36 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { IPagination, ITag, ITagFindInput } from '@gauzy/contracts';
 import { firstValueFrom } from 'rxjs';
+import { IPagination, ITag, ITagFindInput } from '@gauzy/contracts';
+import { toParams } from '@gauzy/common-angular';
 import { API_PREFIX } from '../constants/app.constants';
-import { toParams } from 'packages/common-angular/dist';
+import { CrudService } from './crud/crud.service';
 
 @Injectable()
-export class TagsService {
+export class TagsService extends CrudService<ITag> {
+
+	static readonly API_URL = `${API_PREFIX}/tags`;
 
 	constructor(
-		private readonly http: HttpClient
-	) { }
-
-	insertTags(createTags: ITag[]): Promise<ITag[]> {
-		return firstValueFrom(
-			this.http
-				.post<ITag[]>(`${API_PREFIX}/tags`, createTags)
-		);
+		protected readonly http: HttpClient
+	) {
+		super(http, TagsService.API_URL);
 	}
 
-	insertTag(createTag: ITag): Promise<ITag> {
-		return firstValueFrom(
-			this.http.post<ITag>(`${API_PREFIX}/tags`, createTag)
-		);
-	}
-
+	/**
+	 * Get tags
+	 *
+	 * @param relations
+	 * @param findInput
+	 * @returns
+	 */
 	getTags(
-		relations?: string[],
-		findInput?: ITag
+		where: ITagFindInput,
+		relations: string[] = [],
 	): Promise<IPagination<ITag>> {
-		const data = JSON.stringify({ relations, findInput });
 		return firstValueFrom(
 			this.http.get<IPagination<ITag>>(`${API_PREFIX}/tags`, {
-				params: { data }
+				params: toParams({ where, relations })
 			})
 		);
 	}
@@ -52,24 +50,6 @@ export class TagsService {
 			this.http.get<IPagination<ITag>>(`${API_PREFIX}/tags/level`, {
 				params: toParams({ ...where, relations })
 			})
-		);
-	}
-
-	delete(id: ITag['id']): Promise<any> {
-		return firstValueFrom(
-			this.http.delete(`${API_PREFIX}/tags/${id}`)
-		);
-	}
-
-	update(id: string, updateInput: ITag) {
-		return firstValueFrom(
-			this.http.put(`${API_PREFIX}/tags/${id}`, updateInput)
-		);
-	}
-
-	findByName(name: string): Promise<{ item: ITag }> {
-		return firstValueFrom(
-			this.http.get<{ item: ITag }>(`${API_PREFIX}/tags/getByName/${name}`)
 		);
 	}
 }

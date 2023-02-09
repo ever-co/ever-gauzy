@@ -222,7 +222,7 @@ export async function createTags(
 			new Tag({
 				name: label.name,
 				description: label.description,
-				color: label.color,
+				color: `#${label.color}`,
 				tenant,
 				organization,
 			})

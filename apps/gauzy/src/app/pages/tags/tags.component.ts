@@ -5,6 +5,7 @@ import {
 	ViewChild,
 	AfterViewInit
 } from '@angular/core';
+import { ActivatedRoute } from '@angular/router';
 import { NbDialogService } from '@nebular/theme';
 import { LocalDataSource, Ng2SmartTableComponent } from 'ng2-smart-table';
 import { debounceTime, filter, tap } from 'rxjs/operators';
@@ -26,7 +27,6 @@ import {
 	IPaginationBase,
 	PaginationFilterBaseComponent
 } from '../../@shared/pagination/pagination-filter-base.component';
-import { ActivatedRoute } from '@angular/router';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -34,10 +34,9 @@ import { ActivatedRoute } from '@angular/router';
 	templateUrl: './tags.component.html',
 	styleUrls: ['./tags.component.scss']
 })
-export class TagsComponent
-	extends PaginationFilterBaseComponent
-	implements AfterViewInit, OnInit, OnDestroy
-{
+export class TagsComponent extends PaginationFilterBaseComponent
+	implements AfterViewInit, OnInit, OnDestroy {
+
 	settingsSmartTable: object;
 	loading: boolean;
 	smartTableSource = new LocalDataSource();
@@ -209,8 +208,7 @@ export class TagsComponent
 
 			if (result) {
 				const { id, name } = this.selectedTag;
-				await this.tagsService
-					.delete(id)
+				await firstValueFrom(this.tagsService.delete(id))
 					.then(() => {
 						this.toastrService.success(
 							'TAGS_PAGE.TAGS_DELETE_TAG',
@@ -310,7 +308,7 @@ export class TagsComponent
 		const { tenantId } = this.store.user;
 		const { id: organizationId } = this.organization;
 
-		const { items } = await this.tagsService.getTags(['organization'], {
+		const { items } = await this.tagsService.getTags({
 			tenantId,
 			organizationId
 		});
@@ -443,5 +441,5 @@ export class TagsComponent
 		}
 	}
 
-	ngOnDestroy() {}
+	ngOnDestroy() { }
 }
