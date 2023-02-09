@@ -2721,10 +2721,10 @@
   resolved "https://registry.yarnpkg.com/@esbuild/linux-loong64/-/linux-loong64-0.15.13.tgz#64e8825bf0ce769dac94ee39d92ebe6272020dfc"
   integrity sha512-+BoyIm4I8uJmH/QDIH0fu7MG0AEx9OXEDXnqptXCwKOlOqZiS4iraH1Nr7/ObLMokW3sOCeBNyD68ATcV9b9Ag==
 
-"@faker-js/faker@^7.6.0":
-  version "7.6.0"
-  resolved "https://registry.yarnpkg.com/@faker-js/faker/-/faker-7.6.0.tgz#9ea331766084288634a9247fcd8b84f16ff4ba07"
-  integrity sha512-XK6BTq1NDMo9Xqw/YkYyGjSsg44fbNwYRx7QK2CuoQgyy+f1rrTDHoExVM5PsyXCtfl2vs2vVJ0MN0yN6LppRw==
+"@faker-js/faker@8.0.0-alpha.0":
+  version "8.0.0-alpha.0"
+  resolved "https://registry.yarnpkg.com/@faker-js/faker/-/faker-8.0.0-alpha.0.tgz#4df0010d728d2fd5ffa47c2d30e73cdd6fcd5ca5"
+  integrity sha512-w/1f2Q95azPcDlQU+cPoWm5uS7wrUWWlfXIaQYFPO5MRnNJJfjd6E1oR2emzl22pS/Y8iRmODI5645xTwQkYyg==
 
 "@fastify/accepts@^3.0.0":
   version "3.0.0"
