@@ -57,7 +57,7 @@ export const createRandomProductVariant = async (
 						const productVariant = new ProductVariant();
 						productVariant.notes = faker.name.jobDescriptor();
 						productVariant.productId = product.id;
-						productVariant.quantity = faker.datatype.number(20);
+						productVariant.quantity = faker.number.int(20);
 						productVariant.billingInvoicingPolicy = faker.helpers.arrayElement(
 							Object.keys(BillingInvoicingPolicyEnum)
 						);

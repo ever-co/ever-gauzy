@@ -28,12 +28,10 @@ export const createRandomAppointmentEmployees = async (
 		for await (const organization of organizations) {
 			const tenantEmployees = organizationEmployeesMap.get(organization);
 			for await (const tenantEmployee of tenantEmployees) {
-				for (let i = 0; i < faker.datatype.number(15); i++) {
+				for (let i = 0; i < faker.number.int(15); i++) {
 					const appointemployee = new AppointmentEmployee();
 					//todo: need to verify appointmentId is used anywhere else or not
-					appointemployee.appointmentId = faker.datatype
-						.number({ min: 100000, max: 1000000 })
-						.toString();
+					appointemployee.appointmentId = faker.number.int({ min: 100000, max: 1000000 }).toString();
 					appointemployee.employeeId = tenantEmployee.id;
 					appointemployee.organization = tenantEmployee.organization;
 					appointemployee.tenant = tenant;

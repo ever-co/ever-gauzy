@@ -47,7 +47,7 @@ export const createDefaultPayment = async (
 			)
 				.startOf('day')
 				.toDate();
-			payment.amount = faker.datatype.number({
+			payment.amount = faker.number.int({
 				min: 500,
 				max: 5000
 			});
@@ -61,7 +61,7 @@ export const createDefaultPayment = async (
 			payment.tenant = tenant;
 			payment.tags = _.chain(tags)
 				.shuffle()
-				.take(faker.datatype.number({ min: 1, max: 3 }))
+				.take(faker.number.int({ min: 1, max: 3 }))
 				.values()
 				.value();
 			payment.organizationContact = invoice.toContact;
@@ -131,7 +131,7 @@ export const createRandomPayment = async (
 				)
 					.startOf('day')
 					.toDate();
-				payment.amount = faker.datatype.number({
+				payment.amount = faker.number.int({
 					min: 500,
 					max: 5000
 				});
@@ -145,7 +145,7 @@ export const createRandomPayment = async (
 				payment.tenant = tenant;
 				payment.tags = _.chain(tags)
 					.shuffle()
-					.take(faker.datatype.number({ min: 1, max: 3 }))
+					.take(faker.number.int({ min: 1, max: 3 }))
 					.values()
 					.value();
 				payment.organizationContact = invoice.toContact;

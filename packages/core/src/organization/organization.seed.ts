@@ -57,7 +57,7 @@ export const createDefaultOrganizations = async (
 	organizations.forEach((organization: IOrganizationCreateInput) => {
 		const organizationSkills = _.chain(skills)
 			.shuffle()
-			.take(faker.datatype.number({ min: 1, max: 4 }))
+			.take(faker.number.int({ min: 1, max: 4 }))
 			.values()
 			.value();
 		const defaultOrganization: IOrganization = new Organization();
@@ -102,15 +102,15 @@ export const createDefaultOrganizations = async (
 			Object.keys(AlignmentOptions)
 		);
 		defaultOrganization.fiscalStartDate = moment(new Date())
-			.add(faker.datatype.number(10), 'days')
+			.add(faker.number.int(10), 'days')
 			.toDate();
 		defaultOrganization.fiscalEndDate = moment(
 			defaultOrganization.fiscalStartDate
 		)
-			.add(faker.datatype.number(10), 'days')
+			.add(faker.number.int(10), 'days')
 			.toDate();
 		defaultOrganization.futureDateAllowed = true;
-		defaultOrganization.inviteExpiryPeriod = faker.datatype.number(50);
+		defaultOrganization.inviteExpiryPeriod = faker.number.int(50);
 		defaultOrganization.numberFormat = faker.helpers.arrayElement([
 			'USD',
 			'BGN',
@@ -121,7 +121,7 @@ export const createDefaultOrganizations = async (
 		defaultOrganization.startWeekOn = WeekDaysEnum.MONDAY;
 		defaultOrganization.tenant = tenant;
 		defaultOrganization.valueDate = moment(new Date())
-			.add(faker.datatype.number(10), 'days')
+			.add(faker.number.int(10), 'days')
 			.toDate();
 
 		defaultOrganizations.push(defaultOrganization);
@@ -151,7 +151,7 @@ export const createRandomOrganizations = async (
 			for (let index = 0; index < organizationsPerTenant; index++) {
 				const organizationSkills = _.chain(skills)
 					.shuffle()
-					.take(faker.datatype.number({ min: 1, max: 4 }))
+					.take(faker.number.int({ min: 1, max: 4 }))
 					.values()
 					.value();
 				const organization: IOrganization = new Organization();
@@ -208,15 +208,15 @@ export const createRandomOrganizations = async (
 					Object.keys(AlignmentOptions)
 				);
 				organization.fiscalStartDate = moment(new Date())
-					.add(faker.datatype.number(10), 'days')
+					.add(faker.number.int(10), 'days')
 					.toDate();
 				organization.fiscalEndDate = moment(
 					organization.fiscalStartDate
 				)
-					.add(faker.datatype.number(10), 'days')
+					.add(faker.number.int(10), 'days')
 					.toDate();
 				organization.futureDateAllowed = true;
-				organization.inviteExpiryPeriod = faker.datatype.number(50);
+				organization.inviteExpiryPeriod = faker.number.int(50);
 				organization.numberFormat = faker.helpers.arrayElement([
 					'USD',
 					'BGN',
@@ -227,7 +227,7 @@ export const createRandomOrganizations = async (
 				organization.startWeekOn = WeekDaysEnum.MONDAY;
 				organization.tenant = tenant;
 				organization.valueDate = moment(new Date())
-					.add(faker.datatype.number(10), 'days')
+					.add(faker.number.int(10), 'days')
 					.toDate();
 
 				randomOrganizations.push(organization);

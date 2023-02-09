@@ -53,7 +53,7 @@ export const createRandomTimeLogs = async (
 			const timesheet = timeSheetChunk[timeSheetChunkIndex][timeSheetIndex];
 			const randomDays = _.chain([0, 1, 2, 3, 4, 5, 6])
 				.shuffle()
-				.take(faker.datatype.number({ min: 3, max: 5 }))
+				.take(faker.number.int({ min: 3, max: 5 }))
 				.values()
 				.value();
 
@@ -102,7 +102,7 @@ export const createRandomTimeLogs = async (
 							tenant
 						});
 						timeLog.organizationContact = project.organizationContact;
-						timeLog.description = faker.lorem.sentence(faker.datatype.number(10));
+						timeLog.description = faker.lorem.sentence(faker.number.int(10));
 						timeLog.isBillable = faker.helpers.arrayElement([true, false]);
 						timeLog.deletedAt = null;
 						timeLog.isRunning = false;

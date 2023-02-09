@@ -40,9 +40,9 @@ export const createDefaultEmployees = async (
 		employee.payPeriod = faker.helpers.arrayElement(
 			Object.keys(PayPeriodEnum)
 		);
-		employee.billRateValue = faker.datatype.number({ min: 15, max: 40 });
+		employee.billRateValue = faker.number.int({ min: 15, max: 40 });
 		employee.billRateCurrency = organization.currency || env.defaultCurrency;
-		employee.reWeeklyLimit = faker.datatype.number({ min: 10, max: 40 });
+		employee.reWeeklyLimit = faker.number.int({ min: 10, max: 40 });
 		employees.push(employee);
 	}
 	await insertEmployees(dataSource, employees);
@@ -72,9 +72,9 @@ export const createRandomEmployees = async (
 				employee.payPeriod = faker.helpers.arrayElement(
 					Object.keys(PayPeriodEnum)
 				);
-				employee.billRateValue = faker.datatype.number({ min: 15, max: 40 });
+				employee.billRateValue = faker.number.int({ min: 15, max: 40 });
 				employee.billRateCurrency = organization.currency || env.defaultCurrency;
-				employee.reWeeklyLimit = faker.datatype.number({ min: 10, max: 40 });
+				employee.reWeeklyLimit = faker.number.int({ min: 10, max: 40 });
 				employees.push(employee);
 			}
 			organizationEmployeesMap.set(organization, employees);

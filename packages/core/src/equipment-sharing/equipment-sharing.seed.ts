@@ -29,9 +29,9 @@ export const createDefaultEquipmentSharing = async (
 			sharing.shareStartDay = faker.date.future(0.5);
 			sharing.shareEndDay = addDays(
 				sharing.shareStartDay,
-				faker.datatype.number(15)
+				faker.number.int(15)
 			);
-			sharing.status = faker.datatype.number({ min: 1, max: 3 });
+			sharing.status = faker.number.int({ min: 1, max: 3 });
 			sharing.employees = [faker.helpers.arrayElement(defaultEmployees)];
 			sharing.organization = organization;
 			sharing.tenant = tenant;
@@ -73,9 +73,9 @@ export const createRandomEquipmentSharing = async (
 					sharing.shareStartDay = faker.date.future(0.5);
 					sharing.shareEndDay = addDays(
 						sharing.shareStartDay,
-						faker.datatype.number(15)
+						faker.number.int(15)
 					);
-					sharing.status = faker.datatype.number({ min: 1, max: 3 });
+					sharing.status = faker.number.int({ min: 1, max: 3 });
 					sharing.employees = [faker.helpers.arrayElement(employees)];
 					sharing.organization = organization;
 					sharing.tenant = tenant;

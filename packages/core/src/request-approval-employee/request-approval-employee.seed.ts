@@ -50,7 +50,7 @@ export const createRandomRequestApprovalEmployee = async (
 						requestApprovalEmployee.requestApproval = requestApproval;
 						// requestApprovalEmployee.employeeId = tenantEmployee.id;
 						requestApprovalEmployee.employee = tenantEmployee;
-						requestApprovalEmployee.status = faker.datatype.number(
+						requestApprovalEmployee.status = faker.number.int(
 							99
 						);
 						requestApprovalEmployee.tenant = tenant;

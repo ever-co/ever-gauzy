@@ -83,11 +83,11 @@ async function invoiceItemForInvoiceType(
 	const invoiceItems: IInvoiceItem[] = [];
 	for await (const invoice of invoices) {
 		let totalValue = 0;
-		for (let i = 0; i < faker.datatype.number({ min: 1, max: numberOfInvoiceItemPerInvoice }); i++) {
+		for (let i = 0; i < faker.number.int({ min: 1, max: numberOfInvoiceItemPerInvoice }); i++) {
 			const invoiceItem = new InvoiceItem();
 			invoiceItem.description = faker.random.words();
-			invoiceItem.price = faker.datatype.number({ min: 10, max: 50 });
-			invoiceItem.quantity = faker.datatype.number({ min: 10, max: 20 });
+			invoiceItem.price = faker.number.int({ min: 10, max: 50 });
+			invoiceItem.quantity = faker.number.int({ min: 10, max: 20 });
 			invoiceItem.totalValue = invoiceItem.price * invoiceItem.quantity;
 			invoiceItem.invoice = invoice;
 

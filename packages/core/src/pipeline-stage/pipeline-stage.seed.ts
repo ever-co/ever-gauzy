@@ -27,7 +27,7 @@ export const createRandomPipelineStage = async (
 				tenantId
 			});
 			for (const pipeline of organizationPipeline) {
-				for (let i = 0; i <= faker.datatype.number(10); i++) {
+				for (let i = 0; i <= faker.number.int(10); i++) {
 					//todo Need to update with real values
 					const pipelineStage = new PipelineStage();
 					pipelineStage.pipeline = pipeline;

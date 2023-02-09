@@ -54,7 +54,7 @@ export const createRandomWarehouses = async (
 
                     let productsQuantity = 0;
                     for await (const variant of product.variants) {
-                        const quantity = faker.datatype.number(200);
+                        const quantity = faker.number.int(200);
                         productsQuantity += quantity;
 
                         const warehouseVariant = new WarehouseProductVariant();
@@ -98,7 +98,7 @@ const applyRandomProperties = (
     contact.address2 = faker.address.secondaryAddress();
     contact.city = faker.address.city();
     contact.country = faker.helpers.arrayElement(countries).isoCode;
-    contact.fax = faker.datatype.number(8).toString();
+    contact.fax = faker.number.int(8).toString();
     contact.longitude = +faker.address.longitude();
     contact.latitude = +faker.address.latitude();
     contact.organization = organization;

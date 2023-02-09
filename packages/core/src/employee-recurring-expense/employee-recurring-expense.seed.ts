@@ -59,7 +59,7 @@ export const createRandomEmployeeRecurringExpense = async (
 				employeeRecurringExpense.categoryName =
 					RecurringExpenseDefaultCategoriesEnum.SALARY;
 
-				employeeRecurringExpense.value = faker.datatype.number(999); // new changes
+				employeeRecurringExpense.value = faker.number.int(999); // new changes
 				employeeRecurringExpense.currency = env.defaultCurrency; // new changes
 
 				// TODO: some expenses should have a parent if they change "over time"

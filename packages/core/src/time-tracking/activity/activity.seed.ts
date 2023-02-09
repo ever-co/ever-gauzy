@@ -48,7 +48,7 @@ export const createRandomActivities = async (
 			const activities: Activity[] = [];
 			for (
 				let i = 0;
-				i < faker.datatype.number({ min: 0, max: appNames.length });
+				i < faker.number.int({ min: 0, max: appNames.length });
 				i++
 			) {
 				const appName = appNames[i];
@@ -73,17 +73,17 @@ export const createRandomActivities = async (
 				).format('HH:mm:ss');
 
 				activity.recordedAt = moment(date).toDate();
-				activity.duration = faker.datatype.number(100);
+				activity.duration = faker.number.int(100);
 				activity.type = ActivityType.APP;
 
 				activities.push(activity);
 			}
 
-			for (let i = 0; i < faker.datatype.number({ min: 0, max: 10 }); i++) {
+			for (let i = 0; i < faker.number.int({ min: 0, max: 10 }); i++) {
 				const url = faker.internet.domainName();
 				for (
 					let j = 0;
-					j < faker.datatype.number({ min: 5, max: 10 });
+					j < faker.number.int({ min: 5, max: 10 });
 					j++
 				) {
 					const project = faker.helpers.arrayElement(projects);
@@ -113,7 +113,7 @@ export const createRandomActivities = async (
 							moment(date).endOf('day').toDate()
 						)
 					).format('HH:mm:ss');
-					activity.duration = faker.datatype.number({
+					activity.duration = faker.number.int({
 						min: 10,
 						max: 100
 					});

@@ -71,7 +71,7 @@ export const createRandomScreenshot = async (
 		index++
 	) {
 		const sourceFile = faker.helpers.arrayElement(fileList);
-		const sourceName = 'screenshot-' + moment().unix() + faker.datatype.number(999) + '.png';
+		const sourceName = 'screenshot-' + moment().unix() + faker.number.int(999) + '.png';
 		const destFile = path.join(destDir, sourceName);
 		const sourceFilePath = path.join(dir, sourceFile);
 		const destFilePath = path.join(baseDir, destFile);

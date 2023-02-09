@@ -33,14 +33,14 @@ export const createDefaultEmployeeTimeOff = async (
 			request.tenantId = tenantId;
 			request.employees = _.chain(employees)
 				.shuffle()
-				.take(faker.datatype.number({ min: 1, max: 3 }))
+				.take(faker.number.int({ min: 1, max: 3 }))
 				.values()
 				.value();
 			request.description = 'Time off';
 			request.isHoliday = faker.helpers.arrayElement([true, false]);
 			request.isArchived = faker.helpers.arrayElement([true, false]);
 			request.start = faker.date.future(0.5);
-			request.end = addDays(request.start, faker.datatype.number(7));
+			request.end = addDays(request.start, faker.number.int(7));
 			request.requestDate = faker.date.recent();
 			request.status = faker.helpers.arrayElement(status);
 			request.documentUrl = '';
@@ -82,14 +82,14 @@ export const createRandomEmployeeTimeOff = async (
 					request.tenantId = tenantId;
 					request.employees = _.chain(employees)
 						.shuffle()
-						.take(faker.datatype.number({ min: 1, max: 3 }))
+						.take(faker.number.int({ min: 1, max: 3 }))
 						.values()
 						.value();
 					request.description = 'Time off';
 					request.isHoliday = faker.helpers.arrayElement([true, false]);
 					request.isArchived = faker.helpers.arrayElement([true, false]);
 					request.start = faker.date.future(0.5);
-					request.end = addDays(request.start, faker.datatype.number(7));
+					request.end = addDays(request.start, faker.number.int(7));
 					request.requestDate = faker.date.recent();
 					request.status = faker.helpers.arrayElement(status);
 					request.documentUrl = '';

@@ -131,7 +131,7 @@ export const createRandomTimesheet = async (
 
 				_.chain(employees)
 					.shuffle()
-					.take(faker.datatype.number(employees.length))
+					.take(faker.number.int(employees.length))
 					.each((employee) => {
 						const status = faker.helpers.arrayElement(
 							Object.keys(TimesheetStatus)

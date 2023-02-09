@@ -57,7 +57,7 @@ const dataOperation = async (
 	pipelines: IPipeline[],
 	organization: IOrganization
 ) => {
-	for (let i = 0; i <= faker.datatype.number(10); i++) {
+	for (let i = 0; i <= faker.number.int(10); i++) {
 		const pipeline = new Pipeline();
 
 		pipeline.organization = organization;

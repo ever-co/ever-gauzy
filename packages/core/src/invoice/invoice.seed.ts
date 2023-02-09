@@ -88,10 +88,10 @@ const generateInvoice = async (
 	const invoice = new Invoice();
 	invoice.tags = chain(tags)
 		.shuffle()
-		.take(faker.datatype.number({ min: 1, max: 3 }))
+		.take(faker.number.int({ min: 1, max: 3 }))
 		.values()
 		.value();
-	invoice.invoiceNumber = faker.datatype.number({ min: 111111111111, max: 999999999999 });
+	invoice.invoiceNumber = faker.number.int({ min: 111111111111, max: 999999999999 });
 
 	invoice.invoiceDate = moment(
 		faker.date.between(
@@ -118,10 +118,10 @@ const generateInvoice = async (
 	invoice.fromOrganization = organization;
 	invoice.toContact = faker.helpers.arrayElement(organizationContacts);
 	invoice.currency = organization.currency;
-	invoice.discountValue = faker.datatype.number({ min: 1, max: 10 });
+	invoice.discountValue = faker.number.int({ min: 1, max: 10 });
 	invoice.paid = faker.datatype.boolean();
-	invoice.tax = faker.datatype.number({ min: 1, max: 10 });
-	invoice.tax2 = faker.datatype.number({ min: 1, max: 10 });
+	invoice.tax = faker.number.int({ min: 1, max: 10 });
+	invoice.tax2 = faker.number.int({ min: 1, max: 10 });
 	invoice.terms = 'Term and Setting Applied';
 	invoice.isEstimate = faker.datatype.boolean();
 
@@ -178,7 +178,7 @@ const generateInvoiceHistory = async (
 		})
 	);
 
-	for (let i = 0; i < faker.datatype.number({
+	for (let i = 0; i < faker.number.int({
 		min: 2,
 		max: randomSeedConfig.numberOfInvoiceHistoryPerInvoice
 	}); i++) {

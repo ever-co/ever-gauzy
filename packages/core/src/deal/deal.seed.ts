@@ -49,7 +49,7 @@ export const createRandomDeal = async (
 						deal.createdByUserId = tenantEmployee.user.id;
 						deal.stageId = pipelineStage.id;
 						deal.organization = tenantOrg;
-						deal.probability = faker.datatype.number(5);
+						deal.probability = faker.number.int(5);
 						deal.tenant = tenant;
 						deals.push(deal);
 					}

@@ -49,7 +49,7 @@ export const createRandomRequestApprovalTeam = async (
 						requestApprovalTeam.team = organizationTeam;
 						requestApprovalTeam.tenant = tenant;
 						requestApprovalTeam.organization = organization;
-						requestApprovalTeam.status = faker.datatype.number(3);
+						requestApprovalTeam.status = faker.number.int(3);
 						requestApprovalTeams.push(requestApprovalTeam);
 					}
 				}

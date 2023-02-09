@@ -51,9 +51,9 @@ export const createRandomRequestApproval = async (
 
 				const requestApproval = new RequestApproval();
 				requestApproval.name = faker.helpers.arrayElement(approvalTypes);
-				requestApproval.status = faker.datatype.number({ min: 1, max: 3 });
+				requestApproval.status = faker.number.int({ min: 1, max: 3 });
 				requestApproval.approvalPolicy = tenantPolicy;
-				requestApproval.min_count = faker.datatype.number({ min: 1, max: 56 });
+				requestApproval.min_count = faker.number.int({ min: 1, max: 56 });
 				requestApproval.createdBy = faker.helpers.arrayElement(specificEmployees).id;
 
 				const requestApprovalEmployees: RequestApprovalEmployee[] = [];

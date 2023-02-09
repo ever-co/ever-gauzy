@@ -45,8 +45,8 @@ export const createDefaultOrganizationProjects = async (
 		);
 		project.budget =
 			project.budgetType == OrganizationProjectBudgetTypeEnum.COST
-				? faker.datatype.number({ min: 500, max: 5000 })
-				: faker.datatype.number({ min: 40, max: 400 });
+				? faker.number.int({ min: 500, max: 5000 })
+				: faker.number.int({ min: 40, max: 400 });
 		project.taskListType = faker.helpers.arrayElement(
 			Object.values(TaskListTypeEnum)
 		);
@@ -115,8 +115,8 @@ export const createRandomOrganizationProjects = async (
 				);
 				project.budget =
 					project.budgetType == OrganizationProjectBudgetTypeEnum.COST
-						? faker.datatype.number({ min: 500, max: 5000 })
-						: faker.datatype.number({ min: 40, max: 400 });
+						? faker.number.int({ min: 500, max: 5000 })
+						: faker.number.int({ min: 40, max: 400 });
 
 				project.startDate = faker.date.past(5);
 				project.endDate = faker.date.past(2);
@@ -167,7 +167,7 @@ export const assignOrganizationProjectToEmployee = async (
 	for await (const employee of employees) {
 		employee.projects = chain(organizationProjects)
 			.shuffle()
-			.take(faker.datatype.number({ min: 2, max: 4 }))
+			.take(faker.number.int({ min: 2, max: 4 }))
 			.unique()
 			.values()
 			.value();

@@ -100,8 +100,8 @@ const generateOrganizationContact = async (
 	);
 	orgContact.budget =
 		orgContact.budgetType == OrganizationContactBudgetTypeEnum.COST
-			? faker.datatype.number({ min: 500, max: 5000 })
-			: faker.datatype.number({ min: 40, max: 400 });
+			? faker.number.int({ min: 500, max: 5000 })
+			: faker.number.int({ min: 40, max: 400 });
 
 	const email = faker.internet.exampleEmail(contact.firstName, contact.lastName);
 	orgContact.emailAddresses = [email];
@@ -113,7 +113,7 @@ const generateOrganizationContact = async (
 	orgContact.imageUrl = getDummyImage(330, 300, (orgContact.name || faker.name.firstName()).charAt(0).toUpperCase());
 	orgContact.tags = _.chain(tags)
 		.shuffle()
-		.take(faker.datatype.number({ min: 1, max: 2 }))
+		.take(faker.number.int({ min: 1, max: 2 }))
 		.values()
 		.value();
 	return orgContact;
@@ -138,7 +138,7 @@ export const assignOrganizationContactToEmployee = async (
 	for await (const employee of employees) {
 		employee.organizationContacts = _.chain(organizationContacts)
 			.shuffle()
-			.take(faker.datatype.number({ min: 2, max: 4 }))
+			.take(faker.number.int({ min: 2, max: 4 }))
 			.unique()
 			.values()
 			.value();
