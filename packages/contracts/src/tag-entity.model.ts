@@ -13,7 +13,7 @@ export interface ITagFindInput extends IBasePerTenantAndOrganizationEntityModel 
 	description?: string;
 }
 
-export interface ITagCreateInput extends ITag { }
+export interface ITagCreateInput extends ITag {}
 
 export interface ITagUpdateInput extends Partial<ITagCreateInput> {
 	id?: string;

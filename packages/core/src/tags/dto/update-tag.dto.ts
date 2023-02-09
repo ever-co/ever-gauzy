@@ -3,7 +3,9 @@ import { ITagUpdateInput } from '@gauzy/contracts';
 import { TenantOrganizationBaseDTO } from './../../core/dto';
 import { Tag } from './../tag.entity';
 
-export class UpdateTagDTO extends IntersectionType(
-    PartialType(TenantOrganizationBaseDTO),
-    PartialType(PickType(Tag, ['name', 'description', 'color'])),
-) implements ITagUpdateInput { }
+export class UpdateTagDTO
+	extends IntersectionType(
+		PartialType(TenantOrganizationBaseDTO),
+		PartialType(PickType(Tag, ['name', 'description', 'color']))
+	)
+	implements ITagUpdateInput {}

@@ -8,12 +8,9 @@ import { CrudService } from './crud/crud.service';
 
 @Injectable()
 export class TagsService extends CrudService<ITag> {
-
 	static readonly API_URL = `${API_PREFIX}/tags`;
 
-	constructor(
-		protected readonly http: HttpClient
-	) {
+	constructor(protected readonly http: HttpClient) {
 		super(http, TagsService.API_URL);
 	}
 
@@ -24,10 +21,7 @@ export class TagsService extends CrudService<ITag> {
 	 * @param findInput
 	 * @returns
 	 */
-	getTags(
-		where: ITagFindInput,
-		relations: string[] = [],
-	): Promise<IPagination<ITag>> {
+	getTags(where: ITagFindInput, relations: string[] = []): Promise<IPagination<ITag>> {
 		return firstValueFrom(
 			this.http.get<IPagination<ITag>>(`${API_PREFIX}/tags`, {
 				params: toParams({ where, relations })
@@ -42,10 +36,7 @@ export class TagsService extends CrudService<ITag> {
 	 * @param relations
 	 * @returns
 	 */
-	getTagsByLevel(
-		where: ITagFindInput,
-		relations: string[] = []
-	): Promise<IPagination<ITag>> {
+	getTagsByLevel(where: ITagFindInput, relations: string[] = []): Promise<IPagination<ITag>> {
 		return firstValueFrom(
 			this.http.get<IPagination<ITag>>(`${API_PREFIX}/tags/level`, {
 				params: toParams({ ...where, relations })

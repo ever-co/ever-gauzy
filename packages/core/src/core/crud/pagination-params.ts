@@ -13,7 +13,6 @@ import { TenantOrganizationBaseDTO } from './../../core/dto';
  * Specifies what columns should be retrieved.
  */
 export class OptionsSelect<T = any> {
-
 	@ApiPropertyOptional({ type: 'object' })
 	@IsOptional()
 	@Transform(({ value }: TransformFnParams) => parseObject(value, parseToBoolean))
@@ -22,9 +21,8 @@ export class OptionsSelect<T = any> {
 
 /**
  * Indicates what relations of entity should be loaded (simplified left join form).
-*/
+ */
 export class OptionsRelations<T = any> extends OptionsSelect<T> {
-
 	@ApiPropertyOptional({ type: 'object' })
 	@IsOptional()
 	readonly relations?: FindOptionsRelations<T>;
@@ -48,11 +46,11 @@ export class OptionParams<T> extends OptionsRelations<T> {
 	readonly where: FindOptionsWhere<T>;
 
 	/**
-	* Indicates if soft-deleted rows should be included in entity result.
-	*/
+	 * Indicates if soft-deleted rows should be included in entity result.
+	 */
 	@ApiPropertyOptional({ type: 'boolean' })
 	@IsOptional()
-	@Transform(({ value }: TransformFnParams) => value ? parseToBoolean(value) : false)
+	@Transform(({ value }: TransformFnParams) => (value ? parseToBoolean(value) : false))
 	readonly withDeleted: boolean;
 }
 
@@ -94,7 +92,7 @@ export function parseObject(source: Object, callback: Function) {
 					parseObject(source[key], callback);
 				}
 			} else {
-				Object.assign(source, { [key]: callback(source[key]) })
+				Object.assign(source, { [key]: callback(source[key]) });
 			}
 		}
 	}

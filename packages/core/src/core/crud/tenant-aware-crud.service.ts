@@ -22,12 +22,11 @@ import { isNotEmpty } from '@gauzy/common';
  * This abstract class adds tenantId to all query filters if a user is available in the current RequestContext
  * If a user is not available in RequestContext, then it behaves exactly the same as CrudService
  */
-export abstract class TenantAwareCrudService<T extends TenantBaseEntity> extends CrudService<T>
-	implements ICrudService<T> {
-
-	protected constructor(
-		protected readonly repository: Repository<T>
-	) {
+export abstract class TenantAwareCrudService<T extends TenantBaseEntity>
+	extends CrudService<T>
+	implements ICrudService<T>
+{
+	protected constructor(protected readonly repository: Repository<T>) {
 		super(repository);
 	}
 
@@ -37,34 +36,32 @@ export abstract class TenantAwareCrudService<T extends TenantBaseEntity> extends
 			/**
 			 * If employee has login & retrieve self data
 			 */
-			(isNotEmpty(employeeId)) ?
-				(
-					!RequestContext.hasPermission(
-						PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
-					) &&
-					this.repository.metadata.hasColumnWithPropertyPath('employeeId')
-				) ? {
-					employee: {
-						id: employeeId
-					},
-					employeeId: employeeId
-				} : {}
-				: {}
-		) as FindOptionsWhere<T>
+			(
+				isNotEmpty(employeeId)
+					? !RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE) &&
+					  this.repository.metadata.hasColumnWithPropertyPath('employeeId')
+						? {
+								employee: {
+									id: employeeId
+								},
+								employeeId: employeeId
+						  }
+						: {}
+					: {}
+			) as FindOptionsWhere<T>
+		);
 	}
 
-	private findConditionsWithTenantByUser(
-		user: IUser
-	): FindOptionsWhere<T> {
+	private findConditionsWithTenantByUser(user: IUser): FindOptionsWhere<T> {
 		return {
-			...(
-				this.repository.metadata.hasColumnWithPropertyPath('tenantId')
-			) ? {
-				tenant: {
-					id: user.tenantId
-				},
-				tenantId: user.tenantId
-			} : {},
+			...(this.repository.metadata.hasColumnWithPropertyPath('tenantId')
+				? {
+						tenant: {
+							id: user.tenantId
+						},
+						tenantId: user.tenantId
+				  }
+				: {}),
 			...this.findConditionsWithEmployeeByUser()
 		} as FindOptionsWhere<T>;
 	}
@@ -79,23 +76,23 @@ export abstract class TenantAwareCrudService<T extends TenantBaseEntity> extends
 				wheres.push({
 					...options,
 					...this.findConditionsWithTenantByUser(user)
-				})
+				});
 			});
 			return wheres;
 		}
 		return (
-			where ? {
-				...where,
-				...this.findConditionsWithTenantByUser(user)
-			} : {
-				...this.findConditionsWithTenantByUser(user)
-			}
+			where
+				? {
+						...where,
+						...this.findConditionsWithTenantByUser(user)
+				  }
+				: {
+						...this.findConditionsWithTenantByUser(user)
+				  }
 		) as FindOptionsWhere<T>;
 	}
 
-	private findOneWithTenant(
-		filter?: FindOneOptions<T>
-	): FindOneOptions<T> {
+	private findOneWithTenant(filter?: FindOneOptions<T>): FindOneOptions<T> {
 		const user = RequestContext.currentUser();
 		if (!user || !user.tenantId) {
 			return filter;
@@ -120,10 +117,7 @@ export abstract class TenantAwareCrudService<T extends TenantBaseEntity> extends
 		return filter;
 	}
 
-	private findManyWithTenant(
-		filter?: FindManyOptions<T>
-	): FindManyOptions<T> {
-
+	private findManyWithTenant(filter?: FindManyOptions<T>): FindManyOptions<T> {
 		const user = RequestContext.currentUser();
 		if (!user || !user.tenantId) {
 			return filter;
@@ -222,14 +216,8 @@ export abstract class TenantAwareCrudService<T extends TenantBaseEntity> extends
 	 * @param options
 	 * @returns
 	 */
-	public async findOneOrFailByIdString(
-		id: T['id'],
-		options?: FindOneOptions<T>
-	): Promise<ITryRequest<T>> {
-		return await super.findOneOrFailByIdString(
-			id,
-			this.findOneWithTenant(options)
-		);
+	public async findOneOrFailByIdString(id: T['id'], options?: FindOneOptions<T>): Promise<ITryRequest<T>> {
+		return await super.findOneOrFailByIdString(id, this.findOneWithTenant(options));
 	}
 
 	/**
@@ -239,12 +227,8 @@ export abstract class TenantAwareCrudService<T extends TenantBaseEntity> extends
 	 * @param options
 	 * @returns
 	 */
-	public async findOneOrFailByOptions(
-		options?: FindOneOptions<T>
-	): Promise<ITryRequest<T>> {
-		return await super.findOneOrFailByOptions(
-			this.findOneWithTenant(options)
-		);
+	public async findOneOrFailByOptions(options?: FindOneOptions<T>): Promise<ITryRequest<T>> {
+		return await super.findOneOrFailByOptions(this.findOneWithTenant(options));
 	}
 
 	/**
@@ -254,9 +238,7 @@ export abstract class TenantAwareCrudService<T extends TenantBaseEntity> extends
 	 * @param options
 	 * @returns
 	 */
-	public async findOneOrFailByWhereOptions(
-		options: FindOptionsWhere<T>
-	): Promise<ITryRequest<T>> {
+	public async findOneOrFailByWhereOptions(options: FindOptionsWhere<T>): Promise<ITryRequest<T>> {
 		const user = RequestContext.currentUser();
 		return await super.findOneOrFailByWhereOptions({
 			...options,
@@ -277,14 +259,8 @@ export abstract class TenantAwareCrudService<T extends TenantBaseEntity> extends
 	 * @param options
 	 * @returns
 	 */
-	public async findOneByIdString(
-		id: T['id'],
-		options?: FindOneOptions<T>
-	): Promise<T> {
-		return await super.findOneByIdString(
-			id,
-			this.findOneWithTenant(options)
-		);
+	public async findOneByIdString(id: T['id'], options?: FindOneOptions<T>): Promise<T> {
+		return await super.findOneByIdString(id, this.findOneWithTenant(options));
 	}
 
 	/**
@@ -294,12 +270,8 @@ export abstract class TenantAwareCrudService<T extends TenantBaseEntity> extends
 	 * @param options
 	 * @returns
 	 */
-	public async findOneByOptions(
-		options: FindOneOptions<T>
-	): Promise<T> {
-		return await super.findOneByOptions(
-			this.findOneWithTenant(options)
-		);
+	public async findOneByOptions(options: FindOneOptions<T>): Promise<T> {
+		return await super.findOneByOptions(this.findOneWithTenant(options));
 	}
 
 	/**
@@ -309,9 +281,7 @@ export abstract class TenantAwareCrudService<T extends TenantBaseEntity> extends
 	 * @param options
 	 * @returns
 	 */
-	public async findOneByWhereOptions(
-		options: FindOptionsWhere<T>
-	): Promise<T> {
+	public async findOneByWhereOptions(options: FindOptionsWhere<T>): Promise<T> {
 		const user = RequestContext.currentUser();
 		return await super.findOneByWhereOptions({
 			...options,
@@ -332,32 +302,28 @@ export abstract class TenantAwareCrudService<T extends TenantBaseEntity> extends
 
 		return super.create({
 			...entity,
-			...(
-				this.repository.metadata.hasColumnWithPropertyPath('tenantId')
-			) ? {
-				tenant: {
-					id: tenantId
-				},
-				tenantId,
-			} : {},
+			...(this.repository.metadata.hasColumnWithPropertyPath('tenantId')
+				? {
+						tenant: {
+							id: tenantId
+						},
+						tenantId
+				  }
+				: {}),
 			/**
 			 * If employee has login & create data for self
 			 */
-			...(
-				(isNotEmpty(employeeId)) ?
-					(
-						!RequestContext.hasPermission(
-							PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
-						) &&
-						this.repository.metadata.hasColumnWithPropertyPath('employeeId')
-					) ? {
-						employee: {
-							id: employeeId
-						},
-						employeeId: employeeId
-					} : {}
+			...(isNotEmpty(employeeId)
+				? !RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE) &&
+				  this.repository.metadata.hasColumnWithPropertyPath('employeeId')
+					? {
+							employee: {
+								id: employeeId
+							},
+							employeeId: employeeId
+					  }
 					: {}
-			)
+				: {})
 		});
 	}
 
@@ -372,14 +338,14 @@ export abstract class TenantAwareCrudService<T extends TenantBaseEntity> extends
 		const tenantId = RequestContext.currentTenantId();
 		return await super.save({
 			...entity,
-			...(
-				this.repository.metadata.hasColumnWithPropertyPath('tenantId')
-			) ? {
-				tenant: {
-					id: tenantId
-				},
-				tenantId,
-			} : {},
+			...(this.repository.metadata.hasColumnWithPropertyPath('tenantId')
+				? {
+						tenant: {
+							id: tenantId
+						},
+						tenantId
+				  }
+				: {})
 		});
 	}
 
@@ -409,10 +375,7 @@ export abstract class TenantAwareCrudService<T extends TenantBaseEntity> extends
 	 * @param options
 	 * @returns
 	 */
-	public async delete(
-		criteria: string | FindOptionsWhere<T>,
-		options?: FindOneOptions<T>
-	): Promise<DeleteResult> {
+	public async delete(criteria: string | FindOptionsWhere<T>, options?: FindOneOptions<T>): Promise<DeleteResult> {
 		try {
 			let record: T;
 			if (typeof criteria === 'string') {

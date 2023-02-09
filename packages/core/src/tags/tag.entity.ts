@@ -62,7 +62,6 @@ import {
 
 @Entity('tag')
 export class Tag extends TenantOrganizationBaseEntity implements ITag {
-
 	@ApiProperty({ type: () => String, required: true })
 	@IsNotEmpty()
 	@IsString()

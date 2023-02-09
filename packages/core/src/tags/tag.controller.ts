@@ -30,10 +30,7 @@ import { CreateTagDTO, TagQueryByLevelDTO, UpdateTagDTO } from './dto';
 @UseGuards(TenantPermissionGuard)
 @Controller()
 export class TagController extends CrudController<Tag> {
-	constructor(
-		private readonly tagService: TagService,
-		private readonly commandBus: CommandBus
-	) {
+	constructor(private readonly tagService: TagService, private readonly commandBus: CommandBus) {
 		super(tagService);
 	}
 
@@ -44,9 +41,7 @@ export class TagController extends CrudController<Tag> {
 	 */
 	@Get('level')
 	@UsePipes(new ValidationPipe())
-	async findTagsByLevel(
-		@Query() query: TagQueryByLevelDTO
-	): Promise<IPagination<ITag>> {
+	async findTagsByLevel(@Query() query: TagQueryByLevelDTO): Promise<IPagination<ITag>> {
 		try {
 			return await this.tagService.findTagsByLevel(query, query.relations);
 		} catch (error) {
@@ -62,12 +57,8 @@ export class TagController extends CrudController<Tag> {
 	 */
 	@Get()
 	@UsePipes(new ValidationPipe())
-	async findAll(
-		@Query() options: PaginationParams<Tag>
-	): Promise<any> {
-		return await this.commandBus.execute(
-			new TagListCommand(options.where, options.relations)
-		);
+	async findAll(@Query() options: PaginationParams<Tag>): Promise<any> {
+		return await this.commandBus.execute(new TagListCommand(options.where, options.relations));
 	}
 
 	/**
@@ -81,9 +72,7 @@ export class TagController extends CrudController<Tag> {
 	@Permissions(PermissionsEnum.ORG_TAGS_EDIT)
 	@Post()
 	@UsePipes(new ValidationPipe({ whitelist: true }))
-	async create(
-		@Body() entity: CreateTagDTO
-	): Promise<ITag> {
+	async create(@Body() entity: CreateTagDTO): Promise<ITag> {
 		return await this.tagService.create(entity);
 	}
 

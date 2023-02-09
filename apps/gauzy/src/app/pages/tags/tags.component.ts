@@ -1,10 +1,4 @@
-import {
-	Component,
-	OnInit,
-	OnDestroy,
-	ViewChild,
-	AfterViewInit
-} from '@angular/core';
+import { Component, OnInit, OnDestroy, ViewChild, AfterViewInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { NbDialogService } from '@nebular/theme';
 import { LocalDataSource, Ng2SmartTableComponent } from 'ng2-smart-table';
@@ -12,11 +6,7 @@ import { debounceTime, filter, tap } from 'rxjs/operators';
 import { Subject, firstValueFrom } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import {
-	ITag,
-	IOrganization,
-	ComponentLayoutStyleEnum
-} from '@gauzy/contracts';
+import { ITag, IOrganization, ComponentLayoutStyleEnum } from '@gauzy/contracts';
 import { distinctUntilChange, splitCamelCase } from '@gauzy/common-angular';
 import { DeleteConfirmationComponent } from '../../@shared/user/forms';
 import { TagsColorComponent } from './tags-color/tags-color.component';
@@ -34,9 +24,7 @@ import {
 	templateUrl: './tags.component.html',
 	styleUrls: ['./tags.component.scss']
 })
-export class TagsComponent extends PaginationFilterBaseComponent
-	implements AfterViewInit, OnInit, OnDestroy {
-
+export class TagsComponent extends PaginationFilterBaseComponent implements AfterViewInit, OnInit, OnDestroy {
 	settingsSmartTable: object;
 	loading: boolean;
 	smartTableSource = new LocalDataSource();
@@ -96,10 +84,7 @@ export class TagsComponent extends PaginationFilterBaseComponent
 			.subscribe();
 		this.route.queryParamMap
 			.pipe(
-				filter(
-					(params) =>
-						!!params && params.get('openAddDialog') === 'true'
-				),
+				filter((params) => !!params && params.get('openAddDialog') === 'true'),
 				debounceTime(1000),
 				tap(() => this.add()),
 				untilDestroyed(this)
@@ -133,14 +118,8 @@ export class TagsComponent extends PaginationFilterBaseComponent
 		if (searchText) {
 			const searchedTags = this.allTags.filter(
 				(tag) =>
-					(tag.name &&
-						tag.name
-							.toLowerCase()
-							.includes(searchText.toLowerCase())) ||
-					(tag.description &&
-						tag.description
-							.toLowerCase()
-							.includes(searchText.toLowerCase()))
+					(tag.name && tag.name.toLowerCase().includes(searchText.toLowerCase())) ||
+					(tag.description && tag.description.toLowerCase().includes(searchText.toLowerCase()))
 			);
 			this._isFiltered = true;
 			this._refresh$.next(true);
@@ -158,15 +137,9 @@ export class TagsComponent extends PaginationFilterBaseComponent
 		this.store
 			.componentLayout$(this.viewComponentName)
 			.pipe(
-				tap(
-					(componentLayout) =>
-						(this.dataLayoutStyle = componentLayout)
-				),
+				tap((componentLayout) => (this.dataLayoutStyle = componentLayout)),
 				tap(() => this.refreshPagination()),
-				filter(
-					(componentLayout) =>
-						componentLayout === ComponentLayoutStyleEnum.CARDS_GRID
-				),
+				filter((componentLayout) => componentLayout === ComponentLayoutStyleEnum.CARDS_GRID),
 				tap(() => (this.tags = [])),
 				tap(() => this.tags$.next(true)),
 				untilDestroyed(this)
@@ -202,20 +175,15 @@ export class TagsComponent extends PaginationFilterBaseComponent
 		}
 
 		if (this.selectedTag) {
-			const result = await firstValueFrom(
-				this.dialogService.open(DeleteConfirmationComponent).onClose
-			);
+			const result = await firstValueFrom(this.dialogService.open(DeleteConfirmationComponent).onClose);
 
 			if (result) {
 				const { id, name } = this.selectedTag;
 				await firstValueFrom(this.tagsService.delete(id))
 					.then(() => {
-						this.toastrService.success(
-							'TAGS_PAGE.TAGS_DELETE_TAG',
-							{
-								name
-							}
-						);
+						this.toastrService.success('TAGS_PAGE.TAGS_DELETE_TAG', {
+							name
+						});
 					})
 					.finally(() => {
 						this._refresh$.next(true);
@@ -257,9 +225,7 @@ export class TagsComponent extends PaginationFilterBaseComponent
 			actions: false,
 			pager: {
 				display: false,
-				perPage: pagination
-					? pagination.itemsPerPage
-					: this.minItemPerPage
+				perPage: pagination ? pagination.itemsPerPage : this.minItemPerPage
 			},
 			noDataMessage: this.getTranslation('SM_TABLE.NO_DATA.TAGS'),
 			columns: {
@@ -341,9 +307,7 @@ export class TagsComponent extends PaginationFilterBaseComponent
 	}
 
 	private get _isGridLayout() {
-		return (
-			this.componentLayoutStyleEnum.CARDS_GRID === this.dataLayoutStyle
-		);
+		return this.componentLayoutStyleEnum.CARDS_GRID === this.dataLayoutStyle;
 	}
 
 	/**
@@ -360,9 +324,7 @@ export class TagsComponent extends PaginationFilterBaseComponent
 			return;
 		}
 		if (value) {
-			const tags = this.allTags.filter(
-				(tag) => tag[value] && parseInt(tag[value]) > 0
-			);
+			const tags = this.allTags.filter((tag) => tag[value] && parseInt(tag[value]) > 0);
 			this._isFiltered = true;
 			this._refresh$.next(true);
 			this.smartTableSource.load(tags);
@@ -379,19 +341,12 @@ export class TagsComponent extends PaginationFilterBaseComponent
 		tags.forEach((tag) => {
 			for (const property in tag) {
 				const substring = '_counter';
-				if (
-					property.includes(substring) &&
-					parseInt(tag[property]) > 0
-				) {
-					const options = this.filterOptions.find(
-						(option) => option.property === property
-					);
+				if (property.includes(substring) && parseInt(tag[property]) > 0) {
+					const options = this.filterOptions.find((option) => option.property === property);
 					if (!options) {
 						this.filterOptions.push({
 							property,
-							displayName: splitCamelCase(
-								property.replace(substring, '')
-							)
+							displayName: splitCamelCase(property.replace(substring, ''))
 						});
 					}
 				}
@@ -441,5 +396,5 @@ export class TagsComponent extends PaginationFilterBaseComponent
 		}
 	}
 
-	ngOnDestroy() { }
+	ngOnDestroy() {}
 }

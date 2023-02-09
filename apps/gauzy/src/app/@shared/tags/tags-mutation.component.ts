@@ -13,7 +13,6 @@ import { NotesWithTagsComponent } from '../table-components';
 	styleUrls: ['./tags-mutation.component.scss']
 })
 export class TagsMutationComponent extends NotesWithTagsComponent implements OnInit {
-
 	/**
 	 * Tag mutation form
 	 */
@@ -28,8 +27,8 @@ export class TagsMutationComponent extends NotesWithTagsComponent implements OnI
 	}
 
 	/*
-	* Getter & Setter for tag to edit
-	*/
+	 * Getter & Setter for tag to edit
+	 */
 	_tag: ITag;
 	get tag(): ITag {
 		return this._tag;
@@ -57,7 +56,7 @@ export class TagsMutationComponent extends NotesWithTagsComponent implements OnI
 		super(themeService, translateService);
 	}
 
-	ngOnInit(): void { }
+	ngOnInit(): void {}
 
 	async addTag() {
 		if (!this.store.selectedOrganization) {
@@ -75,11 +74,11 @@ export class TagsMutationComponent extends NotesWithTagsComponent implements OnI
 				tenantId,
 				...(isTenantLevel
 					? {
-						organizationId: null
-					}
+							organizationId: null
+					  }
 					: {
-						organizationId
-					})
+							organizationId
+					  })
 			})
 		);
 		this.closeDialog(tag);
@@ -103,11 +102,11 @@ export class TagsMutationComponent extends NotesWithTagsComponent implements OnI
 				tenantId,
 				...(isTenantLevel
 					? {
-						organizationId: null
-					}
+							organizationId: null
+					  }
 					: {
-						organizationId
-					})
+							organizationId
+					  })
 			})
 		);
 		this.closeDialog(tag);
