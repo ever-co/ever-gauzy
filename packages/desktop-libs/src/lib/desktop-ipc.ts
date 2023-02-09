@@ -15,7 +15,7 @@ import { PowerManagerPreventDisplaySleep, PowerManagerDetectInactivity } from '.
 import { DesktopOsInactivityHandler } from './desktop-os-inactivity-handler';
 import { DesktopOfflineModeHandler } from './offline/desktop-offline-mode-handler';
 import { IntervalTO } from './offline/dto/interval.dto';
-import { Interval, IntervalService, Timer, TimerService, User, UserService } from './offline';
+import { Interval, IntervalService, Timer, TimerService, TimerTO, User, UserService } from './offline';
 
 const timerHandler = new TimerHandler();
 
@@ -39,8 +39,8 @@ export function ipcMainHandler(store, startServer, knex, config, timeTrackerWind
 			API_BASE_URL: arg.serverUrl
 				? arg.serverUrl
 				: arg.port
-				? `http://localhost:${arg.port}`
-				: `http://localhost:${config.API_DEFAULT_PORT}`,
+					? `http://localhost:${arg.port}`
+					: `http://localhost:${config.API_DEFAULT_PORT}`,
 			IS_INTEGRATED_DESKTOP: arg.isLocalServer
 		};
 		startServer(arg);
@@ -379,7 +379,6 @@ export function ipcTimer(
 		});
 		if (powerManagerPreventSleep) powerManagerPreventSleep.stop();
 		if (powerManagerDetectInactivity) powerManagerDetectInactivity.stopInactivityDetection();
-		await sequentialSyncQueue(timeTrackerWindow);
 	});
 
 	ipcMain.on('return_time_slot', async (event, arg) => {
@@ -614,7 +613,9 @@ export function ipcTimer(
 		try {
 			const lastTime = await TimerData.getLastCaptureTimeSlot(knex, LocalStore.beforeRequestParams());
 			console.log('Last Capture Time Start Tracking Time (Desktop Try):', lastTime);
-			await sequentialSyncQueue(timeTrackerWindow);
+			if (!isQueueThreadLocked) {
+				await sequentialSyncQueue(timeTrackerWindow);
+			}
 			await syncIntervalQueue(timeTrackerWindow);
 			await latestScreenshots(timeTrackerWindow);
 			event.sender.send('timer_tracker_show', {
@@ -700,34 +701,32 @@ export function removeTimerListener() {
 	});
 }
 
+let isQueueThreadLocked = false;
+
 async function sequentialSyncQueue(window: BrowserWindow) {
 	try {
 		await offlineMode.connectivity();
 		if (offlineMode.enabled) return;
+		isQueueThreadLocked = true;
 		const timers = await timerService.findToSynced();
-		timers.forEach(async (timer) => {
+		const timersToSynced: {
+			timer: TimerTO,
+			intervals: IntervalTO[],
+		}[] = [];
+		console.log('---> PREPARE TO SYNC <---');
+		let count = timers.length;
+		for (const timer of timers) {
+			console.log('waiting...', count);
 			const sequence = await timer;
-			syncTimerQueue(window, {
-				isStart: true,
-				timer: sequence.timer
-			}).then(async () => {
-				sequence.intervals.forEach((interval: IntervalTO) => {
-					interval.activities = JSON.parse(interval.activities as any);
-					interval.screenshots = JSON.parse(interval.screenshots as any);
-					const intervalToSync = new Interval(interval);
-					window.webContents.send('backup-no-synced', {
-						...intervalToSync.toObject(),
-						id: intervalToSync.id
-					});
-				});
-				setTimeout(async () => {
-					await syncTimerQueue(window, {
-						isStart: false,
-						timer: sequence.timer
-					});
-				}, 0);
-			});
-		});
+			timersToSynced.push(sequence);
+			count--;
+		}
+		console.log('---> SEND TO SYNC <---')
+		if (timersToSynced.length > 0) {
+			window.webContents.send('backup-timers-no-synced', timersToSynced);
+		} else {
+			isQueueThreadLocked = false;
+		}
 	} catch (error) {
 		console.log('Error', error);
 	}
@@ -737,16 +736,11 @@ async function syncIntervalQueue(window: BrowserWindow) {
 	try {
 		await offlineMode.connectivity();
 		if (offlineMode.enabled) return;
-		const intervals = await intervalService.backedUpAllNoSynced();
-		intervals.forEach((interval: IntervalTO) => {
-			interval.activities = JSON.parse(interval.activities as any);
-			interval.screenshots = JSON.parse(interval.screenshots as any);
-			const intervalToSync = new Interval(interval);
-			window.webContents.send('backup-no-synced', {
-				...intervalToSync.toObject(),
-				id: intervalToSync.id
-			});
-		});
+		const lastTimer = await timerService.findLastOne();
+		if (!lastTimer.isStartedOffline && !lastTimer.isStoppedOffline && !lastTimer.synced) {
+			const intervals = await intervalService.backedUpAllNoSynced();
+			window.webContents.send('backup-no-synced', [intervals, lastTimer]);
+		}
 	} catch (error) {
 		console.log('Error', error);
 	}
@@ -754,6 +748,7 @@ async function syncIntervalQueue(window: BrowserWindow) {
 
 async function countIntervalQueue(window: BrowserWindow, isSyncing: boolean) {
 	const total = await intervalService.countNoSynced();
+	if (total < 1) isQueueThreadLocked = false;
 	window.webContents.send('count-synced', {
 		queue: total,
 		isSyncing: isSyncing
@@ -762,10 +757,4 @@ async function countIntervalQueue(window: BrowserWindow, isSyncing: boolean) {
 
 async function latestScreenshots(window: BrowserWindow): Promise<void> {
 	window.webContents.send('latest_screenshots', await intervalService.screenshots());
-}
-
-async function syncTimerQueue(window: BrowserWindow, timer) {
-	await offlineMode.connectivity();
-	if (offlineMode.enabled) return;
-	window.webContents.send('sync-timer', timer);
 }

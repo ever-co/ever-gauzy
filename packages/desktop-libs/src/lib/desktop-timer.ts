@@ -192,7 +192,8 @@ export default class TimerHandler {
 			new Timer({
 				id: this.lastTimer ? this.lastTimer.id : null,
 				startedAt: new Date(),
-				synced: !this._offlineMode.enabled
+				synced: !this._offlineMode.enabled,
+				isStartedOffline: this._offlineMode.enabled
 			})
 		);
 		this.intervalUpdateTime = setInterval(async () => {
@@ -250,7 +251,8 @@ export default class TimerHandler {
 				new Timer({
 					id: this.lastTimer ? this.lastTimer.id : null,
 					stoppedAt: new Date(),
-					synced: !this._offlineMode.enabled
+					synced: !this._offlineMode.enabled,
+					isStoppedOffline: this._offlineMode.enabled
 				})
 			);
 		} catch (error) {
@@ -271,7 +273,7 @@ export default class TimerHandler {
 	async getSetTimeSlot(setupWindow, knex) {
 		const id = this.lastTimer ? this.lastTimer.id : null;
 		await TimerData.getTimer(knex, id).then(async (timerD) => {
-			await TimerData.getAfk(knex, id).then((afk) => {});
+			await TimerData.getAfk(knex, id).then((afk) => { });
 		});
 	}
 
@@ -318,20 +320,20 @@ export default class TimerHandler {
 			.map((item) => {
 				return item.data
 					? {
-							title: item.data.app || item.data.title,
-							date: moment(item.timestamp).utc().format('YYYY-MM-DD'),
-							time: moment(item.timestamp).utc().format('HH:mm:ss'),
-							duration: Math.floor(item.duration),
-							type: item.data.url ? ActivityType.URL : ActivityType.APP,
-							taskId: userInfo.taskId,
-							projectId: userInfo.projectId,
-							organizationContactId: userInfo.organizationContactId,
-							organizationId: userInfo.organizationId,
-							employeeId: userInfo.employeeId,
-							source: TimeLogSourceEnum.DESKTOP,
-							recordedAt: moment(item.timestamp).utc().toDate(),
-							metaData: item.data
-					  }
+						title: item.data.app || item.data.title,
+						date: moment(item.timestamp).utc().format('YYYY-MM-DD'),
+						time: moment(item.timestamp).utc().format('HH:mm:ss'),
+						duration: Math.floor(item.duration),
+						type: item.data.url ? ActivityType.URL : ActivityType.APP,
+						taskId: userInfo.taskId,
+						projectId: userInfo.projectId,
+						organizationContactId: userInfo.organizationContactId,
+						organizationId: userInfo.organizationId,
+						employeeId: userInfo.employeeId,
+						source: TimeLogSourceEnum.DESKTOP,
+						recordedAt: moment(item.timestamp).utc().toDate(),
+						metaData: item.data
+					}
 					: null;
 			})
 			.filter((item) => !!item);
@@ -541,11 +543,13 @@ export default class TimerHandler {
 			};
 			this.isPaused
 				? await TimerData.createTimer(knex, {
-						...payload,
-						day: this.todayLocalTimezone,
-						duration: 0,
-						synced: !this._offlineMode.enabled
-				  })
+					...payload,
+					day: this.todayLocalTimezone,
+					duration: 0,
+					synced: !this._offlineMode.enabled,
+					isStartedOffline: this._offlineMode.enabled,
+					isStoppedOffline: false
+				})
 				: await TimerData.updateDurationOfTimer(knex, payload);
 
 			const lastSavedTimer = await TimerData.getLastTimer(knex, info);
@@ -610,7 +614,8 @@ export default class TimerHandler {
 								case 'update-duration-timer':
 									await TimerData.updateDurationOfTimer(knex, {
 										id: job.data.data.id,
-										duration: job.data.data.duration
+										duration: job.data.data.duration,
+										...(this._offlineMode.enabled && { synced: false })
 									});
 									break;
 								case 'save-failed-request':
