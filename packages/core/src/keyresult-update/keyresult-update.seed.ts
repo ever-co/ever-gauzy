@@ -33,12 +33,7 @@ export const createDefaultKeyResultUpdates = async (
 	for await (const keyResult of keyResults) {
 		const numberOfUpdates = faker.number.int({ max: 10 });
 		for (let i = 0; i < numberOfUpdates; i++) {
-			const startDate = goalTimeFrames.find(
-				(element) => element.name === keyResult.goal.deadline
-			).startDate;
-			const endDate = goalTimeFrames.find(
-				(element) => element.name === keyResult.goal.deadline
-			).endDate;
+			const startDate = goalTimeFrames.find((element) => element.name === keyResult.goal.deadline).startDate;
 			if (moment().isAfter(startDate)) {
 				const keyResultUpdate = new KeyResultUpdate();
 				keyResultUpdate.owner = keyResult.owner.id;
@@ -52,25 +47,9 @@ export const createDefaultKeyResultUpdates = async (
 					min: keyResult.initialValue + 1,
 					max: keyResult.targetValue
 				});
-				if (
-					keyResult.deadline ===
-					KeyResultDeadlineEnum.NO_CUSTOM_DEADLINE
-				) {
-					keyResultUpdate.createdAt = faker.date.between({
-						from: startDate,
-						to: endDate
-					});
-				} else {
-					keyResultUpdate.createdAt = faker.date.between({
-						from: startDate,
-						to: keyResult.hardDeadline
-					});
-				}
-
 				if (keyResult.type !== KeyResultTypeEnum.TRUE_OR_FALSE) {
 					const diff = keyResult.targetValue - keyResult.initialValue;
-					const updateDiff =
-						keyResultUpdate.update - keyResult.initialValue;
+					const updateDiff = keyResultUpdate.update - keyResult.initialValue;
 
 					keyResultUpdate.progress = Math.round(
 						(Math.abs(updateDiff) / Math.abs(diff)) * 100

@@ -24,12 +24,13 @@ export const createDefaultInvoice = async (
 	organizations: IOrganization[],
 	noOfInvoicePerOrganization: number
 ) => {
-	const { id: tenantId } = tenant;
 	const invoices: IInvoice[] = [];
-	for (const organization of organizations) {
+	const { id: tenantId } = tenant;
+	for await (const organization of organizations) {
 		const { id: organizationId } = organization;
 		const tags = await dataSource.manager.findBy(Tag, {
-			organizationId
+			organizationId,
+			tenantId
 		});
 		const organizationContacts = await dataSource.manager.findBy(OrganizationContact, {
 			tenantId,
@@ -59,7 +60,7 @@ export const createRandomInvoice = async (
 		const { id: tenantId } = tenant;
 		const organizations = tenantOrganizationsMap.get(tenant);
 		const invoices: IInvoice[] = [];
-		for (const organization of organizations) {
+		for await (const organization of organizations) {
 			const { id: organizationId } = organization;
 			const tags = await dataSource.manager.findBy(Tag, {
 				organizationId
@@ -86,34 +87,29 @@ const generateInvoice = async (
 ): Promise<IInvoice> => {
 
 	const invoice = new Invoice();
+	invoice.invoiceNumber = faker.number.int({ min: 111111111111, max: 999999999999 });
+
 	invoice.tags = chain(tags)
 		.shuffle()
 		.take(faker.number.int({ min: 1, max: 3 }))
 		.values()
 		.value();
-	invoice.invoiceNumber = faker.number.int({ min: 111111111111, max: 999999999999 });
 
-	invoice.invoiceDate = moment(
-		faker.date.between({
-			from: new Date(),
-			to: faker.date.past({ years: 0.3 })
-		})
-	)
-		.startOf('day')
-		.toDate();
-	invoice.dueDate = moment(
-		faker.date.between({
-			from: new Date(),
-			to: faker.date.future({ years: 0.3 })
-		})
-	)
-		.startOf('day')
-		.toDate();
+	const invoiceDate = faker.date.between({
+		from: faker.date.past({ years: 0.3 }),
+		to: new Date()
+	});
+	invoice.invoiceDate = moment(invoiceDate).startOf('day').toDate();
+
+	const dueDate = faker.date.between({
+		from: new Date(),
+		to: faker.date.future({ years: 0.3 })
+	});
+	invoice.dueDate = moment(dueDate).startOf('day').toDate();
 
 	if (organizationContacts.length) {
 		invoice.organizationContactId = faker.helpers.arrayElement(organizationContacts).id;
 	}
-
 	invoice.sentTo = organization.id;
 	invoice.fromOrganization = organization;
 	invoice.toContact = faker.helpers.arrayElement(organizationContacts);
@@ -140,7 +136,6 @@ const generateInvoice = async (
 	invoice.organization = organization;
 	invoice.tenant = tenant;
 	invoice.isArchived = false;
-
 	invoice.historyRecords = await generateInvoiceHistory(
 		dataSource,
 		tenant,
