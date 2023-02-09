@@ -88,7 +88,7 @@ export class TagController extends CrudController<Tag> {
 	}
 
 	/**
-	 * Update existin tag by ID
+	 * Update existing tag by ID
 	 *
 	 * @param id
 	 * @param entity

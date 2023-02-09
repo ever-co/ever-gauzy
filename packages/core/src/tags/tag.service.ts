@@ -30,7 +30,7 @@ export class TagService extends TenantAwareCrudService<Tag> {
 	): Promise<IPagination<ITag>> {
 		const query = this.tagRepository.createQueryBuilder(this.alias);
 		/**
-		 * Defines a special criteria to find specific reltaions.
+		 * Defines a special criteria to find specific relations.
 		 */
 		query.setFindOptions({
 			...(
@@ -63,7 +63,7 @@ export class TagService extends TenantAwareCrudService<Tag> {
 		try {
 			const query = this.tagRepository.createQueryBuilder(this.alias);
 			/**
-			 * Defines a special criteria to find specific reltaions.
+			 * Defines a special criteria to find specific relations.
 			 */
 			query.setFindOptions({
 				...(
