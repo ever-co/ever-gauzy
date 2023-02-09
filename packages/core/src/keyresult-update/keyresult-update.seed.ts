@@ -56,10 +56,10 @@ export const createDefaultKeyResultUpdates = async (
 					keyResult.deadline ===
 					KeyResultDeadlineEnum.NO_CUSTOM_DEADLINE
 				) {
-					keyResultUpdate.createdAt = faker.date.between(
-						startDate,
-						endDate
-					);
+					keyResultUpdate.createdAt = faker.date.between({
+						from: startDate,
+						to: endDate
+					});
 				} else {
 					keyResultUpdate.createdAt = faker.date.between(
 						startDate,

@@ -71,7 +71,7 @@ const dataOperation = async (
 		const candidate = new CandidateInterview();
 		const interViewDate = faker.date.past();
 
-		candidate.title = faker.name.jobArea();
+		candidate.title = faker.person.jobArea();
 		candidate.startTime = new Date(interViewDate.setHours(10));
 		candidate.endTime = new Date(interViewDate.setHours(12));
 		candidate.location = faker.address.city();

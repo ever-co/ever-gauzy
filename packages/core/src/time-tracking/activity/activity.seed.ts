@@ -66,10 +66,10 @@ export const createRandomActivities = async (
 				activity.title = appName;
 				activity.date = moment(date).format('YYYY-MM-DD');
 				activity.time = moment(
-					faker.date.between(
-						moment(date).startOf('day').toDate(),
-						moment(date).endOf('day').toDate()
-					)
+					faker.date.between({
+						from: moment(date).startOf('day').toDate(),
+						to: moment(date).endOf('day').toDate()
+					})
 				).format('HH:mm:ss');
 
 				activity.recordedAt = moment(date).toDate();
@@ -108,10 +108,10 @@ export const createRandomActivities = async (
 					activity.description = faker.lorem.sentence();
 					activity.date = moment(date).format('YYYY-MM-DD');
 					activity.time = moment(
-						faker.date.between(
-							moment(date).startOf('day').toDate(),
-							moment(date).endOf('day').toDate()
-						)
+						faker.date.between({
+							from: moment(date).startOf('day').toDate(),
+							to: moment(date).endOf('day').toDate()
+						})
 					).format('HH:mm:ss');
 					activity.duration = faker.number.int({
 						min: 10,

@@ -45,11 +45,11 @@ export const createDefaultTimeSheet = async (
 					submittedAt = faker.date.past();
 				} else if (TimesheetStatus[status] === TimesheetStatus.IN_REVIEW) {
 					approvedAt = null;
-					submittedAt = faker.date.between(startedAt, new Date());
+					submittedAt = faker.date.between({ from: startedAt, to: new Date() });
 				} else if (TimesheetStatus[status] === TimesheetStatus.APPROVED) {
 					isBilled = faker.helpers.arrayElement([true, false]);
-					approvedAt = faker.date.between(startedAt, new Date());
-					submittedAt = faker.date.between(startedAt, approvedAt);
+					approvedAt = faker.date.between({ from: startedAt, to: new Date() });
+					submittedAt = faker.date.between({ from: startedAt, to: approvedAt });
 				}
 				const timesheet = new Timesheet();
 				timesheet.employee = employee;
@@ -148,13 +148,13 @@ export const createRandomTimesheet = async (
 							TimesheetStatus[status] === TimesheetStatus.IN_REVIEW
 						) {
 							approvedAt = null;
-							submittedAt = faker.date.between(startedAt, new Date());
+							submittedAt = faker.date.between({ from: startedAt, to: new Date() });
 						} else if (
 							TimesheetStatus[status] === TimesheetStatus.APPROVED
 						) {
 							isBilled = faker.helpers.arrayElement([true, false]);
-							approvedAt = faker.date.between(startedAt, new Date());
-							submittedAt = faker.date.between(startedAt, approvedAt);
+							approvedAt = faker.date.between({ from: startedAt, to: new Date() });
+							submittedAt = faker.date.between({ from: startedAt, to: approvedAt });
 						}
 
 						const timesheet = new Timesheet();

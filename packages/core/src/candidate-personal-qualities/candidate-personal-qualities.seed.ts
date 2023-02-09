@@ -76,7 +76,7 @@ const dataOperation = async (
 	for (const interview of candidateInterviews) {
 		const candidate = new CandidatePersonalQualities();
 
-		candidate.name = faker.name.jobArea();
+		candidate.name = faker.person.jobArea();
 		candidate.interviewId = interview.id;
 		candidate.rating = Math.floor(Math.random() * 5) + 1;
 		candidate.interview = interview;

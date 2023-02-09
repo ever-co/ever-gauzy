@@ -39,7 +39,7 @@ export const createRandomCandidateExperience = async (
 						faker.date.past().getFullYear());
 				getExperience = Number(getExperience.toFixed(2));
 				const val = Math.abs(getExperience);
-				candidateExperience.occupation = faker.name.jobArea();
+				candidateExperience.occupation = faker.person.jobArea();
 				candidateExperience.organization = faker.helpers.arrayElement(
 					organizations
 				);

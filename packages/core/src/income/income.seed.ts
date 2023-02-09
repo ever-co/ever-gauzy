@@ -58,10 +58,10 @@ export const createDefaultIncomes = async (
 					income.currency = seedIncome.currency || env.defaultCurrency;
 					income.notes = seedIncome.notes;
 					income.valueDate = moment(
-						faker.date.between(
-							moment().subtract(3, 'months').calendar(),
-							moment().add(10, 'days').calendar()
-						)
+						faker.date.between({
+							from: moment().subtract(3, 'months').calendar(),
+							to: moment().add(10, 'days').calendar()
+						})
 					)
 						.startOf('day')
 						.toDate();
@@ -147,10 +147,10 @@ export const createRandomIncomes = async (
 					}
 					income.currency = employee.organization.currency || env.defaultCurrency;
 					income.valueDate = moment(
-						faker.date.between(
-							moment().subtract(3, 'months').calendar(),
-							moment().add(10, 'days').calendar()
-						)
+						faker.date.between({
+							from: moment().subtract(3, 'months').calendar(),
+							to: moment().add(10, 'days').calendar()
+						})
 					)
 						.startOf('day')
 						.toDate();

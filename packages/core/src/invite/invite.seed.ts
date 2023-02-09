@@ -23,10 +23,10 @@ export const createDefaultEmployeeInviteSent = async (
 		for (let i = 0; i < 10; i++) {
 			const invitee = new Invite();
 			invitee.email = faker.internet.exampleEmail();
-			invitee.expireDate = faker.date.between(
-				new Date(),
-				moment(new Date()).add(30, 'days').toDate()
-			);
+			invitee.expireDate = faker.date.between({
+				from: new Date(),
+				to: moment(new Date()).add(30, 'days').toDate()
+			});
 			invitee.invitedBy = faker.helpers.arrayElement(SuperAdmin);
 			invitee.organizationId = organization.id;
 			invitee.role = faker.helpers.arrayElement(roles);
@@ -60,10 +60,10 @@ export const createRandomEmployeeInviteSent = async (
 			for (let i = 0; i < noOfInvitesPerOrganization; i++) {
 				const invitee = new Invite();
 				invitee.email = faker.internet.exampleEmail();
-				invitee.expireDate = faker.date.between(
-					new Date(),
-					moment(new Date()).add(30, 'days').toDate()
-				);
+				invitee.expireDate = faker.date.between({
+					from: new Date(),
+					to: moment(new Date()).add(30, 'days').toDate()
+				});
 				invitee.invitedBy = faker.helpers.arrayElement(admins);
 				invitee.organizationId = organization.id;
 				invitee.role = faker.helpers.arrayElement(roles);

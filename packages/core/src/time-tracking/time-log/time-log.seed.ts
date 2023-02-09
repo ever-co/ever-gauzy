@@ -160,11 +160,11 @@ export const createRandomTimeLogs = async (
 
 function dateRanges(start: Date, stop: Date) {
 	const range = [];
-	const startedAt = faker.date.between(start, stop);
-	const stoppedAt = faker.date.between(
-		startedAt,
-		moment(startedAt).add(2, 'hours').toDate()
-	);
+	const startedAt = faker.date.between({ from: start, to: stop });
+	const stoppedAt = faker.date.between({
+		from: startedAt,
+		to: moment(startedAt).add(2, 'hours').toDate()
+	});
 	range.push({ startedAt, stoppedAt });
 	return range;
 }

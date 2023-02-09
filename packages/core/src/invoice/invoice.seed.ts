@@ -94,18 +94,18 @@ const generateInvoice = async (
 	invoice.invoiceNumber = faker.number.int({ min: 111111111111, max: 999999999999 });
 
 	invoice.invoiceDate = moment(
-		faker.date.between(
-			new Date(),
-			faker.date.past(0.3)
-		)
+		faker.date.between({
+			from: new Date(),
+			to: faker.date.past(0.3)
+		})
 	)
 		.startOf('day')
 		.toDate();
 	invoice.dueDate = moment(
-		faker.date.between(
-			new Date(),
-			faker.date.future(0.3)
-		)
+		faker.date.between({
+			from: new Date(),
+			to: faker.date.future(0.3)
+		})
 	)
 		.startOf('day')
 		.toDate();
@@ -185,7 +185,7 @@ const generateInvoiceHistory = async (
 		historyRecords.push(
 			new InvoiceEstimateHistory({
 				user: faker.helpers.arrayElement(users),
-				action: faker.name.jobTitle(),
+				action: faker.person.jobTitle(),
 				tenant,
 				organization
 			})

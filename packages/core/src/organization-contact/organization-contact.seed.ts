@@ -110,7 +110,7 @@ const generateOrganizationContact = async (
 	const phone = faker.phone.number();
 	orgContact.primaryEmail = email;
 	orgContact.primaryPhone = phone;
-	orgContact.imageUrl = getDummyImage(330, 300, (orgContact.name || faker.name.firstName()).charAt(0).toUpperCase());
+	orgContact.imageUrl = getDummyImage(330, 300, (orgContact.name || faker.person.firstName()).charAt(0).toUpperCase());
 	orgContact.tags = _.chain(tags)
 		.shuffle()
 		.take(faker.number.int({ min: 1, max: 2 }))

@@ -63,8 +63,8 @@ const applyRandomProperties = (
     merchant.tenant = tenant;
 
     const contact = new Contact();
-    contact.firstName = faker.name.firstName();
-    contact.lastName = faker.name.lastName();
+    contact.firstName = faker.person.firstName();
+    contact.lastName = faker.person.lastName();
     contact.name = contact.firstName + ' ' + contact.lastName;
     contact.website = faker.internet.url();
     contact.address = faker.address.streetAddress();

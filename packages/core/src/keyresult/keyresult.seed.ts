@@ -202,7 +202,7 @@ export const createRandomKeyResult = async (
 				]);
 
 				keyResult.progress = 0;
-				keyResult.name = faker.name.jobTitle();
+				keyResult.name = faker.person.jobTitle();
 				keyResult.goal = goal;
 				keyResult.organizationId = goal.organizationId;
 				keyResult.tenant = tenant;

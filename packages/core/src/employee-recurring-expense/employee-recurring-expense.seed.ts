@@ -46,10 +46,10 @@ export const createRandomEmployeeRecurringExpense = async (
 				// TODO: fix endDate generation for some entities only, most should not have end date really
 				if (index % 2 === 0) {
 					// new changes
-					const endDate = faker.date.between(
-						new Date(startDate),
-						moment(startDate).add(4, 'months').toDate()
-					);
+					const endDate = faker.date.between({
+						from: new Date(startDate),
+						to: moment(startDate).add(4, 'months').toDate()
+					});
 					employeeRecurringExpense.endDay = endDate.getDate();
 					employeeRecurringExpense.endMonth = endDate.getMonth();
 					employeeRecurringExpense.endYear = endDate.getFullYear();

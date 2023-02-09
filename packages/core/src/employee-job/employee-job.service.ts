@@ -137,7 +137,7 @@ export class EmployeeJobPostService {
 
 			const job = new JobPost({
 				country: faker.helpers.arrayElement(countries).isoCode,
-				category: faker.name.jobTitle(),
+				category: faker.person.jobTitle(),
 				title: faker.lorem.sentence(),
 				description: faker.lorem.sentences(3),
 				jobDateCreated: faker.date.past(0.1),

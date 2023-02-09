@@ -35,8 +35,8 @@ export const createRandomEventType = async (
 					});
 					const event = new EventType();
 					event.isActive = faker.datatype.boolean();
-					event.description = faker.name.jobDescriptor();
-					event.title = faker.name.jobTitle();
+					event.description = faker.person.jobDescriptor();
+					event.title = faker.person.jobTitle();
 					event.durationUnit = 'minutes';
 					event.duration = faker.number.int(50);
 					event.organization = organization;

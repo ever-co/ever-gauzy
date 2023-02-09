@@ -86,7 +86,7 @@ export const createRandomScreenshot = async (
 		screenshot.file = file;
 		screenshot.thumb = file;
 		screenshot.thumbUrl = file;
-		screenshot.recordedAt = faker.date.between(startedAt, stoppedAt);
+		screenshot.recordedAt = faker.date.between({ from: startedAt, to: stoppedAt });
 		screenshot.deletedAt = null;
 		screenshot.storageProvider = FileStorageProviderEnum.LOCAL;
 		screenshots.push(screenshot);

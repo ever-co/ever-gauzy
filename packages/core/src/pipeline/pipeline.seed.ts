@@ -64,7 +64,7 @@ const dataOperation = async (
 		pipeline.tenant = tenant;
 		pipeline.organizationId = organization.id;
 		pipeline.name = faker.company.name();
-		pipeline.description = faker.name.jobDescriptor();
+		pipeline.description = faker.person.jobDescriptor();
 		pipeline.isActive = faker.datatype.boolean();
 
 		pipelines.push(pipeline);

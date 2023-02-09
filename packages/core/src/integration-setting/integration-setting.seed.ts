@@ -33,7 +33,7 @@ export const createRandomIntegrationSetting = async (
 			//todo: need to understand real values here
 			integrationSetting.settingsName =
 				'Setting-' + faker.number.int(40);
-			integrationSetting.settingsValue = faker.name.jobArea();
+			integrationSetting.settingsValue = faker.person.jobArea();
 			integrationSettings.push(integrationSetting);
 		}
 	}

@@ -34,7 +34,7 @@ export const createDefaultGoals = async (
 			}
 
 			goal.lead = faker.helpers.arrayElement(employees);
-			goal.description = faker.name.jobDescriptor();
+			goal.description = faker.person.jobDescriptor();
 			goal.deadline = faker.helpers.arrayElement(goalTimeFrames).name;
 			goal.tenant = tenant;
 			goal.organization = organization;
@@ -125,7 +125,7 @@ export const createRandomGoal = async (
 			});
 
 			const goal = new Goal();
-			goal.name = faker.name.jobTitle();
+			goal.name = faker.person.jobTitle();
 			goal.progress = 0;
 			goal.level = faker.helpers.arrayElement(Object.values(GoalLevelEnum));
 
@@ -136,7 +136,7 @@ export const createRandomGoal = async (
 			}
 
 			goal.lead = faker.helpers.arrayElement(tenantEmployees);
-			goal.description = faker.name.jobDescriptor();
+			goal.description = faker.person.jobDescriptor();
 			goal.deadline = faker.helpers.arrayElement(goalTimeFrames).name;
 			goal.tenant = tenant;
 			goal.organization = organization;

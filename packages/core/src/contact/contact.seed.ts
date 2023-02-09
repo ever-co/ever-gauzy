@@ -32,8 +32,8 @@ export const getRandomContact = (
 	organization: IOrganization
 ) => {
 	const contact: IContact = new Contact();
-	contact.firstName = faker.name.firstName();
-	contact.lastName = faker.name.lastName();
+	contact.firstName = faker.person.firstName();
+	contact.lastName = faker.person.lastName();
 	contact.website = faker.internet.url();
 	contact.address = faker.address.streetAddress();
 	contact.address2 = faker.address.secondaryAddress();

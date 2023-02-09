@@ -51,7 +51,7 @@ export const createDefaultPayment = async (
 				min: 500,
 				max: 5000
 			});
-			payment.note = faker.name.jobDescriptor();
+			payment.note = faker.person.jobDescriptor();
 			payment.currency = organization.currency || env.defaultCurrency;
 			payment.paymentMethod = faker.helpers.arrayElement(
 				Object.keys(PaymentMethodEnum)
@@ -124,10 +124,10 @@ export const createRandomPayment = async (
 				const payment = new Payment();
 				payment.invoice = invoice;
 				payment.paymentDate = moment(
-					faker.date.between(
-						new Date(),
-						moment(new Date()).add(1, 'month').toDate()
-					)
+					faker.date.between({
+						from: new Date(),
+						to: moment(new Date()).add(1, 'month').toDate()
+					})
 				)
 					.startOf('day')
 					.toDate();
@@ -135,7 +135,7 @@ export const createRandomPayment = async (
 					min: 500,
 					max: 5000
 				});
-				payment.note = faker.name.jobDescriptor();
+				payment.note = faker.person.jobDescriptor();
 				payment.currency = organization.currency || env.defaultCurrency;
 				payment.paymentMethod = faker.helpers.arrayElement(
 					Object.keys(PaymentMethodEnum)

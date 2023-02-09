@@ -72,9 +72,9 @@ export const createDefaultOrganizations = async (
 		defaultOrganization.bonusType = BonusTypeEnum.REVENUE_BASED_BONUS;
 		defaultOrganization.bonusPercentage = 10;
 		defaultOrganization.registrationDate = faker.date.past(5);
-		defaultOrganization.overview = faker.name.jobDescriptor();
-		defaultOrganization.short_description = faker.name.jobDescriptor();
-		defaultOrganization.client_focus = faker.name.jobDescriptor();
+		defaultOrganization.overview = faker.person.jobDescriptor();
+		defaultOrganization.short_description = faker.person.jobDescriptor();
+		defaultOrganization.client_focus = faker.person.jobDescriptor();
 		defaultOrganization.show_profits = false;
 		defaultOrganization.show_bonuses_paid = false;
 		defaultOrganization.show_income = false;
@@ -84,7 +84,7 @@ export const createDefaultOrganizations = async (
 		defaultOrganization.show_clients_count = true;
 		defaultOrganization.show_clients = true;
 		defaultOrganization.show_employees_count = true;
-		defaultOrganization.banner = faker.name.jobDescriptor();
+		defaultOrganization.banner = faker.person.jobDescriptor();
 		defaultOrganization.skills = organizationSkills;
 		defaultOrganization.brandColor = faker.helpers.arrayElement([
 			'#FF0000',
@@ -171,9 +171,9 @@ export const createRandomOrganizations = async (
 					logoAbbreviation
 				);
 				organization.invitesAllowed = true;
-				organization.overview = faker.name.jobDescriptor();
-				organization.short_description = faker.name.jobDescriptor();
-				organization.client_focus = faker.name.jobDescriptor();
+				organization.overview = faker.person.jobDescriptor();
+				organization.short_description = faker.person.jobDescriptor();
+				organization.client_focus = faker.person.jobDescriptor();
 				organization.show_profits = false;
 				organization.show_bonuses_paid = false;
 				organization.show_income = false;
@@ -182,7 +182,7 @@ export const createRandomOrganizations = async (
 				organization.show_minimum_project_size = true;
 				organization.show_clients_count = true;
 				organization.show_employees_count = true;
-				organization.banner = faker.name.jobDescriptor();
+				organization.banner = faker.person.jobDescriptor();
 
 				const { bonusType, bonusPercentage } = randomBonus();
 				organization.bonusType = bonusType;
