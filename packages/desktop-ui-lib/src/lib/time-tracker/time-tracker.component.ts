@@ -483,7 +483,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 
 		this.electronService.ipcRenderer.on('backup-no-synced', (event, args) =>
 			this._ngZone.run(async () => {
-				console.log('--------> SYNC LOADING... <------', args)
+				console.log('--------> SYNC LOADING... <------', args);
 				const intervals = args[0];
 				const lastTimer = args[1];
 				for (const interval of intervals) {
@@ -539,8 +539,8 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 					} catch (error) {
 						console.log('error backup timeslot', error);
 					}
-				};
-				console.log('TIMER TO UPDATE', lastTimer)
+				}
+				console.log('TIMER TO UPDATE', lastTimer);
 				setTimeout(() => {
 					event.sender.send('update-synced-timer', {
 						lastTimer: { ...lastTimer, id: lastTimer.timelogId },
@@ -615,99 +615,105 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 			});
 		});
 
-		this.electronService.ipcRenderer.on('backup-timers-no-synced', (event, args: {
-			timer: any;
-			intervals: any[];
-		}[]) => {
-			this._ngZone.run(async () => {
-				for (const sequence of args) {
-					let latest = null;
-					const params = {
-						token: this.token,
-						note: this.note,
-						organizationId: this.userOrganization.id,
-						tenantId: this.userData.tenantId,
-						organizationContactId: this.organizationContactId,
-						apiHost: this.apiHost
-					};
-					if (sequence.timer.isStartedOffline) {
-						console.log('--------> START SYNC <------')
-						latest = await this.timeTrackerService.toggleApiStart({
-							...params,
-							...sequence.timer
-						});
-					}
-					console.log('--------> SYNC LOADING... <------', latest)
-					for (const interval of sequence.intervals) {
-						try {
-							interval.activities = JSON.parse(interval.activities as any);
-							interval.screenshots = JSON.parse(interval.screenshots as any);
-							const screenshots = interval.screenshots;
-							console.log('prepare backup', interval);
-							const resActivities: any = await this.timeTrackerService.pushToTimeSlot({
-								...interval,
-								recordedAt: interval.startedAt,
-								token: this.token,
-								apiHost: this.apiHost
+		this.electronService.ipcRenderer.on(
+			'backup-timers-no-synced',
+			(
+				event,
+				args: {
+					timer: any;
+					intervals: any[];
+				}[]
+			) => {
+				this._ngZone.run(async () => {
+					for (const sequence of args) {
+						let latest = null;
+						const params = {
+							token: this.token,
+							note: this.note,
+							organizationId: this.userOrganization.id,
+							tenantId: this.userData.tenantId,
+							organizationContactId: this.organizationContactId,
+							apiHost: this.apiHost
+						};
+						if (sequence.timer.isStartedOffline) {
+							console.log('--------> START SYNC <------');
+							latest = await this.timeTrackerService.toggleApiStart({
+								...params,
+								...sequence.timer
 							});
-							console.log('backup', resActivities);
-							// upload screenshot to timeslot api
-							const timeSlotId = resActivities.id;
+						}
+						console.log('--------> SYNC LOADING... <------', latest);
+						for (const interval of sequence.intervals) {
 							try {
-								await Promise.all(
-									screenshots.map(async (screenshot) => {
-										try {
-											const resImg = await this.timeTrackerService.uploadImages(
-												{
+								interval.activities = JSON.parse(interval.activities as any);
+								interval.screenshots = JSON.parse(interval.screenshots as any);
+								const screenshots = interval.screenshots;
+								console.log('prepare backup', interval);
+								const resActivities: any = await this.timeTrackerService.pushToTimeSlot({
+									...interval,
+									recordedAt: interval.startedAt,
+									token: this.token,
+									apiHost: this.apiHost
+								});
+								console.log('backup', resActivities);
+								// upload screenshot to timeslot api
+								const timeSlotId = resActivities.id;
+								try {
+									await Promise.all(
+										screenshots.map(async (screenshot) => {
+											try {
+												const resImg = await this.timeTrackerService.uploadImages(
+													{
+														...interval,
+														recordedAt: interval.startedAt,
+														token: this.token,
+														apiHost: this.apiHost,
+														timeSlotId
+													},
+													{
+														b64Img: screenshot.b64img,
+														fileName: screenshot.fileName
+													}
+												);
+												this.getLastTimeSlotImage({
 													...interval,
-													recordedAt: interval.startedAt,
 													token: this.token,
 													apiHost: this.apiHost,
 													timeSlotId
-												},
-												{
-													b64Img: screenshot.b64img,
-													fileName: screenshot.fileName
-												}
-											);
-											this.getLastTimeSlotImage({
-												...interval,
-												token: this.token,
-												apiHost: this.apiHost,
-												timeSlotId
-											});
-											console.log('Result upload', resImg);
-											return resImg;
-										} catch (error) {
-											console.log('On upload Image', error);
-										}
-									})
-								);
+												});
+												console.log('Result upload', resImg);
+												return resImg;
+											} catch (error) {
+												console.log('On upload Image', error);
+											}
+										})
+									);
+								} catch (error) {
+									console.log('Backup-error', error);
+								}
+								interval.remoteId = timeSlotId;
+								this.electronService.ipcRenderer.send('update-synced', interval);
 							} catch (error) {
-								console.log('Backup-error', error);
+								console.log('error backup timeslot', error);
 							}
-							interval.remoteId = timeSlotId;
-							this.electronService.ipcRenderer.send('update-synced', interval);
-						} catch (error) {
-							console.log('error backup timeslot', error);
 						}
-					};
-					if (sequence.timer.isStoppedOffline) {
-						console.log('--------> STOP SYNC <------')
-						latest = await this.timeTrackerService.toggleApiStop({
-							...params,
-							...sequence.timer
-						})
+						if (sequence.timer.isStoppedOffline) {
+							console.log('--------> STOP SYNC <------');
+							latest = await this.timeTrackerService.toggleApiStop({
+								...params,
+								...sequence.timer
+							});
+						}
+						setTimeout(() => {
+							event.sender.send('update-synced-timer', {
+								lastTimer: latest ? latest : sequence.timer,
+								...sequence.timer
+							});
+						}, 0);
 					}
-					setTimeout(() => {
-						event.sender.send('update-synced-timer', {
-							lastTimer: latest ? latest : sequence.timer,
-							...sequence.timer
-						});
-					}, 0)
-				}
-			})
-		});
+				});
+			}
+		);
 		this.electronService.ipcRenderer.send('time_tracker_ready');
 	}
 
@@ -1114,7 +1120,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 					recordedAt: Date.now()
 				})
 			);
-		} catch (error) { }
+		} catch (error) {}
 	}
 
 	updateImageUrl(e) {
@@ -1429,7 +1435,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 						return await this.uploadsScreenshot(arg, img, resActivities.id);
 					})
 				);
-			} catch (error) { }
+			} catch (error) {}
 			const remoteId = resActivities.id;
 			this.getLastTimeSlotImage({
 				...arg,

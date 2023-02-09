@@ -39,8 +39,8 @@ export function ipcMainHandler(store, startServer, knex, config, timeTrackerWind
 			API_BASE_URL: arg.serverUrl
 				? arg.serverUrl
 				: arg.port
-					? `http://localhost:${arg.port}`
-					: `http://localhost:${config.API_DEFAULT_PORT}`,
+				? `http://localhost:${arg.port}`
+				: `http://localhost:${config.API_DEFAULT_PORT}`,
 			IS_INTEGRATED_DESKTOP: arg.isLocalServer
 		};
 		startServer(arg);
@@ -710,8 +710,8 @@ async function sequentialSyncQueue(window: BrowserWindow) {
 		isQueueThreadLocked = true;
 		const timers = await timerService.findToSynced();
 		const timersToSynced: {
-			timer: TimerTO,
-			intervals: IntervalTO[],
+			timer: TimerTO;
+			intervals: IntervalTO[];
 		}[] = [];
 		console.log('---> PREPARE TO SYNC <---');
 		let count = timers.length;
@@ -721,7 +721,7 @@ async function sequentialSyncQueue(window: BrowserWindow) {
 			timersToSynced.push(sequence);
 			count--;
 		}
-		console.log('---> SEND TO SYNC <---')
+		console.log('---> SEND TO SYNC <---');
 		if (timersToSynced.length > 0) {
 			window.webContents.send('backup-timers-no-synced', timersToSynced);
 		} else {
