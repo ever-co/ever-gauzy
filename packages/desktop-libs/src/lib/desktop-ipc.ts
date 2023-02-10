@@ -688,6 +688,7 @@ export function ipcTimer(
 			}
 			await syncIntervalQueue(timeTrackerWindow);
 			await latestScreenshots(timeTrackerWindow);
+			await countIntervalQueue(timeTrackerWindow, false);
 			event.sender.send('timer_tracker_show', {
 				...LocalStore.beforeRequestParams(),
 				timeSlotId: lastTime ? lastTime.timeslotId : null
