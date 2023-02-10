@@ -1,6 +1,6 @@
 import { DataSource } from 'typeorm';
 import { InvoiceItem } from './invoice-item.entity';
-import { faker } from '@ever-co/faker';
+import { faker } from '@faker-js/faker';
 import {
 	IEmployee,
 	IExpense,
@@ -83,29 +83,29 @@ async function invoiceItemForInvoiceType(
 	const invoiceItems: IInvoiceItem[] = [];
 	for await (const invoice of invoices) {
 		let totalValue = 0;
-		for (let i = 0; i < faker.datatype.number({ min: 1, max: numberOfInvoiceItemPerInvoice }); i++) {
+		for (let i = 0; i < faker.number.int({ min: 1, max: numberOfInvoiceItemPerInvoice }); i++) {
 			const invoiceItem = new InvoiceItem();
 			invoiceItem.description = faker.random.words();
-			invoiceItem.price = faker.datatype.number({ min: 10, max: 50 });
-			invoiceItem.quantity = faker.datatype.number({ min: 10, max: 20 });
+			invoiceItem.price = faker.number.int({ min: 10, max: 50 });
+			invoiceItem.quantity = faker.number.int({ min: 10, max: 20 });
 			invoiceItem.totalValue = invoiceItem.price * invoiceItem.quantity;
 			invoiceItem.invoice = invoice;
 
 			switch (invoice.invoiceType) {
 				case InvoiceTypeEnum.BY_EMPLOYEE_HOURS:
-					invoiceItem.employee = faker.random.arrayElement(employees);
+					invoiceItem.employee = faker.helpers.arrayElement(employees);
 					break;
 				case InvoiceTypeEnum.BY_PROJECT_HOURS:
-					invoiceItem.project = faker.random.arrayElement(projects);
+					invoiceItem.project = faker.helpers.arrayElement(projects);
 					break;
 				case InvoiceTypeEnum.BY_TASK_HOURS:
-					invoiceItem.task = faker.random.arrayElement(tasks);
+					invoiceItem.task = faker.helpers.arrayElement(tasks);
 					break;
 				case InvoiceTypeEnum.BY_PRODUCTS:
-					invoiceItem.product = faker.random.arrayElement(products);
+					invoiceItem.product = faker.helpers.arrayElement(products);
 					break;
 				case InvoiceTypeEnum.BY_EXPENSES:
-					invoiceItem.expense = faker.random.arrayElement(expenses);
+					invoiceItem.expense = faker.helpers.arrayElement(expenses);
 					break;
 			}
 

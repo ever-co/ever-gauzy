@@ -1,7 +1,7 @@
 import { DataSource } from 'typeorm';
 import { IEmployee, IOrganization, ITenant } from '@gauzy/contracts';
 import { Deal } from './deal.entity';
-import { faker } from '@ever-co/faker';
+import { faker } from '@faker-js/faker';
 import { Pipeline, PipelineStage } from './../core/entities/internal';
 
 export const createRandomDeal = async (
@@ -45,11 +45,11 @@ export const createRandomDeal = async (
 						const deal = new Deal();
 						deal.createdBy = tenantEmployee.user;
 						deal.stage = pipelineStage;
-						deal.title = faker.name.jobTitle();
+						deal.title = faker.person.jobTitle();
 						deal.createdByUserId = tenantEmployee.user.id;
 						deal.stageId = pipelineStage.id;
 						deal.organization = tenantOrg;
-						deal.probability = faker.datatype.number(5);
+						deal.probability = faker.number.int(5);
 						deal.tenant = tenant;
 						deals.push(deal);
 					}

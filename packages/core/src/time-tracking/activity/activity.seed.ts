@@ -1,4 +1,4 @@
-import { faker } from '@ever-co/faker';
+import { faker } from '@faker-js/faker';
 import * as _ from 'underscore';
 import * as moment from 'moment';
 import { DataSource } from 'typeorm';
@@ -48,13 +48,13 @@ export const createRandomActivities = async (
 			const activities: Activity[] = [];
 			for (
 				let i = 0;
-				i < faker.datatype.number({ min: 0, max: appNames.length });
+				i < faker.number.int({ min: 0, max: appNames.length });
 				i++
 			) {
 				const appName = appNames[i];
-				const project = faker.random.arrayElement(projects);
-				const task = faker.random.arrayElement(project.tasks);
-				const timeSlot = faker.random.arrayElement(employeeTimeSlots);
+				const project = faker.helpers.arrayElement(projects);
+				const task = faker.helpers.arrayElement(project.tasks);
+				const timeSlot = faker.helpers.arrayElement(employeeTimeSlots);
 
 				const activity = new Activity();
 				activity.organizationId = employee.organizationId;
@@ -66,29 +66,29 @@ export const createRandomActivities = async (
 				activity.title = appName;
 				activity.date = moment(date).format('YYYY-MM-DD');
 				activity.time = moment(
-					faker.date.between(
-						moment(date).startOf('day').toDate(),
-						moment(date).endOf('day').toDate()
-					)
+					faker.date.between({
+						from: moment(date).startOf('day').toDate(),
+						to: moment(date).endOf('day').toDate()
+					})
 				).format('HH:mm:ss');
 
 				activity.recordedAt = moment(date).toDate();
-				activity.duration = faker.datatype.number(100);
+				activity.duration = faker.number.int(100);
 				activity.type = ActivityType.APP;
 
 				activities.push(activity);
 			}
 
-			for (let i = 0; i < faker.datatype.number({ min: 0, max: 10 }); i++) {
+			for (let i = 0; i < faker.number.int({ min: 0, max: 10 }); i++) {
 				const url = faker.internet.domainName();
 				for (
 					let j = 0;
-					j < faker.datatype.number({ min: 5, max: 10 });
+					j < faker.number.int({ min: 5, max: 10 });
 					j++
 				) {
-					const project = faker.random.arrayElement(projects);
-					const task = faker.random.arrayElement(project.tasks);
-					const timeSlot = faker.random.arrayElement(
+					const project = faker.helpers.arrayElement(projects);
+					const task = faker.helpers.arrayElement(project.tasks);
+					const timeSlot = faker.helpers.arrayElement(
 						employeeTimeSlots
 					);
 
@@ -108,12 +108,12 @@ export const createRandomActivities = async (
 					activity.description = faker.lorem.sentence();
 					activity.date = moment(date).format('YYYY-MM-DD');
 					activity.time = moment(
-						faker.date.between(
-							moment(date).startOf('day').toDate(),
-							moment(date).endOf('day').toDate()
-						)
+						faker.date.between({
+							from: moment(date).startOf('day').toDate(),
+							to: moment(date).endOf('day').toDate()
+						})
 					).format('HH:mm:ss');
-					activity.duration = faker.datatype.number({
+					activity.duration = faker.number.int({
 						min: 10,
 						max: 100
 					});

@@ -1,8 +1,8 @@
 import { DataSource } from 'typeorm';
 import { ILanguage, LanguagesEnum } from '@gauzy/contracts';
-import { faker } from '@ever-co/faker';
+import { faker } from '@faker-js/faker';
 import { Language } from './language.entity';
-import  allLanguages from './all-languages';
+import allLanguages from './all-languages';
 
 export const createLanguages = async (
 	dataSource: DataSource
@@ -24,7 +24,7 @@ export const createLanguages = async (
 	try {
 		await dataSource.getRepository(Language).save(languages)
 	} catch (error) {
-		console.log({error})
+		console.log({ error })
 	}
 	return languages;
 };

@@ -1,5 +1,5 @@
 import { Brackets, DataSource, WhereExpressionBuilder } from 'typeorm';
-import { faker } from '@ever-co/faker';
+import { faker } from '@faker-js/faker';
 import * as _ from 'underscore';
 import {
 	TimeLogSourceEnum,
@@ -53,7 +53,7 @@ export const createRandomTimeLogs = async (
 			const timesheet = timeSheetChunk[timeSheetChunkIndex][timeSheetIndex];
 			const randomDays = _.chain([0, 1, 2, 3, 4, 5, 6])
 				.shuffle()
-				.take(faker.datatype.number({ min: 3, max: 5 }))
+				.take(faker.number.int({ min: 3, max: 5 }))
 				.values()
 				.value();
 
@@ -73,10 +73,10 @@ export const createRandomTimeLogs = async (
 				) {
 					const { startedAt, stoppedAt } = range[rangeIndex];
 					if (moment.utc().isAfter(moment.utc(stoppedAt))) {
-						const project = faker.random.arrayElement(projects);
-						const task = faker.random.arrayElement(project.tasks);
+						const project = faker.helpers.arrayElement(projects);
+						const task = faker.helpers.arrayElement(project.tasks);
 
-						const source: TimeLogSourceEnum = faker.random.arrayElement(
+						const source: TimeLogSourceEnum = faker.helpers.arrayElement(
 							Object.keys(TimeLogSourceEnum)
 						) as TimeLogSourceEnum;
 
@@ -102,8 +102,8 @@ export const createRandomTimeLogs = async (
 							tenant
 						});
 						timeLog.organizationContact = project.organizationContact;
-						timeLog.description = faker.lorem.sentence(faker.datatype.number(10));
-						timeLog.isBillable = faker.random.arrayElement([true, false]);
+						timeLog.description = faker.lorem.sentence(faker.number.int(10));
+						timeLog.isBillable = faker.helpers.arrayElement([true, false]);
 						timeLog.deletedAt = null;
 						timeLog.isRunning = false;
 						timeLogs.push(timeLog);
@@ -160,11 +160,11 @@ export const createRandomTimeLogs = async (
 
 function dateRanges(start: Date, stop: Date) {
 	const range = [];
-	const startedAt = faker.date.between(start, stop);
-	const stoppedAt = faker.date.between(
-		startedAt,
-		moment(startedAt).add(2, 'hours').toDate()
-	);
+	const startedAt = faker.date.between({ from: start, to: stop });
+	const stoppedAt = faker.date.between({
+		from: startedAt,
+		to: moment(startedAt).add(2, 'hours').toDate()
+	});
 	range.push({ startedAt, stoppedAt });
 	return range;
 }

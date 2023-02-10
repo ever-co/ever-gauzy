@@ -1,5 +1,5 @@
 import { DataSource } from 'typeorm';
-import { faker } from '@ever-co/faker';
+import { faker } from '@faker-js/faker';
 import {
 	TimesheetStatus,
 	ITimeSlot,
@@ -32,7 +32,7 @@ export const createDefaultTimeSheet = async (
 			const stoppedAt = moment(date).endOf('week').toDate();
 
 			for await (const employee of employees) {
-				const status = faker.random.arrayElement(
+				const status = faker.helpers.arrayElement(
 					Object.keys(TimesheetStatus)
 				);
 
@@ -45,11 +45,11 @@ export const createDefaultTimeSheet = async (
 					submittedAt = faker.date.past();
 				} else if (TimesheetStatus[status] === TimesheetStatus.IN_REVIEW) {
 					approvedAt = null;
-					submittedAt = faker.date.between(startedAt, new Date());
+					submittedAt = faker.date.between({ from: startedAt, to: new Date() });
 				} else if (TimesheetStatus[status] === TimesheetStatus.APPROVED) {
-					isBilled = faker.random.arrayElement([true, false]);
-					approvedAt = faker.date.between(startedAt, new Date());
-					submittedAt = faker.date.between(startedAt, approvedAt);
+					isBilled = faker.helpers.arrayElement([true, false]);
+					approvedAt = faker.date.between({ from: startedAt, to: new Date() });
+					submittedAt = faker.date.between({ from: startedAt, to: approvedAt });
 				}
 				const timesheet = new Timesheet();
 				timesheet.employee = employee;
@@ -131,9 +131,9 @@ export const createRandomTimesheet = async (
 
 				_.chain(employees)
 					.shuffle()
-					.take(faker.datatype.number(employees.length))
+					.take(faker.number.int(employees.length))
 					.each((employee) => {
-						const status = faker.random.arrayElement(
+						const status = faker.helpers.arrayElement(
 							Object.keys(TimesheetStatus)
 						);
 
@@ -148,13 +148,13 @@ export const createRandomTimesheet = async (
 							TimesheetStatus[status] === TimesheetStatus.IN_REVIEW
 						) {
 							approvedAt = null;
-							submittedAt = faker.date.between(startedAt, new Date());
+							submittedAt = faker.date.between({ from: startedAt, to: new Date() });
 						} else if (
 							TimesheetStatus[status] === TimesheetStatus.APPROVED
 						) {
-							isBilled = faker.random.arrayElement([true, false]);
-							approvedAt = faker.date.between(startedAt, new Date());
-							submittedAt = faker.date.between(startedAt, approvedAt);
+							isBilled = faker.helpers.arrayElement([true, false]);
+							approvedAt = faker.date.between({ from: startedAt, to: new Date() });
+							submittedAt = faker.date.between({ from: startedAt, to: approvedAt });
 						}
 
 						const timesheet = new Timesheet();

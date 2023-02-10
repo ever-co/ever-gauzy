@@ -1,6 +1,6 @@
 import { DataSource } from 'typeorm';
 import { OrganizationRecurringExpense } from './organization-recurring-expense.entity';
-import { faker } from '@ever-co/faker';
+import { faker } from '@faker-js/faker';
 import {
 	IOrganization,
 	ITenant,
@@ -97,7 +97,7 @@ const dataOperation = async (
 		organization.endDate = endDate;
 
 		organization.categoryName = expenseCategory;
-		organization.value = faker.datatype.number(9999);
+		organization.value = faker.number.int(9999);
 
 		organization.currency = tenantOrg.currency || env.defaultCurrency;
 

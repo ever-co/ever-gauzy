@@ -6,7 +6,7 @@ import {
 	ITenant
 } from '@gauzy/contracts';
 import { TimeOffPolicy } from './time-off-policy.entity';
-import { faker } from '@ever-co/faker';
+import { faker } from '@faker-js/faker';
 import { DEFAULT_TIMEOFF_POLICIES } from './default-time-off-policies';
 
 export const createDefaultTimeOffPolicy = async (
@@ -54,8 +54,8 @@ export const createRandomTimeOffPolicies = async (
 				policy.name = name;
 				policy.organization = organization;
 				policy.tenant = tenant;
-				policy.paid = faker.random.arrayElement([true, false]);
-				policy.requiresApproval = faker.random.arrayElement([
+				policy.paid = faker.helpers.arrayElement([true, false]);
+				policy.requiresApproval = faker.helpers.arrayElement([
 					true,
 					false
 				]);

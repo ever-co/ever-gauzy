@@ -1,5 +1,5 @@
 import { DataSource } from 'typeorm';
-import { faker } from '@ever-co/faker';
+import { faker } from '@faker-js/faker';
 import { IContact, IOrganization, ITenant } from '@gauzy/contracts';
 import { Contact } from './../core/entities/internal';
 
@@ -32,17 +32,17 @@ export const getRandomContact = (
 	organization: IOrganization
 ) => {
 	const contact: IContact = new Contact();
-	contact.firstName = faker.name.firstName();
-	contact.lastName = faker.name.lastName();
+	contact.firstName = faker.person.firstName();
+	contact.lastName = faker.person.lastName();
 	contact.website = faker.internet.url();
-	contact.address = faker.address.streetAddress();
-	contact.address2 = faker.address.secondaryAddress();
-	contact.city = faker.address.city();
-	contact.country = faker.address.countryCode();
+	contact.address = faker.location.streetAddress();
+	contact.address2 = faker.location.secondaryAddress();
+	contact.city = faker.location.city();
+	contact.country = faker.location.countryCode();
 	contact.name = contact.firstName + ' ' + contact.lastName;
-	contact.longitude = +faker.address.longitude();
-	contact.latitude = +faker.address.latitude();
-	contact.postcode = faker.address.zipCode();
+	contact.longitude = +faker.location.longitude();
+	contact.latitude = +faker.location.latitude();
+	contact.postcode = faker.location.zipCode();
 	contact.organization = organization;
 	contact.tenant = tenant;
 	return contact;

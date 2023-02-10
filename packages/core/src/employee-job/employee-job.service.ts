@@ -1,6 +1,6 @@
 import { environment as env } from '@gauzy/config';
 import { Injectable } from '@nestjs/common';
-import { faker } from '@ever-co/faker';
+import { faker } from '@faker-js/faker';
 import { GauzyAIService } from '@gauzy/integration-ai';
 import {
 	IApplyJobPostInput,
@@ -26,7 +26,7 @@ export class EmployeeJobPostService {
 		private readonly employeeService: EmployeeService,
 		private readonly gauzyAIService: GauzyAIService,
 		private readonly countryService: CountryService
-	) {}
+	) { }
 
 	/**
 	 * Updates job visibility
@@ -125,29 +125,29 @@ export class EmployeeJobPostService {
 		page = 0,
 		limit = 10
 	): Promise<IPagination<IEmployeeJobPost>> {
-		const { items : countries = [] as ICountry[] } = await this.countryService.findAll();
+		const { items: countries = [] as ICountry[] } = await this.countryService.findAll();
 
 		const employeesJobs: EmployeeJobPost[] = [];
 		for (let i = 0; i < limit; i++) {
-			const employee = faker.random.arrayElement(employees);
+			const employee = faker.helpers.arrayElement(employees);
 			const jobPostEmployee = new EmployeeJobPost({
 				employeeId: employee ? employee.id : null,
 				employee: employee
 			});
 
 			const job = new JobPost({
-				country: faker.random.arrayElement(countries).isoCode,
-				category: faker.name.jobTitle(),
+				country: faker.helpers.arrayElement(countries).isoCode,
+				category: faker.person.jobTitle(),
 				title: faker.lorem.sentence(),
 				description: faker.lorem.sentences(3),
-				jobDateCreated: faker.date.past(0.1),
-				jobStatus: faker.random.arrayElement(
+				jobDateCreated: faker.date.past({ years: 0.1 }),
+				jobStatus: faker.helpers.arrayElement(
 					Object.values(JobPostStatusEnum)
 				),
-				jobSource: faker.random.arrayElement(
+				jobSource: faker.helpers.arrayElement(
 					Object.values(JobPostSourceEnum)
 				),
-				jobType: faker.random.arrayElement(Object.values(JobPostTypeEnum))
+				jobType: faker.helpers.arrayElement(Object.values(JobPostTypeEnum))
 			});
 
 			jobPostEmployee.jobPost = job;
