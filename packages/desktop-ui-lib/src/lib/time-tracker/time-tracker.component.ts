@@ -719,6 +719,68 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 			}
 		);
 		this.electronService.ipcRenderer.send('time_tracker_ready');
+		this.electronService.ipcRenderer.on('toggle_timer_state', (event, arg) => {
+			this._ngZone.run(async () => {
+				try {
+					const { lastTimer, isStarted } = arg;
+					const params = {
+						token: this.token,
+						note: this.note,
+						projectId: this.projectSelect,
+						taskId: this.taskSelect,
+						organizationId: this.userOrganization.id,
+						tenantId: this.userData.tenantId,
+						organizationContactId: this.organizationContactId,
+						apiHost: this.apiHost
+					};
+					let timelog = null;
+					console.log('[TIMER_STATE]', lastTimer);
+					if (isStarted) {
+						if (!this._isOffline) {
+							timelog = await this.timeTrackerService.toggleApiStart({
+								...params,
+								...lastTimer
+							});
+						}
+						this.loading = false;
+					} else {
+						if (!this._isOffline) {
+							timelog = await this.timeTrackerService.toggleApiStop({
+								...params,
+								...lastTimer
+							});
+						}
+						this.start$.next(false);
+						this.loading = false;
+						this._timeRun$.next({
+							second: '00',
+							minute: '00',
+							hours: '00'
+						});
+					}
+					setTimeout(() => {
+						if (!this._isOffline) {
+							event.sender.send('update-synced-timer', {
+								lastTimer: timelog,
+								...lastTimer
+							});
+						}
+					}, 0);
+				} catch (error) {
+					this.loading = false;
+					let messageError = error.message;
+					if (messageError.includes('Http failure response')) {
+						messageError = `Can't connect to api server`;
+					} else {
+						messageError = 'Internal server error';
+					}
+					this.toastrService.show(messageError, `Warning`, {
+						status: 'danger'
+					});
+					log.info(`Timer Toggle Catch: ${moment().format()}`, error);
+				}
+			})
+		})
 	}
 
 	async toggleStart(val) {
@@ -733,33 +795,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 		if (this.validationField()) {
 			if (val) {
 				if (!this.start) {
-					try {
-						const paramsTimeStart = {
-							token: this.token,
-							note: this.note,
-							projectId: this.projectSelect,
-							taskId: this.taskSelect,
-							organizationId: this.userOrganization.id,
-							tenantId: this.userData.tenantId,
-							organizationContactId: this.organizationContactId,
-							apiHost: this.apiHost
-						};
-						this.startTime(
-							this._isOffline ? null : await this.timeTrackerService.toggleApiStart(paramsTimeStart)
-						);
-					} catch (error) {
-						this.loading = false;
-						let messageError = error.message;
-						if (messageError.includes('Http failure response')) {
-							messageError = `Can't connect to api server`;
-						} else {
-							messageError = 'Internal server error';
-						}
-						this.toastrService.show(messageError, `Warning`, {
-							status: 'danger'
-						});
-						log.info(`Timer Toggle Catch: ${moment().format()}`, error);
-					}
+					this.startTime();
 				} else {
 					this.loading = false;
 					console.log('Error', 'Timer is already running');
@@ -820,7 +856,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 		}
 	}
 
-	startTime(timeLog) {
+	startTime() {
 		this.start$.next(true);
 		this.electronService.ipcRenderer.send('update_tray_start');
 		this.electronService.ipcRenderer.send('start_timer', {
@@ -832,10 +868,9 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 				host: this.defaultAwAPI,
 				isAw: this.aw
 			},
-			timeLog: timeLog
+			timeLog: null
 		});
 		this.electronService.ipcRenderer.send('request_permission');
-		this.loading = false;
 	}
 
 	async stopTimer() {
@@ -844,25 +879,6 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 				quitApp: this.quitApp
 			});
 			this.electronService.ipcRenderer.send('update_tray_stop');
-			if (!this._isOffline) {
-				await this.timeTrackerService.toggleApiStop({
-					token: this.token,
-					note: this.note,
-					projectId: this.projectSelect,
-					taskId: this.taskSelect,
-					organizationId: this.userOrganization.id,
-					tenantId: this.userData.tenantId,
-					organizationContactId: this.organizationContactId,
-					apiHost: this.apiHost
-				});
-			}
-			this.start$.next(false);
-			this.loading = false;
-			this._timeRun$.next({
-				second: '00',
-				minute: '00',
-				hours: '00'
-			});
 		} catch (error) {
 			console.log('[ERROR_STOP_TIMER]', error);
 		}
@@ -1440,16 +1456,16 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 					})
 				);
 			} catch (error) { }
-			const remoteId = resActivities.id;
+			const timeSlotId = resActivities.id;
 			this.getLastTimeSlotImage({
 				...arg,
 				token: this.token,
 				apiHost: this.apiHost,
-				remoteId
+				timeSlotId
 			});
 			this.electronService.ipcRenderer.send('create-synced-interval', {
 				...paramActivity,
-				remoteId,
+				remoteId: timeSlotId,
 				b64Imgs: screenshotImg.map((img) => {
 					this.localImage(this.buffToB64(img));
 					return {
