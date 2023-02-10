@@ -283,7 +283,7 @@
 		<nb-icon nbTooltip="Refresh" *ngIf="!(isRefresh$ | async)" class="icon ml-2 mr-2 pointed"
 			(click)="refreshTimer()" icon="redo-alt" pack="font-awesome">
 		</nb-icon>
-		<div [nbTooltip]="(isOffline$ | async) ? 'Api connectivity is down': 'Api connectivity\'s established'"
+		<div [nbTooltip]="(isOffline$ | async) ? 'Api connectivity is down': 'You switched to offline mode now'"
 			class="state-container" [ngClass]="{offline: isOffline$ | async}">
 			<div class="state" [ngClass]="{offline: isOffline$ | async}"></div>
 			{{(isOffline$ | async)
