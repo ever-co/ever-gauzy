@@ -589,7 +589,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 			this._ngZone.run(() => {
 				this._isOffline$.next(isOffline);
 				this.toastrService.show(
-					isOffline ? 'You switched to offline mode now' : 'Your api connection is established',
+					'You switched to ' + (isOffline ? 'offline' : 'online') + ' mode now',
 					`Warning`,
 					{
 						status: isOffline ? 'danger' : 'success'
