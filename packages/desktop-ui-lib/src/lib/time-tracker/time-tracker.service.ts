@@ -10,7 +10,7 @@ import {
 	IOrganizationProjectsCreateInput,
 	IOrganizationProject,
 	IOrganizationContactCreateInput,
-	IOrganizationContact,
+	IOrganizationContact
 } from '@gauzy/contracts';
 
 // Import logging for electron and override default console logging
@@ -19,7 +19,7 @@ console.log = log.log;
 Object.assign(console, log.functions);
 
 @Injectable({
-	providedIn: 'root',
+	providedIn: 'root'
 })
 export class TimeTrackerService {
 	AW_HOST = 'http://localhost:5600';
@@ -28,9 +28,7 @@ export class TimeTrackerService {
 	employeeId = '';
 	buckets: any = {};
 
-	constructor(
-		private readonly http: HttpClient
-	) { }
+	constructor(private readonly http: HttpClient) {}
 
 	createAuthorizationHeader(headers: Headers) {
 		headers.append('Authorization', 'Basic ' + btoa('username:password'));
@@ -54,7 +52,7 @@ export class TimeTrackerService {
 	reqGetTasks(values) {
 		const headers = new HttpHeaders({
 			Authorization: `Bearer ${values.token}`,
-			'Tenant-Id': values.tenantId,
+			'Tenant-Id': values.tenantId
 		});
 		const request = {
 			where: {
@@ -62,21 +60,18 @@ export class TimeTrackerService {
 				tenantId: values.tenantId,
 				...(values.projectId
 					? {
-						projectId: values.projectId,
-					}
-					: {}),
-			},
+							projectId: values.projectId
+					  }
+					: {})
+			}
 		};
 		return firstValueFrom(
-			this.http.get(
-				`${values.apiHost}/api/tasks/employee/${values.employeeId}`,
-				{
-					headers: headers,
-					params: this.toParams({
-						...request,
-					}),
-				}
-			)
+			this.http.get(`${values.apiHost}/api/tasks/employee/${values.employeeId}`, {
+				headers: headers,
+				params: this.toParams({
+					...request
+				})
+			})
 		);
 	}
 
@@ -98,25 +93,22 @@ export class TimeTrackerService {
 	reqGetEmployees(values) {
 		const headers = new HttpHeaders({
 			Authorization: `Bearer ${values.token}`,
-			'Tenant-Id': values.tenantId,
+			'Tenant-Id': values.tenantId
 		});
 		return firstValueFrom(
-			this.http.get(
-				`${values.apiHost}/api/employee/${values.employeeId}`,
-				{
-					headers: headers,
-					params: this.toParams({
-						data: JSON.stringify({
-							relations: ['user'],
-							findInput: {
-								organization: {
-									id: values.organizationId,
-								},
-							},
-						}),
-					}),
-				}
-			)
+			this.http.get(`${values.apiHost}/api/employee/${values.employeeId}`, {
+				headers: headers,
+				params: this.toParams({
+					data: JSON.stringify({
+						relations: ['user'],
+						findInput: {
+							organization: {
+								id: values.organizationId
+							}
+						}
+					})
+				})
+			})
 		);
 	}
 
@@ -138,15 +130,17 @@ export class TimeTrackerService {
 	reqGetTags(values) {
 		const headers = new HttpHeaders({
 			Authorization: `Bearer ${values.token}`,
-			'Tenant-Id': values.tenantId,
+			'Tenant-Id': values.tenantId
 		});
 		return firstValueFrom(
 			this.http.get(`${values.apiHost}/api/tags/level`, {
 				headers: headers,
-				params: values.organizationId ? this.toParams({
-					organizationId: values.organizationId,
-					tenantId: values.tenantId,
-				}) : this.toParams({}),
+				params: values.organizationId
+					? this.toParams({
+							organizationId: values.organizationId,
+							tenantId: values.tenantId
+					  })
+					: this.toParams({})
 			})
 		);
 	}
@@ -169,26 +163,22 @@ export class TimeTrackerService {
 	reqGetProjects(values) {
 		const headers = new HttpHeaders({
 			Authorization: `Bearer ${values.token}`,
-			'Tenant-Id': values.tenantId,
+			'Tenant-Id': values.tenantId
 		});
 		return firstValueFrom(
-			this.http.get(
-				`${values.apiHost}/api/organization-projects/employee/${values.employeeId}`,
-				{
-					headers: headers,
-					params: this.toParams({
-						organizationId: values.organizationId,
-						employeeId: values.employeeId,
-						tenantId: values.tenantId,
-						...(values.organizationContactId
-							? {
-								organizationContactId:
-									values.organizationContactId,
-							}
-							: {}),
-					}),
-				}
-			)
+			this.http.get(`${values.apiHost}/api/organization-projects/employee/${values.employeeId}`, {
+				headers: headers,
+				params: this.toParams({
+					organizationId: values.organizationId,
+					employeeId: values.employeeId,
+					tenantId: values.tenantId,
+					...(values.organizationContactId
+						? {
+								organizationContactId: values.organizationContactId
+						  }
+						: {})
+				})
+			})
 		);
 	}
 
@@ -210,18 +200,15 @@ export class TimeTrackerService {
 	reqGetClient(values) {
 		const headers = new HttpHeaders({
 			Authorization: `Bearer ${values.token}`,
-			'Tenant-Id': values.tenantId,
+			'Tenant-Id': values.tenantId
 		});
 		return firstValueFrom(
-			this.http.get(
-				`${values.apiHost}/api/organization-contact/employee/${values.employeeId}`,
-				{
-					headers: headers,
-					params: {
-						organizationId: values.organizationId,
-					},
+			this.http.get(`${values.apiHost}/api/organization-contact/employee/${values.employeeId}`, {
+				headers: headers,
+				params: {
+					organizationId: values.organizationId
 				}
-			)
+			})
 		);
 	}
 
@@ -243,21 +230,15 @@ export class TimeTrackerService {
 	reqGetUserDetail(values) {
 		const headers = new HttpHeaders({
 			Authorization: `Bearer ${values.token}`,
-			'Tenant-Id': values.tenantId,
+			'Tenant-Id': values.tenantId
 		});
 		const params = this.toParams({
-			relations: [
-				'tenant',
-				'employee',
-				'employee.organization',
-				'role',
-				'role.rolePermissions',
-			],
+			relations: ['tenant', 'employee', 'employee.organization', 'role', 'role.rolePermissions']
 		});
 		return firstValueFrom(
 			this.http.get(`${values.apiHost}/api/user/me`, {
 				params,
-				headers: headers,
+				headers: headers
 			})
 		);
 	}
@@ -280,7 +261,7 @@ export class TimeTrackerService {
 	reqGetTimeLogs(values) {
 		const headers = new HttpHeaders({
 			Authorization: `Bearer ${values.token}`,
-			'Tenant-Id': values.tenantId,
+			'Tenant-Id': values.tenantId
 		});
 
 		return firstValueFrom(
@@ -289,8 +270,8 @@ export class TimeTrackerService {
 				params: this.toParams({
 					tenantId: values.tenantId,
 					organizationId: values.organizationId,
-					employeeIds: [values.employeeId],
-				}),
+					employeeIds: [values.employeeId]
+				})
 			})
 		);
 	}
@@ -313,7 +294,7 @@ export class TimeTrackerService {
 	reqGetTimeSlot(values) {
 		const headers = new HttpHeaders({
 			Authorization: `Bearer ${values.token}`,
-			'Tenant-Id': values.tenantId,
+			'Tenant-Id': values.tenantId
 		});
 
 		log.info(`Get Time Slot: ${moment().format()}`);
@@ -322,7 +303,7 @@ export class TimeTrackerService {
 			this.http.get(
 				`${values.apiHost}/api/timesheet/time-slot/${values.timeSlotId}?relations[]=screenshots&relations[]=activities&relations[]=employee`,
 				{
-					headers: headers,
+					headers: headers
 				}
 			)
 		);
@@ -335,7 +316,7 @@ export class TimeTrackerService {
 	toggleApiStart(values) {
 		const headers = new HttpHeaders({
 			Authorization: `Bearer ${values.token}`,
-			'Tenant-Id': values.tenantId,
+			'Tenant-Id': values.tenantId
 		});
 		const body = {
 			description: values.note,
@@ -348,22 +329,18 @@ export class TimeTrackerService {
 			organizationId: values.organizationId,
 			tenantId: values.tenantId,
 			organizationContactId: values.organizationContactId,
-			...(values.startedAt ? { startedAt: values.startedAt } : {}),
+			...(values.startedAt ? { startedAt: values.startedAt } : {})
 		};
-		log.info(`Toggle Timer Request: ${moment().format()}`, body);
+		log.info(`Toggle Start Timer Request: ${moment().format()}`, body);
 		return firstValueFrom(
-			this.http.post(
-				`${values.apiHost}/api/timesheet/timer/start`,
-				{ ...body },
-				{ headers: headers }
-			)
+			this.http.post(`${values.apiHost}/api/timesheet/timer/start`, { ...body }, { headers: headers })
 		);
 	}
 
 	toggleApiStop(values) {
 		const headers = new HttpHeaders({
 			Authorization: `Bearer ${values.token}`,
-			'Tenant-Id': values.tenantId,
+			'Tenant-Id': values.tenantId
 		});
 		const body = {
 			description: values.note,
@@ -378,31 +355,28 @@ export class TimeTrackerService {
 			organizationContactId: values.organizationContactId,
 			isRunning: false,
 			...(values.startedAt ? { startedAt: values.startedAt } : {}),
-			...(values.stoppedAt ? { stoppedAt: values.stoppedAt } : {}),
+			...(values.stoppedAt ? { stoppedAt: values.stoppedAt } : {})
 		};
+		log.info(`Toggle Stop Timer Request: ${moment().format()}`, body);
 		return firstValueFrom(
-			this.http.post(
-				`${values.apiHost}/api/timesheet/timer/stop`,
-				{ ...body },
-				{ headers: headers }
-			)
+			this.http.post(`${values.apiHost}/api/timesheet/timer/stop`, { ...body }, { headers: headers })
 		);
 	}
 
 	deleteTimeSlot(values) {
 		const params = this.toParams({
 			ids: [values.timeSlotId],
-			tenantId: values.tenantId,
+			tenantId: values.tenantId
 		});
 		const headers = new HttpHeaders({
 			Authorization: `Bearer ${values.token}`,
-			'Tenant-Id': values.tenantId,
+			'Tenant-Id': values.tenantId
 		});
 
 		return firstValueFrom(
 			this.http.delete(`${values.apiHost}/api/timesheet/time-slot`, {
 				params,
-				headers: headers,
+				headers: headers
 			})
 		);
 	}
@@ -420,21 +394,13 @@ export class TimeTrackerService {
 	}
 
 	isJsObject(object: any) {
-		return (
-			object !== null &&
-			object !== undefined &&
-			typeof object === 'object'
-		);
+		return object !== null && object !== undefined && typeof object === 'object';
 	}
 
 	toSubParams(params: HttpParams, key: string, object: any) {
 		Object.keys(object).forEach((childKey) => {
 			if (this.isJsObject(object[childKey])) {
-				params = this.toSubParams(
-					params,
-					`${key}[${childKey}]`,
-					object[childKey]
-				);
+				params = this.toSubParams(params, `${key}[${childKey}]`, object[childKey]);
 			} else {
 				params = params.append(`${key}[${childKey}]`, object[childKey]);
 			}
@@ -446,7 +412,7 @@ export class TimeTrackerService {
 	getInvalidTimeLog(values) {
 		const headers = new HttpHeaders({
 			Authorization: `Bearer ${values.token}`,
-			'Tenant-Id': values.tenantId,
+			'Tenant-Id': values.tenantId
 		});
 
 		return firstValueFrom(
@@ -456,8 +422,8 @@ export class TimeTrackerService {
 					tenantId: values.tenantId,
 					organizationId: values.organizationId,
 					employeeId: values.employeeId,
-					source: 'DESKTOP',
-				},
+					source: 'DESKTOP'
+				}
 			})
 		);
 	}
@@ -465,17 +431,17 @@ export class TimeTrackerService {
 	deleteInvalidTimeLog(values) {
 		const headers = new HttpHeaders({
 			Authorization: `Bearer ${values.token}`,
-			'Tenant-Id': values.tenantId,
+			'Tenant-Id': values.tenantId
 		});
 
 		const params = this.toParams({
-			logIds: values.timeLogIds,
+			logIds: values.timeLogIds
 		});
 
 		return firstValueFrom(
 			this.http.delete(`${values.apiHost}/api/timesheet/time-log`, {
 				params,
-				headers: headers,
+				headers: headers
 			})
 		);
 	}
@@ -483,7 +449,7 @@ export class TimeTrackerService {
 	getTimerStatus(values) {
 		const headers = new HttpHeaders({
 			Authorization: `Bearer ${values.token}`,
-			'Tenant-Id': values.tenantId,
+			'Tenant-Id': values.tenantId
 		});
 		return firstValueFrom(
 			this.http.get(`${values.apiHost}/api/timesheet/timer/status`, {
@@ -491,9 +457,9 @@ export class TimeTrackerService {
 					source: 'DESKTOP',
 					tenantId: values.tenantId,
 					organizationId: values.organizationId,
-					relations: ['employee', 'employee.user'],
+					relations: ['employee', 'employee.user']
 				},
-				headers: headers,
+				headers: headers
 			})
 		);
 	}
@@ -572,7 +538,7 @@ export class TimeTrackerService {
 		console.log('TimeSlot ✅', values);
 		const headers = new HttpHeaders({
 			Authorization: `Bearer ${values.token}`,
-			'Tenant-Id': values.tenantId,
+			'Tenant-Id': values.tenantId
 		});
 		const params = {
 			employeeId: values.employeeId,
@@ -588,7 +554,7 @@ export class TimeTrackerService {
 			tenantId: values.tenantId,
 			organizationContactId: values.organizationContactId,
 			recordedAt: moment(values.recordedAt).utc().toISOString(),
-			version: values.version,
+			version: values.version
 		};
 
 		console.log('Params', params);
@@ -602,13 +568,13 @@ export class TimeTrackerService {
 		return firstValueFrom(
 			this.http
 				.post(`${values.apiHost}/api/timesheet/time-slot`, params, {
-					headers: headers,
+					headers: headers
 				})
 				.pipe(
 					catchError((error) => {
 						error.error = {
 							...error.error,
-							params: JSON.stringify(params),
+							params: JSON.stringify(params)
 						};
 						return throwError(() => new Error(error));
 					})
@@ -619,7 +585,7 @@ export class TimeTrackerService {
 	uploadImages(values, img: any) {
 		const headers = new HttpHeaders({
 			Authorization: `Bearer ${values.token}`,
-			'Tenant-Id': values.tenantId,
+			'Tenant-Id': values.tenantId
 		});
 		const formData = new FormData();
 		const contentType = 'image/png';
@@ -629,20 +595,17 @@ export class TimeTrackerService {
 		formData.append('timeSlotId', values.timeSlotId);
 		formData.append('tenantId', values.tenantId);
 		formData.append('organizationId', values.organizationId);
-		formData.append(
-			'recordedAt',
-			moment(values.recordedAt).utc().toISOString()
-		);
+		formData.append('recordedAt', moment(values.recordedAt).utc().toISOString());
 		return firstValueFrom(
 			this.http
 				.post(`${values.apiHost}/api/timesheet/screenshot`, formData, {
-					headers: headers,
+					headers: headers
 				})
 				.pipe(
 					catchError((error) => {
 						error.error = {
 							...error.error,
-							params: JSON.stringify(formData),
+							params: JSON.stringify(formData)
 						};
 						return throwError(() => new Error(error));
 					})
@@ -654,11 +617,7 @@ export class TimeTrackerService {
 		const byteCharacters = atob(b64Data);
 		const byteArrays = [];
 
-		for (
-			let offset = 0;
-			offset < byteCharacters.length;
-			offset += sliceSize
-		) {
+		for (let offset = 0; offset < byteCharacters.length; offset += sliceSize) {
 			const slice = byteCharacters.slice(offset, offset + sliceSize);
 
 			const byteNumbers = new Array(slice.length);
@@ -703,17 +662,17 @@ export class TimeTrackerService {
 	saveNewTask(values, payload) {
 		const headers = new HttpHeaders({
 			Authorization: `Bearer ${values.token}`,
-			'Tenant-Id': values.tenantId,
+			'Tenant-Id': values.tenantId
 		});
 		return firstValueFrom(
 			this.http
 				.post(`${values.apiHost}/api/tasks`, payload, {
-					headers: headers,
+					headers: headers
 				})
 				.pipe(
 					catchError((error) => {
 						error.error = {
-							...error.error,
+							...error.error
 						};
 						return throwError(() => new Error(error));
 					})
@@ -721,46 +680,32 @@ export class TimeTrackerService {
 		);
 	}
 
-	createNewProject(
-		createInput: IOrganizationProjectsCreateInput,
-		data
-	): Promise<IOrganizationProject> {
+	createNewProject(createInput: IOrganizationProjectsCreateInput, data): Promise<IOrganizationProject> {
 		const headers = new HttpHeaders({
 			Authorization: `Bearer ${data.token}`,
-			'Tenant-Id': data.tenantId,
+			'Tenant-Id': data.tenantId
 		});
 		return firstValueFrom(
-			this.http.post<IOrganizationProject>(
-				data.apiHost + '/api/organization-projects',
-				createInput,
-				{
-					headers: headers,
-				}
-			)
+			this.http.post<IOrganizationProject>(data.apiHost + '/api/organization-projects', createInput, {
+				headers: headers
+			})
 		);
 	}
 
-	createNewContact(
-		input: IOrganizationContactCreateInput,
-		values
-	): Promise<IOrganizationContact> {
+	createNewContact(input: IOrganizationContactCreateInput, values): Promise<IOrganizationContact> {
 		const headers = new HttpHeaders({
 			Authorization: `Bearer ${values.token}`,
-			'Tenant-Id': values.tenantId,
+			'Tenant-Id': values.tenantId
 		});
 		return firstValueFrom(
 			this.http
-				.post<IOrganizationContact>(
-					`${values.apiHost}/api/organization-contact`,
-					input,
-					{
-						headers: headers,
-					}
-				)
+				.post<IOrganizationContact>(`${values.apiHost}/api/organization-contact`, input, {
+					headers: headers
+				})
 				.pipe(
 					catchError((error) => {
 						error.error = {
-							...error.error,
+							...error.error
 						};
 						return throwError(() => new Error(error));
 					})
