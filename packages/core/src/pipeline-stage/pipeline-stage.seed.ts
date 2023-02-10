@@ -1,5 +1,5 @@
 import { DataSource } from 'typeorm';
-import { faker } from '@ever-co/faker';
+import { faker } from '@faker-js/faker';
 import { IOrganization, ITenant } from '@gauzy/contracts';
 import { PipelineStage } from './pipeline-stage.entity';
 import { Pipeline } from './../core/entities/internal';
@@ -27,13 +27,13 @@ export const createRandomPipelineStage = async (
 				tenantId
 			});
 			for (const pipeline of organizationPipeline) {
-				for (let i = 0; i <= faker.datatype.number(10); i++) {
+				for (let i = 0; i <= faker.number.int(10); i++) {
 					//todo Need to update with real values
 					const pipelineStage = new PipelineStage();
 					pipelineStage.pipeline = pipeline;
 					pipelineStage.pipelineId = pipeline.id;
-					pipelineStage.name = faker.company.companyName();
-					pipelineStage.description = faker.name.jobDescriptor();
+					pipelineStage.name = faker.company.name();
+					pipelineStage.description = faker.person.jobDescriptor();
 					pipelineStage.index = Math.floor(Math.random() * 99999) + 1;
 					pipelineStage.tenant = tenant;
 					pipelineStage.organization = tenantOrg;

@@ -4,7 +4,7 @@ import {
 	InsertEvent,
 	LoadEvent,
 } from 'typeorm';
-import { faker } from '@ever-co/faker';
+import { faker } from '@faker-js/faker';
 import { sluggable } from '@gauzy/common';
 import { TaskStatus } from './status.entity';
 

@@ -1,5 +1,5 @@
 import { Brackets, DataSource, WhereExpressionBuilder } from 'typeorm';
-import { faker } from '@ever-co/faker';
+import { faker } from '@faker-js/faker';
 import { filter, uniq } from 'underscore';
 import { lastValueFrom, map } from 'rxjs';
 import { isNotEmpty } from '@gauzy/common';
@@ -63,7 +63,7 @@ export const createDefaultTask = async (
 
 	let count = 0;
 	for await (const issue of issues) {
-		const project = faker.random.arrayElement(defaultProjects);
+		const project = faker.helpers.arrayElement(defaultProjects);
 		const maxTaskNumber = await getMaxTaskNumberByProject(dataSource, {
 			tenantId: tenant.id,
 			organizationId: organization.id,
@@ -82,16 +82,16 @@ export const createDefaultTask = async (
 		task.description = issue.body;
 		task.status = issue.state;
 		task.estimate = null;
-		task.dueDate = faker.date.future(0.3);
+		task.dueDate = faker.date.future({ years: 0.3 });
 		task.project = project;
 		task.prefix = project.name.substring(0, 3);
 		task.number = maxTaskNumber + 1;
-		task.creator = faker.random.arrayElement(users);
+		task.creator = faker.helpers.arrayElement(users);
 
 		if (count % 2 === 0) {
-			task.members = faker.random.arrayElements(employees, 5);
+			task.members = faker.helpers.arrayElements(employees, 5);
 		} else {
-			task.teams = [faker.random.arrayElement(teams)];
+			task.teams = [faker.helpers.arrayElement(teams)];
 		}
 		await dataSource.manager.save(task);
 		count++;
@@ -163,7 +163,7 @@ export const createRandomTask = async (
 			let count = 0;
 
 			for await (const issue of issues) {
-				const project = faker.random.arrayElement(projects);
+				const project = faker.helpers.arrayElement(projects);
 				const maxTaskNumber = await getMaxTaskNumberByProject(
 					dataSource,
 					{
@@ -189,15 +189,15 @@ export const createRandomTask = async (
 				task.project = project;
 				task.prefix = project.name.substring(0, 3);
 				task.number = maxTaskNumber + 1;
-				task.teams = [faker.random.arrayElement(teams)];
-				task.creator = faker.random.arrayElement(users);
+				task.teams = [faker.helpers.arrayElement(teams)];
+				task.creator = faker.helpers.arrayElement(users);
 				task.organization = organization;
 				task.tenant = tenant;
 
 				if (count % 2 === 0) {
-					task.members = faker.random.arrayElements(employees, 5);
+					task.members = faker.helpers.arrayElements(employees, 5);
 				} else {
-					task.teams = [faker.random.arrayElement(teams)];
+					task.teams = [faker.helpers.arrayElement(teams)];
 				}
 
 				await dataSource.manager.save(task);
@@ -222,7 +222,7 @@ export async function createTags(
 			new Tag({
 				name: label.name,
 				description: label.description,
-				color: label.color,
+				color: `#${label.color}`,
 				tenant,
 				organization,
 			})

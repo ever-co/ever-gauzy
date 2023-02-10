@@ -5,7 +5,7 @@
 import { DataSource } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 import { environment as env } from '@gauzy/config';
-import { faker } from '@ever-co/faker';
+import { faker } from '@faker-js/faker';
 import {
 	IDefaultUser,
 	RolesEnum,
@@ -59,9 +59,9 @@ export const createDefaultEmployeesUsers = async (
 ): Promise<{ defaultEmployeeUsers: IUser[]; }> => {
 	// Employee Users
 	const _defaultEmployeeUsers: Promise<IUser[]> = seedDefaultEmployeeUsers(dataSource, tenant, DEFAULT_EMPLOYEES);
-	const [ defaultEmployeeUsers ] = await Promise.all([ _defaultEmployeeUsers ]);
+	const [defaultEmployeeUsers] = await Promise.all([_defaultEmployeeUsers]);
 
-	await insertUsers(dataSource, [ ...defaultEmployeeUsers ]);
+	await insertUsers(dataSource, [...defaultEmployeeUsers]);
 
 	return {
 		defaultEmployeeUsers
@@ -386,9 +386,8 @@ const generateRandomUser = async (
 	role: IRole,
 	tenant: ITenant
 ): Promise<IUser> => {
-	const gender = faker.datatype.number(1);
-	const firstName = faker.name.firstName(gender);
-	const lastName = faker.name.lastName(gender);
+	const firstName = faker.person.firstName();
+	const lastName = faker.person.lastName();
 	const username = faker.internet.userName(firstName, lastName);
 	const email = faker.internet.exampleEmail(firstName, lastName);
 	const avatar = faker.image.avatar();

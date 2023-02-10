@@ -1,5 +1,5 @@
 import { DataSource } from 'typeorm';
-import { faker } from '@ever-co/faker';
+import { faker } from '@faker-js/faker';
 import { IIntegrationEntitySettingTied, IntegrationEntity, ITenant } from '@gauzy/contracts';
 import { PROJECT_TIED_ENTITIES } from '@gauzy/integration-hubstaff';
 import { IntegrationEntitySetting, IntegrationTenant, Organization } from './../core/entities/internal';
@@ -35,7 +35,7 @@ export const createRandomIntegrationEntitySettingTied = async (
 
 				integrationEntitySettingTiedEntity.integrationEntitySetting = integrationEntitySetting;
 				integrationEntitySettingTiedEntity.sync = faker.datatype.boolean();
-				integrationEntitySettingTiedEntity.organization = faker.random.arrayElement(
+				integrationEntitySettingTiedEntity.organization = faker.helpers.arrayElement(
 					organizations
 				);
 				integrationEntitySettingTiedEntity.tenant = tenant;
@@ -44,11 +44,11 @@ export const createRandomIntegrationEntitySettingTied = async (
 					integrationEntitySetting['entity'] ===
 					IntegrationEntity.PROJECT
 				) {
-					integrationEntitySettingTiedEntity.entity = faker.random.arrayElement(
+					integrationEntitySettingTiedEntity.entity = faker.helpers.arrayElement(
 						PROJECT_TIED_ENTITIES
 					)['entity'];
 				} else {
-					integrationEntitySettingTiedEntity.entity = faker.random.arrayElement(
+					integrationEntitySettingTiedEntity.entity = faker.helpers.arrayElement(
 						Object.values(IntegrationEntity)
 					);
 				}

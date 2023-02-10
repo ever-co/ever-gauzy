@@ -1,6 +1,6 @@
 import { DataSource } from 'typeorm';
 import { Proposal } from './proposal.entity';
-import { faker } from '@ever-co/faker';
+import { faker } from '@faker-js/faker';
 import * as moment from 'moment';
 import { Tag } from '../tags/tag.entity';
 import { IEmployee, IOrganization, ITenant, ProposalStatusEnum } from '@gauzy/contracts';
@@ -26,17 +26,17 @@ export const createDefaultProposals = async (
 		});
 		for (let i = 0; i < noOfProposalsPerOrganization; i++) {
 			const proposal = new Proposal();
-			proposal.employee = faker.random.arrayElement(employees);
+			proposal.employee = faker.helpers.arrayElement(employees);
 			proposal.jobPostUrl = faker.internet.url();
-			proposal.jobPostContent = faker.name.jobTitle();
+			proposal.jobPostContent = faker.person.jobTitle();
 			proposal.organization = organization;
-			proposal.status = faker.random.arrayElement(Object.values(ProposalStatusEnum));
-			proposal.tags = [faker.random.arrayElement(tags)];
-			proposal.valueDate = moment(faker.date.recent(0.5)) .startOf('day').toDate();
-			proposal.proposalContent = faker.name.jobDescriptor();
+			proposal.status = faker.helpers.arrayElement(Object.values(ProposalStatusEnum));
+			proposal.tags = [faker.helpers.arrayElement(tags)];
+			proposal.valueDate = moment(faker.date.recent({ days: 0.5 })).startOf('day').toDate();
+			proposal.proposalContent = faker.person.jobDescriptor();
 			proposal.tenant = tenant;
 			if (organizationContacts.length) {
-				proposal.organizationContactId = faker.random.arrayElement(organizationContacts).id;
+				proposal.organizationContactId = faker.helpers.arrayElement(organizationContacts).id;
 			}
 			proposals.push(proposal);
 		}
@@ -68,17 +68,17 @@ export const createRandomProposals = async (
 			});
 			for (let i = 0; i < noOfProposalsPerOrganization; i++) {
 				const proposal = new Proposal();
-				proposal.employee = faker.random.arrayElement(employees);
+				proposal.employee = faker.helpers.arrayElement(employees);
 				proposal.jobPostUrl = faker.internet.url();
-				proposal.jobPostContent = faker.name.jobTitle();
+				proposal.jobPostContent = faker.person.jobTitle();
 				proposal.organization = organization;
-				proposal.status = faker.random.arrayElement(Object.values(ProposalStatusEnum));
-				proposal.tags = [faker.random.arrayElement(tags)];
-				proposal.valueDate = moment(faker.date.recent(0.5)) .startOf('day').toDate();
-				proposal.proposalContent = faker.name.jobDescriptor();
+				proposal.status = faker.helpers.arrayElement(Object.values(ProposalStatusEnum));
+				proposal.tags = [faker.helpers.arrayElement(tags)];
+				proposal.valueDate = moment(faker.date.recent({ days: 0.5 })).startOf('day').toDate();
+				proposal.proposalContent = faker.person.jobDescriptor();
 				proposal.tenant = tenant;
 				if (organizationContacts.length) {
-					proposal.organizationContactId = faker.random.arrayElement(organizationContacts).id;
+					proposal.organizationContactId = faker.helpers.arrayElement(organizationContacts).id;
 				}
 				proposals.push(proposal);
 			}

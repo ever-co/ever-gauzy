@@ -6,7 +6,7 @@ import {
 	EventEmitter,
 	OnDestroy
 } from '@angular/core';
-import { ITag, IOrganization, PermissionsEnum } from '@gauzy/contracts';
+import { ITag, IOrganization, PermissionsEnum, ITagCreateInput } from '@gauzy/contracts';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { filter, map, tap } from 'rxjs/operators';
 import { Observable } from 'rxjs/internal/Observable';
@@ -167,7 +167,7 @@ export class TagsColorInputComponent extends PictureNameTagsComponent
 	 * @param name
 	 * @returns
 	 */
-	createNewTag = async (name: ITag['name']) => {
+	createNewTag = async (name: ITagCreateInput['name']) => {
 		if (!name) {
 			return;
 		}
@@ -177,7 +177,7 @@ export class TagsColorInputComponent extends PictureNameTagsComponent
 		const { id: organizationId } = this.organization;
 
 		try {
-			return await this.tagsService.insertTag({
+			return await this.tagsService.create({
 				name: name,
 				color: randomColor(),
 				description: '',

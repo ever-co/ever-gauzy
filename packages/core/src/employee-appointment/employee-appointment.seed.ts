@@ -1,6 +1,6 @@
 import { DataSource } from 'typeorm';
 import { IEmployee, IOrganization, ITenant } from '@gauzy/contracts';
-import { faker } from '@ever-co/faker';
+import { faker } from '@faker-js/faker';
 import * as moment from 'moment';
 import { EmployeeAppointment } from './employee-appointment.entity';
 import { AGENDAS } from './default-employee-appointment';
@@ -94,19 +94,19 @@ const dataOperation = async (
 
 		employeesAppointment.employee = tenantEmployee;
 		employeesAppointment.organization = organization;
-		employeesAppointment.description = faker.name.jobDescriptor();
-		employeesAppointment.location = faker.address.city();
-		employeesAppointment.startDateTime = faker.date.between(
-			new Date(),
-			moment(new Date()).add(2, 'months').toDate()
-		);
+		employeesAppointment.description = faker.person.jobDescriptor();
+		employeesAppointment.location = faker.location.city();
+		employeesAppointment.startDateTime = faker.date.between({
+			from: new Date(),
+			to: moment(new Date()).add(2, 'months').toDate()
+		});
 		employeesAppointment.endDateTime = moment(
 			employeesAppointment.startDateTime
 		)
 			.add(1, 'hours')
 			.toDate();
 		employeesAppointment.invitees = invitees;
-		employeesAppointment.agenda = faker.random.arrayElement(AGENDAS);
+		employeesAppointment.agenda = faker.helpers.arrayElement(AGENDAS);
 		employeesAppointment.tenant = tenant;
 		employeesAppointments.push(employeesAppointment);
 	}

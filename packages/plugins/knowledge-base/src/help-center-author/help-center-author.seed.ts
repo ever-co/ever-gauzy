@@ -1,5 +1,5 @@
 import { DataSource } from 'typeorm';
-import { faker } from '@ever-co/faker';
+import { faker } from '@faker-js/faker';
 import { IEmployee, IHelpCenterAuthor, ITenant } from '@gauzy/contracts';
 import { HelpCenterAuthor } from './help-center-author.entity';
 import { HelpCenterArticle } from '../help-center-article/help-center-article.entity';
@@ -76,7 +76,7 @@ const operateData = async (
 	employees: IEmployee[]
 ) => {
 	for (let i = 0; i < allArticle.length; i++) {
-		const employee = faker.random.arrayElement(employees);
+		const employee = faker.helpers.arrayElement(employees);
 		const employeeMap: IHelpCenterAuthor = new HelpCenterAuthor();
 
 		employeeMap.employeeId = employee.id;

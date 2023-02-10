@@ -1,6 +1,6 @@
 import { DataSource } from 'typeorm';
 import { IEmployee, IOrganization, ITenant } from '@gauzy/contracts';
-import { faker } from '@ever-co/faker';
+import { faker } from '@faker-js/faker';
 import { EventType, Tag } from './../core/entities/internal';
 
 export const createRandomEventType = async (
@@ -35,10 +35,10 @@ export const createRandomEventType = async (
 					});
 					const event = new EventType();
 					event.isActive = faker.datatype.boolean();
-					event.description = faker.name.jobDescriptor();
-					event.title = faker.name.jobTitle();
+					event.description = faker.person.jobDescriptor();
+					event.title = faker.person.jobTitle();
 					event.durationUnit = 'minutes';
-					event.duration = faker.datatype.number(50);
+					event.duration = faker.number.int(50);
 					event.organization = organization;
 					event.employee = tenantEmployee;
 					event.tags = tags;
