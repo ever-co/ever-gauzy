@@ -546,6 +546,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 						lastTimer: { ...lastTimer, id: lastTimer.timelogId },
 						...lastTimer
 					});
+					event.sender.send('finish-synced-timer');
 				}, 0);
 			})
 		);
@@ -711,6 +712,9 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 							});
 						}, 0);
 					}
+					setTimeout(() => {
+						event.sender.send('finish-synced-timer');
+					}, 0);
 				});
 			}
 		);
@@ -1120,7 +1124,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 					recordedAt: Date.now()
 				})
 			);
-		} catch (error) {}
+		} catch (error) { }
 	}
 
 	updateImageUrl(e) {
@@ -1435,7 +1439,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 						return await this.uploadsScreenshot(arg, img, resActivities.id);
 					})
 				);
-			} catch (error) {}
+			} catch (error) { }
 			const remoteId = resActivities.id;
 			this.getLastTimeSlotImage({
 				...arg,
