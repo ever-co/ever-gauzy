@@ -2,7 +2,7 @@ import { Component, OnInit, OnDestroy, AfterViewInit, Input, ViewChild } from '@
 import { BehaviorSubject, combineLatest, of as observableOf, Subject, switchMap, take } from 'rxjs';
 import { filter, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { DaterangepickerDirective as DateRangePickerDirective, LocaleConfig } from 'ngx-daterangepicker-material';
+import { DaterangepickerComponent as NgxDateRangePickerComponent, DaterangepickerDirective as DateRangePickerDirective, LocaleConfig } from 'ngx-daterangepicker-material';
 import * as moment from 'moment';
 import { IDateRangePicker, IOrganization, ITimeLogFilters, WeekDaysEnum } from '@gauzy/contracts';
 import { distinctUntilChange, isNotEmpty } from '@gauzy/common-angular';
@@ -28,6 +28,7 @@ import { TimesheetFilterService } from './../../../../../@shared/timesheet/times
 export class DateRangePickerComponent extends TranslationBaseComponent
 	implements AfterViewInit, OnInit, OnDestroy {
 
+	public picker: NgxDateRangePickerComponent;
 	public organization: IOrganization;
 	public maxDate: string;
 	public futureDateAllowed: boolean;
@@ -173,7 +174,7 @@ export class DateRangePickerComponent extends TranslationBaseComponent
 		this._isDisableFutureDatePicker = isDisable;
 	}
 
-	@ViewChild(DateRangePickerDirective, { static: false }) dateRangePickerDirective: DateRangePickerDirective;
+	@ViewChild(DateRangePickerDirective, { static: true }) dateRangePickerDirective: DateRangePickerDirective;
 
 	constructor(
 		private readonly store: Store,
@@ -185,7 +186,9 @@ export class DateRangePickerComponent extends TranslationBaseComponent
 		super(translateService);
 	}
 
-	ngOnInit() {
+	ngOnInit(): void {
+		this.picker = this.dateRangePickerDirective.picker;
+
 		const storeOrganization$ = this.store.selectedOrganization$;
 		const storeDatePickerConfig$ = this.dateRangePickerBuilderService.datePickerConfig$;
 
@@ -319,9 +322,9 @@ export class DateRangePickerComponent extends TranslationBaseComponent
 		this.setFutureStrategy();
 	}
 
-   /**
-   * get previous selected range
-   */
+	/**
+	* get previous selected range
+	*/
 	previousRange() {
 		this.arrow.setStrategy = this.previous;
 		const previousRange = this.arrow.execute(this.rangePicker, this.unitOfTime);
@@ -442,8 +445,8 @@ export class DateRangePickerComponent extends TranslationBaseComponent
 				tap((filters: ITimeLogFilters) => {
 					const { startDate = range.startDate } = filters;
 					const date = (!this.hasFutureStrategy() && this.isSameOrAfterDay(startDate)) ?
-							moment() :
-							moment(startDate);
+						moment() :
+						moment(startDate);
 
 					const start = moment(date).startOf(this.unitOfTime);
 					const end = moment(date).endOf(this.unitOfTime);
@@ -489,8 +492,8 @@ export class DateRangePickerComponent extends TranslationBaseComponent
 	/**
 	 * Open Date Picker On Calender Click
 	 */
-	openDatepicker() {
-		this.dateRangePickerDirective.toggle();
+	openDatepicker(event: MouseEvent): void {
+		this.dateRangePickerDirective.toggle(event);
 	}
 
 	/**
@@ -510,5 +513,5 @@ export class DateRangePickerComponent extends TranslationBaseComponent
 		}
 	}
 
-	ngOnDestroy() {}
+	ngOnDestroy(): void { }
 }
