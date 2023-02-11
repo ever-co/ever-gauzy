@@ -217,7 +217,11 @@ export class TeamComponent extends BaseSelectorFilterComponent implements OnInit
 				return {
 					...member,
 					isRunningTimer: isWorkingToday ? logs[0].isRunning : false,
-					todayWorkDuration: isWorkingToday ? logs[0].duration : 0,
+					todayWorkDuration: isWorkingToday
+						? logs.reduce((accumulator, log) => {
+								return accumulator + log.duration;
+						  }, 0)
+						: 0,
 					isWorkingToday: isWorkingToday,
 					tasks: tasks,
 					projects: proj,
