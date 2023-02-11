@@ -10,6 +10,7 @@
 				</h5>
 				<p class="text-center">
 					{{ message | translate }}
+					<ng-content select="[message]"></ng-content>
 				</p>
 			</div>
 		</div>
