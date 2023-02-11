@@ -288,6 +288,7 @@ export const DEFAULT_ROLE_PERMISSIONS = [
 			PermissionsEnum.REQUEST_APPROVAL_VIEW,
 			PermissionsEnum.ORG_TASK_ADD,
 			PermissionsEnum.ORG_TASK_VIEW,
+			PermissionsEnum.ORG_TASK_EDIT,
 			PermissionsEnum.ORG_CANDIDATES_TASK_EDIT,
 			PermissionsEnum.EVENT_TYPES_VIEW,
 			PermissionsEnum.TIME_TRACKER,
