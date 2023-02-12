@@ -636,15 +636,14 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 							organizationContactId: this.organizationContactId,
 							apiHost: this.apiHost,
 							taskId: this.taskSelect,
-							projectId: this.projectSelect,
+							projectId: this.projectSelect
 						};
 						if (sequence.timer.isStartedOffline) {
 							console.log('--------> START SYNC <------');
-							latest =
-								await this.timeTrackerService.toggleApiStart({
-									...sequence.timer,
-									...params,
-								});
+							latest = await this.timeTrackerService.toggleApiStart({
+								...sequence.timer,
+								...params
+							});
 						}
 						console.log('--------> SYNC LOADING... <------', latest);
 						for (const interval of sequence.intervals) {
@@ -703,11 +702,10 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 						}
 						if (sequence.timer.isStoppedOffline) {
 							console.log('--------> STOP SYNC <------');
-							latest =
-								await this.timeTrackerService.toggleApiStop({
-									...sequence.timer,
-									...params,
-								});
+							latest = await this.timeTrackerService.toggleApiStop({
+								...sequence.timer,
+								...params
+							});
 						}
 						setTimeout(() => {
 							event.sender.send('update-synced-timer', {
@@ -741,24 +739,18 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 					console.log('[TIMER_STATE]', lastTimer);
 					if (isStarted) {
 						if (!this._isOffline) {
-							timelog =
-								await this.timeTrackerService.toggleApiStart(
-									{
-										...lastTimer,
-										...params
-									}
-								);
+							timelog = await this.timeTrackerService.toggleApiStart({
+								...lastTimer,
+								...params
+							});
 						}
 						this.loading = false;
 					} else {
 						if (!this._isOffline) {
-							timelog =
-								await this.timeTrackerService.toggleApiStop(
-									{
-										...lastTimer,
-										...params
-									}
-								);
+							timelog = await this.timeTrackerService.toggleApiStop({
+								...lastTimer,
+								...params
+							});
 						}
 						this.start$.next(false);
 						this.loading = false;
@@ -789,8 +781,8 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 					});
 					log.info(`Timer Toggle Catch: ${moment().format()}`, error);
 				}
-			})
-		})
+			});
+		});
 	}
 
 	async toggleStart(val) {
@@ -1150,7 +1142,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 					recordedAt: Date.now()
 				})
 			);
-		} catch (error) { }
+		} catch (error) {}
 	}
 
 	updateImageUrl(e) {
@@ -1465,7 +1457,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 						return await this.uploadsScreenshot(arg, img, resActivities.id);
 					})
 				);
-			} catch (error) { }
+			} catch (error) {}
 			const timeSlotId = resActivities.id;
 			this.getLastTimeSlotImage({
 				...arg,
