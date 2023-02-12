@@ -634,13 +634,15 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 							organizationId: this.userOrganization.id,
 							tenantId: this.userData.tenantId,
 							organizationContactId: this.organizationContactId,
-							apiHost: this.apiHost
+							apiHost: this.apiHost,
+							taskId: this.taskSelect,
+							projectId: this.projectSelect
 						};
 						if (sequence.timer.isStartedOffline) {
 							console.log('--------> START SYNC <------');
 							latest = await this.timeTrackerService.toggleApiStart({
-								...params,
-								...sequence.timer
+								...sequence.timer,
+								...params
 							});
 						}
 						console.log('--------> SYNC LOADING... <------', latest);
@@ -701,8 +703,8 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 						if (sequence.timer.isStoppedOffline) {
 							console.log('--------> STOP SYNC <------');
 							latest = await this.timeTrackerService.toggleApiStop({
-								...params,
-								...sequence.timer
+								...sequence.timer,
+								...params
 							});
 						}
 						setTimeout(() => {
@@ -738,16 +740,16 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 					if (isStarted) {
 						if (!this._isOffline) {
 							timelog = await this.timeTrackerService.toggleApiStart({
-								...params,
-								...lastTimer
+								...lastTimer,
+								...params
 							});
 						}
 						this.loading = false;
 					} else {
 						if (!this._isOffline) {
 							timelog = await this.timeTrackerService.toggleApiStop({
-								...params,
-								...lastTimer
+								...lastTimer,
+								...params
 							});
 						}
 						this.start$.next(false);
@@ -779,8 +781,8 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 					});
 					log.info(`Timer Toggle Catch: ${moment().format()}`, error);
 				}
-			})
-		})
+			});
+		});
 	}
 
 	async toggleStart(val) {
@@ -1140,7 +1142,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 					recordedAt: Date.now()
 				})
 			);
-		} catch (error) { }
+		} catch (error) {}
 	}
 
 	updateImageUrl(e) {
@@ -1455,7 +1457,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 						return await this.uploadsScreenshot(arg, img, resActivities.id);
 					})
 				);
-			} catch (error) { }
+			} catch (error) {}
 			const timeSlotId = resActivities.id;
 			this.getLastTimeSlotImage({
 				...arg,

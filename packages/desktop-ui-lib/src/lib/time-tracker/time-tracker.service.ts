@@ -329,6 +329,7 @@ export class TimeTrackerService {
 			organizationId: values.organizationId,
 			tenantId: values.tenantId,
 			organizationContactId: values.organizationContactId,
+			isRunning: true,
 			...(values.startedAt ? { startedAt: values.startedAt } : {})
 		};
 		log.info(`Toggle Start Timer Request: ${moment().format()}`, body);

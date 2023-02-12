@@ -92,24 +92,22 @@
 				</div>
 				<div class="legend-container">
 					<div class="legend">
-						<button nbButton outline size="tiny"
-								status="success">{{'DASHBOARD_PAGE.CHARTS.WORKING_NOW'|translate}}</button>
-						<nb-badge [text]="team?.statistics?.countOnline" position="bottom right"
-								  status="success"></nb-badge>
-					</div>
-					<div class="legend">
-						<button nbButton outline size="tiny"
-								status="warning">{{'DASHBOARD_PAGE.CHARTS.WORKING_TODAY'|translate}}</button>
 						<nb-badge
-							[text]="(team?.statistics?.countWorking - team?.statistics?.countOnline).toString()"
-							position="bottom right"
-							status="warning"></nb-badge>
+						  status="success"
+						  [text]="('DASHBOARD_PAGE.CHARTS.WORKING_NOW' | translate)+' '+ team?.statistics?.countOnline"
+					  ></nb-badge>
 					</div>
 					<div class="legend">
-						<button nbButton outline size="tiny"
-								status="danger">{{'DASHBOARD_PAGE.CHARTS.NOT_WORKING'|translate}}</button>
-						<nb-badge [text]="team?.statistics?.countNotWorking" position="bottom right"
-								  status="danger"></nb-badge>
+						<nb-badge
+						  status="warning"
+						  [text]="('DASHBOARD_PAGE.CHARTS.WORKING_TODAY' | translate)+' '+ (team?.statistics?.countWorking - team?.statistics?.countOnline).toString()"
+					  ></nb-badge>
+					</div>
+					<div class="legend">
+						<nb-badge
+						  status="danger"
+						  [text]="('DASHBOARD_PAGE.CHARTS.NOT_WORKING' | translate)+' '+ team?.statistics?.countNotWorking"
+					  ></nb-badge>
 					</div>
 				</div>
 				<div>
