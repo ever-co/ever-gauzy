@@ -712,7 +712,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 						setTimeout(() => {
 							event.sender.send('update-synced-timer', {
 								lastTimer: latest ? latest : sequence.timer,
-								...sequence.timer,
+								...sequence.timer
 							});
 						}, 0);
 					}
@@ -745,7 +745,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 								await this.timeTrackerService.toggleApiStart(
 									{
 										...lastTimer,
-										...params,
+										...params
 									}
 								);
 						}
@@ -756,7 +756,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 								await this.timeTrackerService.toggleApiStop(
 									{
 										...lastTimer,
-										...params,
+										...params
 									}
 								);
 						}

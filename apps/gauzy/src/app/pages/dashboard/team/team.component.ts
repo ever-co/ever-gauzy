@@ -220,7 +220,7 @@ export class TeamComponent extends BaseSelectorFilterComponent implements OnInit
 				projects.push(...proj)
 				return {
 					...member,
-					isRunningTimer: isWorkingToday ? logs[0].isRunning : false,
+					isRunningTimer: isWorkingToday ? logs.reverse()[0].isRunning : false,
 					todayWorkDuration: memberDailyLog
 						? memberDailyLog.sum
 						: null,
