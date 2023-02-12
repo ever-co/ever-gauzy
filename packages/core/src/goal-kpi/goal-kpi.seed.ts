@@ -1,7 +1,7 @@
 import { DataSource } from 'typeorm';
 import { IEmployee, IOrganization, ITenant } from '@gauzy/contracts';
 import { GoalKPI } from './goal-kpi.entity';
-import { faker } from '@ever-co/faker';
+import { faker } from '@faker-js/faker';
 import { DEFAULT_GOAL_KPIS } from './default-goal-kpis';
 
 export const createDefaultGoalKpi = async (
@@ -19,7 +19,7 @@ export const createDefaultGoalKpi = async (
 			goalKpi.type = goalKPI.type;
 			goalKpi.operator = goalKPI.operator;
 			goalKpi.unit = goalKPI.unit;
-			goalKpi.lead = faker.random.arrayElement(employees);
+			goalKpi.lead = faker.helpers.arrayElement(employees);
 			goalKpi.currentValue = goalKPI.currentValue;
 			goalKpi.targetValue = goalKPI.targetValue;
 			goalKpi.organization = organization;

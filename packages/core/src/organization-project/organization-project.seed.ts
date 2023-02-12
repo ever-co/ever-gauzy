@@ -1,5 +1,5 @@
 import { DataSource } from 'typeorm';
-import { faker } from '@ever-co/faker';
+import { faker } from '@faker-js/faker';
 import { chain } from 'underscore';
 import { OrganizationProject } from './organization-project.entity';
 import {
@@ -24,7 +24,7 @@ export const createDefaultOrganizationProjects = async (
 	const tag = await dataSource.getRepository(Tag).save({
 		name: 'Web',
 		description: '',
-		color: faker.commerce.color()
+		color: faker.color.human()
 	});
 
 	const projects: IOrganizationProject[] = [];
@@ -37,28 +37,28 @@ export const createDefaultOrganizationProjects = async (
 		const project = new OrganizationProject();
 		project.tags = [tag];
 		project.name = name;
-		project.organizationContact = faker.random.arrayElement(organizationContacts);
+		project.organizationContact = faker.helpers.arrayElement(organizationContacts);
 		project.organization = organization;
 		project.tenant = tenant;
-		project.budgetType = faker.random.arrayElement(
+		project.budgetType = faker.helpers.arrayElement(
 			Object.values(OrganizationProjectBudgetTypeEnum)
 		);
 		project.budget =
 			project.budgetType == OrganizationProjectBudgetTypeEnum.COST
-				? faker.datatype.number({ min: 500, max: 5000 })
-				: faker.datatype.number({ min: 40, max: 400 });
-		project.taskListType = faker.random.arrayElement(
+				? faker.number.int({ min: 500, max: 5000 })
+				: faker.number.int({ min: 40, max: 400 });
+		project.taskListType = faker.helpers.arrayElement(
 			Object.values(TaskListTypeEnum)
 		);
 		// TODO: this seed creates default projects without tenantId.
 		projects.push(project);
 	}
- 	await dataSource.manager.save(projects);
+	await dataSource.manager.save(projects);
 
 	/**
 	* Seeder for assign organization project to the employee of the specific organization
 	*/
- 	await assignOrganizationProjectToEmployee(
+	await assignOrganizationProjectToEmployee(
 		dataSource,
 		tenant,
 		organization
@@ -100,26 +100,26 @@ export const createRandomOrganizationProjects = async (
 				tenantId,
 				organizationId
 			});
-			const organizationContact = faker.random.arrayElement(organizationContacts);
+			const organizationContact = faker.helpers.arrayElement(organizationContacts);
 
 			const projects: OrganizationProject[] = [];
 			for (let i = 0; i < projectsPerOrganization; i++) {
 				const project = new OrganizationProject();
 				project.tags = [tags[Math.floor(Math.random() * tags.length)]];
-				project.name = faker.company.companyName();
+				project.name = faker.company.name();
 				project.organizationContact = organizationContact;
 				project.organization = organization;
 				project.tenant = tenant;
-				project.budgetType = faker.random.arrayElement(
+				project.budgetType = faker.helpers.arrayElement(
 					Object.values(OrganizationProjectBudgetTypeEnum)
 				);
 				project.budget =
 					project.budgetType == OrganizationProjectBudgetTypeEnum.COST
-						? faker.datatype.number({ min: 500, max: 5000 })
-						: faker.datatype.number({ min: 40, max: 400 });
+						? faker.number.int({ min: 500, max: 5000 })
+						: faker.number.int({ min: 40, max: 400 });
 
-				project.startDate = faker.date.past(5);
-				project.endDate = faker.date.past(2);
+				project.startDate = faker.date.past({ years: 5 });
+				project.endDate = faker.date.past({ years: 2 });
 				projects.push(project);
 			}
 			await dataSource.manager.save(projects);
@@ -167,7 +167,7 @@ export const assignOrganizationProjectToEmployee = async (
 	for await (const employee of employees) {
 		employee.projects = chain(organizationProjects)
 			.shuffle()
-			.take(faker.datatype.number({ min: 2, max: 4 }))
+			.take(faker.number.int({ min: 2, max: 4 }))
 			.unique()
 			.values()
 			.value();
@@ -199,7 +199,7 @@ export async function seedProjectMembersCount(
 			/**
 			 * GET member counts for organization project
 			 */
-			const [ members ] = await dataSource.manager.query(`
+			const [members] = await dataSource.manager.query(`
 				SELECT
 					COUNT("organization_project_employee"."employeeId") AS count
 				FROM "organization_project_employee"
@@ -209,7 +209,7 @@ export async function seedProjectMembersCount(
 					"organization_project" ON "organization_project"."id"="organization_project_employee"."organizationProjectId"
 				WHERE
 					"organization_project_employee"."organizationProjectId" = $1
-			`, [ projectId ]);
+			`, [projectId]);
 
 			const count = members['count'];
 

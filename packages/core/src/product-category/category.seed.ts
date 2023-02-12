@@ -1,7 +1,7 @@
 import { DataSource } from 'typeorm';
 import { ProductCategory } from './product-category.entity';
-import { faker } from '@ever-co/faker';
-import * as seed from './product-category.seed.json';
+import { faker } from '@faker-js/faker';
+import * as categories from './product-category.seed.json';
 import { ProductCategoryTranslation } from './product-category-translation.entity';
 import { IOrganization, ITenant } from '@gauzy/contracts';
 
@@ -12,11 +12,12 @@ export const createCategories = async (
 ): Promise<ProductCategory[]> => {
 	const seedProductCategories = [];
 
-	for (const organization of organizations) {
-		for (const seedProductCategory of seed) {
-			const newCategory = new ProductCategory();
-			const image = faker.image[seedProductCategory.fakerImageCategory]() || faker.image.abstract();
+	for await (const organization of organizations) {
+		for await (const seedProductCategory of categories) {
+			const { category } = seedProductCategory;
+			const image = faker.image.urlLoremFlickr({ category });
 
+			const newCategory = new ProductCategory();
 			newCategory.imageUrl = image;
 			newCategory.organization = organization;
 			newCategory.tenant = tenant;
@@ -51,12 +52,11 @@ export const createRandomProductCategories = async (
 	for await (const tenant of tenants) {
 		const organizations = tenantOrganizationsMap.get(tenant);
 		for await (const organization of organizations) {
-			for (const seedProductCategory of seed) {
-				const newCategory = new ProductCategory();
-				const image =
-					faker.image[seedProductCategory.fakerImageCategory]() ||
-					faker.image.abstract();
+			for (const seedProductCategory of categories) {
+				const { category } = seedProductCategory;
+				const image = faker.image.urlLoremFlickr({ category });
 
+				const newCategory = new ProductCategory();
 				newCategory.imageUrl = image;
 				newCategory.organization = organization;
 				newCategory.tenant = tenant;

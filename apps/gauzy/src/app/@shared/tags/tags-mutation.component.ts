@@ -1,10 +1,10 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, Input, OnInit } from '@angular/core';
 import { NbDialogRef, NbThemeService } from '@nebular/theme';
 import { FormGroup, FormBuilder, Validators } from '@angular/forms';
-import { TagsService } from '../../@core/services/tags.service';
+import { firstValueFrom } from 'rxjs';
 import { ITag } from '@gauzy/contracts';
 import { TranslateService } from '@ngx-translate/core';
-import { Store } from '../../@core/services/store.service';
+import { Store, TagsService } from '../../@core/services';
 import { NotesWithTagsComponent } from '../table-components';
 
 @Component({
@@ -12,125 +12,130 @@ import { NotesWithTagsComponent } from '../table-components';
 	templateUrl: './tags-mutation.component.html',
 	styleUrls: ['./tags-mutation.component.scss']
 })
-export class TagsMutationComponent
-	extends NotesWithTagsComponent
-	implements OnInit
-{
-	tag: ITag;
-
-	private isTenantLevelChecked = false;
-	public color = '';
+export class TagsMutationComponent extends NotesWithTagsComponent implements OnInit {
 
 	/**
-	 * Build Form
-	 *
+	 * Tag mutation form
 	 */
 	public form: FormGroup = TagsMutationComponent.buildForm(this.fb);
 	static buildForm(fb: FormBuilder): FormGroup {
 		return fb.group({
-			name: ['', Validators.required],
-			color: [],
-			isTenantLevel: [],
+			name: [null, Validators.required],
+			color: [null, Validators.required],
+			isTenantLevel: [false],
 			description: []
 		});
+	}
+
+	/*
+	* Getter & Setter for tag to edit
+	*/
+	_tag: ITag;
+	get tag(): ITag {
+		return this._tag;
+	}
+	@Input() public set tag(tag: ITag) {
+		this._tag = tag;
+		this._patchFormValue();
+	}
+
+	/**
+	 * Getter for color form control
+	 */
+	get color() {
+		return this.form.get('color').value || '';
 	}
 
 	constructor(
 		protected readonly dialogRef: NbDialogRef<TagsMutationComponent>,
 		private readonly tagsService: TagsService,
 		private readonly fb: FormBuilder,
-		readonly translateService: TranslateService,
-		readonly themeService: NbThemeService,
+		public readonly translateService: TranslateService,
+		public readonly themeService: NbThemeService,
 		private readonly store: Store
 	) {
 		super(themeService, translateService);
 	}
 
-	ngOnInit() {
-		this.initializeForm();
-	}
+	ngOnInit(): void { }
 
 	async addTag() {
+		if (!this.store.selectedOrganization) {
+			return;
+		}
 		const { tenantId } = this.store.user;
 		const { id: organizationId } = this.store.selectedOrganization;
+		const { name, description, color, isTenantLevel } = this.form.getRawValue();
 
-		const { name, description } = this.form.getRawValue();
-
-		if (this.isTenantLevelChecked) {
-			const tagWithTenantLevel = await this.tagsService.insertTag(
-				Object.assign({
-					name,
-					description,
-					color: this.color,
-					tenantId,
-					organization: null
-				})
-			);
-			this.closeDialog(tagWithTenantLevel);
-		} else {
-			const tagWithoutTenantLevel = await this.tagsService.insertTag(
-				Object.assign({
-					name,
-					description,
-					color: this.color,
-					tenantId,
-					organizationId
-				})
-			);
-			this.closeDialog(tagWithoutTenantLevel);
-		}
+		const tag = await firstValueFrom(
+			this.tagsService.create({
+				name,
+				description,
+				color,
+				tenantId,
+				...(isTenantLevel
+					? {
+						organizationId: null
+					}
+					: {
+						organizationId
+					})
+			})
+		);
+		this.closeDialog(tag);
 	}
 
 	async editTag() {
+		if (!this.store.selectedOrganization) {
+			return;
+		}
+
 		const { tenantId } = this.store.user;
 		const { id: organizationId } = this.store.selectedOrganization;
 
-		const { name, description } = this.form.getRawValue();
+		const { name, description, color, isTenantLevel } = this.form.getRawValue();
 
-		if (this.isTenantLevelChecked) {
-			const tagWithTenantLevel = await this.tagsService.update(
-				this.tag.id,
-				Object.assign({
-					name,
-					description,
-					color: this.color,
-					organizationId: null,
-					tenantId
-				})
-			);
-			this.closeDialog(tagWithTenantLevel);
-		} else {
-			const tagWithoutTenantLevel = await this.tagsService.update(
-				this.tag.id,
-				Object.assign({
-					name,
-					description,
-					color: this.color,
-					organizationId,
-					tenantId
-				})
-			);
-			this.closeDialog(tagWithoutTenantLevel);
-		}
+		const tag = await firstValueFrom(
+			this.tagsService.update(this.tag.id, {
+				name,
+				description,
+				color,
+				tenantId,
+				...(isTenantLevel
+					? {
+						organizationId: null
+					}
+					: {
+						organizationId
+					})
+			})
+		);
+		this.closeDialog(tag);
 	}
 
 	async closeDialog(tag?: ITag) {
 		this.dialogRef.close(tag);
 	}
 
-	initializeForm() {
+	private _patchFormValue() {
 		if (this.tag) {
-			this.color = this.tag.color;
+			const { name, color, description, organizationId } = this.tag;
 			this.form.patchValue({
-				name: this.tag.name,
-				color: this.tag.color,
-				description: this.tag.description,
-				isTenantLevel: this.tag.organizationId ? false : true
+				name,
+				color,
+				description,
+				isTenantLevel: organizationId ? false : true
 			});
 		}
 	}
 
-	isChecked(checked: boolean) {
-		this.isTenantLevelChecked = checked;
+	/**
+	 * On changed color input
+	 *
+	 * @param color
+	 */
+	onChangeColor(color: ITag['color']) {
+		this.form.get('color').setValue(color);
+		this.form.get('color').updateValueAndValidity();
 	}
 }

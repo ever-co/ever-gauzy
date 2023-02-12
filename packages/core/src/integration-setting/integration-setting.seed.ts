@@ -1,6 +1,6 @@
 import { DataSource } from 'typeorm';
 import { IntegrationSetting } from './integration-setting.entity';
-import { faker } from '@ever-co/faker';
+import { faker } from '@faker-js/faker';
 import { ITenant } from '@gauzy/contracts';
 import { IntegrationTenant, Organization } from './../core/entities/internal';
 
@@ -26,14 +26,14 @@ export const createRandomIntegrationSetting = async (
 		for (const integrationTenant of integrationTenants) {
 			const integrationSetting = new IntegrationSetting();
 			integrationSetting.integration = integrationTenant;
-			integrationSetting.organization = faker.random.arrayElement(
+			integrationSetting.organization = faker.helpers.arrayElement(
 				organizations
 			);
 			integrationSetting.tenant = tenant;
 			//todo: need to understand real values here
 			integrationSetting.settingsName =
-				'Setting-' + faker.datatype.number(40);
-			integrationSetting.settingsValue = faker.name.jobArea();
+				'Setting-' + faker.number.int(40);
+			integrationSetting.settingsValue = faker.person.jobArea();
 			integrationSettings.push(integrationSetting);
 		}
 	}

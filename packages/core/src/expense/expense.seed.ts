@@ -1,5 +1,5 @@
 import { DataSource } from 'typeorm';
-import { faker } from '@ever-co/faker';
+import { faker } from '@faker-js/faker';
 import {
 	IOrganization,
 	IEmployee,
@@ -74,13 +74,13 @@ export const createDefaultExpenses = async (
 					expense.currency = seedExpense.currency || env.defaultCurrency;
 					expense.notes = seedExpense.notes;
 					expense.valueDate = moment(
-						faker.date.between(
-							moment().subtract(3, 'months').calendar(),
-							moment().add(10, 'days').calendar()
-						)
+						faker.date.between({
+							from: moment().subtract(3, 'months').calendar(),
+							to: moment().add(10, 'days').calendar()
+						})
 					)
-					.startOf('day')
-					.toDate();
+						.startOf('day')
+						.toDate();
 					return expense;
 				});
 				await insertExpense(dataSource, defaultExpenses);
@@ -134,29 +134,29 @@ export const createRandomExpenses = async (
 				const randomExpenses: Expense[] = [];
 				for (let index = 0; index < 100; index++) {
 					const expense = new Expense();
-					const currentIndex = faker.datatype.number({
+					const currentIndex = faker.number.int({
 						min: 0,
 						max: index % 5
 					});
 					expense.organization = employee.organization;
 					expense.tenant = tenant;
 					expense.employee = employee;
-					expense.amount = faker.datatype.number({ min: 10, max: 999 });
+					expense.amount = faker.number.int({ min: 10, max: 999 });
 					expense.vendor =
 						organizationVendors[
-							currentIndex % organizationVendors.length
+						currentIndex % organizationVendors.length
 						];
 					expense.category = categories[currentIndex % categories.length];
 					expense.currency = employee.organization.currency || env.defaultCurrency;
 					expense.notes = notesArray[currentIndex];
 					expense.valueDate = moment(
-						faker.date.between(
-							moment().subtract(3, 'months').calendar(),
-							moment().add(10, 'days').calendar()
-						)
+						faker.date.between({
+							from: moment().subtract(3, 'months').calendar(),
+							to: moment().add(10, 'days').calendar()
+						})
 					)
-					.startOf('day')
-					.toDate();
+						.startOf('day')
+						.toDate();
 					randomExpenses.push(expense);
 				}
 				await insertExpense(dataSource, randomExpenses);

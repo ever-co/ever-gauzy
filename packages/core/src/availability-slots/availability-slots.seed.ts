@@ -1,5 +1,5 @@
 import { DataSource } from 'typeorm';
-import { faker } from '@ever-co/faker';
+import { faker } from '@faker-js/faker';
 import * as moment from 'moment';
 import { AvailabilitySlotType, IEmployee, IOrganization, ITenant } from '@gauzy/contracts';
 import { AvailabilitySlot } from './availability-slots.entity';
@@ -61,21 +61,21 @@ const dataOperation = async (
 	for (let i = 0; i < noOfAvailabilitySlotsPerOrganization; i++) {
 		const slot = new AvailabilitySlot();
 		slot.allDay = faker.datatype.boolean();
-		slot.employee = faker.random.arrayElement([
-			faker.random.arrayElement(employees),
+		slot.employee = faker.helpers.arrayElement([
+			faker.helpers.arrayElement(employees),
 			null
 		]);
 		slot.organization = organization;
 		slot.tenant = tenant;
-		slot.startTime = faker.date.between(
-			new Date(),
-			moment(new Date()).add(2, 'months').toDate()
-		);
-		slot.endTime = faker.date.between(
-			slot.startTime,
-			moment(slot.startTime).add(7, 'hours').toDate()
-		);
-		slot.type = faker.random.arrayElement(
+		slot.startTime = faker.date.between({
+			from: new Date(),
+			to: moment(new Date()).add(2, 'months').toDate()
+		});
+		slot.endTime = faker.date.between({
+			from: slot.startTime,
+			to: moment(slot.startTime).add(7, 'hours').toDate()
+		});
+		slot.type = faker.helpers.arrayElement(
 			Object.values(AvailabilitySlotType)
 		);
 		slots.push(slot);

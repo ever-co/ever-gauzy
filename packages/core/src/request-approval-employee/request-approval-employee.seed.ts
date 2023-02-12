@@ -1,6 +1,6 @@
 import { DataSource } from 'typeorm';
 import { IEmployee, IOrganization, ITenant } from '@gauzy/contracts';
-import { faker } from '@ever-co/faker';
+import { faker } from '@faker-js/faker';
 import { RequestApprovalEmployee } from './request-approval-employee.entity';
 import { ApprovalPolicy, RequestApproval } from './../core/entities/internal';
 
@@ -50,7 +50,7 @@ export const createRandomRequestApprovalEmployee = async (
 						requestApprovalEmployee.requestApproval = requestApproval;
 						// requestApprovalEmployee.employeeId = tenantEmployee.id;
 						requestApprovalEmployee.employee = tenantEmployee;
-						requestApprovalEmployee.status = faker.datatype.number(
+						requestApprovalEmployee.status = faker.number.int(
 							99
 						);
 						requestApprovalEmployee.tenant = tenant;

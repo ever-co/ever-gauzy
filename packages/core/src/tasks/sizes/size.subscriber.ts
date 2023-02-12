@@ -4,7 +4,7 @@ import {
 	InsertEvent,
 	LoadEvent,
 } from 'typeorm';
-import { faker } from '@ever-co/faker';
+import { faker } from '@faker-js/faker';
 import { sluggable } from '@gauzy/common';
 import { TaskSize } from './size.entity';
 
@@ -26,7 +26,7 @@ export class TaskSizeSubscriber implements EntitySubscriberInterface<TaskSize> {
 	afterLoad(
 		entity: TaskSize | Partial<TaskSize>,
 		event?: LoadEvent<TaskSize>
-	): void | Promise<any> {}
+	): void | Promise<any> { }
 
 	/**
 	 * Called before entity is inserted to the database.

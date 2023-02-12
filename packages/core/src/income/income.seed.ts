@@ -1,5 +1,5 @@
 import { DataSource } from 'typeorm';
-import { faker } from '@ever-co/faker';
+import { faker } from '@faker-js/faker';
 import {
 	IOrganization,
 	IEmployee,
@@ -58,13 +58,13 @@ export const createDefaultIncomes = async (
 					income.currency = seedIncome.currency || env.defaultCurrency;
 					income.notes = seedIncome.notes;
 					income.valueDate = moment(
-						faker.date.between(
-							moment().subtract(3, 'months').calendar(),
-							moment().add(10, 'days').calendar()
-						)
+						faker.date.between({
+							from: moment().subtract(3, 'months').calendar(),
+							to: moment().add(10, 'days').calendar()
+						})
 					)
-					.startOf('day')
-					.toDate();
+						.startOf('day')
+						.toDate();
 
 					const payload = {
 						name: `Client ${seedIncome.clientName}`,
@@ -91,7 +91,7 @@ export const createDefaultIncomes = async (
 					}
 					income.tags = chain(tags)
 						.shuffle()
-						.take(faker.datatype.number({ min: 1, max: 3 }))
+						.take(faker.number.int({ min: 1, max: 3 }))
 						.values()
 						.value();
 					incomes.push(income);
@@ -134,30 +134,30 @@ export const createRandomIncomes = async (
 			for await (const employee of employees || []) {
 				for (let index = 0; index < 100; index++) {
 					const income = new Income();
-					const currentIndex = faker.datatype.number({
+					const currentIndex = faker.number.int({
 						min: 0,
 						max: index % 5
 					});
 					income.organization = organization;
 					income.tenant = tenant;
 					income.employee = employee;
-					income.amount = faker.datatype.number({ min: 10, max: 9999 });
+					income.amount = faker.number.int({ min: 10, max: 9999 });
 					if (organizationContacts.length) {
-						income.client = faker.random.arrayElement(organizationContacts);
+						income.client = faker.helpers.arrayElement(organizationContacts);
 					}
 					income.currency = employee.organization.currency || env.defaultCurrency;
 					income.valueDate = moment(
-						faker.date.between(
-							moment().subtract(3, 'months').calendar(),
-							moment().add(10, 'days').calendar()
-						)
+						faker.date.between({
+							from: moment().subtract(3, 'months').calendar(),
+							to: moment().add(10, 'days').calendar()
+						})
 					)
-					.startOf('day')
-					.toDate();
+						.startOf('day')
+						.toDate();
 					income.notes = notes[currentIndex];
 					income.tags = chain(tags)
 						.shuffle()
-						.take(faker.datatype.number({ min: 1, max: 3 }))
+						.take(faker.number.int({ min: 1, max: 3 }))
 						.values()
 						.value();
 					incomes.push(income);

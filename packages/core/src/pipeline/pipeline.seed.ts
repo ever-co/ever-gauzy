@@ -1,5 +1,5 @@
 import { DataSource } from 'typeorm';
-import { faker } from '@ever-co/faker';
+import { faker } from '@faker-js/faker';
 import { IOrganization, IPipeline, ITenant } from '@gauzy/contracts';
 import { Pipeline } from './pipeline.entity';
 
@@ -57,14 +57,14 @@ const dataOperation = async (
 	pipelines: IPipeline[],
 	organization: IOrganization
 ) => {
-	for (let i = 0; i <= faker.datatype.number(10); i++) {
+	for (let i = 0; i <= faker.number.int(10); i++) {
 		const pipeline = new Pipeline();
 
 		pipeline.organization = organization;
 		pipeline.tenant = tenant;
 		pipeline.organizationId = organization.id;
-		pipeline.name = faker.company.companyName();
-		pipeline.description = faker.name.jobDescriptor();
+		pipeline.name = faker.company.name();
+		pipeline.description = faker.person.jobDescriptor();
 		pipeline.isActive = faker.datatype.boolean();
 
 		pipelines.push(pipeline);

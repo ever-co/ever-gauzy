@@ -1,7 +1,7 @@
 import { DataSource } from 'typeorm';
 import { IOrganization, IProductVariantPrice, ITenant } from '@gauzy/contracts';
 import { ProductVariantPrice } from './product-variant-price.entity';
-import { faker } from '@ever-co/faker';
+import { faker } from '@faker-js/faker';
 import { ProductCategory } from '../product-category/product-category.entity';
 import { Product } from '../product/product.entity';
 import { ProductVariant } from '../product-variant/product-variant.entity';
@@ -48,12 +48,12 @@ export const createRandomProductVariantPrice = async (
 						const productVariantPrice: IProductVariantPrice = new ProductVariantPrice();
 
 						productVariantPrice.productVariant = productVariant;
-						productVariantPrice.unitCost = faker.datatype.number(
+						productVariantPrice.unitCost = faker.number.int(
 							10000
 						);
 						productVariantPrice.unitCostCurrency =
 							tenantOrg.currency || env.defaultCurrency;
-						productVariantPrice.retailPrice = faker.datatype.number(
+						productVariantPrice.retailPrice = faker.number.int(
 							productVariantPrice.unitCost
 						);
 						productVariantPrice.retailPriceCurrency =

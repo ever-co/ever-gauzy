@@ -1,6 +1,6 @@
 import { DataSource } from 'typeorm';
 import { OrganizationDepartment } from './organization-department.entity';
-import { faker } from '@ever-co/faker';
+import { faker } from '@faker-js/faker';
 import { Tag } from '../tags/tag.entity';
 import { DEFAULT_ORGANIZATION_DEPARTMENTS } from './default-organization-departments';
 import { IOrganization, ITenant } from '@gauzy/contracts';
@@ -13,7 +13,7 @@ export const createDefaultOrganizationDepartments = async (
 	const tag = dataSource.getRepository(Tag).create({
 		name: 'API',
 		description: '',
-		color: faker.commerce.color()
+		color: faker.color.human()
 	});
 	const departments: OrganizationDepartment[] = [];
 	for (const organization of organizations) {

@@ -1,6 +1,6 @@
 import { DataSource } from 'typeorm';
 import { ICandidate, ICandidateInterview, IOrganization, ITenant } from '@gauzy/contracts';
-import { faker } from '@ever-co/faker';
+import { faker } from '@faker-js/faker';
 import { CandidateInterview, Organization } from './../core/entities/internal';
 
 export const createDefaultCandidateInterview = async (
@@ -15,17 +15,17 @@ export const createDefaultCandidateInterview = async (
 		);
 		return;
 	}
-	let candidateInterviewes: ICandidateInterview[] = [];
+	let candidateInterviews: ICandidateInterview[] = [];
 	for (const tenantCandidate of candidates) {
-		candidateInterviewes = await dataOperation(
+		candidateInterviews = await dataOperation(
 			dataSource,
-			candidateInterviewes,
+			candidateInterviews,
 			tenantCandidate,
 			tenant,
 			organization
 		);
 	}
-	return candidateInterviewes;
+	return candidateInterviews;
 };
 
 export const createRandomCandidateInterview = async (
@@ -45,7 +45,7 @@ export const createRandomCandidateInterview = async (
 		const organizations = await dataSource.manager.findBy(Organization, {
 			tenantId
 		});
-		const organization = faker.random.arrayElement(organizations);
+		const organization = faker.helpers.arrayElement(organizations);
 		const tenantCandidates = tenantCandidatesMap.get(tenant);
 		for (const tenantCandidate of tenantCandidates) {
 			candidates = await dataOperation(
@@ -71,10 +71,10 @@ const dataOperation = async (
 		const candidate = new CandidateInterview();
 		const interViewDate = faker.date.past();
 
-		candidate.title = faker.name.jobArea();
+		candidate.title = faker.person.jobArea();
 		candidate.startTime = new Date(interViewDate.setHours(10));
 		candidate.endTime = new Date(interViewDate.setHours(12));
-		candidate.location = faker.address.city();
+		candidate.location = faker.location.city();
 		candidate.note = faker.lorem.words();
 		candidate.candidate = tenantCandidate;
 		candidate.tenant = tenant;

@@ -7,7 +7,7 @@ export const DEFAULT_GLOBAL_SIZES: ITaskSize[] = [
 		value: TaskSizeEnum.X_LARGE,
 		description: 'Larger size then medium Size',
 		icon: null,
-		color: '#ff3d71',
+		color: '#F5B8B8',
 		isSystem: true,
 	},
     {
@@ -15,7 +15,7 @@ export const DEFAULT_GLOBAL_SIZES: ITaskSize[] = [
 		value: TaskSizeEnum.LARGE,
 		description: 'Bigger size than average.',
 		icon: null,
-		color: '#ffaa00',
+		color: '#F3D8B0',
 		isSystem: true,
 	},
     {
@@ -23,7 +23,7 @@ export const DEFAULT_GLOBAL_SIZES: ITaskSize[] = [
 		value: TaskSizeEnum.MEDIUM,
 		description: 'Neither large nor small.',
 		icon: null,
-		color: '#0095ff',
+		color: '#F5F1CB',
 		isSystem: true,
 	},
     {
@@ -31,7 +31,7 @@ export const DEFAULT_GLOBAL_SIZES: ITaskSize[] = [
 		value: TaskSizeEnum.SMALL,
 		description: 'Little size or slight dimensions.',
 		icon: null,
-		color: '#3366ff',
+		color: '#B8D1F5',
 		isSystem: true,
 	},
     {
@@ -39,7 +39,7 @@ export const DEFAULT_GLOBAL_SIZES: ITaskSize[] = [
 		value: TaskSizeEnum.TINY,
 		description: 'Below average in size.',
 		icon: null,
-		color: '#f7f9fc',
+		color: '#ECE8FC',
 		isSystem: true,
 	},
 ];

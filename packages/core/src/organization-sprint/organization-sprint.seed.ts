@@ -1,5 +1,5 @@
 import { DataSource } from 'typeorm';
-import { faker } from '@ever-co/faker';
+import { faker } from '@faker-js/faker';
 import { OrganizationSprint } from './organization-sprint.entity';
 import { IOrganization, ITenant, SprintStartDayEnum } from '@gauzy/contracts';
 import { OrganizationProject } from '../organization-project/organization-project.entity';
@@ -28,18 +28,18 @@ export const createRandomOrganizationSprint = async (
 				tenantId,
 				organizationId
 			});
-			let project = faker.random.arrayElement(projects);
+			let project = faker.helpers.arrayElement(projects);
 
 			const { id: projectId } = project;
 			const tasks = await dataSource.getRepository(Task).findBy({
 				projectId
 			});
-			for (let i = 0; i <= faker.datatype.number(10); i++) {
+			for (let i = 0; i <= faker.number.int(10); i++) {
 				const sprint = new OrganizationSprint();
 
-				sprint.name = faker.company.companyName();
+				sprint.name = faker.company.name();
 				sprint.projectId = project.id;
-				sprint.length = faker.datatype.number({ min: 1, max: 9 });
+				sprint.length = faker.number.int({ min: 1, max: 9 });
 				sprint.startDate = faker.date.past();
 				sprint.endDate = moment(sprint.startDate)
 					.add(1, 'months')

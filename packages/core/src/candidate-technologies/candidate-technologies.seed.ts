@@ -1,6 +1,6 @@
 import { DataSource } from 'typeorm';
 import { ICandidate, ICandidateInterview, ICandidateTechnologies, IOrganization, ITenant } from '@gauzy/contracts';
-import { faker } from '@ever-co/faker';
+import { faker } from '@faker-js/faker';
 import { CandidateTechnologies } from './candidate-technologies.entity';
 import { CandidateInterview } from './../core/entities/internal';
 
@@ -76,7 +76,7 @@ const dataOperation = async (
 	for (const interview of candidateInterviews) {
 		const candidate = new CandidateTechnologies();
 
-		candidate.name = faker.name.jobArea();
+		candidate.name = faker.person.jobArea();
 		candidate.interviewId = interview.id;
 		candidate.rating = Math.floor(Math.random() * 5) + 1;
 		candidate.tenant = tenant;

@@ -1,6 +1,6 @@
 import { DataSource } from 'typeorm';
 import { Tenant } from './tenant.entity';
-import { faker } from '@ever-co/faker';
+import { faker } from '@faker-js/faker';
 import { DEFAULT_EVER_TENANT } from './default-tenants';
 import { ITenant } from '@gauzy/contracts';
 
@@ -31,7 +31,7 @@ export const createRandomTenants = async (
 	const randomTenants: Tenant[] = [];
 	for (let i = 0; i < noOfTenants; i++) {
 		const tenant = new Tenant();
-		tenant.name = faker.company.companyName();
+		tenant.name = faker.company.name();
 		randomTenants.push(tenant);
 	}
 

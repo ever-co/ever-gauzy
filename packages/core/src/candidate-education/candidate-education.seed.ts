@@ -1,6 +1,6 @@
 import { ICandidate, ICandidateEducation, ITenant } from '@gauzy/contracts';
 import { DataSource } from 'typeorm';
-import { faker } from '@ever-co/faker';
+import { faker } from '@faker-js/faker';
 import { DEFAULT_CANDIDATE_EDUCATIONS } from './default-candidate-educations';
 import { CandidateEducation, Organization } from './../core/entities/internal';
 
@@ -65,7 +65,7 @@ export const createRandomCandidateEducations = async (
 					completionDate: education.completionDate,
 					field: education.field,
 					candidateId: candidateId,
-					organization: faker.random.arrayElement(organizations),
+					organization: faker.helpers.arrayElement(organizations),
 					tenantId: tenantId,
 					notes: faker.lorem.sentence()
 				})
