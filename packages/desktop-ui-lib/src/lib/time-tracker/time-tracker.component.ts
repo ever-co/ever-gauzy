@@ -634,14 +634,17 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 							organizationId: this.userOrganization.id,
 							tenantId: this.userData.tenantId,
 							organizationContactId: this.organizationContactId,
-							apiHost: this.apiHost
+							apiHost: this.apiHost,
+							taskId: this.taskSelect,
+							projectId: this.projectSelect,
 						};
 						if (sequence.timer.isStartedOffline) {
 							console.log('--------> START SYNC <------');
-							latest = await this.timeTrackerService.toggleApiStart({
-								...params,
-								...sequence.timer
-							});
+							latest =
+								await this.timeTrackerService.toggleApiStart({
+									...sequence.timer,
+									...params,
+								});
 						}
 						console.log('--------> SYNC LOADING... <------', latest);
 						for (const interval of sequence.intervals) {
@@ -700,15 +703,16 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 						}
 						if (sequence.timer.isStoppedOffline) {
 							console.log('--------> STOP SYNC <------');
-							latest = await this.timeTrackerService.toggleApiStop({
-								...params,
-								...sequence.timer
-							});
+							latest =
+								await this.timeTrackerService.toggleApiStop({
+									...sequence.timer,
+									...params,
+								});
 						}
 						setTimeout(() => {
 							event.sender.send('update-synced-timer', {
 								lastTimer: latest ? latest : sequence.timer,
-								...sequence.timer
+								...sequence.timer,
 							});
 						}, 0);
 					}
@@ -737,18 +741,24 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 					console.log('[TIMER_STATE]', lastTimer);
 					if (isStarted) {
 						if (!this._isOffline) {
-							timelog = await this.timeTrackerService.toggleApiStart({
-								...params,
-								...lastTimer
-							});
+							timelog =
+								await this.timeTrackerService.toggleApiStart(
+									{
+										...lastTimer,
+										...params,
+									}
+								);
 						}
 						this.loading = false;
 					} else {
 						if (!this._isOffline) {
-							timelog = await this.timeTrackerService.toggleApiStop({
-								...params,
-								...lastTimer
-							});
+							timelog =
+								await this.timeTrackerService.toggleApiStop(
+									{
+										...lastTimer,
+										...params,
+									}
+								);
 						}
 						this.start$.next(false);
 						this.loading = false;
