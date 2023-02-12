@@ -1,4 +1,4 @@
-import {Component, OnDestroy, OnInit} from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import {
 	IGetCountsStatistics,
 	IGetTimeLogReportInput,
@@ -7,21 +7,21 @@ import {
 	ITimeLog,
 	ReportGroupFilterEnum
 } from "@gauzy/contracts";
-import {debounceTime, tap} from "rxjs";
-import {UntilDestroy, untilDestroyed} from "@ngneat/until-destroy";
-import {TranslateService} from '@ngx-translate/core';
+import { debounceTime, tap } from "rxjs";
+import { UntilDestroy, untilDestroyed } from "@ngneat/until-destroy";
+import { TranslateService } from '@ngx-translate/core';
 import {
 	DateRangePickerBuilderService,
 	OrganizationTeamsService,
 	Store
 } from "../../../@core";
-import {TimesheetService, TimesheetStatisticsService} from "../../../@shared/timesheet";
+import { TimesheetService, TimesheetStatisticsService } from "../../../@shared/timesheet";
 import {
 	BaseSelectorFilterComponent
 } from '../../../@shared/timesheet/gauzy-filters/base-selector-filter/base-selector-filter.component';
 import * as moment from 'moment';
 
-@UntilDestroy({checkProperties: true})
+@UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'gauzy-teams',
 	templateUrl: './team.component.html',
@@ -30,6 +30,7 @@ import * as moment from 'moment';
 export class TeamComponent extends BaseSelectorFilterComponent implements OnInit, OnDestroy {
 	private _logs: ITimeLog[] = [];
 	private _countsStatistics: any;
+	private _dailyLogs: any[] = [];
 
 	constructor(
 		private readonly _organizationTeamsService: OrganizationTeamsService,
@@ -118,8 +119,8 @@ export class TeamComponent extends BaseSelectorFilterComponent implements OnInit
 	public select(team: IOrganizationTeam) {
 		this._selectedTeam =
 			this._selectedTeam.data && team.id === this._selectedTeam.data.id
-				? {isSelected: !this._selectedTeam.isSelected, data: team}
-				: {isSelected: true, data: team};
+				? { isSelected: !this._selectedTeam.isSelected, data: team }
+				: { isSelected: true, data: team };
 	}
 
 	ngOnInit(): void {
@@ -141,8 +142,8 @@ export class TeamComponent extends BaseSelectorFilterComponent implements OnInit
 		if (!this.organization) {
 			return;
 		}
-		const {id: organizationId} = this.organization;
-		const {tenantId} = this.store.user;
+		const { id: organizationId } = this.organization;
+		const { tenantId } = this.store.user;
 		this.isLoading = true;
 		this._organizationTeamsService.getAll(
 			[
@@ -175,14 +176,13 @@ export class TeamComponent extends BaseSelectorFilterComponent implements OnInit
 				'task',
 				'employee.user'
 			]);
-			this._logs = this._logs.sort(
-				(a, b) => this._sortByIdAndDate(a, b)
+			this._dailyLogs = await this._timesheetService.getDailyReport(
+				request
 			);
 			await this.teamMapper();
 		} catch (error) {
 			console.log(error);
 		} finally {
-
 		}
 	}
 
@@ -190,8 +190,12 @@ export class TeamComponent extends BaseSelectorFilterComponent implements OnInit
 		let projects = [];
 		let allMembers = [];
 		let allMembersWorking = [];
-		this._todayTeamsWorkers = this._teams.map(team => {
-			const members = team.members.map(member => {
+		this._todayTeamsWorkers = this._teams.map((team) => {
+			const members = team.members.map((member) => {
+				const memberDailyLog = this._dailyLogs.filter(
+					(dailyLog) =>
+						dailyLog.employee.userId === member.employee.userId
+				)[0];
 				const logs = this._logs
 					.map(log => log.employee.userId === member.employee.userId ? log : null)
 					.filter(log => !!log)
@@ -217,20 +221,26 @@ export class TeamComponent extends BaseSelectorFilterComponent implements OnInit
 				return {
 					...member,
 					isRunningTimer: isWorkingToday ? logs[0].isRunning : false,
-					todayWorkDuration: isWorkingToday
-						? logs.reduce((accumulator, log) => {
-								return accumulator + log.duration;
-						  }, 0)
-						: 0,
+					todayWorkDuration: memberDailyLog
+						? memberDailyLog.sum
+						: null,
 					isWorkingToday: isWorkingToday,
 					tasks: tasks,
 					projects: proj,
-					workPeriod: this._period
-				}
-			})
-			const membersOnline = members.filter((member) => member.isRunningTimer);
-			const membersWorkingToday = members.filter(member => member.isWorkingToday);
-			const membersNotWorkingToday = members.filter(member => !member.isWorkingToday);
+					workPeriod: this._period,
+					activity: memberDailyLog ? memberDailyLog.activity : null,
+				};
+			});
+
+			const membersOnline = members.filter(
+				(member) => member.isRunningTimer
+			);
+			const membersWorkingToday = members.filter(
+				(member) => member.isWorkingToday
+			);
+			const membersNotWorkingToday = members.filter(
+				(member) => !member.isWorkingToday
+			);
 			allMembers.push(...members);
 			allMembersWorking.push(...membersWorkingToday);
 			return {

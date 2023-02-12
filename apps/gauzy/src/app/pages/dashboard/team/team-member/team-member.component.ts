@@ -43,7 +43,9 @@ export class TeamMemberComponent implements OnInit {
 	}
 
 	public calculatePercentage(a, b) {
-		return Math.abs(a / b * 100)
+		let value = Math.abs((a / b) * 100);
+		value = isFinite(value) ? value : 0;
+		return value;
 	}
 
 	public humanize(duration: number) {
