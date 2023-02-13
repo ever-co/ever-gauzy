@@ -28,7 +28,7 @@ export class TimeTrackerService {
 	employeeId = '';
 	buckets: any = {};
 
-	constructor(private readonly http: HttpClient) {}
+	constructor(private readonly http: HttpClient) { }
 
 	createAuthorizationHeader(headers: Headers) {
 		headers.append('Authorization', 'Basic ' + btoa('username:password'));
@@ -60,8 +60,8 @@ export class TimeTrackerService {
 				tenantId: values.tenantId,
 				...(values.projectId
 					? {
-							projectId: values.projectId
-					  }
+						projectId: values.projectId
+					}
 					: {})
 			}
 		};
@@ -137,9 +137,9 @@ export class TimeTrackerService {
 				headers: headers,
 				params: values.organizationId
 					? this.toParams({
-							organizationId: values.organizationId,
-							tenantId: values.tenantId
-					  })
+						organizationId: values.organizationId,
+						tenantId: values.tenantId
+					})
 					: this.toParams({})
 			})
 		);
@@ -174,8 +174,8 @@ export class TimeTrackerService {
 					tenantId: values.tenantId,
 					...(values.organizationContactId
 						? {
-								organizationContactId: values.organizationContactId
-						  }
+							organizationContactId: values.organizationContactId
+						}
 						: {})
 				})
 			})
@@ -330,6 +330,7 @@ export class TimeTrackerService {
 			tenantId: values.tenantId,
 			organizationContactId: values.organizationContactId,
 			isRunning: true,
+			version: values.version,
 			...(values.startedAt ? { startedAt: values.startedAt } : {})
 		};
 		log.info(`Toggle Start Timer Request: ${moment().format()}`, body);
@@ -355,6 +356,7 @@ export class TimeTrackerService {
 			tenantId: values.tenantId,
 			organizationContactId: values.organizationContactId,
 			isRunning: false,
+			version: values.version,
 			...(values.startedAt ? { startedAt: values.startedAt } : {}),
 			...(values.stoppedAt ? { stoppedAt: values.stoppedAt } : {})
 		};
@@ -555,7 +557,6 @@ export class TimeTrackerService {
 			tenantId: values.tenantId,
 			organizationContactId: values.organizationContactId,
 			recordedAt: moment(values.recordedAt).utc().toISOString(),
-			version: values.version
 		};
 
 		console.log('Params', params);
