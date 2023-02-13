@@ -8,6 +8,7 @@ import {
 } from '@angular/core';
 import { ITag, IOrganization, PermissionsEnum, ITagCreateInput } from '@gauzy/contracts';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { firstValueFrom } from 'rxjs';
 import { filter, map, tap } from 'rxjs/operators';
 import { Observable } from 'rxjs/internal/Observable';
 import { Subject } from 'rxjs/internal/Subject';
@@ -177,13 +178,15 @@ export class TagsColorInputComponent extends PictureNameTagsComponent
 		const { id: organizationId } = this.organization;
 
 		try {
-			return await this.tagsService.create({
-				name: name,
-				color: randomColor(),
-				description: '',
-				tenantId,
-				...(this.isOrgLevel ? { organizationId } : {}),
-			});
+			return await firstValueFrom(
+				this.tagsService.create({
+					name: name,
+					color: randomColor(),
+					description: '',
+					tenantId,
+					...(this.isOrgLevel ? { organizationId } : {}),
+				})
+			);
 		} catch (error) {
 			console.log('Error while creating tags', error);
 		} finally {
