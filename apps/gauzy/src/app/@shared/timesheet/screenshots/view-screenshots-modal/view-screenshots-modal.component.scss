@@ -1,4 +1,5 @@
 @import 'themes';
+@import 'gauzy/_gauzy-table';
 
 :host {
   display: block;
@@ -56,4 +57,26 @@
 		letter-spacing: 0em;
 		color: var(--gauzy-text-color-2);
 	}
+  nb-badge{
+    position: relative;
+    font-size: 14px;
+    font-weight: 600;
+    padding: 2px 4px;
+    border-radius: calc(var(--border-radius) / 2);
+  }
+  nb-card-header,
+  nb-card-body,
+  nb-card-footer {
+    padding: 1rem;
+  }
+
+  .subtitle {
+    font-size: 12px;
+    font-weight: 600;
+    line-height: 13px;
+    letter-spacing: -0.01em;
+    text-align: left;
+    margin-bottom: 10px;
+    color: var(--gauzy-text-color-2);
+  }
 }
