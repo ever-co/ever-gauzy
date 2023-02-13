@@ -15,6 +15,7 @@ import { TranslateModule } from '@ngx-translate/core';
 import { LabelModule } from '../../../components/label/label.module';
 import { GalleryModule } from '../../../gallery/gallery.module';
 import { DialogsModule } from '../../../dialogs/dialogs.module';
+import { TableComponentsModule } from '../../../table-components';
 
 @NgModule({
 	declarations: [ViewScreenshotsModalComponent],
@@ -32,7 +33,8 @@ import { DialogsModule } from '../../../dialogs/dialogs.module';
 		TranslateModule,
 		LabelModule,
 		GalleryModule,
-    	DialogsModule
+		DialogsModule,
+		TableComponentsModule
 	]
 })
-export class ViewScreenshotsModalModule {}
+export class ViewScreenshotsModalModule { }
