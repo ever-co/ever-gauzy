@@ -1,7 +1,7 @@
-import { Injectable } from '@nestjs/common';
+import { ForbiddenException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { IEmployee } from '@gauzy/contracts';
+import { DeleteResult, FindOptionsWhere, Repository } from 'typeorm';
+import { IBasePerTenantAndOrganizationEntityModel, IEmployee, IOrganizationTeamEmployee, IRelationalEmployee, PermissionsEnum } from '@gauzy/contracts';
 import { TenantAwareCrudService } from './../core/crud';
 import { RequestContext } from './../core/context';
 import { OrganizationTeamEmployee } from './organization-team-employee.entity';
@@ -56,7 +56,7 @@ export class OrganizationTeamEmployeeService extends TenantAwareCrudService<Orga
 				});
 
 			const tenantId = RequestContext.currentTenantId();
-			
+
 			// 3. Add new team members
 			employeesToUpdate
 				.filter((emp) => !existingMembers.includes(emp.id))
@@ -73,10 +73,41 @@ export class OrganizationTeamEmployeeService extends TenantAwareCrudService<Orga
 				});
 		}
 	}
-	
+
 	deleteMemberByIds(memberIds: string[]) {
 		memberIds.forEach(async (memberId) => {
 			await this.delete(memberId);
 		});
+	}
+
+	/**
+	 * Delete team member by memberId
+	 *
+	 * @param memberId
+	 * @param options
+	 * @returns
+	 */
+	async deleteTeamMember(
+		memberId: IOrganizationTeamEmployee['id'],
+		options: IBasePerTenantAndOrganizationEntityModel & IRelationalEmployee
+	): Promise<DeleteResult | OrganizationTeamEmployee> {
+		try {
+			const { employeeId, organizationId } = options;
+			const member = await this.findOneByIdString(memberId, {
+				where: {
+					...(
+						(RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE)) ? {
+							employeeId,
+							organizationId
+						} : {
+							employeeId: RequestContext.currentEmployeeId()
+						}
+					)
+				}
+			});
+			return await this.repository.remove(member);
+		} catch (error) {
+			throw new ForbiddenException(error);
+		}
 	}
 }
