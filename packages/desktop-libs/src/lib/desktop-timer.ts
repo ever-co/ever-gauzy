@@ -556,9 +556,12 @@ export default class TimerHandler {
 					duration: 0,
 					synced: !this._offlineMode.enabled,
 					isStartedOffline: this._offlineMode.enabled,
-					isStoppedOffline: false
+					isStoppedOffline: false,
 				})
-				: await TimerData.updateDurationOfTimer(knex, payload);
+				: await TimerData.updateDurationOfTimer(knex, {
+					...payload,
+					id: this.lastTimer.id,
+				});
 
 			const lastSavedTimer = await TimerData.getLastTimer(knex, info);
 
