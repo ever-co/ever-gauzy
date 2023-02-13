@@ -150,6 +150,7 @@ export * from './../../invite/invite.subscriber';
 export * from './../../invoice/invoice.subscriber';
 export * from './../../organization-contact/organization-contact.subscriber';
 export * from './../../organization-project/organization-project.subscriber';
+export * from './../../organization-team-employee/organization-team-employee.subscriber';
 export * from './../../organization-team/organization-team.subscriber';
 export * from './../../organization/organization.subscriber';
 export * from './../../payment/payment.subscriber';
