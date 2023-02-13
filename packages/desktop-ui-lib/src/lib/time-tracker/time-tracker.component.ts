@@ -1142,7 +1142,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 					recordedAt: Date.now()
 				})
 			);
-		} catch (error) {}
+		} catch (error) { }
 	}
 
 	updateImageUrl(e) {
@@ -1429,8 +1429,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 			apiHost: arg.apiHost,
 			token: arg.token,
 			isAw: arg.isAw,
-			isAwConnected: arg.isAwConnected,
-			version: arg.version
+			isAwConnected: arg.isAwConnected
 		};
 
 		try {
@@ -1457,7 +1456,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 						return await this.uploadsScreenshot(arg, img, resActivities.id);
 					})
 				);
-			} catch (error) {}
+			} catch (error) { }
 			const timeSlotId = resActivities.id;
 			this.getLastTimeSlotImage({
 				...arg,

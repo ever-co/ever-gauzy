@@ -459,8 +459,7 @@ export default class TimerHandler {
 					isAwConnected: appSetting.awIsConnected,
 					keyboard: Math.round(this._eventCounter.keyboardPercentage * durationNow),
 					mouse: Math.round(this._eventCounter.mousePercentage * durationNow),
-					system: Math.round(this._eventCounter.systemPercentage * durationNow),
-					version: 'v' + app.getVersion()
+					system: Math.round(this._eventCounter.systemPercentage * durationNow)
 				});
 				break;
 			case 'ScreenshotDesktopLib':
@@ -493,8 +492,7 @@ export default class TimerHandler {
 					isAwConnected: appSetting.awIsConnected,
 					keyboard: Math.round(this._eventCounter.keyboardPercentage * durationNow),
 					mouse: Math.round(this._eventCounter.mousePercentage * durationNow),
-					system: Math.round(this._eventCounter.systemPercentage * durationNow),
-					version: 'v' + app.getVersion()
+					system: Math.round(this._eventCounter.systemPercentage * durationNow)
 				});
 				break;
 			default:
@@ -557,6 +555,7 @@ export default class TimerHandler {
 					synced: !this._offlineMode.enabled,
 					isStartedOffline: this._offlineMode.enabled,
 					isStoppedOffline: false,
+					version: 'v' + app.getVersion()
 				})
 				: await TimerData.updateDurationOfTimer(knex, {
 					...payload,
