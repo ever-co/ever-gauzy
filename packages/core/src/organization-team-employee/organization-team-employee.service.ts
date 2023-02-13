@@ -1,6 +1,6 @@
 import { ForbiddenException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { DeleteResult, FindOptionsWhere, Repository } from 'typeorm';
+import { DeleteResult, Repository } from 'typeorm';
 import { IBasePerTenantAndOrganizationEntityModel, IEmployee, IOrganizationTeamEmployee, IRelationalEmployee, PermissionsEnum } from '@gauzy/contracts';
 import { TenantAwareCrudService } from './../core/crud';
 import { RequestContext } from './../core/context';
@@ -107,7 +107,7 @@ export class OrganizationTeamEmployeeService extends TenantAwareCrudService<Orga
 			});
 			return await this.repository.remove(member);
 		} catch (error) {
-			throw new ForbiddenException(error);
+			throw new ForbiddenException();
 		}
 	}
 }
