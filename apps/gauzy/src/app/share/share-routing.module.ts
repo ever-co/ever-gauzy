@@ -15,11 +15,10 @@ const routes: Routes = [
 				pathMatch: 'full'
 			},
 			{
-				path: 'organization/:link',
-				loadChildren: () =>
-					import('./organization/organization.module').then(
-						(m) => m.OrganizationModule
-					)
+				path: 'organization/:profileLink/:organizationId',
+				loadChildren: () => import('./organization/organization.module').then(
+					(m) => m.OrganizationModule
+				)
 			},
 			{
 				path: 'employee/edit-appointment',
@@ -50,7 +49,7 @@ const routes: Routes = [
 					).then((m) => m.ConfirmAppointmentModule)
 			},
 			{
-				path: 'employee/:employeeid/create-appointment',
+				path: 'employee/:employeeId/create-appointment',
 				loadChildren: () =>
 					import(
 						'./public-appointments/appointment-form/appointment-form.module'
@@ -89,4 +88,4 @@ const routes: Routes = [
 	imports: [RouterModule.forChild(routes)],
 	exports: [RouterModule]
 })
-export class ShareRoutingModule {}
+export class ShareRoutingModule { }

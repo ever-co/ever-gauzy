@@ -1,12 +1,13 @@
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
 import {
 	IOrganizationTeam,
 	IOrganizationTeamFindInput,
 	IOrganizationTeamCreateInput,
 	IPagination,
-	IOrganizationTeamUpdateInput
+	IOrganizationTeamUpdateInput,
+	IBasePerTenantAndOrganizationEntityModel
 } from '@gauzy/contracts';
 import { toParams } from '@gauzy/common-angular';
 import { API_PREFIX } from '../constants/app.constants';
@@ -18,7 +19,7 @@ export class OrganizationTeamsService {
 
 	constructor(
 		private readonly http: HttpClient
-	) {}
+	) { }
 
 	// TODO: Implement logic to proceed the following requests:
 	// 1) Get all employees of selected Organization and put in in the select as options;
@@ -53,9 +54,14 @@ export class OrganizationTeamsService {
 		);
 	}
 
-	delete(id: IOrganizationTeam['id']): Promise<any> {
+	delete(
+		id: IOrganizationTeam['id'],
+		params: IBasePerTenantAndOrganizationEntityModel
+	): Promise<IOrganizationTeam | HttpErrorResponse> {
 		return firstValueFrom(
-			this.http.delete(`${API_PREFIX}/organization-team/${id}`)
+			this.http.delete<IOrganizationTeam>(`${API_PREFIX}/organization-team/${id}`, {
+				params: toParams(params)
+			})
 		);
 	}
 

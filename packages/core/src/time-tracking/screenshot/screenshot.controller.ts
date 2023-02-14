@@ -27,7 +27,7 @@ import { LazyFileInterceptor } from './../../core/interceptors';
 import { Permissions } from './../../shared/decorators';
 import { PermissionGuard, TenantPermissionGuard } from './../../shared/guards';
 import { UUIDValidationPipe } from './../../shared/pipes';
-import { DeleteQueryDTO } from './dto';
+import { DeleteQueryDTO } from './../../shared/dto';
 
 @ApiTags('Screenshot')
 @UseGuards(TenantPermissionGuard, PermissionGuard)
@@ -36,7 +36,7 @@ import { DeleteQueryDTO } from './dto';
 export class ScreenshotController {
 	constructor(
 		private readonly screenshotService: ScreenshotService
-	) {}
+	) { }
 
 	@ApiOperation({ summary: 'Add manual time' })
 	@ApiResponse({
@@ -50,20 +50,20 @@ export class ScreenshotController {
 	})
 	@Post()
 	@UseInterceptors(
-        LazyFileInterceptor('file', {
+		LazyFileInterceptor('file', {
 			storage: (request: ExecutionContext) => {
-                return new FileStorage().storage({
+				return new FileStorage().storage({
 					dest: () => {
 						return path.join(
 							'screenshots',
 							moment().format('YYYY/MM/DD')
 						);
 					},
-                  	prefix: 'screenshots'
-              	})
-            }
-        })
-    )
+					prefix: 'screenshots'
+				})
+			}
+		})
+	)
 	async create(
 		@Body() entity: Screenshot,
 		@UploadedFileStorage() file

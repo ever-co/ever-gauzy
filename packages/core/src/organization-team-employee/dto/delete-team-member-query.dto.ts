@@ -1,12 +1,12 @@
 import { IntersectionType, PickType } from "@nestjs/swagger";
 import { IBasePerTenantAndOrganizationEntityModel, IRelationalEmployee } from "@gauzy/contracts";
 import { EmployeeFeatureDTO } from "./../../employee/dto";
-import { TenantOrganizationBaseDTO } from "../../core/dto";
+import { DeleteQueryDTO } from "./../../shared/dto";
 
 /**
  * Delete team member query DTO
  */
 export class DeleteTeamMemberQueryDTO extends IntersectionType(
-    PickType(TenantOrganizationBaseDTO, ['organizationId', 'tenantId']),
+    DeleteQueryDTO,
     PickType(EmployeeFeatureDTO, ['employeeId']),
 ) implements IBasePerTenantAndOrganizationEntityModel, IRelationalEmployee { }
