@@ -5,7 +5,7 @@ import {
 	ForbiddenException
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, In, ILike, SelectQueryBuilder, DeleteResult, FindOptionsWhere } from 'typeorm';
+import { Repository, In, ILike, SelectQueryBuilder, DeleteResult } from 'typeorm';
 import {
 	IOrganizationTeamCreateInput,
 	IOrganizationTeam,
@@ -14,8 +14,7 @@ import {
 	IOrganizationTeamUpdateInput,
 	IEmployee,
 	PermissionsEnum,
-	IBasePerTenantAndOrganizationEntityModel,
-	IRelationalEmployee
+	IBasePerTenantAndOrganizationEntityModel
 } from '@gauzy/contracts';
 import { isNotEmpty } from '@gauzy/common';
 import { Employee } from '../employee/employee.entity';
