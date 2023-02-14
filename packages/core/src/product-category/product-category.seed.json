@@ -2,7 +2,7 @@
 	{
 		"name": "Software",
 		"description": "a collection of data or computer instructions that tell the computer how to work",
-		"fakerImageCategory": "technics",
+		"category": "technics",
 		"translations": [
 			{
 				"languageCode": "bg",
@@ -29,7 +29,7 @@
 	{
 		"name": "Food",
 		"description": "Any substance consumed to provide nutritional support for an organism",
-		"fakerImageCategory": "food",
+		"category": "food",
 		"translations": [
 			{
 				"languageCode": "bg",
@@ -56,7 +56,7 @@
 	{
 		"name": "Transport",
 		"description": "The movement of people or goods from one place to another",
-		"fakerImageCategory": "transport",
+		"category": "transport",
 		"translations": [
 			{
 				"languageCode": "bg",
@@ -83,7 +83,7 @@
 	{
 		"name": "Education",
 		"description": "Aquisition of knowledge, skills, values, beliefs, and habits",
-		"fakerImageCategory": "people",
+		"category": "people",
 		"translations": [
 			{
 				"languageCode": "bg",
@@ -110,7 +110,7 @@
 	{
 		"name": "Clothing",
 		"description": "Items worn on the body",
-		"fakerImageCategory": "fashion",
+		"category": "fashion",
 		"translations": [
 			{
 				"languageCode": "bg",
@@ -137,7 +137,7 @@
 	{
 		"name": "Office",
 		"description": "A place for commercial, professional, or bureaucratic work.",
-		"fakerImageCategory": "business",
+		"category": "business",
 		"translations": [
 			{
 				"languageCode": "bg",
@@ -164,7 +164,7 @@
 	{
 		"name": "Advertisement",
 		"description": "How a company encourages people to buy their products, services or ideas",
-		"fakerImageCategory": "business",
+		"category": "business",
 		"translations": [
 			{
 				"languageCode": "bg",
@@ -191,7 +191,7 @@
 	{
 		"name": "Health",
 		"description": "State of complete physical, mental, and social well-being",
-		"fakerImageCategory": "nature",
+		"category": "nature",
 		"translations": [
 			{
 				"languageCode": "bg",
@@ -218,7 +218,7 @@
 	{
 		"name": "Sport",
 		"description": "An activity involving physical exertion and skill",
-		"fakerImageCategory": "sports",
+		"category": "sports",
 		"translations": [
 			{
 				"languageCode": "bg",
@@ -245,7 +245,7 @@
 	{
 		"name": "Furniture",
 		"description": "Used to make a room or building suitable for living or working in",
-		"fakerImageCategory": "abstract",
+		"category": "abstract",
 		"translations": [
 			{
 				"languageCode": "bg",
@@ -272,7 +272,7 @@
 	{
 		"name": "Pets",
 		"description": "An animal kept primarily for a person's company or entertainment rather than as a working animal",
-		"fakerImageCategory": "cats",
+		"category": "cats",
 		"translations": [
 			{
 				"languageCode": "bg",

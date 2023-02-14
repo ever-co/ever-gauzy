@@ -1,5 +1,5 @@
 import { ICandidate, ICandidateDocument, IOrganization, ITenant } from '@gauzy/contracts';
-import { faker } from '@ever-co/faker';
+import { faker } from '@faker-js/faker';
 import { DataSource } from 'typeorm';
 import { CandidateDocument, Organization } from './../core/entities/internal';
 import { DEFAULT_CANDIDATE_DOCUMENTS } from './default-candidate-documents';
@@ -63,7 +63,7 @@ export const createRandomCandidateDocuments = async (
 				name: document.name,
 				documentUrl: document.documentUrl,
 				candidateId: candidateId,
-				organization: faker.random.arrayElement(organizations),
+				organization: faker.helpers.arrayElement(organizations),
 				tenantId: tenantId
 			}));
 			candidateDocumentsMap.set(candidate, documents);

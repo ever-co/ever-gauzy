@@ -25,9 +25,17 @@ export class NgxLoginComponent extends NbLoginComponent implements OnInit {
 		super(nbAuthService, options, cdr, router);
 	}
 
-	ngOnInit() {}
+	ngOnInit() { }
 
-	public forgot(): void {}
+	public forgot(): void {
+		this.electronService.shell.openExternal(
+			'https://app.gauzy.co/#/auth/request-password'
+		);
+	}
 
-	public register(): void {}
+	public register(): void {
+		this.electronService.shell.openExternal(
+			'https://app.gauzy.co/#/auth/register'
+		);
+	}
 }

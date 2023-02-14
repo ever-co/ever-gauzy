@@ -3,7 +3,7 @@ import { OrganizationTeam } from './organization-team.entity';
 import { OrganizationTeamEmployee } from '../organization-team-employee/organization-team-employee.entity';
 import { IEmployee, IOrganization, IRole, ITenant, RolesEnum } from '@gauzy/contracts';
 import * as _ from 'underscore';
-import { faker } from '@ever-co/faker';
+import { faker } from '@faker-js/faker';
 import { DEFAULT_ORGANIZATION_TEAMS } from './default-organization-teams';
 
 export const createDefaultTeams = async (
@@ -85,7 +85,7 @@ export const createRandomTeam = async (
 				 */
 				const managers = _.chain(employees)
 					.shuffle()
-					.take(faker.datatype.number({ min: 1, max: 5 }))
+					.take(faker.number.int({ min: 1, max: 5 }))
 					.values()
 					.value();
 				managers.forEach((employee: IEmployee) => {

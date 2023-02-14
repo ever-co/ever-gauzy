@@ -17,6 +17,22 @@
 
 Ever® Gauzy™ Platform is a part of our larger Open Platform for **On-Demand and Sharing Economies** - [Ever® Platform™](https://ever.co).
 
+## 🌼 Screenshots
+
+<details>
+<summary>Show / Hide Screenshots</summary>
+
+### Web UI
+![overview](https://docs.gauzy.co/docs/assets/overview.png)
+
+### Desktop Timer UI (Standard)
+![timer](https://docs.gauzy.co/docs/assets/desktop/desktop-timer-small.png)
+
+### Desktop Timer UI (Expanded)
+![timer](https://docs.gauzy.co/docs/assets/desktop/desktop-timer-expanded.png)
+
+</details>
+
 ## ✨ Features
 
 Main features:

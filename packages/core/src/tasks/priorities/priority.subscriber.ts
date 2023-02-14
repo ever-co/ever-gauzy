@@ -4,7 +4,7 @@ import {
 	InsertEvent,
 	LoadEvent,
 } from 'typeorm';
-import { faker } from '@ever-co/faker';
+import { faker } from '@faker-js/faker';
 import { sluggable } from '@gauzy/common';
 import { TaskPriority } from './priority.entity';
 
@@ -26,7 +26,7 @@ export class TaskPrioritySubscriber implements EntitySubscriberInterface<TaskPri
 	afterLoad(
 		entity: TaskPriority | Partial<TaskPriority>,
 		event?: LoadEvent<TaskPriority>
-	): void | Promise<any> {}
+	): void | Promise<any> { }
 
 	/**
 	 * Called before entity is inserted to the database.

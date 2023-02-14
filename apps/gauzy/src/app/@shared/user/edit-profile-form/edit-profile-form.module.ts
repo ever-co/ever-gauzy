@@ -25,6 +25,7 @@ import { SharedModule } from '../../shared.module';
 import { PasswordFormFieldModule } from '../forms/fields/password';
 import { RoleFormFieldModule } from '../forms/fields/role';
 import { TableComponentsModule } from '../../table-components';
+import { TimeZoneSelectorModule } from '../../selectors';
 
 @NgModule({
 	imports: [
@@ -46,7 +47,8 @@ import { TableComponentsModule } from '../../table-components';
 		SharedModule,
 		PasswordFormFieldModule,
 		RoleFormFieldModule,
-		TableComponentsModule
+		TableComponentsModule,
+		TimeZoneSelectorModule
 	],
 	exports: [EditProfileFormComponent],
 	declarations: [EditProfileFormComponent],

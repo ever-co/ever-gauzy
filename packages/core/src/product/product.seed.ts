@@ -1,5 +1,5 @@
 import { DataSource } from 'typeorm';
-import { faker } from '@ever-co/faker';
+import { faker } from '@faker-js/faker';
 import { IOrganization, ITenant, LanguagesEnum } from '@gauzy/contracts';
 import { Product, ProductCategory, ProductTranslation, ProductType } from './../core/entities/internal';
 
@@ -27,7 +27,7 @@ export const createDefaultProducts = async (
 			productTypes[Math.floor(Math.random() * productTypes.length)];
 		product.productCategory =
 			productCategories[
-				Math.floor(Math.random() * productCategories.length)
+			Math.floor(Math.random() * productCategories.length)
 			];
 		product.translations = [translation];
 		product.organization = organization;
@@ -93,7 +93,7 @@ export const createRandomProduct = async (
 				productTypes[Math.floor(Math.random() * productTypes.length)];
 			product.productCategory =
 				productCategories[
-					Math.floor(Math.random() * productCategories.length)
+				Math.floor(Math.random() * productCategories.length)
 				];
 			product.tenant = tenant;
 			product.organization = tenantOrg;

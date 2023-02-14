@@ -1,5 +1,5 @@
 import { DataSource } from 'typeorm';
-import { faker } from '@ever-co/faker';
+import { faker } from '@faker-js/faker';
 import { InviteStatusEnum, IOrganization, ITenant, IUser } from '@gauzy/contracts';
 import { sign } from 'jsonwebtoken';
 import { environment as env } from '@gauzy/config';
@@ -23,14 +23,14 @@ export const createDefaultEmployeeInviteSent = async (
 		for (let i = 0; i < 10; i++) {
 			const invitee = new Invite();
 			invitee.email = faker.internet.exampleEmail();
-			invitee.expireDate = faker.date.between(
-				new Date(),
-				moment(new Date()).add(30, 'days').toDate()
-			);
-			invitee.invitedBy = faker.random.arrayElement(SuperAdmin);
+			invitee.expireDate = faker.date.between({
+				from: new Date(),
+				to: moment(new Date()).add(30, 'days').toDate()
+			});
+			invitee.invitedBy = faker.helpers.arrayElement(SuperAdmin);
 			invitee.organizationId = organization.id;
-			invitee.role = faker.random.arrayElement(roles);
-			invitee.status = faker.random.arrayElement(invitationStatus);
+			invitee.role = faker.helpers.arrayElement(roles);
+			invitee.status = faker.helpers.arrayElement(invitationStatus);
 			invitee.token = createToken(invitee.email);
 			invitee.tenant = tenant;
 			totalInvites.push(invitee);
@@ -60,14 +60,14 @@ export const createRandomEmployeeInviteSent = async (
 			for (let i = 0; i < noOfInvitesPerOrganization; i++) {
 				const invitee = new Invite();
 				invitee.email = faker.internet.exampleEmail();
-				invitee.expireDate = faker.date.between(
-					new Date(),
-					moment(new Date()).add(30, 'days').toDate()
-				);
-				invitee.invitedBy = faker.random.arrayElement(admins);
+				invitee.expireDate = faker.date.between({
+					from: new Date(),
+					to: moment(new Date()).add(30, 'days').toDate()
+				});
+				invitee.invitedBy = faker.helpers.arrayElement(admins);
 				invitee.organizationId = organization.id;
-				invitee.role = faker.random.arrayElement(roles);
-				invitee.status = faker.random.arrayElement(invitationStatus);
+				invitee.role = faker.helpers.arrayElement(roles);
+				invitee.status = faker.helpers.arrayElement(invitationStatus);
 				invitee.token = createToken(invitee.email);
 				invitee.tenant = tenant;
 				totalInvites.push(invitee);

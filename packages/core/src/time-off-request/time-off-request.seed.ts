@@ -1,5 +1,5 @@
 import { DataSource } from 'typeorm';
-import { faker } from '@ever-co/faker';
+import { faker } from '@faker-js/faker';
 import { addDays } from 'date-fns';
 import * as _ from 'underscore';
 import { IEmployee, IOrganization, ITenant, ITimeOff as ITimeOffRequest, StatusTypesEnum } from '@gauzy/contracts';
@@ -33,16 +33,16 @@ export const createDefaultEmployeeTimeOff = async (
 			request.tenantId = tenantId;
 			request.employees = _.chain(employees)
 				.shuffle()
-				.take(faker.datatype.number({ min: 1, max: 3 }))
+				.take(faker.number.int({ min: 1, max: 3 }))
 				.values()
 				.value();
 			request.description = 'Time off';
-			request.isHoliday = faker.random.arrayElement([true, false]);
-			request.isArchived = faker.random.arrayElement([true, false]);
-			request.start = faker.date.future(0.5);
-			request.end = addDays(request.start, faker.datatype.number(7));
+			request.isHoliday = faker.helpers.arrayElement([true, false]);
+			request.isArchived = faker.helpers.arrayElement([true, false]);
+			request.start = faker.date.future({ years: 0.5 });
+			request.end = addDays(request.start, faker.number.int(7));
 			request.requestDate = faker.date.recent();
-			request.status = faker.random.arrayElement(status);
+			request.status = faker.helpers.arrayElement(status);
 			request.documentUrl = '';
 
 			const timeOffRequest = await dataSource.manager.save(request);
@@ -82,16 +82,16 @@ export const createRandomEmployeeTimeOff = async (
 					request.tenantId = tenantId;
 					request.employees = _.chain(employees)
 						.shuffle()
-						.take(faker.datatype.number({ min: 1, max: 3 }))
+						.take(faker.number.int({ min: 1, max: 3 }))
 						.values()
 						.value();
 					request.description = 'Time off';
-					request.isHoliday = faker.random.arrayElement([true, false]);
-					request.isArchived = faker.random.arrayElement([true, false]);
-					request.start = faker.date.future(0.5);
-					request.end = addDays(request.start, faker.datatype.number(7));
+					request.isHoliday = faker.helpers.arrayElement([true, false]);
+					request.isArchived = faker.helpers.arrayElement([true, false]);
+					request.start = faker.date.future({ years: 0.5 });
+					request.end = addDays(request.start, faker.number.int(7));
 					request.requestDate = faker.date.recent();
-					request.status = faker.random.arrayElement(status);
+					request.status = faker.helpers.arrayElement(status);
 					request.documentUrl = '';
 
 					const timeOffRequest = await dataSource.manager.save(request);

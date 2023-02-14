@@ -1088,7 +1088,7 @@
 			"MANUAL_ACTIVITY": "Записи не найдены. Пожалуйста, выберите диапазон дат, сотрудник или проект.",
 			"AMOUNT_OWED": "Недостаточно сумм",
 			"WEEKLY_TIME_AND_ACTIVITY": "Вы еще не отслеживали время и активность в этот день.",
-			"DAILY_TIME_AND_ACTIVITY": "Вы еще не отследили времени и активности в этот день.",
+			"DAILY_TIME_AND_ACTIVITY": "В этот день еще не отслеживается время и активность. Пожалуйста, используйте <a href=\"https://web.gauzy.co/downloads\" rel=\"noopener\" target=\"_blank\">Gauzy Desktop Timer App</a>.",
 			"PROJECT_BUDGET": "Вы не создали ни одного проекта с бюджетом.",
 			"CLIENT_BUDGET": "Вы не создали ни одного клиента с бюджетом."
 		}
@@ -1313,7 +1313,9 @@
 			"TOTAL_HOURS": "Всего часов",
 			"RATE": "Ставка",
 			"VETTED": "Ограблен",
-			"HR": "час"
+			"HR": "час",
+			"SETTINGS": "Настройки",
+			"GENERAL_SETTINGS": "общие настройки"
 		},
 		"ADD_EMPLOYEES": {
 			"STEP_1": "Шаг 1",

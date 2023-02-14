@@ -6,9 +6,9 @@ import { TenantOrganizationBaseEntity } from '@gauzy/core';
 import { HelpCenter, HelpCenterAuthor } from './../entities';
 
 @Entity('knowledge_base_article')
-export class HelpCenterArticle
-	extends TenantOrganizationBaseEntity
+export class HelpCenterArticle extends TenantOrganizationBaseEntity
 	implements IHelpCenterArticle {
+
 	@ApiProperty({ type: () => String })
 	@Column()
 	name: string;
@@ -34,10 +34,10 @@ export class HelpCenterArticle
 	index: number;
 
 	/*
-    |--------------------------------------------------------------------------
-    | @ManyToOne 
-    |--------------------------------------------------------------------------
-    */
+	|--------------------------------------------------------------------------
+	| @ManyToOne
+	|--------------------------------------------------------------------------
+	*/
 	@ManyToOne(() => HelpCenter, (center) => center.articles, {
 		onDelete: 'CASCADE'
 	})
@@ -51,10 +51,10 @@ export class HelpCenterArticle
 	categoryId: string;
 
 	/*
-    |--------------------------------------------------------------------------
-    | @OneToMany 
-    |--------------------------------------------------------------------------
-    */
+	|--------------------------------------------------------------------------
+	| @OneToMany
+	|--------------------------------------------------------------------------
+	*/
 	@OneToMany(() => HelpCenterAuthor, (author) => author.article, {
 		cascade: true
 	})

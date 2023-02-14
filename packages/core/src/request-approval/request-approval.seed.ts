@@ -1,5 +1,5 @@
 import { DataSource } from 'typeorm';
-import { faker } from '@ever-co/faker';
+import { faker } from '@faker-js/faker';
 import { IEmployee, IOrganization, ITenant } from '@gauzy/contracts';
 import { RequestApproval } from './request-approval.entity';
 import { RequestApprovalEmployee } from '../request-approval-employee/request-approval-employee.entity';
@@ -37,24 +37,24 @@ export const createRandomRequestApproval = async (
 		for await (const organization of organizations) {
 			const employees = organizationEmployeesMap.get(organization);
 			const policies: ApprovalPolicy[] = await dataSource.manager.find(ApprovalPolicy, {
-					where: {
-						tenantId,
-						organizationId: organization.id
-					}
+				where: {
+					tenantId,
+					organizationId: organization.id
 				}
+			}
 			);
 			for (let i = 0; i < noOfRequestsPerOrganizations; i++) {
-				const tenantPolicy = faker.random.arrayElement(policies);
+				const tenantPolicy = faker.helpers.arrayElement(policies);
 				const specificEmployees = employees
 					.sort(() => Math.random() - Math.random())
 					.slice(0, 3);
 
 				const requestApproval = new RequestApproval();
-				requestApproval.name = faker.random.arrayElement(approvalTypes);
-				requestApproval.status = faker.datatype.number({ min: 1, max: 3 });
+				requestApproval.name = faker.helpers.arrayElement(approvalTypes);
+				requestApproval.status = faker.number.int({ min: 1, max: 3 });
 				requestApproval.approvalPolicy = tenantPolicy;
-				requestApproval.min_count = faker.datatype.number({ min: 1, max: 56 });
-				requestApproval.createdBy = faker.random.arrayElement(specificEmployees).id;
+				requestApproval.min_count = faker.number.int({ min: 1, max: 56 });
+				requestApproval.createdBy = faker.helpers.arrayElement(specificEmployees).id;
 
 				const requestApprovalEmployees: RequestApprovalEmployee[] = [];
 				for await (const employee of specificEmployees) {

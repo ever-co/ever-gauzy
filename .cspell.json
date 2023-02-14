@@ -216,7 +216,13 @@
         "echarts",
         "roboto",
         "fontface",
-        "gauzydesktop"
+        "gauzydesktop",
+        "latlng",
+        "Flickr",
+        "KPIS",
+        "Freemont",
+        "keyresults",
+        "signups"
     ],
     "useGitignore": true,
     "ignorePaths": [
@@ -243,6 +249,7 @@
         "package-lock.json",
         "yarn.lock",
         "**/assets/i18n/*.json",
-        "**/migrations/**"
+        "**/migrations/**",
+        "packages/**/*.seed.json"
     ]
 }

@@ -22,7 +22,7 @@
 				</div>
 			</div>
 			<ng-template [ngIfElse]="classic" [ngIf]="!isClassic">
-				<div class="col-9">
+				<div class="col-8">
 					<div *ngIf="!member?.tasks?.length" class="col-6">&#8212;</div>
 					<div *ngFor="let task of member?.tasks" class="row">
 						<div class="col-6">
@@ -42,7 +42,7 @@
 										size="tiny"
 									></nb-progress-bar>
 								</div>
-								<div class="col-3 text-right">
+								<div class="col-3">
 									<ng-template [ngIf]="task?.estimate">
 										{{ task?.estimate | durationFormat }}
 									</ng-template>
@@ -50,6 +50,12 @@
 							</div>
 						</div>
 					</div>
+				</div>
+				<div class="col-1">
+					<nb-badge
+						[status]="progressStatus(member?.activity || 0)"
+						[text]="(member?.activity || 0) + '%'"
+					></nb-badge>
 				</div>
 			</ng-template>
 		</div>
@@ -59,7 +65,7 @@
 <ng-template #classic>
 	<div class="col-7">
 		<div class="row align-items-center">
-			<div class="col-8">
+			<div class="col-7">
 				<nb-progress-bar
 					[displayValue]="false"
 					[status]="progressStatus(calculatePercentage(member?.todayWorkDuration, member?.workPeriod))"
@@ -69,8 +75,14 @@
 				>
 				</nb-progress-bar>
 			</div>
-			<div class="col-4 text-right">
+			<div class="col-3 text-right">
 				{{member?.todayWorkDuration > 0 ? humanize(member?.todayWorkDuration) : ('ORGANIZATIONS_PAGE.NOT_WORKED'|translate)}}
+			</div>
+			<div class="col-1">
+				<nb-badge
+					[status]="progressStatus(member?.activity || 0)"
+					[text]="(member?.activity || 0) + '%'"
+				></nb-badge>
 			</div>
 		</div>
 	</div>

@@ -48,7 +48,6 @@ export class ProviderFactory implements IDatabaseProvider {
 
 	private get _dialect(): string {
 		const cfg = LocalStore.getApplicationConfig().config;
-		console.log('Config', cfg);
 		return cfg && cfg.db ? cfg.db : '';
 	}
 

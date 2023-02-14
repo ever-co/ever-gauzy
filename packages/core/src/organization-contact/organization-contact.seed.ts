@@ -1,5 +1,5 @@
 import { DataSource } from 'typeorm';
-import { faker } from '@ever-co/faker';
+import { faker } from '@faker-js/faker';
 import {
 	ContactOrganizationInviteStatus,
 	ContactType,
@@ -53,7 +53,7 @@ const createOrganizationContact = async (
 		},
 		relations: ['employees']
 	});
-	const allCrganizationContacts: IOrganizationContact[] = [];
+	const allOrganizationContacts: IOrganizationContact[] = [];
 	for await (const organization of organizations) {
 		const { id: organizationId } = organization;
 		const { employees } = organization;
@@ -77,9 +77,9 @@ const createOrganizationContact = async (
 			organization,
 			employees
 		);
-		allCrganizationContacts.push(...organizationContacts);
+		allOrganizationContacts.push(...organizationContacts);
 	}
-	return allCrganizationContacts;
+	return allOrganizationContacts;
 }
 
 const generateOrganizationContact = async (
@@ -94,26 +94,26 @@ const generateOrganizationContact = async (
 	orgContact.organization = organization;
 	orgContact.tenant = tenant;
 	orgContact.contact = contact;
-	orgContact.contactType = faker.random.arrayElement(Object.values(ContactType));
-	orgContact.budgetType = faker.random.arrayElement(
+	orgContact.contactType = faker.helpers.arrayElement(Object.values(ContactType));
+	orgContact.budgetType = faker.helpers.arrayElement(
 		Object.values(OrganizationContactBudgetTypeEnum)
 	);
 	orgContact.budget =
 		orgContact.budgetType == OrganizationContactBudgetTypeEnum.COST
-			? faker.datatype.number({ min: 500, max: 5000 })
-			: faker.datatype.number({ min: 40, max: 400 });
+			? faker.number.int({ min: 500, max: 5000 })
+			: faker.number.int({ min: 40, max: 400 });
 
 	const email = faker.internet.exampleEmail(contact.firstName, contact.lastName);
 	orgContact.emailAddresses = [email];
-	orgContact.inviteStatus = faker.random.arrayElement(Object.values(ContactOrganizationInviteStatus));
+	orgContact.inviteStatus = faker.helpers.arrayElement(Object.values(ContactOrganizationInviteStatus));
 
-	const phone = faker.phone.phoneNumber();
+	const phone = faker.phone.number();
 	orgContact.primaryEmail = email;
 	orgContact.primaryPhone = phone;
-	orgContact.imageUrl = getDummyImage(330, 300, (orgContact.name || faker.name.firstName()).charAt(0).toUpperCase());
+	orgContact.imageUrl = getDummyImage(330, 300, (orgContact.name || faker.person.firstName()).charAt(0).toUpperCase());
 	orgContact.tags = _.chain(tags)
 		.shuffle()
-		.take(faker.datatype.number({ min: 1, max: 2 }))
+		.take(faker.number.int({ min: 1, max: 2 }))
 		.values()
 		.value();
 	return orgContact;
@@ -138,7 +138,7 @@ export const assignOrganizationContactToEmployee = async (
 	for await (const employee of employees) {
 		employee.organizationContacts = _.chain(organizationContacts)
 			.shuffle()
-			.take(faker.datatype.number({ min: 2, max: 4 }))
+			.take(faker.number.int({ min: 2, max: 4 }))
 			.unique()
 			.values()
 			.value();

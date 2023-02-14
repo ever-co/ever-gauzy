@@ -18,18 +18,21 @@ log.catchErrors({
 				message: error.message,
 				detail: error.stack,
 				type: 'error',
-				buttons: ['Ignore', 'Report', 'Exit']
+				buttons: ['Ignore', 'Report', 'Exit'],
 			})
 			.then((result) => {
 				if (result.response === 1) {
-					submitIssue('https://github.com/ever-co/ever-gauzy-desktop/issues/new', {
-						title: `Automatic error report for Desktop App ${versions.app}`,
-						body:
-							'Error:\n```' +
-							error.stack +
-							'\n```\n' +
-							`OS: ${versions.os}`
-					});
+					submitIssue(
+						'https://github.com/ever-co/ever-gauzy-desktop/issues/new',
+						{
+							title: `Automatic error report for Desktop App ${versions.app}`,
+							body:
+								'Error:\n```' +
+								error.stack +
+								'\n```\n' +
+								`OS: ${versions.os}`,
+						}
+					);
 					return;
 				}
 
@@ -37,7 +40,7 @@ log.catchErrors({
 					app.quit();
 				}
 			});
-	}
+	},
 });
 
 import * as path from 'path';
@@ -71,7 +74,7 @@ import {
 	createTimeTrackerWindow,
 	createSettingsWindow,
 	createUpdaterWindow,
-	createImageViewerWindow
+	createImageViewerWindow,
 } from '@gauzy/desktop-window';
 import { fork } from 'child_process';
 import { autoUpdater } from 'electron-updater';
@@ -90,7 +93,7 @@ log.info(`Sqlite DB path: ${sqlite3filename}`);
 const knex = require('knex')({
 	client: 'sqlite3',
 	connection: {
-		filename: sqlite3filename
+		filename: sqlite3filename,
 	},
 	pool: {
 		min: 2,
@@ -99,9 +102,9 @@ const knex = require('knex')({
 		acquireTimeoutMillis: 60 * 1000 * 2,
 		idleTimeoutMillis: 30000,
 		reapIntervalMillis: 1000,
-		createRetryIntervalMillis: 100
+		createRetryIntervalMillis: 100,
 	},
-	useNullAsDefault: true
+	useNullAsDefault: true,
 });
 
 const exeName = path.basename(process.execPath);
@@ -121,22 +124,18 @@ let settingsWindow: BrowserWindow = null;
 let updaterWindow: BrowserWindow = null;
 let imageView: BrowserWindow = null;
 
-console.log(
-	'App UI Render Path:',
-	path.join(__dirname, './index.html')
-);
+console.log('App UI Render Path:', path.join(__dirname, './index.html'));
 
 const pathWindow = {
 	gauzyWindow: path.join(__dirname, './index.html'),
 	timeTrackerUi: path.join(__dirname, './ui/index.html'),
-	screenshotWindow: path.join(__dirname, './ui/index.html')
+	screenshotWindow: path.join(__dirname, './ui/index.html'),
 };
 
 const updater = new DesktopUpdater({
 	repository: 'ever-gauzy-desktop',
 	owner: 'ever-co',
-	typeRelease: 'releases'
-
+	typeRelease: 'releases',
 });
 
 let tray = null;
@@ -147,8 +146,8 @@ let serverDesktop = null;
 let dialogErr = false;
 
 LocalStore.setFilePath({
-	iconPath: path.join(__dirname, 'icons', 'icon.png')
-})
+	iconPath: path.join(__dirname, 'icons', 'icon.png'),
+});
 
 // Instance detection
 const gotTheLock = app.requestSingleInstanceLock();
@@ -162,15 +161,20 @@ if (!gotTheLock) {
 			if (gauzyWindow.isMinimized()) gauzyWindow.restore();
 			gauzyWindow.focus();
 			dialog.showMessageBoxSync(gauzyWindow, {
-				type: "warning",
-				title: "Gauzy",
-				message: "You already have a running instance"
+				type: 'warning',
+				title: 'Gauzy',
+				message: 'You already have a running instance',
 			});
 		}
 	});
 }
 
- function startServer(value, restart = false) {
+/* Setting the app user model id for the app. */
+if (process.platform === 'win32') {
+	app.setAppUserModelId('com.ever.gauzydesktop');
+}
+
+function startServer(value, restart = false) {
 	process.env.IS_ELECTRON = 'true';
 	if (value.db === 'sqlite') {
 		process.env.DB_PATH = sqlite3filename;
@@ -192,13 +196,13 @@ if (!gotTheLock) {
 		setEnvAdditional();
 		// require(path.join(__dirname, 'api/main.js'));
 		serverGauzy = fork(path.join(__dirname, './api/main.js'), {
-			silent: true
+			silent: true,
 		});
 		serverGauzy.stdout.on('data', (data) => {
 			const msgData = data.toString();
 			console.log('log -- ', msgData);
 			setupWindow.webContents.send('setup-progress', {
-				msg: msgData
+				msg: msgData,
 			});
 			if (!value.isSetup && !value.serverConfigConnected) {
 				if (msgData.indexOf('Listening at http') > -1) {
@@ -231,11 +235,11 @@ if (!gotTheLock) {
 	try {
 		const config: any = {
 			...value,
-			isSetup: true
+			isSetup: true,
 		};
 		const aw = {
 			host: value.awHost,
-			isAw: value.aw
+			isAw: value.aw,
 		};
 		store.set({
 			configs: config,
@@ -244,8 +248,8 @@ if (!gotTheLock) {
 				taskId: null,
 				note: null,
 				aw,
-				organizationContactId: null
-			}
+				organizationContactId: null,
+			},
 		});
 	} catch (error) {}
 
@@ -273,12 +277,7 @@ if (!gotTheLock) {
 		settingsWindow,
 		{ ...environment },
 		pathWindow,
-		path.join(
-			__dirname,
-			'assets',
-			'icons',
-			'icon_16x16.png'
-		),
+		path.join(__dirname, 'assets', 'icons', 'icon_16x16.png'),
 		gauzyWindow
 	);
 
@@ -287,7 +286,7 @@ if (!gotTheLock) {
 		if (!isAlreadyRun && value && !restart) {
 			onWaitingServer = true;
 			setupWindow.webContents.send('server_ping', {
-				host: getApiBaseUrl(value)
+				host: getApiBaseUrl(value),
 			});
 		}
 	});
@@ -311,7 +310,7 @@ const dialogMessage = (msg) => {
 		buttons: ['Open Setting', 'Exit'],
 		defaultId: 2,
 		title: 'Warning',
-		message: msg
+		message: msg,
 	};
 
 	dialog.showMessageBox(null, options).then((response) => {
@@ -327,7 +326,10 @@ const dialogMessage = (msg) => {
 				}
 				settingsWindow.show();
 				setTimeout(() => {
-					settingsWindow.webContents.send('app_setting', LocalStore.getApplicationConfig());
+					settingsWindow.webContents.send(
+						'app_setting',
+						LocalStore.getApplicationConfig()
+					);
 				}, 500);
 			}
 		}
@@ -353,8 +355,12 @@ app.on('ready', async () => {
 	const configs: any = store.get('configs');
 	const settings: any = store.get('appSetting');
 	const autoLaunch: boolean =
-		settings && typeof settings.autoLaunch === 'boolean' ? settings.autoLaunch : true;
-	await knex.raw(`pragma journal_mode = WAL;`).then((res) => console.log(res));
+		settings && typeof settings.autoLaunch === 'boolean'
+			? settings.autoLaunch
+			: true;
+	await knex
+		.raw(`pragma journal_mode = WAL;`)
+		.then((res) => console.log(res));
 	await dataModel.createNewTable(knex);
 	launchAtStartup(autoLaunch, false);
 	Menu.setApplicationMenu(
@@ -365,9 +371,9 @@ app.on('ready', async () => {
 					{ role: 'about', label: 'About' },
 					{ type: 'separator' },
 					{ type: 'separator' },
-					{ role: 'quit', label: 'Exit' }
-				]
-			}
+					{ role: 'quit', label: 'Exit' },
+				],
+			},
 		])
 	);
 
@@ -407,13 +413,13 @@ app.on('ready', async () => {
 			setupWindow.show();
 			setTimeout(() => {
 				setupWindow.webContents.send('setup-data', {
-					...configs
+					...configs,
 				});
 			}, 1000);
 		} else {
 			global.variableGlobal = {
 				API_BASE_URL: getApiBaseUrl(configs),
-				IS_INTEGRATED_DESKTOP: configs.isLocalServer
+				IS_INTEGRATED_DESKTOP: configs.isLocalServer,
 			};
 			setupWindow = createSetupWindow(
 				setupWindow,
@@ -434,7 +440,13 @@ app.on('ready', async () => {
 	updater.gauzyWindow = gauzyWindow;
 	updater.checkUpdate();
 	removeMainListener();
-	ipcMainHandler(store, startServer, knex, { ...environment }, timeTrackerWindow);
+	ipcMainHandler(
+		store,
+		startServer,
+		knex,
+		{ ...environment },
+		timeTrackerWindow
+	);
 	gauzyWindow.webContents.setZoomFactor(1.0);
 	gauzyWindow.webContents
 		.setVisualZoomLevelLimits(1, 5)
@@ -453,13 +465,11 @@ ipcMain.on('server_is_ready', () => {
 	const appConfig = LocalStore.getStore('configs');
 	appConfig.serverConfigConnected = true;
 	store.set({
-		configs: appConfig
+		configs: appConfig,
 	});
 	onWaitingServer = false;
 	if (!isAlreadyRun) {
-		serverDesktop = fork(
-			path.join(__dirname, './desktop-api/main.js')
-		);
+		serverDesktop = fork(path.join(__dirname, './desktop-api/main.js'));
 		gauzyWindow.loadURL(gauzyPage(pathWindow.gauzyWindow));
 		removeTimerListener();
 		ipcTimer(
@@ -505,11 +515,11 @@ ipcMain.on('restart_app', (event, arg) => {
 			const configs = LocalStore.getStore('configs');
 			global.variableGlobal = {
 				API_BASE_URL: getApiBaseUrl(configs),
-				IS_INTEGRATED_DESKTOP: configs.isLocalServer
+				IS_INTEGRATED_DESKTOP: configs.isLocalServer,
 			};
 			startServer(configs, tray ? true : false);
 			setupWindow.webContents.send('server_ping_restart', {
-				host: getApiBaseUrl(configs)
+				host: getApiBaseUrl(configs),
 			});
 		}
 	}, 100);
@@ -517,7 +527,7 @@ ipcMain.on('restart_app', (event, arg) => {
 
 ipcMain.on('save_additional_setting', (event, arg) => {
 	LocalStore.updateAdditionalSetting(arg);
-})
+});
 
 ipcMain.on('server_already_start', () => {
 	if (!gauzyWindow && !isAlreadyRun) {
@@ -556,15 +566,15 @@ ipcMain.on('check_database_connection', async (event, arg) => {
 				user: arg.dbUsername,
 				password: arg.dbPassword,
 				database: arg.dbName,
-				port: arg.dbPort
-			}
+				port: arg.dbPort,
+			},
 		};
 	} else {
 		databaseOptions = {
 			client: 'sqlite',
 			connection: {
-				filename: sqlite3filename
-			}
+				filename: sqlite3filename,
+			},
 		};
 	}
 	const dbConn = require('knex')(databaseOptions);
@@ -575,12 +585,12 @@ ipcMain.on('check_database_connection', async (event, arg) => {
 			message:
 				arg.db === 'postgres'
 					? 'Connection to PostgreSQL DB Succeeds'
-					: 'Connection to SQLITE DB Succeeds'
+					: 'Connection to SQLITE DB Succeeds',
 		});
 	} catch (error) {
 		event.sender.send('database_status', {
 			status: false,
-			message: error.message
+			message: error.message,
 		});
 	}
 });
@@ -617,14 +627,14 @@ app.on('before-quit', (e) => {
 		e.preventDefault();
 		setTimeout(() => {
 			timeTrackerWindow.webContents.send('stop_from_tray', {
-				quitApp: true
+				quitApp: true,
 			});
 		}, 1000);
 	} else {
 		// soft download cancellation
 		try {
 			updater.cancel();
-		} catch (e) { }
+		} catch (e) {}
 		app.exit(0);
 		if (serverDesktop) serverDesktop.kill();
 		if (serverGauzy) serverGauzy.kill();
@@ -644,7 +654,7 @@ function launchAtStartup(autoLaunch, hidden) {
 		case 'darwin':
 			app.setLoginItemSettings({
 				openAtLogin: autoLaunch,
-				openAsHidden: hidden
+				openAsHidden: hidden,
 			});
 			break;
 		case 'win32':
@@ -657,15 +667,19 @@ function launchAtStartup(autoLaunch, hidden) {
 							'--processStart',
 							`"${exeName}"`,
 							'--process-start-args',
-							`"--hidden"`
+							`"--hidden"`,
 					  ]
-					: ['--processStart', `"${exeName}"`, '--process-start-args']
+					: [
+							'--processStart',
+							`"${exeName}"`,
+							'--process-start-args',
+					  ],
 			});
 			break;
 		case 'linux':
 			app.setLoginItemSettings({
 				openAtLogin: autoLaunch,
-				openAsHidden: hidden
+				openAsHidden: hidden,
 			});
 			break;
 		default:

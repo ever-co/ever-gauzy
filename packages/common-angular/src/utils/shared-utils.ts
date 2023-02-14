@@ -172,12 +172,12 @@ export function ucFirst(str: string, force: boolean): string {
 	});
 }
 
-export function toLocal(data: string | Date | moment.Moment): moment.Moment {
-	return moment.utc(data).local();
+export function toLocal(date: string | Date | moment.Moment): moment.Moment {
+	return moment.utc(date).local();
 }
 
-export function toUTC(data: string | Date | moment.Moment): moment.Moment {
-	return moment(data).utc();
+export function toUTC(date: string | Date | moment.Moment): moment.Moment {
+	return moment(date).utc();
 }
 
 export function distinctUntilChange<T>() {
@@ -293,12 +293,12 @@ export function employeeMapper(row: any) {
  * console.log(addTrailingSlashIfMissing('pages/home'));
  *
  */
- export function addTrailingSlash(str: string) {
+export function addTrailingSlash(str: string) {
 	if (!str) {
 		return;
 	}
-	const slashChar = str.startsWith('/') ? '': '/';
-    return slashChar + str;
+	const slashChar = str.startsWith('/') ? '' : '/';
+	return slashChar + str;
 }
 
 /**
@@ -321,7 +321,7 @@ export function removeTrailingSlash(str: string) {
  * @param url
  * @returns
  */
-export function __prepareExternalUrlLocation (url: string) {
+export function __prepareExternalUrlLocation(url: string) {
 	return [
 		removeTrailingSlash(location.origin),
 		addTrailingSlash(url)

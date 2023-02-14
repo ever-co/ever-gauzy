@@ -1,7 +1,7 @@
 import { DataSource } from 'typeorm';
 import { Tenant } from '../tenant/tenant.entity';
 import { ICandidate } from '@gauzy/contracts';
-import { faker } from '@ever-co/faker';
+import { faker } from '@faker-js/faker';
 import { CandidateExperience } from './candidate-experience.entity';
 import { Organization } from '../organization/organization.entity';
 
@@ -31,16 +31,16 @@ export const createRandomCandidateExperience = async (
 				let getExperience =
 					(faker.date.past().getDate() -
 						faker.date.past().getDate()) /
-						30 +
+					30 +
 					faker.date.past().getMonth() -
 					faker.date.past().getMonth() +
 					12 *
-						(faker.date.past().getFullYear() -
-							faker.date.past().getFullYear());
+					(faker.date.past().getFullYear() -
+						faker.date.past().getFullYear());
 				getExperience = Number(getExperience.toFixed(2));
 				const val = Math.abs(getExperience);
-				candidateExperience.occupation = faker.name.jobArea();
-				candidateExperience.organization = faker.random.arrayElement(
+				candidateExperience.occupation = faker.person.jobArea();
+				candidateExperience.organization = faker.helpers.arrayElement(
 					organizations
 				);
 				candidateExperience.duration =

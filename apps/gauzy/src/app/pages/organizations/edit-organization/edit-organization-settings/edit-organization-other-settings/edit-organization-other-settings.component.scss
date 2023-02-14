@@ -5,7 +5,7 @@
     height: 100%;
 }
 
-// !importants exclusively for overriding Bootstrap and Nebular styles, which cannot be touched otherwise.
+// !important exclusively for overriding Bootstrap and Nebular styles, which cannot be touched otherwise.
 
 // main sections
 :host .main-form {
@@ -116,8 +116,8 @@ nb-accordion {
         padding-right: 15px;
     }
 
-    //separate accordion styles for each one because of input fields colors, layouts, etc.
-    //some medua queries here,... too much useless nesting otherwise
+    // separate accordion styles for each one because of input fields colors, layouts, etc.
+    // some media queries here,... too much useless nesting otherwise
     nb-accordion-item {
         border-radius: 0.5rem;
         margin-bottom: 20px;

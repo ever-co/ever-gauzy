@@ -853,8 +853,12 @@ export class SeedDataService {
 
 		// TODO: needs to fix error of seeding Product Category
 		await this.tryExecute(
-			'Default Categories',
-			createCategories(this.dataSource, this.tenant, this.organizations)
+			'Default Product Categories',
+			createCategories(
+				this.dataSource,
+				this.tenant,
+				this.organizations
+			)
 		);
 
 		await this.tryExecute(

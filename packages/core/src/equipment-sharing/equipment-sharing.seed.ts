@@ -1,5 +1,5 @@
 import { DataSource } from 'typeorm';
-import { faker } from '@ever-co/faker';
+import { faker } from '@faker-js/faker';
 import { addDays } from 'date-fns';
 import { IEmployee, IEquipmentSharing, IOrganization, ITenant } from '@gauzy/contracts';
 import { EquipmentSharing } from './equipment-sharing.entity';
@@ -23,16 +23,16 @@ export const createDefaultEquipmentSharing = async (
 	for (let i = 0; i < noOfEquipmentSharingPerTenant; i++) {
 		for await (const equipment of equipments) {
 			const sharing = new EquipmentSharing();
-			sharing.name = faker.company.companyName();
+			sharing.name = faker.company.name();
 			sharing.equipment = equipment;
-			sharing.shareRequestDay = faker.date.recent(30);
-			sharing.shareStartDay = faker.date.future(0.5);
+			sharing.shareRequestDay = faker.date.recent({ days: 30 });
+			sharing.shareStartDay = faker.date.future({ years: 0.5 });
 			sharing.shareEndDay = addDays(
 				sharing.shareStartDay,
-				faker.datatype.number(15)
+				faker.number.int(15)
 			);
-			sharing.status = faker.datatype.number({ min: 1, max: 3 });
-			sharing.employees = [faker.random.arrayElement(defaultEmployees)];
+			sharing.status = faker.number.int({ min: 1, max: 3 });
+			sharing.employees = [faker.helpers.arrayElement(defaultEmployees)];
 			sharing.organization = organization;
 			sharing.tenant = tenant;
 
@@ -67,16 +67,16 @@ export const createRandomEquipmentSharing = async (
 				for await (const equipment of equipments) {
 
 					const sharing = new EquipmentSharing();
-					sharing.name = faker.company.companyName();
+					sharing.name = faker.company.name();
 					sharing.equipment = equipment;
-					sharing.shareRequestDay = faker.date.recent(30);
-					sharing.shareStartDay = faker.date.future(0.5);
+					sharing.shareRequestDay = faker.date.recent({ days: 30 });
+					sharing.shareStartDay = faker.date.future({ years: 0.5 });
 					sharing.shareEndDay = addDays(
 						sharing.shareStartDay,
-						faker.datatype.number(15)
+						faker.number.int(15)
 					);
-					sharing.status = faker.datatype.number({ min: 1, max: 3 });
-					sharing.employees = [faker.random.arrayElement(employees)];
+					sharing.status = faker.number.int({ min: 1, max: 3 });
+					sharing.employees = [faker.helpers.arrayElement(employees)];
 					sharing.organization = organization;
 					sharing.tenant = tenant;
 

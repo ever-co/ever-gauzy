@@ -1,5 +1,5 @@
 import { DataSource } from 'typeorm';
-import { faker } from '@ever-co/faker';
+import { faker } from '@faker-js/faker';
 import { IOrganization, ITenant } from '@gauzy/contracts';
 import { environment as env } from '@gauzy/config';
 import { DEFAULT_RANDOM_EQUIPMENTS } from './default-equipments';
@@ -24,7 +24,7 @@ export const createDefaultEquipments = async (
 	equipment.initialCost = 40000;
 	equipment.currency = env.defaultCurrency;
 	equipment.maxSharePeriod = 7;
-	equipment.tags = [faker.random.arrayElement(tags)];
+	equipment.tags = [faker.helpers.arrayElement(tags)];
 	equipment.tenant = tenant;
 	equipment.organization = organization;
 	equipment.autoApproveShare = true;
@@ -59,26 +59,26 @@ export const createRandomEquipments = async (
 		});
 		for (let i = 0; i < noOfEquipmentsPerTenant; i++) {
 			const equipment = new Equipment();
-			const randomElement = faker.random.arrayElement(
+			const randomElement = faker.helpers.arrayElement(
 				DEFAULT_RANDOM_EQUIPMENTS
 			);
 			equipment.type = randomElement.key;
-			equipment.name = faker.random.arrayElement(randomElement.value);
-			equipment.serialNumber = faker.datatype.uuid();
-			equipment.manufacturedYear = faker.datatype.number({
+			equipment.name = faker.helpers.arrayElement(randomElement.value);
+			equipment.serialNumber = faker.string.uuid();
+			equipment.manufacturedYear = faker.number.int({
 				min: 2000,
 				max: 2020
 			});
-			equipment.initialCost = faker.datatype.number({
+			equipment.initialCost = faker.number.int({
 				min: 10000,
 				max: 50000
 			});
 
 			equipment.currency = env.defaultCurrency;
-			equipment.maxSharePeriod = faker.datatype.number({ min: 1, max: 15 });
-			equipment.tags = [faker.random.arrayElement(tags)];
+			equipment.maxSharePeriod = faker.number.int({ min: 1, max: 15 });
+			equipment.tags = [faker.helpers.arrayElement(tags)];
 			equipment.tenant = tenant;
-			(equipment.organization = faker.random.arrayElement(organizations)),
+			(equipment.organization = faker.helpers.arrayElement(organizations)),
 				(equipment.autoApproveShare = faker.datatype.boolean());
 			equipments.push(equipment);
 		}

@@ -13,6 +13,10 @@ export class Timer implements TimerTO, Serializable<TimerTO> {
 	private _timeslotId: string;
 	private _stoppedAt: Date;
 	private _startedAt: Date;
+	private _synced: boolean;
+	private _isStartedOffline: boolean;
+	private _isStoppedOffline: boolean;
+	private _version: string;
 
 	constructor(timer: TimerTO) {
 		this._id = timer.id;
@@ -26,6 +30,31 @@ export class Timer implements TimerTO, Serializable<TimerTO> {
 		this._timeslotId = timer.timeslotId;
 		this._stoppedAt = timer.stoppedAt;
 		this._startedAt = timer.startedAt;
+		this._synced = timer.synced;
+		this._isStartedOffline = timer.isStartedOffline;
+		this._isStoppedOffline = timer.isStoppedOffline;
+		this._version = timer.version;
+	}
+
+	public get isStoppedOffline(): boolean {
+		return this._isStoppedOffline;
+	}
+	public set isStoppedOffline(value: boolean) {
+		this._isStoppedOffline = value;
+	}
+
+	public get isStartedOffline(): boolean {
+		return this._isStartedOffline;
+	}
+	public set isStartedOffline(value: boolean) {
+		this._isStartedOffline = value;
+	}
+
+	public get synced(): boolean {
+		return this._synced;
+	}
+	public set synced(value: boolean) {
+		this._synced = value;
 	}
 
 	public get startedAt(): Date {
@@ -98,18 +127,29 @@ export class Timer implements TimerTO, Serializable<TimerTO> {
 		this._timeslotId = value;
 	}
 
+	public get version(): string {
+		return this._version;
+	}
+	public set version(value: string) {
+		this._version = value;
+	}
+
 	public toObject(): TimerTO {
 		return {
 			day: this._day,
 			duration: this._duration,
 			employeeId: this._employeeId,
 			projectId: this._projectId,
+			startedAt: this._startedAt,
+			stoppedAt: this._stoppedAt,
+			synced: this._synced,
 			taskId: this._taskId,
 			timelogId: this._timelogId,
 			timesheetId: this._timesheetId,
 			timeslotId: this._timeslotId,
-			startedAt: this._startedAt,
-			stoppedAt: this._stoppedAt,
+			isStartedOffline: this._isStartedOffline,
+			isStoppedOffline: this._isStoppedOffline,
+			version: this._version
 		};
 	}
 }

@@ -51,6 +51,7 @@ import { CurrencyModule } from '../../../../@shared/currency/currency.module';
 import { LocationFormModule } from '../../../../@shared/forms/location';
 import { LeafletMapModule } from '../../../../@shared/forms/maps/leaflet/leaflet.module';
 import { TranslateModule } from '../../../../@shared/translate/translate.module';
+import { TimeZoneSelectorModule } from 'apps/gauzy/src/app/@shared/selectors';
 
 @NgModule({
 	imports: [
@@ -93,6 +94,7 @@ import { TranslateModule } from '../../../../@shared/translate/translate.module'
 		LocationFormModule,
 		LeafletMapModule,
 		NbAccordionModule,
+		TimeZoneSelectorModule
 	],
 	providers: [
 		OrganizationDepartmentsService,

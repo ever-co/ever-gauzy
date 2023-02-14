@@ -2721,10 +2721,10 @@
   resolved "https://registry.yarnpkg.com/@esbuild/linux-loong64/-/linux-loong64-0.15.13.tgz#64e8825bf0ce769dac94ee39d92ebe6272020dfc"
   integrity sha512-+BoyIm4I8uJmH/QDIH0fu7MG0AEx9OXEDXnqptXCwKOlOqZiS4iraH1Nr7/ObLMokW3sOCeBNyD68ATcV9b9Ag==
 
-"@ever-co/faker@^6.0.0-alpha.5":
-  version "6.0.0-alpha.5"
-  resolved "https://registry.yarnpkg.com/@ever-co/faker/-/faker-6.0.0-alpha.5.tgz#76f2f4bbd189f9c699eaa870336ab2d31a3bb181"
-  integrity sha512-hzhX8SfKZT9Bd94Y+A77JHKX0ynEVes/efnUEgt+ywOQa0C+9tJfsuWpXe1W8Rax5Il6kUd4ZvGHC0K8eymkiQ==
+"@faker-js/faker@8.0.0-alpha.0":
+  version "8.0.0-alpha.0"
+  resolved "https://registry.yarnpkg.com/@faker-js/faker/-/faker-8.0.0-alpha.0.tgz#4df0010d728d2fd5ffa47c2d30e73cdd6fcd5ca5"
+  integrity sha512-w/1f2Q95azPcDlQU+cPoWm5uS7wrUWWlfXIaQYFPO5MRnNJJfjd6E1oR2emzl22pS/Y8iRmODI5645xTwQkYyg==
 
 "@fastify/accepts@^3.0.0":
   version "3.0.0"
@@ -11008,7 +11008,7 @@ commander@^8.0.0:
   resolved "https://registry.yarnpkg.com/commander/-/commander-8.3.0.tgz#4837ea1b2da67b9c616a67afbb0fafee567bca66"
   integrity sha512-OkTL9umf+He2DZkUq8f8J9of7yL6RJKI24dVITBmNfZBmri9zYZQrKkuXiKhyfPSu8tUhnVBB1iKXevvnlR4Ww==
 
-commander@^9.0.0, commander@^9.1.0:
+commander@^9.0.0:
   version "9.4.1"
   resolved "https://registry.yarnpkg.com/commander/-/commander-9.4.1.tgz#d1dd8f2ce6faf93147295c0df13c7c21141cfbdd"
   integrity sha512-5EEkTNyHNGFPD2H+c/dXXfQZYa/scCKasxWcXJaWnNJ99pnQN9Vnmqow+p+PlFPE63Q6mThaZws1T+HxfpgtPw==
@@ -12994,6 +12994,11 @@ dayjs@^1.10.4, dayjs@^1.10.6:
   version "1.11.6"
   resolved "https://registry.yarnpkg.com/dayjs/-/dayjs-1.11.6.tgz#2e79a226314ec3ec904e3ee1dd5a4f5e5b1c7afb"
   integrity sha512-zZbY5giJAinCG+7AGaw0wIhNZ6J8AhWuSXKvuc1KAyMiRsvGQWqh4L+MomvhdAYjN+lqvVCMq1I41e3YHvXkyQ==
+
+dayjs@^1.11.5:
+  version "1.11.7"
+  resolved "https://registry.yarnpkg.com/dayjs/-/dayjs-1.11.7.tgz#4b296922642f70999544d1144a2c25730fce63e2"
+  integrity sha512-+Yw9U6YO5TQohxLcIkrXBeY73WP3ejHWVvx8XCk3gxvQDCTEmS48ZrSZCKciI7Bhl/uCMyxYtE9UqRILmFphkQ==
 
 dayjs@~1.8.24, dayjs@~1.8.25:
   version "1.8.36"
@@ -23832,10 +23837,17 @@ moment-range@^4.0.2:
   dependencies:
     es6-symbol "^3.1.0"
 
-moment-timezone@^0.5.31, moment-timezone@^0.5.32, moment-timezone@^0.5.37, moment-timezone@^0.5.x:
+moment-timezone@^0.5.31, moment-timezone@^0.5.32, moment-timezone@^0.5.x:
   version "0.5.38"
   resolved "https://registry.yarnpkg.com/moment-timezone/-/moment-timezone-0.5.38.tgz#9674a5397b8be7c13de820fd387d8afa0f725aad"
   integrity sha512-nMIrzGah4+oYZPflDvLZUgoVUO4fvAqHstvG3xAUnMolWncuAiLDWNnJZj6EwJGMGfb1ZcuTFE6GI3hNOVWI/Q==
+  dependencies:
+    moment ">= 2.9.0"
+
+moment-timezone@^0.5.40:
+  version "0.5.40"
+  resolved "https://registry.yarnpkg.com/moment-timezone/-/moment-timezone-0.5.40.tgz#c148f5149fd91dd3e29bf481abc8830ecba16b89"
+  integrity sha512-tWfmNkRYmBkPJz5mr9GVDn9vRlVZOTe6yqY92rFxiOdWXbjaR0+9LwQnZGGuNR63X456NqmEkbskte8tWL5ePg==
   dependencies:
     moment ">= 2.9.0"
 
@@ -24325,12 +24337,12 @@ ngx-countdown@^13.0.0:
   dependencies:
     tslib "^2.3.0"
 
-ngx-daterangepicker-material@^5.0.2:
-  version "5.0.2"
-  resolved "https://registry.yarnpkg.com/ngx-daterangepicker-material/-/ngx-daterangepicker-material-5.0.2.tgz#e3869dfc0aa1387616a35b1b67fa56ecae23b319"
-  integrity sha512-1NV47l5kzvSxwZpMv91hAbTXuvysgCocQeRhsdkk67szeCTgzdXMof3s+jW5uhRiN1+a7NI8X0mHFv8trBjceg==
+ngx-daterangepicker-material@^6.0.4:
+  version "6.0.4"
+  resolved "https://registry.yarnpkg.com/ngx-daterangepicker-material/-/ngx-daterangepicker-material-6.0.4.tgz#4e2432698ded28021a5fc0b0025dd1e0a3a13412"
+  integrity sha512-IrAQqiwKJEaKY7xTeRP4rMO+NIjTSYWjulIG4B8XT8cD12G9YH8bOXUtmEdbSr3FU9zHGEpIFdL2dlFlKGoWTQ==
   dependencies:
-    dayjs "^1.10.4"
+    dayjs "^1.11.5"
     tslib "^2.0.0"
 
 ngx-draggable-dom@2.4.6:

@@ -41,17 +41,15 @@
 }
 
 .legend {
-	position: relative;
-	width: fit-content;
-	padding: 0 10px 10px 0;
-	font-weight: 600;
-	height: fit-content;
-	color: var(--gauzy-text-color-2);
-
-	button {
-		border: unset;
-		border-radius: calc(var(--border-radius) / 2);
-	}
+	
+		nb-badge{
+			position: relative;
+			font-size: 14px;
+			font-weight: 600;
+			padding: 2px 4px;
+			border-radius: calc(var(--border-radius) / 2);
+		}
+	  
 }
 
 .widgets-container {

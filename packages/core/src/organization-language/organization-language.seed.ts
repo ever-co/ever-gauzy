@@ -1,6 +1,6 @@
 import { DataSource, In } from 'typeorm';
 import { OrganizationLanguage } from './organization-language.entity';
-import { faker } from '@ever-co/faker';
+import { faker } from '@faker-js/faker';
 import { IOrganization, IOrganizationLanguage, ITenant, LanguagesEnum } from '@gauzy/contracts';
 import { Language } from '../language/language.entity';
 import { DEFAULT_LANGUAGE_LEVEL, DEFAULT_ORGANIZATION_LANGUAGES } from './default-organization-languages';
@@ -45,14 +45,14 @@ export const createRandomOrganizationLanguage = async (
 
 	const mapOrganizationLanguage: IOrganizationLanguage[] = [];
 	const allLanguage = await dataSource.manager.createQueryBuilder(Language, "language")
-	.orderBy("random()")
-	.limit(4)
-	.getMany();
+		.orderBy("random()")
+		.limit(4)
+		.getMany();
 
 	for (const tenant of tenants) {
 		const tenantOrganization = tenantOrganizationsMap.get(tenant);
 		for (const tenantOrg of tenantOrganization) {
-			const language = faker.random.arrayElement(allLanguage);
+			const language = faker.helpers.arrayElement(allLanguage);
 			const organization = new OrganizationLanguage();
 			organization.organization = tenantOrg;
 			organization.tenant = tenant;

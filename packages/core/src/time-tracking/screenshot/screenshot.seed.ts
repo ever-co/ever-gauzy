@@ -1,6 +1,6 @@
 import { readdir, mkdirSync, copyFileSync } from 'fs';
 import * as path from 'path';
-import { faker } from '@ever-co/faker';
+import { faker } from '@faker-js/faker';
 import * as moment from 'moment';
 import { IPluginConfig } from '@gauzy/common';
 import { environment as env } from '@gauzy/config';
@@ -70,8 +70,8 @@ export const createRandomScreenshot = async (
 		index < randomSeedConfig.noOfScreenshotPerTimeSlot;
 		index++
 	) {
-		const sourceFile = faker.random.arrayElement(fileList);
-		const sourceName = 'screenshot-' + moment().unix() + faker.datatype.number(999) + '.png';
+		const sourceFile = faker.helpers.arrayElement(fileList);
+		const sourceName = 'screenshot-' + moment().unix() + faker.number.int(999) + '.png';
 		const destFile = path.join(destDir, sourceName);
 		const sourceFilePath = path.join(dir, sourceFile);
 		const destFilePath = path.join(baseDir, destFile);
@@ -86,7 +86,7 @@ export const createRandomScreenshot = async (
 		screenshot.file = file;
 		screenshot.thumb = file;
 		screenshot.thumbUrl = file;
-		screenshot.recordedAt = faker.date.between(startedAt, stoppedAt);
+		screenshot.recordedAt = faker.date.between({ from: startedAt, to: stoppedAt });
 		screenshot.deletedAt = null;
 		screenshot.storageProvider = FileStorageProviderEnum.LOCAL;
 		screenshots.push(screenshot);

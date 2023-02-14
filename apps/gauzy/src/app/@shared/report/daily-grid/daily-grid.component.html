@@ -183,9 +183,12 @@
 	</ng-template>
 	<ng-template #notFound>
 		<div class="no-data">
-			<ngx-no-data-message
-				[message]="'REPORT_PAGE.NO_DATA.DAILY_TIME_AND_ACTIVITY'"
-			></ngx-no-data-message>	
+			<ngx-no-data-message>
+				<div
+				 	message
+					[innerHTML]="'REPORT_PAGE.NO_DATA.DAILY_TIME_AND_ACTIVITY' | translate"
+				></div>
+			</ngx-no-data-message>
 		</div>
 	</ng-template>
 </div>

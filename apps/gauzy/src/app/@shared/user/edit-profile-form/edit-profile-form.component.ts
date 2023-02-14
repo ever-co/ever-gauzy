@@ -87,7 +87,8 @@ export class EditProfileFormComponent
 			repeatPassword: [],
 			role: [],
 			tags: [],
-			preferredLanguage: []
+			preferredLanguage: [],
+			timeZone: []
 		}, {
 			validators: [
 				MatchValidator.mustMatch(
@@ -205,13 +206,14 @@ export class EditProfileFormComponent
 	}
 
 	async submitForm() {
-		const { email, firstName, lastName, tags, preferredLanguage, password } = this.form.getRawValue();
+		const { email, firstName, lastName, tags, preferredLanguage, password, timeZone } = this.form.getRawValue();
 		let request: IUserUpdateInput = {
 			email,
 			firstName,
 			lastName,
 			tags,
-			preferredLanguage
+			preferredLanguage,
+			timeZone
 		};
 
 		if (password) {
@@ -269,7 +271,8 @@ export class EditProfileFormComponent
 			imageUrl: user.imageUrl,
 			role: user.role,
 			tags: user.tags,
-			preferredLanguage: user.preferredLanguage
+			preferredLanguage: user.preferredLanguage,
+			timeZone: user.timeZone
 		});
 		this.role = user.role;
 	}
