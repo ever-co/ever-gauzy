@@ -107,7 +107,6 @@ export class OrganizationTeamEmployeeService extends TenantAwareCrudService<Orga
 			});
 			return await this.repository.remove(member);
 		} catch (error) {
-			console.log('Error while deleting team member from organization team', error?.message);
 			throw new ForbiddenException();
 		}
 	}

@@ -286,7 +286,7 @@ export class OrganizationTeamService extends TenantAwareCrudService<Organization
 	async deleteTeam(
 		teamId: IOrganizationTeam['id'],
 		options: IBasePerTenantAndOrganizationEntityModel
-	): Promise<DeleteResult | IOrganizationTeam | void> {
+	): Promise<DeleteResult | IOrganizationTeam> {
 		try {
 			const { organizationId } = options;
 			const team = await this.findOneByIdString(teamId, {
@@ -309,7 +309,6 @@ export class OrganizationTeamService extends TenantAwareCrudService<Organization
 			});
 			return await this.repository.remove(team);
 		} catch (error) {
-			console.log('Error while deleting organization team', error?.message);
 			throw new ForbiddenException();
 		}
 	}

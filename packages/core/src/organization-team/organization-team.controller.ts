@@ -223,7 +223,7 @@ export class OrganizationTeamController extends CrudController<OrganizationTeam>
 	async delete(
 		@Param('id', UUIDValidationPipe) teamId: IOrganizationTeam['id'],
 		@Query() options: DeleteQueryDTO<OrganizationTeam>
-	): Promise<DeleteResult | IOrganizationTeam | void> {
+	): Promise<DeleteResult | IOrganizationTeam> {
 		return await this.organizationTeamService.deleteTeam(teamId, options);
 	}
 }
