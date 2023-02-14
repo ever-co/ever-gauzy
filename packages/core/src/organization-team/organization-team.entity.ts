@@ -19,6 +19,8 @@ import {
 	ITask,
 	IUser
 } from '@gauzy/contracts';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { IsBoolean, IsNotEmpty, IsOptional, IsString } from 'class-validator';
 import {
 	EquipmentSharing,
 	Goal,
@@ -34,6 +36,8 @@ import {
 export class OrganizationTeam extends TenantOrganizationBaseEntity
 	implements IOrganizationTeam {
 
+	@ApiProperty({ type: () => String })
+	@IsNotEmpty()
 	@Index()
 	@Column()
 	name: string;
@@ -41,14 +45,32 @@ export class OrganizationTeam extends TenantOrganizationBaseEntity
 	/**
 	 * prefix for organization team
 	 */
+	@ApiPropertyOptional({ type: () => String })
+	@IsOptional()
 	@Column({ nullable: true })
 	prefix?: string;
 
+	/**
+	 * Team type should be boolean true/false
+	 */
+	@ApiPropertyOptional({ type: () => Boolean })
+	@IsOptional()
+	@IsBoolean()
+	@Column({ nullable: true, default: true })
+	public?: boolean;
+
+	@ApiPropertyOptional({ type: () => String })
+	@IsOptional()
+	@IsString()
+	@Index()
+	@Column({ nullable: true })
+	profile_link?: string;
+
 	/*
-    |--------------------------------------------------------------------------
-    | @ManyToOne
-    |--------------------------------------------------------------------------
-    */
+	|--------------------------------------------------------------------------
+	| @ManyToOne
+	|--------------------------------------------------------------------------
+	*/
 
 	/**
 	 * User
@@ -65,10 +87,10 @@ export class OrganizationTeam extends TenantOrganizationBaseEntity
 	createdById?: IUser['id'];
 
 	/*
-    |--------------------------------------------------------------------------
-    | @OneToMany
-    |--------------------------------------------------------------------------
-    */
+	|--------------------------------------------------------------------------
+	| @OneToMany
+	|--------------------------------------------------------------------------
+	*/
 
 	/**
 	 * OrganizationTeamEmployee
@@ -93,10 +115,10 @@ export class OrganizationTeam extends TenantOrganizationBaseEntity
 	goals?: IGoal[];
 
 	/*
-    |--------------------------------------------------------------------------
-    | @ManyToMany
-    |--------------------------------------------------------------------------
-    */
+	|--------------------------------------------------------------------------
+	| @ManyToMany
+	|--------------------------------------------------------------------------
+	*/
 	@ManyToMany(() => Tag, (tag) => tag.organizationTeams, {
 		onUpdate: 'CASCADE',
 		onDelete: 'CASCADE'
