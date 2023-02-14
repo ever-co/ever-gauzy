@@ -15,11 +15,10 @@ import { FindPublicClientsByOrganizationQuery, FindPublicOrganizationQuery } fro
 @UseInterceptors(PublicTransformInterceptor)
 @Controller()
 export class PublicOrganizationController {
-
 	constructor(
 		private readonly queryBus: QueryBus,
 		private readonly publicOrganizationService: PublicOrganizationService
-	) { }
+	) {}
 
 	/**
 	 * GET public clients in the specific organization
@@ -44,9 +43,7 @@ export class PublicOrganizationController {
 		@Query() options: TenantOrganizationBaseDTO
 	): Promise<IPagination<IOrganizationContact>> {
 		return await this.queryBus.execute(
-			new FindPublicClientsByOrganizationQuery(
-				options as FindOptionsWhere<OrganizationContact>
-			)
+			new FindPublicClientsByOrganizationQuery(options as FindOptionsWhere<OrganizationContact>)
 		);
 	}
 
@@ -58,12 +55,10 @@ export class PublicOrganizationController {
 	 */
 	@Get('client/count')
 	@UsePipes(new ValidationPipe({ transform: true, whitelist: true }))
-	async findPublicClientCountsByOrganization(
-		@Query() options: TenantOrganizationBaseDTO
-	): Promise<Number> {
+	async findPublicClientCountsByOrganization(@Query() options: TenantOrganizationBaseDTO): Promise<Number> {
 		return await this.publicOrganizationService.findPublicClientCountsByOrganization(
 			options as FindOptionsWhere<OrganizationContact>
-		)
+		);
 	}
 
 	/**
@@ -74,12 +69,10 @@ export class PublicOrganizationController {
 	 */
 	@Get('project/count')
 	@UsePipes(new ValidationPipe({ transform: true, whitelist: true }))
-	async findPublicProjectCountsByOrganization(
-		@Query() options: TenantOrganizationBaseDTO
-	): Promise<Number> {
+	async findPublicProjectCountsByOrganization(@Query() options: TenantOrganizationBaseDTO): Promise<Number> {
 		return await this.publicOrganizationService.findPublicProjectCountsByOrganization(
 			options as FindOptionsWhere<OrganizationProject>
-		)
+		);
 	}
 
 	/**
@@ -103,8 +96,6 @@ export class PublicOrganizationController {
 		@Param() params: FindOptionsWhere<Organization>,
 		@Query() options: PublicOrganizationQueryDTO
 	): Promise<IOrganization> {
-		return await this.queryBus.execute(
-			new FindPublicOrganizationQuery(params, options.relations)
-		);
+		return await this.queryBus.execute(new FindPublicOrganizationQuery(params, options.relations));
 	}
 }
