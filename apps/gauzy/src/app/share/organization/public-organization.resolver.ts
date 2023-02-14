@@ -17,23 +17,25 @@ export class PublicOrganizationResolver implements Resolve<any> {
 		private readonly organizationsService: OrganizationsService,
 		private readonly router: Router,
 		private readonly errorHandlingService: ErrorHandlingService
-	) {}
+	) { }
 
 	resolve(
 		route: ActivatedRouteSnapshot
 	): Observable<IOrganization> {
 		try {
+			const profileLink = route.params.profileLink;
+			const organizationId = route.params.organizationId;
 			const relations = route.data.relations || [];
-            const profile_link = route.params.link;
-			return this.organizationsService.getByProfileLink(profile_link, [...relations]).pipe(
+
+			return this.organizationsService.getByProfileLink(profileLink, organizationId, [...relations]).pipe(
 				catchError((error) => {
 					this.errorHandlingService.handleError(error);
 					this.router.navigateByUrl('/');
 					return EMPTY;
 				})
 			);
-        } catch (error) {
-            this.router.navigateByUrl('/');
-        }
+		} catch (error) {
+			this.router.navigateByUrl('/');
+		}
 	}
 }

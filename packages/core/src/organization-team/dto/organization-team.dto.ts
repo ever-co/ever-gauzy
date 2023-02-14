@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
-import { IsArray, IsNotEmpty, IsOptional, IsString } from "class-validator";
+import { IsArray, IsBoolean, IsNotEmpty, IsOptional, IsString } from "class-validator";
 import { IOrganizationTeam } from "@gauzy/contracts";
 import { IsTeamAlreadyExist } from "./../../shared/validators";
 import { TenantOrganizationBaseDTO } from "./../../core/dto";
@@ -15,6 +15,14 @@ export class OrganizationTeamDTO extends TenantOrganizationBaseDTO implements IO
     @ApiPropertyOptional({ type: () => String })
     @IsOptional()
     readonly prefix?: string;
+
+    /**
+     * Team type should be boolean true/false
+     */
+    @ApiPropertyOptional({ type: () => Boolean })
+    @IsOptional()
+    @IsBoolean()
+    readonly public?: boolean;
 
     @ApiPropertyOptional({ type: () => String, isArray: true })
     @IsOptional()

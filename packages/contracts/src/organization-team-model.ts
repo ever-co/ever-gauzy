@@ -1,4 +1,4 @@
-import { IEmployee } from 'employee.model';
+import { IRelationalEmployee } from './employee.model';
 import { IBasePerTenantAndOrganizationEntityModel } from './base-entity.model';
 import { IOrganizationTeamEmployee } from './organization-team-employee-model';
 import { ITag } from './tag-entity.model';
@@ -8,21 +8,26 @@ import { ITimerStatusInput } from './timesheet.model';
 export interface IOrganizationTeam extends IBasePerTenantAndOrganizationEntityModel {
 	name: string;
 	prefix?: string;
+	public?: boolean;
+	profile_link?: string;
 	members?: IOrganizationTeamEmployee[];
 	managers?: IOrganizationTeamEmployee[];
 	tags?: ITag[];
 	tasks?: ITask[];
 }
 
-export interface IOrganizationTeamFindInput extends IBasePerTenantAndOrganizationEntityModel {
+export interface IOrganizationTeamFindInput extends IBasePerTenantAndOrganizationEntityModel, IRelationalEmployee {
 	name?: string;
 	prefix?: string;
-	employeeId?: IEmployee['id'];
+	public?: boolean;
+	profile_link?: string;
 }
 
 export interface IOrganizationTeamCreateInput extends IBasePerTenantAndOrganizationEntityModel {
 	name: string;
 	prefix?: string;
+	public?: boolean;
+	profile_link?: string;
 	memberIds?: string[];
 	managerIds?: string[];
 	tags?: ITag[];

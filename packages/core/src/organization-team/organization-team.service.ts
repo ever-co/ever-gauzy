@@ -46,7 +46,8 @@ export class OrganizationTeamService extends TenantAwareCrudService<Organization
 		entity: IOrganizationTeamCreateInput
 	): Promise<IOrganizationTeam> {
 		const { tags = [], memberIds = [], managerIds = [] } = entity;
-		const { name, prefix, organizationId } = entity;
+		const { name, organizationId, prefix, profile_link } = entity;
+
 		try {
 			const tenantId = RequestContext.currentTenantId();
 			/**
@@ -95,7 +96,9 @@ export class OrganizationTeamService extends TenantAwareCrudService<Organization
 				tenantId,
 				name,
 				prefix,
-				members
+				members,
+				profile_link,
+				public: entity.public
 			});
 		} catch (error) {
 			throw new BadRequestException(`Failed to create a team: ${error}`);
@@ -150,7 +153,7 @@ export class OrganizationTeamService extends TenantAwareCrudService<Organization
 			);
 
 			const organizationTeam = await this.findOneByIdString(id);
-			this.repository.merge(organizationTeam, { name, tags, prefix });
+			this.repository.merge(organizationTeam, { name, tags, prefix, public: entity.public });
 
 			return await this.repository.save(organizationTeam);
 		} catch (err /*: WriteError*/) {
