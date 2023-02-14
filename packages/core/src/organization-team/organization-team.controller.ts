@@ -21,7 +21,7 @@ import { CrudController, PaginationParams } from './../core/crud';
 import { TenantPermissionGuard, PermissionGuard } from './../shared/guards';
 import { UUIDValidationPipe } from './../shared/pipes';
 import { Permissions } from './../shared/decorators';
-import { CountQueryDTO } from './../shared/dto';
+import { CountQueryDTO, DeleteQueryDTO } from './../shared/dto';
 import { GetOrganizationTeamStatisticQuery } from './queries';
 import { CreateOrganizationTeamDTO, OrganizationTeamStatisticDTO, UpdateOrganizationTeamDTO } from './dto';
 import { OrganizationTeam } from './organization-team.entity';
@@ -219,9 +219,11 @@ export class OrganizationTeamController extends CrudController<OrganizationTeam>
 	@HttpCode(HttpStatus.ACCEPTED)
 	@Permissions(PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ORG_TEAM_DELETE)
 	@Delete(':id')
+	@UsePipes(new ValidationPipe({ whitelist: true }))
 	async delete(
-		@Param('id', UUIDValidationPipe) id: IOrganizationTeam['id']
-	): Promise<DeleteResult> {
-		return await this.organizationTeamService.delete(id);
+		@Param('id', UUIDValidationPipe) teamId: IOrganizationTeam['id'],
+		@Query() options: DeleteQueryDTO<OrganizationTeam>
+	): Promise<DeleteResult | IOrganizationTeam> {
+		return await this.organizationTeamService.deleteTeam(teamId, options);
 	}
 }
