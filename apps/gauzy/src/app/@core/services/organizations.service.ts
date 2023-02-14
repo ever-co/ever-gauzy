@@ -17,8 +17,8 @@ import { API_PREFIX } from '../constants/app.constants';
 export class OrganizationsService {
 
 	constructor(
-		private  readonly http: HttpClient
-	) {}
+		private readonly http: HttpClient
+	) { }
 
 	create(body: IOrganizationCreateInput): Promise<IOrganization> {
 		return firstValueFrom(
@@ -54,7 +54,7 @@ export class OrganizationsService {
 		relations: string[] = [],
 		select: IOptionsSelect<IOrganization> = {}
 	): Observable<IOrganization> {
-		return this.http.get<IOrganization>( `${API_PREFIX}/organization/${id}`, {
+		return this.http.get<IOrganization>(`${API_PREFIX}/organization/${id}`, {
 			params: toParams({ relations, select })
 		});
 	}
@@ -67,9 +67,10 @@ export class OrganizationsService {
 	 */
 	getByProfileLink(
 		profile_link: IOrganization['profile_link'],
+		organizationId: IOrganization['id'],
 		relations: string[] = []
 	): Observable<IOrganization> {
-		return this.http.get<IOrganization>(`${API_PREFIX}/public/organization/${profile_link}`, {
+		return this.http.get<IOrganization>(`${API_PREFIX}/public/organization/${profile_link}/${organizationId}`, {
 			params: toParams({ relations })
 		});
 	}

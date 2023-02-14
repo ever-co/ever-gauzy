@@ -74,7 +74,12 @@ export class OrganizationComponent extends TranslationBaseComponent
 		super(translateService);
 	}
 
-	ngOnInit() {
+	ngOnInit(): void {
+		this.hasEditPublicPage$ = this.store.userRolePermissions$.pipe(
+			map(() =>
+				this.store.hasPermission(PermissionsEnum.PUBLIC_PAGE_EDIT)
+			)
+		);
 		this.organization$ = this.route.data.pipe(
 			map(({ organization }) => organization),
 			tap((organization: IOrganization) => this.organization = organization),
@@ -84,14 +89,9 @@ export class OrganizationComponent extends TranslationBaseComponent
 			tap(() => this.getProjectCounts()),
 			// tap(() => this.getEmployeeStatistics())
 		);
-		this.hasEditPublicPage$ = this.store.userRolePermissions$.pipe(
-			map(() =>
-				this.store.hasPermission(PermissionsEnum.PUBLIC_PAGE_EDIT)
-			)
-		);
 	}
 
-	ngAfterViewInit() {
+	ngAfterViewInit(): void {
 		this.reload$
 			.pipe(
 				debounceTime(100),
@@ -126,14 +126,14 @@ export class OrganizationComponent extends TranslationBaseComponent
 		if (!this.organization) {
 			return;
 		}
-		const { id: organizationId, tenantId } = this.organization;
+		const { id: organizationId } = this.organization;
 		if (!!this.organization.show_clients) {
-			this.clients$ = this.organizationsService.getAllPublicClients({ organizationId, tenantId }).pipe(
+			this.clients$ = this.organizationsService.getAllPublicClients({ organizationId }).pipe(
 				map(({ items }) => items),
 			);
 		}
 		if (!!this.organization.show_clients_count) {
-			this.clientCounts$ = this.organizationsService.getAllPublicClientCounts({ organizationId, tenantId });
+			this.clientCounts$ = this.organizationsService.getAllPublicClientCounts({ organizationId });
 		}
 	}
 
@@ -147,8 +147,8 @@ export class OrganizationComponent extends TranslationBaseComponent
 			return;
 		}
 		if (!!this.organization.show_projects_count) {
-			const { id: organizationId, tenantId } = this.organization;
-			this.projectCounts$ = this.organizationsService.getAllPublicProjectCounts({ organizationId, tenantId });
+			const { id: organizationId } = this.organization;
+			this.projectCounts$ = this.organizationsService.getAllPublicProjectCounts({ organizationId });
 		}
 	}
 
@@ -162,9 +162,9 @@ export class OrganizationComponent extends TranslationBaseComponent
 		if (!this.organization) {
 			return;
 		}
-		const { id: organizationId, tenantId } = this.organization;
+		const { id: organizationId } = this.organization;
 		if (!!this.organization.show_employees_count) {
-			this.employees$ = this.employeesService.getAllPublic({ organizationId, tenantId }, [
+			this.employees$ = this.employeesService.getAllPublic({ organizationId }, [
 				'user',
 				'organizationPosition',
 				'skills'
@@ -235,7 +235,7 @@ export class OrganizationComponent extends TranslationBaseComponent
 				if (!!result) {
 					await this.organizationsService.update(
 						this.organization.id,
-						{...result, currency: this.organization.currency, defaultValueDateType: this.organization.defaultValueDateType}
+						{ ...result, currency: this.organization.currency, defaultValueDateType: this.organization.defaultValueDateType }
 					);
 					this.toastrService.success('TOASTR.MESSAGE.ORGANIZATION_PAGE_UPDATED', {
 						name: this.organization.name
@@ -255,5 +255,5 @@ export class OrganizationComponent extends TranslationBaseComponent
 		}
 	}
 
-	ngOnDestroy() {}
+	ngOnDestroy() { }
 }
