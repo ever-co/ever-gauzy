@@ -1,10 +1,11 @@
 import {
 	Injectable,
 	BadRequestException,
-	UnauthorizedException
+	UnauthorizedException,
+	ForbiddenException
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, In, ILike, SelectQueryBuilder } from 'typeorm';
+import { Repository, In, ILike, SelectQueryBuilder, DeleteResult, FindOptionsWhere } from 'typeorm';
 import {
 	IOrganizationTeamCreateInput,
 	IOrganizationTeam,
@@ -12,7 +13,9 @@ import {
 	IPagination,
 	IOrganizationTeamUpdateInput,
 	IEmployee,
-	PermissionsEnum
+	PermissionsEnum,
+	IBasePerTenantAndOrganizationEntityModel,
+	IRelationalEmployee
 } from '@gauzy/contracts';
 import { isNotEmpty } from '@gauzy/common';
 import { Employee } from '../employee/employee.entity';
@@ -56,7 +59,7 @@ export class OrganizationTeamService extends TenantAwareCrudService<Organization
 					}
 				});
 				managerIds.push(RequestContext.currentEmployeeId());
-			} catch (error) {}
+			} catch (error) { }
 
 			const employees = await this.employeeRepository.find({
 				where: {
@@ -117,7 +120,7 @@ export class OrganizationTeamService extends TenantAwareCrudService<Organization
 					}
 				});
 				managerIds.push(RequestContext.currentEmployeeId());
-			} catch (error) {}
+			} catch (error) { }
 			/**
 			 * Get manager role
 			 */
@@ -268,5 +271,43 @@ export class OrganizationTeamService extends TenantAwareCrudService<Organization
 		query.andWhere(`"${query.alias}"."tenantId" = :tenantId`, { tenantId });
 		const [items, total] = await query.getManyAndCount();
 		return { items, total };
+	}
+
+	/**
+	 * Delete organization team
+	 *
+	 * @param teamId
+	 * @param options
+	 * @returns
+	 */
+	async deleteTeam(
+		teamId: IOrganizationTeam['id'],
+		options: IBasePerTenantAndOrganizationEntityModel
+	): Promise<DeleteResult | IOrganizationTeam | void> {
+		try {
+			const { organizationId } = options;
+			const team = await this.findOneByIdString(teamId, {
+				where: {
+					tenantId: RequestContext.currentTenantId(),
+					...(
+						(RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE)) ? {
+							organizationId
+						} : {
+							organizationId,
+							members: {
+								employeeId: RequestContext.currentEmployeeId(),
+								role: {
+									name: RolesEnum.MANAGER
+								}
+							}
+						}
+					)
+				}
+			});
+			return await this.repository.remove(team);
+		} catch (error) {
+			console.log('Error while deleting organization team', error?.message);
+			throw new ForbiddenException();
+		}
 	}
 }
