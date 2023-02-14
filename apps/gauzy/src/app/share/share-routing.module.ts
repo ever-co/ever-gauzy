@@ -49,7 +49,7 @@ const routes: Routes = [
 					).then((m) => m.ConfirmAppointmentModule)
 			},
 			{
-				path: 'employee/:employeeid/create-appointment',
+				path: 'employee/:employeeId/create-appointment',
 				loadChildren: () =>
 					import(
 						'./public-appointments/appointment-form/appointment-form.module'
