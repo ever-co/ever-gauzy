@@ -48,8 +48,9 @@ export class OrganizationTeamSubscriber implements EntitySubscriberInterface<Org
                 if (entity) {
                     entity.createdById = RequestContext.currentUserId();
 
-                    if (entity.name) {
-                        entity.profile_link = sluggable(`${entity.name}`);
+                    // organization team slug based on name or profile link
+                    if (entity.profile_link || entity.name) {
+                        entity.profile_link = sluggable(`${entity.profile_link || entity.name}`);
                     }
                 }
             }
