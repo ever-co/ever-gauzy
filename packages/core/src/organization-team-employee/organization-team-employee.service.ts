@@ -1,7 +1,7 @@
 import { ForbiddenException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { DeleteResult, Repository } from 'typeorm';
-import { IBasePerTenantAndOrganizationEntityModel, IEmployee, IOrganizationTeamEmployee, IRelationalEmployee, PermissionsEnum } from '@gauzy/contracts';
+import { IEmployee, IOrganizationTeamEmployee, IOrganizationTeamEmployeeFindInput, PermissionsEnum, RolesEnum } from '@gauzy/contracts';
 import { TenantAwareCrudService } from './../core/crud';
 import { RequestContext } from './../core/context';
 import { OrganizationTeamEmployee } from './organization-team-employee.entity';
@@ -89,23 +89,48 @@ export class OrganizationTeamEmployeeService extends TenantAwareCrudService<Orga
 	 */
 	async deleteTeamMember(
 		memberId: IOrganizationTeamEmployee['id'],
-		options: IBasePerTenantAndOrganizationEntityModel & IRelationalEmployee
+		options: IOrganizationTeamEmployeeFindInput
 	): Promise<DeleteResult | OrganizationTeamEmployee> {
 		try {
-			const { employeeId, organizationId } = options;
-			const member = await this.findOneByIdString(memberId, {
-				where: {
-					...(
-						(RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE)) ? {
-							employeeId,
-							organizationId
-						} : {
-							employeeId: RequestContext.currentEmployeeId()
+			const { organizationId, organizationTeamId } = options;
+			const tenantId = RequestContext.currentTenantId();
+
+			if (RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE)) {
+				const member = await this.findOneByIdString(memberId, {
+					where: {
+						organizationId,
+						tenantId,
+						organizationTeamId
+					}
+				});
+				return await this.repository.remove(member);
+			} else {
+				const employeeId = RequestContext.currentEmployeeId();
+				if (employeeId) {
+					try {
+						const manager = await this.findOneByWhereOptions({
+							organizationId,
+							organizationTeamId,
+							role: {
+								name: RolesEnum.MANAGER
+							}
+						});
+						if (manager) {
+							const member = await this.repository.findOneOrFail({
+								where: {
+									id: memberId,
+									organizationId,
+									tenantId,
+									organizationTeamId
+								}
+							});
+							return await this.repository.remove(member);
 						}
-					)
+					} catch (error) {
+						throw new ForbiddenException();
+					}
 				}
-			});
-			return await this.repository.remove(member);
+			}
 		} catch (error) {
 			throw new ForbiddenException();
 		}

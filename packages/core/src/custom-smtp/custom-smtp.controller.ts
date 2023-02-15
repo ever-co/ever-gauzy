@@ -57,7 +57,7 @@ export class CustomSmtpController extends CrudController<CustomSmtp>{
 	})
 	@Get('setting')
 	@UsePipes(new ValidationPipe({ whitelist: true }))
-	async smtpSetting(
+	async getSmtpSetting(
 		@Query() query: CustomSmtpQueryDTO
 	): Promise<ICustomSmtp | ISMTPConfig> {
 		return await this.customSmtpService.getSmtpSetting(query);
