@@ -250,11 +250,15 @@ export class Organization extends TenantBaseEntity implements IOrganization {
 
 	@Column({ nullable: true })
 	daysUntilDue?: number;
+
+	@Column({ default: false })
+	isRemoveIdleTime?: boolean;
+
 	/*
-    |--------------------------------------------------------------------------
-    | @ManyToOne
-    |--------------------------------------------------------------------------
-    */
+	|--------------------------------------------------------------------------
+	| @ManyToOne
+	|--------------------------------------------------------------------------
+	*/
 
 	// Contact
 	@ManyToOne(() => Contact, (contact) => contact.organization, {
@@ -269,10 +273,10 @@ export class Organization extends TenantBaseEntity implements IOrganization {
 	readonly contactId?: string;
 
 	/*
-    |--------------------------------------------------------------------------
-    | @OneToMany
-    |--------------------------------------------------------------------------
-    */
+	|--------------------------------------------------------------------------
+	| @OneToMany
+	|--------------------------------------------------------------------------
+	*/
 
 	@OneToMany(() => Invoice, (invoice) => invoice.fromOrganization)
 	@JoinColumn()
@@ -324,10 +328,10 @@ export class Organization extends TenantBaseEntity implements IOrganization {
 	reportOrganizations?: IReportOrganization[];
 
 	/*
-    |--------------------------------------------------------------------------
-    | @ManyToMany
-    |--------------------------------------------------------------------------
-    */
+	|--------------------------------------------------------------------------
+	| @ManyToMany
+	|--------------------------------------------------------------------------
+	*/
 	// Tags
 	@ManyToMany(() => Tag, (it) => it.organizations, {
 		onUpdate: 'CASCADE',
@@ -339,8 +343,8 @@ export class Organization extends TenantBaseEntity implements IOrganization {
 	tags: ITag[];
 
 	@ManyToMany(() => Skill, (skill) => skill.organizations, {
-        onUpdate: 'CASCADE',
+		onUpdate: 'CASCADE',
 		onDelete: 'CASCADE'
-    })
+	})
 	skills: ISkill[];
 }
