@@ -6,6 +6,8 @@ import NotificationDesktop from './desktop-notifier';
 import { DesktopDialog } from './desktop-dialog';
 import { BrowserWindow } from 'electron';
 import { LocalStore } from './desktop-store';
+import { IntervalService } from './offline';
+import moment from 'moment';
 
 export class DesktopOsInactivityHandler {
 	private _inactivityResultAccepted: boolean;
@@ -14,6 +16,7 @@ export class DesktopOsInactivityHandler {
 	private _dialog: DesktopDialog;
 	private _waiting: number;
 	private _waitingIntervalId: any;
+	private _intervalService: IntervalService;
 
 
 	constructor(powerManager: PowerManagerDetectInactivity) {
@@ -22,6 +25,7 @@ export class DesktopOsInactivityHandler {
 		this._inactivityResultAccepted = false;
 		this._waiting = 0;
 		this._waitingIntervalId = null;
+		this._intervalService = new IntervalService();
 		this._powerManager.detectInactivity.on(
 			'activity-proof-request',
 			async () => {
@@ -67,7 +71,7 @@ export class DesktopOsInactivityHandler {
 		);
 		this._powerManager.detectInactivity.on(
 			'activity-proof-result',
-			(res) => {
+			async (res) => {
 				if (this._dialog) {
 					this._dialog.close();
 					delete this._dialog;
@@ -88,9 +92,8 @@ export class DesktopOsInactivityHandler {
 						'Gauzy'
 					);
 				if (this._isRemoveIdleTime && this._waitingIntervalId) {
-					this._powerManager.detectInactivity.emit('remove_idle_time', this._waiting);
+					await this._removeIdleTime();
 				}
-				this._clearInterval();
 				this._inactivityResultAccepted = true;
 			}
 		);
@@ -124,5 +127,17 @@ export class DesktopOsInactivityHandler {
 		clearInterval(this._waitingIntervalId);
 		this._waitingIntervalId = null;
 		this._waiting = 0;
+	}
+
+	private async _removeIdleTime(): Promise<void> {
+		const auth = LocalStore.getStore('auth');
+		const inactivityTimeLimit = auth ? auth.inactivityTimeLimit : 10;
+		const stoppedAt = new Date();
+		const startedAt = moment(stoppedAt).subtract(inactivityTimeLimit * 60 + this._waiting, 'seconds').toDate();
+		const timeslotIds = await this._intervalService.removeIdlesTime(startedAt, stoppedAt);
+		if (timeslotIds.length > 0) {
+			this._powerManager.window.webContents.send('remove_idle_time', timeslotIds);
+		}
+		this._clearInterval();
 	}
 }
