@@ -42,7 +42,7 @@ export class InviteAcceptEmployeeHandler implements ICommandHandler<InviteAccept
 		@InjectRepository(OrganizationContact) private readonly organizationContactRepository: Repository<OrganizationContact>,
 		@InjectRepository(OrganizationDepartment) private readonly organizationDepartmentRepository: Repository<OrganizationDepartment>,
 		@InjectRepository(OrganizationTeam) private readonly organizationTeamRepository: Repository<OrganizationTeam>
-	) {}
+	) { }
 
 	public async execute(
 		command: InviteAcceptEmployeeCommand
@@ -120,7 +120,7 @@ export class InviteAcceptEmployeeHandler implements ICommandHandler<InviteAccept
 				user,
 				organization,
 				tenantId,
-				startedWorkOn: invite.actionDate || null,
+				startedWorkOn: invite.actionDate || new Date(),
 				isActive: true
 			});
 			const employee = await this.employeeRepository.save(create);
