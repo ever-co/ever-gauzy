@@ -108,8 +108,41 @@ export class OrganizationTeamService extends TenantAwareCrudService<Organization
 		id: IOrganizationTeam['id'],
 		entity: IOrganizationTeamUpdateInput
 	): Promise<OrganizationTeam> {
-		const { tags = [], memberIds = [], managerIds = [] } = entity;
-		const { name, prefix, organizationId } = entity;
+		const { memberIds = [], managerIds = [] } = entity;
+		const { name, prefix, organizationId, tags } = entity;
+
+		let organizationTeam = await this.findOneByIdString(id, {
+			where: {
+				organizationId
+			}
+		});
+
+		/**
+		 * If employee has manager of the team, he/she should be able to update basic things for team
+		 */
+		if (!RequestContext.hasPermission(
+			PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
+		)) {
+			try {
+				const employeeId = RequestContext.currentEmployeeId();
+				if (employeeId) {
+					organizationTeam = await this.findOneByIdString(id, {
+						where: {
+							organizationId,
+							members: {
+								employeeId,
+								role: {
+									name: RolesEnum.MANAGER
+								}
+							}
+						}
+					});
+				}
+			} catch (error) {
+				throw new ForbiddenException();
+			}
+		}
+
 		try {
 			const tenantId = RequestContext.currentTenantId();
 			/**
@@ -151,9 +184,7 @@ export class OrganizationTeamService extends TenantAwareCrudService<Organization
 				memberIds
 			);
 
-			const organizationTeam = await this.findOneByIdString(id);
 			this.repository.merge(organizationTeam, { name, tags, prefix, public: entity.public });
-
 			return await this.repository.save(organizationTeam);
 		} catch (err /*: WriteError*/) {
 			throw new BadRequestException(err);
@@ -291,18 +322,16 @@ export class OrganizationTeamService extends TenantAwareCrudService<Organization
 			const team = await this.findOneByIdString(teamId, {
 				where: {
 					tenantId: RequestContext.currentTenantId(),
+					organizationId,
 					...(
-						(RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE)) ? {
-							organizationId
-						} : {
-							organizationId,
+						(!RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE)) ? {
 							members: {
 								employeeId: RequestContext.currentEmployeeId(),
 								role: {
 									name: RolesEnum.MANAGER
 								}
 							}
-						}
+						} : {}
 					)
 				}
 			});
