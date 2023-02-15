@@ -301,6 +301,7 @@ export const DEFAULT_ROLE_PERMISSIONS = [
 			PermissionsEnum.ORG_PROJECT_VIEW,
 			PermissionsEnum.ORG_TEAM_ADD,
 			PermissionsEnum.ORG_TEAM_VIEW,
+			PermissionsEnum.ORG_TEAM_EDIT,
 			PermissionsEnum.ORG_TEAM_DELETE,
 			PermissionsEnum.EMPLOYEE_EXPENSES_VIEW,
 			PermissionsEnum.EMPLOYEE_EXPENSES_EDIT,
