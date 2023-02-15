@@ -1,5 +1,5 @@
 import { IBasePerTenantAndOrganizationEntityModel } from './base-entity.model';
-import { IOrganizationTeam } from './organization-team-model';
+import { IOrganizationTeam, IRelationalOrganizationTeam } from './organization-team-model';
 import { IEmployee } from './employee.model';
 import { IRole } from './role.model';
 import { ITimerStatus } from './timesheet.model';
@@ -13,3 +13,4 @@ export interface IOrganizationTeamEmployee extends IBasePerTenantAndOrganization
 	roleId?: IRole['id'];
 }
 
+export interface IOrganizationTeamEmployeeFindInput extends IBasePerTenantAndOrganizationEntityModel, IRelationalOrganizationTeam { }
