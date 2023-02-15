@@ -12,15 +12,21 @@ import {
 export class OrganizationTeamEmployee extends TenantOrganizationBaseEntity
 	implements IOrganizationTeamEmployee {
 
-	/*
-    |--------------------------------------------------------------------------
-    | @ManyToOne
-    |--------------------------------------------------------------------------
-    */
-
-   	/**
-	 * OrganizationTeam
+	/**
+	 * enabled / disabled time tracking feature for team member
 	 */
+	@Column({ type: Boolean, nullable: true, default: true })
+	isTrackingEnabled: boolean;
+
+	/*
+	|--------------------------------------------------------------------------
+	| @ManyToOne
+	|--------------------------------------------------------------------------
+	*/
+
+	/**
+	* OrganizationTeam
+	*/
 	@ApiProperty({ type: () => OrganizationTeam })
 	@ManyToOne(() => OrganizationTeam, (organizationTeam) => organizationTeam.members, {
 		onDelete: 'CASCADE'
@@ -33,7 +39,7 @@ export class OrganizationTeamEmployee extends TenantOrganizationBaseEntity
 	@Column()
 	public organizationTeamId: IOrganizationTeam['id'];
 
-    /**
+	/**
 	 * Employee
 	 */
 	@ApiProperty({ type: () => Employee })
