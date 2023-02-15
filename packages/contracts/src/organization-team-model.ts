@@ -40,3 +40,8 @@ export interface IOrganizationTeamUpdateInput extends Partial<IOrganizationTeamC
 export interface IOrganizationTeamStatisticInput extends ITimerStatusInput {
 	withLaskWorkedTask: boolean;
 }
+
+export interface IRelationalOrganizationTeam {
+	organizationTeam?: IOrganizationTeam;
+	organizationTeamId?: IOrganizationTeam['id'];
+}

@@ -36,7 +36,7 @@ export class OrganizationTeamEmployeeController {
 		description: 'Record not found'
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
-	@Permissions(PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ORG_TEAM_DELETE, PermissionsEnum.ORG_TEAM_ADD)
+	@Permissions(PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ORG_TEAM_DELETE)
 	@UsePipes(new ValidationPipe({ whitelist: true }))
 	@Delete(':id')
 	async deleteTeamMember(
