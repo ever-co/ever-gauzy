@@ -12,17 +12,28 @@ export class DesktopOsInactivityHandler {
 	private _powerManager: PowerManagerDetectInactivity;
 	private _notify: NotificationDesktop;
 	private _dialog: DesktopDialog;
+	private _waiting: number;
+	private _waitingIntervalId: any;
+
 
 	constructor(powerManager: PowerManagerDetectInactivity) {
 		this._notify = new NotificationDesktop();
 		this._powerManager = powerManager;
 		this._inactivityResultAccepted = false;
+		this._waiting = 0;
+		this._waitingIntervalId = null;
 		this._powerManager.detectInactivity.on(
 			'activity-proof-request',
 			async () => {
 				if (!this._isAllowTrackInactivity) return;
 				this._inactivityResultAccepted = false;
 				this._windowFocus();
+				this._waiting = 0;
+				if (!this._waitingIntervalId) {
+					this._waitingIntervalId = setInterval(() => {
+						this._waiting++;
+					}, 1000);
+				}
 				this._dialog = new DesktopDialog(
 					'Gauzy',
 					'Are you still working?',
@@ -57,7 +68,6 @@ export class DesktopOsInactivityHandler {
 		this._powerManager.detectInactivity.on(
 			'activity-proof-result',
 			(res) => {
-				console.log('Test', this._inactivityResultAccepted);
 				if (this._dialog) {
 					this._dialog.close();
 					delete this._dialog;
@@ -77,6 +87,10 @@ export class DesktopOsInactivityHandler {
 						'Tracker was stopped due to inactivity!',
 						'Gauzy'
 					);
+				if (this._isRemoveIdleTime && this._waitingIntervalId) {
+					this._powerManager.detectInactivity.emit('remove_idle_time', this._waiting);
+				}
+				this._clearInterval();
 				this._inactivityResultAccepted = true;
 			}
 		);
@@ -99,5 +113,16 @@ export class DesktopOsInactivityHandler {
 	private get _isAllowTrackInactivity(): boolean {
 		const auth = LocalStore.getStore('auth');
 		return auth && auth.allowTrackInactivity;
+	}
+
+	private get _isRemoveIdleTime(): boolean {
+		const auth = LocalStore.getStore('auth');
+		return auth && auth.isRemoveIdleTime;
+	}
+
+	private _clearInterval() {
+		clearInterval(this._waitingIntervalId);
+		this._waitingIntervalId = null;
+		this._waiting = 0;
 	}
 }

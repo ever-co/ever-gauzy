@@ -384,6 +384,24 @@ export class TimeTrackerService {
 		);
 	}
 
+	deleteTimeSlots(values) {
+		const params = this.toParams({
+			ids: [...values.timeslotIds],
+			tenantId: values.tenantId,
+			organizationId: values.organizationId
+		});
+		const headers = new HttpHeaders({
+			Authorization: `Bearer ${values.token}`,
+			'Tenant-Id': values.tenantId
+		});
+
+		return firstValueFrom(
+			this.http.delete(`${values.apiHost}/api/timesheet/time-slot`, {
+				params,
+				headers: headers
+			})
+		);
+	}
 	toParams(query) {
 		let params: HttpParams = new HttpParams();
 		Object.keys(query).forEach((key) => {

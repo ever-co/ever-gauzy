@@ -476,8 +476,8 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 		);
 
 		this.electronService.ipcRenderer.on('prepare_activities_screenshot', (event, arg) =>
-			this._ngZone.run(() => {
-				(async () => await this.sendActivities(arg))();
+			this._ngZone.run(async () => {
+				await this.sendActivities(arg);
 			})
 		);
 
@@ -783,6 +783,28 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 				}
 			});
 		});
+		this.electronService.ipcRenderer.on('remove_idle_time', (event, args) => {
+			this._ngZone.run(async () => {
+				try {
+					const { tenantId } = this.userData;
+					const { id: organizationId } = this.userOrganization;
+					const payload = {
+						timeslotIds: [...args],
+						token: this.token,
+						apiHost: this.apiHost,
+						tenantId,
+						organizationId
+					}
+					console.log('DELETE ARGS', args)
+					const res = await this.timeTrackerService.deleteTimeSlots(payload);
+					console.log('DELETE RES', res)
+					this.toastrService.success('Idles Time Removed Successfully', 'Gauzy');
+				} catch (error) {
+					this.toastrService.danger('An Error Occurred', 'Gauzy');
+					console.log('ERROR', error)
+				}
+			})
+		})
 	}
 
 	async toggleStart(val) {
@@ -1173,7 +1195,8 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 				this.electronService.ipcRenderer.send('update_timer_auth_config', {
 					activityProofDuration: res.employee.organization.activityProofDuration,
 					inactivityTimeLimit: res.employee.organization.inactivityTimeLimit,
-					allowTrackInactivity: res.employee.organization.allowTrackInactivity
+					allowTrackInactivity: res.employee.organization.allowTrackInactivity,
+					isRemoveIdleTime: res.employee.organization.isRemoveIdleTime
 				});
 				this.isTrackingEnabled =
 					typeof res.employee.isTrackingEnabled !== 'undefined' ? res.employee.isTrackingEnabled : true;

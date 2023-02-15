@@ -254,9 +254,25 @@ export function ipcTimer(
 	windowPath,
 	soundPath
 ) {
-	let powerManager;
-	let powerManagerPreventSleep;
-	let powerManagerDetectInactivity;
+	const powerManager = new DesktopPowerManager(timeTrackerWindow);
+	const powerManagerPreventSleep = new PowerManagerPreventDisplaySleep(
+		powerManager
+	);
+	const powerManagerDetectInactivity = new PowerManagerDetectInactivity(
+		powerManager
+	);
+	powerManagerDetectInactivity.detectInactivity.on('remove_idle_time', async (delay: number) => {
+		const auth = LocalStore.getStore('auth');
+		const inactivityTimeLimit = auth ? auth.inactivityTimeLimit : 10;
+		const stoppedAt = new Date();
+		const startedAt = moment(stoppedAt).subtract(inactivityTimeLimit * 60 + delay, 'seconds').toDate();
+		const timeslotIds = await intervalService.removeIdlesTime(startedAt, stoppedAt);
+		console.log('RES', timeslotIds);
+		console.log('DELAY', delay);
+		if (timeslotIds.length > 0) {
+			timeTrackerWindow.webContents.send('remove_idle_time', timeslotIds);
+		}
+	})
 
 	ipcMain.on('update-synced', async (event, arg: IntervalTO) => {
 		try {
@@ -315,13 +331,6 @@ export function ipcTimer(
 	offlineMode.trigger();
 
 	ipcMain.on('start_timer', (event, arg) => {
-		powerManager = new DesktopPowerManager(timeTrackerWindow);
-		powerManagerPreventSleep = new PowerManagerPreventDisplaySleep(
-			powerManager
-		);
-		powerManagerDetectInactivity = new PowerManagerDetectInactivity(
-			powerManager
-		);
 		new DesktopOsInactivityHandler(powerManagerDetectInactivity);
 		const setting = LocalStore.getStore('appSetting');
 		log.info(`Timer Start: ${moment().format()}`);
