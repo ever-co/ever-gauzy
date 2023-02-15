@@ -916,8 +916,9 @@
 									</div>
 								</div>
 							</div>
-							<div *ngIf="isTrackInactivity" class="row mt-4">
-								<div class="col-6">
+							<div *ngIf="isTrackInactivity" class="mt-4">
+								<div class="row">
+									<div class="col-6">
 									<label class="label">
 										{{'ORGANIZATIONS_PAGE.EDIT.SETTINGS.INACTIVITY_TIME_LIMIT'
 											| translate}}
@@ -984,6 +985,31 @@
 											{{proof}}
 										</nb-option>
 									</nb-select>
+								</div>
+								</div>
+								<div class="row">
+									<div class="col-6">
+									<label class="label">
+										{{ 'Delete Idle Time' | translate }}
+									</label>
+									<button
+											[nbTooltip]="'Delete Idle Time'| translate"
+											ghost
+											nbButton
+											size="small"
+											status="info"
+									>
+										<nb-icon icon="info"></nb-icon>
+									</button>
+									<nb-toggle
+											class="d-block"
+											formControlName="isRemoveIdleTime"
+											status="primary"
+											labelPosition="start"
+										>
+											{{'Enable'| translate}}
+									</nb-toggle>
+								</div>
 								</div>
 							</div>
 						</div>

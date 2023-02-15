@@ -133,7 +133,8 @@ export class EditOrganizationOtherSettingsComponent extends NotesWithTagsCompone
 			invoiceTemplate: [],
 			estimateTemplate: [],
 			receiptTemplate: [],
-			isDefault: []
+			isDefault: [],
+			isRemoveIdleTime: [false]
 		});
 	}
 
@@ -456,22 +457,23 @@ export class EditOrganizationOtherSettingsComponent extends NotesWithTagsCompone
 			discountAfterTax: this.organization.discountAfterTax,
 			convertAcceptedEstimates: this.organization.convertAcceptedEstimates,
 			daysUntilDue: this.organization.daysUntilDue,
-			isDefault: this.organization.isDefault
+			isDefault: this.organization.isDefault,
+			isRemoveIdleTime: this.organization.isRemoveIdleTime
 		});
 		this.form.updateValueAndValidity();
 
 		/**
 		 * Default selected accounting templates dropdowns
 		 */
-	 	const invoiceTemplateControl = this.form.get('invoiceTemplate') as FormControl;
+		const invoiceTemplateControl = this.form.get('invoiceTemplate') as FormControl;
 		invoiceTemplateControl.setValue(this.selectedInvoiceTemplate ? this.selectedInvoiceTemplate.id : null);
 		invoiceTemplateControl.updateValueAndValidity();
 
-	 	const estimateTemplateControl = this.form.get('estimateTemplate') as FormControl;
+		const estimateTemplateControl = this.form.get('estimateTemplate') as FormControl;
 		estimateTemplateControl.setValue(this.selectedEstimateTemplate ? this.selectedEstimateTemplate.id : null);
 		estimateTemplateControl.updateValueAndValidity();
 
-	 	const receiptTemplateControl = this.form.get('receiptTemplate') as FormControl;
+		const receiptTemplateControl = this.form.get('receiptTemplate') as FormControl;
 		receiptTemplateControl.setValue(this.selectedReceiptTemplate ? this.selectedReceiptTemplate.id : null);
 		receiptTemplateControl.updateValueAndValidity();
 	}
