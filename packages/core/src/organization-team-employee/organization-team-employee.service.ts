@@ -60,7 +60,7 @@ export class OrganizationTeamEmployeeService extends TenantAwareCrudService<Orga
 			(member: IOrganizationTeamEmployee) => member.employeeId
 		);
 		employees
-			.filter((member: IOrganizationTeamEmployee) => !existingMembers.includes(member.id))
+			.filter((member: IEmployee) => !existingMembers.includes(member.id))
 			.forEach(async (employee: IEmployee) => {
 				const organizationTeamEmployee = new OrganizationTeamEmployee();
 				organizationTeamEmployee.organizationTeamId = organizationTeamId;
