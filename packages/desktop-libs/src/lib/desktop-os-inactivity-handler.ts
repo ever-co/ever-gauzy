@@ -75,7 +75,7 @@ export class DesktopOsInactivityHandler {
 				if (this._dialog) {
 					this._dialog.close();
 					delete this._dialog;
-					if (this._isRemoveIdleTime) await this._removeIdleTime();
+					if (this._isRemoveIdleTime) await this._removeIdleTime(res);
 					if (!this._inactivityResultAccepted) {
 						const dialog = new DialogAcknowledgeInactivity(
 							new DesktopDialog(
@@ -127,15 +127,19 @@ export class DesktopOsInactivityHandler {
 		this._waiting = 0;
 	}
 
-	private async _removeIdleTime(): Promise<void> {
+	private async _removeIdleTime(isStillWorking: boolean): Promise<void> {
 		if (!this._waitingIntervalId) return;
+		if (!isStillWorking) this._powerManager.pauseTracking();
 		const auth = LocalStore.getStore('auth');
 		const inactivityTimeLimit = auth ? auth.inactivityTimeLimit : 10;
 		const stoppedAt = new Date();
 		const startedAt = moment(stoppedAt).subtract(inactivityTimeLimit * 60 + this._waiting, 'seconds').toDate();
 		const timeslotIds = await this._intervalService.removeIdlesTime(startedAt, stoppedAt);
 		if (timeslotIds.length > 0) {
-			this._powerManager.window.webContents.send('remove_idle_time', timeslotIds);
+			this._powerManager.window.webContents.send('remove_idle_time', {
+				isWorking: isStillWorking,
+				timeslotIds
+			});
 		}
 		this._clearInterval();
 	}

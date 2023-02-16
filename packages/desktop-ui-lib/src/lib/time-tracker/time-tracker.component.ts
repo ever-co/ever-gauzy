@@ -541,9 +541,15 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 					}
 				}
 				console.log('TIMER TO UPDATE', lastTimer);
+				await this.getTimerStatus({
+					token: this.token,
+					apiHost: this.apiHost,
+					organizationId: this.userOrganization.id,
+					tenantId: this.userData.tenantId,
+				});
 				setTimeout(() => {
 					event.sender.send('update-synced-timer', {
-						lastTimer: { ...lastTimer, id: lastTimer.timelogId },
+						lastTimer: { ...lastTimer, id: this.timerStatus.lastLog.id },
 						...lastTimer
 					});
 					event.sender.send('finish-synced-timer');
@@ -707,9 +713,15 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 								...params
 							});
 						}
+						await this.getTimerStatus({
+							token: this.token,
+							apiHost: this.apiHost,
+							organizationId: this.userOrganization.id,
+							tenantId: this.userData.tenantId,
+						});
 						setTimeout(() => {
 							event.sender.send('update-synced-timer', {
-								lastTimer: latest ? latest : sequence.timer,
+								lastTimer: latest ? latest : { ...sequence.timer, id: this.timerStatus.lastLog.id },
 								...sequence.timer
 							});
 						}, 0);
@@ -783,13 +795,13 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 				}
 			});
 		});
-		this.electronService.ipcRenderer.on('remove_idle_time', (event, args) => {
+		this.electronService.ipcRenderer.on('remove_idle_time', (event, arg) => {
 			this._ngZone.run(async () => {
 				try {
-					const { tenantId } = this.userData;
+					const { tenantId, employeeId } = this.userData;
 					const { id: organizationId } = this.userOrganization;
 					const payload = {
-						timeslotIds: [...args],
+						timeslotIds: [...arg.timeslotIds],
 						token: this.token,
 						apiHost: this.apiHost,
 						tenantId,
@@ -799,17 +811,37 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 						message: 'Idle time successfully deleted',
 						title: 'Gauzy',
 					};
-					const res =
+					// Silent delete and restart
+					if (arg.isWorking && this.start) {
+						const params = {
+							token: this.token,
+							note: this.note,
+							projectId: this.projectSelect,
+							taskId: this.taskSelect,
+							organizationId: this.userOrganization.id,
+							tenantId: this.userData.tenantId,
+							organizationContactId: this.organizationContactId,
+							apiHost: this.apiHost
+						};
+						this.timeTrackerService.toggleApiStop(params).then(() =>
+							this.timeTrackerService.deleteTimeSlots(
+								payload
+							).then(async () => {
+								console.log('Deleted');
+								await this.timeTrackerService.toggleApiStart(params);
+								this.getTodayTime({ ...payload, employeeId }, true);
+							})
+						)
+					} else {
 						await this.timeTrackerService.deleteTimeSlots(
 							payload
 						);
-					if (res) {
-						this.toastrService.success(
-							notification.message,
-							notification.title
-						);
-						event.sender.send('notify', notification);
 					}
+					this.toastrService.success(
+						notification.message,
+						notification.title
+					);
+					event.sender.send('notify', notification);
 				} catch (error) {
 					this.toastrService.danger('An Error Occurred', 'Gauzy');
 					console.log('ERROR', error);
@@ -851,7 +883,6 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 		const hours = moment.duration(value.second, 'seconds').hours();
 		const instantaneaous = this._lastTotalWorkedToday + value.second;
 		const instantaneousWeek = this._lastTotalWorkedWeek + value.second;
-
 		this._timeRun$.next({
 			second: seconds.toString().length > 1 ? `${seconds}` : `0${seconds}`,
 			minute: minutes.toString().length > 1 ? `${minutes}` : `0${minutes}`,
@@ -1079,17 +1110,17 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 		};
 	}
 
-	getTodayTime(arg) {
+	getTodayTime(arg, isForcedSync?) {
 		if (this._isOffline) return;
 		this.timeTrackerService.getTimeLogs(arg).then((res: any) => {
 			if (res && res.todayDuration && res.weekDuration) {
-				this.countDuration(res);
+				this.countDuration(res, isForcedSync);
 			}
 		});
 	}
 
-	countDuration(count) {
-		if (count && !this.start) {
+	countDuration(count, isForcedSync?) {
+		if (count && (!this.start || isForcedSync)) {
 			const minutes = moment.duration(count.todayDuration, 'seconds').minutes();
 			const hours = moment.duration(count.todayDuration, 'seconds').hours();
 			this.todayDuration$.next({
