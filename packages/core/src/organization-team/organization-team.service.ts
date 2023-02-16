@@ -58,7 +58,11 @@ export class OrganizationTeamService extends TenantAwareCrudService<Organization
 						name: RolesEnum.EMPLOYEE
 					}
 				});
-				managerIds.push(RequestContext.currentEmployeeId());
+
+				const employeeId = RequestContext.currentEmployeeId();
+				if (!managerIds.includes(employeeId)) {
+					managerIds.push(employeeId);
+				}
 			} catch (error) { }
 
 			const employees = await this.employeeRepository.find({
@@ -154,8 +158,13 @@ export class OrganizationTeamService extends TenantAwareCrudService<Organization
 						name: RolesEnum.EMPLOYEE
 					}
 				});
-				managerIds.push(RequestContext.currentEmployeeId());
+
+				const employeeId = RequestContext.currentEmployeeId();
+				if (!managerIds.includes(employeeId)) {
+					managerIds.push(employeeId);
+				}
 			} catch (error) { }
+
 			/**
 			 * Get manager role
 			 */
