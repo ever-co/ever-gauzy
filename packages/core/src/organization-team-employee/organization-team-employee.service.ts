@@ -1,7 +1,8 @@
 import { ForbiddenException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { DeleteResult, Repository } from 'typeorm';
-import { IEmployee, IOrganizationTeamEmployee, IOrganizationTeamEmployeeFindInput, PermissionsEnum, RolesEnum } from '@gauzy/contracts';
+import { IEmployee, IOrganizationTeam, IOrganizationTeamEmployee, IOrganizationTeamEmployeeFindInput, PermissionsEnum, RolesEnum } from '@gauzy/contracts';
+import { isNotEmpty } from '@gauzy/common';
 import { TenantAwareCrudService } from './../core/crud';
 import { RequestContext } from './../core/context';
 import { OrganizationTeamEmployee } from './organization-team-employee.entity';
@@ -11,72 +12,75 @@ import { Role } from '../role/role.entity';
 export class OrganizationTeamEmployeeService extends TenantAwareCrudService<OrganizationTeamEmployee> {
 	constructor(
 		@InjectRepository(OrganizationTeamEmployee)
-		private readonly organizationTeamEmployeeRepository: Repository<OrganizationTeamEmployee>
+		protected readonly organizationTeamEmployeeRepository: Repository<OrganizationTeamEmployee>
 	) {
 		super(organizationTeamEmployeeRepository);
 	}
 
 	async updateOrganizationTeam(
-		teamId: string,
-		organizationId: string,
-		employeesToUpdate: IEmployee[],
+		organizationTeamId: IOrganizationTeam['id'],
+		organizationId: IOrganizationTeam['organizationId'],
+		employees: IEmployee[],
 		role: Role,
 		managerIds: string[],
 		memberIds: string[]
 	) {
 		const members = [...managerIds, ...memberIds];
+		const tenantId = RequestContext.currentTenantId();
 
-		const { items: existingEmployees } = await this.findAll({
-			where: { organizationTeamId: teamId },
-			relations: ['role']
+		const teamMembers = await this.repository.find({
+			where: {
+				tenantId,
+				organizationId,
+				organizationTeamId
+			},
+			relations: {
+				role: true
+			}
 		});
-		if (existingEmployees) {
-			const existingMembers = existingEmployees.map(
-				(emp) => emp.employeeId
-			);
 
-			// 1. Remove employees from the team
-			const removedMemberIds =
-				existingEmployees
-					.filter(
-						(employee) => !members.includes(employee.employeeId)
-					)
-					.map((emp) => emp.id) || [];
+		// 1. Remove employee members from the organization team
+		const removedMemberIds = teamMembers.filter((employee) => !members.includes(employee.employeeId)).map((emp) => emp.id) || [];
+		if (isNotEmpty(removedMemberIds)) {
 			this.deleteMemberByIds(removedMemberIds);
-
-			// 2. Update role of employees that already exist in the system
-			existingEmployees
-				.filter((employee) => members.includes(employee.employeeId))
-				.forEach(async (employee) => {
-					await this.update(employee.id, {
-						role: managerIds.includes(employee.employeeId)
-							? role
-							: null
-					});
-				});
-
-			const tenantId = RequestContext.currentTenantId();
-
-			// 3. Add new team members
-			employeesToUpdate
-				.filter((emp) => !existingMembers.includes(emp.id))
-				.forEach(async (employee) => {
-					const teamEmployee = new OrganizationTeamEmployee();
-					teamEmployee.organizationTeamId = teamId;
-					teamEmployee.employeeId = employee.id;
-					teamEmployee.tenantId = tenantId;
-					teamEmployee.organizationId = organizationId;
-					teamEmployee.role = managerIds.includes(employee.id)
-						? role
-						: null;
-					this.create(teamEmployee);
-				});
 		}
+
+		// 2. Update role of employees that already exist in the system
+		teamMembers
+			.filter((employee) => members.includes(employee.employeeId))
+			.forEach(async (member: IOrganizationTeamEmployee) => {
+				const { id, employeeId } = member
+				await this.repository.update(id, {
+					role: managerIds.includes(employeeId) ? role : null
+				});
+			});
+
+		// 3. Add new team members
+		const existingMembers = teamMembers.map(
+			(member: IOrganizationTeamEmployee) => member.employeeId
+		);
+		employees
+			.filter((member: IEmployee) => !existingMembers.includes(member.id))
+			.forEach(async (employee: IEmployee) => {
+				const organizationTeamEmployee = new OrganizationTeamEmployee();
+				organizationTeamEmployee.organizationTeamId = organizationTeamId;
+				organizationTeamEmployee.employeeId = employee.id;
+				organizationTeamEmployee.tenantId = tenantId;
+				organizationTeamEmployee.organizationId = organizationId;
+				organizationTeamEmployee.role = managerIds.includes(employee.id) ? role : null;
+
+				this.save(organizationTeamEmployee);
+			});
 	}
 
+	/**
+	 * Delete team members by IDs
+	 *
+	 * @param memberIds
+	 */
 	deleteMemberByIds(memberIds: string[]) {
 		memberIds.forEach(async (memberId) => {
-			await this.delete(memberId);
+			await this.repository.delete(memberId);
 		});
 	}
 
