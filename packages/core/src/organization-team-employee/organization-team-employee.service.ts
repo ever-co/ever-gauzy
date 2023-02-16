@@ -1,7 +1,14 @@
 import { ForbiddenException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { DeleteResult, Repository } from 'typeorm';
-import { IEmployee, IOrganizationTeam, IOrganizationTeamEmployee, IOrganizationTeamEmployeeFindInput, PermissionsEnum, RolesEnum } from '@gauzy/contracts';
+import {
+	IEmployee,
+	IOrganizationTeam,
+	IOrganizationTeamEmployee,
+	IOrganizationTeamEmployeeFindInput,
+	PermissionsEnum,
+	RolesEnum
+} from '@gauzy/contracts';
 import { isNotEmpty } from '@gauzy/common';
 import { TenantAwareCrudService } from './../core/crud';
 import { RequestContext } from './../core/context';
@@ -40,7 +47,8 @@ export class OrganizationTeamEmployeeService extends TenantAwareCrudService<Orga
 		});
 
 		// 1. Remove employee members from the organization team
-		const removedMemberIds = teamMembers.filter((employee) => !members.includes(employee.employeeId)).map((emp) => emp.id) || [];
+		const removedMemberIds =
+			teamMembers.filter((employee) => !members.includes(employee.employeeId)).map((emp) => emp.id) || [];
 		if (isNotEmpty(removedMemberIds)) {
 			this.deleteMemberByIds(removedMemberIds);
 		}
@@ -49,16 +57,14 @@ export class OrganizationTeamEmployeeService extends TenantAwareCrudService<Orga
 		teamMembers
 			.filter((employee) => members.includes(employee.employeeId))
 			.forEach(async (member: IOrganizationTeamEmployee) => {
-				const { id, employeeId } = member
+				const { id, employeeId } = member;
 				await this.repository.update(id, {
 					role: managerIds.includes(employeeId) ? role : null
 				});
 			});
 
 		// 3. Add new team members
-		const existingMembers = teamMembers.map(
-			(member: IOrganizationTeamEmployee) => member.employeeId
-		);
+		const existingMembers = teamMembers.map((member: IOrganizationTeamEmployee) => member.employeeId);
 		employees
 			.filter((member: IEmployee) => !existingMembers.includes(member.id))
 			.forEach(async (employee: IEmployee) => {
