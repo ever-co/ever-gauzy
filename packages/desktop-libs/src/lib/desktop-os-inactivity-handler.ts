@@ -33,7 +33,7 @@ export class DesktopOsInactivityHandler {
 				this._inactivityResultAccepted = false;
 				this._windowFocus();
 				this._waiting = 0;
-				if (!this._waitingIntervalId) {
+				if (!this._waitingIntervalId && this._isRemoveIdleTime) {
 					this._waitingIntervalId = setInterval(() => {
 						this._waiting++;
 					}, 1000);
@@ -75,6 +75,7 @@ export class DesktopOsInactivityHandler {
 				if (this._dialog) {
 					this._dialog.close();
 					delete this._dialog;
+					if (this._isRemoveIdleTime) await this._removeIdleTime();
 					if (!this._inactivityResultAccepted) {
 						const dialog = new DialogAcknowledgeInactivity(
 							new DesktopDialog(
@@ -83,7 +84,7 @@ export class DesktopOsInactivityHandler {
 								powerManager.window
 							)
 						);
-						dialog.show();
+						await dialog.show();
 					}
 				}
 				if (!res)
@@ -91,9 +92,6 @@ export class DesktopOsInactivityHandler {
 						'Tracker was stopped due to inactivity!',
 						'Gauzy'
 					);
-				if (this._isRemoveIdleTime && this._waitingIntervalId) {
-					await this._removeIdleTime();
-				}
 				this._inactivityResultAccepted = true;
 			}
 		);
@@ -130,6 +128,7 @@ export class DesktopOsInactivityHandler {
 	}
 
 	private async _removeIdleTime(): Promise<void> {
+		if (!this._waitingIntervalId) return;
 		const auth = LocalStore.getStore('auth');
 		const inactivityTimeLimit = auth ? auth.inactivityTimeLimit : 10;
 		const stoppedAt = new Date();
