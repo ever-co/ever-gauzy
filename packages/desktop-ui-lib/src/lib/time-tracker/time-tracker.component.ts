@@ -793,17 +793,28 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 						token: this.token,
 						apiHost: this.apiHost,
 						tenantId,
-						organizationId
+						organizationId,
+					};
+					const notification = {
+						message: 'Idle time successfully deleted',
+						title: 'Gauzy',
+					};
+					const res =
+						await this.timeTrackerService.deleteTimeSlots(
+							payload
+						);
+					if (res) {
+						this.toastrService.success(
+							notification.message,
+							notification.title
+						);
+						event.sender.send('notify', notification);
 					}
-					console.log('DELETE ARGS', args)
-					const res = await this.timeTrackerService.deleteTimeSlots(payload);
-					console.log('DELETE RES', res)
-					this.toastrService.success('Idles Time Removed Successfully', 'Gauzy');
 				} catch (error) {
 					this.toastrService.danger('An Error Occurred', 'Gauzy');
-					console.log('ERROR', error)
+					console.log('ERROR', error);
 				}
-			})
+			});
 		})
 	}
 

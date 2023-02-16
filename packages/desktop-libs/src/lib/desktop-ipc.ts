@@ -743,6 +743,11 @@ export function ipcTimer(
 		isQueueThreadTimerLocked = false;
 		console.log('-----> FINISH SYNC <------');
 	});
+
+	ipcMain.on('notify', (event, notification) => {
+		const notify = new NotificationDesktop();
+		notify.customNotification(notification.message, notification.text);
+	})
 }
 
 export function removeMainListener() {
