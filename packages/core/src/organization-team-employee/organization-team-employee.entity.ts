@@ -1,6 +1,7 @@
 import { IEmployee, IOrganizationTeam, IOrganizationTeamEmployee, IRole } from '@gauzy/contracts';
 import { Entity, Column, ManyToOne, RelationId, Index } from 'typeorm';
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { IsBoolean, IsOptional } from 'class-validator';
 import {
 	Employee,
 	OrganizationTeam,
@@ -15,8 +16,11 @@ export class OrganizationTeamEmployee extends TenantOrganizationBaseEntity
 	/**
 	 * enabled / disabled time tracking feature for team member
 	 */
+	@ApiPropertyOptional({ type: () => Boolean })
+	@IsOptional()
+	@IsBoolean()
 	@Column({ type: Boolean, nullable: true, default: true })
-	isTrackingEnabled: boolean;
+	isTrackingEnabled?: boolean;
 
 	/*
 	|--------------------------------------------------------------------------
