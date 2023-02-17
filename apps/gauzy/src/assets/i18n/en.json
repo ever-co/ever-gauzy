@@ -2573,6 +2573,7 @@
 		"EMAIL": "Email",
 		"PASSWORD": "Password",
 		"REPEAT_PASSWORD": "Repeat Password",
+		"PHONE_NUMBER": "Phone Number",
 		"ERROR": "Error",
 		"SAVE": "Save",
 		"VALIDATION": {

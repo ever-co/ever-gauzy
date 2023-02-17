@@ -2562,6 +2562,7 @@
 		"EMAIL": "דוא\"ל",
 		"PASSWORD": "סיסמה",
 		"REPEAT_PASSWORD": "Repeat Password",
+		"PHONE_NUMBER": "Phone Number",
 		"ERROR": "Error",
 		"SAVE": "לשמור",
 		"VALIDATION": {

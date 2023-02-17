@@ -2562,6 +2562,7 @@
 		"EMAIL": "Eлектронна поща",
 		"PASSWORD": "Парола",
 		"REPEAT_PASSWORD": "Repeat Password",
+		"PHONE_NUMBER": "Phone Number",
 		"ERROR": "Error",
 		"SAVE": "Запази",
 		"VALIDATION": {
