@@ -268,6 +268,7 @@
 		"EMAIL": "דוא\"ל",
 		"LABELS": {
 			"NAME": "שם",
+			"PHONE_NUMBER": "מספר טלפון",
 			"WEBSITE": "Website",
 			"FIRST_NAME": "שם פרטי",
 			"LAST_NAME": "שם משפחה",
@@ -414,6 +415,7 @@
 		},
 		"PLACEHOLDERS": {
 			"NAME": "שם",
+			"PHONE_NUMBER": "מספר טלפון",
 			"DEFAULT": "Select Default",
 			"FIRST_NAME": "שם פרטי",
 			"LAST_NAME": "שם משפחה",
@@ -2562,7 +2564,6 @@
 		"EMAIL": "דוא\"ל",
 		"PASSWORD": "סיסמה",
 		"REPEAT_PASSWORD": "Repeat Password",
-		"PHONE_NUMBER": "Phone Number",
 		"ERROR": "Error",
 		"SAVE": "לשמור",
 		"VALIDATION": {

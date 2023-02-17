@@ -268,6 +268,7 @@
 		"EMAIL": "Eлектронна поща",
 		"LABELS": {
 			"NAME": "Име",
+			"PHONE_NUMBER": "телефонен номер",
 			"WEBSITE": "Website",
 			"FIRST_NAME": "Име (незадължително)",
 			"LAST_NAME": "Фамилия (незадължително)",
@@ -414,6 +415,7 @@
 		},
 		"PLACEHOLDERS": {
 			"NAME": "Име",
+			"PHONE_NUMBER": "телефонен номер",
 			"DEFAULT": "Select Default",
 			"FIRST_NAME": "Име",
 			"LAST_NAME": "Фамилия",
@@ -2562,7 +2564,6 @@
 		"EMAIL": "Eлектронна поща",
 		"PASSWORD": "Парола",
 		"REPEAT_PASSWORD": "Repeat Password",
-		"PHONE_NUMBER": "Phone Number",
 		"ERROR": "Error",
 		"SAVE": "Запази",
 		"VALIDATION": {
