@@ -20,16 +20,23 @@ export class PublicTeamService {
 	 * @returns
 	 */
 	async findOneByProfileLink(
-		where: FindOptionsWhere<OrganizationTeam>,
+		options: FindOptionsWhere<OrganizationTeam>,
 		relations: string[]
 	): Promise<IOrganizationTeam> {
 		try {
 			return await this.repository.findOneOrFail({
-				where,
-				relations
+				where: {
+					public: true,
+					...options
+				},
+				...(
+					(relations) ? {
+						relations: relations
+					} : {}
+				),
 			});
 		} catch (error) {
-			throw new NotFoundException(`The requested record was not found`);
+			throw new NotFoundException();
 		}
 	}
 }
