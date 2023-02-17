@@ -60,7 +60,7 @@
 						<div class="row">
 							<div class="col-12 form-group tp-padding">
 								<label>Client</label>
-								<ng-select [addTag]=" (hasContactPermission$ | async) ? addContact: null"
+								<ng-select [disabled]="(start$ | async)" [addTag]=" (hasContactPermission$ | async) ? addContact: null"
 									addTagText="Add contact" [class]="
 										errors?.client ? 'error-border' : ''
 									" [clearable]="true" placeholder="Client" [(ngModel)]="organizationContactId"
@@ -87,7 +87,7 @@
 						<div class="row">
 							<div class="col-12 form-group">
 								<label>Project</label>
-								<ng-select [addTag]="(hasProjectPermission$ | async) ? addProject: null"
+								<ng-select [disabled]="(start$ | async)" [addTag]="(hasProjectPermission$ | async) ? addProject: null"
 									addTagText="Add project" [class]="errors?.project ? 'error-border' : ''"
 									[clearable]="true" placeholder="Project" [(ngModel)]="projectSelect"
 									[items]="projects$ | async" bindValue="id" bindLabel="name"
@@ -113,7 +113,7 @@
 						<div class="row">
 							<div class="col-12 form-group" *ngIf="!isExpand">
 								<label>Task</label>
-								<ng-select [addTag]="(hasTaskPermission$ | async)  ? addNewTask: null"
+								<ng-select [disabled]="(start$ | async)" [addTag]="(hasTaskPermission$ | async)  ? addNewTask: null"
 									addTagText="Add task" [class]="errors?.task ? 'error-border' : ''"
 									[clearable]="true" placeholder="Task" [(ngModel)]="taskSelect"
 									[items]="tasks$ | async" bindValue="id" bindLabel="title"
@@ -136,7 +136,7 @@
 						<div class="row">
 							<div class="col-12 form-group">
 								<label>Working on:</label>
-								<textarea nbInput fullWidth placeholder="Note" status="basic" [(ngModel)]="note"
+								<textarea nbInput [disabled]="(start$ | async)" fullWidth placeholder="Note" status="basic" [(ngModel)]="note"
 									[status]="errors?.note ? 'danger' : 'basic'"
 									(ngModelChange)="descriptionChange($event)"></textarea>
 							</div>
@@ -148,7 +148,7 @@
 																">
 								<div class="row">
 									<div class="col-8">
-										<nb-toggle [checked]="aw$ | async" (checkedChange)="setAW($event)">ActivityWatch
+										<nb-toggle [disabled]="(start$ | async)" [checked]="aw$ | async" (checkedChange)="setAW($event)">ActivityWatch
 											Integration
 										</nb-toggle>
 									</div>
@@ -231,8 +231,8 @@
 						<div class="row">
 							<div class="col-12 search">
 								<button nbButton nbTooltipStatus="warning"
-									[nbTooltip]="!(hasTaskPermission$ | async) ?'Request permission from the organization administrator': (isOffline$ | async) ? 'Return online': null"
-									[nbTooltipDisabled]="(hasTaskPermission$ | async) && !(isOffline$ | async)"
+									[nbTooltip]="!(hasTaskPermission$ | async) ?'Request permission from the organization administrator': (start$ | async) ? 'Stop timer first' : (isOffline$ | async) ? 'Return online' : null"
+									[nbTooltipDisabled]="!(start$ | async) && (hasTaskPermission$ | async) && !(isOffline$ | async)"
 									nbTooltipStatus="warning" class="mb-2" status="success" (click)="addTask()">
 									<nb-icon icon="plus" pack="font-awesome"></nb-icon>Add
 								</button>
@@ -242,12 +242,12 @@
 							<div class="col-12 search">
 								<nb-form-field>
 									<nb-icon nbPrefix icon="search-outline"></nb-icon>
-									<input type="text" fullWidth nbInput placeholder="Search" #search
+									<input type="text" fullWidth nbInput [disabled]="(start$ | async)" placeholder="Search" #search
 										(keydown.enter)="onSearch(search?.value)">
 								</nb-form-field>
 							</div>
 						</div>
-						<div class="row">
+						<div class="row" [ngClass]="{'disabled-table': (start$ | async)}">
 							<div *ngIf="tableData?.length > 0; else noTask" class="col-12 custom-table">
 								<div class="table-scroll-container">
 									<ng2-smart-table #taskTable style="cursor: pointer" [settings]="tableHeader"
