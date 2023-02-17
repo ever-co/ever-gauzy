@@ -29,12 +29,14 @@ import { NgSelectModule } from '@ng-select/ng-select';
 import { TasksModule } from '../tasks/tasks.module';
 import { PaginationModule } from './pagination/pagination.module';
 import { NoDataMessageComponent } from './no-data-message/no-data-message.component';
+import { HumanizePipe } from './pipes/humanize.pipe';
 
 @NgModule({
 	declarations: [
 		TimeTrackerComponent,
 		CustomRenderComponent,
 		NoDataMessageComponent,
+		HumanizePipe
 	],
 	imports: [
 		CommonModule,
@@ -66,8 +68,8 @@ import { NoDataMessageComponent } from './no-data-message/no-data-message.compon
 		NbSidebarService,
 		TimeTrackerService,
 		NbDialogService,
-		NbToastrService,
+		NbToastrService
 	],
 	exports: [TimeTrackerComponent],
 })
-export class TimeTrackerModule {}
+export class TimeTrackerModule { }

@@ -177,7 +177,7 @@
 										<div *ngIf="(lastScreenCapture$ | async)?.recordedAt"
 											class="screen-capture-label-left">
 											<span>Last screen capture taken </span>
-											<span>{{humanize((lastScreenCapture$ | async)?.recordedAt)}}</span>
+											<span>{{(lastScreenCapture$ | async)?.recordedAt | humanize }}</span>
 										</div>
 									</nb-card-header>
 									<nb-card-body class="p-0">
