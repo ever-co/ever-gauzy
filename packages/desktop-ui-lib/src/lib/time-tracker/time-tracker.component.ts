@@ -801,7 +801,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 					const { tenantId, employeeId } = this.userData;
 					const { id: organizationId } = this.userOrganization;
 					const payload = {
-						timeslotIds: [...arg.timeslotIds],
+						timeslotIds: [..._.uniq(arg.timeslotIds)],
 						token: this.token,
 						apiHost: this.apiHost,
 						tenantId,
@@ -820,19 +820,31 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 							taskId: this.taskSelect,
 							organizationId: this.userOrganization.id,
 							tenantId: this.userData.tenantId,
-							organizationContactId: this.organizationContactId,
-							apiHost: this.apiHost
+							organizationContactId:
+								this.organizationContactId,
+							apiHost: this.apiHost,
 						};
-						this.timeTrackerService.toggleApiStop(params).then(() =>
-							this.timeTrackerService.deleteTimeSlots(
-								payload
-							).then(async () => {
-								console.log('Deleted');
-								await this.timeTrackerService.toggleApiStart(params);
-								this.getTodayTime({ ...payload, employeeId }, true);
-							})
-						)
+						this.timeTrackerService
+							.toggleApiStop(params)
+							.then(() =>
+								this.timeTrackerService
+									.deleteTimeSlots(payload)
+									.then(async () => {
+										console.log('Deleted');
+										await this.timeTrackerService.toggleApiStart(
+											params
+										);
+										this.getTodayTime(
+											{ ...payload, employeeId },
+											true
+										);
+									})
+							);
 					} else {
+						do {
+							await this.getTimerStatus(payload);
+							console.log('Waiting...');
+						} while (this.timerStatus.running);
 						await this.timeTrackerService.deleteTimeSlots(
 							payload
 						);
