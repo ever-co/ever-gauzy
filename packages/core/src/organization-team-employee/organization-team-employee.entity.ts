@@ -1,7 +1,7 @@
 import { IEmployee, IOrganizationTeam, IOrganizationTeamEmployee, IRole } from '@gauzy/contracts';
 import { Entity, Column, ManyToOne, RelationId, Index } from 'typeorm';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsBoolean, IsOptional } from 'class-validator';
+import { IsBoolean, IsNotEmpty, IsOptional, IsUUID } from 'class-validator';
 import {
 	Employee,
 	OrganizationTeam,
@@ -38,6 +38,8 @@ export class OrganizationTeamEmployee extends TenantOrganizationBaseEntity
 	public organizationTeam!: IOrganizationTeam;
 
 	@ApiProperty({ type: () => String })
+	@IsNotEmpty()
+	@IsUUID()
 	@RelationId((it: OrganizationTeamEmployee) => it.organizationTeam)
 	@Index()
 	@Column()

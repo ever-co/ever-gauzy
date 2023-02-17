@@ -10,6 +10,6 @@ export interface IOrganizationTeamEmployee extends IBasePerTenantAndOrganization
 
 export interface IOrganizationTeamEmployeeFindInput extends IBasePerTenantAndOrganizationEntityModel, IRelationalOrganizationTeam { }
 
-export interface IOrganizationTeamEmployeeUpdateInput extends IBasePerTenantAndOrganizationEntityModel {
+export interface IOrganizationTeamEmployeeUpdateInput extends IBasePerTenantAndOrganizationEntityModel, IRelationalOrganizationTeam {
 	isTrackingEnabled?: boolean;
 }
