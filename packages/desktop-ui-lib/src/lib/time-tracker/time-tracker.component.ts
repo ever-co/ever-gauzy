@@ -805,11 +805,11 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 						token: this.token,
 						apiHost: this.apiHost,
 						tenantId,
-						organizationId,
+						organizationId
 					};
 					const notification = {
 						message: 'Idle time successfully deleted',
-						title: 'Gauzy',
+						title: 'Gauzy'
 					};
 					// Silent delete and restart
 					if (arg.isWorking && this.start) {
@@ -820,24 +820,40 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 							taskId: this.taskSelect,
 							organizationId: this.userOrganization.id,
 							tenantId: this.userData.tenantId,
-							organizationContactId:
-								this.organizationContactId,
-							apiHost: this.apiHost,
+							organizationContactId: this.organizationContactId,
+							apiHost: this.apiHost
 						};
 						this.timeTrackerService
-							.toggleApiStop(params)
+							.toggleApiStop({
+								...params,
+								...arg.timer,
+								stoppedAt: new Date()
+							})
 							.then(() =>
 								this.timeTrackerService
 									.deleteTimeSlots(payload)
 									.then(async () => {
 										console.log('Deleted');
-										await this.timeTrackerService.toggleApiStart(
-											params
-										);
+										const timelog =
+											await this.timeTrackerService.toggleApiStart(
+												{
+													...params,
+													startedAt: new Date()
+												}
+											);
 										this.getTodayTime(
 											{ ...payload, employeeId },
 											true
 										);
+										setTimeout(() => {
+											event.sender.send(
+												'update-synced-timer',
+												{
+													lastTimer: timelog,
+													...arg.timer,
+												}
+											);
+										}, 0);
 									})
 							);
 					} else {
@@ -845,9 +861,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 							await this.getTimerStatus(payload);
 							console.log('Waiting...');
 						} while (this.timerStatus.running);
-						await this.timeTrackerService.deleteTimeSlots(
-							payload
-						);
+						await this.timeTrackerService.deleteTimeSlots(payload);
 					}
 					this.toastrService.success(
 						notification.message,

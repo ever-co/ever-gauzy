@@ -275,7 +275,8 @@ export function ipcTimer(
 					id: arg.id,
 					timelogId: arg.lastTimer.id,
 					timesheetId: arg.lastTimer.timesheetId,
-					synced: true
+					synced: true,
+					...(arg.lastTimer.startedAt && { startedAt: new Date(arg.lastTimer.startedAt) })
 				})
 			);
 		} catch (error) {

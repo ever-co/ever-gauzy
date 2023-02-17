@@ -6,7 +6,7 @@ import NotificationDesktop from './desktop-notifier';
 import { DesktopDialog } from './desktop-dialog';
 import { BrowserWindow } from 'electron';
 import { LocalStore } from './desktop-store';
-import { IntervalService } from './offline';
+import { IntervalService, TimerService } from './offline';
 import moment from 'moment';
 
 export class DesktopOsInactivityHandler {
@@ -17,6 +17,7 @@ export class DesktopOsInactivityHandler {
 	private _waiting: number;
 	private _waitingIntervalId: any;
 	private _intervalService: IntervalService;
+	private _timerService: TimerService;
 
 
 	constructor(powerManager: PowerManagerDetectInactivity) {
@@ -26,6 +27,7 @@ export class DesktopOsInactivityHandler {
 		this._waiting = 0;
 		this._waitingIntervalId = null;
 		this._intervalService = new IntervalService();
+		this._timerService = new TimerService();
 		this._powerManager.detectInactivity.on(
 			'activity-proof-request',
 			async () => {
@@ -135,8 +137,10 @@ export class DesktopOsInactivityHandler {
 		const stoppedAt = new Date();
 		const startedAt = moment(stoppedAt).subtract(inactivityTimeLimit * 60 + this._waiting, 'seconds').toDate();
 		const timeslotIds = await this._intervalService.removeIdlesTime(startedAt, stoppedAt);
+		const timer = await this._timerService.findLastOne();
 		if (timeslotIds.length > 0) {
 			this._powerManager.window.webContents.send('remove_idle_time', {
+				timer: timer,
 				isWorking: isStillWorking,
 				timeslotIds
 			});
