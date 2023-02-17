@@ -1,6 +1,7 @@
 import { EntitySubscriberInterface, EventSubscriber, InsertEvent, LoadEvent } from "typeorm";
 import { sluggable } from "@gauzy/common";
 import { RequestContext } from "./../core/context";
+import { getDummyImage } from "./../core/utils";
 import { OrganizationTeam } from "./organization-team.entity";
 
 @EventSubscriber()
@@ -51,6 +52,10 @@ export class OrganizationTeamSubscriber implements EntitySubscriberInterface<Org
                     // organization team slug based on name or profile link
                     if (entity.profile_link || entity.name) {
                         entity.profile_link = sluggable(`${entity.profile_link || entity.name}`);
+                    }
+
+                    if (!entity.logo) {
+                        entity.logo = getDummyImage(330, 300, (entity.name).charAt(0).toUpperCase());
                     }
                 }
             }

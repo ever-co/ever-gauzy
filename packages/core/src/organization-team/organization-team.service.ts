@@ -45,7 +45,7 @@ export class OrganizationTeamService extends TenantAwareCrudService<Organization
 		entity: IOrganizationTeamCreateInput
 	): Promise<IOrganizationTeam> {
 		const { tags = [], memberIds = [], managerIds = [] } = entity;
-		const { name, organizationId, prefix, profile_link } = entity;
+		const { name, organizationId, prefix, profile_link, logo } = entity;
 
 		try {
 			const tenantId = RequestContext.currentTenantId();
@@ -101,7 +101,8 @@ export class OrganizationTeamService extends TenantAwareCrudService<Organization
 				prefix,
 				members,
 				profile_link,
-				public: entity.public
+				public: entity.public,
+				logo
 			});
 		} catch (error) {
 			throw new BadRequestException(`Failed to create a team: ${error}`);
@@ -112,12 +113,15 @@ export class OrganizationTeamService extends TenantAwareCrudService<Organization
 		id: IOrganizationTeam['id'],
 		entity: IOrganizationTeamUpdateInput
 	): Promise<OrganizationTeam> {
-		const { memberIds = [], managerIds = [] } = entity;
-		const { name, prefix, organizationId, tags } = entity;
+
+		const tenantId = RequestContext.currentTenantId();
+		const { memberIds, managerIds } = entity;
+		const { name, prefix, organizationId, tags, logo } = entity;
 
 		let organizationTeam = await this.findOneByIdString(id, {
 			where: {
-				organizationId
+				organizationId,
+				tenantId
 			}
 		});
 
@@ -133,8 +137,11 @@ export class OrganizationTeamService extends TenantAwareCrudService<Organization
 					organizationTeam = await this.findOneByIdString(id, {
 						where: {
 							organizationId,
+							tenantId,
 							members: {
 								employeeId,
+								tenantId,
+								organizationId,
 								role: {
 									name: RolesEnum.MANAGER
 								}
@@ -148,52 +155,37 @@ export class OrganizationTeamService extends TenantAwareCrudService<Organization
 		}
 
 		try {
-			const tenantId = RequestContext.currentTenantId();
-			/**
-			 * If, employee create teams, default add as a manager
-			 */
-			try {
-				await this.roleService.findOneByIdString(RequestContext.currentRoleId(), {
+			if (isNotEmpty(memberIds) || isNotEmpty(managerIds)) {
+				/**
+				 * Get manager role
+				 */
+				const role = await this.roleService.findOneByWhereOptions({
+					name: RolesEnum.MANAGER
+				});
+
+				const employees = await this.employeeRepository.find({
 					where: {
-						name: RolesEnum.EMPLOYEE
+						id: In([...memberIds, ...managerIds]),
+						organizationId,
+						tenantId
+					},
+					relations: {
+						user: true
 					}
 				});
 
-				const employeeId = RequestContext.currentEmployeeId();
-				if (!managerIds.includes(employeeId)) {
-					managerIds.push(employeeId);
-				}
-			} catch (error) { }
-
-			/**
-			 * Get manager role
-			 */
-			const role = await this.roleService.findOneByWhereOptions({
-				name: RolesEnum.MANAGER
-			});
-
-			const employees = await this.employeeRepository.find({
-				where: {
-					id: In([...memberIds, ...managerIds]),
+				// Update nested entity
+				await this.organizationTeamEmployeeService.updateOrganizationTeam(
+					id,
 					organizationId,
-					tenantId
-				},
-				relations: {
-					user: true
-				}
-			});
+					employees,
+					role,
+					managerIds,
+					memberIds
+				);
+			}
 
-			// Update nested entity
-			await this.organizationTeamEmployeeService.updateOrganizationTeam(
-				id,
-				organizationId,
-				employees,
-				role,
-				managerIds,
-				memberIds
-			);
-
-			this.repository.merge(organizationTeam, { name, tags, prefix, public: entity.public });
+			this.repository.merge(organizationTeam, { name, tags, prefix, public: entity.public, logo });
 			return await this.repository.save(organizationTeam);
 		} catch (err /*: WriteError*/) {
 			throw new BadRequestException(err);
