@@ -268,6 +268,7 @@
 		"EMAIL": "Эл. адрес",
 		"LABELS": {
 			"NAME": "Имя",
+			"PHONE_NUMBER": "номер телефона",
 			"WEBSITE": "Сайт",
 			"FIRST_NAME": "Имя (необязательно)",
 			"LAST_NAME": "Фамилия (необязательно)",
@@ -414,6 +415,7 @@
 		},
 		"PLACEHOLDERS": {
 			"NAME": "Имя",
+			"PHONE_NUMBER": "номер телефона",
 			"DEFAULT": "Выбрать по умолчанию",
 			"FIRST_NAME": "Имя",
 			"LAST_NAME": "Фамилия",

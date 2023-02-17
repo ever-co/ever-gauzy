@@ -267,6 +267,7 @@
 		"EMAIL": "Email",
 		"LABELS": {
 			"NAME": "Name",
+			"PHONE_NUMBER": "Phone Number",
 			"WEBSITE": "Website",
 			"FIRST_NAME": "First Name (optional)",
 			"LAST_NAME": "Last Name (optional)",
@@ -413,6 +414,7 @@
 		},
 		"PLACEHOLDERS": {
 			"NAME": "Name",
+			"PHONE_NUMBER": "Phone Number",
 			"DEFAULT": "Select Default",
 			"FIRST_NAME": "First Name",
 			"LAST_NAME": "Last Name",
