@@ -26,6 +26,7 @@ import { PasswordFormFieldModule } from '../forms/fields/password';
 import { RoleFormFieldModule } from '../forms/fields/role';
 import { TableComponentsModule } from '../../table-components';
 import { TimeZoneSelectorModule } from '../../selectors';
+import { PhoneFormInputModule } from '../forms/fields';
 
 @NgModule({
 	imports: [
@@ -48,10 +49,11 @@ import { TimeZoneSelectorModule } from '../../selectors';
 		PasswordFormFieldModule,
 		RoleFormFieldModule,
 		TableComponentsModule,
-		TimeZoneSelectorModule
+		TimeZoneSelectorModule,
+		PhoneFormInputModule
 	],
 	exports: [EditProfileFormComponent],
 	declarations: [EditProfileFormComponent],
 	providers: [OrganizationsService, UsersService, RoleService]
 })
-export class EditProfileFormModule {}
+export class EditProfileFormModule { }
