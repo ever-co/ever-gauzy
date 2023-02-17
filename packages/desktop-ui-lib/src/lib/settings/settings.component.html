@@ -27,7 +27,7 @@
 			</div>
 			<div class="row">
 				<div class="col-12">
-					<div class="row monitors mb-3">
+					<div [ngClass]="{'disabled-monitors': appSetting?.timerStarted}" class="row monitors mb-3">
 						<div class="col-5" *ngFor="let item of monitorsOption">
 							<nb-card accent="{{ item?.accent }}" status="primary">
 								<nb-card-body class="center-card" (click)="selectMonitorOption(item)">
