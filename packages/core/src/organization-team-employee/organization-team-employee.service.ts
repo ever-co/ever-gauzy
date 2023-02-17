@@ -1,7 +1,15 @@
 import { ForbiddenException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { DeleteResult, Repository } from 'typeorm';
-import { IEmployee, IOrganizationTeam, IOrganizationTeamEmployee, IOrganizationTeamEmployeeFindInput, PermissionsEnum, RolesEnum } from '@gauzy/contracts';
+import { DeleteResult, Repository, UpdateResult } from 'typeorm';
+import {
+	IEmployee,
+	IOrganizationTeam,
+	IOrganizationTeamEmployee,
+	IOrganizationTeamEmployeeFindInput,
+	IOrganizationTeamEmployeeUpdateInput,
+	PermissionsEnum,
+	RolesEnum
+} from '@gauzy/contracts';
 import { isNotEmpty } from '@gauzy/common';
 import { TenantAwareCrudService } from './../core/crud';
 import { RequestContext } from './../core/context';
@@ -82,6 +90,40 @@ export class OrganizationTeamEmployeeService extends TenantAwareCrudService<Orga
 		memberIds.forEach(async (memberId) => {
 			await this.repository.delete(memberId);
 		});
+	}
+
+	/**
+	 * Update organization team member entity
+	 *
+	 * @param id
+	 * @param entity
+	 * @returns
+	 */
+	public async update(
+		memberId: IOrganizationTeamEmployee['id'],
+		entity: IOrganizationTeamEmployeeUpdateInput
+	): Promise<OrganizationTeamEmployee | UpdateResult> {
+		try {
+			const { organizationId, organizationTeamId } = entity;
+			if (!RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE)) {
+				try {
+					await this.findOneByWhereOptions({
+						employeeId: RequestContext.currentEmployeeId(),
+						organizationId,
+						organizationTeamId,
+						role: {
+							name: RolesEnum.MANAGER
+						}
+					});
+					return await super.update({ id: memberId, organizationId, organizationTeamId }, entity);
+				} catch (error) {
+					throw new ForbiddenException();
+				}
+			}
+			return await super.update({ id: memberId, organizationId, organizationTeamId }, entity);
+		} catch (error) {
+			throw new ForbiddenException();
+		}
 	}
 
 	/**
