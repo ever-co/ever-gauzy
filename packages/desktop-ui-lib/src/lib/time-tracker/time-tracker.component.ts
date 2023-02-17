@@ -1209,7 +1209,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 						default:
 							break;
 					}
-				} else await this.stopTimer();
+				} else if (this.start) await this.stopTimer();
 			});
 	}
 
