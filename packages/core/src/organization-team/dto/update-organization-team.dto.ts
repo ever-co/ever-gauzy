@@ -1,19 +1,22 @@
-import { ApiProperty, IntersectionType, PartialType } from "@nestjs/swagger";
-import { IsNotEmpty, IsString } from "class-validator";
+import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
+import { IsNotEmpty, IsOptional, IsString } from "class-validator";
 import { IOrganizationTeamUpdateInput } from "@gauzy/contracts";
-import { RelationalTagDTO } from "./../../tags/dto";
 import { OrganizationTeamDTO } from "./organization-team.dto";
+import { IsTeamAlreadyExist } from "shared/validators";
 
 /**
  * Update organization team request DTO's
  */
-export class UpdateOrganizationTeamDTO extends IntersectionType(
-    OrganizationTeamDTO,
-    PartialType(RelationalTagDTO),
-) implements IOrganizationTeamUpdateInput {
+export class UpdateOrganizationTeamDTO extends OrganizationTeamDTO implements IOrganizationTeamUpdateInput {
 
-    @ApiProperty({ type: () => String })
-	@IsNotEmpty()
-	@IsString()
-	readonly id: string;
+    @ApiProperty({ type: () => String, required: true })
+    @IsNotEmpty()
+    @IsString()
+    readonly id: string;
+
+    @ApiPropertyOptional({ type: () => String, required: false })
+    @IsOptional()
+    @IsString()
+    @IsTeamAlreadyExist()
+    readonly name: string;
 }
