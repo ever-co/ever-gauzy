@@ -34,7 +34,6 @@ export class OrganizationTeamEmployeeController {
 		@Param('id', UUIDValidationPipe) memberId: IOrganizationTeamEmployee['id'],
 		@Body() entity: UpdateTeamMemberDTO
 	): Promise<UpdateResult | IOrganizationTeamEmployee> {
-		console.log({ memberId, entity });
 		return await this.organizationTeamEmployeeService.update(memberId, entity);
 	}
 
@@ -58,7 +57,7 @@ export class OrganizationTeamEmployeeController {
 	@Permissions(PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ORG_TEAM_DELETE)
 	@UsePipes(new ValidationPipe({ whitelist: true }))
 	@Delete(':id')
-	async deleteTeamMember(
+	async delete(
 		@Param('id', UUIDValidationPipe) memberId: IOrganizationTeamEmployee['id'],
 		@Query() options: DeleteTeamMemberQueryDTO
 	): Promise<DeleteResult | OrganizationTeamEmployee> {
