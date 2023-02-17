@@ -152,9 +152,13 @@ if (!gotTheLock) {
 	app.quit();
 } else {
 	app.on('second-instance', () => {
-		// if someone tried to run a second instance, we should focus our window and show warning message.
+		// if someone tried to run a second instance, we should only show and focus on current window instance.
 		if (gauzyWindow) {
-			if (gauzyWindow.isMinimized()) gauzyWindow.restore();
+			// show window if it hides
+			gauzyWindow.show();
+			// restore window if it's minified
+			gauzyWindow.restore();
+			// focus on the main window
 			gauzyWindow.focus();
 		}
 	});
@@ -183,14 +187,14 @@ async function startServer(value, restart = false) {
 			project: projectConfig
 				? projectConfig
 				: {
-						projectId: null,
-						taskId: null,
-						note: null,
-						aw,
-						organizationContactId: null,
-				  },
+					projectId: null,
+					taskId: null,
+					note: null,
+					aw,
+					organizationContactId: null,
+				},
 		});
-	} catch (error) {}
+	} catch (error) { }
 
 	/* create main window */
 	if (value.serverConfigConnected || !value.isLocalServer) {
@@ -471,8 +475,8 @@ ipcMain.on('check_database_connection', async (event, arg) => {
 				arg.db === 'postgres'
 					? 'Connection to PostgresSQL DB Succeeds'
 					: arg.db === 'mysql'
-					? 'Connection to MySQL DB Succeeds'
-					: 'Connection to SQLITE DB Succeeds',
+						? 'Connection to MySQL DB Succeeds'
+						: 'Connection to SQLITE DB Succeeds',
 		});
 	} catch (error) {
 		event.sender.send('database_status', {
@@ -526,7 +530,7 @@ app.on('before-quit', (e) => {
 		// soft download cancellation
 		try {
 			updater.cancel();
-		} catch (e) {}
+		} catch (e) { }
 		app.exit(0);
 		if (serverDesktop) serverDesktop.kill();
 		if (serverGauzy) serverGauzy.kill();
@@ -556,16 +560,16 @@ function launchAtStartup(autoLaunch, hidden) {
 				path: app.getPath('exe'),
 				args: hidden
 					? [
-							'--processStart',
-							`"${exeName}"`,
-							'--process-start-args',
-							`"--hidden"`,
-					  ]
+						'--processStart',
+						`"${exeName}"`,
+						'--process-start-args',
+						`"--hidden"`,
+					]
 					: [
-							'--processStart',
-							`"${exeName}"`,
-							'--process-start-args',
-					  ],
+						'--processStart',
+						`"${exeName}"`,
+						'--process-start-args',
+					],
 			});
 			break;
 		case 'linux':
