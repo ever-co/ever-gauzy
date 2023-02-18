@@ -1,3 +1,10 @@
+// Copyright (c) 2019-2023 Ever Co. LTD
+
+// Modified code from https://github.com/urish/ngx-moment.
+// Originally MIT Licensed
+// - see https://github.com/urish/ngx-moment/blob/master/LICENSE
+// - original code `ngx-moment (c) 2015, 2016 Uri Shaked`;
+
 import { Pipe, ChangeDetectorRef, PipeTransform, OnDestroy, NgZone } from '@angular/core';
 import * as moment from 'moment';
 

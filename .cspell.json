@@ -222,7 +222,8 @@
         "KPIS",
         "Freemont",
         "keyresults",
-        "signups"
+        "signups",
+        "Shaked"
     ],
     "useGitignore": true,
     "ignorePaths": [
