@@ -144,7 +144,7 @@ export class IntervalDAO implements DAO<IntervalTO> {
 				.connection<IntervalTO>(TABLE_NAME_INTERVALS)
 				.select('remoteId')
 				.where('employeeId', user.employeeId)
-				.where((qb) => qb.andWhereBetween('startedAt', [startedAt, stoppedAt]).andWhere('synced', true))
+				.where((qb) => qb.andWhereBetween('stoppedAt', [startedAt, stoppedAt]).andWhere('synced', true))
 			await this.deleteLocallyIdlesTime(startedAt, stoppedAt, user);
 			return remotesIds;
 		} catch (error) {
@@ -168,7 +168,7 @@ export class IntervalDAO implements DAO<IntervalTO> {
 				.connection<IntervalTO>(TABLE_NAME_INTERVALS)
 				.select('id')
 				.where('employeeId', user.employeeId)
-				.where((qb) => qb.andWhereBetween('startedAt', [startedAt, stoppedAt]));
+				.where((qb) => qb.andWhereBetween('stoppedAt', [startedAt, stoppedAt]));
 			await this._provider
 				.connection<IntervalTO>(TABLE_NAME_INTERVALS)
 				.whereIn('id', subQuery.map(({ id }) => id))
