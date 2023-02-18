@@ -4,6 +4,20 @@ public/screenshots/**/*.jpg
 public/screenshots/**/*.png
 public/invoices/pdf/*.pdf
 
+# JPEG
+public/ever-icons/**/*.jpg
+public/ever-icons/**/*.jpeg
+
+# Portable Network Graphics
+public/ever-icons/**/*.png
+
+# Scalable Vector Graphics
+public/ever-icons/**/*.svg
+public/ever-icons/**/*.svgz
+
+# Graphics Interchange Format
+public/ever-icons/**/*.gif
+
 # Ignore Import/Export Path
 public/import/
 public/export/
