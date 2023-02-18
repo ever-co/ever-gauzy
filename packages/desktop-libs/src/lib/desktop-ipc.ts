@@ -749,6 +749,10 @@ export function ipcTimer(
 		const notify = new NotificationDesktop();
 		notify.customNotification(notification.message, notification.text);
 	})
+
+	ipcMain.on('update_session', (event, timer: TimerTO) => {
+		timerHandler.timeStart = moment(timer.startedAt);
+	})
 }
 
 export function removeMainListener() {

@@ -347,12 +347,12 @@ export class TrayIcon {
 		});
 
 		ipcMain.on('update_tray_time_update', (event, arg) => {
-			contextMenu[0].label = `Now tracking time - ${arg.hours}h ${arg.minutes}m`;
+			contextMenu[0].label = `Now tracking time - ${arg}`;
 			this.tray.setContextMenu(Menu.buildFromTemplate(contextMenu));
 		});
 
 		ipcMain.on('update_tray_time_title', (event, arg) => {
-			this.tray.setTitle(arg ? arg.timeRun : '00:00:00', options);
+			this.tray.setTitle(arg ? arg.timeRun : '--:--:--', options);
 		});
 
 		ipcMain.on('auth_success', async (event, arg) => {
