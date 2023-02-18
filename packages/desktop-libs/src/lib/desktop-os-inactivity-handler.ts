@@ -14,8 +14,8 @@ export class DesktopOsInactivityHandler {
 	private _powerManager: PowerManagerDetectInactivity;
 	private _notify: NotificationDesktop;
 	private _dialog: DesktopDialog;
-	private _waiting: number;
-	private _waitingIntervalId: any;
+	private _startedAt: Date;
+	private _stoppedAt: Date;
 	private _intervalService: IntervalService;
 	private _timerService: TimerService;
 
@@ -24,8 +24,8 @@ export class DesktopOsInactivityHandler {
 		this._notify = new NotificationDesktop();
 		this._powerManager = powerManager;
 		this._inactivityResultAccepted = false;
-		this._waiting = 0;
-		this._waitingIntervalId = null;
+		this._startedAt = null;
+		this._stoppedAt = null;
 		this._intervalService = new IntervalService();
 		this._timerService = new TimerService();
 		this._powerManager.detectInactivity.on(
@@ -34,12 +34,7 @@ export class DesktopOsInactivityHandler {
 				if (!this._isAllowTrackInactivity) return;
 				this._inactivityResultAccepted = false;
 				this._windowFocus();
-				this._waiting = 0;
-				if (!this._waitingIntervalId && this._isRemoveIdleTime) {
-					this._waitingIntervalId = setInterval(() => {
-						this._waiting++;
-					}, 1000);
-				}
+				this._startedAt = new Date();
 				this._dialog = new DesktopDialog(
 					'Gauzy',
 					'Are you still working?',
@@ -123,20 +118,13 @@ export class DesktopOsInactivityHandler {
 		return auth && auth.isRemoveIdleTime;
 	}
 
-	private _clearInterval() {
-		clearInterval(this._waitingIntervalId);
-		this._waitingIntervalId = null;
-		this._waiting = 0;
-	}
-
 	private async _removeIdleTime(isStillWorking: boolean): Promise<void> {
-		if (!this._waitingIntervalId) return;
 		if (!isStillWorking) this._powerManager.pauseTracking();
 		const auth = LocalStore.getStore('auth');
 		const inactivityTimeLimit = auth ? auth.inactivityTimeLimit : 10;
-		const stoppedAt = new Date();
-		const startedAt = moment(stoppedAt).subtract(inactivityTimeLimit * 60 + this._waiting, 'seconds').toDate();
-		const timeslotIds = await this._intervalService.removeIdlesTime(startedAt, stoppedAt);
+		this._stoppedAt = new Date();
+		this._startedAt = moment(this._startedAt).subtract(inactivityTimeLimit, 'minutes').toDate();
+		const timeslotIds = await this._intervalService.removeIdlesTime(this._startedAt, this._stoppedAt);
 		const timer = await this._timerService.findLastOne();
 		if (timeslotIds.length > 0) {
 			this._powerManager.window.webContents.send('remove_idle_time', {
@@ -145,6 +133,5 @@ export class DesktopOsInactivityHandler {
 				timeslotIds
 			});
 		}
-		this._clearInterval();
 	}
 }
