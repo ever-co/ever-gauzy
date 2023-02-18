@@ -1209,7 +1209,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 						default:
 							break;
 					}
-				} else await this.stopTimer();
+				} else if (this.start) await this.stopTimer();
 			});
 	}
 
@@ -1595,7 +1595,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 	}
 
 	addTask() {
-		this.isAddTask = !this._isOffline && this._hasTaskPermission;
+		this.isAddTask = !this._isOffline && this._hasTaskPermission && !this.start;
 	}
 
 	closeAddTask(e) {

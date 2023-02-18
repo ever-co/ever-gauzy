@@ -604,3 +604,8 @@ img {
   width: 100%;
   padding: 0 10px;
 }
+
+.disabled-table {
+  pointer-events: none;
+  opacity: 0.5;
+}
