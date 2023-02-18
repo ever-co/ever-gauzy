@@ -336,7 +336,7 @@ export class SeedDataService {
 	constructor(
 		private readonly moduleRef: ModuleRef,
 		private readonly configService: ConfigService
-	) {}
+	) { }
 
 	/**
 	 * This config is applied only for `yarn seed:*` type calls because
@@ -510,8 +510,7 @@ export class SeedDataService {
 		try {
 			this.log(
 				chalk.green(
-					`🌱 SEEDING ${
-						env.production ? 'PRODUCTION' : ''
+					`🌱 SEEDING ${env.production ? 'PRODUCTION' : ''
 					} REPORTS DATABASE...`
 				)
 			);
@@ -527,8 +526,7 @@ export class SeedDataService {
 
 			this.log(
 				chalk.green(
-					`✅ SEEDED ${
-						env.production ? 'PRODUCTION' : ''
+					`✅ SEEDED ${env.production ? 'PRODUCTION' : ''
 					} REPORTS DATABASE`
 				)
 			);
@@ -559,8 +557,7 @@ export class SeedDataService {
 		try {
 			this.log(
 				chalk.green(
-					`🌱 SEEDING ${
-						env.production ? 'PRODUCTION' : ''
+					`🌱 SEEDING ${env.production ? 'PRODUCTION' : ''
 					} JOBS DATABASE...`
 				)
 			);
@@ -585,8 +582,7 @@ export class SeedDataService {
 
 			this.log(
 				chalk.green(
-					`✅ SEEDED ${
-						env.production ? 'PRODUCTION' : ''
+					`✅ SEEDED ${env.production ? 'PRODUCTION' : ''
 					} JOBS DATABASE`
 				)
 			);
@@ -601,8 +597,7 @@ export class SeedDataService {
 	private async seedBasicDefaultData() {
 		this.log(
 			chalk.magenta(
-				`🌱 SEEDING BASIC ${
-					env.production ? 'PRODUCTION' : ''
+				`🌱 SEEDING BASIC ${env.production ? 'PRODUCTION' : ''
 				} DATABASE...`
 			)
 		);
@@ -614,11 +609,20 @@ export class SeedDataService {
 
 		await this.tryExecute('Languages', createLanguages(this.dataSource));
 
-		await this.tryExecute('Statuses', createDefaultStatuses(this.dataSource));
+		await this.tryExecute('Statuses', createDefaultStatuses(
+			this.dataSource,
+			this.configService.config
+		));
 
-		await this.tryExecute('Priorities', createDefaultPriorities(this.dataSource));
+		await this.tryExecute('Priorities', createDefaultPriorities(
+			this.dataSource,
+			this.configService.config
+		));
 
-		await this.tryExecute('Sizes', createDefaultSizes(this.dataSource));
+		await this.tryExecute('Sizes', createDefaultSizes(
+			this.dataSource,
+			this.configService.config
+		));
 
 		// default and internal tenant
 		const tenantName =
@@ -811,8 +815,7 @@ export class SeedDataService {
 	private async seedDefaultData() {
 		this.log(
 			chalk.magenta(
-				`🌱 SEEDING DEFAULT ${
-					env.production ? 'PRODUCTION' : ''
+				`🌱 SEEDING DEFAULT ${env.production ? 'PRODUCTION' : ''
 				} DATABASE...`
 			)
 		);
@@ -1362,8 +1365,7 @@ export class SeedDataService {
 
 		this.log(
 			chalk.magenta(
-				`✅ SEEDED DEFAULT ${
-					env.production ? 'PRODUCTION' : ''
+				`✅ SEEDED DEFAULT ${env.production ? 'PRODUCTION' : ''
 				} DATABASE`
 			)
 		);
@@ -1375,8 +1377,7 @@ export class SeedDataService {
 	private async seedRandomData() {
 		this.log(
 			chalk.magenta(
-				`🌱 SEEDING RANDOM ${
-					env.production ? 'PRODUCTION' : ''
+				`🌱 SEEDING RANDOM ${env.production ? 'PRODUCTION' : ''
 				} DATABASE...`
 			)
 		);
@@ -2131,8 +2132,7 @@ export class SeedDataService {
 
 		this.log(
 			chalk.magenta(
-				`✅ SEEDED RANDOM ${
-					env.production ? 'PRODUCTION' : ''
+				`✅ SEEDED RANDOM ${env.production ? 'PRODUCTION' : ''
 				} DATABASE`
 			)
 		);
@@ -2148,9 +2148,9 @@ export class SeedDataService {
 			const assetOptions = this.configService.assetOptions;
 			const dir = env.isElectron
 				? path.join(
-						path.resolve(env.gauzyUserPath, ...['public']),
-						'screenshots'
-				  )
+					path.resolve(env.gauzyUserPath, ...['public']),
+					'screenshots'
+				)
 				: path.join(assetOptions.assetPublicPath, 'screenshots');
 
 			// delete old generated screenshots
@@ -2332,8 +2332,7 @@ export class SeedDataService {
 	private handleError(error: Error, message?: string): void {
 		this.log(
 			chalk.bgRed(
-				`🛑 ERROR: ${message ? message + '-> ' : ''} ${
-					error ? error.message : ''
+				`🛑 ERROR: ${message ? message + '-> ' : ''} ${error ? error.message : ''
 				}`
 			)
 		);
