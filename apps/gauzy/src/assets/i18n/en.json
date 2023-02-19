@@ -1831,7 +1831,9 @@
 				"ACTIVITY_PROOF_DURATION": "Activity proof duration",
 				"ACTIVITY_PROOF_DURATION_INFO": "Duration of activity proof countdown dialog, it represent an amount of minutes given to prove activity",
 				"ENABLE_DETECTION_INACTIVITY": "Enable detection of employee inactivity",
-				"ENABLE_DETECTION_INACTIVITY_INFO": "Enabled - the system will detect inactivity and display a warning. Disabled - no warning will be displayed when an employee is inactive."
+				"ENABLE_DETECTION_INACTIVITY_INFO": "Enabled - the system will detect inactivity and display a warning. Disabled - no warning will be displayed when an employee is inactive.",
+				"DELETE_IDLE_TIME": "Enable deletion of idle time",
+				"DELETE_IDLE_TIME_INFO": "Enable - the system will delete idle time. Disable - the system will not delete idle time"
 			},
 			"TEAMS_PAGE": {
 				"MANAGERS": "Managers",

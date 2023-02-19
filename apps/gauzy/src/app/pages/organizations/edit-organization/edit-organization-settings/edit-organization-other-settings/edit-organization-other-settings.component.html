@@ -988,28 +988,25 @@
 								</div>
 								</div>
 								<div class="row">
-									<div class="col-6">
-									<label class="label">
-										{{ 'Delete Idle Time' | translate }}
-									</label>
-									<button
-											[nbTooltip]="'Delete Idle Time'| translate"
-											ghost
-											nbButton
-											size="small"
-											status="info"
-									>
-										<nb-icon icon="info"></nb-icon>
-									</button>
-									<nb-toggle
-											class="d-block"
-											formControlName="isRemoveIdleTime"
-											status="primary"
-											labelPosition="start"
-										>
-											{{'Enable'| translate}}
-									</nb-toggle>
-								</div>
+									<div class="col-6 form-group invite-toggle">
+										<nb-toggle
+												class="d-block"
+												formControlName="isRemoveIdleTime"
+												status="primary"
+												labelPosition="start"
+											>
+											{{ 'ORGANIZATIONS_PAGE.EDIT.SETTINGS.DELETE_IDLE_TIME' | translate }}
+											<button
+													[nbTooltip]="'ORGANIZATIONS_PAGE.EDIT.SETTINGS.DELETE_IDLE_TIME_INFO'| translate"
+													ghost
+													nbButton
+													size="small"
+													status="info"
+											>
+												<nb-icon icon="info"></nb-icon>
+											</button>
+										</nb-toggle>
+									</div>
 								</div>
 							</div>
 						</div>
