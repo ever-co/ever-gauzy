@@ -122,7 +122,7 @@ export class IntervalDAO implements DAO<IntervalTO> {
 				};
 			});
 		} catch (error) {
-			console.error('[SCREENSHOTDAOERROR]', error);
+			console.error('[SCREENSHOT_DAO_ERROR]', error);
 		}
 	}
 
