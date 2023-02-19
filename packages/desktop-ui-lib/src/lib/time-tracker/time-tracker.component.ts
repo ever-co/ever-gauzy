@@ -800,64 +800,69 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 						message: 'Idle time successfully deleted',
 						title: 'Gauzy'
 					};
-					// Silent delete and restart
-					if (arg.isWorking && this.start) {
-						const params = {
-							token: this.token,
-							note: this.note,
-							projectId: this.projectSelect,
-							taskId: this.taskSelect,
-							organizationId: this.userOrganization.id,
-							tenantId: this.userData.tenantId,
-							organizationContactId: this.organizationContactId,
-							apiHost: this.apiHost
-						};
-						this.timeTrackerService
-							.toggleApiStop({
-								...params,
-								...arg.timer,
-								stoppedAt: new Date()
-							})
-							.then(() =>
-								this.timeTrackerService
-									.deleteTimeSlots(payload)
-									.then(async () => {
-										console.log('Deleted');
-										const timelog =
-											await this.timeTrackerService.toggleApiStart(
-												{
-													...params,
-													startedAt: new Date()
-												}
+					const isReadyForDeletion = !this._isOffline && payload.timeslotIds.length > 0;
+					if (isReadyForDeletion) {
+						// Silent delete and restart
+						if (arg.isWorking && this.start) {
+							const params = {
+								token: this.token,
+								note: this.note,
+								projectId: this.projectSelect,
+								taskId: this.taskSelect,
+								organizationId: this.userOrganization.id,
+								tenantId: this.userData.tenantId,
+								organizationContactId: this.organizationContactId,
+								apiHost: this.apiHost
+							};
+							this.timeTrackerService
+								.toggleApiStop({
+									...params,
+									...arg.timer,
+									stoppedAt: new Date()
+								})
+								.then(() =>
+									this.timeTrackerService
+										.deleteTimeSlots(payload)
+										.then(async () => {
+											console.log('Deleted');
+											const timelog =
+												await this.timeTrackerService.toggleApiStart(
+													{
+														...params,
+														startedAt: new Date()
+													}
+												);
+											this.getTodayTime(
+												{ ...payload, employeeId },
+												true
 											);
-										this.getTodayTime(
-											{ ...payload, employeeId },
-											true
-										);
-										setTimeout(() => {
-											event.sender.send('update_session', { ...timelog })
-											event.sender.send(
-												'update-synced-timer',
-												{
-													lastTimer: timelog,
-													...arg.timer,
-												}
-											);
-										}, 0);
-									})
-							);
-					} else {
-						do {
-							await this.getTimerStatus(payload);
-							console.log('Waiting...');
-						} while (this.timerStatus.running);
-						await this.timeTrackerService.deleteTimeSlots(payload);
+											setTimeout(() => {
+												event.sender.send('update_session', { ...timelog })
+												event.sender.send(
+													'update-synced-timer',
+													{
+														lastTimer: timelog,
+														...arg.timer,
+													}
+												);
+											}, 0);
+										})
+								);
+						} else {
+							do {
+								await this.getTimerStatus(payload);
+								console.log('Waiting...');
+							} while (this.timerStatus.running);
+							await this.timeTrackerService.deleteTimeSlots(payload);
+						}
 					}
-					this.toastrService.success(
-						notification.message,
-						notification.title
-					);
-					event.sender.send('notify', notification);
+					if (this._isOffline || isReadyForDeletion) {
+						this.toastrService.success(
+							notification.message,
+							notification.title
+						);
+						event.sender.send('notify', notification);
+					}
 				} catch (error) {
 					this.toastrService.danger('An Error Occurred', 'Gauzy');
 					console.log('ERROR', error);

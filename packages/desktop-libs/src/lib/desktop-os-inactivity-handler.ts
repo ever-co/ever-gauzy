@@ -90,8 +90,8 @@ export class DesktopOsInactivityHandler {
 					/* Handle multiple promises in parallel. */
 					try {
 						await Promise.allSettled([
-							...(dialogPromise && [dialogPromise]),
-							...(removeIdleTimePromise && [removeIdleTimePromise])
+							...(dialogPromise ? [dialogPromise] : []),
+							...(removeIdleTimePromise ? [removeIdleTimePromise] : [])
 						]);
 					} catch (error) {
 						console.log('Error', error);
@@ -139,12 +139,10 @@ export class DesktopOsInactivityHandler {
 		this._startedAt = moment(this._startedAt).subtract(inactivityTimeLimit, 'minutes').toDate();
 		const timeslotIds = await this._intervalService.removeIdlesTime(this._startedAt, this._stoppedAt);
 		const timer = await this._timerService.findLastOne();
-		if (timeslotIds.length > 0) {
-			this._powerManager.window.webContents.send('remove_idle_time', {
-				timer: timer,
-				isWorking: isStillWorking,
-				timeslotIds
-			});
-		}
+		this._powerManager.window.webContents.send('remove_idle_time', {
+			timer: timer,
+			isWorking: isStillWorking,
+			timeslotIds
+		});
 	}
 }
