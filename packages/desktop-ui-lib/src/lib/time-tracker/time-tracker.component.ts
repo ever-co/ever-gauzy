@@ -538,7 +538,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 					token: this.token,
 					apiHost: this.apiHost,
 					organizationId: this.userOrganization.id,
-					tenantId: this.userData.tenantId,
+					tenantId: this.userData.tenantId
 				});
 				setTimeout(() => {
 					event.sender.send('update-synced-timer', {
@@ -710,7 +710,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 							token: this.token,
 							apiHost: this.apiHost,
 							organizationId: this.userOrganization.id,
-							tenantId: this.userData.tenantId,
+							tenantId: this.userData.tenantId
 						});
 						setTimeout(() => {
 							event.sender.send('update-synced-timer', {
@@ -819,32 +819,21 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 								stoppedAt: new Date()
 							})
 							.then(() =>
-								this.timeTrackerService
-									.deleteTimeSlots(payload)
-									.then(async () => {
-										console.log('Deleted');
-										const timelog =
-											await this.timeTrackerService.toggleApiStart(
-												{
-													...params,
-													startedAt: new Date()
-												}
-											);
-										this.getTodayTime(
-											{ ...payload, employeeId },
-											true
-										);
-										setTimeout(() => {
-											event.sender.send('update_session', { ...timelog })
-											event.sender.send(
-												'update-synced-timer',
-												{
-													lastTimer: timelog,
-													...arg.timer,
-												}
-											);
-										}, 0);
-									})
+								this.timeTrackerService.deleteTimeSlots(payload).then(async () => {
+									console.log('Deleted');
+									const timelog = await this.timeTrackerService.toggleApiStart({
+										...params,
+										startedAt: new Date()
+									});
+									this.getTodayTime({ ...payload, employeeId }, true);
+									setTimeout(() => {
+										event.sender.send('update_session', { ...timelog });
+										event.sender.send('update-synced-timer', {
+											lastTimer: timelog,
+											...arg.timer
+										});
+									}, 0);
+								})
 							);
 					} else {
 						do {
@@ -853,17 +842,14 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 						} while (this.timerStatus.running);
 						await this.timeTrackerService.deleteTimeSlots(payload);
 					}
-					this.toastrService.success(
-						notification.message,
-						notification.title
-					);
+					this.toastrService.success(notification.message, notification.title);
 					event.sender.send('notify', notification);
 				} catch (error) {
 					this.toastrService.danger('An Error Occurred', 'Gauzy');
 					console.log('ERROR', error);
 				}
 			});
-		})
+		});
 	}
 
 	async toggleStart(val) {
@@ -896,8 +882,12 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 	setTime(value) {
 		const instantaneaous = this._lastTotalWorkedToday + value.second;
 		const instantaneousWeek = this._lastTotalWorkedWeek + value.second;
-		this.todayDuration$.next(moment.duration(instantaneaous, 'seconds').format('hh[h] mm[m]', { trim: false, trunc: true }));
-		this.weeklyDuration$.next(moment.duration(instantaneousWeek, 'seconds').format('hh[h] mm[m]', { trim: false, trunc: true }));
+		this.todayDuration$.next(
+			moment.duration(instantaneaous, 'seconds').format('hh[h] mm[m]', { trim: false, trunc: true })
+		);
+		this.weeklyDuration$.next(
+			moment.duration(instantaneousWeek, 'seconds').format('hh[h] mm[m]', { trim: false, trunc: true })
+		);
 		this._timeRun$.next(moment.duration(value.second, 'seconds').format('hh:mm:ss', { trim: false }));
 		this.electronService.ipcRenderer.send('update_tray_time_update', this.todayDuration);
 		this.electronService.ipcRenderer.send('update_tray_time_title', {
@@ -1116,8 +1106,16 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 		if (count && (!this.start || isForcedSync)) {
 			this._lastTotalWorkedToday = count.todayDuration;
 			this._lastTotalWorkedWeek = count.weekDuration;
-			this.todayDuration$.next(moment.duration(this._lastTotalWorkedToday, 'seconds').format('hh[h] mm[m]', { trim: false, trunc: true }));
-			this.weeklyDuration$.next(moment.duration(this._lastTotalWorkedWeek, 'seconds').format('hh[h] mm[m]', { trim: false, trunc: true }));
+			this.todayDuration$.next(
+				moment
+					.duration(this._lastTotalWorkedToday, 'seconds')
+					.format('hh[h] mm[m]', { trim: false, trunc: true })
+			);
+			this.weeklyDuration$.next(
+				moment
+					.duration(this._lastTotalWorkedWeek, 'seconds')
+					.format('hh[h] mm[m]', { trim: false, trunc: true })
+			);
 			this.electronService.ipcRenderer.send('update_tray_time_update', this.todayDuration);
 			this.electronService.ipcRenderer.send('update_tray_time_title', {
 				timeRun: moment.duration(this._lastTotalWorkedToday, 'seconds').format('hh:mm:ss', { trim: false })
@@ -1169,7 +1167,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 					recordedAt: Date.now()
 				})
 			);
-		} catch (error) { }
+		} catch (error) {}
 	}
 
 	updateImageUrl(e) {
@@ -1484,7 +1482,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 						return await this.uploadsScreenshot(arg, img, resActivities.id);
 					})
 				);
-			} catch (error) { }
+			} catch (error) {}
 			const timeSlotId = resActivities.id;
 			this.getLastTimeSlotImage({
 				...arg,

@@ -21,7 +21,7 @@ export enum OrganizationPermissionsEnum {
 	ALLOW_MANUAL_TIME = 'ALLOW_MANUAL_TIME',
 	ALLOW_MODIFY_TIME = 'ALLOW_MODIFY_TIME',
 	ALLOW_DELETE_TIME = 'ALLOW_DELETE_TIME',
-	ALLOW_FUTURE_DATE = "FUTURE_DATE_ALLOWED"
+	ALLOW_FUTURE_DATE = 'FUTURE_DATE_ALLOWED'
 }
 
 export enum ListsInputTypeEnum {
@@ -104,10 +104,10 @@ export interface IOrganization extends IBasePerTenantEntityModel {
 	daysUntilDue?: number;
 	accountingTemplates?: IAccountingTemplate[];
 	reportOrganizations?: IReportOrganization[];
-	allowTrackInactivity?: boolean,
-	inactivityTimeLimit?: number,
-	activityProofDuration?: number,
-	isRemoveIdleTime?: boolean
+	allowTrackInactivity?: boolean;
+	inactivityTimeLimit?: number;
+	activityProofDuration?: number;
+	isRemoveIdleTime?: boolean;
 }
 
 export interface IOrganizationFindInput extends IBasePerTenantEntityModel {

@@ -29,17 +29,12 @@ export class PowerManagerDetectInactivity extends BasePowerManagerDecorator {
 			}
 			if (!powerManager.trackerStatusActive) return;
 			if (res) {
-				this._detectionEmitter.emit(
-					'activity-proof-result-accepted',
-					true
-				);
+				this._detectionEmitter.emit('activity-proof-result-accepted', true);
 				this.startInactivityDetection();
 				return;
 			}
 			this._detectionEmitter.emit('activity-proof-result-not-accepted');
-			powerManager.sleepTracking = new SleepInactivityTracking(
-				new ControlledSleepTracking(powerManager.window)
-			);
+			powerManager.sleepTracking = new SleepInactivityTracking(new ControlledSleepTracking(powerManager.window));
 			powerManager.pauseTracking();
 		});
 	}
@@ -49,15 +44,9 @@ export class PowerManagerDetectInactivity extends BasePowerManagerDecorator {
 	}
 
 	public startInactivityDetection(): void {
-		if (
-			this._inactivityDetectionIntervalId ||
-			!this._isAllowTrackInactivity
-		)
-			return;
+		if (this._inactivityDetectionIntervalId || !this._isAllowTrackInactivity) return;
 		this.resumeTracking();
-		this.sleepTracking = new SleepTracking(
-			this.window
-		);
+		this.sleepTracking = new SleepTracking(this.window);
 		this._inactivityDetectionIntervalId = setInterval(() => {
 			const currentIdleTime = powerMonitor.getSystemIdleTime();
 			if (currentIdleTime > this._inactivityTimeLimit) {
@@ -77,10 +66,7 @@ export class PowerManagerDetectInactivity extends BasePowerManagerDecorator {
 	}
 
 	public triggerInactivityDetection(): void {
-		this._detectionEmitter.emit(
-			'activity-proof-request',
-			this._activityProofDuration * 1000
-		);
+		this._detectionEmitter.emit('activity-proof-request', this._activityProofDuration * 1000);
 		this._activityProofTimeoutIntervalId = setTimeout(
 			() => this._detectionEmitter.emit('activity-proof-result', false),
 			(this._activityProofDuration + 1) * 1000

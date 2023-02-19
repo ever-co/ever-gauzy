@@ -2,9 +2,7 @@ import { IDesktopDialog } from '../../interfaces';
 import { BaseDesktopDialogDecorator } from '../abstracts/base-desktop-dialog-decorator';
 import { LocalStore } from '../../desktop-store';
 
-export class DialogAcknowledgeInactivity
-	extends BaseDesktopDialogDecorator
-	implements IDesktopDialog {
+export class DialogAcknowledgeInactivity extends BaseDesktopDialogDecorator implements IDesktopDialog {
 	constructor(dialog: IDesktopDialog) {
 		super(dialog);
 		this.options = {
