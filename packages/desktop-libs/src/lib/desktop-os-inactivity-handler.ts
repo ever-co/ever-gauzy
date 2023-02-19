@@ -72,7 +72,11 @@ export class DesktopOsInactivityHandler {
 				if (this._dialog) {
 					this._dialog.close();
 					delete this._dialog;
-					if (this._isRemoveIdleTime) await this._removeIdleTime(res);
+					let removeIdleTimePromise = null;
+					let dialogPromise = null;
+					if (this._isRemoveIdleTime) {
+						removeIdleTimePromise = this._removeIdleTime(res);
+					}
 					if (!this._inactivityResultAccepted) {
 						const dialog = new DialogAcknowledgeInactivity(
 							new DesktopDialog(
@@ -81,7 +85,16 @@ export class DesktopOsInactivityHandler {
 								powerManager.window
 							)
 						);
-						await dialog.show();
+						dialogPromise = dialog.show();
+					}
+					/* Handle multiple promises in parallel. */
+					try {
+						await Promise.allSettled([
+							...(dialogPromise && [dialogPromise]),
+							...(removeIdleTimePromise && [removeIdleTimePromise])
+						]);
+					} catch (error) {
+						console.log('Error', error);
 					}
 				}
 				if (!res)
