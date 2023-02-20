@@ -1202,12 +1202,22 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 					this._permissions$.next(this.userPermission);
 				}
 				this.userOrganization$.next(res.employee.organization);
-				this.electronService.ipcRenderer.send('update_timer_auth_config', {
-					activityProofDuration: res.employee.organization.activityProofDuration,
-					inactivityTimeLimit: res.employee.organization.inactivityTimeLimit,
-					allowTrackInactivity: res.employee.organization.allowTrackInactivity,
-					isRemoveIdleTime: res.employee.organization.isRemoveIdleTime
-				});
+				this.electronService.ipcRenderer.send(
+					'update_timer_auth_config',
+					{
+						activityProofDuration:
+							res.employee.organization.activityProofDuration,
+						inactivityTimeLimit:
+							res.employee.organization.inactivityTimeLimit,
+						allowTrackInactivity:
+							res.employee.organization.allowTrackInactivity,
+						isRemoveIdleTime:
+							res.employee.organization.isRemoveIdleTime,
+						allowScreenshotCapture:
+							res.employee.organization.allowScreenshotCapture &&
+							res.employee.allowScreenshotCapture
+					}
+				);
 				this.isTrackingEnabled =
 					typeof res.employee.isTrackingEnabled !== 'undefined' ? res.employee.isTrackingEnabled : true;
 				if (start) {
@@ -1342,7 +1352,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 						this.appSetting.monitor.captured &&
 						this.appSetting.monitor.captured === 'active-only'
 					) {
-						if (source.display_id === arg.activeWindow.id.toString()) {
+						if (arg.activeWindow && source.display_id === arg.activeWindow.id.toString()) {
 							screens.push({
 								img: source.thumbnail.toPNG(),
 								name: source.name,

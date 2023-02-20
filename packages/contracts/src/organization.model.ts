@@ -104,10 +104,10 @@ export interface IOrganization extends IBasePerTenantEntityModel {
 	daysUntilDue?: number;
 	accountingTemplates?: IAccountingTemplate[];
 	reportOrganizations?: IReportOrganization[];
-	allowTrackInactivity?: boolean,
-	inactivityTimeLimit?: number,
-	activityProofDuration?: number,
-	isRemoveIdleTime?: boolean,
+	allowTrackInactivity?: boolean;
+	inactivityTimeLimit?: number;
+	activityProofDuration?: number;
+	isRemoveIdleTime?: boolean;
 	allowScreenshotCapture?: boolean;
 }
 
