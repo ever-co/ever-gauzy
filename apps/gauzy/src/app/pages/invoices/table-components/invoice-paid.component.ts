@@ -21,7 +21,7 @@ import { TranslationBaseComponent } from '../../../@shared/language-base/transla
 	styles: [
 		'.progress-bar-inner {background-color: rgba(0, 214, 143, 1); position: absolute; height: 32px; width:100%; border-radius: 4px;}',
 		'.progress-bar {background-color: rgba(126, 126, 143, 0.2); border-radius: 4px; position: relative; height: 32px}',
-		'.paid-percent {color: #ffffff; z-index: 101; font-weight: bold;}'
+		'.paid-percent {color: #ffffff; z-index: 1; font-weight: bold;}'
 	]
 })
 export class InvoicePaidComponent extends TranslationBaseComponent

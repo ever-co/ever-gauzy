@@ -287,3 +287,8 @@ nb-card-body {
   overflow: auto;
   height: calc(100vh - 3.5rem);
 }
+
+.disabled-monitors {
+  pointer-events: none;
+  opacity: 0.5;
+}

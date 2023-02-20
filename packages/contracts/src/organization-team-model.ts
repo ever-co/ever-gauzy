@@ -7,6 +7,7 @@ import { ITimerStatusInput } from './timesheet.model';
 
 export interface IOrganizationTeam extends IBasePerTenantAndOrganizationEntityModel {
 	name: string;
+	logo: string;
 	prefix?: string;
 	public?: boolean;
 	profile_link?: string;
@@ -25,6 +26,7 @@ export interface IOrganizationTeamFindInput extends IBasePerTenantAndOrganizatio
 
 export interface IOrganizationTeamCreateInput extends IBasePerTenantAndOrganizationEntityModel {
 	name: string;
+	logo?: string;
 	prefix?: string;
 	public?: boolean;
 	profile_link?: string;
@@ -39,4 +41,9 @@ export interface IOrganizationTeamUpdateInput extends Partial<IOrganizationTeamC
 
 export interface IOrganizationTeamStatisticInput extends ITimerStatusInput {
 	withLaskWorkedTask: boolean;
+}
+
+export interface IRelationalOrganizationTeam {
+	organizationTeam?: IOrganizationTeam;
+	organizationTeamId?: IOrganizationTeam['id'];
 }

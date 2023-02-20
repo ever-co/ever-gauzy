@@ -1,7 +1,16 @@
 import { ForbiddenException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { DeleteResult, Repository } from 'typeorm';
-import { IBasePerTenantAndOrganizationEntityModel, IEmployee, IOrganizationTeamEmployee, IRelationalEmployee, PermissionsEnum } from '@gauzy/contracts';
+import { DeleteResult, Repository, UpdateResult } from 'typeorm';
+import {
+	IEmployee,
+	IOrganizationTeam,
+	IOrganizationTeamEmployee,
+	IOrganizationTeamEmployeeFindInput,
+	IOrganizationTeamEmployeeUpdateInput,
+	PermissionsEnum,
+	RolesEnum
+} from '@gauzy/contracts';
+import { isNotEmpty } from '@gauzy/common';
 import { TenantAwareCrudService } from './../core/crud';
 import { RequestContext } from './../core/context';
 import { OrganizationTeamEmployee } from './organization-team-employee.entity';
@@ -11,73 +20,110 @@ import { Role } from '../role/role.entity';
 export class OrganizationTeamEmployeeService extends TenantAwareCrudService<OrganizationTeamEmployee> {
 	constructor(
 		@InjectRepository(OrganizationTeamEmployee)
-		private readonly organizationTeamEmployeeRepository: Repository<OrganizationTeamEmployee>
+		protected readonly organizationTeamEmployeeRepository: Repository<OrganizationTeamEmployee>
 	) {
 		super(organizationTeamEmployeeRepository);
 	}
 
 	async updateOrganizationTeam(
-		teamId: string,
-		organizationId: string,
-		employeesToUpdate: IEmployee[],
+		organizationTeamId: IOrganizationTeam['id'],
+		organizationId: IOrganizationTeam['organizationId'],
+		employees: IEmployee[],
 		role: Role,
 		managerIds: string[],
 		memberIds: string[]
 	) {
 		const members = [...managerIds, ...memberIds];
+		const tenantId = RequestContext.currentTenantId();
 
-		const { items: existingEmployees } = await this.findAll({
-			where: { organizationTeamId: teamId },
-			relations: ['role']
+		const teamMembers = await this.repository.find({
+			where: {
+				tenantId,
+				organizationId,
+				organizationTeamId
+			},
+			relations: {
+				role: true
+			}
 		});
-		if (existingEmployees) {
-			const existingMembers = existingEmployees.map(
-				(emp) => emp.employeeId
-			);
 
-			// 1. Remove employees from the team
-			const removedMemberIds =
-				existingEmployees
-					.filter(
-						(employee) => !members.includes(employee.employeeId)
-					)
-					.map((emp) => emp.id) || [];
+		// 1. Remove employee members from the organization team
+		const removedMemberIds = teamMembers.filter((employee) => !members.includes(employee.employeeId)).map((emp) => emp.id) || [];
+		if (isNotEmpty(removedMemberIds)) {
 			this.deleteMemberByIds(removedMemberIds);
-
-			// 2. Update role of employees that already exist in the system
-			existingEmployees
-				.filter((employee) => members.includes(employee.employeeId))
-				.forEach(async (employee) => {
-					await this.update(employee.id, {
-						role: managerIds.includes(employee.employeeId)
-							? role
-							: null
-					});
-				});
-
-			const tenantId = RequestContext.currentTenantId();
-
-			// 3. Add new team members
-			employeesToUpdate
-				.filter((emp) => !existingMembers.includes(emp.id))
-				.forEach(async (employee) => {
-					const teamEmployee = new OrganizationTeamEmployee();
-					teamEmployee.organizationTeamId = teamId;
-					teamEmployee.employeeId = employee.id;
-					teamEmployee.tenantId = tenantId;
-					teamEmployee.organizationId = organizationId;
-					teamEmployee.role = managerIds.includes(employee.id)
-						? role
-						: null;
-					this.create(teamEmployee);
-				});
 		}
+
+		// 2. Update role of employees that already exist in the system
+		teamMembers
+			.filter((employee) => members.includes(employee.employeeId))
+			.forEach(async (member: IOrganizationTeamEmployee) => {
+				const { id, employeeId } = member
+				await this.repository.update(id, {
+					role: managerIds.includes(employeeId) ? role : null
+				});
+			});
+
+		// 3. Add new team members
+		const existingMembers = teamMembers.map(
+			(member: IOrganizationTeamEmployee) => member.employeeId
+		);
+		employees
+			.filter((member: IEmployee) => !existingMembers.includes(member.id))
+			.forEach(async (employee: IEmployee) => {
+				const organizationTeamEmployee = new OrganizationTeamEmployee();
+				organizationTeamEmployee.organizationTeamId = organizationTeamId;
+				organizationTeamEmployee.employeeId = employee.id;
+				organizationTeamEmployee.tenantId = tenantId;
+				organizationTeamEmployee.organizationId = organizationId;
+				organizationTeamEmployee.role = managerIds.includes(employee.id) ? role : null;
+
+				this.save(organizationTeamEmployee);
+			});
 	}
 
+	/**
+	 * Delete team members by IDs
+	 *
+	 * @param memberIds
+	 */
 	deleteMemberByIds(memberIds: string[]) {
 		memberIds.forEach(async (memberId) => {
-			await this.delete(memberId);
+			await this.repository.delete(memberId);
 		});
+	}
+
+	/**
+	 * Update organization team member entity
+	 *
+	 * @param id
+	 * @param entity
+	 * @returns
+	 */
+	public async update(
+		memberId: IOrganizationTeamEmployee['id'],
+		entity: IOrganizationTeamEmployeeUpdateInput
+	): Promise<OrganizationTeamEmployee | UpdateResult> {
+		try {
+			const { organizationId, organizationTeamId } = entity;
+			if (!RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE)) {
+				try {
+					await this.findOneByWhereOptions({
+						employeeId: RequestContext.currentEmployeeId(),
+						organizationId,
+						organizationTeamId,
+						role: {
+							name: RolesEnum.MANAGER
+						}
+					});
+					return await super.update({ id: memberId, organizationId, organizationTeamId }, entity);
+				} catch (error) {
+					throw new ForbiddenException();
+				}
+			}
+			return await super.update({ id: memberId, organizationId, organizationTeamId }, entity);
+		} catch (error) {
+			throw new ForbiddenException();
+		}
 	}
 
 	/**
@@ -89,23 +135,48 @@ export class OrganizationTeamEmployeeService extends TenantAwareCrudService<Orga
 	 */
 	async deleteTeamMember(
 		memberId: IOrganizationTeamEmployee['id'],
-		options: IBasePerTenantAndOrganizationEntityModel & IRelationalEmployee
+		options: IOrganizationTeamEmployeeFindInput
 	): Promise<DeleteResult | OrganizationTeamEmployee> {
 		try {
-			const { employeeId, organizationId } = options;
-			const member = await this.findOneByIdString(memberId, {
-				where: {
-					...(
-						(RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE)) ? {
-							employeeId,
-							organizationId
-						} : {
-							employeeId: RequestContext.currentEmployeeId()
+			const { organizationId, organizationTeamId } = options;
+			const tenantId = RequestContext.currentTenantId();
+
+			if (RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE)) {
+				const member = await this.findOneByIdString(memberId, {
+					where: {
+						organizationId,
+						tenantId,
+						organizationTeamId
+					}
+				});
+				return await this.repository.remove(member);
+			} else {
+				const employeeId = RequestContext.currentEmployeeId();
+				if (employeeId) {
+					try {
+						const manager = await this.findOneByWhereOptions({
+							organizationId,
+							organizationTeamId,
+							role: {
+								name: RolesEnum.MANAGER
+							}
+						});
+						if (manager) {
+							const member = await this.repository.findOneOrFail({
+								where: {
+									id: memberId,
+									organizationId,
+									tenantId,
+									organizationTeamId
+								}
+							});
+							return await this.repository.remove(member);
 						}
-					)
+					} catch (error) {
+						throw new ForbiddenException();
+					}
 				}
-			});
-			return await this.repository.remove(member);
+			}
 		} catch (error) {
 			throw new ForbiddenException();
 		}

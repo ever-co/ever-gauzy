@@ -1,6 +1,7 @@
 import { IEmployee, IOrganizationTeam, IOrganizationTeamEmployee, IRole } from '@gauzy/contracts';
 import { Entity, Column, ManyToOne, RelationId, Index } from 'typeorm';
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { IsBoolean, IsNotEmpty, IsOptional, IsUUID } from 'class-validator';
 import {
 	Employee,
 	OrganizationTeam,
@@ -12,15 +13,24 @@ import {
 export class OrganizationTeamEmployee extends TenantOrganizationBaseEntity
 	implements IOrganizationTeamEmployee {
 
-	/*
-    |--------------------------------------------------------------------------
-    | @ManyToOne
-    |--------------------------------------------------------------------------
-    */
-
-   	/**
-	 * OrganizationTeam
+	/**
+	 * enabled / disabled time tracking feature for team member
 	 */
+	@ApiPropertyOptional({ type: () => Boolean })
+	@IsOptional()
+	@IsBoolean()
+	@Column({ type: Boolean, nullable: true, default: true })
+	isTrackingEnabled?: boolean;
+
+	/*
+	|--------------------------------------------------------------------------
+	| @ManyToOne
+	|--------------------------------------------------------------------------
+	*/
+
+	/**
+	* OrganizationTeam
+	*/
 	@ApiProperty({ type: () => OrganizationTeam })
 	@ManyToOne(() => OrganizationTeam, (organizationTeam) => organizationTeam.members, {
 		onDelete: 'CASCADE'
@@ -28,12 +38,14 @@ export class OrganizationTeamEmployee extends TenantOrganizationBaseEntity
 	public organizationTeam!: IOrganizationTeam;
 
 	@ApiProperty({ type: () => String })
+	@IsNotEmpty()
+	@IsUUID()
 	@RelationId((it: OrganizationTeamEmployee) => it.organizationTeam)
 	@Index()
 	@Column()
 	public organizationTeamId: IOrganizationTeam['id'];
 
-    /**
+	/**
 	 * Employee
 	 */
 	@ApiProperty({ type: () => Employee })

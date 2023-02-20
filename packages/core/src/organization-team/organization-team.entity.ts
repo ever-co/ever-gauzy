@@ -42,6 +42,12 @@ export class OrganizationTeam extends TenantOrganizationBaseEntity
 	@Column()
 	name: string;
 
+	@ApiPropertyOptional({ type: () => String })
+	@IsOptional()
+	@IsString()
+	@Column({ nullable: true })
+	logo: string;
+
 	/**
 	 * prefix for organization team
 	 */

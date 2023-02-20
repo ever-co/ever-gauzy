@@ -1,12 +1,12 @@
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { Controller, Delete, HttpCode, HttpStatus, Param, Query, UseGuards, UsePipes, ValidationPipe } from '@nestjs/common';
-import { DeleteResult } from 'typeorm';
+import { Body, Controller, Delete, HttpCode, HttpStatus, Param, Put, Query, UseGuards, UsePipes, ValidationPipe } from '@nestjs/common';
+import { DeleteResult, UpdateResult } from 'typeorm';
 import { IOrganizationTeamEmployee, PermissionsEnum } from '@gauzy/contracts';
 import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
 import { Permissions } from './../shared/decorators';
 import { UUIDValidationPipe } from './../shared/pipes';
 import { OrganizationTeamEmployeeService } from './organization-team-employee.service';
-import { DeleteTeamMemberQueryDTO } from './dto';
+import { DeleteTeamMemberQueryDTO, UpdateTeamMemberDTO } from './dto';
 import { OrganizationTeamEmployee } from './organization-team-employee.entity';
 
 @ApiTags('OrganizationTeamEmployee')
@@ -18,6 +18,24 @@ export class OrganizationTeamEmployeeController {
 	constructor(
 		private readonly organizationTeamEmployeeService: OrganizationTeamEmployeeService
 	) { }
+
+	/**
+	 * Update team member by memberId
+	 *
+	 * @param memberId
+	 * @param options
+	 * @returns
+	 */
+	@HttpCode(HttpStatus.ACCEPTED)
+	@Permissions(PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ORG_TEAM_EDIT)
+	@UsePipes(new ValidationPipe({ whitelist: true }))
+	@Put(':id')
+	async update(
+		@Param('id', UUIDValidationPipe) memberId: IOrganizationTeamEmployee['id'],
+		@Body() entity: UpdateTeamMemberDTO
+	): Promise<UpdateResult | IOrganizationTeamEmployee> {
+		return await this.organizationTeamEmployeeService.update(memberId, entity);
+	}
 
 	/**
 	 * Delete team member by memberId
@@ -36,10 +54,10 @@ export class OrganizationTeamEmployeeController {
 		description: 'Record not found'
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
-	@Permissions(PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ORG_TEAM_DELETE, PermissionsEnum.ORG_TEAM_ADD)
+	@Permissions(PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ORG_TEAM_DELETE)
 	@UsePipes(new ValidationPipe({ whitelist: true }))
 	@Delete(':id')
-	async deleteTeamMember(
+	async delete(
 		@Param('id', UUIDValidationPipe) memberId: IOrganizationTeamEmployee['id'],
 		@Query() options: DeleteTeamMemberQueryDTO
 	): Promise<DeleteResult | OrganizationTeamEmployee> {
