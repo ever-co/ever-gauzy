@@ -35,7 +35,6 @@ export class SeedTaskPriorityAndSizeAndStatusIcon1676870424741 implements Migrat
      */
     async seedTaskStatusIcon(queryRunner: QueryRunner) {
         try {
-            console.log(this.config);
             for await (const status of DEFAULT_GLOBAL_STATUSES) {
                 const { name, value, icon, color } = status;
 
@@ -55,7 +54,6 @@ export class SeedTaskPriorityAndSizeAndStatusIcon1676870424741 implements Migrat
      */
     async seedTaskPriorityIcon(queryRunner: QueryRunner) {
         try {
-            console.log(this.config);
             for await (const priority of DEFAULT_GLOBAL_PRIORITIES) {
                 const { name, value, icon, color } = priority;
 
