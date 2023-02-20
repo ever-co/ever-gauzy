@@ -1,9 +1,9 @@
 
 import { MigrationInterface, QueryRunner } from "typeorm";
 
-export class alterTableOrganization1676389328189 implements MigrationInterface {
+export class AlterTableOrganization1676875755384 implements MigrationInterface {
 
-    name = 'alterTableOrganization1676389328189';
+    name = 'AlterTableOrganization1676875755384';
 
     /**
     * Up Migration
@@ -37,7 +37,7 @@ export class alterTableOrganization1676389328189 implements MigrationInterface {
     * @param queryRunner
     */
     public async postgresUpQueryRunner(queryRunner: QueryRunner): Promise<any> {
-        
+        await queryRunner.query(`ALTER TABLE "organization" ADD "isRemoveIdleTime" boolean NOT NULL DEFAULT false`);
     }
 
     /**
@@ -46,7 +46,7 @@ export class alterTableOrganization1676389328189 implements MigrationInterface {
     * @param queryRunner
     */
     public async postgresDownQueryRunner(queryRunner: QueryRunner): Promise<any> {
-        
+        await queryRunner.query(`ALTER TABLE "organization" DROP COLUMN "isRemoveIdleTime"`);
     }
 
     /**
