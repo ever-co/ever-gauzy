@@ -2,9 +2,8 @@
 @import 'gauzy/_gauzy-dialogs';
 
 :host {
-  display: block;
-  position: relative;
-  margin: auto;
+    display: flex;
+      justify-content: center;
 
   .close-button {
     position: absolute;
