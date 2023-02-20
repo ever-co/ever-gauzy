@@ -250,6 +250,7 @@
         "yarn.lock",
         "**/assets/i18n/*.json",
         "**/migrations/**",
-        "packages/**/*.seed.json"
+        "packages/**/*.seed.json",
+        "**/*.svg"
     ]
 }
