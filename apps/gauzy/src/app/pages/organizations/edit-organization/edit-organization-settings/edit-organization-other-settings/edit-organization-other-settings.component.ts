@@ -134,7 +134,8 @@ export class EditOrganizationOtherSettingsComponent extends NotesWithTagsCompone
 			estimateTemplate: [],
 			receiptTemplate: [],
 			isDefault: [],
-			isRemoveIdleTime: [false]
+			isRemoveIdleTime: [false],
+			allowScreenshotCapture: [true]
 		});
 	}
 
@@ -458,7 +459,8 @@ export class EditOrganizationOtherSettingsComponent extends NotesWithTagsCompone
 			convertAcceptedEstimates: this.organization.convertAcceptedEstimates,
 			daysUntilDue: this.organization.daysUntilDue,
 			isDefault: this.organization.isDefault,
-			isRemoveIdleTime: this.organization.isRemoveIdleTime
+			isRemoveIdleTime: this.organization.isRemoveIdleTime,
+			allowScreenshotCapture: this.organization.allowScreenshotCapture
 		});
 		this.form.updateValueAndValidity();
 
