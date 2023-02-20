@@ -1,8 +1,9 @@
-<nb-layout>
+<nb-layout [nbSpinner]="menus?.length === 0 || !(selectedMenu$ | async)" nbSpinnerSize="giant"
+	nbSpinnerStatus="primary">
 	<nb-sidebar>
 		<nb-list>
 			<nb-list-item *ngFor="let menu of menus;" (click)="selectMenu(menu)" [class]="
-					selectedMenu === menu
+			(selectedMenu$ | async) === menu
 						? 'menu-item menu-item-active'
 						: 'menu-item'
 				">
@@ -14,7 +15,7 @@
 	</nb-sidebar>
 
 	<nb-layout-column class="main-layout colored-column-success">
-		<ng-container *ngIf="selectedMenu === 'Screen Capture'">
+		<ng-container *ngIf="(selectedMenu$ | async) === 'Screen Capture'">
 			<div class="row">
 				<div class="col-12">
 					<h4>Monitor</h4>
@@ -140,7 +141,7 @@
 				</div>
 			</div>
 		</ng-container>
-		<ng-container *ngIf="selectedMenu === 'Timer'">
+		<ng-container *ngIf="(selectedMenu$ | async) === 'Timer'">
 			<div class="row">
 				<div class="col-12">
 					<h4>Timer</h4>
@@ -196,7 +197,7 @@
 				</div>
 			</div>
 		</ng-container>
-		<div class="row" *ngIf="selectedMenu === 'Update'">
+		<div class="row" *ngIf="(selectedMenu$ | async) === 'Update'">
 			<div class="col-12">
 				<div class="row">
 					<div class="col-12">
@@ -383,7 +384,7 @@
 				</div>
 			</div>
 		</div>
-		<div class="row" *ngIf="selectedMenu === 'Advanced Setting'">
+		<div class="row" *ngIf="(selectedMenu$ | async) === 'Advanced Setting'">
 			<div class="col-12">
 				<h4>Advanced Setting</h4>
 			</div>
@@ -564,7 +565,7 @@
 				</nb-tabset>
 			</div>
 		</div>
-		<ng-container class="row" *ngIf="selectedMenu === 'About'">
+		<ng-container class="row" *ngIf="(selectedMenu$ | async) === 'About'">
 			<div class="col-12">
 				<div class="row">
 					<div class="col-12 text-center margin-content">
