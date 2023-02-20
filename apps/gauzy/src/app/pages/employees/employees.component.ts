@@ -60,6 +60,8 @@ import {
 import { ServerDataSource } from '../../@core/utils/smart-table';
 import { ToggleFilterComponent } from "../../@shared/table-filters";
 import { DateFormatPipe } from '../../@shared/pipes';
+import { AllowScreenshotCaptureComponent } from '../../@shared/table-components/allow-screenshot-capture/allow-screenshot-capture.component';
+import { IEmployeeUpdateInput } from 'packages/contracts/dist';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -147,6 +149,7 @@ export class EmployeesComponent extends PaginationFilterBaseComponent
 					({ invitesAllowed }) =>
 						(this.organizationInvitesAllowed = invitesAllowed)
 				),
+				tap(() => this._additionalColumns()),
 				tap(() => this._refresh$.next(true)),
 				tap(() => this.employees$.next(true)),
 				untilDestroyed(this)
@@ -675,7 +678,7 @@ export class EmployeesComponent extends PaginationFilterBaseComponent
 					title: this.getTranslation('SM_TABLE.STATUS'),
 					type: 'custom',
 					class: 'text-center',
-					width: '20%',
+					width: '5%',
 					renderComponent: EmployeeWorkStatusComponent,
 					filter: {
 						type: 'custom',
@@ -687,6 +690,70 @@ export class EmployeesComponent extends PaginationFilterBaseComponent
 				}
 			}
 		};
+	}
+
+	private _additionalColumns() {
+		if (!this.organization) {
+			return;
+		}
+		const { allowScreenshotCapture } = this.organization;
+		if (allowScreenshotCapture) {
+			this.settingsSmartTable['columns']['allowScreenshotCapture'] = {
+				title: 'Screenshot Capture',
+				type: 'custom',
+				class: 'text-center',
+				editable: false,
+				addable: false,
+				notShownField: true,
+				filter: {
+					type: 'custom',
+					component: ToggleFilterComponent
+				},
+				filterFunction: (isEnable: boolean) => {
+					this.setFilter({ field: 'allowScreenshotCapture', search: isEnable });
+				},
+				renderComponent: AllowScreenshotCaptureComponent,
+				onComponentInitFunction: (instance: any) => {
+					instance.allowScreenshotCaptureChange.subscribe({
+						next: (isAllow: boolean) => {
+							this.clearItem();
+							this._updateAllowScreenshotCapture(
+								instance.rowData,
+								isAllow
+							);
+						},
+						error: (err: any) => {
+							console.warn(err);
+						}
+					});
+				}
+			}
+		}
+		this.settingsSmartTable = Object.assign({}, this.settingsSmartTable);
+	}
+
+	private _updateAllowScreenshotCapture(employee: IEmployee, isAllowed: boolean) {
+		try {
+			const { id: organizationId } = this.organization;
+			const { tenantId } = this.store.user;
+			const payload: IEmployeeUpdateInput = {
+				allowScreenshotCapture: isAllowed,
+				organizationId,
+				tenantId
+			}
+			this.employeesService.update(employee.id, payload);
+			this.toastrService.success(
+				'Screenshot capture changed',
+				{
+					name: employee.fullName.trim()
+				}
+			);
+		} catch (error) {
+			this.errorHandler.handleError(error)
+		} finally {
+			this._refresh$.next(true);
+			this.employees$.next(true);
+		}
 	}
 
 	changeIncludeDeleted(checked: boolean) {
@@ -727,8 +794,8 @@ export class EmployeesComponent extends PaginationFilterBaseComponent
 
 	async startEmployeeWork() {
 		try {
-			const {id: organizationId} = this.organization;
-			const {tenantId} = this.store.user;
+			const { id: organizationId } = this.organization;
+			const { tenantId } = this.store.user;
 
 			const dialog = this.dialogService.open(EmployeeStartWorkComponent, {
 				context: {
@@ -746,8 +813,8 @@ export class EmployeesComponent extends PaginationFilterBaseComponent
 					}
 				);
 				this.toastrService.success(this.getTranslation('TOASTR.MESSAGE.AUTHORIZED_TO_WORK', {
-						name: this.selectedEmployee.fullName.trim()
-					}
+					name: this.selectedEmployee.fullName.trim()
+				}
 				), {
 					name: this.selectedEmployee.fullName.trim()
 				});
@@ -760,5 +827,5 @@ export class EmployeesComponent extends PaginationFilterBaseComponent
 		}
 	}
 
-	ngOnDestroy(): void {}
+	ngOnDestroy(): void { }
 }
