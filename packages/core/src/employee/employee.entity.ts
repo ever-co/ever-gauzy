@@ -287,6 +287,9 @@ export class Employee extends TenantOrganizationBaseEntity implements IEmployee 
 	fullName?: string;
 	isDeleted?: boolean;
 
+	@Column({ default: true })
+	allowScreenshotCapture?: boolean;
+
 	/*
 	|--------------------------------------------------------------------------
 	| @OneToOne
