@@ -107,7 +107,8 @@ export interface IOrganization extends IBasePerTenantEntityModel {
 	allowTrackInactivity?: boolean,
 	inactivityTimeLimit?: number,
 	activityProofDuration?: number,
-	isRemoveIdleTime?: boolean
+	isRemoveIdleTime?: boolean,
+	allowScreenshotCapture?: boolean;
 }
 
 export interface IOrganizationFindInput extends IBasePerTenantEntityModel {
