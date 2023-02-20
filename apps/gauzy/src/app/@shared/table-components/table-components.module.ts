@@ -39,6 +39,7 @@ import { ProjectOrganizationGridComponent } from './project-organization-grid/pr
 import { ProjectOrganizationGridDetailsComponent } from './project-organization-grid-details/project-organization-grid-details.component';
 import { ProjectOrganizationEmployeesComponent } from './project-organization-employees/project-organization-employees.component';
 import { PhoneUrlComponent } from './phone-url/phone-url.component';
+import { AllowScreenshotCaptureComponent } from './allow-screenshot-capture/allow-screenshot-capture.component';
 
 @NgModule({
 	imports: [
@@ -81,7 +82,8 @@ import { PhoneUrlComponent } from './phone-url/phone-url.component';
 		ProjectOrganizationGridComponent,
 		ProjectOrganizationGridDetailsComponent,
 		ProjectOrganizationEmployeesComponent,
-		PhoneUrlComponent
+		PhoneUrlComponent,
+  AllowScreenshotCaptureComponent
 	],
 	exports: [
 		NotesWithTagsComponent,

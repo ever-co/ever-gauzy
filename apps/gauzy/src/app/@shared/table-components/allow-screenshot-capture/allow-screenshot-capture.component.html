@@ -1,0 +1,8 @@
+<nb-toggle
+	status="primary"
+	[checked]="rowData?.allowScreenshotCapture"
+	(checkedChange)="onCheckedChange($event)"
+	>{{
+		rowData?.allowScreenshotCapture ? 'Enabled' : 'Disabled'
+	}}</nb-toggle
+>
