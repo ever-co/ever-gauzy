@@ -80,7 +80,7 @@ export async function cleanEverIcons(
             ? path.resolve(env.gauzyUserPath, ...['public', destDir])
             : path.join(config.assetOptions.assetPublicPath, destDir);
 
-        // delete old generated ever iconss
+        // delete old generated ever icons
         rimraf(
             `${dir}/!(rimraf|.gitkeep)`,
             () => {
