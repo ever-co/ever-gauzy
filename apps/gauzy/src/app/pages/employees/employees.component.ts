@@ -699,7 +699,7 @@ export class EmployeesComponent extends PaginationFilterBaseComponent
 		const { allowScreenshotCapture } = this.organization;
 		if (allowScreenshotCapture) {
 			this.settingsSmartTable['columns']['allowScreenshotCapture'] = {
-				title: 'Screenshot Capture',
+				title: this.getTranslation('SM_TABLE.SCREEN_CAPTURE'),
 				type: 'custom',
 				class: 'text-center',
 				editable: false,
@@ -743,7 +743,7 @@ export class EmployeesComponent extends PaginationFilterBaseComponent
 			}
 			this.employeesService.update(employee.id, payload);
 			this.toastrService.success(
-				'Screenshot capture changed',
+				'TOASTR.MESSAGE.SCREEN_CAPTURE_CHANGED',
 				{
 					name: employee.fullName.trim()
 				}
@@ -766,6 +766,7 @@ export class EmployeesComponent extends PaginationFilterBaseComponent
 		this.translateService.onLangChange
 			.pipe(
 				tap(() => this._loadSmartTableSettings()),
+				tap(() => this._additionalColumns()),
 				untilDestroyed(this)
 			)
 			.subscribe();
