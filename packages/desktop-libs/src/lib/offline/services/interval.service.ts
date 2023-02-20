@@ -21,11 +21,7 @@ export class IntervalService implements IIntervalService<IntervalTO> {
 	}
 	public async backedUpNoSynced(): Promise<IntervalTO[]> {
 		const user = await this._userService.retrieve();
-		return await this._intervalDAO.backedUpNoSynced(
-			this._offlineMode.startedAt,
-			this._offlineMode.stoppedAt,
-			user
-		);
+		return await this._intervalDAO.backedUpNoSynced(this._offlineMode.startedAt, this._offlineMode.stoppedAt, user);
 	}
 	public async destroy(interval: Partial<IntervalTO>): Promise<void> {
 		await this._intervalDAO.delete(interval);
@@ -33,16 +29,9 @@ export class IntervalService implements IIntervalService<IntervalTO> {
 	public async synced(interval: IntervalTO): Promise<void> {
 		const intervalToUpdate = new Interval(interval);
 		intervalToUpdate.synced = true;
-		intervalToUpdate.activities = JSON.stringify(
-			intervalToUpdate.activities
-		);
-		intervalToUpdate.screenshots = JSON.stringify(
-			intervalToUpdate.screenshots
-		) as any;
-		await this._intervalDAO.update(
-			intervalToUpdate.id,
-			intervalToUpdate.toObject()
-		);
+		intervalToUpdate.activities = JSON.stringify(intervalToUpdate.activities);
+		intervalToUpdate.screenshots = JSON.stringify(intervalToUpdate.screenshots) as any;
+		await this._intervalDAO.update(intervalToUpdate.id, intervalToUpdate.toObject());
 	}
 	public async backedUpAllNoSynced(): Promise<IntervalTO[]> {
 		const user = await this._userService.retrieve();
@@ -58,23 +47,12 @@ export class IntervalService implements IIntervalService<IntervalTO> {
 		return await this._intervalDAO.screenshots(user);
 	}
 
-	public async removeIdlesTime(
-		startedAt: Date,
-		stoppedAt: Date
-	): Promise<string[]> {
+	public async removeIdlesTime(startedAt: Date, stoppedAt: Date): Promise<string[]> {
 		const user = await this._userService.retrieve();
 		let remoteIds = [];
 		this._offlineMode.enabled
-			? await this._intervalDAO.deleteLocallyIdlesTime(
-				startedAt,
-				stoppedAt,
-				user
-			)
-			: (remoteIds = await this._intervalDAO.deleteIdlesTime(
-				startedAt,
-				stoppedAt,
-				user
-			));
+			? await this._intervalDAO.deleteLocallyIdlesTime(startedAt, stoppedAt, user)
+			: (remoteIds = await this._intervalDAO.deleteIdlesTime(startedAt, stoppedAt, user));
 		return remoteIds.map(({ remoteId }) => remoteId);
 	}
 }

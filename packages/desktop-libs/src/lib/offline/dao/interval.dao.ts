@@ -14,19 +14,14 @@ export class IntervalDAO implements DAO<IntervalTO> {
 
 	public async findAll(): Promise<IntervalTO[]> {
 		try {
-			return await this._provider.connection<IntervalTO>(
-				TABLE_NAME_INTERVALS
-			);
+			return await this._provider.connection<IntervalTO>(TABLE_NAME_INTERVALS);
 		} catch (error) {
 			console.log('[dao]: ', 'interval backed up fails : ', error);
 			return [];
 		}
 	}
 
-	public async findAllSynced(
-		isSynced: boolean,
-		user: UserTO
-	): Promise<IntervalTO[]> {
+	public async findAllSynced(isSynced: boolean, user: UserTO): Promise<IntervalTO[]> {
 		try {
 			return await this._provider
 				.connection<IntervalTO>(TABLE_NAME_INTERVALS)
@@ -43,9 +38,7 @@ export class IntervalDAO implements DAO<IntervalTO> {
 
 	public async findOneById(id: number): Promise<IntervalTO> {
 		try {
-			return await this._provider
-				.connection<IntervalTO>(TABLE_NAME_INTERVALS)
-				.where('id', id)[0];
+			return await this._provider.connection<IntervalTO>(TABLE_NAME_INTERVALS).where('id', id)[0];
 		} catch (error) {
 			console.log('[dao]: ', 'fail on find interval : ', error);
 		}
@@ -61,20 +54,13 @@ export class IntervalDAO implements DAO<IntervalTO> {
 
 	public async delete(value: Partial<IntervalTO>): Promise<void> {
 		try {
-			return await this._provider
-				.connection<IntervalTO>(TABLE_NAME_INTERVALS)
-				.where('id', value.id)
-				.del();
+			return await this._provider.connection<IntervalTO>(TABLE_NAME_INTERVALS).where('id', value.id).del();
 		} catch (error) {
 			console.log('[dao]: ', 'interval deleted fails : ', error);
 		}
 	}
 
-	public async backedUpNoSynced(
-		startedAt: Date,
-		stoppedAt: Date,
-		user: UserTO
-	): Promise<IntervalTO[]> {
+	public async backedUpNoSynced(startedAt: Date, stoppedAt: Date, user: UserTO): Promise<IntervalTO[]> {
 		try {
 			return await this._provider
 				.connection<IntervalTO>(TABLE_NAME_INTERVALS)
@@ -118,7 +104,7 @@ export class IntervalDAO implements DAO<IntervalTO> {
 			return latests.map((latest) => {
 				return {
 					...latest,
-					screenshots: JSON.parse(latest.screenshots),
+					screenshots: JSON.parse(latest.screenshots)
 				};
 			});
 		} catch (error) {
@@ -134,17 +120,13 @@ export class IntervalDAO implements DAO<IntervalTO> {
 	 * @param {UserTO} user - UserTO
 	 * @returns The remoteId of the intervals that are synced and not null.
 	 */
-	public async deleteIdlesTime(
-		startedAt: Date,
-		stoppedAt: Date,
-		user: UserTO
-	): Promise<{ remoteId }[]> {
+	public async deleteIdlesTime(startedAt: Date, stoppedAt: Date, user: UserTO): Promise<{ remoteId }[]> {
 		try {
 			const remotesIds = await this._provider
 				.connection<IntervalTO>(TABLE_NAME_INTERVALS)
 				.select('remoteId')
 				.where('employeeId', user.employeeId)
-				.where((qb) => qb.andWhereBetween('stoppedAt', [startedAt, stoppedAt]).andWhere('synced', true))
+				.where((qb) => qb.andWhereBetween('stoppedAt', [startedAt, stoppedAt]).andWhere('synced', true));
 			await this.deleteLocallyIdlesTime(startedAt, stoppedAt, user);
 			return remotesIds;
 		} catch (error) {
@@ -158,11 +140,7 @@ export class IntervalDAO implements DAO<IntervalTO> {
 	 * @param {Date} stoppedAt - Date - the date when the user stopped working
 	 * @param {UserTO} user - UserTO
 	 */
-	public async deleteLocallyIdlesTime(
-		startedAt: Date,
-		stoppedAt: Date,
-		user: UserTO
-	): Promise<void> {
+	public async deleteLocallyIdlesTime(startedAt: Date, stoppedAt: Date, user: UserTO): Promise<void> {
 		try {
 			const subQuery = await this._provider
 				.connection<IntervalTO>(TABLE_NAME_INTERVALS)
@@ -171,7 +149,10 @@ export class IntervalDAO implements DAO<IntervalTO> {
 				.where((qb) => qb.andWhereBetween('stoppedAt', [startedAt, stoppedAt]));
 			await this._provider
 				.connection<IntervalTO>(TABLE_NAME_INTERVALS)
-				.whereIn('id', subQuery.map(({ id }) => id))
+				.whereIn(
+					'id',
+					subQuery.map(({ id }) => id)
+				)
 				.del();
 		} catch (error) {
 			console.log('[dao]: ', error);
