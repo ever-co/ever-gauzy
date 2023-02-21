@@ -270,7 +270,9 @@ export class TimeTrackerService {
 				params: this.toParams({
 					tenantId: values.tenantId,
 					organizationId: values.organizationId,
-					employeeIds: [values.employeeId]
+					employeeIds: [values.employeeId],
+					todayStart: moment().startOf('day').utc().toISOString(),
+					todayEnd: moment().endOf('day').utc().toISOString()
 				})
 			})
 		);
