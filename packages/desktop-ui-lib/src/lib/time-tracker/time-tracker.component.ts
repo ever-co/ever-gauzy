@@ -1745,9 +1745,9 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 		let screenshots = args.map((arg) => {
 			const imgUrl = 'data:image/png;base64,' + arg.screenshots[0].b64img;
 			return {
-				textTime: moment(arg.recordedAt).fromNow(),
-				createdAt: arg.recordedAt,
-				recordedAt: arg.recordedAt,
+				textTime: moment(this._adaptTimezone(arg.recordedAt)).fromNow(),
+				createdAt: this._adaptTimezone(arg.recordedAt),
+				recordedAt: this._adaptTimezone(arg.recordedAt),
 				fullUrl: imgUrl,
 				thumbUrl: imgUrl
 			};
@@ -1761,6 +1761,17 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 			console.log('screenshots from db', screenshots);
 			this.localImage(this.lastScreenCapture);
 		}
+	}
+
+	/**
+	 * It takes a date and returns a date that is adjusted for the timezone
+	 * @param {Date} value - The value to be converted.
+	 * @returns A date object with the timezone offset added to it.
+	 */
+	private _adaptTimezone(value: Date) {
+		const now = new Date();
+		const offset = now.getTimezoneOffset();
+		return moment(value).add(offset, 'minutes').toDate();
 	}
 
 	/**
