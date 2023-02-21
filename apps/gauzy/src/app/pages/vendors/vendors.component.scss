@@ -1,5 +1,4 @@
 @import 'apps/gauzy/src/app/pages/expenses/expense-categories/expense-categories.component.scss';
-@import 'report';
 
 .editable {
   width: 525px;
@@ -16,8 +15,4 @@
   .table-scroll-container {
     max-height: 100%;
   }
-}
-
-.table-column {
-  width: 20%;
 }

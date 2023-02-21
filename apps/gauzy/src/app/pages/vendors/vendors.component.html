@@ -25,112 +25,47 @@
 		<ng-template
 			[ngIf]="dataLayoutStyle === componentLayoutStyleEnum.TABLE"
 		>
-			<nb-card class="card">
-				<nb-card-body>
-					<div class="columns-header">
-						<div
-							class="table-inner-wrapper font-weight-bold align-items-center"
-						>
-							<div class="responsive-table-row table-column">
-								{{ 'ORGANIZATIONS_PAGE.NAME' | translate }}
-							</div>
-							<div class="responsive-table-row table-column">
-								{{ 'ORGANIZATIONS_PAGE.PHONE' | translate }}
-							</div>
-							<div class="responsive-table-row table-column">
-								{{ 'ORGANIZATIONS_PAGE.EMAIL' | translate }}
-							</div>
-							<div class="responsive-table-row table-column">
-								{{ 'ORGANIZATIONS_PAGE.WEBSITE' | translate }}
-							</div>
-							<div class="responsive-table-row table-column">
-								{{ 'ORGANIZATIONS_PAGE.TAGS' | translate }}
-							</div>
-						</div>
-					</div>
-
-					<div
-						class="cart-body project-row"
-						*ngFor="let vendor of vendors"
+			<div
+				class="table-scroll-container"
+				infinite-scroll
+				[scrollWindow]="false"
+				(scrolled)="onScroll()"
+			>
+				<nb-card class="p-0" *ngFor="let vendor of vendors">
+					<nb-card-body
+						class="custom-table"
+						[ngClass]="{
+							selected:
+								selected?.state && vendor === selected?.vendor
+						}"
+						(click)="selectVendor(vendor)"
 					>
-						<div
-							class="table-row custom-table"
-							[ngClass]="{
-								selected:
-									selected?.state &&
-									vendor === selected?.vendor
-							}"
-							(click)="selectVendor(vendor)"
-						>
-							<div class="table-inner-wrapper">
-								<div class="responsive-table-row table-column">
-									<div class="responsive-table-header">
-										{{
-											'ORGANIZATIONS_PAGE.NAME'
-												| translate
-										}}
-									</div>
-									<div class="responsive-table-content">
-										<ga-company-logo
-											[rowData]="vendor"
-										></ga-company-logo>
-										{{ vendor.name }}
-									</div>
-								</div>
-								<div class="responsive-table-row table-column">
-									<div class="responsive-table-header">
-										{{
-											'ORGANIZATIONS_PAGE.PHONE'
-												| translate
-										}}
-									</div>
-									<div class="responsive-table-content">
-										{{ vendor.phone }}
-									</div>
-								</div>
-								<div class="responsive-table-row table-column">
-									<div class="responsive-table-header">
-										{{
-											'ORGANIZATIONS_PAGE.EMAIL'
-												| translate
-										}}
-									</div>
-									<div class="responsive-table-content">
-										<gauzy-email
-											[rowData]="vendor"
-										></gauzy-email>
-									</div>
-								</div>
-								<div class="responsive-table-row table-column">
-									<div class="responsive-table-header">
-										{{
-											'ORGANIZATIONS_PAGE.WEBSITE'
-												| translate
-										}}
-									</div>
-									<div class="responsive-table-content">
-										<gauzy-external-link
-											[rowData]="vendor"
-										></gauzy-external-link>
-									</div>
-								</div>
-								<div class="responsive-table-row table-column">
-									<div class="responsive-table-header">
-										{{
-											'ORGANIZATIONS_PAGE.TAGS'
-												| translate
-										}}
-									</div>
-									<div class="responsive-table-content">
-										<ga-only-tags [rowData]="vendor">
-										</ga-only-tags>
-									</div>
-								</div>
+						<div class="row align-items-center">
+							<div class="col-md-2 p-0 float-left text-truncate">
+								<ga-company-logo
+									[rowData]="vendor"
+								></ga-company-logo>
+								{{ vendor.name }}
+							</div>
+							<div class="col-md-2 p-0 text-center text-truncate">
+								{{ vendor.phone }}
+							</div>
+							<div class="col-md-2 p-0 text-center text-truncate">
+								<gauzy-email [rowData]="vendor"></gauzy-email>
+							</div>
+							<div class="col-md-3 p-0 float-left text-truncate">
+								<gauzy-external-link
+									[rowData]="vendor"
+								></gauzy-external-link>
+							</div>
+							<div class="col-md-3 text-center p-0 text-truncate">
+								<ga-only-tags [rowData]="vendor">
+								</ga-only-tags>
 							</div>
 						</div>
-					</div>
-				</nb-card-body>
-			</nb-card>
+					</nb-card-body>
+				</nb-card>
+			</div>
 		</ng-template>
 		<ng-template
 			[ngIf]="
@@ -138,7 +73,7 @@
 				vendors?.length > 0
 			"
 		>
-			<ga-card-grid
+			<ga-card-grid 
 				[totalItems]="pagination?.totalItems"
 				[settings]="settingsSmartTable"
 				[source]="vendors"
