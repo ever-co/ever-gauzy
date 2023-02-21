@@ -243,10 +243,10 @@ export class StatisticService {
 			.andWhere(`"${todayQuery.alias}"."organizationId" = :organizationId`, { organizationId })
 			.andWhere(
 				new Brackets((qb: WhereExpressionBuilder) => {
-					// qb.andWhere(`"timeLogs"."startedAt" BETWEEN :startDate AND :endDate`, {
-					// 	startDate: startToday,
-					// 	endDate: endToday
-					// });
+					qb.andWhere(`"timeLogs"."startedAt" BETWEEN :startDate AND :endDate`, {
+						startDate: startToday,
+						endDate: endToday
+					});
 					qb.andWhere(`"${todayQuery.alias}"."startedAt" BETWEEN :startDate AND :endDate`, {
 						startDate: startToday,
 						endDate: endToday
