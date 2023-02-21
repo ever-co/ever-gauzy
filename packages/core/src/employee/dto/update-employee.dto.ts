@@ -38,4 +38,9 @@ export class UpdateEmployeeDTO extends IntersectionType(
     @IsOptional()
     @IsBoolean()
     readonly isTrackingEnabled: boolean;
+
+    @ApiPropertyOptional({ type: () => Boolean })
+    @IsOptional()
+    @IsBoolean()
+    readonly allowScreenshotCapture?: boolean;
 }

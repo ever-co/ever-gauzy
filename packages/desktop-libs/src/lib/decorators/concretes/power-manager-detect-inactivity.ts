@@ -54,9 +54,9 @@ export class PowerManagerDetectInactivity extends BasePowerManagerDecorator {
 			!this._isAllowTrackInactivity
 		)
 			return;
-		super.decorator.resumeTracking();
-		super.decorator.sleepTracking = new SleepTracking(
-			this.decorator.window
+		this.resumeTracking();
+		this.sleepTracking = new SleepTracking(
+			this.window
 		);
 		this._inactivityDetectionIntervalId = setInterval(() => {
 			const currentIdleTime = powerMonitor.getSystemIdleTime();

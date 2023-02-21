@@ -20,8 +20,8 @@ import { ICandidate } from './candidate.model';
 import { IEmployeeAward } from './employee-award.model';
 
 export interface IRelationalEmployee {
-    readonly employee?: IEmployee;
-    readonly employeeId?: IEmployee['id'];
+	readonly employee?: IEmployee;
+	readonly employeeId?: IEmployee['id'];
 }
 
 export interface IEmployee extends IBasePerTenantAndOrganizationEntityModel {
@@ -87,6 +87,7 @@ export interface IEmployee extends IBasePerTenantAndOrganizationEntityModel {
 	profile_link?: string;
 	isTrackingEnabled: boolean;
 	isDeleted?: boolean;
+	allowScreenshotCapture?: boolean;
 }
 
 export type IEmployeeJobsStatisticsResponse = IEmployee &
@@ -136,6 +137,7 @@ export interface IEmployeeUpdateInput
 	gitlabUrl?: string;
 	upworkUrl?: string;
 	profile_link?: string;
+	allowScreenshotCapture?: boolean;
 }
 
 export interface IEmployeeCreateInput
@@ -182,7 +184,7 @@ export enum PayPeriodEnum {
 	MONTHLY = 'MONTHLY'
 }
 export interface IEmployeeLevel
-	extends IBasePerTenantAndOrganizationEntityModel  {
+	extends IBasePerTenantAndOrganizationEntityModel {
 	level: string;
 	tag?: ITag[];
 	skills?: ISkill[];
