@@ -104,6 +104,10 @@ const sqlite3filename = `${process.env.GAUZY_USER_PATH}/gauzy.sqlite3`;
 log.info(`Sqlite DB path: ${sqlite3filename}`);
 
 const provider = ProviderFactory.instance;
+(async () => {
+	await provider.createDatabase();
+	await provider.migrate();
+})();
 const knex = provider.connection;
 
 const exeName = path.basename(process.execPath);
@@ -414,6 +418,10 @@ ipcMain.on('restart_app', (event, arg) => {
 				host: getApiBaseUrl(configs),
 			});
 		}
+		/* Killing the provider. */
+		await provider.kill();
+		/* Creating a database if not exit. */
+		await ProviderFactory.instance.createDatabase();
 		app.relaunch({ args: process.argv.slice(1).concat(['--relaunch']) });
 		app.exit(0);
 	}, 100);
