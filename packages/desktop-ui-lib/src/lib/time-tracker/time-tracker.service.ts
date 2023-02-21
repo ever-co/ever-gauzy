@@ -4,6 +4,7 @@ import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import * as moment from 'moment';
 import { catchError } from 'rxjs/operators';
 import { firstValueFrom, throwError } from 'rxjs';
+import { toUTC } from '@gauzy/common-angular';
 import {
 	TimeLogSourceEnum,
 	TimeLogType,
@@ -271,8 +272,8 @@ export class TimeTrackerService {
 					tenantId: values.tenantId,
 					organizationId: values.organizationId,
 					employeeIds: [values.employeeId],
-					todayStart: moment().startOf('day').utc().toISOString(),
-					todayEnd: moment().endOf('day').utc().toISOString()
+					todayStart: toUTC(moment().startOf('day')).format('YYYY-MM-DD HH:mm:ss'),
+					todayEnd: toUTC(moment().endOf('day')).format('YYYY-MM-DD HH:mm:ss')
 				})
 			})
 		);
