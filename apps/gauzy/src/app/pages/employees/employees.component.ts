@@ -61,7 +61,7 @@ import {
 import { ServerDataSource } from '../../@core/utils/smart-table';
 import { ToggleFilterComponent } from "../../@shared/table-filters";
 import { DateFormatPipe } from '../../@shared/pipes';
-import { AllowScreenshotCaptureComponent } from '../../@shared/table-components/allow-screenshot-capture/allow-screenshot-capture.component';
+import { AllowScreenshotCaptureComponent } from '../../@shared/table-components';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

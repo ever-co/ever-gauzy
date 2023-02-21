@@ -83,7 +83,7 @@ import { AllowScreenshotCaptureComponent } from './allow-screenshot-capture/allo
 		ProjectOrganizationGridDetailsComponent,
 		ProjectOrganizationEmployeesComponent,
 		PhoneUrlComponent,
-  AllowScreenshotCaptureComponent
+		AllowScreenshotCaptureComponent
 	],
 	exports: [
 		NotesWithTagsComponent,
@@ -107,4 +107,4 @@ import { AllowScreenshotCaptureComponent } from './allow-screenshot-capture/allo
 	],
 	providers: []
 })
-export class TableComponentsModule {}
+export class TableComponentsModule { }
