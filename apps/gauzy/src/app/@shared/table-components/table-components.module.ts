@@ -1,11 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { NgModule } from '@angular/core';
-import {
-	NbIconModule,
-	NbTooltipModule,
-	NbBadgeModule,
-	NbToggleModule
-} from '@nebular/theme';
+import { NbIconModule, NbTooltipModule, NbBadgeModule, NbToggleModule } from '@nebular/theme';
 import { DateViewComponent } from './date-view/date-view.component';
 import { IncomeExpenseAmountComponent } from './income-amount/income-amount.component';
 import { NotesWithTagsComponent } from './notes-with-tags/notes-with-tags.component';
@@ -107,4 +102,4 @@ import { AllowScreenshotCaptureComponent } from './allow-screenshot-capture/allo
 	],
 	providers: []
 })
-export class TableComponentsModule { }
+export class TableComponentsModule {}

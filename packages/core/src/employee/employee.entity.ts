@@ -294,7 +294,6 @@ export class Employee extends TenantOrganizationBaseEntity implements IEmployee 
 	fullName?: string;
 	isDeleted?: boolean;
 
-
 	/*
 	|--------------------------------------------------------------------------
 	| @OneToOne

@@ -44,9 +44,7 @@ import { FormsModule } from '@angular/forms';
 		NbTooltipModule,
 		NbSpinnerModule
 	],
-	providers: [
-		NbToastrService
-	],
+	providers: [NbToastrService],
 	exports: [SettingsComponent]
 })
 export class SettingsModule {}
