@@ -14,7 +14,8 @@ import {
 	EmployeeViewModel,
 	CrudActionEnum,
 	IEmployee,
-	ITag
+	ITag,
+	IEmployeeUpdateInput
 } from '@gauzy/contracts';
 import { NbDialogService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
@@ -61,7 +62,6 @@ import { ServerDataSource } from '../../@core/utils/smart-table';
 import { ToggleFilterComponent } from "../../@shared/table-filters";
 import { DateFormatPipe } from '../../@shared/pipes';
 import { AllowScreenshotCaptureComponent } from '../../@shared/table-components/allow-screenshot-capture/allow-screenshot-capture.component';
-import { IEmployeeUpdateInput } from 'packages/contracts/dist';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
