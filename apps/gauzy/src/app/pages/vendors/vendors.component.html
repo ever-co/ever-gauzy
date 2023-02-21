@@ -20,19 +20,19 @@
 			*ngIf="dataLayoutStyle === componentLayoutStyleEnum.TABLE"
 			class="columns-header row align-items-center"
 		>
-			<div class="col-md-2 p-0 text-center text-truncate">
+			<div class="col-md-2 pl-3 float-left text-truncate">
 				{{ 'ORGANIZATIONS_PAGE.NAME' | translate }}
 			</div>
-			<div class="col-md-2 p-0 text-center text-truncate">
+			<div class="col-md-2 p-0 float-left text-truncate">
 				{{ 'ORGANIZATIONS_PAGE.PHONE' | translate }}
 			</div>
-			<div class="col-md-2 p-0 text-center text-truncate">
+			<div class="col-md-2 p-0 float-left text-truncate">
 				{{ 'ORGANIZATIONS_PAGE.EMAIL' | translate }}
 			</div>
-			<div class="col-md-3 p-0 text-center text-truncate">
+			<div class="col-md-3 p-0 float-left text-truncate">
 				{{ 'ORGANIZATIONS_PAGE.WEBSITE' | translate }}
 			</div>
-			<div class="col-md-3 p-0 text-center text-truncate">
+			<div class="col-md-3 p-0 float-left text-truncate">
 				{{ 'ORGANIZATIONS_PAGE.TAGS' | translate }}
 			</div>
 		</div>
@@ -67,18 +67,18 @@
 								></ga-company-logo>
 								{{ vendor.name }}
 							</div>
-							<div class="col-md-2 p-0 text-center text-truncate">
+							<div class="col-md-2 p-0 float-left text-truncate">
 								{{ vendor.phone }}
 							</div>
-							<div class="col-md-2 p-0 text-center text-truncate">
+							<div class="col-md-2 p-0 float-left text-truncate">
 								<gauzy-email [rowData]="vendor"></gauzy-email>
 							</div>
-							<div class="col-md-3 p-0 text-center text-truncate">
+							<div class="col-md-3 p-0 float-left text-truncate">
 								<gauzy-external-link
 									[rowData]="vendor"
 								></gauzy-external-link>
 							</div>
-							<div class="col-md-3 text-center p-0 text-truncate">
+							<div class="col-md-3 float-left p-0 text-truncate">
 								<ga-only-tags [rowData]="vendor">
 								</ga-only-tags>
 							</div>
