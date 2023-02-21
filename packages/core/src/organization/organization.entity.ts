@@ -254,6 +254,8 @@ export class Organization extends TenantBaseEntity implements IOrganization {
 	@Column({ default: false })
 	isRemoveIdleTime?: boolean;
 
+	@Column({ default: true })
+	allowScreenshotCapture?: boolean;
 	/*
 	|--------------------------------------------------------------------------
 	| @ManyToOne

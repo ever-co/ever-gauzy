@@ -47,9 +47,7 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 	logIsOpen: boolean = false;
 
 	appName: string = this.electronService.remote.app.getName();
-	menus = this.isServer
-		? ['Update', 'Advanced Setting', 'About']
-		: ['Screen Capture', 'Timer', 'Update', 'Advanced Setting', 'About'];
+	menus = [];
 	gauzyIcon =
 		this.isDesktopTimer || this.isServer
 			? './assets/images/logos/logo_Gauzy.svg'
@@ -326,8 +324,10 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 		},
 	];
 
-	selectedMenu = this.isServer ? 'Update' : 'Screen Capture';
-
+	private _selectedMenu$: BehaviorSubject<string>;
+	private get _selectedMenu(): string {
+		return this._selectedMenu$.getValue();
+	}
 	monitorOptionSelected = null;
 	appSetting = null;
 	periodOption = [1, 3, 5, 10];
@@ -394,6 +394,7 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 			local: false,
 		});
 		this._prerelease$ = new BehaviorSubject(false);
+		this._selectedMenu$ = new BehaviorSubject(null);
 	}
 
 	ngOnInit(): void {
@@ -432,6 +433,23 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 				if (!this.isServer) {
 					this.getUserDetails();
 				}
+				this.menus = this.isServer
+					? ['Update', 'Advanced Setting', 'About']
+					: [
+						...(auth && auth.allowScreenshotCapture
+							? ['Screen Capture']
+							: []),
+						'Timer',
+						'Update',
+						'Advanced Setting',
+						'About',
+					];
+				const lastMenu =
+					this._selectedMenu &&
+						this.menus.includes(this._selectedMenu)
+						? this._selectedMenu
+						: this.menus[0];
+				this._selectedMenu$.next(lastMenu);
 			})
 		);
 
@@ -528,9 +546,12 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 
 		this.electronService.ipcRenderer.on('goto_top_menu', () =>
 			this._ngZone.run(() => {
-				if (this.isServer) {
-					this.selectMenu('Advanced Setting');
-				} else this.selectMenu('Screen Capture');
+				const lastMenu =
+					this._selectedMenu &&
+						this.menus.includes(this._selectedMenu)
+						? this._selectedMenu
+						: this.menus[0];
+				this.selectMenu(lastMenu);
 			})
 		);
 
@@ -598,7 +619,7 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 	}
 
 	selectMenu(menu) {
-		this.selectedMenu = menu;
+		this._selectedMenu$.next(menu);
 	}
 
 	updateSetting(value, type) {
@@ -745,19 +766,8 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 	 * Get logged in user details
 	 */
 	getUserDetails() {
-		const request = {
-			...this.authSetting,
-			...this.config,
-			apiHost: this.config.serverUrl,
-		};
 		if (this.authSetting) {
-			this.timeTrackerService.getUserDetail(request).then((res) => {
-				if (!this.authSetting.isLogout) {
-					this.currentUser$.next(res);
-				} else {
-					this.currentUser$.next(null);
-				}
-			});
+			this.currentUser$.next(this.authSetting.user);
 		} else {
 			this.currentUser$.next(null);
 		}
@@ -768,6 +778,7 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 	 */
 	logout() {
 		console.log('On Logout');
+		localStorage.clear();
 		this.electronService.ipcRenderer.send('logout_desktop');
 	}
 
@@ -930,5 +941,9 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 
 	public get isServer(): boolean {
 		return this.appName === 'gauzy-server';
+	}
+
+	public get selectedMenu$(): Observable<string> {
+		return this._selectedMenu$.asObservable();
 	}
 }

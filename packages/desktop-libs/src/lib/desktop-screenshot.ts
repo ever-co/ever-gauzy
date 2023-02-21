@@ -25,6 +25,10 @@ const captureOnlyActiveWindow = async (
 	windowPath,
 	soundPath
 ) => {
+	/* Checking if the user is allowed to take a screenshot. */
+	if (!allowScreenshotCapture()) {
+		return;
+	}
 	const display = displays.find((x) => x.id === activeScreen.id.toString());
 	if (!isTemp) {
 		const result = await uploadScreenShot(
@@ -56,6 +60,10 @@ const captureAllWindow = async (
 	windowPath,
 	soundPath
 ) => {
+	/* Checking if the user is allowed to take a screenshot. */
+	if (!allowScreenshotCapture()) {
+		return;
+	}
 	const result = [];
 	await Promise.all(
 		displays.map(async (display, i) => {
@@ -101,6 +109,10 @@ const uploadScreenShot = async (
 	windowPath,
 	soundPath
 ) => {
+	/* Checking if the user is allowed to take a screenshot. */
+	if (!allowScreenshotCapture()) {
+		return;
+	}
 	/* start upload */
 	let fileName = `screenshot-${moment().format(
 		'YYYYMMDDHHmmss'
@@ -199,6 +211,10 @@ const uploadScreenShot = async (
 };
 
 const writeScreenshotLocally = (img, fileName) => {
+	/* Checking if the user is allowed to take a screenshot. */
+	if (!allowScreenshotCapture()) {
+		return;
+	}
 	const imgLocation = path.join(app.getPath('userData'), '/public/temp');
 	readOrCreateTempDir(imgLocation);
 
@@ -235,6 +251,10 @@ const readOrCreateTempDir = (tempPath) => {
 };
 
 export const detectActiveWindow = () => {
+	/* Checking if the user is allowed to take a screenshot. */
+	if (!allowScreenshotCapture()) {
+		return;
+	}
 	const allScreen = screen.getAllDisplays();
 	const cursorPosition = screen.getCursorScreenPoint();
 	let idx = null;
@@ -251,6 +271,10 @@ export const detectActiveWindow = () => {
 };
 
 const updateLastCapture = (timeTrackerWindow, timeSlotId) => {
+	/* Checking if the user is allowed to take a screenshot. */
+	if (!allowScreenshotCapture()) {
+		return;
+	}
 	timeTrackerWindow.webContents.send('show_last_capture', {
 		...LocalStore.beforeRequestParams(),
 		timeSlotId: timeSlotId,
@@ -258,6 +282,10 @@ const updateLastCapture = (timeTrackerWindow, timeSlotId) => {
 };
 
 const showCapture = (timeTrackerWindow, url) => {
+	/* Checking if the user is allowed to take a screenshot. */
+	if (!allowScreenshotCapture()) {
+		return;
+	}
 	timeTrackerWindow.webContents.send('last_capture_local', { fullUrl: url });
 };
 
@@ -269,6 +297,10 @@ const showCapturedToRenderer = (
 	soundPath,
 	timeTrackerWindow
 ) => {
+	/* Checking if the user is allowed to take a screenshot. */
+	if (!allowScreenshotCapture()) {
+		return;
+	}
 	const soundCamera = soundPath;
 	const sizes = screen.getPrimaryDisplay().size;
 	// preparing window screenshot
@@ -335,6 +367,10 @@ export async function takeshot(
 	soundPath
 ) {
 	try {
+		/* Checking if the user is allowed to take a screenshot. */
+		if (!allowScreenshotCapture()) {
+			return;
+		}
 		const displays = arg.screens;
 		const appSetting = LocalStore.getStore('appSetting');
 		const activeWindow = detectActiveWindow();
@@ -388,6 +424,10 @@ export async function captureScreen(
 	soundPath
 ) {
 	try {
+		/* Checking if the user is allowed to take a screenshot. */
+		if (!allowScreenshotCapture()) {
+			return;
+		}
 		const displays = await screenshot.listDisplays();
 		const activeWindow = detectActiveWindow();
 		const allDisplays = [];
@@ -565,4 +605,9 @@ export function notifyScreenshot(
 	setTimeout(() => {
 		notificationWindow.close();
 	}, 4000);
+}
+
+function allowScreenshotCapture(): boolean {
+	const auth = LocalStore.getStore('auth');
+	return auth && auth.allowScreenshotCapture;
 }
