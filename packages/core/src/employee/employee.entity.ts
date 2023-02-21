@@ -275,6 +275,13 @@ export class Employee extends TenantOrganizationBaseEntity implements IEmployee 
 	isTrackingEnabled: boolean;
 
 	/**
+	 * Enabled/Disabled Screen Capture Feature
+	 */
+	@ApiPropertyOptional({ type: () => Boolean, default: true })
+	@Column({ default: true })
+	allowScreenshotCapture?: boolean;
+
+	/**
 	 * Soft Delete
 	 */
 	@ApiPropertyOptional({ type: () => 'timestamptz' })
@@ -287,8 +294,6 @@ export class Employee extends TenantOrganizationBaseEntity implements IEmployee 
 	fullName?: string;
 	isDeleted?: boolean;
 
-	@Column({ default: true })
-	allowScreenshotCapture?: boolean;
 
 	/*
 	|--------------------------------------------------------------------------
