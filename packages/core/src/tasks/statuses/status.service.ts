@@ -59,7 +59,7 @@ export class TaskStatusService extends TaskStatusPrioritySizeService<TaskStatus>
 		const statuses: ITaskStatus[] = [];
 		for (const tenant of tenants) {
 			for (const status of DEFAULT_GLOBAL_STATUSES) {
-				statuses.push(new TaskStatus({ ...status, isSystem: false, tenant }));
+				statuses.push(new TaskStatus({...status, icon: `ever-icons/${status.icon}`, isSystem: false, tenant }));
 			}
 		}
 		return await this.repository.save(statuses);
