@@ -46,7 +46,8 @@ export class PostgresProvider implements IClientServerProvider {
 			port: cfg.dbPort,
 			user: cfg.dbUsername,
 			password: cfg.dbPassword,
-		};
+			timezone: 'utc'
+		}
 	}
 
 	public async createDatabase() {

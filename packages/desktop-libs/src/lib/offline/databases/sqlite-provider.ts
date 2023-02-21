@@ -19,6 +19,7 @@ export class SqliteProvider implements IServerLessProvider {
 					app.getPath('userData'),
 					'gauzy.sqlite3'
 				),
+				timezone: 'utc'
 			},
 			pool: {
 				min: 2,
