@@ -1,10 +1,10 @@
-import { IDatabaseProvider } from '../../interfaces/i-database-provider';
 import { Knex } from 'knex';
 import { LocalStore } from '../../desktop-store';
+import { IClientServerProvider } from '../../interfaces';
 
-export class MysqlProvider implements IDatabaseProvider {
+export class MysqlProvider implements IClientServerProvider {
 	private _connectionConfig: Knex.StaticConnectionConfig;
-	private static _instance: IDatabaseProvider;
+	private static _instance: IClientServerProvider;
 	private _connection: Knex;
 	private _database: string;
 
@@ -38,7 +38,7 @@ export class MysqlProvider implements IDatabaseProvider {
 		};
 	}
 
-	public static get instance(): IDatabaseProvider {
+	public static get instance(): IClientServerProvider {
 		if (!MysqlProvider._instance) {
 			MysqlProvider._instance = new MysqlProvider();
 		}
@@ -54,21 +54,22 @@ export class MysqlProvider implements IDatabaseProvider {
 			user: cfg.dbUsername,
 			password: cfg.dbPassword,
 		};
-		(async () => {
-			try {
-				const connection: Knex = require('knex')({
-					client: 'mysql',
-					connection: this._connectionConfig,
+	}
+
+	public async createDatabase() {
+		try {
+			const connection: Knex = require('knex')({
+				client: 'mysql',
+				connection: this._connectionConfig,
+			});
+			await connection
+				.raw('CREATE DATABASE IF NOT EXISTS ??', this._database)
+				.finally(async () => {
+					await connection.destroy();
 				});
-				await connection
-					.raw('CREATE DATABASE IF NOT EXISTS ??', this._database)
-					.finally(async () => {
-						await connection.destroy();
-					});
-			} catch (error) {
-				console.error('[provider-error]', error);
-			}
-		})();
+		} catch (error) {
+			console.error('[provider-error]', error);
+		}
 	}
 
 	public get connection(): Knex {

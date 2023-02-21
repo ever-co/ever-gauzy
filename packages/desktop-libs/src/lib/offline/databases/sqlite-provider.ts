@@ -1,10 +1,10 @@
-import { IDatabaseProvider } from '../../interfaces/i-database-provider';
+import { IServerLessProvider } from '../../interfaces';
 import { Knex } from 'knex';
 import path from 'path';
 import { app } from 'electron';
 
-export class SqliteProvider implements IDatabaseProvider {
-	private static _instance: IDatabaseProvider;
+export class SqliteProvider implements IServerLessProvider {
+	private static _instance: IServerLessProvider;
 	private _connection: Knex;
 
 	private constructor() {
@@ -42,7 +42,7 @@ export class SqliteProvider implements IDatabaseProvider {
 		return this._connection;
 	}
 
-	public static get instance(): IDatabaseProvider {
+	public static get instance(): IServerLessProvider {
 		if (!this._instance) {
 			this._instance = new SqliteProvider();
 		}
