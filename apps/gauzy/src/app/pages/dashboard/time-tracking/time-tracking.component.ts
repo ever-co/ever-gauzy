@@ -31,7 +31,8 @@ import {
 	IEmployee,
 	IDateRangePicker,
 	ITimeLogFilters,
-	IUser
+	IUser,
+	ITimeLogTodayFilters
 } from '@gauzy/contracts';
 import { BehaviorSubject, combineLatest, firstValueFrom, of, Subject, Subscription, switchMap, timer } from 'rxjs';
 import { debounceTime, filter, tap } from 'rxjs/operators';
@@ -267,9 +268,11 @@ export class TimeTrackingComponent extends TranslationBaseComponent
 		const { tenantId } = this.store.user;
 		const { startDate, endDate } = getAdjustDateRangeFutureAllowed(selectedDateRange);
 
-		const request: ITimeLogFilters = {
+		const request: ITimeLogFilters & ITimeLogTodayFilters = {
 			tenantId,
 			organizationId,
+			todayStart: toUTC(moment().startOf('day')).format('YYYY-MM-DD HH:mm:ss'),
+			todayEnd: toUTC(moment().endOf('day')).format('YYYY-MM-DD HH:mm:ss'),
 			startDate: toUTC(startDate).format('YYYY-MM-DD HH:mm:ss'),
 			endDate: toUTC(endDate).format('YYYY-MM-DD HH:mm:ss')
 		};
