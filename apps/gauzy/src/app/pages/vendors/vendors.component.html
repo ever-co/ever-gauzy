@@ -16,6 +16,26 @@
 			>
 			</ngx-gauzy-button-action>
 		</div>
+		<div
+			*ngIf="dataLayoutStyle === componentLayoutStyleEnum.TABLE"
+			class="columns-header row align-items-center"
+		>
+			<div class="col-md-2 p-0 text-center text-truncate">
+				{{ 'ORGANIZATIONS_PAGE.NAME' | translate }}
+			</div>
+			<div class="col-md-2 p-0 text-center text-truncate">
+				{{ 'ORGANIZATIONS_PAGE.PHONE' | translate }}
+			</div>
+			<div class="col-md-2 p-0 text-center text-truncate">
+				{{ 'ORGANIZATIONS_PAGE.EMAIL' | translate }}
+			</div>
+			<div class="col-md-3 p-0 text-center text-truncate">
+				{{ 'ORGANIZATIONS_PAGE.WEBSITE' | translate }}
+			</div>
+			<div class="col-md-3 p-0 text-center text-truncate">
+				{{ 'ORGANIZATIONS_PAGE.TAGS' | translate }}
+			</div>
+		</div>
 	</nb-card-header>
 	<nb-card-body
 		[nbSpinner]="isLoading"
@@ -53,7 +73,7 @@
 							<div class="col-md-2 p-0 text-center text-truncate">
 								<gauzy-email [rowData]="vendor"></gauzy-email>
 							</div>
-							<div class="col-md-3 p-0 float-left text-truncate">
+							<div class="col-md-3 p-0 text-center text-truncate">
 								<gauzy-external-link
 									[rowData]="vendor"
 								></gauzy-external-link>
@@ -73,7 +93,7 @@
 				vendors?.length > 0
 			"
 		>
-			<ga-card-grid 
+			<ga-card-grid
 				[totalItems]="pagination?.totalItems"
 				[settings]="settingsSmartTable"
 				[source]="vendors"
