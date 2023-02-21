@@ -180,12 +180,10 @@ export class VendorsComponent
 				perPage: pagination ? pagination : this.minItemPerPage
 			},
 			actions: false,
-			hideSubHeader: true,
 			columns: {
 				logo: {
 					title: this.getTranslation('ORGANIZATIONS_PAGE.IMAGE'),
 					type: 'custom',
-					width: '5%',
 					renderComponent: CompanyLogoComponent
 				},
 				name: {

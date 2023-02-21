@@ -25,14 +25,46 @@
 		<ng-template
 			[ngIf]="dataLayoutStyle === componentLayoutStyleEnum.TABLE"
 		>
-			<div class="table-scroll-container">
-				<ng2-smart-table
-					style="cursor: pointer"
-					[settings]="settingsSmartTable"
-					[source]="smartTableSource"
-					(userRowSelect)="selectVendor($event)"
-					#vendorsTable
-				></ng2-smart-table>
+			<div
+				class="table-scroll-container"
+				infinite-scroll
+				[scrollWindow]="false"
+				(scrolled)="onScroll()"
+			>
+				<nb-card class="p-0" *ngFor="let vendor of vendors">
+					<nb-card-body
+						class="custom-table"
+						[ngClass]="{
+							selected:
+								selected?.state && vendor === selected?.vendor
+						}"
+						(click)="selectVendor(vendor)"
+					>
+						<div class="row align-items-center">
+							<div class="col-md-2 p-0 float-left text-truncate">
+								<ga-company-logo
+									[rowData]="vendor"
+								></ga-company-logo>
+								{{ vendor.name }}
+							</div>
+							<div class="col-md-2 p-0 text-center text-truncate">
+								{{ vendor.phone }}
+							</div>
+							<div class="col-md-2 p-0 text-center text-truncate">
+								<gauzy-email [rowData]="vendor"></gauzy-email>
+							</div>
+							<div class="col-md-3 p-0 float-left text-truncate">
+								<gauzy-external-link
+									[rowData]="vendor"
+								></gauzy-external-link>
+							</div>
+							<div class="col-md-3 text-center p-0 text-truncate">
+								<ga-only-tags [rowData]="vendor">
+								</ga-only-tags>
+							</div>
+						</div>
+					</nb-card-body>
+				</nb-card>
 			</div>
 		</ng-template>
 		<ng-template
@@ -41,7 +73,7 @@
 				vendors?.length > 0
 			"
 		>
-			<ga-card-grid
+			<ga-card-grid 
 				[totalItems]="pagination?.totalItems"
 				[settings]="settingsSmartTable"
 				[source]="vendors"
