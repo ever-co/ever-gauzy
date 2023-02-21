@@ -1,0 +1,8 @@
+<nb-toggle
+	status="primary"
+	[checked]="rowData?.allowScreenshotCapture"
+	(checkedChange)="onCheckedChange($event)"
+	>{{
+		(rowData?.allowScreenshotCapture ? 'EMPLOYEES_PAGE.ENABLED' : 'EMPLOYEES_PAGE.DISABLED') | translate
+	}}</nb-toggle
+>

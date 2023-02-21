@@ -331,7 +331,7 @@ export class TimeTrackerService {
 			organizationContactId: values.organizationContactId,
 			isRunning: true,
 			version: values.version,
-			...(values.startedAt ? { startedAt: values.startedAt } : {})
+			...(values.startedAt ? { startedAt: moment(values.startedAt).utc().toISOString() } : {})
 		};
 		log.info(`Toggle Start Timer Request: ${moment().format()}`, body);
 		return firstValueFrom(
@@ -357,8 +357,8 @@ export class TimeTrackerService {
 			organizationContactId: values.organizationContactId,
 			isRunning: false,
 			version: values.version,
-			...(values.startedAt ? { startedAt: values.startedAt } : {}),
-			...(values.stoppedAt ? { stoppedAt: values.stoppedAt } : {})
+			...(values.startedAt ? { startedAt: moment(values.startedAt).utc().toISOString() } : {}),
+			...(values.stoppedAt ? { stoppedAt: moment(values.stoppedAt).utc().toISOString() } : {})
 		};
 		log.info(`Toggle Stop Timer Request: ${moment().format()}`, body);
 		return firstValueFrom(
@@ -384,6 +384,24 @@ export class TimeTrackerService {
 		);
 	}
 
+	deleteTimeSlots(values) {
+		const params = this.toParams({
+			ids: [...values.timeslotIds],
+			tenantId: values.tenantId,
+			organizationId: values.organizationId
+		});
+		const headers = new HttpHeaders({
+			Authorization: `Bearer ${values.token}`,
+			'Tenant-Id': values.tenantId
+		});
+
+		return firstValueFrom(
+			this.http.delete(`${values.apiHost}/api/timesheet/time-slot`, {
+				params,
+				headers: headers
+			})
+		);
+	}
 	toParams(query) {
 		let params: HttpParams = new HttpParams();
 		Object.keys(query).forEach((key) => {
