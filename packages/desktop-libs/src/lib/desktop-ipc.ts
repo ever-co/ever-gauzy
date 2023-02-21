@@ -275,7 +275,8 @@ export function ipcTimer(
 					id: arg.id,
 					timelogId: arg.lastTimer.id,
 					timesheetId: arg.lastTimer.timesheetId,
-					synced: true
+					synced: true,
+					...(arg.lastTimer.startedAt && { startedAt: new Date(arg.lastTimer.startedAt) })
 				})
 			);
 		} catch (error) {
@@ -743,6 +744,15 @@ export function ipcTimer(
 		isQueueThreadTimerLocked = false;
 		console.log('-----> FINISH SYNC <------');
 	});
+
+	ipcMain.on('notify', (event, notification) => {
+		const notify = new NotificationDesktop();
+		notify.customNotification(notification.message, notification.text);
+	})
+
+	ipcMain.on('update_session', (event, timer: TimerTO) => {
+		timerHandler.timeStart = moment(timer.startedAt);
+	})
 }
 
 export function removeMainListener() {

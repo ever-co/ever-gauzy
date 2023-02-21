@@ -104,9 +104,11 @@ export interface IOrganization extends IBasePerTenantEntityModel {
 	daysUntilDue?: number;
 	accountingTemplates?: IAccountingTemplate[];
 	reportOrganizations?: IReportOrganization[];
-	allowTrackInactivity?: boolean,
-	inactivityTimeLimit?: number,
-	activityProofDuration?: number
+	allowTrackInactivity?: boolean;
+	inactivityTimeLimit?: number;
+	activityProofDuration?: number;
+	isRemoveIdleTime?: boolean;
+	allowScreenshotCapture?: boolean;
 }
 
 export interface IOrganizationFindInput extends IBasePerTenantEntityModel {
@@ -269,8 +271,8 @@ export enum CrudActionEnum {
 export const DEFAULT_DATE_FORMATS: string[] = ['L', 'LL', 'dddd, LL'];
 export const DEFAULT_TIME_FORMATS: number[] = [12, 24];
 export interface IKeyValuePair {
-    key: string;
-    value: boolean | string;
+	key: string;
+	value: boolean | string;
 }
 
 export const DEFAULT_INACTIVITY_TIME_LIMITS: number[] = [1, 5, 10, 20, 30];

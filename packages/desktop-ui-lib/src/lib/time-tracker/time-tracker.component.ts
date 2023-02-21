@@ -57,12 +57,11 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 		}
 	}
 	public start$: BehaviorSubject<boolean> = new BehaviorSubject(false);
-	private _timeRun$: BehaviorSubject<any> = new BehaviorSubject({
-		second: '00',
-		minute: '00',
-		hours: '00'
-	});
-	public get timeRun$(): Observable<any> {
+	private _timeRun$: BehaviorSubject<string> = new BehaviorSubject('00:00:00');
+	private get _timeRun(): string {
+		return this._timeRun$.getValue();
+	}
+	public get timeRun$(): Observable<string> {
 		return this._timeRun$.asObservable();
 	}
 	userData: any;
@@ -93,14 +92,8 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 	iconAw$: BehaviorSubject<string> = new BehaviorSubject('close-square-outline');
 	statusIcon$: BehaviorSubject<string> = new BehaviorSubject('success');
 	defaultAwAPI = 'http:localhost:5600';
-	public todayDuration$: BehaviorSubject<any> = new BehaviorSubject({
-		hours: '00',
-		minutes: '00'
-	});
-	public weeklyDuration$: BehaviorSubject<any> = new BehaviorSubject({
-		hours: '00',
-		minutes: '00'
-	});
+	public todayDuration$: BehaviorSubject<any> = new BehaviorSubject('--h --m');
+	public weeklyDuration$: BehaviorSubject<any> = new BehaviorSubject('--h --m');
 	public userOrganization$: BehaviorSubject<any> = new BehaviorSubject({});
 	public lastScreenCapture$: BehaviorSubject<any> = new BehaviorSubject({});
 	userPermission: any = [];
@@ -476,8 +469,8 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 		);
 
 		this.electronService.ipcRenderer.on('prepare_activities_screenshot', (event, arg) =>
-			this._ngZone.run(() => {
-				(async () => await this.sendActivities(arg))();
+			this._ngZone.run(async () => {
+				await this.sendActivities(arg);
 			})
 		);
 
@@ -541,9 +534,15 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 					}
 				}
 				console.log('TIMER TO UPDATE', lastTimer);
+				await this.getTimerStatus({
+					token: this.token,
+					apiHost: this.apiHost,
+					organizationId: this.userOrganization.id,
+					tenantId: this.userData.tenantId,
+				});
 				setTimeout(() => {
 					event.sender.send('update-synced-timer', {
-						lastTimer: { ...lastTimer, id: lastTimer.timelogId },
+						lastTimer: { ...lastTimer, id: this.timerStatus.lastLog.id },
 						...lastTimer
 					});
 					event.sender.send('finish-synced-timer');
@@ -707,9 +706,15 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 								...params
 							});
 						}
+						await this.getTimerStatus({
+							token: this.token,
+							apiHost: this.apiHost,
+							organizationId: this.userOrganization.id,
+							tenantId: this.userData.tenantId,
+						});
 						setTimeout(() => {
 							event.sender.send('update-synced-timer', {
-								lastTimer: latest ? latest : sequence.timer,
+								lastTimer: latest ? latest : { ...sequence.timer, id: this.timerStatus.lastLog.id },
 								...sequence.timer
 							});
 						}, 0);
@@ -754,11 +759,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 						}
 						this.start$.next(false);
 						this.loading = false;
-						this._timeRun$.next({
-							second: '00',
-							minute: '00',
-							hours: '00'
-						});
+						this._timeRun$.next('00:00:00');
 					}
 					setTimeout(() => {
 						if (!this._isOffline) {
@@ -783,6 +784,91 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 				}
 			});
 		});
+		this.electronService.ipcRenderer.on('remove_idle_time', (event, arg) => {
+			this._ngZone.run(async () => {
+				try {
+					const { tenantId, employeeId } = this.userData;
+					const { id: organizationId } = this.userOrganization;
+					const payload = {
+						timeslotIds: [..._.uniq(arg.timeslotIds)],
+						token: this.token,
+						apiHost: this.apiHost,
+						tenantId,
+						organizationId
+					};
+					const notification = {
+						message: 'Idle time successfully deleted',
+						title: 'Gauzy'
+					};
+					const isReadyForDeletion = !this._isOffline && payload.timeslotIds.length > 0;
+					if (isReadyForDeletion) {
+						// Silent delete and restart
+						if (arg.isWorking && this.start) {
+							const params = {
+								token: this.token,
+								note: this.note,
+								projectId: this.projectSelect,
+								taskId: this.taskSelect,
+								organizationId: this.userOrganization.id,
+								tenantId: this.userData.tenantId,
+								organizationContactId: this.organizationContactId,
+								apiHost: this.apiHost
+							};
+							this.timeTrackerService
+								.toggleApiStop({
+									...params,
+									...arg.timer,
+									stoppedAt: new Date()
+								})
+								.then(() =>
+									this.timeTrackerService
+										.deleteTimeSlots(payload)
+										.then(async () => {
+											console.log('Deleted');
+											const timelog =
+												await this.timeTrackerService.toggleApiStart(
+													{
+														...params,
+														startedAt: new Date()
+													}
+												);
+											this.getTodayTime(
+												{ ...payload, employeeId },
+												true
+											);
+											setTimeout(() => {
+												event.sender.send('update_session', { ...timelog })
+												event.sender.send(
+													'update-synced-timer',
+													{
+														lastTimer: timelog,
+														...arg.timer,
+													}
+												);
+											}, 0);
+										})
+								);
+						} else {
+							do {
+								await this.getTimerStatus(payload);
+								console.log('Waiting...');
+							} while (this.timerStatus.running);
+							await this.timeTrackerService.deleteTimeSlots(payload);
+						}
+					}
+					if (this._isOffline || isReadyForDeletion) {
+						this.toastrService.success(
+							notification.message,
+							notification.title
+						);
+						event.sender.send('notify', notification);
+					}
+				} catch (error) {
+					this.toastrService.danger('An Error Occurred', 'Gauzy');
+					console.log('ERROR', error);
+				}
+			});
+		})
 	}
 
 	async toggleStart(val) {
@@ -813,41 +899,17 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 	}
 
 	setTime(value) {
-		const seconds = moment.duration(value.second, 'seconds').seconds();
-		const minutes = moment.duration(value.second, 'seconds').minutes();
-		const hours = moment.duration(value.second, 'seconds').hours();
 		const instantaneaous = this._lastTotalWorkedToday + value.second;
 		const instantaneousWeek = this._lastTotalWorkedWeek + value.second;
-
-		this._timeRun$.next({
-			second: seconds.toString().length > 1 ? `${seconds}` : `0${seconds}`,
-			minute: minutes.toString().length > 1 ? `${minutes}` : `0${minutes}`,
-			hours: hours.toString().length > 1 ? `${hours}` : `0${hours}`
-		});
-
+		this.todayDuration$.next(moment.duration(instantaneaous, 'seconds').format('hh[h] mm[m]', { trim: false, trunc: true }));
+		this.weeklyDuration$.next(moment.duration(instantaneousWeek, 'seconds').format('hh[h] mm[m]', { trim: false, trunc: true }));
+		this._timeRun$.next(moment.duration(value.second, 'seconds').format('hh:mm:ss', { trim: false }));
+		this.electronService.ipcRenderer.send('update_tray_time_update', this.todayDuration);
 		this.electronService.ipcRenderer.send('update_tray_time_title', {
 			timeRun: moment.duration(instantaneaous, 'seconds').format('hh:mm:ss', { trim: false })
 		});
 
-		this.todayDuration$.next({
-			hours: this.formattingDuration('hours', moment.duration(instantaneaous, 'seconds').hours()),
-			minutes: this.formattingDuration('minutes', moment.duration(instantaneaous, 'seconds').minutes())
-		});
-
-		this.weeklyDuration$.next({
-			minutes: this.formattingDuration('minutes', moment.duration(instantaneousWeek, 'seconds').minutes()),
-			hours: this.formattingDuration(
-				'hours',
-				Math.floor(parseInt(moment.duration(instantaneousWeek, 'seconds').format('h', 4)))
-			)
-		});
-
-		this.electronService.ipcRenderer.send('update_tray_time_update', {
-			minutes: this.todayDuration.minutes,
-			hours: this.todayDuration.hours
-		});
-
-		if (seconds % 5 === 0) {
+		if (value.second % 5 === 0) {
 			this.pingAw(null);
 			if (this.lastScreenCapture.createdAt) {
 				this.lastScreenCapture$.next({
@@ -1046,55 +1108,25 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 		};
 	}
 
-	getTodayTime(arg) {
+	getTodayTime(arg, isForcedSync?) {
 		if (this._isOffline) return;
 		this.timeTrackerService.getTimeLogs(arg).then((res: any) => {
 			if (res && res.todayDuration && res.weekDuration) {
-				this.countDuration(res);
+				this.countDuration(res, isForcedSync);
 			}
 		});
 	}
 
-	countDuration(count) {
-		if (count && !this.start) {
-			const minutes = moment.duration(count.todayDuration, 'seconds').minutes();
-			const hours = moment.duration(count.todayDuration, 'seconds').hours();
-			this.todayDuration$.next({
-				hours: this.formattingDuration('hours', hours),
-				minutes: this.formattingDuration('minutes', minutes)
-			});
-			this.weeklyDuration$.next({
-				minutes: this.formattingDuration('minutes', moment.duration(count.weekDuration, 'seconds').minutes()),
-				hours: this.formattingDuration(
-					'hours',
-					Math.floor(parseInt(moment.duration(count.weekDuration, 'seconds').format('h', 4)))
-				)
-			});
-
-			this.electronService.ipcRenderer.send('update_tray_time_update', {
-				minutes: this.todayDuration.minutes,
-				hours: this.todayDuration.hours
-			});
-
+	countDuration(count, isForcedSync?) {
+		if (count && (!this.start || isForcedSync)) {
 			this._lastTotalWorkedToday = count.todayDuration;
 			this._lastTotalWorkedWeek = count.weekDuration;
+			this.todayDuration$.next(moment.duration(this._lastTotalWorkedToday, 'seconds').format('hh[h] mm[m]', { trim: false, trunc: true }));
+			this.weeklyDuration$.next(moment.duration(this._lastTotalWorkedWeek, 'seconds').format('hh[h] mm[m]', { trim: false, trunc: true }));
+			this.electronService.ipcRenderer.send('update_tray_time_update', this.todayDuration);
 			this.electronService.ipcRenderer.send('update_tray_time_title', {
 				timeRun: moment.duration(this._lastTotalWorkedToday, 'seconds').format('hh:mm:ss', { trim: false })
 			});
-		}
-	}
-
-	formattingDuration(timeEntity, val) {
-		switch (timeEntity) {
-			case 'hours': {
-				return val.toString().length > 1 ? `${val}` : `0${val}`;
-			}
-			case 'minutes': {
-				const minteBackTime = val % 60;
-				return minteBackTime.toString().length > 1 ? `${minteBackTime}` : `0${minteBackTime}`;
-			}
-			default:
-				return '00';
 		}
 	}
 
@@ -1170,11 +1202,22 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 					this._permissions$.next(this.userPermission);
 				}
 				this.userOrganization$.next(res.employee.organization);
-				this.electronService.ipcRenderer.send('update_timer_auth_config', {
-					activityProofDuration: res.employee.organization.activityProofDuration,
-					inactivityTimeLimit: res.employee.organization.inactivityTimeLimit,
-					allowTrackInactivity: res.employee.organization.allowTrackInactivity
-				});
+				this.electronService.ipcRenderer.send(
+					'update_timer_auth_config',
+					{
+						activityProofDuration:
+							res.employee.organization.activityProofDuration,
+						inactivityTimeLimit:
+							res.employee.organization.inactivityTimeLimit,
+						allowTrackInactivity:
+							res.employee.organization.allowTrackInactivity,
+						isRemoveIdleTime:
+							res.employee.organization.isRemoveIdleTime,
+						allowScreenshotCapture:
+							res.employee.organization.allowScreenshotCapture &&
+							res.employee.allowScreenshotCapture
+					}
+				);
 				this.isTrackingEnabled =
 					typeof res.employee.isTrackingEnabled !== 'undefined' ? res.employee.isTrackingEnabled : true;
 				if (start) {
@@ -1309,7 +1352,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 						this.appSetting.monitor.captured &&
 						this.appSetting.monitor.captured === 'active-only'
 					) {
-						if (source.display_id === arg.activeWindow.id.toString()) {
+						if (arg.activeWindow && source.display_id === arg.activeWindow.id.toString()) {
 							screens.push({
 								img: source.thumbnail.toPNG(),
 								name: source.name,
