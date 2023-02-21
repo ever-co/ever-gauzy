@@ -223,7 +223,8 @@
         "Freemont",
         "keyresults",
         "signups",
-        "Shaked"
+        "Shaked",
+        "julianday"
     ],
     "useGitignore": true,
     "ignorePaths": [

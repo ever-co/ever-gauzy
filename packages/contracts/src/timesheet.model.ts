@@ -197,6 +197,11 @@ export interface ITimeLogFilters
 	unitOfTime?: any;
 }
 
+export interface ITimeLogTodayFilters extends IBasePerTenantAndOrganizationEntityModel {
+	todayStart?: Date | string;
+	todayEnd?: Date | string;
+}
+
 export interface ITimeSlot extends IBasePerTenantAndOrganizationEntityModel {
 	[x: string]: any;
 	employeeId: string;
