@@ -25,7 +25,10 @@ export class TaskSizeController extends CrudFactory<
 	ITaskSizeUpdateInput,
 	ITaskSizeFindInput
 >(PaginationParams, CreateTaskSizeDTO, UpdateTaskSizeDTO, CountQueryDTO) {
-	constructor(protected readonly taskSizeService: TaskSizeService) {
+
+	constructor(
+		protected readonly taskSizeService: TaskSizeService
+	) {
 		super(taskSizeService);
 	}
 
@@ -44,7 +47,9 @@ export class TaskSizeController extends CrudFactory<
 	@HttpCode(HttpStatus.OK)
 	@Get()
 	@UsePipes(new ValidationPipe({ whitelist: true }))
-	async findTaskSizes(@Query() params: TaskSizeQuerDTO): Promise<IPagination<ITaskSize>> {
+	async findTaskSizes(
+		@Query() params: TaskSizeQuerDTO
+	): Promise<IPagination<ITaskSize>> {
 		return await this.taskSizeService.findTaskSizes(params);
 	}
 }
