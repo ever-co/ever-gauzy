@@ -2,14 +2,14 @@ import * as loginPage from '../support/Base/pages/Login.po';
 import { LoginPageData } from '../support/Base/pagedata/LoginPageData';
 import * as organizationEquipmentPage from '../support/Base/pages/OrganizationEquipment.po';
 import { OrganizationEquipmentPageData } from '../support/Base/pagedata/OrganizationEquipmentPageData';
-import * as dashboradPage from '../support/Base/pages/Dashboard.po';
+import * as dashboardPage from '../support/Base/pages/Dashboard.po';
 import * as organizationTagsUserPage from '../support/Base/pages/OrganizationTags.po';
 import { OrganizationTagsPageData } from '../support/Base/pagedata/OrganizationTagsPageData';
 import { CustomCommands } from '../support/commands';
 
 describe('Organization equipment test', () => {
 	before(() => {
-		CustomCommands.login(loginPage, LoginPageData, dashboradPage);
+		CustomCommands.login(loginPage, LoginPageData, dashboardPage);
 	});
 
 	it('Should be able to add new equipment', () => {
@@ -21,7 +21,7 @@ describe('Organization equipment test', () => {
 		organizationEquipmentPage.gridBtnExists();
 		organizationEquipmentPage.gridBtnClick(1);
 		organizationEquipmentPage.addEquipmentButtonVisible();
-		organizationEquipmentPage.clickAddEqupmentButton();
+		organizationEquipmentPage.clickAddEquipmentButton();
 		organizationEquipmentPage.nameInputVisible();
 		organizationEquipmentPage.enterNameInputData(
 			OrganizationEquipmentPageData.name
@@ -47,7 +47,7 @@ describe('Organization equipment test', () => {
 			OrganizationEquipmentPageData.period
 		);
 		organizationEquipmentPage.tagsDropdownVisible();
-		organizationEquipmentPage.clickTagsDropdwon();
+		organizationEquipmentPage.clickTagsDropdown();
 		organizationEquipmentPage.selectTagFromDropdown(0);
 		organizationEquipmentPage.clickCardBody();
 		organizationEquipmentPage.saveButtonVisible();
@@ -96,7 +96,7 @@ describe('Organization equipment test', () => {
 		organizationEquipmentPage.selectPolicyFromDropdown(0);
 		organizationEquipmentPage.selectEmployeeDropdownVisible();
 		organizationEquipmentPage.clickEmployeeDropdown();
-		organizationEquipmentPage.selectEmployeeFromDrodpwon(0);
+		organizationEquipmentPage.selectEmployeeFromDropdown(0);
 		organizationEquipmentPage.clickKeyboardButtonByKeyCode(9);
 		organizationEquipmentPage.dateInputVisible();
 		organizationEquipmentPage.enterDateData();
@@ -162,7 +162,7 @@ describe('Organization equipment test', () => {
 		organizationEquipmentPage.selectPolicyFromDropdown(0);
 		organizationEquipmentPage.selectEmployeeDropdownVisible();
 		organizationEquipmentPage.clickEmployeeDropdown();
-		organizationEquipmentPage.selectEmployeeFromDrodpwon(0);
+		organizationEquipmentPage.selectEmployeeFromDropdown(0);
 		organizationEquipmentPage.clickKeyboardButtonByKeyCode(9);
 		organizationEquipmentPage.saveButtonVisible();
 		organizationEquipmentPage.clickSaveButton();

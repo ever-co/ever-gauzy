@@ -2,12 +2,12 @@ import * as loginPage from '../support/Base/pages/Login.po';
 import { LoginPageData } from '../support/Base/pagedata/LoginPageData';
 import * as pipelinesPage from '../support/Base/pages/Pipelines.po';
 import { PipelinesPageData } from '../support/Base/pagedata/PipelinesPageData';
-import * as dashboradPage from '../support/Base/pages/Dashboard.po';
+import * as dashboardPage from '../support/Base/pages/Dashboard.po';
 import { CustomCommands } from '../support/commands';
 
 describe('Pipelines test', () => {
 	before(() => {
-		CustomCommands.login(loginPage, LoginPageData, dashboradPage);
+		CustomCommands.login(loginPage, LoginPageData, dashboardPage);
 	});
 
 	it('Should be able to add new pipeline', () => {
@@ -40,7 +40,7 @@ describe('Pipelines test', () => {
 			PipelinesPageData.pipelineDescription
 		);
 		pipelinesPage.updateButtonVisible();
-		pipelinesPage.clickUpdateButon();
+		pipelinesPage.clickUpdateButton();
 		pipelinesPage.waitMessageToHide();
 		pipelinesPage.verifyPipelineExists(PipelinesPageData.editPipelineName);
 	});

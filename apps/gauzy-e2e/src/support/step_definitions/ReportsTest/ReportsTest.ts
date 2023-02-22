@@ -4,7 +4,7 @@ import * as reportsPage from '../../Base/pages/Reports.po';
 import { ReportsPageData } from '../../Base/pagedata/ReportsPageData';
 import * as dashboardPage from '../../Base/pages/Dashboard.po';
 import { CustomCommands } from '../../commands';
-import { faker } from '@ever-co/faker';
+import { faker } from '@faker-js/faker';
 import * as organizationProjectsPage from '../../Base/pages/OrganizationProjects.po';
 import { OrganizationProjectsPageData } from '../../Base/pagedata/OrganizationProjectsPageData';
 import * as logoutPage from '../../Base/pages/Logout.po';
@@ -24,20 +24,20 @@ import { Given, Then, When, And } from 'cypress-cucumber-preprocessor/steps';
 const pageLoadTimeout = Cypress.config('pageLoadTimeout');
 
 let email = faker.internet.email();
-let fullName = faker.name.firstName() + ' ' + faker.name.lastName();
-let city = faker.address.city();
-let postcode = faker.address.zipCode();
-let street = faker.address.streetAddress();
+let fullName = faker.person.firstName() + ' ' + faker.person.lastName();
+let city = faker.location.city();
+let postcode = faker.location.zipCode();
+let street = faker.location.streetAddress();
 let website = faker.internet.url();
 
-let firstName = faker.name.firstName();
-let lastName = faker.name.lastName();
+let firstName = faker.person.firstName();
+let lastName = faker.person.lastName();
 let username = faker.internet.userName();
 let password = faker.internet.password();
 let employeeEmail = faker.internet.email();
 let imgUrl = faker.image.avatar();
 let employeeFullName = `${firstName} ${lastName}`;
-let projectName = faker.company.companyName()
+let projectName = faker.company.name()
 
 
 let description = faker.lorem.text();
@@ -176,7 +176,7 @@ And('User can add new task', () => {
 	CustomCommands.logout(dashboardPage, logoutPage, loginPage);
 	CustomCommands.clearCookies();
 	CustomCommands.login(loginPage, LoginPageData, dashboardPage);
-	CustomCommands.addTask(addTaskPage,{ 
+	CustomCommands.addTask(addTaskPage, {
 		defaultTaskProject: projectName,
 		defaultTaskTitle: AddTasksPageData.defaultTaskTitle,
 		editTaskTitle: AddTasksPageData.defaultTaskTitle,
@@ -210,7 +210,7 @@ And('Employee can log time', () => {
 
 // Verify reports time log data
 And('Employee can see Reports sidebar button', () => {
-	reportsPage.sidebarBtnVidible();
+	reportsPage.sidebarBtnVisible();
 });
 
 When('Employee click on Reports sidebar button', () => {

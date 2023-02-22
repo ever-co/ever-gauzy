@@ -4,7 +4,7 @@ import * as dashboardPage from '../../Base/pages/Dashboard.po';
 import { CustomCommands } from '../../commands';
 import * as goalsKPIPage from '../../Base/pages/GoalsKPI.po';
 import { GoalsKPIPageData } from '../../Base/pagedata/GoalsKPIPageData';
-import { faker } from '@ever-co/faker';
+import { faker } from '@faker-js/faker';
 import * as logoutPage from '../../Base/pages/Logout.po';
 import * as manageEmployeesPage from '../../Base/pages/ManageEmployees.po';
 import * as goalstimeFramePage from '../../Base/pages/GoalsTimeFrame.po';
@@ -14,8 +14,8 @@ import { Given, Then, When, And } from 'cypress-cucumber-preprocessor/steps';
 
 const pageLoadTimeout = Cypress.config('pageLoadTimeout');
 
-let firstName = faker.name.firstName();
-let lastName = faker.name.lastName();
+let firstName = faker.person.firstName();
+let lastName = faker.person.lastName();
 let username = faker.internet.userName();
 let password = faker.internet.password();
 let employeeEmail = faker.internet.email();

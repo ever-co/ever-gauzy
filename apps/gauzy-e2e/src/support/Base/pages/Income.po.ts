@@ -37,7 +37,7 @@ export const clickEmployeeDropdown = () => {
 	clickButton(IncomePage.selectEmployeeDropdownCss);
 };
 
-export const selectEmployeeFromDrodpwon = (index) => {
+export const selectEmployeeFromDropdown = (index) => {
 	clickButtonByIndex(IncomePage.selectEmployeeDropdownOptionCss, index);
 };
 
@@ -76,7 +76,7 @@ export const tagsDropdownVisible = () => {
 	verifyElementIsVisible(IncomePage.addTagsDropdownCss);
 };
 
-export const clickTagsDropdwon = () => {
+export const clickTagsDropdown = () => {
 	clickButton(IncomePage.addTagsDropdownCss);
 };
 

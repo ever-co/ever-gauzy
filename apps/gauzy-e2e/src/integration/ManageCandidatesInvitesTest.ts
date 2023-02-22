@@ -2,8 +2,8 @@ import * as loginPage from '../support/Base/pages/Login.po';
 import { LoginPageData } from '../support/Base/pagedata/LoginPageData';
 import * as manageCandidatesInvitesPage from '../support/Base/pages/ManageCandidatesInvites.po';
 import { CustomCommands } from '../support/commands';
-import * as dashboradPage from '../support/Base/pages/Dashboard.po';
-import { faker } from '@ever-co/faker';
+import * as dashboardPage from '../support/Base/pages/Dashboard.po';
+import { faker } from '@faker-js/faker';
 
 let email = ' ';
 
@@ -11,7 +11,7 @@ describe('Manage candidates invites test', () => {
 	before(() => {
 		email = faker.internet.email();
 
-		CustomCommands.login(loginPage, LoginPageData, dashboradPage);
+		CustomCommands.login(loginPage, LoginPageData, dashboardPage);
 	});
 
 	it('Should be able to invite candidate', () => {

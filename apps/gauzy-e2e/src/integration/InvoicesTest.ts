@@ -4,9 +4,9 @@ import * as invoicesPage from '../support/Base/pages/Invoices.po';
 import { InvoicesPageData } from '../support/Base/pagedata/InvoicesPageData';
 import * as organizationTagsUserPage from '../support/Base/pages/OrganizationTags.po';
 import { OrganizationTagsPageData } from '../support/Base/pagedata/OrganizationTagsPageData';
-import * as dashboradPage from '../support/Base/pages/Dashboard.po';
+import * as dashboardPage from '../support/Base/pages/Dashboard.po';
 import { CustomCommands } from '../support/commands';
-import { faker } from '@ever-co/faker';
+import { faker } from '@faker-js/faker';
 import { ContactsLeadsPageData } from '../support/Base/pagedata/ContactsLeadsPageData';
 import * as contactsLeadsPage from '../support/Base/pages/ContactsLeads.po';
 import * as organizationProjectsPage from '../support/Base/pages/OrganizationProjects.po';
@@ -23,14 +23,14 @@ let sendEmail = ' ';
 describe('Invoices test', () => {
 	before(() => {
 		email = faker.internet.email();
-		fullName = faker.name.firstName() + ' ' + faker.name.lastName();
-		city = faker.address.city();
-		postcode = faker.address.zipCode();
-		street = faker.address.streetAddress();
+		fullName = faker.person.firstName() + ' ' + faker.person.lastName();
+		city = faker.location.city();
+		postcode = faker.location.zipCode();
+		street = faker.location.streetAddress();
 		website = faker.internet.url();
 		sendEmail = faker.internet.email();
 
-		CustomCommands.login(loginPage, LoginPageData, dashboradPage);
+		CustomCommands.login(loginPage, LoginPageData, dashboardPage);
 	});
 	it('Should be able to add new invoice', () => {
 		CustomCommands.addProject(
@@ -57,7 +57,7 @@ describe('Invoices test', () => {
 		invoicesPage.addButtonVisible();
 		invoicesPage.clickAddButton();
 		invoicesPage.tagsDropdownVisible();
-		invoicesPage.clickTagsDropdwon();
+		invoicesPage.clickTagsDropdown();
 		invoicesPage.selectTagFromDropdown(0);
 		invoicesPage.clickCardBody();
 		invoicesPage.discountInputVisible();
@@ -69,7 +69,7 @@ describe('Invoices test', () => {
 		);
 		invoicesPage.contactDropdownVisible();
 		invoicesPage.clickContactDropdown();
-		invoicesPage.selectContactFromDropdwon(0);
+		invoicesPage.selectContactFromDropdown(0);
 		invoicesPage.taxInputVisible();
 		invoicesPage.enterTaxData(InvoicesPageData.taxValue);
 		invoicesPage.taxTypeDropdownVisible();
@@ -94,15 +94,15 @@ describe('Invoices test', () => {
 	it('Should be able to search invoice', () => {
 		invoicesPage.verifyTabButtonVisible();
 		invoicesPage.clickTabButton(1);
-		invoicesPage.veirifyEstimateNumberInputVisible();
+		invoicesPage.verifyEstimateNumberInputVisible();
 		invoicesPage.enterEstimateNumberInputData(
 			InvoicesPageData.invoiceNumber
 		);
-		invoicesPage.verifyCurrencuDropdownVisible();
+		invoicesPage.verifyCurrencyDropdownVisible();
 		invoicesPage.verifyEstimateDateInput();
 		invoicesPage.verifyEstimateDueDateInput();
 		invoicesPage.verifyTotalValueInputVisible();
-		invoicesPage.verifyCurrencuDropdownVisible();
+		invoicesPage.verifyCurrencyDropdownVisible();
 		invoicesPage.verifyStatusInputVisible();
 		invoicesPage.searchButtonVisible();
 		invoicesPage.clickSearchButton();
@@ -133,7 +133,7 @@ describe('Invoices test', () => {
 		);
 		invoicesPage.contactDropdownVisible();
 		invoicesPage.clickContactDropdown();
-		invoicesPage.selectContactFromDropdwon(0);
+		invoicesPage.selectContactFromDropdown(0);
 		invoicesPage.taxInputVisible();
 		invoicesPage.enterTaxData(InvoicesPageData.taxValue);
 		invoicesPage.taxTypeDropdownVisible();

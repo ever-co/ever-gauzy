@@ -67,7 +67,7 @@ export const tagsDropdownVisible = () => {
 	verifyElementIsVisible(OrganizationVendorsPage.addTagsDropdownCss);
 };
 
-export const clickTagsDropdwon = () => {
+export const clickTagsDropdown = () => {
 	clickButton(OrganizationVendorsPage.addTagsDropdownCss);
 };
 

@@ -2,9 +2,9 @@ import * as loginPage from '../support/Base/pages/Login.po';
 import { LoginPageData } from '../support/Base/pagedata/LoginPageData';
 import * as timeOffPage from '../support/Base/pages/TimeOff.po';
 import { TimeOffPageData } from '../support/Base/pagedata/TimeOffPageData';
-import * as dashboradPage from '../support/Base/pages/Dashboard.po';
+import * as dashboardPage from '../support/Base/pages/Dashboard.po';
 import { CustomCommands } from '../support/commands';
-import { faker } from '@ever-co/faker';
+import { faker } from '@faker-js/faker';
 import * as manageEmployeesPage from '../support/Base/pages/ManageEmployees.po';
 
 let firstName = ' ';
@@ -16,14 +16,14 @@ let imgUrl = ' ';
 
 describe('Time Off test', () => {
 	before(() => {
-		firstName = faker.name.firstName();
-		lastName = faker.name.lastName();
+		firstName = faker.person.firstName();
+		lastName = faker.person.lastName();
 		username = faker.internet.userName();
 		password = faker.internet.password();
 		employeeEmail = faker.internet.email();
 		imgUrl = faker.image.avatar();
 
-		CustomCommands.login(loginPage, LoginPageData, dashboradPage);
+		CustomCommands.login(loginPage, LoginPageData, dashboardPage);
 	});
 	it('Should be able to create new time off request', () => {
 		CustomCommands.addEmployee(
@@ -51,7 +51,7 @@ describe('Time Off test', () => {
 		timeOffPage.endDateInputVisible();
 		timeOffPage.enterEndDateData();
 		timeOffPage.descriptionInputVisible();
-		timeOffPage.enterDdescriptionInputData(
+		timeOffPage.enterDescriptionInputData(
 			TimeOffPageData.defaultDescription
 		);
 		timeOffPage.saveRequestButtonVisible();
@@ -86,7 +86,7 @@ describe('Time Off test', () => {
 		timeOffPage.endDateInputVisible();
 		timeOffPage.enterEndDateData();
 		timeOffPage.descriptionInputVisible();
-		timeOffPage.enterDdescriptionInputData(
+		timeOffPage.enterDescriptionInputData(
 			TimeOffPageData.defaultDescription
 		);
 		timeOffPage.saveRequestButtonVisible();
@@ -98,7 +98,7 @@ describe('Time Off test', () => {
 		timeOffPage.deleteTimeOffBtnVisible();
 		timeOffPage.clickDeleteTimeOffButton();
 		timeOffPage.confirmDeleteTimeOffBtnVisible();
-		timeOffPage.clickConfirmDeleteTimeOffButoon();
+		timeOffPage.clickConfirmDeleteTimeOffButton();
 	});
 	it('Should be able to add holiday', () => {
 		timeOffPage.addHolidayButtonVisible();

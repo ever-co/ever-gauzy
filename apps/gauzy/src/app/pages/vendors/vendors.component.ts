@@ -53,10 +53,9 @@ import { ServerDataSource } from '../../@core/utils/smart-table';
 })
 export class VendorsComponent
 	extends PaginationFilterBaseComponent
-	implements OnInit, OnDestroy
-{
+	implements OnInit, OnDestroy {
 	@ViewChild('addEditTemplate') public addEditTemplateRef: TemplateRef<any>;
-	addEditdialogRef: NbDialogRef<any>;
+	addEditDialogRef: NbDialogRef<any>;
 	organization: IOrganization;
 	vendors: IOrganizationVendor[] = [];
 	viewComponentName: ComponentEnum;
@@ -145,7 +144,7 @@ export class VendorsComponent
 			.subscribe();
 	}
 
-	ngOnDestroy(): void {}
+	ngOnDestroy(): void { }
 
 	private _initializeForm() {
 		this.form = this.fb.group({
@@ -223,7 +222,7 @@ export class VendorsComponent
 	}
 
 	cancel() {
-		this.addEditdialogRef?.close();
+		this.addEditDialogRef?.close();
 		this.form.reset();
 		this.selectedVendor = null;
 		this.tags = [];
@@ -395,7 +394,7 @@ export class VendorsComponent
 	openDialog(template: TemplateRef<any>, isEditTemplate: boolean) {
 		try {
 			isEditTemplate ? this.edit(this.selectedVendor) : this.cancel();
-			this.addEditdialogRef = this.dialogService.open(template);
+			this.addEditDialogRef = this.dialogService.open(template);
 		} catch (error) {
 			console.log('An error occurred on open dialog: ' + error);
 		}

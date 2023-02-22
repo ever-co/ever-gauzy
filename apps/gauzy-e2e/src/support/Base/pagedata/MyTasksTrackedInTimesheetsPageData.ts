@@ -4,7 +4,7 @@ export const MyTasksTrackedInTimesheetsPageData = {
 	editTaskTitle: 'Feature: Invite users with emails',
 	defaultTaskEstimateDays: 1,
 	defaultTaskEstimateHours: 8,
-	defauleStatus: 'Todo',
+	defaultStatus: 'Todo',
 	defaultTaskEstimateMinutes: 59,
 	defaultTaskDescription: 'Very important task'
 };

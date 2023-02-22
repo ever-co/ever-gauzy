@@ -15,27 +15,27 @@ const pageLoadTimeout = Cypress.config('pageLoadTimeout');
 
 import { Given, Then, When, And } from 'cypress-cucumber-preprocessor/steps';
 
-import { faker } from '@ever-co/faker';
+import { faker } from '@faker-js/faker';
 import { OrganizationProjectsPageData } from '../../Base/pagedata/OrganizationProjectsPageData';
 
 const email = faker.internet.email();
-const fullName = faker.name.firstName() + ' ' + faker.name.lastName();
-const city = faker.address.city();
-const postcode = faker.address.zipCode();
-const street = faker.address.streetAddress();
+const fullName = faker.person.firstName() + ' ' + faker.person.lastName();
+const city = faker.location.city();
+const postcode = faker.location.zipCode();
+const street = faker.location.streetAddress();
 const website = faker.internet.url();
 
-const firstName = faker.name.firstName();
-const lastName = faker.name.lastName();
+const firstName = faker.person.firstName();
+const lastName = faker.person.lastName();
 const username = faker.internet.userName();
 const password = faker.internet.password();
 const employeeEmail = faker.internet.email();
 const imgUrl = faker.image.avatar();
 const employeeFullName = `${firstName} ${lastName}`;
 
-const organizationName = faker.company.companyName().toLowerCase().replace(/ /g, '-').replace(/[^\w-]+/g, '').trim();
-const newOrgProfileLink = faker.company.companyName().toLowerCase().replace(/ /g, '-').replace(/[^\w-]+/g, '').trim();
-const taxId = faker.random.alphaNumeric();
+const organizationName = faker.company.name().toLowerCase().replace(/ /g, '-').replace(/[^\w-]+/g, '').trim();
+const newOrgProfileLink = faker.company.name().toLowerCase().replace(/ /g, '-').replace(/[^\w-]+/g, '').trim();
+const taxId = faker.string.alphanumeric();
 
 // Login with email
 Given('Login with default credentials', () => {

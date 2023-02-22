@@ -71,8 +71,7 @@ export interface IManualTimesStatistics
 	project?: Pick<IOrganizationProject, 'name'>;
 }
 
-export interface IGetMembersStatistics
-	extends ITimeLogFilters {
+export interface IGetMembersStatistics extends ITimeLogFilters, ITimeLogTodayFilters {
 	employeeId?: string;
 	projectId?: string | string[];
 }

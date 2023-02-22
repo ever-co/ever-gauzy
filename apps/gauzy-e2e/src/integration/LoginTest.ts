@@ -1,5 +1,5 @@
 import * as loginPage from '../support/Base/pages/Login.po';
-import * as dashboradPage from '../support/Base/pages/Dashboard.po';
+import * as dashboardPage from '../support/Base/pages/Dashboard.po';
 import * as logoutPage from '../support/Base/pages/Logout.po';
 import { LoginPageData } from '../support/Base/pagedata/LoginPageData';
 
@@ -16,11 +16,11 @@ describe('Login Test', () => {
 		loginPage.clearPasswordField();
 		loginPage.enterPassword(LoginPageData.password);
 		loginPage.clickLoginButton();
-		dashboradPage.verifyCreateButton();
+		dashboardPage.verifyCreateButton();
 	});
 
 	it('Should able to logout', () => {
-		dashboradPage.clickUserName();
+		dashboardPage.clickUserName();
 		logoutPage.clickLogoutButton();
 		loginPage.verifyLoginText();
 	});

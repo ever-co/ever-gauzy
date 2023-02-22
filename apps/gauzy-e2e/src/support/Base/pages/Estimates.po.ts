@@ -38,11 +38,11 @@ export const tagsDropdownVisible = () => {
 	verifyElementIsVisible(EstimatesPage.addTagsDropdownCss);
 };
 
-export const clickTagsDropdwon = () => {
+export const clickTagsDropdown = () => {
 	cy.on('uncaught:exception', (err, runnable) => {
-		
+
 		return false
-	  })
+	})
 	clickButton(EstimatesPage.addTagsDropdownCss);
 };
 
@@ -87,7 +87,7 @@ export const clickContactDropdown = () => {
 	clickButton(EstimatesPage.organizationContactDropdownCss);
 };
 
-export const selectContactFromDropdwon = (index) => {
+export const selectContactFromDropdown = (index) => {
 	clickButtonByIndex(EstimatesPage.contactOptionCss, index);
 };
 
@@ -125,10 +125,10 @@ export const selectInvoiceTypeFromDropdown = (text) => {
 };
 
 export const employeeDropdownVisible = () => {
-	verifyElementIsVisible(EstimatesPage.selectEmloyeeCss);
+	verifyElementIsVisible(EstimatesPage.selectEmployeeCss);
 };
 export const clickEmployeeDropdown = () => {
-	clickButton(EstimatesPage.selectEmloyeeCss);
+	clickButton(EstimatesPage.selectEmployeeCss);
 };
 
 export const selectEmployeeFromDropdown = (index) => {
@@ -274,7 +274,7 @@ export const clickTabButton = (index) => {
 	clickButtonByIndex(EstimatesPage.tabButtonCss, index);
 };
 
-export const veirifyEstimateNumberInputVisible = () => {
+export const verifyEstimateNumberInputVisible = () => {
 	verifyElementIsVisible(EstimatesPage.inputInvoicenumberCss);
 };
 
@@ -295,7 +295,7 @@ export const verifyTotalValueInputVisible = () => {
 	verifyElementIsVisible(EstimatesPage.totalValueInputCss);
 };
 
-export const verifyCurrencuDropdownVisible = () => {
+export const verifyCurrencyDropdownVisible = () => {
 	verifyElementIsVisible(EstimatesPage.currencySelectCss);
 };
 

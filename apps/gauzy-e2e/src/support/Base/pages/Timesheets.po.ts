@@ -24,11 +24,11 @@ export const clickAddTimeButton = () => {
 };
 
 export const selectEmployeeDropdownVisible = () => {
-	verifyElementIsVisible(TimesheetsPage.selectEmloyeeCss);
+	verifyElementIsVisible(TimesheetsPage.selectEmployeeCss);
 };
 
 export const clickSelectEmployeeDropdown = () => {
-	clickButton(TimesheetsPage.selectEmloyeeCss);
+	clickButton(TimesheetsPage.selectEmployeeCss);
 };
 
 export const selectEmployeeFromDropdown = (index) => {

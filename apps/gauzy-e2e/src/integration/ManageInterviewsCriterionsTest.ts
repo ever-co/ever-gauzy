@@ -3,17 +3,17 @@ import { LoginPageData } from '../support/Base/pagedata/LoginPageData';
 import { ManageInterviewsCriterionsPageData } from '../support/Base/pagedata/ManageInterviewsCriterionsPageData';
 import * as manageInterviewsCriterionsPage from '../support/Base/pages/ManageInterviewsCriterions.po';
 import { CustomCommands } from '../support/commands';
-import * as dashboradPage from '../support/Base/pages/Dashboard.po';
+import * as dashboardPage from '../support/Base/pages/Dashboard.po';
 
 describe('Manage interviews criterions test', () => {
 	before(() => {
-		CustomCommands.login(loginPage, LoginPageData, dashboradPage);
+		CustomCommands.login(loginPage, LoginPageData, dashboardPage);
 	});
 
 	it('Should be able to add technology stack', () => {
 		cy.visit('/#/pages/employees/candidates/interviews/criterion');
 		manageInterviewsCriterionsPage.technologyInputVisible();
-		manageInterviewsCriterionsPage.enterTechonologyInputData(
+		manageInterviewsCriterionsPage.enterTechnologyInputData(
 			ManageInterviewsCriterionsPageData.technology
 		);
 		manageInterviewsCriterionsPage.saveButtonVisible();
@@ -27,7 +27,7 @@ describe('Manage interviews criterions test', () => {
 		manageInterviewsCriterionsPage.editTechnologyButtonVisible();
 		manageInterviewsCriterionsPage.clickEditTechnologyButton();
 		manageInterviewsCriterionsPage.technologyInputVisible();
-		manageInterviewsCriterionsPage.enterTechonologyInputData(
+		manageInterviewsCriterionsPage.enterTechnologyInputData(
 			ManageInterviewsCriterionsPageData.editTechnology
 		);
 		manageInterviewsCriterionsPage.saveButtonVisible();

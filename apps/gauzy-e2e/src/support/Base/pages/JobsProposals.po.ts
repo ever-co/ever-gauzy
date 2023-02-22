@@ -28,7 +28,7 @@ export const clickEmployeeDropdown = () => {
 	clickButton(JobsProposalsPage.selectEmployeeDropdownCss);
 };
 
-export const selectEmployeeFromDrodpwon = (index) => {
+export const selectEmployeeFromDropdown = (index) => {
 	clickButtonByIndex(
 		JobsProposalsPage.selectEmployeeDropdownOptionCss,
 		index

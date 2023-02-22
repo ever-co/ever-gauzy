@@ -40,6 +40,7 @@ export interface IUser extends IBasePerTenantEntityModel {
 	code?: number;
 	codeExpireAt?: Date;
 	emailVerifiedAt?: Date;
+	isEmailVerified?: boolean;
 	emailToken?: string;
 	invites?: IInvite[];
 }

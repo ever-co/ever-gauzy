@@ -93,7 +93,7 @@ And('User can see tags dropdown', () => {
 });
 
 When('User click on tags dropdown', () => {
-	organizationVendorsPage.clickTagsDropdwon();
+	organizationVendorsPage.clickTagsDropdown();
 });
 
 Then('User can select tag from dropdown options', () => {

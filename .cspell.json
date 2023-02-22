@@ -224,7 +224,8 @@
         "keyresults",
         "signups",
         "Shaked",
-        "julianday"
+        "julianday",
+        "pagedata"
     ],
     "useGitignore": true,
     "ignorePaths": [

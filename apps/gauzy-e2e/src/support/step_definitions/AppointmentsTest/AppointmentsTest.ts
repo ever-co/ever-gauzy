@@ -4,7 +4,7 @@ import * as appointmentsPage from '../../Base/pages/Appointments.po';
 import { AppointmentsPageData } from '../../Base/pagedata/AppointmentsPageData';
 import * as dashboardPage from '../../Base/pages/Dashboard.po';
 import { CustomCommands } from '../../commands';
-import { faker } from '@ever-co/faker';
+import { faker } from '@faker-js/faker';
 import * as logoutPage from '../../Base/pages/Logout.po';
 import * as manageEmployeesPage from '../../Base/pages/ManageEmployees.po';
 import * as eventTypesPage from '../../Base/pages/EventTypes.po';
@@ -16,8 +16,8 @@ import { Given, Then, When, And } from 'cypress-cucumber-preprocessor/steps';
 
 const pageLoadTimeout = Cypress.config('pageLoadTimeout');
 
-let firstName = faker.name.firstName();
-let lastName = faker.name.lastName();
+let firstName = faker.person.firstName();
+let lastName = faker.person.lastName();
 let username = faker.internet.userName();
 let password = faker.internet.password();
 let employeeEmail = faker.internet.email();
@@ -129,7 +129,7 @@ And('User can see title input field', () => {
 });
 
 And('User can enter value for title', () => {
-	eventTypesPage.enterTitleInputData(EventTypePageData.dafaultEventTitle);
+	eventTypesPage.enterTitleInputData(EventTypePageData.defaultEventTitle);
 });
 
 And('User can see description input field', () => {
