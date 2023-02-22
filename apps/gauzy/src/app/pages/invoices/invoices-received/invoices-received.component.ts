@@ -26,20 +26,14 @@ import {
 	Store,
 	ToastrService
 } from '../../../@core/services';
-import {
-	InvoiceEstimateTotalValueComponent,
-	InvoicePaidComponent
-} from '../table-components';
+import { InvoiceEstimateTotalValueComponent, InvoicePaidComponent } from '../table-components';
 import {
 	ContactLinksComponent,
 	DateViewComponent,
 	NotesWithTagsComponent,
 	TagsOnlyComponent
 } from '../../../@shared/table-components';
-import {
-	InputFilterComponent,
-	TagsColorFilterComponent
-} from '../../../@shared/table-filters';
+import { InputFilterComponent, TagsColorFilterComponent } from '../../../@shared/table-filters';
 import { StatusBadgeComponent } from '../../../@shared/status-badge';
 import {
 	IPaginationBase,
@@ -54,10 +48,7 @@ import { getAdjustDateRangeFutureAllowed } from '../../../@theme/components/head
 	templateUrl: './invoices-received.component.html',
 	styleUrls: ['./invoices-received.component.scss']
 })
-export class InvoicesReceivedComponent
-	extends PaginationFilterBaseComponent
-	implements OnInit, OnDestroy
-{
+export class InvoicesReceivedComponent extends PaginationFilterBaseComponent implements OnInit, OnDestroy {
 	loading: boolean = false;
 	disableButton: boolean = true;
 	settingsSmartTable: object;
@@ -85,9 +76,7 @@ export class InvoicesReceivedComponent
 	}
 
 	invoiceReceivedTable: Ng2SmartTableComponent;
-	@ViewChild('invoiceReceivedTable', { static: false }) set content(
-		content: Ng2SmartTableComponent
-	) {
+	@ViewChild('invoiceReceivedTable', { static: false }) set content(content: Ng2SmartTableComponent) {
 		if (content) {
 			this.invoiceReceivedTable = content;
 			this.onChangedSource();
@@ -137,9 +126,7 @@ export class InvoicesReceivedComponent
 		combineLatest([storeOrganization$, storeDateRange$])
 			.pipe(
 				debounceTime(300),
-				filter(
-					([organization, dateRange]) => !!organization && !!dateRange
-				),
+				filter(([organization, dateRange]) => !!organization && !!dateRange),
 				distinctUntilChange(),
 				tap(([organization, dateRange]) => {
 					this.organization = organization as IOrganization;
@@ -152,11 +139,7 @@ export class InvoicesReceivedComponent
 			.subscribe();
 		this._refresh$
 			.pipe(
-				filter(
-					() =>
-						this.dataLayoutStyle ===
-						ComponentLayoutStyleEnum.CARDS_GRID
-				),
+				filter(() => this.dataLayoutStyle === ComponentLayoutStyleEnum.CARDS_GRID),
 				tap(() => this.refreshPagination()),
 				tap(() => (this.invoices = [])),
 				untilDestroyed(this)
@@ -182,15 +165,9 @@ export class InvoicesReceivedComponent
 			.componentLayout$(this.viewComponentName)
 			.pipe(
 				distinctUntilChange(),
-				tap(
-					(componentLayout) =>
-						(this.dataLayoutStyle = componentLayout)
-				),
+				tap((componentLayout) => (this.dataLayoutStyle = componentLayout)),
 				tap(() => this.refreshPagination()),
-				filter(
-					(componentLayout) =>
-						componentLayout === ComponentLayoutStyleEnum.CARDS_GRID
-				),
+				filter((componentLayout) => componentLayout === ComponentLayoutStyleEnum.CARDS_GRID),
 				tap(() => (this.invoices = [])),
 				tap(() => this.invoices$.next(true)),
 				untilDestroyed(this)
@@ -228,7 +205,7 @@ export class InvoicesReceivedComponent
 					tags: 'invoice.tags',
 					toContact: 'invoice.toContact'
 				},
-				...(this.filters.join) ? this.filters.join : {}
+				...(this.filters.join ? this.filters.join : {})
 			},
 			where: {
 				sentTo: organizationId,
@@ -285,10 +262,7 @@ export class InvoicesReceivedComponent
 		}
 		const { id } = this.selectedInvoice;
 		if (this.isEstimate) {
-			this.router.navigate([
-				`/pages/accounting/invoices/estimates/view`,
-				id
-			]);
+			this.router.navigate([`/pages/accounting/invoices/estimates/view`, id]);
 		} else {
 			this.router.navigate([`/pages/accounting/invoices/view`, id]);
 		}
@@ -309,9 +283,7 @@ export class InvoicesReceivedComponent
 				.then(() => {
 					this._refresh$.next(true);
 					this.invoices$.next(true);
-					this.toastrService.success(
-						'INVOICES_PAGE.INVOICE_ACCEPTED'
-					);
+					this.toastrService.success('INVOICES_PAGE.INVOICE_ACCEPTED');
 				});
 		} catch (error) {
 			this._errorHandlingService.handleError(error);
@@ -333,9 +305,7 @@ export class InvoicesReceivedComponent
 				.then(() => {
 					this._refresh$.next(true);
 					this.invoices$.next(true);
-					this.toastrService.success(
-						'INVOICES_PAGE.INVOICE_REJECTED'
-					);
+					this.toastrService.success('INVOICES_PAGE.INVOICE_REJECTED');
 				});
 		} catch (error) {
 			this._errorHandlingService.handleError(error);
@@ -352,18 +322,14 @@ export class InvoicesReceivedComponent
 			},
 			mode: 'external',
 			editable: true,
-			noDataMessage: this.getTranslation(
-				'SM_TABLE.NO_DATA.RECEIVE_ESTIMATE'
-			),
+			noDataMessage: this.getTranslation('SM_TABLE.NO_DATA.RECEIVE_ESTIMATE'),
 			columns: {
 				invoiceNumber: {
 					title: this.isEstimate
 						? this.getTranslation('INVOICES_PAGE.ESTIMATE_NUMBER')
 						: this.getTranslation('INVOICES_PAGE.INVOICE_NUMBER'),
 					type: this.isEstimate ? 'string' : 'custom',
-					renderComponent: this.isEstimate
-						? null
-						: NotesWithTagsComponent,
+					renderComponent: this.isEstimate ? null : NotesWithTagsComponent,
 					sortDirection: 'asc',
 					width: '20%',
 					filter: {
@@ -506,25 +472,15 @@ export class InvoicesReceivedComponent
 	private statusMapper = (value: string) => {
 		let badgeClass;
 		if (value) {
-			badgeClass = [
-				'sent',
-				'viewed',
-				'accepted',
-				'active',
-				'fully paid'
-			].includes(value.toLowerCase())
+			badgeClass = ['sent', 'viewed', 'accepted', 'active', 'fully paid'].includes(value.toLowerCase())
 				? 'success'
-				: ['void', 'draft', 'partially paid'].includes(
-						value.toLowerCase()
-				  )
+				: ['void', 'draft', 'partially paid'].includes(value.toLowerCase())
 				? 'warning'
 				: 'danger';
 		}
 		return {
 			originalValue: value,
-			text: this.getTranslation(
-				`INVOICES_PAGE.STATUSES.${value.toUpperCase()}`
-			),
+			text: this.getTranslation(`INVOICES_PAGE.STATUSES.${value.toUpperCase()}`),
 			class: badgeClass
 		};
 	};
@@ -545,10 +501,7 @@ export class InvoicesReceivedComponent
 
 		const { id } = this.selectedInvoice;
 		if (this.isEstimate) {
-			this.router.navigate([
-				`/pages/accounting/invoices/estimates/edit`,
-				id
-			]);
+			this.router.navigate([`/pages/accounting/invoices/estimates/edit`, id]);
 		} else {
 			this.router.navigate([`/pages/accounting/invoices/edit`, id]);
 		}
