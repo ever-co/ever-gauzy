@@ -38,6 +38,7 @@ export class UserSubscriber implements EntitySubscriberInterface<User> {
         try {
             entity.name = [entity.firstName, entity.lastName].filter(Boolean).join(' ');
             entity.employeeId = entity.employee ? entity.employee.id : null;
+            entity.isEmailVerified = !!entity.emailVerifiedAt;
         } catch (error) {
             console.log(error);
         }
