@@ -10,10 +10,15 @@ export class OrganizationProjectStatusBulkCreateHandler
 
 	constructor(
 		private readonly taskStatusService: TaskStatusService
-	) {}
+	) { }
 
 	public async execute(command: OrganizationProjectStatusBulkCreateCommand): Promise<ITaskStatus[] & TaskStatus[]> {
 		const { input } = command;
-		return await this.taskStatusService.bulkCreateOrganizationProjectStatus(input);
+		const { id: projectId, organizationId } = input;
+
+		/**
+		 * Create bulk status for specific organization project
+		 */
+		return await this.taskStatusService.createBulkStatusByEntity({ organizationId, projectId });
 	}
 }
