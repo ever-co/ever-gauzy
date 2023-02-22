@@ -333,7 +333,31 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 	periodOption = [1, 3, 5, 10];
 	selectedPeriod = 5;
 	screenshotNotification = null;
-	config = null;
+	config = {
+		/* Default Selected dialect	*/
+		db: 'sqlite',
+		/* Default Mysql config */
+		mysql: {
+			dbHost: '127.0.0.1',
+			dbPort: 3306,
+			dbUsername: 'root',
+			dbPassword: ''
+		},
+		/* Default PostgresSQL config */
+		postgres: {
+			dbHost: '127.0.0.1',
+			dbPort: 5432,
+			dbUsername: 'postgres',
+			dbPassword: 'postgres'
+		},
+		timeTrackerWindow: null,
+		isLocalServer: false,
+		serverType: null,
+		serverUrl: null,
+		awPort: null,
+		awHost: null,
+		port: 5620
+	};
 	restartDisable = false;
 	version = '0.0.0';
 	message = {
@@ -407,7 +431,10 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 			this._ngZone.run(() => {
 				const { setting, config, auth, additionalSetting } = arg;
 				this.appSetting = setting;
-				this.config = config;
+				this.config = {
+					...this.config,
+					...config
+				};
 				this.authSetting = auth;
 				this.mappingAdditionalSetting(additionalSetting || null);
 

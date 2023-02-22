@@ -47,7 +47,7 @@ export class MysqlProvider implements IClientServerProvider {
 
 	private _initialization() {
 		this._database = 'gauzy_timer_db';
-		const cfg = LocalStore.getApplicationConfig().config;
+		const cfg = LocalStore.getApplicationConfig().config['mysql'];
 		this._connectionConfig = {
 			host: cfg.dbHost,
 			port: cfg.dbPort,
