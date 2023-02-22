@@ -18,6 +18,7 @@
 		"url": "https://ever.co"
 	},
 	"dependencies": {
+		"@faker-js/faker": "^7.6.0",
 		"resolve": "^1.20.0"
 	},
 	"scripts": {
