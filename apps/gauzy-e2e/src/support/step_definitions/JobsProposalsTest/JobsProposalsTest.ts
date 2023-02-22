@@ -62,7 +62,7 @@ When('User click on employee dropdown', () => {
 });
 
 Then('User can select employee from dropdown options', () => {
-	jobProposalsPage.selectEmployeeFromDrodpwon(1);
+	jobProposalsPage.selectEmployeeFromDropdown(1);
 });
 
 And('User can see name input field', () => {

@@ -83,7 +83,7 @@ describe('Organization departments test', () => {
 		);
 		organizationDepartmentsPage.selectEmployeeDropdownVisible();
 		organizationDepartmentsPage.clickEmployeeDropdown();
-		organizationDepartmentsPage.selectEmployeeFromDrodpwon(0);
+		organizationDepartmentsPage.selectEmployeeFromDropdown(0);
 		organizationDepartmentsPage.clickKeyboardButtonByKeyCode(9);
 		organizationDepartmentsPage.tagsDropdownVisible();
 		organizationDepartmentsPage.clickTagsDropdwon();

@@ -43,7 +43,7 @@ export const clickEmployeeDropdown = () => {
 	waitForDropdownToLoad(ProposalsPage.selectEmployeeDropdownOptionCss)
 };
 
-export const selectEmployeeFromDrodpwon = (index) => {
+export const selectEmployeeFromDropdown = (index) => {
 	clickButtonByIndex(ProposalsPage.selectEmployeeDropdownOptionCss, index);
 };
 

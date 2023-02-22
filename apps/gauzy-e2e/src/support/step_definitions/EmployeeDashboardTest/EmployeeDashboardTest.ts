@@ -203,7 +203,7 @@ When('User click on employee dropdown again', () => {
 });
 
 Then('User can select employee from dropdown options again', () => {
-	employeeDashboard.selectEmployeeFromDrodpwonByName(employeeFullName);
+	employeeDashboard.selectEmployeeFromDropdownByName(employeeFullName);
 });
 
 And('User can see date input field', () => {

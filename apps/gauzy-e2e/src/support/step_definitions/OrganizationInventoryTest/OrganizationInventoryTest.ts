@@ -88,7 +88,7 @@ And('User can enter value for category name', () => {
 });
 
 And('User can see category description input field', () => {
-	organizationInventoryPage.descriptionInputVisivle();
+	organizationInventoryPage.descriptionInputVisible();
 });
 
 And('User can enter value for category description', () => {
@@ -143,7 +143,7 @@ And('User can enter value for type name', () => {
 });
 
 And('User can see type category input field', () => {
-	organizationInventoryPage.descriptionInputVisivle();
+	organizationInventoryPage.descriptionInputVisible();
 });
 
 And('User can enter value for type description', () => {
@@ -206,7 +206,7 @@ And('User can see product dropdown', () => {
 });
 
 When('User click on product dropdown', () => {
-	organizationInventoryPage.clickProductTypeDrodpwon();
+	organizationInventoryPage.clickProductTypeDropdown();
 });
 
 Then('User can select product from dropdown options', () => {
@@ -218,7 +218,7 @@ And('User can see category dropdown', () => {
 });
 
 When('User click on category dropdown', () => {
-	organizationInventoryPage.clickProductCategoryDrodpwon();
+	organizationInventoryPage.clickProductCategoryDropdown();
 });
 
 Then('User can select category from dropdown options', () => {
@@ -226,7 +226,7 @@ Then('User can select category from dropdown options', () => {
 });
 
 And('User can see inventory description input field', () => {
-	organizationInventoryPage.descriptionInputVisivle();
+	organizationInventoryPage.descriptionInputVisible();
 });
 
 And('User can enter  value for inventory description', () => {
@@ -297,7 +297,7 @@ And('User can enter new code', () => {
 });
 
 And('User can see edit description input field', () => {
-	organizationInventoryPage.descriptionInputVisivle();
+	organizationInventoryPage.descriptionInputVisible();
 });
 
 And('User can enter new description', () => {
@@ -393,7 +393,7 @@ And('User can enter new category name', () => {
 });
 
 And('User can see edit description input field', () => {
-	organizationInventoryPage.descriptionInputVisivle();
+	organizationInventoryPage.descriptionInputVisible();
 });
 
 And('User can enter new category description', () => {
@@ -489,7 +489,7 @@ And('User can enter new product type name', () => {
 });
 
 And('User can see edit product type description input field', () => {
-	organizationInventoryPage.descriptionInputVisivle();
+	organizationInventoryPage.descriptionInputVisible();
 });
 
 And('User can enter new product type description', () => {

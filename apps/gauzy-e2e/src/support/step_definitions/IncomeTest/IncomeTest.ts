@@ -74,7 +74,7 @@ When('User click on employee dropdown', () => {
 });
 
 Then('User can select employee from dropdown options', () => {
-	incomePage.selectEmployeeFromDrodpwon(1);
+	incomePage.selectEmployeeFromDropdown(1);
 });
 
 And('User can see date input field', () => {

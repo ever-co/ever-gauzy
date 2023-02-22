@@ -24,7 +24,7 @@ describe('Organization inventory test', () => {
 		organizationInventoryPage.enterNameInputData(
 			OrganizationInventoryPageData.productCategoryName
 		);
-		organizationInventoryPage.descriptionInputVisivle();
+		organizationInventoryPage.descriptionInputVisible();
 		organizationInventoryPage.enterDescriptionInputData(
 			OrganizationInventoryPageData.productCategoryDescription
 		);
@@ -47,7 +47,7 @@ describe('Organization inventory test', () => {
 		organizationInventoryPage.enterNameInputData(
 			OrganizationInventoryPageData.productTypeName
 		);
-		organizationInventoryPage.descriptionInputVisivle();
+		organizationInventoryPage.descriptionInputVisible();
 		organizationInventoryPage.enterDescriptionInputData(
 			OrganizationInventoryPageData.productTypeDescription
 		);
@@ -77,16 +77,16 @@ describe('Organization inventory test', () => {
 			OrganizationInventoryPageData.defaultInventoryCode
 		);
 		organizationInventoryPage.productTypeDropdownVisible();
-		organizationInventoryPage.clickProductTypeDrodpwon();
+		organizationInventoryPage.clickProductTypeDropdown();
 		organizationInventoryPage.clickDropdownOption(
 			OrganizationInventoryPageData.productTypeName
 		);
 		organizationInventoryPage.productCategoryDropdownVisible();
-		organizationInventoryPage.clickProductCategoryDrodpwon();
+		organizationInventoryPage.clickProductCategoryDropdown();
 		organizationInventoryPage.clickDropdownOption(
 			OrganizationInventoryPageData.productCategoryName
 		);
-		organizationInventoryPage.descriptionInputVisivle();
+		organizationInventoryPage.descriptionInputVisible();
 		organizationInventoryPage.enterDescriptionInputData(
 			OrganizationInventoryPageData.productInventoryDescription
 		);
@@ -112,7 +112,7 @@ describe('Organization inventory test', () => {
 		organizationInventoryPage.enterCodeInputData(
 			OrganizationInventoryPageData.defaultInventoryCode
 		);
-		organizationInventoryPage.descriptionInputVisivle();
+		organizationInventoryPage.descriptionInputVisible();
 		organizationInventoryPage.enterDescriptionInputData(
 			OrganizationInventoryPageData.productInventoryDescription
 		);
@@ -144,7 +144,7 @@ describe('Organization inventory test', () => {
 		organizationInventoryPage.enterNameInputData(
 			OrganizationInventoryPageData.productCategoryName
 		);
-		organizationInventoryPage.descriptionInputVisivle();
+		organizationInventoryPage.descriptionInputVisible();
 		organizationInventoryPage.enterDescriptionInputData(
 			OrganizationInventoryPageData.productCategoryDescription
 		);
@@ -178,7 +178,7 @@ describe('Organization inventory test', () => {
 		organizationInventoryPage.enterNameInputData(
 			OrganizationInventoryPageData.productTypeName
 		);
-		organizationInventoryPage.descriptionInputVisivle();
+		organizationInventoryPage.descriptionInputVisible();
 		organizationInventoryPage.enterDescriptionInputData(
 			OrganizationInventoryPageData.productTypeDescription
 		);

@@ -29,7 +29,7 @@ describe('Income test', () => {
 		incomePage.clickAddIncomeButton();
 		incomePage.selectEmployeeDropdownVisible();
 		incomePage.clickEmployeeDropdown();
-		incomePage.selectEmployeeFromDrodpwon(0);
+		incomePage.selectEmployeeFromDropdown(0);
 		incomePage.dateInputVisible();
 		incomePage.enterDateInputData();
 		incomePage.clickKeyboardButtonByKeyCode(9);

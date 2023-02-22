@@ -96,7 +96,7 @@ describe('Organization equipment test', () => {
 		organizationEquipmentPage.selectPolicyFromDropdown(0);
 		organizationEquipmentPage.selectEmployeeDropdownVisible();
 		organizationEquipmentPage.clickEmployeeDropdown();
-		organizationEquipmentPage.selectEmployeeFromDrodpwon(0);
+		organizationEquipmentPage.selectEmployeeFromDropdown(0);
 		organizationEquipmentPage.clickKeyboardButtonByKeyCode(9);
 		organizationEquipmentPage.dateInputVisible();
 		organizationEquipmentPage.enterDateData();
@@ -162,7 +162,7 @@ describe('Organization equipment test', () => {
 		organizationEquipmentPage.selectPolicyFromDropdown(0);
 		organizationEquipmentPage.selectEmployeeDropdownVisible();
 		organizationEquipmentPage.clickEmployeeDropdown();
-		organizationEquipmentPage.selectEmployeeFromDrodpwon(0);
+		organizationEquipmentPage.selectEmployeeFromDropdown(0);
 		organizationEquipmentPage.clickKeyboardButtonByKeyCode(9);
 		organizationEquipmentPage.saveButtonVisible();
 		organizationEquipmentPage.clickSaveButton();

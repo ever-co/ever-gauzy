@@ -68,7 +68,7 @@ describe('Invite candidate test', () => {
 		inviteCandidatePage.clickKeyboardButtonByKeyCode(9);
 		inviteCandidatePage.tagsDropdownVisible();
 		inviteCandidatePage.clickAddTagsDropdown();
-		inviteCandidatePage.selectTagsFromDrodpwon(0);
+		inviteCandidatePage.selectTagsFromDropdown(0);
 		inviteCandidatePage.clickKeyboardButtonByKeyCode(9);
 		inviteCandidatePage.imageInputvisible();
 		inviteCandidatePage.enterImageInputData(imgUrl);

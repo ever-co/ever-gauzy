@@ -91,7 +91,7 @@ And('User can see on employee dropdown', () => {
 });
 
 Then('User can select employee from dropdown options', () => {
-	proposalsPage.selectEmployeeFromDrodpwon(1);
+	proposalsPage.selectEmployeeFromDropdown(1);
 });
 
 And('User can see job post input field', () => {

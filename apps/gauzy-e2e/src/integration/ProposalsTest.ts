@@ -56,7 +56,7 @@ describe('Proposals test', () => {
 		proposalsPage.clickRegisterProposalButton();
 		proposalsPage.selectEmployeeDropdownVisible();
 		proposalsPage.clickEmployeeDropdown();
-		proposalsPage.selectEmployeeFromDrodpwon(1);
+		proposalsPage.selectEmployeeFromDropdown(1);
 		proposalsPage.jobPostInputVisible();
 		proposalsPage.enterJobPostInputData(jobPostUrl);
 		proposalsPage.dateInputVisible();

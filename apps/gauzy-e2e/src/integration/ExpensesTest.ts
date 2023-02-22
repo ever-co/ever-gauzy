@@ -35,7 +35,7 @@ describe('Expense test', () => {
 		expensesPage.clickAddExpenseButton();
 		expensesPage.selectEmployeeDropdownVisible();
 		expensesPage.clickEmployeeDropdown();
-		expensesPage.selectEmployeeFromDrodpwon(0);
+		expensesPage.selectEmployeeFromDropdown(0);
 		expensesPage.categoryInputVisible();
 		expensesPage.clickCategoryInput();
 		expensesPage.enterCategoryInputData(ExpensePageData.defaultCategory);

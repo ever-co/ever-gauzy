@@ -151,7 +151,7 @@ When('User click on tags dropdown', () => {
 });
 
 Then('User can select tag from dropdown options', () => {
-	inviteCandidatePage.selectTagsFromDrodpwon(0);
+	inviteCandidatePage.selectTagsFromDropdown(0);
 	inviteCandidatePage.clickKeyboardButtonByKeyCode(9);
 });
 

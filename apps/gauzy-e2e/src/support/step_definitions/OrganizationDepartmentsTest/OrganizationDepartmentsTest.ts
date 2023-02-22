@@ -105,7 +105,7 @@ When('User click on employee dropdown', () => {
 });
 
 Then('User can select employee from dropdown options', () => {
-	organizationDepartmentsPage.selectEmployeeFromDrodpwon(0);
+	organizationDepartmentsPage.selectEmployeeFromDropdown(0);
 	organizationDepartmentsPage.clickKeyboardButtonByKeyCode(9);
 });
 
