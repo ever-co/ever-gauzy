@@ -21,7 +21,7 @@ let password = faker.internet.password();
 let employeeEmail = faker.internet.email();
 let imgUrl = faker.image.avatar();
 
-let dafaultName = faker.person.jobTitle() + ' ' + ApprovalRequestPageData.defaultRequest;
+let defaultName = faker.person.jobTitle() + ' ' + ApprovalRequestPageData.defaultRequest;
 let editName = faker.person.jobTitle() + ' ' + ApprovalRequestPageData.defaultRequest
 
 // Login with email
@@ -102,7 +102,7 @@ And('User can see description input field', () => {
 
 And('User can enter value for description', () => {
 	approvalRequestPage.enterDescriptionInputData(
-		ApprovalRequestPageData.defaultpolicyDescription
+		ApprovalRequestPageData.defaultPolicyDescription
 	);
 });
 
@@ -154,7 +154,7 @@ Then('User can see approval name input field', () => {
 });
 
 And('User can enter value for approval name', () => {
-	approvalRequestPage.enterNameInputData(dafaultName);
+	approvalRequestPage.enterNameInputData(defaultName);
 });
 
 And('User can see min count input field', () => {
@@ -207,7 +207,7 @@ Then('Notification message will appear', () => {
 });
 
 And('User can verify request was created', () => {
-	approvalRequestPage.verifyRequestExists(dafaultName);
+	approvalRequestPage.verifyRequestExists(defaultName);
 });
 
 //Approve approval request
@@ -216,7 +216,7 @@ When('User see name input field', () => {
 });
 
 Then('User can search approval by name', () => {
-	approvalRequestPage.searchApprovalRequest(dafaultName, ApprovalRequestPageData.searchResult);
+	approvalRequestPage.searchApprovalRequest(defaultName, ApprovalRequestPageData.searchResult);
 });
 
 And('Verify table load', () => {

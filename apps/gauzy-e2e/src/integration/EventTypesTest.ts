@@ -19,7 +19,7 @@ describe('Event types test', () => {
 		eventTypesPage.clickSelectEmployeeDropdown();
 		eventTypesPage.selectEmployeeFromDropdown(1);
 		eventTypesPage.titleInputVisible();
-		eventTypesPage.enterTitleInputData(EventTypePageData.dafaultEventTitle);
+		eventTypesPage.enterTitleInputData(EventTypePageData.defaultEventTitle);
 		eventTypesPage.descriptionInputVisible();
 		eventTypesPage.enterDescriptionInputData(
 			EventTypePageData.defaultDescription
@@ -41,7 +41,7 @@ describe('Event types test', () => {
 		eventTypesPage.editEventTypeButtonVisible();
 		eventTypesPage.clickEditEventTypeButton();
 		eventTypesPage.titleInputVisible();
-		eventTypesPage.enterTitleInputData(EventTypePageData.dafaultEventTitle);
+		eventTypesPage.enterTitleInputData(EventTypePageData.defaultEventTitle);
 		eventTypesPage.descriptionInputVisible();
 		eventTypesPage.enterDescriptionInputData(
 			EventTypePageData.defaultDescription

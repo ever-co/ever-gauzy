@@ -54,7 +54,7 @@ describe('Approval request test', () => {
 		);
 		approvalRequestPage.descriptionInputVisible();
 		approvalRequestPage.enterDescriptionInputData(
-			ApprovalRequestPageData.defaultpolicyDescription
+			ApprovalRequestPageData.defaultPolicyDescription
 		);
 		approvalRequestPage.saveButtonVisible();
 		approvalRequestPage.clickSaveButton();
@@ -72,7 +72,7 @@ describe('Approval request test', () => {
 		approvalRequestPage.clickAddApprovalButton();
 		approvalRequestPage.nameInputVisible();
 		approvalRequestPage.enterNameInputData(
-			ApprovalRequestPageData.dafaultName
+			ApprovalRequestPageData.defaultName
 		);
 		approvalRequestPage.minCountInputVisible();
 		approvalRequestPage.enterMinCountInputData(
@@ -91,7 +91,7 @@ describe('Approval request test', () => {
 		approvalRequestPage.clickSaveButton();
 		approvalRequestPage.waitMessageToHide();
 		approvalRequestPage.verifyRequestExists(
-			ApprovalRequestPageData.dafaultName
+			ApprovalRequestPageData.defaultName
 		);
 	});
 	it('Should be able to edit approval request', () => {

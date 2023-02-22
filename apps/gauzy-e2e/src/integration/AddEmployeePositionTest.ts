@@ -45,7 +45,7 @@ describe('Add employee position test', () => {
 	});
 	it('Should be able to edit employee position', () => {
 		addEmployeePositionPage.clickEditEmployeePositionButton();
-		addEmployeePositionPage.editEmployeePositionInpuVisible();
+		addEmployeePositionPage.editEmployeePositionInputVisible();
 		addEmployeePositionPage.enterEditPositionData(
 			AddEmployeePositionPageData.midLevelWebDeveloper
 		);

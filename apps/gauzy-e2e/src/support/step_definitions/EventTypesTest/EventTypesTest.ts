@@ -79,7 +79,7 @@ And('User can see title input field', () => {
 });
 
 And('User can enter value for title', () => {
-	eventTypesPage.enterTitleInputData(EventTypePageData.dafaultEventTitle);
+	eventTypesPage.enterTitleInputData(EventTypePageData.defaultEventTitle);
 });
 
 And('User can see description input field', () => {
@@ -142,7 +142,7 @@ Then('User can see title input field', () => {
 });
 
 And('User can enter value for title', () => {
-	eventTypesPage.enterTitleInputData(EventTypePageData.dafaultEventTitle);
+	eventTypesPage.enterTitleInputData(EventTypePageData.defaultEventTitle);
 });
 
 And('User can see description input field', () => {
