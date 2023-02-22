@@ -130,19 +130,19 @@ export class OrganizationTeam extends TenantOrganizationBaseEntity
 	/**
 	 * Team Statuses
 	 */
-	@OneToMany(() => TaskStatus, (status) => status.team)
+	@OneToMany(() => TaskStatus, (status) => status.organizationTeam)
 	statuses?: ITaskStatus[];
 
 	/**
 	 * Team Priorities
 	 */
-	@OneToMany(() => TaskPriority, (priority) => priority.team)
+	@OneToMany(() => TaskPriority, (priority) => priority.organizationTeam)
 	priorities?: ITaskPriority[];
 
 	/**
 	 * Team Sizes
 	 */
-	@OneToMany(() => TaskSize, (size) => size.team)
+	@OneToMany(() => TaskSize, (size) => size.organizationTeam)
 	sizes?: ITaskSize[];
 
 	/*

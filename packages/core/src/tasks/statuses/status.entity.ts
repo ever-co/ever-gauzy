@@ -70,13 +70,13 @@ export class TaskStatus extends TenantOrganizationBaseEntity implements ITaskSta
 	@ManyToOne(() => OrganizationTeam, (team) => team.statuses, {
 		onDelete: 'SET NULL',
 	})
-	team?: IOrganizationTeam;
+	organizationTeam?: IOrganizationTeam;
 
 	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()
 	@IsUUID()
-	@RelationId((it: TaskStatus) => it.team)
+	@RelationId((it: TaskStatus) => it.organizationTeam)
 	@Index()
 	@Column({ nullable: true })
-	teamId?: IOrganizationTeam['id'];
+	organizationTeamId?: IOrganizationTeam['id'];
 }

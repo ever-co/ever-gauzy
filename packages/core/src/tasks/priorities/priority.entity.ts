@@ -5,7 +5,6 @@ import { IsNotEmpty, IsOptional, IsString, IsUUID } from 'class-validator';
 import {
 	OrganizationProject,
 	OrganizationTeam,
-	TaskStatus,
 	TenantOrganizationBaseEntity,
 } from './../../core/entities/internal';
 
@@ -71,13 +70,13 @@ export class TaskPriority extends TenantOrganizationBaseEntity implements ITaskP
 	@ManyToOne(() => OrganizationTeam, (team) => team.priorities, {
 		onDelete: 'SET NULL',
 	})
-	team?: IOrganizationTeam;
+	organizationTeam?: IOrganizationTeam;
 
 	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()
 	@IsUUID()
-	@RelationId((it: TaskStatus) => it.team)
+	@RelationId((it: TaskPriority) => it.organizationTeam)
 	@Index()
 	@Column({ nullable: true })
-	teamId?: IOrganizationTeam['id'];
+	organizationTeamId?: IOrganizationTeam['id'];
 }

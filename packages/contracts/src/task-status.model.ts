@@ -1,7 +1,8 @@
 import { IBasePerTenantAndOrganizationEntityModel } from './base-entity.model';
 import { IOrganizationProject } from './organization-projects.model';
+import { IRelationalOrganizationTeam } from './organization-team-model';
 
-export interface ITaskStatus extends IBasePerTenantAndOrganizationEntityModel {
+export interface ITaskStatus extends IBasePerTenantAndOrganizationEntityModel, IRelationalOrganizationTeam {
 	name: string;
 	value: string;
 	description?: string;
@@ -12,13 +13,13 @@ export interface ITaskStatus extends IBasePerTenantAndOrganizationEntityModel {
 	projectId?: IOrganizationProject['id'];
 }
 
-export interface ITaskStatusCreateInput extends Omit<ITaskStatus, 'isSystem'>, Omit<ITaskStatus, 'value'> {}
+export interface ITaskStatusCreateInput extends Omit<ITaskStatus, 'isSystem'>, Omit<ITaskStatus, 'value'> { }
 
 export interface ITaskStatusUpdateInput extends Partial<ITaskStatusCreateInput> {
 	id?: string;
 }
 
-export interface ITaskStatusFindInput extends IBasePerTenantAndOrganizationEntityModel, Pick<ITaskStatus, 'projectId'> {}
+export interface ITaskStatusFindInput extends IBasePerTenantAndOrganizationEntityModel, Pick<ITaskStatus, 'projectId' | 'organizationTeamId'> { }
 
 /**
  * Default task statuses

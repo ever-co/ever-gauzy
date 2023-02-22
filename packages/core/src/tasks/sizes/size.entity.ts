@@ -71,13 +71,13 @@ export class TaskSize extends TenantOrganizationBaseEntity implements ITaskSize 
 	@ManyToOne(() => OrganizationTeam, (team) => team.sizes, {
 		onDelete: 'SET NULL',
 	})
-	team?: IOrganizationTeam;
+	organizationTeam?: IOrganizationTeam;
 
 	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()
 	@IsUUID()
-	@RelationId((it: TaskStatus) => it.team)
+	@RelationId((it: TaskSize) => it.organizationTeam)
 	@Index()
 	@Column({ nullable: true })
-	teamId?: IOrganizationTeam['id'];
+	organizationTeamId?: IOrganizationTeam['id'];
 }
