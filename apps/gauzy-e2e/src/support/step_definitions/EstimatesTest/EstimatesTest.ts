@@ -117,7 +117,7 @@ Then('User can see tags dropdown', () => {
 });
 
 When('User click on tags dropdown', () => {
-	estimatesPage.clickTagsDropdwon();
+	estimatesPage.clickTagsDropdown();
 });
 
 Then('User can select tag from dropdown options', () => {
@@ -156,7 +156,7 @@ When('User click on contact dropdown', () => {
 });
 
 Then('User can select contact from dropdown options', () => {
-	estimatesPage.selectContactFromDropdwon(0);
+	estimatesPage.selectContactFromDropdown(0);
 });
 
 And('User can see tax input field', () => {
@@ -365,7 +365,7 @@ When('User click on contact dropdown', () => {
 });
 
 Then('User can select contact from dropdown options', () => {
-	estimatesPage.selectContactFromDropdwon(0);
+	estimatesPage.selectContactFromDropdown(0);
 });
 
 And('User can see tax input field', () => {
@@ -513,7 +513,7 @@ Then('User can see tags dropdown', () => {
 });
 
 When('User click on tags dropdown', () => {
-	estimatesPage.clickTagsDropdwon();
+	estimatesPage.clickTagsDropdown();
 });
 
 Then('User can select tag from dropdown options', () => {
@@ -552,7 +552,7 @@ When('User click on contact dropdown', () => {
 });
 
 Then('User can select contact from dropdown options', () => {
-	estimatesPage.selectContactFromDropdwon(0);
+	estimatesPage.selectContactFromDropdown(0);
 });
 
 And('User can see tax input field', () => {

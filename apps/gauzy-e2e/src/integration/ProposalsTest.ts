@@ -62,7 +62,7 @@ describe('Proposals test', () => {
 		proposalsPage.dateInputVisible();
 		proposalsPage.enterDateInputData();
 		proposalsPage.tagsDropdownVisible();
-		proposalsPage.clickTagsDropdwon();
+		proposalsPage.clickTagsDropdown();
 		proposalsPage.selectTagFromDropdown(0);
 		proposalsPage.clickCardBody();
 		proposalsPage.saveProposalButtonVisible();
@@ -84,7 +84,7 @@ describe('Proposals test', () => {
 		proposalsPage.jobPostInputVisible();
 		proposalsPage.enterJobPostInputData(editJobPostUrl);
 		proposalsPage.tagsDropdownVisible();
-		proposalsPage.clickTagsDropdwon();
+		proposalsPage.clickTagsDropdown();
 		proposalsPage.selectTagFromDropdown(0);
 		proposalsPage.clickCardBody();
 		proposalsPage.saveProposalButtonVisible();

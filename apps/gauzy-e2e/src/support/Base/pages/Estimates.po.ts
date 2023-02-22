@@ -38,7 +38,7 @@ export const tagsDropdownVisible = () => {
 	verifyElementIsVisible(EstimatesPage.addTagsDropdownCss);
 };
 
-export const clickTagsDropdwon = () => {
+export const clickTagsDropdown = () => {
 	cy.on('uncaught:exception', (err, runnable) => {
 
 		return false
@@ -87,7 +87,7 @@ export const clickContactDropdown = () => {
 	clickButton(EstimatesPage.organizationContactDropdownCss);
 };
 
-export const selectContactFromDropdwon = (index) => {
+export const selectContactFromDropdown = (index) => {
 	clickButtonByIndex(EstimatesPage.contactOptionCss, index);
 };
 

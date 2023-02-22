@@ -69,7 +69,7 @@ describe('Goals test', () => {
 		goalsPage.clickProgressBar(0);
 		goalsPage.weightTypeButtonVisible();
 		goalsPage.clickWeightTypeButton(0);
-		goalsPage.weightParameterDropdwonVisible();
+		goalsPage.weightParameterDropdownVisible();
 		goalsPage.clickWeightParameterDropdown();
 		goalsPage.selectWeightParameterFromDropdown(
 			GoalsPageData.weightParameter

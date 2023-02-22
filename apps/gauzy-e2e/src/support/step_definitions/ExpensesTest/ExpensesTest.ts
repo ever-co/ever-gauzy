@@ -164,7 +164,7 @@ And('User can see tags dropdown', () => {
 });
 
 When('User click on tags dropdown', () => {
-	expensesPage.clickTagsDropdwon();
+	expensesPage.clickTagsDropdown();
 });
 
 Then('User can select tag from dropdown options', () => {
@@ -407,7 +407,7 @@ And('User can see category tags dropdown', () => {
 });
 
 When('User click on category tags dropdown', () => {
-	expensesPage.clickTagsDropdwon();
+	expensesPage.clickTagsDropdown();
 });
 
 Then('User can select category tag from dropdown options', () => {

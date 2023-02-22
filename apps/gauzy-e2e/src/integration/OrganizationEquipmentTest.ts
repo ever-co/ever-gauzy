@@ -47,7 +47,7 @@ describe('Organization equipment test', () => {
 			OrganizationEquipmentPageData.period
 		);
 		organizationEquipmentPage.tagsDropdownVisible();
-		organizationEquipmentPage.clickTagsDropdwon();
+		organizationEquipmentPage.clickTagsDropdown();
 		organizationEquipmentPage.selectTagFromDropdown(0);
 		organizationEquipmentPage.clickCardBody();
 		organizationEquipmentPage.saveButtonVisible();

@@ -296,7 +296,7 @@ And('User can see tags dropdown', () => {
 });
 
 When('User click on tags dropdown', () => {
-	approvalRequestPage.clickTagsDropdwon();
+	approvalRequestPage.clickTagsDropdown();
 });
 
 Then('User can select tag from dropdown options', () => {

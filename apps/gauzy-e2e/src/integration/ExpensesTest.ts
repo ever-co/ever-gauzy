@@ -54,7 +54,7 @@ describe('Expense test', () => {
 		expensesPage.clickProjectDropdown();
 		expensesPage.selectProjectFromDropdown(ExpensePageData.defaultProject);
 		expensesPage.tagsDropdownVisible();
-		expensesPage.clickTagsDropdwon();
+		expensesPage.clickTagsDropdown();
 		expensesPage.selectTagFromDropdown(0);
 		expensesPage.clickCardBody();
 		expensesPage.saveExpenseButtonVisible();
@@ -111,7 +111,7 @@ describe('Expense test', () => {
 		expensesPage.newCategoryInputVisible();
 		expensesPage.enterNewCategoryInputData(ExpensePageData.defaultCategory);
 		expensesPage.tagsDropdownVisible();
-		expensesPage.clickTagsDropdwon();
+		expensesPage.clickTagsDropdown();
 		expensesPage.selectTagFromDropdown(0);
 		expensesPage.categorieCardVisible();
 		expensesPage.clickKeyboardButtonByKeyCode(9);

@@ -53,7 +53,7 @@ describe('Organization departments test', () => {
 		manageEmployeesPage.passwordInputVisible();
 		manageEmployeesPage.enterPasswordInputData(password);
 		manageEmployeesPage.tagsDropdownVisible();
-		manageEmployeesPage.clickTagsDropdwon();
+		manageEmployeesPage.clickTagsDropdown();
 		manageEmployeesPage.selectTagFromDropdown(0);
 		manageEmployeesPage.clickCardBody();
 		manageEmployeesPage.imageInputVisible();
@@ -86,7 +86,7 @@ describe('Organization departments test', () => {
 		organizationDepartmentsPage.selectEmployeeFromDropdown(0);
 		organizationDepartmentsPage.clickKeyboardButtonByKeyCode(9);
 		organizationDepartmentsPage.tagsDropdownVisible();
-		organizationDepartmentsPage.clickTagsDropdwon();
+		organizationDepartmentsPage.clickTagsDropdown();
 		organizationDepartmentsPage.selectTagFromDropdown(0);
 		organizationDepartmentsPage.clickCardBody();
 		organizationDepartmentsPage.saveDepartmentButtonVisible();

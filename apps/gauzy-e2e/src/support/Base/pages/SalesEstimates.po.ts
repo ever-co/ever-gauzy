@@ -34,7 +34,7 @@ export const tagsDropdownVisible = () => {
 	verifyElementIsVisible(SalesEstimatesPage.addTagsDropdownCss);
 };
 
-export const clickTagsDropdwon = () => {
+export const clickTagsDropdown = () => {
 	clickButton(SalesEstimatesPage.addTagsDropdownCss);
 };
 
@@ -79,7 +79,7 @@ export const clickContactDropdown = () => {
 	clickButton(SalesEstimatesPage.organizationContactDropdownCss);
 };
 
-export const selectContactFromDropdwon = (index) => {
+export const selectContactFromDropdown = (index) => {
 	clickButtonByIndex(SalesEstimatesPage.contactOptionCss, index);
 };
 

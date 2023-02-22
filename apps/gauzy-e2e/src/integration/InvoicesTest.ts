@@ -57,7 +57,7 @@ describe('Invoices test', () => {
 		invoicesPage.addButtonVisible();
 		invoicesPage.clickAddButton();
 		invoicesPage.tagsDropdownVisible();
-		invoicesPage.clickTagsDropdwon();
+		invoicesPage.clickTagsDropdown();
 		invoicesPage.selectTagFromDropdown(0);
 		invoicesPage.clickCardBody();
 		invoicesPage.discountInputVisible();
@@ -69,7 +69,7 @@ describe('Invoices test', () => {
 		);
 		invoicesPage.contactDropdownVisible();
 		invoicesPage.clickContactDropdown();
-		invoicesPage.selectContactFromDropdwon(0);
+		invoicesPage.selectContactFromDropdown(0);
 		invoicesPage.taxInputVisible();
 		invoicesPage.enterTaxData(InvoicesPageData.taxValue);
 		invoicesPage.taxTypeDropdownVisible();
@@ -133,7 +133,7 @@ describe('Invoices test', () => {
 		);
 		invoicesPage.contactDropdownVisible();
 		invoicesPage.clickContactDropdown();
-		invoicesPage.selectContactFromDropdwon(0);
+		invoicesPage.selectContactFromDropdown(0);
 		invoicesPage.taxInputVisible();
 		invoicesPage.enterTaxData(InvoicesPageData.taxValue);
 		invoicesPage.taxTypeDropdownVisible();

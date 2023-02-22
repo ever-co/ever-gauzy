@@ -39,7 +39,7 @@ describe('Organization vendors test', () => {
 			OrganizationVendorsPageData.vendorWebsite
 		);
 		organizationVendorsPage.tagsDropdownVisible();
-		organizationVendorsPage.clickTagsDropdwon();
+		organizationVendorsPage.clickTagsDropdown();
 		organizationVendorsPage.selectTagFromDropdown(0);
 		organizationVendorsPage.clickKeyboardButtonByKeyCode(9);
 		organizationVendorsPage.saveVendorButtonVisible();
@@ -69,7 +69,7 @@ describe('Organization vendors test', () => {
 			OrganizationVendorsPageData.vendorWebsite
 		);
 		organizationVendorsPage.tagsDropdownVisible();
-		organizationVendorsPage.clickTagsDropdwon();
+		organizationVendorsPage.clickTagsDropdown();
 		organizationVendorsPage.selectTagFromDropdown(0);
 		organizationVendorsPage.clickKeyboardButtonByKeyCode(9);
 		organizationVendorsPage.saveVendorButtonVisible();

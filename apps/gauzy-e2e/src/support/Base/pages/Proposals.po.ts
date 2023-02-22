@@ -70,7 +70,7 @@ export const tagsDropdownVisible = () => {
 	verifyElementIsVisible(ProposalsPage.addTagsDropdownCss);
 };
 
-export const clickTagsDropdwon = () => {
+export const clickTagsDropdown = () => {
 	clickButton(ProposalsPage.addTagsDropdownCss);
 };
 

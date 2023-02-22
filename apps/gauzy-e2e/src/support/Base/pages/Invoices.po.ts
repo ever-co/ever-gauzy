@@ -35,7 +35,7 @@ export const tagsDropdownVisible = () => {
 	verifyElementIsVisible(InvoicesPage.addTagsDropdownCss);
 };
 
-export const clickTagsDropdwon = () => {
+export const clickTagsDropdown = () => {
 	clickButton(InvoicesPage.addTagsDropdownCss);
 };
 
@@ -80,7 +80,7 @@ export const clickContactDropdown = () => {
 	clickButton(InvoicesPage.organizationContactDropdownCss);
 };
 
-export const selectContactFromDropdwon = (index) => {
+export const selectContactFromDropdown = (index) => {
 	clickButtonByIndex(InvoicesPage.contactOptionCss, index);
 };
 

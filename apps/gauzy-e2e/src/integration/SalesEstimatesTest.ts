@@ -57,7 +57,7 @@ describe('Sales estimates test', () => {
 		salesEstimatesPage.addButtonVisible();
 		salesEstimatesPage.clickAddButton();
 		salesEstimatesPage.tagsDropdownVisible();
-		salesEstimatesPage.clickTagsDropdwon();
+		salesEstimatesPage.clickTagsDropdown();
 		salesEstimatesPage.selectTagFromDropdown(0);
 		salesEstimatesPage.clickCardBody();
 		salesEstimatesPage.discountInputVisible();
@@ -71,7 +71,7 @@ describe('Sales estimates test', () => {
 		);
 		salesEstimatesPage.contactDropdownVisible();
 		salesEstimatesPage.clickContactDropdown();
-		salesEstimatesPage.selectContactFromDropdwon(0);
+		salesEstimatesPage.selectContactFromDropdown(0);
 		salesEstimatesPage.taxInputVisible();
 		salesEstimatesPage.enterTaxData(SalesEstimatesPageData.taxValue);
 		salesEstimatesPage.taxTypeDropdownVisible();
@@ -112,7 +112,7 @@ describe('Sales estimates test', () => {
 		);
 		salesEstimatesPage.contactDropdownVisible();
 		salesEstimatesPage.clickContactDropdown();
-		salesEstimatesPage.selectContactFromDropdwon(0);
+		salesEstimatesPage.selectContactFromDropdown(0);
 		salesEstimatesPage.taxInputVisible();
 		salesEstimatesPage.enterTaxData(SalesEstimatesPageData.taxValue);
 		salesEstimatesPage.taxTypeDropdownVisible();
@@ -189,7 +189,7 @@ describe('Sales estimates test', () => {
 		salesEstimatesPage.addButtonVisible();
 		salesEstimatesPage.clickAddButton();
 		salesEstimatesPage.tagsDropdownVisible();
-		salesEstimatesPage.clickTagsDropdwon();
+		salesEstimatesPage.clickTagsDropdown();
 		salesEstimatesPage.selectTagFromDropdown(0);
 		salesEstimatesPage.clickCardBody();
 		salesEstimatesPage.discountInputVisible();
@@ -203,7 +203,7 @@ describe('Sales estimates test', () => {
 		);
 		salesEstimatesPage.contactDropdownVisible();
 		salesEstimatesPage.clickContactDropdown();
-		salesEstimatesPage.selectContactFromDropdwon(0);
+		salesEstimatesPage.selectContactFromDropdown(0);
 		salesEstimatesPage.taxInputVisible();
 		salesEstimatesPage.enterTaxData(SalesEstimatesPageData.taxValue);
 		salesEstimatesPage.taxTypeDropdownVisible();

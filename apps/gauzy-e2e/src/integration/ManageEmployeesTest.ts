@@ -79,7 +79,7 @@ describe('Manage employees test', () => {
 		manageEmployeesPage.passwordInputVisible();
 		manageEmployeesPage.enterPasswordInputData(password);
 		manageEmployeesPage.tagsDropdownVisible();
-		manageEmployeesPage.clickTagsDropdwon();
+		manageEmployeesPage.clickTagsDropdown();
 		manageEmployeesPage.selectTagFromDropdown(0);
 		manageEmployeesPage.clickCardBody();
 		manageEmployeesPage.imageInputVisible();

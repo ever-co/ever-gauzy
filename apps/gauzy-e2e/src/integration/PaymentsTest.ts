@@ -29,7 +29,7 @@ describe('Payments test', () => {
 		paymentsPage.addPaymentButtonVisible();
 		paymentsPage.clickAddPaymentButton();
 		paymentsPage.tagsDropdownVisible();
-		paymentsPage.clickTagsDropdwon();
+		paymentsPage.clickTagsDropdown();
 		paymentsPage.selectTagFromDropdown(0);
 		paymentsPage.clickCardBody();
 		paymentsPage.projectDropdownVisible();
@@ -58,7 +58,7 @@ describe('Payments test', () => {
 		paymentsPage.editPaymentButtonVisible();
 		paymentsPage.clickEditPaymentButton();
 		paymentsPage.tagsDropdownVisible();
-		paymentsPage.clickTagsDropdwon();
+		paymentsPage.clickTagsDropdown();
 		paymentsPage.selectTagFromDropdown(0);
 		paymentsPage.clickCardBody();
 		paymentsPage.projectDropdownVisible();

@@ -120,7 +120,7 @@ Then('User can see tags dropdown', () => {
 });
 
 When('User click on tags dropdown', () => {
-	salesInvoicesPage.clickTagsDropdwon();
+	salesInvoicesPage.clickTagsDropdown();
 });
 
 Then('User can select tag from dropdown options', () => {
@@ -159,7 +159,7 @@ When('User click on contact dropdown', () => {
 });
 
 Then('User can select contact from dropdown options', () => {
-	salesInvoicesPage.selectContactFromDropdwon(0);
+	salesInvoicesPage.selectContactFromDropdown(0);
 });
 
 And('User can see tax input field', () => {
@@ -275,7 +275,7 @@ When('User click on contact dropdown', () => {
 });
 
 Then('User can select contact from dropdown options', () => {
-	salesInvoicesPage.selectContactFromDropdwon(0);
+	salesInvoicesPage.selectContactFromDropdown(0);
 });
 
 And('User can see tax input field', () => {

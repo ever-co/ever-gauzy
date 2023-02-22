@@ -57,7 +57,7 @@ describe('Estimates test', () => {
 		estimatesPage.addButtonVisible();
 		estimatesPage.clickAddButton();
 		estimatesPage.tagsDropdownVisible();
-		estimatesPage.clickTagsDropdwon();
+		estimatesPage.clickTagsDropdown();
 		estimatesPage.selectTagFromDropdown(0);
 		estimatesPage.clickCardBody();
 		estimatesPage.discountInputVisible();
@@ -69,7 +69,7 @@ describe('Estimates test', () => {
 		);
 		estimatesPage.contactDropdownVisible();
 		estimatesPage.clickContactDropdown();
-		estimatesPage.selectContactFromDropdwon(0);
+		estimatesPage.selectContactFromDropdown(0);
 		estimatesPage.taxInputVisible();
 		estimatesPage.enterTaxData(EstimatesPageData.taxValue);
 		estimatesPage.taxTypeDropdownVisible();
@@ -135,7 +135,7 @@ describe('Estimates test', () => {
 		);
 		estimatesPage.contactDropdownVisible();
 		estimatesPage.clickContactDropdown();
-		estimatesPage.selectContactFromDropdwon(0);
+		estimatesPage.selectContactFromDropdown(0);
 		estimatesPage.taxInputVisible();
 		estimatesPage.enterTaxData(EstimatesPageData.taxValue);
 		estimatesPage.taxTypeDropdownVisible();
@@ -207,7 +207,7 @@ describe('Estimates test', () => {
 		estimatesPage.addButtonVisible();
 		estimatesPage.clickAddButton();
 		estimatesPage.tagsDropdownVisible();
-		estimatesPage.clickTagsDropdwon();
+		estimatesPage.clickTagsDropdown();
 		estimatesPage.selectTagFromDropdown(0);
 		estimatesPage.clickCardBody();
 		estimatesPage.discountInputVisible();
@@ -219,7 +219,7 @@ describe('Estimates test', () => {
 		);
 		estimatesPage.contactDropdownVisible();
 		estimatesPage.clickContactDropdown();
-		estimatesPage.selectContactFromDropdwon(0);
+		estimatesPage.selectContactFromDropdown(0);
 		estimatesPage.taxInputVisible();
 		estimatesPage.enterTaxData(EstimatesPageData.taxValue);
 		estimatesPage.taxTypeDropdownVisible();

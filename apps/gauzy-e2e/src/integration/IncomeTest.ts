@@ -38,7 +38,7 @@ describe('Income test', () => {
 		incomePage.amountInputVisible();
 		incomePage.enterAmountInputData(IncomePageData.defaultAmount);
 		incomePage.tagsDropdownVisible();
-		incomePage.clickTagsDropdwon();
+		incomePage.clickTagsDropdown();
 		incomePage.selectTagFromDropdown(0);
 		incomePage.clickCardBody();
 		incomePage.notesTextareaVisible();

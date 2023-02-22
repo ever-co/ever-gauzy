@@ -114,7 +114,7 @@ And('User can see tags dropdown', () => {
 });
 
 When('User click on tags dropdown', () => {
-	organizationDepartmentsPage.clickTagsDropdwon();
+	organizationDepartmentsPage.clickTagsDropdown();
 });
 
 Then('User can select tag from dropdown options', () => {

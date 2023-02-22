@@ -131,7 +131,7 @@ export const tagsDropdownVisible = () => {
 	verifyElementIsVisible(ManageEmployeesPage.addTagsDropdownCss);
 };
 
-export const clickTagsDropdwon = () => {
+export const clickTagsDropdown = () => {
 	clickButton(ManageEmployeesPage.addTagsDropdownCss);
 };
 

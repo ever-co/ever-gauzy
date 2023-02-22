@@ -27,7 +27,7 @@ describe('Organization employment types test', () => {
 			OrganizationEmploymentTypesPageData.name
 		);
 		organizationEmploymentTypePage.tagsDropdownVisible();
-		organizationEmploymentTypePage.clickTagsDropdwon();
+		organizationEmploymentTypePage.clickTagsDropdown();
 		organizationEmploymentTypePage.selectTagFromDropdown(0);
 		organizationEmploymentTypePage.clickKeyboardButtonByKeyCode(9);
 		organizationEmploymentTypePage.saveButtonVisible();

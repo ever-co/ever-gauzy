@@ -57,7 +57,7 @@ describe('Sales invoices test', () => {
 		salesInvoicesPage.addButtonVisible();
 		salesInvoicesPage.clickAddButton();
 		salesInvoicesPage.tagsDropdownVisible();
-		salesInvoicesPage.clickTagsDropdwon();
+		salesInvoicesPage.clickTagsDropdown();
 		salesInvoicesPage.selectTagFromDropdown(0);
 		salesInvoicesPage.clickCardBody();
 		salesInvoicesPage.discountInputVisible();
@@ -71,7 +71,7 @@ describe('Sales invoices test', () => {
 		);
 		salesInvoicesPage.contactDropdownVisible();
 		salesInvoicesPage.clickContactDropdown();
-		salesInvoicesPage.selectContactFromDropdwon(0);
+		salesInvoicesPage.selectContactFromDropdown(0);
 		salesInvoicesPage.taxInputVisible();
 		salesInvoicesPage.enterTaxData(SalesInvoicesPageData.taxValue);
 		salesInvoicesPage.taxTypeDropdownVisible();
@@ -112,7 +112,7 @@ describe('Sales invoices test', () => {
 		);
 		salesInvoicesPage.contactDropdownVisible();
 		salesInvoicesPage.clickContactDropdown();
-		salesInvoicesPage.selectContactFromDropdwon(0);
+		salesInvoicesPage.selectContactFromDropdown(0);
 		salesInvoicesPage.taxInputVisible();
 		salesInvoicesPage.enterTaxData(SalesInvoicesPageData.taxValue);
 		salesInvoicesPage.taxTypeDropdownVisible();
