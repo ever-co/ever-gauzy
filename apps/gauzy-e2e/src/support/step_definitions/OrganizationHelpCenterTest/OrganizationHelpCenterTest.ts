@@ -14,9 +14,9 @@ import { Given, Then, When, And } from 'cypress-cucumber-preprocessor/steps';
 
 const pageLoadTimeout = Cypress.config('pageLoadTimeout');
 
-let articleName = faker.name.title();
-let empFirstName = faker.name.firstName();
-let empLastName = faker.name.lastName();
+let articleName = faker.person.jobTitle();
+let empFirstName = faker.person.firstName();
+let empLastName = faker.person.lastName();
 let empUsername = faker.internet.userName();
 let empPassword = faker.internet.password();
 let employeeEmail = faker.internet.email();

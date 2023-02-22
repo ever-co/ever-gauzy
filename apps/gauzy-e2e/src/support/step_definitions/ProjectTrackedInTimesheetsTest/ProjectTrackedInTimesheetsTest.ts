@@ -15,14 +15,14 @@ const pageLoadTimeout = Cypress.config('pageLoadTimeout');
 
 
 
-let firstName = faker.name.firstName();
-let lastName = faker.name.lastName();
+let firstName = faker.person.firstName();
+let lastName = faker.person.lastName();
 let username = faker.internet.userName();
 let password = faker.internet.password();
 let imgUrl = faker.image.avatar();
 let employeeEmail = faker.internet.email();
 
-let projectName = faker.company.companyName()
+let projectName = faker.company.name()
 
 let employeeFullName = `${firstName} ${lastName}`;
 

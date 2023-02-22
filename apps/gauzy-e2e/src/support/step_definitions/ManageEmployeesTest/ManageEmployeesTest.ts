@@ -18,8 +18,8 @@ const pageLoadTimeout = Cypress.config('pageLoadTimeout');
 
 let email = faker.internet.email();
 let secEmail = faker.internet.email();
-let firstName = faker.name.firstName();
-let lastName = faker.name.lastName();
+let firstName = faker.person.firstName();
+let lastName = faker.person.lastName();
 let username = faker.internet.userName();
 let password = faker.internet.password();
 let employeeEmail = faker.internet.email();

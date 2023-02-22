@@ -21,11 +21,11 @@ let website = ' ';
 describe('Contacts leads test', () => {
 	before(() => {
 		email = faker.internet.email();
-		fullName = faker.name.firstName() + ' ' + faker.name.lastName();
-		deleteName = faker.name.firstName() + ' ' + faker.name.lastName();
-		city = faker.address.city();
-		postcode = faker.address.zipCode();
-		street = faker.address.streetAddress();
+		fullName = faker.person.firstName() + ' ' + faker.person.lastName();
+		deleteName = faker.person.firstName() + ' ' + faker.person.lastName();
+		city = faker.location.city();
+		postcode = faker.location.zipCode();
+		street = faker.location.streetAddress();
 		website = faker.internet.url();
 
 		CustomCommands.login(loginPage, LoginPageData, dashboradPage);

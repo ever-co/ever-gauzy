@@ -16,12 +16,12 @@ let street = ' ';
 
 describe('Register Test', () => {
 	before(() => {
-		fullName = faker.name.findName();
+		fullName = faker.person.fullName();
 		email = faker.internet.email();
 		pass = faker.internet.password();
-		organizationName = faker.company.companyName();
-		taxId = faker.random.alphaNumeric();
-		street = faker.address.streetAddress();
+		organizationName = faker.company.name();
+		taxId = faker.string.alphanumeric();
+		street = faker.location.streetAddress();
 
 		cy.visit('/');
 		loginPage.verifyTitle();

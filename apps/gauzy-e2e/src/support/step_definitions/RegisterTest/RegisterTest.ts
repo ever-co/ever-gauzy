@@ -11,12 +11,12 @@ import { Given, Then, When, And } from 'cypress-cucumber-preprocessor/steps';
 
 const pageLoadTimeout = Cypress.config('pageLoadTimeout');
 
-let fullName = faker.name.findName();
+let fullName = faker.person.fullName();
 let email = faker.internet.email();
 let pass = faker.internet.password();
-let organizationName = faker.company.companyName();
-let taxId = faker.random.alphaNumeric();
-let street = faker.address.streetAddress();
+let organizationName = faker.company.name();
+let taxId = faker.string.alphanumeric();
+let street = faker.location.streetAddress();
 
 // Create new account
 Given('Visit home page as unauthorized user', () => {

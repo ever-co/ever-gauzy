@@ -20,8 +20,8 @@ let editJobPostUrl = faker.internet.url();
 let proposalContent = faker.lorem.paragraph();
 let proposalTemplateContent = faker.lorem.paragraph();
 
-let firstName = faker.name.firstName();
-let lastName = faker.name.lastName();
+let firstName = faker.person.firstName();
+let lastName = faker.person.lastName();
 let username = faker.internet.userName();
 let password = faker.internet.password();
 let employeeEmail = faker.internet.email();

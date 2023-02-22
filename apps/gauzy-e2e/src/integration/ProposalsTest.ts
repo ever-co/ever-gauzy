@@ -25,8 +25,8 @@ describe('Proposals test', () => {
 		editJobPostUrl = faker.internet.url();
 		proposalContent = faker.lorem.paragraph();
 
-		firstName = faker.name.firstName();
-		lastName = faker.name.lastName();
+		firstName = faker.person.firstName();
+		lastName = faker.person.lastName();
 		username = faker.internet.userName();
 		password = faker.internet.password();
 		employeeEmail = faker.internet.email();

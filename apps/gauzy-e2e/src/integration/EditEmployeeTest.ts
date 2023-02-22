@@ -35,24 +35,24 @@ let editEmail = ' ';
 
 describe('Edit employee test', () => {
 	before(() => {
-		firstName = faker.name.firstName();
-		lastName = faker.name.lastName();
+		firstName = faker.person.firstName();
+		lastName = faker.person.lastName();
 		username = faker.internet.userName();
 		password = faker.internet.password();
 		email = faker.internet.email();
 		employeeEmail = faker.internet.email();
-		fullName = faker.name.firstName() + ' ' + faker.name.lastName();
+		fullName = faker.person.firstName() + ' ' + faker.person.lastName();
 		imgUrl = faker.image.avatar();
-		city = faker.address.city();
-		postcode = faker.address.zipCode();
-		street = faker.address.streetAddress();
+		city = faker.location.city();
+		postcode = faker.location.zipCode();
+		street = faker.location.streetAddress();
 		editUsername = faker.internet.userName();
-		editFirstName = faker.name.firstName();
-		editLastName = faker.name.lastName();
+		editFirstName = faker.person.firstName();
+		editLastName = faker.person.lastName();
 		editEmail = faker.internet.email();
-		contactCity = faker.address.city();
-		contactPostcode = faker.address.zipCode();
-		contactStreet = faker.address.streetAddress();
+		contactCity = faker.location.city();
+		contactPostcode = faker.location.zipCode();
+		contactStreet = faker.location.streetAddress();
 
 		CustomCommands.login(loginPage, LoginPageData, dashboradPage);
 		CustomCommands.addEmployee(

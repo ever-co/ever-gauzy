@@ -19,14 +19,14 @@ let editLastName = ' ';
 
 describe('Edit user test', () => {
 	before(() => {
-		firstName = faker.name.firstName();
-		lastName = faker.name.lastName();
+		firstName = faker.person.firstName();
+		lastName = faker.person.lastName();
 		username = faker.internet.userName();
 		email = faker.internet.email();
 		password = faker.internet.password();
 		imgUrl = faker.image.avatar();
-		editFirstName = faker.name.firstName();
-		editLastName = faker.name.lastName();
+		editFirstName = faker.person.firstName();
+		editLastName = faker.person.lastName();
 
 		CustomCommands.login(loginPage, LoginPageData, dashboradPage);
 	});

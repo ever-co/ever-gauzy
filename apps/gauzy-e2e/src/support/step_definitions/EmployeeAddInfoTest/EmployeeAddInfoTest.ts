@@ -13,10 +13,10 @@ import { OrganizationTagsPageData } from '../../Base/pagedata/OrganizationTagsPa
 
 const responseTimeout = Cypress.config('responseTimeout');
 
-const jobTitle = faker.name.jobTitle();
+const jobTitle = faker.person.jobTitle();
 const employeeLevel = EmployeeAddInfoPageData.level + ` ${faker.random.alpha().toUpperCase()}`
-const firstName = faker.name.firstName();
-const lastName = faker.name.lastName();
+const firstName = faker.person.firstName();
+const lastName = faker.person.lastName();
 const username = faker.internet.userName();
 const password = faker.internet.password();
 const employeeEmail = faker.internet.email();

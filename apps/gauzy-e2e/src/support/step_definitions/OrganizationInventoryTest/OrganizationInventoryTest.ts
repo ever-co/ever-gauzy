@@ -17,9 +17,9 @@ const pageLoadTimeout = Cypress.config('pageLoadTimeout');
 let email = faker.internet.email();
 let website = faker.internet.url();
 let description = faker.lorem.text();
-let city = faker.address.city();
-let postcode = faker.address.zipCode();
-let address = faker.address.streetAddress();
+let city = faker.location.city();
+let postcode = faker.location.zipCode();
+let address = faker.location.streetAddress();
 
 // Login with email
 Given('Login with default credentials', () => {

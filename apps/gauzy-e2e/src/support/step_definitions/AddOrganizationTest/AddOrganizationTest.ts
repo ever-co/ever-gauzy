@@ -11,9 +11,9 @@ import { Given, Then, When, And } from 'cypress-cucumber-preprocessor/steps';
 
 const pageLoadTimeout = Cypress.config('pageLoadTimeout');
 
-let organizationName = faker.company.companyName();
-let taxId = faker.random.alphaNumeric();
-let street = faker.address.streetAddress();
+let organizationName = faker.company.name();
+let taxId = faker.string.alphanumeric();
+let street = faker.location.streetAddress();
 
 // Login with email
 Given('Login with default credentials and visit Organizations page', () => {

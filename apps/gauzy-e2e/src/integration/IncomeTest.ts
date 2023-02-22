@@ -12,7 +12,7 @@ let name = ' ';
 
 describe('Income test', () => {
 	before(() => {
-		name = faker.name.firstName();
+		name = faker.person.firstName();
 
 		CustomCommands.login(loginPage, LoginPageData, dashboradPage);
 	});

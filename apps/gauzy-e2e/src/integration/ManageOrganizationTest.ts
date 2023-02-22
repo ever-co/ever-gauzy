@@ -14,9 +14,9 @@ let street = ' ';
 
 describe('Manage Organization Test', () => {
 	before(() => {
-		organizationName = faker.company.companyName();
-		taxId = faker.random.alphaNumeric();
-		street = faker.address.streetAddress();
+		organizationName = faker.company.name();
+		taxId = faker.string.alphanumeric();
+		street = faker.location.streetAddress();
 
 		CustomCommands.login(loginPage, LoginPageData, dashboradPage);
 	});

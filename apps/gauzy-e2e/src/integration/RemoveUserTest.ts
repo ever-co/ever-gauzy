@@ -16,8 +16,8 @@ let imgUrl = ' ';
 
 describe('Remove user test', () => {
 	before(() => {
-		firstName = faker.name.firstName();
-		lastName = faker.name.lastName();
+		firstName = faker.person.firstName();
+		lastName = faker.person.lastName();
 		username = faker.internet.userName();
 		email = faker.internet.email();
 		password = faker.internet.password();
