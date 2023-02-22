@@ -5,7 +5,7 @@ import * as manageInterviewsPage from '../../Base/pages/ManageInterviews.po';
 import { CustomCommands } from '../../commands';
 import * as dashboardPage from '../../Base/pages/Dashboard.po';
 import * as inviteCandidatePage from '../../Base/pages/Candidates.po';
-import { faker } from '@ever-co/faker';
+import { faker } from '@faker-js/faker';
 import * as logoutPage from '../../Base/pages/Logout.po';
 import * as manageEmployeesPage from '../../Base/pages/ManageEmployees.po';
 
@@ -329,11 +329,11 @@ And('User can see Edit interview button', () => {
 	manageInterviewsPage.verifyEditButtonVisible();
 });
 
-And('User can see future checkbox', () => { 
+And('User can see future checkbox', () => {
 	manageInterviewsPage.verifyOnlyFutureCheckboxVisible()
 })
 
-Then('User click future checkbox', () => { 
+Then('User click future checkbox', () => {
 	manageInterviewsPage.verifyOnlyFutureCheckboxVisible()
 })
 

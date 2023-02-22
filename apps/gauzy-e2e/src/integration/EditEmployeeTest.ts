@@ -4,7 +4,7 @@ import * as editEmployeePage from '../support/Base/pages/EditEmployee.po';
 import { EditEmployeePageData } from '../support/Base/pagedata/EditEmployeePageData';
 import * as dashboradPage from '../support/Base/pages/Dashboard.po';
 import { CustomCommands } from '../support/commands';
-import { faker } from '@ever-co/faker';
+import { faker } from '@faker-js/faker';
 import * as manageEmployeesPage from '../support/Base/pages/ManageEmployees.po';
 import * as organizationProjectsPage from '../support/Base/pages/OrganizationProjects.po';
 import { OrganizationProjectsPageData } from '../support/Base/pagedata/OrganizationProjectsPageData';

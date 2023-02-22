@@ -4,7 +4,7 @@ import * as dashboardPage from '../../Base/pages/Dashboard.po';
 import { CustomCommands } from '../../commands';
 import * as goalsKPIPage from '../../Base/pages/GoalsKPI.po';
 import { GoalsKPIPageData } from '../../Base/pagedata/GoalsKPIPageData';
-import { faker } from '@ever-co/faker';
+import { faker } from '@faker-js/faker';
 import * as logoutPage from '../../Base/pages/Logout.po';
 import * as manageEmployeesPage from '../../Base/pages/ManageEmployees.po';
 import * as goalstimeFramePage from '../../Base/pages/GoalsTimeFrame.po';

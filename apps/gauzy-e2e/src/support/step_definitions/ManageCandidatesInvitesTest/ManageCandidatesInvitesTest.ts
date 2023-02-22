@@ -3,7 +3,7 @@ import { LoginPageData } from '../../Base/pagedata/LoginPageData';
 import * as manageCandidatesInvitesPage from '../../Base/pages/ManageCandidatesInvites.po';
 import { CustomCommands } from '../../commands';
 import * as dashboardPage from '../../Base/pages/Dashboard.po';
-import { faker } from '@ever-co/faker';
+import { faker } from '@faker-js/faker';
 import { ManageCandidatesInvitesPageData } from '../../Base/pagedata/ManageCandidatesInvitesPageData'
 
 import { Given, Then, When, And } from 'cypress-cucumber-preprocessor/steps';
@@ -69,7 +69,7 @@ Then('Notification message will appear', () => {
 });
 
 //Search by Email
-When ('User see email input field', () => {
+When('User see email input field', () => {
 	manageCandidatesInvitesPage.verifyEmailPlaceholder();
 });
 Then('User can enter email in email field', () => {

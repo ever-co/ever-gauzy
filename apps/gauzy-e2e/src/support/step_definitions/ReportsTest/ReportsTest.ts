@@ -4,7 +4,7 @@ import * as reportsPage from '../../Base/pages/Reports.po';
 import { ReportsPageData } from '../../Base/pagedata/ReportsPageData';
 import * as dashboardPage from '../../Base/pages/Dashboard.po';
 import { CustomCommands } from '../../commands';
-import { faker } from '@ever-co/faker';
+import { faker } from '@faker-js/faker';
 import * as organizationProjectsPage from '../../Base/pages/OrganizationProjects.po';
 import { OrganizationProjectsPageData } from '../../Base/pagedata/OrganizationProjectsPageData';
 import * as logoutPage from '../../Base/pages/Logout.po';
@@ -176,7 +176,7 @@ And('User can add new task', () => {
 	CustomCommands.logout(dashboardPage, logoutPage, loginPage);
 	CustomCommands.clearCookies();
 	CustomCommands.login(loginPage, LoginPageData, dashboardPage);
-	CustomCommands.addTask(addTaskPage,{ 
+	CustomCommands.addTask(addTaskPage, {
 		defaultTaskProject: projectName,
 		defaultTaskTitle: AddTasksPageData.defaultTaskTitle,
 		editTaskTitle: AddTasksPageData.defaultTaskTitle,

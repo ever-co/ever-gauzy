@@ -4,7 +4,7 @@ import * as organizationInventoryPage from '../../Base/pages/OrganizationInvento
 import { OrganizationInventoryPageData } from '../../Base/pagedata/OrganizationInventoryPageData';
 import * as dashboardPage from '../../Base/pages/Dashboard.po';
 import { CustomCommands } from '../../commands';
-import { faker } from '@ever-co/faker';
+import { faker } from '@faker-js/faker';
 import * as logoutPage from '../../Base/pages/Logout.po';
 import * as organizationTagsUserPage from '../../Base/pages/OrganizationTags.po';
 import { OrganizationTagsPageData } from '../../Base/pagedata/OrganizationTagsPageData';
@@ -861,7 +861,7 @@ When('User click on warehouses select', () => {
 	organizationInventoryPage.clickWarehousesSelect();
 });
 
-Then('User can select warehouse from dropdown options', () => {});
+Then('User can select warehouse from dropdown options', () => { });
 
 And('User can see save merchant button', () => {
 	organizationInventoryPage.saveMerchantBtnVisible();

@@ -5,7 +5,7 @@ import { EmployeeDashboardPageData } from '../../Base/pagedata/EmployeeDashboard
 import * as dashboardPage from '../../Base/pages/Dashboard.po';
 import { CustomCommands } from '../../commands';
 import * as logoutPage from '../../Base/pages/Logout.po';
-import { faker } from '@ever-co/faker';
+import { faker } from '@faker-js/faker';
 import * as organizationProjectsPage from '../../Base/pages/OrganizationProjects.po';
 import { OrganizationProjectsPageData } from '../../Base/pagedata/OrganizationProjectsPageData';
 import { ClientsData } from '../../Base/pagedata/ClientsPageData';
@@ -40,7 +40,7 @@ Given('Login with default credentials', () => {
 
 // Add employee
 And('User can add new employee', () => {
-    dashboardPage.verifyAccountingDashboardIfVisible();
+	dashboardPage.verifyAccountingDashboardIfVisible();
 	CustomCommands.addEmployee(
 		manageEmployeesPage,
 		firstName,
@@ -227,7 +227,7 @@ And('User click on currency input field', () => {
 	employeeDashboard.clickOnCurrencyField();
 });
 
-And('User select currency',() => {
+And('User select currency', () => {
 	employeeDashboard.selectCurrency(EmployeeDashboardPageData.bgnCurrency);
 });
 
@@ -269,7 +269,7 @@ When('User see dashboard button on main manu', () => {
 	employeeDashboard.verifyMenuBtnByText(EmployeeDashboardPageData.dashboardTxt);
 });
 
-Then ('User click on dashboard button', () => {
+Then('User click on dashboard button', () => {
 	employeeDashboard.clickMenuButtonsByText(EmployeeDashboardPageData.dashboardTxt)
 });
 
@@ -281,11 +281,11 @@ Then('User click on employee selector', () => {
 	employeeDashboard.clickOnEmployeeSelecor();
 });
 
-When ('User see employee dropdown', () => {
+When('User see employee dropdown', () => {
 	employeeDashboard.verifyEmployeeSelectorDropdown(employeeFullName);
 });
 
-Then ('User click on employee', () => {
+Then('User click on employee', () => {
 	employeeDashboard.clickOnEmployeeSelecorDropdown(employeeFullName);
 });
 

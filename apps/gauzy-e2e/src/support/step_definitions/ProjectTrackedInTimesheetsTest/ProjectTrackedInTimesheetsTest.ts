@@ -1,4 +1,4 @@
-import { faker } from '@ever-co/faker';
+import { faker } from '@faker-js/faker';
 import { Given, Then, When, And } from 'cypress-cucumber-preprocessor/steps';
 import { CustomCommands } from '../../commands';
 import * as loginPage from '../../Base/pages/Login.po';
@@ -29,8 +29,8 @@ let employeeFullName = `${firstName} ${lastName}`;
 
 // Login with email
 
-Given('Login with default credentials',()=>{
-    CustomCommands.login(loginPage, LoginPageData, dashboardPage)
+Given('Login with default credentials', () => {
+	CustomCommands.login(loginPage, LoginPageData, dashboardPage)
 })
 
 //Add employee
@@ -108,8 +108,8 @@ Then('Notification message will appear', () => {
 });
 
 //Logout
-And ('User can logout', () => {
-    CustomCommands.logout(dashboardPage, logoutPage, loginPage);
+And('User can logout', () => {
+	CustomCommands.logout(dashboardPage, logoutPage, loginPage);
 	CustomCommands.clearCookies();
 });
 
@@ -193,8 +193,6 @@ Then('Employee can see view timesheet button', () => {
 When('Employee click on view timesheet button', () => {
 	projectTrackedInTimesheets.clickViewTimesheetBtn();
 });
-Then ('Employee verify project name is the same', () => {
+Then('Employee verify project name is the same', () => {
 	projectTrackedInTimesheets.verifyProjectText(projectName)
 });
-
-

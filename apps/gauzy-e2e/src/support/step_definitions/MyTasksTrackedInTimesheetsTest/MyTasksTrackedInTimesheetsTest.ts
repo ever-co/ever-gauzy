@@ -1,4 +1,4 @@
-import { faker } from '@ever-co/faker';
+import { faker } from '@faker-js/faker';
 import { Given, Then, When, And } from 'cypress-cucumber-preprocessor/steps';
 import { CustomCommands } from '../../commands';
 import * as loginPage from '../../Base/pages/Login.po';
@@ -37,8 +37,8 @@ let employeeFullName = `${firstName} ${lastName}`;
 
 // Login with email
 
-Given('Login with default credentials',()=>{
-    CustomCommands.login(loginPage, LoginPageData, dashboardPage)
+Given('Login with default credentials', () => {
+	CustomCommands.login(loginPage, LoginPageData, dashboardPage)
 })
 
 // Add new tag
@@ -111,20 +111,20 @@ Then('Employee will see Create button', () => {
 });
 
 //Create task and verify
-When('Employee go to my tasks',() => {
+When('Employee go to my tasks', () => {
 	CustomCommands.logout(dashboardPage, logoutPage, loginPage);
 	CustomCommands.clearCookies();
-	CustomCommands.login(loginPage, {email: employeeEmail, password: password}, dashboardPage);
-	
+	CustomCommands.login(loginPage, { email: employeeEmail, password: password }, dashboardPage);
+
 	cy.visit('/#/pages/tasks/me', { timeout: pageLoadTimeout });
-	
+
 })
 
-Then ('Employee can see add button', () => {
+Then('Employee can see add button', () => {
 	myTasksTrackedInTimesheets.verifyAddButton()
 })
 
-When ('Employee click on add button', () => {
+When('Employee click on add button', () => {
 	myTasksTrackedInTimesheets.clickOnAddTaskButton()
 })
 
@@ -285,10 +285,6 @@ Then('Employee can see view timesheet button', () => {
 When('Employee click on view timesheet button', () => {
 	myTasksTrackedInTimesheets.clickViewTimesheetBtn();
 });
-Then ('Employee verify project name is the same', () => {
+Then('Employee verify project name is the same', () => {
 	myTasksTrackedInTimesheets.verifyProjectText(MyTasksTrackedInTimesheetsPageData.defaultTaskTitle)
 });
-
-
-
-

@@ -3,7 +3,7 @@ import { LoginPageData } from '../../Base/pagedata/LoginPageData';
 import * as addOrganizationPage from '../../Base/pages/AddOrganization.po';
 import { AddOrganizationPageData } from '../../Base/pagedata/AddOrganizationPageData';
 import * as manageOrganizationPage from '../../Base/pages/ManageOrganization.po';
-import { faker } from '@ever-co/faker';
+import { faker } from '@faker-js/faker';
 import { ManageOrganizationPageData } from '../../Base/pagedata/ManageOrganizationPageData';
 import * as dashboardPage from '../../Base/pages/Dashboard.po';
 import { CustomCommands } from '../../commands';

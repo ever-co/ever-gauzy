@@ -4,7 +4,7 @@ import * as organizationHelpCenterPage from '../../Base/pages/OrganizationHelpCe
 import { OrganizationHelpCenterPageData } from '../../Base/pagedata/OrganizationHelpCenterPageData';
 import * as dashboardPage from '../../Base/pages/Dashboard.po';
 import { CustomCommands } from '../../commands';
-import { faker } from '@ever-co/faker';
+import { faker } from '@faker-js/faker';
 import * as manageEmployeesPage from '../../Base/pages/ManageEmployees.po';
 import * as logoutPage from '../../Base/pages/Logout.po';
 
@@ -46,7 +46,7 @@ And('User can add new employee', () => {
 
 // Add base
 
-Then('User visit Organization help center page',() => {
+Then('User visit Organization help center page', () => {
 	CustomCommands.logout(dashboardPage, logoutPage, loginPage);
 	CustomCommands.clearCookies();
 	CustomCommands.login(loginPage, LoginPageData, dashboardPage);
@@ -202,7 +202,7 @@ Then('Notification message will appear', () => {
 	organizationHelpCenterPage.waitMessageToHide();
 });
 
-And('User can see arrow button',() => {
+And('User can see arrow button', () => {
 	organizationHelpCenterPage.arrowButtonVisible();
 });
 
@@ -217,7 +217,7 @@ And('User can verify category was created', () => {
 });
 
 //Add article
-Then('User click on the category',() => {
+Then('User click on the category', () => {
 	organizationHelpCenterPage.clickOnCategory(OrganizationHelpCenterPageData.categoryOption);
 });
 

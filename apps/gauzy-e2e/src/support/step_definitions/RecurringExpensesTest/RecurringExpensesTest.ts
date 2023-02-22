@@ -5,7 +5,7 @@ import { RecurringExpensesPageData } from '../../Base/pagedata/RecurringExpenses
 import * as dashboardPage from '../../Base/pages/Dashboard.po';
 import { CustomCommands } from '../../commands';
 import * as logoutPage from '../../Base/pages/Logout.po';
-import { faker } from '@ever-co/faker';
+import { faker } from '@faker-js/faker';
 import * as manageEmployeesPage from '../../Base/pages/ManageEmployees.po';
 
 import { Given, Then, When, And } from 'cypress-cucumber-preprocessor/steps';

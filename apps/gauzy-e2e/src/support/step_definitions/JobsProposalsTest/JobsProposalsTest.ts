@@ -4,7 +4,7 @@ import * as jobProposalsPage from '../../Base/pages/JobsProposals.po';
 import { JobsProposalsPageData } from '../../Base/pagedata/JobsProposalsPageData';
 import * as dashboardPage from '../../Base/pages/Dashboard.po';
 import { CustomCommands } from '../../commands';
-import { faker } from '@ever-co/faker';
+import { faker } from '@faker-js/faker';
 import * as logoutPage from '../../Base/pages/Logout.po';
 import * as manageEmployeesPage from '../../Base/pages/ManageEmployees.po';
 

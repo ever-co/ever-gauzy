@@ -4,7 +4,7 @@ import * as timeOffPage from '../../Base/pages/TimeOff.po';
 import { TimeOffPageData } from '../../Base/pagedata/TimeOffPageData';
 import * as dashboardPage from '../../Base/pages/Dashboard.po';
 import { CustomCommands } from '../../commands';
-import { faker } from '@ever-co/faker';
+import { faker } from '@faker-js/faker';
 import * as logoutPage from '../../Base/pages/Logout.po';
 import * as manageEmployeesPage from '../../Base/pages/ManageEmployees.po';
 

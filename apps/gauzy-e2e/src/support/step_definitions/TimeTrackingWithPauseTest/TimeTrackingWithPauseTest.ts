@@ -1,4 +1,4 @@
-import { faker } from '@ever-co/faker';
+import { faker } from '@faker-js/faker';
 import { Given, Then, When, And } from 'cypress-cucumber-preprocessor/steps';
 import { CustomCommands } from '../../commands';
 import * as loginPage from '../../Base/pages/Login.po';
@@ -33,8 +33,8 @@ let employeeFullName = `${firstName} ${lastName}`;
 
 // Login with email
 
-Given('Login with default credentials',()=>{
-    CustomCommands.login(loginPage, LoginPageData, dashboardPage)
+Given('Login with default credentials', () => {
+	CustomCommands.login(loginPage, LoginPageData, dashboardPage)
 })
 
 //Add employee
@@ -157,7 +157,7 @@ Then('Employee can see again start timer button', () => {
 });
 
 
-//Check the recorded time 
+//Check the recorded time
 
 Then('Employee can see view timesheet button', () => {
 	timeTrackingWithPausePage.viewTimesheetbtnVisible();
@@ -167,27 +167,27 @@ When('Employee click on view timesheet button', () => {
 	timeTrackingWithPausePage.clickViewTimesheetBtn();
 });
 
-Then('Employee verify first time record', () =>{
+Then('Employee verify first time record', () => {
 	timeTrackingWithPausePage.verifyWorkTimeRecorded(TimeTrackingWithPausePageData.firstTimeTable, TimeTrackingWithPausePageData.tracked)
 });
 
-And('Employee verify second time record', () =>{
+And('Employee verify second time record', () => {
 	timeTrackingWithPausePage.verifyWorkTimeRecorded(TimeTrackingWithPausePageData.secondTimeTable, TimeTrackingWithPausePageData.tracked)
 });
 
-Then('Employee can see first delete button',()=>{
+Then('Employee can see first delete button', () => {
 	timeTrackingWithPausePage.viewRecordedTimeDeleteBtn(TimeTrackingWithPausePageData.firstDeleteBtn)
 });
 
-Then('Employee can see second delete button',()=>{
+Then('Employee can see second delete button', () => {
 	timeTrackingWithPausePage.viewRecordedTimeDeleteBtn(TimeTrackingWithPausePageData.secondDeleteBtn)
 });
 
-When ('Employee click on delete button',()=>{
+When('Employee click on delete button', () => {
 	timeTrackingWithPausePage.clickRecordedTimeDeleteBtn(TimeTrackingWithPausePageData.firstDeleteBtn)
 });
 
-Then ('Employee can see confirm dialog', ()=> {
+Then('Employee can see confirm dialog', () => {
 	timeTrackingWithPausePage.notificationDialogVisible()
 });
 
@@ -195,17 +195,17 @@ When('Employee can click confirm dialog button', () => {
 	timeTrackingWithPausePage.clickNotificationButton()
 });
 
-Then ('Employee refresh',()=>{
+Then('Employee refresh', () => {
 	CustomCommands.logout(dashboardPage, logoutPage, loginPage);
 	CustomCommands.clearCookies();
-	CustomCommands.login(loginPage, {email: employeeEmail, password: password}, dashboardPage);
+	CustomCommands.login(loginPage, { email: employeeEmail, password: password }, dashboardPage);
 
 	cy.visit('/#/pages/employees/timesheets/daily', { timeout: pageLoadTimeout });
 
 });
 
 
-Then ('Employee can verify time',()=>{
+Then('Employee can verify time', () => {
 	timeTrackingWithPausePage.verifyTimerTime(TimeTrackingWithPausePageData.timerTime)
-	
+
 });

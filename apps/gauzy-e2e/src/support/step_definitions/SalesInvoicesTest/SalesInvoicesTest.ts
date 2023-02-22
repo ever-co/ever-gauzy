@@ -6,7 +6,7 @@ import * as organizationTagsUserPage from '../../Base/pages/OrganizationTags.po'
 import { OrganizationTagsPageData } from '../../Base/pagedata/OrganizationTagsPageData';
 import * as dashboardPage from '../../Base/pages/Dashboard.po';
 import { CustomCommands } from '../../commands';
-import { faker } from '@ever-co/faker';
+import { faker } from '@faker-js/faker';
 import * as manageEmployeesPage from '../../Base/pages/ManageEmployees.po';
 import * as logoutPage from '../../Base/pages/Logout.po';
 import { ContactsLeadsPageData } from '../../Base/pagedata/ContactsLeadsPageData';

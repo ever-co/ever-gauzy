@@ -1,7 +1,7 @@
 import * as loginPage from '../../Base/pages/Login.po';
 import { LoginPageData } from '../../Base/pagedata/LoginPageData';
 import * as clientsPage from '../../Base/pages/Clients.po';
-import { faker } from '@ever-co/faker';
+import { faker } from '@faker-js/faker';
 import { ClientsData } from '../../Base/pagedata/ClientsPageData';
 import * as dashboardPage from '../../Base/pages/Dashboard.po';
 import * as organizationTagsUserPage from '../../Base/pages/OrganizationTags.po';
@@ -339,4 +339,3 @@ And('User can verify client was deleted', () => {
 	clientsPage.clearSearchInput();
 	clientsPage.verifyElementIsDeleted(deleteName);
 });
-

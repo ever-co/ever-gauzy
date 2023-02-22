@@ -4,7 +4,7 @@ import * as approvalRequestPage from '../../Base/pages/ApprovalRequest.po';
 import * as dashboardPage from '../../Base/pages/Dashboard.po';
 import { ApprovalRequestPageData } from '../../Base/pagedata/ApprovalRequestPageData';
 import { CustomCommands } from '../../commands';
-import { faker } from '@ever-co/faker';
+import { faker } from '@faker-js/faker';
 import * as logoutPage from '../../Base/pages/Logout.po';
 import * as manageEmployeesPage from '../../Base/pages/ManageEmployees.po';
 import * as organizationTagsUserPage from '../../Base/pages/OrganizationTags.po';
@@ -57,7 +57,7 @@ Then('User can visit Employees approvals page', () => {
 	CustomCommands.clearCookies();
 	CustomCommands.login(loginPage, LoginPageData, dashboardPage);
 	dashboardPage.verifyAccountingDashboardIfVisible();
-	cy.intercept('GET','/api/request-approval*').as('waitApproval');
+	cy.intercept('GET', '/api/request-approval*').as('waitApproval');
 	cy.visit('/#/pages/employees/approvals', { timeout: pageLoadTimeout });
 	cy.wait('@waitApproval');
 });
@@ -211,7 +211,7 @@ And('User can verify request was created', () => {
 });
 
 //Approve approval request
-When('User see name input field',() => {
+When('User see name input field', () => {
 	approvalRequestPage.verifyNameInput();
 });
 
@@ -319,7 +319,7 @@ Then('Notification message will appear', () => {
 	approvalRequestPage.waitMessageToHide();
 });
 
-When('User see name input field again',() => {
+When('User see name input field again', () => {
 	approvalRequestPage.verifyNameInput();
 });
 

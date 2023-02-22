@@ -1,4 +1,4 @@
-import { faker } from '@ever-co/faker';
+import { faker } from '@faker-js/faker';
 import { Given, Then, When, And } from 'cypress-cucumber-preprocessor/steps';
 import { CustomCommands } from '../../commands';
 import * as loginPage from '../../Base/pages/Login.po';
@@ -32,8 +32,8 @@ let employeeFullName = `${firstName} ${lastName}`;
 
 // Login with email
 
-Given('Login with default credentials',()=>{
-    CustomCommands.login(loginPage, LoginPageData, dashboardPage)
+Given('Login with default credentials', () => {
+	CustomCommands.login(loginPage, LoginPageData, dashboardPage)
 })
 
 //Add employee
@@ -157,12 +157,12 @@ When('Employee click on view timesheet button', () => {
 });
 
 Then('Employee can see view button', () => {
-    timeTrackingForClient.viewViewBtnVisible();
+	timeTrackingForClient.viewViewBtnVisible();
 });
 When('Employee click on view button', () => {
-    timeTrackingForClient.clickOnViewBtn();
+	timeTrackingForClient.clickOnViewBtn();
 });
 
-Then('Employee can verify the client name is recorded', () =>{
-    timeTrackingForClient.verifyCustomerName(fullName);
+Then('Employee can verify the client name is recorded', () => {
+	timeTrackingForClient.verifyCustomerName(fullName);
 });

@@ -15,7 +15,7 @@ const pageLoadTimeout = Cypress.config('pageLoadTimeout');
 
 import { Given, Then, When, And } from 'cypress-cucumber-preprocessor/steps';
 
-import { faker } from '@ever-co/faker';
+import { faker } from '@faker-js/faker';
 import { OrganizationProjectsPageData } from '../../Base/pagedata/OrganizationProjectsPageData';
 
 const email = faker.internet.email();
