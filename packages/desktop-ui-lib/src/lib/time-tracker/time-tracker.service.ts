@@ -4,6 +4,7 @@ import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import * as moment from 'moment';
 import { catchError } from 'rxjs/operators';
 import { firstValueFrom, throwError } from 'rxjs';
+import { toUTC } from '@gauzy/common-angular';
 import {
 	TimeLogSourceEnum,
 	TimeLogType,
@@ -270,7 +271,9 @@ export class TimeTrackerService {
 				params: this.toParams({
 					tenantId: values.tenantId,
 					organizationId: values.organizationId,
-					employeeIds: [values.employeeId]
+					employeeIds: [values.employeeId],
+					todayStart: toUTC(moment().startOf('day')).format('YYYY-MM-DD HH:mm:ss'),
+					todayEnd: toUTC(moment().endOf('day')).format('YYYY-MM-DD HH:mm:ss')
 				})
 			})
 		);
@@ -331,7 +334,7 @@ export class TimeTrackerService {
 			organizationContactId: values.organizationContactId,
 			isRunning: true,
 			version: values.version,
-			...(values.startedAt ? { startedAt: values.startedAt } : {})
+			...(values.startedAt ? { startedAt: moment(values.startedAt).utc().toISOString() } : {})
 		};
 		log.info(`Toggle Start Timer Request: ${moment().format()}`, body);
 		return firstValueFrom(
@@ -357,8 +360,8 @@ export class TimeTrackerService {
 			organizationContactId: values.organizationContactId,
 			isRunning: false,
 			version: values.version,
-			...(values.startedAt ? { startedAt: values.startedAt } : {}),
-			...(values.stoppedAt ? { stoppedAt: values.stoppedAt } : {})
+			...(values.startedAt ? { startedAt: moment(values.startedAt).utc().toISOString() } : {}),
+			...(values.stoppedAt ? { stoppedAt: moment(values.stoppedAt).utc().toISOString() } : {})
 		};
 		log.info(`Toggle Stop Timer Request: ${moment().format()}`, body);
 		return firstValueFrom(
@@ -384,6 +387,24 @@ export class TimeTrackerService {
 		);
 	}
 
+	deleteTimeSlots(values) {
+		const params = this.toParams({
+			ids: [...values.timeslotIds],
+			tenantId: values.tenantId,
+			organizationId: values.organizationId
+		});
+		const headers = new HttpHeaders({
+			Authorization: `Bearer ${values.token}`,
+			'Tenant-Id': values.tenantId
+		});
+
+		return firstValueFrom(
+			this.http.delete(`${values.apiHost}/api/timesheet/time-slot`, {
+				params,
+				headers: headers
+			})
+		);
+	}
 	toParams(query) {
 		let params: HttpParams = new HttpParams();
 		Object.keys(query).forEach((key) => {

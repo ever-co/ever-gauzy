@@ -60,6 +60,7 @@ export class TaskPriorityService extends TaskStatusPrioritySizeService<TaskPrior
 				for (const priority of DEFAULT_GLOBAL_PRIORITIES) {
 					const create = this.repository.create({
 						...priority,
+						icon: `ever-icons/${priority.icon}`,
 						tenant,
 						isSystem: false
 					});

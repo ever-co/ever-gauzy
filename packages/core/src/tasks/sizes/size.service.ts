@@ -60,6 +60,7 @@ export class TaskSizeService extends TaskStatusPrioritySizeService<TaskSize> {
 				for (const size of DEFAULT_GLOBAL_SIZES) {
 					const create = this.repository.create({
 						...size,
+						icon: `ever-icons/${size.icon}`,
 						tenant,
 						isSystem: false
 					});

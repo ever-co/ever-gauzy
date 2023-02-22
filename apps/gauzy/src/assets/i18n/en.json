@@ -257,7 +257,8 @@
 		"HIRED_DATE": "Hired Date",
 		"REJECTED_DATE": "Rejected Date",
 		"TIME_TRACKING": "Time Tracking",
-		"CREATED_AT": "Created At"
+		"CREATED_AT": "Created At",
+		"SCREEN_CAPTURE": "Screen Capture"
 	},
 	"FORM": {
 		"USERNAME": "Username",
@@ -1741,6 +1742,7 @@
 		"PHONE": "Phone",
 		"EMAIL": "Email",
 		"WEBSITE": "Website",
+		"TAGS": "Tags",
 		"DOCUMENT_URL": "Document URL",
 		"UPDATED": "Updated",
 		"LEVEL_NAME": "Level name",
@@ -1831,7 +1833,11 @@
 				"ACTIVITY_PROOF_DURATION": "Activity proof duration",
 				"ACTIVITY_PROOF_DURATION_INFO": "Duration of activity proof countdown dialog, it represent an amount of minutes given to prove activity",
 				"ENABLE_DETECTION_INACTIVITY": "Enable detection of employee inactivity",
-				"ENABLE_DETECTION_INACTIVITY_INFO": "Enabled - the system will detect inactivity and display a warning. Disabled - no warning will be displayed when an employee is inactive."
+				"ENABLE_DETECTION_INACTIVITY_INFO": "Enabled - the system will detect inactivity and display a warning. Disabled - no warning will be displayed when an employee is inactive.",
+				"DELETE_IDLE_TIME": "Enable deletion of idle time",
+				"DELETE_IDLE_TIME_INFO": "Enable - the system will delete idle time. Disable - the system will not delete idle time",
+				"ALLOW_SCREEN_CAPTURE": "Allow Screen Capture",
+				"ALLOW_SCREEN_CAPTURE_INFO": "Enable - the timer will take screenshot. Disable - the timer will run without to take screenshot for all organization members"
 			},
 			"TEAMS_PAGE": {
 				"MANAGERS": "Managers",
@@ -3350,7 +3356,8 @@
 			"BUCKET_CREATED": "'{{ bucket }}' for '{{ region }}' has been created successfully",
 			"AUTHORIZED_TO_WORK": "{{ name }} is authorized to work",
 			"EMAIL_VERIFICATION_NOT_VALID": "Sorry, this verification link is not valid.",
-			"EMAIL_VERIFICATION_VALID": "Congrats! Your email is now verified."
+			"EMAIL_VERIFICATION_VALID": "Congrats! Your email is now verified.",
+			"SCREEN_CAPTURE_CHANGED": "Screen capture status changed for {{ name }}"
 		}
 	},
 	"ACCEPT_INVITE": {

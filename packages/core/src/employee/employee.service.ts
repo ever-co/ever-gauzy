@@ -51,7 +51,7 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 			/**
 			 * Load selected table properties/fields for self & relational select.
 			*/
-			 select: {
+			select: {
 				id: true,
 				isActive: true,
 				short_description: true,
@@ -98,7 +98,7 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 					qb.andWhere(
 						new Brackets((web: WhereExpressionBuilder) => {
 							web.where(`"${qb.alias}"."endWork" IS NULL`);
-							web.orWhere( `"${qb.alias}"."endWork" >= :endWork`, {
+							web.orWhere(`"${qb.alias}"."endWork" >= :endWork`, {
 								endWork: startDate
 							});
 						})
@@ -181,6 +181,7 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 					endWork: true,
 					isTrackingEnabled: true,
 					deletedAt: true,
+					allowScreenshotCapture: true,
 					user: {
 						id: true,
 						firstName: true,
@@ -228,19 +229,30 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 					if ('isActive' in where) {
 						qb.andWhere(
 							new Brackets((web: WhereExpressionBuilder) => {
-									web.andWhere(`"${qb.alias}"."isActive" = :isActive`, {
-										isActive: Boolean(JSON.parse(where.isActive))
-									});
-								}
+								web.andWhere(`"${qb.alias}"."isActive" = :isActive`, {
+									isActive: Boolean(JSON.parse(where.isActive))
+								});
+							}
 							)
 						);
 					}
-					if ('isTrackingEnabled' in where)  {
+					if ('isTrackingEnabled' in where) {
 						qb.andWhere(
 							new Brackets((web: WhereExpressionBuilder) => {
 								const { isTrackingEnabled } = where;
 								web.andWhere(`"${qb.alias}"."isTrackingEnabled" = :isTrackingEnabled`, {
 									isTrackingEnabled: Boolean(JSON.parse(isTrackingEnabled))
+								});
+							})
+						);
+					}
+
+					if ('allowScreenshotCapture' in where) {
+						qb.andWhere(
+							new Brackets((web: WhereExpressionBuilder) => {
+								const { allowScreenshotCapture } = where;
+								web.andWhere(`"${qb.alias}"."allowScreenshotCapture" = :allowScreenshotCapture`, {
+									allowScreenshotCapture: Boolean(JSON.parse(allowScreenshotCapture))
 								});
 							})
 						);
@@ -260,17 +272,17 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 									const keywords: string[] = where.user.name.split(' ');
 									keywords.forEach((keyword: string, index: number) => {
 										web.orWhere(`LOWER("user"."firstName") like LOWER(:keyword_${index})`, {
-											[`keyword_${index}`]:`%${keyword}%`
+											[`keyword_${index}`]: `%${keyword}%`
 										});
 										web.orWhere(`LOWER("user"."lastName") like LOWER(:${index}_keyword)`, {
-											[`${index}_keyword`]:`%${keyword}%`
+											[`${index}_keyword`]: `%${keyword}%`
 										});
 									});
 								}
 								if (isNotEmpty(where.user.email)) {
 									const { email } = where.user;
 									web.orWhere(`LOWER("user"."email") like LOWER(:email)`, {
-										email:`%${email}%`
+										email: `%${email}%`
 									});
 								}
 							}

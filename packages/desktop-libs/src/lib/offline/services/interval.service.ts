@@ -57,4 +57,24 @@ export class IntervalService implements IIntervalService<IntervalTO> {
 		const user = await this._userService.retrieve();
 		return await this._intervalDAO.screenshots(user);
 	}
+
+	public async removeIdlesTime(
+		startedAt: Date,
+		stoppedAt: Date
+	): Promise<string[]> {
+		const user = await this._userService.retrieve();
+		let remoteIds = [];
+		this._offlineMode.enabled
+			? await this._intervalDAO.deleteLocallyIdlesTime(
+				startedAt,
+				stoppedAt,
+				user
+			)
+			: (remoteIds = await this._intervalDAO.deleteIdlesTime(
+				startedAt,
+				stoppedAt,
+				user
+			));
+		return remoteIds.map(({ remoteId }) => remoteId);
+	}
 }

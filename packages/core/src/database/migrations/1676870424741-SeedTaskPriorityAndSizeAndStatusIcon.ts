@@ -37,8 +37,9 @@ export class SeedTaskPriorityAndSizeAndStatusIcon1676870424741 implements Migrat
         try {
             for await (const status of DEFAULT_GLOBAL_STATUSES) {
                 const { name, value, icon, color } = status;
+                const filepath = `ever-icons/${icon}`;
 
-                const query = `UPDATE "task_status" SET "icon" = '${icon}', "color" = '${color}' WHERE ("name" = $1 AND "value" = $2) AND ("tenantId" IS NULL AND "organizationId" IS NULL)`;
+                const query = `UPDATE "task_status" SET "icon" = '${filepath}', "color" = '${color}' WHERE ("name" = $1 AND "value" = $2) AND ("tenantId" IS NULL AND "organizationId" IS NULL)`;
                 await queryRunner.connection.manager.query(query, [name, value]);
                 copyEverIcons(status.icon, this.config);
             }
@@ -56,8 +57,9 @@ export class SeedTaskPriorityAndSizeAndStatusIcon1676870424741 implements Migrat
         try {
             for await (const priority of DEFAULT_GLOBAL_PRIORITIES) {
                 const { name, value, icon, color } = priority;
+                const filepath = `ever-icons/${icon}`;
 
-                const query = `UPDATE "task_priority" SET "icon" = '${icon}', "color" = '${color}' WHERE ("name" = $1 AND "value" = $2) AND ("tenantId" IS NULL AND "organizationId" IS NULL)`;
+                const query = `UPDATE "task_priority" SET "icon" = '${filepath}', "color" = '${color}' WHERE ("name" = $1 AND "value" = $2) AND ("tenantId" IS NULL AND "organizationId" IS NULL)`;
                 await queryRunner.connection.manager.query(query, [name, value]);
                 copyEverIcons(priority.icon, this.config);
             }
@@ -75,8 +77,9 @@ export class SeedTaskPriorityAndSizeAndStatusIcon1676870424741 implements Migrat
         try {
             for await (const size of DEFAULT_GLOBAL_SIZES) {
                 const { name, value, icon, color } = size;
+                const filepath = `ever-icons/${icon}`;
 
-                const query = `UPDATE "task_size" SET "icon" = '${icon}', "color" = '${color}' WHERE ("name" = $1 AND "value" = $2) AND ("tenantId" IS NULL AND "organizationId" IS NULL)`;
+                const query = `UPDATE "task_size" SET "icon" = '${filepath}', "color" = '${color}' WHERE ("name" = $1 AND "value" = $2) AND ("tenantId" IS NULL AND "organizationId" IS NULL)`;
                 await queryRunner.connection.manager.query(query, [name, value]);
                 copyEverIcons(size.icon, this.config);
             }
