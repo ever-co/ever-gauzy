@@ -210,7 +210,7 @@ And('Employee can log time', () => {
 
 // Verify reports time log data
 And('Employee can see Reports sidebar button', () => {
-	reportsPage.sidebarBtnVidible();
+	reportsPage.sidebarBtnVisible();
 });
 
 When('Employee click on Reports sidebar button', () => {

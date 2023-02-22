@@ -97,7 +97,7 @@ When('User click on status dropdown', () => {
 });
 
 Then('User can select status from dropdown options', () => {
-	teamsTasksPage.selectStatusFromDropdown(TeamsTasksPageData.defauleStatus);
+	teamsTasksPage.selectStatusFromDropdown(TeamsTasksPageData.defaultStatus);
 });
 
 And('User can see team dropdown', () => {

@@ -41,7 +41,7 @@ describe('Add teams tasks test', () => {
 		teamsTasksPage.selectStatusDropdownVisible();
 		teamsTasksPage.clickStatusDropdown();
 		teamsTasksPage.selectStatusFromDropdown(
-			TeamsTasksPageData.defauleStatus
+			TeamsTasksPageData.defaultStatus
 		);
 		teamsTasksPage.selectTeamDropdownVisible();
 		teamsTasksPage.clickSelectTeamDropdown();

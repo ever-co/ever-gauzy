@@ -18,7 +18,7 @@ export const InvoicesPage = {
 	taxTypeDropdownCss: '[formcontrolname="taxType"]',
 	invoiceTypeDropdownCss: '[formcontrolname="invoiceType"]',
 	generateItemsButtonCss: 'div.buttons > button[status="success"]',
-	selectEmloyeeCss: 'div.form-group ga-employee-multi-select nb-select',
+	selectEmployeeCss: 'div.form-group ga-employee-multi-select nb-select',
 	saveAsDraftButtonCss: 'nb-card-footer > button[status="success"]',
 	emailInputCss: '#email',
 	moreButtonCss:

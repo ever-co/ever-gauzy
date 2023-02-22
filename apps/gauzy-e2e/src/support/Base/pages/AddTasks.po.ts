@@ -43,11 +43,11 @@ export const selectProjectOptionDropdown = (text) => {
 };
 
 export const selectEmployeeDropdownVisible = () => {
-	verifyElementIsVisible(AddTaskPage.selectEmloyeeMultiSelectCss);
+	verifyElementIsVisible(AddTaskPage.selectEmployeeMultiSelectCss);
 };
 
 export const clickSelectEmployeeDropdown = () => {
-	clickButton(AddTaskPage.selectEmloyeeMultiSelectCss);
+	clickButton(AddTaskPage.selectEmployeeMultiSelectCss);
 };
 
 export const selectEmployeeDropdownOption = (index) => {

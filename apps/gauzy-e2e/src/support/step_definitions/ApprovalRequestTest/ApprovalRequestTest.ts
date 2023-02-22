@@ -82,7 +82,7 @@ And('User can see Add approval button', () => {
 	approvalRequestPage.addApprovalButtonVisible();
 });
 
-When('User click on Add approval buton', () => {
+When('User click on Add approval button', () => {
 	approvalRequestPage.clickAddApprovalButton();
 });
 

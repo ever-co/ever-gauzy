@@ -12,7 +12,7 @@ import {
 	verifyElementIsVisibleByIndex,
 	verifyElementIsNotVisibleByIndex,
 	clickButtonWithForce,
-    clickByText,
+	clickByText,
 	compareTwoTexts
 } from '../utils/util';
 import { ProjectTrackedInTimesheetPage } from '../pageobjects/ProjectTrackedInTimesheetPageObject';
@@ -45,16 +45,16 @@ export const enterNameInputData = (data) => {
 
 export const selectEmployeeDropdownVisible = () => {
 	verifyElementIsVisible(
-		ProjectTrackedInTimesheetPage.selectEmloyeeMultyselectCss
+		ProjectTrackedInTimesheetPage.selectEmployeeMultyselectCss
 	);
 };
 
 export const clickSelectEmployeeDropdown = () => {
-	clickButton(ProjectTrackedInTimesheetPage.selectEmloyeeMultyselectCss);
+	clickButton(ProjectTrackedInTimesheetPage.selectEmployeeMultyselectCss);
 };
 
 export const selectEmployeeDropdownOption = (text) => {
-	clickByText(ProjectTrackedInTimesheetPage.selectEmployeeDropdownOptionCss,text);
+	clickByText(ProjectTrackedInTimesheetPage.selectEmployeeDropdownOptionCss, text);
 };
 
 export const clickKeyboardButtonByKeyCode = (keycode) => {
@@ -96,7 +96,7 @@ export const clickProjectSelect = () => {
 
 export const selectOptionFromDropdown = (index, projectName: string) => {
 	cy.wait('@waitProjectLoad').then(() => {
-		verifyText(ProjectTrackedInTimesheetPage.dropdownOptionCss,projectName);
+		verifyText(ProjectTrackedInTimesheetPage.dropdownOptionCss, projectName);
 		clickButtonByIndex(ProjectTrackedInTimesheetPage.dropdownOptionCss, index);
 	});
 };
@@ -122,11 +122,11 @@ export const clickViewTimesheetBtn = () => {
 };
 
 export const verifyProjectText = (text) => {
-    compareTwoTexts(ProjectTrackedInTimesheetPage.projectNameCss, text)
+	compareTwoTexts(ProjectTrackedInTimesheetPage.projectNameCss, text)
 }
 
 export const waitMainDashboard = (url: string) => {
-	//waits for responce then continue 
+	//waits for responce then continue
 	cy.intercept('GET', url).as('getUser')
 	cy.wait('@getUser').then(() => {
 		verifyElementIsVisible(ProjectTrackedInTimesheetPage.headerImgCss);

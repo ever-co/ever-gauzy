@@ -118,11 +118,11 @@ export const selectHolidayOption = (index) => {
 };
 
 export const selectEmployeeDropdownVisible = () => {
-	verifyElementIsVisible(TimeOffPage.selectEmloyeeCss);
+	verifyElementIsVisible(TimeOffPage.selectEmployeeCss);
 };
 
 export const clickSelectEmployeeDropdown = () => {
-	clickButton(TimeOffPage.selectEmloyeeCss);
+	clickButton(TimeOffPage.selectEmployeeCss);
 };
 
 export const selectEmployeeFromHolidayDropdown = (index) => {

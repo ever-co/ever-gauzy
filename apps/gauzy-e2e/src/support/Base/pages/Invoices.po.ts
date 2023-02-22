@@ -118,10 +118,10 @@ export const selectInvoiceTypeFromDropdown = (text) => {
 };
 
 export const employeeDropdownVisible = () => {
-	verifyElementIsVisible(InvoicesPage.selectEmloyeeCss);
+	verifyElementIsVisible(InvoicesPage.selectEmployeeCss);
 };
 export const clickEmployeeDropdown = () => {
-	clickButton(InvoicesPage.selectEmloyeeCss);
+	clickButton(InvoicesPage.selectEmployeeCss);
 };
 
 export const selectEmployeeFromDropdown = (index) => {

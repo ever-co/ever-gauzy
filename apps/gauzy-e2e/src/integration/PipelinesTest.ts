@@ -40,7 +40,7 @@ describe('Pipelines test', () => {
 			PipelinesPageData.pipelineDescription
 		);
 		pipelinesPage.updateButtonVisible();
-		pipelinesPage.clickUpdateButon();
+		pipelinesPage.clickUpdateButton();
 		pipelinesPage.waitMessageToHide();
 		pipelinesPage.verifyPipelineExists(PipelinesPageData.editPipelineName);
 	});

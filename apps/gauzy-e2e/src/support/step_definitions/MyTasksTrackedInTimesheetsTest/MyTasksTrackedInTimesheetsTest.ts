@@ -151,7 +151,7 @@ When('Employee click on status dropdown', () => {
 });
 
 Then('Employee can select status from dropdown options', () => {
-	myTasksTrackedInTimesheets.selectStatusFromDropdown(MyTasksTrackedInTimesheetsPageData.defauleStatus);
+	myTasksTrackedInTimesheets.selectStatusFromDropdown(MyTasksTrackedInTimesheetsPageData.defaultStatus);
 });
 
 And('Employee can see title input field', () => {

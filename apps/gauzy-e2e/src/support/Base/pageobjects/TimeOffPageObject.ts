@@ -12,7 +12,7 @@ export const TimeOffPage = {
 		'nb-card-footer.text-right > button[status="success"]',
 	addHolidayButtonCss: 'div.col-4 > button[status="info"]',
 	selectHolidayDropdownOptionCss: '.option-list nb-option',
-	selectEmloyeeCss: 'button[class="select-button placeholder"]',
+	selectEmployeeCss: 'button[class="select-button placeholder"]',
 	selectEmployeeDropdownOptionCss: '.option-list nb-option',
 	startHolidayDateCss: '[formControlName="start"]',
 	endHolidayDateCss: '[formControlName="end"]',

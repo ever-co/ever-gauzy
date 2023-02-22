@@ -13,7 +13,7 @@ export const AddTaskPage = {
 		'nb-card-footer > button[status="success"]',
 	confirmDeleteTaskButtonCss: 'nb-card-footer > button[status="danger"]',
 	addTitleInputCss: '[formControlName="title"]',
-	selectEmloyeeMultiSelectCss: 'button[class="select-button placeholder"]',
+	selectEmployeeMultiSelectCss: 'button[class="select-button placeholder"]',
 	selectEmployeeDropdownOptionCss: '.option-list nb-option',
 	dueDateInputCss: '[formControlName="dueDate"]',
 	estimateDaysInputCss: '[formControlName="estimateDays"]',

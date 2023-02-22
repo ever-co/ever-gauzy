@@ -319,7 +319,7 @@ When('User click on edit proposal template button', () => {
 	proposalsPage.clickEditTemplateBtn(0);
 });
 
-Then('User can see tempalte name input field again', () => {
+Then('User can see template name input field again', () => {
 	proposalsPage.templateNameInputVisible();
 });
 
@@ -352,11 +352,11 @@ When('User click on rpoposals templates table row again', () => {
 	proposalsPage.selectTableRow(0);
 });
 
-Then('Delete proposal template button will become actuve', () => {
+Then('Delete proposal template button will become active', () => {
 	proposalsPage.deleteTemplateBtnVisible();
 });
 
-When('User click on delete proposal tempalte button', () => {
+When('User click on delete proposal template button', () => {
 	proposalsPage.clickDeleteTemplateBtn();
 });
 

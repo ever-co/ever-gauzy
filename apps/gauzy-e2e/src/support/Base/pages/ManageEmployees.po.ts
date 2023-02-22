@@ -296,11 +296,11 @@ export const clickConfirmDeleteButton = () => {
 // COPY INVITE LINK
 
 export const manageInvitesButtonVisible = () => {
-	verifyElementIsVisible(ManageEmployeesPage.manageInvitesButonCss);
+	verifyElementIsVisible(ManageEmployeesPage.manageInvitesButtonCss);
 };
 
 export const clickManageInviteButton = () => {
-	clickButton(ManageEmployeesPage.manageInvitesButonCss);
+	clickButton(ManageEmployeesPage.manageInvitesButtonCss);
 };
 
 export const copyLinkButtonVisible = () => {
