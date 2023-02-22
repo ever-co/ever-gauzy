@@ -108,7 +108,7 @@ export class TaskStatusService extends TaskStatusPrioritySizeService<TaskStatus>
 	 * @param entity
 	 * @returns
 	 */
-	async createBulkStatusByEntity(entity: Partial<ITaskStatusCreateInput>): Promise<ITaskStatus[]> {
+	async createBulkStatusesByEntity(entity: Partial<ITaskStatusCreateInput>): Promise<ITaskStatus[]> {
 		try {
 			const { organizationId } = entity;
 			const tenantId = RequestContext.currentTenantId();
@@ -118,6 +118,7 @@ export class TaskStatusService extends TaskStatusPrioritySizeService<TaskStatus>
 
 			for (const item of items) {
 				const { name, value, description, icon, color } = item;
+
 				const status = await this.create({
 					...entity,
 					name,

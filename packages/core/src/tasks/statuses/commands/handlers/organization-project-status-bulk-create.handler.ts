@@ -17,8 +17,8 @@ export class OrganizationProjectStatusBulkCreateHandler
 		const { id: projectId, organizationId } = input;
 
 		/**
-		 * Create bulk status for specific organization project
+		 * Create bulk task statuses for specific organization project
 		 */
-		return await this.taskStatusService.createBulkStatusByEntity({ organizationId, projectId });
+		return await this.taskStatusService.createBulkStatusesByEntity({ organizationId, projectId });
 	}
 }
