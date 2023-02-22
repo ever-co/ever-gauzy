@@ -1,6 +1,6 @@
 import { isNotEmpty } from "@gauzy/common";
 import { Injectable } from "@nestjs/common";
-import { IPagination, ITaskPriorityFindInput, ITaskSizeFindInput } from "@gauzy/contracts";
+import { IPagination, ITaskPriorityFindInput, ITaskSizeFindInput, ITaskStatusFindInput } from "@gauzy/contracts";
 import { Brackets, Repository, SelectQueryBuilder, WhereExpressionBuilder } from "typeorm";
 import { TenantBaseEntity } from "../core/entities/internal";
 import { RequestContext } from "../core/context";
@@ -73,9 +73,9 @@ export class TaskStatusPrioritySizeService<BaseEntity extends TenantBaseEntity> 
 	 */
 	getFilterQuery(
 		query: SelectQueryBuilder<BaseEntity>,
-		request: ITaskPriorityFindInput | ITaskSizeFindInput
+		request: ITaskStatusFindInput | ITaskPriorityFindInput | ITaskSizeFindInput
 	) {
-		const { tenantId, organizationId, projectId } = request;
+		const { tenantId, organizationId, projectId, organizationTeamId } = request;
 		/**
 		 * GET by tenant level
 		 */
@@ -105,6 +105,17 @@ export class TaskStatusPrioritySizeService<BaseEntity extends TenantBaseEntity> 
 			});
 		} else {
 			query.andWhere(`"${query.alias}"."projectId" IS NULL`);
+		}
+
+		/**
+		 * GET by team level
+		 */
+		if (isNotEmpty(organizationTeamId)) {
+			query.andWhere(`"${query.alias}"."organizationTeamId" = :organizationTeamId`, {
+				organizationTeamId,
+			});
+		} else {
+			query.andWhere(`"${query.alias}"."organizationTeamId" IS NULL`);
 		}
 		return query;
 	}
