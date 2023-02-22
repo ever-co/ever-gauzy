@@ -1742,6 +1742,7 @@
 		"PHONE": "Phone",
 		"EMAIL": "Email",
 		"WEBSITE": "Website",
+		"TAGS": "Tags",
 		"DOCUMENT_URL": "Document URL",
 		"UPDATED": "Updated",
 		"LEVEL_NAME": "Level name",

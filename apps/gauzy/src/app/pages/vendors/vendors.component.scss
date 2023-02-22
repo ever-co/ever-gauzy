@@ -16,3 +16,17 @@
     max-height: 100%;
   }
 }
+
+.columns-header {
+  background-color: nb-theme(gauzy-card-2);
+  border-radius: 8px;
+  margin-bottom: 10px;
+  padding-top: 12px;
+  padding-bottom: 12px;
+  padding-left: 12px;
+  font-size: 12px;
+  font-style: normal;
+  font-weight: 600;
+  line-height: 15px;
+  letter-spacing: 0em;
+}
