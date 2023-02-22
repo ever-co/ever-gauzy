@@ -397,7 +397,7 @@ export class InvoicesReceivedComponent
 					title: this.getTranslation('INVOICES_PAGE.TOTAL_VALUE'),
 					type: 'custom',
 					renderComponent: InvoiceEstimateTotalValueComponent,
-					width: '10%',
+					width: '12%',
 					filter: {
 						type: 'custom',
 						component: InputFilterComponent
