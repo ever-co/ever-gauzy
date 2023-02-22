@@ -2,7 +2,7 @@ import * as loginPage from '../support/Base/pages/Login.po';
 import { LoginPageData } from '../support/Base/pagedata/LoginPageData';
 import * as customSMTPPage from '../support/Base/pages/CustomSMTP.po';
 import { CustomSMTPPageData } from '../support/Base/pagedata/CustomSMTPPageData';
-import * as dashboradPage from '../support/Base/pages/Dashboard.po';
+import * as dashboardPage from '../support/Base/pages/Dashboard.po';
 import { CustomCommands } from '../support/commands';
 import { faker } from '@faker-js/faker';
 
@@ -14,7 +14,7 @@ describe('Add SMTP server test', () => {
 		username = faker.internet.userName();
 		password = faker.internet.password();
 
-		CustomCommands.login(loginPage, LoginPageData, dashboradPage);
+		CustomCommands.login(loginPage, LoginPageData, dashboardPage);
 	});
 	it('Should be able to add new transfer protocol', () => {
 		cy.visit('/#/pages/settings/custom-smtp/tenant');

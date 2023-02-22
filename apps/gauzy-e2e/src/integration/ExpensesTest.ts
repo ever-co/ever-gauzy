@@ -3,7 +3,7 @@ import { LoginPageData } from '../support/Base/pagedata/LoginPageData';
 import { faker } from '@faker-js/faker';
 import * as expensesPage from '../support/Base/pages/Expenses.po';
 import { ExpensePageData } from '../support/Base/pagedata/ExpensesPageData';
-import * as dashboradPage from '../support/Base/pages/Dashboard.po';
+import * as dashboardPage from '../support/Base/pages/Dashboard.po';
 import * as organizationTagsUserPage from '../support/Base/pages/OrganizationTags.po';
 import { OrganizationTagsPageData } from '../support/Base/pagedata/OrganizationTagsPageData';
 import * as organizationProjectsPage from '../support/Base/pages/OrganizationProjects.po';
@@ -16,7 +16,7 @@ describe('Expense test', () => {
 	before(() => {
 		name = faker.person.firstName();
 
-		CustomCommands.login(loginPage, LoginPageData, dashboradPage);
+		CustomCommands.login(loginPage, LoginPageData, dashboardPage);
 	});
 
 	it('Should be able to add new expense', () => {

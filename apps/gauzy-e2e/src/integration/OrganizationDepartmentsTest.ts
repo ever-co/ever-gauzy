@@ -3,7 +3,7 @@ import { LoginPageData } from '../support/Base/pagedata/LoginPageData';
 import * as organizationDepartmentsPage from '../support/Base/pages/OrganizationDepartments.po';
 import { faker } from '@faker-js/faker';
 import { OrganizationDepartmentsPageData } from '../support/Base/pagedata/OrganizationDepartmentsPageData';
-import * as dashboradPage from '../support/Base/pages/Dashboard.po';
+import * as dashboardPage from '../support/Base/pages/Dashboard.po';
 import * as organizationTagsUserPage from '../support/Base/pages/OrganizationTags.po';
 import { OrganizationTagsPageData } from '../support/Base/pagedata/OrganizationTagsPageData';
 import * as manageEmployeesPage from '../support/Base/pages/ManageEmployees.po';
@@ -32,7 +32,7 @@ describe('Organization departments test', () => {
 		employeeEmail = faker.internet.email();
 		imgUrl = faker.image.avatar();
 
-		CustomCommands.login(loginPage, LoginPageData, dashboradPage);
+		CustomCommands.login(loginPage, LoginPageData, dashboardPage);
 	});
 
 	it('Should be able to add new department', () => {

@@ -3,7 +3,7 @@ import { LoginPageData } from '../support/Base/pagedata/LoginPageData';
 import * as clientsPage from '../support/Base/pages/Clients.po';
 import { faker } from '@faker-js/faker';
 import { ClientsData } from '../support/Base/pagedata/ClientsPageData';
-import * as dashboradPage from '../support/Base/pages/Dashboard.po';
+import * as dashboardPage from '../support/Base/pages/Dashboard.po';
 import * as organizationTagsUserPage from '../support/Base/pages/OrganizationTags.po';
 import { OrganizationTagsPageData } from '../support/Base/pagedata/OrganizationTagsPageData';
 import * as organizationProjectsPage from '../support/Base/pages/OrganizationProjects.po';
@@ -30,7 +30,7 @@ describe('Clients test', () => {
 		street = faker.location.streetAddress();
 		website = faker.internet.url();
 
-		CustomCommands.login(loginPage, LoginPageData, dashboradPage);
+		CustomCommands.login(loginPage, LoginPageData, dashboardPage);
 	});
 
 	it('Should be able to add new client', () => {

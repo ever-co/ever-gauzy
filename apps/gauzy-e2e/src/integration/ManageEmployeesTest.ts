@@ -3,7 +3,7 @@ import { LoginPageData } from '../support/Base/pagedata/LoginPageData';
 import * as manageEmployeesPage from '../support/Base/pages/ManageEmployees.po';
 import { faker } from '@faker-js/faker';
 import { ManageEmployeesPageData } from '../support/Base/pagedata/ManageEmployeesPageData';
-import * as dashboradPage from '../support/Base/pages/Dashboard.po';
+import * as dashboardPage from '../support/Base/pages/Dashboard.po';
 import * as organizationProjectsPage from '../support/Base/pages/OrganizationProjects.po';
 import { OrganizationProjectsPageData } from '../support/Base/pagedata/OrganizationProjectsPageData';
 import * as organizationTagsUserPage from '../support/Base/pages/OrganizationTags.po';
@@ -31,7 +31,7 @@ describe('Manage employees test', () => {
 		employeeEmail = faker.internet.email();
 		imgUrl = faker.image.avatar();
 
-		CustomCommands.login(loginPage, LoginPageData, dashboradPage);
+		CustomCommands.login(loginPage, LoginPageData, dashboardPage);
 	});
 
 	it('Should be able to invite employees', () => {

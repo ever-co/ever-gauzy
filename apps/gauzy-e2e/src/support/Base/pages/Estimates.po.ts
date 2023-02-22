@@ -40,9 +40,9 @@ export const tagsDropdownVisible = () => {
 
 export const clickTagsDropdwon = () => {
 	cy.on('uncaught:exception', (err, runnable) => {
-		
+
 		return false
-	  })
+	})
 	clickButton(EstimatesPage.addTagsDropdownCss);
 };
 
@@ -295,7 +295,7 @@ export const verifyTotalValueInputVisible = () => {
 	verifyElementIsVisible(EstimatesPage.totalValueInputCss);
 };
 
-export const verifyCurrencuDropdownVisible = () => {
+export const verifyCurrencyDropdownVisible = () => {
 	verifyElementIsVisible(EstimatesPage.currencySelectCss);
 };
 

@@ -2,7 +2,7 @@ import * as loginPage from '../support/Base/pages/Login.po';
 import { LoginPageData } from '../support/Base/pagedata/LoginPageData';
 import * as appointmentsPage from '../support/Base/pages/Appointments.po';
 import { AppointmentsPageData } from '../support/Base/pagedata/AppointmentsPageData';
-import * as dashboradPage from '../support/Base/pages/Dashboard.po';
+import * as dashboardPage from '../support/Base/pages/Dashboard.po';
 import { CustomCommands } from '../support/commands';
 import { faker } from '@faker-js/faker';
 import * as manageEmployeesPage from '../support/Base/pages/ManageEmployees.po';
@@ -23,7 +23,7 @@ describe('Book public appointment test', () => {
 		employeeEmail = faker.internet.email();
 		imgUrl = faker.image.avatar();
 
-		CustomCommands.login(loginPage, LoginPageData, dashboradPage);
+		CustomCommands.login(loginPage, LoginPageData, dashboardPage);
 	});
 	it('Should be able to book public appointment', () => {
 		CustomCommands.addEmployee(

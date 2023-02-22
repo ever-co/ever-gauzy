@@ -252,7 +252,7 @@ And('User can enter invoice number', () => {
 });
 
 And('User can see currency dropdown', () => {
-	invoicesPage.verifyCurrencuDropdownVisible();
+	invoicesPage.verifyCurrencyDropdownVisible();
 });
 
 And('User can see invoice date input field', () => {

@@ -289,7 +289,7 @@ export const verifyTotalValueInputVisible = () => {
 	verifyElementIsVisible(InvoicesPage.totalValueInputCss);
 };
 
-export const verifyCurrencuDropdownVisible = () => {
+export const verifyCurrencyDropdownVisible = () => {
 	verifyElementIsVisible(InvoicesPage.currencySelectCss);
 };
 

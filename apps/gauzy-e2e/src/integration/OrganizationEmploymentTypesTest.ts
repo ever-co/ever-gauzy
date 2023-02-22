@@ -2,14 +2,14 @@ import * as loginPage from '../support/Base/pages/Login.po';
 import { LoginPageData } from '../support/Base/pagedata/LoginPageData';
 import * as organizationEmploymentTypePage from '../support/Base/pages/OrganizationEmploymentTypes.po';
 import { OrganizationEmploymentTypesPageData } from '../support/Base/pagedata/OrganizationEmploymentTypesPageData';
-import * as dashboradPage from '../support/Base/pages/Dashboard.po';
+import * as dashboardPage from '../support/Base/pages/Dashboard.po';
 import * as organizationTagsUserPage from '../support/Base/pages/OrganizationTags.po';
 import { OrganizationTagsPageData } from '../support/Base/pagedata/OrganizationTagsPageData';
 import { CustomCommands } from '../support/commands';
 
 describe('Organization employment types test', () => {
 	before(() => {
-		CustomCommands.login(loginPage, LoginPageData, dashboradPage);
+		CustomCommands.login(loginPage, LoginPageData, dashboardPage);
 	});
 
 	it('Should be able to add new employment type', () => {

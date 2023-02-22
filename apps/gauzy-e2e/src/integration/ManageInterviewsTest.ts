@@ -3,7 +3,7 @@ import { LoginPageData } from '../support/Base/pagedata/LoginPageData';
 import { ManageInterviewsPageData } from '../support/Base/pagedata/ManageInterviewsPageData';
 import * as manageInterviewsPage from '../support/Base/pages/ManageInterviews.po';
 import { CustomCommands } from '../support/commands';
-import * as dashboradPage from '../support/Base/pages/Dashboard.po';
+import * as dashboardPage from '../support/Base/pages/Dashboard.po';
 import * as inviteCandidatePage from '../support/Base/pages/Candidates.po';
 import { faker } from '@faker-js/faker';
 
@@ -23,7 +23,7 @@ describe('Manage interviews test', () => {
 		password = faker.internet.password();
 		imgUrl = faker.image.avatar();
 
-		CustomCommands.login(loginPage, LoginPageData, dashboradPage);
+		CustomCommands.login(loginPage, LoginPageData, dashboardPage);
 	});
 
 	it('Should be able to add interview', () => {

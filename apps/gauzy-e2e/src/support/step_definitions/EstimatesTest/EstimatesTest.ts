@@ -248,7 +248,7 @@ And('User can enter estimate number', () => {
 });
 
 And('User can see currency dropdown', () => {
-	estimatesPage.verifyCurrencuDropdownVisible();
+	estimatesPage.verifyCurrencyDropdownVisible();
 });
 
 And('User can see estimate date input field', () => {

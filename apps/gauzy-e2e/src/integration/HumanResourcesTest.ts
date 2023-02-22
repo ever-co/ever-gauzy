@@ -2,7 +2,7 @@ import * as loginPage from '../support/Base/pages/Login.po';
 import { LoginPageData } from '../support/Base/pagedata/LoginPageData';
 import * as humanResourcesPage from '../support/Base/pages/HumanResources.po';
 import { HumanResourcesPageData } from '../support/Base/pagedata/HumanResourcesPageData';
-import * as dashboradPage from '../support/Base/pages/Dashboard.po';
+import * as dashboardPage from '../support/Base/pages/Dashboard.po';
 import { CustomCommands } from '../support/commands';
 import { faker } from '@faker-js/faker';
 import * as manageEmployeesPage from '../support/Base/pages/ManageEmployees.po';
@@ -23,7 +23,7 @@ describe('Human resources page test', () => {
 		employeeEmail = faker.internet.email();
 		imgUrl = faker.image.avatar();
 
-		CustomCommands.login(loginPage, LoginPageData, dashboradPage);
+		CustomCommands.login(loginPage, LoginPageData, dashboardPage);
 		CustomCommands.addEmployee(
 			manageEmployeesPage,
 			firstName,

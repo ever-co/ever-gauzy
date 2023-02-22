@@ -463,8 +463,8 @@ export const CustomCommands = {
 		});
 		cy.reload();
 	},
-	logout: (dashboradPage: any, logoutPage: any, loginPage: any) => {
-		dashboradPage.clickUserName();
+	logout: (dashboardPage: any, logoutPage: any, loginPage: any) => {
+		dashboardPage.clickUserName();
 		logoutPage.clickLogoutButton();
 		loginPage.verifyLoginText();
 	},

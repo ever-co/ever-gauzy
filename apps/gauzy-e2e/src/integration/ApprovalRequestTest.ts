@@ -1,7 +1,7 @@
 import * as loginPage from '../support/Base/pages/Login.po';
 import { LoginPageData } from '../support/Base/pagedata/LoginPageData';
 import * as approvalRequestPage from '../support/Base/pages/ApprovalRequest.po';
-import * as dashboradPage from '../support/Base/pages/Dashboard.po';
+import * as dashboardPage from '../support/Base/pages/Dashboard.po';
 import { ApprovalRequestPageData } from '../support/Base/pagedata/ApprovalRequestPageData';
 import { CustomCommands } from '../support/commands';
 import { faker } from '@faker-js/faker';
@@ -25,7 +25,7 @@ describe('Approval request test', () => {
 		employeeEmail = faker.internet.email();
 		imgUrl = faker.image.avatar();
 
-		CustomCommands.login(loginPage, LoginPageData, dashboradPage);
+		CustomCommands.login(loginPage, LoginPageData, dashboardPage);
 	});
 	it('Should be able to add approval policy', () => {
 		CustomCommands.addTag(

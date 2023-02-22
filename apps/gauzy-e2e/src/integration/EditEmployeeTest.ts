@@ -2,7 +2,7 @@ import * as loginPage from '../support/Base/pages/Login.po';
 import { LoginPageData } from '../support/Base/pagedata/LoginPageData';
 import * as editEmployeePage from '../support/Base/pages/EditEmployee.po';
 import { EditEmployeePageData } from '../support/Base/pagedata/EditEmployeePageData';
-import * as dashboradPage from '../support/Base/pages/Dashboard.po';
+import * as dashboardPage from '../support/Base/pages/Dashboard.po';
 import { CustomCommands } from '../support/commands';
 import { faker } from '@faker-js/faker';
 import * as manageEmployeesPage from '../support/Base/pages/ManageEmployees.po';
@@ -54,7 +54,7 @@ describe('Edit employee test', () => {
 		contactPostcode = faker.location.zipCode();
 		contactStreet = faker.location.streetAddress();
 
-		CustomCommands.login(loginPage, LoginPageData, dashboradPage);
+		CustomCommands.login(loginPage, LoginPageData, dashboardPage);
 		CustomCommands.addEmployee(
 			manageEmployeesPage,
 			firstName,

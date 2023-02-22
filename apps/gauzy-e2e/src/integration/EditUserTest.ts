@@ -5,7 +5,7 @@ import * as addUserPage from '../support/Base/pages/AddUser.po';
 import { faker } from '@faker-js/faker';
 import { EditUserPageData } from '../support/Base/pagedata/EditUserPageData';
 import { AddUserPageData } from '../support/Base/pagedata/AddUserPageData';
-import * as dashboradPage from '../support/Base/pages/Dashboard.po';
+import * as dashboardPage from '../support/Base/pages/Dashboard.po';
 import { CustomCommands } from '../support/commands';
 
 let firstName = ' ';
@@ -28,7 +28,7 @@ describe('Edit user test', () => {
 		editFirstName = faker.person.firstName();
 		editLastName = faker.person.lastName();
 
-		CustomCommands.login(loginPage, LoginPageData, dashboradPage);
+		CustomCommands.login(loginPage, LoginPageData, dashboardPage);
 	});
 	it('Should be able to add new user', () => {
 		cy.visit('/#/pages/users');

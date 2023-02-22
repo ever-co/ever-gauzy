@@ -2,14 +2,14 @@ import * as loginPage from '../support/Base/pages/Login.po';
 import { LoginPageData } from '../support/Base/pagedata/LoginPageData';
 import * as reportsPage from '../support/Base/pages/Reports.po';
 import { ReportsPageData } from '../support/Base/pagedata/ReportsPageData';
-import * as dashboradPage from '../support/Base/pages/Dashboard.po';
+import * as dashboardPage from '../support/Base/pages/Dashboard.po';
 import { CustomCommands } from '../support/commands';
 
 let notChecked = 'not.checked';
 
 describe('Reports test', () => {
 	before(() => {
-		CustomCommands.login(loginPage, LoginPageData, dashboradPage);
+		CustomCommands.login(loginPage, LoginPageData, dashboardPage);
 	});
 	it('Time Tracking', () => {
 		cy.visit('/#/pages/reports/all');

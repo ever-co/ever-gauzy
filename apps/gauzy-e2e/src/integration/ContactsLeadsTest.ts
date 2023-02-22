@@ -3,7 +3,7 @@ import { LoginPageData } from '../support/Base/pagedata/LoginPageData';
 import * as contactsLeadsPage from '../support/Base/pages/ContactsLeads.po';
 import { faker } from '@faker-js/faker';
 import { ContactsLeadsPageData } from '../support/Base/pagedata/ContactsLeadsPageData';
-import * as dashboradPage from '../support/Base/pages/Dashboard.po';
+import * as dashboardPage from '../support/Base/pages/Dashboard.po';
 import * as organizationProjectsPage from '../support/Base/pages/OrganizationProjects.po';
 import { OrganizationProjectsPageData } from '../support/Base/pagedata/OrganizationProjectsPageData';
 import * as organizationTagsUserPage from '../support/Base/pages/OrganizationTags.po';
@@ -28,7 +28,7 @@ describe('Contacts leads test', () => {
 		street = faker.location.streetAddress();
 		website = faker.internet.url();
 
-		CustomCommands.login(loginPage, LoginPageData, dashboradPage);
+		CustomCommands.login(loginPage, LoginPageData, dashboardPage);
 	});
 
 	it('Should be able to add new lead', () => {

@@ -4,7 +4,7 @@ import * as invoicesPage from '../support/Base/pages/Invoices.po';
 import { InvoicesPageData } from '../support/Base/pagedata/InvoicesPageData';
 import * as organizationTagsUserPage from '../support/Base/pages/OrganizationTags.po';
 import { OrganizationTagsPageData } from '../support/Base/pagedata/OrganizationTagsPageData';
-import * as dashboradPage from '../support/Base/pages/Dashboard.po';
+import * as dashboardPage from '../support/Base/pages/Dashboard.po';
 import { CustomCommands } from '../support/commands';
 import { faker } from '@faker-js/faker';
 import { ContactsLeadsPageData } from '../support/Base/pagedata/ContactsLeadsPageData';
@@ -30,7 +30,7 @@ describe('Invoices test', () => {
 		website = faker.internet.url();
 		sendEmail = faker.internet.email();
 
-		CustomCommands.login(loginPage, LoginPageData, dashboradPage);
+		CustomCommands.login(loginPage, LoginPageData, dashboardPage);
 	});
 	it('Should be able to add new invoice', () => {
 		CustomCommands.addProject(
@@ -98,11 +98,11 @@ describe('Invoices test', () => {
 		invoicesPage.enterEstimateNumberInputData(
 			InvoicesPageData.invoiceNumber
 		);
-		invoicesPage.verifyCurrencuDropdownVisible();
+		invoicesPage.verifyCurrencyDropdownVisible();
 		invoicesPage.verifyEstimateDateInput();
 		invoicesPage.verifyEstimateDueDateInput();
 		invoicesPage.verifyTotalValueInputVisible();
-		invoicesPage.verifyCurrencuDropdownVisible();
+		invoicesPage.verifyCurrencyDropdownVisible();
 		invoicesPage.verifyStatusInputVisible();
 		invoicesPage.searchButtonVisible();
 		invoicesPage.clickSearchButton();

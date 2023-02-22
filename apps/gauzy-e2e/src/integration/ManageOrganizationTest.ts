@@ -5,7 +5,7 @@ import { AddOrganizationPageData } from '../support/Base/pagedata/AddOrganizatio
 import * as manageOrganizationPage from '../support/Base/pages/ManageOrganization.po';
 import { faker } from '@faker-js/faker';
 import { ManageOrganizationPageData } from '../support/Base/pagedata/ManageOrganizationPageData';
-import * as dashboradPage from '../support/Base/pages/Dashboard.po';
+import * as dashboardPage from '../support/Base/pages/Dashboard.po';
 import { CustomCommands } from '../support/commands';
 
 let organizationName = ' ';
@@ -18,7 +18,7 @@ describe('Manage Organization Test', () => {
 		taxId = faker.string.alphanumeric();
 		street = faker.location.streetAddress();
 
-		CustomCommands.login(loginPage, LoginPageData, dashboradPage);
+		CustomCommands.login(loginPage, LoginPageData, dashboardPage);
 	});
 
 	it('Should be able to manage organization', () => {
