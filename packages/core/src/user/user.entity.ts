@@ -129,6 +129,7 @@ export class User extends TenantBaseEntity implements IUser {
 
 	name?: string;
 	employeeId?: string;
+	isEmailVerified?: boolean;
 
 	/*
 	|--------------------------------------------------------------------------
