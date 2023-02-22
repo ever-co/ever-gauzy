@@ -23,7 +23,7 @@ export const ExpensesPage = {
 	manageCategoriseButtonCss:
 		'div.card-header-title > button[status="primary"]',
 	expenseNameInputCss: '[placeholder="Expense name"]',
-	savecategoryButtonCss:
+	SaveCategoryButtonCss:
 		'div.justify-content-end > button[status="success"]',
 	backButtonCss: 'div.main > button[status="primary"]',
 	categoryCardCss: 'nb-card.ng-star-inserted',

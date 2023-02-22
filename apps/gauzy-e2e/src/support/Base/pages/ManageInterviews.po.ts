@@ -203,7 +203,7 @@ export const clearFilterInputField = () => {
 };
 // End of Filter functions
 
-export const verifyAddFeedbackButtonVisisible = () => {
+export const verifyAddFeedbackButtonVisible = () => {
 	verifyElementIsVisible(ManageInterviewsPage.tableOptionsButtonsCss);
 };
 

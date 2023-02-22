@@ -8,7 +8,7 @@ export const OrganizationInventoryPageData = {
 	productInventoryDescription: 'Main category and type',
 	productTypeName: 'CRM System',
 	productTypeDescription: 'Main product',
-	categoryButtonText: 'Product categorys',
+	categoryButtonText: 'Product categories',
 	typeButtonText: 'Product types',
 	currency: 'Afghan Afghani (AFN)',
 	country: 'Afghanistan',

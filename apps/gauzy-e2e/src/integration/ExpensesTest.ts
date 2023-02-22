@@ -104,8 +104,8 @@ describe('Expense test', () => {
 	});
 	it('Should be able to add new category', () => {
 		expensesPage.waitMessageToHide();
-		expensesPage.managecategorysButtonVisible();
-		expensesPage.clickManagecategorysButton();
+		expensesPage.managecategoriesButtonVisible();
+		expensesPage.clickManagecategoriesButton();
 		expensesPage.addExpenseButtonVisible();
 		expensesPage.clickAddExpenseButton();
 		expensesPage.newCategoryInputVisible();
@@ -115,8 +115,8 @@ describe('Expense test', () => {
 		expensesPage.selectTagFromDropdown(0);
 		expensesPage.categoryCardVisible();
 		expensesPage.clickKeyboardButtonByKeyCode(9);
-		expensesPage.savecategoryButtonVisible();
-		expensesPage.clickSavecategoryButton();
+		expensesPage.SaveCategoryButtonVisible();
+		expensesPage.clickSaveCategoryButton();
 		expensesPage.verifyCategoryExists(ExpensePageData.defaultCategory);
 		expensesPage.backButtonVisible();
 		expensesPage.clickBackButton();

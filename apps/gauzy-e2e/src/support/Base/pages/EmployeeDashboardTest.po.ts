@@ -85,11 +85,11 @@ export const clickMenuButtonsByText = (text: string) => {
 	clickElementByText(EmployeeDashboardPage.menuButtonsCss, text)
 }
 
-export const verifyEmployeeSelecor = () => {
+export const verifyEmployeeSelector = () => {
 	verifyElementIsVisible(EmployeeDashboardPage.employeeSelectorCss)
 }
 
-export const clickOnEmployeeSelecor = () => {
+export const clickOnEmployeeSelector = () => {
 	clickButton(EmployeeDashboardPage.employeeSelectorCss);
 	clickButtonDouble(EmployeeDashboardPage.employeeSelectorCss);
 };
@@ -98,7 +98,7 @@ export const verifyEmployeeSelectorDropdown = (text: string) => {
 	verifyByText(EmployeeDashboardPage.selectEmployeeDropdownOptionCss, text);
 };
 
-export const clickOnEmployeeSelecorDropdown = (text: string) => {
+export const clickOnEmployeeSelectorDropdown = (text: string) => {
 	clickByText(EmployeeDashboardPage.selectEmployeeDropdownOptionCss, text);
 };
 

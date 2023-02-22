@@ -232,7 +232,7 @@ Then('User can see filtered candidate', () => {
 });
 
 And('User can see Add Feedback button', () => {
-	manageInterviewsPage.verifyAddFeedbackButtonVisisible();
+	manageInterviewsPage.verifyAddFeedbackButtonVisible();
 });
 
 When('User clicks on Add Feedback button', () => {

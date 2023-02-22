@@ -236,7 +236,7 @@ And('User can see amount input field', () => {
 });
 
 And('User can enter value for amount', () => {
-	employeeDashboard.enterAmountInputData(EmployeeDashboardPageData.anountInput);
+	employeeDashboard.enterAmountInputData(EmployeeDashboardPageData.amountInput);
 });
 
 And('User can see notes textarea input field', () => {
@@ -274,11 +274,11 @@ Then('User click on dashboard button', () => {
 });
 
 When('User see employee selector', () => {
-	employeeDashboard.verifyEmployeeSelecor();
+	employeeDashboard.verifyEmployeeSelector();
 });
 
 Then('User click on employee selector', () => {
-	employeeDashboard.clickOnEmployeeSelecor();
+	employeeDashboard.clickOnEmployeeSelector();
 });
 
 When('User see employee dropdown', () => {
@@ -286,7 +286,7 @@ When('User see employee dropdown', () => {
 });
 
 Then('User click on employee', () => {
-	employeeDashboard.clickOnEmployeeSelecorDropdown(employeeFullName);
+	employeeDashboard.clickOnEmployeeSelectorDropdown(employeeFullName);
 });
 
 And('User can verify salary', () => {

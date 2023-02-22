@@ -120,11 +120,11 @@ Then('User click on dashboard button', () => {
 });
 
 When('User see employee selector', () => {
-	employeeAddInfo.verifyEmployeeSelecor();
+	employeeAddInfo.verifyEmployeeSelector();
 });
 
 Then('User click on employee selector', () => {
-	employeeAddInfo.clickOnEmployeeSelecor();
+	employeeAddInfo.clickOnEmployeeSelector();
 });
 
 When('User see employee dropdown', () => {
@@ -132,7 +132,7 @@ When('User see employee dropdown', () => {
 });
 
 Then('User click on employee', () => {
-	employeeAddInfo.clickOnEmployeeSelecorDropdown(employeeFullName);
+	employeeAddInfo.clickOnEmployeeSelectorDropdown(employeeFullName);
 });
 
 When('User see edit icon button', () => {
