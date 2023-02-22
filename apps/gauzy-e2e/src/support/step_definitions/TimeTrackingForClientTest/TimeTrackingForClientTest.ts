@@ -1,4 +1,4 @@
-import { faker } from '@ever-co/faker';
+import { faker } from '@faker-js/faker';
 import { Given, Then, When, And } from 'cypress-cucumber-preprocessor/steps';
 import { CustomCommands } from '../../commands';
 import * as loginPage from '../../Base/pages/Login.po';
@@ -14,15 +14,15 @@ import { TimeTrackingForClientPageData } from '../../Base/pagedata/TimeTrackingF
 
 
 let email = faker.internet.email();
-let fullName = faker.name.firstName() + ' ' + faker.name.lastName();
-let city = faker.address.city();
-let postcode = faker.address.zipCode();
-let street = faker.address.streetAddress();
+let fullName = faker.person.firstName() + ' ' + faker.person.lastName();
+let city = faker.location.city();
+let postcode = faker.location.zipCode();
+let street = faker.location.streetAddress();
 let website = faker.internet.url();
 
 
-let firstName = faker.name.firstName();
-let lastName = faker.name.lastName();
+let firstName = faker.person.firstName();
+let lastName = faker.person.lastName();
 let username = faker.internet.userName();
 let password = faker.internet.password();
 let imgUrl = faker.image.avatar();
@@ -32,8 +32,8 @@ let employeeFullName = `${firstName} ${lastName}`;
 
 // Login with email
 
-Given('Login with default credentials',()=>{
-    CustomCommands.login(loginPage, LoginPageData, dashboardPage)
+Given('Login with default credentials', () => {
+	CustomCommands.login(loginPage, LoginPageData, dashboardPage)
 })
 
 //Add employee
@@ -157,12 +157,12 @@ When('Employee click on view timesheet button', () => {
 });
 
 Then('Employee can see view button', () => {
-    timeTrackingForClient.viewViewBtnVisible();
+	timeTrackingForClient.viewViewBtnVisible();
 });
 When('Employee click on view button', () => {
-    timeTrackingForClient.clickOnViewBtn();
+	timeTrackingForClient.clickOnViewBtn();
 });
 
-Then('Employee can verify the client name is recorded', () =>{
-    timeTrackingForClient.verifyCustomerName(fullName);
+Then('Employee can verify the client name is recorded', () => {
+	timeTrackingForClient.verifyCustomerName(fullName);
 });

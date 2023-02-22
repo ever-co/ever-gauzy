@@ -5,18 +5,18 @@ import {
 	clearField,
 	clickKeyboardBtnByKeycode,
 	clickElementByText,
-    clickButtonDouble,
+	clickButtonDouble,
 	waitElementToHide,
-    clickByText,
-    verifyByText,
+	clickByText,
+	verifyByText,
 	clickButtonByIndex,
 	scrollDown
-	
+
 } from '../utils/util';
 import { EmployeeAddInfoPage } from '../pageobjects/EmployeeAddInfoPageObject';
 
 export const gridBtnExists = () => {
-	cy.intercept('GET','/api/employee-level*').as('waitLevel');
+	cy.intercept('GET', '/api/employee-level*').as('waitLevel');
 	cy.wait('@waitLevel');
 	verifyElementIsVisible(EmployeeAddInfoPage.gridButtonCss);
 
@@ -80,28 +80,28 @@ export const waitMessageToHide = () => {
 };
 
 export const verifyMenuBtnByText = (text: string) => {
-    verifyByText(EmployeeAddInfoPage.menuButtonsCss, text)
+	verifyByText(EmployeeAddInfoPage.menuButtonsCss, text)
 }
 
 export const clickMenuButtonsByText = (text: string) => {
-    clickElementByText(EmployeeAddInfoPage.menuButtonsCss, text)
+	clickElementByText(EmployeeAddInfoPage.menuButtonsCss, text)
 }
 
-export const verifyEmployeeSelecor = () => {
-    verifyElementIsVisible(EmployeeAddInfoPage.employeeSelectorCss)
+export const verifyEmployeeSelector = () => {
+	verifyElementIsVisible(EmployeeAddInfoPage.employeeSelectorCss)
 }
 
-export const clickOnEmployeeSelecor = () => {
-    clickButton(EmployeeAddInfoPage.employeeSelectorCss);
-    clickButtonDouble(EmployeeAddInfoPage.employeeSelectorCss);
+export const clickOnEmployeeSelector = () => {
+	clickButton(EmployeeAddInfoPage.employeeSelectorCss);
+	clickButtonDouble(EmployeeAddInfoPage.employeeSelectorCss);
 };
 
 export const verifyEmployeeSelectorDropdown = (text: string) => {
-    verifyByText(EmployeeAddInfoPage.selectEmployeeDropdownOptionCss, text);
+	verifyByText(EmployeeAddInfoPage.selectEmployeeDropdownOptionCss, text);
 };
 
-export const clickOnEmployeeSelecorDropdown = (text: string) => {
-    clickByText(EmployeeAddInfoPage.selectEmployeeDropdownOptionCss, text);
+export const clickOnEmployeeSelectorDropdown = (text: string) => {
+	clickByText(EmployeeAddInfoPage.selectEmployeeDropdownOptionCss, text);
 };
 
 export const verifyEditIconButton = () => {

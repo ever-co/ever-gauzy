@@ -4,7 +4,7 @@ import * as organizationProjectsPage from '../../Base/pages/OrganizationProjects
 import { OrganizationProjectsPageData } from '../../Base/pagedata/OrganizationProjectsPageData';
 import * as dashboardPage from '../../Base/pages/Dashboard.po';
 import { CustomCommands } from '../../commands';
-import { faker } from '@ever-co/faker';
+import { faker } from '@faker-js/faker';
 import * as logoutPage from '../../Base/pages/Logout.po';
 import * as manageEmployeesPage from '../../Base/pages/ManageEmployees.po';
 import * as organizationTagsUserPage from '../../Base/pages/OrganizationTags.po';
@@ -14,8 +14,8 @@ import { Given, Then, When, And } from 'cypress-cucumber-preprocessor/steps';
 
 const pageLoadTimeout = Cypress.config('pageLoadTimeout');
 
-let empFirstName = faker.name.firstName();
-let empLastName = faker.name.lastName();
+let empFirstName = faker.person.firstName();
+let empLastName = faker.person.lastName();
 let empUsername = faker.internet.userName();
 let empPassword = faker.internet.password();
 let employeeEmail = faker.internet.email();

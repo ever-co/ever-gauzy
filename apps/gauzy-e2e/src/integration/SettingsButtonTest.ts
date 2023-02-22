@@ -2,12 +2,12 @@ import * as loginPage from '../support/Base/pages/Login.po';
 import { LoginPageData } from '../support/Base/pagedata/LoginPageData';
 import * as settingsButton from '../support/Base/pages/SettingsButton.po';
 import { SettingsButtonData } from '../support/Base/pagedata/SettingsButtonPageData';
-import * as dashboradPage from '../support/Base/pages/Dashboard.po';
+import * as dashboardPage from '../support/Base/pages/Dashboard.po';
 import { CustomCommands } from '../support/commands';
 
 describe('Settings button test', () => {
 	before(() => {
-		CustomCommands.login(loginPage, LoginPageData, dashboradPage);
+		CustomCommands.login(loginPage, LoginPageData, dashboardPage);
 	});
 
 	it('Should be able to verify themes', () => {

@@ -1,4 +1,4 @@
-import { faker } from '@ever-co/faker';
+import { faker } from '@faker-js/faker';
 import { Given, Then, When, And } from 'cypress-cucumber-preprocessor/steps';
 import { CustomCommands } from '../../commands';
 import * as loginPage from '../../Base/pages/Login.po';
@@ -19,15 +19,15 @@ const pageLoadTimeout = Cypress.config('pageLoadTimeout');
 
 
 let email = faker.internet.email();
-let fullName = faker.name.firstName() + ' ' + faker.name.lastName();
-let city = faker.address.city();
-let postcode = faker.address.zipCode();
-let street = faker.address.streetAddress();
+let fullName = faker.person.firstName() + ' ' + faker.person.lastName();
+let city = faker.location.city();
+let postcode = faker.location.zipCode();
+let street = faker.location.streetAddress();
 let website = faker.internet.url();
 
 
-let firstName = faker.name.firstName();
-let lastName = faker.name.lastName();
+let firstName = faker.person.firstName();
+let lastName = faker.person.lastName();
 let username = faker.internet.userName();
 let password = faker.internet.password();
 let imgUrl = faker.image.avatar();
@@ -37,8 +37,8 @@ let employeeFullName = `${firstName} ${lastName}`;
 
 // Login with email
 
-Given('Login with default credentials',()=>{
-    CustomCommands.login(loginPage, LoginPageData, dashboardPage)
+Given('Login with default credentials', () => {
+	CustomCommands.login(loginPage, LoginPageData, dashboardPage)
 })
 
 // Add new tag
@@ -111,20 +111,20 @@ Then('Employee will see Create button', () => {
 });
 
 //Create task and verify
-When('Employee go to my tasks',() => {
+When('Employee go to my tasks', () => {
 	CustomCommands.logout(dashboardPage, logoutPage, loginPage);
 	CustomCommands.clearCookies();
-	CustomCommands.login(loginPage, {email: employeeEmail, password: password}, dashboardPage);
-	
+	CustomCommands.login(loginPage, { email: employeeEmail, password: password }, dashboardPage);
+
 	cy.visit('/#/pages/tasks/me', { timeout: pageLoadTimeout });
-	
+
 })
 
-Then ('Employee can see add button', () => {
+Then('Employee can see add button', () => {
 	myTasksTrackedInTimesheets.verifyAddButton()
 })
 
-When ('Employee click on add button', () => {
+When('Employee click on add button', () => {
 	myTasksTrackedInTimesheets.clickOnAddTaskButton()
 })
 
@@ -151,7 +151,7 @@ When('Employee click on status dropdown', () => {
 });
 
 Then('Employee can select status from dropdown options', () => {
-	myTasksTrackedInTimesheets.selectStatusFromDropdown(MyTasksTrackedInTimesheetsPageData.defauleStatus);
+	myTasksTrackedInTimesheets.selectStatusFromDropdown(MyTasksTrackedInTimesheetsPageData.defaultStatus);
 });
 
 And('Employee can see title input field', () => {
@@ -189,7 +189,7 @@ And('Employee can see estimate days input field', () => {
 });
 
 And('Employee can enter estimate days', () => {
-	myTasksTrackedInTimesheets.enterEstiamteDaysInputData(
+	myTasksTrackedInTimesheets.enterEstimateDaysInputData(
 		MyTasksTrackedInTimesheetsPageData.defaultTaskEstimateDays
 	);
 });
@@ -199,7 +199,7 @@ And('Employee can see estimate hours input field', () => {
 });
 
 And('Employee can enter estimate hours', () => {
-	myTasksTrackedInTimesheets.enterEstiamteHoursInputData(
+	myTasksTrackedInTimesheets.enterEstimateHoursInputData(
 		MyTasksTrackedInTimesheetsPageData.defaultTaskEstimateHours
 	);
 });
@@ -215,7 +215,7 @@ And('Employee can enter estimate minutes', () => {
 });
 
 And('Employee can see task description input field', () => {
-	myTasksTrackedInTimesheets.taskDecriptionTextareaVisible();
+	myTasksTrackedInTimesheets.taskDescriptionTextareaVisible();
 });
 
 And('Employee can enter task description', () => {
@@ -285,10 +285,6 @@ Then('Employee can see view timesheet button', () => {
 When('Employee click on view timesheet button', () => {
 	myTasksTrackedInTimesheets.clickViewTimesheetBtn();
 });
-Then ('Employee verify project name is the same', () => {
+Then('Employee verify project name is the same', () => {
 	myTasksTrackedInTimesheets.verifyProjectText(MyTasksTrackedInTimesheetsPageData.defaultTaskTitle)
 });
-
-
-
-

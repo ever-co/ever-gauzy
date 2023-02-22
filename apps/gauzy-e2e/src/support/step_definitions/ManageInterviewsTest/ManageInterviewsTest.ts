@@ -5,7 +5,7 @@ import * as manageInterviewsPage from '../../Base/pages/ManageInterviews.po';
 import { CustomCommands } from '../../commands';
 import * as dashboardPage from '../../Base/pages/Dashboard.po';
 import * as inviteCandidatePage from '../../Base/pages/Candidates.po';
-import { faker } from '@ever-co/faker';
+import { faker } from '@faker-js/faker';
 import * as logoutPage from '../../Base/pages/Logout.po';
 import * as manageEmployeesPage from '../../Base/pages/ManageEmployees.po';
 
@@ -14,15 +14,15 @@ import { Given, Then, When, And } from 'cypress-cucumber-preprocessor/steps';
 const pageLoadTimeout = Cypress.config('pageLoadTimeout');
 
 let email = faker.internet.email();
-let firstName = faker.name.firstName();
-let lastName = faker.name.lastName();
+let firstName = faker.person.firstName();
+let lastName = faker.person.lastName();
 let username = faker.internet.userName();
 
 let password = faker.internet.password();
 let imgUrl = faker.image.avatar();
 
-let empFirstName = faker.name.firstName();
-let empLastName = faker.name.lastName();
+let empFirstName = faker.person.firstName();
+let empLastName = faker.person.lastName();
 let empUsername = faker.internet.userName();
 let empPassword = faker.internet.password();
 let employeeEmail = faker.internet.email();
@@ -207,7 +207,7 @@ And('User navigates to Candidates interview panel', () => {
 	CustomCommands.clearCookies();
 	CustomCommands.login(loginPage, LoginPageData, dashboardPage);
 	cy.visit('/#/pages/employees/candidates/interviews/interview_panel');
-	// manageInterviewsPage.verifySheduleExist(`${firstName} ${lastName}`);
+	// manageInterviewsPage.verifyScheduleExist(`${firstName} ${lastName}`);
 });
 
 And('User can see name filter input field', () => {
@@ -232,7 +232,7 @@ Then('User can see filtered candidate', () => {
 });
 
 And('User can see Add Feedback button', () => {
-	manageInterviewsPage.verifyAddFeedbackButtonVisisible();
+	manageInterviewsPage.verifyAddFeedbackButtonVisible();
 });
 
 When('User clicks on Add Feedback button', () => {
@@ -329,11 +329,11 @@ And('User can see Edit interview button', () => {
 	manageInterviewsPage.verifyEditButtonVisible();
 });
 
-And('User can see future checkbox', () => { 
+And('User can see future checkbox', () => {
 	manageInterviewsPage.verifyOnlyFutureCheckboxVisible()
 })
 
-Then('User click future checkbox', () => { 
+Then('User click future checkbox', () => {
 	manageInterviewsPage.verifyOnlyFutureCheckboxVisible()
 })
 

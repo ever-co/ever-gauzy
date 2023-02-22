@@ -1,12 +1,12 @@
 import * as loginPage from '../support/Base/pages/Login.po';
 import { LoginPageData } from '../support/Base/pagedata/LoginPageData';
 import * as jobSearchPage from '../support/Base/pages/JobSearch.po';
-import * as dashboradPage from '../support/Base/pages/Dashboard.po';
+import * as dashboardPage from '../support/Base/pages/Dashboard.po';
 import { CustomCommands } from '../support/commands';
 
 describe('Job search test', () => {
 	before(() => {
-		CustomCommands.login(loginPage, LoginPageData, dashboradPage);
+		CustomCommands.login(loginPage, LoginPageData, dashboardPage);
 	});
 
 	it('Should be able to verify job search visibility', () => {

@@ -1,9 +1,9 @@
 import * as registerPage from '../support/Base/pages/Register.po';
 import * as loginPage from '../support/Base/pages/Login.po';
 import * as onboardingPage from '../support/Base/pages/Onboarding.po';
-import { faker } from '@ever-co/faker';
+import { faker } from '@faker-js/faker';
 import { OnboardingPageData } from '../support/Base/pagedata/OnboardingPageData';
-import * as dashboradPage from '../support/Base/pages/Dashboard.po';
+import * as dashboardPage from '../support/Base/pages/Dashboard.po';
 import * as logoutPage from '../support/Base/pages/Logout.po';
 import { RegisterPageData } from '../support/Base/pagedata/RegisterPageData';
 
@@ -16,12 +16,12 @@ let street = ' ';
 
 describe('Register Test', () => {
 	before(() => {
-		fullName = faker.name.findName();
+		fullName = faker.person.fullName();
 		email = faker.internet.email();
 		pass = faker.internet.password();
-		organizationName = faker.company.companyName();
-		taxId = faker.random.alphaNumeric();
-		street = faker.address.streetAddress();
+		organizationName = faker.company.name();
+		taxId = faker.string.alphanumeric();
+		street = faker.location.streetAddress();
 
 		cy.visit('/');
 		loginPage.verifyTitle();
@@ -89,11 +89,11 @@ describe('Register Test', () => {
 		registerPage.clickOnNextButton();
 		onboardingPage.verifyHeadingOnCompletePage();
 		onboardingPage.clickDashboardCard(0);
-		dashboradPage.verifyCreateButton();
+		dashboardPage.verifyCreateButton();
 	});
 
 	it('Should able to logout', () => {
-		dashboradPage.clickUserName();
+		dashboardPage.clickUserName();
 		logoutPage.clickLogoutButton();
 		loginPage.verifyLoginText();
 	});

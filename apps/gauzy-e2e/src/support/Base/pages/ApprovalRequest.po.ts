@@ -157,7 +157,7 @@ export const verifyElementIsDeleted = (text: string) => {
 	verifyTextNotExisting(ApprovalRequestPage.tableBodyCss, text);
 };
 
-export const clickSaveButtonWithForce = () =>{
+export const clickSaveButtonWithForce = () => {
 	clickButtonWithForce(ApprovalRequestPage.saveButtonCss);
 };
 
@@ -165,7 +165,7 @@ export const tagsDropdownVisible = () => {
 	verifyElementIsVisible(ApprovalRequestPage.addTagsDropdownCss);
 };
 
-export const clickTagsDropdwon = () => {
+export const clickTagsDropdown = () => {
 	clickButton(ApprovalRequestPage.addTagsDropdownCss);
 };
 
@@ -183,7 +183,7 @@ export const verifyApprovalRefuseButton = (text: string, index: number) => {
 
 export const clickOnApprovalRefuseButton = (text: string) => {
 	clickByText(ApprovalRequestPage.approvalRefuseButtonCss, text);
-	
+
 };
 
 export const verifyApprovalButtonNotExist = (text: string, index: number) => {

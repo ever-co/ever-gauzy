@@ -23,7 +23,7 @@ export const OrganizationInventoryPage = {
 		'nb-card-header.d-flex div.navigate button[status="primary"]',
 	toastrMessageCss: 'nb-toast.ng-trigger',
 	verifyTypeCss: 'div.ng-star-inserted',
-	verifyCategorieCss: 'div.ng-star-inserted',
+	verifycategoryCss: 'div.ng-star-inserted',
 	verifyInventoryCss: 'ng-component > div > div.d-block',
 	merchantsOrWarehousesBtnCss: 'div.mb-3 > button[status="warning"]',
 	addMerchantBtnCss: 'div.mb-3 > button[status="success"]',

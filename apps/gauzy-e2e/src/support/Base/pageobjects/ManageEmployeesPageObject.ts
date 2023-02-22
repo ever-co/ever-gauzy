@@ -41,7 +41,7 @@ export const ManageEmployeesPage = {
 	preferredLanguageOptionCss:
 		'ng-dropdown-panel.ng-dropdown-panel > div.ng-dropdown-panel-items div.ng-option',
 	cardBodyCss: 'div.text-right',
-	manageInvitesButonCss:
+	manageInvitesButtonCss:
 		'div.card-header-title > div.mr-2 > button[status="primary"]',
 	copyLinkButtonCss: 'div.mb-3 > button[status="success"]',
 	resendInviteButtonCss: 'div.mb-3 > button[status="warning"]',

@@ -5,7 +5,7 @@ import { EmployeeAddInfoPageData } from '../../Base/pagedata/EmployeeAddInfoPage
 import * as dashboardPage from '../../Base/pages/Dashboard.po';
 import { CustomCommands } from '../../commands';
 import * as logoutPage from '../../Base/pages/Logout.po';
-import { faker } from '@ever-co/faker';
+import { faker } from '@faker-js/faker';
 import * as manageEmployeesPage from '../../Base/pages/ManageEmployees.po';
 import { Given, Then, When, And } from 'cypress-cucumber-preprocessor/steps';
 import * as organizationTagsUserPage from '../../Base/pages/OrganizationTags.po';
@@ -13,10 +13,10 @@ import { OrganizationTagsPageData } from '../../Base/pagedata/OrganizationTagsPa
 
 const responseTimeout = Cypress.config('responseTimeout');
 
-const jobTitle = faker.name.jobTitle();
+const jobTitle = faker.person.jobTitle();
 const employeeLevel = EmployeeAddInfoPageData.level + ` ${faker.random.alpha().toUpperCase()}`
-const firstName = faker.name.firstName();
-const lastName = faker.name.lastName();
+const firstName = faker.person.firstName();
+const lastName = faker.person.lastName();
 const username = faker.internet.userName();
 const password = faker.internet.password();
 const employeeEmail = faker.internet.email();
@@ -40,7 +40,7 @@ And('User can add new employee', () => {
 	CustomCommands.logout(dashboardPage, logoutPage, loginPage);
 	CustomCommands.clearCookies();
 	CustomCommands.login(loginPage, LoginPageData, dashboardPage);
-    dashboardPage.verifyAccountingDashboardIfVisible();
+	dashboardPage.verifyAccountingDashboardIfVisible();
 	CustomCommands.addEmployee(
 		manageEmployeesPage,
 		firstName,
@@ -115,67 +115,67 @@ When('User see dashboard button on main manu', () => {
 	employeeAddInfo.verifyMenuBtnByText(EmployeeAddInfoPageData.dashboardTxt);
 });
 
-Then ('User click on dashboard button', () => {
+Then('User click on dashboard button', () => {
 	employeeAddInfo.clickMenuButtonsByText(EmployeeAddInfoPageData.dashboardTxt)
 });
 
 When('User see employee selector', () => {
-	employeeAddInfo.verifyEmployeeSelecor();
+	employeeAddInfo.verifyEmployeeSelector();
 });
 
 Then('User click on employee selector', () => {
-	employeeAddInfo.clickOnEmployeeSelecor();
+	employeeAddInfo.clickOnEmployeeSelector();
 });
 
-When ('User see employee dropdown', () => {
+When('User see employee dropdown', () => {
 	employeeAddInfo.verifyEmployeeSelectorDropdown(employeeFullName);
 });
 
-Then ('User click on employee', () => {
-	employeeAddInfo.clickOnEmployeeSelecorDropdown(employeeFullName);
+Then('User click on employee', () => {
+	employeeAddInfo.clickOnEmployeeSelectorDropdown(employeeFullName);
 });
 
-When ('User see edit icon button', () => {
+When('User see edit icon button', () => {
 	employeeAddInfo.verifyEditIconButton();
 })
 
-Then ('User click on edit icon button', () => {
+Then('User click on edit icon button', () => {
 	employeeAddInfo.clickOnEditIconButton();
 });
 
-When ('User see Employment tab', ()=> {
+When('User see Employment tab', () => {
 	employeeAddInfo.verifyTab(EmployeeAddInfoPageData.employmentTxt);
 });
 
-Then ('User click on Employment tab', () => {
+Then('User click on Employment tab', () => {
 	employeeAddInfo.clickTab(EmployeeAddInfoPageData.employmentTxt);
 });
 
-When ('User see Short Description input field', () => {
+When('User see Short Description input field', () => {
 	employeeAddInfo.verifyInputField();
 });
 
-Then ('User enter value for Short Description', () => {
+Then('User enter value for Short Description', () => {
 	employeeAddInfo.enterInputField(jobTitle);
 });
 
-When ('User see level input field', () => {
+When('User see level input field', () => {
 	employeeAddInfo.verifyLevelInput();
 });
 
-Then ('User click on level input field',() => {
+Then('User click on level input field', () => {
 	employeeAddInfo.clickOnLevelInput();
 });
 
-And ('User can select level from dropdown', () => {
+And('User can select level from dropdown', () => {
 	employeeAddInfo.clickOnLevelOptions(employeeLevel);
 });
 
-When ('User see save button', () => {
+When('User see save button', () => {
 	employeeAddInfo.verifySaveBtn();
 });
 
-Then ('User click on save button again', () => {
+Then('User click on save button again', () => {
 	employeeAddInfo.clickOnSaveBtn();
 });
 

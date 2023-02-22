@@ -79,7 +79,7 @@ export const clickEditEmployeePositionButton = () => {
 	getLastElement(AddEmployeePositionPage.editEmployeePositionButtonCss);
 };
 
-export const editEmployeePositionInpuVisible = () => {
+export const editEmployeePositionInputVisible = () => {
 	verifyElementIsVisible(AddEmployeePositionPage.editPositionInputCss);
 };
 

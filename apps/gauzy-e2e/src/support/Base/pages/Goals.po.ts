@@ -194,7 +194,7 @@ export const clickWeightTypeButton = (index) => {
 	clickButtonByIndex(GoalsPage.weightTypeButtonCss, index);
 };
 
-export const weightParameterDropdwonVisible = () => {
+export const weightParameterDropdownVisible = () => {
 	verifyElementIsVisible(GoalsPage.weightParameterDropdownCss);
 };
 

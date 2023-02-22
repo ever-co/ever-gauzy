@@ -43,11 +43,11 @@ export const selectProjectOptionDropdown = (text) => {
 };
 
 export const selectEmployeeDropdownVisible = () => {
-	verifyElementIsVisible(AddTaskPage.selectEmloyeeMultiSelectCss);
+	verifyElementIsVisible(AddTaskPage.selectEmployeeMultiSelectCss);
 };
 
 export const clickSelectEmployeeDropdown = () => {
-	clickButton(AddTaskPage.selectEmloyeeMultiSelectCss);
+	clickButton(AddTaskPage.selectEmployeeMultiSelectCss);
 };
 
 export const selectEmployeeDropdownOption = (index) => {
@@ -108,7 +108,7 @@ export const estimateDaysInputVisible = () => {
 	verifyElementIsVisible(AddTaskPage.estimateDaysInputCss);
 };
 
-export const enterEstiamteDaysInputData = (days) => {
+export const enterEstimateDaysInputData = (days) => {
 	clearField(AddTaskPage.estimateDaysInputCss);
 	enterInput(AddTaskPage.estimateDaysInputCss, days);
 };
@@ -117,7 +117,7 @@ export const estimateHoursInputVisible = () => {
 	verifyElementIsVisible(AddTaskPage.estimateHoursInputCss);
 };
 
-export const enterEstiamteHoursInputData = (hours) => {
+export const enterEstimateHoursInputData = (hours) => {
 	clearField(AddTaskPage.estimateHoursInputCss);
 	enterInput(AddTaskPage.estimateHoursInputCss, hours);
 };
@@ -131,7 +131,7 @@ export const enterEstimateMinutesInputData = (mins) => {
 	enterInput(AddTaskPage.estimateMinsInputCss, mins);
 };
 
-export const taskDecriptionTextareaVisible = () => {
+export const taskDescriptionTextareaVisible = () => {
 	verifyElementIsVisible(AddTaskPage.descriptionTextareaCss);
 };
 
@@ -213,6 +213,6 @@ export const clearSearchInput = () => {
 	clearField(AddTaskPage.searchTitleInputCss);
 };
 
-export const verifySearchResult = (length: number) =>{
+export const verifySearchResult = (length: number) => {
 	vefiryByLength(AddTaskPage.selectTableRowCss, length);
 };

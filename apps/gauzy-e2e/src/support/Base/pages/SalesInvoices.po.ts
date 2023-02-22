@@ -35,7 +35,7 @@ export const tagsDropdownVisible = () => {
 	verifyElementIsVisible(SalesInvoicesPage.addTagsDropdownCss);
 };
 
-export const clickTagsDropdwon = () => {
+export const clickTagsDropdown = () => {
 	clickButton(SalesInvoicesPage.addTagsDropdownCss);
 };
 
@@ -80,7 +80,7 @@ export const clickContactDropdown = () => {
 	clickButton(SalesInvoicesPage.organizationContactDropdownCss);
 };
 
-export const selectContactFromDropdwon = (index) => {
+export const selectContactFromDropdown = (index) => {
 	clickButtonByIndex(SalesInvoicesPage.contactOptionCss, index);
 };
 
@@ -118,10 +118,10 @@ export const selectInvoiceTypeFromDropdown = (text) => {
 };
 
 export const employeeDropdownVisible = () => {
-	verifyElementIsVisible(SalesInvoicesPage.selectEmloyeeCss);
+	verifyElementIsVisible(SalesInvoicesPage.selectEmployeeCss);
 };
 export const clickEmployeeDropdown = () => {
-	clickButton(SalesInvoicesPage.selectEmloyeeCss);
+	clickButton(SalesInvoicesPage.selectEmployeeCss);
 };
 
 export const selectEmployeeFromDropdown = (index) => {

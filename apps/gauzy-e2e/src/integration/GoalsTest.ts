@@ -2,12 +2,12 @@ import * as loginPage from '../support/Base/pages/Login.po';
 import { LoginPageData } from '../support/Base/pagedata/LoginPageData';
 import * as goalsPage from '../support/Base/pages/Goals.po';
 import { GoalsPageData } from '../support/Base/pagedata/GoalsPageData';
-import * as dashboradPage from '../support/Base/pages/Dashboard.po';
+import * as dashboardPage from '../support/Base/pages/Dashboard.po';
 import { CustomCommands } from '../support/commands';
 
 describe('Goals test', () => {
 	before(() => {
-		CustomCommands.login(loginPage, LoginPageData, dashboradPage);
+		CustomCommands.login(loginPage, LoginPageData, dashboardPage);
 	});
 	it('Should be able to add new goal', () => {
 		cy.visit('/#/pages/goals');
@@ -69,7 +69,7 @@ describe('Goals test', () => {
 		goalsPage.clickProgressBar(0);
 		goalsPage.weightTypeButtonVisible();
 		goalsPage.clickWeightTypeButton(0);
-		goalsPage.weightParameterDropdwonVisible();
+		goalsPage.weightParameterDropdownVisible();
 		goalsPage.clickWeightParameterDropdown();
 		goalsPage.selectWeightParameterFromDropdown(
 			GoalsPageData.weightParameter
@@ -100,7 +100,7 @@ describe('Goals test', () => {
 		goalsPage.clickConfirmButton();
 		goalsPage.waitMessageToHide();
 		cy.reload();
-		CustomCommands.login(loginPage, LoginPageData, dashboradPage);
+		CustomCommands.login(loginPage, LoginPageData, dashboardPage);
 		cy.visit('/#/pages/goals');
 		goalsPage.verifyElementIsDeleted();
 	});
