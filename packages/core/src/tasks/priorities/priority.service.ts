@@ -1,7 +1,7 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { DeleteResult, Repository } from 'typeorm';
-import { IOrganization, IOrganizationProject, IPagination, ITaskPriority, ITaskPriorityFindInput, ITenant } from '@gauzy/contracts';
+import { IOrganization, IOrganizationProject, IPagination, ITaskPriority, ITaskPriorityCreateInput, ITaskPriorityFindInput, ITenant } from '@gauzy/contracts';
 import { RequestContext } from './../../core/context';
 import { TaskStatusPrioritySizeService } from '../task-status-priority-size.service';
 import { TaskPriority } from './priority.entity';
@@ -107,14 +107,15 @@ export class TaskPriorityService extends TaskStatusPrioritySizeService<TaskPrior
 	}
 
 	/**
-	 * Create bulk task priorities for organization project
+	 * Create bulk task priorities for specific organization entity
 	 *
-	 * @param project
+	 * @param entity
 	 * @returns
 	 */
-	async bulkCreateOrganizationProjectTaskPriorities(project: IOrganizationProject): Promise<ITaskPriority[]> {
+	async createBulkPrioritiesByEntity(entity: Partial<ITaskPriorityCreateInput>): Promise<ITaskPriority[]> {
 		try {
-			const { tenantId, organizationId } = project;
+			const { organizationId } = entity;
+			const tenantId = RequestContext.currentTenantId();
 
 			const priorities: ITaskPriority[] = [];
 			const { items = [] } = await this.findEntitiesByParams({ tenantId, organizationId });
@@ -122,20 +123,19 @@ export class TaskPriorityService extends TaskStatusPrioritySizeService<TaskPrior
 			for (const item of items) {
 				const { name, value, description, icon, color } = item;
 
-				const create = this.repository.create({
-					tenantId,
-					organizationId,
+				const priority = await this.create({
+					...entity,
 					name,
 					value,
 					description,
 					icon,
 					color,
-					project,
 					isSystem: false
 				});
-				priorities.push(create);
+				priorities.push(priority);
 			}
-			return await this.repository.save(priorities);
+
+			return priorities;
 		} catch (error) {
 			throw new BadRequestException(error);
 		}
