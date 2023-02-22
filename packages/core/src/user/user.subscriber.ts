@@ -40,7 +40,7 @@ export class UserSubscriber implements EntitySubscriberInterface<User> {
             entity.employeeId = entity.employee ? entity.employee.id : null;
             entity.isEmailVerified = !!entity.emailVerifiedAt;
         } catch (error) {
-            console.log(error);
+            console.log('Error while retrieve user subscriber', error);
         }
     }
 }
