@@ -1,9 +1,11 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Column, Entity, Index, ManyToOne, RelationId } from 'typeorm';
-import { IOrganizationProject, ITaskPriority } from '@gauzy/contracts';
+import { IOrganizationProject, IOrganizationTeam, ITaskPriority } from '@gauzy/contracts';
 import { IsNotEmpty, IsOptional, IsString, IsUUID } from 'class-validator';
 import {
 	OrganizationProject,
+	OrganizationTeam,
+	TaskStatus,
 	TenantOrganizationBaseEntity,
 } from './../../core/entities/internal';
 
@@ -62,4 +64,20 @@ export class TaskPriority extends TenantOrganizationBaseEntity implements ITaskP
 	@Index()
 	@Column({ nullable: true })
 	projectId?: IOrganizationProject['id'];
+
+	/**
+	 * Organization Team
+	 */
+	@ManyToOne(() => OrganizationTeam, (team) => team.priorities, {
+		onDelete: 'SET NULL',
+	})
+	team?: IOrganizationTeam;
+
+	@ApiPropertyOptional({ type: () => String })
+	@IsOptional()
+	@IsUUID()
+	@RelationId((it: TaskStatus) => it.team)
+	@Index()
+	@Column({ nullable: true })
+	teamId?: IOrganizationTeam['id'];
 }

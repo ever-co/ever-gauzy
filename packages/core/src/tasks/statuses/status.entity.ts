@@ -1,9 +1,10 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Column, Entity, Index, ManyToOne, RelationId } from 'typeorm';
-import { IOrganizationProject, ITaskStatus } from '@gauzy/contracts';
+import { IOrganizationProject, IOrganizationTeam, ITaskStatus } from '@gauzy/contracts';
 import { IsNotEmpty, IsOptional, IsString, IsUUID } from 'class-validator';
 import {
 	OrganizationProject,
+	OrganizationTeam,
 	TenantOrganizationBaseEntity
 } from '../../core/entities/internal';
 
@@ -62,4 +63,20 @@ export class TaskStatus extends TenantOrganizationBaseEntity implements ITaskSta
 	@Index()
 	@Column({ nullable: true })
 	projectId?: IOrganizationProject['id'];
+
+	/**
+	 * Organization Team
+	 */
+	@ManyToOne(() => OrganizationTeam, (team) => team.statuses, {
+		onDelete: 'SET NULL',
+	})
+	team?: IOrganizationTeam;
+
+	@ApiPropertyOptional({ type: () => String })
+	@IsOptional()
+	@IsUUID()
+	@RelationId((it: TaskStatus) => it.team)
+	@Index()
+	@Column({ nullable: true })
+	teamId?: IOrganizationTeam['id'];
 }
