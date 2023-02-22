@@ -67,18 +67,18 @@ describe('Add tasks test', () => {
 		addTaskPage.enterDueDateData();
 		addTaskPage.clickKeyboardButtonByKeyCode(9);
 		addTaskPage.estimateDaysInputVisible();
-		addTaskPage.enterEstiamteDaysInputData(
+		addTaskPage.enterEstimateDaysInputData(
 			AddTasksPageData.defaultTaskEstimateDays
 		);
 		addTaskPage.estimateHoursInputVisible();
-		addTaskPage.enterEstiamteHoursInputData(
+		addTaskPage.enterEstimateHoursInputData(
 			AddTasksPageData.defaultTaskEstimateHours
 		);
 		addTaskPage.estimateMinutesInputVisible();
 		addTaskPage.enterEstimateMinutesInputData(
 			AddTasksPageData.defaultTaskEstimateMinutes
 		);
-		addTaskPage.taskDecriptionTextareaVisible();
+		addTaskPage.taskDescriptionTextareaVisible();
 		addTaskPage.enterTaskDescriptionTextareaData(
 			AddTasksPageData.defaultTaskDescription
 		);
@@ -121,18 +121,18 @@ describe('Add tasks test', () => {
 		addTaskPage.enterDueDateData();
 		addTaskPage.clickKeyboardButtonByKeyCode(9);
 		addTaskPage.estimateDaysInputVisible();
-		addTaskPage.enterEstiamteDaysInputData(
+		addTaskPage.enterEstimateDaysInputData(
 			AddTasksPageData.defaultTaskEstimateDays
 		);
 		addTaskPage.estimateHoursInputVisible();
-		addTaskPage.enterEstiamteHoursInputData(
+		addTaskPage.enterEstimateHoursInputData(
 			AddTasksPageData.defaultTaskEstimateHours
 		);
 		addTaskPage.estimateMinutesInputVisible();
 		addTaskPage.enterEstimateMinutesInputData(
 			AddTasksPageData.defaultTaskEstimateMinutes
 		);
-		addTaskPage.taskDecriptionTextareaVisible();
+		addTaskPage.taskDescriptionTextareaVisible();
 		addTaskPage.enterTaskDescriptionTextareaData(
 			AddTasksPageData.defaultTaskDescription
 		);

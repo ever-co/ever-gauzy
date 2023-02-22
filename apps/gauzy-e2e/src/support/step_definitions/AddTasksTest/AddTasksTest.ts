@@ -137,7 +137,7 @@ And('User can see estimate days input field', () => {
 });
 
 And('User can enter value for estimate days', () => {
-	addTaskPage.enterEstiamteDaysInputData(
+	addTaskPage.enterEstimateDaysInputData(
 		AddTasksPageData.defaultTaskEstimateDays
 	);
 });
@@ -147,7 +147,7 @@ And('User can see estimate hours input field', () => {
 });
 
 And('User can add value for estimate hours', () => {
-	addTaskPage.enterEstiamteHoursInputData(
+	addTaskPage.enterEstimateHoursInputData(
 		AddTasksPageData.defaultTaskEstimateHours
 	);
 });
@@ -163,7 +163,7 @@ And('User can enter value for estimate minutes', () => {
 });
 
 And('User can task description input field', () => {
-	addTaskPage.taskDecriptionTextareaVisible();
+	addTaskPage.taskDescriptionTextareaVisible();
 });
 
 And('User can enter value for description', () => {
@@ -285,7 +285,7 @@ And('User can see edit estimate days input field', () => {
 });
 
 And('User can enter value for estimate days edit', () => {
-	addTaskPage.enterEstiamteDaysInputData(
+	addTaskPage.enterEstimateDaysInputData(
 		AddTasksPageData.defaultTaskEstimateDays
 	);
 });
@@ -295,7 +295,7 @@ And('User can see edit estimate hours input field', () => {
 });
 
 And('User can add value for estimate hours edit', () => {
-	addTaskPage.enterEstiamteHoursInputData(
+	addTaskPage.enterEstimateHoursInputData(
 		AddTasksPageData.defaultTaskEstimateHours
 	);
 });
@@ -311,7 +311,7 @@ And('User can enter value for estimate minutes edit', () => {
 });
 
 And('User can task edit description input field', () => {
-	addTaskPage.taskDecriptionTextareaVisible();
+	addTaskPage.taskDescriptionTextareaVisible();
 });
 
 And('User can enter value for description edit', () => {

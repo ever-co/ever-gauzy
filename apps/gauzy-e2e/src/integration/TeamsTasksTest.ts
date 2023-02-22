@@ -57,18 +57,18 @@ describe('Add teams tasks test', () => {
 		teamsTasksPage.enterDueDateData();
 		teamsTasksPage.clickKeyboardButtonByKeyCode(9);
 		teamsTasksPage.estimateDaysInputVisible();
-		teamsTasksPage.enterEstiamteDaysInputData(
+		teamsTasksPage.enterEstimateDaysInputData(
 			TeamsTasksPageData.defaultTaskEstimateDays
 		);
 		teamsTasksPage.estimateHoursInputVisible();
-		teamsTasksPage.enterEstiamteHoursInputData(
+		teamsTasksPage.enterEstimateHoursInputData(
 			TeamsTasksPageData.defaultTaskEstimateHours
 		);
 		teamsTasksPage.estimateMinutesInputVisible();
 		teamsTasksPage.enterEstimateMinutesInputData(
 			TeamsTasksPageData.defaultTaskEstimateMinutes
 		);
-		teamsTasksPage.taskDecriptionTextareaVisible();
+		teamsTasksPage.taskDescriptionTextareaVisible();
 		teamsTasksPage.enterTaskDescriptionTextareaData(
 			TeamsTasksPageData.defaultTaskDescription
 		);
@@ -111,18 +111,18 @@ describe('Add teams tasks test', () => {
 		teamsTasksPage.enterDueDateData();
 		teamsTasksPage.clickKeyboardButtonByKeyCode(9);
 		teamsTasksPage.estimateDaysInputVisible();
-		teamsTasksPage.enterEstiamteDaysInputData(
+		teamsTasksPage.enterEstimateDaysInputData(
 			TeamsTasksPageData.defaultTaskEstimateDays
 		);
 		teamsTasksPage.estimateHoursInputVisible();
-		teamsTasksPage.enterEstiamteHoursInputData(
+		teamsTasksPage.enterEstimateHoursInputData(
 			TeamsTasksPageData.defaultTaskEstimateHours
 		);
 		teamsTasksPage.estimateMinutesInputVisible();
 		teamsTasksPage.enterEstimateMinutesInputData(
 			TeamsTasksPageData.defaultTaskEstimateMinutes
 		);
-		teamsTasksPage.taskDecriptionTextareaVisible();
+		teamsTasksPage.taskDescriptionTextareaVisible();
 		teamsTasksPage.enterTaskDescriptionTextareaData(
 			TeamsTasksPageData.defaultTaskDescription
 		);

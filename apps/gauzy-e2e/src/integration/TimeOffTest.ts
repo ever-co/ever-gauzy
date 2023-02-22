@@ -51,7 +51,7 @@ describe('Time Off test', () => {
 		timeOffPage.endDateInputVisible();
 		timeOffPage.enterEndDateData();
 		timeOffPage.descriptionInputVisible();
-		timeOffPage.enterDdescriptionInputData(
+		timeOffPage.enterDescriptionInputData(
 			TimeOffPageData.defaultDescription
 		);
 		timeOffPage.saveRequestButtonVisible();
@@ -86,7 +86,7 @@ describe('Time Off test', () => {
 		timeOffPage.endDateInputVisible();
 		timeOffPage.enterEndDateData();
 		timeOffPage.descriptionInputVisible();
-		timeOffPage.enterDdescriptionInputData(
+		timeOffPage.enterDescriptionInputData(
 			TimeOffPageData.defaultDescription
 		);
 		timeOffPage.saveRequestButtonVisible();
@@ -98,7 +98,7 @@ describe('Time Off test', () => {
 		timeOffPage.deleteTimeOffBtnVisible();
 		timeOffPage.clickDeleteTimeOffButton();
 		timeOffPage.confirmDeleteTimeOffBtnVisible();
-		timeOffPage.clickConfirmDeleteTimeOffButoon();
+		timeOffPage.clickConfirmDeleteTimeOffButton();
 	});
 	it('Should be able to add holiday', () => {
 		timeOffPage.addHolidayButtonVisible();

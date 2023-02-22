@@ -189,7 +189,7 @@ And('Employee can see estimate days input field', () => {
 });
 
 And('Employee can enter estimate days', () => {
-	myTasksTrackedInTimesheets.enterEstiamteDaysInputData(
+	myTasksTrackedInTimesheets.enterEstimateDaysInputData(
 		MyTasksTrackedInTimesheetsPageData.defaultTaskEstimateDays
 	);
 });
@@ -199,7 +199,7 @@ And('Employee can see estimate hours input field', () => {
 });
 
 And('Employee can enter estimate hours', () => {
-	myTasksTrackedInTimesheets.enterEstiamteHoursInputData(
+	myTasksTrackedInTimesheets.enterEstimateHoursInputData(
 		MyTasksTrackedInTimesheetsPageData.defaultTaskEstimateHours
 	);
 });
@@ -215,7 +215,7 @@ And('Employee can enter estimate minutes', () => {
 });
 
 And('Employee can see task description input field', () => {
-	myTasksTrackedInTimesheets.taskDecriptionTextareaVisible();
+	myTasksTrackedInTimesheets.taskDescriptionTextareaVisible();
 });
 
 And('Employee can enter task description', () => {

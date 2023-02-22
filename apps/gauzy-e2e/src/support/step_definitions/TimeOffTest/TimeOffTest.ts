@@ -165,7 +165,7 @@ And('User can see description input field', () => {
 });
 
 And('User can enter description', () => {
-	timeOffPage.enterDdescriptionInputData(TimeOffPageData.defaultDescription);
+	timeOffPage.enterDescriptionInputData(TimeOffPageData.defaultDescription);
 });
 
 And('User can see save request button', () => {
@@ -273,7 +273,7 @@ And('User can see description input field', () => {
 });
 
 And('User can enter description', () => {
-	timeOffPage.enterDdescriptionInputData(TimeOffPageData.defaultDescription);
+	timeOffPage.enterDescriptionInputData(TimeOffPageData.defaultDescription);
 });
 
 And('User can see save request button', () => {
@@ -310,7 +310,7 @@ Then('User can see confirm delete button', () => {
 });
 
 When('User click on confirm delete button', () => {
-	timeOffPage.clickConfirmDeleteTimeOffButoon();
+	timeOffPage.clickConfirmDeleteTimeOffButton();
 });
 
 Then('Notification message will appear', () => {
