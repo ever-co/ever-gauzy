@@ -21,7 +21,7 @@ describe('Organization equipment test', () => {
 		organizationEquipmentPage.gridBtnExists();
 		organizationEquipmentPage.gridBtnClick(1);
 		organizationEquipmentPage.addEquipmentButtonVisible();
-		organizationEquipmentPage.clickAddEqupmentButton();
+		organizationEquipmentPage.clickAddEquipmentButton();
 		organizationEquipmentPage.nameInputVisible();
 		organizationEquipmentPage.enterNameInputData(
 			OrganizationEquipmentPageData.name

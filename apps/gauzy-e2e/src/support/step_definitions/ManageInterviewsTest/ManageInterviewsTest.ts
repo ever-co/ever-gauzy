@@ -207,7 +207,7 @@ And('User navigates to Candidates interview panel', () => {
 	CustomCommands.clearCookies();
 	CustomCommands.login(loginPage, LoginPageData, dashboardPage);
 	cy.visit('/#/pages/employees/candidates/interviews/interview_panel');
-	// manageInterviewsPage.verifySheduleExist(`${firstName} ${lastName}`);
+	// manageInterviewsPage.verifyScheduleExist(`${firstName} ${lastName}`);
 });
 
 And('User can see name filter input field', () => {

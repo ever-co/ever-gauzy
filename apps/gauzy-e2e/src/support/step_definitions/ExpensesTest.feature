@@ -89,8 +89,8 @@ Feature: Expenses test
     When User can click on confirm delete button
     Then Notification message will appear
   Scenario: Add new category
-    And User can see manage categories button
-    When User click on manage categories button
+    And User can see manage categorys button
+    When User click on manage categorys button
     Then User can add category button
     When User click on add category button
     Then User can see new category input field

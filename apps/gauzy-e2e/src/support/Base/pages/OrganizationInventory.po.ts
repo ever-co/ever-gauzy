@@ -43,7 +43,7 @@ export const languageDropdownVisible = () => {
 	verifyElementIsVisible(OrganizationInventoryPage.languageDropdownCss);
 };
 
-export const clickLangaugeDropdown = () => {
+export const clickLanguageDropdown = () => {
 	clickButton(OrganizationInventoryPage.languageDropdownCss);
 };
 
@@ -174,12 +174,12 @@ export const verifyTypeIsDeleted = (text) => {
 	verifyTextNotExisting(OrganizationInventoryPage.verifyTypeCss, text);
 };
 
-export const verifyCategorieExists = (text) => {
-	verifyText(OrganizationInventoryPage.verifyCategorieCss, text);
+export const verifycategoryExists = (text) => {
+	verifyText(OrganizationInventoryPage.verifycategoryCss, text);
 };
 
-export const verifyCategorieIsDeleted = (text) => {
-	verifyTextNotExisting(OrganizationInventoryPage.verifyCategorieCss, text);
+export const verifycategoryIsDeleted = (text) => {
+	verifyTextNotExisting(OrganizationInventoryPage.verifycategoryCss, text);
 };
 
 export const verifyInventoryExists = (text) => {

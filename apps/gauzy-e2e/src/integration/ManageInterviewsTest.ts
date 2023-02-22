@@ -74,6 +74,6 @@ describe('Manage interviews test', () => {
 		manageInterviewsPage.clickSaveButton();
 		manageInterviewsPage.waitMessageToHide();
 		cy.visit('/#/pages/employees/candidates/interviews/interview_panel');
-		manageInterviewsPage.verifySheduleExist(`${firstName} ${lastName}`);
+		manageInterviewsPage.verifyScheduleExist(`${firstName} ${lastName}`);
 	});
 });

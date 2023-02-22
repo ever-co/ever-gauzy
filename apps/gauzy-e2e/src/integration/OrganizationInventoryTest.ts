@@ -31,7 +31,7 @@ describe('Organization inventory test', () => {
 		organizationInventoryPage.saveButtonVisible();
 		organizationInventoryPage.clickSaveButton();
 		organizationInventoryPage.waitMessageToHide();
-		organizationInventoryPage.verifyCategorieExists(
+		organizationInventoryPage.verifycategoryExists(
 			OrganizationInventoryPageData.productCategoryName
 		);
 		organizationInventoryPage.backButtonVisible();
@@ -64,7 +64,7 @@ describe('Organization inventory test', () => {
 		organizationInventoryPage.addButtonVisible();
 		organizationInventoryPage.clickAddButton();
 		organizationInventoryPage.languageDropdownVisible();
-		organizationInventoryPage.clickLangaugeDropdown();
+		organizationInventoryPage.clickLanguageDropdown();
 		organizationInventoryPage.clickDropdownOption(
 			OrganizationInventoryPageData.defaultInventoryLanguage
 		);
@@ -159,7 +159,7 @@ describe('Organization inventory test', () => {
 		organizationInventoryPage.confirmDeleteButtonVisible();
 		organizationInventoryPage.clickConfirmDeleteButton();
 		organizationInventoryPage.waitMessageToHide();
-		organizationInventoryPage.verifyCategorieIsDeleted(
+		organizationInventoryPage.verifycategoryIsDeleted(
 			OrganizationInventoryPageData.productCategoryName
 		);
 		organizationInventoryPage.backButtonVisible();

@@ -24,7 +24,7 @@ export const addEquipmentButtonVisible = () => {
 	verifyElementIsVisible(OrganizationEquipmentPage.addButtonCss);
 };
 
-export const clickAddEqupmentButton = () => {
+export const clickAddEquipmentButton = () => {
 	clickButton(OrganizationEquipmentPage.addButtonCss);
 };
 
@@ -184,11 +184,11 @@ export const enterRequestNameInputData = (data) => {
 };
 
 export const selectEquipmentDropdownVisible = () => {
-	verifyElementIsVisible(OrganizationEquipmentPage.selectEqupmentDropdownCss);
+	verifyElementIsVisible(OrganizationEquipmentPage.selectEquipmentDropdownCss);
 };
 
 export const clickEquipmentDropdown = () => {
-	clickButton(OrganizationEquipmentPage.selectEqupmentDropdownCss);
+	clickButton(OrganizationEquipmentPage.selectEquipmentDropdownCss);
 };
 
 export const selectEquipmentFromDropdown = (index) => {

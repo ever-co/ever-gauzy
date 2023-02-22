@@ -239,7 +239,7 @@ When('User click on second tab button', () => {
 });
 
 Then('User can see estimate number input field', () => {
-	estimatesPage.veirifyEstimateNumberInputVisible();
+	estimatesPage.verifyEstimateNumberInputVisible();
 });
 
 And('User can enter estimate number', () => {

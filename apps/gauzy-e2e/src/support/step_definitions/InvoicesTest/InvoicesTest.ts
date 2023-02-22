@@ -242,7 +242,7 @@ When('User click on second tab button', () => {
 });
 
 Then('User can see invoice number input field', () => {
-	invoicesPage.veirifyEstimateNumberInputVisible();
+	invoicesPage.verifyEstimateNumberInputVisible();
 });
 
 And('User can enter invoice number', () => {

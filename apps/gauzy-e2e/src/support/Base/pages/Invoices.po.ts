@@ -268,7 +268,7 @@ export const clickTabButton = (index) => {
 	clickButtonByIndex(InvoicesPage.tabButtonCss, index);
 };
 
-export const veirifyEstimateNumberInputVisible = () => {
+export const verifyEstimateNumberInputVisible = () => {
 	verifyElementIsVisible(InvoicesPage.inputInvoicenumberCss);
 };
 

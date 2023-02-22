@@ -13,7 +13,7 @@ describe('Manage interviews criterions test', () => {
 	it('Should be able to add technology stack', () => {
 		cy.visit('/#/pages/employees/candidates/interviews/criterion');
 		manageInterviewsCriterionsPage.technologyInputVisible();
-		manageInterviewsCriterionsPage.enterTechonologyInputData(
+		manageInterviewsCriterionsPage.enterTechnologyInputData(
 			ManageInterviewsCriterionsPageData.technology
 		);
 		manageInterviewsCriterionsPage.saveButtonVisible();
@@ -27,7 +27,7 @@ describe('Manage interviews criterions test', () => {
 		manageInterviewsCriterionsPage.editTechnologyButtonVisible();
 		manageInterviewsCriterionsPage.clickEditTechnologyButton();
 		manageInterviewsCriterionsPage.technologyInputVisible();
-		manageInterviewsCriterionsPage.enterTechonologyInputData(
+		manageInterviewsCriterionsPage.enterTechnologyInputData(
 			ManageInterviewsCriterionsPageData.editTechnology
 		);
 		manageInterviewsCriterionsPage.saveButtonVisible();

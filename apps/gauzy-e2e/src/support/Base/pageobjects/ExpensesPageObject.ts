@@ -23,10 +23,10 @@ export const ExpensesPage = {
 	manageCategoriseButtonCss:
 		'div.card-header-title > button[status="primary"]',
 	expenseNameInputCss: '[placeholder="Expense name"]',
-	saveCategorieButtonCss:
+	savecategoryButtonCss:
 		'div.justify-content-end > button[status="success"]',
 	backButtonCss: 'div.main > button[status="primary"]',
-	categorieCardCss: 'nb-card.ng-star-inserted',
+	categoryCardCss: 'nb-card.ng-star-inserted',
 	toastrMessageCss: 'nb-toast.ng-trigger',
 	notBillableBadgeCss: 'div.badge-danger',
 	verifyCategoryCss: 'ga-notes-with-tags > div > div > div.ng-star-inserted',

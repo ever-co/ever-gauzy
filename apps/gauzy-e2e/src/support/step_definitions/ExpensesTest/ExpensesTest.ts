@@ -378,12 +378,12 @@ Then('Notification message will appear', () => {
 });
 
 // Add new category
-And('User can see manage categories button', () => {
-	expensesPage.manageCategoriesButtonVisible();
+And('User can see manage categorys button', () => {
+	expensesPage.managecategorysButtonVisible();
 });
 
-When('User click on manage categories button', () => {
-	expensesPage.clickManageCategoriesButton();
+When('User click on manage categorys button', () => {
+	expensesPage.clickManagecategorysButton();
 });
 
 Then('User can add category button', () => {
@@ -412,16 +412,16 @@ When('User click on category tags dropdown', () => {
 
 Then('User can select category tag from dropdown options', () => {
 	expensesPage.selectTagFromDropdown(0);
-	expensesPage.categorieCardVisible();
+	expensesPage.categoryCardVisible();
 	expensesPage.clickKeyboardButtonByKeyCode(9);
 });
 
 And('User can see save category button', () => {
-	expensesPage.saveCategorieButtonVisible();
+	expensesPage.savecategoryButtonVisible();
 });
 
 When('User click on save category button', () => {
-	expensesPage.clickSaveCategorieButton();
+	expensesPage.clickSavecategoryButton();
 });
 
 Then('User can verify category was created', () => {

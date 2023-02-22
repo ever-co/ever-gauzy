@@ -96,7 +96,7 @@ describe('Estimates test', () => {
 	it('Should be able to search estimate', () => {
 		estimatesPage.verifyTabButtonVisible();
 		estimatesPage.clickTabButton(1);
-		estimatesPage.veirifyEstimateNumberInputVisible();
+		estimatesPage.verifyEstimateNumberInputVisible();
 		estimatesPage.enterEstimateNumberInputData(
 			EstimatesPageData.estimateNumber
 		);

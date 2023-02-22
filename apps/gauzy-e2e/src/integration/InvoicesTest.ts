@@ -94,7 +94,7 @@ describe('Invoices test', () => {
 	it('Should be able to search invoice', () => {
 		invoicesPage.verifyTabButtonVisible();
 		invoicesPage.clickTabButton(1);
-		invoicesPage.veirifyEstimateNumberInputVisible();
+		invoicesPage.verifyEstimateNumberInputVisible();
 		invoicesPage.enterEstimateNumberInputData(
 			InvoicesPageData.invoiceNumber
 		);

@@ -102,10 +102,10 @@ describe('Expense test', () => {
 		expensesPage.clickConfirmDeleteButton();
 		expensesPage.verifyElementIsDeleted();
 	});
-	it('Should be able to add new categorie', () => {
+	it('Should be able to add new category', () => {
 		expensesPage.waitMessageToHide();
-		expensesPage.manageCategoriesButtonVisible();
-		expensesPage.clickManageCategoriesButton();
+		expensesPage.managecategorysButtonVisible();
+		expensesPage.clickManagecategorysButton();
 		expensesPage.addExpenseButtonVisible();
 		expensesPage.clickAddExpenseButton();
 		expensesPage.newCategoryInputVisible();
@@ -113,10 +113,10 @@ describe('Expense test', () => {
 		expensesPage.tagsDropdownVisible();
 		expensesPage.clickTagsDropdown();
 		expensesPage.selectTagFromDropdown(0);
-		expensesPage.categorieCardVisible();
+		expensesPage.categoryCardVisible();
 		expensesPage.clickKeyboardButtonByKeyCode(9);
-		expensesPage.saveCategorieButtonVisible();
-		expensesPage.clickSaveCategorieButton();
+		expensesPage.savecategoryButtonVisible();
+		expensesPage.clickSavecategoryButton();
 		expensesPage.verifyCategoryExists(ExpensePageData.defaultCategory);
 		expensesPage.backButtonVisible();
 		expensesPage.clickBackButton();

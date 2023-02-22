@@ -191,11 +191,11 @@ export const clickDuplicateButton = () => {
 	clickButton(ExpensesPage.duplicateExpenseButtonCss);
 };
 
-export const manageCategoriesButtonVisible = () => {
+export const managecategorysButtonVisible = () => {
 	verifyElementIsVisible(ExpensesPage.manageCategoriseButtonCss);
 };
 
-export const clickManageCategoriesButton = () => {
+export const clickManagecategorysButton = () => {
 	clickButton(ExpensesPage.manageCategoriseButtonCss);
 };
 
@@ -208,12 +208,12 @@ export const enterNewCategoryInputData = (data) => {
 	enterInput(ExpensesPage.expenseNameInputCss, data);
 };
 
-export const saveCategorieButtonVisible = () => {
-	verifyElementIsVisible(ExpensesPage.saveCategorieButtonCss);
+export const savecategoryButtonVisible = () => {
+	verifyElementIsVisible(ExpensesPage.savecategoryButtonCss);
 };
 
-export const clickSaveCategorieButton = () => {
-	clickButton(ExpensesPage.saveCategorieButtonCss);
+export const clickSavecategoryButton = () => {
+	clickButton(ExpensesPage.savecategoryButtonCss);
 };
 
 export const backButtonVisible = () => {
@@ -224,12 +224,12 @@ export const clickBackButton = () => {
 	clickButton(ExpensesPage.backButtonCss);
 };
 
-export const categorieCardVisible = () => {
-	verifyElementIsVisible(ExpensesPage.categorieCardCss);
+export const categoryCardVisible = () => {
+	verifyElementIsVisible(ExpensesPage.categoryCardCss);
 };
 
-export const clickCategorieCard = () => {
-	clickButton(ExpensesPage.categorieCardCss);
+export const clickcategoryCard = () => {
+	clickButton(ExpensesPage.categoryCardCss);
 };
 
 export const waitMessageToHide = () => {

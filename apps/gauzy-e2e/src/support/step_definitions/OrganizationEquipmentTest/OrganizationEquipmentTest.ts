@@ -58,7 +58,7 @@ And('User can see add equipment button', () => {
 });
 
 When('User click on add equipment button', () => {
-	organizationEquipmentPage.clickAddEqupmentButton();
+	organizationEquipmentPage.clickAddEquipmentButton();
 });
 
 Then('User will see name input field', () => {
