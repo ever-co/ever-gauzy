@@ -57,7 +57,13 @@ export class StatisticService {
 	 * @returns
 	 */
 	async getCounts(request: IGetCountsStatistics): Promise<ICountsStatistics> {
-		const { organizationId, startDate, endDate, todayStart, todayEnd } = request;
+		const {
+			organizationId,
+			startDate,
+			endDate,
+			todayStart,
+			todayEnd
+		} = request;
 		let { employeeIds = [], projectIds = [] } = request;
 
 		const user = RequestContext.currentUser();
@@ -353,7 +359,9 @@ export class StatisticService {
 		const {
 			organizationId,
 			startDate,
-			endDate
+			endDate,
+			todayStart,
+			todayEnd
 		} = request;
 		let { employeeIds = [], projectIds = [] } = request;
 
@@ -559,10 +567,15 @@ export class StatisticService {
 				.andWhere(`"${dayTimeQuery.alias}"."organizationId" = :organizationId`, { organizationId })
 				.andWhere(
 					new Brackets((qb: WhereExpressionBuilder) => {
-						const { start: startToday, end: endToday } = getDateRangeFormat(
-							moment().startOf('day').utc(),
-							moment().endOf('day').utc()
-						);
+						const { start: startToday, end: endToday } = (todayStart && todayEnd) ?
+							getDateRangeFormat(
+								moment.utc(todayStart),
+								moment.utc(todayEnd)
+							) :
+							getDateRangeFormat(
+								moment().startOf('day').utc(),
+								moment().endOf('day').utc()
+							);
 
 						qb.where(`"timeLogs"."startedAt" BETWEEN :startToday AND :endToday`, {
 							startToday,
