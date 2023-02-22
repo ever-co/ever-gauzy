@@ -12,14 +12,12 @@ import * as timeTrackingForClient from '../../Base/pages/TimeTrackingForClient.p
 import { waitUntil } from '../../Base/utils/util';
 import { TimeTrackingForClientPageData } from '../../Base/pagedata/TimeTrackingForClientPageData';
 
-
 let email = faker.internet.email();
 let fullName = faker.person.firstName() + ' ' + faker.person.lastName();
 let city = faker.location.city();
 let postcode = faker.location.zipCode();
 let street = faker.location.streetAddress();
 let website = faker.internet.url();
-
 
 let firstName = faker.person.firstName();
 let lastName = faker.person.lastName();
@@ -33,23 +31,15 @@ let employeeFullName = `${firstName} ${lastName}`;
 // Login with email
 
 Given('Login with default credentials', () => {
-	CustomCommands.login(loginPage, LoginPageData, dashboardPage)
-})
+	CustomCommands.login(loginPage, LoginPageData, dashboardPage);
+});
 
 //Add employee
 Then('User can add new employee', () => {
 	CustomCommands.logout(dashboardPage, logoutPage, loginPage);
 	CustomCommands.clearCookies();
 	CustomCommands.login(loginPage, LoginPageData, dashboardPage);
-	CustomCommands.addEmployee(
-		manageEmployeesPage,
-		firstName,
-		lastName,
-		username,
-		employeeEmail,
-		password,
-		imgUrl
-	);
+	CustomCommands.addEmployee(manageEmployeesPage, firstName, lastName, username, employeeEmail, password, imgUrl);
 });
 // Add new client
 And('User can add new client', () => {
@@ -138,7 +128,7 @@ When('Employee click on start timer button', () => {
 
 Then('Employee can let timer work for 5 seconds', () => {
 	waitUntil(5000);
-})
+});
 
 And('Employee can see stop timer button', () => {
 	timeTrackingForClient.stopTimerBtnVisible();

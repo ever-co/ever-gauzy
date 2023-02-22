@@ -18,19 +18,13 @@ describe('Recurring expenses test', () => {
 		recurringExpensesPage.selectEmployeeFromDropdown(0);
 		recurringExpensesPage.expenseDropdownVisible();
 		recurringExpensesPage.clickExpenseDropdown();
-		recurringExpensesPage.selectExpenseOptionDropdown(
-			RecurringExpensesPageData.defaultExpense
-		);
+		recurringExpensesPage.selectExpenseOptionDropdown(RecurringExpensesPageData.defaultExpense);
 		recurringExpensesPage.expenseValueInputVisible();
-		recurringExpensesPage.enterExpenseValueInputData(
-			RecurringExpensesPageData.defaultExpenseValue
-		);
+		recurringExpensesPage.enterExpenseValueInputData(RecurringExpensesPageData.defaultExpenseValue);
 		recurringExpensesPage.saveExpenseButtonVisible();
 		recurringExpensesPage.clickSaveExpenseButton();
 		recurringExpensesPage.waitMessageToHide();
-		recurringExpensesPage.verifyExpenseExists(
-			`BGN${RecurringExpensesPageData.defaultExpenseValue}`
-		);
+		recurringExpensesPage.verifyExpenseExists(`BGN${RecurringExpensesPageData.defaultExpenseValue}`);
 	});
 	it('Should be able to edit expense', () => {
 		recurringExpensesPage.settingsButtonVisible();
@@ -39,19 +33,13 @@ describe('Recurring expenses test', () => {
 		recurringExpensesPage.clickEditButton();
 		recurringExpensesPage.expenseDropdownVisible();
 		recurringExpensesPage.clickExpenseDropdown();
-		recurringExpensesPage.selectExpenseOptionDropdown(
-			RecurringExpensesPageData.defaultExpense
-		);
+		recurringExpensesPage.selectExpenseOptionDropdown(RecurringExpensesPageData.defaultExpense);
 		recurringExpensesPage.expenseValueInputVisible();
-		recurringExpensesPage.enterExpenseValueInputData(
-			RecurringExpensesPageData.editExpenseValue
-		);
+		recurringExpensesPage.enterExpenseValueInputData(RecurringExpensesPageData.editExpenseValue);
 		recurringExpensesPage.saveExpenseButtonVisible();
 		recurringExpensesPage.clickSaveExpenseButton();
 		recurringExpensesPage.waitMessageToHide();
-		recurringExpensesPage.verifyExpenseExists(
-			`BGN${RecurringExpensesPageData.editExpenseValue}`
-		);
+		recurringExpensesPage.verifyExpenseExists(`BGN${RecurringExpensesPageData.editExpenseValue}`);
 	});
 	it('Should be able to delete expense', () => {
 		recurringExpensesPage.waitMessageToHide();

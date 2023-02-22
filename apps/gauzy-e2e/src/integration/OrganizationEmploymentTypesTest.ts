@@ -13,19 +13,14 @@ describe('Organization employment types test', () => {
 	});
 
 	it('Should be able to add new employment type', () => {
-		CustomCommands.addTag(
-			organizationTagsUserPage,
-			OrganizationTagsPageData
-		);
+		CustomCommands.addTag(organizationTagsUserPage, OrganizationTagsPageData);
 		cy.visit('/#/pages/organization/employment-types');
 		organizationEmploymentTypePage.gridBtnExists();
 		organizationEmploymentTypePage.gridBtnClick(1);
 		organizationEmploymentTypePage.addButtonVisible();
 		organizationEmploymentTypePage.clickAddButton();
 		organizationEmploymentTypePage.nameInputVisible();
-		organizationEmploymentTypePage.enterNameInputData(
-			OrganizationEmploymentTypesPageData.name
-		);
+		organizationEmploymentTypePage.enterNameInputData(OrganizationEmploymentTypesPageData.name);
 		organizationEmploymentTypePage.tagsDropdownVisible();
 		organizationEmploymentTypePage.clickTagsDropdown();
 		organizationEmploymentTypePage.selectTagFromDropdown(0);
@@ -33,9 +28,7 @@ describe('Organization employment types test', () => {
 		organizationEmploymentTypePage.saveButtonVisible();
 		organizationEmploymentTypePage.clickSaveButton();
 		organizationEmploymentTypePage.waitMessageToHide();
-		organizationEmploymentTypePage.verifyTypeExists(
-			OrganizationEmploymentTypesPageData.name
-		);
+		organizationEmploymentTypePage.verifyTypeExists(OrganizationEmploymentTypesPageData.name);
 	});
 	it('Should be able to edit employment type', () => {
 		organizationEmploymentTypePage.editButtonVisible();

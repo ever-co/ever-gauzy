@@ -13,39 +13,24 @@ describe('Organization equipment test', () => {
 	});
 
 	it('Should be able to add new equipment', () => {
-		CustomCommands.addTag(
-			organizationTagsUserPage,
-			OrganizationTagsPageData
-		);
+		CustomCommands.addTag(organizationTagsUserPage, OrganizationTagsPageData);
 		cy.visit('/#/pages/organization/equipment');
 		organizationEquipmentPage.gridBtnExists();
 		organizationEquipmentPage.gridBtnClick(1);
 		organizationEquipmentPage.addEquipmentButtonVisible();
 		organizationEquipmentPage.clickAddEquipmentButton();
 		organizationEquipmentPage.nameInputVisible();
-		organizationEquipmentPage.enterNameInputData(
-			OrganizationEquipmentPageData.name
-		);
+		organizationEquipmentPage.enterNameInputData(OrganizationEquipmentPageData.name);
 		organizationEquipmentPage.typeInputVisible();
-		organizationEquipmentPage.enterTypeInputData(
-			OrganizationEquipmentPageData.type
-		);
+		organizationEquipmentPage.enterTypeInputData(OrganizationEquipmentPageData.type);
 		organizationEquipmentPage.serialNumberInputVisible();
-		organizationEquipmentPage.enterSerialNumberInputData(
-			OrganizationEquipmentPageData.sn
-		);
+		organizationEquipmentPage.enterSerialNumberInputData(OrganizationEquipmentPageData.sn);
 		organizationEquipmentPage.manufacturedYearInputVisible();
-		organizationEquipmentPage.enterManufacturedYearInputData(
-			OrganizationEquipmentPageData.year
-		);
+		organizationEquipmentPage.enterManufacturedYearInputData(OrganizationEquipmentPageData.year);
 		organizationEquipmentPage.initialCostInputVisible();
-		organizationEquipmentPage.enterInitialCostInputData(
-			OrganizationEquipmentPageData.cost
-		);
+		organizationEquipmentPage.enterInitialCostInputData(OrganizationEquipmentPageData.cost);
 		organizationEquipmentPage.sharePeriodInputVisible();
-		organizationEquipmentPage.enterSharePeriodInputData(
-			OrganizationEquipmentPageData.period
-		);
+		organizationEquipmentPage.enterSharePeriodInputData(OrganizationEquipmentPageData.period);
 		organizationEquipmentPage.tagsDropdownVisible();
 		organizationEquipmentPage.clickTagsDropdown();
 		organizationEquipmentPage.selectTagFromDropdown(0);
@@ -53,9 +38,7 @@ describe('Organization equipment test', () => {
 		organizationEquipmentPage.saveButtonVisible();
 		organizationEquipmentPage.clickSaveButton();
 		organizationEquipmentPage.waitMessageToHide();
-		organizationEquipmentPage.verifyEquipmentExists(
-			OrganizationEquipmentPageData.name
-		);
+		organizationEquipmentPage.verifyEquipmentExists(OrganizationEquipmentPageData.name);
 	});
 	it('Should be able to add equipment policy', () => {
 		organizationEquipmentPage.equipmentSharingButtonVisible();
@@ -65,19 +48,13 @@ describe('Organization equipment test', () => {
 		organizationEquipmentPage.addPolicyButtonVisible();
 		organizationEquipmentPage.clickAddPolicyButton();
 		organizationEquipmentPage.policyNameInputVisible();
-		organizationEquipmentPage.enterPolicyNameInputData(
-			OrganizationEquipmentPageData.policy
-		);
+		organizationEquipmentPage.enterPolicyNameInputData(OrganizationEquipmentPageData.policy);
 		organizationEquipmentPage.policyDescriptionInputVisible();
-		organizationEquipmentPage.enterPolicyDescriptionInputData(
-			OrganizationEquipmentPageData.description
-		);
+		organizationEquipmentPage.enterPolicyDescriptionInputData(OrganizationEquipmentPageData.description);
 		organizationEquipmentPage.saveButtonVisible();
 		organizationEquipmentPage.clickSaveButton();
 		organizationEquipmentPage.waitMessageToHide();
-		organizationEquipmentPage.verifyPolicyExists(
-			OrganizationEquipmentPageData.policy
-		);
+		organizationEquipmentPage.verifyPolicyExists(OrganizationEquipmentPageData.policy);
 		organizationEquipmentPage.backButtonVisible();
 		organizationEquipmentPage.clickBackButton();
 	});
@@ -85,9 +62,7 @@ describe('Organization equipment test', () => {
 		organizationEquipmentPage.requestButtonVisible();
 		organizationEquipmentPage.clickRequestButton();
 		organizationEquipmentPage.requestNameInputVisible();
-		organizationEquipmentPage.enterRequestNameInputData(
-			OrganizationEquipmentPageData.requestName
-		);
+		organizationEquipmentPage.enterRequestNameInputData(OrganizationEquipmentPageData.requestName);
 		organizationEquipmentPage.selectEquipmentDropdownVisible();
 		organizationEquipmentPage.clickEquipmentDropdown();
 		organizationEquipmentPage.selectEquipmentFromDropdown(0);
@@ -107,9 +82,7 @@ describe('Organization equipment test', () => {
 		organizationEquipmentPage.saveButtonVisible();
 		organizationEquipmentPage.clickSaveButton();
 		organizationEquipmentPage.waitMessageToHide();
-		organizationEquipmentPage.verifySharingExists(
-			OrganizationEquipmentPageData.requestName
-		);
+		organizationEquipmentPage.verifySharingExists(OrganizationEquipmentPageData.requestName);
 		organizationEquipmentPage.clickBackButton();
 	});
 	it('Should be able to edit equipment', () => {
@@ -118,29 +91,17 @@ describe('Organization equipment test', () => {
 		organizationEquipmentPage.editButtonVisible();
 		organizationEquipmentPage.clickEditButton();
 		organizationEquipmentPage.nameInputVisible();
-		organizationEquipmentPage.enterNameInputData(
-			OrganizationEquipmentPageData.name
-		);
+		organizationEquipmentPage.enterNameInputData(OrganizationEquipmentPageData.name);
 		organizationEquipmentPage.typeInputVisible();
-		organizationEquipmentPage.enterTypeInputData(
-			OrganizationEquipmentPageData.type
-		);
+		organizationEquipmentPage.enterTypeInputData(OrganizationEquipmentPageData.type);
 		organizationEquipmentPage.serialNumberInputVisible();
-		organizationEquipmentPage.enterSerialNumberInputData(
-			OrganizationEquipmentPageData.sn
-		);
+		organizationEquipmentPage.enterSerialNumberInputData(OrganizationEquipmentPageData.sn);
 		organizationEquipmentPage.manufacturedYearInputVisible();
-		organizationEquipmentPage.enterManufacturedYearInputData(
-			OrganizationEquipmentPageData.year
-		);
+		organizationEquipmentPage.enterManufacturedYearInputData(OrganizationEquipmentPageData.year);
 		organizationEquipmentPage.initialCostInputVisible();
-		organizationEquipmentPage.enterInitialCostInputData(
-			OrganizationEquipmentPageData.cost
-		);
+		organizationEquipmentPage.enterInitialCostInputData(OrganizationEquipmentPageData.cost);
 		organizationEquipmentPage.sharePeriodInputVisible();
-		organizationEquipmentPage.enterSharePeriodInputData(
-			OrganizationEquipmentPageData.period
-		);
+		organizationEquipmentPage.enterSharePeriodInputData(OrganizationEquipmentPageData.period);
 		organizationEquipmentPage.saveButtonVisible();
 		organizationEquipmentPage.clickSaveButton();
 	});
@@ -151,9 +112,7 @@ describe('Organization equipment test', () => {
 		organizationEquipmentPage.editButtonVisible();
 		organizationEquipmentPage.clickEditButton();
 		organizationEquipmentPage.requestNameInputVisible();
-		organizationEquipmentPage.enterRequestNameInputData(
-			OrganizationEquipmentPageData.requestName
-		);
+		organizationEquipmentPage.enterRequestNameInputData(OrganizationEquipmentPageData.requestName);
 		organizationEquipmentPage.selectEquipmentDropdownVisible();
 		organizationEquipmentPage.clickEquipmentDropdown();
 		organizationEquipmentPage.selectEquipmentFromDropdown(0);
@@ -184,13 +143,9 @@ describe('Organization equipment test', () => {
 		organizationEquipmentPage.editButtonVisible();
 		organizationEquipmentPage.clickEditButton();
 		organizationEquipmentPage.policyNameInputVisible();
-		organizationEquipmentPage.enterPolicyNameInputData(
-			OrganizationEquipmentPageData.policy
-		);
+		organizationEquipmentPage.enterPolicyNameInputData(OrganizationEquipmentPageData.policy);
 		organizationEquipmentPage.policyDescriptionInputVisible();
-		organizationEquipmentPage.enterPolicyDescriptionInputData(
-			OrganizationEquipmentPageData.description
-		);
+		organizationEquipmentPage.enterPolicyDescriptionInputData(OrganizationEquipmentPageData.description);
 		organizationEquipmentPage.saveButtonVisible();
 		organizationEquipmentPage.clickSaveButton();
 	});

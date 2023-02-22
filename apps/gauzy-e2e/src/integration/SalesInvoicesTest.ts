@@ -33,14 +33,8 @@ describe('Sales invoices test', () => {
 		CustomCommands.login(loginPage, LoginPageData, dashboardPage);
 	});
 	it('Should be able to add new invoice', () => {
-		CustomCommands.addProject(
-			organizationProjectsPage,
-			OrganizationProjectsPageData
-		);
-		CustomCommands.addTag(
-			organizationTagsUserPage,
-			OrganizationTagsPageData
-		);
+		CustomCommands.addProject(organizationProjectsPage, OrganizationProjectsPageData);
+		CustomCommands.addTag(organizationTagsUserPage, OrganizationTagsPageData);
 		CustomCommands.addContact(
 			fullName,
 			email,
@@ -61,14 +55,10 @@ describe('Sales invoices test', () => {
 		salesInvoicesPage.selectTagFromDropdown(0);
 		salesInvoicesPage.clickCardBody();
 		salesInvoicesPage.discountInputVisible();
-		salesInvoicesPage.enterDiscountData(
-			SalesInvoicesPageData.discountValue
-		);
+		salesInvoicesPage.enterDiscountData(SalesInvoicesPageData.discountValue);
 		salesInvoicesPage.discountTypeDropdownVisible();
 		salesInvoicesPage.clickDiscountDropdown();
-		salesInvoicesPage.selectDiscountTypeFromDropdown(
-			SalesInvoicesPageData.discountType
-		);
+		salesInvoicesPage.selectDiscountTypeFromDropdown(SalesInvoicesPageData.discountType);
 		salesInvoicesPage.contactDropdownVisible();
 		salesInvoicesPage.clickContactDropdown();
 		salesInvoicesPage.selectContactFromDropdown(0);
@@ -76,14 +66,10 @@ describe('Sales invoices test', () => {
 		salesInvoicesPage.enterTaxData(SalesInvoicesPageData.taxValue);
 		salesInvoicesPage.taxTypeDropdownVisible();
 		salesInvoicesPage.clickTaxTypeDropdown();
-		salesInvoicesPage.selectTaxTypeFromDropdown(
-			SalesInvoicesPageData.taxType
-		);
+		salesInvoicesPage.selectTaxTypeFromDropdown(SalesInvoicesPageData.taxType);
 		salesInvoicesPage.invoiceTypeDropdownVisible();
 		salesInvoicesPage.clickInvoiceTypeDropdown();
-		salesInvoicesPage.selectInvoiceTypeFromDropdown(
-			SalesInvoicesPageData.invoiceType
-		);
+		salesInvoicesPage.selectInvoiceTypeFromDropdown(SalesInvoicesPageData.invoiceType);
 		salesInvoicesPage.employeeDropdownVisible();
 		salesInvoicesPage.clickEmployeeDropdown();
 		salesInvoicesPage.selectEmployeeFromDropdown(0);
@@ -91,9 +77,7 @@ describe('Sales invoices test', () => {
 		salesInvoicesPage.generateItemsButtonVisible();
 		salesInvoicesPage.clickGenerateItemsButton();
 		salesInvoicesPage.saveAsDraftButtonVisible();
-		salesInvoicesPage.clickSaveAsDraftButton(
-			SalesInvoicesPageData.saveAsDraftButton
-		);
+		salesInvoicesPage.clickSaveAsDraftButton(SalesInvoicesPageData.saveAsDraftButton);
 		salesInvoicesPage.waitMessageToHide();
 		salesInvoicesPage.verifyDraftBadgeClass();
 	});
@@ -102,14 +86,10 @@ describe('Sales invoices test', () => {
 		salesInvoicesPage.editButtonVisible();
 		salesInvoicesPage.clickEditButton(0);
 		salesInvoicesPage.discountInputVisible();
-		salesInvoicesPage.enterDiscountData(
-			SalesInvoicesPageData.editDiscountValue
-		);
+		salesInvoicesPage.enterDiscountData(SalesInvoicesPageData.editDiscountValue);
 		salesInvoicesPage.discountTypeDropdownVisible();
 		salesInvoicesPage.clickDiscountDropdown();
-		salesInvoicesPage.selectDiscountTypeFromDropdown(
-			SalesInvoicesPageData.discountType
-		);
+		salesInvoicesPage.selectDiscountTypeFromDropdown(SalesInvoicesPageData.discountType);
 		salesInvoicesPage.contactDropdownVisible();
 		salesInvoicesPage.clickContactDropdown();
 		salesInvoicesPage.selectContactFromDropdown(0);
@@ -117,13 +97,9 @@ describe('Sales invoices test', () => {
 		salesInvoicesPage.enterTaxData(SalesInvoicesPageData.taxValue);
 		salesInvoicesPage.taxTypeDropdownVisible();
 		salesInvoicesPage.clickTaxTypeDropdown();
-		salesInvoicesPage.selectTaxTypeFromDropdown(
-			SalesInvoicesPageData.taxType
-		);
+		salesInvoicesPage.selectTaxTypeFromDropdown(SalesInvoicesPageData.taxType);
 		salesInvoicesPage.saveAsDraftButtonVisible();
-		salesInvoicesPage.clickSaveAsDraftButton(
-			SalesInvoicesPageData.saveAsDraftButton
-		);
+		salesInvoicesPage.clickSaveAsDraftButton(SalesInvoicesPageData.saveAsDraftButton);
 		salesInvoicesPage.waitMessageToHide();
 		salesInvoicesPage.verifyDraftBadgeClass();
 	});
@@ -132,9 +108,7 @@ describe('Sales invoices test', () => {
 		salesInvoicesPage.moreButtonVisible();
 		salesInvoicesPage.clickMoreButton();
 		salesInvoicesPage.actionButtonVisible();
-		salesInvoicesPage.clickActionButtonByText(
-			SalesInvoicesPageData.sendButton
-		);
+		salesInvoicesPage.clickActionButtonByText(SalesInvoicesPageData.sendButton);
 		salesInvoicesPage.confirmButtonVisible();
 		salesInvoicesPage.clickConfirmButton();
 		salesInvoicesPage.waitMessageToHide();
@@ -155,9 +129,7 @@ describe('Sales invoices test', () => {
 		salesInvoicesPage.moreButtonVisible();
 		salesInvoicesPage.clickMoreButton();
 		salesInvoicesPage.actionButtonVisible();
-		salesInvoicesPage.clickActionButtonByText(
-			SalesInvoicesPageData.emailButton
-		);
+		salesInvoicesPage.clickActionButtonByText(SalesInvoicesPageData.emailButton);
 		salesInvoicesPage.scrollEmailInviteTemplate();
 		salesInvoicesPage.emailInputVisible();
 		salesInvoicesPage.enterEmailData(sendEmail);
@@ -170,9 +142,7 @@ describe('Sales invoices test', () => {
 		salesInvoicesPage.waitMessageToHide();
 		salesInvoicesPage.selectTableRow(0);
 		salesInvoicesPage.setStatusButtonVisible();
-		salesInvoicesPage.clickSetStatusButton(
-			SalesInvoicesPageData.setStatusButton
-		);
+		salesInvoicesPage.clickSetStatusButton(SalesInvoicesPageData.setStatusButton);
 		salesInvoicesPage.setStatusFromDropdown(SalesInvoicesPageData.status);
 	});
 	it('Should be able to delete invoice', () => {
@@ -185,8 +155,6 @@ describe('Sales invoices test', () => {
 		salesInvoicesPage.confirmDeleteButtonVisible();
 		salesInvoicesPage.clickConfirmDeleteButton();
 		salesInvoicesPage.waitMessageToHide();
-		salesInvoicesPage.verifyElementIsDeleted(
-			SalesInvoicesPageData.emptyTableText
-		);
+		salesInvoicesPage.verifyElementIsDeleted(SalesInvoicesPageData.emptyTableText);
 	});
 });

@@ -36,19 +36,8 @@ describe('Proposals test', () => {
 	});
 
 	it('Should be able to add new proposal', () => {
-		CustomCommands.addTag(
-			organizationTagsUserPage,
-			OrganizationTagsPageData
-		);
-		CustomCommands.addEmployee(
-			manageEmployeesPage,
-			firstName,
-			lastName,
-			username,
-			employeeEmail,
-			password,
-			imgUrl
-		);
+		CustomCommands.addTag(organizationTagsUserPage, OrganizationTagsPageData);
+		CustomCommands.addEmployee(manageEmployeesPage, firstName, lastName, username, employeeEmail, password, imgUrl);
 		cy.visit('/#/pages/sales/proposals');
 		proposalsPage.gridBtnExists();
 		proposalsPage.gridBtnClick(1);

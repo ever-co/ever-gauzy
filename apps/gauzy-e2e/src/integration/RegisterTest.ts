@@ -58,18 +58,14 @@ describe('Register Test', () => {
 		registerPage.clickBonusTypeDropdown();
 		registerPage.selectBonusTypeFromDropdown(RegisterPageData.bonusType);
 		registerPage.bonusPercentageInputVisible();
-		registerPage.enterBonusPercentageInputData(
-			RegisterPageData.bonusPercentage
-		);
+		registerPage.enterBonusPercentageInputData(RegisterPageData.bonusPercentage);
 		registerPage.clickOnNextButton();
 		registerPage.timeZoneDropdownVisible();
 		registerPage.clickTimeZoneDropdown();
 		registerPage.selectTimeZoneFromDropdown(RegisterPageData.timeZone);
 		registerPage.startOfWeekDropdownVisible();
 		registerPage.clickStartOfWeekDropdown();
-		registerPage.selectStartOfWeekFromDropdown(
-			RegisterPageData.startOfWeek
-		);
+		registerPage.selectStartOfWeekFromDropdown(RegisterPageData.startOfWeek);
 		registerPage.dateTypeDropdownVisible();
 		registerPage.clickDateTypeDropdown();
 		registerPage.selectDateTypeFromDropdown(RegisterPageData.dateType);
@@ -78,9 +74,7 @@ describe('Register Test', () => {
 		registerPage.selectRegionFromDropdown(RegisterPageData.region);
 		registerPage.numberFormatDropdownVisible();
 		registerPage.clickNumberFormatDropdown();
-		registerPage.selectNumberFormatFromDropdown(
-			RegisterPageData.numberFormat
-		);
+		registerPage.selectNumberFormatFromDropdown(RegisterPageData.numberFormat);
 		registerPage.dateFormatDropdownVisible();
 		registerPage.clickDateFormatDropdown();
 		registerPage.selectDateFormatFromDropdown();

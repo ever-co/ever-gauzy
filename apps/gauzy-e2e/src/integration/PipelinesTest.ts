@@ -19,9 +19,7 @@ describe('Pipelines test', () => {
 		pipelinesPage.nameInputVisible();
 		pipelinesPage.enterNameInputData(PipelinesPageData.pipelineName);
 		pipelinesPage.descriptionInputVisible();
-		pipelinesPage.enterDescriptionInputData(
-			PipelinesPageData.pipelineDescription
-		);
+		pipelinesPage.enterDescriptionInputData(PipelinesPageData.pipelineDescription);
 		pipelinesPage.createPipelineButtonVisible();
 		pipelinesPage.clickCreatePipelineButton();
 		pipelinesPage.waitMessageToHide();
@@ -36,9 +34,7 @@ describe('Pipelines test', () => {
 		pipelinesPage.nameInputVisible();
 		pipelinesPage.enterNameInputData(PipelinesPageData.editPipelineName);
 		pipelinesPage.descriptionInputVisible();
-		pipelinesPage.enterDescriptionInputData(
-			PipelinesPageData.pipelineDescription
-		);
+		pipelinesPage.enterDescriptionInputData(PipelinesPageData.pipelineDescription);
 		pipelinesPage.updateButtonVisible();
 		pipelinesPage.clickUpdateButton();
 		pipelinesPage.waitMessageToHide();
@@ -51,8 +47,6 @@ describe('Pipelines test', () => {
 		pipelinesPage.confirmDeleteButtonVisible();
 		pipelinesPage.clickConfirmDeleteButton();
 		pipelinesPage.waitMessageToHide();
-		pipelinesPage.verifyPipelineIsDeleted(
-			PipelinesPageData.editPipelineName
-		);
+		pipelinesPage.verifyPipelineIsDeleted(PipelinesPageData.editPipelineName);
 	});
 });

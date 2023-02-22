@@ -15,58 +15,28 @@ describe('Goals general settings Test', () => {
 
 	it('Should be able to verify goals general settings', () => {
 		cy.visit('/#/pages/goals/settings');
-		goalsGeneralSettingsPage.verifyHeaderText(
-			GoalsGeneralSettingsPageData.header
-		);
-		goalsGeneralSettingsPage.verifySubheaderText(
-			GoalsGeneralSettingsPageData.maxNumberOfEntities
-		);
-		goalsGeneralSettingsPage.verifySubheaderText(
-			GoalsGeneralSettingsPageData.employeesOwnObjectives
-		);
-		goalsGeneralSettingsPage.verifySubheaderText(
-			GoalsGeneralSettingsPageData.whoOwnObjectives
-		);
-		goalsGeneralSettingsPage.verifySubheaderText(
-			GoalsGeneralSettingsPageData.whoOwnKeyResults
-		);
-		goalsGeneralSettingsPage.verifySubheaderText(
-			GoalsGeneralSettingsPageData.addKPI
-		);
-		goalsGeneralSettingsPage.verifySubheaderText(
-			GoalsGeneralSettingsPageData.addTask
-		);
+		goalsGeneralSettingsPage.verifyHeaderText(GoalsGeneralSettingsPageData.header);
+		goalsGeneralSettingsPage.verifySubheaderText(GoalsGeneralSettingsPageData.maxNumberOfEntities);
+		goalsGeneralSettingsPage.verifySubheaderText(GoalsGeneralSettingsPageData.employeesOwnObjectives);
+		goalsGeneralSettingsPage.verifySubheaderText(GoalsGeneralSettingsPageData.whoOwnObjectives);
+		goalsGeneralSettingsPage.verifySubheaderText(GoalsGeneralSettingsPageData.whoOwnKeyResults);
+		goalsGeneralSettingsPage.verifySubheaderText(GoalsGeneralSettingsPageData.addKPI);
+		goalsGeneralSettingsPage.verifySubheaderText(GoalsGeneralSettingsPageData.addTask);
 		goalsGeneralSettingsPage.goalsInputVisible();
-		goalsGeneralSettingsPage.enterGoalsInputData(
-			GoalsGeneralSettingsPageData.objectives
-		);
+		goalsGeneralSettingsPage.enterGoalsInputData(GoalsGeneralSettingsPageData.objectives);
 		goalsGeneralSettingsPage.keyResultInputVisible();
-		goalsGeneralSettingsPage.enterKeyResultInputData(
-			GoalsGeneralSettingsPageData.keyResults
-		);
+		goalsGeneralSettingsPage.enterKeyResultInputData(GoalsGeneralSettingsPageData.keyResults);
 		goalsGeneralSettingsPage.objectivesDropdownVisible();
 		goalsGeneralSettingsPage.clickObjectivesDropdown();
-		goalsGeneralSettingsPage.verifyDropdownText(
-			GoalsGeneralSettingsPageData.employeesOptionText
-		);
-		goalsGeneralSettingsPage.verifyDropdownText(
-			GoalsGeneralSettingsPageData.employeesAndTeamsText
-		);
-		goalsGeneralSettingsPage.verifyDropdownText(
-			GoalsGeneralSettingsPageData.teamsText
-		);
+		goalsGeneralSettingsPage.verifyDropdownText(GoalsGeneralSettingsPageData.employeesOptionText);
+		goalsGeneralSettingsPage.verifyDropdownText(GoalsGeneralSettingsPageData.employeesAndTeamsText);
+		goalsGeneralSettingsPage.verifyDropdownText(GoalsGeneralSettingsPageData.teamsText);
 		goalsGeneralSettingsPage.clickKeyboardButtonByKeyCode(9);
 		goalsGeneralSettingsPage.keyResultsDropdownVisible();
 		goalsGeneralSettingsPage.clickKeyResultsDropdown();
-		goalsGeneralSettingsPage.verifyDropdownText(
-			GoalsGeneralSettingsPageData.employeesOptionText
-		);
-		goalsGeneralSettingsPage.verifyDropdownText(
-			GoalsGeneralSettingsPageData.employeesAndTeamsText
-		);
-		goalsGeneralSettingsPage.verifyDropdownText(
-			GoalsGeneralSettingsPageData.teamsText
-		);
+		goalsGeneralSettingsPage.verifyDropdownText(GoalsGeneralSettingsPageData.employeesOptionText);
+		goalsGeneralSettingsPage.verifyDropdownText(GoalsGeneralSettingsPageData.employeesAndTeamsText);
+		goalsGeneralSettingsPage.verifyDropdownText(GoalsGeneralSettingsPageData.teamsText);
 		goalsGeneralSettingsPage.clickKeyboardButtonByKeyCode(9);
 		goalsGeneralSettingsPage.verifyCheckboxState(0, checked);
 		goalsGeneralSettingsPage.verifyCheckboxState(1, checked);

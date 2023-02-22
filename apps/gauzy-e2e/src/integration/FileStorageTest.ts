@@ -18,13 +18,9 @@ describe('File storage test', () => {
 		fileStoragePage.selectOptionFromDropdown(1);
 		fileStoragePage.verifySubheader(FileStoragePageData.subheader);
 		fileStoragePage.accessKeyInputVisible();
-		fileStoragePage.enterAccessKeyInputData(
-			FileStoragePageData.accessKeyId
-		);
+		fileStoragePage.enterAccessKeyInputData(FileStoragePageData.accessKeyId);
 		fileStoragePage.secretKeyInputVisible();
-		fileStoragePage.enterSecretKeyInputData(
-			FileStoragePageData.secretAccessKey
-		);
+		fileStoragePage.enterSecretKeyInputData(FileStoragePageData.secretAccessKey);
 		fileStoragePage.regioninputVisible();
 		fileStoragePage.enterRegionInputData(FileStoragePageData.region);
 		fileStoragePage.bucketInputVisible();

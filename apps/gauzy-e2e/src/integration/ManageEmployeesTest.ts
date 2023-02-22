@@ -35,14 +35,8 @@ describe('Manage employees test', () => {
 	});
 
 	it('Should be able to invite employees', () => {
-		CustomCommands.addProject(
-			organizationProjectsPage,
-			OrganizationProjectsPageData
-		);
-		CustomCommands.addTag(
-			organizationTagsUserPage,
-			OrganizationTagsPageData
-		);
+		CustomCommands.addProject(organizationProjectsPage, OrganizationProjectsPageData);
+		CustomCommands.addTag(organizationTagsUserPage, OrganizationTagsPageData);
 		cy.visit('/#/pages/employees');
 		manageEmployeesPage.gridBtnExists();
 		manageEmployeesPage.gridBtnClick(1);
@@ -56,9 +50,7 @@ describe('Manage employees test', () => {
 		manageEmployeesPage.clickKeyboardButtonByKeyCode(9);
 		manageEmployeesPage.selectProjectDropdownVisible();
 		manageEmployeesPage.clickProjectDropdown();
-		manageEmployeesPage.selectProjectFromDropdown(
-			ManageEmployeesPageData.defaultProject
-		);
+		manageEmployeesPage.selectProjectFromDropdown(ManageEmployeesPageData.defaultProject);
 		manageEmployeesPage.sendInviteButtonVisible();
 		manageEmployeesPage.clickSendInviteButton();
 	});
@@ -108,9 +100,7 @@ describe('Manage employees test', () => {
 		manageEmployeesPage.enterLastNameEditInputData(lastName);
 		manageEmployeesPage.preferredLanguageDropdownVisible();
 		manageEmployeesPage.clickpreferredLanguageDropdown();
-		manageEmployeesPage.selectLanguageFromDropdown(
-			ManageEmployeesPageData.preferredLanguage
-		);
+		manageEmployeesPage.selectLanguageFromDropdown(ManageEmployeesPageData.preferredLanguage);
 		manageEmployeesPage.saveEditButtonVisible();
 		manageEmployeesPage.clickSaveEditButton();
 		manageEmployeesPage.backButtonVisible();

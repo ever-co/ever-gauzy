@@ -59,11 +59,9 @@ export const RolesPermissionsPageData = {
 	viewEventTypes: 'View Event Types',
 	// Administration
 	viewOrganizationEmployees: 'View Organization Employees',
-	createEditDeleteOrganizationEmployees:
-		'Create/Edit/Delete Organization Employees',
+	createEditDeleteOrganizationEmployees: 'Create/Edit/Delete Organization Employees',
 	viewOrganizationCandidates: 'View Organization Candidates',
-	createEditDeleteOrganizationCandidates:
-		'Create/Edit/Delete Organization Candidates',
+	createEditDeleteOrganizationCandidates: 'Create/Edit/Delete Organization Candidates',
 	viewOrganizationUsers: 'View Organization Users',
 	createEditDeleteOrganizationUsers: 'Create/Edit/Delete Organization Users',
 	viewAllOrganizations: 'View All Organizations',

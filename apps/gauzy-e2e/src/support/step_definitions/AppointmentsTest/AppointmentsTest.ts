@@ -10,8 +10,6 @@ import * as manageEmployeesPage from '../../Base/pages/ManageEmployees.po';
 import * as eventTypesPage from '../../Base/pages/EventTypes.po';
 import { EventTypePageData } from '../../Base/pagedata/EventTypesPageData';
 
-
-
 import { Given, Then, When, And } from 'cypress-cucumber-preprocessor/steps';
 
 const pageLoadTimeout = Cypress.config('pageLoadTimeout');
@@ -31,15 +29,7 @@ Given('Login with default credentials', () => {
 // Add employee
 And('User can add new employee', () => {
 	dashboardPage.verifyAccountingDashboardIfVisible();
-	CustomCommands.addEmployee(
-		manageEmployeesPage,
-		firstName,
-		lastName,
-		username,
-		employeeEmail,
-		password,
-		imgUrl
-	);
+	CustomCommands.addEmployee(manageEmployeesPage, firstName, lastName, username, employeeEmail, password, imgUrl);
 });
 
 And('User can visit Employees appointments page', () => {
@@ -137,9 +127,7 @@ And('User can see description input field', () => {
 });
 
 And('User can enter value for description', () => {
-	eventTypesPage.enterDescriptionInputData(
-		EventTypePageData.defaultDescription
-	);
+	eventTypesPage.enterDescriptionInputData(EventTypePageData.defaultDescription);
 });
 
 And('User can see duration input field', () => {
@@ -176,9 +164,7 @@ And('User can see Book Public Appointment button', () => {
 });
 
 When('User click on Book Public Appointment button', () => {
-	appointmentsPage.clickBookPublicAppointmentButton(
-		AppointmentsPageData.bookAppointmentButton
-	);
+	appointmentsPage.clickBookPublicAppointmentButton(AppointmentsPageData.bookAppointmentButton);
 });
 
 Then('User can see Event Type Select button', () => {
@@ -218,9 +204,7 @@ Then('User can see Buffer minutes input field', () => {
 });
 
 And('User enters Buffer minutes input field data', () => {
-	appointmentsPage.enterBufferMinutesInputData(
-		AppointmentsPageData.bufferTime
-	);
+	appointmentsPage.enterBufferMinutesInputData(AppointmentsPageData.bufferTime);
 });
 
 And('User can see Break time checkbox', () => {
@@ -248,9 +232,7 @@ And('User can see Break time minutes input field', () => {
 });
 
 And('User enters Break time minutes input field data', () => {
-	appointmentsPage.enterBreakTimeMinutesInputData(
-		AppointmentsPageData.bufferTime
-	);
+	appointmentsPage.enterBreakTimeMinutesInputData(AppointmentsPageData.bufferTime);
 });
 
 And('User can see location input field', () => {
@@ -266,9 +248,7 @@ And('User can see description input field', () => {
 });
 
 And('User enters description input field data', () => {
-	appointmentsPage.enterDescriptionInputData(
-		AppointmentsPageData.appointmentDescription
-	);
+	appointmentsPage.enterDescriptionInputData(AppointmentsPageData.appointmentDescription);
 });
 
 And('User can see Save button', () => {
@@ -285,9 +265,7 @@ Then('Notification message will appear', () => {
 
 // Verify appointment
 And('User can verify appointment title', () => {
-	appointmentsPage.verifyAppointmentConfirmedTitle(
-		AppointmentsPageData.appointmentConfirmed
-	);
+	appointmentsPage.verifyAppointmentConfirmedTitle(AppointmentsPageData.appointmentConfirmed);
 });
 
 And('User can verify employee name', () => {
@@ -303,7 +281,5 @@ And('User can verify location', () => {
 });
 
 And('User can verify description', () => {
-	appointmentsPage.verifyDescription(
-		AppointmentsPageData.appointmentDescription
-	);
+	appointmentsPage.verifyDescription(AppointmentsPageData.appointmentDescription);
 });

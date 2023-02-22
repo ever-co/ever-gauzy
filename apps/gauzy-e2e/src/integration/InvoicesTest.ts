@@ -33,14 +33,8 @@ describe('Invoices test', () => {
 		CustomCommands.login(loginPage, LoginPageData, dashboardPage);
 	});
 	it('Should be able to add new invoice', () => {
-		CustomCommands.addProject(
-			organizationProjectsPage,
-			OrganizationProjectsPageData
-		);
-		CustomCommands.addTag(
-			organizationTagsUserPage,
-			OrganizationTagsPageData
-		);
+		CustomCommands.addProject(organizationProjectsPage, OrganizationProjectsPageData);
+		CustomCommands.addTag(organizationTagsUserPage, OrganizationTagsPageData);
 		CustomCommands.addContact(
 			fullName,
 			email,
@@ -64,9 +58,7 @@ describe('Invoices test', () => {
 		invoicesPage.enterDiscountData(InvoicesPageData.discountValue);
 		invoicesPage.discountTypeDropdownVisible();
 		invoicesPage.clickDiscountDropdown();
-		invoicesPage.selectDiscountTypeFromDropdown(
-			InvoicesPageData.discountType
-		);
+		invoicesPage.selectDiscountTypeFromDropdown(InvoicesPageData.discountType);
 		invoicesPage.contactDropdownVisible();
 		invoicesPage.clickContactDropdown();
 		invoicesPage.selectContactFromDropdown(0);
@@ -77,9 +69,7 @@ describe('Invoices test', () => {
 		invoicesPage.selectTaxTypeFromDropdown(InvoicesPageData.taxType);
 		invoicesPage.invoiceTypeDropdownVisible();
 		invoicesPage.clickInvoiceTypeDropdown();
-		invoicesPage.selectInvoiceTypeFromDropdown(
-			InvoicesPageData.invoiceType
-		);
+		invoicesPage.selectInvoiceTypeFromDropdown(InvoicesPageData.invoiceType);
 		invoicesPage.employeeDropdownVisible();
 		invoicesPage.clickEmployeeDropdown();
 		invoicesPage.selectEmployeeFromDropdown(0);
@@ -95,9 +85,7 @@ describe('Invoices test', () => {
 		invoicesPage.verifyTabButtonVisible();
 		invoicesPage.clickTabButton(1);
 		invoicesPage.verifyEstimateNumberInputVisible();
-		invoicesPage.enterEstimateNumberInputData(
-			InvoicesPageData.invoiceNumber
-		);
+		invoicesPage.enterEstimateNumberInputData(InvoicesPageData.invoiceNumber);
 		invoicesPage.verifyCurrencyDropdownVisible();
 		invoicesPage.verifyEstimateDateInput();
 		invoicesPage.verifyEstimateDueDateInput();
@@ -110,9 +98,7 @@ describe('Invoices test', () => {
 		invoicesPage.clickResetButton();
 		invoicesPage.clickSearchButton();
 		invoicesPage.verifyDraftBadgeClass();
-		invoicesPage.enterEstimateNumberInputData(
-			InvoicesPageData.secondInvoiceNumber
-		);
+		invoicesPage.enterEstimateNumberInputData(InvoicesPageData.secondInvoiceNumber);
 		invoicesPage.clickSearchButton();
 		invoicesPage.clickResetButton();
 		invoicesPage.verifyDraftBadgeClass();
@@ -128,9 +114,7 @@ describe('Invoices test', () => {
 		invoicesPage.enterDiscountData(InvoicesPageData.editDiscountValue);
 		invoicesPage.discountTypeDropdownVisible();
 		invoicesPage.clickDiscountDropdown();
-		invoicesPage.selectDiscountTypeFromDropdown(
-			InvoicesPageData.discountType
-		);
+		invoicesPage.selectDiscountTypeFromDropdown(InvoicesPageData.discountType);
 		invoicesPage.contactDropdownVisible();
 		invoicesPage.clickContactDropdown();
 		invoicesPage.selectContactFromDropdown(0);

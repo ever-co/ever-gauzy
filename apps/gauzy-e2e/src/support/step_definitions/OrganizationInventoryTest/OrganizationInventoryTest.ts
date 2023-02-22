@@ -11,7 +11,6 @@ import { OrganizationTagsPageData } from '../../Base/pagedata/OrganizationTagsPa
 
 import { Given, Then, When, And } from 'cypress-cucumber-preprocessor/steps';
 
-
 const pageLoadTimeout = Cypress.config('pageLoadTimeout');
 
 let email = faker.internet.email();
@@ -58,9 +57,7 @@ And('User can see add category button', () => {
 });
 
 When('User click on add category button', () => {
-	organizationInventoryPage.clickAddCategoryOrTypeButton(
-		OrganizationInventoryPageData.categoryButtonText
-	);
+	organizationInventoryPage.clickAddCategoryOrTypeButton(OrganizationInventoryPageData.categoryButtonText);
 });
 
 And('User can see add button', () => {
@@ -82,9 +79,7 @@ Then('User can see category name input field', () => {
 });
 
 And('User can enter value for category name', () => {
-	organizationInventoryPage.enterNameInputData(
-		OrganizationInventoryPageData.productCategoryName
-	);
+	organizationInventoryPage.enterNameInputData(OrganizationInventoryPageData.productCategoryName);
 });
 
 And('User can see category description input field', () => {
@@ -92,9 +87,7 @@ And('User can see category description input field', () => {
 });
 
 And('User can enter value for category description', () => {
-	organizationInventoryPage.enterDescriptionInputData(
-		OrganizationInventoryPageData.productCategoryDescription
-	);
+	organizationInventoryPage.enterDescriptionInputData(OrganizationInventoryPageData.productCategoryDescription);
 });
 
 And('User can see save category button', () => {
@@ -119,9 +112,7 @@ When('User click on back button', () => {
 
 // Add new product type
 Then('User can click on add type button', () => {
-	organizationInventoryPage.clickAddCategoryOrTypeButton(
-		OrganizationInventoryPageData.typeButtonText
-	);
+	organizationInventoryPage.clickAddCategoryOrTypeButton(OrganizationInventoryPageData.typeButtonText);
 });
 
 And('User can see add product type button', () => {
@@ -137,9 +128,7 @@ Then('User can see type name input field', () => {
 });
 
 And('User can enter value for type name', () => {
-	organizationInventoryPage.enterNameInputData(
-		OrganizationInventoryPageData.productTypeName
-	);
+	organizationInventoryPage.enterNameInputData(OrganizationInventoryPageData.productTypeName);
 });
 
 And('User can see type category input field', () => {
@@ -147,9 +136,7 @@ And('User can see type category input field', () => {
 });
 
 And('User can enter value for type description', () => {
-	organizationInventoryPage.enterDescriptionInputData(
-		OrganizationInventoryPageData.productTypeDescription
-	);
+	organizationInventoryPage.enterDescriptionInputData(OrganizationInventoryPageData.productTypeDescription);
 });
 
 And('User can see save type button', () => {
@@ -186,9 +173,7 @@ And('User can see inventory name input field', () => {
 });
 
 And('User can add value for inventory name', () => {
-	organizationInventoryPage.enterNameInputData(
-		OrganizationInventoryPageData.inventoryName
-	);
+	organizationInventoryPage.enterNameInputData(OrganizationInventoryPageData.inventoryName);
 });
 
 And('User can se code input field', () => {
@@ -196,9 +181,7 @@ And('User can se code input field', () => {
 });
 
 And('User can enter value for code', () => {
-	organizationInventoryPage.enterCodeInputData(
-		OrganizationInventoryPageData.defaultInventoryCode
-	);
+	organizationInventoryPage.enterCodeInputData(OrganizationInventoryPageData.defaultInventoryCode);
 });
 
 And('User can see product dropdown', () => {
@@ -230,9 +213,7 @@ And('User can see inventory description input field', () => {
 });
 
 And('User can enter  value for inventory description', () => {
-	organizationInventoryPage.enterDescriptionInputData(
-		OrganizationInventoryPageData.productInventoryDescription
-	);
+	organizationInventoryPage.enterDescriptionInputData(OrganizationInventoryPageData.productInventoryDescription);
 });
 
 And('User can see save inventory button', () => {
@@ -281,9 +262,7 @@ Then('User can see edit inventory name input field', () => {
 });
 
 And('User can enter new inventory name', () => {
-	organizationInventoryPage.enterNameInputData(
-		OrganizationInventoryPageData.productTypeName
-	);
+	organizationInventoryPage.enterNameInputData(OrganizationInventoryPageData.productTypeName);
 });
 
 And('User can see edit code input field', () => {
@@ -291,9 +270,7 @@ And('User can see edit code input field', () => {
 });
 
 And('User can enter new code', () => {
-	organizationInventoryPage.enterCodeInputData(
-		OrganizationInventoryPageData.defaultInventoryCode
-	);
+	organizationInventoryPage.enterCodeInputData(OrganizationInventoryPageData.defaultInventoryCode);
 });
 
 And('User can see edit description input field', () => {
@@ -301,9 +278,7 @@ And('User can see edit description input field', () => {
 });
 
 And('User can enter new description', () => {
-	organizationInventoryPage.enterDescriptionInputData(
-		OrganizationInventoryPageData.productInventoryDescription
-	);
+	organizationInventoryPage.enterDescriptionInputData(OrganizationInventoryPageData.productInventoryDescription);
 });
 
 And('User can see save edited inventory button', () => {
@@ -361,9 +336,7 @@ And('User can see add category button', () => {
 });
 
 When('User click on add category button', () => {
-	organizationInventoryPage.clickAddCategoryOrTypeButton(
-		OrganizationInventoryPageData.categoryButtonText
-	);
+	organizationInventoryPage.clickAddCategoryOrTypeButton(OrganizationInventoryPageData.categoryButtonText);
 });
 
 Then('User can see category table', () => {
@@ -387,9 +360,7 @@ Then('User can see edit category name input field', () => {
 });
 
 And('User can enter new category name', () => {
-	organizationInventoryPage.enterNameInputData(
-		OrganizationInventoryPageData.productCategoryName
-	);
+	organizationInventoryPage.enterNameInputData(OrganizationInventoryPageData.productCategoryName);
 });
 
 And('User can see edit description input field', () => {
@@ -397,9 +368,7 @@ And('User can see edit description input field', () => {
 });
 
 And('User can enter new category description', () => {
-	organizationInventoryPage.enterDescriptionInputData(
-		OrganizationInventoryPageData.productCategoryDescription
-	);
+	organizationInventoryPage.enterDescriptionInputData(OrganizationInventoryPageData.productCategoryDescription);
 });
 
 And('User can see save edited category button', () => {
@@ -457,9 +426,7 @@ Then('User can see add product type button again', () => {
 });
 
 When('User click on add product type button again', () => {
-	organizationInventoryPage.clickAddCategoryOrTypeButton(
-		OrganizationInventoryPageData.typeButtonText
-	);
+	organizationInventoryPage.clickAddCategoryOrTypeButton(OrganizationInventoryPageData.typeButtonText);
 });
 
 Then('User can see product types table', () => {
@@ -483,9 +450,7 @@ Then('User can see edit product type name input field', () => {
 });
 
 And('User can enter new product type name', () => {
-	organizationInventoryPage.enterNameInputData(
-		OrganizationInventoryPageData.productTypeName
-	);
+	organizationInventoryPage.enterNameInputData(OrganizationInventoryPageData.productTypeName);
 });
 
 And('User can see edit product type description input field', () => {
@@ -493,9 +458,7 @@ And('User can see edit product type description input field', () => {
 });
 
 And('User can enter new product type description', () => {
-	organizationInventoryPage.enterDescriptionInputData(
-		OrganizationInventoryPageData.productTypeDescription
-	);
+	organizationInventoryPage.enterDescriptionInputData(OrganizationInventoryPageData.productTypeDescription);
 });
 
 And('User can see save edited product type button', () => {
@@ -545,9 +508,7 @@ And('User can see sidebar menu buttons', () => {
 });
 
 When('User click on Organization sidebar button', () => {
-	organizationInventoryPage.clickSidebarBtn(
-		OrganizationInventoryPageData.organization
-	);
+	organizationInventoryPage.clickSidebarBtn(OrganizationInventoryPageData.organization);
 });
 
 Then('User can click on Inventory sidebar button', () => {
@@ -559,9 +520,7 @@ And('User can see Warehouses button', () => {
 });
 
 When('User click on Warehouses button', () => {
-	organizationInventoryPage.clickMerchantOrWarehouseBtn(
-		OrganizationInventoryPageData.warehouses
-	);
+	organizationInventoryPage.clickMerchantOrWarehouseBtn(OrganizationInventoryPageData.warehouses);
 });
 
 Then('User can see Add warehouse button', () => {
@@ -577,9 +536,7 @@ Then('User can see warehouse name input field', () => {
 });
 
 And('User can enter value for warehouse name', () => {
-	organizationInventoryPage.enterWarehouseName(
-		OrganizationInventoryPageData.warehouseName
-	);
+	organizationInventoryPage.enterWarehouseName(OrganizationInventoryPageData.warehouseName);
 });
 
 And('User can see warehouse tags select', () => {
@@ -599,9 +556,7 @@ And('User can see warehouse code input field', () => {
 });
 
 And('User can enter warehouse code', () => {
-	organizationInventoryPage.enterWarehouseCode(
-		OrganizationInventoryPageData.warehouseCode
-	);
+	organizationInventoryPage.enterWarehouseCode(OrganizationInventoryPageData.warehouseCode);
 });
 
 And('User can see warehouse email input field', () => {
@@ -633,9 +588,7 @@ And('User can see tab button', () => {
 });
 
 When('User click on Location tab button', () => {
-	organizationInventoryPage.clickTabBtn(
-		OrganizationInventoryPageData.location
-	);
+	organizationInventoryPage.clickTabBtn(OrganizationInventoryPageData.location);
 });
 
 Then('User can see warehouse country select', () => {
@@ -647,9 +600,7 @@ When('User click on warehouse country select', () => {
 });
 
 Then('User can select warehouse country from dropdown options', () => {
-	organizationInventoryPage.selectCountryFromDropdownOptions(
-		OrganizationInventoryPageData.country
-	);
+	organizationInventoryPage.selectCountryFromDropdownOptions(OrganizationInventoryPageData.country);
 });
 
 And('User can see warehouse city input field', () => {
@@ -689,9 +640,7 @@ Then('Notification message will appear', () => {
 });
 
 And('User can verify Warehouse was created', () => {
-	organizationInventoryPage.verifyMerchantWarehouse(
-		OrganizationInventoryPageData.warehouseName
-	);
+	organizationInventoryPage.verifyMerchantWarehouse(OrganizationInventoryPageData.warehouseName);
 });
 
 // Add merchant
@@ -704,9 +653,7 @@ Then('User can see Merchants button', () => {
 });
 
 When('User click on Merchants button', () => {
-	organizationInventoryPage.clickMerchantOrWarehouseBtn(
-		OrganizationInventoryPageData.merchants
-	);
+	organizationInventoryPage.clickMerchantOrWarehouseBtn(OrganizationInventoryPageData.merchants);
 });
 
 Then('User can see Add merchant button', () => {
@@ -722,9 +669,7 @@ Then('User can see merchant name input field', () => {
 });
 
 And('User can enter merchant name', () => {
-	organizationInventoryPage.enterMerchantNameInput(
-		OrganizationInventoryPageData.merchantName
-	);
+	organizationInventoryPage.enterMerchantNameInput(OrganizationInventoryPageData.merchantName);
 });
 
 And('User can see merchant code input field', () => {
@@ -732,9 +677,7 @@ And('User can see merchant code input field', () => {
 });
 
 And('User can enter merchant code', () => {
-	organizationInventoryPage.enterMerchantCode(
-		OrganizationInventoryPageData.merchantCode
-	);
+	organizationInventoryPage.enterMerchantCode(OrganizationInventoryPageData.merchantCode);
 });
 
 And('User can see merchant email input field', () => {
@@ -754,9 +697,7 @@ When('User click on currency select', () => {
 });
 
 Then('User can select currency from dropdown options', () => {
-	organizationInventoryPage.selectCurrencyFromDropdownOptions(
-		OrganizationInventoryPageData.currency
-	);
+	organizationInventoryPage.selectCurrencyFromDropdownOptions(OrganizationInventoryPageData.currency);
 });
 
 And('User can see merchant website input field', () => {
@@ -800,9 +741,7 @@ And('User can see next step button', () => {
 });
 
 When('User click on next step button', () => {
-	organizationInventoryPage.clickMerchantNextBtn(
-		OrganizationInventoryPageData.nextBtn
-	);
+	organizationInventoryPage.clickMerchantNextBtn(OrganizationInventoryPageData.nextBtn);
 });
 
 Then('User can see merchant country select', () => {
@@ -814,9 +753,7 @@ When('User click on merchant country select', () => {
 });
 
 Then('User can select merchant country from dropdown options', () => {
-	organizationInventoryPage.selectCountryFromDropdownOptions(
-		OrganizationInventoryPageData.country
-	);
+	organizationInventoryPage.selectCountryFromDropdownOptions(OrganizationInventoryPageData.country);
 });
 
 And('User can see merchant city input field', () => {
@@ -848,9 +785,7 @@ And('User can see last step button', () => {
 });
 
 When('User click on last step button', () => {
-	organizationInventoryPage.clickMerchantNextBtn(
-		OrganizationInventoryPageData.nextBtn
-	);
+	organizationInventoryPage.clickMerchantNextBtn(OrganizationInventoryPageData.nextBtn);
 });
 
 And('User can see warehouse select', () => {
@@ -861,7 +796,7 @@ When('User click on warehouses select', () => {
 	organizationInventoryPage.clickWarehousesSelect();
 });
 
-Then('User can select warehouse from dropdown options', () => { });
+Then('User can select warehouse from dropdown options', () => {});
 
 And('User can see save merchant button', () => {
 	organizationInventoryPage.saveMerchantBtnVisible();
@@ -876,9 +811,7 @@ Then('Notification message will appear', () => {
 });
 
 And('User can verify Merchant was created', () => {
-	organizationInventoryPage.verifyMerchantWarehouse(
-		OrganizationInventoryPageData.merchantName
-	);
+	organizationInventoryPage.verifyMerchantWarehouse(OrganizationInventoryPageData.merchantName);
 });
 
 // Edit Merchant
@@ -903,9 +836,7 @@ Then('User can see again merchant name input field', () => {
 });
 
 And('User can enter new value for merchant name', () => {
-	organizationInventoryPage.enterMerchantNameInput(
-		OrganizationInventoryPageData.editMerchantName
-	);
+	organizationInventoryPage.enterMerchantNameInput(OrganizationInventoryPageData.editMerchantName);
 });
 
 And('User can see again next step button', () => {
@@ -913,15 +844,11 @@ And('User can see again next step button', () => {
 });
 
 When('User click on next step button again', () => {
-	organizationInventoryPage.clickMerchantNextBtn(
-		OrganizationInventoryPageData.nextBtn
-	);
+	organizationInventoryPage.clickMerchantNextBtn(OrganizationInventoryPageData.nextBtn);
 });
 
 Then('User can click again on last step button', () => {
-	organizationInventoryPage.clickMerchantNextBtn(
-		OrganizationInventoryPageData.nextBtn
-	);
+	organizationInventoryPage.clickMerchantNextBtn(OrganizationInventoryPageData.nextBtn);
 });
 
 And('User can see again save merchant button', () => {
@@ -937,9 +864,7 @@ Then('Notification message will appear', () => {
 });
 
 And('User can verify Merchant was edited', () => {
-	organizationInventoryPage.verifyMerchantWarehouse(
-		OrganizationInventoryPageData.editMerchantName
-	);
+	organizationInventoryPage.verifyMerchantWarehouse(OrganizationInventoryPageData.editMerchantName);
 });
 
 // Delete merchant
@@ -977,9 +902,7 @@ Then('User can see Warehouses button again', () => {
 });
 
 When('User click on Warehouses button again', () => {
-	organizationInventoryPage.clickMerchantOrWarehouseBtn(
-		OrganizationInventoryPageData.warehouses
-	);
+	organizationInventoryPage.clickMerchantOrWarehouseBtn(OrganizationInventoryPageData.warehouses);
 });
 
 Then('User can see warehouses table', () => {
@@ -1003,9 +926,7 @@ Then('User can see warehouse name input field again', () => {
 });
 
 And('User can enter new value for warehouse name', () => {
-	organizationInventoryPage.enterWarehouseName(
-		OrganizationInventoryPageData.editWarehouseName
-	);
+	organizationInventoryPage.enterWarehouseName(OrganizationInventoryPageData.editWarehouseName);
 });
 
 And('User can see save edited warehouse button', () => {
@@ -1021,9 +942,7 @@ Then('Notification message will appear', () => {
 });
 
 And('User can verify warehouse was edited', () => {
-	organizationInventoryPage.verifyMerchantWarehouse(
-		OrganizationInventoryPageData.editWarehouseName
-	);
+	organizationInventoryPage.verifyMerchantWarehouse(OrganizationInventoryPageData.editWarehouseName);
 });
 
 // Delete warehouse

@@ -4,7 +4,7 @@ import * as manageCandidatesInvitesPage from '../../Base/pages/ManageCandidatesI
 import { CustomCommands } from '../../commands';
 import * as dashboardPage from '../../Base/pages/Dashboard.po';
 import { faker } from '@faker-js/faker';
-import { ManageCandidatesInvitesPageData } from '../../Base/pagedata/ManageCandidatesInvitesPageData'
+import { ManageCandidatesInvitesPageData } from '../../Base/pagedata/ManageCandidatesInvitesPageData';
 
 import { Given, Then, When, And } from 'cypress-cucumber-preprocessor/steps';
 
@@ -83,7 +83,6 @@ And('User can see only selected user', () => {
 And('User can verify invite was created', () => {
 	manageCandidatesInvitesPage.verifyInviteExist(email);
 });
-
 
 // Resend invite
 And('User can see invites table', () => {

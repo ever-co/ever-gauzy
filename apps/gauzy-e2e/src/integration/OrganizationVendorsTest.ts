@@ -13,31 +13,20 @@ describe('Organization vendors test', () => {
 	});
 
 	it('Should be able to add new vendor', () => {
-		CustomCommands.addTag(
-			organizationTagsUserPage,
-			OrganizationTagsPageData
-		);
+		CustomCommands.addTag(organizationTagsUserPage, OrganizationTagsPageData);
 		cy.visit('/#/pages/organization/vendors');
 		organizationVendorsPage.gridButtonVisible();
 		organizationVendorsPage.clickGridButton(1);
 		organizationVendorsPage.addVendorButtonVisible();
 		organizationVendorsPage.clickAddVendorButton();
 		organizationVendorsPage.nameInputVisible();
-		organizationVendorsPage.enterNameInputData(
-			OrganizationVendorsPageData.vendorName
-		);
+		organizationVendorsPage.enterNameInputData(OrganizationVendorsPageData.vendorName);
 		organizationVendorsPage.phoneInputVisible();
-		organizationVendorsPage.enterPhoneInputData(
-			OrganizationVendorsPageData.vendorPhone
-		);
+		organizationVendorsPage.enterPhoneInputData(OrganizationVendorsPageData.vendorPhone);
 		organizationVendorsPage.emailInputVisible();
-		organizationVendorsPage.enterEmailInputData(
-			OrganizationVendorsPageData.vendorEmail
-		);
+		organizationVendorsPage.enterEmailInputData(OrganizationVendorsPageData.vendorEmail);
 		organizationVendorsPage.websiteInputVisible();
-		organizationVendorsPage.enterWebsiteInputData(
-			OrganizationVendorsPageData.vendorWebsite
-		);
+		organizationVendorsPage.enterWebsiteInputData(OrganizationVendorsPageData.vendorWebsite);
 		organizationVendorsPage.tagsDropdownVisible();
 		organizationVendorsPage.clickTagsDropdown();
 		organizationVendorsPage.selectTagFromDropdown(0);
@@ -45,29 +34,19 @@ describe('Organization vendors test', () => {
 		organizationVendorsPage.saveVendorButtonVisible();
 		organizationVendorsPage.clickSaveVendorButton();
 		organizationVendorsPage.waitMessageToHide();
-		organizationVendorsPage.verifyVendorExists(
-			OrganizationVendorsPageData.vendorName
-		);
+		organizationVendorsPage.verifyVendorExists(OrganizationVendorsPageData.vendorName);
 	});
 	it('Should be able to edit vendor', () => {
 		organizationVendorsPage.editVendorButtonVisible();
 		organizationVendorsPage.clickEditVendorButton(0);
 		organizationVendorsPage.nameInputVisible();
-		organizationVendorsPage.enterNameInputData(
-			OrganizationVendorsPageData.editVendorName
-		);
+		organizationVendorsPage.enterNameInputData(OrganizationVendorsPageData.editVendorName);
 		organizationVendorsPage.phoneInputVisible();
-		organizationVendorsPage.enterPhoneInputData(
-			OrganizationVendorsPageData.vendorPhone
-		);
+		organizationVendorsPage.enterPhoneInputData(OrganizationVendorsPageData.vendorPhone);
 		organizationVendorsPage.emailInputVisible();
-		organizationVendorsPage.enterEmailInputData(
-			OrganizationVendorsPageData.vendorEmail
-		);
+		organizationVendorsPage.enterEmailInputData(OrganizationVendorsPageData.vendorEmail);
 		organizationVendorsPage.websiteInputVisible();
-		organizationVendorsPage.enterWebsiteInputData(
-			OrganizationVendorsPageData.vendorWebsite
-		);
+		organizationVendorsPage.enterWebsiteInputData(OrganizationVendorsPageData.vendorWebsite);
 		organizationVendorsPage.tagsDropdownVisible();
 		organizationVendorsPage.clickTagsDropdown();
 		organizationVendorsPage.selectTagFromDropdown(0);
@@ -75,9 +54,7 @@ describe('Organization vendors test', () => {
 		organizationVendorsPage.saveVendorButtonVisible();
 		organizationVendorsPage.clickSaveVendorButton();
 		organizationVendorsPage.waitMessageToHide();
-		organizationVendorsPage.verifyVendorExists(
-			OrganizationVendorsPageData.editVendorName
-		);
+		organizationVendorsPage.verifyVendorExists(OrganizationVendorsPageData.editVendorName);
 	});
 	it('Should be able to delete vendor', () => {
 		organizationVendorsPage.deleteVendorButtonVisible();

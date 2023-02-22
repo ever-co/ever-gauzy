@@ -66,9 +66,7 @@ Then('User will see name input field', () => {
 });
 
 And('User can enter value for name', () => {
-	organizationEquipmentPage.enterNameInputData(
-		OrganizationEquipmentPageData.name
-	);
+	organizationEquipmentPage.enterNameInputData(OrganizationEquipmentPageData.name);
 });
 
 And('User can see type input field', () => {
@@ -76,9 +74,7 @@ And('User can see type input field', () => {
 });
 
 And('User can enter value for type', () => {
-	organizationEquipmentPage.enterTypeInputData(
-		OrganizationEquipmentPageData.type
-	);
+	organizationEquipmentPage.enterTypeInputData(OrganizationEquipmentPageData.type);
 });
 
 And('User can see serial number input field', () => {
@@ -86,9 +82,7 @@ And('User can see serial number input field', () => {
 });
 
 And('User can enter value for serial number', () => {
-	organizationEquipmentPage.enterSerialNumberInputData(
-		OrganizationEquipmentPageData.sn
-	);
+	organizationEquipmentPage.enterSerialNumberInputData(OrganizationEquipmentPageData.sn);
 });
 
 And('User can see manufactured year input field', () => {
@@ -96,9 +90,7 @@ And('User can see manufactured year input field', () => {
 });
 
 And('User can enter value for manufactured year', () => {
-	organizationEquipmentPage.enterManufacturedYearInputData(
-		OrganizationEquipmentPageData.year
-	);
+	organizationEquipmentPage.enterManufacturedYearInputData(OrganizationEquipmentPageData.year);
 });
 
 And('User can see initial cost input field', () => {
@@ -106,9 +98,7 @@ And('User can see initial cost input field', () => {
 });
 
 And('User can enter value for initial cost', () => {
-	organizationEquipmentPage.enterInitialCostInputData(
-		OrganizationEquipmentPageData.cost
-	);
+	organizationEquipmentPage.enterInitialCostInputData(OrganizationEquipmentPageData.cost);
 });
 
 And('User can see share period input field', () => {
@@ -116,9 +106,7 @@ And('User can see share period input field', () => {
 });
 
 And('User can enter value for share period', () => {
-	organizationEquipmentPage.enterSharePeriodInputData(
-		OrganizationEquipmentPageData.period
-	);
+	organizationEquipmentPage.enterSharePeriodInputData(OrganizationEquipmentPageData.period);
 });
 
 And('User can see save button', () => {
@@ -134,9 +122,7 @@ Then('Notification message will appear', () => {
 });
 
 And('User can verify equipment was created', () => {
-	organizationEquipmentPage.verifyEquipmentExists(
-		OrganizationEquipmentPageData.name
-	);
+	organizationEquipmentPage.verifyEquipmentExists(OrganizationEquipmentPageData.name);
 });
 
 // Add equipment policy
@@ -176,9 +162,7 @@ Then('User can see policy name input field', () => {
 });
 
 And('User can enter policy name', () => {
-	organizationEquipmentPage.enterPolicyNameInputData(
-		OrganizationEquipmentPageData.policy
-	);
+	organizationEquipmentPage.enterPolicyNameInputData(OrganizationEquipmentPageData.policy);
 });
 
 And('User can see policy description input field', () => {
@@ -186,9 +170,7 @@ And('User can see policy description input field', () => {
 });
 
 And('User can enter value for policy description', () => {
-	organizationEquipmentPage.enterPolicyDescriptionInputData(
-		OrganizationEquipmentPageData.description
-	);
+	organizationEquipmentPage.enterPolicyDescriptionInputData(OrganizationEquipmentPageData.description);
 });
 
 And('User can see save policy button', () => {
@@ -204,9 +186,7 @@ Then('Notification message will appear', () => {
 });
 
 And('User can verify policy was created', () => {
-	organizationEquipmentPage.verifyPolicyExists(
-		OrganizationEquipmentPageData.policy
-	);
+	organizationEquipmentPage.verifyPolicyExists(OrganizationEquipmentPageData.policy);
 });
 
 And('User can see back button', () => {
@@ -241,9 +221,7 @@ Then('User can see request name input field', () => {
 });
 
 And('User can enter value for request name', () => {
-	organizationEquipmentPage.enterRequestNameInputData(
-		OrganizationEquipmentPageData.requestName
-	);
+	organizationEquipmentPage.enterRequestNameInputData(OrganizationEquipmentPageData.requestName);
 });
 
 And('User can see equipment dropdown', () => {
@@ -356,9 +334,7 @@ Then('User can see edit name input field', () => {
 });
 
 And('User can enter new value for name', () => {
-	organizationEquipmentPage.enterNameInputData(
-		OrganizationEquipmentPageData.editName
-	);
+	organizationEquipmentPage.enterNameInputData(OrganizationEquipmentPageData.editName);
 });
 
 And('User can see save edited equipment button', () => {
@@ -399,9 +375,7 @@ Then('User can see edit request name input field', () => {
 });
 
 And('User can enter new value for request name', () => {
-	organizationEquipmentPage.enterRequestNameInputData(
-		OrganizationEquipmentPageData.editRequestName
-	);
+	organizationEquipmentPage.enterRequestNameInputData(OrganizationEquipmentPageData.editRequestName);
 });
 
 And('User can see save edited request button', () => {
@@ -475,9 +449,7 @@ And('User can see edit policy name input field', () => {
 });
 
 And('User can enter new policy name', () => {
-	organizationEquipmentPage.enterPolicyNameInputData(
-		OrganizationEquipmentPageData.editPolicy
-	);
+	organizationEquipmentPage.enterPolicyNameInputData(OrganizationEquipmentPageData.editPolicy);
 });
 
 And('User can see edit policy description input field', () => {
@@ -485,9 +457,7 @@ And('User can see edit policy description input field', () => {
 });
 
 And('User can enter new description', () => {
-	organizationEquipmentPage.enterPolicyDescriptionInputData(
-		OrganizationEquipmentPageData.description
-	);
+	organizationEquipmentPage.enterPolicyDescriptionInputData(OrganizationEquipmentPageData.description);
 });
 
 And('User can see save edited policy button', () => {

@@ -28,15 +28,7 @@ Given('Login with default credentials', () => {
 
 // Add employee
 And('User can add new employee', () => {
-	CustomCommands.addEmployee(
-		manageEmployeesPage,
-		firstName,
-		lastName,
-		username,
-		employeeEmail,
-		password,
-		imgUrl
-	);
+	CustomCommands.addEmployee(manageEmployeesPage, firstName, lastName, username, employeeEmail, password, imgUrl);
 });
 
 // Add new project
@@ -44,10 +36,7 @@ And('User can add new project', () => {
 	CustomCommands.logout(dashboardPage, logoutPage, loginPage);
 	CustomCommands.clearCookies();
 	CustomCommands.login(loginPage, LoginPageData, dashboardPage);
-	CustomCommands.addProject(
-		organizationProjectsPage,
-		OrganizationProjectsPageData
-	);
+	CustomCommands.addProject(organizationProjectsPage, OrganizationProjectsPageData);
 });
 
 // Add new payment

@@ -19,26 +19,20 @@ describe('Organization documents test', () => {
 		organizationDocumentsPage.addButtonVisible();
 		organizationDocumentsPage.clickAddButton();
 		organizationDocumentsPage.nameInputVisible();
-		organizationDocumentsPage.enterNameInputData(
-			OrganizationDocumentsPageData.documentName
-		);
+		organizationDocumentsPage.enterNameInputData(OrganizationDocumentsPageData.documentName);
 		organizationDocumentsPage.urlInputVisible();
 		organizationDocumentsPage.enterUrlInputData(url);
 		organizationDocumentsPage.clickCardBody();
 		organizationDocumentsPage.saveButtonVisible();
 		organizationDocumentsPage.clickSaveButton();
 		organizationDocumentsPage.waitMessageToHide();
-		organizationDocumentsPage.verifyDocumentExists(
-			OrganizationDocumentsPageData.documentName
-		);
+		organizationDocumentsPage.verifyDocumentExists(OrganizationDocumentsPageData.documentName);
 	});
 	it('Should be able to edit document', () => {
 		organizationDocumentsPage.editButtonVisible();
 		organizationDocumentsPage.clickEditButton(0);
 		organizationDocumentsPage.nameInputVisible();
-		organizationDocumentsPage.enterNameInputData(
-			OrganizationDocumentsPageData.documentName
-		);
+		organizationDocumentsPage.enterNameInputData(OrganizationDocumentsPageData.documentName);
 		organizationDocumentsPage.saveButtonVisible();
 		organizationDocumentsPage.clickSaveButton();
 	});
@@ -49,8 +43,6 @@ describe('Organization documents test', () => {
 		organizationDocumentsPage.confirmDeleteButtonVisible();
 		organizationDocumentsPage.clickConfirmDeleteButton();
 		organizationDocumentsPage.waitMessageToHide();
-		organizationDocumentsPage.verifyDocumentIsDeleted(
-			OrganizationDocumentsPageData.documentName
-		);
+		organizationDocumentsPage.verifyDocumentIsDeleted(OrganizationDocumentsPageData.documentName);
 	});
 });

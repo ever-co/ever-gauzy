@@ -67,9 +67,7 @@ When('User click on country dropdown', () => {
 });
 
 Then('User can select country from dropdown option', () => {
-	addOrganizationPage.selectCountryFromDropdown(
-		AddOrganizationPageData.country
-	);
+	addOrganizationPage.selectCountryFromDropdown(AddOrganizationPageData.country);
 });
 
 And('User can see city input field', () => {
@@ -85,9 +83,7 @@ And('User can see post code input field', () => {
 });
 
 And('User can add value for post code', () => {
-	addOrganizationPage.enterPostcodeInputData(
-		AddOrganizationPageData.postcode
-	);
+	addOrganizationPage.enterPostcodeInputData(AddOrganizationPageData.postcode);
 });
 
 And('User can see street input field', () => {
@@ -111,9 +107,7 @@ When('User click on bonus dropdown', () => {
 });
 
 Then('User can select bonus from dropdown options', () => {
-	addOrganizationPage.selectBonusTypeFromDropdown(
-		AddOrganizationPageData.bonusType
-	);
+	addOrganizationPage.selectBonusTypeFromDropdown(AddOrganizationPageData.bonusType);
 });
 
 And('User can see bonus input field', () => {
@@ -121,9 +115,7 @@ And('User can see bonus input field', () => {
 });
 
 And('User can enter value for bonus', () => {
-	addOrganizationPage.enterBonusPercentageInputData(
-		AddOrganizationPageData.bonusPercentage
-	);
+	addOrganizationPage.enterBonusPercentageInputData(AddOrganizationPageData.bonusPercentage);
 });
 
 Then('User can click next button', () => {
@@ -139,9 +131,7 @@ When('User click on time zone dropdown', () => {
 });
 
 Then('User can select time zone from dropdown options', () => {
-	addOrganizationPage.selectTimeZoneFromDropdown(
-		AddOrganizationPageData.timeZone
-	);
+	addOrganizationPage.selectTimeZoneFromDropdown(AddOrganizationPageData.timeZone);
 });
 
 And('User can see start of week dropdown', () => {
@@ -153,9 +143,7 @@ When('User click on start of week dropdown', () => {
 });
 
 Then('User can select day of week from dropdown options', () => {
-	addOrganizationPage.selectStartOfWeekFromDropdown(
-		AddOrganizationPageData.startOfWeek
-	);
+	addOrganizationPage.selectStartOfWeekFromDropdown(AddOrganizationPageData.startOfWeek);
 });
 
 And('User can see date type dropdown', () => {
@@ -167,9 +155,7 @@ When('User click on date type dropdown', () => {
 });
 
 Then('User can select date type from dropdown options', () => {
-	addOrganizationPage.selectDateTypeFromDropdown(
-		AddOrganizationPageData.dateType
-	);
+	addOrganizationPage.selectDateTypeFromDropdown(AddOrganizationPageData.dateType);
 });
 
 And('User can see region dropdown', () => {
@@ -181,9 +167,7 @@ When('User click on region dropdown', () => {
 });
 
 Then('User can select region from dropdown options', () => {
-	addOrganizationPage.selectRegionFromDropdown(
-		AddOrganizationPageData.region
-	);
+	addOrganizationPage.selectRegionFromDropdown(AddOrganizationPageData.region);
 });
 
 And('User can see number format dropdown', () => {
@@ -195,9 +179,7 @@ When('User click on number format dropdown', () => {
 });
 
 Then('User can select number format from dropdown options', () => {
-	addOrganizationPage.selectNumberFormatFromDropdown(
-		AddOrganizationPageData.numberFormat
-	);
+	addOrganizationPage.selectNumberFormatFromDropdown(AddOrganizationPageData.numberFormat);
 });
 
 And('User can see date format dropdown', () => {
@@ -217,9 +199,7 @@ And('User can see expiry date input field', () => {
 });
 
 And('User can enter value for expiry date', () => {
-	addOrganizationPage.enterExpiryPeriodInputData(
-		AddOrganizationPageData.expiryPeriod
-	);
+	addOrganizationPage.enterExpiryPeriodInputData(AddOrganizationPageData.expiryPeriod);
 });
 
 When('User click on last Next button', () => {

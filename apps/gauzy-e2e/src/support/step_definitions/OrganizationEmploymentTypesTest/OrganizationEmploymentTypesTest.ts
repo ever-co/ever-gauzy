@@ -10,7 +10,6 @@ import * as logoutPage from '../../Base/pages/Logout.po';
 
 import { Given, Then, When, And } from 'cypress-cucumber-preprocessor/steps';
 
-
 const pageLoadTimeout = Cypress.config('pageLoadTimeout');
 
 // Login with email
@@ -53,9 +52,7 @@ Then('User can see name input field', () => {
 });
 
 And('User can enter value for name', () => {
-	organizationEmploymentTypePage.enterNameInputData(
-		OrganizationEmploymentTypesPageData.name
-	);
+	organizationEmploymentTypePage.enterNameInputData(OrganizationEmploymentTypesPageData.name);
 });
 
 And('User can see tags dropdown', () => {
@@ -84,9 +81,7 @@ Then('Notification message will appear', () => {
 });
 
 And('User can verify employment type was created', () => {
-	organizationEmploymentTypePage.verifyTypeExists(
-		OrganizationEmploymentTypesPageData.name
-	);
+	organizationEmploymentTypePage.verifyTypeExists(OrganizationEmploymentTypesPageData.name);
 });
 
 // Edit employment type
@@ -103,9 +98,7 @@ Then('User can see edit name input field', () => {
 });
 
 And('User can enter new value for name', () => {
-	organizationEmploymentTypePage.enterEditNameInputData(
-		OrganizationEmploymentTypesPageData.editName
-	);
+	organizationEmploymentTypePage.enterEditNameInputData(OrganizationEmploymentTypesPageData.editName);
 });
 
 And('User can see save edited type button', () => {
@@ -121,9 +114,7 @@ Then('Notification message will appear', () => {
 });
 
 And('User can verify employment type was edited', () => {
-	organizationEmploymentTypePage.verifyTypeExists(
-		OrganizationEmploymentTypesPageData.editName
-	);
+	organizationEmploymentTypePage.verifyTypeExists(OrganizationEmploymentTypesPageData.editName);
 });
 
 // Delete employment type

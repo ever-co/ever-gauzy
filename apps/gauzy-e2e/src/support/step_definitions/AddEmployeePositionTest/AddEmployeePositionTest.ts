@@ -52,9 +52,7 @@ Then('User can see new position input', () => {
 });
 
 And('User can add data for new position', () => {
-	addEmployeePositionPage.enterNewPositionData(
-		AddEmployeePositionPageData.fullStackDeveloper
-	);
+	addEmployeePositionPage.enterNewPositionData(AddEmployeePositionPageData.fullStackDeveloper);
 });
 
 And('User can see tag multi-select', () => {
@@ -91,9 +89,7 @@ When('User click on edit position button', () => {
 });
 
 Then('User can verify position was created', () => {
-	addEmployeePositionPage.verifyTitleExists(
-		AddEmployeePositionPageData.fullStackDeveloper
-	);
+	addEmployeePositionPage.verifyTitleExists(AddEmployeePositionPageData.fullStackDeveloper);
 });
 
 And('User can see cancel edit button', () => {
@@ -114,9 +110,7 @@ When('User click on edit new position button', () => {
 });
 
 Then('User can edit previously created position', () => {
-	addEmployeePositionPage.enterEditPositionData(
-		AddEmployeePositionPageData.midLevelWebDeveloper
-	);
+	addEmployeePositionPage.enterEditPositionData(AddEmployeePositionPageData.midLevelWebDeveloper);
 });
 
 And('User can see tag multi-select', () => {
@@ -153,9 +147,7 @@ When('User click on edit position button', () => {
 });
 
 Then('User can verify position was edited', () => {
-	addEmployeePositionPage.verifyTitleExists(
-		AddEmployeePositionPageData.midLevelWebDeveloper
-	);
+	addEmployeePositionPage.verifyTitleExists(AddEmployeePositionPageData.midLevelWebDeveloper);
 });
 
 And('User can see cancel edit button', () => {
@@ -180,9 +172,7 @@ Then('User can see new position input', () => {
 });
 
 And('User can add data for new position', () => {
-	addEmployeePositionPage.enterNewPositionData(
-		AddEmployeePositionPageData.fullStackDeveloper
-	);
+	addEmployeePositionPage.enterNewPositionData(AddEmployeePositionPageData.fullStackDeveloper);
 });
 
 And('User can see tag multi-select', () => {
@@ -227,9 +217,7 @@ When('User click on confirm delete button', () => {
 });
 
 Then('User can verify that position was deleted', () => {
-	addEmployeePositionPage.verifyElementIsDeleted(
-		AddEmployeePositionPageData.fullStackDeveloper
-	);
+	addEmployeePositionPage.verifyElementIsDeleted(AddEmployeePositionPageData.fullStackDeveloper);
 });
 
 And('User will see a notification message', () => {

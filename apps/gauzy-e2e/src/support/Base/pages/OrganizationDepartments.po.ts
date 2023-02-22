@@ -37,9 +37,7 @@ export const enterNameInputData = (data) => {
 };
 
 export const selectEmployeeDropdownVisible = () => {
-	verifyElementIsVisible(
-		OrganizationDepartmentsPage.selectEmployeeDropdownCss
-	);
+	verifyElementIsVisible(OrganizationDepartmentsPage.selectEmployeeDropdownCss);
 };
 
 export const clickEmployeeDropdown = () => {
@@ -47,10 +45,7 @@ export const clickEmployeeDropdown = () => {
 };
 
 export const selectEmployeeFromDropdown = (index) => {
-	clickButtonByIndex(
-		OrganizationDepartmentsPage.selectEmployeeDropdownOptionCss,
-		index
-	);
+	clickButtonByIndex(OrganizationDepartmentsPage.selectEmployeeDropdownOptionCss, index);
 };
 
 export const tagsDropdownVisible = () => {
@@ -98,9 +93,7 @@ export const clickEditButton = () => {
 };
 
 export const deleteButtonVisible = () => {
-	verifyElementIsVisible(
-		OrganizationDepartmentsPage.deleteDepartmentButtonCss
-	);
+	verifyElementIsVisible(OrganizationDepartmentsPage.deleteDepartmentButtonCss);
 };
 
 export const clickDeleteButton = () => {
@@ -120,10 +113,7 @@ export const verifyDepartmentExists = (text) => {
 };
 
 export const verifyDepartmentIsDeleted = (text) => {
-	verifyTextNotExisting(
-		OrganizationDepartmentsPage.verifyDepartmentCss,
-		text
-	);
+	verifyTextNotExisting(OrganizationDepartmentsPage.verifyDepartmentCss, text);
 };
 
 export const waitMessageToHide = () => {

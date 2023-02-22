@@ -15,9 +15,7 @@ describe('Danger zone Test', () => {
 		dangerZonePage.verifyHeaderTextExist(DangerZonePageData.headerText);
 		dangerZonePage.deleteButtonVisible();
 		dangerZonePage.clickDeleteButton();
-		dangerZonePage.verifyDeleteTextExist(
-			DangerZonePageData.confirmDeleteText
-		);
+		dangerZonePage.verifyDeleteTextExist(DangerZonePageData.confirmDeleteText);
 		dangerZonePage.deleteInputVisible();
 		dangerZonePage.enterInputData(DangerZonePageData.deleteUserText);
 		dangerZonePage.confirmDeleteButtonVisible();

@@ -15,48 +15,32 @@ describe('Organization inventory test', () => {
 		organizationInventoryPage.gridBtnExists();
 		organizationInventoryPage.gridBtnClick(1);
 		organizationInventoryPage.addCategoryOrTypeButtonVisible();
-		organizationInventoryPage.clickAddCategoryOrTypeButton(
-			OrganizationInventoryPageData.categoryButtonText
-		);
+		organizationInventoryPage.clickAddCategoryOrTypeButton(OrganizationInventoryPageData.categoryButtonText);
 		organizationInventoryPage.addButtonVisible();
 		organizationInventoryPage.clickAddButton();
 		organizationInventoryPage.nameInputVisible();
-		organizationInventoryPage.enterNameInputData(
-			OrganizationInventoryPageData.productCategoryName
-		);
+		organizationInventoryPage.enterNameInputData(OrganizationInventoryPageData.productCategoryName);
 		organizationInventoryPage.descriptionInputVisible();
-		organizationInventoryPage.enterDescriptionInputData(
-			OrganizationInventoryPageData.productCategoryDescription
-		);
+		organizationInventoryPage.enterDescriptionInputData(OrganizationInventoryPageData.productCategoryDescription);
 		organizationInventoryPage.saveButtonVisible();
 		organizationInventoryPage.clickSaveButton();
 		organizationInventoryPage.waitMessageToHide();
-		organizationInventoryPage.verifycategoryExists(
-			OrganizationInventoryPageData.productCategoryName
-		);
+		organizationInventoryPage.verifycategoryExists(OrganizationInventoryPageData.productCategoryName);
 		organizationInventoryPage.backButtonVisible();
 		organizationInventoryPage.clickBackButton();
 	});
 	it('Should be able to add new product type', () => {
-		organizationInventoryPage.clickAddCategoryOrTypeButton(
-			OrganizationInventoryPageData.typeButtonText
-		);
+		organizationInventoryPage.clickAddCategoryOrTypeButton(OrganizationInventoryPageData.typeButtonText);
 		organizationInventoryPage.addButtonVisible();
 		organizationInventoryPage.clickAddButton();
 		organizationInventoryPage.nameInputVisible();
-		organizationInventoryPage.enterNameInputData(
-			OrganizationInventoryPageData.productTypeName
-		);
+		organizationInventoryPage.enterNameInputData(OrganizationInventoryPageData.productTypeName);
 		organizationInventoryPage.descriptionInputVisible();
-		organizationInventoryPage.enterDescriptionInputData(
-			OrganizationInventoryPageData.productTypeDescription
-		);
+		organizationInventoryPage.enterDescriptionInputData(OrganizationInventoryPageData.productTypeDescription);
 		organizationInventoryPage.saveButtonVisible();
 		organizationInventoryPage.clickSaveButton();
 		organizationInventoryPage.waitMessageToHide();
-		organizationInventoryPage.verifyTypeExists(
-			OrganizationInventoryPageData.productTypeName
-		);
+		organizationInventoryPage.verifyTypeExists(OrganizationInventoryPageData.productTypeName);
 		organizationInventoryPage.backButtonVisible();
 		organizationInventoryPage.clickBackButton();
 	});
@@ -65,39 +49,25 @@ describe('Organization inventory test', () => {
 		organizationInventoryPage.clickAddButton();
 		organizationInventoryPage.languageDropdownVisible();
 		organizationInventoryPage.clickLanguageDropdown();
-		organizationInventoryPage.clickDropdownOption(
-			OrganizationInventoryPageData.defaultInventoryLanguage
-		);
+		organizationInventoryPage.clickDropdownOption(OrganizationInventoryPageData.defaultInventoryLanguage);
 		organizationInventoryPage.nameInputVisible();
-		organizationInventoryPage.enterNameInputData(
-			OrganizationInventoryPageData.inventoryName
-		);
+		organizationInventoryPage.enterNameInputData(OrganizationInventoryPageData.inventoryName);
 		organizationInventoryPage.codeInputVisible();
-		organizationInventoryPage.enterCodeInputData(
-			OrganizationInventoryPageData.defaultInventoryCode
-		);
+		organizationInventoryPage.enterCodeInputData(OrganizationInventoryPageData.defaultInventoryCode);
 		organizationInventoryPage.productTypeDropdownVisible();
 		organizationInventoryPage.clickProductTypeDropdown();
-		organizationInventoryPage.clickDropdownOption(
-			OrganizationInventoryPageData.productTypeName
-		);
+		organizationInventoryPage.clickDropdownOption(OrganizationInventoryPageData.productTypeName);
 		organizationInventoryPage.productCategoryDropdownVisible();
 		organizationInventoryPage.clickProductCategoryDropdown();
-		organizationInventoryPage.clickDropdownOption(
-			OrganizationInventoryPageData.productCategoryName
-		);
+		organizationInventoryPage.clickDropdownOption(OrganizationInventoryPageData.productCategoryName);
 		organizationInventoryPage.descriptionInputVisible();
-		organizationInventoryPage.enterDescriptionInputData(
-			OrganizationInventoryPageData.productInventoryDescription
-		);
+		organizationInventoryPage.enterDescriptionInputData(OrganizationInventoryPageData.productInventoryDescription);
 		organizationInventoryPage.saveButtonVisible();
 		organizationInventoryPage.clickSaveButton();
 		organizationInventoryPage.waitMessageToHide();
 		organizationInventoryPage.backFromInventoryButtonVisible();
 		organizationInventoryPage.clickBackFromInventoryButton();
-		organizationInventoryPage.verifyInventoryExists(
-			OrganizationInventoryPageData.inventoryName
-		);
+		organizationInventoryPage.verifyInventoryExists(OrganizationInventoryPageData.inventoryName);
 	});
 	it('Should be able to edit inventory', () => {
 		organizationInventoryPage.tableRowVisible();
@@ -105,17 +75,11 @@ describe('Organization inventory test', () => {
 		organizationInventoryPage.editButtonVisible();
 		organizationInventoryPage.clickEditButton();
 		organizationInventoryPage.nameInputVisible();
-		organizationInventoryPage.enterNameInputData(
-			OrganizationInventoryPageData.productTypeName
-		);
+		organizationInventoryPage.enterNameInputData(OrganizationInventoryPageData.productTypeName);
 		organizationInventoryPage.codeInputVisible();
-		organizationInventoryPage.enterCodeInputData(
-			OrganizationInventoryPageData.defaultInventoryCode
-		);
+		organizationInventoryPage.enterCodeInputData(OrganizationInventoryPageData.defaultInventoryCode);
 		organizationInventoryPage.descriptionInputVisible();
-		organizationInventoryPage.enterDescriptionInputData(
-			OrganizationInventoryPageData.productInventoryDescription
-		);
+		organizationInventoryPage.enterDescriptionInputData(OrganizationInventoryPageData.productInventoryDescription);
 		organizationInventoryPage.saveButtonVisible();
 		organizationInventoryPage.clickSaveButton();
 		organizationInventoryPage.waitMessageToHide();
@@ -133,21 +97,15 @@ describe('Organization inventory test', () => {
 	});
 	it('Should be able to edit product category', () => {
 		organizationInventoryPage.addCategoryOrTypeButtonVisible();
-		organizationInventoryPage.clickAddCategoryOrTypeButton(
-			OrganizationInventoryPageData.categoryButtonText
-		);
+		organizationInventoryPage.clickAddCategoryOrTypeButton(OrganizationInventoryPageData.categoryButtonText);
 		organizationInventoryPage.tableRowVisible();
 		organizationInventoryPage.selectTableRow(0);
 		organizationInventoryPage.editButtonVisible();
 		organizationInventoryPage.clickEditButton();
 		organizationInventoryPage.nameInputVisible();
-		organizationInventoryPage.enterNameInputData(
-			OrganizationInventoryPageData.productCategoryName
-		);
+		organizationInventoryPage.enterNameInputData(OrganizationInventoryPageData.productCategoryName);
 		organizationInventoryPage.descriptionInputVisible();
-		organizationInventoryPage.enterDescriptionInputData(
-			OrganizationInventoryPageData.productCategoryDescription
-		);
+		organizationInventoryPage.enterDescriptionInputData(OrganizationInventoryPageData.productCategoryDescription);
 		organizationInventoryPage.saveButtonVisible();
 		organizationInventoryPage.clickSaveButton();
 	});
@@ -159,29 +117,21 @@ describe('Organization inventory test', () => {
 		organizationInventoryPage.confirmDeleteButtonVisible();
 		organizationInventoryPage.clickConfirmDeleteButton();
 		organizationInventoryPage.waitMessageToHide();
-		organizationInventoryPage.verifycategoryIsDeleted(
-			OrganizationInventoryPageData.productCategoryName
-		);
+		organizationInventoryPage.verifycategoryIsDeleted(OrganizationInventoryPageData.productCategoryName);
 		organizationInventoryPage.backButtonVisible();
 		organizationInventoryPage.clickBackButton();
 	});
 	it('Should be able to edit product type', () => {
 		organizationInventoryPage.addCategoryOrTypeButtonVisible();
-		organizationInventoryPage.clickAddCategoryOrTypeButton(
-			OrganizationInventoryPageData.typeButtonText
-		);
+		organizationInventoryPage.clickAddCategoryOrTypeButton(OrganizationInventoryPageData.typeButtonText);
 		organizationInventoryPage.tableRowVisible();
 		organizationInventoryPage.selectTableRow(0);
 		organizationInventoryPage.editButtonVisible();
 		organizationInventoryPage.clickEditButton();
 		organizationInventoryPage.nameInputVisible();
-		organizationInventoryPage.enterNameInputData(
-			OrganizationInventoryPageData.productTypeName
-		);
+		organizationInventoryPage.enterNameInputData(OrganizationInventoryPageData.productTypeName);
 		organizationInventoryPage.descriptionInputVisible();
-		organizationInventoryPage.enterDescriptionInputData(
-			OrganizationInventoryPageData.productTypeDescription
-		);
+		organizationInventoryPage.enterDescriptionInputData(OrganizationInventoryPageData.productTypeDescription);
 		organizationInventoryPage.saveButtonVisible();
 		organizationInventoryPage.clickSaveButton();
 	});
@@ -194,8 +144,6 @@ describe('Organization inventory test', () => {
 		organizationInventoryPage.confirmDeleteButtonVisible();
 		organizationInventoryPage.clickConfirmDeleteButton();
 		organizationInventoryPage.waitMessageToHide();
-		organizationInventoryPage.verifyTypeIsDeleted(
-			OrganizationInventoryPageData.productTypeName
-		);
+		organizationInventoryPage.verifyTypeIsDeleted(OrganizationInventoryPageData.productTypeName);
 	});
 });

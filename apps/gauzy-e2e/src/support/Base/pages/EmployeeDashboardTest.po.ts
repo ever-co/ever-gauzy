@@ -78,16 +78,16 @@ export const waitMessageToHide = () => {
 };
 
 export const verifyMenuBtnByText = (text: string) => {
-	verifyByText(EmployeeDashboardPage.menuButtonsCss, text)
-}
+	verifyByText(EmployeeDashboardPage.menuButtonsCss, text);
+};
 
 export const clickMenuButtonsByText = (text: string) => {
-	clickElementByText(EmployeeDashboardPage.menuButtonsCss, text)
-}
+	clickElementByText(EmployeeDashboardPage.menuButtonsCss, text);
+};
 
 export const verifyEmployeeSelector = () => {
-	verifyElementIsVisible(EmployeeDashboardPage.employeeSelectorCss)
-}
+	verifyElementIsVisible(EmployeeDashboardPage.employeeSelectorCss);
+};
 
 export const clickOnEmployeeSelector = () => {
 	clickButton(EmployeeDashboardPage.employeeSelectorCss);
@@ -118,7 +118,7 @@ export const verifyIncomeAddButton = () => {
 
 export const clickIncomeAddButton = () => {
 	clickButton(EmployeeDashboardPage.addNewIncomeBtnCss);
-}
+};
 
 export const gridBtnExists = () => {
 	verifyElementIsVisible(EmployeeDashboardPage.gridButtonCss);
@@ -135,7 +135,6 @@ export const selectEmployeeDropdownVisible = () => {
 export const clickEmployeeSelector = () => {
 	clickButton(EmployeeDashboardPage.selectEmployeeDropdownCss);
 	clickButtonDouble(EmployeeDashboardPage.selectEmployeeDropdownCss);
-
 };
 
 export const selectEmployeeFromDropdownByName = (name: string) => {
@@ -207,17 +206,17 @@ export const verifyIncomeExists = (text) => {
 };
 
 export const verifyEmployeeIncome = (text: string) => {
-	verifyByText(EmployeeDashboardPage.verifyDashboardIncomeCss, text)
+	verifyByText(EmployeeDashboardPage.verifyDashboardIncomeCss, text);
 };
 
 export const verifyEmployeeBonus = (text: string) => {
-	verifyByText(EmployeeDashboardPage.verifyDashboardBonusCss, text)
-}
+	verifyByText(EmployeeDashboardPage.verifyDashboardBonusCss, text);
+};
 
 export const clickOnCurrencyField = () => {
-	clickButton(EmployeeDashboardPage.currencyFieldCss)
+	clickButton(EmployeeDashboardPage.currencyFieldCss);
 };
 
 export const selectCurrency = (currency: string) => {
-	clickByText(EmployeeDashboardPage.currenctOptionCss, currency)
+	clickByText(EmployeeDashboardPage.currenctOptionCss, currency);
 };

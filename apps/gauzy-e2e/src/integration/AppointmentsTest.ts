@@ -26,20 +26,10 @@ describe('Book public appointment test', () => {
 		CustomCommands.login(loginPage, LoginPageData, dashboardPage);
 	});
 	it('Should be able to book public appointment', () => {
-		CustomCommands.addEmployee(
-			manageEmployeesPage,
-			firstName,
-			lastName,
-			username,
-			employeeEmail,
-			password,
-			imgUrl
-		);
+		CustomCommands.addEmployee(manageEmployeesPage, firstName, lastName, username, employeeEmail, password, imgUrl);
 		cy.visit('/#/pages/employees/appointments');
 		appointmentsPage.bookPublicAppointmentButtonVisible();
-		appointmentsPage.clickBookPublicAppointmentButton(
-			AppointmentsPageData.bookAppointmentButton
-		);
+		appointmentsPage.clickBookPublicAppointmentButton(AppointmentsPageData.bookAppointmentButton);
 		appointmentsPage.employeeSelectVisible();
 		appointmentsPage.clickEmployeeSelect();
 		appointmentsPage.employeeDropdownVisible();

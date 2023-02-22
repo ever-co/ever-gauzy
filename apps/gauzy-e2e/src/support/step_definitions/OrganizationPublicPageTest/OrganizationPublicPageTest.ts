@@ -33,8 +33,18 @@ const employeeEmail = faker.internet.email();
 const imgUrl = faker.image.avatar();
 const employeeFullName = `${firstName} ${lastName}`;
 
-const organizationName = faker.company.name().toLowerCase().replace(/ /g, '-').replace(/[^\w-]+/g, '').trim();
-const newOrgProfileLink = faker.company.name().toLowerCase().replace(/ /g, '-').replace(/[^\w-]+/g, '').trim();
+const organizationName = faker.company
+	.name()
+	.toLowerCase()
+	.replace(/ /g, '-')
+	.replace(/[^\w-]+/g, '')
+	.trim();
+const newOrgProfileLink = faker.company
+	.name()
+	.toLowerCase()
+	.replace(/ /g, '-')
+	.replace(/[^\w-]+/g, '')
+	.trim();
 const taxId = faker.string.alphanumeric();
 
 // Login with email
@@ -42,7 +52,6 @@ Given('Login with default credentials', () => {
 	CustomCommands.login(loginPage, LoginPageData, dashboardPage);
 	dashboardPage.verifyAccountingDashboardIfVisible();
 	cy.visit('/#/pages/organizations', { timeout: pageLoadTimeout });
-
 });
 
 // Add new organization
@@ -91,9 +100,7 @@ When('User click on country dropdown', () => {
 });
 
 Then('User can select country from dropdown option', () => {
-	organizationPublicPage.selectCountryFromDropdown(
-		AddOrganizationPageData.country
-	);
+	organizationPublicPage.selectCountryFromDropdown(AddOrganizationPageData.country);
 });
 
 And('User can see city input field', () => {
@@ -109,9 +116,7 @@ And('User can see post code input field', () => {
 });
 
 And('User can add value for post code', () => {
-	organizationPublicPage.enterPostcodeInputData(
-		AddOrganizationPageData.postcode
-	);
+	organizationPublicPage.enterPostcodeInputData(AddOrganizationPageData.postcode);
 });
 
 And('User can see street input field', () => {
@@ -135,9 +140,7 @@ When('User click on bonus dropdown', () => {
 });
 
 Then('User can select bonus from dropdown options', () => {
-	organizationPublicPage.selectBonusTypeFromDropdown(
-		AddOrganizationPageData.bonusType
-	);
+	organizationPublicPage.selectBonusTypeFromDropdown(AddOrganizationPageData.bonusType);
 });
 
 And('User can see bonus input field', () => {
@@ -145,9 +148,7 @@ And('User can see bonus input field', () => {
 });
 
 And('User can enter value for bonus', () => {
-	organizationPublicPage.enterBonusPercentageInputData(
-		AddOrganizationPageData.bonusPercentage
-	);
+	organizationPublicPage.enterBonusPercentageInputData(AddOrganizationPageData.bonusPercentage);
 });
 
 Then('User can click next button', () => {
@@ -163,9 +164,7 @@ When('User click on time zone dropdown', () => {
 });
 
 Then('User can select time zone from dropdown options', () => {
-	organizationPublicPage.selectTimeZoneFromDropdown(
-		AddOrganizationPageData.timeZone
-	);
+	organizationPublicPage.selectTimeZoneFromDropdown(AddOrganizationPageData.timeZone);
 });
 
 And('User can see start of week dropdown', () => {
@@ -177,9 +176,7 @@ When('User click on start of week dropdown', () => {
 });
 
 Then('User can select day of week from dropdown options', () => {
-	organizationPublicPage.selectStartOfWeekFromDropdown(
-		AddOrganizationPageData.startOfWeek
-	);
+	organizationPublicPage.selectStartOfWeekFromDropdown(AddOrganizationPageData.startOfWeek);
 });
 
 And('User can see date type dropdown', () => {
@@ -191,9 +188,7 @@ When('User click on date type dropdown', () => {
 });
 
 Then('User can select date type from dropdown options', () => {
-	organizationPublicPage.selectDateTypeFromDropdown(
-		AddOrganizationPageData.dateType
-	);
+	organizationPublicPage.selectDateTypeFromDropdown(AddOrganizationPageData.dateType);
 });
 
 And('User can see region dropdown', () => {
@@ -205,9 +200,7 @@ When('User click on region dropdown', () => {
 });
 
 Then('User can select region from dropdown options', () => {
-	organizationPublicPage.selectRegionFromDropdown(
-		AddOrganizationPageData.region
-	);
+	organizationPublicPage.selectRegionFromDropdown(AddOrganizationPageData.region);
 });
 
 And('User can see number format dropdown', () => {
@@ -219,9 +212,7 @@ When('User click on number format dropdown', () => {
 });
 
 Then('User can select number format from dropdown options', () => {
-	organizationPublicPage.selectNumberFormatFromDropdown(
-		AddOrganizationPageData.numberFormat
-	);
+	organizationPublicPage.selectNumberFormatFromDropdown(AddOrganizationPageData.numberFormat);
 });
 
 And('User can see date format dropdown', () => {
@@ -241,9 +232,7 @@ And('User can see expiry date input field', () => {
 });
 
 And('User can enter value for expiry date', () => {
-	organizationPublicPage.enterExpiryPeriodInputData(
-		AddOrganizationPageData.expiryPeriod
-	);
+	organizationPublicPage.enterExpiryPeriodInputData(AddOrganizationPageData.expiryPeriod);
 });
 
 When('User click on last Next button', () => {
@@ -272,15 +261,7 @@ And('User can add new employee', () => {
 
 	selectOrganization(organizationName);
 
-	CustomCommands.addEmployee(
-		manageEmployeesPage,
-		firstName,
-		lastName,
-		username,
-		employeeEmail,
-		password,
-		imgUrl
-	);
+	CustomCommands.addEmployee(manageEmployeesPage, firstName, lastName, username, employeeEmail, password, imgUrl);
 });
 
 // Add project
@@ -289,10 +270,7 @@ And('User can add new project', () => {
 
 	selectOrganization(organizationName);
 
-	CustomCommands.addProject(
-		organizationProjectsPage,
-		OrganizationProjectsPageData
-	);
+	CustomCommands.addProject(organizationProjectsPage, OrganizationProjectsPageData);
 });
 
 // Add new client
@@ -325,15 +303,11 @@ And('User can see organization name filter input field', () => {
 });
 
 When('User enters organization name filter input value', () => {
-	organizationPublicPage.enterOrganizationNameFilterInputData(
-		organizationName
-	);
+	organizationPublicPage.enterOrganizationNameFilterInputData(organizationName);
 });
 
 Then('User can see filtered organization', () => {
-	organizationPublicPage.verifyOrganizationNameTableRowContains(
-		`${organizationName}`
-	);
+	organizationPublicPage.verifyOrganizationNameTableRowContains(`${organizationName}`);
 });
 
 When('User selects organization from table row', () => {
@@ -387,9 +361,7 @@ Then('User can see company name input field', () => {
 });
 
 And('User enters company name value', () => {
-	organizationPublicPage.enterCompanyNameInputData(
-		OrganizationPublicPageData.copyrightSymbol
-	);
+	organizationPublicPage.enterCompanyNameInputData(OrganizationPublicPageData.copyrightSymbol);
 });
 
 And('User can see company size input field', () => {
@@ -397,9 +369,7 @@ And('User can see company size input field', () => {
 });
 
 And('User enters company size value', () => {
-	organizationPublicPage.enterCompanySizeInputData(
-		OrganizationPublicPageData.companySize
-	);
+	organizationPublicPage.enterCompanySizeInputData(OrganizationPublicPageData.companySize);
 });
 
 And('User can see year founded input field', () => {
@@ -407,9 +377,7 @@ And('User can see year founded input field', () => {
 });
 
 And('User enters year founded value', () => {
-	organizationPublicPage.enterYearFoundedInputData(
-		OrganizationPublicPageData.yearFounded
-	);
+	organizationPublicPage.enterYearFoundedInputData(OrganizationPublicPageData.yearFounded);
 });
 
 And('User can see banner input field', () => {
@@ -417,9 +385,7 @@ And('User can see banner input field', () => {
 });
 
 And('User enters banner value', () => {
-	organizationPublicPage.enterBannerInputData(
-		OrganizationPublicPageData.banner
-	);
+	organizationPublicPage.enterBannerInputData(OrganizationPublicPageData.banner);
 });
 
 And('User see minimum project size dropdown', () => {
@@ -431,9 +397,7 @@ When('User clicks on minimum project size dropdown', () => {
 });
 
 Then('User can select minimum project size from dropdown options', () => {
-	organizationPublicPage.selectMinimumProjectSizeDropdownOption(
-		OrganizationPublicPageData.minimumProjectSizeUSD
-	);
+	organizationPublicPage.selectMinimumProjectSizeDropdownOption(OrganizationPublicPageData.minimumProjectSizeUSD);
 });
 
 And('User can see client focus dropdown', () => {
@@ -445,9 +409,7 @@ When('User clicks on client focus dropdown', () => {
 });
 
 Then('User can select client focus from dropdown options', () => {
-	organizationPublicPage.selectClientFocusDropdownOptions(
-		OrganizationPublicPageData.clientFocus
-	);
+	organizationPublicPage.selectClientFocusDropdownOptions(OrganizationPublicPageData.clientFocus);
 });
 
 And('User can see description tab', () => {
@@ -463,9 +425,7 @@ Then('User can see short description input field', () => {
 });
 
 And('User enters short description value', () => {
-	organizationPublicPage.enterShortDescriptionInputData(
-		OrganizationPublicPageData.shortDescription
-	);
+	organizationPublicPage.enterShortDescriptionInputData(OrganizationPublicPageData.shortDescription);
 });
 
 And('User can see awards tab', () => {
@@ -489,9 +449,7 @@ Then('User can see award name input field', () => {
 });
 
 And('User enters award name value', () => {
-	organizationPublicPage.enterAwardNameInputData(
-		OrganizationPublicPageData.awardName
-	);
+	organizationPublicPage.enterAwardNameInputData(OrganizationPublicPageData.awardName);
 });
 
 And('User can see award year input field', () => {
@@ -499,9 +457,7 @@ And('User can see award year input field', () => {
 });
 
 And('User enters award year value', () => {
-	organizationPublicPage.enterAwardYearInputData(
-		OrganizationPublicPageData.awardYear
-	);
+	organizationPublicPage.enterAwardYearInputData(OrganizationPublicPageData.awardYear);
 });
 
 And('User can see save award button', () => {
@@ -545,9 +501,7 @@ When('User clicks on language dropdown', () => {
 });
 
 Then('User can select language from dropdown options', () => {
-	organizationPublicPage.selectLanguageFromDropdownOptions(
-		OrganizationPublicPageData.language
-	);
+	organizationPublicPage.selectLanguageFromDropdownOptions(OrganizationPublicPageData.language);
 });
 
 And('User can see language level dropdown', () => {
@@ -559,9 +513,7 @@ When('User clicks on language level dropdown', () => {
 });
 
 Then('User can select language level from dropdown options', () => {
-	organizationPublicPage.selectLanguageLevelFromDropdownOptions(
-		OrganizationPublicPageData.languageLevel
-	);
+	organizationPublicPage.selectLanguageLevelFromDropdownOptions(OrganizationPublicPageData.languageLevel);
 });
 
 And('User can see save language button', () => {
@@ -590,9 +542,7 @@ Then('Notification message will appear', () => {
 
 // Verify public page data
 And('User can verify company name', () => {
-	organizationPublicPage.verifyCompanyName(
-		OrganizationPublicPageData.copyrightSymbol
-	);
+	organizationPublicPage.verifyCompanyName(OrganizationPublicPageData.copyrightSymbol);
 });
 
 And('User can verify banner', () => {
@@ -600,19 +550,13 @@ And('User can verify banner', () => {
 });
 
 And('User can verify company size', () => {
-	organizationPublicPage.verifyCompanySize(
-		OrganizationPublicPageData.companySizeStr
-	);
+	organizationPublicPage.verifyCompanySize(OrganizationPublicPageData.companySizeStr);
 });
 
 And('User can verify total clients', () => {
-	organizationPublicPage.verifyTotalClients(
-		OrganizationPublicPageData.totalClients
-	);
+	organizationPublicPage.verifyTotalClients(OrganizationPublicPageData.totalClients);
 });
 
 And('User can verify client focus', () => {
-	organizationPublicPage.verifyClientFocus(
-		OrganizationPublicPageData.clientFocus
-	);
+	organizationPublicPage.verifyClientFocus(OrganizationPublicPageData.clientFocus);
 });

@@ -22,9 +22,7 @@ export const gridBtnClick = (index) => {
 };
 
 export const addCategoryOrTypeButtonVisible = () => {
-	verifyElementIsVisible(
-		OrganizationInventoryPage.addCategoryOrTypeButtonCss
-	);
+	verifyElementIsVisible(OrganizationInventoryPage.addCategoryOrTypeButtonCss);
 };
 
 export const clickAddCategoryOrTypeButton = (text) => {
@@ -56,9 +54,7 @@ export const clickProductTypeDropdown = () => {
 };
 
 export const productCategoryDropdownVisible = () => {
-	verifyElementIsVisible(
-		OrganizationInventoryPage.productCategoryDropdownCss
-	);
+	verifyElementIsVisible(OrganizationInventoryPage.productCategoryDropdownCss);
 };
 
 export const clickProductCategoryDropdown = () => {
@@ -113,9 +109,7 @@ export const clickBackFromCategodyButton = () => {
 };
 
 export const backFromInventoryButtonVisible = () => {
-	verifyElementIsVisible(
-		OrganizationInventoryPage.backFromInventoryButtonCss
-	);
+	verifyElementIsVisible(OrganizationInventoryPage.backFromInventoryButtonCss);
 };
 
 export const clickBackFromInventoryButton = () => {
@@ -191,16 +185,11 @@ export const verifyInventoryIsDeleted = () => {
 };
 
 export const merchantOrWarehouseBtnVisible = () => {
-	verifyElementIsVisible(
-		OrganizationInventoryPage.merchantsOrWarehousesBtnCss
-	);
+	verifyElementIsVisible(OrganizationInventoryPage.merchantsOrWarehousesBtnCss);
 };
 
 export const clickMerchantOrWarehouseBtn = (text) => {
-	clickElementByText(
-		OrganizationInventoryPage.merchantsOrWarehousesBtnCss,
-		text
-	);
+	clickElementByText(OrganizationInventoryPage.merchantsOrWarehousesBtnCss, text);
 };
 
 export const addMerchantBtnVisible = () => {
@@ -285,17 +274,12 @@ export const selectTagFromDropdownOptions = (index) => {
 };
 
 export const merchantDescriptionInputVisible = () => {
-	verifyElementIsVisible(
-		OrganizationInventoryPage.merchantDescriptionInputCss
-	);
+	verifyElementIsVisible(OrganizationInventoryPage.merchantDescriptionInputCss);
 };
 
 export const enterMerchantDescription = (description) => {
 	clearField(OrganizationInventoryPage.merchantDescriptionInputCss);
-	enterInput(
-		OrganizationInventoryPage.merchantDescriptionInputCss,
-		description
-	);
+	enterInput(OrganizationInventoryPage.merchantDescriptionInputCss, description);
 };
 
 export const activeStateCheckBoxVisible = () => {
@@ -421,17 +405,12 @@ export const enterWarehouseEmail = (email) => {
 };
 
 export const warehouseDescriptionInputVisible = () => {
-	verifyElementIsVisible(
-		OrganizationInventoryPage.warehouseDescriptionInputCss
-	);
+	verifyElementIsVisible(OrganizationInventoryPage.warehouseDescriptionInputCss);
 };
 
 export const enterWarehouseDescription = (description) => {
 	clearField(OrganizationInventoryPage.warehouseDescriptionInputCss);
-	enterInput(
-		OrganizationInventoryPage.warehouseDescriptionInputCss,
-		description
-	);
+	enterInput(OrganizationInventoryPage.warehouseDescriptionInputCss, description);
 };
 
 export const tabBtnVisible = () => {

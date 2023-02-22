@@ -23,13 +23,7 @@ Given('Login with default credentials', () => {
 // Add new organization
 And('User can add new organization', () => {
 	dashboardPage.verifyAccountingDashboardIfVisible();
-	CustomCommands.addOrganization(
-		addOrganizationPage,
-		organizationName,
-		AddOrganizationPageData,
-		taxId,
-		street
-	);
+	CustomCommands.addOrganization(addOrganizationPage, organizationName, AddOrganizationPageData, taxId, street);
 });
 
 // Manage organization
@@ -86,9 +80,7 @@ When('User click on country dropdown', () => {
 });
 
 Then('User can select country from dropdown options', () => {
-	manageOrganizationPage.selectCountryFromDropdown(
-		ManageOrganizationPageData.country
-	);
+	manageOrganizationPage.selectCountryFromDropdown(ManageOrganizationPageData.country);
 });
 
 And('User can see city input field', () => {
@@ -104,9 +96,7 @@ And('User can see post code input field', () => {
 });
 
 And('User can enter value for post code', () => {
-	manageOrganizationPage.enterPostcodeInputData(
-		ManageOrganizationPageData.postcode
-	);
+	manageOrganizationPage.enterPostcodeInputData(ManageOrganizationPageData.postcode);
 });
 
 And('User can see street input field', () => {
@@ -134,9 +124,7 @@ When('User click on time zone dropdown', () => {
 });
 
 Then('User can select time zone option from dropdown', () => {
-	manageOrganizationPage.selectTimeZoneFromDropdown(
-		ManageOrganizationPageData.timeZone
-	);
+	manageOrganizationPage.selectTimeZoneFromDropdown(ManageOrganizationPageData.timeZone);
 });
 
 And('User can see start of week dropdown', () => {
@@ -148,9 +136,7 @@ When('User click on start of week dropdown', () => {
 });
 
 Then('User can select start of week option from dropdown', () => {
-	manageOrganizationPage.selectStartOfWeekFromDropdown(
-		ManageOrganizationPageData.startOfWeek
-	);
+	manageOrganizationPage.selectStartOfWeekFromDropdown(ManageOrganizationPageData.startOfWeek);
 });
 
 And('User can see date type dropdown', () => {
@@ -162,9 +148,7 @@ When('User click on date type dropdown', () => {
 });
 
 Then('User can select date type from dropdown options', () => {
-	manageOrganizationPage.selectDateTypeFromDropdown(
-		ManageOrganizationPageData.dateType
-	);
+	manageOrganizationPage.selectDateTypeFromDropdown(ManageOrganizationPageData.dateType);
 });
 
 And('User can see region dropdown', () => {
@@ -176,9 +160,7 @@ When('User click on region dropdown', () => {
 });
 
 Then('User can select region from dropdown options', () => {
-	manageOrganizationPage.selectRegionFromDropdown(
-		ManageOrganizationPageData.region
-	);
+	manageOrganizationPage.selectRegionFromDropdown(ManageOrganizationPageData.region);
 });
 
 And('User can see number format dropdown', () => {
@@ -190,9 +172,7 @@ When('User click on number format dropdown', () => {
 });
 
 Then('User can select number format from dropdown options', () => {
-	manageOrganizationPage.selectNumberFormatFromDropdown(
-		ManageOrganizationPageData.numberFormat
-	);
+	manageOrganizationPage.selectNumberFormatFromDropdown(ManageOrganizationPageData.numberFormat);
 });
 
 And('User can see date format dropdown', () => {

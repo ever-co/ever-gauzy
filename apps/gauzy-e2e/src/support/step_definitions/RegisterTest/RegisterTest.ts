@@ -58,12 +58,9 @@ When('User click on click on register button', () => {
 });
 
 // Create first organization
-Then(
-	'User will be redirected to create first organization and add organization name',
-	() => {
-		onboardingPage.enterOrganizationName(organizationName);
-	}
-);
+Then('User will be redirected to create first organization and add organization name', () => {
+	onboardingPage.enterOrganizationName(organizationName);
+});
 
 And('User can select currency', () => {
 	onboardingPage.selectCurrency(OnboardingPageData.currency);
@@ -138,9 +135,7 @@ And('User can see bonus percentage input field', () => {
 });
 
 And('User can enter bonus percentage data', () => {
-	registerPage.enterBonusPercentageInputData(
-		RegisterPageData.bonusPercentage
-	);
+	registerPage.enterBonusPercentageInputData(RegisterPageData.bonusPercentage);
 });
 
 When('User click on next button', () => {

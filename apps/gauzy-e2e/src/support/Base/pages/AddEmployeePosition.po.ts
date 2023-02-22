@@ -70,9 +70,7 @@ export const clickSavePositionButton = () => {
 };
 
 export const editEmployeePositionButtonVisible = () => {
-	verifyElementIsVisible(
-		AddEmployeePositionPage.editEmployeePositionButtonCss
-	);
+	verifyElementIsVisible(AddEmployeePositionPage.editEmployeePositionButtonCss);
 };
 
 export const clickEditEmployeePositionButton = () => {
@@ -89,9 +87,7 @@ export const enterEditPositionData = (data) => {
 };
 
 export const deletePositionButtonVisible = () => {
-	verifyElementIsVisible(
-		AddEmployeePositionPage.removeEmployeePositionButtonCss
-	);
+	verifyElementIsVisible(AddEmployeePositionPage.removeEmployeePositionButtonCss);
 };
 
 export const clickDeletePositionButton = () => {
@@ -99,9 +95,7 @@ export const clickDeletePositionButton = () => {
 };
 
 export const confirmDeleteButtonVisible = () => {
-	verifyElementIsVisible(
-		AddEmployeePositionPage.confirmDeletePositionButtonCss
-	);
+	verifyElementIsVisible(AddEmployeePositionPage.confirmDeletePositionButtonCss);
 };
 
 export const clickConfirmDeletePositionButton = () => {

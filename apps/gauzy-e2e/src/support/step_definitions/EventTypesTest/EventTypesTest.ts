@@ -26,16 +26,8 @@ Given('Login with default credentials', () => {
 
 // Add new employee
 And('User can add new employee', () => {
-	dashboardPage.verifyAccountingDashboard()
-	CustomCommands.addEmployee(
-		manageEmployeesPage,
-		firstName,
-		lastName,
-		username,
-		employeeEmail,
-		password,
-		imgUrl
-	);
+	dashboardPage.verifyAccountingDashboard();
+	CustomCommands.addEmployee(manageEmployeesPage, firstName, lastName, username, employeeEmail, password, imgUrl);
 });
 
 // Add new event type
@@ -87,9 +79,7 @@ And('User can see description input field', () => {
 });
 
 And('User can enter value for description', () => {
-	eventTypesPage.enterDescriptionInputData(
-		EventTypePageData.defaultDescription
-	);
+	eventTypesPage.enterDescriptionInputData(EventTypePageData.defaultDescription);
 });
 
 And('User can see duration input field', () => {
@@ -150,9 +140,7 @@ And('User can see description input field', () => {
 });
 
 And('User can enter value for description', () => {
-	eventTypesPage.enterDescriptionInputData(
-		EventTypePageData.defaultDescription
-	);
+	eventTypesPage.enterDescriptionInputData(EventTypePageData.defaultDescription);
 });
 
 And('User can see duration input field', () => {

@@ -27,15 +27,7 @@ Given('Login with default credentials', () => {
 // Add new employee
 And('User can add new employee', () => {
 	dashboardPage.verifyAccountingDashboardIfVisible();
-	CustomCommands.addEmployee(
-		manageEmployeesPage,
-		firstName,
-		lastName,
-		username,
-		employeeEmail,
-		password,
-		imgUrl
-	);
+	CustomCommands.addEmployee(manageEmployeesPage, firstName, lastName, username, employeeEmail, password, imgUrl);
 });
 
 // Add new expense
@@ -80,9 +72,7 @@ When('User click on expense dropdown', () => {
 });
 
 Then('User can select expense from dropdown options', () => {
-	recurringExpensesPage.selectExpenseOptionDropdown(
-		RecurringExpensesPageData.defaultExpense
-	);
+	recurringExpensesPage.selectExpenseOptionDropdown(RecurringExpensesPageData.defaultExpense);
 });
 
 And('User can see expense value input field', () => {
@@ -90,9 +80,7 @@ And('User can see expense value input field', () => {
 });
 
 And('User can enter expense value', () => {
-	recurringExpensesPage.enterExpenseValueInputData(
-		RecurringExpensesPageData.defaultExpenseValue
-	);
+	recurringExpensesPage.enterExpenseValueInputData(RecurringExpensesPageData.defaultExpenseValue);
 });
 
 And('User can see save button', () => {
@@ -129,9 +117,7 @@ Then('User can see expense value input field again', () => {
 });
 
 And('User can enter new expense value', () => {
-	recurringExpensesPage.enterExpenseValueInputData(
-		RecurringExpensesPageData.editExpenseValue
-	);
+	recurringExpensesPage.enterExpenseValueInputData(RecurringExpensesPageData.editExpenseValue);
 });
 
 And('User can see save button again', () => {

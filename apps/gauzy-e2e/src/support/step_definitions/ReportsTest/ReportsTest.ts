@@ -18,7 +18,6 @@ import { AddTasksPageData } from '../../Base/pagedata/AddTasksPageData';
 import * as timeTrackingPage from '../../Base/pages/TimeTracking.po';
 import { TimeTrackingPageData } from '../../Base/pagedata/TimeTrackingPageData';
 
-
 import { Given, Then, When, And } from 'cypress-cucumber-preprocessor/steps';
 
 const pageLoadTimeout = Cypress.config('pageLoadTimeout');
@@ -37,8 +36,7 @@ let password = faker.internet.password();
 let employeeEmail = faker.internet.email();
 let imgUrl = faker.image.avatar();
 let employeeFullName = `${firstName} ${lastName}`;
-let projectName = faker.company.name()
-
+let projectName = faker.company.name();
 
 let description = faker.lorem.text();
 
@@ -119,15 +117,7 @@ And('User can add new employee', () => {
 	CustomCommands.logout(dashboardPage, logoutPage, loginPage);
 	CustomCommands.clearCookies();
 	CustomCommands.login(loginPage, LoginPageData, dashboardPage);
-	CustomCommands.addEmployee(
-		manageEmployeesPage,
-		firstName,
-		lastName,
-		username,
-		employeeEmail,
-		password,
-		imgUrl
-	);
+	CustomCommands.addEmployee(manageEmployeesPage, firstName, lastName, username, employeeEmail, password, imgUrl);
 });
 
 // Add new project
@@ -176,15 +166,19 @@ And('User can add new task', () => {
 	CustomCommands.logout(dashboardPage, logoutPage, loginPage);
 	CustomCommands.clearCookies();
 	CustomCommands.login(loginPage, LoginPageData, dashboardPage);
-	CustomCommands.addTask(addTaskPage, {
-		defaultTaskProject: projectName,
-		defaultTaskTitle: AddTasksPageData.defaultTaskTitle,
-		editTaskTitle: AddTasksPageData.defaultTaskTitle,
-		defaultTaskEstimateDays: AddTasksPageData.defaultTaskEstimateDays,
-		defaultTaskEstimateHours: AddTasksPageData.defaultTaskEstimateHours,
-		defaultTaskEstimateMinutes: AddTasksPageData.defaultTaskEstimateMinutes,
-		defaultTaskDescription: AddTasksPageData.defaultTaskDescription
-	}, employeeFullName);
+	CustomCommands.addTask(
+		addTaskPage,
+		{
+			defaultTaskProject: projectName,
+			defaultTaskTitle: AddTasksPageData.defaultTaskTitle,
+			editTaskTitle: AddTasksPageData.defaultTaskTitle,
+			defaultTaskEstimateDays: AddTasksPageData.defaultTaskEstimateDays,
+			defaultTaskEstimateHours: AddTasksPageData.defaultTaskEstimateHours,
+			defaultTaskEstimateMinutes: AddTasksPageData.defaultTaskEstimateMinutes,
+			defaultTaskDescription: AddTasksPageData.defaultTaskDescription
+		},
+		employeeFullName
+	);
 });
 
 // Logout
@@ -195,12 +189,7 @@ And('User can logout', () => {
 
 // Login as employee
 And('Newly created employee can log in', () => {
-	CustomCommands.loginAsEmployee(
-		loginPage,
-		dashboardPage,
-		employeeEmail,
-		password
-	);
+	CustomCommands.loginAsEmployee(loginPage, dashboardPage, employeeEmail, password);
 });
 
 // Add time

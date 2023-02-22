@@ -27,15 +27,7 @@ Given('Login with default credentials', () => {
 // Add employee
 And('User can add new employee', () => {
 	dashboardPage.verifyAccountingDashboardIfVisible();
-	CustomCommands.addEmployee(
-		manageEmployeesPage,
-		firstName,
-		lastName,
-		username,
-		employeeEmail,
-		password,
-		imgUrl
-	);
+	CustomCommands.addEmployee(manageEmployeesPage, firstName, lastName, username, employeeEmail, password, imgUrl);
 });
 
 // Add new policy

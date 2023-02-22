@@ -24,9 +24,7 @@ describe('Add SMTP server test', () => {
 		customSMTPPage.enterPortInputData(CustomSMTPPageData.port);
 		customSMTPPage.secureDropdownVisible();
 		customSMTPPage.clickSecureDropdown();
-		customSMTPPage.selectSecureOptionFromDropdown(
-			CustomSMTPPageData.secure
-		);
+		customSMTPPage.selectSecureOptionFromDropdown(CustomSMTPPageData.secure);
 		customSMTPPage.usernameInputVisible();
 		customSMTPPage.enterUsernameInputData(username);
 		customSMTPPage.passwordInputVisible();

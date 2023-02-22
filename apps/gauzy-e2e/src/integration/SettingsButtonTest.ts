@@ -50,16 +50,12 @@ describe('Settings button test', () => {
 	});
 	it('Should be able to verify body cosmic theme', () => {
 		settingsButton.clickThemesDropdown(0);
-		settingsButton.clickDropdownOption(
-			SettingsButtonData.themeButtonCosmic
-		);
+		settingsButton.clickDropdownOption(SettingsButtonData.themeButtonCosmic);
 		settingsButton.verifyBodyTheme(SettingsButtonData.cosmicTheme);
 	});
 	it('Should be able to verify body corporate theme', () => {
 		settingsButton.clickThemesDropdown(0);
-		settingsButton.clickDropdownOption(
-			SettingsButtonData.themeButtonCorporate
-		);
+		settingsButton.clickDropdownOption(SettingsButtonData.themeButtonCorporate);
 		settingsButton.verifyBodyTheme(SettingsButtonData.corporateTheme);
 	});
 	it('Should be able to verify english header', () => {
@@ -69,16 +65,12 @@ describe('Settings button test', () => {
 	});
 	it('Should be able to verify bulgarian header', () => {
 		settingsButton.clickThemesDropdown(1);
-		settingsButton.clickDropdownOption(
-			SettingsButtonData.languageBulgarian
-		);
+		settingsButton.clickDropdownOption(SettingsButtonData.languageBulgarian);
 		settingsButton.verifyHeaderText(SettingsButtonData.headerBulgarian);
 	});
 	it('Should be able to verify russian header', () => {
 		settingsButton.clickThemesDropdown(1);
-		settingsButton.clickDropdownOption(
-			SettingsButtonData.changeLangRussian
-		);
+		settingsButton.clickDropdownOption(SettingsButtonData.changeLangRussian);
 		settingsButton.verifyHeaderText(SettingsButtonData.headerRussian);
 	});
 	it('Should be able to verify hebrew header', () => {

@@ -13,19 +13,14 @@ describe('Organization teams test', () => {
 	});
 
 	it('Should be able to add new team', () => {
-		CustomCommands.addTag(
-			organizationTagsUserPage,
-			OrganizationTagsPageData
-		);
+		CustomCommands.addTag(organizationTagsUserPage, OrganizationTagsPageData);
 		cy.visit('/#/pages/organization/teams');
 		organizationTeamsPage.gridBtnExists();
 		organizationTeamsPage.gridBtnClick(1);
 		organizationTeamsPage.addTeamButtonVisible();
 		organizationTeamsPage.clickAddTeamButton();
 		organizationTeamsPage.nameInputVisible();
-		organizationTeamsPage.enterNameInputData(
-			OrganizationTeamsPageData.name
-		);
+		organizationTeamsPage.enterNameInputData(OrganizationTeamsPageData.name);
 		organizationTeamsPage.tagsMultiSelectVisible();
 		organizationTeamsPage.clickTagsMultiSelect();
 		organizationTeamsPage.selectTagsFromDropdown(0);
@@ -47,9 +42,7 @@ describe('Organization teams test', () => {
 		organizationTeamsPage.editButtonVisible();
 		organizationTeamsPage.clickEditButton();
 		organizationTeamsPage.nameInputVisible();
-		organizationTeamsPage.enterNameInputData(
-			OrganizationTeamsPageData.editName
-		);
+		organizationTeamsPage.enterNameInputData(OrganizationTeamsPageData.editName);
 		organizationTeamsPage.tagsMultiSelectVisible();
 		organizationTeamsPage.clickTagsMultiSelect();
 		organizationTeamsPage.selectTagsFromDropdown(0);
@@ -63,9 +56,7 @@ describe('Organization teams test', () => {
 		organizationTeamsPage.saveButtonVisible();
 		organizationTeamsPage.clickSaveButton();
 		organizationTeamsPage.waitMessageToHide();
-		organizationTeamsPage.verifyTeamExists(
-			OrganizationTeamsPageData.editName
-		);
+		organizationTeamsPage.verifyTeamExists(OrganizationTeamsPageData.editName);
 	});
 	it('Should be able to delete team', () => {
 		organizationTeamsPage.selectTableRow(0);
@@ -74,8 +65,6 @@ describe('Organization teams test', () => {
 		organizationTeamsPage.confirmDeleteButtonVisible();
 		organizationTeamsPage.clickConfirmDeleteButton();
 		organizationTeamsPage.waitMessageToHide();
-		organizationTeamsPage.verifyTeamIsDeleted(
-			OrganizationTeamsPageData.editName
-		);
+		organizationTeamsPage.verifyTeamIsDeleted(OrganizationTeamsPageData.editName);
 	});
 });

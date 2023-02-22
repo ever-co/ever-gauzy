@@ -15,14 +15,8 @@ describe('Payments test', () => {
 	});
 
 	it('Should able to add new payment', () => {
-		CustomCommands.addProject(
-			organizationProjectsPage,
-			OrganizationProjectsPageData
-		);
-		CustomCommands.addTag(
-			organizationTagsUserPage,
-			OrganizationTagsPageData
-		);
+		CustomCommands.addProject(organizationProjectsPage, OrganizationProjectsPageData);
+		CustomCommands.addTag(organizationTagsUserPage, OrganizationTagsPageData);
 		cy.visit('/#/pages/accounting/payments');
 		paymentsPage.gridBtnExists();
 		paymentsPage.gridBtnClick(1);

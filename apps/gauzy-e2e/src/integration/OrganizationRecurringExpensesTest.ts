@@ -25,9 +25,7 @@ describe('Organization recurring expenses test', () => {
 		organizationRecurringExpensesPage.saveExpenseButtonVisible();
 		organizationRecurringExpensesPage.clickSaveExpenseButton();
 		organizationRecurringExpensesPage.waitMessageToHide();
-		organizationRecurringExpensesPage.verifyExpenseExists(
-			OrganizationRecurringExpensesPageData.defaultExpense
-		);
+		organizationRecurringExpensesPage.verifyExpenseExists(OrganizationRecurringExpensesPageData.defaultExpense);
 	});
 	it('Should be able to edit expense', () => {
 		organizationRecurringExpensesPage.settingsButtonVisible();

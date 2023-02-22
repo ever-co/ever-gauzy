@@ -29,10 +29,7 @@ export const clickEmployeeDropdown = () => {
 };
 
 export const selectEmployeeFromDropdown = (index) => {
-	clickButtonByIndex(
-		JobsProposalsPage.selectEmployeeDropdownOptionCss,
-		index
-	);
+	clickButtonByIndex(JobsProposalsPage.selectEmployeeDropdownOptionCss, index);
 };
 
 export const nameInputVisible = () => {

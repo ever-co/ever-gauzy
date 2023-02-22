@@ -27,15 +27,7 @@ describe('Manage interviews test', () => {
 	});
 
 	it('Should be able to add interview', () => {
-		CustomCommands.addCandidate(
-			inviteCandidatePage,
-			firstName,
-			lastName,
-			username,
-			email,
-			password,
-			imgUrl
-		);
+		CustomCommands.addCandidate(inviteCandidatePage, firstName, lastName, username, email, password, imgUrl);
 		cy.visit('/#/pages/employees/candidates/interviews/calendar');
 		manageInterviewsPage.addInterviewButtonVisible();
 		manageInterviewsPage.clickAddInterviewButton();
@@ -44,9 +36,7 @@ describe('Manage interviews test', () => {
 		manageInterviewsPage.candidateDropdownOptionVisible();
 		manageInterviewsPage.selectCandidateFromDropdown(0);
 		manageInterviewsPage.titleInputVisible();
-		manageInterviewsPage.enterTitleInputData(
-			ManageInterviewsPageData.title
-		);
+		manageInterviewsPage.enterTitleInputData(ManageInterviewsPageData.title);
 		manageInterviewsPage.dateInputVisible();
 		manageInterviewsPage.enterDateInputData();
 		manageInterviewsPage.clickKeyboardButtonByKeyCode(9);
@@ -58,9 +48,7 @@ describe('Manage interviews test', () => {
 		manageInterviewsPage.interviewTypeButtonVisible();
 		manageInterviewsPage.clickInterviewTypeButton(1);
 		manageInterviewsPage.loactioninputVisible();
-		manageInterviewsPage.enterLocationInputData(
-			ManageInterviewsPageData.location
-		);
+		manageInterviewsPage.enterLocationInputData(ManageInterviewsPageData.location);
 		manageInterviewsPage.noteInputVisible();
 		manageInterviewsPage.enterNoteInputData(ManageInterviewsPageData.note);
 		manageInterviewsPage.nextButtonVisible();

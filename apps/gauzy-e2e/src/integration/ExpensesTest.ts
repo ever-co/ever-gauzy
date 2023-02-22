@@ -20,14 +20,8 @@ describe('Expense test', () => {
 	});
 
 	it('Should be able to add new expense', () => {
-		CustomCommands.addProject(
-			organizationProjectsPage,
-			OrganizationProjectsPageData
-		);
-		CustomCommands.addTag(
-			organizationTagsUserPage,
-			OrganizationTagsPageData
-		);
+		CustomCommands.addProject(organizationProjectsPage, OrganizationProjectsPageData);
+		CustomCommands.addTag(organizationTagsUserPage, OrganizationTagsPageData);
 		cy.visit('/#/pages/accounting/expenses');
 		expensesPage.gridBtnExists();
 		expensesPage.gridBtnClick(1);

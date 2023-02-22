@@ -11,7 +11,6 @@ import {
 	verifyByText,
 	clickButtonByIndex,
 	scrollDown
-
 } from '../utils/util';
 import { EmployeeAddInfoPage } from '../pageobjects/EmployeeAddInfoPageObject';
 
@@ -19,7 +18,6 @@ export const gridBtnExists = () => {
 	cy.intercept('GET', '/api/employee-level*').as('waitLevel');
 	cy.wait('@waitLevel');
 	verifyElementIsVisible(EmployeeAddInfoPage.gridButtonCss);
-
 };
 
 export const gridBtnClick = (index) => {
@@ -80,16 +78,16 @@ export const waitMessageToHide = () => {
 };
 
 export const verifyMenuBtnByText = (text: string) => {
-	verifyByText(EmployeeAddInfoPage.menuButtonsCss, text)
-}
+	verifyByText(EmployeeAddInfoPage.menuButtonsCss, text);
+};
 
 export const clickMenuButtonsByText = (text: string) => {
-	clickElementByText(EmployeeAddInfoPage.menuButtonsCss, text)
-}
+	clickElementByText(EmployeeAddInfoPage.menuButtonsCss, text);
+};
 
 export const verifyEmployeeSelector = () => {
-	verifyElementIsVisible(EmployeeAddInfoPage.employeeSelectorCss)
-}
+	verifyElementIsVisible(EmployeeAddInfoPage.employeeSelectorCss);
+};
 
 export const clickOnEmployeeSelector = () => {
 	clickButton(EmployeeAddInfoPage.employeeSelectorCss);
@@ -124,7 +122,7 @@ export const clickTab = (text: string) => {
 };
 
 export const verifyInputField = () => {
-	verifyElementIsVisible(EmployeeAddInfoPage.shortDecsInputCss)
+	verifyElementIsVisible(EmployeeAddInfoPage.shortDecsInputCss);
 };
 
 export const enterInputField = (text: string) => {
@@ -134,7 +132,7 @@ export const enterInputField = (text: string) => {
 
 export const verifyLevelInput = () => {
 	scrollDown(EmployeeAddInfoPage.formCss);
-	verifyElementIsVisible(EmployeeAddInfoPage.levelInputFieldCss)
+	verifyElementIsVisible(EmployeeAddInfoPage.levelInputFieldCss);
 };
 
 export const clickOnLevelInput = () => {
@@ -156,4 +154,4 @@ export const clickOnSaveBtn = () => {
 
 export const verifyInfo = (text: string) => {
 	verifyByText(EmployeeAddInfoPage.shortDecsCss, text);
-}
+};

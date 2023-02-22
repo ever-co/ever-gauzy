@@ -9,8 +9,7 @@ export const AddTaskPage = {
 	tagsSelectCss: '#addTags',
 	tagsSelectOptionCss: '[type="checkbox"]',
 	closeTagsMultiSelectDropdownCss: '.ng-select-container > .ng-arrow-wrapper',
-	confirmDuplicateOrEditTaskButtonCss:
-		'nb-card-footer > button[status="success"]',
+	confirmDuplicateOrEditTaskButtonCss: 'nb-card-footer > button[status="success"]',
 	confirmDeleteTaskButtonCss: 'nb-card-footer > button[status="danger"]',
 	addTitleInputCss: '[formControlName="title"]',
 	selectEmployeeMultiSelectCss: 'button[class="select-button placeholder"]',
@@ -23,6 +22,5 @@ export const AddTaskPage = {
 	saveNewTaskButtonCss: 'nb-card-footer > button[status="success"]',
 	verifyTextCss: 'ga-notes-with-tags > div > div.ng-star-inserted',
 	toastrMessageCss: 'nb-toast.ng-trigger',
-	searchTitleInputCss: 'ng-component > input[placeholder="Title"]',
-
+	searchTitleInputCss: 'ng-component > input[placeholder="Title"]'
 };

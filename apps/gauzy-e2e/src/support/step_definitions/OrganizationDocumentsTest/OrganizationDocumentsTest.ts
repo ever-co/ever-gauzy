@@ -14,13 +14,10 @@ import { waitUntil } from '../../Base/utils/util';
 const pageLoadTimeout = Cypress.config('pageLoadTimeout');
 
 // Login with email
-Given(
-	'Login with default credentials and go to Organization documents page',
-	() => {
-		CustomCommands.login(loginPage, LoginPageData, dashboardPage);
-		cy.visit('/#/pages/organization/documents', { timeout: pageLoadTimeout });
-	}
-);
+Given('Login with default credentials and go to Organization documents page', () => {
+	CustomCommands.login(loginPage, LoginPageData, dashboardPage);
+	cy.visit('/#/pages/organization/documents', { timeout: pageLoadTimeout });
+});
 
 // Add new document
 And('User can see grid button', () => {
@@ -44,9 +41,7 @@ Then('User can see name input field', () => {
 });
 
 And('User can enter value for name', () => {
-	organizationDocumentsPage.enterNameInputData(
-		OrganizationDocumentsPageData.documentName
-	);
+	organizationDocumentsPage.enterNameInputData(OrganizationDocumentsPageData.documentName);
 });
 
 And('User can see url input field', () => {
@@ -73,9 +68,7 @@ Then('Notification message will appear', () => {
 });
 
 And('User can verify document was created', () => {
-	organizationDocumentsPage.verifyDocumentExists(
-		OrganizationDocumentsPageData.documentName
-	);
+	organizationDocumentsPage.verifyDocumentExists(OrganizationDocumentsPageData.documentName);
 });
 
 // Edit document
@@ -92,9 +85,7 @@ Then('User can see edit name input field', () => {
 });
 
 And('User can enter new value for name', () => {
-	organizationDocumentsPage.enterNameInputData(
-		OrganizationDocumentsPageData.editDocumentName
-	);
+	organizationDocumentsPage.enterNameInputData(OrganizationDocumentsPageData.editDocumentName);
 });
 
 And('User can see save document button again', () => {
@@ -110,9 +101,7 @@ Then('Notification message will appear', () => {
 });
 
 And('User can verify document was edited', () => {
-	organizationDocumentsPage.verifyDocumentExists(
-		OrganizationDocumentsPageData.editDocumentName
-	);
+	organizationDocumentsPage.verifyDocumentExists(OrganizationDocumentsPageData.editDocumentName);
 });
 
 // Delete document
@@ -137,7 +126,5 @@ Then('Notification message will appear', () => {
 });
 
 And('User can verify document was deleted', () => {
-	organizationDocumentsPage.verifyDocumentIsDeleted(
-		OrganizationDocumentsPageData.editDocumentName
-	);
+	organizationDocumentsPage.verifyDocumentIsDeleted(OrganizationDocumentsPageData.editDocumentName);
 });

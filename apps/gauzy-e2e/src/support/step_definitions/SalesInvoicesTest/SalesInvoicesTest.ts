@@ -49,15 +49,7 @@ And('User can add new employee', () => {
 	CustomCommands.logout(dashboardPage, logoutPage, loginPage);
 	CustomCommands.clearCookies();
 	CustomCommands.login(loginPage, LoginPageData, dashboardPage);
-	CustomCommands.addEmployee(
-		manageEmployeesPage,
-		firstName,
-		lastName,
-		username,
-		employeeEmail,
-		password,
-		imgUrl
-	);
+	CustomCommands.addEmployee(manageEmployeesPage, firstName, lastName, username, employeeEmail, password, imgUrl);
 });
 
 // Add project
@@ -65,10 +57,7 @@ And('User can add new project', () => {
 	CustomCommands.logout(dashboardPage, logoutPage, loginPage);
 	CustomCommands.clearCookies();
 	CustomCommands.login(loginPage, LoginPageData, dashboardPage);
-	CustomCommands.addProject(
-		organizationProjectsPage,
-		OrganizationProjectsPageData
-	);
+	CustomCommands.addProject(organizationProjectsPage, OrganizationProjectsPageData);
 });
 
 // Add contact
@@ -145,9 +134,7 @@ When('User click on discount type dropdown', () => {
 });
 
 Then('User can select discount type from dropdown options', () => {
-	salesInvoicesPage.selectDiscountTypeFromDropdown(
-		SalesInvoicesPageData.discountType
-	);
+	salesInvoicesPage.selectDiscountTypeFromDropdown(SalesInvoicesPageData.discountType);
 });
 
 And('User can see contact dropdown', () => {
@@ -261,9 +248,7 @@ When('User click on discount type dropdown', () => {
 });
 
 Then('User can select discount type from dropdown options', () => {
-	salesInvoicesPage.selectDiscountTypeFromDropdown(
-		SalesInvoicesPageData.discountType
-	);
+	salesInvoicesPage.selectDiscountTypeFromDropdown(SalesInvoicesPageData.discountType);
 });
 
 And('User can see contact dropdown', () => {
@@ -360,7 +345,7 @@ When('User click on email button', () => {
 
 Then('User can scroll down to email input field', () => {
 	salesInvoicesPage.scrollEmailInviteTemplate();
-})
+});
 
 And('User can see email input field', () => {
 	salesInvoicesPage.emailInputVisible();
@@ -393,7 +378,7 @@ Then('User can see more settings button again', () => {
 	dashboardPage.verifyAccountingDashboardIfVisible();
 	cy.visit('/#/pages/sales/invoices', { timeout: pageLoadTimeout });
 	salesInvoicesPage.verifyMoreButton();
-})
+});
 
 And('User can verify invoice was sent by email', () => {
 	salesInvoicesPage.verifySentBadgeClass();

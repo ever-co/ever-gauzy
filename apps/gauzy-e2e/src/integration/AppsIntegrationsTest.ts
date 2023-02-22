@@ -15,22 +15,12 @@ describe('Apps integrations page test', () => {
 		appsIntegrationsPage.verifyHeaderText(AppsIntegrationsPageData.header);
 		appsIntegrationsPage.dropdownVisible();
 		appsIntegrationsPage.clickDropdown(0);
-		appsIntegrationsPage.verifyDropdownText(
-			AppsIntegrationsPageData.allIntegrations
-		);
-		appsIntegrationsPage.verifyDropdownText(
-			AppsIntegrationsPageData.forSalesTeams
-		);
-		appsIntegrationsPage.verifyDropdownText(
-			AppsIntegrationsPageData.forAccountants
-		);
-		appsIntegrationsPage.verifyDropdownText(
-			AppsIntegrationsPageData.forSupportTeams
-		);
+		appsIntegrationsPage.verifyDropdownText(AppsIntegrationsPageData.allIntegrations);
+		appsIntegrationsPage.verifyDropdownText(AppsIntegrationsPageData.forSalesTeams);
+		appsIntegrationsPage.verifyDropdownText(AppsIntegrationsPageData.forAccountants);
+		appsIntegrationsPage.verifyDropdownText(AppsIntegrationsPageData.forSupportTeams);
 		appsIntegrationsPage.verifyDropdownText(AppsIntegrationsPageData.crm);
-		appsIntegrationsPage.verifyDropdownText(
-			AppsIntegrationsPageData.scheduling
-		);
+		appsIntegrationsPage.verifyDropdownText(AppsIntegrationsPageData.scheduling);
 		appsIntegrationsPage.verifyDropdownText(AppsIntegrationsPageData.tools);
 		appsIntegrationsPage.clickKeyboardButtonByKeyCode(9);
 		appsIntegrationsPage.clickDropdown(1);
@@ -44,16 +34,12 @@ describe('Apps integrations page test', () => {
 		appsIntegrationsPage.clearButtonVisible();
 		appsIntegrationsPage.verifyIntegrationList();
 		appsIntegrationsPage.clickIntegrationItem(0);
-		appsIntegrationsPage.verifyCardHeaderText(
-			AppsIntegrationsPageData.hubstaffHeader
-		);
+		appsIntegrationsPage.verifyCardHeaderText(AppsIntegrationsPageData.hubstaffHeader);
 		appsIntegrationsPage.clientIdInputVisible();
 		appsIntegrationsPage.backButtonVisible();
 		appsIntegrationsPage.clickBackButton();
 		appsIntegrationsPage.clickIntegrationItem(1);
-		appsIntegrationsPage.verifyCardHeaderText(
-			AppsIntegrationsPageData.upworkHeader
-		);
+		appsIntegrationsPage.verifyCardHeaderText(AppsIntegrationsPageData.upworkHeader);
 		appsIntegrationsPage.apiKeyInputVisible();
 		appsIntegrationsPage.secretInputVisible();
 		appsIntegrationsPage.backButtonVisible();

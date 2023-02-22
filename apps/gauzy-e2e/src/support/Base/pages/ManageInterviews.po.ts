@@ -1,9 +1,5 @@
 import dayjs from 'dayjs';
-import {
-	verifyByText,
-	verifyElementIsVisibleByIndex,
-	waitUntil
-} from './../utils/util';
+import { verifyByText, verifyElementIsVisibleByIndex, waitUntil } from './../utils/util';
 import {
 	enterInput,
 	verifyElementIsVisible,
@@ -91,16 +87,11 @@ export const clickEmployeeDropdown = () => {
 };
 
 export const employeeDropdownOptionVisible = () => {
-	verifyElementIsVisible(
-		ManageInterviewsPage.employeeMultiselectDropdownOptionCss
-	);
+	verifyElementIsVisible(ManageInterviewsPage.employeeMultiselectDropdownOptionCss);
 };
 
 export const clickEmployeeDropdownOption = (index) => {
-	clickButtonByIndex(
-		ManageInterviewsPage.employeeMultiselectDropdownOptionCss,
-		index
-	);
+	clickButtonByIndex(ManageInterviewsPage.employeeMultiselectDropdownOptionCss, index);
 };
 
 export const interviewTypeButtonVisible = () => {
@@ -220,10 +211,7 @@ export const clickInterviewerDropdown = () => {
 };
 
 export const clickInterviewerFromDropdown = (index: number) => {
-	clickButtonByIndex(
-		ManageInterviewsPage.employeeMultiselectDropdownOptionCss,
-		index
-	);
+	clickButtonByIndex(ManageInterviewsPage.employeeMultiselectDropdownOptionCss, index);
 };
 
 export const verifyRating = () => {
@@ -264,10 +252,7 @@ export const verifyOnlyFutureCheckboxVisible = () => {
 };
 
 export const clickOnlyFutureCheckbox = () => {
-	clickButtonByIndex(
-		ManageInterviewsPage.interviewCheckboxFiltersInputsCss,
-		1
-	);
+	clickButtonByIndex(ManageInterviewsPage.interviewCheckboxFiltersInputsCss, 1);
 	waitUntil(1500);
 };
 
@@ -284,10 +269,7 @@ export const verifyUpdatedNoteContains = (text: string) => {
 };
 
 export const verifyArchiveOptionVisible = () => {
-	verifyElementIsVisibleByIndex(
-		ManageInterviewsPage.tableOptionsButtonsCss,
-		2
-	);
+	verifyElementIsVisibleByIndex(ManageInterviewsPage.tableOptionsButtonsCss, 2);
 };
 
 export const clickArchiveOption = () => {
@@ -303,17 +285,11 @@ export const clickOkButton = () => {
 };
 
 export const verifyInludeArchivedCheckboxVisible = () => {
-	verifyElementIsVisibleByIndex(
-		ManageInterviewsPage.interviewCheckboxFiltersCss,
-		2
-	);
+	verifyElementIsVisibleByIndex(ManageInterviewsPage.interviewCheckboxFiltersCss, 2);
 };
 
 export const clickInludeArchivedCheckbox = () => {
-	clickButtonByIndex(
-		ManageInterviewsPage.interviewCheckboxFiltersInputsCss,
-		2
-	);
+	clickButtonByIndex(ManageInterviewsPage.interviewCheckboxFiltersInputsCss, 2);
 	waitUntil(1000);
 };
 
@@ -323,10 +299,7 @@ export const verifyArchivedBadgeContains = (text: string) => {
 
 // Delete future interview
 export const verifyDeleteOptionVisible = () => {
-	verifyElementIsVisibleByIndex(
-		ManageInterviewsPage.tableOptionsButtonsCss,
-		3
-	);
+	verifyElementIsVisibleByIndex(ManageInterviewsPage.tableOptionsButtonsCss, 3);
 };
 
 export const clickDeleteOption = () => {
@@ -343,4 +316,4 @@ export const clickDeleteButton = () => {
 
 export const clearFieldForSearch = () => {
 	clearField(ManageInterviewsPage.titleFilterInputCss);
-}
+};

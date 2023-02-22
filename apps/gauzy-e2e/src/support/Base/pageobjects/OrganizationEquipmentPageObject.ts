@@ -25,8 +25,7 @@ export const OrganizationEquipmentPage = {
 	dateInputCss: '[formcontrolname="shareRequestDay"]',
 	startDateInputCss: '[formcontrolname="shareStartDay"]',
 	endDateInputCss: '[formcontrolname="shareEndDay"]',
-	equipmentSharingPolicyButtonCss:
-		'nb-card-header.main-header > div.main-header > button[status="primary"]',
+	equipmentSharingPolicyButtonCss: 'nb-card-header.main-header > div.main-header > button[status="primary"]',
 	policyDescriptionInputCss: '[formcontrolname="description"]',
 	backButtonCss: 'g[data-name="arrow-back"]',
 	toastrMessageCss: 'nb-toast.ng-trigger',

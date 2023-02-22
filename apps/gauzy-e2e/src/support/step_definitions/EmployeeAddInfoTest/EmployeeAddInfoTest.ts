@@ -14,7 +14,7 @@ import { OrganizationTagsPageData } from '../../Base/pagedata/OrganizationTagsPa
 const responseTimeout = Cypress.config('responseTimeout');
 
 const jobTitle = faker.person.jobTitle();
-const employeeLevel = EmployeeAddInfoPageData.level + ` ${faker.random.alpha().toUpperCase()}`
+const employeeLevel = EmployeeAddInfoPageData.level + ` ${faker.random.alpha().toUpperCase()}`;
 const firstName = faker.person.firstName();
 const lastName = faker.person.lastName();
 const username = faker.internet.userName();
@@ -22,7 +22,6 @@ const password = faker.internet.password();
 const employeeEmail = faker.internet.email();
 const imgUrl = faker.image.avatar();
 const employeeFullName = `${firstName} ${lastName}`;
-
 
 // Login with email
 Given('Login with default credentials', () => {
@@ -41,15 +40,7 @@ And('User can add new employee', () => {
 	CustomCommands.clearCookies();
 	CustomCommands.login(loginPage, LoginPageData, dashboardPage);
 	dashboardPage.verifyAccountingDashboardIfVisible();
-	CustomCommands.addEmployee(
-		manageEmployeesPage,
-		firstName,
-		lastName,
-		username,
-		employeeEmail,
-		password,
-		imgUrl
-	);
+	CustomCommands.addEmployee(manageEmployeesPage, firstName, lastName, username, employeeEmail, password, imgUrl);
 });
 
 //Add employee level
@@ -116,7 +107,7 @@ When('User see dashboard button on main manu', () => {
 });
 
 Then('User click on dashboard button', () => {
-	employeeAddInfo.clickMenuButtonsByText(EmployeeAddInfoPageData.dashboardTxt)
+	employeeAddInfo.clickMenuButtonsByText(EmployeeAddInfoPageData.dashboardTxt);
 });
 
 When('User see employee selector', () => {
@@ -137,7 +128,7 @@ Then('User click on employee', () => {
 
 When('User see edit icon button', () => {
 	employeeAddInfo.verifyEditIconButton();
-})
+});
 
 Then('User click on edit icon button', () => {
 	employeeAddInfo.clickOnEditIconButton();

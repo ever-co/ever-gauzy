@@ -19,43 +19,27 @@ describe('Organization tags test', () => {
 		organizationTagsUserPage.clickCloseDialogButton();
 		organizationTagsUserPage.clickAddTagButton();
 		organizationTagsUserPage.tagNameInputVisible();
-		organizationTagsUserPage.enterTagNameData(
-			OrganizationTagsPageData.tagName
-		);
+		organizationTagsUserPage.enterTagNameData(OrganizationTagsPageData.tagName);
 		organizationTagsUserPage.tagColorInputVisible();
-		organizationTagsUserPage.enterTagColorData(
-			OrganizationTagsPageData.tagColor
-		);
+		organizationTagsUserPage.enterTagColorData(OrganizationTagsPageData.tagColor);
 		organizationTagsUserPage.tagDescriptionTextareaVisible();
-		organizationTagsUserPage.enterTagDescriptionData(
-			OrganizationTagsPageData.tagDescription
-		);
+		organizationTagsUserPage.enterTagDescriptionData(OrganizationTagsPageData.tagDescription);
 		organizationTagsUserPage.saveTagButtonVisible();
 		organizationTagsUserPage.clickSaveTagButton();
 		organizationTagsUserPage.waitMessageToHide();
-		organizationTagsUserPage.verifyTagExists(
-			OrganizationTagsPageData.tagName
-		);
+		organizationTagsUserPage.verifyTagExists(OrganizationTagsPageData.tagName);
 	});
 	it('Should be able to edit tag', () => {
 		organizationTagsUserPage.selectTableRow(0);
 		organizationTagsUserPage.editTagButtonVisible();
 		organizationTagsUserPage.clickEditTagButton();
-		organizationTagsUserPage.enterTagNameData(
-			OrganizationTagsPageData.editTagName
-		);
-		organizationTagsUserPage.enterTagColorData(
-			OrganizationTagsPageData.tagColor
-		);
-		organizationTagsUserPage.enterTagDescriptionData(
-			OrganizationTagsPageData.tagDescription
-		);
+		organizationTagsUserPage.enterTagNameData(OrganizationTagsPageData.editTagName);
+		organizationTagsUserPage.enterTagColorData(OrganizationTagsPageData.tagColor);
+		organizationTagsUserPage.enterTagDescriptionData(OrganizationTagsPageData.tagDescription);
 		organizationTagsUserPage.saveTagButtonVisible();
 		organizationTagsUserPage.clickSaveTagButton();
 		organizationTagsUserPage.waitMessageToHide();
-		organizationTagsUserPage.verifyTagExists(
-			OrganizationTagsPageData.editTagName
-		);
+		organizationTagsUserPage.verifyTagExists(OrganizationTagsPageData.editTagName);
 	});
 	it('Should be able to delete tag', () => {
 		organizationTagsUserPage.selectTableRow(0);
@@ -64,8 +48,6 @@ describe('Organization tags test', () => {
 		organizationTagsUserPage.confirmDeleteTagButtonVisible();
 		organizationTagsUserPage.clickConfirmDeleteTagButton();
 		organizationTagsUserPage.waitMessageToHide();
-		organizationTagsUserPage.verifyTagIsDeleted(
-			OrganizationTagsPageData.editTagName
-		);
+		organizationTagsUserPage.verifyTagIsDeleted(OrganizationTagsPageData.editTagName);
 	});
 });

@@ -12,7 +12,6 @@ import * as logoutPage from '../../Base/pages/Logout.po';
 
 import { Given, Then, When, And } from 'cypress-cucumber-preprocessor/steps';
 
-
 const pageLoadTimeout = Cypress.config('pageLoadTimeout');
 
 let empFirstName = faker.person.firstName();
@@ -154,9 +153,7 @@ Then('User can see name input field again', () => {
 });
 
 And('User can enter new name', () => {
-	organizationTeamsPage.enterNameInputData(
-		OrganizationTeamsPageData.editName
-	);
+	organizationTeamsPage.enterNameInputData(OrganizationTeamsPageData.editName);
 });
 
 And('User can see save edited team button', () => {

@@ -13,8 +13,7 @@ export const ManageEmployeesPage = {
 	confirmDeleteButtonCss: 'nb-card-footer > button[status="danger"]',
 	endWorkButtonCss: 'div.mb-3 > button[status="warning"]',
 	endWorkDateInputCss: '[placeholder="Pick a Date"]',
-	confirmEndWorkButtonCss:
-		'nb-card-footer.text-right > button[status="success"]',
+	confirmEndWorkButtonCss: 'nb-card-footer.text-right > button[status="success"]',
 	firstNameInputCss: '#firstName',
 	lastNameInputCss: '#lastName',
 	usernameInputCss: '#username',
@@ -36,13 +35,10 @@ export const ManageEmployeesPage = {
 	emailEditSecondInputCss: '#emailInput',
 	firstNameSecondEditInputCss: '#firstNameInput',
 	lastNameSecondEditInputCss: '#lastNameInput',
-	preferredLanguageDropdownCss:
-		'div.col-sm-6 > div.form-group > ngx-language-selector > ng-select',
-	preferredLanguageOptionCss:
-		'ng-dropdown-panel.ng-dropdown-panel > div.ng-dropdown-panel-items div.ng-option',
+	preferredLanguageDropdownCss: 'div.col-sm-6 > div.form-group > ngx-language-selector > ng-select',
+	preferredLanguageOptionCss: 'ng-dropdown-panel.ng-dropdown-panel > div.ng-dropdown-panel-items div.ng-option',
 	cardBodyCss: 'div.text-right',
-	manageInvitesButtonCss:
-		'div.card-header-title > div.mr-2 > button[status="primary"]',
+	manageInvitesButtonCss: 'div.card-header-title > div.mr-2 > button[status="primary"]',
 	copyLinkButtonCss: 'div.mb-3 > button[status="success"]',
 	resendInviteButtonCss: 'div.mb-3 > button[status="warning"]',
 	deleteInviteButtonCss: 'div.mb-3 > button[status="danger"]',

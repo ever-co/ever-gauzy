@@ -73,11 +73,11 @@ Then('User click on roles select', () => {
 
 When('User can see roles dropdown', () => {
 	manageUserInvitesPage.verifyRolesDropdown();
-})
+});
 
 Then('User click see roles dropdown', () => {
 	manageUserInvitesPage.clickRolesDropdown(0);
-})
+});
 
 And('User can see save button', () => {
 	manageUserInvitesPage.saveButtonVisible();
@@ -101,7 +101,7 @@ Then('User type email', () => {
 
 And('User can verify client name', () => {
 	manageUserInvitesPage.verifyInviteExist(email);
-})
+});
 
 // Copy invite
 And('User can see invites table', () => {

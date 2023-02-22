@@ -14,7 +14,6 @@ import * as logoutPage from '../../Base/pages/Logout.po';
 
 import { Given, Then, When, And } from 'cypress-cucumber-preprocessor/steps';
 
-
 const pageLoadTimeout = Cypress.config('pageLoadTimeout');
 
 // Login with email
@@ -33,10 +32,7 @@ And('User can add new project', () => {
 	CustomCommands.logout(dashboardPage, logoutPage, loginPage);
 	CustomCommands.clearCookies();
 	CustomCommands.login(loginPage, LoginPageData, dashboardPage);
-	CustomCommands.addProject(
-		organizationProjectsPage,
-		OrganizationProjectsPageData
-	);
+	CustomCommands.addProject(organizationProjectsPage, OrganizationProjectsPageData);
 });
 
 // Add team
@@ -83,9 +79,7 @@ When('User click on project dropdown', () => {
 });
 
 Then('User can select project from dropdown options', () => {
-	teamsTasksPage.selectProjectOptionDropdown(
-		TeamsTasksPageData.defaultTaskProject
-	);
+	teamsTasksPage.selectProjectOptionDropdown(TeamsTasksPageData.defaultTaskProject);
 });
 
 And('User can see status dropdown', () => {
@@ -148,9 +142,7 @@ And('User can see estimate days input field', () => {
 });
 
 And('User can enter estimate days', () => {
-	teamsTasksPage.enterEstimateDaysInputData(
-		TeamsTasksPageData.defaultTaskEstimateDays
-	);
+	teamsTasksPage.enterEstimateDaysInputData(TeamsTasksPageData.defaultTaskEstimateDays);
 });
 
 And('User can see estimate hours input field', () => {
@@ -158,9 +150,7 @@ And('User can see estimate hours input field', () => {
 });
 
 And('User can enter estimate hours', () => {
-	teamsTasksPage.enterEstimateHoursInputData(
-		TeamsTasksPageData.defaultTaskEstimateHours
-	);
+	teamsTasksPage.enterEstimateHoursInputData(TeamsTasksPageData.defaultTaskEstimateHours);
 });
 
 And('User can see estimate minutes input field', () => {
@@ -168,9 +158,7 @@ And('User can see estimate minutes input field', () => {
 });
 
 And('User can enter estimate minutes', () => {
-	teamsTasksPage.enterEstimateMinutesInputData(
-		TeamsTasksPageData.defaultTaskEstimateMinutes
-	);
+	teamsTasksPage.enterEstimateMinutesInputData(TeamsTasksPageData.defaultTaskEstimateMinutes);
 });
 
 And('User can see task description input field', () => {
@@ -178,9 +166,7 @@ And('User can see task description input field', () => {
 });
 
 And('User can enter task description', () => {
-	teamsTasksPage.enterTaskDescriptionTextareaData(
-		TeamsTasksPageData.defaultTaskDescription
-	);
+	teamsTasksPage.enterTaskDescriptionTextareaData(TeamsTasksPageData.defaultTaskDescription);
 });
 
 And('User can see task save button', () => {

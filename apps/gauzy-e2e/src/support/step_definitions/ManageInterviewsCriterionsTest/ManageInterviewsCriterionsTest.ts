@@ -21,7 +21,6 @@ And('User can visit Candidates interview criterion page', () => {
 	cy.intercept('GET', '/api/candidate-personal-qualities*').as('waitCandidatePersonalQualities');
 	cy.visit('/#/pages/employees/candidates/interviews/criterion', { timeout: pageLoadTimeout });
 	cy.wait(['@waitCandidateTechnologies', '@waitCandidatePersonalQualities']);
-
 });
 
 And('User can see technology stack input field', () => {
@@ -29,9 +28,7 @@ And('User can see technology stack input field', () => {
 });
 
 And('User can enter value for technology stack', () => {
-	manageInterviewsCriterionsPage.enterTechnologyInputData(
-		ManageInterviewsCriterionsPageData.technology
-	);
+	manageInterviewsCriterionsPage.enterTechnologyInputData(ManageInterviewsCriterionsPageData.technology);
 });
 
 And('User can see save technology stack button', () => {
@@ -47,9 +44,7 @@ Then('Notification message will appear', () => {
 });
 
 And('User can verify technology stack', () => {
-	manageInterviewsCriterionsPage.verifyTechnologyTextExist(
-		ManageInterviewsCriterionsPageData.technology
-	);
+	manageInterviewsCriterionsPage.verifyTechnologyTextExist(ManageInterviewsCriterionsPageData.technology);
 });
 
 // Edit technology stack
@@ -66,9 +61,7 @@ Then('User can see edit technology stack input field', () => {
 });
 
 And('User can enter new value for technology stack', () => {
-	manageInterviewsCriterionsPage.enterTechnologyInputData(
-		ManageInterviewsCriterionsPageData.editTechnology
-	);
+	manageInterviewsCriterionsPage.enterTechnologyInputData(ManageInterviewsCriterionsPageData.editTechnology);
 });
 
 And('User can see save edited technology stack button', () => {
@@ -84,9 +77,7 @@ Then('Notification message will appear', () => {
 });
 
 And('User can verify technology stack was edited', () => {
-	manageInterviewsCriterionsPage.verifyTechnologyTextExist(
-		ManageInterviewsCriterionsPageData.editTechnology
-	);
+	manageInterviewsCriterionsPage.verifyTechnologyTextExist(ManageInterviewsCriterionsPageData.editTechnology);
 });
 
 // Delete technology stack
@@ -112,9 +103,7 @@ And('User can see quality input field', () => {
 });
 
 And('User can enter value for quality', () => {
-	manageInterviewsCriterionsPage.enterQualityInputData(
-		ManageInterviewsCriterionsPageData.quality
-	);
+	manageInterviewsCriterionsPage.enterQualityInputData(ManageInterviewsCriterionsPageData.quality);
 });
 
 And('User can see save quality button', () => {
@@ -130,9 +119,7 @@ Then('Notification message will appear', () => {
 });
 
 Then('User can verify quality was created', () => {
-	manageInterviewsCriterionsPage.verifyQualityTextExist(
-		ManageInterviewsCriterionsPageData.quality
-	);
+	manageInterviewsCriterionsPage.verifyQualityTextExist(ManageInterviewsCriterionsPageData.quality);
 });
 
 // Edit personal quality
@@ -149,9 +136,7 @@ Then('User can see edit quality input field', () => {
 });
 
 And('User can enter new value for quality', () => {
-	manageInterviewsCriterionsPage.enterQualityInputData(
-		ManageInterviewsCriterionsPageData.editQuality
-	);
+	manageInterviewsCriterionsPage.enterQualityInputData(ManageInterviewsCriterionsPageData.editQuality);
 });
 
 And('User can see save edited quality button', () => {
@@ -167,9 +152,7 @@ Then('Notification message will appear', () => {
 });
 
 And('User can verify quality was edited', () => {
-	manageInterviewsCriterionsPage.verifyQualityTextExist(
-		ManageInterviewsCriterionsPageData.editQuality
-	);
+	manageInterviewsCriterionsPage.verifyQualityTextExist(ManageInterviewsCriterionsPageData.editQuality);
 });
 
 // Delete personal quality

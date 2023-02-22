@@ -45,7 +45,7 @@ export const enterEditNameInputData = (data) => {
 	clickButton(OrganizationEmploymentTypesPage.editNameInputCss);
 	clearField(OrganizationEmploymentTypesPage.editNameInputCss);
 	enterInput(OrganizationEmploymentTypesPage.editNameInputCss, data);
-}
+};
 
 export const tagsDropdownVisible = () => {
 	verifyElementIsVisible(OrganizationEmploymentTypesPage.addTagsDropdownCss);
@@ -56,10 +56,7 @@ export const clickTagsDropdown = () => {
 };
 
 export const selectTagFromDropdown = (index) => {
-	clickButtonByIndex(
-		OrganizationEmploymentTypesPage.tagsDropdownOption,
-		index
-	);
+	clickButtonByIndex(OrganizationEmploymentTypesPage.tagsDropdownOption, index);
 };
 
 export const clickCardBody = () => {
@@ -95,9 +92,7 @@ export const clickKeyboardButtonByKeyCode = (keycode) => {
 };
 
 export const confirmDeleteButtonVisible = () => {
-	verifyElementIsVisible(
-		OrganizationEmploymentTypesPage.confirmDeleteButtonCss
-	);
+	verifyElementIsVisible(OrganizationEmploymentTypesPage.confirmDeleteButtonCss);
 };
 
 export const clickConfirmDeleteButton = () => {

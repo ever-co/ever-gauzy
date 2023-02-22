@@ -26,19 +26,12 @@ Given('Login with default credentials', () => {
 
 // Add new employee
 And('User can add new employee', () => {
-	CustomCommands.addEmployee(
-		manageEmployeesPage,
-		firstName,
-		lastName,
-		username,
-		employeeEmail,
-		password,
-		imgUrl
-	);
+	CustomCommands.addEmployee(manageEmployeesPage, firstName, lastName, username, employeeEmail, password, imgUrl);
 });
 
 // Add new proposal
-And('User can visits Jobs proposals page', () => { // User can verify complete page
+And('User can visits Jobs proposals page', () => {
+	// User can verify complete page
 	CustomCommands.logout(dashboardPage, logoutPage, loginPage);
 	CustomCommands.clearCookies(); //expected ga-onboarding-complete > div.logo > h6 to be visible
 	CustomCommands.login(loginPage, LoginPageData, dashboardPage);
@@ -144,9 +137,7 @@ Then('Make default button will become active', () => {
 });
 
 When('User click on make default button', () => {
-	jobProposalsPage.clickMakeDefaultButton(
-		JobsProposalsPageData.makeDefaultButton
-	);
+	jobProposalsPage.clickMakeDefaultButton(JobsProposalsPageData.makeDefaultButton);
 });
 
 Then('Notification message will appear', () => {

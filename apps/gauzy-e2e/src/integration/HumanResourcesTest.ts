@@ -24,15 +24,7 @@ describe('Human resources page test', () => {
 		imgUrl = faker.image.avatar();
 
 		CustomCommands.login(loginPage, LoginPageData, dashboardPage);
-		CustomCommands.addEmployee(
-			manageEmployeesPage,
-			firstName,
-			lastName,
-			username,
-			employeeEmail,
-			password,
-			imgUrl
-		);
+		CustomCommands.addEmployee(manageEmployeesPage, firstName, lastName, username, employeeEmail, password, imgUrl);
 	});
 	it('Should be able to verify chart options', () => {
 		cy.visit('/#/pages/dashboard/accounting');
@@ -40,121 +32,51 @@ describe('Human resources page test', () => {
 		humanResourcesPage.verifyEmployeeName(`${firstName} ${lastName}`);
 		humanResourcesPage.verifyChartDropdownVisible();
 		humanResourcesPage.clickChartDropdown();
-		humanResourcesPage.verifyChartOptionText(
-			HumanResourcesPageData.barChartText
-		);
-		humanResourcesPage.verifyChartOptionText(
-			HumanResourcesPageData.doughnutChartText
-		);
-		humanResourcesPage.verifyChartOptionText(
-			HumanResourcesPageData.stackedBarChartText
-		);
+		humanResourcesPage.verifyChartOptionText(HumanResourcesPageData.barChartText);
+		humanResourcesPage.verifyChartOptionText(HumanResourcesPageData.doughnutChartText);
+		humanResourcesPage.verifyChartOptionText(HumanResourcesPageData.stackedBarChartText);
 	});
 	it('Should be able to verify Total Income', () => {
-		humanResourcesPage.verifyCardTextExist(
-			HumanResourcesPageData.totalIncomeText
-		);
-		humanResourcesPage.verifyCardTextExist(
-			HumanResourcesPageData.totalExpenseText
-		);
-		humanResourcesPage.verifyCardTextExist(
-			HumanResourcesPageData.totalExpensesText
-		);
-		humanResourcesPage.verifyCardTextExist(
-			HumanResourcesPageData.profitText
-		);
-		humanResourcesPage.clickCardByHeaderText(
-			HumanResourcesPageData.totalIncomeText
-		);
-		humanResourcesPage.verifyPopupHeaderText(
-			HumanResourcesPageData.incomeHeaderText
-		);
-		humanResourcesPage.verifyPopupTableHeaderText(
-			HumanResourcesPageData.incomeTableHeaderDateText
-		);
-		humanResourcesPage.verifyPopupTableHeaderText(
-			HumanResourcesPageData.incomeTableHeaderClientNameText
-		);
-		humanResourcesPage.verifyPopupTableHeaderText(
-			HumanResourcesPageData.incomeTableHeaderValueText
-		);
-		humanResourcesPage.verifyPopupTableHeaderText(
-			HumanResourcesPageData.incomeTableHeaderNotesText
-		);
+		humanResourcesPage.verifyCardTextExist(HumanResourcesPageData.totalIncomeText);
+		humanResourcesPage.verifyCardTextExist(HumanResourcesPageData.totalExpenseText);
+		humanResourcesPage.verifyCardTextExist(HumanResourcesPageData.totalExpensesText);
+		humanResourcesPage.verifyCardTextExist(HumanResourcesPageData.profitText);
+		humanResourcesPage.clickCardByHeaderText(HumanResourcesPageData.totalIncomeText);
+		humanResourcesPage.verifyPopupHeaderText(HumanResourcesPageData.incomeHeaderText);
+		humanResourcesPage.verifyPopupTableHeaderText(HumanResourcesPageData.incomeTableHeaderDateText);
+		humanResourcesPage.verifyPopupTableHeaderText(HumanResourcesPageData.incomeTableHeaderClientNameText);
+		humanResourcesPage.verifyPopupTableHeaderText(HumanResourcesPageData.incomeTableHeaderValueText);
+		humanResourcesPage.verifyPopupTableHeaderText(HumanResourcesPageData.incomeTableHeaderNotesText);
 		humanResourcesPage.clickCardBody();
 	});
 	it('Should be able to verify Total Expenses without salary', () => {
-		humanResourcesPage.clickCardByHeaderText(
-			HumanResourcesPageData.totalExpenseText
-		);
-		humanResourcesPage.verifyPopupHeaderText(
-			HumanResourcesPageData.expensesHeaderText
-		);
-		humanResourcesPage.verifyPopupTableHeaderText(
-			HumanResourcesPageData.expensesTableHeaderSourceText
-		);
-		humanResourcesPage.verifyPopupTableHeaderText(
-			HumanResourcesPageData.expensesTableHeaderDateText
-		);
-		humanResourcesPage.verifyPopupTableHeaderText(
-			HumanResourcesPageData.expensesTableHeaderVendorText
-		);
-		humanResourcesPage.verifyPopupTableHeaderText(
-			HumanResourcesPageData.expensesTableHeaderCategoryText
-		);
-		humanResourcesPage.verifyPopupTableHeaderText(
-			HumanResourcesPageData.expensesTableHeaderValueText
-		);
-		humanResourcesPage.verifyPopupTableHeaderText(
-			HumanResourcesPageData.expensesTableHeaderNotesText
-		);
+		humanResourcesPage.clickCardByHeaderText(HumanResourcesPageData.totalExpenseText);
+		humanResourcesPage.verifyPopupHeaderText(HumanResourcesPageData.expensesHeaderText);
+		humanResourcesPage.verifyPopupTableHeaderText(HumanResourcesPageData.expensesTableHeaderSourceText);
+		humanResourcesPage.verifyPopupTableHeaderText(HumanResourcesPageData.expensesTableHeaderDateText);
+		humanResourcesPage.verifyPopupTableHeaderText(HumanResourcesPageData.expensesTableHeaderVendorText);
+		humanResourcesPage.verifyPopupTableHeaderText(HumanResourcesPageData.expensesTableHeaderCategoryText);
+		humanResourcesPage.verifyPopupTableHeaderText(HumanResourcesPageData.expensesTableHeaderValueText);
+		humanResourcesPage.verifyPopupTableHeaderText(HumanResourcesPageData.expensesTableHeaderNotesText);
 		humanResourcesPage.clickCardBody();
 	});
 	it('Should be able to verify Total Expenses', () => {
-		humanResourcesPage.clickCardByHeaderText(
-			HumanResourcesPageData.totalExpensesText
-		);
-		humanResourcesPage.verifyPopupHeaderText(
-			HumanResourcesPageData.expensesHeaderText
-		);
-		humanResourcesPage.verifyPopupTableHeaderText(
-			HumanResourcesPageData.expensesTableHeaderSourceText
-		);
-		humanResourcesPage.verifyPopupTableHeaderText(
-			HumanResourcesPageData.expensesTableHeaderDateText
-		);
-		humanResourcesPage.verifyPopupTableHeaderText(
-			HumanResourcesPageData.expensesTableHeaderVendorText
-		);
-		humanResourcesPage.verifyPopupTableHeaderText(
-			HumanResourcesPageData.expensesTableHeaderCategoryText
-		);
-		humanResourcesPage.verifyPopupTableHeaderText(
-			HumanResourcesPageData.expensesTableHeaderValueText
-		);
-		humanResourcesPage.verifyPopupTableHeaderText(
-			HumanResourcesPageData.expensesTableHeaderNotesText
-		);
+		humanResourcesPage.clickCardByHeaderText(HumanResourcesPageData.totalExpensesText);
+		humanResourcesPage.verifyPopupHeaderText(HumanResourcesPageData.expensesHeaderText);
+		humanResourcesPage.verifyPopupTableHeaderText(HumanResourcesPageData.expensesTableHeaderSourceText);
+		humanResourcesPage.verifyPopupTableHeaderText(HumanResourcesPageData.expensesTableHeaderDateText);
+		humanResourcesPage.verifyPopupTableHeaderText(HumanResourcesPageData.expensesTableHeaderVendorText);
+		humanResourcesPage.verifyPopupTableHeaderText(HumanResourcesPageData.expensesTableHeaderCategoryText);
+		humanResourcesPage.verifyPopupTableHeaderText(HumanResourcesPageData.expensesTableHeaderValueText);
+		humanResourcesPage.verifyPopupTableHeaderText(HumanResourcesPageData.expensesTableHeaderNotesText);
 		humanResourcesPage.clickCardBody();
 	});
 	it('Should be able to verify Profit', () => {
-		humanResourcesPage.clickCardByHeaderText(
-			HumanResourcesPageData.profitText
-		);
-		humanResourcesPage.verifyPopupProfitHeaderText(
-			HumanResourcesPageData.profitHeaderText
-		);
-		humanResourcesPage.verifyPopupTableHeaderText(
-			HumanResourcesPageData.profitTableHeaderDateText
-		);
-		humanResourcesPage.verifyPopupTableHeaderText(
-			HumanResourcesPageData.profitTableHeaderExpensesText
-		);
-		humanResourcesPage.verifyPopupTableHeaderText(
-			HumanResourcesPageData.profitTableHeaderIncomeText
-		);
-		humanResourcesPage.verifyPopupTableHeaderText(
-			HumanResourcesPageData.profitTableHeaderDescriptionText
-		);
+		humanResourcesPage.clickCardByHeaderText(HumanResourcesPageData.profitText);
+		humanResourcesPage.verifyPopupProfitHeaderText(HumanResourcesPageData.profitHeaderText);
+		humanResourcesPage.verifyPopupTableHeaderText(HumanResourcesPageData.profitTableHeaderDateText);
+		humanResourcesPage.verifyPopupTableHeaderText(HumanResourcesPageData.profitTableHeaderExpensesText);
+		humanResourcesPage.verifyPopupTableHeaderText(HumanResourcesPageData.profitTableHeaderIncomeText);
+		humanResourcesPage.verifyPopupTableHeaderText(HumanResourcesPageData.profitTableHeaderDescriptionText);
 	});
 });

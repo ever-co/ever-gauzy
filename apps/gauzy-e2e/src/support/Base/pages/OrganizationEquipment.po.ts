@@ -115,9 +115,7 @@ export const clickEquipmentSharingButton = () => {
 };
 
 export const sharingPolicyButtonVisible = () => {
-	verifyElementIsVisible(
-		OrganizationEquipmentPage.equipmentSharingPolicyButtonCss
-	);
+	verifyElementIsVisible(OrganizationEquipmentPage.equipmentSharingPolicyButtonCss);
 };
 
 export const clickSharingPolicyButton = () => {
@@ -192,10 +190,7 @@ export const clickEquipmentDropdown = () => {
 };
 
 export const selectEquipmentFromDropdown = (index) => {
-	clickButtonByIndex(
-		OrganizationEquipmentPage.selectEquipmentDropdownOptionCss,
-		index
-	);
+	clickButtonByIndex(OrganizationEquipmentPage.selectEquipmentDropdownOptionCss, index);
 };
 
 export const approvalPolicyDropdownVisible = () => {
@@ -207,10 +202,7 @@ export const clickSelectPolicyDropdown = () => {
 };
 
 export const selectPolicyFromDropdown = (index) => {
-	clickButtonByIndex(
-		OrganizationEquipmentPage.selectPolicyDropdownOptionCss,
-		index
-	);
+	clickButtonByIndex(OrganizationEquipmentPage.selectPolicyDropdownOptionCss, index);
 };
 
 export const selectEmployeeDropdownVisible = () => {
@@ -222,10 +214,7 @@ export const clickEmployeeDropdown = () => {
 };
 
 export const selectEmployeeFromDropdown = (index) => {
-	clickButtonByIndex(
-		OrganizationEquipmentPage.selectEmployeeDropdownOptionCss,
-		index
-	);
+	clickButtonByIndex(OrganizationEquipmentPage.selectEmployeeDropdownOptionCss, index);
 };
 
 export const clickKeyboardButtonByKeyCode = (keycode) => {

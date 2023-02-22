@@ -47,17 +47,11 @@ export const CustomCommands = {
 		organizationTagsUserPage.addTagButtonVisible();
 		organizationTagsUserPage.clickAddTagButton();
 		organizationTagsUserPage.tagNameInputVisible();
-		organizationTagsUserPage.enterTagNameData(
-			OrganizationTagsPageData.tagName
-		);
+		organizationTagsUserPage.enterTagNameData(OrganizationTagsPageData.tagName);
 		organizationTagsUserPage.tagColorInputVisible();
-		organizationTagsUserPage.enterTagColorData(
-			OrganizationTagsPageData.tagColor
-		);
+		organizationTagsUserPage.enterTagColorData(OrganizationTagsPageData.tagColor);
 		organizationTagsUserPage.tagDescriptionTextareaVisible();
-		organizationTagsUserPage.enterTagDescriptionData(
-			OrganizationTagsPageData.tagDescription
-		);
+		organizationTagsUserPage.enterTagDescriptionData(OrganizationTagsPageData.tagDescription);
 		organizationTagsUserPage.saveTagButtonVisible();
 		organizationTagsUserPage.clickSaveTagButton();
 	},
@@ -81,14 +75,10 @@ export const CustomCommands = {
 		contactsLeadsPage.emailInputVisible();
 		contactsLeadsPage.enterEmailInputData(email);
 		contactsLeadsPage.phoneInputVisible();
-		contactsLeadsPage.enterPhoneInputData(
-			ContactsLeadsPageData.defaultPhone
-		);
+		contactsLeadsPage.enterPhoneInputData(ContactsLeadsPageData.defaultPhone);
 		contactsLeadsPage.projectDropdownVisible();
 		contactsLeadsPage.clickProjectDropdown();
-		contactsLeadsPage.selectProjectFromDropdown(
-			ContactsLeadsPageData.defaultProject
-		);
+		contactsLeadsPage.selectProjectFromDropdown(ContactsLeadsPageData.defaultProject);
 		contactsLeadsPage.tagsMultiSelectVisible();
 		contactsLeadsPage.clickTagsMultiSelect();
 		contactsLeadsPage.selectTagsFromDropdown(0);
@@ -99,9 +89,7 @@ export const CustomCommands = {
 		contactsLeadsPage.clickSaveButton();
 		contactsLeadsPage.countryDropdownVisible();
 		contactsLeadsPage.clickCountryDropdown();
-		contactsLeadsPage.selectCountryFromDropdown(
-			ContactsLeadsPageData.country
-		);
+		contactsLeadsPage.selectCountryFromDropdown(ContactsLeadsPageData.country);
 		contactsLeadsPage.cityInputVisible();
 		contactsLeadsPage.enterCityInputData(city);
 		contactsLeadsPage.postcodeInputVisible();
@@ -128,9 +116,7 @@ export const CustomCommands = {
 		organizationTeamsPage.addTeamButtonVisible();
 		organizationTeamsPage.clickAddTeamButton();
 		organizationTeamsPage.nameInputVisible();
-		organizationTeamsPage.enterNameInputData(
-			OrganizationTeamsPageData.name
-		);
+		organizationTeamsPage.enterNameInputData(OrganizationTeamsPageData.name);
 		organizationTeamsPage.tagsMultiSelectVisible();
 		organizationTeamsPage.clickTagsMultiSelect();
 		organizationTeamsPage.selectTagsFromDropdown(0);
@@ -144,11 +130,7 @@ export const CustomCommands = {
 		organizationTeamsPage.saveButtonVisible();
 		organizationTeamsPage.clickSaveButton();
 	},
-	addProject: (
-		organizationProjectsPage: any,
-		OrganizationProjectsPageData: any,
-		employeeFullName?: string
-	) => {
+	addProject: (organizationProjectsPage: any, OrganizationProjectsPageData: any, employeeFullName?: string) => {
 		cy.on('uncaught:exception', (err, runnable) => {
 			return false;
 		});
@@ -160,37 +142,25 @@ export const CustomCommands = {
 		organizationProjectsPage.requestProjectButtonVisible();
 		organizationProjectsPage.clickRequestProjectButton();
 		organizationProjectsPage.nameInputVisible();
-		organizationProjectsPage.enterNameInputData(
-			OrganizationProjectsPageData.name
-		);
+		organizationProjectsPage.enterNameInputData(OrganizationProjectsPageData.name);
 		organizationProjectsPage.selectEmployeeDropdownVisible();
 		organizationProjectsPage.clickSelectEmployeeDropdown();
 		if (!employeeFullName) {
 			organizationProjectsPage.selectEmployeeDropdownOption(0);
 		} else {
-			organizationProjectsPage.selectEmployeeFromDropdownByName(
-				employeeFullName
-			);
+			organizationProjectsPage.selectEmployeeFromDropdownByName(employeeFullName);
 		}
 		organizationProjectsPage.clickKeyboardButtonByKeyCode(9);
 		organizationProjectsPage.clickTabButton(3);
 		organizationProjectsPage.budgetHoursInputVisible();
-		organizationProjectsPage.enterBudgetHoursInputData(
-			OrganizationProjectsPageData.hours
-		);
+		organizationProjectsPage.enterBudgetHoursInputData(OrganizationProjectsPageData.hours);
 		organizationProjectsPage.clickTabButton(5);
 		organizationProjectsPage.colorInputVisible();
-		organizationProjectsPage.enterColorInputData(
-			OrganizationProjectsPageData.color
-		);
+		organizationProjectsPage.enterColorInputData(OrganizationProjectsPageData.color);
 		organizationProjectsPage.saveProjectButtonVisible();
 		organizationProjectsPage.clickSaveProjectButton();
 	},
-	addTask: (
-		addTaskPage: any,
-		AddTasksPageData: any,
-		employeeFullName?: string
-	) => {
+	addTask: (addTaskPage: any, AddTasksPageData: any, employeeFullName?: string) => {
 		cy.visit('/#/pages/tasks/dashboard', { timeout: pageLoadTimeout });
 		addTaskPage.gridBtnExists();
 		addTaskPage.gridBtnClick(1);
@@ -198,9 +168,7 @@ export const CustomCommands = {
 		addTaskPage.clickAddTaskButton();
 		addTaskPage.selectProjectDropdownVisible();
 		addTaskPage.clickSelectProjectDropdown();
-		addTaskPage.selectProjectOptionDropdown(
-			AddTasksPageData.defaultTaskProject
-		);
+		addTaskPage.selectProjectOptionDropdown(AddTasksPageData.defaultTaskProject);
 		addTaskPage.selectEmployeeDropdownVisible();
 		addTaskPage.clickSelectEmployeeDropdown();
 		if (!employeeFullName) {
@@ -215,21 +183,13 @@ export const CustomCommands = {
 		addTaskPage.enterDueDateData();
 		addTaskPage.clickKeyboardButtonByKeyCode(9);
 		addTaskPage.estimateDaysInputVisible();
-		addTaskPage.enterEstimateDaysInputData(
-			AddTasksPageData.defaultTaskEstimateDays
-		);
+		addTaskPage.enterEstimateDaysInputData(AddTasksPageData.defaultTaskEstimateDays);
 		addTaskPage.estimateHoursInputVisible();
-		addTaskPage.enterEstimateHoursInputData(
-			AddTasksPageData.defaultTaskEstimateHours
-		);
+		addTaskPage.enterEstimateHoursInputData(AddTasksPageData.defaultTaskEstimateHours);
 		addTaskPage.estimateMinutesInputVisible();
-		addTaskPage.enterEstimateMinutesInputData(
-			AddTasksPageData.defaultTaskEstimateMinutes
-		);
+		addTaskPage.enterEstimateMinutesInputData(AddTasksPageData.defaultTaskEstimateMinutes);
 		addTaskPage.taskDescriptionTextareaVisible();
-		addTaskPage.enterTaskDescriptionTextareaData(
-			AddTasksPageData.defaultTaskDescription
-		);
+		addTaskPage.enterTaskDescriptionTextareaData(AddTasksPageData.defaultTaskDescription);
 		addTaskPage.saveTaskButtonVisible();
 		addTaskPage.clickSaveTaskButton();
 	},
@@ -353,60 +313,40 @@ export const CustomCommands = {
 		addOrganizationPage.clickOnNextButton();
 		addOrganizationPage.countryDropdownVisible();
 		addOrganizationPage.clickCountryDropdown();
-		addOrganizationPage.selectCountryFromDropdown(
-			AddOrganizationPageData.country
-		);
+		addOrganizationPage.selectCountryFromDropdown(AddOrganizationPageData.country);
 		addOrganizationPage.cityInputVisible();
 		addOrganizationPage.enterCityInputData(AddOrganizationPageData.city);
 		addOrganizationPage.postcodeInputVisible();
-		addOrganizationPage.enterPostcodeInputData(
-			AddOrganizationPageData.postcode
-		);
+		addOrganizationPage.enterPostcodeInputData(AddOrganizationPageData.postcode);
 		addOrganizationPage.streetInputVisible();
 		addOrganizationPage.enterStreetInputData(street);
 		addOrganizationPage.clickOnNextButton();
 		addOrganizationPage.bonusTypeDropdownVisible();
 		addOrganizationPage.clickBonusTypeDropdown();
-		addOrganizationPage.selectBonusTypeFromDropdown(
-			AddOrganizationPageData.bonusType
-		);
+		addOrganizationPage.selectBonusTypeFromDropdown(AddOrganizationPageData.bonusType);
 		addOrganizationPage.bonusPercentageInputVisible();
-		addOrganizationPage.enterBonusPercentageInputData(
-			AddOrganizationPageData.bonusPercentage
-		);
+		addOrganizationPage.enterBonusPercentageInputData(AddOrganizationPageData.bonusPercentage);
 		addOrganizationPage.clickOnNextButton();
 		addOrganizationPage.timeZoneDropdownVisible();
 		addOrganizationPage.clickTimeZoneDropdown();
-		addOrganizationPage.selectTimeZoneFromDropdown(
-			AddOrganizationPageData.timeZone
-		);
+		addOrganizationPage.selectTimeZoneFromDropdown(AddOrganizationPageData.timeZone);
 		addOrganizationPage.startOfWeekDropdownVisible();
 		addOrganizationPage.clickStartOfWeekDropdown();
-		addOrganizationPage.selectStartOfWeekFromDropdown(
-			AddOrganizationPageData.startOfWeek
-		);
+		addOrganizationPage.selectStartOfWeekFromDropdown(AddOrganizationPageData.startOfWeek);
 		addOrganizationPage.dateTypeDropdownVisible();
 		addOrganizationPage.clickDateTypeDropdown();
-		addOrganizationPage.selectDateTypeFromDropdown(
-			AddOrganizationPageData.dateType
-		);
+		addOrganizationPage.selectDateTypeFromDropdown(AddOrganizationPageData.dateType);
 		addOrganizationPage.regionDropdownVisible();
 		addOrganizationPage.clickRegionDropdown();
-		addOrganizationPage.selectRegionFromDropdown(
-			AddOrganizationPageData.region
-		);
+		addOrganizationPage.selectRegionFromDropdown(AddOrganizationPageData.region);
 		addOrganizationPage.numberFormatDropdownVisible();
 		addOrganizationPage.clickNumberFormatDropdown();
-		addOrganizationPage.selectNumberFormatFromDropdown(
-			AddOrganizationPageData.numberFormat
-		);
+		addOrganizationPage.selectNumberFormatFromDropdown(AddOrganizationPageData.numberFormat);
 		addOrganizationPage.dateFormatDropdownVisible();
 		addOrganizationPage.clickDateFormatDropdown();
 		addOrganizationPage.selectDateFormatFromDropdown();
 		addOrganizationPage.expiryPeriodInputVisible();
-		addOrganizationPage.enterExpiryPeriodInputData(
-			AddOrganizationPageData.expiryPeriod
-		);
+		addOrganizationPage.enterExpiryPeriodInputData(AddOrganizationPageData.expiryPeriod);
 		addOrganizationPage.clickOnNextButton();
 		addOrganizationPage.waitMessageToHide();
 		// addOrganizationPage.verifyOrganizationExists(organizationName);
@@ -475,12 +415,7 @@ export const CustomCommands = {
 			.should('not.be.empty')
 			.then(cy.wrap);
 	},
-	loginAsEmployee: (
-		loginPage: any,
-		dashboardPage: any,
-		empEmail: string,
-		empPassword: string
-	) => {
+	loginAsEmployee: (loginPage: any, dashboardPage: any, empEmail: string, empPassword: string) => {
 		loginPage.verifyLoginText();
 		loginPage.clearEmailField();
 		loginPage.enterEmail(empEmail);

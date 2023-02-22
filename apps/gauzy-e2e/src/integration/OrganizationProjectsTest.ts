@@ -16,9 +16,7 @@ describe('Organization projects test', () => {
 		organizationProjectsPage.requestProjectButtonVisible();
 		organizationProjectsPage.clickRequestProjectButton();
 		organizationProjectsPage.nameInputVisible();
-		organizationProjectsPage.enterNameInputData(
-			OrganizationProjectsPageData.name
-		);
+		organizationProjectsPage.enterNameInputData(OrganizationProjectsPageData.name);
 		organizationProjectsPage.selectEmployeeDropdownVisible();
 		organizationProjectsPage.clickSelectEmployeeDropdown();
 		organizationProjectsPage.selectEmployeeDropdownOption(0);
@@ -30,20 +28,14 @@ describe('Organization projects test', () => {
 		organizationProjectsPage.clickCardBody();
 		organizationProjectsPage.clickTabButton(3);
 		organizationProjectsPage.budgetHoursInputVisible();
-		organizationProjectsPage.enterBudgetHoursInputData(
-			OrganizationProjectsPageData.hours
-		);
+		organizationProjectsPage.enterBudgetHoursInputData(OrganizationProjectsPageData.hours);
 		organizationProjectsPage.clickTabButton(5);
 		organizationProjectsPage.colorInputVisible();
-		organizationProjectsPage.enterColorInputData(
-			OrganizationProjectsPageData.color
-		);
+		organizationProjectsPage.enterColorInputData(OrganizationProjectsPageData.color);
 		organizationProjectsPage.saveProjectButtonVisible();
 		organizationProjectsPage.clickSaveProjectButton();
 		organizationProjectsPage.waitMessageToHide();
-		organizationProjectsPage.verifyProjectExists(
-			OrganizationProjectsPageData.name
-		);
+		organizationProjectsPage.verifyProjectExists(OrganizationProjectsPageData.name);
 	});
 	it('Should be able to edit project', () => {
 		organizationProjectsPage.tableRowVisible();
@@ -51,19 +43,13 @@ describe('Organization projects test', () => {
 		organizationProjectsPage.editButtonVisible();
 		organizationProjectsPage.clickEditButton();
 		organizationProjectsPage.nameInputVisible();
-		organizationProjectsPage.enterNameInputData(
-			OrganizationProjectsPageData.editName
-		);
+		organizationProjectsPage.enterNameInputData(OrganizationProjectsPageData.editName);
 		organizationProjectsPage.clickTabButton(3);
 		organizationProjectsPage.budgetHoursInputVisible();
-		organizationProjectsPage.enterBudgetHoursInputData(
-			OrganizationProjectsPageData.hours
-		);
+		organizationProjectsPage.enterBudgetHoursInputData(OrganizationProjectsPageData.hours);
 		organizationProjectsPage.clickTabButton(5);
 		organizationProjectsPage.colorInputVisible();
-		organizationProjectsPage.enterColorInputData(
-			OrganizationProjectsPageData.color
-		);
+		organizationProjectsPage.enterColorInputData(OrganizationProjectsPageData.color);
 		organizationProjectsPage.saveProjectButtonVisible();
 		organizationProjectsPage.clickSaveProjectButton();
 	});
@@ -75,8 +61,6 @@ describe('Organization projects test', () => {
 		organizationProjectsPage.confirmDeleteButtonVisible();
 		organizationProjectsPage.clickConfirmDeleteButton();
 		organizationProjectsPage.waitMessageToHide();
-		organizationProjectsPage.verifyProjectIsDeleted(
-			OrganizationProjectsPageData.editName
-		);
+		organizationProjectsPage.verifyProjectIsDeleted(OrganizationProjectsPageData.editName);
 	});
 });

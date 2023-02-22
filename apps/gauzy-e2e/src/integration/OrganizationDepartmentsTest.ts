@@ -64,23 +64,15 @@ describe('Organization departments test', () => {
 		manageEmployeesPage.clickNextStepButton();
 		manageEmployeesPage.lastStepButtonVisible();
 		manageEmployeesPage.clickLastStepButton();
-		CustomCommands.addProject(
-			organizationProjectsPage,
-			OrganizationProjectsPageData
-		);
-		CustomCommands.addTag(
-			organizationTagsUserPage,
-			OrganizationTagsPageData
-		);
+		CustomCommands.addProject(organizationProjectsPage, OrganizationProjectsPageData);
+		CustomCommands.addTag(organizationTagsUserPage, OrganizationTagsPageData);
 		cy.visit('/#/pages/organization/departments');
 		organizationDepartmentsPage.gridBtnExists();
 		organizationDepartmentsPage.gridBtnClick(1);
 		organizationDepartmentsPage.addDepartmentButtonVisible();
 		organizationDepartmentsPage.clickAddDepartmentButton();
 		organizationDepartmentsPage.nameInputVisible();
-		organizationDepartmentsPage.enterNameInputData(
-			OrganizationDepartmentsPageData.departmentName
-		);
+		organizationDepartmentsPage.enterNameInputData(OrganizationDepartmentsPageData.departmentName);
 		organizationDepartmentsPage.selectEmployeeDropdownVisible();
 		organizationDepartmentsPage.clickEmployeeDropdown();
 		organizationDepartmentsPage.selectEmployeeFromDropdown(0);
@@ -91,9 +83,7 @@ describe('Organization departments test', () => {
 		organizationDepartmentsPage.clickCardBody();
 		organizationDepartmentsPage.saveDepartmentButtonVisible();
 		organizationDepartmentsPage.clickSaveDepartmentButton();
-		organizationDepartmentsPage.verifyDepartmentExists(
-			OrganizationDepartmentsPageData.departmentName
-		);
+		organizationDepartmentsPage.verifyDepartmentExists(OrganizationDepartmentsPageData.departmentName);
 	});
 	it('Should be able to edit department', () => {
 		organizationDepartmentsPage.tableRowVisible();
@@ -101,9 +91,7 @@ describe('Organization departments test', () => {
 		organizationDepartmentsPage.editButtonVisible();
 		organizationDepartmentsPage.clickEditButton();
 		organizationDepartmentsPage.nameInputVisible();
-		organizationDepartmentsPage.enterNameInputData(
-			OrganizationDepartmentsPageData.departmentName
-		);
+		organizationDepartmentsPage.enterNameInputData(OrganizationDepartmentsPageData.departmentName);
 		organizationDepartmentsPage.saveDepartmentButtonVisible();
 		organizationDepartmentsPage.clickSaveDepartmentButton();
 	});
@@ -113,8 +101,6 @@ describe('Organization departments test', () => {
 		organizationDepartmentsPage.clickDeleteButton();
 		organizationDepartmentsPage.confirmDeleteButtonVisible();
 		organizationDepartmentsPage.clickConfirmDeleteButton();
-		organizationDepartmentsPage.verifyDepartmentIsDeleted(
-			OrganizationDepartmentsPageData.departmentName
-		);
+		organizationDepartmentsPage.verifyDepartmentIsDeleted(OrganizationDepartmentsPageData.departmentName);
 	});
 });

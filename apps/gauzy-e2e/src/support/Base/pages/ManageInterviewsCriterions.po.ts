@@ -33,15 +33,11 @@ export const verifyTechnologyTextExist = (text) => {
 };
 
 export const verifyTechnologyIsDeleted = () => {
-	verifyElementNotExist(
-		ManageInterviewsCriterionsPage.verifyTechnologyTextCss
-	);
+	verifyElementNotExist(ManageInterviewsCriterionsPage.verifyTechnologyTextCss);
 };
 
 export const editTechnologyButtonVisible = () => {
-	verifyElementIsVisible(
-		ManageInterviewsCriterionsPage.editTechnologyButtonCss
-	);
+	verifyElementIsVisible(ManageInterviewsCriterionsPage.editTechnologyButtonCss);
 };
 
 export const clickEditTechnologyButton = () => {
@@ -49,9 +45,7 @@ export const clickEditTechnologyButton = () => {
 };
 
 export const deleteTechnologyButtonVisible = () => {
-	verifyElementIsVisible(
-		ManageInterviewsCriterionsPage.deleteTechnologyButtonCss
-	);
+	verifyElementIsVisible(ManageInterviewsCriterionsPage.deleteTechnologyButtonCss);
 };
 
 export const clickDeleteTechnologyButton = () => {
@@ -85,9 +79,7 @@ export const clickEditQualityButton = () => {
 };
 
 export const deleteQualityButtonVisible = () => {
-	verifyElementIsVisible(
-		ManageInterviewsCriterionsPage.deleteQualityButtonCss
-	);
+	verifyElementIsVisible(ManageInterviewsCriterionsPage.deleteQualityButtonCss);
 };
 
 export const clickDeleteQualityButton = () => {

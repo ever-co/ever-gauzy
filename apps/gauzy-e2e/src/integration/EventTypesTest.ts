@@ -21,13 +21,9 @@ describe('Event types test', () => {
 		eventTypesPage.titleInputVisible();
 		eventTypesPage.enterTitleInputData(EventTypePageData.defaultEventTitle);
 		eventTypesPage.descriptionInputVisible();
-		eventTypesPage.enterDescriptionInputData(
-			EventTypePageData.defaultDescription
-		);
+		eventTypesPage.enterDescriptionInputData(EventTypePageData.defaultDescription);
 		eventTypesPage.durationInputVisible();
-		eventTypesPage.enterDurationInputData(
-			EventTypePageData.defaultDuration
-		);
+		eventTypesPage.enterDurationInputData(EventTypePageData.defaultDuration);
 		eventTypesPage.checkboxVisible();
 		eventTypesPage.clickCheckbox();
 		eventTypesPage.saveButtonVisible();
@@ -43,13 +39,9 @@ describe('Event types test', () => {
 		eventTypesPage.titleInputVisible();
 		eventTypesPage.enterTitleInputData(EventTypePageData.defaultEventTitle);
 		eventTypesPage.descriptionInputVisible();
-		eventTypesPage.enterDescriptionInputData(
-			EventTypePageData.defaultDescription
-		);
+		eventTypesPage.enterDescriptionInputData(EventTypePageData.defaultDescription);
 		eventTypesPage.durationInputVisible();
-		eventTypesPage.enterDurationInputData(
-			EventTypePageData.defaultDuration
-		);
+		eventTypesPage.enterDurationInputData(EventTypePageData.defaultDuration);
 		eventTypesPage.checkboxVisible();
 		eventTypesPage.clickCheckbox();
 		eventTypesPage.saveButtonVisible();

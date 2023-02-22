@@ -33,14 +33,8 @@ describe('Estimates test', () => {
 		CustomCommands.login(loginPage, LoginPageData, dashboardPage);
 	});
 	it('Should be able to add new estimate', () => {
-		CustomCommands.addProject(
-			organizationProjectsPage,
-			OrganizationProjectsPageData
-		);
-		CustomCommands.addTag(
-			organizationTagsUserPage,
-			OrganizationTagsPageData
-		);
+		CustomCommands.addProject(organizationProjectsPage, OrganizationProjectsPageData);
+		CustomCommands.addTag(organizationTagsUserPage, OrganizationTagsPageData);
 		CustomCommands.addContact(
 			fullName,
 			email,
@@ -64,9 +58,7 @@ describe('Estimates test', () => {
 		estimatesPage.enterDiscountData(EstimatesPageData.discountValue);
 		estimatesPage.discountTypeDropdownVisible();
 		estimatesPage.clickDiscountDropdown();
-		estimatesPage.selectDiscountTypeFromDropdown(
-			EstimatesPageData.discountType
-		);
+		estimatesPage.selectDiscountTypeFromDropdown(EstimatesPageData.discountType);
 		estimatesPage.contactDropdownVisible();
 		estimatesPage.clickContactDropdown();
 		estimatesPage.selectContactFromDropdown(0);
@@ -77,9 +69,7 @@ describe('Estimates test', () => {
 		estimatesPage.selectTaxTypeFromDropdown(EstimatesPageData.taxType);
 		estimatesPage.invoiceTypeDropdownVisible();
 		estimatesPage.clickInvoiceTypeDropdown();
-		estimatesPage.selectInvoiceTypeFromDropdown(
-			EstimatesPageData.invoiceType
-		);
+		estimatesPage.selectInvoiceTypeFromDropdown(EstimatesPageData.invoiceType);
 		estimatesPage.employeeDropdownVisible();
 		estimatesPage.clickEmployeeDropdown();
 		estimatesPage.selectEmployeeFromDropdown(0);
@@ -87,9 +77,7 @@ describe('Estimates test', () => {
 		estimatesPage.generateItemsButtonVisible();
 		estimatesPage.clickGenerateItemsButton();
 		estimatesPage.saveAsDraftButtonVisible();
-		estimatesPage.clickSaveAsDraftButton(
-			EstimatesPageData.saveAsDraftButton
-		);
+		estimatesPage.clickSaveAsDraftButton(EstimatesPageData.saveAsDraftButton);
 		estimatesPage.waitMessageToHide();
 		estimatesPage.verifyDraftBadgeClass();
 	});
@@ -97,9 +85,7 @@ describe('Estimates test', () => {
 		estimatesPage.verifyTabButtonVisible();
 		estimatesPage.clickTabButton(1);
 		estimatesPage.verifyEstimateNumberInputVisible();
-		estimatesPage.enterEstimateNumberInputData(
-			EstimatesPageData.estimateNumber
-		);
+		estimatesPage.enterEstimateNumberInputData(EstimatesPageData.estimateNumber);
 		estimatesPage.verifyCurrencyDropdownVisible();
 		estimatesPage.verifyEstimateDateInput();
 		estimatesPage.verifyEstimateDueDateInput();
@@ -112,9 +98,7 @@ describe('Estimates test', () => {
 		estimatesPage.clickResetButton();
 		estimatesPage.clickSearchButton();
 		estimatesPage.verifyDraftBadgeClass();
-		estimatesPage.enterEstimateNumberInputData(
-			EstimatesPageData.secondEstimateNumber
-		);
+		estimatesPage.enterEstimateNumberInputData(EstimatesPageData.secondEstimateNumber);
 		estimatesPage.clickSearchButton();
 		estimatesPage.clickResetButton();
 		estimatesPage.verifyDraftBadgeClass();
@@ -130,9 +114,7 @@ describe('Estimates test', () => {
 		estimatesPage.enterDiscountData(EstimatesPageData.editDiscountValue);
 		estimatesPage.discountTypeDropdownVisible();
 		estimatesPage.clickDiscountDropdown();
-		estimatesPage.selectDiscountTypeFromDropdown(
-			EstimatesPageData.discountType
-		);
+		estimatesPage.selectDiscountTypeFromDropdown(EstimatesPageData.discountType);
 		estimatesPage.contactDropdownVisible();
 		estimatesPage.clickContactDropdown();
 		estimatesPage.selectContactFromDropdown(0);
@@ -142,9 +124,7 @@ describe('Estimates test', () => {
 		estimatesPage.clickTaxTypeDropdown();
 		estimatesPage.selectTaxTypeFromDropdown(EstimatesPageData.taxType);
 		estimatesPage.saveAsDraftButtonVisible();
-		estimatesPage.clickSaveAsDraftButton(
-			EstimatesPageData.saveAsDraftButton
-		);
+		estimatesPage.clickSaveAsDraftButton(EstimatesPageData.saveAsDraftButton);
 	});
 	it('Should be able to duplicate estimate', () => {
 		estimatesPage.waitMessageToHide();
@@ -153,9 +133,7 @@ describe('Estimates test', () => {
 		estimatesPage.moreButtonVisible();
 		estimatesPage.clickMoreButton();
 		estimatesPage.actionButtonVisible();
-		estimatesPage.clickActionButtonByText(
-			EstimatesPageData.duplicateButton
-		);
+		estimatesPage.clickActionButtonByText(EstimatesPageData.duplicateButton);
 		estimatesPage.waitMessageToHide();
 		estimatesPage.backButtonVisible();
 		estimatesPage.clickBackButton();
@@ -214,9 +192,7 @@ describe('Estimates test', () => {
 		estimatesPage.enterDiscountData(EstimatesPageData.discountValue);
 		estimatesPage.discountTypeDropdownVisible();
 		estimatesPage.clickDiscountDropdown();
-		estimatesPage.selectDiscountTypeFromDropdown(
-			EstimatesPageData.discountType
-		);
+		estimatesPage.selectDiscountTypeFromDropdown(EstimatesPageData.discountType);
 		estimatesPage.contactDropdownVisible();
 		estimatesPage.clickContactDropdown();
 		estimatesPage.selectContactFromDropdown(0);
@@ -227,9 +203,7 @@ describe('Estimates test', () => {
 		estimatesPage.selectTaxTypeFromDropdown(EstimatesPageData.taxType);
 		estimatesPage.invoiceTypeDropdownVisible();
 		estimatesPage.clickInvoiceTypeDropdown();
-		estimatesPage.selectInvoiceTypeFromDropdown(
-			EstimatesPageData.invoiceType
-		);
+		estimatesPage.selectInvoiceTypeFromDropdown(EstimatesPageData.invoiceType);
 		estimatesPage.employeeDropdownVisible();
 		estimatesPage.clickEmployeeDropdown();
 		estimatesPage.selectEmployeeFromDropdown(0);
@@ -237,9 +211,7 @@ describe('Estimates test', () => {
 		estimatesPage.generateItemsButtonVisible();
 		estimatesPage.clickGenerateItemsButton();
 		estimatesPage.saveAsDraftButtonVisible();
-		estimatesPage.clickSaveAsDraftButton(
-			EstimatesPageData.saveAsDraftButton
-		);
+		estimatesPage.clickSaveAsDraftButton(EstimatesPageData.saveAsDraftButton);
 		estimatesPage.waitMessageToHide();
 		estimatesPage.verifyDraftBadgeClass();
 		estimatesPage.selectTableRow(0);

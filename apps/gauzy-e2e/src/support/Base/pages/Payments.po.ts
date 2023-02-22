@@ -195,5 +195,5 @@ export const selectOptionFromDropdown = (text) => {
 };
 
 export const selectTableRowByNote = (text) => {
-	clickElementByText(PaymentsPage.selectTableRowCss, text)
-}
+	clickElementByText(PaymentsPage.selectTableRowCss, text);
+};

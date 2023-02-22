@@ -71,9 +71,7 @@ describe('Goals test', () => {
 		goalsPage.clickWeightTypeButton(0);
 		goalsPage.weightParameterDropdownVisible();
 		goalsPage.clickWeightParameterDropdown();
-		goalsPage.selectWeightParameterFromDropdown(
-			GoalsPageData.weightParameter
-		);
+		goalsPage.selectWeightParameterFromDropdown(GoalsPageData.weightParameter);
 		goalsPage.confirmButtonVisible();
 		goalsPage.clickConfirmButton();
 	});

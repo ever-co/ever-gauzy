@@ -11,5 +11,4 @@ export const ApprovalRequestPageData = {
 	searchResult: 1,
 	refuseBtn: 'Refuse',
 	refusedStatus: 'Refused'
-
 };

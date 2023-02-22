@@ -19,9 +19,7 @@ describe('Time tracking page test', () => {
 		timeTrackingPage.topCardTextExist(TimeTrackingPageData.workedThisWeek);
 		timeTrackingPage.topCardTextExist(TimeTrackingPageData.todayActivity);
 		timeTrackingPage.topCardTextExist(TimeTrackingPageData.workedToday);
-		timeTrackingPage.bottomCardTextExist(
-			TimeTrackingPageData.recentActivities
-		);
+		timeTrackingPage.bottomCardTextExist(TimeTrackingPageData.recentActivities);
 		timeTrackingPage.bottomCardTextExist(TimeTrackingPageData.projects);
 		timeTrackingPage.bottomCardTextExist(TimeTrackingPageData.tasks);
 		timeTrackingPage.bottomCardTextExist(TimeTrackingPageData.appsUrls);

@@ -27,15 +27,7 @@ Given('Login with default credentials', () => {
 // Add employee
 And('User can add new employee', () => {
 	dashboardPage.verifyAccountingDashboardIfVisible();
-	CustomCommands.addEmployee(
-		manageEmployeesPage,
-		firstName,
-		lastName,
-		username,
-		employeeEmail,
-		password,
-		imgUrl
-	);
+	CustomCommands.addEmployee(manageEmployeesPage, firstName, lastName, username, employeeEmail, password, imgUrl);
 });
 
 // Verify chart options
@@ -48,7 +40,7 @@ And('User can visit Dashboard accounting page', () => {
 
 And('User can see employees dashboard', () => {
 	humanResourcesPage.verifyEmployeeCardVisible();
-})
+});
 
 When('User select employee by name', () => {
 	humanResourcesPage.selectEmployee(1);
@@ -64,40 +56,28 @@ When('User click chart dropdown', () => {
 });
 
 And('User can verify bar chart', () => {
-	humanResourcesPage.verifyChartOptionText(
-		HumanResourcesPageData.barChartText
-	);
+	humanResourcesPage.verifyChartOptionText(HumanResourcesPageData.barChartText);
 });
 
 And('User can verify doughnut chart', () => {
-	humanResourcesPage.verifyChartOptionText(
-		HumanResourcesPageData.doughnutChartText
-	);
+	humanResourcesPage.verifyChartOptionText(HumanResourcesPageData.doughnutChartText);
 });
 
 And('User can verify stacked bar chart', () => {
-	humanResourcesPage.verifyChartOptionText(
-		HumanResourcesPageData.stackedBarChartText
-	);
+	humanResourcesPage.verifyChartOptionText(HumanResourcesPageData.stackedBarChartText);
 });
 
 // Verify total income
 And('User can verify total income section', () => {
-	humanResourcesPage.verifyCardTextExist(
-		HumanResourcesPageData.totalIncomeText
-	);
+	humanResourcesPage.verifyCardTextExist(HumanResourcesPageData.totalIncomeText);
 });
 
 And('User can verify total expense section', () => {
-	humanResourcesPage.verifyCardTextExist(
-		HumanResourcesPageData.totalExpenseText
-	);
+	humanResourcesPage.verifyCardTextExist(HumanResourcesPageData.totalExpenseText);
 });
 
 And('User can verify total expenses section', () => {
-	humanResourcesPage.verifyCardTextExist(
-		HumanResourcesPageData.totalExpensesText
-	);
+	humanResourcesPage.verifyCardTextExist(HumanResourcesPageData.totalExpensesText);
 });
 
 And('User can verify profit section', () => {
@@ -105,89 +85,61 @@ And('User can verify profit section', () => {
 });
 
 When('User click on total income section', () => {
-	humanResourcesPage.clickCardByHeaderText(
-		HumanResourcesPageData.totalIncomeText
-	);
+	humanResourcesPage.clickCardByHeaderText(HumanResourcesPageData.totalIncomeText);
 });
 
 Then('User can see popup with income header', () => {
-	humanResourcesPage.verifyPopupHeaderText(
-		HumanResourcesPageData.incomeHeaderText
-	);
+	humanResourcesPage.verifyPopupHeaderText(HumanResourcesPageData.incomeHeaderText);
 });
 
 And('user can see total income date table column', () => {
-	humanResourcesPage.verifyPopupTableHeaderText(
-		HumanResourcesPageData.incomeTableHeaderDateText
-	);
+	humanResourcesPage.verifyPopupTableHeaderText(HumanResourcesPageData.incomeTableHeaderDateText);
 });
 
 And('User can see total income contact table column', () => {
-	humanResourcesPage.verifyPopupTableHeaderText(
-		HumanResourcesPageData.incomeTableHeaderClientNameText
-	);
+	humanResourcesPage.verifyPopupTableHeaderText(HumanResourcesPageData.incomeTableHeaderClientNameText);
 });
 
 And('User can see total income value table column', () => {
-	humanResourcesPage.verifyPopupTableHeaderText(
-		HumanResourcesPageData.incomeTableHeaderValueText
-	);
+	humanResourcesPage.verifyPopupTableHeaderText(HumanResourcesPageData.incomeTableHeaderValueText);
 });
 
 And('Uer can see total income notes table column', () => {
-	humanResourcesPage.verifyPopupTableHeaderText(
-		HumanResourcesPageData.incomeTableHeaderNotesText
-	);
+	humanResourcesPage.verifyPopupTableHeaderText(HumanResourcesPageData.incomeTableHeaderNotesText);
 	humanResourcesPage.clickCardBody();
 });
 
 // Verify Total Expenses without salary
 When('User click on Total expenses section', () => {
-	humanResourcesPage.clickCardByHeaderText(
-		HumanResourcesPageData.totalExpenseText
-	);
+	humanResourcesPage.clickCardByHeaderText(HumanResourcesPageData.totalExpenseText);
 });
 
 Then('User can see popup with expenses header', () => {
-	humanResourcesPage.verifyPopupHeaderText(
-		HumanResourcesPageData.expensesHeaderText
-	);
+	humanResourcesPage.verifyPopupHeaderText(HumanResourcesPageData.expensesHeaderText);
 });
 
 And('user can see total expenses source table column', () => {
-	humanResourcesPage.verifyPopupTableHeaderText(
-		HumanResourcesPageData.expensesTableHeaderSourceText
-	);
+	humanResourcesPage.verifyPopupTableHeaderText(HumanResourcesPageData.expensesTableHeaderSourceText);
 });
 
 And('User can see total expenses date table column', () => {
-	humanResourcesPage.verifyPopupTableHeaderText(
-		HumanResourcesPageData.expensesTableHeaderDateText
-	);
+	humanResourcesPage.verifyPopupTableHeaderText(HumanResourcesPageData.expensesTableHeaderDateText);
 });
 
 And('User can see total expenses vendor table column', () => {
-	humanResourcesPage.verifyPopupTableHeaderText(
-		HumanResourcesPageData.expensesTableHeaderVendorText
-	);
+	humanResourcesPage.verifyPopupTableHeaderText(HumanResourcesPageData.expensesTableHeaderVendorText);
 });
 
 And('Uer can see total expenses category table column', () => {
-	humanResourcesPage.verifyPopupTableHeaderText(
-		HumanResourcesPageData.expensesTableHeaderCategoryText
-	);
+	humanResourcesPage.verifyPopupTableHeaderText(HumanResourcesPageData.expensesTableHeaderCategoryText);
 });
 
 And('Uer can see total expenses value table column', () => {
-	humanResourcesPage.verifyPopupTableHeaderText(
-		HumanResourcesPageData.expensesTableHeaderValueText
-	);
+	humanResourcesPage.verifyPopupTableHeaderText(HumanResourcesPageData.expensesTableHeaderValueText);
 });
 
 And('Uer can see total expenses notes table column', () => {
-	humanResourcesPage.verifyPopupTableHeaderText(
-		HumanResourcesPageData.expensesTableHeaderNotesText
-	);
+	humanResourcesPage.verifyPopupTableHeaderText(HumanResourcesPageData.expensesTableHeaderNotesText);
 	humanResourcesPage.clickCardBody();
 });
 
@@ -197,31 +149,21 @@ When('User click on Profit section', () => {
 });
 
 Then('User can see popup with profit header', () => {
-	humanResourcesPage.verifyPopupProfitHeaderText(
-		HumanResourcesPageData.profitHeaderText
-	);
+	humanResourcesPage.verifyPopupProfitHeaderText(HumanResourcesPageData.profitHeaderText);
 });
 
 And('user can see profit date table column', () => {
-	humanResourcesPage.verifyPopupTableHeaderText(
-		HumanResourcesPageData.profitTableHeaderDateText
-	);
+	humanResourcesPage.verifyPopupTableHeaderText(HumanResourcesPageData.profitTableHeaderDateText);
 });
 
 And('User can see profit expenses table column', () => {
-	humanResourcesPage.verifyPopupTableHeaderText(
-		HumanResourcesPageData.profitTableHeaderExpensesText
-	);
+	humanResourcesPage.verifyPopupTableHeaderText(HumanResourcesPageData.profitTableHeaderExpensesText);
 });
 
 And('User can see profit income table column', () => {
-	humanResourcesPage.verifyPopupTableHeaderText(
-		HumanResourcesPageData.profitTableHeaderIncomeText
-	);
+	humanResourcesPage.verifyPopupTableHeaderText(HumanResourcesPageData.profitTableHeaderIncomeText);
 });
 
 And('Uer can see profit description table column', () => {
-	humanResourcesPage.verifyPopupTableHeaderText(
-		HumanResourcesPageData.profitTableHeaderDescriptionText
-	);
+	humanResourcesPage.verifyPopupTableHeaderText(HumanResourcesPageData.profitTableHeaderDescriptionText);
 });

@@ -16,7 +16,6 @@ import * as manageEmployeesPage from '../../Base/pages/ManageEmployees.po';
 
 import { Given, Then, When, And } from 'cypress-cucumber-preprocessor/steps';
 
-
 const pageLoadTimeout = Cypress.config('pageLoadTimeout');
 
 let email = faker.internet.email();
@@ -50,15 +49,7 @@ And('User can add new employee', () => {
 	CustomCommands.logout(dashboardPage, logoutPage, loginPage);
 	CustomCommands.clearCookies();
 	CustomCommands.login(loginPage, LoginPageData, dashboardPage);
-	CustomCommands.addEmployee(
-		manageEmployeesPage,
-		firstName,
-		lastName,
-		username,
-		employeeEmail,
-		password,
-		imgUrl
-	);
+	CustomCommands.addEmployee(manageEmployeesPage, firstName, lastName, username, employeeEmail, password, imgUrl);
 });
 
 // Add project
@@ -66,10 +57,7 @@ And('User can add new project', () => {
 	CustomCommands.logout(dashboardPage, logoutPage, loginPage);
 	CustomCommands.clearCookies();
 	CustomCommands.login(loginPage, LoginPageData, dashboardPage);
-	CustomCommands.addProject(
-		organizationProjectsPage,
-		OrganizationProjectsPageData
-	);
+	CustomCommands.addProject(organizationProjectsPage, OrganizationProjectsPageData);
 });
 
 // Add contact
@@ -143,9 +131,7 @@ When('User click on discount type dropdown', () => {
 });
 
 Then('User can select discount type from dropdown options', () => {
-	estimatesPage.selectDiscountTypeFromDropdown(
-		EstimatesPageData.discountType
-	);
+	estimatesPage.selectDiscountTypeFromDropdown(EstimatesPageData.discountType);
 });
 
 And('User can see contact dropdown', () => {
@@ -243,9 +229,7 @@ Then('User can see estimate number input field', () => {
 });
 
 And('User can enter estimate number', () => {
-	estimatesPage.enterEstimateNumberInputData(
-		EstimatesPageData.estimateNumber
-	);
+	estimatesPage.enterEstimateNumberInputData(EstimatesPageData.estimateNumber);
 });
 
 And('User can see currency dropdown', () => {
@@ -293,9 +277,7 @@ And('User can verify badge', () => {
 });
 
 And('User can edit estimate number', () => {
-	estimatesPage.enterEstimateNumberInputData(
-		EstimatesPageData.secondEstimateNumber
-	);
+	estimatesPage.enterEstimateNumberInputData(EstimatesPageData.secondEstimateNumber);
 });
 
 And('User can click search button again', () => {
@@ -352,9 +334,7 @@ When('User click on discount type dropdown', () => {
 });
 
 Then('User can select discount type from dropdown options', () => {
-	estimatesPage.selectDiscountTypeFromDropdown(
-		EstimatesPageData.discountType
-	);
+	estimatesPage.selectDiscountTypeFromDropdown(EstimatesPageData.discountType);
 });
 
 And('User can see contact dropdown', () => {
@@ -448,7 +428,7 @@ When('User click on email button', () => {
 
 Then('User can scroll down to email input field', () => {
 	estimatesPage.scrollEmailInviteTemplate();
-})
+});
 
 And('User can see email input field', () => {
 	estimatesPage.emailInputVisible();
@@ -481,7 +461,7 @@ Then('User can see more settings button again', () => {
 	dashboardPage.verifyAccountingDashboardIfVisible();
 	cy.visit('/#/pages/sales/invoices/estimates', { timeout: pageLoadTimeout });
 	estimatesPage.verifyMoreButton();
-})
+});
 
 And('User can verify invoice was sent by email', () => {
 	estimatesPage.verifySentBadgeClass();
@@ -539,9 +519,7 @@ When('User click on discount type dropdown', () => {
 });
 
 Then('User can select discount type from dropdown options', () => {
-	estimatesPage.selectDiscountTypeFromDropdown(
-		EstimatesPageData.discountType
-	);
+	estimatesPage.selectDiscountTypeFromDropdown(EstimatesPageData.discountType);
 });
 
 And('User can see contact dropdown', () => {

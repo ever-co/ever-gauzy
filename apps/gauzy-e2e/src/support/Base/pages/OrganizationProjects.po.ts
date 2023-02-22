@@ -40,9 +40,7 @@ export const enterNameInputData = (data) => {
 };
 
 export const selectEmployeeDropdownVisible = () => {
-	verifyElementIsVisible(
-		OrganizationProjectsPage.selectEmployeeMultiSelectCss
-	);
+	verifyElementIsVisible(OrganizationProjectsPage.selectEmployeeMultiSelectCss);
 };
 
 export const clickSelectEmployeeDropdown = () => {
@@ -50,17 +48,11 @@ export const clickSelectEmployeeDropdown = () => {
 };
 
 export const selectEmployeeDropdownOption = (index) => {
-	clickButtonByIndex(
-		OrganizationProjectsPage.selectEmployeeDropdownOptionCss,
-		index
-	);
+	clickButtonByIndex(OrganizationProjectsPage.selectEmployeeDropdownOptionCss, index);
 };
 
 export const selectEmployeeFromDropdownByName = (name) => {
-	clickElementByText(
-		OrganizationProjectsPage.selectEmployeeDropdownOptionCss,
-		name
-	);
+	clickElementByText(OrganizationProjectsPage.selectEmployeeDropdownOptionCss, name);
 };
 
 export const tagsMultiSelectVisible = () => {

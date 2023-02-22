@@ -14,7 +14,6 @@ import * as logoutPage from '../../Base/pages/Logout.po';
 
 import { Given, Then, When, And } from 'cypress-cucumber-preprocessor/steps';
 
-
 const pageLoadTimeout = Cypress.config('pageLoadTimeout');
 
 let empFirstName = faker.person.firstName();
@@ -56,10 +55,7 @@ And('User can add new project', () => {
 	CustomCommands.logout(dashboardPage, logoutPage, loginPage);
 	CustomCommands.clearCookies();
 	CustomCommands.login(loginPage, LoginPageData, dashboardPage);
-	CustomCommands.addProject(
-		organizationProjectsPage,
-		OrganizationProjectsPageData
-	);
+	CustomCommands.addProject(organizationProjectsPage, OrganizationProjectsPageData);
 });
 
 // Add department
@@ -91,9 +87,7 @@ Then('User will see name input field', () => {
 });
 
 And('User can enter value for name', () => {
-	organizationDepartmentsPage.enterNameInputData(
-		OrganizationDepartmentsPageData.departmentName
-	);
+	organizationDepartmentsPage.enterNameInputData(OrganizationDepartmentsPageData.departmentName);
 });
 
 And('User can see employee dropdown', () => {
@@ -135,9 +129,7 @@ Then('Notification message will appear', () => {
 });
 
 And('User can verify department was created', () => {
-	organizationDepartmentsPage.verifyDepartmentExists(
-		OrganizationDepartmentsPageData.departmentName
-	);
+	organizationDepartmentsPage.verifyDepartmentExists(OrganizationDepartmentsPageData.departmentName);
 });
 
 // Edit department
@@ -162,9 +154,7 @@ Then('User can see edit department name input field', () => {
 });
 
 And('User can enter new value for department name', () => {
-	organizationDepartmentsPage.enterNameInputData(
-		OrganizationDepartmentsPageData.editDepartmentName
-	);
+	organizationDepartmentsPage.enterNameInputData(OrganizationDepartmentsPageData.editDepartmentName);
 });
 
 And('User can save edited department button', () => {
@@ -180,9 +170,7 @@ Then('Notification message will appear', () => {
 });
 
 And('User can verify department was edited', () => {
-	organizationDepartmentsPage.verifyDepartmentExists(
-		OrganizationDepartmentsPageData.editDepartmentName
-	);
+	organizationDepartmentsPage.verifyDepartmentExists(OrganizationDepartmentsPageData.editDepartmentName);
 });
 
 // Delete department
@@ -215,7 +203,5 @@ Then('Notification message will appear', () => {
 });
 
 And('User can verify department was deleted', () => {
-	organizationDepartmentsPage.verifyDepartmentIsDeleted(
-		OrganizationDepartmentsPageData.editDepartmentName
-	);
+	organizationDepartmentsPage.verifyDepartmentIsDeleted(OrganizationDepartmentsPageData.editDepartmentName);
 });

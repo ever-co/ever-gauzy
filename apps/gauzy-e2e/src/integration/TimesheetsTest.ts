@@ -48,33 +48,10 @@ describe('Timesheets test', () => {
 		CustomCommands.login(loginPage, LoginPageData, dashboardPage);
 	});
 	it('Should be able to add time', () => {
-		CustomCommands.addProject(
-			organizationProjectsPage,
-			OrganizationProjectsPageData
-		);
-		CustomCommands.addTag(
-			organizationTagsUserPage,
-			OrganizationTagsPageData
-		);
-		CustomCommands.addEmployee(
-			manageEmployeesPage,
-			firstName,
-			lastName,
-			username,
-			employeeEmail,
-			password,
-			imgUrl
-		);
-		CustomCommands.addClient(
-			clientsPage,
-			fullName,
-			email,
-			website,
-			city,
-			postcode,
-			street,
-			ClientsData
-		);
+		CustomCommands.addProject(organizationProjectsPage, OrganizationProjectsPageData);
+		CustomCommands.addTag(organizationTagsUserPage, OrganizationTagsPageData);
+		CustomCommands.addEmployee(manageEmployeesPage, firstName, lastName, username, employeeEmail, password, imgUrl);
+		CustomCommands.addClient(clientsPage, fullName, email, website, city, postcode, street, ClientsData);
 		CustomCommands.addTask(addTaskPage, AddTasksPageData);
 		cy.visit('/#/pages/employees/timesheets/daily');
 		timesheetsPage.addTimeButtonVisible();
@@ -87,9 +64,7 @@ describe('Timesheets test', () => {
 		timesheetsPage.selectTaskFromDropdown(0);
 		timesheetsPage.selectProjectDropdownVisible();
 		timesheetsPage.clickSelectProjectDropdown();
-		timesheetsPage.selectProjectFromDropdown(
-			TimesheetsPageData.defaultProjectName
-		);
+		timesheetsPage.selectProjectFromDropdown(TimesheetsPageData.defaultProjectName);
 		timesheetsPage.clientDropdownVisible();
 		timesheetsPage.clickClientDropdown();
 		timesheetsPage.selectClientFromDropdown(0);
@@ -100,9 +75,7 @@ describe('Timesheets test', () => {
 		timesheetsPage.clickSelectEmployeeDropdown();
 		timesheetsPage.selectEmployeeFromDropdown(0);
 		timesheetsPage.addTimeLogDescriptionVisible();
-		timesheetsPage.enterTimeLogDescriptionData(
-			TimesheetsPageData.defaultDescription
-		);
+		timesheetsPage.enterTimeLogDescriptionData(TimesheetsPageData.defaultDescription);
 		timesheetsPage.saveTimeLogButtonVisible();
 		timesheetsPage.clickSaveTimeLogButton();
 	});
@@ -120,9 +93,7 @@ describe('Timesheets test', () => {
 		timesheetsPage.enterDateData();
 		timesheetsPage.clickKeyboardButtonByKeyCode(9);
 		timesheetsPage.addTimeLogDescriptionVisible();
-		timesheetsPage.enterTimeLogDescriptionData(
-			TimesheetsPageData.defaultDescription
-		);
+		timesheetsPage.enterTimeLogDescriptionData(TimesheetsPageData.defaultDescription);
 		timesheetsPage.saveTimeLogButtonVisible();
 		timesheetsPage.clickSaveTimeLogButton();
 	});

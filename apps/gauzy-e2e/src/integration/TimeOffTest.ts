@@ -26,15 +26,7 @@ describe('Time Off test', () => {
 		CustomCommands.login(loginPage, LoginPageData, dashboardPage);
 	});
 	it('Should be able to create new time off request', () => {
-		CustomCommands.addEmployee(
-			manageEmployeesPage,
-			firstName,
-			lastName,
-			username,
-			employeeEmail,
-			password,
-			imgUrl
-		);
+		CustomCommands.addEmployee(manageEmployeesPage, firstName, lastName, username, employeeEmail, password, imgUrl);
 		cy.visit('/#/pages/employees/time-off');
 		timeOffPage.requestButtonVisible();
 		timeOffPage.clickRequestButton();
@@ -51,9 +43,7 @@ describe('Time Off test', () => {
 		timeOffPage.endDateInputVisible();
 		timeOffPage.enterEndDateData();
 		timeOffPage.descriptionInputVisible();
-		timeOffPage.enterDescriptionInputData(
-			TimeOffPageData.defaultDescription
-		);
+		timeOffPage.enterDescriptionInputData(TimeOffPageData.defaultDescription);
 		timeOffPage.saveRequestButtonVisible();
 		timeOffPage.clickSaveRequestButton();
 		timeOffPage.waitMessageToHide();
@@ -86,9 +76,7 @@ describe('Time Off test', () => {
 		timeOffPage.endDateInputVisible();
 		timeOffPage.enterEndDateData();
 		timeOffPage.descriptionInputVisible();
-		timeOffPage.enterDescriptionInputData(
-			TimeOffPageData.defaultDescription
-		);
+		timeOffPage.enterDescriptionInputData(TimeOffPageData.defaultDescription);
 		timeOffPage.saveRequestButtonVisible();
 		timeOffPage.clickSaveRequestButton();
 	});

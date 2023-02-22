@@ -16,18 +16,9 @@ describe('Add teams tasks test', () => {
 		CustomCommands.login(loginPage, LoginPageData, dashboardPage);
 	});
 	it('Should be able to add new task', () => {
-		CustomCommands.addProject(
-			organizationProjectsPage,
-			OrganizationProjectsPageData
-		);
-		CustomCommands.addTag(
-			organizationTagsUserPage,
-			OrganizationTagsPageData
-		);
-		CustomCommands.addTeam(
-			organizationTeamsPage,
-			OrganizationTeamsPageData
-		);
+		CustomCommands.addProject(organizationProjectsPage, OrganizationProjectsPageData);
+		CustomCommands.addTag(organizationTagsUserPage, OrganizationTagsPageData);
+		CustomCommands.addTeam(organizationTeamsPage, OrganizationTeamsPageData);
 		cy.visit('/#/pages/tasks/team');
 		teamsTasksPage.gridBtnExists();
 		teamsTasksPage.gridBtnClick(1);
@@ -35,14 +26,10 @@ describe('Add teams tasks test', () => {
 		teamsTasksPage.clickAddTaskButton();
 		teamsTasksPage.selectProjectDropdownVisible();
 		teamsTasksPage.clickSelectProjectDropdown();
-		teamsTasksPage.selectProjectOptionDropdown(
-			TeamsTasksPageData.defaultTaskProject
-		);
+		teamsTasksPage.selectProjectOptionDropdown(TeamsTasksPageData.defaultTaskProject);
 		teamsTasksPage.selectStatusDropdownVisible();
 		teamsTasksPage.clickStatusDropdown();
-		teamsTasksPage.selectStatusFromDropdown(
-			TeamsTasksPageData.defaultStatus
-		);
+		teamsTasksPage.selectStatusFromDropdown(TeamsTasksPageData.defaultStatus);
 		teamsTasksPage.selectTeamDropdownVisible();
 		teamsTasksPage.clickSelectTeamDropdown();
 		teamsTasksPage.selectTeamDropdownOption(0);
@@ -57,21 +44,13 @@ describe('Add teams tasks test', () => {
 		teamsTasksPage.enterDueDateData();
 		teamsTasksPage.clickKeyboardButtonByKeyCode(9);
 		teamsTasksPage.estimateDaysInputVisible();
-		teamsTasksPage.enterEstimateDaysInputData(
-			TeamsTasksPageData.defaultTaskEstimateDays
-		);
+		teamsTasksPage.enterEstimateDaysInputData(TeamsTasksPageData.defaultTaskEstimateDays);
 		teamsTasksPage.estimateHoursInputVisible();
-		teamsTasksPage.enterEstimateHoursInputData(
-			TeamsTasksPageData.defaultTaskEstimateHours
-		);
+		teamsTasksPage.enterEstimateHoursInputData(TeamsTasksPageData.defaultTaskEstimateHours);
 		teamsTasksPage.estimateMinutesInputVisible();
-		teamsTasksPage.enterEstimateMinutesInputData(
-			TeamsTasksPageData.defaultTaskEstimateMinutes
-		);
+		teamsTasksPage.enterEstimateMinutesInputData(TeamsTasksPageData.defaultTaskEstimateMinutes);
 		teamsTasksPage.taskDescriptionTextareaVisible();
-		teamsTasksPage.enterTaskDescriptionTextareaData(
-			TeamsTasksPageData.defaultTaskDescription
-		);
+		teamsTasksPage.enterTaskDescriptionTextareaData(TeamsTasksPageData.defaultTaskDescription);
 		teamsTasksPage.saveTaskButtonVisible();
 		teamsTasksPage.clickSaveTaskButton();
 		teamsTasksPage.waitMessageToHide();
@@ -102,30 +81,20 @@ describe('Add teams tasks test', () => {
 		teamsTasksPage.clickDuplicateOrEditTaskButton(1);
 		teamsTasksPage.selectProjectDropdownVisible();
 		teamsTasksPage.clickSelectProjectDropdown();
-		teamsTasksPage.selectProjectOptionDropdown(
-			TeamsTasksPageData.defaultTaskProject
-		);
+		teamsTasksPage.selectProjectOptionDropdown(TeamsTasksPageData.defaultTaskProject);
 		teamsTasksPage.addTitleInputVisible();
 		teamsTasksPage.enterTitleInputData(TeamsTasksPageData.editTaskTitle);
 		teamsTasksPage.dueDateInputVisible();
 		teamsTasksPage.enterDueDateData();
 		teamsTasksPage.clickKeyboardButtonByKeyCode(9);
 		teamsTasksPage.estimateDaysInputVisible();
-		teamsTasksPage.enterEstimateDaysInputData(
-			TeamsTasksPageData.defaultTaskEstimateDays
-		);
+		teamsTasksPage.enterEstimateDaysInputData(TeamsTasksPageData.defaultTaskEstimateDays);
 		teamsTasksPage.estimateHoursInputVisible();
-		teamsTasksPage.enterEstimateHoursInputData(
-			TeamsTasksPageData.defaultTaskEstimateHours
-		);
+		teamsTasksPage.enterEstimateHoursInputData(TeamsTasksPageData.defaultTaskEstimateHours);
 		teamsTasksPage.estimateMinutesInputVisible();
-		teamsTasksPage.enterEstimateMinutesInputData(
-			TeamsTasksPageData.defaultTaskEstimateMinutes
-		);
+		teamsTasksPage.enterEstimateMinutesInputData(TeamsTasksPageData.defaultTaskEstimateMinutes);
 		teamsTasksPage.taskDescriptionTextareaVisible();
-		teamsTasksPage.enterTaskDescriptionTextareaData(
-			TeamsTasksPageData.defaultTaskDescription
-		);
+		teamsTasksPage.enterTaskDescriptionTextareaData(TeamsTasksPageData.defaultTaskDescription);
 		teamsTasksPage.saveTaskButtonVisible();
 		teamsTasksPage.clickSaveTaskButton();
 		teamsTasksPage.waitMessageToHide();

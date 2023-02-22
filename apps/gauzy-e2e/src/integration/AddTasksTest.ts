@@ -30,23 +30,9 @@ describe('Add tasks test', () => {
 		CustomCommands.login(loginPage, LoginPageData, dashboardPage);
 	});
 	it('Should be able to add new task', () => {
-		CustomCommands.addTag(
-			organizationTagsUserPage,
-			OrganizationTagsPageData
-		);
-		CustomCommands.addProject(
-			organizationProjectsPage,
-			OrganizationProjectsPageData
-		);
-		CustomCommands.addEmployee(
-			manageEmployeesPage,
-			firstName,
-			lastName,
-			username,
-			employeeEmail,
-			password,
-			imgUrl
-		);
+		CustomCommands.addTag(organizationTagsUserPage, OrganizationTagsPageData);
+		CustomCommands.addProject(organizationProjectsPage, OrganizationProjectsPageData);
+		CustomCommands.addEmployee(manageEmployeesPage, firstName, lastName, username, employeeEmail, password, imgUrl);
 		cy.visit('/#/pages/tasks/dashboard');
 		addTaskPage.gridBtnExists();
 		addTaskPage.gridBtnClick(1);
@@ -54,9 +40,7 @@ describe('Add tasks test', () => {
 		addTaskPage.clickAddTaskButton();
 		addTaskPage.selectProjectDropdownVisible();
 		addTaskPage.clickSelectProjectDropdown();
-		addTaskPage.selectProjectOptionDropdown(
-			AddTasksPageData.defaultTaskProject
-		);
+		addTaskPage.selectProjectOptionDropdown(AddTasksPageData.defaultTaskProject);
 		addTaskPage.selectEmployeeDropdownVisible();
 		addTaskPage.clickSelectEmployeeDropdown();
 		addTaskPage.selectEmployeeDropdownOption(0);
@@ -67,21 +51,13 @@ describe('Add tasks test', () => {
 		addTaskPage.enterDueDateData();
 		addTaskPage.clickKeyboardButtonByKeyCode(9);
 		addTaskPage.estimateDaysInputVisible();
-		addTaskPage.enterEstimateDaysInputData(
-			AddTasksPageData.defaultTaskEstimateDays
-		);
+		addTaskPage.enterEstimateDaysInputData(AddTasksPageData.defaultTaskEstimateDays);
 		addTaskPage.estimateHoursInputVisible();
-		addTaskPage.enterEstimateHoursInputData(
-			AddTasksPageData.defaultTaskEstimateHours
-		);
+		addTaskPage.enterEstimateHoursInputData(AddTasksPageData.defaultTaskEstimateHours);
 		addTaskPage.estimateMinutesInputVisible();
-		addTaskPage.enterEstimateMinutesInputData(
-			AddTasksPageData.defaultTaskEstimateMinutes
-		);
+		addTaskPage.enterEstimateMinutesInputData(AddTasksPageData.defaultTaskEstimateMinutes);
 		addTaskPage.taskDescriptionTextareaVisible();
-		addTaskPage.enterTaskDescriptionTextareaData(
-			AddTasksPageData.defaultTaskDescription
-		);
+		addTaskPage.enterTaskDescriptionTextareaData(AddTasksPageData.defaultTaskDescription);
 		addTaskPage.saveTaskButtonVisible();
 		addTaskPage.clickSaveTaskButton();
 		addTaskPage.waitMessageToHide();
@@ -112,30 +88,20 @@ describe('Add tasks test', () => {
 		addTaskPage.clickDuplicateOrEditTaskButton(1);
 		addTaskPage.selectProjectDropdownVisible();
 		addTaskPage.clickSelectProjectDropdown();
-		addTaskPage.selectProjectOptionDropdown(
-			AddTasksPageData.defaultTaskProject
-		);
+		addTaskPage.selectProjectOptionDropdown(AddTasksPageData.defaultTaskProject);
 		addTaskPage.addTitleInputVisible();
 		addTaskPage.enterTitleInputData(AddTasksPageData.editTaskTitle);
 		addTaskPage.dueDateInputVisible();
 		addTaskPage.enterDueDateData();
 		addTaskPage.clickKeyboardButtonByKeyCode(9);
 		addTaskPage.estimateDaysInputVisible();
-		addTaskPage.enterEstimateDaysInputData(
-			AddTasksPageData.defaultTaskEstimateDays
-		);
+		addTaskPage.enterEstimateDaysInputData(AddTasksPageData.defaultTaskEstimateDays);
 		addTaskPage.estimateHoursInputVisible();
-		addTaskPage.enterEstimateHoursInputData(
-			AddTasksPageData.defaultTaskEstimateHours
-		);
+		addTaskPage.enterEstimateHoursInputData(AddTasksPageData.defaultTaskEstimateHours);
 		addTaskPage.estimateMinutesInputVisible();
-		addTaskPage.enterEstimateMinutesInputData(
-			AddTasksPageData.defaultTaskEstimateMinutes
-		);
+		addTaskPage.enterEstimateMinutesInputData(AddTasksPageData.defaultTaskEstimateMinutes);
 		addTaskPage.taskDescriptionTextareaVisible();
-		addTaskPage.enterTaskDescriptionTextareaData(
-			AddTasksPageData.defaultTaskDescription
-		);
+		addTaskPage.enterTaskDescriptionTextareaData(AddTasksPageData.defaultTaskDescription);
 		addTaskPage.saveTaskButtonVisible();
 		addTaskPage.clickSaveTaskButton();
 		addTaskPage.waitMessageToHide();

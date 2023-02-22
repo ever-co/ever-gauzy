@@ -12,10 +12,7 @@ describe('Add employee position test', () => {
 		CustomCommands.login(loginPage, LoginPageData, dashboardPage);
 	});
 	it('Should be able to add new employee position', () => {
-		CustomCommands.addTag(
-			organizationTagsUserPage,
-			OrganizationTagsPageData
-		);
+		CustomCommands.addTag(organizationTagsUserPage, OrganizationTagsPageData);
 		cy.visit('/#/pages/employees/positions');
 		addEmployeePositionPage.gridBtnExists();
 		addEmployeePositionPage.gridBtnClick(1);
@@ -25,9 +22,7 @@ describe('Add employee position test', () => {
 		addEmployeePositionPage.clickCancelNewPositionButton();
 		addEmployeePositionPage.clickAddNewPositionButton();
 		addEmployeePositionPage.newPositionInputVisible();
-		addEmployeePositionPage.enterNewPositionData(
-			AddEmployeePositionPageData.fullStackDeveloper
-		);
+		addEmployeePositionPage.enterNewPositionData(AddEmployeePositionPageData.fullStackDeveloper);
 		addEmployeePositionPage.tagsMultiSelectVisible();
 		addEmployeePositionPage.clickTagsMultiSelect();
 		addEmployeePositionPage.selectTagsFromDropdown(0);
@@ -37,18 +32,14 @@ describe('Add employee position test', () => {
 		addEmployeePositionPage.waitMessageToHide();
 		addEmployeePositionPage.editEmployeePositionButtonVisible();
 		addEmployeePositionPage.clickEditEmployeePositionButton();
-		addEmployeePositionPage.verifyTitleExists(
-			AddEmployeePositionPageData.fullStackDeveloper
-		);
+		addEmployeePositionPage.verifyTitleExists(AddEmployeePositionPageData.fullStackDeveloper);
 		addEmployeePositionPage.cancelButtonVisible();
 		addEmployeePositionPage.clickCancelButton();
 	});
 	it('Should be able to edit employee position', () => {
 		addEmployeePositionPage.clickEditEmployeePositionButton();
 		addEmployeePositionPage.editEmployeePositionInputVisible();
-		addEmployeePositionPage.enterEditPositionData(
-			AddEmployeePositionPageData.midLevelWebDeveloper
-		);
+		addEmployeePositionPage.enterEditPositionData(AddEmployeePositionPageData.midLevelWebDeveloper);
 		addEmployeePositionPage.tagsMultiSelectVisible();
 		addEmployeePositionPage.clickTagsMultiSelect();
 		addEmployeePositionPage.selectTagsFromDropdown(0);
@@ -58,9 +49,7 @@ describe('Add employee position test', () => {
 		addEmployeePositionPage.waitMessageToHide();
 		addEmployeePositionPage.editEmployeePositionButtonVisible();
 		addEmployeePositionPage.clickEditEmployeePositionButton();
-		addEmployeePositionPage.verifyTitleExists(
-			AddEmployeePositionPageData.midLevelWebDeveloper
-		);
+		addEmployeePositionPage.verifyTitleExists(AddEmployeePositionPageData.midLevelWebDeveloper);
 		addEmployeePositionPage.cancelButtonVisible();
 		addEmployeePositionPage.clickCancelButton();
 	});
@@ -71,9 +60,7 @@ describe('Add employee position test', () => {
 		addEmployeePositionPage.clickCancelNewPositionButton();
 		addEmployeePositionPage.clickAddNewPositionButton();
 		addEmployeePositionPage.newPositionInputVisible();
-		addEmployeePositionPage.enterNewPositionData(
-			AddEmployeePositionPageData.fullStackDeveloper
-		);
+		addEmployeePositionPage.enterNewPositionData(AddEmployeePositionPageData.fullStackDeveloper);
 		addEmployeePositionPage.tagsMultiSelectVisible();
 		addEmployeePositionPage.clickTagsMultiSelect();
 		addEmployeePositionPage.selectTagsFromDropdown(0);
@@ -85,9 +72,7 @@ describe('Add employee position test', () => {
 		addEmployeePositionPage.clickDeletePositionButton();
 		addEmployeePositionPage.confirmDeleteButtonVisible();
 		addEmployeePositionPage.clickConfirmDeletePositionButton();
-		addEmployeePositionPage.verifyElementIsDeleted(
-			AddEmployeePositionPageData.fullStackDeveloper
-		);
+		addEmployeePositionPage.verifyElementIsDeleted(AddEmployeePositionPageData.fullStackDeveloper);
 		addEmployeePositionPage.waitMessageToHide();
 		addEmployeePositionPage.deletePositionButtonVisible();
 		addEmployeePositionPage.clickDeletePositionButton();

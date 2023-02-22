@@ -26,7 +26,6 @@ export const employeeSelectorVisible = () => {
 	cy.intercept('GET', '/api/employee/working*').as('getUsersXhr');
 	verifyElementIsVisible(TimeOffPage.employeeDropdownCss);
 	cy.wait('@getUsersXhr');
-
 };
 
 export const clickEmployeeSelector = () => {
@@ -135,10 +134,7 @@ export const startHolidayDateInputVisible = () => {
 
 export const enterStartHolidayDate = () => {
 	clearField(TimeOffPage.startHolidayDateCss);
-	const date = dayjs()
-		.add(1, 'years')
-		.startOf('year')
-		.format('MMM D, YYYY');
+	const date = dayjs().add(1, 'years').startOf('year').format('MMM D, YYYY');
 	enterInput(TimeOffPage.startHolidayDateCss, date);
 };
 
@@ -148,11 +144,7 @@ export const endHolidayDateInputVisible = () => {
 
 export const enterEndHolidayDate = () => {
 	clearField(TimeOffPage.endHolidayDateCss);
-	const date = dayjs()
-		.add(1, 'years')
-		.startOf('year')
-		.add(1, 'days')
-		.format('MMM D, YYYY');
+	const date = dayjs().add(1, 'years').startOf('year').add(1, 'days').format('MMM D, YYYY');
 	enterInput(TimeOffPage.endHolidayDateCss, date);
 };
 

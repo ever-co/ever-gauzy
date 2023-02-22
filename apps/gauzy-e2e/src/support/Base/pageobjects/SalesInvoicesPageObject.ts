@@ -20,8 +20,7 @@ export const SalesInvoicesPage = {
 	selectEmployeeCss: 'div.form-group ga-employee-multi-select nb-select',
 	saveAsDraftButtonCss: 'nb-card-footer > button[status="success"]',
 	emailInputCss: '#email',
-	moreButtonCss:
-		'div.actions-container > div > button > nb-icon[icon="more-vertical-outline"]',
+	moreButtonCss: 'div.actions-container > div > button > nb-icon[icon="more-vertical-outline"]',
 	tableRowCss: 'table > tbody > tr.ng2-smart-row',
 	toastrMessageCss: 'nb-toast.ng-trigger',
 	cardBodyCss: 'nb-card-header.d-flex',

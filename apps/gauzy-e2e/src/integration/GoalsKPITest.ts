@@ -26,15 +26,7 @@ describe('Goals KPI test', () => {
 		CustomCommands.login(loginPage, LoginPageData, dashboardPage);
 	});
 	it('Should be able to add new KPI', () => {
-		CustomCommands.addEmployee(
-			manageEmployeesPage,
-			firstName,
-			lastName,
-			username,
-			employeeEmail,
-			password,
-			imgUrl
-		);
+		CustomCommands.addEmployee(manageEmployeesPage, firstName, lastName, username, employeeEmail, password, imgUrl);
 		cy.visit('/#/pages/goals/settings');
 		goalsKPIPage.tabButtonVisible();
 		goalsKPIPage.clickTabButton(2);

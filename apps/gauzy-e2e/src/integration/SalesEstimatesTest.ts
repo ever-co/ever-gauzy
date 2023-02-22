@@ -33,14 +33,8 @@ describe('Sales estimates test', () => {
 		CustomCommands.login(loginPage, LoginPageData, dashboardPage);
 	});
 	it('Should be able to add new estimate', () => {
-		CustomCommands.addProject(
-			organizationProjectsPage,
-			OrganizationProjectsPageData
-		);
-		CustomCommands.addTag(
-			organizationTagsUserPage,
-			OrganizationTagsPageData
-		);
+		CustomCommands.addProject(organizationProjectsPage, OrganizationProjectsPageData);
+		CustomCommands.addTag(organizationTagsUserPage, OrganizationTagsPageData);
 		CustomCommands.addContact(
 			fullName,
 			email,
@@ -61,14 +55,10 @@ describe('Sales estimates test', () => {
 		salesEstimatesPage.selectTagFromDropdown(0);
 		salesEstimatesPage.clickCardBody();
 		salesEstimatesPage.discountInputVisible();
-		salesEstimatesPage.enterDiscountData(
-			SalesEstimatesPageData.discountValue
-		);
+		salesEstimatesPage.enterDiscountData(SalesEstimatesPageData.discountValue);
 		salesEstimatesPage.discountTypeDropdownVisible();
 		salesEstimatesPage.clickDiscountDropdown();
-		salesEstimatesPage.selectDiscountTypeFromDropdown(
-			SalesEstimatesPageData.discountType
-		);
+		salesEstimatesPage.selectDiscountTypeFromDropdown(SalesEstimatesPageData.discountType);
 		salesEstimatesPage.contactDropdownVisible();
 		salesEstimatesPage.clickContactDropdown();
 		salesEstimatesPage.selectContactFromDropdown(0);
@@ -76,14 +66,10 @@ describe('Sales estimates test', () => {
 		salesEstimatesPage.enterTaxData(SalesEstimatesPageData.taxValue);
 		salesEstimatesPage.taxTypeDropdownVisible();
 		salesEstimatesPage.clickTaxTypeDropdown();
-		salesEstimatesPage.selectTaxTypeFromDropdown(
-			SalesEstimatesPageData.taxType
-		);
+		salesEstimatesPage.selectTaxTypeFromDropdown(SalesEstimatesPageData.taxType);
 		salesEstimatesPage.invoiceTypeDropdownVisible();
 		salesEstimatesPage.clickInvoiceTypeDropdown();
-		salesEstimatesPage.selectInvoiceTypeFromDropdown(
-			SalesEstimatesPageData.invoiceType
-		);
+		salesEstimatesPage.selectInvoiceTypeFromDropdown(SalesEstimatesPageData.invoiceType);
 		salesEstimatesPage.employeeDropdownVisible();
 		salesEstimatesPage.clickEmployeeDropdown();
 		salesEstimatesPage.selectEmployeeFromDropdown(0);
@@ -91,9 +77,7 @@ describe('Sales estimates test', () => {
 		salesEstimatesPage.generateItemsButtonVisible();
 		salesEstimatesPage.clickGenerateItemsButton();
 		salesEstimatesPage.saveAsDraftButtonVisible();
-		salesEstimatesPage.clickSaveAsDraftButton(
-			SalesEstimatesPageData.saveAsDraftButton
-		);
+		salesEstimatesPage.clickSaveAsDraftButton(SalesEstimatesPageData.saveAsDraftButton);
 		salesEstimatesPage.waitMessageToHide();
 		salesEstimatesPage.verifyDraftBadgeClass();
 	});
@@ -102,14 +86,10 @@ describe('Sales estimates test', () => {
 		salesEstimatesPage.editButtonVisible();
 		salesEstimatesPage.clickEditButton(0);
 		salesEstimatesPage.discountInputVisible();
-		salesEstimatesPage.enterDiscountData(
-			SalesEstimatesPageData.editDiscountValue
-		);
+		salesEstimatesPage.enterDiscountData(SalesEstimatesPageData.editDiscountValue);
 		salesEstimatesPage.discountTypeDropdownVisible();
 		salesEstimatesPage.clickDiscountDropdown();
-		salesEstimatesPage.selectDiscountTypeFromDropdown(
-			SalesEstimatesPageData.discountType
-		);
+		salesEstimatesPage.selectDiscountTypeFromDropdown(SalesEstimatesPageData.discountType);
 		salesEstimatesPage.contactDropdownVisible();
 		salesEstimatesPage.clickContactDropdown();
 		salesEstimatesPage.selectContactFromDropdown(0);
@@ -117,13 +97,9 @@ describe('Sales estimates test', () => {
 		salesEstimatesPage.enterTaxData(SalesEstimatesPageData.taxValue);
 		salesEstimatesPage.taxTypeDropdownVisible();
 		salesEstimatesPage.clickTaxTypeDropdown();
-		salesEstimatesPage.selectTaxTypeFromDropdown(
-			SalesEstimatesPageData.taxType
-		);
+		salesEstimatesPage.selectTaxTypeFromDropdown(SalesEstimatesPageData.taxType);
 		salesEstimatesPage.saveAsDraftButtonVisible();
-		salesEstimatesPage.clickSaveAsDraftButton(
-			SalesEstimatesPageData.saveAsDraftButton
-		);
+		salesEstimatesPage.clickSaveAsDraftButton(SalesEstimatesPageData.saveAsDraftButton);
 	});
 	it('Should be able to duplicate estimate', () => {
 		salesEstimatesPage.waitMessageToHide();
@@ -131,9 +107,7 @@ describe('Sales estimates test', () => {
 		salesEstimatesPage.moreButtonVisible();
 		salesEstimatesPage.clickMoreButton();
 		salesEstimatesPage.actionButtonVisible();
-		salesEstimatesPage.clickActionButtonByText(
-			SalesEstimatesPageData.duplicateButton
-		);
+		salesEstimatesPage.clickActionButtonByText(SalesEstimatesPageData.duplicateButton);
 		salesEstimatesPage.waitMessageToHide();
 		salesEstimatesPage.backButtonVisible();
 		salesEstimatesPage.clickBackButton();
@@ -146,9 +120,7 @@ describe('Sales estimates test', () => {
 		salesEstimatesPage.moreButtonVisible();
 		salesEstimatesPage.clickMoreButton();
 		salesEstimatesPage.actionButtonVisible();
-		salesEstimatesPage.clickActionButtonByText(
-			SalesEstimatesPageData.sendButton
-		);
+		salesEstimatesPage.clickActionButtonByText(SalesEstimatesPageData.sendButton);
 		salesEstimatesPage.confirmButtonVisible();
 		salesEstimatesPage.clickConfirmButton();
 		salesEstimatesPage.waitMessageToHide();
@@ -167,9 +139,7 @@ describe('Sales estimates test', () => {
 		salesEstimatesPage.moreButtonVisible();
 		salesEstimatesPage.clickMoreButton();
 		salesEstimatesPage.actionButtonVisible();
-		salesEstimatesPage.clickActionButtonByText(
-			SalesEstimatesPageData.emailButton
-		);
+		salesEstimatesPage.clickActionButtonByText(SalesEstimatesPageData.emailButton);
 		salesEstimatesPage.scrollEmailInviteTemplate();
 		salesEstimatesPage.emailInputVisible();
 		salesEstimatesPage.enterEmailData(sendEmail);
@@ -193,14 +163,10 @@ describe('Sales estimates test', () => {
 		salesEstimatesPage.selectTagFromDropdown(0);
 		salesEstimatesPage.clickCardBody();
 		salesEstimatesPage.discountInputVisible();
-		salesEstimatesPage.enterDiscountData(
-			SalesEstimatesPageData.discountValue
-		);
+		salesEstimatesPage.enterDiscountData(SalesEstimatesPageData.discountValue);
 		salesEstimatesPage.discountTypeDropdownVisible();
 		salesEstimatesPage.clickDiscountDropdown();
-		salesEstimatesPage.selectDiscountTypeFromDropdown(
-			SalesEstimatesPageData.discountType
-		);
+		salesEstimatesPage.selectDiscountTypeFromDropdown(SalesEstimatesPageData.discountType);
 		salesEstimatesPage.contactDropdownVisible();
 		salesEstimatesPage.clickContactDropdown();
 		salesEstimatesPage.selectContactFromDropdown(0);
@@ -208,14 +174,10 @@ describe('Sales estimates test', () => {
 		salesEstimatesPage.enterTaxData(SalesEstimatesPageData.taxValue);
 		salesEstimatesPage.taxTypeDropdownVisible();
 		salesEstimatesPage.clickTaxTypeDropdown();
-		salesEstimatesPage.selectTaxTypeFromDropdown(
-			SalesEstimatesPageData.taxType
-		);
+		salesEstimatesPage.selectTaxTypeFromDropdown(SalesEstimatesPageData.taxType);
 		salesEstimatesPage.invoiceTypeDropdownVisible();
 		salesEstimatesPage.clickInvoiceTypeDropdown();
-		salesEstimatesPage.selectInvoiceTypeFromDropdown(
-			SalesEstimatesPageData.invoiceType
-		);
+		salesEstimatesPage.selectInvoiceTypeFromDropdown(SalesEstimatesPageData.invoiceType);
 		salesEstimatesPage.employeeDropdownVisible();
 		salesEstimatesPage.clickEmployeeDropdown();
 		salesEstimatesPage.selectEmployeeFromDropdown(0);
@@ -223,9 +185,7 @@ describe('Sales estimates test', () => {
 		salesEstimatesPage.generateItemsButtonVisible();
 		salesEstimatesPage.clickGenerateItemsButton();
 		salesEstimatesPage.saveAsDraftButtonVisible();
-		salesEstimatesPage.clickSaveAsDraftButton(
-			SalesEstimatesPageData.saveAsDraftButton
-		);
+		salesEstimatesPage.clickSaveAsDraftButton(SalesEstimatesPageData.saveAsDraftButton);
 		salesEstimatesPage.waitMessageToHide();
 		salesEstimatesPage.verifyDraftBadgeClass();
 		salesEstimatesPage.selectTableRow(0);
@@ -235,8 +195,6 @@ describe('Sales estimates test', () => {
 		salesEstimatesPage.clickDeleteButton();
 		salesEstimatesPage.confirmDeleteButtonVisible();
 		salesEstimatesPage.clickConfirmDeleteButton();
-		salesEstimatesPage.verifyElementIsDeleted(
-			SalesEstimatesPageData.discountValue
-		);
+		salesEstimatesPage.verifyElementIsDeleted(SalesEstimatesPageData.discountValue);
 	});
 });

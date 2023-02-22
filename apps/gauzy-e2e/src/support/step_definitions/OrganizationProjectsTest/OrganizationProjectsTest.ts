@@ -78,9 +78,7 @@ Then('User can see name input field', () => {
 });
 
 And('User can enter value for name', () => {
-	organizationProjectsPage.enterNameInputData(
-		OrganizationProjectsPageData.name
-	);
+	organizationProjectsPage.enterNameInputData(OrganizationProjectsPageData.name);
 });
 
 And('User can see employee dropdown', () => {
@@ -122,9 +120,7 @@ And('User can see budget hours input field', () => {
 });
 
 And('User can enter value for budget hours', () => {
-	organizationProjectsPage.enterBudgetHoursInputData(
-		OrganizationProjectsPageData.hours
-	);
+	organizationProjectsPage.enterBudgetHoursInputData(OrganizationProjectsPageData.hours);
 });
 
 And('User can navigate to last section', () => {
@@ -136,9 +132,7 @@ And('User can see color input field', () => {
 });
 
 And('User can enter value for color', () => {
-	organizationProjectsPage.enterColorInputData(
-		OrganizationProjectsPageData.color
-	);
+	organizationProjectsPage.enterColorInputData(OrganizationProjectsPageData.color);
 });
 
 And('User can see save project button', () => {
@@ -175,9 +169,7 @@ Then('User can see edit name input field', () => {
 });
 
 And('User can enter new value for name', () => {
-	organizationProjectsPage.enterNameInputData(
-		OrganizationProjectsPageData.editName
-	);
+	organizationProjectsPage.enterNameInputData(OrganizationProjectsPageData.editName);
 });
 
 And('User can go to next section', () => {
@@ -189,9 +181,7 @@ And('User can see edit budget hours input field', () => {
 });
 
 And('User can enter new value for budget hours', () => {
-	organizationProjectsPage.enterBudgetHoursInputData(
-		OrganizationProjectsPageData.hours
-	);
+	organizationProjectsPage.enterBudgetHoursInputData(OrganizationProjectsPageData.hours);
 });
 
 And('User can go to last section', () => {
@@ -203,9 +193,7 @@ And('User can see edit color input field', () => {
 });
 
 And('User can enter new value for color', () => {
-	organizationProjectsPage.enterColorInputData(
-		OrganizationProjectsPageData.color
-	);
+	organizationProjectsPage.enterColorInputData(OrganizationProjectsPageData.color);
 });
 
 And('User can see save edited project button', () => {

@@ -39,9 +39,7 @@ describe('Job proposals test', () => {
 	});
 	it('Should be able to make proposal default', () => {
 		jobProposalsPage.makeDefaultButtonVisible();
-		jobProposalsPage.clickMakeDefaultButton(
-			JobsProposalsPageData.makeDefaultButton
-		);
+		jobProposalsPage.clickMakeDefaultButton(JobsProposalsPageData.makeDefaultButton);
 	});
 	it('Should be able to delete job proposal', () => {
 		jobProposalsPage.waitMessageToHide();

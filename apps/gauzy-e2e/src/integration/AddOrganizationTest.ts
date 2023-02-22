@@ -30,60 +30,40 @@ describe('Create Organization Test', () => {
 		addOrganizationPage.clickOnNextButton();
 		addOrganizationPage.countryDropdownVisible();
 		addOrganizationPage.clickCountryDropdown();
-		addOrganizationPage.selectCountryFromDropdown(
-			AddOrganizationPageData.country
-		);
+		addOrganizationPage.selectCountryFromDropdown(AddOrganizationPageData.country);
 		addOrganizationPage.cityInputVisible();
 		addOrganizationPage.enterCityInputData(AddOrganizationPageData.city);
 		addOrganizationPage.postcodeInputVisible();
-		addOrganizationPage.enterPostcodeInputData(
-			AddOrganizationPageData.postcode
-		);
+		addOrganizationPage.enterPostcodeInputData(AddOrganizationPageData.postcode);
 		addOrganizationPage.streetInputVisible();
 		addOrganizationPage.enterStreetInputData(street);
 		addOrganizationPage.clickOnNextButton();
 		addOrganizationPage.bonusTypeDropdownVisible();
 		addOrganizationPage.clickBonusTypeDropdown();
-		addOrganizationPage.selectBonusTypeFromDropdown(
-			AddOrganizationPageData.bonusType
-		);
+		addOrganizationPage.selectBonusTypeFromDropdown(AddOrganizationPageData.bonusType);
 		addOrganizationPage.bonusPercentageInputVisible();
-		addOrganizationPage.enterBonusPercentageInputData(
-			AddOrganizationPageData.bonusPercentage
-		);
+		addOrganizationPage.enterBonusPercentageInputData(AddOrganizationPageData.bonusPercentage);
 		addOrganizationPage.clickOnNextButton();
 		addOrganizationPage.timeZoneDropdownVisible();
 		addOrganizationPage.clickTimeZoneDropdown();
-		addOrganizationPage.selectTimeZoneFromDropdown(
-			AddOrganizationPageData.timeZone
-		);
+		addOrganizationPage.selectTimeZoneFromDropdown(AddOrganizationPageData.timeZone);
 		addOrganizationPage.startOfWeekDropdownVisible();
 		addOrganizationPage.clickStartOfWeekDropdown();
-		addOrganizationPage.selectStartOfWeekFromDropdown(
-			AddOrganizationPageData.startOfWeek
-		);
+		addOrganizationPage.selectStartOfWeekFromDropdown(AddOrganizationPageData.startOfWeek);
 		addOrganizationPage.dateTypeDropdownVisible();
 		addOrganizationPage.clickDateTypeDropdown();
-		addOrganizationPage.selectDateTypeFromDropdown(
-			AddOrganizationPageData.dateType
-		);
+		addOrganizationPage.selectDateTypeFromDropdown(AddOrganizationPageData.dateType);
 		addOrganizationPage.regionDropdownVisible();
 		addOrganizationPage.clickRegionDropdown();
-		addOrganizationPage.selectRegionFromDropdown(
-			AddOrganizationPageData.region
-		);
+		addOrganizationPage.selectRegionFromDropdown(AddOrganizationPageData.region);
 		addOrganizationPage.numberFormatDropdownVisible();
 		addOrganizationPage.clickNumberFormatDropdown();
-		addOrganizationPage.selectNumberFormatFromDropdown(
-			AddOrganizationPageData.numberFormat
-		);
+		addOrganizationPage.selectNumberFormatFromDropdown(AddOrganizationPageData.numberFormat);
 		addOrganizationPage.dateFormatDropdownVisible();
 		addOrganizationPage.clickDateFormatDropdown();
 		addOrganizationPage.selectDateFormatFromDropdown();
 		addOrganizationPage.expiryPeriodInputVisible();
-		addOrganizationPage.enterExpiryPeriodInputData(
-			AddOrganizationPageData.expiryPeriod
-		);
+		addOrganizationPage.enterExpiryPeriodInputData(AddOrganizationPageData.expiryPeriod);
 		addOrganizationPage.clickOnNextButton();
 		addOrganizationPage.waitMessageToHide();
 		addOrganizationPage.verifyOrganizationExists(organizationName);

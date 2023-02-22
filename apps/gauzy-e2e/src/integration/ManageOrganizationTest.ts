@@ -22,68 +22,44 @@ describe('Manage Organization Test', () => {
 	});
 
 	it('Should be able to manage organization', () => {
-		CustomCommands.addOrganization(
-			addOrganizationPage,
-			organizationName,
-			AddOrganizationPageData,
-			taxId,
-			street
-		);
+		CustomCommands.addOrganization(addOrganizationPage, organizationName, AddOrganizationPageData, taxId, street);
 		manageOrganizationPage.gridBtnExists();
 		manageOrganizationPage.gridBtnClick(1);
 		manageOrganizationPage.selectTableRow();
 		manageOrganizationPage.manageBtnExists();
 		manageOrganizationPage.manageBtnClick();
 		manageOrganizationPage.enterOrganizationName(organizationName);
-		manageOrganizationPage.selectCurrency(
-			ManageOrganizationPageData.currency
-		);
+		manageOrganizationPage.selectCurrency(ManageOrganizationPageData.currency);
 		manageOrganizationPage.enterOfficialName(organizationName);
 		manageOrganizationPage.enterTaxId(taxId);
 		manageOrganizationPage.tabButtonVisible();
 		manageOrganizationPage.clickTabButton(1);
 		manageOrganizationPage.countryDropdownVisible();
 		manageOrganizationPage.clickCountryDropdown();
-		manageOrganizationPage.selectCountryFromDropdown(
-			ManageOrganizationPageData.country
-		);
+		manageOrganizationPage.selectCountryFromDropdown(ManageOrganizationPageData.country);
 		manageOrganizationPage.cityInputVisible();
-		manageOrganizationPage.enterCityInputData(
-			ManageOrganizationPageData.city
-		);
+		manageOrganizationPage.enterCityInputData(ManageOrganizationPageData.city);
 		manageOrganizationPage.postcodeInputVisible();
-		manageOrganizationPage.enterPostcodeInputData(
-			ManageOrganizationPageData.postcode
-		);
+		manageOrganizationPage.enterPostcodeInputData(ManageOrganizationPageData.postcode);
 		manageOrganizationPage.streetInputVisible();
 		manageOrganizationPage.enterStreetInputData(street);
 		manageOrganizationPage.tabButtonVisible();
 		manageOrganizationPage.clickTabButton(2);
 		manageOrganizationPage.timeZoneDropdownVisible();
 		manageOrganizationPage.clickTimeZoneDropdown();
-		manageOrganizationPage.selectTimeZoneFromDropdown(
-			ManageOrganizationPageData.timeZone
-		);
+		manageOrganizationPage.selectTimeZoneFromDropdown(ManageOrganizationPageData.timeZone);
 		manageOrganizationPage.startOfWeekDropdownVisible();
 		manageOrganizationPage.clickStartOfWeekDropdown();
-		manageOrganizationPage.selectStartOfWeekFromDropdown(
-			ManageOrganizationPageData.startOfWeek
-		);
+		manageOrganizationPage.selectStartOfWeekFromDropdown(ManageOrganizationPageData.startOfWeek);
 		manageOrganizationPage.dateTypeDropdownVisible();
 		manageOrganizationPage.clickDateTypeDropdown();
-		manageOrganizationPage.selectDateTypeFromDropdown(
-			ManageOrganizationPageData.dateType
-		);
+		manageOrganizationPage.selectDateTypeFromDropdown(ManageOrganizationPageData.dateType);
 		manageOrganizationPage.regionDropdownVisible();
 		manageOrganizationPage.clickRegionDropdown();
-		manageOrganizationPage.selectRegionFromDropdown(
-			ManageOrganizationPageData.region
-		);
+		manageOrganizationPage.selectRegionFromDropdown(ManageOrganizationPageData.region);
 		manageOrganizationPage.numberFormatDropdownVisible();
 		manageOrganizationPage.clickNumberFormatDropdown();
-		manageOrganizationPage.selectNumberFormatFromDropdown(
-			ManageOrganizationPageData.numberFormat
-		);
+		manageOrganizationPage.selectNumberFormatFromDropdown(ManageOrganizationPageData.numberFormat);
 		manageOrganizationPage.dateFormatDropdownVisible();
 		manageOrganizationPage.clickDateFormatDropdown();
 		manageOrganizationPage.selectDateFormatFromDropdown();

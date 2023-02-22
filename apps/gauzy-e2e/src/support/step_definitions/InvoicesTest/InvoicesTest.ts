@@ -16,7 +16,6 @@ import { OrganizationProjectsPageData } from '../../Base/pagedata/OrganizationPr
 
 import { Given, Then, When, And } from 'cypress-cucumber-preprocessor/steps';
 
-
 const pageLoadTimeout = Cypress.config('pageLoadTimeout');
 
 let firstName = faker.person.firstName();
@@ -50,15 +49,7 @@ And('User can add new employee', () => {
 	CustomCommands.logout(dashboardPage, logoutPage, loginPage);
 	CustomCommands.clearCookies();
 	CustomCommands.login(loginPage, LoginPageData, dashboardPage);
-	CustomCommands.addEmployee(
-		manageEmployeesPage,
-		firstName,
-		lastName,
-		username,
-		employeeEmail,
-		password,
-		imgUrl
-	);
+	CustomCommands.addEmployee(manageEmployeesPage, firstName, lastName, username, employeeEmail, password, imgUrl);
 });
 
 // Add project
@@ -66,10 +57,7 @@ And('User can add new project', () => {
 	CustomCommands.logout(dashboardPage, logoutPage, loginPage);
 	CustomCommands.clearCookies();
 	CustomCommands.login(loginPage, LoginPageData, dashboardPage);
-	CustomCommands.addProject(
-		organizationProjectsPage,
-		OrganizationProjectsPageData
-	);
+	CustomCommands.addProject(organizationProjectsPage, OrganizationProjectsPageData);
 });
 
 // Add contact
@@ -146,9 +134,7 @@ When('User click on discount type dropdown', () => {
 });
 
 Then('User can select discount type from dropdown options', () => {
-	invoicesPage.selectDiscountTypeFromDropdown(
-		InvoicesPageData.discountType
-	);
+	invoicesPage.selectDiscountTypeFromDropdown(InvoicesPageData.discountType);
 });
 
 And('User can see contact dropdown', () => {
@@ -246,9 +232,7 @@ Then('User can see invoice number input field', () => {
 });
 
 And('User can enter invoice number', () => {
-	invoicesPage.enterEstimateNumberInputData(
-		InvoicesPageData.invoiceNumber
-	);
+	invoicesPage.enterEstimateNumberInputData(InvoicesPageData.invoiceNumber);
 });
 
 And('User can see currency dropdown', () => {
@@ -296,9 +280,7 @@ And('User can verify badge', () => {
 });
 
 And('User can edit invoice number', () => {
-	invoicesPage.enterEstimateNumberInputData(
-		InvoicesPageData.secondInvoiceNumber
-	);
+	invoicesPage.enterEstimateNumberInputData(InvoicesPageData.secondInvoiceNumber);
 });
 
 And('User can click search button again', () => {
@@ -355,9 +337,7 @@ When('User click on discount type dropdown', () => {
 });
 
 Then('User can select discount type from dropdown options', () => {
-	invoicesPage.selectDiscountTypeFromDropdown(
-		InvoicesPageData.discountType
-	);
+	invoicesPage.selectDiscountTypeFromDropdown(InvoicesPageData.discountType);
 });
 
 And('User can see contact dropdown', () => {
@@ -451,7 +431,7 @@ When('User click on email button', () => {
 
 Then('User can scroll down to email input field', () => {
 	invoicesPage.scrollEmailInviteTemplate();
-})
+});
 
 And('User can see email input field', () => {
 	invoicesPage.emailInputVisible();
