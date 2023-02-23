@@ -1,14 +1,4 @@
-import {
-	Entity,
-	Column,
-	ManyToOne,
-	JoinColumn,
-	RelationId,
-	OneToMany,
-	ManyToMany,
-	JoinTable,
-	Index,
-} from 'typeorm';
+import { Entity, Column, ManyToOne, JoinColumn, RelationId, OneToMany, ManyToMany, JoinTable, Index } from 'typeorm';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsArray, IsBoolean, IsNotEmpty, IsNumber, IsObject, IsOptional, IsString, IsUUID } from 'class-validator';
 import {
@@ -24,7 +14,7 @@ import {
 	IUser,
 	TaskPriorityEnum,
 	TaskSizeEnum,
-	TaskStatusEnum,
+	TaskStatusEnum
 } from '@gauzy/contracts';
 import {
 	Activity,
@@ -36,14 +26,12 @@ import {
 	Tag,
 	TenantOrganizationBaseEntity,
 	TimeLog,
-	User,
+	User
 } from '../core/entities/internal';
 
 @Entity('task')
 @Index('taskNumber', ['projectId', 'number'], { unique: true })
-export class Task extends TenantOrganizationBaseEntity
-	implements ITask {
-
+export class Task extends TenantOrganizationBaseEntity implements ITask {
 	@Column({ nullable: true })
 	number?: number;
 
@@ -135,7 +123,7 @@ export class Task extends TenantOrganizationBaseEntity
 	@IsObject()
 	@ManyToOne(() => OrganizationProject, (it) => it.tasks, {
 		nullable: true,
-		onDelete: 'CASCADE',
+		onDelete: 'CASCADE'
 	})
 	project?: IOrganizationProject;
 
@@ -152,7 +140,7 @@ export class Task extends TenantOrganizationBaseEntity
 	 */
 	@ManyToOne(() => User, {
 		nullable: true,
-		onDelete: 'CASCADE',
+		onDelete: 'CASCADE'
 	})
 	@JoinColumn()
 	creator?: IUser;
@@ -220,10 +208,10 @@ export class Task extends TenantOrganizationBaseEntity
 	@IsArray()
 	@ManyToMany(() => Tag, (tag) => tag.tasks, {
 		onUpdate: 'CASCADE',
-		onDelete: 'CASCADE',
+		onDelete: 'CASCADE'
 	})
 	@JoinTable({
-		name: 'tag_task',
+		name: 'tag_task'
 	})
 	tags?: ITag[];
 
@@ -235,10 +223,10 @@ export class Task extends TenantOrganizationBaseEntity
 	@IsArray()
 	@ManyToMany(() => Employee, (employee) => employee.tasks, {
 		onUpdate: 'CASCADE',
-		onDelete: 'CASCADE',
+		onDelete: 'CASCADE'
 	})
 	@JoinTable({
-		name: 'task_employee',
+		name: 'task_employee'
 	})
 	members?: IEmployee[];
 
@@ -250,10 +238,10 @@ export class Task extends TenantOrganizationBaseEntity
 	@IsArray()
 	@ManyToMany(() => OrganizationTeam, (team) => team.tasks, {
 		onUpdate: 'CASCADE',
-		onDelete: 'CASCADE',
+		onDelete: 'CASCADE'
 	})
 	@JoinTable({
-		name: 'task_team',
+		name: 'task_team'
 	})
 	teams?: IOrganizationTeam[];
 }

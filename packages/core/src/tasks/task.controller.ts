@@ -16,12 +16,7 @@ import {
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { CommandBus } from '@nestjs/cqrs';
 import { DeleteResult } from 'typeorm';
-import {
-	PermissionsEnum,
-	ITask,
-	IPagination,
-	IEmployee
-} from '@gauzy/contracts';
+import { PermissionsEnum, ITask, IPagination, IEmployee } from '@gauzy/contracts';
 import { UUIDValidationPipe } from './../shared/pipes';
 import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
 import { Permissions } from './../shared/decorators';
@@ -37,10 +32,7 @@ import { CreateTaskDTO, TaskMaxNumberQueryDTO, UpdateTaskDTO } from './dto';
 @Permissions(PermissionsEnum.ALL_ORG_EDIT)
 @Controller()
 export class TaskController extends CrudController<Task> {
-	constructor(
-		private readonly taskService: TaskService,
-		private readonly commandBus: CommandBus
-	) {
+	constructor(private readonly taskService: TaskService, private readonly commandBus: CommandBus) {
 		super(taskService);
 	}
 
@@ -53,9 +45,7 @@ export class TaskController extends CrudController<Task> {
 	@Permissions(PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.ORG_TASK_VIEW)
 	@Get('count')
 	@UsePipes(new ValidationPipe())
-	async getCount(
-		@Query() options: CountQueryDTO<Task>
-	): Promise<number> {
+	async getCount(@Query() options: CountQueryDTO<Task>): Promise<number> {
 		return await this.taskService.countBy(options);
 	}
 
@@ -68,9 +58,7 @@ export class TaskController extends CrudController<Task> {
 	@Permissions(PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.ORG_TASK_VIEW)
 	@Get('pagination')
 	@UsePipes(new ValidationPipe({ transform: true }))
-	async pagination(
-		@Query() params: PaginationParams<Task>
-	): Promise<IPagination<ITask>> {
+	async pagination(@Query() params: PaginationParams<Task>): Promise<IPagination<ITask>> {
 		return await this.taskService.pagination(params);
 	}
 
@@ -93,9 +81,7 @@ export class TaskController extends CrudController<Task> {
 	@Permissions(PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.ORG_TASK_VIEW)
 	@Get('max-number')
 	@UsePipes(new ValidationPipe())
-	async getMaxTaskNumberByProject(
-		@Query() options: TaskMaxNumberQueryDTO
-	): Promise<number> {
+	async getMaxTaskNumberByProject(@Query() options: TaskMaxNumberQueryDTO): Promise<number> {
 		return await this.taskService.getMaxTaskNumberByProject(options);
 	}
 
@@ -118,9 +104,7 @@ export class TaskController extends CrudController<Task> {
 	@Permissions(PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.ORG_TASK_VIEW)
 	@Get('me')
 	@UsePipes(new ValidationPipe({ transform: true }))
-	async findMyTasks(
-		@Query() params: PaginationParams<Task>
-	): Promise<IPagination<ITask>> {
+	async findMyTasks(@Query() params: PaginationParams<Task>): Promise<IPagination<ITask>> {
 		return await this.taskService.getMyTasks(params);
 	}
 
@@ -143,9 +127,7 @@ export class TaskController extends CrudController<Task> {
 	@Permissions(PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.ORG_TASK_VIEW)
 	@Get('employee')
 	@UsePipes(new ValidationPipe({ transform: true }))
-	async findEmployeeTask(
-		@Query() params: PaginationParams<Task>
-	): Promise<IPagination<ITask>> {
+	async findEmployeeTask(@Query() params: PaginationParams<Task>): Promise<IPagination<ITask>> {
 		return await this.taskService.getEmployeeTasks(params);
 	}
 
@@ -168,9 +150,7 @@ export class TaskController extends CrudController<Task> {
 	@Permissions(PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.ORG_TASK_VIEW)
 	@Get('team')
 	@UsePipes(new ValidationPipe({ transform: true }))
-	async findTeamTasks(
-		@Query() params: PaginationParams<Task>
-	): Promise<IPagination<ITask>> {
+	async findTeamTasks(@Query() params: PaginationParams<Task>): Promise<IPagination<ITask>> {
 		return await this.taskService.findTeamTasks(params);
 	}
 
@@ -216,9 +196,7 @@ export class TaskController extends CrudController<Task> {
 	@Permissions(PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.ORG_TASK_VIEW)
 	@Get()
 	@UsePipes(new ValidationPipe())
-	async findAll(
-		@Query() params: PaginationParams<Task>
-	): Promise<IPagination<ITask>> {
+	async findAll(@Query() params: PaginationParams<Task>): Promise<IPagination<ITask>> {
 		return await this.taskService.findAll(params);
 	}
 
@@ -229,19 +207,14 @@ export class TaskController extends CrudController<Task> {
 	})
 	@ApiResponse({
 		status: HttpStatus.BAD_REQUEST,
-		description:
-			'Invalid input, The response body may contain clues as to what went wrong'
+		description: 'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
 	@Permissions(PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ORG_TASK_ADD)
 	@Post()
 	@UsePipes(new ValidationPipe({ whitelist: true }))
-	async create(
-		@Body() entity: CreateTaskDTO
-	): Promise<ITask> {
-		return await this.commandBus.execute(
-			new TaskCreateCommand(entity)
-		);
+	async create(@Body() entity: CreateTaskDTO): Promise<ITask> {
+		return await this.commandBus.execute(new TaskCreateCommand(entity));
 	}
 
 	@ApiOperation({ summary: 'Update an existing task' })
@@ -255,27 +228,19 @@ export class TaskController extends CrudController<Task> {
 	})
 	@ApiResponse({
 		status: HttpStatus.BAD_REQUEST,
-		description:
-			'Invalid input, The response body may contain clues as to what went wrong'
+		description: 'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
 	@Permissions(PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ORG_TASK_EDIT)
 	@Put(':id')
 	@UsePipes(new ValidationPipe({ whitelist: true }))
-	async update(
-		@Param('id', UUIDValidationPipe) id: ITask['id'],
-		@Body() entity: UpdateTaskDTO
-	): Promise<ITask> {
-		return await this.commandBus.execute(
-			new TaskUpdateCommand(id, entity)
-		);
+	async update(@Param('id', UUIDValidationPipe) id: ITask['id'], @Body() entity: UpdateTaskDTO): Promise<ITask> {
+		return await this.commandBus.execute(new TaskUpdateCommand(id, entity));
 	}
 
 	@Permissions(PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ORG_TASK_DELETE)
 	@Delete(':id')
-	async delete(
-		@Param('id', UUIDValidationPipe) id: ITask['id']
-	): Promise<DeleteResult> {
+	async delete(@Param('id', UUIDValidationPipe) id: ITask['id']): Promise<DeleteResult> {
 		return await this.taskService.delete(id);
 	}
 }
