@@ -81,10 +81,16 @@ export class Tag extends TenantOrganizationBaseEntity implements ITag {
 	@Column({ nullable: true })
 	description?: string;
 
+	@ApiPropertyOptional({ type: () => String, required: false })
+	@IsOptional()
+	@Column({ nullable: true })
+	icon?: string;
+
 	@ApiPropertyOptional({ type: () => Boolean, default: false, required: false })
 	@Column({ default: false })
 	isSystem?: boolean;
 
+	fullIconUrl?: string;
 	/*
 	|--------------------------------------------------------------------------
 	| @ManyToMany
