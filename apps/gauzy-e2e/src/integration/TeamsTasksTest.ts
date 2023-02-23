@@ -2,7 +2,7 @@ import * as loginPage from '../support/Base/pages/Login.po';
 import { LoginPageData } from '../support/Base/pagedata/LoginPageData';
 import * as teamsTasksPage from '../support/Base/pages/TeamsTasks.po';
 import { TeamsTasksPageData } from '../support/Base/pagedata/TeamsTasksPageData';
-import * as dashboradPage from '../support/Base/pages/Dashboard.po';
+import * as dashboardPage from '../support/Base/pages/Dashboard.po';
 import * as organizationProjectsPage from '../support/Base/pages/OrganizationProjects.po';
 import { OrganizationProjectsPageData } from '../support/Base/pagedata/OrganizationProjectsPageData';
 import { CustomCommands } from '../support/commands';
@@ -13,7 +13,7 @@ import { OrganizationTeamsPageData } from '../support/Base/pagedata/Organization
 
 describe('Add teams tasks test', () => {
 	before(() => {
-		CustomCommands.login(loginPage, LoginPageData, dashboradPage);
+		CustomCommands.login(loginPage, LoginPageData, dashboardPage);
 	});
 	it('Should be able to add new task', () => {
 		CustomCommands.addProject(
@@ -41,7 +41,7 @@ describe('Add teams tasks test', () => {
 		teamsTasksPage.selectStatusDropdownVisible();
 		teamsTasksPage.clickStatusDropdown();
 		teamsTasksPage.selectStatusFromDropdown(
-			TeamsTasksPageData.defauleStatus
+			TeamsTasksPageData.defaultStatus
 		);
 		teamsTasksPage.selectTeamDropdownVisible();
 		teamsTasksPage.clickSelectTeamDropdown();
@@ -57,18 +57,18 @@ describe('Add teams tasks test', () => {
 		teamsTasksPage.enterDueDateData();
 		teamsTasksPage.clickKeyboardButtonByKeyCode(9);
 		teamsTasksPage.estimateDaysInputVisible();
-		teamsTasksPage.enterEstiamteDaysInputData(
+		teamsTasksPage.enterEstimateDaysInputData(
 			TeamsTasksPageData.defaultTaskEstimateDays
 		);
 		teamsTasksPage.estimateHoursInputVisible();
-		teamsTasksPage.enterEstiamteHoursInputData(
+		teamsTasksPage.enterEstimateHoursInputData(
 			TeamsTasksPageData.defaultTaskEstimateHours
 		);
 		teamsTasksPage.estimateMinutesInputVisible();
 		teamsTasksPage.enterEstimateMinutesInputData(
 			TeamsTasksPageData.defaultTaskEstimateMinutes
 		);
-		teamsTasksPage.taskDecriptionTextareaVisible();
+		teamsTasksPage.taskDescriptionTextareaVisible();
 		teamsTasksPage.enterTaskDescriptionTextareaData(
 			TeamsTasksPageData.defaultTaskDescription
 		);
@@ -111,18 +111,18 @@ describe('Add teams tasks test', () => {
 		teamsTasksPage.enterDueDateData();
 		teamsTasksPage.clickKeyboardButtonByKeyCode(9);
 		teamsTasksPage.estimateDaysInputVisible();
-		teamsTasksPage.enterEstiamteDaysInputData(
+		teamsTasksPage.enterEstimateDaysInputData(
 			TeamsTasksPageData.defaultTaskEstimateDays
 		);
 		teamsTasksPage.estimateHoursInputVisible();
-		teamsTasksPage.enterEstiamteHoursInputData(
+		teamsTasksPage.enterEstimateHoursInputData(
 			TeamsTasksPageData.defaultTaskEstimateHours
 		);
 		teamsTasksPage.estimateMinutesInputVisible();
 		teamsTasksPage.enterEstimateMinutesInputData(
 			TeamsTasksPageData.defaultTaskEstimateMinutes
 		);
-		teamsTasksPage.taskDecriptionTextareaVisible();
+		teamsTasksPage.taskDescriptionTextareaVisible();
 		teamsTasksPage.enterTaskDescriptionTextareaData(
 			TeamsTasksPageData.defaultTaskDescription
 		);

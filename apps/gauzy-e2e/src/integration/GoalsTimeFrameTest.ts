@@ -1,13 +1,13 @@
 import * as loginPage from '../support/Base/pages/Login.po';
 import { LoginPageData } from '../support/Base/pagedata/LoginPageData';
-import * as dashboradPage from '../support/Base/pages/Dashboard.po';
+import * as dashboardPage from '../support/Base/pages/Dashboard.po';
 import { CustomCommands } from '../support/commands';
 import * as goalstimeFramePage from '../support/Base/pages/GoalsTimeFrame.po';
 import { GoalsTimeFramePageData } from '../support/Base/pagedata/GoalsTimeFramePageData';
 
 describe('Goals Time Frame test', () => {
 	before(() => {
-		CustomCommands.login(loginPage, LoginPageData, dashboradPage);
+		CustomCommands.login(loginPage, LoginPageData, dashboardPage);
 	});
 	it('Should be able to add new time frame', () => {
 		cy.visit('/#/pages/goals/settings');

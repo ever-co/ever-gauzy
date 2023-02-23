@@ -82,7 +82,7 @@ export const descriptionInputVisible = () => {
 	verifyElementIsVisible(TimeOffPage.descriptionInputCss);
 };
 
-export const enterDdescriptionInputData = (data) => {
+export const enterDescriptionInputData = (data) => {
 	clearField(TimeOffPage.descriptionInputCss);
 	enterInput(TimeOffPage.descriptionInputCss, data);
 };
@@ -118,11 +118,11 @@ export const selectHolidayOption = (index) => {
 };
 
 export const selectEmployeeDropdownVisible = () => {
-	verifyElementIsVisible(TimeOffPage.selectEmloyeeCss);
+	verifyElementIsVisible(TimeOffPage.selectEmployeeCss);
 };
 
 export const clickSelectEmployeeDropdown = () => {
-	clickButton(TimeOffPage.selectEmloyeeCss);
+	clickButton(TimeOffPage.selectEmployeeCss);
 };
 
 export const selectEmployeeFromHolidayDropdown = (index) => {
@@ -212,7 +212,7 @@ export const confirmDeleteTimeOffBtnVisible = () => {
 	verifyElementIsVisible(TimeOffPage.confirmDeleteTimeOfButtonCss);
 };
 
-export const clickConfirmDeleteTimeOffButoon = () => {
+export const clickConfirmDeleteTimeOffButton = () => {
 	clickButton(TimeOffPage.confirmDeleteTimeOfButtonCss);
 };
 

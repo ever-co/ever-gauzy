@@ -3,7 +3,7 @@ import { LoginPageData } from '../../Base/pagedata/LoginPageData';
 import * as addOrganizationPage from '../../Base/pages/AddOrganization.po';
 import { AddOrganizationPageData } from '../../Base/pagedata/AddOrganizationPageData';
 import * as manageOrganizationPage from '../../Base/pages/ManageOrganization.po';
-import { faker } from '@ever-co/faker';
+import { faker } from '@faker-js/faker';
 import { ManageOrganizationPageData } from '../../Base/pagedata/ManageOrganizationPageData';
 import * as dashboardPage from '../../Base/pages/Dashboard.po';
 import { CustomCommands } from '../../commands';
@@ -11,9 +11,9 @@ import * as logoutPage from '../../Base/pages/Logout.po';
 
 import { Given, Then, When, And } from 'cypress-cucumber-preprocessor/steps';
 
-let organizationName = faker.company.companyName();
-let taxId = faker.random.alphaNumeric();
-let street = faker.address.streetAddress();
+let organizationName = faker.company.name();
+let taxId = faker.string.alphanumeric();
+let street = faker.location.streetAddress();
 
 // Login with email
 Given('Login with default credentials', () => {

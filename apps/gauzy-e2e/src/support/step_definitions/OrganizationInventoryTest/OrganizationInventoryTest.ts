@@ -4,7 +4,7 @@ import * as organizationInventoryPage from '../../Base/pages/OrganizationInvento
 import { OrganizationInventoryPageData } from '../../Base/pagedata/OrganizationInventoryPageData';
 import * as dashboardPage from '../../Base/pages/Dashboard.po';
 import { CustomCommands } from '../../commands';
-import { faker } from '@ever-co/faker';
+import { faker } from '@faker-js/faker';
 import * as logoutPage from '../../Base/pages/Logout.po';
 import * as organizationTagsUserPage from '../../Base/pages/OrganizationTags.po';
 import { OrganizationTagsPageData } from '../../Base/pagedata/OrganizationTagsPageData';
@@ -17,9 +17,9 @@ const pageLoadTimeout = Cypress.config('pageLoadTimeout');
 let email = faker.internet.email();
 let website = faker.internet.url();
 let description = faker.lorem.text();
-let city = faker.address.city();
-let postcode = faker.address.zipCode();
-let address = faker.address.streetAddress();
+let city = faker.location.city();
+let postcode = faker.location.zipCode();
+let address = faker.location.streetAddress();
 
 // Login with email
 Given('Login with default credentials', () => {
@@ -88,7 +88,7 @@ And('User can enter value for category name', () => {
 });
 
 And('User can see category description input field', () => {
-	organizationInventoryPage.descriptionInputVisivle();
+	organizationInventoryPage.descriptionInputVisible();
 });
 
 And('User can enter value for category description', () => {
@@ -143,7 +143,7 @@ And('User can enter value for type name', () => {
 });
 
 And('User can see type category input field', () => {
-	organizationInventoryPage.descriptionInputVisivle();
+	organizationInventoryPage.descriptionInputVisible();
 });
 
 And('User can enter value for type description', () => {
@@ -206,7 +206,7 @@ And('User can see product dropdown', () => {
 });
 
 When('User click on product dropdown', () => {
-	organizationInventoryPage.clickProductTypeDrodpwon();
+	organizationInventoryPage.clickProductTypeDropdown();
 });
 
 Then('User can select product from dropdown options', () => {
@@ -218,7 +218,7 @@ And('User can see category dropdown', () => {
 });
 
 When('User click on category dropdown', () => {
-	organizationInventoryPage.clickProductCategoryDrodpwon();
+	organizationInventoryPage.clickProductCategoryDropdown();
 });
 
 Then('User can select category from dropdown options', () => {
@@ -226,7 +226,7 @@ Then('User can select category from dropdown options', () => {
 });
 
 And('User can see inventory description input field', () => {
-	organizationInventoryPage.descriptionInputVisivle();
+	organizationInventoryPage.descriptionInputVisible();
 });
 
 And('User can enter  value for inventory description', () => {
@@ -297,7 +297,7 @@ And('User can enter new code', () => {
 });
 
 And('User can see edit description input field', () => {
-	organizationInventoryPage.descriptionInputVisivle();
+	organizationInventoryPage.descriptionInputVisible();
 });
 
 And('User can enter new description', () => {
@@ -393,7 +393,7 @@ And('User can enter new category name', () => {
 });
 
 And('User can see edit description input field', () => {
-	organizationInventoryPage.descriptionInputVisivle();
+	organizationInventoryPage.descriptionInputVisible();
 });
 
 And('User can enter new category description', () => {
@@ -489,7 +489,7 @@ And('User can enter new product type name', () => {
 });
 
 And('User can see edit product type description input field', () => {
-	organizationInventoryPage.descriptionInputVisivle();
+	organizationInventoryPage.descriptionInputVisible();
 });
 
 And('User can enter new product type description', () => {
@@ -861,7 +861,7 @@ When('User click on warehouses select', () => {
 	organizationInventoryPage.clickWarehousesSelect();
 });
 
-Then('User can select warehouse from dropdown options', () => {});
+Then('User can select warehouse from dropdown options', () => { });
 
 And('User can see save merchant button', () => {
 	organizationInventoryPage.saveMerchantBtnVisible();

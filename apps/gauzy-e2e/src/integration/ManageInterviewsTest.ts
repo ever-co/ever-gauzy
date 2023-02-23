@@ -3,9 +3,9 @@ import { LoginPageData } from '../support/Base/pagedata/LoginPageData';
 import { ManageInterviewsPageData } from '../support/Base/pagedata/ManageInterviewsPageData';
 import * as manageInterviewsPage from '../support/Base/pages/ManageInterviews.po';
 import { CustomCommands } from '../support/commands';
-import * as dashboradPage from '../support/Base/pages/Dashboard.po';
+import * as dashboardPage from '../support/Base/pages/Dashboard.po';
 import * as inviteCandidatePage from '../support/Base/pages/Candidates.po';
-import { faker } from '@ever-co/faker';
+import { faker } from '@faker-js/faker';
 
 let email = ' ';
 let firstName = ' ';
@@ -17,13 +17,13 @@ let imgUrl = ' ';
 describe('Manage interviews test', () => {
 	before(() => {
 		email = faker.internet.email();
-		firstName = faker.name.firstName();
-		lastName = faker.name.lastName();
+		firstName = faker.person.firstName();
+		lastName = faker.person.lastName();
 		username = faker.internet.userName();
 		password = faker.internet.password();
 		imgUrl = faker.image.avatar();
 
-		CustomCommands.login(loginPage, LoginPageData, dashboradPage);
+		CustomCommands.login(loginPage, LoginPageData, dashboardPage);
 	});
 
 	it('Should be able to add interview', () => {
@@ -74,6 +74,6 @@ describe('Manage interviews test', () => {
 		manageInterviewsPage.clickSaveButton();
 		manageInterviewsPage.waitMessageToHide();
 		cy.visit('/#/pages/employees/candidates/interviews/interview_panel');
-		manageInterviewsPage.verifySheduleExist(`${firstName} ${lastName}`);
+		manageInterviewsPage.verifyScheduleExist(`${firstName} ${lastName}`);
 	});
 });

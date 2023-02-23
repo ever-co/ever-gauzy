@@ -14,7 +14,7 @@ export const technologyInputVisible = () => {
 	verifyElementIsVisible(ManageInterviewsCriterionsPage.nameInputCss);
 };
 
-export const enterTechonologyInputData = (data) => {
+export const enterTechnologyInputData = (data) => {
 	clickButton(ManageInterviewsCriterionsPage.nameInputCss);
 	clearField(ManageInterviewsCriterionsPage.nameInputCss);
 	enterInput(ManageInterviewsCriterionsPage.nameInputCss, data);

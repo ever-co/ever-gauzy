@@ -12,6 +12,7 @@ import { OrganizationTeamController } from './organization-team.controller';
 import { OrganizationTeam } from './organization-team.entity';
 import { OrganizationTeamService } from './organization-team.service';
 import { QueryHandlers } from './queries/handlers';
+import { CommandHandlers } from './commands/handlers';
 import { TimerModule } from './../time-tracking/timer/timer.module';
 
 @Module({
@@ -34,6 +35,7 @@ import { TimerModule } from './../time-tracking/timer/timer.module';
 	controllers: [OrganizationTeamController],
 	providers: [
 		...QueryHandlers,
+		...CommandHandlers,
 		OrganizationTeamService
 	],
 	exports: [
@@ -41,4 +43,4 @@ import { TimerModule } from './../time-tracking/timer/timer.module';
 		OrganizationTeamService
 	]
 })
-export class OrganizationTeamModule {}
+export class OrganizationTeamModule { }

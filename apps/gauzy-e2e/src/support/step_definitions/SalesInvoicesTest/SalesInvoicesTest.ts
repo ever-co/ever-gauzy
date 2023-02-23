@@ -6,7 +6,7 @@ import * as organizationTagsUserPage from '../../Base/pages/OrganizationTags.po'
 import { OrganizationTagsPageData } from '../../Base/pagedata/OrganizationTagsPageData';
 import * as dashboardPage from '../../Base/pages/Dashboard.po';
 import { CustomCommands } from '../../commands';
-import { faker } from '@ever-co/faker';
+import { faker } from '@faker-js/faker';
 import * as manageEmployeesPage from '../../Base/pages/ManageEmployees.po';
 import * as logoutPage from '../../Base/pages/Logout.po';
 import { ContactsLeadsPageData } from '../../Base/pagedata/ContactsLeadsPageData';
@@ -18,18 +18,18 @@ import { Given, Then, When, And } from 'cypress-cucumber-preprocessor/steps';
 
 const pageLoadTimeout = Cypress.config('pageLoadTimeout');
 
-let firstName = faker.name.firstName();
-let lastName = faker.name.lastName();
+let firstName = faker.person.firstName();
+let lastName = faker.person.lastName();
 let username = faker.internet.userName();
 let password = faker.internet.password();
 let employeeEmail = faker.internet.email();
 let imgUrl = faker.image.avatar();
 
 let email = faker.internet.email();
-let fullName = faker.name.firstName() + ' ' + faker.name.lastName();
-let city = faker.address.city();
-let postcode = faker.address.zipCode();
-let street = faker.address.streetAddress();
+let fullName = faker.person.firstName() + ' ' + faker.person.lastName();
+let city = faker.location.city();
+let postcode = faker.location.zipCode();
+let street = faker.location.streetAddress();
 let website = faker.internet.url();
 let sendEmail = faker.internet.email();
 
@@ -120,7 +120,7 @@ Then('User can see tags dropdown', () => {
 });
 
 When('User click on tags dropdown', () => {
-	salesInvoicesPage.clickTagsDropdwon();
+	salesInvoicesPage.clickTagsDropdown();
 });
 
 Then('User can select tag from dropdown options', () => {
@@ -159,7 +159,7 @@ When('User click on contact dropdown', () => {
 });
 
 Then('User can select contact from dropdown options', () => {
-	salesInvoicesPage.selectContactFromDropdwon(0);
+	salesInvoicesPage.selectContactFromDropdown(0);
 });
 
 And('User can see tax input field', () => {
@@ -275,7 +275,7 @@ When('User click on contact dropdown', () => {
 });
 
 Then('User can select contact from dropdown options', () => {
-	salesInvoicesPage.selectContactFromDropdwon(0);
+	salesInvoicesPage.selectContactFromDropdown(0);
 });
 
 And('User can see tax input field', () => {

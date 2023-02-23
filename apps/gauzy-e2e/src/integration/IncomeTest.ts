@@ -1,9 +1,9 @@
 import * as loginPage from '../support/Base/pages/Login.po';
 import { LoginPageData } from '../support/Base/pagedata/LoginPageData';
 import * as incomePage from '../support/Base/pages/Income.po';
-import { faker } from '@ever-co/faker';
+import { faker } from '@faker-js/faker';
 import { IncomePageData } from '../support/Base/pagedata/IncomePageData';
-import * as dashboradPage from '../support/Base/pages/Dashboard.po';
+import * as dashboardPage from '../support/Base/pages/Dashboard.po';
 import * as organizationTagsUserPage from '../support/Base/pages/OrganizationTags.po';
 import { OrganizationTagsPageData } from '../support/Base/pagedata/OrganizationTagsPageData';
 import { CustomCommands } from '../support/commands';
@@ -12,9 +12,9 @@ let name = ' ';
 
 describe('Income test', () => {
 	before(() => {
-		name = faker.name.firstName();
+		name = faker.person.firstName();
 
-		CustomCommands.login(loginPage, LoginPageData, dashboradPage);
+		CustomCommands.login(loginPage, LoginPageData, dashboardPage);
 	});
 
 	it('Should be able to add new income', () => {
@@ -29,7 +29,7 @@ describe('Income test', () => {
 		incomePage.clickAddIncomeButton();
 		incomePage.selectEmployeeDropdownVisible();
 		incomePage.clickEmployeeDropdown();
-		incomePage.selectEmployeeFromDrodpwon(0);
+		incomePage.selectEmployeeFromDropdown(0);
 		incomePage.dateInputVisible();
 		incomePage.enterDateInputData();
 		incomePage.clickKeyboardButtonByKeyCode(9);
@@ -38,7 +38,7 @@ describe('Income test', () => {
 		incomePage.amountInputVisible();
 		incomePage.enterAmountInputData(IncomePageData.defaultAmount);
 		incomePage.tagsDropdownVisible();
-		incomePage.clickTagsDropdwon();
+		incomePage.clickTagsDropdown();
 		incomePage.selectTagFromDropdown(0);
 		incomePage.clickCardBody();
 		incomePage.notesTextareaVisible();

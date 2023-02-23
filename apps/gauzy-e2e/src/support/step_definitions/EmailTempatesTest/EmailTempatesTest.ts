@@ -1,7 +1,7 @@
 import * as loginPage from '../../Base/pages/Login.po';
 import { LoginPageData } from '../../Base/pagedata/LoginPageData';
-import * as emailTemplatesPage from '../../Base/pages/EmailTempates.po';
-import { EmailTemplatesPageData } from '../../Base/pagedata/EmailTempatesPageData';
+import * as emailTemplatesPage from '../../Base/pages/EmailTemplates.po';
+import { EmailTemplatesPageData } from '../../Base/pagedata/EmailTemplatesPageData';
 import * as dashboardPage from '../../Base/pages/Dashboard.po';
 import { CustomCommands } from '../../commands';
 

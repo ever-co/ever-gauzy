@@ -1,7 +1,7 @@
 import * as loginPage from '../../Base/pages/Login.po';
 import { LoginPageData } from '../../Base/pagedata/LoginPageData';
 import * as addOrganizationPage from '../../Base/pages/AddOrganization.po';
-import { faker } from '@ever-co/faker';
+import { faker } from '@faker-js/faker';
 import { AddOrganizationPageData } from '../../Base/pagedata/AddOrganizationPageData';
 import * as deleteOrganizationPage from '../../Base/pages/DeleteOrganization.po';
 import * as dashboardPage from '../../Base/pages/Dashboard.po';
@@ -11,9 +11,9 @@ import { Given, Then, When, And } from 'cypress-cucumber-preprocessor/steps';
 
 const pageLoadTimeout = Cypress.config('pageLoadTimeout');
 
-let organizationName = faker.company.companyName();
-let taxId = faker.random.alphaNumeric();
-let street = faker.address.streetAddress();
+let organizationName = faker.company.name();
+let taxId = faker.string.alphanumeric();
+let street = faker.location.streetAddress();
 
 // Login with email
 Given('Login with default credentials and visit Organizations page', () => {

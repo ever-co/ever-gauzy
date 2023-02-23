@@ -112,7 +112,7 @@ export const estimateDaysInputVisible = () => {
 	verifyElementIsVisible(TeamsTasksPage.estimateDaysInputCss);
 };
 
-export const enterEstiamteDaysInputData = (days) => {
+export const enterEstimateDaysInputData = (days) => {
 	clearField(TeamsTasksPage.estimateDaysInputCss);
 	enterInput(TeamsTasksPage.estimateDaysInputCss, days);
 };
@@ -121,7 +121,7 @@ export const estimateHoursInputVisible = () => {
 	verifyElementIsVisible(TeamsTasksPage.estimateHoursInputCss);
 };
 
-export const enterEstiamteHoursInputData = (hours) => {
+export const enterEstimateHoursInputData = (hours) => {
 	clearField(TeamsTasksPage.estimateHoursInputCss);
 	enterInput(TeamsTasksPage.estimateHoursInputCss, hours);
 };
@@ -135,7 +135,7 @@ export const enterEstimateMinutesInputData = (mins) => {
 	enterInput(TeamsTasksPage.estimateMinsInputCss, mins);
 };
 
-export const taskDecriptionTextareaVisible = () => {
+export const taskDescriptionTextareaVisible = () => {
 	verifyElementIsVisible(TeamsTasksPage.descriptionTextareaCss);
 };
 

@@ -1,6 +1,6 @@
 import * as loginPage from '../../Base/pages/Login.po';
 import { LoginPageData } from '../../Base/pagedata/LoginPageData';
-import { faker } from '@ever-co/faker';
+import { faker } from '@faker-js/faker';
 import * as proposalsPage from '../../Base/pages/Proposals.po';
 import { ProposalsPageData } from '../../Base/pagedata/ProposalsPageData';
 import * as dashboardPage from '../../Base/pages/Dashboard.po';
@@ -20,8 +20,8 @@ let editJobPostUrl = faker.internet.url();
 let proposalContent = faker.lorem.paragraph();
 let proposalTemplateContent = faker.lorem.paragraph();
 
-let firstName = faker.name.firstName();
-let lastName = faker.name.lastName();
+let firstName = faker.person.firstName();
+let lastName = faker.person.lastName();
 let username = faker.internet.userName();
 let password = faker.internet.password();
 let employeeEmail = faker.internet.email();
@@ -91,7 +91,7 @@ And('User can see on employee dropdown', () => {
 });
 
 Then('User can select employee from dropdown options', () => {
-	proposalsPage.selectEmployeeFromDrodpwon(1);
+	proposalsPage.selectEmployeeFromDropdown(1);
 });
 
 And('User can see job post input field', () => {
@@ -115,7 +115,7 @@ And('User can see tags dropdown', () => {
 });
 
 When('User click on tags dropdown', () => {
-	proposalsPage.clickTagsDropdwon();
+	proposalsPage.clickTagsDropdown();
 });
 
 Then('User can select tag from dropdown options', () => {
@@ -319,7 +319,7 @@ When('User click on edit proposal template button', () => {
 	proposalsPage.clickEditTemplateBtn(0);
 });
 
-Then('User can see tempalte name input field again', () => {
+Then('User can see template name input field again', () => {
 	proposalsPage.templateNameInputVisible();
 });
 
@@ -352,11 +352,11 @@ When('User click on rpoposals templates table row again', () => {
 	proposalsPage.selectTableRow(0);
 });
 
-Then('Delete proposal template button will become actuve', () => {
+Then('Delete proposal template button will become active', () => {
 	proposalsPage.deleteTemplateBtnVisible();
 });
 
-When('User click on delete proposal tempalte button', () => {
+When('User click on delete proposal template button', () => {
 	proposalsPage.clickDeleteTemplateBtn();
 });
 

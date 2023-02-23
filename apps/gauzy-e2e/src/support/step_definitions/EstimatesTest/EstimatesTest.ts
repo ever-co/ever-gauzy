@@ -6,7 +6,7 @@ import * as organizationTagsUserPage from '../../Base/pages/OrganizationTags.po'
 import { OrganizationTagsPageData } from '../../Base/pagedata/OrganizationTagsPageData';
 import * as dashboardPage from '../../Base/pages/Dashboard.po';
 import { CustomCommands } from '../../commands';
-import { faker } from '@ever-co/faker';
+import { faker } from '@faker-js/faker';
 import * as logoutPage from '../../Base/pages/Logout.po';
 import { ContactsLeadsPageData } from '../../Base/pagedata/ContactsLeadsPageData';
 import * as contactsLeadsPage from '../../Base/pages/ContactsLeads.po';
@@ -19,15 +19,15 @@ import { Given, Then, When, And } from 'cypress-cucumber-preprocessor/steps';
 const pageLoadTimeout = Cypress.config('pageLoadTimeout');
 
 let email = faker.internet.email();
-let fullName = faker.name.firstName() + ' ' + faker.name.lastName();
-let city = faker.address.city();
-let postcode = faker.address.zipCode();
-let street = faker.address.streetAddress();
+let fullName = faker.person.firstName() + ' ' + faker.person.lastName();
+let city = faker.location.city();
+let postcode = faker.location.zipCode();
+let street = faker.location.streetAddress();
 let website = faker.internet.url();
 let sendEmail = faker.internet.email();
 
-let firstName = faker.name.firstName();
-let lastName = faker.name.lastName();
+let firstName = faker.person.firstName();
+let lastName = faker.person.lastName();
 let username = faker.internet.userName();
 let password = faker.internet.password();
 let employeeEmail = faker.internet.email();
@@ -117,7 +117,7 @@ Then('User can see tags dropdown', () => {
 });
 
 When('User click on tags dropdown', () => {
-	estimatesPage.clickTagsDropdwon();
+	estimatesPage.clickTagsDropdown();
 });
 
 Then('User can select tag from dropdown options', () => {
@@ -156,7 +156,7 @@ When('User click on contact dropdown', () => {
 });
 
 Then('User can select contact from dropdown options', () => {
-	estimatesPage.selectContactFromDropdwon(0);
+	estimatesPage.selectContactFromDropdown(0);
 });
 
 And('User can see tax input field', () => {
@@ -238,7 +238,7 @@ When('User click on second tab button', () => {
 });
 
 Then('User can see estimate number input field', () => {
-	estimatesPage.veirifyEstimateNumberInputVisible();
+	estimatesPage.verifyEstimateNumberInputVisible();
 });
 
 And('User can enter estimate number', () => {
@@ -248,7 +248,7 @@ And('User can enter estimate number', () => {
 });
 
 And('User can see currency dropdown', () => {
-	estimatesPage.verifyCurrencuDropdownVisible();
+	estimatesPage.verifyCurrencyDropdownVisible();
 });
 
 And('User can see estimate date input field', () => {
@@ -365,7 +365,7 @@ When('User click on contact dropdown', () => {
 });
 
 Then('User can select contact from dropdown options', () => {
-	estimatesPage.selectContactFromDropdwon(0);
+	estimatesPage.selectContactFromDropdown(0);
 });
 
 And('User can see tax input field', () => {
@@ -513,7 +513,7 @@ Then('User can see tags dropdown', () => {
 });
 
 When('User click on tags dropdown', () => {
-	estimatesPage.clickTagsDropdwon();
+	estimatesPage.clickTagsDropdown();
 });
 
 Then('User can select tag from dropdown options', () => {
@@ -552,7 +552,7 @@ When('User click on contact dropdown', () => {
 });
 
 Then('User can select contact from dropdown options', () => {
-	estimatesPage.selectContactFromDropdwon(0);
+	estimatesPage.selectContactFromDropdown(0);
 });
 
 And('User can see tax input field', () => {

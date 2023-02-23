@@ -46,7 +46,7 @@ export const clickEmployeeDropdown = () => {
 	clickButton(OrganizationDepartmentsPage.selectEmployeeDropdownCss);
 };
 
-export const selectEmployeeFromDrodpwon = (index) => {
+export const selectEmployeeFromDropdown = (index) => {
 	clickButtonByIndex(
 		OrganizationDepartmentsPage.selectEmployeeDropdownOptionCss,
 		index
@@ -57,7 +57,7 @@ export const tagsDropdownVisible = () => {
 	verifyElementIsVisible(OrganizationDepartmentsPage.addTagsDropdownCss);
 };
 
-export const clickTagsDropdwon = () => {
+export const clickTagsDropdown = () => {
 	clickButton(OrganizationDepartmentsPage.addTagsDropdownCss);
 };
 

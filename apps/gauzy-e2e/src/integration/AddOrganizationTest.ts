@@ -1,9 +1,9 @@
 import * as loginPage from '../support/Base/pages/Login.po';
 import { LoginPageData } from '../support/Base/pagedata/LoginPageData';
 import * as addOrganizationPage from '../support/Base/pages/AddOrganization.po';
-import { faker } from '@ever-co/faker';
+import { faker } from '@faker-js/faker';
 import { AddOrganizationPageData } from '../support/Base/pagedata/AddOrganizationPageData';
-import * as dashboradPage from '../support/Base/pages/Dashboard.po';
+import * as dashboardPage from '../support/Base/pages/Dashboard.po';
 import { CustomCommands } from '../support/commands';
 
 let organizationName = ' ';
@@ -12,11 +12,11 @@ let street = ' ';
 
 describe('Create Organization Test', () => {
 	before(() => {
-		organizationName = faker.company.companyName();
-		taxId = faker.random.alphaNumeric();
-		street = faker.address.streetAddress();
+		organizationName = faker.company.name();
+		taxId = faker.string.alphanumeric();
+		street = faker.location.streetAddress();
 
-		CustomCommands.login(loginPage, LoginPageData, dashboradPage);
+		CustomCommands.login(loginPage, LoginPageData, dashboardPage);
 	});
 
 	it('Should able to create organization', () => {

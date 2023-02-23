@@ -21,7 +21,7 @@ import { ManageInterviewsPage } from '../pageobjects/ManageInterviewsPageObject'
 export const addInterviewButtonVisible = () => {
 	cy.intercept('GET', '/api/employee/working*').as('waitScheduleLoad');
 	cy.intercept('GET', '/api/employee*').as('waitEmployee');
-	cy.wait(['@waitScheduleLoad','@waitEmployee']);
+	cy.wait(['@waitScheduleLoad', '@waitEmployee']);
 	verifyElementIsVisible(ManageInterviewsPage.addInterviewButtonCss);
 };
 
@@ -165,7 +165,7 @@ export const clickSaveButton = () => {
 	clickButton(ManageInterviewsPage.saveButtonCss);
 };
 
-export const verifySheduleExist = (text) => {
+export const verifyScheduleExist = (text) => {
 	verifyText(ManageInterviewsPage.verifyCandidateCss, text);
 };
 
@@ -203,7 +203,7 @@ export const clearFilterInputField = () => {
 };
 // End of Filter functions
 
-export const verifyAddFeedbackButtonVisisible = () => {
+export const verifyAddFeedbackButtonVisible = () => {
 	verifyElementIsVisible(ManageInterviewsPage.tableOptionsButtonsCss);
 };
 

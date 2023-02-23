@@ -2,14 +2,14 @@ import * as loginPage from '../support/Base/pages/Login.po';
 import { LoginPageData } from '../support/Base/pagedata/LoginPageData';
 import * as settingsFeaturesPage from '../support/Base/pages/SettingsFeatures.po';
 import { SettingsFeaturesPageData } from '../support/Base/pagedata/SettingsFeaturesPageData';
-import * as dashboradPage from '../support/Base/pages/Dashboard.po';
+import * as dashboardPage from '../support/Base/pages/Dashboard.po';
 import { CustomCommands } from '../support/commands';
 
 let checked = 'be.checked';
 
 describe('Verify settings features', () => {
 	before(() => {
-		CustomCommands.login(loginPage, LoginPageData, dashboradPage);
+		CustomCommands.login(loginPage, LoginPageData, dashboardPage);
 	});
 	it('Task Dashboard', () => {
 		cy.visit('/#/pages/settings/features/tenant');

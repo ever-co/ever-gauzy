@@ -140,7 +140,7 @@ export const clickAddTagsDropdown = () => {
 	clickButton(CandidatesPage.addTagsDropdownCss);
 };
 
-export const selectTagsFromDrodpwon = (index) => {
+export const selectTagsFromDropdown = (index) => {
 	clickButtonByIndex(CandidatesPage.tagsDropdownOption, index);
 };
 

@@ -110,7 +110,7 @@ Then('User can see edit newly position button', () => {
 });
 
 When('User click on edit new position button', () => {
-	addEmployeePositionPage.editEmployeePositionInpuVisible();
+	addEmployeePositionPage.editEmployeePositionInputVisible();
 });
 
 Then('User can edit previously created position', () => {

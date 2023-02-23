@@ -1,9 +1,9 @@
 import * as loginPage from '../support/Base/pages/Login.po';
 import { LoginPageData } from '../support/Base/pagedata/LoginPageData';
-import { faker } from '@ever-co/faker';
+import { faker } from '@faker-js/faker';
 import * as expensesPage from '../support/Base/pages/Expenses.po';
 import { ExpensePageData } from '../support/Base/pagedata/ExpensesPageData';
-import * as dashboradPage from '../support/Base/pages/Dashboard.po';
+import * as dashboardPage from '../support/Base/pages/Dashboard.po';
 import * as organizationTagsUserPage from '../support/Base/pages/OrganizationTags.po';
 import { OrganizationTagsPageData } from '../support/Base/pagedata/OrganizationTagsPageData';
 import * as organizationProjectsPage from '../support/Base/pages/OrganizationProjects.po';
@@ -14,9 +14,9 @@ let name = ' ';
 
 describe('Expense test', () => {
 	before(() => {
-		name = faker.name.firstName();
+		name = faker.person.firstName();
 
-		CustomCommands.login(loginPage, LoginPageData, dashboradPage);
+		CustomCommands.login(loginPage, LoginPageData, dashboardPage);
 	});
 
 	it('Should be able to add new expense', () => {
@@ -35,7 +35,7 @@ describe('Expense test', () => {
 		expensesPage.clickAddExpenseButton();
 		expensesPage.selectEmployeeDropdownVisible();
 		expensesPage.clickEmployeeDropdown();
-		expensesPage.selectEmployeeFromDrodpwon(0);
+		expensesPage.selectEmployeeFromDropdown(0);
 		expensesPage.categoryInputVisible();
 		expensesPage.clickCategoryInput();
 		expensesPage.enterCategoryInputData(ExpensePageData.defaultCategory);
@@ -54,7 +54,7 @@ describe('Expense test', () => {
 		expensesPage.clickProjectDropdown();
 		expensesPage.selectProjectFromDropdown(ExpensePageData.defaultProject);
 		expensesPage.tagsDropdownVisible();
-		expensesPage.clickTagsDropdwon();
+		expensesPage.clickTagsDropdown();
 		expensesPage.selectTagFromDropdown(0);
 		expensesPage.clickCardBody();
 		expensesPage.saveExpenseButtonVisible();
@@ -102,21 +102,21 @@ describe('Expense test', () => {
 		expensesPage.clickConfirmDeleteButton();
 		expensesPage.verifyElementIsDeleted();
 	});
-	it('Should be able to add new categorie', () => {
+	it('Should be able to add new category', () => {
 		expensesPage.waitMessageToHide();
-		expensesPage.manageCategoriesButtonVisible();
-		expensesPage.clickManageCategoriesButton();
+		expensesPage.managecategoriesButtonVisible();
+		expensesPage.clickManagecategoriesButton();
 		expensesPage.addExpenseButtonVisible();
 		expensesPage.clickAddExpenseButton();
 		expensesPage.newCategoryInputVisible();
 		expensesPage.enterNewCategoryInputData(ExpensePageData.defaultCategory);
 		expensesPage.tagsDropdownVisible();
-		expensesPage.clickTagsDropdwon();
+		expensesPage.clickTagsDropdown();
 		expensesPage.selectTagFromDropdown(0);
-		expensesPage.categorieCardVisible();
+		expensesPage.categoryCardVisible();
 		expensesPage.clickKeyboardButtonByKeyCode(9);
-		expensesPage.saveCategorieButtonVisible();
-		expensesPage.clickSaveCategorieButton();
+		expensesPage.SaveCategoryButtonVisible();
+		expensesPage.clickSaveCategoryButton();
 		expensesPage.verifyCategoryExists(ExpensePageData.defaultCategory);
 		expensesPage.backButtonVisible();
 		expensesPage.clickBackButton();

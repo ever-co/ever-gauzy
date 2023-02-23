@@ -55,7 +55,7 @@ And('User can visit Tasks team page', () => {
 	cy.intercept('GET', '/api/organization-projects/count*').as('waitOrg');
 	cy.intercept('GET', '/api/employee/working/count*').as('waitWorking');
 	cy.visit('/#/pages/tasks/team', { timeout: pageLoadTimeout });
-	cy.wait(['@waitOrg','@waitWorking']);
+	cy.wait(['@waitOrg', '@waitWorking']);
 });
 
 And('User can see grid button', () => {
@@ -97,7 +97,7 @@ When('User click on status dropdown', () => {
 });
 
 Then('User can select status from dropdown options', () => {
-	teamsTasksPage.selectStatusFromDropdown(TeamsTasksPageData.defauleStatus);
+	teamsTasksPage.selectStatusFromDropdown(TeamsTasksPageData.defaultStatus);
 });
 
 And('User can see team dropdown', () => {
@@ -148,7 +148,7 @@ And('User can see estimate days input field', () => {
 });
 
 And('User can enter estimate days', () => {
-	teamsTasksPage.enterEstiamteDaysInputData(
+	teamsTasksPage.enterEstimateDaysInputData(
 		TeamsTasksPageData.defaultTaskEstimateDays
 	);
 });
@@ -158,7 +158,7 @@ And('User can see estimate hours input field', () => {
 });
 
 And('User can enter estimate hours', () => {
-	teamsTasksPage.enterEstiamteHoursInputData(
+	teamsTasksPage.enterEstimateHoursInputData(
 		TeamsTasksPageData.defaultTaskEstimateHours
 	);
 });
@@ -174,7 +174,7 @@ And('User can enter estimate minutes', () => {
 });
 
 And('User can see task description input field', () => {
-	teamsTasksPage.taskDecriptionTextareaVisible();
+	teamsTasksPage.taskDescriptionTextareaVisible();
 });
 
 And('User can enter task description', () => {

@@ -2,12 +2,12 @@ import * as loginPage from '../support/Base/pages/Login.po';
 import { LoginPageData } from '../support/Base/pagedata/LoginPageData';
 import * as organizationProjectsPage from '../support/Base/pages/OrganizationProjects.po';
 import { OrganizationProjectsPageData } from '../support/Base/pagedata/OrganizationProjectsPageData';
-import * as dashboradPage from '../support/Base/pages/Dashboard.po';
+import * as dashboardPage from '../support/Base/pages/Dashboard.po';
 import { CustomCommands } from '../support/commands';
 
 describe('Organization projects test', () => {
 	before(() => {
-		CustomCommands.login(loginPage, LoginPageData, dashboradPage);
+		CustomCommands.login(loginPage, LoginPageData, dashboardPage);
 	});
 	it('Should be able to add new project', () => {
 		cy.visit('/#/pages/organization/projects');

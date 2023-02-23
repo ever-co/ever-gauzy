@@ -2,12 +2,12 @@ import * as loginPage from '../support/Base/pages/Login.po';
 import { LoginPageData } from '../support/Base/pagedata/LoginPageData';
 import * as organizationInventoryPage from '../support/Base/pages/OrganizationInventory.po';
 import { OrganizationInventoryPageData } from '../support/Base/pagedata/OrganizationInventoryPageData';
-import * as dashboradPage from '../support/Base/pages/Dashboard.po';
+import * as dashboardPage from '../support/Base/pages/Dashboard.po';
 import { CustomCommands } from '../support/commands';
 
 describe('Organization inventory test', () => {
 	before(() => {
-		CustomCommands.login(loginPage, LoginPageData, dashboradPage);
+		CustomCommands.login(loginPage, LoginPageData, dashboardPage);
 	});
 
 	it('Should be able to add new product category', () => {
@@ -24,14 +24,14 @@ describe('Organization inventory test', () => {
 		organizationInventoryPage.enterNameInputData(
 			OrganizationInventoryPageData.productCategoryName
 		);
-		organizationInventoryPage.descriptionInputVisivle();
+		organizationInventoryPage.descriptionInputVisible();
 		organizationInventoryPage.enterDescriptionInputData(
 			OrganizationInventoryPageData.productCategoryDescription
 		);
 		organizationInventoryPage.saveButtonVisible();
 		organizationInventoryPage.clickSaveButton();
 		organizationInventoryPage.waitMessageToHide();
-		organizationInventoryPage.verifyCategorieExists(
+		organizationInventoryPage.verifycategoryExists(
 			OrganizationInventoryPageData.productCategoryName
 		);
 		organizationInventoryPage.backButtonVisible();
@@ -47,7 +47,7 @@ describe('Organization inventory test', () => {
 		organizationInventoryPage.enterNameInputData(
 			OrganizationInventoryPageData.productTypeName
 		);
-		organizationInventoryPage.descriptionInputVisivle();
+		organizationInventoryPage.descriptionInputVisible();
 		organizationInventoryPage.enterDescriptionInputData(
 			OrganizationInventoryPageData.productTypeDescription
 		);
@@ -64,7 +64,7 @@ describe('Organization inventory test', () => {
 		organizationInventoryPage.addButtonVisible();
 		organizationInventoryPage.clickAddButton();
 		organizationInventoryPage.languageDropdownVisible();
-		organizationInventoryPage.clickLangaugeDropdown();
+		organizationInventoryPage.clickLanguageDropdown();
 		organizationInventoryPage.clickDropdownOption(
 			OrganizationInventoryPageData.defaultInventoryLanguage
 		);
@@ -77,16 +77,16 @@ describe('Organization inventory test', () => {
 			OrganizationInventoryPageData.defaultInventoryCode
 		);
 		organizationInventoryPage.productTypeDropdownVisible();
-		organizationInventoryPage.clickProductTypeDrodpwon();
+		organizationInventoryPage.clickProductTypeDropdown();
 		organizationInventoryPage.clickDropdownOption(
 			OrganizationInventoryPageData.productTypeName
 		);
 		organizationInventoryPage.productCategoryDropdownVisible();
-		organizationInventoryPage.clickProductCategoryDrodpwon();
+		organizationInventoryPage.clickProductCategoryDropdown();
 		organizationInventoryPage.clickDropdownOption(
 			OrganizationInventoryPageData.productCategoryName
 		);
-		organizationInventoryPage.descriptionInputVisivle();
+		organizationInventoryPage.descriptionInputVisible();
 		organizationInventoryPage.enterDescriptionInputData(
 			OrganizationInventoryPageData.productInventoryDescription
 		);
@@ -112,7 +112,7 @@ describe('Organization inventory test', () => {
 		organizationInventoryPage.enterCodeInputData(
 			OrganizationInventoryPageData.defaultInventoryCode
 		);
-		organizationInventoryPage.descriptionInputVisivle();
+		organizationInventoryPage.descriptionInputVisible();
 		organizationInventoryPage.enterDescriptionInputData(
 			OrganizationInventoryPageData.productInventoryDescription
 		);
@@ -144,7 +144,7 @@ describe('Organization inventory test', () => {
 		organizationInventoryPage.enterNameInputData(
 			OrganizationInventoryPageData.productCategoryName
 		);
-		organizationInventoryPage.descriptionInputVisivle();
+		organizationInventoryPage.descriptionInputVisible();
 		organizationInventoryPage.enterDescriptionInputData(
 			OrganizationInventoryPageData.productCategoryDescription
 		);
@@ -159,7 +159,7 @@ describe('Organization inventory test', () => {
 		organizationInventoryPage.confirmDeleteButtonVisible();
 		organizationInventoryPage.clickConfirmDeleteButton();
 		organizationInventoryPage.waitMessageToHide();
-		organizationInventoryPage.verifyCategorieIsDeleted(
+		organizationInventoryPage.verifycategoryIsDeleted(
 			OrganizationInventoryPageData.productCategoryName
 		);
 		organizationInventoryPage.backButtonVisible();
@@ -178,7 +178,7 @@ describe('Organization inventory test', () => {
 		organizationInventoryPage.enterNameInputData(
 			OrganizationInventoryPageData.productTypeName
 		);
-		organizationInventoryPage.descriptionInputVisivle();
+		organizationInventoryPage.descriptionInputVisible();
 		organizationInventoryPage.enterDescriptionInputData(
 			OrganizationInventoryPageData.productTypeDescription
 		);

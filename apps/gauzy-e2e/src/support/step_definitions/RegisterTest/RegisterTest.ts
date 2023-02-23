@@ -1,9 +1,9 @@
 import * as registerPage from '../../Base/pages/Register.po';
 import * as loginPage from '../../Base/pages/Login.po';
 import * as onboardingPage from '../../Base/pages/Onboarding.po';
-import { faker } from '@ever-co/faker';
+import { faker } from '@faker-js/faker';
 import { OnboardingPageData } from '../../Base/pagedata/OnboardingPageData';
-import * as dashboradPage from '../../Base/pages/Dashboard.po';
+import * as dashboardPage from '../../Base/pages/Dashboard.po';
 import * as logoutPage from '../../Base/pages/Logout.po';
 import { RegisterPageData } from '../../Base/pagedata/RegisterPageData';
 
@@ -11,12 +11,12 @@ import { Given, Then, When, And } from 'cypress-cucumber-preprocessor/steps';
 
 const pageLoadTimeout = Cypress.config('pageLoadTimeout');
 
-let fullName = faker.name.findName();
+let fullName = faker.person.fullName();
 let email = faker.internet.email();
 let pass = faker.internet.password();
-let organizationName = faker.company.companyName();
-let taxId = faker.random.alphaNumeric();
-let street = faker.address.streetAddress();
+let organizationName = faker.company.name();
+let taxId = faker.string.alphanumeric();
+let street = faker.location.streetAddress();
 
 // Create new account
 Given('Visit home page as unauthorized user', () => {
@@ -243,12 +243,12 @@ When('User click on dashboard', () => {
 });
 
 Then('User can see home page as authorized user', () => {
-	dashboradPage.verifyCreateButton();
+	dashboardPage.verifyCreateButton();
 });
 
 // Logout
 When('User click on username', () => {
-	dashboradPage.clickUserName();
+	dashboardPage.clickUserName();
 });
 
 Then('User can click on logout button', () => {

@@ -24,7 +24,7 @@ export const addEquipmentButtonVisible = () => {
 	verifyElementIsVisible(OrganizationEquipmentPage.addButtonCss);
 };
 
-export const clickAddEqupmentButton = () => {
+export const clickAddEquipmentButton = () => {
 	clickButton(OrganizationEquipmentPage.addButtonCss);
 };
 
@@ -86,7 +86,7 @@ export const tagsDropdownVisible = () => {
 	verifyElementIsVisible(OrganizationEquipmentPage.addTagsDropdownCss);
 };
 
-export const clickTagsDropdwon = () => {
+export const clickTagsDropdown = () => {
 	clickButton(OrganizationEquipmentPage.addTagsDropdownCss);
 };
 
@@ -184,11 +184,11 @@ export const enterRequestNameInputData = (data) => {
 };
 
 export const selectEquipmentDropdownVisible = () => {
-	verifyElementIsVisible(OrganizationEquipmentPage.selectEqupmentDropdownCss);
+	verifyElementIsVisible(OrganizationEquipmentPage.selectEquipmentDropdownCss);
 };
 
 export const clickEquipmentDropdown = () => {
-	clickButton(OrganizationEquipmentPage.selectEqupmentDropdownCss);
+	clickButton(OrganizationEquipmentPage.selectEquipmentDropdownCss);
 };
 
 export const selectEquipmentFromDropdown = (index) => {
@@ -221,7 +221,7 @@ export const clickEmployeeDropdown = () => {
 	clickButton(OrganizationEquipmentPage.selectEmployeeDropdownCss);
 };
 
-export const selectEmployeeFromDrodpwon = (index) => {
+export const selectEmployeeFromDropdown = (index) => {
 	clickButtonByIndex(
 		OrganizationEquipmentPage.selectEmployeeDropdownOptionCss,
 		index

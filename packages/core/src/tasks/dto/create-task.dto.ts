@@ -1,9 +1,15 @@
 import { ITaskCreateInput } from "@gauzy/contracts";
-import { IntersectionType } from "@nestjs/swagger";
-import { RelationalTagDTO } from "./../../tags/dto";
-import { TaskDTO } from "./task.dto";
+import { IntersectionType, OmitType } from "@nestjs/swagger";
+import { TenantOrganizationBaseDTO } from "./../../core/dto";
+import { Task } from "./../task.entity";
 
+/**
+ * Create task validation request DTO
+ */
 export class CreateTaskDTO extends IntersectionType(
-    TaskDTO,
-    RelationalTagDTO,
-) implements ITaskCreateInput {}
+    TenantOrganizationBaseDTO,
+    OmitType(
+        Task,
+        ['organizationId', 'organization']
+    )
+) implements ITaskCreateInput { }

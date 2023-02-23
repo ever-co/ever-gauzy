@@ -2,7 +2,7 @@ import * as loginPage from '../support/Base/pages/Login.po';
 import { LoginPageData } from '../support/Base/pagedata/LoginPageData';
 import * as goalsGeneralSettingsPage from '../support/Base/pages/GoalsGeneralSettings.po';
 import { GoalsGeneralSettingsPageData } from '../support/Base/pagedata/GoalsGeneralSettingsPageData';
-import * as dashboradPage from '../support/Base/pages/Dashboard.po';
+import * as dashboardPage from '../support/Base/pages/Dashboard.po';
 import { CustomCommands } from '../support/commands';
 
 let checked = 'be.checked';
@@ -10,7 +10,7 @@ let notChecked = 'not.checked';
 
 describe('Goals general settings Test', () => {
 	before(() => {
-		CustomCommands.login(loginPage, LoginPageData, dashboradPage);
+		CustomCommands.login(loginPage, LoginPageData, dashboardPage);
 	});
 
 	it('Should be able to verify goals general settings', () => {

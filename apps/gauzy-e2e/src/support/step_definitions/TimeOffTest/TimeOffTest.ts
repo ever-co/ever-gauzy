@@ -4,7 +4,7 @@ import * as timeOffPage from '../../Base/pages/TimeOff.po';
 import { TimeOffPageData } from '../../Base/pagedata/TimeOffPageData';
 import * as dashboardPage from '../../Base/pages/Dashboard.po';
 import { CustomCommands } from '../../commands';
-import { faker } from '@ever-co/faker';
+import { faker } from '@faker-js/faker';
 import * as logoutPage from '../../Base/pages/Logout.po';
 import * as manageEmployeesPage from '../../Base/pages/ManageEmployees.po';
 
@@ -12,8 +12,8 @@ import { Given, Then, When, And } from 'cypress-cucumber-preprocessor/steps';
 
 const pageLoadTimeout = Cypress.config('pageLoadTimeout');
 
-let firstName = faker.name.firstName();
-let lastName = faker.name.lastName();
+let firstName = faker.person.firstName();
+let lastName = faker.person.lastName();
 let username = faker.internet.userName();
 let password = faker.internet.password();
 let employeeEmail = faker.internet.email();
@@ -165,7 +165,7 @@ And('User can see description input field', () => {
 });
 
 And('User can enter description', () => {
-	timeOffPage.enterDdescriptionInputData(TimeOffPageData.defaultDescription);
+	timeOffPage.enterDescriptionInputData(TimeOffPageData.defaultDescription);
 });
 
 And('User can see save request button', () => {
@@ -273,7 +273,7 @@ And('User can see description input field', () => {
 });
 
 And('User can enter description', () => {
-	timeOffPage.enterDdescriptionInputData(TimeOffPageData.defaultDescription);
+	timeOffPage.enterDescriptionInputData(TimeOffPageData.defaultDescription);
 });
 
 And('User can see save request button', () => {
@@ -310,7 +310,7 @@ Then('User can see confirm delete button', () => {
 });
 
 When('User click on confirm delete button', () => {
-	timeOffPage.clickConfirmDeleteTimeOffButoon();
+	timeOffPage.clickConfirmDeleteTimeOffButton();
 });
 
 Then('Notification message will appear', () => {

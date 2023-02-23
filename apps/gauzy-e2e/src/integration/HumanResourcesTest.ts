@@ -2,9 +2,9 @@ import * as loginPage from '../support/Base/pages/Login.po';
 import { LoginPageData } from '../support/Base/pagedata/LoginPageData';
 import * as humanResourcesPage from '../support/Base/pages/HumanResources.po';
 import { HumanResourcesPageData } from '../support/Base/pagedata/HumanResourcesPageData';
-import * as dashboradPage from '../support/Base/pages/Dashboard.po';
+import * as dashboardPage from '../support/Base/pages/Dashboard.po';
 import { CustomCommands } from '../support/commands';
-import { faker } from '@ever-co/faker';
+import { faker } from '@faker-js/faker';
 import * as manageEmployeesPage from '../support/Base/pages/ManageEmployees.po';
 
 let firstName = ' ';
@@ -16,14 +16,14 @@ let imgUrl = ' ';
 
 describe('Human resources page test', () => {
 	before(() => {
-		firstName = faker.name.firstName();
-		lastName = faker.name.lastName();
+		firstName = faker.person.firstName();
+		lastName = faker.person.lastName();
 		username = faker.internet.userName();
 		password = faker.internet.password();
 		employeeEmail = faker.internet.email();
 		imgUrl = faker.image.avatar();
 
-		CustomCommands.login(loginPage, LoginPageData, dashboradPage);
+		CustomCommands.login(loginPage, LoginPageData, dashboardPage);
 		CustomCommands.addEmployee(
 			manageEmployeesPage,
 			firstName,

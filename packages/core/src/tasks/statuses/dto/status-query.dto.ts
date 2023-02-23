@@ -5,5 +5,5 @@ import { TaskStatus } from './../status.entity';
 
 export class StatusQuerDTO extends IntersectionType(
 	PartialType(TenantOrganizationBaseDTO),
-	PickType(TaskStatus, ['projectId'])
-) implements ITaskStatusFindInput {}
+	PickType(TaskStatus, ['projectId', 'organizationTeamId'])
+) implements ITaskStatusFindInput { }

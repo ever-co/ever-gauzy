@@ -41,12 +41,12 @@ export const enterNameInputData = (data) => {
 
 export const selectEmployeeDropdownVisible = () => {
 	verifyElementIsVisible(
-		OrganizationProjectsPage.selectEmloyeeMultiSelectCss
+		OrganizationProjectsPage.selectEmployeeMultiSelectCss
 	);
 };
 
 export const clickSelectEmployeeDropdown = () => {
-	clickButton(OrganizationProjectsPage.selectEmloyeeMultiSelectCss);
+	clickButton(OrganizationProjectsPage.selectEmployeeMultiSelectCss);
 };
 
 export const selectEmployeeDropdownOption = (index) => {
