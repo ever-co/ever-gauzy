@@ -15,7 +15,7 @@ export class TaskStatusPrioritySizeService<BaseEntity extends TenantBaseEntity> 
 	}
 
 	async findEntitiesByParams(
-		params: ITaskPriorityFindInput | ITaskSizeFindInput
+		params: ITaskStatusFindInput | ITaskPriorityFindInput | ITaskSizeFindInput
 	): Promise<IPagination<BaseEntity>> {
 		try {
 			/**

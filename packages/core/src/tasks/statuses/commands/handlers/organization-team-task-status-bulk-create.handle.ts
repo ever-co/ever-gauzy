@@ -18,6 +18,6 @@ export class OrganizationTeamTaskStatusBulkCreateHandler
 		/**
 		 * Create bulk task statuses for specific organization team
 		 */
-		return await this.taskStatusService.createBulkStatusesByEntity({ organizationId, organizationTeamId });
+		return this.taskStatusService.createBulkStatusesByEntity({ organizationId, organizationTeamId });
 	}
 }

@@ -1,7 +1,7 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { DeleteResult, Repository } from 'typeorm';
-import { IOrganization, IOrganizationProject, IPagination, ITaskPriority, ITaskPriorityCreateInput, ITaskPriorityFindInput, ITenant } from '@gauzy/contracts';
+import { IOrganization, IPagination, ITaskPriority, ITaskPriorityCreateInput, ITaskPriorityFindInput, ITenant } from '@gauzy/contracts';
 import { RequestContext } from './../../core/context';
 import { TaskStatusPrioritySizeService } from '../task-status-priority-size.service';
 import { TaskPriority } from './priority.entity';
