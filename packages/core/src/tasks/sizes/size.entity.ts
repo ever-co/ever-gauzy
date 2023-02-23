@@ -43,6 +43,7 @@ export class TaskSize extends TenantOrganizationBaseEntity implements ITaskSize 
 	@Column({ default: false, update: false })
 	isSystem?: boolean;
 
+	fullIconUrl?: string;
 	/*
 	|--------------------------------------------------------------------------
 	| @ManyToOne

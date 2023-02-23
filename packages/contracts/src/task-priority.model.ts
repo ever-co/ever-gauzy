@@ -9,6 +9,7 @@ export interface ITaskPriority extends IBasePerTenantAndOrganizationEntityModel,
 	icon?: string;
 	color?: string;
 	isSystem?: boolean;
+	fullIconUrl?: string;
 	project?: IOrganizationProject;
 	projectId?: IOrganizationProject['id'];
 }

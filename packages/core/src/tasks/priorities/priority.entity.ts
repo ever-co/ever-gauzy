@@ -42,6 +42,7 @@ export class TaskPriority extends TenantOrganizationBaseEntity implements ITaskP
 	@Column({ default: false, update: false })
 	isSystem?: boolean;
 
+	fullIconUrl?: string;
 	/*
 	|--------------------------------------------------------------------------
 	| @ManyToOne

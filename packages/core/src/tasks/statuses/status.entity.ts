@@ -42,6 +42,7 @@ export class TaskStatus extends TenantOrganizationBaseEntity implements ITaskSta
 	@Column({ default: false, update: false })
 	isSystem?: boolean;
 
+	fullIconUrl?: string;
 	/*
 	|--------------------------------------------------------------------------
 	| @ManyToOne
