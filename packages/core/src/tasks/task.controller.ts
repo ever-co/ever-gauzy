@@ -53,7 +53,9 @@ export class TaskController extends CrudController<Task> {
 	@Permissions(PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.ORG_TASK_VIEW)
 	@Get('count')
 	@UsePipes(new ValidationPipe())
-	async getCount(@Query() options: CountQueryDTO<Task>): Promise<number> {
+	async getCount(
+		@Query() options: CountQueryDTO<Task>
+	): Promise<number> {
 		return await this.taskService.countBy(options);
 	}
 
