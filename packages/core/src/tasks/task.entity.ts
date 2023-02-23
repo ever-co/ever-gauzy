@@ -10,7 +10,7 @@ import {
 	Index,
 } from 'typeorm';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsBoolean, IsNotEmpty, IsNumber, IsOptional, IsString, IsUUID } from 'class-validator';
+import { IsArray, IsBoolean, IsNotEmpty, IsNumber, IsObject, IsOptional, IsString, IsUUID } from 'class-validator';
 import {
 	IActivity,
 	IEmployee,
@@ -44,11 +44,9 @@ import {
 export class Task extends TenantOrganizationBaseEntity
 	implements ITask {
 
-	@ApiPropertyOptional({ type: () => Number })
 	@Column({ nullable: true })
 	number?: number;
 
-	@ApiPropertyOptional({ type: () => String })
 	@Column({ nullable: true })
 	prefix?: string;
 
@@ -132,8 +130,9 @@ export class Task extends TenantOrganizationBaseEntity
 	/**
 	 * Organization Project
 	 */
-	@ApiPropertyOptional({ type: () => OrganizationProject })
+	@ApiPropertyOptional({ type: () => Object })
 	@IsOptional()
+	@IsObject()
 	@ManyToOne(() => OrganizationProject, (it) => it.tasks, {
 		nullable: true,
 		onDelete: 'CASCADE',
@@ -158,9 +157,6 @@ export class Task extends TenantOrganizationBaseEntity
 	@JoinColumn()
 	creator?: IUser;
 
-	@ApiPropertyOptional({ type: () => String })
-	@IsOptional()
-	@IsUUID()
 	@RelationId((it: Task) => it.creator)
 	@Index()
 	@Column({ nullable: true })
@@ -169,8 +165,9 @@ export class Task extends TenantOrganizationBaseEntity
 	/**
 	 * Organization Sprint
 	 */
-	@ApiPropertyOptional({ type: () => OrganizationSprint })
+	@ApiPropertyOptional({ type: () => Object })
 	@IsOptional()
+	@IsObject()
 	@ManyToOne(() => OrganizationSprint, { onDelete: 'SET NULL' })
 	@JoinColumn()
 	organizationSprint?: IOrganizationSprint;
@@ -218,6 +215,9 @@ export class Task extends TenantOrganizationBaseEntity
 	/**
 	 * Tags
 	 */
+	@ApiPropertyOptional({ type: () => Array, isArray: true })
+	@IsOptional()
+	@IsArray()
 	@ManyToMany(() => Tag, (tag) => tag.tasks, {
 		onUpdate: 'CASCADE',
 		onDelete: 'CASCADE',
@@ -230,6 +230,9 @@ export class Task extends TenantOrganizationBaseEntity
 	/**
 	 * Members
 	 */
+	@ApiPropertyOptional({ type: () => Array, isArray: true })
+	@IsOptional()
+	@IsArray()
 	@ManyToMany(() => Employee, (employee) => employee.tasks, {
 		onUpdate: 'CASCADE',
 		onDelete: 'CASCADE',
@@ -242,6 +245,9 @@ export class Task extends TenantOrganizationBaseEntity
 	/**
 	 * OrganizationTeam
 	 */
+	@ApiPropertyOptional({ type: () => Array, isArray: true })
+	@IsOptional()
+	@IsArray()
 	@ManyToMany(() => OrganizationTeam, (team) => team.tasks, {
 		onUpdate: 'CASCADE',
 		onDelete: 'CASCADE',

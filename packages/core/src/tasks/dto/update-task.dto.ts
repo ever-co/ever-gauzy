@@ -1,9 +1,7 @@
 import { ITaskUpdateInput } from "@gauzy/contracts";
-import { IntersectionType } from "@nestjs/swagger";
-import { RelationalTagDTO } from "./../../tags/dto";
-import { TaskDTO } from "./task.dto";
+import { CreateTaskDTO } from "./create-task.dto";
 
-export class UpdateTaskDTO extends IntersectionType(
-    TaskDTO,
-    RelationalTagDTO,
-) implements ITaskUpdateInput {}
+/**
+ * Update task validation request DTO
+ */
+export class UpdateTaskDTO extends CreateTaskDTO implements ITaskUpdateInput { }
