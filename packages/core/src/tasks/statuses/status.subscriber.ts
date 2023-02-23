@@ -32,7 +32,7 @@ export class TaskStatusSubscriber implements EntitySubscriberInterface<TaskStatu
 		try {
 			if (entity.icon) {
 				const store = new FileStorage().setProvider(FileStorageProviderEnum.LOCAL);
-				entity.icon = store.getProviderInstance().url(entity.icon);
+				entity.fullIconUrl = store.getProviderInstance().url(entity.icon);
 			}
 		} catch (error) {
 			console.log(error);

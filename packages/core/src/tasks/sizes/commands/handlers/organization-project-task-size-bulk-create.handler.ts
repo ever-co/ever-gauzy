@@ -15,6 +15,11 @@ export class OrganizationTaskProjectSizeBulkCreateHandler
 		command: OrganizationProjectTaskSizeBulkCreateCommand
 	): Promise<ITaskSize[]> {
 		const { input } = command;
-		return await this.taskSizeService.bulkCreateOrganizationProjectSizes(input);
+		const { id: projectId, organizationId } = input;
+
+		/**
+		 * Create bulk task size for specific organization team
+		 */
+		return await this.taskSizeService.createBulkSizesByEntity({ organizationId, projectId });
 	}
 }

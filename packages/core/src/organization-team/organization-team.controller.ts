@@ -15,7 +15,7 @@ import {
 	Delete
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
-import { QueryBus } from '@nestjs/cqrs';
+import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { DeleteResult } from 'typeorm';
 import { CrudController, PaginationParams } from './../core/crud';
 import { TenantPermissionGuard, PermissionGuard } from './../shared/guards';
@@ -26,6 +26,7 @@ import { GetOrganizationTeamStatisticQuery } from './queries';
 import { CreateOrganizationTeamDTO, OrganizationTeamStatisticDTO, UpdateOrganizationTeamDTO } from './dto';
 import { OrganizationTeam } from './organization-team.entity';
 import { OrganizationTeamService } from './organization-team.service';
+import { OrganizationTeamCreateCommand } from './commands';
 
 @ApiTags('OrganizationTeam')
 @UseGuards(TenantPermissionGuard, PermissionGuard)
@@ -34,10 +35,11 @@ import { OrganizationTeamService } from './organization-team.service';
 export class OrganizationTeamController extends CrudController<OrganizationTeam> {
 
 	constructor(
-		private readonly queryBus: QueryBus,
-		private readonly organizationTeamService: OrganizationTeamService,
+		private readonly _commandBus: CommandBus,
+		private readonly _queryBus: QueryBus,
+		private readonly _organizationTeamService: OrganizationTeamService,
 	) {
-		super(organizationTeamService);
+		super(_organizationTeamService);
 	}
 
 	/**
@@ -64,7 +66,7 @@ export class OrganizationTeamController extends CrudController<OrganizationTeam>
 	async findMyTeams(
 		@Query() params: PaginationParams<OrganizationTeam>
 	): Promise<IPagination<IOrganizationTeam>> {
-		return await this.organizationTeamService.findMyTeams(params);
+		return await this._organizationTeamService.findMyTeams(params);
 	}
 
 	/**
@@ -79,7 +81,7 @@ export class OrganizationTeamController extends CrudController<OrganizationTeam>
 	async getCount(
 		@Query() options: CountQueryDTO<OrganizationTeam>
 	): Promise<number> {
-		return await this.organizationTeamService.countBy(options);
+		return await this._organizationTeamService.countBy(options);
 	}
 
 	/**
@@ -94,7 +96,7 @@ export class OrganizationTeamController extends CrudController<OrganizationTeam>
 	async pagination(
 		@Query() params: PaginationParams<OrganizationTeam>
 	): Promise<IPagination<IOrganizationTeam>> {
-		return await this.organizationTeamService.pagination(params);
+		return await this._organizationTeamService.pagination(params);
 	}
 
 	/**
@@ -121,7 +123,7 @@ export class OrganizationTeamController extends CrudController<OrganizationTeam>
 	async findAll(
 		@Query() params: PaginationParams<OrganizationTeam>
 	): Promise<IPagination<IOrganizationTeam>> {
-		return await this.organizationTeamService.findAll(params);
+		return await this._organizationTeamService.findAll(params);
 	}
 
 	/**
@@ -137,7 +139,7 @@ export class OrganizationTeamController extends CrudController<OrganizationTeam>
 		@Param('id', UUIDValidationPipe) id: IOrganizationTeam['id'],
 		@Query() options: OrganizationTeamStatisticDTO
 	): Promise<any> {
-		return await this.queryBus.execute(
+		return await this._queryBus.execute(
 			new GetOrganizationTeamStatisticQuery(
 				id,
 				options
@@ -167,7 +169,9 @@ export class OrganizationTeamController extends CrudController<OrganizationTeam>
 	async create(
 		@Body() entity: CreateOrganizationTeamDTO
 	): Promise<IOrganizationTeam> {
-		return await this.organizationTeamService.create(entity);
+		return await this._commandBus.execute(
+			new OrganizationTeamCreateCommand(entity)
+		);
 	}
 
 	/**
@@ -198,7 +202,7 @@ export class OrganizationTeamController extends CrudController<OrganizationTeam>
 		@Param('id', UUIDValidationPipe) id: IOrganizationTeam['id'],
 		@Body() entity: UpdateOrganizationTeamDTO
 	): Promise<IOrganizationTeam> {
-		return await this.organizationTeamService.update(id, entity);
+		return await this._organizationTeamService.update(id, entity);
 	}
 
 	/**
@@ -224,6 +228,6 @@ export class OrganizationTeamController extends CrudController<OrganizationTeam>
 		@Param('id', UUIDValidationPipe) teamId: IOrganizationTeam['id'],
 		@Query() options: DeleteQueryDTO<OrganizationTeam>
 	): Promise<DeleteResult | IOrganizationTeam> {
-		return await this.organizationTeamService.deleteTeam(teamId, options);
+		return await this._organizationTeamService.deleteTeam(teamId, options);
 	}
 }
