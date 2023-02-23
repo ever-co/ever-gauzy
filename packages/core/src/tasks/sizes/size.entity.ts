@@ -5,7 +5,6 @@ import { IOrganizationProject, IOrganizationTeam, ITaskSize } from '@gauzy/contr
 import {
 	OrganizationProject,
 	OrganizationTeam,
-	TaskStatus,
 	TenantOrganizationBaseEntity,
 } from './../../core/entities/internal';
 
