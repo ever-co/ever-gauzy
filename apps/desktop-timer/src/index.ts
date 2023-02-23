@@ -454,35 +454,36 @@ ipcMain.on('restart_and_update', () => {
 });
 
 ipcMain.on('check_database_connection', async (event, arg) => {
-	let databaseOptions;
-	if (arg.db === 'postgres' || arg.db === 'mysql') {
-		databaseOptions = {
-			client: arg.db === 'postgres' ? 'pg' : 'mysql',
-			connection: {
-				host: arg.dbHost,
-				user: arg.dbUsername,
-				password: arg.dbPassword,
-				database: arg.dbName,
-				port: arg.dbPort,
-			},
-		};
-	} else {
-		databaseOptions = {
-			client: 'sqlite',
-			connection: {
-				filename: sqlite3filename,
-			},
-		};
-	}
-	const dbConn = require('knex')(databaseOptions);
 	try {
+		const provider = arg.db;
+		let databaseOptions;
+		if (provider === 'postgres' || provider === 'mysql') {
+			databaseOptions = {
+				client: provider === 'postgres' ? 'pg' : 'mysql',
+				connection: {
+					host: arg[provider].dbHost,
+					user: arg[provider].dbUsername,
+					password: arg[provider].dbPassword,
+					database: arg[provider].dbName,
+					port: arg[provider].dbPort
+				}
+			};
+		} else {
+			databaseOptions = {
+				client: 'sqlite',
+				connection: {
+					filename: sqlite3filename,
+				},
+			};
+		}
+		const dbConn = require('knex')(databaseOptions);
 		await dbConn.raw('select 1+1 as result');
 		event.sender.send('database_status', {
 			status: true,
 			message:
-				arg.db === 'postgres'
+				provider === 'postgres'
 					? 'Connection to PostgresSQL DB Succeeds'
-					: arg.db === 'mysql'
+					: provider === 'mysql'
 						? 'Connection to MySQL DB Succeeds'
 						: 'Connection to SQLITE DB Succeeds',
 		});

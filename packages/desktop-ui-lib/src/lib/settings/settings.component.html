@@ -463,7 +463,28 @@
 												</nb-select>
 											</div>
 											<ng-container
-												*ngTemplateOutlet="databaseConfig, context: {providerConfig: config}"></ng-container>
+												*ngTemplateOutlet="databaseConfig, context: {providerConfig: config}">
+											</ng-container>
+										</div>
+										<div class="row">
+											<div class="col-5">
+												<button nbButton status="basic" class="check-db" [nbSpinner]="(isCheckDatabase$ | async)" nbSpinnerSize="tiny" nbSpinner
+													(click)="checkDatabaseConnectivity()">
+													<ng-container *ngIf="!(isCheckDatabase$ | async)">
+														<nb-icon [status]="(isConnectedDatabase$ | async)?.status ? 'success': 'danger'"
+															[icon]="(isConnectedDatabase$ | async)?.status ? 'checkmark-circle-2-outline': 'close-circle-outline'"></nb-icon>
+														Check
+													</ng-container>
+												</button>
+											</div>
+											<div *ngIf="!(isHidden$ | async)" class="col-7 warn-container">
+												<button nbButton (click)="onHide()" status="basic" size="tiny" class="close-warn" >
+													<nb-icon icon="close-outline"></nb-icon>
+												</button>
+												<div class="message-db-connection">
+													{{ (isConnectedDatabase$ | async)?.message }}
+												</div>
+											</div>
 										</div>
 									</nb-card-body>
 								</nb-card>
@@ -522,7 +543,7 @@
 							</div>
 							<div class="col-12">
 								<button nbButton status="primary" (click)="restartApp()"
-									[disabled]="restartDisable || appSetting?.timerStarted">
+									[disabled]="(restartDisable$ | async) || appSetting?.timerStarted">
 									{{ isServer ? 'Save' : 'Restart App' }}
 								</button>
 							</div>
@@ -556,7 +577,7 @@
 							</div>
 							<div class="col-12">
 								<button nbButton status="primary" (click)="restartApp()"
-									[disabled]="restartDisable || appSetting?.timerStarted">
+									[disabled]="(restartDisable$ | async) || appSetting?.timerStarted">
 									{{ isServer ? 'Save' : 'Restart App' }}
 								</button>
 							</div>

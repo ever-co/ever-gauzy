@@ -358,7 +358,6 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 		awHost: null,
 		port: 5620
 	};
-	restartDisable = false;
 	version = '0.0.0';
 	message = {
 		text: 'Application Update',
@@ -400,6 +399,10 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 	private _updaterServer$: BehaviorSubject<any>;
 	private _file$: BehaviorSubject<any>;
 	private _prerelease$: BehaviorSubject<boolean>;
+	private _isCheckDatabase$: BehaviorSubject<boolean>;
+	private _isConnectedDatabase$: BehaviorSubject<{ status: boolean, message: string }>;
+	private _restartDisable$: BehaviorSubject<boolean>;
+	private _isHidden$: BehaviorSubject<boolean>;
 
 	constructor(
 		private electronService: ElectronService,
@@ -419,6 +422,10 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 		});
 		this._prerelease$ = new BehaviorSubject(false);
 		this._selectedMenu$ = new BehaviorSubject(null);
+		this._isCheckDatabase$ = new BehaviorSubject(false);
+		this._isConnectedDatabase$ = new BehaviorSubject({ status: false, message: null });
+		this._restartDisable$ = new BehaviorSubject(false);
+		this._isHidden$ = new BehaviorSubject(true);
 	}
 
 	ngOnInit(): void {
@@ -435,6 +442,7 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 					...this.config,
 					...config
 				};
+				this.checkDatabaseConnectivity();
 				this.authSetting = auth;
 				this.mappingAdditionalSetting(additionalSetting || null);
 
@@ -618,6 +626,15 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 				this._dialogService.open(AboutComponent);
 			});
 		});
+
+		this.electronService.ipcRenderer.on('database_status', (event, arg) => {
+			this._ngZone.run(() => {
+				this._isCheckDatabase$.next(false);
+				this._isConnectedDatabase$.next(arg);
+				this._isHidden$.next(false);
+				this._restartDisable$.next(!this._isConnectedDatabase.status);
+			});
+		})
 	}
 
 	mappingAdditionalSetting(values) {
@@ -705,7 +722,7 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 
 	restartApp() {
 		if (this.isServer && this.serverIsRunning) {
-			this.restartDisable = true;
+			this._restartDisable$.next(true);
 		} else {
 			this.logout();
 		}
@@ -733,13 +750,15 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 				['5621', '5622'].findIndex((item) => item === val.toString()) >
 				-1
 			) {
-				this.restartDisable = true;
+				this._restartDisable$.next(true);
 			} else {
-				this.restartDisable = false;
+				this._restartDisable$.next(false);
 			}
 		}
 		if (type === 'db') {
 			console.log('Port change', val);
+			this._restartDisable$.next(true);
+			this._isHidden$.next(true);
 		}
 	}
 
@@ -759,6 +778,13 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 			default:
 				break;
 		}
+	}
+
+	public checkDatabaseConnectivity() {
+		this._isHidden$.next(false);
+		this._restartDisable$.next(true);
+		this._isCheckDatabase$.next(true);
+		this.electronService.ipcRenderer.send('check_database_connection', this.config);
 	}
 
 	checkForUpdate() {
@@ -830,6 +856,8 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 	}
 
 	onDriverChange(val) {
+		this._restartDisable$.next(true);
+		this._isHidden$.next(true);
 		switch (val) {
 			case 'sqlite':
 				this.config.db = 'sqlite';
@@ -853,7 +881,7 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 					'Server configuration updated, please wait till server restarts';
 				break;
 			case 'start_server':
-				this.restartDisable = false;
+				this._restartDisable$.next(false);
 				message = 'Server Restated Successfully';
 				break;
 			default:
@@ -973,4 +1001,33 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 	public get selectedMenu$(): Observable<string> {
 		return this._selectedMenu$.asObservable();
 	}
+
+	public get _isConnectedDatabase(): { status: boolean, message: string } {
+		return this._isConnectedDatabase$.getValue();
+	}
+
+	public get isConnectedDatabase$(): Observable<{ status: boolean, message: string }> {
+		return this._isConnectedDatabase$.asObservable()
+	}
+
+	public get _isCheckDatabase(): boolean {
+		return this._isCheckDatabase$.getValue();
+	}
+
+	public get isCheckDatabase$(): Observable<boolean> {
+		return this._isCheckDatabase$.asObservable();
+	}
+
+	public get restartDisable$(): Observable<boolean> {
+		return this._restartDisable$.asObservable();
+	}
+
+	public get isHidden$(): Observable<boolean> {
+		return this._isHidden$.asObservable();
+	}
+
+	public onHide() {
+		this._isHidden$.next(true);
+	}
+
 }

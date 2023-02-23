@@ -292,3 +292,26 @@ nb-card-body {
   pointer-events: none;
   opacity: 0.5;
 }
+
+.message-db-connection {
+  padding: 5px;
+  border: 1px dashed var(--gauzy-text-color-2);
+  border-radius: var(--border-radius);
+}
+
+.check-db {
+  box-shadow: var(--gauzy-shadow);
+  min-width: 102px;
+  min-height: 32px;
+}
+
+warn-container {
+  position: relative;
+}
+
+.close-warn {
+  position: absolute;
+  right: calc(15px / 2);
+  top: calc(-15px / 2);
+  box-shadow: var(--gauzy-shadow);
+}
