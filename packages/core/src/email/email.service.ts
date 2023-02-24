@@ -873,7 +873,7 @@ export class EmailService extends TenantAwareCrudService<EmailEntity> {
 				locale: languageCode,
 				email: user.email,
 				host: env.clientBaseUrl,
-				inviteCode: user.code,
+				otp: user.code,
 				...integration
 			}
 		};
