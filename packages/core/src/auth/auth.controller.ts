@@ -31,12 +31,11 @@ import { HasPermissionsQueryDTO, HasRoleQueryDTO, RefreshTokenDto, SendAuthCodeD
 @ApiTags('Auth')
 @Controller()
 export class AuthController {
-
 	constructor(
 		private readonly authService: AuthService,
 		private readonly userService: UserService,
 		private readonly commandBus: CommandBus
-	) { }
+	) {}
 
 	/**
 	 *
@@ -44,7 +43,7 @@ export class AuthController {
 	 */
 	@ApiOperation({ summary: 'Check if user is authenticated' })
 	@ApiOkResponse({ status: HttpStatus.OK, description: 'The success server response' })
-	@ApiBadRequestResponse({ status: HttpStatus.BAD_REQUEST, })
+	@ApiBadRequestResponse({ status: HttpStatus.BAD_REQUEST })
 	@Get('/authenticated')
 	@Public()
 	async authenticated(): Promise<boolean> {
@@ -62,9 +61,7 @@ export class AuthController {
 	@ApiResponse({ status: HttpStatus.BAD_REQUEST })
 	@Get('/role')
 	@UsePipes(new ValidationPipe())
-	async hasRole(
-		@Query() query: HasRoleQueryDTO
-	): Promise<boolean> {
+	async hasRole(@Query() query: HasRoleQueryDTO): Promise<boolean> {
 		return await this.authService.hasRole(query.roles);
 	}
 
@@ -79,9 +76,7 @@ export class AuthController {
 	@ApiResponse({ status: HttpStatus.BAD_REQUEST })
 	@Get('/permissions')
 	@UsePipes(new ValidationPipe())
-	async hasPermissions(
-		@Query() query: HasPermissionsQueryDTO
-	): Promise<boolean> {
+	async hasPermissions(@Query() query: HasPermissionsQueryDTO): Promise<boolean> {
 		return await this.authService.hasPermissions(query.permissions);
 	}
 
@@ -99,8 +94,7 @@ export class AuthController {
 	})
 	@ApiResponse({
 		status: HttpStatus.BAD_REQUEST,
-		description:
-			'Invalid input, The response body may contain clues as to what went wrong'
+		description: 'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@Post('/register')
 	@Public()
@@ -111,9 +105,11 @@ export class AuthController {
 		@I18nLang() languageCode: LanguagesEnum
 	): Promise<IUser> {
 		return await this.commandBus.execute(
-			new AuthRegisterCommand({
-				originalUrl: request.get('Origin'), ...entity
-			},
+			new AuthRegisterCommand(
+				{
+					originalUrl: request.get('Origin'),
+					...entity
+				},
 				languageCode
 			)
 		);
@@ -128,12 +124,8 @@ export class AuthController {
 	@Post('/login')
 	@Public()
 	@UsePipes(new ValidationPipe({ transform: true }))
-	async login(
-		@Body() entity: UserLoginDTO
-	): Promise<IAuthResponse | null> {
-		return await this.commandBus.execute(
-			new AuthLoginCommand(entity)
-		);
+	async login(@Body() entity: UserLoginDTO): Promise<IAuthResponse | null> {
+		return await this.commandBus.execute(new AuthLoginCommand(entity));
 	}
 
 	/**
@@ -146,12 +138,8 @@ export class AuthController {
 	@Post('/send-code')
 	@Public()
 	@UsePipes(new ValidationPipe({ transform: true }))
-	async sendInviteCode(
-		@Body() entity: SendAuthCodeDTO
-	): Promise<any> {
-		return await this.commandBus.execute(
-			new SendAuthCodeCommand(entity)
-		);
+	async sendInviteCode(@Body() entity: SendAuthCodeDTO): Promise<any> {
+		return await this.commandBus.execute(new SendAuthCodeCommand(entity));
 	}
 
 	/**
@@ -162,12 +150,8 @@ export class AuthController {
 	@Post('/verify-code')
 	@Public()
 	@UsePipes(new ValidationPipe({ whitelist: true }))
-	async confirmInviteCode(
-		@Body() entity: VerifyAuthCodeDTO
-	): Promise<any> {
-		return await this.commandBus.execute(
-			new VerifyAuthCodeCommand(entity)
-		);
+	async confirmInviteCode(@Body() entity: VerifyAuthCodeDTO): Promise<any> {
+		return await this.commandBus.execute(new VerifyAuthCodeCommand(entity));
 	}
 
 	/**
@@ -178,9 +162,7 @@ export class AuthController {
 	@Post('/reset-password')
 	@Public()
 	@UsePipes(new ValidationPipe({ whitelist: true }))
-	async resetPassword(
-		@Body() request: ChangePasswordRequestDTO
-	) {
+	async resetPassword(@Body() request: ChangePasswordRequestDTO) {
 		return await this.authService.resetPassword(request);
 	}
 
@@ -199,11 +181,7 @@ export class AuthController {
 		@Req() request: Request,
 		@I18nLang() languageCode: LanguagesEnum
 	): Promise<boolean | BadRequestException> {
-		return await this.authService.requestPassword(
-			body,
-			languageCode,
-			request.get('Origin')
-		);
+		return await this.authService.requestPassword(body, languageCode, request.get('Origin'));
 	}
 
 	/**

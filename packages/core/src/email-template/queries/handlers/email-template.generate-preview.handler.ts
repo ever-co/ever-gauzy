@@ -7,16 +7,10 @@ import { moment } from '../../../core/moment-extend';
 import { generateRandomInteger } from './../../../core/utils';
 
 @QueryHandler(EmailTemplateGeneratePreviewQuery)
-export class EmailTemplateGeneratePreviewHandler
-	implements IQueryHandler<EmailTemplateGeneratePreviewQuery> {
+export class EmailTemplateGeneratePreviewHandler implements IQueryHandler<EmailTemplateGeneratePreviewQuery> {
+	constructor(private readonly configService: ConfigService) {}
 
-	constructor(
-		private readonly configService: ConfigService
-	) {}
-
-	public async execute(
-		command: EmailTemplateGeneratePreviewQuery
-	): Promise<{ html: string }> {
+	public async execute(command: EmailTemplateGeneratePreviewQuery): Promise<{ html: string }> {
 		const { input } = command;
 		let textToHtml = input;
 
@@ -86,7 +80,7 @@ export class EmailTemplateGeneratePreviewHandler
 			appName: appName,
 			appLogo: appLogo,
 			appSignature: appSignature,
-			appLink: appLink,
+			appLink: appLink
 		});
 		return { html };
 	}

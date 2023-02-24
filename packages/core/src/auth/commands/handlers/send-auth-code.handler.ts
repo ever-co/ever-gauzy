@@ -5,10 +5,7 @@ import { AuthService } from '../../auth.service';
 
 @CommandHandler(SendAuthCodeCommand)
 export class SendAuthCodeHandler implements ICommandHandler<SendAuthCodeCommand> {
-
-	constructor(
-		private readonly authService: AuthService
-	) { }
+	constructor(private readonly authService: AuthService) {}
 
 	public async execute(command: SendAuthCodeCommand): Promise<any> {
 		try {
