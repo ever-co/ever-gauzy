@@ -21,8 +21,8 @@ export class EmailTemplateGeneratePreviewHandler
 		let textToHtml = input;
 
 		try {
-			const mjmlTohtml = mjml2html(input);
-			textToHtml = mjmlTohtml.errors.length ? input : mjmlTohtml.html;
+			const mjmlToHtml = mjml2html(input);
+			textToHtml = mjmlToHtml.errors.length ? input : mjmlToHtml.html;
 		} catch (error) {
 			// ignore mjml conversion errors for non-mjml text such as subject
 		}
