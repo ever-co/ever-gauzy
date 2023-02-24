@@ -1,5 +1,5 @@
-import { IDatabaseProvider } from "./i-database-provider";
+import { IDatabaseProvider } from './i-database-provider';
 
 export interface IClientServerProvider extends IDatabaseProvider {
-    createDatabase(): Promise<void>;
+	createDatabase(): Promise<void>;
 }

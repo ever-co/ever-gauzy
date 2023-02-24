@@ -19,10 +19,10 @@ export class MysqlProvider implements IClientServerProvider {
 			client: 'mysql',
 			connection: {
 				...this._connectionConfig,
-				database: this._database,
+				database: this._database
 			},
 			migrations: {
-				directory: __dirname + '/migrations',
+				directory: __dirname + '/migrations'
 			},
 			pool: {
 				min: 2,
@@ -31,10 +31,10 @@ export class MysqlProvider implements IClientServerProvider {
 				acquireTimeoutMillis: 60 * 1000 * 2,
 				idleTimeoutMillis: 30000,
 				reapIntervalMillis: 1000,
-				createRetryIntervalMillis: 100,
+				createRetryIntervalMillis: 100
 			},
 			useNullAsDefault: true,
-			asyncStackTraces: true,
+			asyncStackTraces: true
 		};
 	}
 
@@ -61,13 +61,11 @@ export class MysqlProvider implements IClientServerProvider {
 		try {
 			const connection: Knex = require('knex')({
 				client: 'mysql',
-				connection: this._connectionConfig,
+				connection: this._connectionConfig
 			});
-			await connection
-				.raw('CREATE DATABASE IF NOT EXISTS ??', this._database)
-				.finally(async () => {
-					await connection.destroy();
-				});
+			await connection.raw('CREATE DATABASE IF NOT EXISTS ??', this._database).finally(async () => {
+				await connection.destroy();
+			});
 		} catch (error) {
 			console.error('[provider-error]', error);
 		}

@@ -19,10 +19,10 @@ export class PostgresProvider implements IClientServerProvider {
 			client: 'pg',
 			connection: {
 				...this._connectionConfig,
-				database: this._database,
+				database: this._database
 			},
 			migrations: {
-				directory: __dirname + '/migrations',
+				directory: __dirname + '/migrations'
 			},
 			pool: {
 				min: 2,
@@ -31,10 +31,10 @@ export class PostgresProvider implements IClientServerProvider {
 				acquireTimeoutMillis: 60 * 1000 * 2,
 				idleTimeoutMillis: 30000,
 				reapIntervalMillis: 1000,
-				createRetryIntervalMillis: 100,
+				createRetryIntervalMillis: 100
 			},
 			useNullAsDefault: true,
-			asyncStackTraces: true,
+			asyncStackTraces: true
 		};
 	}
 
@@ -47,21 +47,18 @@ export class PostgresProvider implements IClientServerProvider {
 			user: cfg.dbUsername,
 			password: cfg.dbPassword,
 			parseInputDatesAsUTC: true
-		}
+		};
 	}
 
 	public async createDatabase() {
 		try {
 			const connection: Knex = require('knex')({
 				client: 'pg',
-				connection: this._connectionConfig,
+				connection: this._connectionConfig
 			});
-			const res = await connection
-				.select('datname')
-				.from('pg_database')
-				.where('datname', this._database);
+			const res = await connection.select('datname').from('pg_database').where('datname', this._database);
 			if (res.length < 1) {
-				await connection.raw('CREATE DATABASE ??', this._database)
+				await connection.raw('CREATE DATABASE ??', this._database);
 			}
 			await connection.destroy();
 		} catch (error) {

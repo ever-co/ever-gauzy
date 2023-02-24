@@ -4,7 +4,7 @@ export class DatabaseProviderContext {
 	private _provider: IServerLessProvider | IClientServerProvider;
 
 	constructor(provider?: IServerLessProvider | IClientServerProvider) {
-		this._provider = provider
+		this._provider = provider;
 	}
 
 	public set provider(value: IServerLessProvider | IClientServerProvider) {
