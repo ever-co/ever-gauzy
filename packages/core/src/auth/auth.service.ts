@@ -550,8 +550,14 @@ export class AuthService extends SocialAuthService {
 						}
 					});
 
-					const { appName, appLogo, appSignature, appLink, callbackUrl } = input;
-					await this.emailService.passwordLessAuthentication(
+					/**
+					 * Send password less authentication email
+					 */
+					let { appName, appLogo, appSignature, appLink, callbackUrl } = input;
+					if (callbackUrl) {
+						callbackUrl = `${callbackUrl}?email=${user.email}&code=${user.code}`;
+					}
+					this.emailService.passwordLessAuthentication(
 						user,
 						user.preferredLanguage as LanguagesEnum,
 						{
