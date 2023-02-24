@@ -137,7 +137,7 @@ export enum PermissionsEnum {
 	ORG_PRODUCT_CATEGORIES_EDIT = 'ORG_PRODUCT_CATEGORIES_EDIT',
 	VIEW_ALL_ACCOUNTING_TEMPLATES = 'VIEW_ALL_ACCOUNTING_TEMPLATES',
 	ACCESS_DELETE_ACCOUNT = "ACCESS_DELETE_ACCOUNT",
-    ACCESS_DELETE_ALL_DATA = "ACCESS_DELETE_ALL_DATA",
+	ACCESS_DELETE_ALL_DATA = "ACCESS_DELETE_ALL_DATA",
 	TENANT_SETTING = "TENANT_SETTING", //allow user to access tenant setting
 	ALLOW_DELETE_TIME = "ALLOW_DELETE_TIME",
 	ALLOW_MODIFY_TIME = "ALLOW_MODIFY_TIME",
@@ -240,6 +240,7 @@ export const PermissionGroups = {
 		PermissionsEnum.ALLOW_MODIFY_TIME,
 		PermissionsEnum.ALLOW_MANUAL_TIME,
 		PermissionsEnum.DELETE_SCREENSHOTS,
+		PermissionsEnum.ACCESS_DELETE_ACCOUNT,
 	],
 
 	//Readonly permissions, are only enabled for Super Admin/Admin role
@@ -259,7 +260,6 @@ export const PermissionGroups = {
 		PermissionsEnum.SMS_GATEWAY_VIEW,
 		PermissionsEnum.CUSTOM_SMTP_VIEW,
 		PermissionsEnum.IMPORT_EXPORT_VIEW,
-		PermissionsEnum.ACCESS_DELETE_ACCOUNT,
 		PermissionsEnum.ACCESS_DELETE_ALL_DATA,
 		PermissionsEnum.TENANT_SETTING,
 	]

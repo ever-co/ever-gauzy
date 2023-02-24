@@ -1,24 +1,22 @@
+import { ForbiddenException } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-import { ConfigService } from '@gauzy/config';
 import { DeleteResult } from 'typeorm';
 import { UserDeleteCommand } from './../user.delete.command';
 import { UserService } from './../../user.service';
-import { ForbiddenException } from '@nestjs/common';
 
 @CommandHandler(UserDeleteCommand)
-export class UserDeleteHandler
-	implements ICommandHandler<UserDeleteCommand> {
+export class UserDeleteHandler implements ICommandHandler<UserDeleteCommand> {
 
 	constructor(
-		private readonly userService: UserService,
-		private readonly configService: ConfigService
-	) {}
+		private readonly userService: UserService
+	) { }
 
 	public async execute(command: UserDeleteCommand): Promise<DeleteResult> {
-		const { userId } = command;
-		if (this.configService.get('demo') === true) {
-            throw new ForbiddenException();
-        }
-		return await this.userService.delete(userId);
+		try {
+			let { userId } = command;
+			return await this.userService.delete(userId);
+		} catch (error) {
+			throw new ForbiddenException();
+		}
 	}
 }

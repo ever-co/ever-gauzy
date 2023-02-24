@@ -4,12 +4,12 @@
 
 import { ForbiddenException, Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, InsertResult, SelectQueryBuilder, Brackets, WhereExpressionBuilder, In, UpdateResult } from 'typeorm';
+import { Repository, InsertResult, SelectQueryBuilder, Brackets, WhereExpressionBuilder, In, UpdateResult, DeleteResult, FindOneOptions } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 import { JwtPayload } from 'jsonwebtoken';
 import { ComponentLayoutStyleEnum, IUser, LanguagesEnum, PermissionsEnum, RolesEnum } from '@gauzy/contracts';
 import { isNotEmpty } from '@gauzy/common';
-import { environment as env } from '@gauzy/config';
+import { ConfigService, environment as env } from '@gauzy/config';
 import { User } from './user.entity';
 import { TenantAwareCrudService } from './../core/crud';
 import { RequestContext } from './../core/context';
@@ -19,8 +19,8 @@ import { freshTimestamp } from './../core/utils';
 export class UserService extends TenantAwareCrudService<User> {
 
 	constructor(
-		@InjectRepository(User)
-		private readonly userRepository: Repository<User>
+		@InjectRepository(User) private readonly userRepository: Repository<User>,
+		private readonly _configService: ConfigService
 	) {
 		super(userRepository);
 	}
@@ -33,7 +33,7 @@ export class UserService extends TenantAwareCrudService<User> {
 	 */
 	public async markEmailAsVerified(id: IUser['id']) {
 		return await this.userRepository.update({ id }, {
-		  	emailVerifiedAt: freshTimestamp(),
+			emailVerifiedAt: freshTimestamp(),
 			emailToken: null,
 			code: null,
 			codeExpireAt: null
@@ -138,7 +138,7 @@ export class UserService extends TenantAwareCrudService<User> {
 		}
 		let user: IUser;
 		try {
-			if (typeof(id) == 'string') {
+			if (typeof (id) == 'string') {
 				user = await this.findOneByIdString(id, {
 					relations: {
 						role: true
@@ -163,7 +163,7 @@ export class UserService extends TenantAwareCrudService<User> {
 					id: id as string,
 					tenantId: RequestContext.currentTenantId()
 				});
-			} catch {}
+			} catch { }
 		} catch (error) {
 			throw new ForbiddenException();
 		}
@@ -325,5 +325,41 @@ export class UserService extends TenantAwareCrudService<User> {
 		return await this.findOneByIdString(RequestContext.currentUserId(), {
 			relations
 		})
+	}
+
+	/**
+	 * To permanently delete your account from your Gauzy app:
+	 *
+	 * @param userId
+	 * @param options
+	 * @returns
+	 */
+	public async delete(
+		criteria: IUser['id'],
+		options?: FindOneOptions<User>
+	): Promise<DeleteResult> {
+		try {
+			const userId = RequestContext.currentUserId();
+
+			// Do not allow user to delete account in Demo server.
+			if (!!this._configService.get('demo')) {
+				throw new ForbiddenException();
+			}
+
+			// If user don't have enough permission (CHANGE_SELECTED_EMPLOYEE).
+			if (!RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE)) {
+				// If user try to delete someone other user account, just denied the request.
+				if (userId != criteria) {
+					throw new ForbiddenException();
+				}
+			}
+
+			const user = await this.findOneByIdString(criteria, options);
+			if (!!user) {
+				return await super.delete(criteria, options);
+			}
+		} catch (error) {
+			throw new ForbiddenException();
+		}
 	}
 }
