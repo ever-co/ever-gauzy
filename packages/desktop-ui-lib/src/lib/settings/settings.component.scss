@@ -315,3 +315,7 @@ warn-container {
   top: calc(-15px / 2);
   box-shadow: var(--gauzy-shadow);
 }
+
+.restart-btn-container {
+  width: fit-content;
+}

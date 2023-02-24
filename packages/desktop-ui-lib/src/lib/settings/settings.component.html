@@ -542,10 +542,7 @@
 								</nb-card>
 							</div>
 							<div class="col-12">
-								<button nbButton status="primary" (click)="restartApp()"
-									[disabled]="(restartDisable$ | async) || appSetting?.timerStarted">
-									{{ isServer ? 'Save' : 'Restart App' }}
-								</button>
+								<ng-container *ngTemplateOutlet="restart"></ng-container>
 							</div>
 						</div>
 					</nb-tab>
@@ -576,10 +573,7 @@
 								</nb-card>
 							</div>
 							<div class="col-12">
-								<button nbButton status="primary" (click)="restartApp()"
-									[disabled]="(restartDisable$ | async) || appSetting?.timerStarted">
-									{{ isServer ? 'Save' : 'Restart App' }}
-								</button>
+								<ng-container *ngTemplateOutlet="restart"></ng-container>
 							</div>
 						</div>
 					</nb-tab>
@@ -650,3 +644,14 @@
 		</div>
 	</ng-container>
 </ng-template>
+<ng-template #restart>
+	<div class="restart-btn-container" nbTooltip="Check database connectivity"
+		[nbTooltipDisabled]="(isConnectedDatabase$ | async)?.status">
+		<button nbButton status="primary" (click)="restartApp()"
+			[disabled]="(restartDisable$ | async) || appSetting?.timerStarted">
+			{{ isServer ? 'Save' : 'Restart App' }}
+		</button>
+	</div>
+</ng-template>
+	
+	
