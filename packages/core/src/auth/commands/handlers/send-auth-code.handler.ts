@@ -8,14 +8,12 @@ export class SendAuthCodeHandler implements ICommandHandler<SendAuthCodeCommand>
 
 	constructor(
 		private readonly authService: AuthService
-	) {}
+	) { }
 
 	public async execute(command: SendAuthCodeCommand): Promise<any> {
 		try {
 			const { input } = command;
-			const { email } = input;
-
-			await this.authService.sendAuthCode(email);
+			await this.authService.sendAuthCode(input);
 		} finally {
 			return new Object({
 				status: HttpStatus.OK,

@@ -36,14 +36,14 @@ export class AuthController {
 		private readonly authService: AuthService,
 		private readonly userService: UserService,
 		private readonly commandBus: CommandBus
-	) {}
+	) { }
 
 	/**
 	 *
 	 * @returns
 	 */
 	@ApiOperation({ summary: 'Check if user is authenticated' })
-	@ApiOkResponse({ status: HttpStatus.OK, description:'The success server response' })
+	@ApiOkResponse({ status: HttpStatus.OK, description: 'The success server response' })
 	@ApiBadRequestResponse({ status: HttpStatus.BAD_REQUEST, })
 	@Get('/authenticated')
 	@Public()
@@ -112,7 +112,8 @@ export class AuthController {
 	): Promise<IUser> {
 		return await this.commandBus.execute(
 			new AuthRegisterCommand({
-				originalUrl: request.get('Origin'), ...entity },
+				originalUrl: request.get('Origin'), ...entity
+			},
 				languageCode
 			)
 		);
@@ -144,11 +145,11 @@ export class AuthController {
 	@HttpCode(HttpStatus.OK)
 	@Post('/send-code')
 	@Public()
-	@UsePipes(new ValidationPipe({ whitelist: true }))
+	@UsePipes(new ValidationPipe({ transform: true }))
 	async sendInviteCode(
 		@Body() entity: SendAuthCodeDTO
 	): Promise<any> {
-	 	return await this.commandBus.execute(
+		return await this.commandBus.execute(
 			new SendAuthCodeCommand(entity)
 		);
 	}

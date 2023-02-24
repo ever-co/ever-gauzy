@@ -855,8 +855,15 @@ export class EmailService extends TenantAwareCrudService<EmailEntity> {
 	 */
 	async passwordLessAuthentication(
 		user: IUser,
-		languageCode: LanguagesEnum
+		languageCode: LanguagesEnum,
+		integration?: IAppIntegrationConfig
 	) {
+		/**
+		* Override the default config by merging in the provided values.
+		*
+		*/
+		deepMerge(integration, env.appIntegrationConfig);
+
 		const sendOptions = {
 			template: 'password-less-authentication',
 			message: {
@@ -866,7 +873,8 @@ export class EmailService extends TenantAwareCrudService<EmailEntity> {
 				locale: languageCode,
 				email: user.email,
 				host: env.clientBaseUrl,
-				inviteCode: user.code
+				otp: user.code,
+				...integration
 			}
 		};
 		try {

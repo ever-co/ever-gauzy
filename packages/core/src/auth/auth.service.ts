@@ -17,7 +17,8 @@ import {
 	IPasswordReset,
 	IResetPasswordRequest,
 	IUserInviteCodeConfirmationInput,
-	PermissionsEnum
+	PermissionsEnum,
+	IUserEmailInput
 } from '@gauzy/contracts';
 import { environment } from '@gauzy/config';
 import { SocialAuthService } from '@gauzy/auth';
@@ -526,8 +527,9 @@ export class AuthService extends SocialAuthService {
 	 *
 	 * @param email
 	 */
-	async sendAuthCode(email: IUser['email']) {
+	async sendAuthCode(input: IUserEmailInput & Partial<IAppIntegrationConfig>,) {
 		try {
+			const { email } = input;
 			if (email) {
 				const existed = await this.userRepository.findOneOrFail({
 					where: {
@@ -547,9 +549,24 @@ export class AuthService extends SocialAuthService {
 							id: existed.id
 						}
 					});
-					await this.emailService.passwordLessAuthentication(
+
+					/**
+					 * Send password less authentication email
+					 */
+					let { appName, appLogo, appSignature, appLink, callbackUrl } = input;
+					if (callbackUrl) {
+						callbackUrl = `${callbackUrl}?email=${user.email}&code=${user.code}`;
+					}
+					this.emailService.passwordLessAuthentication(
 						user,
-						user.preferredLanguage as LanguagesEnum
+						user.preferredLanguage as LanguagesEnum,
+						{
+							appName,
+							appLogo,
+							appSignature,
+							appLink,
+							callbackUrl
+						}
 					);
 				}
 			}
