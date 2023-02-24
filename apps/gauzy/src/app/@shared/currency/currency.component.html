@@ -6,6 +6,7 @@
 			</label>
 		</ng-container>
 		<ng-select
+			class="currency-selector"
 			#select
 			[items]="(currencies$ | async)"
 			(clear)="select.blur();"
