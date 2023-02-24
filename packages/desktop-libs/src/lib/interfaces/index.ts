@@ -29,3 +29,5 @@ export * from './i-tag-service';
 export * from './i-client-filter-option';
 export * from './i-timer-transaction';
 export * from './i-timer-service';
+export * from './i-client-server-provider';
+export * from './i-server-less-provider';

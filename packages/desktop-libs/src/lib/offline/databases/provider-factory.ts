@@ -8,18 +8,11 @@ import { LocalStore } from '../../desktop-store';
 
 export class ProviderFactory implements IDatabaseProvider {
 	private _dbContext: DatabaseProviderContext;
-	private static _instance: IDatabaseProvider;
+	private static _instance: ProviderFactory;
 
 	private constructor() {
 		this._dbContext = new DatabaseProviderContext();
 		this._defineProvider();
-		(async () => {
-			try {
-				await this._migrate();
-			} catch (error) {
-				console.error('[provider-factory]', error);
-			}
-		})();
 	}
 
 	public get config(): Knex.Config<any> {
@@ -51,7 +44,7 @@ export class ProviderFactory implements IDatabaseProvider {
 		return cfg && cfg.db ? cfg.db : '';
 	}
 
-	private async _migrate(): Promise<void> {
+	public async migrate(): Promise<void> {
 		const connection = require('knex')(this.config);
 		await connection.migrate
 			.latest()
@@ -69,10 +62,21 @@ export class ProviderFactory implements IDatabaseProvider {
 			});
 	}
 
-	public static get instance(): IDatabaseProvider {
+	public static get instance(): ProviderFactory {
 		if (!this._instance) {
 			this._instance = new ProviderFactory();
 		}
 		return this._instance;
+	}
+
+	public async createDatabase(): Promise<void> {
+		if ('createDatabase' in this._dbContext.provider) {
+			await this._dbContext.provider.createDatabase();
+		}
+	}
+
+	public async kill(): Promise<void> {
+		await this.connection.destroy();
+		ProviderFactory._instance = null;
 	}
 }
