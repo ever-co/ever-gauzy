@@ -469,7 +469,7 @@
 										<div class="row">
 											<div class="col-5">
 												<button nbButton status="basic" class="check-db" [nbSpinner]="(isCheckDatabase$ | async)" nbSpinnerSize="tiny" nbSpinner
-													(click)="checkDatabaseConnectivity()">
+													(click)="checkDatabaseConnectivity()" [disabled]="appSetting?.timerStarted">
 													<ng-container *ngIf="!(isCheckDatabase$ | async)">
 														<nb-icon [status]="(isConnectedDatabase$ | async)?.status ? 'success': 'danger'"
 															[icon]="(isConnectedDatabase$ | async)?.status ? 'checkmark-circle-2-outline': 'close-circle-outline'"></nb-icon>
