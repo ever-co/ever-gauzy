@@ -463,7 +463,28 @@
 												</nb-select>
 											</div>
 											<ng-container
-												*ngTemplateOutlet="databaseConfig, context: {providerConfig: config}"></ng-container>
+												*ngTemplateOutlet="databaseConfig, context: {providerConfig: config}">
+											</ng-container>
+										</div>
+										<div class="row">
+											<div class="col-5">
+												<button nbButton status="basic" class="check-db" [nbSpinner]="(isCheckDatabase$ | async)" nbSpinnerSize="tiny" nbSpinner
+													(click)="checkDatabaseConnectivity()" [disabled]="appSetting?.timerStarted">
+													<ng-container *ngIf="!(isCheckDatabase$ | async)">
+														<nb-icon [status]="(isConnectedDatabase$ | async)?.status ? 'success': 'danger'"
+															[icon]="(isConnectedDatabase$ | async)?.status ? 'checkmark-circle-2-outline': 'close-circle-outline'"></nb-icon>
+														Check
+													</ng-container>
+												</button>
+											</div>
+											<div *ngIf="!(isHidden$ | async)" class="col-7 warn-container">
+												<button nbButton (click)="onHide()" status="basic" size="tiny" class="close-warn" >
+													<nb-icon icon="close-outline"></nb-icon>
+												</button>
+												<div class="message-db-connection">
+													{{ (isConnectedDatabase$ | async)?.message }}
+												</div>
+											</div>
 										</div>
 									</nb-card-body>
 								</nb-card>
@@ -521,10 +542,7 @@
 								</nb-card>
 							</div>
 							<div class="col-12">
-								<button nbButton status="primary" (click)="restartApp()"
-									[disabled]="restartDisable || appSetting?.timerStarted">
-									{{ isServer ? 'Save' : 'Restart App' }}
-								</button>
+								<ng-container *ngTemplateOutlet="restart"></ng-container>
 							</div>
 						</div>
 					</nb-tab>
@@ -555,10 +573,7 @@
 								</nb-card>
 							</div>
 							<div class="col-12">
-								<button nbButton status="primary" (click)="restartApp()"
-									[disabled]="restartDisable || appSetting?.timerStarted">
-									{{ isServer ? 'Save' : 'Restart App' }}
-								</button>
+								<ng-container *ngTemplateOutlet="restart"></ng-container>
 							</div>
 						</div>
 					</nb-tab>
@@ -598,34 +613,45 @@
 </nb-layout>
 
 <ng-template #databaseConfig let-provider="providerConfig">
-	<ng-container *ngIf="provider?.db !== 'sqlite'">
+	<ng-container *ngIf="provider?.db && provider?.db !== 'sqlite'">
 		<div class="col-5 centered-text">
 			<p>DB Host</p>
 		</div>
 		<div class="col-7 form-group">
-			<input [(ngModel)]="provider.dbHost" type="text" nbInput fullWidth status="basic"
+			<input [(ngModel)]="provider[provider?.db].dbHost" type="text" nbInput fullWidth status="basic"
 				[disabled]="appSetting?.timerStarted" (ngModelChange)="portChange($event, 'db')" />
 		</div>
 		<div class="col-5 centered-text">
 			<p>DB UserName</p>
 		</div>
 		<div class="col-7 form-group">
-			<input [(ngModel)]="provider.dbUsername" type="text" nbInput fullWidth status="basic"
+			<input [(ngModel)]="provider[provider?.db].dbUsername" type="text" nbInput fullWidth status="basic"
 				[disabled]="appSetting?.timerStarted" (ngModelChange)="portChange($event, 'db')" />
 		</div>
 		<div class="col-5 centered-text">
 			<p>DB Password</p>
 		</div>
 		<div class="col-7 form-group">
-			<input [(ngModel)]="provider.dbPassword" type="password" nbInput fullWidth status="basic"
+			<input [(ngModel)]="provider[provider?.db].dbPassword" type="password" nbInput fullWidth status="basic"
 				[disabled]="appSetting?.timerStarted" (ngModelChange)="portChange($event, 'db')" />
 		</div>
 		<div class="col-5 centered-text">
 			<p>DB Port</p>
 		</div>
 		<div class="col-7 form-group">
-			<input [(ngModel)]="provider.dbPort" type="number" nbInput fullWidth status="basic"
+			<input [(ngModel)]="provider[provider?.db].dbPort" type="number" nbInput fullWidth status="basic"
 				[disabled]="appSetting?.timerStarted" (ngModelChange)="portChange($event, 'db')" />
 		</div>
 	</ng-container>
 </ng-template>
+<ng-template #restart>
+	<div class="restart-btn-container" nbTooltip="Check database connectivity"
+		[nbTooltipDisabled]="(isConnectedDatabase$ | async)?.status">
+		<button nbButton status="primary" (click)="restartApp()"
+			[disabled]="(restartDisable$ | async) || appSetting?.timerStarted">
+			{{ isServer ? 'Save' : 'Restart App' }}
+		</button>
+	</div>
+</ng-template>
+	
+	
