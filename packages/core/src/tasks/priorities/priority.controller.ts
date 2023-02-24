@@ -25,7 +25,10 @@ export class TaskPriorityController extends CrudFactory<
 	ITaskPriorityUpdateInput,
 	ITaskPriorityFindInput
 >(PaginationParams, CreateTaskPriorityDTO, UpdateTaskPriorityDTO, CountQueryDTO) {
-	constructor(protected readonly taskPriorityService: TaskPriorityService) {
+
+	constructor(
+		protected readonly taskPriorityService: TaskPriorityService
+	) {
 		super(taskPriorityService);
 	}
 
@@ -44,7 +47,9 @@ export class TaskPriorityController extends CrudFactory<
 	@HttpCode(HttpStatus.OK)
 	@Get()
 	@UsePipes(new ValidationPipe({ whitelist: true }))
-	async findTaskPriorities(@Query() params: TaskPriorityQuerDTO): Promise<IPagination<ITaskPriority>> {
+	async findTaskPriorities(
+		@Query() params: TaskPriorityQuerDTO
+	): Promise<IPagination<ITaskPriority>> {
 		return await this.taskPriorityService.findTaskPriorities(params);
 	}
 }

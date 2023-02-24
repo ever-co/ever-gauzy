@@ -4,7 +4,7 @@ import {
 } from 'typeorm';
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { IOrganization, IOrganizationProject, IPagination, ITaskStatus, ITaskStatusFindInput, ITenant } from '@gauzy/contracts';
+import { IOrganization, IPagination, ITaskStatus, ITaskStatusCreateInput, ITaskStatusFindInput, ITenant } from '@gauzy/contracts';
 import { TaskStatusPrioritySizeService } from '../task-status-priority-size.service';
 import { RequestContext } from './../../core/context';
 import { TaskStatus } from './status.entity';
@@ -59,7 +59,12 @@ export class TaskStatusService extends TaskStatusPrioritySizeService<TaskStatus>
 		const statuses: ITaskStatus[] = [];
 		for (const tenant of tenants) {
 			for (const status of DEFAULT_GLOBAL_STATUSES) {
-				statuses.push(new TaskStatus({...status, icon: `ever-icons/${status.icon}`, isSystem: false, tenant }));
+				statuses.push(new TaskStatus({
+					...status,
+					icon: `ever-icons/${status.icon}`,
+					isSystem: false,
+					tenant
+				}));
 			}
 		}
 		return await this.repository.save(statuses);
@@ -98,34 +103,35 @@ export class TaskStatusService extends TaskStatusPrioritySizeService<TaskStatus>
 	}
 
 	/**
-	 * Create bulk statuses for specific organization project
+	 * Create bulk statuses for specific organization entity
 	 *
-	 * @param project
+	 * @param entity
 	 * @returns
 	 */
-	async bulkCreateOrganizationProjectStatus(project: IOrganizationProject): Promise<ITaskStatus[] & TaskStatus[]> {
+	async createBulkStatusesByEntity(entity: Partial<ITaskStatusCreateInput>): Promise<ITaskStatus[]> {
 		try {
-			const { tenantId, organizationId } = project;
+			const { organizationId } = entity;
+			const tenantId = RequestContext.currentTenantId();
 
 			const statuses: ITaskStatus[] = [];
 			const { items = [] } = await this.findEntitiesByParams({ tenantId, organizationId });
 
 			for (const item of items) {
 				const { name, value, description, icon, color } = item;
-				const status = new TaskStatus({
-					tenantId,
-					organizationId,
+
+				const status = await this.create({
+					...entity,
 					name,
 					value,
 					description,
 					icon,
 					color,
-					project,
 					isSystem: false
 				});
 				statuses.push(status);
 			}
-			return await this.repository.save(statuses);
+
+			return statuses;
 		} catch (error) {
 			throw new BadRequestException(error);
 		}
