@@ -17,19 +17,10 @@ import {
 	UsePipes,
 	ValidationPipe
 } from '@nestjs/common';
-import {
-	ApiOperation,
-	ApiResponse,
-	ApiTags,
-	ApiBearerAuth
-} from '@nestjs/swagger';
+import { ApiOperation, ApiResponse, ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import { CommandBus } from '@nestjs/cqrs';
 import { DeleteResult, FindOptionsWhere, UpdateResult } from 'typeorm';
-import {
-	IPagination,
-	IUser,
-	PermissionsEnum,
-} from '@gauzy/contracts';
+import { IPagination, IUser, PermissionsEnum } from '@gauzy/contracts';
 import { CrudController, PaginationParams } from './../core/crud';
 import { UUIDValidationPipe, ParseJsonPipe } from './../shared/pipes';
 import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
@@ -77,9 +68,7 @@ export class UserController extends CrudController<User> {
 	@Get('/me')
 	@UsePipes(new ValidationPipe({ whitelist: true }))
 	async findMe(@Query() options: FindMeQueryDTO): Promise<IUser> {
-		return await this.userService.findMe(
-			options.relations
-		);
+		return await this.userService.findMe(options.relations);
 	}
 
 	/**
@@ -99,9 +88,7 @@ export class UserController extends CrudController<User> {
 		description: 'Record not found'
 	})
 	@Get('/email/:email')
-	async findByEmail(
-		@Param('email') email: string
-	): Promise<IUser | null> {
+	async findByEmail(@Param('email') email: string): Promise<IUser | null> {
 		return await this.userService.getUserByEmail(email);
 	}
 
@@ -115,14 +102,9 @@ export class UserController extends CrudController<User> {
 	@UseGuards(TenantPermissionGuard)
 	@Put('/preferred-language')
 	@UsePipes(new ValidationPipe({ transform: true, whitelist: true }))
-	async updatePreferredLanguage(
-		@Body() entity: UpdatePreferredLanguageDTO
-	): Promise<IUser | UpdateResult> {
-		return await this.userService.updatePreferredLanguage(
-			entity.preferredLanguage
-		);
+	async updatePreferredLanguage(@Body() entity: UpdatePreferredLanguageDTO): Promise<IUser | UpdateResult> {
+		return await this.userService.updatePreferredLanguage(entity.preferredLanguage);
 	}
-
 
 	/**
 	 * UPDATE user preferred component layout
@@ -137,9 +119,7 @@ export class UserController extends CrudController<User> {
 	async updatePreferredComponentLayout(
 		@Body() entity: UpdatePreferredComponentLayoutDTO
 	): Promise<IUser | UpdateResult> {
-		return await this.userService.updatePreferredComponentLayout(
-			entity.preferredComponentLayout
-		);
+		return await this.userService.updatePreferredComponentLayout(entity.preferredComponentLayout);
 	}
 
 	/**
@@ -150,9 +130,7 @@ export class UserController extends CrudController<User> {
 	@UseGuards(TenantPermissionGuard, PermissionGuard)
 	@Permissions(PermissionsEnum.ORG_USERS_VIEW)
 	@Get('count')
-	async getCount(
-		@Query() options: FindOptionsWhere<User>
-	): Promise<number> {
+	async getCount(@Query() options: FindOptionsWhere<User>): Promise<number> {
 		return await this.userService.countBy(options);
 	}
 
@@ -165,9 +143,7 @@ export class UserController extends CrudController<User> {
 	@UseGuards(TenantPermissionGuard, PermissionGuard)
 	@Permissions(PermissionsEnum.ORG_USERS_VIEW)
 	@Get('pagination')
-	async pagination(
-		@Query() options: PaginationParams<User>
-	): Promise<IPagination<IUser>> {
+	async pagination(@Query() options: PaginationParams<User>): Promise<IPagination<IUser>> {
 		return await this.userService.paginate(options);
 	}
 
@@ -190,9 +166,7 @@ export class UserController extends CrudController<User> {
 	@UseGuards(TenantPermissionGuard, PermissionGuard)
 	@Permissions(PermissionsEnum.ORG_USERS_VIEW)
 	@Get()
-	async findAll(
-		@Query() options: PaginationParams<User>
-	): Promise<IPagination<IUser>> {
+	async findAll(@Query() options: PaginationParams<User>): Promise<IPagination<IUser>> {
 		return await this.userService.findAll(options);
 	}
 
@@ -235,20 +209,15 @@ export class UserController extends CrudController<User> {
 	})
 	@ApiResponse({
 		status: HttpStatus.BAD_REQUEST,
-		description:
-			'Invalid input, The response body may contain clues as to what went wrong'
+		description: 'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@UseGuards(TenantPermissionGuard, PermissionGuard)
 	@Permissions(PermissionsEnum.ORG_USERS_EDIT)
 	@HttpCode(HttpStatus.CREATED)
 	@Post()
 	@UsePipes(new ValidationPipe())
-	async create(
-		@Body() entity: CreateUserDTO
-	): Promise<IUser> {
-		return await this.commandBus.execute(
-			new UserCreateCommand(entity)
-		);
+	async create(@Body() entity: CreateUserDTO): Promise<IUser> {
+		return await this.commandBus.execute(new UserCreateCommand(entity));
 	}
 
 	/**
@@ -263,10 +232,7 @@ export class UserController extends CrudController<User> {
 	@Permissions(PermissionsEnum.ORG_USERS_EDIT, PermissionsEnum.PROFILE_EDIT)
 	@Put(':id')
 	@UsePipes(new ValidationPipe({ transform: true }))
-	async update(
-		@Param('id', UUIDValidationPipe) id: IUser['id'],
-		@Body() entity: UpdateUserDTO
-	): Promise<IUser> {
+	async update(@Param('id', UUIDValidationPipe) id: IUser['id'], @Body() entity: UpdateUserDTO): Promise<IUser> {
 		return await this.userService.updateProfile(id, {
 			id,
 			...entity
@@ -293,12 +259,8 @@ export class UserController extends CrudController<User> {
 	@UseGuards(TenantPermissionGuard, PermissionGuard)
 	@Permissions(PermissionsEnum.ACCESS_DELETE_ACCOUNT)
 	@Delete(':id')
-	async delete(
-		@Param('id', UUIDValidationPipe) id: IUser['id'],
-	): Promise<DeleteResult> {
-		return await this.commandBus.execute(
-			new UserDeleteCommand(id)
-		);
+	async delete(@Param('id', UUIDValidationPipe) id: IUser['id']): Promise<DeleteResult> {
+		return await this.commandBus.execute(new UserDeleteCommand(id));
 	}
 
 	/**
