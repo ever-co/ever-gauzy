@@ -1,0 +1,25 @@
+$radius: calc(var(--border-radius) / 2);
+
+ng-select {
+    .selector-template {
+        display: flex;
+        align-items: center;
+        height: 100%;
+    }
+
+    img {
+        margin-right: 0.25rem;
+        margin-left: 0.25rem;
+        height: 20px;
+        width: 20px;
+        box-shadow: var(--gauzy-shadow);
+        object-fit: cover;
+        border-radius: $radius;
+    }
+}
+
+::ng-deep {
+    .ng-select-container .ng-has-value {
+        box-shadow: var(--gauzy-shadow) !important;
+    }
+}
