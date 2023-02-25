@@ -1,23 +1,10 @@
-import {
-	Entity,
-	Column,
-	RelationId,
-	ManyToOne,
-	JoinColumn,
-	Index
-} from 'typeorm';
+import { Entity, Column, RelationId, ManyToOne, JoinColumn, Index } from 'typeorm';
 import { IEmployee, ITimesheet, IUser, TimesheetStatus } from '@gauzy/contracts';
 import { ApiProperty } from '@nestjs/swagger';
-import {
-	Employee,
-	TenantOrganizationBaseEntity,
-	User
-} from './../../core/entities/internal';
+import { Employee, TenantOrganizationBaseEntity, User } from './../../core/entities/internal';
 
 @Entity('timesheet')
-export class Timesheet extends TenantOrganizationBaseEntity
-	implements ITimesheet {
-
+export class Timesheet extends TenantOrganizationBaseEntity implements ITimesheet {
 	@ApiProperty({ type: () => Number })
 	@Column({ default: 0 })
 	duration?: number;

@@ -1,36 +1,12 @@
-import {
-	Entity,
-	Column,
-	RelationId,
-	ManyToOne,
-	JoinColumn,
-	OneToMany,
-	ManyToMany,
-	JoinTable
-} from 'typeorm';
-import {
-	ITimeSlot,
-	ITimeSlotMinute,
-	IActivity,
-	IScreenshot,
-	IEmployee,
-	ITimeLog
-} from '@gauzy/contracts';
+import { Entity, Column, RelationId, ManyToOne, JoinColumn, OneToMany, ManyToMany, JoinTable } from 'typeorm';
+import { ITimeSlot, ITimeSlotMinute, IActivity, IScreenshot, IEmployee, ITimeLog } from '@gauzy/contracts';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsNumber, IsDateString } from 'class-validator';
-import {
-	Activity,
-	Employee,
-	Screenshot,
-	TenantOrganizationBaseEntity,
-	TimeLog
-} from './../../core/entities/internal';
+import { Activity, Employee, Screenshot, TenantOrganizationBaseEntity, TimeLog } from './../../core/entities/internal';
 import { TimeSlotMinute } from './time-slot-minute.entity';
 
 @Entity('time_slot')
-export class TimeSlot extends TenantOrganizationBaseEntity
-	implements ITimeSlot {
-
+export class TimeSlot extends TenantOrganizationBaseEntity implements ITimeSlot {
 	@ApiProperty({ type: () => Number })
 	@IsNumber()
 	@Column({ default: 0 })

@@ -1,13 +1,4 @@
-import {
-	Entity,
-	Column,
-	RelationId,
-	ManyToOne,
-	JoinColumn,
-	ManyToMany,
-	Index,
-	AfterLoad
-} from 'typeorm';
+import { Entity, Column, RelationId, ManyToOne, JoinColumn, ManyToMany, Index, AfterLoad } from 'typeorm';
 import {
 	ITimeLog,
 	TimeLogType,
@@ -33,7 +24,6 @@ import {
 
 @Entity('time_log')
 export class TimeLog extends TenantOrganizationBaseEntity implements ITimeLog {
-
 	@ApiProperty({ type: () => 'timestamptz' })
 	@Column({ nullable: true, default: null })
 	startedAt?: Date;
@@ -164,7 +154,6 @@ export class TimeLog extends TenantOrganizationBaseEntity implements ITimeLog {
 	@Column({ nullable: true })
 	organizationContactId?: string;
 
-
 	/*
 	|--------------------------------------------------------------------------
 	| @ManyToMany
@@ -188,8 +177,8 @@ export class TimeLog extends TenantOrganizationBaseEntity implements ITimeLog {
 	*/
 
 	/**
-	* Called after entity is loaded.
-	*/
+	 * Called after entity is loaded.
+	 */
 	@AfterLoad()
 	afterLoadEntity?() {
 		const startedAt = moment(this.startedAt, 'YYYY-MM-DD HH:mm:ss');
@@ -201,6 +190,6 @@ export class TimeLog extends TenantOrganizationBaseEntity implements ITimeLog {
 		 */
 		const createdAt = moment(this.createdAt, 'YYYY-MM-DD HH:mm:ss');
 		const updatedAt = moment(this.updatedAt, 'YYYY-MM-DD HH:mm:ss');
-		this.isEdited = (updatedAt.diff(createdAt, 'seconds') > 0);
+		this.isEdited = updatedAt.diff(createdAt, 'seconds') > 0;
 	}
 }
