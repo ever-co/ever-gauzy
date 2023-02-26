@@ -9,13 +9,8 @@
 					<nb-card-body class="timer-body">
 						<div class="row mb-3">
 							<div class="col-12">
-								<span class="org-name">
-									{{
-									(userOrganization$ | async)?.name
-									? (userOrganization$ | async)?.name
-									: 'UNKNOWN'
-									}}
-								</span>
+								<ga-organization-selector (organizationChange)="selectOrganization($event)">
+								</ga-organization-selector>
 							</div>
 						</div>
 						<div class="row d-flex justify-content-between">

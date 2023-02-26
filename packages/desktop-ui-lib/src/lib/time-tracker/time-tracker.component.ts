@@ -22,6 +22,7 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import 'moment-duration-format';
 import {
 	ContactType,
+	IOrganization,
 	IOrganizationContact,
 	ITask,
 	PermissionsEnum,
@@ -1877,4 +1878,8 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 			this.toastrService.danger('An error occurred', 'Gauzy');
 		}
 	};
+
+	public selectOrganization(organization: IOrganization) {
+		console.log('Organization', organization)
+	}
 }

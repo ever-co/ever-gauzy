@@ -30,13 +30,16 @@ import { TasksModule } from '../tasks/tasks.module';
 import { PaginationModule } from './pagination/pagination.module';
 import { NoDataMessageComponent } from './no-data-message/no-data-message.component';
 import { HumanizePipe } from './pipes/humanize.pipe';
+import { UserOrganizationService } from './organization-selector/user-organization.service';
+import { OrganizationSelectorComponent } from './organization-selector/organization-selector.component';
 
 @NgModule({
 	declarations: [
 		TimeTrackerComponent,
 		CustomRenderComponent,
 		NoDataMessageComponent,
-		HumanizePipe
+		HumanizePipe,
+		OrganizationSelectorComponent,
 	],
 	imports: [
 		CommonModule,
@@ -68,8 +71,9 @@ import { HumanizePipe } from './pipes/humanize.pipe';
 		NbSidebarService,
 		TimeTrackerService,
 		NbDialogService,
-		NbToastrService
+		NbToastrService,
+		UserOrganizationService,
 	],
 	exports: [TimeTrackerComponent],
 })
-export class TimeTrackerModule { }
+export class TimeTrackerModule {}
