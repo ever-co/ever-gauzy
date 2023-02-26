@@ -41,7 +41,7 @@ export class OrganizationSelectorComponent implements OnInit, AfterViewInit {
 					this.user = await this._userOrganizationService.detail(
 						this._auth
 					);
-					this.loadOrganizations();
+					await this.loadOrganizations();
 				});
 			}
 		);

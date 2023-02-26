@@ -18,7 +18,7 @@ ng-select {
     }
 }
 
-::ng-deep {
+:host ::ng-deep {
     .ng-select-container .ng-has-value {
         box-shadow: var(--gauzy-shadow) !important;
     }
