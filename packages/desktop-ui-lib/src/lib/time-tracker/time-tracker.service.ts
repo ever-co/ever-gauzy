@@ -1,10 +1,10 @@
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
 // import { environment } from '../../../environments/environment';
 import * as moment from 'moment';
 import { catchError, map, shareReplay, tap } from 'rxjs/operators';
 import { firstValueFrom, throwError } from 'rxjs';
-import { toUTC } from '@gauzy/common-angular';
+import { toUTC, toParams } from '@gauzy/common-angular';
 import {
 	TimeLogSourceEnum,
 	TimeLogType,
@@ -76,7 +76,7 @@ export class TimeTrackerService {
 					`${values.apiHost}/api/tasks/employee/${values.employeeId}`,
 					{
 						headers: headers,
-						params: this.toParams({
+						params: toParams({
 							...request,
 						}),
 					}
@@ -109,7 +109,7 @@ export class TimeTrackerService {
 			employee$ = this.http
 				.get(`${values.apiHost}/api/employee/${values.employeeId}`, {
 					headers: headers,
-					params: this.toParams(params),
+					params: toParams(params),
 				})
 				.pipe(
 					map((response: any) => response),
@@ -126,11 +126,11 @@ export class TimeTrackerService {
 			'Tenant-Id': values.tenantId,
 		});
 		const params = values.organizationId
-			? this.toParams({
+			? toParams({
 					organizationId: values.organizationId,
 					tenantId: values.tenantId,
 			  })
-			: this.toParams({});
+			: toParams({});
 		let tags$ = this._tagCacheService.getValue(params);
 		if (!tags$) {
 			tags$ = this.http
@@ -169,7 +169,7 @@ export class TimeTrackerService {
 					`${values.apiHost}/api/organization-projects/employee/${values.employeeId}`,
 					{
 						headers,
-						params: this.toParams(params),
+						params: toParams(params),
 					}
 				)
 				.pipe(
@@ -222,7 +222,7 @@ export class TimeTrackerService {
 			timeLogs$ = this.http
 				.get(`${values.apiHost}/api/timesheet/statistics/counts`, {
 					headers: headers,
-					params: this.toParams({
+					params: toParams({
 						tenantId: values.tenantId,
 						organizationId: values.organizationId,
 						employeeIds: [values.employeeId],
@@ -339,7 +339,7 @@ export class TimeTrackerService {
 	}
 
 	deleteTimeSlot(values) {
-		const params = this.toParams({
+		const params = toParams({
 			ids: [values.timeSlotId],
 			tenantId: values.tenantId,
 		});
@@ -357,7 +357,7 @@ export class TimeTrackerService {
 	}
 
 	deleteTimeSlots(values) {
-		const params = this.toParams({
+		const params = toParams({
 			ids: [...values.timeslotIds],
 			tenantId: values.tenantId,
 			organizationId: values.organizationId,
@@ -373,41 +373,6 @@ export class TimeTrackerService {
 				headers: headers,
 			})
 		);
-	}
-	toParams(query) {
-		let params: HttpParams = new HttpParams();
-		Object.keys(query).forEach((key) => {
-			if (this.isJsObject(query[key])) {
-				params = this.toSubParams(params, key, query[key]);
-			} else {
-				params = params.append(key.toString(), query[key]);
-			}
-		});
-		return params;
-	}
-
-	isJsObject(object: any) {
-		return (
-			object !== null &&
-			object !== undefined &&
-			typeof object === 'object'
-		);
-	}
-
-	toSubParams(params: HttpParams, key: string, object: any) {
-		Object.keys(object).forEach((childKey) => {
-			if (this.isJsObject(object[childKey])) {
-				params = this.toSubParams(
-					params,
-					`${key}[${childKey}]`,
-					object[childKey]
-				);
-			} else {
-				params = params.append(`${key}[${childKey}]`, object[childKey]);
-			}
-		});
-
-		return params;
 	}
 
 	getInvalidTimeLog(values) {
@@ -435,7 +400,7 @@ export class TimeTrackerService {
 			'Tenant-Id': values.tenantId,
 		});
 
-		const params = this.toParams({
+		const params = toParams({
 			logIds: values.timeLogIds,
 		});
 
