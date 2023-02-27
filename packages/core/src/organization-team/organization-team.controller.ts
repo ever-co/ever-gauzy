@@ -1,4 +1,4 @@
-import { PermissionsEnum, IPagination, IOrganizationTeam } from '@gauzy/contracts';
+import { PermissionsEnum, IPagination, IOrganizationTeam, IUser } from '@gauzy/contracts';
 import {
 	Controller,
 	Get,
@@ -229,5 +229,20 @@ export class OrganizationTeamController extends CrudController<OrganizationTeam>
 		@Query() options: DeleteQueryDTO<OrganizationTeam>
 	): Promise<DeleteResult | IOrganizationTeam> {
 		return await this._organizationTeamService.deleteTeam(teamId, options);
+	}
+
+	/**
+	 * Exist from teams where users joined as a team members.
+	 *
+	 * @param userId
+	 * @returns
+	 */
+	@UseGuards(TenantPermissionGuard, PermissionGuard)
+	@Permissions(PermissionsEnum.ACCESS_DELETE_ACCOUNT)
+	@Delete('teams/:userId')
+	async existTeamsAsMember(
+		@Param('userId', UUIDValidationPipe) userId: IUser['id']
+	) {
+		return await this._organizationTeamService.existTeamsAsMember(userId);
 	}
 }
