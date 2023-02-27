@@ -1,6 +1,7 @@
 import * as moment from 'moment';
 import { Observable } from 'rxjs';
 import { ICache, StorageService } from './storage.service';
+import { Store } from '@gauzy/desktop-timer/src/app/auth/services/store.service';
 import hash from 'hash-it';
 
 export abstract class AbstractCacheService<T> {
@@ -11,7 +12,10 @@ export abstract class AbstractCacheService<T> {
 		[id: string]: ICache<T>;
 	} = {};
 
-	constructor(protected _storageService: StorageService<T>) {
+	constructor(
+		protected _storageService: StorageService<T>,
+		protected _store: Store
+	) {
 		this._duration = 5; // Default cache set to 5 minutes
 		this._prefix = '';
 	}
@@ -27,7 +31,11 @@ export abstract class AbstractCacheService<T> {
 		if (!item) {
 			return null;
 		}
-		if (moment(new Date()).isAfter(item.expiresAt)) {
+		if (this._store.isOffline) {
+			/* 
+			^_^ Ignore expire date
+			 */
+		} else if (moment(new Date()).isAfter(item.expiresAt)) {
 			return null;
 		}
 		return item.value;
