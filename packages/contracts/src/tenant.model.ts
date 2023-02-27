@@ -34,6 +34,9 @@ export interface ITenantUpdateInput {
 	logo?: string;
 }
 
-export interface ITenantSetting extends IS3FileStorageProviderConfig, IWasabiFileStorageProviderConfig, ICloudinaryFileStorageProviderConfig {
+export interface ITenantSetting
+	extends IS3FileStorageProviderConfig,
+		IWasabiFileStorageProviderConfig,
+		ICloudinaryFileStorageProviderConfig {
 	fileStorageProvider?: FileStorageProviderEnum;
 }
