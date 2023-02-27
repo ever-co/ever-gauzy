@@ -3228,7 +3228,6 @@
 			"NEW_ORGANIZATION_PROJECT_INVALID_NAME": "Invalid input",
 			"NEW_ORGANIZATION_TEAM_INVALID_NAME": "Team name and members are required",
 			"NEW_ORGANIZATION_VENDOR_INVALID_NAME": "Vendor name is required",
-			"NEW_ORGANIZATION_VENDOR_EXISTS": "Vendor already exists",
 			"NEW_ORGANIZATION_EXPENSE_CATEGORY_INVALID_NAME": "Expense category name is required",
 			"NEW_ORGANIZATION_POSITION_INVALID_NAME": "Position name is required",
 			"NEW_ORGANIZATION_EMPLOYEE_LEVEL_INVALID_NAME": "Employee Level is required",
@@ -3462,8 +3461,7 @@
 				"ADD_VENDOR": "vendor '{{ name }}' was added",
 				"UPDATE_VENDOR": "Vendor '{{ name }}' was changed",
 				"REMOVE_VENDOR": "Vendor '{{ name }}' was removed",
-				"INVALID_VENDOR_NAME": "Please add a Vendor name",
-				"VENDOR_EXISTS": "Please add a new vendor"
+				"INVALID_VENDOR_NAME": "Please add a Vendor name"
 			},
 			"EDIT_ORGANIZATIONS_EXPENSE_CATEGORIES": {
 				"ADD_EXPENSE_CATEGORY": "Category '{{ name }}' was added",
