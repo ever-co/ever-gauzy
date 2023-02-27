@@ -276,9 +276,7 @@ export class AppComponent implements OnInit, AfterViewInit {
 								clearInterval(pinghost);
 							}
 
-							const userDetail =
-								localStorage.getItem('userDetail');
-							if (userDetail) {
+							if (this.store.userId) {
 								event.sender.send('server_is_ready');
 								clearInterval(pinghost);
 							}
@@ -315,9 +313,7 @@ export class AppComponent implements OnInit, AfterViewInit {
 									event.sender.send('server_already_start');
 									clearInterval(pinghost);
 								}
-								const userDetail =
-									localStorage.getItem('userDetail');
-								if (userDetail) {
+								if (this.store.userId) {
 									event.sender.send('server_is_ready');
 									clearInterval(pinghost);
 								}

@@ -4,7 +4,7 @@ import { environment } from '../environments/environment';
 import { firstValueFrom, throwError } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { TimeLogSourceEnum, TimeLogType } from '@gauzy/contracts';
-import { UserOrganizationService } from '../../../../packages/desktop-ui-lib/src/lib/time-tracker/organization-selector/user-organization.service';
+import { UserOrganizationService } from '@gauzy/desktop-ui-lib';
 
 @Injectable({
 	providedIn: 'root',
