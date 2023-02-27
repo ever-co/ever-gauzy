@@ -113,4 +113,29 @@ export class OrganizationVendorController extends CrudController<OrganizationVen
 	): Promise<any> {
 		return this.organizationVendorService.deleteVendor(id);
 	}
+
+	/**
+	 * GET organization vendor by name
+	 *
+	 * @param name
+	 * @returns
+	 */
+	@ApiOperation({
+		summary: 'Find organization vendor by name',
+	})
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'Found organization vendor by name',
+		type: OrganizationVendor,
+	})
+	@ApiResponse({
+		status: HttpStatus.NOT_FOUND,
+		description: 'Record not found',
+	})
+	@Get('getByName/:name')
+	async findOneByName(
+		@Param('name') name: string
+	): Promise<OrganizationVendor> {
+		return this.organizationVendorService.findOneByName(name);
+	}
 }

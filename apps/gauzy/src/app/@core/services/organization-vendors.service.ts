@@ -56,4 +56,12 @@ export class OrganizationVendorsService {
 			.delete(`${API_PREFIX}/organization-vendors/${id}`)
 		);
 	}
+
+	getByName(name: string): Promise<IOrganizationVendor> {
+		return firstValueFrom(
+			this.http.get<IOrganizationVendor>(
+				`${API_PREFIX}/organization-vendors/getByName/${name}`
+			)
+		);
+	}
 }

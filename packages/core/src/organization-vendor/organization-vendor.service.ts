@@ -41,4 +41,13 @@ export class OrganizationVendorService extends TenantAwareCrudService<Organizati
 		}
 		return super.paginate(filter);
 	}
+
+	async findOneByName(name: string) {
+		const vendor = await this.organizationVendorRepository.findOne({
+			where: {
+				name: name,
+			},
+		});
+		return vendor;
+	}
 }

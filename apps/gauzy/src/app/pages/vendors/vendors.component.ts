@@ -237,7 +237,22 @@ export class VendorsComponent
 		if (this.selectedVendor) {
 			this.updateVendor(this.selectedVendor);
 		} else {
-			this.createVendor();
+			this.organizationVendorsService
+				.getByName(this.form.value.name)
+				.then((vendor) => {
+					if (vendor) {
+						this.toastrService.danger(
+							this.getTranslation(
+								'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_VENDOR.VENDOR_EXISTS'
+							),
+							this.getTranslation(
+								'TOASTR.MESSAGE.NEW_ORGANIZATION_VENDOR_EXISTS'
+							)
+						);
+					} else {
+						this.createVendor();
+					}
+				});
 		}
 	}
 
