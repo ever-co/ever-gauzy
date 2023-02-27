@@ -77,24 +77,24 @@ export class TimeLog extends TenantOrganizationBaseEntity implements ITimeLog {
 	duration: number;
 	isEdited?: boolean;
 	/*
-    |--------------------------------------------------------------------------
-    | @ManyToOne
-    |--------------------------------------------------------------------------
-    */
+	|--------------------------------------------------------------------------
+	| @ManyToOne
+	|--------------------------------------------------------------------------
+	*/
 
 	/**
 	 * Employee
 	 */
-	@ApiProperty({ type: () => Employee })
-	@ManyToOne(() => Employee, (employee) => employee.timeLogs)
-	@JoinColumn()
+	@ManyToOne(() => Employee, (employee) => employee.timeLogs, {
+		onDelete: 'CASCADE'
+	})
 	employee: IEmployee;
 
-	@ApiProperty({ type: () => String, readOnly: true })
+	@ApiProperty({ type: () => String })
 	@RelationId((it: TimeLog) => it.employee)
 	@Index()
 	@Column()
-	readonly employeeId: string;
+	readonly employeeId: IEmployee['id'];
 
 	/**
 	 * Timesheet
@@ -107,7 +107,7 @@ export class TimeLog extends TenantOrganizationBaseEntity implements ITimeLog {
 	@JoinColumn()
 	timesheet?: ITimesheet;
 
-	@ApiProperty({ type: () => String, readOnly: true })
+	@ApiProperty({ type: () => String })
 	@RelationId((it: TimeLog) => it.timesheet)
 	@Index()
 	@Column({ nullable: true })
@@ -124,7 +124,7 @@ export class TimeLog extends TenantOrganizationBaseEntity implements ITimeLog {
 	@JoinColumn()
 	project?: IOrganizationProject;
 
-	@ApiProperty({ type: () => String, readOnly: true })
+	@ApiProperty({ type: () => String })
 	@RelationId((timeLog: TimeLog) => timeLog.project)
 	@Index()
 	@Column({ nullable: true })
@@ -141,7 +141,7 @@ export class TimeLog extends TenantOrganizationBaseEntity implements ITimeLog {
 	@JoinColumn()
 	task?: ITask;
 
-	@ApiProperty({ type: () => String, readOnly: true })
+	@ApiProperty({ type: () => String })
 	@RelationId((timeLog: TimeLog) => timeLog.task)
 	@Index()
 	@Column({ nullable: true })
@@ -158,7 +158,7 @@ export class TimeLog extends TenantOrganizationBaseEntity implements ITimeLog {
 	@JoinColumn()
 	organizationContact?: IOrganizationContact;
 
-	@ApiProperty({ type: () => String, readOnly: true })
+	@ApiProperty({ type: () => String })
 	@RelationId((timeLog: TimeLog) => timeLog.organizationContact)
 	@Index()
 	@Column({ nullable: true })
@@ -166,10 +166,10 @@ export class TimeLog extends TenantOrganizationBaseEntity implements ITimeLog {
 
 
 	/*
-    |--------------------------------------------------------------------------
-    | @ManyToMany
-    |--------------------------------------------------------------------------
-    */
+	|--------------------------------------------------------------------------
+	| @ManyToMany
+	|--------------------------------------------------------------------------
+	*/
 
 	/**
 	 * TimeSlot
@@ -182,19 +182,19 @@ export class TimeLog extends TenantOrganizationBaseEntity implements ITimeLog {
 	timeSlots?: ITimeSlot[];
 
 	/*
-    |--------------------------------------------------------------------------
-    | @EventSubscriber
-    |--------------------------------------------------------------------------
-    */
+	|--------------------------------------------------------------------------
+	| @EventSubscriber
+	|--------------------------------------------------------------------------
+	*/
 
 	/**
-    * Called after entity is loaded.
-    */
+	* Called after entity is loaded.
+	*/
 	@AfterLoad()
 	afterLoadEntity?() {
-        const startedAt = moment(this.startedAt, 'YYYY-MM-DD HH:mm:ss');
-        const stoppedAt = moment(this.stoppedAt || new Date(), 'YYYY-MM-DD HH:mm:ss');
-        this.duration = stoppedAt.diff(startedAt, 'seconds');
+		const startedAt = moment(this.startedAt, 'YYYY-MM-DD HH:mm:ss');
+		const stoppedAt = moment(this.stoppedAt || new Date(), 'YYYY-MM-DD HH:mm:ss');
+		this.duration = stoppedAt.diff(startedAt, 'seconds');
 
 		/**
 		 * Check If, TimeLog is edited or not
@@ -202,5 +202,5 @@ export class TimeLog extends TenantOrganizationBaseEntity implements ITimeLog {
 		const createdAt = moment(this.createdAt, 'YYYY-MM-DD HH:mm:ss');
 		const updatedAt = moment(this.updatedAt, 'YYYY-MM-DD HH:mm:ss');
 		this.isEdited = (updatedAt.diff(createdAt, 'seconds') > 0);
-    }
+	}
 }
