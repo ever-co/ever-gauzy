@@ -1,9 +1,10 @@
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { environment } from '../environments/environment';
 import { firstValueFrom, throwError } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { TimeLogSourceEnum, TimeLogType } from '@gauzy/contracts';
+import { UserOrganizationService } from '../../../../packages/desktop-ui-lib/src/lib/time-tracker/organization-selector/user-organization.service';
 
 @Injectable({
 	providedIn: 'root',
@@ -11,7 +12,10 @@ import { TimeLogSourceEnum, TimeLogType } from '@gauzy/contracts';
 export class AppService {
 	AW_HOST = environment.AWHost;
 	buckets: any = {};
-	constructor(private http: HttpClient) {}
+	constructor(
+		private http: HttpClient,
+		private readonly _userOrganizationService: UserOrganizationService
+	) {}
 
 	pingServer(values) {
 		return firstValueFrom(this.http.get(values.host));
@@ -373,76 +377,7 @@ export class AppService {
 		);
 	}
 
-	reqGetUserDetail(values) {
-		const headers = new HttpHeaders({
-			Authorization: `Bearer ${values.token}`,
-			'Tenant-Id': values.tenantId,
-		});
-		const params = this.toParams({
-			relations: [
-				'tenant',
-				'employee',
-				'employee.organization',
-				'role',
-				'role.rolePermissions',
-			],
-		});
-		return firstValueFrom(
-			this.http.get(`${values.apiHost}/api/user/me`, {
-				params,
-				headers: headers,
-			})
-		);
-	}
-
 	async getUserDetail(values) {
-		let userDetail;
-		try {
-			userDetail = await this.reqGetUserDetail(values);
-			localStorage.setItem('userDetail', JSON.stringify(userDetail));
-			return userDetail;
-		} catch (error) {
-			userDetail = localStorage.getItem('userDetail');
-			if (userDetail) {
-				return JSON.parse(userDetail);
-			}
-			throw error;
-		}
-	}
-
-	toParams(query) {
-		let params: HttpParams = new HttpParams();
-		Object.keys(query).forEach((key) => {
-			if (this.isJsObject(query[key])) {
-				params = this.toSubParams(params, key, query[key]);
-			} else {
-				params = params.append(key.toString(), query[key]);
-			}
-		});
-		return params;
-	}
-
-	isJsObject(object: any) {
-		return (
-			object !== null &&
-			object !== undefined &&
-			typeof object === 'object'
-		);
-	}
-
-	toSubParams(params: HttpParams, key: string, object: any) {
-		Object.keys(object).forEach((childKey) => {
-			if (this.isJsObject(object[childKey])) {
-				params = this.toSubParams(
-					params,
-					`${key}[${childKey}]`,
-					object[childKey]
-				);
-			} else {
-				params = params.append(`${key}[${childKey}]`, object[childKey]);
-			}
-		});
-
-		return params;
+		return this._userOrganizationService.detail(values);
 	}
 }
