@@ -41,11 +41,13 @@ export class ProposalTemplateComponent extends PaginationFilterBaseComponent
 	implements OnInit, OnDestroy {
 
 	smartTableSettings: object;
+	smartTableSettingsNoData: object;
 	disableButton: boolean = true;
 	loading: boolean = false;
 	smartTableSource: ServerDataSource;
 	selectedEmployee: ISelectedEmployee;
 	selectedItem: any;
+	noData: boolean = false;
 
 	proposalTemplateTabsEnum = ProposalTemplateTabsEnum;
 	templates$: Subject<any> = new Subject();
@@ -148,6 +150,7 @@ export class ProposalTemplateComponent extends PaginationFilterBaseComponent
 		if (!this.organization) {
 			return;
 		}
+		this.noData = false;
 		this.loading = true;
 
 		const { tenantId } = this.store.user;
@@ -171,6 +174,9 @@ export class ProposalTemplateComponent extends PaginationFilterBaseComponent
 					...this.getPagination(),
 					totalItems: this.smartTableSource.count()
 				});
+				if (this.smartTableSource.count() === 0) {
+					this.noData = true;
+				}
 				this.loading = false;
 			}
 		});
@@ -205,7 +211,7 @@ export class ProposalTemplateComponent extends PaginationFilterBaseComponent
 			actions: false,
 			editable: true,
 			hideSubHeader: true,
-			noDataMessage: this.getTranslation('SM_TABLE.NO_DATA.PROPOSAL_TEMPLATE'),
+			noDataMessage: '',
 			pager: {
 				display: false,
 				perPage: pagination ? pagination.itemsPerPage : 10
@@ -275,6 +281,12 @@ export class ProposalTemplateComponent extends PaginationFilterBaseComponent
 					}
 				}
 			}
+		};
+		this.smartTableSettingsNoData = {
+			...this.smartTableSettings,
+			noDataMessage: this.getTranslation(
+				'SM_TABLE.NO_DATA.PROPOSAL_TEMPLATE'
+			),
 		};
 	}
 

@@ -127,8 +127,17 @@
 	<ng-template ngxPermissionsOnly="ORG_PROPOSAL_TEMPLATES_VIEW">
 		<div class="table-scroll-container">
 			<ng2-smart-table
+				*ngIf="!noData"
 				style="cursor: pointer"
 				[settings]="smartTableSettings"
+				[source]="smartTableSource"
+				(userRowSelect)="selectItem($event)"
+				#proposalTemplateTable
+			></ng2-smart-table>
+			<ng2-smart-table
+				*ngIf="noData"
+				style="cursor: pointer"
+				[settings]="smartTableSettingsNoData"
 				[source]="smartTableSource"
 				(userRowSelect)="selectItem($event)"
 				#proposalTemplateTable
