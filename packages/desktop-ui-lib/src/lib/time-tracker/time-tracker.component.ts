@@ -1569,11 +1569,13 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 							});
 						}
 					} else {
-						screens.push({
-							img: source.thumbnail.toPNG(),
-							name: source.name,
-							id: source.display_id,
-						});
+						if (arg.activeWindow) {
+							screens.push({
+								img: source.thumbnail.toPNG(),
+								name: source.name,
+								id: source.display_id
+							});
+						}
 					}
 				});
 				log.info('screenshot data', screens);
