@@ -32,7 +32,10 @@ export class FileStorageComponent extends TranslationBaseComponent
 	public readonly form: FormGroup = FileStorageComponent.buildForm(this.fb);
 	static buildForm(fb: FormBuilder): FormGroup {
 		const form = fb.group({
-			fileStorageProvider: [(environment.FILE_PROVIDER).toUpperCase() as FileStorageProviderEnum || FileStorageProviderEnum.LOCAL, Validators.required],
+			fileStorageProvider: [
+				(environment.FILE_PROVIDER).toUpperCase() as FileStorageProviderEnum || FileStorageProviderEnum.LOCAL,
+				Validators.required
+			],
 			// Aws Configuration
 			S3: fb.group({
 				aws_access_key_id: [],
@@ -138,6 +141,20 @@ export class FileStorageComponent extends TranslationBaseComponent
 			settings = {
 				fileStorageProvider: FileStorageProviderEnum.LOCAL
 			}
+		}
+
+		try {
+			if (fileStorageProvider === FileStorageProviderEnum.WASABI) {
+				await this.fileStorageService.validateWasabiCredentials(settings);
+
+				this.toastrService.success('TOASTR.MESSAGE.BUCKET_CREATED', {
+					bucket: `${this.settings.wasabi_aws_bucket}`,
+					region: `${this.settings.wasabi_aws_default_region}`
+				});
+			}
+		} catch (error) {
+			this.toastrService.danger(error);
+			return;
 		}
 
 		try {

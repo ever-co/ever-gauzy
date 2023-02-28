@@ -45,7 +45,8 @@ export class LocalProvider extends Provider<LocalProvider> {
 	}: FileStorageOption): multer.StorageEngine {
 		return multer.diskStorage({
 			destination: (_req, file, callback) => {
-				let dir;
+				// A string or function that determines the destination path for uploaded
+				let dir: string;
 				if (dest instanceof Function) {
 					dir = dest(file);
 				} else {
@@ -58,16 +59,19 @@ export class LocalProvider extends Provider<LocalProvider> {
 				callback(null, fullPath);
 			},
 			filename: (_req, file, callback) => {
-				let fileName = '';
-				const ext = file.originalname.split('.').pop();
+				// A file extension, or filename extension, is a suffix at the end of a file.
+				const extension = file.originalname.split('.').pop();
+
+				// A function that determines the name of the uploaded file.
+				let fileName: string;
 				if (filename) {
 					if (typeof filename === 'string') {
 						fileName = filename;
 					} else {
-						fileName = filename(file, ext);
+						fileName = filename(file, extension);
 					}
 				} else {
-					fileName = `${prefix}-${moment().unix()}-${parseInt('' + Math.random() * 1000, 10)}.${ext}`;
+					fileName = `${prefix}-${moment().unix()}-${parseInt('' + Math.random() * 1000, 10)}.${extension}`;
 				}
 				callback(null, fileName);
 			}
