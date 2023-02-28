@@ -277,7 +277,7 @@
 						(click)="save()"
 						nbButton
 						status="success"
-						[disabled]="form.invalid"
+						[disabled]="form.invalid || saveDisabled"
 					>
 						{{ 'BUTTONS.SAVE' | translate }}
 					</button>

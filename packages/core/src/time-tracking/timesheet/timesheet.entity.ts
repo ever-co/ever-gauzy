@@ -67,26 +67,24 @@ export class Timesheet extends TenantOrganizationBaseEntity
 	deletedAt?: Date;
 
 	/*
-    |--------------------------------------------------------------------------
-    | @ManyToOne
-    |--------------------------------------------------------------------------
-    */
+	|--------------------------------------------------------------------------
+	| @ManyToOne
+	|--------------------------------------------------------------------------
+	*/
 
 	/**
 	 * Employee
 	 */
-	@ApiProperty({ type: () => Employee })
 	@ManyToOne(() => Employee, (employee) => employee.timesheets, {
 		onDelete: 'CASCADE'
 	})
-	@JoinColumn()
 	employee: IEmployee;
 
-	@ApiProperty({ type: () => String, readOnly: true })
+	@ApiProperty({ type: () => String })
 	@RelationId((it: Timesheet) => it.employee)
 	@Index()
 	@Column()
-	employeeId?: string;
+	employeeId?: IEmployee['id'];
 
 	/**
 	 * Approve By Employee
@@ -96,7 +94,7 @@ export class Timesheet extends TenantOrganizationBaseEntity
 	@JoinColumn()
 	approvedBy?: IUser;
 
-	@ApiProperty({ type: () => String, readOnly: true })
+	@ApiProperty({ type: () => String })
 	@RelationId((it: Timesheet) => it.approvedBy)
 	@Index()
 	@Column({ nullable: true })

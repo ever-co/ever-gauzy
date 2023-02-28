@@ -82,7 +82,6 @@ export class EmailTemplateGeneratePreviewHandler
 			inviteCode: generateRandomInteger(6),
 			teams: 'Gauzy Team',
 			verificationCode: generateRandomInteger(6),
-			otp: generateRandomInteger(6),
 			appName: appName,
 			appLogo: appLogo,
 			appSignature: appSignature,

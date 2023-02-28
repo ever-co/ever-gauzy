@@ -5,7 +5,7 @@ import {
 	ForbiddenException
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, In, ILike, SelectQueryBuilder, DeleteResult } from 'typeorm';
+import { Repository, In, ILike, SelectQueryBuilder, DeleteResult, IsNull } from 'typeorm';
 import {
 	IOrganizationTeamCreateInput,
 	IOrganizationTeam,
@@ -14,29 +14,27 @@ import {
 	IOrganizationTeamUpdateInput,
 	IEmployee,
 	PermissionsEnum,
-	IBasePerTenantAndOrganizationEntityModel
+	IBasePerTenantAndOrganizationEntityModel,
+	IUser
 } from '@gauzy/contracts';
 import { isNotEmpty } from '@gauzy/common';
-import { Employee } from '../employee/employee.entity';
+import { Employee, OrganizationTeamEmployee } from './../core/entities/internal';
 import { OrganizationTeam } from './organization-team.entity';
-import { OrganizationTeamEmployee } from '../organization-team-employee/organization-team-employee.entity';
 import { PaginationParams, TenantAwareCrudService } from './../core/crud';
 import { RequestContext } from '../core/context';
 import { RoleService } from '../role/role.service';
+import { UserService } from './../user/user.service';
 import { OrganizationTeamEmployeeService } from '../organization-team-employee/organization-team-employee.service';
 
 @Injectable()
 export class OrganizationTeamService extends TenantAwareCrudService<OrganizationTeam> {
 
 	constructor(
-		@InjectRepository(OrganizationTeam)
-		private readonly organizationTeamRepository: Repository<OrganizationTeam>,
-
-		@InjectRepository(Employee)
-		private readonly employeeRepository: Repository<Employee>,
-
+		@InjectRepository(OrganizationTeam) protected readonly organizationTeamRepository: Repository<OrganizationTeam>,
+		@InjectRepository(Employee) private readonly employeeRepository: Repository<Employee>,
 		private readonly roleService: RoleService,
-		private readonly organizationTeamEmployeeService: OrganizationTeamEmployeeService
+		private readonly organizationTeamEmployeeService: OrganizationTeamEmployeeService,
+		private readonly userService: UserService
 	) {
 		super(organizationTeamRepository);
 	}
@@ -337,6 +335,44 @@ export class OrganizationTeamService extends TenantAwareCrudService<Organization
 				}
 			});
 			return await this.repository.remove(team);
+		} catch (error) {
+			throw new ForbiddenException();
+		}
+	}
+
+	/**
+	 * Exist from teams where users joined as a team members.
+	 *
+	 * @param criteria
+	 * @param options
+	 */
+	public async existTeamsAsMember(criteria: IUser['id']) {
+		try {
+			const userId = RequestContext.currentUserId();
+
+			// If user don't have enough permission (CHANGE_SELECTED_EMPLOYEE).
+			if (!RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE)) {
+				// If user try to delete someone other user account, just denied the request.
+				if (userId != criteria) {
+					throw new ForbiddenException();
+				}
+			}
+
+			const user = await this.userService.findOneByIdString(criteria, {
+				relations: {
+					employee: true
+				}
+			});
+			if (!!user) {
+				const { employeeId } = user;
+				if (isNotEmpty(employeeId)) {
+					return await this.organizationTeamEmployeeService.delete({
+						roleId: IsNull(),
+						employeeId
+					});
+				}
+			}
+			throw new ForbiddenException();
 		} catch (error) {
 			throw new ForbiddenException();
 		}
