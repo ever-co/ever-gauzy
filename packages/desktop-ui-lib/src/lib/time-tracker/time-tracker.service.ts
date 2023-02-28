@@ -289,9 +289,7 @@ export class TimeTrackerService {
 			organizationContactId: values.organizationContactId,
 			isRunning: true,
 			version: values.version,
-			...(values.startedAt
-				? { startedAt: moment(values.startedAt).utc().toISOString() }
-				: {}),
+			startedAt: moment(values.startedAt).utc().toISOString(),
 		};
 		log.info(`Toggle Start Timer Request: ${moment().format()}`, body);
 		return firstValueFrom(
@@ -321,12 +319,8 @@ export class TimeTrackerService {
 			organizationContactId: values.organizationContactId,
 			isRunning: false,
 			version: values.version,
-			...(values.startedAt
-				? { startedAt: moment(values.startedAt).utc().toISOString() }
-				: {}),
-			...(values.stoppedAt
-				? { stoppedAt: moment(values.stoppedAt).utc().toISOString() }
-				: {}),
+			startedAt: moment(values.startedAt).utc().toISOString(),
+			stoppedAt: moment(values.stoppedAt).utc().toISOString(),
 		};
 		log.info(`Toggle Stop Timer Request: ${moment().format()}`, body);
 		return firstValueFrom(
