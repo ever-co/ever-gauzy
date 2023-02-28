@@ -1,5 +1,7 @@
 <div *ngIf="organizations">
-    <ng-select #select [searchable]="false" [clearable]="false" [items]="organizations" bindLabel="name"
+    <ng-select #select [disabled]="disabled" [searchable]="false" [clearable]="false" [items]="organizations"
+        bindLabel="name" nbTooltip="Please stop the timer before to change the organization" nbTooltipStatus="warning"
+        [nbTooltipDisabled]="!disabled"
         (change)="selectOrganization($event); select.blur();" (clear)="select.blur();"
         [(ngModel)]="selectedOrganization" placeholder="Select Organization" appendTo="body">
         <ng-template ng-option-tmp let-item="item" let-index="index">

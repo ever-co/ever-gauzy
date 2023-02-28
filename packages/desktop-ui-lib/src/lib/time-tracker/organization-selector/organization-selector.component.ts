@@ -5,6 +5,7 @@ import {
 	EventEmitter,
 	AfterViewInit,
 	NgZone,
+	Input,
 } from '@angular/core';
 import { IOrganization, IUserOrganization } from '@gauzy/contracts';
 import { uniq } from 'underscore';
@@ -19,6 +20,7 @@ import { ElectronService } from '../../electron/services';
 export class OrganizationSelectorComponent implements OnInit, AfterViewInit {
 	private _user: IUserOrganization;
 	private _auth: any;
+	private _isDisabled: boolean;
 	organizations: IOrganization[] = [];
 	selectedOrganization: IOrganization;
 	@Output()
@@ -30,6 +32,7 @@ export class OrganizationSelectorComponent implements OnInit, AfterViewInit {
 		private readonly _ngZone: NgZone
 	) {
 		this.organizationChange = new EventEmitter();
+		this._isDisabled = false;
 	}
 	ngAfterViewInit(): void {
 		this._electronService.ipcRenderer.on(
@@ -117,5 +120,14 @@ export class OrganizationSelectorComponent implements OnInit, AfterViewInit {
 
 	public get user(): IUserOrganization {
 		return this._user;
+	}
+
+	@Input()
+	public set disabled(value: boolean) {
+		this._isDisabled = value;
+	}
+
+	public get disabled(): boolean {
+		return this._isDisabled;
 	}
 }
