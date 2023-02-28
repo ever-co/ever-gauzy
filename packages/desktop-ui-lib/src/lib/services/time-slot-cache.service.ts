@@ -5,13 +5,10 @@ import { StorageService } from './storage.service';
 import { Store } from 'apps/desktop-timer/src/app/auth/services/store.service';
 
 @Injectable({
-	providedIn: 'root',
+	providedIn: 'root'
 })
 export class TimeSlotCacheService extends AbstractCacheService<ITimeSlot[]> {
-	constructor(
-		protected _storageService: StorageService<ITimeSlot[]>,
-		protected _store: Store
-	) {
+	constructor(protected _storageService: StorageService<ITimeSlot[]>, protected _store: Store) {
 		super(_storageService, _store);
 		this.prefix = TimeSlotCacheService.name.toString();
 	}

@@ -1,10 +1,5 @@
 import { Injectable } from '@angular/core';
-import {
-	ActivatedRouteSnapshot,
-	CanActivate,
-	Router,
-	RouterStateSnapshot
-} from '@angular/router';
+import { ActivatedRouteSnapshot, CanActivate, Router, RouterStateSnapshot } from '@angular/router';
 import { AuthService } from './services/auth.service';
 import { AuthStrategy } from './auth-strategy.service';
 import { ElectronService } from 'ngx-electron';
@@ -20,16 +15,10 @@ export class AuthGuard implements CanActivate {
 		private readonly store: Store
 	) {}
 
-	async canActivate(
-		route: ActivatedRouteSnapshot,
-		state: RouterStateSnapshot
-	) {
+	async canActivate(route: ActivatedRouteSnapshot, state: RouterStateSnapshot) {
 		try {
 			const isAuthenticated = await this.authService.isAuthenticated();
-			console.log(
-				'Token Authenticated:',
-				`${isAuthenticated ? 'true' : 'false'}`
-			);
+			console.log('Token Authenticated:', `${isAuthenticated ? 'true' : 'false'}`);
 			if (isAuthenticated) {
 				// logged in so return true
 				return true;
@@ -47,7 +36,7 @@ export class AuthGuard implements CanActivate {
 
 			// not logged in so redirect to login page with the return url
 			this.router.navigate(['/auth/login'], {
-				queryParams: { returnUrl: state.url },
+				queryParams: { returnUrl: state.url }
 			});
 			return false;
 		} catch (error) {

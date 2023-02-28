@@ -12,7 +12,7 @@ interface IHash<S, T> {
 }
 
 @Injectable({
-	providedIn: 'root',
+	providedIn: 'root'
 })
 export class StorageService<T> {
 	constructor() {}
@@ -32,10 +32,7 @@ export class StorageService<T> {
 	public async setItem(hash: IHash<string, T>): Promise<void> {
 		const { expiresAt, value } = hash.cache;
 		const toStore = await firstValueFrom(value);
-		this._storage.setItem(
-			hash.key,
-			JSON.stringify({ expiresAt, value: toStore })
-		);
+		this._storage.setItem(hash.key, JSON.stringify({ expiresAt, value: toStore }));
 	}
 
 	/**

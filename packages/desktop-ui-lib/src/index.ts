@@ -28,7 +28,6 @@ export * from './lib/dialogs/about/about.module';
 export * from './lib/services';
 export * from './lib/time-tracker/organization-selector/user-organization.service';
 
-
 /**
  * Auth Module
  */

@@ -21,7 +21,7 @@ import {
 	NbToastrService,
 	NbFormFieldModule,
 	NbTooltipModule,
-	NbBadgeModule,
+	NbBadgeModule
 } from '@nebular/theme';
 import { NbEvaIconsModule } from '@nebular/eva-icons';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
@@ -39,7 +39,7 @@ import { OrganizationSelectorComponent } from './organization-selector/organizat
 		CustomRenderComponent,
 		NoDataMessageComponent,
 		HumanizePipe,
-		OrganizationSelectorComponent,
+		OrganizationSelectorComponent
 	],
 	imports: [
 		CommonModule,
@@ -65,15 +65,9 @@ import { OrganizationSelectorComponent } from './organization-selector/organizat
 		NbToggleModule,
 		NbBadgeModule,
 		PaginationModule,
-		NbTooltipModule,
+		NbTooltipModule
 	],
-	providers: [
-		NbSidebarService,
-		TimeTrackerService,
-		NbDialogService,
-		NbToastrService,
-		UserOrganizationService,
-	],
-	exports: [TimeTrackerComponent],
+	providers: [NbSidebarService, TimeTrackerService, NbDialogService, NbToastrService, UserOrganizationService],
+	exports: [TimeTrackerComponent]
 })
 export class TimeTrackerModule {}

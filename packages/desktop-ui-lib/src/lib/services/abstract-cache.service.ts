@@ -12,21 +12,14 @@ export abstract class AbstractCacheService<T> {
 		[id: string]: ICache<T>;
 	} = {};
 
-	constructor(
-		protected _storageService: StorageService<T>,
-		protected _store: Store
-	) {
+	constructor(protected _storageService: StorageService<T>, protected _store: Store) {
 		this._duration = 5; // Default cache set to 5 minutes
 		this._prefix = '';
 	}
 
 	public getValue(object?: any): Observable<T> {
-		const key = object
-			? this.prefix.concat(hash(object).toString())
-			: this._DEFAULT_KEY;
-		const item = this._cache[key]
-			? this._cache[key]
-			: this._storageService.getItem(key);
+		const key = object ? this.prefix.concat(hash(object).toString()) : this._DEFAULT_KEY;
+		const item = this._cache[key] ? this._cache[key] : this._storageService.getItem(key);
 
 		if (!item) {
 			return null;
@@ -42,12 +35,8 @@ export abstract class AbstractCacheService<T> {
 	}
 
 	public setValue(value: Observable<T>, object?: any) {
-		const key = object
-			? this.prefix.concat(hash(object).toString())
-			: this._DEFAULT_KEY;
-		const expiresAt = moment(new Date())
-			.add(this._duration, 'minutes')
-			.toDate();
+		const key = object ? this.prefix.concat(hash(object).toString()) : this._DEFAULT_KEY;
+		const expiresAt = moment(new Date()).add(this._duration, 'minutes').toDate();
 		this._cache[key] = { expiresAt, value };
 		this._storageService.setItem({ key, cache: this._cache[key] });
 	}

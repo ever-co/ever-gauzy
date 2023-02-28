@@ -4,10 +4,7 @@ import { Store } from './store.service';
 
 @Injectable()
 export class ServerConnectionService {
-	constructor(
-		private readonly httpClient: HttpClient,
-		private readonly store: Store
-	) {}
+	constructor(private readonly httpClient: HttpClient, private readonly store: Store) {}
 
 	async checkServerConnection(endPoint: string) {
 		return new Promise((resolve, reject) => {
@@ -22,7 +19,7 @@ export class ServerConnectionService {
 					}
 					this.store.serverConnection = err.status;
 					reject(err);
-				},
+				}
 			});
 		}).catch((e) => {});
 	}

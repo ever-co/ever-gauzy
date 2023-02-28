@@ -7,15 +7,12 @@ import { TimeLogSourceEnum, TimeLogType } from '@gauzy/contracts';
 import { UserOrganizationService } from '@gauzy/desktop-ui-lib';
 
 @Injectable({
-	providedIn: 'root',
+	providedIn: 'root'
 })
 export class AppService {
 	AW_HOST = environment.AWHost;
 	buckets: any = {};
-	constructor(
-		private http: HttpClient,
-		private readonly _userOrganizationService: UserOrganizationService
-	) {}
+	constructor(private http: HttpClient, private readonly _userOrganizationService: UserOrganizationService) {}
 
 	pingServer(values) {
 		return firstValueFrom(this.http.get(values.host));
@@ -27,18 +24,13 @@ export class AppService {
 				timestamp: new Date(),
 				data: {
 					running: true,
-					label: '',
-				},
-			},
+					label: ''
+				}
+			}
 		];
 
 		if (id) defaultValue[0].id = id;
-		return firstValueFrom(
-			this.http.post(
-				`${this.AW_HOST}/api/0/buckets/aw-stopwatch/events`,
-				defaultValue
-			)
-		);
+		return firstValueFrom(this.http.post(`${this.AW_HOST}/api/0/buckets/aw-stopwatch/events`, defaultValue));
 	}
 
 	stopTime(historyTime): Promise<any> {
@@ -47,17 +39,12 @@ export class AppService {
 				timestamp: new Date(),
 				data: {
 					running: false,
-					label: '',
+					label: ''
 				},
-				id: historyTime.id,
-			},
+				id: historyTime.id
+			}
 		];
-		return firstValueFrom(
-			this.http.post(
-				`${this.AW_HOST}/api/0/buckets/aw-stopwatch/events`,
-				defaultStopParams
-			)
-		);
+		return firstValueFrom(this.http.post(`${this.AW_HOST}/api/0/buckets/aw-stopwatch/events`, defaultStopParams));
 	}
 
 	getAwBuckets(tpURL): Promise<any> {
@@ -130,17 +117,13 @@ export class AppService {
 
 	collectAfkFromAW(tpURL, start, end) {
 		if (!this.buckets.afkBucket) return Promise.resolve([]);
-		return firstValueFrom(
-			this.http.get(
-				`${tpURL}/api/0/buckets/${this.buckets.afkBucket.id}/events?limit=1`
-			)
-		);
+		return firstValueFrom(this.http.get(`${tpURL}/api/0/buckets/${this.buckets.afkBucket.id}/events?limit=1`));
 	}
 
 	pushToTimeSlot(values) {
 		const headers = new HttpHeaders({
 			Authorization: `Bearer ${values.token}`,
-			'Tenant-Id': values.tenantId,
+			'Tenant-Id': values.tenantId
 		});
 		const params = {
 			employeeId: values.employeeId,
@@ -154,18 +137,18 @@ export class AppService {
 			timeLogId: values.timeLogId,
 			organizationId: values.organizationId,
 			tenantId: values.tenantId,
-			organizationContactId: values.organizationContactId,
+			organizationContactId: values.organizationContactId
 		};
 		return firstValueFrom(
 			this.http
 				.post(`${values.apiHost}/api/timesheet/time-slot`, params, {
-					headers: headers,
+					headers: headers
 				})
 				.pipe(
 					catchError((error) => {
 						error.error = {
 							...error.error,
-							params: JSON.stringify(params),
+							params: JSON.stringify(params)
 						};
 						return throwError(error);
 					})
@@ -176,7 +159,7 @@ export class AppService {
 	pushToTimesheet(values) {
 		const headers = new HttpHeaders({
 			Authorization: `Bearer ${values.token}`,
-			'Tenant-Id': values.tenantId,
+			'Tenant-Id': values.tenantId
 		});
 		return firstValueFrom(
 			this.http.post(
@@ -193,10 +176,10 @@ export class AppService {
 					stoppedAt: values.stoppedAt,
 					organizationId: values.organizationId,
 					tenantId: values.tenantId,
-					organizationContactId: values.organizationContactId,
+					organizationContactId: values.organizationContactId
 				},
 				{
-					headers: headers,
+					headers: headers
 				}
 			)
 		);
@@ -205,7 +188,7 @@ export class AppService {
 	updateToTimeSheet(values) {
 		const headers = new HttpHeaders({
 			Authorization: `Bearer ${values.token}`,
-			'Tenant-Id': values.tenantId,
+			'Tenant-Id': values.tenantId
 		});
 		return firstValueFrom(
 			this.http.put(
@@ -215,10 +198,10 @@ export class AppService {
 					keyboard: values.keyboard,
 					mouse: values.mouse,
 					overall: values.overall,
-					stoppedAt: values.stoppedAt,
+					stoppedAt: values.stoppedAt
 				},
 				{
-					headers: headers,
+					headers: headers
 				}
 			)
 		);
@@ -227,7 +210,7 @@ export class AppService {
 	updateToTimeSlot(values) {
 		const headers = new HttpHeaders({
 			Authorization: `Bearer ${values.token}`,
-			'Tenant-Id': values.tenantId,
+			'Tenant-Id': values.tenantId
 		});
 		return firstValueFrom(
 			this.http.put(
@@ -237,10 +220,10 @@ export class AppService {
 					keyboard: values.keyboard,
 					mouse: values.mouse,
 					overall: values.overall,
-					activities: values.activities,
+					activities: values.activities
 				},
 				{
-					headers: headers,
+					headers: headers
 				}
 			)
 		);
@@ -249,16 +232,16 @@ export class AppService {
 	pushToActivity(values) {
 		const headers = new HttpHeaders({
 			Authorization: `Bearer ${values.token}`,
-			'Tenant-Id': values.tenantId,
+			'Tenant-Id': values.tenantId
 		});
 		return firstValueFrom(
 			this.http.post(
 				`${values.apiHost}/api/timesheet/activity/bulk`,
 				{
-					activities: values.activities,
+					activities: values.activities
 				},
 				{
-					headers: headers,
+					headers: headers
 				}
 			)
 		);
@@ -267,16 +250,16 @@ export class AppService {
 	updateToActivity(values) {
 		const headers = new HttpHeaders({
 			Authorization: `Bearer ${values.token}`,
-			'Tenant-Id': values.tenantId,
+			'Tenant-Id': values.tenantId
 		});
 		return firstValueFrom(
 			this.http.put(
 				`${values.apiHost}/api/timesheet/activity/${values.activityId}`,
 				{
-					duration: values.duration,
+					duration: values.duration
 				},
 				{
-					headers: headers,
+					headers: headers
 				}
 			)
 		);
@@ -285,7 +268,7 @@ export class AppService {
 	setTimeLog(values) {
 		const headers = new HttpHeaders({
 			Authorization: `Bearer ${values.token}`,
-			'Tenant-Id': values.tenantId,
+			'Tenant-Id': values.tenantId
 		});
 		const body = {
 			employeeId: values.employeeId,
@@ -296,31 +279,27 @@ export class AppService {
 			stoppedAt: values.stoppedAt,
 			isBillable: true,
 			logType: TimeLogType.TRACKED,
-			source: TimeLogSourceEnum.DESKTOP,
+			source: TimeLogSourceEnum.DESKTOP
 		};
 		return firstValueFrom(
-			this.http.post(
-				`${values.apiHost}/api/timesheet/time-log`,
-				{ ...body },
-				{ headers: headers }
-			)
+			this.http.post(`${values.apiHost}/api/timesheet/time-log`, { ...body }, { headers: headers })
 		);
 	}
 
 	updateTimeLog(values) {
 		const headers = new HttpHeaders({
 			Authorization: `Bearer ${values.token}`,
-			'Tenant-Id': values.tenantId,
+			'Tenant-Id': values.tenantId
 		});
 		return firstValueFrom(
 			this.http.put(
 				`${values.apiHost}/api/timesheet/time-log/${values.timeLogId}`,
 				{
 					startedAt: values.startedAt,
-					stoppedAt: values.stoppedAt,
+					stoppedAt: values.stoppedAt
 				},
 				{
-					headers: headers,
+					headers: headers
 				}
 			)
 		);
@@ -329,7 +308,7 @@ export class AppService {
 	stopTimer(values) {
 		const headers = new HttpHeaders({
 			Authorization: `Bearer ${values.token}`,
-			'Tenant-Id': values.tenantId,
+			'Tenant-Id': values.tenantId
 		});
 		const body = {
 			description: values.note,
@@ -341,22 +320,18 @@ export class AppService {
 			manualTimeSlot: values.manualTimeSlot,
 			organizationId: values.organizationId,
 			tenantId: values.tenantId,
-			organizationContactId: values.organizationContactId,
+			organizationContactId: values.organizationContactId
 		};
 		console.log(body, 'body from toggle API from app.service.ts 353 line');
 		return firstValueFrom(
-			this.http.post(
-				`${values.apiHost}/api/timesheet/timer/stop`,
-				{ ...body },
-				{ headers: headers }
-			)
+			this.http.post(`${values.apiHost}/api/timesheet/timer/stop`, { ...body }, { headers: headers })
 		);
 	}
 
 	uploadScreenCapture(values) {
 		const headers = new HttpHeaders({
 			Authorization: `Bearer ${values.token}`,
-			'Tenant-Id': values.tenantId,
+			'Tenant-Id': values.tenantId
 		});
 
 		const formData = new FormData();
@@ -367,13 +342,9 @@ export class AppService {
 		formData.append('organizationContactId', values.organizationContactId);
 
 		return firstValueFrom(
-			this.http.post(
-				`${values.apiHost}/api/timesheet/screenshot`,
-				formData,
-				{
-					headers: headers,
-				}
-			)
+			this.http.post(`${values.apiHost}/api/timesheet/screenshot`, formData, {
+				headers: headers
+			})
 		);
 	}
 

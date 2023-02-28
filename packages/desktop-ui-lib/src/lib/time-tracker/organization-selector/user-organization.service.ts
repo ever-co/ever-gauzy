@@ -1,16 +1,13 @@
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import {
-	IUserOrganization,
-	IUserOrganizationFindInput,
-} from '@gauzy/contracts';
+import { IUserOrganization, IUserOrganizationFindInput } from '@gauzy/contracts';
 import { toParams } from '@gauzy/common-angular';
 import { firstValueFrom, map, shareReplay } from 'rxjs';
 import { OrganizationsCacheService } from '../../services/organizations-cache.service';
 import { UserOrganizationCacheService } from '../../services/user-organization-cache.service';
 
 @Injectable({
-	providedIn: 'root',
+	providedIn: 'root'
 })
 export class UserOrganizationService {
 	constructor(
@@ -27,10 +24,9 @@ export class UserOrganizationService {
 		const data = JSON.stringify({ relations, findInput });
 		const headers = new HttpHeaders({
 			Authorization: `Bearer ${config.token}`,
-			'Tenant-Id': config.tenantId,
+			'Tenant-Id': config.tenantId
 		});
-		let usersOrganizations$ =
-			this._userOrganizationsCacheService.getValue('all');
+		let usersOrganizations$ = this._userOrganizationsCacheService.getValue('all');
 		if (!usersOrganizations$) {
 			usersOrganizations$ = this._http
 				.get<{
@@ -38,16 +34,13 @@ export class UserOrganizationService {
 					total: number;
 				}>(`${config.apiHost}/api/user-organization`, {
 					headers: headers,
-					params: { data },
+					params: { data }
 				})
 				.pipe(
 					map((response: any) => response),
 					shareReplay(1)
 				);
-			this._userOrganizationsCacheService.setValue(
-				usersOrganizations$,
-				'all'
-			);
+			this._userOrganizationsCacheService.setValue(usersOrganizations$, 'all');
 		}
 		return firstValueFrom(usersOrganizations$);
 	}
@@ -55,33 +48,23 @@ export class UserOrganizationService {
 	public async detail(values): Promise<IUserOrganization> {
 		const headers = new HttpHeaders({
 			Authorization: `Bearer ${values.token}`,
-			'Tenant-Id': values.tenantId,
+			'Tenant-Id': values.tenantId
 		});
 		const params = toParams({
-			relations: [
-				'tenant',
-				'employee',
-				'employee.organization',
-				'role',
-				'role.rolePermissions',
-			],
+			relations: ['tenant', 'employee', 'employee.organization', 'role', 'role.rolePermissions']
 		});
-		let userOrganizations$ =
-			this._userOrganizationCacheService.getValue('me');
+		let userOrganizations$ = this._userOrganizationCacheService.getValue('me');
 		if (!userOrganizations$) {
 			userOrganizations$ = this._http
 				.get<IUserOrganization>(`${values.apiHost}/api/user/me`, {
 					params,
-					headers: headers,
+					headers: headers
 				})
 				.pipe(
 					map((response: any) => response),
 					shareReplay(1)
 				);
-			this._userOrganizationCacheService.setValue(
-				userOrganizations$,
-				'me'
-			);
+			this._userOrganizationCacheService.setValue(userOrganizations$, 'me');
 		}
 		return firstValueFrom(userOrganizations$);
 	}

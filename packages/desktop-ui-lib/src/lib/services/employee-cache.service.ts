@@ -5,13 +5,10 @@ import { StorageService } from './storage.service';
 import { Store } from 'apps/desktop-timer/src/app/auth/services/store.service';
 
 @Injectable({
-	providedIn: 'root',
+	providedIn: 'root'
 })
 export class EmployeeCacheService extends AbstractCacheService<IEmployee> {
-	constructor(
-		protected _storageService: StorageService<IEmployee>,
-		protected _store: Store
-	) {
+	constructor(protected _storageService: StorageService<IEmployee>, protected _store: Store) {
 		super(_storageService, _store);
 		this.prefix = EmployeeCacheService.name.toString();
 	}

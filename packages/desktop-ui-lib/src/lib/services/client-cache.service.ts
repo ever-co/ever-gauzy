@@ -5,15 +5,10 @@ import { StorageService } from './storage.service';
 import { Store } from '@gauzy/desktop-timer/src/app/auth/services/store.service';
 
 @Injectable({
-	providedIn: 'root',
+	providedIn: 'root'
 })
-export class ClientCacheService extends AbstractCacheService<
-	IOrganizationContact[]
-> {
-	constructor(
-		protected _storageService: StorageService<IOrganizationContact[]>,
-		protected _store: Store
-	) {
+export class ClientCacheService extends AbstractCacheService<IOrganizationContact[]> {
+	constructor(protected _storageService: StorageService<IOrganizationContact[]>, protected _store: Store) {
 		super(_storageService, _store);
 		this.prefix = ClientCacheService.name.toString();
 	}

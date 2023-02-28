@@ -5,7 +5,7 @@ import { StorageService } from './storage.service';
 import { Store } from 'apps/desktop-timer/src/app/auth/services/store.service';
 
 @Injectable({
-	providedIn: 'root',
+	providedIn: 'root'
 })
 export class OrganizationsCacheService extends AbstractCacheService<{
 	items: IUserOrganization[];
