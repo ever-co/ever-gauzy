@@ -94,7 +94,7 @@ export interface ISubmitTimesheetInput
 
 export interface IGetTimesheetInput
 	extends IBasePerTenantAndOrganizationEntityModel,
-		IBaseRelationsEntityModel {
+	IBaseRelationsEntityModel {
 	startDate?: Date | string;
 	endDate?: Date | string;
 	projectIds?: string[];
@@ -317,18 +317,16 @@ export interface ICreateScreenshotInput
 	recordedAt: Date | string;
 }
 
-export interface IScreenshot extends IBasePerTenantAndOrganizationEntityModel {
+export interface IScreenshot extends IBasePerTenantAndOrganizationEntityModel, IRelationalEmployee {
 	[x: string]: any;
 	timeSlot?: ITimeSlot;
-	timeSlotId?: string;
+	timeSlotId?: ITimeSlot['id'];
 	file: string;
 	thumb?: string;
 	fileUrl?: string;
 	thumbUrl?: string;
 	recordedAt?: Date;
 	storageProvider?: FileStorageProviderEnum;
-	employeeId?: string;
-	employee?: IEmployee;
 }
 
 export interface IScreenshotMap {
@@ -339,8 +337,8 @@ export interface IScreenshotMap {
 
 export interface ITimerStatusInput
 	extends IBasePerTenantAndOrganizationEntityModel,
-		IBaseRelationsEntityModel,
-		IRelationalEmployee {
+	IBaseRelationsEntityModel,
+	IRelationalEmployee {
 	source?: TimeLogSourceEnum;
 }
 
@@ -398,7 +396,7 @@ export interface IManualTimeInput
 
 export interface IGetTimeLogInput
 	extends ITimeLogFilters,
-		IBaseRelationsEntityModel {
+	IBaseRelationsEntityModel {
 	timesheetId?: string;
 	teamId?: string;
 }
@@ -409,7 +407,7 @@ export interface IGetTimeLogReportInput extends IGetTimeLogInput {
 
 export interface IGetTimeLogConflictInput
 	extends IBasePerTenantAndOrganizationEntityModel,
-		IBaseRelationsEntityModel {
+	IBaseRelationsEntityModel {
 	ignoreId?: string | string[];
 	startDate: string | Date;
 	endDate: string | Date;
@@ -418,14 +416,14 @@ export interface IGetTimeLogConflictInput
 
 export interface IGetTimeSlotInput
 	extends ITimeLogFilters,
-		IBaseRelationsEntityModel {
+	IBaseRelationsEntityModel {
 	[x: string]: any;
 }
 
 export interface IGetActivitiesInput
 	extends ITimeLogFilters,
-		IPaginationInput,
-		IBaseRelationsEntityModel {
+	IPaginationInput,
+	IBaseRelationsEntityModel {
 	types?: string[];
 	titles?: string[];
 	groupBy?: string;
@@ -523,7 +521,7 @@ export type IReportDayData =
 
 export interface IGetTimeLimitReportInput
 	extends IBasePerTenantAndOrganizationEntityModel,
-		IBaseRelationsEntityModel {
+	IBaseRelationsEntityModel {
 	startDate?: string | Date;
 	endDate?: string | Date;
 	projectIds?: string[];
