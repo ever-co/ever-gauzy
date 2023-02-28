@@ -126,17 +126,17 @@ export class TimeTrackerService {
 			'Tenant-Id': values.tenantId,
 		});
 		const params = values.organizationId
-			? toParams({
+			? {
 					organizationId: values.organizationId,
 					tenantId: values.tenantId,
-			  })
-			: toParams({});
+			  }
+			: {};
 		let tags$ = this._tagCacheService.getValue(params);
 		if (!tags$) {
 			tags$ = this.http
 				.get(`${values.apiHost}/api/tags/level`, {
 					headers,
-					params,
+					params: toParams(params),
 				})
 				.pipe(
 					map((response: any) => response),
