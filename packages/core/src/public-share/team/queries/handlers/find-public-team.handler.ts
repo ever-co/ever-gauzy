@@ -11,7 +11,7 @@ export class FindPublicTeamHandler implements IQueryHandler<FindPublicTeamQuery,
     ) { }
 
     async execute(query: FindPublicTeamQuery): Promise<IOrganizationTeam> {
-        const { params, relations = [] } = query;
-        return await this.publicTeamService.findOneByProfileLink(params, relations);
+        const { params, options } = query;
+        return await this.publicTeamService.findOneByProfileLink(params, options);
     }
 }
