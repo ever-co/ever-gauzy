@@ -646,6 +646,12 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 				this._restartDisable$.next(!this._isConnectedDatabase.status);
 			});
 		})
+
+		this.electronService.ipcRenderer.on('_logout_quit_install_', (event, arg) => {
+			this._ngZone.run(() => {
+				this.logout(true);
+			})
+		})
 	}
 
 	mappingAdditionalSetting(values) {
@@ -805,7 +811,7 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 	}
 
 	restartAndUpdate() {
-		this.electronService.ipcRenderer.send('restart_and_update');
+		this.logout(true);
 	}
 
 	toggleAwView(value) {
@@ -840,10 +846,10 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 	/*
 	 * Logout desktop timer
 	 */
-	logout() {
+	logout(isAfterUpgrade?: boolean) {
 		console.log('On Logout');
 		localStorage.clear();
-		this.electronService.ipcRenderer.send('logout_desktop');
+		this.electronService.ipcRenderer.send('logout_desktop', isAfterUpgrade);
 	}
 
 	onServerChange(val) {

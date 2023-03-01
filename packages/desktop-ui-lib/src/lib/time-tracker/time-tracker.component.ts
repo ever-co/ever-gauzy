@@ -465,6 +465,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 			this._ngZone.run(async () => {
 				if (this.isExpand) this.expand();
 				if (this.start) await this.stopTimer();
+				if (arg) event.sender.send('restart_and_update');
 			})
 		);
 
