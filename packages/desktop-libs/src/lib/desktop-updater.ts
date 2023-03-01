@@ -191,6 +191,7 @@ export class DesktopUpdater {
 			try {
 				this._updateContext.checkUpdate();
 			} catch (e) {
+				this._settingWindow.webContents.send('error_update', e);
 				console.log('Error on checking update:', e);
 			}
 		}, 5000);
