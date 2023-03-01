@@ -7,11 +7,11 @@ import { PublicTeamService } from './../../public-team.service';
 export class FindPublicTeamHandler implements IQueryHandler<FindPublicTeamQuery, IOrganizationTeam> {
 
     constructor(
-        private readonly publicTeamService: PublicTeamService
+        private readonly _publicTeamService: PublicTeamService
     ) { }
 
     async execute(query: FindPublicTeamQuery): Promise<IOrganizationTeam> {
-        const { params, relations = [] } = query;
-        return await this.publicTeamService.findOneByProfileLink(params, relations);
+        const { params, options } = query;
+        return await this._publicTeamService.findOneByProfileLink(params, options);
     }
 }

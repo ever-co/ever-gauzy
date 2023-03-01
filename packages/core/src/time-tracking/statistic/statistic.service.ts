@@ -67,7 +67,7 @@ export class StatisticService {
 		let { employeeIds = [], projectIds = [] } = request;
 
 		const user = RequestContext.currentUser();
-		const tenantId = RequestContext.currentTenantId();
+		const tenantId = RequestContext.currentTenantId() || request.tenantId;
 
 		const { start, end } = (startDate && endDate) ?
 			getDateRangeFormat(
@@ -94,7 +94,8 @@ export class StatisticService {
 		} else {
 			employeeIds = await this.getEmployeesIds(
 				organizationId,
-				employeeIds
+				employeeIds,
+				tenantId
 			);
 		}
 
@@ -366,7 +367,7 @@ export class StatisticService {
 		let { employeeIds = [], projectIds = [] } = request;
 
 		const user = RequestContext.currentUser();
-		const tenantId = RequestContext.currentTenantId();
+		const tenantId = RequestContext.currentTenantId() || request.tenantId;
 
 		const { start: weeklyStart, end: weeklyEnd } = (startDate && endDate) ?
 			getDateRangeFormat(
@@ -393,7 +394,8 @@ export class StatisticService {
 		} else {
 			employeeIds = await this.getEmployeesIds(
 				organizationId,
-				employeeIds
+				employeeIds,
+				tenantId
 			);
 		}
 
@@ -735,7 +737,7 @@ export class StatisticService {
 		let { employeeIds = [], projectIds = [] } = request;
 
 		const user = RequestContext.currentUser();
-		const tenantId = RequestContext.currentTenantId();
+		const tenantId = RequestContext.currentTenantId() || request.tenantId;
 		const { start, end } = (startDate && endDate) ?
 			getDateRangeFormat(
 				moment.utc(startDate),
@@ -762,7 +764,8 @@ export class StatisticService {
 		} else {
 			employeeIds = await this.getEmployeesIds(
 				organizationId,
-				employeeIds
+				employeeIds,
+				tenantId
 			);
 		}
 
@@ -908,7 +911,7 @@ export class StatisticService {
 		let { employeeIds = [], projectIds = [], taskIds = [], defaultRange, unitOfTime } = request;
 
 		const user = RequestContext.currentUser();
-		const tenantId = RequestContext.currentTenantId();
+		const tenantId = RequestContext.currentTenantId() || request.tenantId;
 
 		let start: string | Date;
 		let end: string | Date;
@@ -930,23 +933,17 @@ export class StatisticService {
 				end = range.end;
 			}
 		}
+
 		/*
 		 *  Get employees id of the organization or get current employee id
 		 */
-		if (
-			(user.employeeId && request.onlyMe) ||
-			(
-				!RequestContext.hasPermission(
-					PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
-				)
-				&& user.employeeId
-			)
-		) {
+		if ((user && user.employeeId) && (request.onlyMe || !RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE))) {
 			employeeIds = [user.employeeId];
 		} else {
 			employeeIds = await this.getEmployeesIds(
 				organizationId,
-				employeeIds
+				employeeIds,
+				tenantId
 			);
 		}
 
@@ -1094,7 +1091,7 @@ export class StatisticService {
 		let { employeeIds = [], projectIds = [] } = request;
 
 		const user = RequestContext.currentUser();
-		const tenantId = RequestContext.currentTenantId();
+		const tenantId = RequestContext.currentTenantId() || request.tenantId;
 		const { start, end } = (startDate && endDate) ?
 			getDateRangeFormat(
 				moment.utc(startDate),
@@ -1120,7 +1117,8 @@ export class StatisticService {
 		} else {
 			employeeIds = await this.getEmployeesIds(
 				organizationId,
-				employeeIds
+				employeeIds,
+				tenantId
 			);
 		}
 
@@ -1209,7 +1207,8 @@ export class StatisticService {
 		let { employeeIds = [], projectIds = [] } = request;
 
 		const user = RequestContext.currentUser();
-		const tenantId = RequestContext.currentTenantId();
+		const tenantId = RequestContext.currentTenantId() || request.tenantId;
+
 		const { start, end } = (startDate && endDate) ?
 			getDateRangeFormat(
 				moment.utc(startDate),
@@ -1235,7 +1234,8 @@ export class StatisticService {
 		} else {
 			employeeIds = await this.getEmployeesIds(
 				organizationId,
-				employeeIds
+				employeeIds,
+				tenantId
 			);
 		}
 
@@ -1393,7 +1393,8 @@ export class StatisticService {
 		let { employeeIds = [], projectIds = [] } = request;
 
 		const user = RequestContext.currentUser();
-		const tenantId = RequestContext.currentTenantId();
+		const tenantId = RequestContext.currentTenantId() || request.tenantId;
+
 		const { start, end } = (startDate && endDate) ?
 			getDateRangeFormat(
 				moment.utc(startDate),
@@ -1420,7 +1421,8 @@ export class StatisticService {
 		} else {
 			employeeIds = await this.getEmployeesIds(
 				organizationId,
-				employeeIds
+				employeeIds,
+				tenantId
 			);
 		}
 
@@ -1556,9 +1558,9 @@ export class StatisticService {
 
 	private async getEmployeesIds(
 		organizationId: string,
-		employeeIds: string[]
+		employeeIds: string[],
+		tenantId = RequestContext.currentTenantId()
 	) {
-		const tenantId = RequestContext.currentTenantId();
 		const query = this.employeeRepository.createQueryBuilder('employee');
 		query
 			.select(['id'])
@@ -1630,7 +1632,6 @@ export class StatisticService {
 		qb: WhereExpressionBuilder,
 		request: IGetCountsStatistics
 	) {
-		const tenantId = RequestContext.currentTenantId();
 		const {
 			organizationId,
 			startDate,
@@ -1638,6 +1639,7 @@ export class StatisticService {
 			employeeIds = [],
 			projectIds = []
 		} = request;
+		const tenantId = RequestContext.currentTenantId() || request.tenantId;
 
 		const { start, end } = (startDate && endDate) ?
 			getDateRangeFormat(

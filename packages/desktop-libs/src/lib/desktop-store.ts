@@ -42,6 +42,25 @@ export const LocalStore = {
 	setDefaultApplicationSetting: () => {
 		try {
 			const config = store.get('appSetting');
+			const projectConfig = store.get('project');
+			if (!projectConfig) {
+				const config = {
+					aw: {
+						isAw: true
+					}
+				};
+				store.set({
+					project: config
+				});
+			} else {
+				projectConfig.aw =
+					typeof projectConfig.aw === 'undefined'
+						? { isAw: true }
+						: projectConfig.aw;
+				store.set({
+					appSetting: projectConfig
+				});
+			}
 			if (!config) {
 				const defaultAppSetting = {
 					monitor: {

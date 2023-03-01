@@ -5,9 +5,9 @@ import { FindOptionsWhere } from 'typeorm';
 import { Public } from '@gauzy/common';
 import { IOrganizationTeam } from '@gauzy/contracts';
 import { OrganizationTeam } from './../../core/entities/internal';
-import { RelationsQueryDTO } from './../../shared/dto';
 import { FindPublicTeamQuery } from './queries';
 import { PublicTransformInterceptor } from './../public-transform.interceptor';
+import { PublicTeamQueryDTO } from './dto';
 
 @Public()
 @UseInterceptors(PublicTransformInterceptor)
@@ -15,7 +15,7 @@ import { PublicTransformInterceptor } from './../public-transform.interceptor';
 export class PublicTeamController {
 
 	constructor(
-		private readonly queryBus: QueryBus
+		private readonly _queryBus: QueryBus
 	) { }
 
 	/**
@@ -38,10 +38,10 @@ export class PublicTeamController {
 	@UsePipes(new ValidationPipe({ transform: true, whitelist: true }))
 	async findOneByProfileLink(
 		@Param() params: FindOptionsWhere<OrganizationTeam>,
-		@Query() options: RelationsQueryDTO
+		@Query() options: PublicTeamQueryDTO
 	): Promise<IOrganizationTeam> {
-		return await this.queryBus.execute(
-			new FindPublicTeamQuery(params, options.relations)
+		return await this._queryBus.execute(
+			new FindPublicTeamQuery(params, options)
 		);
 	}
 }
