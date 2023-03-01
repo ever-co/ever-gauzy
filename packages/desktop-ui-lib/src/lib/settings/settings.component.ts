@@ -329,7 +329,15 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 		return this._selectedMenu$.getValue();
 	}
 	monitorOptionSelected = null;
-	appSetting = null;
+	/* Set Default Value */
+	appSetting = {
+		timerStarted: false,
+		randomScreenshotTime: 10,
+		trackOnPcSleep: false,
+		preventDisplaySleep: false,
+		visibleAwOption: true,
+		visibleWakatimeOption: false
+	};
 	periodOption = [1, 3, 5, 10];
 	selectedPeriod = 5;
 	screenshotNotification = null;
@@ -437,7 +445,10 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 		this.electronService.ipcRenderer.on('app_setting', (event, arg) =>
 			this._ngZone.run(() => {
 				const { setting, config, auth, additionalSetting } = arg;
-				this.appSetting = setting;
+				this.appSetting = {
+					...this.appSetting,
+					...setting
+				};
 				this.config = {
 					...this.config,
 					...config
