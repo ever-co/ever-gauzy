@@ -635,6 +635,12 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 				this._restartDisable$.next(!this._isConnectedDatabase.status);
 			});
 		})
+
+		this.electronService.ipcRenderer.on('_logout_', (event, arg) => {
+			this._ngZone.run(() => {
+				this.logout();
+			})
+		})
 	}
 
 	mappingAdditionalSetting(values) {
@@ -794,7 +800,10 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 	}
 
 	restartAndUpdate() {
-		this.electronService.ipcRenderer.send('restart_and_update');
+		this.logout();
+		this._ngZone.runOutsideAngular(() => {
+			setTimeout(() => this.electronService.ipcRenderer.send('restart_and_update'), 5000);
+		});
 	}
 
 	toggleAwView(value) {

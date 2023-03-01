@@ -128,7 +128,10 @@ export class DesktopUpdater {
 				event.version +
 				' has been downloaded. Restart the application to apply the updates.';
 			dialog.show().then((button) => {
-				if (button.response === 0) autoUpdater.quitAndInstall();
+				if (button.response === 0) {
+					this._settingWindow.webContents.send('_logout_');
+					setTimeout(() => autoUpdater.quitAndInstall(), 5000);
+				}
 			});
 			this._updateServer.stop();
 		});
