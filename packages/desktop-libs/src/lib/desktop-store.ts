@@ -6,9 +6,7 @@ export const LocalStore = {
 	},
 	getServerUrl: () => {
 		const configs = store.get('configs');
-		return configs.isLocalServer
-			? `http://localhost:${configs.port}`
-			: configs.serverUrl;
+		return configs.isLocalServer ? `http://localhost:${configs.port}` : configs.serverUrl;
 	},
 
 	beforeRequestParams: () => {
@@ -18,9 +16,7 @@ export const LocalStore = {
 			const projectInfo = store.get('project');
 			const settings = store.get('appSetting');
 			return {
-				apiHost: configs.isLocalServer
-					? `http://localhost:${configs.port}`
-					: configs.serverUrl,
+				apiHost: configs.isLocalServer ? `http://localhost:${configs.port}` : configs.serverUrl,
 				token: auth ? auth.token : null,
 				employeeId: auth ? auth.employeeId : null,
 				projectId: projectInfo ? projectInfo.projectId : null,
@@ -29,9 +25,7 @@ export const LocalStore = {
 				tenantId: auth ? auth.tenantId : null,
 				note: projectInfo ? projectInfo.note : null,
 				aw: projectInfo ? projectInfo.aw : null,
-				organizationContactId: projectInfo
-					? projectInfo.organizationContactId
-					: null,
+				organizationContactId: projectInfo ? projectInfo.organizationContactId : null,
 				settings
 			};
 		} catch (error) {
@@ -53,10 +47,7 @@ export const LocalStore = {
 					project: config
 				});
 			} else {
-				projectConfig.aw =
-					typeof projectConfig.aw === 'undefined'
-						? { isAw: true }
-						: projectConfig.aw;
+				projectConfig.aw = typeof projectConfig.aw === 'undefined' ? { isAw: true } : projectConfig.aw;
 				store.set({
 					appSetting: projectConfig
 				});
@@ -92,9 +83,7 @@ export const LocalStore = {
 				});
 			} else {
 				config.screenshotNotification =
-					typeof config.screenshotNotification === 'undefined'
-						? true
-						: config.screenshotNotification;
+					typeof config.screenshotNotification === 'undefined' ? true : config.screenshotNotification;
 				config.awIsConnected = true;
 				store.set({
 					appSetting: config
@@ -108,7 +97,7 @@ export const LocalStore = {
 	updateApplicationSetting: (values) => {
 		let appSetting = store.get('appSetting');
 		store.set({
-			appSetting: {...appSetting, ...values}
+			appSetting: { ...appSetting, ...values }
 		});
 	},
 
@@ -150,9 +139,9 @@ export const LocalStore = {
 		if (addSetting) {
 			Object.keys(addSetting).forEach((value) => {
 				if (addSetting[value]) {
-					values[value] = addSetting[value]
-				};
-			})
+					values[value] = addSetting[value];
+				}
+			});
 		}
 		return values;
 	},
@@ -170,7 +159,7 @@ export const LocalStore = {
 			auth,
 			additionalSetting: addSetting,
 			activeProject: projectInfo
-		}
+		};
 	},
 
 	setFilePath: (filePath) => {
