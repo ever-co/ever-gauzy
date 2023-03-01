@@ -636,9 +636,9 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 			});
 		})
 
-		this.electronService.ipcRenderer.on('_logout_', (event, arg) => {
+		this.electronService.ipcRenderer.on('_logout_quit_install_', (event, arg) => {
 			this._ngZone.run(() => {
-				this.logout();
+				this.logout(true);
 			})
 		})
 	}
@@ -800,10 +800,7 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 	}
 
 	restartAndUpdate() {
-		this.logout();
-		this._ngZone.runOutsideAngular(() => {
-			setTimeout(() => this.electronService.ipcRenderer.send('restart_and_update'), 5000);
-		});
+		this.logout(true);
 	}
 
 	toggleAwView(value) {
@@ -838,10 +835,10 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 	/*
 	 * Logout desktop timer
 	 */
-	logout() {
+	logout(isAfterUpgrade?: boolean) {
 		console.log('On Logout');
 		localStorage.clear();
-		this.electronService.ipcRenderer.send('logout_desktop');
+		this.electronService.ipcRenderer.send('logout_desktop', isAfterUpgrade);
 	}
 
 	onServerChange(val) {
