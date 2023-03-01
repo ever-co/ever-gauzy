@@ -15,7 +15,7 @@ import { PublicTeamQueryDTO } from './dto';
 export class PublicTeamController {
 
 	constructor(
-		private readonly queryBus: QueryBus
+		private readonly _queryBus: QueryBus
 	) { }
 
 	/**
@@ -40,7 +40,7 @@ export class PublicTeamController {
 		@Param() params: FindOptionsWhere<OrganizationTeam>,
 		@Query() options: PublicTeamQueryDTO
 	): Promise<IOrganizationTeam> {
-		return await this.queryBus.execute(
+		return await this._queryBus.execute(
 			new FindPublicTeamQuery(params, options)
 		);
 	}

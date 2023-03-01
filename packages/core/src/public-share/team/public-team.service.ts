@@ -11,7 +11,8 @@ export class PublicTeamService {
 	constructor(
 		@InjectRepository(OrganizationTeam)
 		private readonly repository: Repository<OrganizationTeam>,
-		private readonly statisticService: StatisticService
+
+		private readonly _statisticService: StatisticService
 	) { }
 
 	/**
@@ -46,11 +47,6 @@ export class PublicTeamService {
 								lastName: true,
 								imageUrl: true
 							}
-						},
-						organization: {
-							id: true,
-							name: true,
-							brandColor: true
 						}
 					}
 				},
@@ -95,12 +91,12 @@ export class PublicTeamService {
 						const { employeeId } = member
 						return {
 							...member,
-							totalWorkedTasks: await this.statisticService.getTasks({
+							totalWorkedTasks: await this._statisticService.getTasks({
 								organizationId,
 								tenantId,
 								employeeIds: [employeeId]
 							}),
-							totalTodayTasks: await this.statisticService.getTasks({
+							totalTodayTasks: await this._statisticService.getTasks({
 								organizationId,
 								tenantId,
 								employeeIds: [employeeId],
