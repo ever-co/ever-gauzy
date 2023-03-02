@@ -48,6 +48,7 @@ export class ProposalTemplateComponent extends PaginationFilterBaseComponent
 	selectedEmployee: ISelectedEmployee;
 	selectedItem: any;
 	noData: boolean = false;
+	proposalTemplates: any = [];
 
 	proposalTemplateTabsEnum = ProposalTemplateTabsEnum;
 	templates$: Subject<any> = new Subject();
@@ -174,12 +175,23 @@ export class ProposalTemplateComponent extends PaginationFilterBaseComponent
 					...this.getPagination(),
 					totalItems: this.smartTableSource.count()
 				});
-				if (this.smartTableSource.count() === 0) {
-					this.noData = true;
-				}
 				this.loading = false;
 			}
 		});
+	
+		this.proposalTemplateService
+			.getAll({
+				where: {
+					organizationId,
+					tenantId,
+				},
+			})
+			.then((items) => {
+				this.proposalTemplates = items;
+				if (this.proposalTemplates.total === 0) {
+					this.noData = true;
+				}
+			});
 	}
 
 	async getProposalTemplates() {
