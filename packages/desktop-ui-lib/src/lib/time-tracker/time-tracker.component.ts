@@ -27,7 +27,7 @@ import {
 	PermissionsEnum,
 	ProjectOwnerEnum,
 	TaskStatusEnum
-} from 'packages/contracts/dist';
+} from '@gauzy/contracts';
 
 // Import logging for electron and override default console logging
 const log = window.require('electron-log');
