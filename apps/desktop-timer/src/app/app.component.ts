@@ -40,10 +40,10 @@ export class AppComponent implements OnInit, AfterViewInit {
 				//Returns the language code name from the browser, e.g. "en", "bg", "he", "ru"
 				const browserLang = this.translate.getBrowserLang() as string;
 
-				//Gets default enum laguages, e.g. "en", "bg", "he", "ru"
+				//Gets default enum languages, e.g. "en", "bg", "he", "ru"
 				const defaultLanguages = Object.values(LanguagesEnum);
 
-				//Gets system laguages
+				//Gets system languages
 				const systemLanguages: string[] = _.pluck(
 					languages,
 					'code'
@@ -253,7 +253,7 @@ export class AppComponent implements OnInit, AfterViewInit {
 							console.log('success stopped timer', res);
 						})
 						.catch((e) => {
-							console.log('failed stoped timer', e);
+							console.log('failed stopped timer', e);
 							event.sender.send('timer_stopped');
 						});
 				})
@@ -261,26 +261,24 @@ export class AppComponent implements OnInit, AfterViewInit {
 
 		this.electronService.ipcRenderer.on('server_ping', (event, arg) =>
 			this._ngZone.run(() => {
-				const pinghost = setInterval(() => {
+				const pingHost = setInterval(() => {
 					this.appService
 						.pingServer(arg)
 						.then((res) => {
 							console.log('Server Found');
 							event.sender.send('server_is_ready');
-							clearInterval(pinghost);
+							clearInterval(pingHost);
 						})
 						.catch((e) => {
 							console.log('ping status result', e.status);
 							if (e.status === 404) {
 								event.sender.send('server_is_ready');
-								clearInterval(pinghost);
+								clearInterval(pingHost);
 							}
 
-							const userDetail =
-								localStorage.getItem('userDetail');
-							if (userDetail) {
+							if (this.store.userId) {
 								event.sender.send('server_is_ready');
-								clearInterval(pinghost);
+								clearInterval(pingHost);
 							}
 						});
 				}, 1000);
@@ -301,25 +299,23 @@ export class AppComponent implements OnInit, AfterViewInit {
 			'server_ping_restart',
 			(event, arg) =>
 				this._ngZone.run(() => {
-					const pinghost = setInterval(() => {
+					const pingHost = setInterval(() => {
 						this.appService
 							.pingServer(arg)
 							.then((res) => {
 								console.log('server found');
 								event.sender.send('server_already_start');
-								clearInterval(pinghost);
+								clearInterval(pingHost);
 							})
 							.catch((e) => {
 								console.log('ping status result', e.status);
 								if (e.status === 404) {
 									event.sender.send('server_already_start');
-									clearInterval(pinghost);
+									clearInterval(pingHost);
 								}
-								const userDetail =
-									localStorage.getItem('userDetail');
-								if (userDetail) {
+								if (this.store.userId) {
 									event.sender.send('server_is_ready');
-									clearInterval(pinghost);
+									clearInterval(pingHost);
 								}
 							});
 					}, 3000);
