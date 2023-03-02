@@ -8,5 +8,5 @@ export class TimeLogUpdateCommand implements ICommand {
 		public readonly input: Partial<TimeLog>,
 		public readonly id: TimeLog['id'] | TimeLog,
 		public readonly manualTimeSlot?: boolean | null
-	) { }
+	) {}
 }

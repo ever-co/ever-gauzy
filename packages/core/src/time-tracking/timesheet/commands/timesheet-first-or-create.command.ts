@@ -8,5 +8,5 @@ export class TimesheetFirstOrCreateCommand implements ICommand {
 		public readonly date: Date,
 		public readonly employeeId: ITimesheet['employeeId'],
 		public readonly organizationId?: ITimesheet['organizationId']
-	) { }
+	) {}
 }

@@ -8,17 +8,14 @@ import { IGetConflictTimeLogCommand } from '../get-conflict-time-log.command';
 import { RequestContext } from './../../../../core/context';
 
 @CommandHandler(IGetConflictTimeLogCommand)
-export class GetConflictTimeLogHandler
-	implements ICommandHandler<IGetConflictTimeLogCommand> {
+export class GetConflictTimeLogHandler implements ICommandHandler<IGetConflictTimeLogCommand> {
 	constructor(
 		@InjectRepository(TimeLog)
 		private readonly timeLogRepository: Repository<TimeLog>,
 		private readonly configService: ConfigService
-	) { }
+	) {}
 
-	public async execute(
-		command: IGetConflictTimeLogCommand
-	): Promise<TimeLog[]> {
+	public async execute(command: IGetConflictTimeLogCommand): Promise<TimeLog[]> {
 		const { input } = command;
 
 		const tenantId = RequestContext.currentTenantId() || input.tenantId;
@@ -43,23 +40,14 @@ export class GetConflictTimeLogHandler
 
 		if (input.relations) {
 			input.relations.forEach((relation) => {
-				conflictQuery = conflictQuery.leftJoinAndSelect(
-					`${conflictQuery.alias}.${relation}`,
-					relation
-				);
+				conflictQuery = conflictQuery.leftJoinAndSelect(`${conflictQuery.alias}.${relation}`, relation);
 			});
 		}
 
 		if (input.ignoreId) {
-			conflictQuery = conflictQuery.andWhere(
-				`${conflictQuery.alias}.id NOT IN (:...id)`,
-				{
-					id:
-						input.ignoreId instanceof Array
-							? input.ignoreId
-							: [input.ignoreId]
-				}
-			);
+			conflictQuery = conflictQuery.andWhere(`${conflictQuery.alias}.id NOT IN (:...id)`, {
+				id: input.ignoreId instanceof Array ? input.ignoreId : [input.ignoreId]
+			});
 		}
 		return await conflictQuery.getMany();
 	}

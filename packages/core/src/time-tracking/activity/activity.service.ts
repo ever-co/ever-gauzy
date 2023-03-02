@@ -36,9 +36,7 @@ export class ActivityService extends TenantAwareCrudService<Activity> {
 		super(activityRepository);
 	}
 
-	async getDailyActivities(
-		request: IGetActivitiesInput
-	): Promise<IDailyActivity[]> {
+	async getDailyActivities(request: IGetActivitiesInput): Promise<IDailyActivity[]> {
 		const query = this.filterQuery(request);
 		query.select(`COUNT("${query.alias}"."id")`, `sessions`);
 		query.addSelect(`SUM("${query.alias}"."duration")`, `duration`);
@@ -48,10 +46,7 @@ export class ActivityService extends TenantAwareCrudService<Activity> {
 		if (config.dbConnectionOptions.type === 'sqlite') {
 			query.addSelect(`time("${query.alias}"."time")`, `time`);
 		} else {
-			query.addSelect(
-				`(to_char("${query.alias}"."time", 'HH24') || ':00')::time`,
-				`time`
-			);
+			query.addSelect(`(to_char("${query.alias}"."time", 'HH24') || ':00')::time`, `time`);
 		}
 		query.addSelect(`"${query.alias}"."title"`, `title`);
 		query.groupBy(`"${query.alias}"."date"`);
@@ -59,9 +54,7 @@ export class ActivityService extends TenantAwareCrudService<Activity> {
 		if (config.dbConnectionOptions.type === 'sqlite') {
 			query.addGroupBy(`time("${query.alias}"."time")`);
 		} else {
-			query.addGroupBy(
-				`(to_char("${query.alias}"."time", 'HH24') || ':00')::time`
-			);
+			query.addGroupBy(`(to_char("${query.alias}"."time", 'HH24') || ':00')::time`);
 		}
 
 		query.addGroupBy(`"${query.alias}"."title"`);
@@ -73,9 +66,7 @@ export class ActivityService extends TenantAwareCrudService<Activity> {
 		return await query.getRawMany();
 	}
 
-	async getDailyActivitiesReport(
-		request: IGetActivitiesInput
-	): Promise<IActivity[]> {
+	async getDailyActivitiesReport(request: IGetActivitiesInput): Promise<IActivity[]> {
 		const query = this.filterQuery(request);
 
 		query.select(`COUNT("${query.alias}"."id")`, `sessions`);
@@ -126,20 +117,9 @@ export class ActivityService extends TenantAwareCrudService<Activity> {
 
 	async getActivities(request: IGetActivitiesInput): Promise<IActivity[]> {
 		const query = this.filterQuery(request);
-		if (
-			RequestContext.hasPermission(
-				PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
-			)
-		) {
-			query.leftJoinAndSelect(
-				`${query.alias}.employee`,
-				'activityEmployee'
-			);
-			query.leftJoinAndSelect(
-				`activityEmployee.user`,
-				'activityUser',
-				'"employee"."userId" = activityUser.id'
-			);
+		if (RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE)) {
+			query.leftJoinAndSelect(`${query.alias}.employee`, 'activityEmployee');
+			query.leftJoinAndSelect(`activityEmployee.user`, 'activityUser', '"employee"."userId" = activityUser.id');
 		}
 
 		query.orderBy(`${query.alias}.duration`, 'DESC');
@@ -147,9 +127,7 @@ export class ActivityService extends TenantAwareCrudService<Activity> {
 	}
 
 	async bulkSave(input: IBulkActivitiesInput) {
-		return await this.commandBus.execute(
-			new BulkActivitiesSaveCommand(input)
-		);
+		return await this.commandBus.execute(new BulkActivitiesSaveCommand(input));
 	}
 
 	private filterQuery(request: IGetActivitiesInput): SelectQueryBuilder<Activity> {
@@ -157,11 +135,7 @@ export class ActivityService extends TenantAwareCrudService<Activity> {
 		const tenantId = RequestContext.currentTenantId();
 
 		let employeeIds: string[];
-		if (
-			RequestContext.hasPermission(
-				PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
-			)
-		) {
+		if (RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE)) {
 			if (request.employeeIds) {
 				employeeIds = request.employeeIds;
 			}
@@ -207,15 +181,21 @@ export class ActivityService extends TenantAwareCrudService<Activity> {
 		query.andWhere(
 			new Brackets((qb: WhereExpressionBuilder) => {
 				if (config.dbConnectionOptions.type === 'sqlite') {
-					qb.andWhere(`datetime("${query.alias}"."date" || ' ' || "${query.alias}"."time") Between :startDate AND :endDate`, {
-						startDate,
-						endDate
-					});
+					qb.andWhere(
+						`datetime("${query.alias}"."date" || ' ' || "${query.alias}"."time") Between :startDate AND :endDate`,
+						{
+							startDate,
+							endDate
+						}
+					);
 				} else {
-					qb.andWhere(`concat("${query.alias}"."date", ' ', "${query.alias}"."time")::timestamp Between :startDate AND :endDate`, {
-						startDate,
-						endDate
-					});
+					qb.andWhere(
+						`concat("${query.alias}"."date", ' ', "${query.alias}"."time")::timestamp Between :startDate AND :endDate`,
+						{
+							startDate,
+							endDate
+						}
+					);
 				}
 			})
 		);
@@ -242,8 +222,8 @@ export class ActivityService extends TenantAwareCrudService<Activity> {
 					 * Activity Level should be 0-100%
 					 * So, we have convert it into 10 minutes timeslot by multiply by 6
 					 */
-					const start = (activityLevel.start * 6);
-					const end = (activityLevel.end * 6);
+					const start = activityLevel.start * 6;
+					const end = activityLevel.end * 6;
 
 					qb.andWhere(`"time_slot"."overall" BETWEEN :start AND :end`, {
 						start,
