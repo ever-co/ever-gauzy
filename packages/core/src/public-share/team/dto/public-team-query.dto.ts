@@ -11,7 +11,10 @@ export enum PublicTeamRelationEnum {
     'organization' = 'organization',
     'members' = 'members',
     'members.employee' = 'members.employee',
-    'members.employee.user' = 'members.employee.user'
+    'members.employee.user' = 'members.employee.user',
+    'tasks' = 'tasks',
+    'tasks.members' = 'tasks.members',
+    'tasks.teams' = 'tasks.teams'
 }
 
 export class PublicTeamQueryDTO extends PickType(

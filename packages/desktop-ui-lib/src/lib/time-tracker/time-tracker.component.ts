@@ -27,7 +27,7 @@ import {
 	ITask,
 	PermissionsEnum,
 	ProjectOwnerEnum,
-	TaskStatusEnum,
+	TaskStatusEnum
 } from '@gauzy/contracts';
 import { Store } from '@gauzy/desktop-timer/src/app/auth/services/store.service';
 
