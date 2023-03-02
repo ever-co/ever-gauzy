@@ -14,14 +14,14 @@ export class GetConflictTimeLogHandler
 		@InjectRepository(TimeLog)
 		private readonly timeLogRepository: Repository<TimeLog>,
 		private readonly configService: ConfigService
-	) {}
+	) { }
 
 	public async execute(
 		command: IGetConflictTimeLogCommand
 	): Promise<TimeLog[]> {
 		const { input } = command;
-		
-		const tenantId = RequestContext.currentTenantId();
+
+		const tenantId = RequestContext.currentTenantId() || input.tenantId;
 		const { employeeId, organizationId } = input;
 
 		const startedAt = moment.utc(input.startDate).toISOString();
