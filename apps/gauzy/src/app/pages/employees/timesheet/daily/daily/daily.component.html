@@ -216,9 +216,12 @@
 		</div>
 		<ng-template #notFound>
 			<div class="h-100">
-				<ngx-no-data-message
-					[message]="'TIMESHEET.NO_DATA.DAILY_TIMESHEET'"
-				></ngx-no-data-message>
+				<ngx-no-data-message>
+					<div
+						 message
+						[innerHTML]="'REPORT_PAGE.NO_DATA.DAILY_TIME_AND_ACTIVITY' | translate"
+					></div>
+				</ngx-no-data-message>
 			</div>
 		</ng-template>
 	</nb-card-body>

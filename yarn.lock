@@ -17659,6 +17659,11 @@ hash-base@^3.0.0:
     readable-stream "^3.6.0"
     safe-buffer "^5.2.0"
 
+hash-it@^6.0.0:
+  version "6.0.0"
+  resolved "https://registry.yarnpkg.com/hash-it/-/hash-it-6.0.0.tgz#188df5a8ca2f8e036690e35f2ef88bd9417ff334"
+  integrity sha512-KHzmSFx1KwyMPw0kXeeUD752q/Kfbzhy6dAZrjXV9kAIXGqzGvv8vhkUqj+2MGZldTo0IBpw6v7iWE7uxsvH0w==
+
 hash.js@^1.0.0, hash.js@^1.0.3:
   version "1.1.7"
   resolved "https://registry.yarnpkg.com/hash.js/-/hash.js-1.1.7.tgz#0babca538e8d4ee4a0f8988d68866537a003cf42"

@@ -38,6 +38,7 @@ export class PublicTeamService {
 					members: {
 						id: true,
 						organizationTeamId: true,
+						employeeId: true,
 						employee: {
 							id: true,
 							userId: true,

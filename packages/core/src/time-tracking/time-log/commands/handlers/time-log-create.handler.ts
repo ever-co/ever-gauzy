@@ -22,13 +22,13 @@ export class TimeLogCreateHandler
 
 		private readonly commandBus: CommandBus,
 		private readonly timeSlotService: TimeSlotService
-	) {}
+	) { }
 
 	public async execute(command: TimeLogCreateCommand): Promise<TimeLog> {
 		const { input } = command;
 		const { startedAt, employeeId, organizationId } = input;
 
-		const tenantId = RequestContext.currentTenantId();
+		const tenantId = RequestContext.currentTenantId() || input.tenantId;
 
 		const timesheet = await this.commandBus.execute(
 			new TimesheetFirstOrCreateCommand(

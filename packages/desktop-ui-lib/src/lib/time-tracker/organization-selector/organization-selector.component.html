@@ -1,0 +1,18 @@
+<div *ngIf="organizations">
+    <ng-select #select [disabled]="disabled" [searchable]="false" [clearable]="false" [items]="organizations"
+        bindLabel="name" nbTooltip="Please stop the timer before to change the organization" nbTooltipStatus="warning"
+        [nbTooltipDisabled]="!disabled"
+        (change)="selectOrganization($event); select.blur();" (clear)="select.blur();"
+        [(ngModel)]="selectedOrganization" placeholder="Select Organization" appendTo="body">
+        <ng-template ng-option-tmp let-item="item" let-index="index">
+            <img *ngIf="item.imageUrl" [src]="item.imageUrl" width="40" height="40" />
+            {{ item.name }}
+        </ng-template>
+        <ng-template ng-label-tmp let-item="item">
+            <div class="selector-template">
+                <img *ngIf="item.imageUrl" height="25" width="25" [src]="item.imageUrl" />
+                <span>{{ item.name }}</span>
+            </div>
+        </ng-template>
+    </ng-select>
+</div>
