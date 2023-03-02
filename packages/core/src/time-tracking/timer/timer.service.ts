@@ -243,7 +243,7 @@ export class TimerService {
 		}
 
 		const now = moment.utc().toDate();
-		const stoppedAt = request.startedAt ? moment.utc(request.startedAt).toDate() : now;
+		const stoppedAt = request.stoppedAt ? moment.utc(request.stoppedAt).toDate() : now;
 
 		lastLog = await this.commandBus.execute(
 			new TimeLogUpdateCommand(
