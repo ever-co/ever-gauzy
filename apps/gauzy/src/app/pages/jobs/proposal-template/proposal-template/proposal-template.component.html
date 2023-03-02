@@ -96,16 +96,19 @@
 			<button
 				nbButton
 				status="basic"
-				(click)="makeDefaultTemplate()"
-				[disabled]="
-					!selectedItem && disableButton && !selectedItem?.isDefault
+				(click)="
+					!isDefault ? makeDefaultTemplate() : removeDefaultTemplate()
 				"
 				class="mr-2"
 				class="action primary"
 				size="small"
 			>
-				<!-- <nb-icon class="mr-1" icon="edit-outline"></nb-icon> -->
-				{{ 'BUTTONS.MAKE_DEFAULT' | translate }}
+				{{
+					(!isDefault
+						? 'BUTTONS.MAKE_DEFAULT'
+						: 'BUTTONS.REMOVE_DEFAULT'
+					) | translate
+				}}
 			</button>
 		</ng-template>
 	</div>

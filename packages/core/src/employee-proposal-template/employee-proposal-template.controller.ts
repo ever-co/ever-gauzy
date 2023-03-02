@@ -68,6 +68,24 @@ export class EmployeeProposalTemplateController extends CrudController<EmployeeP
 	}
 
 	/**
+	 * CREATE remove default template by id
+	 *
+	 * @param id
+	 * @returns
+	 */
+	@ApiOperation({ summary: 'Remove Default' })
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'Record Updated',
+	})
+	@Post(':id/remove-default')
+	async removeDefault(
+		@Param('id', UUIDValidationPipe) id: string
+	): Promise<IEmployeeProposalTemplate> {
+		return await this.employeeProposalTemplateService.removeDefault(id);
+	}
+
+	/**
 	 * GET all employee proposal templates
 	 *
 	 * @param params

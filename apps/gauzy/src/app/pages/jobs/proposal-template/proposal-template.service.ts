@@ -46,6 +46,15 @@ export class ProposalTemplateService {
 		);
 	}
 
+	removeDefault(id) {
+		return firstValueFrom(
+			this.http.post<IEmployeeProposalTemplate>(
+				`${this.API_URL}/${id}/remove-default`,
+				{}
+			)
+		);
+	}
+
 	delete(id: string) {
 		return firstValueFrom(
 			this.http
