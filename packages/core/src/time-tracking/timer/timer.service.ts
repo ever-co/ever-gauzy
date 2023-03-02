@@ -10,13 +10,13 @@ import * as moment from 'moment';
 import {
 	TimeLogType,
 	ITimerStatus,
-	IGetTimeLogConflictInput,
 	ITimerToggleInput,
 	IDateRange,
 	TimeLogSourceEnum,
 	ITimerStatusInput,
 	ITimeLog,
 	PermissionsEnum,
+	ITimeSlot,
 } from '@gauzy/contracts';
 import { isNotEmpty } from '@gauzy/common';
 import { Employee, TimeLog } from './../../core/entities/internal';
@@ -35,13 +35,17 @@ export class TimerService {
 	constructor(
 		@InjectRepository(TimeLog)
 		private readonly timeLogRepository: Repository<TimeLog>,
-
 		@InjectRepository(Employee)
 		private readonly employeeRepository: Repository<Employee>,
-
 		private readonly commandBus: CommandBus
-	) {}
+	) { }
 
+	/**
+	 * Get timer status
+	 *
+	 * @param request
+	 * @returns
+	 */
 	async getTimerStatus(request: ITimerStatusInput): Promise<ITimerStatus> {
 		const userId = RequestContext.currentUserId();
 		const tenantId = RequestContext.currentTenantId();
@@ -113,8 +117,8 @@ export class TimerService {
 			},
 			...(request['relations']
 				? {
-						relations: request['relations'],
-				  }
+					relations: request['relations'],
+				}
 				: {}),
 			relationLoadStrategy: 'query',
 		});
@@ -147,9 +151,15 @@ export class TimerService {
 		return status;
 	}
 
+	/**
+	 * Start time tracking
+	 *
+	 * @param request
+	 * @returns
+	 */
 	async startTimer(request: ITimerToggleInput): Promise<ITimeLog> {
 		const userId = RequestContext.currentUserId();
-		const tenantId = RequestContext.currentTenantId();
+		const tenantId = RequestContext.currentTenantId() || request.tenantId;
 
 		const employee = await this.employeeRepository.findOneBy({
 			userId,
@@ -163,10 +173,7 @@ export class TimerService {
 		const { id: employeeId } = employee;
 		const lastLog = await this.getLastRunningLog(request);
 
-		console.log('Start Timer Request', {
-			request,
-			lastLog,
-		});
+		console.log('Start Timer Time Log', { request, lastLog });
 
 		if (lastLog) {
 			/**
@@ -188,19 +195,19 @@ export class TimerService {
 			logType,
 			description,
 			isBillable,
-			organizationId,
-			startedAt,
+			organizationId
 		} = request;
 
-		const timeStarted = startedAt ? startedAt : moment.utc().toDate();
+		const now = moment.utc().toDate();
+		const startedAt = request.startedAt ? moment.utc(request.startedAt).toDate() : now;
 
 		return await this.commandBus.execute(
 			new TimeLogCreateCommand({
 				organizationId,
 				tenantId,
 				employeeId,
-				startedAt: timeStarted,
-				stoppedAt: timeStarted,
+				startedAt: startedAt,
+				stoppedAt: startedAt,
 				duration: 0,
 				source: source || TimeLogSourceEnum.WEB_TIMER,
 				projectId: projectId || null,
@@ -210,13 +217,19 @@ export class TimerService {
 				description: description || null,
 				isBillable: isBillable || false,
 				version: request.version || null,
-				isRunning: true,
+				isRunning: true
 			})
 		);
 	}
 
+	/**
+	 * Stop time tracking
+	 *
+	 * @param request
+	 * @returns
+	 */
 	async stopTimer(request: ITimerToggleInput): Promise<ITimeLog> {
-		const tenantId = RequestContext.currentTenantId();
+		const tenantId = RequestContext.currentTenantId() || request.tenantId;
 
 		let lastLog = await this.getLastRunningLog(request);
 		if (!lastLog) {
@@ -229,56 +242,75 @@ export class TimerService {
 			lastLog = await this.getLastRunningLog(request);
 		}
 
-		console.log('Stop Timer Request', {
-			request,
-			lastLog,
-		});
-		const stoppedAt = request.stoppedAt
-			? request.stoppedAt
-			: moment.utc().toDate();
+		const now = moment.utc().toDate();
+		const stoppedAt = request.startedAt ? moment.utc(request.startedAt).toDate() : now;
+
 		lastLog = await this.commandBus.execute(
 			new TimeLogUpdateCommand(
-				{ stoppedAt, isRunning: false },
+				{
+					stoppedAt,
+					isRunning: false
+				},
 				lastLog.id,
 				request.manualTimeSlot
 			)
 		);
+		console.log('Stop Timer Time Log', { lastLog });
 
-		console.log('Stop Timer Updated Time Log', {
-			lastLog,
-		});
-
-		const conflicts = await this.commandBus.execute(
-			new IGetConflictTimeLogCommand({
+		try {
+			const conflicts = await this.commandBus.execute(
+				new IGetConflictTimeLogCommand({
+					ignoreId: lastLog.id,
+					startDate: lastLog.startedAt,
+					endDate: lastLog.stoppedAt,
+					employeeId: lastLog.employeeId,
+					organizationId: request.organizationId || lastLog.organizationId,
+					tenantId
+				})
+			);
+			console.log('Get Conflicts Time Logs', conflicts, {
 				ignoreId: lastLog.id,
 				startDate: lastLog.startedAt,
 				endDate: lastLog.stoppedAt,
 				employeeId: lastLog.employeeId,
-				organizationId:
-					request.organizationId || lastLog.organizationId,
+				organizationId: request.organizationId || lastLog.organizationId,
 				tenantId,
-			} as IGetTimeLogConflictInput)
-		);
-		console.log('Get Conflicts Time Logs', conflicts);
-		if (isNotEmpty(conflicts)) {
-			const times: IDateRange = {
-				start: new Date(lastLog.startedAt),
-				end: new Date(lastLog.stoppedAt),
-			};
+			});
 			if (isNotEmpty(conflicts)) {
-				for await (const timeLog of conflicts) {
-					const { timeSlots = [] } = timeLog;
-					for await (const timeSlot of timeSlots) {
-						await this.commandBus.execute(
-							new DeleteTimeSpanCommand(times, timeLog, timeSlot)
-						);
-					}
+				const times: IDateRange = {
+					start: new Date(lastLog.startedAt),
+					end: new Date(lastLog.stoppedAt),
+				};
+				if (isNotEmpty(conflicts)) {
+					await Promise.all(
+						await conflicts.map(
+							async (timeLog: ITimeLog) => {
+								const { timeSlots = [] } = timeLog;
+								timeSlots.map(
+									async (timeSlot: ITimeSlot) => {
+										await this.commandBus.execute(
+											new DeleteTimeSpanCommand(times, timeLog, timeSlot)
+										);
+									}
+								)
+							}
+						)
+					);
 				}
 			}
+		} catch (error) {
+			console.error('Error while deleting time span during conflicts timelogs', error);
 		}
+
 		return lastLog;
 	}
 
+	/**
+	 * Toggle time tracking start/stop
+	 *
+	 * @param request
+	 * @returns
+	 */
 	async toggleTimeLog(request: ITimerToggleInput): Promise<TimeLog> {
 		const lastLog = await this.getLastRunningLog(request);
 		if (!lastLog) {
@@ -288,8 +320,11 @@ export class TimerService {
 		}
 	}
 
-	/*
+	/**
 	 * Get employee last running timer
+	 *
+	 * @param request
+	 * @returns
 	 */
 	private async getLastRunningLog(request: ITimerToggleInput) {
 		const userId = RequestContext.currentUserId();
@@ -305,14 +340,10 @@ export class TimerService {
 			},
 		});
 		if (!employee) {
-			throw new NotFoundException(
-				"We couldn't find the employee you were looking for."
-			);
+			throw new NotFoundException("We couldn't find the employee you were looking for.");
 		}
 		if (!employee.isTrackingEnabled) {
-			throw new ForbiddenException(
-				`The time tracking functionality has been disabled for you.`
-			);
+			throw new ForbiddenException(`The time tracking functionality has been disabled for you.`);
 		}
 		const { id: employeeId } = employee;
 		return await this.timeLogRepository.findOne({
@@ -331,6 +362,12 @@ export class TimerService {
 		});
 	}
 
+	/**
+	 * Get timer worked status
+	 *
+	 * @param request
+	 * @returns
+	 */
 	public async getTimerWorkedStatus(request: ITimerStatusInput) {
 		const userId = RequestContext.currentUserId();
 		const tenantId = RequestContext.currentTenantId();
@@ -352,9 +389,7 @@ export class TimerService {
 			});
 		}
 		if (!employee) {
-			throw new NotFoundException(
-				"We couldn't find the employee you were looking for."
-			);
+			throw new NotFoundException("We couldn't find the employee you were looking for.");
 		}
 
 		const { id: employeeId } = employee;
@@ -382,8 +417,8 @@ export class TimerService {
 			},
 			...(request['relations']
 				? {
-						relations: request['relations'],
-				  }
+					relations: request['relations'],
+				}
 				: {}),
 			relationLoadStrategy: 'query',
 		});
