@@ -1,6 +1,6 @@
 import { IBasePerTenantAndOrganizationEntityModel } from './base-entity.model';
 import { IOrganizationProject } from './organization-projects.model';
-import { IRelationalOrganizationTeam } from './organization-team-model';
+import { IRelationalOrganizationTeam } from './organization-team.model';
 
 export interface ITaskPriority extends IBasePerTenantAndOrganizationEntityModel, IRelationalOrganizationTeam {
 	name: string;

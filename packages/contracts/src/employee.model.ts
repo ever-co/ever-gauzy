@@ -5,7 +5,7 @@ import { IOrganizationDepartment } from './organization-department.model';
 import { IOrganizationEmploymentType } from './organization-employment-type.model';
 import { CrudActionEnum, IOrganizationFindInput } from './organization.model';
 import { IOrganizationPosition } from './organization-positions.model';
-import { IOrganizationTeam } from './organization-team-model';
+import { IOrganizationTeam } from './organization-team.model';
 import { IRequestApprovalEmployee } from './request-approval-employee.model';
 import { ISkill } from './skill-entity.model';
 import { ITag } from './tag-entity.model';

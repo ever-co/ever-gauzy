@@ -76,7 +76,7 @@ export * from './organization-projects.model';
 export * from './organization-recurring-expense.model';
 export * from './organization-sprint.model';
 export * from './organization-team-employee-model';
-export * from './organization-team-model';
+export * from './organization-team.model';
 export * from './organization-vendors.model';
 export * from './organization.model';
 export * from './password-reset.model';

@@ -6,7 +6,7 @@ import { IEmployee } from './employee.model';
 import { IInvoiceItem } from './invoice-item.model';
 import { IOrganizationProject } from './organization-projects.model';
 import { IOrganizationSprint } from './organization-sprint.model';
-import { IOrganizationTeam } from './organization-team-model';
+import { IOrganizationTeam } from './organization-team.model';
 import { ITag } from './tag-entity.model';
 import { IUser } from './user.model';
 import { TaskStatusEnum } from './task-status.model';

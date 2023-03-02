@@ -1,6 +1,6 @@
 import { IBasePerTenantAndOrganizationEntityModel } from './base-entity.model';
 import { IEmployee } from './employee.model';
-import { IOrganizationTeam } from './organization-team-model';
+import { IOrganizationTeam } from './organization-team.model';
 import { IEquipment } from './equipment.model';
 import { IEquipmentSharingPolicy } from './equipment-sharing-policy.model';
 

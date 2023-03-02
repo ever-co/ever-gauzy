@@ -1,5 +1,5 @@
 import { IBasePerTenantAndOrganizationEntityModel } from './base-entity.model';
-import { IRelationalOrganizationTeam } from './organization-team-model';
+import { IRelationalOrganizationTeam } from './organization-team.model';
 import { IRelationalEmployee } from './employee.model';
 import { IRelationalRole } from './role.model';
 import { ITimerStatus } from './timesheet.model';

@@ -3,7 +3,7 @@ import { ICandidateFeedback } from './candidate-feedback.model';
 import { ICandidateSource } from './candidate-source.model';
 import { IBasePerTenantAndOrganizationEntityModel } from './base-entity.model';
 import { IUserFindInput, IUser } from './user.model';
-import { IOrganizationTeam } from './organization-team-model';
+import { IOrganizationTeam } from './organization-team.model';
 import { IOrganizationEmploymentType } from './organization-employment-type.model';
 import { ICandidateExperience } from './candidate-experience.model';
 import { ICandidateSkill } from './candidate-skill.model';
@@ -16,8 +16,8 @@ import { ITag } from './tag-entity.model';
 import { IEmployee, PayPeriodEnum } from './employee.model';
 
 export interface IRelationalCandidate {
-    readonly candidate?: ICandidate;
-    readonly candidateId?: ICandidate['id'];
+	readonly candidate?: ICandidate;
+	readonly candidateId?: ICandidate['id'];
 }
 
 export interface ICandidate extends IBasePerTenantAndOrganizationEntityModel {
@@ -118,4 +118,3 @@ export interface ICandidateViewModel extends IBasePerTenantAndOrganizationEntity
 	isArchived?: boolean;
 	status?: CandidateStatusEnum;
 }
-
