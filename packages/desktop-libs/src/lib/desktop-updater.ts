@@ -128,7 +128,9 @@ export class DesktopUpdater {
 				event.version +
 				' has been downloaded. Restart the application to apply the updates.';
 			dialog.show().then((button) => {
-				if (button.response === 0) autoUpdater.quitAndInstall();
+				if (button.response === 0) {
+					this._settingWindow.webContents.send('_logout_quit_install_');
+				}
 			});
 			this._updateServer.stop();
 		});
@@ -188,6 +190,7 @@ export class DesktopUpdater {
 			try {
 				this._updateContext.checkUpdate();
 			} catch (e) {
+				this._settingWindow.webContents.send('error_update', e);
 				console.log('Error on checking update:', e);
 			}
 		}, 5000);
