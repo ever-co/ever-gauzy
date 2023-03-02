@@ -16,7 +16,7 @@ export abstract class AbstractCacheService<T> {
 		protected _storageService: StorageService<T>,
 		protected _store: Store
 	) {
-		this._duration = 5; // Default cache set to 5 minutes
+		this._duration = 500; // Default cache set to 500 milliseconds
 		this._prefix = '';
 	}
 
@@ -46,7 +46,7 @@ export abstract class AbstractCacheService<T> {
 			? this.prefix.concat(hash(object).toString())
 			: this._DEFAULT_KEY;
 		const expiresAt = moment(new Date())
-			.add(this._duration, 'minutes')
+			.add(this._duration, 'milliseconds')
 			.toDate();
 		this._cache[key] = { expiresAt, value };
 		this._storageService.setItem({ key, cache: this._cache[key] });

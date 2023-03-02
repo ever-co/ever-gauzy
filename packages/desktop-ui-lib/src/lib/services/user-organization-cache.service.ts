@@ -14,6 +14,6 @@ export class UserOrganizationCacheService extends AbstractCacheService<IUserOrga
 	) {
 		super(_storageService, _store);
 		this.prefix = UserOrganizationCacheService.name.toString();
-		this.duration = 1440; // 24 Hours
+		this.duration = 24 * 3600 * 1000; // 24 Hours
 	}
 }

@@ -20,6 +20,6 @@ export class TagCacheService extends AbstractCacheService<{
 	) {
 		super(_storageService, _store);
 		this.prefix = TagCacheService.name.toString();
-		this.duration = 10080; // 1 week
+		this.duration = 24 * 3600 * 7 * 1000; // 1 week
 	}
 }
