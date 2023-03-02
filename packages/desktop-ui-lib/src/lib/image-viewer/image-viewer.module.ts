@@ -9,9 +9,10 @@ import {
 	NbDialogService,
 	NbButtonModule
 } from '@nebular/theme';
+import { dateTimePipe } from '../time-tracker/pipes/date-time.pipe';
 
 @NgModule({
-	declarations: [ImageViewerComponent],
+	declarations: [ImageViewerComponent, dateTimePipe],
 	imports: [
 		CommonModule,
 		NbLayoutModule,
