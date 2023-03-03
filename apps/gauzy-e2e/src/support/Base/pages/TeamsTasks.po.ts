@@ -38,7 +38,7 @@ export const clickSelectProjectDropdown = () => {
 };
 
 export const selectProjectOptionDropdown = (text) => {
-	clickElementByText(TeamsTasksPage.drodownOptionCss, text);
+	clickElementByText(TeamsTasksPage.dropdownOptionCss, text);
 };
 
 export const selectStatusDropdownVisible = () => {
@@ -50,7 +50,7 @@ export const clickStatusDropdown = () => {
 };
 
 export const selectStatusFromDropdown = (text) => {
-	clickElementByText(TeamsTasksPage.drodownOptionCss, text);
+	clickElementByText(TeamsTasksPage.dropdownOptionCss, text);
 };
 
 export const selectTeamDropdownVisible = () => {

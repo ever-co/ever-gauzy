@@ -111,7 +111,7 @@ Then('User will see notification message', () => {
 });
 
 //Add employee level and short description
-When('User see dashboard button on main manu', () => {
+When('User see dashboard button on main menu', () => {
 	employeeAddInfo.verifyMenuBtnByText(EmployeeAddInfoPageData.dashboardTxt);
 });
 

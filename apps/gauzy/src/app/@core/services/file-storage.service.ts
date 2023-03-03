@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
 import { IWasabiFileStorageProviderConfig } from '@gauzy/contracts';
 import { API_PREFIX } from '../constants/app.constants';
@@ -10,7 +10,7 @@ export class FileStorageService {
         private readonly http: HttpClient
     ) { }
 
-	validateWasabiCredentials(config: IWasabiFileStorageProviderConfig) {
+	validateWasabiCredentials(config: IWasabiFileStorageProviderConfig): Promise<any> | HttpErrorResponse {
 		return firstValueFrom(
 			this.http.post<IWasabiFileStorageProviderConfig>(`${API_PREFIX}/tenant-setting/wasabi/validate`, config)
 		);

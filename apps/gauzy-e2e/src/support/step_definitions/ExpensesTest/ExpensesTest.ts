@@ -379,11 +379,11 @@ Then('Notification message will appear', () => {
 
 // Add new category
 And('User can see manage categories button', () => {
-	expensesPage.managecategoriesButtonVisible();
+	expensesPage.manageCategoriesButtonVisible();
 });
 
 When('User click on manage categories button', () => {
-	expensesPage.clickManagecategoriesButton();
+	expensesPage.clickManageCategoriesButton();
 });
 
 Then('User can add category button', () => {

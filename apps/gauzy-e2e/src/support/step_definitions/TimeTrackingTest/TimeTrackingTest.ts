@@ -379,7 +379,7 @@ Then('Notification message will appear', () => {
 });
 
 And('User can see view timesheet button', () => {
-	timeTrackingPage.viewTimesheetbtnVisible();
+	timeTrackingPage.viewTimesheetBtnVisible();
 });
 
 When('User click on view timesheet button', () => {

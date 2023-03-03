@@ -159,7 +159,7 @@ export const clickInviteButton = () => {
 	clickButton(CustomersPage.inviteButtonCss);
 };
 
-export const saveInvitebuttonVisible = () => {
+export const saveInviteButtonVisible = () => {
 	verifyElementIsVisible(CustomersPage.saveInviteButtonCss);
 };
 
@@ -258,7 +258,7 @@ export const clickFinishButton = () => {
 	clickButton(CustomersPage.finishButtonCss);
 };
 
-export const lastStepBtnVisible = () =>{
+export const lastStepBtnVisible = () => {
 	verifyElementIsVisible(CustomersPage.lastStepBtnCss)
 }
 

@@ -53,7 +53,7 @@ export const enterSecretKeyInputData = (data) => {
 	enterInput(FileStoragePage.secretAccessKeyInputCss, data);
 };
 
-export const regioninputVisible = () => {
+export const regionInputVisible = () => {
 	verifyElementIsVisible(FileStoragePage.regionInputCss);
 };
 

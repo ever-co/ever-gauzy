@@ -1,5 +1,5 @@
 export const SettingsFeaturesPageData = {
-	hedearText: 'Settings',
+	headerText: 'Settings',
 	subheaderTextTenant: "Manage Features for",
 	subheaderTextOrganization: "Manage Features for 'Ever Technologies LTD'",
 	// Tenant

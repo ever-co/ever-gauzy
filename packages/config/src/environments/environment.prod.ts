@@ -68,6 +68,16 @@ export const environment: IEnvironment = {
 		}
 	},
 
+	/**
+	 * Cloudinary FileSystem Storage Configuration
+	 */
+	cloudinaryConfig: {
+		cloudName: process.env.CLOUDINARY_CLOUD_NAME,
+		apiKey: process.env.CLOUDINARY_API_KEY,
+		apiSecret: process.env.CLOUDINARY_API_SECRET,
+		secure: process.env.CLOUDINARY_API_SECURE === 'false' ? false : true
+	},
+
 	facebookConfig: {
 		loginDialogUri: 'https://www.facebook.com/v2.12/dialog/oauth',
 		accessTokenUri: 'https://graph.facebook.com/v2.12/oauth/access_token',

@@ -183,7 +183,7 @@ export const verifyProposalExists = (text) => {
 };
 
 export const verifyProposalAccepted = () => {
-	verifyElementIsVisible(ProposalsPage.acceptedproposalCss);
+	verifyElementIsVisible(ProposalsPage.acceptedProposalCss);
 };
 
 export const manageTemplatesBtnVisible = () => {
@@ -256,11 +256,11 @@ export const verifyProposalTemplate = (name) => {
 };
 
 export const employeeMultiSelectVisible = () => {
-	verifyElementIsVisible(ProposalsPage.employeeMultyseelectCss);
+	verifyElementIsVisible(ProposalsPage.employeeMultiSelectCss);
 };
 
 export const clickEmployeeMultiSelect = () => {
-	clickButton(ProposalsPage.employeeMultyseelectCss);
+	clickButton(ProposalsPage.employeeMultiSelectCss);
 };
 
 export const selectEmployeeFromMultiSelectDropdown = (index) => {

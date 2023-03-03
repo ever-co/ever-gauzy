@@ -27,12 +27,12 @@ export const clickAddEventTypeButton = () => {
 };
 
 export const selectEmployeeDropdownVisible = () => {
-	verifyElementIsVisible(EventTypesPage.selectEmployeeDrodownCss);
+	verifyElementIsVisible(EventTypesPage.selectEmployeeDropdownCss);
 };
 
 export const clickSelectEmployeeDropdown = () => {
 	waitUntil(3000);
-	clickButton(EventTypesPage.selectEmployeeDrodownCss);
+	clickButton(EventTypesPage.selectEmployeeDropdownCss);
 };
 
 export const selectEmployeeFromDropdown = (index) => {

@@ -283,7 +283,7 @@ And('User can enter value for customer email', () => {
 });
 
 And('User can see save invite button', () => {
-	customersPage.saveInvitebuttonVisible();
+	customersPage.saveInviteButtonVisible();
 });
 
 When('User click on save invite button', () => {

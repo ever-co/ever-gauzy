@@ -63,7 +63,7 @@ describe('Contacts leads test', () => {
 		);
 		contactsLeadsPage.contactEmailInputVisible();
 		contactsLeadsPage.enterContactEmailData(email);
-		contactsLeadsPage.saveInvitebuttonVisible();
+		contactsLeadsPage.saveInviteButtonVisible();
 		contactsLeadsPage.clickSaveInviteButton();
 		contactsLeadsPage.waitMessageToHide();
 		contactsLeadsPage.verifyLeadExists(fullName);

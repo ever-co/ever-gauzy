@@ -230,7 +230,16 @@
         "Ruslan",
         "Konviser",
         "datname",
-        "Udemy"
+        "Udemy",
+        "pageobjects",
+        "urlpath",
+        "fieldname",
+        "pinghost",
+        "formcontrolname",
+        "formcontrol",
+        "TIMERTRX",
+        "TIMERTRXER",
+        "TIMERTRXERUPDATE"
     ],
     "useGitignore": true,
     "ignorePaths": [

@@ -31,7 +31,7 @@ describe('Organization inventory test', () => {
 		organizationInventoryPage.saveButtonVisible();
 		organizationInventoryPage.clickSaveButton();
 		organizationInventoryPage.waitMessageToHide();
-		organizationInventoryPage.verifycategoryExists(
+		organizationInventoryPage.verifyCategoryExists(
 			OrganizationInventoryPageData.productCategoryName
 		);
 		organizationInventoryPage.backButtonVisible();
@@ -159,7 +159,7 @@ describe('Organization inventory test', () => {
 		organizationInventoryPage.confirmDeleteButtonVisible();
 		organizationInventoryPage.clickConfirmDeleteButton();
 		organizationInventoryPage.waitMessageToHide();
-		organizationInventoryPage.verifycategoryIsDeleted(
+		organizationInventoryPage.verifyCategoryIsDeleted(
 			OrganizationInventoryPageData.productCategoryName
 		);
 		organizationInventoryPage.backButtonVisible();

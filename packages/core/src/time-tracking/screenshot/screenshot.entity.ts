@@ -7,7 +7,7 @@ import {
 } from 'typeorm';
 import { FileStorageProviderEnum, IScreenshot, ITimeSlot } from '@gauzy/contracts';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsString, IsOptional, IsNumber, IsDateString } from 'class-validator';
+import { IsString, IsOptional, IsNumber, IsDateString, IsUUID } from 'class-validator';
 import { Exclude } from 'class-transformer';
 import {
 	TenantOrganizationBaseEntity,
@@ -52,10 +52,10 @@ export class Screenshot extends TenantOrganizationBaseEntity
 	fullUrl?: string;
 	thumbUrl?: string;
 	/*
-    |--------------------------------------------------------------------------
-    | @ManyToOne
-    |--------------------------------------------------------------------------
-    */
+	|--------------------------------------------------------------------------
+	| @ManyToOne
+	|--------------------------------------------------------------------------
+	*/
 
 	/**
 	 * TimeSlot
@@ -66,10 +66,10 @@ export class Screenshot extends TenantOrganizationBaseEntity
 	})
 	timeSlot?: ITimeSlot;
 
-	@ApiProperty({ type: () => String, readOnly: true })
+	@ApiProperty({ type: () => String })
+	@IsUUID()
 	@RelationId((it: Screenshot) => it.timeSlot)
-	@IsString()
 	@Index()
 	@Column({ nullable: true })
-	readonly timeSlotId?: string;
+	timeSlotId?: ITimeSlot['id'];
 }

@@ -282,7 +282,7 @@ And('User can enter template name', () => {
 	proposalsPage.enterTemplateName(ProposalsPageData.juniorDeveloper);
 });
 
-And('User can enter propsoal template content', () => {
+And('User can enter proposal template content', () => {
 	proposalsPage.enterProposalTemplateContent(proposalTemplateContent, 0);
 });
 
@@ -307,7 +307,7 @@ And('User can see proposals templates table', () => {
 	proposalsPage.tableRowVisible();
 });
 
-When('User click on rpoposals templates table row', () => {
+When('User click on proposals templates table row', () => {
 	proposalsPage.selectTableRow(0);
 });
 
@@ -348,7 +348,7 @@ And('User can see proposals templates table again', () => {
 	proposalsPage.tableRowVisible();
 });
 
-When('User click on rpoposals templates table row again', () => {
+When('User click on proposals templates table row again', () => {
 	proposalsPage.selectTableRow(0);
 });
 

@@ -219,5 +219,5 @@ export const clickOnCurrencyField = () => {
 };
 
 export const selectCurrency = (currency: string) => {
-	clickByText(EmployeeDashboardPage.currenctOptionCss, currency)
+	clickByText(EmployeeDashboardPage.currencyOptionCss, currency)
 };

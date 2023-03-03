@@ -59,7 +59,7 @@ describe('Approval request test', () => {
 		approvalRequestPage.saveButtonVisible();
 		approvalRequestPage.clickSaveButton();
 		approvalRequestPage.waitMessageToHide();
-		approvalRequestPage.verifyApprovalpolicyExists(
+		approvalRequestPage.verifyApprovalPolicyExists(
 			ApprovalRequestPageData.defaultApprovalPolicy
 		);
 		approvalRequestPage.backButtonVisible();

@@ -13,7 +13,7 @@ describe('Verify settings features', () => {
 	});
 	it('Task Dashboard', () => {
 		cy.visit('/#/pages/settings/features/tenant');
-		settingsFeaturesPage.verifyHeader(SettingsFeaturesPageData.hedearText);
+		settingsFeaturesPage.verifyHeader(SettingsFeaturesPageData.headerText);
 		settingsFeaturesPage.tabButtonVisible();
 		settingsFeaturesPage.clickTabButton(0);
 		settingsFeaturesPage.verifySubheader(

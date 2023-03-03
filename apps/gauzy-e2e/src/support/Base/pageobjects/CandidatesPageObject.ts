@@ -38,11 +38,11 @@ export const CandidatesPage = {
 	ratesButtonCss: '.route-tab:nth-child(5) > .tab-text',
 	payPeriodDropdownCss: '#payPeriodsSelect',
 	billRateInputCss: '#billRateValueInput',
-	experienseButtonCss: '.route-tab:nth-child(7) > .tab-text',
+	experienceButtonCss: '.route-tab:nth-child(7) > .tab-text',
 	addExperienceButtonCss: 'div.btn > button[status="success"]',
 	schoolNameInputCss: '[formcontrolname="schoolName"]',
 	degreeInputCss: '[formcontrolname="degree"]',
-	saveExperisnceButtonCss: 'div.col-2 > button[status="success"]',
+	saveExperienceButtonCss: 'div.col-2 > button[status="success"]',
 	toastrMessageCss: 'nb-toast.ng-trigger',
 	verifyCandidateCss: 'div.d-block',
 	badgeCss: 'div.badge-danger'

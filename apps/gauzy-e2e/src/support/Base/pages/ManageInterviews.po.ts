@@ -111,7 +111,7 @@ export const clickInterviewTypeButton = (index) => {
 	clickButtonByIndex(ManageInterviewsPage.radioButtonCss, index);
 };
 
-export const locationinputVisible = () => {
+export const locationInputVisible = () => {
 	verifyElementIsVisible(ManageInterviewsPage.locationInputCss);
 };
 
@@ -302,14 +302,14 @@ export const clickOkButton = () => {
 	clickButton(ManageInterviewsPage.archiveInterviewOkButtonCss);
 };
 
-export const verifyInludeArchivedCheckboxVisible = () => {
+export const verifyIncludeArchivedCheckboxVisible = () => {
 	verifyElementIsVisibleByIndex(
 		ManageInterviewsPage.interviewCheckboxFiltersCss,
 		2
 	);
 };
 
-export const clickInludeArchivedCheckbox = () => {
+export const clickIncludeArchivedCheckbox = () => {
 	clickButtonByIndex(
 		ManageInterviewsPage.interviewCheckboxFiltersInputsCss,
 		2

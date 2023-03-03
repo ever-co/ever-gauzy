@@ -1,4 +1,3 @@
-import dayjs from 'dayjs';
 import {
 	clearField,
 	clickButton,
@@ -8,10 +7,6 @@ import {
 	verifyElementIsVisible,
 	verifyText,
 	waitElementToHide,
-	verifyTextContentByIndex,
-	verifyElementIsVisibleByIndex,
-	verifyElementIsNotVisibleByIndex,
-	clickButtonWithForce,
 	clickByText,
 	compareTwoTexts
 } from '../utils/util';
@@ -45,12 +40,12 @@ export const enterNameInputData = (data) => {
 
 export const selectEmployeeDropdownVisible = () => {
 	verifyElementIsVisible(
-		ProjectTrackedInTimesheetPage.selectEmployeeMultyselectCss
+		ProjectTrackedInTimesheetPage.selectEmployeeMultiSelectCss
 	);
 };
 
 export const clickSelectEmployeeDropdown = () => {
-	clickButton(ProjectTrackedInTimesheetPage.selectEmployeeMultyselectCss);
+	clickButton(ProjectTrackedInTimesheetPage.selectEmployeeMultiSelectCss);
 };
 
 export const selectEmployeeDropdownOption = (text) => {
@@ -113,7 +108,7 @@ export const clickStopTimerBtn = () => {
 	clickButton(ProjectTrackedInTimesheetPage.stopTimerBtnCss);
 };
 
-export const viewTimesheetbtnVisible = () => {
+export const viewTimesheetBtnVisible = () => {
 	verifyElementIsVisible(ProjectTrackedInTimesheetPage.viewTimesheetBtnCss);
 };
 
@@ -126,7 +121,7 @@ export const verifyProjectText = (text) => {
 }
 
 export const waitMainDashboard = (url: string) => {
-	//waits for responce then continue
+	//waits for response then continue
 	cy.intercept('GET', url).as('getUser')
 	cy.wait('@getUser').then(() => {
 		verifyElementIsVisible(ProjectTrackedInTimesheetPage.headerImgCss);

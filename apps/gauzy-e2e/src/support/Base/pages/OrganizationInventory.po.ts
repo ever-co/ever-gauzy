@@ -108,7 +108,7 @@ export const backFromCategoryButtonVisible = () => {
 	verifyElementIsVisible(OrganizationInventoryPage.backFromCategoryButtonCss);
 };
 
-export const clickBackFromCategodyButton = () => {
+export const clickBackFromCategoryButton = () => {
 	clickButton(OrganizationInventoryPage.backFromCategoryButtonCss);
 };
 
@@ -174,12 +174,12 @@ export const verifyTypeIsDeleted = (text) => {
 	verifyTextNotExisting(OrganizationInventoryPage.verifyTypeCss, text);
 };
 
-export const verifycategoryExists = (text) => {
-	verifyText(OrganizationInventoryPage.verifycategoryCss, text);
+export const verifyCategoryExists = (text) => {
+	verifyText(OrganizationInventoryPage.verifyCategoryCss, text);
 };
 
-export const verifycategoryIsDeleted = (text) => {
-	verifyTextNotExisting(OrganizationInventoryPage.verifycategoryCss, text);
+export const verifyCategoryIsDeleted = (text) => {
+	verifyTextNotExisting(OrganizationInventoryPage.verifyCategoryCss, text);
 };
 
 export const verifyInventoryExists = (text) => {

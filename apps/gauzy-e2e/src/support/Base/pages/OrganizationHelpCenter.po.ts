@@ -144,7 +144,7 @@ export const waitMessageToHide = () => {
 	waitElementToHide(OrganizationHelpCenterPage.toastrMessageCss);
 };
 
-export const verifybaseExists = (text) => {
+export const verifyBaseExists = (text) => {
 	verifyText(OrganizationHelpCenterPage.verifyBaseCss, text);
 };
 
@@ -152,7 +152,7 @@ export const verifyBaseIsDeleted = () => {
 	verifyElementNotExist(OrganizationHelpCenterPage.verifyBaseCss);
 };
 
-export const clickAddCategotyOption = (text) => {
+export const clickAddCategoryOption = (text) => {
 	clickElementByText(
 		OrganizationHelpCenterPage.settingsDropdownOptionCss,
 		text
@@ -174,7 +174,7 @@ export const arrowButtonVisible = () => {
 };
 
 export const clickArrowButton = (index: number) => {
-	clickElementIfVisible(OrganizationHelpCenterPage.arrowButtonCss,index);
+	clickElementIfVisible(OrganizationHelpCenterPage.arrowButtonCss, index);
 };
 
 export const clickOnCategory = (index) => {

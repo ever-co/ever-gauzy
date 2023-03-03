@@ -3917,6 +3917,21 @@
 				"BUCKET": "Bucket",
 				"SERVICE_URL": "Service URL"
 			}
+		},
+		"CLOUDINARY": {
+			"HEADER": "Cloudinary Configuration",
+			"LABELS": {
+				"CLOUD_NAME": "Cloudinary name",
+				"ACCESS_API_KEY": "Access key id",
+				"ACCESS_API_SECRET": "Secret access key",
+				"SECURE": "Secure"
+			},
+			"PLACEHOLDERS": {
+				"CLOUD_NAME": "Cloudinary name",
+				"ACCESS_API_KEY": "Access key id",
+				"ACCESS_API_SECRET": "Secret access key",
+				"SECURE": "Secure"
+			}
 		}
 	},
 	"CUSTOM_SMTP_PAGE": {
