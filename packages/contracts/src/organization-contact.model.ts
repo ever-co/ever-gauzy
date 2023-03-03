@@ -3,7 +3,7 @@ import { IEmployee } from './employee.model';
 import { IBaseEntityWithMembers } from './entity-with-members.model';
 import { IOrganizationCreateInput } from './organization.model';
 import { IUser, LanguagesEnum } from './user.model';
-import { ITag } from './tag-entity.model';
+import { ITag } from './tag.model';
 import { IContact } from './contact.model';
 import { IBasePerTenantAndOrganizationEntityModel } from './base-entity.model';
 import { ITimeLog } from './timesheet.model';

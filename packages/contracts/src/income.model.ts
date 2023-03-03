@@ -1,6 +1,6 @@
 import { IRelationalEmployee } from './employee.model';
 import { IBasePerTenantAndOrganizationEntityModel } from './base-entity.model';
-import { ITag } from './tag-entity.model';
+import { ITag } from './tag.model';
 import { IOrganizationContact } from './organization-contact.model';
 
 export interface IIncome extends IBasePerTenantAndOrganizationEntityModel, IRelationalEmployee {

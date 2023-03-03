@@ -8,7 +8,7 @@ import { IOrganizationAward } from './organization-award.model';
 import { IOrganizationLanguage } from './organization-language.model';
 import { IOrganizationSprint } from './organization-sprint.model';
 import { ISkill } from './skill-entity.model';
-import { ITag } from './tag-entity.model';
+import { ITag } from './tag.model';
 import { ITenant } from './tenant.model';
 import { IReportOrganization } from './report.model';
 
