@@ -899,7 +899,7 @@ And('User can verify Viewer administration roles and permissions', () => {
 	rolesPermissionsPage.verifyState(RolesPermissionsPageData.ViewOrganizationEquipmentAdmin, notChecked);
 	rolesPermissionsPage.verifyState(RolesPermissionsPageData.ViewOrganizationEquipmentSharingAdmin, notChecked);
 	rolesPermissionsPage.verifyState(RolesPermissionsPageData.ViewOrganizationProductTypesAdmin, notChecked);
-	rolesPermissionsPage.verifyState(RolesPermissionsPageData.ViewOrganizationProductcategoriesAdmin, notChecked);
+	rolesPermissionsPage.verifyState(RolesPermissionsPageData.ViewOrganizationProductCategoriesAdmin, notChecked);
 	rolesPermissionsPage.verifyState(RolesPermissionsPageData.MigrateIntoGauzyCloud, notChecked);
 	rolesPermissionsPage.verifyState(RolesPermissionsPageData.AccessDeleteAccount, notChecked);
 	rolesPermissionsPage.verifyState(RolesPermissionsPageData.AccessDeleteAllData, notChecked);
