@@ -22,7 +22,10 @@ import { DeleteQueryDTO } from './../../shared/dto';
 @Permissions(PermissionsEnum.TIME_TRACKER)
 @Controller()
 export class ScreenshotController {
-	constructor(private readonly screenshotService: ScreenshotService) { }
+
+	constructor(
+		private readonly screenshotService: ScreenshotService
+	) { }
 
 	@ApiOperation({ summary: 'Add manual time' })
 	@ApiResponse({
