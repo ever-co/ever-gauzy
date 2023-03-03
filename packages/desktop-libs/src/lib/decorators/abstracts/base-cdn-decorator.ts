@@ -19,8 +19,8 @@ export abstract class BaseCdnDecorator implements IDesktopCdnUpdate {
 		return await this._decorator.tagName();
 	}
 
-	public checkUpdate(): void {
-		this._decorator.checkUpdate();
+	public async checkUpdate(): Promise<void> {
+		await this._decorator.checkUpdate();
 	}
 
 	public get config(): IUpdaterConfig {

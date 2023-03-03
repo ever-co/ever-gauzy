@@ -17,8 +17,8 @@ export class UpdateContext {
 		this._strategy.notify(info);
 	}
 
-	public checkUpdate() {
-		this._strategy.checkUpdate();
+	public async checkUpdate(): Promise<void> {
+		await this._strategy.checkUpdate();
 	}
 
 	public cancel() {

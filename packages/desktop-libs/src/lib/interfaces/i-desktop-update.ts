@@ -1,7 +1,7 @@
 import { UpdateInfo } from "electron-updater";
 
 export interface IDesktopUpdate {
-    checkUpdate(): void;
+    checkUpdate(): Promise<void>;
     update(): void;
     notify(info: UpdateInfo): void;
     cancel(): void;
