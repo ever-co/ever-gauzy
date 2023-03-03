@@ -185,7 +185,7 @@ export class TagService extends TenantAwareCrudService<Tag> {
 		query.andWhere(
 			new Brackets((qb: WhereExpressionBuilder) => {
 				if (isNotEmpty(organizationTeamId)) {
-					query.andWhere(`"${query.alias}"."organizationTeamId" = :organizationTeamId`, {
+					qb.andWhere(`"${query.alias}"."organizationTeamId" = :organizationTeamId`, {
 						organizationTeamId
 					});
 				}
