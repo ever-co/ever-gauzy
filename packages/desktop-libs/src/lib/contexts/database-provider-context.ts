@@ -1,15 +1,17 @@
-import { IDatabaseProvider } from '../interfaces/i-database-provider';
+import { IClientServerProvider, IServerLessProvider } from '../interfaces';
 
 export class DatabaseProviderContext {
-	private _provider: IDatabaseProvider;
-	constructor(provider?: IDatabaseProvider) {
-		this._provider = provider;
+	private _provider: IServerLessProvider | IClientServerProvider;
+
+	constructor(provider?: IServerLessProvider | IClientServerProvider) {
+		this._provider = provider
 	}
-	public set provider(value: IDatabaseProvider) {
+
+	public set provider(value: IServerLessProvider | IClientServerProvider) {
 		this._provider = value;
 	}
 
-	public get provider(): IDatabaseProvider {
+	public get provider(): IServerLessProvider | IClientServerProvider {
 		return this._provider;
 	}
 }

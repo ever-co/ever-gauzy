@@ -313,6 +313,7 @@ export const DEFAULT_ROLE_PERMISSIONS = [
 			PermissionsEnum.EQUIPMENT_MAKE_REQUEST,
 			PermissionsEnum.ORG_PRODUCT_TYPES_VIEW,
 			PermissionsEnum.ORG_PRODUCT_CATEGORIES_VIEW,
+			PermissionsEnum.ACCESS_DELETE_ACCOUNT,
 			PermissionsEnum.PROFILE_EDIT,
 			PermissionsEnum.ALLOW_DELETE_TIME,
 			PermissionsEnum.ALLOW_MODIFY_TIME,

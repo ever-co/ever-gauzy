@@ -608,19 +608,25 @@ export function ipcTimer(
 	ipcMain.on('logout_desktop', async (event, arg) => {
 		try {
 			console.log('masuk logout main');
-			timeTrackerWindow.webContents.send('logout');
 			await userService.remove();
+			timeTrackerWindow.webContents.send('logout', arg);
 		} catch (error) {
 			console.log('Error', error);
 		}
 	});
 
 	ipcMain.on('navigate_to_login', () => {
-		if (timeTrackerWindow) {
-			timeTrackerWindow.loadURL(timeTrackerPage(windowPath.timeTrackerUi));
+		try {
+			if (timeTrackerWindow) {
+				timeTrackerWindow.loadURL(timeTrackerPage(windowPath.timeTrackerUi));
+			}
+			LocalStore.updateAuthSetting({ isLogout: true });
+			if (settingWindow) {
+				settingWindow.webContents.send('logout_success');
+			}
+		} catch (error) {
+			console.log('ERROR', error);
 		}
-		LocalStore.updateAuthSetting({ isLogout: true });
-		settingWindow.webContents.send('logout_success');
 	});
 
 	ipcMain.on('expand', (event, arg) => {

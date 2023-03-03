@@ -1,26 +1,28 @@
-import { IDatabaseProvider } from '../../interfaces/i-database-provider';
 import { Knex } from 'knex';
 import { LocalStore } from '../../desktop-store';
+import { IClientServerProvider } from '../../interfaces';
 
-export class PostgresProvider implements IDatabaseProvider {
-	private static _instance: IDatabaseProvider;
+export class PostgresProvider implements IClientServerProvider {
+	private _connectionConfig: Knex.StaticConnectionConfig;
+	private static _instance: IClientServerProvider;
 	private _connection: Knex;
+	private _database: string;
 
 	private constructor() {
+		this._initialization();
 		this._connection = require('knex')(this.config);
 		console.log('[provider]: ', 'postgres connected...');
 	}
 
 	public get config(): Knex.Config<any> {
-		const cfg = LocalStore.getApplicationConfig().config;
 		return {
 			client: 'pg',
 			connection: {
-				host: cfg.dbHost,
-				port: cfg.dbPort,
-				user: cfg.dbUsername,
-				password: cfg.dbPassword,
-				database: 'db_gauzy_timer',
+				...this._connectionConfig,
+				database: this._database,
+			},
+			migrations: {
+				directory: __dirname + '/migrations',
 			},
 			pool: {
 				min: 2,
@@ -31,15 +33,43 @@ export class PostgresProvider implements IDatabaseProvider {
 				reapIntervalMillis: 1000,
 				createRetryIntervalMillis: 100,
 			},
-			migrations: {
-				directory: __dirname + '/migrations',
-			},
 			useNullAsDefault: true,
 			asyncStackTraces: true,
 		};
 	}
 
-	public static get instance(): IDatabaseProvider {
+	private _initialization() {
+		this._database = 'gauzy_timer_db';
+		const cfg = LocalStore.getApplicationConfig().config['postgres'];
+		this._connectionConfig = {
+			host: cfg.dbHost,
+			port: cfg.dbPort,
+			user: cfg.dbUsername,
+			password: cfg.dbPassword,
+			parseInputDatesAsUTC: true
+		}
+	}
+
+	public async createDatabase() {
+		try {
+			const connection: Knex = require('knex')({
+				client: 'pg',
+				connection: this._connectionConfig,
+			});
+			const res = await connection
+				.select('datname')
+				.from('pg_database')
+				.where('datname', this._database);
+			if (res.length < 1) {
+				await connection.raw('CREATE DATABASE ??', this._database)
+			}
+			await connection.destroy();
+		} catch (error) {
+			console.error('[provider-error]', error);
+		}
+	}
+
+	public static get instance(): IClientServerProvider {
 		if (!PostgresProvider._instance) {
 			PostgresProvider._instance = new PostgresProvider();
 		}

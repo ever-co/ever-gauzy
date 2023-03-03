@@ -70,7 +70,7 @@ export class ActivityService extends TenantAwareCrudService<Activity> {
 		query.orderBy(`time`, 'ASC');
 		query.addOrderBy(`"duration"`, 'DESC');
 
-		return query.getRawMany();
+		return await query.getRawMany();
 	}
 
 	async getDailyActivitiesReport(
@@ -244,7 +244,7 @@ export class ActivityService extends TenantAwareCrudService<Activity> {
 					 */
 					const start = (activityLevel.start * 6);
 					const end = (activityLevel.end * 6);
-	
+
 					qb.andWhere(`"time_slot"."overall" BETWEEN :start AND :end`, {
 						start,
 						end

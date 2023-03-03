@@ -27,6 +27,7 @@ import { environment as ENV } from './../../../environments/environment';
 @Component({
 	selector: 'ga-currency',
 	templateUrl: './currency.component.html',
+	styleUrls: ['./currency.component.scss'],
 	providers: [
 		{
 			provide: NG_VALUE_ACCESSOR,

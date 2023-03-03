@@ -225,7 +225,11 @@
         "signups",
         "Shaked",
         "julianday",
-        "pagedata"
+        "pagedata",
+        "Artboard",
+        "Ruslan",
+        "Konviser",
+        "datname"
     ],
     "useGitignore": true,
     "ignorePaths": [

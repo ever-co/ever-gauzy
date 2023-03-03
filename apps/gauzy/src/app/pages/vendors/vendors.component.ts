@@ -71,6 +71,7 @@ export class VendorsComponent
 		state: false
 	};
 	disabled: boolean = true;
+	saveDisabled: boolean = false;
 	isLoading: boolean = false;
 	private _refresh$: Subject<any> = new Subject();
 
@@ -231,9 +232,11 @@ export class VendorsComponent
 			state: false
 		};
 		this.disabled = true;
+		this.saveDisabled = false;
 	}
 
 	save() {
+		this.saveDisabled = true;
 		if (this.selectedVendor) {
 			this.updateVendor(this.selectedVendor);
 		} else {
