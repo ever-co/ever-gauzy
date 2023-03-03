@@ -60,7 +60,7 @@ describe('Organization equipment test', () => {
 	it('Should be able to add equipment policy', () => {
 		organizationEquipmentPage.equipmentSharingButtonVisible();
 		organizationEquipmentPage.clickEquipmentSharingButton();
-		organizationEquipmentPage.sharingpolicyButtonVisible();
+		organizationEquipmentPage.sharingPolicyButtonVisible();
 		organizationEquipmentPage.clickSharingPolicyButton();
 		organizationEquipmentPage.addPolicyButtonVisible();
 		organizationEquipmentPage.clickAddPolicyButton();
@@ -178,7 +178,7 @@ describe('Organization equipment test', () => {
 		organizationEquipmentPage.verifyEquipmentIsDeleted();
 	});
 	it('Should be able to edit policy', () => {
-		organizationEquipmentPage.sharingpolicyButtonVisible();
+		organizationEquipmentPage.sharingPolicyButtonVisible();
 		organizationEquipmentPage.clickSharingPolicyButton();
 		organizationEquipmentPage.selectTableRow(0);
 		organizationEquipmentPage.editButtonVisible();

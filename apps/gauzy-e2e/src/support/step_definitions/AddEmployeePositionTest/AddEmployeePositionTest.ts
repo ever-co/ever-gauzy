@@ -104,7 +104,7 @@ And('User can click on cancel edit button', () => {
 	addEmployeePositionPage.clickCancelButton();
 });
 
-// Еdit employee position
+// edit employee position
 Then('User can see edit newly position button', () => {
 	addEmployeePositionPage.clickEditEmployeePositionButton();
 });

@@ -111,7 +111,7 @@ export const clickInterviewTypeButton = (index) => {
 	clickButtonByIndex(ManageInterviewsPage.radioButtonCss, index);
 };
 
-export const locationinputVisible = () => {
+export const locationInputVisible = () => {
 	verifyElementIsVisible(ManageInterviewsPage.locationInputCss);
 };
 

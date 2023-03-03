@@ -27,7 +27,7 @@ export const clickTabButton = (index) => {
 	clickButtonByIndex(GoalstimeFramePage.tabButtonCss, index);
 };
 
-export const addtimeFrameButtonVisible = () => {
+export const addTimeFrameButtonVisible = () => {
 	verifyElementIsVisible(GoalstimeFramePage.addTimeFrameButtonCss);
 };
 

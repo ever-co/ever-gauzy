@@ -57,7 +57,7 @@ describe('Manage interviews test', () => {
 		manageInterviewsPage.clickKeyboardButtonByKeyCode(9);
 		manageInterviewsPage.interviewTypeButtonVisible();
 		manageInterviewsPage.clickInterviewTypeButton(1);
-		manageInterviewsPage.loactioninputVisible();
+		manageInterviewsPage.loactionInputVisible();
 		manageInterviewsPage.enterLocationInputData(
 			ManageInterviewsPageData.location
 		);

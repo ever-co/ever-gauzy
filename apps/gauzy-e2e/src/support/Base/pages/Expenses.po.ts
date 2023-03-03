@@ -195,7 +195,7 @@ export const manageCategoriesButtonVisible = () => {
 	verifyElementIsVisible(ExpensesPage.manageCategoriesButtonCss);
 };
 
-export const clickManagecategoriesButton = () => {
+export const clickManageCategoriesButton = () => {
 	clickButton(ExpensesPage.manageCategoriesButtonCss);
 };
 

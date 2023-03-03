@@ -10,7 +10,7 @@ import {
 	waitElementToHide,
 	verifyText,
 	verifyTextNotExisting,
-	vefiryByLength
+	verifyByLength
 } from '../utils/util';
 import { AddTaskPage } from '../pageobjects/AddTasksPageObject';
 
@@ -214,5 +214,5 @@ export const clearSearchInput = () => {
 };
 
 export const verifySearchResult = (length: number) => {
-	vefiryByLength(AddTaskPage.selectTableRowCss, length);
+	verifyByLength(AddTaskPage.selectTableRowCss, length);
 };

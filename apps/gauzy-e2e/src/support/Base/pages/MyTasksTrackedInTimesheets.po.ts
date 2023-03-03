@@ -174,7 +174,7 @@ export const clickStopTimerBtn = () => {
 	clickButton(MyTasksTrackedInTimesheets.stopTimerBtnCss);
 };
 
-export const viewTimesheetbtnVisible = () => {
+export const viewTimesheetBtnVisible = () => {
 	verifyElementIsVisible(MyTasksTrackedInTimesheets.viewTimesheetBtnCss);
 };
 

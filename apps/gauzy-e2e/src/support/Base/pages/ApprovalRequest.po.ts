@@ -125,12 +125,12 @@ export const clickApprovalPolicyButton = () => {
 };
 
 export const descriptionInputVisible = () => {
-	verifyElementIsVisible(ApprovalRequestPage.descriptioninputCss);
+	verifyElementIsVisible(ApprovalRequestPage.descriptionInputCss);
 };
 
 export const enterDescriptionInputData = (data) => {
-	clearField(ApprovalRequestPage.descriptioninputCss);
-	enterInput(ApprovalRequestPage.descriptioninputCss, data);
+	clearField(ApprovalRequestPage.descriptionInputCss);
+	enterInput(ApprovalRequestPage.descriptionInputCss, data);
 };
 
 export const backButtonVisible = () => {
@@ -145,7 +145,7 @@ export const waitMessageToHide = () => {
 	waitElementToHide(ApprovalRequestPage.toastrMessageCss);
 };
 
-export const verifyApprovalpolicyExists = (text) => {
+export const verifyApprovalPolicyExists = (text) => {
 	verifyText(ApprovalRequestPage.verifyApprovalPolicyCss, text);
 };
 

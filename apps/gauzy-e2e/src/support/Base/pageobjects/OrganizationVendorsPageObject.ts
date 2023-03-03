@@ -7,7 +7,7 @@ export const OrganizationVendorsPage = {
 	websiteInputCss: '[formcontrolname="website"]',
 	addTagsDropdownCss: '#addTags',
 	tagsDropdownOption: 'div.ng-option',
-	saveVendorbuttonCss: 'nb-card-footer > button[status="success"]',
+	saveVendorButtonCss: 'nb-card-footer > button[status="success"]',
 	editVendorButtonCss: 'nb-actions > nb-action[icon="edit"]',
 	deleteVendorButtonCss: 'nb-actions > nb-action[icon="close"]',
 	confirmDeleteButtonCss: 'nb-card-footer > button[status="danger"]',
