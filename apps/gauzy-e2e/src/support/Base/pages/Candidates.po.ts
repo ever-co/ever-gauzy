@@ -328,15 +328,15 @@ export const experienceButtonVisible = () => {
 	verifyElementIsVisible(CandidatesPage.experienceButtonCss);
 };
 
-export const clickExperienseButton = () => {
+export const clickExperienceButton = () => {
 	clickButton(CandidatesPage.experienceButtonCss);
 };
 
-export const addExperienseButtonVisible = () => {
+export const addExperienceButtonVisible = () => {
 	verifyElementIsVisible(CandidatesPage.addExperienceButtonCss);
 };
 
-export const clickAddExperienseButton = () => {
+export const clickAddExperienceButton = () => {
 	clickButton(CandidatesPage.addExperienceButtonCss);
 };
 
@@ -362,7 +362,7 @@ export const saveExperienceButtonVisible = () => {
 	verifyElementIsVisible(CandidatesPage.saveExperienceButtonCss);
 };
 
-export const clickSaveExperienseButton = () => {
+export const clickSaveExperienceButton = () => {
 	clickButton(CandidatesPage.saveExperienceButtonCss);
 };
 

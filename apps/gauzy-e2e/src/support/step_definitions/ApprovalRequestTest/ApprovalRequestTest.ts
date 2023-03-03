@@ -119,7 +119,7 @@ Then('Notification message will appear', () => {
 });
 
 And('User can verify policy was created', () => {
-	approvalRequestPage.verifyApprovalpolicyExists(
+	approvalRequestPage.verifyApprovalPolicyExists(
 		ApprovalRequestPageData.defaultApprovalPolicy
 	);
 });

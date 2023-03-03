@@ -152,7 +152,7 @@ export const verifyBaseIsDeleted = () => {
 	verifyElementNotExist(OrganizationHelpCenterPage.verifyBaseCss);
 };
 
-export const clickAddCategotyOption = (text) => {
+export const clickAddCategoryOption = (text) => {
 	clickElementByText(
 		OrganizationHelpCenterPage.settingsDropdownOptionCss,
 		text

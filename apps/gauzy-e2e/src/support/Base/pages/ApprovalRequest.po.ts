@@ -13,7 +13,7 @@ import {
 	verifyTextByIndex,
 	verifyTextNotExistByIndex,
 	verifyByText,
-	vefiryByLength,
+	verifyByLength,
 	verifyTextNotExisting
 } from '../utils/util';
 import { ApprovalRequestPage } from '../pageobjects/ApprovalRequestPageObject';
@@ -201,7 +201,7 @@ export const verifyNameInput = () => {
 export const searchApprovalRequest = (text: string, length: number) => {
 	clearField(ApprovalRequestPage.searchByNameInputCss);
 	enterInput(ApprovalRequestPage.searchByNameInputCss, text);
-	vefiryByLength(ApprovalRequestPage.approvalStatusCss, length);
+	verifyByLength(ApprovalRequestPage.approvalStatusCss, length);
 };
 
 export const clearNameSearchInput = () => {
@@ -209,5 +209,5 @@ export const clearNameSearchInput = () => {
 };
 
 export const waitTableLoad = (length: number) => {
-	vefiryByLength(ApprovalRequestPage.approvalStatusCss, length);
+	verifyByLength(ApprovalRequestPage.approvalStatusCss, length);
 }

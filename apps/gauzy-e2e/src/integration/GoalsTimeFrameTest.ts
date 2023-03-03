@@ -14,7 +14,7 @@ describe('Goals Time Frame test', () => {
 		goalsTimeFramePage.tabButtonVisible();
 		goalsTimeFramePage.clickTabButton(1);
 		goalsTimeFramePage.addTimeFrameButtonVisible();
-		goalsTimeFramePage.clickAddtimeFrameButton();
+		goalsTimeFramePage.clickAddTimeFrameButton();
 		goalsTimeFramePage.nameInputVisible();
 		goalsTimeFramePage.enterNameInputData(GoalsTimeFramePageData.name);
 		goalsTimeFramePage.startDateInputVisible();

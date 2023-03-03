@@ -235,7 +235,11 @@
         "urlpath",
         "fieldname",
         "pinghost",
-        "formcontrolname"
+        "formcontrolname",
+        "formcontrol",
+        "TIMERTRX",
+        "TIMERTRXER",
+        "TIMERTRXERUPDATE"
     ],
     "useGitignore": true,
     "ignorePaths": [

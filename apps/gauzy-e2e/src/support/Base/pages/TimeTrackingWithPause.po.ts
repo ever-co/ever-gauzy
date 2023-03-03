@@ -60,7 +60,7 @@ export const clickStopTimerBtn = () => {
 	clickButton(TimeTrackingWithPausePage.stopTimerBtnCss);
 };
 
-export const viewTimesheetbtnVisible = () => {
+export const viewTimesheetBtnVisible = () => {
 	verifyElementIsVisible(TimeTrackingWithPausePage.viewTimesheetBtnCss);
 };
 
@@ -199,7 +199,7 @@ export const clickNotificationButton = () => {
 	clickButtonWithForce(TimeTrackingWithPausePage.confirmDialogBtnCss);
 };
 
-export const notVisibleRecordedTimeDeleteBtn = (index) =>{
+export const notVisibleRecordedTimeDeleteBtn = (index) => {
 	verifyElementIsNotVisibleByIndex(TimeTrackingWithPausePage.deleteTimeBtnCss, index)
 };
 
@@ -208,7 +208,7 @@ export const verifyTimerTime = (type) => {
 };
 
 export const waitMainDashboard = (url: string) => {
-	//waits for responce then continue 
+	//waits for responce then continue
 	cy.intercept('GET', url).as('getUser')
 	cy.wait('@getUser').then(() => {
 		verifyElementIsVisible(TimeTrackingWithPausePage.headerImgCss);

@@ -43,4 +43,4 @@ Feature: Manage interviews criterion test
     And User can see delete quality button
     When User click on delete quality button
     Then Notification message will appear
-    And Use can verify qaulity was deleted
+    And Use can verify quality was deleted

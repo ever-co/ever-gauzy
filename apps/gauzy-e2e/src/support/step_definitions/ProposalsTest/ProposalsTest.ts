@@ -307,7 +307,7 @@ And('User can see proposals templates table', () => {
 	proposalsPage.tableRowVisible();
 });
 
-When('User click on rpoposals templates table row', () => {
+When('User click on proposals templates table row', () => {
 	proposalsPage.selectTableRow(0);
 });
 
@@ -348,7 +348,7 @@ And('User can see proposals templates table again', () => {
 	proposalsPage.tableRowVisible();
 });
 
-When('User click on rpoposals templates table row again', () => {
+When('User click on proposals templates table row again', () => {
 	proposalsPage.selectTableRow(0);
 });
 

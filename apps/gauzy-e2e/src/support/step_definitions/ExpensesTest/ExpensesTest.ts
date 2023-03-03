@@ -383,7 +383,7 @@ And('User can see manage categories button', () => {
 });
 
 When('User click on manage categories button', () => {
-	expensesPage.clickManagecategoriesButton();
+	expensesPage.clickManageCategoriesButton();
 });
 
 Then('User can add category button', () => {

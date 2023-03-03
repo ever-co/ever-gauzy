@@ -31,7 +31,7 @@ export const addTimeFrameButtonVisible = () => {
 	verifyElementIsVisible(GoalstimeFramePage.addTimeFrameButtonCss);
 };
 
-export const clickAddtimeFrameButton = () => {
+export const clickAddTimeFrameButton = () => {
 	clickButton(GoalstimeFramePage.addTimeFrameButtonCss);
 };
 

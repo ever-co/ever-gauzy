@@ -187,7 +187,7 @@ When('Employee click on stop timer button', () => {
 });
 
 Then('Employee can see view timesheet button', () => {
-	projectTrackedInTimesheets.viewTimesheetbtnVisible();
+	projectTrackedInTimesheets.viewTimesheetBtnVisible();
 });
 
 When('Employee click on view timesheet button', () => {

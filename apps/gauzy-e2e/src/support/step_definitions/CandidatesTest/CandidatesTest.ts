@@ -125,7 +125,7 @@ And('User can enter candidate email value', () => {
 	inviteCandidatePage.enterCandidateEmailInputData(email);
 });
 
-And('User can see password inpit field', () => {
+And('User can see password input field', () => {
 	inviteCandidatePage.passwordInputVisible();
 });
 

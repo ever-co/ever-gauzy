@@ -108,7 +108,7 @@ export const clickStopTimerBtn = () => {
 	clickButton(ProjectTrackedInTimesheetPage.stopTimerBtnCss);
 };
 
-export const viewTimesheetbtnVisible = () => {
+export const viewTimesheetBtnVisible = () => {
 	verifyElementIsVisible(ProjectTrackedInTimesheetPage.viewTimesheetBtnCss);
 };
 

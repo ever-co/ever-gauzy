@@ -28,15 +28,15 @@ let empPassword = faker.internet.password();
 let employeeEmail = faker.internet.email();
 let empImgUrl = faker.image.avatar();
 
-const createRandomInteviewTitleNumber = () => {
+const createRandomInterviewTitleNumber = () => {
 	return (
 		ManageInterviewsPageData.title + Math.floor(Math.random() * 1000) + 1
 	);
 };
 
-const interviewTitle = createRandomInteviewTitleNumber();
+const interviewTitle = createRandomInterviewTitleNumber();
 
-const futureInterviewTitle = createRandomInteviewTitleNumber();
+const futureInterviewTitle = createRandomInterviewTitleNumber();
 
 // Login with email
 Given('Login with default credentials', () => {
@@ -147,7 +147,7 @@ When('User click on interview type button', () => {
 });
 
 Then('User can see location input field', () => {
-	manageInterviewsPage.locationinputVisible();
+	manageInterviewsPage.locationInputVisible();
 });
 
 And('User can enter value for location', () => {
