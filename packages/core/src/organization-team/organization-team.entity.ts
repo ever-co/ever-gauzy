@@ -145,6 +145,12 @@ export class OrganizationTeam extends TenantOrganizationBaseEntity
 	@OneToMany(() => TaskSize, (size) => size.organizationTeam)
 	sizes?: ITaskSize[];
 
+	/**
+	 * Team Labels
+	 */
+	@OneToMany(() => Tag, (label) => label.organizationTeam)
+	labels?: ITag[];
+
 	/*
 	|--------------------------------------------------------------------------
 	| @ManyToMany
