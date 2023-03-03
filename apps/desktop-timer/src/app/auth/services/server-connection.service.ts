@@ -11,20 +11,19 @@ export class ServerConnectionService {
 
 	async checkServerConnection(endPoint: string) {
 		return new Promise((resolve, reject) => {
-			this.httpClient.get(`${endPoint}/api`).subscribe(
-				(resp: any) => {
+			this.httpClient.get(`${endPoint}/api`).subscribe({
+				next: (resp: any) => {
 					this.store.serverConnection = resp.status;
 					resolve(true);
 				},
-				(err) => {
-					const userDetail = localStorage.getItem('userDetail');
-					if (userDetail) {
+				error: (err) => {
+					if (this.store.userId) {
 						resolve(true);
 					}
 					this.store.serverConnection = err.status;
 					reject(err);
-				}
-			);
+				},
+			});
 		}).catch((e) => {});
 	}
 }

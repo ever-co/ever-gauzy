@@ -16,7 +16,7 @@ import {
 	IRelationalEmployee,
 } from './employee.model';
 import { ITask } from './task.model';
-import { ITag } from './tag-entity.model';
+import { ITag } from './tag.model';
 import { IPaginationInput } from './core.model';
 import { ReportGroupByFilter } from './report.model';
 import { FileStorageProviderEnum } from './file-provider';

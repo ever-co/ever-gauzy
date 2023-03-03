@@ -329,7 +329,15 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 		return this._selectedMenu$.getValue();
 	}
 	monitorOptionSelected = null;
-	appSetting = null;
+	/* Set Default Value */
+	appSetting = {
+		timerStarted: false,
+		randomScreenshotTime: 10,
+		trackOnPcSleep: false,
+		preventDisplaySleep: false,
+		visibleAwOption: true,
+		visibleWakatimeOption: false
+	};
 	periodOption = [1, 3, 5, 10];
 	selectedPeriod = 5;
 	screenshotNotification = null;
@@ -437,7 +445,10 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 		this.electronService.ipcRenderer.on('app_setting', (event, arg) =>
 			this._ngZone.run(() => {
 				const { setting, config, auth, additionalSetting } = arg;
-				this.appSetting = setting;
+				this.appSetting = {
+					...this.appSetting,
+					...setting
+				};
 				this.config = {
 					...this.config,
 					...config
@@ -635,6 +646,12 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 				this._restartDisable$.next(!this._isConnectedDatabase.status);
 			});
 		})
+
+		this.electronService.ipcRenderer.on('_logout_quit_install_', (event, arg) => {
+			this._ngZone.run(() => {
+				this.logout(true);
+			})
+		})
 	}
 
 	mappingAdditionalSetting(values) {
@@ -794,7 +811,7 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 	}
 
 	restartAndUpdate() {
-		this.electronService.ipcRenderer.send('restart_and_update');
+		this.logout(true);
 	}
 
 	toggleAwView(value) {
@@ -829,10 +846,10 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 	/*
 	 * Logout desktop timer
 	 */
-	logout() {
+	logout(isAfterUpgrade?: boolean) {
 		console.log('On Logout');
 		localStorage.clear();
-		this.electronService.ipcRenderer.send('logout_desktop');
+		this.electronService.ipcRenderer.send('logout_desktop', isAfterUpgrade);
 	}
 
 	onServerChange(val) {

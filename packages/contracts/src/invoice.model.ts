@@ -2,7 +2,7 @@ import { IBasePerTenantAndOrganizationEntityModel } from './base-entity.model';
 import { IOrganization } from './organization.model';
 import { IOrganizationContact } from './organization-contact.model';
 import { IInvoiceItem } from './invoice-item.model';
-import { ITag } from './tag-entity.model';
+import { ITag } from './tag.model';
 import { IPayment } from './payment.model';
 import { IInvoiceEstimateHistory } from './invoice-estimate-history.model';
 

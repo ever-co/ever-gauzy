@@ -6,7 +6,7 @@ import {
 	IBasePerTenantAndOrganizationEntityModel
 } from './base-entity.model';
 import { IOrganizationProjectsUpdateInput } from './organization-projects.model';
-import { ITag } from './tag-entity.model';
+import { ITag } from './tag.model';
 
 export interface IIntegrationSetting
 	extends IBasePerTenantAndOrganizationEntityModel {
@@ -79,14 +79,14 @@ export interface IIntegrationFilter {
 	filter: string;
 }
 
-export interface IIntegrationMapSyncActivity 
+export interface IIntegrationMapSyncActivity
 	extends IBasePerTenantAndOrganizationEntityModel {
 	activity: IActivity;
 	integrationId: string;
 	sourceId: number;
 }
 
-export interface IIntegrationMapSyncScreenshot 
+export interface IIntegrationMapSyncScreenshot
 	extends IBasePerTenantAndOrganizationEntityModel {
 	screenshot: IHubstaffScreenshotActivity;
 	integrationId: string;
@@ -95,33 +95,33 @@ export interface IIntegrationMapSyncScreenshot
 
 export interface IIntegrationMapSyncTimeLog
 	extends IBasePerTenantAndOrganizationEntityModel {
-    timeLog: Partial<ITimeLog>;
+	timeLog: Partial<ITimeLog>;
 	integrationId: string;
 	sourceId: number;
 }
 
-export interface IIntegrationMapSyncTimeSlot 
+export interface IIntegrationMapSyncTimeSlot
 	extends IBasePerTenantAndOrganizationEntityModel {
 	timeSlot: IHubstaffTimeSlotActivity;
 	integrationId: string;
 	sourceId: number;
 }
 
-export interface IIntegrationMapSyncTask 
+export interface IIntegrationMapSyncTask
 	extends IBasePerTenantAndOrganizationEntityModel {
 	taskInput: ITaskUpdateInput;
 	integrationId: string;
 	sourceId: number;
 }
 
-export interface IIntegrationMapSyncProject 
+export interface IIntegrationMapSyncProject
 	extends IBasePerTenantAndOrganizationEntityModel {
 	organizationProjectInput: IOrganizationProjectsUpdateInput;
 	integrationId: string;
 	sourceId: number;
 }
 
-export interface IIntegrationMapSyncOrganization 
+export interface IIntegrationMapSyncOrganization
 	extends IBasePerTenantAndOrganizationEntityModel {
 	organizationInput: IOrganizationUpdateInput;
 	integrationId: string;

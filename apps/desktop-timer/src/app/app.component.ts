@@ -135,191 +135,54 @@ export class AppComponent implements OnInit, AfterViewInit {
 				})
 		);
 
-		this.electronService.ipcRenderer.on('set_time_sheet', (event, arg) =>
-			this._ngZone.run(() => {
-				this.appService.pushToTimesheet(arg).then((res: any) => {
-					arg.timesheetId = res.id;
-					this.appService.setTimeLog(arg).then((result: any) => {
-						event.sender.send('return_time_sheet', {
-							timerId: arg.timerId,
-							timeSheetId: res.id,
-							timeLogId: result.id,
-						});
-					});
-				});
-			})
-		);
-
-		this.electronService.ipcRenderer.on('update_time_sheet', (event, arg) =>
-			this._ngZone.run(() => {
-				this.appService.updateToTimeSheet(arg).then((res: any) => {
-					this.appService.updateTimeLog(arg);
-				});
-			})
-		);
-
-		this.electronService.ipcRenderer.on('set_auth_user', (event, arg) =>
-			this._ngZone.run(() => { })
-		);
-
-		this.electronService.ipcRenderer.on('set_time_slot', (event, arg) =>
-			this._ngZone.run(() => {
-				this.appService
-					.pushToTimeSlot(arg)
-					.then((res: any) => {
-						if (res.id) {
-							const timeLogs = res.timeLogs;
-							event.sender.send('return_time_slot', {
-								timerId: arg.timerId,
-								timeSlotId: res.id,
-								quitApp: arg.quitApp,
-								timeLogs: timeLogs,
-							});
-						}
-					})
-					.catch((e) => {
-						event.sender.send('failed_save_time_slot', {
-							params: e.error.params,
-							message: e.message,
-						});
-					});
-			})
-		);
-
-		this.electronService.ipcRenderer.on('update_time_slot', (event, arg) =>
-			this._ngZone.run(() => {
-				this.appService.updateToTimeSlot(arg);
-			})
-		);
-
-		this.electronService.ipcRenderer.on('set_activity', (event, arg) =>
-			this._ngZone.run(() => {
-				this.appService.pushToActivity(arg).then((res: any) => {
-					event.sender.send('return_activity', {
-						activityIds: arg.sourceIds,
-					});
-				});
-			})
-		);
-
-		this.electronService.ipcRenderer.on(
-			'update_to_activity',
-			(event, arg) =>
-				this._ngZone.run(() => {
-					this.appService.updateToActivity(arg);
-				})
-		);
-
-		this.electronService.ipcRenderer.on('set_time_log', (event, arg) =>
-			this._ngZone.run(() => {
-				this.appService.setTimeLog(arg).then((res: any) => {
-					event.sender.send('return_time_log', {
-						timerId: arg.timerId,
-						timeLogId: res.id,
-					});
-				});
-			})
-		);
-
-		this.electronService.ipcRenderer.on(
-			'update_time_log_stop',
-			(event, arg) =>
-				this._ngZone.run(() => {
-					console.log('Time Log Stopped');
-					this.appService.updateTimeLog(arg);
-				})
-		);
-
-		this.electronService.ipcRenderer.on('time_toggle', (event, arg) =>
-			this._ngZone.run(() => {
-				this.appService.stopTimer(arg).then((res) => {
-					event.sender.send('return_toggle_api', {
-						result: res,
-						timerId: arg.timerId,
-					});
-				});
-			})
-		);
-
-		this.electronService.ipcRenderer.on(
-			'update_toggle_timer',
-			(event, arg) =>
-				this._ngZone.run(() => {
-					console.log('event toggle stopped', arg);
-					this.appService
-						.stopTimer(arg)
-						.then((res) => {
-							event.sender.send('timer_stopped');
-							console.log('success stopped timer', res);
-						})
-						.catch((e) => {
-							console.log('failed stopped timer', e);
-							event.sender.send('timer_stopped');
-						});
-				})
-		);
-
 		this.electronService.ipcRenderer.on('server_ping', (event, arg) =>
 			this._ngZone.run(() => {
-				const pinghost = setInterval(() => {
+				const pingHost = setInterval(() => {
 					this.appService
 						.pingServer(arg)
 						.then((res) => {
 							console.log('Server Found');
 							event.sender.send('server_is_ready');
-							clearInterval(pinghost);
+							clearInterval(pingHost);
 						})
 						.catch((e) => {
 							console.log('ping status result', e.status);
 							if (e.status === 404) {
 								event.sender.send('server_is_ready');
-								clearInterval(pinghost);
+								clearInterval(pingHost);
 							}
 
-							const userDetail =
-								localStorage.getItem('userDetail');
-							if (userDetail) {
+							if (this.store.userId) {
 								event.sender.send('server_is_ready');
-								clearInterval(pinghost);
+								clearInterval(pingHost);
 							}
 						});
 				}, 1000);
 			})
 		);
 
-		this.electronService.ipcRenderer.on(
-			'upload_screen_shot',
-			(event, arg) =>
-				this._ngZone.run(() => {
-					this.appService.uploadScreenCapture(arg).then((res) => {
-						console.log('Screenshot Uploaded', res);
-					});
-				})
-		);
 
 		this.electronService.ipcRenderer.on(
 			'server_ping_restart',
 			(event, arg) =>
 				this._ngZone.run(() => {
-					const pinghost = setInterval(() => {
+					const pingHost = setInterval(() => {
 						this.appService
 							.pingServer(arg)
 							.then((res) => {
 								console.log('server found');
 								event.sender.send('server_already_start');
-								clearInterval(pinghost);
+								clearInterval(pingHost);
 							})
 							.catch((e) => {
 								console.log('ping status result', e.status);
 								if (e.status === 404) {
 									event.sender.send('server_already_start');
-									clearInterval(pinghost);
+									clearInterval(pingHost);
 								}
-								const userDetail =
-									localStorage.getItem('userDetail');
-								if (userDetail) {
+								if (this.store.userId) {
 									event.sender.send('server_is_ready');
-									clearInterval(pinghost);
+									clearInterval(pingHost);
 								}
 							});
 					}, 3000);

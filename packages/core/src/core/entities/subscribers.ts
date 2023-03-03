@@ -15,13 +15,14 @@ import {
 	PaymentSubscriber,
 	ReportSubscriber,
 	ScreenshotSubscriber,
+	TagSubscriber,
 	TaskPrioritySubscriber,
 	TaskSizeSubscriber,
 	TaskStatusSubscriber,
 	TaskSubscriber,
 	TenantSubscriber,
 	TimeSlotSubscriber,
-	UserSubscriber,
+	UserSubscriber
 } from './internal';
 
 /**
@@ -44,11 +45,12 @@ export const coreSubscribers = [
 	PaymentSubscriber,
 	ReportSubscriber,
 	ScreenshotSubscriber,
+	TagSubscriber,
 	TaskPrioritySubscriber,
 	TaskSizeSubscriber,
 	TaskStatusSubscriber,
 	TaskSubscriber,
 	TenantSubscriber,
 	TimeSlotSubscriber,
-	UserSubscriber,
+	UserSubscriber
 ];

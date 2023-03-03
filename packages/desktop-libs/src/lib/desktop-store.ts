@@ -42,6 +42,42 @@ export const LocalStore = {
 	setDefaultApplicationSetting: () => {
 		try {
 			const config = store.get('appSetting');
+			const authConfig = store.get('auth');
+			if (!authConfig) {
+				const defaultConfig = {
+					allowScreenshotCapture: true,
+				};
+				store.set({
+					auth: defaultConfig,
+				});
+			} else {
+				authConfig.allowScreenshotCapture =
+					typeof authConfig.allowScreenshotCapture === 'undefined'
+						? true
+						: authConfig.allowScreenshotCapture;
+				store.set({
+					auth: authConfig,
+				});
+			}
+			const projectConfig = store.get('project');
+			if (!projectConfig) {
+				const config = {
+					aw: {
+						isAw: true
+					}
+				};
+				store.set({
+					project: config
+				});
+			} else {
+				projectConfig.aw =
+					typeof projectConfig.aw === 'undefined'
+						? { isAw: true }
+						: projectConfig.aw;
+				store.set({
+					appSetting: projectConfig
+				});
+			}
 			if (!config) {
 				const defaultAppSetting = {
 					monitor: {

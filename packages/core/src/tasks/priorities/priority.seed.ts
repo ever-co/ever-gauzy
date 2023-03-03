@@ -1,9 +1,11 @@
 import { DataSource } from 'typeorm';
-import { IPluginConfig } from '@gauzy/common';
+import { getConfig } from '@gauzy/config';
 import { ITaskPriority } from '@gauzy/contracts';
 import { cleanEverIcons, copyEverIcons } from './../../core/seeds/utils';
 import { DEFAULT_GLOBAL_PRIORITIES } from './default-global-priorities';
 import { TaskPriority } from './priority.entity';
+
+const config = getConfig();
 
 /**
  * Default global system priority
@@ -12,8 +14,7 @@ import { TaskPriority } from './priority.entity';
  * @returns
  */
 export const createDefaultPriorities = async (
-	dataSource: DataSource,
-	config: Partial<IPluginConfig>
+	dataSource: DataSource
 ): Promise<ITaskPriority[]> => {
 	await cleanEverIcons(config, 'ever-icons/task-priorities');
 

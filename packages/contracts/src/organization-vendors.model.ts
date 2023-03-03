@@ -1,5 +1,5 @@
 import { IBasePerTenantAndOrganizationEntityModel } from './base-entity.model';
-import { ITag } from './tag-entity.model';
+import { ITag } from './tag.model';
 
 export interface IOrganizationVendor
 	extends IBasePerTenantAndOrganizationEntityModel {

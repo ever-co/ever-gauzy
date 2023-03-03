@@ -3,7 +3,7 @@ import {
 	IBasePerTenantEntityModel
 } from './base-entity.model';
 import { ITranslation, ITranslatable } from './translation.model';
-import { ITag } from './tag-entity.model';
+import { ITag } from './tag.model';
 import { IContact, IRelationalContact } from './contact.model';
 import { IInvoiceItem } from './invoice-item.model';
 import { CurrenciesEnum } from './currency.model';

@@ -13,6 +13,7 @@
 				</div>
 				<div class="media-viewer" (click)="$event.stopPropagation()">
 					<img #imageMedia [src]="sanitizeImgUrl(item?.fullUrl)" />
+					<div class="date">{{ item?.recordedAt | dateTime: 'llll' }}</div>
 				</div>
 				<div class="right-button">
 					<button class="nav-button" nbButton [disabled]="active_index == items.length - 1" status="primary"
@@ -25,7 +26,8 @@
 				<div class="thumb-items custom-scroll" #customScroll>
 					<div class="thumb-item" *ngFor="let thumb of items; let index = index"
 						[ngClass]="{ 'thumb-item-active': item == thumb }" (click)="setFocus(thumb)">
-						<img *ngIf="thumb" [src]="sanitizeImgUrl(thumb.thumbUrl)" />
+						<img *ngIf="thumb" [src]="sanitizeImgUrl(thumb?.thumbUrl)" />
+						<div class="thumb date ">{{ thumb?.recordedAt | dateTime }}</div>
 					</div>
 				</div>
 			</div>

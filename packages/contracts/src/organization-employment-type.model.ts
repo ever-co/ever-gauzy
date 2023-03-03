@@ -1,6 +1,6 @@
 import { IBasePerTenantAndOrganizationEntityModel } from './base-entity.model';
 import { ICandidate } from './candidate.model';
-import { ITag } from './tag-entity.model';
+import { ITag } from './tag.model';
 
 export enum GenericEmploymentTypes {
 	INTERN = 'Intern',
@@ -30,6 +30,6 @@ export interface IOrganizationEmploymentTypeCreateInput
 }
 
 export enum EmploymentTypeTabsEnum {
-    BROWSE = "BROWSE",
-    SEARCH = "SEARCH"
+	BROWSE = "BROWSE",
+	SEARCH = "SEARCH"
 }

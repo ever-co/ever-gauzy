@@ -34,6 +34,7 @@ export interface AppState {
 	featureToggles: IFeatureToggle[];
 	featureOrganizations: IFeatureOrganization[];
 	featureTenant: IFeatureOrganization[];
+	isOffline: boolean;
 }
 
 export interface PersistState {
@@ -53,7 +54,8 @@ export function createInitialAppState(): AppState {
 		userRolePermissions: [],
 		featureToggles: [],
 		featureOrganizations: [],
-		featureTenant: []
+		featureTenant: [],
+		isOffline: false,
 	} as AppState;
 }
 
@@ -72,7 +74,7 @@ export function createInitialPersistState(): PersistState {
 		organizationId,
 		serverConnection,
 		preferredLanguage,
-		componentLayout
+		componentLayout,
 	} as PersistState;
 }
 
@@ -139,6 +141,7 @@ export class Store {
 		.select((state) => state.componentLayout)
 		.pipe(map((componentLayout) => new Map(componentLayout)));
 	systemLanguages$ = this.appQuery.select((state) => state.systemLanguages);
+	isOffline$ = this.appQuery.select((state) => state.isOffline);
 
 	subject = new Subject<ComponentEnum>();
 
@@ -157,9 +160,8 @@ export class Store {
 				.select((state) => state.preferredComponentLayout)
 				.pipe(
 					map((preferredLayout) => {
-						const dataLayout = this.getLayoutForComponent(
-							component
-						);
+						const dataLayout =
+							this.getLayoutForComponent(component);
 						return (
 							dataLayout ||
 							preferredLayout ||
@@ -189,19 +191,19 @@ export class Store {
 
 	set selectedOrganization(organization: IOrganization) {
 		this.appStore.update({
-			selectedOrganization: organization
+			selectedOrganization: organization,
 		});
 	}
 
 	set selectedProject(project: IOrganizationProject) {
 		this.appStore.update({
-			selectedProject: project
+			selectedProject: project,
 		});
 	}
 
 	set systemLanguages(languages: ILanguage[]) {
 		this.appStore.update({
-			systemLanguages: languages
+			systemLanguages: languages,
 		});
 	}
 
@@ -217,7 +219,7 @@ export class Store {
 
 	set token(token: string) {
 		this.persistStore.update({
-			token: token
+			token: token,
 		});
 	}
 
@@ -228,7 +230,7 @@ export class Store {
 
 	set userId(id: IUser['id'] | null) {
 		this.persistStore.update({
-			userId: id
+			userId: id,
 		});
 	}
 
@@ -239,7 +241,7 @@ export class Store {
 
 	set organizationId(id: IOrganization['id'] | null) {
 		this.persistStore.update({
-			organizationId: id
+			organizationId: id,
 		});
 	}
 
@@ -250,7 +252,7 @@ export class Store {
 
 	set user(user: IUser) {
 		this.appStore.update({
-			user: user
+			user: user,
 		});
 	}
 
@@ -262,7 +264,7 @@ export class Store {
 
 		const date = new Date(selectedDate);
 		this.appStore.update({
-			selectedDate: date
+			selectedDate: date,
 		});
 
 		return date;
@@ -270,7 +272,7 @@ export class Store {
 
 	set selectedDate(date: Date) {
 		this.appStore.update({
-			selectedDate: date
+			selectedDate: date,
 		});
 	}
 
@@ -281,7 +283,7 @@ export class Store {
 
 	set selectedProposal(proposal: IProposalViewModel) {
 		this.appStore.update({
-			selectedProposal: proposal
+			selectedProposal: proposal,
 		});
 	}
 
@@ -292,7 +294,7 @@ export class Store {
 
 	set featureToggles(featureToggles: IFeatureToggle[]) {
 		this.appStore.update({
-			featureToggles: featureToggles
+			featureToggles: featureToggles,
 		});
 	}
 
@@ -303,7 +305,7 @@ export class Store {
 
 	set featureTenant(featureOrganizations: IFeatureOrganization[]) {
 		this.appStore.update({
-			featureTenant: featureOrganizations
+			featureTenant: featureOrganizations,
 		});
 	}
 
@@ -314,7 +316,7 @@ export class Store {
 
 	set featureOrganizations(featureOrganizations: IFeatureOrganization[]) {
 		this.appStore.update({
-			featureOrganizations: featureOrganizations
+			featureOrganizations: featureOrganizations,
 		});
 	}
 
@@ -325,7 +327,7 @@ export class Store {
 		const {
 			featureTenant = [],
 			featureOrganizations = [],
-			featureToggles = []
+			featureToggles = [],
 		} = this.appQuery.getValue();
 		const filtered = _.uniq(
 			[...featureOrganizations, ...featureTenant],
@@ -351,9 +353,20 @@ export class Store {
 
 	set userRolePermissions(rolePermissions: IRolePermission[]) {
 		this.appStore.update({
-			userRolePermissions: rolePermissions
+			userRolePermissions: rolePermissions,
 		});
 		// this.loadPermissions();
+	}
+
+	get isOffline(): boolean {
+		const { isOffline } = this.appQuery.getValue();
+		return isOffline;
+	}
+
+	set isOffline(value: boolean) {
+		this.appStore.update({
+			isOffline: value,
+		});
 	}
 
 	hasPermission(permission: PermissionsEnum) {
@@ -391,7 +404,7 @@ export class Store {
 
 	set serverConnection(val: number) {
 		this.persistStore.update({
-			serverConnection: val
+			serverConnection: val,
 		});
 	}
 
@@ -402,7 +415,7 @@ export class Store {
 
 	set preferredLanguage(preferredLanguage) {
 		this.persistStore.update({
-			preferredLanguage: preferredLanguage
+			preferredLanguage: preferredLanguage,
 		});
 	}
 
@@ -413,7 +426,7 @@ export class Store {
 
 	set preferredComponentLayout(preferredComponentLayout) {
 		this.persistStore.update({
-			preferredComponentLayout: preferredComponentLayout
+			preferredComponentLayout: preferredComponentLayout,
 		});
 	}
 
@@ -447,13 +460,13 @@ export class Store {
 			componentLayoutMap.entries()
 		) as any;
 		this.persistStore.update({
-			componentLayout: componentLayoutArray
+			componentLayout: componentLayoutArray,
 		});
 	}
 
 	set componentLayout(componentLayout: any[]) {
 		this.persistStore.update({
-			componentLayout
+			componentLayout,
 		});
 	}
 }

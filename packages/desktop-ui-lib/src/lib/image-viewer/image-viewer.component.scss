@@ -45,6 +45,7 @@
       display: flex;
       align-items: center;
       justify-content: center;
+      position: relative;
       img {
         max-width: 100%;
         max-height: calc(100vh - 9rem);
@@ -71,6 +72,7 @@
         padding: 5px;
         cursor: pointer;
         border-radius: var(--border-radius);
+        position: relative;
         &.thumb-item-active {
           img {
             border: 5px solid var(--text-primary-color);
@@ -89,4 +91,24 @@
 
 ::ng-deep body {
   -webkit-app-region: drag;
+}
+
+.date {
+  position: absolute;
+  background-color: rgba(25, 25, 25, .8);
+  font-size: 13px;
+  font-weight: 600;
+  color: white;
+  border-radius: var(--border-radius);
+  bottom: 8px;
+  right: 8px;
+  padding: 4px 6px;
+
+  &.thumb {
+    border-radius: calc(var(--border-radius) / 2);
+    padding: 1px 2px;
+    font-size: 8px;
+    bottom: 12px;
+    right: 13px;
+  }
 }

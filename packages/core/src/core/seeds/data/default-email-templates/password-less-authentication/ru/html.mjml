@@ -19,7 +19,7 @@
 					background-color="#3366ff"
 					color="white"
 				>
-					{{otp}}
+					{{inviteCode}}
 				</mj-button>
 				<mj-text font-size="16px" font-family="helvetica">
 					<p>
