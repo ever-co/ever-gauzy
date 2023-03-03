@@ -329,6 +329,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 			'timer_tracker_show',
 			(event, arg) =>
 				this._ngZone.run(() => {
+					this._isOffline$.next(arg.isOffline);
 					this.apiHost = arg.apiHost;
 					this.argFromMain = arg;
 					this.taskSelect = arg.taskId;

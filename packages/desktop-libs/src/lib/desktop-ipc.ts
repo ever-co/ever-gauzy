@@ -155,29 +155,29 @@ export function ipcMainHandler(
 					timeTrackerWindow.webContents.send('logout');
 				}
 			}
+		}
+		try {
 			const lastTime = await TimerData.getLastCaptureTimeSlot(
 				knex,
 				LocalStore.beforeRequestParams()
 			);
 			console.log('Last Capture Time (Desktop IPC):', lastTime);
-			event.sender.send('timer_tracker_show', {
-				...LocalStore.beforeRequestParams(),
-				timeSlotId: lastTime ? lastTime.timeslotId : null,
-			});
-		}
-
-		// check connectivity five seconds after start
-		setTimeout(async () => {
-			try {
-				await offlineMode.connectivity();
+			await offlineMode.connectivity()
+				.then(() => {
+					console.log('Network state', offlineMode.enabled ? 'Offline' : 'Online')
+					event.sender.send('timer_tracker_show', {
+						...LocalStore.beforeRequestParams(),
+						timeSlotId: lastTime ? lastTime.timeslotId : null,
+						isOffline: offlineMode.enabled
+					})
+				});
 				await countIntervalQueue(timeTrackerWindow, false);
 				await sequentialSyncQueue(timeTrackerWindow);
 				await latestScreenshots(timeTrackerWindow);
 			} catch (error) {
 				console.log('[ERROR_OFFLINE_CHECK]', error);
 			}
-		}, 5500);
-	});
+	})
 
 	ipcMain.on('screen_shoot', async (event, arg) => {
 		log.info(`Taken Screenshot: ${moment().format()}`);
@@ -232,8 +232,8 @@ export function ipcMainHandler(
 		event.sender.send('show_error_message', arg.message);
 	});
 
-	ipcMain.handle('DESKTOP_CAPTURER_GET_SOURCES', (event, opts) =>
-		desktopCapturer.getSources(opts)
+	ipcMain.handle('DESKTOP_CAPTURER_GET_SOURCES', async (event, opts) =>
+		await desktopCapturer.getSources(opts)
 	);
 }
 
@@ -589,15 +589,13 @@ export function ipcTimer(
 			);
 		}
 		settingWindow.show();
-		setTimeout(() => {
-			settingWindow.webContents.send('app_setting', {
-				setting: appSetting,
-				config: config,
-				auth,
-				additionalSetting: addSetting
-			});
-			settingWindow.webContents.send('goto_top_menu');
-		}, 500);
+		settingWindow.webContents.send('app_setting', {
+			setting: appSetting,
+			config: config,
+			auth,
+			additionalSetting: addSetting
+		});
+		settingWindow.webContents.send('goto_top_menu');
 	});
 
 	ipcMain.on('switch_aw_option', (event, arg) => {
