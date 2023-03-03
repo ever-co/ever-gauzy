@@ -39,15 +39,11 @@ export class AppMenu {
 								);
 							}
 							settingsWindow.show();
-							setTimeout(() => {
-								settingsWindow.webContents.send('goto_update');
-							}, 100);
-							setTimeout(() => {
-								settingsWindow.webContents.send(
-									'app_setting',
-									LocalStore.getApplicationConfig()
-								);
-							}, 500);
+							settingsWindow.webContents.send('goto_update');
+							settingsWindow.webContents.send(
+								'app_setting',
+								LocalStore.getApplicationConfig()
+							);
 						},
 					},
 					{ type: 'separator' },
@@ -64,9 +60,8 @@ export class AppMenu {
 						visible:
 							LocalStore.getStore('configs') &&
 							LocalStore.getStore('configs').timeTrackerWindow,
-						click() {
+						async click() {
 							timeTrackerWindow.show();
-							setTimeout(async () => {
 								const lastTime =
 									await TimerData.getLastCaptureTimeSlot(
 										knex,
@@ -85,7 +80,6 @@ export class AppMenu {
 											: null,
 									}
 								);
-							}, 1000);
 						},
 					},
 					{
@@ -100,17 +94,15 @@ export class AppMenu {
 								);
 							}
 							settingsWindow.show();
-							setTimeout(() => {
-								settingsWindow.webContents.send(
-									'app_setting',
-									LocalStore.getApplicationConfig()
-								);
-								settingsWindow.webContents.send(
-									timeTrackerWindow
-										? 'goto_top_menu'
-										: 'goto_update'
-								);
-							}, 500);
+							settingsWindow.webContents.send(
+								'app_setting',
+								LocalStore.getApplicationConfig()
+							);
+							settingsWindow.webContents.send(
+								timeTrackerWindow
+									? 'goto_top_menu'
+									: 'goto_update'
+							);
 						},
 					},
 					{

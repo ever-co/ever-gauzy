@@ -34,7 +34,7 @@ export class TrayIcon {
 		const iconNativePath = nativeImage.createFromPath(iconPath);
 		iconNativePath.resize({ width: 16, height: 16 });
 		this.tray = new Tray(iconNativePath);
-		this.tray.setTitle('00:00:00', options);
+		this.tray.setTitle('--:--:--', options);
 		let contextMenu: any = [
 			{
 				id: '4',
@@ -47,13 +47,11 @@ export class TrayIcon {
 						);
 					}
 					settingsWindow.show();
-					setTimeout(() => {
-						settingsWindow.webContents.send(
-							'app_setting',
-							LocalStore.getApplicationConfig()
-						);
-						settingsWindow.webContents.send('goto_top_menu');
-					}, 500);
+					settingsWindow.webContents.send(
+						'app_setting',
+						LocalStore.getApplicationConfig()
+					);
+					settingsWindow.webContents.send('goto_top_menu');
 				},
 			},
 			{
@@ -67,15 +65,11 @@ export class TrayIcon {
 						);
 					}
 					settingsWindow.show();
-					setTimeout(() => {
-						settingsWindow.webContents.send('goto_update');
-					}, 100);
-					setTimeout(() => {
-						settingsWindow.webContents.send(
-							'app_setting',
-							LocalStore.getApplicationConfig()
-						);
-					}, 500);
+					settingsWindow.webContents.send('goto_update');
+					settingsWindow.webContents.send(
+						'app_setting',
+						LocalStore.getApplicationConfig()
+					);
 				},
 			},
 			{
@@ -98,13 +92,11 @@ export class TrayIcon {
 						);
 					}
 					settingsWindow.show();
-					setTimeout(() => {
-						settingsWindow.webContents.send(
-							'app_setting',
-							LocalStore.getApplicationConfig()
-						);
-						settingsWindow.webContents.send('goto_top_menu');
-					}, 500);
+					settingsWindow.webContents.send(
+						'app_setting',
+						LocalStore.getApplicationConfig()
+					);
+					settingsWindow.webContents.send('goto_top_menu');
 				},
 			},
 			{
@@ -118,15 +110,11 @@ export class TrayIcon {
 						);
 					}
 					settingsWindow.show();
-					setTimeout(() => {
-						settingsWindow.webContents.send('goto_update');
-					}, 100);
-					setTimeout(() => {
-						settingsWindow.webContents.send(
-							'app_setting',
-							LocalStore.getApplicationConfig()
-						);
-					}, 500);
+					settingsWindow.webContents.send('goto_update');
+					settingsWindow.webContents.send(
+						'app_setting',
+						LocalStore.getApplicationConfig()
+					);
 				},
 			},
 			{
@@ -153,67 +141,22 @@ export class TrayIcon {
 				id: '1',
 				label: 'Start Tracking Time',
 				visible: appConfig.timeTrackerWindow,
-				click(menuItem) {
+				async click(menuItem) {
 					const userLogin = store.get('auth');
 					if (userLogin && userLogin.employeeId) {
-						// timeTrackerWindow.show();
-						setTimeout(() => {
-							timeTrackerWindow.webContents.send(
-								'start_from_tray',
-								LocalStore.beforeRequestParams()
-							);
-						}, 1000);
-					} else {
-						timeTrackerWindow.show();
-						setTimeout(async () => {
-							const lastTime =
-								await TimerData.getLastCaptureTimeSlot(
-									knex,
-									LocalStore.beforeRequestParams()
-								);
-							console.log(
-								'Last Capture Time Start Tracking Time (Desktop Try):',
-								lastTime
-							);
-							timeTrackerWindow.webContents.send(
-								'timer_tracker_show',
-								{
-									...LocalStore.beforeRequestParams(),
-									timeSlotId: lastTime
-										? lastTime.timeslotId
-										: null,
-								}
-							);
-						}, 1000);
-					}
-				},
-			},
-			{
-				id: '2',
-				label: 'Stop Tracking Time',
-				enabled: false,
-				visible: appConfig.timeTrackerWindow,
-				click(menuItem) {
-					// timeTrackerWindow.show();
-					setTimeout(() => {
-						timeTrackerWindow.webContents.send('stop_from_tray');
-					}, 1000);
-				},
-			},
-			{
-				id: '3',
-				label: 'Open Time Tracker',
-				enabled: true,
-				visible: appConfig.timeTrackerWindow,
-				click(menuItem) {
-					timeTrackerWindow.show();
-					setTimeout(async () => {
-						const lastTime = await TimerData.getLastCaptureTimeSlot(
-							knex,
+						timeTrackerWindow.webContents.send(
+							'start_from_tray',
 							LocalStore.beforeRequestParams()
 						);
+					} else {
+						timeTrackerWindow.show();
+						const lastTime =
+							await TimerData.getLastCaptureTimeSlot(
+								knex,
+								LocalStore.beforeRequestParams()
+							);
 						console.log(
-							'Last Capture Time Open Time Tracker (Desktop Try):',
+							'Last Capture Time Start Tracking Time (Desktop Try):',
 							lastTime
 						);
 						timeTrackerWindow.webContents.send(
@@ -225,7 +168,42 @@ export class TrayIcon {
 									: null,
 							}
 						);
-					}, 1000);
+					}
+				},
+			},
+			{
+				id: '2',
+				label: 'Stop Tracking Time',
+				enabled: false,
+				visible: appConfig.timeTrackerWindow,
+				click(menuItem) {
+					timeTrackerWindow.webContents.send('stop_from_tray');
+				},
+			},
+			{
+				id: '3',
+				label: 'Open Time Tracker',
+				enabled: true,
+				visible: appConfig.timeTrackerWindow,
+				async click(menuItem) {
+					timeTrackerWindow.show();
+					const lastTime = await TimerData.getLastCaptureTimeSlot(
+						knex,
+						LocalStore.beforeRequestParams()
+					);
+					console.log(
+						'Last Capture Time Open Time Tracker (Desktop Try):',
+						lastTime
+					);
+					timeTrackerWindow.webContents.send(
+						'timer_tracker_show',
+						{
+							...LocalStore.beforeRequestParams(),
+							timeSlotId: lastTime
+								? lastTime.timeslotId
+								: null,
+						}
+					);
 				},
 			},
 			{
@@ -239,15 +217,11 @@ export class TrayIcon {
 						);
 					}
 					settingsWindow.show();
-					setTimeout(() => {
-						settingsWindow.webContents.send('goto_update');
-					}, 100);
-					setTimeout(() => {
-						settingsWindow.webContents.send(
-							'app_setting',
-							LocalStore.getApplicationConfig()
-						);
-					}, 500);
+					settingsWindow.webContents.send('goto_update');
+					settingsWindow.webContents.send(
+						'app_setting',
+						LocalStore.getApplicationConfig()
+					);
 				},
 			},
 			{
@@ -261,13 +235,11 @@ export class TrayIcon {
 						);
 					}
 					settingsWindow.show();
-					setTimeout(() => {
-						settingsWindow.webContents.send(
-							'app_setting',
-							LocalStore.getApplicationConfig()
-						);
-						settingsWindow.webContents.send('goto_top_menu');
-					}, 500);
+					settingsWindow.webContents.send(
+						'app_setting',
+						LocalStore.getApplicationConfig()
+					);
+					settingsWindow.webContents.send('goto_top_menu');
 				},
 			},
 			{
@@ -292,26 +264,24 @@ export class TrayIcon {
 		const menuWindowSetting =
 			Menu.getApplicationMenu().getMenuItemById('window-setting');
 
-		const openWindow = () => {
+		const openWindow = async () => {
 			if (app.getName() === 'gauzy-desktop-timer') {
 				timeTrackerWindow.show();
-				setTimeout(async () => {
-					let lastTime;
-					if (auth && auth.employeeId) {
-						lastTime = await TimerData.getLastCaptureTimeSlot(
-							knex,
-							LocalStore.beforeRequestParams()
-						);
-					}
-					console.log(
-						'Last Capture Time Open Time Tracker (Desktop Try):',
-						lastTime
+				let lastTime;
+				if (auth && auth.employeeId) {
+					lastTime = await TimerData.getLastCaptureTimeSlot(
+						knex,
+						LocalStore.beforeRequestParams()
 					);
-					timeTrackerWindow.webContents.send('timer_tracker_show', {
-						...LocalStore.beforeRequestParams(),
-						timeSlotId: lastTime ? lastTime.timeslotId : null,
-					});
-				}, 1000);
+				}
+				console.log(
+					'Last Capture Time Open Time Tracker (Desktop Try):',
+					lastTime
+				);
+				timeTrackerWindow.webContents.send('timer_tracker_show', {
+					...LocalStore.beforeRequestParams(),
+					timeSlotId: lastTime ? lastTime.timeslotId : null,
+				});
 			} else {
 				mainWindow.show();
 			}
@@ -396,17 +366,15 @@ export class TrayIcon {
 					timeTrackerPage(windowPath.timeTrackerUi)
 				);
 				timeTrackerWindow.show();
-				setTimeout(async () => {
-					const lastTime = await TimerData.getLastCaptureTimeSlot(
-						knex,
-						LocalStore.beforeRequestParams()
-					);
-					console.log('Last Capture Time (Desktop Try):', lastTime);
-					timeTrackerWindow.webContents.send('timer_tracker_show', {
-						...LocalStore.beforeRequestParams(),
-						timeSlotId: lastTime ? lastTime.timeslotId : null,
-					});
-				}, 1000);
+				const lastTime = await TimerData.getLastCaptureTimeSlot(
+					knex,
+					LocalStore.beforeRequestParams()
+				);
+				console.log('Last Capture Time (Desktop Try):', lastTime);
+				timeTrackerWindow.webContents.send('timer_tracker_show', {
+					...LocalStore.beforeRequestParams(),
+					timeSlotId: lastTime ? lastTime.timeslotId : null,
+				});
 			}
 		});
 
@@ -416,9 +384,7 @@ export class TrayIcon {
 
 			const appSetting = store.get('appSetting');
 			if (appSetting && appSetting.timerStarted) {
-				setTimeout(() => {
-					timeTrackerWindow.webContents.send('stop_from_tray');
-				}, 1000);
+				timeTrackerWindow.webContents.send('stop_from_tray');
 			}
 
 			if (settingsWindow) settingsWindow.hide();
