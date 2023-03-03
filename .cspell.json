@@ -231,7 +231,10 @@
         "Konviser",
         "datname",
         "Udemy",
-        "pageobjects"
+        "pageobjects",
+        "urlpath",
+        "fieldname",
+        "pinghost"
     ],
     "useGitignore": true,
     "ignorePaths": [

@@ -90,7 +90,7 @@ When('User click on employee dropdown', () => {
 	projectTrackedInTimesheets.clickSelectEmployeeDropdown();
 });
 
-Then('User can select employee from dropodown options', () => {
+Then('User can select employee from dropdown options', () => {
 	projectTrackedInTimesheets.selectEmployeeDropdownOption(employeeFullName);
 	projectTrackedInTimesheets.clickKeyboardButtonByKeyCode(9);
 });

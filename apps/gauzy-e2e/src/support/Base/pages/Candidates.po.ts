@@ -144,7 +144,7 @@ export const selectTagsFromDropdown = (index) => {
 	clickButtonByIndex(CandidatesPage.tagsDropdownOption, index);
 };
 
-export const imageInputvisible = () => {
+export const imageInputVisible = () => {
 	verifyElementIsVisible(CandidatesPage.imageInputCss);
 };
 

@@ -156,7 +156,7 @@ Then('User can select tag from dropdown options', () => {
 });
 
 And('User can see image input field', () => {
-	inviteCandidatePage.imageInputvisible();
+	inviteCandidatePage.imageInputVisible();
 });
 
 And('User can enter value for image', () => {

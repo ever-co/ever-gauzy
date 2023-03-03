@@ -13,7 +13,7 @@ Feature: Project tracked in timesheets test
     And User can enter value for name
     And User can see employee dropdown
     When User click on employee dropdown
-    Then User can select employee from dropodown options
+    Then User can select employee from dropdown options
     And User can see save project button
     When User click on save project button
     Then Notification message will appear

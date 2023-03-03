@@ -178,7 +178,7 @@ export const clickInviteButton = () => {
 	clickButton(ClientsPage.inviteButtonCss);
 };
 
-export const saveInvitebuttonVisible = () => {
+export const saveInviteButtonVisible = () => {
 	verifyElementIsVisible(ClientsPage.saveInviteButtonCss);
 };
 
@@ -265,7 +265,7 @@ export const verifyElementIsDeleted = (text) => {
 	verifyTextNotExisting(ClientsPage.verifyClientCss, text);
 };
 
-export const lastStepBtnVisible = () =>{
+export const lastStepBtnVisible = () => {
 	verifyElementIsVisible(ClientsPage.lastStepBtnCss)
 }
 
@@ -305,7 +305,7 @@ export const viewButtonVisible = () => {
 };
 
 export const clickViewButton = () => {
-	cy.intercept('GET','/api/employee*').as('waitClient');
+	cy.intercept('GET', '/api/employee*').as('waitClient');
 	clickButton(ClientsPage.viewButtonCss);
 	cy.wait('@waitClient')
 };
@@ -326,6 +326,6 @@ export const clickOnBackBtn = () => {
 	clickButton(ClientsPage.backBtn);
 };
 
-export const verifySearchResult = (length: number) =>{
+export const verifySearchResult = (length: number) => {
 	vefiryByLength(ClientsPage.selectTableRowCss, length);
 };
