@@ -346,35 +346,39 @@ export class OrganizationTeamService extends TenantAwareCrudService<Organization
 	 * @param criteria
 	 * @param options
 	 */
-	public async existTeamsAsMember(criteria: IUser['id']) {
-		try {
-			const userId = RequestContext.currentUserId();
+	public async existTeamsAsMember(criteria: IUser['id']): Promise<DeleteResult> {
+		const userId = RequestContext.currentUserId();
 
-			// If user don't have enough permission (CHANGE_SELECTED_EMPLOYEE).
-			if (!RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE)) {
-				// If user try to delete someone other user account, just denied the request.
-				if (userId != criteria) {
-					throw new ForbiddenException();
-				}
+		// If user don't have enough permission (CHANGE_SELECTED_EMPLOYEE).
+		if (!RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE)) {
+			// If user try to delete someone other user account, just denied the request.
+			if (userId != criteria) {
+				throw new ForbiddenException('You can not removed account for other members!');
 			}
+		}
 
-			const user = await this.userService.findOneByIdString(criteria, {
-				relations: {
-					employee: true
-				}
-			});
-			if (!!user) {
-				const { employeeId } = user;
+		const user = await this.userService.findOneByIdString(criteria, {
+			relations: {
+				employee: true
+			}
+		});
+		if (!!user) {
+			const { employeeId } = user;
+			try {
 				if (isNotEmpty(employeeId)) {
+					await this.organizationTeamEmployeeService.findOneByWhereOptions({
+						employeeId,
+						roleId: IsNull()
+					});
 					return await this.organizationTeamEmployeeService.delete({
 						roleId: IsNull(),
 						employeeId
 					});
 				}
+			} catch (error) {
+				throw new ForbiddenException('You are not able to removed account where you are only the manager!');
 			}
-			throw new ForbiddenException();
-		} catch (error) {
-			throw new ForbiddenException();
 		}
+		throw new ForbiddenException();
 	}
 }

@@ -1,6 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { Entity, Column, ManyToMany } from 'typeorm';
-import { IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import { Entity, Column, ManyToMany, ManyToOne, RelationId, Index } from 'typeorm';
+import { IsNotEmpty, IsOptional, IsString, IsUUID } from 'class-validator';
 import {
 	ICandidate,
 	IEmployee,
@@ -81,9 +81,38 @@ export class Tag extends TenantOrganizationBaseEntity implements ITag {
 	@Column({ nullable: true })
 	description?: string;
 
+	@ApiPropertyOptional({ type: () => String, required: false })
+	@IsOptional()
+	@Column({ nullable: true })
+	icon?: string;
+
 	@ApiPropertyOptional({ type: () => Boolean, default: false, required: false })
 	@Column({ default: false })
 	isSystem?: boolean;
+
+	fullIconUrl?: string;
+
+	/*
+	|--------------------------------------------------------------------------
+	| @ManyToOne
+	|--------------------------------------------------------------------------
+	*/
+
+	/**
+	 * Organization Team
+	 */
+	@ManyToOne(() => OrganizationTeam, (team) => team.labels, {
+		onDelete: 'SET NULL',
+	})
+	organizationTeam?: IOrganizationTeam;
+
+	@ApiPropertyOptional({ type: () => String })
+	@IsOptional()
+	@IsUUID()
+	@RelationId((it: Tag) => it.organizationTeam)
+	@Index()
+	@Column({ nullable: true })
+	organizationTeamId?: IOrganizationTeam['id'];
 
 	/*
 	|--------------------------------------------------------------------------

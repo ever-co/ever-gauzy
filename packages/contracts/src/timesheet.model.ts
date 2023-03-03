@@ -16,7 +16,7 @@ import {
 	IRelationalEmployee,
 } from './employee.model';
 import { ITask } from './task.model';
-import { ITag } from './tag-entity.model';
+import { ITag } from './tag.model';
 import { IPaginationInput } from './core.model';
 import { ReportGroupByFilter } from './report.model';
 import { FileStorageProviderEnum } from './file-provider';
@@ -94,7 +94,7 @@ export interface ISubmitTimesheetInput
 
 export interface IGetTimesheetInput
 	extends IBasePerTenantAndOrganizationEntityModel,
-		IBaseRelationsEntityModel {
+	IBaseRelationsEntityModel {
 	startDate?: Date | string;
 	endDate?: Date | string;
 	projectIds?: string[];
@@ -339,8 +339,8 @@ export interface IScreenshotMap {
 
 export interface ITimerStatusInput
 	extends IBasePerTenantAndOrganizationEntityModel,
-		IBaseRelationsEntityModel,
-		IRelationalEmployee {
+	IBaseRelationsEntityModel,
+	IRelationalEmployee {
 	source?: TimeLogSourceEnum;
 }
 
@@ -398,7 +398,7 @@ export interface IManualTimeInput
 
 export interface IGetTimeLogInput
 	extends ITimeLogFilters,
-		IBaseRelationsEntityModel {
+	IBaseRelationsEntityModel {
 	timesheetId?: string;
 	teamId?: string;
 }
@@ -409,7 +409,7 @@ export interface IGetTimeLogReportInput extends IGetTimeLogInput {
 
 export interface IGetTimeLogConflictInput
 	extends IBasePerTenantAndOrganizationEntityModel,
-		IBaseRelationsEntityModel {
+	IBaseRelationsEntityModel {
 	ignoreId?: string | string[];
 	startDate: string | Date;
 	endDate: string | Date;
@@ -418,14 +418,14 @@ export interface IGetTimeLogConflictInput
 
 export interface IGetTimeSlotInput
 	extends ITimeLogFilters,
-		IBaseRelationsEntityModel {
+	IBaseRelationsEntityModel {
 	[x: string]: any;
 }
 
 export interface IGetActivitiesInput
 	extends ITimeLogFilters,
-		IPaginationInput,
-		IBaseRelationsEntityModel {
+	IPaginationInput,
+	IBaseRelationsEntityModel {
 	types?: string[];
 	titles?: string[];
 	groupBy?: string;
@@ -523,7 +523,7 @@ export type IReportDayData =
 
 export interface IGetTimeLimitReportInput
 	extends IBasePerTenantAndOrganizationEntityModel,
-		IBaseRelationsEntityModel {
+	IBaseRelationsEntityModel {
 	startDate?: string | Date;
 	endDate?: string | Date;
 	projectIds?: string[];
