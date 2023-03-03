@@ -62,7 +62,7 @@ describe('Clients test', () => {
 		clientsPage.enterClientPhoneData(ClientsData.defaultPhone);
 		clientsPage.clientEmailInputVisible();
 		clientsPage.enterClientEmailData(email);
-		clientsPage.saveInvitebuttonVisible();
+		clientsPage.saveInviteButtonVisible();
 		clientsPage.clickSaveInviteButton();
 		clientsPage.waitMessageToHide();
 		clientsPage.verifyClientExists(inviteName);

@@ -25,7 +25,7 @@ describe('File storage test', () => {
 		fileStoragePage.enterSecretKeyInputData(
 			FileStoragePageData.secretAccessKey
 		);
-		fileStoragePage.regioninputVisible();
+		fileStoragePage.regionInputVisible();
 		fileStoragePage.enterRegionInputData(FileStoragePageData.region);
 		fileStoragePage.bucketInputVisible();
 		fileStoragePage.enterBucketInputData(FileStoragePageData.bucket);

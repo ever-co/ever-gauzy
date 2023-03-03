@@ -29,7 +29,7 @@ export const addButtonVisible = () => {
 };
 
 export const clickAddButton = () => {
-	clickButtonByIndex(ContactsLeadsPage.addButtonCss,0);
+	clickButtonByIndex(ContactsLeadsPage.addButtonCss, 0);
 };
 
 export const nameInputVisible = () => {
@@ -163,7 +163,7 @@ export const clickInviteButton = () => {
 	clickButton(ContactsLeadsPage.inviteButtonCss);
 };
 
-export const saveInvitebuttonVisible = () => {
+export const saveInviteButtonVisible = () => {
 	verifyElementIsVisible(ContactsLeadsPage.saveInviteButtonCss);
 };
 
@@ -262,7 +262,7 @@ export const clickFinishButton = () => {
 	clickButton(ContactsLeadsPage.finishButtonCss);
 };
 
-export const lastStepBtnVisible = () =>{
+export const lastStepBtnVisible = () => {
 	verifyElementIsVisible(ContactsLeadsPage.lastStepBtnCss)
 }
 
@@ -288,7 +288,7 @@ export const searchClientName = (name: string) => {
 	enterInput(ContactsLeadsPage.searchNameInputCss, name);
 };
 
-export const verifySearchResult = (length: number) =>{
+export const verifySearchResult = (length: number) => {
 	vefiryByLength(ContactsLeadsPage.selectTableRowCss, length);
 };
 

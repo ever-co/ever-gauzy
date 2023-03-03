@@ -18,7 +18,7 @@ And('User can see create button', () => {
 });
 
 When('User click on create button', () => {
-	createButton.clickCreatebutton();
+	createButton.clickCreateButton();
 });
 
 Then('User can verify all dropdown options', () => {
@@ -60,7 +60,7 @@ Then('User can see create button again', () => {
 });
 
 When('User click on create button', () => {
-	createButton.clickCreatebutton();
+	createButton.clickCreateButton();
 });
 
 // Verify expense card
@@ -85,7 +85,7 @@ Then('User can see create button again', () => {
 });
 
 When('User click on create button', () => {
-	createButton.clickCreatebutton();
+	createButton.clickCreateButton();
 });
 
 // Verify invoice card
@@ -102,7 +102,7 @@ And('User can see create button again', () => {
 });
 
 When('User click on create button', () => {
-	createButton.clickCreatebutton();
+	createButton.clickCreateButton();
 });
 
 // Verify estimate card
@@ -119,7 +119,7 @@ And('User can see create button again', () => {
 });
 
 When('User click on create button', () => {
-	createButton.clickCreatebutton();
+	createButton.clickCreateButton();
 });
 
 // Verify payment card
@@ -144,7 +144,7 @@ Then('User can see create button again', () => {
 });
 
 When('User click on create button', () => {
-	createButton.clickCreatebutton();
+	createButton.clickCreateButton();
 });
 
 // Verify time log card
@@ -169,7 +169,7 @@ Then('User can see create button again', () => {
 });
 
 When('User click on create button', () => {
-	createButton.clickCreatebutton();
+	createButton.clickCreateButton();
 });
 
 // Verify candidate card
@@ -194,7 +194,7 @@ Then('User can see create button again', () => {
 });
 
 When('User click on create button', () => {
-	createButton.clickCreatebutton();
+	createButton.clickCreateButton();
 });
 
 // Verify proposal card
@@ -211,7 +211,7 @@ And('User can see create button again', () => {
 });
 
 When('User click on create button', () => {
-	createButton.clickCreatebutton();
+	createButton.clickCreateButton();
 });
 
 // Verify contract card
@@ -231,7 +231,7 @@ And('User can see create button again', () => {
 });
 
 When('User click on create button', () => {
-	createButton.clickCreatebutton();
+	createButton.clickCreateButton();
 });
 
 // Verify team card
@@ -248,7 +248,7 @@ And('User can see create button again', () => {
 });
 
 When('User click on create button', () => {
-	createButton.clickCreatebutton();
+	createButton.clickCreateButton();
 });
 
 // Verify task card
@@ -273,7 +273,7 @@ Then('User can see create button again', () => {
 });
 
 When('User click on create button', () => {
-	createButton.clickCreatebutton();
+	createButton.clickCreateButton();
 });
 
 // Verify contact card
@@ -290,7 +290,7 @@ And('User can see create button again', () => {
 });
 
 When('User click on create button', () => {
-	createButton.clickCreatebutton();
+	createButton.clickCreateButton();
 });
 
 // Verify project card
@@ -310,7 +310,7 @@ When('User click on create button', () => {
 	cy.on('uncaught:exception', (err, runnable) => {
 		return false;
 	});
-	createButton.clickCreatebutton();
+	createButton.clickCreateButton();
 });
 
 // Verify employee card

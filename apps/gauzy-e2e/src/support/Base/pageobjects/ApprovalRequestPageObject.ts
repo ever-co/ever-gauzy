@@ -13,7 +13,7 @@ export const ApprovalRequestPage = {
 	saveButtonCss: 'nb-card-footer > button[status="success"]',
 	selectTableRowCss: 'table > tbody > tr.ng2-smart-row',
 	approvalPolicyButtonCss: 'div.mr-2 > button[status="primary"]',
-	descriptioninputCss: '[formcontrolname="description"]',
+	descriptionInputCss: '[formcontrolname="description"]',
 	backButtonCss: 'g[data-name="arrow-back"]',
 	toastrMessageCss: 'nb-toast.ng-trigger',
 	verifyApprovalPolicyCss: 'div.ng-star-inserted',

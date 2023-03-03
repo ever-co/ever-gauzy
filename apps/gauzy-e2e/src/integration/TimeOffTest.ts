@@ -42,7 +42,7 @@ describe('Time Off test', () => {
 		timeOffPage.clickEmployeeSelector();
 		timeOffPage.employeeDropdownVisible();
 		timeOffPage.selectEmployeeFromDropdown(1);
-		timeOffPage.selectTiemOffPolicyVisible();
+		timeOffPage.selectTimeOffPolicyVisible();
 		timeOffPage.clickTimeOffPolicyDropdown();
 		timeOffPage.timeOffPolicyDropdownOptionVisible();
 		timeOffPage.selectTimeOffPolicy(TimeOffPageData.defaultPolicy);
@@ -77,7 +77,7 @@ describe('Time Off test', () => {
 		timeOffPage.clickEmployeeSelector();
 		timeOffPage.employeeDropdownVisible();
 		timeOffPage.selectEmployeeFromDropdown(1);
-		timeOffPage.selectTiemOffPolicyVisible();
+		timeOffPage.selectTimeOffPolicyVisible();
 		timeOffPage.clickTimeOffPolicyDropdown();
 		timeOffPage.timeOffPolicyDropdownOptionVisible();
 		timeOffPage.selectTimeOffPolicy(TimeOffPageData.defaultPolicy);
@@ -110,7 +110,7 @@ describe('Time Off test', () => {
 		timeOffPage.clickSelectEmployeeDropdown();
 		timeOffPage.selectEmployeeFromHolidayDropdown(0);
 		timeOffPage.clickKeyboardButtonByKeyCode(9);
-		timeOffPage.selectTiemOffPolicyVisible();
+		timeOffPage.selectTimeOffPolicyVisible();
 		timeOffPage.clickTimeOffPolicyDropdown();
 		timeOffPage.timeOffPolicyDropdownOptionVisible();
 		timeOffPage.selectTimeOffPolicy(TimeOffPageData.defaultPolicy);

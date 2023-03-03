@@ -26,7 +26,7 @@ Feature: Employee candidates test
     And User can enter value for username
     And User can see candidate email input field
     And User can enter candidate email value
-    And User can see password inpit field
+    And User can see password input field
     And User can enter value for password
     And User can see candidate date input field
     And User can enter value for candidate date
@@ -66,4 +66,3 @@ Feature: Employee candidates test
     Then User will see confirm archive button
     When User click on confirm archive button
     Then Notification message will appear
-    

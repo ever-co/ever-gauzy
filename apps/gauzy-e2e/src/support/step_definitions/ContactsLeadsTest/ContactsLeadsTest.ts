@@ -123,7 +123,7 @@ And('User can enter value for contact email', () => {
 });
 
 And('User can see save invite button', () => {
-	contactsLeadsPage.saveInvitebuttonVisible();
+	contactsLeadsPage.saveInviteButtonVisible();
 });
 
 When('User click on save invite button', () => {

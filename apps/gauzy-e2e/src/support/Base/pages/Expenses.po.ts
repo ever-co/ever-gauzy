@@ -191,12 +191,12 @@ export const clickDuplicateButton = () => {
 	clickButton(ExpensesPage.duplicateExpenseButtonCss);
 };
 
-export const managecategoriesButtonVisible = () => {
-	verifyElementIsVisible(ExpensesPage.manageCategoriseButtonCss);
+export const manageCategoriesButtonVisible = () => {
+	verifyElementIsVisible(ExpensesPage.manageCategoriesButtonCss);
 };
 
-export const clickManagecategoriesButton = () => {
-	clickButton(ExpensesPage.manageCategoriseButtonCss);
+export const clickManageCategoriesButton = () => {
+	clickButton(ExpensesPage.manageCategoriesButtonCss);
 };
 
 export const newCategoryInputVisible = () => {
@@ -228,7 +228,7 @@ export const categoryCardVisible = () => {
 	verifyElementIsVisible(ExpensesPage.categoryCardCss);
 };
 
-export const clickcategoryCard = () => {
+export const clickCategoryCard = () => {
 	clickButton(ExpensesPage.categoryCardCss);
 };
 

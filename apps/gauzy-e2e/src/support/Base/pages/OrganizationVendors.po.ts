@@ -76,11 +76,11 @@ export const selectTagFromDropdown = (index) => {
 };
 
 export const saveVendorButtonVisible = () => {
-	verifyElementIsVisible(OrganizationVendorsPage.saveVendorbuttonCss);
+	verifyElementIsVisible(OrganizationVendorsPage.saveVendorButtonCss);
 };
 
 export const clickSaveVendorButton = () => {
-	clickButton(OrganizationVendorsPage.saveVendorbuttonCss);
+	clickButton(OrganizationVendorsPage.saveVendorButtonCss);
 };
 
 export const editVendorButtonVisible = () => {
@@ -99,7 +99,7 @@ export const clickDeleteVendorButton = (index) => {
 	clickButtonByIndex(OrganizationVendorsPage.deleteVendorButtonCss, index);
 };
 
-export const confirmDeletebuttonVisible = () => {
+export const confirmDeleteButtonVisible = () => {
 	verifyElementIsVisible(OrganizationVendorsPage.confirmDeleteButtonCss);
 };
 

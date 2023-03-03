@@ -20,7 +20,7 @@ export const ExpensesPage = {
 	confirmDeleteButtonCss: 'nb-card-footer > button[status="danger"]',
 	cardBodyCss: 'nb-card-footer.text-right',
 	duplicateExpenseButtonCss: 'div.mb-3 > button[status="primary"]',
-	manageCategoriseButtonCss:
+	manageCategoriesButtonCss:
 		'div.card-header-title > button[status="primary"]',
 	expenseNameInputCss: '[placeholder="Expense name"]',
 	SaveCategoryButtonCss:

@@ -184,7 +184,7 @@ When('User click on delete button', () => {
 });
 
 Then('User can see confirm delete button', () => {
-	organizationVendorsPage.confirmDeletebuttonVisible();
+	organizationVendorsPage.confirmDeleteButtonVisible();
 });
 
 When('User click on confirm delete button', () => {

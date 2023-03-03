@@ -276,7 +276,7 @@ And('User can see preferred language dropdown', () => {
 });
 
 When('User click on preferred language dropdown', () => {
-	manageEmployeesPage.clickpreferredLanguageDropdown();
+	manageEmployeesPage.clickPreferredLanguageDropdown();
 });
 
 Then('User can select language from dropdown options', () => {

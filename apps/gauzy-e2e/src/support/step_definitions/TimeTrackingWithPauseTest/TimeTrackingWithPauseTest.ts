@@ -160,7 +160,7 @@ Then('Employee can see again start timer button', () => {
 //Check the recorded time
 
 Then('Employee can see view timesheet button', () => {
-	timeTrackingWithPausePage.viewTimesheetbtnVisible();
+	timeTrackingWithPausePage.viewTimesheetBtnVisible();
 });
 
 When('Employee click on view timesheet button', () => {

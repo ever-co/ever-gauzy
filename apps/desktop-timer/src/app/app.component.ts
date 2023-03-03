@@ -29,7 +29,7 @@ export class AppComponent implements OnInit, AfterViewInit {
 		private store: Store,
 		private toastrService: NbToastrService,
 		private _ngZone: NgZone
-	) {}
+	) { }
 
 	ngOnInit(): void {
 		console.log('On Init');

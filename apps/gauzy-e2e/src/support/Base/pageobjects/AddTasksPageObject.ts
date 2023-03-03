@@ -2,7 +2,7 @@ export const AddTaskPage = {
 	gridButtonCss: 'div.layout-switch > button',
 	addTaskButtonCss: 'div.mb-3 > button[status="success"]',
 	selectProjectDropdownCss: '[formControlName="projectId"]',
-	selectProjectDrodownOptionCss: '.ng-option',
+	selectProjectDropdownOptionCss: '.ng-option',
 	duplicateOrEditTaskButtonCss: 'div.mb-3 > button[status="info"]',
 	deleteTaskButtonCss: 'div.mb-3 > button[status="danger"]',
 	selectTableRowCss: 'table > tbody > tr.ng2-smart-row',

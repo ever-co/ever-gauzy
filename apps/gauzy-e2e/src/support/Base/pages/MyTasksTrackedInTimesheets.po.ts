@@ -31,7 +31,7 @@ export const clickSelectProjectDropdown = () => {
 };
 
 export const selectProjectOptionDropdown = (text) => {
-	clickElementByText(MyTasksTrackedInTimesheets.drodownOptionCss, text);
+	clickElementByText(MyTasksTrackedInTimesheets.dropdownOptionCss, text);
 };
 
 export const selectStatusDropdownVisible = () => {
@@ -43,7 +43,7 @@ export const clickStatusDropdown = () => {
 };
 
 export const selectStatusFromDropdown = (text) => {
-	clickElementByText(MyTasksTrackedInTimesheets.drodownOptionCss, text);
+	clickElementByText(MyTasksTrackedInTimesheets.dropdownOptionCss, text);
 };
 
 export const addTitleInputVisible = () => {
@@ -174,7 +174,7 @@ export const clickStopTimerBtn = () => {
 	clickButton(MyTasksTrackedInTimesheets.stopTimerBtnCss);
 };
 
-export const viewTimesheetbtnVisible = () => {
+export const viewTimesheetBtnVisible = () => {
 	verifyElementIsVisible(MyTasksTrackedInTimesheets.viewTimesheetBtnCss);
 };
 

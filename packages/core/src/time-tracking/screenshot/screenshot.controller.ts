@@ -17,6 +17,7 @@ import * as path from 'path';
 import * as moment from 'moment';
 import * as sharp from 'sharp';
 import * as fs from 'fs';
+import { v4 as uuid } from 'uuid';
 import { FileStorageProviderEnum, IScreenshot, PermissionsEnum } from '@gauzy/contracts';
 import { Screenshot } from './screenshot.entity';
 import { ScreenshotService } from './screenshot.service';
@@ -56,7 +57,8 @@ export class ScreenshotController {
 					dest: () => {
 						return path.join(
 							'screenshots',
-							moment().format('YYYY/MM/DD')
+							moment().format('YYYY/MM/DD'),
+							RequestContext.currentTenantId() || uuid()
 						);
 					},
 					prefix: 'screenshots'
@@ -68,9 +70,8 @@ export class ScreenshotController {
 		@Body() entity: Screenshot,
 		@UploadedFileStorage() file
 	) {
-		console.log('Screenshot Http Request', {
-			entity
-		});
+		console.log('Screenshot Http Request', { entity, file });
+
 		const user = RequestContext.currentUser();
 		const provider = new FileStorage().getProvider();
 		let thumb;

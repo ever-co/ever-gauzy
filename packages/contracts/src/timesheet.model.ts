@@ -317,18 +317,16 @@ export interface ICreateScreenshotInput
 	recordedAt: Date | string;
 }
 
-export interface IScreenshot extends IBasePerTenantAndOrganizationEntityModel {
+export interface IScreenshot extends IBasePerTenantAndOrganizationEntityModel, IRelationalEmployee {
 	[x: string]: any;
 	timeSlot?: ITimeSlot;
-	timeSlotId?: string;
+	timeSlotId?: ITimeSlot['id'];
 	file: string;
 	thumb?: string;
 	fileUrl?: string;
 	thumbUrl?: string;
 	recordedAt?: Date;
 	storageProvider?: FileStorageProviderEnum;
-	employeeId?: string;
-	employee?: IEmployee;
 }
 
 export interface IScreenshotMap {

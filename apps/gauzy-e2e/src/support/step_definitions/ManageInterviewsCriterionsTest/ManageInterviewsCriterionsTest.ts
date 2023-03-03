@@ -185,6 +185,6 @@ Then('Notification message will appear', () => {
 	manageInterviewsCriterionsPage.waitMessageToHide();
 });
 
-And('Use can verify qaulity was deleted', () => {
+And('Use can verify quality was deleted', () => {
 	manageInterviewsCriterionsPage.verifyQualityIsDeleted();
 });

@@ -2,6 +2,7 @@ import { IImportRecord } from 'import-export.model';
 import { IFeatureOrganization } from './feature.model';
 import {
 	FileStorageProviderEnum,
+	ICloudinaryFileStorageProviderConfig,
 	IS3FileStorageProviderConfig,
 	IWasabiFileStorageProviderConfig
 } from './file-provider';
@@ -33,7 +34,6 @@ export interface ITenantUpdateInput {
 	logo?: string;
 }
 
-export interface ITenantSetting
-	extends IS3FileStorageProviderConfig, IWasabiFileStorageProviderConfig {
+export interface ITenantSetting extends IS3FileStorageProviderConfig, IWasabiFileStorageProviderConfig, ICloudinaryFileStorageProviderConfig {
 	fileStorageProvider?: FileStorageProviderEnum;
 }

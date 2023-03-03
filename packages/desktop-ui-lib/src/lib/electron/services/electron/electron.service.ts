@@ -21,8 +21,8 @@ export class ElectronService {
 			this.remote = window.require('@electron/remote');
 			this.shell = window.require('electron').shell;
 			this.desktopCapturer = {
-				getSources: (opts) =>
-					this.ipcRenderer.invoke(
+				getSources: async (opts) =>
+					await this.ipcRenderer.invoke(
 						'DESKTOP_CAPTURER_GET_SOURCES',
 						opts
 					)

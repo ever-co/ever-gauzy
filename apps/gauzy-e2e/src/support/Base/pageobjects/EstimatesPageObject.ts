@@ -34,7 +34,7 @@ export const EstimatesPage = {
 	draftBadgeCss: 'div.badge-warning',
 	successBadgeCss: 'div.badge-success',
 	emailCardCss: 'nb-card-body.invoice-email-body',
-	inputInvoicenumberCss: '#inputInvoiceNumber',
+	inputInvoiceNumberCss: '#inputInvoiceNumber',
 	estimateDateCss: '#inputInvoiceDate',
 	dueDateInputCss: '#inputDueDate',
 	totalValueInputCss: '#inputTotalValue',
