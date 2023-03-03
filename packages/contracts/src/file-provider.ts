@@ -11,10 +11,10 @@ export interface FileSystem {
 }
 
 export enum FileStorageProviderEnum {
-	LOCAL = 'LOCAL',
-	S3 = 'S3',
-	WASABI = 'WASABI',
-	CLOUDINARY = 'CLOUDINARY'
+	LOCAL = "LOCAL",
+	S3 = "S3",
+	WASABI = "WASABI",
+	CLOUDINARY = "CLOUDINARY",
 }
 
 export interface UploadedFile {
