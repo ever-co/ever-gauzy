@@ -130,9 +130,7 @@ export enum ExpenseStatusesEnum {
 	NOT_BILLABLE = 'NOT_BILLABLE'
 }
 
-export interface IGetExpenseInput
-	extends IPaginationInput,
-	IBasePerTenantAndOrganizationEntityModel {
+export interface IGetExpenseInput extends IPaginationInput, IBasePerTenantAndOrganizationEntityModel {
 	relations?: string[];
 	types?: string[];
 	titles?: string[];

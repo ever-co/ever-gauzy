@@ -11,25 +11,22 @@ export enum GenericEmploymentTypes {
 	CONTRACTOR = 'Contractor'
 }
 
-export interface IOrganizationEmploymentType
-	extends IBasePerTenantAndOrganizationEntityModel {
+export interface IOrganizationEmploymentType extends IBasePerTenantAndOrganizationEntityModel {
 	name: string;
 	tags?: ITag[];
 	candidates?: ICandidate[];
 }
 
-export interface IOrganizationEmploymentTypeFindInput
-	extends IBasePerTenantAndOrganizationEntityModel {
+export interface IOrganizationEmploymentTypeFindInput extends IBasePerTenantAndOrganizationEntityModel {
 	name?: string;
 }
 
-export interface IOrganizationEmploymentTypeCreateInput
-	extends IBasePerTenantAndOrganizationEntityModel {
+export interface IOrganizationEmploymentTypeCreateInput extends IBasePerTenantAndOrganizationEntityModel {
 	name: string;
 	tags?: ITag[];
 }
 
 export enum EmploymentTypeTabsEnum {
-	BROWSE = "BROWSE",
-	SEARCH = "SEARCH"
+	BROWSE = 'BROWSE',
+	SEARCH = 'SEARCH'
 }

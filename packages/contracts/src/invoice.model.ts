@@ -41,8 +41,7 @@ export interface IInvoice extends IBasePerTenantAndOrganizationEntityModel {
 	isArchived?: boolean;
 }
 
-export interface IInvoiceCreateInput
-	extends IBasePerTenantAndOrganizationEntityModel {
+export interface IInvoiceCreateInput extends IBasePerTenantAndOrganizationEntityModel {
 	invoiceDate?: Date;
 	invoiceNumber?: number;
 	dueDate?: Date;
@@ -77,8 +76,7 @@ export interface IInvoiceUpdateInput extends IInvoiceCreateInput {
 	hasRemainingAmountInvoiced?: boolean;
 	isArchived?: boolean;
 }
-export interface IInvoiceFindInput
-	extends IBasePerTenantAndOrganizationEntityModel {
+export interface IInvoiceFindInput extends IBasePerTenantAndOrganizationEntityModel {
 	organizationContactId?: string;
 	invoiceId?: string;
 	sentTo?: string;

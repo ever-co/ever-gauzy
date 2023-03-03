@@ -13,17 +13,17 @@ const config = getConfig();
  * @param dataSource
  * @returns
  */
-export const createDefaultStatuses = async (
-	dataSource: DataSource
-): Promise<ITaskStatus[]> => {
+export const createDefaultStatuses = async (dataSource: DataSource): Promise<ITaskStatus[]> => {
 	await cleanEverIcons(config, 'ever-icons/task-statuses');
 
 	let statuses: ITaskStatus[] = [];
 	for await (const status of DEFAULT_GLOBAL_STATUSES) {
-		statuses.push(new TaskStatus({
-			...status,
-			icon: copyEverIcons(status.icon, config)
-		}));
+		statuses.push(
+			new TaskStatus({
+				...status,
+				icon: copyEverIcons(status.icon, config)
+			})
+		);
 	}
 	return await dataSource.manager.save(statuses);
 };

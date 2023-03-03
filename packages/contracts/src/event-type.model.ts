@@ -13,8 +13,7 @@ export interface IEventType extends IBasePerTenantAndOrganizationEntityModel {
 	tags?: ITag[];
 }
 
-export interface IEventTypeFindInput
-	extends IBasePerTenantAndOrganizationEntityModel {
+export interface IEventTypeFindInput extends IBasePerTenantAndOrganizationEntityModel {
 	title?: string;
 	description?: string;
 	duration?: number;
@@ -24,8 +23,7 @@ export interface IEventTypeFindInput
 	tags?: ITag[];
 }
 
-export interface IEventTypeCreateInput
-	extends IBasePerTenantAndOrganizationEntityModel {
+export interface IEventTypeCreateInput extends IBasePerTenantAndOrganizationEntityModel {
 	employeeId?: string;
 	title: string;
 	description?: string;
@@ -35,8 +33,7 @@ export interface IEventTypeCreateInput
 	tags?: ITag[];
 }
 
-export interface IEventTypeUpdateInput
-	extends IBasePerTenantAndOrganizationEntityModel {
+export interface IEventTypeUpdateInput extends IBasePerTenantAndOrganizationEntityModel {
 	employeeId?: string;
 	title?: string;
 	description?: string;

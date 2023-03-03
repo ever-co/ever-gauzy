@@ -16,7 +16,7 @@ export interface ITagFindInput extends IBasePerTenantAndOrganizationEntityModel,
 	isSystem?: boolean;
 }
 
-export interface ITagCreateInput extends ITag { }
+export interface ITagCreateInput extends ITag {}
 
 export interface ITagUpdateInput extends Partial<ITagCreateInput> {
 	id?: string;

@@ -16,8 +16,7 @@ export interface IProposal extends IBasePerTenantAndOrganizationEntityModel {
 	organizationContactId?: string;
 }
 
-export interface IProposalCreateInput
-	extends IBasePerTenantAndOrganizationEntityModel {
+export interface IProposalCreateInput extends IBasePerTenantAndOrganizationEntityModel {
 	employeeId?: string;
 	jobPostUrl?: string;
 	valueDate?: Date;
@@ -28,8 +27,7 @@ export interface IProposalCreateInput
 	organizationContactId?: string;
 }
 
-export interface IProposalFindInput
-	extends IBasePerTenantAndOrganizationEntityModel {
+export interface IProposalFindInput extends IBasePerTenantAndOrganizationEntityModel {
 	employeeId?: string;
 	employee?: IEmployeeFindInput;
 	jobPostUrl?: string;
@@ -44,8 +42,7 @@ export enum ProposalStatusEnum {
 	SENT = 'SENT',
 	ACCEPTED = 'ACCEPTED'
 }
-export interface IProposalViewModel
-	extends IBasePerTenantAndOrganizationEntityModel {
+export interface IProposalViewModel extends IBasePerTenantAndOrganizationEntityModel {
 	tags?: ITag[];
 	valueDate: Date;
 	id: string;

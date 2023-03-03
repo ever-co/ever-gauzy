@@ -34,8 +34,7 @@ export interface IPaymentUpdateInput extends IBasePerTenantAndOrganizationEntity
 	paymentDate?: Date;
 }
 
-export interface IPaymentFindInput
-	extends IBasePerTenantAndOrganizationEntityModel {
+export interface IPaymentFindInput extends IBasePerTenantAndOrganizationEntityModel {
 	invoiceId?: string;
 }
 
@@ -57,7 +56,10 @@ export interface IPaymentReportChartData {
 	value: number;
 }
 
-export interface IGetPaymentInput extends IPaginationInput, IBasePerTenantAndOrganizationEntityModel, IBaseRelationsEntityModel {
+export interface IGetPaymentInput
+	extends IPaginationInput,
+		IBasePerTenantAndOrganizationEntityModel,
+		IBaseRelationsEntityModel {
 	types?: string[];
 	titles?: string[];
 	groupBy?: ReportGroupByFilter;

@@ -1,10 +1,6 @@
 import { IEmployee } from './employee.model';
 import { IOrganizationContact } from './organization-contact.model';
-import {
-	CrudActionEnum,
-	ProjectBillingEnum,
-	ProjectOwnerEnum
-} from './organization.model';
+import { CrudActionEnum, ProjectBillingEnum, ProjectOwnerEnum } from './organization.model';
 import { IBaseEntityWithMembers } from './entity-with-members.model';
 import { ITag } from './tag.model';
 import { ITask } from './task.model';

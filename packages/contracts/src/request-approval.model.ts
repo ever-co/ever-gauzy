@@ -6,8 +6,7 @@ import { IRequestApprovalTeam } from './request-approval-team.model';
 import { IApprovalPolicy } from './approval-policy.model';
 import { ITag } from './tag.model';
 
-export interface IRequestApproval
-	extends IBasePerTenantAndOrganizationEntityModel {
+export interface IRequestApproval extends IBasePerTenantAndOrganizationEntityModel {
 	name: string;
 	status: number;
 	createdBy: string;
@@ -24,8 +23,7 @@ export interface IRequestApproval
 	teams?: IOrganizationTeam[];
 }
 
-export interface IRequestApprovalCreateInput
-	extends IBasePerTenantAndOrganizationEntityModel {
+export interface IRequestApprovalCreateInput extends IBasePerTenantAndOrganizationEntityModel {
 	id?: string;
 	employeeApprovals?: IRequestApprovalEmployee[];
 	teamApprovals?: IRequestApprovalTeam[];
@@ -50,8 +48,7 @@ export const RequestApprovalStatus = {
 	REFUSED: 3
 };
 
-export interface IRequestApprovalFindInput
-	extends IBasePerTenantAndOrganizationEntityModel {
+export interface IRequestApprovalFindInput extends IBasePerTenantAndOrganizationEntityModel {
 	id?: string;
 }
 

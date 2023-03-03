@@ -10,8 +10,7 @@ export interface IOrganizationDepartment extends IBaseEntityWithMembers {
 	candidates?: ICandidate[];
 }
 
-export interface IOrganizationDepartmentFindInput
-	extends IBasePerTenantAndOrganizationEntityModel {
+export interface IOrganizationDepartmentFindInput extends IBasePerTenantAndOrganizationEntityModel {
 	name?: string;
 }
 
@@ -20,8 +19,7 @@ export interface IOrganizationDepartmentFindByMemberInput {
 	tags?: ITag[];
 }
 
-export interface IOrganizationDepartmentCreateInput
-	extends IBasePerTenantAndOrganizationEntityModel {
+export interface IOrganizationDepartmentCreateInput extends IBasePerTenantAndOrganizationEntityModel {
 	name: string;
 	members?: IEmployee[];
 	tags?: ITag[];

@@ -1,23 +1,18 @@
 import { IHubstaffScreenshotActivity, IHubstaffTimeSlotActivity } from './hubstaff.model';
 import { IOrganizationUpdateInput, ITaskUpdateInput } from './index';
 import { IActivity, ITimeLog } from './timesheet.model';
-import {
-	IBaseEntityModel,
-	IBasePerTenantAndOrganizationEntityModel
-} from './base-entity.model';
+import { IBaseEntityModel, IBasePerTenantAndOrganizationEntityModel } from './base-entity.model';
 import { IOrganizationProjectsUpdateInput } from './organization-projects.model';
 import { ITag } from './tag.model';
 
-export interface IIntegrationSetting
-	extends IBasePerTenantAndOrganizationEntityModel {
+export interface IIntegrationSetting extends IBasePerTenantAndOrganizationEntityModel {
 	settingsName: string;
 	settingsValue: string;
 	integration?: IIntegrationTenant;
 	integrationId?: string;
 }
 
-export interface IIntegrationEntitySetting
-	extends IBasePerTenantAndOrganizationEntityModel {
+export interface IIntegrationEntitySetting extends IBasePerTenantAndOrganizationEntityModel {
 	entity: string;
 	sync: boolean;
 	integration?: IIntegrationTenant;
@@ -25,16 +20,14 @@ export interface IIntegrationEntitySetting
 	tiedEntities?: IIntegrationEntitySettingTied[];
 }
 
-export interface IIntegrationEntitySettingTied
-	extends IBasePerTenantAndOrganizationEntityModel {
+export interface IIntegrationEntitySettingTied extends IBasePerTenantAndOrganizationEntityModel {
 	entity: string;
 	sync: boolean;
 	integrationEntitySetting?: IIntegrationEntitySetting;
 	readonly integrationEntitySettingId?: string;
 }
 
-export interface IIntegrationMap
-	extends IBasePerTenantAndOrganizationEntityModel {
+export interface IIntegrationMap extends IBasePerTenantAndOrganizationEntityModel {
 	integration: IIntegrationTenant;
 	sourceId: number;
 	gauzyId: string;
@@ -79,65 +72,56 @@ export interface IIntegrationFilter {
 	filter: string;
 }
 
-export interface IIntegrationMapSyncActivity
-	extends IBasePerTenantAndOrganizationEntityModel {
+export interface IIntegrationMapSyncActivity extends IBasePerTenantAndOrganizationEntityModel {
 	activity: IActivity;
 	integrationId: string;
 	sourceId: number;
 }
 
-export interface IIntegrationMapSyncScreenshot
-	extends IBasePerTenantAndOrganizationEntityModel {
+export interface IIntegrationMapSyncScreenshot extends IBasePerTenantAndOrganizationEntityModel {
 	screenshot: IHubstaffScreenshotActivity;
 	integrationId: string;
 	sourceId: number;
 }
 
-export interface IIntegrationMapSyncTimeLog
-	extends IBasePerTenantAndOrganizationEntityModel {
+export interface IIntegrationMapSyncTimeLog extends IBasePerTenantAndOrganizationEntityModel {
 	timeLog: Partial<ITimeLog>;
 	integrationId: string;
 	sourceId: number;
 }
 
-export interface IIntegrationMapSyncTimeSlot
-	extends IBasePerTenantAndOrganizationEntityModel {
+export interface IIntegrationMapSyncTimeSlot extends IBasePerTenantAndOrganizationEntityModel {
 	timeSlot: IHubstaffTimeSlotActivity;
 	integrationId: string;
 	sourceId: number;
 }
 
-export interface IIntegrationMapSyncTask
-	extends IBasePerTenantAndOrganizationEntityModel {
+export interface IIntegrationMapSyncTask extends IBasePerTenantAndOrganizationEntityModel {
 	taskInput: ITaskUpdateInput;
 	integrationId: string;
 	sourceId: number;
 }
 
-export interface IIntegrationMapSyncProject
-	extends IBasePerTenantAndOrganizationEntityModel {
+export interface IIntegrationMapSyncProject extends IBasePerTenantAndOrganizationEntityModel {
 	organizationProjectInput: IOrganizationProjectsUpdateInput;
 	integrationId: string;
 	sourceId: number;
 }
 
-export interface IIntegrationMapSyncOrganization
-	extends IBasePerTenantAndOrganizationEntityModel {
+export interface IIntegrationMapSyncOrganization extends IBasePerTenantAndOrganizationEntityModel {
 	organizationInput: IOrganizationUpdateInput;
 	integrationId: string;
 	sourceId: number;
 }
 
-export interface IIntegrationMapSyncEntityInput
-	extends IBasePerTenantAndOrganizationEntityModel {
+export interface IIntegrationMapSyncEntityInput extends IBasePerTenantAndOrganizationEntityModel {
 	integrationId: string;
 	sourceId: number;
 	gauzyId: string;
 	entity: string;
 }
 
-export interface IIntegrationTenantCreateDto
-	extends IBasePerTenantAndOrganizationEntityModel {
+export interface IIntegrationTenantCreateDto extends IBasePerTenantAndOrganizationEntityModel {
 	name: string;
 	entitySettings?: IIntegrationEntitySetting[];
 	settings?: IIntegrationSetting[];
@@ -205,34 +189,27 @@ export const DEFAULT_INTEGRATIONS = [
 	{
 		name: IntegrationEnum.HUBSTAFF,
 		imgSrc: 'assets/images/integrations/hubstaff.svg',
-		integrationTypesMap: <string[]>[
-			IntegrationTypeNameEnum.ALL_INTEGRATIONS
-		],
+		integrationTypesMap: <string[]>[IntegrationTypeNameEnum.ALL_INTEGRATIONS],
 		order: 1
 	},
 	{
 		name: IntegrationEnum.UPWORK,
 		imgSrc: 'assets/images/integrations/upwork.svg',
-		integrationTypesMap: <string[]>[
-			IntegrationTypeNameEnum.ALL_INTEGRATIONS
-		],
+		integrationTypesMap: <string[]>[IntegrationTypeNameEnum.ALL_INTEGRATIONS],
 		order: 2
 	},
 	{
 		name: 'Import/Export',
 		imgSrc: 'assets/images/integrations/import-export.svg',
 		isComingSoon: true,
-		integrationTypesMap: <string[]>[
-			IntegrationTypeNameEnum.ALL_INTEGRATIONS,
-			IntegrationTypeNameEnum.CRM
-		],
+		integrationTypesMap: <string[]>[IntegrationTypeNameEnum.ALL_INTEGRATIONS, IntegrationTypeNameEnum.CRM],
 		order: 3
 	}
 ];
 
 /**
-* Hubstaff Integration
-*/
+ * Hubstaff Integration
+ */
 export interface IEntitySettingToSync {
 	previousValue: IIntegrationEntitySetting[];
 	currentValue: IIntegrationEntitySetting[];

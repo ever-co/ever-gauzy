@@ -13,17 +13,17 @@ const config = getConfig();
  * @param dataSource
  * @returns
  */
-export const createDefaultSizes = async (
-	dataSource: DataSource
-): Promise<ITaskSize[]> => {
+export const createDefaultSizes = async (dataSource: DataSource): Promise<ITaskSize[]> => {
 	await cleanEverIcons(config, 'ever-icons/task-sizes');
 
 	let sizes: ITaskSize[] = [];
 	for await (const size of DEFAULT_GLOBAL_SIZES) {
-		sizes.push(new TaskSize({
-			...size,
-			icon: copyEverIcons(size.icon, config)
-		}));
+		sizes.push(
+			new TaskSize({
+				...size,
+				icon: copyEverIcons(size.icon, config)
+			})
+		);
 	}
 	return await dataSource.manager.save(sizes);
 };

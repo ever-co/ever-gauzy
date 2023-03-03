@@ -1,7 +1,7 @@
 import { IBasePerTenantAndOrganizationEntityModel } from './base-entity.model';
 import { IEquipmentSharing } from './equipment-sharing.model';
 import { ITag } from './tag.model';
-import { IImageAsset } from "./image-asset.model";
+import { IImageAsset } from './image-asset.model';
 
 export interface IEquipment extends IBasePerTenantAndOrganizationEntityModel {
 	name: string;
@@ -17,7 +17,6 @@ export interface IEquipment extends IBasePerTenantAndOrganizationEntityModel {
 	tags: ITag[];
 }
 
-export interface IEquipmentFindInput
-	extends IBasePerTenantAndOrganizationEntityModel {
+export interface IEquipmentFindInput extends IBasePerTenantAndOrganizationEntityModel {
 	organizationId?: string;
 }

@@ -8,8 +8,7 @@ export interface IExpenseCategory extends IBasePerTenantAndOrganizationEntityMod
 	expenses?: IExpense[];
 }
 
-export interface IExpenseCategoryFind
-	extends IBasePerTenantAndOrganizationEntityModel {
+export interface IExpenseCategoryFind extends IBasePerTenantAndOrganizationEntityModel {
 	name?: string;
 }
 

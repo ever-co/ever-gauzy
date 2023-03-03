@@ -62,7 +62,6 @@ import {
 
 @Entity('tag')
 export class Tag extends TenantOrganizationBaseEntity implements ITag {
-
 	@ApiProperty({ type: () => String, required: true })
 	@IsNotEmpty()
 	@IsString()
@@ -102,7 +101,7 @@ export class Tag extends TenantOrganizationBaseEntity implements ITag {
 	 * Organization Team
 	 */
 	@ManyToOne(() => OrganizationTeam, (team) => team.labels, {
-		onDelete: 'SET NULL',
+		onDelete: 'SET NULL'
 	})
 	organizationTeam?: IOrganizationTeam;
 
