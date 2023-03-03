@@ -160,12 +160,12 @@ export class TagService extends TenantAwareCrudService<Tag> {
 		query: SelectQueryBuilder<Tag>,
 		request: ITagFindInput
 	): SelectQueryBuilder<Tag> {
-		const { organizationId, name, color, description } = request;
+		const tenantId = RequestContext.currentTenantId() || request.tenantId;
+		const { organizationId, organizationTeamId, name, color, description } = request;
+
 		query.andWhere(
 			new Brackets((qb: WhereExpressionBuilder) => {
-				qb.andWhere(`"${query.alias}"."tenantId" = :tenantId`, {
-					tenantId: RequestContext.currentTenantId()
-				});
+				qb.andWhere(`"${query.alias}"."tenantId" = :tenantId`, { tenantId });
 			})
 		);
 		query.andWhere(
@@ -180,6 +180,15 @@ export class TagService extends TenantAwareCrudService<Tag> {
 						}
 					]
 				);
+			})
+		);
+		query.andWhere(
+			new Brackets((qb: WhereExpressionBuilder) => {
+				if (isNotEmpty(organizationTeamId)) {
+					query.andWhere(`"${query.alias}"."organizationTeamId" = :organizationTeamId`, {
+						organizationTeamId
+					});
+				}
 			})
 		);
 		query.andWhere(`"${query.alias}"."isSystem" = :isSystem`, {
