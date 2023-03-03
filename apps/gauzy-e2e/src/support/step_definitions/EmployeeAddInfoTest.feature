@@ -20,7 +20,7 @@ Feature: Employee add info test
     When User click on Save button
     Then User will see notification message
   Scenario: Add employee level and short description
-    When User see dashboard button on main manu
+    When User see dashboard button on main menu
     Then User click on dashboard button
     When User see employee selector
     Then User click on employee selector
@@ -41,7 +41,7 @@ Feature: Employee add info test
     Then User click on save button again
     Then User will see notification message
   Scenario: Verify employee information
-    When User see dashboard button on main manu
+    When User see dashboard button on main menu
     Then User click on dashboard button
     When User see employee selector
     Then User click on employee selector

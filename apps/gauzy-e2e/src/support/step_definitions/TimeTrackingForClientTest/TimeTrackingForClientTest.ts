@@ -149,7 +149,7 @@ When('Employee click on stop timer button', () => {
 });
 
 Then('Employee can see view timesheet button', () => {
-	timeTrackingForClient.viewTimesheetbtnVisible();
+	timeTrackingForClient.viewTimesheetBtnVisible();
 });
 
 When('Employee click on view timesheet button', () => {

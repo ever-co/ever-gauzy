@@ -1,5 +1,5 @@
 export interface IClientFilterOption {
 	name?: string;
-	clienId?: number;
+	clientId?: number;
 	remoteId?: string;
 }

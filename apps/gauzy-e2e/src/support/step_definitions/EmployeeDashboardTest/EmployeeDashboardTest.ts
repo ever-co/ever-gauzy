@@ -265,7 +265,7 @@ And('User can verify income was created', () => {
 
 //User go to dashboard to verify employee salary
 
-When('User see dashboard button on main manu', () => {
+When('User see dashboard button on main menu', () => {
 	employeeDashboard.verifyMenuBtnByText(EmployeeDashboardPageData.dashboardTxt);
 });
 

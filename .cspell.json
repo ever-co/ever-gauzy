@@ -234,7 +234,8 @@
         "pageobjects",
         "urlpath",
         "fieldname",
-        "pinghost"
+        "pinghost",
+        "formcontrolname"
     ],
     "useGitignore": true,
     "ignorePaths": [

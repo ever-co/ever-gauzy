@@ -282,7 +282,7 @@ And('User can enter template name', () => {
 	proposalsPage.enterTemplateName(ProposalsPageData.juniorDeveloper);
 });
 
-And('User can enter propsoal template content', () => {
+And('User can enter proposal template content', () => {
 	proposalsPage.enterProposalTemplateContent(proposalTemplateContent, 0);
 });
 

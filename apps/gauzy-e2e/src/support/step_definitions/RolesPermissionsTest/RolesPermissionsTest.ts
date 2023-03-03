@@ -102,7 +102,7 @@ And('User can verify Super admin administration roles and permissions', () => {
 	rolesPermissionsPage.verifyState(RolesPermissionsPageData.RequestMakeEquipmentMake, checked);
 	rolesPermissionsPage.verifyState(RolesPermissionsPageData.RequestApproveEquipment, checked);
 	rolesPermissionsPage.verifyState(RolesPermissionsPageData.ViewOrganizationProductTypes, checked);
-	rolesPermissionsPage.verifyState(RolesPermissionsPageData.ViewOrganizationProductcategories, checked);
+	rolesPermissionsPage.verifyState(RolesPermissionsPageData.ViewOrganizationProductCategories, checked);
 	rolesPermissionsPage.verifyState(RolesPermissionsPageData.EditOrganizationProductcategories, checked);
 	rolesPermissionsPage.verifyState(RolesPermissionsPageData.ViewAllAccountingTemplates, checked);
 	rolesPermissionsPage.verifyState(RolesPermissionsPageData.ViewOrganizationEmployees, checked);
@@ -139,7 +139,7 @@ And('User can verify Super admin administration roles and permissions', () => {
 	rolesPermissionsPage.verifyState(RolesPermissionsPageData.ViewOrganizationEquipmentAdmin, checked);
 	rolesPermissionsPage.verifyState(RolesPermissionsPageData.ViewOrganizationEquipmentSharingAdmin, checked);
 	rolesPermissionsPage.verifyState(RolesPermissionsPageData.ViewOrganizationProductTypesAdmin, checked);
-	rolesPermissionsPage.verifyState(RolesPermissionsPageData.ViewOrganizationProductcategoriesAdmin, checked);
+	rolesPermissionsPage.verifyState(RolesPermissionsPageData.ViewOrganizationProductCategoriesAdmin, checked);
 	rolesPermissionsPage.verifyState(RolesPermissionsPageData.MigrateIntoGauzyCloud, checked);
 	rolesPermissionsPage.verifyState(RolesPermissionsPageData.AccessDeleteAccount, checked);
 	rolesPermissionsPage.verifyState(RolesPermissionsPageData.AccessDeleteAllData, checked);

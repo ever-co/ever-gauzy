@@ -119,7 +119,7 @@ export class CloudinaryProvider extends Provider<CloudinaryProvider> {
                 if (error) {
                     return reject(error);
                 }
-                // Image has been successfully uploaded on cloudinary so we dont need local image file anymore
+                // Image has been successfully uploaded on cloudinary so we don't need local image file anymore
                 // Remove file from local uploads folder
                 fs.unlinkSync(this.path(path));
                 return resolve({ url: result.url, id: result.public_id } as any);

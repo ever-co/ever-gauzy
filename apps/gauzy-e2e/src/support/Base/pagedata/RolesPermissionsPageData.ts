@@ -144,7 +144,7 @@ export const RolesPermissionsPageData = {
 	RequestMakeEquipmentMake: 58,
 	RequestApproveEquipment: 59,
 	ViewOrganizationProductTypes: 60,
-	ViewOrganizationProductcategories: 61,
+	ViewOrganizationProductCategories: 61,
 	EditOrganizationProductcategories: 62,
 	ViewAllAccountingTemplates: 63,
 	ViewOrganizationEmployees: 64,
@@ -181,7 +181,7 @@ export const RolesPermissionsPageData = {
 	ViewOrganizationEquipmentAdmin: 95,
 	ViewOrganizationEquipmentSharingAdmin: 96,
 	ViewOrganizationProductTypesAdmin: 97,
-	ViewOrganizationProductcategoriesAdmin: 98,
+	ViewOrganizationProductCategoriesAdmin: 98,
 	MigrateIntoGauzyCloud: 99,
 	AccessDeleteAccount: 100,
 	AccessDeleteAllData: 101
