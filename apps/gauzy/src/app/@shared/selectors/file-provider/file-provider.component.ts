@@ -12,7 +12,7 @@ import { FileStorageProviderEnum } from '@gauzy/contracts';
 		{
 			provide: NG_VALUE_ACCESSOR,
 			useExisting: forwardRef(() => FileProviderComponent),
-			multi: true
+			multi: true,
 		}
 	]
 })
@@ -32,16 +32,19 @@ export class FileProviderComponent implements OnInit {
 		return this._provider;
 	}
 
-	onChange: any = () => {};
-	onTouched: any = () => {};
+	onChange: any = () => { };
+	onTouched: any = () => { };
 
 	@Output() onSelectionChanged = new EventEmitter();
 
 	ngOnInit(): void {
-		this.fileStorageProviders = Object.keys(FileStorageProviderEnum).map((label: FileStorageProviderEnum) => ({
-			label,
-			value: FileStorageProviderEnum[label]
-		}));
+		this.fileStorageProviders = Object.keys(FileStorageProviderEnum)
+			// WIP: Support cloudinary provider
+			.filter((label) => label !== FileStorageProviderEnum.CLOUDINARY)
+			.map((label: FileStorageProviderEnum) => ({
+				label,
+				value: FileStorageProviderEnum[label]
+			}));
 	}
 
 	/**
