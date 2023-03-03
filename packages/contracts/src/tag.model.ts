@@ -1,6 +1,7 @@
+import { IRelationalOrganizationTeam } from './organization-team-model';
 import { IBasePerTenantAndOrganizationEntityModel } from './base-entity.model';
 
-export interface ITag extends IBasePerTenantAndOrganizationEntityModel {
+export interface ITag extends IBasePerTenantAndOrganizationEntityModel, IRelationalOrganizationTeam {
 	name: string;
 	color: string;
 	icon?: string;
@@ -8,10 +9,11 @@ export interface ITag extends IBasePerTenantAndOrganizationEntityModel {
 	isSystem?: boolean;
 }
 
-export interface ITagFindInput extends IBasePerTenantAndOrganizationEntityModel {
+export interface ITagFindInput extends IBasePerTenantAndOrganizationEntityModel, Pick<ITag, 'organizationTeamId'> {
 	name?: string;
 	color?: string;
 	description?: string;
+	isSystem?: boolean;
 }
 
 export interface ITagCreateInput extends ITag { }

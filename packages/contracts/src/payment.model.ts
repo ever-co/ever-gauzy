@@ -1,6 +1,6 @@
 import { IBasePerTenantAndOrganizationEntityModel, IBaseRelationsEntityModel } from './base-entity.model';
 import { IInvoice } from './invoice.model';
-import { ITag } from './tag-entity.model';
+import { ITag } from './tag.model';
 import { IUser } from './user.model';
 import { IOrganizationContact } from './organization-contact.model';
 import { IOrganizationProject } from './organization-projects.model';

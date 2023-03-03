@@ -4,7 +4,7 @@ import { IEmployee } from './employee.model';
 import { IOrganizationTeam } from './organization-team-model';
 import { IRequestApprovalTeam } from './request-approval-team.model';
 import { IApprovalPolicy } from './approval-policy.model';
-import { ITag } from './tag-entity.model';
+import { ITag } from './tag.model';
 
 export interface IRequestApproval
 	extends IBasePerTenantAndOrganizationEntityModel {

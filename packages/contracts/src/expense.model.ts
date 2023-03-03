@@ -1,6 +1,6 @@
 import { IEmployee, IRelationalEmployee } from './employee.model';
 import { IBasePerTenantAndOrganizationEntityModel } from './base-entity.model';
-import { ITag } from './tag-entity.model';
+import { ITag } from './tag.model';
 import { IExpenseCategory } from './expense-category.model';
 import { IOrganizationVendor } from './organization-vendors.model';
 import { IOrganizationProject } from './organization-projects.model';
@@ -132,7 +132,7 @@ export enum ExpenseStatusesEnum {
 
 export interface IGetExpenseInput
 	extends IPaginationInput,
-		IBasePerTenantAndOrganizationEntityModel {
+	IBasePerTenantAndOrganizationEntityModel {
 	relations?: string[];
 	types?: string[];
 	titles?: string[];
