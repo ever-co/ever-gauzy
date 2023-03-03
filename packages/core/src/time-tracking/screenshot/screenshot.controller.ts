@@ -1,17 +1,4 @@
-import {
-	Controller,
-	UseGuards,
-	HttpStatus,
-	Post,
-	Body,
-	UseInterceptors,
-	Delete,
-	Param,
-	ExecutionContext,
-	Query,
-	UsePipes,
-	ValidationPipe
-} from '@nestjs/common';
+import { Controller, UseGuards, HttpStatus, Post, Body, UseInterceptors, Delete, Param, ExecutionContext, Query, UsePipes, ValidationPipe } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import * as path from 'path';
 import * as moment from 'moment';
@@ -35,7 +22,7 @@ import { DeleteQueryDTO } from './../../shared/dto';
 @Permissions(PermissionsEnum.TIME_TRACKER)
 @Controller()
 export class ScreenshotController {
-	constructor(private readonly screenshotService: ScreenshotService) {}
+	constructor(private readonly screenshotService: ScreenshotService) { }
 
 	@ApiOperation({ summary: 'Add manual time' })
 	@ApiResponse({
