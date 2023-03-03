@@ -126,20 +126,20 @@ export class RequestApprovalService extends TenantAwareCrudService<RequestApprov
 		try {
 			const tenantId = RequestContext.currentTenantId();
 			const { organizationId } = findInput;
-			const result = await this.requestApprovalRepository.find({
-				where: {
-					createdBy: id,
-					organizationId,
-					tenantId
-				}
-			});
-			let requestApproval = [];
 			const [employee] = await this.employeeRepository.find({
 				where: {
 					id
 				},
 				relations
 			});
+			const result = await this.requestApprovalRepository.find({
+				where: {
+					createdBy: [employee].length > 0 ? [employee][0].userId : '',
+					organizationId,
+					tenantId
+				}
+			});
+			let requestApproval = [];
 			if (
 				employee &&
 				employee.requestApprovals &&
