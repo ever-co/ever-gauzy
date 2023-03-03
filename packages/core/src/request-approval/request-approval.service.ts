@@ -1,9 +1,4 @@
-import {
-	Injectable,
-	BadRequestException,
-	NotFoundException,
-	ConflictException
-} from '@nestjs/common';
+import { Injectable, BadRequestException, NotFoundException, ConflictException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Brackets, FindManyOptions, In, Repository } from 'typeorm';
 import {
@@ -19,12 +14,7 @@ import {
 } from '@gauzy/contracts';
 import { getConfig } from '@gauzy/config';
 import { RequestContext } from '../core/context';
-import {
-	Employee,
-	OrganizationTeam,
-	RequestApprovalEmployee,
-	RequestApprovalTeam
-} from './../core/entities/internal';
+import { Employee, OrganizationTeam, RequestApprovalEmployee, RequestApprovalTeam } from './../core/entities/internal';
 import { TenantAwareCrudService } from './../core/crud';
 import { RequestApproval } from './request-approval.entity';
 
@@ -98,8 +88,7 @@ export class RequestApprovalService extends TenantAwareCrudService<RequestApprov
 				new Brackets((sqb) => {
 					sqb.where('time_off_request.organizationId =:organizationId', {
 						organizationId
-					})
-					.andWhere('time_off_request.tenantId =:tenantId', {
+					}).andWhere('time_off_request.tenantId =:tenantId', {
 						tenantId
 					});
 				})
@@ -140,15 +129,8 @@ export class RequestApprovalService extends TenantAwareCrudService<RequestApprov
 				}
 			});
 			let requestApproval = [];
-			if (
-				employee &&
-				employee.requestApprovals &&
-				employee.requestApprovals.length > 0
-			) {
-				requestApproval = [
-					...requestApproval,
-					...employee.requestApprovals
-				];
+			if (employee && employee.requestApprovals && employee.requestApprovals.length > 0) {
+				requestApproval = [...requestApproval, ...employee.requestApprovals];
 			}
 
 			for (const request of requestApproval) {
@@ -172,9 +154,7 @@ export class RequestApprovalService extends TenantAwareCrudService<RequestApprov
 		}
 	}
 
-	async createRequestApproval(
-		entity: IRequestApprovalCreateInput
-	): Promise<RequestApproval> {
+	async createRequestApproval(entity: IRequestApprovalCreateInput): Promise<RequestApproval> {
 		try {
 			const tenantId = RequestContext.currentTenantId();
 			const requestApproval = new RequestApproval();
@@ -227,10 +207,7 @@ export class RequestApprovalService extends TenantAwareCrudService<RequestApprov
 			throw new BadRequestException(err);
 		}
 	}
-	async updateRequestApproval(
-		id: string,
-		entity: IRequestApprovalCreateInput
-	): Promise<RequestApproval> {
+	async updateRequestApproval(id: string, entity: IRequestApprovalCreateInput): Promise<RequestApproval> {
 		try {
 			const tenantId = RequestContext.currentTenantId();
 			const requestApproval = await this.requestApprovalRepository.findOneBy({
@@ -301,10 +278,7 @@ export class RequestApprovalService extends TenantAwareCrudService<RequestApprov
 		}
 	}
 
-	async updateStatusRequestApprovalByAdmin(
-		id: string,
-		status: number
-	): Promise<RequestApproval> {
+	async updateStatusRequestApprovalByAdmin(id: string, status: number): Promise<RequestApproval> {
 		try {
 			const [requestApproval] = await this.requestApprovalRepository.find({
 				where: {
@@ -334,10 +308,7 @@ export class RequestApprovalService extends TenantAwareCrudService<RequestApprov
 		}
 	}
 
-	async updateStatusRequestApprovalByEmployeeOrTeam(
-		id: string,
-		status: number
-	): Promise<RequestApproval> {
+	async updateStatusRequestApprovalByEmployeeOrTeam(id: string, status: number): Promise<RequestApproval> {
 		try {
 			let minCount = 0;
 			const employeeId = RequestContext.currentUser().employeeId;
@@ -356,25 +327,18 @@ export class RequestApprovalService extends TenantAwareCrudService<RequestApprov
 			}
 
 			if (
-				requestApproval.status ===
-				RequestApprovalStatusTypesEnum.APPROVED ||
-				requestApproval.status ===
-				RequestApprovalStatusTypesEnum.REFUSED
+				requestApproval.status === RequestApprovalStatusTypesEnum.APPROVED ||
+				requestApproval.status === RequestApprovalStatusTypesEnum.REFUSED
 			) {
 				throw new ConflictException('Request Approval is Conflict');
 			}
 
-			if (
-				requestApproval.employeeApprovals &&
-				requestApproval.employeeApprovals.length > 0
-			) {
+			if (requestApproval.employeeApprovals && requestApproval.employeeApprovals.length > 0) {
 				requestApproval.employeeApprovals.forEach((req) => {
 					if (req.employeeId === employeeId) {
 						req.status = status;
 					}
-					if (
-						req.status === RequestApprovalStatusTypesEnum.APPROVED
-					) {
+					if (req.status === RequestApprovalStatusTypesEnum.APPROVED) {
 						minCount++;
 					}
 				});
@@ -383,8 +347,7 @@ export class RequestApprovalService extends TenantAwareCrudService<RequestApprov
 			if (status === RequestApprovalStatusTypesEnum.REFUSED) {
 				requestApproval.status = RequestApprovalStatusTypesEnum.REFUSED;
 			} else if (minCount >= requestApproval.min_count) {
-				requestApproval.status =
-					RequestApprovalStatusTypesEnum.APPROVED;
+				requestApproval.status = RequestApprovalStatusTypesEnum.APPROVED;
 			}
 
 			return this.requestApprovalRepository.save(requestApproval);
