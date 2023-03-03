@@ -22,7 +22,7 @@ let employeeEmail = faker.internet.email();
 let imgUrl = faker.image.avatar();
 
 let defaultName = faker.person.jobTitle() + ' ' + ApprovalRequestPageData.defaultRequest;
-let editName = faker.person.jobTitle() + ' ' + ApprovalRequestPageData.defaultRequest
+let editName = faker.person.jobTitle() + ' ' + ApprovalRequestPageData.defaultRequest;
 
 // Login with email
 Given('Login with default credentials', () => {
@@ -40,15 +40,7 @@ And('User can add new employee', () => {
 	CustomCommands.logout(dashboardPage, logoutPage, loginPage);
 	CustomCommands.clearCookies();
 	CustomCommands.login(loginPage, LoginPageData, dashboardPage);
-	CustomCommands.addEmployee(
-		manageEmployeesPage,
-		firstName,
-		lastName,
-		username,
-		employeeEmail,
-		password,
-		imgUrl
-	);
+	CustomCommands.addEmployee(manageEmployeesPage, firstName, lastName, username, employeeEmail, password, imgUrl);
 });
 
 // Add approval policy
@@ -91,9 +83,7 @@ Then('User can see name input field', () => {
 });
 
 And('User can enter value for name', () => {
-	approvalRequestPage.enterNameInputData(
-		ApprovalRequestPageData.defaultApprovalPolicy
-	);
+	approvalRequestPage.enterNameInputData(ApprovalRequestPageData.defaultApprovalPolicy);
 });
 
 And('User can see description input field', () => {
@@ -101,9 +91,7 @@ And('User can see description input field', () => {
 });
 
 And('User can enter value for description', () => {
-	approvalRequestPage.enterDescriptionInputData(
-		ApprovalRequestPageData.defaultPolicyDescription
-	);
+	approvalRequestPage.enterDescriptionInputData(ApprovalRequestPageData.defaultPolicyDescription);
 });
 
 And('User can see save button', () => {
@@ -119,9 +107,7 @@ Then('Notification message will appear', () => {
 });
 
 And('User can verify policy was created', () => {
-	approvalRequestPage.verifyApprovalPolicyExists(
-		ApprovalRequestPageData.defaultApprovalPolicy
-	);
+	approvalRequestPage.verifyApprovalPolicyExists(ApprovalRequestPageData.defaultApprovalPolicy);
 });
 
 And('User can see back button', () => {
@@ -162,9 +148,7 @@ And('User can see min count input field', () => {
 });
 
 And('User can enter value for min count', () => {
-	approvalRequestPage.enterMinCountInputData(
-		ApprovalRequestPageData.defaultMinCount
-	);
+	approvalRequestPage.enterMinCountInputData(ApprovalRequestPageData.defaultMinCount);
 });
 
 And('User can see approval policy dropdown', () => {
@@ -176,9 +160,7 @@ When('User click on approval policy dropdown', () => {
 });
 
 Then('User can select policy from dropdown options', () => {
-	approvalRequestPage.selectApprovalPolicyOptionDropdown(
-		ApprovalRequestPageData.defaultApprovalPolicy
-	);
+	approvalRequestPage.selectApprovalPolicyOptionDropdown(ApprovalRequestPageData.defaultApprovalPolicy);
 });
 
 And('User can see employee dropdown', () => {
@@ -224,7 +206,10 @@ And('Verify table load', () => {
 });
 
 When('User can see approval button', () => {
-	approvalRequestPage.verifyApprovalRefuseButton(ApprovalRequestPageData.approvalBtn, ApprovalRequestPageData.approvalRefuseBtnIndex);
+	approvalRequestPage.verifyApprovalRefuseButton(
+		ApprovalRequestPageData.approvalBtn,
+		ApprovalRequestPageData.approvalRefuseBtnIndex
+	);
 });
 
 Then('User click on approval button', () => {
@@ -236,7 +221,10 @@ Then('Notification message will appear', () => {
 });
 
 And('User cant see approval button', () => {
-	approvalRequestPage.verifyApprovalButtonNotExist(ApprovalRequestPageData.approvalBtn, ApprovalRequestPageData.approvalRefuseBtnIndex);
+	approvalRequestPage.verifyApprovalButtonNotExist(
+		ApprovalRequestPageData.approvalBtn,
+		ApprovalRequestPageData.approvalRefuseBtnIndex
+	);
 });
 
 And('User can see status is Approved', () => {
@@ -245,7 +233,10 @@ And('User can see status is Approved', () => {
 //Refuse approval request
 
 When('User see refuse button', () => {
-	approvalRequestPage.verifyApprovalRefuseButton(ApprovalRequestPageData.refuseBtn, ApprovalRequestPageData.approvalRefuseBtnIndex)
+	approvalRequestPage.verifyApprovalRefuseButton(
+		ApprovalRequestPageData.refuseBtn,
+		ApprovalRequestPageData.approvalRefuseBtnIndex
+	);
 });
 
 Then('User click on refuse button', () => {
@@ -286,9 +277,7 @@ And('User can see min count input field', () => {
 });
 
 And('User can enter new value for min count', () => {
-	approvalRequestPage.enterMinCountInputData(
-		ApprovalRequestPageData.defaultMinCount
-	);
+	approvalRequestPage.enterMinCountInputData(ApprovalRequestPageData.defaultMinCount);
 });
 
 And('User can see tags dropdown', () => {
@@ -305,7 +294,7 @@ Then('User can select tag from dropdown options', () => {
 
 When('User click on card body', () => {
 	approvalRequestPage.clickCardBody();
-})
+});
 
 Then('User can see save button', () => {
 	approvalRequestPage.saveButtonVisible();
@@ -350,7 +339,7 @@ Then('Notification message will appear', () => {
 
 And('User clear search field', () => {
 	approvalRequestPage.clearNameSearchInput();
-})
+});
 
 And('User can verify request was deleted', () => {
 	approvalRequestPage.verifyElementIsDeleted(editName);

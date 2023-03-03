@@ -34,24 +34,9 @@ describe('Clients test', () => {
 	});
 
 	it('Should be able to add new client', () => {
-		CustomCommands.addProject(
-			organizationProjectsPage,
-			OrganizationProjectsPageData
-		);
-		CustomCommands.addTag(
-			organizationTagsUserPage,
-			OrganizationTagsPageData
-		);
-		CustomCommands.addClient(
-			clientsPage,
-			fullName,
-			email,
-			website,
-			city,
-			postcode,
-			street,
-			ClientsData
-		);
+		CustomCommands.addProject(organizationProjectsPage, OrganizationProjectsPageData);
+		CustomCommands.addTag(organizationTagsUserPage, OrganizationTagsPageData);
+		CustomCommands.addClient(clientsPage, fullName, email, website, city, postcode, street, ClientsData);
 	});
 	it('Should be able to invite client', () => {
 		clientsPage.inviteButtonVisible();

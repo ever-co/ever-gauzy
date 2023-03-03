@@ -259,12 +259,12 @@ export const clickFinishButton = () => {
 };
 
 export const lastStepBtnVisible = () => {
-	verifyElementIsVisible(CustomersPage.lastStepBtnCss)
-}
+	verifyElementIsVisible(CustomersPage.lastStepBtnCss);
+};
 
 export const clickLastStepBtn = () => {
-	clickButton(CustomersPage.lastStepBtnCss)
-}
+	clickButton(CustomersPage.lastStepBtnCss);
+};
 
 export const budgetInputVisible = () => {
 	verifyElementIsVisible(CustomersPage.budgetInpuCss);

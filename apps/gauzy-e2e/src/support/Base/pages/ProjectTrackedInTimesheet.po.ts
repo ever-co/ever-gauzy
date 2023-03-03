@@ -12,7 +12,6 @@ import {
 } from '../utils/util';
 import { ProjectTrackedInTimesheetPage } from '../pageobjects/ProjectTrackedInTimesheetPageObject';
 
-
 export const gridBtnExists = () => {
 	verifyElementIsVisible(ProjectTrackedInTimesheetPage.gridButtonCss);
 };
@@ -39,9 +38,7 @@ export const enterNameInputData = (data) => {
 };
 
 export const selectEmployeeDropdownVisible = () => {
-	verifyElementIsVisible(
-		ProjectTrackedInTimesheetPage.selectEmployeeMultiSelectCss
-	);
+	verifyElementIsVisible(ProjectTrackedInTimesheetPage.selectEmployeeMultiSelectCss);
 };
 
 export const clickSelectEmployeeDropdown = () => {
@@ -117,13 +114,13 @@ export const clickViewTimesheetBtn = () => {
 };
 
 export const verifyProjectText = (text) => {
-	compareTwoTexts(ProjectTrackedInTimesheetPage.projectNameCss, text)
-}
+	compareTwoTexts(ProjectTrackedInTimesheetPage.projectNameCss, text);
+};
 
 export const waitMainDashboard = (url: string) => {
 	//waits for response then continue
-	cy.intercept('GET', url).as('getUser')
+	cy.intercept('GET', url).as('getUser');
 	cy.wait('@getUser').then(() => {
 		verifyElementIsVisible(ProjectTrackedInTimesheetPage.headerImgCss);
-	})
+	});
 };

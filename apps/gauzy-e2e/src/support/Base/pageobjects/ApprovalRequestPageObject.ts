@@ -1,7 +1,6 @@
 export const ApprovalRequestPage = {
 	gridButtonCss: 'div.layout-switch > button',
-	addApprovalRequestButtonCss:
-		'nb-card-body > div.mb-3 > button[status="success"]',
+	addApprovalRequestButtonCss: 'nb-card-body > div.mb-3 > button[status="success"]',
 	editApprovalRequestButtonCss: 'div.mb-3 > button[status="info"]',
 	deleteApprovalRequestButtonCss: 'div.mb-3 > button[status="danger"]',
 	nameInputCss: '[formcontrolname="name"]',
@@ -25,5 +24,5 @@ export const ApprovalRequestPage = {
 	approvalStatusCss: 'table > tbody > tr.ng2-smart-row',
 	searchByNameInputCss: 'input[placeholder="Name"]',
 	rowCss: 'table > tbody > tr.ng2-smart-row',
-	tableBodyCss: 'table > tbody',
+	tableBodyCss: 'table > tbody'
 };

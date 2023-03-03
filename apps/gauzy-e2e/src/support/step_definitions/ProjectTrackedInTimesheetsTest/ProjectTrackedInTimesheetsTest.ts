@@ -10,10 +10,7 @@ import * as projectTrackedInTimesheets from '../../Base/pages/ProjectTrackedInTi
 import { waitUntil } from '../../Base/utils/util';
 import { ProjectTrackedInTimesheetPageData } from '../../Base/pagedata/ProjectTrackedInTimesheetPageData';
 
-
 const pageLoadTimeout = Cypress.config('pageLoadTimeout');
-
-
 
 let firstName = faker.person.firstName();
 let lastName = faker.person.lastName();
@@ -22,31 +19,22 @@ let password = faker.internet.password();
 let imgUrl = faker.image.avatar();
 let employeeEmail = faker.internet.email();
 
-let projectName = faker.company.name()
+let projectName = faker.company.name();
 
 let employeeFullName = `${firstName} ${lastName}`;
-
 
 // Login with email
 
 Given('Login with default credentials', () => {
-	CustomCommands.login(loginPage, LoginPageData, dashboardPage)
-})
+	CustomCommands.login(loginPage, LoginPageData, dashboardPage);
+});
 
 //Add employee
 Then('User can add new employee', () => {
 	CustomCommands.logout(dashboardPage, logoutPage, loginPage);
 	CustomCommands.clearCookies();
 	CustomCommands.login(loginPage, LoginPageData, dashboardPage);
-	CustomCommands.addEmployee(
-		manageEmployeesPage,
-		firstName,
-		lastName,
-		username,
-		employeeEmail,
-		password,
-		imgUrl
-	);
+	CustomCommands.addEmployee(manageEmployeesPage, firstName, lastName, username, employeeEmail, password, imgUrl);
 });
 
 //Add new project
@@ -176,7 +164,7 @@ When('Employee click on start timer button', () => {
 
 Then('Employee can let timer work for 5 seconds', () => {
 	waitUntil(5000);
-})
+});
 
 And('Employee can see stop timer button', () => {
 	projectTrackedInTimesheets.stopTimerBtnVisible();
@@ -194,5 +182,5 @@ When('Employee click on view timesheet button', () => {
 	projectTrackedInTimesheets.clickViewTimesheetBtn();
 });
 Then('Employee verify project name is the same', () => {
-	projectTrackedInTimesheets.verifyProjectText(projectName)
+	projectTrackedInTimesheets.verifyProjectText(projectName);
 });

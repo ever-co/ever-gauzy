@@ -8,7 +8,6 @@ import {
 
 import { TimeTrackingForClient } from '../pageobjects/TimeTrackingForClientPageObject';
 
-
 export const timerVisible = () => {
 	verifyElementIsVisible(TimeTrackingForClient.timerCss);
 };
@@ -66,12 +65,12 @@ export const clickOnViewBtn = () => {
 
 export const verifyCustomerName = (name) => {
 	verifyByText(TimeTrackingForClient.clientNameCss, name);
-}
+};
 
 export const waitMainDashboard = (url: string) => {
 	//waits for responce then continue
-	cy.intercept('GET', url).as('getUser')
+	cy.intercept('GET', url).as('getUser');
 	cy.wait('@getUser').then(() => {
 		verifyElementIsVisible(TimeTrackingForClient.headerImgCss);
-	})
+	});
 };

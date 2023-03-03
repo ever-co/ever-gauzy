@@ -16,8 +16,7 @@ export const CandidatesPage = {
 	tagsDropdownOption: 'div.ng-option',
 	nextButtonCss: 'div.text-right > button[status="success"]',
 	nextStepButtonCss: 'div.button-container > button[status="success"]',
-	allCurrentCandidatesButtonCss:
-		'div.step-container > button[status="success"]',
+	allCurrentCandidatesButtonCss: 'div.step-container > button[status="success"]',
 	selectTableRowCss: 'table > tbody > tr.ng2-smart-row',
 	editButtonCss: '.status-info',
 	archiveButtonCss: 'div.float-left > button[status="warning"]',
@@ -33,8 +32,7 @@ export const CandidatesPage = {
 	cityInputCss: '#cityInput',
 	addressOneInputCss: 'addressInput',
 	postcodeInputCss: '#postcodeInput',
-	saveActionButtonCss:
-		'ga-edit-candidate-main div.actions > button[status="success"]',
+	saveActionButtonCss: 'ga-edit-candidate-main div.actions > button[status="success"]',
 	ratesButtonCss: '.route-tab:nth-child(5) > .tab-text',
 	payPeriodDropdownCss: '#payPeriodsSelect',
 	billRateInputCss: '#billRateValueInput',

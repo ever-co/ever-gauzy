@@ -131,10 +131,7 @@ export const selectEmployeeDropdownOption = (index) => {
 };
 
 export const selectEmployeeFromDropdownByName = (name) => {
-	clickElementByText(
-		ClientsPage.dropdownOptionCss,
-		name
-	);
+	clickElementByText(ClientsPage.dropdownOptionCss, name);
 };
 
 export const tagsMultiSelectVisible = () => {
@@ -266,12 +263,12 @@ export const verifyElementIsDeleted = (text) => {
 };
 
 export const lastStepBtnVisible = () => {
-	verifyElementIsVisible(ClientsPage.lastStepBtnCss)
-}
+	verifyElementIsVisible(ClientsPage.lastStepBtnCss);
+};
 
 export const clickLastStepBtn = () => {
-	clickButton(ClientsPage.lastStepBtnCss)
-}
+	clickButton(ClientsPage.lastStepBtnCss);
+};
 
 export const budgetInputVisible = () => {
 	verifyElementIsVisible(ClientsPage.budgetInpuCss);
@@ -292,8 +289,8 @@ export const searchClientName = (name: string) => {
 };
 
 export const verifyClientNameInTable = (name: string) => {
-	vefiryByLength(ClientsPage.clientsTableRow, 1)
-	verifyByText(ClientsPage.clientsTableData, name)
+	vefiryByLength(ClientsPage.clientsTableRow, 1);
+	verifyByText(ClientsPage.clientsTableData, name);
 };
 
 export const clearSearchInput = () => {
@@ -307,19 +304,19 @@ export const viewButtonVisible = () => {
 export const clickViewButton = () => {
 	cy.intercept('GET', '/api/employee*').as('waitClient');
 	clickButton(ClientsPage.viewButtonCss);
-	cy.wait('@waitClient')
+	cy.wait('@waitClient');
 };
 
 export const verifyClientNameView = (name: string) => {
-	verifyByText(ClientsPage.clientNameViewCss, name)
+	verifyByText(ClientsPage.clientNameViewCss, name);
 };
 
 export const verifyContactType = (type: string) => {
-	verifyByText(ClientsPage.clientTypeViewCss, type)
+	verifyByText(ClientsPage.clientTypeViewCss, type);
 };
 
 export const verifyBackBtn = () => {
-	verifyElementIsVisible(ClientsPage.backBtn)
+	verifyElementIsVisible(ClientsPage.backBtn);
 };
 
 export const clickOnBackBtn = () => {

@@ -55,10 +55,7 @@ export const selectEmployeeDropdownOption = (index) => {
 };
 
 export const selectEmployeeFromDropdownByName = (name) => {
-	clickElementByText(
-		AddTaskPage.selectEmployeeDropdownOptionCss,
-		name
-	);
+	clickElementByText(AddTaskPage.selectEmployeeDropdownOptionCss, name);
 };
 
 export const addTitleInputVisible = () => {

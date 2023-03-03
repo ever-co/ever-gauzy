@@ -13,14 +13,13 @@ import * as clientsPage from '../../Base/pages/Clients.po';
 import * as manageEmployeesPage from '../../Base/pages/ManageEmployees.po';
 import { Given, Then, When, And } from 'cypress-cucumber-preprocessor/steps';
 
-
 let email = faker.internet.email();
 let fullName = faker.person.firstName() + ' ' + faker.person.lastName();
 let city = faker.location.city();
 let postcode = faker.location.zipCode();
 let street = faker.location.streetAddress();
 let website = faker.internet.url();
-let projectName = faker.person.jobTitle()
+let projectName = faker.person.jobTitle();
 
 let firstName = faker.person.firstName();
 let lastName = faker.person.lastName();
@@ -32,7 +31,6 @@ let employeeFullName = `${firstName} ${lastName}`;
 
 const pageLoadTimeout = Cypress.config('pageLoadTimeout');
 
-
 // Login with email
 Given('Login with default credentials', () => {
 	CustomCommands.login(loginPage, LoginPageData, dashboardPage);
@@ -41,15 +39,7 @@ Given('Login with default credentials', () => {
 // Add employee
 And('User can add new employee', () => {
 	dashboardPage.verifyAccountingDashboardIfVisible();
-	CustomCommands.addEmployee(
-		manageEmployeesPage,
-		firstName,
-		lastName,
-		username,
-		employeeEmail,
-		password,
-		imgUrl
-	);
+	CustomCommands.addEmployee(manageEmployeesPage, firstName, lastName, username, employeeEmail, password, imgUrl);
 });
 
 // Add new project
@@ -103,7 +93,7 @@ And('User can visit Employees recurring expense page', () => {
 	cy.visit('/#/pages/employees/recurring-expenses', {
 		timeout: pageLoadTimeout
 	});
-	cy.wait('@waitOrganization')
+	cy.wait('@waitOrganization');
 });
 
 And('User can see add new expense button', () => {
@@ -135,9 +125,7 @@ When('User click on expense dropdown', () => {
 });
 
 Then('User can select expense from dropdown options', () => {
-	employeeDashboard.selectExpenseOptionDropdown(
-		EmployeeDashboardPageData.defaultExpense
-	);
+	employeeDashboard.selectExpenseOptionDropdown(EmployeeDashboardPageData.defaultExpense);
 });
 
 And('User can see expense value input field', () => {
@@ -145,9 +133,7 @@ And('User can see expense value input field', () => {
 });
 
 And('User can enter expense value', () => {
-	employeeDashboard.enterExpenseValueInputData(
-		EmployeeDashboardPageData.defaultExpenseValue
-	);
+	employeeDashboard.enterExpenseValueInputData(EmployeeDashboardPageData.defaultExpenseValue);
 });
 
 And('User can see save button', () => {
@@ -169,11 +155,11 @@ When('User see Accounting button', () => {
 
 Then('User click on Accounting button', () => {
 	employeeDashboard.clickMenuButtonsByText(EmployeeDashboardPageData.accountingTxt);
-})
+});
 
 When('User see income button', () => {
 	employeeDashboard.verifyMenuBtnByText(EmployeeDashboardPageData.incomeTxt);
-})
+});
 Then('User click on income button', () => {
 	employeeDashboard.clickOnIncomeBtn();
 });
@@ -270,7 +256,7 @@ When('User see dashboard button on main menu', () => {
 });
 
 Then('User click on dashboard button', () => {
-	employeeDashboard.clickMenuButtonsByText(EmployeeDashboardPageData.dashboardTxt)
+	employeeDashboard.clickMenuButtonsByText(EmployeeDashboardPageData.dashboardTxt);
 });
 
 When('User see employee selector', () => {

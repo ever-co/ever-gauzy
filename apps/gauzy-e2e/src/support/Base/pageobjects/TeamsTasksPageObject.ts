@@ -11,8 +11,7 @@ export const TeamsTasksPage = {
 	tagsSelectCss: '#addTags',
 	tagsSelectOptionCss: '[type="checkbox"]',
 	closeTagsMultiSelectDropdownCss: '.ng-select-container > .ng-arrow-wrapper',
-	confirmDuplicateOrEditTaskButtonCss:
-		'nb-card-footer > button[status="success"]',
+	confirmDuplicateOrEditTaskButtonCss: 'nb-card-footer > button[status="success"]',
 	confirmDeleteTaskButtonCss: 'nb-card-footer > button[status="danger"]',
 	addTitleInputCss: '[formControlName="title"]',
 	selectTeamMultiSelectCss: 'button[class="select-button placeholder"]',

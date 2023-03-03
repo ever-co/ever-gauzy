@@ -28,19 +28,8 @@ describe('Approval request test', () => {
 		CustomCommands.login(loginPage, LoginPageData, dashboardPage);
 	});
 	it('Should be able to add approval policy', () => {
-		CustomCommands.addTag(
-			organizationTagsUserPage,
-			OrganizationTagsPageData
-		);
-		CustomCommands.addEmployee(
-			manageEmployeesPage,
-			firstName,
-			lastName,
-			username,
-			employeeEmail,
-			password,
-			imgUrl
-		);
+		CustomCommands.addTag(organizationTagsUserPage, OrganizationTagsPageData);
+		CustomCommands.addEmployee(manageEmployeesPage, firstName, lastName, username, employeeEmail, password, imgUrl);
 		cy.visit('/#/pages/employees/approvals');
 		approvalRequestPage.approvalPolicyButtonVisible();
 		approvalRequestPage.clickApprovalPolicyButton();
@@ -49,19 +38,13 @@ describe('Approval request test', () => {
 		approvalRequestPage.addApprovalButtonVisible();
 		approvalRequestPage.clickAddApprovalButton();
 		approvalRequestPage.nameInputVisible();
-		approvalRequestPage.enterNameInputData(
-			ApprovalRequestPageData.defaultApprovalPolicy
-		);
+		approvalRequestPage.enterNameInputData(ApprovalRequestPageData.defaultApprovalPolicy);
 		approvalRequestPage.descriptionInputVisible();
-		approvalRequestPage.enterDescriptionInputData(
-			ApprovalRequestPageData.defaultPolicyDescription
-		);
+		approvalRequestPage.enterDescriptionInputData(ApprovalRequestPageData.defaultPolicyDescription);
 		approvalRequestPage.saveButtonVisible();
 		approvalRequestPage.clickSaveButton();
 		approvalRequestPage.waitMessageToHide();
-		approvalRequestPage.verifyApprovalPolicyExists(
-			ApprovalRequestPageData.defaultApprovalPolicy
-		);
+		approvalRequestPage.verifyApprovalPolicyExists(ApprovalRequestPageData.defaultApprovalPolicy);
 		approvalRequestPage.backButtonVisible();
 		approvalRequestPage.clickBackButton();
 	});
@@ -71,18 +54,12 @@ describe('Approval request test', () => {
 		approvalRequestPage.addApprovalButtonVisible();
 		approvalRequestPage.clickAddApprovalButton();
 		approvalRequestPage.nameInputVisible();
-		approvalRequestPage.enterNameInputData(
-			ApprovalRequestPageData.defaultName
-		);
+		approvalRequestPage.enterNameInputData(ApprovalRequestPageData.defaultName);
 		approvalRequestPage.minCountInputVisible();
-		approvalRequestPage.enterMinCountInputData(
-			ApprovalRequestPageData.defaultMinCount
-		);
+		approvalRequestPage.enterMinCountInputData(ApprovalRequestPageData.defaultMinCount);
 		approvalRequestPage.approvalPolicyDropdownVisible();
 		approvalRequestPage.clickApprovalPolicyDropdown();
-		approvalRequestPage.selectApprovalPolicyOptionDropdown(
-			ApprovalRequestPageData.defaultApprovalPolicy
-		);
+		approvalRequestPage.selectApprovalPolicyOptionDropdown(ApprovalRequestPageData.defaultApprovalPolicy);
 		approvalRequestPage.selectEmployeeDropdownVisible();
 		approvalRequestPage.clickSelectEmployeeDropdown();
 		approvalRequestPage.selectEmployeeFromDropdown(0);
@@ -90,9 +67,7 @@ describe('Approval request test', () => {
 		approvalRequestPage.saveButtonVisible();
 		approvalRequestPage.clickSaveButton();
 		approvalRequestPage.waitMessageToHide();
-		approvalRequestPage.verifyRequestExists(
-			ApprovalRequestPageData.defaultName
-		);
+		approvalRequestPage.verifyRequestExists(ApprovalRequestPageData.defaultName);
 	});
 	it('Should be able to edit approval request', () => {
 		approvalRequestPage.waitMessageToHide();
@@ -100,19 +75,13 @@ describe('Approval request test', () => {
 		approvalRequestPage.editApprovalRequestButtonVisible();
 		approvalRequestPage.clickEditApprovalRequestButton();
 		approvalRequestPage.nameInputVisible();
-		approvalRequestPage.enterNameInputData(
-			ApprovalRequestPageData.editName
-		);
+		approvalRequestPage.enterNameInputData(ApprovalRequestPageData.editName);
 		approvalRequestPage.minCountInputVisible();
-		approvalRequestPage.enterMinCountInputData(
-			ApprovalRequestPageData.defaultMinCount
-		);
+		approvalRequestPage.enterMinCountInputData(ApprovalRequestPageData.defaultMinCount);
 		approvalRequestPage.saveButtonVisible();
 		approvalRequestPage.clickSaveButton();
 		approvalRequestPage.waitMessageToHide();
-		approvalRequestPage.verifyRequestExists(
-			ApprovalRequestPageData.editName
-		);
+		approvalRequestPage.verifyRequestExists(ApprovalRequestPageData.editName);
 	});
 	it('Should be able to delete approval request', () => {
 		approvalRequestPage.waitMessageToHide();

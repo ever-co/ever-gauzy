@@ -181,8 +181,8 @@ export const clickKeyboardButtonByKeyCode = (keycode) => {
 
 export const waitMainDashboard = (url: string) => {
 	//waits for responce then continue
-	cy.intercept('GET', url).as('getUser')
+	cy.intercept('GET', url).as('getUser');
 	cy.wait('@getUser').then(() => {
 		verifyElementIsVisible(TimeTrackingPage.headerImgCss);
-	})
+	});
 };

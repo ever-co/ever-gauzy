@@ -100,29 +100,19 @@ export const clickSettingsButton = (index) => {
 };
 
 export const editBaseOptionVisible = () => {
-	verifyElementIsVisible(
-		OrganizationHelpCenterPage.settingsDropdownOptionCss
-	);
+	verifyElementIsVisible(OrganizationHelpCenterPage.settingsDropdownOptionCss);
 };
 
 export const clickEditBaseOption = (text) => {
-	clickElementByText(
-		OrganizationHelpCenterPage.settingsDropdownOptionCss,
-		text
-	);
+	clickElementByText(OrganizationHelpCenterPage.settingsDropdownOptionCss, text);
 };
 
 export const deleteBaseOptionVisible = () => {
-	verifyElementIsVisible(
-		OrganizationHelpCenterPage.settingsDropdownOptionCss
-	);
+	verifyElementIsVisible(OrganizationHelpCenterPage.settingsDropdownOptionCss);
 };
 
 export const clickDeleteBaseOption = (text) => {
-	clickElementByText(
-		OrganizationHelpCenterPage.settingsDropdownOptionCss,
-		text
-	);
+	clickElementByText(OrganizationHelpCenterPage.settingsDropdownOptionCss, text);
 };
 
 export const deleteButtonVisible = () => {
@@ -134,10 +124,7 @@ export const clickDeleteButton = () => {
 };
 
 export const clickCloseDeleteButton = (times) => {
-	clickButtonMultipleTimes(
-		OrganizationHelpCenterPage.closeDeleteButtonCss,
-		times
-	);
+	clickButtonMultipleTimes(OrganizationHelpCenterPage.closeDeleteButtonCss, times);
 };
 
 export const waitMessageToHide = () => {
@@ -153,16 +140,11 @@ export const verifyBaseIsDeleted = () => {
 };
 
 export const clickAddCategoryOption = (text) => {
-	clickElementByText(
-		OrganizationHelpCenterPage.settingsDropdownOptionCss,
-		text
-	);
+	clickElementByText(OrganizationHelpCenterPage.settingsDropdownOptionCss, text);
 };
 
 export const addCategoryOptionVisible = () => {
-	verifyElementIsVisible(
-		OrganizationHelpCenterPage.settingsDropdownOptionCss
-	);
+	verifyElementIsVisible(OrganizationHelpCenterPage.settingsDropdownOptionCss);
 };
 
 export const verifyCategoryExists = (text) => {
@@ -178,15 +160,15 @@ export const clickArrowButton = (index: number) => {
 };
 
 export const clickOnCategory = (index) => {
-	clickButtonByIndex(OrganizationHelpCenterPage.verifyCategortCss, index)
+	clickButtonByIndex(OrganizationHelpCenterPage.verifyCategortCss, index);
 };
 
 export const verifyAddArticleButton = (index) => {
-	verifyElementIsVisibleByIndex(OrganizationHelpCenterPage.addArticleButtonCss, index)
+	verifyElementIsVisibleByIndex(OrganizationHelpCenterPage.addArticleButtonCss, index);
 };
 
 export const clickOnAddArticleButton = (index) => {
-	clickButtonByIndex(OrganizationHelpCenterPage.addArticleButtonCss, index)
+	clickButtonByIndex(OrganizationHelpCenterPage.addArticleButtonCss, index);
 };
 
 export const verifyNameOfTheArticleInput = () => {
@@ -195,7 +177,7 @@ export const verifyNameOfTheArticleInput = () => {
 
 export const enterArticleName = (articleName) => {
 	enterInput(OrganizationHelpCenterPage.nameOfTheArticleInputCss, articleName);
-}
+};
 
 export const verifyDescOfTheArticleInput = () => {
 	verifyElementIsVisible(OrganizationHelpCenterPage.descOfTheArticleInputCss);
@@ -203,7 +185,7 @@ export const verifyDescOfTheArticleInput = () => {
 
 export const enterDescName = (descName) => {
 	enterInput(OrganizationHelpCenterPage.descOfTheArticleInputCss, descName);
-}
+};
 
 export const verifyEmployeePlaceholderField = (index) => {
 	verifyElementIsVisibleByIndex(OrganizationHelpCenterPage.employeePlaceholderCss, index);

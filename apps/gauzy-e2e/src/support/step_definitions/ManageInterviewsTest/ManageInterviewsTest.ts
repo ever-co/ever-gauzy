@@ -29,9 +29,7 @@ let employeeEmail = faker.internet.email();
 let empImgUrl = faker.image.avatar();
 
 const createRandomInterviewTitleNumber = () => {
-	return (
-		ManageInterviewsPageData.title + Math.floor(Math.random() * 1000) + 1
-	);
+	return ManageInterviewsPageData.title + Math.floor(Math.random() * 1000) + 1;
 };
 
 const interviewTitle = createRandomInterviewTitleNumber();
@@ -62,15 +60,7 @@ And('User can add new candidate', () => {
 	CustomCommands.logout(dashboardPage, logoutPage, loginPage);
 	CustomCommands.clearCookies();
 	CustomCommands.login(loginPage, LoginPageData, dashboardPage);
-	CustomCommands.addCandidate(
-		inviteCandidatePage,
-		firstName,
-		lastName,
-		username,
-		email,
-		password,
-		imgUrl
-	);
+	CustomCommands.addCandidate(inviteCandidatePage, firstName, lastName, username, email, password, imgUrl);
 });
 
 // Add interview
@@ -102,9 +92,7 @@ When('User click on candidate dropdown', () => {
 
 Then('User can select candidate from dropdown options', () => {
 	manageInterviewsPage.candidateDropdownOptionVisible();
-	manageInterviewsPage.selectCandidateFromDropdown(
-		`${firstName} ${lastName}`
-	);
+	manageInterviewsPage.selectCandidateFromDropdown(`${firstName} ${lastName}`);
 });
 
 And('User can see title input field', () => {
@@ -151,9 +139,7 @@ Then('User can see location input field', () => {
 });
 
 And('User can enter value for location', () => {
-	manageInterviewsPage.enterLocationInputData(
-		ManageInterviewsPageData.location
-	);
+	manageInterviewsPage.enterLocationInputData(ManageInterviewsPageData.location);
 });
 
 And('User can see note input field', () => {
@@ -273,9 +259,7 @@ And('User can see Feedback description input field', () => {
 });
 
 And('User enters value for Feedback description', () => {
-	manageInterviewsPage.enterFeedBackDescription(
-		ManageInterviewsPageData.feedbackDescription
-	);
+	manageInterviewsPage.enterFeedBackDescription(ManageInterviewsPageData.feedbackDescription);
 });
 
 And('User can see feedback save button', () => {
@@ -330,21 +314,19 @@ And('User can see Edit interview button', () => {
 });
 
 And('User can see future checkbox', () => {
-	manageInterviewsPage.verifyOnlyFutureCheckboxVisible()
-})
+	manageInterviewsPage.verifyOnlyFutureCheckboxVisible();
+});
 
 Then('User click future checkbox', () => {
-	manageInterviewsPage.verifyOnlyFutureCheckboxVisible()
-})
+	manageInterviewsPage.verifyOnlyFutureCheckboxVisible();
+});
 
 And('User clicks Edit interview button', () => {
 	manageInterviewsPage.clickEditButton();
 });
 
 And('User can enter value for updated note', () => {
-	manageInterviewsPage.enterNoteInputData(
-		ManageInterviewsPageData.updatedNote
-	);
+	manageInterviewsPage.enterNoteInputData(ManageInterviewsPageData.updatedNote);
 });
 
 Then('Notification message will appear', () => {
@@ -355,9 +337,7 @@ Then('Notification message will appear', () => {
 });
 
 And('User can see updated note', () => {
-	manageInterviewsPage.verifyUpdatedNoteContains(
-		ManageInterviewsPageData.updatedNote
-	);
+	manageInterviewsPage.verifyUpdatedNoteContains(ManageInterviewsPageData.updatedNote);
 });
 
 // Archive future interview

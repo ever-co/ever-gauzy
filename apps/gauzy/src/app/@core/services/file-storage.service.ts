@@ -6,9 +6,7 @@ import { API_PREFIX } from '../constants/app.constants';
 
 @Injectable()
 export class FileStorageService {
-	constructor(
-        private readonly http: HttpClient
-    ) { }
+	constructor(private readonly http: HttpClient) {}
 
 	validateWasabiCredentials(config: IWasabiFileStorageProviderConfig): Promise<any> | HttpErrorResponse {
 		return firstValueFrom(

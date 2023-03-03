@@ -40,7 +40,7 @@ export const selectEmployeeDropdownVisible = () => {
 export const clickEmployeeDropdown = () => {
 	clickButtonDouble(ProposalsPage.selectEmployeeDropdownCss);
 	clickButton(ProposalsPage.selectEmployeeDropdownCss);
-	waitForDropdownToLoad(ProposalsPage.selectEmployeeDropdownOptionCss)
+	waitForDropdownToLoad(ProposalsPage.selectEmployeeDropdownOptionCss);
 };
 
 export const selectEmployeeFromDropdown = (index) => {
@@ -264,17 +264,14 @@ export const clickEmployeeMultiSelect = () => {
 };
 
 export const selectEmployeeFromMultiSelectDropdown = (index) => {
-	clickButtonByIndex(
-		ProposalsPage.employeeMultiSelectDropdownOptionCss,
-		index
-	);
+	clickButtonByIndex(ProposalsPage.employeeMultiSelectDropdownOptionCss, index);
 };
 
 export const verifyEmployeeDropdownVisible = () => {
-	verifyElementIsVisible(ProposalsPage.selectEmployeeDropdownOptionCss)
-	waitForDropdownToLoad(ProposalsPage.selectEmployeeDropdownOptionCss)
-}
+	verifyElementIsVisible(ProposalsPage.selectEmployeeDropdownOptionCss);
+	waitForDropdownToLoad(ProposalsPage.selectEmployeeDropdownOptionCss);
+};
 
 export const verifyHeaderTitle = (text: string) => {
-	verifyByText(ProposalsPage.headerTitleCss, text)
-}
+	verifyByText(ProposalsPage.headerTitleCss, text);
+};

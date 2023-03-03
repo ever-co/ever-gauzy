@@ -263,12 +263,12 @@ export const clickFinishButton = () => {
 };
 
 export const lastStepBtnVisible = () => {
-	verifyElementIsVisible(ContactsLeadsPage.lastStepBtnCss)
-}
+	verifyElementIsVisible(ContactsLeadsPage.lastStepBtnCss);
+};
 
 export const clickLastStepBtn = () => {
-	clickButton(ContactsLeadsPage.lastStepBtnCss)
-}
+	clickButton(ContactsLeadsPage.lastStepBtnCss);
+};
 
 export const budgetInputVisible = () => {
 	verifyElementIsVisible(ContactsLeadsPage.budgetInpuCss);
@@ -297,6 +297,6 @@ export const clearSearchInput = () => {
 };
 
 export const verifyClientNameInTable = (name: string) => {
-	vefiryByLength(ContactsLeadsPage.clientsTableRow, 1)
-	verifyByText(ContactsLeadsPage.clientsTableData, name)
+	vefiryByLength(ContactsLeadsPage.clientsTableRow, 1);
+	verifyByText(ContactsLeadsPage.clientsTableData, name);
 };
