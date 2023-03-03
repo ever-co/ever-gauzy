@@ -1,6 +1,6 @@
 export const SettingsFeaturesPageData = {
 	headerText: 'Settings',
-	subheaderTextTenant: "Manage Features for",
+	subheaderTextTenant: 'Manage Features for',
 	subheaderTextOrganization: "Manage Features for 'Ever Technologies LTD'",
 	// Tenant
 	taskDashboard: 'Task Dashboard',
@@ -15,12 +15,9 @@ export const SettingsFeaturesPageData = {
 	manageInvoice: 'Manage Invoice, Create First Invoice',
 	invoiceReceived: 'Invoice Received',
 	jobSearch: 'Job Search & Jobs Matching',
-	manageTimeActivity:
-		'Manage Time Activity, Screenshots, App, Visited Sites, Activities',
-	employeeAppointment:
-		'Employee Appointment, Schedules & Book Public Appointment',
-	manageOrganizationDetails:
-		'Manage Organization Details, Location and Settings',
+	manageTimeActivity: 'Manage Time Activity, Screenshots, App, Visited Sites, Activities',
+	employeeAppointment: 'Employee Appointment, Schedules & Book Public Appointment',
+	manageOrganizationDetails: 'Manage Organization Details, Location and Settings',
 	helpCenter: 'Help Center',
 	organizationEmploymentType: 'Organization Employment Type',
 	organizationDepartment: 'Organization Department',
@@ -28,13 +25,11 @@ export const SettingsFeaturesPageData = {
 	organizationEquipment: 'Organization Equipment',
 	organizationTag: 'Organization Tag',
 	manageProject: 'Manage Project, Create First Project',
-	manageOrganizationDocument:
-		'Manage Organization Document, Create First Document',
+	manageOrganizationDocument: 'Manage Organization Document, Create First Document',
 	manageGoals: 'Manage Goals and Objectives',
 	goalTimeFrame: 'Goal Time Frame & KPI',
 	manageTenantUsers: 'Manage Tenant Users',
-	manageAvailableApps:
-		'Manage Available Apps & Integrations Like Upwork & Hubstaff',
+	manageAvailableApps: 'Manage Available Apps & Integrations Like Upwork & Hubstaff',
 	manageSetting: 'Manage Setting',
 	fileStorage: 'File Storage',
 	SMSGateway: 'SMS Gateway',
@@ -43,8 +38,7 @@ export const SettingsFeaturesPageData = {
 	manageEstimate: 'Manage Estimate, Create First Estimate',
 	estimateReceived: 'Estimate Received',
 	createFirstIncome: 'Create First Income',
-	goToDashboard:
-		'Go to dashboard, Manage Employee Statistics, Time Tracking Dashboard',
+	goToDashboard: 'Go to dashboard, Manage Employee Statistics, Time Tracking Dashboard',
 	createSalesPipeline: 'Create Sales Pipeline',
 	salesPipelineDeal: 'Sales Pipeline Deal',
 	manageEmployees: 'Manage Employees, Add or Invite Employees',
@@ -53,15 +47,13 @@ export const SettingsFeaturesPageData = {
 	employeePosition: 'Employee Position',
 	employeeTimeOff: 'Employee Time Off',
 	employeeApprovalPolicy: 'Employee Approval Policy',
-	manageEmployeeTimesheetDaily:
-		'Manage Employee Timesheet Daily, Weekly, Calendar, Create First Timesheet',
+	manageEmployeeTimesheetDaily: 'Manage Employee Timesheet Daily, Weekly, Calendar, Create First Timesheet',
 	manageCandidates: 'Manage Candidates, Interviews & Invites',
 	manageInvite: 'Manage Invite',
 	manageInterview: 'Manage Interview',
 	manageProductInventory: 'Manage Product Inventory, Create First Product',
 	manageOrganizationTeam: 'Manage Organization Team, Create First Team',
-	manageLeads:
-		'Manage Leads, Customers and Clients, Create First Customer/Clients',
+	manageLeads: 'Manage Leads, Customers and Clients, Create First Customer/Clients',
 	manageExpense: 'Manage Expense, Weekly, Time & Activity and etc reports',
 	manageTenantOrganizations: 'Manage Tenant Organizations',
 	manageEmailHistory: 'Manage Email History',

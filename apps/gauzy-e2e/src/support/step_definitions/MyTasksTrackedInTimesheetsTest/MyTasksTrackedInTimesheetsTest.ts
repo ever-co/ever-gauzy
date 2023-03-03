@@ -14,9 +14,7 @@ import { OrganizationProjectsPageData } from '../../Base/pagedata/OrganizationPr
 import * as organizationTagsUserPage from '../../Base/pages/OrganizationTags.po';
 import { OrganizationTagsPageData } from '../../Base/pagedata/OrganizationTagsPageData';
 
-
 const pageLoadTimeout = Cypress.config('pageLoadTimeout');
-
 
 let email = faker.internet.email();
 let fullName = faker.person.firstName() + ' ' + faker.person.lastName();
@@ -24,7 +22,6 @@ let city = faker.location.city();
 let postcode = faker.location.zipCode();
 let street = faker.location.streetAddress();
 let website = faker.internet.url();
-
 
 let firstName = faker.person.firstName();
 let lastName = faker.person.lastName();
@@ -38,8 +35,8 @@ let employeeFullName = `${firstName} ${lastName}`;
 // Login with email
 
 Given('Login with default credentials', () => {
-	CustomCommands.login(loginPage, LoginPageData, dashboardPage)
-})
+	CustomCommands.login(loginPage, LoginPageData, dashboardPage);
+});
 
 // Add new tag
 And('User can add new tag', () => {
@@ -52,26 +49,14 @@ Then('User can add new employee', () => {
 	CustomCommands.logout(dashboardPage, logoutPage, loginPage);
 	CustomCommands.clearCookies();
 	CustomCommands.login(loginPage, LoginPageData, dashboardPage);
-	CustomCommands.addEmployee(
-		manageEmployeesPage,
-		firstName,
-		lastName,
-		username,
-		employeeEmail,
-		password,
-		imgUrl
-	);
+	CustomCommands.addEmployee(manageEmployeesPage, firstName, lastName, username, employeeEmail, password, imgUrl);
 });
 //Add new project
 And('User can add new project', () => {
 	CustomCommands.logout(dashboardPage, logoutPage, loginPage);
 	CustomCommands.clearCookies();
 	CustomCommands.login(loginPage, LoginPageData, dashboardPage);
-	CustomCommands.addProject(
-		organizationProjectsPage,
-		OrganizationProjectsPageData,
-		employeeFullName
-	);
+	CustomCommands.addProject(organizationProjectsPage, OrganizationProjectsPageData, employeeFullName);
 });
 
 //Logout
@@ -117,16 +102,15 @@ When('Employee go to my tasks', () => {
 	CustomCommands.login(loginPage, { email: employeeEmail, password: password }, dashboardPage);
 
 	cy.visit('/#/pages/tasks/me', { timeout: pageLoadTimeout });
-
-})
+});
 
 Then('Employee can see add button', () => {
-	myTasksTrackedInTimesheets.verifyAddButton()
-})
+	myTasksTrackedInTimesheets.verifyAddButton();
+});
 
 When('Employee click on add button', () => {
-	myTasksTrackedInTimesheets.clickOnAddTaskButton()
-})
+	myTasksTrackedInTimesheets.clickOnAddTaskButton();
+});
 
 Then('Employee can see project dropdown', () => {
 	myTasksTrackedInTimesheets.selectProjectDropdownVisible();
@@ -137,9 +121,7 @@ When('Employee click on project dropdown', () => {
 });
 
 Then('Employee can select project from dropdown options', () => {
-	myTasksTrackedInTimesheets.selectProjectOptionDropdown(
-		MyTasksTrackedInTimesheetsPageData.defaultTaskProject
-	);
+	myTasksTrackedInTimesheets.selectProjectOptionDropdown(MyTasksTrackedInTimesheetsPageData.defaultTaskProject);
 });
 
 And('Employee can see status dropdown', () => {
@@ -189,9 +171,7 @@ And('Employee can see estimate days input field', () => {
 });
 
 And('Employee can enter estimate days', () => {
-	myTasksTrackedInTimesheets.enterEstimateDaysInputData(
-		MyTasksTrackedInTimesheetsPageData.defaultTaskEstimateDays
-	);
+	myTasksTrackedInTimesheets.enterEstimateDaysInputData(MyTasksTrackedInTimesheetsPageData.defaultTaskEstimateDays);
 });
 
 And('Employee can see estimate hours input field', () => {
@@ -199,9 +179,7 @@ And('Employee can see estimate hours input field', () => {
 });
 
 And('Employee can enter estimate hours', () => {
-	myTasksTrackedInTimesheets.enterEstimateHoursInputData(
-		MyTasksTrackedInTimesheetsPageData.defaultTaskEstimateHours
-	);
+	myTasksTrackedInTimesheets.enterEstimateHoursInputData(MyTasksTrackedInTimesheetsPageData.defaultTaskEstimateHours);
 });
 
 And('Employee can see estimate minutes input field', () => {
@@ -268,7 +246,7 @@ When('Employee click on start timer button', () => {
 
 Then('Employee can let timer work for 5 seconds', () => {
 	waitUntil(5000);
-})
+});
 
 And('Employee can see stop timer button', () => {
 	myTasksTrackedInTimesheets.stopTimerBtnVisible();
@@ -286,5 +264,5 @@ When('Employee click on view timesheet button', () => {
 	myTasksTrackedInTimesheets.clickViewTimesheetBtn();
 });
 Then('Employee verify project name is the same', () => {
-	myTasksTrackedInTimesheets.verifyProjectText(MyTasksTrackedInTimesheetsPageData.defaultTaskTitle)
+	myTasksTrackedInTimesheets.verifyProjectText(MyTasksTrackedInTimesheetsPageData.defaultTaskTitle);
 });

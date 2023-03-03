@@ -64,10 +64,7 @@ export const clickApprovalPolicyDropdown = () => {
 };
 
 export const selectApprovalPolicyOptionDropdown = (text) => {
-	clickElementByText(
-		ApprovalRequestPage.checkApprovalPolicyDropdownOptionCss,
-		text
-	);
+	clickElementByText(ApprovalRequestPage.checkApprovalPolicyDropdownOptionCss, text);
 };
 
 export const selectEmployeeDropdownVisible = () => {
@@ -178,20 +175,19 @@ export const clickCardBody = () => {
 };
 
 export const verifyApprovalRefuseButton = (text: string, index: number) => {
-	verifyTextByIndex(ApprovalRequestPage.approvalRefuseButtonCss, text, index)
+	verifyTextByIndex(ApprovalRequestPage.approvalRefuseButtonCss, text, index);
 };
 
 export const clickOnApprovalRefuseButton = (text: string) => {
 	clickByText(ApprovalRequestPage.approvalRefuseButtonCss, text);
-
 };
 
 export const verifyApprovalButtonNotExist = (text: string, index: number) => {
-	verifyTextNotExistByIndex(ApprovalRequestPage.approvalRefuseButtonCss, index, text)
+	verifyTextNotExistByIndex(ApprovalRequestPage.approvalRefuseButtonCss, index, text);
 };
 
 export const verifyStatus = (text: string) => {
-	verifyByText(ApprovalRequestPage.rowCss, text)
+	verifyByText(ApprovalRequestPage.rowCss, text);
 };
 
 export const verifyNameInput = () => {
@@ -210,4 +206,4 @@ export const clearNameSearchInput = () => {
 
 export const waitTableLoad = (length: number) => {
 	verifyByLength(ApprovalRequestPage.approvalStatusCss, length);
-}
+};

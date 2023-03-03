@@ -1,10 +1,4 @@
-import {
-	verifyElementIsVisible,
-	clickButton,
-	clickElementByText,
-	verifyText,
-	waitUntil
-} from '../utils/util';
+import { verifyElementIsVisible, clickButton, clickElementByText, verifyText, waitUntil } from '../utils/util';
 import { CreateButton } from '../pageobjects/CreateButtonPageObject';
 
 export const createButtonVisible = () => {
@@ -39,8 +33,8 @@ export const verifyDivH4Header = (text) => {
 };
 
 export const verifyProjectHeaderText = (text) => {
-	verifyText(CreateButton.projectHeaderCss, text)
-}
+	verifyText(CreateButton.projectHeaderCss, text);
+};
 
 export const verifyTimeLogHeaderText = (text) => {
 	verifyText(CreateButton.timeLogHeaderTextCss, text);

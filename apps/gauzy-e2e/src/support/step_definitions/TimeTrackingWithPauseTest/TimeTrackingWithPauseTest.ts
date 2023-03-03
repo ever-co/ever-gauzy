@@ -10,9 +10,7 @@ import * as timeTrackingWithPausePage from '../../Base/pages/TimeTrackingWithPau
 import { waitUntil } from '../../Base/utils/util';
 import { TimeTrackingWithPausePageData } from '../../Base/pagedata/TimeTracingWithPausePageData';
 
-
 const pageLoadTimeout = Cypress.config('pageLoadTimeout');
-
 
 let email = faker.internet.email();
 let fullName = faker.person.firstName() + ' ' + faker.person.lastName();
@@ -20,7 +18,6 @@ let city = faker.location.city();
 let postcode = faker.location.zipCode();
 let street = faker.location.streetAddress();
 let website = faker.internet.url();
-
 
 let firstName = faker.person.firstName();
 let lastName = faker.person.lastName();
@@ -34,23 +31,15 @@ let employeeFullName = `${firstName} ${lastName}`;
 // Login with email
 
 Given('Login with default credentials', () => {
-	CustomCommands.login(loginPage, LoginPageData, dashboardPage)
-})
+	CustomCommands.login(loginPage, LoginPageData, dashboardPage);
+});
 
 //Add employee
 Then('User can add new employee', () => {
 	CustomCommands.logout(dashboardPage, logoutPage, loginPage);
 	CustomCommands.clearCookies();
 	CustomCommands.login(loginPage, LoginPageData, dashboardPage);
-	CustomCommands.addEmployee(
-		manageEmployeesPage,
-		firstName,
-		lastName,
-		username,
-		employeeEmail,
-		password,
-		imgUrl
-	);
+	CustomCommands.addEmployee(manageEmployeesPage, firstName, lastName, username, employeeEmail, password, imgUrl);
 });
 
 //Logout
@@ -118,7 +107,7 @@ When('Employee click on start timer button', () => {
 
 Then('Employee can let timer work for 5 seconds', () => {
 	waitUntil(5000);
-})
+});
 
 And('Employee can see stop timer button', () => {
 	timeTrackingWithPausePage.stopTimerBtnVisible();
@@ -142,7 +131,7 @@ When('Employee click on start timer button', () => {
 
 Then('Employee can let timer work for 5 seconds', () => {
 	waitUntil(5000);
-})
+});
 
 And('Employee can see stop timer button again', () => {
 	timeTrackingWithPausePage.stopTimerBtnVisible();
@@ -156,7 +145,6 @@ Then('Employee can see again start timer button', () => {
 	timeTrackingWithPausePage.startTimerBtnVisible();
 });
 
-
 //Check the recorded time
 
 Then('Employee can see view timesheet button', () => {
@@ -168,31 +156,37 @@ When('Employee click on view timesheet button', () => {
 });
 
 Then('Employee verify first time record', () => {
-	timeTrackingWithPausePage.verifyWorkTimeRecorded(TimeTrackingWithPausePageData.firstTimeTable, TimeTrackingWithPausePageData.tracked)
+	timeTrackingWithPausePage.verifyWorkTimeRecorded(
+		TimeTrackingWithPausePageData.firstTimeTable,
+		TimeTrackingWithPausePageData.tracked
+	);
 });
 
 And('Employee verify second time record', () => {
-	timeTrackingWithPausePage.verifyWorkTimeRecorded(TimeTrackingWithPausePageData.secondTimeTable, TimeTrackingWithPausePageData.tracked)
+	timeTrackingWithPausePage.verifyWorkTimeRecorded(
+		TimeTrackingWithPausePageData.secondTimeTable,
+		TimeTrackingWithPausePageData.tracked
+	);
 });
 
 Then('Employee can see first delete button', () => {
-	timeTrackingWithPausePage.viewRecordedTimeDeleteBtn(TimeTrackingWithPausePageData.firstDeleteBtn)
+	timeTrackingWithPausePage.viewRecordedTimeDeleteBtn(TimeTrackingWithPausePageData.firstDeleteBtn);
 });
 
 Then('Employee can see second delete button', () => {
-	timeTrackingWithPausePage.viewRecordedTimeDeleteBtn(TimeTrackingWithPausePageData.secondDeleteBtn)
+	timeTrackingWithPausePage.viewRecordedTimeDeleteBtn(TimeTrackingWithPausePageData.secondDeleteBtn);
 });
 
 When('Employee click on delete button', () => {
-	timeTrackingWithPausePage.clickRecordedTimeDeleteBtn(TimeTrackingWithPausePageData.firstDeleteBtn)
+	timeTrackingWithPausePage.clickRecordedTimeDeleteBtn(TimeTrackingWithPausePageData.firstDeleteBtn);
 });
 
 Then('Employee can see confirm dialog', () => {
-	timeTrackingWithPausePage.notificationDialogVisible()
+	timeTrackingWithPausePage.notificationDialogVisible();
 });
 
 When('Employee can click confirm dialog button', () => {
-	timeTrackingWithPausePage.clickNotificationButton()
+	timeTrackingWithPausePage.clickNotificationButton();
 });
 
 Then('Employee refresh', () => {
@@ -201,11 +195,8 @@ Then('Employee refresh', () => {
 	CustomCommands.login(loginPage, { email: employeeEmail, password: password }, dashboardPage);
 
 	cy.visit('/#/pages/employees/timesheets/daily', { timeout: pageLoadTimeout });
-
 });
 
-
 Then('Employee can verify time', () => {
-	timeTrackingWithPausePage.verifyTimerTime(TimeTrackingWithPausePageData.timerTime)
-
+	timeTrackingWithPausePage.verifyTimerTime(TimeTrackingWithPausePageData.timerTime);
 });

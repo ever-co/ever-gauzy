@@ -10,7 +10,6 @@ import * as logoutPage from '../../Base/pages/Logout.po';
 
 import { Given, Then, When, And } from 'cypress-cucumber-preprocessor/steps';
 
-
 const pageLoadTimeout = Cypress.config('pageLoadTimeout');
 
 // Login with email
@@ -53,9 +52,7 @@ Then('User can see name input field', () => {
 });
 
 And('User can enter vendor name', () => {
-	organizationVendorsPage.enterNameInputData(
-		OrganizationVendorsPageData.vendorName
-	);
+	organizationVendorsPage.enterNameInputData(OrganizationVendorsPageData.vendorName);
 });
 
 And('User can see phone input field', () => {
@@ -63,9 +60,7 @@ And('User can see phone input field', () => {
 });
 
 And('User can enter vendor phone', () => {
-	organizationVendorsPage.enterPhoneInputData(
-		OrganizationVendorsPageData.vendorPhone
-	);
+	organizationVendorsPage.enterPhoneInputData(OrganizationVendorsPageData.vendorPhone);
 });
 
 And('User can see email input field', () => {
@@ -73,9 +68,7 @@ And('User can see email input field', () => {
 });
 
 And('User can enter vendor email', () => {
-	organizationVendorsPage.enterEmailInputData(
-		OrganizationVendorsPageData.vendorEmail
-	);
+	organizationVendorsPage.enterEmailInputData(OrganizationVendorsPageData.vendorEmail);
 });
 
 And('User can see website input field', () => {
@@ -83,9 +76,7 @@ And('User can see website input field', () => {
 });
 
 And('User can enter vendor website', () => {
-	organizationVendorsPage.enterWebsiteInputData(
-		OrganizationVendorsPageData.vendorWebsite
-	);
+	organizationVendorsPage.enterWebsiteInputData(OrganizationVendorsPageData.vendorWebsite);
 });
 
 And('User can see tags dropdown', () => {
@@ -127,9 +118,7 @@ Then('User can see name input field again', () => {
 });
 
 And('User can change vendor name', () => {
-	organizationVendorsPage.enterNameInputData(
-		OrganizationVendorsPageData.editVendorName
-	);
+	organizationVendorsPage.enterNameInputData(OrganizationVendorsPageData.editVendorName);
 });
 
 And('User can see phone input field again', () => {
@@ -137,9 +126,7 @@ And('User can see phone input field again', () => {
 });
 
 And('User can change vendor phone', () => {
-	organizationVendorsPage.enterPhoneInputData(
-		OrganizationVendorsPageData.vendorPhone
-	);
+	organizationVendorsPage.enterPhoneInputData(OrganizationVendorsPageData.vendorPhone);
 });
 
 And('User can see email input field again', () => {
@@ -147,9 +134,7 @@ And('User can see email input field again', () => {
 });
 
 And('User can change vendor email', () => {
-	organizationVendorsPage.enterEmailInputData(
-		OrganizationVendorsPageData.vendorEmail
-	);
+	organizationVendorsPage.enterEmailInputData(OrganizationVendorsPageData.vendorEmail);
 });
 
 And('User can see website input field again', () => {
@@ -157,9 +142,7 @@ And('User can see website input field again', () => {
 });
 
 And('User can change vendor website', () => {
-	organizationVendorsPage.enterWebsiteInputData(
-		OrganizationVendorsPageData.vendorWebsite
-	);
+	organizationVendorsPage.enterWebsiteInputData(OrganizationVendorsPageData.vendorWebsite);
 });
 
 And('User can see save button again', () => {

@@ -99,15 +99,11 @@ export class WasabiS3Provider extends Provider<WasabiS3Provider> {
 		return filePath ? this.config.rootPath + '/' + filePath : null;
 	}
 
-	handler({
-		dest,
-		filename,
-		prefix = 'file'
-	}: FileStorageOption): StorageEngine {
+	handler({ dest, filename, prefix = 'file' }: FileStorageOption): StorageEngine {
 		return multerS3({
 			s3: this.getWasabiInstance(),
 			bucket: (_req, file, callback) => {
-				callback(null, this.getWasabiBucket())
+				callback(null, this.getWasabiBucket());
 			},
 			metadata: function (_req, file, callback) {
 				callback(null, { fieldName: file.fieldname });
@@ -232,8 +228,8 @@ export class WasabiS3Provider extends Provider<WasabiS3Provider> {
 	 * @returns
 	 */
 	private _mapDefaultWasabiServiceUrl(): {
-		wasabi_aws_default_region: string,
-		wasabi_aws_service_url: string
+		wasabi_aws_default_region: string;
+		wasabi_aws_service_url: string;
 	} {
 		const regionServiceUrls: IWasabiRegionServiceURL[] = [
 			{
@@ -286,6 +282,6 @@ export class WasabiS3Provider extends Provider<WasabiS3Provider> {
 		return {
 			wasabi_aws_default_region: item.region,
 			wasabi_aws_service_url: item.serviceUrl
-		}
+		};
 	}
 }

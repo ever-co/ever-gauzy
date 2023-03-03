@@ -17,7 +17,6 @@ import { FileStorageProviderEnum } from '@gauzy/contracts';
 	]
 })
 export class FileProviderComponent implements OnInit {
-
 	public fileStorageProviders: { label: FileStorageProviderEnum; value: any }[] = [];
 
 	/**
@@ -33,8 +32,8 @@ export class FileProviderComponent implements OnInit {
 		return this._provider;
 	}
 
-	onChange: any = () => { };
-	onTouched: any = () => { };
+	onChange: any = () => {};
+	onTouched: any = () => {};
 
 	@Output() onSelectionChanged = new EventEmitter();
 
@@ -42,12 +41,10 @@ export class FileProviderComponent implements OnInit {
 		this.fileStorageProviders = Object.keys(FileStorageProviderEnum)
 			// WIP: Support cloudinary provider
 			.filter((label) => label !== FileStorageProviderEnum.CLOUDINARY)
-			.map(
-				(label: FileStorageProviderEnum) => ({
-					label,
-					value: FileStorageProviderEnum[label]
-				})
-			);
+			.map((label: FileStorageProviderEnum) => ({
+				label,
+				value: FileStorageProviderEnum[label]
+			}));
 	}
 
 	/**

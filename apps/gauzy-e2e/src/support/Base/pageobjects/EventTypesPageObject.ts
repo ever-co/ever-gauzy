@@ -13,5 +13,5 @@ export const EventTypesPage = {
 	selectTableRowCss: 'table > tbody > tr.ng2-smart-row',
 	confirmDeleteEventTypeButtonCss: 'nb-card-footer > button[status="danger"]',
 	verifyEventTypeCss: 'ga-notes-with-tags > div > div.ng-star-inserted',
-	toastrMessageCss: 'nb-toast.ng-trigger',
+	toastrMessageCss: 'nb-toast.ng-trigger'
 };

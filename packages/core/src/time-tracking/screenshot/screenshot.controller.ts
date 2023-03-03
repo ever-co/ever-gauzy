@@ -35,9 +35,7 @@ import { DeleteQueryDTO } from './../../shared/dto';
 @Permissions(PermissionsEnum.TIME_TRACKER)
 @Controller()
 export class ScreenshotController {
-	constructor(
-		private readonly screenshotService: ScreenshotService
-	) { }
+	constructor(private readonly screenshotService: ScreenshotService) {}
 
 	@ApiOperation({ summary: 'Add manual time' })
 	@ApiResponse({
@@ -46,8 +44,7 @@ export class ScreenshotController {
 	})
 	@ApiResponse({
 		status: HttpStatus.BAD_REQUEST,
-		description:
-			'Invalid input, The response body may contain clues as to what went wrong'
+		description: 'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@Post()
 	@UseInterceptors(
@@ -62,14 +59,11 @@ export class ScreenshotController {
 						);
 					},
 					prefix: 'screenshots'
-				})
+				});
 			}
 		})
 	)
-	async create(
-		@Body() entity: Screenshot,
-		@UploadedFileStorage() file
-	) {
+	async create(@Body() entity: Screenshot, @UploadedFileStorage() file) {
 		console.log('Screenshot Http Request', { entity, file });
 
 		const user = RequestContext.currentUser();
@@ -106,7 +100,7 @@ export class ScreenshotController {
 		try {
 			entity.file = file.key;
 			entity.thumb = thumb.key;
-			entity.storageProvider = (provider.name).toUpperCase() as FileStorageProviderEnum;
+			entity.storageProvider = provider.name.toUpperCase() as FileStorageProviderEnum;
 			entity.recordedAt = entity.recordedAt ? entity.recordedAt : new Date();
 
 			const screenshot = await this.screenshotService.create(entity);
@@ -135,9 +129,6 @@ export class ScreenshotController {
 		@Param('id', UUIDValidationPipe) screenshotId: IScreenshot['id'],
 		@Query() options: DeleteQueryDTO<Screenshot>
 	): Promise<IScreenshot> {
-		return await this.screenshotService.deleteScreenshot(
-			screenshotId,
-			options
-		);
+		return await this.screenshotService.deleteScreenshot(screenshotId, options);
 	}
 }

@@ -28,16 +28,8 @@ Given('Login with default credentials', () => {
 
 // Add new employee
 And('User can add new employee', () => {
-	dashboardPage.verifyAccountingDashboard()
-	CustomCommands.addEmployee(
-		manageEmployeesPage,
-		firstName,
-		lastName,
-		username,
-		employeeEmail,
-		password,
-		imgUrl
-	);
+	dashboardPage.verifyAccountingDashboard();
+	CustomCommands.addEmployee(manageEmployeesPage, firstName, lastName, username, employeeEmail, password, imgUrl);
 });
 
 // Goals Time Frame test
@@ -56,7 +48,7 @@ And('User can see second tab button', () => {
 When('User click on second tab button', () => {
 	cy.intercept('GET', '/api/goal-time-frame*').as('waitTable');
 	goalsTimeFramePage.clickTabButton(1);
-	cy.wait('@waitTable')
+	cy.wait('@waitTable');
 });
 
 Then('User can see add time frame button', () => {

@@ -1,5 +1,4 @@
 import {
-
 	verifyElementIsVisible,
 	clickButton,
 	clickElementByText,
@@ -9,10 +8,9 @@ import {
 	clickKeyboardBtnByKeycode,
 	waitElementToHide,
 	compareTwoTexts
-
 } from '../utils/util';
 import { MyTasksTrackedInTimesheets } from '../pageobjects/MyTasksTrackedInTimesheetsPageObject';
-import dayjs from 'dayjs'
+import dayjs from 'dayjs';
 
 export const verifyAddButton = () => {
 	verifyElementIsVisible(MyTasksTrackedInTimesheets.addButtonCss);
@@ -20,7 +18,7 @@ export const verifyAddButton = () => {
 
 export const clickOnAddTaskButton = () => {
 	clickButton(MyTasksTrackedInTimesheets.addButtonCss);
-}
+};
 
 export const selectProjectDropdownVisible = () => {
 	verifyElementIsVisible(MyTasksTrackedInTimesheets.projectDropdownCss);
@@ -149,17 +147,15 @@ export const taskSelectVisible = () => {
 	verifyElementIsVisible(MyTasksTrackedInTimesheets.taskSelectCss);
 };
 
-
 export const clickTaskSelect = () => {
 	cy.intercept('GET', '/api/tasks/employee/*').as('waitTasksXhr');
 	clickButton(MyTasksTrackedInTimesheets.taskSelectCss);
 };
 
 export const selectOptionFromDropdown = (index) => {
-	cy.wait('@waitTasksXhr')
-		.then(() => {
-			clickButtonByIndex(MyTasksTrackedInTimesheets.dropdownOptionCss, index);
-		})
+	cy.wait('@waitTasksXhr').then(() => {
+		clickButtonByIndex(MyTasksTrackedInTimesheets.dropdownOptionCss, index);
+	});
 };
 
 export const clickStartTimerBtn = () => {
@@ -183,5 +179,5 @@ export const clickViewTimesheetBtn = () => {
 };
 
 export const verifyProjectText = (text) => {
-	compareTwoTexts(MyTasksTrackedInTimesheets.projectNameCss, text)
-}
+	compareTwoTexts(MyTasksTrackedInTimesheets.projectNameCss, text);
+};

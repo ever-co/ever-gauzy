@@ -32,9 +32,7 @@ Then('User can see roles dropdown options', () => {
 });
 
 And('User can select Super admin role from dropdown options', () => {
-	rolesPermissionsPage.selectRoleFromDropdown(
-		RolesPermissionsPageData.superAdmin
-	);
+	rolesPermissionsPage.selectRoleFromDropdown(RolesPermissionsPageData.superAdmin);
 });
 
 And('User can verify Super admin general roles and permissions', () => {
@@ -284,9 +282,7 @@ Then('User can see roles dropdown options', () => {
 });
 
 And('User can select Data Entry role from dropdown options', () => {
-	rolesPermissionsPage.selectRoleFromDropdown(
-		RolesPermissionsPageData.dataEntry
-	);
+	rolesPermissionsPage.selectRoleFromDropdown(RolesPermissionsPageData.dataEntry);
 });
 
 And('User can verify Data Entry general roles and permissions', () => {
@@ -411,9 +407,7 @@ Then('User can see roles dropdown options', () => {
 });
 
 And('User can select Employee role from dropdown options', () => {
-	rolesPermissionsPage.selectRoleFromDropdown(
-		RolesPermissionsPageData.employee
-	);
+	rolesPermissionsPage.selectRoleFromDropdown(RolesPermissionsPageData.employee);
 });
 
 And('User can verify Employee general roles and permissions', () => {
@@ -538,9 +532,7 @@ Then('User can see roles dropdown options', () => {
 });
 
 And('User can select Candidate role from dropdown options', () => {
-	rolesPermissionsPage.selectRoleFromDropdown(
-		RolesPermissionsPageData.candidate
-	);
+	rolesPermissionsPage.selectRoleFromDropdown(RolesPermissionsPageData.candidate);
 });
 
 And('User can verify Candidate general roles and permissions', () => {
@@ -665,9 +657,7 @@ Then('User can see roles dropdown options', () => {
 });
 
 And('User can select Manager role from dropdown options', () => {
-	rolesPermissionsPage.selectRoleFromDropdown(
-		RolesPermissionsPageData.manager
-	);
+	rolesPermissionsPage.selectRoleFromDropdown(RolesPermissionsPageData.manager);
 });
 
 And('User can verify Manager general roles and permissions', () => {
@@ -792,9 +782,7 @@ Then('User can see roles dropdown options', () => {
 });
 
 And('User can select Viewer role from dropdown options', () => {
-	rolesPermissionsPage.selectRoleFromDropdown(
-		RolesPermissionsPageData.viewer
-	);
+	rolesPermissionsPage.selectRoleFromDropdown(RolesPermissionsPageData.viewer);
 });
 
 And('User can verify Viewer general roles and permissions', () => {

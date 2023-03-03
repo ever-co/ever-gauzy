@@ -17,26 +17,18 @@ export class TenantSettingService extends TenantAwareCrudService<TenantSetting> 
 	}
 
 	async get(request?: FindManyOptions) {
-		const settings: TenantSetting[] = await this.tenantSettingRepository.find(
-			request
-		);
+		const settings: TenantSetting[] = await this.tenantSettingRepository.find(request);
 		return object(pluck(settings, 'name'), pluck(settings, 'value'));
 	}
 
-	async saveSettings(
-		input: ITenantSetting,
-		tenantId: string
-	): Promise<ITenantSetting> {
-
+	async saveSettings(input: ITenantSetting, tenantId: string): Promise<ITenantSetting> {
 		const settingsName = keys(input);
-		const settings: TenantSetting[] = await this.tenantSettingRepository.find(
-			{
-				where: {
-					name: In(settingsName),
-					tenantId
-				}
+		const settings: TenantSetting[] = await this.tenantSettingRepository.find({
+			where: {
+				name: In(settingsName),
+				tenantId
 			}
-		);
+		});
 
 		const settingsByName = indexBy(settings, 'name');
 		const saveInput = [];
@@ -59,10 +51,7 @@ export class TenantSettingService extends TenantAwareCrudService<TenantSetting> 
 		}
 
 		await this.tenantSettingRepository.save(saveInput);
-		return object(
-			pluck(saveInput, 'name'),
-			pluck(saveInput, 'value')
-		);
+		return object(pluck(saveInput, 'name'), pluck(saveInput, 'value'));
 	}
 
 	// Verify connection configuration

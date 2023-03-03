@@ -51,8 +51,6 @@ describe('Goals Time Frame test', () => {
 		goalsTimeFramePage.clickDeleteTimeFrameButton();
 		goalsTimeFramePage.confirmDeleteButtonVisible();
 		goalsTimeFramePage.clickConfirmDeleteButton();
-		goalsTimeFramePage.verifyElementDeleted(
-			GoalsTimeFramePageData.emptyTableText
-		);
+		goalsTimeFramePage.verifyElementDeleted(GoalsTimeFramePageData.emptyTableText);
 	});
 });

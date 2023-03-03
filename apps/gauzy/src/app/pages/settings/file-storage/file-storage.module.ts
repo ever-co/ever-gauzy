@@ -24,9 +24,7 @@ import { FileStorageComponent } from './file-storage.component';
 		NbSelectModule,
 		FileProviderModule
 	],
-	declarations: [
-		FileStorageComponent
-	],
+	declarations: [FileStorageComponent],
 	providers: []
 })
 export class FileStorageModule {}

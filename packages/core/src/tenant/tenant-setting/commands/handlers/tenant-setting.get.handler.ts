@@ -7,9 +7,7 @@ import { WrapSecrets } from './../../../../core/decorators';
 import { AwsS3ProviderConfigDTO, CloudinaryProviderConfigDTO, WasabiS3ProviderConfigDTO } from './../../dto';
 
 @CommandHandler(TenantSettingGetCommand)
-export class TenantSettingGetHandler
-	implements ICommandHandler<TenantSettingGetCommand> {
-
+export class TenantSettingGetHandler implements ICommandHandler<TenantSettingGetCommand> {
 	constructor(
 		@Inject(forwardRef(() => TenantSettingService))
 		private readonly _tenantSettingService: TenantSettingService
@@ -26,7 +24,7 @@ export class TenantSettingGetHandler
 			{},
 			WrapSecrets(settings, new WasabiS3ProviderConfigDTO()),
 			WrapSecrets(settings, new AwsS3ProviderConfigDTO()),
-			WrapSecrets(settings, new CloudinaryProviderConfigDTO()),
+			WrapSecrets(settings, new CloudinaryProviderConfigDTO())
 		);
 	}
 }

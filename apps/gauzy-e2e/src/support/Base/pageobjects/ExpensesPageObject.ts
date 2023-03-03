@@ -20,11 +20,9 @@ export const ExpensesPage = {
 	confirmDeleteButtonCss: 'nb-card-footer > button[status="danger"]',
 	cardBodyCss: 'nb-card-footer.text-right',
 	duplicateExpenseButtonCss: 'div.mb-3 > button[status="primary"]',
-	manageCategoriesButtonCss:
-		'div.card-header-title > button[status="primary"]',
+	manageCategoriesButtonCss: 'div.card-header-title > button[status="primary"]',
 	expenseNameInputCss: '[placeholder="Expense name"]',
-	SaveCategoryButtonCss:
-		'div.justify-content-end > button[status="success"]',
+	SaveCategoryButtonCss: 'div.justify-content-end > button[status="success"]',
 	backButtonCss: 'div.main > button[status="primary"]',
 	categoryCardCss: 'nb-card.ng-star-inserted',
 	toastrMessageCss: 'nb-toast.ng-trigger',
@@ -33,8 +31,7 @@ export const ExpensesPage = {
 	sidebarBtnCss: 'span.menu-title',
 	accountingExpensesSidebarBtnCss: 'a[href="#/pages/accounting/expenses"] > span.menu-title',
 	reportsExpenseSidebarBtnCss: 'a[href="#/pages/reports/expense"] > span.menu-title',
-	expenseTableCellCss:
-		'div[class="col-sm-2 project-name"] > span.ng-star-inserted',
+	expenseTableCellCss: 'div[class="col-sm-2 project-name"] > span.ng-star-inserted',
 	amountTableCellCss: 'div[class="col text-center day-col"]',
 	groupByCss: 'div.ml-3 > nb-select > button.select-button',
 	dropdownOptionCss: '.option-list nb-option'

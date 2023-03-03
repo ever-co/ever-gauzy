@@ -8,8 +8,6 @@ import { faker } from '@faker-js/faker';
 import * as manageEmployeesPage from '../../Base/pages/ManageEmployees.po';
 import * as logoutPage from '../../Base/pages/Logout.po';
 
-
-
 import { Given, Then, When, And } from 'cypress-cucumber-preprocessor/steps';
 
 const pageLoadTimeout = Cypress.config('pageLoadTimeout');
@@ -24,12 +22,9 @@ let empImgUrl = faker.image.avatar();
 let desc = faker.lorem.words();
 let articleText = faker.lorem.paragraph();
 // Login with email
-Given(
-	'Login with default credentials',
-	() => {
-		CustomCommands.login(loginPage, LoginPageData, dashboardPage);
-	}
-);
+Given('Login with default credentials', () => {
+	CustomCommands.login(loginPage, LoginPageData, dashboardPage);
+});
 
 // Add new employee
 And('User can add new employee', () => {
@@ -86,9 +81,7 @@ And('User can see color input field', () => {
 });
 
 And('User can enter value for color', () => {
-	organizationHelpCenterPage.enterColorInputData(
-		OrganizationHelpCenterPageData.defaultColor
-	);
+	organizationHelpCenterPage.enterColorInputData(OrganizationHelpCenterPageData.defaultColor);
 });
 
 And('User can see name input field', () => {
@@ -96,9 +89,7 @@ And('User can see name input field', () => {
 });
 
 And('User can enter name', () => {
-	organizationHelpCenterPage.enterNameInputData(
-		OrganizationHelpCenterPageData.defaultBaseName
-	);
+	organizationHelpCenterPage.enterNameInputData(OrganizationHelpCenterPageData.defaultBaseName);
 });
 
 And('User can see description input field', () => {
@@ -106,9 +97,7 @@ And('User can see description input field', () => {
 });
 
 And('User can enter description', () => {
-	organizationHelpCenterPage.enterDescriptionInputData(
-		OrganizationHelpCenterPageData.defaultBaseDescription
-	);
+	organizationHelpCenterPage.enterDescriptionInputData(OrganizationHelpCenterPageData.defaultBaseDescription);
 });
 
 And('User can see save button', () => {
@@ -124,9 +113,7 @@ Then('Notification message will appear', () => {
 });
 
 And('User can verify base was created', () => {
-	organizationHelpCenterPage.verifyBaseExists(
-		OrganizationHelpCenterPageData.defaultBaseName
-	);
+	organizationHelpCenterPage.verifyBaseExists(OrganizationHelpCenterPageData.defaultBaseName);
 });
 
 //Add category
@@ -143,9 +130,7 @@ Then('User can see category button', () => {
 });
 
 When('User click on add category button', () => {
-	organizationHelpCenterPage.clickAddCategoryOption(
-		OrganizationHelpCenterPageData.addCategoryOption
-	);
+	organizationHelpCenterPage.clickAddCategoryOption(OrganizationHelpCenterPageData.addCategoryOption);
 });
 
 Then('User can see icon button', () => {
@@ -165,9 +150,7 @@ And('User can see color input field', () => {
 });
 
 And('User can enter value for color', () => {
-	organizationHelpCenterPage.enterColorInputData(
-		OrganizationHelpCenterPageData.defaultColor
-	);
+	organizationHelpCenterPage.enterColorInputData(OrganizationHelpCenterPageData.defaultColor);
 });
 
 And('User can see name input field', () => {
@@ -175,9 +158,7 @@ And('User can see name input field', () => {
 });
 
 And('User can enter name', () => {
-	organizationHelpCenterPage.enterNameInputData(
-		OrganizationHelpCenterPageData.defaultBaseName
-	);
+	organizationHelpCenterPage.enterNameInputData(OrganizationHelpCenterPageData.defaultBaseName);
 });
 
 And('User can see description input field', () => {
@@ -185,9 +166,7 @@ And('User can see description input field', () => {
 });
 
 And('User can enter description', () => {
-	organizationHelpCenterPage.enterDescriptionInputData(
-		OrganizationHelpCenterPageData.defaultBaseDescription
-	);
+	organizationHelpCenterPage.enterDescriptionInputData(OrganizationHelpCenterPageData.defaultBaseDescription);
 });
 
 And('User can see save button', () => {
@@ -211,9 +190,7 @@ Then('User click on arrow button', () => {
 });
 
 And('User can verify category was created', () => {
-	organizationHelpCenterPage.verifyCategoryExists(
-		OrganizationHelpCenterPageData.defaultBaseName
-	);
+	organizationHelpCenterPage.verifyCategoryExists(OrganizationHelpCenterPageData.defaultBaseName);
 });
 
 //Add article
@@ -243,7 +220,7 @@ And('User can see input for description of the article', () => {
 
 And('User can enter description of the article', () => {
 	organizationHelpCenterPage.enterDescName(desc);
-})
+});
 
 And('User can see employee placeholder field', () => {
 	organizationHelpCenterPage.verifyEmployeePlaceholderField(OrganizationHelpCenterPageData.employeePlaceholder);
@@ -251,7 +228,7 @@ And('User can see employee placeholder field', () => {
 
 And('User click employee placeholder field', () => {
 	organizationHelpCenterPage.clickOnEmployeePlaceholderField(OrganizationHelpCenterPageData.employeePlaceholder);
-})
+});
 
 Then('User can select employee from dropdown', () => {
 	organizationHelpCenterPage.clickEmployeeDropdown(OrganizationHelpCenterPageData.employeeOption);
@@ -260,7 +237,7 @@ Then('User can select employee from dropdown', () => {
 
 Then('User can see article text', () => {
 	organizationHelpCenterPage.verifyArticleText();
-})
+});
 
 When('User enter in article text', () => {
 	organizationHelpCenterPage.enterArticleText(articleText);
@@ -268,11 +245,11 @@ When('User enter in article text', () => {
 
 Then('User can see article save button', () => {
 	organizationHelpCenterPage.verifyArticleSaveBtn();
-})
+});
 
 And('User click on article save button', () => {
 	organizationHelpCenterPage.clickArticleSaveBtn();
-})
+});
 // Edit base
 And('User can see settings button', () => {
 	organizationHelpCenterPage.settingsButtonVisible();
@@ -287,9 +264,7 @@ Then('User can see edit button', () => {
 });
 
 When('User click on edit button', () => {
-	organizationHelpCenterPage.clickEditBaseOption(
-		OrganizationHelpCenterPageData.editBaseOption
-	);
+	organizationHelpCenterPage.clickEditBaseOption(OrganizationHelpCenterPageData.editBaseOption);
 });
 
 Then('User can see color input field again', () => {
@@ -297,9 +272,7 @@ Then('User can see color input field again', () => {
 });
 
 And('User can edit color', () => {
-	organizationHelpCenterPage.enterColorInputData(
-		OrganizationHelpCenterPageData.defaultColor
-	);
+	organizationHelpCenterPage.enterColorInputData(OrganizationHelpCenterPageData.defaultColor);
 });
 
 And('User can see name input field again', () => {
@@ -307,9 +280,7 @@ And('User can see name input field again', () => {
 });
 
 And('User can edit name', () => {
-	organizationHelpCenterPage.enterNameInputData(
-		OrganizationHelpCenterPageData.defaultBaseName
-	);
+	organizationHelpCenterPage.enterNameInputData(OrganizationHelpCenterPageData.defaultBaseName);
 });
 
 And('User can see description input field', () => {
@@ -317,9 +288,7 @@ And('User can see description input field', () => {
 });
 
 And('User can edit description', () => {
-	organizationHelpCenterPage.enterDescriptionInputData(
-		OrganizationHelpCenterPageData.defaultBaseDescription
-	);
+	organizationHelpCenterPage.enterDescriptionInputData(OrganizationHelpCenterPageData.defaultBaseDescription);
 });
 
 And('User can see save edited base button', () => {
@@ -348,9 +317,7 @@ Then('User can see delete base option', () => {
 });
 
 When('User click on delete base option', () => {
-	organizationHelpCenterPage.clickDeleteBaseOption(
-		OrganizationHelpCenterPageData.deleteBaseOption
-	);
+	organizationHelpCenterPage.clickDeleteBaseOption(OrganizationHelpCenterPageData.deleteBaseOption);
 });
 
 Then('User can see delete button', () => {

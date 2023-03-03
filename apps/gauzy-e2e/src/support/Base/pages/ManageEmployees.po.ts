@@ -15,7 +15,6 @@ import {
 } from '../utils/util';
 import { ManageEmployeesPage } from '../pageobjects/ManageEmployeesPageObject';
 
-
 // INVITE EMPLOYEE BY EMAIL
 export const gridBtnExists = () => {
 	verifyElementIsVisible(ManageEmployeesPage.gridButtonCss);
@@ -64,10 +63,7 @@ export const clickProjectDropdown = () => {
 };
 
 export const selectProjectFromDropdown = (text) => {
-	clickElementByText(
-		ManageEmployeesPage.selectProjectDropdownOptionCss,
-		text
-	);
+	clickElementByText(ManageEmployeesPage.selectProjectDropdownOptionCss, text);
 };
 
 export const sendInviteButtonVisible = () => {

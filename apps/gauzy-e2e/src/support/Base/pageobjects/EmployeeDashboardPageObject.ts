@@ -4,12 +4,12 @@ export const EmployeeDashboardPage = {
 	dropdownOptionCss: 'div.ng-option',
 	expenseDropdownCss: '#positionInput',
 	valueInputCss: '#valueInput',
-	saveExpenseButtonCss:
-		'nb-card-footer.text-right > button[status="success"]',
+	saveExpenseButtonCss: 'nb-card-footer.text-right > button[status="success"]',
 	toastrMessageCss: 'nb-toast.ng-trigger',
 	menuButtonsCss: 'nb-menu > ul.menu-items > li',
 	employeeSelectorCss: 'ga-employee-selector',
-	selectEmployeeDropdownOptionCss: 'ng-dropdown-panel > div[class="ng-dropdown-panel-items scroll-host"] > div > div.ng-star-inserted',
+	selectEmployeeDropdownOptionCss:
+		'ng-dropdown-panel > div[class="ng-dropdown-panel-items scroll-host"] > div > div.ng-star-inserted',
 	salaryCss: 'div.header-container > div > div[class="employee-details employee-salary ng-star-inserted"]',
 	incomeBtn: 'a[title="Income"]',
 	addNewIncomeBtnCss: 'nb-card-body > div > button[status="success"]',
@@ -29,5 +29,4 @@ export const EmployeeDashboardPage = {
 	verifyDashboardBonusCss: 'div[class="bonus ng-star-inserted"]',
 	currencyFieldCss: 'nb-select[id="currencySelect"]',
 	currencyOptionCss: 'ul.option-list > nb-option'
-
 };
