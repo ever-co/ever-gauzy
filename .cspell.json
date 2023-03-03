@@ -230,7 +230,8 @@
         "Ruslan",
         "Konviser",
         "datname",
-        "Udemy"
+        "Udemy",
+        "pageobjects"
     ],
     "useGitignore": true,
     "ignorePaths": [

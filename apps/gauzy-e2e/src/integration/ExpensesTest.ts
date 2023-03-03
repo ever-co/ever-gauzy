@@ -104,7 +104,7 @@ describe('Expense test', () => {
 	});
 	it('Should be able to add new category', () => {
 		expensesPage.waitMessageToHide();
-		expensesPage.managecategoriesButtonVisible();
+		expensesPage.manageCategoriesButtonVisible();
 		expensesPage.clickManagecategoriesButton();
 		expensesPage.addExpenseButtonVisible();
 		expensesPage.clickAddExpenseButton();

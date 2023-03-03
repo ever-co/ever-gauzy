@@ -19,7 +19,7 @@ export const selectLanguageOption = (data) => {
 	clickElementByText(EmailTemplatesPage.selectLanguageOptionCss, data);
 };
 
-export const emailtTemplateSubjectVisible = () => {
+export const emailTemplateSubjectVisible = () => {
 	verifyElementIsVisible(EmailTemplatesPage.templatePageSubjectCss);
 };
 

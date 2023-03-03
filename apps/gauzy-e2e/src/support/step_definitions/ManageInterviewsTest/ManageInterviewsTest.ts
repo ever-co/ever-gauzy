@@ -382,11 +382,11 @@ Then('Notification message will appear', () => {
 });
 
 And('User can see Include Archived checkbox', () => {
-	manageInterviewsPage.verifyInludeArchivedCheckboxVisible();
+	manageInterviewsPage.verifyIncludeArchivedCheckboxVisible();
 });
 
 When('User clicks on Include Archived button', () => {
-	manageInterviewsPage.clickInludeArchivedCheckbox();
+	manageInterviewsPage.clickIncludeArchivedCheckbox();
 });
 
 Then('User can see Archived badge', () => {
