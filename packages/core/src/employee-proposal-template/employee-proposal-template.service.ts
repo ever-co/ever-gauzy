@@ -18,8 +18,8 @@ export class EmployeeProposalTemplateService extends TenantAwareCrudService<Empl
 		id: IEmployeeProposalTemplate['id']
 	): Promise<IEmployeeProposalTemplate> {
 		const proposalTemplate: IEmployeeProposalTemplate = await this.findOneByIdString(id);
-		proposalTemplate.isDefault = true;
-
+		proposalTemplate.isDefault = !proposalTemplate.isDefault;
+		
 		const { organizationId, tenantId, employeeId } = proposalTemplate;
 		await this.employeeProposalTemplateRepository.update(
 			{
@@ -33,17 +33,5 @@ export class EmployeeProposalTemplateService extends TenantAwareCrudService<Empl
 		);
 
 		return await this.employeeProposalTemplateRepository.save(proposalTemplate);
-	}
-
-	async removeDefault(
-		id: IEmployeeProposalTemplate['id']
-	): Promise<IEmployeeProposalTemplate> {
-		const proposalTemplate: IEmployeeProposalTemplate =
-			await this.findOneByIdString(id);
-		proposalTemplate.isDefault = false;
-
-		return await this.employeeProposalTemplateRepository.save(
-			proposalTemplate
-		);
 	}
 }

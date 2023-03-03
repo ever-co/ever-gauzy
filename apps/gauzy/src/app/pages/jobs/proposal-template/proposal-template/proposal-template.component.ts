@@ -332,29 +332,13 @@ export class ProposalTemplateComponent extends PaginationFilterBaseComponent
 	makeDefaultTemplate(): void {
 		this.proposalTemplateService
 			.makeDefault(this.selectedItem.id)
-			.then(() => {
-				this.toastrService.success(
-					'PROPOSAL_TEMPLATE.PROPOSAL_MAKE_DEFAULT_MESSAGE',
-					{
-						name: this.selectedItem.name
-					}
-				);
-			})
-			.finally(() => {
-				this.templates$.next(true);
-			});
-	}
-
-	removeDefaultTemplate(): void {
-		this.proposalTemplateService
-			.removeDefault(this.selectedItem.id)
-			.then(() => {
-				this.toastrService.success(
-					'PROPOSAL_TEMPLATE.PROPOSAL_REMOVE_DEFAULT_MESSAGE',
-					{
-						name: this.selectedItem.name,
-					}
-				);
+			.then((data) => {
+				const successMessage = data.isDefault
+					? 'PROPOSAL_TEMPLATE.PROPOSAL_MAKE_DEFAULT_MESSAGE'
+					: 'PROPOSAL_TEMPLATE.PROPOSAL_REMOVE_DEFAULT_MESSAGE';
+				this.toastrService.success(successMessage, {
+					name: this.selectedItem.name,
+				});
 			})
 			.finally(() => {
 				this.templates$.next(true);
