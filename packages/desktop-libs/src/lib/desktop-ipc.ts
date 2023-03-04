@@ -691,7 +691,6 @@ export function ipcTimer(
 			if (!isQueueThreadTimerLocked) {
 				await sequentialSyncQueue(timeTrackerWindow);
 			}
-			await syncIntervalQueue(timeTrackerWindow);
 			await latestScreenshots(timeTrackerWindow);
 			await countIntervalQueue(timeTrackerWindow, false);
 			event.sender.send('timer_tracker_show', {
@@ -728,23 +727,19 @@ export function ipcTimer(
 	});
 
 	ipcMain.on('finish-synced-timer', async (event, arg) => {
-		const previous = queueSync;
 		await countIntervalQueue(timeTrackerWindow, false);
 		const total = await intervalService.countNoSynced();
-		if (total > 0 && !isQueueThreadIntervalLocked && previous !== total) {
+		if (total > 0) {
 			const lastTimer = await timerService.findLastOne();
 			if (lastTimer.synced) {
-				const intervals = await intervalService.backedUpAllNoSynced();
-				isQueueThreadIntervalLocked = true;
-				isQueueThreadTimerLocked = true
-				timeTrackerWindow.webContents.send('backup-no-synced', [
-					intervals,
-					lastTimer
-				]);
+				await timerService.update(
+					new Timer({ id: lastTimer.id, synced: false })
+				);
+				await sequentialSyncQueue(timeTrackerWindow);
 			}
 			return;
 		}
-		isQueueThreadIntervalLocked = false;
+		// isQueueThreadIntervalLocked = false;
 		isQueueThreadTimerLocked = false;
 		console.log('-----> FINISH SYNC <------');
 	});
@@ -833,27 +828,6 @@ async function sequentialSyncQueue(window: BrowserWindow) {
 			window.webContents.send('backup-timers-no-synced', timersToSynced);
 		} else {
 			isQueueThreadTimerLocked = false;
-		}
-	} catch (error) {
-		console.log('Error', error);
-	}
-}
-
-let isQueueThreadIntervalLocked = false;
-async function syncIntervalQueue(window: BrowserWindow) {
-	try {
-		await offlineMode.connectivity();
-		if (offlineMode.enabled) return;
-		const lastTimer = await timerService.findLastOne();
-		if (
-			!lastTimer.isStartedOffline &&
-			!lastTimer.isStoppedOffline &&
-			!lastTimer.synced &&
-			!isQueueThreadIntervalLocked
-		) {
-			isQueueThreadIntervalLocked = true;
-			const intervals = await intervalService.backedUpAllNoSynced();
-			window.webContents.send('backup-no-synced', [intervals, lastTimer]);
 		}
 	} catch (error) {
 		console.log('Error', error);
