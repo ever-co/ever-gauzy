@@ -721,8 +721,8 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 									console.log('Backup-error', error);
 								}
 								interval.remoteId = timeSlotId;
-								this.electronService.ipcRenderer.send(
-									'update-synced',
+								await this.electronService.ipcRenderer.invoke(
+									'UPDATE_SYNCED',
 									interval
 								);
 							} catch (error) {
@@ -743,20 +743,23 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 							organizationId: this.userOrganization.id,
 							tenantId: this.userData.tenantId,
 						});
-						asapScheduler.schedule(() => {
-							event.sender.send('update-synced-timer', {
-								lastTimer: latest
-									? latest
-									: {
+						asapScheduler.schedule(async () => {
+							await this.electronService.ipcRenderer.invoke(
+								'UPDATE_SYNCED_TIMER',
+								{
+									lastTimer: latest
+										? latest
+										: {
 											...sequence.timer,
 											id: this.timerStatus.lastLog.id,
-									  },
-								...sequence.timer,
-							});
+										},
+									...sequence.timer,
+								}
+							);
 						});
 					}
-					asapScheduler.schedule(() => {
-						event.sender.send('finish-synced-timer');
+					asapScheduler.schedule(async () => {
+						await this.electronService.ipcRenderer.invoke('FINISH_SYNCED_TIMER');
 					});
 				});
 			}
@@ -805,12 +808,15 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 							this.loading = false;
 							this._timeRun$.next('00:00:00');
 						}
-						asapScheduler.schedule(() => {
+						asapScheduler.schedule(async () => {
 							if (!this._isOffline) {
-								event.sender.send('update-synced-timer', {
-									lastTimer: timelog,
-									...lastTimer,
-								});
+								await this.electronService.ipcRenderer.invoke(
+									'UPDATE_SYNCED_TIMER',
+									{
+										lastTimer: timelog,
+										...lastTimer,
+									}
+								);
 							}
 						});
 					} catch (error) {
@@ -889,13 +895,13 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 													{ ...payload, employeeId },
 													true
 												);
-												asapScheduler.schedule(() => {
+												asapScheduler.schedule(async () => {
 													event.sender.send(
 														'update_session',
 														{ ...timelog }
 													);
-													event.sender.send(
-														'update-synced-timer',
+													await this.electronService.ipcRenderer.invoke(
+														'UPDATE_SYNCED_TIMER',
 														{
 															lastTimer: timelog,
 															...arg.timer,

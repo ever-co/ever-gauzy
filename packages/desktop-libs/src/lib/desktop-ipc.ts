@@ -235,6 +235,41 @@ export function ipcMainHandler(
 	ipcMain.handle('DESKTOP_CAPTURER_GET_SOURCES', async (event, opts) =>
 		await desktopCapturer.getSources(opts)
 	);
+
+	ipcMain.handle('UPDATE_SYNCED_TIMER', async (event, arg) => {
+		try {
+			await timerService.update(
+				new Timer({
+					id: arg.id,
+					timelogId: arg.lastTimer.id,
+					timesheetId: arg.lastTimer.timesheetId,
+					synced: true,
+					...(arg.lastTimer.startedAt && { startedAt: new Date(arg.lastTimer.startedAt) })
+				})
+			);
+		} catch (error) {
+			console.log('[UPDATE_SYNCED_TIME_ERROR]', error);
+		}
+	});
+
+	ipcMain.handle('UPDATE_SYNCED', async (event, arg: IntervalTO) => {
+		try {
+			const interval = new Interval(arg);
+			await intervalService.synced(interval);
+			await countIntervalQueue(timeTrackerWindow, true);
+		} catch (error) {
+			console.log('Error', error);
+		}
+	});
+
+	ipcMain.handle('FINISH_SYNCED_TIMER', async (event, arg) => {
+		const total = await intervalService.countNoSynced();
+		await countIntervalQueue(timeTrackerWindow, false);
+		if (total === 0) {
+			isQueueThreadTimerLocked = false;
+			console.log('...FINISH SYNC');
+		}
+	});
 }
 
 function isScreenUnauthorized() {
@@ -257,32 +292,6 @@ export function ipcTimer(
 	let powerManager;
 	let powerManagerPreventSleep;
 	let powerManagerDetectInactivity;
-
-	ipcMain.on('update-synced', async (event, arg: IntervalTO) => {
-		try {
-			const interval = new Interval(arg);
-			await intervalService.synced(interval);
-			await countIntervalQueue(timeTrackerWindow, true);
-		} catch (error) {
-			console.log('Error', error);
-		}
-	});
-
-	ipcMain.on('update-synced-timer', async (event, arg) => {
-		try {
-			await timerService.update(
-				new Timer({
-					id: arg.id,
-					timelogId: arg.lastTimer.id,
-					timesheetId: arg.lastTimer.timesheetId,
-					synced: true,
-					...(arg.lastTimer.startedAt && { startedAt: new Date(arg.lastTimer.startedAt) })
-				})
-			);
-		} catch (error) {
-			console.log('[UPDATE_SYNCED_TIME_ERROR]', error);
-		}
-	});
 
 	ipcMain.on('create-synced-interval', async (_event, arg) => {
 		try {
@@ -724,24 +733,6 @@ export function ipcTimer(
 				aw: arg
 			},
 		});
-	});
-
-	ipcMain.on('finish-synced-timer', async (event, arg) => {
-		await countIntervalQueue(timeTrackerWindow, false);
-		const total = await intervalService.countNoSynced();
-		if (total > 0) {
-			const lastTimer = await timerService.findLastOne();
-			if (lastTimer.synced) {
-				await timerService.update(
-					new Timer({ id: lastTimer.id, synced: false })
-				);
-				await sequentialSyncQueue(timeTrackerWindow);
-			}
-			return;
-		}
-		// isQueueThreadIntervalLocked = false;
-		isQueueThreadTimerLocked = false;
-		console.log('-----> FINISH SYNC <------');
 	});
 
 	ipcMain.on('notify', (event, notification) => {
