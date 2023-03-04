@@ -16,7 +16,7 @@ import * as _ from 'underscore';
 import { CustomRenderComponent } from './custom-render-cell.component';
 import { LocalDataSource, Ng2SmartTableComponent } from 'ng2-smart-table';
 import { DomSanitizer } from '@angular/platform-browser';
-import { BehaviorSubject, Observable, Subject, tap } from 'rxjs';
+import { asapScheduler, BehaviorSubject, Observable, Subject, tap } from 'rxjs';
 import { ElectronService } from '../electron/services';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import 'moment-duration-format';
@@ -544,96 +544,6 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 				})
 		);
 
-		this.electronService.ipcRenderer.on('backup-no-synced', (event, args) =>
-			this._ngZone.run(async () => {
-				console.log('--------> SYNC LOADING... <------', args);
-				const intervals = args[0];
-				const lastTimer = args[1];
-				for (const interval of intervals) {
-					try {
-						interval.activities = JSON.parse(
-							interval.activities as any
-						);
-						interval.screenshots = JSON.parse(
-							interval.screenshots as any
-						);
-						const screenshots = interval.screenshots;
-						console.log('prepare backup', interval);
-						const resActivities: any =
-							await this.timeTrackerService.pushToTimeSlot({
-								...interval,
-								recordedAt: interval.startedAt,
-								token: this.token,
-								apiHost: this.apiHost,
-							});
-						console.log('backup', resActivities);
-						// upload screenshot to timeslot api
-						const timeSlotId = resActivities.id;
-						try {
-							await Promise.all(
-								screenshots.map(async (screenshot) => {
-									try {
-										const resImg =
-											await this.timeTrackerService.uploadImages(
-												{
-													...interval,
-													recordedAt:
-														interval.startedAt,
-													token: this.token,
-													apiHost: this.apiHost,
-													timeSlotId,
-												},
-												{
-													b64Img: screenshot.b64img,
-													fileName:
-														screenshot.fileName,
-												}
-											);
-										this.getLastTimeSlotImage({
-											...interval,
-											token: this.token,
-											apiHost: this.apiHost,
-											timeSlotId,
-										});
-										console.log('Result upload', resImg);
-										return resImg;
-									} catch (error) {
-										console.log('On upload Image', error);
-									}
-								})
-							);
-						} catch (error) {
-							console.log('Backup-error', error);
-						}
-						interval.remoteId = timeSlotId;
-						this.electronService.ipcRenderer.send(
-							'update-synced',
-							interval
-						);
-					} catch (error) {
-						console.log('error backup timeslot', error);
-					}
-				}
-				console.log('TIMER TO UPDATE', lastTimer);
-				await this.getTimerStatus({
-					token: this.token,
-					apiHost: this.apiHost,
-					organizationId: this.userOrganization.id,
-					tenantId: this.userData.tenantId,
-				});
-				setTimeout(() => {
-					event.sender.send('update-synced-timer', {
-						lastTimer: {
-							...lastTimer,
-							id: this.timerStatus.lastLog.id,
-						},
-						...lastTimer,
-					});
-					event.sender.send('finish-synced-timer');
-				}, 0);
-			})
-		);
-
 		this.electronService.ipcRenderer.on('play_sound', (event, arg) =>
 			this._ngZone.run(() => {
 				try {
@@ -811,8 +721,8 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 									console.log('Backup-error', error);
 								}
 								interval.remoteId = timeSlotId;
-								this.electronService.ipcRenderer.send(
-									'update-synced',
+								await this.electronService.ipcRenderer.invoke(
+									'UPDATE_SYNCED',
 									interval
 								);
 							} catch (error) {
@@ -833,21 +743,24 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 							organizationId: this.userOrganization.id,
 							tenantId: this.userData.tenantId,
 						});
-						setTimeout(() => {
-							event.sender.send('update-synced-timer', {
-								lastTimer: latest
-									? latest
-									: {
+						asapScheduler.schedule(async () => {
+							await this.electronService.ipcRenderer.invoke(
+								'UPDATE_SYNCED_TIMER',
+								{
+									lastTimer: latest
+										? latest
+										: {
 											...sequence.timer,
 											id: this.timerStatus.lastLog.id,
-									  },
-								...sequence.timer,
-							});
-						}, 0);
+										},
+									...sequence.timer,
+								}
+							);
+						});
 					}
-					setTimeout(() => {
-						event.sender.send('finish-synced-timer');
-					}, 0);
+					asapScheduler.schedule(async () => {
+						await this.electronService.ipcRenderer.invoke('FINISH_SYNCED_TIMER');
+					});
 				});
 			}
 		);
@@ -895,14 +808,17 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 							this.loading = false;
 							this._timeRun$.next('00:00:00');
 						}
-						setTimeout(() => {
+						asapScheduler.schedule(async () => {
 							if (!this._isOffline) {
-								event.sender.send('update-synced-timer', {
-									lastTimer: timelog,
-									...lastTimer,
-								});
+								await this.electronService.ipcRenderer.invoke(
+									'UPDATE_SYNCED_TIMER',
+									{
+										lastTimer: timelog,
+										...lastTimer,
+									}
+								);
 							}
-						}, 0);
+						});
 					} catch (error) {
 						this.loading = false;
 						let messageError = error.message;
@@ -979,19 +895,19 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 													{ ...payload, employeeId },
 													true
 												);
-												setTimeout(() => {
+												asapScheduler.schedule(async () => {
 													event.sender.send(
 														'update_session',
 														{ ...timelog }
 													);
-													event.sender.send(
-														'update-synced-timer',
+													await this.electronService.ipcRenderer.invoke(
+														'UPDATE_SYNCED_TIMER',
 														{
 															lastTimer: timelog,
 															...arg.timer,
 														}
 													);
-												}, 0);
+												});
 											})
 									);
 							} else {
