@@ -16,7 +16,7 @@ import * as _ from 'underscore';
 import { CustomRenderComponent } from './custom-render-cell.component';
 import { LocalDataSource, Ng2SmartTableComponent } from 'ng2-smart-table';
 import { DomSanitizer } from '@angular/platform-browser';
-import { BehaviorSubject, Observable, Subject, tap } from 'rxjs';
+import { asapScheduler, BehaviorSubject, Observable, Subject, tap } from 'rxjs';
 import { ElectronService } from '../electron/services';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import 'moment-duration-format';
@@ -621,7 +621,8 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 					organizationId: this.userOrganization.id,
 					tenantId: this.userData.tenantId,
 				});
-				setTimeout(() => {
+
+				asapScheduler.schedule(() => {
 					event.sender.send('update-synced-timer', {
 						lastTimer: {
 							...lastTimer,
@@ -630,7 +631,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 						...lastTimer,
 					});
 					event.sender.send('finish-synced-timer');
-				}, 0);
+				});
 			})
 		);
 
@@ -833,7 +834,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 							organizationId: this.userOrganization.id,
 							tenantId: this.userData.tenantId,
 						});
-						setTimeout(() => {
+						asapScheduler.schedule(() => {
 							event.sender.send('update-synced-timer', {
 								lastTimer: latest
 									? latest
@@ -843,11 +844,11 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 									  },
 								...sequence.timer,
 							});
-						}, 0);
+						});
 					}
-					setTimeout(() => {
+					asapScheduler.schedule(() => {
 						event.sender.send('finish-synced-timer');
-					}, 0);
+					});
 				});
 			}
 		);
@@ -895,14 +896,14 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 							this.loading = false;
 							this._timeRun$.next('00:00:00');
 						}
-						setTimeout(() => {
+						asapScheduler.schedule(() => {
 							if (!this._isOffline) {
 								event.sender.send('update-synced-timer', {
 									lastTimer: timelog,
 									...lastTimer,
 								});
 							}
-						}, 0);
+						});
 					} catch (error) {
 						this.loading = false;
 						let messageError = error.message;
@@ -979,7 +980,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 													{ ...payload, employeeId },
 													true
 												);
-												setTimeout(() => {
+												asapScheduler.schedule(() => {
 													event.sender.send(
 														'update_session',
 														{ ...timelog }
@@ -991,7 +992,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 															...arg.timer,
 														}
 													);
-												}, 0);
+												});
 											})
 									);
 							} else {
