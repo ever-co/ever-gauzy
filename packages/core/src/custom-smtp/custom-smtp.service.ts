@@ -69,7 +69,7 @@ export class CustomSmtpService extends TenantAwareCrudService<CustomSmtp> {
 				});
 				transporter.verify((error, success) => {
 					if (error) {
-						console.log('Error while verifing nodemailer transport!', error);
+						console.log('Error while verifying nodemailer transport!', error);
 						reject(false);
 					} else {
 						resolve(true);
