@@ -2,8 +2,7 @@ import { IBaseEntityModel } from './base-entity.model';
 
 export interface IEmailReset
 	extends IBaseEntityModel {
-	oldEmail: string;
-	newEmail: string;
+	email: string;
 	token: string;
 	code: number;
 	expired?: boolean;

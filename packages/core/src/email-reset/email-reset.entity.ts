@@ -3,22 +3,15 @@ import { ApiProperty } from '@nestjs/swagger';
 import * as moment from 'moment';
 import { IEmailReset, IUser } from '@gauzy/contracts';
 import { BaseEntity } from './../core/entities/base.entity';
-import { User } from 'core';
+import { User } from 'core/entities/internal';
 
 @Entity('email_reset')
 export class EmailReset extends BaseEntity 
 	implements IEmailReset {
-    deletedAt?: Date;
-	
 	@ApiProperty({ type: () => String })
 	@Index()
 	@Column()
-	oldEmail: string;
-
-    @ApiProperty({ type: () => String })
-	@Index()
-	@Column()
-	newEmail: string;
+	email: string;
 
 	@ApiProperty({ type: () => String })
 	@Index()
@@ -35,7 +28,7 @@ export class EmailReset extends BaseEntity
     /**
 	 * User
 	 */
-	@ManyToOne(() => User, (user) => user.teams, {
+	@ManyToOne(() => User, (user) => user.emailReset, {
 		onDelete: 'SET NULL'
 	})
 	@JoinColumn()
