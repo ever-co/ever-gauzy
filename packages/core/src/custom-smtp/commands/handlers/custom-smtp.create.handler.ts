@@ -10,13 +10,12 @@ export class CustomSmtpCreateHandler
 
 	constructor(
 		private readonly customSmtpService: CustomSmtpService
-	) {}
+	) { }
 
 	public async execute(
 		command: CustomSmtpCreateCommand
 	): Promise<ICustomSmtp> {
 		const { input } = command;
-		delete input['id'];
 		try {
 			return await this.customSmtpService.create(input);
 		} catch (error) {
