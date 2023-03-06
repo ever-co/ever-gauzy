@@ -5,7 +5,7 @@ export class GetOrganizationTeamStatisticQuery implements IQuery {
 	static readonly type = 'Get [Organization Team] Statistic';
 
 	constructor(
-		public readonly teamId: IOrganizationTeam['id'],
+		public readonly organizationTeamId: IOrganizationTeam['id'],
 		public readonly options: IOrganizationTeamStatisticInput
-	) {}
+	) { }
 }
