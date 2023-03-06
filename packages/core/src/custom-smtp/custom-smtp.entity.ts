@@ -8,13 +8,11 @@ import { TenantOrganizationBaseEntity } from '../core/entities/internal';
 import { IsSecret } from './../core/decorators';
 
 @Entity('custom_smtp')
-export class CustomSmtp extends TenantOrganizationBaseEntity
-	implements ICustomSmtp {
-
+export class CustomSmtp extends TenantOrganizationBaseEntity implements ICustomSmtp {
 	@ApiProperty({ type: () => String, examples: ['noreply@domain.com'], required: true })
 	@IsEmail()
 	@Column({ nullable: true })
-	fromAddress?: string
+	fromAddress?: string;
 
 	@ApiProperty({ type: () => String, examples: ['smtp.postmarkapp.com', 'smtp.gmail.com'], required: true })
 	@IsString()
@@ -71,6 +69,6 @@ export class CustomSmtp extends TenantOrganizationBaseEntity
 				user: this.username,
 				pass: this.password
 			}
-		} as ISMTPConfig
+		} as ISMTPConfig;
 	}
 }

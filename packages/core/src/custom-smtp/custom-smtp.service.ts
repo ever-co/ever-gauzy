@@ -2,11 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { IsNull, Repository } from 'typeorm';
 import * as nodemailer from 'nodemailer';
-import {
-	ICustomSmtp,
-	ICustomSmtpFindInput,
-	ICustomSmtpValidateInput
-} from '@gauzy/contracts';
+import { ICustomSmtp, ICustomSmtpFindInput, ICustomSmtpValidateInput } from '@gauzy/contracts';
 import { isEmpty, ISMTPConfig } from '@gauzy/common';
 import { environment as env } from '@gauzy/config';
 import { TenantAwareCrudService } from './../core/crud';
@@ -27,9 +23,7 @@ export class CustomSmtpService extends TenantAwareCrudService<CustomSmtp> {
 	 * @param query
 	 * @returns
 	 */
-	public async getSmtpSetting(
-		query: ICustomSmtpFindInput
-	): Promise<ICustomSmtp | ISMTPConfig> {
+	public async getSmtpSetting(query: ICustomSmtpFindInput): Promise<ICustomSmtp | ISMTPConfig> {
 		const globalSmtp = this.defaultSMTPTransporter();
 		delete globalSmtp['auth'];
 

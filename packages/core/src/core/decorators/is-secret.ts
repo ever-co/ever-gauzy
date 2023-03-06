@@ -1,4 +1,4 @@
-import { isClassInstance, isNotEmpty, isObject } from "@gauzy/common";
+import { isClassInstance, isNotEmpty, isObject } from '@gauzy/common';
 
 /**
  * Checks if value is needs to be wrap with specific character.
@@ -8,12 +8,8 @@ import { isClassInstance, isNotEmpty, isObject } from "@gauzy/common";
  */
 export function IsSecret(boolean: boolean = true): PropertyDecorator {
 	return (target, property) => {
-		Reflect.defineMetadata(
-			property,
-			boolean,
-			target
-		);
-	}
+		Reflect.defineMetadata(property, boolean, target);
+	};
 }
 
 /**

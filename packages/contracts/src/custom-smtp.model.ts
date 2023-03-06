@@ -10,13 +10,11 @@ export interface ICustomSmtp extends IBasePerTenantAndOrganizationEntityModel {
 	fromAddress?: string;
 }
 
-export interface ICustomSmtpFindInput
-	extends IBasePerTenantAndOrganizationEntityModel {
+export interface ICustomSmtpFindInput extends IBasePerTenantAndOrganizationEntityModel {
 	id?: string;
 }
 
-export interface ICustomSmtpCreateInput
-	extends IBasePerTenantAndOrganizationEntityModel {
+export interface ICustomSmtpCreateInput extends IBasePerTenantAndOrganizationEntityModel {
 	host: string;
 	port: number;
 	secure: boolean;
@@ -25,7 +23,7 @@ export interface ICustomSmtpCreateInput
 	fromAddress?: string;
 }
 
-export interface ICustomSmtpValidateInput extends ICustomSmtpCreateInput { }
+export interface ICustomSmtpValidateInput extends ICustomSmtpCreateInput {}
 
 export interface ICustomSmtpUpdateInput extends ICustomSmtpCreateInput {
 	id: string;
