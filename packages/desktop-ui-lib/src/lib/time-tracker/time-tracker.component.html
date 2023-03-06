@@ -51,7 +51,7 @@
 						<div class="row">
 							<div class="col-12 form-group tp-padding">
 								<label>Client</label>
-								<ng-select [disabled]="(start$ | async)" nbTooltip="Please stop the timer before to change the client"
+								<ng-select [disabled]="(start$ | async)" nbTooltip="Please stop the timer before changing the client"
 									nbTooltipStatus="warning" [nbTooltipDisabled]="!(start$ | async)"
 									[addTag]=" (hasContactPermission$ | async) ? addContact: null"
 									addTagText="Add contact" [class]="
@@ -80,7 +80,7 @@
 						<div class="row">
 							<div class="col-12 form-group">
 								<label>Project</label>
-								<ng-select [disabled]="(start$ | async)" nbTooltip="Please stop the timer before to change the project"
+								<ng-select [disabled]="(start$ | async)" nbTooltip="Please stop the timer before changing the project"
 									nbTooltipStatus="warning" [nbTooltipDisabled]="!(start$ | async)"
 									[addTag]="(hasProjectPermission$ | async) ? addProject: null"
 									addTagText="Add project" [class]="errors?.project ? 'error-border' : ''"
@@ -108,7 +108,7 @@
 						<div class="row">
 							<div class="col-12 form-group" *ngIf="!isExpand">
 								<label>Task</label>
-								<ng-select [disabled]="(start$ | async)" nbTooltip="Please stop the timer before to change the task"
+								<ng-select [disabled]="(start$ | async)" nbTooltip="Please stop the timer before changing the task"
 									nbTooltipStatus="warning" [nbTooltipDisabled]="!(start$ | async)"
 									[addTag]="(hasTaskPermission$ | async)  ? addNewTask: null"
 									addTagText="Add task" [class]="errors?.task ? 'error-border' : ''"
@@ -131,7 +131,7 @@
 							</div>
 						</div>
 						<div class="row">
-							<div class="col-12 form-group" nbTooltip="Please stop the timer before to change the description"
+							<div class="col-12 form-group" nbTooltip="Please stop the timer before changing the description"
 								nbTooltipStatus="warning" [nbTooltipDisabled]="!(start$ | async)">
 								<label>Working on:</label>
 								<textarea nbInput [disabled]="(start$ | async)" fullWidth placeholder="Note" status="basic" [(ngModel)]="note"
