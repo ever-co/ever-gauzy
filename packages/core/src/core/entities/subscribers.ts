@@ -1,6 +1,7 @@
 import {
 	ActivitySubscriber,
 	CandidateSubscriber,
+	CustomSmtpSubscriber,
 	EmailTemplateSubscriber,
 	EmployeeSubscriber,
 	FeatureSubscriber,
@@ -31,6 +32,7 @@ import {
 export const coreSubscribers = [
 	ActivitySubscriber,
 	CandidateSubscriber,
+	CustomSmtpSubscriber,
 	EmailTemplateSubscriber,
 	EmployeeSubscriber,
 	FeatureSubscriber,

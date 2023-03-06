@@ -4,8 +4,8 @@ import { IsNull, Repository } from 'typeorm';
 import * as nodemailer from 'nodemailer';
 import {
 	ICustomSmtp,
-	ICustomSmtpCreateInput,
-	ICustomSmtpFindInput
+	ICustomSmtpFindInput,
+	ICustomSmtpValidateInput
 } from '@gauzy/contracts';
 import { isEmpty, ISMTPConfig } from '@gauzy/common';
 import { environment as env } from '@gauzy/config';
@@ -30,18 +30,18 @@ export class CustomSmtpService extends TenantAwareCrudService<CustomSmtp> {
 	public async getSmtpSetting(
 		query: ICustomSmtpFindInput
 	): Promise<ICustomSmtp | ISMTPConfig> {
-		const { organizationId } = query;
-
 		const globalSmtp = this.defaultSMTPTransporter();
 		delete globalSmtp['auth'];
+
 		try {
-			if (isEmpty(organizationId)) {
-				return await this.findOneByWhereOptions({
-					organizationId: IsNull()
-				});
-			}
-			return await this.findOneByWhereOptions({
-				organizationId
+			const { organizationId } = query;
+			return await this.findOneByOptions({
+				where: {
+					organizationId: isEmpty(organizationId) ? IsNull() : organizationId
+				},
+				order: {
+					createdAt: 'DESC'
+				}
 			});
 		} catch (error) {
 			return globalSmtp;
@@ -49,7 +49,7 @@ export class CustomSmtpService extends TenantAwareCrudService<CustomSmtp> {
 	}
 
 	// Verify connection configuration
-	public async verifyTransporter(configuration: ICustomSmtpCreateInput): Promise<Boolean | any> {
+	public async verifyTransporter(configuration: ICustomSmtpValidateInput): Promise<Boolean | any> {
 		return new Promise((resolve, reject) => {
 			try {
 				const transporter = nodemailer.createTransport({
