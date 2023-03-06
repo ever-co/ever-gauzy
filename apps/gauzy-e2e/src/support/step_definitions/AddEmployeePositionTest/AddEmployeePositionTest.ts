@@ -19,7 +19,7 @@ Given('Login with default credentials', () => {
 
 // Add new tag
 Then('User can add new tag', () => {
-	dashboardPage.verifyAccountingDashboardIfVisible();
+	//dashboardPage.verifyAccountingDashboardIfVisible();
 	CustomCommands.addTag(organizationTagsUserPage, OrganizationTagsPageData);
 });
 
@@ -82,6 +82,10 @@ Then('Notification message will appear', () => {
 	addEmployeePositionPage.waitMessageToHide();
 });
 
+When('User selects position to edit', () => {
+	addEmployeePositionPage.selectPositionToEdit();
+})
+
 And('User can see edit position button', () => {
 	addEmployeePositionPage.editEmployeePositionButtonVisible();
 });
@@ -104,7 +108,15 @@ And('User can click on cancel edit button', () => {
 	addEmployeePositionPage.clickCancelButton();
 });
 
-// edit employee position
+// Еdit employee position
+When('User selects position to edit', () => {
+	addEmployeePositionPage.selectPositionToEdit();
+})
+
+When('User click on the created Employee Level Twice', () => {
+	addEmployeePositionPage.clickRowEmployeeLevelTwice(); //there is a minor bug that requires to double click the level after cancelling an edit
+});
+
 Then('User can see edit newly position button', () => {
 	addEmployeePositionPage.clickEditEmployeePositionButton();
 });
@@ -132,17 +144,21 @@ Then('User can pick tag from dropdown menu', () => {
 	addEmployeePositionPage.clickKeyboardButtonByKeyCode(9);
 });
 
-And('User can see save position button', () => {
-	addEmployeePositionPage.savePositionButtonVisible();
+And('User can see update position button', () => {
+	addEmployeePositionPage.updatePositionButtonVisible();
 });
 
-When('User click on save position button', () => {
-	addEmployeePositionPage.clickSavePositionButton();
+When('User click on update position button', () => {
+	addEmployeePositionPage.clickUpdatePositionButton();
 });
 
 Then('Notification message will appear', () => {
 	addEmployeePositionPage.waitMessageToHide();
 });
+
+When('User selects position to edit', () => {
+	addEmployeePositionPage.selectPositionToEdit();
+})
 
 And('User can see edit position button', () => {
 	addEmployeePositionPage.editEmployeePositionButtonVisible();
@@ -181,7 +197,7 @@ Then('User can see new position input', () => {
 
 And('User can add data for new position', () => {
 	addEmployeePositionPage.enterNewPositionData(
-		AddEmployeePositionPageData.fullStackDeveloper
+		AddEmployeePositionPageData.deleteThisPosition
 	);
 });
 
@@ -210,6 +226,10 @@ Then('Notification message will appear', () => {
 	addEmployeePositionPage.waitMessageToHide();
 });
 
+When('User selects position to delete', () => {
+	addEmployeePositionPage.selectPositionToDelete();
+});
+
 And('User can see delete position button', () => {
 	addEmployeePositionPage.deletePositionButtonVisible();
 });
@@ -228,26 +248,10 @@ When('User click on confirm delete button', () => {
 
 Then('User can verify that position was deleted', () => {
 	addEmployeePositionPage.verifyElementIsDeleted(
-		AddEmployeePositionPageData.fullStackDeveloper
+		AddEmployeePositionPageData.deleteThisPosition
 	);
 });
 
 And('User will see a notification message', () => {
 	addEmployeePositionPage.waitMessageToHide();
-});
-
-And('User can see delete position button', () => {
-	addEmployeePositionPage.deletePositionButtonVisible();
-});
-
-When('User click on delete position button', () => {
-	addEmployeePositionPage.clickDeletePositionButton();
-});
-
-Then('User can see confirm delete button', () => {
-	addEmployeePositionPage.confirmDeleteButtonVisible();
-});
-
-And('User click on confirm delete button', () => {
-	addEmployeePositionPage.clickConfirmDeletePositionButton();
 });

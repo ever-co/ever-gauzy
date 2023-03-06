@@ -1,4 +1,4 @@
-import { verifyElementIsVisible, clickButtonByIndex } from '../utils/util';
+import { verifyElementIsVisible, clickButtonByIndex, clickOrganizationByIndex } from '../utils/util';
 import { DeleteOrganizationPage } from '../pageobjects/DeleteOrganizationPageObject';
 
 export const gridBtnExists = () => {
@@ -23,4 +23,8 @@ export const confirmBtnExists = () => {
 
 export const confirmBtnClick = (index) => {
 	clickButtonByIndex(DeleteOrganizationPage.confirmDeleteCss, index);
+};
+
+export const selectOrganization = (index) => {
+	clickOrganizationByIndex(DeleteOrganizationPage.selectOrganization, index)
 };

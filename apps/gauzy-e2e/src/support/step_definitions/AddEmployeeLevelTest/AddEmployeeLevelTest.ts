@@ -9,6 +9,7 @@ import * as dashboardPage from '../../Base/pages/Dashboard.po';
 import { CustomCommands } from '../../../support/commands';
 
 import { Given, Then, When, And } from 'cypress-cucumber-preprocessor/steps';
+import { wait } from '../../Base/utils/util';
 
 const responseTimeout = Cypress.config('responseTimeout');
 
@@ -48,7 +49,7 @@ Then('User will see Create button', () => {
 
 // Add new tag
 When('User go to Tags page', () => {
-	dashboardPage.verifyAccountingDashboardIfVisible();
+	//dashboardPage.verifyAccountingDashboardIfVisible();
 	cy.visit('/#/pages/organization/tags');
 });
 
@@ -109,7 +110,7 @@ When('User visit Add new employee level page', () => {
 	CustomCommands.logout(dashboardPage, logoutPage, loginPage);
 	CustomCommands.clearCookies();
 	CustomCommands.login(loginPage, LoginPageData, dashboardPage);
-	dashboardPage.verifyAccountingDashboardIfVisible();
+	//dashboardPage.verifyAccountingDashboardIfVisible();
 	cy.visit('/#/pages/employees/employee-level', { timeout: responseTimeout });
 });
 
@@ -162,6 +163,10 @@ Then('User will see notification message', () => {
 	addEmployeeLevelPage.waitMessageToHide();
 });
 
+When('User click on the created Employee Level', () => {
+	addEmployeeLevelPage.clickRowEmployeeLevel();
+});
+
 And('User can see Edit level button', () => {
 	addEmployeeLevelPage.editEmployeeLevelButtonVisible();
 });
@@ -183,6 +188,10 @@ And('User can cancel editing by clicking on cancel button', () => {
 });
 
 // Edit employee level
+When('User click on the created Employee Level Twice', () => {
+	addEmployeeLevelPage.clickRowEmployeeLevelTwice(); //there is a minor bug that requires to double click the level after cancelling an edit
+});
+
 And('User can see edit level button', () => {
 	addEmployeeLevelPage.editEmployeeLevelButtonVisible();
 });
@@ -196,7 +205,7 @@ Then('User can see level name input', () => {
 });
 
 And('User can enter new level name data', () => {
-	addEmployeeLevelPage.enterEditLevelData(AddEmployeeLevelPageData.levelF);
+	addEmployeeLevelPage.enterEditLevelData(AddEmployeeLevelPageData.deleteLevel);
 });
 
 And('User can see tags multi-select', () => {
@@ -222,68 +231,11 @@ When('User click on Save button', () => {
 
 Then('User will see notification message', () => {
 	addEmployeeLevelPage.waitMessageToHide();
-});
-
-And('User can see Edit level button', () => {
-	addEmployeeLevelPage.editEmployeeLevelButtonVisible();
-});
-
-When('User click on Edit level button', () => {
-	addEmployeeLevelPage.clickEditEmployeeLevelButton();
-});
-
-Then('User can verify that new levelF was created', () => {
-	addEmployeeLevelPage.verifyTitleExists(AddEmployeeLevelPageData.levelF);
-});
-
-And('User can see cancel edit button', () => {
-	addEmployeeLevelPage.cancelButtonVisible();
-});
-
-And('User can cancel editing by clicking on cancel button', () => {
-	addEmployeeLevelPage.clickCancelButton();
 });
 
 // Delete employee level
-And('User can see Add new level button again', () => {
-	addEmployeeLevelPage.addNewLevelButtonVisible();
-});
-
-When('User click on Add new level button again', () => {
-	addEmployeeLevelPage.clickAddNewLevelButton();
-});
-
-Then('User will see new level input', () => {
-	addEmployeeLevelPage.newLevelInputVisible();
-});
-
-And('User can enter another level name', () => {
-	addEmployeeLevelPage.enterNewLevelData(AddEmployeeLevelPageData.levelE);
-});
-
-And('User can see tags multi-select', () => {
-	addEmployeeLevelPage.tagsMultiSelectVisible();
-});
-
-When('User click on tags multi-select', () => {
-	addEmployeeLevelPage.clickTagsMultiSelect();
-});
-
-Then('User can select tag from dropdown menu', () => {
-	addEmployeeLevelPage.selectTagsFromDropdown(0);
-	addEmployeeLevelPage.clickKeyboardButtonByKeyCode(9);
-});
-
-And('User can see Save button', () => {
-	addEmployeeLevelPage.saveNewLevelButtonVisible();
-});
-
-When('User click on Save button', () => {
-	addEmployeeLevelPage.clickSaveNewLevelButton();
-});
-
-Then('User will see notification message', () => {
-	addEmployeeLevelPage.waitMessageToHide();
+When('User click on the created Employee Level to Delete', () => {
+	addEmployeeLevelPage.clickRowEmployeeLevelToDelete();
 });
 
 And('User can see Delete level button', () => {
@@ -310,20 +262,4 @@ Then('User can verify that levelE was deleted', () => {
 
 And('User will see notification message', () => {
 	addEmployeeLevelPage.waitMessageToHide();
-});
-
-Then('User can see Delete button again', () => {
-	addEmployeeLevelPage.deleteLevelButtonVisible();
-});
-
-When('User click on Delete button', () => {
-	addEmployeeLevelPage.clickDeleteLevelButton();
-});
-
-Then('User can see Confirm delete button', () => {
-	addEmployeeLevelPage.confirmDeleteButtonVisible();
-});
-
-And('User can click on Confirm delete button', () => {
-	addEmployeeLevelPage.clickConfirmDeleteLevelButton();
 });

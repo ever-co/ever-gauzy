@@ -24,7 +24,7 @@
 	"responseTimeout": 30000,
 	"retries": {
 		"runMode": 1,
-		"openMode": 1
+		"openMode": 0
 	},
 	"env": {				
 		"coverage": false,

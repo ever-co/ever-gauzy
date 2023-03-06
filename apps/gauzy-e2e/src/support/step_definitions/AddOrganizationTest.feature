@@ -52,6 +52,7 @@ Feature: Add Organization
   Scenario: Delete organization
     Then User can see grid button
     And User can click on grid button to change view
+    And User selects the project to delete
     And User can see delete button
     When User click on delete button
     Then User can see confirm delete button
