@@ -61,7 +61,7 @@ export class CustomSmtp extends TenantOrganizationBaseEntity
 	 *
 	 * @returns
 	 */
-	getSmtpTransporter?() {
+	getSmtpTransporter?(): ISMTPConfig {
 		return {
 			fromAddress: this.fromAddress,
 			host: this.host,

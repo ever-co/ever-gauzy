@@ -48,7 +48,12 @@ export class CustomSmtpService extends TenantAwareCrudService<CustomSmtp> {
 		}
 	}
 
-	// Verify connection configuration
+	/**
+	 * Verifies SMTP configuration
+	 *
+	 * @param configuration
+	 * @returns
+	 */
 	public async verifyTransporter(configuration: ICustomSmtpValidateInput): Promise<Boolean | any> {
 		return new Promise((resolve, reject) => {
 			try {
@@ -62,10 +67,10 @@ export class CustomSmtpService extends TenantAwareCrudService<CustomSmtp> {
 					},
 					from: configuration.fromAddress
 				});
-				transporter.verify(function (error, success) {
+				transporter.verify((error, success) => {
 					if (error) {
-						console.log(error);
-						reject(error);
+						console.log('Error while verifying nodemailer transport!', error);
+						reject(false);
 					} else {
 						resolve(true);
 					}
