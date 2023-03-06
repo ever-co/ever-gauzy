@@ -1372,7 +1372,9 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 						default:
 							break;
 					}
-				} else if (this.start) await this.stopTimer();
+				} else if (this.start && option.type === this.dialogType.timeTrackingOption.name) {
+					await this.stopTimer();
+				};
 			});
 	}
 
