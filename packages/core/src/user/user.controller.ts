@@ -28,12 +28,13 @@ import { DeleteResult, FindOptionsWhere, UpdateResult } from 'typeorm';
 import {
 	IPagination,
 	IUser,
+	LanguagesEnum,
 	PermissionsEnum,
 } from '@gauzy/contracts';
 import { CrudController, PaginationParams } from './../core/crud';
 import { UUIDValidationPipe, ParseJsonPipe } from './../shared/pipes';
 import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
-import { Permissions } from './../shared/decorators';
+import { LanguageDecorator, Permissions } from './../shared/decorators';
 import { User } from './user.entity';
 import { UserService } from './user.service';
 import { UserCreateCommand, UserDeleteCommand } from './commands';
@@ -43,7 +44,8 @@ import {
 	UpdatePreferredComponentLayoutDTO,
 	CreateUserDTO,
 	UpdateUserDTO,
-	FindMeQueryDTO
+	FindMeQueryDTO,
+	UserEmailDTO
 } from './dto';
 
 @ApiTags('User')
@@ -321,5 +323,17 @@ export class UserController extends CrudController<User> {
 	@Delete('/reset')
 	async factoryReset() {
 		return await this.factoryResetService.reset();
+	}
+
+	@HttpCode(HttpStatus.ACCEPTED)
+	@UseGuards(TenantPermissionGuard, PermissionGuard)
+	@Permissions(PermissionsEnum.ORG_USERS_EDIT, PermissionsEnum.PROFILE_EDIT)
+	@Post('/request-change-email')
+	@UseGuards(TenantPermissionGuard, PermissionGuard)
+	async requestChangeEmail(
+		@Body() entity: UserEmailDTO,
+		@LanguageDecorator() languageCode: LanguagesEnum
+	){
+		return await this.userService.requestChangeEmail(entity, languageCode)
 	}
 }

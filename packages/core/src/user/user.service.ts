@@ -2,7 +2,7 @@
 // MIT License, see https://github.com/xmlking/ngx-starter-kit/blob/develop/LICENSE
 // Copyright (c) 2018 Sumanth Chinthagunta
 
-import { ForbiddenException, Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
+import { BadRequestException, ForbiddenException, Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, InsertResult, SelectQueryBuilder, Brackets, WhereExpressionBuilder, In, UpdateResult, DeleteResult, FindOneOptions } from 'typeorm';
 import * as bcrypt from 'bcrypt';
@@ -14,6 +14,7 @@ import { User } from './user.entity';
 import { TenantAwareCrudService } from './../core/crud';
 import { RequestContext } from './../core/context';
 import { freshTimestamp } from './../core/utils';
+import { UserEmailDTO } from './dto';
 
 @Injectable()
 export class UserService extends TenantAwareCrudService<User> {
@@ -362,5 +363,23 @@ export class UserService extends TenantAwareCrudService<User> {
 		} catch (error) {
 			throw new ForbiddenException();
 		}
+	}
+
+	async requestChangeEmail(
+		request: UserEmailDTO,
+		languageCode: LanguagesEnum
+	){
+		const user = RequestContext.currentUser()
+
+		/**
+		 * User with email already exist
+		 */
+		if(user.email === request.email || (await this.checkIfExistsEmail(request.email))){
+			throw new BadRequestException('Oops, the email exists, please try with another email');
+		}
+
+
+		
+		return true
 	}
 }
