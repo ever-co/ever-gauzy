@@ -1407,8 +1407,8 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 			})
 			.then(async (res) => {
 				this.getLastTimeSlotImage(this.argFromMain);
+				this.electronService.ipcRenderer.send('delete_time_slot');
 				asapScheduler.schedule(async () => {
-					this.electronService.ipcRenderer.send('delete_time_slot');
 					this.toastrService.show(
 						`Successfully remove last screenshot and activities`,
 						`Success`,
