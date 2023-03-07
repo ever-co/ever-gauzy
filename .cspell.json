@@ -239,7 +239,8 @@
         "formcontrol",
         "TIMERTRX",
         "TIMERTRXER",
-        "TIMERTRXERUPDATE"
+        "TIMERTRXERUPDATE",
+        "postmarkapp"
     ],
     "useGitignore": true,
     "ignorePaths": [
