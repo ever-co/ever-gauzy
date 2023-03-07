@@ -369,9 +369,15 @@ export function ipcTimer(
 				count > 0 &&
 				offlineMode.enabled
 			) {
+				const notification = {
+					message: 'Successfully remove last screenshot and activities',
+					title: 'Gauzy',
+				};
+				const notify = new NotificationDesktop();
 				await intervalService.remove(intervalId);
 				await countIntervalQueue(timeTrackerWindow, false);
 				await latestScreenshots(timeTrackerWindow);
+				notify.customNotification(notification.message, notification.title);
 			}
 			if (!offlineMode.enabled) {
 				const lastTimer = await timerService.findLastCapture();
