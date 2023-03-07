@@ -7,13 +7,13 @@ import { isClassInstance, isNotEmpty, isObject } from "@gauzy/common";
  * @returns
  */
 export function IsSecret(boolean: boolean = true): PropertyDecorator {
-    return (target, property) => {
+	return (target, property) => {
 		Reflect.defineMetadata(
 			property,
 			boolean,
 			target
 		);
-    }
+	}
 }
 
 /**
@@ -21,11 +21,11 @@ export function IsSecret(boolean: boolean = true): PropertyDecorator {
  *
  * @param secrets
  * @param targets
- * @param offset
+ * @param percentage
  * @param character
  * @returns
  */
-export function WrapSecrets(secrets: any, targets : any, offset = 4, character = '*') {
+export function WrapSecrets(secrets: any, targets: any, percentage = 35, character = '*') {
 	// Check if found class target, convert it into array to use for loop
 	if (isClassInstance(targets)) {
 		targets = [targets];
@@ -37,12 +37,19 @@ export function WrapSecrets(secrets: any, targets : any, offset = 4, character =
 					if (Reflect.getMetadata(key, target)) {
 						if (isNotEmpty(value)) {
 							const string = value.toString();
+
+							// Calculate offset in percentage based on secret length
+							const offset = Math.ceil((percentage / 100) * string.length);
+
 							// Get first offset character
 							const first = string.substring(0, offset);
+
 							// Get last offset character
 							const last = string.slice(string.length - offset);
+
 							// Create character repeater
 							const repeater = character.repeat(offset);
+
 							// ReplaceAll secrets with character
 							secrets[key] = string.replace(first, repeater).replace(last, repeater);
 						}

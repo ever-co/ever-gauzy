@@ -13,14 +13,14 @@ import {
 	IPagination,
 	IInviteTeamMemberModel
 } from '@gauzy/contracts';
-import { forwardRef, Inject, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, forwardRef, Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import * as Email from 'email-templates';
 import * as Handlebars from 'handlebars';
 import * as nodemailer from 'nodemailer';
 import { Repository, IsNull, FindManyOptions } from 'typeorm';
 import { environment as env } from '@gauzy/config';
-import { deepMerge, IAppIntegrationConfig, ISMTPConfig } from '@gauzy/common';
+import { deepMerge, IAppIntegrationConfig, isEmpty, ISMTPConfig } from '@gauzy/common';
 import { TenantAwareCrudService } from './../core/crud';
 import { RequestContext } from '../core/context';
 import { EmailTemplate, Organization } from './../core/entities/internal';
@@ -75,8 +75,8 @@ export class EmailService extends TenantAwareCrudService<EmailEntity> {
 	 * @returns
 	 */
 	private async getEmailInstance(
-		organizationId?: string,
-		tenantId?: string
+		organizationId?: IOrganization['id'],
+		tenantId?: IOrganization['tenantId'],
 	): Promise<Email<any>> {
 		const currentTenantId = tenantId || RequestContext.currentTenantId();
 		let smtpConfig: ISMTPConfig;
@@ -84,37 +84,61 @@ export class EmailService extends TenantAwareCrudService<EmailEntity> {
 		try {
 			const smtpTransporter = await this.customSmtpService.findOneByOptions({
 				where: {
-					tenantId: currentTenantId,
-					organizationId
+					tenantId: isEmpty(currentTenantId) ? IsNull() : currentTenantId,
+					organizationId: isEmpty(organizationId) ? IsNull() : organizationId
+				},
+				order: {
+					createdAt: 'DESC'
 				}
 			});
-			smtpConfig = smtpTransporter.getSmtpTransporter() as ISMTPConfig;
-			console.log({ smtpConfig }, 'try email instance', {
-				where: {
-					tenantId: currentTenantId,
-					organizationId
-				}
-			});
+			smtpConfig = smtpTransporter.getSmtpTransporter();
+
+			/** Verifies SMTP configuration */
+			if (!!await this.customSmtpService.verifyTransporter(smtpTransporter)) {
+				console.log({ smtpConfig }, 'try email instance', {
+					where: {
+						tenantId: isEmpty(currentTenantId) ? IsNull() : currentTenantId,
+						organizationId: isEmpty(organizationId) ? IsNull() : organizationId
+					},
+					order: {
+						createdAt: 'DESC'
+					}
+				});
+			} else {
+				throw new BadRequestException();
+			}
 		} catch (error) {
 			try {
 				if (error instanceof NotFoundException) {
 					const smtpTransporter = await this.customSmtpService.findOneByOptions({
 						where: {
-							tenantId: currentTenantId,
+							tenantId: isEmpty(currentTenantId) ? IsNull() : currentTenantId,
 							organizationId: IsNull()
+						},
+						order: {
+							createdAt: 'DESC'
 						}
 					});
-					smtpConfig = smtpTransporter.getSmtpTransporter() as ISMTPConfig;
-				}
-				console.log({ smtpConfig }, 'catch try email instance', {
-					where: {
-						tenantId: currentTenantId,
-						organizationId: IsNull()
+					smtpConfig = smtpTransporter.getSmtpTransporter();
+
+					/** Verifies SMTP configuration */
+					if (!!await this.customSmtpService.verifyTransporter(smtpTransporter)) {
+						console.log({ smtpConfig }, 'catch try email instance', {
+							where: {
+								tenantId: isEmpty(currentTenantId) ? IsNull() : currentTenantId,
+								organizationId: IsNull()
+							},
+							order: {
+								createdAt: 'DESC'
+							}
+						});
+					} else {
+						throw new BadRequestException();
 					}
-				});
+				}
 			} catch (error) {
 				smtpConfig = this.customSmtpService.defaultSMTPTransporter() as ISMTPConfig;
-				console.log({ smtpConfig }, 'catch catch email instance');
+				console.log({ smtpConfig }, 'Global default SMTP configuration verifies');
 			}
 		}
 		const config: Email.EmailConfig<any> = {
