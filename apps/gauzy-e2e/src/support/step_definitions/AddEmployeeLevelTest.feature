@@ -54,10 +54,27 @@ Feature: Add employee level
     And User can see Save button
     When User click on Save button
     Then User will see notification message
+    When User click on the created Employee Level
+    And User can see Edit level button
+    When User click on Edit level button
+    Then User can verify that new levelF was created
+    And User can see cancel edit button
+    And User can cancel editing by clicking on cancel button
   Scenario: Delete employee level
+    When User click on the created Employee Level
+    And User can see Add new level button again
+    When User click on Add new level button again
+    Then User will see new level input
+    And User can enter another level name
+    And User can see tags multi-select
+    When User click on tags multi-select
+    Then User can select tag from dropdown menu
+    And User can see Save button
+    When User click on Save button
+    Then User will see notification message
     When User click on the created Employee Level to Delete
     And User can see Delete level button
     When User click on Delete level button
     Then User will see Confirm delete button
     When User click on Confirm delete button
-    Then User can verify that levelE was deleted
+    Then User can verify that level was deleted

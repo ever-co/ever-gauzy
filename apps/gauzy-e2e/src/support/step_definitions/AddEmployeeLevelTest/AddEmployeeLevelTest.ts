@@ -205,7 +205,7 @@ Then('User can see level name input', () => {
 });
 
 And('User can enter new level name data', () => {
-	addEmployeeLevelPage.enterEditLevelData(AddEmployeeLevelPageData.deleteLevel);
+	addEmployeeLevelPage.enterEditLevelData(AddEmployeeLevelPageData.levelF);
 });
 
 And('User can see tags multi-select', () => {
@@ -233,7 +233,72 @@ Then('User will see notification message', () => {
 	addEmployeeLevelPage.waitMessageToHide();
 });
 
+When('User click on the created Employee Level', () => {
+	addEmployeeLevelPage.clickRowEmployeeLevel();
+});
+
+And('User can see Edit level button', () => {
+	addEmployeeLevelPage.editEmployeeLevelButtonVisible();
+});
+
+When('User click on Edit level button', () => {
+	addEmployeeLevelPage.clickEditEmployeeLevelButton();
+});
+
+Then('User can verify that new levelF was created', () => {
+	addEmployeeLevelPage.verifyTitleExists(AddEmployeeLevelPageData.levelF);
+});
+
+And('User can see cancel edit button', () => {
+	addEmployeeLevelPage.cancelButtonVisible();
+});
+
+And('User can cancel editing by clicking on cancel button', () => {
+	addEmployeeLevelPage.clickCancelButton();
+});
+
 // Delete employee level
+And('User can see Add new level button again', () => {
+	addEmployeeLevelPage.addNewLevelButtonVisible();
+});
+
+When('User click on Add new level button again', () => {
+	addEmployeeLevelPage.clickAddNewLevelButton();
+});
+
+Then('User will see new level input', () => {
+	addEmployeeLevelPage.newLevelInputVisible();
+});
+
+And('User can enter another level name', () => {
+	addEmployeeLevelPage.enterNewLevelData(AddEmployeeLevelPageData.deleteLevel);
+});
+
+And('User can see tags multi-select', () => {
+	addEmployeeLevelPage.tagsMultiSelectVisible();
+});
+
+When('User click on tags multi-select', () => {
+	addEmployeeLevelPage.clickTagsMultiSelect();
+});
+
+Then('User can select tag from dropdown menu', () => {
+	addEmployeeLevelPage.selectTagsFromDropdown(0);
+	addEmployeeLevelPage.clickKeyboardButtonByKeyCode(9);
+});
+
+And('User can see Save button', () => {
+	addEmployeeLevelPage.saveNewLevelButtonVisible();
+});
+
+When('User click on Save button', () => {
+	addEmployeeLevelPage.clickSaveNewLevelButton();
+});
+
+Then('User will see notification message', () => {
+	addEmployeeLevelPage.waitMessageToHide();
+});
+
 When('User click on the created Employee Level to Delete', () => {
 	addEmployeeLevelPage.clickRowEmployeeLevelToDelete();
 });
@@ -254,9 +319,9 @@ When('User click on Confirm delete button', () => {
 	addEmployeeLevelPage.clickConfirmDeleteLevelButton();
 });
 
-Then('User can verify that levelE was deleted', () => {
+Then('User can verify that level was deleted', () => {
 	addEmployeeLevelPage.verifyElementIsDeleted(
-		AddEmployeeLevelPageData.levelE
+		AddEmployeeLevelPageData.deleteLevel
 	);
 });
 

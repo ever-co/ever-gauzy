@@ -14,7 +14,7 @@ export const AddEmployeeLevelPage = {
 	cardBodyCss: 'nb-card-body',
 	toastrMessageCss: 'nb-toast.ng-trigger',
 	cancelButtonCss: 'button.delete.mr-3',
-	selectEmployeeLevelRow: '[class="p-0 ng-star-inserted"]:nth-of-type(5) [ng-reflect-ng-class]',
-	selectEmployeeLevelRowtoDelete: '[class="p-0 ng-star-inserted"]:nth-of-type(5) [ng-reflect-ng-class]',
+	selectEmployeeLevelRow: 'ga-notes-with-tags',
+	selectEmployeeLevelRowtoDelete: 'ga-notes-with-tags',
 	updateLevelButtonCss: '.appearance-filled.size-medium'
 };

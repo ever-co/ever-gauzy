@@ -77,11 +77,11 @@ export const editEmployeeLevelButtonVisible = () => {
 };
 
 export const clickRowEmployeeLevel = () => {
-	clickButton(AddEmployeeLevelPage.selectEmployeeLevelRow)
+	getLastElement(AddEmployeeLevelPage.selectEmployeeLevelRow)
 };
 
 export const clickRowEmployeeLevelToDelete = () => {
-	clickButton(AddEmployeeLevelPage.selectEmployeeLevelRowtoDelete)
+	getLastElement(AddEmployeeLevelPage.selectEmployeeLevelRowtoDelete)
 };
 
 
