@@ -1,23 +1,28 @@
 import { Entity, Index, Column, AfterLoad } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
 import * as moment from 'moment';
+import { IsEmail, IsNotEmpty } from 'class-validator';
 import { IEmailReset } from '@gauzy/contracts';
-import { TenantOrganizationBaseEntity } from '../core/entities/internal';
+import { TenantBaseEntity } from '../core/entities/internal';
 
 @Entity('email_reset')
-export class EmailReset extends TenantOrganizationBaseEntity 
+export class EmailReset extends TenantBaseEntity
 	implements IEmailReset {
-	@ApiProperty({ type: () => String })
+
+	@ApiProperty({ type: () => String, required: true })
+	@IsEmail()
 	@Index()
 	@Column()
 	email: string;
 
-	@ApiProperty({ type: () => String })
+	@ApiProperty({ type: () => String, required: true })
+	@IsNotEmpty()
 	@Index()
 	@Column()
 	token: string;
 
-    @ApiProperty({ type: () => Number })
+	@ApiProperty({ type: () => Number, required: true })
+	@IsNotEmpty()
 	@Index()
 	@Column()
 	code: number;
@@ -25,8 +30,8 @@ export class EmailReset extends TenantOrganizationBaseEntity
 	expired?: boolean;
 
 	/**
-    * Called after entity is loaded.
-    */
+	* Called after entity is loaded.
+	*/
 	@AfterLoad()
 	afterLoadEntity?() {
 		const createdAt = moment(this.createdAt, 'YYYY-MM-DD HH:mm:ss');
