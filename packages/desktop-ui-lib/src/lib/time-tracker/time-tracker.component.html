@@ -9,13 +9,8 @@
 					<nb-card-body class="timer-body">
 						<div class="row mb-3">
 							<div class="col-12">
-								<span class="org-name">
-									{{
-									(userOrganization$ | async)?.name
-									? (userOrganization$ | async)?.name
-									: 'UNKNOWN'
-									}}
-								</span>
+								<ga-organization-selector [disabled]="(start$| async)" (organizationChange)="selectOrganization($event)">
+								</ga-organization-selector>
 							</div>
 						</div>
 						<div class="row d-flex justify-content-between">
@@ -56,7 +51,9 @@
 						<div class="row">
 							<div class="col-12 form-group tp-padding">
 								<label>Client</label>
-								<ng-select [disabled]="(start$ | async)" [addTag]=" (hasContactPermission$ | async) ? addContact: null"
+								<ng-select [disabled]="(start$ | async)" nbTooltip="Please stop the timer before changing the client"
+									nbTooltipStatus="warning" [nbTooltipDisabled]="!(start$ | async)"
+									[addTag]=" (hasContactPermission$ | async) ? addContact: null"
 									addTagText="Add contact" [class]="
 										errors?.client ? 'error-border' : ''
 									" [clearable]="true" placeholder="Client" [(ngModel)]="organizationContactId"
@@ -83,7 +80,9 @@
 						<div class="row">
 							<div class="col-12 form-group">
 								<label>Project</label>
-								<ng-select [disabled]="(start$ | async)" [addTag]="(hasProjectPermission$ | async) ? addProject: null"
+								<ng-select [disabled]="(start$ | async)" nbTooltip="Please stop the timer before changing the project"
+									nbTooltipStatus="warning" [nbTooltipDisabled]="!(start$ | async)"
+									[addTag]="(hasProjectPermission$ | async) ? addProject: null"
 									addTagText="Add project" [class]="errors?.project ? 'error-border' : ''"
 									[clearable]="true" placeholder="Project" [(ngModel)]="projectSelect"
 									[items]="projects$ | async" bindValue="id" bindLabel="name"
@@ -109,7 +108,9 @@
 						<div class="row">
 							<div class="col-12 form-group" *ngIf="!isExpand">
 								<label>Task</label>
-								<ng-select [disabled]="(start$ | async)" [addTag]="(hasTaskPermission$ | async)  ? addNewTask: null"
+								<ng-select [disabled]="(start$ | async)" nbTooltip="Please stop the timer before changing the task"
+									nbTooltipStatus="warning" [nbTooltipDisabled]="!(start$ | async)"
+									[addTag]="(hasTaskPermission$ | async)  ? addNewTask: null"
 									addTagText="Add task" [class]="errors?.task ? 'error-border' : ''"
 									[clearable]="true" placeholder="Task" [(ngModel)]="taskSelect"
 									[items]="tasks$ | async" bindValue="id" bindLabel="title"
@@ -130,7 +131,8 @@
 							</div>
 						</div>
 						<div class="row">
-							<div class="col-12 form-group">
+							<div class="col-12 form-group" nbTooltip="Please stop the timer before changing the description"
+								nbTooltipStatus="warning" [nbTooltipDisabled]="!(start$ | async)">
 								<label>Working on:</label>
 								<textarea nbInput [disabled]="(start$ | async)" fullWidth placeholder="Note" status="basic" [(ngModel)]="note"
 									[status]="errors?.note ? 'danger' : 'basic'"

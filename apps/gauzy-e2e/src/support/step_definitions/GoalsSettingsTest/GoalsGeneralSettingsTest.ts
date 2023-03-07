@@ -7,7 +7,7 @@ import { GoalsKPIPageData } from '../../Base/pagedata/GoalsKPIPageData';
 import { faker } from '@faker-js/faker';
 import * as logoutPage from '../../Base/pages/Logout.po';
 import * as manageEmployeesPage from '../../Base/pages/ManageEmployees.po';
-import * as goalstimeFramePage from '../../Base/pages/GoalsTimeFrame.po';
+import * as goalsTimeFramePage from '../../Base/pages/GoalsTimeFrame.po';
 import { GoalsTimeFramePageData } from '../../Base/pagedata/GoalsTimeFramePageData';
 
 import { Given, Then, When, And } from 'cypress-cucumber-preprocessor/steps';
@@ -55,119 +55,119 @@ And('User can see second tab button', () => {
 
 When('User click on second tab button', () => {
 	cy.intercept('GET', '/api/goal-time-frame*').as('waitTable');
-	goalstimeFramePage.clickTabButton(1);
+	goalsTimeFramePage.clickTabButton(1);
 	cy.wait('@waitTable')
 });
 
 Then('User can see add time frame button', () => {
-	goalstimeFramePage.addtimeFrameButtonVisible();
+	goalsTimeFramePage.addTimeFrameButtonVisible();
 });
 
 When('User click on add time frame button', () => {
-	goalstimeFramePage.clickAddtimeFrameButton();
+	goalsTimeFramePage.clickAddTimeFrameButton();
 });
 
 Then('User can see time frame name input field', () => {
-	goalstimeFramePage.nameInputVisible();
+	goalsTimeFramePage.nameInputVisible();
 });
 
 And('User can enter name for time frame', () => {
-	goalstimeFramePage.enterNameInputData(GoalsTimeFramePageData.name);
+	goalsTimeFramePage.enterNameInputData(GoalsTimeFramePageData.name);
 });
 
 And('User can see start date input field', () => {
-	goalstimeFramePage.startDateInputVisible();
+	goalsTimeFramePage.startDateInputVisible();
 });
 
 And('User can enter start date', () => {
-	goalstimeFramePage.enterStartDateData();
+	goalsTimeFramePage.enterStartDateData();
 });
 
 And('User can see end date input field', () => {
-	goalstimeFramePage.endDateInputVisible();
+	goalsTimeFramePage.endDateInputVisible();
 });
 
 And('User can enter and date', () => {
-	goalstimeFramePage.enterEndDateData();
-	goalstimeFramePage.clickKeyboardButtonByKeyCode(9);
+	goalsTimeFramePage.enterEndDateData();
+	goalsTimeFramePage.clickKeyboardButtonByKeyCode(9);
 });
 
 And('User can see save time frame button', () => {
-	goalstimeFramePage.saveTimeFrameButtonVisible();
+	goalsTimeFramePage.saveTimeFrameButtonVisible();
 });
 
 When('User click on save time frame button', () => {
-	goalstimeFramePage.clickSaveTimeFrameButton();
+	goalsTimeFramePage.clickSaveTimeFrameButton();
 });
 
 Then('Notification message will appear', () => {
-	goalstimeFramePage.waitMessageToHide();
+	goalsTimeFramePage.waitMessageToHide();
 });
 
 // Edit time frame
 And('User can see time frame table', () => {
-	goalstimeFramePage.tableRowVisible();
+	goalsTimeFramePage.tableRowVisible();
 });
 
 When('User click on time frame table row', () => {
-	goalstimeFramePage.selectTableRow(0);
+	goalsTimeFramePage.selectTableRow(0);
 });
 
 Then('Edit time frame button will become active', () => {
-	goalstimeFramePage.editTimeFrameButtonVisible();
+	goalsTimeFramePage.editTimeFrameButtonVisible();
 });
 
 When('User click on edit time frame button', () => {
-	goalstimeFramePage.clickEditTimeFrameButton();
+	goalsTimeFramePage.clickEditTimeFrameButton();
 });
 
 Then('User can see edit time frame name input field', () => {
-	goalstimeFramePage.nameInputVisible();
+	goalsTimeFramePage.nameInputVisible();
 });
 
 And('User can enter new time frame name', () => {
-	goalstimeFramePage.enterNameInputData(GoalsTimeFramePageData.editName);
+	goalsTimeFramePage.enterNameInputData(GoalsTimeFramePageData.editName);
 });
 
 And('User can see save edited time frame button', () => {
-	goalstimeFramePage.saveTimeFrameButtonVisible();
+	goalsTimeFramePage.saveTimeFrameButtonVisible();
 });
 
 When('User click on save edited time frame button', () => {
-	goalstimeFramePage.clickSaveTimeFrameButton();
+	goalsTimeFramePage.clickSaveTimeFrameButton();
 });
 
 Then('Notification message will appear', () => {
-	goalstimeFramePage.waitMessageToHide();
+	goalsTimeFramePage.waitMessageToHide();
 });
 
 // Delete time frame
 And('User can see time frame table again', () => {
-	goalstimeFramePage.tableRowVisible();
+	goalsTimeFramePage.tableRowVisible();
 });
 
 When('User click on time frame table row again', () => {
-	goalstimeFramePage.selectTableRow(0);
+	goalsTimeFramePage.selectTableRow(0);
 });
 
 Then('Delete time frame button will become active', () => {
-	goalstimeFramePage.deleteTimeFrameButtonVisible();
+	goalsTimeFramePage.deleteTimeFrameButtonVisible();
 });
 
 When('USer click on delete time frame button', () => {
-	goalstimeFramePage.clickDeleteTimeFrameButton();
+	goalsTimeFramePage.clickDeleteTimeFrameButton();
 });
 
 Then('User can see confirm delete time frame button', () => {
-	goalstimeFramePage.confirmDeleteButtonVisible();
+	goalsTimeFramePage.confirmDeleteButtonVisible();
 });
 
 When('User click on confirm delete time frame button', () => {
-	goalstimeFramePage.clickConfirmDeleteButton();
+	goalsTimeFramePage.clickConfirmDeleteButton();
 });
 
 Then('Notification message will appear', () => {
-	goalstimeFramePage.waitMessageToHide();
+	goalsTimeFramePage.waitMessageToHide();
 });
 
 // Goals KPI test
@@ -177,7 +177,7 @@ And('User can see third tab button', () => {
 });
 
 When('User click on third tab button', () => {
-	goalstimeFramePage.clickTabButton(2);
+	goalsTimeFramePage.clickTabButton(2);
 });
 
 Then('User can see add KPI button', () => {
@@ -233,7 +233,7 @@ When('User click on save KPI button', () => {
 });
 
 Then('Notification message will appear', () => {
-	goalstimeFramePage.waitMessageToHide();
+	goalsTimeFramePage.waitMessageToHide();
 });
 
 // Edit KPI
@@ -282,7 +282,7 @@ When('User click on save edited KPI button', () => {
 });
 
 Then('Notification message will appear', () => {
-	goalstimeFramePage.waitMessageToHide();
+	goalsTimeFramePage.waitMessageToHide();
 });
 
 // Delete KPI
@@ -323,5 +323,5 @@ When('User click on confirm delete KPI button', () => {
 });
 
 Then('Notification message will appear', () => {
-	goalstimeFramePage.waitMessageToHide();
+	goalsTimeFramePage.waitMessageToHide();
 });

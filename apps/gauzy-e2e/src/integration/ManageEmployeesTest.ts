@@ -107,7 +107,7 @@ describe('Manage employees test', () => {
 		manageEmployeesPage.lastNameEditInputVisible();
 		manageEmployeesPage.enterLastNameEditInputData(lastName);
 		manageEmployeesPage.preferredLanguageDropdownVisible();
-		manageEmployeesPage.clickpreferredLanguageDropdown();
+		manageEmployeesPage.clickPreferredLanguageDropdown();
 		manageEmployeesPage.selectLanguageFromDropdown(
 			ManageEmployeesPageData.preferredLanguage
 		);

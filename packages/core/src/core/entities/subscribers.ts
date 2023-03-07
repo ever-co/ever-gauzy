@@ -1,6 +1,7 @@
 import {
 	ActivitySubscriber,
 	CandidateSubscriber,
+	CustomSmtpSubscriber,
 	EmailTemplateSubscriber,
 	EmployeeSubscriber,
 	FeatureSubscriber,
@@ -15,13 +16,14 @@ import {
 	PaymentSubscriber,
 	ReportSubscriber,
 	ScreenshotSubscriber,
+	TagSubscriber,
 	TaskPrioritySubscriber,
 	TaskSizeSubscriber,
 	TaskStatusSubscriber,
 	TaskSubscriber,
 	TenantSubscriber,
 	TimeSlotSubscriber,
-	UserSubscriber,
+	UserSubscriber
 } from './internal';
 
 /**
@@ -30,6 +32,7 @@ import {
 export const coreSubscribers = [
 	ActivitySubscriber,
 	CandidateSubscriber,
+	CustomSmtpSubscriber,
 	EmailTemplateSubscriber,
 	EmployeeSubscriber,
 	FeatureSubscriber,
@@ -44,11 +47,12 @@ export const coreSubscribers = [
 	PaymentSubscriber,
 	ReportSubscriber,
 	ScreenshotSubscriber,
+	TagSubscriber,
 	TaskPrioritySubscriber,
 	TaskSizeSubscriber,
 	TaskStatusSubscriber,
 	TaskSubscriber,
 	TenantSubscriber,
 	TimeSlotSubscriber,
-	UserSubscriber,
+	UserSubscriber
 ];

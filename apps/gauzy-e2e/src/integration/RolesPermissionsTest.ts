@@ -744,7 +744,7 @@ describe('Roles and permissions test', () => {
 			RolesPermissionsPageData.accessPrivateProjects
 		);
 		rolesPermissionsPage.verifyTextExist(
-			RolesPermissionsPageData.editTimeinTimesheet
+			RolesPermissionsPageData.editTimeInTimesheet
 		);
 		rolesPermissionsPage.verifyTextExist(
 			RolesPermissionsPageData.viewInvoices

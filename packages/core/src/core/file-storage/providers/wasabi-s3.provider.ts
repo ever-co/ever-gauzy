@@ -6,7 +6,6 @@ import * as moment from 'moment';
 import { environment } from '@gauzy/config';
 import * as AWS from 'aws-sdk';
 import { StorageEngine } from 'multer';
-import { v4 as uuid } from 'uuid';
 import { Provider } from './provider';
 import { RequestContext } from '../../context';
 
@@ -100,7 +99,11 @@ export class WasabiS3Provider extends Provider<WasabiS3Provider> {
 		return filePath ? this.config.rootPath + '/' + filePath : null;
 	}
 
-	handler({ dest, filename, prefix }: FileStorageOption): StorageEngine {
+	handler({
+		dest,
+		filename,
+		prefix = 'file'
+	}: FileStorageOption): StorageEngine {
 		return multerS3({
 			s3: this.getWasabiInstance(),
 			bucket: (_req, file, callback) => {
@@ -110,39 +113,30 @@ export class WasabiS3Provider extends Provider<WasabiS3Provider> {
 				callback(null, { fieldName: file.fieldname });
 			},
 			key: (_req, file, callback) => {
-				let fileNameString = '';
-				const ext = file.originalname.split('.').pop();
-				if (filename) {
-					if (typeof filename === 'string') {
-						fileNameString = filename;
-					} else {
-						fileNameString = filename(file, ext);
-					}
-				} else {
-					if (!prefix) {
-						prefix = 'file';
-					}
-					fileNameString = `gauzy-${prefix}-${moment().unix()}-${parseInt(
-						'' + Math.random() * 1000,
-						10
-					)}.${ext}`;
-				}
-				let dir;
+				// A string or function that determines the destination path for uploaded
+				let dir: string;
 				if (dest instanceof Function) {
 					dir = dest(file);
 				} else {
 					dir = dest;
 				}
-				const user = RequestContext.currentUser();
-				callback(
-					null,
-					join(
-						this.config.rootPath,
-						dir,
-						user ? user.tenantId : uuid(),
-						fileNameString
-					)
-				);
+
+				// A file extension, or filename extension, is a suffix at the end of a file.
+				const extension = file.originalname.split('.').pop();
+
+				// A function that determines the name of the uploaded file.
+				let fileName: string;
+				if (filename) {
+					if (typeof filename === 'string') {
+						fileName = filename;
+					} else {
+						fileName = filename(file, extension);
+					}
+				} else {
+					fileName = `${prefix}-${moment().unix()}-${parseInt('' + Math.random() * 1000, 10)}.${extension}`;
+				}
+				const fullPath = join(this.config.rootPath, dir, fileName);
+				callback(null, fullPath);
 			}
 		});
 	}
@@ -178,7 +172,7 @@ export class WasabiS3Provider extends Provider<WasabiS3Provider> {
 						.then((res) => res.ContentLength);
 
 					const file = {
-						originalname: fileName, // orignal file name
+						originalname: fileName, // original file name
 						size: size, // files in bytes
 						filename: fileName,
 						path: key, // Full path of the file

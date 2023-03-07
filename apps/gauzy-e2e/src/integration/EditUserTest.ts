@@ -71,7 +71,7 @@ describe('Edit user test', () => {
 		editUserPage.clickSelectOrgDropdown();
 		editUserPage.clickSelectOrgDropdownOption();
 		editUserPage.saveSelectedOrgButtonVisible();
-		editUserPage.clickSaveselectedOrgButton();
+		editUserPage.clickSaveSelectedOrgButton();
 		editUserPage.removeOrgButtonVisible();
 		editUserPage.clickRemoveOrgButton();
 		editUserPage.confirmRemoveBtnVisible();

@@ -111,7 +111,7 @@ export class AccountingTemplateController extends CrudController<AccountingTempl
 	}
 
 	@ApiOperation({
-		summary: 'Converts mjml or handlebar text to html for temaplate preview'
+		summary: 'Converts mjml or handlebar text to html for template preview'
 	})
 	@ApiResponse({
 		status: HttpStatus.OK,
@@ -130,7 +130,7 @@ export class AccountingTemplateController extends CrudController<AccountingTempl
 	 * @returns
 	 */
 	@ApiOperation({
-		summary: 'Converts mjml or handlebar text to html for temaplate preview'
+		summary: 'Converts mjml or handlebar text to html for template preview'
 	})
 	@ApiResponse({
 		status: HttpStatus.OK,

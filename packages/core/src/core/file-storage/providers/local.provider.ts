@@ -5,8 +5,6 @@ import * as moment from 'moment';
 import { environment, getConfig } from '@gauzy/config';
 import { Provider } from './provider';
 import { basename, join, resolve } from 'path';
-import { RequestContext } from '../../context';
-import { v4 as uuid } from 'uuid';
 
 const config = getConfig();
 
@@ -18,7 +16,7 @@ export class LocalProvider extends Provider<LocalProvider> {
 		rootPath: environment.isElectron
 			? resolve(environment.gauzyUserPath, 'public')
 			: config.assetOptions.assetPublicPath ||
-			  resolve(process.cwd(), 'apps', 'api', 'public'),
+			resolve(process.cwd(), 'apps', 'api', 'public'),
 		baseUrl: environment.baseUrl + '/public'
 	};
 
@@ -43,49 +41,39 @@ export class LocalProvider extends Provider<LocalProvider> {
 	handler({
 		dest,
 		filename,
-		prefix
+		prefix = 'file'
 	}: FileStorageOption): multer.StorageEngine {
 		return multer.diskStorage({
 			destination: (_req, file, callback) => {
-				let dir;
+				// A string or function that determines the destination path for uploaded
+				let dir: string;
 				if (dest instanceof Function) {
 					dir = dest(file);
 				} else {
 					dir = dest;
 				}
 
-				const tenantId = RequestContext.currentTenantId();
-				const fullPath = join(
-					this.config.rootPath,
-					dir,
-					tenantId || uuid()
-				);
-
-				fs.mkdirSync(fullPath, {
-					recursive: true
-				});
+				const fullPath = join(this.config.rootPath, dir);
+				fs.mkdirSync(fullPath, { recursive: true });
 
 				callback(null, fullPath);
 			},
 			filename: (_req, file, callback) => {
-				let fileNameString = '';
-				const ext = file.originalname.split('.').pop();
+				// A file extension, or filename extension, is a suffix at the end of a file.
+				const extension = file.originalname.split('.').pop();
+
+				// A function that determines the name of the uploaded file.
+				let fileName: string;
 				if (filename) {
 					if (typeof filename === 'string') {
-						fileNameString = filename;
+						fileName = filename;
 					} else {
-						fileNameString = filename(file, ext);
+						fileName = filename(file, extension);
 					}
 				} else {
-					if (!prefix) {
-						prefix = 'file';
-					}
-					fileNameString = `${prefix}-${moment().unix()}-${parseInt(
-						'' + Math.random() * 1000,
-						10
-					)}.${ext}`;
+					fileName = `${prefix}-${moment().unix()}-${parseInt('' + Math.random() * 1000, 10)}.${extension}`;
 				}
-				callback(null, fileNameString);
+				callback(null, fileName);
 			}
 		});
 	}

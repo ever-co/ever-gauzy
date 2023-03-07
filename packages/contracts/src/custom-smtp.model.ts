@@ -25,6 +25,8 @@ export interface ICustomSmtpCreateInput
 	fromAddress?: string;
 }
 
+export interface ICustomSmtpValidateInput extends ICustomSmtpCreateInput { }
+
 export interface ICustomSmtpUpdateInput extends ICustomSmtpCreateInput {
 	id: string;
 }

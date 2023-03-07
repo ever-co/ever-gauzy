@@ -124,7 +124,7 @@ Then('Notification message will appear', () => {
 });
 
 And('User can verify base was created', () => {
-	organizationHelpCenterPage.verifybaseExists(
+	organizationHelpCenterPage.verifyBaseExists(
 		OrganizationHelpCenterPageData.defaultBaseName
 	);
 });
@@ -143,7 +143,7 @@ Then('User can see category button', () => {
 });
 
 When('User click on add category button', () => {
-	organizationHelpCenterPage.clickAddCategotyOption(
+	organizationHelpCenterPage.clickAddCategoryOption(
 		OrganizationHelpCenterPageData.addCategoryOption
 	);
 });

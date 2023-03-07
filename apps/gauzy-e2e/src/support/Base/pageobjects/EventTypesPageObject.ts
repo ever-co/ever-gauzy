@@ -3,7 +3,7 @@ export const EventTypesPage = {
 	addEventTypeButtonCss: 'nb-card-body > div.mb-3 > button[status="success"]',
 	editEventTypeButtonCss: 'div.mb-3 > button[status="info"]',
 	deleteEventTypeButtonCss: 'div.mb-3 > button[status="danger"]',
-	selectEmployeeDrodownCss: 'ga-employee-multi-select[id="employee"]',
+	selectEmployeeDropdownCss: 'ga-employee-multi-select[id="employee"]',
 	selectEmployeeDropdownOptionCss: 'nb-option-list > ul.option-list > nb-option',
 	titleInputCss: '#title',
 	descriptionInputCss: '#description',

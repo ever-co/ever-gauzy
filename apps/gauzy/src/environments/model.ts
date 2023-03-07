@@ -44,7 +44,7 @@ export interface Environment {
 	IS_INTEGRATED_DESKTOP: boolean;
 
 	DEMO: boolean;
-	
+
 	DEMO_SUPER_ADMIN_EMAIL?: string;
 	DEMO_SUPER_ADMIN_PASSWORD?: string;
 

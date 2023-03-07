@@ -90,7 +90,7 @@ When('User click on employee dropdown', () => {
 	projectTrackedInTimesheets.clickSelectEmployeeDropdown();
 });
 
-Then('User can select employee from dropodown options', () => {
+Then('User can select employee from dropdown options', () => {
 	projectTrackedInTimesheets.selectEmployeeDropdownOption(employeeFullName);
 	projectTrackedInTimesheets.clickKeyboardButtonByKeyCode(9);
 });
@@ -187,7 +187,7 @@ When('Employee click on stop timer button', () => {
 });
 
 Then('Employee can see view timesheet button', () => {
-	projectTrackedInTimesheets.viewTimesheetbtnVisible();
+	projectTrackedInTimesheets.viewTimesheetBtnVisible();
 });
 
 When('Employee click on view timesheet button', () => {

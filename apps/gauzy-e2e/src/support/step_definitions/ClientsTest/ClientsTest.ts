@@ -95,7 +95,7 @@ And('User can enter value for client email', () => {
 });
 
 And('User can see save invite button', () => {
-	clientsPage.saveInvitebuttonVisible();
+	clientsPage.saveInviteButtonVisible();
 });
 
 When('User click on save invite button', () => {

@@ -1,6 +1,6 @@
 import { IBasePerTenantAndOrganizationEntityModel } from './base-entity.model';
 import { IEquipmentSharing } from './equipment-sharing.model';
-import { ITag } from './tag-entity.model';
+import { ITag } from './tag.model';
 import { IImageAsset } from "./image-asset.model";
 
 export interface IEquipment extends IBasePerTenantAndOrganizationEntityModel {

@@ -82,7 +82,7 @@ describe('Organization vendors test', () => {
 	it('Should be able to delete vendor', () => {
 		organizationVendorsPage.deleteVendorButtonVisible();
 		organizationVendorsPage.clickDeleteVendorButton(0);
-		organizationVendorsPage.confirmDeletebuttonVisible();
+		organizationVendorsPage.confirmDeleteButtonVisible();
 		organizationVendorsPage.clickConfirmDeleteButton();
 		organizationVendorsPage.waitMessageToHide();
 		organizationVendorsPage.verifyVendorIsDeleted();

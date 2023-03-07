@@ -38,7 +38,7 @@ describe('Organization help center test', () => {
 		organizationHelpCenterPage.saveButtonVisible();
 		organizationHelpCenterPage.clickSaveButton();
 		organizationHelpCenterPage.waitMessageToHide();
-		organizationHelpCenterPage.verifybaseExists(
+		organizationHelpCenterPage.verifyBaseExists(
 			OrganizationHelpCenterPageData.defaultBaseName
 		);
 	});

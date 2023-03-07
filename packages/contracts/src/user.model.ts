@@ -4,7 +4,7 @@
 
 import { IRole } from './role.model';
 import { IBasePerTenantEntityModel } from './base-entity.model';
-import { ITag } from './tag-entity.model';
+import { ITag } from './tag.model';
 import { IEmployee } from './employee.model';
 import { IPayment } from './payment.model';
 import { IOrganization } from './organization.model';

@@ -1,13 +1,14 @@
 export * from './hooks';
 
-export * from './ILogger';
-export * from './IGraphql';
-export * from './IPlugin';
 export * from './IConfig';
+export * from './IGraphql';
+export * from './ILogger';
+export * from './IPlugin';
 
 export * from './IAppIntegrationConfig';
 export * from './IAuth0Config';
 export * from './IAwsConfig';
+export * from './ICloudinaryConfig';
 export * from './IFacebookConfig';
 export * from './IFiverrConfig';
 export * from './IGithubConfig';

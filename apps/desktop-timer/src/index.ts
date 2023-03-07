@@ -333,7 +333,7 @@ app.on('ready', async () => {
 
 	updater.settingWindow = settingsWindow;
 	updater.gauzyWindow = gauzyWindow;
-	updater.checkUpdate();
+	await updater.checkUpdate();
 
 	removeMainListener();
 	ipcMainHandler(

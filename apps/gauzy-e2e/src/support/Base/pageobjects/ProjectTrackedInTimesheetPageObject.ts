@@ -2,7 +2,7 @@ export const ProjectTrackedInTimesheetPage = {
     gridButtonCss: 'div.layout-switch > button',
     requestNewProjectButtonCss: 'div.mb-3 > button[status="success"]',
     projectNameInputCss: '#name',
-    selectEmployeeMultyselectCss: 'button[class="select-button placeholder"]',
+    selectEmployeeMultiSelectCss: 'button[class="select-button placeholder"]',
     selectEmployeeDropdownOptionCss: '.option-list nb-option',
     saveProjectButtonCss: 'div.form-group > button[status="success"]',
     toastrMessageCss: 'nb-toast.ng-trigger',

@@ -1,9 +1,11 @@
 import { Component, OnInit } from '@angular/core';
-import { FileStorageProviderEnum, ITenantSetting, IUser, IWasabiFileStorageProviderConfig } from '@gauzy/contracts';
+import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { FileStorageProviderEnum, ITenantSetting, IUser, PermissionsEnum, SMTPSecureEnum } from '@gauzy/contracts';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
 import { isNotEmpty } from '@gauzy/common-angular';
 import { filter, tap } from 'rxjs/operators';
+import { Subject } from 'rxjs/internal/Subject';
 import { FileStorageService, Store, TenantService, ToastrService } from '../../../@core/services';
 import { TranslationBaseComponent } from '../../../@shared/language-base';
 import { environment } from './../../../../environments/environment';
@@ -12,50 +14,88 @@ import { environment } from './../../../../environments/environment';
 @Component({
 	selector: 'ga-file-storage',
 	templateUrl: './file-storage.component.html',
-	styleUrls:['./file-storage.component.scss'],
+	styleUrls: ['./file-storage.component.scss'],
 	providers: [FileStorageService, TenantService]
 })
-export class FileStorageComponent
-	extends TranslationBaseComponent
+export class FileStorageComponent extends TranslationBaseComponent
 	implements OnInit {
 
+	secureOptions = [
+		{ label: SMTPSecureEnum.TRUE, value: "true" },
+		{ label: SMTPSecureEnum.FALSE, value: "false" }
+	];
+	PermissionsEnum = PermissionsEnum;
+	FileStorageProviderEnum = FileStorageProviderEnum;
 	user: IUser;
 	settings: ITenantSetting = new Object();
-	fileStorageProviderEnum = FileStorageProviderEnum;
-	fileStorageProviders: { label: string; value: any }[];
+
+	public readonly form: FormGroup = FileStorageComponent.buildForm(this.fb);
+	static buildForm(fb: FormBuilder): FormGroup {
+		const form = fb.group({
+			fileStorageProvider: [
+				(environment.FILE_PROVIDER).toUpperCase() as FileStorageProviderEnum || FileStorageProviderEnum.LOCAL,
+				Validators.required
+			],
+			// Aws Configuration
+			S3: fb.group({
+				aws_access_key_id: [],
+				aws_secret_access_key: [],
+				aws_default_region: [],
+				aws_bucket: []
+			}),
+			// Wasabi Configuration
+			WASABI: fb.group({
+				wasabi_aws_access_key_id: [],
+				wasabi_aws_secret_access_key: [],
+				wasabi_aws_default_region: ['us-east-1'],
+				wasabi_aws_service_url: ['s3.wasabisys.com'],
+				wasabi_aws_bucket: ['gauzy']
+			}),
+			// Cloudinary Configuration
+			CLOUDINARY: fb.group({
+				cloudinary_cloud_name: [],
+				cloudinary_api_key: [],
+				cloudinary_api_secret: [],
+				cloudinary_api_secure: []
+			}),
+		});
+		return form;
+	}
+
+	public subject$: Subject<boolean> = new Subject();
+
+	/*
+	* Getter for file storage provider
+	*/
+	get fileStorageProvider() {
+		return this.form.get('fileStorageProvider').value;
+	}
 
 	constructor(
 		public readonly translate: TranslateService,
 		private readonly tenantService: TenantService,
 		private readonly fileStorageService: FileStorageService,
 		private readonly toastrService: ToastrService,
-		private readonly store: Store
+		private readonly store: Store,
+		private readonly fb: FormBuilder,
 	) {
 		super(translate);
 	}
 
-	ngOnInit() {
-		this.store.user$
+	ngOnInit(): void {
+		this.subject$
 			.pipe(
-				filter((user: IUser) => !!user),
-				tap((user: IUser) => (this.user = user)),
 				tap(() => this.getSetting()),
-				tap(() => this.getFileStorageProviders()),
 				untilDestroyed(this)
 			)
 			.subscribe();
-	}
-
-	/**
-	 * GET file storage providers
-	 */
-	getFileStorageProviders() {
-		this.fileStorageProviders = Object.keys(FileStorageProviderEnum).map(
-			(label) => ({
-				label,
-				value: FileStorageProviderEnum[label]
-			})
-		);
+		this.store.user$
+			.pipe(
+				filter((user: IUser) => !!user),
+				tap(() => this.subject$.next(true)),
+				untilDestroyed(this)
+			)
+			.subscribe();
 	}
 
 	/**
@@ -64,12 +104,15 @@ export class FileStorageComponent
 	async getSetting() {
 		const settings = await this.tenantService.getSettings();
 		if (isNotEmpty(settings)) {
-			this.settings = Object.assign({}, this.defaultWasabiConfiguration(), settings);
-		} else {
-			this.settings = {
-				fileStorageProvider: (environment.FILE_PROVIDER).toUpperCase() as FileStorageProviderEnum || FileStorageProviderEnum.LOCAL,
-				...this.defaultWasabiConfiguration()
+			const { fileStorageProvider } = settings;
+			this.setFileStorageProvider(fileStorageProvider);
+
+			if (this.form.contains(fileStorageProvider)) {
+				this.form.get(fileStorageProvider).patchValue({ ...settings });
+				this.form.get(fileStorageProvider).updateValueAndValidity();
 			}
+		} else {
+			this.setFileStorageProvider((environment.FILE_PROVIDER.toUpperCase() as FileStorageProviderEnum) || FileStorageProviderEnum.LOCAL);
 		}
 	}
 
@@ -77,67 +120,58 @@ export class FileStorageComponent
 	 * SAVE current tenant file storage setting
 	 */
 	async submit() {
+		if (this.form.invalid) {
+			return;
+		}
+
+		let settings: ITenantSetting;
+
+		const { fileStorageProvider = FileStorageProviderEnum.LOCAL } = this.form.getRawValue();
+		const filesystem: ITenantSetting = this.form.getRawValue();
+
+		/**
+		 * If driver is available else use LOCAL file storage
+		 */
+		if (fileStorageProvider in filesystem) {
+			settings = {
+				fileStorageProvider,
+				...filesystem[fileStorageProvider]
+			}
+		} else {
+			settings = {
+				fileStorageProvider: FileStorageProviderEnum.LOCAL
+			}
+		}
+
 		try {
-			let settings: ITenantSetting;
-			let keysOfPros = [];
+			if (fileStorageProvider === FileStorageProviderEnum.WASABI) {
+				await this.fileStorageService.validateWasabiCredentials(settings);
 
-			if (this.settings.fileStorageProvider === FileStorageProviderEnum.LOCAL) {
-				settings = {
-					fileStorageProvider: FileStorageProviderEnum.LOCAL
-				}
-			} else if (this.settings.fileStorageProvider === FileStorageProviderEnum.WASABI) {
-				settings = {
-					fileStorageProvider: FileStorageProviderEnum.WASABI,
-				};
-				keysOfPros.push(...[
-					'wasabi_aws_access_key_id', 'wasabi_aws_secret_access_key',
-					'wasabi_aws_default_region', 'wasabi_aws_service_url', 'wasabi_aws_bucket'
-				]);
-
-				try {
-					await this.fileStorageService.validateWasabiCredentials(this.settings);
-					this.toastrService.success('TOASTR.MESSAGE.BUCKET_CREATED', {
-						bucket: `${this.settings.wasabi_aws_bucket}`,
-						region: `${this.settings.wasabi_aws_default_region}`
-					});
-				} catch (error) {
-					this.toastrService.danger(error);
-					return;
-				}
-
-			} else {
-				settings = {
-					fileStorageProvider: FileStorageProviderEnum.S3,
-				};
-				keysOfPros.push(...[
-					'aws_access_key_id', 'aws_secret_access_key',
-					'aws_default_region', 'aws_bucket'
-				]);
+				this.toastrService.success('TOASTR.MESSAGE.BUCKET_CREATED', {
+					bucket: `${this.settings.wasabi_aws_bucket}`,
+					region: `${this.settings.wasabi_aws_default_region}`
+				});
 			}
-			for (const prop of keysOfPros) {
-				settings[prop] = this.settings[prop];
-			}
+		} catch (error) {
+			this.toastrService.danger(error);
+			return;
+		}
 
-			try {
-				await this.tenantService.saveSettings(settings);
-				this.toastrService.success('TOASTR.MESSAGE.SETTINGS_SAVED');
-			} catch (error) {
-				this.toastrService.danger(error);
-			}
+		try {
+			await this.tenantService.saveSettings(settings);
+			this.toastrService.success('TOASTR.MESSAGE.SETTINGS_SAVED');
 		} catch (error) {
 			this.toastrService.danger(error);
 		}
 	}
 
 	/**
-	 * Default Wasabi Provider Configuration
+	 * Set file storage provider for formcontrol
 	 *
+	 * @param provider
 	 */
-	defaultWasabiConfiguration(): IWasabiFileStorageProviderConfig {
-		return {
-			wasabi_aws_default_region: 'us-east-1',
-			wasabi_aws_service_url: 's3.wasabisys.com',
-			wasabi_aws_bucket: 'gauzy'
-		}
+	setFileStorageProvider(provider: FileStorageProviderEnum) {
+		this.form.get('fileStorageProvider').setValue(provider);
+		this.form.get('fileStorageProvider').updateValueAndValidity();
 	}
 }

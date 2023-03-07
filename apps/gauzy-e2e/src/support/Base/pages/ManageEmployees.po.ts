@@ -233,7 +233,7 @@ export const preferredLanguageDropdownVisible = () => {
 	verifyElementIsVisible(ManageEmployeesPage.preferredLanguageDropdownCss);
 };
 
-export const clickpreferredLanguageDropdown = () => {
+export const clickPreferredLanguageDropdown = () => {
 	clickButton(ManageEmployeesPage.preferredLanguageDropdownCss);
 };
 

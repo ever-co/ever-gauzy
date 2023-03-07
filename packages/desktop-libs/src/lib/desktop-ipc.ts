@@ -155,29 +155,29 @@ export function ipcMainHandler(
 					timeTrackerWindow.webContents.send('logout');
 				}
 			}
+		}
+		try {
 			const lastTime = await TimerData.getLastCaptureTimeSlot(
 				knex,
 				LocalStore.beforeRequestParams()
 			);
 			console.log('Last Capture Time (Desktop IPC):', lastTime);
-			event.sender.send('timer_tracker_show', {
-				...LocalStore.beforeRequestParams(),
-				timeSlotId: lastTime ? lastTime.timeslotId : null,
-			});
-		}
-
-		// check connectivity five seconds after start
-		setTimeout(async () => {
-			try {
-				await offlineMode.connectivity();
+			await offlineMode.connectivity()
+				.then(() => {
+					console.log('Network state', offlineMode.enabled ? 'Offline' : 'Online')
+					event.sender.send('timer_tracker_show', {
+						...LocalStore.beforeRequestParams(),
+						timeSlotId: lastTime ? lastTime.timeslotId : null,
+						isOffline: offlineMode.enabled
+					})
+				});
 				await countIntervalQueue(timeTrackerWindow, false);
 				await sequentialSyncQueue(timeTrackerWindow);
 				await latestScreenshots(timeTrackerWindow);
 			} catch (error) {
 				console.log('[ERROR_OFFLINE_CHECK]', error);
 			}
-		}, 5500);
-	});
+	})
 
 	ipcMain.on('screen_shoot', async (event, arg) => {
 		log.info(`Taken Screenshot: ${moment().format()}`);
@@ -232,9 +232,44 @@ export function ipcMainHandler(
 		event.sender.send('show_error_message', arg.message);
 	});
 
-	ipcMain.handle('DESKTOP_CAPTURER_GET_SOURCES', (event, opts) =>
-		desktopCapturer.getSources(opts)
+	ipcMain.handle('DESKTOP_CAPTURER_GET_SOURCES', async (event, opts) =>
+		await desktopCapturer.getSources(opts)
 	);
+
+	ipcMain.handle('UPDATE_SYNCED_TIMER', async (event, arg) => {
+		try {
+			await timerService.update(
+				new Timer({
+					id: arg.id,
+					timelogId: arg.lastTimer.id,
+					timesheetId: arg.lastTimer.timesheetId,
+					synced: true,
+					...(arg.lastTimer.startedAt && { startedAt: new Date(arg.lastTimer.startedAt) })
+				})
+			);
+		} catch (error) {
+			console.log('[UPDATE_SYNCED_TIME_ERROR]', error);
+		}
+	});
+
+	ipcMain.handle('UPDATE_SYNCED', async (event, arg: IntervalTO) => {
+		try {
+			const interval = new Interval(arg);
+			await intervalService.synced(interval);
+			await countIntervalQueue(timeTrackerWindow, true);
+		} catch (error) {
+			console.log('Error', error);
+		}
+	});
+
+	ipcMain.handle('FINISH_SYNCED_TIMER', async (event, arg) => {
+		const total = await intervalService.countNoSynced();
+		await countIntervalQueue(timeTrackerWindow, false);
+		if (total === 0) {
+			isQueueThreadTimerLocked = false;
+			console.log('...FINISH SYNC');
+		}
+	});
 }
 
 function isScreenUnauthorized() {
@@ -257,32 +292,6 @@ export function ipcTimer(
 	let powerManager;
 	let powerManagerPreventSleep;
 	let powerManagerDetectInactivity;
-
-	ipcMain.on('update-synced', async (event, arg: IntervalTO) => {
-		try {
-			const interval = new Interval(arg);
-			await intervalService.synced(interval);
-			await countIntervalQueue(timeTrackerWindow, true);
-		} catch (error) {
-			console.log('Error', error);
-		}
-	});
-
-	ipcMain.on('update-synced-timer', async (event, arg) => {
-		try {
-			await timerService.update(
-				new Timer({
-					id: arg.id,
-					timelogId: arg.lastTimer.id,
-					timesheetId: arg.lastTimer.timesheetId,
-					synced: true,
-					...(arg.lastTimer.startedAt && { startedAt: new Date(arg.lastTimer.startedAt) })
-				})
-			);
-		} catch (error) {
-			console.log('[UPDATE_SYNCED_TIME_ERROR]', error);
-		}
-	});
 
 	ipcMain.on('create-synced-interval', async (_event, arg) => {
 		try {
@@ -589,15 +598,13 @@ export function ipcTimer(
 			);
 		}
 		settingWindow.show();
-		setTimeout(() => {
-			settingWindow.webContents.send('app_setting', {
-				setting: appSetting,
-				config: config,
-				auth,
-				additionalSetting: addSetting
-			});
-			settingWindow.webContents.send('goto_top_menu');
-		}, 500);
+		settingWindow.webContents.send('app_setting', {
+			setting: appSetting,
+			config: config,
+			auth,
+			additionalSetting: addSetting
+		});
+		settingWindow.webContents.send('goto_top_menu');
 	});
 
 	ipcMain.on('switch_aw_option', (event, arg) => {
@@ -616,11 +623,17 @@ export function ipcTimer(
 	});
 
 	ipcMain.on('navigate_to_login', () => {
-		if (timeTrackerWindow) {
-			timeTrackerWindow.loadURL(timeTrackerPage(windowPath.timeTrackerUi));
+		try {
+			if (timeTrackerWindow) {
+				timeTrackerWindow.loadURL(timeTrackerPage(windowPath.timeTrackerUi));
+			}
+			LocalStore.updateAuthSetting({ isLogout: true });
+			if (settingWindow) {
+				settingWindow.webContents.send('logout_success');
+			}
+		} catch (error) {
+			console.log('ERROR', error);
 		}
-		LocalStore.updateAuthSetting({ isLogout: true });
-		settingWindow.webContents.send('logout_success');
 	});
 
 	ipcMain.on('expand', (event, arg) => {
@@ -687,7 +700,6 @@ export function ipcTimer(
 			if (!isQueueThreadTimerLocked) {
 				await sequentialSyncQueue(timeTrackerWindow);
 			}
-			await syncIntervalQueue(timeTrackerWindow);
 			await latestScreenshots(timeTrackerWindow);
 			await countIntervalQueue(timeTrackerWindow, false);
 			event.sender.send('timer_tracker_show', {
@@ -721,28 +733,6 @@ export function ipcTimer(
 				aw: arg
 			},
 		});
-	});
-
-	ipcMain.on('finish-synced-timer', async (event, arg) => {
-		const previous = queueSync;
-		await countIntervalQueue(timeTrackerWindow, false);
-		const total = await intervalService.countNoSynced();
-		if (total > 0 && !isQueueThreadIntervalLocked && previous !== total) {
-			const lastTimer = await timerService.findLastOne();
-			if (lastTimer.synced) {
-				const intervals = await intervalService.backedUpAllNoSynced();
-				isQueueThreadIntervalLocked = true;
-				isQueueThreadTimerLocked = true
-				timeTrackerWindow.webContents.send('backup-no-synced', [
-					intervals,
-					lastTimer
-				]);
-			}
-			return;
-		}
-		isQueueThreadIntervalLocked = false;
-		isQueueThreadTimerLocked = false;
-		console.log('-----> FINISH SYNC <------');
 	});
 
 	ipcMain.on('notify', (event, notification) => {
@@ -829,27 +819,6 @@ async function sequentialSyncQueue(window: BrowserWindow) {
 			window.webContents.send('backup-timers-no-synced', timersToSynced);
 		} else {
 			isQueueThreadTimerLocked = false;
-		}
-	} catch (error) {
-		console.log('Error', error);
-	}
-}
-
-let isQueueThreadIntervalLocked = false;
-async function syncIntervalQueue(window: BrowserWindow) {
-	try {
-		await offlineMode.connectivity();
-		if (offlineMode.enabled) return;
-		const lastTimer = await timerService.findLastOne();
-		if (
-			!lastTimer.isStartedOffline &&
-			!lastTimer.isStoppedOffline &&
-			!lastTimer.synced &&
-			!isQueueThreadIntervalLocked
-		) {
-			isQueueThreadIntervalLocked = true;
-			const intervals = await intervalService.backedUpAllNoSynced();
-			window.webContents.send('backup-no-synced', [intervals, lastTimer]);
 		}
 	} catch (error) {
 		console.log('Error', error);

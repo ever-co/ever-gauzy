@@ -1,7 +1,7 @@
 import { IRelationalEmployee } from './employee.model';
 import { IBasePerTenantAndOrganizationEntityModel } from './base-entity.model';
 import { IOrganizationTeamEmployee } from './organization-team-employee-model';
-import { ITag } from './tag-entity.model';
+import { ITag } from './tag.model';
 import { ITask } from './task.model';
 import { ITimerStatusInput } from './timesheet.model';
 

@@ -142,6 +142,7 @@ export * from '../../warehouse/warehouse.entity';
 
 //core subscribers
 export * from './../../candidate/candidate.subscriber';
+export * from './../../custom-smtp/custom-smtp.subscriber';
 export * from './../../email-template/email-template.subscriber';
 export * from './../../employee/employee.subscriber';
 export * from './../../export-import/import-history/import-history.subscriber';
@@ -155,6 +156,7 @@ export * from './../../organization-team/organization-team.subscriber';
 export * from './../../organization/organization.subscriber';
 export * from './../../payment/payment.subscriber';
 export * from './../../reports/report.subscriber';
+export * from './../../tags/tag.subscriber';
 export * from './../../tasks/priorities/priority.subscriber';
 export * from './../../tasks/sizes/size.subscriber';
 export * from './../../tasks/statuses/status.subscriber';

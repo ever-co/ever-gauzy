@@ -12,7 +12,7 @@ import { ICandidateDocument } from './candidate-document.model';
 import { IOrganizationDepartment } from './organization-department.model';
 import { IOrganizationPosition } from './organization-positions.model';
 import { IContact } from './contact.model';
-import { ITag } from './tag-entity.model';
+import { ITag } from './tag.model';
 import { IEmployee, PayPeriodEnum } from './employee.model';
 
 export interface IRelationalCandidate {

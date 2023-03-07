@@ -25,6 +25,8 @@ export * from './lib/server-dashboard/server-dashboard.module';
 export * from './lib/electron/services';
 export * from './lib/dialogs/about/about.component';
 export * from './lib/dialogs/about/about.module';
+export * from './lib/services';
+export * from './lib/time-tracker/organization-selector/user-organization.service';
 
 
 /**

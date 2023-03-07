@@ -275,12 +275,12 @@ export const clickTabButton = (index) => {
 };
 
 export const verifyEstimateNumberInputVisible = () => {
-	verifyElementIsVisible(EstimatesPage.inputInvoicenumberCss);
+	verifyElementIsVisible(EstimatesPage.inputInvoiceNumberCss);
 };
 
 export const enterEstimateNumberInputData = (data) => {
-	clearField(EstimatesPage.inputInvoicenumberCss);
-	enterInput(EstimatesPage.inputInvoicenumberCss, data);
+	clearField(EstimatesPage.inputInvoiceNumberCss);
+	enterInput(EstimatesPage.inputInvoiceNumberCss, data);
 };
 
 export const verifyEstimateDateInput = () => {

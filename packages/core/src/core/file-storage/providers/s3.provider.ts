@@ -27,8 +27,6 @@ export class S3Provider extends Provider<S3Provider> {
 	config: IS3Config;
 	defaultConfig: IS3Config;
 
-	fetchSetting = false;
-
 	constructor() {
 		super();
 		this.config = this.defaultConfig = {
@@ -164,7 +162,7 @@ export class S3Provider extends Provider<S3Provider> {
 						.then((res) => res.ContentLength);
 
 					const file = {
-						originalname: fileName, // orignal file name
+						originalname: fileName, // original file name
 						size: size, // files in bytes
 						filename: fileName,
 						path: key, // Full path of the file

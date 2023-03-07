@@ -1,9 +1,11 @@
 import { DataSource } from 'typeorm';
-import { IPluginConfig } from '@gauzy/common';
+import { getConfig } from '@gauzy/config';
 import { ITaskSize } from '@gauzy/contracts';
 import { cleanEverIcons, copyEverIcons } from './../../core/seeds/utils';
 import { DEFAULT_GLOBAL_SIZES } from './default-global-sizes';
 import { TaskSize } from './size.entity';
+
+const config = getConfig();
 
 /**
  * Default global system sizes
@@ -12,8 +14,7 @@ import { TaskSize } from './size.entity';
  * @returns
  */
 export const createDefaultSizes = async (
-	dataSource: DataSource,
-	config: Partial<IPluginConfig>
+	dataSource: DataSource
 ): Promise<ITaskSize[]> => {
 	await cleanEverIcons(config, 'ever-icons/task-sizes');
 

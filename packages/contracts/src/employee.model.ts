@@ -8,7 +8,7 @@ import { IOrganizationPosition } from './organization-positions.model';
 import { IOrganizationTeam } from './organization-team.model';
 import { IRequestApprovalEmployee } from './request-approval-employee.model';
 import { ISkill } from './skill-entity.model';
-import { ITag } from './tag-entity.model';
+import { ITag } from './tag.model';
 import { IUser, IUserFindInput } from './user.model';
 import { IOrganizationContact } from './organization-contact.model';
 import { IOrganizationProject } from './organization-projects.model';

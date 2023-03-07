@@ -46,6 +46,7 @@ export class ProposalTemplateComponent extends PaginationFilterBaseComponent
 	smartTableSource: ServerDataSource;
 	selectedEmployee: ISelectedEmployee;
 	selectedItem: any;
+	isDefault: boolean = false;
 
 	proposalTemplateTabsEnum = ProposalTemplateTabsEnum;
 	templates$: Subject<any> = new Subject();
@@ -197,6 +198,7 @@ export class ProposalTemplateComponent extends PaginationFilterBaseComponent
 	selectItem({ isSelected, data }) {
 		this.disableButton = !isSelected;
 		this.selectedItem = isSelected ? data : null;
+		this.isDefault = this.selectedItem?.isDefault;
 	}
 
 	private _loadSmartTableSettings() {
@@ -330,13 +332,13 @@ export class ProposalTemplateComponent extends PaginationFilterBaseComponent
 	makeDefaultTemplate(): void {
 		this.proposalTemplateService
 			.makeDefault(this.selectedItem.id)
-			.then(() => {
-				this.toastrService.success(
-					'PROPOSAL_TEMPLATE.PROPOSAL_MAKE_DEFAULT_MESSAGE',
-					{
-						name: this.selectedItem.name
-					}
-				);
+			.then((data) => {
+				const successMessage = data.isDefault
+					? 'PROPOSAL_TEMPLATE.PROPOSAL_MAKE_DEFAULT_MESSAGE'
+					: 'PROPOSAL_TEMPLATE.PROPOSAL_REMOVE_DEFAULT_MESSAGE';
+				this.toastrService.success(successMessage, {
+					name: this.selectedItem.name,
+				});
 			})
 			.finally(() => {
 				this.templates$.next(true);

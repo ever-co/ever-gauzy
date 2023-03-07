@@ -123,7 +123,7 @@ export class PaginationComponent implements OnChanges, OnDestroy {
 
 	public onChangePerPage(event: any) {
 		this._currentPerPage = event;
-		console.log('Perpage', event);
+		console.log('PerPage', event);
 		if (this._currentPerPage) {
 			if (
 				typeof this._currentPerPage === 'string' &&
@@ -210,5 +210,5 @@ export class PaginationComponent implements OnChanges, OnDestroy {
 	protected set dataChangedSub(value: Subscription) {
 		this._dataChangedSub = value;
 	}
-	ngOnDestroy(): void {}
+	ngOnDestroy(): void { }
 }

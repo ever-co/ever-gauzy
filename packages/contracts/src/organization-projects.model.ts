@@ -6,7 +6,7 @@ import {
 	ProjectOwnerEnum
 } from './organization.model';
 import { IBaseEntityWithMembers } from './entity-with-members.model';
-import { ITag } from './tag-entity.model';
+import { ITag } from './tag.model';
 import { ITask } from './task.model';
 import { IOrganizationSprint } from './organization-sprint.model';
 import { IPayment } from './payment.model';

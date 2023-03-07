@@ -229,7 +229,18 @@
         "Artboard",
         "Ruslan",
         "Konviser",
-        "datname"
+        "datname",
+        "Udemy",
+        "pageobjects",
+        "urlpath",
+        "fieldname",
+        "pinghost",
+        "formcontrolname",
+        "formcontrol",
+        "TIMERTRX",
+        "TIMERTRXER",
+        "TIMERTRXERUPDATE",
+        "postmarkapp"
     ],
     "useGitignore": true,
     "ignorePaths": [

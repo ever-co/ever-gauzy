@@ -16,8 +16,7 @@ export class AppModuleGuard implements CanActivate {
 		state: RouterStateSnapshot
 	): boolean {
 		const serverConnection = Number(this.store.serverConnection);
-
-		if (serverConnection === 0 && !localStorage.getItem('userDetail')) {
+		if (serverConnection === 0 && !this.store.userId) {
 			this.router.navigate(['server-down']);
 			return false;
 		}

@@ -10,7 +10,7 @@ import { throwError } from 'rxjs';
 export class AppService {
 	AW_HOST = environment.AWHost;
 	buckets: any = {};
-	constructor(private http: HttpClient) {}
+	constructor(private http: HttpClient) { }
 
 	pingServer(values) {
 		return this.http.get(values.host).pipe().toPromise();
@@ -172,7 +172,7 @@ export class AppService {
 			.toPromise();
 	}
 
-	pushTotimesheet(values) {
+	pushToTimesheet(values) {
 		const headers = new HttpHeaders({
 			Authorization: `Bearer ${values.token}`,
 		});

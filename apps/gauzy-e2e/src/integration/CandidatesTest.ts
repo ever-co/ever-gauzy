@@ -70,7 +70,7 @@ describe('Invite candidate test', () => {
 		inviteCandidatePage.clickAddTagsDropdown();
 		inviteCandidatePage.selectTagsFromDropdown(0);
 		inviteCandidatePage.clickKeyboardButtonByKeyCode(9);
-		inviteCandidatePage.imageInputvisible();
+		inviteCandidatePage.imageInputVisible();
 		inviteCandidatePage.enterImageInputData(imgUrl);
 		inviteCandidatePage.nextButtonVisible();
 		inviteCandidatePage.clickNextButton();
