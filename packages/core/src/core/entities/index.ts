@@ -22,6 +22,7 @@ import {
 	CustomSmtp,
 	Deal,
 	Email,
+	EmailReset,
 	EmailTemplate,
 	Employee,
 	EmployeeAppointment,
@@ -130,8 +131,7 @@ import {
 	UserOrganization,
 	Warehouse,
 	WarehouseProduct,
-	WarehouseProductVariant,
-	EmailReset
+	WarehouseProductVariant
 } from './internal';
 
 export const coreEntities = [
