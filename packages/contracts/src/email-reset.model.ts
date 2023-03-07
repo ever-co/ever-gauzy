@@ -4,7 +4,6 @@ export interface IEmailReset
 	extends IBaseEntityModel {
 	email: string;
 	oldEmail: string;
-	token: string;
 	code: number;
 	expired?: boolean;
 	userId?: string;
@@ -14,12 +13,11 @@ export interface IEmailResetFindInput
 	extends IBaseEntityModel {
 	email?: string;
 	oldEmail?: string;
-	token?: string;
 	code?: number;
+	userId?: string;
 }
 
 export interface IChangeEmailRequest { 
-	token: string;
 	code: number;
 }
 

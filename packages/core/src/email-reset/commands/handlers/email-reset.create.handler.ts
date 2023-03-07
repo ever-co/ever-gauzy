@@ -14,12 +14,12 @@ export class EmailResetCreateHandler
 		command: EmailResetCreateCommand
 	) {
 		const { input } = command;
-		const { email, token, code } = input;
+		const { email, oldEmail, code } = input;
 
 		try {
 			return await this._emailResetService.create({
 				email,
-				token,
+				oldEmail, 
 				code
 			});
 		} catch (error) {

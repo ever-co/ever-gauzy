@@ -16,12 +16,12 @@ export class EmailResetGetHandler
 		command: EmailResetGetCommand
 	): Promise<IEmailReset> {
 		const { input } = command;
-		const { token } = input;
+		const { email, oldEmail, userId } = input;
 
 		try {
 			return await this._emailResetService.findOneByOptions({
 				where: {
-					token
+					email, oldEmail, userId
 				},
 				order: {
 					createdAt: 'DESC'

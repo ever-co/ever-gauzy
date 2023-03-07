@@ -21,12 +21,6 @@ export class EmailReset extends TenantBaseEntity
 	@Column()
 	oldEmail: string;
 
-	@ApiProperty({ type: () => String, required: true })
-	@IsNotEmpty()
-	@Index()
-	@Column()
-	token: string;
-
 	@ApiProperty({ type: () => Number, required: true })
 	@IsNotEmpty()
 	@Index()
