@@ -130,7 +130,8 @@ import {
 	UserOrganization,
 	Warehouse,
 	WarehouseProduct,
-	WarehouseProductVariant
+	WarehouseProductVariant,
+	EmailReset
 } from './internal';
 
 export const coreEntities = [
@@ -157,6 +158,7 @@ export const coreEntities = [
 	CustomSmtp,
 	Deal,
 	Email,
+	EmailReset,
 	EmailTemplate,
 	Employee,
 	EmployeeAppointment,

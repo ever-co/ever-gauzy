@@ -13,11 +13,9 @@ import {
 	IOrganizationTeam,
 	ICandidate,
 	IEmail,
-	IEmailReset
 } from '@gauzy/contracts';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Exclude } from 'class-transformer';
-import { EmailReset } from 'email-reset/email-reset.entity';
 import {
 	Column,
 	Entity,
@@ -223,12 +221,4 @@ export class User extends TenantBaseEntity implements IUser {
 		onDelete: 'CASCADE'
 	})
 	teams?: IOrganizationTeam[];
-
-	/**
-	 * User belongs to EmailReset
-	 */
-	@OneToMany(() => EmailReset, (it) => it.userId, {
-		onDelete: 'CASCADE'
-	})
-	emailReset?: IEmailReset[];
 }
