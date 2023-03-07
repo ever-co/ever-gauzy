@@ -77,4 +77,12 @@ export class IntervalService implements IIntervalService<IntervalTO> {
 			));
 		return remoteIds.map(({ remoteId }) => remoteId);
 	}
+
+	/**
+	 * It deletes the interval with the given id
+	 * @param {number} id - number - The id of the interval to remove
+	 */
+	public async remove(id: number): Promise<void> {
+		await this._intervalDAO.delete({ id });
+	}
 }
