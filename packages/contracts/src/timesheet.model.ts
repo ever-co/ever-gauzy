@@ -21,7 +21,7 @@ import { IPaginationInput } from './core.model';
 import { ReportGroupByFilter } from './report.model';
 import { FileStorageProviderEnum } from './file-provider';
 import { IUser } from './user.model';
-import { IRelationalOrganizationTeam } from './organization-team-model';
+import { IRelationalOrganizationTeam } from './organization-team.model';
 
 export interface ITimesheet extends IBasePerTenantAndOrganizationEntityModel {
 	[x: string]: any;

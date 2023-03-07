@@ -1,4 +1,4 @@
-import { IRelationalOrganizationTeam } from './organization-team-model';
+import { IRelationalOrganizationTeam } from './organization-team.model';
 import { IBasePerTenantAndOrganizationEntityModel } from './base-entity.model';
 
 export interface ITag extends IBasePerTenantAndOrganizationEntityModel, IRelationalOrganizationTeam {
