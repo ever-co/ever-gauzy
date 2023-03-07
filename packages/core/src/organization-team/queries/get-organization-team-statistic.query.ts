@@ -7,5 +7,5 @@ export class GetOrganizationTeamStatisticQuery implements IQuery {
 	constructor(
 		public readonly organizationTeamId: IOrganizationTeam['id'],
 		public readonly options: IOrganizationTeamStatisticInput
-	) { }
+	) {}
 }
