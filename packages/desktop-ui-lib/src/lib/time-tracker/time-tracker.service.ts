@@ -336,6 +336,7 @@ export class TimeTrackerService {
 		const params = toParams({
 			ids: [values.timeSlotId],
 			tenantId: values.tenantId,
+			organizationId: values.organizationId
 		});
 		const headers = new HttpHeaders({
 			Authorization: `Bearer ${values.token}`,
