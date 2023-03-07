@@ -57,7 +57,7 @@ export function ipcMainHandler(
 	ipcMain.removeAllListeners('return_time_sheet');
 	ipcMain.removeAllListeners('return_toggle_api');
 	ipcMain.removeAllListeners('set_project_task');
-	ipcMain.removeHandler('DESKTOP_CAPTURER_GET_SOURCES');
+	removeAllHandlers();
 	ipcMain.on('start_server', (event, arg) => {
 		global.variableGlobal = {
 			API_BASE_URL: arg.serverUrl
@@ -238,6 +238,13 @@ export function ipcMainHandler(
 
 	ipcMain.handle('UPDATE_SYNCED_TIMER', async (event, arg) => {
 		try {
+			if (!arg.id) {
+				const { id } = await timerService.findLastCapture();
+				arg = {
+					...arg,
+					id
+				};
+			}
 			await timerService.update(
 				new Timer({
 					id: arg.id,
@@ -352,6 +359,28 @@ export function ipcTimer(
 			powerManagerPreventSleep.start();
 		powerManagerDetectInactivity.startInactivityDetection();
 	});
+
+	ipcMain.on('delete_time_slot', async (event, intervalId: number) => {
+		try {
+			const count = await intervalService.countNoSynced();
+			if (
+				typeof intervalId === 'number' &&
+				intervalId &&
+				count > 0 &&
+				offlineMode.enabled
+			) {
+				await intervalService.remove(intervalId);
+				await countIntervalQueue(timeTrackerWindow, false);
+				await latestScreenshots(timeTrackerWindow);
+			}
+			if (!offlineMode.enabled) {
+				const lastTimer = await timerService.findLastCapture();
+				await timerService.remove(new Timer(lastTimer));
+			}
+		} catch (error) {
+			console.log('ERROR_ON_DELETE', error);
+		}
+	})
 
 	ipcMain.on('data_push_activity', async (event, arg) => {
 		const collections = arg.windowEvent.map((item) => {
@@ -791,6 +820,18 @@ export function removeTimerListener() {
 	];
 	timerListeners.forEach((listener) => {
 		ipcMain.removeAllListeners(listener);
+	});
+}
+
+export function removeAllHandlers() {
+	const channels = [
+		'UPDATE_SYNCED_TIMER',
+		'UPDATE_SYNCED',
+		'DESKTOP_CAPTURER_GET_SOURCES',
+		'FINISH_SYNCED_TIMER',
+	];
+	channels.forEach((channel: string) => {
+		ipcMain.removeHandler(channel);
 	});
 }
 
