@@ -31,6 +31,7 @@ import {
 import {
 	Candidate,
 	Email,
+	EmailReset,
 	Employee,
 	Invite,
 	OrganizationTeam,
@@ -221,4 +222,12 @@ export class User extends TenantBaseEntity implements IUser {
 		onDelete: 'CASCADE'
 	})
 	teams?: IOrganizationTeam[];
+
+	/**
+	 * User belongs to email reset
+	 */
+	@OneToMany(() => EmailReset, (it) => it.user, {
+		onDelete: 'CASCADE'
+	})
+	emailReset?: IOrganizationTeam[];
 }
