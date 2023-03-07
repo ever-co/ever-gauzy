@@ -3,7 +3,6 @@ import { Column, Entity, Index, ManyToOne, RelationId } from 'typeorm';
 import { Exclude } from 'class-transformer';
 import {
 	IsEmail,
-	IsEnum,
 	IsNotEmpty,
 	IsOptional,
 	IsString,
@@ -44,25 +43,17 @@ export class OrganizationTeamJoinRequest extends TenantOrganizationBaseEntity im
 	@Column({ nullable: true })
 	position: string;
 
-	@ApiProperty({ type: () => String, enum: OrganizationTeamJoinRequestStatusEnum })
-	@IsEnum(OrganizationTeamJoinRequestStatusEnum)
 	@Column({ default: OrganizationTeamJoinRequestStatusEnum.REQUESTED })
 	status: OrganizationTeamJoinRequestStatusEnum;
 
-	@ApiPropertyOptional({ type: () => Number, required: false })
-	@IsOptional()
 	@Exclude({ toPlainOnly: true })
 	@Column({ nullable: true })
 	code: number;
 
-	@ApiPropertyOptional({ type: () => String, required: false })
-	@IsOptional()
 	@Exclude({ toPlainOnly: true })
 	@Column({ nullable: true })
 	token: string;
 
-	@ApiPropertyOptional({ type: () => Date })
-	@IsOptional()
 	@Exclude({ toPlainOnly: true })
 	@Column({ nullable: true })
 	expireAt: Date;
@@ -79,13 +70,11 @@ export class OrganizationTeamJoinRequest extends TenantOrganizationBaseEntity im
 	/**
 	 * Join request belongs to user
 	 */
-	@ApiPropertyOptional({ type: () => User })
 	@ManyToOne(() => User, {
 		onDelete: "SET NULL"
 	})
 	user?: IUser;
 
-	@ApiProperty({ type: () => String })
 	@RelationId((it: OrganizationTeamJoinRequest) => it.user)
 	@Index()
 	@Column({ nullable: true })
@@ -99,8 +88,7 @@ export class OrganizationTeamJoinRequest extends TenantOrganizationBaseEntity im
 	})
 	organizationTeam?: IOrganizationTeam;
 
-	@ApiPropertyOptional({ type: () => String })
-	@IsOptional()
+	@ApiProperty({ type: () => String, required: true })
 	@IsUUID()
 	@RelationId((it: OrganizationTeamJoinRequest) => it.organizationTeam)
 	@Index()
