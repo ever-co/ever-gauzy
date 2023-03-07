@@ -377,12 +377,7 @@ export class TimerService {
 			tenantId,
 		});
 
-		if (
-			RequestContext.hasPermission(
-				PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
-			) &&
-			isNotEmpty(request.employeeId)
-		) {
+		if ((RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE) || isNotEmpty(request.organizationTeamId)) && isNotEmpty(request.employeeId)) {
 			employee = await this.employeeRepository.findOneBy({
 				id: request.employeeId,
 				tenantId,

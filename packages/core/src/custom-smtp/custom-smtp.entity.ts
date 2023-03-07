@@ -1,66 +1,67 @@
-import { Entity, Column, AfterLoad } from 'typeorm';
+import { Entity, Column } from 'typeorm';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { ICustomSmtp } from '@gauzy/contracts';
 import { ISMTPConfig } from '@gauzy/common';
+import { IsBoolean, IsEmail, IsNumber, IsOptional, IsString } from 'class-validator';
 import { Exclude, Expose } from 'class-transformer';
 import { TenantOrganizationBaseEntity } from '../core/entities/internal';
-import { IsSecret, WrapSecrets } from './../core/decorators';
+import { IsSecret } from './../core/decorators';
 
 @Entity('custom_smtp')
 export class CustomSmtp extends TenantOrganizationBaseEntity
 	implements ICustomSmtp {
 
-	@ApiProperty({ type: () => String })
+	@ApiProperty({ type: () => String, examples: ['noreply@domain.com'], required: true })
+	@IsEmail()
+	@Column({ nullable: true })
+	fromAddress?: string
+
+	@ApiProperty({ type: () => String, examples: ['smtp.postmarkapp.com', 'smtp.gmail.com'], required: true })
+	@IsString()
 	@Column()
 	host: string;
 
-	@ApiProperty({ type: () => Number })
+	@ApiProperty({ type: () => Number, examples: [587, 465], required: true })
+	@IsNumber()
 	@Column()
 	port: number;
 
-	@ApiProperty({ type: () => Boolean })
+	@ApiProperty({ type: () => Boolean, examples: [true, false], required: true })
+	@IsBoolean()
 	@Column()
 	secure: boolean;
 
-	@ApiProperty({ type: () => String })
 	@Exclude({ toPlainOnly: true })
 	@Column()
 	username: string;
 
-	@ApiProperty({ type: () => String })
 	@Exclude({ toPlainOnly: true })
 	@Column()
 	password: string;
 
-	@ApiProperty({ type: () => Boolean, default: false })
+	@ApiPropertyOptional({ type: () => Boolean, default: false })
+	@IsOptional()
+	@IsBoolean()
 	@Column({ default: false })
 	isValidate?: boolean;
 
-	@ApiPropertyOptional({ type: () => String })
-	@Column({ nullable: true })
-	fromAddress?: string
-
-	@ApiProperty({ type: () => String })
+	/**
+	 * Additional fields to expose secret fields
+	 */
 	@Expose({ toPlainOnly: true, name: 'username' })
 	@IsSecret()
 	secretKey?: string;
 
-	@ApiProperty({ type: () => String })
 	@Expose({ toPlainOnly: true, name: 'password' })
 	@IsSecret()
 	secretPassword?: string;
 
 	/**
-    * Called after entity is loaded.
-    */
-	@AfterLoad()
-	afterLoadEntity?() {
-		this.secretKey = this.username;
-		this.secretPassword = this.password;
-		WrapSecrets(this, this);
-	}
-
-	getSmtpTransporter?() {
+	 * Get SMTP transporter configuration
+	 *
+	 * @returns
+	 */
+	getSmtpTransporter?(): ISMTPConfig {
 		return {
 			fromAddress: this.fromAddress,
 			host: this.host,
