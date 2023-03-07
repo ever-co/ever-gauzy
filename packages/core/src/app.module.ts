@@ -56,6 +56,7 @@ import { OrganizationProjectModule } from './organization-project/organization-p
 import { OrganizationVendorModule } from './organization-vendor/organization-vendor.module';
 import { OrganizationTeamModule } from './organization-team/organization-team.module';
 import { OrganizationTeamEmployeeModule } from './organization-team-employee/organization-team-employee.module';
+import { OrganizationTeamJoinRequestModule } from './organization-team-join-request/organization-team-join-request.module';
 import { OrganizationAwardModule } from './organization-award/organization-award.module';
 import { OrganizationLanguageModule } from './organization-language/organization-language.module';
 import { OrganizationDocumentModule } from './organization-document/organization-document.module';
@@ -146,7 +147,6 @@ import { ContactModule } from './contact/contact.module';
 import { PublicShareModule } from './public-share/public-share.module';
 import { TransformInterceptor } from './core/interceptors';
 
-
 const { unleashConfig } = environment;
 
 if (unleashConfig.url) {
@@ -222,27 +222,27 @@ if (process.env.DB_TYPE === 'postgres') {
 		}),
 		...(environment.sentry
 			? [
-					SentryModule.forRoot({
-						dsn: environment.sentry.dns,
-						debug: !environment.production,
-						environment: environment.production
-							? 'production'
-							: 'development',
-						// TODO: we should use some internal function which returns version of Gauzy
-						release: 'gauzy@' + process.env.npm_package_version,
-						logLevels: ['error'],
-						integrations: sentryIntegrations,
-						tracesSampleRate: 1.0,
-					}),
-			  ]
+				SentryModule.forRoot({
+					dsn: environment.sentry.dns,
+					debug: !environment.production,
+					environment: environment.production
+						? 'production'
+						: 'development',
+					// TODO: we should use some internal function which returns version of Gauzy
+					release: 'gauzy@' + process.env.npm_package_version,
+					logLevels: ['error'],
+					integrations: sentryIntegrations,
+					tracesSampleRate: 1.0,
+				}),
+			]
 			: []),
 		ThrottlerModule.forRootAsync({
 			inject: [ConfigService],
 			useFactory: (config: ConfigService): ThrottlerModuleOptions =>
-				({
-					ttl: config.get('THROTTLE_TTL'),
-					limit: config.get('THROTTLE_LIMIT'),
-				} as ThrottlerModuleOptions),
+			({
+				ttl: config.get('THROTTLE_TTL'),
+				limit: config.get('THROTTLE_LIMIT'),
+			} as ThrottlerModuleOptions),
 		}),
 		CoreModule,
 		AuthModule,
@@ -289,6 +289,7 @@ if (process.env.DB_TYPE === 'postgres') {
 		OrganizationSprintModule,
 		OrganizationTeamModule,
 		OrganizationTeamEmployeeModule,
+		OrganizationTeamJoinRequestModule,
 		OrganizationDocumentModule,
 		RequestApprovalEmployeeModule,
 		RequestApprovalTeamModule,
