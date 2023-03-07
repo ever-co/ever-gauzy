@@ -11,6 +11,11 @@ import { IOrganization } from './organization.model';
 import { IInvite } from './invite.model';
 import { ICandidate } from 'candidate.model';
 
+export interface IRelationalUser {
+	user?: IUser;
+	userId?: IUser['id'];
+}
+
 export interface IUser extends IBasePerTenantEntityModel {
 	thirdPartyId?: string;
 	name?: string;
