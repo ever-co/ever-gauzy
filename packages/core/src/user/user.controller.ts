@@ -33,7 +33,7 @@ import {
 import { CrudController, PaginationParams } from './../core/crud';
 import { UUIDValidationPipe, ParseJsonPipe } from './../shared/pipes';
 import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
-import { LanguageDecorator, Permissions } from './../shared/decorators';
+import { Permissions } from './../shared/decorators';
 import { User } from './user.entity';
 import { UserService } from './user.service';
 import { UserCreateCommand, UserDeleteCommand } from './commands';
