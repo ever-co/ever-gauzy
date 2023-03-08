@@ -12,23 +12,14 @@ import { EmailModule } from './../email/email.module';
 
 @Module({
 	imports: [
-		TypeOrmModule.forFeature([
-			EmailReset
-		]),
+		TypeOrmModule.forFeature([EmailReset]),
 		forwardRef(() => TenantModule),
 		CqrsModule,
 		UserModule,
 		EmailModule
 	],
-	providers: [
-		EmailResetService,
-		...CommandHandlers,
-		...QueryHandlers
-	],
-	exports: [
-		TypeOrmModule,
-		EmailResetService
-	],
+	providers: [EmailResetService, ...CommandHandlers, ...QueryHandlers],
+	exports: [TypeOrmModule, EmailResetService],
 	controllers: [EmailResetController]
 })
-export class EmailResetModule { }
+export class EmailResetModule {}

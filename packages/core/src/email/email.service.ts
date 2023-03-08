@@ -31,7 +31,6 @@ const DISALLOW_EMAIL_SERVER_DOMAIN: string[] = ['@example.com'];
 
 @Injectable()
 export class EmailService extends TenantAwareCrudService<EmailEntity> {
-
 	constructor(
 		@InjectRepository(EmailEntity)
 		private readonly emailRepository: Repository<EmailEntity>,
@@ -76,7 +75,7 @@ export class EmailService extends TenantAwareCrudService<EmailEntity> {
 	 */
 	private async getEmailInstance(
 		organizationId?: IOrganization['id'],
-		tenantId?: IOrganization['tenantId'],
+		tenantId?: IOrganization['tenantId']
 	): Promise<Email<any>> {
 		const currentTenantId = tenantId || RequestContext.currentTenantId();
 		let smtpConfig: ISMTPConfig;
@@ -94,7 +93,7 @@ export class EmailService extends TenantAwareCrudService<EmailEntity> {
 			smtpConfig = smtpTransporter.getSmtpTransporter();
 
 			/** Verifies SMTP configuration */
-			if (!!await this.customSmtpService.verifyTransporter(smtpTransporter)) {
+			if (!!(await this.customSmtpService.verifyTransporter(smtpTransporter))) {
 				console.log({ smtpConfig }, 'try email instance', {
 					where: {
 						tenantId: isEmpty(currentTenantId) ? IsNull() : currentTenantId,
@@ -122,7 +121,7 @@ export class EmailService extends TenantAwareCrudService<EmailEntity> {
 					smtpConfig = smtpTransporter.getSmtpTransporter();
 
 					/** Verifies SMTP configuration */
-					if (!!await this.customSmtpService.verifyTransporter(smtpTransporter)) {
+					if (!!(await this.customSmtpService.verifyTransporter(smtpTransporter))) {
 						console.log({ smtpConfig }, 'catch try email instance', {
 							where: {
 								tenantId: isEmpty(currentTenantId) ? IsNull() : currentTenantId,
@@ -232,7 +231,7 @@ export class EmailService extends TenantAwareCrudService<EmailEntity> {
 				tenantId,
 				organizationName
 			}
-		}
+		};
 		try {
 			const body = {
 				templateName: sendOptions.template,
@@ -240,7 +239,7 @@ export class EmailService extends TenantAwareCrudService<EmailEntity> {
 				languageCode,
 				organization,
 				message: ''
-			}
+			};
 			const match = !!DISALLOW_EMAIL_SERVER_DOMAIN.find((server) => body.email.includes(server));
 			if (!match) {
 				try {
@@ -298,7 +297,7 @@ export class EmailService extends TenantAwareCrudService<EmailEntity> {
 				languageCode,
 				organization,
 				message: ''
-			}
+			};
 			const match = !!DISALLOW_EMAIL_SERVER_DOMAIN.find((server) => body.email.includes(server));
 			if (!match) {
 				try {
@@ -335,7 +334,7 @@ export class EmailService extends TenantAwareCrudService<EmailEntity> {
 				name: organizationContact.name,
 				host: baseUrl,
 				id: organizationContact.id,
-				inviterName: inviterUser ? (inviterUser.name || '') : '',
+				inviterName: inviterUser ? inviterUser.name || '' : '',
 				organizationName: organization.name,
 				organizationId,
 				tenantId,
@@ -349,7 +348,7 @@ export class EmailService extends TenantAwareCrudService<EmailEntity> {
 				languageCode,
 				message: '',
 				organization
-			}
+			};
 			const match = !!DISALLOW_EMAIL_SERVER_DOMAIN.find((server) => body.email.includes(server));
 			if (!match) {
 				try {
@@ -366,15 +365,7 @@ export class EmailService extends TenantAwareCrudService<EmailEntity> {
 	}
 
 	async inviteUser(inviteUserModel: IInviteUserModel) {
-		const {
-			email,
-			role,
-			organization,
-			registerUrl,
-			originUrl,
-			languageCode,
-			invitedBy
-		} = inviteUserModel;
+		const { email, role, organization, registerUrl, originUrl, languageCode, invitedBy } = inviteUserModel;
 		const tenantId = RequestContext.currentTenantId();
 		const { id: organizationId } = organization;
 		const sendOptions = {
@@ -400,7 +391,7 @@ export class EmailService extends TenantAwareCrudService<EmailEntity> {
 				message: '',
 				organization,
 				user: invitedBy
-			}
+			};
 			const match = !!DISALLOW_EMAIL_SERVER_DOMAIN.find((server) => body.email.includes(server));
 			if (!match) {
 				try {
@@ -450,7 +441,7 @@ export class EmailService extends TenantAwareCrudService<EmailEntity> {
 				message: '',
 				organization,
 				user: invitedBy
-			}
+			};
 			const match = !!DISALLOW_EMAIL_SERVER_DOMAIN.find((server) => body.email.includes(server));
 			if (!match) {
 				try {
@@ -467,14 +458,7 @@ export class EmailService extends TenantAwareCrudService<EmailEntity> {
 	}
 
 	async inviteEmployee(inviteEmployeeModel: IInviteEmployeeModel) {
-		const {
-			email,
-			registerUrl,
-			organization,
-			originUrl,
-			languageCode,
-			invitedBy
-		} = inviteEmployeeModel;
+		const { email, registerUrl, organization, originUrl, languageCode, invitedBy } = inviteEmployeeModel;
 		const tenantId = RequestContext.currentTenantId();
 		const { id: organizationId } = organization;
 
@@ -500,7 +484,7 @@ export class EmailService extends TenantAwareCrudService<EmailEntity> {
 				message: '',
 				organization,
 				user: invitedBy
-			}
+			};
 			const match = !!DISALLOW_EMAIL_SERVER_DOMAIN.find((server) => body.email.includes(server));
 			if (!match) {
 				try {
@@ -517,12 +501,7 @@ export class EmailService extends TenantAwareCrudService<EmailEntity> {
 	}
 
 	async sendAcceptInvitationEmail(joinEmployeeModel: IJoinEmployeeModel, originUrl?: string) {
-		const {
-			email,
-			employee,
-			organization,
-			languageCode,
-		} = joinEmployeeModel;
+		const { email, employee, organization, languageCode } = joinEmployeeModel;
 
 		const { id: organizationId, tenantId } = organization;
 		const sendOptions = {
@@ -534,7 +513,7 @@ export class EmailService extends TenantAwareCrudService<EmailEntity> {
 				host: originUrl || env.clientBaseUrl,
 				locale: languageCode,
 				organizationName: organization.name,
-				employeeName: employee.user.firstName,
+				employeeName: employee.user.firstName
 			}
 		};
 		try {
@@ -543,8 +522,8 @@ export class EmailService extends TenantAwareCrudService<EmailEntity> {
 				email: sendOptions.message.to,
 				languageCode,
 				message: '',
-				organization,
-			}
+				organization
+			};
 			const match = !!DISALLOW_EMAIL_SERVER_DOMAIN.find((server) => body.email.includes(server));
 			if (!match) {
 				try {
@@ -573,12 +552,12 @@ export class EmailService extends TenantAwareCrudService<EmailEntity> {
 				id: organizationId
 			});
 		}
-		const tenantId = (organization) ? organization.tenantId : RequestContext.currentTenantId();
+		const tenantId = organization ? organization.tenantId : RequestContext.currentTenantId();
 
 		/**
-		* Override the default config by merging in the provided values.
-		*
-		*/
+		 * Override the default config by merging in the provided values.
+		 *
+		 */
 		deepMerge(integration, env.appIntegrationConfig);
 
 		const sendOptions = {
@@ -602,8 +581,8 @@ export class EmailService extends TenantAwareCrudService<EmailEntity> {
 				email: sendOptions.message.to,
 				languageCode,
 				organization,
-				message: '',
-			}
+				message: ''
+			};
 			const match = !!DISALLOW_EMAIL_SERVER_DOMAIN.find((server) => body.email.includes(server));
 			if (!match) {
 				try {
@@ -635,9 +614,9 @@ export class EmailService extends TenantAwareCrudService<EmailEntity> {
 		const name = [firstName, lastName].filter(Boolean).join(' ');
 
 		/**
-		* Override the default config by merging in the provided values.
-		*
-		*/
+		 * Override the default config by merging in the provided values.
+		 *
+		 */
 		const integration = Object.assign({}, env.appIntegrationConfig, thirdPartyIntegration);
 		/**
 		 * Email template email options
@@ -664,7 +643,7 @@ export class EmailService extends TenantAwareCrudService<EmailEntity> {
 				email: sendOptions.message.to,
 				languageCode: sendOptions.locals.locale,
 				message: ''
-			}
+			};
 			const match = !!DISALLOW_EMAIL_SERVER_DOMAIN.find((server) => body.email.includes(server));
 			if (!match) {
 				try {
@@ -692,7 +671,7 @@ export class EmailService extends TenantAwareCrudService<EmailEntity> {
 				id: organizationId
 			});
 		}
-		const tenantId = (organization) ? organization.tenantId : RequestContext.currentTenantId();
+		const tenantId = organization ? organization.tenantId : RequestContext.currentTenantId();
 		const sendOptions = {
 			template: 'password',
 			message: {
@@ -713,8 +692,8 @@ export class EmailService extends TenantAwareCrudService<EmailEntity> {
 				email: sendOptions.message.to,
 				languageCode,
 				organization,
-				message: '',
-			}
+				message: ''
+			};
 			const match = !!DISALLOW_EMAIL_SERVER_DOMAIN.find((server) => body.email.includes(server));
 			if (!match) {
 				try {
@@ -730,19 +709,14 @@ export class EmailService extends TenantAwareCrudService<EmailEntity> {
 		}
 	}
 
-	async sendAppointmentMail(
-		email: string,
-		languageCode: LanguagesEnum,
-		organizationId?: string,
-		originUrl?: string
-	) {
+	async sendAppointmentMail(email: string, languageCode: LanguagesEnum, organizationId?: string, originUrl?: string) {
 		let organization: Organization;
 		if (organizationId) {
 			organization = await this.organizationRepository.findOneBy({
 				id: organizationId
 			});
 		}
-		const tenantId = (organization) ? organization.tenantId : RequestContext.currentTenantId();
+		const tenantId = organization ? organization.tenantId : RequestContext.currentTenantId();
 		const sendOptions = {
 			template: 'email-appointment',
 			message: {
@@ -762,8 +736,8 @@ export class EmailService extends TenantAwareCrudService<EmailEntity> {
 				email: sendOptions.message.to,
 				languageCode,
 				organization,
-				message: '',
-			}
+				message: ''
+			};
 			const match = !!DISALLOW_EMAIL_SERVER_DOMAIN.find((server) => body.email.includes(server));
 			if (!match) {
 				try {
@@ -785,7 +759,7 @@ export class EmailService extends TenantAwareCrudService<EmailEntity> {
 		const organization = await this.organizationRepository.findOneBy({
 			id: timesheet.employee.organizationId
 		});
-		const tenantId = (organization) ? organization.tenantId : RequestContext.currentTenantId();
+		const tenantId = organization ? organization.tenantId : RequestContext.currentTenantId();
 		const sendOptions = {
 			template: 'timesheet-action',
 			message: {
@@ -809,7 +783,7 @@ export class EmailService extends TenantAwareCrudService<EmailEntity> {
 				message: '',
 				organization,
 				user: timesheet.employee.user
-			}
+			};
 			const match = !!DISALLOW_EMAIL_SERVER_DOMAIN.find((server) => body.email.includes(server));
 			if (!match) {
 				try {
@@ -831,7 +805,7 @@ export class EmailService extends TenantAwareCrudService<EmailEntity> {
 		const organization = await this.organizationRepository.findOneBy({
 			id: timesheet.employee.organizationId
 		});
-		const tenantId = (organization) ? organization.tenantId : RequestContext.currentTenantId();
+		const tenantId = organization ? organization.tenantId : RequestContext.currentTenantId();
 		const sendOptions = {
 			template: 'timesheet-submit',
 			message: {
@@ -855,7 +829,7 @@ export class EmailService extends TenantAwareCrudService<EmailEntity> {
 				message: '',
 				organization,
 				user: timesheet.employee.user
-			}
+			};
 			const match = !!DISALLOW_EMAIL_SERVER_DOMAIN.find((server) => body.email.includes(server));
 			if (!match) {
 				try {
@@ -877,15 +851,11 @@ export class EmailService extends TenantAwareCrudService<EmailEntity> {
 	 * @param user
 	 * @param languageCode
 	 */
-	async passwordLessAuthentication(
-		user: IUser,
-		languageCode: LanguagesEnum,
-		integration?: IAppIntegrationConfig
-	) {
+	async passwordLessAuthentication(user: IUser, languageCode: LanguagesEnum, integration?: IAppIntegrationConfig) {
 		/**
-		* Override the default config by merging in the provided values.
-		*
-		*/
+		 * Override the default config by merging in the provided values.
+		 *
+		 */
 		deepMerge(integration, env.appIntegrationConfig);
 
 		const sendOptions = {
@@ -907,7 +877,7 @@ export class EmailService extends TenantAwareCrudService<EmailEntity> {
 				email: sendOptions.message.to,
 				languageCode,
 				message: ''
-			}
+			};
 			const match = !!DISALLOW_EMAIL_SERVER_DOMAIN.find((server) => body.email.includes(server));
 			if (!match) {
 				try {
@@ -928,11 +898,7 @@ export class EmailService extends TenantAwareCrudService<EmailEntity> {
 	 * @param user
 	 * @param languageCode
 	 */
-	async emailReset(
-		user: IUser,
-		languageCode: LanguagesEnum,
-		verificationCode: number
-	){
+	async emailReset(user: IUser, languageCode: LanguagesEnum, verificationCode: number) {
 		const integration = Object.assign({}, env.appIntegrationConfig);
 
 		const sendOptions = {
@@ -946,7 +912,7 @@ export class EmailService extends TenantAwareCrudService<EmailEntity> {
 				email: user.email,
 				host: env.clientBaseUrl,
 				verificationCode,
-				name: user.name,
+				name: user.name
 			}
 		};
 		try {
@@ -955,7 +921,7 @@ export class EmailService extends TenantAwareCrudService<EmailEntity> {
 				email: sendOptions.message.to,
 				languageCode,
 				message: ''
-			}
+			};
 			const match = !!DISALLOW_EMAIL_SERVER_DOMAIN.find((server) => body.email.includes(server));
 			if (!match) {
 				try {
@@ -979,15 +945,8 @@ export class EmailService extends TenantAwareCrudService<EmailEntity> {
 		user?: IUser;
 	}): Promise<IEmail> {
 		const emailEntity = new EmailEntity();
-		const {
-			templateName: template,
-			email,
-			languageCode,
-			message,
-			organization,
-			user
-		} = createEmailOptions;
-		const tenantId = (organization) ? organization.tenantId : RequestContext.currentTenantId();
+		const { templateName: template, email, languageCode, message, organization, user } = createEmailOptions;
+		const tenantId = organization ? organization.tenantId : RequestContext.currentTenantId();
 		const emailTemplate = await this.emailTemplateRepository.findOneBy({
 			name: template + '/html',
 			languageCode
@@ -997,7 +956,7 @@ export class EmailService extends TenantAwareCrudService<EmailEntity> {
 		emailEntity.content = message.html;
 		emailEntity.emailTemplate = emailTemplate;
 		emailEntity.tenantId = tenantId;
-		emailEntity.organizationId = (organization) ? organization.id : null;
+		emailEntity.organizationId = organization ? organization.id : null;
 		if (user) {
 			emailEntity.user = user;
 		}

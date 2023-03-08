@@ -6,9 +6,7 @@ import { IEmailReset, IUser } from '@gauzy/contracts';
 import { TenantBaseEntity, User } from '../core/entities/internal';
 
 @Entity('email_reset')
-export class EmailReset extends TenantBaseEntity
-	implements IEmailReset {
-
+export class EmailReset extends TenantBaseEntity implements IEmailReset {
 	@ApiProperty({ type: () => String, required: true })
 	@IsEmail()
 	@Index()
@@ -50,8 +48,8 @@ export class EmailReset extends TenantBaseEntity
 	userId?: IUser['id'];
 
 	/**
-	* Called after entity is loaded.
-	*/
+	 * Called after entity is loaded.
+	 */
 	@AfterLoad()
 	afterLoadEntity?() {
 		const createdAt = moment(this.createdAt, 'YYYY-MM-DD HH:mm:ss');

@@ -1,7 +1,6 @@
 import { IBaseEntityModel } from './base-entity.model';
 
-export interface IEmailReset
-	extends IBaseEntityModel {
+export interface IEmailReset extends IBaseEntityModel {
 	email: string;
 	oldEmail: string;
 	code: number;
@@ -9,15 +8,14 @@ export interface IEmailReset
 	userId?: string;
 }
 
-export interface IEmailResetFindInput
-	extends IBaseEntityModel {
+export interface IEmailResetFindInput extends IBaseEntityModel {
 	email?: string;
 	oldEmail?: string;
 	code?: number;
 	userId?: string;
 }
 
-export interface IChangeEmailRequest { 
+export interface IChangeEmailRequest {
 	code: number;
 }
 

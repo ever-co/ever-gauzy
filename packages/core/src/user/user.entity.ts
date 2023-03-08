@@ -12,7 +12,7 @@ import {
 	IInvite,
 	IOrganizationTeam,
 	ICandidate,
-	IEmail,
+	IEmail
 } from '@gauzy/contracts';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Exclude } from 'class-transformer';
@@ -43,7 +43,6 @@ import {
 
 @Entity('user')
 export class User extends TenantBaseEntity implements IUser {
-
 	@ApiPropertyOptional({ type: () => String })
 	@Index()
 	@Column({ nullable: true })

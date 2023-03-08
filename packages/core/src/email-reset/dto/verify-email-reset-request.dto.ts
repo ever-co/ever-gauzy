@@ -1,5 +1,5 @@
-import { IChangeEmailRequest } from "@gauzy/contracts";
-import { UserCodeDTO} from "../../user/dto";
+import { IChangeEmailRequest } from '@gauzy/contracts';
+import { UserCodeDTO } from '../../user/dto';
 
 /**
  * Reset Email Request DTO validation

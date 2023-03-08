@@ -10,18 +10,13 @@ import { TenantAwareCrudService } from '../core/crud';
 import { EmailReset } from './email-reset.entity';
 import { UserEmailDTO } from '../user/dto';
 import { generateRandomInteger } from './../core/utils';
-import {
-	EmailResetCreateCommand
-} from './commands'
-import {
-	EmailResetGetQuery
-} from './queries'
+import { EmailResetCreateCommand } from './commands';
+import { EmailResetGetQuery } from './queries';
 import { VerifyEmailResetRequestDTO } from './dto/verify-email-reset-request.dto';
 import { EmailService } from '../email/email.service';
 
 @Injectable()
 export class EmailResetService extends TenantAwareCrudService<EmailReset> {
-
 	constructor(
 		@InjectRepository(EmailReset)
 		private readonly _emailResetRepository: Repository<EmailReset>,
@@ -33,19 +28,16 @@ export class EmailResetService extends TenantAwareCrudService<EmailReset> {
 		super(_emailResetRepository);
 	}
 
-	async requestChangeEmail(
-		request: UserEmailDTO,
-		languageCode: LanguagesEnum
-	){
+	async requestChangeEmail(request: UserEmailDTO, languageCode: LanguagesEnum) {
 		const user = RequestContext.currentUser();
 
 		/**
 		 * User with email already exist
 		 */
-		if(user.email === request.email || (await this.userService.checkIfExistsEmail(request.email))){
+		if (user.email === request.email || (await this.userService.checkIfExistsEmail(request.email))) {
 			throw new BadRequestException('Oops, the email exists, please try with another email');
 		}
-		const verificationCode = generateRandomInteger(6)
+		const verificationCode = generateRandomInteger(6);
 		await this.commandBus.execute(
 			new EmailResetCreateCommand({
 				code: verificationCode,
@@ -60,17 +52,17 @@ export class EmailResetService extends TenantAwareCrudService<EmailReset> {
 				...user,
 				email: request.email
 			},
-			languageCode || user.preferredLanguage as LanguagesEnum,
+			languageCode || (user.preferredLanguage as LanguagesEnum),
 			verificationCode
 		);
 
-		return true		
+		return true;
 	}
 
-	async verifyCode(request: VerifyEmailResetRequestDTO){
+	async verifyCode(request: VerifyEmailResetRequestDTO) {
 		try {
 			const { code } = request;
-			const user = RequestContext.currentUser()
+			const user = RequestContext.currentUser();
 
 			const record: IEmailReset = await this.queryBus.execute(
 				new EmailResetGetQuery({
@@ -79,20 +71,23 @@ export class EmailResetService extends TenantAwareCrudService<EmailReset> {
 					userId: user.id
 				})
 			);
-			
+
 			if (!record || record.expired) {
 				throw new BadRequestException('Email Reset Failed.');
 			}
 
-			await this.userService.update({
-				id: record.userId
-			}, {
-				email: record.email
-			})
+			await this.userService.update(
+				{
+					id: record.userId
+				},
+				{
+					email: record.email
+				}
+			);
 
-			return true
+			return true;
 		} catch (error) {
-			throw new BadRequestException('Email Reset Failed.')
+			throw new BadRequestException('Email Reset Failed.');
 		}
 	}
 }
