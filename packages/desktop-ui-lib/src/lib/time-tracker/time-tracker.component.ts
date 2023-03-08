@@ -698,12 +698,6 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 																screenshot.fileName,
 														}
 													);
-												this.getLastTimeSlotImage({
-													...interval,
-													token: this.token,
-													apiHost: this.apiHost,
-													timeSlotId,
-												});
 												console.log(
 													'Result upload',
 													resImg
@@ -720,6 +714,12 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 								} catch (error) {
 									console.log('Backup-error', error);
 								}
+								this.getLastTimeSlotImage({
+									...interval,
+									token: this.token,
+									apiHost: this.apiHost,
+									timeSlotId,
+								});
 								interval.remoteId = timeSlotId;
 								await this.electronService.ipcRenderer.invoke(
 									'UPDATE_SYNCED',
@@ -859,6 +859,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 						const isReadyForDeletion =
 							!this._isOffline && payload.timeslotIds.length > 0;
 						if (isReadyForDeletion) {
+							let timelog = null;
 							// Silent delete and restart
 							if (arg.isWorking && this.start) {
 								const params = {
@@ -883,7 +884,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 											.deleteTimeSlots(payload)
 											.then(async () => {
 												console.log('Deleted');
-												const timelog =
+												timelog =
 													await this.timeTrackerService.toggleApiStart(
 														{
 															...params,
@@ -895,19 +896,6 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 													{ ...payload, employeeId },
 													true
 												);
-												asapScheduler.schedule(async () => {
-													event.sender.send(
-														'update_session',
-														{ ...timelog }
-													);
-													await this.electronService.ipcRenderer.invoke(
-														'UPDATE_SYNCED_TIMER',
-														{
-															lastTimer: timelog,
-															...arg.timer,
-														}
-													);
-												});
 											})
 									);
 							} else {
@@ -915,12 +903,29 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 									await this.getTimerStatus(payload);
 									console.log('Waiting...');
 								} while (this.timerStatus.running);
-								await this.timeTrackerService.deleteTimeSlots(
+								const isDeleted = await this.timeTrackerService.deleteTimeSlots(
 									payload
 								);
+								if (isDeleted) {
+									timelog = this.timerStatus.lastLog
+								}
 							}
+							asapScheduler.schedule(async () => {
+								event.sender.send(
+									'update_session',
+									{ ...timelog }
+								);
+								await this.electronService.ipcRenderer.invoke(
+									'UPDATE_SYNCED_TIMER',
+									{
+										lastTimer: timelog,
+										...arg.timer,
+									}
+								);
+							});
 						}
 						if (this._isOffline || isReadyForDeletion) {
+							this.refreshTimer();
 							this.toastrService.success(
 								notification.message,
 								notification.title
@@ -1372,25 +1377,46 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 						default:
 							break;
 					}
-				} else if (this.start) await this.stopTimer();
+				} else if (
+					this.start &&
+					option.type === this.dialogType.timeTrackingOption.name
+				) {
+					await this.stopTimer();
+				}
 			});
 	}
 
-	deleteTimeSlot() {
+	async deleteTimeSlot() {
+		this._isOffline
+			? this.electronService.ipcRenderer.send(
+				'delete_time_slot',
+				this.screenshots[0].id
+			)
+			: await this._deleteSyncedTimeslot()
+	}
+
+	private async _deleteSyncedTimeslot() {
+		await this.getTimerStatus(this.argFromMain);
+		if (this.timerStatus.running) {
+			await this.toggleStart(false);
+		}
 		this.timeTrackerService
 			.deleteTimeSlot({
 				...this.argFromMain,
 				timeSlotId: this.selectedTimeSlot.id,
 			})
-			.then((res) => {
+			.then(async (res) => {
 				this.getLastTimeSlotImage(this.argFromMain);
-				this.toastrService.show(
-					`Successfully remove last screenshot and activities`,
-					`Success`,
-					{
-						status: 'success',
-					}
-				);
+				this.electronService.ipcRenderer.send('delete_time_slot');
+				asapScheduler.schedule(async () => {
+					this.toastrService.show(
+						`Successfully remove last screenshot and activities`,
+						`Success`,
+						{
+							status: 'success',
+						}
+					);
+				});
 			})
 			.catch((e) => {
 				console.log('error on delete', e);
@@ -1942,6 +1968,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 				recordedAt: arg.recordedAt,
 				fullUrl: imgUrl,
 				thumbUrl: imgUrl,
+				id: arg.id
 			};
 		});
 		if (screenshots.length > 0) {

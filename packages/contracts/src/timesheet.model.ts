@@ -21,6 +21,7 @@ import { IPaginationInput } from './core.model';
 import { ReportGroupByFilter } from './report.model';
 import { FileStorageProviderEnum } from './file-provider';
 import { IUser } from './user.model';
+import { IRelationalOrganizationTeam } from './organization-team-model';
 
 export interface ITimesheet extends IBasePerTenantAndOrganizationEntityModel {
 	[x: string]: any;
@@ -335,10 +336,7 @@ export interface IScreenshotMap {
 	timeSlots: ITimeSlot[];
 }
 
-export interface ITimerStatusInput
-	extends IBasePerTenantAndOrganizationEntityModel,
-	IBaseRelationsEntityModel,
-	IRelationalEmployee {
+export interface ITimerStatusInput extends IBasePerTenantAndOrganizationEntityModel, IBaseRelationsEntityModel, IRelationalEmployee, IRelationalOrganizationTeam {
 	source?: TimeLogSourceEnum;
 }
 

@@ -34,7 +34,7 @@ export class DesktopUpdater {
 	}
 
 	private _mainProcess(): void {
-		ipcMain.on('update_locally', () => {
+		ipcMain.on('update_locally', async () => {
 			const localUpdate = new LocalUpdate();
 			const dialog = new DialogLocalUpdate(
 				new DesktopDialog(
@@ -62,7 +62,12 @@ export class DesktopUpdater {
 			this._settingWindow.webContents.send('update_files_directory', {
 				uri: files
 			});
-			this._updateContext.checkUpdate();
+			try {
+				await this._updateContext.checkUpdate();
+			} catch (e) {
+				this._settingWindow.webContents.send('error_update', e);
+				console.log('Error on checking update:', e);
+			}
 		});
 
 		ipcMain.on('change_update_strategy', async (event, args) => {
@@ -74,11 +79,23 @@ export class DesktopUpdater {
 					new CdnUpdate(this._config)
 				);
 			}
-			if (!args.local) this._updateContext.checkUpdate();
+			if (!args.local) {
+				try {
+					await this._updateContext.checkUpdate();
+				} catch (e) {
+					this._settingWindow.webContents.send('error_update', e);
+					console.log('Error on checking update:', e);
+				}
+			}
 		});
 
-		ipcMain.on('check_for_update', () => {
-			this._updateContext.checkUpdate();
+		ipcMain.on('check_for_update', async () => {
+			try {
+				await this._updateContext.checkUpdate();
+			} catch (e) {
+				this._settingWindow.webContents.send('error_update', e);
+				console.log('Error on checking update:', e);
+			}
 		});
 
 		ipcMain.on('download_update', () => {
@@ -188,7 +205,7 @@ export class DesktopUpdater {
 		}
 		setTimeout(async () => {
 			try {
-				this._updateContext.checkUpdate();
+				await this._updateContext.checkUpdate();
 			} catch (e) {
 				this._settingWindow.webContents.send('error_update', e);
 				console.log('Error on checking update:', e);
