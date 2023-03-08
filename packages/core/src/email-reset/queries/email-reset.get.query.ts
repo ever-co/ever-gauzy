@@ -1,7 +1,7 @@
 import { IEmailResetFindInput } from '@gauzy/contracts';
-import { ICommand } from '@nestjs/cqrs';
+import { IQuery } from '@nestjs/cqrs';
 
-export class EmailResetGetCommand implements ICommand {
+export class EmailResetGetQuery implements IQuery {
 	static readonly type = '[Email Reset] Get';
 
 	constructor(

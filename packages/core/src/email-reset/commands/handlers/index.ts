@@ -1,7 +1,5 @@
-import { EmailResetCreateHandler } from './email-reset.create.handler';
-import { EmailResetGetHandler } from './email-reset.get.handler';
+import { EmailResetCreateHandler } from './email-reset.create.handler'
 
 export const CommandHandlers = [
-	EmailResetCreateHandler,
-	EmailResetGetHandler
+	EmailResetCreateHandler
 ];

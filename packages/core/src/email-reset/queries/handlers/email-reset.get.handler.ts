@@ -1,27 +1,27 @@
 import { NotFoundException } from '@nestjs/common';
-import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-import { EmailResetGetCommand } from '../email-reset.get.command';
-import { EmailResetService } from './../../email-reset.service';
+import { QueryHandler, IQueryHandler } from '@nestjs/cqrs';
+import { EmailResetGetQuery } from '../email-reset.get.query';
+import { EmailResetService } from '../../email-reset.service';
 import { IEmailReset } from '@gauzy/contracts';
 
-@CommandHandler(EmailResetGetCommand)
+@QueryHandler(EmailResetGetQuery)
 export class EmailResetGetHandler
-	implements ICommandHandler<EmailResetGetCommand> {
+	implements IQueryHandler<EmailResetGetQuery> {
 
 	constructor(
 		private readonly _emailResetService : EmailResetService
 	) {}
 
 	public async execute(
-		command: EmailResetGetCommand
+		query: EmailResetGetQuery
 	): Promise<IEmailReset> {
-		const { input } = command;
-		const { email, oldEmail, userId } = input;
+		const { input } = query;
+		const { email, oldEmail, userId, code } = input;
 
 		try {
 			return await this._emailResetService.findOneByOptions({
 				where: {
-					email, oldEmail, userId
+					email, oldEmail, userId, code
 				},
 				order: {
 					createdAt: 'DESC'

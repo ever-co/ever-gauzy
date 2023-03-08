@@ -1,8 +1,8 @@
-import { CommandBus } from '@nestjs/cqrs';
+import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { IChangeEmailRequest, IEmailReset, LanguagesEnum } from '@gauzy/contracts';
+import { IEmailReset, LanguagesEnum } from '@gauzy/contracts';
 
 import { RequestContext } from '../core/context';
 import { UserService } from '../user/user.service';
@@ -11,9 +11,13 @@ import { EmailReset } from './email-reset.entity';
 import { UserEmailDTO } from '../user/dto';
 import { generateRandomInteger } from './../core/utils';
 import {
-	EmailResetCreateCommand, EmailResetGetCommand
+	EmailResetCreateCommand
 } from './commands'
+import {
+	EmailResetGetQuery
+} from './queries'
 import { VerifyEmailResetRequestDTO } from './dto/verify-email-reset-request.dto';
+import { EmailService } from '../email/email.service';
 
 @Injectable()
 export class EmailResetService extends TenantAwareCrudService<EmailReset> {
@@ -22,7 +26,9 @@ export class EmailResetService extends TenantAwareCrudService<EmailReset> {
 		@InjectRepository(EmailReset)
 		private readonly _emailResetRepository: Repository<EmailReset>,
 		private readonly userService: UserService,
-		private readonly commandBus: CommandBus
+		private readonly commandBus: CommandBus,
+		private readonly queryBus: QueryBus,
+		private readonly emailService: EmailService
 	) {
 		super(_emailResetRepository);
 	}
@@ -39,15 +45,23 @@ export class EmailResetService extends TenantAwareCrudService<EmailReset> {
 		if(user.email === request.email || (await this.userService.checkIfExistsEmail(request.email))){
 			throw new BadRequestException('Oops, the email exists, please try with another email');
 		}
-
-
+		const verificationCode = generateRandomInteger(6)
 		await this.commandBus.execute(
 			new EmailResetCreateCommand({
-				code: generateRandomInteger(6),
+				code: verificationCode,
 				email: request.email,
 				oldEmail: user.email,
 				userId: user.id
 			})
+		);
+
+		this.emailService.emailReset(
+			{
+				...user,
+				email: request.email
+			},
+			languageCode || user.preferredLanguage as LanguagesEnum,
+			verificationCode
 		);
 
 		return true		
@@ -58,14 +72,15 @@ export class EmailResetService extends TenantAwareCrudService<EmailReset> {
 			const { code } = request;
 			const user = RequestContext.currentUser()
 
-			const record: IEmailReset = await this.commandBus.execute(
-				new EmailResetGetCommand({
+			const record: IEmailReset = await this.queryBus.execute(
+				new EmailResetGetQuery({
 					code,
+					oldEmail: user.email,
 					userId: user.id
 				})
 			);
 			
-			if (!record) {
+			if (!record || record.expired) {
 				throw new BadRequestException('Email Reset Failed.');
 			}
 
