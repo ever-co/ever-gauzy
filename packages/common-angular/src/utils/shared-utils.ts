@@ -18,9 +18,7 @@ export function toParams(query) {
 }
 
 export function isJsObject(object: any) {
-	return (
-		object !== null && object !== undefined && typeof object === 'object'
-	);
+	return object !== null && object !== undefined && typeof object === 'object';
 }
 
 /**
@@ -43,32 +41,20 @@ export function isEmpty(item: any) {
 		return item.length === 0;
 	} else if (item && typeof item === 'object') {
 		for (var key in item) {
-			if (
-				item[key] === null ||
-				item[key] === undefined ||
-				item[key] === ''
-			) {
+			if (item[key] === null || item[key] === undefined || item[key] === '') {
 				delete item[key];
 			}
 		}
 		return Object.keys(item).length === 0;
 	} else {
-		return (
-			!item ||
-			(item + '').toLocaleLowerCase() === 'null' ||
-			(item + '').toLocaleLowerCase() === 'undefined'
-		);
+		return !item || (item + '').toLocaleLowerCase() === 'null' || (item + '').toLocaleLowerCase() === 'undefined';
 	}
 }
 
 function toSubParams(params: HttpParams, key: string, object: any) {
 	Object.keys(object).forEach((childKey) => {
 		if (isJsObject(object[childKey])) {
-			params = toSubParams(
-				params,
-				`${key}[${childKey}]`,
-				object[childKey]
-			);
+			params = toSubParams(params, `${key}[${childKey}]`, object[childKey]);
 		} else {
 			params = params.append(`${key}[${childKey}]`, object[childKey]);
 		}
@@ -92,10 +78,7 @@ export function toFormData(obj: any, form?: any, namespace?: any) {
 			// if the property is an object, but not a File, use recursively.
 			if (obj[property] instanceof Date) {
 				fd.append(formKey, obj[property].toISOString());
-			} else if (
-				typeof obj[property] === 'object' &&
-				!(obj[property] instanceof File)
-			) {
+			} else if (typeof obj[property] === 'object' && !(obj[property] instanceof File)) {
 				toFormData(obj[property], fd, formKey);
 			} else {
 				// if it's a string or a File object
@@ -197,7 +180,7 @@ export const compareDate = (date1: any, date2: any) => {
 		return false;
 	}
 	return d1 > d2;
-}
+};
 
 export function splitCamelCase(word: string): string {
 	let output: string[];
@@ -228,9 +211,10 @@ export function mergeDeep(target: any, ...sources: any) {
 	if (isJsObject(target) && isJsObject(source)) {
 		for (const key in source) {
 			if (isJsObject(source[key])) {
-				if (!target[key]) Object.assign(target, {
-					[key]: {}
-				});
+				if (!target[key])
+					Object.assign(target, {
+						[key]: {}
+					});
 				mergeDeep(target[key], source[key]);
 			} else {
 				Object.assign(target, {
@@ -251,7 +235,7 @@ export function mergeDeep(target: any, ...sources: any) {
  */
 export function cleanKeys(data, deleteKeys) {
 	// There is nothing to be done if `data` is not an object,
-	if (typeof data != "object") return;
+	if (typeof data != 'object') return;
 	if (!data) return; // null object
 
 	for (const key in data) {
@@ -276,10 +260,7 @@ export function employeeMapper(row: any) {
 		name: row.employee && row.employee.user ? row.employee.fullName : null,
 		fullName: row.employee && row.employee.user ? row.employee.fullName : null,
 		id: row.employee ? row.employee.id : null,
-		imageUrl:
-			row.employee && row.employee.user
-				? row.employee.user.imageUrl
-				: null
+		imageUrl: row.employee && row.employee.user ? row.employee.user.imageUrl : null
 	};
 }
 
@@ -322,10 +303,7 @@ export function removeTrailingSlash(str: string) {
  * @returns
  */
 export function __prepareExternalUrlLocation(url: string) {
-	return [
-		removeTrailingSlash(location.origin),
-		addTrailingSlash(url)
-	].join('');
+	return [removeTrailingSlash(location.origin), addTrailingSlash(url)].join('');
 }
 
 /**
@@ -364,7 +342,7 @@ export function compressImage(base64Image: string, width: number, height: number
 			ctx.drawImage(img, 0, 0, width, height);
 			const data = ctx.canvas.toDataURL();
 			resolve(data);
-		}
-		img.onerror = error => reject(error);
-	})
+		};
+		img.onerror = (error) => reject(error);
+	});
 }
