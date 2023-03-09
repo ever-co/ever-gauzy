@@ -22,7 +22,7 @@ jobs:
             - name: Install Node.js, NPM and Yarn
               uses: actions/setup-node@v3
               with:
-                  node-version: 16.18.0
+                  node-version: 18
                   cache: 'yarn'
 
             - name: Change permissions
@@ -46,9 +46,9 @@ jobs:
             - name: Bump version desktop timer app
               uses: actions/github-script@v6
               with:
-                script: |
-                  const script = require('./.scripts/bump-version-electron.js')
-                  console.log(script.desktopTimer(true))
+                  script: |
+                      const script = require('./.scripts/bump-version-electron.js')
+                      console.log(script.desktopTimer(true))
 
             - name: Build Desktop Timer App
               run: 'yarn build:desktop-timer:linux:release'
@@ -74,7 +74,7 @@ jobs:
             - name: Install Node.js, NPM and Yarn
               uses: actions/setup-node@v3
               with:
-                  node-version: 16.18.0
+                  node-version: 18
                   cache: 'yarn'
 
             - name: Install latest version of NPM
@@ -92,9 +92,9 @@ jobs:
             - name: Bump version desktop timer app
               uses: actions/github-script@v6
               with:
-                script: |
-                  const script = require('./.scripts/bump-version-electron.js')
-                  console.log(script.desktopTimer(true))
+                  script: |
+                      const script = require('./.scripts/bump-version-electron.js')
+                      console.log(script.desktopTimer(true))
 
             - name: Build Desktop Timer App
               run: 'yarn build:desktop-timer:mac:release'
@@ -120,7 +120,7 @@ jobs:
             - name: Install Node.js, NPM and Yarn
               uses: actions/setup-node@v3
               with:
-                  node-version: 16.18.0
+                  node-version: 18
                   cache: 'yarn'
 
             - name: Install latest version of NPM
@@ -138,9 +138,9 @@ jobs:
             - name: Bump version desktop timer app
               uses: actions/github-script@v6
               with:
-                script: |
-                  const script = require('./.scripts/bump-version-electron.js')
-                  console.log(script.desktopTimer(true))
+                  script: |
+                      const script = require('./.scripts/bump-version-electron.js')
+                      console.log(script.desktopTimer(true))
 
             - name: Build Desktop Timer App
               run: 'yarn build:desktop-timer:windows:release'
