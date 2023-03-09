@@ -31,8 +31,8 @@ LABEL org.opencontainers.image.source https://github.com/ever-co/ever-gauzy
 ENV CI=true
 
 RUN apk --update add bash && \
-    apk add --no-cache --virtual build-dependencies dos2unix gcc g++ git make python2 py2-setuptools vips-dev && \
-    mkdir /srv/gauzy && chown -R node:node /srv/gauzy
+	apk add --no-cache --virtual curl jq py3-configobj py3-pip py3-setuptools python3 python3-dev build-dependencies dos2unix gcc g++ git make vips-dev && \
+	mkdir /srv/gauzy && chown -R node:node /srv/gauzy
 
 COPY wait .deploy/webapp/entrypoint.compose.sh .deploy/webapp/entrypoint.prod.sh /
 
@@ -101,7 +101,7 @@ COPY --chown=nginx:nginx .deploy/webapp/nginx.prod.conf /etc/nginx/conf.d/prod.c
 COPY --chown=nginx:nginx --from=build /srv/gauzy/dist/apps/gauzy .
 
 RUN chmod +x wait entrypoint.compose.sh entrypoint.prod.sh && \
-    chmod a+rw /etc/nginx/conf.d/compose.conf.template /etc/nginx/conf.d/prod.conf.template
+	chmod a+rw /etc/nginx/conf.d/compose.conf.template /etc/nginx/conf.d/prod.conf.template
 
 ENV API_HOST=${API_HOST:-api}
 ENV API_PORT=${API_PORT:-3000}
