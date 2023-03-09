@@ -9,6 +9,7 @@ import { EmailResetController } from './email-reset.controller';
 import { UserModule } from '../user/user.module';
 import { TenantModule } from '../tenant/tenant.module';
 import { EmailModule } from './../email/email.module';
+import { EmployeeModule } from './../employee/employee.module';
 
 @Module({
 	imports: [
@@ -18,7 +19,8 @@ import { EmailModule } from './../email/email.module';
 		forwardRef(() => TenantModule),
 		CqrsModule,
 		UserModule,
-		EmailModule
+		EmailModule,
+		EmployeeModule
 	],
 	providers: [
 		EmailResetService,

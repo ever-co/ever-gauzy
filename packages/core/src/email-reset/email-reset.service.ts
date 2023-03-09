@@ -18,6 +18,7 @@ import {
 } from './queries'
 import { VerifyEmailResetRequestDTO } from './dto/verify-email-reset-request.dto';
 import { EmailService } from '../email/email.service';
+import { EmployeeService } from './../employee/employee.service';
 
 @Injectable()
 export class EmailResetService extends TenantAwareCrudService<EmailReset> {
@@ -28,7 +29,8 @@ export class EmailResetService extends TenantAwareCrudService<EmailReset> {
 		private readonly userService: UserService,
 		private readonly commandBus: CommandBus,
 		private readonly queryBus: QueryBus,
-		private readonly emailService: EmailService
+		private readonly emailService: EmailService,
+		private readonly employeeService: EmployeeService
 	) {
 		super(_emailResetRepository);
 	}
@@ -54,6 +56,13 @@ export class EmailResetService extends TenantAwareCrudService<EmailReset> {
 				userId: user.id
 			})
 		);
+		const employee = await this.employeeService.findOneByIdString(user.employeeId, {
+			relations: ['organization']
+		});
+		const { 
+			organization
+		} = employee;
+		
 
 		this.emailService.emailReset(
 			{
@@ -61,7 +70,8 @@ export class EmailResetService extends TenantAwareCrudService<EmailReset> {
 				email: request.email
 			},
 			languageCode || user.preferredLanguage as LanguagesEnum,
-			verificationCode
+			verificationCode,
+			organization
 		);
 
 		return true		
