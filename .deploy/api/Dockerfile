@@ -68,7 +68,7 @@ ENV CI=true
 ENV PYTHON /usr/bin/python
 
 RUN apk --update add bash && apk add libexecinfo libexecinfo-dev && npm i -g npm \
-	&& apk add --no-cache --virtual jq py3-configobj py3-pip py3-setuptools python3 python3-dev build-dependencies build-base \
+	&& apk add --no-cache --virtual py3-configobj py3-pip py3-setuptools python3 python3-dev build-dependencies build-base \
 	snappy libheif dos2unix gcc g++ snappy-dev git libgcc libstdc++ linux-headers autoconf automake make nasm vips-dev vips
 
 RUN npm install --quiet node-gyp -g
@@ -110,7 +110,7 @@ FROM node:18-alpine3.16 AS prodDependencies
 ENV PYTHON /usr/bin/python
 
 RUN apk --update add bash && apk add libexecinfo libexecinfo-dev && npm i -g npm \
-	&& apk add --no-cache --virtual jq py3-configobj py3-pip py3-setuptools python3 python3-dev build-dependencies build-base \
+	&& apk add --no-cache --virtual py3-configobj py3-pip py3-setuptools python3 python3-dev build-dependencies build-base \
 	snappy libheif dos2unix gcc g++ snappy-dev git libgcc libstdc++ linux-headers autoconf automake make nasm vips-dev vips
 
 RUN npm install --quiet node-gyp -g
