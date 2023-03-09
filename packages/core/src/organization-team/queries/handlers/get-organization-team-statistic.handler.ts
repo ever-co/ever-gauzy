@@ -1,6 +1,7 @@
 import { BadRequestException } from '@nestjs/common';
 import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
 import { IOrganizationTeam, IOrganizationTeamEmployee } from '@gauzy/contracts';
+import * as moment from 'moment';
 import { GetOrganizationTeamStatisticQuery } from '../get-organization-team-statistic.query';
 import { OrganizationTeamService } from '../../organization-team.service';
 import { TimerService } from '../../../time-tracking/timer/timer.service';
@@ -70,7 +71,10 @@ export class GetOrganizationTeamStatisticHandler implements IQueryHandler<GetOrg
 								}
 							),
 							running: timerStatus.running,
-							duration: timerStatus.duration
+							duration: timerStatus.duration,
+							timerStatus: timerStatus.running ? 'running' : 
+							timerStatus?.lastLog?.stoppedAt && moment(timerStatus.lastLog.stoppedAt).diff(new Date(), 'day') === 0 ? 
+							'pause' : 'idle'
 						}
 					}
 				)

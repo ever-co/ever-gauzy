@@ -6,6 +6,7 @@ import { OrganizationTeam } from './../../core/entities/internal';
 import { PublicTeamController } from './public-team.controller';
 import { PublicTeamService } from './public-team.service';
 import { QueryHandlers } from './queries/handlers';
+import { TimerModule } from 'time-tracking/timer/timer.module';
 
 @Module({
 	imports: [
@@ -13,7 +14,8 @@ import { QueryHandlers } from './queries/handlers';
 			OrganizationTeam
 		]),
 		CqrsModule,
-		StatisticModule
+		StatisticModule,
+		TimerModule
 	],
 	controllers: [
 		PublicTeamController
