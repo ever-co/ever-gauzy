@@ -931,8 +931,9 @@ export class EmailService extends TenantAwareCrudService<EmailEntity> {
 	async emailReset(
 		user: IUser,
 		languageCode: LanguagesEnum,
-		verificationCode: number
-	){
+		verificationCode: number,
+		organization: IOrganization
+	){	
 		const integration = Object.assign({}, env.appIntegrationConfig);
 
 		const sendOptions = {
@@ -954,7 +955,9 @@ export class EmailService extends TenantAwareCrudService<EmailEntity> {
 				templateName: sendOptions.template,
 				email: sendOptions.message.to,
 				languageCode,
-				message: ''
+				message: '',
+				user: user,
+				organization
 			}
 			const match = !!DISALLOW_EMAIL_SERVER_DOMAIN.find((server) => body.email.includes(server));
 			if (!match) {
@@ -965,6 +968,7 @@ export class EmailService extends TenantAwareCrudService<EmailEntity> {
 					console.error(error);
 				}
 			}
+			await this.createEmailRecord(body);
 		} catch (error) {
 			console.error(error);
 		}
