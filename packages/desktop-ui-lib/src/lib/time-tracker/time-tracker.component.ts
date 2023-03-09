@@ -30,6 +30,8 @@ import {
 	TaskStatusEnum
 } from '@gauzy/contracts';
 import { Store } from '@gauzy/desktop-timer/src/app/auth/services/store.service';
+import { compressImage } from '@gauzy/common-angular';
+
 
 // Import logging for electron and override default console logging
 const log = window.require('electron-log');
@@ -1258,8 +1260,6 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 					this.localImage(this.lastScreenCapture);
 					this.screenshots$.next(screenshots);
 					this.lastTimeSlot = res;
-				} else {
-					this.lastScreenCapture$.next({});
 				}
 				if (this.lastScreenCapture.recordedAt) {
 					this.lastScreenCapture$.next({
@@ -1269,7 +1269,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 						).fromNow(),
 					});
 				} else {
-					this.lastScreenCapture$.next({});
+					this.updateImageUrl();
 				}
 			})
 			.catch((error) => {
@@ -1277,25 +1277,26 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 			});
 	}
 
-	async localImage(img) {
+	async localImage(img, originalBase64Image?: string) {
 		try {
 			const convScreenshot =
-				img && img.fullUrl
-					? await this.getBase64ImageFromUrl(img.fullUrl)
+				img && img.thumbUrl
+					? await this.getBase64ImageFromUrl(img.thumbUrl)
 					: img;
 			localStorage.setItem(
 				'lastScreenCapture',
 				JSON.stringify({
-					fullUrl: convScreenshot,
+					thumbUrl: convScreenshot,
 					textTime: moment().fromNow(),
 					createdAt: Date.now(),
 					recordedAt: Date.now(),
+					...(originalBase64Image && { fullUrl: originalBase64Image })
 				})
 			);
 		} catch (error) {}
 	}
 
-	updateImageUrl(e) {
+	updateImageUrl(e?: string) {
 		console.log('image error', e);
 		this.lastScreenCapture$.next({});
 
@@ -1304,10 +1305,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 		if (localLastScreenCapture) {
 			localLastScreenCapture = JSON.parse(localLastScreenCapture);
 			this.lastScreenCapture$.next({
-				...this.lastScreenCapture,
-				fullUrl: this.sanitize.bypassSecurityTrustUrl(
-					localLastScreenCapture.fullUrl
-				),
+				...localLastScreenCapture
 			});
 		}
 	}
@@ -1627,7 +1625,6 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 		} else {
 			screenshotImg = arg.displays;
 		}
-
 		// notify
 		this.screenshotNotify(arg, thumbScreenshotImg);
 
@@ -1680,7 +1677,18 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 					idsWakatime: arg.idsWakatime,
 				}
 			);
-
+			if (!this._isOffline && screenshotImg.length > 0) {
+				/* Converting the screenshot image to a base64 string. */
+				const original = `data:image/png;base64, ${this.buffToB64(screenshotImg[0])}`;
+				/* Compressing the image to 320x200 */
+				const compressed = await compressImage(original, 320, 200);
+				/*  Saving compressed image to the local storage. */
+				await this.localImage(compressed, original);
+				/* Update image waiting for server response*/
+				this.updateImageUrl(null);
+				/* Adding the last screen capture to the screenshots array. */
+				this.screenshots$.next([...this.screenshots, this.lastScreenCapture])
+			}
 			// upload screenshot to timeslot api
 			try {
 				await Promise.all(
@@ -1762,7 +1770,6 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 					fileName: fileName,
 				}
 			);
-			this.getLastTimeSlotImage({ ...arg, timeSlotId });
 			return resImg;
 		} catch (error) {
 			this.electronService.ipcRenderer.send('save_temp_img', {
@@ -1959,18 +1966,19 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 		return this._isRefresh$.asObservable();
 	}
 
-	private _mappingScreenshots(args: any[]) {
-		let screenshots = args.map((arg) => {
-			const imgUrl = 'data:image/png;base64,' + arg.screenshots[0].b64img;
+	private async _mappingScreenshots(args: any[]) {
+		let screenshots = await Promise.all(args.map(async (arg) => {
+			const fullUrl = 'data:image/png;base64,' + arg.screenshots[0].b64img;
+			const thumbUrl = await compressImage(fullUrl, 320, 200);
 			return {
 				textTime: moment(arg.recordedAt).fromNow(),
 				createdAt: arg.recordedAt,
 				recordedAt: arg.recordedAt,
-				fullUrl: imgUrl,
-				thumbUrl: imgUrl,
-				id: arg.id
+				id: arg.id,
+				fullUrl,
+				thumbUrl
 			};
-		});
+		}));
 		if (screenshots.length > 0) {
 			screenshots = _.sortBy(screenshots, 'recordedAt').reverse();
 			const [lastCaptureScreen] = screenshots;
