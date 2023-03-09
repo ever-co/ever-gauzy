@@ -22,7 +22,7 @@ jobs:
             - name: Install Node.js, NPM and Yarn
               uses: actions/setup-node@v3
               with:
-                  node-version: 16.18.0
+                  node-version: 18
                   cache: 'yarn'
 
             - name: Change permissions
@@ -46,9 +46,9 @@ jobs:
             - name: Bump server version
               uses: actions/github-script@v6
               with:
-                script: |
-                  const script = require('./.scripts/bump-version-electron.js')
-                  console.log(script.server(true))
+                  script: |
+                      const script = require('./.scripts/bump-version-electron.js')
+                      console.log(script.server(true))
 
             - name: Build Server
               run: 'yarn build:gauzy-server:linux:release'
@@ -74,7 +74,7 @@ jobs:
             - name: Install Node.js, NPM and Yarn
               uses: actions/setup-node@v3
               with:
-                  node-version: 16.18.0
+                  node-version: 18
                   cache: 'yarn'
 
             - name: Install latest version of NPM
@@ -92,9 +92,9 @@ jobs:
             - name: Bump Server version
               uses: actions/github-script@v6
               with:
-                script: |
-                  const script = require('./.scripts/bump-version-electron.js')
-                  console.log(script.server(true))
+                  script: |
+                      const script = require('./.scripts/bump-version-electron.js')
+                      console.log(script.server(true))
 
             - name: Build Server
               run: 'yarn build:gauzy-server:mac:release'
@@ -120,7 +120,7 @@ jobs:
             - name: Install Node.js, NPM and Yarn
               uses: actions/setup-node@v3
               with:
-                  node-version: 16.18.0
+                  node-version: 18
                   cache: 'yarn'
 
             - name: Install latest version of NPM
@@ -138,9 +138,9 @@ jobs:
             - name: Bump Server version
               uses: actions/github-script@v6
               with:
-                script: |
-                  const script = require('./.scripts/bump-version-electron.js')
-                  console.log(script.server(true))
+                  script: |
+                      const script = require('./.scripts/bump-version-electron.js')
+                      console.log(script.server(true))
 
             - name: Build Server
               run: 'yarn build:gauzy-server:windows:release'
