@@ -43,7 +43,7 @@ import {
 	UpdatePreferredComponentLayoutDTO,
 	CreateUserDTO,
 	UpdateUserDTO,
-	FindMeQueryDTO
+	FindMeQueryDTO,
 } from './dto';
 
 @ApiTags('User')
