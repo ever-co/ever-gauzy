@@ -13,24 +13,15 @@ import { EmployeeModule } from './../employee/employee.module';
 
 @Module({
 	imports: [
-		TypeOrmModule.forFeature([
-			EmailReset
-		]),
+		TypeOrmModule.forFeature([EmailReset]),
 		forwardRef(() => TenantModule),
 		CqrsModule,
 		UserModule,
 		EmailModule,
 		EmployeeModule
 	],
-	providers: [
-		EmailResetService,
-		...CommandHandlers,
-		...QueryHandlers
-	],
-	exports: [
-		TypeOrmModule,
-		EmailResetService
-	],
+	providers: [EmailResetService, ...CommandHandlers, ...QueryHandlers],
+	exports: [TypeOrmModule, EmailResetService],
 	controllers: [EmailResetController]
 })
-export class EmailResetModule { }
+export class EmailResetModule {}
