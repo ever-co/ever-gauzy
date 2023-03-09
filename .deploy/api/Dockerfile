@@ -57,7 +57,7 @@ ARG UNLEASH_REFRESH_INTERVAL
 ARG UNLEASH_METRICS_INTERVAL
 ARG UNLEASH_API_KEY
 
-FROM node:16-alpine3.14 AS dependencies
+FROM node:18-alpine3.16 AS dependencies
 
 LABEL maintainer="ever@ever.co"
 LABEL org.opencontainers.image.source https://github.com/ever-co/ever-gauzy
@@ -68,8 +68,8 @@ ENV CI=true
 ENV PYTHON /usr/bin/python
 
 RUN apk --update add bash && apk add libexecinfo libexecinfo-dev && npm i -g npm \
-    && apk add --no-cache --virtual build-dependencies build-base \
-    snappy libheif dos2unix gcc g++ snappy-dev git libgcc libstdc++ linux-headers autoconf automake make nasm python2 py2-setuptools vips-dev vips
+	&& apk add --no-cache --virtual jq py3-configobj py3-pip py3-setuptools python3 python3-dev build-dependencies build-base \
+	snappy libheif dos2unix gcc g++ snappy-dev git libgcc libstdc++ linux-headers autoconf automake make nasm vips-dev vips
 
 RUN npm install --quiet node-gyp -g
 RUN npm install yarn -g --force
@@ -104,14 +104,14 @@ COPY --chown=node:node decorate-angular-cli.js lerna.json package.json yarn.lock
 RUN yarn install --network-timeout 1000000 --frozen-lockfile && yarn cache clean
 # RUN apk del build-dependencies make gcc g++ python2 py2-setuptools vips-dev
 
-FROM node:16-alpine3.14 AS prodDependencies
+FROM node:18-alpine3.16 AS prodDependencies
 
 # Set Python interpreter for `node-gyp` to use
 ENV PYTHON /usr/bin/python
 
 RUN apk --update add bash && apk add libexecinfo libexecinfo-dev && npm i -g npm \
-    && apk add --no-cache --virtual build-dependencies build-base \
-    snappy libheif dos2unix gcc g++ snappy-dev git libgcc libstdc++ linux-headers autoconf automake make nasm python2 py2-setuptools vips-dev vips
+	&& apk add --no-cache --virtual jq py3-configobj py3-pip py3-setuptools python3 python3-dev build-dependencies build-base \
+	snappy libheif dos2unix gcc g++ snappy-dev git libgcc libstdc++ linux-headers autoconf automake make nasm vips-dev vips
 
 RUN npm install --quiet node-gyp -g
 RUN npm install yarn -g --force
@@ -143,7 +143,7 @@ RUN yarn install --network-timeout 1000000 --frozen-lockfile --production && yar
 
 RUN rm -r node_modules/@angular
 
-FROM node:16-alpine3.14 AS development
+FROM node:18-alpine3.16 AS development
 
 USER node:node
 
@@ -153,7 +153,7 @@ COPY --chown=node:node --from=dependencies /wait /entrypoint.prod.sh /entrypoint
 COPY --chown=node:node --from=dependencies /srv/gauzy .
 COPY . .
 
-FROM node:16-alpine3.14 AS build
+FROM node:18-alpine3.16 AS build
 
 WORKDIR /srv/gauzy
 
@@ -170,7 +170,7 @@ ENV IS_DOCKER=true
 RUN yarn build:package:api
 RUN yarn build:api:prod
 
-FROM node:16-alpine3.14 AS production
+FROM node:18-alpine3.16 AS production
 
 WORKDIR /srv/gauzy
 
@@ -192,9 +192,9 @@ COPY --chown=node:node apps/api/src/assets/seed apps/api/public
 COPY --chown=node:node --from=build /srv/gauzy/dist/apps/api .
 
 RUN npm install pm2 -g && \
-    mkdir /import && chown node:node /import && \
-    touch ormlogs.log && chown node:node ormlogs.log && chown node:node wait && \
-    chmod +x wait entrypoint.compose.sh entrypoint.prod.sh && chown -R node:node apps/
+	mkdir /import && chown node:node /import && \
+	touch ormlogs.log && chown node:node ormlogs.log && chown node:node wait && \
+	chmod +x wait entrypoint.compose.sh entrypoint.prod.sh && chown -R node:node apps/
 
 USER node:node
 
