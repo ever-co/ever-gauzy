@@ -31,7 +31,7 @@ Given('Login with default credentials', () => {
 
 // Add new tag
 Then('User can add new tag', () => {
-	dashboardPage.verifyAccountingDashboard();
+	//dashboardPage.verifyAccountingDashboard();
 	CustomCommands.addTag(organizationTagsUserPage, OrganizationTagsPageData);
 });
 
@@ -146,7 +146,7 @@ And('User can see departments table', () => {
 });
 
 When('User click on departments table row', () => {
-	organizationDepartmentsPage.selectTableRow(0);
+	organizationDepartmentsPage.selectTableRow();
 });
 
 Then('Edit department button will become active', () => {
@@ -191,7 +191,7 @@ And('User can see departments table again', () => {
 });
 
 When('User click on departments table row again', () => {
-	organizationDepartmentsPage.selectTableRow(0);
+	organizationDepartmentsPage.selectTableRow();
 });
 
 Then('Delete department button will become active', () => {

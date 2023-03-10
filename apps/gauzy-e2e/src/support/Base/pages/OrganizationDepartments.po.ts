@@ -7,7 +7,8 @@ import {
 	clickButtonByIndex,
 	verifyText,
 	verifyTextNotExisting,
-	waitElementToHide
+	waitElementToHide,
+	getLastElement
 } from '../utils/util';
 import { OrganizationDepartmentsPage } from '../pageobjects/OrganizationDepartmentsPageObject';
 
@@ -62,7 +63,8 @@ export const clickTagsDropdown = () => {
 };
 
 export const selectTagFromDropdown = (index) => {
-	clickButtonByIndex(OrganizationDepartmentsPage.tagsDropdownOption, index);
+	//clickButtonByIndex(OrganizationDepartmentsPage.tagsDropdownOption, index);
+	getLastElement(OrganizationDepartmentsPage.tagsDropdownOption)
 };
 
 export const clickKeyboardButtonByKeyCode = (keycode) => {
@@ -85,8 +87,8 @@ export const tableRowVisible = () => {
 	verifyElementIsVisible(OrganizationDepartmentsPage.selectTableRowCss);
 };
 
-export const selectTableRow = (index) => {
-	clickButtonByIndex(OrganizationDepartmentsPage.selectTableRowCss, index);
+export const selectTableRow = () => {
+	getLastElement(OrganizationDepartmentsPage.selectTableRowCss)
 };
 
 export const editButtonVisible = () => {

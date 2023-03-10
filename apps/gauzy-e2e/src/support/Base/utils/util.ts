@@ -49,7 +49,7 @@ export const verifyTextByIndex = (loc, data, index) => {
 };
 
 export const clickButton = (loc) => {
-	cy.get(loc, { timeout: taskTimeout }).click();
+	cy.get(loc, { timeout: taskTimeout }).click({ multiple: true, force: true });
 };
 
 export const clickElementByText = (loc, data) => {
@@ -94,6 +94,10 @@ export const clickButtonByIndex = (loc, index) => {
 	cy.get(loc, { timeout: taskTimeout }).eq(index).click({ force: true });
 };
 
+export const clickOrganizationByIndex = (loc, index) => {
+	cy.get(loc, { timeout: taskTimeout }).eq(index).click({ force: true });
+};
+
 export const enterInputConditionally = (loc, data) => {
 	cy.get(loc, { timeout: taskTimeout }).type(`${data}{enter}`);
 };
@@ -133,7 +137,7 @@ export const getNotEqualElement = (loc, text) => {
 };
 
 export const waitElementToHide = (loc) => {
-	cy.wait(requestTimeout);
+	cy.wait(10000);
 	cy.get(loc, { timeout: defaultCommandTimeout }).should('not.exist');
 };
 

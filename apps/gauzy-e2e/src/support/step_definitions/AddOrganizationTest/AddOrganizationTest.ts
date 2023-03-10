@@ -239,12 +239,16 @@ And('User can click on grid button to change view', () => {
 	deleteOrganizationPage.gridBtnClick(0);
 });
 
+And('User selects the project to delete', () => {
+	deleteOrganizationPage.selectOrganization(0);
+});
+
 And('User can see delete button', () => {
 	deleteOrganizationPage.deleteBtnExists();
 });
 
 When('User click on delete button', () => {
-	deleteOrganizationPage.deleteBtnClick(1);
+	deleteOrganizationPage.deleteBtnClick(0);
 });
 
 Then('User can see confirm delete button', () => {
