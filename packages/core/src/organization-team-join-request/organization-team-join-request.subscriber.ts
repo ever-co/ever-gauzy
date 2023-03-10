@@ -20,8 +20,8 @@ export class OrganizationTeamJoinRequestSubscriber implements EntitySubscriberIn
      */
     afterLoad(entity: OrganizationTeamJoinRequest, event?: LoadEvent<OrganizationTeamJoinRequest>): void | Promise<any> {
         try {
-            if ('expireAt' in entity) {
-                entity.isExpired = entity.expireAt ? moment(entity.expireAt).isBefore(moment()) : false;
+            if ('expiredAt' in entity) {
+                entity.isExpired = entity.expiredAt ? moment(entity.expiredAt).isBefore(moment()) : false;
             }
         } catch (error) {
             console.log(error);

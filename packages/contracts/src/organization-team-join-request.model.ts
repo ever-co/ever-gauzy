@@ -5,7 +5,7 @@ import { IRelationalUser, IUserEmailInput } from "./user.model";
 export interface IOrganizationTeamJoinRequest extends IBasePerTenantAndOrganizationEntityModel, IRelationalUser, IOrganizationTeamJoinRequestCreateInput {
     code: number;
     token: string;
-    expireAt: Date;
+    expiredAt: Date;
     isExpired: boolean;
 }
 

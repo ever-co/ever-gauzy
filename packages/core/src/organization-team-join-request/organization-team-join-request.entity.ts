@@ -56,7 +56,7 @@ export class OrganizationTeamJoinRequest extends TenantOrganizationBaseEntity im
 
 	@Exclude({ toPlainOnly: true })
 	@Column({ nullable: true })
-	expireAt: Date;
+	expiredAt: Date;
 
 	/** Additional fields */
 	isExpired: boolean;
@@ -71,7 +71,7 @@ export class OrganizationTeamJoinRequest extends TenantOrganizationBaseEntity im
 	 * Join request belongs to user
 	 */
 	@ManyToOne(() => User, {
-		onDelete: "SET NULL"
+		onDelete: "CASCADE"
 	})
 	user?: IUser;
 
@@ -84,7 +84,7 @@ export class OrganizationTeamJoinRequest extends TenantOrganizationBaseEntity im
 	 * Organization Team
 	 */
 	@ManyToOne(() => OrganizationTeam, {
-		onDelete: 'SET NULL',
+		onDelete: "CASCADE"
 	})
 	organizationTeam?: IOrganizationTeam;
 
