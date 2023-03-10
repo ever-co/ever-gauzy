@@ -922,6 +922,58 @@ export class EmailService extends TenantAwareCrudService<EmailEntity> {
 		}
 	}
 
+	/**
+	 * Email Reset
+	 *
+	 * @param user
+	 * @param languageCode
+	 */
+	async emailReset(
+		user: IUser,
+		languageCode: LanguagesEnum,
+		verificationCode: number,
+		organization: IOrganization
+	){	
+		const integration = Object.assign({}, env.appIntegrationConfig);
+
+		const sendOptions = {
+			template: 'email-reset',
+			message: {
+				to: `${user.email}`
+			},
+			locals: {
+				...integration,
+				locale: languageCode,
+				email: user.email,
+				host: env.clientBaseUrl,
+				verificationCode,
+				name: user.name,
+			}
+		};
+		try {
+			const body = {
+				templateName: sendOptions.template,
+				email: sendOptions.message.to,
+				languageCode,
+				message: '',
+				user: user,
+				organization
+			}
+			const match = !!DISALLOW_EMAIL_SERVER_DOMAIN.find((server) => body.email.includes(server));
+			if (!match) {
+				try {
+					const send = await (await this.getEmailInstance()).send(sendOptions);
+					body['message'] = send.originalMessage;
+				} catch (error) {
+					console.error(error);
+				}
+			}
+			await this.createEmailRecord(body);
+		} catch (error) {
+			console.error(error);
+		}
+	}
+
 	private async createEmailRecord(createEmailOptions: {
 		templateName: string;
 		email: string;

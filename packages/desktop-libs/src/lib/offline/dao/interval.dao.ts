@@ -111,7 +111,7 @@ export class IntervalDAO implements DAO<IntervalTO> {
 		try {
 			const latests = await this._provider
 				.connection<IntervalTO>(TABLE_NAME_INTERVALS)
-				.select('screenshots', 'startedAt as recordedAt')
+				.select('id', 'screenshots', 'startedAt as recordedAt')
 				.where('employeeId', user.employeeId)
 				.orderBy('id', 'desc')
 				.limit(10);

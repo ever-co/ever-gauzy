@@ -2,8 +2,10 @@ import { IBaseRelationsEntityModel, IDateRangePicker, IOrganizationTeam, IOrgani
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { FindOptionsWhere, Repository } from 'typeorm';
+import * as moment from 'moment';
 import { OrganizationTeam } from './../../core/entities/internal';
 import { StatisticService } from './../../time-tracking/statistic';
+import { TimerService } from './../../time-tracking/timer/timer.service';
 
 @Injectable()
 export class PublicTeamService {
@@ -12,7 +14,8 @@ export class PublicTeamService {
 		@InjectRepository(OrganizationTeam)
 		private readonly repository: Repository<OrganizationTeam>,
 
-		private readonly _statisticService: StatisticService
+		private readonly _statisticService: StatisticService,
+		private readonly _timerService: TimerService
 	) { }
 
 	/**
@@ -89,7 +92,12 @@ export class PublicTeamService {
 			return await Promise.all(
 				await members.map(
 					async (member: IOrganizationTeamEmployee) => {
-						const { employeeId } = member
+						const { employeeId } = member		
+						const timerStatus = await this._timerService.getTimerWorkedStatus({
+							employeeId,
+							organizationTeamId: member.organizationTeamId
+						})
+					
 						return {
 							...member,
 							totalWorkedTasks: await this._statisticService.getTasks({
@@ -104,6 +112,9 @@ export class PublicTeamService {
 								startDate,
 								endDate
 							}),
+							timerStatus: timerStatus.running ? 'running' : 
+							timerStatus?.lastLog?.stoppedAt && moment(timerStatus.lastLog.stoppedAt).diff(new Date(), 'day') === 0 ? 
+							'pause' : 'idle'
 						}
 					}
 				)

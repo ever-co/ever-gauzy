@@ -12,7 +12,7 @@ import {
 	IInvite,
 	IOrganizationTeam,
 	ICandidate,
-	IEmail
+	IEmail,
 } from '@gauzy/contracts';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Exclude } from 'class-transformer';
@@ -31,6 +31,7 @@ import {
 import {
 	Candidate,
 	Email,
+	EmailReset,
 	Employee,
 	Invite,
 	OrganizationTeam,
@@ -221,4 +222,12 @@ export class User extends TenantBaseEntity implements IUser {
 		onDelete: 'CASCADE'
 	})
 	teams?: IOrganizationTeam[];
+
+	/**
+	 * User belongs to email reset
+	 */
+	@OneToMany(() => EmailReset, (it) => it.user, {
+		onDelete: 'CASCADE'
+	})
+	emailReset?: IOrganizationTeam[];
 }

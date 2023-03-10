@@ -28,6 +28,7 @@ export * from '../../custom-smtp/custom-smtp.entity';
 export * from '../../deal/deal.entity';
 export * from '../../email-template/email-template.entity';
 export * from '../../email/email.entity';
+export * from '../../email-reset/email-reset.entity';
 export * from '../../employee-appointment/employee-appointment.entity';
 export * from '../../employee-award/employee-award.entity';
 export * from '../../employee-job-preset/employee-upwork-jobs-search-criterion.entity';

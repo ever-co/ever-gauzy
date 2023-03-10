@@ -146,6 +146,7 @@ import { GauzyCloudModule } from './gauzy-cloud/gauzy-cloud.module';
 import { ContactModule } from './contact/contact.module';
 import { PublicShareModule } from './public-share/public-share.module';
 import { TransformInterceptor } from './core/interceptors';
+import { EmailResetModule } from './email-reset/email-reset.module';
 
 const { unleashConfig } = environment;
 
@@ -363,6 +364,7 @@ if (process.env.DB_TYPE === 'postgres') {
 		GauzyCloudModule,
 		ContactModule,
 		PublicShareModule,
+		EmailResetModule,
 	],
 	controllers: [AppController],
 	providers: [
