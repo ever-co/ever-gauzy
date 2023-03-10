@@ -90,10 +90,10 @@ describe('Add tasks test', () => {
 	it('Should be able to duplicate task', () => {
 		addTaskPage.tasksTableVisible();
 		addTaskPage.selectTasksTableRow(0);
-		addTaskPage.duplicateOrEditTaskButtonVisible();
-		addTaskPage.clickDuplicateOrEditTaskButton(0);
-		addTaskPage.confirmDuplicateOrEditTaskButtonVisible();
-		addTaskPage.clickConfirmDuplicateOrEditTaskButton();
+		addTaskPage.duplicateTaskButtonVisible();
+		addTaskPage.clickDuplicateTaskButton(0);
+		addTaskPage.confirmDuplicateTaskButtonVisible();
+		addTaskPage.clickConfirmDuplicateTaskButton();
 	});
 	// it('Should be able to delete task', () => {
 	// 	addTaskPage.waitMessageToHide();
@@ -108,8 +108,8 @@ describe('Add tasks test', () => {
 		addTaskPage.waitMessageToHide();
 		addTaskPage.tasksTableVisible();
 		addTaskPage.selectTasksTableRow(0);
-		addTaskPage.duplicateOrEditTaskButtonVisible();
-		addTaskPage.clickDuplicateOrEditTaskButton(1);
+		addTaskPage.duplicateTaskButtonVisible();
+		addTaskPage.clickDuplicateTaskButton(1);
 		addTaskPage.selectProjectDropdownVisible();
 		addTaskPage.clickSelectProjectDropdown();
 		addTaskPage.selectProjectOptionDropdown(
@@ -146,10 +146,10 @@ describe('Add tasks test', () => {
 			return false;
 		});
 		addTaskPage.selectTasksTableRow(0);
-		addTaskPage.duplicateOrEditTaskButtonVisible();
-		addTaskPage.clickDuplicateOrEditTaskButton(1);
-		addTaskPage.confirmDuplicateOrEditTaskButtonVisible();
-		addTaskPage.clickConfirmDuplicateOrEditTaskButton();
+		addTaskPage.duplicateTaskButtonVisible();
+		addTaskPage.clickDuplicateTaskButton(1);
+		addTaskPage.confirmDuplicateTaskButtonVisible();
+		addTaskPage.clickConfirmDuplicateTaskButton();
 		addTaskPage.selectTasksTableRow(0);
 		addTaskPage.deleteTaskButtonVisible();
 		addTaskPage.clickDeleteTaskButton();

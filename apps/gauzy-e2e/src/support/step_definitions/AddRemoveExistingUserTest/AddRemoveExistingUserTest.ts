@@ -104,6 +104,10 @@ Then('User creation will be confirmed with notification message', () => {
 	addUserPage.waitMessageToHide();
 });
 
+Then('User goes to the end of the user list', () => {
+	addUserPage.goToEndOfUserList();
+})
+
 And('Users table will be populated with new user', () => {
 	addUserPage.verifyUserExists(`${firstName} ${lastName}`);
 });
@@ -171,6 +175,10 @@ When('User click on save button', () => {
 Then('Notification message will appear', () => {
 	addUserPage.waitMessageToHide();
 });
+
+Then('User goes to the end of the user list', () => {
+	addUserPage.goToEndOfUserList();
+})
 
 And('User can verify that data was edited', () => {
 	addUserPage.verifyUserExists(`${editFirstName} ${editLastName}`);

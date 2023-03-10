@@ -10,15 +10,19 @@ import {
 	ExecutionContext,
 	Query,
 	UsePipes,
-	ValidationPipe
+	ValidationPipe,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import * as path from 'path';
 import * as moment from 'moment';
-import * as sharp from 'sharp';
 import * as fs from 'fs';
 import { v4 as uuid } from 'uuid';
-import { FileStorageProviderEnum, IScreenshot, PermissionsEnum } from '@gauzy/contracts';
+import jimp from 'jimp';
+import {
+	FileStorageProviderEnum,
+	IScreenshot,
+	PermissionsEnum,
+} from '@gauzy/contracts';
 import { Screenshot } from './screenshot.entity';
 import { ScreenshotService } from './screenshot.service';
 import { RequestContext } from './../../core/context';
@@ -35,19 +39,17 @@ import { DeleteQueryDTO } from './../../shared/dto';
 @Permissions(PermissionsEnum.TIME_TRACKER)
 @Controller()
 export class ScreenshotController {
-	constructor(
-		private readonly screenshotService: ScreenshotService
-	) { }
+	constructor(private readonly screenshotService: ScreenshotService) {}
 
 	@ApiOperation({ summary: 'Add manual time' })
 	@ApiResponse({
 		status: HttpStatus.OK,
-		description: 'The timer has been successfully On/Off.'
+		description: 'The timer has been successfully On/Off.',
 	})
 	@ApiResponse({
 		status: HttpStatus.BAD_REQUEST,
 		description:
-			'Invalid input, The response body may contain clues as to what went wrong'
+			'Invalid input, The response body may contain clues as to what went wrong',
 	})
 	@Post()
 	@UseInterceptors(
@@ -61,15 +63,12 @@ export class ScreenshotController {
 							RequestContext.currentTenantId() || uuid()
 						);
 					},
-					prefix: 'screenshots'
-				})
-			}
+					prefix: 'screenshots',
+				});
+			},
 		})
 	)
-	async create(
-		@Body() entity: Screenshot,
-		@UploadedFileStorage() file
-	) {
+	async create(@Body() entity: Screenshot, @UploadedFileStorage() file) {
 		console.log('Screenshot Http Request', { entity, file });
 
 		const user = RequestContext.currentUser();
@@ -80,16 +79,19 @@ export class ScreenshotController {
 			const inputFile = await tempFile('screenshot-thumb');
 			const outputFile = await tempFile('screenshot-thumb');
 			await fs.promises.writeFile(inputFile, fileContent);
-			await new Promise((resolve, reject) => {
-				sharp(inputFile)
-					.resize(250, 150)
-					.toFile(outputFile, (error: any, data: any) => {
-						if (error) {
-							reject(error);
-						} else {
-							resolve(data);
-						}
-					});
+			await new Promise(async (resolve, reject) => {
+				const image = await jimp.read(inputFile);
+
+				// TODO: possible to use jimp.AUTO for height instead of hardcode to 150px?
+				await image.resize(250, 150);
+
+				try {
+					await image.writeAsync(outputFile);
+				} catch (error) {
+					reject(error);
+				}
+
+				resolve(image);
 			});
 			const thumbName = `thumb-${file.filename}`;
 			const thumbDir = path.dirname(file.key);
@@ -97,36 +99,54 @@ export class ScreenshotController {
 			await fs.promises.unlink(inputFile);
 			await fs.promises.unlink(outputFile);
 
-			thumb = await provider.putFile(data, path.join(thumbDir, thumbName));
-			console.log(`Screenshot thumb created for employee (${user.name})`, thumb);
+			thumb = await provider.putFile(
+				data,
+				path.join(thumbDir, thumbName)
+			);
+			console.log(
+				`Screenshot thumb created for employee (${user.name})`,
+				thumb
+			);
 		} catch (error) {
-			console.log('Error while uploading screenshot into file storage provider:', error);
+			console.log(
+				'Error while uploading screenshot into file storage provider:',
+				error
+			);
 		}
 
 		try {
 			entity.file = file.key;
 			entity.thumb = thumb.key;
-			entity.storageProvider = (provider.name).toUpperCase() as FileStorageProviderEnum;
-			entity.recordedAt = entity.recordedAt ? entity.recordedAt : new Date();
+			entity.storageProvider =
+				provider.name.toUpperCase() as FileStorageProviderEnum;
+			entity.recordedAt = entity.recordedAt
+				? entity.recordedAt
+				: new Date();
 
 			const screenshot = await this.screenshotService.create(entity);
-			console.log(`Screenshot created for employee (${user.name})`, screenshot);
+			console.log(
+				`Screenshot created for employee (${user.name})`,
+				screenshot
+			);
 			return this.screenshotService.findOneByIdString(screenshot.id);
 		} catch (error) {
-			console.log(`Error while creating screenshot for employee (${user.name})`, error);
+			console.log(
+				`Error while creating screenshot for employee (${user.name})`,
+				error
+			);
 		}
 	}
 
 	@ApiOperation({
-		summary: 'Delete record'
+		summary: 'Delete record',
 	})
 	@ApiResponse({
 		status: HttpStatus.OK,
-		description: 'The record has been successfully deleted'
+		description: 'The record has been successfully deleted',
 	})
 	@ApiResponse({
 		status: HttpStatus.NOT_FOUND,
-		description: 'Record not found'
+		description: 'Record not found',
 	})
 	@Permissions(PermissionsEnum.DELETE_SCREENSHOTS)
 	@Delete(':id')

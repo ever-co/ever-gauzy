@@ -10,7 +10,9 @@ import {
 	waitElementToHide,
 	verifyText,
 	verifyTextNotExisting,
-	verifyByLength
+	verifyByLength,
+	wait
+	
 } from '../utils/util';
 import { AddTaskPage } from '../pageobjects/AddTasksPageObject';
 
@@ -39,7 +41,7 @@ export const clickSelectProjectDropdown = () => {
 };
 
 export const selectProjectOptionDropdown = (text) => {
-	clickElementByText(AddTaskPage.selectProjectDropdownOptionCss, text);
+	clickElementByText(AddTaskPage.selectProjectDrodownOptionCss, text);
 };
 
 export const selectEmployeeDropdownVisible = () => {
@@ -156,6 +158,10 @@ export const selectTasksTableRow = (index) => {
 	clickButtonByIndex(AddTaskPage.selectTableRowCss, index);
 };
 
+export const selectFirstTaskTableRow = (index) => {
+	clickButtonByIndex(AddTaskPage.selectTableFirstRowCss, index);
+};
+
 export const deleteTaskButtonVisible = () => {
 	verifyElementIsVisible(AddTaskPage.deleteTaskButtonCss);
 };
@@ -172,19 +178,36 @@ export const clickConfirmDeleteTaskButton = () => {
 	clickButton(AddTaskPage.confirmDeleteTaskButtonCss);
 };
 
-export const duplicateOrEditTaskButtonVisible = () => {
-	verifyElementIsVisible(AddTaskPage.duplicateOrEditTaskButtonCss);
+export const duplicateTaskButtonVisible = () => {
+	verifyElementIsVisible(AddTaskPage.duplicateTaskButtonCss);
 };
 
-export const clickDuplicateOrEditTaskButton = (index) => {
-	clickButtonByIndex(AddTaskPage.duplicateOrEditTaskButtonCss, index);
+export const clickDuplicateTaskButton = (index) => {
+	clickButtonByIndex(AddTaskPage.duplicateTaskButtonCss, index);
 };
 
-export const confirmDuplicateOrEditTaskButtonVisible = () => {
+export const confirmDuplicateTaskButtonVisible = () => {
 	verifyElementIsVisible(AddTaskPage.confirmDuplicateOrEditTaskButtonCss);
 };
 
-export const clickConfirmDuplicateOrEditTaskButton = () => {
+export const clickConfirmDuplicateTaskButton = () => {
+	clickButton(AddTaskPage.confirmDuplicateOrEditTaskButtonCss);
+};
+
+export const editTaskButtonVisible = () => {
+	wait(500);
+	verifyElementIsVisible(AddTaskPage.editTaskButtonCss);
+};
+
+export const clickEditTaskButton = (index) => {
+	clickButtonByIndex(AddTaskPage.editTaskButtonCss, index);
+};
+
+export const confirmEditTaskButtonVisible = () => {
+	verifyElementIsVisible(AddTaskPage.confirmDuplicateOrEditTaskButtonCss);
+};
+
+export const clickConfirmEditTaskButton = () => {
 	clickButton(AddTaskPage.confirmDuplicateOrEditTaskButtonCss);
 };
 

@@ -9,26 +9,21 @@ import { EmailResetController } from './email-reset.controller';
 import { UserModule } from '../user/user.module';
 import { TenantModule } from '../tenant/tenant.module';
 import { EmailModule } from './../email/email.module';
+import { EmployeeModule } from './../employee/employee.module';
+import { AuthModule } from './../auth/auth.module';
 
 @Module({
 	imports: [
-		TypeOrmModule.forFeature([
-			EmailReset
-		]),
+		TypeOrmModule.forFeature([EmailReset]),
 		forwardRef(() => TenantModule),
 		CqrsModule,
 		UserModule,
-		EmailModule
+		EmailModule,
+		EmployeeModule,
+		AuthModule
 	],
-	providers: [
-		EmailResetService,
-		...CommandHandlers,
-		...QueryHandlers
-	],
-	exports: [
-		TypeOrmModule,
-		EmailResetService
-	],
+	providers: [EmailResetService, ...CommandHandlers, ...QueryHandlers],
+	exports: [TypeOrmModule, EmailResetService],
 	controllers: [EmailResetController]
 })
-export class EmailResetModule { }
+export class EmailResetModule {}

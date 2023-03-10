@@ -38,8 +38,8 @@ Feature: Add task
     Then User enter title name
     And User can see only the results
     And User can verify task was created
-    And User clear the search field
   Scenario: Duplicate task
+    And User clear the search field
     Then User can see table populated with tasks
     When User click on table first row
     Then Duplicate task button will become active

@@ -42,8 +42,9 @@ import {
 export class OrganizationTeam extends TenantOrganizationBaseEntity
 	implements IOrganizationTeam {
 
-	@ApiProperty({ type: () => String })
+	@ApiProperty({ type: () => String, required: true })
 	@IsNotEmpty()
+	@IsString()
 	@Index()
 	@Column()
 	name: string;
@@ -65,10 +66,10 @@ export class OrganizationTeam extends TenantOrganizationBaseEntity
 	/**
 	 * Team type should be boolean true/false
 	 */
-	@ApiPropertyOptional({ type: () => Boolean })
+	@ApiPropertyOptional({ type: () => Boolean, default: false })
 	@IsOptional()
 	@IsBoolean()
-	@Column({ nullable: true, default: true })
+	@Column({ nullable: true, default: false })
 	public?: boolean;
 
 	@ApiPropertyOptional({ type: () => String })

@@ -138,4 +138,9 @@ export interface IEnvironment {
 
 	demo: boolean;
 	demoCredentialConfig?: IDemoCredential;
+
+	/**
+	 * Email Reset
+	 */
+	EMAIL_RESET_EXPIRATION_TIME?: number;
 }
