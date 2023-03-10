@@ -85,16 +85,15 @@ export class ScreenshotController {
 			await new Promise(async (resolve, reject) => {
 				const image = await Jimp.read(inputFile);
 
-				// TODO: possible to use jimp.AUTO for height instead of hardcode to 150px?
+				// we are using Jimp.AUTO for height instead of hardcode (e.g. 150px)
 				image.resize(250, Jimp.AUTO);
 
 				try {
 					await image.writeAsync(outputFile);
+					resolve(image);					
 				} catch (error) {
 					reject(error);
 				}
-
-				resolve(image);
 			});
 			const thumbName = `thumb-${file.filename}`;
 			const thumbDir = path.dirname(file.key);
