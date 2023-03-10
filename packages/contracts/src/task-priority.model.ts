@@ -14,13 +14,15 @@ export interface ITaskPriority extends IBasePerTenantAndOrganizationEntityModel,
 	projectId?: IOrganizationProject['id'];
 }
 
-export interface ITaskPriorityCreateInput extends Omit<ITaskPriority, 'isSystem'>, Omit<ITaskPriority, 'value'> { }
+export interface ITaskPriorityCreateInput extends Omit<ITaskPriority, 'isSystem'>, Omit<ITaskPriority, 'value'> {}
 
 export interface ITaskPriorityUpdateInput extends Partial<ITaskPriorityCreateInput> {
 	id?: string;
 }
 
-export interface ITaskPriorityFindInput extends IBasePerTenantAndOrganizationEntityModel, Pick<ITaskPriority, 'projectId' | 'organizationTeamId'> { }
+export interface ITaskPriorityFindInput
+	extends IBasePerTenantAndOrganizationEntityModel,
+		Pick<ITaskPriority, 'projectId' | 'organizationTeamId'> {}
 
 /**
  * Default task priorities

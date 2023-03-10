@@ -14,13 +14,15 @@ export interface ITaskStatus extends IBasePerTenantAndOrganizationEntityModel, I
 	projectId?: IOrganizationProject['id'];
 }
 
-export interface ITaskStatusCreateInput extends Omit<ITaskStatus, 'isSystem'>, Omit<ITaskStatus, 'value'> { }
+export interface ITaskStatusCreateInput extends Omit<ITaskStatus, 'isSystem'>, Omit<ITaskStatus, 'value'> {}
 
 export interface ITaskStatusUpdateInput extends Partial<ITaskStatusCreateInput> {
 	id?: string;
 }
 
-export interface ITaskStatusFindInput extends IBasePerTenantAndOrganizationEntityModel, Pick<ITaskStatus, 'projectId' | 'organizationTeamId'> { }
+export interface ITaskStatusFindInput
+	extends IBasePerTenantAndOrganizationEntityModel,
+		Pick<ITaskStatus, 'projectId' | 'organizationTeamId'> {}
 
 /**
  * Default task statuses
@@ -31,5 +33,5 @@ export enum TaskStatusEnum {
 	READY_FOR_REVIEW = 'ready-for-review',
 	IN_REVIEW = 'in-review',
 	BLOCKED = 'blocked',
-	COMPLETED = 'completed',
+	COMPLETED = 'completed'
 }
