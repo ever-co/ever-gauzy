@@ -1,12 +1,9 @@
-import {
-	IBasePerTenantAndOrganizationEntityModel,
-	IBaseRelationsEntityModel,
-} from './base-entity.model';
+import { IBasePerTenantAndOrganizationEntityModel, IBaseRelationsEntityModel } from './base-entity.model';
 import { IEmployee } from './employee.model';
 import { IInvoiceItem } from './invoice-item.model';
 import { IOrganizationProject } from './organization-projects.model';
 import { IOrganizationSprint } from './organization-sprint.model';
-import { IOrganizationTeam } from './organization-team-model';
+import { IOrganizationTeam } from './organization-team.model';
 import { ITag } from './tag.model';
 import { IUser } from './user.model';
 import { TaskStatusEnum } from './task-status.model';
@@ -35,8 +32,7 @@ export interface ITask extends IBasePerTenantAndOrganizationEntityModel {
 	creatorId?: IUser['id'];
 }
 
-export interface IGetTaskOptions
-	extends IBasePerTenantAndOrganizationEntityModel {
+export interface IGetTaskOptions extends IBasePerTenantAndOrganizationEntityModel {
 	projectId?: IOrganizationProject['id'];
 }
 
@@ -44,14 +40,14 @@ export interface IGetTaskByEmployeeOptions extends IBaseRelationsEntityModel {
 	where?: IGetTaskOptions;
 }
 
-export interface IGetSprintsOptions extends IGetTaskOptions { }
+export interface IGetSprintsOptions extends IGetTaskOptions {}
 
 export enum TaskParticipantEnum {
 	EMPLOYEES = 'employees',
-	TEAMS = 'teams',
+	TEAMS = 'teams'
 }
 
-export interface ITaskCreateInput extends ITask { }
+export interface ITaskCreateInput extends ITask {}
 
 export interface ITaskUpdateInput extends ITaskCreateInput {
 	id?: string;
