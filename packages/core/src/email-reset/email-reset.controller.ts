@@ -1,48 +1,45 @@
-import { 
-    Controller, 
-    HttpCode, 
-    HttpStatus, 
-    UseGuards,
+import {
+	Controller,
+	HttpCode,
+	HttpStatus,
+	UseGuards,
 	Post,
 	Body,
+	UsePipes,
+	ValidationPipe
 } from '@nestjs/common';
-import {
-	LanguagesEnum,
-	PermissionsEnum,
-} from '@gauzy/contracts';
+import { LanguagesEnum, PermissionsEnum } from '@gauzy/contracts';
 import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
 import { LanguageDecorator, Permissions } from './../shared/decorators';
-import { UserEmailDTO } from '../user/dto'
-import { EmailResetService } from './email-reset.service'
+import { EmailResetService } from './email-reset.service';
 import { ApiBearerAuth } from '@nestjs/swagger';
-import { VerifyEmailResetRequestDTO } from './dto/verify-email-reset-request.dto';
-
+import { ResetEmailRequestDTO, VerifyEmailResetRequestDTO } from './dto';
 
 @ApiBearerAuth()
 @Controller('email-reset')
 export class EmailResetController {
-    constructor(
-        private readonly emailResetService: EmailResetService
-    ){}
+	constructor(private readonly emailResetService: EmailResetService) {}
 
-    @HttpCode(HttpStatus.ACCEPTED)
+	@HttpCode(HttpStatus.CREATED)
 	@UseGuards(TenantPermissionGuard, PermissionGuard)
 	@Permissions(PermissionsEnum.ORG_USERS_EDIT, PermissionsEnum.PROFILE_EDIT)
 	@Post('/request-change-email')
+	@UsePipes(new ValidationPipe())
 	async requestChangeEmail(
-		@Body() entity: UserEmailDTO,
+		@Body() entity: ResetEmailRequestDTO,
 		@LanguageDecorator() languageCode: LanguagesEnum
-	){
-		return await this.emailResetService.requestChangeEmail(entity, languageCode)
+	) {
+		return await this.emailResetService.requestChangeEmail(
+			entity,
+			languageCode
+		);
 	}
 
-	@HttpCode(HttpStatus.ACCEPTED)
 	@UseGuards(TenantPermissionGuard, PermissionGuard)
 	@Permissions(PermissionsEnum.ORG_USERS_EDIT, PermissionsEnum.PROFILE_EDIT)
 	@Post('/verify-change-email')
-	async verifyChangeEmail(
-		@Body() entity: VerifyEmailResetRequestDTO,
-	){
-		return await this.emailResetService.verifyCode(entity)
+	@UsePipes(new ValidationPipe())
+	async verifyChangeEmail(@Body() entity: VerifyEmailResetRequestDTO) {
+		return await this.emailResetService.verifyCode(entity);
 	}
 }

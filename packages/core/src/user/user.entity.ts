@@ -43,7 +43,7 @@ import {
 
 @Entity('user')
 export class User extends TenantBaseEntity implements IUser {
-
+	
 	@ApiPropertyOptional({ type: () => String })
 	@Index()
 	@Column({ nullable: true })
@@ -197,9 +197,13 @@ export class User extends TenantBaseEntity implements IUser {
 	 * UserOrganization
 	 */
 	@ApiProperty({ type: () => UserOrganization, isArray: true })
-	@OneToMany(() => UserOrganization, (userOrganization) => userOrganization.user, {
-		cascade: true
-	})
+	@OneToMany(
+		() => UserOrganization,
+		(userOrganization) => userOrganization.user,
+		{
+			cascade: true
+		}
+	)
 	@JoinColumn()
 	organizations?: IOrganization[];
 
@@ -222,12 +226,4 @@ export class User extends TenantBaseEntity implements IUser {
 		onDelete: 'CASCADE'
 	})
 	teams?: IOrganizationTeam[];
-
-	/**
-	 * User belongs to email reset
-	 */
-	@OneToMany(() => EmailReset, (it) => it.user, {
-		onDelete: 'CASCADE'
-	})
-	emailReset?: IOrganizationTeam[];
 }
