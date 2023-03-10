@@ -18256,11 +18256,6 @@ iconv@2:
     nan "^2.14.0"
     safer-buffer "^2.1.2"
 
-iconv@^3.0.1:
-  version "3.0.1"
-  resolved "https://registry.yarnpkg.com/iconv/-/iconv-3.0.1.tgz#31d319d71b59415cf348362c382961b1eb6f0e81"
-  integrity sha512-lJnFLxVc0d82R7GfU7a9RujKVUQ3Eee19tPKWZWBJtAEGRHVEyFzCtbNl3GPKuDnHBBRT4/nDS4Ru9AIDT72qA==
-
 icss-replace-symbols@^1.1.0:
   version "1.1.0"
   resolved "https://registry.yarnpkg.com/icss-replace-symbols/-/icss-replace-symbols-1.1.0.tgz#06ea6f83679a7749e386cfe1fe812ae5db223ded"
