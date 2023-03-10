@@ -46,8 +46,7 @@ export interface IKeyResult extends IBasePerTenantAndOrganizationEntityModel {
 	kpiId?: string;
 }
 
-export interface IKeyResultUpdate
-	extends IBasePerTenantAndOrganizationEntityModel {
+export interface IKeyResultUpdate extends IBasePerTenantAndOrganizationEntityModel {
 	id?: string;
 	owner: string;
 	progress: number;
@@ -71,8 +70,7 @@ export enum KeyResultWeightEnum {
 	INCREASE_BY_4X = '4'
 }
 
-export interface IGoalFindInput
-	extends IBasePerTenantAndOrganizationEntityModel {
+export interface IGoalFindInput extends IBasePerTenantAndOrganizationEntityModel {
 	employee?: IEmployeeFindInput;
 }
 

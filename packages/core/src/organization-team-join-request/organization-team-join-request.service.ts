@@ -8,13 +8,12 @@ import { OrganizationTeamJoinRequest } from './organization-team-join-request.en
 
 @Injectable()
 export class OrganizationTeamJoinRequestService extends TenantAwareCrudService<OrganizationTeamJoinRequest> {
-
 	constructor(
 		@InjectRepository(OrganizationTeamJoinRequest)
 		private readonly _organizationTeamJoinRequestRepository: Repository<OrganizationTeamJoinRequest>,
 
 		@InjectRepository(OrganizationTeam)
-		private readonly _organizationTeamRepository: Repository<OrganizationTeam>,
+		private readonly _organizationTeamRepository: Repository<OrganizationTeam>
 	) {
 		super(_organizationTeamJoinRequestRepository);
 	}
@@ -25,9 +24,7 @@ export class OrganizationTeamJoinRequestService extends TenantAwareCrudService<O
 	 * @param entity
 	 * @returns
 	 */
-	async create(
-		entity: IOrganizationTeamJoinRequestCreateInput
-	): Promise<IOrganizationTeamJoinRequest> {
+	async create(entity: IOrganizationTeamJoinRequestCreateInput): Promise<IOrganizationTeamJoinRequest> {
 		try {
 			const { organizationTeamId } = entity;
 			const organizationTeam = await this._organizationTeamRepository.findOneByOrFail({

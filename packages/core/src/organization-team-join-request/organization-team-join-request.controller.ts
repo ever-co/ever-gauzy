@@ -9,10 +9,7 @@ import { OrganizationTeamJoinRequestService } from './organization-team-join-req
 @ApiTags('OrganizationTeamJoinRequest')
 @Controller()
 export class OrganizationTeamJoinRequestController {
-
-	constructor(
-		private readonly _organizationTeamJoinRequestService: OrganizationTeamJoinRequestService
-	) { }
+	constructor(private readonly _organizationTeamJoinRequestService: OrganizationTeamJoinRequestService) {}
 
 	@HttpCode(HttpStatus.OK)
 	@Get()
@@ -33,9 +30,7 @@ export class OrganizationTeamJoinRequestController {
 	@Post()
 	@UsePipes(new ValidationPipe({ whitelist: true }))
 	@Public()
-	async create(
-		@Body() entity: OrganizationTeamJoinRequest
-	): Promise<IOrganizationTeamJoinRequest> {
+	async create(@Body() entity: OrganizationTeamJoinRequest): Promise<IOrganizationTeamJoinRequest> {
 		return await this._organizationTeamJoinRequestService.create(entity);
 	}
 }

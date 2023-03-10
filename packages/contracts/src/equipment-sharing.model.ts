@@ -4,8 +4,7 @@ import { IOrganizationTeam } from './organization-team.model';
 import { IEquipment } from './equipment.model';
 import { IEquipmentSharingPolicy } from './equipment-sharing-policy.model';
 
-export interface IEquipmentSharing
-	extends IBasePerTenantAndOrganizationEntityModel {
+export interface IEquipmentSharing extends IBasePerTenantAndOrganizationEntityModel {
 	name: string;
 	shareRequestDay: Date;
 	shareStartDay: Date;
@@ -21,8 +20,7 @@ export interface IEquipmentSharing
 	teams?: IOrganizationTeam[];
 }
 
-export interface IEquipmentSharingRequest
-	extends IBasePerTenantAndOrganizationEntityModel {
+export interface IEquipmentSharingRequest extends IBasePerTenantAndOrganizationEntityModel {
 	equipment?: IEquipment;
 	equipmentId?: string;
 	shareRequestDay: Date;

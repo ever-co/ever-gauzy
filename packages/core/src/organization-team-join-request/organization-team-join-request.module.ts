@@ -9,24 +9,13 @@ import { OrganizationTeamJoinRequestService } from './organization-team-join-req
 
 @Module({
 	imports: [
-		RouterModule.forRoutes([
-			{ path: '/organization-team-join', module: OrganizationTeamJoinRequestModule }
-		]),
-		TypeOrmModule.forFeature([
-			OrganizationTeamJoinRequest
-		]),
+		RouterModule.forRoutes([{ path: '/organization-team-join', module: OrganizationTeamJoinRequestModule }]),
+		TypeOrmModule.forFeature([OrganizationTeamJoinRequest]),
 		TenantModule,
 		OrganizationTeamModule
 	],
-	controllers: [
-		OrganizationTeamJoinRequestController
-	],
-	providers: [
-		OrganizationTeamJoinRequestService
-	],
-	exports: [
-		TypeOrmModule,
-		OrganizationTeamJoinRequestService
-	]
+	controllers: [OrganizationTeamJoinRequestController],
+	providers: [OrganizationTeamJoinRequestService],
+	exports: [TypeOrmModule, OrganizationTeamJoinRequestService]
 })
-export class OrganizationTeamJoinRequestModule { }
+export class OrganizationTeamJoinRequestModule {}
