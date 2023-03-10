@@ -1,6 +1,13 @@
 import { IRole } from './role.model';
 import { IBasePerTenantAndOrganizationEntityModel } from './base-entity.model';
-import { IUser, IUserCodeInput, IUserEmailInput, IUserRegistrationInput, IUserTokenInput, LanguagesEnum } from './user.model';
+import {
+	IUser,
+	IUserCodeInput,
+	IUserEmailInput,
+	IUserRegistrationInput,
+	IUserTokenInput,
+	LanguagesEnum
+} from './user.model';
 import { IOrganizationProject } from './organization-projects.model';
 import { IOrganization } from './organization.model';
 import { IOrganizationContact } from './organization-contact.model';
@@ -55,8 +62,7 @@ export interface ICreateEmailInvitesInput extends IBasePerTenantAndOrganizationE
 	[x: string]: any;
 }
 
-export interface ICreateOrganizationContactInviteInput
-	extends IBasePerTenantAndOrganizationEntityModel {
+export interface ICreateOrganizationContactInviteInput extends IBasePerTenantAndOrganizationEntityModel {
 	emailId: string;
 	organizationContactId: string;
 	roleId: string;
@@ -71,8 +77,7 @@ export interface ICreateEmailInvitesOutput {
 	ignored: number;
 }
 
-export interface IInviteFindInput
-	extends IBasePerTenantAndOrganizationEntityModel {
+export interface IInviteFindInput extends IBasePerTenantAndOrganizationEntityModel {
 	invitationType?: InvitationTypeEnum;
 }
 
@@ -121,8 +126,7 @@ export interface IInviteViewModel extends IBasePerTenantAndOrganizationEntityMod
 	token: string;
 }
 
-export interface IInviteUserModel
-	extends IBasePerTenantAndOrganizationEntityModel {
+export interface IInviteUserModel extends IBasePerTenantAndOrganizationEntityModel {
 	email: string;
 	role: string;
 	registerUrl: string;
@@ -130,8 +134,7 @@ export interface IInviteUserModel
 	invitedBy: IUser;
 	originUrl?: string;
 }
-export interface IInviteEmployeeModel
-	extends IBasePerTenantAndOrganizationEntityModel {
+export interface IInviteEmployeeModel extends IBasePerTenantAndOrganizationEntityModel {
 	email: string;
 	registerUrl: string;
 	languageCode: LanguagesEnum;

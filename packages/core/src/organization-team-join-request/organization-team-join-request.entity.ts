@@ -1,13 +1,7 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Column, Entity, Index, ManyToOne, RelationId } from 'typeorm';
 import { Exclude } from 'class-transformer';
-import {
-	IsEmail,
-	IsNotEmpty,
-	IsOptional,
-	IsString,
-	IsUUID
-} from 'class-validator';
+import { IsEmail, IsNotEmpty, IsOptional, IsString, IsUUID } from 'class-validator';
 import {
 	IOrganizationTeam,
 	IOrganizationTeamJoinRequest,
@@ -18,7 +12,6 @@ import { OrganizationTeam, TenantOrganizationBaseEntity, User } from '../core/en
 
 @Entity('organization_team_join_request')
 export class OrganizationTeamJoinRequest extends TenantOrganizationBaseEntity implements IOrganizationTeamJoinRequest {
-
 	@ApiProperty({ type: () => String, required: true })
 	@IsNotEmpty()
 	@IsEmail()
@@ -71,7 +64,7 @@ export class OrganizationTeamJoinRequest extends TenantOrganizationBaseEntity im
 	 * Join request belongs to user
 	 */
 	@ManyToOne(() => User, {
-		onDelete: "CASCADE"
+		onDelete: 'CASCADE'
 	})
 	user?: IUser;
 
@@ -84,7 +77,7 @@ export class OrganizationTeamJoinRequest extends TenantOrganizationBaseEntity im
 	 * Organization Team
 	 */
 	@ManyToOne(() => OrganizationTeam, {
-		onDelete: "CASCADE"
+		onDelete: 'CASCADE'
 	})
 	organizationTeam?: IOrganizationTeam;
 
