@@ -4,27 +4,22 @@ import { EmailResetService } from './../../email-reset.service';
 
 @CommandHandler(EmailResetCreateCommand)
 export class EmailResetCreateHandler
-	implements ICommandHandler<EmailResetCreateCommand> {
-	
-	constructor(
-		private readonly _emailResetService : EmailResetService
-	) {}
+	implements ICommandHandler<EmailResetCreateCommand>
+{
+	constructor(private readonly _emailResetService: EmailResetService) {}
 
-	public async execute(
-		command: EmailResetCreateCommand
-	) {
+	public async execute(command: EmailResetCreateCommand) {
 		const { input } = command;
-		const { email, oldEmail, code, userId } = input;
+		const { email, oldEmail, code, userId, token } = input;
 
 		try {
 			return await this._emailResetService.create({
 				email,
-				oldEmail, 
+				oldEmail,
 				code,
-				userId
+				userId,
+				token
 			});
-		} catch (error) {
-			
-		}
+		} catch (error) {}
 	}
 }
