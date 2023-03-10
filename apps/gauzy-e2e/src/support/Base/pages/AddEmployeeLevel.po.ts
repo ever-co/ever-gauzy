@@ -65,15 +65,30 @@ export const clickKeyboardButtonByKeyCode = (keycode) => {
 };
 
 export const saveNewLevelButtonVisible = () => {
-	verifyElementIsVisible(AddEmployeeLevelPage.saveNewLevelButtonCss);
+	verifyElementIsVisible(AddEmployeeLevelPage.updateLevelButtonCss);
 };
 
 export const clickSaveNewLevelButton = () => {
-	clickButton(AddEmployeeLevelPage.saveNewLevelButtonCss);
+	clickButton(AddEmployeeLevelPage.updateLevelButtonCss);
 };
 
 export const editEmployeeLevelButtonVisible = () => {
 	verifyElementIsVisible(AddEmployeeLevelPage.editEmployeeLevelButtonCss);
+};
+
+export const clickRowEmployeeLevel = () => {
+	getLastElement(AddEmployeeLevelPage.selectEmployeeLevelRow)
+};
+
+export const clickRowEmployeeLevelToDelete = () => {
+	getLastElement(AddEmployeeLevelPage.selectEmployeeLevelRowtoDelete)
+};
+
+
+export const clickRowEmployeeLevelTwice = () => {
+	clickButton(AddEmployeeLevelPage.selectEmployeeLevelRow);
+	cy.wait(500);
+	clickButton(AddEmployeeLevelPage.selectEmployeeLevelRow);
 };
 
 export const clickEditEmployeeLevelButton = () => {

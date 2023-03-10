@@ -69,6 +69,14 @@ export const clickSavePositionButton = () => {
 	clickButton(AddEmployeePositionPage.saveNewPositionButtonCss);
 };
 
+export const updatePositionButtonVisible = () => {
+	verifyElementIsVisible(AddEmployeePositionPage.updatePositionButtonCss)
+}
+
+export const clickUpdatePositionButton = () => {
+	clickButton(AddEmployeePositionPage.updatePositionButtonCss);
+}
+
 export const editEmployeePositionButtonVisible = () => {
 	verifyElementIsVisible(
 		AddEmployeePositionPage.editEmployeePositionButtonCss
@@ -76,8 +84,21 @@ export const editEmployeePositionButtonVisible = () => {
 };
 
 export const clickEditEmployeePositionButton = () => {
-	getLastElement(AddEmployeePositionPage.editEmployeePositionButtonCss);
+	clickButton(AddEmployeePositionPage.editEmployeePositionButtonCss);
 };
+
+export const selectPositionToEdit =() => {
+	getLastElement(AddEmployeePositionPage.selectPositionToEditCss)
+}
+
+export const selectPositionToDelete = () => {
+	getLastElement(AddEmployeePositionPage.selectPositionToDeleteCss)
+}
+
+export const clickRowEmployeeLevelTwice = () => {
+	cy.wait(500)
+	getLastElement(AddEmployeePositionPage.selectPositionToEditCss)
+}
 
 export const editEmployeePositionInputVisible = () => {
 	verifyElementIsVisible(AddEmployeePositionPage.editPositionInputCss);

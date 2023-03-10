@@ -1,13 +1,22 @@
-import { Entity, Index, Column, AfterLoad, ManyToOne, JoinColumn, RelationId } from 'typeorm';
+import {
+	Entity,
+	Index,
+	Column,
+	AfterLoad,
+	ManyToOne,
+	JoinColumn,
+	RelationId,
+	BeforeInsert,
+} from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
 import * as moment from 'moment';
 import { IsEmail, IsNotEmpty } from 'class-validator';
 import { IEmailReset, IUser } from '@gauzy/contracts';
+import { environment } from '@gauzy/config';
 import { TenantBaseEntity, User } from '../core/entities/internal';
 
 @Entity('email_reset')
-export class EmailReset extends TenantBaseEntity
-	implements IEmailReset {
+export class EmailReset extends TenantBaseEntity implements IEmailReset {
 
 	@ApiProperty({ type: () => String, required: true })
 	@IsEmail()
@@ -27,6 +36,15 @@ export class EmailReset extends TenantBaseEntity
 	@Column()
 	code: number;
 
+	@ApiProperty({ type: () => String })
+	@Index()
+	@Column({ nullable: true })
+	token: string;
+
+	@ApiProperty({ type: () => 'timestamptz' })
+	@Column({ nullable: true })
+	expiredAt?: Date;
+
 	expired?: boolean;
 
 	/*
@@ -38,8 +56,8 @@ export class EmailReset extends TenantBaseEntity
 	/**
 	 * User
 	 */
-	@ManyToOne(() => User, (user) => user.emailReset, {
-		onDelete: 'SET NULL'
+	@ManyToOne(() => User, {
+		onDelete: 'CASCADE'
 	})
 	@JoinColumn()
 	user?: IUser;
@@ -50,12 +68,22 @@ export class EmailReset extends TenantBaseEntity
 	userId?: IUser['id'];
 
 	/**
-	* Called after entity is loaded.
-	*/
+	 * Called after entity is loaded.
+	 */
 	@AfterLoad()
 	afterLoadEntity?() {
 		const createdAt = moment(this.createdAt, 'YYYY-MM-DD HH:mm:ss');
 		const expiredAt = moment(moment(), 'YYYY-MM-DD HH:mm:ss');
 		this.expired = expiredAt.diff(createdAt, 'minutes') > 10;
+	}
+
+	/**
+	 * Called before entity is inserted.
+	 */
+	@BeforeInsert()
+	beforeInsertEntity() {
+		this.expiredAt = moment(this.createdAt)
+			.add(environment.EMAIL_RESET_EXPIRATION_TIME, 'seconds')
+			.toDate();
 	}
 }

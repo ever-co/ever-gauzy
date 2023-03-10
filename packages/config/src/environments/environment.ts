@@ -42,6 +42,12 @@ export const environment: IEnvironment = {
 		86400 * 7, // default verification expire token time (7 days)
 
 	/**
+	 * Email Reset
+	 */
+	EMAIL_RESET_EXPIRATION_TIME:
+		parseInt(process.env.EMAIL_RESET_EXPIRATION_TIME) || 1800, // default email reset expiration time (30 minutes)
+
+	/**
 	 * Password Less Authentication Configuration
 	 */
 	AUTHENTICATION_CODE_EXPIRATION_TIME:

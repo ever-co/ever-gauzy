@@ -97,3 +97,7 @@ export const verifyUserExists = (text) => {
 export const waitMessageToHide = () => {
 	waitElementToHide(AddUserPage.toastrMessageCss);
 };
+
+export const goToEndOfUserList = () => {
+	clickButton(AddUserPage.endOfUserListCss)
+}
