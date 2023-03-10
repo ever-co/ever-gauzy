@@ -68,7 +68,7 @@ export class OrganizationTeam extends TenantOrganizationBaseEntity
 	@ApiPropertyOptional({ type: () => Boolean })
 	@IsOptional()
 	@IsBoolean()
-	@Column({ nullable: true, default: true })
+	@Column({ nullable: true, default: false })
 	public?: boolean;
 
 	@ApiPropertyOptional({ type: () => String })
