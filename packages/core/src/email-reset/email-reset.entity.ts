@@ -17,6 +17,7 @@ import { TenantBaseEntity, User } from '../core/entities/internal';
 
 @Entity('email_reset')
 export class EmailReset extends TenantBaseEntity implements IEmailReset {
+
 	@ApiProperty({ type: () => String, required: true })
 	@IsEmail()
 	@Index()
@@ -37,11 +38,11 @@ export class EmailReset extends TenantBaseEntity implements IEmailReset {
 
 	@ApiProperty({ type: () => String })
 	@Index()
-	@Column({ nullable: true, default: null })
+	@Column({ nullable: true })
 	token: string;
 
 	@ApiProperty({ type: () => 'timestamptz' })
-	@Column({ nullable: true, default: null })
+	@Column({ nullable: true })
 	expiredAt?: Date;
 
 	expired?: boolean;
