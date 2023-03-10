@@ -1,13 +1,4 @@
-import {
-	Entity,
-	Index,
-	Column,
-	AfterLoad,
-	ManyToOne,
-	JoinColumn,
-	RelationId,
-	BeforeInsert,
-} from 'typeorm';
+import { Entity, Index, Column, AfterLoad, ManyToOne, JoinColumn, RelationId, BeforeInsert } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
 import * as moment from 'moment';
 import { IsEmail, IsNotEmpty } from 'class-validator';
@@ -17,7 +8,6 @@ import { TenantBaseEntity, User } from '../core/entities/internal';
 
 @Entity('email_reset')
 export class EmailReset extends TenantBaseEntity implements IEmailReset {
-
 	@ApiProperty({ type: () => String, required: true })
 	@IsEmail()
 	@Index()
@@ -82,8 +72,6 @@ export class EmailReset extends TenantBaseEntity implements IEmailReset {
 	 */
 	@BeforeInsert()
 	beforeInsertEntity() {
-		this.expiredAt = moment(this.createdAt)
-			.add(environment.EMAIL_RESET_EXPIRATION_TIME, 'seconds')
-			.toDate();
+		this.expiredAt = moment(this.createdAt).add(environment.EMAIL_RESET_EXPIRATION_TIME, 'seconds').toDate();
 	}
 }
