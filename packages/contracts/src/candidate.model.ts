@@ -3,7 +3,7 @@ import { ICandidateFeedback } from './candidate-feedback.model';
 import { ICandidateSource } from './candidate-source.model';
 import { IBasePerTenantAndOrganizationEntityModel } from './base-entity.model';
 import { IUserFindInput, IUser } from './user.model';
-import { IOrganizationTeam } from './organization-team-model';
+import { IOrganizationTeam } from './organization-team.model';
 import { IOrganizationEmploymentType } from './organization-employment-type.model';
 import { ICandidateExperience } from './candidate-experience.model';
 import { ICandidateSkill } from './candidate-skill.model';
@@ -62,8 +62,7 @@ export enum CandidateStatusEnum {
 	HIRED = 'HIRED'
 }
 
-export interface ICandidateFindInput
-	extends IBasePerTenantAndOrganizationEntityModel {
+export interface ICandidateFindInput extends IBasePerTenantAndOrganizationEntityModel {
 	id?: string;
 	user?: IUserFindInput;
 	valueDate?: Date;

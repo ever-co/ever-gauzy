@@ -2,7 +2,7 @@ import { IBasePerTenantAndOrganizationEntityModel } from './base-entity.model';
 import { IEmployee, IEmployeeFindInput } from './employee.model';
 import { IOrganizationProject } from './organization-projects.model';
 import { ITask } from './task.model';
-import { IOrganizationTeam } from './organization-team-model';
+import { IOrganizationTeam } from './organization-team.model';
 import { IKPI } from './goal-settings.model';
 
 export interface IGoal extends IBasePerTenantAndOrganizationEntityModel {
@@ -46,8 +46,7 @@ export interface IKeyResult extends IBasePerTenantAndOrganizationEntityModel {
 	kpiId?: string;
 }
 
-export interface IKeyResultUpdate
-	extends IBasePerTenantAndOrganizationEntityModel {
+export interface IKeyResultUpdate extends IBasePerTenantAndOrganizationEntityModel {
 	id?: string;
 	owner: string;
 	progress: number;
@@ -71,8 +70,7 @@ export enum KeyResultWeightEnum {
 	INCREASE_BY_4X = '4'
 }
 
-export interface IGoalFindInput
-	extends IBasePerTenantAndOrganizationEntityModel {
+export interface IGoalFindInput extends IBasePerTenantAndOrganizationEntityModel {
 	employee?: IEmployeeFindInput;
 }
 

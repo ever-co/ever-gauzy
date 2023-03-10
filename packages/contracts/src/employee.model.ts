@@ -5,7 +5,7 @@ import { IOrganizationDepartment } from './organization-department.model';
 import { IOrganizationEmploymentType } from './organization-employment-type.model';
 import { CrudActionEnum, IOrganizationFindInput } from './organization.model';
 import { IOrganizationPosition } from './organization-positions.model';
-import { IOrganizationTeam } from './organization-team-model';
+import { IOrganizationTeam } from './organization-team.model';
 import { IRequestApprovalEmployee } from './request-approval-employee.model';
 import { ISkill } from './skill-entity.model';
 import { ITag } from './tag.model';
@@ -90,11 +90,9 @@ export interface IEmployee extends IBasePerTenantAndOrganizationEntityModel {
 	allowScreenshotCapture?: boolean;
 }
 
-export type IEmployeeJobsStatisticsResponse = IEmployee &
-	IEmployeeJobsStatistics;
+export type IEmployeeJobsStatisticsResponse = IEmployee & IEmployeeJobsStatistics;
 
-export interface UpdateEmployeeJobsStatistics
-	extends IBasePerTenantAndOrganizationEntityModel {
+export interface UpdateEmployeeJobsStatistics extends IBasePerTenantAndOrganizationEntityModel {
 	isJobSearchActive?: boolean;
 }
 
@@ -110,8 +108,7 @@ export interface IEmployeeFindInput {
 	profile_link?: string;
 }
 
-export interface IEmployeeUpdateInput
-	extends IBasePerTenantAndOrganizationEntityModel {
+export interface IEmployeeUpdateInput extends IBasePerTenantAndOrganizationEntityModel {
 	payPeriod?: string;
 	billRateValue?: number;
 	billRateCurrency?: string;
@@ -140,8 +137,7 @@ export interface IEmployeeUpdateInput
 	allowScreenshotCapture?: boolean;
 }
 
-export interface IEmployeeCreateInput
-	extends IBasePerTenantAndOrganizationEntityModel {
+export interface IEmployeeCreateInput extends IBasePerTenantAndOrganizationEntityModel {
 	user?: IUser;
 	userId?: IUser['id'];
 	password?: string;
@@ -183,15 +179,13 @@ export enum PayPeriodEnum {
 	TWICE_PER_MONTH = 'TWICE_PER_MONTH',
 	MONTHLY = 'MONTHLY'
 }
-export interface IEmployeeLevel
-	extends IBasePerTenantAndOrganizationEntityModel {
+export interface IEmployeeLevel extends IBasePerTenantAndOrganizationEntityModel {
 	level: string;
 	tag?: ITag[];
 	skills?: ISkill[];
 }
 
-export interface IEmployeeLevelInput
-	extends IBasePerTenantAndOrganizationEntityModel {
+export interface IEmployeeLevelInput extends IBasePerTenantAndOrganizationEntityModel {
 	level: string;
 	tags?: ITag[];
 	skills?: ISkill[];
