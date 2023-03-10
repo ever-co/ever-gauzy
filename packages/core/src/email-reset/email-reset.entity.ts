@@ -37,7 +37,7 @@ export class EmailReset extends TenantBaseEntity implements IEmailReset {
 
 	@ApiProperty({ type: () => String })
 	@Index()
-	@Column()
+	@Column({ nullable: true, default: null })
 	token: string;
 
 	@ApiProperty({ type: () => 'timestamptz' })
