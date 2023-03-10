@@ -17,7 +17,7 @@ import * as path from 'path';
 import * as moment from 'moment';
 import * as fs from 'fs';
 import { v4 as uuid } from 'uuid';
-import jimp from 'jimp';
+import * as Jimp from 'jimp';
 import {
 	FileStorageProviderEnum,
 	IScreenshot,
@@ -39,7 +39,10 @@ import { DeleteQueryDTO } from './../../shared/dto';
 @Permissions(PermissionsEnum.TIME_TRACKER)
 @Controller()
 export class ScreenshotController {
-	constructor(private readonly screenshotService: ScreenshotService) {}
+
+	constructor(
+		private readonly screenshotService: ScreenshotService
+	) { }
 
 	@ApiOperation({ summary: 'Add manual time' })
 	@ApiResponse({
@@ -80,10 +83,10 @@ export class ScreenshotController {
 			const outputFile = await tempFile('screenshot-thumb');
 			await fs.promises.writeFile(inputFile, fileContent);
 			await new Promise(async (resolve, reject) => {
-				const image = await jimp.read(inputFile);
+				const image = await Jimp.read(inputFile);
 
 				// TODO: possible to use jimp.AUTO for height instead of hardcode to 150px?
-				await image.resize(250, 150);
+				image.resize(250, Jimp.AUTO);
 
 				try {
 					await image.writeAsync(outputFile);
