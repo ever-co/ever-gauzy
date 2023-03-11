@@ -1,9 +1,7 @@
-import { IChangeEmailRequest } from '@gauzy/contracts';
+import { IUserCodeInput } from '@gauzy/contracts';
 import { UserCodeDTO } from '../../user/dto';
 
 /**
- * Reset Email Request DTO validation
+ * Verify reset email request DTO validation
  */
-export class VerifyEmailResetRequestDTO
-	extends UserCodeDTO
-	implements IChangeEmailRequest {}
+export class VerifyEmailResetRequestDTO extends UserCodeDTO implements IUserCodeInput { }

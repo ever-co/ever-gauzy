@@ -1,5 +1,5 @@
 import { IBasePerTenantEntityModel } from './base-entity.model';
-import { IRelationalUser, IUserCodeInput, IUserEmailInput } from './user.model';
+import { IRelationalUser } from './user.model';
 
 export interface IEmailReset extends IEmailResetCreateInput {
 	expiredAt?: Date;
@@ -14,7 +14,3 @@ export interface IEmailResetCreateInput extends IBasePerTenantEntityModel, IRela
 	code: number;
 	token: string;
 }
-
-export interface IChangeEmailRequest extends IUserCodeInput { }
-
-export interface IResetEmailRequest extends IUserEmailInput { }
