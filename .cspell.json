@@ -269,6 +269,7 @@
         "**/assets/i18n/*.json",
         "**/migrations/**",
         "packages/**/*.seed.json",
-        "**/*.svg"
+        "**/*.svg",
+        "tools/build/webpack.config.js"
     ]
 }
