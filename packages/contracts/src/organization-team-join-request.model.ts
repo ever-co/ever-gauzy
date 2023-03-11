@@ -1,13 +1,8 @@
-import { IBasePerTenantAndOrganizationEntityModel } from './base-entity.model';
-import { IRelationalOrganizationTeam } from './organization-team.model';
-import { IRelationalUser, IUserEmailInput } from './user.model';
+import { IBasePerTenantAndOrganizationEntityModel } from "./base-entity.model";
+import { IRelationalOrganizationTeam } from "./organization-team.model";
+import { IRelationalUser, IUserCodeInput, IUserEmailInput, IUserTokenInput } from "./user.model";
 
-export interface IOrganizationTeamJoinRequest
-	extends IBasePerTenantAndOrganizationEntityModel,
-		IRelationalUser,
-		IOrganizationTeamJoinRequestCreateInput {
-	code: number;
-	token: string;
+export interface IOrganizationTeamJoinRequest extends IBasePerTenantAndOrganizationEntityModel, IRelationalUser, IOrganizationTeamJoinRequestCreateInput, IUserCodeInput, IUserTokenInput {
 	expiredAt: Date;
 	isExpired: boolean;
 }
@@ -21,11 +16,10 @@ export interface IOrganizationTeamJoinRequestCreateInput extends IUserEmailInput
 
 export interface IOrganizationTeamJoinRequestUpdateInput extends IOrganizationTeamJoinRequestCreateInput {
 	id?: IOrganizationTeamJoinRequest['id'];
+	// status: OrganizationTeamJoinRequestStatusEnum;
 }
 
-export interface IOrganizationTeamJoinRequestFindInput
-	extends IBasePerTenantAndOrganizationEntityModel,
-		Pick<IOrganizationTeamJoinRequest, 'organizationTeamId'> {}
+export interface IOrganizationTeamJoinRequestFindInput extends IBasePerTenantAndOrganizationEntityModel, Pick<IOrganizationTeamJoinRequest, 'organizationTeamId'> { }
 
 export enum OrganizationTeamJoinRequestStatusEnum {
 	REQUESTED = 'REQUESTED',
