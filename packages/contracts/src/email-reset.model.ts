@@ -6,8 +6,13 @@ export interface IEmailReset extends IEmailResetCreateInput {
 	isExpired?: boolean;
 }
 
-export interface IEmailResetFindInput extends Partial<IEmailResetCreateInput> { }
+export interface IEmailResetFindInput extends Partial<IEmailResetCreateInput> {}
 
-export interface IEmailResetCreateInput extends IBasePerTenantEntityModel, IRelationalUser, IUserEmailInput, IUserCodeInput, IUserTokenInput {
+export interface IEmailResetCreateInput
+	extends IBasePerTenantEntityModel,
+		IRelationalUser,
+		IUserEmailInput,
+		IUserCodeInput,
+		IUserTokenInput {
 	oldEmail: string;
 }

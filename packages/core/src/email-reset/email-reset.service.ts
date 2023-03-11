@@ -1,21 +1,8 @@
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
-import {
-	BadRequestException,
-	Injectable,
-	NotFoundException
-} from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import {
-	IsNull,
-	MoreThanOrEqual,
-	Repository,
-	SelectQueryBuilder
-} from 'typeorm';
-import {
-	IEmailReset,
-	IEmailResetFindInput,
-	LanguagesEnum
-} from '@gauzy/contracts';
+import { IsNull, MoreThanOrEqual, Repository, SelectQueryBuilder } from 'typeorm';
+import { IEmailReset, IEmailResetFindInput, LanguagesEnum } from '@gauzy/contracts';
 import { RequestContext } from '../core/context';
 import { UserService } from '../user/user.service';
 import { TenantAwareCrudService } from '../core/crud';
@@ -44,29 +31,21 @@ export class EmailResetService extends TenantAwareCrudService<EmailReset> {
 		super(_emailResetRepository);
 	}
 
-	async requestChangeEmail(
-		request: UserEmailDTO,
-		languageCode: LanguagesEnum
-	) {
+	async requestChangeEmail(request: UserEmailDTO, languageCode: LanguagesEnum) {
 		let user = RequestContext.currentUser();
 		user = await this.userService.findOneByIdString(user.id, {
 			relations: {
 				role: true,
 				employee: true
-			},
+			}
 		});
 		const token = await this.authService.getJwtAccessToken(user);
 
 		/**
 		 * User with email already exist
 		 */
-		if (
-			user.email === request.email ||
-			(await this.userService.checkIfExistsEmail(request.email))
-		) {
-			throw new BadRequestException(
-				'Oops, the email exists, please try with another email'
-			);
+		if (user.email === request.email || (await this.userService.checkIfExistsEmail(request.email))) {
+			throw new BadRequestException('Oops, the email exists, please try with another email');
 		}
 		const verificationCode = generateRandomInteger(6);
 		await this.commandBus.execute(
@@ -78,12 +57,9 @@ export class EmailResetService extends TenantAwareCrudService<EmailReset> {
 				token
 			})
 		);
-		const employee = await this.employeeService.findOneByIdString(
-			user.employeeId,
-			{
-				relations: ['organization']
-			}
-		);
+		const employee = await this.employeeService.findOneByIdString(user.employeeId, {
+			relations: ['organization']
+		});
 		const { organization } = employee;
 
 		this.emailService.emailReset(
@@ -133,8 +109,7 @@ export class EmailResetService extends TenantAwareCrudService<EmailReset> {
 
 	async getEmailResetIfCodeMatches(input: IEmailResetFindInput) {
 		try {
-			const query =
-				this._emailResetRepository.createQueryBuilder('email_reset');
+			const query = this._emailResetRepository.createQueryBuilder('email_reset');
 			query.where((qb: SelectQueryBuilder<EmailReset>) => {
 				qb.andWhere(input);
 				qb.andWhere([
@@ -143,7 +118,7 @@ export class EmailResetService extends TenantAwareCrudService<EmailReset> {
 					},
 					{
 						expiredAt: IsNull()
-					},
+					}
 				]);
 
 				qb.orderBy(`"${qb.alias}"."createdAt"`, 'DESC');

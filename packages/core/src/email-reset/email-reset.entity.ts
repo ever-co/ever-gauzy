@@ -1,11 +1,4 @@
-import {
-	Entity,
-	Index,
-	Column,
-	ManyToOne,
-	JoinColumn,
-	RelationId
-} from 'typeorm';
+import { Entity, Index, Column, ManyToOne, JoinColumn, RelationId } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsEmail } from 'class-validator';
 import { Exclude } from 'class-transformer';
@@ -14,7 +7,6 @@ import { TenantBaseEntity, User } from '../core/entities/internal';
 
 @Entity('email_reset')
 export class EmailReset extends TenantBaseEntity implements IEmailReset {
-
 	@ApiProperty({ type: () => String, required: true })
 	@IsEmail()
 	@Index()
