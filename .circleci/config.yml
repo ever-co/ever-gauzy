@@ -33,7 +33,7 @@ aliases:
           sudo apt-get update
           sudo apt install npm
           sudo apt install build-essential
-          sudo npm install --quiet node-gyp -g
+          sudo npm install --quiet node-gyp@9.3.1 -g
           sudo npm config set python /usr/bin/python
 
     - &install-yarn

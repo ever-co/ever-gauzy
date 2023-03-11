@@ -59,6 +59,7 @@
 		"electron-util": "^0.17.2",
 		"express": "^4.18.2",
 		"ffi-napi": "^4.0.3",
+		"iconv": "^3.0.1",
 		"mac-screen-capture-permissions": "^2.0.0",
 		"moment": "^2.29.4",
 		"mysql": "^2.18.1",
