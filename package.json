@@ -232,6 +232,7 @@
 		"autoprefixer": "10.4.5",
 		"bcrypt": "^5.1.0",
 		"dotenv": "^16.0.3",
+		"ffi-napi": "^4.0.3",
 		"ng2-smart-table": "^1.7.2",
 		"rxjs": "^7.4.0",
 		"unleash": "^2.0.2",
