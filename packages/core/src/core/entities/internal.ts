@@ -145,6 +145,7 @@ export * from '../../warehouse/warehouse.entity';
 //core subscribers
 export * from './../../candidate/candidate.subscriber';
 export * from './../../custom-smtp/custom-smtp.subscriber';
+export * from './../../email-reset/email-reset.subscriber';
 export * from './../../email-template/email-template.subscriber';
 export * from './../../employee/employee.subscriber';
 export * from './../../export-import/import-history/import-history.subscriber';
