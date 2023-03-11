@@ -71,7 +71,7 @@ RUN apk --update add bash && apk add libexecinfo libexecinfo-dev && npm i -g npm
 	&& apk add --no-cache --virtual build-dependencies curl jq py3-configobj py3-pip py3-setuptools python3 python3-dev build-base \
 	snappy libheif dos2unix gcc g++ snappy-dev git libgcc libstdc++ linux-headers autoconf automake make nasm vips-dev vips
 
-RUN npm install --quiet node-gyp -g
+RUN npm install --quiet node-gyp@9.3.1 -g
 RUN npm install yarn -g --force
 RUN mkdir /srv/gauzy && chown -R node:node /srv/gauzy
 
@@ -113,7 +113,7 @@ RUN apk --update add bash && apk add libexecinfo libexecinfo-dev && npm i -g npm
 	&& apk add --no-cache --virtual build-dependencies curl jq py3-configobj py3-pip py3-setuptools python3 python3-dev build-base \
 	snappy libheif dos2unix gcc g++ snappy-dev git libgcc libstdc++ linux-headers autoconf automake make nasm vips-dev vips
 
-RUN npm install --quiet node-gyp -g
+RUN npm install --quiet node-gyp@9.3.1 -g
 RUN npm install yarn -g --force
 RUN mkdir /srv/gauzy && chown -R node:node /srv/gauzy
 
