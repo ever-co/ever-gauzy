@@ -5,6 +5,7 @@
 	"typescript.enablePromptUseWorkspaceTsdk": true,
 	"npm.packageManager": "yarn",
 	"prettier.trailingComma": "none",
+	"prettier.singleQuote": true,
 	"editor.formatOnSave": true,
 	"eslint.format.enable": true,
 	"editor.tabSize": 4,

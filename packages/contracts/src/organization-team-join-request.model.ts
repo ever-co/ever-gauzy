@@ -1,6 +1,6 @@
-import { IBasePerTenantAndOrganizationEntityModel } from "./base-entity.model";
-import { IRelationalOrganizationTeam } from "./organization-team.model";
-import { IRelationalUser, IUserCodeInput, IUserEmailInput, IUserTokenInput } from "./user.model";
+import { IBasePerTenantAndOrganizationEntityModel } from './base-entity.model';
+import { IRelationalOrganizationTeam } from './organization-team.model';
+import { IRelationalUser, IUserCodeInput, IUserEmailInput, IUserTokenInput } from './user.model';
 
 export interface IOrganizationTeamJoinRequest extends IBasePerTenantAndOrganizationEntityModel, IRelationalUser, IOrganizationTeamJoinRequestCreateInput, IUserCodeInput, IUserTokenInput {
 	expiredAt: Date;
