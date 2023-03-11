@@ -1,26 +1,20 @@
-import { IBaseEntityModel } from './base-entity.model';
+import { IBasePerTenantEntityModel } from './base-entity.model';
+import { IRelationalUser, IUserCodeInput, IUserEmailInput } from './user.model';
 
-export interface IEmailReset extends IBaseEntityModel {
+export interface IEmailReset extends IEmailResetCreateInput {
+	expiredAt?: Date;
+	isExpired?: boolean;
+}
+
+export interface IEmailResetFindInput extends Partial<IEmailResetCreateInput> { }
+
+export interface IEmailResetCreateInput extends IBasePerTenantEntityModel, IRelationalUser {
 	email: string;
 	oldEmail: string;
 	code: number;
-	expired?: boolean;
-	userId?: string;
 	token: string;
 }
 
-export interface IEmailResetFindInput extends IBaseEntityModel {
-	email?: string;
-	oldEmail?: string;
-	code?: number;
-	userId?: string;
-	token?: string;
-}
+export interface IChangeEmailRequest extends IUserCodeInput { }
 
-export interface IChangeEmailRequest {
-	code: number;
-}
-
-export interface IResetEmailRequest {
-	email: string;
-}
+export interface IResetEmailRequest extends IUserEmailInput { }
