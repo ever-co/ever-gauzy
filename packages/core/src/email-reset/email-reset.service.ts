@@ -98,11 +98,6 @@ export class EmailResetService extends TenantAwareCrudService<EmailReset> {
 				verificationCode,
 				organization
 			);
-
-			return new Object({
-				status: HttpStatus.OK,
-				message: `OK`
-			});
 		}
 		finally {
 			return new Object({
