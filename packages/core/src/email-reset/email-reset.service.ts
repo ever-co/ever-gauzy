@@ -51,12 +51,14 @@ export class EmailResetService extends TenantAwareCrudService<EmailReset> {
 	) {
 		try {
 			let user = RequestContext.currentUser();
+
 			user = await this.userService.findOneByIdString(user.id, {
 				relations: {
 					role: true,
 					employee: true
 				},
 			});
+
 			const token = await this.authService.getJwtAccessToken(user);
 
 			/**
@@ -71,7 +73,9 @@ export class EmailResetService extends TenantAwareCrudService<EmailReset> {
 					message: `OK`
 				});
 			}
+
 			const verificationCode = generateRandomInteger(6);
+
 			await this.commandBus.execute(
 				new EmailResetCreateCommand({
 					code: verificationCode,
@@ -81,12 +85,14 @@ export class EmailResetService extends TenantAwareCrudService<EmailReset> {
 					token
 				})
 			);
+
 			const employee = await this.employeeService.findOneByIdString(
 				user.employeeId,
 				{
 					relations: ['organization']
 				}
 			);
+
 			const { organization } = employee;
 
 			this.emailService.emailReset(
@@ -100,6 +106,7 @@ export class EmailResetService extends TenantAwareCrudService<EmailReset> {
 			);
 		}
 		finally {
+		    // we reply "OK" in any case for security reasons
 			return new Object({
 				status: HttpStatus.OK,
 				message: `OK`
@@ -127,9 +134,14 @@ export class EmailResetService extends TenantAwareCrudService<EmailReset> {
 			 	*/
 				(await this.userService.checkIfExistsEmail(record.email))
 				) {
-				throw new BadRequestException('Email Reset Failed.');
+				// we reply with OK, but just do not update email for the user if something is wrong
+				return new Object({
+                	status: HttpStatus.OK,
+                	message: `OK`
+            	});
 			}
 
+			// we only do update if all checks completed above
 			await this.userService.update(
 				{
 					id: record.userId
@@ -138,13 +150,13 @@ export class EmailResetService extends TenantAwareCrudService<EmailReset> {
 					email: record.email
 				}
 			);
-
+			
+		} finally {
+		    // we reply "OK" in any case for security reasons
 			return new Object({
                 status: HttpStatus.OK,
                 message: `OK`
             });
-		} catch (error) {
-			throw new BadRequestException('Email Reset Failed.');
 		}
 	}
 
