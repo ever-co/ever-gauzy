@@ -317,7 +317,6 @@
 		"protractor": "^7.0.0",
 		"rimraf": "^3.0.2",
 		"semantic-release": "^17.4.2",
-		"snyk": "^1.573.0",
 		"stylelint": "^13.7.2",
 		"typedoc": "^0.23.24",
 		"ts-jest": "^26.4.0",
