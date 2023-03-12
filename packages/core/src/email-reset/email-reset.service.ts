@@ -64,9 +64,7 @@ export class EmailResetService extends TenantAwareCrudService<EmailReset> {
 			user.email === request.email ||
 			(await this.userService.checkIfExistsEmail(request.email))
 		) {
-			throw new BadRequestException(
-				'Oops, the email exists, please try with another email'
-			);
+			return true;
 		}
 		const verificationCode = generateRandomInteger(6);
 		await this.commandBus.execute(
@@ -112,7 +110,13 @@ export class EmailResetService extends TenantAwareCrudService<EmailReset> {
 				})
 			);
 
-			if (!record) {
+			if (
+				!record || 
+				/**
+			 	* Check if other user has already registered with same email
+			 	*/
+				(await this.userService.checkIfExistsEmail(record.email))
+				) {
 				throw new BadRequestException('Email Reset Failed.');
 			}
 

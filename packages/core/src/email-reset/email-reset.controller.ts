@@ -32,7 +32,7 @@ export class EmailResetController {
 	 * @param languageCode
 	 * @returns
 	 */
-	@HttpCode(HttpStatus.CREATED)
+	@HttpCode(HttpStatus.OK)
 	@Post('/request-change-email')
 	@UsePipes(new ValidationPipe({ whitelist: true }))
 	async requestChangeEmail(
