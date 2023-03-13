@@ -1,16 +1,11 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import {
-	IInvite,
-	InviteStatusEnum,
-	IUser,
-	RolesEnum
-} from '@gauzy/contracts';
+import { IInvite, InviteStatusEnum, IUser, RolesEnum } from '@gauzy/contracts';
 import { AuthService } from '../../../auth/auth.service';
 import { InviteService } from '../../invite.service';
 import { InviteAcceptCandidateCommand } from '../invite.accept-candidate.command';
-import { Candidate, User } from './../../../core/entities/internal'
+import { Candidate, User } from './../../../core/entities/internal';
 import { BadRequestException } from '@nestjs/common';
 
 /**
@@ -20,17 +15,14 @@ import { BadRequestException } from '@nestjs/common';
  */
 @CommandHandler(InviteAcceptCandidateCommand)
 export class InviteAcceptCandidateHandler implements ICommandHandler<InviteAcceptCandidateCommand> {
-
 	constructor(
 		private readonly inviteService: InviteService,
 		private readonly authService: AuthService,
 		@InjectRepository(User) private readonly userRepository: Repository<User>,
 		@InjectRepository(Candidate) private readonly candidateRepository: Repository<Candidate>
-	) { }
+	) {}
 
-	public async execute(
-		command: InviteAcceptCandidateCommand
-	): Promise<IUser> {
+	public async execute(command: InviteAcceptCandidateCommand): Promise<IUser> {
 		const { input, languageCode } = command;
 		const { inviteId } = input;
 

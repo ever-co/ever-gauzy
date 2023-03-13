@@ -15,17 +15,14 @@ import { User } from './../../../core/entities/internal';
  */
 @CommandHandler(InviteAcceptUserCommand)
 export class InviteAcceptUserHandler implements ICommandHandler<InviteAcceptUserCommand> {
-
 	constructor(
 		@InjectRepository(User) private readonly userRepository: Repository<User>,
 		private readonly inviteService: InviteService,
 		private readonly authService: AuthService,
 		private readonly organizationService: OrganizationService
-	) { }
+	) {}
 
-	public async execute(
-		command: InviteAcceptUserCommand
-	): Promise<IUser> {
+	public async execute(command: InviteAcceptUserCommand): Promise<IUser> {
 		const { input, languageCode } = command;
 		const { inviteId } = input;
 

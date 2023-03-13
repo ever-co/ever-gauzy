@@ -20,8 +20,7 @@ import { InviteAcceptOrganizationContactCommand } from '../invite.accept-organiz
 import { ReportOrganizationCreateCommand } from './../../../reports/commands';
 
 @CommandHandler(InviteAcceptOrganizationContactCommand)
-export class InviteAcceptOrganizationContactHandler
-	implements ICommandHandler<InviteAcceptOrganizationContactCommand> {
+export class InviteAcceptOrganizationContactHandler implements ICommandHandler<InviteAcceptOrganizationContactCommand> {
 	constructor(
 		private readonly inviteService: InviteService,
 		private readonly authService: AuthService,
@@ -30,19 +29,11 @@ export class InviteAcceptOrganizationContactHandler
 		private readonly tenantService: TenantService,
 		private readonly roleService: RoleService,
 		private readonly commandBus: CommandBus
-	) { }
+	) {}
 
-	public async execute(
-		command: InviteAcceptOrganizationContactCommand
-	): Promise<IInvite | UpdateResult> {
+	public async execute(command: InviteAcceptOrganizationContactCommand): Promise<IInvite | UpdateResult> {
 		const {
-			input: {
-				user,
-				password,
-				contactOrganization,
-				inviteId,
-				originalUrl
-			},
+			input: { user, password, contactOrganization, inviteId, originalUrl },
 			languageCode
 		} = command;
 
@@ -53,14 +44,10 @@ export class InviteAcceptOrganizationContactHandler
 		});
 
 		// 2. Create Role and Role Permissions for contact
-		await this.commandBus.execute(
-			new TenantRoleBulkCreateCommand([tenant])
-		);
+		await this.commandBus.execute(new TenantRoleBulkCreateCommand([tenant]));
 
 		// 3. Create Enabled/Disabled features for relative tenants.
-		await this.commandBus.execute(
-			new TenantFeatureOrganizationCreateCommand([tenant])
-		);
+		await this.commandBus.execute(new TenantFeatureOrganizationCreateCommand([tenant]));
 
 		let { contact = {} } = contactOrganization;
 		delete contactOrganization['contact'];
@@ -72,9 +59,7 @@ export class InviteAcceptOrganizationContactHandler
 		});
 
 		// 5. Create Enabled/Disabled reports for relative organization.
-		await this.commandBus.execute(
-			new ReportOrganizationCreateCommand(organization)
-		);
+		await this.commandBus.execute(new ReportOrganizationCreateCommand(organization));
 
 		// 6. Create contact details of created organization
 		const { id: organizationId } = organization;

@@ -32,21 +32,21 @@ import {
  */
 @CommandHandler(InviteAcceptEmployeeCommand)
 export class InviteAcceptEmployeeHandler implements ICommandHandler<InviteAcceptEmployeeCommand> {
-
 	constructor(
 		private readonly inviteService: InviteService,
 		private readonly authService: AuthService,
 		@InjectRepository(User) private readonly userRepository: Repository<User>,
 		@InjectRepository(Employee) private readonly employeeRepository: Repository<Employee>,
-		@InjectRepository(OrganizationProject) private readonly organizationProjectRepository: Repository<OrganizationProject>,
-		@InjectRepository(OrganizationContact) private readonly organizationContactRepository: Repository<OrganizationContact>,
-		@InjectRepository(OrganizationDepartment) private readonly organizationDepartmentRepository: Repository<OrganizationDepartment>,
+		@InjectRepository(OrganizationProject)
+		private readonly organizationProjectRepository: Repository<OrganizationProject>,
+		@InjectRepository(OrganizationContact)
+		private readonly organizationContactRepository: Repository<OrganizationContact>,
+		@InjectRepository(OrganizationDepartment)
+		private readonly organizationDepartmentRepository: Repository<OrganizationDepartment>,
 		@InjectRepository(OrganizationTeam) private readonly organizationTeamRepository: Repository<OrganizationTeam>
-	) { }
+	) {}
 
-	public async execute(
-		command: InviteAcceptEmployeeCommand
-	): Promise<IUser> {
+	public async execute(command: InviteAcceptEmployeeCommand): Promise<IUser> {
 		const { input, languageCode } = command;
 		const { inviteId } = input;
 
@@ -143,11 +143,7 @@ export class InviteAcceptEmployeeHandler implements ICommandHandler<InviteAccept
 	 * @param invite
 	 * @param employee
 	 */
-	public async updateEmployeeMemberships(
-		invite: IInvite,
-		employee: IEmployee
-	): Promise<void> {
-
+	public async updateEmployeeMemberships(invite: IInvite, employee: IEmployee): Promise<void> {
 		//Update project members
 		if (invite.projects) {
 			invite.projects.forEach(async (project: IOrganizationProject) => {
