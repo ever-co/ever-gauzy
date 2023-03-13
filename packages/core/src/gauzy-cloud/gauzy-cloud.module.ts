@@ -14,7 +14,7 @@ import { CommandHandlers } from './commands/handlers';
 @Module({
 	imports: [
 		RouterModule.forRoutes([
-			{ path: '/cloud/migrate', module: GauzyCloudModule }
+			{ path: '/cloud/migrate', module: GauzyCloudModule },
 		]),
 		HttpModule.registerAsync({
 			imports: [ConfigModule],
@@ -23,8 +23,8 @@ import { CommandHandlers } from './commands/handlers';
 				timeout: 60 * 5 * 1000,
 				maxRedirects: 5,
 				headers: {
-                    'Content-Type': 'application/json'
-                }
+					'Content-Type': 'application/json',
+				},
 			}),
 			inject: [ConfigService],
 		}),
@@ -32,13 +32,10 @@ import { CommandHandlers } from './commands/handlers';
 		forwardRef(() => UserModule),
 		TenantModule,
 		RoleModule,
-		RolePermissionModule
+		RolePermissionModule,
 	],
 	controllers: [GauzyCloudController],
-	providers: [
-		GauzyCloudService,
-		...CommandHandlers
-	],
-	exports: []
+	providers: [GauzyCloudService, ...CommandHandlers],
+	exports: [],
 })
 export class GauzyCloudModule {}

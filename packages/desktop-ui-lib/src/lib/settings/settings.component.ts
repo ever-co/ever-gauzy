@@ -443,7 +443,7 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 
 	ngAfterViewInit(): void {
 		this.electronService.ipcRenderer.on('app_setting', (event, arg) =>
-			this._ngZone.run(() => {
+			this._ngZone.run(async () => {
 				const { setting, config, auth, additionalSetting } = arg;
 				this.appSetting = {
 					...this.appSetting,
@@ -477,7 +477,7 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 				});
 				this.selectPeriod(setting.timer.updatePeriod);
 				if (!this.isServer) {
-					this.getUserDetails();
+					await this.getUserDetails();
 				}
 				this.menus = this.isServer
 					? ['Update', 'Advanced Setting', 'About']
@@ -835,9 +835,19 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 	/*
 	 * Get logged in user details
 	 */
-	getUserDetails() {
+	public async getUserDetails() {
 		if (this.authSetting) {
-			this.currentUser$.next(this.authSetting.user);
+			try {
+				const user = await this.timeTrackerService.getUserDetail(this.authSetting);
+				if (user) {
+					this.currentUser$.next(user);
+				} else {
+					this.currentUser$.next(null);
+					this.logout();
+				}
+			} catch (error) {
+				console.log('User Detail error', error);
+			}
 		} else {
 			this.currentUser$.next(null);
 		}

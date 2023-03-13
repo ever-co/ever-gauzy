@@ -22,7 +22,7 @@ jobs:
             - name: Install Node.js, NPM and Yarn
               uses: actions/setup-node@v3
               with:
-                  node-version: 18
+                  node-version: 16
                   cache: 'yarn'
 
             - name: Change permissions
@@ -35,7 +35,7 @@ jobs:
               run: 'sudo npm install -g npm'
 
             - name: Install latest node-gyp package
-              run: 'sudo npm install --quiet -g node-gyp@9.3.0'
+              run: 'sudo npm install --quiet -g node-gyp@9.3.1'
 
             - name: Install Yarn dependencies
               run: 'yarn install --network-timeout 1000000 --frozen-lockfile'
@@ -74,14 +74,14 @@ jobs:
             - name: Install Node.js, NPM and Yarn
               uses: actions/setup-node@v3
               with:
-                  node-version: 18
+                  node-version: 16
                   cache: 'yarn'
 
             - name: Install latest version of NPM
               run: 'sudo npm install -g npm'
 
             - name: Install latest node-gyp package
-              run: 'sudo npm install --quiet -g node-gyp@9.3.0'
+              run: 'sudo npm install --quiet -g node-gyp@9.3.1'
 
             - name: Install Yarn dependencies
               run: 'yarn install --network-timeout 1000000 --frozen-lockfile'
@@ -120,14 +120,14 @@ jobs:
             - name: Install Node.js, NPM and Yarn
               uses: actions/setup-node@v3
               with:
-                  node-version: 18
+                  node-version: 16
                   cache: 'yarn'
 
             - name: Install latest version of NPM
               run: 'npm install -g npm'
 
             - name: Install latest node-gyp package
-              run: 'npm install --quiet -g node-gyp@9.3.0'
+              run: 'npm install --quiet -g node-gyp@9.3.1'
 
             - name: Install Yarn dependencies
               run: 'yarn install --network-timeout 1000000 --frozen-lockfile'

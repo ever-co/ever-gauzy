@@ -1,6 +1,7 @@
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import {
 	BadRequestException,
+	HttpStatus,
 	Injectable,
 	NotFoundException
 } from '@nestjs/common';
@@ -48,55 +49,69 @@ export class EmailResetService extends TenantAwareCrudService<EmailReset> {
 		request: UserEmailDTO,
 		languageCode: LanguagesEnum
 	) {
-		let user = RequestContext.currentUser();
-		user = await this.userService.findOneByIdString(user.id, {
-			relations: {
-				role: true,
-				employee: true
-			},
-		});
-		const token = await this.authService.getJwtAccessToken(user);
+		try {
+			let user = RequestContext.currentUser();
 
-		/**
-		 * User with email already exist
-		 */
-		if (
-			user.email === request.email ||
-			(await this.userService.checkIfExistsEmail(request.email))
-		) {
-			throw new BadRequestException(
-				'Oops, the email exists, please try with another email'
+			user = await this.userService.findOneByIdString(user.id, {
+				relations: {
+					role: true,
+					employee: true
+				},
+			});
+
+			const token = await this.authService.getJwtAccessToken(user);
+
+			/**
+			 * User with email already exist
+			 */
+			if (
+				user.email === request.email ||
+				(await this.userService.checkIfExistsEmail(request.email))
+			) {
+				return new Object({
+					status: HttpStatus.OK,
+					message: `OK`
+				});
+			}
+
+			const verificationCode = generateRandomInteger(6);
+
+			await this.commandBus.execute(
+				new EmailResetCreateCommand({
+					code: verificationCode,
+					email: request.email,
+					oldEmail: user.email,
+					userId: user.id,
+					token
+				})
+			);
+
+			const employee = await this.employeeService.findOneByIdString(
+				user.employeeId,
+				{
+					relations: ['organization']
+				}
+			);
+
+			const { organization } = employee;
+
+			this.emailService.emailReset(
+				{
+					...user,
+					email: request.email
+				},
+				languageCode || (user.preferredLanguage as LanguagesEnum),
+				verificationCode,
+				organization
 			);
 		}
-		const verificationCode = generateRandomInteger(6);
-		await this.commandBus.execute(
-			new EmailResetCreateCommand({
-				code: verificationCode,
-				email: request.email,
-				oldEmail: user.email,
-				userId: user.id,
-				token
-			})
-		);
-		const employee = await this.employeeService.findOneByIdString(
-			user.employeeId,
-			{
-				relations: ['organization']
-			}
-		);
-		const { organization } = employee;
-
-		this.emailService.emailReset(
-			{
-				...user,
-				email: request.email
-			},
-			languageCode || (user.preferredLanguage as LanguagesEnum),
-			verificationCode,
-			organization
-		);
-
-		return true;
+		finally {
+		    // we reply "OK" in any case for security reasons
+			return new Object({
+				status: HttpStatus.OK,
+				message: `OK`
+			});
+		}
 	}
 
 	async verifyCode(request: VerifyEmailResetRequestDTO) {
@@ -112,10 +127,21 @@ export class EmailResetService extends TenantAwareCrudService<EmailReset> {
 				})
 			);
 
-			if (!record) {
-				throw new BadRequestException('Email Reset Failed.');
+			if (
+				!record || 
+				/**
+			 	* Check if other user has already registered with same email
+			 	*/
+				(await this.userService.checkIfExistsEmail(record.email))
+				) {
+				// we reply with OK, but just do not update email for the user if something is wrong
+				return new Object({
+                	status: HttpStatus.OK,
+                	message: `OK`
+            	});
 			}
 
+			// we only do update if all checks completed above
 			await this.userService.update(
 				{
 					id: record.userId
@@ -124,10 +150,13 @@ export class EmailResetService extends TenantAwareCrudService<EmailReset> {
 					email: record.email
 				}
 			);
-
-			return true;
-		} catch (error) {
-			throw new BadRequestException('Email Reset Failed.');
+			
+		} finally {
+		    // we reply "OK" in any case for security reasons
+			return new Object({
+                status: HttpStatus.OK,
+                message: `OK`
+            });
 		}
 	}
 

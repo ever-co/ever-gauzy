@@ -90,7 +90,7 @@ export class ScreenshotController {
 
 				try {
 					await image.writeAsync(outputFile);
-					resolve(image);					
+					resolve(image);
 				} catch (error) {
 					reject(error);
 				}
@@ -130,7 +130,7 @@ export class ScreenshotController {
 				`Screenshot created for employee (${user.name})`,
 				screenshot
 			);
-			return this.screenshotService.findOneByIdString(screenshot.id);
+			return await this.screenshotService.findOneByIdString(screenshot.id);
 		} catch (error) {
 			console.log(
 				`Error while creating screenshot for employee (${user.name})`,

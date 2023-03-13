@@ -21,7 +21,7 @@ export class InviteAcceptUserHandler implements ICommandHandler<InviteAcceptUser
 		private readonly inviteService: InviteService,
 		private readonly authService: AuthService,
 		private readonly organizationService: OrganizationService
-	) {}
+	) { }
 
 	public async execute(
 		command: InviteAcceptUserCommand
@@ -65,7 +65,8 @@ export class InviteAcceptUserHandler implements ICommandHandler<InviteAcceptUser
 							id: tenantId
 						}
 					},
-					organizationId
+					organizationId,
+					inviteId
 				},
 				languageCode
 			);
