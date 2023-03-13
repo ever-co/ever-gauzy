@@ -5,7 +5,7 @@ import { AuthStrategy } from './auth/auth-strategy.service';
 import { TranslateService } from '@ngx-translate/core';
 import { LanguagesEnum } from '@gauzy/contracts';
 import { Store } from './auth/services/store.service';
-import { untilDestroyed } from '@ngneat/until-destroy';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { NbToastrService } from '@nebular/theme';
 import * as _ from 'underscore';
 import { Router } from '@angular/router';
@@ -14,6 +14,7 @@ const log = window.require('electron-log');
 console.log = log.log;
 Object.assign(console, log.functions);
 
+UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'gauzy-root',
 	template: '<router-outlet></router-outlet>',
