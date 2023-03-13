@@ -253,7 +253,7 @@ export class AuthService extends SocialAuthService {
 		});
 		const entity = await this.userRepository.save(create);
 
-		/** Email automatically verifies after accept invitation */
+		/** Email automatically verified after accept invitation */
 		await this.userRepository.update(entity.id, {
 			...(input.inviteId
 				? {
