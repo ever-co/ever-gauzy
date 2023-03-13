@@ -249,14 +249,19 @@ export class AuthService extends SocialAuthService {
 				? {
 					hash: await this.getPasswordHash(input.password)
 				}
-				: {}),
+				: {})
+		});
+		const entity = await this.userRepository.save(create);
+
+		/** Email automatically verified after accept invitation */
+		await this.userRepository.update(entity.id, {
 			...(input.inviteId
 				? {
 					emailVerifiedAt: freshTimestamp()
 				}
-				: {}),
+				: {})
 		});
-		const entity = await this.userRepository.save(create);
+
 		/**
 		 * Find latest register user with role
 		 */

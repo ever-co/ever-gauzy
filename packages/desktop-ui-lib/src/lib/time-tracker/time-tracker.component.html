@@ -229,8 +229,8 @@
 						<div class="row">
 							<div class="col-12 search">
 								<button nbButton nbTooltipStatus="warning"
-									[nbTooltip]="!(hasTaskPermission$ | async) ?'Request permission from the organization administrator': (start$ | async) ? 'Stop timer first' : (isOffline$ | async) ? 'Return online' : null"
-									[nbTooltipDisabled]="!(start$ | async) && (hasTaskPermission$ | async) && !(isOffline$ | async)"
+									[nbTooltip]="!(hasTaskPermission$ | async) ?'Request permission from the organization administrator' : (isOffline$ | async) ? 'Return online' : null"
+									[nbTooltipDisabled]="(hasTaskPermission$ | async) && !(isOffline$ | async)"
 									nbTooltipStatus="warning" class="mb-2" status="success" (click)="addTask()">
 									<nb-icon icon="plus" pack="font-awesome"></nb-icon>Add
 								</button>

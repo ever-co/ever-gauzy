@@ -1846,7 +1846,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 
 	addTask() {
 		this.isAddTask =
-			!this._isOffline && this._hasTaskPermission && !this.start;
+			!this._isOffline && this._hasTaskPermission;
 	}
 
 	closeAddTask(e) {
