@@ -104,7 +104,10 @@ export class TasksComponent implements OnInit {
 
 	private async _projects(user: IUserOrganization): Promise<void> {
 		try {
-			this.projects = await this.timeTrackerService.getProjects(user);
+			this.projects = await this.timeTrackerService.getProjects({
+				organizationContactId: null,
+				...user
+			});
 		} catch (error) {
 			console.error(
 				'[error]',
