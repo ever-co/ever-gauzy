@@ -14,7 +14,7 @@ const log = window.require('electron-log');
 console.log = log.log;
 Object.assign(console, log.functions);
 
-UntilDestroy({ checkProperties: true })
+@UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'gauzy-root',
 	template: '<router-outlet></router-outlet>',
