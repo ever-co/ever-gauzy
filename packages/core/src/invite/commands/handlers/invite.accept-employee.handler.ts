@@ -42,7 +42,7 @@ export class InviteAcceptEmployeeHandler implements ICommandHandler<InviteAccept
 		@InjectRepository(OrganizationContact) private readonly organizationContactRepository: Repository<OrganizationContact>,
 		@InjectRepository(OrganizationDepartment) private readonly organizationDepartmentRepository: Repository<OrganizationDepartment>,
 		@InjectRepository(OrganizationTeam) private readonly organizationTeamRepository: Repository<OrganizationTeam>
-	) {}
+	) { }
 
 	public async execute(
 		command: InviteAcceptEmployeeCommand
@@ -109,7 +109,8 @@ export class InviteAcceptEmployeeHandler implements ICommandHandler<InviteAccept
 							id: tenantId
 						}
 					},
-					organizationId
+					organizationId,
+					inviteId
 				},
 				languageCode
 			);

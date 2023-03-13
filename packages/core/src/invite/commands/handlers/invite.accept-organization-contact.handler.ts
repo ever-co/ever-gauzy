@@ -30,7 +30,7 @@ export class InviteAcceptOrganizationContactHandler
 		private readonly tenantService: TenantService,
 		private readonly roleService: RoleService,
 		private readonly commandBus: CommandBus
-	) {}
+	) { }
 
 	public async execute(
 		command: InviteAcceptOrganizationContactCommand
@@ -96,12 +96,20 @@ export class InviteAcceptOrganizationContactHandler
 		});
 
 		// 8. Create user account for contact and link role, tenant and organization
-		await this.authService.register({
-			user: { ...user, tenant, role },
-			password,
-			originalUrl,
-			organizationId
-		}, languageCode );
+		await this.authService.register(
+			{
+				user: {
+					...user,
+					tenant,
+					role
+				},
+				password,
+				originalUrl,
+				organizationId,
+				inviteId
+			},
+			languageCode
+		);
 
 		// 8. Link newly created contact organization to organization contact invite
 		const { organizationContacts } = await this.inviteService.findOneByIdString(inviteId, {
