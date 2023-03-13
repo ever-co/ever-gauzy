@@ -26,7 +26,7 @@ export class InviteAcceptCandidateHandler implements ICommandHandler<InviteAccep
 		private readonly authService: AuthService,
 		@InjectRepository(User) private readonly userRepository: Repository<User>,
 		@InjectRepository(Candidate) private readonly candidateRepository: Repository<Candidate>
-	) {}
+	) { }
 
 	public async execute(
 		command: InviteAcceptCandidateCommand
@@ -83,7 +83,8 @@ export class InviteAcceptCandidateHandler implements ICommandHandler<InviteAccep
 							id: tenantId
 						}
 					},
-					organizationId
+					organizationId,
+					inviteId
 				},
 				languageCode
 			);
