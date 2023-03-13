@@ -7,7 +7,6 @@
 	"arrowParens": "always",
 	"trailingComma": "none",
 	"quoteProps": "as-needed",
-	"bracketSpacing": false,
 	"overrides": [
 		{
 			"files": "*.scss",
