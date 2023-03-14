@@ -1,7 +1,7 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Column, Entity, Index, ManyToOne, RelationId } from 'typeorm';
 import { Exclude } from 'class-transformer';
-import { IsEmail, IsNotEmpty, IsOptional, IsString, IsUUID } from 'class-validator';
+import { IsEmail, IsEnum, IsNotEmpty, IsOptional, IsString, IsUUID } from 'class-validator';
 import {
 	IOrganizationTeam,
 	IOrganizationTeamJoinRequest,
@@ -11,7 +11,9 @@ import {
 import { OrganizationTeam, TenantOrganizationBaseEntity, User } from '../core/entities/internal';
 
 @Entity('organization_team_join_request')
-export class OrganizationTeamJoinRequest extends TenantOrganizationBaseEntity implements IOrganizationTeamJoinRequest {
+export class OrganizationTeamJoinRequest extends TenantOrganizationBaseEntity
+	implements IOrganizationTeamJoinRequest {
+
 	@ApiProperty({ type: () => String, required: true })
 	@IsNotEmpty()
 	@IsEmail()
@@ -36,6 +38,9 @@ export class OrganizationTeamJoinRequest extends TenantOrganizationBaseEntity im
 	@Column({ nullable: true })
 	position: string;
 
+	@ApiPropertyOptional({ type: () => String })
+	@IsOptional()
+	@IsEnum(OrganizationTeamJoinRequestStatusEnum)
 	@Column({ default: OrganizationTeamJoinRequestStatusEnum.REQUESTED })
 	status: OrganizationTeamJoinRequestStatusEnum;
 
