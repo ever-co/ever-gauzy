@@ -1347,7 +1347,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 					await this.toggleStart(true);
 				}
 			}
-		});
+		}).catch((error) => console.log('[User Error]: ', error));
 	}
 
 	showImage() {
