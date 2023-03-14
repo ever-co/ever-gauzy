@@ -144,9 +144,10 @@ export class TagService extends TenantAwareCrudService<Tag> {
 				this.getFilterTagQuery(qb, input);
 			});
 			let items = await query.getRawMany();
+			const store = new FileStorage()
 			items = items.map((item) => {
 				if (item.icon) {
-					const store = new FileStorage().setProvider(
+					store.setProvider(
 						FileStorageProviderEnum.LOCAL
 					);
 					item.fullIconUrl = store
