@@ -1,9 +1,10 @@
 import { BadRequestException, ConflictException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { MoreThanOrEqual, Repository, SelectQueryBuilder } from 'typeorm';
 import {
 	IOrganizationTeamJoinRequest,
 	IOrganizationTeamJoinRequestCreateInput,
+	IOrganizationTeamJoinRequestValidateInput,
 	LanguagesEnum,
 	OrganizationTeamJoinRequestStatusEnum
 } from '@gauzy/contracts';
@@ -69,6 +70,46 @@ export class OrganizationTeamJoinRequestService extends TenantAwareCrudService<O
 			);
 		} catch (error) {
 			throw new BadRequestException('Error while requesting join organization team', error);
+		}
+	}
+
+	/**
+	 * Validate organization team join request
+	 *
+	 * @param options
+	 * @returns
+	 */
+	async validateJoinRequest(
+		options: IOrganizationTeamJoinRequestValidateInput
+	): Promise<IOrganizationTeamJoinRequest> {
+		const { email, code, token, organizationTeamId } = options;
+		try {
+			const query = this.repository.createQueryBuilder(this.alias);
+			query.setFindOptions({
+				select: {
+					email: true,
+					organizationTeamId: true
+				}
+			});
+			query.where((qb: SelectQueryBuilder<OrganizationTeamJoinRequest>) => {
+				qb.andWhere({
+					email,
+					organizationTeamId,
+					expiredAt: MoreThanOrEqual(new Date()),
+					status: OrganizationTeamJoinRequestStatusEnum.REQUESTED
+				})
+				qb.andWhere([
+					{
+						code
+					},
+					{
+						token
+					}
+				]);
+			});
+			return await query.getOneOrFail();
+		} catch (error) {
+			throw new BadRequestException();
 		}
 	}
 }

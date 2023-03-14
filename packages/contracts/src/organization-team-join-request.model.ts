@@ -1,13 +1,13 @@
 import { IBasePerTenantAndOrganizationEntityModel } from './base-entity.model';
 import { IRelationalOrganizationTeam } from './organization-team.model';
-import { IRelationalUser, IUserEmailInput } from './user.model';
+import { IRelationalUser, IUserCodeInput, IUserEmailInput, IUserTokenInput } from './user.model';
 
-export interface IOrganizationTeamJoinRequest
-	extends IBasePerTenantAndOrganizationEntityModel,
-		IRelationalUser,
-		IOrganizationTeamJoinRequestCreateInput {
-	code: number;
-	token: string;
+export interface IOrganizationTeamJoinRequest extends IBasePerTenantAndOrganizationEntityModel,
+	IRelationalUser,
+	IOrganizationTeamJoinRequestCreateInput,
+	IUserCodeInput,
+	IUserTokenInput {
+
 	expiredAt: Date;
 	isExpired: boolean;
 }
@@ -25,10 +25,12 @@ export interface IOrganizationTeamJoinRequestUpdateInput extends IOrganizationTe
 
 export interface IOrganizationTeamJoinRequestFindInput
 	extends IBasePerTenantAndOrganizationEntityModel,
-		Pick<IOrganizationTeamJoinRequest, 'organizationTeamId' | 'status'> {}
+	Pick<IOrganizationTeamJoinRequest, 'organizationTeamId' | 'status'> { }
 
 export enum OrganizationTeamJoinRequestStatusEnum {
 	REQUESTED = 'REQUESTED',
 	ACCEPTED = 'ACCEPTED',
 	REJECTED = 'REJECTED'
 }
+
+export interface IOrganizationTeamJoinRequestValidateInput extends IUserEmailInput, IUserCodeInput, IUserTokenInput, Pick<IOrganizationTeamJoinRequest, 'organizationTeamId'> { }

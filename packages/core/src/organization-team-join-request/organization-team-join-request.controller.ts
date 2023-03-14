@@ -8,6 +8,7 @@ import { LanguageDecorator } from './../shared/decorators';
 import { OrganizationTeamJoinRequestCreateCommand } from './commands';
 import { OrganizationTeamJoinRequest } from './organization-team-join-request.entity';
 import { OrganizationTeamJoinRequestService } from './organization-team-join-request.service';
+import { ValidateJoinRequestDTO } from './dto';
 
 @ApiTags('OrganizationTeamJoinRequest')
 @Controller()
@@ -19,10 +20,26 @@ export class OrganizationTeamJoinRequestController {
 	) { }
 
 	/**
+	 * Validate organization team join request
+	 *
+	 * @param params
+	 * @returns
+	 */
+	@HttpCode(HttpStatus.ACCEPTED)
+	@Post('validate')
+	@UsePipes(new ValidationPipe({ whitelist: true }))
+	@Public()
+	async validateJoinRequest(
+		@Body() entity: ValidateJoinRequestDTO
+	): Promise<IOrganizationTeamJoinRequest> {
+		return await this._organizationTeamJoinRequestService.validateJoinRequest(entity);
+	}
+
+	/**
 	 * Get organization team join requests
-	 * 
-	 * @param params 
-	 * @returns 
+	 *
+	 * @param params
+	 * @returns
 	 */
 	@HttpCode(HttpStatus.OK)
 	@Get()
