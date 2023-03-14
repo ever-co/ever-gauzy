@@ -145,11 +145,11 @@ export class TagService extends TenantAwareCrudService<Tag> {
 			});
 			let items = await query.getRawMany();
 			const store = new FileStorage();
+			store.setProvider(
+				FileStorageProviderEnum.LOCAL
+			);
 			items = items.map((item) => {
 				if (item.icon) {
-					store.setProvider(
-						FileStorageProviderEnum.LOCAL
-					);
 					item.fullIconUrl = store
 						.getProviderInstance()
 						.url(item.icon);
