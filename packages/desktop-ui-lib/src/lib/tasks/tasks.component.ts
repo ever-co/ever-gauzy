@@ -77,8 +77,7 @@ export class TasksComponent implements OnInit {
 		this.form = new FormGroup({
 			description: new FormControl(null),
 			dueDate: new FormControl(
-				moment().add(1, 'day').utc().toDate(),
-				Validators.required
+				moment().add(1, 'day').utc().toDate()
 			),
 			estimate: new FormControl(null),
 			estimateDays: new FormControl(null, [Validators.min(0)]),
