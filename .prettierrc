@@ -3,7 +3,7 @@
 	"singleQuote": true,
 	"semi": true,
 	"useTabs": true,
-	"tabWidth": 2,
+	"tabWidth": 4,
 	"arrowParens": "always",
 	"trailingComma": "none",
 	"quoteProps": "as-needed",
