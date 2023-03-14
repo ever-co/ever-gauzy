@@ -86,7 +86,7 @@ export interface IEnvironment {
 	AUTHENTICATION_CODE_EXPIRATION_TIME?: number;
 
 	/** Organization Team Join Request Configuration */
-	ORGANIZATION_TEAM_JOIN_CODE_EXPIRATION_TIME?: number;
+	TEAM_JOIN_REQUEST_EXPIRATION_TIME?: number;
 
 	/**
 	 * Throttler (Rate Limiting) Options
