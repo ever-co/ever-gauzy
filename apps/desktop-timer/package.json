@@ -71,7 +71,7 @@
 		"rxjs": "^7.4.0",
 		"screenshot-desktop": "^1.12.7",
 		"sound-play": "1.1.0",
-		"sqlite3": "^5.1.2",
+		"sqlite3": "^5.1.5",
 		"squirrelly": "^8.0.8",
 		"twing": "^5.0.2",
 		"underscore": "^1.13.3"

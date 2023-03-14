@@ -154,7 +154,7 @@
 		"pg": "^8.8.0",
 		"pg-query-stream": "^4.2.4",
 		"sound-play": "1.1.0",
-		"sqlite3": "^5.1.2",
+		"sqlite3": "^5.1.5",
 		"squirrelly": "^8.0.8",
 		"tslib": "^2.3.1",
 		"twing": "^5.0.2",
