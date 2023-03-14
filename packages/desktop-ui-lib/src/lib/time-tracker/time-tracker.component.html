@@ -23,8 +23,12 @@
 										<div class="work-today-duration">{{ todayDuration$ | async }}</div>
 										<div class="work-today">Today</div>
 									</div>
-									<div class="work-duration-container">
-										<div class="work-weekly-duration">{{ weeklyDuration$ | async }}</div>
+									<div [ngClass]="{ over: (isOver$ | async) }" nbTooltipStatus="danger" nbTooltipIcon="alert-triangle-outline"
+										nbTooltip="Weekly limit exceeded" [nbTooltipDisabled]="!(isOver$ | async)" class="work-duration-container">
+										<div class="work-weekly-duration">
+											<div>{{ weeklyDuration$ | async }}</div>
+											<small *ngIf="!noLimit(weeklyLimit$ | async); else limitLess">Of {{ (weeklyLimit$ | async) }} hrs</small>
+										</div>
 										<div class="work-weekly">This Week</div>
 									</div>
 								</div>
@@ -327,3 +331,7 @@
 					type: 'timeTrackingOption'
 				})
 			" style="display: none"></button>
+
+<ng-template #limitLess>
+	<small>∞ No Limit</small>
+</ng-template>
