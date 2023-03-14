@@ -161,16 +161,20 @@
   font-size: 14px;
   font-weight: 500;
   color: var(--gauzy-text-color-1);
+
   small {
       position: absolute;
       right: 0;
       top: 1px;
       translate: 105%;
     }
-  
-    &.over {
-      color: var(--color-danger-default);
-    }
+}
+
+.over > {
+	.work-weekly-duration,
+	.work-weekly {
+		color: var(--color-danger-default) !important;
+	}
 }
 
 .error-border {
