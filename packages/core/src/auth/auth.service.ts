@@ -532,7 +532,7 @@ export class AuthService extends SocialAuthService {
 	 *
 	 * @param email
 	 */
-	async sendAuthCode(input: IUserEmailInput & Partial<IAppIntegrationConfig>,) {
+	async sendAuthCode(input: IUserEmailInput & Partial<IAppIntegrationConfig>) {
 		try {
 			const { email } = input;
 			if (email) {
