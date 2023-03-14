@@ -411,6 +411,7 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 	private _isConnectedDatabase$: BehaviorSubject<{ status: boolean, message: string }>;
 	private _restartDisable$: BehaviorSubject<boolean>;
 	private _isHidden$: BehaviorSubject<boolean>;
+	private _argMain = null;
 
 	constructor(
 		private electronService: ElectronService,
@@ -453,6 +454,7 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 					...this.config,
 					...config
 				};
+				this._argMain = arg;
 				this.checkDatabaseConnectivity();
 				this.authSetting = auth;
 				this.mappingAdditionalSetting(additionalSetting || null);
@@ -836,9 +838,9 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 	 * Get logged in user details
 	 */
 	public async getUserDetails() {
-		if (this.authSetting) {
+		if (this._argMain) {
 			try {
-				const user = await this.timeTrackerService.getUserDetail(this.authSetting);
+				const user = await this.timeTrackerService.getUserDetail(this._argMain);
 				if (user) {
 					this.currentUser$.next(user);
 				} else {

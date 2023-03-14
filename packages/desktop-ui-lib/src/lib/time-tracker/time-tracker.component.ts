@@ -186,6 +186,8 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 	private _inQueue$: BehaviorSubject<number> = new BehaviorSubject(0);
 	private _isRefresh$: BehaviorSubject<boolean> = new BehaviorSubject(false);
 	private _permissions$: Subject<any> = new Subject();
+	private _weeklyLimit$: BehaviorSubject<number> = new BehaviorSubject(Infinity);
+	private _isOver$: BehaviorSubject<boolean> = new BehaviorSubject(false);
 
 	public hasTaskPermission$: BehaviorSubject<boolean> = new BehaviorSubject(
 		false
@@ -983,6 +985,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 				.duration(instantaneousWeek, 'seconds')
 				.format('hh[h] mm[m]', { trim: false, trunc: true })
 		);
+		this._isOver$.next(instantaneousWeek > this._weeklyLimit * 3600);
 		this._timeRun$.next(
 			moment
 				.duration(value.second, 'seconds')
@@ -1233,6 +1236,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 					.duration(this._lastTotalWorkedWeek, 'seconds')
 					.format('hh[h] mm[m]', { trim: false, trunc: true })
 			);
+			this._isOver$.next(this._lastTotalWorkedWeek > this._weeklyLimit * 3600);
 			this.electronService.ipcRenderer.send(
 				'update_tray_time_update',
 				this.todayDuration
@@ -1322,6 +1326,9 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 						.filter((permission) => !!permission);
 					this._permissions$.next(this.userPermission);
 				}
+				if (res.employee.reWeeklyLimit) {
+					this._weeklyLimit$.next(res.employee.reWeeklyLimit);
+				}
 				this.userOrganization$.next(res.employee.organization);
 				this.electronService.ipcRenderer.send(
 					'update_timer_auth_config',
@@ -1347,7 +1354,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 					await this.toggleStart(true);
 				}
 			}
-		});
+		}).catch((error) => console.log('[User Error]: ', error));
 	}
 
 	showImage() {
@@ -2126,5 +2133,21 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 
 	public selectOrganization(organization: IOrganization) {
 		console.log('Organization', organization);
+	}
+
+	public get weeklyLimit$(): Observable<number> {
+		return this._weeklyLimit$.asObservable();
+	}
+
+	public get _weeklyLimit(): number {
+		return this._weeklyLimit$.getValue();
+	}
+
+	public get isOver$(): Observable<boolean> {
+		return this._isOver$.asObservable();
+	}
+
+	public noLimit(value: number): boolean {
+		return value === Infinity;
 	}
 }

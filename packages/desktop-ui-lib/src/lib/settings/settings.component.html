@@ -649,9 +649,7 @@
 		[nbTooltipDisabled]="(isConnectedDatabase$ | async)?.status">
 		<button nbButton status="primary" (click)="restartApp()"
 			[disabled]="(restartDisable$ | async) || appSetting?.timerStarted">
-			{{ isServer ? 'Save' : 'Restart App' }}
+			{{ isServer ? 'Save' : 'Save & Restart' }}
 		</button>
 	</div>
 </ng-template>
-	
-	

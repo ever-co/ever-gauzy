@@ -634,6 +634,7 @@ export function ipcTimer(
 		}
 		settingWindow.show();
 		settingWindow.webContents.send('app_setting', {
+			...LocalStore.beforeRequestParams(),
 			setting: appSetting,
 			config: config,
 			auth,
