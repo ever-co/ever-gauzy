@@ -25,7 +25,7 @@ export interface IOrganizationTeamJoinRequestUpdateInput extends IOrganizationTe
 
 export interface IOrganizationTeamJoinRequestFindInput
 	extends IBasePerTenantAndOrganizationEntityModel,
-		Pick<IOrganizationTeamJoinRequest, 'organizationTeamId'> {}
+		Pick<IOrganizationTeamJoinRequest, 'organizationTeamId' | 'status'> {}
 
 export enum OrganizationTeamJoinRequestStatusEnum {
 	REQUESTED = 'REQUESTED',

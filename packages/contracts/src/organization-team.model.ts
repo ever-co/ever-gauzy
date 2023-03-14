@@ -37,6 +37,7 @@ export interface IOrganizationTeamCreateInput extends IBasePerTenantAndOrganizat
 
 export interface IOrganizationTeamUpdateInput extends Partial<IOrganizationTeamCreateInput> {
 	id: string;
+	public?: boolean;
 }
 
 export interface IOrganizationTeamStatisticInput extends ITimerStatusInput {
