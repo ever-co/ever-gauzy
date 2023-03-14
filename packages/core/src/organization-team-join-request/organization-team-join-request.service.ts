@@ -1,6 +1,9 @@
 import { BadRequestException, ConflictException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { MoreThanOrEqual, Repository, SelectQueryBuilder } from 'typeorm';
+import { JwtPayload, sign } from 'jsonwebtoken';
+import { environment } from '@gauzy/config';
+import { IAppIntegrationConfig } from '@gauzy/common';
 import {
 	IOrganizationTeamJoinRequest,
 	IOrganizationTeamJoinRequestCreateInput,
@@ -8,9 +11,9 @@ import {
 	LanguagesEnum,
 	OrganizationTeamJoinRequestStatusEnum
 } from '@gauzy/contracts';
-import { IAppIntegrationConfig } from '@gauzy/common';
 import { TenantAwareCrudService } from './../core/crud';
 import { generateRandomInteger } from './../core/utils';
+import { EmailService } from './../email/email.service';
 import { OrganizationTeamJoinRequest } from './organization-team-join-request.entity';
 import { OrganizationTeamService } from './../organization-team/organization-team.service';
 
@@ -20,7 +23,8 @@ export class OrganizationTeamJoinRequestService extends TenantAwareCrudService<O
 		@InjectRepository(OrganizationTeamJoinRequest)
 		private readonly _organizationTeamJoinRequestRepository: Repository<OrganizationTeamJoinRequest>,
 
-		private readonly organizationTeamService: OrganizationTeamService,
+		private readonly _organizationTeamService: OrganizationTeamService,
+		private readonly _emailService: EmailService
 	) {
 		super(_organizationTeamJoinRequestRepository);
 	}
@@ -50,24 +54,38 @@ export class OrganizationTeamJoinRequestService extends TenantAwareCrudService<O
 
 		/** create new team join request */
 		try {
-			const organizationTeam = await this.organizationTeamService.findOneByIdString(organizationTeamId, {
+			const organizationTeam = await this._organizationTeamService.findOneByIdString(organizationTeamId, {
 				where: {
 					public: true
 				}
 			});
-
-			const otp = generateRandomInteger(6);
 			const { organizationId, tenantId } = organizationTeam;
+			const code = generateRandomInteger(6);
 
-			return await this.repository.save(
+			const payload: JwtPayload = {
+				email,
+				tenantId,
+				organizationId,
+				organizationTeamId,
+				code
+			};
+			/** Generate JWT token using above JWT payload */
+			const token: string = sign(payload, environment.JWT_SECRET, {
+				expiresIn: `${environment.TEAM_JOIN_REQUEST_EXPIRATION_TIME}s`
+			});
+
+			const request = await this.repository.save(
 				this.repository.create({
 					...entity,
 					organizationId,
 					tenantId,
-					code: otp,
+					code,
+					token,
 					status: OrganizationTeamJoinRequestStatusEnum.REQUESTED
 				})
 			);
+			/** Place here organization team join request email to send verification code*/
+			return request;
 		} catch (error) {
 			throw new BadRequestException('Error while requesting join organization team', error);
 		}

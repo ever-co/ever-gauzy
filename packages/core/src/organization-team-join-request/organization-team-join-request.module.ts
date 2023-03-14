@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { CqrsModule } from '@nestjs/cqrs';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { RouterModule } from 'nest-router';
+import { EmailModule } from './../email/email.module';
 import { TenantModule } from '../tenant/tenant.module';
 import { OrganizationTeamModule } from './../organization-team/organization-team.module';
 import { CommandHandlers } from './commands/handlers';
@@ -19,7 +20,8 @@ import { OrganizationTeamJoinRequestService } from './organization-team-join-req
 		]),
 		CqrsModule,
 		TenantModule,
-		OrganizationTeamModule
+		OrganizationTeamModule,
+		EmailModule
 	],
 	controllers: [
 		OrganizationTeamJoinRequestController
