@@ -21,12 +21,13 @@ export interface IOrganizationTeamJoinRequestCreateInput extends IUserEmailInput
 
 export interface IOrganizationTeamJoinRequestUpdateInput extends IOrganizationTeamJoinRequestCreateInput {
 	id?: IOrganizationTeamJoinRequest['id'];
-	// status: OrganizationTeamJoinRequestStatusEnum
 }
 
 export interface IOrganizationTeamJoinRequestFindInput
 	extends IBasePerTenantAndOrganizationEntityModel,
-	Pick<IOrganizationTeamJoinRequest, 'organizationTeamId'> { }
+	Pick<IOrganizationTeamJoinRequest, 'organizationTeamId'> {
+	status: OrganizationTeamJoinRequestStatusEnum
+}
 
 export enum OrganizationTeamJoinRequestStatusEnum {
 	REQUESTED = 'REQUESTED',
