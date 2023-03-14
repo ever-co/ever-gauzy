@@ -4,8 +4,8 @@ import { IRelationalUser, IUserEmailInput } from './user.model';
 
 export interface IOrganizationTeamJoinRequest
 	extends IBasePerTenantAndOrganizationEntityModel,
-		IRelationalUser,
-		IOrganizationTeamJoinRequestCreateInput {
+	IRelationalUser,
+	IOrganizationTeamJoinRequestCreateInput {
 	code: number;
 	token: string;
 	expiredAt: Date;
@@ -21,12 +21,12 @@ export interface IOrganizationTeamJoinRequestCreateInput extends IUserEmailInput
 
 export interface IOrganizationTeamJoinRequestUpdateInput extends IOrganizationTeamJoinRequestCreateInput {
 	id?: IOrganizationTeamJoinRequest['id'];
-	// status: OrganizationTeamJoinRequestStatusEnum;
+	// status: OrganizationTeamJoinRequestStatusEnum
 }
 
 export interface IOrganizationTeamJoinRequestFindInput
 	extends IBasePerTenantAndOrganizationEntityModel,
-		Pick<IOrganizationTeamJoinRequest, 'organizationTeamId'> {}
+	Pick<IOrganizationTeamJoinRequest, 'organizationTeamId'> { }
 
 export enum OrganizationTeamJoinRequestStatusEnum {
 	REQUESTED = 'REQUESTED',
