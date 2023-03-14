@@ -1,4 +1,11 @@
-import { Brackets, FindOptionsRelations, IsNull, Repository, SelectQueryBuilder, WhereExpressionBuilder } from 'typeorm';
+import {
+	Brackets,
+	FindOptionsRelations,
+	IsNull,
+	Repository,
+	SelectQueryBuilder,
+	WhereExpressionBuilder
+} from 'typeorm';
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { IPagination, ITag, ITagFindInput } from '@gauzy/contracts';
@@ -11,7 +18,6 @@ import { FileStorage } from './../core/file-storage';
 
 @Injectable()
 export class TagService extends TenantAwareCrudService<Tag> {
-
 	constructor(
 		@InjectRepository(Tag)
 		private readonly tagRepository: Repository<Tag>
@@ -26,20 +32,17 @@ export class TagService extends TenantAwareCrudService<Tag> {
 	 * @param relations
 	 * @returns
 	 */
-	async findTagsByLevel(
-		input: ITagFindInput,
-		relations: string[] = []
-	): Promise<IPagination<ITag>> {
+	async findTagsByLevel(input: ITagFindInput, relations: string[] = []): Promise<IPagination<ITag>> {
 		const query = this.tagRepository.createQueryBuilder(this.alias);
 		/**
 		 * Defines a special criteria to find specific relations.
 		 */
 		query.setFindOptions({
-			...(
-				(relations) ? {
-					relations: relations
-				} : {}
-			),
+			...(relations
+				? {
+						relations: relations
+				  }
+				: {})
 		});
 		/**
 		 * Additionally you can add parameters used in where expression.
@@ -68,11 +71,11 @@ export class TagService extends TenantAwareCrudService<Tag> {
 			 * Defines a special criteria to find specific relations.
 			 */
 			query.setFindOptions({
-				...(
-					(relations) ? {
-						relations: relations
-					} : {}
-				),
+				...(relations
+					? {
+							relations: relations
+					  }
+					: {})
 			});
 			/**
 			 * Left join all relational tables with tag table
@@ -104,8 +107,8 @@ export class TagService extends TenantAwareCrudService<Tag> {
 			query.leftJoin(`${query.alias}.users`, 'user');
 			query.leftJoin(`${query.alias}.warehouses`, 'warehouse');
 			/**
-			* Adds new selection to the SELECT query.
-			*/
+			 * Adds new selection to the SELECT query.
+			 */
 			query.select(`${query.alias}.*`);
 			query.addSelect(`COUNT("candidate"."id")`, `candidate_counter`);
 			query.addSelect(`COUNT("employee"."id")`, `employee_counter`);
@@ -134,8 +137,8 @@ export class TagService extends TenantAwareCrudService<Tag> {
 			query.addSelect(`COUNT("user"."id")`, `user_counter`);
 			query.addSelect(`COUNT("warehouse"."id")`, `warehouse_counter`);
 			/**
-			* Adds GROUP BY condition in the query builder.
-			*/
+			 * Adds GROUP BY condition in the query builder.
+			 */
 			query.addGroupBy(`${query.alias}.id`);
 			/**
 			 * Additionally you can add parameters used in where expression.
@@ -147,12 +150,8 @@ export class TagService extends TenantAwareCrudService<Tag> {
 			const store = new FileStorage();
 			items = items.map((item) => {
 				if (item.icon) {
-					store.setProvider(
-						FileStorageProviderEnum.LOCAL
-					);
-					item.fullIconUrl = store
-						.getProviderInstance()
-						.url(item.icon);
+					store.setProvider(FileStorageProviderEnum.LOCAL);
+					item.fullIconUrl = store.getProviderInstance().url(item.icon);
 				}
 
 				return item;
@@ -171,10 +170,7 @@ export class TagService extends TenantAwareCrudService<Tag> {
 	 * @param request
 	 * @returns
 	 */
-	getFilterTagQuery(
-		query: SelectQueryBuilder<Tag>,
-		request: ITagFindInput
-	): SelectQueryBuilder<Tag> {
+	getFilterTagQuery(query: SelectQueryBuilder<Tag>, request: ITagFindInput): SelectQueryBuilder<Tag> {
 		const tenantId = RequestContext.currentTenantId() || request.tenantId;
 		const { organizationId, organizationTeamId, name, color, description } = request;
 
@@ -185,16 +181,14 @@ export class TagService extends TenantAwareCrudService<Tag> {
 		);
 		query.andWhere(
 			new Brackets((qb: WhereExpressionBuilder) => {
-				qb.where(
-					[
-						{
-							organizationId: IsNull()
-						},
-						{
-							organizationId
-						}
-					]
-				);
+				qb.where([
+					{
+						organizationId: IsNull()
+					},
+					{
+						organizationId
+					}
+				]);
 			})
 		);
 		query.andWhere(
