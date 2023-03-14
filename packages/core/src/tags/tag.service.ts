@@ -6,6 +6,8 @@ import { RequestContext } from '../core/context';
 import { TenantAwareCrudService } from '../core/crud';
 import { Tag } from './tag.entity';
 import { isNotEmpty } from '@gauzy/common';
+import { FileStorageProviderEnum } from '@gauzy/contracts';
+import { FileStorage } from './../core/file-storage';
 
 @Injectable()
 export class TagService extends TenantAwareCrudService<Tag> {
@@ -141,7 +143,19 @@ export class TagService extends TenantAwareCrudService<Tag> {
 			query.where((qb: SelectQueryBuilder<Tag>) => {
 				this.getFilterTagQuery(qb, input);
 			});
-			const items = await query.getRawMany();
+			let items = await query.getRawMany();
+			items = items.map((item) => {
+				if (item.icon) {
+					const store = new FileStorage().setProvider(
+						FileStorageProviderEnum.LOCAL
+					);
+					item.fullIconUrl = store
+						.getProviderInstance()
+						.url(item.icon);
+				}
+
+				return item;
+			});
 			const total = items.length;
 			return { items, total };
 		} catch (error) {
