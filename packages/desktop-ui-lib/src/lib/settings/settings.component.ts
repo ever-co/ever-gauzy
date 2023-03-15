@@ -849,6 +849,8 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 				}
 			} catch (error) {
 				console.log('User Detail error', error);
+				this.currentUser$.next(null);
+				this.logout();
 			}
 		} else {
 			this.currentUser$.next(null);
