@@ -1330,6 +1330,12 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 					this._weeklyLimit$.next(res.employee.reWeeklyLimit);
 				}
 				this.userOrganization$.next(res.employee.organization);
+				const isAllowScreenCapture: boolean =
+					typeof res.employee.organization.allowScreenshotCapture !==
+						'undefined'
+						? res.employee.organization.allowScreenshotCapture &&
+						res.employee.allowScreenshotCapture
+						: true;
 				this.electronService.ipcRenderer.send(
 					'update_timer_auth_config',
 					{
@@ -1341,9 +1347,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 							res.employee.organization.allowTrackInactivity,
 						isRemoveIdleTime:
 							res.employee.organization.isRemoveIdleTime,
-						allowScreenshotCapture:
-							res.employee.organization.allowScreenshotCapture &&
-							res.employee.allowScreenshotCapture,
+						allowScreenshotCapture: isAllowScreenCapture,
 					}
 				);
 				this.isTrackingEnabled =
