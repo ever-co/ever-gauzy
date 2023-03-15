@@ -26,6 +26,7 @@ export class DesktopUpdater {
 
 	constructor(config: IUpdaterConfig) {
 		this._updateContext = new UpdateContext();
+		this._updateContext.strategy = new DigitalOceanCdn(new CdnUpdate(config));
 		this._updateServer = new DesktopLocalUpdateServer();
 		this._strategy = new GithubCdn(new CdnUpdate(config));
 		this._config = config;
