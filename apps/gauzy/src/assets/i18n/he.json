@@ -3817,6 +3817,8 @@
 			"candidate-schedule-interview": "Candidate Interview Schedule",
 			"interviewer-interview-schedule": "Interviewer Schedule",
 			"employee-join": "Employee Join",
+			"email-reset": "Email Reset",
+			"organization-team-join-request": "Organization team join request",
 			"TEMPLATE_NAMES": "Template Names"
 		},
 		"HTML_EDITOR": "HTML Editor"

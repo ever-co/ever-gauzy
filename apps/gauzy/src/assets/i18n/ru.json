@@ -3817,6 +3817,8 @@
 			"candidate-schedule-interview": "Расписание интервью Кандидата",
 			"interviewer-interview-schedule": "Расписание интервьюера",
 			"employee-join": "Прием сотрудников",
+			"email-reset": "Сброс электронной почты",
+			"organization-team-join-request": "Запрос на вступление в команду организации",
 			"TEMPLATE_NAMES": "Названия шаблонов"
 		},
 		"HTML_EDITOR": "HTML-редактор"
