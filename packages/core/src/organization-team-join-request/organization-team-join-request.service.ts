@@ -57,9 +57,12 @@ export class OrganizationTeamJoinRequestService extends TenantAwareCrudService<O
 			const organizationTeam = await this._organizationTeamService.findOneByIdString(organizationTeamId, {
 				where: {
 					public: true
+				},
+				relations: {
+					organization: true
 				}
 			});
-			const { organizationId, tenantId } = organizationTeam;
+			const { organization, organizationId, tenantId } = organizationTeam;
 			const code = generateRandomInteger(6);
 
 			const payload: JwtPayload = {
@@ -74,7 +77,7 @@ export class OrganizationTeamJoinRequestService extends TenantAwareCrudService<O
 				expiresIn: `${environment.TEAM_JOIN_REQUEST_EXPIRATION_TIME}s`
 			});
 
-			const request = await this.repository.save(
+			const organizationTeamJoinRequest: IOrganizationTeamJoinRequest = await this.repository.save(
 				this.repository.create({
 					...entity,
 					organizationId,
@@ -84,8 +87,23 @@ export class OrganizationTeamJoinRequestService extends TenantAwareCrudService<O
 					status: OrganizationTeamJoinRequestStatusEnum.REQUESTED
 				})
 			);
+
 			/** Place here organization team join request email to send verification code*/
-			return request;
+			let { appName, appLogo, appSignature, appLink } = entity;
+			this._emailService.organizationTeamJoinRequest(
+				organizationTeam,
+				organizationTeamJoinRequest,
+				languageCode,
+				organization,
+				{
+					appName,
+					appLogo,
+					appSignature,
+					appLink
+				}
+			);
+
+			return organizationTeamJoinRequest;
 		} catch (error) {
 			throw new BadRequestException('Error while requesting join organization team', error);
 		}
