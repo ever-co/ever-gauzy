@@ -38,11 +38,7 @@ export class DesktopUpdater {
 		ipcMain.on('update_locally', async () => {
 			const localUpdate = new LocalUpdate();
 			const dialog = new DialogLocalUpdate(
-				new DesktopDialog(
-					'Gauzy',
-					'Please select folder with update files',
-					this._settingWindow
-				)
+				new DesktopDialog('Gauzy', 'Please select folder with update files', this._settingWindow)
 			);
 			const openedDialogResult = dialog.open();
 			const files = openedDialogResult ? openedDialogResult[0] : null;
@@ -50,10 +46,7 @@ export class DesktopUpdater {
 				console.log('Files directory', files);
 				this._updateServer.fileUri(files);
 				this._updateServer.restart();
-				localUpdate.url =
-					'http://localhost:' +
-					LOCAL_SERVER_UPDATE_CONFIG.PORT +
-					'/download';
+				localUpdate.url = 'http://localhost:' + LOCAL_SERVER_UPDATE_CONFIG.PORT + '/download';
 			} else {
 				localUpdate.url = null;
 			}
@@ -76,9 +69,7 @@ export class DesktopUpdater {
 				await this._strategy.initialize();
 				this._updateContext.strategy = this._strategy;
 			} else if (args.digitalOcean) {
-				this._updateContext.strategy = new DigitalOceanCdn(
-					new CdnUpdate(this._config)
-				);
+				this._updateContext.strategy = new DigitalOceanCdn(new CdnUpdate(this._config));
 			}
 			if (!args.local) {
 				try {
@@ -109,11 +100,7 @@ export class DesktopUpdater {
 			const setting = LocalStore.getStore('appSetting');
 			if (setting && !setting.automaticUpdate) return;
 			const dialog = new DialogConfirmUpgradeDownload(
-				new DesktopDialog(
-					'Gauzy',
-					'Update Ready to Download',
-					this._gauzyWindow
-				)
+				new DesktopDialog('Gauzy', 'Update Ready to Download', this._gauzyWindow)
 			);
 			dialog.options = {
 				...dialog.options,
@@ -135,11 +122,7 @@ export class DesktopUpdater {
 			this._settingWindow.webContents.send('update_downloaded');
 			if (setting && !setting.automaticUpdate) return;
 			const dialog = new DialogConfirmInstallDownload(
-				new DesktopDialog(
-					'Gauzy',
-					'Update Ready to Install',
-					this._gauzyWindow
-				)
+				new DesktopDialog('Gauzy', 'Update Ready to Install', this._gauzyWindow)
 			);
 			dialog.options.detail =
 				'A new version v' +
@@ -159,8 +142,7 @@ export class DesktopUpdater {
 		});
 
 		autoUpdater.requestHeaders = {
-			'Cache-Control':
-				'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0'
+			'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0'
 		};
 
 		autoUpdater.on('update-not-available', () => {
@@ -171,10 +153,7 @@ export class DesktopUpdater {
 		autoUpdater.on('download-progress', (event) => {
 			console.log('update log', event);
 			if (this._settingWindow) {
-				this._settingWindow.webContents.send(
-					'download_on_progress',
-					event
-				);
+				this._settingWindow.webContents.send('download_on_progress', event);
 			}
 		});
 
@@ -199,9 +178,7 @@ export class DesktopUpdater {
 				await this._strategy.initialize();
 				this._updateContext.strategy = this._strategy;
 			} else if (settings.cdnUpdater.digitalOcean) {
-				this._updateContext.strategy = new DigitalOceanCdn(
-					new CdnUpdate(this._config)
-				);
+				this._updateContext.strategy = new DigitalOceanCdn(new CdnUpdate(this._config));
 			}
 		}
 		setTimeout(async () => {
