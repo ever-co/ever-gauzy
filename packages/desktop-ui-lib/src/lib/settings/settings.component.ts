@@ -464,20 +464,20 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 					: null;
 				this.serverConnectivity();
 				this.selectMonitorOption({
-					value: setting.monitor.captured,
+					value: setting?.monitor?.captured,
 				});
-				this.screenshotNotification = setting.screenshotNotification;
-				this.muted = setting.mutedNotification;
-				this.autoLaunch = setting.autoLaunch;
-				this.minimizeOnStartup = setting.minimizeOnStartup;
-				this._automaticUpdate$.next(setting.automaticUpdate);
-				this._prerelease$.next(setting.prerelease);
+				this.screenshotNotification = setting?.screenshotNotification;
+				this.muted = setting?.mutedNotification;
+				this.autoLaunch = setting?.autoLaunch;
+				this.minimizeOnStartup = setting?.minimizeOnStartup;
+				this._automaticUpdate$.next(setting?.automaticUpdate);
+				this._prerelease$.next(setting?.prerelease);
 				this._updaterServer$ = new BehaviorSubject({
-					github: setting.cdnUpdater.github,
-					digitalOcean: setting.cdnUpdater.digitalOcean,
+					github: setting?.cdnUpdater?.github == true,
+					digitalOcean: setting?.cdnUpdater?.digitalOcean == true,
 					local: false,
 				});
-				this.selectPeriod(setting.timer.updatePeriod);
+				this.selectPeriod(setting?.timer?.updatePeriod);
 				if (!this.isServer) {
 					await this.getUserDetails();
 				}
