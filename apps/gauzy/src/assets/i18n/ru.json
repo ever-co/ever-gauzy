@@ -3818,8 +3818,7 @@
 			"interviewer-interview-schedule": "Расписание интервьюера",
 			"employee-join": "Прием сотрудников",
 			"email-reset": "Сброс электронной почты",
-			"organization-team-join-request": "Запрос на вступление в команду организации",
-			"TEMPLATE_NAMES": "Названия шаблонов"
+			"organization-team-join-request": "Запрос на вступление в команду организации"
 		},
 		"HTML_EDITOR": "HTML-редактор"
 	},

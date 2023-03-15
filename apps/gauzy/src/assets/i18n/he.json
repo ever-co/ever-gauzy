@@ -3818,8 +3818,7 @@
 			"interviewer-interview-schedule": "Interviewer Schedule",
 			"employee-join": "Employee Join",
 			"email-reset": "Email Reset",
-			"organization-team-join-request": "Organization team join request",
-			"TEMPLATE_NAMES": "Template Names"
+			"organization-team-join-request": "Organization team join request"
 		},
 		"HTML_EDITOR": "HTML Editor"
 	},
