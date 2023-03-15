@@ -1332,7 +1332,8 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 				this.userOrganization$.next(res.employee.organization);
 				const isAllowScreenCapture: boolean =
 					typeof res.employee.organization.allowScreenshotCapture !==
-						'undefined'
+						'undefined' &&
+						typeof res.employee.allowScreenshotCapture !== 'undefined'
 						? res.employee.organization.allowScreenshotCapture &&
 						res.employee.allowScreenshotCapture
 						: true;
