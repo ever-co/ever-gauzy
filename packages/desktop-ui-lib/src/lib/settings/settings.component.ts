@@ -838,15 +838,29 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 	 * Get logged in user details
 	 */
 	public async getUserDetails() {
-		if (this._argMain) {
+		const request = {
+			...this.authSetting,
+			...this.config,
+			apiHost: this.config.serverUrl
+		};
+		if (this.authSetting) {
 			try {
-				const user = await this.timeTrackerService.getUserDetail(this._argMain);
-				if (user) {
-					this.currentUser$.next(user);
-				} else {
-					this.currentUser$.next(null);
-					this.logout();
+				const payload = {
+					tenantId: request.tenantId,
+					token: request.token,
+					apiHost: request.apiHost
 				}
+				if (Object.values(payload).includes(null || undefined)) {
+					this.currentUser$.next(null);
+					if (typeof this.authSetting.isLogout !== 'undefined') {
+						if (!this.authSetting.isLogout) {
+							this.logout();
+						}
+					}
+				} else {
+					const user = await this.timeTrackerService.getUserDetail(payload);
+					this.currentUser$.next(this.authSetting.isLogout ? null : user);
+				};
 			} catch (error) {
 				console.log('User Detail error', error);
 			}
