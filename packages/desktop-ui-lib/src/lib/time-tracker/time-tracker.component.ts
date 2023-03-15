@@ -467,7 +467,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 			this._ngZone.run(() => {
 				this.timeTrackerService.getUserDetail(arg).then((res) => {
 					event.sender.send('user_detail', res);
-				});
+				}).catch((error) => console.log('[User Error]: ', error));
 			})
 		);
 
@@ -1330,6 +1330,16 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 					this._weeklyLimit$.next(res.employee.reWeeklyLimit);
 				}
 				this.userOrganization$.next(res.employee.organization);
+				let isAllowScreenCapture: boolean = true;
+				const employee = res.employee;
+				if (
+					'allowScreenshotCapture' in employee ||
+					'allowScreenshotCapture' in employee.organization
+				) {
+					isAllowScreenCapture =
+						employee.allowScreenshotCapture == true &&
+						employee.organization.allowScreenshotCapture == true;
+				}
 				this.electronService.ipcRenderer.send(
 					'update_timer_auth_config',
 					{
@@ -1341,9 +1351,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 							res.employee.organization.allowTrackInactivity,
 						isRemoveIdleTime:
 							res.employee.organization.isRemoveIdleTime,
-						allowScreenshotCapture:
-							res.employee.organization.allowScreenshotCapture &&
-							res.employee.allowScreenshotCapture,
+						allowScreenshotCapture: isAllowScreenCapture,
 					}
 				);
 				this.isTrackingEnabled =

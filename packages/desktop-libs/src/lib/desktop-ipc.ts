@@ -845,6 +845,7 @@ export function removeAllHandlers() {
 let isQueueThreadTimerLocked = false;
 
 async function sequentialSyncQueue(window: BrowserWindow) {
+	if (!window) return;
 	try {
 		await offlineMode.connectivity();
 		if (offlineMode.enabled) return;
@@ -876,17 +877,27 @@ async function sequentialSyncQueue(window: BrowserWindow) {
 let queueSync = Infinity;
 
 async function countIntervalQueue(window: BrowserWindow, isSyncing: boolean) {
-	queueSync = await intervalService.countNoSynced();
-	if (queueSync < 1) isQueueThreadTimerLocked = false;
-	window.webContents.send('count-synced', {
-		queue: queueSync,
-		isSyncing: isSyncing
-	});
+	if (!window) return;
+	try {
+		queueSync = await intervalService.countNoSynced();
+		if (queueSync < 1) isQueueThreadTimerLocked = false;
+		window.webContents.send('count-synced', {
+			queue: queueSync,
+			isSyncing: isSyncing
+		});
+	} catch (error) {
+		console.log('ERROR_COUNT', error);
+	}
 }
 
 async function latestScreenshots(window: BrowserWindow): Promise<void> {
-	window.webContents.send(
-		'latest_screenshots',
-		await intervalService.screenshots()
-	);
+	if (!window) return;
+	try {
+		window.webContents.send(
+			'latest_screenshots',
+			await intervalService.screenshots()
+		);
+	} catch (error) {
+		console.log('ERROR_SCREENSHOTS', error);
+	}
 }
