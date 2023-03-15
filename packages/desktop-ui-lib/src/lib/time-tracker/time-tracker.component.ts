@@ -1330,13 +1330,16 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 					this._weeklyLimit$.next(res.employee.reWeeklyLimit);
 				}
 				this.userOrganization$.next(res.employee.organization);
-				const isAllowScreenCapture: boolean =
-					typeof res.employee.organization.allowScreenshotCapture !==
-						'undefined' &&
-						typeof res.employee.allowScreenshotCapture !== 'undefined'
-						? res.employee.organization.allowScreenshotCapture &&
-						res.employee.allowScreenshotCapture
-						: true;
+				let isAllowScreenCapture: boolean = true;
+				const employee = res.employee;
+				if (
+					'allowScreenshotCapture' in employee ||
+					'allowScreenshotCapture' in employee.organization
+				) {
+					isAllowScreenCapture =
+						employee.allowScreenshotCapture == true &&
+						employee.organization.allowScreenshotCapture == true;
+				}
 				this.electronService.ipcRenderer.send(
 					'update_timer_auth_config',
 					{
