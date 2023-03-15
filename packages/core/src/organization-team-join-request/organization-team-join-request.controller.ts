@@ -1,10 +1,12 @@
-import { Body, Controller, Get, HttpCode, HttpStatus, Post, Query, UsePipes, ValidationPipe } from '@nestjs/common';
+import { Body, Controller, Get, HttpCode, HttpStatus, Post, Query, UseGuards, UsePipes, ValidationPipe } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { CommandBus } from '@nestjs/cqrs';
-import { IOrganizationTeamJoinRequest, IPagination, LanguagesEnum } from '@gauzy/contracts';
+import { IOrganizationTeamJoinRequest, IPagination, LanguagesEnum, PermissionsEnum } from '@gauzy/contracts';
 import { Public } from '@gauzy/common';
 import { PaginationParams } from './../core/crud';
 import { LanguageDecorator } from './../shared/decorators';
+import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
+import { Permissions } from './../shared/decorators';
 import { OrganizationTeamJoinRequestCreateCommand } from './commands';
 import { OrganizationTeamJoinRequest } from './organization-team-join-request.entity';
 import { OrganizationTeamJoinRequestService } from './organization-team-join-request.service';
@@ -43,6 +45,8 @@ export class OrganizationTeamJoinRequestController {
 	 */
 	@HttpCode(HttpStatus.OK)
 	@Get()
+	@UseGuards(TenantPermissionGuard, PermissionGuard)
+	@Permissions(PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.ORG_TEAM_JOIN_REQUEST_VIEW)
 	@UsePipes(new ValidationPipe())
 	async findAll(
 		@Query() params: PaginationParams<OrganizationTeamJoinRequest>
