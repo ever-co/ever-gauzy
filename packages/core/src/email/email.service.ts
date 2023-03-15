@@ -11,7 +11,9 @@ import {
 	IUser,
 	IInvite,
 	IPagination,
-	IInviteTeamMemberModel
+	IInviteTeamMemberModel,
+	IOrganizationTeam,
+	IOrganizationTeamJoinRequest
 } from '@gauzy/contracts';
 import { BadRequestException, forwardRef, Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -933,7 +935,7 @@ export class EmailService extends TenantAwareCrudService<EmailEntity> {
 		languageCode: LanguagesEnum,
 		verificationCode: number,
 		organization: IOrganization
-	){	
+	) {
 		const integration = Object.assign({}, env.appIntegrationConfig);
 
 		const sendOptions = {
@@ -957,6 +959,63 @@ export class EmailService extends TenantAwareCrudService<EmailEntity> {
 				languageCode,
 				message: '',
 				user: user,
+				organization
+			}
+			const match = !!DISALLOW_EMAIL_SERVER_DOMAIN.find((server) => body.email.includes(server));
+			if (!match) {
+				try {
+					const send = await (await this.getEmailInstance()).send(sendOptions);
+					body['message'] = send.originalMessage;
+				} catch (error) {
+					console.error(error);
+				}
+			}
+			await this.createEmailRecord(body);
+		} catch (error) {
+			console.error(error);
+		}
+	}
+
+	/**
+	 * Organization team join request email
+	 *
+	 * @param email
+	 * @param code
+	 * @param languageCode
+	 * @param organization
+	 */
+	async organizationTeamJoinRequest(
+		organizationTeam: IOrganizationTeam,
+		organizationTeamJoinRequest: IOrganizationTeamJoinRequest,
+		languageCode: LanguagesEnum,
+		organization: IOrganization,
+		integration?: IAppIntegrationConfig
+	) {
+		/**
+		* Override the default config by merging in the provided values.
+		*
+		*/
+		deepMerge(integration, env.appIntegrationConfig);
+
+		const sendOptions = {
+			template: 'organization-team-join-request',
+			message: {
+				to: `${organizationTeamJoinRequest.email}`
+			},
+			locals: {
+				locale: languageCode,
+				host: env.clientBaseUrl,
+				...organizationTeam,
+				...organizationTeamJoinRequest,
+				...integration
+			}
+		};
+		try {
+			const body = {
+				templateName: sendOptions.template,
+				email: sendOptions.message.to,
+				languageCode,
+				message: '',
 				organization
 			}
 			const match = !!DISALLOW_EMAIL_SERVER_DOMAIN.find((server) => body.email.includes(server));

@@ -40,6 +40,8 @@ export enum EmailTemplateNameEnum {
 	EMAIL_INVOICE = 'email-invoice',
 	EMAIL_ESTIMATE = 'email-estimate',
 	EMPLOYEE_JOIN = "employee-join",
+	EMAIL_RESET = "email-reset",
+	ORGANIZATION_TEAM_JOIN_REQUEST = 'organization-team-join-request'
 }
 
 export interface ICustomizeEmailTemplateFindInput
