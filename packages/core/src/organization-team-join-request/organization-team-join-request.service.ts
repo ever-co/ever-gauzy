@@ -49,7 +49,9 @@ export class OrganizationTeamJoinRequestService extends TenantAwareCrudService<O
 			}
 		});
 		if (!!request) {
-			throw new ConflictException('You have sent already join request for this team, please wait for manager response.');
+			throw new ConflictException(
+				'You have sent already join request for this team, please wait for manager response.'
+			);
 		}
 
 		/** create new team join request */
@@ -133,7 +135,7 @@ export class OrganizationTeamJoinRequestService extends TenantAwareCrudService<O
 					organizationTeamId,
 					expiredAt: MoreThanOrEqual(new Date()),
 					status: OrganizationTeamJoinRequestStatusEnum.REQUESTED
-				})
+				});
 				qb.andWhere([
 					{
 						code
