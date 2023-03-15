@@ -1941,6 +1941,8 @@
 			"ORG_TEAM_VIEW": "View Teams",
 			"ORG_TEAM_EDIT": "Edit Teams",
 			"ORG_TEAM_DELETE": "Delete Teams",
+			"ORG_TEAM_JOIN_REQUEST_VIEW": "View Teams Join Requests",
+			"ORG_TEAM_JOIN_REQUEST_EDIT": "Delete Teams Join Requests",
 			"ORG_CONTRACT_EDIT": "Create/Edit Contracts",
 			"TIME_TRACKER": "Access Time Tracker",
 			"TENANT_ADD_EXISTING_USER": "Tenant Add User To Organization",
