@@ -467,7 +467,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 			this._ngZone.run(() => {
 				this.timeTrackerService.getUserDetail(arg).then((res) => {
 					event.sender.send('user_detail', res);
-				});
+				}).catch((error) => console.log('[User Error]: ', error));
 			})
 		);
 
