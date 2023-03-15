@@ -3837,7 +3837,9 @@
 			"task-update": "Task Update",
 			"candidate-schedule-interview": "Candidate Interview Schedule",
 			"interviewer-interview-schedule": "Interviewer Schedule",
-			"employee-join": "Employee Join"
+			"employee-join": "Employee Join",
+			"email-reset": "Email Reset",
+			"organization-team-join-request": "Organization team join request"
 		},
 		"HTML_EDITOR": "HTML Editor"
 	},
