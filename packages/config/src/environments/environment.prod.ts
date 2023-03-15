@@ -43,8 +43,7 @@ export const environment: IEnvironment = {
 	AUTHENTICATION_CODE_EXPIRATION_TIME: parseInt(process.env.AUTHENTICATION_CODE_EXPIRATION_TIME) || 600, // default code expire time (10 minutes)
 
 	/** Organization Team Join Request Configuration **/
-	ORGANIZATION_TEAM_JOIN_CODE_EXPIRATION_TIME:
-		parseInt(process.env.ORGANIZATION_TEAM_JOIN_CODE_EXPIRATION_TIME) || 60 * 60 * 24, // default code expire time (1 day)
+	TEAM_JOIN_REQUEST_EXPIRATION_TIME: parseInt(process.env.TEAM_JOIN_REQUEST_EXPIRATION_TIME) || 60 * 60 * 24, // default code expire time (1 day)
 
 	/**
 	 * Throttler (Rate Limiting) Options

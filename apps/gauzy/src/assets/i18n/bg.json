@@ -1931,6 +1931,8 @@
 			"ORG_TEAM_VIEW": "View Teams",
 			"ORG_TEAM_EDIT": "Edit Teams",
 			"ORG_TEAM_DELETE": "Delete Teams",
+			"ORG_TEAM_JOIN_REQUEST_VIEW": "Преглед на заявките за присъединяване към екипи",
+			"ORG_TEAM_JOIN_REQUEST_EDIT": "Изтриване на заявки за присъединяване към екипи",
 			"ORG_CONTRACT_EDIT": "Create/Edit Contracts",
 			"TIME_TRACKER": "Access Time Tracker",
 			"TENANT_ADD_EXISTING_USER": "Tenant Add User To Organization",

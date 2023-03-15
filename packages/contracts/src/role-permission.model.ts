@@ -110,6 +110,9 @@ export enum PermissionsEnum {
 	ORG_TEAM_VIEW = 'ORG_TEAM_VIEW',
 	ORG_TEAM_EDIT = 'ORG_TEAM_EDIT',
 	ORG_TEAM_DELETE = 'ORG_TEAM_DELETE',
+	/** Organization Team Join Request Permissions */
+	ORG_TEAM_JOIN_REQUEST_VIEW = 'ORG_TEAM_JOIN_REQUEST_VIEW',
+	ORG_TEAM_JOIN_REQUEST_EDIT = 'ORG_TEAM_JOIN_REQUEST_EDIT',
 	ORG_CONTRACT_EDIT = 'ORG_CONTRACT_EDIT',
 	EVENT_TYPES_VIEW = 'EVENT_TYPES_VIEW',
 	TIME_TRACKER = 'TIME_TRACKER',
@@ -221,6 +224,8 @@ export const PermissionGroups = {
 		PermissionsEnum.ORG_TEAM_VIEW,
 		PermissionsEnum.ORG_TEAM_EDIT,
 		PermissionsEnum.ORG_TEAM_DELETE,
+		PermissionsEnum.ORG_TEAM_JOIN_REQUEST_VIEW,
+		PermissionsEnum.ORG_TEAM_JOIN_REQUEST_EDIT,
 		PermissionsEnum.ORG_CONTRACT_EDIT,
 		PermissionsEnum.EVENT_TYPES_VIEW,
 		PermissionsEnum.TIME_TRACKER,
