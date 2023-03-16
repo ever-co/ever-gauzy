@@ -3,6 +3,7 @@ import * as multer from 'multer';
 import * as moment from 'moment';
 import * as fs from 'fs';
 import { join, resolve } from 'path';
+import * as streamifier from 'streamifier';
 import { UploadApiErrorResponse, UploadApiResponse, v2 as cloudinary } from 'cloudinary';
 import { environment, getConfig } from '@gauzy/config';
 import { FileStorageOption, FileStorageProviderEnum, FileSystem, UploadedFile } from "@gauzy/contracts";
@@ -13,6 +14,7 @@ const config = getConfig();
 
 export class CloudinaryProvider extends Provider<CloudinaryProvider> {
 
+    public folder: string;
     public config: ICloudinaryConfig & FileSystem;
     public readonly name = FileStorageProviderEnum.CLOUDINARY;
     public static instance: CloudinaryProvider;
@@ -34,7 +36,7 @@ export class CloudinaryProvider extends Provider<CloudinaryProvider> {
         filename,
         prefix = 'file'
     }: FileStorageOption): multer.StorageEngine {
-        const diskStorage = multer.diskStorage({
+        return multer.diskStorage({
             destination: (_req: Request, file: Express.Multer.File, callback) => {
                 // A string or function that determines the destination path for uploaded
                 let dir: string;
@@ -46,7 +48,6 @@ export class CloudinaryProvider extends Provider<CloudinaryProvider> {
 
                 // In "screenshots" folder we will temporarily upload image before uploading to cloudinary
                 const fullPath = join(this.config.rootPath, dir);
-                console.log({ fullPath }, file.path);
 
                 // Creating screenshots folder if not already present.
                 if (!fs.existsSync(fullPath)) {
@@ -55,8 +56,6 @@ export class CloudinaryProvider extends Provider<CloudinaryProvider> {
                 callback(null, fullPath);
             },
             filename: (_req: Request, file: Express.Multer.File, callback) => {
-                console.log(file.path, 'File Path');
-
                 // A file extension, or filename extension, is a suffix at the end of a file.
                 const extension = file.originalname.split('.').pop();
 
@@ -74,8 +73,6 @@ export class CloudinaryProvider extends Provider<CloudinaryProvider> {
                 callback(null, fileName);
             }
         });
-        console.log(diskStorage);
-        return diskStorage;
     }
 
     async deleteFile(file: string): Promise<void> { }
@@ -112,19 +109,20 @@ export class CloudinaryProvider extends Provider<CloudinaryProvider> {
     }
 
     async putFile(file: any, path: string = ''): Promise<UploadedFile> {
-        console.log('Cloudinary File Upload', file, path);
-        return new Promise((resolve, reject) => {
-            cloudinary.uploader.upload(this.path(path), (error: UploadApiErrorResponse, result: UploadApiResponse) => {
-                console.log(error, result);
-                if (error) {
-                    return reject(error);
-                }
-                // Image has been successfully uploaded on cloudinary so we don't need local image file anymore
-                // Remove file from local uploads folder
-                fs.unlinkSync(this.path(path));
-                return resolve({ url: result.url, id: result.public_id } as any);
+        try {
+            return new Promise((resolve, reject) => {
+                const stream = cloudinary.uploader.upload_stream((error: UploadApiErrorResponse, result: UploadApiResponse) => {
+                    if (error) return reject(error);
+
+                    resolve({ url: result.url, id: result.public_id } as any);
+                });
+                streamifier.createReadStream(file).pipe(stream);
             });
-        });
+        } finally {
+            // Image has been successfully uploaded on cloudinary so we don't need local image file anymore
+            // Remove file from local uploads folder
+            // fs.unlinkSync(this.path(path));
+        }
     }
 
     /**
