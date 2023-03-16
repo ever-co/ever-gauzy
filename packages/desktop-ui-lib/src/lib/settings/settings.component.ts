@@ -12,6 +12,7 @@ import { NbDialogService, NbToastrService } from '@nebular/theme';
 import { ElectronService } from '../electron/services';
 import { BehaviorSubject, Observable } from 'rxjs';
 import { AboutComponent } from '../dialogs/about/about.component';
+import { SetupService } from '../setup/setup.service';
 @Component({
 	selector: 'ngx-settings',
 	templateUrl: './settings.component.html',
@@ -408,6 +409,12 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 	private _file$: BehaviorSubject<any>;
 	private _prerelease$: BehaviorSubject<boolean>;
 	private _isCheckDatabase$: BehaviorSubject<boolean>;
+	private _isCheckHost$: BehaviorSubject<{
+		isLoading: boolean,
+		isHidden: boolean,
+		message: string,
+		status: boolean
+	}>;
 	private _isConnectedDatabase$: BehaviorSubject<{ status: boolean, message: string }>;
 	private _restartDisable$: BehaviorSubject<boolean>;
 	private _isHidden$: BehaviorSubject<boolean>;
@@ -418,7 +425,8 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 		private _ngZone: NgZone,
 		private readonly timeTrackerService: TimeTrackerService,
 		private toastrService: NbToastrService,
-		private _dialogService: NbDialogService
+		private _dialogService: NbDialogService,
+		private _setupService: SetupService
 	) {
 		this._loading$ = new BehaviorSubject(false);
 		this._automaticUpdate$ = new BehaviorSubject(false);
@@ -432,6 +440,12 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 		this._prerelease$ = new BehaviorSubject(false);
 		this._selectedMenu$ = new BehaviorSubject(null);
 		this._isCheckDatabase$ = new BehaviorSubject(false);
+		this._isCheckHost$ = new BehaviorSubject({
+			isLoading: false,
+			isHidden: true,
+			status: false,
+			message: ''
+		});
 		this._isConnectedDatabase$ = new BehaviorSubject({ status: false, message: null });
 		this._restartDisable$ = new BehaviorSubject(false);
 		this._isHidden$ = new BehaviorSubject(true);
@@ -458,26 +472,26 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 				this.checkDatabaseConnectivity();
 				this.authSetting = auth;
 				this.mappingAdditionalSetting(additionalSetting || null);
-
+				await this.checkHostConnectivity();
 				this.config.awPort = this.config.timeTrackerWindow
 					? this.config.awHost.split('t:')[1]
 					: null;
 				this.serverConnectivity();
 				this.selectMonitorOption({
-					value: setting.monitor.captured,
+					value: setting?.monitor?.captured,
 				});
-				this.screenshotNotification = setting.screenshotNotification;
-				this.muted = setting.mutedNotification;
-				this.autoLaunch = setting.autoLaunch;
-				this.minimizeOnStartup = setting.minimizeOnStartup;
-				this._automaticUpdate$.next(setting.automaticUpdate);
-				this._prerelease$.next(setting.prerelease);
+				this.screenshotNotification = setting?.screenshotNotification;
+				this.muted = setting?.mutedNotification;
+				this.autoLaunch = setting?.autoLaunch;
+				this.minimizeOnStartup = setting?.minimizeOnStartup;
+				this._automaticUpdate$.next(setting?.automaticUpdate);
+				this._prerelease$.next(setting?.prerelease);
 				this._updaterServer$ = new BehaviorSubject({
-					github: setting.cdnUpdater.github,
-					digitalOcean: setting.cdnUpdater.digitalOcean,
+					github: setting?.cdnUpdater?.github == true,
+					digitalOcean: setting?.cdnUpdater?.digitalOcean == true,
 					local: false,
 				});
-				this.selectPeriod(setting.timer.updatePeriod);
+				this.selectPeriod(setting?.timer?.updatePeriod);
 				if (!this.isServer) {
 					await this.getUserDetails();
 				}
@@ -879,6 +893,7 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 	}
 
 	onServerChange(val) {
+		this._restartDisable$.next(true);
 		switch (val) {
 			case this.serverTypes.integrated:
 				this.config.isLocalServer = true;
@@ -1057,6 +1072,24 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 		return this._isCheckDatabase$.getValue();
 	}
 
+	public get _isCheckHost(): {
+		isLoading: boolean,
+		isHidden: boolean,
+		message: string,
+		status: boolean
+	} {
+		return this._isCheckHost$.getValue();
+	}
+
+	public get isCheckHost$(): Observable<{
+		isLoading: boolean,
+		isHidden: boolean,
+		message: string,
+		status: boolean
+	}> {
+		return this._isCheckHost$.asObservable();
+	}
+
 	public get isCheckDatabase$(): Observable<boolean> {
 		return this._isCheckDatabase$.asObservable();
 	}
@@ -1073,4 +1106,50 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 		this._isHidden$.next(true);
 	}
 
+	public onHideApi() {
+		this._isCheckHost$.next({
+			...this._isCheckHost,
+			isHidden: true
+		});
+	}
+
+	public async checkHostConnectivity(): Promise<any> {
+		try {
+			this._isCheckHost$.next({
+				...this._isCheckHost,
+				isLoading: true,
+			});
+			const url = new URL(this.config.serverUrl);
+			if (url.pathname.length > 1) {
+				this.config.serverUrl = url.origin;
+			}
+			const isOk = await this._setupService.pingServer({
+				host: url.origin,
+			});
+			if (isOk) {
+				this._isCheckHost$.next({
+					status: true,
+					isHidden: false,
+					isLoading: false,
+					message: `Connection to Server ${this.config.serverUrl} Succeeds`,
+				});
+				this._restartDisable$.next(false);
+			}
+		} catch (error) {
+			const isOkAnyway = error.status === 404;
+			this._isCheckHost$.next({
+				status: isOkAnyway,
+				isHidden: false,
+				isLoading: false,
+				message: isOkAnyway
+					? `Connection to Server ${this.config.serverUrl} Succeeds`
+					: error.message,
+			});
+			this._restartDisable$.next(!isOkAnyway);
+		}
+	}
+
+	public onHostChange(host: string) {
+		this._restartDisable$.next(true);
+	}
 }

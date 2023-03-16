@@ -7,7 +7,7 @@ import {
 	UpdateDateColumn,
 	CreateDateColumn
 } from 'typeorm';
-import { ApiPropertyOptional, ApiProperty } from '@nestjs/swagger';
+import { ApiPropertyOptional } from '@nestjs/swagger';
 import { BaseEntityModel as IBaseEntityModel } from '@gauzy/contracts';
 
 export abstract class Model {
@@ -20,11 +20,12 @@ export abstract class Model {
 	}
 }
 export abstract class BaseEntity extends Model implements IBaseEntityModel {
+
 	@ApiPropertyOptional({ type: () => String })
 	@PrimaryGeneratedColumn('uuid')
 	id?: string;
 
-	@ApiProperty({
+	@ApiPropertyOptional({
 		type: 'string',
 		format: 'date-time',
 		example: '2018-11-21T06:20:32.232Z'
@@ -32,7 +33,7 @@ export abstract class BaseEntity extends Model implements IBaseEntityModel {
 	@CreateDateColumn()
 	createdAt?: Date;
 
-	@ApiProperty({
+	@ApiPropertyOptional({
 		type: 'string',
 		format: 'date-time',
 		example: '2018-11-21T06:20:32.232Z'

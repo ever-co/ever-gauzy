@@ -433,13 +433,31 @@
 												<p>Server URL</p>
 											</div>
 											<div class="col-7 form-group" *ngIf="!config?.isLocalServer">
-												<input [(ngModel)]="config.serverUrl" type="text" nbInput fullWidth
+												<input [(ngModel)]="config.serverUrl" (ngModelChange)="onHostChange($event)" type="text" nbInput fullWidth
 													[disabled]="
 													appSetting?.timerStarted ||
 													config?.serverType === serverTypes?.live
 												" status="basic" />
 											</div>
-										</div>
+											<div class="col-5">
+												<button nbButton status="basic" class="check-db" [nbSpinner]="(isCheckHost$ | async)?.isLoading" nbSpinnerSize="tiny" nbSpinner
+													(click)="checkHostConnectivity()" [disabled]="appSetting?.timerStarted">
+													<ng-container *ngIf="!(isCheckHost$ | async)?.isLoading">
+														<nb-icon [status]="(isCheckHost$ | async)?.status ? 'success': 'danger'"
+															[icon]="(isCheckHost$ | async)?.status ? 'checkmark-circle-2-outline': 'close-circle-outline'"></nb-icon>
+														Check
+													</ng-container>
+												</button>
+											</div>
+											<div *ngIf="!(isCheckHost$ | async)?.isHidden" class="col-7 warn-container">
+												<button nbButton (click)="onHideApi()" status="basic" size="tiny" class="close-warn" >
+													<nb-icon icon="close-outline"></nb-icon>
+												</button>
+												<div class="message-db-connection">
+													{{ (isCheckHost$ | async)?.message }}
+												</div>
+											</div>
+											</div>
 									</nb-card-body>
 								</nb-card>
 							</div>

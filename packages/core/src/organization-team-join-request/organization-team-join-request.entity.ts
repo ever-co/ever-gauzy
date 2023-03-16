@@ -20,7 +20,7 @@ export class OrganizationTeamJoinRequest extends TenantOrganizationBaseEntity
 	@Column()
 	email: string;
 
-	@ApiPropertyOptional({ type: () => String, required: true })
+	@ApiPropertyOptional({ type: () => String, required: false })
 	@IsNotEmpty()
 	@IsString()
 	@Column({ nullable: true })
@@ -38,7 +38,7 @@ export class OrganizationTeamJoinRequest extends TenantOrganizationBaseEntity
 	@Column({ nullable: true })
 	position: string;
 
-	@ApiPropertyOptional({ type: () => String })
+	@ApiPropertyOptional({ type: () => String, required: false })
 	@IsOptional()
 	@IsEnum(OrganizationTeamJoinRequestStatusEnum)
 	@Column({ default: OrganizationTeamJoinRequestStatusEnum.REQUESTED })
