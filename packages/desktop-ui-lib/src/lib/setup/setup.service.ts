@@ -1,16 +1,18 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
+import { firstValueFrom } from 'rxjs';
+
 @Injectable({
 	providedIn: 'root'
 })
 export class SetupService {
-	constructor(private http: HttpClient) {}
+	constructor(private _http: HttpClient) { }
 
-	pingAw(host) {
-		return this.http.get(host).pipe().toPromise();
+	public pingAw(host) {
+		return firstValueFrom(this._http.get(host));
 	}
 
-	pingServer(values) {
-		return this.http.get(values.host).pipe().toPromise();
+	public pingServer(values) {
+		return firstValueFrom(this._http.get(values.host));
 	}
 }
