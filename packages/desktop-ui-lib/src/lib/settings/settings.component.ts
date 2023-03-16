@@ -1147,4 +1147,8 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 			this._restartDisable$.next(!isOkAnyway);
 		}
 	}
+
+	public onHostChange(host: string) {
+		this._restartDisable$.next(true);
+	}
 }

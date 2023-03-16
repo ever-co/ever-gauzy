@@ -433,7 +433,7 @@
 												<p>Server URL</p>
 											</div>
 											<div class="col-7 form-group" *ngIf="!config?.isLocalServer">
-												<input [(ngModel)]="config.serverUrl" type="text" nbInput fullWidth
+												<input [(ngModel)]="config.serverUrl" (ngModelChange)="onHostChange($event)" type="text" nbInput fullWidth
 													[disabled]="
 													appSetting?.timerStarted ||
 													config?.serverType === serverTypes?.live
