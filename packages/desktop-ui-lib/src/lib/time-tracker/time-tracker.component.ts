@@ -1147,6 +1147,9 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 	}
 
 	pingAw(host) {
+		if (!this.aw) {
+			return;
+		}
 		this.timeTrackerService
 			.pingAw(`${host || this.defaultAwAPI}/api`)
 			.then((res) => {

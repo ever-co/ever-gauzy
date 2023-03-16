@@ -149,12 +149,13 @@
 																	(appSetting$ | async)?.visibleAwOption
 																">
 								<div class="row">
-									<div class="col-8">
+									<div nbTooltip="ActivityWatch integration can be turned on/off only when the timer is stopped"
+									nbTooltipStatus="warning" [nbTooltipDisabled]="!(start$ | async)" class="col-8">
 										<nb-toggle [disabled]="(start$ | async)" [checked]="aw$ | async" (checkedChange)="setAW($event)">ActivityWatch
 											Integration
 										</nb-toggle>
 									</div>
-									<div class="col-4 text-right">
+									<div *ngIf="aw$ | async" class="col-4 text-right">
 										<nb-icon [nbTooltip]="activityWatchLog$ | async" [icon]="iconAw$ | async"
 											[status]="statusIcon$ | async">
 										</nb-icon>
