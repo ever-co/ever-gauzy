@@ -893,6 +893,7 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 	}
 
 	onServerChange(val) {
+		this._restartDisable$.next(true);
 		switch (val) {
 			case this.serverTypes.integrated:
 				this.config.isLocalServer = true;
