@@ -1,11 +1,6 @@
 import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
 import { IsNull } from 'typeorm';
-import {
-	ICustomizableEmailTemplate,
-	LanguagesEnum,
-	EmailTemplateNameEnum,
-	IEmailTemplate
-} from '@gauzy/contracts';
+import { ICustomizableEmailTemplate, LanguagesEnum, EmailTemplateNameEnum, IEmailTemplate } from '@gauzy/contracts';
 import { RequestContext } from './../../../core/context';
 import { EmailTemplate } from './../../email-template.entity';
 import { EmailTemplateService } from '../../email-template.service';
@@ -14,16 +9,12 @@ import { FindEmailTemplateQuery } from '../email-template.find.query';
 
 @QueryHandler(FindEmailTemplateQuery)
 export class FindEmailTemplateHandler implements IQueryHandler<FindEmailTemplateQuery> {
-
 	constructor(
 		private readonly emailTemplateService: EmailTemplateService,
-		private readonly emailTemplateReaderService: EmailTemplateReaderService,
-	) { }
+		private readonly emailTemplateReaderService: EmailTemplateReaderService
+	) {}
 
-	public async execute(
-		command: FindEmailTemplateQuery
-	): Promise<ICustomizableEmailTemplate> {
-
+	public async execute(command: FindEmailTemplateQuery): Promise<ICustomizableEmailTemplate> {
 		const { input, themeLanguage } = command;
 		const { name, organizationId, languageCode = themeLanguage } = input;
 		const tenantId = RequestContext.currentTenantId();
@@ -33,20 +24,8 @@ export class FindEmailTemplateHandler implements IQueryHandler<FindEmailTemplate
 			template: ''
 		};
 		[emailTemplate.subject, emailTemplate.template] = await Promise.all([
-			await this._fetchTemplate(
-				languageCode,
-				name,
-				organizationId,
-				tenantId,
-				'subject'
-			),
-			await this._fetchTemplate(
-				languageCode,
-				name,
-				organizationId,
-				tenantId,
-				'html'
-			)
+			await this._fetchTemplate(languageCode, name, organizationId, tenantId, 'subject'),
+			await this._fetchTemplate(languageCode, name, organizationId, tenantId, 'html')
 		]);
 
 		return emailTemplate;
@@ -109,11 +88,9 @@ export class FindEmailTemplateHandler implements IQueryHandler<FindEmailTemplate
 						 * Save it to the database for global tenant
 						 */
 						const templates = this.emailTemplateReaderService.readEmailTemplate(name);
-						const emailTemplates = templates.filter(
-							(template: IEmailTemplate) => template.name === `${name}/${type}`
-						).map(
-							(template) => new EmailTemplate({ ...template })
-						);
+						const emailTemplates = templates
+							.filter((template: IEmailTemplate) => template.name === `${name}/${type}`)
+							.map((template) => new EmailTemplate({ ...template }));
 						for await (const emailTemplate of emailTemplates) {
 							await this.emailTemplateService.saveTemplate(
 								emailTemplate.languageCode as LanguagesEnum,
