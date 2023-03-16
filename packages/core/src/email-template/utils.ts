@@ -29,18 +29,18 @@ export class EmailTemplateUtils {
     public static async migrateEmailTemplates(
         queryRunner: QueryRunner,
         folder: EmailTemplateNameEnum
-    ) {
+    ): Promise<void> {
         const templatePath = path.join(path.join(__dirname), '../', ...EmailTemplateUtils.globalPath);
 
         // Found default email templates path
-        if (await EmailTemplateUtils.fileExists(templatePath)) {
+        if (EmailTemplateUtils.fileExists(templatePath)) {
             if (isNotEmpty(folder)) {
                 const files = [];
                 const folderPath = path.join(templatePath, folder);
 
                 // Read directory for missing templates
-                await EmailTemplateUtils.readdirSync(folderPath, files);
-                const templates = await EmailTemplateUtils.filesToTemplates(files);
+                EmailTemplateUtils.readdirSync(folderPath, files);
+                const templates = EmailTemplateUtils.filesToTemplates(files);
 
                 await EmailTemplateUtils.createOrUpdateTemplates(queryRunner, templates);
 
@@ -55,7 +55,7 @@ export class EmailTemplateUtils {
      * @param dir
      * @param files
      */
-    public static async readdirSync(directory: string, files: string[] = []) {
+    public static readdirSync(directory: string, files: string[] = []): void {
         // if directory exists.
         if (EmailTemplateUtils.fileExists(directory)) {
             const items = fs.readdirSync(directory);
@@ -80,7 +80,7 @@ export class EmailTemplateUtils {
      * @param filePath
      * @returns
      */
-    public static async fileExists(filePath: string) {
+    public static fileExists(filePath: string): boolean {
         return fs.existsSync(filePath);
     }
 
@@ -90,7 +90,7 @@ export class EmailTemplateUtils {
      * @param path
      * @returns
      */
-    public static async pathToTemplate(path: string) {
+    public static pathToTemplate(path: string): Object {
         try {
             const template = new Object();
             const paths = path.replace(/\\/g, '/').split('/');
@@ -135,9 +135,9 @@ export class EmailTemplateUtils {
      * @param files
      * @returns
      */
-    public static async filesToTemplates(files: string[] = []): Promise<Array<Object>> {
+    public static filesToTemplates(files: string[] = []): Array<Object> {
         const templates: Array<Object> = [];
-        for await (const file of files) {
+        for (const file of files) {
             const template = EmailTemplateUtils.pathToTemplate(file);
             templates.push(template);
         }
