@@ -21,7 +21,7 @@ export class EmailTemplateUtils {
     ];
 
     /**
-     * Migrate email templates for sepcific folder
+     * Migrate email templates for specific folder
      *
      * @param queryRunner
      * @param folder
