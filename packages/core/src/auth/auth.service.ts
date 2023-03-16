@@ -134,6 +134,9 @@ export class AuthService extends SocialAuthService {
 				relations: {
 					role: true,
 					employee: true
+				},
+				order: {
+					createdAt: 'DESC'
 				}
 			});
 			/**
