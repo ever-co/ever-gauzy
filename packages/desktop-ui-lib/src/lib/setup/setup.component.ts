@@ -4,7 +4,7 @@ import {
 	ChangeDetectorRef,
 	ChangeDetectionStrategy,
 	ViewChild,
-	ElementRef
+	ElementRef,
 } from '@angular/core';
 import { SetupService } from './setup.service';
 import { NbDialogService } from '@nebular/theme';
@@ -20,7 +20,7 @@ Object.assign(console, log.functions);
 	selector: 'ngx-setup',
 	templateUrl: './setup.component.html',
 	styleUrls: ['./setup.component.scss'],
-	changeDetection: ChangeDetectionStrategy.OnPush
+	changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class SetupComponent implements OnInit {
 	@ViewChild('dialogOpenBtn') btnDialogOpen: ElementRef<HTMLElement>;
@@ -28,13 +28,13 @@ export class SetupComponent implements OnInit {
 		private setupService: SetupService,
 		private _cdr: ChangeDetectorRef,
 		private dialogService: NbDialogService,
-		private electronService: ElectronService,
+		private electronService: ElectronService
 	) {
 		electronService.ipcRenderer.on('setup-data', (event, arg) => {
 			this.desktopFeatures.gauzyPlatform = arg.gauzyWindow;
 			this.desktopFeatures.timeTracking = arg.timeTrackerWindow;
 			this.connectivity.integrated = arg.isLocalServer;
-			this.connectivity.localNetwork =
+			this.connectivity.custom =
 				!arg.isLocalServer && arg.serverUrl !== 'https://api.gauzy.co';
 			this.connectivity.live =
 				arg.serverUrl && arg.serverUrl === 'https://api.gauzy.co';
@@ -43,12 +43,10 @@ export class SetupComponent implements OnInit {
 			this.databaseDriver.postgre = arg.db === 'postgres';
 			this.serverConfig.integrated.port = arg.port;
 			if (!arg.isLocalServer) {
-				this.serverConfig.localNetwork.apiHost = arg.serverUrl
+				this.serverConfig.custom.apiHost = arg.serverUrl
 					.split(':')[1]
 					.slice(2);
-				this.serverConfig.localNetwork.port = arg.serverUrl.split(
-					':'
-				)[2];
+				this.serverConfig.custom.port = arg.serverUrl.split(':')[2];
 			}
 			if (arg.db === 'postgres') {
 				this.databaseConfig.postgre = {
@@ -56,7 +54,7 @@ export class SetupComponent implements OnInit {
 					dbPort: arg.dbPort,
 					dbName: arg.dbName,
 					dbUser: arg.dbUsername,
-					dbPassword: arg.dbPassword
+					dbPassword: arg.dbPassword,
 				};
 			}
 		});
@@ -101,37 +99,37 @@ export class SetupComponent implements OnInit {
 			: '../assets/images/logos/logo_Gauzy.svg';
 	desktopFeatures: any = {
 		gauzyPlatform: this.appName === 'gauzy-desktop-timer' ? false : true,
-		timeTracking: this.appName === 'gauzy-server' ? false : true
+		timeTracking: this.appName === 'gauzy-server' ? false : true,
 	};
 
 	connectivity: any = {
 		integrated: this.appName === 'gauzy-desktop-timer' ? false : true,
-		localNetwork: this.appName === 'gauzy-desktop-timer' ? false : true,
-		live:  this.appName === 'gauzy-desktop-timer' ? true : false
+		custom: this.appName === 'gauzy-desktop-timer' ? false : true,
+		live: this.appName === 'gauzy-desktop-timer' ? true : false,
 	};
 
 	thirdParty: any = {
 		activitywatch: true,
-		wakatime: true
+		wakatime: true,
 	};
 
 	databaseDriver: any = {
 		sqlite: true,
-		postgre: false
+		postgre: false,
 	};
 
 	serverConfig: any = {
 		integrated: {
 			port: '5620',
-			portUi: '8084'
+			portUi: '8084',
 		},
-		localNetwork: {
+		custom: {
 			apiHost: '127.0.0.1',
-			port: '5620'
+			port: '3000',
 		},
 		live: {
-			url: 'https://api.gauzy.co'
-		}
+			url: 'https://api.gauzy.co',
+		},
 	};
 
 	databaseConfig: any = {
@@ -140,8 +138,8 @@ export class SetupComponent implements OnInit {
 			dbPort: '5432',
 			dbName: 'postgres',
 			dbUser: 'postgres',
-			dbPassword: ''
-		}
+			dbPassword: '',
+		},
 	};
 
 	showPassword = false;
@@ -178,13 +176,13 @@ export class SetupComponent implements OnInit {
 		'SEEDING Default Time Off Policy',
 		'SEEDING Default Integration Types',
 		'SEEDING Default Integrations',
-		'SEEDED PRODUCTION DATABASE'
+		'SEEDED PRODUCTION DATABASE',
 	];
 
 	dialogData: any = {
 		title: 'Success',
 		message: '',
-		status: 'success'
+		status: 'success',
 	};
 
 	runApp: boolean = false;
@@ -242,7 +240,7 @@ export class SetupComponent implements OnInit {
 		return {
 			aw: this.thirdParty.activitywatch,
 			awHost: this.awAPI,
-			wakatime: this.thirdParty.wakatime
+			wakatime: this.thirdParty.wakatime,
 		};
 	}
 
@@ -250,22 +248,21 @@ export class SetupComponent implements OnInit {
 		if (this.connectivity.integrated) {
 			return {
 				...this.serverConfig.integrated,
-				isLocalServer: true
+				isLocalServer: true,
 			};
 		}
 
-		if (this.connectivity.localNetwork) {
-			const url =
-				this.serverConfig.localNetwork.apiHost.indexOf('http') === 0
+		if (this.connectivity.custom) {
+			const protocol =
+				this.serverConfig.custom.apiHost.indexOf('http') === 0
 					? ''
 					: 'http://';
+			const port = this.serverConfig.custom.port
+				? ':' + this.serverConfig.custom.port
+				: '';
 			return {
-				serverUrl:
-					url +
-					this.serverConfig.localNetwork.apiHost +
-					':' +
-					this.serverConfig.localNetwork.port,
-				isLocalServer: false
+				serverUrl: protocol + this.serverConfig.custom.apiHost + port,
+				isLocalServer: false,
 			};
 		}
 
@@ -273,7 +270,7 @@ export class SetupComponent implements OnInit {
 		if (this.connectivity.live) {
 			return {
 				serverUrl: this.serverConfig.live.url,
-				isLocalServer: false
+				isLocalServer: false,
 			};
 		}
 	}
@@ -286,13 +283,13 @@ export class SetupComponent implements OnInit {
 				dbName: this.databaseConfig.postgre.dbName,
 				dbUsername: this.databaseConfig.postgre.dbUser,
 				dbPassword: this.databaseConfig.postgre.dbPassword,
-				db: 'postgres'
+				db: 'postgres',
 			};
 		}
 
 		if (this.databaseDriver.sqlite) {
 			return {
-				db: 'sqlite'
+				db: 'sqlite',
 			};
 		}
 
@@ -302,7 +299,7 @@ export class SetupComponent implements OnInit {
 	getFeature() {
 		return {
 			gauzyWindow: this.desktopFeatures.gauzyPlatform,
-			timeTrackerWindow: this.desktopFeatures.timeTracking
+			timeTrackerWindow: this.desktopFeatures.timeTracking,
 		};
 	}
 
@@ -314,7 +311,7 @@ export class SetupComponent implements OnInit {
 			...this.getServerConfig(),
 			...this.getDataBaseConfig(),
 			...this.getThirdPartyConfig(),
-			...this.getFeature()
+			...this.getFeature(),
 		};
 
 		this.electronService.ipcRenderer.send('start_server', gauzyConfig);
@@ -352,16 +349,11 @@ export class SetupComponent implements OnInit {
 	}
 
 	validation() {
-		const { integrated, localNetwork, live } = this.connectivity;
+		const { integrated, custom, live } = this.connectivity;
 		const { port, portUi } = this.serverConfig.integrated;
-		const { apiHost } = this.serverConfig.localNetwork;
-		const {
-			host,
-			dbPort,
-			dbName,
-			dbUser,
-			dbPassword
-		} = this.databaseConfig.postgre;
+		const { apiHost } = this.serverConfig.custom;
+		const { host, dbPort, dbName, dbUser, dbPassword } =
+			this.databaseConfig.postgre;
 
 		const { postgre, sqlite } = this.databaseDriver;
 
@@ -380,12 +372,13 @@ export class SetupComponent implements OnInit {
 			case integrated && port && portUi && sqlite:
 				this.buttonSave = true;
 				break;
-			case localNetwork &&
-				apiHost &&
-				this.serverConfig.localNetwork.port > 0:
+			case custom && apiHost && this.serverConfig.custom.port > 0:
 				this.buttonSave = true;
 				break;
 			case live:
+				this.buttonSave = true;
+				break;
+			case custom && apiHost && this.serverConfig.custom.port === null:
 				this.buttonSave = true;
 				break;
 			default:
@@ -396,7 +389,7 @@ export class SetupComponent implements OnInit {
 
 	openLink(link) {
 		this.electronService.ipcRenderer.send('open_browser', {
-			url: link
+			url: link,
 		});
 	}
 
@@ -413,7 +406,7 @@ export class SetupComponent implements OnInit {
 
 	checkDatabaseConn() {
 		this.electronService.ipcRenderer.send('check_database_connection', {
-			...this.getDataBaseConfig()
+			...this.getDataBaseConfig(),
 		});
 	}
 
@@ -422,7 +415,7 @@ export class SetupComponent implements OnInit {
 		console.log('server host', serverHostOptions);
 		this.setupService
 			.pingServer({
-				host: serverHostOptions.serverUrl
+				host: serverHostOptions.serverUrl,
 			})
 			.then((res) => {
 				if (this.runApp) {
@@ -431,7 +424,7 @@ export class SetupComponent implements OnInit {
 					this.dialogData = {
 						title: 'Succes',
 						message: `Connection to Server ${serverHostOptions.serverUrl} Succeeds`,
-						status: 'success'
+						status: 'success',
 					};
 					let elBtn: HTMLElement = this.btnDialogOpen.nativeElement;
 					elBtn.click();
@@ -445,17 +438,17 @@ export class SetupComponent implements OnInit {
 						this.dialogData = {
 							title: 'Succes',
 							message: `Connection to Server ${serverHostOptions.serverUrl} Succeeds`,
-							status: 'success'
+							status: 'success',
 						};
-						let elBtn: HTMLElement = this.btnDialogOpen
-							.nativeElement;
+						let elBtn: HTMLElement =
+							this.btnDialogOpen.nativeElement;
 						elBtn.click();
 					}
 				} else {
 					this.dialogData = {
 						title: 'Error',
 						message: e.message,
-						status: 'danger'
+						status: 'danger',
 					};
 					let elBtn: HTMLElement = this.btnDialogOpen.nativeElement;
 					elBtn.click();
@@ -475,8 +468,8 @@ export class SetupComponent implements OnInit {
 	open(hasBackdrop: boolean) {
 		this.dialogService.open(AlertComponent, {
 			context: {
-				data: this.dialogData
-			}
+				data: this.dialogData,
+			},
 		});
 	}
 
@@ -493,13 +486,13 @@ export class SetupComponent implements OnInit {
 				this.dialogData = {
 					title: 'Success',
 					message: arg.message,
-					status: 'success'
+					status: 'success',
 				};
 			} else {
 				this.dialogData = {
 					title: 'Warning',
 					message: arg.message,
-					status: 'danger'
+					status: 'danger',
 				};
 			}
 

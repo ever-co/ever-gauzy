@@ -381,18 +381,18 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 	currentUser$: BehaviorSubject<any> = new BehaviorSubject({});
 	serverTypes = {
 		integrated: 'Integrated',
-		localNetwork: 'Local Network',
+		custom: 'Custom',
 		live: 'Live',
 	};
 	waitRestart = false;
 	serverIsRunning = false;
 
 	serverOptions = this.isDesktopTimer
-		? [this.serverTypes.localNetwork, this.serverTypes.live]
+		? [this.serverTypes.custom, this.serverTypes.live]
 		: [
-				this.serverTypes.integrated,
-				this.serverTypes.localNetwork,
-				this.serverTypes.live,
+			this.serverTypes.integrated,
+			this.serverTypes.custom,
+			this.serverTypes.live
 		  ];
 
 	driverOptions = [
@@ -814,7 +814,7 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 				break;
 			case !this.config.isLocalServer &&
 				this.config.serverUrl !== 'https://api.gauzy.co':
-				this.config.serverType = 'Local Network';
+				this.config.serverType = 'Custom';
 				break;
 			case !this.config.isLocalServer &&
 				this.config.serverUrl === 'https://api.gauzy.co':
@@ -912,7 +912,7 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 				this.config.port = 5620;
 				this.config.serverUrl = null;
 				break;
-			case this.serverTypes.localNetwork:
+			case this.serverTypes.custom:
 				this.config.isLocalServer = false;
 				this.config.serverUrl = 'http://localhost:3000';
 				break;
