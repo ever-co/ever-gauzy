@@ -2,19 +2,17 @@ import { Request } from 'express';
 import * as multer from 'multer';
 import * as moment from 'moment';
 import * as fs from 'fs';
-import { join, resolve } from 'path';
+import { join } from 'path';
 import * as streamifier from 'streamifier';
 import { UploadApiErrorResponse, UploadApiResponse, v2 as cloudinary } from 'cloudinary';
-import { environment, getConfig } from '@gauzy/config';
+import { CloudinaryStorage } from 'multer-storage-cloudinary';
+import { environment } from '@gauzy/config';
 import { FileStorageOption, FileStorageProviderEnum, FileSystem, UploadedFile } from "@gauzy/contracts";
 import { ICloudinaryConfig } from '@gauzy/common';
 import { Provider } from './provider';
 
-const config = getConfig();
-
 export class CloudinaryProvider extends Provider<CloudinaryProvider> {
 
-    public folder: string;
     public config: ICloudinaryConfig & FileSystem;
     public readonly name = FileStorageProviderEnum.CLOUDINARY;
     public static instance: CloudinaryProvider;
@@ -31,33 +29,26 @@ export class CloudinaryProvider extends Provider<CloudinaryProvider> {
         return CloudinaryProvider.instance;
     }
 
+    /**
+     * Handle file upload to the cloudinary storage
+     *
+     * @param param0
+     * @returns
+     */
     handler({
         dest,
         filename,
         prefix = 'file'
     }: FileStorageOption): multer.StorageEngine {
-        return multer.diskStorage({
-            destination: (_req: Request, file: Express.Multer.File, callback) => {
-                // A string or function that determines the destination path for uploaded
-                let dir: string;
-                if (dest instanceof Function) {
-                    dir = dest(file);
-                } else {
-                    dir = dest;
-                }
-
-                // In "screenshots" folder we will temporarily upload image before uploading to cloudinary
-                const fullPath = join(this.config.rootPath, dir);
-
-                // Creating screenshots folder if not already present.
-                if (!fs.existsSync(fullPath)) {
-                    fs.mkdirSync(fullPath, { recursive: true });
-                }
-                callback(null, fullPath);
-            },
-            filename: (_req: Request, file: Express.Multer.File, callback) => {
+        return new CloudinaryStorage({
+            cloudinary: cloudinary,
+            params: (_req: Request, file: Express.Multer.File) => {
+                console.log({ file });
                 // A file extension, or filename extension, is a suffix at the end of a file.
-                const extension = file.originalname.split('.').pop();
+                const format = file.originalname.split('.').pop();
+
+                // A string or function that determines the destination path for uploaded
+                const folder = dest instanceof Function ? dest(file) : dest;
 
                 // A function that determines the name of the uploaded file.
                 let fileName: string;
@@ -65,12 +56,19 @@ export class CloudinaryProvider extends Provider<CloudinaryProvider> {
                     if (typeof filename === 'string') {
                         fileName = filename;
                     } else {
-                        fileName = filename(file, extension);
+                        fileName = filename(file, format);
                     }
                 } else {
-                    fileName = `${prefix}-${moment().unix()}-${parseInt('' + Math.random() * 1000, 10)}.${extension}`;
+                    fileName = `${prefix}-${moment().unix()}-${parseInt('' + Math.random() * 1000, 10)}`;
                 }
-                callback(null, fileName);
+
+                // A string or function that determines the destination image path for uploaded
+                const public_id = join(folder, fileName).replace(/\\/g, '/');
+
+                return {
+                    public_id: public_id,
+                    format
+                }
             }
         });
     }
@@ -93,8 +91,7 @@ export class CloudinaryProvider extends Provider<CloudinaryProvider> {
      */
     setConfig() {
         this.config = {
-            rootPath: config.assetOptions.assetPublicPath || resolve(process.cwd(), 'apps', 'api', 'public'),
-            baseUrl: environment.baseUrl + '/public',
+            rootPath: '',
             ...cloudinary.config({
                 cloud_name: environment.cloudinaryConfig.cloudName,
                 api_key: environment.cloudinaryConfig.apiKey,
@@ -109,20 +106,15 @@ export class CloudinaryProvider extends Provider<CloudinaryProvider> {
     }
 
     async putFile(file: any, path: string = ''): Promise<UploadedFile> {
-        try {
-            return new Promise((resolve, reject) => {
-                const stream = cloudinary.uploader.upload_stream((error: UploadApiErrorResponse, result: UploadApiResponse) => {
-                    if (error) return reject(error);
+        return new Promise((resolve, reject) => {
+            const stream = cloudinary.uploader.upload_stream((error: UploadApiErrorResponse, result: UploadApiResponse) => {
+                if (error) return reject(error);
 
-                    resolve({ url: result.url, id: result.public_id } as any);
-                });
-                streamifier.createReadStream(file).pipe(stream);
+                console.log(file, result);
+                resolve({ url: result.url, id: result.public_id } as any);
             });
-        } finally {
-            // Image has been successfully uploaded on cloudinary so we don't need local image file anymore
-            // Remove file from local uploads folder
-            // fs.unlinkSync(this.path(path));
-        }
+            streamifier.createReadStream(file).pipe(stream);
+        });
     }
 
     /**
@@ -132,11 +124,6 @@ export class CloudinaryProvider extends Provider<CloudinaryProvider> {
      * @returns
      */
     mapUploadedFile(file: any): UploadedFile {
-        const separator = process.platform === 'win32' ? '\\' : '/';
-        if (file.path) {
-            file.key = file.path.replace(this.config.rootPath + separator, '');
-        }
-        file.url = this.url(file.key);
         return file;
     }
 }

@@ -7,7 +7,6 @@ import {
 	UseInterceptors,
 	Delete,
 	Param,
-	ExecutionContext,
 	Query,
 	UsePipes,
 	ValidationPipe,
@@ -47,17 +46,16 @@ export class ScreenshotController {
 	@ApiOperation({ summary: 'Add manual time' })
 	@ApiResponse({
 		status: HttpStatus.OK,
-		description: 'The timer has been successfully On/Off.',
+		description: 'The screenshot has been successfully captured.',
 	})
 	@ApiResponse({
 		status: HttpStatus.BAD_REQUEST,
-		description:
-			'Invalid input, The response body may contain clues as to what went wrong',
+		description: 'Invalid input, The response body may contain clues as to what went wrong',
 	})
 	@Post()
 	@UseInterceptors(
 		LazyFileInterceptor('file', {
-			storage: (request: ExecutionContext) => {
+			storage: () => {
 				return new FileStorage().storage({
 					dest: () => {
 						return path.join(
@@ -101,19 +99,10 @@ export class ScreenshotController {
 			await fs.promises.unlink(inputFile);
 			await fs.promises.unlink(outputFile);
 
-			thumb = await provider.putFile(
-				data,
-				path.join(thumbDir, thumbName)
-			);
-			console.log(
-				`Screenshot thumb created for employee (${user.name})`,
-				thumb
-			);
+			thumb = await provider.putFile(data, path.join(thumbDir, thumbName));
+			console.log(`Screenshot thumb created for employee (${user.name})`, thumb);
 		} catch (error) {
-			console.log(
-				'Error while uploading screenshot into file storage provider:',
-				error
-			);
+			console.log('Error while uploading screenshot into file storage provider:', error);
 		}
 
 		try {
@@ -123,16 +112,10 @@ export class ScreenshotController {
 			entity.recordedAt = entity.recordedAt ? entity.recordedAt : new Date();
 
 			const screenshot = await this.screenshotService.create(entity);
-			console.log(
-				`Screenshot created for employee (${user.name})`,
-				screenshot
-			);
+			console.log(`Screenshot created for employee (${user.name})`, screenshot);
 			return await this.screenshotService.findOneByIdString(screenshot.id);
 		} catch (error) {
-			console.log(
-				`Error while creating screenshot for employee (${user.name})`,
-				error
-			);
+			console.log(`Error while creating screenshot for employee (${user.name})`, error);
 		}
 	}
 
