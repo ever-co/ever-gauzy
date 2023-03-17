@@ -216,7 +216,8 @@
   nb-tab.content-active {
     background-color: var(--gauzy-card-2);
     border-radius: 0 var(--border-radius) var(--border-radius);
-    height: calc(100vh - 10rem);
+    height: calc(100vh - 11.75rem);
+    padding: 1rem 1rem 0 1rem;
 
     nb-card {
       margin-bottom: 1rem;
@@ -285,7 +286,7 @@ nb-card-body {
 
 .main-layout {
   overflow: auto;
-  height: calc(100vh - 3.5rem);
+  height: calc(100vh - 2.25rem);
 }
 
 .disabled-monitors {
@@ -318,4 +319,15 @@ warn-container {
 
 .restart-btn-container {
   width: fit-content;
+}
+
+.nb-tab-card,
+.nb-tab-body {
+    background-color: unset;
+    padding: 0;
+    margin: 0;
+}
+
+.nb-tab-footer {
+  padding: 1rem 0 0 0;
 }
