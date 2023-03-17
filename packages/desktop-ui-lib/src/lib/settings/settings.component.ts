@@ -10,7 +10,7 @@ import {
 import { TimeTrackerService } from '../time-tracker/time-tracker.service';
 import { NbDialogService, NbToastrService } from '@nebular/theme';
 import { ElectronService } from '../electron/services';
-import { BehaviorSubject, Observable } from 'rxjs';
+import { BehaviorSubject, Observable, filter, tap } from 'rxjs';
 import { AboutComponent } from '../dialogs/about/about.component';
 import { SetupService } from '../setup/setup.service';
 @Component({
@@ -454,6 +454,19 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 	ngOnInit(): void {
 		this.electronService.ipcRenderer.send('request_permission');
 		this.version = this.electronService.remote.app.getVersion();
+		this.isConnectedDatabase$
+			.pipe(
+				tap(({ status }) => this._restartDisable$.next(!status)),
+				filter(() => !this._isCheckHost.status),
+				tap(() => this._restartDisable$.next(true))
+			)
+			.subscribe()
+		this.isCheckHost$
+			.pipe(
+				tap(({ status }) => this._restartDisable$.next(!status)),
+				filter(() => !this._isConnectedDatabase.status),
+				tap(() => this._restartDisable$.next(true)))
+			.subscribe()
 	}
 
 	ngAfterViewInit(): void {
@@ -659,7 +672,6 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 				this._isCheckDatabase$.next(false);
 				this._isConnectedDatabase$.next(arg);
 				this._isHidden$.next(false);
-				this._restartDisable$.next(!this._isConnectedDatabase.status);
 			});
 		})
 
@@ -1133,7 +1145,6 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 					isLoading: false,
 					message: `Connection to Server ${this.config.serverUrl} Succeeds`,
 				});
-				this._restartDisable$.next(false);
 			}
 		} catch (error) {
 			const isOkAnyway = error.status === 404;
@@ -1145,7 +1156,6 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 					? `Connection to Server ${this.config.serverUrl} Succeeds`
 					: error.message,
 			});
-			this._restartDisable$.next(!isOkAnyway);
 		}
 	}
 
