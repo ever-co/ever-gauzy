@@ -69,7 +69,7 @@ export class TaskSize extends TenantOrganizationBaseEntity implements ITaskSize 
 	 * Organization Team
 	 */
 	@ManyToOne(() => OrganizationTeam, (team) => team.sizes, {
-		onDelete: 'SET NULL',
+		onDelete: 'CASCADE',
 	})
 	organizationTeam?: IOrganizationTeam;
 
