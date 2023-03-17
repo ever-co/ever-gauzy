@@ -117,6 +117,7 @@
 		"moment-timezone": "^0.5.40",
 		"mqtt": "^4.3.7",
 		"multer-s3": "^2.9.0",
+		"multer-storage-cloudinary": "^4.0.0",
 		"mysql": "^2.18.1",
 		"nats": "^2.6.1",
 		"nest-router": "^1.0.9",
