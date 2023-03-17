@@ -85,33 +85,39 @@
 				<div class="col-10">
 					<nb-card>
 						<nb-card-body>
-							<div class="row d-flex flex-column">
-								<div class="col-7">
-									<nb-toggle [(ngModel)]="screenshotNotification"
-										[disabled]="appSetting?.timerStarted"
-										(ngModelChange)="toggleNotificationChange($event)" status="basic"> Detailed
-										Notification
-									</nb-toggle>
+							<div class="row">
+								<div class="col-6">
+									<div class="row d-flex flex-column">
+									<div class="col-12">
+										<nb-toggle [(ngModel)]="screenshotNotification"
+											[disabled]="appSetting?.timerStarted"
+											(ngModelChange)="toggleNotificationChange($event)" status="basic"> Detailed
+											Notification
+										</nb-toggle>
+									</div>
+									<div class="col-12">
+										<small>Show notification with captured image</small>
+									</div>
+									<div class="col-12">
+										<img width="100%" src="./assets/images/logos/screenshot_detailed.png" />
+									</div>
 								</div>
-								<div class="col-7">
-									<small>Show notification with captured image</small>
 								</div>
-								<div class="col-7">
-									<img width="100%" src="./assets/images/logos/screenshot_detailed.png" />
+								<div class="col-6">
+									<div class="row mt-2 d-flex flex-column">
+									<div class="col-12">
+										<nb-toggle [checked]="!screenshotNotification" [disabled]="appSetting?.timerStarted"
+											(checkedChange)="toggleSimpleNotificationChange($event)" status="basic"> Simple
+											Notification
+										</nb-toggle>
+									</div>
+									<div class="col-12">
+										<small>Show native OS notification</small>
+									</div>
+									<div class="col-12">
+										<img width="100%" src="./assets/images/logos/screenshot_simple.png" />
+									</div>
 								</div>
-							</div>
-							<div class="row mt-2 d-flex flex-column">
-								<div class="col-7">
-									<nb-toggle [checked]="!screenshotNotification" [disabled]="appSetting?.timerStarted"
-										(checkedChange)="toggleSimpleNotificationChange($event)" status="basic"> Simple
-										Notification
-									</nb-toggle>
-								</div>
-								<div class="col-7">
-									<small>Show native OS notification</small>
-								</div>
-								<div class="col-7">
-									<img width="100%" src="./assets/images/logos/screenshot_simple.png" />
 								</div>
 							</div>
 						</nb-card-body>
