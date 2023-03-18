@@ -240,7 +240,10 @@
         "TIMERTRX",
         "TIMERTRXER",
         "TIMERTRXERUPDATE",
-        "postmarkapp"
+        "postmarkapp",
+        "activitywatch",
+        "openfromhere",
+        "postgre"
     ],
     "useGitignore": true,
     "ignorePaths": [
