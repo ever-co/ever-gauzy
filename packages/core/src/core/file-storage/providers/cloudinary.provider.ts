@@ -123,24 +123,25 @@ export class CloudinaryProvider extends Provider<CloudinaryProvider> {
                 const format = file.originalname.split('.').pop();
 
                 // A string or function that determines the destination path for uploaded
-                const folder = dest instanceof Function ? dest(file) : dest;
+                const destination = dest instanceof Function ? dest(file) : dest;
+
+                // A string or function that determines the destination image path for uploaded.
+                const folder = join(destination).replace(/\\/g, '/');
 
                 // A function that determines the name of the uploaded file.
-                let fileName: string;
+                let public_id: string;
                 if (filename) {
                     if (typeof filename === 'string') {
-                        fileName = filename;
+                        public_id = filename;
                     } else {
-                        fileName = filename(file, format);
+                        public_id = filename(file, format);
                     }
                 } else {
-                    fileName = `${prefix}-${moment().unix()}-${parseInt('' + Math.random() * 1000, 10)}`;
+                    public_id = `${prefix}-${moment().unix()}-${parseInt('' + Math.random() * 1000, 10)}`;
                 }
-
-                // A string or function that determines the destination image path for uploaded
-                const public_id = join(folder, fileName).replace(/\\/g, '/');
                 return {
-                    public_id: public_id,
+                    public_id,
+                    folder,
                     format
                 }
             }
@@ -199,11 +200,20 @@ export class CloudinaryProvider extends Provider<CloudinaryProvider> {
      */
     async putFile(file: any, path: string = ''): Promise<UploadedFile> {
         return new Promise((resolve, reject) => {
-            const stream = cloudinary.uploader.upload_stream((error: UploadApiErrorResponse, result: UploadApiResponse) => {
+            // A string or function that determines the destination image path for uploaded.
+            const public_id = join(path).replace(/\\/g, '/');
+
+            const stream = cloudinary.uploader.upload_stream({ public_id }, (error: UploadApiErrorResponse, result: UploadApiResponse) => {
                 if (error) return reject(error);
 
-                console.log(file, result, path);
-                resolve({ url: result.url, id: result.public_id } as any);
+                const uploaded_file = {
+                    key: result.public_id,
+                    size: result.bytes,
+                    filename: result.public_id,
+                    url: result.url,
+                    path: result.secure_url
+                };
+                resolve(uploaded_file as any);
             });
             streamifier.createReadStream(file).pipe(stream);
         });
@@ -231,8 +241,12 @@ export class CloudinaryProvider extends Provider<CloudinaryProvider> {
      * @returns
      */
     mapUploadedFile(file: any): UploadedFile {
-        if (file.filename) {
-            file.key = file.filename;
+        if (isNotEmpty(file.filename)) {
+            const filename = file.filename;
+            file.key = filename;
+
+            const originalname = filename.split('/').pop();
+            file.filename = originalname;
         }
         return file;
     }
