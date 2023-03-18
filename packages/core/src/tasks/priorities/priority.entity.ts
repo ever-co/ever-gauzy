@@ -53,7 +53,7 @@ export class TaskPriority extends TenantOrganizationBaseEntity implements ITaskP
 	 * Organization Project
 	 */
 	@ManyToOne(() => OrganizationProject, (project) => project.priorities, {
-		onDelete: 'SET NULL',
+		onDelete: 'CASCADE',
 	})
 	project?: IOrganizationProject;
 
@@ -69,7 +69,7 @@ export class TaskPriority extends TenantOrganizationBaseEntity implements ITaskP
 	 * Organization Team
 	 */
 	@ManyToOne(() => OrganizationTeam, (team) => team.priorities, {
-		onDelete: 'SET NULL',
+		onDelete: 'CASCADE',
 	})
 	organizationTeam?: IOrganizationTeam;
 

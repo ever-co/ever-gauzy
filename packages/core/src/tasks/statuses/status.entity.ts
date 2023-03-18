@@ -53,7 +53,7 @@ export class TaskStatus extends TenantOrganizationBaseEntity implements ITaskSta
 	 * Organization Project
 	 */
 	@ManyToOne(() => OrganizationProject, (project) => project.statuses, {
-		onDelete: 'SET NULL',
+		onDelete: 'CASCADE',
 	})
 	project?: IOrganizationProject;
 
@@ -69,7 +69,7 @@ export class TaskStatus extends TenantOrganizationBaseEntity implements ITaskSta
 	 * Organization Team
 	 */
 	@ManyToOne(() => OrganizationTeam, (team) => team.statuses, {
-		onDelete: 'SET NULL',
+		onDelete: 'CASCADE',
 	})
 	organizationTeam?: IOrganizationTeam;
 
