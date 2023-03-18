@@ -184,7 +184,7 @@ export class CloudinaryProvider extends Provider<CloudinaryProvider> {
             const response = await axios.get(this.url(file), { responseType: 'arraybuffer' });
             return Buffer.from(response.data, "utf-8");
         } catch (error) {
-            console.log('Error while retriving cloudinary image from serer', error);
+            console.log('Error while retrieving cloudinary image from serer', error);
         }
     }
 
