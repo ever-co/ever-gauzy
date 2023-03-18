@@ -21,6 +21,7 @@ import {
 	FileStorageProviderEnum,
 	IScreenshot,
 	PermissionsEnum,
+	UploadedFile,
 } from '@gauzy/contracts';
 import { Screenshot } from './screenshot.entity';
 import { ScreenshotService } from './screenshot.service';
@@ -43,7 +44,7 @@ export class ScreenshotController {
 		private readonly screenshotService: ScreenshotService
 	) { }
 
-	@ApiOperation({ summary: 'Add manual time' })
+	@ApiOperation({ summary: 'Create start/stop screenshot.' })
 	@ApiResponse({
 		status: HttpStatus.OK,
 		description: 'The screenshot has been successfully captured.',
@@ -57,24 +58,21 @@ export class ScreenshotController {
 		LazyFileInterceptor('file', {
 			storage: () => {
 				return new FileStorage().storage({
-					dest: () => {
-						return path.join(
-							'screenshots',
-							moment().format('YYYY/MM/DD'),
-							RequestContext.currentTenantId() || uuid()
-						);
-					},
+					dest: () => path.join('screenshots', moment().format('YYYY/MM/DD'), RequestContext.currentTenantId() || uuid()),
 					prefix: 'screenshots',
 				});
 			},
 		})
 	)
-	async create(@Body() entity: Screenshot, @UploadedFileStorage() file) {
+	async create(
+		@Body() entity: Screenshot,
+		@UploadedFileStorage() file
+	) {
 		console.log('Screenshot Http Request', { entity, file });
-
 		const user = RequestContext.currentUser();
 		const provider = new FileStorage().getProvider();
-		let thumb;
+		let thumb: UploadedFile;
+
 		try {
 			const fileContent = await provider.getFile(file.key);
 			const inputFile = await tempFile('screenshot-thumb');
@@ -93,11 +91,12 @@ export class ScreenshotController {
 					reject(error);
 				}
 			});
-			const thumbName = `thumb-${file.filename}`;
-			const thumbDir = path.dirname(file.key);
 			const data = await fs.promises.readFile(outputFile);
 			await fs.promises.unlink(inputFile);
 			await fs.promises.unlink(outputFile);
+
+			const thumbName = `thumb-${file.filename}`;
+			const thumbDir = path.dirname(file.key);
 
 			thumb = await provider.putFile(data, path.join(thumbDir, thumbName));
 			console.log(`Screenshot thumb created for employee (${user.name})`, thumb);
