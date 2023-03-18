@@ -34,7 +34,9 @@ export class OrganizationTeamJoinRequestController {
 	async validateJoinRequest(
 		@Body() entity: ValidateJoinRequestDTO
 	): Promise<IOrganizationTeamJoinRequest> {
-		return await this._organizationTeamJoinRequestService.validateJoinRequest(entity);
+		return await this._organizationTeamJoinRequestService.validateJoinRequest(
+			entity
+		);
 	}
 
 	/**
@@ -73,6 +75,23 @@ export class OrganizationTeamJoinRequestController {
 				entity,
 				languageCode
 			)
+		);
+	}
+
+	/**
+	 * Resend email verification code
+	 *
+	 * @returns
+	 */
+	@HttpCode(HttpStatus.OK)
+	@Post('resend-code')
+	@UsePipes(new ValidationPipe())
+	@Public()
+	public async resendConfirmationCode(
+		@Body() entity: OrganizationTeamJoinRequest
+	): Promise<Object> {
+		return await this._organizationTeamJoinRequestService.resendConfirmationCode(
+			entity
 		);
 	}
 }
