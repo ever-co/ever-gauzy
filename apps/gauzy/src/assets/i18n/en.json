@@ -3928,12 +3928,14 @@
 				"CLOUD_NAME": "Cloudinary name",
 				"ACCESS_API_KEY": "Access key id",
 				"ACCESS_API_SECRET": "Secret access key",
+				"DELIVERY_URL": "Delivery URL",
 				"SECURE": "Secure"
 			},
 			"PLACEHOLDERS": {
 				"CLOUD_NAME": "Cloudinary name",
 				"ACCESS_API_KEY": "Access key id",
 				"ACCESS_API_SECRET": "Secret access key",
+				"DELIVERY_URL": "Delivery URL",
 				"SECURE": "Secure"
 			}
 		}

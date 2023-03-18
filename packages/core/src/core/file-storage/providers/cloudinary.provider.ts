@@ -89,8 +89,8 @@ export class CloudinaryProvider extends Provider<CloudinaryProvider> {
                 if (isNotEmpty(settings.cloudinary_api_secure)) {
                     this.config['secure'] = settings.cloudinary_api_secure;
                 }
-                if (isNotEmpty(settings.delivery_url)) {
-                    const baseUrl = new URL(settings.delivery_url).toString();
+                if (isNotEmpty(settings.cloudinary_delivery_url)) {
+                    const baseUrl = new URL(settings.cloudinary_delivery_url).toString();
                     this.config['baseUrl'] = baseUrl;
                 }
             }
@@ -131,11 +131,7 @@ export class CloudinaryProvider extends Provider<CloudinaryProvider> {
                 // A function that determines the name of the uploaded file.
                 let public_id: string;
                 if (filename) {
-                    if (typeof filename === 'string') {
-                        public_id = filename;
-                    } else {
-                        public_id = filename(file, format);
-                    }
+                    public_id = (typeof filename === 'string') ? filename : filename(file, format);
                 } else {
                     public_id = `${prefix}-${moment().unix()}-${parseInt('' + Math.random() * 1000, 10)}`;
                 }

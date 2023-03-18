@@ -317,6 +317,25 @@
 				</div>
 			</div>
 			<div class="form-group row">
+				<label class="label col-3 col-xl-2" for="cloudinary_delivery_url">
+					{{ 'SETTINGS_FILE_STORAGE.CLOUDINARY.LABELS.DELIVERY_URL' | translate }}
+				</label>
+				<div class="col-9 col-xl-4">
+					<input
+						id="cloudinary_delivery_url"
+						name="cloudinary_delivery_url"
+						formControlName="cloudinary_delivery_url"
+						nbInput
+						fullWidth
+						class="w-100"
+						[placeholder]="
+							'SETTINGS_FILE_STORAGE.CLOUDINARY.PLACEHOLDERS.DELIVERY_URL'
+								| translate
+						"
+					/>
+				</div>
+			</div>
+			<div class="form-group row">
 				<label class="label col-3 col-xl-2" for="cloudinary_api_secure">
 					{{ 'SETTINGS_FILE_STORAGE.CLOUDINARY.LABELS.SECURE' | translate }}
 				</label>
