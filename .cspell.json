@@ -240,7 +240,8 @@
         "TIMERTRX",
         "TIMERTRXER",
         "TIMERTRXERUPDATE",
-        "postmarkapp"
+        "postmarkapp",
+        "streamifier"
     ],
     "useGitignore": true,
     "ignorePaths": [
