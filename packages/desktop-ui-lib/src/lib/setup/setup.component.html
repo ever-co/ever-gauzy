@@ -226,20 +226,20 @@
 													<div class="col-12">
 														<nb-radio
 															[checked]="
-																connectivity.localNetwork
+																connectivity.custom
 															"
 															(valueChange)="
 																connectivityChange(
 																	$event,
-																	'localNetwork'
+																	'custom'
 																)
 															"
 															[value]="
-																connectivity.localNetwork
+																connectivity.custom
 															"
 															><span
 																class="card-item-label"
-																>Local /
+																>Custom /
 																Network</span
 															></nb-radio
 														>
@@ -688,7 +688,7 @@
 								<div class="row">
 									<div
 										class="col-5 col-center margin-form"
-										*ngIf="connectivity.localNetwork"
+										*ngIf="connectivity.custom"
 									>
 										<div class="row">
 											<div class="col-3 col-center">
@@ -704,7 +704,7 @@
 													status="basic"
 													[(ngModel)]="
 														serverConfig
-															.localNetwork
+															.custom
 															.apiHost
 													"
 													(ngModelChange)="
@@ -716,7 +716,7 @@
 									</div>
 									<div
 										class="col-5 col-center margin-form"
-										*ngIf="connectivity.localNetwork"
+										*ngIf="connectivity.custom"
 									>
 										<div class="row">
 											<div class="col-3 col-center">
@@ -732,7 +732,7 @@
 													status="basic"
 													[(ngModel)]="
 														serverConfig
-															.localNetwork.port
+															.custom.port
 													"
 													(ngModelChange)="
 														validation()

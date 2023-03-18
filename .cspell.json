@@ -241,6 +241,9 @@
         "TIMERTRXER",
         "TIMERTRXERUPDATE",
         "postmarkapp",
+        "activitywatch",
+        "openfromhere",
+        "postgre",
         "streamifier"
     ],
     "useGitignore": true,
