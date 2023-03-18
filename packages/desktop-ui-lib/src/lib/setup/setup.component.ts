@@ -422,7 +422,7 @@ export class SetupComponent implements OnInit {
 					this.saveAndRun();
 				} else {
 					this.dialogData = {
-						title: 'Succes',
+						title: 'Success',
 						message: `Connection to Server ${serverHostOptions.serverUrl} Succeeds`,
 						status: 'success',
 					};
@@ -436,7 +436,7 @@ export class SetupComponent implements OnInit {
 						this.saveAndRun();
 					} else {
 						this.dialogData = {
-							title: 'Succes',
+							title: 'Success',
 							message: `Connection to Server ${serverHostOptions.serverUrl} Succeeds`,
 							status: 'success',
 						};
