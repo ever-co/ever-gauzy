@@ -151,7 +151,7 @@ export class OrganizationTeamJoinRequestService extends TenantAwareCrudService<O
 			await this.repository.update(record.id, {
 				status: OrganizationTeamJoinRequestStatusEnum.REQUESTED,
 			});
-
+			delete record.id;
 			return record;
 		} catch (error) {
 			throw new BadRequestException();
@@ -173,10 +173,11 @@ export class OrganizationTeamJoinRequestService extends TenantAwareCrudService<O
 					email,
 					status: IsNull(),
 				},
-				relations: [
-					'organizationTeam',
-					'organizationTeam.organization',
-				],
+				relations: {
+					organizationTeam: {
+						organization: true
+					}
+                }
 			});
 
 			const code = generateRandomInteger(6);
@@ -223,11 +224,7 @@ export class OrganizationTeamJoinRequestService extends TenantAwareCrudService<O
 					appLink,
 				}
 			);
-			return new Object({
-				status: HttpStatus.OK,
-				message: `OK`,
-			});
-		} catch (error) {
+		} finally {
 			return new Object({
 				status: HttpStatus.OK,
 				message: `OK`,
