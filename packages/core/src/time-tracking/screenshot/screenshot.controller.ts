@@ -7,7 +7,6 @@ import {
 	UseInterceptors,
 	Delete,
 	Param,
-	ExecutionContext,
 	Query,
 	UsePipes,
 	ValidationPipe,
@@ -22,6 +21,7 @@ import {
 	FileStorageProviderEnum,
 	IScreenshot,
 	PermissionsEnum,
+	UploadedFile,
 } from '@gauzy/contracts';
 import { Screenshot } from './screenshot.entity';
 import { ScreenshotService } from './screenshot.service';
@@ -44,39 +44,35 @@ export class ScreenshotController {
 		private readonly screenshotService: ScreenshotService
 	) { }
 
-	@ApiOperation({ summary: 'Add manual time' })
+	@ApiOperation({ summary: 'Create start/stop screenshot.' })
 	@ApiResponse({
 		status: HttpStatus.OK,
-		description: 'The timer has been successfully On/Off.',
+		description: 'The screenshot has been successfully captured.',
 	})
 	@ApiResponse({
 		status: HttpStatus.BAD_REQUEST,
-		description:
-			'Invalid input, The response body may contain clues as to what went wrong',
+		description: 'Invalid input, The response body may contain clues as to what went wrong',
 	})
 	@Post()
 	@UseInterceptors(
 		LazyFileInterceptor('file', {
-			storage: (request: ExecutionContext) => {
+			storage: () => {
 				return new FileStorage().storage({
-					dest: () => {
-						return path.join(
-							'screenshots',
-							moment().format('YYYY/MM/DD'),
-							RequestContext.currentTenantId() || uuid()
-						);
-					},
+					dest: () => path.join('screenshots', moment().format('YYYY/MM/DD'), RequestContext.currentTenantId() || uuid()),
 					prefix: 'screenshots',
 				});
 			},
 		})
 	)
-	async create(@Body() entity: Screenshot, @UploadedFileStorage() file) {
+	async create(
+		@Body() entity: Screenshot,
+		@UploadedFileStorage() file
+	) {
 		console.log('Screenshot Http Request', { entity, file });
-
 		const user = RequestContext.currentUser();
 		const provider = new FileStorage().getProvider();
-		let thumb;
+		let thumb: UploadedFile;
+
 		try {
 			const fileContent = await provider.getFile(file.key);
 			const inputFile = await tempFile('screenshot-thumb');
@@ -95,47 +91,30 @@ export class ScreenshotController {
 					reject(error);
 				}
 			});
-			const thumbName = `thumb-${file.filename}`;
-			const thumbDir = path.dirname(file.key);
 			const data = await fs.promises.readFile(outputFile);
 			await fs.promises.unlink(inputFile);
 			await fs.promises.unlink(outputFile);
 
-			thumb = await provider.putFile(
-				data,
-				path.join(thumbDir, thumbName)
-			);
-			console.log(
-				`Screenshot thumb created for employee (${user.name})`,
-				thumb
-			);
+			const thumbName = `thumb-${file.filename}`;
+			const thumbDir = path.dirname(file.key);
+
+			thumb = await provider.putFile(data, path.join(thumbDir, thumbName));
+			console.log(`Screenshot thumb created for employee (${user.name})`, thumb);
 		} catch (error) {
-			console.log(
-				'Error while uploading screenshot into file storage provider:',
-				error
-			);
+			console.log('Error while uploading screenshot into file storage provider:', error);
 		}
 
 		try {
 			entity.file = file.key;
 			entity.thumb = thumb.key;
-			entity.storageProvider =
-				provider.name.toUpperCase() as FileStorageProviderEnum;
-			entity.recordedAt = entity.recordedAt
-				? entity.recordedAt
-				: new Date();
+			entity.storageProvider = provider.name.toUpperCase() as FileStorageProviderEnum;
+			entity.recordedAt = entity.recordedAt ? entity.recordedAt : new Date();
 
 			const screenshot = await this.screenshotService.create(entity);
-			console.log(
-				`Screenshot created for employee (${user.name})`,
-				screenshot
-			);
+			console.log(`Screenshot created for employee (${user.name})`, screenshot);
 			return await this.screenshotService.findOneByIdString(screenshot.id);
 		} catch (error) {
-			console.log(
-				`Error while creating screenshot for employee (${user.name})`,
-				error
-			);
+			console.log(`Error while creating screenshot for employee (${user.name})`, error);
 		}
 	}
 
