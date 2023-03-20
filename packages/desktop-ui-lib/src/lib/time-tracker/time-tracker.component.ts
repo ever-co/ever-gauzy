@@ -180,8 +180,8 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 	isTrackingEnabled = true;
 	isAddTask = false;
 	sound: any = null;
-	private _lastTotalWorkedToday = 0;
-	private _lastTotalWorkedWeek = 0;
+	private _lastTotalWorkedToday$: BehaviorSubject<number> = new BehaviorSubject(0);
+	private _lastTotalWorkedWeek$: BehaviorSubject<number> = new BehaviorSubject(0);
 	private _isOffline$: BehaviorSubject<boolean> = new BehaviorSubject(false);
 	private _inQueue$: BehaviorSubject<number> = new BehaviorSubject(0);
 	private _isRefresh$: BehaviorSubject<boolean> = new BehaviorSubject(false);
@@ -208,6 +208,12 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 	private get _isOffline(): boolean {
 		return this._isOffline$.getValue();
 	}
+	private get _lastTotalWorkedToday(): number {
+		return this._lastTotalWorkedToday$.getValue();
+	};
+	private get _lastTotalWorkedWeek(): number {
+		return this._lastTotalWorkedWeek$.getValue();
+	};
 
 	constructor(
 		private electronService: ElectronService,
@@ -1012,6 +1018,25 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 				});
 			}
 		}
+
+		if (this._isMidnight) {
+			const { tenantId, employeeId } = this.userData;
+			const { id: organizationId } = this.userOrganization;
+			const payload = {
+				token: this.token,
+				apiHost: this.apiHost,
+				tenantId,
+				organizationId,
+			};
+			this.electronService.ipcRenderer.send(
+				'update_session',
+				{ startedAt: moment(Date.now()).toISOString() }
+			);
+			this.getTodayTime(
+				{ ...payload, employeeId },
+				true
+			);
+		}
 	}
 
 	startTime() {
@@ -1227,8 +1252,8 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 
 	countDuration(count, isForcedSync?) {
 		if (count && (!this.start || isForcedSync)) {
-			this._lastTotalWorkedToday = count.todayDuration;
-			this._lastTotalWorkedWeek = count.weekDuration;
+			this._lastTotalWorkedToday$.next(count.todayDuration);
+			this._lastTotalWorkedWeek$.next(count.weekDuration);
 			this.todayDuration$.next(
 				moment
 					.duration(this._lastTotalWorkedToday, 'seconds')
@@ -2160,5 +2185,13 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 
 	public noLimit(value: number): boolean {
 		return value === Infinity;
+	}
+
+	/**
+	 * > If it midnight, then return true
+	 * @returns A boolean value.
+	 */
+	private get _isMidnight(): boolean {
+		return moment(Date.now()).isSame(moment(new Date).startOf('day'));
 	}
 }
