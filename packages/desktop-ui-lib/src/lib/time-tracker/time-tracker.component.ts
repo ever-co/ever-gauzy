@@ -16,7 +16,7 @@ import * as _ from 'underscore';
 import { CustomRenderComponent } from './custom-render-cell.component';
 import { LocalDataSource, Ng2SmartTableComponent } from 'ng2-smart-table';
 import { DomSanitizer } from '@angular/platform-browser';
-import { asapScheduler, BehaviorSubject, Observable, Subject, tap } from 'rxjs';
+import { asapScheduler, BehaviorSubject, filter, Observable, Subject, tap } from 'rxjs';
 import { ElectronService } from '../electron/services';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import 'moment-duration-format';
@@ -180,14 +180,15 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 	isTrackingEnabled = true;
 	isAddTask = false;
 	sound: any = null;
-	private _lastTotalWorkedToday = 0;
-	private _lastTotalWorkedWeek = 0;
+	private _lastTotalWorkedToday$: BehaviorSubject<number> = new BehaviorSubject(0);
+	private _lastTotalWorkedWeek$: BehaviorSubject<number> = new BehaviorSubject(0);
 	private _isOffline$: BehaviorSubject<boolean> = new BehaviorSubject(false);
 	private _inQueue$: BehaviorSubject<number> = new BehaviorSubject(0);
 	private _isRefresh$: BehaviorSubject<boolean> = new BehaviorSubject(false);
 	private _permissions$: Subject<any> = new Subject();
 	private _weeklyLimit$: BehaviorSubject<number> = new BehaviorSubject(Infinity);
 	private _isOver$: BehaviorSubject<boolean> = new BehaviorSubject(false);
+	private _lastTime: number = 0;
 
 	public hasTaskPermission$: BehaviorSubject<boolean> = new BehaviorSubject(
 		false
@@ -208,6 +209,12 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 	private get _isOffline(): boolean {
 		return this._isOffline$.getValue();
 	}
+	private get _lastTotalWorkedToday(): number {
+		return this._lastTotalWorkedToday$.getValue();
+	};
+	private get _lastTotalWorkedWeek(): number {
+		return this._lastTotalWorkedWeek$.getValue();
+	};
 
 	constructor(
 		private electronService: ElectronService,
@@ -319,6 +326,44 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 				}),
 				untilDestroyed(this)
 			)
+			.subscribe();
+		this._lastTotalWorkedToday$
+			.pipe(
+				tap((todayDuration: number) => {
+					this.todayDuration$.next(
+						moment
+							.duration(todayDuration, 'seconds')
+							.format('hh[h] mm[m]', { trim: false, trunc: true })
+					);
+					this.electronService.ipcRenderer.send(
+						'update_tray_time_update',
+						this.todayDuration
+					);
+					this.electronService.ipcRenderer.send('update_tray_time_title', {
+						timeRun: moment
+							.duration(todayDuration, 'seconds')
+							.format('hh:mm:ss', { trim: false }),
+					});
+				}))
+			.subscribe();
+		this._lastTotalWorkedWeek$
+			.pipe(
+				tap((weekDuration: number) => {
+					this.weeklyDuration$.next(
+						moment
+							.duration(weekDuration, 'seconds')
+							.format('hh[h] mm[m]', { trim: false, trunc: true })
+					);
+					this._isOver$.next(weekDuration > this._weeklyLimit * 3600);
+				}))
+			.subscribe();
+		this.start$
+			.pipe(
+				filter((isStart: boolean) => !isStart),
+				tap(() => {
+					this._timeRun$.next('00:00:00');
+					this._lastTime = 0;
+				}))
 			.subscribe();
 	}
 
@@ -810,7 +855,6 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 							}
 							this.start$.next(false);
 							this.loading = false;
-							this._timeRun$.next('00:00:00');
 						}
 						asapScheduler.schedule(async () => {
 							if (!this._isOffline) {
@@ -971,37 +1015,17 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 			console.log('Error', 'validation failed');
 		}
 	}
-
-	setTime(value) {
-		const instantaneaous = this._lastTotalWorkedToday + value.second;
-		const instantaneousWeek = this._lastTotalWorkedWeek + value.second;
-		this.todayDuration$.next(
-			moment
-				.duration(instantaneaous, 'seconds')
-				.format('hh[h] mm[m]', { trim: false, trunc: true })
-		);
-		this.weeklyDuration$.next(
-			moment
-				.duration(instantaneousWeek, 'seconds')
-				.format('hh[h] mm[m]', { trim: false, trunc: true })
-		);
-		this._isOver$.next(instantaneousWeek > this._weeklyLimit * 3600);
+	setTime({ second }) {
+		const dt = second - this._lastTime;
+		this._lastTotalWorkedToday$.next(this._lastTotalWorkedToday + dt);
+		this._lastTotalWorkedWeek$.next(this._lastTotalWorkedWeek + dt);
+		this._lastTime = second;
 		this._timeRun$.next(
 			moment
-				.duration(value.second, 'seconds')
+				.duration(second, 'seconds')
 				.format('hh:mm:ss', { trim: false })
 		);
-		this.electronService.ipcRenderer.send(
-			'update_tray_time_update',
-			this.todayDuration
-		);
-		this.electronService.ipcRenderer.send('update_tray_time_title', {
-			timeRun: moment
-				.duration(instantaneaous, 'seconds')
-				.format('hh:mm:ss', { trim: false }),
-		});
-
-		if (value.second % 5 === 0) {
+		if (second % 5 === 0) {
 			this.pingAw(null);
 			if (this.lastScreenCapture.createdAt) {
 				this.lastScreenCapture$.next({
@@ -1011,6 +1035,30 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 					).fromNow(),
 				});
 			}
+		}
+		this.resetAtMidnight();
+	}
+
+	private resetAtMidnight() {
+		if (this._isMidnight) {
+			const { tenantId, employeeId } = this.userData;
+			const { id: organizationId } = this.userOrganization;
+			const payload = {
+				token: this.token,
+				apiHost: this.apiHost,
+				tenantId,
+				organizationId,
+			};
+			this.getTodayTime(
+				{ ...payload, employeeId },
+				true
+			);
+			asapScheduler.schedule(async () => {
+				this.electronService.ipcRenderer.send(
+					'update_session',
+					{ startedAt: moment(Date.now()).toISOString() }
+				);
+			});
 		}
 	}
 
@@ -1218,37 +1266,19 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 
 	getTodayTime(arg, isForcedSync?) {
 		if (this._isOffline) return;
-		this.timeTrackerService.getTimeLogs(arg).then((res: any) => {
-			if (res && res.todayDuration && res.weekDuration) {
-				this.countDuration(res, isForcedSync);
-			}
-		});
+		this.timeTrackerService
+			.getTimeLogs(arg)
+			.then((res: any) => {
+				if (res) {
+					this.countDuration(res, isForcedSync);
+				}
+			});
 	}
 
-	countDuration(count, isForcedSync?) {
-		if (count && (!this.start || isForcedSync)) {
-			this._lastTotalWorkedToday = count.todayDuration;
-			this._lastTotalWorkedWeek = count.weekDuration;
-			this.todayDuration$.next(
-				moment
-					.duration(this._lastTotalWorkedToday, 'seconds')
-					.format('hh[h] mm[m]', { trim: false, trunc: true })
-			);
-			this.weeklyDuration$.next(
-				moment
-					.duration(this._lastTotalWorkedWeek, 'seconds')
-					.format('hh[h] mm[m]', { trim: false, trunc: true })
-			);
-			this._isOver$.next(this._lastTotalWorkedWeek > this._weeklyLimit * 3600);
-			this.electronService.ipcRenderer.send(
-				'update_tray_time_update',
-				this.todayDuration
-			);
-			this.electronService.ipcRenderer.send('update_tray_time_title', {
-				timeRun: moment
-					.duration(this._lastTotalWorkedToday, 'seconds')
-					.format('hh:mm:ss', { trim: false }),
-			});
+	countDuration(count, isForcedSync?: boolean) {
+		if (!this.start || isForcedSync) {
+			this._lastTotalWorkedToday$.next(count.todayDuration);
+			this._lastTotalWorkedWeek$.next(count.weekDuration);
 		}
 	}
 
@@ -2160,5 +2190,13 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 
 	public noLimit(value: number): boolean {
 		return value === Infinity;
+	}
+
+	/**
+	 * > If it midnight, then return true
+	 * @returns A boolean value.
+	 */
+	private get _isMidnight(): boolean {
+		return moment(Date.now()).isSame(moment(new Date).startOf('day'));
 	}
 }
