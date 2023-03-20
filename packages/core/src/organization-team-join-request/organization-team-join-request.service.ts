@@ -17,6 +17,7 @@ import { generateRandomInteger } from './../core/utils';
 import { EmailService } from './../email/email.service';
 import { OrganizationTeamJoinRequest } from './organization-team-join-request.entity';
 import { OrganizationTeamService } from './../organization-team/organization-team.service';
+import { RequestContext } from 'core';
 
 @Injectable()
 export class OrganizationTeamJoinRequestService extends TenantAwareCrudService<OrganizationTeamJoinRequest> {
@@ -61,7 +62,7 @@ export class OrganizationTeamJoinRequestService extends TenantAwareCrudService<O
 				},
 				relations: {
 					organization: true
-                }
+				}
 			});
 			const { organization, organizationId, tenantId } = organizationTeam;
 			const code = generateRandomInteger(6);
@@ -79,15 +80,15 @@ export class OrganizationTeamJoinRequestService extends TenantAwareCrudService<O
 			});
 
 			const organizationTeamJoinRequest: IOrganizationTeamJoinRequest = await this.repository.save(
-					this.repository.create({
-						...entity,
-						organizationId,
-						tenantId,
-						code,
-						token,
-						status: null
-					})
-				);
+				this.repository.create({
+					...entity,
+					organizationId,
+					tenantId,
+					code,
+					token,
+					status: null
+				})
+			);
 
 			/** Place here organization team join request email to send verification code*/
 			let { appName, appLogo, appSignature, appLink } = entity;
@@ -106,7 +107,7 @@ export class OrganizationTeamJoinRequestService extends TenantAwareCrudService<O
 
 			return organizationTeamJoinRequest;
 		} catch (error) {
-			throw new BadRequestException('Error while requesting join organization team', error);
+			throw new BadRequestException('Error while requesting join organization team');
 		}
 	}
 
@@ -130,21 +131,21 @@ export class OrganizationTeamJoinRequestService extends TenantAwareCrudService<O
 				}
 			});
 			query.where((qb: SelectQueryBuilder<OrganizationTeamJoinRequest>) => {
-					qb.andWhere({
-						email,
-						organizationTeamId,
-						expiredAt: MoreThanOrEqual(new Date()),
-						status: IsNull()
-					})
-					qb.andWhere([
-						{
-							code
-						},
-						{
-							token
-						}
-					]);
-				}
+				qb.andWhere({
+					email,
+					organizationTeamId,
+					expiredAt: MoreThanOrEqual(new Date()),
+					status: IsNull()
+				})
+				qb.andWhere([
+					{
+						code
+					},
+					{
+						token
+					}
+				]);
+			}
 			);
 			const record = await query.getOneOrFail();
 
@@ -177,7 +178,7 @@ export class OrganizationTeamJoinRequestService extends TenantAwareCrudService<O
 					organizationTeam: {
 						organization: true
 					}
-                }
+				}
 			});
 
 			const code = generateRandomInteger(6);

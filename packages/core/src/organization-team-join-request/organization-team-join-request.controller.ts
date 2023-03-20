@@ -69,7 +69,7 @@ export class OrganizationTeamJoinRequestController {
 	async create(
 		@Body() entity: OrganizationTeamJoinRequest,
 		@LanguageDecorator() languageCode: LanguagesEnum
-	): Promise<IOrganizationTeamJoinRequest> {
+	): Promise<Object> {
 		return await this._commandBus.execute(
 			new OrganizationTeamJoinRequestCreateCommand(
 				entity,

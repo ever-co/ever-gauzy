@@ -1,5 +1,5 @@
+import { HttpStatus } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-import { IOrganizationTeamJoinRequest } from '@gauzy/contracts';
 import { OrganizationTeamJoinRequestService } from '../../organization-team-join-request.service';
 import { OrganizationTeamJoinRequestCreateCommand } from '../organization-team-join-request.create.command';
 
@@ -12,8 +12,12 @@ export class OrganizationTeamJoinRequestCreateHandler implements ICommandHandler
 
 	public async execute(
 		command: OrganizationTeamJoinRequestCreateCommand
-	): Promise<IOrganizationTeamJoinRequest> {
-		const { input, languageCode } = command;
-		return await this._organizationTeamJoinRequestService.create(input, languageCode);
+	): Promise<Object> {
+		try {
+			const { input, languageCode } = command;
+			await this._organizationTeamJoinRequestService.create(input, languageCode);
+		} finally {
+			return new Object({ status: HttpStatus.OK, message: `OK` });
+		}
 	}
 }
