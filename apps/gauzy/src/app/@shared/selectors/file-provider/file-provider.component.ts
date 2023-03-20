@@ -40,8 +40,6 @@ export class FileProviderComponent implements OnInit {
 
 	ngOnInit(): void {
 		this.fileStorageProviders = Object.keys(FileStorageProviderEnum)
-			// WIP: Support cloudinary provider
-			.filter((label) => label !== FileStorageProviderEnum.CLOUDINARY)
 			.map(
 				(label: FileStorageProviderEnum) => ({
 					label,
