@@ -24,8 +24,7 @@ import { take } from 'rxjs/operators';
 })
 export class ProductGalleryComponent
 	extends TranslationBaseComponent
-	implements OnInit, OnDestroy
-{
+	implements OnInit, OnDestroy {
 	selectedImage: IImageAsset;
 	gallery: IImageAsset[] = [];
 	featuredImage: IImageAsset;
@@ -36,10 +35,10 @@ export class ProductGalleryComponent
 	private newImageStoredEvent$ = new Subject<any>();
 
 	get displayImageUrl() {
-		if (this.selectedImage) return this.selectedImage.url;
+		if (this.selectedImage) return this.selectedImage.fullUrl;
 
 		if (this.featuredImage) {
-			return this.featuredImage.url;
+			return this.featuredImage.fullUrl;
 		}
 
 		return null;
@@ -117,13 +116,13 @@ export class ProductGalleryComponent
 		if (!selectedImages) return;
 		selectedImages = selectedImages.length
 			? selectedImages.filter((image) => {
-					return !this.inventoryStore.gallery.find((galleryImg) => {
-						return (
-							galleryImg.id == image.id ||
-							galleryImg.name == image.name
-						);
-					});
-			  })
+				return !this.inventoryStore.gallery.find((galleryImg) => {
+					return (
+						galleryImg.id == image.id ||
+						galleryImg.name == image.name
+					);
+				});
+			})
 			: [];
 
 		try {
@@ -212,8 +211,8 @@ export class ProductGalleryComponent
 	onViewGalleryClick() {
 		const mappedImages = this.gallery.map((image) => {
 			return {
-				thumbUrl: image.url,
-				fullUrl: image.url
+				thumbUrl: image.fullUrl,
+				fullUrl: image.fullUrl
 			};
 		});
 
@@ -231,7 +230,7 @@ export class ProductGalleryComponent
 	isSelected(image: IImageAsset) {
 		if (!this.selectedImage || !image) return false;
 
-		return image.url == this.selectedImage.url;
+		return image.fullUrl == this.selectedImage.fullUrl;
 	}
 
 	isFeaturedImage(image: IImageAsset) {
@@ -266,5 +265,5 @@ export class ProductGalleryComponent
 			});
 	}
 
-	ngOnDestroy(): void {}
+	ngOnDestroy(): void { }
 }

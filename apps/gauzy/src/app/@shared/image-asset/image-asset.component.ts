@@ -17,8 +17,7 @@ import { TranslationBaseComponent } from '../language-base/translation-base.comp
 })
 export class ImageAssetComponent
 	extends TranslationBaseComponent
-	implements OnInit
-{
+	implements OnInit {
 	form: FormGroup;
 	@Input() imageAsset: IImageAsset;
 
@@ -43,7 +42,7 @@ export class ImageAssetComponent
 		if (this.imageAsset)
 			this.form.patchValue({
 				name: this.imageAsset.name,
-				url: this.imageAsset.url,
+				url: this.imageAsset.fullUrl,
 				width: this.imageAsset.width,
 				height: this.imageAsset.height
 			});
