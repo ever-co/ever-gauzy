@@ -14,3 +14,7 @@ export interface IImageAsset extends IBasePerTenantAndOrganizationEntityModel {
 	externalProviderId?: string;
 	storageProvider?: FileStorageProviderEnum;
 }
+
+export interface IImageAssetFindInput extends IBasePerTenantAndOrganizationEntityModel {
+	isFeatured?: boolean;
+}

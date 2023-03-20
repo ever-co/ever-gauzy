@@ -18,12 +18,13 @@ import { FindOptionsWhere } from 'typeorm';
 import { CrudController, PaginationParams } from './../core/crud';
 import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
 import { Permissions } from './../shared/decorators';
-import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
+import { UUIDValidationPipe } from './../shared/pipes';
 import { ImageAsset } from './image-asset.entity';
 import { ImageAssetService } from './image-asset.service';
 
 @ApiTags('ImageAsset')
-@UseGuards(TenantPermissionGuard)
+@UseGuards(TenantPermissionGuard, PermissionGuard)
+@Permissions(PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.MEDIA_GALLERY_ADD)
 @Controller()
 export class ImageAssetController extends CrudController<ImageAsset> {
 	constructor(
@@ -43,8 +44,7 @@ export class ImageAssetController extends CrudController<ImageAsset> {
 		status: HttpStatus.OK,
 		description: 'Found image assets count'
 	})
-	@UseGuards(PermissionGuard)
-	@Permissions(PermissionsEnum.INVENTORY_GALLERY_VIEW)
+	@Permissions(PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.MEDIA_GALLERY_VIEW)
 	@Get('count')
 	async getCount(
 		@Query() options: FindOptionsWhere<ImageAsset>
@@ -68,14 +68,13 @@ export class ImageAssetController extends CrudController<ImageAsset> {
 		status: HttpStatus.NOT_FOUND,
 		description: 'Record not found'
 	})
-	@UseGuards(PermissionGuard)
-	@Permissions(PermissionsEnum.INVENTORY_GALLERY_VIEW)
+	@Permissions(PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.MEDIA_GALLERY_VIEW)
 	@Get('pagination')
 	@UsePipes(new ValidationPipe({ transform: true }))
 	async pagination(
-		@Query() filter: PaginationParams<ImageAsset>
+		@Query() params: PaginationParams<ImageAsset>
 	): Promise<IPagination<IImageAsset>> {
-		return this.imageAssetService.paginate(filter);
+		return await this.imageAssetService.paginate(params);
 	}
 
 	/**
@@ -84,17 +83,13 @@ export class ImageAssetController extends CrudController<ImageAsset> {
 	 * @param data
 	 * @returns
 	 */
-	@UseGuards(PermissionGuard)
-	@Permissions(PermissionsEnum.INVENTORY_GALLERY_VIEW)
+	@Permissions(PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.MEDIA_GALLERY_VIEW)
 	@Get()
+	@UsePipes(new ValidationPipe())
 	async findAll(
-		@Query('data', ParseJsonPipe) data: any
+		@Query() params: PaginationParams<ImageAsset>
 	): Promise<IPagination<IImageAsset>> {
-		const { relations, findInput } = data;
-		return this.imageAssetService.findAll({
-			where: findInput,
-			relations
-		});
+		return await this.imageAssetService.findAll(params);
 	}
 
 	/**
@@ -103,13 +98,13 @@ export class ImageAssetController extends CrudController<ImageAsset> {
 	 * @param id
 	 * @returns
 	 */
-	@UseGuards(PermissionGuard)
-	@Permissions(PermissionsEnum.INVENTORY_GALLERY_VIEW)
+	@HttpCode(HttpStatus.OK)
+	@Permissions(PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.MEDIA_GALLERY_VIEW)
 	@Get(':id')
 	async findById(
-		@Param('id', UUIDValidationPipe) id: string
+		@Param('id', UUIDValidationPipe) id: IImageAsset['id']
 	): Promise<IImageAsset> {
-		return this.imageAssetService.findOneByIdString(id);
+		return await this.imageAssetService.findOneByIdString(id);
 	}
 
 	/**
@@ -118,13 +113,13 @@ export class ImageAssetController extends CrudController<ImageAsset> {
 	 * @param entity
 	 * @returns
 	 */
-	@UseGuards(PermissionGuard)
-	@Permissions(PermissionsEnum.INVENTORY_GALLERY_EDIT)
+	@HttpCode(HttpStatus.CREATED)
+	@Permissions(PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.MEDIA_GALLERY_ADD)
 	@Post()
 	async create(
 		@Body() entity: ImageAsset
 	): Promise<IImageAsset> {
-		return this.imageAssetService.create(entity);
+		return await this.imageAssetService.create(entity);
 	}
 
 	/**
@@ -134,12 +129,11 @@ export class ImageAssetController extends CrudController<ImageAsset> {
 	 * @returns
 	 */
 	@HttpCode(HttpStatus.ACCEPTED)
-	@UseGuards(PermissionGuard)
-	@Permissions(PermissionsEnum.INVENTORY_GALLERY_EDIT)
+	@Permissions(PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.MEDIA_GALLERY_DELETE)
 	@Delete(':id')
 	async delete(
-		@Param('id', UUIDValidationPipe) id: string
+		@Param('id', UUIDValidationPipe) id: IImageAsset['id']
 	): Promise<any> {
-		return this.imageAssetService.deleteAsset(id);
+		return await this.imageAssetService.deleteAsset(id);
 	}
 }
