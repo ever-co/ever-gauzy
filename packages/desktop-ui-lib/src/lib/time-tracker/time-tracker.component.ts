@@ -1018,7 +1018,10 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 				});
 			}
 		}
+		this.resetAtMidnight();
+	}
 
+	private resetAtMidnight() {
 		if (this._isMidnight) {
 			const { tenantId, employeeId } = this.userData;
 			const { id: organizationId } = this.userOrganization;
