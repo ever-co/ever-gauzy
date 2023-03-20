@@ -1,4 +1,15 @@
-import { Body, Controller, Get, HttpCode, HttpStatus, Post, Query, UseGuards, UsePipes, ValidationPipe } from '@nestjs/common';
+import {
+	Body,
+	Controller,
+	Get,
+	HttpCode,
+	HttpStatus,
+	Post,
+	Query,
+	UseGuards,
+	UsePipes,
+	ValidationPipe
+} from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { CommandBus } from '@nestjs/cqrs';
 import { IOrganizationTeamJoinRequest, IPagination, LanguagesEnum, PermissionsEnum } from '@gauzy/contracts';
@@ -15,11 +26,10 @@ import { ValidateJoinRequestDTO } from './dto';
 @ApiTags('OrganizationTeamJoinRequest')
 @Controller()
 export class OrganizationTeamJoinRequestController {
-
 	constructor(
 		private readonly _commandBus: CommandBus,
-		private readonly _organizationTeamJoinRequestService: OrganizationTeamJoinRequestService,
-	) { }
+		private readonly _organizationTeamJoinRequestService: OrganizationTeamJoinRequestService
+	) {}
 
 	/**
 	 * Validate organization team join request
@@ -31,12 +41,8 @@ export class OrganizationTeamJoinRequestController {
 	@Post('validate')
 	@UsePipes(new ValidationPipe({ whitelist: true }))
 	@Public()
-	async validateJoinRequest(
-		@Body() entity: ValidateJoinRequestDTO
-	): Promise<IOrganizationTeamJoinRequest> {
-		return await this._organizationTeamJoinRequestService.validateJoinRequest(
-			entity
-		);
+	async validateJoinRequest(@Body() entity: ValidateJoinRequestDTO): Promise<IOrganizationTeamJoinRequest> {
+		return await this._organizationTeamJoinRequestService.validateJoinRequest(entity);
 	}
 
 	/**
@@ -70,12 +76,7 @@ export class OrganizationTeamJoinRequestController {
 		@Body() entity: OrganizationTeamJoinRequest,
 		@LanguageDecorator() languageCode: LanguagesEnum
 	): Promise<IOrganizationTeamJoinRequest> {
-		return await this._commandBus.execute(
-			new OrganizationTeamJoinRequestCreateCommand(
-				entity,
-				languageCode
-			)
-		);
+		return await this._commandBus.execute(new OrganizationTeamJoinRequestCreateCommand(entity, languageCode));
 	}
 
 	/**
@@ -87,11 +88,7 @@ export class OrganizationTeamJoinRequestController {
 	@Post('resend-code')
 	@UsePipes(new ValidationPipe())
 	@Public()
-	public async resendConfirmationCode(
-		@Body() entity: OrganizationTeamJoinRequest
-	): Promise<Object> {
-		return await this._organizationTeamJoinRequestService.resendConfirmationCode(
-			entity
-		);
+	public async resendConfirmationCode(@Body() entity: OrganizationTeamJoinRequest): Promise<Object> {
+		return await this._organizationTeamJoinRequestService.resendConfirmationCode(entity);
 	}
 }

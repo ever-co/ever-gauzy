@@ -50,7 +50,9 @@ export class OrganizationTeamJoinRequestService extends TenantAwareCrudService<O
 			}
 		});
 		if (!!request) {
-			throw new ConflictException('You have sent already join request for this team, please wait for manager response.');
+			throw new ConflictException(
+				'You have sent already join request for this team, please wait for manager response.'
+			);
 		}
 
 		/** create new team join request */
@@ -61,7 +63,7 @@ export class OrganizationTeamJoinRequestService extends TenantAwareCrudService<O
 				},
 				relations: {
 					organization: true
-                }
+				}
 			});
 			const { organization, organizationId, tenantId } = organizationTeam;
 			const code = generateRandomInteger(6);
@@ -79,15 +81,15 @@ export class OrganizationTeamJoinRequestService extends TenantAwareCrudService<O
 			});
 
 			const organizationTeamJoinRequest: IOrganizationTeamJoinRequest = await this.repository.save(
-					this.repository.create({
-						...entity,
-						organizationId,
-						tenantId,
-						code,
-						token,
-						status: null
-					})
-				);
+				this.repository.create({
+					...entity,
+					organizationId,
+					tenantId,
+					code,
+					token,
+					status: null
+				})
+			);
 
 			/** Place here organization team join request email to send verification code*/
 			let { appName, appLogo, appSignature, appLink } = entity;
@@ -130,26 +132,25 @@ export class OrganizationTeamJoinRequestService extends TenantAwareCrudService<O
 				}
 			});
 			query.where((qb: SelectQueryBuilder<OrganizationTeamJoinRequest>) => {
-					qb.andWhere({
-						email,
-						organizationTeamId,
-						expiredAt: MoreThanOrEqual(new Date()),
-						status: IsNull()
-					})
-					qb.andWhere([
-						{
-							code
-						},
-						{
-							token
-						}
-					]);
-				}
-			);
+				qb.andWhere({
+					email,
+					organizationTeamId,
+					expiredAt: MoreThanOrEqual(new Date()),
+					status: IsNull()
+				});
+				qb.andWhere([
+					{
+						code
+					},
+					{
+						token
+					}
+				]);
+			});
 			const record = await query.getOneOrFail();
 
 			await this.repository.update(record.id, {
-				status: OrganizationTeamJoinRequestStatusEnum.REQUESTED,
+				status: OrganizationTeamJoinRequestStatusEnum.REQUESTED
 			});
 			delete record.id;
 			return record;
@@ -159,8 +160,7 @@ export class OrganizationTeamJoinRequestService extends TenantAwareCrudService<O
 	}
 
 	async resendConfirmationCode(
-		entity: IOrganizationTeamJoinRequestCreateInput &
-			Partial<IAppIntegrationConfig>,
+		entity: IOrganizationTeamJoinRequestCreateInput & Partial<IAppIntegrationConfig>,
 		languageCode?: LanguagesEnum
 	) {
 		const { organizationTeamId, email } = entity;
@@ -171,13 +171,13 @@ export class OrganizationTeamJoinRequestService extends TenantAwareCrudService<O
 				where: {
 					organizationTeamId,
 					email,
-					status: IsNull(),
+					status: IsNull()
 				},
 				relations: {
 					organizationTeam: {
 						organization: true
 					}
-                }
+				}
 			});
 
 			const code = generateRandomInteger(6);
@@ -187,23 +187,18 @@ export class OrganizationTeamJoinRequestService extends TenantAwareCrudService<O
 				tenantId: request.tenantId,
 				organizationId: request.organizationId,
 				organizationTeamId,
-				code,
+				code
 			};
 			/** Generate JWT token using above JWT payload */
 			const token: string = sign(payload, environment.JWT_SECRET, {
-				expiresIn: `${environment.TEAM_JOIN_REQUEST_EXPIRATION_TIME}s`,
+				expiresIn: `${environment.TEAM_JOIN_REQUEST_EXPIRATION_TIME}s`
 			});
 
 			/** Update code, token and expiredAt */
 			await this.repository.update(request.id, {
 				code,
 				token,
-				expiredAt: moment(new Date())
-					.add(
-						environment.TEAM_JOIN_REQUEST_EXPIRATION_TIME,
-						'seconds'
-					)
-					.toDate(),
+				expiredAt: moment(new Date()).add(environment.TEAM_JOIN_REQUEST_EXPIRATION_TIME, 'seconds').toDate()
 			});
 
 			/** Place here organization team join request email to send verification code*/
@@ -213,7 +208,7 @@ export class OrganizationTeamJoinRequestService extends TenantAwareCrudService<O
 				{
 					...request,
 					code,
-					token,
+					token
 				},
 				languageCode,
 				request.organizationTeam.organization,
@@ -221,13 +216,13 @@ export class OrganizationTeamJoinRequestService extends TenantAwareCrudService<O
 					appName,
 					appLogo,
 					appSignature,
-					appLink,
+					appLink
 				}
 			);
 		} finally {
 			return new Object({
 				status: HttpStatus.OK,
-				message: `OK`,
+				message: `OK`
 			});
 		}
 	}

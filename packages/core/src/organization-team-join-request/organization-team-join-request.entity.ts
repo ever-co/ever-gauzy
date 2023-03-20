@@ -11,9 +11,7 @@ import {
 import { OrganizationTeam, TenantOrganizationBaseEntity, User } from '../core/entities/internal';
 
 @Entity('organization_team_join_request')
-export class OrganizationTeamJoinRequest extends TenantOrganizationBaseEntity
-	implements IOrganizationTeamJoinRequest {
-
+export class OrganizationTeamJoinRequest extends TenantOrganizationBaseEntity implements IOrganizationTeamJoinRequest {
 	@ApiProperty({ type: () => String, required: true })
 	@IsNotEmpty()
 	@IsEmail()
