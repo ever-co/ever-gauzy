@@ -17,7 +17,6 @@ import { generateRandomInteger } from './../core/utils';
 import { EmailService } from './../email/email.service';
 import { OrganizationTeamJoinRequest } from './organization-team-join-request.entity';
 import { OrganizationTeamService } from './../organization-team/organization-team.service';
-import { RequestContext } from 'core';
 
 @Injectable()
 export class OrganizationTeamJoinRequestService extends TenantAwareCrudService<OrganizationTeamJoinRequest> {
