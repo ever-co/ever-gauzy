@@ -14,6 +14,7 @@ export class ImageAssetCreateHandler implements ICommandHandler<ImageAssetCreate
 		command: ImageAssetCreateCommand
 	): Promise<IImageAsset> {
 		const { input } = command;
-		return await this._imageAssetService.create(input);
+		const asset = await this._imageAssetService.create(input);
+		return await this._imageAssetService.findOneByIdString(asset.id);
 	}
 }

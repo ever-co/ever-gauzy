@@ -16,7 +16,7 @@ import {
 } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { CommandBus } from '@nestjs/cqrs';
-import { FileStorageProviderEnum, IImageAsset, IPagination, PermissionsEnum } from '@gauzy/contracts';
+import { IImageAsset, IPagination, PermissionsEnum } from '@gauzy/contracts';
 import { FindOptionsWhere } from 'typeorm';
 import { v4 as uuid } from 'uuid';
 import * as path from 'path';
@@ -67,15 +67,13 @@ export class ImageAssetController extends CrudController<ImageAsset> {
 		@UploadedFileStorage() file
 	) {
 		const provider = new FileStorage().getProvider();
-
-		const entity = new ImageAsset();
-		entity.name = file.filename;
-		entity.url = file.key;
-		entity.size = file.size;
-		entity.storageProvider = provider.name.toUpperCase() as FileStorageProviderEnum;
-
 		return await this._commandBus.execute(
-			new ImageAssetCreateCommand(entity)
+			new ImageAssetCreateCommand({
+				name: file.filename,
+				url: file.key,
+				size: file.size,
+				storageProvider: provider.name
+			})
 		);
 	}
 

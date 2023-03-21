@@ -1,23 +1,21 @@
-import { FileStorageOption, FileStorageProviderEnum, UploadedFile } from '@gauzy/contracts';
 import * as multer from 'multer';
 import * as fs from 'fs';
+import { basename, join, resolve } from 'path';
 import * as moment from 'moment';
+import { FileStorageOption, FileStorageProviderEnum, UploadedFile } from '@gauzy/contracts';
 import { environment, getConfig } from '@gauzy/config';
 import { Provider } from './provider';
-import { basename, join, resolve } from 'path';
 
 const config = getConfig();
 
 export class LocalProvider extends Provider<LocalProvider> {
+
 	static instance: LocalProvider;
 	name = FileStorageProviderEnum.LOCAL;
-	tenantId = '';
+
 	config = {
-		rootPath: environment.isElectron
-			? resolve(environment.gauzyUserPath, 'public')
-			: config.assetOptions.assetPublicPath ||
-			resolve(process.cwd(), 'apps', 'api', 'public'),
-		baseUrl: environment.baseUrl + '/public'
+		rootPath: (environment.isElectron ? resolve(environment.gauzyUserPath, 'public') : config.assetOptions.assetPublicPath) || resolve(process.cwd(), 'apps', 'api', 'public'),
+		baseUrl: environment.baseUrl
 	};
 
 	getInstance() {
@@ -27,15 +25,27 @@ export class LocalProvider extends Provider<LocalProvider> {
 		return LocalProvider.instance;
 	}
 
-	url(filePath: string) {
-		if (filePath && filePath.startsWith('http')) {
-			return filePath;
+	/**
+	 * Get full URL of the file storage
+	 *
+	 * @param fileURL
+	 * @returns
+	 */
+	url(fileURL: string) {
+		if (fileURL && fileURL.startsWith('http')) {
+			return fileURL;
 		}
-		return filePath ? `${this.config.baseUrl}/${filePath}` : null;
+		return fileURL ? new URL(join('public', fileURL), this.config.baseUrl).toString() : null;
 	}
 
+	/**
+	 * Get full Path of the file storage
+	 *
+	 * @param filePath
+	 * @returns
+	 */
 	path(filePath: string) {
-		return filePath ? `${this.config.rootPath}/${filePath}` : null;
+		return filePath ? join(this.config.rootPath, filePath) : null;
 	}
 
 	handler({
