@@ -13,6 +13,7 @@ import {
 	IOrganizationTeam,
 	ICandidate,
 	IEmail,
+	IImageAsset,
 } from '@gauzy/contracts';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Exclude } from 'class-transformer';
@@ -31,8 +32,8 @@ import {
 import {
 	Candidate,
 	Email,
-	EmailReset,
 	Employee,
+	ImageAsset,
 	Invite,
 	OrganizationTeam,
 	Role,
@@ -43,7 +44,7 @@ import {
 
 @Entity('user')
 export class User extends TenantBaseEntity implements IUser {
-	
+
 	@ApiPropertyOptional({ type: () => String })
 	@Index()
 	@Column({ nullable: true })
@@ -150,7 +151,22 @@ export class User extends TenantBaseEntity implements IUser {
 	@RelationId((it: User) => it.role)
 	@Index()
 	@Column({ nullable: true })
-	readonly roleId?: string;
+	roleId?: string;
+
+	/**
+	 * ImageAsset
+	 */
+	@ManyToOne(() => ImageAsset, {
+		onDelete: 'SET NULL'
+	})
+	@JoinColumn()
+	image?: IImageAsset;
+
+	@ApiProperty({ type: () => String })
+	@RelationId((it: User) => it.image)
+	@Index()
+	@Column({ nullable: true })
+	imageId?: IImageAsset['id'];
 
 	/*
 	|--------------------------------------------------------------------------

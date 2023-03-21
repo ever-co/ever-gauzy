@@ -12,6 +12,7 @@ import {
 import {
 	IEquipmentSharing,
 	IGoal,
+	IImageAsset,
 	IOrganizationTeam,
 	IOrganizationTeamEmployee,
 	IRequestApprovalTeam,
@@ -27,6 +28,7 @@ import { IsBoolean, IsNotEmpty, IsOptional, IsString } from 'class-validator';
 import {
 	EquipmentSharing,
 	Goal,
+	ImageAsset,
 	OrganizationTeamEmployee,
 	RequestApprovalTeam,
 	Tag,
@@ -98,6 +100,21 @@ export class OrganizationTeam extends TenantOrganizationBaseEntity
 	@Index()
 	@Column({ nullable: true })
 	createdById?: IUser['id'];
+
+	/**
+	 * ImageAsset
+	 */
+	@ManyToOne(() => ImageAsset, {
+		onDelete: 'SET NULL'
+	})
+	@JoinColumn()
+	image?: IImageAsset;
+
+	@ApiProperty({ type: () => String })
+	@RelationId((it: OrganizationTeam) => it.image)
+	@Index()
+	@Column({ nullable: true })
+	imageId?: IImageAsset['id'];
 
 	/*
 	|--------------------------------------------------------------------------

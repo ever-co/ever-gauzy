@@ -2,21 +2,24 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
 	BaseEntity,
 	FeatureOrganization,
+	ImageAsset,
 	ImportRecord,
 	Organization,
 	RolePermission
 } from '../core/entities/internal';
-import { Entity, Column, Index, OneToMany, JoinColumn } from 'typeorm';
+import { Entity, Column, Index, OneToMany, JoinColumn, ManyToOne, RelationId } from 'typeorm';
 import {
 	ITenant,
 	IOrganization,
 	IRolePermission,
 	IFeatureOrganization,
-	IImportRecord
+	IImportRecord,
+	IImageAsset
 } from '@gauzy/contracts';
 
 @Entity('tenant')
 export class Tenant extends BaseEntity implements ITenant {
+
 	@ApiProperty({ type: () => String })
 	@Index()
 	@Column()
@@ -27,10 +30,31 @@ export class Tenant extends BaseEntity implements ITenant {
 	logo?: string;
 
 	/*
-    |--------------------------------------------------------------------------
-    | @OneToMany
-    |--------------------------------------------------------------------------
-    */
+	|--------------------------------------------------------------------------
+	| @ManyToOne
+	|--------------------------------------------------------------------------
+	*/
+
+	/**
+	 * ImageAsset
+	 */
+	@ManyToOne(() => ImageAsset, {
+		onDelete: 'SET NULL'
+	})
+	@JoinColumn()
+	image?: ImageAsset;
+
+	@ApiProperty({ type: () => String })
+	@RelationId((it: Tenant) => it.image)
+	@Index()
+	@Column({ nullable: true })
+	imageId?: IImageAsset['id'];
+
+	/*
+	|--------------------------------------------------------------------------
+	| @OneToMany
+	|--------------------------------------------------------------------------
+	*/
 	@ApiProperty({ type: () => Organization })
 	@OneToMany(() => Organization, (organization) => organization.tenant, {
 		cascade: true
