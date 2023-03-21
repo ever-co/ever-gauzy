@@ -1,22 +1,19 @@
-public/features/*.png
-public/reports/*.png
-public/screenshots/**/*.jpg
-public/screenshots/**/*.png
-public/invoices/pdf/*.pdf
+# Portable Document Format
+public/**/*.pdf
 
 # JPEG
-public/ever-icons/**/*.jpg
-public/ever-icons/**/*.jpeg
+public/**/*.jpg
+public/**/*.jpeg
 
 # Portable Network Graphics
-public/ever-icons/**/*.png
+public/**/*.png
 
 # Scalable Vector Graphics
-public/ever-icons/**/*.svg
-public/ever-icons/**/*.svgz
+public/**/*.svg
+public/**/*.svgz
 
 # Graphics Interchange Format
-public/ever-icons/**/*.gif
+public/**/*.gif
 
 # Ignore Import/Export Path
 public/import/
