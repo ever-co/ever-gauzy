@@ -245,19 +245,37 @@ export function ipcMainHandler(
 					id
 				};
 			}
-			await timerService.update(
-				new Timer({
-					id: arg.id,
-					timelogId: arg.lastTimer.id,
-					timesheetId: arg.lastTimer.timesheetId,
-					synced: true,
-					...(arg.lastTimer.startedAt && { startedAt: new Date(arg.lastTimer.startedAt) })
-				})
-			);
+			if (!offlineMode.enabled) {
+				await timerService.update(
+					new Timer({
+						id: arg.id,
+						timelogId: arg.lastTimer.id,
+						timesheetId: arg.lastTimer.timesheetId,
+						synced: true,
+						...(arg.lastTimer.startedAt && { startedAt: new Date(arg.lastTimer.startedAt) })
+					})
+				);
+			}
+			if (arg.config) {
+				if (arg.config.isStarted) {
+					await timerHandler.makeScreenshot(null, knex, timeTrackerWindow, false);
+				}
+				timeTrackerWindow.webContents.send('timer_status', {
+					...LocalStore.beforeRequestParams()
+				});
+			}
 		} catch (error) {
 			console.log('[UPDATE_SYNCED_TIME_ERROR]', error);
 		}
 	});
+
+	ipcMain.handle('TAKE_SCREEN_CAPTURE', async (event, { quitApp }) => {
+		try {
+			await timerHandler.makeScreenshot(null, knex, timeTrackerWindow, quitApp);
+		} catch (error) {
+			console.log('[TAKE_SCREEN_CAPTURE_ERROR]', error);
+		}
+	})
 
 	ipcMain.handle('UPDATE_SYNCED', async (event, arg: IntervalTO) => {
 		try {
@@ -453,7 +471,7 @@ export function ipcTimer(
 
 	ipcMain.on('stop_timer', async (event, arg) => {
 		log.info(`Timer Stop: ${moment().format()}`);
-		timerHandler.stopTime(setupWindow, timeTrackerWindow, knex, arg.quitApp);
+		timerHandler.stopTimer(setupWindow, timeTrackerWindow, knex, arg.quitApp);
 		settingWindow.webContents.send('app_setting_update', {
 			setting: LocalStore.getStore('appSetting')
 		});
@@ -836,6 +854,7 @@ export function removeAllHandlers() {
 		'UPDATE_SYNCED',
 		'DESKTOP_CAPTURER_GET_SOURCES',
 		'FINISH_SYNCED_TIMER',
+		'TAKE_SCREEN_CAPTURE'
 	];
 	channels.forEach((channel: string) => {
 		ipcMain.removeHandler(channel);

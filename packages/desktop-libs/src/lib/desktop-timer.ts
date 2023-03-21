@@ -84,19 +84,11 @@ export default class TimerHandler {
 				await this.startTimerIntervalPeriod(setupWindow, knex, timeTrackerWindow);
 			}
 
-			/*
-			 * Create screenshots at beginning of timer
-			 */
-
-			await this.makeScreenshot(setupWindow, knex, timeTrackerWindow, false);
 			const lastTimer = await TimerData.getLastTimer(knex, null)
 			timeTrackerWindow.webContents.send('toggle_timer_state', {
 				isStarted: true,
 				lastTimer: lastTimer
 			})
-			timeTrackerWindow.webContents.send('timer_status', {
-				...LocalStore.beforeRequestParams()
-			});
 		})();
 	}
 
@@ -505,35 +497,21 @@ export default class TimerHandler {
 		}
 	}
 
-	stopTime(setupWindow, timeTrackerWindow, knex, quitApp) {
+	async stopTimer(setupWindow, timeTrackerWindow, knex, quitApp) {
 		const appSetting = LocalStore.getStore('appSetting');
 		appSetting.timerStarted = false;
-
 		LocalStore.updateApplicationSetting(appSetting);
 		this.notificationDesktop.timerActionNotification(false);
 		/*
 		 * Stop time interval after stop timer
 		 */
-		(async () => {
-			await this.stopTimerIntervalPeriod();
-			const lastTimer = await TimerData.getLastTimer(knex, null);
-			timeTrackerWindow.webContents.send('toggle_timer_state', {
-				isStarted: false,
-				lastTimer: lastTimer
-			})
-		})();
-
+		await this.stopTimerIntervalPeriod();
+		const lastTimer = await TimerData.getLastTimer(knex, null);
+		timeTrackerWindow.webContents.send('toggle_timer_state', {
+			isStarted: false,
+			lastTimer: lastTimer
+		})
 		this.updateToggle(setupWindow, knex, true);
-
-		/*
-		 * Create screenshots at end of timer
-		 */
-		(async () => {
-			await this.makeScreenshot(setupWindow, knex, timeTrackerWindow, quitApp);
-			timeTrackerWindow.webContents.send('timer_status', {
-				...LocalStore.beforeRequestParams()
-			});
-		})();
 		this.isPaused = true;
 	}
 
