@@ -41,7 +41,7 @@ export class OrganizationTeamJoinRequest extends TenantOrganizationBaseEntity
 	@ApiPropertyOptional({ type: () => String, required: false })
 	@IsOptional()
 	@IsEnum(OrganizationTeamJoinRequestStatusEnum)
-	@Column({ default: OrganizationTeamJoinRequestStatusEnum.REQUESTED })
+	@Column({ nullable: true })
 	status: OrganizationTeamJoinRequestStatusEnum;
 
 	@Exclude({ toPlainOnly: true })

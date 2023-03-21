@@ -78,10 +78,11 @@ export const environment: IEnvironment = {
 	 * Cloudinary FileSystem Storage Configuration
 	 */
 	cloudinaryConfig: {
-		cloudName: process.env.CLOUDINARY_CLOUD_NAME,
-		apiKey: process.env.CLOUDINARY_API_KEY,
-		apiSecret: process.env.CLOUDINARY_API_SECRET,
-		secure: process.env.CLOUDINARY_API_SECURE === 'false' ? false : true
+		cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+		api_key: process.env.CLOUDINARY_API_KEY,
+		api_secret: process.env.CLOUDINARY_API_SECRET,
+		secure: process.env.CLOUDINARY_API_SECURE === 'false' ? false : true,
+		delivery_url: process.env.CLOUDINARY_CDN_URL || 'https://res.cloudinary.com'
 	},
 
 	facebookConfig: {

@@ -1,15 +1,17 @@
 import { Request } from 'express';
 import * as multer from 'multer';
 import * as moment from 'moment';
-import * as fs from 'fs';
-import { join, resolve } from 'path';
-import { UploadApiErrorResponse, UploadApiResponse, v2 as cloudinary } from 'cloudinary';
-import { environment, getConfig } from '@gauzy/config';
+import { join } from 'path';
+import { URL } from 'url';
+import * as streamifier from 'streamifier';
+import axios from 'axios';
+import { ConfigOptions, UploadApiErrorResponse, UploadApiResponse, v2 as cloudinary } from 'cloudinary';
+import { CloudinaryStorage } from 'multer-storage-cloudinary';
+import { environment } from '@gauzy/config';
 import { FileStorageOption, FileStorageProviderEnum, FileSystem, UploadedFile } from "@gauzy/contracts";
-import { ICloudinaryConfig } from '@gauzy/common';
+import { ICloudinaryConfig, isNotEmpty } from '@gauzy/common';
 import { Provider } from './provider';
-
-const config = getConfig();
+import { RequestContext } from './../../../core/context';
 
 export class CloudinaryProvider extends Provider<CloudinaryProvider> {
 
@@ -19,126 +21,229 @@ export class CloudinaryProvider extends Provider<CloudinaryProvider> {
 
     constructor() {
         super();
-        this.setConfig();
+        this.setDefaultConfig();
     }
 
-    getInstance() {
+    public getInstance() {
         if (!CloudinaryProvider.instance) {
             CloudinaryProvider.instance = new CloudinaryProvider();
         }
+        this.setCloudinaryConfig();
         return CloudinaryProvider.instance;
     }
 
-    handler({
-        dest,
-        filename,
-        prefix = 'file'
-    }: FileStorageOption): multer.StorageEngine {
-        const diskStorage = multer.diskStorage({
-            destination: (_req: Request, file: Express.Multer.File, callback) => {
-                // A string or function that determines the destination path for uploaded
-                let dir: string;
-                if (dest instanceof Function) {
-                    dir = dest(file);
-                } else {
-                    dir = dest;
-                }
-
-                // In "screenshots" folder we will temporarily upload image before uploading to cloudinary
-                const fullPath = join(this.config.rootPath, dir);
-                console.log({ fullPath }, file.path);
-
-                // Creating screenshots folder if not already present.
-                if (!fs.existsSync(fullPath)) {
-                    fs.mkdirSync(fullPath, { recursive: true });
-                }
-                callback(null, fullPath);
-            },
-            filename: (_req: Request, file: Express.Multer.File, callback) => {
-                console.log(file.path, 'File Path');
-
-                // A file extension, or filename extension, is a suffix at the end of a file.
-                const extension = file.originalname.split('.').pop();
-
-                // A function that determines the name of the uploaded file.
-                let fileName: string;
-                if (filename) {
-                    if (typeof filename === 'string') {
-                        fileName = filename;
-                    } else {
-                        fileName = filename(file, extension);
-                    }
-                } else {
-                    fileName = `${prefix}-${moment().unix()}-${parseInt('' + Math.random() * 1000, 10)}.${extension}`;
-                }
-                callback(null, fileName);
-            }
-        });
-        console.log(diskStorage);
-        return diskStorage;
-    }
-
-    async deleteFile(file: string): Promise<void> { }
-
-    url(fileURL: string): string {
-        if (fileURL && fileURL.startsWith('http')) {
-            return fileURL;
+    /**
+     * Get cloudinary instance
+     * @returns
+     */
+    private getCloudinaryInstance(): ConfigOptions {
+        try {
+            this.setCloudinaryConfig();
+            return cloudinary.config({
+                cloud_name: this.config.cloud_name,
+                api_key: this.config.api_key,
+                api_secret: this.config.api_secret,
+                secure: this.config.secure
+            });
+        } catch (error) {
+            console.log(`Error while retrieving ${FileStorageProviderEnum.CLOUDINARY} instance:`, error);
         }
-        return fileURL ? `${this.config.baseUrl}/${fileURL}` : null;
-    }
-
-    path(filePath: string): string {
-        return filePath ? `${this.config.rootPath}/${filePath}` : null;
     }
 
     /**
      *  Set Cloudinary Configuration
      */
-    setConfig() {
+    setDefaultConfig() {
+        const { cloudinaryConfig } = environment;
         this.config = {
-            rootPath: config.assetOptions.assetPublicPath || resolve(process.cwd(), 'apps', 'api', 'public'),
-            baseUrl: environment.baseUrl + '/public',
-            ...cloudinary.config({
-                cloud_name: environment.cloudinaryConfig.cloudName,
-                api_key: environment.cloudinaryConfig.apiKey,
-                api_secret: environment.cloudinaryConfig.apiSecret,
-                secure: environment.cloudinaryConfig.secure
-            })
+            rootPath: '',
+            baseUrl: cloudinaryConfig.delivery_url,
+            cloud_name: cloudinaryConfig.cloud_name,
+            api_key: cloudinaryConfig.api_key,
+            api_secret: cloudinaryConfig.api_secret,
+            secure: cloudinaryConfig.secure
         }
     }
 
-    async getFile(file: string): Promise<Buffer> {
-        return await fs.promises.readFile(this.path(file));
+    /**
+     * Set Cloudinary Configuration Run Time
+     */
+    setCloudinaryConfig() {
+        const request = RequestContext.currentRequest();
+        if (request) {
+            const settings = request['tenantSettings'];
+            if (isNotEmpty(settings)) {
+                this.config = {
+                    rootPath: '',
+                    ...this.config
+                };
+                if (isNotEmpty(settings.cloudinary_cloud_name)) {
+                    this.config['cloud_name'] = settings.cloudinary_cloud_name.trim();
+                }
+                if (isNotEmpty(settings.cloudinary_api_key)) {
+                    this.config['api_key'] = settings.cloudinary_api_key.trim();
+                }
+                if (isNotEmpty(settings.cloudinary_api_secret)) {
+                    this.config['api_secret'] = settings.cloudinary_api_secret.trim();
+                }
+                if (isNotEmpty(settings.cloudinary_api_secure)) {
+                    this.config['secure'] = settings.cloudinary_api_secure;
+                }
+                if (isNotEmpty(settings.cloudinary_delivery_url)) {
+                    const baseUrl = new URL(settings.cloudinary_delivery_url).toString();
+                    this.config['baseUrl'] = baseUrl;
+                }
+            }
+        } else {
+            this.config = {
+                rootPath: '',
+                ...this.config
+            };
+        }
     }
 
-    async putFile(file: any, path: string = ''): Promise<UploadedFile> {
-        console.log('Cloudinary File Upload', file, path);
-        return new Promise((resolve, reject) => {
-            cloudinary.uploader.upload(this.path(path), (error: UploadApiErrorResponse, result: UploadApiResponse) => {
-                console.log(error, result);
-                if (error) {
-                    return reject(error);
+    /**
+     * Handle file upload to the cloudinary storage
+     *
+     * @param param0
+     * @returns
+     */
+    handler({
+        dest,
+        filename,
+        prefix = 'file'
+    }: FileStorageOption): multer.StorageEngine {
+        /** Get cloudinary instance */
+        this.getCloudinaryInstance();
+
+        return new CloudinaryStorage({
+            cloudinary: cloudinary,
+            params: (_req: Request, file: Express.Multer.File) => {
+                // A file extension, or filename extension, is a suffix at the end of a file.
+                const format = file.originalname.split('.').pop();
+
+                // A string or function that determines the destination path for uploaded
+                const destination = dest instanceof Function ? dest(file) : dest;
+
+                // A string or function that determines the destination image path for uploaded.
+                const folder = join(destination).replace(/\\/g, '/');
+
+                // A function that determines the name of the uploaded file.
+                let public_id: string;
+                if (filename) {
+                    public_id = (typeof filename === 'string') ? filename : filename(file, format);
+                } else {
+                    public_id = `${prefix}-${moment().unix()}-${parseInt('' + Math.random() * 1000, 10)}`;
                 }
-                // Image has been successfully uploaded on cloudinary so we don't need local image file anymore
-                // Remove file from local uploads folder
-                fs.unlinkSync(this.path(path));
-                return resolve({ url: result.url, id: result.public_id } as any);
+                return {
+                    public_id,
+                    folder,
+                    format
+                }
+            }
+        });
+    }
+
+    /**
+     *
+     * @param fileURL
+     * @returns
+     */
+    url(fileURL: string): string {
+        if (!fileURL) {
+            return null;
+        }
+        if (fileURL.startsWith('http')) {
+            return fileURL;
+        }
+        return new URL(join(this.config.cloud_name, fileURL), this.config.baseUrl).toString();
+    }
+
+    /**
+     *
+     * @param filePath
+     * @returns
+     */
+    path(filePath: string): string {
+        if (!filePath) {
+            return null;
+        }
+        if (filePath.startsWith('http')) {
+            return filePath;
+        }
+        return new URL(join(this.config.cloud_name, filePath), this.config.baseUrl).toString();
+    }
+
+    /**
+     *
+     * @param file
+     * @returns
+     */
+    async getFile(file: string): Promise<Buffer> {
+        try {
+            const response = await axios.get(this.url(file), { responseType: 'arraybuffer' });
+            return Buffer.from(response.data, "utf-8");
+        } catch (error) {
+            console.log('Error while retrieving cloudinary image from serer', error);
+        }
+    }
+
+    /**
+     *
+     * @param file
+     * @param path
+     * @returns
+     */
+    async putFile(file: any, path: string = ''): Promise<UploadedFile> {
+        return new Promise((resolve, reject) => {
+            // A string or function that determines the destination image path for uploaded.
+            const public_id = join(path).replace(/\\/g, '/');
+
+            const stream = cloudinary.uploader.upload_stream({ public_id }, (error: UploadApiErrorResponse, result: UploadApiResponse) => {
+                if (error) return reject(error);
+
+                const uploaded_file = {
+                    key: result.public_id,
+                    size: result.bytes,
+                    filename: result.public_id,
+                    url: result.url,
+                    path: result.secure_url
+                };
+                resolve(uploaded_file as any);
+            });
+            streamifier.createReadStream(file).pipe(stream);
+        });
+    }
+
+    /**
+    * Delete Cloudinary Image
+    *
+    * @param file
+    */
+    async deleteFile(file: string): Promise<void> {
+        return new Promise((resolve, reject) => {
+            cloudinary.uploader.destroy(file, (error: any, result: any) => {
+                if (error) return reject(error);
+
+                resolve(result);
             });
         });
     }
 
     /**
-     * Map uploaded file for provider
+     * Map uploaded file for cloudinary provider
      *
      * @param file
      * @returns
      */
     mapUploadedFile(file: any): UploadedFile {
-        const separator = process.platform === 'win32' ? '\\' : '/';
-        if (file.path) {
-            file.key = file.path.replace(this.config.rootPath + separator, '');
+        if (isNotEmpty(file.filename)) {
+            const filename = file.filename;
+            file.key = filename;
+
+            const originalname = filename.split('/').pop();
+            file.filename = originalname;
         }
-        file.url = this.url(file.key);
         return file;
     }
 }

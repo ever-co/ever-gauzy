@@ -1,6 +1,6 @@
-import { BadRequestException, ConflictException, Injectable } from '@nestjs/common';
+import { BadRequestException, ConflictException, Injectable, HttpStatus } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { MoreThanOrEqual, Repository, SelectQueryBuilder } from 'typeorm';
+import { MoreThanOrEqual, Repository, SelectQueryBuilder, IsNull } from 'typeorm';
 import { JwtPayload, sign } from 'jsonwebtoken';
 import { environment } from '@gauzy/config';
 import { IAppIntegrationConfig } from '@gauzy/common';
@@ -11,6 +11,7 @@ import {
 	LanguagesEnum,
 	OrganizationTeamJoinRequestStatusEnum
 } from '@gauzy/contracts';
+import * as moment from 'moment';
 import { TenantAwareCrudService } from './../core/crud';
 import { generateRandomInteger } from './../core/utils';
 import { EmailService } from './../email/email.service';
@@ -84,7 +85,7 @@ export class OrganizationTeamJoinRequestService extends TenantAwareCrudService<O
 					tenantId,
 					code,
 					token,
-					status: OrganizationTeamJoinRequestStatusEnum.REQUESTED
+					status: null
 				})
 			);
 
@@ -105,7 +106,7 @@ export class OrganizationTeamJoinRequestService extends TenantAwareCrudService<O
 
 			return organizationTeamJoinRequest;
 		} catch (error) {
-			throw new BadRequestException('Error while requesting join organization team', error);
+			throw new BadRequestException('Error while requesting join organization team');
 		}
 	}
 
@@ -118,11 +119,12 @@ export class OrganizationTeamJoinRequestService extends TenantAwareCrudService<O
 	async validateJoinRequest(
 		options: IOrganizationTeamJoinRequestValidateInput
 	): Promise<IOrganizationTeamJoinRequest> {
-		const { email, code, token, organizationTeamId } = options;
+		const { email, token, code, organizationTeamId } = options;
 		try {
 			const query = this.repository.createQueryBuilder(this.alias);
 			query.setFindOptions({
 				select: {
+					id: true,
 					email: true,
 					organizationTeamId: true
 				}
@@ -132,7 +134,7 @@ export class OrganizationTeamJoinRequestService extends TenantAwareCrudService<O
 					email,
 					organizationTeamId,
 					expiredAt: MoreThanOrEqual(new Date()),
-					status: OrganizationTeamJoinRequestStatusEnum.REQUESTED
+					status: IsNull()
 				})
 				qb.andWhere([
 					{
@@ -142,10 +144,91 @@ export class OrganizationTeamJoinRequestService extends TenantAwareCrudService<O
 						token
 					}
 				]);
+			}
+			);
+			const record = await query.getOneOrFail();
+
+			await this.repository.update(record.id, {
+				status: OrganizationTeamJoinRequestStatusEnum.REQUESTED,
 			});
-			return await query.getOneOrFail();
+			delete record.id;
+			return record;
 		} catch (error) {
 			throw new BadRequestException();
+		}
+	}
+
+	async resendConfirmationCode(
+		entity: IOrganizationTeamJoinRequestCreateInput &
+			Partial<IAppIntegrationConfig>,
+		languageCode?: LanguagesEnum
+	) {
+		const { organizationTeamId, email } = entity;
+
+		try {
+			/** find existing team join request */
+			const request = await this.repository.findOneOrFail({
+				where: {
+					organizationTeamId,
+					email,
+					status: IsNull(),
+				},
+				relations: {
+					organizationTeam: {
+						organization: true
+					}
+				}
+			});
+
+			const code = generateRandomInteger(6);
+
+			const payload: JwtPayload = {
+				email,
+				tenantId: request.tenantId,
+				organizationId: request.organizationId,
+				organizationTeamId,
+				code,
+			};
+			/** Generate JWT token using above JWT payload */
+			const token: string = sign(payload, environment.JWT_SECRET, {
+				expiresIn: `${environment.TEAM_JOIN_REQUEST_EXPIRATION_TIME}s`,
+			});
+
+			/** Update code, token and expiredAt */
+			await this.repository.update(request.id, {
+				code,
+				token,
+				expiredAt: moment(new Date())
+					.add(
+						environment.TEAM_JOIN_REQUEST_EXPIRATION_TIME,
+						'seconds'
+					)
+					.toDate(),
+			});
+
+			/** Place here organization team join request email to send verification code*/
+			let { appName, appLogo, appSignature, appLink } = entity;
+			this._emailService.organizationTeamJoinRequest(
+				request.organizationTeam,
+				{
+					...request,
+					code,
+					token,
+				},
+				languageCode,
+				request.organizationTeam.organization,
+				{
+					appName,
+					appLogo,
+					appSignature,
+					appLink,
+				}
+			);
+		} finally {
+			return new Object({
+				status: HttpStatus.OK,
+				message: `OK`,
+			});
 		}
 	}
 }

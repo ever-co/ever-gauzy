@@ -243,7 +243,8 @@
         "postmarkapp",
         "activitywatch",
         "openfromhere",
-        "postgre"
+        "postgre",
+        "streamifier"
     ],
     "useGitignore": true,
     "ignorePaths": [
