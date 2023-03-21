@@ -189,6 +189,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 	private _weeklyLimit$: BehaviorSubject<number> = new BehaviorSubject(Infinity);
 	private _isOver$: BehaviorSubject<boolean> = new BehaviorSubject(false);
 	private _lastTime: number = 0;
+	private _stopProcessIsStarted = false;
 
 	public hasTaskPermission$: BehaviorSubject<boolean> = new BehaviorSubject(
 		false
@@ -857,15 +858,14 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 							this.loading = false;
 						}
 						asapScheduler.schedule(async () => {
-							if (!this._isOffline) {
-								await this.electronService.ipcRenderer.invoke(
-									'UPDATE_SYNCED_TIMER',
-									{
-										lastTimer: timelog,
-										...lastTimer,
-									}
-								);
-							}
+							await this.electronService.ipcRenderer.invoke(
+								'UPDATE_SYNCED_TIMER',
+								{
+									config: { isStarted },
+									lastTimer: timelog,
+									...lastTimer,
+								}
+							);
 						});
 					} catch (error) {
 						this.loading = false;
@@ -1001,7 +1001,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 		if (this.validationField()) {
 			if (val) {
 				if (!this.start) {
-					this.startTime();
+					this.startTimer();
 				} else {
 					this.loading = false;
 					console.log('Error', 'Timer is already running');
@@ -1062,7 +1062,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 		}
 	}
 
-	startTime() {
+	startTimer() {
 		this.start$.next(true);
 		this.electronService.ipcRenderer.send('update_tray_start');
 		this.electronService.ipcRenderer.send('start_timer', {
@@ -1079,14 +1079,24 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 		this.electronService.ipcRenderer.send('request_permission');
 	}
 
+
 	async stopTimer() {
 		try {
+			const config = { quitApp: this.quitApp }
+			this._stopProcessIsStarted = true;
+			await this.electronService.ipcRenderer.invoke('TAKE_SCREEN_CAPTURE', config);
+		} catch (error) {
+			console.log('[ERROR_STOP_TIMER]', error);
+		}
+	}
+
+	private _stopTimerProcess() {
+		if (this._stopProcessIsStarted) {
 			this.electronService.ipcRenderer.send('stop_timer', {
 				quitApp: this.quitApp,
 			});
 			this.electronService.ipcRenderer.send('update_tray_stop');
-		} catch (error) {
-			console.log('[ERROR_STOP_TIMER]', error);
+			this._stopProcessIsStarted = false;
 		}
 	}
 
@@ -1737,6 +1747,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 				/* Adding the last screen capture to the screenshots array. */
 				this.screenshots$.next([...this.screenshots, this.lastScreenCapture])
 			}
+			this._stopTimerProcess();
 			// upload screenshot to timeslot api
 			try {
 				await Promise.all(
@@ -1769,6 +1780,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 			});
 		} catch (error) {
 			console.log('error send to api timeslot', error);
+			this._stopTimerProcess();
 			this.electronService.ipcRenderer.send('failed_save_time_slot', {
 				params: JSON.stringify({
 					...paramActivity,
@@ -1795,6 +1807,8 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 			});
 		}
 	}
+
+
 
 	screenshotNotify(arg, imgs) {
 		if (imgs.length > 0) {
