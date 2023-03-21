@@ -37,13 +37,13 @@ export class ImageAsset extends TenantOrganizationBaseEntity
 	@IsOptional()
 	@IsNumber()
 	@Column({ default: 0 })
-	width: number;
+	width?: number;
 
 	@ApiPropertyOptional({ type: () => Number, default: 0 })
 	@IsOptional()
 	@IsNumber()
 	@Column({ default: 0 })
-	height: number;
+	height?: number;
 
 	@ApiPropertyOptional({ type: () => Number })
 	@IsOptional()
@@ -58,7 +58,7 @@ export class ImageAsset extends TenantOrganizationBaseEntity
 	@ApiProperty({ type: () => Boolean })
 	@IsBoolean()
 	@Column({ default: false })
-	isFeatured: boolean;
+	isFeatured?: boolean;
 
 	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()

@@ -20,6 +20,7 @@ export function LazyFileInterceptor(
     fieldName: string,
     localOptions?: MulterOptions,
 ): Type<NestInterceptor> {
+
     class MixinInterceptor implements NestInterceptor {
         protected multer: MulterInstance;
 

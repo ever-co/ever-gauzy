@@ -1,20 +1,21 @@
 import { FileStorageProviderEnum } from "./file-provider";
 import { IBasePerTenantAndOrganizationEntityModel } from "./base-entity.model";
 
-export interface IImageAsset extends IBasePerTenantAndOrganizationEntityModel {
+export interface IImageAsset extends IImageAssetCreateInput {
+	fullUrl?: string;
+	thumbUrl?: string;
+}
+
+export interface IImageAssetFindInput extends IBasePerTenantAndOrganizationEntityModel, Pick<IImageAsset, 'isFeatured'> { }
+
+export interface IImageAssetCreateInput extends IBasePerTenantAndOrganizationEntityModel {
 	name: string;
 	url: string;
 	thumb?: string;
-	fullUrl?: string;
-	thumbUrl?: string;
-	width: number;
-	height: number;
+	width?: number;
+	height?: number;
 	size?: number;
-	isFeatured: boolean;
+	isFeatured?: boolean;
 	externalProviderId?: string;
 	storageProvider?: FileStorageProviderEnum;
-}
-
-export interface IImageAssetFindInput extends IBasePerTenantAndOrganizationEntityModel {
-	isFeatured?: boolean;
 }
