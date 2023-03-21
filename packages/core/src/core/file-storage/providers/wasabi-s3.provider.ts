@@ -51,19 +51,6 @@ export class WasabiS3Provider extends Provider<WasabiS3Provider> {
 		return WasabiS3Provider.instance;
 	}
 
-	url(key: string) {
-		try {
-			const url = this.getWasabiInstance().getSignedUrl('getObject', {
-				Bucket: this.getWasabiBucket(),
-				Key: key,
-				Expires: 3600
-			});
-			return url;
-		} catch (error) {
-			console.log('Error while retrieving singed URL:', error);
-		}
-	}
-
 	setWasabiDetails() {
 		const request = RequestContext.currentRequest();
 		if (request) {
@@ -95,8 +82,36 @@ export class WasabiS3Provider extends Provider<WasabiS3Provider> {
 		}
 	}
 
+	/**
+	 * Get a pre-signed URL for a given operation name.
+	 *
+	 * @param key
+	 * @returns
+	*/
+	url(key: string) {
+		if (!key) {
+			return null;
+		}
+		try {
+			const url = this.getWasabiInstance().getSignedUrl('getObject', {
+				Bucket: this.getWasabiBucket(),
+				Key: key,
+				Expires: 3600
+			});
+			return url;
+		} catch (error) {
+			console.log('Error while retrieving singed URL:', error);
+		}
+	}
+
+	/**
+	 * Get full Path of the file storage
+	 *
+	 * @param filePath
+	 * @returns
+	 */
 	path(filePath: string) {
-		return filePath ? this.config.rootPath + '/' + filePath : null;
+		return filePath ? join(this.config.rootPath, filePath) : null;
 	}
 
 	handler({
@@ -114,12 +129,7 @@ export class WasabiS3Provider extends Provider<WasabiS3Provider> {
 			},
 			key: (_req, file, callback) => {
 				// A string or function that determines the destination path for uploaded
-				let dir: string;
-				if (dest instanceof Function) {
-					dir = dest(file);
-				} else {
-					dir = dest;
-				}
+				const dir = dest instanceof Function ? dest(file) : dest;
 
 				// A file extension, or filename extension, is a suffix at the end of a file.
 				const extension = file.originalname.split('.').pop();
@@ -127,14 +137,11 @@ export class WasabiS3Provider extends Provider<WasabiS3Provider> {
 				// A function that determines the name of the uploaded file.
 				let fileName: string;
 				if (filename) {
-					if (typeof filename === 'string') {
-						fileName = filename;
-					} else {
-						fileName = filename(file, extension);
-					}
+					fileName = (typeof filename === 'string') ? filename : filename(file, extension);
 				} else {
 					fileName = `${prefix}-${moment().unix()}-${parseInt('' + Math.random() * 1000, 10)}.${extension}`;
 				}
+
 				const fullPath = join(this.config.rootPath, dir, fileName);
 				callback(null, fullPath);
 			}

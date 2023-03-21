@@ -32,10 +32,13 @@ export class LocalProvider extends Provider<LocalProvider> {
 	 * @returns
 	 */
 	url(fileURL: string) {
-		if (fileURL && fileURL.startsWith('http')) {
+		if (!fileURL) {
+			return null;
+		}
+		if (fileURL.startsWith('http')) {
 			return fileURL;
 		}
-		return fileURL ? new URL(join('public', fileURL), this.config.baseUrl).toString() : null;
+		return new URL(join('public', fileURL), this.config.baseUrl).toString();
 	}
 
 	/**
