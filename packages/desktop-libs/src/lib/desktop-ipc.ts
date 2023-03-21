@@ -471,7 +471,7 @@ export function ipcTimer(
 
 	ipcMain.on('stop_timer', async (event, arg) => {
 		log.info(`Timer Stop: ${moment().format()}`);
-		timerHandler.stopTimer(setupWindow, timeTrackerWindow, knex, arg.quitApp);
+		await timerHandler.stopTimer(setupWindow, timeTrackerWindow, knex, arg.quitApp);
 		settingWindow.webContents.send('app_setting_update', {
 			setting: LocalStore.getStore('appSetting')
 		});
