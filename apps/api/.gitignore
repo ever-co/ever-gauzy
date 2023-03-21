@@ -1,23 +1,9 @@
-# Portable Document Format
-public/**/*.pdf
+# Ignore everything in this public directory
+public/**/*.*
 
-# JPEG
-public/**/*.jpg
-public/**/*.jpeg
-
-# Portable Network Graphics
-public/**/*.png
-
-# Scalable Vector Graphics
-public/**/*.svg
-public/**/*.svgz
-
-# Graphics Interchange Format
-public/**/*.gif
-
-# Ignore Import/Export Path
-public/import/
-public/export/
+# Except these (.gitkeep) files
+!public/.gitkeep
+!public/**/.gitkeep
 
 data/*
 report.*.json
