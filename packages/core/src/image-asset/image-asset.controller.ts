@@ -16,10 +16,10 @@ import {
 } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { CommandBus } from '@nestjs/cqrs';
-import { IImageAsset, IPagination, PermissionsEnum } from '@gauzy/contracts';
 import { FindOptionsWhere } from 'typeorm';
 import { v4 as uuid } from 'uuid';
 import * as path from 'path';
+import { IImageAsset, IPagination, PermissionsEnum } from '@gauzy/contracts';
 import { CrudController, PaginationParams } from './../core/crud';
 import { FileStorage, UploadedFileStorage } from './../core/file-storage';
 import { LazyFileInterceptor } from './../core/interceptors';
@@ -30,12 +30,14 @@ import { UUIDValidationPipe } from './../shared/pipes';
 import { ImageAssetCreateCommand } from './commands';
 import { ImageAsset } from './image-asset.entity';
 import { ImageAssetService } from './image-asset.service';
+import { UploadImageAsset } from './dto';
 
 @ApiTags('ImageAsset')
 @UseGuards(TenantPermissionGuard, PermissionGuard)
 @Permissions(PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.MEDIA_GALLERY_ADD)
 @Controller()
 export class ImageAssetController extends CrudController<ImageAsset> {
+
 	constructor(
 		private readonly _commandBus: CommandBus,
 		private readonly _imageAssetService: ImageAssetService
@@ -49,7 +51,6 @@ export class ImageAssetController extends CrudController<ImageAsset> {
 	 * @param entity
 	 * @returns
 	 */
-	@Permissions(PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.MEDIA_GALLERY_ADD)
 	@Post('upload/:folder')
 	@UseInterceptors(
 		LazyFileInterceptor('file', {
@@ -63,12 +64,15 @@ export class ImageAssetController extends CrudController<ImageAsset> {
 			},
 		})
 	)
+	@UsePipes(new ValidationPipe({ whitelist: true }))
 	async upload(
-		@UploadedFileStorage() file
+		@UploadedFileStorage() file,
+		@Body() entity: UploadImageAsset
 	) {
 		const provider = new FileStorage().getProvider();
 		return await this._commandBus.execute(
 			new ImageAssetCreateCommand({
+				...entity,
 				name: file.filename,
 				url: file.key,
 				size: file.size,
@@ -158,7 +162,6 @@ export class ImageAssetController extends CrudController<ImageAsset> {
 	 * @returns
 	 */
 	@HttpCode(HttpStatus.CREATED)
-	@Permissions(PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.MEDIA_GALLERY_ADD)
 	@Post()
 	async create(
 		@Body() entity: ImageAsset

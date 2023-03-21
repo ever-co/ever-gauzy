@@ -13,6 +13,8 @@ export interface IImageAsset extends IImageAssetCreateInput {
 
 export interface IImageAssetFindInput extends IBasePerTenantAndOrganizationEntityModel, Pick<IImageAsset, 'isFeatured'> { }
 
+export interface IImageAssetUploadInput extends IBasePerTenantAndOrganizationEntityModel { }
+
 export interface IImageAssetCreateInput extends IBasePerTenantAndOrganizationEntityModel {
 	name: string;
 	url: string;
