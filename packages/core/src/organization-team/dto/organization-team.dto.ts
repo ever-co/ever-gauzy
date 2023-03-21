@@ -1,6 +1,6 @@
 import { ApiPropertyOptional, IntersectionType, PartialType } from "@nestjs/swagger";
-import { IsArray, IsBoolean, IsOptional, IsString } from "class-validator";
-import { IOrganizationTeam } from "@gauzy/contracts";
+import { IsArray, IsBoolean, IsOptional, IsString, IsUUID } from "class-validator";
+import { IImageAsset, IOrganizationTeam } from "@gauzy/contracts";
 import { TenantOrganizationBaseDTO } from "./../../core/dto";
 import { RelationalTagDTO } from "./../../tags/dto";
 
@@ -36,4 +36,9 @@ export class OrganizationTeamDTO extends IntersectionType(
     @IsOptional()
     @IsArray()
     readonly managerIds?: string[] = [];
+
+    @ApiPropertyOptional({ type: () => String })
+    @IsOptional()
+    @IsUUID()
+    readonly imageId?: IImageAsset['id'];
 }

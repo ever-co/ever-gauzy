@@ -4,8 +4,9 @@ import { IOrganizationTeamEmployee } from './organization-team-employee-model';
 import { ITag } from './tag.model';
 import { ITask } from './task.model';
 import { ITimerStatusInput } from './timesheet.model';
+import { IRelationalImageAsset } from './image-asset.model';
 
-export interface IOrganizationTeam extends IBasePerTenantAndOrganizationEntityModel {
+export interface IOrganizationTeam extends IBasePerTenantAndOrganizationEntityModel, IRelationalImageAsset {
 	name: string;
 	logo: string;
 	prefix?: string;
@@ -24,7 +25,7 @@ export interface IOrganizationTeamFindInput extends IBasePerTenantAndOrganizatio
 	profile_link?: string;
 }
 
-export interface IOrganizationTeamCreateInput extends IBasePerTenantAndOrganizationEntityModel {
+export interface IOrganizationTeamCreateInput extends IBasePerTenantAndOrganizationEntityModel, IRelationalImageAsset {
 	name: string;
 	logo?: string;
 	prefix?: string;
