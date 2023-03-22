@@ -8,8 +8,8 @@ import { OrganizationContactService } from '../../organization-contact.service';
 export class OrganizationContactUpdateHandler implements ICommandHandler<OrganizationContactUpdateCommand> {
 
 	constructor(
-		private readonly organizationContactService: OrganizationContactService
-	) {}
+		private readonly _organizationContactService: OrganizationContactService
+	) { }
 
 	public async execute(
 		command: OrganizationContactUpdateCommand
@@ -18,10 +18,11 @@ export class OrganizationContactUpdateHandler implements ICommandHandler<Organiz
 			const { id, input } = command;
 			//We are using create here because create calls the method save()
 			//We need save() to save ManyToMany relations
-			return await this.organizationContactService.create({
-				id,
-				...input
+			await this._organizationContactService.create({
+				...input,
+				id
 			});
+			return await this._organizationContactService.findOneByIdString(id);
 		} catch (error) {
 			throw new BadRequestException(error);
 		}
