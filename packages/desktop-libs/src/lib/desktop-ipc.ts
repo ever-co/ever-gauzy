@@ -257,7 +257,7 @@ export function ipcMainHandler(
 				);
 			}
 			if (arg.config) {
-				if (arg.config.isStarted) {
+				if (arg.config.isTakeScreenCapture) {
 					await timerHandler.makeScreenshot(null, knex, timeTrackerWindow, false);
 				}
 				timeTrackerWindow.webContents.send('timer_status', {
@@ -268,14 +268,6 @@ export function ipcMainHandler(
 			console.log('[UPDATE_SYNCED_TIME_ERROR]', error);
 		}
 	});
-
-	ipcMain.handle('TAKE_SCREEN_CAPTURE', async (event, { quitApp }) => {
-		try {
-			await timerHandler.makeScreenshot(null, knex, timeTrackerWindow, quitApp);
-		} catch (error) {
-			console.log('[TAKE_SCREEN_CAPTURE_ERROR]', error);
-		}
-	})
 
 	ipcMain.handle('UPDATE_SYNCED', async (event, arg: IntervalTO) => {
 		try {
@@ -853,8 +845,7 @@ export function removeAllHandlers() {
 		'UPDATE_SYNCED_TIMER',
 		'UPDATE_SYNCED',
 		'DESKTOP_CAPTURER_GET_SOURCES',
-		'FINISH_SYNCED_TIMER',
-		'TAKE_SCREEN_CAPTURE'
+		'FINISH_SYNCED_TIMER'
 	];
 	channels.forEach((channel: string) => {
 		ipcMain.removeHandler(channel);
