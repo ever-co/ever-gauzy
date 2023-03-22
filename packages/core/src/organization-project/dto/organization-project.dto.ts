@@ -1,15 +1,19 @@
-import { ApiProperty, ApiPropertyOptional, PartialType } from "@nestjs/swagger";
+import { ApiProperty, ApiPropertyOptional, IntersectionType, PartialType, PickType } from "@nestjs/swagger";
 import { OrganizationProjectBudgetTypeEnum, ProjectBillingEnum } from "@gauzy/contracts";
 import { IsEnum, IsNotEmpty, IsOptional } from "class-validator";
+import { OrganizationProject } from "./../organization-project.entity";
 import { UpdateTaskModeDTO } from "./update-task-mode.dto";
 
-export class OrganizationProjectDTO extends PartialType(UpdateTaskModeDTO) {
+export class OrganizationProjectDTO extends IntersectionType(
+	PickType(OrganizationProject, ['imageId']),
+	PartialType(UpdateTaskModeDTO)
+) {
 
-    @ApiProperty({ type: () => String })
+	@ApiProperty({ type: () => String })
 	@IsNotEmpty()
 	readonly name: string;
 
-    @ApiPropertyOptional({
+	@ApiPropertyOptional({
 		enum: ProjectBillingEnum,
 		example: ProjectBillingEnum.FLAT_FEE
 	})
@@ -17,7 +21,7 @@ export class OrganizationProjectDTO extends PartialType(UpdateTaskModeDTO) {
 	@IsEnum(ProjectBillingEnum)
 	readonly billing: ProjectBillingEnum;
 
-    @ApiPropertyOptional({
+	@ApiPropertyOptional({
 		enum: OrganizationProjectBudgetTypeEnum,
 		example: OrganizationProjectBudgetTypeEnum.COST
 	})

@@ -1,4 +1,4 @@
-import { EntitySubscriberInterface, EventSubscriber, InsertEvent, UpdateEvent } from "typeorm";
+import { EntitySubscriberInterface, EventSubscriber, InsertEvent, LoadEvent, UpdateEvent } from "typeorm";
 import { getDummyImage } from "./../core/utils";
 import { OrganizationProject } from "./organization-project.entity";
 
@@ -9,6 +9,22 @@ export class OrganizationProjectSubscriber implements EntitySubscriberInterface<
     */
     listenTo() {
         return OrganizationProject;
+    }
+
+    /**
+     * Called after entity is loaded from the database.
+     *
+     * @param entity
+     * @param event
+     */
+    afterLoad(entity: OrganizationProject, event?: LoadEvent<OrganizationProject>): void | Promise<any> {
+        try {
+            if (!!entity['image']) {
+                entity.imageUrl = entity.image.fullUrl || entity.imageUrl;
+            }
+        } catch (error) {
+            console.log(error);
+        }
     }
 
     /**
