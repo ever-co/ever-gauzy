@@ -42,6 +42,9 @@ export class UserSubscriber implements EntitySubscriberInterface<User> {
             if ('emailVerifiedAt' in entity) {
                 entity.isEmailVerified = !!entity.emailVerifiedAt;
             }
+            if (!!entity['image']) {
+                entity.imageUrl = entity.image.fullUrl || entity.imageUrl;
+            }
         } catch (error) {
             console.log('Error while retrieve user subscriber', error);
         }
