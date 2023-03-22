@@ -49,6 +49,7 @@ import {
 	InviteResendCommand
 } from './commands';
 import {
+	AcceptMyInviteDTO,
 	CreateInviteDTO,
 	ResendInviteDTO,
 	ValidateInviteByCodeQueryDTO,
@@ -301,5 +302,33 @@ export class InviteController {
 				languageCode
 			})
 		);
+	}
+
+	@ApiOperation({ summary: 'Find all invites of current user' })
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'Found invites',
+	})
+	@UseGuards(TenantPermissionGuard, PermissionGuard)
+	@Permissions(PermissionsEnum.ORG_INVITE_VIEW)
+	@Get('me')
+	async findInviteOfCurrentUser() {
+		return await this.inviteService.findInviteOfCurrentUser();
+	}
+
+	@ApiOperation({ summary: 'Accept or Reject invite of current user' })
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'Invite Accepted',
+	})
+	@UseGuards(TenantPermissionGuard, PermissionGuard)
+	@Permissions(PermissionsEnum.ORG_INVITE_VIEW, PermissionsEnum.ORG_INVITE_EDIT)
+	@Post('me/accept-reject')
+	async acceptMyInvitation(
+		@Body() body: AcceptMyInviteDTO,
+		@Req() request,
+		@I18nLang() languageCode: LanguagesEnum
+	){
+		return await this.inviteService.acceptMyInvitation(body, request.get('Origin'), languageCode)
 	}
 }

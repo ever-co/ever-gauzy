@@ -20,7 +20,12 @@ import {
 	IOrganizationTeam,
 	IInviteResendInput
 } from '@gauzy/contracts';
-import { BadRequestException, Injectable, UnauthorizedException } from '@nestjs/common';
+import {
+	BadRequestException,
+	Injectable,
+	NotFoundException,
+	UnauthorizedException
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { JwtPayload, sign, verify } from 'jsonwebtoken';
 import {
@@ -46,6 +51,9 @@ import { OrganizationTeamService } from './../organization-team/organization-tea
 import { OrganizationDepartmentService } from './../organization-department/organization-department.service';
 import { OrganizationContactService } from './../organization-contact/organization-contact.service';
 import { OrganizationProjectService } from './../organization-project/organization-project.service';
+import { AcceptMyInviteDTO } from './dto';
+import { CommandBus } from '@nestjs/cqrs';
+import { InviteAcceptCommand } from './commands';
 
 @Injectable()
 export class InviteService extends TenantAwareCrudService<Invite> {
@@ -62,6 +70,7 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 		private readonly organizationTeamService: OrganizationTeamService,
 		private readonly roleService: RoleService,
 		private readonly userService: UserService,
+		private readonly commandBus: CommandBus
 	) {
 		super(inviteRepository);
 	}
@@ -634,5 +643,112 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 		} catch (error) {
 			throw new BadRequestException(error);
 		}
+	}
+
+	/**
+	 * Find all invitations current user received
+	 * @returns
+	 */
+	async findInviteOfCurrentUser() {
+		const user = RequestContext.currentUser();
+
+		const query = this.repository.createQueryBuilder(this.alias);
+		query.setFindOptions({
+			select: {
+				id: true,
+				teams: {
+					id: true,
+					name: true,
+				},
+			},
+			relations: {
+				teams: true,
+			},
+		});
+		query.where((qb: SelectQueryBuilder<Invite>) => {
+			qb.andWhere({
+				email: user.email,
+				status: InviteStatusEnum.INVITED,
+			});
+			qb.andWhere([
+				{
+					expireDate: MoreThanOrEqual(new Date()),
+				},
+				{
+					expireDate: IsNull(),
+				},
+			]);
+		});
+
+		const [items, total] = await query.getManyAndCount();
+
+		return {
+			items,
+			total,
+		};
+	}
+
+	async acceptMyInvitation(
+		body: AcceptMyInviteDTO,
+		origin: string,
+		languageCode: LanguagesEnum
+	){
+		const user = RequestContext.currentUser();
+		const query = this.repository.createQueryBuilder(this.alias);
+
+		query.innerJoin(`${query.alias}.teams`, 'teams');
+		query.setFindOptions({
+			select: {
+				id: true,
+				code: true,
+				token: true,
+				email: true,
+				teams: {
+					id: true,
+					name: true,
+				},
+			},
+			relations: {
+				teams: true,
+			},
+		});
+		query.where((qb: SelectQueryBuilder<Invite>) => {
+			qb.andWhere({
+				email: user.email,
+				status: InviteStatusEnum.INVITED,
+			});
+			qb.andWhere([
+				{
+					expireDate: MoreThanOrEqual(new Date()),
+				},
+				{
+					expireDate: IsNull(),
+				},
+			]);
+		});
+		query.andWhere((qb: SelectQueryBuilder<Invite>) => {
+			const subQuery = qb.subQuery();
+			subQuery.select('"invite_organization_team"."organizationTeamId"').from('invite_organization_team', 'invite_organization_team');
+			return (`"invite_teams"."organizationTeamId" = '${body.organizationTeamId}'`);
+		});
+
+		const invitation = await query.getOne();
+
+		if(!invitation){
+			throw new NotFoundException('You do not have any invitation.');
+		}
+
+		if(body.accept){
+			return await this.commandBus.execute(
+				new InviteAcceptCommand(
+					{ code: invitation.code, token: invitation.token, email: invitation.email, user, originalUrl: origin },
+					languageCode
+				)
+			);
+		}
+
+		await this.repository.update(invitation.id, {
+			status: InviteStatusEnum.EXPIRED // TODO: REJECTED
+		})
 	}
 }
