@@ -1,23 +1,14 @@
-import { ApiPropertyOptional, IntersectionType, PartialType } from "@nestjs/swagger";
-import { IsArray, IsBoolean, IsOptional, IsString, IsUUID } from "class-validator";
-import { IImageAsset, IOrganizationTeam } from "@gauzy/contracts";
+import { ApiPropertyOptional, IntersectionType, PartialType, PickType } from "@nestjs/swagger";
+import { IsArray, IsBoolean, IsOptional } from "class-validator";
+import { IOrganizationTeam } from "@gauzy/contracts";
 import { TenantOrganizationBaseDTO } from "./../../core/dto";
 import { RelationalTagDTO } from "./../../tags/dto";
+import { OrganizationTeam } from "./../organization-team.entity";
 
 export class OrganizationTeamDTO extends IntersectionType(
-    TenantOrganizationBaseDTO,
-    PartialType(RelationalTagDTO),
+    IntersectionType(TenantOrganizationBaseDTO, PartialType(RelationalTagDTO)),
+    PickType(OrganizationTeam, ['logo', 'prefix', 'imageId'])
 ) implements Omit<IOrganizationTeam, 'name'> {
-
-    @ApiPropertyOptional({ type: () => String })
-    @IsOptional()
-    @IsString()
-    readonly logo: string;
-
-    @ApiPropertyOptional({ type: () => String })
-    @IsOptional()
-    @IsString()
-    readonly prefix?: string;
 
     /**
      * Team type should be boolean true/false
@@ -36,9 +27,4 @@ export class OrganizationTeamDTO extends IntersectionType(
     @IsOptional()
     @IsArray()
     readonly managerIds?: string[] = [];
-
-    @ApiPropertyOptional({ type: () => String })
-    @IsOptional()
-    @IsUUID()
-    readonly imageId?: IImageAsset['id'];
 }

@@ -24,7 +24,7 @@ import {
 	IUser
 } from '@gauzy/contracts';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsBoolean, IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import { IsBoolean, IsNotEmpty, IsOptional, IsString, IsUUID } from 'class-validator';
 import {
 	EquipmentSharing,
 	Goal,
@@ -62,6 +62,7 @@ export class OrganizationTeam extends TenantOrganizationBaseEntity
 	 */
 	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()
+	@IsString()
 	@Column({ nullable: true })
 	prefix?: string;
 
@@ -110,7 +111,9 @@ export class OrganizationTeam extends TenantOrganizationBaseEntity
 	@JoinColumn()
 	image?: IImageAsset;
 
-	@ApiProperty({ type: () => String })
+	@ApiPropertyOptional({ type: () => String })
+	@IsOptional()
+	@IsUUID()
 	@RelationId((it: OrganizationTeam) => it.image)
 	@Index()
 	@Column({ nullable: true })

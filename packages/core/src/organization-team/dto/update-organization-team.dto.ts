@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
-import { IsNotEmpty, IsOptional, IsString } from "class-validator";
+import { IsNotEmpty, IsOptional, IsString, IsUUID } from "class-validator";
 import { IOrganizationTeamUpdateInput } from "@gauzy/contracts";
 import { OrganizationTeamDTO } from "./organization-team.dto";
 import { IsTeamAlreadyExist } from "./../../shared/validators";
@@ -11,10 +11,10 @@ export class UpdateOrganizationTeamDTO extends OrganizationTeamDTO implements IO
 
     @ApiProperty({ type: () => String, required: true })
     @IsNotEmpty()
-    @IsString()
+    @IsUUID()
     readonly id: string;
 
-    @ApiPropertyOptional({ type: () => String, required: false })
+    @ApiPropertyOptional({ type: () => String })
     @IsOptional()
     @IsString()
     @IsTeamAlreadyExist()
