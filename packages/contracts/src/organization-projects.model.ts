@@ -13,8 +13,9 @@ import { IPayment } from './payment.model';
 import { IBasePerTenantAndOrganizationEntityModel } from './base-entity.model';
 import { CurrenciesEnum } from './currency.model';
 import { ITimeLog } from './timesheet.model';
+import { IRelationalImageAsset } from './image-asset.model';
 
-export interface IOrganizationProject extends IBaseEntityWithMembers {
+export interface IOrganizationProject extends IBaseEntityWithMembers, IRelationalImageAsset {
 	name: string;
 	organizationContact?: IOrganizationContact;
 	organizationContactId?: IOrganizationContact['id'];
@@ -68,7 +69,7 @@ export interface IOrganizationProjectsFindInput extends IBasePerTenantAndOrganiz
 	billingFlat?: boolean;
 }
 
-export interface IOrganizationProjectsCreateInput extends IBasePerTenantAndOrganizationEntityModel {
+export interface IOrganizationProjectsCreateInput extends IBasePerTenantAndOrganizationEntityModel, IRelationalImageAsset {
 	name?: string;
 	organizationContact?: IOrganizationContact;
 	organizationContactId?: IOrganizationContact['id'];

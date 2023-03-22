@@ -19,7 +19,10 @@ export class OrganizationContactSubscriber implements EntitySubscriberInterface<
      */
     afterLoad(entity: OrganizationContact, event?: LoadEvent<OrganizationContact>): void | Promise<any> {
         try {
-            if (!entity.imageUrl && entity.name)  {
+            if (!!entity['image']) {
+                entity.imageUrl = entity.image.fullUrl || entity.imageUrl;
+            }
+            if (!entity.imageUrl && entity.name) {
                 entity.imageUrl = getDummyImage(330, 300, (entity.name).charAt(0).toUpperCase());
             }
         } catch (error) {
@@ -47,5 +50,5 @@ export class OrganizationContactSubscriber implements EntitySubscriberInterface<
      *
      * @param event
      */
-    beforeUpdate(event: UpdateEvent<OrganizationContact>): void | Promise<any> {}
+    beforeUpdate(event: UpdateEvent<OrganizationContact>): void | Promise<any> { }
 }

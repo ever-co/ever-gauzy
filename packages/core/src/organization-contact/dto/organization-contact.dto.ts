@@ -3,7 +3,7 @@ import {
 	ContactType,
 	OrganizationContactBudgetTypeEnum
 } from "@gauzy/contracts";
-import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
+import { ApiProperty, ApiPropertyOptional, IntersectionType, PickType } from "@nestjs/swagger";
 import { Transform, TransformFnParams } from "class-transformer";
 import {
 	IsEmail,
@@ -14,9 +14,13 @@ import {
 	IsString,
 	MaxLength
 } from "class-validator";
+import { OrganizationContact } from "./../organization-contact.entity";
 import { TenantOrganizationBaseDTO } from "./../../core/dto";
 
-export class OrganizationContactDTO extends TenantOrganizationBaseDTO {
+export class OrganizationContactDTO extends IntersectionType(
+	PickType(OrganizationContact, ['imageId']),
+	TenantOrganizationBaseDTO
+) {
 
 	@ApiProperty({ type: () => String })
 	@IsNotEmpty()

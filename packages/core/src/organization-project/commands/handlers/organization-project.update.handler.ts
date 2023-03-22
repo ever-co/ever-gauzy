@@ -10,7 +10,7 @@ export class OrganizationProjectUpdateHandler
 
 	constructor(
 		private readonly _organizationProjectService: OrganizationProjectService
-	) {}
+	) { }
 
 	public async execute(
 		command: OrganizationProjectUpdateCommand
@@ -21,8 +21,8 @@ export class OrganizationProjectUpdateHandler
 			//We are using create here because create calls the method save()
 			//We need save() to save ManyToMany relations
 			await this._organizationProjectService.create({
-				id,
-				...input
+				...input,
+				id
 			});
 			return await this._organizationProjectService.findOneByIdString(id);
 		} catch (error) {
