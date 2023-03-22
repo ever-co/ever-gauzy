@@ -14,8 +14,7 @@ import { DeleteConfirmationComponent } from '../../user/forms/delete-confirmatio
 })
 export class ImageAssetComponent
 	extends TranslationBaseComponent
-	implements OnInit
-{
+	implements OnInit {
 	@Input()
 	imageAsset: IImageAsset;
 
@@ -27,7 +26,7 @@ export class ImageAssetComponent
 	@Output() imageClicked = new EventEmitter<any>();
 	@Output() assetDeleted = new EventEmitter<any>();
 
-	ngOnInit(): void {}
+	ngOnInit(): void { }
 
 	constructor(
 		private imageAssetService: ImageAssetService,
@@ -42,7 +41,7 @@ export class ImageAssetComponent
 		if (!this.imageAsset || !this.selectedImages) return;
 
 		return this.selectedImages.find(
-			(image) => image.url == this.imageAsset.url
+			(image) => image.fullUrl == this.imageAsset.fullUrl
 		);
 	}
 

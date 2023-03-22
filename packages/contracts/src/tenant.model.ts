@@ -1,3 +1,4 @@
+import { IRelationalImageAsset } from './image-asset.model';
 import { IImportRecord } from 'import-export.model';
 import { IFeatureOrganization } from './feature.model';
 import {
@@ -9,7 +10,7 @@ import {
 import { IOrganization } from './organization.model';
 import { IRolePermission } from './role-permission.model';
 
-export interface ITenant {
+export interface ITenant extends IRelationalImageAsset {
 	id?: string;
 	name?: string;
 	logo?: string;
@@ -29,7 +30,7 @@ export interface ITenantCreateInput extends ITenantUpdateInput {
 	userSourceId?: string;
 }
 
-export interface ITenantUpdateInput {
+export interface ITenantUpdateInput extends IRelationalImageAsset {
 	name: string;
 	logo?: string;
 }

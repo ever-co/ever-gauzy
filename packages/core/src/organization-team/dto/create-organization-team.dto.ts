@@ -9,7 +9,7 @@ import { OrganizationTeamDTO } from "./organization-team.dto";
  */
 export class CreateOrganizationTeamDTO extends OrganizationTeamDTO implements IOrganizationTeamCreateInput {
 
-    @ApiProperty({ type: () => String })
+    @ApiProperty({ type: () => String, required: true })
     @IsNotEmpty()
     @IsString()
     @IsTeamAlreadyExist()
