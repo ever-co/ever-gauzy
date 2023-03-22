@@ -1,6 +1,6 @@
-import { ITenant } from "@gauzy/contracts";
+import { IImageAsset, ITenant } from "@gauzy/contracts";
 import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
-import { IsNotEmpty, IsString, IsOptional } from "class-validator";
+import { IsNotEmpty, IsString, IsOptional, IsUUID } from "class-validator";
 
 export class TenantDTO implements ITenant {
 
@@ -12,4 +12,9 @@ export class TenantDTO implements ITenant {
     @IsOptional()
     @IsString()
     readonly logo: string;
+
+    @ApiPropertyOptional({ type: () => String })
+    @IsOptional()
+    @IsUUID()
+    readonly imageId: IImageAsset['id'];
 }

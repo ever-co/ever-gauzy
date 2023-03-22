@@ -87,7 +87,7 @@ export class InventoryItemViewComponent
 							return (
 								translation.languageCode == languageCode ||
 								translation.languageCode ==
-									LanguagesEnum.ENGLISH
+								LanguagesEnum.ENGLISH
 							);
 						}
 					);
@@ -108,8 +108,8 @@ export class InventoryItemViewComponent
 	onGalleryItemClick(galleryItem: IImageAsset) {
 		const mappedImages = this.inventoryItem.gallery.map((image) => {
 			return {
-				thumbUrl: image.url,
-				fullUrl: image.url
+				thumbUrl: image.fullUrl,
+				fullUrl: image.fullUrl
 			};
 		});
 
@@ -119,7 +119,7 @@ export class InventoryItemViewComponent
 			context: {
 				items: mappedImages,
 				item: mappedImages.find(
-					(image) => image.thumbUrl == galleryItem.url
+					(image) => image.thumbUrl == galleryItem.fullUrl
 				)
 			},
 			dialogClass: 'fullscreen'
@@ -147,11 +147,11 @@ export class InventoryItemViewComponent
 					valuePrepareFunction: (_, variant) => {
 						return variant.options && variant.options.length > 0
 							? variant.options
-									.map((option) => option.name)
-									.join(', ')
+								.map((option) => option.name)
+								.join(', ')
 							: this.getTranslation(
-									'INVENTORY_PAGE.NO_OPTIONS_LABEL'
-							  );
+								'INVENTORY_PAGE.NO_OPTIONS_LABEL'
+							);
 					},
 					filter: false
 				},

@@ -10,13 +10,14 @@ import { IPayment } from './payment.model';
 import { IOrganization } from './organization.model';
 import { IInvite } from './invite.model';
 import { ICandidate } from 'candidate.model';
+import { IRelationalImageAsset } from './image-asset.model';
 
 export interface IRelationalUser {
 	user?: IUser;
 	userId?: IUser['id'];
 }
 
-export interface IUser extends IBasePerTenantEntityModel {
+export interface IUser extends IBasePerTenantEntityModel, IRelationalImageAsset {
 	thirdPartyId?: string;
 	name?: string;
 	firstName?: string;
@@ -84,7 +85,7 @@ export interface IVerificationTokenPayload extends IUserEmailInput {
 	id: string;
 }
 
-export interface IUserInviteCodeConfirmationInput extends IUserEmailInput, IUserCodeInput {}
+export interface IUserInviteCodeConfirmationInput extends IUserEmailInput, IUserCodeInput { }
 
 export interface IUserEmailInput {
 	email: string;
@@ -102,14 +103,14 @@ export interface IUserCodeInput {
 	code: number;
 }
 
-export interface IUserLoginInput extends IUserEmailInput, IUserPasswordInput {}
+export interface IUserLoginInput extends IUserEmailInput, IUserPasswordInput { }
 
 export interface IAuthResponse {
 	user: IUser;
 	token: string;
 	refresh_token?: string;
 }
-export interface IUserCreateInput {
+export interface IUserCreateInput extends IRelationalImageAsset {
 	firstName?: string;
 	lastName?: string;
 	email?: string;
