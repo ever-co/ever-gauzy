@@ -7,9 +7,11 @@ import {
 	OneToMany,
 	JoinTable,
 	RelationId,
-	OneToOne
+	OneToOne,
+	ManyToOne
 } from 'typeorm';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { IsOptional, IsUUID } from 'class-validator';
 import {
 	IOrganizationContact,
 	ContactOrganizationInviteStatus,
@@ -23,12 +25,14 @@ import {
 	OrganizationContactBudgetTypeEnum,
 	IExpense,
 	ITimeLog,
-	IIncome
+	IIncome,
+	IImageAsset
 } from '@gauzy/contracts';
 import {
 	Contact,
 	Employee,
 	Expense,
+	ImageAsset,
 	Income,
 	Invoice,
 	OrganizationProject,
@@ -40,8 +44,7 @@ import {
 } from '../core/entities/internal';
 
 @Entity('organization_contact')
-export class OrganizationContact
-	extends TenantOrganizationBaseEntity
+export class OrganizationContact extends TenantOrganizationBaseEntity
 	implements IOrganizationContact {
 
 	@ApiProperty({ type: () => String })
@@ -103,10 +106,10 @@ export class OrganizationContact
 	createdBy?: string;
 
 	/*
-    |--------------------------------------------------------------------------
-    | @ManyToOne
-    |--------------------------------------------------------------------------
-    */
+	|--------------------------------------------------------------------------
+	| @ManyToOne
+	|--------------------------------------------------------------------------
+	*/
 
 	/**
 	 * Contact
@@ -119,17 +122,34 @@ export class OrganizationContact
 	@JoinColumn()
 	contact?: IContact;
 
-	@ApiProperty({ type: () => String, readOnly: true })
+	@ApiProperty({ type: () => String })
 	@RelationId((it: OrganizationContact) => it.contact)
 	@Index()
 	@Column({ nullable: true })
-	readonly contactId?: string;
+	contactId?: IContact['id'];
+
+	/**
+	 * ImageAsset
+	 */
+	@ManyToOne(() => ImageAsset, {
+		onDelete: 'SET NULL'
+	})
+	@JoinColumn()
+	image?: IImageAsset;
+
+	@ApiPropertyOptional({ type: () => String })
+	@IsOptional()
+	@IsUUID()
+	@RelationId((it: OrganizationContact) => it.image)
+	@Index()
+	@Column({ nullable: true })
+	imageId?: IImageAsset['id'];
 
 	/*
-    |--------------------------------------------------------------------------
-    | @OneToMany
-    |--------------------------------------------------------------------------
-    */
+	|--------------------------------------------------------------------------
+	| @OneToMany
+	|--------------------------------------------------------------------------
+	*/
 	// Organization Projects
 	@ApiPropertyOptional({ type: () => OrganizationProject, isArray: true })
 	@OneToMany(() => OrganizationProject, (it) => it.organizationContact, { cascade: true })
@@ -181,10 +201,10 @@ export class OrganizationContact
 	timeLogs?: ITimeLog[];
 
 	/*
-    |--------------------------------------------------------------------------
-    | @ManyToMany
-    |--------------------------------------------------------------------------
-    */
+	|--------------------------------------------------------------------------
+	| @ManyToMany
+	|--------------------------------------------------------------------------
+	*/
 	// Organization Contact Tags
 	@ManyToMany(() => Tag, (tag) => tag.organizationContacts, {
 		onUpdate: 'CASCADE',
@@ -196,10 +216,10 @@ export class OrganizationContact
 	tags: ITag[];
 
 	// Organization Contact Employees
-	@ManyToMany(() => Employee, (it) => it.organizationContacts,  {
-        onUpdate: 'CASCADE',
+	@ManyToMany(() => Employee, (it) => it.organizationContacts, {
+		onUpdate: 'CASCADE',
 		onDelete: 'CASCADE'
-    })
+	})
 	@JoinTable({
 		name: 'organization_contact_employee'
 	})

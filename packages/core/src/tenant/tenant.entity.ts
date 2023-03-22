@@ -1,13 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import {
-	BaseEntity,
-	FeatureOrganization,
-	ImageAsset,
-	ImportRecord,
-	Organization,
-	RolePermission
-} from '../core/entities/internal';
 import { Entity, Column, Index, OneToMany, JoinColumn, ManyToOne, RelationId } from 'typeorm';
+import { IsOptional, IsUUID } from 'class-validator';
 import {
 	ITenant,
 	IOrganization,
@@ -16,6 +9,14 @@ import {
 	IImportRecord,
 	IImageAsset
 } from '@gauzy/contracts';
+import {
+	BaseEntity,
+	FeatureOrganization,
+	ImageAsset,
+	ImportRecord,
+	Organization,
+	RolePermission
+} from '../core/entities/internal';
 
 @Entity('tenant')
 export class Tenant extends BaseEntity implements ITenant {
@@ -44,7 +45,9 @@ export class Tenant extends BaseEntity implements ITenant {
 	@JoinColumn()
 	image?: ImageAsset;
 
-	@ApiProperty({ type: () => String })
+	@ApiPropertyOptional({ type: () => String })
+	@IsOptional()
+	@IsUUID()
 	@RelationId((it: Tenant) => it.image)
 	@Index()
 	@Column({ nullable: true })

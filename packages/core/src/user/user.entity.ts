@@ -17,6 +17,7 @@ import {
 } from '@gauzy/contracts';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Exclude } from 'class-transformer';
+import { IsOptional, IsUUID } from 'class-validator';
 import {
 	Column,
 	Entity,
@@ -162,7 +163,9 @@ export class User extends TenantBaseEntity implements IUser {
 	@JoinColumn()
 	image?: IImageAsset;
 
-	@ApiProperty({ type: () => String })
+	@ApiPropertyOptional({ type: () => String })
+	@IsOptional()
+	@IsUUID()
 	@RelationId((it: User) => it.image)
 	@Index()
 	@Column({ nullable: true })
