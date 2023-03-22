@@ -37,14 +37,8 @@ export class ImageAssetService extends TenantAwareCrudService<ImageAsset> {
 			relations: ['productGallery', 'productFeaturedImage']
 		});
 
-		if (
-			result &&
-			(result.productGallery.length || result.productFeaturedImage.length)
-		) {
-			throw new HttpException(
-				'Image is under use',
-				HttpStatus.BAD_REQUEST
-			);
+		if (result && (result.productGallery.length || result.productFeaturedImage.length)) {
+			throw new HttpException('Image is under use', HttpStatus.BAD_REQUEST);
 		}
 
 		return this.imageAssetRepository.remove(result);

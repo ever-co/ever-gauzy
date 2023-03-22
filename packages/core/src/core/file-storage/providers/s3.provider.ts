@@ -18,7 +18,6 @@ export interface IS3Config {
 }
 
 export class S3Provider extends Provider<S3Provider> {
-
 	static instance: S3Provider;
 	name = FileStorageProviderEnum.S3;
 	config: IS3Config;
@@ -74,7 +73,7 @@ export class S3Provider extends Provider<S3Provider> {
 	 *
 	 * @param key
 	 * @returns
-	*/
+	 */
 	url(key: string) {
 		if (!key) {
 			return null;
@@ -114,7 +113,7 @@ export class S3Provider extends Provider<S3Provider> {
 				// A function that determines the name of the uploaded file.
 				let fileName: string;
 				if (filename) {
-					fileName = (typeof filename === 'string') ? filename : filename(file, extension);
+					fileName = typeof filename === 'string' ? filename : filename(file, extension);
 				} else {
 					fileName = `${prefix}-${moment().unix()}-${parseInt('' + Math.random() * 1000, 10)}.${extension}`;
 				}

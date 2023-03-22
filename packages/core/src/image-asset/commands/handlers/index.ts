@@ -1,5 +1,3 @@
-import { ImageAssetCreateHandler } from "./image-asset.create.handler";
+import { ImageAssetCreateHandler } from './image-asset.create.handler';
 
-export const CommandHandlers = [
-	ImageAssetCreateHandler
-];
+export const CommandHandlers = [ImageAssetCreateHandler];

@@ -11,25 +11,14 @@ import { ImageAssetService } from './image-asset.service';
 
 @Module({
 	imports: [
-		RouterModule.forRoutes([
-			{ path: '/image-assets', module: ImageAssetModule }
-		]),
-		TypeOrmModule.forFeature([
-			ImageAsset
-		]),
+		RouterModule.forRoutes([{ path: '/image-assets', module: ImageAssetModule }]),
+		TypeOrmModule.forFeature([ImageAsset]),
 		CqrsModule,
 		TenantModule,
 		UserModule
 	],
-	controllers: [
-		ImageAssetController
-	],
-	providers: [
-		ImageAssetService,
-		...CommandHandlers
-	],
-	exports: [
-		ImageAssetService
-	]
+	controllers: [ImageAssetController],
+	providers: [ImageAssetService, ...CommandHandlers],
+	exports: [ImageAssetService]
 })
-export class ImageAssetModule { }
+export class ImageAssetModule {}

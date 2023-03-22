@@ -1,9 +1,4 @@
-import {
-	Injectable,
-	BadRequestException,
-	UnauthorizedException,
-	ForbiddenException
-} from '@nestjs/common';
+import { Injectable, BadRequestException, UnauthorizedException, ForbiddenException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, In, ILike, SelectQueryBuilder, DeleteResult, IsNull } from 'typeorm';
 import {
@@ -28,7 +23,6 @@ import { OrganizationTeamEmployeeService } from '../organization-team-employee/o
 
 @Injectable()
 export class OrganizationTeamService extends TenantAwareCrudService<OrganizationTeam> {
-
 	constructor(
 		@InjectRepository(OrganizationTeam) protected readonly organizationTeamRepository: Repository<OrganizationTeam>,
 		@InjectRepository(Employee) private readonly employeeRepository: Repository<Employee>,
@@ -39,9 +33,7 @@ export class OrganizationTeamService extends TenantAwareCrudService<Organization
 		super(organizationTeamRepository);
 	}
 
-	async create(
-		entity: IOrganizationTeamCreateInput
-	): Promise<IOrganizationTeam> {
+	async create(entity: IOrganizationTeamCreateInput): Promise<IOrganizationTeam> {
 		const { tags = [], memberIds = [], managerIds = [] } = entity;
 		const { name, organizationId, prefix, profile_link, logo, imageId } = entity;
 
@@ -61,7 +53,7 @@ export class OrganizationTeamService extends TenantAwareCrudService<Organization
 				if (!managerIds.includes(employeeId)) {
 					managerIds.push(employeeId);
 				}
-			} catch (error) { }
+			} catch (error) {}
 
 			const employees = await this.employeeRepository.find({
 				where: {
@@ -84,12 +76,14 @@ export class OrganizationTeamService extends TenantAwareCrudService<Organization
 			const members: OrganizationTeamEmployee[] = [];
 			employees.forEach((employee: IEmployee) => {
 				const employeeId = employee.id;
-				members.push(new OrganizationTeamEmployee({
-					employeeId,
-					organizationId,
-					tenantId,
-					role: managerIds.includes(employeeId) ? manager : null
-				}));
+				members.push(
+					new OrganizationTeamEmployee({
+						employeeId,
+						organizationId,
+						tenantId,
+						role: managerIds.includes(employeeId) ? manager : null
+					})
+				);
 			});
 			return await super.create({
 				tags,
@@ -108,11 +102,7 @@ export class OrganizationTeamService extends TenantAwareCrudService<Organization
 		}
 	}
 
-	async update(
-		id: IOrganizationTeam['id'],
-		entity: IOrganizationTeamUpdateInput
-	): Promise<OrganizationTeam> {
-
+	async update(id: IOrganizationTeam['id'], entity: IOrganizationTeamUpdateInput): Promise<OrganizationTeam> {
 		const tenantId = RequestContext.currentTenantId();
 		const { memberIds, managerIds } = entity;
 		const { name, prefix, organizationId, tags, logo, imageId } = entity;
@@ -127,9 +117,7 @@ export class OrganizationTeamService extends TenantAwareCrudService<Organization
 		/**
 		 * If employee has manager of the team, he/she should be able to update basic things for team
 		 */
-		if (!RequestContext.hasPermission(
-			PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
-		)) {
+		if (!RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE)) {
 			try {
 				const employeeId = RequestContext.currentEmployeeId();
 				if (employeeId) {
@@ -197,9 +185,7 @@ export class OrganizationTeamService extends TenantAwareCrudService<Organization
 	 * @param params
 	 * @returns
 	 */
-	public async findMyTeams(
-		options: PaginationParams<OrganizationTeam>
-	): Promise<IPagination<OrganizationTeam>> {
+	public async findMyTeams(options: PaginationParams<OrganizationTeam>): Promise<IPagination<OrganizationTeam>> {
 		try {
 			return await this.findAll(options);
 		} catch (error) {
@@ -213,9 +199,7 @@ export class OrganizationTeamService extends TenantAwareCrudService<Organization
 	 * @param filter
 	 * @returns
 	 */
-	public async pagination(
-		options?: PaginationParams<OrganizationTeam>
-	): Promise<IPagination<OrganizationTeam>> {
+	public async pagination(options?: PaginationParams<OrganizationTeam>): Promise<IPagination<OrganizationTeam>> {
 		if ('where' in options) {
 			const { where } = options;
 			if ('name' in where) {
@@ -224,7 +208,7 @@ export class OrganizationTeamService extends TenantAwareCrudService<Organization
 			if ('tags' in where) {
 				options['where']['tags'] = {
 					id: In(where.tags as [])
-				}
+				};
 			}
 		}
 		return await this.findAll(options);
@@ -236,23 +220,24 @@ export class OrganizationTeamService extends TenantAwareCrudService<Organization
 	 * @param options
 	 * @returns
 	 */
-	public async findAll(
-		options?: PaginationParams<OrganizationTeam>
-	): Promise<IPagination<OrganizationTeam>> {
+	public async findAll(options?: PaginationParams<OrganizationTeam>): Promise<IPagination<OrganizationTeam>> {
 		const tenantId = RequestContext.currentTenantId();
 		const employeeId = RequestContext.currentEmployeeId();
 
 		const members = options.where.members;
-		if ('members' in options.where) { delete options.where['members']; }
+		if ('members' in options.where) {
+			delete options.where['members'];
+		}
 
 		const query = this.repository.createQueryBuilder(this.alias);
 		// If employee has login and don't have permission to change employee
-		if (employeeId && !RequestContext.hasPermission(
-			PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
-		)) {
+		if (employeeId && !RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE)) {
 			// Sub query to get only employee assigned teams
 			query.andWhere((cb: SelectQueryBuilder<OrganizationTeam>) => {
-				const subQuery = cb.subQuery().select('"team"."organizationTeamId"').from('organization_team_employee', 'team');
+				const subQuery = cb
+					.subQuery()
+					.select('"team"."organizationTeamId"')
+					.from('organization_team_employee', 'team');
 				subQuery.andWhere(`"${query.alias}"."tenantId" = :tenantId`, { tenantId });
 
 				if (isNotEmpty(options) && isNotEmpty(options.where)) {
@@ -267,7 +252,10 @@ export class OrganizationTeamService extends TenantAwareCrudService<Organization
 			if (isNotEmpty(members) && isNotEmpty(members['employeeId'])) {
 				// Sub query to get only employee assigned teams
 				query.andWhere((cb: SelectQueryBuilder<OrganizationTeam>) => {
-					const subQuery = cb.subQuery().select('"team"."organizationTeamId"').from('organization_team_employee', 'team');
+					const subQuery = cb
+						.subQuery()
+						.select('"team"."organizationTeamId"')
+						.from('organization_team_employee', 'team');
 					subQuery.andWhere(`"${query.alias}"."tenantId" = :tenantId`, { tenantId });
 
 					if (isNotEmpty(options) && isNotEmpty(options.where)) {
@@ -283,22 +271,14 @@ export class OrganizationTeamService extends TenantAwareCrudService<Organization
 		}
 		if (isNotEmpty(options)) {
 			query.setFindOptions({
-				skip: options.skip ? (options.take * (options.skip - 1)) : 0,
-				take: options.take ? (options.take) : 10
+				skip: options.skip ? options.take * (options.skip - 1) : 0,
+				take: options.take ? options.take : 10
 			});
 			query.setFindOptions({
-				...(
-					(options.select) ? { select: options.select } : {}
-				),
-				...(
-					(options.relations) ? { relations: options.relations } : {}
-				),
-				...(
-					(options.where) ? { where: options.where } : {}
-				),
-				...(
-					(options.order) ? { order: options.order } : {}
-				)
+				...(options.select ? { select: options.select } : {}),
+				...(options.relations ? { relations: options.relations } : {}),
+				...(options.where ? { where: options.where } : {}),
+				...(options.order ? { order: options.order } : {})
 			});
 		}
 		query.andWhere(`"${query.alias}"."tenantId" = :tenantId`, { tenantId });
@@ -323,16 +303,16 @@ export class OrganizationTeamService extends TenantAwareCrudService<Organization
 				where: {
 					tenantId: RequestContext.currentTenantId(),
 					organizationId,
-					...(
-						(!RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE)) ? {
-							members: {
-								employeeId: RequestContext.currentEmployeeId(),
-								role: {
-									name: RolesEnum.MANAGER
+					...(!RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE)
+						? {
+								members: {
+									employeeId: RequestContext.currentEmployeeId(),
+									role: {
+										name: RolesEnum.MANAGER
+									}
 								}
-							}
-						} : {}
-					)
+						  }
+						: {})
 				}
 			});
 			return await this.repository.remove(team);

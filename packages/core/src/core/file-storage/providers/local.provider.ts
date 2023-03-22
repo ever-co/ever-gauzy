@@ -9,12 +9,14 @@ import { Provider } from './provider';
 const config = getConfig();
 
 export class LocalProvider extends Provider<LocalProvider> {
-
 	static instance: LocalProvider;
 	name = FileStorageProviderEnum.LOCAL;
 
 	config = {
-		rootPath: (environment.isElectron ? resolve(environment.gauzyUserPath, 'public') : config.assetOptions.assetPublicPath) || resolve(process.cwd(), 'apps', 'api', 'public'),
+		rootPath:
+			(environment.isElectron
+				? resolve(environment.gauzyUserPath, 'public')
+				: config.assetOptions.assetPublicPath) || resolve(process.cwd(), 'apps', 'api', 'public'),
 		baseUrl: environment.baseUrl
 	};
 
@@ -51,11 +53,7 @@ export class LocalProvider extends Provider<LocalProvider> {
 		return filePath ? join(this.config.rootPath, filePath) : null;
 	}
 
-	handler({
-		dest,
-		filename,
-		prefix = 'file'
-	}: FileStorageOption): multer.StorageEngine {
+	handler({ dest, filename, prefix = 'file' }: FileStorageOption): multer.StorageEngine {
 		return multer.diskStorage({
 			destination: (_req, file, callback) => {
 				// A string or function that determines the destination path for uploaded

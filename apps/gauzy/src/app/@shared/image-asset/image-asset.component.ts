@@ -15,9 +15,7 @@ import { TranslationBaseComponent } from '../language-base/translation-base.comp
 	templateUrl: './image-asset.component.html',
 	styleUrls: ['./image-asset.component.scss']
 })
-export class ImageAssetComponent
-	extends TranslationBaseComponent
-	implements OnInit {
+export class ImageAssetComponent extends TranslationBaseComponent implements OnInit {
 	form: FormGroup;
 	@Input() imageAsset: IImageAsset;
 
@@ -53,9 +51,7 @@ export class ImageAssetComponent
 		this.imageAssetService
 			.updateImageAsset(request)
 			.then((res) => {
-				this.toastrService.success(
-					'INVENTORY_PAGE.IMAGE_ASSET_UPDATED'
-				);
+				this.toastrService.success('INVENTORY_PAGE.IMAGE_ASSET_UPDATED');
 
 				this.dialogRef.close(request);
 			})

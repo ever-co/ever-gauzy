@@ -37,11 +37,7 @@ import { UploadImageAsset } from './dto';
 @Permissions(PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.MEDIA_GALLERY_ADD)
 @Controller()
 export class ImageAssetController extends CrudController<ImageAsset> {
-
-	constructor(
-		private readonly _commandBus: CommandBus,
-		private readonly _imageAssetService: ImageAssetService
-	) {
+	constructor(private readonly _commandBus: CommandBus, private readonly _imageAssetService: ImageAssetService) {
 		super(_imageAssetService);
 	}
 
@@ -61,14 +57,11 @@ export class ImageAssetController extends CrudController<ImageAsset> {
 				return new FileStorage().storage({
 					dest: () => path.join('uploads', folder, RequestContext.currentTenantId() || uuid())
 				});
-			},
+			}
 		})
 	)
 	@UsePipes(new ValidationPipe({ whitelist: true }))
-	async upload(
-		@UploadedFileStorage() file,
-		@Body() entity: UploadImageAsset
-	) {
+	async upload(@UploadedFileStorage() file, @Body() entity: UploadImageAsset) {
 		const provider = new FileStorage().getProvider();
 		return await this._commandBus.execute(
 			new ImageAssetCreateCommand({
@@ -94,9 +87,7 @@ export class ImageAssetController extends CrudController<ImageAsset> {
 	})
 	@Permissions(PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.MEDIA_GALLERY_VIEW)
 	@Get('count')
-	async getCount(
-		@Query() options: FindOptionsWhere<ImageAsset>
-	): Promise<number> {
+	async getCount(@Query() options: FindOptionsWhere<ImageAsset>): Promise<number> {
 		return await this._imageAssetService.countBy(options);
 	}
 
@@ -119,9 +110,7 @@ export class ImageAssetController extends CrudController<ImageAsset> {
 	@Permissions(PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.MEDIA_GALLERY_VIEW)
 	@Get('pagination')
 	@UsePipes(new ValidationPipe({ transform: true }))
-	async pagination(
-		@Query() params: PaginationParams<ImageAsset>
-	): Promise<IPagination<IImageAsset>> {
+	async pagination(@Query() params: PaginationParams<ImageAsset>): Promise<IPagination<IImageAsset>> {
 		return await this._imageAssetService.paginate(params);
 	}
 
@@ -134,9 +123,7 @@ export class ImageAssetController extends CrudController<ImageAsset> {
 	@Permissions(PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.MEDIA_GALLERY_VIEW)
 	@Get()
 	@UsePipes(new ValidationPipe())
-	async findAll(
-		@Query() params: PaginationParams<ImageAsset>
-	): Promise<IPagination<IImageAsset>> {
+	async findAll(@Query() params: PaginationParams<ImageAsset>): Promise<IPagination<IImageAsset>> {
 		return await this._imageAssetService.findAll(params);
 	}
 
@@ -149,9 +136,7 @@ export class ImageAssetController extends CrudController<ImageAsset> {
 	@HttpCode(HttpStatus.OK)
 	@Permissions(PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.MEDIA_GALLERY_VIEW)
 	@Get(':id')
-	async findById(
-		@Param('id', UUIDValidationPipe) id: IImageAsset['id']
-	): Promise<IImageAsset> {
+	async findById(@Param('id', UUIDValidationPipe) id: IImageAsset['id']): Promise<IImageAsset> {
 		return await this._imageAssetService.findOneByIdString(id);
 	}
 
@@ -163,9 +148,7 @@ export class ImageAssetController extends CrudController<ImageAsset> {
 	 */
 	@HttpCode(HttpStatus.CREATED)
 	@Post()
-	async create(
-		@Body() entity: ImageAsset
-	): Promise<IImageAsset> {
+	async create(@Body() entity: ImageAsset): Promise<IImageAsset> {
 		return await this._imageAssetService.create(entity);
 	}
 
@@ -178,9 +161,7 @@ export class ImageAssetController extends CrudController<ImageAsset> {
 	@HttpCode(HttpStatus.ACCEPTED)
 	@Permissions(PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.MEDIA_GALLERY_DELETE)
 	@Delete(':id')
-	async delete(
-		@Param('id', UUIDValidationPipe) id: IImageAsset['id']
-	): Promise<any> {
+	async delete(@Param('id', UUIDValidationPipe) id: IImageAsset['id']): Promise<any> {
 		return await this._imageAssetService.deleteAsset(id);
 	}
 }

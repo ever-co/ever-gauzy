@@ -13,7 +13,7 @@ import {
 	IOrganizationTeam,
 	ICandidate,
 	IEmail,
-	IImageAsset,
+	IImageAsset
 } from '@gauzy/contracts';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Exclude } from 'class-transformer';
@@ -45,7 +45,6 @@ import {
 
 @Entity('user')
 export class User extends TenantBaseEntity implements IUser {
-
 	@ApiPropertyOptional({ type: () => String })
 	@Index()
 	@Column({ nullable: true })
@@ -216,13 +215,9 @@ export class User extends TenantBaseEntity implements IUser {
 	 * UserOrganization
 	 */
 	@ApiProperty({ type: () => UserOrganization, isArray: true })
-	@OneToMany(
-		() => UserOrganization,
-		(userOrganization) => userOrganization.user,
-		{
-			cascade: true
-		}
-	)
+	@OneToMany(() => UserOrganization, (userOrganization) => userOrganization.user, {
+		cascade: true
+	})
 	@JoinColumn()
 	organizations?: IOrganization[];
 

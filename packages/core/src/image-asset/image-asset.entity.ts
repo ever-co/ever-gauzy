@@ -4,17 +4,10 @@ import { Exclude } from 'class-transformer';
 import { IsBoolean, IsDateString, IsNotEmpty, IsNumber, IsOptional, IsString } from 'class-validator';
 import { Column, Entity, ManyToMany, OneToMany } from 'typeorm';
 import { ColumnNumericTransformerPipe } from './../shared/pipes';
-import {
-	Product,
-	TenantOrganizationBaseEntity,
-	Equipment,
-	Warehouse
-} from './../core/entities/internal';
+import { Product, TenantOrganizationBaseEntity, Equipment, Warehouse } from './../core/entities/internal';
 
 @Entity('image_asset')
-export class ImageAsset extends TenantOrganizationBaseEntity
-	implements IImageAsset {
-
+export class ImageAsset extends TenantOrganizationBaseEntity implements IImageAsset {
 	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()
 	@IsString()
@@ -25,7 +18,7 @@ export class ImageAsset extends TenantOrganizationBaseEntity
 	@IsNotEmpty()
 	@IsString()
 	@Column()
-	url: string
+	url: string;
 
 	@ApiProperty({ type: () => String })
 	@IsString()
