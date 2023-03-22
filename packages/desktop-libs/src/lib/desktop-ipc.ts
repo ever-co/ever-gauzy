@@ -269,6 +269,14 @@ export function ipcMainHandler(
 		}
 	});
 
+	ipcMain.handle('TAKE_SCREEN_CAPTURE', async (event, { quitApp }) => {
+		try {
+			await timerHandler.makeScreenshot(null, knex, timeTrackerWindow, quitApp);
+		} catch (error) {
+			console.log('[TAKE_SCREEN_CAPTURE_ERROR]', error);
+		}
+	})
+
 	ipcMain.handle('UPDATE_SYNCED', async (event, arg: IntervalTO) => {
 		try {
 			const interval = new Interval(arg);
@@ -845,7 +853,8 @@ export function removeAllHandlers() {
 		'UPDATE_SYNCED_TIMER',
 		'UPDATE_SYNCED',
 		'DESKTOP_CAPTURER_GET_SOURCES',
-		'FINISH_SYNCED_TIMER'
+		'FINISH_SYNCED_TIMER',
+		'TAKE_SCREEN_CAPTURE'
 	];
 	channels.forEach((channel: string) => {
 		ipcMain.removeHandler(channel);
