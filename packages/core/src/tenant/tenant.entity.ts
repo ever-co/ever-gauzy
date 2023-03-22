@@ -20,7 +20,6 @@ import {
 
 @Entity('tenant')
 export class Tenant extends BaseEntity implements ITenant {
-
 	@ApiProperty({ type: () => String })
 	@Index()
 	@Column()

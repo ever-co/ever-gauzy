@@ -1,27 +1,14 @@
-import {
-	ContactOrganizationInviteStatus,
-	ContactType,
-	OrganizationContactBudgetTypeEnum
-} from "@gauzy/contracts";
-import { ApiProperty, ApiPropertyOptional, IntersectionType, PickType } from "@nestjs/swagger";
-import { Transform, TransformFnParams } from "class-transformer";
-import {
-	IsEmail,
-	IsEnum,
-	IsNotEmpty,
-	IsNumber,
-	IsOptional,
-	IsString,
-	MaxLength
-} from "class-validator";
-import { OrganizationContact } from "./../organization-contact.entity";
-import { TenantOrganizationBaseDTO } from "./../../core/dto";
+import { ContactOrganizationInviteStatus, ContactType, OrganizationContactBudgetTypeEnum } from '@gauzy/contracts';
+import { ApiProperty, ApiPropertyOptional, IntersectionType, PickType } from '@nestjs/swagger';
+import { Transform, TransformFnParams } from 'class-transformer';
+import { IsEmail, IsEnum, IsNotEmpty, IsNumber, IsOptional, IsString, MaxLength } from 'class-validator';
+import { OrganizationContact } from './../organization-contact.entity';
+import { TenantOrganizationBaseDTO } from './../../core/dto';
 
 export class OrganizationContactDTO extends IntersectionType(
 	PickType(OrganizationContact, ['imageId']),
 	TenantOrganizationBaseDTO
 ) {
-
 	@ApiProperty({ type: () => String })
 	@IsNotEmpty()
 	@IsString()
@@ -30,7 +17,7 @@ export class OrganizationContactDTO extends IntersectionType(
 	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()
 	@IsEmail()
-	@Transform((params: TransformFnParams) => params.value ? params.value.trim() : null)
+	@Transform((params: TransformFnParams) => (params.value ? params.value.trim() : null))
 	readonly primaryEmail: string;
 
 	@ApiPropertyOptional({ type: () => String })

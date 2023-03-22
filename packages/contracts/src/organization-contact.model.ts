@@ -34,8 +34,7 @@ export enum OrganizationContactBudgetTypeEnum {
 	COST = 'cost'
 }
 
-export interface IOrganizationContactFindInput
-	extends IBasePerTenantAndOrganizationEntityModel {
+export interface IOrganizationContactFindInput extends IBasePerTenantAndOrganizationEntityModel {
 	name?: string;
 	primaryEmail?: string;
 	primaryPhone?: string;
@@ -45,7 +44,10 @@ export interface IOrganizationContactFindInput
 	createdBy?: string;
 }
 
-export interface IOrganizationContactCreateInput extends IContact, IBasePerTenantAndOrganizationEntityModel, IRelationalImageAsset {
+export interface IOrganizationContactCreateInput
+	extends IContact,
+		IBasePerTenantAndOrganizationEntityModel,
+		IRelationalImageAsset {
 	name: string;
 	contactId?: string;
 	primaryEmail?: string;
@@ -77,8 +79,7 @@ export interface IOrganizationContactRegistrationInput {
 	contactOrganization: IOrganizationCreateInput;
 }
 
-export interface IOrganizationContactAcceptInviteInput
-	extends IOrganizationContactRegistrationInput {
+export interface IOrganizationContactAcceptInviteInput extends IOrganizationContactRegistrationInput {
 	inviteId: string;
 	originalUrl?: string;
 }

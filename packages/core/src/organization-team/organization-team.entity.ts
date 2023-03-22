@@ -1,14 +1,4 @@
-import {
-	Column,
-	Entity,
-	Index,
-	OneToMany,
-	ManyToMany,
-	JoinTable,
-	ManyToOne,
-	JoinColumn,
-	RelationId
-} from 'typeorm';
+import { Column, Entity, Index, OneToMany, ManyToMany, JoinTable, ManyToOne, JoinColumn, RelationId } from 'typeorm';
 import {
 	IEquipmentSharing,
 	IGoal,
@@ -41,9 +31,7 @@ import {
 } from '../core/entities/internal';
 
 @Entity('organization_team')
-export class OrganizationTeam extends TenantOrganizationBaseEntity
-	implements IOrganizationTeam {
-
+export class OrganizationTeam extends TenantOrganizationBaseEntity implements IOrganizationTeam {
 	@ApiProperty({ type: () => String, required: true })
 	@IsNotEmpty()
 	@IsString()
@@ -150,7 +138,6 @@ export class OrganizationTeam extends TenantOrganizationBaseEntity
 		onDelete: 'SET NULL'
 	})
 	goals?: IGoal[];
-
 
 	/**
 	 * Team Statuses

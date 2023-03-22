@@ -5,16 +5,10 @@ import { OrganizationProjectUpdateCommand } from '../organization-project.update
 import { OrganizationProjectService } from '../../organization-project.service';
 
 @CommandHandler(OrganizationProjectUpdateCommand)
-export class OrganizationProjectUpdateHandler
-	implements ICommandHandler<OrganizationProjectUpdateCommand> {
+export class OrganizationProjectUpdateHandler implements ICommandHandler<OrganizationProjectUpdateCommand> {
+	constructor(private readonly _organizationProjectService: OrganizationProjectService) {}
 
-	constructor(
-		private readonly _organizationProjectService: OrganizationProjectService
-	) { }
-
-	public async execute(
-		command: OrganizationProjectUpdateCommand
-	): Promise<IOrganizationProject> {
+	public async execute(command: OrganizationProjectUpdateCommand): Promise<IOrganizationProject> {
 		try {
 			const { input } = command;
 			const { id } = input;
