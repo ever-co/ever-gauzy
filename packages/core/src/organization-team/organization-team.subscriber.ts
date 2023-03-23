@@ -31,6 +31,9 @@ export class OrganizationTeamSubscriber implements EntitySubscriberInterface<Org
                         entity.prefix = prefix.substring(0, 3).toUpperCase();
                     }
                 }
+                if (!!entity['image']) {
+                    entity.logo = entity.image.fullUrl || entity.logo;
+                }
             }
         } catch (error) {
             console.log(error);

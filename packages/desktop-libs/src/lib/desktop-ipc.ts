@@ -257,7 +257,7 @@ export function ipcMainHandler(
 				);
 			}
 			if (arg.config) {
-				if (arg.config.isStarted) {
+				if (arg.config.isTakeScreenCapture) {
 					await timerHandler.makeScreenshot(null, knex, timeTrackerWindow, false);
 				}
 				timeTrackerWindow.webContents.send('timer_status', {

@@ -56,7 +56,8 @@ export class FileStorageComponent extends TranslationBaseComponent
 				cloudinary_cloud_name: [],
 				cloudinary_api_key: [],
 				cloudinary_api_secret: [],
-				cloudinary_api_secure: []
+				cloudinary_api_secure: [],
+				cloudinary_delivery_url: []
 			}),
 		});
 		return form;

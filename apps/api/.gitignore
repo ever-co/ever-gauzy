@@ -1,26 +1,9 @@
-public/features/*.png
-public/reports/*.png
-public/screenshots/**/*.jpg
-public/screenshots/**/*.png
-public/invoices/pdf/*.pdf
+# Ignore everything in this public directory
+public/**/*.*
 
-# JPEG
-public/ever-icons/**/*.jpg
-public/ever-icons/**/*.jpeg
-
-# Portable Network Graphics
-public/ever-icons/**/*.png
-
-# Scalable Vector Graphics
-public/ever-icons/**/*.svg
-public/ever-icons/**/*.svgz
-
-# Graphics Interchange Format
-public/ever-icons/**/*.gif
-
-# Ignore Import/Export Path
-public/import/
-public/export/
+# Except these (.gitkeep) files
+!public/.gitkeep
+!public/**/.gitkeep
 
 data/*
 report.*.json

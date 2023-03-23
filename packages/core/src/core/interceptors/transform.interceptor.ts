@@ -13,7 +13,7 @@ import { instanceToPlain } from 'class-transformer';
 @Injectable()
 export class TransformInterceptor implements NestInterceptor {
 
-    intercept(
+	intercept(
 		ctx: ExecutionContext,
 		next: CallHandler
 	): Observable<any> {

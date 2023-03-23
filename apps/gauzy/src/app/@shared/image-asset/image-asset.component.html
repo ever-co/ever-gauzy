@@ -11,11 +11,11 @@
 		<div class="row">
 			<div class="col-sm-4">
 				<img
-					*ngIf="imageAsset && imageAsset.url"
-					[src]="imageAsset.url"
+					*ngIf="imageAsset && imageAsset.fullUrl"
+					[src]="imageAsset.fullUrl"
 				/>
 				<img
-					*ngIf="!imageAsset || !imageAsset.url"
+					*ngIf="!imageAsset || !imageAsset.fullUrl"
 					src="/assets/images/others/no-image-placeholder.svg"
 				/>
 			</div>

@@ -188,7 +188,7 @@ export class OrganizationProjectController extends CrudController<OrganizationPr
 	 * @param filter
 	 * @returns
 	 */
-	 @ApiOperation({
+	@ApiOperation({
 		summary:
 			'Find all organization project in the same tenant using pagination.'
 	})
@@ -301,7 +301,7 @@ export class OrganizationProjectController extends CrudController<OrganizationPr
 		@Body() entity: UpdateOrganizationProjectDTO
 	): Promise<IOrganizationProject> {
 		return await this.commandBus.execute(
-			new OrganizationProjectUpdateCommand({ id, ...entity })
+			new OrganizationProjectUpdateCommand({ ...entity, id })
 		);
 	}
 

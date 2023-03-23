@@ -8,7 +8,6 @@ import * as AWS from 'aws-sdk';
 import { StorageEngine } from 'multer';
 import { Provider } from './provider';
 import { RequestContext } from '../../context';
-import { v4 as uuid } from 'uuid';
 
 export interface IS3Config {
 	rootPath: string;
@@ -19,11 +18,9 @@ export interface IS3Config {
 }
 
 export class S3Provider extends Provider<S3Provider> {
+
 	static instance: S3Provider;
-
 	name = FileStorageProviderEnum.S3;
-	tenantId: string;
-
 	config: IS3Config;
 	defaultConfig: IS3Config;
 
@@ -44,15 +41,6 @@ export class S3Provider extends Provider<S3Provider> {
 		}
 		this.setAwsDetails();
 		return S3Provider.instance;
-	}
-
-	url(key: string) {
-		const url = this.getS3Instance().getSignedUrl('getObject', {
-			Bucket: this.getS3Bucket(),
-			Key: key,
-			Expires: 3600
-		});
-		return url;
 	}
 
 	setAwsDetails() {
@@ -81,8 +69,32 @@ export class S3Provider extends Provider<S3Provider> {
 		}
 	}
 
+	/**
+	 * Get a pre-signed URL for a given operation name.
+	 *
+	 * @param key
+	 * @returns
+	*/
+	url(key: string) {
+		if (!key) {
+			return null;
+		}
+		const url = this.getS3Instance().getSignedUrl('getObject', {
+			Bucket: this.getS3Bucket(),
+			Key: key,
+			Expires: 3600
+		});
+		return url;
+	}
+
+	/**
+	 * Get full Path of the file storage
+	 *
+	 * @param filePath
+	 * @returns
+	 */
 	path(filePath: string) {
-		return filePath ? this.config.rootPath + '/' + filePath : null;
+		return filePath ? join(this.config.rootPath, filePath) : null;
 	}
 
 	handler({ dest, filename, prefix }: FileStorageOption): StorageEngine {
@@ -93,39 +105,22 @@ export class S3Provider extends Provider<S3Provider> {
 				cb(null, { fieldName: file.fieldname });
 			},
 			key: (_req, file, callback) => {
-				let fileNameString = '';
-				const ext = file.originalname.split('.').pop();
+				// A string or function that determines the destination path for uploaded
+				const dir = dest instanceof Function ? dest(file) : dest;
+
+				// A file extension, or filename extension, is a suffix at the end of a file.
+				const extension = file.originalname.split('.').pop();
+
+				// A function that determines the name of the uploaded file.
+				let fileName: string;
 				if (filename) {
-					if (typeof filename === 'string') {
-						fileNameString = filename;
-					} else {
-						fileNameString = filename(file, ext);
-					}
+					fileName = (typeof filename === 'string') ? filename : filename(file, extension);
 				} else {
-					if (!prefix) {
-						prefix = 'file';
-					}
-					fileNameString = `gauzy-${prefix}-${moment().unix()}-${parseInt(
-						'' + Math.random() * 1000,
-						10
-					)}.${ext}`;
+					fileName = `${prefix}-${moment().unix()}-${parseInt('' + Math.random() * 1000, 10)}.${extension}`;
 				}
-				let dir;
-				if (dest instanceof Function) {
-					dir = dest(file);
-				} else {
-					dir = dest;
-				}
-				const user = RequestContext.currentUser();
-				callback(
-					null,
-					join(
-						this.config.rootPath,
-						dir,
-						user ? user.tenantId : uuid(),
-						fileNameString
-					)
-				);
+
+				const fullPath = join(this.config.rootPath, dir, fileName);
+				callback(null, fullPath);
 			}
 		});
 	}
