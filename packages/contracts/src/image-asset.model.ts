@@ -2,8 +2,8 @@ import { FileStorageProviderEnum } from "./file-provider";
 import { IBasePerTenantAndOrganizationEntityModel } from "./base-entity.model";
 
 export interface IRelationalImageAsset {
-	image?: IImageAsset;
-	imageId?: IImageAsset['id'];
+	image?: IImageAsset | null;
+	imageId?: IImageAsset['id'] | null;
 }
 
 export interface IImageAsset extends IImageAssetCreateInput {

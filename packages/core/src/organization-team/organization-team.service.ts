@@ -111,11 +111,9 @@ export class OrganizationTeamService extends TenantAwareCrudService<Organization
 	async update(
 		id: IOrganizationTeam['id'],
 		entity: IOrganizationTeamUpdateInput
-	): Promise<OrganizationTeam> {
-
+	): Promise<IOrganizationTeam> {
 		const tenantId = RequestContext.currentTenantId();
-		const { memberIds, managerIds } = entity;
-		const { name, prefix, organizationId, tags, logo, imageId } = entity;
+		const { managerIds, memberIds, organizationId } = entity;
 
 		let organizationTeam = await this.findOneByIdString(id, {
 			where: {
@@ -184,8 +182,11 @@ export class OrganizationTeamService extends TenantAwareCrudService<Organization
 				);
 			}
 
-			this.repository.merge(organizationTeam, { name, tags, prefix, public: entity.public, logo, imageId });
-			return await this.repository.save(organizationTeam);
+			const { id: organizationTeamId } = organizationTeam;
+			return await super.create({
+				...entity,
+				id: organizationTeamId
+			});
 		} catch (err /*: WriteError*/) {
 			throw new BadRequestException(err);
 		}
