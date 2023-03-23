@@ -203,9 +203,6 @@ async function startServer(value, restart = false) {
 	/* create main window */
 	if (value.serverConfigConnected || !value.isLocalServer) {
 		setupWindow.hide();
-		if (timeTrackerWindow) {
-			timeTrackerWindow.destroy();
-		}
 		timeTrackerWindow = createTimeTrackerWindow(
 			timeTrackerWindow,
 			pathWindow.timeTrackerUi
