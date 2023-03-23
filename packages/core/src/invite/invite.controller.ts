@@ -26,11 +26,7 @@ import {
 	UsePipes
 } from '@nestjs/common';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
-import {
-	ApiOperation,
-	ApiResponse,
-	ApiTags
-} from '@nestjs/swagger';
+import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { DeleteResult, UpdateResult } from 'typeorm';
 import { Request } from 'express';
 import { I18nLang } from 'nestjs-i18n';
@@ -55,10 +51,7 @@ import {
 	ValidateInviteByCodeQueryDTO,
 	ValidateInviteQueryDTO
 } from './dto';
-import {
-	FindInviteByEmailCodeQuery,
-	FindInviteByEmailTokenQuery
-} from './queries';
+import { FindInviteByEmailCodeQuery, FindInviteByEmailTokenQuery } from './queries';
 
 @ApiTags('Invite')
 @Controller()
@@ -76,8 +69,7 @@ export class InviteController {
 	})
 	@ApiResponse({
 		status: HttpStatus.BAD_REQUEST,
-		description:
-			'Invalid input, The response body may contain clues as to what went wrong'
+		description: 'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@HttpCode(HttpStatus.CREATED)
 	@UseGuards(TenantPermissionGuard, PermissionGuard)
@@ -88,12 +80,7 @@ export class InviteController {
 		@Body() entity: CreateInviteDTO,
 		@LanguageDecorator() languageCode: LanguagesEnum
 	): Promise<ICreateEmailInvitesOutput> {
-		return await this.commandBus.execute(
-			new InviteBulkCreateCommand(
-				entity,
-				languageCode
-			)
-		);
+		return await this.commandBus.execute(new InviteBulkCreateCommand(entity, languageCode));
 	}
 
 	/**
@@ -115,9 +102,7 @@ export class InviteController {
 	@Public()
 	@Get('validate')
 	@UsePipes(new ValidationPipe({ whitelist: true }))
-	async validateInviteByToken(
-		@Query() options: ValidateInviteQueryDTO
-	) {
+	async validateInviteByToken(@Query() options: ValidateInviteQueryDTO) {
 		return await this.queryBus.execute(
 			new FindInviteByEmailTokenQuery({
 				email: options.email,
@@ -135,9 +120,7 @@ export class InviteController {
 	@Public()
 	@Post('validate-by-code')
 	@UsePipes(new ValidationPipe({ whitelist: true }))
-	async validateInviteByCode(
-		@Body() body: ValidateInviteByCodeQueryDTO
-	) {
+	async validateInviteByCode(@Body() body: ValidateInviteByCodeQueryDTO) {
 		return await this.queryBus.execute(
 			new FindInviteByEmailCodeQuery({
 				email: body.email,
@@ -153,8 +136,7 @@ export class InviteController {
 	})
 	@ApiResponse({
 		status: HttpStatus.BAD_REQUEST,
-		description:
-			'Invalid input, The response body may contain clues as to what went wrong'
+		description: 'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@Public()
 	@Post('accept')
@@ -163,9 +145,7 @@ export class InviteController {
 		@Headers('origin') origin: string,
 		@I18nLang() languageCode: LanguagesEnum
 	) {
-		return await this.commandBus.execute(
-			new InviteAcceptCommand({ ...entity, originalUrl: origin }, languageCode)
-		);
+		return await this.commandBus.execute(new InviteAcceptCommand({ ...entity, originalUrl: origin }, languageCode));
 	}
 
 	/**
@@ -188,9 +168,7 @@ export class InviteController {
 	@Permissions(PermissionsEnum.ORG_INVITE_VIEW)
 	@Get()
 	@UsePipes(new ValidationPipe())
-	async findAll(
-		@Query() options: PaginationParams<Invite>
-	): Promise<IPagination<IInvite>> {
+	async findAll(@Query() options: PaginationParams<Invite>): Promise<IPagination<IInvite>> {
 		return await this.inviteService.findAllInvites(options);
 	}
 
@@ -201,8 +179,7 @@ export class InviteController {
 	})
 	@ApiResponse({
 		status: HttpStatus.BAD_REQUEST,
-		description:
-			'Invalid input, The response body may contain clues as to what went wrong'
+		description: 'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@Post('contact')
 	@Public()
@@ -212,12 +189,7 @@ export class InviteController {
 		@I18nLang() languageCode: LanguagesEnum
 	): Promise<any> {
 		input.originalUrl = request.get('Origin');
-		return await this.commandBus.execute(
-			new InviteAcceptOrganizationContactCommand(
-				input,
-				languageCode
-			)
-		);
+		return await this.commandBus.execute(new InviteAcceptOrganizationContactCommand(input, languageCode));
 	}
 
 	/**
@@ -244,12 +216,7 @@ export class InviteController {
 		@Body() entity: ResendInviteDTO,
 		@LanguageDecorator() languageCode: LanguagesEnum
 	): Promise<UpdateResult | Invite> {
-		return await this.commandBus.execute(
-			new InviteResendCommand(
-				entity,
-				languageCode
-			)
-		);
+		return await this.commandBus.execute(new InviteResendCommand(entity, languageCode));
 	}
 
 	@ApiOperation({ summary: 'Delete record' })
@@ -265,9 +232,7 @@ export class InviteController {
 	@UseGuards(TenantPermissionGuard, PermissionGuard)
 	@Permissions(PermissionsEnum.ORG_INVITE_EDIT)
 	@Delete(':id')
-	async delete(
-		@Param('id', UUIDValidationPipe) id: IInvite['id']
-	): Promise<DeleteResult> {
+	async delete(@Param('id', UUIDValidationPipe) id: IInvite['id']): Promise<DeleteResult> {
 		return await this.inviteService.delete(id);
 	}
 
@@ -282,8 +247,7 @@ export class InviteController {
 	})
 	@ApiResponse({
 		status: HttpStatus.BAD_REQUEST,
-		description:
-			'Invalid input, The response body may contain clues as to what went wrong'
+		description: 'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
 	@UseGuards(TenantPermissionGuard, PermissionGuard)
@@ -307,7 +271,7 @@ export class InviteController {
 	@ApiOperation({ summary: 'Find all invites of current user' })
 	@ApiResponse({
 		status: HttpStatus.OK,
-		description: 'Found invites',
+		description: 'Found invites'
 	})
 	@UseGuards(TenantPermissionGuard, PermissionGuard)
 	@Permissions(PermissionsEnum.ORG_INVITE_VIEW)
@@ -319,16 +283,12 @@ export class InviteController {
 	@ApiOperation({ summary: 'Accept or Reject invite of current user' })
 	@ApiResponse({
 		status: HttpStatus.OK,
-		description: 'Invite Accepted',
+		description: 'Invite Accepted'
 	})
 	@UseGuards(TenantPermissionGuard, PermissionGuard)
 	@Permissions(PermissionsEnum.ORG_INVITE_VIEW, PermissionsEnum.ORG_INVITE_EDIT)
 	@Post('me/accept-reject')
-	async acceptMyInvitation(
-		@Body() body: AcceptMyInviteDTO,
-		@Req() request,
-		@I18nLang() languageCode: LanguagesEnum
-	){
-		return await this.inviteService.acceptMyInvitation(body, request.get('Origin'), languageCode)
+	async acceptMyInvitation(@Body() body: AcceptMyInviteDTO, @Req() request, @I18nLang() languageCode: LanguagesEnum) {
+		return await this.inviteService.acceptMyInvitation(body, request.get('Origin'), languageCode);
 	}
 }
