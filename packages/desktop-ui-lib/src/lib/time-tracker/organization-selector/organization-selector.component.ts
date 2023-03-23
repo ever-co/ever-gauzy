@@ -39,12 +39,22 @@ export class OrganizationSelectorComponent implements OnInit, AfterViewInit {
 			'timer_tracker_show',
 			(event, arg) => {
 				this._ngZone.run(async () => {
-					console.log('USER_ORG', arg);
-					this._auth = arg;
-					this.user = await this._userOrganizationService.detail(
-						this._auth
-					);
-					await this.loadOrganizations();
+					try {
+						const payload = {
+							tenantId: arg.tenantId,
+							token: arg.token,
+							apiHost: arg.apiHost
+						}
+						if (!Object.values(payload).includes(null || undefined)) {
+							this._auth = payload;
+							this.user = await this._userOrganizationService.detail(
+								payload
+							);
+							await this.loadOrganizations();
+						}
+					} catch (error) {
+						console.log('[error]', error)
+					}
 				});
 			}
 		);
