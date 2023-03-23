@@ -56,8 +56,8 @@ export class FileStorageComponent extends TranslationBaseComponent
 				cloudinary_cloud_name: [],
 				cloudinary_api_key: [],
 				cloudinary_api_secret: [],
-				cloudinary_api_secure: [],
-				cloudinary_delivery_url: []
+				cloudinary_api_secure: ['true'],
+				cloudinary_delivery_url: ['https://res.cloudinary.com']
 			}),
 		});
 		return form;
@@ -103,15 +103,10 @@ export class FileStorageComponent extends TranslationBaseComponent
 	 * GET current tenant file storage setting
 	 */
 	async getSetting() {
-		const settings = await this.tenantService.getSettings();
+		const settings = this.settings = await this.tenantService.getSettings();
 		if (isNotEmpty(settings)) {
 			const { fileStorageProvider } = settings;
 			this.setFileStorageProvider(fileStorageProvider);
-
-			if (this.form.contains(fileStorageProvider)) {
-				this.form.get(fileStorageProvider).patchValue({ ...settings });
-				this.form.get(fileStorageProvider).updateValueAndValidity();
-			}
 		} else {
 			this.setFileStorageProvider((environment.FILE_PROVIDER.toUpperCase() as FileStorageProviderEnum) || FileStorageProviderEnum.LOCAL);
 		}
@@ -121,6 +116,7 @@ export class FileStorageComponent extends TranslationBaseComponent
 	 * SAVE current tenant file storage setting
 	 */
 	async submit() {
+		console.log(this.form);
 		if (this.form.invalid) {
 			return;
 		}
@@ -149,8 +145,8 @@ export class FileStorageComponent extends TranslationBaseComponent
 				await this.fileStorageService.validateWasabiCredentials(settings);
 
 				this.toastrService.success('TOASTR.MESSAGE.BUCKET_CREATED', {
-					bucket: `${this.settings.wasabi_aws_bucket}`,
-					region: `${this.settings.wasabi_aws_default_region}`
+					bucket: `${settings.wasabi_aws_bucket}`,
+					region: `${settings.wasabi_aws_default_region}`
 				});
 			}
 		} catch (error) {
@@ -163,6 +159,8 @@ export class FileStorageComponent extends TranslationBaseComponent
 			this.toastrService.success('TOASTR.MESSAGE.SETTINGS_SAVED');
 		} catch (error) {
 			this.toastrService.danger(error);
+		} finally {
+			this.subject$.next(true);
 		}
 	}
 
@@ -174,5 +172,10 @@ export class FileStorageComponent extends TranslationBaseComponent
 	setFileStorageProvider(provider: FileStorageProviderEnum) {
 		this.form.get('fileStorageProvider').setValue(provider);
 		this.form.get('fileStorageProvider').updateValueAndValidity();
+
+		if (this.form.contains(provider)) {
+			this.form.get(provider).patchValue({ ...this.settings });
+			this.form.get(provider).updateValueAndValidity();
+		}
 	}
 }
