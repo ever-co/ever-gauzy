@@ -164,9 +164,7 @@ const uploadScreenShot = async (
 		);
 
 		// remove file on local directory after successful upload
-		setTimeout(() => {
-			removeScreenshotLocally(fileName);
-		}, 4000);
+		removeScreenshotLocally(fileName);
 
 		console.log('Screenshot Thumb Url:', screenshot.thumbUrl);
 
@@ -335,23 +333,26 @@ const showCapturedToRenderer = (
 	notificationWindow.loadURL(urlpath);
 	notificationWindow.setMenu(null);
 	notificationWindow.hide();
+	notificationWindow.setVisibleOnAllWorkspaces(true, {
+		visibleOnFullScreen: true,
+		skipTransformProcessType: true,
+	});
 
-	setTimeout(() => {
-		notificationWindow.show();
-		notificationWindow.webContents.send('show_popup_screen_capture', {
-			imgUrl: thumbUrl,
-			note: LocalStore.beforeRequestParams().note,
-		});
-		try {
-			if (existsSync(soundCamera)) {
-				timeTrackerWindow.webContents.send('play_sound', {
-					soundFile: soundCamera,
-				});
-			}
-		} catch (err) {
-			console.error('sound camera not found');
+	notificationWindow.show();
+	notificationWindow.webContents.send('show_popup_screen_capture', {
+		imgUrl: thumbUrl,
+		note: LocalStore.beforeRequestParams().note,
+	});
+	try {
+		if (existsSync(soundCamera)) {
+			timeTrackerWindow.webContents.send('play_sound', {
+				soundFile: soundCamera,
+			});
 		}
-	}, 1000);
+	} catch (err) {
+		console.error('sound camera not found');
+	}
+
 	setTimeout(() => {
 		notificationWindow.close();
 		if (quitApp) app.quit();
@@ -573,35 +574,30 @@ export function notifyScreenshot(
 		skipTransformProcessType: true,
 	});
 	notificationWindow.on('show', () => {
-		setTimeout(() => {
-			notificationWindow.focus();
-		}, 200);
+		notificationWindow.focus();
+	});
+	notificationWindow.show();
+	notificationWindow.webContents.send('show_popup_screen_capture', {
+		note: LocalStore.beforeRequestParams().note,
 	});
 
-	setTimeout(() => {
-		notificationWindow.show();
-		notificationWindow.webContents.send('show_popup_screen_capture', {
-			note: LocalStore.beforeRequestParams().note,
-		});
-	}, 1000);
-	setTimeout(() => {
-		timeTrackerWindow.webContents.send('last_capture_local', {
-			fullUrl: `data:image/png;base64, ${thumb.img}`,
-		});
-		try {
-			if (
-				existsSync(soundCamera) &&
-				appSetting &&
-				!appSetting.mutedNotification
-			) {
-				timeTrackerWindow.webContents.send('play_sound', {
-					soundFile: soundCamera,
-				});
-			}
-		} catch (err) {
-			console.error('sound camera not found');
+	timeTrackerWindow.webContents.send('last_capture_local', {
+		fullUrl: `data:image/png;base64, ${thumb.img}`,
+	});
+	try {
+		if (
+			existsSync(soundCamera) &&
+			appSetting &&
+			!appSetting.mutedNotification
+		) {
+			timeTrackerWindow.webContents.send('play_sound', {
+				soundFile: soundCamera,
+			});
 		}
-	}, 1000);
+	} catch (err) {
+		console.error('sound camera not found');
+	}
+
 	setTimeout(() => {
 		notificationWindow.close();
 	}, 4000);
