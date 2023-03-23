@@ -8,7 +8,7 @@ Object.assign(console, log.functions);
 import * as path from 'path';
 import { app, dialog, BrowserWindow, ipcMain, shell, Menu } from 'electron';
 import { environment } from './environments/environment';
-import Url from 'url';
+import * as Url from 'url';
 import * as Sentry from '@sentry/electron';
 
 // setup logger to catch all unhandled errors and submit as bug reports to our repo
@@ -203,13 +203,25 @@ async function startServer(value, restart = false) {
 	/* create main window */
 	if (value.serverConfigConnected || !value.isLocalServer) {
 		setupWindow.hide();
-		if (timeTrackerWindow) {
-			timeTrackerWindow.destroy();
+		if (!timeTrackerWindow) {
+			timeTrackerWindow = createTimeTrackerWindow(
+				timeTrackerWindow,
+				pathWindow.timeTrackerUi
+			);
+		} else {
+			try {
+				await timeTrackerWindow.loadURL(
+					Url.format({
+						pathname: pathWindow.timeTrackerUi,
+						protocol: 'file:',
+						slashes: true,
+						hash: '/time-tracker'
+					})
+				);
+			} catch (error) {
+				console.log('Error', error);
+			}
 		}
-		timeTrackerWindow = createTimeTrackerWindow(
-			timeTrackerWindow,
-			pathWindow.timeTrackerUi
-		);
 		gauzyWindow = timeTrackerWindow;
 		gauzyWindow.show();
 	}
@@ -394,6 +406,13 @@ ipcMain.on('restore', () => {
 ipcMain.on('restart_app', (event, arg) => {
 	dialogErr = false;
 	LocalStore.updateConfigSetting(arg);
+	if (timeTrackerWindow) {
+		timeTrackerWindow.destroy();
+		timeTrackerWindow = createTimeTrackerWindow(
+			timeTrackerWindow,
+			pathWindow.timeTrackerUi
+		);
+	}
 	if (serverGauzy) serverGauzy.kill();
 	if (gauzyWindow) gauzyWindow.destroy();
 	gauzyWindow = null;
