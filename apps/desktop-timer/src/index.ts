@@ -8,7 +8,7 @@ Object.assign(console, log.functions);
 import * as path from 'path';
 import { app, dialog, BrowserWindow, ipcMain, shell, Menu } from 'electron';
 import { environment } from './environments/environment';
-import Url from 'url';
+import * as Url from 'url';
 import * as Sentry from '@sentry/electron';
 
 // setup logger to catch all unhandled errors and submit as bug reports to our repo
@@ -203,10 +203,20 @@ async function startServer(value, restart = false) {
 	/* create main window */
 	if (value.serverConfigConnected || !value.isLocalServer) {
 		setupWindow.hide();
-		timeTrackerWindow = createTimeTrackerWindow(
-			timeTrackerWindow,
-			pathWindow.timeTrackerUi
-		);
+		if (!timeTrackerWindow) {
+			timeTrackerWindow = createTimeTrackerWindow(
+				timeTrackerWindow,
+				pathWindow.timeTrackerUi
+			);
+		} else {
+			await timeTrackerWindow.loadURL(
+				Url.format({
+					pathname: pathWindow.timeTrackerUi,
+					protocol: 'file:',
+					slashes: true,
+					hash: '/time-tracker'
+				}))
+		}
 		gauzyWindow = timeTrackerWindow;
 		gauzyWindow.show();
 	}
