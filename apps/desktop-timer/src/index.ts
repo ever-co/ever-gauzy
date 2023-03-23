@@ -209,13 +209,18 @@ async function startServer(value, restart = false) {
 				pathWindow.timeTrackerUi
 			);
 		} else {
-			await timeTrackerWindow.loadURL(
-				Url.format({
-					pathname: pathWindow.timeTrackerUi,
-					protocol: 'file:',
-					slashes: true,
-					hash: '/time-tracker'
-				}))
+			try {
+				await timeTrackerWindow.loadURL(
+					Url.format({
+						pathname: pathWindow.timeTrackerUi,
+						protocol: 'file:',
+						slashes: true,
+						hash: '/time-tracker'
+					})
+				);
+			} catch (error) {
+				console.log('Error', error);
+			}
 		}
 		gauzyWindow = timeTrackerWindow;
 		gauzyWindow.show();
@@ -401,6 +406,13 @@ ipcMain.on('restore', () => {
 ipcMain.on('restart_app', (event, arg) => {
 	dialogErr = false;
 	LocalStore.updateConfigSetting(arg);
+	if (timeTrackerWindow) {
+		timeTrackerWindow.destroy();
+		timeTrackerWindow = createTimeTrackerWindow(
+			timeTrackerWindow,
+			pathWindow.timeTrackerUi
+		);
+	}
 	if (serverGauzy) serverGauzy.kill();
 	if (gauzyWindow) gauzyWindow.destroy();
 	gauzyWindow = null;
