@@ -173,7 +173,7 @@
 <ng-template #imageUploaderTemplate>
 	<ngx-image-uploader
 		(changeHoverState)="hoverState = $event"
-		(uploadedImageUrl)="updateImage($event)"
+		(uploadedImageAsset)="updateImageAsset($event)"
 		(uploadImageError)="handleImageUploadError($event)"
 	></ngx-image-uploader>
 	<svg

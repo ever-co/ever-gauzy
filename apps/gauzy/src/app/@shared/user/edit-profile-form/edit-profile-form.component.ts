@@ -16,7 +16,8 @@ import {
 	ITag,
 	IRole,
 	IUserUpdateInput,
-	RolesEnum
+	RolesEnum,
+	IImageAsset
 } from '@gauzy/contracts';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { Subject, firstValueFrom } from 'rxjs';
@@ -81,8 +82,9 @@ export class EditProfileFormComponent
 		return fb.group({
 			firstName: [],
 			lastName: [],
-			email: ['', Validators.required],
-			imageUrl: ['', Validators.required],
+			email: [null, Validators.required],
+			imageUrl: [],
+			imageId: [],
 			password: [],
 			repeatPassword: [],
 			role: [],
@@ -158,15 +160,14 @@ export class EditProfileFormComponent
 		this.toastrService.danger(error);
 	}
 
-	async updateImage(imageUrl: string) {
-		this.form.get('imageUrl').setValue(imageUrl);
+	async updateImageAsset(image: IImageAsset) {
 		this.store.user = {
 			...this.store.user,
-			imageUrl: imageUrl
+			imageId: image.id
 		}
 
 		let request: IUserUpdateInput = {
-			imageUrl
+			imageId: image.id
 		};
 
 		if (this.allowRoleChange) {
@@ -271,6 +272,7 @@ export class EditProfileFormComponent
 			lastName: user.lastName,
 			email: user.email,
 			imageUrl: user.imageUrl,
+			imageId: user.imageId,
 			role: user.role,
 			tags: user.tags,
 			preferredLanguage: user.preferredLanguage,
