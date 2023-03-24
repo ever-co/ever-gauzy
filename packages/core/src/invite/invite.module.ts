@@ -20,15 +20,12 @@ import { UserOrganizationModule } from './../user-organization/user-organization
 import { InviteController } from './invite.controller';
 import { Invite } from './invite.entity';
 import { InviteService } from './invite.service';
+import { OrganizationTeamEmployeeModule } from './../organization-team-employee/organization-team-employee.module';
 
 @Module({
 	imports: [
-		RouterModule.forRoutes([
-			{ path: '/invite', module: InviteModule }
-		]),
-		TypeOrmModule.forFeature([
-			Invite
-		]),
+		RouterModule.forRoutes([{ path: '/invite', module: InviteModule }]),
+		TypeOrmModule.forFeature([Invite]),
 		CqrsModule,
 		EmailModule,
 		TenantModule,
@@ -42,17 +39,11 @@ import { InviteService } from './invite.service';
 		OrganizationDepartmentModule,
 		OrganizationTeamModule,
 		UserOrganizationModule,
-		AuthModule
+		AuthModule,
+		OrganizationTeamEmployeeModule,
 	],
 	controllers: [InviteController],
-	providers: [
-		InviteService,
-		...CommandHandlers,
-		...QueryHandlers,
-	],
-	exports: [
-		TypeOrmModule,
-		InviteService
-	]
+	providers: [InviteService, ...CommandHandlers, ...QueryHandlers],
+	exports: [TypeOrmModule, InviteService],
 })
 export class InviteModule {}

@@ -6,7 +6,7 @@ import {
 	IUserEmailInput,
 	IUserRegistrationInput,
 	IUserTokenInput,
-	LanguagesEnum
+	LanguagesEnum,
 } from './user.model';
 import { IOrganizationProject } from './organization-projects.model';
 import { IOrganization } from './organization.model';
@@ -36,18 +36,24 @@ export interface IInvite extends IBasePerTenantAndOrganizationEntityModel {
 	isExpired?: boolean;
 }
 
-export interface IInviteAcceptInput extends IUserRegistrationInput, IUserEmailInput, IUserTokenInput, IUserCodeInput {
+export interface IInviteAcceptInput
+	extends IUserRegistrationInput,
+		IUserEmailInput,
+		IUserTokenInput,
+		IUserCodeInput {
 	inviteId?: string;
 	originalUrl?: string;
 }
 
-export interface IInviteResendInput extends IBasePerTenantAndOrganizationEntityModel {
+export interface IInviteResendInput
+	extends IBasePerTenantAndOrganizationEntityModel {
 	inviteId: IInvite['id'];
 	inviteType: InvitationTypeEnum;
 	[x: string]: any;
 }
 
-export interface ICreateEmailInvitesInput extends IBasePerTenantAndOrganizationEntityModel {
+export interface ICreateEmailInvitesInput
+	extends IBasePerTenantAndOrganizationEntityModel {
 	emailIds: string[];
 	projectIds?: string[];
 	organizationContactIds?: string[];
@@ -62,7 +68,8 @@ export interface ICreateEmailInvitesInput extends IBasePerTenantAndOrganizationE
 	[x: string]: any;
 }
 
-export interface ICreateOrganizationContactInviteInput extends IBasePerTenantAndOrganizationEntityModel {
+export interface ICreateOrganizationContactInviteInput
+	extends IBasePerTenantAndOrganizationEntityModel {
 	emailId: string;
 	organizationContactId: string;
 	roleId: string;
@@ -77,7 +84,8 @@ export interface ICreateEmailInvitesOutput {
 	ignored: number;
 }
 
-export interface IInviteFindInput extends IBasePerTenantAndOrganizationEntityModel {
+export interface IInviteFindInput
+	extends IBasePerTenantAndOrganizationEntityModel {
 	invitationType?: InvitationTypeEnum;
 }
 
@@ -93,14 +101,20 @@ export interface IInviteUpdateInput {
 export enum InviteStatusEnum {
 	INVITED = 'INVITED',
 	ACCEPTED = 'ACCEPTED',
-	EXPIRED = 'EXPIRED'
+	EXPIRED = 'EXPIRED',
+	REJECTED = 'REJECTED',
+}
+
+export enum InviteActionEnum {
+	ACCEPTED = 'ACCEPTED',
+	REJECTED = 'REJECTED',
 }
 
 export enum InvitationTypeEnum {
 	USER = 'USER',
 	EMPLOYEE = 'EMPLOYEE',
 	CANDIDATE = 'CANDIDATE',
-	TEAM = 'TEAM'
+	TEAM = 'TEAM',
 }
 
 export enum InvitationExpirationEnum {
@@ -108,10 +122,11 @@ export enum InvitationExpirationEnum {
 	WEEK = 7,
 	TWO_WEEK = 14,
 	MONTH = 30,
-	NEVER = 'Never'
+	NEVER = 'Never',
 }
 
-export interface IInviteViewModel extends IBasePerTenantAndOrganizationEntityModel {
+export interface IInviteViewModel
+	extends IBasePerTenantAndOrganizationEntityModel {
 	email: string;
 	expireDate: string;
 	createdDate: string;
@@ -126,7 +141,8 @@ export interface IInviteViewModel extends IBasePerTenantAndOrganizationEntityMod
 	token: string;
 }
 
-export interface IInviteUserModel extends IBasePerTenantAndOrganizationEntityModel {
+export interface IInviteUserModel
+	extends IBasePerTenantAndOrganizationEntityModel {
 	email: string;
 	role: string;
 	registerUrl: string;
@@ -134,7 +150,8 @@ export interface IInviteUserModel extends IBasePerTenantAndOrganizationEntityMod
 	invitedBy: IUser;
 	originUrl?: string;
 }
-export interface IInviteEmployeeModel extends IBasePerTenantAndOrganizationEntityModel {
+export interface IInviteEmployeeModel
+	extends IBasePerTenantAndOrganizationEntityModel {
 	email: string;
 	registerUrl: string;
 	languageCode: LanguagesEnum;
@@ -145,7 +162,9 @@ export interface IInviteEmployeeModel extends IBasePerTenantAndOrganizationEntit
 	originUrl?: string;
 }
 
-export interface IInviteTeamMemberModel extends IBasePerTenantAndOrganizationEntityModel, IUserEmailInput {
+export interface IInviteTeamMemberModel
+	extends IBasePerTenantAndOrganizationEntityModel,
+		IUserEmailInput {
 	languageCode: LanguagesEnum;
 	invitedBy: IUser;
 	teams: string;
@@ -153,7 +172,8 @@ export interface IInviteTeamMemberModel extends IBasePerTenantAndOrganizationEnt
 	[x: string]: any;
 }
 
-export interface IJoinEmployeeModel extends IBasePerTenantAndOrganizationEntityModel {
+export interface IJoinEmployeeModel
+	extends IBasePerTenantAndOrganizationEntityModel {
 	email: string;
 	employee: IEmployee;
 	organization: IOrganization;
