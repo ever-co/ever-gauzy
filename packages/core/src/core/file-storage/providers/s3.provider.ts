@@ -75,13 +75,16 @@ export class S3Provider extends Provider<S3Provider> {
 	 * @param key
 	 * @returns
 	*/
-	url(key: string) {
-		if (!key) {
+	url(fileURL: string) {
+		if (!fileURL) {
 			return null;
+		}
+		if (fileURL.startsWith('http')) {
+			return fileURL;
 		}
 		const url = this.getS3Instance().getSignedUrl('getObject', {
 			Bucket: this.getS3Bucket(),
-			Key: key,
+			Key: fileURL,
 			Expires: 3600
 		});
 		return url;

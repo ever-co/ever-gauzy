@@ -88,14 +88,17 @@ export class WasabiS3Provider extends Provider<WasabiS3Provider> {
 	 * @param key
 	 * @returns
 	*/
-	url(key: string) {
-		if (!key) {
+	url(fileURL: string) {
+		if (!fileURL) {
 			return null;
+		}
+		if (fileURL.startsWith('http')) {
+			return fileURL;
 		}
 		try {
 			const url = this.getWasabiInstance().getSignedUrl('getObject', {
 				Bucket: this.getWasabiBucket(),
-				Key: key,
+				Key: fileURL,
 				Expires: 3600
 			});
 			return url;
