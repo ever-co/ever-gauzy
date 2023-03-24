@@ -17,6 +17,7 @@
 			<nb-card-body>
 				<file-provider-selector
 					formControlName="fileStorageProvider"
+					(onSelectionChanged)="setFileStorageProvider($event)"
 				></file-provider-selector>
 				<ng-container [ngSwitch]="fileStorageProvider">
 					<ng-container *ngSwitchCase="FileStorageProviderEnum.S3">
@@ -75,7 +76,6 @@
 							'SETTINGS_FILE_STORAGE.S3.PLACEHOLDERS.ACCESS_KEY_ID'
 								| translate
 						"
-						required
 					/>
 				</div>
 			</div>
@@ -95,7 +95,6 @@
 							'SETTINGS_FILE_STORAGE.S3.PLACEHOLDERS.SECRET_ACCESS_KEY'
 								| translate
 						"
-						required
 					/>
 				</div>
 			</div>
@@ -165,7 +164,6 @@
 							'SETTINGS_FILE_STORAGE.WASABI.PLACEHOLDERS.ACCESS_KEY_ID'
 								| translate
 						"
-						required
 					/>
 				</div>
 			</div>
@@ -185,7 +183,6 @@
 							'SETTINGS_FILE_STORAGE.WASABI.PLACEHOLDERS.SECRET_ACCESS_KEY'
 								| translate
 						"
-						required
 					/>
 				</div>
 			</div>
@@ -272,7 +269,6 @@
 						fullWidth
 						class="w-100"
 						[placeholder]="'SETTINGS_FILE_STORAGE.CLOUDINARY.PLACEHOLDERS.CLOUD_NAME' | translate"
-						required
 					/>
 				</div>
 			</div>
@@ -292,7 +288,6 @@
 							'SETTINGS_FILE_STORAGE.CLOUDINARY.PLACEHOLDERS.ACCESS_API_KEY'
 								| translate
 						"
-						required
 					/>
 				</div>
 			</div>
@@ -312,7 +307,6 @@
 							'SETTINGS_FILE_STORAGE.CLOUDINARY.PLACEHOLDERS.ACCESS_API_SECRET'
 								| translate
 						"
-						required
 					/>
 				</div>
 			</div>
@@ -350,7 +344,6 @@
 							'SETTINGS_FILE_STORAGE.CLOUDINARY.PLACEHOLDERS.SECURE'
 								| translate
 						"
-						required
 					>
 						<nb-option
 							*ngFor="let secure of secureOptions"
