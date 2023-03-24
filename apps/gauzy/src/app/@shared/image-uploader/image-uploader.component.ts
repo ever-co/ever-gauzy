@@ -28,7 +28,7 @@ export class ImageUploaderComponent implements AfterViewInit, OnInit {
     user: IUser;
     uploader: FileUploader;
     /*
-    * Getter & Setter for dynamic file uploade style element
+    * Getter & Setter for dynamic file uploader style element
     */
     _styles: Object = {
         width: '100%',
