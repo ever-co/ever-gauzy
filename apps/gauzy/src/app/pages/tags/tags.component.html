@@ -90,35 +90,41 @@
 			let-buttonSize="buttonSize"
 			let-selectedItem="selectedItem"
 		>
-			<div class="actions">
-				<button
-					nbButton
-					status="basic"
-					(click)="edit(selectedItem)"
-					class="action primary"
-					[disabled]="!selectedItem && disableButton"
-					size="small"
-				>
-					<nb-icon icon="edit-outline"></nb-icon>
-					{{ 'BUTTONS.EDIT' | translate }}
-				</button>
-				<button
-					nbButton
-					status="basic"
-					(click)="delete(selectedItem)"
-					class="action"
-					[disabled]="!selectedItem && disableButton"
-					size="small"
-					[nbTooltip]="'BUTTONS.DELETE' | translate"
-				>
-					<nb-icon status="danger" icon="trash-2-outline"> </nb-icon>
-				</button>
-			</div>
+			<ng-template [ngxPermissionsOnly]="['ALL_ORG_EDIT', 'ORG_TAGS_EDIT', 'ORG_TAGS_DELETE']">
+				<div class="actions">
+					<ng-template [ngxPermissionsOnly]="['ALL_ORG_EDIT', 'ORG_TAGS_EDIT']">
+						<button
+							nbButton
+							status="basic"
+							(click)="edit(selectedItem)"
+							class="action primary"
+							[disabled]="!selectedItem && disableButton"
+							size="small"
+						>
+							<nb-icon icon="edit-outline"></nb-icon>
+							{{ 'BUTTONS.EDIT' | translate }}
+						</button>
+					</ng-template>
+					<ng-template [ngxPermissionsOnly]="['ALL_ORG_EDIT', 'ORG_TAGS_DELETE']">
+						<button
+							nbButton
+							status="basic"
+							(click)="delete(selectedItem)"
+							class="action"
+							[disabled]="!selectedItem && disableButton"
+							size="small"
+							[nbTooltip]="'BUTTONS.DELETE' | translate"
+						>
+							<nb-icon status="danger" icon="trash-2-outline"> </nb-icon>
+						</button>
+					</ng-template>
+				</div>
+			</ng-template>
 		</ng-template>
 	</div>
 </div>
 <ng-template #visibleButton>
-	<ng-template ngxPermissionsOnly="ORG_TAGS_EDIT">
+	<ng-template [ngxPermissionsOnly]="['ALL_ORG_EDIT', 'ORG_TAGS_ADD']">
 		<button
 			nbButton
 			class="action"
