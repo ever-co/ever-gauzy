@@ -98,7 +98,7 @@ export class ImageUploaderComponent implements AfterViewInit, OnInit {
     }
 
     /**
-     * Image asset uppload handler
+     * Image asset upload handler
      */
     imageUploadHandler() {
         if (this.uploader.queue.length > 0) {

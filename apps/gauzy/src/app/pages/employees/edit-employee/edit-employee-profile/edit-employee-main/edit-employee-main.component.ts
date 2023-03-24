@@ -72,7 +72,7 @@ export class EditEmployeeMainComponent implements OnInit, OnDestroy {
 	}
 
 	/**
-	 * Uploade employee image/avatar
+	 * Upload employee image/avatar
 	 *
 	 * @param image
 	 */

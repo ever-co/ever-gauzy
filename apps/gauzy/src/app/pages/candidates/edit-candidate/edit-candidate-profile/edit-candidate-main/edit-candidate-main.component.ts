@@ -34,7 +34,7 @@ export class EditCandidateMainComponent implements OnInit, OnDestroy {
 	organization: IOrganization;
 
 	/*
-	* Candiate Main Mutation Form
+	* Candidate Main Mutation Form
 	*/
 	public form: FormGroup = EditCandidateMainComponent.buildForm(this.fb);
 	static buildForm(
@@ -98,7 +98,7 @@ export class EditCandidateMainComponent implements OnInit, OnDestroy {
 	}
 
 	/**
-	 * Uploade candidate image/avatar
+	 * Upload candidate image/avatar
 	 *
 	 * @param image
 	 */
