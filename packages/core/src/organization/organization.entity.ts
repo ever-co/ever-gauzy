@@ -1,14 +1,4 @@
-import {
-	Column,
-	Entity,
-	Index,
-	JoinColumn,
-	JoinTable,
-	ManyToMany,
-	ManyToOne,
-	OneToMany,
-	RelationId
-} from 'typeorm';
+import { Column, Entity, Index, JoinColumn, JoinTable, ManyToMany, ManyToOne, OneToMany, RelationId } from 'typeorm';
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { IsOptional, IsUUID } from 'class-validator';
 import {
@@ -53,7 +43,6 @@ import {
 
 @Entity('organization')
 export class Organization extends TenantBaseEntity implements IOrganization {
-
 	@Index()
 	@Column()
 	name: string;
@@ -205,7 +194,7 @@ export class Organization extends TenantBaseEntity implements IOrganization {
 	inactivityTimeLimit?: number;
 
 	@Column({ default: 1 })
-	activityProofDuration?: number
+	activityProofDuration?: number;
 
 	@Column({ default: false })
 	requireReason?: boolean;
