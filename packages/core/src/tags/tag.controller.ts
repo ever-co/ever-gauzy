@@ -78,7 +78,7 @@ export class TagController extends CrudController<Tag> {
 	 */
 	@HttpCode(HttpStatus.CREATED)
 	@UseGuards(PermissionGuard)
-	@Permissions(PermissionsEnum.ORG_TAGS_EDIT)
+	@Permissions(PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ORG_TAGS_ADD)
 	@Post()
 	@UsePipes(new ValidationPipe({ whitelist: true }))
 	async create(
@@ -96,7 +96,7 @@ export class TagController extends CrudController<Tag> {
 	 */
 	@HttpCode(HttpStatus.ACCEPTED)
 	@UseGuards(PermissionGuard)
-	@Permissions(PermissionsEnum.ORG_TAGS_EDIT)
+	@Permissions(PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ORG_TAGS_EDIT)
 	@Put(':id')
 	@UsePipes(new ValidationPipe({ whitelist: true }))
 	async update(
