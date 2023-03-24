@@ -70,7 +70,7 @@ export class EmployeeComponent extends TranslationBaseComponent
 		);
 	}
 
-	ngAfterViewInit() {}
+	ngAfterViewInit() { }
 
 	updateImageUrl(url: string) {
 		this.imageUrl = url;
@@ -160,8 +160,8 @@ export class EmployeeComponent extends TranslationBaseComponent
 				},
 				startedWorkOn: employeeUpdatedRes.startedWorkOn
 					? moment(new Date(employeeUpdatedRes.startedWorkOn)).format(
-							'MM-DD-YYYY'
-					  )
+						'MM-DD-YYYY'
+					)
 					: employee.startedWorkOn
 			};
 			this.employee$ = of(updatedEmployee);
@@ -175,5 +175,5 @@ export class EmployeeComponent extends TranslationBaseComponent
 		this.toastrService.danger(error, 'Error');
 	}
 
-	ngOnDestroy(): void {}
+	ngOnDestroy(): void { }
 }

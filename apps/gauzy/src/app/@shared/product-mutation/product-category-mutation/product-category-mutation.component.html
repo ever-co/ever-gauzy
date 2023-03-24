@@ -23,10 +23,10 @@
 					<div class="category-img">
 						<ngx-image-uploader
 							(changeHoverState)="hoverState = $event"
-							(uploadedImageUrl)="
+							(uploadedImageAsset)="
 								form.get('imageUrl').setValue($event)
 							"
-							(uploadImageError)="handleImageUploadError($event)"
+							(uploadImageAssetError)="handleImageUploadError($event)"
 						></ngx-image-uploader>
 						<svg
 							xmlns="http://www.w3.org/2000/svg"

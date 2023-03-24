@@ -3,8 +3,8 @@
 		<div class="organization-photo ml-4">
 			<ngx-image-uploader
 				(changeHoverState)="hoverState = $event"
-				(uploadedImageUrl)="updateImageUrl($event)"
-				(uploadImageError)="handleImageUploadError($event)"
+				(uploadedImageAsset)="updateImageUrl($event)"
+				(uploadImageAssetError)="handleImageUploadError($event)"
 			></ngx-image-uploader>
 			<div
 				class="image-overlay"
