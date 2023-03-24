@@ -611,7 +611,8 @@ export class PagesComponent extends TranslationBaseComponent
 						data: {
 							translationKey: 'MENU.TAGS',
 							permissionKeys: [
-								PermissionsEnum.ORG_TAGS_EDIT
+								PermissionsEnum.ALL_ORG_VIEW,
+								PermissionsEnum.ORG_TAGS_ADD
 							],
 							featureKey: FeatureEnum.FEATURE_ORGANIZATION_TAG,
 							add: '/pages/organization/tags?openAddDialog=true'

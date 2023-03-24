@@ -11,7 +11,10 @@ const routes: Routes = [
 		canActivate: [NgxPermissionsGuard],
 		data: {
 			permissions: {
-				only: [PermissionsEnum.ORG_TAGS_EDIT],
+				only: [
+					PermissionsEnum.ALL_ORG_VIEW,
+					PermissionsEnum.ORG_TAGS_VIEW
+				],
 				redirectTo: '/pages/dashboard'
 			}
 		}
