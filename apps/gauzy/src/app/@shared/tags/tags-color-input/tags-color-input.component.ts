@@ -114,7 +114,10 @@ export class TagsColorInputComponent extends PictureNameTagsComponent
 	ngOnInit(): void {
 		this.hasAddTag$ = this.store.userRolePermissions$.pipe(
 			map(() =>
-				this.store.hasPermission(PermissionsEnum.ORG_TAGS_EDIT)
+				this.store.hasAnyPermission(
+					PermissionsEnum.ALL_ORG_EDIT,
+					PermissionsEnum.ORG_TAGS_ADD
+				)
 			)
 		);
 		this.subject$
