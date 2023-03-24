@@ -2,7 +2,7 @@ import { Component, OnInit, Input, Output, EventEmitter, AfterViewInit } from '@
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { FileUploader, FileUploaderOptions } from 'ng2-file-upload';
 import { filter, tap } from 'rxjs/operators';
-import { IUser } from '@gauzy/contracts';
+import { IImageAsset, IUser } from '@gauzy/contracts';
 import { Store } from '../../@core/services';
 import { API_PREFIX } from '../../@core/constants';
 
@@ -13,7 +13,7 @@ import { API_PREFIX } from '../../@core/constants';
 		<input
 			type="file"
 			accept="image/*"
-			(change)="handlePhotoUpload()"
+			(change)="imageUploadHandler()"
 			(mouseenter)="changeHoverState.emit(true)"
 			(mouseleave)="changeHoverState.emit(false)"
 			ng2FileSelect
@@ -26,6 +26,7 @@ import { API_PREFIX } from '../../@core/constants';
 export class ImageUploaderComponent implements AfterViewInit, OnInit {
 
     user: IUser;
+    uploader: FileUploader;
     /*
     * Getter & Setter for dynamic file uploade style element
     */
@@ -55,10 +56,8 @@ export class ImageUploaderComponent implements AfterViewInit, OnInit {
     }
 
     @Output() changeHoverState = new EventEmitter<boolean>();
-    @Output() uploadedImageUrl = new EventEmitter<string>();
-    @Output() uploadImageError = new EventEmitter<any>();
-
-    uploader: FileUploader;
+    @Output() uploadedImageAsset = new EventEmitter<IImageAsset>();
+    @Output() uploadImageAssetError = new EventEmitter<any>();
 
     constructor(
         private readonly store: Store,
@@ -77,22 +76,31 @@ export class ImageUploaderComponent implements AfterViewInit, OnInit {
 
     ngAfterViewInit() {
         this.uploader.onSuccessItem = (item: any, response: string, status: number) => {
-            console.log({ item, response, status });
-            if (response) {
-                const data = JSON.parse(response);
-                this.uploadedImageUrl.emit(data.url);
+            try {
+                if (response) {
+                    const image: IImageAsset = JSON.parse(response);
+                    this.uploadedImageAsset.emit(image);
+                }
+            } catch (error) {
+                console.log('Error while uploaded image url', error);
             }
         };
         this.uploader.onErrorItem = (item: any, response: string, status: number) => {
-            console.log({ item, response, status });
-            if (response) {
-                const error = JSON.parse(response);
-                this.uploadImageError.emit(error);
+            try {
+                if (response) {
+                    const error = JSON.parse(response);
+                    this.uploadImageAssetError.emit(error);
+                }
+            } catch (error) {
+                console.log('Error while uploaded image url error', error);
             }
         };
     }
 
-    handlePhotoUpload() {
+    /**
+     * Image asset uppload handler
+     */
+    imageUploadHandler() {
         if (this.uploader.queue.length > 0) {
             this.uploader.queue[this.uploader.queue.length - 1].upload();
         }
@@ -111,6 +119,7 @@ export class ImageUploaderComponent implements AfterViewInit, OnInit {
 
         const uploaderOptions: FileUploaderOptions = {
             url: `${API_PREFIX}/image-assets/upload/profile_pictures_avatars`,
+            // XHR request method
             method: 'POST',
             // Upload files automatically upon addition to upload queue
             autoUpload: true,
