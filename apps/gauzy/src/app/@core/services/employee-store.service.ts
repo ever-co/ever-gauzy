@@ -2,7 +2,8 @@ import {
 	IEmployee,
 	IEmployeeUpdateInput,
 	IUserFindInput,
-	IEmployeeStoreState
+	IEmployeeStoreState,
+	IUserUpdateInput
 } from '@gauzy/contracts';
 import { BehaviorSubject } from 'rxjs';
 import { Injectable } from '@angular/core';
@@ -35,7 +36,7 @@ export class EmployeeStore {
 	constructor(
 		protected employeeAkitaStore: EmployeeAkitaStore,
 		protected employeeAkitaQuery: EmployeeAkitaQuery
-	) {}
+	) { }
 
 	selectedEmployee$: BehaviorSubject<IEmployee> = new BehaviorSubject(
 		this.selectedEmployee
@@ -69,12 +70,12 @@ export class EmployeeStore {
 		});
 	}
 
-	set userForm(user: IUserFindInput) {
+	set userForm(user: IUserUpdateInput) {
 		this._userForm = user;
 		this.userForm$.next(user);
 	}
 
-	get userForm(): IUserFindInput {
+	get userForm(): IUserUpdateInput {
 		return this._userForm;
 	}
 
