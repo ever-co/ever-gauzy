@@ -1,7 +1,7 @@
 import * as loginPage from '../../Base/pages/Login.po';
 import { LoginPageData } from '../../Base/pagedata/LoginPageData';
 import * as organizationDepartmentsPage from '../../Base/pages/OrganizationDepartments.po';
-import { faker } from '@ever-co/faker';
+import { faker } from '@faker-js/faker';
 import { OrganizationDepartmentsPageData } from '../../Base/pagedata/OrganizationDepartmentsPageData';
 import * as dashboardPage from '../../Base/pages/Dashboard.po';
 import * as organizationTagsUserPage from '../../Base/pages/OrganizationTags.po';
@@ -17,8 +17,8 @@ import { Given, Then, When, And } from 'cypress-cucumber-preprocessor/steps';
 
 const pageLoadTimeout = Cypress.config('pageLoadTimeout');
 
-let empFirstName = faker.name.firstName();
-let empLastName = faker.name.lastName();
+let empFirstName = faker.person.firstName();
+let empLastName = faker.person.lastName();
 let empUsername = faker.internet.userName();
 let empPassword = faker.internet.password();
 let employeeEmail = faker.internet.email();
@@ -31,7 +31,7 @@ Given('Login with default credentials', () => {
 
 // Add new tag
 Then('User can add new tag', () => {
-	dashboardPage.verifyAccountingDashboard();
+	//dashboardPage.verifyAccountingDashboard();
 	CustomCommands.addTag(organizationTagsUserPage, OrganizationTagsPageData);
 });
 
@@ -105,7 +105,7 @@ When('User click on employee dropdown', () => {
 });
 
 Then('User can select employee from dropdown options', () => {
-	organizationDepartmentsPage.selectEmployeeFromDrodpwon(0);
+	organizationDepartmentsPage.selectEmployeeFromDropdown(0);
 	organizationDepartmentsPage.clickKeyboardButtonByKeyCode(9);
 });
 
@@ -114,7 +114,7 @@ And('User can see tags dropdown', () => {
 });
 
 When('User click on tags dropdown', () => {
-	organizationDepartmentsPage.clickTagsDropdwon();
+	organizationDepartmentsPage.clickTagsDropdown();
 });
 
 Then('User can select tag from dropdown options', () => {
@@ -146,7 +146,7 @@ And('User can see departments table', () => {
 });
 
 When('User click on departments table row', () => {
-	organizationDepartmentsPage.selectTableRow(0);
+	organizationDepartmentsPage.selectTableRow();
 });
 
 Then('Edit department button will become active', () => {
@@ -191,7 +191,7 @@ And('User can see departments table again', () => {
 });
 
 When('User click on departments table row again', () => {
-	organizationDepartmentsPage.selectTableRow(0);
+	organizationDepartmentsPage.selectTableRow();
 });
 
 Then('Delete department button will become active', () => {

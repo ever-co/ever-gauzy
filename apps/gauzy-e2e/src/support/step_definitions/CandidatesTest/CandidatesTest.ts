@@ -1,7 +1,7 @@
 import * as loginPage from '../../Base/pages/Login.po';
 import { LoginPageData } from '../../Base/pagedata/LoginPageData';
 import * as inviteCandidatePage from '../../Base/pages/Candidates.po';
-import { faker } from '@ever-co/faker';
+import { faker } from '@faker-js/faker';
 import * as dashboardPage from '../../Base/pages/Dashboard.po';
 import * as organizationTagsUserPage from '../../Base/pages/OrganizationTags.po';
 import { OrganizationTagsPageData } from '../../Base/pagedata/OrganizationTagsPageData';
@@ -14,8 +14,8 @@ const pageLoadTimeout = Cypress.config('pageLoadTimeout');
 
 let email = faker.internet.email();
 let secondEmail = faker.internet.email();
-let firstName = faker.name.firstName();
-let lastName = faker.name.lastName();
+let firstName = faker.person.firstName();
+let lastName = faker.person.lastName();
 let username = faker.internet.userName();
 let password = faker.internet.password();
 let imgUrl = faker.image.avatar();
@@ -125,7 +125,7 @@ And('User can enter candidate email value', () => {
 	inviteCandidatePage.enterCandidateEmailInputData(email);
 });
 
-And('User can see password inpit field', () => {
+And('User can see password input field', () => {
 	inviteCandidatePage.passwordInputVisible();
 });
 
@@ -151,12 +151,12 @@ When('User click on tags dropdown', () => {
 });
 
 Then('User can select tag from dropdown options', () => {
-	inviteCandidatePage.selectTagsFromDrodpwon(0);
+	inviteCandidatePage.selectTagsFromDropdown(0);
 	inviteCandidatePage.clickKeyboardButtonByKeyCode(9);
 });
 
 And('User can see image input field', () => {
-	inviteCandidatePage.imageInputvisible();
+	inviteCandidatePage.imageInputVisible();
 });
 
 And('User can enter value for image', () => {

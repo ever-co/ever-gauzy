@@ -1,20 +1,22 @@
-import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
-import { IsArray, IsNotEmpty, IsOptional, IsString } from "class-validator";
+import { ApiPropertyOptional, IntersectionType, PartialType, PickType } from "@nestjs/swagger";
+import { IsArray, IsBoolean, IsOptional } from "class-validator";
 import { IOrganizationTeam } from "@gauzy/contracts";
-import { IsTeamAlreadyExist } from "./../../shared/validators";
 import { TenantOrganizationBaseDTO } from "./../../core/dto";
+import { RelationalTagDTO } from "./../../tags/dto";
+import { OrganizationTeam } from "./../organization-team.entity";
 
-export class OrganizationTeamDTO extends TenantOrganizationBaseDTO implements IOrganizationTeam {
+export class OrganizationTeamDTO extends IntersectionType(
+    IntersectionType(TenantOrganizationBaseDTO, PartialType(RelationalTagDTO)),
+    PickType(OrganizationTeam, ['logo', 'prefix', 'imageId'])
+) implements Omit<IOrganizationTeam, 'name'> {
 
-    @ApiProperty({ type: () => String })
-    @IsNotEmpty()
-    @IsString()
-    @IsTeamAlreadyExist()
-    readonly name: string;
-
-    @ApiPropertyOptional({ type: () => String })
+    /**
+     * Team type should be boolean true/false
+     */
+    @ApiPropertyOptional({ type: () => Boolean })
     @IsOptional()
-    readonly prefix?: string;
+    @IsBoolean()
+    readonly public?: boolean;
 
     @ApiPropertyOptional({ type: () => String, isArray: true })
     @IsOptional()

@@ -13,7 +13,7 @@ import {
 	verifyTextByIndex,
 	verifyTextNotExistByIndex,
 	verifyByText,
-	vefiryByLength,
+	verifyByLength,
 	verifyTextNotExisting
 } from '../utils/util';
 import { ApprovalRequestPage } from '../pageobjects/ApprovalRequestPageObject';
@@ -125,12 +125,12 @@ export const clickApprovalPolicyButton = () => {
 };
 
 export const descriptionInputVisible = () => {
-	verifyElementIsVisible(ApprovalRequestPage.descriptioninputCss);
+	verifyElementIsVisible(ApprovalRequestPage.descriptionInputCss);
 };
 
 export const enterDescriptionInputData = (data) => {
-	clearField(ApprovalRequestPage.descriptioninputCss);
-	enterInput(ApprovalRequestPage.descriptioninputCss, data);
+	clearField(ApprovalRequestPage.descriptionInputCss);
+	enterInput(ApprovalRequestPage.descriptionInputCss, data);
 };
 
 export const backButtonVisible = () => {
@@ -145,7 +145,7 @@ export const waitMessageToHide = () => {
 	waitElementToHide(ApprovalRequestPage.toastrMessageCss);
 };
 
-export const verifyApprovalpolicyExists = (text) => {
+export const verifyApprovalPolicyExists = (text) => {
 	verifyText(ApprovalRequestPage.verifyApprovalPolicyCss, text);
 };
 
@@ -157,7 +157,7 @@ export const verifyElementIsDeleted = (text: string) => {
 	verifyTextNotExisting(ApprovalRequestPage.tableBodyCss, text);
 };
 
-export const clickSaveButtonWithForce = () =>{
+export const clickSaveButtonWithForce = () => {
 	clickButtonWithForce(ApprovalRequestPage.saveButtonCss);
 };
 
@@ -165,7 +165,7 @@ export const tagsDropdownVisible = () => {
 	verifyElementIsVisible(ApprovalRequestPage.addTagsDropdownCss);
 };
 
-export const clickTagsDropdwon = () => {
+export const clickTagsDropdown = () => {
 	clickButton(ApprovalRequestPage.addTagsDropdownCss);
 };
 
@@ -183,7 +183,7 @@ export const verifyApprovalRefuseButton = (text: string, index: number) => {
 
 export const clickOnApprovalRefuseButton = (text: string) => {
 	clickByText(ApprovalRequestPage.approvalRefuseButtonCss, text);
-	
+
 };
 
 export const verifyApprovalButtonNotExist = (text: string, index: number) => {
@@ -201,7 +201,7 @@ export const verifyNameInput = () => {
 export const searchApprovalRequest = (text: string, length: number) => {
 	clearField(ApprovalRequestPage.searchByNameInputCss);
 	enterInput(ApprovalRequestPage.searchByNameInputCss, text);
-	vefiryByLength(ApprovalRequestPage.approvalStatusCss, length);
+	verifyByLength(ApprovalRequestPage.approvalStatusCss, length);
 };
 
 export const clearNameSearchInput = () => {
@@ -209,5 +209,5 @@ export const clearNameSearchInput = () => {
 };
 
 export const waitTableLoad = (length: number) => {
-	vefiryByLength(ApprovalRequestPage.approvalStatusCss, length);
+	verifyByLength(ApprovalRequestPage.approvalStatusCss, length);
 }

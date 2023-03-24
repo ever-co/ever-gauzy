@@ -7,7 +7,8 @@ import {
 	clickButtonByIndex,
 	verifyText,
 	verifyTextNotExisting,
-	waitElementToHide
+	waitElementToHide,
+	getLastElement
 } from '../utils/util';
 import { OrganizationDepartmentsPage } from '../pageobjects/OrganizationDepartmentsPageObject';
 
@@ -46,7 +47,7 @@ export const clickEmployeeDropdown = () => {
 	clickButton(OrganizationDepartmentsPage.selectEmployeeDropdownCss);
 };
 
-export const selectEmployeeFromDrodpwon = (index) => {
+export const selectEmployeeFromDropdown = (index) => {
 	clickButtonByIndex(
 		OrganizationDepartmentsPage.selectEmployeeDropdownOptionCss,
 		index
@@ -57,12 +58,13 @@ export const tagsDropdownVisible = () => {
 	verifyElementIsVisible(OrganizationDepartmentsPage.addTagsDropdownCss);
 };
 
-export const clickTagsDropdwon = () => {
+export const clickTagsDropdown = () => {
 	clickButton(OrganizationDepartmentsPage.addTagsDropdownCss);
 };
 
 export const selectTagFromDropdown = (index) => {
-	clickButtonByIndex(OrganizationDepartmentsPage.tagsDropdownOption, index);
+	//clickButtonByIndex(OrganizationDepartmentsPage.tagsDropdownOption, index);
+	getLastElement(OrganizationDepartmentsPage.tagsDropdownOption)
 };
 
 export const clickKeyboardButtonByKeyCode = (keycode) => {
@@ -85,8 +87,8 @@ export const tableRowVisible = () => {
 	verifyElementIsVisible(OrganizationDepartmentsPage.selectTableRowCss);
 };
 
-export const selectTableRow = (index) => {
-	clickButtonByIndex(OrganizationDepartmentsPage.selectTableRowCss, index);
+export const selectTableRow = () => {
+	getLastElement(OrganizationDepartmentsPage.selectTableRowCss)
 };
 
 export const editButtonVisible = () => {

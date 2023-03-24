@@ -3,12 +3,13 @@ import { IEmployee } from './employee.model';
 import { IBaseEntityWithMembers } from './entity-with-members.model';
 import { IOrganizationCreateInput } from './organization.model';
 import { IUser, LanguagesEnum } from './user.model';
-import { ITag } from './tag-entity.model';
+import { ITag } from './tag.model';
 import { IContact } from './contact.model';
 import { IBasePerTenantAndOrganizationEntityModel } from './base-entity.model';
 import { ITimeLog } from './timesheet.model';
+import { IRelationalImageAsset } from './image-asset.model';
 
-export interface IOrganizationContact extends IBaseEntityWithMembers {
+export interface IOrganizationContact extends IBaseEntityWithMembers, IRelationalImageAsset {
 	name: string;
 	contactType: ContactType;
 	primaryEmail: string;
@@ -44,7 +45,7 @@ export interface IOrganizationContactFindInput
 	createdBy?: string;
 }
 
-export interface IOrganizationContactCreateInput extends IContact, IBasePerTenantAndOrganizationEntityModel {
+export interface IOrganizationContactCreateInput extends IContact, IBasePerTenantAndOrganizationEntityModel, IRelationalImageAsset {
 	name: string;
 	contactId?: string;
 	primaryEmail?: string;

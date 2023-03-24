@@ -1,8 +1,8 @@
 import * as loginPage from '../support/Base/pages/Login.po';
 import { LoginPageData } from '../support/Base/pagedata/LoginPageData';
 import * as inviteCandidatePage from '../support/Base/pages/Candidates.po';
-import { faker } from '@ever-co/faker';
-import * as dashboradPage from '../support/Base/pages/Dashboard.po';
+import { faker } from '@faker-js/faker';
+import * as dashboardPage from '../support/Base/pages/Dashboard.po';
 import * as organizationTagsUserPage from '../support/Base/pages/OrganizationTags.po';
 import { OrganizationTagsPageData } from '../support/Base/pagedata/OrganizationTagsPageData';
 import { CustomCommands } from '../support/commands';
@@ -19,13 +19,13 @@ describe('Invite candidate test', () => {
 	before(() => {
 		email = faker.internet.email();
 		secondEmail = faker.internet.email();
-		firstName = faker.name.firstName();
-		lastName = faker.name.lastName();
+		firstName = faker.person.firstName();
+		lastName = faker.person.lastName();
 		username = faker.internet.userName();
 		password = faker.internet.password();
 		imgUrl = faker.image.avatar();
 
-		CustomCommands.login(loginPage, LoginPageData, dashboradPage);
+		CustomCommands.login(loginPage, LoginPageData, dashboardPage);
 	});
 
 	it('Should be able to send invite', () => {
@@ -68,9 +68,9 @@ describe('Invite candidate test', () => {
 		inviteCandidatePage.clickKeyboardButtonByKeyCode(9);
 		inviteCandidatePage.tagsDropdownVisible();
 		inviteCandidatePage.clickAddTagsDropdown();
-		inviteCandidatePage.selectTagsFromDrodpwon(0);
+		inviteCandidatePage.selectTagsFromDropdown(0);
 		inviteCandidatePage.clickKeyboardButtonByKeyCode(9);
-		inviteCandidatePage.imageInputvisible();
+		inviteCandidatePage.imageInputVisible();
 		inviteCandidatePage.enterImageInputData(imgUrl);
 		inviteCandidatePage.nextButtonVisible();
 		inviteCandidatePage.clickNextButton();

@@ -1,6 +1,6 @@
 import { DataSource } from 'typeorm';
 import { Merchant, Contact, ImageAsset, Country } from './../core/entities/internal';
-import { faker } from '@ever-co/faker';
+import { faker } from '@faker-js/faker';
 import { ICountry, IMerchant, IOrganization, ITenant } from '@gauzy/contracts';
 
 export const createRandomMerchants = async (
@@ -54,32 +54,32 @@ const applyRandomProperties = (
     countries: ICountry[]
 ) => {
     const merchant = new Merchant()
-    merchant.name = faker.company.companyName();
-    merchant.code = faker.random.alphaNumeric();
+    merchant.name = faker.company.name();
+    merchant.code = faker.string.alphanumeric();
     merchant.email = faker.internet.exampleEmail(merchant.name);
     merchant.description = faker.lorem.words();
-    merchant.phone = faker.phone.phoneNumber();
+    merchant.phone = faker.phone.number();
     merchant.organization = organization;
     merchant.tenant = tenant;
 
     const contact = new Contact();
-    contact.firstName = faker.name.firstName();
-	contact.lastName = faker.name.lastName();
+    contact.firstName = faker.person.firstName();
+    contact.lastName = faker.person.lastName();
     contact.name = contact.firstName + ' ' + contact.lastName;
     contact.website = faker.internet.url();
-    contact.address = faker.address.streetAddress();
-    contact.address2 = faker.address.secondaryAddress();
-    contact.city = faker.address.city();
-    contact.country = faker.random.arrayElement(countries).isoCode;
-    contact.fax = faker.datatype.number(8).toString();
-    contact.longitude = +faker.address.longitude();
-    contact.latitude = +faker.address.latitude();
+    contact.address = faker.location.streetAddress();
+    contact.address2 = faker.location.secondaryAddress();
+    contact.city = faker.location.city();
+    contact.country = faker.helpers.arrayElement(countries).isoCode;
+    contact.fax = faker.number.int(8).toString();
+    contact.longitude = +faker.location.longitude();
+    contact.latitude = +faker.location.latitude();
     contact.organization = organization;
     contact.tenant = tenant;
 
     const logo = new ImageAsset();
-    logo.name = faker.name.title();
-    logo.url = faker.image.imageUrl();
+    logo.name = faker.company.name();
+    logo.url = faker.image.url();
     logo.organization = organization;
     logo.tenant = tenant;
 

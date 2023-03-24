@@ -10,7 +10,7 @@ import {
 	TimeLogSourceEnum,
 	ITimerStatusInput
 } from '@gauzy/contracts';
-import { toLocal, toParams } from '@gauzy/common-angular';
+import { toLocal, toParams, toUTC } from '@gauzy/common-angular';
 import * as moment from 'moment';
 import { StoreConfig, Store, Query } from '@datorama/akita';
 import { Store as AppStore } from '../../@core/services/store.service';
@@ -31,7 +31,9 @@ export function createInitialTimerState(): TimerState {
 		description: '',
 		logType: TimeLogType.TRACKED,
 		source: TimeLogSourceEnum.WEB_TIMER,
-		tags: []
+		tags: [],
+		startedAt: null,
+		stoppedAt: null
 	};
 	try {
 		const config = localStorage.getItem('timerConfig');
@@ -41,7 +43,7 @@ export function createInitialTimerState(): TimerState {
 				...JSON.parse(config)
 			};
 		}
-	} catch (error) {}
+	} catch (error) { }
 	return {
 		showTimerWindow: false,
 		duration: 0,
@@ -138,7 +140,7 @@ export class TimeTrackerService implements OnDestroy {
 					this.turnOnTimer();
 				}
 			})
-			.catch(() => {});
+			.catch(() => { });
 	}
 
 	public get showTimerWindow(): boolean {
@@ -228,6 +230,10 @@ export class TimeTrackerService implements OnDestroy {
 	toggle() {
 		if (this.running) {
 			this.turnOffTimer();
+			this.timerConfig = {
+				...this.timerConfig,
+				stoppedAt: toUTC(moment()).toDate()
+			};
 			return firstValueFrom(
 				this.http.post<ITimeLog>(
 					`${API_PREFIX}/timesheet/timer/stop`,
@@ -237,6 +243,10 @@ export class TimeTrackerService implements OnDestroy {
 		} else {
 			this.currentSessionDuration = 0;
 			this.turnOnTimer();
+			this.timerConfig = {
+				...this.timerConfig,
+				startedAt: toUTC(moment()).toDate()
+			};
 			return firstValueFrom(
 				this.http.post<ITimeLog>(
 					`${API_PREFIX}/timesheet/timer/start`,
@@ -317,7 +327,7 @@ export class TimeTrackerService implements OnDestroy {
 			this._worker = new Worker(
 				new URL('./time-tracker.worker', import.meta.url)
 			);
-			// // retreive message post from time tracker worker
+			// // retrieve message post from time tracker worker
 			this._worker.onmessage = ({ data }) => {
 				this.currentSessionDuration = data.session;
 				this.duration = data.todayWorked;
@@ -329,5 +339,5 @@ export class TimeTrackerService implements OnDestroy {
 		}
 	}
 
-	ngOnDestroy(): void {}
+	ngOnDestroy(): void { }
 }

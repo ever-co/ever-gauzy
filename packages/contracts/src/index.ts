@@ -76,7 +76,7 @@ export * from './organization-projects.model';
 export * from './organization-recurring-expense.model';
 export * from './organization-sprint.model';
 export * from './organization-team-employee-model';
-export * from './organization-team-model';
+export * from './organization-team.model';
 export * from './organization-vendors.model';
 export * from './organization.model';
 export * from './password-reset.model';
@@ -96,7 +96,7 @@ export * from './role.model';
 export * from './seed.model';
 export * from './skill-entity.model';
 export * from './sms.model';
-export * from './tag-entity.model';
+export * from './tag.model';
 export * from './task-priority.model';
 export * from './task-size.model';
 export * from './task-status.model';
@@ -111,6 +111,8 @@ export * from './upwork.model';
 export * from './user-organization.model';
 export * from './user.model';
 export * from './wakatime.model';
+export * from './organization-team-join-request.model';
+export * from './email-reset.model';
 
 export { IBaseEntityModel as BaseEntityModel } from './base-entity.model';
 export {

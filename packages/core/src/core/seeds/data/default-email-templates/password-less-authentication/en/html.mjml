@@ -4,7 +4,7 @@
 			<mj-column>
 				<mj-image
 					width="100px"
-					src="{{host}}/assets/images/logos/logo_Gauzy.png"
+					src="{{appLogo}}"
 				></mj-image>
 				<mj-divider
 					border-color="#1B005D"
@@ -22,18 +22,22 @@
 					{{inviteCode}}
 				</mj-button>
 				<mj-text font-size="16px" font-family="helvetica">
-					<p>Kindly click on this link to join the team <a href="https://app.gauzy.team/passcode" style="color: #598bff">Click Here</a></p>
+					<p>
+						Kindly click on this link to join the team
+						<a href="{{callbackUrl}}" style="color: #598bff">Click Here</a>
+					</p>
 				</mj-text>
                 <mj-text font-size="16px" font-family="helvetica">
 					<p>Best regards,</p>
-					<p>The Gauzy Team</p>
+					<p>{{appSignature}}</p>
 				</mj-text>
 				<mj-divider
 					border-color="#1B005D"
 					border-width="1px"
 				></mj-divider>
-				<mj-text align="center" font-size="12px" font-family="helvetica">© 2019,
-					<a href="https://app.gauzy.co/." style="color: #598bff">Gauzy</a>
+				<mj-text align="center" font-size="12px" font-family="helvetica">
+					© 2019,
+					<a href="{{appLink}}" style="color: #598bff">{{appName}}</a>
 					by
 					<a href="https://ever.co/" style="color: #598bff">Ever Co. LTD.</a>
 					All rights reserved.

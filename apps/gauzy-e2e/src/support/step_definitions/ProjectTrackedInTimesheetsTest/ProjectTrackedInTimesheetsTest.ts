@@ -1,4 +1,4 @@
-import { faker } from '@ever-co/faker';
+import { faker } from '@faker-js/faker';
 import { Given, Then, When, And } from 'cypress-cucumber-preprocessor/steps';
 import { CustomCommands } from '../../commands';
 import * as loginPage from '../../Base/pages/Login.po';
@@ -15,22 +15,22 @@ const pageLoadTimeout = Cypress.config('pageLoadTimeout');
 
 
 
-let firstName = faker.name.firstName();
-let lastName = faker.name.lastName();
+let firstName = faker.person.firstName();
+let lastName = faker.person.lastName();
 let username = faker.internet.userName();
 let password = faker.internet.password();
 let imgUrl = faker.image.avatar();
 let employeeEmail = faker.internet.email();
 
-let projectName = faker.company.companyName()
+let projectName = faker.company.name()
 
 let employeeFullName = `${firstName} ${lastName}`;
 
 
 // Login with email
 
-Given('Login with default credentials',()=>{
-    CustomCommands.login(loginPage, LoginPageData, dashboardPage)
+Given('Login with default credentials', () => {
+	CustomCommands.login(loginPage, LoginPageData, dashboardPage)
 })
 
 //Add employee
@@ -90,7 +90,7 @@ When('User click on employee dropdown', () => {
 	projectTrackedInTimesheets.clickSelectEmployeeDropdown();
 });
 
-Then('User can select employee from dropodown options', () => {
+Then('User can select employee from dropdown options', () => {
 	projectTrackedInTimesheets.selectEmployeeDropdownOption(employeeFullName);
 	projectTrackedInTimesheets.clickKeyboardButtonByKeyCode(9);
 });
@@ -108,8 +108,8 @@ Then('Notification message will appear', () => {
 });
 
 //Logout
-And ('User can logout', () => {
-    CustomCommands.logout(dashboardPage, logoutPage, loginPage);
+And('User can logout', () => {
+	CustomCommands.logout(dashboardPage, logoutPage, loginPage);
 	CustomCommands.clearCookies();
 });
 
@@ -187,14 +187,12 @@ When('Employee click on stop timer button', () => {
 });
 
 Then('Employee can see view timesheet button', () => {
-	projectTrackedInTimesheets.viewTimesheetbtnVisible();
+	projectTrackedInTimesheets.viewTimesheetBtnVisible();
 });
 
 When('Employee click on view timesheet button', () => {
 	projectTrackedInTimesheets.clickViewTimesheetBtn();
 });
-Then ('Employee verify project name is the same', () => {
+Then('Employee verify project name is the same', () => {
 	projectTrackedInTimesheets.verifyProjectText(projectName)
 });
-
-

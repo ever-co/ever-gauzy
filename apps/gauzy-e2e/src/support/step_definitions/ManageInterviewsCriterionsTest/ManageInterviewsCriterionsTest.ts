@@ -21,7 +21,7 @@ And('User can visit Candidates interview criterion page', () => {
 	cy.intercept('GET', '/api/candidate-personal-qualities*').as('waitCandidatePersonalQualities');
 	cy.visit('/#/pages/employees/candidates/interviews/criterion', { timeout: pageLoadTimeout });
 	cy.wait(['@waitCandidateTechnologies', '@waitCandidatePersonalQualities']);
-	
+
 });
 
 And('User can see technology stack input field', () => {
@@ -29,7 +29,7 @@ And('User can see technology stack input field', () => {
 });
 
 And('User can enter value for technology stack', () => {
-	manageInterviewsCriterionsPage.enterTechonologyInputData(
+	manageInterviewsCriterionsPage.enterTechnologyInputData(
 		ManageInterviewsCriterionsPageData.technology
 	);
 });
@@ -66,7 +66,7 @@ Then('User can see edit technology stack input field', () => {
 });
 
 And('User can enter new value for technology stack', () => {
-	manageInterviewsCriterionsPage.enterTechonologyInputData(
+	manageInterviewsCriterionsPage.enterTechnologyInputData(
 		ManageInterviewsCriterionsPageData.editTechnology
 	);
 });
@@ -185,6 +185,6 @@ Then('Notification message will appear', () => {
 	manageInterviewsCriterionsPage.waitMessageToHide();
 });
 
-And('Use can verify qaulity was deleted', () => {
+And('Use can verify quality was deleted', () => {
 	manageInterviewsCriterionsPage.verifyQualityIsDeleted();
 });

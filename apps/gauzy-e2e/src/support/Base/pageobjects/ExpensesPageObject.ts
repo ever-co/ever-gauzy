@@ -20,13 +20,13 @@ export const ExpensesPage = {
 	confirmDeleteButtonCss: 'nb-card-footer > button[status="danger"]',
 	cardBodyCss: 'nb-card-footer.text-right',
 	duplicateExpenseButtonCss: 'div.mb-3 > button[status="primary"]',
-	manageCategoriseButtonCss:
+	manageCategoriesButtonCss:
 		'div.card-header-title > button[status="primary"]',
 	expenseNameInputCss: '[placeholder="Expense name"]',
-	saveCategorieButtonCss:
+	SaveCategoryButtonCss:
 		'div.justify-content-end > button[status="success"]',
 	backButtonCss: 'div.main > button[status="primary"]',
-	categorieCardCss: 'nb-card.ng-star-inserted',
+	categoryCardCss: 'nb-card.ng-star-inserted',
 	toastrMessageCss: 'nb-toast.ng-trigger',
 	notBillableBadgeCss: 'div.badge-danger',
 	verifyCategoryCss: 'ga-notes-with-tags > div > div > div.ng-star-inserted',

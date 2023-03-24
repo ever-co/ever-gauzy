@@ -93,7 +93,7 @@ And('User can see tags dropdown', () => {
 });
 
 When('User click on tags dropdown', () => {
-	organizationVendorsPage.clickTagsDropdwon();
+	organizationVendorsPage.clickTagsDropdown();
 });
 
 Then('User can select tag from dropdown options', () => {
@@ -184,7 +184,7 @@ When('User click on delete button', () => {
 });
 
 Then('User can see confirm delete button', () => {
-	organizationVendorsPage.confirmDeletebuttonVisible();
+	organizationVendorsPage.confirmDeleteButtonVisible();
 });
 
 When('User click on confirm delete button', () => {

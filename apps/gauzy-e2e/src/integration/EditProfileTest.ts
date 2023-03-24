@@ -1,7 +1,7 @@
 import * as loginPage from '../support/Base/pages/Login.po';
 import * as editProfilePage from '../support/Base/pages/EditProfile.po';
 import { EditProfilePageData } from '../support/Base/pagedata/EditProfilePageData';
-import * as dashboradPage from '../support/Base/pages/Dashboard.po';
+import * as dashboardPage from '../support/Base/pages/Dashboard.po';
 import * as logoutPage from '../support/Base/pages/Logout.po';
 
 describe('Edit user profile test', () => {
@@ -14,7 +14,7 @@ describe('Edit user profile test', () => {
 		loginPage.clearPasswordField();
 		loginPage.enterPassword(EditProfilePageData.password);
 		loginPage.clickLoginButton();
-		dashboradPage.verifyCreateButton();
+		dashboardPage.verifyCreateButton();
 	});
 
 	it('Should be able to edit user profile info', () => {
@@ -36,7 +36,7 @@ describe('Edit user profile test', () => {
 	});
 
 	it('Should be able to logout', () => {
-		dashboradPage.clickUserName();
+		dashboardPage.clickUserName();
 		logoutPage.clickLogoutButton();
 		loginPage.verifyLoginText();
 	});
@@ -48,6 +48,6 @@ describe('Edit user profile test', () => {
 		loginPage.clearPasswordField();
 		loginPage.enterPassword(EditProfilePageData.password);
 		loginPage.clickLoginButton();
-		dashboradPage.verifyCreateButton();
+		dashboardPage.verifyCreateButton();
 	});
 });

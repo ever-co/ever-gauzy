@@ -5,7 +5,7 @@ import {
 	ITenant,
 	RecurringExpenseDefaultCategoriesEnum
 } from '@gauzy/contracts';
-import { faker } from '@ever-co/faker';
+import { faker } from '@faker-js/faker';
 import * as moment from 'moment';
 import { environment as env } from '@gauzy/config';
 import { EmployeeRecurringExpense } from './employee-recurring-expense.entity';
@@ -31,7 +31,7 @@ export const createRandomEmployeeRecurringExpense = async (
 	const employeeRecurringExpenses: EmployeeRecurringExpense[] = [];
 	for await (const tenant of tenants) {
 		const organizations = tenantOrganizationsMap.get(tenant);
-		for await(const organization of organizations) {
+		for await (const organization of organizations) {
 			const tenantEmployees = organizationEmployeesMap.get(organization);
 			for (const [index, tenantEmployee] of tenantEmployees.entries()) {
 				const employeeRecurringExpense = new EmployeeRecurringExpense();
@@ -46,10 +46,10 @@ export const createRandomEmployeeRecurringExpense = async (
 				// TODO: fix endDate generation for some entities only, most should not have end date really
 				if (index % 2 === 0) {
 					// new changes
-					const endDate = faker.date.between(
-						new Date(startDate),
-						moment(startDate).add(4, 'months').toDate()
-					);
+					const endDate = faker.date.between({
+						from: new Date(startDate),
+						to: moment(startDate).add(4, 'months').toDate()
+					});
 					employeeRecurringExpense.endDay = endDate.getDate();
 					employeeRecurringExpense.endMonth = endDate.getMonth();
 					employeeRecurringExpense.endYear = endDate.getFullYear();
@@ -59,7 +59,7 @@ export const createRandomEmployeeRecurringExpense = async (
 				employeeRecurringExpense.categoryName =
 					RecurringExpenseDefaultCategoriesEnum.SALARY;
 
-				employeeRecurringExpense.value = faker.datatype.number(999); // new changes
+				employeeRecurringExpense.value = faker.number.int(999); // new changes
 				employeeRecurringExpense.currency = env.defaultCurrency; // new changes
 
 				// TODO: some expenses should have a parent if they change "over time"

@@ -268,6 +268,7 @@
 		"EMAIL": "Эл. адрес",
 		"LABELS": {
 			"NAME": "Имя",
+			"PHONE_NUMBER": "номер телефона",
 			"WEBSITE": "Сайт",
 			"FIRST_NAME": "Имя (необязательно)",
 			"LAST_NAME": "Фамилия (необязательно)",
@@ -414,6 +415,7 @@
 		},
 		"PLACEHOLDERS": {
 			"NAME": "Имя",
+			"PHONE_NUMBER": "номер телефона",
 			"DEFAULT": "Выбрать по умолчанию",
 			"FIRST_NAME": "Имя",
 			"LAST_NAME": "Фамилия",
@@ -1088,7 +1090,7 @@
 			"MANUAL_ACTIVITY": "Записи не найдены. Пожалуйста, выберите диапазон дат, сотрудник или проект.",
 			"AMOUNT_OWED": "Недостаточно сумм",
 			"WEEKLY_TIME_AND_ACTIVITY": "Вы еще не отслеживали время и активность в этот день.",
-			"DAILY_TIME_AND_ACTIVITY": "Вы еще не отследили времени и активности в этот день.",
+			"DAILY_TIME_AND_ACTIVITY": "В этот день еще не отслеживается время и активность. Пожалуйста, используйте <a href=\"https://web.gauzy.co/downloads\" rel=\"noopener\" target=\"_blank\">Gauzy Desktop Timer App</a>.",
 			"PROJECT_BUDGET": "Вы не создали ни одного проекта с бюджетом.",
 			"CLIENT_BUDGET": "Вы не создали ни одного клиента с бюджетом."
 		}
@@ -1313,7 +1315,9 @@
 			"TOTAL_HOURS": "Всего часов",
 			"RATE": "Ставка",
 			"VETTED": "Ограблен",
-			"HR": "час"
+			"HR": "час",
+			"SETTINGS": "Настройки",
+			"GENERAL_SETTINGS": "общие настройки"
 		},
 		"ADD_EMPLOYEES": {
 			"STEP_1": "Шаг 1",
@@ -1867,7 +1871,10 @@
 			"ORG_CANDIDATES_INTERVIEW_EDIT": "Создать/редактировать интервью",
 			"ORG_CANDIDATES_INTERVIEW_VIEW": "Просмотр интервью",
 			"ORG_INVENTORY_PRODUCT_EDIT": "Продукт управления",
-			"ORG_TAGS_EDIT": "Создание/Изменить/Удалить Теги",
+			"ORG_TAGS_ADD": "Create Tags",
+			"ORG_TAGS_VIEW": "View Tags",
+			"ORG_TAGS_EDIT": "Edit Tags",
+			"ORG_TAGS_DELETE": "Delete Tags",
 			"ORG_CANDIDATES_FEEDBACK_EDIT": "Создать/изменить/Удалить отзыв по Кандидату",
 			"ALL_ORG_VIEW": "Просмотр всех организаций",
 			"ALL_ORG_EDIT": "Создание/Изменить/Удалить все организации",
@@ -1927,6 +1934,8 @@
 			"ORG_TEAM_VIEW": "Посмотреть команды",
 			"ORG_TEAM_EDIT": "Редактировать команды",
 			"ORG_TEAM_DELETE": "Удалить команды",
+			"ORG_TEAM_JOIN_REQUEST_VIEW": "Просмотр запросов на присоединение к командам",
+			"ORG_TEAM_JOIN_REQUEST_EDIT": "Удалить запросы на присоединение к командам",
 			"ORG_CONTRACT_EDIT": "Создать/редактировать контракты",
 			"TIME_TRACKER": "Отслеживание времени доступа",
 			"TENANT_ADD_EXISTING_USER": "Добавить пользователя в организацию",
@@ -3811,7 +3820,8 @@
 			"candidate-schedule-interview": "Расписание интервью Кандидата",
 			"interviewer-interview-schedule": "Расписание интервьюера",
 			"employee-join": "Прием сотрудников",
-			"TEMPLATE_NAMES": "Названия шаблонов"
+			"email-reset": "Сброс электронной почты",
+			"organization-team-join-request": "Запрос на вступление в команду организации"
 		},
 		"HTML_EDITOR": "HTML-редактор"
 	},

@@ -1,7 +1,7 @@
 import { DataSource } from 'typeorm';
 import { IEmployee, IOrganization, ITenant, PaymentMethodEnum } from '@gauzy/contracts';
 import { Payment } from './payment.entity';
-import { faker } from '@ever-co/faker';
+import { faker } from '@faker-js/faker';
 import * as moment from 'moment';
 import { environment as env } from '@gauzy/config';
 import { Invoice, OrganizationProject, Tag, User } from './../core/entities/internal';
@@ -40,35 +40,35 @@ export const createDefaultPayment = async (
 			const payment = new Payment();
 			payment.invoice = invoice;
 			payment.paymentDate = moment(
-				faker.date.between(
-					new Date(),
-					moment(new Date()).add(1, 'month').toDate()
-				)
+				faker.date.between({
+					from: new Date(),
+					to: moment(new Date()).add(1, 'month').toDate()
+				})
 			)
-			.startOf('day')
-			.toDate();
-			payment.amount = faker.datatype.number({
+				.startOf('day')
+				.toDate();
+			payment.amount = faker.number.int({
 				min: 500,
 				max: 5000
 			});
-			payment.note = faker.name.jobDescriptor();
+			payment.note = faker.person.jobDescriptor();
 			payment.currency = organization.currency || env.defaultCurrency;
-			payment.paymentMethod = faker.random.arrayElement(
+			payment.paymentMethod = faker.helpers.arrayElement(
 				Object.keys(PaymentMethodEnum)
 			) as PaymentMethodEnum;
 			payment.overdue = faker.datatype.boolean();
 			payment.organization = organization;
 			payment.tenant = tenant;
 			payment.tags = _.chain(tags)
-					.shuffle()
-					.take(faker.datatype.number({ min: 1, max: 3 }))
-					.values()
-					.value();
+				.shuffle()
+				.take(faker.number.int({ min: 1, max: 3 }))
+				.values()
+				.value();
 			payment.organizationContact = invoice.toContact;
-			payment.employeeId = faker.random.arrayElement(employees).id;
-			payment.recordedBy = faker.random.arrayElement(users);
+			payment.employeeId = faker.helpers.arrayElement(employees).id;
+			payment.recordedBy = faker.helpers.arrayElement(users);
 
-			const project = faker.random.arrayElement(projects);
+			const project = faker.helpers.arrayElement(projects);
 			if (project) {
 				payment.projectId = project.id;
 			}
@@ -124,20 +124,20 @@ export const createRandomPayment = async (
 				const payment = new Payment();
 				payment.invoice = invoice;
 				payment.paymentDate = moment(
-					faker.date.between(
-						new Date(),
-						moment(new Date()).add(1, 'month').toDate()
-					)
+					faker.date.between({
+						from: new Date(),
+						to: moment(new Date()).add(1, 'month').toDate()
+					})
 				)
-				.startOf('day')
-				.toDate();
-				payment.amount = faker.datatype.number({
+					.startOf('day')
+					.toDate();
+				payment.amount = faker.number.int({
 					min: 500,
 					max: 5000
 				});
-				payment.note = faker.name.jobDescriptor();
+				payment.note = faker.person.jobDescriptor();
 				payment.currency = organization.currency || env.defaultCurrency;
-				payment.paymentMethod = faker.random.arrayElement(
+				payment.paymentMethod = faker.helpers.arrayElement(
 					Object.keys(PaymentMethodEnum)
 				) as PaymentMethodEnum;
 				payment.overdue = faker.datatype.boolean();
@@ -145,14 +145,14 @@ export const createRandomPayment = async (
 				payment.tenant = tenant;
 				payment.tags = _.chain(tags)
 					.shuffle()
-					.take(faker.datatype.number({ min: 1, max: 3 }))
+					.take(faker.number.int({ min: 1, max: 3 }))
 					.values()
 					.value();
 				payment.organizationContact = invoice.toContact;
-				payment.employeeId = faker.random.arrayElement(tenantEmployees).id;
-				payment.recordedBy = faker.random.arrayElement(users);
+				payment.employeeId = faker.helpers.arrayElement(tenantEmployees).id;
+				payment.recordedBy = faker.helpers.arrayElement(users);
 
-				const project = faker.random.arrayElement(projects);
+				const project = faker.helpers.arrayElement(projects);
 				if (project) {
 					payment.projectId = project.id;
 				}

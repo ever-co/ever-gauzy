@@ -31,7 +31,8 @@ import {
 	IEmployee,
 	IDateRangePicker,
 	ITimeLogFilters,
-	IUser
+	IUser,
+	ITimeLogTodayFilters
 } from '@gauzy/contracts';
 import { BehaviorSubject, combineLatest, firstValueFrom, of, Subject, Subscription, switchMap, timer } from 'rxjs';
 import { debounceTime, filter, tap } from 'rxjs/operators';
@@ -146,7 +147,7 @@ export class TimeTrackingComponent extends TranslationBaseComponent
 		private readonly changeRef: ChangeDetectorRef,
 		private readonly _router: Router,
 		private readonly employeesService: EmployeesService,
-    	private readonly projectService: OrganizationProjectsService,
+		private readonly projectService: OrganizationProjectsService,
 		private readonly toastrService: ToastrService,
 		private readonly widgetService: WidgetService,
 		private readonly windowService: WindowService
@@ -267,11 +268,13 @@ export class TimeTrackingComponent extends TranslationBaseComponent
 		const { tenantId } = this.store.user;
 		const { startDate, endDate } = getAdjustDateRangeFutureAllowed(selectedDateRange);
 
-		const request: ITimeLogFilters = {
+		const request: ITimeLogFilters & ITimeLogTodayFilters = {
 			tenantId,
 			organizationId,
-			startDate: toUTC(startDate).format('YYYY-MM-DD HH:mm'),
-			endDate: toUTC(endDate).format('YYYY-MM-DD HH:mm')
+			todayStart: toUTC(moment().startOf('day')).format('YYYY-MM-DD HH:mm:ss'),
+			todayEnd: toUTC(moment().endOf('day')).format('YYYY-MM-DD HH:mm:ss'),
+			startDate: toUTC(startDate).format('YYYY-MM-DD HH:mm:ss'),
+			endDate: toUTC(endDate).format('YYYY-MM-DD HH:mm:ss')
 		};
 
 		if (isNotEmpty(employeeIds)) { request['employeeIds'] = employeeIds; }
@@ -543,7 +546,7 @@ export class TimeTrackingComponent extends TranslationBaseComponent
 			return;
 		}
 		try {
-			const people  = await firstValueFrom(this.employeesService.getEmployeeById(
+			const people = await firstValueFrom(this.employeesService.getEmployeeById(
 				employee.id,
 				['user']
 			));
@@ -613,7 +616,7 @@ export class TimeTrackingComponent extends TranslationBaseComponent
 	 * Get employee counts
 	 *
 	 */
-  	private async loadEmployeesCount() {
+	private async loadEmployeesCount() {
 		if (this.user && this.user.employeeId) {
 			return;
 		}
@@ -631,7 +634,7 @@ export class TimeTrackingComponent extends TranslationBaseComponent
 			.subscribe();
 	}
 
-  	private async loadProjectsCount() {
+	private async loadProjectsCount() {
 		if (!this.organization) {
 			return;
 		}
@@ -723,7 +726,7 @@ export class TimeTrackingComponent extends TranslationBaseComponent
 		this.widgetService.save();
 	}
 
-	public undo(isWindow?: boolean){
+	public undo(isWindow?: boolean) {
 		isWindow
 			? this.windowService.undoDrag()
 			: this.widgetService.undoDrag();

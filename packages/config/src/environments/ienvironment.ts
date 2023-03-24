@@ -7,6 +7,7 @@ import {
 	IAppIntegrationConfig,
 	IAuth0Config,
 	IAwsConfig,
+	ICloudinaryConfig,
 	IFacebookConfig,
 	IFiverrConfig,
 	IGithubConfig,
@@ -84,6 +85,9 @@ export interface IEnvironment {
 	 */
 	AUTHENTICATION_CODE_EXPIRATION_TIME?: number;
 
+	/** Organization Team Join Request Configuration */
+	TEAM_JOIN_REQUEST_EXPIRATION_TIME?: number;
+
 	/**
 	 * Throttler (Rate Limiting) Options
 	 */
@@ -93,6 +97,7 @@ export interface IEnvironment {
 	fileSystem: FileSystem;
 	awsConfig?: IAwsConfig;
 	wasabiConfig?: IWasabiConfig;
+	cloudinaryConfig?: ICloudinaryConfig;
 
 	facebookConfig: IFacebookConfig;
 	googleConfig: IGoogleConfig;
@@ -136,4 +141,9 @@ export interface IEnvironment {
 
 	demo: boolean;
 	demoCredentialConfig?: IDemoCredential;
+
+	/**
+	 * Email Reset
+	 */
+	EMAIL_RESET_EXPIRATION_TIME?: number;
 }

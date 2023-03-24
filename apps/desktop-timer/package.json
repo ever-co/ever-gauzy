@@ -62,6 +62,7 @@
 		"iconv": "^3.0.1",
 		"mac-screen-capture-permissions": "^2.0.0",
 		"moment": "^2.29.4",
+		"mysql": "^2.18.1",
 		"ngx-electron": "^2.2.0",
 		"node-fetch": "^2.6.7",
 		"node-notifier": "^8.0.0",
@@ -70,7 +71,7 @@
 		"rxjs": "^7.4.0",
 		"screenshot-desktop": "^1.12.7",
 		"sound-play": "1.1.0",
-		"sqlite3": "^5.1.2",
+		"sqlite3": "^5.1.5",
 		"squirrelly": "^8.0.8",
 		"twing": "^5.0.2",
 		"underscore": "^1.13.3"

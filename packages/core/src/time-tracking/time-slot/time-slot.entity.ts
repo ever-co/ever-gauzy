@@ -62,29 +62,29 @@ export class TimeSlot extends TenantOrganizationBaseEntity
 	keyboardPercentage?: number;
 	mousePercentage?: number;
 	/*
-    |--------------------------------------------------------------------------
-    | @ManyToOne
-    |--------------------------------------------------------------------------
-    */
+	|--------------------------------------------------------------------------
+	| @ManyToOne
+	|--------------------------------------------------------------------------
+	*/
 
 	/**
 	 * Employee
 	 */
-	@ApiProperty({ type: () => Employee })
-	@ManyToOne(() => Employee, (employee) => employee.timeSlots)
-	@JoinColumn()
+	@ManyToOne(() => Employee, (employee) => employee.timeSlots, {
+		onDelete: 'CASCADE'
+	})
 	employee?: IEmployee;
 
-	@ApiProperty({ type: () => String, readOnly: true })
+	@ApiProperty({ type: () => String })
 	@RelationId((it: TimeSlot) => it.employee)
 	@Column()
-	employeeId: string;
+	employeeId: IEmployee['id'];
 
 	/*
-    |--------------------------------------------------------------------------
-    | @OneToMany
-    |--------------------------------------------------------------------------
-    */
+	|--------------------------------------------------------------------------
+	| @OneToMany
+	|--------------------------------------------------------------------------
+	*/
 
 	/**
 	 * Screenshot
@@ -115,10 +115,10 @@ export class TimeSlot extends TenantOrganizationBaseEntity
 	timeSlotMinutes?: ITimeSlotMinute[];
 
 	/*
-    |--------------------------------------------------------------------------
-    | @ManyToMany
-    |--------------------------------------------------------------------------
-    */
+	|--------------------------------------------------------------------------
+	| @ManyToMany
+	|--------------------------------------------------------------------------
+	*/
 
 	/**
 	 * TimeLog

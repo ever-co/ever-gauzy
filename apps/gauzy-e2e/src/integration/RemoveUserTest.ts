@@ -1,10 +1,10 @@
 import * as loginPage from '../support/Base/pages/Login.po';
 import { LoginPageData } from '../support/Base/pagedata/LoginPageData';
 import * as removeUserPage from '../support/Base/pages/RemoveUser.po';
-import * as dashboradPage from '../support/Base/pages/Dashboard.po';
+import * as dashboardPage from '../support/Base/pages/Dashboard.po';
 import { CustomCommands } from '../support/commands';
 import * as addUserPage from '../support/Base/pages/AddUser.po';
-import { faker } from '@ever-co/faker';
+import { faker } from '@faker-js/faker';
 import { AddUserPageData } from '../support/Base/pagedata/AddUserPageData';
 
 let firstName = ' ';
@@ -16,14 +16,14 @@ let imgUrl = ' ';
 
 describe('Remove user test', () => {
 	before(() => {
-		firstName = faker.name.firstName();
-		lastName = faker.name.lastName();
+		firstName = faker.person.firstName();
+		lastName = faker.person.lastName();
 		username = faker.internet.userName();
 		email = faker.internet.email();
 		password = faker.internet.password();
 		imgUrl = faker.image.avatar();
 
-		CustomCommands.login(loginPage, LoginPageData, dashboradPage);
+		CustomCommands.login(loginPage, LoginPageData, dashboardPage);
 	});
 	it('Should be able to add new user', () => {
 		cy.visit('/#/pages/users');

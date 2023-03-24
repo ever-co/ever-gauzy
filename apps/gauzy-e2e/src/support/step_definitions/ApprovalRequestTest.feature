@@ -12,7 +12,7 @@ Feature: Approval request test
     Then User can see grid button
     And User cn click on second grid button to change view
     And User can see Add approval button
-    When User click on Add approval buton
+    When User click on Add approval button
     Then User can see name input field
     And User can enter value for name
     And User can see description input field

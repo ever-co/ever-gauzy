@@ -6,7 +6,7 @@ import {
 	IUser,
 	PayPeriodEnum
 } from '@gauzy/contracts';
-import { faker } from '@ever-co/faker';
+import { faker } from '@faker-js/faker';
 import { environment as env } from '@gauzy/config';
 import * as moment from 'moment';
 import { Employee } from './../core/entities/internal';
@@ -37,12 +37,12 @@ export const createDefaultEmployees = async (
 				.endWork
 		);
 		// TODO: check below value as its correct or not, and into frontend too
-		employee.payPeriod = faker.random.arrayElement(
+		employee.payPeriod = faker.helpers.arrayElement(
 			Object.keys(PayPeriodEnum)
 		);
-		employee.billRateValue = faker.datatype.number({ min: 15, max: 40 });
+		employee.billRateValue = faker.number.int({ min: 15, max: 40 });
 		employee.billRateCurrency = organization.currency || env.defaultCurrency;
-		employee.reWeeklyLimit = faker.datatype.number({ min: 10, max: 40 });
+		employee.reWeeklyLimit = faker.number.int({ min: 10, max: 40 });
 		employees.push(employee);
 	}
 	await insertEmployees(dataSource, employees);
@@ -69,12 +69,12 @@ export const createRandomEmployees = async (
 				employee.isActive = true;
 				employee.endWork = null;
 				employee.startedWorkOn = new Date(moment(faker.date.past()).format('YYYY-MM-DD hh:mm:ss'));
-				employee.payPeriod = faker.random.arrayElement(
+				employee.payPeriod = faker.helpers.arrayElement(
 					Object.keys(PayPeriodEnum)
 				);
-				employee.billRateValue = faker.datatype.number({ min: 15, max: 40 });
+				employee.billRateValue = faker.number.int({ min: 15, max: 40 });
 				employee.billRateCurrency = organization.currency || env.defaultCurrency;
-				employee.reWeeklyLimit = faker.datatype.number({ min: 10, max: 40 });
+				employee.reWeeklyLimit = faker.number.int({ min: 10, max: 40 });
 				employees.push(employee);
 			}
 			organizationEmployeesMap.set(organization, employees);

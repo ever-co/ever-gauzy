@@ -12,10 +12,12 @@ import {
 	IInvite,
 	IOrganizationTeam,
 	ICandidate,
-	IEmail
+	IEmail,
+	IImageAsset,
 } from '@gauzy/contracts';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Exclude } from 'class-transformer';
+import { IsOptional, IsUUID } from 'class-validator';
 import {
 	Column,
 	Entity,
@@ -32,6 +34,7 @@ import {
 	Candidate,
 	Email,
 	Employee,
+	ImageAsset,
 	Invite,
 	OrganizationTeam,
 	Role,
@@ -42,6 +45,7 @@ import {
 
 @Entity('user')
 export class User extends TenantBaseEntity implements IUser {
+
 	@ApiPropertyOptional({ type: () => String })
 	@Index()
 	@Column({ nullable: true })
@@ -71,6 +75,9 @@ export class User extends TenantBaseEntity implements IUser {
 	@Index({ unique: false })
 	@Column({ nullable: true })
 	username?: string;
+
+	@Column({ nullable: true })
+	timeZone?: string;
 
 	@ApiProperty({ type: () => String })
 	@Exclude({ toPlainOnly: true })
@@ -125,6 +132,7 @@ export class User extends TenantBaseEntity implements IUser {
 
 	name?: string;
 	employeeId?: string;
+	isEmailVerified?: boolean;
 
 	/*
 	|--------------------------------------------------------------------------
@@ -144,7 +152,28 @@ export class User extends TenantBaseEntity implements IUser {
 	@RelationId((it: User) => it.role)
 	@Index()
 	@Column({ nullable: true })
-	readonly roleId?: string;
+	roleId?: string;
+
+	/**
+	 * ImageAsset
+	 */
+	@ManyToOne(() => ImageAsset, {
+		/** Database cascade action on delete. */
+		onDelete: 'SET NULL',
+
+		/** Eager relations are always loaded automatically when relation's owner entity is loaded using find* methods. */
+		eager: true
+	})
+	@JoinColumn()
+	image?: IImageAsset;
+
+	@ApiPropertyOptional({ type: () => String })
+	@IsOptional()
+	@IsUUID()
+	@RelationId((it: User) => it.image)
+	@Index()
+	@Column({ nullable: true })
+	imageId?: IImageAsset['id'];
 
 	/*
 	|--------------------------------------------------------------------------
@@ -191,9 +220,13 @@ export class User extends TenantBaseEntity implements IUser {
 	 * UserOrganization
 	 */
 	@ApiProperty({ type: () => UserOrganization, isArray: true })
-	@OneToMany(() => UserOrganization, (userOrganization) => userOrganization.user, {
-		cascade: true
-	})
+	@OneToMany(
+		() => UserOrganization,
+		(userOrganization) => userOrganization.user,
+		{
+			cascade: true
+		}
+	)
 	@JoinColumn()
 	organizations?: IOrganization[];
 

@@ -3,7 +3,7 @@ import { LoginPageData } from '../../Base/pagedata/LoginPageData';
 import * as addExistingUserPage from '../../Base/pages/AddExistingUser.po';
 import * as dashboardPage from '../../Base/pages/Dashboard.po';
 import { CustomCommands } from '../../commands';
-import { faker } from '@ever-co/faker';
+import { faker } from '@faker-js/faker';
 import * as addUserPage from '../../Base/pages/AddUser.po';
 import { AddUserPageData } from '../../Base/pagedata/AddUserPageData';
 import * as editUserPage from '../../Base/pages/EditUser.po';
@@ -12,14 +12,14 @@ import { Given, Then, When, And } from 'cypress-cucumber-preprocessor/steps';
 
 const pageLoadTimeout = Cypress.config('pageLoadTimeout');
 
-let firstName = faker.name.firstName();
-let lastName = faker.name.lastName();
+let firstName = faker.person.firstName();
+let lastName = faker.person.lastName();
 let username = faker.internet.userName();
 let email = faker.internet.email();
 let password = faker.internet.password();
 let imgUrl = faker.image.avatar();
-let editFirstName = faker.name.firstName();
-let editLastName = faker.name.lastName();
+let editFirstName = faker.person.firstName();
+let editLastName = faker.person.lastName();
 
 // Login with email
 Given('Login with default credentials and visit Users page', () => {
@@ -104,6 +104,10 @@ Then('User creation will be confirmed with notification message', () => {
 	addUserPage.waitMessageToHide();
 });
 
+Then('User goes to the end of the user list', () => {
+	addUserPage.goToEndOfUserList();
+})
+
 And('Users table will be populated with new user', () => {
 	addUserPage.verifyUserExists(`${firstName} ${lastName}`);
 });
@@ -171,6 +175,10 @@ When('User click on save button', () => {
 Then('Notification message will appear', () => {
 	addUserPage.waitMessageToHide();
 });
+
+Then('User goes to the end of the user list', () => {
+	addUserPage.goToEndOfUserList();
+})
 
 And('User can verify that data was edited', () => {
 	addUserPage.verifyUserExists(`${editFirstName} ${editLastName}`);

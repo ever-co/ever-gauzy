@@ -1,19 +1,17 @@
-<nb-layout class="p-0 m-0">
-	<nb-layout-column class="top-bottom-space p-0 m-0">
-		<nb-card class="no-padding p-0 m-0">
-			<nb-card-body class="notification no-padding p-0 m-0">
-				<div class="notification-header">
-					<div class="notification-header-title">
-						<img class="icon-logo" src="./assets/icons/icon@4x.png" />
-						<div class="title-window">Screen Capture</div>
-					</div>
-					<div class="notification-header-note">
-						<span class="hidden-long-text">{{ note }}</span>
-					</div>
+<nb-layout class="h-100 p-0 m-0">
+	<nb-layout-column class="h-100 p-0 m-0">
+		<nb-card class="notification p-0 m-0">
+			<nb-card-header class="notification-header">
+				<div class="notification-header-title">
+					<img class="icon-logo" src="./assets/icons/icon@4x.png" />
+					<div class="title-window">Screen Capture</div>
 				</div>
-				<div class="notification-body">
-					<img class="screen-capture-img" [src]="screenCaptureUrl" />
+				<div class="notification-header-note">
+					<span class="hidden-long-text">{{ note }}</span>
 				</div>
+			</nb-card-header>
+			<nb-card-body class="notification-body">
+				<img class="screen-capture-img" [src]="screenCaptureUrl" />
 			</nb-card-body>
 		</nb-card>
 	</nb-layout-column>

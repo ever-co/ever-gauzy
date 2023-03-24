@@ -1,22 +1,26 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import {
-	BaseEntity,
-	FeatureOrganization,
-	ImportRecord,
-	Organization,
-	RolePermission
-} from '../core/entities/internal';
-import { Entity, Column, Index, OneToMany, JoinColumn } from 'typeorm';
+import { Entity, Column, Index, OneToMany, JoinColumn, ManyToOne, RelationId } from 'typeorm';
+import { IsOptional, IsUUID } from 'class-validator';
 import {
 	ITenant,
 	IOrganization,
 	IRolePermission,
 	IFeatureOrganization,
-	IImportRecord
+	IImportRecord,
+	IImageAsset
 } from '@gauzy/contracts';
+import {
+	BaseEntity,
+	FeatureOrganization,
+	ImageAsset,
+	ImportRecord,
+	Organization,
+	RolePermission
+} from '../core/entities/internal';
 
 @Entity('tenant')
 export class Tenant extends BaseEntity implements ITenant {
+
 	@ApiProperty({ type: () => String })
 	@Index()
 	@Column()
@@ -27,10 +31,37 @@ export class Tenant extends BaseEntity implements ITenant {
 	logo?: string;
 
 	/*
-    |--------------------------------------------------------------------------
-    | @OneToMany
-    |--------------------------------------------------------------------------
-    */
+	|--------------------------------------------------------------------------
+	| @ManyToOne
+	|--------------------------------------------------------------------------
+	*/
+
+	/**
+	 * ImageAsset
+	 */
+	@ManyToOne(() => ImageAsset, {
+		/** Database cascade action on delete. */
+		onDelete: 'SET NULL',
+
+		/** Eager relations are always loaded automatically when relation's owner entity is loaded using find* methods. */
+		eager: true
+	})
+	@JoinColumn()
+	image?: ImageAsset;
+
+	@ApiPropertyOptional({ type: () => String })
+	@IsOptional()
+	@IsUUID()
+	@RelationId((it: Tenant) => it.image)
+	@Index()
+	@Column({ nullable: true })
+	imageId?: IImageAsset['id'];
+
+	/*
+	|--------------------------------------------------------------------------
+	| @OneToMany
+	|--------------------------------------------------------------------------
+	*/
 	@ApiProperty({ type: () => Organization })
 	@OneToMany(() => Organization, (organization) => organization.tenant, {
 		cascade: true

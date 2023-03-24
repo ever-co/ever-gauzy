@@ -377,12 +377,12 @@ export class UsersComponent extends PaginationFilterBaseComponent
 				map((organizations: IUserOrganization[]) =>
 					organizations
 						.filter(
-							(organizaiton: IUserOrganization) =>
-								organizaiton.isActive
+							(organization: IUserOrganization) =>
+								organization.isActive
 						)
 						.filter(
-							(organizaiton: IUserOrganization) =>
-								organizaiton.user.role
+							(organization: IUserOrganization) =>
+								organization.user.role
 						)
 				),
 				tap((users: IUserOrganization[]) =>

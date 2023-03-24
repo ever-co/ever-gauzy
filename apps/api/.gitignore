@@ -1,12 +1,9 @@
-public/features/*.png
-public/reports/*.png
-public/screenshots/**/*.jpg
-public/screenshots/**/*.png
-public/invoices/pdf/*.pdf
+# Ignore everything in this public directory
+public/**/*.*
 
-# Ignore Import/Export Path
-public/import/
-public/export/
+# Except these (.gitkeep) files
+!public/.gitkeep
+!public/**/.gitkeep
 
 data/*
 report.*.json

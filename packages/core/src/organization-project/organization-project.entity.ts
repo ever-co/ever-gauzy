@@ -9,11 +9,14 @@ import {
 	RelationId,
 	JoinTable,
 } from 'typeorm';
+import { ApiPropertyOptional } from '@nestjs/swagger';
+import { IsOptional, IsUUID } from 'class-validator';
 import {
 	CurrenciesEnum,
 	IActivity,
 	IEmployee,
 	IExpense,
+	IImageAsset,
 	IInvoiceItem,
 	IOrganizationContact,
 	IOrganizationProject,
@@ -34,6 +37,7 @@ import {
 	Activity,
 	Employee,
 	Expense,
+	ImageAsset,
 	InvoiceItem,
 	OrganizationContact,
 	OrganizationSprint,
@@ -118,10 +122,10 @@ export class OrganizationProject extends TenantOrganizationBaseEntity
 	imageUrl?: string;
 
 	/*
-    |--------------------------------------------------------------------------
-    | @ManyToOne
-    |--------------------------------------------------------------------------
-    */
+	|--------------------------------------------------------------------------
+	| @ManyToOne
+	|--------------------------------------------------------------------------
+	*/
 
 	/**
 	 * Organization Contact
@@ -139,11 +143,32 @@ export class OrganizationProject extends TenantOrganizationBaseEntity
 	@Column({ nullable: true })
 	organizationContactId?: IOrganizationContact['id'];
 
+	/**
+	 * ImageAsset
+	 */
+	@ManyToOne(() => ImageAsset, {
+		/** Database cascade action on delete. */
+		onDelete: 'SET NULL',
+
+		/** Eager relations are always loaded automatically when relation's owner entity is loaded using find* methods. */
+		eager: true
+	})
+	@JoinColumn()
+	image?: IImageAsset;
+
+	@ApiPropertyOptional({ type: () => String })
+	@IsOptional()
+	@IsUUID()
+	@RelationId((it: OrganizationProject) => it.image)
+	@Index()
+	@Column({ nullable: true })
+	imageId?: IImageAsset['id'];
+
 	/*
-    |--------------------------------------------------------------------------
-    | @OneToMany
-    |--------------------------------------------------------------------------
-    */
+	|--------------------------------------------------------------------------
+	| @OneToMany
+	|--------------------------------------------------------------------------
+	*/
 	// Organization Tasks
 	@OneToMany(() => Task, (it) => it.project, {
 		onDelete: 'SET NULL',
@@ -205,10 +230,10 @@ export class OrganizationProject extends TenantOrganizationBaseEntity
 	sizes?: ITaskSize[];
 
 	/*
-    |--------------------------------------------------------------------------
-    | @ManyToMany
-    |--------------------------------------------------------------------------
-    */
+	|--------------------------------------------------------------------------
+	| @ManyToMany
+	|--------------------------------------------------------------------------
+	*/
 	// Organization Project Tags
 	@ManyToMany(() => Tag, (tag) => tag.organizationProjects, {
 		onUpdate: 'CASCADE',

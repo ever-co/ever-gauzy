@@ -268,6 +268,7 @@
 		"EMAIL": "Eлектронна поща",
 		"LABELS": {
 			"NAME": "Име",
+			"PHONE_NUMBER": "телефонен номер",
 			"WEBSITE": "Website",
 			"FIRST_NAME": "Име (незадължително)",
 			"LAST_NAME": "Фамилия (незадължително)",
@@ -414,6 +415,7 @@
 		},
 		"PLACEHOLDERS": {
 			"NAME": "Име",
+			"PHONE_NUMBER": "телефонен номер",
 			"DEFAULT": "Select Default",
 			"FIRST_NAME": "Име",
 			"LAST_NAME": "Фамилия",
@@ -1088,7 +1090,7 @@
 			"MANUAL_ACTIVITY": "No records found. Please select date range, employee or project.",
 			"AMOUNT_OWED": "No Amount Owed",
 			"WEEKLY_TIME_AND_ACTIVITY": "You have not any tracked time and activity yet for these day's.",
-			"DAILY_TIME_AND_ACTIVITY": "You have not any tracked time and activity yet for this day.",
+			"DAILY_TIME_AND_ACTIVITY": "There is no time and activity tracked yet for this day. Please use the <a href=\"https://web.gauzy.co/downloads\" rel=\"noopener\" target=\"_blank\">Gauzy Desktop Timer App</a>.",
 			"PROJECT_BUDGET": "You have not created any project with budget.",
 			"CLIENT_BUDGET": "You have not created any client with budget."
 		}
@@ -1313,7 +1315,9 @@
 			"TOTAL_HOURS": "Total Hours",
 			"RATE": "Почасово",
 			"VETTED": "Vetted",
-			"HR": "hr"
+			"HR": "hr",
+			"SETTINGS": "Настройки",
+			"GENERAL_SETTINGS": "Основни настройки"
 		},
 		"ADD_EMPLOYEES": {
 			"STEP_1": "Step 1",
@@ -1867,7 +1871,10 @@
 			"ORG_CANDIDATES_INTERVIEW_EDIT": "Create/Edit Interview",
 			"ORG_CANDIDATES_INTERVIEW_VIEW": "View Interview",
 			"ORG_INVENTORY_PRODUCT_EDIT": "Management Product",
-			"ORG_TAGS_EDIT": "Create/Edit/Delete Tags",
+			"ORG_TAGS_ADD": "Create Tags",
+			"ORG_TAGS_VIEW": "View Tags",
+			"ORG_TAGS_EDIT": "Edit Tags",
+			"ORG_TAGS_DELETE": "Delete Tags",
 			"ORG_CANDIDATES_FEEDBACK_EDIT": "Create/Edit/Delete Candidate Feedback",
 			"ALL_ORG_VIEW": "Виж всички организации",
 			"ALL_ORG_EDIT": "Създай/Редактирай/Изтрии всички организации",
@@ -1927,6 +1934,8 @@
 			"ORG_TEAM_VIEW": "View Teams",
 			"ORG_TEAM_EDIT": "Edit Teams",
 			"ORG_TEAM_DELETE": "Delete Teams",
+			"ORG_TEAM_JOIN_REQUEST_VIEW": "Преглед на заявките за присъединяване към екипи",
+			"ORG_TEAM_JOIN_REQUEST_EDIT": "Изтриване на заявки за присъединяване към екипи",
 			"ORG_CONTRACT_EDIT": "Create/Edit Contracts",
 			"TIME_TRACKER": "Access Time Tracker",
 			"TENANT_ADD_EXISTING_USER": "Tenant Add User To Organization",
@@ -3811,7 +3820,8 @@
 			"candidate-schedule-interview": "Candidate Interview Schedule",
 			"interviewer-interview-schedule": "Interviewer Schedule",
 			"employee-join": "Employee Join",
-			"TEMPLATE_NAMES": "Template Names"
+			"email-reset": "Email Reset",
+			"organization-team-join-request": "Organization team join request"
 		},
 		"HTML_EDITOR": "HTML Editor"
 	},
@@ -3861,7 +3871,7 @@
 		"DELETE_CONFIRM": "Alert"
 	},
 	"SETTINGS_FILE_STORAGE": {
-		"FILE_PROVIDER": "File provider",
+		"FILE_PROVIDER": "Доставчик на файлове",
 		"S3": {
 			"HEADER": "S3 Configuration",
 			"LABELS": {

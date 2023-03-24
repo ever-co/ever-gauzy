@@ -6,7 +6,7 @@ import {
 	ViewChild
 } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpStatusCode } from '@angular/common/http';
 import {
 	IEmployee,
 	IOrganization,
@@ -178,7 +178,7 @@ export class TeamsComponent extends PaginationFilterBaseComponent
 			.subscribe();
 	}
 
-	ngOnDestroy() {}
+	ngOnDestroy() { }
 
 	setView() {
 		this.viewComponentName = ComponentEnum.TEAMS;
@@ -251,6 +251,10 @@ export class TeamsComponent extends PaginationFilterBaseComponent
 	}
 
 	async removeTeam(id?: string, name?: string) {
+		if (!this.organization) {
+			return;
+		}
+
 		const result = await firstValueFrom(
 			this.dialogService.open(DeleteConfirmationComponent, {
 				context: {
@@ -261,20 +265,25 @@ export class TeamsComponent extends PaginationFilterBaseComponent
 
 		if (result) {
 			try {
-				await this.organizationTeamsService.delete(
-					this.selectedTeam ? this.selectedTeam.id : id
-				);
+				const { id: organizationId, tenantId } = this.organization;
+				const { id, name } = this.selectedTeam;
 
-				this.toastrService.success(
-					'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_TEAM.REMOVE_TEAM',
-					{
-						name: this.selectedTeam ? this.selectedTeam.name : name
-					}
-				);
-				this._refresh$.next(true);
-				this.teams$.next(true);
+				const response = await this.organizationTeamsService.delete(id, {
+					organizationId,
+					tenantId
+				});
+				if ('status' in response && response.status === HttpStatusCode.Forbidden) {
+					this.toastrService.error(response);
+				} else {
+					this.toastrService.success('NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_TEAM.REMOVE_TEAM', {
+						name
+					});
+				}
 			} catch (error) {
 				console.error(error);
+			} finally {
+				this._refresh$.next(true);
+				this.teams$.next(true);
 			}
 		}
 	}
@@ -338,11 +347,11 @@ export class TeamsComponent extends PaginationFilterBaseComponent
 				organizationId,
 				tenantId,
 				...(this.selectedEmployeeId
-					?  {
-						 	members: {
-								employeeId: this.selectedEmployeeId
-							}
-					  	}
+					? {
+						members: {
+							employeeId: this.selectedEmployeeId
+						}
+					}
 					: {}),
 				...(this.filters.where ? this.filters.where : {})
 			},

@@ -6,5 +6,6 @@ export * from './edit-employee-main/edit-employee-main.component';
 export * from './edit-employee-networks/edit-employee-networks.component';
 export * from './edit-employee-projects/edit-employee-projects.component';
 export * from './edit-employee-rate/edit-employee-rate.component';
+export * from './edit-employee-settings/edit-employee-other-settings.component';
 
 export * from './edit-employee-profile.component';

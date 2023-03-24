@@ -7,19 +7,19 @@ import * as logoutPage from '../../Base/pages/Logout.po';
 import { CustomCommands } from '../../commands';
 import * as addUserPage from '../../Base/pages/AddUser.po';
 import { AddUserPageData } from '../../Base/pagedata/AddUserPageData';
-import { faker } from '@ever-co/faker';
+import { faker } from '@faker-js/faker';
 
 import { Given, Then, When, And } from 'cypress-cucumber-preprocessor/steps';
 
 const pageLoadTimeout = Cypress.config('pageLoadTimeout');
 
-let firstName = faker.name.firstName();
-let lastName = faker.name.lastName();
+let firstName = faker.person.firstName();
+let lastName = faker.person.lastName();
 let username = faker.internet.userName();
 let email = faker.internet.email();
 let password = faker.internet.password();
-let editFirstName = faker.name.firstName();
-let editLastName = faker.name.lastName();
+let editFirstName = faker.person.firstName();
+let editLastName = faker.person.lastName();
 let imgUrl = faker.image.avatar();
 
 // Login with email

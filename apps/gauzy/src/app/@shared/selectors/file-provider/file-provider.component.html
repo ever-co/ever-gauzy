@@ -1,0 +1,20 @@
+<ng-template [ngIf]="fileStorageProviders.length > 0">
+    <div class="form-group">
+        <label class="label">
+            {{ 'SETTINGS_FILE_STORAGE.FILE_PROVIDER' | translate }}
+        </label>
+        <nb-select
+            class="d-block"
+            size="medium"
+            [(ngModel)]="provider"
+            (selectedChange)="onSelectionChange($event)"
+        >
+            <nb-option
+                *ngFor="let providerName of fileStorageProviders"
+                [value]="providerName.value | uppercase"
+            >
+                {{ providerName?.label | titlecase }}
+            </nb-option>
+        </nb-select>
+    </div>
+</ng-template>

@@ -1,7 +1,7 @@
 import * as loginPage from '../../Base/pages/Login.po';
 import { LoginPageData } from '../../Base/pagedata/LoginPageData';
 import * as manageEmployeesPage from '../../Base/pages/ManageEmployees.po';
-import { faker } from '@ever-co/faker';
+import { faker } from '@faker-js/faker';
 import { ManageEmployeesPageData } from '../../Base/pagedata/ManageEmployeesPageData';
 import * as dashboardPage from '../../Base/pages/Dashboard.po';
 import * as organizationProjectsPage from '../../Base/pages/OrganizationProjects.po';
@@ -18,8 +18,8 @@ const pageLoadTimeout = Cypress.config('pageLoadTimeout');
 
 let email = faker.internet.email();
 let secEmail = faker.internet.email();
-let firstName = faker.name.firstName();
-let lastName = faker.name.lastName();
+let firstName = faker.person.firstName();
+let lastName = faker.person.lastName();
 let username = faker.internet.userName();
 let password = faker.internet.password();
 let employeeEmail = faker.internet.email();
@@ -178,7 +178,7 @@ And('User can see tags dropdown', () => {
 });
 
 When('User click on tags dropdown', () => {
-	manageEmployeesPage.clickTagsDropdwon();
+	manageEmployeesPage.clickTagsDropdown();
 });
 
 Then('User can select tag from dropdown options', () => {
@@ -276,7 +276,7 @@ And('User can see preferred language dropdown', () => {
 });
 
 When('User click on preferred language dropdown', () => {
-	manageEmployeesPage.clickpreferredLanguageDropdown();
+	manageEmployeesPage.clickPreferredLanguageDropdown();
 });
 
 Then('User can select language from dropdown options', () => {

@@ -1,6 +1,6 @@
 import * as loginPage from '../../Base/pages/Login.po';
 import { LoginPageData } from '../../Base/pagedata/LoginPageData';
-import { faker } from '@ever-co/faker';
+import { faker } from '@faker-js/faker';
 import * as expensesPage from '../../Base/pages/Expenses.po';
 import { ExpensePageData } from '../../Base/pagedata/ExpensesPageData';
 import * as dashboardPage from '../../Base/pages/Dashboard.po';
@@ -17,8 +17,8 @@ import { Given, Then, When, And } from 'cypress-cucumber-preprocessor/steps';
 
 const pageLoadTimeout = Cypress.config('pageLoadTimeout');
 
-let firstName = faker.name.firstName();
-let lastName = faker.name.lastName();
+let firstName = faker.person.firstName();
+let lastName = faker.person.lastName();
 let username = faker.internet.userName();
 let password = faker.internet.password();
 let employeeEmail = faker.internet.email();
@@ -95,7 +95,7 @@ When('User click on employee dropdown', () => {
 });
 
 Then('User can select employee from dropdown options', () => {
-	expensesPage.selectEmployeeFromDrodpwon(1);
+	expensesPage.selectEmployeeFromDropdown(1);
 });
 
 And('User can see category input field', () => {
@@ -164,7 +164,7 @@ And('User can see tags dropdown', () => {
 });
 
 When('User click on tags dropdown', () => {
-	expensesPage.clickTagsDropdwon();
+	expensesPage.clickTagsDropdown();
 });
 
 Then('User can select tag from dropdown options', () => {
@@ -407,21 +407,21 @@ And('User can see category tags dropdown', () => {
 });
 
 When('User click on category tags dropdown', () => {
-	expensesPage.clickTagsDropdwon();
+	expensesPage.clickTagsDropdown();
 });
 
 Then('User can select category tag from dropdown options', () => {
 	expensesPage.selectTagFromDropdown(0);
-	expensesPage.categorieCardVisible();
+	expensesPage.categoryCardVisible();
 	expensesPage.clickKeyboardButtonByKeyCode(9);
 });
 
 And('User can see save category button', () => {
-	expensesPage.saveCategorieButtonVisible();
+	expensesPage.SaveCategoryButtonVisible();
 });
 
 When('User click on save category button', () => {
-	expensesPage.clickSaveCategorieButton();
+	expensesPage.clickSaveCategoryButton();
 });
 
 Then('User can verify category was created', () => {

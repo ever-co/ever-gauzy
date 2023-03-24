@@ -10,6 +10,7 @@ import {
 	Index,
 } from 'typeorm';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { IsArray, IsBoolean, IsNotEmpty, IsNumber, IsObject, IsOptional, IsString, IsUUID } from 'class-validator';
 import {
 	IActivity,
 	IEmployee,
@@ -21,6 +22,8 @@ import {
 	ITask,
 	ITimeLog,
 	IUser,
+	TaskPriorityEnum,
+	TaskSizeEnum,
 	TaskStatusEnum,
 } from '@gauzy/contracts';
 import {
@@ -38,53 +41,107 @@ import {
 
 @Entity('task')
 @Index('taskNumber', ['projectId', 'number'], { unique: true })
-export class Task extends TenantOrganizationBaseEntity implements ITask {
-	@ApiProperty({ type: () => Number })
+export class Task extends TenantOrganizationBaseEntity
+	implements ITask {
+
 	@Column({ nullable: true })
 	number?: number;
 
-	@ApiProperty({ type: () => String })
 	@Column({ nullable: true })
 	prefix?: string;
 
 	@ApiProperty({ type: () => String })
+	@IsNotEmpty()
+	@IsString()
 	@Column()
 	title: string;
 
-	@ApiProperty({ type: () => String })
+	@ApiPropertyOptional({ type: () => String })
+	@IsOptional()
+	@IsString()
 	@Column({ nullable: true })
 	description?: string;
 
 	@ApiProperty({ type: () => String })
+	@IsNotEmpty()
+	@IsString()
 	@Column({ nullable: true })
 	status?: TaskStatusEnum;
 
-	@ApiProperty({ type: () => Number })
+	@ApiPropertyOptional({ type: () => String })
+	@IsOptional()
+	@IsString()
+	@Column({ nullable: true })
+	priority?: TaskPriorityEnum;
+
+	@ApiPropertyOptional({ type: () => String })
+	@IsOptional()
+	@IsString()
+	@Column({ nullable: true })
+	size?: TaskSizeEnum;
+
+	@ApiPropertyOptional({ type: () => Number })
+	@IsOptional()
+	@IsNumber()
 	@Column({ nullable: true })
 	estimate?: number;
 
-	@ApiProperty({ type: () => Date })
+	@ApiPropertyOptional({ type: () => Date })
+	@IsOptional()
+	@IsString()
 	@Column({ nullable: true })
 	dueDate?: Date;
 
+	/**
+	 * task privacy should be boolean true/false
+	 */
+	@ApiPropertyOptional({ type: () => Boolean })
+	@IsOptional()
+	@IsBoolean()
+	@Column({ nullable: true, default: true })
+	public?: boolean;
+
+	@ApiPropertyOptional({ type: () => Date })
+	@IsOptional()
+	@Column({ nullable: true })
+	startDate?: Date;
+
+	@ApiPropertyOptional({ type: () => Date })
+	@IsOptional()
+	@Column({ nullable: true })
+	resolvedAt?: Date;
+
+	@ApiPropertyOptional({ type: () => String })
+	@IsOptional()
+	@IsString()
+	@Column({ nullable: true })
+	version?: string;
+
+	/**
+	 * Additional exposed fields
+	 */
 	taskNumber?: string;
 
 	/*
-    |--------------------------------------------------------------------------
-    | @ManyToOne
-    |--------------------------------------------------------------------------
-    */
+	|--------------------------------------------------------------------------
+	| @ManyToOne
+	|--------------------------------------------------------------------------
+	*/
 	/**
 	 * Organization Project
 	 */
-	@ApiProperty({ type: () => OrganizationProject })
+	@ApiPropertyOptional({ type: () => Object })
+	@IsOptional()
+	@IsObject()
 	@ManyToOne(() => OrganizationProject, (it) => it.tasks, {
 		nullable: true,
 		onDelete: 'CASCADE',
 	})
 	project?: IOrganizationProject;
 
-	@ApiProperty({ type: () => String, readOnly: true })
+	@ApiPropertyOptional({ type: () => String })
+	@IsOptional()
+	@IsUUID()
 	@RelationId((it: Task) => it.project)
 	@Index()
 	@Column({ nullable: true })
@@ -93,7 +150,6 @@ export class Task extends TenantOrganizationBaseEntity implements ITask {
 	/**
 	 * Creator
 	 */
-	@ApiProperty({ type: () => User })
 	@ManyToOne(() => User, {
 		nullable: true,
 		onDelete: 'CASCADE',
@@ -101,7 +157,6 @@ export class Task extends TenantOrganizationBaseEntity implements ITask {
 	@JoinColumn()
 	creator?: IUser;
 
-	@ApiProperty({ type: () => String, readOnly: true })
 	@RelationId((it: Task) => it.creator)
 	@Index()
 	@Column({ nullable: true })
@@ -110,26 +165,29 @@ export class Task extends TenantOrganizationBaseEntity implements ITask {
 	/**
 	 * Organization Sprint
 	 */
-	@ApiProperty({ type: () => OrganizationSprint })
+	@ApiPropertyOptional({ type: () => Object })
+	@IsOptional()
+	@IsObject()
 	@ManyToOne(() => OrganizationSprint, { onDelete: 'SET NULL' })
 	@JoinColumn()
 	organizationSprint?: IOrganizationSprint;
 
-	@ApiProperty({ type: () => String, readOnly: true })
+	@ApiPropertyOptional({ type: () => String })
+	@IsOptional()
+	@IsUUID()
 	@RelationId((it: Task) => it.organizationSprint)
 	@Index()
 	@Column({ nullable: true })
 	organizationSprintId?: IOrganizationSprint['id'];
 
 	/*
-    |--------------------------------------------------------------------------
-    | @OneToMany
-    |--------------------------------------------------------------------------
-    */
+	|--------------------------------------------------------------------------
+	| @OneToMany
+	|--------------------------------------------------------------------------
+	*/
 	/**
 	 * InvoiceItem
 	 */
-	@ApiPropertyOptional({ type: () => InvoiceItem, isArray: true })
 	@OneToMany(() => InvoiceItem, (invoiceItem) => invoiceItem.task)
 	@JoinColumn()
 	invoiceItems?: IInvoiceItem[];
@@ -137,7 +195,6 @@ export class Task extends TenantOrganizationBaseEntity implements ITask {
 	/**
 	 * TimeLog
 	 */
-	@ApiPropertyOptional({ type: () => TimeLog, isArray: true })
 	@OneToMany(() => TimeLog, (timeLog) => timeLog.task)
 	@JoinColumn()
 	timeLogs?: ITimeLog[];
@@ -145,21 +202,22 @@ export class Task extends TenantOrganizationBaseEntity implements ITask {
 	/**
 	 * Activity
 	 */
-	@ApiPropertyOptional({ type: () => Activity, isArray: true })
 	@OneToMany(() => Activity, (activity) => activity.task)
 	@JoinColumn()
 	activities?: IActivity[];
 
 	/*
-    |--------------------------------------------------------------------------
-    | @ManyToMany
-    |--------------------------------------------------------------------------
-    */
+	|--------------------------------------------------------------------------
+	| @ManyToMany
+	|--------------------------------------------------------------------------
+	*/
 
 	/**
 	 * Tags
 	 */
-	@ApiProperty({ type: () => Tag })
+	@ApiPropertyOptional({ type: () => Array, isArray: true })
+	@IsOptional()
+	@IsArray()
 	@ManyToMany(() => Tag, (tag) => tag.tasks, {
 		onUpdate: 'CASCADE',
 		onDelete: 'CASCADE',
@@ -172,7 +230,9 @@ export class Task extends TenantOrganizationBaseEntity implements ITask {
 	/**
 	 * Members
 	 */
-	@ApiProperty({ type: () => Employee })
+	@ApiPropertyOptional({ type: () => Array, isArray: true })
+	@IsOptional()
+	@IsArray()
 	@ManyToMany(() => Employee, (employee) => employee.tasks, {
 		onUpdate: 'CASCADE',
 		onDelete: 'CASCADE',
@@ -185,7 +245,9 @@ export class Task extends TenantOrganizationBaseEntity implements ITask {
 	/**
 	 * OrganizationTeam
 	 */
-	@ApiProperty({ type: () => OrganizationTeam })
+	@ApiPropertyOptional({ type: () => Array, isArray: true })
+	@IsOptional()
+	@IsArray()
 	@ManyToMany(() => OrganizationTeam, (team) => team.tasks, {
 		onUpdate: 'CASCADE',
 		onDelete: 'CASCADE',

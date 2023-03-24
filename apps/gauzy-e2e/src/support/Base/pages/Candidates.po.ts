@@ -140,11 +140,11 @@ export const clickAddTagsDropdown = () => {
 	clickButton(CandidatesPage.addTagsDropdownCss);
 };
 
-export const selectTagsFromDrodpwon = (index) => {
+export const selectTagsFromDropdown = (index) => {
 	clickButtonByIndex(CandidatesPage.tagsDropdownOption, index);
 };
 
-export const imageInputvisible = () => {
+export const imageInputVisible = () => {
 	verifyElementIsVisible(CandidatesPage.imageInputCss);
 };
 
@@ -324,19 +324,19 @@ export const clickSaveBillRateButton = () => {
 	clickButton(CandidatesPage.saveActionButtonCss);
 };
 
-export const experienseButtonVisible = () => {
-	verifyElementIsVisible(CandidatesPage.experienseButtonCss);
+export const experienceButtonVisible = () => {
+	verifyElementIsVisible(CandidatesPage.experienceButtonCss);
 };
 
-export const clickExperienseButton = () => {
-	clickButton(CandidatesPage.experienseButtonCss);
+export const clickExperienceButton = () => {
+	clickButton(CandidatesPage.experienceButtonCss);
 };
 
-export const addExperienseButtonVisible = () => {
+export const addExperienceButtonVisible = () => {
 	verifyElementIsVisible(CandidatesPage.addExperienceButtonCss);
 };
 
-export const clickAddExperienseButton = () => {
+export const clickAddExperienceButton = () => {
 	clickButton(CandidatesPage.addExperienceButtonCss);
 };
 
@@ -358,12 +358,12 @@ export const enterDegreeInputData = (data) => {
 	enterInput(CandidatesPage.degreeInputCss, data);
 };
 
-export const saveExperienseBittonVisible = () => {
-	verifyElementIsVisible(CandidatesPage.saveExperisnceButtonCss);
+export const saveExperienceButtonVisible = () => {
+	verifyElementIsVisible(CandidatesPage.saveExperienceButtonCss);
 };
 
-export const clickSaveExperienseButton = () => {
-	clickButton(CandidatesPage.saveExperisnceButtonCss);
+export const clickSaveExperienceButton = () => {
+	clickButton(CandidatesPage.saveExperienceButtonCss);
 };
 
 export const confirmActionButtonVisible = () => {

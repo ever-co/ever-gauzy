@@ -43,7 +43,7 @@ export const clickEmployeeDropdown = () => {
 	waitForDropdownToLoad(ProposalsPage.selectEmployeeDropdownOptionCss)
 };
 
-export const selectEmployeeFromDrodpwon = (index) => {
+export const selectEmployeeFromDropdown = (index) => {
 	clickButtonByIndex(ProposalsPage.selectEmployeeDropdownOptionCss, index);
 };
 
@@ -70,7 +70,7 @@ export const tagsDropdownVisible = () => {
 	verifyElementIsVisible(ProposalsPage.addTagsDropdownCss);
 };
 
-export const clickTagsDropdwon = () => {
+export const clickTagsDropdown = () => {
 	clickButton(ProposalsPage.addTagsDropdownCss);
 };
 
@@ -183,7 +183,7 @@ export const verifyProposalExists = (text) => {
 };
 
 export const verifyProposalAccepted = () => {
-	verifyElementIsVisible(ProposalsPage.acceptedproposalCss);
+	verifyElementIsVisible(ProposalsPage.acceptedProposalCss);
 };
 
 export const manageTemplatesBtnVisible = () => {
@@ -256,11 +256,11 @@ export const verifyProposalTemplate = (name) => {
 };
 
 export const employeeMultiSelectVisible = () => {
-	verifyElementIsVisible(ProposalsPage.employeeMultyseelectCss);
+	verifyElementIsVisible(ProposalsPage.employeeMultiSelectCss);
 };
 
 export const clickEmployeeMultiSelect = () => {
-	clickButton(ProposalsPage.employeeMultyseelectCss);
+	clickButton(ProposalsPage.employeeMultiSelectCss);
 };
 
 export const selectEmployeeFromMultiSelectDropdown = (index) => {

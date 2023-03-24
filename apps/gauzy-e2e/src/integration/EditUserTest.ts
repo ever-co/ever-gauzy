@@ -2,10 +2,10 @@ import * as loginPage from '../support/Base/pages/Login.po';
 import { LoginPageData } from '../support/Base/pagedata/LoginPageData';
 import * as editUserPage from '../support/Base/pages/EditUser.po';
 import * as addUserPage from '../support/Base/pages/AddUser.po';
-import { faker } from '@ever-co/faker';
+import { faker } from '@faker-js/faker';
 import { EditUserPageData } from '../support/Base/pagedata/EditUserPageData';
 import { AddUserPageData } from '../support/Base/pagedata/AddUserPageData';
-import * as dashboradPage from '../support/Base/pages/Dashboard.po';
+import * as dashboardPage from '../support/Base/pages/Dashboard.po';
 import { CustomCommands } from '../support/commands';
 
 let firstName = ' ';
@@ -19,16 +19,16 @@ let editLastName = ' ';
 
 describe('Edit user test', () => {
 	before(() => {
-		firstName = faker.name.firstName();
-		lastName = faker.name.lastName();
+		firstName = faker.person.firstName();
+		lastName = faker.person.lastName();
 		username = faker.internet.userName();
 		email = faker.internet.email();
 		password = faker.internet.password();
 		imgUrl = faker.image.avatar();
-		editFirstName = faker.name.firstName();
-		editLastName = faker.name.lastName();
+		editFirstName = faker.person.firstName();
+		editLastName = faker.person.lastName();
 
-		CustomCommands.login(loginPage, LoginPageData, dashboradPage);
+		CustomCommands.login(loginPage, LoginPageData, dashboardPage);
 	});
 	it('Should be able to add new user', () => {
 		cy.visit('/#/pages/users');
@@ -71,7 +71,7 @@ describe('Edit user test', () => {
 		editUserPage.clickSelectOrgDropdown();
 		editUserPage.clickSelectOrgDropdownOption();
 		editUserPage.saveSelectedOrgButtonVisible();
-		editUserPage.clickSaveselectedOrgButton();
+		editUserPage.clickSaveSelectedOrgButton();
 		editUserPage.removeOrgButtonVisible();
 		editUserPage.clickRemoveOrgButton();
 		editUserPage.confirmRemoveBtnVisible();

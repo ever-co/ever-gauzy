@@ -1,9 +1,9 @@
 import * as loginPage from '../support/Base/pages/Login.po';
 import { LoginPageData } from '../support/Base/pagedata/LoginPageData';
 import * as contactsLeadsPage from '../support/Base/pages/ContactsLeads.po';
-import { faker } from '@ever-co/faker';
+import { faker } from '@faker-js/faker';
 import { ContactsLeadsPageData } from '../support/Base/pagedata/ContactsLeadsPageData';
-import * as dashboradPage from '../support/Base/pages/Dashboard.po';
+import * as dashboardPage from '../support/Base/pages/Dashboard.po';
 import * as organizationProjectsPage from '../support/Base/pages/OrganizationProjects.po';
 import { OrganizationProjectsPageData } from '../support/Base/pagedata/OrganizationProjectsPageData';
 import * as organizationTagsUserPage from '../support/Base/pages/OrganizationTags.po';
@@ -21,14 +21,14 @@ let website = ' ';
 describe('Contacts leads test', () => {
 	before(() => {
 		email = faker.internet.email();
-		fullName = faker.name.firstName() + ' ' + faker.name.lastName();
-		deleteName = faker.name.firstName() + ' ' + faker.name.lastName();
-		city = faker.address.city();
-		postcode = faker.address.zipCode();
-		street = faker.address.streetAddress();
+		fullName = faker.person.firstName() + ' ' + faker.person.lastName();
+		deleteName = faker.person.firstName() + ' ' + faker.person.lastName();
+		city = faker.location.city();
+		postcode = faker.location.zipCode();
+		street = faker.location.streetAddress();
 		website = faker.internet.url();
 
-		CustomCommands.login(loginPage, LoginPageData, dashboradPage);
+		CustomCommands.login(loginPage, LoginPageData, dashboardPage);
 	});
 
 	it('Should be able to add new lead', () => {
@@ -63,7 +63,7 @@ describe('Contacts leads test', () => {
 		);
 		contactsLeadsPage.contactEmailInputVisible();
 		contactsLeadsPage.enterContactEmailData(email);
-		contactsLeadsPage.saveInvitebuttonVisible();
+		contactsLeadsPage.saveInviteButtonVisible();
 		contactsLeadsPage.clickSaveInviteButton();
 		contactsLeadsPage.waitMessageToHide();
 		contactsLeadsPage.verifyLeadExists(fullName);

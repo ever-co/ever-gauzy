@@ -1,9 +1,9 @@
 import * as loginPage from '../support/Base/pages/Login.po';
 import { LoginPageData } from '../support/Base/pagedata/LoginPageData';
 import * as clientsPage from '../support/Base/pages/Clients.po';
-import { faker } from '@ever-co/faker';
+import { faker } from '@faker-js/faker';
 import { ClientsData } from '../support/Base/pagedata/ClientsPageData';
-import * as dashboradPage from '../support/Base/pages/Dashboard.po';
+import * as dashboardPage from '../support/Base/pages/Dashboard.po';
 import * as organizationTagsUserPage from '../support/Base/pages/OrganizationTags.po';
 import { OrganizationTagsPageData } from '../support/Base/pagedata/OrganizationTagsPageData';
 import * as organizationProjectsPage from '../support/Base/pages/OrganizationProjects.po';
@@ -22,15 +22,15 @@ let website = ' ';
 describe('Clients test', () => {
 	before(() => {
 		email = faker.internet.email();
-		fullName = faker.name.firstName() + ' ' + faker.name.lastName();
-		inviteName = faker.name.firstName() + ' ' + faker.name.lastName();
-		deleteName = faker.name.firstName() + ' ' + faker.name.lastName();
-		city = faker.address.city();
-		postcode = faker.address.zipCode();
-		street = faker.address.streetAddress();
+		fullName = faker.person.firstName() + ' ' + faker.person.lastName();
+		inviteName = faker.person.firstName() + ' ' + faker.person.lastName();
+		deleteName = faker.person.firstName() + ' ' + faker.person.lastName();
+		city = faker.location.city();
+		postcode = faker.location.zipCode();
+		street = faker.location.streetAddress();
 		website = faker.internet.url();
 
-		CustomCommands.login(loginPage, LoginPageData, dashboradPage);
+		CustomCommands.login(loginPage, LoginPageData, dashboardPage);
 	});
 
 	it('Should be able to add new client', () => {
@@ -62,7 +62,7 @@ describe('Clients test', () => {
 		clientsPage.enterClientPhoneData(ClientsData.defaultPhone);
 		clientsPage.clientEmailInputVisible();
 		clientsPage.enterClientEmailData(email);
-		clientsPage.saveInvitebuttonVisible();
+		clientsPage.saveInviteButtonVisible();
 		clientsPage.clickSaveInviteButton();
 		clientsPage.waitMessageToHide();
 		clientsPage.verifyClientExists(inviteName);

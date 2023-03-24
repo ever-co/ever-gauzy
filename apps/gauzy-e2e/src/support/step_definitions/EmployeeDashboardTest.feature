@@ -50,7 +50,7 @@ Feature: Employee dashboard test
     When User click on save button
     Then Notification message will appear
   Scenario: User go to dashboard to verify employee salary
-    When User see dashboard button on main manu
+    When User see dashboard button on main menu
     Then User click on dashboard button
     When User see employee selector
     Then User click on employee selector

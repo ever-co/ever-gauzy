@@ -15,7 +15,7 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { chain } from 'underscore';
 import { distinctUntilChange, isNotEmpty } from '@gauzy/common-angular';
 import { SelectorService } from '../@core/utils/selector.service';
-import { EmployeesService, Store, UsersService } from '../@core/services';
+import { Store, UsersService } from '../@core/services';
 import { ReportService } from './reports/all-report/report.service';
 import { AuthStrategy } from '../@core/auth/auth-strategy.service';
 import { TranslationBaseComponent } from '../@shared/language-base';
@@ -52,7 +52,6 @@ export class PagesComponent extends TranslationBaseComponent
 	reportMenuItems: NbMenuItem[] = [];
 
 	constructor(
-		private readonly employeeService: EmployeesService,
 		public readonly translate: TranslateService,
 		private readonly store: Store,
 		private readonly reportService: ReportService,
@@ -611,6 +610,10 @@ export class PagesComponent extends TranslationBaseComponent
 						link: '/pages/organization/tags',
 						data: {
 							translationKey: 'MENU.TAGS',
+							permissionKeys: [
+								PermissionsEnum.ALL_ORG_VIEW,
+								PermissionsEnum.ORG_TAGS_ADD
+							],
 							featureKey: FeatureEnum.FEATURE_ORGANIZATION_TAG,
 							add: '/pages/organization/tags?openAddDialog=true'
 						}
@@ -989,8 +992,8 @@ export class PagesComponent extends TranslationBaseComponent
 		if (item.data.permissionKeys || item.data.hide) {
 			const anyPermission = item.data.permissionKeys
 				? item.data.permissionKeys.reduce((permission, key) => {
-						return this.store.hasPermission(key) || permission;
-				  }, false)
+					return this.store.hasPermission(key) || permission;
+				}, false)
 				: true;
 
 			item.hidden =
@@ -1030,5 +1033,5 @@ export class PagesComponent extends TranslationBaseComponent
 		});
 	}
 
-	ngOnDestroy() {}
+	ngOnDestroy() { }
 }

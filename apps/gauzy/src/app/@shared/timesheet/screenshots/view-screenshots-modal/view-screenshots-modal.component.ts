@@ -31,7 +31,7 @@ export class ViewScreenshotsModalComponent implements OnInit {
 	}
 	@Input() set timeSlot(timeSlot: ITimeSlot) {
 		let screenshots = JSON.parse(JSON.stringify(timeSlot.screenshots));
-		this.screenshots = sortBy(screenshots, 'createdAt').map((screenshot: IScreenshot) => {
+		this.screenshots = sortBy(screenshots, 'recordedAt').map((screenshot: IScreenshot) => {
 			return {
 				employee: timeSlot.employee,
 				...screenshot
@@ -62,7 +62,7 @@ export class ViewScreenshotsModalComponent implements OnInit {
 		return this._timeLogs;
 	}
 	@Input() set timeLogs(timeLogs: ITimeLog[]) {
-		this._timeLogs = sortBy(timeLogs, 'createdAt');
+		this._timeLogs = sortBy(timeLogs, 'recordedAt');
 	}
 	constructor(
 		private readonly store: Store,

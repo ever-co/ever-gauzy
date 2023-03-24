@@ -3,7 +3,6 @@ import { FormBuilder, FormControl, FormGroup, Validators } from '@angular/forms'
 import { ActivatedRoute, Router } from '@angular/router';
 import { formatDate } from '@angular/common';
 import * as moment from 'moment';
-import * as timezone from 'moment-timezone';
 import {
 	AccountingTemplateTypeEnum,
 	AlignmentOptions,
@@ -64,7 +63,6 @@ export class EditOrganizationOtherSettingsComponent extends NotesWithTagsCompone
 	selectedEstimateTemplate: IAccountingTemplate;
 	selectedReceiptTemplate: IAccountingTemplate;
 
-	listOfZones = timezone.tz.names().filter((zone) => zone.includes('/'));
 	listOfDateFormats = DEFAULT_DATE_FORMATS;
 	listOfTimeFormats = DEFAULT_TIME_FORMATS;
 	listOfInactivityLimits = DEFAULT_INACTIVITY_TIME_LIMITS;
@@ -135,7 +133,9 @@ export class EditOrganizationOtherSettingsComponent extends NotesWithTagsCompone
 			invoiceTemplate: [],
 			estimateTemplate: [],
 			receiptTemplate: [],
-			isDefault: []
+			isDefault: [],
+			isRemoveIdleTime: [false],
+			allowScreenshotCapture: [true]
 		});
 	}
 
@@ -236,16 +236,6 @@ export class EditOrganizationOtherSettingsComponent extends NotesWithTagsCompone
 				}),
 				untilDestroyed(this)
 			).subscribe();
-	}
-
-	getTimeWithOffset(zone: string) {
-		let cutZone = zone;
-		if (zone.includes('/')) {
-			cutZone = zone.split('/')[1];
-		}
-
-		const offset = timezone.tz(zone).format('zZ');
-		return '(' + offset + ') ' + cutZone;
 	}
 
 	dateFormatPreview(format: string) {
@@ -428,7 +418,7 @@ export class EditOrganizationOtherSettingsComponent extends NotesWithTagsCompone
 			return;
 		}
 		this.organizationEditStore.selectedOrganization = this.organization;
-		this._setDefaultAccoutingTemplates();
+		this._setDefaultAccountingTemplates();
 
 		this.form.patchValue({
 			name: this.organization.name,
@@ -468,32 +458,34 @@ export class EditOrganizationOtherSettingsComponent extends NotesWithTagsCompone
 			discountAfterTax: this.organization.discountAfterTax,
 			convertAcceptedEstimates: this.organization.convertAcceptedEstimates,
 			daysUntilDue: this.organization.daysUntilDue,
-			isDefault: this.organization.isDefault
+			isDefault: this.organization.isDefault,
+			isRemoveIdleTime: this.organization.isRemoveIdleTime,
+			allowScreenshotCapture: this.organization.allowScreenshotCapture
 		});
 		this.form.updateValueAndValidity();
 
 		/**
-		 * Default selected accouting templates dropdowns
+		 * Default selected accounting templates dropdowns
 		 */
-	 	const invoiceTemplateControl = this.form.get('invoiceTemplate') as FormControl;
+		const invoiceTemplateControl = this.form.get('invoiceTemplate') as FormControl;
 		invoiceTemplateControl.setValue(this.selectedInvoiceTemplate ? this.selectedInvoiceTemplate.id : null);
 		invoiceTemplateControl.updateValueAndValidity();
 
-	 	const estimateTemplateControl = this.form.get('estimateTemplate') as FormControl;
+		const estimateTemplateControl = this.form.get('estimateTemplate') as FormControl;
 		estimateTemplateControl.setValue(this.selectedEstimateTemplate ? this.selectedEstimateTemplate.id : null);
 		estimateTemplateControl.updateValueAndValidity();
 
-	 	const receiptTemplateControl = this.form.get('receiptTemplate') as FormControl;
+		const receiptTemplateControl = this.form.get('receiptTemplate') as FormControl;
 		receiptTemplateControl.setValue(this.selectedReceiptTemplate ? this.selectedReceiptTemplate.id : null);
 		receiptTemplateControl.updateValueAndValidity();
 	}
 
 	/**
-	 * Set default organization selected accouting templates
+	 * Set default organization selected accounting templates
 	 *
 	 * @returns
 	 */
-	private _setDefaultAccoutingTemplates() {
+	private _setDefaultAccountingTemplates() {
 		if (!this.organization || isEmpty(this.organization.accountingTemplates)) {
 			return;
 		}

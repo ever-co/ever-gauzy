@@ -1,5 +1,7 @@
-import { RequestContext } from "core/context";
 import { EntitySubscriberInterface, EventSubscriber, InsertEvent, LoadEvent } from "typeorm";
+import { sluggable } from "@gauzy/common";
+import { RequestContext } from "./../core/context";
+import { getDummyImage } from "./../core/utils";
 import { OrganizationTeam } from "./organization-team.entity";
 
 @EventSubscriber()
@@ -25,9 +27,12 @@ export class OrganizationTeamSubscriber implements EntitySubscriberInterface<Org
                     entity.prefix = entity.prefix.toUpperCase();
                 } else if (!entity.prefix) {
                     const prefix = entity.name;
-                    if(prefix) {
-                        entity.prefix =  prefix.substring(0, 3).toUpperCase();
+                    if (prefix) {
+                        entity.prefix = prefix.substring(0, 3).toUpperCase();
                     }
+                }
+                if (!!entity['image']) {
+                    entity.logo = entity.image.fullUrl || entity.logo;
                 }
             }
         } catch (error) {
@@ -42,10 +47,23 @@ export class OrganizationTeamSubscriber implements EntitySubscriberInterface<Org
      */
     beforeInsert(event: InsertEvent<OrganizationTeam>): void | Promise<any> {
         try {
-            const entity = event.entity;
-            if (entity) { entity.createdById = RequestContext.currentUserId(); }
+            if (event) {
+                const { entity } = event;
+                if (entity) {
+                    entity.createdById = RequestContext.currentUserId();
+
+                    // organization team slug based on name or profile link
+                    if (entity.profile_link || entity.name) {
+                        entity.profile_link = sluggable(`${entity.profile_link || entity.name}`);
+                    }
+
+                    if (!entity.logo) {
+                        entity.logo = getDummyImage(330, 300, (entity.name).charAt(0).toUpperCase());
+                    }
+                }
+            }
         } catch (error) {
-            console.log(error);
+            console.log('Error before insert organization team entity', error);
         }
     }
 }

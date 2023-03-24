@@ -25,7 +25,7 @@ import { CustomSmtp } from './custom-smtp.entity';
 import { CustomSmtpService } from './custom-smtp.service';
 import { CustomSmtpCreateCommand, CustomSmtpUpdateCommand } from './commands';
 import { CrudController } from './../core/crud';
-import { CustomSmtpDTO, CustomSmtpQueryDTO } from './dto';
+import { CreateCustomSmtpDTO, CustomSmtpQueryDTO, UpdateCustomSmtpDTO, ValidateCustomSmtpDTO } from './dto';
 
 @ApiTags('CustomSmtp')
 @UseGuards(TenantPermissionGuard, PermissionGuard)
@@ -57,7 +57,7 @@ export class CustomSmtpController extends CrudController<CustomSmtp>{
 	})
 	@Get('setting')
 	@UsePipes(new ValidationPipe({ whitelist: true }))
-	async smtpSetting(
+	async getSmtpSetting(
 		@Query() query: CustomSmtpQueryDTO
 	): Promise<ICustomSmtp | ISMTPConfig> {
 		return await this.customSmtpService.getSmtpSetting(query);
@@ -72,13 +72,12 @@ export class CustomSmtpController extends CrudController<CustomSmtp>{
 	@ApiOperation({ summary: 'Validate new record' })
 	@ApiResponse({
 		status: HttpStatus.BAD_REQUEST,
-		description:
-			'Invalid input, The response body may contain clues as to what went wrong'
+		description: 'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@Post('validate')
-	@UsePipes(new ValidationPipe())
+	@UsePipes(new ValidationPipe({ whitelist: true }))
 	async validateSmtpSetting(
-		@Body() entity: CustomSmtpDTO
+		@Body() entity: ValidateCustomSmtpDTO
 	): Promise<Boolean | any> {
 		return await this.customSmtpService.verifyTransporter(entity);
 	}
@@ -96,13 +95,12 @@ export class CustomSmtpController extends CrudController<CustomSmtp>{
 	})
 	@ApiResponse({
 		status: HttpStatus.BAD_REQUEST,
-		description:
-			'Invalid input, The response body may contain clues as to what went wrong'
+		description: 'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@Post()
 	@UsePipes(new ValidationPipe({ whitelist: true }))
 	async create(
-		@Body() entity: CustomSmtpDTO
+		@Body() entity: CreateCustomSmtpDTO
 	): Promise<ICustomSmtp> {
 		return await this.commandBus.execute(
 			new CustomSmtpCreateCommand(entity)
@@ -133,8 +131,8 @@ export class CustomSmtpController extends CrudController<CustomSmtp>{
 	@Put(':id')
 	@UsePipes(new ValidationPipe({ whitelist: true }))
 	async update(
-		@Param('id', UUIDValidationPipe) id: string,
-		@Body() entity: CustomSmtpDTO
+		@Param('id', UUIDValidationPipe) id: ICustomSmtp['id'],
+		@Body() entity: UpdateCustomSmtpDTO
 	): Promise<ICustomSmtp> {
 		return await this.commandBus.execute(
 			new CustomSmtpUpdateCommand({ id, ...entity })

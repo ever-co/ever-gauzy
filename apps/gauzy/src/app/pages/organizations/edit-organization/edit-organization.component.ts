@@ -35,7 +35,7 @@ export class EditOrganizationComponent extends TranslationBaseComponent
 		super(translateService);
 	}
 
-	ngOnInit() {
+	ngOnInit(): void {
 		this.route.data
 			.pipe(
 				debounceTime(100),
@@ -55,7 +55,7 @@ export class EditOrganizationComponent extends TranslationBaseComponent
 			.subscribe();
 	}
 
-	ngAfterViewInit() {
+	ngAfterViewInit(): void {
 		this.store.selectedOrganization$
 			.pipe(
 				filter((organization: IOrganization) => !!organization),
@@ -81,13 +81,15 @@ export class EditOrganizationComponent extends TranslationBaseComponent
 		if (!this.organization || !this.store.hasPermission(PermissionsEnum.PUBLIC_PAGE_EDIT)) {
 			return;
 		}
-		// The call to Location.prepareExternalUrl is the key thing here.
-		let tree = this.router.createUrlTree([`/share/organization/${this.organization.profile_link}`]);
+		const { id, profile_link } = this.organization;
 
-    	// As far as I can tell you don't really need the UrlSerializer.
+		// The call to Location.prepareExternalUrl is the key thing here.
+		let tree = this.router.createUrlTree([`/share/organization/${profile_link}/${id}`]);
+
+		// As far as I can tell you don't really need the UrlSerializer.
 		const externalUrl = this._location.prepareExternalUrl(this._urlSerializer.serialize(tree));
 		window.open(externalUrl, '_blank');
 	}
 
-	ngOnDestroy() {}
+	ngOnDestroy(): void { }
 }

@@ -10,19 +10,15 @@
 }
 
 .icon-logo {
-	width: 16px;
-	height: 16px;
-	border-radius: calc(var(--border-radius) / 2);
-	box-shadow: var(--gauzy-shadow);
+  width: 16px;
+  height: 16px;
+  border-radius: calc(var(--border-radius) / 2);
+  box-shadow: var(--gauzy-shadow);
 }
 
 .title-window {
   font-size: 14px;
   font-weight: 600;
-}
-
-::ng-deep body {
-  overflow: hidden !important;
 }
 
 ::ng-deep .layout-container {
@@ -51,23 +47,30 @@
 .notification {
   display: flex;
   flex-direction: column;
+  overflow: unset;
+  align-items: center;
+  height: 100%;
 }
 
 .notification-header {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
+  align-self: flex-start;
   gap: 4px;
   padding: 6px 6px 0 6px;
+
   .notification-header-title {
     display: flex;
-    align-items: flex-start;
+    align-items: center;
     gap: 4px;
   }
 }
 
 .notification-body {
+  height: 100%;
   width: 100%;
   padding: 6px;
-  align-self: stretch;
+  flex-grow: 4;
+  max-height: 135px;
 }

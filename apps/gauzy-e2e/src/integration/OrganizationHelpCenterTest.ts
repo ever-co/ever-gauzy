@@ -2,12 +2,12 @@ import * as loginPage from '../support/Base/pages/Login.po';
 import { LoginPageData } from '../support/Base/pagedata/LoginPageData';
 import * as organizationHelpCenterPage from '../support/Base/pages/OrganizationHelpCenter.po';
 import { OrganizationHelpCenterPageData } from '../support/Base/pagedata/OrganizationHelpCenterPageData';
-import * as dashboradPage from '../support/Base/pages/Dashboard.po';
+import * as dashboardPage from '../support/Base/pages/Dashboard.po';
 import { CustomCommands } from '../support/commands';
 
 describe('Organization help center test', () => {
 	before(() => {
-		CustomCommands.login(loginPage, LoginPageData, dashboradPage);
+		CustomCommands.login(loginPage, LoginPageData, dashboardPage);
 	});
 	it('Should be able to add base', () => {
 		cy.visit('/#/pages/organization/help-center');
@@ -38,7 +38,7 @@ describe('Organization help center test', () => {
 		organizationHelpCenterPage.saveButtonVisible();
 		organizationHelpCenterPage.clickSaveButton();
 		organizationHelpCenterPage.waitMessageToHide();
-		organizationHelpCenterPage.verifybaseExists(
+		organizationHelpCenterPage.verifyBaseExists(
 			OrganizationHelpCenterPageData.defaultBaseName
 		);
 	});

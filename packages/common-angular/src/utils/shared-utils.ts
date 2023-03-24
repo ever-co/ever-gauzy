@@ -172,12 +172,12 @@ export function ucFirst(str: string, force: boolean): string {
 	});
 }
 
-export function toLocal(data: string | Date | moment.Moment): moment.Moment {
-	return moment.utc(data).local();
+export function toLocal(date: string | Date | moment.Moment): moment.Moment {
+	return moment.utc(date).local();
 }
 
-export function toUTC(data: string | Date | moment.Moment): moment.Moment {
-	return moment(data).utc();
+export function toUTC(date: string | Date | moment.Moment): moment.Moment {
+	return moment(date).utc();
 }
 
 export function distinctUntilChange<T>() {
@@ -293,12 +293,12 @@ export function employeeMapper(row: any) {
  * console.log(addTrailingSlashIfMissing('pages/home'));
  *
  */
- export function addTrailingSlash(str: string) {
+export function addTrailingSlash(str: string) {
 	if (!str) {
 		return;
 	}
-	const slashChar = str.startsWith('/') ? '': '/';
-    return slashChar + str;
+	const slashChar = str.startsWith('/') ? '' : '/';
+	return slashChar + str;
 }
 
 /**
@@ -321,7 +321,7 @@ export function removeTrailingSlash(str: string) {
  * @param url
  * @returns
  */
-export function __prepareExternalUrlLocation (url: string) {
+export function __prepareExternalUrlLocation(url: string) {
 	return [
 		removeTrailingSlash(location.origin),
 		addTrailingSlash(url)
@@ -342,4 +342,29 @@ export function sluggable(string: string, replacement: any = '-'): string {
 		lower: true, // convert to lower case, defaults to `false`
 		trim: true // trim leading and trailing replacement chars, defaults to `true`
 	}).replace(/[_]/g, replacement);
+}
+
+/**
+ * It takes a base64 image, compresses it to a given width and height, and returns a promise that
+ * resolves to the compressed image
+ * @param {string} base64Image - The base64 image string
+ * @param {number} width - The width of the image you want to compress.
+ * @param {number} height - The height of the image in pixels.
+ * @returns A promise that resolves to a string.
+ */
+export function compressImage(base64Image: string, width: number, height: number): Promise<string> {
+	return new Promise((resolve, reject) => {
+		const img = new Image();
+		img.src = base64Image;
+		img.onload = () => {
+			const elem = document.createElement('canvas');
+			elem.width = width;
+			elem.height = height;
+			const ctx = elem.getContext('2d');
+			ctx.drawImage(img, 0, 0, width, height);
+			const data = ctx.canvas.toDataURL();
+			resolve(data);
+		}
+		img.onerror = error => reject(error);
+	})
 }

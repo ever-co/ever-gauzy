@@ -1,8 +1,8 @@
 export const ApprovalRequestPageData = {
 	defaultApprovalPolicy: 'Default Approval Policy',
-	dafaultName: 'Request time off',
+	defaultName: 'Request time off',
 	defaultMinCount: 14,
-	defaultpolicyDescription: 'Default Approval Policy',
+	defaultPolicyDescription: 'Default Approval Policy',
 	editName: 'Request holiday',
 	approvalBtn: 'Approve',
 	approvalRefuseBtnIndex: 7,

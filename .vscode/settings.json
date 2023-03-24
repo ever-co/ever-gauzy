@@ -4,11 +4,14 @@
 	"typescript.tsdk": "node_modules/typescript/lib",
 	"typescript.enablePromptUseWorkspaceTsdk": true,
 	"npm.packageManager": "yarn",
+	"prettier.trailingComma": "none",
+	"prettier.singleQuote": true,
 	"editor.formatOnSave": true,
 	"eslint.format.enable": true,
 	"editor.tabSize": 4,
 	"files.insertFinalNewline": true,
 	"files.trimFinalNewlines": true,
+	"files.trimTrailingWhitespace": true,
 	"editor.codeActionsOnSave": {
 		"source.fixAll": true
 	},

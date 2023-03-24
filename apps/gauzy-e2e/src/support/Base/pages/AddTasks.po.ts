@@ -10,7 +10,9 @@ import {
 	waitElementToHide,
 	verifyText,
 	verifyTextNotExisting,
-	vefiryByLength
+	verifyByLength,
+	wait
+	
 } from '../utils/util';
 import { AddTaskPage } from '../pageobjects/AddTasksPageObject';
 
@@ -43,11 +45,11 @@ export const selectProjectOptionDropdown = (text) => {
 };
 
 export const selectEmployeeDropdownVisible = () => {
-	verifyElementIsVisible(AddTaskPage.selectEmloyeeMultiSelectCss);
+	verifyElementIsVisible(AddTaskPage.selectEmployeeMultiSelectCss);
 };
 
 export const clickSelectEmployeeDropdown = () => {
-	clickButton(AddTaskPage.selectEmloyeeMultiSelectCss);
+	clickButton(AddTaskPage.selectEmployeeMultiSelectCss);
 };
 
 export const selectEmployeeDropdownOption = (index) => {
@@ -108,7 +110,7 @@ export const estimateDaysInputVisible = () => {
 	verifyElementIsVisible(AddTaskPage.estimateDaysInputCss);
 };
 
-export const enterEstiamteDaysInputData = (days) => {
+export const enterEstimateDaysInputData = (days) => {
 	clearField(AddTaskPage.estimateDaysInputCss);
 	enterInput(AddTaskPage.estimateDaysInputCss, days);
 };
@@ -117,7 +119,7 @@ export const estimateHoursInputVisible = () => {
 	verifyElementIsVisible(AddTaskPage.estimateHoursInputCss);
 };
 
-export const enterEstiamteHoursInputData = (hours) => {
+export const enterEstimateHoursInputData = (hours) => {
 	clearField(AddTaskPage.estimateHoursInputCss);
 	enterInput(AddTaskPage.estimateHoursInputCss, hours);
 };
@@ -131,7 +133,7 @@ export const enterEstimateMinutesInputData = (mins) => {
 	enterInput(AddTaskPage.estimateMinsInputCss, mins);
 };
 
-export const taskDecriptionTextareaVisible = () => {
+export const taskDescriptionTextareaVisible = () => {
 	verifyElementIsVisible(AddTaskPage.descriptionTextareaCss);
 };
 
@@ -156,6 +158,10 @@ export const selectTasksTableRow = (index) => {
 	clickButtonByIndex(AddTaskPage.selectTableRowCss, index);
 };
 
+export const selectFirstTaskTableRow = (index) => {
+	clickButtonByIndex(AddTaskPage.selectTableFirstRowCss, index);
+};
+
 export const deleteTaskButtonVisible = () => {
 	verifyElementIsVisible(AddTaskPage.deleteTaskButtonCss);
 };
@@ -172,19 +178,36 @@ export const clickConfirmDeleteTaskButton = () => {
 	clickButton(AddTaskPage.confirmDeleteTaskButtonCss);
 };
 
-export const duplicateOrEditTaskButtonVisible = () => {
-	verifyElementIsVisible(AddTaskPage.duplicateOrEditTaskButtonCss);
+export const duplicateTaskButtonVisible = () => {
+	verifyElementIsVisible(AddTaskPage.duplicateTaskButtonCss);
 };
 
-export const clickDuplicateOrEditTaskButton = (index) => {
-	clickButtonByIndex(AddTaskPage.duplicateOrEditTaskButtonCss, index);
+export const clickDuplicateTaskButton = (index) => {
+	clickButtonByIndex(AddTaskPage.duplicateTaskButtonCss, index);
 };
 
-export const confirmDuplicateOrEditTaskButtonVisible = () => {
+export const confirmDuplicateTaskButtonVisible = () => {
 	verifyElementIsVisible(AddTaskPage.confirmDuplicateOrEditTaskButtonCss);
 };
 
-export const clickConfirmDuplicateOrEditTaskButton = () => {
+export const clickConfirmDuplicateTaskButton = () => {
+	clickButton(AddTaskPage.confirmDuplicateOrEditTaskButtonCss);
+};
+
+export const editTaskButtonVisible = () => {
+	wait(500);
+	verifyElementIsVisible(AddTaskPage.editTaskButtonCss);
+};
+
+export const clickEditTaskButton = (index) => {
+	clickButtonByIndex(AddTaskPage.editTaskButtonCss, index);
+};
+
+export const confirmEditTaskButtonVisible = () => {
+	verifyElementIsVisible(AddTaskPage.confirmDuplicateOrEditTaskButtonCss);
+};
+
+export const clickConfirmEditTaskButton = () => {
 	clickButton(AddTaskPage.confirmDuplicateOrEditTaskButtonCss);
 };
 
@@ -213,6 +236,6 @@ export const clearSearchInput = () => {
 	clearField(AddTaskPage.searchTitleInputCss);
 };
 
-export const verifySearchResult = (length: number) =>{
-	vefiryByLength(AddTaskPage.selectTableRowCss, length);
+export const verifySearchResult = (length: number) => {
+	verifyByLength(AddTaskPage.selectTableRowCss, length);
 };

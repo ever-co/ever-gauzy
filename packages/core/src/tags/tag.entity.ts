@@ -1,5 +1,6 @@
-import { Entity, Column, ManyToMany } from 'typeorm';
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { Entity, Column, ManyToMany, ManyToOne, RelationId, Index } from 'typeorm';
+import { IsNotEmpty, IsOptional, IsString, IsUUID } from 'class-validator';
 import {
 	ICandidate,
 	IEmployee,
@@ -61,27 +62,63 @@ import {
 
 @Entity('tag')
 export class Tag extends TenantOrganizationBaseEntity implements ITag {
-	@ApiProperty({ type: () => String })
-	@Column()
-	name?: string;
 
-	@ApiProperty({ type: () => String })
+	@ApiProperty({ type: () => String, required: true })
+	@IsNotEmpty()
+	@IsString()
+	@Column()
+	name: string;
+
+	@ApiProperty({ type: () => String, required: true })
+	@IsNotEmpty()
+	@IsString()
+	@Column()
+	color: string;
+
+	@ApiPropertyOptional({ type: () => String, required: false })
+	@IsOptional()
+	@IsString()
 	@Column({ nullable: true })
 	description?: string;
 
-	@ApiProperty({ type: () => String })
-	@Column()
-	color?: string;
+	@ApiPropertyOptional({ type: () => String, required: false })
+	@IsOptional()
+	@Column({ nullable: true })
+	icon?: string;
 
-	@ApiProperty({ type: () => Boolean, default: false })
+	@ApiPropertyOptional({ type: () => Boolean, default: false, required: false })
 	@Column({ default: false })
 	isSystem?: boolean;
 
+	fullIconUrl?: string;
+
 	/*
-    |--------------------------------------------------------------------------
-    | @ManyToMany 
-    |--------------------------------------------------------------------------
-    */
+	|--------------------------------------------------------------------------
+	| @ManyToOne
+	|--------------------------------------------------------------------------
+	*/
+
+	/**
+	 * Organization Team
+	 */
+	@ManyToOne(() => OrganizationTeam, (team) => team.labels, {
+		onDelete: 'SET NULL',
+	})
+	organizationTeam?: IOrganizationTeam;
+
+	@ApiPropertyOptional({ type: () => String })
+	@IsOptional()
+	@IsUUID()
+	@RelationId((it: Tag) => it.organizationTeam)
+	@Index()
+	@Column({ nullable: true })
+	organizationTeamId?: IOrganizationTeam['id'];
+
+	/*
+	|--------------------------------------------------------------------------
+	| @ManyToMany
+	|--------------------------------------------------------------------------
+	*/
 
 	/**
 	 * Candidate
@@ -315,5 +352,5 @@ export class Tag extends TenantOrganizationBaseEntity implements ITag {
 	@ManyToMany(() => Organization, (organization) => organization.tags, {
 		onDelete: 'CASCADE'
 	})
-    organizations?: IOrganization[];
+	organizations?: IOrganization[];
 }

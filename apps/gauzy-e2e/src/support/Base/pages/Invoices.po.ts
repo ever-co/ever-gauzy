@@ -35,7 +35,7 @@ export const tagsDropdownVisible = () => {
 	verifyElementIsVisible(InvoicesPage.addTagsDropdownCss);
 };
 
-export const clickTagsDropdwon = () => {
+export const clickTagsDropdown = () => {
 	clickButton(InvoicesPage.addTagsDropdownCss);
 };
 
@@ -80,7 +80,7 @@ export const clickContactDropdown = () => {
 	clickButton(InvoicesPage.organizationContactDropdownCss);
 };
 
-export const selectContactFromDropdwon = (index) => {
+export const selectContactFromDropdown = (index) => {
 	clickButtonByIndex(InvoicesPage.contactOptionCss, index);
 };
 
@@ -118,10 +118,10 @@ export const selectInvoiceTypeFromDropdown = (text) => {
 };
 
 export const employeeDropdownVisible = () => {
-	verifyElementIsVisible(InvoicesPage.selectEmloyeeCss);
+	verifyElementIsVisible(InvoicesPage.selectEmployeeCss);
 };
 export const clickEmployeeDropdown = () => {
-	clickButton(InvoicesPage.selectEmloyeeCss);
+	clickButton(InvoicesPage.selectEmployeeCss);
 };
 
 export const selectEmployeeFromDropdown = (index) => {
@@ -268,13 +268,13 @@ export const clickTabButton = (index) => {
 	clickButtonByIndex(InvoicesPage.tabButtonCss, index);
 };
 
-export const veirifyEstimateNumberInputVisible = () => {
-	verifyElementIsVisible(InvoicesPage.inputInvoicenumberCss);
+export const verifyEstimateNumberInputVisible = () => {
+	verifyElementIsVisible(InvoicesPage.inputInvoiceNumberCss);
 };
 
 export const enterEstimateNumberInputData = (data) => {
-	clearField(InvoicesPage.inputInvoicenumberCss);
-	enterInput(InvoicesPage.inputInvoicenumberCss, data);
+	clearField(InvoicesPage.inputInvoiceNumberCss);
+	enterInput(InvoicesPage.inputInvoiceNumberCss, data);
 };
 
 export const verifyEstimateDateInput = () => {
@@ -289,7 +289,7 @@ export const verifyTotalValueInputVisible = () => {
 	verifyElementIsVisible(InvoicesPage.totalValueInputCss);
 };
 
-export const verifyCurrencuDropdownVisible = () => {
+export const verifyCurrencyDropdownVisible = () => {
 	verifyElementIsVisible(InvoicesPage.currencySelectCss);
 };
 

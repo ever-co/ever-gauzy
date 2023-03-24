@@ -1,10 +1,10 @@
 import * as loginPage from '../support/Base/pages/Login.po';
 import { LoginPageData } from '../support/Base/pagedata/LoginPageData';
 import * as approvalRequestPage from '../support/Base/pages/ApprovalRequest.po';
-import * as dashboradPage from '../support/Base/pages/Dashboard.po';
+import * as dashboardPage from '../support/Base/pages/Dashboard.po';
 import { ApprovalRequestPageData } from '../support/Base/pagedata/ApprovalRequestPageData';
 import { CustomCommands } from '../support/commands';
-import { faker } from '@ever-co/faker';
+import { faker } from '@faker-js/faker';
 import * as manageEmployeesPage from '../support/Base/pages/ManageEmployees.po';
 import * as organizationTagsUserPage from '../support/Base/pages/OrganizationTags.po';
 import { OrganizationTagsPageData } from '../support/Base/pagedata/OrganizationTagsPageData';
@@ -18,14 +18,14 @@ let imgUrl = ' ';
 
 describe('Approval request test', () => {
 	before(() => {
-		firstName = faker.name.firstName();
-		lastName = faker.name.lastName();
+		firstName = faker.person.firstName();
+		lastName = faker.person.lastName();
 		username = faker.internet.userName();
 		password = faker.internet.password();
 		employeeEmail = faker.internet.email();
 		imgUrl = faker.image.avatar();
 
-		CustomCommands.login(loginPage, LoginPageData, dashboradPage);
+		CustomCommands.login(loginPage, LoginPageData, dashboardPage);
 	});
 	it('Should be able to add approval policy', () => {
 		CustomCommands.addTag(
@@ -54,12 +54,12 @@ describe('Approval request test', () => {
 		);
 		approvalRequestPage.descriptionInputVisible();
 		approvalRequestPage.enterDescriptionInputData(
-			ApprovalRequestPageData.defaultpolicyDescription
+			ApprovalRequestPageData.defaultPolicyDescription
 		);
 		approvalRequestPage.saveButtonVisible();
 		approvalRequestPage.clickSaveButton();
 		approvalRequestPage.waitMessageToHide();
-		approvalRequestPage.verifyApprovalpolicyExists(
+		approvalRequestPage.verifyApprovalPolicyExists(
 			ApprovalRequestPageData.defaultApprovalPolicy
 		);
 		approvalRequestPage.backButtonVisible();
@@ -72,7 +72,7 @@ describe('Approval request test', () => {
 		approvalRequestPage.clickAddApprovalButton();
 		approvalRequestPage.nameInputVisible();
 		approvalRequestPage.enterNameInputData(
-			ApprovalRequestPageData.dafaultName
+			ApprovalRequestPageData.defaultName
 		);
 		approvalRequestPage.minCountInputVisible();
 		approvalRequestPage.enterMinCountInputData(
@@ -91,7 +91,7 @@ describe('Approval request test', () => {
 		approvalRequestPage.clickSaveButton();
 		approvalRequestPage.waitMessageToHide();
 		approvalRequestPage.verifyRequestExists(
-			ApprovalRequestPageData.dafaultName
+			ApprovalRequestPageData.defaultName
 		);
 	});
 	it('Should be able to edit approval request', () => {

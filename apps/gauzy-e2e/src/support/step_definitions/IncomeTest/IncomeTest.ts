@@ -1,7 +1,7 @@
 import * as loginPage from '../../Base/pages/Login.po';
 import { LoginPageData } from '../../Base/pagedata/LoginPageData';
 import * as incomePage from '../../Base/pages/Income.po';
-import { faker } from '@ever-co/faker';
+import { faker } from '@faker-js/faker';
 import { IncomePageData } from '../../Base/pagedata/IncomePageData';
 import * as dashboardPage from '../../Base/pages/Dashboard.po';
 import { CustomCommands } from '../../commands';
@@ -12,9 +12,9 @@ import { Given, Then, When, And } from 'cypress-cucumber-preprocessor/steps';
 
 const pageLoadTimeout = Cypress.config('pageLoadTimeout');
 
-let name = faker.name.firstName();
-let firstName = faker.name.firstName();
-let lastName = faker.name.lastName();
+let name = faker.person.firstName();
+let firstName = faker.person.firstName();
+let lastName = faker.person.lastName();
 let username = faker.internet.userName();
 let password = faker.internet.password();
 let employeeEmail = faker.internet.email();
@@ -74,7 +74,7 @@ When('User click on employee dropdown', () => {
 });
 
 Then('User can select employee from dropdown options', () => {
-	incomePage.selectEmployeeFromDrodpwon(1);
+	incomePage.selectEmployeeFromDropdown(1);
 });
 
 And('User can see date input field', () => {

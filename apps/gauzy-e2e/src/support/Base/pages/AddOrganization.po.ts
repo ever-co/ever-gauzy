@@ -110,7 +110,7 @@ export const clickBonusTypeDropdown = () => {
 };
 
 export const selectBonusTypeFromDropdown = (text) => {
-	clickElementByText(AddOrganizationPage.dropdownOptionCss, text);
+	clickElementByText(AddOrganizationPage.bonusDropdownOptionCss, text);
 };
 
 export const bonusPercentageInputVisible = () => {
@@ -152,7 +152,7 @@ export const clickStartOfWeekDropdown = () => {
 };
 
 export const selectStartOfWeekFromDropdown = (text) => {
-	clickElementByText(AddOrganizationPage.dropdownOptionCss, text);
+	clickElementByText(AddOrganizationPage.startofweekOptionCss, text);
 };
 
 export const dateTypeDropdownVisible = () => {
@@ -164,7 +164,7 @@ export const clickDateTypeDropdown = () => {
 };
 
 export const selectDateTypeFromDropdown = (text) => {
-	clickElementByText(AddOrganizationPage.dropdownOptionCss, text);
+	clickElementByText(AddOrganizationPage.dateDropdownOptionCss, text);
 };
 
 export const regionDropdownVisible = () => {
@@ -176,7 +176,7 @@ export const clickRegionDropdown = () => {
 };
 
 export const selectRegionFromDropdown = (text) => {
-	clickElementByText(AddOrganizationPage.dropdownOptionCss, text);
+	clickElementByText(AddOrganizationPage.regionDropdownOptionCss, text);
 };
 
 export const numberFormatDropdownVisible = () => {
@@ -188,7 +188,7 @@ export const clickNumberFormatDropdown = () => {
 };
 
 export const selectNumberFormatFromDropdown = (text) => {
-	clickElementByText(AddOrganizationPage.dropdownOptionCss, text);
+	clickElementByText(AddOrganizationPage.numformatDropdownOptionCss, text);
 };
 
 export const dateFormatDropdownVisible = () => {
@@ -200,8 +200,8 @@ export const clickDateFormatDropdown = () => {
 };
 
 export const selectDateFormatFromDropdown = () => {
-	const today = dayjs().format('MM/DD/YYYY');
-	clickElementByText(AddOrganizationPage.dropdownOptionCss, today);
+	const today = dayjs().format('DD/MM/YYYY');
+	clickElementByText(AddOrganizationPage.dateFormatOptionCss, today);
 };
 
 export const selectTableRow = () => {

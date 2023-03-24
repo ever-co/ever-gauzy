@@ -4,8 +4,10 @@ import {
 	InsertEvent,
 	LoadEvent,
 } from 'typeorm';
-import { faker } from '@ever-co/faker';
+import { faker } from '@faker-js/faker';
 import { sluggable } from '@gauzy/common';
+import { FileStorageProviderEnum } from '@gauzy/contracts';
+import { FileStorage } from './../../core/file-storage';
 import { TaskPriority } from './priority.entity';
 
 @EventSubscriber()
@@ -26,7 +28,16 @@ export class TaskPrioritySubscriber implements EntitySubscriberInterface<TaskPri
 	afterLoad(
 		entity: TaskPriority | Partial<TaskPriority>,
 		event?: LoadEvent<TaskPriority>
-	): void | Promise<any> {}
+	): void | Promise<any> {
+		try {
+			if (entity.icon) {
+				const store = new FileStorage().setProvider(FileStorageProviderEnum.LOCAL);
+				entity.fullIconUrl = store.getProviderInstance().url(entity.icon);
+			}
+		} catch (error) {
+			console.log(error);
+		}
+	}
 
 	/**
 	 * Called before entity is inserted to the database.

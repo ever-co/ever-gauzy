@@ -1,0 +1,13 @@
+<div class="form-group">
+    <label class="label" for="phoneNumber">
+        {{ 'FORM.LABELS.PHONE_NUMBER' | translate }}
+    </label>
+    <input
+        [placeholder]="(placeholder || 'FORM.PLACEHOLDERS.PHONE_NUMBER') | translate"
+        fullWidth
+        id="phoneNumber"
+        type="phoneNumber"
+        nbInput
+        [(ngModel)]="phoneNumber"
+    />
+</div>

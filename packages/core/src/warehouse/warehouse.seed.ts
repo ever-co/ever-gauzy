@@ -1,5 +1,5 @@
 import { DataSource } from 'typeorm';
-import { faker } from '@ever-co/faker';
+import { faker } from '@faker-js/faker';
 import { ICountry, IOrganization, ITenant, IWarehouse } from '@gauzy/contracts';
 import {
     Country,
@@ -44,7 +44,7 @@ export const createRandomWarehouses = async (
                 warehouse.products = [];
 
                 for (let i = 0; i <= Math.floor(Math.random() * 2); i++) {
-                    const product = faker.random.arrayElement(products);
+                    const product = faker.helpers.arrayElement(products);
 
                     let warehouseProduct = new WarehouseProduct();
                     warehouseProduct.product = product;
@@ -54,7 +54,7 @@ export const createRandomWarehouses = async (
 
                     let productsQuantity = 0;
                     for await (const variant of product.variants) {
-                        const quantity = faker.datatype.number(200);
+                        const quantity = faker.number.int(200);
                         productsQuantity += quantity;
 
                         const warehouseVariant = new WarehouseProductVariant();
@@ -81,8 +81,8 @@ const applyRandomProperties = (
     countries: ICountry[]
 ) => {
     const warehouse = new Warehouse()
-    warehouse.name = faker.company.companyName();
-    warehouse.code = faker.datatype.uuid();
+    warehouse.name = faker.company.name();
+    warehouse.code = faker.string.uuid();
     warehouse.email = faker.internet.exampleEmail(warehouse.name);
     warehouse.description = faker.lorem.words();
     warehouse.active = faker.datatype.boolean();
@@ -90,23 +90,23 @@ const applyRandomProperties = (
     warehouse.tenant = tenant;
 
     const contact = new Contact();
-    contact.firstName = faker.name.firstName();
-    contact.lastName = faker.name.lastName();
+    contact.firstName = faker.person.firstName();
+    contact.lastName = faker.person.lastName();
     contact.name = contact.firstName + ' ' + contact.lastName;
     contact.website = faker.internet.url();
-    contact.address = faker.address.streetAddress();
-    contact.address2 = faker.address.secondaryAddress();
-    contact.city = faker.address.city();
-    contact.country = faker.random.arrayElement(countries).isoCode;
-    contact.fax = faker.datatype.number(8).toString();
-    contact.longitude = +faker.address.longitude();
-    contact.latitude = +faker.address.latitude();
+    contact.address = faker.location.streetAddress();
+    contact.address2 = faker.location.secondaryAddress();
+    contact.city = faker.location.city();
+    contact.country = faker.helpers.arrayElement(countries).isoCode;
+    contact.fax = faker.number.int(8).toString();
+    contact.longitude = +faker.location.longitude();
+    contact.latitude = +faker.location.latitude();
     contact.organization = organization;
     contact.tenant = tenant;
 
     const logo = new ImageAsset();
-    logo.name = faker.name.title();
-    logo.url = faker.image.imageUrl();
+    logo.name = faker.company.name();
+    logo.url = faker.image.url();
     logo.organization = organization;
     logo.tenant = tenant;
 

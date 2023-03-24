@@ -1,7 +1,7 @@
 import { IUser } from './user.model';
 import { IEmployee } from './employee.model';
 import { ITask } from './task.model';
-import { ITimeSlot, ITimeLog, ITimeLogFilters } from './timesheet.model';
+import { ITimeSlot, ITimeLog, ITimeLogFilters, ITimeLogTodayFilters } from './timesheet.model';
 import { IOrganizationProject } from './organization-projects.model';
 
 export interface IGetTimeSlotStatistics
@@ -71,8 +71,7 @@ export interface IManualTimesStatistics
 	project?: Pick<IOrganizationProject, 'name'>;
 }
 
-export interface IGetMembersStatistics
-	extends ITimeLogFilters {
+export interface IGetMembersStatistics extends ITimeLogFilters, ITimeLogTodayFilters {
 	employeeId?: string;
 	projectId?: string | string[];
 }
@@ -95,7 +94,7 @@ export interface IMembersStatistics {
 	user?: Pick<IUser, 'name' | 'imageUrl'>;
 }
 
-export interface IGetCountsStatistics extends ITimeLogFilters {
+export interface IGetCountsStatistics extends ITimeLogFilters, ITimeLogTodayFilters {
 	onlyMe?: boolean;
 	employeeId?: string;
 	projectId?: string | string[];

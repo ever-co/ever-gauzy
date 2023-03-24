@@ -215,18 +215,18 @@ export const CustomCommands = {
 		addTaskPage.enterDueDateData();
 		addTaskPage.clickKeyboardButtonByKeyCode(9);
 		addTaskPage.estimateDaysInputVisible();
-		addTaskPage.enterEstiamteDaysInputData(
+		addTaskPage.enterEstimateDaysInputData(
 			AddTasksPageData.defaultTaskEstimateDays
 		);
 		addTaskPage.estimateHoursInputVisible();
-		addTaskPage.enterEstiamteHoursInputData(
+		addTaskPage.enterEstimateHoursInputData(
 			AddTasksPageData.defaultTaskEstimateHours
 		);
 		addTaskPage.estimateMinutesInputVisible();
 		addTaskPage.enterEstimateMinutesInputData(
 			AddTasksPageData.defaultTaskEstimateMinutes
 		);
-		addTaskPage.taskDecriptionTextareaVisible();
+		addTaskPage.taskDescriptionTextareaVisible();
 		addTaskPage.enterTaskDescriptionTextareaData(
 			AddTasksPageData.defaultTaskDescription
 		);
@@ -259,7 +259,7 @@ export const CustomCommands = {
 		manageEmployeesPage.passwordInputVisible();
 		manageEmployeesPage.enterPasswordInputData(password);
 		manageEmployeesPage.tagsDropdownVisible();
-		manageEmployeesPage.clickTagsDropdwon();
+		manageEmployeesPage.clickTagsDropdown();
 		manageEmployeesPage.selectTagFromDropdown(0);
 		manageEmployeesPage.clickCardBody();
 		manageEmployeesPage.imageInputVisible();
@@ -441,9 +441,9 @@ export const CustomCommands = {
 		inviteCandidatePage.clickKeyboardButtonByKeyCode(9);
 		inviteCandidatePage.tagsDropdownVisible();
 		inviteCandidatePage.clickAddTagsDropdown();
-		inviteCandidatePage.selectTagsFromDrodpwon(0);
+		inviteCandidatePage.selectTagsFromDropdown(0);
 		inviteCandidatePage.clickKeyboardButtonByKeyCode(9);
-		inviteCandidatePage.imageInputvisible();
+		inviteCandidatePage.imageInputVisible();
 		inviteCandidatePage.enterImageInputData(imgUrl);
 		inviteCandidatePage.nextButtonVisible();
 		inviteCandidatePage.clickNextButton();
@@ -463,8 +463,8 @@ export const CustomCommands = {
 		});
 		cy.reload();
 	},
-	logout: (dashboradPage: any, logoutPage: any, loginPage: any) => {
-		dashboradPage.clickUserName();
+	logout: (dashboardPage: any, logoutPage: any, loginPage: any) => {
+		dashboardPage.clickUserName();
 		logoutPage.clickLogoutButton();
 		loginPage.verifyLoginText();
 	},

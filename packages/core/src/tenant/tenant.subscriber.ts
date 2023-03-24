@@ -23,6 +23,9 @@ export class TenantSubscriber implements EntitySubscriberInterface<Tenant> {
             if (!entity.logo) {
                 entity.logo = getTenantLogo(entity.name);
             }
+            if (!!entity['image']) {
+                entity.logo = entity.image.fullUrl || entity.logo;
+            }
         } catch (error) {
             console.log(error);
         }

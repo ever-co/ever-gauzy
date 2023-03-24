@@ -1,46 +1,45 @@
 <div>
-	<label class="label" for="addTags" *ngIf="label">
-		{{ 'TAGS_PAGE.HEADER' | translate }}
-	</label>
+	<ng-container *ngIf="label">
+		<label class="label" for="addTags">
+			{{ 'TAGS_PAGE.HEADER' | translate }}
+		</label>
+	</ng-container>
 	<ng-select
+		id="addTags"
 		[items]="tags"
 		[multiple]="multiple"
 		bindLabel="name"
 		appendTo="body"
 		[loading]="loading"
-		[addTag]="addTag.bind(this)"
-		(change)="selectedTagsEvent.emit(this.selectedTags)"
+		[addTag]="((hasAddTag$ | async) && addTag) ? createNewTag : null"
+		(change)="selectedTagsEvent.emit(selectedTags)"
 		[(ngModel)]="selectedTags"
 		[closeOnSelect]="false"
-		id="addTags"
 		[placeholder]="'MENU.TAGS' | translate"
 	>
 		<ng-template ng-option-tmp let-tag="item" let-tag$="item$">
-      <div class="d-flex align-items-center">
-        <ng-container *ngIf="multiple">
-          <input type="checkbox" [ngModel]="tag$.selected" />
-        </ng-container>
-        <nb-badge
-          [style.background]="background(tag.color)"
-          class="tag-color"
-        ></nb-badge>
-        <span class="text">{{ tag.name }}</span>
-      </div>
+			<div class="d-flex align-items-center">
+				<ng-container *ngIf="multiple">
+					<input type="checkbox" [ngModel]="tag$.selected" />
+				</ng-container>
+				<nb-badge
+					[style.background]="background(tag.color)"
+					class="tag-color"
+				></nb-badge>
+				<span class="text">{{ tag.name }}</span>
+			</div>
 		</ng-template>
-
 		<ng-template ng-label-tmp let-tag="item" let-clear="clear">
 			<nb-badge
 				class="tag-color tag-label"
 				[style.background]="background(tag.color)"
 				[style.color]="backgroundContrast(tag.color)"
-				text="{{ tag.name }}"
+				[text]="tag.name"
 				(click)="clear(tag)"
 			></nb-badge>
 		</ng-template>
-
 		<ng-template ng-tag-tmp let-newTagName="searchTerm">
-			<b>{{ 'TAGS_PAGE.ADD_NEW_TAG' | translate }}</b
-			>: {{ newTagName }}
+			<b>{{ 'TAGS_PAGE.ADD_NEW_TAG' | translate }}</b>: {{ newTagName }}
 		</ng-template>
 	</ng-select>
 </div>

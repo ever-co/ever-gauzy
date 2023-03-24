@@ -85,7 +85,7 @@ export const saveSelectedOrgButtonVisible = () => {
 	verifyElementIsVisible(EditUserPage.saveSelectedOrgButton);
 };
 
-export const clickSaveselectedOrgButton = () => {
+export const clickSaveSelectedOrgButton = () => {
 	clickButton(EditUserPage.saveSelectedOrgButton);
 };
 

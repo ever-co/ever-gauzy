@@ -5,7 +5,7 @@ import { EmployeeDashboardPageData } from '../../Base/pagedata/EmployeeDashboard
 import * as dashboardPage from '../../Base/pages/Dashboard.po';
 import { CustomCommands } from '../../commands';
 import * as logoutPage from '../../Base/pages/Logout.po';
-import { faker } from '@ever-co/faker';
+import { faker } from '@faker-js/faker';
 import * as organizationProjectsPage from '../../Base/pages/OrganizationProjects.po';
 import { OrganizationProjectsPageData } from '../../Base/pagedata/OrganizationProjectsPageData';
 import { ClientsData } from '../../Base/pagedata/ClientsPageData';
@@ -15,15 +15,15 @@ import { Given, Then, When, And } from 'cypress-cucumber-preprocessor/steps';
 
 
 let email = faker.internet.email();
-let fullName = faker.name.firstName() + ' ' + faker.name.lastName();
-let city = faker.address.city();
-let postcode = faker.address.zipCode();
-let street = faker.address.streetAddress();
+let fullName = faker.person.firstName() + ' ' + faker.person.lastName();
+let city = faker.location.city();
+let postcode = faker.location.zipCode();
+let street = faker.location.streetAddress();
 let website = faker.internet.url();
-let projectName = faker.name.jobTitle()
+let projectName = faker.person.jobTitle()
 
-let firstName = faker.name.firstName();
-let lastName = faker.name.lastName();
+let firstName = faker.person.firstName();
+let lastName = faker.person.lastName();
 let username = faker.internet.userName();
 let password = faker.internet.password();
 let employeeEmail = faker.internet.email();
@@ -40,7 +40,7 @@ Given('Login with default credentials', () => {
 
 // Add employee
 And('User can add new employee', () => {
-    dashboardPage.verifyAccountingDashboardIfVisible();
+	dashboardPage.verifyAccountingDashboardIfVisible();
 	CustomCommands.addEmployee(
 		manageEmployeesPage,
 		firstName,
@@ -203,7 +203,7 @@ When('User click on employee dropdown again', () => {
 });
 
 Then('User can select employee from dropdown options again', () => {
-	employeeDashboard.selectEmployeeFromDrodpwonByName(employeeFullName);
+	employeeDashboard.selectEmployeeFromDropdownByName(employeeFullName);
 });
 
 And('User can see date input field', () => {
@@ -227,7 +227,7 @@ And('User click on currency input field', () => {
 	employeeDashboard.clickOnCurrencyField();
 });
 
-And('User select currency',() => {
+And('User select currency', () => {
 	employeeDashboard.selectCurrency(EmployeeDashboardPageData.bgnCurrency);
 });
 
@@ -236,7 +236,7 @@ And('User can see amount input field', () => {
 });
 
 And('User can enter value for amount', () => {
-	employeeDashboard.enterAmountInputData(EmployeeDashboardPageData.anountInput);
+	employeeDashboard.enterAmountInputData(EmployeeDashboardPageData.amountInput);
 });
 
 And('User can see notes textarea input field', () => {
@@ -265,28 +265,28 @@ And('User can verify income was created', () => {
 
 //User go to dashboard to verify employee salary
 
-When('User see dashboard button on main manu', () => {
+When('User see dashboard button on main menu', () => {
 	employeeDashboard.verifyMenuBtnByText(EmployeeDashboardPageData.dashboardTxt);
 });
 
-Then ('User click on dashboard button', () => {
+Then('User click on dashboard button', () => {
 	employeeDashboard.clickMenuButtonsByText(EmployeeDashboardPageData.dashboardTxt)
 });
 
 When('User see employee selector', () => {
-	employeeDashboard.verifyEmployeeSelecor();
+	employeeDashboard.verifyEmployeeSelector();
 });
 
 Then('User click on employee selector', () => {
-	employeeDashboard.clickOnEmployeeSelecor();
+	employeeDashboard.clickOnEmployeeSelector();
 });
 
-When ('User see employee dropdown', () => {
+When('User see employee dropdown', () => {
 	employeeDashboard.verifyEmployeeSelectorDropdown(employeeFullName);
 });
 
-Then ('User click on employee', () => {
-	employeeDashboard.clickOnEmployeeSelecorDropdown(employeeFullName);
+Then('User click on employee', () => {
+	employeeDashboard.clickOnEmployeeSelectorDropdown(employeeFullName);
 });
 
 And('User can verify salary', () => {

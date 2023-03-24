@@ -37,9 +37,17 @@ export const environment: IEnvironment = {
 	JWT_VERIFICATION_TOKEN_EXPIRATION_TIME: parseInt(process.env.JWT_VERIFICATION_TOKEN_EXPIRATION_TIME) || 86400 * 7, // default verification expire token time (7 days)
 
 	/**
+	 * Email Reset
+	 */
+	EMAIL_RESET_EXPIRATION_TIME: parseInt(process.env.EMAIL_RESET_EXPIRATION_TIME) || 1800, // default email reset expiration time (30 minutes)
+
+	/**
 	 * Password Less Authentication Configuration
 	 */
 	AUTHENTICATION_CODE_EXPIRATION_TIME: parseInt(process.env.AUTHENTICATION_CODE_EXPIRATION_TIME) || 600, // default code expire time (10 minutes)
+
+	/** Organization Team Join Request Configuration **/
+	TEAM_JOIN_REQUEST_EXPIRATION_TIME: parseInt(process.env.TEAM_JOIN_REQUEST_EXPIRATION_TIME) || 60 * 60 * 24, // default code expire time (1 day)
 
 	/**
 	 * Throttler (Rate Limiting) Options
@@ -48,9 +56,7 @@ export const environment: IEnvironment = {
 	THROTTLE_LIMIT: parseInt(process.env.THROTTLE_LIMIT) || 300,
 
 	fileSystem: {
-		name:
-			(process.env.FILE_PROVIDER as FileStorageProviderEnum) ||
-			FileStorageProviderEnum.LOCAL
+		name: (process.env.FILE_PROVIDER as FileStorageProviderEnum) || FileStorageProviderEnum.LOCAL
 	},
 
 	awsConfig: {
@@ -70,6 +76,17 @@ export const environment: IEnvironment = {
 		s3: {
 			bucket: process.env.WASABI_S3_BUCKET || 'gauzy'
 		}
+	},
+
+	/**
+	 * Cloudinary FileSystem Storage Configuration
+	 */
+	cloudinaryConfig: {
+		cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+		api_key: process.env.CLOUDINARY_API_KEY,
+		api_secret: process.env.CLOUDINARY_API_SECRET,
+		secure: process.env.CLOUDINARY_API_SECURE === 'false' ? false : true,
+		delivery_url: process.env.CLOUDINARY_CDN_URL || `https://res.cloudinary.com`
 	},
 
 	facebookConfig: {
@@ -149,8 +166,7 @@ export const environment: IEnvironment = {
 		dns: process.env.SENTRY_DSN
 	},
 
-	defaultIntegratedUserPass:
-		process.env.INTEGRATED_USER_DEFAULT_PASS || '123456',
+	defaultIntegratedUserPass: process.env.INTEGRATED_USER_DEFAULT_PASS || '123456',
 
 	upworkConfig: {
 		callbackUrl:
@@ -160,8 +176,7 @@ export const environment: IEnvironment = {
 
 	isElectron: process.env.IS_ELECTRON === 'true' ? true : false,
 	gauzyUserPath: process.env.GAUZY_USER_PATH,
-	allowSuperAdminRole:
-		process.env.ALLOW_SUPER_ADMIN_ROLE === 'false' ? false : true,
+	allowSuperAdminRole: process.env.ALLOW_SUPER_ADMIN_ROLE === 'false' ? false : true,
 
 	/**
 	 * Endpoint for Gauzy AI API (optional), e.g.: http://localhost:3005/graphql
@@ -182,7 +197,8 @@ export const environment: IEnvironment = {
 	defaultCurrency: process.env.DEFAULT_CURRENCY || 'USD',
 
 	unleashConfig: {
-		url: process.env.UNLEASH_API_URL,
+		// if UNLEASH_API_URL is not set / empty or it's a spaces only, we consider UNLEASH disabled
+		url: process.env.UNLEASH_API_URL ? process.env.UNLEASH_API_URL.trim() : '',
 		appName: process.env.UNLEASH_APP_NAME,
 		environment: 'development',
 		instanceId: process.env.UNLEASH_INSTANCE_ID,
@@ -210,7 +226,7 @@ export const environment: IEnvironment = {
 		adminPassword: process.env.DEMO_ADMIN_PASSWORD || `admin`,
 		employeeEmail: process.env.DEMO_EMPLOYEE_EMAIL || `employee@ever.co`,
 		employeePassword: process.env.DEMO_EMPLOYEE_PASSWORD || `123456`
-	},
+	}
 };
 
 export const gauzyToggleFeatures: IGauzyFeatures = {
@@ -255,7 +271,8 @@ export const gauzyToggleFeatures: IGauzyFeatures = {
 	FEATURE_ORGANIZATION_TEAM: process.env.FEATURE_ORGANIZATION_TEAM === 'false' ? false : true,
 	FEATURE_ORGANIZATION_DOCUMENT: process.env.FEATURE_ORGANIZATION_DOCUMENT === 'false' ? false : true,
 	FEATURE_ORGANIZATION_EMPLOYMENT_TYPE: process.env.FEATURE_ORGANIZATION_EMPLOYMENT_TYPE === 'false' ? false : true,
-	FEATURE_ORGANIZATION_RECURRING_EXPENSE: process.env.FEATURE_ORGANIZATION_RECURRING_EXPENSE === 'false' ? false : true,
+	FEATURE_ORGANIZATION_RECURRING_EXPENSE:
+		process.env.FEATURE_ORGANIZATION_RECURRING_EXPENSE === 'false' ? false : true,
 	FEATURE_ORGANIZATION_HELP_CENTER: process.env.FEATURE_ORGANIZATION_HELP_CENTER === 'false' ? false : true,
 	FEATURE_CONTACT: process.env.FEATURE_CONTACT === 'false' ? false : true,
 	FEATURE_GOAL: process.env.FEATURE_GOAL === 'false' ? false : true,
@@ -274,5 +291,5 @@ export const gauzyToggleFeatures: IGauzyFeatures = {
 	FEATURE_SMS_GATEWAY: process.env.FEATURE_SMS_GATEWAY === 'false' ? false : true,
 	FEATURE_SMTP: process.env.FEATURE_SMTP === 'false' ? false : true,
 	FEATURE_ROLES_PERMISSION: process.env.FEATURE_ROLES_PERMISSION === 'false' ? false : true,
-	FEATURE_EMAIL_VERIFICATION: process.env.FEATURE_EMAIL_VERIFICATION === 'false' ? false : true,
+	FEATURE_EMAIL_VERIFICATION: process.env.FEATURE_EMAIL_VERIFICATION === 'false' ? false : true
 };

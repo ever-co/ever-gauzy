@@ -1,13 +1,13 @@
 import * as loginPage from '../support/Base/pages/Login.po';
 import { LoginPageData } from '../support/Base/pagedata/LoginPageData';
 import * as eventTypesPage from '../support/Base/pages/EventTypes.po';
-import * as dashboradPage from '../support/Base/pages/Dashboard.po';
+import * as dashboardPage from '../support/Base/pages/Dashboard.po';
 import { EventTypePageData } from '../support/Base/pagedata/EventTypesPageData';
 import { CustomCommands } from '../support/commands';
 
 describe('Event types test', () => {
 	before(() => {
-		CustomCommands.login(loginPage, LoginPageData, dashboradPage);
+		CustomCommands.login(loginPage, LoginPageData, dashboardPage);
 	});
 	it('Should be able to add new event type', () => {
 		cy.visit('/#/pages/employees/event-types');
@@ -19,7 +19,7 @@ describe('Event types test', () => {
 		eventTypesPage.clickSelectEmployeeDropdown();
 		eventTypesPage.selectEmployeeFromDropdown(1);
 		eventTypesPage.titleInputVisible();
-		eventTypesPage.enterTitleInputData(EventTypePageData.dafaultEventTitle);
+		eventTypesPage.enterTitleInputData(EventTypePageData.defaultEventTitle);
 		eventTypesPage.descriptionInputVisible();
 		eventTypesPage.enterDescriptionInputData(
 			EventTypePageData.defaultDescription
@@ -41,7 +41,7 @@ describe('Event types test', () => {
 		eventTypesPage.editEventTypeButtonVisible();
 		eventTypesPage.clickEditEventTypeButton();
 		eventTypesPage.titleInputVisible();
-		eventTypesPage.enterTitleInputData(EventTypePageData.dafaultEventTitle);
+		eventTypesPage.enterTitleInputData(EventTypePageData.defaultEventTitle);
 		eventTypesPage.descriptionInputVisible();
 		eventTypesPage.enterDescriptionInputData(
 			EventTypePageData.defaultDescription

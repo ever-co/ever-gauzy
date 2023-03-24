@@ -2,15 +2,15 @@ import * as loginPage from '../support/Base/pages/Login.po';
 import { LoginPageData } from '../support/Base/pagedata/LoginPageData';
 import * as organizationDocumentsPage from '../support/Base/pages/OrganizationDocuments.po';
 import { OrganizationDocumentsPageData } from '../support/Base/pagedata/OrganizationDocumentsPageData';
-import * as dashboradPage from '../support/Base/pages/Dashboard.po';
+import * as dashboardPage from '../support/Base/pages/Dashboard.po';
 import { CustomCommands } from '../support/commands';
-import { faker } from '@ever-co/faker';
+import { faker } from '@faker-js/faker';
 
 let url = faker.internet.url();
 
 describe('Organization documents test', () => {
 	before(() => {
-		CustomCommands.login(loginPage, LoginPageData, dashboradPage);
+		CustomCommands.login(loginPage, LoginPageData, dashboardPage);
 	});
 	it('Should be able to add new document', () => {
 		cy.visit('/#/pages/organization/documents');

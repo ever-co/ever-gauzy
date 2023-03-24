@@ -1,13 +1,17 @@
 # Ever Gauzy Platform
 
+[uri_gauzy]: https://gauzy.co
+[uri_gauzy_github]: https://github.com/ever-co/ever-gauzy
+[uri_license]: https://www.gnu.org/licenses/agpl-3.0.html
+[uri_license_image]: https://img.shields.io/badge/License-AGPL%20v3-blue.svg
+
+![visitors](https://visitor-badge.laobi.icu/badge?page_id=ever-co.gauzy-platform)
+[![License: AGPL v3][uri_license_image]][uri_license]
 [![Gitpod Ready-to-Code](https://img.shields.io/badge/Gitpod-Ready--to--Code-blue?logo=gitpod)](https://gitpod.io/#https://github.com/ever-co/ever-gauzy)
-[![Join the community on Spectrum](https://withspectrum.github.io/badge/badge.svg)](https://spectrum.chat/gauzy)
-[![Gitter](https://badges.gitter.im/JoinChat.svg)](https://gitter.im/ever-co/ever-gauzy?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
-[![Get help on Codementor](https://cdn.codementor.io/badges/get_help_github.svg)](https://www.codementor.io/evereq?utm_source=github&utm_medium=button&utm_term=evereq&utm_campaign=github)
 
 ## ⭐️ What is it?
 
-[Ever® Gauzy™](https://gauzy.co) - **Open-Source Business Management Platform** for On-Demand and Sharing Economies.
+[Ever® Gauzy™][uri_gauzy] - **Open-Source Business Management Platform** for On-Demand and Sharing Economies.
 
 - **Enterprise Resource Planning** (ERP) software
 - **Customer Relationship Management** (CRM) software
@@ -16,6 +20,22 @@
 ![overview](https://docs.gauzy.co/docs/assets/overview.png)
 
 Ever® Gauzy™ Platform is a part of our larger Open Platform for **On-Demand and Sharing Economies** - [Ever® Platform™](https://ever.co).
+
+## 🌼 Screenshots
+
+<details>
+<summary>Show / Hide Screenshots</summary>
+
+### Web UI
+![overview](https://docs.gauzy.co/docs/assets/overview.png)
+
+### Desktop Timer UI (Standard)
+![timer](https://docs.gauzy.co/docs/assets/desktop/desktop-timer-small.png)
+
+### Desktop Timer UI (Expanded)
+![timer](https://docs.gauzy.co/docs/assets/desktop/desktop-timer-expanded.png)
+
+</details>
 
 ## ✨ Features
 
@@ -48,10 +68,10 @@ More detailed list of the features available in the platform:
 - Time Off Management / Holidays / Approvals
 - Inventory
 - Equipment / Sharing
+- Multiple Organizations Management
 - Organization Departments and Teams
 - Organization Clients and Vendors
 - Help Center / Knowledge Base
-- Multiple Organizations Management
 - Tags / Labels
 - Reports
 - Organization and Employee Public Pages
@@ -60,7 +80,7 @@ More detailed list of the features available in the platform:
 - Data Import / Export
 - Roles / Permissions
 - Multi-currency
-- Multi-language
+- Multi-lingual
 - Dark / Light / Corporate / Material and other Themes
 
 Read more [About Gauzy](https://github.com/ever-co/ever-gauzy/wiki/About-Gauzy) and [How to use it](https://github.com/ever-co/ever-gauzy/wiki/How-to-use-Gauzy) at your company, on-demand business, freelance business, agency, studio or in-house teams.
@@ -82,7 +102,7 @@ You can download Gauzy Platform, Gauzy Server or Desktop Apps (Windows/Mac/Linux
 
 In addition, all downloads are also available from the following pages:
 
-- [Gauzy Releases](https://github.com/ever-co/ever-gauzy/releases)
+- [Gauzy Releases][uri_gauzy_github](https://github.com/ever-co/ever-gauzy/releases)
 - [Server Releases](https://github.com/ever-co/ever-gauzy-server/releases)
 - [Desktop App Releases](https://github.com/ever-co/ever-gauzy-desktop/releases)
 - [Desktop Timer App Releases](https://github.com/ever-co/ever-gauzy-desktop-timer/releases)
@@ -197,9 +217,9 @@ Notes:
 - [Ever.co Website Contact Us page](https://ever.co/contacts)
 - [Slack Community](https://join.slack.com/t/gauzy/shared_invite/enQtNzc5MTA5MDUwODg2LTI0MGEwYTlmNWFlNzQzMzBlOWExNTk0NzAyY2IwYWYwMzZjMTliYjMwNDI3NTJmYmM4MDQ4NDliMDNiNDY1NWU)
 - [Discord Chat](https://discord.gg/hKQfn4j)
-- [Spectrum Community](https://spectrum.chat/gauzy)
-- [Gitter Chat](https://gitter.im/ever-co/gauzy)
-- [CodeMentor](https://www.codementor.io/evereq)
+- [![Join the community on Spectrum](https://withspectrum.github.io/badge/badge.svg)](https://spectrum.chat/gauzy)
+- [![Gitter](https://badges.gitter.im/JoinChat.svg)](https://gitter.im/ever-co/ever-gauzy?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+- [![Get help on Codementor](https://cdn.codementor.io/badges/get_help_github.svg)](https://www.codementor.io/evereq?utm_source=github&utm_medium=button&utm_term=evereq&utm_campaign=github)
 - For business inquiries: <mailto:gauzy@ever.co>
 - Please report security vulnerabilities to <mailto:security@ever.co>
 - [Gauzy Platform @ Twitter](https://twitter.com/gauzyplatform)
@@ -253,13 +273,10 @@ You can also view full list of our [contributors tracked by Github](https://gith
 
 <img src="https://contributors-img.web.app/image?repo=ever-co/ever-gauzy" />
 
-## ©️ Copyright
+## ©️ Copyrigh
 
 #### Copyright © 2019-present, Ever Co. LTD. All rights reserved.
 
----
-
-![visitors](https://visitor-badge.laobi.icu/badge?page_id=ever-co.gauzy-platform)
 [![huntr](https://cdn.huntr.dev/huntr_security_badge_mono.svg)](https://huntr.dev)
 [![Circle CI](https://circleci.com/gh/ever-co/ever-gauzy.svg?style=svg)](https://circleci.com/gh/ever-co/ever-gauzy)
 [![codecov](https://codecov.io/gh/ever-co/ever-gauzy/branch/master/graph/badge.svg)](https://codecov.io/gh/ever-co/ever-gauzy)

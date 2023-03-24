@@ -11,7 +11,7 @@ export const createButtonVisible = () => {
 	verifyElementIsVisible(CreateButton.createButtonCss);
 };
 
-export const clickCreatebutton = () => {
+export const clickCreateButton = () => {
 	cy.on('uncaught:exception', (err, runnable) => {
 		return false;
 	});

@@ -1,15 +1,16 @@
 import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
+import { IsNull } from 'typeorm';
 import {
 	ICustomizableEmailTemplate,
 	LanguagesEnum,
 	EmailTemplateNameEnum,
 	IEmailTemplate
 } from '@gauzy/contracts';
-import { IsNull } from 'typeorm';
+import { RequestContext } from './../../../core/context';
+import { EmailTemplate } from './../../email-template.entity';
 import { EmailTemplateService } from '../../email-template.service';
 import { EmailTemplateReaderService } from './../../email-template-reader.service';
 import { FindEmailTemplateQuery } from '../email-template.find.query';
-import { RequestContext } from './../../../core/context';
 
 @QueryHandler(FindEmailTemplateQuery)
 export class FindEmailTemplateHandler implements IQueryHandler<FindEmailTemplateQuery> {
@@ -17,7 +18,7 @@ export class FindEmailTemplateHandler implements IQueryHandler<FindEmailTemplate
 	constructor(
 		private readonly emailTemplateService: EmailTemplateService,
 		private readonly emailTemplateReaderService: EmailTemplateReaderService,
-	) {}
+	) { }
 
 	public async execute(
 		command: FindEmailTemplateQuery
@@ -107,8 +108,11 @@ export class FindEmailTemplateHandler implements IQueryHandler<FindEmailTemplate
 						 * Fetch missing templates for production environment
 						 * Save it to the database for global tenant
 						 */
-						const emailTemplates = this.emailTemplateReaderService.readEmailTemplate(name).filter(
+						const templates = this.emailTemplateReaderService.readEmailTemplate(name);
+						const emailTemplates = templates.filter(
 							(template: IEmailTemplate) => template.name === `${name}/${type}`
+						).map(
+							(template) => new EmailTemplate({ ...template })
 						);
 						for await (const emailTemplate of emailTemplates) {
 							await this.emailTemplateService.saveTemplate(

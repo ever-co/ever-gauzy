@@ -1,5 +1,5 @@
-import { AccoutingTemplateHandler } from './accouting-template.handler';
+import { AccountingTemplateHandler } from './accounting-template.handler';
 
 export const QueryHandlers = [
-	AccoutingTemplateHandler
+	AccountingTemplateHandler
 ];

@@ -11,16 +11,18 @@ import {
 	IUser,
 	IInvite,
 	IPagination,
-	IInviteTeamMemberModel
+	IInviteTeamMemberModel,
+	IOrganizationTeam,
+	IOrganizationTeamJoinRequest
 } from '@gauzy/contracts';
-import { forwardRef, Inject, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, forwardRef, Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import * as Email from 'email-templates';
 import * as Handlebars from 'handlebars';
 import * as nodemailer from 'nodemailer';
 import { Repository, IsNull, FindManyOptions } from 'typeorm';
 import { environment as env } from '@gauzy/config';
-import { deepMerge, IAppIntegrationConfig, ISMTPConfig } from '@gauzy/common';
+import { deepMerge, IAppIntegrationConfig, isEmpty, ISMTPConfig } from '@gauzy/common';
 import { TenantAwareCrudService } from './../core/crud';
 import { RequestContext } from '../core/context';
 import { EmailTemplate, Organization } from './../core/entities/internal';
@@ -75,8 +77,8 @@ export class EmailService extends TenantAwareCrudService<EmailEntity> {
 	 * @returns
 	 */
 	private async getEmailInstance(
-		organizationId?: string,
-		tenantId?: string
+		organizationId?: IOrganization['id'],
+		tenantId?: IOrganization['tenantId'],
 	): Promise<Email<any>> {
 		const currentTenantId = tenantId || RequestContext.currentTenantId();
 		let smtpConfig: ISMTPConfig;
@@ -84,37 +86,61 @@ export class EmailService extends TenantAwareCrudService<EmailEntity> {
 		try {
 			const smtpTransporter = await this.customSmtpService.findOneByOptions({
 				where: {
-					tenantId: currentTenantId,
-					organizationId
+					tenantId: isEmpty(currentTenantId) ? IsNull() : currentTenantId,
+					organizationId: isEmpty(organizationId) ? IsNull() : organizationId
+				},
+				order: {
+					createdAt: 'DESC'
 				}
 			});
-			smtpConfig = smtpTransporter.getSmtpTransporter() as ISMTPConfig;
-			console.log({ smtpConfig }, 'try email instance', {
-				where: {
-					tenantId: currentTenantId,
-					organizationId
-				}
-			});
+			smtpConfig = smtpTransporter.getSmtpTransporter();
+
+			/** Verifies SMTP configuration */
+			if (!!await this.customSmtpService.verifyTransporter(smtpTransporter)) {
+				console.log({ smtpConfig }, 'try email instance', {
+					where: {
+						tenantId: isEmpty(currentTenantId) ? IsNull() : currentTenantId,
+						organizationId: isEmpty(organizationId) ? IsNull() : organizationId
+					},
+					order: {
+						createdAt: 'DESC'
+					}
+				});
+			} else {
+				throw new BadRequestException();
+			}
 		} catch (error) {
 			try {
 				if (error instanceof NotFoundException) {
 					const smtpTransporter = await this.customSmtpService.findOneByOptions({
 						where: {
-							tenantId: currentTenantId,
+							tenantId: isEmpty(currentTenantId) ? IsNull() : currentTenantId,
 							organizationId: IsNull()
+						},
+						order: {
+							createdAt: 'DESC'
 						}
 					});
-					smtpConfig = smtpTransporter.getSmtpTransporter() as ISMTPConfig;
-				}
-				console.log({ smtpConfig }, 'catch try email instance', {
-					where: {
-						tenantId: currentTenantId,
-						organizationId: IsNull()
+					smtpConfig = smtpTransporter.getSmtpTransporter();
+
+					/** Verifies SMTP configuration */
+					if (!!await this.customSmtpService.verifyTransporter(smtpTransporter)) {
+						console.log({ smtpConfig }, 'catch try email instance', {
+							where: {
+								tenantId: isEmpty(currentTenantId) ? IsNull() : currentTenantId,
+								organizationId: IsNull()
+							},
+							order: {
+								createdAt: 'DESC'
+							}
+						});
+					} else {
+						throw new BadRequestException();
 					}
-				});
+				}
 			} catch (error) {
 				smtpConfig = this.customSmtpService.defaultSMTPTransporter() as ISMTPConfig;
-				console.log({ smtpConfig }, 'catch catch email instance');
+				console.log({ smtpConfig }, 'Global default SMTP configuration verifies');
 			}
 		}
 		const config: Email.EmailConfig<any> = {
@@ -855,8 +881,15 @@ export class EmailService extends TenantAwareCrudService<EmailEntity> {
 	 */
 	async passwordLessAuthentication(
 		user: IUser,
-		languageCode: LanguagesEnum
+		languageCode: LanguagesEnum,
+		integration?: IAppIntegrationConfig
 	) {
+		/**
+		* Override the default config by merging in the provided values.
+		*
+		*/
+		deepMerge(integration, env.appIntegrationConfig);
+
 		const sendOptions = {
 			template: 'password-less-authentication',
 			message: {
@@ -866,7 +899,8 @@ export class EmailService extends TenantAwareCrudService<EmailEntity> {
 				locale: languageCode,
 				email: user.email,
 				host: env.clientBaseUrl,
-				inviteCode: user.code
+				inviteCode: user.code,
+				...integration
 			}
 		};
 		try {
@@ -885,6 +919,115 @@ export class EmailService extends TenantAwareCrudService<EmailEntity> {
 					console.error(error);
 				}
 			}
+		} catch (error) {
+			console.error(error);
+		}
+	}
+
+	/**
+	 * Email Reset
+	 *
+	 * @param user
+	 * @param languageCode
+	 */
+	async emailReset(
+		user: IUser,
+		languageCode: LanguagesEnum,
+		verificationCode: number,
+		organization: IOrganization
+	) {
+		const integration = Object.assign({}, env.appIntegrationConfig);
+
+		const sendOptions = {
+			template: 'email-reset',
+			message: {
+				to: `${user.email}`
+			},
+			locals: {
+				...integration,
+				locale: languageCode,
+				email: user.email,
+				host: env.clientBaseUrl,
+				verificationCode,
+				name: user.name,
+			}
+		};
+		try {
+			const body = {
+				templateName: sendOptions.template,
+				email: sendOptions.message.to,
+				languageCode,
+				message: '',
+				user: user,
+				organization
+			}
+			const match = !!DISALLOW_EMAIL_SERVER_DOMAIN.find((server) => body.email.includes(server));
+			if (!match) {
+				try {
+					const send = await (await this.getEmailInstance()).send(sendOptions);
+					body['message'] = send.originalMessage;
+				} catch (error) {
+					console.error(error);
+				}
+			}
+			await this.createEmailRecord(body);
+		} catch (error) {
+			console.error(error);
+		}
+	}
+
+	/**
+	 * Organization team join request email
+	 *
+	 * @param email
+	 * @param code
+	 * @param languageCode
+	 * @param organization
+	 */
+	async organizationTeamJoinRequest(
+		organizationTeam: IOrganizationTeam,
+		organizationTeamJoinRequest: IOrganizationTeamJoinRequest,
+		languageCode: LanguagesEnum,
+		organization: IOrganization,
+		integration?: IAppIntegrationConfig
+	) {
+		/**
+		* Override the default config by merging in the provided values.
+		*
+		*/
+		deepMerge(integration, env.appIntegrationConfig);
+
+		const sendOptions = {
+			template: 'organization-team-join-request',
+			message: {
+				to: `${organizationTeamJoinRequest.email}`
+			},
+			locals: {
+				locale: languageCode,
+				host: env.clientBaseUrl,
+				...organizationTeam,
+				...organizationTeamJoinRequest,
+				...integration
+			}
+		};
+		try {
+			const body = {
+				templateName: sendOptions.template,
+				email: sendOptions.message.to,
+				languageCode,
+				message: '',
+				organization
+			}
+			const match = !!DISALLOW_EMAIL_SERVER_DOMAIN.find((server) => body.email.includes(server));
+			if (!match) {
+				try {
+					const send = await (await this.getEmailInstance()).send(sendOptions);
+					body['message'] = send.originalMessage;
+				} catch (error) {
+					console.error(error);
+				}
+			}
+			await this.createEmailRecord(body);
 		} catch (error) {
 			console.error(error);
 		}

@@ -8,7 +8,7 @@ import { IOrganizationAward } from './organization-award.model';
 import { IOrganizationLanguage } from './organization-language.model';
 import { IOrganizationSprint } from './organization-sprint.model';
 import { ISkill } from './skill-entity.model';
-import { ITag } from './tag-entity.model';
+import { ITag } from './tag.model';
 import { ITenant } from './tenant.model';
 import { IReportOrganization } from './report.model';
 
@@ -104,9 +104,11 @@ export interface IOrganization extends IBasePerTenantEntityModel {
 	daysUntilDue?: number;
 	accountingTemplates?: IAccountingTemplate[];
 	reportOrganizations?: IReportOrganization[];
-	allowTrackInactivity?: boolean,
-	inactivityTimeLimit?: number,
-	activityProofDuration?: number
+	allowTrackInactivity?: boolean;
+	inactivityTimeLimit?: number;
+	activityProofDuration?: number;
+	isRemoveIdleTime?: boolean;
+	allowScreenshotCapture?: boolean;
 }
 
 export interface IOrganizationFindInput extends IBasePerTenantEntityModel {
@@ -269,8 +271,8 @@ export enum CrudActionEnum {
 export const DEFAULT_DATE_FORMATS: string[] = ['L', 'LL', 'dddd, LL'];
 export const DEFAULT_TIME_FORMATS: number[] = [12, 24];
 export interface IKeyValuePair {
-    key: string;
-    value: boolean | string;
+	key: string;
+	value: boolean | string;
 }
 
 export const DEFAULT_INACTIVITY_TIME_LIMITS: number[] = [1, 5, 10, 20, 30];

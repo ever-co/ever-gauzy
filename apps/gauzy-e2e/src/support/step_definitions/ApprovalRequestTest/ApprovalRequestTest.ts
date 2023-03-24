@@ -4,7 +4,7 @@ import * as approvalRequestPage from '../../Base/pages/ApprovalRequest.po';
 import * as dashboardPage from '../../Base/pages/Dashboard.po';
 import { ApprovalRequestPageData } from '../../Base/pagedata/ApprovalRequestPageData';
 import { CustomCommands } from '../../commands';
-import { faker } from '@ever-co/faker';
+import { faker } from '@faker-js/faker';
 import * as logoutPage from '../../Base/pages/Logout.po';
 import * as manageEmployeesPage from '../../Base/pages/ManageEmployees.po';
 import * as organizationTagsUserPage from '../../Base/pages/OrganizationTags.po';
@@ -14,15 +14,15 @@ import { Given, Then, When, And } from 'cypress-cucumber-preprocessor/steps';
 
 const pageLoadTimeout = Cypress.config('pageLoadTimeout');
 
-let firstName = faker.name.firstName();
-let lastName = faker.name.lastName();
+let firstName = faker.person.firstName();
+let lastName = faker.person.lastName();
 let username = faker.internet.userName();
 let password = faker.internet.password();
 let employeeEmail = faker.internet.email();
 let imgUrl = faker.image.avatar();
 
-let dafaultName = faker.name.title() + ' ' + ApprovalRequestPageData.defaultRequest;
-let editName = faker.name.title() + ' ' + ApprovalRequestPageData.defaultRequest
+let defaultName = faker.person.jobTitle() + ' ' + ApprovalRequestPageData.defaultRequest;
+let editName = faker.person.jobTitle() + ' ' + ApprovalRequestPageData.defaultRequest
 
 // Login with email
 Given('Login with default credentials', () => {
@@ -57,7 +57,7 @@ Then('User can visit Employees approvals page', () => {
 	CustomCommands.clearCookies();
 	CustomCommands.login(loginPage, LoginPageData, dashboardPage);
 	dashboardPage.verifyAccountingDashboardIfVisible();
-	cy.intercept('GET','/api/request-approval*').as('waitApproval');
+	cy.intercept('GET', '/api/request-approval*').as('waitApproval');
 	cy.visit('/#/pages/employees/approvals', { timeout: pageLoadTimeout });
 	cy.wait('@waitApproval');
 });
@@ -82,7 +82,7 @@ And('User can see Add approval button', () => {
 	approvalRequestPage.addApprovalButtonVisible();
 });
 
-When('User click on Add approval buton', () => {
+When('User click on Add approval button', () => {
 	approvalRequestPage.clickAddApprovalButton();
 });
 
@@ -102,7 +102,7 @@ And('User can see description input field', () => {
 
 And('User can enter value for description', () => {
 	approvalRequestPage.enterDescriptionInputData(
-		ApprovalRequestPageData.defaultpolicyDescription
+		ApprovalRequestPageData.defaultPolicyDescription
 	);
 });
 
@@ -119,7 +119,7 @@ Then('Notification message will appear', () => {
 });
 
 And('User can verify policy was created', () => {
-	approvalRequestPage.verifyApprovalpolicyExists(
+	approvalRequestPage.verifyApprovalPolicyExists(
 		ApprovalRequestPageData.defaultApprovalPolicy
 	);
 });
@@ -154,7 +154,7 @@ Then('User can see approval name input field', () => {
 });
 
 And('User can enter value for approval name', () => {
-	approvalRequestPage.enterNameInputData(dafaultName);
+	approvalRequestPage.enterNameInputData(defaultName);
 });
 
 And('User can see min count input field', () => {
@@ -207,16 +207,16 @@ Then('Notification message will appear', () => {
 });
 
 And('User can verify request was created', () => {
-	approvalRequestPage.verifyRequestExists(dafaultName);
+	approvalRequestPage.verifyRequestExists(defaultName);
 });
 
 //Approve approval request
-When('User see name input field',() => {
+When('User see name input field', () => {
 	approvalRequestPage.verifyNameInput();
 });
 
 Then('User can search approval by name', () => {
-	approvalRequestPage.searchApprovalRequest(dafaultName, ApprovalRequestPageData.searchResult);
+	approvalRequestPage.searchApprovalRequest(defaultName, ApprovalRequestPageData.searchResult);
 });
 
 And('Verify table load', () => {
@@ -296,7 +296,7 @@ And('User can see tags dropdown', () => {
 });
 
 When('User click on tags dropdown', () => {
-	approvalRequestPage.clickTagsDropdwon();
+	approvalRequestPage.clickTagsDropdown();
 });
 
 Then('User can select tag from dropdown options', () => {
@@ -319,7 +319,7 @@ Then('Notification message will appear', () => {
 	approvalRequestPage.waitMessageToHide();
 });
 
-When('User see name input field again',() => {
+When('User see name input field again', () => {
 	approvalRequestPage.verifyNameInput();
 });
 

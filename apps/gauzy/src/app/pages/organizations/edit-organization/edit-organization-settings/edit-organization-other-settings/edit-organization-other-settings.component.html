@@ -65,36 +65,9 @@
 						<div class="fields">
 							<div class="row">
 								<div class="col-6">
-									<div class="form-group">
-										<label class="label">{{
-											'FORM.LABELS.CHOOSE_TIME_ZONE'
-												| translate
-										}}</label>
-										<ng-select
-											[(items)]="listOfZones"
-											[placeholder]="
-												'FORM.PLACEHOLDERS.CHOOSE_TIME_ZONE'
-													| translate
-											"
-											[searchable]="true"
-											appendTo="body"
-											formControlName="timeZone"
-										>
-											<ng-template
-												ng-option-tmp
-												let-item="item"
-												let-index="index"
-											>
-												{{ getTimeWithOffset(item) }}
-											</ng-template>
-											<ng-template
-												ng-label-tmp
-												let-item="item"
-											>
-												{{ getTimeWithOffset(item) }}
-											</ng-template>
-										</ng-select>
-									</div>
+									<ga-timezone-selector
+										formControlName="timeZone"
+									></ga-timezone-selector>
 								</div>
 								<div class="col-6">
 									<div class="form-group">
@@ -858,7 +831,7 @@
 											{{
 											'ORGANIZATIONS_PAGE.EDIT.SETTINGS.ENABLE_DETECTION_INACTIVITY'
 											| translate
-											}} 
+											}}
 											<button [nbTooltip]="'ORGANIZATIONS_PAGE.EDIT.SETTINGS.ENABLE_DETECTION_INACTIVITY_INFO'| translate" ghost nbButton size="small" status="info">
 												<nb-icon icon="info"></nb-icon>
 											</button>
@@ -942,9 +915,48 @@
 										</nb-toggle>
 									</div>
 								</div>
+								<div class="col-6 form-group invite-toggle">
+									<nb-toggle
+											class="d-block"
+											formControlName="isRemoveIdleTime"
+											status="primary"
+											labelPosition="start"
+										>
+										{{ 'ORGANIZATIONS_PAGE.EDIT.SETTINGS.DELETE_IDLE_TIME' | translate }}
+										<button
+												[nbTooltip]="'ORGANIZATIONS_PAGE.EDIT.SETTINGS.DELETE_IDLE_TIME_INFO'| translate"
+												ghost
+												nbButton
+												size="small"
+												status="info"
+										>
+											<nb-icon icon="info"></nb-icon>
+										</button>
+									</nb-toggle>
+								</div>
+								<div class="col-6 form-group invite-toggle">
+									<nb-toggle
+											class="d-block"
+											formControlName="allowScreenshotCapture"
+											status="primary"
+											labelPosition="start"
+										>
+										{{ 'ORGANIZATIONS_PAGE.EDIT.SETTINGS.ALLOW_SCREEN_CAPTURE' | translate }}
+										<button
+												[nbTooltip]="'ORGANIZATIONS_PAGE.EDIT.SETTINGS.ALLOW_SCREEN_CAPTURE_INFO'| translate"
+												ghost
+												nbButton
+												size="small"
+												status="info"
+										>
+											<nb-icon icon="info"></nb-icon>
+										</button>
+									</nb-toggle>
+								</div>
 							</div>
-							<div *ngIf="isTrackInactivity" class="row mt-4">
-								<div class="col-6">
+							<div *ngIf="isTrackInactivity" class="mt-4">
+								<div class="row">
+									<div class="col-6">
 									<label class="label">
 										{{'ORGANIZATIONS_PAGE.EDIT.SETTINGS.INACTIVITY_TIME_LIMIT'
 											| translate}}
@@ -1011,6 +1023,7 @@
 											{{proof}}
 										</nb-option>
 									</nb-select>
+								</div>
 								</div>
 							</div>
 						</div>

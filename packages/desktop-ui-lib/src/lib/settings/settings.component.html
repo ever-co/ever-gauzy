@@ -1,8 +1,9 @@
-<nb-layout>
+<nb-layout [nbSpinner]="menus?.length === 0 || !(selectedMenu$ | async)" nbSpinnerSize="giant"
+	nbSpinnerStatus="primary">
 	<nb-sidebar>
 		<nb-list>
-			<nb-list-item *ngFor="let menu of menus" (click)="selectMenu(menu)" [class]="
-					selectedMenu === menu
+			<nb-list-item *ngFor="let menu of menus;" (click)="selectMenu(menu)" [class]="
+			(selectedMenu$ | async) === menu
 						? 'menu-item menu-item-active'
 						: 'menu-item'
 				">
@@ -14,7 +15,7 @@
 	</nb-sidebar>
 
 	<nb-layout-column class="main-layout colored-column-success">
-		<ng-container *ngIf="selectedMenu === 'Screen Capture'">
+		<ng-container *ngIf="(selectedMenu$ | async) === 'Screen Capture'">
 			<div class="row">
 				<div class="col-12">
 					<h4>Monitor</h4>
@@ -27,35 +28,35 @@
 			</div>
 			<div class="row">
 				<div class="col-12">
-					<div class="row monitors mb-3">
+					<div [ngClass]="{'disabled-monitors': appSetting?.timerStarted}" class="row monitors mb-3">
 						<div class="col-5" *ngFor="let item of monitorsOption">
-							<nb-card accent="{{ item.accent }}" status="primary">
+							<nb-card accent="{{ item?.accent }}" status="primary">
 								<nb-card-body class="center-card" (click)="selectMonitorOption(item)">
 									<div class="row">
 										<div class="col-12">
 											<nb-icon class="all-monitor_icon" icon="monitor-outline"
-												[status]="item.status">
+												[status]="item?.status">
 											</nb-icon>
-											<nb-icon *ngIf="item.value === 'all'" class="all-monitor_icon monitor-many"
-												icon="monitor-outline" [status]="item.status">
+											<nb-icon *ngIf="item?.value === 'all'" class="all-monitor_icon monitor-many"
+												icon="monitor-outline" [status]="item?.status">
 											</nb-icon>
 										</div>
 										<div class="col-12">
 											<span [class]="
-												item.status === 'primary'
+												item?.status === 'primary'
 													? 'title-tile selected'
 													: 'title-tile'
 											">
-												{{ item.title }}
+												{{ item?.title }}
 											</span>
 										</div>
 										<div class="col-12">
 											<span [class]="
-												item.status === 'primary'
+												item?.status === 'primary'
 													? 'subtitle-tile selected'
 													: 'subtitle-tile'
 											">
-												{{ item.subtitle }}
+												{{ item?.subtitle }}
 											</span>
 										</div>
 									</div>
@@ -84,32 +85,39 @@
 				<div class="col-10">
 					<nb-card>
 						<nb-card-body>
-							<div class="row d-flex flex-column">
-								<div class="col-7">
-									<nb-toggle [(ngModel)]="screenshotNotification"
-										(ngModelChange)="toggleNotificationChange($event)" status="basic"> Detailed
-										Notification
-									</nb-toggle>
+							<div class="row">
+								<div class="col-6">
+									<div class="row d-flex flex-column">
+									<div class="col-12">
+										<nb-toggle [(ngModel)]="screenshotNotification"
+											[disabled]="appSetting?.timerStarted"
+											(ngModelChange)="toggleNotificationChange($event)" status="basic"> Detailed
+											Notification
+										</nb-toggle>
+									</div>
+									<div class="col-12">
+										<small>Show notification with captured image</small>
+									</div>
+									<div class="col-12">
+										<img width="100%" src="./assets/images/logos/screenshot_detailed.png" />
+									</div>
 								</div>
-								<div class="col-7">
-									<small>Show notification with captured image</small>
 								</div>
-								<div class="col-7">
-									<img width="100%" src="./assets/images/logos/screenshot_detailed.png" />
+								<div class="col-6">
+									<div class="row d-flex flex-column">
+									<div class="col-12">
+										<nb-toggle [checked]="!screenshotNotification" [disabled]="appSetting?.timerStarted"
+											(checkedChange)="toggleSimpleNotificationChange($event)" status="basic"> Simple
+											Notification
+										</nb-toggle>
+									</div>
+									<div class="col-12">
+										<small>Show native OS notification</small>
+									</div>
+									<div class="col-12">
+										<img width="100%" src="./assets/images/logos/screenshot_simple.png" />
+									</div>
 								</div>
-							</div>
-							<div class="row mt-2 d-flex flex-column">
-								<div class="col-7">
-									<nb-toggle [checked]="!screenshotNotification"
-										(checkedChange)="toggleSimpleNotificationChange($event)" status="basic"> Simple
-										Notification
-									</nb-toggle>
-								</div>
-								<div class="col-7">
-									<small>Show native OS notification</small>
-								</div>
-								<div class="col-7">
-									<img width="100%" src="./assets/images/logos/screenshot_simple.png" />
 								</div>
 							</div>
 						</nb-card-body>
@@ -130,8 +138,8 @@
 				<div class="col-10">
 					<nb-card>
 						<nb-card-body>
-							<nb-toggle [checked]="muted" (checkedChange)="toggleNotificationSoundChange($event)"
-								status="basic"> Muted
+							<nb-toggle [checked]="muted" [disabled]="appSetting?.timerStarted"
+								(checkedChange)="toggleNotificationSoundChange($event)" status="basic"> Muted
 								Notification
 							</nb-toggle>
 						</nb-card-body>
@@ -139,7 +147,7 @@
 				</div>
 			</div>
 		</ng-container>
-		<ng-container *ngIf="selectedMenu === 'Timer'">
+		<ng-container *ngIf="(selectedMenu$ | async) === 'Timer'">
 			<div class="row">
 				<div class="col-12">
 					<h4>Timer</h4>
@@ -195,7 +203,7 @@
 				</div>
 			</div>
 		</ng-container>
-		<div class="row" *ngIf="selectedMenu === 'Update'">
+		<div class="row" *ngIf="(selectedMenu$ | async) === 'Update'">
 			<div class="col-12">
 				<div class="row">
 					<div class="col-12">
@@ -301,8 +309,9 @@
 					<div class="col-10">
 						<nb-card>
 							<nb-card-body>
-								<nb-toggle [checked]="(prerelease$ | async)" (checkedChange)="togglePrerelease($event)" status="basic"
-									[disabled]="appSetting?.timerStarted || showProgressBar">Allow prerelease versions
+								<nb-toggle [checked]="(prerelease$ | async)" (checkedChange)="togglePrerelease($event)"
+									status="basic" [disabled]="appSetting?.timerStarted || showProgressBar">Allow
+									prerelease versions
 								</nb-toggle>
 							</nb-card-body>
 						</nb-card>
@@ -369,7 +378,7 @@
 									Update Logs
 								</nb-accordion-item-header>
 								<nb-accordion-item-body class="log-box">
-									<div class="log-content" #logbox>
+									<div class="log-content" #logBox>
 										<p class="content-text" *ngFor="let content of logContents$ | async">
 											{{content}}
 										</p>
@@ -381,7 +390,7 @@
 				</div>
 			</div>
 		</div>
-		<div class="row" *ngIf="selectedMenu === 'Advanced Setting'">
+		<div class="row" *ngIf="(selectedMenu$ | async) === 'Advanced Setting'">
 			<div class="col-12">
 				<h4>Advanced Setting</h4>
 			</div>
@@ -389,208 +398,223 @@
 				<span>Please Stop Timer if you want to change config</span>
 			</div>
 			<div class="col-12">
-				<nb-tabset>
-					<nb-tab tabTitle="General">
-						<div class="row">
-							<div class="col-12">
-								<nb-card>
-									<nb-card-body>
-										<div class="row">
-											<div class="col-12">
-												<p class="subtitle-tile">API Config</p>
-											</div>
-											<div class="col-5 centered-text" *ngIf="appName !== 'gauzy-server'">
-												<p>Server Type</p>
-											</div>
-											<div class="col-7 form-group" *ngIf="appName !== 'gauzy-server'">
-												<nb-select fullWidth [(ngModel)]="config.serverType"
-													(ngModelChange)="onServerChange($event)"
-													[disabled]="appSetting?.timerStarted">
-													<nb-option *ngFor="let item of serverOptions" [value]="item">
-														{{ item }}
-													</nb-option>
-												</nb-select>
-											</div>
-											<div class="col-5 centered-text" *ngIf="config.isLocalServer">
-												<p>Local API Port</p>
-											</div>
-											<div class="col-7 form-group" *ngIf="config.isLocalServer">
-												<input [(ngModel)]="config.port" type="number" nbInput fullWidth
-													[disabled]="appSetting?.timerStarted" status="basic"
-													(ngModelChange)="portChange($event, 'api')" />
-											</div>
-											<div class="col-5 centered-text" *ngIf="appName === 'gauzy-server'">
-												<p>UI Port</p>
-											</div>
-											<div class="col-7 form-group" *ngIf="appName === 'gauzy-server'">
-												<input [(ngModel)]="config.portUi" type="number" nbInput fullWidth
-													[disabled]="appSetting?.timerStarted" status="basic" />
-											</div>
-											<div class="col-5 centered-text" *ngIf="!config.isLocalServer">
-												<p>Server URL</p>
-											</div>
-											<div class="col-7 form-group" *ngIf="!config.isLocalServer">
-												<input [(ngModel)]="config.serverUrl" type="text" nbInput fullWidth
-													[disabled]="
-													appSetting?.timerStarted ||
-													config.serverType === serverTypes.live
-												" status="basic" />
-											</div>
-										</div>
-									</nb-card-body>
-								</nb-card>
-							</div>
-							<div class="col-12" *ngIf="config.isLocalServer">
-								<nb-card>
-									<nb-card-body>
-										<div class="row">
-											<div class="col-12">
-												<p class="subtitle-tile">Database Config</p>
-											</div>
-											<div class="col-5 centered-text">
-												<p>DB Driver</p>
-											</div>
-											<div class="col-7 form-group">
-												<nb-select fullWidth [(ngModel)]="config.db"
-													(ngModelChange)="onDriverChange($event)"
-													[disabled]="appSetting?.timerStarted">
-													<nb-option *ngFor="let item of driverOptions" [value]="item">
-														{{ item }}
-													</nb-option>
-												</nb-select>
-											</div>
-											<div class="col-5 centered-text" *ngIf="config.db === 'postgres'">
-												<p>DB Host</p>
-											</div>
-											<div class="col-7 form-group" *ngIf="config.db === 'postgres'">
-												<input [(ngModel)]="config.dbHost" type="text" nbInput fullWidth
-													status="basic" [disabled]="appSetting?.timerStarted"
-													(ngModelChange)="portChange($event, 'db')" />
-											</div>
-											<div class="col-5 centered-text" *ngIf="config.db === 'postgres'">
-												<p>DB UserName</p>
-											</div>
-											<div class="col-7 form-group" *ngIf="config.db === 'postgres'">
-												<input [(ngModel)]="config.dbUsername" type="text" nbInput fullWidth
-													status="basic" [disabled]="appSetting?.timerStarted"
-													(ngModelChange)="portChange($event, 'db')" />
-											</div>
-											<div class="col-5 centered-text" *ngIf="config.db === 'postgres'">
-												<p>DB Password</p>
-											</div>
-											<div class="col-7 form-group" *ngIf="config.db === 'postgres'">
-												<input [(ngModel)]="config.dbPassword" type="password" nbInput fullWidth
-													status="basic" [disabled]="appSetting?.timerStarted"
-													(ngModelChange)="portChange($event, 'db')" />
-											</div>
-											<div class="col-5 centered-text" *ngIf="config.db === 'postgres'">
-												<p>DB Port</p>
-											</div>
-											<div class="col-7 form-group" *ngIf="config.db === 'postgres'">
-												<input [(ngModel)]="config.dbPort" type="number" nbInput fullWidth
-													status="basic" [disabled]="appSetting?.timerStarted"
-													(ngModelChange)="portChange($event, 'db')" />
-											</div>
-										</div>
-									</nb-card-body>
-								</nb-card>
-							</div>
-							<div class="col-12" *ngIf="config.timeTrackerWindow">
-								<nb-card>
-									<nb-card-body>
-										<div class="row">
-											<div class="col-12">
-												<p class="subtitle-tile">Third Party Config</p>
-											</div>
-											<div class="col-5 centered-text">
-												<p>Activity Watch Port</p>
-											</div>
-											<div class="col-7 form-group">
-												<input [(ngModel)]="config.awPort" type="text" nbInput fullWidth
-													status="basic" [disabled]="true" />
-											</div>
-											<div class="col-12">
-												<nb-toggle [(ngModel)]="appSetting.visibleAwOption"
-													(ngModelChange)="toggleAwView($event)" status="basic">Visible
-													Activity Watch option on window
-												</nb-toggle>
-											</div>
-											<div class="col-12">
-												<nb-toggle [(ngModel)]="
-													appSetting.visibleWakatimeOption
-												" (ngModelChange)="toggleWakatimeView($event)" status="basic">Visible Wakatime option on window
-												</nb-toggle>
-											</div>
-										</div>
-									</nb-card-body>
-								</nb-card>
-							</div>
-							<div class="col-12" *ngIf="config.timeTrackerWindow">
-								<nb-card>
-									<nb-card-body>
-										<div class="row">
-											<div class="col-12">
-												<nb-toggle [(ngModel)]="autoLaunch"
-													(ngModelChange)="toggleAutoLaunch($event)" status="basic">Automatic
-													Launch
-												</nb-toggle>
-											</div>
-											<div class="col-12">
-												<nb-toggle [(ngModel)]="minimizeOnStartup" (ngModelChange)="
-													toggleMinimizeOnStartup($event)
-												" status="basic" [disabled]="!autoLaunch">Minimize On Startup
-												</nb-toggle>
-											</div>
-										</div>
-									</nb-card-body>
-								</nb-card>
-							</div>
-							<div class="col-12">
-								<button nbButton status="primary" (click)="restartApp()"
-									[disabled]="restartDisable || appSetting?.timerStarted">
-									{{ appName === 'gauzy-server' ? 'Save' : 'Restart App' }}
-								</button>
-							</div>
-						</div>
-					</nb-tab>
-					<nb-tab tabTitle="Third Party">
-						<div class="row">
-							<div class="col-12">
-								<nb-card *ngFor="let item of thirdPartyConfig">
-									<nb-card-body>
-										<div class="row">
-											<div class="col-12">
-												<p class="subtitle-tile third-party-item"><i
-														[class]="('fab fa-'+item.title)|lowercase"></i>{{item.title}}
-												</p>
-											</div>
-											<div class="col-12" *ngFor="let field of item.fields">
+				<nb-card class="nb-tab-card">
+					<nb-card-body class="nb-tab-body">
+						<nb-tabset>
+							<nb-tab tabTitle="General">
+								<div class="row">
+									<div class="col-12">
+										<nb-card>
+											<nb-card-body>
 												<div class="row">
-													<div class="col-5 centered-text">
-														<p>{{field.name.replaceAll('_', ' ')}}</p>
+													<div class="col-12">
+														<p class="subtitle-tile">API Config</p>
 													</div>
-													<div class="col-7 form-group">
-														<input [(ngModel)]="field.value" type="text" nbInput fullWidth
+													<div class="col-5 centered-text" *ngIf="!isServer">
+														<p>Server Type</p>
+													</div>
+													<div class="col-7 form-group" *ngIf="!isServer">
+														<nb-select fullWidth [(ngModel)]="config.serverType"
+															(ngModelChange)="onServerChange($event)"
+															[disabled]="appSetting?.timerStarted">
+															<nb-option *ngFor="let item of serverOptions" [value]="item">
+																{{ item }}
+															</nb-option>
+														</nb-select>
+													</div>
+													<div class="col-5 centered-text" *ngIf="config?.isLocalServer">
+														<p>Local API Port</p>
+													</div>
+													<div class="col-7 form-group" *ngIf="config?.isLocalServer">
+														<input [(ngModel)]="config.port" type="number" nbInput fullWidth
+															[disabled]="appSetting?.timerStarted" status="basic"
+															(ngModelChange)="portChange($event, 'api')" />
+													</div>
+													<div class="col-5 centered-text" *ngIf="isServer">
+														<p>UI Port</p>
+													</div>
+													<div class="col-7 form-group" *ngIf="isServer">
+														<input [(ngModel)]="config.portUi" type="number" nbInput fullWidth
 															[disabled]="appSetting?.timerStarted" status="basic" />
 													</div>
+													<div class="col-5 centered-text" *ngIf="!config?.isLocalServer">
+														<p>Server URL</p>
+													</div>
+													<div class="col-7 form-group" *ngIf="!config?.isLocalServer">
+														<input [(ngModel)]="config.serverUrl" (ngModelChange)="onHostChange($event)" type="text" nbInput fullWidth
+															[disabled]="
+															appSetting?.timerStarted ||
+															config?.serverType === serverTypes?.live
+														" status="basic" />
+													</div>
+													<div class="col-5">
+														<button nbButton status="basic" class="check-db" [nbSpinner]="(isCheckHost$ | async)?.isLoading" nbSpinnerSize="tiny" nbSpinner
+															(click)="checkHostConnectivity()" [disabled]="appSetting?.timerStarted">
+															<ng-container *ngIf="!(isCheckHost$ | async)?.isLoading">
+																<nb-icon [status]="(isCheckHost$ | async)?.status ? 'success': 'danger'"
+																	[icon]="(isCheckHost$ | async)?.status ? 'checkmark-circle-2-outline': 'close-circle-outline'"></nb-icon>
+																Check
+															</ng-container>
+														</button>
+													</div>
+													<div *ngIf="!(isCheckHost$ | async)?.isHidden" class="col-7 warn-container">
+														<button nbButton (click)="onHideApi()" status="basic" size="tiny" class="close-warn" >
+															<nb-icon icon="close-outline"></nb-icon>
+														</button>
+														<div class="message-db-connection">
+															{{ (isCheckHost$ | async)?.message }}
+														</div>
+													</div>
+													</div>
+											</nb-card-body>
+										</nb-card>
+									</div>
+									<div *ngIf="!isDesktop" class="col-12">
+										<nb-card>
+											<nb-card-body>
+												<div class="row">
+													<div class="col-12">
+														<p class="subtitle-tile">Database Config</p>
+													</div>
+													<div class="col-5 centered-text">
+														<p>DB Driver</p>
+													</div>
+													<div class="col-7 form-group">
+														<nb-select fullWidth [(ngModel)]="config.db"
+															(ngModelChange)="onDriverChange($event)"
+															[disabled]="appSetting?.timerStarted">
+															<nb-option *ngFor="let item of driverOptions" [value]="item">
+																{{ item }}
+															</nb-option>
+														</nb-select>
+													</div>
+													<ng-container
+														*ngTemplateOutlet="databaseConfig, context: {providerConfig: config}">
+													</ng-container>
 												</div>
-											</div>
-										</div>
-									</nb-card-body>
-								</nb-card>
-							</div>
+												<div class="row">
+													<div class="col-5">
+														<button nbButton status="basic" class="check-db" [nbSpinner]="(isCheckDatabase$ | async)" nbSpinnerSize="tiny" nbSpinner
+															(click)="checkDatabaseConnectivity()" [disabled]="appSetting?.timerStarted">
+															<ng-container *ngIf="!(isCheckDatabase$ | async)">
+																<nb-icon [status]="(isConnectedDatabase$ | async)?.status ? 'success': 'danger'"
+																	[icon]="(isConnectedDatabase$ | async)?.status ? 'checkmark-circle-2-outline': 'close-circle-outline'"></nb-icon>
+																Check
+															</ng-container>
+														</button>
+													</div>
+													<div *ngIf="!(isHidden$ | async)" class="col-7 warn-container">
+														<button nbButton (click)="onHide()" status="basic" size="tiny" class="close-warn" >
+															<nb-icon icon="close-outline"></nb-icon>
+														</button>
+														<div class="message-db-connection">
+															{{ (isConnectedDatabase$ | async)?.message }}
+														</div>
+													</div>
+												</div>
+											</nb-card-body>
+										</nb-card>
+									</div>
+									<div class="col-12" *ngIf="config?.timeTrackerWindow">
+										<nb-card>
+											<nb-card-body>
+												<div class="row">
+													<div class="col-12">
+														<p class="subtitle-tile">Startup Config</p>
+													</div>
+													<div class="col-12">
+														<nb-toggle [(ngModel)]="autoLaunch"
+															[disabled]="appSetting?.timerStarted"
+															(ngModelChange)="toggleAutoLaunch($event)" status="basic">Automatic
+															Launch
+														</nb-toggle>
+													</div>
+													<div class="col-12">
+														<nb-toggle [(ngModel)]="minimizeOnStartup" (ngModelChange)="
+															toggleMinimizeOnStartup($event)
+														" status="basic" [disabled]="!autoLaunch || appSetting?.timerStarted">Minimize On Startup
+														</nb-toggle>
+													</div>
+												</div>
+											</nb-card-body>
+										</nb-card>
+									</div>
+								</div>
+							</nb-tab>
+							<nb-tab tabTitle="Third Party">
+								<div *ngIf="config?.timeTrackerWindow" class="row">
+									<div class="col-12">
+										<nb-card>
+											<nb-card-body>
+												<div class="row">
+													<div class="col-12">
+														<p class="subtitle-tile">Third Party Config</p>
+													</div>
+													<div class="col-5 centered-text">
+														<p>Activity Watch Port</p>
+													</div>
+													<div class="col-7 form-group">
+														<input [disabled]="appSetting?.timerStarted" [(ngModel)]="config.awPort"
+															type="text" nbInput fullWidth status="basic" [disabled]="true" />
+													</div>
+													<div class="col-12">
+														<nb-toggle [disabled]="appSetting?.timerStarted"
+															[(ngModel)]="appSetting.visibleAwOption"
+															(ngModelChange)="toggleAwView($event)" status="basic">Visible
+															Activity Watch option on window
+														</nb-toggle>
+													</div>
+													<div class="col-12">
+														<nb-toggle [disabled]="appSetting?.timerStarted" [(ngModel)]="
+															appSetting.visibleWakatimeOption
+														" (ngModelChange)="toggleWakatimeView($event)" status="basic">Visible Wakatime option on window
+														</nb-toggle>
+													</div>
+												</div>
+											</nb-card-body>
+										</nb-card>
+									</div>
+								</div>
+								<div class="row">
+									<div class="col-12">
+										<nb-card *ngFor="let item of thirdPartyConfig">
+											<nb-card-body>
+												<div class="row">
+													<div class="col-12">
+														<p class="subtitle-tile third-party-item"><i
+																[class]="('fab fa-'+item?.title)|lowercase"></i>{{item?.title}}
+														</p>
+													</div>
+													<div class="col-12" *ngFor="let field of item?.fields">
+														<div class="row">
+															<div class="col-5 centered-text">
+																<p>{{field?.name.replaceAll('_', ' ')}}</p>
+															</div>
+															<div class="col-7 form-group">
+																<input [(ngModel)]="field.value" type="text" nbInput fullWidth
+																	[disabled]="appSetting?.timerStarted" status="basic" />
+															</div>
+														</div>
+													</div>
+												</div>
+											</nb-card-body>
+										</nb-card>
+									</div>
+								</div>
+							</nb-tab>
+						</nb-tabset>
+					</nb-card-body>
+					<nb-card-footer class="nb-tab-footer">
+						<div class="row">
 							<div class="col-12">
-								<button nbButton status="primary" (click)="restartApp()"
-									[disabled]="restartDisable || appSetting?.timerStarted">
-									{{ appName === 'gauzy-server' ? 'Save' : 'Restart App' }}
-								</button>
+								<ng-container *ngTemplateOutlet="restart"></ng-container>
 							</div>
 						</div>
-					</nb-tab>
-				</nb-tabset>
+					</nb-card-footer>
+				</nb-card>
 			</div>
 		</div>
-		<ng-container class="row" *ngIf="selectedMenu === 'About'">
+		<ng-container class="row" *ngIf="(selectedMenu$ | async) === 'About'">
 			<div class="col-12">
 				<div class="row">
 					<div class="col-12 text-center margin-content">
@@ -612,12 +636,54 @@
 			</div>
 		</ng-container>
 	</nb-layout-column>
-	<nb-layout-footer fixed *ngIf="(currentUser$ | async) && appName === 'gauzy-desktop-timer'">
+	<nb-layout-footer fixed *ngIf="isDesktopTimer && (currentUser$ | async)">
 		<span>
 			<p class="m-0">
-				Signed in as {{ (currentUser$ | async).name }} ({{(currentUser$ | async).email}}) -
+				Signed in as {{ (currentUser$ | async)?.name }} ({{(currentUser$ | async)?.email}}) -
 				<a href="javascript:void(0);" (click)="logout()"> Sign Out </a>
 			</p>
 		</span>
 	</nb-layout-footer>
 </nb-layout>
+
+<ng-template #databaseConfig let-provider="providerConfig">
+	<ng-container *ngIf="provider?.db && provider?.db !== 'sqlite'">
+		<div class="col-5 centered-text">
+			<p>DB Host</p>
+		</div>
+		<div class="col-7 form-group">
+			<input [(ngModel)]="provider[provider?.db].dbHost" type="text" nbInput fullWidth status="basic"
+				[disabled]="appSetting?.timerStarted" (ngModelChange)="portChange($event, 'db')" />
+		</div>
+		<div class="col-5 centered-text">
+			<p>DB UserName</p>
+		</div>
+		<div class="col-7 form-group">
+			<input [(ngModel)]="provider[provider?.db].dbUsername" type="text" nbInput fullWidth status="basic"
+				[disabled]="appSetting?.timerStarted" (ngModelChange)="portChange($event, 'db')" />
+		</div>
+		<div class="col-5 centered-text">
+			<p>DB Password</p>
+		</div>
+		<div class="col-7 form-group">
+			<input [(ngModel)]="provider[provider?.db].dbPassword" type="password" nbInput fullWidth status="basic"
+				[disabled]="appSetting?.timerStarted" (ngModelChange)="portChange($event, 'db')" />
+		</div>
+		<div class="col-5 centered-text">
+			<p>DB Port</p>
+		</div>
+		<div class="col-7 form-group">
+			<input [(ngModel)]="provider[provider?.db].dbPort" type="number" nbInput fullWidth status="basic"
+				[disabled]="appSetting?.timerStarted" (ngModelChange)="portChange($event, 'db')" />
+		</div>
+	</ng-container>
+</ng-template>
+<ng-template #restart>
+	<div class="restart-btn-container" nbTooltip="Check database connectivity"
+		[nbTooltipDisabled]="(isConnectedDatabase$ | async)?.status">
+		<button nbButton status="primary" (click)="restartApp()"
+			[disabled]="(restartDisable$ | async) || appSetting?.timerStarted">
+			{{ isServer ? 'Save' : 'Save & Restart' }}
+		</button>
+	</div>
+</ng-template>

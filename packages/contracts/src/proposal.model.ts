@@ -1,7 +1,7 @@
 import { IOrganizationContact } from './organization-contact.model';
 import { IBasePerTenantAndOrganizationEntityModel } from './base-entity.model';
 import { IEmployee, IEmployeeFindInput } from './employee.model';
-import { ITag } from './tag-entity.model';
+import { ITag } from './tag.model';
 
 export interface IProposal extends IBasePerTenantAndOrganizationEntityModel {
 	employeeId?: string;

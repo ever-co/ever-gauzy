@@ -26,6 +26,7 @@ export class DesktopUpdater {
 
 	constructor(config: IUpdaterConfig) {
 		this._updateContext = new UpdateContext();
+		this._updateContext.strategy = new DigitalOceanCdn(new CdnUpdate(config));
 		this._updateServer = new DesktopLocalUpdateServer();
 		this._strategy = new GithubCdn(new CdnUpdate(config));
 		this._config = config;
@@ -34,7 +35,7 @@ export class DesktopUpdater {
 	}
 
 	private _mainProcess(): void {
-		ipcMain.on('update_locally', () => {
+		ipcMain.on('update_locally', async () => {
 			const localUpdate = new LocalUpdate();
 			const dialog = new DialogLocalUpdate(
 				new DesktopDialog(
@@ -62,7 +63,12 @@ export class DesktopUpdater {
 			this._settingWindow.webContents.send('update_files_directory', {
 				uri: files
 			});
-			this._updateContext.checkUpdate();
+			try {
+				await this._updateContext.checkUpdate();
+			} catch (e) {
+				this._settingWindow.webContents.send('error_update', e);
+				console.log('Error on checking update:', e);
+			}
 		});
 
 		ipcMain.on('change_update_strategy', async (event, args) => {
@@ -74,11 +80,23 @@ export class DesktopUpdater {
 					new CdnUpdate(this._config)
 				);
 			}
-			if (!args.local) this._updateContext.checkUpdate();
+			if (!args.local) {
+				try {
+					await this._updateContext.checkUpdate();
+				} catch (e) {
+					this._settingWindow.webContents.send('error_update', e);
+					console.log('Error on checking update:', e);
+				}
+			}
 		});
 
-		ipcMain.on('check_for_update', () => {
-			this._updateContext.checkUpdate();
+		ipcMain.on('check_for_update', async () => {
+			try {
+				await this._updateContext.checkUpdate();
+			} catch (e) {
+				this._settingWindow.webContents.send('error_update', e);
+				console.log('Error on checking update:', e);
+			}
 		});
 
 		ipcMain.on('download_update', () => {
@@ -128,7 +146,9 @@ export class DesktopUpdater {
 				event.version +
 				' has been downloaded. Restart the application to apply the updates.';
 			dialog.show().then((button) => {
-				if (button.response === 0) autoUpdater.quitAndInstall();
+				if (button.response === 0) {
+					this._settingWindow.webContents.send('_logout_quit_install_');
+				}
 			});
 			this._updateServer.stop();
 		});
@@ -186,8 +206,9 @@ export class DesktopUpdater {
 		}
 		setTimeout(async () => {
 			try {
-				this._updateContext.checkUpdate();
+				await this._updateContext.checkUpdate();
 			} catch (e) {
+				this._settingWindow.webContents.send('error_update', e);
 				console.log('Error on checking update:', e);
 			}
 		}, 5000);

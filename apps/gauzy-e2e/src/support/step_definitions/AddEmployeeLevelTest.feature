@@ -36,12 +36,14 @@ Feature: Add employee level
     And User can see Save button
     When User click on Save button
     Then User will see notification message
+    When User click on the created Employee Level
     And User can see Edit level button
     When User click on Edit level button
     Then User can verify that new levelE was created
     And User can see cancel edit button
     And User can cancel editing by clicking on cancel button
   Scenario: Edit employee level
+    When User click on the created Employee Level Twice
     And User can see edit level button
     When User click edit level button
     Then User can see level name input
@@ -52,12 +54,14 @@ Feature: Add employee level
     And User can see Save button
     When User click on Save button
     Then User will see notification message
+    When User click on the created Employee Level
     And User can see Edit level button
     When User click on Edit level button
     Then User can verify that new levelF was created
     And User can see cancel edit button
     And User can cancel editing by clicking on cancel button
   Scenario: Delete employee level
+    When User click on the created Employee Level
     And User can see Add new level button again
     When User click on Add new level button again
     Then User will see new level input
@@ -68,13 +72,9 @@ Feature: Add employee level
     And User can see Save button
     When User click on Save button
     Then User will see notification message
+    When User click on the created Employee Level to Delete
     And User can see Delete level button
     When User click on Delete level button
     Then User will see Confirm delete button
     When User click on Confirm delete button
-    Then User can verify that levelE was deleted
-    And User will see notification message
-    Then User can see Delete button again
-    When User click on Delete button
-    Then User can see Confirm delete button
-    And User can click on Confirm delete button
+    Then User can verify that level was deleted

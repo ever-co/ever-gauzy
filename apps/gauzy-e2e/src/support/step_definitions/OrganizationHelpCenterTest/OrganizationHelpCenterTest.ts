@@ -4,7 +4,7 @@ import * as organizationHelpCenterPage from '../../Base/pages/OrganizationHelpCe
 import { OrganizationHelpCenterPageData } from '../../Base/pagedata/OrganizationHelpCenterPageData';
 import * as dashboardPage from '../../Base/pages/Dashboard.po';
 import { CustomCommands } from '../../commands';
-import { faker } from '@ever-co/faker';
+import { faker } from '@faker-js/faker';
 import * as manageEmployeesPage from '../../Base/pages/ManageEmployees.po';
 import * as logoutPage from '../../Base/pages/Logout.po';
 
@@ -14,9 +14,9 @@ import { Given, Then, When, And } from 'cypress-cucumber-preprocessor/steps';
 
 const pageLoadTimeout = Cypress.config('pageLoadTimeout');
 
-let articleName = faker.name.title();
-let empFirstName = faker.name.firstName();
-let empLastName = faker.name.lastName();
+let articleName = faker.person.jobTitle();
+let empFirstName = faker.person.firstName();
+let empLastName = faker.person.lastName();
 let empUsername = faker.internet.userName();
 let empPassword = faker.internet.password();
 let employeeEmail = faker.internet.email();
@@ -46,7 +46,7 @@ And('User can add new employee', () => {
 
 // Add base
 
-Then('User visit Organization help center page',() => {
+Then('User visit Organization help center page', () => {
 	CustomCommands.logout(dashboardPage, logoutPage, loginPage);
 	CustomCommands.clearCookies();
 	CustomCommands.login(loginPage, LoginPageData, dashboardPage);
@@ -124,7 +124,7 @@ Then('Notification message will appear', () => {
 });
 
 And('User can verify base was created', () => {
-	organizationHelpCenterPage.verifybaseExists(
+	organizationHelpCenterPage.verifyBaseExists(
 		OrganizationHelpCenterPageData.defaultBaseName
 	);
 });
@@ -143,7 +143,7 @@ Then('User can see category button', () => {
 });
 
 When('User click on add category button', () => {
-	organizationHelpCenterPage.clickAddCategotyOption(
+	organizationHelpCenterPage.clickAddCategoryOption(
 		OrganizationHelpCenterPageData.addCategoryOption
 	);
 });
@@ -202,7 +202,7 @@ Then('Notification message will appear', () => {
 	organizationHelpCenterPage.waitMessageToHide();
 });
 
-And('User can see arrow button',() => {
+And('User can see arrow button', () => {
 	organizationHelpCenterPage.arrowButtonVisible();
 });
 
@@ -217,7 +217,7 @@ And('User can verify category was created', () => {
 });
 
 //Add article
-Then('User click on the category',() => {
+Then('User click on the category', () => {
 	organizationHelpCenterPage.clickOnCategory(OrganizationHelpCenterPageData.categoryOption);
 });
 

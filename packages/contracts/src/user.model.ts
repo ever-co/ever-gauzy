@@ -4,14 +4,20 @@
 
 import { IRole } from './role.model';
 import { IBasePerTenantEntityModel } from './base-entity.model';
-import { ITag } from './tag-entity.model';
+import { ITag } from './tag.model';
 import { IEmployee } from './employee.model';
 import { IPayment } from './payment.model';
 import { IOrganization } from './organization.model';
 import { IInvite } from './invite.model';
 import { ICandidate } from 'candidate.model';
+import { IRelationalImageAsset } from './image-asset.model';
 
-export interface IUser extends IBasePerTenantEntityModel {
+export interface IRelationalUser {
+	user?: IUser;
+	userId?: IUser['id'];
+}
+
+export interface IUser extends IBasePerTenantEntityModel, IRelationalImageAsset {
 	thirdPartyId?: string;
 	name?: string;
 	firstName?: string;
@@ -19,6 +25,7 @@ export interface IUser extends IBasePerTenantEntityModel {
 	email?: string;
 	phoneNumber?: string;
 	username?: string;
+	timeZone?: string;
 	role?: IRole;
 	roleId?: IRole['id'];
 	hash?: string;
@@ -39,6 +46,7 @@ export interface IUser extends IBasePerTenantEntityModel {
 	code?: number;
 	codeExpireAt?: Date;
 	emailVerifiedAt?: Date;
+	isEmailVerified?: boolean;
 	emailToken?: string;
 	invites?: IInvite[];
 }
@@ -48,6 +56,7 @@ export interface IUserFindInput extends IBasePerTenantEntityModel {
 	firstName?: string;
 	lastName?: string;
 	email?: string;
+	phoneNumber?: string;
 	username?: string;
 	role?: IRole;
 	roleId?: string;
@@ -76,7 +85,7 @@ export interface IVerificationTokenPayload extends IUserEmailInput {
 	id: string;
 }
 
-export interface IUserInviteCodeConfirmationInput extends IUserEmailInput, IUserCodeInput {}
+export interface IUserInviteCodeConfirmationInput extends IUserEmailInput, IUserCodeInput { }
 
 export interface IUserEmailInput {
 	email: string;
@@ -94,17 +103,18 @@ export interface IUserCodeInput {
 	code: number;
 }
 
-export interface IUserLoginInput extends IUserEmailInput, IUserPasswordInput {}
+export interface IUserLoginInput extends IUserEmailInput, IUserPasswordInput { }
 
 export interface IAuthResponse {
 	user: IUser;
 	token: string;
 	refresh_token?: string;
 }
-export interface IUserCreateInput {
+export interface IUserCreateInput extends IRelationalImageAsset {
 	firstName?: string;
 	lastName?: string;
 	email?: string;
+	phoneNumber?: string;
 	username?: string;
 	role?: IRole;
 	roleId?: string;
@@ -113,6 +123,7 @@ export interface IUserCreateInput {
 	tags?: ITag[];
 	preferredLanguage?: LanguagesEnum;
 	preferredComponentLayout?: ComponentLayoutStyleEnum;
+	timeZone?: string;
 }
 
 export interface IUserUpdateInput extends IUserCreateInput {

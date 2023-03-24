@@ -131,7 +131,7 @@ export const tagsDropdownVisible = () => {
 	verifyElementIsVisible(ManageEmployeesPage.addTagsDropdownCss);
 };
 
-export const clickTagsDropdwon = () => {
+export const clickTagsDropdown = () => {
 	clickButton(ManageEmployeesPage.addTagsDropdownCss);
 };
 
@@ -233,7 +233,7 @@ export const preferredLanguageDropdownVisible = () => {
 	verifyElementIsVisible(ManageEmployeesPage.preferredLanguageDropdownCss);
 };
 
-export const clickpreferredLanguageDropdown = () => {
+export const clickPreferredLanguageDropdown = () => {
 	clickButton(ManageEmployeesPage.preferredLanguageDropdownCss);
 };
 
@@ -296,11 +296,11 @@ export const clickConfirmDeleteButton = () => {
 // COPY INVITE LINK
 
 export const manageInvitesButtonVisible = () => {
-	verifyElementIsVisible(ManageEmployeesPage.manageInvitesButonCss);
+	verifyElementIsVisible(ManageEmployeesPage.manageInvitesButtonCss);
 };
 
 export const clickManageInviteButton = () => {
-	clickButton(ManageEmployeesPage.manageInvitesButonCss);
+	clickButton(ManageEmployeesPage.manageInvitesButtonCss);
 };
 
 export const copyLinkButtonVisible = () => {

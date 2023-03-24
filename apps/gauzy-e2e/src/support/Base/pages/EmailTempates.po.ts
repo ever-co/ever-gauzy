@@ -5,7 +5,7 @@ import {
 	compareTwoTexts,
 	clickButtonByIndex
 } from '../utils/util';
-import { EmailTemplatesPage } from '../pageobjects/EmailTempatesPageObject';
+import { EmailTemplatesPage } from '../pageobjects/EmailTemplatesPageObject';
 
 export const selectLanguageButtonVisible = () => {
 	verifyElementIsVisible(EmailTemplatesPage.selectLanguageButtonCss);
@@ -19,7 +19,7 @@ export const selectLanguageOption = (data) => {
 	clickElementByText(EmailTemplatesPage.selectLanguageOptionCss, data);
 };
 
-export const emailtTemplateSubjectVisible = () => {
+export const emailTemplateSubjectVisible = () => {
 	verifyElementIsVisible(EmailTemplatesPage.templatePageSubjectCss);
 };
 

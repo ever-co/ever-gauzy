@@ -1,3 +1,4 @@
+import { ITimesheet } from '@gauzy/contracts';
 import { ICommand } from '@nestjs/cqrs';
 
 export class TimesheetFirstOrCreateCommand implements ICommand {
@@ -5,7 +6,7 @@ export class TimesheetFirstOrCreateCommand implements ICommand {
 
 	constructor(
 		public readonly date: Date,
-		public readonly employeeId: string,
-		public readonly organizationId?: string
-	) {}
+		public readonly employeeId: ITimesheet['employeeId'],
+		public readonly organizationId?: ITimesheet['organizationId']
+	) { }
 }

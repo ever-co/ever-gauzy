@@ -21,6 +21,7 @@ Feature: Add remove existing user
     And User can see confirm button
     When User click on confirm button
     Then User creation will be confirmed with notification message
+    Then User goes to the end of the user list
     And Users table will be populated with new user
   Scenario: Edit user
     When User select table row by user name
@@ -38,6 +39,7 @@ Feature: Add remove existing user
     And User can enter value for editing email
     When User click on save button
     Then Notification message will appear
+    Then User goes to the end of the user list
     And User can verify that data was edited
   Scenario: Remove existing user
     Then User can see add existing user button

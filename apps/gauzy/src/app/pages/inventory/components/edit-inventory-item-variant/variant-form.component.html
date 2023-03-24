@@ -34,7 +34,7 @@
 								width="68"
 								height="68"
 								viewBox="0 0 68 68"
-								*ngIf="image && image.url"
+								*ngIf="image && image.fullUrl"
 								[ngStyle]="{
 									opacity: hoverState ? '1' : '0.3'
 								}"
@@ -74,12 +74,12 @@
 								}"
 							></div>
 							<ga-no-image
-								*ngIf="!image && !image?.url"
+								*ngIf="!image && !image?.fullUrl"
 								[fontSize]="14"
 								[placeholder]="'NO_IMAGE.ADD_DROP'"
 							></ga-no-image>
 							<img
-								*ngIf="image && image.url"
+								*ngIf="image && image.fullUrl"
 								[src]="image.url"
 								alt="Product Item Photo"
 							/>

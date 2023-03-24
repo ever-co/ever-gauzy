@@ -4,7 +4,7 @@ export const TeamsTasksPage = {
 	projectDropdownCss: '[formControlName="projectId"]',
 	statusDropdownCss: '[formcontrolname="status"]',
 	teamDropdownCss: '[formcontrolname="teams"]',
-	drodownOptionCss: 'div.ng-option',
+	dropdownOptionCss: 'div.ng-option',
 	duplicateOrEditTaskButtonCss: 'div.mb-3 > button[status="info"]',
 	deleteTaskButtonCss: 'div.mb-3 > button[status="danger"]',
 	selectTableRowCss: 'table > tbody > tr.ng2-smart-row',

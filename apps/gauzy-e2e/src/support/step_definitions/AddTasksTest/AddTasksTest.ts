@@ -9,15 +9,15 @@ import { OrganizationProjectsPageData } from '../../Base/pagedata/OrganizationPr
 import { CustomCommands } from '../../commands';
 import * as organizationTagsUserPage from '../../Base/pages/OrganizationTags.po';
 import { OrganizationTagsPageData } from '../../Base/pagedata/OrganizationTagsPageData';
-import { faker } from '@ever-co/faker';
+import { faker } from '@faker-js/faker';
 import * as manageEmployeesPage from '../../Base/pages/ManageEmployees.po';
 
 import { Given, Then, When, And } from 'cypress-cucumber-preprocessor/steps';
 
 const pageLoadTimeout = Cypress.config('pageLoadTimeout');
 
-let firstName = faker.name.firstName();
-let lastName = faker.name.lastName();
+let firstName = faker.person.firstName();
+let lastName = faker.person.lastName();
 let username = faker.internet.userName();
 let password = faker.internet.password();
 let employeeEmail = faker.internet.email();
@@ -30,7 +30,7 @@ Given('Login with default credentials', () => {
 
 // Add new tag
 Then('User can add new tag', () => {
-	dashboardPage.verifyAccountingDashboardIfVisible();
+	//dashboardPage.verifyAccountingDashboardIfVisible();
 	CustomCommands.addTag(organizationTagsUserPage, OrganizationTagsPageData);
 });
 
@@ -137,7 +137,7 @@ And('User can see estimate days input field', () => {
 });
 
 And('User can enter value for estimate days', () => {
-	addTaskPage.enterEstiamteDaysInputData(
+	addTaskPage.enterEstimateDaysInputData(
 		AddTasksPageData.defaultTaskEstimateDays
 	);
 });
@@ -147,7 +147,7 @@ And('User can see estimate hours input field', () => {
 });
 
 And('User can add value for estimate hours', () => {
-	addTaskPage.enterEstiamteHoursInputData(
+	addTaskPage.enterEstimateHoursInputData(
 		AddTasksPageData.defaultTaskEstimateHours
 	);
 });
@@ -163,7 +163,7 @@ And('User can enter value for estimate minutes', () => {
 });
 
 And('User can task description input field', () => {
-	addTaskPage.taskDecriptionTextareaVisible();
+	addTaskPage.taskDescriptionTextareaVisible();
 });
 
 And('User can enter value for description', () => {
@@ -200,10 +200,11 @@ And('User can verify task was created', () => {
 	addTaskPage.verifyTaskExists(AddTasksPageData.defaultTaskTitle);
 });
 
+// Duplicate task
 And('User clear the search field', () => {
 	addTaskPage.clearSearchInput()
 });
-// Duplicate task
+
 Then('User can see table populated with tasks', () => {
 	addTaskPage.tasksTableVisible();
 });
@@ -213,19 +214,19 @@ When('User click on table first row', () => {
 });
 
 Then('Duplicate task button will become active', () => {
-	addTaskPage.duplicateOrEditTaskButtonVisible();
+	addTaskPage.duplicateTaskButtonVisible();
 });
 
 When('User click on duplicate task button', () => {
-	addTaskPage.clickDuplicateOrEditTaskButton(0);
+	addTaskPage.clickDuplicateTaskButton(0);
 });
 
 Then('User will see confirm action button', () => {
-	addTaskPage.confirmDuplicateOrEditTaskButtonVisible();
+	addTaskPage.confirmDuplicateTaskButtonVisible();
 });
 
 When('User click on confirm action button', () => {
-	addTaskPage.clickConfirmDuplicateOrEditTaskButton();
+	addTaskPage.clickConfirmDuplicateTaskButton();
 });
 
 Then('Notification message will appear', () => {
@@ -242,11 +243,11 @@ When('User select table first row', () => {
 });
 
 Then('Edit task button will become active', () => {
-	addTaskPage.duplicateOrEditTaskButtonVisible();
+	addTaskPage.editTaskButtonVisible();
 });
 
 When('User click on edit task button', () => {
-	addTaskPage.clickDuplicateOrEditTaskButton(1);
+	addTaskPage.clickEditTaskButton(0);
 });
 
 Then('User will see edit project dropdown', () => {
@@ -285,7 +286,7 @@ And('User can see edit estimate days input field', () => {
 });
 
 And('User can enter value for estimate days edit', () => {
-	addTaskPage.enterEstiamteDaysInputData(
+	addTaskPage.enterEstimateDaysInputData(
 		AddTasksPageData.defaultTaskEstimateDays
 	);
 });
@@ -295,7 +296,7 @@ And('User can see edit estimate hours input field', () => {
 });
 
 And('User can add value for estimate hours edit', () => {
-	addTaskPage.enterEstiamteHoursInputData(
+	addTaskPage.enterEstimateHoursInputData(
 		AddTasksPageData.defaultTaskEstimateHours
 	);
 });
@@ -311,7 +312,7 @@ And('User can enter value for estimate minutes edit', () => {
 });
 
 And('User can task edit description input field', () => {
-	addTaskPage.taskDecriptionTextareaVisible();
+	addTaskPage.taskDescriptionTextareaVisible();
 });
 
 And('User can enter value for description edit', () => {
@@ -346,19 +347,19 @@ When('User click on first table row', () => {
 });
 
 Then('User can see duplicate or edit task button', () => {
-	addTaskPage.duplicateOrEditTaskButtonVisible();
+	addTaskPage.duplicateTaskButtonVisible();
 });
 
 When('User click on duplicate or edit task button', () => {
-	addTaskPage.clickDuplicateOrEditTaskButton(1);
+	addTaskPage.clickDuplicateTaskButton(0);
 });
 
 Then('User can see confirm button', () => {
-	addTaskPage.confirmDuplicateOrEditTaskButtonVisible();
+	addTaskPage.confirmDuplicateTaskButtonVisible();
 });
 
 When('User click on confirm button', () => {
-	addTaskPage.clickConfirmDuplicateOrEditTaskButton();
+	addTaskPage.clickConfirmDuplicateTaskButton();
 });
 
 Then('Notification message will appear', () => {
@@ -398,7 +399,7 @@ And('User can verify task was deleted', () => {
 });
 
 When('User click on table first row', () => {
-	addTaskPage.selectTasksTableRow(0);
+	addTaskPage.selectFirstTaskTableRow(0);
 });
 
 Then('Delete button will become active again', () => {

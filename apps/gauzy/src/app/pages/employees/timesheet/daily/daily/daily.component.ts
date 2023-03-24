@@ -1,7 +1,7 @@
 // tslint:disable: nx-enforce-module-boundaries
 import { Component, OnInit, OnDestroy, AfterViewInit, ViewChild } from '@angular/core';
 import { ActivatedRoute, ParamMap } from '@angular/router';
-import { distinctUntilChange, isEmpty } from '@gauzy/common-angular';
+import { isEmpty } from '@gauzy/common-angular';
 import {
 	NbDialogService,
 	NbMenuItem,
@@ -81,7 +81,6 @@ export class DailyComponent extends BaseSelectorFilterComponent
 			.subscribe();
 		this.payloads$
 			.pipe(
-				distinctUntilChange(),
 				filter((payloads: ITimeLogFilters) => !!payloads),
 				tap(() => this.getDailyTimesheetLogs()),
 				untilDestroyed(this)
@@ -168,7 +167,7 @@ export class DailyComponent extends BaseSelectorFilterComponent
 				'employee.user'
 			]);
 		} catch (error) {
-			console.log('Error while retriving daily time logs entries', error);
+			console.log('Error while retrieving daily time logs entries', error);
 			this.toastrService.error(error);
 		} finally {
 			this.loading = false;
@@ -446,5 +445,5 @@ export class DailyComponent extends BaseSelectorFilterComponent
 		return this.timeLogs.find((t: ITimeLog) => t.checked);
 	}
 
-	ngOnDestroy(): void {}
+	ngOnDestroy(): void { }
 }

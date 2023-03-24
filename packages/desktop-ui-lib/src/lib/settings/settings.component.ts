@@ -5,13 +5,14 @@ import {
 	ViewChild,
 	ElementRef,
 	NgZone,
-	AfterViewInit
+	AfterViewInit,
 } from '@angular/core';
 import { TimeTrackerService } from '../time-tracker/time-tracker.service';
 import { NbDialogService, NbToastrService } from '@nebular/theme';
 import { ElectronService } from '../electron/services';
-import { BehaviorSubject, Observable } from 'rxjs';
+import { BehaviorSubject, Observable, filter, tap } from 'rxjs';
 import { AboutComponent } from '../dialogs/about/about.component';
+import { SetupService } from '../setup/setup.service';
 @Component({
 	selector: 'ngx-settings',
 	templateUrl: './settings.component.html',
@@ -22,19 +23,19 @@ import { AboutComponent } from '../dialogs/about/about.component';
 			:host nb-tab {
 				padding: 1rem;
 			}
-		`
-	]
+		`,
+	],
 })
 export class SettingsComponent implements OnInit, AfterViewInit {
 	@ViewChild('selectRef') selectProjectElement: ElementRef;
-	@ViewChild('logbox', { read: ElementRef })
-	set logobox(content: ElementRef) {
+	@ViewChild('logBox', { read: ElementRef })
+	set logBox(content: ElementRef) {
 		if (content) {
-			this._logbox = content;
+			this._logBox = content;
 		}
 	}
 	@ViewChild('logUpdate') logAccordion;
-	private _logbox: ElementRef;
+	private _logBox: ElementRef;
 	private _logContents$: BehaviorSubject<any[]> = new BehaviorSubject([]);
 	public get logContents$(): Observable<any[]> {
 		return this._logContents$.asObservable();
@@ -47,13 +48,9 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 	logIsOpen: boolean = false;
 
 	appName: string = this.electronService.remote.app.getName();
-	menus =
-		this.appName === 'gauzy-server'
-			? ['Update', 'Advanced Setting', 'About']
-			: ['Screen Capture', 'Timer', 'Update', 'Advanced Setting', 'About'];
+	menus = [];
 	gauzyIcon =
-		this.appName === 'gauzy-desktop-timer' ||
-		this.appName === 'gauzy-server'
+		this.isDesktopTimer || this.isServer
 			? './assets/images/logos/logo_Gauzy.svg'
 			: '../assets/images/logos/logo_Gauzy.svg';
 
@@ -63,7 +60,7 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 			title: 'Capture All Monitors',
 			subtitle: 'All connected monitors',
 			accent: 'basic',
-			status: 'basic'
+			status: 'basic',
 		},
 		{
 			value: 'active-only',
@@ -71,8 +68,8 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 			subtitle: 'Monitor current pointer position',
 			iconStyle: 'all-monitor_icon',
 			accent: 'basic',
-			status: 'basic'
-		}
+			status: 'basic',
+		},
 	];
 
 	thirdPartyConfig = [
@@ -82,34 +79,34 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 				{
 					name: 'UNLEASH_APP_NAME',
 					field: 'UNLEASH_APP_NAME',
-					value: ''
+					value: '',
 				},
 				{
 					name: 'UNLEASH_API_URL',
 					field: 'UNLEASH_API_URL',
-					value: ''
+					value: '',
 				},
 				{
 					name: 'UNLEASH_INSTANCE_ID',
 					field: 'UNLEASH_INSTANCE_ID',
-					value: ''
+					value: '',
 				},
 				{
 					name: 'UNLEASH_REFRESH_INTERVAL',
 					field: 'UNLEASH_REFRESH_INTERVAL',
-					value: 15000
+					value: 15000,
 				},
 				{
 					name: 'UNLEASH_METRICS_INTERVAL',
 					field: 'UNLEASH_METRICS_INTERVAL',
-					value: 60000
+					value: 60000,
 				},
 				{
 					name: 'UNLEASH_API_KEY',
 					field: 'UNLEASH_API_KEY',
-					value: ''
-				}
-			]
+					value: '',
+				},
+			],
 		},
 		{
 			title: 'Twitter',
@@ -117,19 +114,19 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 				{
 					name: 'TWITTER_CLIENT_ID',
 					field: 'TWITTER_CLIENT_ID',
-					value: ''
+					value: '',
 				},
 				{
 					name: 'TWITTER_CLIENT_SECRET',
 					field: 'TWITTER_CLIENT_SECRET',
-					value: ''
+					value: '',
 				},
 				{
 					name: 'TWITTER_CALLBACK_URL',
 					field: 'TWITTER_CALLBACK_URL',
-					value: 'http://localhost:3000/api/auth/twitter/callback'
-				}
-			]
+					value: 'http://localhost:3000/api/auth/twitter/callback',
+				},
+			],
 		},
 		{
 			title: 'Google',
@@ -137,19 +134,19 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 				{
 					name: 'GOOGLE_CLIENT_ID',
 					field: 'GOOGLE_CLIENT_ID',
-					value: ''
+					value: '',
 				},
 				{
 					name: 'GOOGLE_CLIENT_SECRET',
 					field: 'GOOGLE_CLIENT_SECRET',
-					value: ''
+					value: '',
 				},
 				{
 					name: 'GOOGLE_CALLBACK_URL',
 					field: 'GOOGLE_CALLBACK_URL',
-					value: 'http://localhost:3000/api/auth/google/callback'
-				}
-			]
+					value: 'http://localhost:3000/api/auth/google/callback',
+				},
+			],
 		},
 		{
 			title: 'Facebook',
@@ -157,24 +154,24 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 				{
 					name: 'FACEBOOK_CLIENT_ID',
 					field: 'FACEBOOK_CLIENT_ID',
-					value: ''
+					value: '',
 				},
 				{
 					name: 'FACEBOOK_CLIENT_SECRET',
 					field: 'FACEBOOK_CLIENT_SECRET',
-					value: ''
+					value: '',
 				},
 				{
 					name: 'FACEBOOK_CALLBACK_URL',
 					field: 'FACEBOOK_CALLBACK_URL',
-					value: ''
+					value: '',
 				},
 				{
 					name: 'FACEBOOK_GRAPH_VERSION',
 					field: 'FACEBOOK_GRAPH_VERSION',
-					value: ''
-				}
-			]
+					value: '',
+				},
+			],
 		},
 		{
 			title: 'Github',
@@ -182,19 +179,19 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 				{
 					name: 'GITHUB_CLIENT_ID',
 					field: 'GITHUB_CLIENT_ID',
-					value: ''
+					value: '',
 				},
 				{
 					name: 'GITHUB_CLIENT_SECRET',
 					field: 'GITHUB_CLIENT_SECRET',
-					value: ''
+					value: '',
 				},
 				{
 					name: 'GITHUB_CALLBACK_URL',
 					field: 'GITHUB_CALLBACK_URL',
-					value: ''
-				}
-			]
+					value: '',
+				},
+			],
 		},
 		{
 			title: 'LinkedIn',
@@ -202,19 +199,19 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 				{
 					name: 'LINKEDIN_CLIENT_ID',
 					field: 'LINKEDIN_CLIENT_ID',
-					value: ''
+					value: '',
 				},
 				{
 					name: 'LINKEDIN_CLIENT_SECRET',
 					field: 'LINKEDIN_CLIENT_SECRET',
-					value: ''
+					value: '',
 				},
 				{
 					name: 'LINKEDIN_CALLBACK_URL',
 					field: 'LINKEDIN_CALLBACK_URL',
-					value: ''
-				}
-			]
+					value: '',
+				},
+			],
 		},
 		{
 			title: 'Microsoft',
@@ -222,29 +219,29 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 				{
 					name: 'MICROSOFT_CLIENT_ID',
 					field: 'MICROSOFT_CLIENT_ID',
-					value: ''
+					value: '',
 				},
 				{
 					name: 'MICROSOFT_CLIENT_SECRET',
 					field: 'MICROSOFT_CLIENT_SECRET',
-					value: ''
+					value: '',
 				},
 				{
 					name: 'MICROSOFT_RESOURCE',
 					field: 'MICROSOFT_RESOURCE',
-					value: ''
+					value: '',
 				},
 				{
 					name: 'MICROSOFT_TENANT',
 					field: 'MICROSOFT_TENANT',
-					value: ''
+					value: '',
 				},
 				{
 					name: 'MICROSOFT_CALLBACK_URL',
 					field: 'MICROSOFT_CALLBACK_URL',
-					value: ''
-				}
-			]
+					value: '',
+				},
+			],
 		},
 		{
 			title: 'Fiverr',
@@ -252,14 +249,14 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 				{
 					name: 'FIVERR_CLIENT_ID',
 					field: 'FIVERR_CLIENT_ID',
-					value: ''
+					value: '',
 				},
 				{
 					name: 'FIVERR_CLIENT_SECRET',
 					field: 'FIVERR_CLIENT_SECRET',
-					value: ''
-				}
-			]
+					value: '',
+				},
+			],
 		},
 		{
 			title: 'Auth0',
@@ -267,19 +264,19 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 				{
 					name: 'AUTH0_CLIENT_ID',
 					field: 'AUTH0_CLIENT_ID',
-					value: ''
+					value: '',
 				},
 				{
 					name: 'AUTH0_CLIENT_SECRET',
 					field: 'AUTH0_CLIENT_SECRET',
-					value: ''
+					value: '',
 				},
 				{
 					name: 'AUTH0_DOMAIN',
 					field: 'AUTH0_DOMAIN',
-					value: ''
-				}
-			]
+					value: '',
+				},
+			],
 		},
 		{
 			title: 'Keycloak',
@@ -287,29 +284,29 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 				{
 					name: 'KEYCLOAK_REALM',
 					field: 'KEYCLOAK_REALM',
-					value: ''
+					value: '',
 				},
 				{
 					name: 'KEYCLOAK_CLIENT_ID',
 					field: 'KEYCLOAK_CLIENT_ID',
-					value: ''
+					value: '',
 				},
 				{
 					name: 'KEYCLOAK_SECRET',
 					field: 'KEYCLOAK_SECRET',
-					value: ''
+					value: '',
 				},
 				{
 					name: 'KEYCLOAK_AUTH_SERVER_URL',
 					field: 'KEYCLOAK_AUTH_SERVER_URL',
-					value: ''
+					value: '',
 				},
 				{
 					name: 'KEYCLOAK_COOKIE_KEY',
 					field: 'KEYCLOAK_COOKIE_KEY',
-					value: ''
-				}
-			]
+					value: '',
+				},
+			],
 		},
 		{
 			title: 'Other',
@@ -317,30 +314,63 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 				{
 					name: 'SENTRY_DSN',
 					field: 'SENTRY_DSN',
-					value: ''
+					value: '',
 				},
 				{
 					name: 'GOOGLE_MAPS_API_KEY',
 					field: 'GOOGLE_MAPS_API_KEY',
-					value: ''
-				}
-			]
-		}
+					value: '',
+				},
+			],
+		},
 	];
 
-	selectedMenu = this.appName === 'gauzy-server' ? 'Update' : 'Screen Capture';
-
+	private _selectedMenu$: BehaviorSubject<string>;
+	private get _selectedMenu(): string {
+		return this._selectedMenu$.getValue();
+	}
 	monitorOptionSelected = null;
-	appSetting = null;
-	periodOption = [1, 3, 5, 10, 20];
+	/* Set Default Value */
+	appSetting = {
+		timerStarted: false,
+		randomScreenshotTime: 10,
+		trackOnPcSleep: false,
+		preventDisplaySleep: false,
+		visibleAwOption: true,
+		visibleWakatimeOption: false
+	};
+	periodOption = [1, 3, 5, 10];
 	selectedPeriod = 5;
 	screenshotNotification = null;
-	config = null;
-	restartDisable = false;
+	config = {
+		/* Default Selected dialect	*/
+		db: 'sqlite',
+		/* Default Mysql config */
+		mysql: {
+			dbHost: '127.0.0.1',
+			dbPort: 3306,
+			dbUsername: 'root',
+			dbPassword: ''
+		},
+		/* Default PostgresSQL config */
+		postgres: {
+			dbHost: '127.0.0.1',
+			dbPort: 5432,
+			dbUsername: 'postgres',
+			dbPassword: 'postgres'
+		},
+		timeTrackerWindow: null,
+		isLocalServer: false,
+		serverType: null,
+		serverUrl: null,
+		awPort: null,
+		awHost: null,
+		port: 5620
+	};
 	version = '0.0.0';
 	message = {
 		text: 'Application Update',
-		status: 'basic'
+		status: 'basic',
 	};
 	downloadFinish = false;
 	progressDownload = 0;
@@ -351,30 +381,44 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 	currentUser$: BehaviorSubject<any> = new BehaviorSubject({});
 	serverTypes = {
 		integrated: 'Integrated',
-		localNetwork: 'Local Network',
-		live: 'Live'
+		custom: 'Custom',
+		live: 'Live',
 	};
 	waitRestart = false;
 	serverIsRunning = false;
 
-	serverOptions =
-		this.appName === 'gauzy-desktop-timer'
-			? [this.serverTypes.localNetwork, this.serverTypes.live]
-			: [
-					this.serverTypes.integrated,
-					this.serverTypes.localNetwork,
-					this.serverTypes.live
-			  ];
+	serverOptions = this.isDesktopTimer
+		? [this.serverTypes.custom, this.serverTypes.live]
+		: [
+			this.serverTypes.integrated,
+			this.serverTypes.custom,
+			this.serverTypes.live
+		  ];
 
-	driverOptions = ['sqlite', 'postgres'];
+	driverOptions = [
+		'sqlite',
+		'postgres',
+		...(this.isDesktopTimer ? ['mysql'] : []),
+	];
 	muted: boolean;
 
-	private _loading$ : BehaviorSubject<boolean>;
+	private _loading$: BehaviorSubject<boolean>;
 	private _automaticUpdate$: BehaviorSubject<boolean>;
 	private _available$: BehaviorSubject<boolean>;
 	private _updaterServer$: BehaviorSubject<any>;
 	private _file$: BehaviorSubject<any>;
 	private _prerelease$: BehaviorSubject<boolean>;
+	private _isCheckDatabase$: BehaviorSubject<boolean>;
+	private _isCheckHost$: BehaviorSubject<{
+		isLoading: boolean,
+		isHidden: boolean,
+		message: string,
+		status: boolean
+	}>;
+	private _isConnectedDatabase$: BehaviorSubject<{ status: boolean, message: string }>;
+	private _restartDisable$: BehaviorSubject<boolean>;
+	private _isHidden$: BehaviorSubject<boolean>;
+	private _argMain = null;
 
 	constructor(
 		private electronService: ElectronService,
@@ -382,55 +426,105 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 		private readonly timeTrackerService: TimeTrackerService,
 		private toastrService: NbToastrService,
 		private _dialogService: NbDialogService,
+		private _setupService: SetupService
 	) {
 		this._loading$ = new BehaviorSubject(false);
 		this._automaticUpdate$ = new BehaviorSubject(false);
 		this._available$ = new BehaviorSubject(false);
-		this._file$ = new BehaviorSubject({uri: null});
+		this._file$ = new BehaviorSubject({ uri: null });
 		this._updaterServer$ = new BehaviorSubject({
 			github: false,
 			digitalOcean: true,
-			local: false
+			local: false,
 		});
 		this._prerelease$ = new BehaviorSubject(false);
+		this._selectedMenu$ = new BehaviorSubject(null);
+		this._isCheckDatabase$ = new BehaviorSubject(false);
+		this._isCheckHost$ = new BehaviorSubject({
+			isLoading: false,
+			isHidden: true,
+			status: false,
+			message: ''
+		});
+		this._isConnectedDatabase$ = new BehaviorSubject({ status: false, message: null });
+		this._restartDisable$ = new BehaviorSubject(false);
+		this._isHidden$ = new BehaviorSubject(true);
 	}
 
 	ngOnInit(): void {
 		this.electronService.ipcRenderer.send('request_permission');
 		this.version = this.electronService.remote.app.getVersion();
+		this.isConnectedDatabase$
+			.pipe(
+				tap(({ status }) => this._restartDisable$.next(!status)),
+				filter(() => !this._isCheckHost.status),
+				tap(() => this._restartDisable$.next(true))
+			)
+			.subscribe()
+		this.isCheckHost$
+			.pipe(
+				tap(({ status }) => this._restartDisable$.next(!status)),
+				filter(() => !this._isConnectedDatabase.status),
+				tap(() => this._restartDisable$.next(true)))
+			.subscribe()
 	}
 
 	ngAfterViewInit(): void {
 		this.electronService.ipcRenderer.on('app_setting', (event, arg) =>
-			this._ngZone.run(() => {
+			this._ngZone.run(async () => {
 				const { setting, config, auth, additionalSetting } = arg;
-				this.appSetting = setting;
-				this.config = config;
+				this.appSetting = {
+					...this.appSetting,
+					...setting
+				};
+				this.config = {
+					...this.config,
+					...config
+				};
+				this._argMain = arg;
+				this.checkDatabaseConnectivity();
 				this.authSetting = auth;
 				this.mappingAdditionalSetting(additionalSetting || null);
-
+				await this.checkHostConnectivity();
 				this.config.awPort = this.config.timeTrackerWindow
 					? this.config.awHost.split('t:')[1]
 					: null;
 				this.serverConnectivity();
 				this.selectMonitorOption({
-					value: setting.monitor.captured
+					value: setting?.monitor?.captured,
 				});
-				this.screenshotNotification = setting.screenshotNotification;
-				this.muted = setting.mutedNotification;
-				this.autoLaunch = setting.autoLaunch;
-				this.minimizeOnStartup = setting.minimizeOnStartup;
-				this._automaticUpdate$.next(setting.automaticUpdate);
-				this._prerelease$.next(setting.prerelease);
+				this.screenshotNotification = setting?.screenshotNotification;
+				this.muted = setting?.mutedNotification;
+				this.autoLaunch = setting?.autoLaunch;
+				this.minimizeOnStartup = setting?.minimizeOnStartup;
+				this._automaticUpdate$.next(setting?.automaticUpdate);
+				this._prerelease$.next(setting?.prerelease);
 				this._updaterServer$ = new BehaviorSubject({
-					github: setting.cdnUpdater.github,
-					digitalOcean: setting.cdnUpdater.digitalOcean,
-					local: false
+					github: setting?.cdnUpdater?.github == true,
+					digitalOcean: setting?.cdnUpdater?.digitalOcean == true,
+					local: false,
 				});
-				this.selectPeriod(setting.timer.updatePeriod);
-				if (this.appName !== 'gauzy-server') {
-					this.getUserDetails();
+				this.selectPeriod(setting?.timer?.updatePeriod);
+				if (!this.isServer) {
+					await this.getUserDetails();
 				}
+				this.menus = this.isServer
+					? ['Update', 'Advanced Setting', 'About']
+					: [
+						...(auth && auth.allowScreenshotCapture
+							? ['Screen Capture']
+							: []),
+						'Timer',
+						'Update',
+						'Advanced Setting',
+						'About',
+					];
+				const lastMenu =
+					this._selectedMenu &&
+						this.menus.includes(this._selectedMenu)
+						? this._selectedMenu
+						: this.menus[0];
+				this._selectedMenu$.next(lastMenu);
 			})
 		);
 
@@ -448,7 +542,7 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 				this._available$.next(false);
 				this.message = {
 					text: 'Update Not Available',
-					status: 'basic'
+					status: 'basic',
 				};
 				this.logContents = this.message.text;
 				this.scrollToBottom();
@@ -460,8 +554,8 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 			this._ngZone.run(() => {
 				this._available$.next(false);
 				this.message = {
-					text:  'Update Error',
-					status: 'danger'
+					text: 'Update Error',
+					status: 'danger',
 				};
 				this.logContents = this.message.text;
 				this.logContents = `error message: ${arg}`;
@@ -475,8 +569,8 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 				this._available$.next(true);
 				this._loading$.next(false);
 				this.message = {
-					text:  'Update Available',
-					status: 'primary'
+					text: 'Update Available',
+					status: 'primary',
 				};
 				this.logContents = this.message.text;
 				this.scrollToBottom();
@@ -488,7 +582,7 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 				this._available$.next(true);
 				this.message = {
 					text: 'Update Download Completed',
-					status: 'success'
+					status: 'success',
 				};
 				this.logContents = this.message.text;
 				this.scrollToBottom();
@@ -507,7 +601,7 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 					this.showProgressBar = true;
 					this.message = {
 						text: 'Update Downloading',
-						status: 'warning'
+						status: 'warning',
 					};
 					this.progressDownload = Math.floor(Number(arg.percent));
 					this.logContents = `Downloading update ${Math.floor(
@@ -527,9 +621,12 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 
 		this.electronService.ipcRenderer.on('goto_top_menu', () =>
 			this._ngZone.run(() => {
-				if (this.appName === 'gauzy-server') {
-					this.selectMenu('Advanced Setting');
-				} else this.selectMenu('Screen Capture');
+				const lastMenu =
+					this._selectedMenu &&
+						this.menus.includes(this._selectedMenu)
+						? this._selectedMenu
+						: this.menus[0];
+				this.selectMenu(lastMenu);
 			})
 		);
 
@@ -555,15 +652,32 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 			})
 		);
 
-		this.electronService.ipcRenderer.on('update_files_directory', (event, arg) => {
-			this._ngZone.run(() => {
-				this._file$.next(arg);
-			})
-		} )
+		this.electronService.ipcRenderer.on(
+			'update_files_directory',
+			(event, arg) => {
+				this._ngZone.run(() => {
+					this._file$.next(arg);
+				});
+			}
+		);
 
 		this.electronService.ipcRenderer.on('show_about', () => {
 			this._ngZone.run(() => {
 				this._dialogService.open(AboutComponent);
+			});
+		});
+
+		this.electronService.ipcRenderer.on('database_status', (event, arg) => {
+			this._ngZone.run(() => {
+				this._isCheckDatabase$.next(false);
+				this._isConnectedDatabase$.next(arg);
+				this._isHidden$.next(false);
+			});
+		})
+
+		this.electronService.ipcRenderer.on('_logout_quit_install_', (event, arg) => {
+			this._ngZone.run(() => {
+				this.logout(true);
 			})
 		})
 	}
@@ -594,13 +708,13 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 	}
 
 	selectMenu(menu) {
-		this.selectedMenu = menu;
+		this._selectedMenu$.next(menu);
 	}
 
 	updateSetting(value, type) {
 		this.appSetting[type] = value;
 		this.electronService.ipcRenderer.send('update_app_setting', {
-			values: this.appSetting
+			values: this.appSetting,
 		});
 	}
 
@@ -629,7 +743,7 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 		this.updateSetting(value, 'autoLaunch');
 		this.electronService.ipcRenderer.send('launch_on_startup', {
 			autoLaunch: value,
-			hidden: this.minimizeOnStartup
+			hidden: this.minimizeOnStartup,
 		});
 	}
 
@@ -637,7 +751,7 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 		this.updateSetting(value, 'minimizeOnStartup');
 		this.electronService.ipcRenderer.send('minimize_on_startup', {
 			autoLaunch: this.autoLaunch,
-			hidden: value
+			hidden: value,
 		});
 	}
 
@@ -652,8 +766,10 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 	}
 
 	restartApp() {
-		if (this.appName === 'gauzy-server' && this.serverIsRunning) {
-			this.restartDisable = true;
+		if (this.isServer && this.serverIsRunning) {
+			this._restartDisable$.next(true);
+		} else {
+			this.logout();
 		}
 		const thConfig = {};
 		this.thirdPartyConfig.forEach((item) => {
@@ -662,7 +778,7 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 			});
 		});
 		const newConfig: any = {
-			...this.config
+			...this.config,
 		};
 		if (this.config.timeTrackerWindow)
 			newConfig.awHost = `http://localhost:${this.config.awPort}`;
@@ -679,10 +795,15 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 				['5621', '5622'].findIndex((item) => item === val.toString()) >
 				-1
 			) {
-				this.restartDisable = true;
+				this._restartDisable$.next(true);
 			} else {
-				this.restartDisable = false;
+				this._restartDisable$.next(false);
 			}
+		}
+		if (type === 'db') {
+			console.log('Port change', val);
+			this._restartDisable$.next(true);
+			this._isHidden$.next(true);
 		}
 	}
 
@@ -693,7 +814,7 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 				break;
 			case !this.config.isLocalServer &&
 				this.config.serverUrl !== 'https://api.gauzy.co':
-				this.config.serverType = 'Local Network';
+				this.config.serverType = 'Custom';
 				break;
 			case !this.config.isLocalServer &&
 				this.config.serverUrl === 'https://api.gauzy.co':
@@ -704,6 +825,13 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 		}
 	}
 
+	public checkDatabaseConnectivity() {
+		this._isHidden$.next(false);
+		this._restartDisable$.next(true);
+		this._isCheckDatabase$.next(true);
+		this.electronService.ipcRenderer.send('check_database_connection', this.config);
+	}
+
 	checkForUpdate() {
 		this._loading$.next(true);
 		this.logIsOpen = true;
@@ -711,7 +839,7 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 	}
 
 	restartAndUpdate() {
-		this.electronService.ipcRenderer.send('restart_and_update');
+		this.logout(true);
 	}
 
 	toggleAwView(value) {
@@ -735,20 +863,33 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 	/*
 	 * Get logged in user details
 	 */
-	getUserDetails() {
+	public async getUserDetails() {
 		const request = {
 			...this.authSetting,
 			...this.config,
 			apiHost: this.config.serverUrl
 		};
 		if (this.authSetting) {
-			this.timeTrackerService.getUserDetail(request).then((res) => {
-				if (!this.authSetting.isLogout) {
-					this.currentUser$.next(res);
-				} else {
-					this.currentUser$.next(null);
+			try {
+				const payload = {
+					tenantId: request.tenantId,
+					token: request.token,
+					apiHost: request.apiHost
 				}
-			});
+				if (Object.values(payload).includes(null || undefined)) {
+					this.currentUser$.next(null);
+					if (typeof this.authSetting.isLogout !== 'undefined') {
+						if (!this.authSetting.isLogout) {
+							this.logout();
+						}
+					}
+				} else {
+					const user = await this.timeTrackerService.getUserDetail(payload);
+					this.currentUser$.next(this.authSetting.isLogout ? null : user);
+				};
+			} catch (error) {
+				console.log('User Detail error', error);
+			}
 		} else {
 			this.currentUser$.next(null);
 		}
@@ -757,19 +898,21 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 	/*
 	 * Logout desktop timer
 	 */
-	logout() {
+	logout(isAfterUpgrade?: boolean) {
 		console.log('On Logout');
-		this.electronService.ipcRenderer.send('logout_desktop');
+		localStorage.clear();
+		this.electronService.ipcRenderer.send('logout_desktop', isAfterUpgrade);
 	}
 
 	onServerChange(val) {
+		this._restartDisable$.next(true);
 		switch (val) {
 			case this.serverTypes.integrated:
 				this.config.isLocalServer = true;
 				this.config.port = 5620;
 				this.config.serverUrl = null;
 				break;
-			case this.serverTypes.localNetwork:
+			case this.serverTypes.custom:
 				this.config.isLocalServer = false;
 				this.config.serverUrl = 'http://localhost:3000';
 				break;
@@ -783,12 +926,17 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 	}
 
 	onDriverChange(val) {
+		this._restartDisable$.next(true);
+		this._isHidden$.next(true);
 		switch (val) {
 			case 'sqlite':
 				this.config.db = 'sqlite';
 				break;
 			case 'postgres':
 				this.config.db = 'postgres';
+				break;
+			case 'mysql':
+				this.config.db = 'mysql';
 				break;
 			default:
 				break;
@@ -803,7 +951,7 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 					'Server configuration updated, please wait till server restarts';
 				break;
 			case 'start_server':
-				this.restartDisable = false;
+				this._restartDisable$.next(false);
 				message = 'Server Restated Successfully';
 				break;
 			default:
@@ -821,9 +969,9 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 	}
 
 	private scrollToBottom() {
-		if (this.logIsOpen && this._logbox) {
-			this._logbox.nativeElement.scrollTop =
-				this._logbox.nativeElement.scrollHeight;
+		if (this.logIsOpen && this._logBox) {
+			this._logBox.nativeElement.scrollTop =
+				this._logBox.nativeElement.scrollHeight;
 		}
 	}
 
@@ -831,7 +979,7 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 		this.updateSetting(event, 'preventDisplaySleep');
 	}
 
-	public openLink(){
+	public openLink() {
 		const url = 'https://gauzy.co';
 		this.electronService.shell.openExternal(url);
 	}
@@ -842,7 +990,7 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 
 	public get available$() {
 		return this._available$.asObservable();
-	};
+	}
 
 	public get automaticUpdate$(): Observable<boolean> {
 		return this._automaticUpdate$.asObservable();
@@ -874,28 +1022,144 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 		this._updaterServer$.next({
 			github: event,
 			digitalOcean: !event,
-			local: false
-		})
+			local: false,
+		});
 		this.updateSetting(this._updaterServer$.getValue(), 'cdnUpdater');
-		this.electronService.ipcRenderer.send('change_update_strategy', this._updaterServer$.getValue());
+		this.electronService.ipcRenderer.send(
+			'change_update_strategy',
+			this._updaterServer$.getValue()
+		);
 	}
 
 	public toggleDigitalOceanDefaultServer(event: boolean) {
 		this._updaterServer$.next({
 			github: !event,
 			digitalOcean: event,
-			local: false
+			local: false,
 		});
 		this.updateSetting(this._updaterServer$.getValue(), 'cdnUpdater');
-		this.electronService.ipcRenderer.send('change_update_strategy', this._updaterServer$.getValue());
+		this.electronService.ipcRenderer.send(
+			'change_update_strategy',
+			this._updaterServer$.getValue()
+		);
 	}
 
 	public toggleLocalServer(event: boolean) {
 		this._file$.next({});
 		this._updaterServer$.next({
 			...this._updaterServer$.getValue(),
-			local: event
+			local: event,
 		});
-		this.electronService.ipcRenderer.send('change_update_strategy', this._updaterServer$.getValue());
+		this.electronService.ipcRenderer.send(
+			'change_update_strategy',
+			this._updaterServer$.getValue()
+		);
+	}
+
+	public get isDesktopTimer(): boolean {
+		return this.appName === 'gauzy-desktop-timer';
+	}
+
+	public get isDesktop(): boolean {
+		return this.appName === 'gauzy-desktop';
+	}
+
+	public get isServer(): boolean {
+		return this.appName === 'gauzy-server';
+	}
+
+	public get selectedMenu$(): Observable<string> {
+		return this._selectedMenu$.asObservable();
+	}
+
+	public get _isConnectedDatabase(): { status: boolean, message: string } {
+		return this._isConnectedDatabase$.getValue();
+	}
+
+	public get isConnectedDatabase$(): Observable<{ status: boolean, message: string }> {
+		return this._isConnectedDatabase$.asObservable()
+	}
+
+	public get _isCheckDatabase(): boolean {
+		return this._isCheckDatabase$.getValue();
+	}
+
+	public get _isCheckHost(): {
+		isLoading: boolean,
+		isHidden: boolean,
+		message: string,
+		status: boolean
+	} {
+		return this._isCheckHost$.getValue();
+	}
+
+	public get isCheckHost$(): Observable<{
+		isLoading: boolean,
+		isHidden: boolean,
+		message: string,
+		status: boolean
+	}> {
+		return this._isCheckHost$.asObservable();
+	}
+
+	public get isCheckDatabase$(): Observable<boolean> {
+		return this._isCheckDatabase$.asObservable();
+	}
+
+	public get restartDisable$(): Observable<boolean> {
+		return this._restartDisable$.asObservable();
+	}
+
+	public get isHidden$(): Observable<boolean> {
+		return this._isHidden$.asObservable();
+	}
+
+	public onHide() {
+		this._isHidden$.next(true);
+	}
+
+	public onHideApi() {
+		this._isCheckHost$.next({
+			...this._isCheckHost,
+			isHidden: true
+		});
+	}
+
+	public async checkHostConnectivity(): Promise<any> {
+		try {
+			this._isCheckHost$.next({
+				...this._isCheckHost,
+				isLoading: true,
+			});
+			const url = new URL(this.config.serverUrl);
+			if (url.pathname.length > 1) {
+				this.config.serverUrl = url.origin;
+			}
+			const isOk = await this._setupService.pingServer({
+				host: url.origin,
+			});
+			if (isOk) {
+				this._isCheckHost$.next({
+					status: true,
+					isHidden: false,
+					isLoading: false,
+					message: `Connection to Server ${this.config.serverUrl} Succeeds`,
+				});
+			}
+		} catch (error) {
+			const isOkAnyway = error.status === 404;
+			this._isCheckHost$.next({
+				status: isOkAnyway,
+				isHidden: false,
+				isLoading: false,
+				message: isOkAnyway
+					? `Connection to Server ${this.config.serverUrl} Succeeds`
+					: error.message,
+			});
+		}
+	}
+
+	public onHostChange(host: string) {
+		this._restartDisable$.next(true);
 	}
 }

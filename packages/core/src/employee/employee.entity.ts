@@ -48,6 +48,7 @@ import {
 	Candidate,
 	Contact,
 	EmployeeAward,
+	EmployeePhone,
 	EmployeeSetting,
 	EquipmentSharing,
 	Expense,
@@ -73,7 +74,6 @@ import {
 	TimeSlot,
 	User
 } from '../core/entities/internal';
-import { EmployeePhone } from 'employee-phone';
 
 @Entity('employee')
 export class Employee extends TenantOrganizationBaseEntity implements IEmployee {
@@ -275,6 +275,13 @@ export class Employee extends TenantOrganizationBaseEntity implements IEmployee 
 	isTrackingEnabled: boolean;
 
 	/**
+	 * Enabled/Disabled Screen Capture Feature
+	 */
+	@ApiPropertyOptional({ type: () => Boolean, default: true })
+	@Column({ default: true })
+	allowScreenshotCapture?: boolean;
+
+	/**
 	 * Soft Delete
 	 */
 	@ApiPropertyOptional({ type: () => 'timestamptz' })
@@ -366,16 +373,20 @@ export class Employee extends TenantOrganizationBaseEntity implements IEmployee 
 	teams?: IOrganizationTeam[];
 
 	/**
-	 * Employee Time Logs
+	 * Time Tracking (Timesheets)
 	 */
-	@ApiPropertyOptional({ type: () => TimeLog, isArray: true })
+	@OneToMany(() => Timesheet, (it) => it.employee)
+	timesheets?: ITimesheet[];
+
+	/**
+	 * Time Tracking (Time Logs)
+	 */
 	@OneToMany(() => TimeLog, (it) => it.employee)
 	timeLogs?: ITimeLog[];
 
 	/**
-	 * Employee Time Slots
+	 * Time Tracking (Time Slots)
 	 */
-	@ApiPropertyOptional({ type: () => TimeSlot, isArray: true })
 	@OneToMany(() => TimeSlot, (it) => it.employee)
 	timeSlots?: ITimeSlot[];
 
@@ -402,15 +413,6 @@ export class Employee extends TenantOrganizationBaseEntity implements IEmployee 
 	@ApiPropertyOptional({ type: () => Expense, isArray: true })
 	@OneToMany(() => Expense, (it) => it.employee)
 	expenses?: IExpense[];
-
-	/**
-	 * Timesheet
-	 */
-	@ApiPropertyOptional({ type: () => Timesheet, isArray: true })
-	@OneToMany(() => Timesheet, (it) => it.employee, {
-		cascade: true
-	})
-	timesheets?: ITimesheet[];
 
 	/**
 	 * Goal

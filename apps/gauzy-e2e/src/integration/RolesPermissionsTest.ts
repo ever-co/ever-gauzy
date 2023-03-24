@@ -1,6 +1,6 @@
 import * as loginPage from '../support/Base/pages/Login.po';
 import { LoginPageData } from '../support/Base/pagedata/LoginPageData';
-import * as dashboradPage from '../support/Base/pages/Dashboard.po';
+import * as dashboardPage from '../support/Base/pages/Dashboard.po';
 import { CustomCommands } from '../support/commands';
 import { RolesPermissionsPageData } from '../support/Base/pagedata/RolesPermissionsPageData';
 import * as rolesPermissionsPage from '../support/Base/pages/RolesPermissions.po';
@@ -10,7 +10,7 @@ let notChecked = 'not.checked';
 
 describe('Roles and permissions test', () => {
 	before(() => {
-		CustomCommands.login(loginPage, LoginPageData, dashboradPage);
+		CustomCommands.login(loginPage, LoginPageData, dashboardPage);
 	});
 	it('Super admin roles and permissions', () => {
 		cy.visit('/#/pages/settings/roles');
@@ -744,7 +744,7 @@ describe('Roles and permissions test', () => {
 			RolesPermissionsPageData.accessPrivateProjects
 		);
 		rolesPermissionsPage.verifyTextExist(
-			RolesPermissionsPageData.editTimeinTimesheet
+			RolesPermissionsPageData.editTimeInTimesheet
 		);
 		rolesPermissionsPage.verifyTextExist(
 			RolesPermissionsPageData.viewInvoices

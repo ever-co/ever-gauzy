@@ -42,7 +42,7 @@ export const clickEmployeeDropdown = () => {
 	clickButton(ExpensesPage.selectEmployeeDropdownCss);
 };
 
-export const selectEmployeeFromDrodpwon = (index) => {
+export const selectEmployeeFromDropdown = (index) => {
 	clickButtonByIndex(ExpensesPage.selectEmployeeDropdownOptionCss, index);
 };
 
@@ -117,7 +117,7 @@ export const tagsDropdownVisible = () => {
 	verifyElementIsVisible(ExpensesPage.addTagsDropdownCss);
 };
 
-export const clickTagsDropdwon = () => {
+export const clickTagsDropdown = () => {
 	clickButton(ExpensesPage.addTagsDropdownCss);
 };
 
@@ -192,11 +192,11 @@ export const clickDuplicateButton = () => {
 };
 
 export const manageCategoriesButtonVisible = () => {
-	verifyElementIsVisible(ExpensesPage.manageCategoriseButtonCss);
+	verifyElementIsVisible(ExpensesPage.manageCategoriesButtonCss);
 };
 
 export const clickManageCategoriesButton = () => {
-	clickButton(ExpensesPage.manageCategoriseButtonCss);
+	clickButton(ExpensesPage.manageCategoriesButtonCss);
 };
 
 export const newCategoryInputVisible = () => {
@@ -208,12 +208,12 @@ export const enterNewCategoryInputData = (data) => {
 	enterInput(ExpensesPage.expenseNameInputCss, data);
 };
 
-export const saveCategorieButtonVisible = () => {
-	verifyElementIsVisible(ExpensesPage.saveCategorieButtonCss);
+export const SaveCategoryButtonVisible = () => {
+	verifyElementIsVisible(ExpensesPage.SaveCategoryButtonCss);
 };
 
-export const clickSaveCategorieButton = () => {
-	clickButton(ExpensesPage.saveCategorieButtonCss);
+export const clickSaveCategoryButton = () => {
+	clickButton(ExpensesPage.SaveCategoryButtonCss);
 };
 
 export const backButtonVisible = () => {
@@ -224,12 +224,12 @@ export const clickBackButton = () => {
 	clickButton(ExpensesPage.backButtonCss);
 };
 
-export const categorieCardVisible = () => {
-	verifyElementIsVisible(ExpensesPage.categorieCardCss);
+export const categoryCardVisible = () => {
+	verifyElementIsVisible(ExpensesPage.categoryCardCss);
 };
 
-export const clickCategorieCard = () => {
-	clickButton(ExpensesPage.categorieCardCss);
+export const clickCategoryCard = () => {
+	clickButton(ExpensesPage.categoryCardCss);
 };
 
 export const waitMessageToHide = () => {

@@ -87,7 +87,9 @@ export class EditProfileFormComponent
 			repeatPassword: [],
 			role: [],
 			tags: [],
-			preferredLanguage: []
+			preferredLanguage: [],
+			timeZone: [],
+			phoneNumber: []
 		}, {
 			validators: [
 				MatchValidator.mustMatch(
@@ -108,7 +110,7 @@ export class EditProfileFormComponent
 		private readonly toastrService: ToastrService,
 		private readonly errorHandler: ErrorHandlingService,
 		private readonly roleService: RoleService
-	) {}
+	) { }
 
 	async ngOnInit() {
 		this.excludeRoles();
@@ -156,7 +158,7 @@ export class EditProfileFormComponent
 		this.toastrService.danger(error);
 	}
 
-	async updateImage(imageUrl: string){
+	async updateImage(imageUrl: string) {
 		this.form.get('imageUrl').setValue(imageUrl);
 		this.store.user = {
 			...this.store.user,
@@ -170,9 +172,9 @@ export class EditProfileFormComponent
 		if (this.allowRoleChange) {
 			const { tenantId } = this.store.user;
 			const role = await firstValueFrom(this.roleService.getRoleByOptions({
-					name: (this.form.get('role').value).name,
-					tenantId
-				})
+				name: (this.form.get('role').value).name,
+				tenantId
+			})
 			);
 
 			request = {
@@ -186,32 +188,34 @@ export class EditProfileFormComponent
 				this.selectedUser ? this.selectedUser.id : this.store.userId,
 				request
 			)
-			.then((res: IUser) => {
-				try {
-					if (res) {
-						this.store.user = {
-							...this.store.user,
-							imageUrl: res.imageUrl
-						} as IUser
+				.then((res: IUser) => {
+					try {
+						if (res) {
+							this.store.user = {
+								...this.store.user,
+								imageUrl: res.imageUrl
+							} as IUser
+						}
+						this.toastrService.success('TOASTR.MESSAGE.IMAGE_UPDATED');
+					} catch (error) {
+						console.log('Error while uploading profile avatar', error);
 					}
-					this.toastrService.success('TOASTR.MESSAGE.IMAGE_UPDATED');
-				} catch (error) {
-					console.log('Error while uploading profile avatar', error);
-				}
-			});
+				});
 		} catch (error) {
 			this.errorHandler.handleError(error);
 		}
 	}
 
 	async submitForm() {
-		const { email, firstName, lastName, tags, preferredLanguage, password } = this.form.getRawValue();
+		const { email, firstName, lastName, tags, preferredLanguage, password, timeZone, phoneNumber } = this.form.getRawValue();
 		let request: IUserUpdateInput = {
 			email,
 			firstName,
 			lastName,
 			tags,
-			preferredLanguage
+			preferredLanguage,
+			timeZone,
+			phoneNumber
 		};
 
 		if (password) {
@@ -224,9 +228,9 @@ export class EditProfileFormComponent
 		if (this.allowRoleChange) {
 			const { tenantId } = this.store.user;
 			const role = await firstValueFrom(this.roleService.getRoleByOptions({
-					name: (this.form.get('role').value).name,
-					tenantId
-				})
+				name: (this.form.get('role').value).name,
+				tenantId
+			})
 			);
 
 			request = {
@@ -240,20 +244,20 @@ export class EditProfileFormComponent
 				this.selectedUser ? this.selectedUser.id : this.store.userId,
 				request
 			)
-			.then(() => {
-				if((this.selectedUser ? this.selectedUser.id : this.store.userId) === this.store.user.id){
-					this.store.user.email = request.email;
-				}
+				.then(() => {
+					if ((this.selectedUser ? this.selectedUser.id : this.store.userId) === this.store.user.id) {
+						this.store.user.email = request.email;
+					}
 
-				this.toastrService.success('TOASTR.MESSAGE.PROFILE_UPDATED');
-				this.userSubmitted.emit();
-				/**
-				* selectedUser is null for edit profile and populated in User edit
-				* Update app language when current user's profile is modified.
-				*/
-				if (this.selectedUser && this.selectedUser.id !== this.store.userId) { return; }
-				this.store.preferredLanguage = preferredLanguage;
-			});
+					this.toastrService.success('TOASTR.MESSAGE.PROFILE_UPDATED');
+					this.userSubmitted.emit();
+					/**
+					* selectedUser is null for edit profile and populated in User edit
+					* Update app language when current user's profile is modified.
+					*/
+					if (this.selectedUser && this.selectedUser.id !== this.store.userId) { return; }
+					this.store.preferredLanguage = preferredLanguage;
+				});
 		} catch (error) {
 			this.errorHandler.handleError(error);
 		}
@@ -269,14 +273,16 @@ export class EditProfileFormComponent
 			imageUrl: user.imageUrl,
 			role: user.role,
 			tags: user.tags,
-			preferredLanguage: user.preferredLanguage
+			preferredLanguage: user.preferredLanguage,
+			timeZone: user.timeZone,
+			phoneNumber: user.phoneNumber
 		});
 		this.role = user.role;
 	}
 
 	selectedTagsHandler(tags: ITag[]) {
 		this.form.get('tags').setValue(tags);
-		this.form.updateValueAndValidity();
+		this.form.get('tags').updateValueAndValidity();
 	}
 
 	/**

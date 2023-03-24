@@ -80,6 +80,7 @@
 		"PROPOSAL_MAKE_DEFAULT_MESSAGE": "Proposal template successfully make as default",
 		"MANAGE_TEMPLATES": "Manage Templates",
 		"MAKE_DEFAULT": "Make Default",
+		"REMOVE_DEFAULT": "Remove Default",
 		"HIDE_ALL": "Hide All",
 		"SCHEDULES": "Schedules",
 		"YES_HIDE_ALL_JOBS": "Yes, Hide All Jobs",
@@ -257,7 +258,8 @@
 		"HIRED_DATE": "Hired Date",
 		"REJECTED_DATE": "Rejected Date",
 		"TIME_TRACKING": "Time Tracking",
-		"CREATED_AT": "Created At"
+		"CREATED_AT": "Created At",
+		"SCREEN_CAPTURE": "Screen Capture"
 	},
 	"FORM": {
 		"USERNAME": "Username",
@@ -267,6 +269,7 @@
 		"EMAIL": "Email",
 		"LABELS": {
 			"NAME": "Name",
+			"PHONE_NUMBER": "Phone Number",
 			"WEBSITE": "Website",
 			"FIRST_NAME": "First Name (optional)",
 			"LAST_NAME": "Last Name (optional)",
@@ -413,6 +416,7 @@
 		},
 		"PLACEHOLDERS": {
 			"NAME": "Name",
+			"PHONE_NUMBER": "Phone Number",
 			"DEFAULT": "Select Default",
 			"FIRST_NAME": "First Name",
 			"LAST_NAME": "Last Name",
@@ -1087,7 +1091,7 @@
 			"MANUAL_ACTIVITY": "No records found. Please select date range, employee or project.",
 			"AMOUNT_OWED": "No Amount Owed",
 			"WEEKLY_TIME_AND_ACTIVITY": "You have not any tracked time and activity yet for these day's.",
-			"DAILY_TIME_AND_ACTIVITY": "You have not any tracked time and activity yet for this day.",
+			"DAILY_TIME_AND_ACTIVITY": "There is no time and activity tracked yet for this day. Please use the <a href=\"https://web.gauzy.co/downloads\" rel=\"noopener\" target=\"_blank\">Gauzy Desktop Timer App</a>.",
 			"PROJECT_BUDGET": "You have not created any project with budget.",
 			"CLIENT_BUDGET": "You have not created any client with budget."
 		}
@@ -1312,7 +1316,9 @@
 			"TOTAL_HOURS": "Total Hours",
 			"RATE": "Rate",
 			"VETTED": "Vetted",
-			"HR": "hr"
+			"HR": "hr",
+			"SETTINGS": "Settings",
+			"GENERAL_SETTINGS": "General Settings"
 		},
 		"ADD_EMPLOYEES": {
 			"STEP_1": "Step 1",
@@ -1737,6 +1743,7 @@
 		"PHONE": "Phone",
 		"EMAIL": "Email",
 		"WEBSITE": "Website",
+		"TAGS": "Tags",
 		"DOCUMENT_URL": "Document URL",
 		"UPDATED": "Updated",
 		"LEVEL_NAME": "Level name",
@@ -1827,7 +1834,11 @@
 				"ACTIVITY_PROOF_DURATION": "Activity proof duration",
 				"ACTIVITY_PROOF_DURATION_INFO": "Duration of activity proof countdown dialog, it represent an amount of minutes given to prove activity",
 				"ENABLE_DETECTION_INACTIVITY": "Enable detection of employee inactivity",
-				"ENABLE_DETECTION_INACTIVITY_INFO": "Enabled - the system will detect inactivity and display a warning. Disabled - no warning will be displayed when an employee is inactive."
+				"ENABLE_DETECTION_INACTIVITY_INFO": "Enabled - the system will detect inactivity and display a warning. Disabled - no warning will be displayed when an employee is inactive.",
+				"DELETE_IDLE_TIME": "Enable deletion of idle time",
+				"DELETE_IDLE_TIME_INFO": "Enable - the system will delete idle time. Disable - the system will not delete idle time",
+				"ALLOW_SCREEN_CAPTURE": "Allow Screen Capture",
+				"ALLOW_SCREEN_CAPTURE_INFO": "Enable - the timer will take screenshot. Disable - the timer will run without to take screenshot for all organization members"
 			},
 			"TEAMS_PAGE": {
 				"MANAGERS": "Managers",
@@ -1867,7 +1878,10 @@
 			"ORG_CANDIDATES_INTERVIEW_EDIT": "Create/Edit Interview",
 			"ORG_CANDIDATES_INTERVIEW_VIEW": "View Interview",
 			"ORG_INVENTORY_PRODUCT_EDIT": "Management Product",
-			"ORG_TAGS_EDIT": "Create/Edit/Delete Tags",
+			"ORG_TAGS_ADD": "Create Tags",
+			"ORG_TAGS_VIEW": "View Tags",
+			"ORG_TAGS_EDIT": "Edit Tags",
+			"ORG_TAGS_DELETE": "Delete Tags",
 			"ORG_CANDIDATES_FEEDBACK_EDIT": "Create/Edit/Delete Candidate Feedback",
 			"ALL_ORG_VIEW": "View All Organizations",
 			"ALL_ORG_EDIT": "Create/Edit/Delete All Organizations",
@@ -1901,6 +1915,10 @@
 			"ORG_INVENTORY_VIEW": "View Organization Inventory",
 			"INVENTORY_GALLERY_VIEW": "View Inventory Gallery",
 			"INVENTORY_GALLERY_EDIT": "Edit Inventory Gallery",
+			"MEDIA_GALLERY_ADD": "Add media gallery",
+			"MEDIA_GALLERY_VIEW": "View media gallery",
+			"MEDIA_GALLERY_EDIT": "Edit media gallery",
+			"MEDIA_GALLERY_DELETE": "Delete media gallery",
 			"ORG_EQUIPMENT_VIEW": "View Organization Equipment",
 			"ORG_EQUIPMENT_EDIT": "Edit Organization Equipment",
 			"ORG_EQUIPMENT_SHARING_VIEW": "View Organization Equipment Sharing",
@@ -1930,6 +1948,8 @@
 			"ORG_TEAM_VIEW": "View Teams",
 			"ORG_TEAM_EDIT": "Edit Teams",
 			"ORG_TEAM_DELETE": "Delete Teams",
+			"ORG_TEAM_JOIN_REQUEST_VIEW": "View Teams Join Requests",
+			"ORG_TEAM_JOIN_REQUEST_EDIT": "Delete Teams Join Requests",
 			"ORG_CONTRACT_EDIT": "Create/Edit Contracts",
 			"TIME_TRACKER": "Access Time Tracker",
 			"TENANT_ADD_EXISTING_USER": "Tenant Add User To Organization",
@@ -2506,6 +2526,7 @@
 		"PROPOSAL_EDIT_MESSAGE": "Proposal template '{{ name }}' was changed",
 		"PROPOSAL_DELETE_MESSAGE": "Proposal template '{{ name }}' was removed",
 		"PROPOSAL_MAKE_DEFAULT_MESSAGE": "Proposal template '{{ name }}' set as default",
+		"PROPOSAL_REMOVE_DEFAULT_MESSAGE": "Proposal template '{{ name }}' remove as default",
 		"YES": "Yes",
 		"NO": "No",
 		"BROWSE": "Browse",
@@ -3346,7 +3367,8 @@
 			"BUCKET_CREATED": "'{{ bucket }}' for '{{ region }}' has been created successfully",
 			"AUTHORIZED_TO_WORK": "{{ name }} is authorized to work",
 			"EMAIL_VERIFICATION_NOT_VALID": "Sorry, this verification link is not valid.",
-			"EMAIL_VERIFICATION_VALID": "Congrats! Your email is now verified."
+			"EMAIL_VERIFICATION_VALID": "Congrats! Your email is now verified.",
+			"SCREEN_CAPTURE_CHANGED": "Screen capture status changed for {{ name }}"
 		}
 	},
 	"ACCEPT_INVITE": {
@@ -3822,7 +3844,9 @@
 			"task-update": "Task Update",
 			"candidate-schedule-interview": "Candidate Interview Schedule",
 			"interviewer-interview-schedule": "Interviewer Schedule",
-			"employee-join": "Employee Join"
+			"employee-join": "Employee Join",
+			"email-reset": "Email Reset",
+			"organization-team-join-request": "Organization team join request"
 		},
 		"HTML_EDITOR": "HTML Editor"
 	},
@@ -3903,6 +3927,23 @@
 				"REGION": "Region",
 				"BUCKET": "Bucket",
 				"SERVICE_URL": "Service URL"
+			}
+		},
+		"CLOUDINARY": {
+			"HEADER": "Cloudinary Configuration",
+			"LABELS": {
+				"CLOUD_NAME": "Cloudinary name",
+				"ACCESS_API_KEY": "Access key id",
+				"ACCESS_API_SECRET": "Secret access key",
+				"DELIVERY_URL": "Delivery URL",
+				"SECURE": "Secure"
+			},
+			"PLACEHOLDERS": {
+				"CLOUD_NAME": "Cloudinary name",
+				"ACCESS_API_KEY": "Access key id",
+				"ACCESS_API_SECRET": "Secret access key",
+				"DELIVERY_URL": "Delivery URL",
+				"SECURE": "Secure"
 			}
 		}
 	},

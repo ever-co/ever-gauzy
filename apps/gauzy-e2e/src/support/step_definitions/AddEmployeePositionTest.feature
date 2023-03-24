@@ -17,21 +17,25 @@ Feature: Add employee position
     And User can see save position button
     When User click on save position button
     Then Notification message will appear
+    When User selects position to edit
     And User can see edit position button
     When User click on edit position button
     Then User can verify position was created
     And User can see cancel edit button
     And User can click on cancel edit button
   Scenario: Еdit employee position
+    When User selects position to edit
+    When User click on the created Employee Level Twice
     Then User can see edit newly position button
     When User click on edit new position button
     Then User can edit previously created position
     And User can see tag multi-select
     When User click on tag multi-select
     Then User can pick tag from dropdown menu
-    And User can see save position button
-    When User click on save position button
+    And User can see update position button
+    When User click on update position button
     Then Notification message will appear
+    When User selects position to edit
     And User can see edit position button
     When User click on edit position button
     Then User can verify position was edited
@@ -48,13 +52,10 @@ Feature: Add employee position
     And User can see save position button
     When User click on save position button
     Then Notification message will appear
+    When User selects position to delete
     And User can see delete position button
     When User click on delete position button
     Then User can see confirm delete button
     When User click on confirm delete button
     Then User can verify that position was deleted
     And User will see a notification message
-    And User can see delete position button
-    When User click on delete position button
-    Then User can see confirm delete button
-    And User click on confirm delete button

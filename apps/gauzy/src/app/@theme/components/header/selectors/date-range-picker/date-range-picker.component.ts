@@ -2,7 +2,11 @@ import { Component, OnInit, OnDestroy, AfterViewInit, Input, ViewChild } from '@
 import { BehaviorSubject, combineLatest, of as observableOf, Subject, switchMap, take } from 'rxjs';
 import { filter, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { DaterangepickerDirective as DateRangePickerDirective, LocaleConfig } from 'ngx-daterangepicker-material';
+import {
+	DaterangepickerComponent as NgxDateRangePickerComponent,
+	DaterangepickerDirective as DateRangePickerDirective,
+	LocaleConfig
+} from 'ngx-daterangepicker-material';
 import * as moment from 'moment';
 import { IDateRangePicker, IOrganization, ITimeLogFilters, WeekDaysEnum } from '@gauzy/contracts';
 import { distinctUntilChange, isNotEmpty } from '@gauzy/common-angular';
@@ -25,9 +29,8 @@ import { TimesheetFilterService } from './../../../../../@shared/timesheet/times
 	templateUrl: './date-range-picker.component.html',
 	styleUrls: ['./date-range-picker.component.scss']
 })
-export class DateRangePickerComponent extends TranslationBaseComponent
-	implements AfterViewInit, OnInit, OnDestroy {
-
+export class DateRangePickerComponent extends TranslationBaseComponent implements AfterViewInit, OnInit, OnDestroy {
+	public picker: NgxDateRangePickerComponent;
 	public organization: IOrganization;
 	public maxDate: string;
 	public futureDateAllowed: boolean;
@@ -76,8 +79,8 @@ export class DateRangePickerComponent extends TranslationBaseComponent
 	arrows: boolean = true;
 
 	/*
-	* Getter & Setter for dynamic unitOfTime
-	*/
+	 * Getter & Setter for dynamic unitOfTime
+	 */
 	private _unitOfTime: moment.unitOfTime.Base = DEFAULT_DATE_PICKER_CONFIG.unitOfTime;
 	get unitOfTime(): moment.unitOfTime.Base {
 		return this._unitOfTime;
@@ -94,8 +97,8 @@ export class DateRangePickerComponent extends TranslationBaseComponent
 	}
 
 	/*
-	* Getter & Setter for dynamic selected date range
-	*/
+	 * Getter & Setter for dynamic selected date range
+	 */
 	private _selectedDateRange: IDateRangePicker;
 	get selectedDateRange(): IDateRangePicker {
 		return this._selectedDateRange;
@@ -109,7 +112,7 @@ export class DateRangePickerComponent extends TranslationBaseComponent
 				this.timesheetFilterService.filter = {
 					...this.timesheetFilterService.filter,
 					...range
-				}
+				};
 			}
 			this._selectedDateRange = range;
 			this.range$.next(range);
@@ -117,8 +120,8 @@ export class DateRangePickerComponent extends TranslationBaseComponent
 	}
 
 	/*
-	* Getter & Setter for dynamic selected internal date range
-	*/
+	 * Getter & Setter for dynamic selected internal date range
+	 */
 	private _rangePicker: IDateRangePicker;
 	public get rangePicker(): IDateRangePicker {
 		return this._rangePicker;
@@ -130,8 +133,8 @@ export class DateRangePickerComponent extends TranslationBaseComponent
 	}
 
 	/*
-	* Getter & Setter for lock date picker
-	*/
+	 * Getter & Setter for lock date picker
+	 */
 	private _isLockDatePicker: boolean = false;
 	get isLockDatePicker(): boolean {
 		return this._isLockDatePicker;
@@ -141,8 +144,8 @@ export class DateRangePickerComponent extends TranslationBaseComponent
 	}
 
 	/*
-	* Getter & Setter for save date picker
-	*/
+	 * Getter & Setter for save date picker
+	 */
 	private _isSaveDatePicker: boolean = false;
 	get isSaveDatePicker(): boolean {
 		return this._isSaveDatePicker;
@@ -152,8 +155,8 @@ export class DateRangePickerComponent extends TranslationBaseComponent
 	}
 
 	/*
-	* Getter & Setter for single date picker
-	*/
+	 * Getter & Setter for single date picker
+	 */
 	private _isSingleDatePicker: boolean = false;
 	get isSingleDatePicker(): boolean {
 		return this._isSingleDatePicker;
@@ -163,8 +166,8 @@ export class DateRangePickerComponent extends TranslationBaseComponent
 	}
 
 	/*
-	* Getter & Setter for disabled future dates
-	*/
+	 * Getter & Setter for disabled future dates
+	 */
 	private _isDisableFutureDatePicker: boolean = false;
 	get isDisableFutureDatePicker(): boolean {
 		return this._isDisableFutureDatePicker;
@@ -173,34 +176,38 @@ export class DateRangePickerComponent extends TranslationBaseComponent
 		this._isDisableFutureDatePicker = isDisable;
 	}
 
-	@ViewChild(DateRangePickerDirective, { static: false }) dateRangePickerDirective: DateRangePickerDirective;
+	@ViewChild(DateRangePickerDirective, { static: true }) dateRangePickerDirective: DateRangePickerDirective;
 
 	constructor(
 		private readonly store: Store,
 		public readonly translateService: TranslateService,
 		private readonly organizationService: OrganizationsService,
 		private readonly dateRangePickerBuilderService: DateRangePickerBuilderService,
-		private readonly timesheetFilterService: TimesheetFilterService,
+		private readonly timesheetFilterService: TimesheetFilterService
 	) {
 		super(translateService);
 	}
 
-	ngOnInit() {
+	ngOnInit(): void {
+		this.picker = this.dateRangePickerDirective.picker;
+
 		const storeOrganization$ = this.store.selectedOrganization$;
 		const storeDatePickerConfig$ = this.dateRangePickerBuilderService.datePickerConfig$;
 
 		combineLatest([storeOrganization$, storeDatePickerConfig$])
 			.pipe(
 				filter(([organization, datePickerConfig]) => !!organization && !!datePickerConfig),
-				switchMap(([organization, datePickerConfig]) => combineLatest([
-					this.organizationService.getById(organization.id, [], {
-						id: true,
-						futureDateAllowed: true,
-						timeZone: true,
-						startWeekOn: true
-					}),
-					observableOf(datePickerConfig),
-				])),
+				switchMap(([organization, datePickerConfig]) =>
+					combineLatest([
+						this.organizationService.getById(organization.id, [], {
+							id: true,
+							futureDateAllowed: true,
+							timeZone: true,
+							startWeekOn: true
+						}),
+						observableOf(datePickerConfig)
+					])
+				),
 				tap(([organization, datePickerConfig]) => {
 					this.organization = organization;
 					this.futureDateAllowed = organization.futureDateAllowed;
@@ -230,13 +237,13 @@ export class DateRangePickerComponent extends TranslationBaseComponent
 							...this.locale,
 							displayFormat: format,
 							format: format
-						}
+						};
 					}
 					if (organization.startWeekOn) {
 						this.locale = {
 							...this.locale,
 							firstDay: dayOfWeekAsString(organization.startWeekOn)
-						}
+						};
 					}
 				}),
 				untilDestroyed(this)
@@ -264,21 +271,27 @@ export class DateRangePickerComponent extends TranslationBaseComponent
 		this.ranges[DateRangeKeyEnum.TODAY] = [moment(), moment()];
 		this.ranges[DateRangeKeyEnum.YESTERDAY] = [moment().subtract(1, 'days'), moment().subtract(1, 'days')];
 		this.ranges[DateRangeKeyEnum.CURRENT_WEEK] = [moment().startOf('week'), moment().endOf('week')];
-		this.ranges[DateRangeKeyEnum.LAST_WEEK] = [moment().subtract(1, 'week').startOf('week'), moment().subtract(1, 'week').endOf('week')];
+		this.ranges[DateRangeKeyEnum.LAST_WEEK] = [
+			moment().subtract(1, 'week').startOf('week'),
+			moment().subtract(1, 'week').endOf('week')
+		];
 		this.ranges[DateRangeKeyEnum.CURRENT_MONTH] = [moment().startOf('month'), moment().endOf('month')];
-		this.ranges[DateRangeKeyEnum.LAST_MONTH] = [moment().subtract(1, 'month').startOf('month'), moment().subtract(1, 'month').endOf('month')];
+		this.ranges[DateRangeKeyEnum.LAST_MONTH] = [
+			moment().subtract(1, 'month').startOf('month'),
+			moment().subtract(1, 'month').endOf('month')
+		];
 
-		if (this.isLockDatePicker && (this.unitOfTime !== 'day')) {
+		if (this.isLockDatePicker && this.unitOfTime !== 'day') {
 			delete this.ranges[DateRangeKeyEnum.TODAY];
 			delete this.ranges[DateRangeKeyEnum.YESTERDAY];
 		}
 
-		if (this.isLockDatePicker && (this.unitOfTime !== 'week')) {
+		if (this.isLockDatePicker && this.unitOfTime !== 'week') {
 			delete this.ranges[DateRangeKeyEnum.CURRENT_WEEK];
 			delete this.ranges[DateRangeKeyEnum.LAST_WEEK];
 		}
 
-		if (this.isLockDatePicker && (this.unitOfTime !== 'month')) {
+		if (this.isLockDatePicker && this.unitOfTime !== 'month') {
 			delete this.ranges[DateRangeKeyEnum.CURRENT_MONTH];
 			delete this.ranges[DateRangeKeyEnum.LAST_MONTH];
 		}
@@ -292,13 +305,11 @@ export class DateRangePickerComponent extends TranslationBaseComponent
 			this.maxDate = null;
 		} else {
 			this.maxDate = moment().format();
-			if (
-				this.isSameOrAfterDay(this.selectedDateRange.endDate)
-			) {
+			if (this.isSameOrAfterDay(this.selectedDateRange.endDate)) {
 				this.selectedDateRange = {
 					...this.selectedDateRange,
 					endDate: moment().toDate()
-				}
+				};
 			}
 		}
 	}
@@ -319,9 +330,9 @@ export class DateRangePickerComponent extends TranslationBaseComponent
 		this.setFutureStrategy();
 	}
 
-   /**
-   * get previous selected range
-   */
+	/**
+	 * get previous selected range
+	 */
 	previousRange() {
 		this.arrow.setStrategy = this.previous;
 		const previousRange = this.arrow.execute(this.rangePicker, this.unitOfTime);
@@ -342,9 +353,7 @@ export class DateRangePickerComponent extends TranslationBaseComponent
 		}
 		const { startDate, endDate } = this.selectedDateRange;
 		if (startDate && endDate) {
-			return this.hasFutureStrategy()
-				? false
-				: this.isSameOrAfterDay(endDate);
+			return this.hasFutureStrategy() ? false : this.isSameOrAfterDay(endDate);
 		} else {
 			return true;
 		}
@@ -383,7 +392,7 @@ export class DateRangePickerComponent extends TranslationBaseComponent
 	 * @param range
 	 */
 	rangeClicked(range: any) {
-		const { label } = range
+		const { label } = range;
 		switch (label) {
 			case DateRangeKeyEnum.TODAY:
 			case DateRangeKeyEnum.YESTERDAY:
@@ -441,9 +450,8 @@ export class DateRangePickerComponent extends TranslationBaseComponent
 				filter(() => !!this.isSaveDatePicker),
 				tap((filters: ITimeLogFilters) => {
 					const { startDate = range.startDate } = filters;
-					const date = (!this.hasFutureStrategy() && this.isSameOrAfterDay(startDate)) ?
-							moment() :
-							moment(startDate);
+					const date =
+						!this.hasFutureStrategy() && this.isSameOrAfterDay(startDate) ? moment() : moment(startDate);
 
 					const start = moment(date).startOf(this.unitOfTime);
 					const end = moment(date).endOf(this.unitOfTime);
@@ -489,8 +497,8 @@ export class DateRangePickerComponent extends TranslationBaseComponent
 	/**
 	 * Open Date Picker On Calender Click
 	 */
-	openDatepicker() {
-		this.dateRangePickerDirective.toggle();
+	openDatepicker(event: MouseEvent): void {
+		this.dateRangePickerDirective.toggle(event);
 	}
 
 	/**
@@ -507,8 +515,8 @@ export class DateRangePickerComponent extends TranslationBaseComponent
 			startDate: start.toDate(),
 			endDate: end.toDate(),
 			isCustomDate: isCustomDate
-		}
+		};
 	}
 
-	ngOnDestroy() {}
+	ngOnDestroy(): void {}
 }

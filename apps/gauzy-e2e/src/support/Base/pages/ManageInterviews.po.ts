@@ -21,7 +21,7 @@ import { ManageInterviewsPage } from '../pageobjects/ManageInterviewsPageObject'
 export const addInterviewButtonVisible = () => {
 	cy.intercept('GET', '/api/employee/working*').as('waitScheduleLoad');
 	cy.intercept('GET', '/api/employee*').as('waitEmployee');
-	cy.wait(['@waitScheduleLoad','@waitEmployee']);
+	cy.wait(['@waitScheduleLoad', '@waitEmployee']);
 	verifyElementIsVisible(ManageInterviewsPage.addInterviewButtonCss);
 };
 
@@ -111,7 +111,7 @@ export const clickInterviewTypeButton = (index) => {
 	clickButtonByIndex(ManageInterviewsPage.radioButtonCss, index);
 };
 
-export const locationinputVisible = () => {
+export const locationInputVisible = () => {
 	verifyElementIsVisible(ManageInterviewsPage.locationInputCss);
 };
 
@@ -165,7 +165,7 @@ export const clickSaveButton = () => {
 	clickButton(ManageInterviewsPage.saveButtonCss);
 };
 
-export const verifySheduleExist = (text) => {
+export const verifyScheduleExist = (text) => {
 	verifyText(ManageInterviewsPage.verifyCandidateCss, text);
 };
 
@@ -203,7 +203,7 @@ export const clearFilterInputField = () => {
 };
 // End of Filter functions
 
-export const verifyAddFeedbackButtonVisisible = () => {
+export const verifyAddFeedbackButtonVisible = () => {
 	verifyElementIsVisible(ManageInterviewsPage.tableOptionsButtonsCss);
 };
 
@@ -302,14 +302,14 @@ export const clickOkButton = () => {
 	clickButton(ManageInterviewsPage.archiveInterviewOkButtonCss);
 };
 
-export const verifyInludeArchivedCheckboxVisible = () => {
+export const verifyIncludeArchivedCheckboxVisible = () => {
 	verifyElementIsVisibleByIndex(
 		ManageInterviewsPage.interviewCheckboxFiltersCss,
 		2
 	);
 };
 
-export const clickInludeArchivedCheckbox = () => {
+export const clickIncludeArchivedCheckbox = () => {
 	clickButtonByIndex(
 		ManageInterviewsPage.interviewCheckboxFiltersInputsCss,
 		2

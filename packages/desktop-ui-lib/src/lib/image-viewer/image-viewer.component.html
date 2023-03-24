@@ -6,40 +6,28 @@
 			</div>
 			<div class="gallery-content" (click)="close()">
 				<div class="left-button">
-					<button
-						class="nav-button"
-						nbButton
-						status="primary"
-						[disabled]="active_index == 0"
-						(click)="prev($event)"
-					>
+					<button class="nav-button" nbButton status="primary" [disabled]="active_index == 0"
+						(click)="prev($event)">
 						<nb-icon icon="arrow-left"></nb-icon>
 					</button>
 				</div>
 				<div class="media-viewer" (click)="$event.stopPropagation()">
-					<img #imageMedia [src]="item?.fullUrl" />
+					<img #imageMedia [src]="sanitizeImgUrl(item?.fullUrl)" />
+					<div class="date">{{ item?.recordedAt | dateTime: 'llll' }}</div>
 				</div>
 				<div class="right-button">
-					<button
-						class="nav-button"
-						nbButton
-						[disabled]="active_index == items.length - 1"
-						status="primary"
-						(click)="next($event)"
-					>
+					<button class="nav-button" nbButton [disabled]="active_index == items.length - 1" status="primary"
+						(click)="next($event)">
 						<nb-icon icon="arrow-right"></nb-icon>
 					</button>
 				</div>
 			</div>
 			<div class="gallery-footer">
 				<div class="thumb-items custom-scroll" #customScroll>
-					<div
-						class="thumb-item"
-						*ngFor="let thumb of items; let index = index"
-						[ngClass]="{ 'thumb-item-active': item == thumb }"
-						(click)="setFocus(thumb)"
-					>
-						<img *ngIf="thumb" [src]="thumb.thumbUrl" />
+					<div class="thumb-item" *ngFor="let thumb of items; let index = index"
+						[ngClass]="{ 'thumb-item-active': item == thumb }" (click)="setFocus(thumb)">
+						<img *ngIf="thumb" [src]="sanitizeImgUrl(thumb?.thumbUrl)" />
+						<div class="thumb date ">{{ thumb?.recordedAt | dateTime }}</div>
 					</div>
 				</div>
 			</div>

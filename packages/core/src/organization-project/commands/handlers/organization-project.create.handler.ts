@@ -12,8 +12,8 @@ export class OrganizationProjectCreateHandler
 	implements ICommandHandler<OrganizationProjectCreateCommand> {
 
 	constructor(
-		private readonly commandBus: CommandBus,
-		private readonly organizationProjectService: OrganizationProjectService
+		private readonly _commandBus: CommandBus,
+		private readonly _organizationProjectService: OrganizationProjectService
 	) { }
 
 	public async execute(
@@ -21,20 +21,20 @@ export class OrganizationProjectCreateHandler
 	): Promise<IOrganizationProject> {
 		try {
 			const { input } = command;
-			const project = await this.organizationProjectService.create(input);
+			const project = await this._organizationProjectService.create(input);
 
 			// 1. Create task statuses for relative organization project.
-			await this.commandBus.execute(
+			this._commandBus.execute(
 				new OrganizationProjectStatusBulkCreateCommand(project)
 			);
 
 			// 2. Create task priorities for relative organization project.
-			await this.commandBus.execute(
+			this._commandBus.execute(
 				new OrganizationProjectTaskPriorityBulkCreateCommand(project)
 			);
 
 			// 3. Create task sizes for relative organization project.
-			await this.commandBus.execute(
+			this._commandBus.execute(
 				new OrganizationProjectTaskSizeBulkCreateCommand(project)
 			);
 

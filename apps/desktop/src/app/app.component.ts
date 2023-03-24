@@ -5,7 +5,7 @@ import { AppService } from './app.service';
 
 @Component({
 	selector: 'gauzy-root',
-	template: '<router-outlet></router-outlet>'
+	template: '<router-outlet></router-outlet>',
 })
 export class AppComponent implements OnInit {
 	constructor(
@@ -15,12 +15,12 @@ export class AppComponent implements OnInit {
 	) {
 		this.electronService.ipcRenderer.on('collect_data', (event, arg) => {
 			appService
-				.collectevents(arg.tpURL, arg.tp, arg.start, arg.end)
+				.collectEvents(arg.tpURL, arg.tp, arg.start, arg.end)
 				.then((res) => {
 					event.sender.send('data_push_activity', {
 						timerId: arg.timerId,
 						windowEvent: res,
-						type: 'APP'
+						type: 'APP',
 					});
 				});
 		});
@@ -32,7 +32,7 @@ export class AppComponent implements OnInit {
 					event.sender.send('data_push_activity', {
 						timerId: arg.timerId,
 						windowEvent: res,
-						type: 'AFK'
+						type: 'AFK',
 					});
 				});
 		});
@@ -46,7 +46,7 @@ export class AppComponent implements OnInit {
 						event.sender.send('data_push_activity', {
 							timerId: arg.timerId,
 							windowEvent: res,
-							type: 'URL'
+							type: 'URL',
 						});
 					});
 			}
@@ -61,20 +61,20 @@ export class AppComponent implements OnInit {
 						event.sender.send('data_push_activity', {
 							timerId: arg.timerId,
 							windowEvent: res,
-							type: 'URL'
+							type: 'URL',
 						});
 					});
 			}
 		);
 
 		this.electronService.ipcRenderer.on('set_time_sheet', (event, arg) => {
-			appService.pushTotimesheet(arg).then((res: any) => {
+			appService.pushToTimesheet(arg).then((res: any) => {
 				arg.timesheetId = res.id;
 				appService.setTimeLog(arg).then((result: any) => {
 					event.sender.send('return_time_sheet', {
 						timerId: arg.timerId,
 						timeSheetId: res.id,
-						timeLogId: result.id
+						timeLogId: result.id,
 					});
 				});
 			});
@@ -91,7 +91,7 @@ export class AppComponent implements OnInit {
 
 		this.electronService.ipcRenderer.on(
 			'set_auth_user',
-			(event, arg) => {}
+			(event, arg) => { }
 		);
 
 		this.electronService.ipcRenderer.on('set_time_slot', (event, arg) => {
@@ -100,14 +100,14 @@ export class AppComponent implements OnInit {
 				.then((res: any) => {
 					if (res.id) {
 						event.sender.send('remove_aw_local_data', {
-							idsAw: arg.idsAw
+							idsAw: arg.idsAw,
 						});
 						event.sender.send('remove_wakatime_local_data', {
-							idsWakatime: arg.idsWakatime
+							idsWakatime: arg.idsWakatime,
 						});
 						if (arg.idAfk) {
 							event.sender.send('remove_afk_local_Data', {
-								idAfk: arg.idAfk
+								idAfk: arg.idAfk,
 							});
 						}
 						const timeLogs = res.timeLogs;
@@ -115,14 +115,14 @@ export class AppComponent implements OnInit {
 							timerId: arg.timerId,
 							timeSlotId: res.id,
 							quitApp: arg.quitApp,
-							timeLogs: timeLogs
+							timeLogs: timeLogs,
 						});
 					}
 				})
 				.catch((e) => {
 					event.sender.send('failed_save_time_slot', {
 						params: e.error.params,
-						message: e.message
+						message: e.message,
 					});
 				});
 		});
@@ -137,7 +137,7 @@ export class AppComponent implements OnInit {
 		this.electronService.ipcRenderer.on('set_activity', (event, arg) => {
 			appService.pushToActivity(arg).then((res: any) => {
 				event.sender.send('return_activity', {
-					activityIds: arg.sourceIds
+					activityIds: arg.sourceIds,
 				});
 			});
 		});
@@ -153,7 +153,7 @@ export class AppComponent implements OnInit {
 			appService.setTimeLog(arg).then((res: any) => {
 				event.sender.send('return_time_log', {
 					timerId: arg.timerId,
-					timeLogId: res.id
+					timeLogId: res.id,
 				});
 			});
 		});
@@ -170,7 +170,7 @@ export class AppComponent implements OnInit {
 			appService.stopTimer(arg).then((res) => {
 				event.sender.send('return_toggle_api', {
 					result: res,
-					timerId: arg.timerId
+					timerId: arg.timerId,
 				});
 			});
 		});
@@ -178,12 +178,15 @@ export class AppComponent implements OnInit {
 		this.electronService.ipcRenderer.on(
 			'update_toggle_timer',
 			(event, arg) => {
-				appService.stopTimer(arg).then(() => {
-					event.sender.send('timer_stopped');
-				}).catch((e) => {
-					console.log('error catcher', e);
-					event.sender.send('timer_stopped');
-				});
+				appService
+					.stopTimer(arg)
+					.then(() => {
+						event.sender.send('timer_stopped');
+					})
+					.catch((e) => {
+						console.log('error catcher', e);
+						event.sender.send('timer_stopped');
+					});
 			}
 		);
 

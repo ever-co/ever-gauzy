@@ -1,9 +1,9 @@
 import * as loginPage from '../support/Base/pages/Login.po';
 import { LoginPageData } from '../support/Base/pagedata/LoginPageData';
 import * as manageEmployeesPage from '../support/Base/pages/ManageEmployees.po';
-import { faker } from '@ever-co/faker';
+import { faker } from '@faker-js/faker';
 import { ManageEmployeesPageData } from '../support/Base/pagedata/ManageEmployeesPageData';
-import * as dashboradPage from '../support/Base/pages/Dashboard.po';
+import * as dashboardPage from '../support/Base/pages/Dashboard.po';
 import * as organizationProjectsPage from '../support/Base/pages/OrganizationProjects.po';
 import { OrganizationProjectsPageData } from '../support/Base/pagedata/OrganizationProjectsPageData';
 import * as organizationTagsUserPage from '../support/Base/pages/OrganizationTags.po';
@@ -23,15 +23,15 @@ describe('Manage employees test', () => {
 	before(() => {
 		email = faker.internet.email();
 		secEmail = faker.internet.email();
-		firstName = faker.name.firstName();
-		lastName = faker.name.lastName();
+		firstName = faker.person.firstName();
+		lastName = faker.person.lastName();
 		username = faker.internet.userName();
 		email = faker.internet.email();
 		password = faker.internet.password();
 		employeeEmail = faker.internet.email();
 		imgUrl = faker.image.avatar();
 
-		CustomCommands.login(loginPage, LoginPageData, dashboradPage);
+		CustomCommands.login(loginPage, LoginPageData, dashboardPage);
 	});
 
 	it('Should be able to invite employees', () => {
@@ -79,7 +79,7 @@ describe('Manage employees test', () => {
 		manageEmployeesPage.passwordInputVisible();
 		manageEmployeesPage.enterPasswordInputData(password);
 		manageEmployeesPage.tagsDropdownVisible();
-		manageEmployeesPage.clickTagsDropdwon();
+		manageEmployeesPage.clickTagsDropdown();
 		manageEmployeesPage.selectTagFromDropdown(0);
 		manageEmployeesPage.clickCardBody();
 		manageEmployeesPage.imageInputVisible();
@@ -107,7 +107,7 @@ describe('Manage employees test', () => {
 		manageEmployeesPage.lastNameEditInputVisible();
 		manageEmployeesPage.enterLastNameEditInputData(lastName);
 		manageEmployeesPage.preferredLanguageDropdownVisible();
-		manageEmployeesPage.clickpreferredLanguageDropdown();
+		manageEmployeesPage.clickPreferredLanguageDropdown();
 		manageEmployeesPage.selectLanguageFromDropdown(
 			ManageEmployeesPageData.preferredLanguage
 		);

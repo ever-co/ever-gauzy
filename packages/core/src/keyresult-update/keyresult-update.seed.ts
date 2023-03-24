@@ -1,11 +1,10 @@
 import { KeyResultUpdate } from './keyresult-update.entity';
 import { DataSource } from 'typeorm';
 import { KeyResult } from '../keyresult/keyresult.entity';
-import { faker } from '@ever-co/faker';
+import { faker } from '@faker-js/faker';
 import {
 	KeyResultUpdateStatusEnum,
 	KeyResultTypeEnum,
-	KeyResultDeadlineEnum,
 	IOrganization,
 	ITenant
 } from '@gauzy/contracts';
@@ -29,60 +28,47 @@ export const createDefaultKeyResultUpdates = async (
 		);
 		return;
 	}
-	keyResults.forEach(async (keyResult) => {
-		const numberOfUpdates = faker.datatype.number({ min: 2, max: 10 });
+
+	for await (const keyResult of keyResults) {
+		const { initialValue, targetValue } = keyResult;
+
+		const numberOfUpdates = faker.number.int({ min: 2, max: 10 });
 		for (let i = 0; i < numberOfUpdates; i++) {
-			const startDate = goalTimeFrames.find(
-				(element) => element.name === keyResult.goal.deadline
-			).startDate;
-			const endDate = goalTimeFrames.find(
-				(element) => element.name === keyResult.goal.deadline
-			).endDate;
+			const startDate = goalTimeFrames.find((element) => element.name === keyResult.goal.deadline).startDate;
 			if (moment().isAfter(startDate)) {
 				const keyResultUpdate = new KeyResultUpdate();
 				keyResultUpdate.owner = keyResult.owner.id;
-				keyResultUpdate.keyResult = keyResult;
+				keyResultUpdate.keyResultId = keyResult.id;
 				keyResultUpdate.tenant = tenant;
 				keyResultUpdate.organization = organization;
-				keyResultUpdate.status = faker.random.arrayElement(
+				keyResultUpdate.status = faker.helpers.arrayElement(
 					Object.values(KeyResultUpdateStatusEnum)
 				);
-				keyResultUpdate.update = faker.datatype.number({
-					min: keyResult.initialValue + 1,
-					max: keyResult.targetValue
-				});
-				if (
-					keyResult.deadline ===
-					KeyResultDeadlineEnum.NO_CUSTOM_DEADLINE
-				) {
-					keyResultUpdate.createdAt = faker.date.between(
-						startDate,
-						endDate
-					);
+
+				let max: number, min: number = 0;
+				if (initialValue > targetValue) {
+					max = initialValue;
+					min = targetValue;
 				} else {
-					keyResultUpdate.createdAt = faker.date.between(
-						startDate,
-						keyResult.hardDeadline
-					);
+					max = targetValue;
+					min = initialValue;
 				}
 
+				keyResultUpdate.update = faker.number.int({ min, max });
 				if (keyResult.type !== KeyResultTypeEnum.TRUE_OR_FALSE) {
 					const diff = keyResult.targetValue - keyResult.initialValue;
-					const updateDiff =
-						keyResultUpdate.update - keyResult.initialValue;
+					const updateDiff = keyResultUpdate.update - keyResult.initialValue;
 
 					keyResultUpdate.progress = Math.round(
 						(Math.abs(updateDiff) / Math.abs(diff)) * 100
 					);
 				} else {
-					keyResultUpdate.progress =
-						keyResultUpdate.update === 1 ? 100 : 0;
+					keyResultUpdate.progress = keyResultUpdate.update == 1 ? 100 : 0;
 				}
-
 				defaultKeyResultUpdates.push(keyResultUpdate);
 			}
 		}
-	});
+	}
 
 	return await insertDefaultKeyResultUpdates(
 		dataSource,

@@ -2,17 +2,17 @@ import * as loginPage from '../support/Base/pages/Login.po';
 import { LoginPageData } from '../support/Base/pagedata/LoginPageData';
 import * as createButton from '../support/Base/pages/CreateButton.po';
 import { CreateButtonData } from '../support/Base/pagedata/CreateButtonPageData';
-import * as dashboradPage from '../support/Base/pages/Dashboard.po';
+import * as dashboardPage from '../support/Base/pages/Dashboard.po';
 import { CustomCommands } from '../support/commands';
 
 describe('Create button test', () => {
 	before(() => {
-		CustomCommands.login(loginPage, LoginPageData, dashboradPage);
+		CustomCommands.login(loginPage, LoginPageData, dashboardPage);
 	});
 
 	it('Should able to verify text exist', () => {
 		createButton.createButtonVisible();
-		createButton.clickCreatebutton();
+		createButton.clickCreateButton();
 		createButton.verifyTextExist(CreateButtonData.income);
 		createButton.verifyTextExist(CreateButtonData.expense);
 		createButton.verifyTextExist(CreateButtonData.invoice);
@@ -34,7 +34,7 @@ describe('Create button test', () => {
 		createButton.closeButtonVisible();
 		createButton.clickCloseButton();
 		createButton.createButtonVisible();
-		createButton.clickCreatebutton();
+		createButton.clickCreateButton();
 	});
 	it('Should able to verify expense card', () => {
 		createButton.clickOptionByText(CreateButtonData.expense);
@@ -42,19 +42,19 @@ describe('Create button test', () => {
 		createButton.closeButtonVisible();
 		createButton.clickCloseButton();
 		createButton.createButtonVisible();
-		createButton.clickCreatebutton();
+		createButton.clickCreateButton();
 	});
 	it('Should able to verify invoice card', () => {
 		createButton.clickOptionByText(CreateButtonData.invoice);
 		createButton.verifyNbCardH4Header(CreateButtonData.invoiceHeader);
 		createButton.createButtonVisible();
-		createButton.clickCreatebutton();
+		createButton.clickCreateButton();
 	});
 	it('Should able to verify estimate card', () => {
 		createButton.clickOptionByText(CreateButtonData.estimate);
 		createButton.verifyNbCardH4Header(CreateButtonData.estimateHeader);
 		createButton.createButtonVisible();
-		createButton.clickCreatebutton();
+		createButton.clickCreateButton();
 	});
 	it('Should able to verify payment card', () => {
 		createButton.clickOptionByText(CreateButtonData.payment);
@@ -62,7 +62,7 @@ describe('Create button test', () => {
 		createButton.cancelButtonVisible();
 		createButton.clickCancelButton();
 		createButton.createButtonVisible();
-		createButton.clickCreatebutton();
+		createButton.clickCreateButton();
 	});
 	it('Should able to verify time log card', () => {
 		createButton.clickOptionByText(CreateButtonData.timeLog);
@@ -70,7 +70,7 @@ describe('Create button test', () => {
 		createButton.closeButtonVisible();
 		createButton.clickCloseButton();
 		createButton.createButtonVisible();
-		createButton.clickCreatebutton();
+		createButton.clickCreateButton();
 	});
 	it('Should able to verify candidate card', () => {
 		createButton.clickOptionByText(CreateButtonData.candidate);
@@ -78,25 +78,25 @@ describe('Create button test', () => {
 		createButton.closeButtonVisible();
 		createButton.clickCloseButton();
 		createButton.createButtonVisible();
-		createButton.clickCreatebutton();
+		createButton.clickCreateButton();
 	});
 	it('Should able to verify proposal card', () => {
 		createButton.clickOptionByText(CreateButtonData.proposal);
 		createButton.verifyProposalHeaderText(CreateButtonData.proposalHeader);
 		createButton.createButtonVisible();
-		createButton.clickCreatebutton();
+		createButton.clickCreateButton();
 	});
 	it('Should able to verify contract card', () => {
 		createButton.clickOptionByText(CreateButtonData.contract);
 		createButton.verifyNbCardH5Header(CreateButtonData.contractHeader);
 		createButton.createButtonVisible();
-		createButton.clickCreatebutton();
+		createButton.clickCreateButton();
 	});
 	it('Should able to verify team card', () => {
 		createButton.clickOptionByText(CreateButtonData.team);
 		createButton.verifyDivH4Header(CreateButtonData.teamHeader);
 		createButton.createButtonVisible();
-		createButton.clickCreatebutton();
+		createButton.clickCreateButton();
 	});
 	it('Should able to verify task card', () => {
 		createButton.clickOptionByText(CreateButtonData.task);
@@ -104,19 +104,19 @@ describe('Create button test', () => {
 		createButton.closeButtonVisible();
 		createButton.clickCloseButton();
 		createButton.createButtonVisible();
-		createButton.clickCreatebutton();
+		createButton.clickCreateButton();
 	});
 	it('Should able to verify contact card', () => {
 		createButton.clickOptionByText(CreateButtonData.contact);
 		createButton.verifyContactHeaderText(CreateButtonData.contactHeader);
 		createButton.createButtonVisible();
-		createButton.clickCreatebutton();
+		createButton.clickCreateButton();
 	});
 	it('Should able to verify project card', () => {
 		createButton.clickOptionByText(CreateButtonData.project);
 		createButton.verifyDivH4Header(CreateButtonData.projectHeader);
 		createButton.createButtonVisible();
-		createButton.clickCreatebutton();
+		createButton.clickCreateButton();
 	});
 	it('Should able to verify employee card', () => {
 		createButton.clickOptionByText(CreateButtonData.employee);

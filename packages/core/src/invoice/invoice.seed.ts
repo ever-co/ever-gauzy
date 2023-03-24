@@ -1,6 +1,6 @@
 import { DataSource } from 'typeorm';
 import { Invoice } from './invoice.entity';
-import { faker } from '@ever-co/faker';
+import { faker } from '@faker-js/faker';
 import * as moment from 'moment';
 import { chain } from 'underscore';
 import {
@@ -24,12 +24,13 @@ export const createDefaultInvoice = async (
 	organizations: IOrganization[],
 	noOfInvoicePerOrganization: number
 ) => {
-	const { id: tenantId } = tenant;
 	const invoices: IInvoice[] = [];
-	for (const organization of organizations) {
+	const { id: tenantId } = tenant;
+	for await (const organization of organizations) {
 		const { id: organizationId } = organization;
 		const tags = await dataSource.manager.findBy(Tag, {
-			organizationId
+			organizationId,
+			tenantId
 		});
 		const organizationContacts = await dataSource.manager.findBy(OrganizationContact, {
 			tenantId,
@@ -59,7 +60,7 @@ export const createRandomInvoice = async (
 		const { id: tenantId } = tenant;
 		const organizations = tenantOrganizationsMap.get(tenant);
 		const invoices: IInvoice[] = [];
-		for (const organization of organizations) {
+		for await (const organization of organizations) {
 			const { id: organizationId } = organization;
 			const tags = await dataSource.manager.findBy(Tag, {
 				organizationId
@@ -86,61 +87,55 @@ const generateInvoice = async (
 ): Promise<IInvoice> => {
 
 	const invoice = new Invoice();
+	invoice.invoiceNumber = faker.number.int({ min: 111111111111, max: 999999999999 });
+
 	invoice.tags = chain(tags)
 		.shuffle()
-		.take(faker.datatype.number({ min: 1, max: 3 }))
+		.take(faker.number.int({ min: 1, max: 3 }))
 		.values()
 		.value();
-	invoice.invoiceNumber = faker.datatype.number({ min: 111111111111, max: 999999999999 });
 
-	invoice.invoiceDate = moment(
-		faker.date.between(
-			new Date(),
-			faker.date.past(0.3)
-		)
-	)
-	.startOf('day')
-	.toDate();
-	invoice.dueDate = moment(
-		faker.date.between(
-			new Date(),
-			faker.date.future(0.3)
-		)
-	)
-	.startOf('day')
-	.toDate();
+	const invoiceDate = faker.date.between({
+		from: faker.date.past({ years: 0.3 }),
+		to: new Date()
+	});
+	invoice.invoiceDate = moment(invoiceDate).startOf('day').toDate();
+
+	const dueDate = faker.date.between({
+		from: new Date(),
+		to: faker.date.future({ years: 0.3 })
+	});
+	invoice.dueDate = moment(dueDate).startOf('day').toDate();
 
 	if (organizationContacts.length) {
-		invoice.organizationContactId = faker.random.arrayElement(organizationContacts).id;
+		invoice.organizationContactId = faker.helpers.arrayElement(organizationContacts).id;
 	}
-
 	invoice.sentTo = organization.id;
 	invoice.fromOrganization = organization;
-	invoice.toContact = faker.random.arrayElement(organizationContacts);
+	invoice.toContact = faker.helpers.arrayElement(organizationContacts);
 	invoice.currency = organization.currency;
-	invoice.discountValue = faker.datatype.number({ min: 1, max: 10 });
+	invoice.discountValue = faker.number.int({ min: 1, max: 10 });
 	invoice.paid = faker.datatype.boolean();
-	invoice.tax = faker.datatype.number({ min: 1, max: 10 });
-	invoice.tax2 = faker.datatype.number({ min: 1, max: 10 });
+	invoice.tax = faker.number.int({ min: 1, max: 10 });
+	invoice.tax2 = faker.number.int({ min: 1, max: 10 });
 	invoice.terms = 'Term and Setting Applied';
 	invoice.isEstimate = faker.datatype.boolean();
 
 	if (invoice.isEstimate) {
 		invoice.isAccepted = faker.datatype.boolean();
-		invoice.status = faker.random.arrayElement(Object.values(EstimateStatusTypesEnum));
+		invoice.status = faker.helpers.arrayElement(Object.values(EstimateStatusTypesEnum));
 	} else {
-		invoice.status = faker.random.arrayElement(Object.values(InvoiceStatusTypesEnum));
+		invoice.status = faker.helpers.arrayElement(Object.values(InvoiceStatusTypesEnum));
 	}
 
-	invoice.discountType = faker.random.arrayElement(Object.values(DiscountTaxTypeEnum));
-	invoice.taxType = faker.random.arrayElement(Object.values(DiscountTaxTypeEnum));
-	invoice.tax2Type = faker.random.arrayElement(Object.values(DiscountTaxTypeEnum));
-	invoice.invoiceType = faker.random.arrayElement(Object.values(InvoiceTypeEnum));
+	invoice.discountType = faker.helpers.arrayElement(Object.values(DiscountTaxTypeEnum));
+	invoice.taxType = faker.helpers.arrayElement(Object.values(DiscountTaxTypeEnum));
+	invoice.tax2Type = faker.helpers.arrayElement(Object.values(DiscountTaxTypeEnum));
+	invoice.invoiceType = faker.helpers.arrayElement(Object.values(InvoiceTypeEnum));
 
 	invoice.organization = organization;
 	invoice.tenant = tenant;
 	invoice.isArchived = false;
-
 	invoice.historyRecords = await generateInvoiceHistory(
 		dataSource,
 		tenant,
@@ -171,21 +166,21 @@ const generateInvoiceHistory = async (
 
 	historyRecords.push(
 		new InvoiceEstimateHistory({
-			user: faker.random.arrayElement(users),
+			user: faker.helpers.arrayElement(users),
 			action: invoice.isEstimate ? 'Estimated Added' : 'Invoice Added',
 			tenant,
 			organization
 		})
 	);
 
-	for (let i = 0; i < faker.datatype.number({
+	for (let i = 0; i < faker.number.int({
 		min: 2,
 		max: randomSeedConfig.numberOfInvoiceHistoryPerInvoice
 	}); i++) {
 		historyRecords.push(
 			new InvoiceEstimateHistory({
-				user: faker.random.arrayElement(users),
-				action: faker.name.jobTitle(),
+				user: faker.helpers.arrayElement(users),
+				action: faker.person.jobTitle(),
 				tenant,
 				organization
 			})

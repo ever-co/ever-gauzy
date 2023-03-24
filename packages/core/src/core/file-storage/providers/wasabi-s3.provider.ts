@@ -6,7 +6,6 @@ import * as moment from 'moment';
 import { environment } from '@gauzy/config';
 import * as AWS from 'aws-sdk';
 import { StorageEngine } from 'multer';
-import { v4 as uuid } from 'uuid';
 import { Provider } from './provider';
 import { RequestContext } from '../../context';
 
@@ -52,19 +51,6 @@ export class WasabiS3Provider extends Provider<WasabiS3Provider> {
 		return WasabiS3Provider.instance;
 	}
 
-	url(key: string) {
-		try {
-			const url = this.getWasabiInstance().getSignedUrl('getObject', {
-				Bucket: this.getWasabiBucket(),
-				Key: key,
-				Expires: 3600
-			});
-			return url;
-		} catch (error) {
-			console.log('Error while retriving singed URL:', error);
-		}
-	}
-
 	setWasabiDetails() {
 		const request = RequestContext.currentRequest();
 		if (request) {
@@ -96,11 +82,46 @@ export class WasabiS3Provider extends Provider<WasabiS3Provider> {
 		}
 	}
 
-	path(filePath: string) {
-		return filePath ? this.config.rootPath + '/' + filePath : null;
+	/**
+	 * Get a pre-signed URL for a given operation name.
+	 *
+	 * @param key
+	 * @returns
+	*/
+	url(fileURL: string) {
+		if (!fileURL) {
+			return null;
+		}
+		if (fileURL.startsWith('http')) {
+			return fileURL;
+		}
+		try {
+			const url = this.getWasabiInstance().getSignedUrl('getObject', {
+				Bucket: this.getWasabiBucket(),
+				Key: fileURL,
+				Expires: 3600
+			});
+			return url;
+		} catch (error) {
+			console.log('Error while retrieving singed URL:', error);
+		}
 	}
 
-	handler({ dest, filename, prefix }: FileStorageOption): StorageEngine {
+	/**
+	 * Get full Path of the file storage
+	 *
+	 * @param filePath
+	 * @returns
+	 */
+	path(filePath: string) {
+		return filePath ? join(this.config.rootPath, filePath) : null;
+	}
+
+	handler({
+		dest,
+		filename,
+		prefix = 'file'
+	}: FileStorageOption): StorageEngine {
 		return multerS3({
 			s3: this.getWasabiInstance(),
 			bucket: (_req, file, callback) => {
@@ -110,39 +131,22 @@ export class WasabiS3Provider extends Provider<WasabiS3Provider> {
 				callback(null, { fieldName: file.fieldname });
 			},
 			key: (_req, file, callback) => {
-				let fileNameString = '';
-				const ext = file.originalname.split('.').pop();
+				// A string or function that determines the destination path for uploaded
+				const dir = dest instanceof Function ? dest(file) : dest;
+
+				// A file extension, or filename extension, is a suffix at the end of a file.
+				const extension = file.originalname.split('.').pop();
+
+				// A function that determines the name of the uploaded file.
+				let fileName: string;
 				if (filename) {
-					if (typeof filename === 'string') {
-						fileNameString = filename;
-					} else {
-						fileNameString = filename(file, ext);
-					}
+					fileName = (typeof filename === 'string') ? filename : filename(file, extension);
 				} else {
-					if (!prefix) {
-						prefix = 'file';
-					}
-					fileNameString = `gauzy-${prefix}-${moment().unix()}-${parseInt(
-						'' + Math.random() * 1000,
-						10
-					)}.${ext}`;
+					fileName = `${prefix}-${moment().unix()}-${parseInt('' + Math.random() * 1000, 10)}.${extension}`;
 				}
-				let dir;
-				if (dest instanceof Function) {
-					dir = dest(file);
-				} else {
-					dir = dest;
-				}
-				const user = RequestContext.currentUser();
-				callback(
-					null,
-					join(
-						this.config.rootPath,
-						dir,
-						user ? user.tenantId : uuid(),
-						fileNameString
-					)
-				);
+
+				const fullPath = join(this.config.rootPath, dir, fileName);
+				callback(null, fullPath);
 			}
 		});
 	}
@@ -178,7 +182,7 @@ export class WasabiS3Provider extends Provider<WasabiS3Provider> {
 						.then((res) => res.ContentLength);
 
 					const file = {
-						originalname: fileName, // orignal file name
+						originalname: fileName, // original file name
 						size: size, // files in bytes
 						filename: fileName,
 						path: key, // Full path of the file
@@ -217,7 +221,7 @@ export class WasabiS3Provider extends Provider<WasabiS3Provider> {
 				endpoint: endpoint
 			});
 		} catch (error) {
-			console.log(`Error while retriving ${FileStorageProviderEnum.WASABI} instance:`, error);
+			console.log(`Error while retrieving ${FileStorageProviderEnum.WASABI} instance:`, error);
 		}
 	}
 

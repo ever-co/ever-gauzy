@@ -1,14 +1,14 @@
 import {
 
 	verifyElementIsVisible,
-    clickButton,
-    clickElementByText,
-    clearField,
-    enterInput,
-    clickButtonByIndex,
-    clickKeyboardBtnByKeycode,
-    waitElementToHide,
-    compareTwoTexts
+	clickButton,
+	clickElementByText,
+	clearField,
+	enterInput,
+	clickButtonByIndex,
+	clickKeyboardBtnByKeycode,
+	waitElementToHide,
+	compareTwoTexts
 
 } from '../utils/util';
 import { MyTasksTrackedInTimesheets } from '../pageobjects/MyTasksTrackedInTimesheetsPageObject';
@@ -19,7 +19,7 @@ export const verifyAddButton = () => {
 };
 
 export const clickOnAddTaskButton = () => {
-    clickButton(MyTasksTrackedInTimesheets.addButtonCss);
+	clickButton(MyTasksTrackedInTimesheets.addButtonCss);
 }
 
 export const selectProjectDropdownVisible = () => {
@@ -31,7 +31,7 @@ export const clickSelectProjectDropdown = () => {
 };
 
 export const selectProjectOptionDropdown = (text) => {
-	clickElementByText(MyTasksTrackedInTimesheets.drodownOptionCss, text);
+	clickElementByText(MyTasksTrackedInTimesheets.dropdownOptionCss, text);
 };
 
 export const selectStatusDropdownVisible = () => {
@@ -43,7 +43,7 @@ export const clickStatusDropdown = () => {
 };
 
 export const selectStatusFromDropdown = (text) => {
-	clickElementByText(MyTasksTrackedInTimesheets.drodownOptionCss, text);
+	clickElementByText(MyTasksTrackedInTimesheets.dropdownOptionCss, text);
 };
 
 export const addTitleInputVisible = () => {
@@ -89,7 +89,7 @@ export const estimateDaysInputVisible = () => {
 	verifyElementIsVisible(MyTasksTrackedInTimesheets.estimateDaysInputCss);
 };
 
-export const enterEstiamteDaysInputData = (days) => {
+export const enterEstimateDaysInputData = (days) => {
 	clearField(MyTasksTrackedInTimesheets.estimateDaysInputCss);
 	enterInput(MyTasksTrackedInTimesheets.estimateDaysInputCss, days);
 };
@@ -98,7 +98,7 @@ export const estimateHoursInputVisible = () => {
 	verifyElementIsVisible(MyTasksTrackedInTimesheets.estimateHoursInputCss);
 };
 
-export const enterEstiamteHoursInputData = (hours) => {
+export const enterEstimateHoursInputData = (hours) => {
 	clearField(MyTasksTrackedInTimesheets.estimateHoursInputCss);
 	enterInput(MyTasksTrackedInTimesheets.estimateHoursInputCss, hours);
 };
@@ -112,7 +112,7 @@ export const enterEstimateMinutesInputData = (mins) => {
 	enterInput(MyTasksTrackedInTimesheets.estimateMinsInputCss, mins);
 };
 
-export const taskDecriptionTextareaVisible = () => {
+export const taskDescriptionTextareaVisible = () => {
 	verifyElementIsVisible(MyTasksTrackedInTimesheets.descriptionTextareaCss);
 };
 
@@ -174,7 +174,7 @@ export const clickStopTimerBtn = () => {
 	clickButton(MyTasksTrackedInTimesheets.stopTimerBtnCss);
 };
 
-export const viewTimesheetbtnVisible = () => {
+export const viewTimesheetBtnVisible = () => {
 	verifyElementIsVisible(MyTasksTrackedInTimesheets.viewTimesheetBtnCss);
 };
 
@@ -183,5 +183,5 @@ export const clickViewTimesheetBtn = () => {
 };
 
 export const verifyProjectText = (text) => {
-    compareTwoTexts(MyTasksTrackedInTimesheets.projectNameCss, text)
+	compareTwoTexts(MyTasksTrackedInTimesheets.projectNameCss, text)
 }

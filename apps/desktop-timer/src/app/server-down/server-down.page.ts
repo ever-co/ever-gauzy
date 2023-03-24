@@ -7,7 +7,7 @@ import { Router } from '@angular/router';
 
 @Component({
 	styleUrls: ['./server-down.page.scss'],
-	templateUrl: 'server-down.page.html'
+	templateUrl: 'server-down.page.html',
 })
 export class ServerDownPage implements OnInit, OnDestroy {
 	noInternetLogo: string;
@@ -31,8 +31,10 @@ export class ServerDownPage implements OnInit, OnDestroy {
 			await this.serverConnectionService.checkServerConnection(
 				environment.API_BASE_URL
 			);
-
-			if (Number(this.store.serverConnection) === 200 || localStorage.getItem('userDetail')) {
+			if (
+				Number(this.store.serverConnection) === 200 ||
+				this.store.userId
+			) {
 				clearInterval(this.interval);
 				this.router.navigate(['']);
 			}

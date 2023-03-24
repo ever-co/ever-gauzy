@@ -43,8 +43,10 @@
 	},
 	"dependencies": {
 		"@electron/remote": "^2.0.8",
+		"@gauzy/common-angular": "^0.1.0",
 		"@gauzy/contracts": "^0.1.0",
 		"@gauzy/desktop-window": "^0.1.0",
+		"hash-it": "^6.0.0",
 		"moment-duration-format": "^2.3.2",
 		"ng2-smart-table": "^1.7.2"
 	}

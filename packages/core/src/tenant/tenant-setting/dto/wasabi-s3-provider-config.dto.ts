@@ -8,7 +8,7 @@ import { IsSecret } from "./../../../core/decorators";
  * Wasabi S3 FileStorage Provider Configuration DTO validation
  */
 export class WasabiS3ProviderConfigDTO implements IWasabiFileStorageProviderConfig {
-	
+
 	@ApiProperty({ type: () => String })
 	@Transform((params: TransformFnParams) => params.value ? params.value.trim() : null)
 	@ValidateIf((it) => it.fileStorageProvider === FileStorageProviderEnum.WASABI)
@@ -31,7 +31,7 @@ export class WasabiS3ProviderConfigDTO implements IWasabiFileStorageProviderConf
 	@IsOptional()
 	@IsString()
 	readonly wasabi_aws_bucket: string;
-	
+
 	@ApiProperty({ type: () => String })
 	@Transform((params: TransformFnParams) => params.value ? params.value.trim() : null)
 	@ValidateIf((it) => it.fileStorageProvider === FileStorageProviderEnum.WASABI)

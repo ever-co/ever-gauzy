@@ -40,7 +40,7 @@ export class AppointmentFormComponent
 			.subscribe(async (params) => {
 				try {
 					this.employee = await firstValueFrom(this.employeeService.getEmployeeById(
-						params.employeeid,
+						params.employeeId,
 						['user']
 					));
 
@@ -51,9 +51,9 @@ export class AppointmentFormComponent
 							this.selectedEventType.durationUnit === 'Day(s)'
 								? this.selectedEventType.duration * 24 * 60
 								: this.selectedEventType.durationUnit ===
-								  'Hour(s)'
-								? this.selectedEventType.duration * 60
-								: this.selectedEventType.duration * 1;
+									'Hour(s)'
+									? this.selectedEventType.duration * 60
+									: this.selectedEventType.duration * 1;
 
 						this.loading = false;
 					} else {

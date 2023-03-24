@@ -1,7 +1,7 @@
 import * as loginPage from '../../Base/pages/Login.po';
 import { LoginPageData } from '../../Base/pagedata/LoginPageData';
 import * as clientsPage from '../../Base/pages/Clients.po';
-import { faker } from '@ever-co/faker';
+import { faker } from '@faker-js/faker';
 import { ClientsData } from '../../Base/pagedata/ClientsPageData';
 import * as dashboardPage from '../../Base/pages/Dashboard.po';
 import * as organizationTagsUserPage from '../../Base/pages/OrganizationTags.po';
@@ -14,12 +14,12 @@ import * as logoutPage from '../../Base/pages/Logout.po';
 import { Given, Then, When, And } from 'cypress-cucumber-preprocessor/steps';
 
 let email = faker.internet.email();
-let fullName = faker.name.firstName() + ' ' + faker.name.lastName();
-let inviteName = faker.name.firstName() + ' ' + faker.name.lastName();
-let deleteName = faker.name.firstName() + ' ' + faker.name.lastName();
-let city = faker.address.city();
-let postcode = faker.address.zipCode();
-let street = faker.address.streetAddress();
+let fullName = faker.person.firstName() + ' ' + faker.person.lastName();
+let inviteName = faker.person.firstName() + ' ' + faker.person.lastName();
+let deleteName = faker.person.firstName() + ' ' + faker.person.lastName();
+let city = faker.location.city();
+let postcode = faker.location.zipCode();
+let street = faker.location.streetAddress();
 let website = faker.internet.url();
 
 // Login with email
@@ -95,7 +95,7 @@ And('User can enter value for client email', () => {
 });
 
 And('User can see save invite button', () => {
-	clientsPage.saveInvitebuttonVisible();
+	clientsPage.saveInviteButtonVisible();
 });
 
 When('User click on save invite button', () => {
@@ -339,4 +339,3 @@ And('User can verify client was deleted', () => {
 	clientsPage.clearSearchInput();
 	clientsPage.verifyElementIsDeleted(deleteName);
 });
-

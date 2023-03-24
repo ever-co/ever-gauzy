@@ -1,6 +1,6 @@
 import { DataSource } from 'typeorm';
 import { IntegrationMap } from './integration-map.entity';
-import { faker } from '@ever-co/faker';
+import { faker } from '@faker-js/faker';
 import { IntegrationTenant } from '../integration-tenant/integration-tenant.entity';
 import { Organization } from '../organization/organization.entity';
 import { IIntegrationMap, IntegrationEntity, ITenant } from '@gauzy/contracts';
@@ -27,16 +27,16 @@ export const createRandomIntegrationMap = async (
 		for (const integrationTenant of integrationTenants) {
 			const integrationMap = new IntegrationMap();
 			integrationMap.integration = integrationTenant;
-			integrationMap.organization = faker.random.arrayElement(
+			integrationMap.organization = faker.helpers.arrayElement(
 				organizations
 			);
 			integrationMap.tenant = tenant;
 			//todo: need to understand real values here
-			integrationMap.entity = faker.random.arrayElement(
+			integrationMap.entity = faker.helpers.arrayElement(
 				Object.values(IntegrationEntity)
 			);
-			integrationMap.sourceId = faker.datatype.number({ min: 10000000, max: 99999999999 });
-			integrationMap.gauzyId = faker.datatype.uuid();
+			integrationMap.sourceId = faker.number.int({ min: 10000000, max: 99999999999 });
+			integrationMap.gauzyId = faker.string.uuid();
 			integrationMaps.push(integrationMap);
 		}
 	}

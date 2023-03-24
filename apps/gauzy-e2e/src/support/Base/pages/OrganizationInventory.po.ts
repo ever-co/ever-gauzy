@@ -43,7 +43,7 @@ export const languageDropdownVisible = () => {
 	verifyElementIsVisible(OrganizationInventoryPage.languageDropdownCss);
 };
 
-export const clickLangaugeDropdown = () => {
+export const clickLanguageDropdown = () => {
 	clickButton(OrganizationInventoryPage.languageDropdownCss);
 };
 
@@ -51,7 +51,7 @@ export const productTypeDropdownVisible = () => {
 	verifyElementIsVisible(OrganizationInventoryPage.productTypeDropdownCss);
 };
 
-export const clickProductTypeDrodpwon = () => {
+export const clickProductTypeDropdown = () => {
 	clickButton(OrganizationInventoryPage.productTypeDropdownCss);
 };
 
@@ -61,7 +61,7 @@ export const productCategoryDropdownVisible = () => {
 	);
 };
 
-export const clickProductCategoryDrodpwon = () => {
+export const clickProductCategoryDropdown = () => {
 	clickButton(OrganizationInventoryPage.productCategoryDropdownCss);
 };
 
@@ -87,7 +87,7 @@ export const enterCodeInputData = (data) => {
 	enterInput(OrganizationInventoryPage.codeInputCss, data);
 };
 
-export const descriptionInputVisivle = () => {
+export const descriptionInputVisible = () => {
 	verifyElementIsVisible(OrganizationInventoryPage.descriptionInputCss);
 };
 
@@ -108,7 +108,7 @@ export const backFromCategoryButtonVisible = () => {
 	verifyElementIsVisible(OrganizationInventoryPage.backFromCategoryButtonCss);
 };
 
-export const clickBackFromCategodyButton = () => {
+export const clickBackFromCategoryButton = () => {
 	clickButton(OrganizationInventoryPage.backFromCategoryButtonCss);
 };
 
@@ -174,12 +174,12 @@ export const verifyTypeIsDeleted = (text) => {
 	verifyTextNotExisting(OrganizationInventoryPage.verifyTypeCss, text);
 };
 
-export const verifyCategorieExists = (text) => {
-	verifyText(OrganizationInventoryPage.verifyCategorieCss, text);
+export const verifyCategoryExists = (text) => {
+	verifyText(OrganizationInventoryPage.verifyCategoryCss, text);
 };
 
-export const verifyCategorieIsDeleted = (text) => {
-	verifyTextNotExisting(OrganizationInventoryPage.verifyCategorieCss, text);
+export const verifyCategoryIsDeleted = (text) => {
+	verifyTextNotExisting(OrganizationInventoryPage.verifyCategoryCss, text);
 };
 
 export const verifyInventoryExists = (text) => {

@@ -1,7 +1,7 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { DeleteResult, Repository } from 'typeorm';
-import { IOrganization, IOrganizationProject, IPagination, ITaskSize, ITaskSizeFindInput, ITenant } from '@gauzy/contracts';
+import { IOrganization, IPagination, ITaskSize, ITaskSizeCreateInput, ITaskSizeFindInput, ITenant } from '@gauzy/contracts';
 import { RequestContext } from './../../core/context';
 import { TaskStatusPrioritySizeService } from '../task-status-priority-size.service';
 import { TaskSize } from './size.entity';
@@ -60,6 +60,7 @@ export class TaskSizeService extends TaskStatusPrioritySizeService<TaskSize> {
 				for (const size of DEFAULT_GLOBAL_SIZES) {
 					const create = this.repository.create({
 						...size,
+						icon: `ever-icons/${size.icon}`,
 						tenant,
 						isSystem: false
 					});
@@ -106,14 +107,15 @@ export class TaskSizeService extends TaskStatusPrioritySizeService<TaskSize> {
 	}
 
 	/**
-	 * Create bulk task sizes for organization project
+	 * Create bulk task sizes for specific organization entity
 	 *
-	 * @param project
+	 * @param entity
 	 * @returns
 	 */
-	async bulkCreateOrganizationProjectSizes(project: IOrganizationProject): Promise<ITaskSize[]> {
+	async createBulkSizesByEntity(entity: Partial<ITaskSizeCreateInput>): Promise<ITaskSize[]> {
 		try {
-			const { tenantId, organizationId } = project;
+			const { organizationId } = entity;
+			const tenantId = RequestContext.currentTenantId();
 
 			const sizes: ITaskSize[] = [];
 			const { items = [] } = await this.findEntitiesByParams({ tenantId, organizationId });
@@ -121,20 +123,19 @@ export class TaskSizeService extends TaskStatusPrioritySizeService<TaskSize> {
 			for (const item of items) {
 				const { name, value, description, icon, color } = item;
 
-				const create = this.repository.create({
-					tenantId,
-					organizationId,
+				const size = await this.create({
+					...entity,
 					name,
 					value,
 					description,
 					icon,
 					color,
-					project,
 					isSystem: false
 				});
-				sizes.push(create);
+				sizes.push(size);
 			}
-			return await this.repository.save(sizes);
+
+			return sizes;
 		} catch (error) {
 			throw new BadRequestException(error);
 		}

@@ -116,7 +116,11 @@
 			"menuCategory": true
 		},
 		"extraResources": [
-			"./data/**/*"
+			"./data/**/*",
+			"databaseDir"
+		],
+		"extraFiles": [
+			"./**/desktop-libs/**/migrations/*"
 		]
 	},
 	"dependencies": {
@@ -136,9 +140,9 @@
 		"electron-util": "^0.17.2",
 		"embedded-queue": "^0.0.11",
 		"ffi-napi": "^4.0.3",
+		"iconv": "^3.0.1",
 		"form-data": "^3.0.0",
 		"htmlparser2": "^3.10.1",
-		"iconv": "^3.0.1",
 		"knex": "^2.4.0",
 		"mac-screen-capture-permissions": "^2.0.0",
 		"moment": "^2.29.4",
@@ -148,7 +152,7 @@
 		"pg-query-stream": "^4.2.4",
 		"screenshot-desktop": "^1.12.7",
 		"sound-play": "1.1.0",
-		"sqlite3": "^5.1.2",
+		"sqlite3": "^5.1.5",
 		"squirrelly": "^8.0.8",
 		"tslib": "^2.3.1",
 		"twing": "^5.0.2",

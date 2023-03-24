@@ -10,7 +10,7 @@ export abstract class CrudService<T> implements ICrudService<T> {
     constructor(
         protected readonly http: HttpClient,
         protected readonly API_URL: string
-    ) {}
+    ) { }
 
     /**
      * The create() method accepts a partial model as an argument and returns the created model from the server.
@@ -42,5 +42,15 @@ export abstract class CrudService<T> implements ICrudService<T> {
      */
     public update(id: any, entity: Partial<T>): Observable<T> {
         return this.http.put<T>(`${this.API_URL}/${id}`, entity).pipe(take(1));
+    }
+
+    /**
+     * When we want to delete an existing resource, we’ll use the delete() method.
+     *
+     * @param id
+     * @returns
+     */
+    public delete(id: any): Observable<T> {
+        return this.http.delete<T>(`${this.API_URL}/${id}`).pipe(take(1));
     }
 }

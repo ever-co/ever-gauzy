@@ -1,7 +1,7 @@
 import * as loginPage from '../../Base/pages/Login.po';
 import { LoginPageData } from '../../Base/pagedata/LoginPageData';
 import * as addOrganizationPage from '../../Base/pages/AddOrganization.po';
-import { faker } from '@ever-co/faker';
+import { faker } from '@faker-js/faker';
 import { AddOrganizationPageData } from '../../Base/pagedata/AddOrganizationPageData';
 import * as deleteOrganizationPage from '../../Base/pages/DeleteOrganization.po';
 import * as dashboardPage from '../../Base/pages/Dashboard.po';
@@ -11,9 +11,9 @@ import { Given, Then, When, And } from 'cypress-cucumber-preprocessor/steps';
 
 const pageLoadTimeout = Cypress.config('pageLoadTimeout');
 
-let organizationName = faker.company.companyName();
-let taxId = faker.random.alphaNumeric();
-let street = faker.address.streetAddress();
+let organizationName = faker.company.name();
+let taxId = faker.string.alphanumeric();
+let street = faker.location.streetAddress();
 
 // Login with email
 Given('Login with default credentials and visit Organizations page', () => {
@@ -239,12 +239,16 @@ And('User can click on grid button to change view', () => {
 	deleteOrganizationPage.gridBtnClick(0);
 });
 
+And('User selects the project to delete', () => {
+	deleteOrganizationPage.selectOrganization(0);
+});
+
 And('User can see delete button', () => {
 	deleteOrganizationPage.deleteBtnExists();
 });
 
 When('User click on delete button', () => {
-	deleteOrganizationPage.deleteBtnClick(1);
+	deleteOrganizationPage.deleteBtnClick(0);
 });
 
 Then('User can see confirm delete button', () => {

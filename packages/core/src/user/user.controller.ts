@@ -43,7 +43,7 @@ import {
 	UpdatePreferredComponentLayoutDTO,
 	CreateUserDTO,
 	UpdateUserDTO,
-	FindMeQueryDTO
+	FindMeQueryDTO,
 } from './dto';
 
 @ApiTags('User')
@@ -262,7 +262,7 @@ export class UserController extends CrudController<User> {
 	@UseGuards(TenantPermissionGuard, PermissionGuard)
 	@Permissions(PermissionsEnum.ORG_USERS_EDIT, PermissionsEnum.PROFILE_EDIT)
 	@Put(':id')
-	@UsePipes(new ValidationPipe({ transform : true }))
+	@UsePipes(new ValidationPipe({ transform: true }))
 	async update(
 		@Param('id', UUIDValidationPipe) id: IUser['id'],
 		@Body() entity: UpdateUserDTO
@@ -274,7 +274,7 @@ export class UserController extends CrudController<User> {
 	}
 
 	/**
-	 * DELTE user account
+	 * To permanently delete your account from your Gauzy app:
 	 *
 	 * @param id
 	 * @returns

@@ -64,17 +64,17 @@ Feature: Proposals test
     Then User can select employee from multiselect dropdown options
     And User can see template name input field
     And User can enter template name
-    And User can enter propsoal template content
+    And User can enter proposal template content
     And User can see save proposal template button
     When User click on save proposal template button
     Then Notification message will appear
     And User can verify proposal template was created
   Scenario: Edit proposal template
     And User can see proposals templates table
-    When User click on rpoposals templates table row
+    When User click on proposals templates table row
     Then Edit proposal template button will become active
     When User click on edit proposal template button
-    Then User can see tempalte name input field again
+    Then User can see template name input field again
     And User can enter new value for template name
     And User can see save proposal template button again
     When User click on save edited proposal template button
@@ -82,9 +82,9 @@ Feature: Proposals test
     And User can verify proposal template was edited
   Scenario: Delete proposal template
     And User can see proposals templates table again
-    When User click on rpoposals templates table row again
-    Then Delete proposal template button will become actuve
-    When User click on delete proposal tempalte button
+    When User click on proposals templates table row again
+    Then Delete proposal template button will become active
+    When User click on delete proposal template button
     Then User can see reject delete operation button
     And User can see confirm delete proposal template button
     When User click on confirm delete proposal template button

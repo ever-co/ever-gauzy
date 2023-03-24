@@ -5,10 +5,10 @@ import {
 	clearField,
 	clickKeyboardBtnByKeycode,
 	clickElementByText,
-    clickButtonDouble,
+	clickButtonDouble,
 	waitElementToHide,
-    clickByText,
-    verifyByText,
+	clickByText,
+	verifyByText,
 	clickButtonByIndex,
 	verifyText,
 	enterInputConditionally
@@ -29,7 +29,7 @@ export const employeeDropdownVisible = () => {
 };
 
 export const clickEmployeeDropdown = () => {
-	cy.intercept('GET','/api/employee/working*').as('waitEmployees');
+	cy.intercept('GET', '/api/employee/working*').as('waitEmployees');
 	clickButton(EmployeeDashboardPage.employeeDropdownCss);
 	cy.wait('@waitEmployees').then(() => {
 		clickButtonDouble(EmployeeDashboardPage.employeeDropdownCss);
@@ -78,35 +78,35 @@ export const waitMessageToHide = () => {
 };
 
 export const verifyMenuBtnByText = (text: string) => {
-    verifyByText(EmployeeDashboardPage.menuButtonsCss, text)
+	verifyByText(EmployeeDashboardPage.menuButtonsCss, text)
 }
 
 export const clickMenuButtonsByText = (text: string) => {
-    clickElementByText(EmployeeDashboardPage.menuButtonsCss, text)
+	clickElementByText(EmployeeDashboardPage.menuButtonsCss, text)
 }
 
-export const verifyEmployeeSelecor = () => {
-    verifyElementIsVisible(EmployeeDashboardPage.employeeSelectorCss)
+export const verifyEmployeeSelector = () => {
+	verifyElementIsVisible(EmployeeDashboardPage.employeeSelectorCss)
 }
 
-export const clickOnEmployeeSelecor = () => {
-    clickButton(EmployeeDashboardPage.employeeSelectorCss);
-    clickButtonDouble(EmployeeDashboardPage.employeeSelectorCss);
+export const clickOnEmployeeSelector = () => {
+	clickButton(EmployeeDashboardPage.employeeSelectorCss);
+	clickButtonDouble(EmployeeDashboardPage.employeeSelectorCss);
 };
 
 export const verifyEmployeeSelectorDropdown = (text: string) => {
-    verifyByText(EmployeeDashboardPage.selectEmployeeDropdownOptionCss, text);
+	verifyByText(EmployeeDashboardPage.selectEmployeeDropdownOptionCss, text);
 };
 
-export const clickOnEmployeeSelecorDropdown = (text: string) => {
-    clickByText(EmployeeDashboardPage.selectEmployeeDropdownOptionCss, text);
+export const clickOnEmployeeSelectorDropdown = (text: string) => {
+	clickByText(EmployeeDashboardPage.selectEmployeeDropdownOptionCss, text);
 };
 
 export const verifyEmployeeSalary = (salary: string) => {
-    verifyByText(EmployeeDashboardPage.salaryCss, salary);
+	verifyByText(EmployeeDashboardPage.salaryCss, salary);
 };
 
-export const clickOnIncomeBtn= () => {
+export const clickOnIncomeBtn = () => {
 	cy.intercept('GET', 'api/organization-contact*').as('waitOrganization');
 	clickButton(EmployeeDashboardPage.incomeBtn);
 	cy.wait('@waitOrganization');
@@ -138,7 +138,7 @@ export const clickEmployeeSelector = () => {
 
 };
 
-export const selectEmployeeFromDrodpwonByName = (name: string) => {
+export const selectEmployeeFromDropdownByName = (name: string) => {
 	clickByText(EmployeeDashboardPage.selectEmployeeDropdownOptCss, name);
 };
 
@@ -177,7 +177,7 @@ export const tagsDropdownVisible = () => {
 	verifyElementIsVisible(EmployeeDashboardPage.addTagsDropdownCss);
 };
 
-export const clickTagsDropdwon = () => {
+export const clickTagsDropdown = () => {
 	clickButton(EmployeeDashboardPage.addTagsDropdownCss);
 };
 
@@ -219,5 +219,5 @@ export const clickOnCurrencyField = () => {
 };
 
 export const selectCurrency = (currency: string) => {
-	clickByText(EmployeeDashboardPage.currenctOptionCss, currency)
+	clickByText(EmployeeDashboardPage.currencyOptionCss, currency)
 };

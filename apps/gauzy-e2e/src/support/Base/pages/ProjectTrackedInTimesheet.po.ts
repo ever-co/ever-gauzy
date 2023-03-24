@@ -1,4 +1,3 @@
-import dayjs from 'dayjs';
 import {
 	clearField,
 	clickButton,
@@ -8,11 +7,7 @@ import {
 	verifyElementIsVisible,
 	verifyText,
 	waitElementToHide,
-	verifyTextContentByIndex,
-	verifyElementIsVisibleByIndex,
-	verifyElementIsNotVisibleByIndex,
-	clickButtonWithForce,
-    clickByText,
+	clickByText,
 	compareTwoTexts
 } from '../utils/util';
 import { ProjectTrackedInTimesheetPage } from '../pageobjects/ProjectTrackedInTimesheetPageObject';
@@ -45,16 +40,16 @@ export const enterNameInputData = (data) => {
 
 export const selectEmployeeDropdownVisible = () => {
 	verifyElementIsVisible(
-		ProjectTrackedInTimesheetPage.selectEmloyeeMultyselectCss
+		ProjectTrackedInTimesheetPage.selectEmployeeMultiSelectCss
 	);
 };
 
 export const clickSelectEmployeeDropdown = () => {
-	clickButton(ProjectTrackedInTimesheetPage.selectEmloyeeMultyselectCss);
+	clickButton(ProjectTrackedInTimesheetPage.selectEmployeeMultiSelectCss);
 };
 
 export const selectEmployeeDropdownOption = (text) => {
-	clickByText(ProjectTrackedInTimesheetPage.selectEmployeeDropdownOptionCss,text);
+	clickByText(ProjectTrackedInTimesheetPage.selectEmployeeDropdownOptionCss, text);
 };
 
 export const clickKeyboardButtonByKeyCode = (keycode) => {
@@ -96,7 +91,7 @@ export const clickProjectSelect = () => {
 
 export const selectOptionFromDropdown = (index, projectName: string) => {
 	cy.wait('@waitProjectLoad').then(() => {
-		verifyText(ProjectTrackedInTimesheetPage.dropdownOptionCss,projectName);
+		verifyText(ProjectTrackedInTimesheetPage.dropdownOptionCss, projectName);
 		clickButtonByIndex(ProjectTrackedInTimesheetPage.dropdownOptionCss, index);
 	});
 };
@@ -113,7 +108,7 @@ export const clickStopTimerBtn = () => {
 	clickButton(ProjectTrackedInTimesheetPage.stopTimerBtnCss);
 };
 
-export const viewTimesheetbtnVisible = () => {
+export const viewTimesheetBtnVisible = () => {
 	verifyElementIsVisible(ProjectTrackedInTimesheetPage.viewTimesheetBtnCss);
 };
 
@@ -122,11 +117,11 @@ export const clickViewTimesheetBtn = () => {
 };
 
 export const verifyProjectText = (text) => {
-    compareTwoTexts(ProjectTrackedInTimesheetPage.projectNameCss, text)
+	compareTwoTexts(ProjectTrackedInTimesheetPage.projectNameCss, text)
 }
 
 export const waitMainDashboard = (url: string) => {
-	//waits for responce then continue 
+	//waits for response then continue
 	cy.intercept('GET', url).as('getUser')
 	cy.wait('@getUser').then(() => {
 		verifyElementIsVisible(ProjectTrackedInTimesheetPage.headerImgCss);

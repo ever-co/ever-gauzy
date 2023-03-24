@@ -3,27 +3,28 @@ import {
 	OnInit,
 	ViewChild,
 	ElementRef,
-	NgZone
+	NgZone,
 } from '@angular/core';
 import { transition, trigger, style, animate } from '@angular/animations';
 import { ElectronService } from '../electron/services';
+import { DomSanitizer } from '@angular/platform-browser';
 export const fadeInOutAnimation = trigger('fadeInOut', [
 	transition(':enter', [
 		// :enter is alias to 'void => *'
 		style({ opacity: 0 }),
-		animate(300, style({ opacity: 1 }))
+		animate(300, style({ opacity: 1 })),
 	]),
 	transition(':leave', [
 		// :leave is alias to '* => void'
-		animate(300, style({ opacity: 0 }))
-	])
+		animate(300, style({ opacity: 0 })),
+	]),
 ]);
 
 @Component({
 	selector: 'ngx-image-viewer',
 	templateUrl: './image-viewer.component.html',
 	styleUrls: ['./image-viewer.component.scss'],
-	animations: [fadeInOutAnimation]
+	animations: [fadeInOutAnimation],
 })
 export class ImageViewerComponent implements OnInit {
 	active_index: any;
@@ -37,15 +38,16 @@ export class ImageViewerComponent implements OnInit {
 	constructor(
 		// private dialogRef: NbDialogRef<any>
 		private electronService: ElectronService,
-		private readonly _ngZone: NgZone
+		private readonly _ngZone: NgZone,
+		private readonly _sanitize: DomSanitizer
 	) {}
 
 	ngOnInit(): void {
 		this.electronService.ipcRenderer.on('show_image', (event, arg) => {
 			this._ngZone.run(() => {
 				this.items = arg.sort((a, b) => {
-					const c: any = new Date(b.createdAt);
-					const d: any = new Date(a.createdAt);
+					const c: any = new Date(b.recordedAt);
+					const d: any = new Date(a.recordedAt);
 					return c - d;
 				});
 				this.item = this.items[0];
@@ -105,10 +107,14 @@ export class ImageViewerComponent implements OnInit {
 
 				if (left < Math.abs(scrollLeft) || right > scrollRight) {
 					this.customScroll.nativeElement.scrollTo({
-						left: left
+						left: left,
 					});
 				}
 			}
 		}
+	}
+
+	sanitizeImgUrl(img: string) {
+		return this._sanitize.bypassSecurityTrustUrl(img);
 	}
 }

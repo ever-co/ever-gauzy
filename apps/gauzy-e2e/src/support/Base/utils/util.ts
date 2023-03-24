@@ -49,7 +49,7 @@ export const verifyTextByIndex = (loc, data, index) => {
 };
 
 export const clickButton = (loc) => {
-	cy.get(loc, { timeout: taskTimeout }).click();
+	cy.get(loc, { timeout: taskTimeout }).click({ multiple: true, force: true });
 };
 
 export const clickElementByText = (loc, data) => {
@@ -94,6 +94,10 @@ export const clickButtonByIndex = (loc, index) => {
 	cy.get(loc, { timeout: taskTimeout }).eq(index).click({ force: true });
 };
 
+export const clickOrganizationByIndex = (loc, index) => {
+	cy.get(loc, { timeout: taskTimeout }).eq(index).click({ force: true });
+};
+
 export const enterInputConditionally = (loc, data) => {
 	cy.get(loc, { timeout: taskTimeout }).type(`${data}{enter}`);
 };
@@ -133,7 +137,7 @@ export const getNotEqualElement = (loc, text) => {
 };
 
 export const waitElementToHide = (loc) => {
-	cy.wait(requestTimeout);
+	cy.wait(10000);
 	cy.get(loc, { timeout: defaultCommandTimeout }).should('not.exist');
 };
 
@@ -174,7 +178,7 @@ export const verifyByText = (loc, text: string) => {
 };
 
 export const clickByText = (loc, text: string) => {
-	cy.get(loc, { timeout: taskTimeout }).contains(text).click({force: true});
+	cy.get(loc, { timeout: taskTimeout }).contains(text).click({ force: true });
 };
 
 export const clickButtonMultipleTimes = (loc, n) => {
@@ -251,8 +255,8 @@ export const clickButtonWithForce = (loc) => {
 
 export const verifyElementIfVisible = (locOne, locTwo) => {
 	cy.get(locTwo, { timeout: taskTimeout }).then((loc) => {
-		if(loc.is(locOne)){
-			cy.get(locOne, { timeout: defaultCommandTimeout}).should('be.visible');
+		if (loc.is(locOne)) {
+			cy.get(locOne, { timeout: defaultCommandTimeout }).should('be.visible');
 		}
 	});
 };
@@ -262,29 +266,29 @@ export const clickButtonDouble = (loc) => {
 }
 
 export const waitForDropdownToLoad = (loc: any) => {
-	cy.get(loc, { timeout: defaultCommandTimeout}).should('have.length.greaterThan', 1);
+	cy.get(loc, { timeout: defaultCommandTimeout }).should('have.length.greaterThan', 1);
 };
 
 export const clickButtonByIndexNoForce = (loc, index) => {
 	cy.get(loc, { timeout: taskTimeout }).eq(index).click();
 }
 
-export const enterTextInIFrame= (loc, text ) => {
+export const enterTextInIFrame = (loc, text) => {
 	cy.get(loc)
-  		.then(($iframe) => {
-    		const $body = $iframe.contents().find('body')
+		.then(($iframe) => {
+			const $body = $iframe.contents().find('body')
 
-    		cy.wrap($body)
-      			.find('p')
-      			.type(text);
-	})
+			cy.wrap($body)
+				.find('p')
+				.type(text);
+		})
 };
 
-export const vefiryByLength = (loc:any, length: number) => {
-	cy.get(loc, { timeout: defaultCommandTimeout}).should('have.length', length);
+export const verifyByLength = (loc: any, length: number) => {
+	cy.get(loc, { timeout: defaultCommandTimeout }).should('have.length', length);
 };
 
-export const enterInputByIndex = (loc, data,index) => {
+export const enterInputByIndex = (loc, data, index) => {
 	cy.get(loc, { timeout: taskTimeout })
 		.eq(index).type(data);
 };

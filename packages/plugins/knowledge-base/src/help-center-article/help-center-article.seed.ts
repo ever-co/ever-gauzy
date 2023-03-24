@@ -1,5 +1,5 @@
 import { DataSource, IsNull, Not } from 'typeorm';
-import { faker } from '@ever-co/faker';
+import { faker } from '@faker-js/faker';
 import { IHelpCenter, IHelpCenterArticle, IOrganization, ITenant } from '@gauzy/contracts';
 import { HelpCenterArticle } from './help-center-article.entity';
 import { HelpCenter } from './../help-center';
@@ -25,10 +25,10 @@ export const createHelpCenterArticle = async (
 				const article = new HelpCenterArticle();
 				article.organizationId = organizationId;
 				article.tenantId = tenantId;
-				article.name = faker.name.title();
-				article.description = faker.name.jobDescriptor();
+				article.name = faker.person.jobTitle();
+				article.description = faker.person.jobDescriptor();
 				article.data = faker.commerce.productMaterial();
-				const helpCenter = faker.random.arrayElement(helpCenters);
+				const helpCenter = faker.helpers.arrayElement(helpCenters);
 				article.categoryId = (helpCenter) ? helpCenter.id : null;
 				article.draft = faker.datatype.boolean();
 				article.privacy = faker.datatype.boolean();
