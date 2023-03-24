@@ -1,12 +1,6 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { NavigationEnd, Router } from '@angular/router';
-import {
-	FeatureEnum,
-	IOrganization,
-	IRolePermission,
-	IUser,
-	PermissionsEnum
-} from '@gauzy/contracts';
+import { FeatureEnum, IOrganization, IRolePermission, IUser, PermissionsEnum } from '@gauzy/contracts';
 import { NbMenuItem } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { filter, map, tap } from 'rxjs/operators';
@@ -42,9 +36,7 @@ interface GaMenuItem extends NbMenuItem {
 		</ngx-one-column-layout>
 	`
 })
-export class PagesComponent extends TranslationBaseComponent
-	implements OnInit, OnDestroy {
-
+export class PagesComponent extends TranslationBaseComponent implements OnInit, OnDestroy {
 	isEmployee: boolean;
 	organization: IOrganization;
 	user: IUser;
@@ -114,10 +106,7 @@ export class PagesComponent extends TranslationBaseComponent
 						link: '/pages/accounting/invoices/estimates',
 						data: {
 							translationKey: 'MENU.ESTIMATES',
-							permissionKeys: [
-								PermissionsEnum.ALL_ORG_VIEW,
-								PermissionsEnum.ESTIMATES_VIEW
-							],
+							permissionKeys: [PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.ESTIMATES_VIEW],
 							featureKey: FeatureEnum.FEATURE_ESTIMATE,
 							add: '/pages/accounting/invoices/estimates/add'
 						}
@@ -128,10 +117,7 @@ export class PagesComponent extends TranslationBaseComponent
 						link: '/pages/accounting/invoices/received-estimates',
 						data: {
 							translationKey: 'MENU.ESTIMATES_RECEIVED',
-							permissionKeys: [
-								PermissionsEnum.ALL_ORG_VIEW,
-								PermissionsEnum.ESTIMATES_VIEW
-							],
+							permissionKeys: [PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.ESTIMATES_VIEW],
 							featureKey: FeatureEnum.FEATURE_ESTIMATE_RECEIVED
 						}
 					},
@@ -142,10 +128,7 @@ export class PagesComponent extends TranslationBaseComponent
 						pathMatch: 'full',
 						data: {
 							translationKey: 'MENU.INVOICES',
-							permissionKeys: [
-								PermissionsEnum.ALL_ORG_VIEW,
-								PermissionsEnum.INVOICES_VIEW
-							],
+							permissionKeys: [PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.INVOICES_VIEW],
 							featureKey: FeatureEnum.FEATURE_INVOICE,
 							add: '/pages/accounting/invoices/add'
 						}
@@ -157,10 +140,7 @@ export class PagesComponent extends TranslationBaseComponent
 						pathMatch: 'prefix',
 						data: {
 							translationKey: 'MENU.RECURRING_INVOICES',
-							permissionKeys: [
-								PermissionsEnum.ALL_ORG_VIEW,
-								PermissionsEnum.INVOICES_VIEW
-							],
+							permissionKeys: [PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.INVOICES_VIEW],
 							featureKey: FeatureEnum.FEATURE_INVOICE_RECURRING
 						}
 					},
@@ -171,10 +151,7 @@ export class PagesComponent extends TranslationBaseComponent
 						pathMatch: 'prefix',
 						data: {
 							translationKey: 'MENU.INVOICES_RECEIVED',
-							permissionKeys: [
-								PermissionsEnum.ALL_ORG_VIEW,
-								PermissionsEnum.INVOICES_VIEW
-							],
+							permissionKeys: [PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.INVOICES_VIEW],
 							featureKey: FeatureEnum.FEATURE_INVOICE_RECEIVED
 						}
 					},
@@ -205,11 +182,9 @@ export class PagesComponent extends TranslationBaseComponent
 						icon: 'fas fa-exchange-alt fa-rotate-90',
 						link: '/pages/accounting/expense-recurring',
 						data: {
-							translationKey:
-								'ORGANIZATIONS_PAGE.EXPENSE_RECURRING',
+							translationKey: 'ORGANIZATIONS_PAGE.EXPENSE_RECURRING',
 							permissionKeys: [PermissionsEnum.ORG_EXPENSES_VIEW],
-							featureKey:
-								FeatureEnum.FEATURE_ORGANIZATION_RECURRING_EXPENSE,
+							featureKey: FeatureEnum.FEATURE_ORGANIZATION_RECURRING_EXPENSE,
 							add: '/pages/accounting/expense-recurring?openAddDialog=true'
 						}
 					},
@@ -241,9 +216,7 @@ export class PagesComponent extends TranslationBaseComponent
 						link: '/pages/sales/proposals',
 						data: {
 							translationKey: 'MENU.PROPOSALS',
-							permissionKeys: [
-								PermissionsEnum.ORG_PROPOSALS_VIEW
-							],
+							permissionKeys: [PermissionsEnum.ORG_PROPOSALS_VIEW],
 							featureKey: FeatureEnum.FEATURE_PROPOSAL,
 							add: '/pages/sales/proposals/register'
 						}
@@ -254,10 +227,7 @@ export class PagesComponent extends TranslationBaseComponent
 						link: '/pages/sales/invoices/estimates',
 						data: {
 							translationKey: 'MENU.ESTIMATES',
-							permissionKeys: [
-								PermissionsEnum.ALL_ORG_VIEW,
-								PermissionsEnum.ESTIMATES_VIEW
-							],
+							permissionKeys: [PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.ESTIMATES_VIEW],
 							featureKey: FeatureEnum.FEATURE_PROPOSAL,
 							add: '/pages/sales/invoices/estimates/add'
 						}
@@ -268,10 +238,7 @@ export class PagesComponent extends TranslationBaseComponent
 						link: '/pages/sales/invoices',
 						data: {
 							translationKey: 'MENU.INVOICES',
-							permissionKeys: [
-								PermissionsEnum.ALL_ORG_VIEW,
-								PermissionsEnum.INVOICES_VIEW
-							],
+							permissionKeys: [PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.INVOICES_VIEW],
 							featureKey: FeatureEnum.FEATURE_INVOICE,
 							add: '/pages/sales/invoices/add'
 						}
@@ -282,10 +249,7 @@ export class PagesComponent extends TranslationBaseComponent
 						link: '/pages/sales/invoices/recurring',
 						data: {
 							translationKey: 'MENU.RECURRING_INVOICES',
-							permissionKeys: [
-								PermissionsEnum.ALL_ORG_VIEW,
-								PermissionsEnum.INVOICES_VIEW
-							],
+							permissionKeys: [PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.INVOICES_VIEW],
 							featureKey: FeatureEnum.FEATURE_INVOICE_RECURRING
 						}
 					},
@@ -306,9 +270,7 @@ export class PagesComponent extends TranslationBaseComponent
 						link: '/pages/sales/pipelines',
 						data: {
 							translationKey: 'MENU.PIPELINES',
-							permissionKeys: [
-								PermissionsEnum.VIEW_SALES_PIPELINES
-							],
+							permissionKeys: [PermissionsEnum.VIEW_SALES_PIPELINES],
 							featureKey: FeatureEnum.FEATURE_PIPELINE,
 							add: '/pages/sales/pipelines?openAddDialog=true'
 						}
@@ -329,10 +291,7 @@ export class PagesComponent extends TranslationBaseComponent
 						link: '/pages/tasks/dashboard',
 						data: {
 							translationKey: 'MENU.DASHBOARD',
-							permissionKeys: [
-								PermissionsEnum.ALL_ORG_VIEW,
-								PermissionsEnum.ORG_TASK_VIEW
-							],
+							permissionKeys: [PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.ORG_TASK_VIEW],
 							featureKey: FeatureEnum.FEATURE_DASHBOARD_TASK,
 							add: '/pages/tasks/dashboard?openAddDialog=true'
 						}
@@ -344,10 +303,7 @@ export class PagesComponent extends TranslationBaseComponent
 						data: {
 							translationKey: 'MENU.MY_TASKS',
 							hide: () => !this.isEmployee,
-							permissionKeys: [
-								PermissionsEnum.ALL_ORG_VIEW,
-								PermissionsEnum.ORG_TASK_VIEW
-							],
+							permissionKeys: [PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.ORG_TASK_VIEW],
 							featureKey: FeatureEnum.FEATURE_MY_TASK,
 							add: '/pages/tasks/me?openAddDialog=true'
 						}
@@ -358,10 +314,7 @@ export class PagesComponent extends TranslationBaseComponent
 						link: '/pages/tasks/team',
 						data: {
 							translationKey: 'MENU.TEAM_TASKS',
-							permissionKeys: [
-								PermissionsEnum.ALL_ORG_VIEW,
-								PermissionsEnum.ORG_TASK_VIEW
-							],
+							permissionKeys: [PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.ORG_TASK_VIEW],
 							featureKey: FeatureEnum.FEATURE_TEAM_TASK,
 							add: '/pages/tasks/team?openAddDialog=true'
 						}
@@ -383,9 +336,7 @@ export class PagesComponent extends TranslationBaseComponent
 						link: '/pages/jobs/employee',
 						data: {
 							translationKey: 'MENU.EMPLOYEES',
-							permissionKeys: [
-								PermissionsEnum.ORG_JOB_EMPLOYEE_VIEW
-							]
+							permissionKeys: [PermissionsEnum.ORG_JOB_EMPLOYEE_VIEW]
 						}
 					},
 					{
@@ -406,9 +357,7 @@ export class PagesComponent extends TranslationBaseComponent
 						link: '/pages/jobs/matching',
 						data: {
 							translationKey: 'MENU.JOBS_MATCHING',
-							permissionKeys: [
-								PermissionsEnum.ORG_JOB_MATCHING_VIEW
-							]
+							permissionKeys: [PermissionsEnum.ORG_JOB_MATCHING_VIEW]
 						}
 					},
 					{
@@ -417,9 +366,7 @@ export class PagesComponent extends TranslationBaseComponent
 						link: '/pages/jobs/proposal-template',
 						data: {
 							translationKey: 'MENU.PROPOSAL_TEMPLATE',
-							permissionKeys: [
-								PermissionsEnum.ORG_PROPOSAL_TEMPLATES_VIEW
-							],
+							permissionKeys: [PermissionsEnum.ORG_PROPOSAL_TEMPLATES_VIEW],
 							add: '/pages/jobs/proposal-template?openAddDialog=true'
 						}
 					}
@@ -439,9 +386,7 @@ export class PagesComponent extends TranslationBaseComponent
 						pathMatch: 'full',
 						data: {
 							translationKey: 'MENU.MANAGE',
-							permissionKeys: [
-								PermissionsEnum.ORG_EMPLOYEES_VIEW
-							],
+							permissionKeys: [PermissionsEnum.ORG_EMPLOYEES_VIEW],
 							featureKey: FeatureEnum.FEATURE_EMPLOYEES
 						}
 					},
@@ -452,10 +397,7 @@ export class PagesComponent extends TranslationBaseComponent
 						pathMatch: 'prefix',
 						data: {
 							translationKey: 'MENU.TIME_ACTIVITY',
-							permissionKeys: [
-								PermissionsEnum.ADMIN_DASHBOARD_VIEW,
-								PermissionsEnum.TIME_TRACKER
-							],
+							permissionKeys: [PermissionsEnum.ADMIN_DASHBOARD_VIEW, PermissionsEnum.TIME_TRACKER],
 							featureKey: FeatureEnum.FEATURE_EMPLOYEE_TIME_ACTIVITY
 						}
 					},
@@ -466,10 +408,7 @@ export class PagesComponent extends TranslationBaseComponent
 						pathMatch: 'prefix',
 						data: {
 							translationKey: 'MENU.TIMESHEETS',
-							permissionKeys: [
-								PermissionsEnum.ADMIN_DASHBOARD_VIEW,
-								PermissionsEnum.TIME_TRACKER
-							],
+							permissionKeys: [PermissionsEnum.ADMIN_DASHBOARD_VIEW, PermissionsEnum.TIME_TRACKER],
 							featureKey: FeatureEnum.FEATURE_EMPLOYEE_TIMESHEETS
 						}
 					},
@@ -489,9 +428,7 @@ export class PagesComponent extends TranslationBaseComponent
 						link: '/pages/employees/approvals',
 						data: {
 							translationKey: 'MENU.APPROVALS',
-							permissionKeys: [
-								PermissionsEnum.REQUEST_APPROVAL_VIEW
-							],
+							permissionKeys: [PermissionsEnum.REQUEST_APPROVAL_VIEW],
 							featureKey: FeatureEnum.FEATURE_EMPLOYEE_APPROVAL,
 							add: '/pages/employees/approvals?openAddDialog=true'
 						}
@@ -533,11 +470,8 @@ export class PagesComponent extends TranslationBaseComponent
 						link: '/pages/employees/recurring-expenses',
 						data: {
 							translationKey: 'MENU.RECURRING_EXPENSE',
-							permissionKeys: [
-								PermissionsEnum.EMPLOYEE_EXPENSES_VIEW
-							],
-							featureKey:
-								FeatureEnum.FEATURE_EMPLOYEE_RECURRING_EXPENSE,
+							permissionKeys: [PermissionsEnum.EMPLOYEE_EXPENSES_VIEW],
+							featureKey: FeatureEnum.FEATURE_EMPLOYEE_RECURRING_EXPENSE,
 							add: '/pages/employees/recurring-expenses?openAddDialog=true'
 						}
 					},
@@ -547,9 +481,7 @@ export class PagesComponent extends TranslationBaseComponent
 						link: '/pages/employees/candidates',
 						data: {
 							translationKey: 'MENU.CANDIDATES',
-							permissionKeys: [
-								PermissionsEnum.ORG_CANDIDATES_VIEW
-							],
+							permissionKeys: [PermissionsEnum.ORG_CANDIDATES_VIEW],
 							featureKey: FeatureEnum.FEATURE_EMPLOYEE_CANDIDATE,
 							add: '/pages/employees/candidates?openAddDialog=true'
 						}
@@ -582,10 +514,7 @@ export class PagesComponent extends TranslationBaseComponent
 						icon: 'fas fa-border-all',
 						link: '/pages/organization/equipment',
 						data: {
-							permissionKeys: [
-								PermissionsEnum.ALL_ORG_VIEW,
-								PermissionsEnum.ORG_EQUIPMENT_VIEW
-							],
+							permissionKeys: [PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.ORG_EQUIPMENT_VIEW],
 							translationKey: 'MENU.EQUIPMENT',
 							featureKey: FeatureEnum.FEATURE_ORGANIZATION_EQUIPMENT,
 							add: '/pages/organization/equipment?openAddDialog=true'
@@ -599,8 +528,7 @@ export class PagesComponent extends TranslationBaseComponent
 						data: {
 							translationKey: 'MENU.INVENTORY',
 							permissionKeys: [PermissionsEnum.ALL_ORG_VIEW],
-							featureKey:
-								FeatureEnum.FEATURE_ORGANIZATION_INVENTORY,
+							featureKey: FeatureEnum.FEATURE_ORGANIZATION_INVENTORY,
 							add: '/pages/organization/inventory/create'
 						}
 					},
@@ -610,10 +538,7 @@ export class PagesComponent extends TranslationBaseComponent
 						link: '/pages/organization/tags',
 						data: {
 							translationKey: 'MENU.TAGS',
-							permissionKeys: [
-								PermissionsEnum.ALL_ORG_VIEW,
-								PermissionsEnum.ORG_TAGS_ADD
-							],
+							permissionKeys: [PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.ORG_TAGS_ADD],
 							featureKey: FeatureEnum.FEATURE_ORGANIZATION_TAG,
 							add: '/pages/organization/tags?openAddDialog=true'
 						}
@@ -635,12 +560,8 @@ export class PagesComponent extends TranslationBaseComponent
 						link: `/pages/organization/projects`,
 						data: {
 							translationKey: 'ORGANIZATIONS_PAGE.PROJECTS',
-							permissionKeys: [
-								PermissionsEnum.ALL_ORG_EDIT,
-								PermissionsEnum.ORG_PROJECT_VIEW
-							],
-							featureKey:
-								FeatureEnum.FEATURE_ORGANIZATION_PROJECT,
+							permissionKeys: [PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ORG_PROJECT_VIEW],
+							featureKey: FeatureEnum.FEATURE_ORGANIZATION_PROJECT,
 							add: '/pages/organization/projects?openAddDialog=true'
 						}
 					},
@@ -651,8 +572,7 @@ export class PagesComponent extends TranslationBaseComponent
 						data: {
 							translationKey: 'ORGANIZATIONS_PAGE.DEPARTMENTS',
 							permissionKeys: [PermissionsEnum.ALL_ORG_EDIT],
-							featureKey:
-								FeatureEnum.FEATURE_ORGANIZATION_DEPARTMENT,
+							featureKey: FeatureEnum.FEATURE_ORGANIZATION_DEPARTMENT,
 							add: '/pages/organization/departments?openAddDialog=true'
 						}
 					},
@@ -662,10 +582,7 @@ export class PagesComponent extends TranslationBaseComponent
 						link: `/pages/organization/teams`,
 						data: {
 							translationKey: 'ORGANIZATIONS_PAGE.EDIT.TEAMS',
-							permissionKeys: [
-								PermissionsEnum.ALL_ORG_EDIT,
-								PermissionsEnum.ORG_TEAM_VIEW
-							],
+							permissionKeys: [PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ORG_TEAM_VIEW],
 							featureKey: FeatureEnum.FEATURE_ORGANIZATION_TEAM,
 							add: '/pages/organization/teams?openAddDialog=true'
 						}
@@ -677,8 +594,7 @@ export class PagesComponent extends TranslationBaseComponent
 						data: {
 							translationKey: 'ORGANIZATIONS_PAGE.DOCUMENTS',
 							permissionKeys: [PermissionsEnum.ALL_ORG_EDIT],
-							featureKey:
-								FeatureEnum.FEATURE_ORGANIZATION_DOCUMENT,
+							featureKey: FeatureEnum.FEATURE_ORGANIZATION_DOCUMENT,
 							add: '/pages/organization/documents?openAddDialog=true'
 						}
 					},
@@ -687,11 +603,9 @@ export class PagesComponent extends TranslationBaseComponent
 						icon: 'fas fa-layer-group',
 						link: `/pages/organization/employment-types`,
 						data: {
-							translationKey:
-								'ORGANIZATIONS_PAGE.EMPLOYMENT_TYPES',
+							translationKey: 'ORGANIZATIONS_PAGE.EMPLOYMENT_TYPES',
 							permissionKeys: [PermissionsEnum.ALL_ORG_EDIT],
-							featureKey:
-								FeatureEnum.FEATURE_ORGANIZATION_EMPLOYMENT_TYPE,
+							featureKey: FeatureEnum.FEATURE_ORGANIZATION_EMPLOYMENT_TYPE,
 							add: '/pages/organization/employment-types?openAddDialog=true'
 						}
 					},
@@ -700,11 +614,9 @@ export class PagesComponent extends TranslationBaseComponent
 						icon: 'fas fa-exchange-alt fa-rotate-90',
 						link: '/pages/organization/expense-recurring',
 						data: {
-							translationKey:
-								'ORGANIZATIONS_PAGE.EXPENSE_RECURRING',
+							translationKey: 'ORGANIZATIONS_PAGE.EXPENSE_RECURRING',
 							permissionKeys: [PermissionsEnum.ORG_EXPENSES_VIEW],
-							featureKey:
-								FeatureEnum.FEATURE_ORGANIZATION_RECURRING_EXPENSE,
+							featureKey: FeatureEnum.FEATURE_ORGANIZATION_RECURRING_EXPENSE,
 							add: '/pages/organization/expense-recurring?openAddDialog=true'
 						}
 					},
@@ -714,8 +626,7 @@ export class PagesComponent extends TranslationBaseComponent
 						link: '/pages/organization/help-center',
 						data: {
 							translationKey: 'ORGANIZATIONS_PAGE.HELP_CENTER',
-							featureKey:
-								FeatureEnum.FEATURE_ORGANIZATION_HELP_CENTER
+							featureKey: FeatureEnum.FEATURE_ORGANIZATION_HELP_CENTER
 						}
 					}
 				]
@@ -725,10 +636,7 @@ export class PagesComponent extends TranslationBaseComponent
 				icon: 'far fa-address-book',
 				data: {
 					translationKey: 'MENU.CONTACTS',
-					permissionKeys: [
-						PermissionsEnum.ORG_CONTACT_VIEW,
-						PermissionsEnum.ALL_ORG_VIEW
-					],
+					permissionKeys: [PermissionsEnum.ORG_CONTACT_VIEW, PermissionsEnum.ALL_ORG_VIEW],
 					featureKey: FeatureEnum.FEATURE_CONTACT
 				},
 				children: [
@@ -836,7 +744,7 @@ export class PagesComponent extends TranslationBaseComponent
 		this.store.user$
 			.pipe(
 				filter((user: IUser) => !!user),
-				tap((user: IUser) => this.isEmployee = !!user.employeeId),
+				tap((user: IUser) => (this.isEmployee = !!user.employeeId)),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -844,82 +752,54 @@ export class PagesComponent extends TranslationBaseComponent
 			.pipe(
 				filter((organization: IOrganization) => !!organization),
 				distinctUntilChange(),
-				tap(
-					(organization: IOrganization) =>
-						(this.organization = organization)
-				),
+				tap((organization: IOrganization) => (this.organization = organization)),
 				tap(() => this.getReportsMenus()),
 				untilDestroyed(this)
 			)
 			.subscribe();
 		this.store.userRolePermissions$
 			.pipe(
-				filter((permissions: IRolePermission[]) =>
-					isNotEmpty(permissions)
-				),
-				map((permissions) =>
-					permissions.map(({ permission }) => permission)
-				),
-				tap((permissions) =>
-					this.ngxPermissionsService.loadPermissions(permissions)
-				),
+				filter((permissions: IRolePermission[]) => isNotEmpty(permissions)),
+				map((permissions) => permissions.map(({ permission }) => permission)),
+				tap((permissions) => this.ngxPermissionsService.loadPermissions(permissions)),
 				untilDestroyed(this)
 			)
 			.subscribe(() => {
-				this.loadItems(
-					this.selectorService.showSelectors(this.router.url)
-						.showOrganizationShortcuts
-				);
+				this.loadItems(this.selectorService.showSelectors(this.router.url).showOrganizationShortcuts);
 			});
 		this.router.events
 			.pipe(filter((event) => event instanceof NavigationEnd))
 			.pipe(untilDestroyed(this))
 			.subscribe((e) => {
-				this.loadItems(
-					this.selectorService.showSelectors(e['url'])
-						.showOrganizationShortcuts
-				);
+				this.loadItems(this.selectorService.showSelectors(e['url']).showOrganizationShortcuts);
 			});
-		this.reportService.menuItems$
-			.pipe(distinctUntilChange(), untilDestroyed(this))
-			.subscribe((menuItems) => {
-				if (menuItems) {
-					this.reportMenuItems = chain(menuItems)
-						.values()
-						.map((item) => {
-							return {
-								title: item.name,
-								link: `/pages/reports/${item.slug}`,
-								icon: item.iconClass,
-								data: {
-									translationKey: `${item.name}`
-								}
-							};
-						})
-						.value();
-				} else {
-					this.reportMenuItems = [];
-				}
+		this.reportService.menuItems$.pipe(distinctUntilChange(), untilDestroyed(this)).subscribe((menuItems) => {
+			if (menuItems) {
+				this.reportMenuItems = chain(menuItems)
+					.values()
+					.map((item) => {
+						return {
+							title: item.name,
+							link: `/pages/reports/${item.slug}`,
+							icon: item.iconClass,
+							data: {
+								translationKey: `${item.name}`
+							}
+						};
+					})
+					.value();
+			} else {
+				this.reportMenuItems = [];
+			}
 
-				this.menu = this.getMenuItems();
-				this.loadItems(
-					this.selectorService.showSelectors(this.router.url)
-						.showOrganizationShortcuts
-				);
-			});
-		this.store.featureOrganizations$
-			.pipe(untilDestroyed(this))
-			.subscribe(() => {
-				this.loadItems(
-					this.selectorService.showSelectors(this.router.url)
-						.showOrganizationShortcuts
-				);
-			});
+			this.menu = this.getMenuItems();
+			this.loadItems(this.selectorService.showSelectors(this.router.url).showOrganizationShortcuts);
+		});
+		this.store.featureOrganizations$.pipe(untilDestroyed(this)).subscribe(() => {
+			this.loadItems(this.selectorService.showSelectors(this.router.url).showOrganizationShortcuts);
+		});
 		this.store.featureTenant$.pipe(untilDestroyed(this)).subscribe(() => {
-			this.loadItems(
-				this.selectorService.showSelectors(this.router.url)
-					.showOrganizationShortcuts
-			);
+			this.loadItems(this.selectorService.showSelectors(this.router.url).showOrganizationShortcuts);
 		});
 		this.menu = this.getMenuItems();
 	}
@@ -932,10 +812,7 @@ export class PagesComponent extends TranslationBaseComponent
 			tenantId,
 			organizationId
 		});
-		this.loadItems(
-			this.selectorService.showSelectors(this.router.url)
-				.showOrganizationShortcuts
-		);
+		this.loadItems(this.selectorService.showSelectors(this.router.url).showOrganizationShortcuts);
 	}
 
 	/*
@@ -971,14 +848,10 @@ export class PagesComponent extends TranslationBaseComponent
 
 		//tenant enabled/disabled features for relatives organizations
 		const { tenant, role } = this.user;
-		this.store.featureTenant = tenant.featureOrganizations.filter(
-			(item) => !item.organizationId
-		);
+		this.store.featureTenant = tenant.featureOrganizations.filter((item) => !item.organizationId);
 
 		//only enabled permissions assign to logged in user
-		this.store.userRolePermissions = role.rolePermissions.filter(
-			(permission) => permission.enabled
-		);
+		this.store.userRolePermissions = role.rolePermissions.filter((permission) => permission.enabled);
 	}
 
 	loadItems(withOrganizationShortcuts: boolean) {
@@ -992,20 +865,16 @@ export class PagesComponent extends TranslationBaseComponent
 		if (item.data.permissionKeys || item.data.hide) {
 			const anyPermission = item.data.permissionKeys
 				? item.data.permissionKeys.reduce((permission, key) => {
-					return this.store.hasPermission(key) || permission;
-				}, false)
+						return this.store.hasPermission(key) || permission;
+				  }, false)
 				: true;
 
-			item.hidden =
-				!anyPermission || (item.data.hide && item.data.hide());
+			item.hidden = !anyPermission || (item.data.hide && item.data.hide());
 
 			if (anyPermission && item.data.organizationShortcut) {
 				item.hidden = !withOrganizationShortcuts || !this.organization;
 				if (!item.hidden) {
-					item.link =
-						item.data.urlPrefix +
-						this.organization.id +
-						item.data.urlPostfix;
+					item.link = item.data.urlPrefix + this.organization.id + item.data.urlPostfix;
 				}
 			}
 		}
@@ -1026,12 +895,9 @@ export class PagesComponent extends TranslationBaseComponent
 
 	private _applyTranslationOnSmartTable() {
 		this.translate.onLangChange.pipe(untilDestroyed(this)).subscribe(() => {
-			this.loadItems(
-				this.selectorService.showSelectors(this.router.url)
-					.showOrganizationShortcuts
-			);
+			this.loadItems(this.selectorService.showSelectors(this.router.url).showOrganizationShortcuts);
 		});
 	}
 
-	ngOnDestroy() { }
+	ngOnDestroy() {}
 }

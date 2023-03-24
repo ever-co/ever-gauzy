@@ -1,11 +1,4 @@
-import {
-	Component,
-	OnInit,
-	Input,
-	Output,
-	EventEmitter,
-	OnDestroy
-} from '@angular/core';
+import { Component, OnInit, Input, Output, EventEmitter, OnDestroy } from '@angular/core';
 import { ITag, IOrganization, PermissionsEnum, ITagCreateInput } from '@gauzy/contracts';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { firstValueFrom } from 'rxjs';
@@ -25,9 +18,7 @@ import { PictureNameTagsComponent } from '../../table-components';
 	templateUrl: './tags-color-input.component.html',
 	styleUrls: ['./tags-color-input.component.scss']
 })
-export class TagsColorInputComponent extends PictureNameTagsComponent
-	implements OnInit, OnDestroy {
-
+export class TagsColorInputComponent extends PictureNameTagsComponent implements OnInit, OnDestroy {
 	public subject$: Subject<boolean> = new Subject();
 	public hasAddTag$: Observable<boolean>;
 	public tags: ITag[] = [];
@@ -35,8 +26,8 @@ export class TagsColorInputComponent extends PictureNameTagsComponent
 	private organization: IOrganization;
 
 	/*
-	* Getter & Setter selected tags
-	*/
+	 * Getter & Setter selected tags
+	 */
 	_selectedTags: ITag[] = [];
 	get selectedTags(): ITag[] {
 		return this._selectedTags;
@@ -46,8 +37,8 @@ export class TagsColorInputComponent extends PictureNameTagsComponent
 	}
 
 	/*
-	* Getter & Setter for check organization level
-	*/
+	 * Getter & Setter for check organization level
+	 */
 	_isOrgLevel: boolean = false;
 	get isOrgLevel(): boolean {
 		return this._isOrgLevel;
@@ -57,8 +48,8 @@ export class TagsColorInputComponent extends PictureNameTagsComponent
 	}
 
 	/*
-	* Getter & Setter for check tenant level
-	*/
+	 * Getter & Setter for check tenant level
+	 */
 	_isTenantLevel: boolean = false;
 	get isTenantLevel(): boolean {
 		return this._isTenantLevel;
@@ -68,8 +59,8 @@ export class TagsColorInputComponent extends PictureNameTagsComponent
 	}
 
 	/*
-	* Getter & Setter for multiple selection
-	*/
+	 * Getter & Setter for multiple selection
+	 */
 	_multiple: boolean = true;
 	get multiple(): boolean {
 		return this._multiple;
@@ -79,8 +70,8 @@ export class TagsColorInputComponent extends PictureNameTagsComponent
 	}
 
 	/*
-	* Getter & Setter for display label
-	*/
+	 * Getter & Setter for display label
+	 */
 	_label: boolean = true;
 	get label(): boolean {
 		return this._label;
@@ -90,8 +81,8 @@ export class TagsColorInputComponent extends PictureNameTagsComponent
 	}
 
 	/*
-	* Getter & Setter for dynamic add tag option
-	*/
+	 * Getter & Setter for dynamic add tag option
+	 */
 	_addTag: boolean = true;
 	get addTag(): boolean {
 		return this._addTag;
@@ -113,12 +104,7 @@ export class TagsColorInputComponent extends PictureNameTagsComponent
 
 	ngOnInit(): void {
 		this.hasAddTag$ = this.store.userRolePermissions$.pipe(
-			map(() =>
-				this.store.hasAnyPermission(
-					PermissionsEnum.ALL_ORG_EDIT,
-					PermissionsEnum.ORG_TAGS_ADD
-				)
-			)
+			map(() => this.store.hasAnyPermission(PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ORG_TAGS_ADD))
 		);
 		this.subject$
 			.pipe(
@@ -130,7 +116,7 @@ export class TagsColorInputComponent extends PictureNameTagsComponent
 			.pipe(
 				distinctUntilChange(),
 				filter((organization: IOrganization) => !!organization),
-				tap((organization: IOrganization) => this.organization = organization),
+				tap((organization: IOrganization) => (this.organization = organization)),
 				tap(() => this.subject$.next(true)),
 				untilDestroyed(this)
 			)
@@ -187,7 +173,7 @@ export class TagsColorInputComponent extends PictureNameTagsComponent
 					color: randomColor(),
 					description: '',
 					tenantId,
-					...(this.isOrgLevel ? { organizationId } : {}),
+					...(this.isOrgLevel ? { organizationId } : {})
 				})
 			);
 		} catch (error) {
@@ -197,5 +183,5 @@ export class TagsColorInputComponent extends PictureNameTagsComponent
 		}
 	};
 
-	ngOnDestroy(): void { }
+	ngOnDestroy(): void {}
 }

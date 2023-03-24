@@ -11,10 +11,7 @@ const routes: Routes = [
 		canActivate: [NgxPermissionsGuard],
 		data: {
 			permissions: {
-				only: [
-					PermissionsEnum.ALL_ORG_VIEW,
-					PermissionsEnum.ORG_TAGS_VIEW
-				],
+				only: [PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.ORG_TAGS_VIEW],
 				redirectTo: '/pages/dashboard'
 			}
 		}
@@ -25,4 +22,4 @@ const routes: Routes = [
 	imports: [RouterModule.forChild(routes)],
 	exports: [RouterModule]
 })
-export class TagsRoutingModule { }
+export class TagsRoutingModule {}

@@ -126,7 +126,7 @@ export const DEFAULT_ROLE_PERMISSIONS = [
 			PermissionsEnum.ALLOW_DELETE_TIME,
 			PermissionsEnum.ALLOW_MODIFY_TIME,
 			PermissionsEnum.ALLOW_MANUAL_TIME,
-			PermissionsEnum.DELETE_SCREENSHOTS,
+			PermissionsEnum.DELETE_SCREENSHOTS
 		]
 	},
 	{
@@ -253,7 +253,7 @@ export const DEFAULT_ROLE_PERMISSIONS = [
 			PermissionsEnum.ALLOW_DELETE_TIME,
 			PermissionsEnum.ALLOW_MODIFY_TIME,
 			PermissionsEnum.ALLOW_MANUAL_TIME,
-			PermissionsEnum.DELETE_SCREENSHOTS,
+			PermissionsEnum.DELETE_SCREENSHOTS
 		]
 	},
 	{
