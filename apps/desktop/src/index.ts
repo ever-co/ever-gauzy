@@ -66,6 +66,7 @@ import {
 	DesktopUpdater,
 	removeMainListener,
 	removeTimerListener,
+	ProviderFactory,
 } from '@gauzy/desktop-libs';
 import {
 	createGauzyWindow,
@@ -90,22 +91,12 @@ log.info(`GAUZY_USER_PATH: ${process.env.GAUZY_USER_PATH}`);
 const sqlite3filename = `${process.env.GAUZY_USER_PATH}/gauzy.sqlite3`;
 log.info(`Sqlite DB path: ${sqlite3filename}`);
 
-const knex = require('knex')({
-	client: 'sqlite3',
-	connection: {
-		filename: sqlite3filename,
-	},
-	pool: {
-		min: 2,
-		max: 15,
-		createTimeoutMillis: 3000,
-		acquireTimeoutMillis: 60 * 1000 * 2,
-		idleTimeoutMillis: 30000,
-		reapIntervalMillis: 1000,
-		createRetryIntervalMillis: 100,
-	},
-	useNullAsDefault: true,
-});
+const provider = ProviderFactory.instance;
+(async () => {
+	await provider.createDatabase();
+	await provider.migrate();
+})();
+const knex = provider.connection;
 
 const exeName = path.basename(process.execPath);
 
@@ -358,9 +349,6 @@ app.on('ready', async () => {
 		settings && typeof settings.autoLaunch === 'boolean'
 			? settings.autoLaunch
 			: true;
-	await knex
-		.raw(`pragma journal_mode = WAL;`)
-		.then((res) => console.log(res));
 	await dataModel.createNewTable(knex);
 	launchAtStartup(autoLaunch, false);
 	Menu.setApplicationMenu(
@@ -447,13 +435,15 @@ app.on('ready', async () => {
 		{ ...environment },
 		timeTrackerWindow
 	);
-	gauzyWindow.webContents.setZoomFactor(1.0);
-	gauzyWindow.webContents
-		.setVisualZoomLevelLimits(1, 5)
-		.then(() =>
-			console.log('Zoom levels have been set between 100% and 500%')
-		)
-		.catch((err) => console.log(err));
+	if (gauzyWindow) {
+		gauzyWindow.webContents.setZoomFactor(1.0);
+		gauzyWindow.webContents
+			.setVisualZoomLevelLimits(1, 5)
+			.then(() =>
+				console.log('Zoom levels have been set between 100% and 500%')
+			)
+			.catch((err) => console.log(err));
+	}
 });
 
 app.on('window-all-closed', quit);
@@ -557,34 +547,35 @@ ipcMain.on('restart_and_update', () => {
 });
 
 ipcMain.on('check_database_connection', async (event, arg) => {
-	let databaseOptions = {};
-	if (arg.db == 'postgres') {
-		databaseOptions = {
-			client: 'pg',
-			connection: {
-				host: arg.dbHost,
-				user: arg.dbUsername,
-				password: arg.dbPassword,
-				database: arg.dbName,
-				port: arg.dbPort,
-			},
-		};
-	} else {
-		databaseOptions = {
-			client: 'sqlite',
-			connection: {
-				filename: sqlite3filename,
-			},
-		};
-	}
-	const dbConn = require('knex')(databaseOptions);
 	try {
+		const provider = arg.db;
+		let databaseOptions;
+		if (provider === 'postgres') {
+			databaseOptions = {
+				client: 'pg',
+				connection: {
+					host: arg[provider].dbHost,
+					user: arg[provider].dbUsername,
+					password: arg[provider].dbPassword,
+					database: arg[provider].dbName,
+					port: arg[provider].dbPort
+				}
+			};
+		} else {
+			databaseOptions = {
+				client: 'sqlite',
+				connection: {
+					filename: sqlite3filename,
+				},
+			};
+		}
+		const dbConn = require('knex')(databaseOptions);
 		await dbConn.raw('select 1+1 as result');
 		event.sender.send('database_status', {
 			status: true,
 			message:
-				arg.db === 'postgres'
-					? 'Connection to PostgreSQL DB Succeeds'
+				provider === 'postgres'
+					? 'Connection to PostgresSQL DB Succeeds'
 					: 'Connection to SQLITE DB Succeeds',
 		});
 	} catch (error) {
