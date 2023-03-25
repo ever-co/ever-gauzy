@@ -1,6 +1,7 @@
 import { CurrenciesEnum, IOrganizationCreateInput } from "@gauzy/contracts";
-import { ApiProperty, IntersectionType } from "@nestjs/swagger";
+import { ApiProperty, IntersectionType, PickType } from "@nestjs/swagger";
 import { IsEnum, IsNotEmpty, IsString } from "class-validator";
+import { Organization } from "./../organization.entity";
 import { RelationalTagDTO } from "./../../tags/dto";
 import { OrganizationBonusesDTO } from "./organization-bonuses.dto";
 import { OrganizationSettingDTO } from "./organization-setting.dto";
@@ -10,7 +11,7 @@ import { OrganizationSettingDTO } from "./organization-setting.dto";
  *
  */
 export class CreateOrganizationDTO extends IntersectionType(
-	OrganizationBonusesDTO,
+	IntersectionType(OrganizationBonusesDTO, PickType(Organization, ['imageId'])),
 	IntersectionType(OrganizationSettingDTO, RelationalTagDTO)
 ) implements IOrganizationCreateInput {
 

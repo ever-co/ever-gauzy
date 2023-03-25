@@ -27,12 +27,15 @@ Ever® Gauzy™ Platform is a part of our larger Open Platform for **On-Demand a
 <summary>Show / Hide Screenshots</summary>
 
 ### Web UI
+
 ![overview](https://docs.gauzy.co/docs/assets/overview.png)
 
 ### Desktop Timer UI (Standard)
+
 ![timer](https://docs.gauzy.co/docs/assets/desktop/desktop-timer-small.png)
 
 ### Desktop Timer UI (Expanded)
+
 ![timer](https://docs.gauzy.co/docs/assets/desktop/desktop-timer-expanded.png)
 
 </details>
@@ -83,41 +86,51 @@ More detailed list of the features available in the platform:
 - Multi-lingual
 - Dark / Light / Corporate / Material and other Themes
 
-Read more [About Gauzy](https://github.com/ever-co/ever-gauzy/wiki/About-Gauzy) and [How to use it](https://github.com/ever-co/ever-gauzy/wiki/How-to-use-Gauzy) at your company, on-demand business, freelance business, agency, studio or in-house teams.
+Read more [about Gauzy](https://github.com/ever-co/ever-gauzy/wiki/About-Gauzy) and [how to use it](https://github.com/ever-co/ever-gauzy/wiki/How-to-use-Gauzy) at your company, on-demand business, freelance business, agency, studio or in-house teams.
 
 ## 🔗 Links
 
 - **<https://gauzy.co>** - check more information about the platform at official website.
-- **<https://ever.co>** - get more information about our company products. 
+- **<https://ever.co>** - get more information about our company products.
 
 ## 💻 Demo, Downloads, Testing and Production
 
 ### Demo
 
-- Ever Gauzy Platform Demo at <https://demo.gauzy.co> (login `admin@ever.co` and password: `admin`).
+Ever Gauzy Platform Demo at <https://demo.gauzy.co>.
 
-### Download
+Notes:
+
+- Default super-admin user login is `admin@ever.co` and password is `admin`
+- Content of demo DB resets on each deployment to demo environment (usually daily)
+- Demo environment deployed using CI/CD from the `develop` branch
+
+### Downloads
 
 You can download Gauzy Platform, Gauzy Server or Desktop Apps (Windows/Mac/Linux) from the official [Downloads](https://web.gauzy.co/downloads) page.
 
 In addition, all downloads are also available from the following pages:
 
-- [Gauzy Releases][uri_gauzy_github](https://github.com/ever-co/ever-gauzy/releases)
+- [Platform Releases](https://github.com/ever-co/ever-gauzy/releases)
 - [Server Releases](https://github.com/ever-co/ever-gauzy-server/releases)
 - [Desktop App Releases](https://github.com/ever-co/ever-gauzy-desktop/releases)
 - [Desktop Timer App Releases](https://github.com/ever-co/ever-gauzy-desktop-timer/releases)
 
-### Production (SaaS, WIP)
+### Production (SaaS)
 
-- Ever® Gauzy™ Platform SaaS at <https://app.gauzy.co> (not used yet in production / in testing mode and it's the same as <https://demo.gauzy.co> for now)
+Ever® Gauzy™ Platform SaaS available at <https://app.gauzy.co>.
 
-### Dev Builds
+Note: it's currently in Alpha version / in testing mode, please use with caution!
 
-- Gauzy Platform Dev builds (using CI/CD, from the `develop` branch) will be available later at <https://app.gauzy.dev>
+### Staging
+
+- Gauzy Platform Staging builds (using CI/CD, from the `stage` branch) are available at <https://stage.gauzy.co>
+- We are using Staging environment to test releases before they are deployed to production environment
+- Our pre-releases of desktop / server apps are built from this environment and can be configured manually (in settings) to connect to Stage API: <https://apistage.gauzy.co>
 
 ### Server & Desktop Apps
 
-We have Gauzy Server and two Desktop Apps (for Windows/Mac/Linux): 
+We have Gauzy Server and two Desktop Apps (for Windows/Mac/Linux):
 
 - Ever® Gauzy™ Server - includes Gauzy API, SQLite DB (or connects to external PostgreSQL) and serves Guazy frontend. It allows to quickly run Gauzy Server for multiple clients (browser based or Desktop based). It's recommended option if you want to setup Ever Gauzy Platform in the small to medium organizations.
 
@@ -152,7 +165,7 @@ For Production, we recommend:
 
 Note: thanks to TypeORM, Gauzy will support lots of DBs: SQLite (default, for demos), PostgreSQL (development/production), MySql, MariaDb, CockroachDb, MS SQL, Oracle, MongoDb and others, with minimal changes.
 
-#### See also README.md and CREDITS.md files in relevant folders for lists of libraries and software included in the Platform, information about licenses and other details.
+#### See also README.md and CREDITS.md files in relevant folders for lists of libraries and software included in the Platform, information about licenses and other details
 
 ## 📄 Documentation
 
@@ -162,55 +175,55 @@ Please refer to our official [Platform Documentation](https://docs.gauzy.co) and
 
 ### With Docker Compose
 
--   Clone repo.
--   Make sure you have Docker Compose [installed locally](https://docs.docker.com/compose/install).
--   Copy `.env.compose` file into `.env` file in the root of mono-repo (file contains default env variables definitions). Important: file `.env.compose` is different to `.env.sample` in some settings, please make sure you use correct one!
--   Run `docker-compose -f docker-compose.demo.yml up`, if you want to run the platform using our prebuild Docker images. _(Note: it uses latest images pre-build automatically from head of `master` branch using Github CI/CD.)_
--   Run `docker-compose up`, if you want to build everything (code and Docker images) locally. _(Note: this is extremely long process, option above is much faster.)_
--   :coffee: time... It might take some time for our API to seed fake data in the DB during the first Docker Compose run, even if you used prebuild Docker images.
--   Open <http://localhost:4200> in your browser.
--   Login with email `admin@ever.co` and password: `admin` for Super Admin user.
--   Login with email `employee@ever.co` and password: `123456` for Employee user.
--   Enjoy!
+- Clone repo.
+- Make sure you have Docker Compose [installed locally](https://docs.docker.com/compose/install).
+- Copy `.env.compose` file into `.env` file in the root of mono-repo (file contains default env variables definitions). Important: file `.env.compose` is different to `.env.sample` in some settings, please make sure you use correct one!
+- Run `docker-compose -f docker-compose.demo.yml up`, if you want to run the platform using our prebuild Docker images. _(Note: it uses latest images pre-build automatically from head of `master` branch using Github CI/CD.)_
+- Run `docker-compose up`, if you want to build everything (code and Docker images) locally. _(Note: this is extremely long process, option above is much faster.)_
+- :coffee: time... It might take some time for our API to seed fake data in the DB during the first Docker Compose run, even if you used prebuild Docker images.
+- Open <http://localhost:4200> in your browser.
+- Login with email `admin@ever.co` and password: `admin` for Super Admin user.
+- Login with email `employee@ever.co` and password: `123456` for Employee user.
+- Enjoy!
 
 Together with Gauzy, Docker Compose will run following:
 
--   [PostgreSQL](https://www.postgresql.org) - Object-relational database system.
--   [Redis](https://github.com/redis/redis) - In-memory data store.
--   [ElasticSearch](https://github.com/elastic/elasticsearch) - Search Engine.
--   [MinIO](https://github.com/minio/minio) - Multi-Cloud ☁️ Object Storage.
--   [Pgweb](https://github.com/sosedoff/pgweb) - Cross-platform client for PostgreSQL DBs, on <http://localhost:8081>.
+- [PostgreSQL](https://www.postgresql.org) - Object-relational database system.
+- [Redis](https://github.com/redis/redis) - In-memory data store.
+- [ElasticSearch](https://github.com/elastic/elasticsearch) - Search Engine.
+- [MinIO](https://github.com/minio/minio) - Multi-Cloud ☁️ Object Storage.
+- [Pgweb](https://github.com/sosedoff/pgweb) - Cross-platform client for PostgreSQL DBs, on <http://localhost:8081>.
 
 ### Manually
 
--   Install [NodeJs](https://nodejs.org/en/download) LTS version or later, e.g. 18.x.
--   Optionally (recommended for production) install and run [PostgreSQL](https://www.postgresql.org) version 14 or later. Note: other DB can be configured manually in TypeORM. The default DB is set to SQLite (recommended for testing/demo purposes only).
--   Optionally (recommended for production) install and run [Redis](https://github.com/redis/redis). Note: the platform will work without Redis using in-memory caching strategy instead of distributed one (recommended for testing/demo purposes only).
--   Optionally (recommended for production) install and run [ElasticSearch](https://github.com/elastic/elasticsearch). Note: the platform will work without ElasticSearch using DB build-in search capabilities (recommended for testing/demo purposes only).
--   Optionally install and run [MinIO](https://github.com/minio/minio) or [LocalStack](https://github.com/localstack/localstack). Note: the platform will work without MinIO / LocalStack or other S3 compatible storage using local filesystem based storage (recommended for testing/demo purposes only).
--   Install [Yarn](https://github.com/yarnpkg/yarn) (if you don't have it) with `npm i -g yarn`.
--   Install NPM packages and bootstrap solution using command `yarn bootstrap`.
--   If you will need to make code changes (and push to Git repo), please run `yarn prepare:husky`.
--   Adjust settings in the [`.env.local`](https://github.com/ever-co/ever-gauzy/blob/develop/.env.local) which used in local runs.  
--   Alternatively, you can copy [`.env.sample`](https://github.com/ever-co/ever-gauzy/blob/develop/.env.sample) to `.env` and change default settings there, e.g. database type, name, user, password, etc.
--   Optionally, if you want to seed a lot of fake data for demo testing, run `yarn seed:all`.
--   Run both API and UI with single command: `yarn start`.
--   Open Gauzy UI on <http://localhost:4200> in your browser (API runs on <http://localhost:3000/api>).
--   Login with email `admin@ever.co` and password: `admin` for Super Admin user.
--   Login with email `employee@ever.co` and password: `123456` for Employee user.
--   Enjoy!
+- Install [NodeJs](https://nodejs.org/en/download) LTS version or later, e.g. 18.x.
+- Optionally (recommended for production) install and run [PostgreSQL](https://www.postgresql.org) version 14 or later. Note: other DB can be configured manually in TypeORM. The default DB is set to SQLite (recommended for testing/demo purposes only).
+- Optionally (recommended for production) install and run [Redis](https://github.com/redis/redis). Note: the platform will work without Redis using in-memory caching strategy instead of distributed one (recommended for testing/demo purposes only).
+- Optionally (recommended for production) install and run [ElasticSearch](https://github.com/elastic/elasticsearch). Note: the platform will work without ElasticSearch using DB build-in search capabilities (recommended for testing/demo purposes only).
+- Optionally install and run [MinIO](https://github.com/minio/minio) or [LocalStack](https://github.com/localstack/localstack). Note: the platform will work without MinIO / LocalStack or other S3 compatible storage using local filesystem based storage (recommended for testing/demo purposes only).
+- Install [Yarn](https://github.com/yarnpkg/yarn) (if you don't have it) with `npm i -g yarn`.
+- Install NPM packages and bootstrap solution using command `yarn bootstrap`.
+- If you will need to make code changes (and push to Git repo), please run `yarn prepare:husky`.
+- Adjust settings in the [`.env.local`](https://github.com/ever-co/ever-gauzy/blob/develop/.env.local) which used in local runs.
+- Alternatively, you can copy [`.env.sample`](https://github.com/ever-co/ever-gauzy/blob/develop/.env.sample) to `.env` and change default settings there, e.g. database type, name, user, password, etc.
+- Optionally, if you want to seed a lot of fake data for demo testing, run `yarn seed:all`.
+- Run both API and UI with single command: `yarn start`.
+- Open Gauzy UI on <http://localhost:4200> in your browser (API runs on <http://localhost:3000/api>).
+- Login with email `admin@ever.co` and password: `admin` for Super Admin user.
+- Login with email `employee@ever.co` and password: `123456` for Employee user.
+- Enjoy!
 
 Notes:
 
--   during the first API start, DB will be automatically seed with minimum set of initial data if no users found.
--   you can run seed any moment manually (e.g. if you changed entities schemas) with `yarn seed` command to re-initialize DB (warning: unsafe for production!).
--   it is possible to run generation of extremely large amount of fake data for demo purposes / testing with `yarn seed:all` (warning: takes ~10 min to complete)
+- during the first API start, DB will be automatically seed with minimum set of initial data if no users found.
+- you can run seed any moment manually (e.g. if you changed entities schemas) with `yarn seed` command to re-initialize DB (warning: unsafe for production!).
+- it is possible to run generation of extremely large amount of fake data for demo purposes / testing with `yarn seed:all` (warning: takes ~10 min to complete)
 
 ### Production
 
--   See [Setup Gauzy for Client Server](https://github.com/ever-co/ever-gauzy/wiki/Setup-Gauzy-for-Client-Server) for more information about production setup on your servers.
--   For simple deployments scenarios (e.g. for yourself or your own small organization), check our [Kubernetes configurations](https://github.com/ever-co/ever-gauzy/tree/develop/.deploy/k8s), which we are using to deploy Gauzy demo into [DigitalOcean k8s cluster](https://www.digitalocean.com/products/kubernetes).
--   In addition, check [Gauzy Pulumi](https://github.com/ever-co/ever-gauzy-pulumi) project (WIP), it makes complex Clouds deployments possible with a single command (`pulumi up`). Note: it currently supports AWS EKS (Kubernetes) for development and production with Application Load Balancers and AWS RDS Serverless PostgreSQL DB deployments. We also implemented deployments to ECS EC2 and Fargate Clusters in the same Pulumi project.
+- See [Setup Gauzy for Client Server](https://github.com/ever-co/ever-gauzy/wiki/Setup-Gauzy-for-Client-Server) for more information about production setup on your servers.
+- For simple deployments scenarios (e.g. for yourself or your own small organization), check our [Kubernetes configurations](https://github.com/ever-co/ever-gauzy/tree/develop/.deploy/k8s), which we are using to deploy Gauzy demo into [DigitalOcean k8s cluster](https://www.digitalocean.com/products/kubernetes).
+- In addition, check [Gauzy Pulumi](https://github.com/ever-co/ever-gauzy-pulumi) project (WIP), it makes complex Clouds deployments possible with a single command (`pulumi up`). Note: it currently supports AWS EKS (Kubernetes) for development and production with Application Load Balancers and AWS RDS Serverless PostgreSQL DB deployments. We also implemented deployments to ECS EC2 and Fargate Clusters in the same Pulumi project.
 
 ## 💌 Contact Us
 
@@ -227,8 +240,8 @@ Notes:
 
 ## 🔐 Security
 
-Ever® Gauzy™ follows good security practices, but 100% security cannot be guaranteed in any software!  
-Ever® Gauzy™ is provided AS IS without any warranty. Use at your own risk!  
+Ever® Gauzy™ follows good security practices, but 100% security cannot be guaranteed in any software!
+Ever® Gauzy™ is provided AS IS without any warranty. Use at your own risk!
 See more details in the [LICENSE](LICENSE.md).
 
 In a production setup, all client-side to server-side (backend, APIs) communications should be encrypted using HTTPS/WSS/SSL (REST APIs, GraphQL endpoint, Socket.io WebSockets, etc.).
@@ -245,15 +258,15 @@ This software is available under following licenses:
 - [Ever® Gauzy™ Platform Small Business](https://github.com/ever-co/ever-gauzy/blob/master/LICENSE.md#gauzy-platform-small-business-license)
 - [Ever® Gauzy™ Platform Enterprise](https://github.com/ever-co/ever-gauzy/blob/master/LICENSE.md#gauzy-platform-enterprise-license)
 
-#### The default Ever® Gauzy™ Platform license, without a valid Ever® Gauzy™ Platform Enterprise or Ever® Gauzy™ Platform Small Business License agreement, is the Ever® Gauzy™ Platform Community Edition License.
+#### The default Ever® Gauzy™ Platform license, without a valid Ever® Gauzy™ Platform Enterprise or Ever® Gauzy™ Platform Small Business License agreement, is the Ever® Gauzy™ Platform Community Edition License
 
-#### Please see [LICENSE](LICENSE.md) for more information on licenses. You can also [compare our offering](https://ever.co/compare-gauzy/#compare).
+#### Please see [LICENSE](LICENSE.md) for more information on licenses. You can also [compare our offering](https://ever.co/compare-gauzy/#compare)
 
 [![FOSSA Status](https://app.fossa.io/api/projects/git%2Bgithub.com%2Fever-co%2Fgauzy.svg?type=large)](https://app.fossa.io/projects/git%2Bgithub.com%2Fever-co%2Fgauzy?ref=badge_large)
 
 ## ™️ Trademarks
 
-**Ever**® is a registered trademark of [Ever Co. LTD](https://ever.co).  
+**Ever**® is a registered trademark of [Ever Co. LTD](https://ever.co).
 **Ever® Demand™**, **Ever® Gauzy™** and **Ever® OpenSaaS™**  are all trademarks of [Ever Co. LTD](https://ever.co).
 
 The trademarks may only be used with the written permission of Ever Co. LTD. and may not be used to promote or otherwise market competitive products or services.
@@ -262,13 +275,13 @@ All other brand and product names are trademarks, registered trademarks or servi
 
 ## 🍺 Contribute
 
--   Please give us :star: on Github, it **helps**!
--   You are more than welcome to submit feature requests in the [separate repo](https://github.com/ever-co/feature-requests/issues)
--   Pull requests are always welcome! Please base pull requests against the _develop_ branch and follow the [contributing guide](.github/CONTRIBUTING.md).
+- Please give us :star: on Github, it **helps**!
+- You are more than welcome to submit feature requests in the [separate repo](https://github.com/ever-co/feature-requests/issues)
+- Pull requests are always welcome! Please base pull requests against the _develop_ branch and follow the [contributing guide](.github/CONTRIBUTING.md).
 
 ## 💪 Thanks to our Contributors
 
-See our contributors list in [CONTRIBUTORS.md](https://github.com/ever-co/ever-gauzy/blob/develop/.github/CONTRIBUTORS.md).  
+See our contributors list in [CONTRIBUTORS.md](https://github.com/ever-co/ever-gauzy/blob/develop/.github/CONTRIBUTORS.md).
 You can also view full list of our [contributors tracked by Github](https://github.com/ever-co/ever-gauzy/graphs/contributors).
 
 <img src="https://contributors-img.web.app/image?repo=ever-co/ever-gauzy" />
