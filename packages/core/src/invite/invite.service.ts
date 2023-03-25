@@ -805,7 +805,22 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 			id: inviteId,
 			token,
 			code,
+			teams,
 		} = invitation;
+		let invitedTenantUser: User;
+		if (user.tenantId !== tenantId) {
+			invitedTenantUser = await this.userRepository.findOne({
+				where: {
+					email,
+					tenantId,
+				},
+				relations: {
+					tenant: true,
+					role: true,
+					employee: true,
+				},
+			});
+		}
 
 		/**
 		 * ACCEPTED
@@ -813,11 +828,52 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 		if (action === InviteActionEnum.ACCEPTED) {
 			/**
 			 * Accepted Case - 1
-			 * Current user is not belong to invited tenant
+			 * Current user is belong to invited tenant
 			 */
-			if (user.tenantId !== tenantId) {
+			if (user.tenantId === tenantId) {
+				await this.commandBus.execute(
+					new InviteAcceptCommand(
+						{
+							user,
+							email,
+							token: token,
+							code: code,
+							originalUrl: origin,
+						},
+						languageCode
+					)
+				);
+			}
+
+			/**
+			 * Accepted Case - 2
+			 * Current user is already part of invited tenant as separate user
+			 */
+			if (invitedTenantUser) {
+				/**
+				 * Add employee to invited team
+				 */
+
+				await this.organizationTeamEmployeeRepository.save({
+					employeeId: invitedTenantUser.employeeId,
+					organizationTeamId: teams[0].id,
+					tenantId,
+					organizationId: organizationId,
+					roleId: invitedTenantUser.roleId,
+				});
+
+				await this.repository.update(inviteId, {
+					status: InviteStatusEnum.ACCEPTED,
+					userId: invitedTenantUser.id,
+				});
+			}
+
+			/**
+			 * Accepted Case - 3
+			 * Current user is not belong to invited tenant & current user email with invited tenant is not present
+			 */
+			if (user.tenantId !== tenantId && !invitedTenantUser) {
 				const names = fullName?.split(' ');
-				const code = generateRandomInteger(6);
 				const newTenantUser = await this.createUser(
 					{
 						user: {
@@ -826,13 +882,6 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 							email: email,
 							tenant: tenant,
 							role: role,
-							code: code,
-							codeExpireAt: moment(new Date())
-								.add(
-									environment.AUTHENTICATION_CODE_EXPIRATION_TIME,
-									'seconds'
-								)
-								.toDate(),
 						},
 						organizationId,
 						inviteId,
@@ -845,37 +894,25 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 					status: InviteStatusEnum.ACCEPTED,
 					userId: newTenantUser.id,
 				});
-
-				return this.authService.verifyAuthCode({ email, code });
-			}
-
-			/**
-			 * Accepted Case - 2
-			 * Current user is belong to invited tenant
-			 */
-			if (user.tenantId === tenantId) {
-				const inviteAcceptCommandResponse =
-					await this.commandBus.execute(
-						new InviteAcceptCommand(
-							{
-								user,
-								email,
-								token: token,
-								code: code,
-								originalUrl: origin,
-							},
-							languageCode
-						)
-					);
-				return inviteAcceptCommandResponse;
 			}
 		}
 
 		/**
 		 * REJECTED
 		 */
-		return await this.repository.update(inviteId, {
-			status: InviteStatusEnum.REJECTED,
+		if (action === InviteActionEnum.REJECTED) {
+			await this.repository.update(inviteId, {
+				status: InviteStatusEnum.REJECTED,
+			});
+		}
+
+		return this.inviteRepository.findOne({
+			where: {
+				id: inviteId,
+			},
+			select: {
+				status: true,
+			},
 		});
 	}
 
