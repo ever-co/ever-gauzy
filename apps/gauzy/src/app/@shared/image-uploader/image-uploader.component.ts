@@ -118,7 +118,7 @@ export class ImageUploaderComponent implements AfterViewInit, OnInit {
         headers.push({ name: 'Tenant-Id', value: tenantId });
 
         const uploaderOptions: FileUploaderOptions = {
-            url: `${API_PREFIX}/image-assets/upload/profile_pictures_avatars`,
+            url: `${API_PREFIX}/image-assets/upload/${this.folder}`,
             // XHR request method
             method: 'POST',
             // Upload files automatically upon addition to upload queue
