@@ -3,8 +3,8 @@
 		<div class="organization-photo">
 			<ngx-image-uploader
 				(changeHoverState)="hoverState = $event"
-				(uploadedImageUrl)="form.get('imageUrl').setValue($event)"
-				(uploadImageError)="handleImageUploadError($event)"
+				(uploadedImageAsset)="updateImageAsset($event)"
+				(uploadImageAssetError)="handleImageUploadError($event)"
 			></ngx-image-uploader>
 			<svg
 				xmlns="http://www.w3.org/2000/svg"
@@ -50,7 +50,7 @@
 	</div>
 
 	<div class="employee-form w-75 pl-3 pr-3">
-		<form [formGroup]="form" *ngIf="form">
+		<form [formGroup]="form">
 			<div class="row">
 				<div class="col">
 					<div class="form-group">

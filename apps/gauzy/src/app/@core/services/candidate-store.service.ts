@@ -2,7 +2,8 @@ import {
 	IUserFindInput,
 	ICandidate,
 	ICandidateUpdateInput,
-	ICandidateInterview
+	ICandidateInterview,
+	IUserUpdateInput
 } from '@gauzy/contracts';
 import { BehaviorSubject, Observable } from 'rxjs';
 import { Injectable } from '@angular/core';
@@ -48,12 +49,12 @@ export class CandidateStore {
 		return this._selectedCandidate;
 	}
 
-	set userForm(user: IUserFindInput) {
+	set userForm(user: IUserUpdateInput) {
 		this._userForm = user;
 		this.userForm$.next(user);
 	}
 
-	get userForm(): IUserFindInput {
+	get userForm(): IUserUpdateInput {
 		return this._userForm;
 	}
 

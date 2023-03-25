@@ -8,10 +8,10 @@
 							<div class="project-image-photo">
 								<ngx-image-uploader
 									(changeHoverState)="hoverState = $event"
-									(uploadedImageUrl)="
+									(uploadedImageAsset)="
 										form.get('imageUrl').setValue($event)
 									"
-									(uploadImageError)="
+									(uploadImageAssetError)="
 										handleImageUploadError($event)
 									"
 								></ngx-image-uploader>
