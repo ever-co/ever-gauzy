@@ -280,7 +280,7 @@ export class OrganizationsStepFormComponent
 	}
 
 	/**
-	 * Upload candidate image/avatar
+	 * Upload organization image/avatar
 	 *
 	 * @param image
 	 */

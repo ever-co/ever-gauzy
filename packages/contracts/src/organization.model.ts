@@ -11,6 +11,7 @@ import { ISkill } from './skill-entity.model';
 import { ITag } from './tag.model';
 import { ITenant } from './tenant.model';
 import { IReportOrganization } from './report.model';
+import { IRelationalImageAsset } from './image-asset.model';
 
 export interface IRegisterAsEmployee {
 	registerAsEmployee?: boolean;
@@ -30,7 +31,7 @@ export enum ListsInputTypeEnum {
 	VENDORS = 'VENDORS'
 }
 
-export interface IOrganization extends IBasePerTenantEntityModel {
+export interface IOrganization extends IBasePerTenantEntityModel, IRelationalImageAsset {
 	name: string;
 	isDefault: boolean;
 	profile_link: string;

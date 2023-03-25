@@ -12,7 +12,8 @@ import {
 	ICurrency,
 	IOrganization,
 	ITag,
-	CrudActionEnum
+	CrudActionEnum,
+	IImageAsset
 } from '@gauzy/contracts';
 import { TranslateService } from '@ngx-translate/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
@@ -27,6 +28,7 @@ import {
 	Store,
 	ToastrService
 } from '../../../../../@core/services';
+import { DUMMY_PROFILE_IMAGE } from './../../../../../@core/constants';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -37,7 +39,6 @@ import {
 export class EditOrganizationMainComponent extends TranslationBaseComponent
 	implements OnInit, OnDestroy, AfterViewInit {
 
-	imageUrl: string;
 	hoverState: boolean;
 	employeesCount: number;
 
@@ -53,14 +54,20 @@ export class EditOrganizationMainComponent extends TranslationBaseComponent
 			currency: [null, Validators.required],
 			name: [null, Validators.required],
 			officialName: [null],
-			profile_link: [null, [
+			profile_link: [
+				null,
+				[
 					Validators.required,
 					Validators.pattern('^[a-z0-9-]+$')
 				]
 			],
 			taxId: [null],
 			registrationDate: [null],
-			website: [null]
+			website: [null],
+			imageUrl: [
+				{ value: null, disabled: true }
+			],
+			imageId: []
 		});
 	}
 
@@ -94,7 +101,6 @@ export class EditOrganizationMainComponent extends TranslationBaseComponent
 					(organization: IOrganization) =>
 						(this.organization = organization)
 				),
-				tap((organization: IOrganization) => (this.imageUrl = organization.imageUrl)),
 				tap(() => this._setFormValues()),
 				untilDestroyed(this)
 			)
@@ -107,11 +113,29 @@ export class EditOrganizationMainComponent extends TranslationBaseComponent
 		this.cdr.detectChanges();
 	}
 
-	updateImageUrl(url: string) {
-		this.imageUrl = url;
+	/**
+	 * Upload organization image/avatar
+	 *
+	 * @param image
+	 */
+	updateImageAsset(image: IImageAsset) {
+		try {
+			if (image && image.id) {
+				this.form.get('imageId').setValue(image.id);
+				this.form.get('imageUrl').setValue(image.fullUrl);
+			} else {
+				this.form.get('imageUrl').setValue(DUMMY_PROFILE_IMAGE);
+			}
+			this.form.updateValueAndValidity();
+		} catch (error) {
+			console.log('Error while updating organization avatars');
+			this.handleImageUploadError(error);
+		}
 	}
 
-	handleImageUploadError(event: any) { }
+	handleImageUploadError(error: any) {
+		this.toastrService.danger(error);
+	}
 
 	/**
 	 * Update organization main settings
@@ -124,9 +148,8 @@ export class EditOrganizationMainComponent extends TranslationBaseComponent
 		}
 		try {
 			const organization = await this.organizationService.update(this.organization.id, {
-				imageUrl: this.imageUrl,
 				defaultValueDateType: this.organization.defaultValueDateType,
-				...this.form.getRawValue()
+				...this.form.value
 			});
 			if (organization) {
 				this.organizationEditStore.organizationAction = {
@@ -157,6 +180,8 @@ export class EditOrganizationMainComponent extends TranslationBaseComponent
 			return;
 		}
 		this.form.setValue({
+			imageId: this.organization.imageId,
+			imageUrl: this.organization.imageUrl,
 			tags: this.organization.tags,
 			currency: this.organization.currency,
 			name: this.organization.name,
@@ -184,5 +209,5 @@ export class EditOrganizationMainComponent extends TranslationBaseComponent
 	/*
 	 * On Changed Currency Event Emitter
 	 */
-	currencyChanged($event: ICurrency) {}
+	currencyChanged($event: ICurrency) { }
 }

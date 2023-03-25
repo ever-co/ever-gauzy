@@ -2,17 +2,14 @@
 	<div class="organization-container">
 		<div class="organization-photo ml-4">
 			<ngx-image-uploader
+				[folder]="'organization_avatars'"
 				(changeHoverState)="hoverState = $event"
-				(uploadedImageAsset)="updateImageUrl($event)"
+				(uploadedImageAsset)="updateImageAsset($event)"
 				(uploadImageAssetError)="handleImageUploadError($event)"
 			></ngx-image-uploader>
-			<div
-				class="image-overlay"
-				[ngStyle]="{ opacity: hoverState ? '0.2' : '0' }"
-			></div>
+			<div class="image-overlay" [ngStyle]="{ opacity: hoverState ? '0.2' : '0' }"></div>
 			<img
-				*ngIf="imageUrl"
-				[src]="imageUrl"
+				[src]="form.get('imageUrl').value"
 				alt="Organization Photo"
 				(mouseenter)="hoverState = true"
 				(mouseleave)="hoverState = false"
