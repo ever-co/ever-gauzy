@@ -16,9 +16,7 @@ export class AuthStrategy extends NbAuthStrategy {
 				success: '/time-tracker',
 				failure: null
 			},
-			defaultErrors: [
-				'Login/Email combination is not correct, please try again.'
-			],
+			defaultErrors: ['Login/Email combination is not correct, please try again.'],
 			defaultMessages: ['You have been successfully logged in.'],
 			roleErrors: ['Your account is not an employee']
 		},
@@ -44,9 +42,7 @@ export class AuthStrategy extends NbAuthStrategy {
 				failure: null
 			},
 			defaultErrors: ['Email is not correct, please try again.'],
-			defaultMessages: [
-				'Reset password instructions have been sent to your email.'
-			]
+			defaultMessages: ['Reset password instructions have been sent to your email.']
 		},
 		resetPass: {
 			redirect: {
@@ -71,11 +67,7 @@ export class AuthStrategy extends NbAuthStrategy {
 		return [AuthStrategy, options];
 	}
 
-	authenticate(args: {
-		email: string;
-		password: string;
-		rememberMe?: boolean | null;
-	}): Observable<NbAuthResult> {
+	authenticate(args: { email: string; password: string; rememberMe?: boolean | null }): Observable<NbAuthResult> {
 		const { email, password } = args;
 		// TODO implement remember me feature
 		// const rememberMe = !!args.rememberMe;
@@ -87,25 +79,17 @@ export class AuthStrategy extends NbAuthStrategy {
 
 	register(data?: any): Observable<NbAuthResult> {
 		return of(
-			new NbAuthResult(
-				false,
-				{},
-				false,
-				AuthStrategy.config.register.defaultErrors,
-				[AuthStrategy.config.register.defaultErrors]
-			)
+			new NbAuthResult(false, {}, false, AuthStrategy.config.register.defaultErrors, [
+				AuthStrategy.config.register.defaultErrors
+			])
 		);
 	}
 
 	resetPassword(data?: any): Observable<NbAuthResult> {
 		return of(
-			new NbAuthResult(
-				false,
-				{},
-				false,
-				AuthStrategy.config.register.defaultErrors,
-				[AuthStrategy.config.register.defaultErrors]
-			)
+			new NbAuthResult(false, {}, false, AuthStrategy.config.register.defaultErrors, [
+				AuthStrategy.config.register.defaultErrors
+			])
 		);
 	}
 
@@ -122,31 +106,16 @@ export class AuthStrategy extends NbAuthStrategy {
 						token = res.token;
 					}
 					if (!token) {
-						return new NbAuthResult(
-							false,
-							res,
-							false,
-							AuthStrategy.config.requestPass.defaultErrors
-						);
+						return new NbAuthResult(false, res, false, AuthStrategy.config.requestPass.defaultErrors);
 					}
-					return new NbAuthResult(
-						true,
-						res,
-						false,
-						[],
-						AuthStrategy.config.requestPass.defaultMessages
-					);
+					return new NbAuthResult(true, res, false, [], AuthStrategy.config.requestPass.defaultMessages);
 				}),
 				catchError((err) => {
 					console.log(err);
 					return of(
-						new NbAuthResult(
-							false,
-							err,
-							false,
-							AuthStrategy.config.requestPass.defaultErrors,
-							[AuthStrategy.config.requestPass.defaultErrors]
-						)
+						new NbAuthResult(false, err, false, AuthStrategy.config.requestPass.defaultErrors, [
+							AuthStrategy.config.requestPass.defaultErrors
+						])
 					);
 				})
 			);
@@ -188,21 +157,11 @@ export class AuthStrategy extends NbAuthStrategy {
 				}
 
 				if (!user) {
-					return new NbAuthResult(
-						false,
-						res,
-						false,
-						AuthStrategy.config.login.defaultErrors
-					);
+					return new NbAuthResult(false, res, false, AuthStrategy.config.login.defaultErrors);
 				}
 
 				if (!user.employee) {
-					return new NbAuthResult(
-						false,
-						res,
-						false,
-						AuthStrategy.config.login.roleErrors
-					);
+					return new NbAuthResult(false, res, false, AuthStrategy.config.login.roleErrors);
 				}
 
 				this.store.userId = user.id;
@@ -221,13 +180,9 @@ export class AuthStrategy extends NbAuthStrategy {
 			catchError((err) => {
 				console.log(err);
 				return of(
-					new NbAuthResult(
-						false,
-						err,
-						false,
-						AuthStrategy.config.login.defaultErrors,
-						[AuthStrategy.config.login.defaultErrors]
-					)
+					new NbAuthResult(false, err, false, AuthStrategy.config.login.defaultErrors, [
+						AuthStrategy.config.login.defaultErrors
+					])
 				);
 			})
 		);
@@ -241,9 +196,7 @@ export class AuthStrategy extends NbAuthStrategy {
 					token: token,
 					userId: user.id,
 					employeeId: user.employee ? user.employee.id : null,
-					organizationId: user.employee
-						? user.employee.organizationId
-						: null,
+					organizationId: user.employee ? user.employee.organizationId : null,
 					tenantId: user.tenantId ? user.tenantId : null
 				});
 			}
