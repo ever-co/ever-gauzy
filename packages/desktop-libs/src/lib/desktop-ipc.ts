@@ -550,14 +550,14 @@ export function ipcTimer(
 			*/
 	});
 
-	ipcMain.on('show_screenshot_notif_window', (event, arg) => {
+	ipcMain.on('show_screenshot_notif_window', async (event, arg) => {
 		const appSetting = LocalStore.getStore('appSetting');
 		const notify = new NotificationDesktop();
 		if (appSetting) {
 			if (appSetting.simpleScreenshotNotification) {
 				notify.customNotification('Screenshot taken', 'Gauzy');
 			} else if (appSetting.screenshotNotification) {
-				notifyScreenshot(
+				await notifyScreenshot(
 					notificationWindow,
 					arg,
 					windowPath,
