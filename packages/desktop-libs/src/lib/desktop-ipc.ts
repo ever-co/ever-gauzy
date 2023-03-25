@@ -141,20 +141,24 @@ export function ipcMainHandler(
 			try {
 				const user = await userService.retrieve();
 				console.log('Current User', user);
-				if (!user || auth.userId !== user.remoteId) {
-					timeTrackerWindow.webContents.send('logout');
-				}
-			} catch (error) {
-				try {
+				if (user) {
+					if (auth.userId !== user.remoteId) {
+						timeTrackerWindow.webContents.send('logout');
+					}
+				} else {
 					const userService = new UserService();
 					const user = new User({ ...auth });
 					user.remoteId = auth.userId;
 					user.organizationId = auth.organizationId;
 					await userService.save(user.toObject());
-				} catch (error) {
-					timeTrackerWindow.webContents.send('logout');
 				}
+			} catch (error) {
+				timeTrackerWindow.webContents.send('logout');
+				console.log('[ERROR_ON_INIT]', error);
 			}
+		} else {
+			timeTrackerWindow.webContents.send('logout');
+			return;
 		}
 		try {
 			const lastTime = await TimerData.getLastCaptureTimeSlot(
@@ -546,14 +550,14 @@ export function ipcTimer(
 			*/
 	});
 
-	ipcMain.on('show_screenshot_notif_window', (event, arg) => {
+	ipcMain.on('show_screenshot_notif_window', async (event, arg) => {
 		const appSetting = LocalStore.getStore('appSetting');
 		const notify = new NotificationDesktop();
 		if (appSetting) {
 			if (appSetting.simpleScreenshotNotification) {
 				notify.customNotification('Screenshot taken', 'Gauzy');
 			} else if (appSetting.screenshotNotification) {
-				notifyScreenshot(
+				await notifyScreenshot(
 					notificationWindow,
 					arg,
 					windowPath,

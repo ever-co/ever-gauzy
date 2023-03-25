@@ -1,6 +1,6 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
-import { IEmployee, IOrganization } from '@gauzy/contracts';
+import { IEmployee, IImageAsset, IOrganization } from '@gauzy/contracts';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { combineLatest } from 'rxjs';
 import { filter, tap } from 'rxjs/operators';
@@ -37,9 +37,12 @@ export class EditEmployeeMainComponent implements OnInit, OnDestroy {
 			email: [null, Validators.required],
 			firstName: [],
 			lastName: [],
-			imageUrl: ['', Validators.required],
 			preferredLanguage: [],
-			profile_link: []
+			profile_link: [],
+			imageId: [],
+			imageUrl: [
+				{ value: null, disabled: true }
+			],
 		});
 	}
 
@@ -48,7 +51,7 @@ export class EditEmployeeMainComponent implements OnInit, OnDestroy {
 		private readonly store: Store,
 		private readonly toastrService: ToastrService,
 		private readonly employeeStore: EmployeeStore
-	) {}
+	) { }
 
 	ngOnInit() {
 		const storeOrganization$ = this.store.selectedOrganization$;
@@ -70,33 +73,43 @@ export class EditEmployeeMainComponent implements OnInit, OnDestroy {
 		this.toastrService.danger(error);
 	}
 
-	updateImage(imageUrl: string) {
-		this.form.get('imageUrl').setValue(imageUrl);
-		try  {
-			this.employeeStore.userForm = {
-				imageUrl
-			};
+	/**
+	 * Upload employee image/avatar
+	 *
+	 * @param image
+	 */
+	updateImageAsset(image: IImageAsset) {
+		try {
+			if (image) {
+				this.employeeStore.userForm = {
+					imageId: image.id
+				};
+			}
 		} catch (error) {
-			this.handleImageUploadError(error)
+			this.handleImageUploadError(error);
 		}
 	}
 
+	/**
+	 * Submit employee main profile
+	 *
+	 * @returns
+	 */
 	submitForm() {
-		if (this.form.valid) {
-			const { id: organizationId } = this.organization;
-			const { tenantId } = this.store.user;
-			
-			const values = {
-				...this.form.getRawValue(),
-				...{
-					organizationId,
-					tenantId
-				}
-			}
-
-			this.employeeStore.userForm = values;
-			this.employeeStore.employeeForm = values;
+		if (this.form.invalid || !this.organization) {
+			return;
 		}
+		const { id: organizationId } = this.organization;
+		const { tenantId } = this.store.user;
+
+		const values = {
+			organizationId,
+			tenantId,
+			...(this.form.valid ? this.form.value : {}),
+		}
+
+		this.employeeStore.userForm = values;
+		this.employeeStore.employeeForm = values;
 	}
 
 	private _initializeFormValue(employee: IEmployee) {
@@ -106,10 +119,11 @@ export class EditEmployeeMainComponent implements OnInit, OnDestroy {
 			firstName: employee.user.firstName,
 			lastName: employee.user.lastName,
 			imageUrl: employee.user.imageUrl,
+			imageId: employee.user.imageId,
 			preferredLanguage: employee.user.preferredLanguage,
 			profile_link: employee.profile_link
 		});
 	}
 
-	ngOnDestroy() {}
+	ngOnDestroy() { }
 }

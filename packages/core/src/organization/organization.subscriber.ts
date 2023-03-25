@@ -1,4 +1,4 @@
-import { EntitySubscriberInterface, EventSubscriber, InsertEvent } from "typeorm";
+import { EntitySubscriberInterface, EventSubscriber, InsertEvent, LoadEvent } from "typeorm";
 import { faker } from '@faker-js/faker';
 import { sluggable } from "@gauzy/common";
 import { Organization } from "./organization.entity";
@@ -12,6 +12,21 @@ export class OrganizationSubscriber implements EntitySubscriberInterface<Organiz
     */
     listenTo() {
         return Organization;
+    }
+
+    /**
+     * Called after entity is loaded from the database.
+     *
+     * @param entity
+     * @param event
+     */
+    afterLoad(entity: Organization, event?: LoadEvent<Organization>): void | Promise<any> {
+        if (!entity.imageUrl) {
+            entity.imageUrl = getOrganizationDummyImage(entity.name || entity.officialName);
+        }
+        if (!!entity['image']) {
+            entity.imageUrl = entity.image.fullUrl || entity.imageUrl;
+        }
     }
 
     /**

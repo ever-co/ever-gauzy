@@ -3,8 +3,8 @@
 		<div class="organization-photo">
 			<ngx-image-uploader
 				(changeHoverState)="hoverState = $event"
-				(uploadedImageUrl)="updateImage($event)"
-				(uploadImageError)="handleImageUploadError($event)"
+				(uploadedImageAsset)="updateImageAsset($event)"
+				(uploadImageAssetError)="handleImageUploadError($event)"
 			></ngx-image-uploader>
 			<svg
 				xmlns="http://www.w3.org/2000/svg"

@@ -986,6 +986,12 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 				});
 			}
 		);
+
+		this.electronService.ipcRenderer.on('auth_success_tray_init', (event, arg) => {
+			this._ngZone.run(() => {
+				this.electronService.ipcRenderer.send('time_tracker_ready');
+			});
+		});
 	}
 
 	async toggleStart(val) {

@@ -53,9 +53,9 @@ export default class TimerHandler {
 	}
 
 	startTimer(setupWindow, knex, timeTrackerWindow, timeLog) {
+		this._activities = [];
 		this._eventCounter.start();
 		this._activeWindow.start();
-		this._activities = [];
 
 		const appSetting = LocalStore.getStore('appSetting');
 
@@ -240,7 +240,6 @@ export default class TimerHandler {
 		try {
 			this._eventCounter.stop();
 			if (this._activeWindow.active) await this._activeWindow.stop();
-			this._activities = [];
 			clearInterval(this.intervalTimer);
 			clearInterval(this.intervalUpdateTime);
 			await this._timerService.update(
