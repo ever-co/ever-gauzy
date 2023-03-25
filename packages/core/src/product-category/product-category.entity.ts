@@ -1,7 +1,9 @@
-import { Entity, Column, OneToMany } from 'typeorm';
+import { Entity, Column, OneToMany, ManyToOne, JoinColumn, RelationId, Index } from 'typeorm';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IProductCategoryTranslatable } from '@gauzy/contracts';
+import { IsOptional, IsString, IsUUID } from 'class-validator';
+import { IImageAsset, IProductCategoryTranslatable } from '@gauzy/contracts';
 import {
+	ImageAsset,
 	Product,
 	ProductCategoryTranslation,
 	TranslatableBase
@@ -12,14 +14,43 @@ export class ProductCategory extends TranslatableBase
 	implements IProductCategoryTranslatable {
 
 	@ApiPropertyOptional({ type: () => String })
+	@IsOptional()
+	@IsString()
 	@Column({ nullable: true })
 	imageUrl: string;
 
 	/*
-    |--------------------------------------------------------------------------
-    | @OneToMany
-    |--------------------------------------------------------------------------
-    */
+	|--------------------------------------------------------------------------
+	| @ManyToOne
+	|--------------------------------------------------------------------------
+	*/
+
+	/**
+	 * ImageAsset
+	 */
+	@ManyToOne(() => ImageAsset, {
+		/** Database cascade action on delete. */
+		onDelete: 'SET NULL',
+
+		/** Eager relations are always loaded automatically when relation's owner entity is loaded using find* methods. */
+		eager: true
+	})
+	@JoinColumn()
+	image?: ImageAsset;
+
+	@ApiPropertyOptional({ type: () => String })
+	@IsOptional()
+	@IsUUID()
+	@RelationId((it: ProductCategory) => it.image)
+	@Index()
+	@Column({ nullable: true })
+	imageId?: IImageAsset['id'];
+
+	/*
+	|--------------------------------------------------------------------------
+	| @OneToMany
+	|--------------------------------------------------------------------------
+	*/
 
 	/**
 	 * Product
