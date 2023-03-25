@@ -37,10 +37,12 @@ export class EditEmployeeMainComponent implements OnInit, OnDestroy {
 			email: [null, Validators.required],
 			firstName: [],
 			lastName: [],
-			imageUrl: ['', Validators.required],
 			preferredLanguage: [],
 			profile_link: [],
-			imageId: []
+			imageId: [],
+			imageUrl: [
+				{ value: null, disabled: true }
+			],
 		});
 	}
 

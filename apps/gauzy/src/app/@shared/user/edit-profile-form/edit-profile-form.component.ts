@@ -83,7 +83,9 @@ export class EditProfileFormComponent
 			firstName: [],
 			lastName: [],
 			email: [null, Validators.required],
-			imageUrl: [],
+			imageUrl: [
+				{ value: null, disabled: true }
+			],
 			imageId: [],
 			password: [],
 			repeatPassword: [],

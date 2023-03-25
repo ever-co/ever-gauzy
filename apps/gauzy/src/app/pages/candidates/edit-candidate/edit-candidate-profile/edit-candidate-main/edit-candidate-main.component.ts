@@ -45,7 +45,9 @@ export class EditCandidateMainComponent implements OnInit, OnDestroy {
 			email: [null, Validators.required],
 			firstName: [],
 			lastName: [],
-			imageUrl: [],
+			imageUrl: [
+				{ value: null, disabled: true }
+			],
 			imageId: []
 		});
 	}
