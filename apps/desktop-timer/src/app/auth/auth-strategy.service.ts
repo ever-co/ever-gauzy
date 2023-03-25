@@ -6,7 +6,7 @@ import { IAuthResponse } from '@gauzy/contracts';
 import { NbAuthStrategyClass } from '@nebular/auth/auth.options';
 import { AuthService } from './services/auth.service';
 import { Store } from './services/store.service';
-import { ElectronService } from 'ngx-electron';
+import { ElectronService } from '@gauzy/desktop-ui-lib';
 
 @Injectable()
 export class AuthStrategy extends NbAuthStrategy {
@@ -112,7 +112,7 @@ export class AuthStrategy extends NbAuthStrategy {
 	requestPassword(args: { email: string }): Observable<NbAuthResult> {
 		const { email } = args;
 		return this.authService
-			.requestPassword({ 
+			.requestPassword({
 				email
 			})
 			.pipe(
@@ -163,7 +163,7 @@ export class AuthStrategy extends NbAuthStrategy {
 	private async _logout(): Promise<NbAuthResult> {
 		this.store.clear();
 		this.store.serverConnection = 200;
-		if (this.electronService.isElectronApp) {
+		if (this.electronService.isElectron) {
 			try {
 				this.electronService.ipcRenderer.send('logout');
 			} catch (error) {}
@@ -235,7 +235,7 @@ export class AuthStrategy extends NbAuthStrategy {
 
 	public electronAuthentication({ user, token }: IAuthResponse) {
 		try {
-			if (this.electronService.isElectronApp) {
+			if (this.electronService.isElectron) {
 				this.electronService.ipcRenderer.send('auth_success', {
 					user: user,
 					token: token,
