@@ -168,7 +168,7 @@ export class ProductCategoryMutationComponent
 		const { tenantId } = this.store.user;
 		const { id: organizationId } = this.organization;
 
-		// Remove old transaltions for language code
+		// Remove old translations for language code
 		const translations = this.translations.filter(({ languageCode }) => {
 			return languageCode !== this.selectedLanguage;
 		});
