@@ -50,11 +50,11 @@ export class SetupComponent implements OnInit {
 			}
 			if (arg.db === 'postgres') {
 				this.databaseConfig.postgre = {
-					host: arg.dbHost,
-					dbPort: arg.dbPort,
-					dbName: arg.dbName,
-					dbUser: arg.dbUsername,
-					dbPassword: arg.dbPassword,
+					host: arg[arg.db]?.dbHost,
+					dbPort: arg[arg.db]?.dbPort,
+					dbName: arg[arg.db]?.dbName,
+					dbUser: arg[arg.db]?.dbUsername,
+					dbPassword: arg[arg.db]?.dbPassword
 				};
 			}
 		});
@@ -278,11 +278,13 @@ export class SetupComponent implements OnInit {
 	getDataBaseConfig() {
 		if (this.databaseDriver.postgre) {
 			return {
-				dbHost: this.databaseConfig.postgre.host,
-				dbPort: this.databaseConfig.postgre.dbPort,
-				dbName: this.databaseConfig.postgre.dbName,
-				dbUsername: this.databaseConfig.postgre.dbUser,
-				dbPassword: this.databaseConfig.postgre.dbPassword,
+				postgres: {
+					dbHost: this.databaseConfig.postgre.host,
+					dbPort: this.databaseConfig.postgre.dbPort,
+					dbName: this.databaseConfig.postgre.dbName,
+					dbUsername: this.databaseConfig.postgre.dbUser,
+					dbPassword: this.databaseConfig.postgre.dbPassword
+				},
 				db: 'postgres',
 			};
 		}

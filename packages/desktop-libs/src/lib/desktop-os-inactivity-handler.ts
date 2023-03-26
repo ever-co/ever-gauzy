@@ -40,30 +40,24 @@ export class DesktopOsInactivityHandler {
 					'Are you still working?',
 					powerManager.window
 				);
-				this._dialog
-					.show()
-					.then((button) => {
-						if (button.response === 0) {
-							if (!this._inactivityResultAccepted) {
-								this._inactivityResultAccepted = true;
-								this._powerManager.detectInactivity.emit(
-									'activity-proof-result',
-									true
-								);
-							}
-						} else {
-							if (!this._inactivityResultAccepted) {
-								this._inactivityResultAccepted = true;
-								this._powerManager.detectInactivity.emit(
-									'activity-proof-result',
-									false
-								);
-							}
-						}
-					})
-					.catch((error) => {
-						console.log(error);
-					});
+				const button = await this._dialog.show();
+				if (button?.response === 0) {
+					if (!this._inactivityResultAccepted) {
+						this._inactivityResultAccepted = true;
+						this._powerManager.detectInactivity.emit(
+							'activity-proof-result',
+							true
+						);
+					}
+				} else {
+					if (!this._inactivityResultAccepted) {
+						this._inactivityResultAccepted = true;
+						this._powerManager.detectInactivity.emit(
+							'activity-proof-result',
+							false
+						);
+					}
+				}
 			}
 		);
 		this._powerManager.detectInactivity.on(

@@ -104,10 +104,6 @@ const sqlite3filename = `${process.env.GAUZY_USER_PATH}/gauzy.sqlite3`;
 log.info(`Sqlite DB path: ${sqlite3filename}`);
 
 const provider = ProviderFactory.instance;
-(async () => {
-	await provider.createDatabase();
-	await provider.migrate();
-})();
 const knex = provider.connection;
 
 const exeName = path.basename(process.execPath);
@@ -287,6 +283,20 @@ app.on('ready', async () => {
 			? settings.autoLaunch
 			: true;
 	launchAtStartup(autoLaunch, false);
+	if (provider.dialect === 'sqlite') {
+		try {
+			const res = await knex.raw(`pragma journal_mode = WAL;`)
+			console.log(res);
+		} catch (error) {
+			console.log('ERROR', error);
+		}
+	}
+	try {
+		await provider.createDatabase();
+		await provider.migrate();
+	} catch (error) {
+		console.log('ERROR', error);
+	}
 	Menu.setApplicationMenu(
 		Menu.buildFromTemplate([
 			{
@@ -459,7 +469,11 @@ ipcMain.on('server_already_start', () => {
 });
 
 ipcMain.on('open_browser', async (event, arg) => {
-	await shell.openExternal(arg.url);
+	try {
+		await shell.openExternal(arg.url);
+	} catch (error) {
+		console.log('ERROR', error);
+	}
 });
 
 ipcMain.on('restart_and_update', () => {
@@ -489,7 +503,7 @@ ipcMain.on('check_database_connection', async (event, arg) => {
 			};
 		} else {
 			databaseOptions = {
-				client: 'sqlite',
+				client: 'sqlite3',
 				connection: {
 					filename: sqlite3filename,
 				},
@@ -632,8 +646,12 @@ app.on('web-contents-created', (e, contents) => {
 				'https://accounts.google.com',
 			].findIndex((str) => url.indexOf(str) > -1) > -1
 		) {
-			e.preventDefault();
-			await showPopup(url, defaultBrowserConfig);
+			try {
+				e.preventDefault();
+				await showPopup(url, defaultBrowserConfig);
+			} catch (error) {
+				console.log('ERROR', error);
+			}
 			return;
 		}
 
@@ -654,7 +672,11 @@ app.on('web-contents-created', (e, contents) => {
 		}
 
 		if (url.indexOf('/auth/register') > -1) {
-			await shell.openExternal(url);
+			try {
+				await shell.openExternal(url);
+			} catch (error) {
+				console.log('ERROR', error);
+			}
 		}
 	});
 });
