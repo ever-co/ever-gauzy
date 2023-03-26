@@ -73,13 +73,12 @@ export default class TimerHandler {
 
 		this.timeStart = moment();
 
-
 		await this.createTimer(knex, timeLog);
 		this.collectActivities(setupWindow, knex, timeTrackerWindow);
 
 		/*
-			* Start time interval for get set activities and screenshots
-			*/
+		 * Start time interval for get set activities and screenshots
+		 */
 		if (!appSetting.randomScreenshotTime) {
 			await this.startTimerIntervalPeriod(setupWindow, knex, timeTrackerWindow);
 		}
@@ -313,20 +312,20 @@ export default class TimerHandler {
 			.map((item) => {
 				return item.data
 					? {
-						title: item.data.app || item.data.title,
-						date: moment(item.timestamp).utc().format('YYYY-MM-DD'),
-						time: moment(item.timestamp).utc().format('HH:mm:ss'),
-						duration: Math.floor(item.duration),
-						type: item.data.url ? ActivityType.URL : ActivityType.APP,
-						taskId: userInfo.taskId,
-						projectId: userInfo.projectId,
-						organizationContactId: userInfo.organizationContactId,
-						organizationId: userInfo.organizationId,
-						employeeId: userInfo.employeeId,
-						source: TimeLogSourceEnum.DESKTOP,
-						recordedAt: moment(item.timestamp).utc().toDate(),
-						metaData: item.data
-					}
+							title: item.data.app || item.data.title,
+							date: moment(item.timestamp).utc().format('YYYY-MM-DD'),
+							time: moment(item.timestamp).utc().format('HH:mm:ss'),
+							duration: Math.floor(item.duration),
+							type: item.data.url ? ActivityType.URL : ActivityType.APP,
+							taskId: userInfo.taskId,
+							projectId: userInfo.projectId,
+							organizationContactId: userInfo.organizationContactId,
+							organizationId: userInfo.organizationId,
+							employeeId: userInfo.employeeId,
+							source: TimeLogSourceEnum.DESKTOP,
+							recordedAt: moment(item.timestamp).utc().toDate(),
+							metaData: item.data
+					  }
 					: null;
 			})
 			.filter((item) => !!item);
@@ -507,7 +506,7 @@ export default class TimerHandler {
 		timeTrackerWindow.webContents.send('toggle_timer_state', {
 			isStarted: false,
 			lastTimer: lastTimer
-		})
+		});
 		this.updateToggle(setupWindow, knex, true);
 		this.isPaused = true;
 	}
@@ -524,18 +523,18 @@ export default class TimerHandler {
 			};
 			this.isPaused
 				? await TimerData.createTimer(knex, {
-					...payload,
-					day: this.todayLocalTimezone,
-					duration: 0,
-					synced: !this._offlineMode.enabled,
-					isStartedOffline: this._offlineMode.enabled,
-					isStoppedOffline: false,
-					version: 'v' + app.getVersion()
-				})
+						...payload,
+						day: this.todayLocalTimezone,
+						duration: 0,
+						synced: !this._offlineMode.enabled,
+						isStartedOffline: this._offlineMode.enabled,
+						isStoppedOffline: false,
+						version: 'v' + app.getVersion()
+				  })
 				: await TimerData.updateDurationOfTimer(knex, {
-					...payload,
-					id: this.lastTimer.id,
-				});
+						...payload,
+						id: this.lastTimer.id
+				  });
 
 			const lastSavedTimer = await TimerData.getLastTimer(knex, info);
 

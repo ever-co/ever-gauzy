@@ -15,7 +15,7 @@ import {
 	Menu,
 	shell,
 	MenuItemConstructorOptions,
-	screen,
+	screen
 } from 'electron';
 import { environment } from './environments/environment';
 
@@ -28,17 +28,8 @@ app.setName('gauzy-server');
 
 console.log('Node Modules Path', path.join(__dirname, 'node_modules'));
 
-import {
-	LocalStore,
-	apiServer,
-	AppMenu,
-	DesktopUpdater,
-} from '@gauzy/desktop-libs';
-import {
-	createSetupWindow,
-	createServerWindow,
-	createSettingsWindow,
-} from '@gauzy/desktop-window';
+import { LocalStore, apiServer, AppMenu, DesktopUpdater } from '@gauzy/desktop-libs';
+import { createSetupWindow, createServerWindow, createSettingsWindow } from '@gauzy/desktop-window';
 // import { initSentry } from './sentry';
 import { readFileSync, writeFileSync, accessSync, constants } from 'fs';
 import * as remoteMain from '@electron/remote/main';
@@ -65,7 +56,7 @@ let isServerRun: boolean;
 const updater = new DesktopUpdater({
 	repository: 'ever-gauzy-server',
 	owner: 'ever-co',
-	typeRelease: 'releases',
+	typeRelease: 'releases'
 });
 
 const pathWindow: {
@@ -78,10 +69,8 @@ const pathWindow: {
 		? path.join(__dirname, '../data/ui/index.html')
 		: path.join(__dirname, './data/ui/index.html'),
 	ui: path.join(__dirname, 'index.html'),
-	dir: app.isPackaged
-		? path.join(__dirname, '../data/ui')
-		: path.join(__dirname, './data/ui'),
-	timeTrackerUi: path.join(__dirname, 'index.html'),
+	dir: app.isPackaged ? path.join(__dirname, '../data/ui') : path.join(__dirname, './data/ui'),
+	timeTrackerUi: path.join(__dirname, 'index.html')
 };
 
 /* Setting the app user model id for the app. */
@@ -90,7 +79,7 @@ if (process.platform === 'win32') {
 }
 
 LocalStore.setFilePath({
-	iconPath: path.join(__dirname, 'icons', 'icon.png'),
+	iconPath: path.join(__dirname, 'icons', 'icon.png')
 });
 
 const runSetup = () => {
@@ -120,17 +109,8 @@ const runMainWindow = () => {
 		createTray();
 	}
 
-	new AppMenu(
-		null,
-		settingsWindow,
-		null,
-		null,
-		pathWindow,
-		serverWindow,
-		false
-	);
-	const menuWindowSetting =
-		Menu.getApplicationMenu().getMenuItemById('window-setting');
+	new AppMenu(null, settingsWindow, null, null, pathWindow, serverWindow, false);
+	const menuWindowSetting = Menu.getApplicationMenu().getMenuItemById('window-setting');
 	if (menuWindowSetting) menuWindowSetting.enabled = true;
 	if (setupWindow) setupWindow.hide();
 };
@@ -144,9 +124,7 @@ const initializeConfig = (val) => {
 const getApiBaseUrl = (config) => {
 	if (config.serverUrl) return config.serverUrl;
 	else {
-		return config.port
-			? `http://localhost:${config.port}`
-			: `http://localhost:${environment.API_DEFAULT_PORT}`;
+		return config.port ? `http://localhost:${config.port}` : `http://localhost:${environment.API_DEFAULT_PORT}`;
 	}
 };
 
@@ -160,8 +138,7 @@ const updateConfigUi = (config) => {
 			var global = window;
 		}; </script>`;
 
-	const elementToReplace =
-		'<script src="https://cdn.ckeditor.com/4.6.1/full-all/ckeditor.js"></script>';
+	const elementToReplace = '<script src="https://cdn.ckeditor.com/4.6.1/full-all/ckeditor.js"></script>';
 
 	fileStr = fileStr.replace(
 		elementToReplace,
@@ -192,7 +169,7 @@ const runServer = (isRestart) => {
 	apiServer(
 		{
 			ui: path.join(__dirname, 'preload', 'ui-server.js'),
-			api: path.join(__dirname, 'api/main.js'),
+			api: path.join(__dirname, 'api/main.js')
 		},
 		envVal,
 		serverWindow,
@@ -215,7 +192,7 @@ const getEnvApi = () => {
 		DB_USER: config.dbUsername,
 		DB_PASS: config.dbPassword,
 		API_PORT: config.port ? config.port.toString() : '',
-		...addsConfig,
+		...addsConfig
 	};
 };
 
@@ -225,9 +202,7 @@ const getUiPort = () => {
 };
 
 const createTray = () => {
-	const iconNativePath = nativeImage.createFromPath(
-		path.join(__dirname, 'assets', 'icons', 'icon.png')
-	);
+	const iconNativePath = nativeImage.createFromPath(path.join(__dirname, 'assets', 'icons', 'icon.png'));
 	iconNativePath.resize({ width: 16, height: 16 });
 	tray = new Tray(iconNativePath);
 	const serverMenu = contextMenu();
@@ -242,7 +217,7 @@ const contextMenu = () => {
 			click() {
 				const config = LocalStore.getStore('configs');
 				shell.openExternal(`http://localhost:${config.portUi}`);
-			},
+			}
 		},
 		{
 			id: 'check_for_update',
@@ -253,52 +228,49 @@ const contextMenu = () => {
 					settingsWindow.webContents.send('goto_update');
 				}, 100);
 				setTimeout(() => {
-					settingsWindow.webContents.send(
-						'app_setting',
-						LocalStore.getApplicationConfig()
-					);
+					settingsWindow.webContents.send('app_setting', LocalStore.getApplicationConfig());
 				}, 500);
-			},
+			}
 		},
 		{
-			type: 'separator',
+			type: 'separator'
 		},
 		{
 			id: 'start_server',
 			label: 'Start Server',
 			click() {
 				runServer(false);
-			},
+			}
 		},
 		{
 			id: 'stop_server',
 			label: 'Stop Server',
 			click() {
 				stopServer(false);
-			},
+			}
 		},
 		{
-			type: 'separator',
+			type: 'separator'
 		},
 		{
 			id: 'server_help',
 			label: 'Help',
 			click() {
 				shell.openExternal('https://gauzy.co');
-			},
+			}
 		},
 		{
 			id: 'server_about',
 			label: 'About',
-			role: 'about',
+			role: 'about'
 		},
 		{
 			id: 'server_exit',
 			label: 'Exit',
 			click() {
 				app.quit();
-			},
-		},
+			}
+		}
 	];
 
 	return serverMenu;
@@ -321,7 +293,7 @@ const stopServer = (isRestart) => {
 		try {
 			process.kill(config.apiPid);
 			LocalStore.updateConfigSetting({
-				apiPid: null,
+				apiPid: null
 			});
 			serverWindow.webContents.send('log_state', { msg: 'Api stopped' });
 		} catch (error) {
@@ -332,7 +304,7 @@ const stopServer = (isRestart) => {
 		try {
 			process.kill(config.uiPid);
 			LocalStore.updateConfigSetting({
-				uiPid: null,
+				uiPid: null
 			});
 			serverWindow.webContents.send('log_state', { msg: 'UI stopped' });
 			if (isRestart) {
@@ -398,8 +370,8 @@ ipcMain.on('check_database_connection', async (event, arg) => {
 			databaseOptions = {
 				client: 'sqlite',
 				connection: {
-					filename: sqlite3filename,
-				},
+					filename: sqlite3filename
+				}
 			};
 		}
 		const dbConn = require('knex')(databaseOptions);
@@ -407,14 +379,12 @@ ipcMain.on('check_database_connection', async (event, arg) => {
 		event.sender.send('database_status', {
 			status: true,
 			message:
-				provider === 'postgres'
-					? 'Connection to PostgresSQL DB Succeeds'
-					: 'Connection to SQLITE DB Succeeds',
+				provider === 'postgres' ? 'Connection to PostgresSQL DB Succeeds' : 'Connection to SQLITE DB Succeeds'
 		});
 	} catch (error) {
 		event.sender.send('database_status', {
 			status: false,
-			message: error.message,
+			message: error.message
 		});
 	}
 });
@@ -454,7 +424,7 @@ ipcMain.on('expand_window', (event, arg) => {
 			width: 980,
 			height: 860,
 			x: (width - 980) * 0.5,
-			y: (height - 860) * 0.5,
+			y: (height - 860) * 0.5
 		},
 		true
 	);
