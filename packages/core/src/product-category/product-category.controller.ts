@@ -19,7 +19,8 @@ import { I18nLang } from 'nestjs-i18n';
 import {
 	LanguagesEnum,
 	IPagination,
-	PermissionsEnum
+	PermissionsEnum,
+	IProductCategoryTranslatable
 } from '@gauzy/contracts';
 import { ProductCategory } from './product-category.entity';
 import { ProductCategoryService } from './product-category.service';
@@ -66,12 +67,12 @@ export class ProductCategoryController extends CrudController<ProductCategory> {
 		return await this.productCategoryService.countBy(options);
 	}
 
-	 /**
-	  * GET inventory product categories by pagination
-	  *
-	  * @param options
-	  * @returns
-	  */
+	/**
+	 * GET inventory product categories by pagination
+	 *
+	 * @param options
+	 * @returns
+	 */
 	@ApiOperation({ summary: 'Find all product categories by pagination' })
 	@ApiResponse({
 		status: HttpStatus.OK,
@@ -104,7 +105,7 @@ export class ProductCategoryController extends CrudController<ProductCategory> {
 	 * @param languageCode
 	 * @returns
 	 */
-	 @ApiOperation({
+	@ApiOperation({
 		summary: 'Find all product categories.'
 	})
 	@ApiResponse({
@@ -147,7 +148,7 @@ export class ProductCategoryController extends CrudController<ProductCategory> {
 			'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@Post()
-	@UsePipes(new ValidationPipe({ transform : true }))
+	@UsePipes(new ValidationPipe({ transform: true }))
 	async create(
 		@Body() entity: ProductCategoryDTO,
 		@LanguageDecorator() themeLanguage: LanguagesEnum,
@@ -184,11 +185,10 @@ export class ProductCategoryController extends CrudController<ProductCategory> {
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
 	@Put(':id')
+	@UsePipes(new ValidationPipe({ transform: true }))
 	async update(
-		@Param('id', UUIDValidationPipe) id: string,
-		@Body(new ValidationPipe({
-			transform : true
-		})) entity: ProductCategoryDTO
+		@Param('id', UUIDValidationPipe) id: IProductCategoryTranslatable['id'],
+		@Body() entity: ProductCategoryDTO
 	): Promise<ProductCategory> {
 		return await this.productCategoryService.updateProductCategory(id, entity);
 	}

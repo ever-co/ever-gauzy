@@ -2,6 +2,7 @@ import { Component, OnInit, Input, OnDestroy } from '@angular/core';
 import { FormGroup, FormBuilder, Validators } from '@angular/forms';
 import { HttpErrorResponse } from '@angular/common/http';
 import {
+	IImageAsset,
 	IOrganization,
 	IProductCategoryTranslatable,
 	IProductCategoryTranslation,
@@ -41,8 +42,11 @@ export class ProductCategoryMutationComponent
 	readonly form: FormGroup = ProductCategoryMutationComponent.buildForm(this.fb);
 	static buildForm(fb: FormBuilder): FormGroup {
 		return fb.group({
-			name: ['', Validators.required],
-			imageUrl: [],
+			name: [null, Validators.required],
+			imageUrl: [
+				{ value: null, disabled: true }
+			],
+			imageId: [],
 			description: []
 		});
 	}
@@ -85,12 +89,12 @@ export class ProductCategoryMutationComponent
 		const { id: organizationId } = this.organization;
 
 		const { translations = [] } = this;
-		const { imageUrl } = this.form.getRawValue();
+		const { imageId } = this.form.value;
 
 		const payload: IProductCategoryTranslatable = {
 			organizationId,
 			tenantId,
-			imageUrl,
+			imageId,
 			translations
 		};
 
@@ -121,8 +125,8 @@ export class ProductCategoryMutationComponent
 
 	/**
 	 * PATCH product category old raw value
-	 * 
-	 * @returns 
+	 *
+	 * @returns
 	 */
 	private _patchRawValue() {
 		if (!this.productCategory) {
@@ -139,17 +143,17 @@ export class ProductCategoryMutationComponent
 
 	/**
 	 * SET selected language active translation
-	 * 
-	 * @returns 
+	 *
+	 * @returns
 	 */
-	private _setActiveTranslation() {		
+	private _setActiveTranslation() {
 		this.activeTranslation = this.translations.find(({ languageCode }) => {
 			return languageCode === this.selectedLanguage;
 		});
 
 		this.form.patchValue({
 			name: this.activeTranslation ? this.activeTranslation.name : '',
-			description: this.activeTranslation ? this.activeTranslation.description: ''
+			description: this.activeTranslation ? this.activeTranslation.description : ''
 		});
 	}
 
@@ -164,7 +168,7 @@ export class ProductCategoryMutationComponent
 		const { tenantId } = this.store.user;
 		const { id: organizationId } = this.organization;
 
-		// Remove old transaltions for language code
+		// Remove old translations for language code
 		const translations = this.translations.filter(({ languageCode }) => {
 			return languageCode !== this.selectedLanguage;
 		});
@@ -184,12 +188,30 @@ export class ProductCategoryMutationComponent
 
 	/**
 	 * On language change set active translation
-	 * 
-	 * @param langCode 
+	 *
+	 * @param langCode
 	 */
 	onLangChange(langCode: LanguagesEnum) {
 		this.selectedLanguage = langCode;
 		this._setActiveTranslation();
+	}
+
+	/**
+	 * Upload product category image
+	 *
+	 * @param image
+	 */
+	updateImageAsset(image: IImageAsset) {
+		try {
+			if (image && image.id) {
+				this.form.get('imageId').setValue(image.id);
+				this.form.get('imageUrl').setValue(image.fullUrl);
+				this.form.updateValueAndValidity();
+			}
+		} catch (error) {
+			console.log('Error while updating product category pictures');
+			this.handleImageUploadError(error);
+		}
 	}
 
 	handleImageUploadError(error: any) {

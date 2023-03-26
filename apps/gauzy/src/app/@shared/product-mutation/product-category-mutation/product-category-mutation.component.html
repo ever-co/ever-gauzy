@@ -22,11 +22,10 @@
 				<div class="col-md-4">
 					<div class="category-img">
 						<ngx-image-uploader
+							[folder]="'inventory_product_category_pictures'"
 							(changeHoverState)="hoverState = $event"
-							(uploadedImageUrl)="
-								form.get('imageUrl').setValue($event)
-							"
-							(uploadImageError)="handleImageUploadError($event)"
+							(uploadedImageAsset)="updateImageAsset($event)"
+							(uploadImageAssetError)="handleImageUploadError($event)"
 						></ngx-image-uploader>
 						<svg
 							xmlns="http://www.w3.org/2000/svg"
@@ -68,15 +67,15 @@
 							class="image-overlay"
 							[ngStyle]="{ opacity: hoverState ? '0.2' : '0' }"
 						></div>
-
-						<img
-							*ngIf="form && form.get('imageUrl').value"
-							[src]="form.get('imageUrl').value"
-							alt="Category Image"
-							class="uploadimage"
-							(mouseenter)="hoverState = true"
-							(mouseleave)="hoverState = false"
-						/>
+						<ng-template [ngIf]="form.get('imageUrl').value">
+							<img
+								[src]="form.get('imageUrl').value"
+								alt="Category Image"
+								class="uploadimage"
+								(mouseenter)="hoverState = true"
+								(mouseleave)="hoverState = false"
+							/>
+						</ng-template>
 					</div>
 				</div>
 				<div class="col-sm-8 mb-2 pr-4 col-left">

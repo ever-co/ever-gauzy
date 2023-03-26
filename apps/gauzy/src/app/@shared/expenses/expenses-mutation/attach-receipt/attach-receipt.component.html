@@ -1,8 +1,9 @@
 <nb-card>
 	<nb-card-body class="receipt-image p-0">
 		<ngx-image-uploader
+			[folder]="'attach_receipts'"
 			(changeHoverState)="hoverState = $event"
-			(uploadedImageUrl)="updateImageUrl($event)"
+			(uploadedImageAsset)="updateImageAsset($event)"
 		></ngx-image-uploader>
 
 		<svg
@@ -48,7 +49,7 @@
 			(click)="saveReceipt()"
 			status="success"
 			nbButton
-      class="mr-3 ml-3"
+      		class="mr-3 ml-3"
 		>
 			{{ 'BUTTONS.SAVE' | translate }}
 		</button>

@@ -7,7 +7,7 @@ import { ITag } from './tag.model';
 import { IContact, IRelationalContact } from './contact.model';
 import { IInvoiceItem } from './invoice-item.model';
 import { CurrenciesEnum } from './currency.model';
-import { IImageAsset } from './image-asset.model';
+import { IImageAsset, IRelationalImageAsset } from './image-asset.model';
 
 export interface IProduct extends IBasePerTenantAndOrganizationEntityModel {
 	name: string;
@@ -125,7 +125,7 @@ export interface IProductTypeTranslated
 }
 
 export interface IProductCategoryTranslatable
-	extends ITranslatable<IProductCategoryTranslation> {
+	extends ITranslatable<IProductCategoryTranslation>, IRelationalImageAsset {
 	imageUrl?: string;
 	name?: string;
 	products?: IProductTranslatable[];
@@ -144,8 +144,7 @@ export interface IProductCategoryTranslated
 	description: string;
 }
 
-export interface IProductVariant
-	extends IBasePerTenantAndOrganizationEntityModel {
+export interface IProductVariant extends IBasePerTenantAndOrganizationEntityModel, IRelationalImageAsset {
 	taxes: number;
 	notes: string;
 	quantity: number;
@@ -156,8 +155,6 @@ export interface IProductVariant
 	setting: IProductVariantSetting;
 	product?: IProductTranslatable;
 	productId?: string;
-	image?: IImageAsset;
-	imageId?: string;
 	options: IProductOptionTranslatable[];
 	warehouseProductVariants?: IWarehouseProductVariant[];
 }

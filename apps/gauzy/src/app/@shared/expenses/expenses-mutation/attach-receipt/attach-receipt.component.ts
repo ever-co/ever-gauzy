@@ -1,5 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { NbDialogRef } from '@nebular/theme';
+import { IImageAsset } from '@gauzy/contracts';
 
 @Component({
 	selector: 'ga-attach-receipt',
@@ -7,7 +8,7 @@ import { NbDialogRef } from '@nebular/theme';
 	styleUrls: ['./attach-receipt.component.scss']
 })
 export class AttachReceiptComponent implements OnInit {
-	constructor(private dialogRef: NbDialogRef<AttachReceiptComponent>) {}
+	constructor(private dialogRef: NbDialogRef<AttachReceiptComponent>) { }
 
 	imageUrl: string;
 	currentReceipt: string;
@@ -18,9 +19,20 @@ export class AttachReceiptComponent implements OnInit {
 		this.imageUrl = this.currentReceipt;
 	}
 
-	updateImageUrl(url: string) {
-		this.imageUrl = url;
-		this.disable = false;
+	/**
+	 * Upload attach receipt
+	 *
+	 * @param image
+	 */
+	updateImageAsset(image: IImageAsset) {
+		try {
+			if (image && image.id) {
+				this.imageUrl = image.fullUrl;
+				this.disable = false;
+			}
+		} catch (error) {
+			console.log('Error while uploading attach receipt');
+		}
 	}
 
 	saveReceipt() {

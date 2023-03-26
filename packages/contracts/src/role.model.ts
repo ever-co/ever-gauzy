@@ -9,7 +9,7 @@ export interface IRole extends IRoleCreateInput {
 }
 
 export interface IRoleCreateInput extends IBasePerTenantEntityModel {
-	name: string
+	name: string;
 }
 
 export interface IRoleFindInput extends IBasePerTenantEntityModel {
@@ -35,6 +35,15 @@ export interface IRoleMigrateInput extends IBasePerTenantEntityModel {
 }
 
 export interface IRelationalRole {
-    readonly role?: IRole;
-    readonly roleId?: IRole['id'];
+	readonly role?: IRole;
+	readonly roleId?: IRole['id'];
 }
+
+/** Default system role */
+export const SYSTEM_DEFAULT_ROLES = [
+	RolesEnum.SUPER_ADMIN,
+	RolesEnum.ADMIN,
+	RolesEnum.EMPLOYEE,
+	RolesEnum.CANDIDATE,
+	RolesEnum.VIEWER
+];

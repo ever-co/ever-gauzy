@@ -17,8 +17,8 @@
 							>
 								<ngx-image-uploader
 									(changeHoverState)="hoverState = $event"
-									(uploadedImageUrl)="updateImageUrl($event)"
-									(uploadImageError)="
+									(uploadedImageAsset)="updateImageUrl($event)"
+									(uploadImageAssetError)="
 										handleImageUploadError($event)
 									"
 								></ngx-image-uploader>
