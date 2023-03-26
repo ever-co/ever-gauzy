@@ -14,49 +14,39 @@ const routes: Routes = [
 			},
 			{
 				path: 'search',
-				loadChildren: () =>
-					import('./search/search.module').then(
-						(m) => m.SearchModule
-					),
+				loadChildren: () => import('./search/search.module').then((m) => m.SearchModule),
 				data: {
 					selectors: {
-						project: false,
-						employee: false,
-						date: false
+						date: true,
+						employee: true,
+						project: false
 					}
 				}
 			},
 			{
 				path: 'matching',
-				loadChildren: () =>
-					import('./matching/matching.module').then(
-						(m) => m.MatchingModule
-					),
+				loadChildren: () => import('./matching/matching.module').then((m) => m.MatchingModule),
 				data: {
 					selectors: {
-						project: false,
-						employee: false,
-						date: false
+						date: true,
+						employee: true,
+						project: false
 					}
 				}
 			},
 			{
 				path: 'proposal-template',
-				loadChildren: () => import('./proposal-template/proposal-template.module').then(
-					(m) => m.ProposalTemplateModule
-				)
+				loadChildren: () =>
+					import('./proposal-template/proposal-template.module').then((m) => m.ProposalTemplateModule)
 			},
 			{
 				path: 'employee',
-				loadChildren: () =>
-					import('./employees/employees.module').then(
-						(m) => m.EmployeesModule
-					),
+				loadChildren: () => import('./employees/employees.module').then((m) => m.EmployeesModule),
 				data: {
 					selectors: {
-						project: false,
-						employee: false,
-						date: false
+						date: true,
+						employee: true,
+						project: false
 					}
 				}
 			}

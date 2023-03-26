@@ -24,8 +24,7 @@
 								[icon]="'close'"
 								pack="eva"
 								(click)="formControl.reset(rolesEnum.EMPLOYEE)"
-							>
-							</nb-icon>
+							></nb-icon>
 						</button>
 					</nb-form-field>
 					<nb-autocomplete
@@ -36,8 +35,9 @@
 							*ngFor="let role of roles$ | async"
 							[value]="role.name"
 							[class]="role.name === input.value ? 'active' : ''"
-							>{{ role.name }}</nb-option
 						>
+							{{ role.name }}
+						</nb-option>
 					</nb-autocomplete>
 				</div>
 			</div>
@@ -56,13 +56,7 @@
 						>
 							<nb-icon icon="plus-outline"></nb-icon>
 						</button>
-						{{
-							'BUTTONS.CREATE_NEW_ROLE'
-								| translate
-									: {
-											name: input.value
-									  }
-						}}
+						{{ 'BUTTONS.CREATE_NEW_ROLE' | translate : { name: input.value } }}
 					</div>
 				</ng-container>
 				<ng-container
@@ -82,13 +76,7 @@
 								icon="trash-2-outline"
 							></nb-icon>
 						</button>
-						{{
-							'BUTTONS.DELETE_EXISTING_ROLE'
-								| translate
-									: {
-											name: role.name
-									  }
-						}}
+						{{ 'BUTTONS.DELETE_EXISTING_ROLE' | translate : { name: role.name } }}
 					</div>
 				</ng-container>
 			</div>
