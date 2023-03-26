@@ -48,7 +48,7 @@ export class RoleService extends TenantAwareCrudService<Role> {
 				name,
 				isImporting: true,
 				sourceId
-			})
+			});
 		}
 		return payload;
 	}
