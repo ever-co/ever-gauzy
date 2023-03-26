@@ -57,7 +57,7 @@ export class RolePermissionUtils {
                                 WHERE (
                                     "role_permission"."tenantId" = $1 AND
                                     "role_permission"."permission" = $2 AND
-                                    "role"."tenantId" = $3
+                                    "role"."tenantId" = $3 AND
                                     "role"."name" = $4
                                 )
                             )
