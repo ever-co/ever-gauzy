@@ -92,10 +92,6 @@ const sqlite3filename = `${process.env.GAUZY_USER_PATH}/gauzy.sqlite3`;
 log.info(`Sqlite DB path: ${sqlite3filename}`);
 
 const provider = ProviderFactory.instance;
-(async () => {
-	await provider.createDatabase();
-	await provider.migrate();
-})();
 const knex = provider.connection;
 
 const exeName = path.basename(process.execPath);
@@ -172,11 +168,11 @@ function startServer(value, restart = false) {
 		process.env.DB_TYPE = 'sqlite';
 	} else {
 		process.env.DB_TYPE = 'postgres';
-		process.env.DB_HOST = value.dbHost;
-		process.env.DB_PORT = value.dbPort;
-		process.env.DB_NAME = value.dbName;
-		process.env.DB_USER = value.dbUsername;
-		process.env.DB_PASS = value.dbPassword;
+		process.env.DB_HOST = value['postgres']?.dbHost;
+		process.env.DB_PORT = value['postgres']?.dbPort;
+		process.env.DB_NAME = value['postgres']?.dbName;
+		process.env.DB_USER = value['postgres']?.dbUsername;
+		process.env.DB_PASS = value['postgres']?.dbPassword;
 	}
 	if (value.isLocalServer) {
 		process.env.API_PORT = value.port || environment.API_DEFAULT_PORT;
@@ -349,7 +345,21 @@ app.on('ready', async () => {
 		settings && typeof settings.autoLaunch === 'boolean'
 			? settings.autoLaunch
 			: true;
-	await dataModel.createNewTable(knex);
+	if (provider.dialect === 'sqlite') {
+		try {
+			const res = await knex.raw(`pragma journal_mode = WAL;`)
+			console.log(res);
+		} catch (error) {
+			console.log('ERROR', error);
+		}
+	}
+	try {
+		await provider.createDatabase();
+		await provider.migrate();
+		await dataModel.createNewTable(knex);
+	} catch (error) {
+		console.log('ERROR', error);
+	}
 	launchAtStartup(autoLaunch, false);
 	Menu.setApplicationMenu(
 		Menu.buildFromTemplate([
