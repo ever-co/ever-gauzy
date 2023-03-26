@@ -2,12 +2,11 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { CommandBus } from '@nestjs/cqrs';
 import { DeleteResult, In, Not, Repository } from 'typeorm';
-import { IRole, ITenant, RolesEnum, IRoleMigrateInput, IImportRecord } from '@gauzy/contracts';
+import { IRole, ITenant, RolesEnum, IRoleMigrateInput, IImportRecord, SYSTEM_DEFAULT_ROLES } from '@gauzy/contracts';
 import { TenantAwareCrudService } from './../core/crud';
 import { Role } from './role.entity';
 import { RequestContext } from './../core/context';
 import { ImportRecordUpdateOrCreateCommand } from './../export-import/import-record';
-import { systemRoles } from './system-role';
 
 @Injectable()
 export class RoleService extends TenantAwareCrudService<Role> {
@@ -29,7 +28,7 @@ export class RoleService extends TenantAwareCrudService<Role> {
 				const role = new Role();
 				role.name = name;
 				role.tenant = tenant;
-				role.isSystem = systemRoles.includes(name);
+				role.isSystem = SYSTEM_DEFAULT_ROLES.includes(name);
 				roles.push(role);
 			}
 		}
@@ -96,7 +95,7 @@ export class RoleService extends TenantAwareCrudService<Role> {
 		return await super.delete(id, {
 			where: {
 				isSystem: false,
-				name: Not(In(systemRoles))
+				name: Not(In(SYSTEM_DEFAULT_ROLES))
 			}
 		});
 	}
