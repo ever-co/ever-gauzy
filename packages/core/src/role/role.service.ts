@@ -58,7 +58,7 @@ export class RoleService extends TenantAwareCrudService<Role> {
 		for await (const item of roles) {
 			const { isImporting, sourceId, name } = item;
 			if (isImporting && sourceId) {
-				const destinantion = await this.repository.findOne({
+				const destination = await this.repository.findOne({
 					where: {
 						tenantId: RequestContext.currentTenantId(),
 						name
@@ -67,13 +67,13 @@ export class RoleService extends TenantAwareCrudService<Role> {
 						createdAt: 'DESC'
 					}
 				});
-				if (destinantion) {
+				if (destination) {
 					records.push(
 						await this._commandBus.execute(
 							new ImportRecordUpdateOrCreateCommand({
 								entityType: this.roleRepository.metadata.tableName,
 								sourceId,
-								destinationId: destinantion.id,
+								destinationId: destination.id,
 								tenantId: RequestContext.currentTenantId()
 							})
 						)
