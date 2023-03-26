@@ -196,21 +196,29 @@ export class AppComponent implements OnInit, AfterViewInit {
 			})
 		);
 
-		this.electronService.ipcRenderer.on('logout', async () =>
-			this._ngZone.run(() => {
-				firstValueFrom(this.authStrategy.logout()).then((res) => {
-					this.electronService.ipcRenderer.send('navigate_to_login');
-				});
+		this.electronService.ipcRenderer.on('logout', () =>
+			this._ngZone.run(async () => {
+				try {
+					await firstValueFrom(this.authStrategy.logout()).then((res) => {
+						this.electronService.ipcRenderer.send('navigate_to_login');
+					});
+				} catch (error) {
+					console.log('ERROR', error);
+				}
 			})
 		);
 
 		this.electronService.ipcRenderer.on(
 			'social_auth_success',
 			(event, arg) =>
-				this._ngZone.run(() => {
-					localStorage.setItem('token', arg.token);
-					localStorage.setItem('_userId', arg.userId);
-					this.authFromSocial(arg);
+				this._ngZone.run(async () => {
+					try {
+						localStorage.setItem('token', arg.token);
+						localStorage.setItem('_userId', arg.userId);
+						await this.authFromSocial(arg);
+					} catch (error) {
+						console.log('ERROR', error)
+					}
 				})
 		);
 	}

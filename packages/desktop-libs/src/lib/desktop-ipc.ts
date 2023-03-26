@@ -353,33 +353,39 @@ export function ipcTimer(
 
 	offlineMode.trigger();
 
-	ipcMain.on('start_timer', (event, arg) => {
-		powerManager = new DesktopPowerManager(timeTrackerWindow);
-		powerManagerPreventSleep = new PowerManagerPreventDisplaySleep(
-			powerManager
-		);
-		powerManagerDetectInactivity = new PowerManagerDetectInactivity(
-			powerManager
-		);
-		new DesktopOsInactivityHandler(powerManagerDetectInactivity);
-		const setting = LocalStore.getStore('appSetting');
-		log.info(`Timer Start: ${moment().format()}`);
-		store.set({
-			project: {
-				projectId: arg.projectId,
-				taskId: arg.taskId,
-				note: arg.note,
-				aw: arg.aw,
-				organizationContactId: arg.organizationContactId
+	ipcMain.on('start_timer', async (event, arg) => {
+		try {
+			powerManager = new DesktopPowerManager(timeTrackerWindow);
+			powerManagerPreventSleep = new PowerManagerPreventDisplaySleep(
+				powerManager
+			);
+			powerManagerDetectInactivity = new PowerManagerDetectInactivity(
+				powerManager
+			);
+			new DesktopOsInactivityHandler(powerManagerDetectInactivity);
+			const setting = LocalStore.getStore('appSetting');
+			log.info(`Timer Start: ${moment().format()}`);
+			store.set({
+				project: {
+					projectId: arg.projectId,
+					taskId: arg.taskId,
+					note: arg.note,
+					aw: arg.aw,
+					organizationContactId: arg.organizationContactId
+				}
+			});
+			await timerHandler.startTimer(setupWindow, knex, timeTrackerWindow, arg.timeLog);
+			settingWindow.webContents.send('app_setting_update', {
+				setting: LocalStore.getStore('appSetting')
+			});
+			if (setting && setting.preventDisplaySleep) {
+				powerManagerPreventSleep.start();
 			}
-		});
-		timerHandler.startTimer(setupWindow, knex, timeTrackerWindow, arg.timeLog);
-		settingWindow.webContents.send('app_setting_update', {
-			setting: LocalStore.getStore('appSetting')
-		});
-		if (setting && setting.preventDisplaySleep)
-			powerManagerPreventSleep.start();
-		powerManagerDetectInactivity.startInactivityDetection();
+			powerManagerDetectInactivity.startInactivityDetection();
+		} catch (error) {
+			timeTrackerWindow.webContents.send('emergency_stop');
+			console.log('ERROR', error)
+		}
 	});
 
 	ipcMain.on('delete_time_slot', async (event, intervalId: number) => {
