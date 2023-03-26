@@ -26,7 +26,7 @@ export class ProviderFactory implements IDatabaseProvider {
 	}
 
 	private _defineProvider() {
-		switch (this._dialect) {
+		switch (this.dialect) {
 			case 'postgres':
 				this._dbContext.provider = PostgresProvider.instance;
 				break;
@@ -39,9 +39,9 @@ export class ProviderFactory implements IDatabaseProvider {
 		}
 	}
 
-	private get _dialect(): string {
+	public get dialect(): string {
 		const cfg = LocalStore.getApplicationConfig().config;
-		return cfg && cfg.db ? cfg.db : '';
+		return cfg && cfg.db ? cfg.db : 'sqlite';
 	}
 
 	public async migrate(): Promise<void> {
