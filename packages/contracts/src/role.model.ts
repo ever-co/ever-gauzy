@@ -9,7 +9,7 @@ export interface IRole extends IRoleCreateInput {
 }
 
 export interface IRoleCreateInput extends IBasePerTenantEntityModel {
-	name: string
+	name: string;
 }
 
 export interface IRoleFindInput extends IBasePerTenantEntityModel {
