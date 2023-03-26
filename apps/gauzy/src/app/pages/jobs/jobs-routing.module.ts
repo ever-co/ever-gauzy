@@ -20,9 +20,9 @@ const routes: Routes = [
 					),
 				data: {
 					selectors: {
-						project: false,
-						employee: false,
-						date: false
+						date: true,
+						employee: true,
+						project: false
 					}
 				}
 			},
@@ -34,9 +34,9 @@ const routes: Routes = [
 					),
 				data: {
 					selectors: {
-						project: false,
-						employee: false,
-						date: false
+						date: true,
+						employee: true,
+						project: false
 					}
 				}
 			},
@@ -54,9 +54,9 @@ const routes: Routes = [
 					),
 				data: {
 					selectors: {
-						project: false,
-						employee: false,
-						date: false
+						date: true,
+						employee: true,
+						project: false
 					}
 				}
 			}
@@ -68,4 +68,4 @@ const routes: Routes = [
 	imports: [RouterModule.forChild(routes)],
 	exports: [RouterModule]
 })
-export class JobsRoutingModule {}
+export class JobsRoutingModule { }
