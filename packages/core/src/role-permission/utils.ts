@@ -65,7 +65,7 @@ export class RolePermissionUtils {
                         `;
                         const existed = await queryRunner.connection.manager.query(query, [tenantId, permission, tenantId, roleEnum]);
                         if (isEmpty(existed) && role) {
-                            console.log(chalk.magenta(`${moment().format('DD.MM.YYYY HH:mm:ss')} unlocked missing permission for the tenant`, permission, role, tenant));
+                            console.log(chalk.magenta(`${moment().format('DD.MM.YYYY HH:mm:ss')} unlocked missing permission for the tenant`, permission, role.name, tenant.name));
                             /**
                              * Missing role permissions payload for insert into database
                              */
