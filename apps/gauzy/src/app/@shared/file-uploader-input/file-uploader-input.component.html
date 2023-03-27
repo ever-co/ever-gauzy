@@ -1,34 +1,31 @@
-<div
-	[nbSpinner]="loading"
-	nbSpinnerStatus="primary"
-	class="file-uploader-container"
->
+<div nbSpinnerStatus="primary" class="file-uploader-container">
 	<input
-		[hidden]="true"
+		type="text"
+		class="form-control"
+		[placeholder]="placeholder"
 		(change)="imageUrlChanged()"
+		[(ngModel)]="fileUrl"
+	/>
+	<input
 		#fileInput
 		type="file"
 		id="fileInput"
 		ng2FileSelect
-		[uploader]="uploader"
-	/>
-
-	<input
-		#shownInput="ngModel"
-		type="text"
-		class="form-control"
-		placeholder="{{ placeholder }}"
 		(change)="imageUrlChanged()"
-		[(ngModel)]="fileUrl"
+		[hidden]="true"
+		[uploader]="uploader"
 	/>
 	<button
 		nbButton
 		status="primary"
 		outline
 		size="tiny"
-		(click)="fileInput.click()"
+		debounceClick
+		(throttledClick)="fileInput.click()"
 	>
 		<i class="far fa-folder mr-1"></i>
-		<span class="text">{{ 'BROWSE' | translate | titlecase }}</span>
+		<span class="text">
+			{{ 'BROWSE' | translate | titlecase }}
+		</span>
 	</button>
 </div>

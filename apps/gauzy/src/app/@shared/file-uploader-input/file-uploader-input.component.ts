@@ -3,46 +3,105 @@ import {
 	Input,
 	Output,
 	EventEmitter,
-	ViewChild
+	ViewChild,
+	ElementRef,
+	AfterViewInit,
+	OnInit
 } from '@angular/core';
+import { IUser } from '@gauzy/contracts';
 import { FileUploader, FileUploaderOptions } from 'ng2-file-upload';
-import { NgModel } from '@angular/forms';
 
 @Component({
 	selector: 'ngx-file-uploader-input',
 	templateUrl: './file-uploader-input.component.html',
 	styleUrls: ['./file-uploader-input.component.scss']
 })
-export class FileUploaderInputComponent {
-	@ViewChild('shownInput', { static: true })
-	shownInput: NgModel;
+export class FileUploaderInputComponent implements AfterViewInit, OnInit {
 
-	@Input()
-	placeholder: string;
-	@Input()
-	name: string;
-	@Input()
-	fileUrl: string;
-	@Input()
-	customClass: string;
-	@Input()
-	locale: string;
-
-	@Output()
-	uploadedImgUrl: EventEmitter<string> = new EventEmitter<string>();
-
-	@Output()
-	uploadedImgData: EventEmitter<any> = new EventEmitter<any>();
-
+	user: IUser;
 	uploader: FileUploader;
-	loading = false;
+	loading: boolean = false;
+
+	/*
+	* Getter & Setter for dynamic image upload folder
+	*/
+	_folder: string = 'profile_pictures';
+	get folder(): string {
+		return this._folder;
+	}
+	@Input() set folder(value: string) {
+		this._folder = value;
+	}
+
+	/*
+	* Getter & Setter for dynamic locale
+	*/
+	_placeholder: string;
+	get placeholder(): string {
+		return this._placeholder;
+	}
+	@Input() set placeholder(value: string) {
+		this._placeholder = value;
+	}
+
+	/*
+	* Getter & Setter for dynamic custom class
+	*/
+	_customClass: string;
+	get customClass(): string {
+		return this._customClass;
+	}
+	@Input() set customClass(value: string) {
+		this._customClass = value;
+	}
+
+	/*
+	* Getter & Setter for dynamic locale
+	*/
+	_locale: string;
+	get locale(): string {
+		return this._locale;
+	}
+	@Input() set locale(value: string) {
+		this._locale = value;
+	}
+
+	/*
+	* Getter & Setter for dynamic name
+	*/
+	_name: string;
+	get name(): string {
+		return this._name;
+	}
+	@Input() set name(value: string) {
+		this._name = value;
+	}
+
+	/*
+	* Getter & Setter for full url
+	*/
+	_fileUrl: string;
+	get fileUrl(): string {
+		return this._fileUrl;
+	}
+	@Input() set fileUrl(value: string) {
+		this._fileUrl = value;
+	}
+
+	@Output() uploadedImgUrl: EventEmitter<string> = new EventEmitter<string>();
+	@Output() uploadedImgData: EventEmitter<any> = new EventEmitter<any>();
+
+	@ViewChild('fileInput') fileInput: ElementRef;
 
 	private oldValue: string;
 
-	constructor() {}
+	constructor() { }
 
 	ngOnInit(): void {
 		this._uploaderConfig();
+	}
+
+	ngAfterViewInit(): void {
 	}
 
 	async imageUrlChanged() {
@@ -127,14 +186,22 @@ export class FileUploaderInputComponent {
 		};
 	}
 
-	private async _setupImage(imgUrl) {
+	private async _setupImage(imgUrl: string) {
 		try {
-			const img = await this._getImageMeta(imgUrl);
+			const img = await this.getImageMetadata(imgUrl);
 			const width = img['width'];
 			const height = img['height'];
 			const orientation = width !== height ? (width > height ? 2 : 1) : 0;
 			const locale = this.locale;
 			const url = imgUrl;
+
+			console.log({
+				locale,
+				url,
+				width,
+				height,
+				orientation
+			});
 			return {
 				locale,
 				url,
@@ -147,12 +214,22 @@ export class FileUploaderInputComponent {
 		}
 	}
 
-	private async _getImageMeta(url) {
-		return new Promise((resolve, reject) => {
-			const img = new Image();
-			img.onload = () => resolve(img);
-			img.onerror = (err) => reject(false);
-			img.src = url;
-		});
+	/**
+	 * Get image metadata using by Image URL
+	 *
+	 * @param url
+	 * @returns
+	 */
+	getImageMetadata(url: string) {
+		try {
+			return new Promise((resolve, reject) => {
+				const img = new Image();
+				img.onload = () => resolve(img);
+				img.onerror = (error: any) => reject(false);
+				img.src = url;
+			});
+		} catch (error) {
+			console.log('Error while retrieving image metadata', error);
+		}
 	}
 }
