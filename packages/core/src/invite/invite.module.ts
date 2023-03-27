@@ -13,6 +13,7 @@ import { EmployeeModule } from './../employee/employee.module';
 import { CandidateModule } from './../candidate/candidate.module';
 import { OrganizationModule } from './../organization/organization.module';
 import { OrganizationTeamModule } from './../organization-team/organization-team.module';
+import { OrganizationTeamEmployeeModule } from './../organization-team-employee/organization-team-employee.module';
 import { OrganizationProjectModule } from './../organization-project/organization-project.module';
 import { OrganizationContactModule } from './../organization-contact/organization-contact.module';
 import { OrganizationDepartmentModule } from './../organization-department/organization-department.module';
@@ -20,12 +21,15 @@ import { UserOrganizationModule } from './../user-organization/user-organization
 import { InviteController } from './invite.controller';
 import { Invite } from './invite.entity';
 import { InviteService } from './invite.service';
-import { OrganizationTeamEmployeeModule } from './../organization-team-employee/organization-team-employee.module';
 
 @Module({
 	imports: [
-		RouterModule.forRoutes([{ path: '/invite', module: InviteModule }]),
-		TypeOrmModule.forFeature([Invite]),
+		RouterModule.forRoutes([
+			{ path: '/invite', module: InviteModule }
+		]),
+		TypeOrmModule.forFeature([
+			Invite
+		]),
 		CqrsModule,
 		EmailModule,
 		TenantModule,
@@ -40,10 +44,17 @@ import { OrganizationTeamEmployeeModule } from './../organization-team-employee/
 		OrganizationTeamModule,
 		UserOrganizationModule,
 		AuthModule,
-		OrganizationTeamEmployeeModule,
+		OrganizationTeamEmployeeModule
 	],
 	controllers: [InviteController],
-	providers: [InviteService, ...CommandHandlers, ...QueryHandlers],
-	exports: [TypeOrmModule, InviteService],
+	providers: [
+		InviteService,
+		...CommandHandlers,
+		...QueryHandlers
+	],
+	exports: [
+		TypeOrmModule,
+		InviteService
+	]
 })
-export class InviteModule {}
+export class InviteModule { }
