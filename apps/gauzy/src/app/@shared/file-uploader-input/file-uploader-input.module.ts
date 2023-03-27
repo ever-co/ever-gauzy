@@ -5,6 +5,7 @@ import { FileUploadModule } from 'ng2-file-upload';
 import { FileUploaderInputComponent } from './file-uploader-input.component';
 import { FormsModule } from '@angular/forms';
 import { NbButtonModule, NbSpinnerModule } from '@nebular/theme';
+import { DirectivesModule } from '../directives/directives.module';
 
 @NgModule({
 	imports: [
@@ -13,9 +14,10 @@ import { NbButtonModule, NbSpinnerModule } from '@nebular/theme';
 		TranslateModule.forChild(),
 		FileUploadModule,
 		NbButtonModule,
-		NbSpinnerModule
+		NbSpinnerModule,
+		DirectivesModule
 	],
 	exports: [FileUploaderInputComponent],
 	declarations: [FileUploaderInputComponent]
 })
-export class FileUploaderModule {}
+export class FileUploaderModule { }

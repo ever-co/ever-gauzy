@@ -60,7 +60,7 @@ export class ImageUploaderComponent implements AfterViewInit, OnInit {
     @Output() uploadImageAssetError = new EventEmitter<any>();
 
     constructor(
-        private readonly store: Store,
+        private readonly store: Store
     ) { }
 
     ngOnInit() {
