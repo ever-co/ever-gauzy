@@ -34,7 +34,7 @@ export class SqliteProvider implements IServerLessProvider {
 				directory: __dirname + '/migrations',
 			},
 			useNullAsDefault: true,
-			debug: true,
+			debug: false,
 			asyncStackTraces: true,
 		};
 	}
