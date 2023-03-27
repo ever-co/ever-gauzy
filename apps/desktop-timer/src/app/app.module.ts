@@ -42,6 +42,7 @@ import { NoAuthGuard } from './auth/no-auth.guard';
 import { AppModuleGuard } from './app.module.guards';
 import { APIInterceptor } from '../../../gauzy/src/app/@core/interceptors/api.interceptor';
 import { TokenInterceptor } from './auth/token.interceptor';
+import { TenantInterceptor } from './auth/tenant.interceptor';
 import { ServerDownModule } from './server-down/server-down.module';
 import { ServerConnectionService } from './auth/services/server-connection.service';
 import { environment } from '../../../gauzy/src/environments/environment';
@@ -110,6 +111,11 @@ import * as Sentry from '@sentry/angular';
 		{
 			provide: HTTP_INTERCEPTORS,
 			useClass: TokenInterceptor,
+			multi: true
+		},
+		{
+			provide: HTTP_INTERCEPTORS,
+			useClass: TenantInterceptor,
 			multi: true
 		},
 		{
