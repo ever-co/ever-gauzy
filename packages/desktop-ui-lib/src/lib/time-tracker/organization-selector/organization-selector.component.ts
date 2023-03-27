@@ -1,12 +1,4 @@
-import {
-	Component,
-	OnInit,
-	Output,
-	EventEmitter,
-	AfterViewInit,
-	NgZone,
-	Input,
-} from '@angular/core';
+import { Component, OnInit, Output, EventEmitter, AfterViewInit, NgZone, Input } from '@angular/core';
 import { IOrganization, IUserOrganization } from '@gauzy/contracts';
 import { uniq } from 'underscore';
 import { UserOrganizationService } from './user-organization.service';
@@ -15,7 +7,7 @@ import { ElectronService } from '../../electron/services';
 @Component({
 	selector: 'ga-organization-selector',
 	templateUrl: './organization-selector.component.html',
-	styleUrls: ['./organization-selector.component.scss'],
+	styleUrls: ['./organization-selector.component.scss']
 })
 export class OrganizationSelectorComponent implements OnInit, AfterViewInit {
 	private _user: IUserOrganization;
@@ -35,27 +27,22 @@ export class OrganizationSelectorComponent implements OnInit, AfterViewInit {
 		this._isDisabled = false;
 	}
 	ngAfterViewInit(): void {
-		this._electronService.ipcRenderer.on(
-			'timer_tracker_show',
-			(event, arg) => {
-				this._ngZone.run(async () => {
-					try {
-						const payload = {
-							apiHost: arg.apiHost
-						}
-						if (!Object.values(payload).includes(null || undefined)) {
-							this._auth = payload;
-							this.user = await this._userOrganizationService.detail(
-								payload
-							);
-							await this.loadOrganizations();
-						}
-					} catch (error) {
-						console.log('[error]', error)
+		this._electronService.ipcRenderer.on('timer_tracker_show', (event, arg) => {
+			this._ngZone.run(async () => {
+				try {
+					const payload = {
+						apiHost: arg.apiHost
+					};
+					if (!Object.values(payload).includes(null || undefined)) {
+						this._auth = payload;
+						this.user = await this._userOrganizationService.detail(payload);
+						await this.loadOrganizations();
 					}
-				});
-			}
-		);
+				} catch (error) {
+					console.log('[error]', error);
+				}
+			});
+		});
 	}
 
 	ngOnInit() {}
@@ -78,7 +65,7 @@ export class OrganizationSelectorComponent implements OnInit, AfterViewInit {
 				'organization',
 				'organization.contact',
 				'organization.featureOrganizations',
-				'organization.featureOrganizations.feature',
+				'organization.featureOrganizations.feature'
 			],
 			{ userId, tenantId },
 			this._auth
@@ -99,15 +86,12 @@ export class OrganizationSelectorComponent implements OnInit, AfterViewInit {
 
 			if (this.organizationId) {
 				const organization = this.organizations.find(
-					(organization: IOrganization) =>
-						organization.id === this.organizationId
+					(organization: IOrganization) => organization.id === this.organizationId
 				);
-				this.selectedOrganization =
-					organization || defaultOrganization || firstOrganization;
+				this.selectedOrganization = organization || defaultOrganization || firstOrganization;
 			} else {
 				// set default organization as selected
-				this.selectedOrganization =
-					defaultOrganization || firstOrganization;
+				this.selectedOrganization = defaultOrganization || firstOrganization;
 			}
 		}
 	}
