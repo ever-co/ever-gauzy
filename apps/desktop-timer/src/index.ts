@@ -413,7 +413,7 @@ ipcMain.on('restore', () => {
 	gauzyWindow.restore();
 });
 
-ipcMain.on('restart_app', (event, arg) => {
+ipcMain.on('restart_app', async (event, arg) => {
 	dialogErr = false;
 	LocalStore.updateConfigSetting(arg);
 	if (timeTrackerWindow) {
@@ -424,36 +424,35 @@ ipcMain.on('restart_app', (event, arg) => {
 		);
 	}
 	if (serverGauzy) serverGauzy.kill();
-	if (gauzyWindow) gauzyWindow.destroy();
-	gauzyWindow = null;
+	if (gauzyWindow) {
+		gauzyWindow.destroy();
+		gauzyWindow = null;
+	}
+
 	isAlreadyRun = false;
-	setTimeout(async () => {
-		if (!gauzyWindow) {
-			const configs = LocalStore.getStore('configs');
-			global.variableGlobal = {
-				API_BASE_URL: getApiBaseUrl(configs),
-				IS_INTEGRATED_DESKTOP: configs.isLocalServer,
-			};
-			await startServer(configs, !!tray);
-			removeMainListener();
-			ipcMainHandler(
-				store,
-				startServer,
-				knex,
-				{ ...environment },
-				timeTrackerWindow
-			);
-			setupWindow.webContents.send('server_ping_restart', {
-				host: getApiBaseUrl(configs),
-			});
-		}
-		/* Killing the provider. */
-		await provider.kill();
-		/* Creating a database if not exit. */
-		await ProviderFactory.instance.createDatabase();
-		app.relaunch({ args: process.argv.slice(1).concat(['--relaunch']) });
-		app.exit(0);
-	}, 100);
+	const configs = LocalStore.getStore('configs');
+	global.variableGlobal = {
+		API_BASE_URL: getApiBaseUrl(configs),
+		IS_INTEGRATED_DESKTOP: configs.isLocalServer,
+	};
+	await startServer(configs, !!tray);
+	removeMainListener();
+	ipcMainHandler(
+		store,
+		startServer,
+		knex,
+		{ ...environment },
+		timeTrackerWindow
+	);
+	setupWindow.webContents.send('server_ping_restart', {
+		host: getApiBaseUrl(configs),
+	});
+	/* Killing the provider. */
+	await provider.kill();
+	/* Creating a database if not exit. */
+	await ProviderFactory.instance.createDatabase();
+	app.relaunch({ args: process.argv.slice(1).concat(['--relaunch']) });
+	app.exit(0);
 });
 
 ipcMain.on('save_additional_setting', (event, arg) => {
