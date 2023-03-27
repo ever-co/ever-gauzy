@@ -876,8 +876,8 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 				const newTenantUser = await this.createUser(
 					{
 						user: {
-							firstName: names[0] || '',
-							lastName: names[1] || '',
+							firstName: names && names.length && names[0] || '',
+							lastName: names && names.length && names[1] || '',
 							email: email,
 							tenant: tenant,
 							role: role,
