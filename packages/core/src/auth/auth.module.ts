@@ -20,10 +20,13 @@ import { FeatureModule } from './../feature/feature.module';
 const providers = [
 	AuthService,
 	EmailConfirmationService,
-	UserOrganizationService,
+	UserOrganizationService
 ];
 
-const strategies = [JwtStrategy, JwtRefreshTokenStrategy];
+const strategies = [
+	JwtStrategy,
+	JwtRefreshTokenStrategy
+];
 
 @Module({
 	imports: [
@@ -31,7 +34,9 @@ const strategies = [JwtStrategy, JwtRefreshTokenStrategy];
 			{
 				path: '/auth',
 				module: AuthModule,
-				children: [{ path: '/', module: SocialAuthModule }],
+				children: [
+					{ path: '/', module: SocialAuthModule }
+				],
 			},
 		]),
 		SocialAuthModule.registerAsync({
@@ -41,20 +46,23 @@ const strategies = [JwtStrategy, JwtRefreshTokenStrategy];
 				UserModule,
 				RoleModule,
 				PasswordResetModule,
-				CqrsModule,
+				CqrsModule
 			],
-			useClass: AuthService,
+			useClass: AuthService
 		}),
-		TypeOrmModule.forFeature([UserOrganization, Organization]),
+		TypeOrmModule.forFeature([
+			UserOrganization,
+			Organization
+		]),
 		EmailModule,
 		UserModule,
 		RoleModule,
 		PasswordResetModule,
 		FeatureModule,
-		CqrsModule,
+		CqrsModule
 	],
 	controllers: [AuthController, EmailVerificationController],
 	providers: [...providers, ...CommandHandlers, ...strategies],
-	exports: [...providers],
+	exports: [...providers]
 })
-export class AuthModule {}
+export class AuthModule { }
