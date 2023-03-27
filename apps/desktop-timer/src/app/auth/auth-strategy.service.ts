@@ -205,8 +205,11 @@ export class AuthStrategy extends NbAuthStrategy {
 					);
 				}
 
-				this.store.tenantId = user.tenantId;
-				this.store.userId = user.id;
+				// Set stored values on login
+				const { id, employee, tenantId } = user;
+				this.store.organizationId = employee.organizationId;
+				this.store.tenantId = tenantId;
+				this.store.userId = id;
 				this.store.token = token;
 
 				this.electronAuthentication({ user, token });

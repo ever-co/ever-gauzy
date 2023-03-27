@@ -449,9 +449,7 @@ export class TimeTrackerService {
 
 		return firstValueFrom(
 			this.http
-				.post(`${values.apiHost}/api/timesheet/time-slot`, params, {
-					headers: headers,
-				})
+				.post(`${values.apiHost}/api/timesheet/time-slot`, params)
 				.pipe(
 					catchError((error) => {
 						error.error = {
