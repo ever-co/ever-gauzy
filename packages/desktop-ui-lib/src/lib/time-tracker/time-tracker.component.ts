@@ -693,8 +693,8 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 						const params = {
 							token: this.token,
 							note: this.note,
-							organizationId: this.userOrganization.id,
-							tenantId: this.userData.tenantId,
+							organizationId: this._store.organizationId,
+							tenantId: this._store.tenantId,
 							organizationContactId: this.organizationContactId,
 							apiHost: this.apiHost,
 							taskId: this.taskSelect,
@@ -797,8 +797,8 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 						await this.getTimerStatus({
 							token: this.token,
 							apiHost: this.apiHost,
-							organizationId: this.userOrganization.id,
-							tenantId: this.userData.tenantId,
+							organizationId: this._store.organizationId,
+							tenantId: this._store.tenantId,
 						});
 						asapScheduler.schedule(async () => {
 							await this.electronService.ipcRenderer.invoke(
@@ -833,8 +833,8 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 							note: this.note,
 							projectId: this.projectSelect,
 							taskId: this.taskSelect,
-							organizationId: this.userOrganization.id,
-							tenantId: this.userData.tenantId,
+							organizationId: this._store.organizationId,
+							tenantId: this._store.tenantId,
 							organizationContactId: this.organizationContactId,
 							apiHost: this.apiHost,
 						};
@@ -898,8 +898,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 			(event, arg) => {
 				this._ngZone.run(async () => {
 					try {
-						const { tenantId, employeeId } = this.userData;
-						const { id: organizationId } = this.userOrganization;
+						const { tenantId, organizationId } = this._store;
 						const payload = {
 							timeslotIds: [..._.uniq(arg.timeslotIds)],
 							token: this.token,
@@ -922,8 +921,8 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 									note: this.note,
 									projectId: this.projectSelect,
 									taskId: this.taskSelect,
-									organizationId: this.userOrganization.id,
-									tenantId: this.userData.tenantId,
+									organizationId: this._store.organizationId,
+									tenantId: this._store.tenantId,
 									organizationContactId:
 										this.organizationContactId,
 									apiHost: this.apiHost,
@@ -1063,8 +1062,8 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 	private async resetAtMidnight() {
 		if (this._isMidnight) {
 			try {
-				const { tenantId, employeeId } = this.userData;
-				const { id: organizationId } = this.userOrganization;
+				const { tenantId, organizationId } = this._store;
+				const { employeeId } = this.userData;
 				const payload = {
 					token: this.token,
 					apiHost: this.apiHost,
@@ -2123,8 +2122,8 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 	/* Adding a new project to the list of projects. */
 	public addProject = async (name: string) => {
 		try {
-			const { tenantId } = this.userData;
-			const organizationId = this.userOrganization.id;
+			const { tenantId } = this._store;
+			const organizationId = this._store.organizationId;
 			const request = {
 				name,
 				organizationId,
@@ -2164,8 +2163,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 		if (!title) {
 			return;
 		}
-		const { tenantId } = this.userData;
-		const organizationId = this.userOrganization.id;
+		const { tenantId, organizationId } = this._store;
 		const data = {
 			tenantId,
 			organizationId,
@@ -2206,8 +2204,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 	/* Creating a new contact for the organization. */
 	public addContact = async (name: IOrganizationContact['name']) => {
 		try {
-			const { tenantId } = this.userData;
-			const { id: organizationId } = this.userOrganization;
+			const { tenantId, organizationId } = this._store;
 			const member: any = { ...this.userData.employee };
 			const payload = {
 				name,
