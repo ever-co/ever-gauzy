@@ -36,8 +36,8 @@ const strategies = [
 				module: AuthModule,
 				children: [
 					{ path: '/', module: SocialAuthModule }
-				],
-			},
+				]
+			}
 		]),
 		SocialAuthModule.registerAsync({
 			imports: [

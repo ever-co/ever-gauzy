@@ -6,7 +6,7 @@ import {
 	IUserEmailInput,
 	IUserRegistrationInput,
 	IUserTokenInput,
-	LanguagesEnum,
+	LanguagesEnum
 } from './user.model';
 import { IOrganizationProject } from './organization-projects.model';
 import { IOrganization } from './organization.model';
@@ -94,19 +94,19 @@ export enum InviteStatusEnum {
 	INVITED = 'INVITED',
 	ACCEPTED = 'ACCEPTED',
 	EXPIRED = 'EXPIRED',
-	REJECTED = 'REJECTED',
+	REJECTED = 'REJECTED'
 }
 
 export enum InviteActionEnum {
 	ACCEPTED = 'ACCEPTED',
-	REJECTED = 'REJECTED',
+	REJECTED = 'REJECTED'
 }
 
 export enum InvitationTypeEnum {
 	USER = 'USER',
 	EMPLOYEE = 'EMPLOYEE',
 	CANDIDATE = 'CANDIDATE',
-	TEAM = 'TEAM',
+	TEAM = 'TEAM'
 }
 
 export enum InvitationExpirationEnum {
@@ -114,7 +114,7 @@ export enum InvitationExpirationEnum {
 	WEEK = 7,
 	TWO_WEEK = 14,
 	MONTH = 30,
-	NEVER = 'Never',
+	NEVER = 'Never'
 }
 
 export interface IInviteViewModel extends IBasePerTenantAndOrganizationEntityModel {
@@ -151,8 +151,7 @@ export interface IInviteEmployeeModel extends IBasePerTenantAndOrganizationEntit
 	originUrl?: string;
 }
 
-export interface IInviteTeamMemberModel extends IBasePerTenantAndOrganizationEntityModel,
-	IUserEmailInput {
+export interface IInviteTeamMemberModel extends IBasePerTenantAndOrganizationEntityModel, IUserEmailInput {
 	languageCode: LanguagesEnum;
 	invitedBy: IUser;
 	teams: string;
