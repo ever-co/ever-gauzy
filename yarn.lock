@@ -7852,15 +7852,14 @@ acorn@^8.0.4, acorn@^8.2.4, acorn@^8.4.1, acorn@^8.5.0, acorn@^8.7.0, acorn@^8.7
   resolved "https://registry.yarnpkg.com/acorn/-/acorn-8.8.2.tgz#1b2f25db02af965399b9776b0c2c391276d37c4a"
   integrity sha512-xjIYgE8HBrkpd/sJqOGNspf8uHG+NOHGOw6a/Urj8taM2EXfdNAH2oFcPeIFfsv3+kz/mJrS5VuMqbNLjCa2vw==
 
-active-win@^7.7.2:
-  version "7.7.2"
-  resolved "https://registry.yarnpkg.com/active-win/-/active-win-7.7.2.tgz#03e60fccffa2ac3ba0f6faf60cf6ec30676333f3"
-  integrity sha512-rXIHbkl1w/li3Lr9jjhaw90hitTANGuVXO6h1atFrxLWVl2Rw0mOdqrrauxNe2W6xeQJ428vsy+1cYOFlx6Lpg==
+active-win@^8.1.0:
+  version "8.1.0"
+  resolved "https://registry.yarnpkg.com/active-win/-/active-win-8.1.0.tgz#9271835d9e4f9be9332136470f6a01a3d1cf3c39"
+  integrity sha512-FK5rlPXVnTI5Tanx9IacNSezi4N8UO6Q6nJlAz0oi4aN141YiB4hryARBGg+p7MqrK1bUAEm9GW8VnzMmw59EA==
   optionalDependencies:
-    ffi-napi "^4.0.3"
-    ref-napi "^3.0.3"
-    ref-struct-di "^1.1.1"
-    ref-wchar-napi "^1.0.3"
+    "@mapbox/node-pre-gyp" "^1.0.10"
+    node-addon-api "^5.0.0"
+    node-gyp "^9.3.0"
 
 add-stream@^1.0.0:
   version "1.0.0"
@@ -18698,14 +18697,6 @@ iconv-lite@0.6, iconv-lite@0.6.3, iconv-lite@^0.6.2, iconv-lite@^0.6.3:
   dependencies:
     safer-buffer ">= 2.1.2 < 3.0.0"
 
-iconv@2:
-  version "2.3.5"
-  resolved "https://registry.yarnpkg.com/iconv/-/iconv-2.3.5.tgz#5f9b9612f5b15313286748d030c6ff29efdefa33"
-  integrity sha512-U5ajDbtDfadp7pvUMC0F2XbkP5vQn9Xrwa6UptePl+cK8EILxapAt3sXers9B3Gxagk+zVjL2ELKuzQvyqOwug==
-  dependencies:
-    nan "^2.14.0"
-    safer-buffer "^2.1.2"
-
 iconv@^3.0.1:
   version "3.0.1"
   resolved "https://registry.yarnpkg.com/iconv/-/iconv-3.0.1.tgz#31d319d71b59415cf348362c382961b1eb6f0e81"
@@ -24592,7 +24583,7 @@ mz@^2.4.0:
     object-assign "^4.0.1"
     thenify-all "^1.0.0"
 
-nan@^2.14.0, nan@^2.4.0:
+nan@^2.4.0:
   version "2.17.0"
   resolved "https://registry.yarnpkg.com/nan/-/nan-2.17.0.tgz#c0150a2368a182f033e9aa5195ec76ea41a199cb"
   integrity sha512-2ZTgtl0nJsO0KQCjEpxcIr5D+Yv90plTitZt9JBfQvVJDS5seMl3FOvsh3+9CoYWXf/1l5OaZzzF6nDm4cagaQ==
@@ -25112,7 +25103,7 @@ node-gyp@^7.1.0, node-gyp@^7.1.2:
     tar "^6.0.2"
     which "^2.0.2"
 
-node-gyp@^9.0.0, node-gyp@^9.3.1:
+node-gyp@^9.0.0, node-gyp@^9.3.0, node-gyp@^9.3.1:
   version "9.3.1"
   resolved "https://registry.yarnpkg.com/node-gyp/-/node-gyp-9.3.1.tgz#1e19f5f290afcc9c46973d68700cbd21a96192e4"
   integrity sha512-4Q16ZCqq3g8awk6UplT7AuxQ35XN4R/yf/+wSAwcBUAjg7l58RTactWaP8fIDTi0FzI7YcVLujwExakZlfWkXg==
@@ -29515,7 +29506,7 @@ redis@^3.1.2:
     redis-errors "^1.2.0"
     redis-parser "^3.0.0"
 
-"ref-napi@^2.0.1 || ^3.0.2", ref-napi@^3.0.1, ref-napi@^3.0.3:
+"ref-napi@^2.0.1 || ^3.0.2":
   version "3.0.3"
   resolved "https://registry.yarnpkg.com/ref-napi/-/ref-napi-3.0.3.tgz#e259bfc2bbafb3e169e8cd9ba49037dd00396b22"
   integrity sha512-LiMq/XDGcgodTYOMppikEtJelWsKQERbLQsYm0IOOnzhwE9xYZC7x8txNnFC9wJNOkPferQI4vD4ZkC0mDyrOA==
@@ -29525,20 +29516,12 @@ redis@^3.1.2:
     node-addon-api "^3.0.0"
     node-gyp-build "^4.2.1"
 
-ref-struct-di@^1.1.0, ref-struct-di@^1.1.1:
+ref-struct-di@^1.1.0:
   version "1.1.1"
   resolved "https://registry.yarnpkg.com/ref-struct-di/-/ref-struct-di-1.1.1.tgz#5827b1d3b32372058f177547093db1fe1602dc10"
   integrity sha512-2Xyn/0Qgz89VT+++WP0sTosdm9oeowLP23wRJYhG4BFdMUrLj3jhwHZNEytYNYgtPKLNTP3KJX4HEgBvM1/Y2g==
   dependencies:
     debug "^3.1.0"
-
-ref-wchar-napi@^1.0.3:
-  version "1.0.3"
-  resolved "https://registry.yarnpkg.com/ref-wchar-napi/-/ref-wchar-napi-1.0.3.tgz#7b1b05a9d610b26b84d2802e38c519e744ff2794"
-  integrity sha512-rx8b0pVfz/jShQPS288Rox/A0DQkcw6La+4YC3FgV4F9KUQ/VTxFrVpKOKGuj5yBvVoHdejbX6/BlHSkKHj9Lg==
-  dependencies:
-    iconv "2"
-    ref-napi "^3.0.1"
 
 reflect-metadata@^0.1.13, reflect-metadata@^0.1.2:
   version "0.1.13"
