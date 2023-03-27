@@ -1,4 +1,4 @@
-import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import {
 	IUserOrganization,
@@ -25,10 +25,6 @@ export class UserOrganizationService {
 		config?
 	): Promise<{ items: IUserOrganization[]; total: number }> {
 		const data = JSON.stringify({ relations, findInput });
-		const headers = new HttpHeaders({
-			Authorization: `Bearer ${config.token}`,
-			'Tenant-Id': config.tenantId,
-		});
 		let usersOrganizations$ =
 			this._userOrganizationsCacheService.getValue('all');
 		if (!usersOrganizations$) {
@@ -37,8 +33,7 @@ export class UserOrganizationService {
 					items: IUserOrganization[];
 					total: number;
 				}>(`${config.apiHost}/api/user-organization`, {
-					headers: headers,
-					params: { data },
+					params: { data }
 				})
 				.pipe(
 					map((response: any) => response),
@@ -53,10 +48,6 @@ export class UserOrganizationService {
 	}
 
 	public async detail(values): Promise<IUserOrganization> {
-		const headers = new HttpHeaders({
-			Authorization: `Bearer ${values.token}`,
-			'Tenant-Id': values.tenantId,
-		});
 		const params = toParams({
 			relations: [
 				'tenant',
@@ -71,8 +62,7 @@ export class UserOrganizationService {
 		if (!userOrganizations$) {
 			userOrganizations$ = this._http
 				.get<IUserOrganization>(`${values.apiHost}/api/user/me`, {
-					params,
-					headers: headers,
+					params
 				})
 				.pipe(
 					map((response: any) => response),
