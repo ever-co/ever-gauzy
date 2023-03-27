@@ -18,13 +18,10 @@
 					<div class="organization-container">
 						<div class="organization-photo">
 							<ngx-image-uploader
+								[folder]="'organization_avatars'"
 								(changeHoverState)="hoverState = $event"
-								(uploadedImageUrl)="
-									orgMainForm.get('imageUrl').setValue($event)
-								"
-								(uploadImageError)="
-									handleImageUploadError($event)
-								"
+								(uploadedImageAsset)="updateImageAsset($event)"
+								(uploadImageAssetError)="handleImageUploadError($event)"
 							></ngx-image-uploader>
 							<svg
 								xmlns="http://www.w3.org/2000/svg"
@@ -70,31 +67,21 @@
 							</svg>
 							<div
 								class="image-overlay"
-								[ngStyle]="{
-									opacity: hoverState ? '0.2' : '0'
-								}"
+								[ngStyle]="{ opacity: hoverState ? '0.2' : '0' }"
 							></div>
-
-							<img
-								*ngIf="
-									orgMainForm &&
-									orgMainForm.get('imageUrl').value
-								"
-								[src]="
-									!orgMainForm.get('imageUrl').value
-										? dummyImage
-										: orgMainForm.get('imageUrl').value
-								"
-								alt="Organization Photo"
-								(mouseenter)="hoverState = true"
-								(mouseleave)="hoverState = false"
-							/>
-							<div
-								*ngIf="!orgMainForm.get('imageUrl').value"
-								class="no-image"
-							>
-								<i class="fas fa-image"></i>
-							</div>
+							<ng-template [ngIf]="orgMainForm.get('imageUrl').value" [ngIfElse]="noImageTemplate">
+								<img
+									[src]="orgMainForm.get('imageUrl').value"
+									alt="Organization Photo"
+									(mouseenter)="hoverState = true"
+									(mouseleave)="hoverState = false"
+								/>
+							</ng-template>
+							<ng-template #noImageTemplate>
+								<div class="no-image">
+									<i class="fas fa-image"></i>
+								</div>
+							</ng-template>
 						</div>
 					</div>
 					<form

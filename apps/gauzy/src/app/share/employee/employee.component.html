@@ -8,8 +8,8 @@
 					<div class="employee-photo">
 						<ngx-image-uploader
 							(changeHoverState)="hoverState = $event"
-							(uploadedImageUrl)="updateImageUrl($event)"
-							(uploadImageError)="handleImageUploadError($event)"
+							(uploadedImageAsset)="updateImageAsset($event)"
+							(uploadImageAssetError)="handleImageUploadError($event)"
 						></ngx-image-uploader>
 						<svg
 							xmlns="http://www.w3.org/2000/svg"

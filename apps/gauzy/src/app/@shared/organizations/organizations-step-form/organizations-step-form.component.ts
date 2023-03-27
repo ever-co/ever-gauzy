@@ -17,6 +17,10 @@ import {
 	FormGroup,
 	Validators
 } from '@angular/forms';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { LatLng } from 'leaflet';
+import * as moment from 'moment';
+import { filter, tap } from 'rxjs/operators';
 import {
 	BonusTypeEnum,
 	ICountry,
@@ -27,19 +31,16 @@ import {
 	ICurrency,
 	IUser,
 	CurrenciesEnum,
-	DEFAULT_DATE_FORMATS
+	DEFAULT_DATE_FORMATS,
+	IImageAsset
 } from '@gauzy/contracts';
-import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { LatLng } from 'leaflet';
-import { filter, tap } from 'rxjs/operators';
 import { retrieveNameFromEmail } from '@gauzy/common-angular';
-import * as moment from 'moment';
-import { LocationFormComponent } from '../../forms/location';
+import { FormHelpers } from '../../forms';
 import { LeafletMapComponent } from '../../forms/maps';
+import { LocationFormComponent } from '../../forms/location';
 import { environment as ENV } from './../../../../environments/environment';
 import { Store, ToastrService } from '../../../@core/services';
 import { DUMMY_PROFILE_IMAGE } from '../../../@core/constants';
-import { FormHelpers } from '../../forms';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -74,7 +75,6 @@ export class OrganizationsStepFormComponent
 
 	user: IUser;
 	retrieveEmail: string;
-	dummyImage = DUMMY_PROFILE_IMAGE;
 
 	@Output() createOrganization = new EventEmitter();
 	@Output() closeForm = new EventEmitter();
@@ -107,7 +107,10 @@ export class OrganizationsStepFormComponent
 	public readonly orgMainForm: FormGroup = OrganizationsStepFormComponent.buildOrgMainForm(this.fb);
 	static buildOrgMainForm(fb: FormBuilder): FormGroup {
 		return fb.group({
-			imageUrl: [],
+			imageUrl: [
+				{ value: null, disabled: true }
+			],
+			imageId: [],
 			currency: [ENV.DEFAULT_CURRENCY || CurrenciesEnum.USD],
 			name: [null, Validators.required],
 			officialName: [],
@@ -276,8 +279,33 @@ export class OrganizationsStepFormComponent
 		this.orgMainForm.updateValueAndValidity();
 	}
 
-	handleImageUploadError(error) {
-		this.toastrService.danger(error);
+	/**
+	 * Upload organization image/avatar
+	 *
+	 * @param image
+	 */
+	updateImageAsset(image: IImageAsset) {
+		try {
+			if (image && image.id) {
+				this.orgMainForm.get('imageId').setValue(image.id);
+				this.orgMainForm.get('imageUrl').setValue(image.fullUrl);
+			} else {
+				this.orgMainForm.get('imageUrl').setValue(DUMMY_PROFILE_IMAGE);
+			}
+			this.orgMainForm.updateValueAndValidity();
+		} catch (error) {
+			console.log('Error while updating organization avatars');
+			this.handleImageUploadError(error);
+		}
+	}
+
+	handleImageUploadError(error: any) {
+		try {
+			this.orgMainForm.get('imageUrl').setValue(DUMMY_PROFILE_IMAGE);
+			this.orgMainForm.updateValueAndValidity();
+		} catch (error) {
+			this.toastrService.danger(error);
+		}
 	}
 
 	loadDefaultBonusPercentage(bonusType: BonusTypeEnum) {

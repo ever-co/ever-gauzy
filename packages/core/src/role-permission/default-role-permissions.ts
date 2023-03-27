@@ -112,8 +112,10 @@ export const DEFAULT_ROLE_PERMISSIONS = [
 			PermissionsEnum.ORG_PRODUCT_CATEGORIES_EDIT,
 			PermissionsEnum.VIEW_ALL_ACCOUNTING_TEMPLATES,
 			PermissionsEnum.MIGRATE_GAUZY_CLOUD,
+			PermissionsEnum.INVENTORY_GALLERY_ADD,
 			PermissionsEnum.INVENTORY_GALLERY_VIEW,
 			PermissionsEnum.INVENTORY_GALLERY_EDIT,
+			PermissionsEnum.INVENTORY_GALLERY_DELETE,
 			PermissionsEnum.MEDIA_GALLERY_ADD,
 			PermissionsEnum.MEDIA_GALLERY_VIEW,
 			PermissionsEnum.MEDIA_GALLERY_EDIT,
@@ -126,7 +128,7 @@ export const DEFAULT_ROLE_PERMISSIONS = [
 			PermissionsEnum.ALLOW_DELETE_TIME,
 			PermissionsEnum.ALLOW_MODIFY_TIME,
 			PermissionsEnum.ALLOW_MANUAL_TIME,
-			PermissionsEnum.DELETE_SCREENSHOTS,
+			PermissionsEnum.DELETE_SCREENSHOTS
 		]
 	},
 	{
@@ -239,8 +241,10 @@ export const DEFAULT_ROLE_PERMISSIONS = [
 			PermissionsEnum.ORG_PRODUCT_CATEGORIES_EDIT,
 			PermissionsEnum.VIEW_ALL_ACCOUNTING_TEMPLATES,
 			PermissionsEnum.MIGRATE_GAUZY_CLOUD,
+			PermissionsEnum.INVENTORY_GALLERY_ADD,
 			PermissionsEnum.INVENTORY_GALLERY_VIEW,
 			PermissionsEnum.INVENTORY_GALLERY_EDIT,
+			PermissionsEnum.INVENTORY_GALLERY_DELETE,
 			PermissionsEnum.MEDIA_GALLERY_ADD,
 			PermissionsEnum.MEDIA_GALLERY_VIEW,
 			PermissionsEnum.MEDIA_GALLERY_EDIT,
@@ -253,7 +257,7 @@ export const DEFAULT_ROLE_PERMISSIONS = [
 			PermissionsEnum.ALLOW_DELETE_TIME,
 			PermissionsEnum.ALLOW_MODIFY_TIME,
 			PermissionsEnum.ALLOW_MANUAL_TIME,
-			PermissionsEnum.DELETE_SCREENSHOTS,
+			PermissionsEnum.DELETE_SCREENSHOTS
 		]
 	},
 	{
@@ -327,8 +331,10 @@ export const DEFAULT_ROLE_PERMISSIONS = [
 			PermissionsEnum.ORG_TAGS_DELETE,
 			PermissionsEnum.EMPLOYEE_EXPENSES_VIEW,
 			PermissionsEnum.EMPLOYEE_EXPENSES_EDIT,
+			PermissionsEnum.INVENTORY_GALLERY_ADD,
 			PermissionsEnum.INVENTORY_GALLERY_VIEW,
 			PermissionsEnum.INVENTORY_GALLERY_EDIT,
+			PermissionsEnum.INVENTORY_GALLERY_DELETE,
 			PermissionsEnum.MEDIA_GALLERY_ADD,
 			PermissionsEnum.MEDIA_GALLERY_VIEW,
 			PermissionsEnum.MEDIA_GALLERY_EDIT,

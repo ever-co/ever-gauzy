@@ -445,7 +445,7 @@ export async function captureScreen(
 				});
 			})
 		);
-		takeshot(
+		await takeshot(
 			timeTrackerWindow,
 			{
 				timeSlotId: timeSlotId,
@@ -524,7 +524,7 @@ export async function getScreenshot() {
 	}
 }
 
-export function notifyScreenshot(
+export async function notifyScreenshot(
 	notificationWindow: BrowserWindow,
 	thumb,
 	windowPath,
@@ -564,7 +564,7 @@ export function notifyScreenshot(
 		slashes: true,
 		hash: '/screen-capture',
 	});
-	notificationWindow.loadURL(urlpath);
+	await notificationWindow.loadURL(urlpath);
 	remoteMain.enable(notificationWindow.webContents);
 	// notificationWindow.webContents.toggleDevTools();
 	notificationWindow.setMenu(null);

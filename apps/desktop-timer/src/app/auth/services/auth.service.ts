@@ -8,7 +8,7 @@ import {
 	PermissionsEnum,
 	IAuthResponse
 } from '@gauzy/contracts';
-import { Observable } from 'rxjs';
+import { Observable, firstValueFrom } from 'rxjs';
 import { API_PREFIX } from '../constants/app.constants';
 
 @Injectable()
@@ -16,10 +16,9 @@ export class AuthService {
 	constructor(private http: HttpClient) {}
 
 	isAuthenticated(): Promise<boolean> {
-		return this.http
+		return firstValueFrom(this.http
 			.get<boolean>(`${API_PREFIX}/auth/authenticated`)
-			.pipe(first())
-			.toPromise();
+			.pipe(first()));
 	}
 
 	login(loginInput): Observable<IAuthResponse> {

@@ -141,20 +141,24 @@ export function ipcMainHandler(
 			try {
 				const user = await userService.retrieve();
 				console.log('Current User', user);
-				if (!user || auth.userId !== user.remoteId) {
-					timeTrackerWindow.webContents.send('logout');
-				}
-			} catch (error) {
-				try {
+				if (user) {
+					if (auth.userId !== user.remoteId) {
+						timeTrackerWindow.webContents.send('logout');
+					}
+				} else {
 					const userService = new UserService();
 					const user = new User({ ...auth });
 					user.remoteId = auth.userId;
 					user.organizationId = auth.organizationId;
 					await userService.save(user.toObject());
-				} catch (error) {
-					timeTrackerWindow.webContents.send('logout');
 				}
+			} catch (error) {
+				timeTrackerWindow.webContents.send('logout');
+				console.log('[ERROR_ON_INIT]', error);
 			}
+		} else {
+			timeTrackerWindow.webContents.send('logout');
+			return;
 		}
 		try {
 			const lastTime = await TimerData.getLastCaptureTimeSlot(
@@ -349,33 +353,39 @@ export function ipcTimer(
 
 	offlineMode.trigger();
 
-	ipcMain.on('start_timer', (event, arg) => {
-		powerManager = new DesktopPowerManager(timeTrackerWindow);
-		powerManagerPreventSleep = new PowerManagerPreventDisplaySleep(
-			powerManager
-		);
-		powerManagerDetectInactivity = new PowerManagerDetectInactivity(
-			powerManager
-		);
-		new DesktopOsInactivityHandler(powerManagerDetectInactivity);
-		const setting = LocalStore.getStore('appSetting');
-		log.info(`Timer Start: ${moment().format()}`);
-		store.set({
-			project: {
-				projectId: arg.projectId,
-				taskId: arg.taskId,
-				note: arg.note,
-				aw: arg.aw,
-				organizationContactId: arg.organizationContactId
+	ipcMain.on('start_timer', async (event, arg) => {
+		try {
+			powerManager = new DesktopPowerManager(timeTrackerWindow);
+			powerManagerPreventSleep = new PowerManagerPreventDisplaySleep(
+				powerManager
+			);
+			powerManagerDetectInactivity = new PowerManagerDetectInactivity(
+				powerManager
+			);
+			new DesktopOsInactivityHandler(powerManagerDetectInactivity);
+			const setting = LocalStore.getStore('appSetting');
+			log.info(`Timer Start: ${moment().format()}`);
+			store.set({
+				project: {
+					projectId: arg.projectId,
+					taskId: arg.taskId,
+					note: arg.note,
+					aw: arg.aw,
+					organizationContactId: arg.organizationContactId
+				}
+			});
+			await timerHandler.startTimer(setupWindow, knex, timeTrackerWindow, arg.timeLog);
+			settingWindow.webContents.send('app_setting_update', {
+				setting: LocalStore.getStore('appSetting')
+			});
+			if (setting && setting.preventDisplaySleep) {
+				powerManagerPreventSleep.start();
 			}
-		});
-		timerHandler.startTimer(setupWindow, knex, timeTrackerWindow, arg.timeLog);
-		settingWindow.webContents.send('app_setting_update', {
-			setting: LocalStore.getStore('appSetting')
-		});
-		if (setting && setting.preventDisplaySleep)
-			powerManagerPreventSleep.start();
-		powerManagerDetectInactivity.startInactivityDetection();
+			powerManagerDetectInactivity.startInactivityDetection();
+		} catch (error) {
+			timeTrackerWindow.webContents.send('emergency_stop');
+			console.log('ERROR', error)
+		}
 	});
 
 	ipcMain.on('delete_time_slot', async (event, intervalId: number) => {
@@ -546,14 +556,14 @@ export function ipcTimer(
 			*/
 	});
 
-	ipcMain.on('show_screenshot_notif_window', (event, arg) => {
+	ipcMain.on('show_screenshot_notif_window', async (event, arg) => {
 		const appSetting = LocalStore.getStore('appSetting');
 		const notify = new NotificationDesktop();
 		if (appSetting) {
 			if (appSetting.simpleScreenshotNotification) {
 				notify.customNotification('Screenshot taken', 'Gauzy');
 			} else if (appSetting.screenshotNotification) {
-				notifyScreenshot(
+				await notifyScreenshot(
 					notificationWindow,
 					arg,
 					windowPath,

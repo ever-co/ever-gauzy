@@ -155,7 +155,7 @@ const updateConfigUi = (config) => {
 	let fileStr = readFileSync(pathWindow.gauzyUi, 'utf8');
 
 	const configStr = `
-		<script> window._env = { api: '${apiBaseUrl}' }; 
+		<script> window._env = { api: '${apiBaseUrl}' };
 		if (typeof global === "undefined") {
 			var global = window;
 		}; </script>`;
@@ -380,34 +380,35 @@ ipcMain.on('save_additional_setting', (event, arg) => {
 ipcMain.on('quit', quit);
 
 ipcMain.on('check_database_connection', async (event, arg) => {
-	let databaseOptions = {};
-	if (arg.db == 'postgres') {
-		databaseOptions = {
-			client: 'pg',
-			connection: {
-				host: arg.dbHost,
-				user: arg.dbUsername,
-				password: arg.dbPassword,
-				database: arg.dbName,
-				port: arg.dbPort,
-			},
-		};
-	} else {
-		databaseOptions = {
-			client: 'sqlite',
-			connection: {
-				filename: sqlite3filename,
-			},
-		};
-	}
-	const dbConn = require('knex')(databaseOptions);
 	try {
+		const provider = arg.db;
+		let databaseOptions;
+		if (provider === 'postgres') {
+			databaseOptions = {
+				client: 'pg',
+				connection: {
+					host: arg[provider].dbHost,
+					user: arg[provider].dbUsername,
+					password: arg[provider].dbPassword,
+					database: arg[provider].dbName,
+					port: arg[provider].dbPort
+				}
+			};
+		} else {
+			databaseOptions = {
+				client: 'sqlite',
+				connection: {
+					filename: sqlite3filename,
+				},
+			};
+		}
+		const dbConn = require('knex')(databaseOptions);
 		await dbConn.raw('select 1+1 as result');
 		event.sender.send('database_status', {
 			status: true,
 			message:
-				arg.db === 'postgres'
-					? 'Connection to PostgreSQL DB Succeeds'
+				provider === 'postgres'
+					? 'Connection to PostgresSQL DB Succeeds'
 					: 'Connection to SQLITE DB Succeeds',
 		});
 	} catch (error) {

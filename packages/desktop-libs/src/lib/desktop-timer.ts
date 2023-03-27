@@ -52,10 +52,10 @@ export default class TimerHandler {
 		});
 	}
 
-	startTimer(setupWindow, knex, timeTrackerWindow, timeLog) {
+	async startTimer(setupWindow, knex, timeTrackerWindow, timeLog) {
+		this._activities = [];
 		this._eventCounter.start();
 		this._activeWindow.start();
-		this._activities = [];
 
 		const appSetting = LocalStore.getStore('appSetting');
 
@@ -73,23 +73,22 @@ export default class TimerHandler {
 
 		this.timeStart = moment();
 
-		(async () => {
-			await this.createTimer(knex, timeLog);
-			this.collectActivities(setupWindow, knex, timeTrackerWindow);
 
-			/*
-			 * Start time interval for get set activities and screenshots
-			 */
-			if (!appSetting.randomScreenshotTime) {
-				await this.startTimerIntervalPeriod(setupWindow, knex, timeTrackerWindow);
-			}
+		await this.createTimer(knex, timeLog);
+		this.collectActivities(setupWindow, knex, timeTrackerWindow);
 
-			const lastTimer = await TimerData.getLastTimer(knex, null)
-			timeTrackerWindow.webContents.send('toggle_timer_state', {
-				isStarted: true,
-				lastTimer: lastTimer
-			})
-		})();
+		/*
+			* Start time interval for get set activities and screenshots
+			*/
+		if (!appSetting.randomScreenshotTime) {
+			await this.startTimerIntervalPeriod(setupWindow, knex, timeTrackerWindow);
+		}
+
+		const lastTimer = await TimerData.getLastTimer(knex, null);
+		timeTrackerWindow.webContents.send('toggle_timer_state', {
+			isStarted: true,
+			lastTimer: lastTimer
+		});
 	}
 
 	/*
@@ -240,7 +239,6 @@ export default class TimerHandler {
 		try {
 			this._eventCounter.stop();
 			if (this._activeWindow.active) await this._activeWindow.stop();
-			this._activities = [];
 			clearInterval(this.intervalTimer);
 			clearInterval(this.intervalUpdateTime);
 			await this._timerService.update(
@@ -268,9 +266,8 @@ export default class TimerHandler {
 
 	async getSetTimeSlot(setupWindow, knex) {
 		const id = this.lastTimer ? this.lastTimer.id : null;
-		await TimerData.getTimer(knex, id).then(async (timerD) => {
-			await TimerData.getAfk(knex, id).then((afk) => { });
-		});
+		await TimerData.getTimer(knex, id);
+		await TimerData.getAfk(knex, id);
 	}
 
 	async getSetActivity(knex, setupWindow, lastTimeSlot, timeTrackerWindow, quitApp) {

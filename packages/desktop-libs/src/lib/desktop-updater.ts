@@ -105,7 +105,7 @@ export class DesktopUpdater {
 	}
 
 	private _updaterProcess(): void {
-		autoUpdater.once('update-available', (info: UpdateInfo) => {
+		autoUpdater.once('update-available', async (info: UpdateInfo) => {
 			const setting = LocalStore.getStore('appSetting');
 			if (setting && !setting.automaticUpdate) return;
 			const dialog = new DialogConfirmUpgradeDownload(
@@ -123,14 +123,13 @@ export class DesktopUpdater {
 					' is available. Upgrade the application by downloading the updates for v' +
 					app.getVersion()
 			};
-			dialog.show().then(async (button) => {
-				if (button.response === 0) {
-					this._updateContext.update();
-				}
-			});
+			const button = await dialog.show();
+			if (button?.response === 0) {
+				this._updateContext.update();
+			}
 		});
 
-		autoUpdater.on('update-downloaded', (event: UpdateDownloadedEvent) => {
+		autoUpdater.on('update-downloaded', async (event: UpdateDownloadedEvent) => {
 			const setting = LocalStore.getStore('appSetting');
 			this._settingWindow.webContents.send('update_downloaded');
 			if (setting && !setting.automaticUpdate) return;
@@ -145,11 +144,10 @@ export class DesktopUpdater {
 				'A new version v' +
 				event.version +
 				' has been downloaded. Restart the application to apply the updates.';
-			dialog.show().then((button) => {
-				if (button.response === 0) {
-					this._settingWindow.webContents.send('_logout_quit_install_');
-				}
-			});
+			const button = await dialog.show();
+			if (button?.response === 0) {
+				this._settingWindow.webContents.send('_logout_quit_install_');
+			}
 			this._updateServer.stop();
 		});
 
