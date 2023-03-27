@@ -65,4 +65,4 @@ const strategies = [
 	providers: [...providers, ...CommandHandlers, ...strategies],
 	exports: [...providers]
 })
-export class AuthModule {}
+export class AuthModule { }
