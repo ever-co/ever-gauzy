@@ -7,7 +7,7 @@ import {
 	IOrganizationContact,
 	IPagination,
 	IInvite,
-	InviteActionEnum,
+	InviteActionEnum
 } from '@gauzy/contracts';
 import {
 	Body,
@@ -24,7 +24,7 @@ import {
 	Put,
 	Req,
 	ValidationPipe,
-	UsePipes,
+	UsePipes
 } from '@nestjs/common';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
@@ -43,18 +43,10 @@ import {
 	InviteAcceptOrganizationContactCommand,
 	InviteBulkCreateCommand,
 	InviteOrganizationContactCommand,
-	InviteResendCommand,
+	InviteResendCommand
 } from './commands';
-import {
-	CreateInviteDTO,
-	ResendInviteDTO,
-	ValidateInviteByCodeQueryDTO,
-	ValidateInviteQueryDTO,
-} from './dto';
-import {
-	FindInviteByEmailCodeQuery,
-	FindInviteByEmailTokenQuery,
-} from './queries';
+import { CreateInviteDTO, ResendInviteDTO, ValidateInviteByCodeQueryDTO, ValidateInviteQueryDTO } from './dto';
+import { FindInviteByEmailCodeQuery, FindInviteByEmailTokenQuery } from './queries';
 
 @ApiTags('Invite')
 @Controller()
@@ -68,12 +60,11 @@ export class InviteController {
 	@ApiOperation({ summary: 'Create email invites' })
 	@ApiResponse({
 		status: HttpStatus.CREATED,
-		description: 'The record has been successfully created.',
+		description: 'The record has been successfully created.'
 	})
 	@ApiResponse({
 		status: HttpStatus.BAD_REQUEST,
-		description:
-			'Invalid input, The response body may contain clues as to what went wrong',
+		description: 'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@HttpCode(HttpStatus.CREATED)
 	@UseGuards(TenantPermissionGuard, PermissionGuard)
@@ -84,9 +75,7 @@ export class InviteController {
 		@Body() entity: CreateInviteDTO,
 		@LanguageDecorator() languageCode: LanguagesEnum
 	): Promise<ICreateEmailInvitesOutput> {
-		return await this.commandBus.execute(
-			new InviteBulkCreateCommand(entity, languageCode)
-		);
+		return await this.commandBus.execute(new InviteBulkCreateCommand(entity, languageCode));
 	}
 
 	/**
@@ -99,11 +88,11 @@ export class InviteController {
 	@ApiResponse({
 		status: HttpStatus.OK,
 		description: 'Found invite',
-		type: Invite,
+		type: Invite
 	})
 	@ApiResponse({
 		status: HttpStatus.NOT_FOUND,
-		description: 'Record not found',
+		description: 'Record not found'
 	})
 	@Public()
 	@Get('validate')
@@ -112,7 +101,7 @@ export class InviteController {
 		return await this.queryBus.execute(
 			new FindInviteByEmailTokenQuery({
 				email: options.email,
-				token: options.token,
+				token: options.token
 			})
 		);
 	}
@@ -130,7 +119,7 @@ export class InviteController {
 		return await this.queryBus.execute(
 			new FindInviteByEmailCodeQuery({
 				email: body.email,
-				code: body.code,
+				code: body.code
 			})
 		);
 	}
@@ -138,12 +127,11 @@ export class InviteController {
 	@ApiOperation({ summary: 'Accept employee/user/candidate invite.' })
 	@ApiResponse({
 		status: HttpStatus.CREATED,
-		description: 'The record has been successfully executed.',
+		description: 'The record has been successfully executed.'
 	})
 	@ApiResponse({
 		status: HttpStatus.BAD_REQUEST,
-		description:
-			'Invalid input, The response body may contain clues as to what went wrong',
+		description: 'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@Public()
 	@Post('accept')
@@ -152,12 +140,7 @@ export class InviteController {
 		@Headers('origin') origin: string,
 		@I18nLang() languageCode: LanguagesEnum
 	) {
-		return await this.commandBus.execute(
-			new InviteAcceptCommand(
-				{ ...entity, originalUrl: origin },
-				languageCode
-			)
-		);
+		return await this.commandBus.execute(new InviteAcceptCommand({ ...entity, originalUrl: origin }, languageCode));
 	}
 
 	/**
@@ -170,31 +153,28 @@ export class InviteController {
 	@ApiResponse({
 		status: HttpStatus.OK,
 		description: 'Found invites',
-		type: Invite,
+		type: Invite
 	})
 	@ApiResponse({
 		status: HttpStatus.NOT_FOUND,
-		description: 'Record not found',
+		description: 'Record not found'
 	})
 	@UseGuards(TenantPermissionGuard, PermissionGuard)
 	@Permissions(PermissionsEnum.ORG_INVITE_VIEW)
 	@Get()
 	@UsePipes(new ValidationPipe())
-	async findAll(
-		@Query() options: PaginationParams<Invite>
-	): Promise<IPagination<IInvite>> {
+	async findAll(@Query() options: PaginationParams<Invite>): Promise<IPagination<IInvite>> {
 		return await this.inviteService.findAllInvites(options);
 	}
 
 	@ApiOperation({ summary: 'Accept organization contact invite.' })
 	@ApiResponse({
 		status: HttpStatus.CREATED,
-		description: 'The record has been successfully created.',
+		description: 'The record has been successfully created.'
 	})
 	@ApiResponse({
 		status: HttpStatus.BAD_REQUEST,
-		description:
-			'Invalid input, The response body may contain clues as to what went wrong',
+		description: 'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@Post('contact')
 	@Public()
@@ -204,9 +184,7 @@ export class InviteController {
 		@I18nLang() languageCode: LanguagesEnum
 	): Promise<any> {
 		input.originalUrl = request.get('Origin');
-		return await this.commandBus.execute(
-			new InviteAcceptOrganizationContactCommand(input, languageCode)
-		);
+		return await this.commandBus.execute(new InviteAcceptOrganizationContactCommand(input, languageCode));
 	}
 
 	/**
@@ -219,12 +197,11 @@ export class InviteController {
 	@ApiOperation({ summary: 'Resend invite.' })
 	@ApiResponse({
 		status: HttpStatus.CREATED,
-		description: 'The record has been successfully updated.',
+		description: 'The record has been successfully updated.'
 	})
 	@ApiResponse({
 		status: HttpStatus.BAD_REQUEST,
-		description:
-			'Invalid input, The response body may contain clues as to what went wrong',
+		description: 'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@UseGuards(TenantPermissionGuard, PermissionGuard)
 	@Permissions(PermissionsEnum.ORG_INVITE_EDIT)
@@ -234,43 +211,38 @@ export class InviteController {
 		@Body() entity: ResendInviteDTO,
 		@LanguageDecorator() languageCode: LanguagesEnum
 	): Promise<UpdateResult | Invite> {
-		return await this.commandBus.execute(
-			new InviteResendCommand(entity, languageCode)
-		);
+		return await this.commandBus.execute(new InviteResendCommand(entity, languageCode));
 	}
 
 	@ApiOperation({ summary: 'Delete record' })
 	@ApiResponse({
 		status: HttpStatus.NO_CONTENT,
-		description: 'The record has been successfully deleted',
+		description: 'The record has been successfully deleted'
 	})
 	@ApiResponse({
 		status: HttpStatus.NOT_FOUND,
-		description: 'Record not found',
+		description: 'Record not found'
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
 	@UseGuards(TenantPermissionGuard, PermissionGuard)
 	@Permissions(PermissionsEnum.ORG_INVITE_EDIT)
 	@Delete(':id')
-	async delete(
-		@Param('id', UUIDValidationPipe) id: IInvite['id']
-	): Promise<DeleteResult> {
+	async delete(@Param('id', UUIDValidationPipe) id: IInvite['id']): Promise<DeleteResult> {
 		return await this.inviteService.delete(id);
 	}
 
 	@ApiOperation({ summary: 'Update an existing record' })
 	@ApiResponse({
 		status: HttpStatus.CREATED,
-		description: 'The record has been successfully edited.',
+		description: 'The record has been successfully edited.'
 	})
 	@ApiResponse({
 		status: HttpStatus.NOT_FOUND,
-		description: 'Record not found',
+		description: 'Record not found'
 	})
 	@ApiResponse({
 		status: HttpStatus.BAD_REQUEST,
-		description:
-			'Invalid input, The response body may contain clues as to what went wrong',
+		description: 'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
 	@UseGuards(TenantPermissionGuard, PermissionGuard)
@@ -286,7 +258,7 @@ export class InviteController {
 				id,
 				originalUrl: request.get('Origin'),
 				inviterUser: request.user,
-				languageCode,
+				languageCode
 			})
 		);
 	}
@@ -294,7 +266,7 @@ export class InviteController {
 	@ApiOperation({ summary: 'Find all invites of current user' })
 	@ApiResponse({
 		status: HttpStatus.OK,
-		description: 'Found invites',
+		description: 'Found invites'
 	})
 	@UseGuards(TenantPermissionGuard, PermissionGuard)
 	@Permissions(PermissionsEnum.ORG_INVITE_VIEW)
@@ -306,13 +278,10 @@ export class InviteController {
 	@ApiOperation({ summary: 'Accept or Reject invite of current user' })
 	@ApiResponse({
 		status: HttpStatus.OK,
-		description: 'Invite Accepted',
+		description: 'Invite Accepted'
 	})
 	@UseGuards(TenantPermissionGuard, PermissionGuard)
-	@Permissions(
-		PermissionsEnum.ORG_INVITE_VIEW,
-		PermissionsEnum.ORG_INVITE_EDIT
-	)
+	@Permissions(PermissionsEnum.ORG_INVITE_VIEW, PermissionsEnum.ORG_INVITE_EDIT)
 	@Put(':id/:action')
 	async acceptMyInvitation(
 		@Param('id', UUIDValidationPipe) id: string,
@@ -320,11 +289,6 @@ export class InviteController {
 		@Req() request: Request,
 		@I18nLang() languageCode: LanguagesEnum
 	) {
-		return await this.inviteService.acceptMyInvitation(
-			id,
-			action,
-			request.get('Origin'),
-			languageCode
-		);
+		return await this.inviteService.acceptMyInvitation(id, action, request.get('Origin'), languageCode);
 	}
 }

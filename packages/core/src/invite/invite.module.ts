@@ -40,10 +40,10 @@ import { OrganizationTeamEmployeeModule } from './../organization-team-employee/
 		OrganizationTeamModule,
 		UserOrganizationModule,
 		AuthModule,
-		OrganizationTeamEmployeeModule,
+		OrganizationTeamEmployeeModule
 	],
 	controllers: [InviteController],
 	providers: [InviteService, ...CommandHandlers, ...QueryHandlers],
-	exports: [TypeOrmModule, InviteService],
+	exports: [TypeOrmModule, InviteService]
 })
 export class InviteModule {}

@@ -17,11 +17,7 @@ import { EmailConfirmationService } from './email-confirmation.service';
 import { EmailVerificationController } from './email-verification.controller';
 import { FeatureModule } from './../feature/feature.module';
 
-const providers = [
-	AuthService,
-	EmailConfirmationService,
-	UserOrganizationService,
-];
+const providers = [AuthService, EmailConfirmationService, UserOrganizationService];
 
 const strategies = [JwtStrategy, JwtRefreshTokenStrategy];
 
@@ -31,19 +27,12 @@ const strategies = [JwtStrategy, JwtRefreshTokenStrategy];
 			{
 				path: '/auth',
 				module: AuthModule,
-				children: [{ path: '/', module: SocialAuthModule }],
-			},
+				children: [{ path: '/', module: SocialAuthModule }]
+			}
 		]),
 		SocialAuthModule.registerAsync({
-			imports: [
-				AuthModule,
-				EmailModule,
-				UserModule,
-				RoleModule,
-				PasswordResetModule,
-				CqrsModule,
-			],
-			useClass: AuthService,
+			imports: [AuthModule, EmailModule, UserModule, RoleModule, PasswordResetModule, CqrsModule],
+			useClass: AuthService
 		}),
 		TypeOrmModule.forFeature([UserOrganization, Organization]),
 		EmailModule,
@@ -51,10 +40,10 @@ const strategies = [JwtStrategy, JwtRefreshTokenStrategy];
 		RoleModule,
 		PasswordResetModule,
 		FeatureModule,
-		CqrsModule,
+		CqrsModule
 	],
 	controllers: [AuthController, EmailVerificationController],
 	providers: [...providers, ...CommandHandlers, ...strategies],
-	exports: [...providers],
+	exports: [...providers]
 })
 export class AuthModule {}
