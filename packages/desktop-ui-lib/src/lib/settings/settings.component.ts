@@ -729,7 +729,7 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 		this._notifier.success(
 			'Update ' +
 			type.replace(/([a-z])([A-Z])/g, '$1 $2').toLowerCase() +
-			' setting successefuly'
+			' setting successfully'
 		);
 	}
 
