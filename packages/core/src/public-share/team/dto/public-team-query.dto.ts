@@ -1,8 +1,9 @@
-import { ApiPropertyOptional, PickType } from "@nestjs/swagger";
+import { ApiPropertyOptional, IntersectionType, PickType } from "@nestjs/swagger";
 import { IsEnum, IsOptional } from "class-validator";
 import { Transform, TransformFnParams } from "class-transformer";
-import { IBaseRelationsEntityModel, IDateRangePicker } from "@gauzy/contracts";
+import { IDateRangePicker, IOrganizationTeamStatisticInput } from "@gauzy/contracts";
 import { DateRangeQueryDTO } from "./../../../shared/dto";
+import { OrganizationTeamStatisticDTO } from "./../../../organization-team/dto";
 
 /**
  * Get public employee request DTO validation
@@ -17,9 +18,11 @@ export enum PublicTeamRelationEnum {
     'tasks.teams' = 'tasks.teams'
 }
 
-export class PublicTeamQueryDTO extends PickType(
-    DateRangeQueryDTO, ['startDate', 'endDate']
-) implements IDateRangePicker, IBaseRelationsEntityModel {
+// OrganizationTeamStatisticDTO
+export class PublicTeamQueryDTO extends IntersectionType(
+    PickType(OrganizationTeamStatisticDTO, ['withLaskWorkedTask']),
+    PickType(DateRangeQueryDTO, ['startDate', 'endDate'])
+) implements IDateRangePicker, IOrganizationTeamStatisticInput {
 
     @ApiPropertyOptional({ type: () => String, enum: PublicTeamRelationEnum })
     @IsOptional()
