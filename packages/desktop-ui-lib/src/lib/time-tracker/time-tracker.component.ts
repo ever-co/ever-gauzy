@@ -1257,19 +1257,12 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 				this.electronService.ipcRenderer.send('aw_status', true);
 			this._activityWatchLog$.next("Activity Watch's connected");
 		} catch (e) {
-			if (e.status === 200) {
-				this.iconAw$.next('checkmark-square-outline');
-				this.statusIcon$.next('success');
-				this.electronService.ipcRenderer.send('aw_status', true);
-				this._activityWatchLog$.next("Activity Watch's connected");
-			} else {
-				this.iconAw$.next('close-square-outline');
-				this.statusIcon$.next('danger');
-				this.electronService.ipcRenderer.send('aw_status', false);
-				this._activityWatchLog$.next(
-					"Activity Watch's Disconnected"
-				);
-			}
+			this.iconAw$.next('close-square-outline');
+			this.statusIcon$.next('danger');
+			this.electronService.ipcRenderer.send('aw_status', false);
+			this._activityWatchLog$.next(
+				"Activity Watch's Disconnected"
+			);
 		}
 	}
 
