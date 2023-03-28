@@ -1,8 +1,12 @@
-import { IBaseRelationsEntityModel, IDateRangePicker, IOrganizationTeam, IOrganizationTeamEmployee, ITask } from '@gauzy/contracts';
+import {
+	IDateRangePicker,
+	IOrganizationTeam,
+	IOrganizationTeamEmployee,
+	IOrganizationTeamStatisticInput
+} from '@gauzy/contracts';
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { FindOptionsWhere, Repository } from 'typeorm';
-import * as moment from 'moment';
 import { OrganizationTeam } from './../../core/entities/internal';
 import { StatisticService } from './../../time-tracking/statistic';
 import { TimerService } from './../../time-tracking/timer/timer.service';
@@ -27,10 +31,9 @@ export class PublicTeamService {
 	 */
 	async findOneByProfileLink(
 		params: FindOptionsWhere<OrganizationTeam>,
-		options: IDateRangePicker & IBaseRelationsEntityModel
+		options: IDateRangePicker & IOrganizationTeamStatisticInput
 	): Promise<IOrganizationTeam> {
 		try {
-			const { startDate, endDate } = options;
 			const team = await this.repository.findOneOrFail({
 				select: {
 					organization: {
@@ -66,7 +69,7 @@ export class PublicTeamService {
 			});
 			if ('members' in team) {
 				const { members, organizationId, tenantId } = team;
-				team['members'] = await this.syncMembers({ organizationId, tenantId, members }, { startDate, endDate });
+				team['members'] = await this.syncMembers({ organizationId, tenantId, members }, options);
 			}
 			return team;
 		} catch (error) {
@@ -80,26 +83,36 @@ export class PublicTeamService {
 	 * @param param0
 	 * @returns
 	 */
-	async syncMembers({
-		organizationId,
-		tenantId,
-		members
-	}, {
-		startDate,
-		endDate
-	}: IDateRangePicker): Promise<ITask[]> {
+	async syncMembers(
+		{
+			organizationId,
+			tenantId,
+			members
+		},
+		options: IDateRangePicker & IOrganizationTeamStatisticInput
+	): Promise<IOrganizationTeamEmployee[]> {
 		try {
+			const { startDate, endDate, withLaskWorkedTask, source } = options;
 			return await Promise.all(
 				await members.map(
 					async (member: IOrganizationTeamEmployee) => {
-						const { employeeId } = member		
-						const timerStatus = await this._timerService.getTimerWorkedStatus({
+						const { employeeId, organizationTeamId } = member;
+						const timerWorkedStatus = await this._timerService.getTimerWorkedStatus({
+							source,
 							employeeId,
-							organizationTeamId: member.organizationTeamId
-						})
-					
+							organizationTeamId,
+							organizationId,
+							tenantId,
+							...(
+								(Boolean(withLaskWorkedTask)) ? {
+									relations: ['task']
+								} : {}
+							),
+						});
 						return {
 							...member,
+							lastWorkedTask: Boolean(withLaskWorkedTask) ? timerWorkedStatus.lastLog?.task : null,
+							timerStatus: timerWorkedStatus?.timerStatus,
 							totalWorkedTasks: await this._statisticService.getTasks({
 								organizationId,
 								tenantId,
@@ -112,9 +125,6 @@ export class PublicTeamService {
 								startDate,
 								endDate
 							}),
-							timerStatus: timerStatus.running ? 'running' : 
-							timerStatus?.lastLog?.stoppedAt && moment(timerStatus.lastLog.stoppedAt).diff(new Date(), 'day') === 0 ? 
-							'pause' : 'idle'
 						}
 					}
 				)

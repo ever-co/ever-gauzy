@@ -1,7 +1,6 @@
 import { BadRequestException } from '@nestjs/common';
 import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
-import { IOrganizationTeam, IOrganizationTeamEmployee } from '@gauzy/contracts';
-import * as moment from 'moment';
+import { IOrganizationTeam, IOrganizationTeamEmployee, IOrganizationTeamStatisticInput } from '@gauzy/contracts';
 import { GetOrganizationTeamStatisticQuery } from '../get-organization-team-statistic.query';
 import { OrganizationTeamService } from '../../organization-team.service';
 import { TimerService } from '../../../time-tracking/timer/timer.service';
@@ -19,6 +18,8 @@ export class GetOrganizationTeamStatisticHandler implements IQueryHandler<GetOrg
 	): Promise<IOrganizationTeam> {
 		try {
 			const { organizationTeamId, options } = query;
+			const { withLaskWorkedTask } = options;
+
 			const organizationTeam = await this.organizationTeamService.findOneByIdString(organizationTeamId, {
 				...(
 					(options['relations']) ? {
@@ -27,9 +28,9 @@ export class GetOrganizationTeamStatisticHandler implements IQueryHandler<GetOrg
 				),
 			});
 			if ('members' in organizationTeam) {
-				const { members } = organizationTeam;
-				if (options.withLaskWorkedTask && Boolean(JSON.parse(options.withLaskWorkedTask as any))) {
-					organizationTeam['members'] = await this.syncLastWorkedTask({ members, options }, organizationTeamId);
+				const { members, organizationId, tenantId } = organizationTeam;
+				if (Boolean(withLaskWorkedTask)) {
+					organizationTeam['members'] = await this.syncLastWorkedTask({ members, organizationId, tenantId }, options);
 				}
 			}
 			return organizationTeam;
@@ -44,37 +45,38 @@ export class GetOrganizationTeamStatisticHandler implements IQueryHandler<GetOrg
 	 * @param param0
 	 * @returns
 	 */
-	async syncLastWorkedTask({ members, options }, organizationTeamId: IOrganizationTeam['id']): Promise<IOrganizationTeamEmployee[]> {
+	async syncLastWorkedTask(
+		{
+			organizationId,
+			tenantId,
+			members
+		},
+		options: IOrganizationTeamStatisticInput
+	): Promise<IOrganizationTeamEmployee[]> {
 		try {
-			const { source } = options;
+			const { withLaskWorkedTask, source } = options;
 			return await Promise.all(
 				await members.map(
 					async (member: IOrganizationTeamEmployee) => {
-						const { employeeId } = member
-						const timerStatus = await this.timerService.getTimerWorkedStatus({
+						const { employeeId, organizationTeamId } = member;
+						const timerWorkedStatus = await this.timerService.getTimerWorkedStatus({
 							source,
 							employeeId,
 							organizationTeamId,
+							organizationId,
+							tenantId,
 							...(
-								(options.withLaskWorkedTask && Boolean(JSON.parse(options.withLaskWorkedTask as any))) ? {
+								(Boolean(withLaskWorkedTask)) ? {
 									relations: ['task']
 								} : {}
-							),
+							)
 						});
 						return {
 							...member,
-							...(
-								(options.withLaskWorkedTask && Boolean(JSON.parse(options.withLaskWorkedTask as any))) ? {
-									lastWorkedTask: timerStatus.lastLog ? timerStatus.lastLog.task : null
-								} : {
-									lastWorkedTask: null
-								}
-							),
-							running: timerStatus.running,
-							duration: timerStatus.duration,
-							timerStatus: timerStatus.running ? 'running' : 
-							timerStatus?.lastLog?.stoppedAt && moment(timerStatus.lastLog.stoppedAt).diff(new Date(), 'day') === 0 ? 
-							'pause' : 'idle'
+							lastWorkedTask: Boolean(withLaskWorkedTask) ? timerWorkedStatus.lastLog?.task : null,
+							running: timerWorkedStatus?.running,
+							duration: timerWorkedStatus?.duration,
+							timerStatus: timerWorkedStatus?.timerStatus
 						}
 					}
 				)
