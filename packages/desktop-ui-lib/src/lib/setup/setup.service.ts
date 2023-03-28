@@ -13,6 +13,6 @@ export class SetupService {
 	}
 
 	public pingServer(values) {
-		return firstValueFrom(this._http.get(values.host));
+		return firstValueFrom(this._http.get(values.host + '/api'));
 	}
 }

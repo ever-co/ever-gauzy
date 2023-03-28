@@ -148,11 +148,6 @@ export class AppComponent implements OnInit, AfterViewInit {
 						})
 						.catch((e) => {
 							console.log('ping status result', e.status);
-							if (e.status === 404) {
-								event.sender.send('server_is_ready');
-								clearInterval(pingHost);
-							}
-
 							if (this.store.userId) {
 								event.sender.send('server_is_ready');
 								clearInterval(pingHost);
@@ -177,10 +172,6 @@ export class AppComponent implements OnInit, AfterViewInit {
 							})
 							.catch((e) => {
 								console.log('ping status result', e.status);
-								if (e.status === 404) {
-									event.sender.send('server_already_start');
-									clearInterval(pingHost);
-								}
 								if (this.store.userId) {
 									event.sender.send('server_is_ready');
 									clearInterval(pingHost);
