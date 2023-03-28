@@ -6,7 +6,7 @@ import { firstValueFrom } from 'rxjs';
 	providedIn: 'root'
 })
 export class SetupService {
-	constructor(private _http: HttpClient) { }
+	constructor(private _http: HttpClient) {}
 
 	public pingAw(host) {
 		return firstValueFrom(this._http.get(host));

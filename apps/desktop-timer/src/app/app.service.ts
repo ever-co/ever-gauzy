@@ -5,15 +5,12 @@ import { firstValueFrom } from 'rxjs';
 import { UserOrganizationService } from '@gauzy/desktop-ui-lib';
 
 @Injectable({
-	providedIn: 'root',
+	providedIn: 'root'
 })
 export class AppService {
 	AW_HOST = environment.AWHost;
 	buckets: any = {};
-	constructor(
-		private http: HttpClient,
-		private readonly _userOrganizationService: UserOrganizationService
-	) {}
+	constructor(private http: HttpClient, private readonly _userOrganizationService: UserOrganizationService) {}
 
 	pingServer(values) {
 		return firstValueFrom(this.http.get(values.host + '/api'));
@@ -25,18 +22,13 @@ export class AppService {
 				timestamp: new Date(),
 				data: {
 					running: true,
-					label: '',
-				},
-			},
+					label: ''
+				}
+			}
 		];
 
 		if (id) defaultValue[0].id = id;
-		return firstValueFrom(
-			this.http.post(
-				`${this.AW_HOST}/api/0/buckets/aw-stopwatch/events`,
-				defaultValue
-			)
-		);
+		return firstValueFrom(this.http.post(`${this.AW_HOST}/api/0/buckets/aw-stopwatch/events`, defaultValue));
 	}
 
 	stopTime(historyTime): Promise<any> {
@@ -45,17 +37,12 @@ export class AppService {
 				timestamp: new Date(),
 				data: {
 					running: false,
-					label: '',
+					label: ''
 				},
-				id: historyTime.id,
-			},
+				id: historyTime.id
+			}
 		];
-		return firstValueFrom(
-			this.http.post(
-				`${this.AW_HOST}/api/0/buckets/aw-stopwatch/events`,
-				defaultStopParams
-			)
-		);
+		return firstValueFrom(this.http.post(`${this.AW_HOST}/api/0/buckets/aw-stopwatch/events`, defaultStopParams));
 	}
 
 	getAwBuckets(tpURL): Promise<any> {
@@ -128,11 +115,7 @@ export class AppService {
 
 	collectAfkFromAW(tpURL, start, end) {
 		if (!this.buckets.afkBucket) return Promise.resolve([]);
-		return firstValueFrom(
-			this.http.get(
-				`${tpURL}/api/0/buckets/${this.buckets.afkBucket.id}/events?limit=1`
-			)
-		);
+		return firstValueFrom(this.http.get(`${tpURL}/api/0/buckets/${this.buckets.afkBucket.id}/events?limit=1`));
 	}
 
 	async getUserDetail(values) {
