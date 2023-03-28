@@ -1147,14 +1147,11 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 				});
 			}
 		} catch (error) {
-			const isOkAnyway = error.status === 404;
 			this._isCheckHost$.next({
-				status: isOkAnyway,
+				status: false,
 				isHidden: false,
 				isLoading: false,
-				message: isOkAnyway
-					? `Connection to Server ${this.config.serverUrl} Succeeds`
-					: error.message,
+				message: error.message
 			});
 		}
 	}

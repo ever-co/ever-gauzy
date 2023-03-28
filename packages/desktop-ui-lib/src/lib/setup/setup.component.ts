@@ -433,28 +433,13 @@ export class SetupComponent implements OnInit {
 				}
 			})
 			.catch((e) => {
-				if (e.status === 404) {
-					if (this.runApp) {
-						this.saveAndRun();
-					} else {
-						this.dialogData = {
-							title: 'Success',
-							message: `Connection to Server ${serverHostOptions.serverUrl} Succeeds`,
-							status: 'success',
-						};
-						let elBtn: HTMLElement =
-							this.btnDialogOpen.nativeElement;
-						elBtn.click();
-					}
-				} else {
-					this.dialogData = {
-						title: 'Error',
-						message: e.message,
-						status: 'danger',
-					};
-					let elBtn: HTMLElement = this.btnDialogOpen.nativeElement;
-					elBtn.click();
-				}
+				this.dialogData = {
+					title: 'Error',
+					message: e.message,
+					status: 'danger',
+				};
+				let elBtn: HTMLElement = this.btnDialogOpen.nativeElement;
+				elBtn.click();
 			});
 	}
 
