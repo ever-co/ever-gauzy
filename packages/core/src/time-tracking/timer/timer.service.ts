@@ -368,9 +368,9 @@ export class TimerService {
 	 * @param request
 	 * @returns
 	 */
-	public async getTimerWorkedStatus(request: ITimerStatusInput) {
+	public async getTimerWorkedStatus(request: ITimerStatusInput): Promise<ITimerStatus> {
 		const userId = RequestContext.currentUserId();
-		const tenantId = RequestContext.currentTenantId();
+		const tenantId = RequestContext.currentTenantId() || request.tenantId;
 
 		let employee = await this.employeeRepository.findOneBy({
 			userId,
@@ -424,6 +424,8 @@ export class TimerService {
 			status.lastLog = lastLog;
 			status.running = lastLog.isRunning;
 			status.duration = lastLog.duration;
+			/** Get timer current status */
+			status.timerStatus = lastLog.isRunning ? 'running' : (moment(lastLog.stoppedAt).diff(new Date(), 'day') > 0 ? 'idle' : 'pause');
 		}
 		return status;
 	}
