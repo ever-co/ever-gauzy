@@ -31,6 +31,7 @@ import {
 } from '@gauzy/contracts';
 import { Store } from '@gauzy/desktop-timer/src/app/auth/services/store.service';
 import { compressImage } from '@gauzy/common-angular';
+import { ErrorHandlerService, NativeNotificationService, ToastrNotificationService } from 'apps/desktop-timer/src/app/services';
 
 
 // Import logging for electron and override default console logging
@@ -224,6 +225,9 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 		private sanitize: DomSanitizer,
 		private _ngZone: NgZone,
 		private iconLibraries: NbIconLibraries,
+		private _errorHandlerService: ErrorHandlerService,
+		private _nativeNotifier: NativeNotificationService,
+		private _toastrNotifier: ToastrNotificationService,
 		private _store: Store
 	) {
 		this.iconLibraries.registerFontPack('font-awesome', {
@@ -474,7 +478,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 						});
 					}
 				} catch (error) {
-					console.log('ERROR_CAPTURE', error);
+					this._errorHandlerService.handleError(error);
 				}
 			})
 		);
@@ -611,7 +615,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 						this.sound.play();
 					}
 				} catch (error) {
-					console.log('error play sound', error);
+					this._errorHandlerService.handleError(error);
 				}
 			})
 		);
@@ -801,22 +805,30 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 							tenantId: this._store.tenantId,
 						});
 						asapScheduler.schedule(async () => {
-							await this.electronService.ipcRenderer.invoke(
-								'UPDATE_SYNCED_TIMER',
-								{
-									lastTimer: latest
-										? latest
-										: {
-											...sequence.timer,
-											id: this.timerStatus.lastLog.id,
-										},
-									...sequence.timer,
-								}
-							);
+							try {
+								await this.electronService.ipcRenderer.invoke(
+									'UPDATE_SYNCED_TIMER',
+									{
+										lastTimer: latest
+											? latest
+											: {
+												...sequence.timer,
+												id: this.timerStatus.lastLog.id,
+											},
+										...sequence.timer,
+									}
+								);
+							} catch (error) {
+								this._errorHandlerService.handleError(error);
+							}
 						});
 					}
 					asapScheduler.schedule(async () => {
-						await this.electronService.ipcRenderer.invoke('FINISH_SYNCED_TIMER');
+						try {
+							await this.electronService.ipcRenderer.invoke('FINISH_SYNCED_TIMER');
+						} catch (error) {
+							this._errorHandlerService.handleError(error);
+						}
 					});
 				});
 			}
@@ -865,14 +877,18 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 							this.loading = false;
 						}
 						asapScheduler.schedule(async () => {
-							await this.electronService.ipcRenderer.invoke(
-								'UPDATE_SYNCED_TIMER',
-								{
-									config: { isTakeScreenCapture: true },
-									lastTimer: timelog,
-									...lastTimer,
-								}
-							);
+							try {
+								await this.electronService.ipcRenderer.invoke(
+									'UPDATE_SYNCED_TIMER',
+									{
+										config: { isTakeScreenCapture: true },
+										lastTimer: timelog,
+										...lastTimer,
+									}
+								);
+							} catch (error) {
+								this._errorHandlerService.handleError(error);
+							}
 						});
 					} catch (error) {
 						this.loading = false;
@@ -970,25 +986,25 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 									'update_session',
 									{ ...timelog }
 								);
-								await this.electronService.ipcRenderer.invoke(
-									'UPDATE_SYNCED_TIMER',
-									{
-										lastTimer: timelog,
-										...arg.timer,
-									}
-								);
+								try {
+									await this.electronService.ipcRenderer.invoke(
+										'UPDATE_SYNCED_TIMER',
+										{
+											lastTimer: timelog,
+											...arg.timer,
+										}
+									);
+								} catch (error) {
+									this._errorHandlerService.handleError(error);
+								}
 							});
 						}
 						if (this._isOffline || isReadyForDeletion) {
 							this.refreshTimer();
-							this.toastrService.success(
-								notification.message,
-								notification.title
-							);
-							event.sender.send('notify', notification);
+							this._toastrNotifier.success(notification.message);
+							this._nativeNotifier.success(notification.message);
 						}
 					} catch (error) {
-						this.toastrService.danger('An Error Occurred', 'Gauzy');
 						console.log('ERROR', error);
 					}
 				});
@@ -1352,7 +1368,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 				this.updateImageUrl();
 			}
 		} catch (error) {
-			console.log('get last timeslot image error', error);
+			this._errorHandlerService.handleError(error);
 		}
 	}
 
@@ -1502,20 +1518,13 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 				await this.getLastTimeSlotImage(this.argFromMain);
 				this.electronService.ipcRenderer.send('delete_time_slot');
 				asapScheduler.schedule(() => {
-					this.toastrService.show(
-						`Successfully remove last screenshot and activities`,
-						`Success`,
-						{
-							status: 'success',
-						}
+					this._toastrNotifier.success(
+						`Successfully remove last screenshot and activities`
 					);
 				});
 			}
 		} catch (e) {
 			console.log('error on delete', e);
-			this.toastrService.show(`${e.statusText}`, `Warning`, {
-				status: 'danger',
-			});
 		}
 	}
 
@@ -1621,7 +1630,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 			log.info('screenshot data', screens);
 			return screens;
 		} catch (error) {
-			console.log('screenshot electron render error', error);
+			this._errorHandlerService.handleError(error);
 			return [];
 		}
 	}
@@ -2088,7 +2097,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 				await this.localImage(this.lastScreenCapture);
 			}
 		} catch (error) {
-			console.log('ERROR', error);
+			this._errorHandlerService.handleError(error);
 		}
 	}
 
@@ -2142,13 +2151,9 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 			const projects = this._projects$.getValue();
 			this._projects$.next(projects.concat([project]));
 			this.projectSelect = project.id;
-			this.toastrService.success('Project added successfully', 'Gauzy');
+			this._toastrNotifier.success('Project added successfully');
 		} catch (error) {
 			console.log(error);
-			this.toastrService.danger(
-				'An error occurred',
-				'Gauzy Desktop Timer'
-			);
 		}
 	};
 
@@ -2183,15 +2188,9 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 			const tasks = this._tasks$.getValue();
 			this._tasks$.next(tasks.concat(task));
 			this.taskSelect = task.id;
-			this.toastrService.success(
-				'Task added successfully',
-				'Gauzy Desktop Timer'
-			);
+			this._toastrNotifier.success('Task added successfully');
 		} catch (error) {
-			this.toastrService.danger(
-				'An error occurred',
-				'Gauzy Desktop Timer'
-			);
+			console.log('ERROR', error);
 		}
 	};
 
@@ -2218,9 +2217,9 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 			const contacts = this._organizationContacts$.getValue();
 			this._organizationContacts$.next(contacts.concat([contact]));
 			this.organizationContactId = contact.id;
-			this.toastrService.success('Client added successfully', 'Gauzy');
+			this._toastrNotifier.success('Client added successfully');
 		} catch (error) {
-			this.toastrService.danger('An error occurred', 'Gauzy');
+			console.log('ERROR', error);
 		}
 	};
 
