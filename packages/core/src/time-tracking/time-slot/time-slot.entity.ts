@@ -100,12 +100,16 @@ export class TimeSlot extends TenantOrganizationBaseEntity
 	/**
 	 * Screenshot
 	 */
+	@ApiPropertyOptional({ type: () => Screenshot, isArray: true })
+	@IsOptional()
 	@OneToMany(() => Screenshot, (screenshot) => screenshot.timeSlot)
 	screenshots?: IScreenshot[];
 
 	/**
 	 * Activity
 	 */
+	@ApiPropertyOptional({ type: () => Activity, isArray: true })
+	@IsOptional()
 	@OneToMany(() => Activity, (activity) => activity.timeSlot, {
 		cascade: true
 	})
@@ -114,6 +118,8 @@ export class TimeSlot extends TenantOrganizationBaseEntity
 	/**
 	 * TimeSlotMinute
 	 */
+	@ApiPropertyOptional({ type: () => TimeSlotMinute, isArray: true })
+	@IsOptional()
 	@OneToMany(() => TimeSlotMinute, (timeSlotMinute) => timeSlotMinute.timeSlot, {
 		cascade: true
 	})
