@@ -55,7 +55,7 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 			? './assets/images/logos/logo_Gauzy.svg'
 			: '../assets/images/logos/logo_Gauzy.svg';
 
-	monitorsOption = [
+	private _monitorsOption$: BehaviorSubject<any> = new BehaviorSubject([
 		{
 			value: 'all',
 			title: 'Capture All Monitors',
@@ -71,8 +71,7 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 			accent: 'basic',
 			status: 'basic',
 		},
-	];
-
+	]);
 	thirdPartyConfig = [
 		{
 			title: 'Unleash',
@@ -330,7 +329,6 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 	private get _selectedMenu(): string {
 		return this._selectedMenu$.getValue();
 	}
-	monitorOptionSelected = null;
 	/* Set Default Value */
 	appSetting = {
 		timerStarted: false,
@@ -499,7 +497,7 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 					? this.config.awHost.split('t:')[1]
 					: null;
 				this.serverConnectivity();
-				this.monitorOptionSelected = setting?.monitor?.captured;
+				this._monitorsOption = { value: setting?.monitor?.captured };
 				this.screenshotNotification = setting?.screenshotNotification;
 				this.muted = setting?.mutedNotification;
 				this.autoLaunch = setting?.autoLaunch;
@@ -703,10 +701,13 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 	}
 
 	selectMonitorOption(item) {
-		this.monitorOptionSelected = item.value;
-		this.updateSetting({ captured: item.value }, 'monitor');
-		this.monitorsOption = this.monitorsOption.map((x) => {
-			if (x.value === item.value) {
+		this._monitorsOption = item;
+		this.updateSetting({ captured: item?.value }, 'monitor');
+	}
+
+	private set _monitorsOption(item) {
+		this._monitorsOption$.next(this._monitorsOption.map((x) => {
+			if (x.value === item?.value) {
 				x.accent = 'primary';
 				x.status = 'primary';
 			} else {
@@ -714,7 +715,7 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 				x.status = 'basic';
 			}
 			return x;
-		});
+		}))
 	}
 
 	selectMenu(menu) {
@@ -729,7 +730,7 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 		this._notifier.success(
 			'Update ' +
 			type.replace(/([a-z])([A-Z])/g, '$1 $2').toLowerCase() +
-			' setting successefuly'
+			' setting successfully'
 		);
 	}
 
@@ -1176,5 +1177,13 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 
 	public onHostChange(host: string) {
 		this._restartDisable$.next(true);
+	}
+
+	private get _monitorsOption() {
+		return this._monitorsOption$.getValue();
+	}
+
+	public get monitorsOption$(): Observable<any> {
+		return this._monitorsOption$.asObservable();
 	}
 }
