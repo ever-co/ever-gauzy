@@ -1,12 +1,12 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { DeleteResult, Repository } from 'typeorm';
-import { IIssueType } from '@gauzy/contracts';
-import { TenantAwareCrudService } from './../../core/crud';
+import { IIssueType, IIssueTypeFindInput, IPagination } from '@gauzy/contracts';
 import { IssueType } from './issue-type.entity';
+import { TaskStatusPrioritySizeService } from './../task-status-priority-size.service';
 
 @Injectable()
-export class IssueTypeService extends TenantAwareCrudService<IssueType> {
+export class IssueTypeService extends TaskStatusPrioritySizeService<IssueType> {
 
 	constructor(
 		@InjectRepository(IssueType)
@@ -27,5 +27,22 @@ export class IssueTypeService extends TenantAwareCrudService<IssueType> {
 				isSystem: false,
 			},
 		});
+	}
+
+	/**
+	 * GET issue types by filters
+	 * If parameters not match, retrieve global issue types
+	 *
+	 * @param params
+	 * @returns
+	 */
+	async findIssueTypes(
+		params: IIssueTypeFindInput
+	): Promise<IPagination<IIssueType>> {
+		try {
+			return await this.findEntitiesByParams(params);
+		} catch (error) {
+			throw new BadRequestException(error);
+		}
 	}
 }
