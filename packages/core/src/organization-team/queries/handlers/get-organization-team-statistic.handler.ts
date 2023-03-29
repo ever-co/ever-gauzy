@@ -1,17 +1,25 @@
 import { BadRequestException } from '@nestjs/common';
 import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
-import { IOrganizationTeam, IOrganizationTeamEmployee, IOrganizationTeamStatisticInput } from '@gauzy/contracts';
+import {
+	IDateRangePicker,
+	IOrganizationTeam,
+	IOrganizationTeamEmployee,
+	IOrganizationTeamStatisticInput,
+} from '@gauzy/contracts';
 import { GetOrganizationTeamStatisticQuery } from '../get-organization-team-statistic.query';
 import { OrganizationTeamService } from '../../organization-team.service';
 import { TimerService } from '../../../time-tracking/timer/timer.service';
+import { StatisticService } from './../../../time-tracking/statistic';
 
 @QueryHandler(GetOrganizationTeamStatisticQuery)
-export class GetOrganizationTeamStatisticHandler implements IQueryHandler<GetOrganizationTeamStatisticQuery> {
-
+export class GetOrganizationTeamStatisticHandler
+	implements IQueryHandler<GetOrganizationTeamStatisticQuery>
+{
 	constructor(
 		private readonly timerService: TimerService,
 		private readonly organizationTeamService: OrganizationTeamService,
-	) { }
+		private readonly _statisticService: StatisticService
+	) {}
 
 	public async execute(
 		query: GetOrganizationTeamStatisticQuery
@@ -20,17 +28,24 @@ export class GetOrganizationTeamStatisticHandler implements IQueryHandler<GetOrg
 			const { organizationTeamId, options } = query;
 			const { withLaskWorkedTask } = options;
 
-			const organizationTeam = await this.organizationTeamService.findOneByIdString(organizationTeamId, {
-				...(
-					(options['relations']) ? {
-						relations: options['relations']
-					} : {}
-				),
-			});
+			const organizationTeam =
+				await this.organizationTeamService.findOneByIdString(
+					organizationTeamId,
+					{
+						...(options['relations']
+							? {
+									relations: options['relations'],
+							  }
+							: {}),
+					}
+				);
 			if ('members' in organizationTeam) {
 				const { members, organizationId, tenantId } = organizationTeam;
 				if (Boolean(withLaskWorkedTask)) {
-					organizationTeam['members'] = await this.syncLastWorkedTask({ members, organizationId, tenantId }, options);
+					organizationTeam['members'] = await this.syncLastWorkedTask(
+						{ members, organizationId, tenantId },
+						options
+					);
 				}
 			}
 			return organizationTeam;
@@ -46,43 +61,58 @@ export class GetOrganizationTeamStatisticHandler implements IQueryHandler<GetOrg
 	 * @returns
 	 */
 	async syncLastWorkedTask(
-		{
-			organizationId,
-			tenantId,
-			members
-		},
-		options: IOrganizationTeamStatisticInput
+		{ organizationId, tenantId, members },
+		options: IDateRangePicker & IOrganizationTeamStatisticInput
 	): Promise<IOrganizationTeamEmployee[]> {
 		try {
-			const { withLaskWorkedTask, source } = options;
+			const { startDate, endDate, withLaskWorkedTask, source } = options;
 			return await Promise.all(
-				await members.map(
-					async (member: IOrganizationTeamEmployee) => {
-						const { employeeId, organizationTeamId } = member;
-						const timerWorkedStatus = await this.timerService.getTimerWorkedStatus({
+				await members.map(async (member: IOrganizationTeamEmployee) => {
+					const { employeeId, organizationTeamId } = member;
+					const timerWorkedStatus =
+						await this.timerService.getTimerWorkedStatus({
 							source,
 							employeeId,
 							organizationTeamId,
 							organizationId,
 							tenantId,
-							...(
-								(Boolean(withLaskWorkedTask)) ? {
-									relations: ['task']
-								} : {}
-							)
+							...(Boolean(withLaskWorkedTask)
+								? {
+										relations: ['task'],
+								  }
+								: {}),
 						});
-						return {
-							...member,
-							lastWorkedTask: Boolean(withLaskWorkedTask) ? timerWorkedStatus.lastLog?.task : null,
-							running: timerWorkedStatus?.running,
-							duration: timerWorkedStatus?.duration,
-							timerStatus: timerWorkedStatus?.timerStatus
-						}
-					}
-				)
+
+					return {
+						...member,
+						lastWorkedTask: Boolean(withLaskWorkedTask)
+							? timerWorkedStatus.lastLog?.task
+							: null,
+						running: timerWorkedStatus?.running,
+						duration: timerWorkedStatus?.duration,
+						timerStatus: timerWorkedStatus?.timerStatus,
+						totalWorkedTasks: await this._statisticService.getTasks(
+							{
+								organizationId,
+								tenantId,
+								employeeIds: [employeeId],
+							}
+						),
+						totalTodayTasks: await this._statisticService.getTasks({
+							organizationId,
+							tenantId,
+							employeeIds: [employeeId],
+							startDate,
+							endDate,
+						}),
+					};
+				})
 			);
 		} catch (error) {
-			console.log('Error while retrieving team members last worked task', error);
+			console.log(
+				'Error while retrieving team members last worked task',
+				error
+			);
 		}
 	}
 }
