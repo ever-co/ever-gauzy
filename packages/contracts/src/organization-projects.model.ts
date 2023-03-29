@@ -15,6 +15,11 @@ import { CurrenciesEnum } from './currency.model';
 import { ITimeLog } from './timesheet.model';
 import { IRelationalImageAsset } from './image-asset.model';
 
+export interface IRelationalOrganizationProject {
+	project?: IOrganizationProject;
+	projectId?: IOrganizationProject['id'];
+}
+
 export interface IOrganizationProject extends IBaseEntityWithMembers, IRelationalImageAsset {
 	name: string;
 	organizationContact?: IOrganizationContact;
