@@ -26,7 +26,15 @@ export class IssueTypeSubscriber implements EntitySubscriberInterface<IssueType>
     afterLoad(
         entity: IssueType | Partial<IssueType>,
         event?: LoadEvent<IssueType>
-    ): void | Promise<any> { }
+    ): void | Promise<any> {
+        try {
+            if (!!entity['image']) {
+                entity.icon = entity.image.fullUrl || entity.icon;
+            }
+        } catch (error) {
+            console.log(error);
+        }
+    }
 
     /**
      * Called before entity is inserted to the database.

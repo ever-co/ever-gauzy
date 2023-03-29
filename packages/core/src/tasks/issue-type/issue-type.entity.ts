@@ -43,7 +43,6 @@ export class IssueType extends TenantOrganizationBaseEntity implements IIssueTyp
 	@Column({ default: false, update: false })
 	isSystem?: boolean;
 
-	fullIconUrl?: string;
 	/*
 	|--------------------------------------------------------------------------
 	| @ManyToOne
