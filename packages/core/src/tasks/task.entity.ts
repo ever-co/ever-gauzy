@@ -65,20 +65,30 @@ export class Task extends TenantOrganizationBaseEntity
 	@ApiProperty({ type: () => String })
 	@IsNotEmpty()
 	@IsString()
+	@Index()
 	@Column({ nullable: true })
 	status?: TaskStatusEnum;
 
 	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()
 	@IsString()
+	@Index()
 	@Column({ nullable: true })
 	priority?: TaskPriorityEnum;
 
 	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()
 	@IsString()
+	@Index()
 	@Column({ nullable: true })
 	size?: TaskSizeEnum;
+
+	@ApiPropertyOptional({ type: () => String })
+	@IsOptional()
+	@IsString()
+	@Index()
+	@Column({ nullable: true })
+	issueType?: string;
 
 	@ApiPropertyOptional({ type: () => Number })
 	@IsOptional()
