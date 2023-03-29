@@ -6,12 +6,11 @@ import {
 	ImageAsset,
 	OrganizationProject,
 	OrganizationTeam,
-	TenantOrganizationBaseEntity,
+	TenantOrganizationBaseEntity
 } from './../../core/entities/internal';
 
 @Entity('issue_type')
 export class IssueType extends TenantOrganizationBaseEntity implements IIssueType {
-
 	@ApiProperty({ type: () => String })
 	@IsNotEmpty()
 	@IsString()
@@ -74,7 +73,7 @@ export class IssueType extends TenantOrganizationBaseEntity implements IIssueTyp
 	 * Organization Project
 	 */
 	@ManyToOne(() => OrganizationProject, {
-		onDelete: 'CASCADE',
+		onDelete: 'CASCADE'
 	})
 	project?: IOrganizationProject;
 
@@ -90,7 +89,7 @@ export class IssueType extends TenantOrganizationBaseEntity implements IIssueTyp
 	 * Organization Team
 	 */
 	@ManyToOne(() => OrganizationTeam, {
-		onDelete: 'CASCADE',
+		onDelete: 'CASCADE'
 	})
 	organizationTeam?: IOrganizationTeam;
 

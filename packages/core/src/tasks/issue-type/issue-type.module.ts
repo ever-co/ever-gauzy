@@ -9,21 +9,13 @@ import { IssueTypeService } from './issue-type.service';
 
 @Module({
 	imports: [
-		RouterModule.forRoutes([
-			{ path: '/issue-types', module: IssueTypeModule }
-		]),
-		TypeOrmModule.forFeature([
-			IssueType
-		]),
+		RouterModule.forRoutes([{ path: '/issue-types', module: IssueTypeModule }]),
+		TypeOrmModule.forFeature([IssueType]),
 		CqrsModule,
 		TenantModule
 	],
-	controllers: [
-		IssueTypeController
-	],
-	providers: [
-		IssueTypeService
-	],
-	exports: [],
+	controllers: [IssueTypeController],
+	providers: [IssueTypeService],
+	exports: []
 })
-export class IssueTypeModule { }
+export class IssueTypeModule {}

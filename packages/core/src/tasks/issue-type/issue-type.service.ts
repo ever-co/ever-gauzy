@@ -7,7 +7,6 @@ import { TaskStatusPrioritySizeService } from './../task-status-priority-size.se
 
 @Injectable()
 export class IssueTypeService extends TaskStatusPrioritySizeService<IssueType> {
-
 	constructor(
 		@InjectRepository(IssueType)
 		protected readonly issueTypeRepository: Repository<IssueType>
@@ -24,8 +23,8 @@ export class IssueTypeService extends TaskStatusPrioritySizeService<IssueType> {
 	async delete(id: IIssueType['id']): Promise<DeleteResult> {
 		return await super.delete(id, {
 			where: {
-				isSystem: false,
-			},
+				isSystem: false
+			}
 		});
 	}
 
@@ -36,9 +35,7 @@ export class IssueTypeService extends TaskStatusPrioritySizeService<IssueType> {
 	 * @param params
 	 * @returns
 	 */
-	async findIssueTypes(
-		params: IIssueTypeFindInput
-	): Promise<IPagination<IIssueType>> {
+	async findIssueTypes(params: IIssueTypeFindInput): Promise<IPagination<IIssueType>> {
 		try {
 			return await this.findEntitiesByParams(params);
 		} catch (error) {

@@ -28,7 +28,7 @@ import {
 	TaskSubscriber,
 	TenantSubscriber,
 	TimeSlotSubscriber,
-	UserSubscriber,
+	UserSubscriber
 } from './internal';
 
 /**
@@ -64,5 +64,5 @@ export const coreSubscribers = [
 	TaskSubscriber,
 	TenantSubscriber,
 	TimeSlotSubscriber,
-	UserSubscriber,
+	UserSubscriber
 ];

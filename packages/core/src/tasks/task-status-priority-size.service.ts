@@ -1,24 +1,32 @@
-import { isNotEmpty } from "@gauzy/common";
-import { Injectable } from "@nestjs/common";
-import { IIssueTypeFindInput, IPagination, ITaskPriorityFindInput, ITaskSizeFindInput, ITaskStatusFindInput } from "@gauzy/contracts";
-import { Brackets, Repository, SelectQueryBuilder, WhereExpressionBuilder } from "typeorm";
-import { TenantBaseEntity } from "../core/entities/internal";
-import { RequestContext } from "../core/context";
-import { TenantAwareCrudService } from "../core/crud";
+import { isNotEmpty } from '@gauzy/common';
+import { Injectable } from '@nestjs/common';
+import {
+	IIssueTypeFindInput,
+	IPagination,
+	ITaskPriorityFindInput,
+	ITaskSizeFindInput,
+	ITaskStatusFindInput
+} from '@gauzy/contracts';
+import { Brackets, Repository, SelectQueryBuilder, WhereExpressionBuilder } from 'typeorm';
+import { TenantBaseEntity } from '../core/entities/internal';
+import { RequestContext } from '../core/context';
+import { TenantAwareCrudService } from '../core/crud';
 
-export type IFindEntityByParams = ITaskStatusFindInput | ITaskPriorityFindInput | ITaskSizeFindInput | IIssueTypeFindInput;
+export type IFindEntityByParams =
+	| ITaskStatusFindInput
+	| ITaskPriorityFindInput
+	| ITaskSizeFindInput
+	| IIssueTypeFindInput;
 
 @Injectable()
-export class TaskStatusPrioritySizeService<BaseEntity extends TenantBaseEntity> extends TenantAwareCrudService<BaseEntity> {
-	constructor(
-		protected readonly repository: Repository<BaseEntity>
-	) {
+export class TaskStatusPrioritySizeService<
+	BaseEntity extends TenantBaseEntity
+> extends TenantAwareCrudService<BaseEntity> {
+	constructor(protected readonly repository: Repository<BaseEntity>) {
 		super(repository);
 	}
 
-	async findEntitiesByParams(
-		params: IFindEntityByParams
-	): Promise<IPagination<BaseEntity>> {
+	async findEntitiesByParams(params: IFindEntityByParams): Promise<IPagination<BaseEntity>> {
 		try {
 			/**
 			 * Find at least one record or get global records
@@ -74,10 +82,7 @@ export class TaskStatusPrioritySizeService<BaseEntity extends TenantBaseEntity> 
 	 * @param request
 	 * @returns
 	 */
-	getFilterQuery(
-		query: SelectQueryBuilder<BaseEntity>,
-		request: IFindEntityByParams
-	) {
+	getFilterQuery(query: SelectQueryBuilder<BaseEntity>, request: IFindEntityByParams) {
 		const { tenantId, organizationId, projectId, organizationTeamId } = request;
 		/**
 		 * GET by tenant level

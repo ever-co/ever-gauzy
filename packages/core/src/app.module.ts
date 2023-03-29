@@ -207,25 +207,25 @@ if (process.env.DB_TYPE === 'postgres') {
 		}),
 		...(environment.sentry
 			? [
-				SentryModule.forRoot({
-					dsn: environment.sentry.dns,
-					debug: !environment.production,
-					environment: environment.production ? 'production' : 'development',
-					// TODO: we should use some internal function which returns version of Gauzy
-					release: 'gauzy@' + process.env.npm_package_version,
-					logLevels: ['error'],
-					integrations: sentryIntegrations,
-					tracesSampleRate: 1.0
-				})
-			]
+					SentryModule.forRoot({
+						dsn: environment.sentry.dns,
+						debug: !environment.production,
+						environment: environment.production ? 'production' : 'development',
+						// TODO: we should use some internal function which returns version of Gauzy
+						release: 'gauzy@' + process.env.npm_package_version,
+						logLevels: ['error'],
+						integrations: sentryIntegrations,
+						tracesSampleRate: 1.0
+					})
+			  ]
 			: []),
 		ThrottlerModule.forRootAsync({
 			inject: [ConfigService],
 			useFactory: (config: ConfigService): ThrottlerModuleOptions =>
-			({
-				ttl: config.get('THROTTLE_TTL'),
-				limit: config.get('THROTTLE_LIMIT')
-			} as ThrottlerModuleOptions)
+				({
+					ttl: config.get('THROTTLE_TTL'),
+					limit: config.get('THROTTLE_LIMIT')
+				} as ThrottlerModuleOptions)
 		}),
 		CoreModule,
 		AuthModule,

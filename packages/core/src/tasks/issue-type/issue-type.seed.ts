@@ -17,15 +17,12 @@ const config = getConfig();
  * @param dataSource
  * @returns
  */
-export const createDefaultIssueTypes = async (
-	dataSource: DataSource
-): Promise<IIssueType[]> => {
+export const createDefaultIssueTypes = async (dataSource: DataSource): Promise<IIssueType[]> => {
 	await cleanEverIcons(config, 'ever-icons/task-issue-types');
 
 	let issueTypes: IIssueType[] = [];
 	try {
 		for await (const issueType of DEFAULT_GLOBAL_ISSUE_TYPES) {
-
 			const iconPath = path.join(config.assetOptions.assetPath, ...['seed', 'ever-icons', issueType.icon]);
 			const { height, width } = imageSize(iconPath);
 			const { size } = fs.statSync(iconPath);
