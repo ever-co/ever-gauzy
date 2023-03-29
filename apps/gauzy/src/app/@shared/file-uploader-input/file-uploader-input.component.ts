@@ -3,35 +3,23 @@ import {
 	Input,
 	Output,
 	EventEmitter,
-	ViewChild,
-	ElementRef,
 	AfterViewInit,
 	OnInit
 } from '@angular/core';
-import { IUser } from '@gauzy/contracts';
-import { FileUploader, FileUploaderOptions } from 'ng2-file-upload';
+import { FormControl } from '@angular/forms';
+import { IImageAsset } from '@gauzy/contracts';
+import { Store } from '../../@core/services';
+import { ImageUploaderBaseComponent } from '../image-uploader/image-uploader-base.component';
 
 @Component({
 	selector: 'ngx-file-uploader-input',
 	templateUrl: './file-uploader-input.component.html',
 	styleUrls: ['./file-uploader-input.component.scss']
 })
-export class FileUploaderInputComponent implements AfterViewInit, OnInit {
+export class FileUploaderInputComponent extends ImageUploaderBaseComponent implements AfterViewInit, OnInit {
 
-	user: IUser;
-	uploader: FileUploader;
-	loading: boolean = false;
-
-	/*
-	* Getter & Setter for dynamic image upload folder
-	*/
-	_folder: string = 'profile_pictures';
-	get folder(): string {
-		return this._folder;
-	}
-	@Input() set folder(value: string) {
-		this._folder = value;
-	}
+	public inputControl = new FormControl();
+	public loading: boolean = false;
 
 	/*
 	* Getter & Setter for dynamic locale
@@ -42,17 +30,6 @@ export class FileUploaderInputComponent implements AfterViewInit, OnInit {
 	}
 	@Input() set placeholder(value: string) {
 		this._placeholder = value;
-	}
-
-	/*
-	* Getter & Setter for dynamic custom class
-	*/
-	_customClass: string;
-	get customClass(): string {
-		return this._customClass;
-	}
-	@Input() set customClass(value: string) {
-		this._customClass = value;
 	}
 
 	/*
@@ -67,124 +44,123 @@ export class FileUploaderInputComponent implements AfterViewInit, OnInit {
 	}
 
 	/*
-	* Getter & Setter for dynamic name
-	*/
-	_name: string;
-	get name(): string {
-		return this._name;
-	}
-	@Input() set name(value: string) {
-		this._name = value;
-	}
-
-	/*
 	* Getter & Setter for full url
 	*/
 	_fileUrl: string;
 	get fileUrl(): string {
 		return this._fileUrl;
 	}
-	@Input() set fileUrl(value: string) {
-		this._fileUrl = value;
+	@Input() set fileUrl(fileUrl: string) {
+		console.log({ fileUrl });
+		this._fileUrl = fileUrl;
 	}
 
+	@Output() uploadedImageAsset = new EventEmitter<IImageAsset>();
 	@Output() uploadedImgUrl: EventEmitter<string> = new EventEmitter<string>();
 	@Output() uploadedImgData: EventEmitter<any> = new EventEmitter<any>();
 
-	@ViewChild('fileInput') fileInput: ElementRef;
-
-	private oldValue: string;
-
-	constructor() { }
-
-	ngOnInit(): void {
-		this._uploaderConfig();
+	constructor(
+		protected readonly store: Store
+	) {
+		super(store)
 	}
+
+	ngOnInit(): void { }
 
 	ngAfterViewInit(): void {
+		this.uploader.onSuccessItem = (item: any, response: string, status: number) => {
+			try {
+				if (response) {
+					const image: IImageAsset = JSON.parse(response);
+					this.uploadedImageAsset.emit(image);
+
+					this.inputControl.setValue(image.fullUrl);
+					this.inputControl.updateValueAndValidity();
+				}
+			} catch (error) {
+				console.log('Error while uploaded image url', error);
+			}
+		};
+		this.uploader.onErrorItem = (item: any, response: string, status: number) => {
+			try {
+				if (response) {
+					const error = JSON.parse(response);
+					console.log(error);
+				}
+			} catch (error) {
+				console.log('Error while uploaded image url error', error);
+			}
+		};
 	}
 
-	async imageUrlChanged() {
-		const newValue =
-			this.fileUrl &&
-			this.fileUrl.replace(this.oldValue || '', '').trim();
+	/**
+	 * When input changed file URL
+	 *
+	 * @param event
+	 */
+	async inputUrlChanged() {
+		try {
+			const fileUrl = this.inputControl.value;
+			if (fileUrl) {
+				await this._setupImage(fileUrl);
+			}
+		} catch (error) {
+			console.log('Error while retrieving image from URL', error);
+		}
+	}
 
-		this.loading = true;
-
+	/**
+	 * Image asset upload handler
+	 */
+	imageUploadHandler() {
 		if (this.uploader.queue.length > 0) {
 			this.uploader.queue[this.uploader.queue.length - 1].upload();
-		} else {
-			await this._setupImage(newValue);
-
-			this.uploadedImgUrl.emit(this.fileUrl);
-			this.oldValue = this.fileUrl;
 		}
-
-		this.uploader.onSuccessItem = (
-			item: any,
-			response: string,
-			status: number
-		) => {
-			const data = JSON.parse(response);
-			this.fileUrl = data.url;
-			// const locale = this.locale;
-			// const width = data.width;
-			// const height = data.height;
-			// const orientation = width !== height ? (width > height ? 2 : 1) : 0;
-			// const url = data.url;
-
-			// const newImage = {
-			// 	locale,
-			// 	url,
-			// 	width,
-			// 	height,
-			// 	orientation
-			// };
-
-			this.loading = false;
-			this.uploadedImgUrl.emit(data.url);
-			this.uploadedImgData.emit(data);
-			this.oldValue = this.fileUrl;
-		};
 	}
 
-	private _uploaderConfig() {
-		const uploaderOptions: FileUploaderOptions = {
-			url: 'https://api.cloudinary.com/v1_1/evereq/upload',
+	// async imageUrlChanged() {
+	// 	const newValue =
+	// 		this.fileUrl &&
+	// 		this.fileUrl.replace(this.oldValue || '', '').trim();
 
-			isHTML5: true,
-			removeAfterUpload: true,
-			headers: [
-				{
-					name: 'X-Requested-With',
-					value: 'XMLHttpRequest'
-				}
-			]
-		};
-		this.uploader = new FileUploader(uploaderOptions);
+	// 	this.loading = true;
 
-		this.uploader.onBuildItemForm = (
-			fileItem: any,
-			form: FormData
-		): any => {
-			form.append('upload_preset', 'everbie-products-images');
+	// 	if (this.uploader.queue.length > 0) {
+	// 		this.uploader.queue[this.uploader.queue.length - 1].upload();
+	// 	} else {
+	// 		await this._setupImage(newValue);
 
-			let tags = 'myphotoalbum';
+	// 		this.uploadedImgUrl.emit(this.fileUrl);
+	// 		this.oldValue = this.fileUrl;
+	// 	}
 
-			if (this.name) {
-				form.append('context', `photo=${this.name}`);
-				tags = `myphotoalbum,${this.name}`;
-			}
+	// 	this.uploader.onSuccessItem = (
+	// 		item: any,
+	// 		response: string,
+	// 		status: number
+	// 	) => {
+	// 		const data = JSON.parse(response);
+	// 		this.fileUrl = data.url;
+	// 		// const locale = this.locale;
+	// 		// const width = data.width;
+	// 		// const height = data.height;
+	// 		// const orientation = width !== height ? (width > height ? 2 : 1) : 0;
+	// 		// const url = data.url;
 
-			form.append('folder', 'angular_sample');
-			form.append('tags', tags);
-			form.append('file', fileItem);
+	// 		// const newImage = {
+	// 		// 	locale,
+	// 		// 	url,
+	// 		// 	width,
+	// 		// 	height,
+	// 		// 	orientation
+	// 		// };
 
-			fileItem.withCredentials = false;
-
-			return { fileItem, form };
-		};
-	}
+	// 		this.loading = false;
+	// 		this.uploadedImgUrl.emit(data.url);
+	// 		this.uploadedImgData.emit(data);
+	// 		this.oldValue = this.fileUrl;
+	// 	};
+	// }
 
 	private async _setupImage(imgUrl: string) {
 		try {
@@ -195,13 +171,6 @@ export class FileUploaderInputComponent implements AfterViewInit, OnInit {
 			const locale = this.locale;
 			const url = imgUrl;
 
-			console.log({
-				locale,
-				url,
-				width,
-				height,
-				orientation
-			});
 			return {
 				locale,
 				url,
@@ -211,25 +180,6 @@ export class FileUploaderInputComponent implements AfterViewInit, OnInit {
 			};
 		} catch (error) {
 			return error;
-		}
-	}
-
-	/**
-	 * Get image metadata using by Image URL
-	 *
-	 * @param url
-	 * @returns
-	 */
-	getImageMetadata(url: string) {
-		try {
-			return new Promise((resolve, reject) => {
-				const img = new Image();
-				img.onload = () => resolve(img);
-				img.onerror = (error: any) => reject(false);
-				img.src = url;
-			});
-		} catch (error) {
-			console.log('Error while retrieving image metadata', error);
 		}
 	}
 }

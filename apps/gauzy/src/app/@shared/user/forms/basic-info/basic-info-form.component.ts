@@ -17,7 +17,8 @@ import {
 	IEmployeeCreateInput,
 	ICandidateSource,
 	ICandidateCreateInput,
-	ICandidate
+	ICandidate,
+	IImageAsset
 } from '@gauzy/contracts';
 import { filter, firstValueFrom, tap } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
@@ -91,7 +92,8 @@ export class BasicInfoFormComponent
 				'',
 				Validators.compose([Validators.required, Validators.email])
 			],
-			imageUrl: [''],
+			imageUrl: [],
+			imageId: [],
 			password: [
 				'',
 				Validators.compose([
@@ -109,13 +111,13 @@ export class BasicInfoFormComponent
 			tags: [self.selectedTags],
 			featureAsEmployee: [false]
 		},
-		{
-			validators: [
-				CompareDateValidator.validateDate('offerDate', 'acceptDate'),
-				CompareDateValidator.validateDate('offerDate', 'rejectDate'),
-				UrlPatternValidator.imageUrlValidator('imageUrl')
-			]
-		});
+			{
+				validators: [
+					CompareDateValidator.validateDate('offerDate', 'acceptDate'),
+					CompareDateValidator.validateDate('offerDate', 'rejectDate'),
+					UrlPatternValidator.imageUrlValidator('imageUrl')
+				]
+			});
 	}
 
 	constructor(
@@ -176,8 +178,8 @@ export class BasicInfoFormComponent
 		if (this.form.invalid) {
 			return;
 		}
-		const { firstName, lastName, email, username, password } = this.form.getRawValue();
-		const { tags, imageUrl, featureAsEmployee, role: { name } } = this.form.getRawValue();
+		const { firstName, lastName, email, username, password } = this.form.value;
+		const { tags, imageUrl, imageId, featureAsEmployee, role: { name } } = this.form.value;
 
 		const { tenantId, tenant } = this.store.user;
 		/**
@@ -200,6 +202,7 @@ export class BasicInfoFormComponent
 			email: email,
 			username: username || null,
 			imageUrl: imageUrl,
+			imageId: imageId,
 			role: role,
 			tenant: tenant,
 			tags: tags
@@ -245,6 +248,23 @@ export class BasicInfoFormComponent
 		this._setupLogoUrlValidation();
 	}
 
+	/**
+	 * Upload organization image/avatar
+	 *
+	 * @param image
+	 */
+	updateImageAsset(image: IImageAsset) {
+		try {
+			if (image && image.id) {
+				this.form.get('imageId').setValue(image.id);
+				this.form.get('imageUrl').setValue(image.fullUrl);
+				this.form.updateValueAndValidity();
+			}
+		} catch (error) {
+			console.log('Error while updating user avatars');
+		}
+	}
+
 	private _setupLogoUrlValidation() {
 		this.imagePreviewElement.nativeElement.onload = () => {
 			this.form.get('imageUrl').setErrors(null);
@@ -275,7 +295,7 @@ export class BasicInfoFormComponent
 	 */
 	setRoleValidations(value: boolean) {
 		if (value === true) {
-			this.form.get('role').setValidators([ Validators.required ]);
+			this.form.get('role').setValidators([Validators.required]);
 		} else {
 			this.form.get('role').clearValidators();
 		}
@@ -292,8 +312,8 @@ export class BasicInfoFormComponent
 		const { tenantId } = this.store.user;
 		const { id: organizationId } = this.organization;
 
-		const { password, tags } = this.form.getRawValue();
-		const { offerDate = null, acceptDate = null, rejectDate = null, startedWorkOn = null } = this.form.getRawValue();
+		const { password, tags } = this.form.value;
+		const { offerDate = null, acceptDate = null, rejectDate = null, startedWorkOn = null } = this.form.value;
 
 		const employee: IEmployeeCreateInput = {
 			tenantId,
@@ -321,8 +341,8 @@ export class BasicInfoFormComponent
 		const { tenantId } = this.store.user;
 		const { id: organizationId } = this.organization;
 
-		const { password, tags } = this.form.getRawValue();
-		const { appliedDate = null, rejectDate = null, source: sourceName = null } = this.form.getRawValue();
+		const { password, tags } = this.form.value;
+		const { appliedDate = null, rejectDate = null, source: sourceName = null } = this.form.value;
 
 		let source: ICandidateSource = null;
 		if (sourceName !== null) {

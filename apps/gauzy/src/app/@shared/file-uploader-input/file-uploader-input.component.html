@@ -3,15 +3,15 @@
 		type="text"
 		class="form-control"
 		[placeholder]="placeholder"
-		(change)="imageUrlChanged()"
-		[(ngModel)]="fileUrl"
+		[formControl]="inputControl"
+		(change)="inputUrlChanged()"
 	/>
 	<input
 		#fileInput
 		type="file"
 		id="fileInput"
 		ng2FileSelect
-		(change)="imageUrlChanged()"
+		(change)="imageUploadHandler()"
 		[hidden]="true"
 		[uploader]="uploader"
 	/>

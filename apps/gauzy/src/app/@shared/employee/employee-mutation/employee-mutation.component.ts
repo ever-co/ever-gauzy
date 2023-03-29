@@ -46,7 +46,7 @@ export class EmployeeMutationComponent implements OnInit, AfterViewInit {
 		protected readonly store: Store,
 		private readonly errorHandler: ErrorHandlingService,
 		private readonly _employeeStore: EmployeeStore
-	) {}
+	) { }
 
 	ngOnInit(): void {
 		this.store.selectedOrganization$
@@ -82,8 +82,9 @@ export class EmployeeMutationComponent implements OnInit, AfterViewInit {
 			username,
 			password,
 			tags,
-			imageUrl
-		} = this.form.getRawValue();
+			imageUrl,
+			imageId
+		} = this.form.value;
 		const {
 			offerDate = null,
 			acceptDate = null,
@@ -96,6 +97,7 @@ export class EmployeeMutationComponent implements OnInit, AfterViewInit {
 			username,
 			email,
 			imageUrl,
+			imageId,
 			tenantId,
 			tags
 		};
@@ -109,9 +111,9 @@ export class EmployeeMutationComponent implements OnInit, AfterViewInit {
 			rejectDate,
 			tags
 		};
-   		// Check form validity before to add an employe to the array of employees.
+		// Check form validity before to add an employe to the array of employees.
 		if (this.form.valid) this.employees.push(employee);
-    	// Reset form and stepper.
+		// Reset form and stepper.
 		this.form.reset();
 		this.stepper.reset();
 	}

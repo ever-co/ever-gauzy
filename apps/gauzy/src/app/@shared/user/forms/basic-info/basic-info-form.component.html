@@ -1,4 +1,5 @@
 <form [formGroup]="form" autocomplete-off no-validate>
+	{{ form.value | json }}
 	<div class="row">
 		<div class="col-3">
 			<div class="form-group row" [hidden]="form.get('imageUrl').invalid">
@@ -60,19 +61,14 @@
 			<div class="row">
 				<div class="col-sm-12">
 					<div class="form-group">
-						<label for="inputImageUrl" class="label">{{
-							'FORM.LABELS.IMAGE_URL' | translate
-						}}</label>
+						<label for="inputImageUrl" class="label">
+							{{ 'FORM.LABELS.IMAGE_URL' | translate }}
+						</label>
 						<ngx-file-uploader-input
 							id="inputImageUrl"
-							[placeholder]="
-								'FORM.PLACEHOLDERS.UPLOADER_PLACEHOLDER'
-									| translate
-							"
+							[placeholder]="'FORM.PLACEHOLDERS.UPLOADER_PLACEHOLDER' | translate"
 							[fileUrl]="form.get('imageUrl').value"
-							(uploadedImgUrl)="
-								form.get('imageUrl').setValue($event)
-							"
+							(uploadedImageAsset)="updateImageAsset($event)"
 						></ngx-file-uploader-input>
 					</div>
 				</div>
