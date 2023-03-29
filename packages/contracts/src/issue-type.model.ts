@@ -1,8 +1,9 @@
 import { IBasePerTenantAndOrganizationEntityModel } from './base-entity.model';
+import { IRelationalImageAsset } from './image-asset.model';
 import { IRelationalOrganizationProject } from './organization-projects.model';
 import { IRelationalOrganizationTeam } from './organization-team.model';
 
-export interface IIssueType extends IBasePerTenantAndOrganizationEntityModel, IRelationalOrganizationTeam, IRelationalOrganizationProject {
+export interface IIssueType extends IBasePerTenantAndOrganizationEntityModel, IRelationalOrganizationTeam, IRelationalOrganizationProject, IRelationalImageAsset {
 	name: string;
 	value: string;
 	description?: string;
