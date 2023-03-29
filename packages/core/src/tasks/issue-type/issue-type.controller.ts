@@ -43,6 +43,6 @@ export class IssueTypeController extends CrudFactory<
 	async findAllIssueTypes(
 		@Query() params: IssueTypeQuerDTO
 	): Promise<IPagination<IIssueType>> {
-		return await this.issueTypeService.findAll(params);
+		return await this.issueTypeService.findAllIssueTypes(params);
 	}
 }

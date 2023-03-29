@@ -36,7 +36,7 @@ export class IssueTypeService extends TaskStatusPrioritySizeService<IssueType> {
 	 * @param params
 	 * @returns
 	 */
-	async findAll(
+	async findAllIssueTypes(
 		params: IIssueTypeFindInput
 	): Promise<IPagination<IIssueType>> {
 		try {
