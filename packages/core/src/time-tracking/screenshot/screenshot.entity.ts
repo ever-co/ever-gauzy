@@ -1,24 +1,12 @@
-import {
-	Entity,
-	Column,
-	RelationId,
-	ManyToOne,
-	Index,
-	JoinColumn
-} from 'typeorm';
+import { Entity, Column, RelationId, ManyToOne, Index, JoinColumn } from 'typeorm';
 import { FileStorageProviderEnum, IScreenshot, ITimeSlot } from '@gauzy/contracts';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsString, IsOptional, IsDateString, IsUUID, IsNotEmpty, IsEnum } from 'class-validator';
 import { Exclude } from 'class-transformer';
-import {
-	TenantOrganizationBaseEntity,
-	TimeSlot
-} from './../../core/entities/internal';
+import { TenantOrganizationBaseEntity, TimeSlot } from './../../core/entities/internal';
 
 @Entity('screenshot')
-export class Screenshot extends TenantOrganizationBaseEntity
-	implements IScreenshot {
-
+export class Screenshot extends TenantOrganizationBaseEntity implements IScreenshot {
 	@ApiProperty({ type: () => String, required: true })
 	@IsNotEmpty()
 	@IsString()
