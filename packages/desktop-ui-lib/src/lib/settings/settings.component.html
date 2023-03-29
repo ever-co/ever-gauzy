@@ -221,14 +221,29 @@
 							available and notify</p>
 					</div>
 				</div>
-				<div class="row notification">
+				<div class="row notification d-flex flex-row align-items-center">
 					<div class="col-10">
 						<nb-card>
 							<nb-card-body>
-								<nb-toggle [checked]="automaticUpdate$ | async"
-									(checkedChange)="toggleAutomaticUpdate($event)" status="basic"
-									[disabled]="appSetting?.timerStarted">Enable
-								</nb-toggle>
+								<div class="row">
+									<div *ngIf="(automaticUpdate$ | async)" class="col-12 mb-3">
+										<div class="label">
+											Set update check interval duration
+										</div>
+										<nb-select *ngIf="(automaticUpdate$ | async)" class="w-100" placeholder="Select a delay" [selected]="automaticUpdateDelay$ | async"
+										(selectedChange)="selectAutomaticUpdateDelay($event)" [disabled]="appSetting?.timerStarted">
+											<nb-option *ngFor="let delay of delayOptions" [value]="delay">
+												<span>{{ humanize(delay) | titlecase }}</span>
+											</nb-option>
+										</nb-select>
+									</div>
+									<div class="col-12">
+										<nb-toggle [checked]="automaticUpdate$ | async"
+											(checkedChange)="toggleAutomaticUpdate($event)" status="basic"
+											[disabled]="appSetting?.timerStarted">Enable
+										</nb-toggle>
+									</div>
+								</div>
 							</nb-card-body>
 						</nb-card>
 					</div>
