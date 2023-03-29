@@ -260,6 +260,12 @@
   }
 }
 
+.label {
+  color: var(--gauzy-text-color-2);
+  font-weight: 500;
+  margin-bottom: 4px;
+}
+
 .file {
   gap: 5px;
 }

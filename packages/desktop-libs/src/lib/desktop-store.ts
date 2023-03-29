@@ -98,6 +98,7 @@ export const LocalStore = {
 					awIsConnected: true,
 					preventDisplaySleep: false,
 					automaticUpdate: true,
+					automaticUpdateDelay: 1, //hour
 					cdnUpdater: {
 						github: false,
 						digitalOcean: true

@@ -14,6 +14,7 @@ import { BehaviorSubject, Observable, filter, tap } from 'rxjs';
 import { AboutComponent } from '../dialogs/about/about.component';
 import { SetupService } from '../setup/setup.service';
 import { ToastrNotificationService } from '@gauzy/desktop-timer/src/app/services';
+import * as moment from 'moment';
 @Component({
 	selector: 'ngx-settings',
 	templateUrl: './settings.component.html',
@@ -401,8 +402,11 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 	];
 	muted: boolean;
 
+	delayOptions: number[] = [0.5, 1, 3, 24];
+
 	private _loading$: BehaviorSubject<boolean>;
 	private _automaticUpdate$: BehaviorSubject<boolean>;
+	private _automaticUpdateDelay$: BehaviorSubject<number>;
 	private _available$: BehaviorSubject<boolean>;
 	private _updaterServer$: BehaviorSubject<any>;
 	private _file$: BehaviorSubject<any>;
@@ -433,6 +437,7 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 	) {
 		this._loading$ = new BehaviorSubject(false);
 		this._automaticUpdate$ = new BehaviorSubject(false);
+		this._automaticUpdateDelay$ = new BehaviorSubject(0);
 		this._available$ = new BehaviorSubject(false);
 		this._file$ = new BehaviorSubject({ uri: null });
 		this._updaterServer$ = new BehaviorSubject({
@@ -503,6 +508,7 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 				this.autoLaunch = setting?.autoLaunch;
 				this.minimizeOnStartup = setting?.minimizeOnStartup;
 				this._automaticUpdate$.next(setting?.automaticUpdate);
+				this._automaticUpdateDelay$.next(setting?.automaticUpdateDelay);
 				this._prerelease$.next(setting?.prerelease);
 				this._updaterServer$ = new BehaviorSubject({
 					github: setting?.cdnUpdater?.github == true,
@@ -774,6 +780,15 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 	toggleAutomaticUpdate(value) {
 		this._automaticUpdate$.next(value);
 		this.updateSetting(value, 'automaticUpdate');
+	}
+
+	selectAutomaticUpdateDelay(value) {
+		this._automaticUpdateDelay$.next(value);
+		this.updateSetting(value, 'automaticUpdateDelay');
+		this.electronService.ipcRenderer.send('automatic_update_setting', {
+			isEnabled: this._automaticUpdate$.getValue(),
+			delay: value,
+		});
 	}
 
 	togglePrerelease(value) {
@@ -1185,5 +1200,13 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 
 	public get monitorsOption$(): Observable<any> {
 		return this._monitorsOption$.asObservable();
+	}
+
+	public humanize(value: number): string {
+		return moment.duration(value, 'hours').humanize(false, {});
+	}
+
+	public get automaticUpdateDelay$(): Observable<number> {
+		return this._automaticUpdateDelay$.asObservable();
 	}
 }
