@@ -54,7 +54,7 @@ export class SetupComponent implements OnInit {
 					dbPort: arg[arg.db]?.dbPort,
 					dbName: arg[arg.db]?.dbName,
 					dbUser: arg[arg.db]?.dbUsername,
-					dbPassword: arg[arg.db]?.dbPassword
+					dbPassword: arg[arg.db]?.dbPassword,
 				};
 			}
 		});
@@ -283,7 +283,7 @@ export class SetupComponent implements OnInit {
 					dbPort: this.databaseConfig.postgre.dbPort,
 					dbName: this.databaseConfig.postgre.dbName,
 					dbUsername: this.databaseConfig.postgre.dbUser,
-					dbPassword: this.databaseConfig.postgre.dbPassword
+					dbPassword: this.databaseConfig.postgre.dbPassword,
 				},
 				db: 'postgres',
 			};
@@ -325,22 +325,20 @@ export class SetupComponent implements OnInit {
 		this.checkConnection(true);
 	}
 
-	pingAw() {
-		this.awCheck = false;
-		this.setupService
-			.pingAw(`${this.awAPI}/api`)
-			.then((res) => {
-				this.iconAw = './assets/icons/toggle-right.svg';
-				this.awCheck = true;
-				this.statusIcon = 'success';
-				this._cdr.detectChanges();
-			})
-			.catch((e) => {
-				this.iconAw = './assets/icons/toggle-left.svg';
-				this.awCheck = true;
-				this.statusIcon = 'danger';
-				this._cdr.detectChanges();
-			});
+	async pingAw(): Promise<void> {
+		try {
+			this.awCheck = false;
+			await this.setupService.pingAw(`${this.awAPI}/api`)
+			this.iconAw = './assets/icons/toggle-right.svg';
+			this.awCheck = true;
+			this.statusIcon = 'success';
+			this._cdr.detectChanges();
+		} catch (error) {
+			this.iconAw = './assets/icons/toggle-left.svg';
+			this.awCheck = true;
+			this.statusIcon = 'danger';
+			this._cdr.detectChanges();
+		}
 	}
 
 	validation() {
