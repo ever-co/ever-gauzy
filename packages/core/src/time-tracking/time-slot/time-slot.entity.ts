@@ -3,10 +3,10 @@ import {
 	Column,
 	RelationId,
 	ManyToOne,
-	JoinColumn,
 	OneToMany,
 	ManyToMany,
-	JoinTable
+	JoinTable,
+	Index
 } from 'typeorm';
 import {
 	ITimeSlot,
@@ -16,8 +16,8 @@ import {
 	IEmployee,
 	ITimeLog
 } from '@gauzy/contracts';
-import { ApiProperty } from '@nestjs/swagger';
-import { IsNumber, IsDateString } from 'class-validator';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { IsNumber, IsDateString, IsUUID, IsNotEmpty, IsOptional } from 'class-validator';
 import {
 	Activity,
 	Employee,
@@ -31,34 +31,42 @@ import { TimeSlotMinute } from './time-slot-minute.entity';
 export class TimeSlot extends TenantOrganizationBaseEntity
 	implements ITimeSlot {
 
-	@ApiProperty({ type: () => Number })
+	@ApiPropertyOptional({ type: () => Number, default: 0 })
+	@IsOptional()
 	@IsNumber()
+	@Index()
 	@Column({ default: 0 })
 	duration?: number;
 
-	@ApiProperty({ type: () => Number })
+	@ApiPropertyOptional({ type: () => Number, default: 0 })
+	@IsOptional()
 	@IsNumber()
 	@Column({ default: 0 })
 	keyboard?: number;
 
-	@ApiProperty({ type: () => Number })
+	@ApiPropertyOptional({ type: () => Number, default: 0 })
+	@IsOptional()
 	@IsNumber()
 	@Column({ default: 0 })
 	mouse?: number;
 
-	@ApiProperty({ type: () => Number })
+	@ApiPropertyOptional({ type: () => Number, default: 0 })
+	@IsOptional()
 	@IsNumber()
+	@Index()
 	@Column({ default: 0 })
 	overall?: number;
 
 	@ApiProperty({ type: () => 'timestamptz' })
+	@IsNotEmpty()
 	@IsDateString()
+	@Index()
 	@Column()
 	startedAt: Date;
 
+	/** Additional fields */
 	stoppedAt?: Date;
 	percentage?: number;
-
 	keyboardPercentage?: number;
 	mousePercentage?: number;
 	/*
@@ -75,8 +83,11 @@ export class TimeSlot extends TenantOrganizationBaseEntity
 	})
 	employee?: IEmployee;
 
-	@ApiProperty({ type: () => String })
+	@ApiProperty({ type: () => String, required: true })
+	@IsNotEmpty()
+	@IsUUID()
 	@RelationId((it: TimeSlot) => it.employee)
+	@Index()
 	@Column()
 	employeeId: IEmployee['id'];
 
@@ -89,29 +100,23 @@ export class TimeSlot extends TenantOrganizationBaseEntity
 	/**
 	 * Screenshot
 	 */
-	@ApiProperty({ type: () => Screenshot, isArray: true })
 	@OneToMany(() => Screenshot, (screenshot) => screenshot.timeSlot)
-	@JoinColumn()
 	screenshots?: IScreenshot[];
 
 	/**
 	 * Activity
 	 */
-	@ApiProperty({ type: () => Activity })
 	@OneToMany(() => Activity, (activity) => activity.timeSlot, {
 		cascade: true
 	})
-	@JoinColumn()
 	activities?: IActivity[];
 
 	/**
 	 * TimeSlotMinute
 	 */
-	@ApiProperty({ type: () => TimeSlotMinute })
 	@OneToMany(() => TimeSlotMinute, (timeSlotMinute) => timeSlotMinute.timeSlot, {
 		cascade: true
 	})
-	@JoinColumn()
 	timeSlotMinutes?: ITimeSlotMinute[];
 
 	/*
