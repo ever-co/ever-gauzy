@@ -5,7 +5,7 @@ import {
 	ViewChild,
 	ElementRef,
 	NgZone,
-	AfterViewInit,
+	AfterViewInit
 } from '@angular/core';
 import { TimeTrackerService } from '../time-tracker/time-tracker.service';
 import { NbDialogService, NbToastrService } from '@nebular/theme';
@@ -25,8 +25,8 @@ import * as moment from 'moment';
 			:host nb-tab {
 				padding: 1rem;
 			}
-		`,
-	],
+		`
+	]
 })
 export class SettingsComponent implements OnInit, AfterViewInit {
 	@ViewChild('selectRef') selectProjectElement: ElementRef;
@@ -62,7 +62,7 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 			title: 'Capture All Monitors',
 			subtitle: 'All connected monitors',
 			accent: 'basic',
-			status: 'basic',
+			status: 'basic'
 		},
 		{
 			value: 'active-only',
@@ -70,8 +70,8 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 			subtitle: 'Monitor current pointer position',
 			iconStyle: 'all-monitor_icon',
 			accent: 'basic',
-			status: 'basic',
-		},
+			status: 'basic'
+		}
 	]);
 	thirdPartyConfig = [
 		{
@@ -80,34 +80,34 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 				{
 					name: 'UNLEASH_APP_NAME',
 					field: 'UNLEASH_APP_NAME',
-					value: '',
+					value: ''
 				},
 				{
 					name: 'UNLEASH_API_URL',
 					field: 'UNLEASH_API_URL',
-					value: '',
+					value: ''
 				},
 				{
 					name: 'UNLEASH_INSTANCE_ID',
 					field: 'UNLEASH_INSTANCE_ID',
-					value: '',
+					value: ''
 				},
 				{
 					name: 'UNLEASH_REFRESH_INTERVAL',
 					field: 'UNLEASH_REFRESH_INTERVAL',
-					value: 15000,
+					value: 15000
 				},
 				{
 					name: 'UNLEASH_METRICS_INTERVAL',
 					field: 'UNLEASH_METRICS_INTERVAL',
-					value: 60000,
+					value: 60000
 				},
 				{
 					name: 'UNLEASH_API_KEY',
 					field: 'UNLEASH_API_KEY',
-					value: '',
-				},
-			],
+					value: ''
+				}
+			]
 		},
 		{
 			title: 'Twitter',
@@ -115,19 +115,19 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 				{
 					name: 'TWITTER_CLIENT_ID',
 					field: 'TWITTER_CLIENT_ID',
-					value: '',
+					value: ''
 				},
 				{
 					name: 'TWITTER_CLIENT_SECRET',
 					field: 'TWITTER_CLIENT_SECRET',
-					value: '',
+					value: ''
 				},
 				{
 					name: 'TWITTER_CALLBACK_URL',
 					field: 'TWITTER_CALLBACK_URL',
-					value: 'http://localhost:3000/api/auth/twitter/callback',
-				},
-			],
+					value: 'http://localhost:3000/api/auth/twitter/callback'
+				}
+			]
 		},
 		{
 			title: 'Google',
@@ -135,19 +135,19 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 				{
 					name: 'GOOGLE_CLIENT_ID',
 					field: 'GOOGLE_CLIENT_ID',
-					value: '',
+					value: ''
 				},
 				{
 					name: 'GOOGLE_CLIENT_SECRET',
 					field: 'GOOGLE_CLIENT_SECRET',
-					value: '',
+					value: ''
 				},
 				{
 					name: 'GOOGLE_CALLBACK_URL',
 					field: 'GOOGLE_CALLBACK_URL',
-					value: 'http://localhost:3000/api/auth/google/callback',
-				},
-			],
+					value: 'http://localhost:3000/api/auth/google/callback'
+				}
+			]
 		},
 		{
 			title: 'Facebook',
@@ -155,24 +155,24 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 				{
 					name: 'FACEBOOK_CLIENT_ID',
 					field: 'FACEBOOK_CLIENT_ID',
-					value: '',
+					value: ''
 				},
 				{
 					name: 'FACEBOOK_CLIENT_SECRET',
 					field: 'FACEBOOK_CLIENT_SECRET',
-					value: '',
+					value: ''
 				},
 				{
 					name: 'FACEBOOK_CALLBACK_URL',
 					field: 'FACEBOOK_CALLBACK_URL',
-					value: '',
+					value: ''
 				},
 				{
 					name: 'FACEBOOK_GRAPH_VERSION',
 					field: 'FACEBOOK_GRAPH_VERSION',
-					value: '',
-				},
-			],
+					value: ''
+				}
+			]
 		},
 		{
 			title: 'Github',
@@ -180,19 +180,19 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 				{
 					name: 'GITHUB_CLIENT_ID',
 					field: 'GITHUB_CLIENT_ID',
-					value: '',
+					value: ''
 				},
 				{
 					name: 'GITHUB_CLIENT_SECRET',
 					field: 'GITHUB_CLIENT_SECRET',
-					value: '',
+					value: ''
 				},
 				{
 					name: 'GITHUB_CALLBACK_URL',
 					field: 'GITHUB_CALLBACK_URL',
-					value: '',
-				},
-			],
+					value: ''
+				}
+			]
 		},
 		{
 			title: 'LinkedIn',
@@ -200,19 +200,19 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 				{
 					name: 'LINKEDIN_CLIENT_ID',
 					field: 'LINKEDIN_CLIENT_ID',
-					value: '',
+					value: ''
 				},
 				{
 					name: 'LINKEDIN_CLIENT_SECRET',
 					field: 'LINKEDIN_CLIENT_SECRET',
-					value: '',
+					value: ''
 				},
 				{
 					name: 'LINKEDIN_CALLBACK_URL',
 					field: 'LINKEDIN_CALLBACK_URL',
-					value: '',
-				},
-			],
+					value: ''
+				}
+			]
 		},
 		{
 			title: 'Microsoft',
@@ -220,29 +220,29 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 				{
 					name: 'MICROSOFT_CLIENT_ID',
 					field: 'MICROSOFT_CLIENT_ID',
-					value: '',
+					value: ''
 				},
 				{
 					name: 'MICROSOFT_CLIENT_SECRET',
 					field: 'MICROSOFT_CLIENT_SECRET',
-					value: '',
+					value: ''
 				},
 				{
 					name: 'MICROSOFT_RESOURCE',
 					field: 'MICROSOFT_RESOURCE',
-					value: '',
+					value: ''
 				},
 				{
 					name: 'MICROSOFT_TENANT',
 					field: 'MICROSOFT_TENANT',
-					value: '',
+					value: ''
 				},
 				{
 					name: 'MICROSOFT_CALLBACK_URL',
 					field: 'MICROSOFT_CALLBACK_URL',
-					value: '',
-				},
-			],
+					value: ''
+				}
+			]
 		},
 		{
 			title: 'Fiverr',
@@ -250,14 +250,14 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 				{
 					name: 'FIVERR_CLIENT_ID',
 					field: 'FIVERR_CLIENT_ID',
-					value: '',
+					value: ''
 				},
 				{
 					name: 'FIVERR_CLIENT_SECRET',
 					field: 'FIVERR_CLIENT_SECRET',
-					value: '',
-				},
-			],
+					value: ''
+				}
+			]
 		},
 		{
 			title: 'Auth0',
@@ -265,19 +265,19 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 				{
 					name: 'AUTH0_CLIENT_ID',
 					field: 'AUTH0_CLIENT_ID',
-					value: '',
+					value: ''
 				},
 				{
 					name: 'AUTH0_CLIENT_SECRET',
 					field: 'AUTH0_CLIENT_SECRET',
-					value: '',
+					value: ''
 				},
 				{
 					name: 'AUTH0_DOMAIN',
 					field: 'AUTH0_DOMAIN',
-					value: '',
-				},
-			],
+					value: ''
+				}
+			]
 		},
 		{
 			title: 'Keycloak',
@@ -285,29 +285,29 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 				{
 					name: 'KEYCLOAK_REALM',
 					field: 'KEYCLOAK_REALM',
-					value: '',
+					value: ''
 				},
 				{
 					name: 'KEYCLOAK_CLIENT_ID',
 					field: 'KEYCLOAK_CLIENT_ID',
-					value: '',
+					value: ''
 				},
 				{
 					name: 'KEYCLOAK_SECRET',
 					field: 'KEYCLOAK_SECRET',
-					value: '',
+					value: ''
 				},
 				{
 					name: 'KEYCLOAK_AUTH_SERVER_URL',
 					field: 'KEYCLOAK_AUTH_SERVER_URL',
-					value: '',
+					value: ''
 				},
 				{
 					name: 'KEYCLOAK_COOKIE_KEY',
 					field: 'KEYCLOAK_COOKIE_KEY',
-					value: '',
-				},
-			],
+					value: ''
+				}
+			]
 		},
 		{
 			title: 'Other',
@@ -315,15 +315,15 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 				{
 					name: 'SENTRY_DSN',
 					field: 'SENTRY_DSN',
-					value: '',
+					value: ''
 				},
 				{
 					name: 'GOOGLE_MAPS_API_KEY',
 					field: 'GOOGLE_MAPS_API_KEY',
-					value: '',
-				},
-			],
-		},
+					value: ''
+				}
+			]
+		}
 	];
 
 	private _selectedMenu$: BehaviorSubject<string>;
@@ -337,7 +337,7 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 		trackOnPcSleep: false,
 		preventDisplaySleep: false,
 		visibleAwOption: true,
-		visibleWakatimeOption: false,
+		visibleWakatimeOption: false
 	};
 	periodOption = [1, 3, 5, 10];
 	selectedPeriod = 5;
@@ -350,14 +350,14 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 			dbHost: '127.0.0.1',
 			dbPort: 3306,
 			dbUsername: 'root',
-			dbPassword: '',
+			dbPassword: ''
 		},
 		/* Default PostgresSQL config */
 		postgres: {
 			dbHost: '127.0.0.1',
 			dbPort: 5432,
 			dbUsername: 'postgres',
-			dbPassword: 'postgres',
+			dbPassword: 'postgres'
 		},
 		timeTrackerWindow: null,
 		isLocalServer: false,
@@ -365,12 +365,12 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 		serverUrl: null,
 		awPort: null,
 		awHost: null,
-		port: 5620,
+		port: 5620
 	};
 	version = '0.0.0';
 	message = {
 		text: 'Application Update',
-		status: 'basic',
+		status: 'basic'
 	};
 	downloadFinish = false;
 	progressDownload = 0;
@@ -382,24 +382,16 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 	serverTypes = {
 		integrated: 'Integrated',
 		custom: 'Custom',
-		live: 'Live',
+		live: 'Live'
 	};
 	waitRestart = false;
 	serverIsRunning = false;
 
 	serverOptions = this.isDesktopTimer
 		? [this.serverTypes.custom, this.serverTypes.live]
-		: [
-			this.serverTypes.integrated,
-			this.serverTypes.custom,
-			this.serverTypes.live,
-		  ];
+		: [this.serverTypes.integrated, this.serverTypes.custom, this.serverTypes.live];
 
-	driverOptions = [
-		'sqlite',
-		'postgres',
-		...(this.isDesktopTimer ? ['mysql'] : []),
-	];
+	driverOptions = ['sqlite', 'postgres', ...(this.isDesktopTimer ? ['mysql'] : [])];
 	muted: boolean;
 
 	delayOptions: number[] = [0.5, 1, 3, 24];
@@ -443,7 +435,7 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 		this._updaterServer$ = new BehaviorSubject({
 			github: false,
 			digitalOcean: true,
-			local: false,
+			local: false
 		});
 		this._prerelease$ = new BehaviorSubject(false);
 		this._selectedMenu$ = new BehaviorSubject(null);
@@ -452,11 +444,11 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 			isLoading: false,
 			isHidden: true,
 			status: false,
-			message: '',
+			message: ''
 		});
 		this._isConnectedDatabase$ = new BehaviorSubject({
 			status: false,
-			message: null,
+			message: null
 		});
 		this._restartDisable$ = new BehaviorSubject(false);
 		this._isHidden$ = new BehaviorSubject(true);
@@ -487,20 +479,18 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 				const { setting, config, auth, additionalSetting } = arg;
 				this.appSetting = {
 					...this.appSetting,
-					...setting,
+					...setting
 				};
 				this.config = {
 					...this.config,
-					...config,
+					...config
 				};
 				this._argMain = arg;
 				this.checkDatabaseConnectivity();
 				this.authSetting = auth;
 				this.mappingAdditionalSetting(additionalSetting || null);
 				await this.checkHostConnectivity();
-				this.config.awPort = this.config.timeTrackerWindow
-					? this.config.awHost.split('t:')[1]
-					: null;
+				this.config.awPort = this.config.timeTrackerWindow ? this.config.awHost.split('t:')[1] : null;
 				this.serverConnectivity();
 				this._monitorsOption = { value: setting?.monitor?.captured };
 				this.screenshotNotification = setting?.screenshotNotification;
@@ -513,7 +503,7 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 				this._updaterServer$ = new BehaviorSubject({
 					github: setting?.cdnUpdater?.github == true,
 					digitalOcean: setting?.cdnUpdater?.digitalOcean == true,
-					local: false,
+					local: false
 				});
 				this.selectedPeriod = setting?.timer?.updatePeriod;
 				if (!this.isServer) {
@@ -522,30 +512,23 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 				this.menus = this.isServer
 					? ['Update', 'Advanced Setting', 'About']
 					: [
-						...(auth && auth.allowScreenshotCapture
-							? ['Screen Capture']
-							: []),
-						'Timer',
-						'Update',
-						'Advanced Setting',
-						'About',
-					];
+							...(auth && auth.allowScreenshotCapture ? ['Screen Capture'] : []),
+							'Timer',
+							'Update',
+							'Advanced Setting',
+							'About'
+					  ];
 				const lastMenu =
-					this._selectedMenu &&
-						this.menus.includes(this._selectedMenu)
-						? this._selectedMenu
-						: this.menus[0];
+					this._selectedMenu && this.menus.includes(this._selectedMenu) ? this._selectedMenu : this.menus[0];
 				this._selectedMenu$.next(lastMenu);
 			})
 		);
 
-		this.electronService.ipcRenderer.on(
-			'app_setting_update',
-			(event, arg) =>
-				this._ngZone.run(() => {
-					const { setting } = arg;
-					this.appSetting = setting;
-				})
+		this.electronService.ipcRenderer.on('app_setting_update', (event, arg) =>
+			this._ngZone.run(() => {
+				const { setting } = arg;
+				this.appSetting = setting;
+			})
 		);
 
 		this.electronService.ipcRenderer.on('update_not_available', () =>
@@ -553,7 +536,7 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 				this._available$.next(false);
 				this.message = {
 					text: 'Update Not Available',
-					status: 'basic',
+					status: 'basic'
 				};
 				this.logContents = this.message.text;
 				this.scrollToBottom();
@@ -566,7 +549,7 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 				this._available$.next(false);
 				this.message = {
 					text: 'Update Error',
-					status: 'danger',
+					status: 'danger'
 				};
 				this.logContents = this.message.text;
 				this.logContents = `error message: ${arg}`;
@@ -581,7 +564,7 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 				this._loading$.next(false);
 				this.message = {
 					text: 'Update Available',
-					status: 'primary',
+					status: 'primary'
 				};
 				this.logContents = this.message.text;
 				this.scrollToBottom();
@@ -593,7 +576,7 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 				this._available$.next(true);
 				this.message = {
 					text: 'Update Download Completed',
-					status: 'success',
+					status: 'success'
 				};
 				this.logContents = this.message.text;
 				this.scrollToBottom();
@@ -603,25 +586,21 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 			})
 		);
 
-		this.electronService.ipcRenderer.on(
-			'download_on_progress',
-			(event, arg) =>
-				this._ngZone.run(() => {
-					this._loading$.next(true);
-					this._available$.next(true);
-					this.showProgressBar = true;
-					this.message = {
-						text: 'Update Downloading',
-						status: 'warning',
-					};
-					this.progressDownload = Math.floor(Number(arg.percent));
-					this.logContents = `Downloading update ${Math.floor(
-						arg.transferred / 1000000
-					)} MB of ${Math.floor(
-						arg.total / 1000000
-					)} MB  ->> ${Math.floor(arg.bytesPerSecond / 1000)} KB/s`;
-					this.scrollToBottom();
-				})
+		this.electronService.ipcRenderer.on('download_on_progress', (event, arg) =>
+			this._ngZone.run(() => {
+				this._loading$.next(true);
+				this._available$.next(true);
+				this.showProgressBar = true;
+				this.message = {
+					text: 'Update Downloading',
+					status: 'warning'
+				};
+				this.progressDownload = Math.floor(Number(arg.percent));
+				this.logContents = `Downloading update ${Math.floor(arg.transferred / 1000000)} MB of ${Math.floor(
+					arg.total / 1000000
+				)} MB  ->> ${Math.floor(arg.bytesPerSecond / 1000)} KB/s`;
+				this.scrollToBottom();
+			})
 		);
 
 		this.electronService.ipcRenderer.on('goto_update', () =>
@@ -633,10 +612,7 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 		this.electronService.ipcRenderer.on('goto_top_menu', () =>
 			this._ngZone.run(() => {
 				const lastMenu =
-					this._selectedMenu &&
-						this.menus.includes(this._selectedMenu)
-						? this._selectedMenu
-						: this.menus[0];
+					this._selectedMenu && this.menus.includes(this._selectedMenu) ? this._selectedMenu : this.menus[0];
 				this.selectMenu(lastMenu);
 			})
 		);
@@ -663,14 +639,11 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 			})
 		);
 
-		this.electronService.ipcRenderer.on(
-			'update_files_directory',
-			(event, arg) => {
-				this._ngZone.run(() => {
-					this._file$.next(arg);
-				});
-			}
-		);
+		this.electronService.ipcRenderer.on('update_files_directory', (event, arg) => {
+			this._ngZone.run(() => {
+				this._file$.next(arg);
+			});
+		});
 
 		this.electronService.ipcRenderer.on('show_about', () => {
 			this._ngZone.run(() => {
@@ -686,14 +659,11 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 			});
 		});
 
-		this.electronService.ipcRenderer.on(
-			'_logout_quit_install_',
-			(event, arg) => {
+		this.electronService.ipcRenderer.on('_logout_quit_install_', (event, arg) => {
 			this._ngZone.run(() => {
 				this.logout(true);
 			});
-			}
-		);
+		});
 	}
 
 	mappingAdditionalSetting(values) {
@@ -712,16 +682,18 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 	}
 
 	private set _monitorsOption(item) {
-		this._monitorsOption$.next(this._monitorsOption.map((x) => {
-			if (x.value === item?.value) {
-				x.accent = 'primary';
-				x.status = 'primary';
-			} else {
-				x.accent = 'basic';
-				x.status = 'basic';
-			}
-			return x;
-		}))
+		this._monitorsOption$.next(
+			this._monitorsOption.map((x) => {
+				if (x.value === item?.value) {
+					x.accent = 'primary';
+					x.status = 'primary';
+				} else {
+					x.accent = 'basic';
+					x.status = 'basic';
+				}
+				return x;
+			})
+		);
 	}
 
 	selectMenu(menu) {
@@ -731,12 +703,10 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 	updateSetting(value, type: string) {
 		this.appSetting[type] = value;
 		this.electronService.ipcRenderer.send('update_app_setting', {
-			values: this.appSetting,
+			values: this.appSetting
 		});
 		this._notifier.success(
-			'Update ' +
-			type.replace(/([a-z])([A-Z])/g, '$1 $2').toLowerCase() +
-			' setting successfully'
+			'Update ' + type.replace(/([a-z])([A-Z])/g, '$1 $2').toLowerCase() + ' setting successfully'
 		);
 	}
 
@@ -765,7 +735,7 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 		this.updateSetting(value, 'autoLaunch');
 		this.electronService.ipcRenderer.send('launch_on_startup', {
 			autoLaunch: value,
-			hidden: this.minimizeOnStartup,
+			hidden: this.minimizeOnStartup
 		});
 	}
 
@@ -773,7 +743,7 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 		this.updateSetting(value, 'minimizeOnStartup');
 		this.electronService.ipcRenderer.send('minimize_on_startup', {
 			autoLaunch: this.autoLaunch,
-			hidden: value,
+			hidden: value
 		});
 	}
 
@@ -787,7 +757,7 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 		this.updateSetting(value, 'automaticUpdateDelay');
 		this.electronService.ipcRenderer.send('automatic_update_setting', {
 			isEnabled: this._automaticUpdate$.getValue(),
-			delay: value,
+			delay: value
 		});
 	}
 
@@ -809,23 +779,16 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 			});
 		});
 		const newConfig: any = {
-			...this.config,
+			...this.config
 		};
-		if (this.config.timeTrackerWindow)
-			newConfig.awHost = `http://localhost:${this.config.awPort}`;
+		if (this.config.timeTrackerWindow) newConfig.awHost = `http://localhost:${this.config.awPort}`;
 		this.electronService.ipcRenderer.send('restart_app', newConfig);
-		this.electronService.ipcRenderer.send(
-			'save_additional_setting',
-			thConfig
-		);
+		this.electronService.ipcRenderer.send('save_additional_setting', thConfig);
 	}
 
 	portChange(val, type) {
 		if (type === 'api') {
-			if (
-				['5621', '5622'].findIndex((item) => item === val.toString()) >
-				-1
-			) {
+			if (['5621', '5622'].findIndex((item) => item === val.toString()) > -1) {
 				this._restartDisable$.next(true);
 			} else {
 				this._restartDisable$.next(false);
@@ -843,12 +806,10 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 			case this.config.isLocalServer:
 				this.config.serverType = 'Integrated';
 				break;
-			case !this.config.isLocalServer &&
-				this.config.serverUrl !== 'https://api.gauzy.co':
+			case !this.config.isLocalServer && this.config.serverUrl !== 'https://api.gauzy.co':
 				this.config.serverType = 'Custom';
 				break;
-			case !this.config.isLocalServer &&
-				this.config.serverUrl === 'https://api.gauzy.co':
+			case !this.config.isLocalServer && this.config.serverUrl === 'https://api.gauzy.co':
 				this.config.serverType = 'Live';
 				break;
 			default:
@@ -906,7 +867,7 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 					tenantId: request.tenantId,
 					token: request.token,
 					apiHost: request.apiHost
-				}
+				};
 				if (Object.values(payload).includes(null || undefined)) {
 					this.currentUser$.next(null);
 					if (typeof this.authSetting.isLogout !== 'undefined') {
@@ -917,7 +878,7 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 				} else {
 					const user = await this.timeTrackerService.getUserDetail(payload);
 					this.currentUser$.next(this.authSetting.isLogout ? null : user);
-				};
+				}
 			} catch (error) {
 				console.log('User Detail error', error);
 			}
@@ -978,8 +939,7 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 		let message = '';
 		switch (arg.type) {
 			case 'update_config':
-				message =
-					'Server configuration updated, please wait till server restarts';
+				message = 'Server configuration updated, please wait till server restarts';
 				break;
 			case 'start_server':
 				this._restartDisable$.next(false);
@@ -1001,8 +961,7 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 
 	private scrollToBottom() {
 		if (this.logIsOpen && this._logBox) {
-			this._logBox.nativeElement.scrollTop =
-				this._logBox.nativeElement.scrollHeight;
+			this._logBox.nativeElement.scrollTop = this._logBox.nativeElement.scrollHeight;
 		}
 	}
 
@@ -1053,38 +1012,29 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 		this._updaterServer$.next({
 			github: event,
 			digitalOcean: !event,
-			local: false,
+			local: false
 		});
 		this.updateSetting(this._updaterServer$.getValue(), 'cdnUpdater');
-		this.electronService.ipcRenderer.send(
-			'change_update_strategy',
-			this._updaterServer$.getValue()
-		);
+		this.electronService.ipcRenderer.send('change_update_strategy', this._updaterServer$.getValue());
 	}
 
 	public toggleDigitalOceanDefaultServer(event: boolean) {
 		this._updaterServer$.next({
 			github: !event,
 			digitalOcean: event,
-			local: false,
+			local: false
 		});
 		this.updateSetting(this._updaterServer$.getValue(), 'cdnUpdater');
-		this.electronService.ipcRenderer.send(
-			'change_update_strategy',
-			this._updaterServer$.getValue()
-		);
+		this.electronService.ipcRenderer.send('change_update_strategy', this._updaterServer$.getValue());
 	}
 
 	public toggleLocalServer(event: boolean) {
 		this._file$.next({});
 		this._updaterServer$.next({
 			...this._updaterServer$.getValue(),
-			local: event,
+			local: event
 		});
-		this.electronService.ipcRenderer.send(
-			'change_update_strategy',
-			this._updaterServer$.getValue()
-		);
+		this.electronService.ipcRenderer.send('change_update_strategy', this._updaterServer$.getValue());
 	}
 
 	public get isDesktopTimer(): boolean {
@@ -1163,21 +1113,21 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 		try {
 			this._isCheckHost$.next({
 				...this._isCheckHost,
-				isLoading: true,
+				isLoading: true
 			});
 			const url = new URL(this.config.serverUrl);
 			if (url.pathname.length > 1) {
 				this.config.serverUrl = url.origin;
 			}
 			const isOk = await this._setupService.pingServer({
-				host: url.origin,
+				host: url.origin
 			});
 			if (isOk) {
 				this._isCheckHost$.next({
 					status: true,
 					isHidden: false,
 					isLoading: false,
-					message: `Connection to Server ${this.config.serverUrl} Succeeds`,
+					message: `Connection to Server ${this.config.serverUrl} Succeeds`
 				});
 			}
 		} catch (error) {
