@@ -3,7 +3,8 @@ import {
 	Column,
 	RelationId,
 	ManyToOne,
-	Index
+	Index,
+	JoinColumn
 } from 'typeorm';
 import { FileStorageProviderEnum, IScreenshot, ITimeSlot } from '@gauzy/contracts';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
@@ -64,6 +65,7 @@ export class Screenshot extends TenantOrganizationBaseEntity
 	@ManyToOne(() => TimeSlot, (timeSlot) => timeSlot.screenshots, {
 		onDelete: 'CASCADE'
 	})
+	@JoinColumn()
 	timeSlot?: ITimeSlot;
 
 	@ApiProperty({ type: () => String })
