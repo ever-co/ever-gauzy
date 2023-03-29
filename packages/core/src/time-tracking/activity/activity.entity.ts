@@ -38,7 +38,7 @@ import {
 let options: TypeOrmModuleOptions;
 try {
 	options = getConfig().dbConnectionOptions
-} catch (error) {}
+} catch (error) { }
 
 @Entity('activity')
 export class Activity extends TenantOrganizationBaseEntity implements IActivity {
@@ -100,10 +100,10 @@ export class Activity extends TenantOrganizationBaseEntity implements IActivity 
 	deletedAt?: Date;
 
 	/*
-    |--------------------------------------------------------------------------
-    | @ManyToOne
-    |--------------------------------------------------------------------------
-    */
+	|--------------------------------------------------------------------------
+	| @ManyToOne
+	|--------------------------------------------------------------------------
+	*/
 	// Employee
 	@ApiProperty({ type: () => Employee })
 	@ManyToOne(() => Employee, {
@@ -141,6 +141,7 @@ export class Activity extends TenantOrganizationBaseEntity implements IActivity 
 		nullable: true,
 		onDelete: 'CASCADE'
 	})
+	@JoinColumn()
 	timeSlot?: ITimeSlot;
 
 	@ApiProperty({ type: () => String, readOnly: true })
