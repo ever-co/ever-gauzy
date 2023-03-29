@@ -336,17 +336,10 @@ export class SetupComponent implements OnInit {
 				this._cdr.detectChanges();
 			})
 			.catch((e) => {
-				if (e.status === 200) {
-					this.iconAw = './assets/icons/toggle-right.svg';
-					this.awCheck = true;
-					this.statusIcon = 'success';
-					this._cdr.detectChanges();
-				} else {
-					this.iconAw = './assets/icons/toggle-left.svg';
-					this.awCheck = true;
-					this.statusIcon = 'danger';
-					this._cdr.detectChanges();
-				}
+				this.iconAw = './assets/icons/toggle-left.svg';
+				this.awCheck = true;
+				this.statusIcon = 'danger';
+				this._cdr.detectChanges();
 			});
 	}
 
