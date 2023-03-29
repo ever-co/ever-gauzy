@@ -40,9 +40,9 @@ export class IssueTypeController extends CrudFactory<
 	@HttpCode(HttpStatus.OK)
 	@Get()
 	@UsePipes(new ValidationPipe({ whitelist: true }))
-	async getAll(
+	async findAllIssueTypes(
 		@Query() params: IssueTypeQuerDTO
 	): Promise<IPagination<IIssueType>> {
-		return await this.issueTypeService.findIssueTypes(params);
+		return await this.issueTypeService.findAll(params);
 	}
 }

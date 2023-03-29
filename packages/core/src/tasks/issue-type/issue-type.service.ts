@@ -1,6 +1,6 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { DeleteResult, Repository } from 'typeorm';
+import { DeleteResult, Repository, SelectQueryBuilder } from 'typeorm';
 import { IIssueType, IIssueTypeFindInput, IPagination } from '@gauzy/contracts';
 import { IssueType } from './issue-type.entity';
 import { TaskStatusPrioritySizeService } from './../task-status-priority-size.service';
@@ -36,13 +36,34 @@ export class IssueTypeService extends TaskStatusPrioritySizeService<IssueType> {
 	 * @param params
 	 * @returns
 	 */
-	async findIssueTypes(
+	async findAll(
 		params: IIssueTypeFindInput
 	): Promise<IPagination<IIssueType>> {
 		try {
-			return await this.findEntitiesByParams(params);
+			/**
+			 * Find at least one record or get global records
+			 */
+			const cqb = this.repository.createQueryBuilder(this.alias);
+			cqb.where((qb: SelectQueryBuilder<IssueType>) => {
+				this.getFilterQuery(qb, params);
+			});
+			await cqb.getOneOrFail();
+
+			/**
+			 * Find task issue types for given params
+			 */
+			const query = this.repository.createQueryBuilder(this.alias).setFindOptions({
+				relations: {
+					image: true
+				}
+			});
+			query.where((qb: SelectQueryBuilder<IssueType>) => {
+				this.getFilterQuery(qb, params);
+			});
+			const [items, total] = await query.getManyAndCount();
+			return { items, total };
 		} catch (error) {
-			throw new BadRequestException(error);
+			return await this.getDefaultEntities();
 		}
 	}
 }
