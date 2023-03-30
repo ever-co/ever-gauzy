@@ -69,7 +69,7 @@ export async function revertLastDatabaseMigration(pluginConfig: Partial<IPluginC
  */
 export async function generateMigration(pluginConfig: Partial<IPluginConfig>, options: IMigrationOptions) {
     if (!options.name) {
-        console.log(chalk.yellow("Migration name must be requried.Please specify migration name!"));
+        console.log(chalk.yellow("Migration name must be required.Please specify migration name!"));
         return;
     }
     const config = await registerPluginConfig(pluginConfig);
@@ -142,7 +142,7 @@ export async function generateMigration(pluginConfig: Partial<IPluginConfig>, op
  */
 export async function createMigration(pluginConfig: Partial<IPluginConfig>, options: IMigrationOptions) {
     if (!options.name) {
-        console.log(chalk.yellow("Migration name must be requried.Please specify migration name!"));
+        console.log(chalk.yellow("Migration name must be required.Please specify migration name!"));
         return;
     }
     const config = await registerPluginConfig(pluginConfig);
