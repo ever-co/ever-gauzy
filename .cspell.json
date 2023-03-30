@@ -245,7 +245,8 @@
         "webapp",
         "websockets",
         "xpack",
-        "xplat"
+        "xplat",
+        "Sqls"
     ],
     "useGitignore": true,
     "ignorePaths": [
