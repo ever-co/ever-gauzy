@@ -5,8 +5,7 @@ import { ITimeSlot, ITimeLog, ITimeLogFilters, ITimeLogTodayFilters } from './ti
 import { IOrganizationProject } from './organization-projects.model';
 import { IRelationalOrganizationTeam } from './organization-team.model';
 
-export interface IGetTimeSlotStatistics
-	extends ITimeLogFilters {
+export interface IGetTimeSlotStatistics extends ITimeLogFilters {
 	employeeId?: string;
 	projectId?: string | string[];
 	onlyMe?: boolean;
@@ -20,8 +19,7 @@ export interface ITimeSlotStatistics extends IEmployee {
 	user: Pick<IUser, 'name' | 'imageUrl'>;
 }
 
-export interface IGetActivitiesStatistics
-	extends ITimeLogFilters {
+export interface IGetActivitiesStatistics extends ITimeLogFilters {
 	employeeId?: string;
 	projectId?: string | string[];
 	onlyMe?: boolean;
@@ -34,8 +32,7 @@ export interface IActivitiesStatistics {
 	sessions?: number;
 }
 
-export interface IGetProjectsStatistics
-	extends ITimeLogFilters {
+export interface IGetProjectsStatistics extends ITimeLogFilters {
 	employeeId?: string;
 	projectId?: string | string[];
 	onlyMe?: boolean;
@@ -46,7 +43,10 @@ export interface IProjectsStatistics extends IOrganizationProject {
 	durationPercentage?: number;
 }
 
-export interface IGetTasksStatistics extends ITimeLogFilters, Pick<IRelationalOrganizationTeam, 'organizationTeamId'>, Pick<IRelationalEmployee, 'employeeId'> {
+export interface IGetTasksStatistics
+	extends ITimeLogFilters,
+		Pick<IRelationalOrganizationTeam, 'organizationTeamId'>,
+		Pick<IRelationalEmployee, 'employeeId'> {
 	projectId?: string | string[];
 	onlyMe?: boolean;
 	take?: number;
@@ -57,15 +57,13 @@ export interface ITasksStatistics extends ITask {
 	durationPercentage?: number;
 }
 
-export interface IGetManualTimesStatistics
-	extends ITimeLogFilters {
+export interface IGetManualTimesStatistics extends ITimeLogFilters {
 	employeeId?: string;
 	projectId?: string | string[];
 	onlyMe?: boolean;
 }
 
-export interface IManualTimesStatistics
-	extends Pick<ITimeLog, 'id' | 'startedAt' | 'duration'> {
+export interface IManualTimesStatistics extends Pick<ITimeLog, 'id' | 'startedAt' | 'duration'> {
 	user?: Pick<IUser, 'name' | 'imageUrl'>;
 	project?: Pick<IOrganizationProject, 'name'>;
 }
