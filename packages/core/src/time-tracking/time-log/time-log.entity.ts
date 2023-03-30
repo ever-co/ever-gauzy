@@ -8,6 +8,9 @@ import {
 	Index,
 	AfterLoad
 } from 'typeorm';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { IsBoolean, IsDateString, IsEnum, IsOptional, IsString, IsUUID } from 'class-validator';
+import * as moment from 'moment';
 import {
 	ITimeLog,
 	TimeLogType,
@@ -19,8 +22,6 @@ import {
 	IOrganizationContact,
 	ITimeSlot
 } from '@gauzy/contracts';
-import { ApiProperty } from '@nestjs/swagger';
-import * as moment from 'moment';
 import {
 	Employee,
 	OrganizationContact,
@@ -35,45 +36,69 @@ import {
 export class TimeLog extends TenantOrganizationBaseEntity implements ITimeLog {
 
 	@ApiProperty({ type: () => 'timestamptz' })
-	@Column({ nullable: true, default: null })
+	@IsDateString()
+	@Index()
+	@Column({ nullable: true })
 	startedAt?: Date;
 
 	@ApiProperty({ type: () => 'timestamptz' })
-	@Column({ nullable: true, default: null })
+	@IsDateString()
+	@Index()
+	@Column({ nullable: true })
 	stoppedAt?: Date;
 
-	@ApiProperty({ type: () => String, enum: TimeLogType })
+	@ApiProperty({ type: () => String, enum: TimeLogType, default: TimeLogType.TRACKED })
+	@IsEnum(TimeLogType)
+	@Index()
 	@Column({ default: TimeLogType.TRACKED })
 	logType: string;
 
-	@ApiProperty({ type: () => String, enum: TimeLogSourceEnum })
+	@ApiProperty({ type: () => String, enum: TimeLogSourceEnum, default: TimeLogSourceEnum.WEB_TIMER })
+	@IsEnum(TimeLogSourceEnum)
+	@Index()
 	@Column({ default: TimeLogSourceEnum.WEB_TIMER })
 	source?: string;
 
-	@ApiProperty({ type: () => String })
-	@Column({ default: null, nullable: true })
+	@ApiPropertyOptional({ type: () => String })
+	@IsOptional()
+	@IsString()
+	@Column({ nullable: true })
 	description?: string;
 
-	@ApiProperty({ type: () => String })
-	@Column({ default: null, nullable: true })
+	@ApiPropertyOptional({ type: () => String })
+	@IsOptional()
+	@IsString()
+	@Column({ nullable: true })
 	reason?: string;
 
-	@ApiProperty({ type: () => Boolean })
+	@ApiPropertyOptional({ type: () => Boolean, default: false })
+	@IsOptional()
+	@IsBoolean()
+	@Index()
 	@Column({ default: false })
 	isBillable: boolean;
 
-	@ApiProperty({ type: () => 'timestamptz' })
-	@Column({ nullable: true, default: null })
-	deletedAt?: Date;
-
-	@ApiProperty({ type: () => Boolean })
+	@ApiPropertyOptional({ type: () => Boolean })
+	@IsOptional()
+	@IsBoolean()
+	@Index()
 	@Column({ nullable: true })
 	isRunning?: boolean;
 
-	@ApiProperty({ type: () => String })
+	@ApiPropertyOptional({ type: () => String })
+	@IsOptional()
+	@IsString()
+	@Index()
 	@Column({ update: false, nullable: true })
 	version?: string;
 
+	@ApiPropertyOptional({ type: () => 'timestamptz' })
+	@IsDateString()
+	@Index()
+	@Column({ nullable: true })
+	deletedAt?: Date;
+
+	/** Additional fields */
 	duration: number;
 	isEdited?: boolean;
 	/*
@@ -85,38 +110,46 @@ export class TimeLog extends TenantOrganizationBaseEntity implements ITimeLog {
 	/**
 	 * Employee
 	 */
+	@ApiPropertyOptional({ type: () => String })
+	@IsOptional()
 	@ManyToOne(() => Employee, (employee) => employee.timeLogs, {
 		onDelete: 'CASCADE'
 	})
+	@JoinColumn()
 	employee: IEmployee;
 
-	@ApiProperty({ type: () => String })
+	@ApiPropertyOptional({ type: () => String })
+	@IsOptional()
+	@IsUUID()
 	@RelationId((it: TimeLog) => it.employee)
 	@Index()
 	@Column()
-	readonly employeeId: IEmployee['id'];
+	employeeId: IEmployee['id'];
 
 	/**
 	 * Timesheet
 	 */
-	@ApiProperty({ type: () => Timesheet })
+	@ApiPropertyOptional({ type: () => Timesheet })
+	@IsOptional()
 	@ManyToOne(() => Timesheet, {
-		nullable: true,
 		onDelete: 'CASCADE'
 	})
 	@JoinColumn()
 	timesheet?: ITimesheet;
 
-	@ApiProperty({ type: () => String })
+	@ApiPropertyOptional({ type: () => String })
+	@IsOptional()
+	@IsUUID()
 	@RelationId((it: TimeLog) => it.timesheet)
 	@Index()
 	@Column({ nullable: true })
-	readonly timesheetId?: string;
+	timesheetId?: ITimesheet['id'];
 
 	/**
 	 * OrganizationProject
 	 */
-	@ApiProperty({ type: () => OrganizationProject })
+	@ApiPropertyOptional({ type: () => OrganizationProject })
+	@IsOptional()
 	@ManyToOne(() => OrganizationProject, (project) => project.timeLogs, {
 		nullable: true,
 		onDelete: 'SET NULL'
@@ -124,16 +157,19 @@ export class TimeLog extends TenantOrganizationBaseEntity implements ITimeLog {
 	@JoinColumn()
 	project?: IOrganizationProject;
 
-	@ApiProperty({ type: () => String })
+	@ApiPropertyOptional({ type: () => String })
+	@IsOptional()
+	@IsUUID()
 	@RelationId((timeLog: TimeLog) => timeLog.project)
 	@Index()
 	@Column({ nullable: true })
-	readonly projectId?: string;
+	projectId?: string;
 
 	/**
 	 * Task
 	 */
-	@ApiProperty({ type: () => Task })
+	@ApiPropertyOptional({ type: () => Task })
+	@IsOptional()
 	@ManyToOne(() => Task, (task) => task.activities, {
 		nullable: true,
 		onDelete: 'SET NULL'
@@ -141,7 +177,9 @@ export class TimeLog extends TenantOrganizationBaseEntity implements ITimeLog {
 	@JoinColumn()
 	task?: ITask;
 
-	@ApiProperty({ type: () => String })
+	@ApiPropertyOptional({ type: () => String })
+	@IsOptional()
+	@IsUUID()
 	@RelationId((timeLog: TimeLog) => timeLog.task)
 	@Index()
 	@Column({ nullable: true })
@@ -150,7 +188,8 @@ export class TimeLog extends TenantOrganizationBaseEntity implements ITimeLog {
 	/**
 	 * OrganizationContact
 	 */
-	@ApiProperty({ type: () => OrganizationContact })
+	@ApiPropertyOptional({ type: () => OrganizationContact })
+	@IsOptional()
 	@ManyToOne(() => OrganizationContact, (contact) => contact.timeLogs, {
 		nullable: true,
 		onDelete: 'SET NULL'
@@ -158,12 +197,13 @@ export class TimeLog extends TenantOrganizationBaseEntity implements ITimeLog {
 	@JoinColumn()
 	organizationContact?: IOrganizationContact;
 
-	@ApiProperty({ type: () => String })
+	@ApiPropertyOptional({ type: () => String })
+	@IsOptional()
+	@IsUUID()
 	@RelationId((timeLog: TimeLog) => timeLog.organizationContact)
 	@Index()
 	@Column({ nullable: true })
 	organizationContactId?: string;
-
 
 	/*
 	|--------------------------------------------------------------------------
