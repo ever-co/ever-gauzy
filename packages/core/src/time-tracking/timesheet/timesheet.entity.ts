@@ -1,24 +1,11 @@
-import {
-	Entity,
-	Column,
-	RelationId,
-	ManyToOne,
-	JoinColumn,
-	Index
-} from 'typeorm';
+import { Entity, Column, RelationId, ManyToOne, JoinColumn, Index } from 'typeorm';
 import { IEmployee, ITimesheet, IUser, TimesheetStatus } from '@gauzy/contracts';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import {
-	Employee,
-	TenantOrganizationBaseEntity,
-	User
-} from './../../core/entities/internal';
+import { Employee, TenantOrganizationBaseEntity, User } from './../../core/entities/internal';
 import { IsBoolean, IsDateString, IsEnum, IsNumber, IsOptional, IsUUID } from 'class-validator';
 
 @Entity('timesheet')
-export class Timesheet extends TenantOrganizationBaseEntity
-	implements ITimesheet {
-
+export class Timesheet extends TenantOrganizationBaseEntity implements ITimesheet {
 	@ApiPropertyOptional({ type: () => Number, default: 0 })
 	@IsOptional()
 	@IsNumber()
