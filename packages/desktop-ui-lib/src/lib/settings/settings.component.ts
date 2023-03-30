@@ -437,7 +437,7 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 	) {
 		this._loading$ = new BehaviorSubject(false);
 		this._automaticUpdate$ = new BehaviorSubject(false);
-		this._automaticUpdateDelay$ = new BehaviorSubject(0);
+		this._automaticUpdateDelay$ = new BehaviorSubject(1);
 		this._available$ = new BehaviorSubject(false);
 		this._file$ = new BehaviorSubject({ uri: null });
 		this._updaterServer$ = new BehaviorSubject({
