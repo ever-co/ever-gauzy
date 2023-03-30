@@ -11,4 +11,4 @@ export * from './organization';
 export * from './core/seeds';
 export * from './employee';
 
-export * from './database/migration';
+export * from './database/migration-executor';

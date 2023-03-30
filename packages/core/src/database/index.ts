@@ -1,1 +1,1 @@
-export * from './migration';
+export * from './migration-executor';
