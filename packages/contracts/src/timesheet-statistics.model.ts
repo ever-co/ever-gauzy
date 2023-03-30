@@ -1,8 +1,9 @@
 import { IUser } from './user.model';
-import { IEmployee } from './employee.model';
+import { IEmployee, IRelationalEmployee } from './employee.model';
 import { ITask } from './task.model';
 import { ITimeSlot, ITimeLog, ITimeLogFilters, ITimeLogTodayFilters } from './timesheet.model';
 import { IOrganizationProject } from './organization-projects.model';
+import { IRelationalOrganizationTeam } from './organization-team.model';
 
 export interface IGetTimeSlotStatistics
 	extends ITimeLogFilters {
@@ -45,9 +46,7 @@ export interface IProjectsStatistics extends IOrganizationProject {
 	durationPercentage?: number;
 }
 
-export interface IGetTasksStatistics
-	extends ITimeLogFilters {
-	employeeId?: string;
+export interface IGetTasksStatistics extends ITimeLogFilters, Pick<IRelationalOrganizationTeam, 'organizationTeamId'>, Pick<IRelationalEmployee, 'employeeId'> {
 	projectId?: string | string[];
 	onlyMe?: boolean;
 	take?: number;

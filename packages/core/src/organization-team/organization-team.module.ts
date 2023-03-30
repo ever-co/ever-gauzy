@@ -19,9 +19,11 @@ import { StatisticModule } from './../time-tracking/statistic/statistic.module';
 @Module({
 	imports: [
 		RouterModule.forRoutes([
-			{ path: '/organization-team', module: OrganizationTeamModule },
+			{ path: '/organization-team', module: OrganizationTeamModule }
 		]),
-		TypeOrmModule.forFeature([OrganizationTeam]),
+		TypeOrmModule.forFeature([
+			OrganizationTeam
+		]),
 		OrganizationTeamEmployeeModule,
 		TenantModule,
 		RoleModule,
@@ -30,10 +32,19 @@ import { StatisticModule } from './../time-tracking/statistic/statistic.module';
 		EmployeeModule,
 		TimerModule,
 		CqrsModule,
-		StatisticModule,
+		StatisticModule
 	],
-	controllers: [OrganizationTeamController],
-	providers: [...QueryHandlers, ...CommandHandlers, OrganizationTeamService],
-	exports: [TypeOrmModule, OrganizationTeamService],
+	controllers: [
+		OrganizationTeamController
+	],
+	providers: [
+		...QueryHandlers,
+		...CommandHandlers,
+		OrganizationTeamService
+	],
+	exports: [
+		TypeOrmModule,
+		OrganizationTeamService
+	]
 })
-export class OrganizationTeamModule {}
+export class OrganizationTeamModule { }
