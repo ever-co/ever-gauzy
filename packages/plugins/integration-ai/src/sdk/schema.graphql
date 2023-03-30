@@ -166,9 +166,15 @@ type JobPost {
   subcategory: String
   country: String
   clientFeedback: String
+  englishLevel: String
+  languages: String
   clientReviewsCount: Float
   clientJobsPosted: Float
   clientPastHires: Float
+  proposalsCount: Float
+  interviewingCount: Float
+  invitesSentCount: Float
+  unansweredInvitesCount: Float
   clientPaymentVerificationStatus: Boolean
   searchCategory: String
   searchCategoryId: String
@@ -201,6 +207,49 @@ type EmployeeJobPost {
   employee: Employee!
 }
 
+type EmployeeJobApplication {
+  id: ID
+  employeeJobPostId: String!
+  employeeId: String!
+  jobPostId: String!
+  jobDateCreated: DateTime
+  jobStatus: String
+  jobType: String
+  providerCode: String!
+  providerJobId: String!
+  providerJobApplicationId: String
+  isViewedByClient: Boolean
+  appliedDate: DateTime
+  createdAt: DateTime
+  updatedAt: DateTime
+  isActive: Boolean!
+  isArchived: Boolean!
+  employeeJobPost: EmployeeJobPost!
+  jobPost: JobPost!
+  employee: Employee!
+}
+
+type AutomationTask {
+  id: ID
+  employeeJobPostId: String
+  employeeId: String
+  jobPostId: String
+  jobDateCreated: DateTime
+  jobStatus: String
+  jobType: String
+  providerCode: String!
+  providerJobId: String
+  commandType: String!
+  status: String!
+  createdAt: DateTime
+  updatedAt: DateTime
+  isActive: Boolean!
+  isArchived: Boolean!
+  employeeJobPost: EmployeeJobPost!
+  jobPost: JobPost!
+  employee: Employee!
+}
+
 type DeleteManyResponse {
   """The number of records deleted."""
   deletedCount: Int!
@@ -224,9 +273,15 @@ type JobPostDeleteResponse {
   subcategory: String
   country: String
   clientFeedback: String
+  englishLevel: String
+  languages: String
   clientReviewsCount: Float
   clientJobsPosted: Float
   clientPastHires: Float
+  proposalsCount: Float
+  interviewingCount: Float
+  invitesSentCount: Float
+  unansweredInvitesCount: Float
   clientPaymentVerificationStatus: Boolean
   searchCategory: String
   searchCategoryId: String
@@ -289,6 +344,8 @@ type JobPostCountAggregate {
   jobStatus: Int
   jobType: Int
   country: Int
+  englishLevel: Int
+  clientPaymentVerificationStatus: Int
   createdAt: Int
   updatedAt: Int
   isActive: Int
@@ -303,6 +360,7 @@ type JobPostMinAggregate {
   jobStatus: String
   jobType: String
   country: String
+  englishLevel: String
   createdAt: DateTime
   updatedAt: DateTime
 }
@@ -315,6 +373,7 @@ type JobPostMaxAggregate {
   jobStatus: String
   jobType: String
   country: String
+  englishLevel: String
   createdAt: DateTime
   updatedAt: DateTime
 }
@@ -588,6 +647,194 @@ type EmployeeJobPostAggregateResponse {
   max: EmployeeJobPostMaxAggregate
 }
 
+type EmployeeJobApplicationDeleteResponse {
+  id: ID
+  employeeJobPostId: String
+  employeeId: String
+  jobPostId: String
+  jobDateCreated: DateTime
+  jobStatus: String
+  jobType: String
+  providerCode: String
+  providerJobId: String
+  providerJobApplicationId: String
+  isViewedByClient: Boolean
+  appliedDate: DateTime
+  createdAt: DateTime
+  updatedAt: DateTime
+  isActive: Boolean
+  isArchived: Boolean
+}
+
+type EmployeeJobApplicationEdge {
+  """The node containing the EmployeeJobApplication"""
+  node: EmployeeJobApplication!
+
+  """Cursor for this node."""
+  cursor: ConnectionCursor!
+}
+
+type EmployeeJobApplicationConnection {
+  """Paging information"""
+  pageInfo: PageInfo!
+
+  """Array of edges."""
+  edges: [EmployeeJobApplicationEdge!]!
+
+  """Fetch total count of records"""
+  totalCount: Int!
+}
+
+type EmployeeJobApplicationCountAggregate {
+  id: Int
+  employeeJobPostId: Int
+  employeeId: Int
+  jobPostId: Int
+  jobDateCreated: Int
+  jobStatus: Int
+  jobType: Int
+  providerCode: Int
+  providerJobId: Int
+  providerJobApplicationId: Int
+  isViewedByClient: Int
+  appliedDate: Int
+  createdAt: Int
+  updatedAt: Int
+  isActive: Int
+  isArchived: Int
+}
+
+type EmployeeJobApplicationMinAggregate {
+  id: ID
+  employeeJobPostId: String
+  employeeId: String
+  jobPostId: String
+  jobDateCreated: DateTime
+  jobStatus: String
+  jobType: String
+  providerCode: String
+  providerJobId: String
+  providerJobApplicationId: String
+  appliedDate: DateTime
+  createdAt: DateTime
+  updatedAt: DateTime
+}
+
+type EmployeeJobApplicationMaxAggregate {
+  id: ID
+  employeeJobPostId: String
+  employeeId: String
+  jobPostId: String
+  jobDateCreated: DateTime
+  jobStatus: String
+  jobType: String
+  providerCode: String
+  providerJobId: String
+  providerJobApplicationId: String
+  appliedDate: DateTime
+  createdAt: DateTime
+  updatedAt: DateTime
+}
+
+type EmployeeJobApplicationAggregateResponse {
+  count: EmployeeJobApplicationCountAggregate
+  min: EmployeeJobApplicationMinAggregate
+  max: EmployeeJobApplicationMaxAggregate
+}
+
+type AutomationTaskDeleteResponse {
+  id: ID
+  employeeJobPostId: String
+  employeeId: String
+  jobPostId: String
+  jobDateCreated: DateTime
+  jobStatus: String
+  jobType: String
+  providerCode: String
+  providerJobId: String
+  commandType: String
+  status: String
+  createdAt: DateTime
+  updatedAt: DateTime
+  isActive: Boolean
+  isArchived: Boolean
+}
+
+type AutomationTaskEdge {
+  """The node containing the AutomationTask"""
+  node: AutomationTask!
+
+  """Cursor for this node."""
+  cursor: ConnectionCursor!
+}
+
+type AutomationTaskConnection {
+  """Paging information"""
+  pageInfo: PageInfo!
+
+  """Array of edges."""
+  edges: [AutomationTaskEdge!]!
+
+  """Fetch total count of records"""
+  totalCount: Int!
+}
+
+type AutomationTaskCountAggregate {
+  id: Int
+  employeeJobPostId: Int
+  employeeId: Int
+  jobPostId: Int
+  jobDateCreated: Int
+  jobStatus: Int
+  jobType: Int
+  providerCode: Int
+  providerJobId: Int
+  commandType: Int
+  status: Int
+  createdAt: Int
+  updatedAt: Int
+  isActive: Int
+  isArchived: Int
+}
+
+type AutomationTaskMinAggregate {
+  id: ID
+  employeeJobPostId: String
+  employeeId: String
+  jobPostId: String
+  jobDateCreated: DateTime
+  jobStatus: String
+  jobType: String
+  providerCode: String
+  providerJobId: String
+  commandType: String
+  status: String
+  createdAt: DateTime
+  updatedAt: DateTime
+}
+
+type AutomationTaskMaxAggregate {
+  id: ID
+  employeeJobPostId: String
+  employeeId: String
+  jobPostId: String
+  jobDateCreated: DateTime
+  jobStatus: String
+  jobType: String
+  providerCode: String
+  providerJobId: String
+  commandType: String
+  status: String
+  createdAt: DateTime
+  updatedAt: DateTime
+}
+
+type AutomationTaskAggregateResponse {
+  count: AutomationTaskCountAggregate
+  min: AutomationTaskMinAggregate
+  max: AutomationTaskMaxAggregate
+}
+
 type Query {
   jobPost(
     """The id of the record to find."""
@@ -661,6 +908,42 @@ type Query {
     """Filter to find records to aggregate on"""
     filter: EmployeeJobPostAggregateFilter
   ): EmployeeJobPostAggregateResponse!
+  employeeJobApplication(
+    """The id of the record to find."""
+    id: ID!
+  ): EmployeeJobApplication
+  employeeJobApplications(
+    """Limit or page results."""
+    paging: CursorPaging = {first: 10}
+
+    """Specify to filter the records returned."""
+    filter: EmployeeJobApplicationFilter = {}
+
+    """Specify to sort results."""
+    sorting: [EmployeeJobApplicationSort!] = []
+  ): EmployeeJobApplicationConnection!
+  employeeJobApplicationAggregate(
+    """Filter to find records to aggregate on"""
+    filter: EmployeeJobApplicationAggregateFilter
+  ): EmployeeJobApplicationAggregateResponse!
+  automationTask(
+    """The id of the record to find."""
+    id: ID!
+  ): AutomationTask
+  automationTasks(
+    """Limit or page results."""
+    paging: CursorPaging = {first: 10}
+
+    """Specify to filter the records returned."""
+    filter: AutomationTaskFilter = {}
+
+    """Specify to sort results."""
+    sorting: [AutomationTaskSort!] = []
+  ): AutomationTaskConnection!
+  automationTaskAggregate(
+    """Filter to find records to aggregate on"""
+    filter: AutomationTaskAggregateFilter
+  ): AutomationTaskAggregateResponse!
 }
 
 input CursorPaging {
@@ -687,6 +970,8 @@ input JobPostFilter {
   jobStatus: StringFieldComparison
   jobType: StringFieldComparison
   country: StringFieldComparison
+  englishLevel: StringFieldComparison
+  clientPaymentVerificationStatus: BooleanFieldComparison
   createdAt: DateFieldComparison
   updatedAt: DateFieldComparison
   isActive: BooleanFieldComparison
@@ -727,6 +1012,8 @@ enum JobPostSortFields {
   jobStatus
   jobType
   country
+  englishLevel
+  clientPaymentVerificationStatus
   createdAt
   updatedAt
   isActive
@@ -743,6 +1030,8 @@ input JobPostAggregateFilter {
   jobStatus: StringFieldComparison
   jobType: StringFieldComparison
   country: StringFieldComparison
+  englishLevel: StringFieldComparison
+  clientPaymentVerificationStatus: BooleanFieldComparison
   createdAt: DateFieldComparison
   updatedAt: DateFieldComparison
   isActive: BooleanFieldComparison
@@ -841,6 +1130,8 @@ input EmployeeJobPostFilterJobPostFilter {
   jobStatus: StringFieldComparison
   jobType: StringFieldComparison
   country: StringFieldComparison
+  englishLevel: StringFieldComparison
+  clientPaymentVerificationStatus: BooleanFieldComparison
   createdAt: DateFieldComparison
   updatedAt: DateFieldComparison
   isActive: BooleanFieldComparison
@@ -908,6 +1199,255 @@ input EmployeeJobPostAggregateFilter {
   isArchived: BooleanFieldComparison
 }
 
+input EmployeeJobApplicationFilter {
+  and: [EmployeeJobApplicationFilter!]
+  or: [EmployeeJobApplicationFilter!]
+  id: IDFilterComparison
+  employeeJobPostId: StringFieldComparison
+  employeeId: StringFieldComparison
+  jobPostId: StringFieldComparison
+  jobDateCreated: DateFieldComparison
+  jobStatus: StringFieldComparison
+  jobType: StringFieldComparison
+  providerCode: StringFieldComparison
+  providerJobId: StringFieldComparison
+  providerJobApplicationId: StringFieldComparison
+  isViewedByClient: BooleanFieldComparison
+  appliedDate: DateFieldComparison
+  createdAt: DateFieldComparison
+  updatedAt: DateFieldComparison
+  isActive: BooleanFieldComparison
+  isArchived: BooleanFieldComparison
+  employeeJobPost: EmployeeJobApplicationFilterEmployeeJobPostFilter
+  jobPost: EmployeeJobApplicationFilterJobPostFilter
+  employee: EmployeeJobApplicationFilterEmployeeFilter
+}
+
+input EmployeeJobApplicationFilterEmployeeJobPostFilter {
+  and: [EmployeeJobApplicationFilterEmployeeJobPostFilter!]
+  or: [EmployeeJobApplicationFilterEmployeeJobPostFilter!]
+  id: IDFilterComparison
+  employeeId: StringFieldComparison
+  jobPostId: StringFieldComparison
+  jobDateCreated: DateFieldComparison
+  jobStatus: StringFieldComparison
+  jobType: StringFieldComparison
+  providerCode: StringFieldComparison
+  providerJobId: StringFieldComparison
+  isApplied: BooleanFieldComparison
+  appliedDate: DateFieldComparison
+  createdAt: DateFieldComparison
+  updatedAt: DateFieldComparison
+  isActive: BooleanFieldComparison
+  isArchived: BooleanFieldComparison
+}
+
+input EmployeeJobApplicationFilterJobPostFilter {
+  and: [EmployeeJobApplicationFilterJobPostFilter!]
+  or: [EmployeeJobApplicationFilterJobPostFilter!]
+  id: IDFilterComparison
+  providerCode: StringFieldComparison
+  providerJobId: StringFieldComparison
+  jobDateCreated: DateFieldComparison
+  jobStatus: StringFieldComparison
+  jobType: StringFieldComparison
+  country: StringFieldComparison
+  englishLevel: StringFieldComparison
+  clientPaymentVerificationStatus: BooleanFieldComparison
+  createdAt: DateFieldComparison
+  updatedAt: DateFieldComparison
+  isActive: BooleanFieldComparison
+  isArchived: BooleanFieldComparison
+}
+
+input EmployeeJobApplicationFilterEmployeeFilter {
+  and: [EmployeeJobApplicationFilterEmployeeFilter!]
+  or: [EmployeeJobApplicationFilterEmployeeFilter!]
+  id: IDFilterComparison
+  externalTenantId: StringFieldComparison
+  externalOrgId: StringFieldComparison
+  externalEmployeeId: StringFieldComparison
+  firstName: StringFieldComparison
+  lastName: StringFieldComparison
+  upworkOrganizationId: StringFieldComparison
+  upworkId: StringFieldComparison
+  linkedInId: StringFieldComparison
+  jobType: StringFieldComparison
+  createdAt: DateFieldComparison
+  updatedAt: DateFieldComparison
+  isActive: BooleanFieldComparison
+  isArchived: BooleanFieldComparison
+}
+
+input EmployeeJobApplicationSort {
+  field: EmployeeJobApplicationSortFields!
+  direction: SortDirection!
+  nulls: SortNulls
+}
+
+enum EmployeeJobApplicationSortFields {
+  id
+  employeeJobPostId
+  employeeId
+  jobPostId
+  jobDateCreated
+  jobStatus
+  jobType
+  providerCode
+  providerJobId
+  providerJobApplicationId
+  isViewedByClient
+  appliedDate
+  createdAt
+  updatedAt
+  isActive
+  isArchived
+}
+
+input EmployeeJobApplicationAggregateFilter {
+  and: [EmployeeJobApplicationAggregateFilter!]
+  or: [EmployeeJobApplicationAggregateFilter!]
+  id: IDFilterComparison
+  employeeJobPostId: StringFieldComparison
+  employeeId: StringFieldComparison
+  jobPostId: StringFieldComparison
+  jobDateCreated: DateFieldComparison
+  jobStatus: StringFieldComparison
+  jobType: StringFieldComparison
+  providerCode: StringFieldComparison
+  providerJobId: StringFieldComparison
+  providerJobApplicationId: StringFieldComparison
+  isViewedByClient: BooleanFieldComparison
+  appliedDate: DateFieldComparison
+  createdAt: DateFieldComparison
+  updatedAt: DateFieldComparison
+  isActive: BooleanFieldComparison
+  isArchived: BooleanFieldComparison
+}
+
+input AutomationTaskFilter {
+  and: [AutomationTaskFilter!]
+  or: [AutomationTaskFilter!]
+  id: IDFilterComparison
+  employeeJobPostId: StringFieldComparison
+  employeeId: StringFieldComparison
+  jobPostId: StringFieldComparison
+  jobDateCreated: DateFieldComparison
+  jobStatus: StringFieldComparison
+  jobType: StringFieldComparison
+  providerCode: StringFieldComparison
+  providerJobId: StringFieldComparison
+  commandType: StringFieldComparison
+  status: StringFieldComparison
+  createdAt: DateFieldComparison
+  updatedAt: DateFieldComparison
+  isActive: BooleanFieldComparison
+  isArchived: BooleanFieldComparison
+  employeeJobPost: AutomationTaskFilterEmployeeJobPostFilter
+  jobPost: AutomationTaskFilterJobPostFilter
+  employee: AutomationTaskFilterEmployeeFilter
+}
+
+input AutomationTaskFilterEmployeeJobPostFilter {
+  and: [AutomationTaskFilterEmployeeJobPostFilter!]
+  or: [AutomationTaskFilterEmployeeJobPostFilter!]
+  id: IDFilterComparison
+  employeeId: StringFieldComparison
+  jobPostId: StringFieldComparison
+  jobDateCreated: DateFieldComparison
+  jobStatus: StringFieldComparison
+  jobType: StringFieldComparison
+  providerCode: StringFieldComparison
+  providerJobId: StringFieldComparison
+  isApplied: BooleanFieldComparison
+  appliedDate: DateFieldComparison
+  createdAt: DateFieldComparison
+  updatedAt: DateFieldComparison
+  isActive: BooleanFieldComparison
+  isArchived: BooleanFieldComparison
+}
+
+input AutomationTaskFilterJobPostFilter {
+  and: [AutomationTaskFilterJobPostFilter!]
+  or: [AutomationTaskFilterJobPostFilter!]
+  id: IDFilterComparison
+  providerCode: StringFieldComparison
+  providerJobId: StringFieldComparison
+  jobDateCreated: DateFieldComparison
+  jobStatus: StringFieldComparison
+  jobType: StringFieldComparison
+  country: StringFieldComparison
+  englishLevel: StringFieldComparison
+  clientPaymentVerificationStatus: BooleanFieldComparison
+  createdAt: DateFieldComparison
+  updatedAt: DateFieldComparison
+  isActive: BooleanFieldComparison
+  isArchived: BooleanFieldComparison
+}
+
+input AutomationTaskFilterEmployeeFilter {
+  and: [AutomationTaskFilterEmployeeFilter!]
+  or: [AutomationTaskFilterEmployeeFilter!]
+  id: IDFilterComparison
+  externalTenantId: StringFieldComparison
+  externalOrgId: StringFieldComparison
+  externalEmployeeId: StringFieldComparison
+  firstName: StringFieldComparison
+  lastName: StringFieldComparison
+  upworkOrganizationId: StringFieldComparison
+  upworkId: StringFieldComparison
+  linkedInId: StringFieldComparison
+  jobType: StringFieldComparison
+  createdAt: DateFieldComparison
+  updatedAt: DateFieldComparison
+  isActive: BooleanFieldComparison
+  isArchived: BooleanFieldComparison
+}
+
+input AutomationTaskSort {
+  field: AutomationTaskSortFields!
+  direction: SortDirection!
+  nulls: SortNulls
+}
+
+enum AutomationTaskSortFields {
+  id
+  employeeJobPostId
+  employeeId
+  jobPostId
+  jobDateCreated
+  jobStatus
+  jobType
+  providerCode
+  providerJobId
+  commandType
+  status
+  createdAt
+  updatedAt
+  isActive
+  isArchived
+}
+
+input AutomationTaskAggregateFilter {
+  and: [AutomationTaskAggregateFilter!]
+  or: [AutomationTaskAggregateFilter!]
+  id: IDFilterComparison
+  employeeJobPostId: StringFieldComparison
+  employeeId: StringFieldComparison
+  jobPostId: StringFieldComparison
+  jobDateCreated: DateFieldComparison
+  jobStatus: StringFieldComparison
+  jobType: StringFieldComparison
+  providerCode: StringFieldComparison
+  providerJobId: StringFieldComparison
+  commandType: StringFieldComparison
+  status: StringFieldComparison
+  createdAt: DateFieldComparison
+  updatedAt: DateFieldComparison
+  isActive: BooleanFieldComparison
+  isArchived: BooleanFieldComparison
+}
+
 type Mutation {
   deleteOneJobPost(input: DeleteOneInput!): JobPostDeleteResponse!
   deleteManyJobPosts(input: DeleteManyJobPostsInput!): DeleteManyResponse!
@@ -941,6 +1481,30 @@ type Mutation {
   removeEmployeeFromEmployeeJobPost(input: RelationInput!): EmployeeJobPost!
   setJobPostOnEmployeeJobPost(input: RelationInput!): EmployeeJobPost!
   setEmployeeOnEmployeeJobPost(input: RelationInput!): EmployeeJobPost!
+  deleteOneEmployeeJobApplication(input: DeleteOneInput!): EmployeeJobApplicationDeleteResponse!
+  deleteManyEmployeeJobApplications(input: DeleteManyEmployeeJobApplicationsInput!): DeleteManyResponse!
+  updateOneEmployeeJobApplication(input: UpdateOneEmployeeJobApplicationInput!): EmployeeJobApplication!
+  updateManyEmployeeJobApplications(input: UpdateManyEmployeeJobApplicationsInput!): UpdateManyResponse!
+  createOneEmployeeJobApplication(input: CreateOneEmployeeJobApplicationInput!): EmployeeJobApplication!
+  createManyEmployeeJobApplications(input: CreateManyEmployeeJobApplicationsInput!): [EmployeeJobApplication!]!
+  removeEmployeeJobPostFromEmployeeJobApplication(input: RelationInput!): EmployeeJobApplication!
+  removeJobPostFromEmployeeJobApplication(input: RelationInput!): EmployeeJobApplication!
+  removeEmployeeFromEmployeeJobApplication(input: RelationInput!): EmployeeJobApplication!
+  setEmployeeJobPostOnEmployeeJobApplication(input: RelationInput!): EmployeeJobApplication!
+  setJobPostOnEmployeeJobApplication(input: RelationInput!): EmployeeJobApplication!
+  setEmployeeOnEmployeeJobApplication(input: RelationInput!): EmployeeJobApplication!
+  deleteOneAutomationTask(input: DeleteOneInput!): AutomationTaskDeleteResponse!
+  deleteManyAutomationTasks(input: DeleteManyAutomationTasksInput!): DeleteManyResponse!
+  updateOneAutomationTask(input: UpdateOneAutomationTaskInput!): AutomationTask!
+  updateManyAutomationTasks(input: UpdateManyAutomationTasksInput!): UpdateManyResponse!
+  createOneAutomationTask(input: CreateOneAutomationTaskInput!): AutomationTask!
+  createManyAutomationTasks(input: CreateManyAutomationTasksInput!): [AutomationTask!]!
+  removeEmployeeJobPostFromAutomationTask(input: RelationInput!): AutomationTask!
+  removeJobPostFromAutomationTask(input: RelationInput!): AutomationTask!
+  removeEmployeeFromAutomationTask(input: RelationInput!): AutomationTask!
+  setEmployeeJobPostOnAutomationTask(input: RelationInput!): AutomationTask!
+  setJobPostOnAutomationTask(input: RelationInput!): AutomationTask!
+  setEmployeeOnAutomationTask(input: RelationInput!): AutomationTask!
 }
 
 input DeleteOneInput {
@@ -963,6 +1527,8 @@ input JobPostDeleteFilter {
   jobStatus: StringFieldComparison
   jobType: StringFieldComparison
   country: StringFieldComparison
+  englishLevel: StringFieldComparison
+  clientPaymentVerificationStatus: BooleanFieldComparison
   createdAt: DateFieldComparison
   updatedAt: DateFieldComparison
   isActive: BooleanFieldComparison
@@ -995,9 +1561,15 @@ input UpdateJobPost {
   subcategory: String
   country: String
   clientFeedback: String
+  englishLevel: String
+  languages: String
   clientReviewsCount: Float
   clientJobsPosted: Float
   clientPastHires: Float
+  proposalsCount: Float
+  interviewingCount: Float
+  invitesSentCount: Float
+  unansweredInvitesCount: Float
   clientPaymentVerificationStatus: Boolean
   searchCategory: String
   searchCategoryId: String
@@ -1029,6 +1601,8 @@ input JobPostUpdateFilter {
   jobStatus: StringFieldComparison
   jobType: StringFieldComparison
   country: StringFieldComparison
+  englishLevel: StringFieldComparison
+  clientPaymentVerificationStatus: BooleanFieldComparison
   createdAt: DateFieldComparison
   updatedAt: DateFieldComparison
   isActive: BooleanFieldComparison
@@ -1058,9 +1632,15 @@ input CreateJobPost {
   subcategory: String
   country: String
   clientFeedback: String
+  englishLevel: String
+  languages: String
   clientReviewsCount: Float
   clientJobsPosted: Float
   clientPastHires: Float
+  proposalsCount: Float
+  interviewingCount: Float
+  invitesSentCount: Float
+  unansweredInvitesCount: Float
   clientPaymentVerificationStatus: Boolean
   searchCategory: String
   searchCategoryId: String
@@ -1384,6 +1964,224 @@ input CreateManyEmployeeJobPostsInput {
   employeeJobPosts: [CreateEmployeeJobPost!]!
 }
 
+input DeleteManyEmployeeJobApplicationsInput {
+  """Filter to find records to delete"""
+  filter: EmployeeJobApplicationDeleteFilter!
+}
+
+input EmployeeJobApplicationDeleteFilter {
+  and: [EmployeeJobApplicationDeleteFilter!]
+  or: [EmployeeJobApplicationDeleteFilter!]
+  id: IDFilterComparison
+  employeeJobPostId: StringFieldComparison
+  employeeId: StringFieldComparison
+  jobPostId: StringFieldComparison
+  jobDateCreated: DateFieldComparison
+  jobStatus: StringFieldComparison
+  jobType: StringFieldComparison
+  providerCode: StringFieldComparison
+  providerJobId: StringFieldComparison
+  providerJobApplicationId: StringFieldComparison
+  isViewedByClient: BooleanFieldComparison
+  appliedDate: DateFieldComparison
+  createdAt: DateFieldComparison
+  updatedAt: DateFieldComparison
+  isActive: BooleanFieldComparison
+  isArchived: BooleanFieldComparison
+}
+
+input UpdateOneEmployeeJobApplicationInput {
+  """The id of the record to update"""
+  id: ID!
+
+  """The update to apply."""
+  update: UpdateEmployeeJobApplication!
+}
+
+input UpdateEmployeeJobApplication {
+  id: ID
+  employeeJobPostId: String
+  employeeId: String
+  jobPostId: String
+  jobDateCreated: DateTime
+  jobStatus: String
+  jobType: String
+  providerCode: String
+  providerJobId: String
+  providerJobApplicationId: String
+  isViewedByClient: Boolean
+  appliedDate: DateTime
+  createdAt: DateTime
+  updatedAt: DateTime
+  isActive: Boolean
+  isArchived: Boolean
+}
+
+input UpdateManyEmployeeJobApplicationsInput {
+  """Filter used to find fields to update"""
+  filter: EmployeeJobApplicationUpdateFilter!
+
+  """The update to apply to all records found using the filter"""
+  update: UpdateEmployeeJobApplication!
+}
+
+input EmployeeJobApplicationUpdateFilter {
+  and: [EmployeeJobApplicationUpdateFilter!]
+  or: [EmployeeJobApplicationUpdateFilter!]
+  id: IDFilterComparison
+  employeeJobPostId: StringFieldComparison
+  employeeId: StringFieldComparison
+  jobPostId: StringFieldComparison
+  jobDateCreated: DateFieldComparison
+  jobStatus: StringFieldComparison
+  jobType: StringFieldComparison
+  providerCode: StringFieldComparison
+  providerJobId: StringFieldComparison
+  providerJobApplicationId: StringFieldComparison
+  isViewedByClient: BooleanFieldComparison
+  appliedDate: DateFieldComparison
+  createdAt: DateFieldComparison
+  updatedAt: DateFieldComparison
+  isActive: BooleanFieldComparison
+  isArchived: BooleanFieldComparison
+}
+
+input CreateOneEmployeeJobApplicationInput {
+  """The record to create"""
+  employeeJobApplication: CreateEmployeeJobApplication!
+}
+
+input CreateEmployeeJobApplication {
+  id: ID
+  employeeJobPostId: String
+  employeeId: String
+  jobPostId: String
+  jobDateCreated: DateTime
+  jobStatus: String
+  jobType: String
+  providerCode: String
+  providerJobId: String
+  providerJobApplicationId: String
+  isViewedByClient: Boolean
+  appliedDate: DateTime
+  createdAt: DateTime
+  updatedAt: DateTime
+  isActive: Boolean
+  isArchived: Boolean
+}
+
+input CreateManyEmployeeJobApplicationsInput {
+  """Array of records to create"""
+  employeeJobApplications: [CreateEmployeeJobApplication!]!
+}
+
+input DeleteManyAutomationTasksInput {
+  """Filter to find records to delete"""
+  filter: AutomationTaskDeleteFilter!
+}
+
+input AutomationTaskDeleteFilter {
+  and: [AutomationTaskDeleteFilter!]
+  or: [AutomationTaskDeleteFilter!]
+  id: IDFilterComparison
+  employeeJobPostId: StringFieldComparison
+  employeeId: StringFieldComparison
+  jobPostId: StringFieldComparison
+  jobDateCreated: DateFieldComparison
+  jobStatus: StringFieldComparison
+  jobType: StringFieldComparison
+  providerCode: StringFieldComparison
+  providerJobId: StringFieldComparison
+  commandType: StringFieldComparison
+  status: StringFieldComparison
+  createdAt: DateFieldComparison
+  updatedAt: DateFieldComparison
+  isActive: BooleanFieldComparison
+  isArchived: BooleanFieldComparison
+}
+
+input UpdateOneAutomationTaskInput {
+  """The id of the record to update"""
+  id: ID!
+
+  """The update to apply."""
+  update: UpdateAutomationTask!
+}
+
+input UpdateAutomationTask {
+  id: ID
+  employeeJobPostId: String
+  employeeId: String
+  jobPostId: String
+  jobDateCreated: DateTime
+  jobStatus: String
+  jobType: String
+  providerCode: String
+  providerJobId: String
+  commandType: String
+  status: String
+  createdAt: DateTime
+  updatedAt: DateTime
+  isActive: Boolean
+  isArchived: Boolean
+}
+
+input UpdateManyAutomationTasksInput {
+  """Filter used to find fields to update"""
+  filter: AutomationTaskUpdateFilter!
+
+  """The update to apply to all records found using the filter"""
+  update: UpdateAutomationTask!
+}
+
+input AutomationTaskUpdateFilter {
+  and: [AutomationTaskUpdateFilter!]
+  or: [AutomationTaskUpdateFilter!]
+  id: IDFilterComparison
+  employeeJobPostId: StringFieldComparison
+  employeeId: StringFieldComparison
+  jobPostId: StringFieldComparison
+  jobDateCreated: DateFieldComparison
+  jobStatus: StringFieldComparison
+  jobType: StringFieldComparison
+  providerCode: StringFieldComparison
+  providerJobId: StringFieldComparison
+  commandType: StringFieldComparison
+  status: StringFieldComparison
+  createdAt: DateFieldComparison
+  updatedAt: DateFieldComparison
+  isActive: BooleanFieldComparison
+  isArchived: BooleanFieldComparison
+}
+
+input CreateOneAutomationTaskInput {
+  """The record to create"""
+  automationTask: CreateAutomationTask!
+}
+
+input CreateAutomationTask {
+  id: ID
+  employeeJobPostId: String
+  employeeId: String
+  jobPostId: String
+  jobDateCreated: DateTime
+  jobStatus: String
+  jobType: String
+  providerCode: String
+  providerJobId: String
+  commandType: String
+  status: String
+  createdAt: DateTime
+  updatedAt: DateTime
+  isActive: Boolean
+  isArchived: Boolean
+}
+
+input CreateManyAutomationTasksInput {
+  """Array of records to create"""
+  automationTasks: [CreateAutomationTask!]!
+}
+
 type Subscription {
   deletedOneJobPost(input: DeleteOneJobPostSubscriptionFilterInput): JobPostDeleteResponse!
   deletedManyJobPosts: DeleteManyResponse!
@@ -1405,6 +2203,16 @@ type Subscription {
   updatedOneEmployeeJobPost(input: UpdateOneEmployeeJobPostSubscriptionFilterInput): EmployeeJobPost!
   updatedManyEmployeeJobPosts: UpdateManyResponse!
   createdEmployeeJobPost(input: CreateEmployeeJobPostSubscriptionFilterInput): EmployeeJobPost!
+  deletedOneEmployeeJobApplication(input: DeleteOneEmployeeJobApplicationSubscriptionFilterInput): EmployeeJobApplicationDeleteResponse!
+  deletedManyEmployeeJobApplications: DeleteManyResponse!
+  updatedOneEmployeeJobApplication(input: UpdateOneEmployeeJobApplicationSubscriptionFilterInput): EmployeeJobApplication!
+  updatedManyEmployeeJobApplications: UpdateManyResponse!
+  createdEmployeeJobApplication(input: CreateEmployeeJobApplicationSubscriptionFilterInput): EmployeeJobApplication!
+  deletedOneAutomationTask(input: DeleteOneAutomationTaskSubscriptionFilterInput): AutomationTaskDeleteResponse!
+  deletedManyAutomationTasks: DeleteManyResponse!
+  updatedOneAutomationTask(input: UpdateOneAutomationTaskSubscriptionFilterInput): AutomationTask!
+  updatedManyAutomationTasks: UpdateManyResponse!
+  createdAutomationTask(input: CreateAutomationTaskSubscriptionFilterInput): AutomationTask!
 }
 
 input DeleteOneJobPostSubscriptionFilterInput {
@@ -1422,6 +2230,8 @@ input JobPostSubscriptionFilter {
   jobStatus: StringFieldComparison
   jobType: StringFieldComparison
   country: StringFieldComparison
+  englishLevel: StringFieldComparison
+  clientPaymentVerificationStatus: BooleanFieldComparison
   createdAt: DateFieldComparison
   updatedAt: DateFieldComparison
   isActive: BooleanFieldComparison
@@ -1529,4 +2339,75 @@ input UpdateOneEmployeeJobPostSubscriptionFilterInput {
 input CreateEmployeeJobPostSubscriptionFilterInput {
   """Specify to filter the records returned."""
   filter: EmployeeJobPostSubscriptionFilter!
+}
+
+input DeleteOneEmployeeJobApplicationSubscriptionFilterInput {
+  """Specify to filter the records returned."""
+  filter: EmployeeJobApplicationSubscriptionFilter!
+}
+
+input EmployeeJobApplicationSubscriptionFilter {
+  and: [EmployeeJobApplicationSubscriptionFilter!]
+  or: [EmployeeJobApplicationSubscriptionFilter!]
+  id: IDFilterComparison
+  employeeJobPostId: StringFieldComparison
+  employeeId: StringFieldComparison
+  jobPostId: StringFieldComparison
+  jobDateCreated: DateFieldComparison
+  jobStatus: StringFieldComparison
+  jobType: StringFieldComparison
+  providerCode: StringFieldComparison
+  providerJobId: StringFieldComparison
+  providerJobApplicationId: StringFieldComparison
+  isViewedByClient: BooleanFieldComparison
+  appliedDate: DateFieldComparison
+  createdAt: DateFieldComparison
+  updatedAt: DateFieldComparison
+  isActive: BooleanFieldComparison
+  isArchived: BooleanFieldComparison
+}
+
+input UpdateOneEmployeeJobApplicationSubscriptionFilterInput {
+  """Specify to filter the records returned."""
+  filter: EmployeeJobApplicationSubscriptionFilter!
+}
+
+input CreateEmployeeJobApplicationSubscriptionFilterInput {
+  """Specify to filter the records returned."""
+  filter: EmployeeJobApplicationSubscriptionFilter!
+}
+
+input DeleteOneAutomationTaskSubscriptionFilterInput {
+  """Specify to filter the records returned."""
+  filter: AutomationTaskSubscriptionFilter!
+}
+
+input AutomationTaskSubscriptionFilter {
+  and: [AutomationTaskSubscriptionFilter!]
+  or: [AutomationTaskSubscriptionFilter!]
+  id: IDFilterComparison
+  employeeJobPostId: StringFieldComparison
+  employeeId: StringFieldComparison
+  jobPostId: StringFieldComparison
+  jobDateCreated: DateFieldComparison
+  jobStatus: StringFieldComparison
+  jobType: StringFieldComparison
+  providerCode: StringFieldComparison
+  providerJobId: StringFieldComparison
+  commandType: StringFieldComparison
+  status: StringFieldComparison
+  createdAt: DateFieldComparison
+  updatedAt: DateFieldComparison
+  isActive: BooleanFieldComparison
+  isArchived: BooleanFieldComparison
+}
+
+input UpdateOneAutomationTaskSubscriptionFilterInput {
+  """Specify to filter the records returned."""
+  filter: AutomationTaskSubscriptionFilter!
+}
+
+input CreateAutomationTaskSubscriptionFilterInput {
+  """Specify to filter the records returned."""
+  filter: AutomationTaskSubscriptionFilter!
 }
