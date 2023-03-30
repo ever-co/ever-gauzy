@@ -18,13 +18,14 @@ import {
 	ITimeSlot,
 	IOrganizationProject
 } from '@gauzy/contracts';
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
 	IsString,
 	IsEnum,
 	IsOptional,
 	IsNumber,
-	IsDateString
+	IsDateString,
+	IsUUID
 } from 'class-validator';
 import { getConfig } from '@gauzy/config';
 import {
@@ -43,18 +44,22 @@ try {
 @Entity('activity')
 export class Activity extends TenantOrganizationBaseEntity implements IActivity {
 
-	@ApiProperty({ type: () => String })
+	@ApiPropertyOptional({ type: () => String })
+	@IsOptional()
 	@IsString()
+	@Index()
 	@Column({ nullable: true })
 	title: string;
 
-	@ApiProperty({ type: () => String })
+	@ApiPropertyOptional({ type: () => String })
+	@IsOptional()
 	@IsString()
 	@Column({ nullable: true })
 	description?: string;
 
-	@ApiProperty({ type: () => options.type === 'sqlite' ? 'text' : 'json' })
-	@IsDateString()
+	@ApiPropertyOptional({ type: () => options.type === 'sqlite' ? 'text' : 'json' })
+	@IsOptional()
+	@IsString()
 	@Column({
 		nullable: true,
 		type: options.type === 'sqlite' ? 'text' : 'json'
@@ -63,40 +68,51 @@ export class Activity extends TenantOrganizationBaseEntity implements IActivity 
 
 	@ApiProperty({ type: () => 'date' })
 	@IsDateString()
+	@Index()
 	@CreateDateColumn({ type: 'date' })
 	date: string;
 
 	@ApiProperty({ type: () => 'time' })
 	@IsDateString()
+	@Index()
 	@CreateDateColumn({ type: 'time' })
 	time: string;
 
-	@ApiProperty({ type: () => Number })
-	@IsNumber()
+	@ApiPropertyOptional({ type: () => Number, default: 0 })
 	@IsOptional()
+	@IsNumber()
 	@Column({ default: 0 })
 	duration?: number;
 
-	@ApiProperty({ type: () => String, enum: ActivityType })
-	@IsEnum(ActivityType)
+	@ApiPropertyOptional({ type: () => String, enum: ActivityType })
 	@IsOptional()
+	@IsEnum(ActivityType)
+	@Index()
 	@Column({ nullable: true })
 	type?: string;
 
-	@ApiProperty({ type: () => String, enum: TimeLogSourceEnum })
+	@ApiPropertyOptional({
+		type: () => String,
+		enum: TimeLogSourceEnum,
+		default: TimeLogSourceEnum.WEB_TIMER
+	})
+	@IsOptional()
 	@IsEnum(TimeLogSourceEnum)
-	@IsString()
+	@Index()
 	@Column({ default: TimeLogSourceEnum.WEB_TIMER })
 	source?: string;
 
-	@ApiProperty({ type: () => 'timestamptz' })
+	@ApiPropertyOptional({ type: () => 'timestamptz' })
+	@IsOptional()
 	@IsDateString()
-	@Column({ default: null, nullable: true })
+	@Index()
+	@Column({ nullable: true })
 	recordedAt?: Date;
 
-	@ApiProperty({ type: () => 'timestamptz' })
+	@ApiPropertyOptional({ type: () => 'timestamptz' })
+	@IsOptional()
 	@IsDateString()
-	@Column({ nullable: true, default: null })
+	@Column({ nullable: true })
 	deletedAt?: Date;
 
 	/*
@@ -104,7 +120,9 @@ export class Activity extends TenantOrganizationBaseEntity implements IActivity 
 	| @ManyToOne
 	|--------------------------------------------------------------------------
 	*/
-	// Employee
+	/**
+	 * Employee Activity
+	 */
 	@ApiProperty({ type: () => Employee })
 	@ManyToOne(() => Employee, {
 		onDelete: 'CASCADE'
@@ -112,59 +130,64 @@ export class Activity extends TenantOrganizationBaseEntity implements IActivity 
 	@JoinColumn()
 	employee?: IEmployee;
 
-	@ApiProperty({ type: () => String, readOnly: true })
+	@ApiProperty({ type: () => String })
+	@IsUUID()
 	@RelationId((it: Activity) => it.employee)
-	@IsString()
 	@Index()
-	@Column()
-	employeeId?: string;
+	@Column({ nullable: false })
+	employeeId?: IEmployee['id'];
 
-	// Organization Project
+	/**
+	 * Organization Project Activity
+	 */
 	@ApiProperty({ type: () => OrganizationProject })
 	@ManyToOne(() => OrganizationProject, (project) => project.activities, {
-		nullable: true,
 		onDelete: 'SET NULL'
 	})
+	@JoinColumn()
 	project?: IOrganizationProject;
 
-	@ApiProperty({ type: () => String, readOnly: true })
-	@RelationId((it: Activity) => it.project)
-	@IsString()
+	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()
+	@IsUUID()
+	@RelationId((it: Activity) => it.project)
 	@Index()
 	@Column({ nullable: true })
-	projectId?: string;
+	projectId?: IOrganizationProject['id'];
 
-	// TimeSlot
+	/**
+	 * Time Slot Activity
+	 */
 	@ApiProperty({ type: () => TimeSlot })
 	@ManyToOne(() => TimeSlot, (timeSlot) => timeSlot.activities, {
-		nullable: true,
 		onDelete: 'CASCADE'
 	})
 	@JoinColumn()
 	timeSlot?: ITimeSlot;
 
-	@ApiProperty({ type: () => String, readOnly: true })
+	@ApiProperty({ type: () => String })
+	@IsUUID()
 	@RelationId((it: Activity) => it.timeSlot)
-	@IsString()
 	@Index()
 	@Column({ nullable: true })
-	readonly timeSlotId?: string;
+	timeSlotId?: ITimeSlot['id'];
 
-	// Task
-	@ApiProperty({ type: () => Task })
+	/**
+	 * Task Activity
+	 */
+	@ApiPropertyOptional({ type: () => Task })
+	@IsOptional()
 	@ManyToOne(() => Task, (task) => task.activities, {
-		nullable: true,
 		onDelete: 'SET NULL'
 	})
 	@JoinColumn()
 	task?: ITask;
 
-	@ApiProperty({ type: () => String, readOnly: true })
-	@RelationId((it: Activity) => it.task)
-	@IsString()
+	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()
+	@IsUUID()
+	@RelationId((it: Activity) => it.task)
 	@Index()
 	@Column({ nullable: true })
-	taskId?: string;
+	taskId?: ITask['id'];
 }
