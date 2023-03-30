@@ -225,8 +225,8 @@
 					<div class="col-10">
 						<nb-card>
 							<nb-card-body>
-								<div class="row">
-									<div *ngIf="(automaticUpdate$ | async)" class="col-12 mb-2">
+								<div class="row flex-column-reverse">
+									<div *ngIf="(automaticUpdate$ | async)" class="col-12">
 										<div class="label">
 											Set update check interval duration
 										</div>
@@ -240,7 +240,7 @@
 									<div class="col-12">
 										<nb-toggle [checked]="automaticUpdate$ | async"
 											(checkedChange)="toggleAutomaticUpdate($event)" status="basic"
-											[disabled]="appSetting?.timerStarted">Enable
+											[disabled]="appSetting?.timerStarted">Enable Automatic Update
 										</nb-toggle>
 									</div>
 								</div>
