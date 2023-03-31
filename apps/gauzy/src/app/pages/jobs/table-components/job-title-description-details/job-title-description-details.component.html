@@ -1,4 +1,9 @@
 <div class="job-detail">
+	<div class="job-date-created">
+		<p>
+			{{ rowData?.jobPost?.jobDateCreated | dateTimeFormat }}
+		</p>
+	</div>
 	<h6 class="job-title">
 		{{ rowData?.jobPost?.title }}
 	</h6>

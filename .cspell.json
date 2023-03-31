@@ -247,7 +247,8 @@
         "xpack",
         "xplat",
         "Sqls",
-        "Whitespaces"
+        "Whitespaces",
+        "datatables"
     ],
     "useGitignore": true,
     "ignorePaths": [
