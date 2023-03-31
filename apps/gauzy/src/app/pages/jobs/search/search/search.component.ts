@@ -9,7 +9,6 @@ import { FormBuilder, FormGroup } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
 import { BehaviorSubject, combineLatest, Subject, Subscription, timer } from 'rxjs';
 import { debounceTime, filter, tap } from 'rxjs/operators';
-import * as moment from 'moment';
 import {
 	IApplyJobPostInput,
 	IEmployeeJobPost,
