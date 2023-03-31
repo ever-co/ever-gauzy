@@ -780,6 +780,10 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 	toggleAutomaticUpdate(value) {
 		this._automaticUpdate$.next(value);
 		this.updateSetting(value, 'automaticUpdate');
+		this.electronService.ipcRenderer.send('automatic_update_setting', {
+			isEnabled: value,
+			delay: this._automaticUpdateDelay$.getValue(),
+		});
 	}
 
 	selectAutomaticUpdateDelay(value) {

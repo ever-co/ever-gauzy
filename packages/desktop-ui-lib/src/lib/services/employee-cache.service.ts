@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { AbstractCacheService } from './abstract-cache.service';
-import { IEmployee } from 'packages/contracts/dist';
+import { IEmployee } from '@gauzy/contracts';
 import { StorageService } from './storage.service';
 import { Store } from 'apps/desktop-timer/src/app/auth/services/store.service';
 

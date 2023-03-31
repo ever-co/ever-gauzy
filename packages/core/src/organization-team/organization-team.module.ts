@@ -14,6 +14,7 @@ import { OrganizationTeamService } from './organization-team.service';
 import { QueryHandlers } from './queries/handlers';
 import { CommandHandlers } from './commands/handlers';
 import { TimerModule } from './../time-tracking/timer/timer.module';
+import { StatisticModule } from './../time-tracking/statistic/statistic.module';
 
 @Module({
 	imports: [
@@ -30,9 +31,12 @@ import { TimerModule } from './../time-tracking/timer/timer.module';
 		OrganizationModule,
 		EmployeeModule,
 		TimerModule,
-		CqrsModule
+		CqrsModule,
+		StatisticModule
 	],
-	controllers: [OrganizationTeamController],
+	controllers: [
+		OrganizationTeamController
+	],
 	providers: [
 		...QueryHandlers,
 		...CommandHandlers,

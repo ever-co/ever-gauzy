@@ -190,6 +190,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 	private _weeklyLimit$: BehaviorSubject<number> = new BehaviorSubject(Infinity);
 	private _isOver$: BehaviorSubject<boolean> = new BehaviorSubject(false);
 	private _lastTime: number = 0;
+	private _isLockSyncProcess = false;
 
 	public hasTaskPermission$: BehaviorSubject<boolean> = new BehaviorSubject(
 		false
@@ -692,6 +693,12 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 				}[]
 			) => {
 				this._ngZone.run(async () => {
+					if (this._isLockSyncProcess) {
+						return;
+					} else {
+						this._isLockSyncProcess = true;
+					}
+					console.log('data', args)
 					for (const sequence of args) {
 						let latest = null;
 						const params = {
@@ -826,6 +833,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 					asapScheduler.schedule(async () => {
 						try {
 							await this.electronService.ipcRenderer.invoke('FINISH_SYNCED_TIMER');
+							this._isLockSyncProcess = false;
 						} catch (error) {
 							this._errorHandlerService.handleError(error);
 						}
@@ -1394,8 +1402,6 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 	}
 
 	public updateImageUrl(e?: string): void {
-		if (e) console.log('image error', e);
-		this.lastScreenCapture$.next({});
 		let localLastScreenCapture: any =
 			localStorage.getItem('lastScreenCapture');
 		if (localLastScreenCapture) {
@@ -1403,6 +1409,10 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 			this.lastScreenCapture$.next({
 				...localLastScreenCapture
 			});
+		}
+		if (e) {
+			console.log('image error', e);
+			this.lastScreenCapture$.next({});
 		}
 	}
 
@@ -2094,7 +2104,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 				this.lastScreenCapture$.next(lastCaptureScreen);
 				this.screenshots$.next(screenshots);
 				console.log('screenshots from db', screenshots);
-				await this.localImage(this.lastScreenCapture);
+				await this.localImage(this.lastScreenCapture.thumbUrl);
 			}
 		} catch (error) {
 			this._errorHandlerService.handleError(error);
