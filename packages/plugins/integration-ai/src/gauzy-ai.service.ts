@@ -783,9 +783,7 @@ export class GauzyAIService {
 
 		console.log(`getEmployeesJobPosts. Data ${JSON.stringify(data)}`);
 
-		const filters: IGetEmployeeJobPostFilters = data.filters
-			? JSON.parse(<any>data.filters)
-			: undefined;
+		const filters: IGetEmployeeJobPostFilters = data.filters ? <any>data.filters : undefined;
 
 		console.log(`getEmployeesJobPosts. Filters ${JSON.stringify(filters)}`);
 
