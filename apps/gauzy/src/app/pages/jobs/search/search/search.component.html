@@ -336,8 +336,8 @@
 	let-buttonSize="buttonSize"
 	let-selectedItem="selectedItem"
 >
-	<div class="btn-group actions">
-		<ng-template ngxPermissionsOnly="ALL_ORG_VIEW">
+	<ng-template [ngxPermissionsOnly]="['ALL_ORG_VIEW']">
+		<div class="btn-group actions">
 			<button
 				status="basic"
 				class="action secondary"
@@ -360,6 +360,16 @@
 				<span>{{ 'JOBS.APPLY' | translate }}</span>
 			</button>
 			<button
+				size="small"
+				style="cursor: pointer"
+				status="basic"
+				class="action success"
+				nbButton
+			>
+				<nb-icon icon="checkmark-outline" pack="eva"></nb-icon>
+				<span>{{ 'JOBS.APPLY_AUTO' | translate }}</span>
+			</button>
+			<button
 				style="cursor: pointer"
 				status="basic"
 				class="action warning"
@@ -370,8 +380,8 @@
 			>
 				<nb-icon icon="eye-off-outline" pack="eva"></nb-icon>
 			</button>
-		</ng-template>
-	</div>
+		</div>
+	</ng-template>
 </ng-template>
 
 <ng-template #visibleButton>
