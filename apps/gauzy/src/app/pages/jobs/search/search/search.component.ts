@@ -381,8 +381,8 @@ export class SearchComponent extends PaginationFilterBaseComponent
 						}
 					}
 					: {}),
-				title: {
-					title: this.getTranslation('JOBS.TITLE'),
+				jobDetails: {
+					title: this.getTranslation('JOBS.JOB_DETAILS'),
 					type: 'custom',
 					renderComponent: JobTitleDescriptionDetailsComponent,
 					filter: false,
