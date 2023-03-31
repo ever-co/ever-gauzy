@@ -4,7 +4,7 @@ import * as remoteMain from '@electron/remote/main';
 import * as url from 'url';
 const Store = require('electron-store');
 const store = new Store();
-export function createGauzyWindow(gauzyWindow, serve, config, filePath) {
+export async function createGauzyWindow(gauzyWindow, serve, config, filePath) {
 	log.info('createGauzyWindow started');
 
 	let mainWindowSettings: Electron.BrowserWindowConstructorOptions = null;
@@ -12,7 +12,7 @@ export function createGauzyWindow(gauzyWindow, serve, config, filePath) {
   	mainWindowSettings = windowSetting();
 
   	gauzyWindow = new BrowserWindow(mainWindowSettings);
-  
+
 	remoteMain.enable(gauzyWindow.webContents);
 
 	let launchPath;
@@ -28,7 +28,7 @@ export function createGauzyWindow(gauzyWindow, serve, config, filePath) {
 
 		launchPath = `http://localhost:${config.GAUZY_UI_DEFAULT_PORT}`;
 
-		gauzyWindow.loadURL(launchPath);
+		await gauzyWindow.loadURL(launchPath);
 	} else {
 		launchPath = url.format({
 			pathname: filePath,
@@ -36,7 +36,7 @@ export function createGauzyWindow(gauzyWindow, serve, config, filePath) {
 			slashes: true
 		});
 
-		gauzyWindow.loadURL(launchPath);
+		await gauzyWindow.loadURL(launchPath);
 	}
 
 	console.log('launched electron with:', launchPath);
@@ -68,7 +68,7 @@ const windowSetting = () => {
 		fullscreenable: true,
 		webPreferences: {
 			nodeIntegration: true,
-			webSecurity: false,			
+			webSecurity: false,
 			contextIsolation: false,
 			sandbox: false
 		},
