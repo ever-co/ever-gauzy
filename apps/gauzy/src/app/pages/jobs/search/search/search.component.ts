@@ -30,7 +30,6 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { EmployeeLinksComponent } from './../../../../@shared/table-components';
 import { IPaginationBase, PaginationFilterBaseComponent } from '../../../../@shared/pagination/pagination-filter-base.component';
 import { JobService, Store, ToastrService } from './../../../../@core/services';
-import { Nl2BrPipe, TruncatePipe } from './../../../../@shared/pipes';
 import { StatusBadgeComponent } from './../../../../@shared/status-badge';
 import { TranslateService } from '@ngx-translate/core';
 import { API_PREFIX } from './../../../../@core/constants';
@@ -105,9 +104,7 @@ export class SearchComponent extends PaginationFilterBaseComponent
 		public readonly translateService: TranslateService,
 		public readonly proposalTemplateService: ProposalTemplateService,
 		private readonly toastrService: ToastrService,
-		private readonly jobService: JobService,
-		private readonly nl2BrPipe: Nl2BrPipe,
-		private readonly truncatePipe: TruncatePipe
+		private readonly jobService: JobService
 	) {
 		super(translateService);
 	}
@@ -451,15 +448,6 @@ export class SearchComponent extends PaginationFilterBaseComponent
 				endPoint: `${API_PREFIX}/employee-job`,
 				pagerPageKey: 'page',
 				pagerLimitKey: 'limit',
-				relations: [],
-				where: {
-					...(this.selectedEmployeeId
-						? {
-							employeeId: this.selectedEmployeeId
-						}
-						: {}),
-					...(this.filters.where ? this.filters.where : {})
-				},
 				finalize: () => {
 					this.setPagination({
 						...this.getPagination(),
@@ -476,8 +464,23 @@ export class SearchComponent extends PaginationFilterBaseComponent
 	private async getEmployeesJob() {
 		try {
 			this.setSmartTableSource();
-
 			const { activePage, itemsPerPage } = this.getPagination();
+			this.smartTableSource.setFilter(
+				[
+					...(
+						this.selectedEmployeeId ? [
+							{
+								field: 'employeeIds',
+								search: [
+									this.selectedEmployeeId
+								]
+							}
+						] : []
+					)
+				],
+				false,
+				false
+			);
 			this.smartTableSource.setSort(
 				[
 					{
@@ -487,7 +490,11 @@ export class SearchComponent extends PaginationFilterBaseComponent
 				],
 				false
 			);
-			this.smartTableSource.setPaging(activePage, itemsPerPage, false);
+			this.smartTableSource.setPaging(
+				activePage,
+				itemsPerPage,
+				false
+			);
 		} catch (error) {
 			this.toastrService.danger(error);
 		}
