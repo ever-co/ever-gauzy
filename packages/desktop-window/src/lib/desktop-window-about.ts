@@ -2,7 +2,7 @@ import { BrowserWindow, Menu } from 'electron';
 import * as url from 'url';
 import * as remoteMain from '@electron/remote/main';
 
-export function createAboutWindow(filePath) {
+export async function createAboutWindow(filePath) {
 	const mainWindowSettings: Electron.BrowserWindowConstructorOptions =
 		windowSetting();
 
@@ -16,7 +16,7 @@ export function createAboutWindow(filePath) {
 	});
 
 	window.hide();
-	window.loadURL(launchPath);
+	await window.loadURL(launchPath);
 	window.setMenu(null);
 
 	window.on('show', () => {

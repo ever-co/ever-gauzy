@@ -1,11 +1,10 @@
-import log from 'electron-log';
-import { screen, BrowserWindow, ipcMain } from 'electron';
+import { BrowserWindow } from 'electron';
 import * as remoteMain from '@electron/remote/main';
 import * as url from 'url';
 const Store = require('electron-store');
 const store = new Store();
 
-export function createServerWindow(serverWindow, config, filePath) {
+export async function createServerWindow(serverWindow, config, filePath) {
 
     let mainWindowSettings: Electron.BrowserWindowConstructorOptions = null;
     mainWindowSettings = windowSetting();
@@ -23,7 +22,7 @@ export function createServerWindow(serverWindow, config, filePath) {
         hash: '/server-dashboard'
     });
 
-    serverWindow.loadURL(launchPath);
+	await serverWindow.loadURL(launchPath);
 
 	console.log('launched electron with:', launchPath);
 	// serverWindow.webContents.toggleDevTools();
@@ -47,7 +46,7 @@ const windowSetting = () => {
 		fullscreenable: true,
 		webPreferences: {
 			nodeIntegration: true,
-			webSecurity: false,			
+			webSecurity: false,
 			contextIsolation: false,
 			sandbox: false
 		},
