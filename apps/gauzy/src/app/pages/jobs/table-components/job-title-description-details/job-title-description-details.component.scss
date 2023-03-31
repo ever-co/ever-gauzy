@@ -1,0 +1,15 @@
+
+:host {
+    .job-detail {
+        letter-spacing: 0em;
+        text-align: left;
+        .job-title {
+            font-size: 16px;
+            font-weight: 700;
+        }
+        .job-description {
+            font-size: 12px;
+            margin-top: 10px;
+        }
+    }
+}

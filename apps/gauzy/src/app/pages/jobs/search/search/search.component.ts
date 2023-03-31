@@ -37,6 +37,7 @@ import { API_PREFIX } from './../../../../@core/constants';
 import { AtLeastOneFieldValidator } from './../../../../@core/validators';
 import { ServerDataSource } from './../../../../@core/utils/smart-table';
 import { ProposalTemplateService } from '../../proposal-template/proposal-template.service';
+import { JobTitleDescriptionDetailsComponent } from '../../table-components';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -385,27 +386,10 @@ export class SearchComponent extends PaginationFilterBaseComponent
 					: {}),
 				title: {
 					title: this.getTranslation('JOBS.TITLE'),
-					type: 'text',
-					width: '20%',
+					type: 'custom',
+					renderComponent: JobTitleDescriptionDetailsComponent,
 					filter: false,
-					sort: false,
-					valuePrepareFunction: (cell, row: IEmployeeJobPost) => {
-						return `${row.jobPost.title.slice(0, 150)}`;
-					}
-				},
-				description: {
-					title: this.getTranslation('JOBS.DESCRIPTION'),
-					type: 'html',
-					width: '30%',
-					filter: false,
-					sort: false,
-					valuePrepareFunction: (cell, row: IEmployeeJobPost) => {
-						let value = this.nl2BrPipe.transform(
-							row.jobPost.description
-						);
-						value = this.truncatePipe.transform(value, 500);
-						return value;
-					}
+					sort: false
 				},
 				jobDateCreated: {
 					title: this.getTranslation('JOBS.CREATED_DATE'),

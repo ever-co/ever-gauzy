@@ -1,0 +1,9 @@
+<div class="job-detail">
+	<h6 class="job-title">
+		{{ rowData?.jobPost?.title }}
+	</h6>
+	<br/>
+	<div class="job-description">
+		<p [innerHTML]="rowData?.jobPost?.description | nl2br"></p>
+	</div>
+</div>
