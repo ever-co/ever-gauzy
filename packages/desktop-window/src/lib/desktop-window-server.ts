@@ -5,22 +5,21 @@ const Store = require('electron-store');
 const store = new Store();
 
 export async function createServerWindow(serverWindow, config, filePath) {
+	let mainWindowSettings: Electron.BrowserWindowConstructorOptions = null;
+	mainWindowSettings = windowSetting();
 
-    let mainWindowSettings: Electron.BrowserWindowConstructorOptions = null;
-    mainWindowSettings = windowSetting();
-
-    serverWindow = new BrowserWindow(mainWindowSettings);
+	serverWindow = new BrowserWindow(mainWindowSettings);
 
 	remoteMain.enable(serverWindow.webContents);
 
-    let launchPath;
+	let launchPath;
 
 	launchPath = url.format({
-        pathname: filePath,
-        protocol: 'file:',
-        slashes: true,
-        hash: '/server-dashboard'
-    });
+		pathname: filePath,
+		protocol: 'file:',
+		slashes: true,
+		hash: '/server-dashboard'
+	});
 
 	await serverWindow.loadURL(launchPath);
 

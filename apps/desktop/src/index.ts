@@ -18,21 +18,14 @@ log.catchErrors({
 				message: error.message,
 				detail: error.stack,
 				type: 'error',
-				buttons: ['Ignore', 'Report', 'Exit'],
+				buttons: ['Ignore', 'Report', 'Exit']
 			})
 			.then((result) => {
 				if (result.response === 1) {
-					submitIssue(
-						'https://github.com/ever-co/ever-gauzy-desktop/issues/new',
-						{
-							title: `Automatic error report for Desktop App ${versions.app}`,
-							body:
-								'Error:\n```' +
-								error.stack +
-								'\n```\n' +
-								`OS: ${versions.os}`,
-						}
-					);
+					submitIssue('https://github.com/ever-co/ever-gauzy-desktop/issues/new', {
+						title: `Automatic error report for Desktop App ${versions.app}`,
+						body: 'Error:\n```' + error.stack + '\n```\n' + `OS: ${versions.os}`
+					});
 					return;
 				}
 
@@ -40,7 +33,7 @@ log.catchErrors({
 					app.quit();
 				}
 			});
-	},
+	}
 });
 
 import * as path from 'path';
@@ -66,7 +59,7 @@ import {
 	DesktopUpdater,
 	removeMainListener,
 	removeTimerListener,
-	ProviderFactory,
+	ProviderFactory
 } from '@gauzy/desktop-libs';
 import {
 	createGauzyWindow,
@@ -75,7 +68,7 @@ import {
 	createTimeTrackerWindow,
 	createSettingsWindow,
 	createUpdaterWindow,
-	createImageViewerWindow,
+	createImageViewerWindow
 } from '@gauzy/desktop-window';
 import { fork } from 'child_process';
 import { autoUpdater } from 'electron-updater';
@@ -116,13 +109,13 @@ console.log('App UI Render Path:', path.join(__dirname, './index.html'));
 const pathWindow = {
 	gauzyWindow: path.join(__dirname, './index.html'),
 	timeTrackerUi: path.join(__dirname, './ui/index.html'),
-	screenshotWindow: path.join(__dirname, './ui/index.html'),
+	screenshotWindow: path.join(__dirname, './ui/index.html')
 };
 
 const updater = new DesktopUpdater({
 	repository: 'ever-gauzy-desktop',
 	owner: 'ever-co',
-	typeRelease: 'releases',
+	typeRelease: 'releases'
 });
 
 let tray = null;
@@ -133,7 +126,7 @@ let serverDesktop = null;
 let dialogErr = false;
 
 LocalStore.setFilePath({
-	iconPath: path.join(__dirname, 'icons', 'icon.png'),
+	iconPath: path.join(__dirname, 'icons', 'icon.png')
 });
 
 // Instance detection
@@ -150,7 +143,7 @@ if (!gotTheLock) {
 			dialog.showMessageBoxSync(gauzyWindow, {
 				type: 'warning',
 				title: 'Gauzy',
-				message: 'You already have a running instance',
+				message: 'You already have a running instance'
 			});
 		}
 	});
@@ -177,19 +170,17 @@ async function startServer(value, restart = false) {
 	if (value.isLocalServer) {
 		process.env.API_PORT = value.port || environment.API_DEFAULT_PORT;
 		process.env.API_HOST = '0.0.0.0';
-		process.env.API_BASE_URL = `http://localhost:${
-			value.port || environment.API_DEFAULT_PORT
-		}`;
+		process.env.API_BASE_URL = `http://localhost:${value.port || environment.API_DEFAULT_PORT}`;
 		setEnvAdditional();
 		// require(path.join(__dirname, 'api/main.js'));
 		serverGauzy = fork(path.join(__dirname, './api/main.js'), {
-			silent: true,
+			silent: true
 		});
 		serverGauzy.stdout.on('data', async (data) => {
 			const msgData = data.toString();
 			console.log('log -- ', msgData);
 			setupWindow.webContents.send('setup-progress', {
-				msg: msgData,
+				msg: msgData
 			});
 			if (!value.isSetup && !value.serverConfigConnected) {
 				if (msgData.indexOf('Listening at http') > -1) {
@@ -204,10 +195,7 @@ async function startServer(value, restart = false) {
 					gauzyWindow.show();
 				}
 			}
-			if (
-				msgData.indexOf('Unable to connect to the database') > -1 &&
-				!dialogErr
-			) {
+			if (msgData.indexOf('Unable to connect to the database') > -1 && !dialogErr) {
 				const msg = 'Unable to connect to the database';
 				dialogMessage(msg);
 			}
@@ -222,11 +210,11 @@ async function startServer(value, restart = false) {
 	try {
 		const config: any = {
 			...value,
-			isSetup: true,
+			isSetup: true
 		};
 		const aw = {
 			host: value.awHost,
-			isAw: value.aw,
+			isAw: value.aw
 		};
 		store.set({
 			configs: config,
@@ -235,8 +223,8 @@ async function startServer(value, restart = false) {
 				taskId: null,
 				note: null,
 				aw,
-				organizationContactId: null,
-			},
+				organizationContactId: null
+			}
 		});
 	} catch (error) {}
 
@@ -273,7 +261,7 @@ async function startServer(value, restart = false) {
 		if (!isAlreadyRun && value && !restart) {
 			onWaitingServer = true;
 			setupWindow.webContents.send('server_ping', {
-				host: getApiBaseUrl(value),
+				host: getApiBaseUrl(value)
 			});
 		}
 	});
@@ -297,7 +285,7 @@ const dialogMessage = (msg) => {
 		buttons: ['Open Setting', 'Exit'],
 		defaultId: 2,
 		title: 'Warning',
-		message: msg,
+		message: msg
 	};
 
 	dialog.showMessageBox(null, options).then(async (response) => {
@@ -306,17 +294,11 @@ const dialogMessage = (msg) => {
 			if (settingsWindow) settingsWindow.show();
 			else {
 				if (!settingsWindow) {
-					settingsWindow = await createSettingsWindow(
-						settingsWindow,
-						pathWindow.timeTrackerUi
-					);
+					settingsWindow = await createSettingsWindow(settingsWindow, pathWindow.timeTrackerUi);
 				}
 				settingsWindow.show();
 				setTimeout(() => {
-					settingsWindow.webContents.send(
-						'app_setting',
-						LocalStore.getApplicationConfig()
-					);
+					settingsWindow.webContents.send('app_setting', LocalStore.getApplicationConfig());
 				}, 500);
 			}
 		}
@@ -326,9 +308,7 @@ const dialogMessage = (msg) => {
 const getApiBaseUrl = (configs) => {
 	if (configs.serverUrl) return configs.serverUrl;
 	else {
-		return configs.port
-			? `http://localhost:${configs.port}`
-			: `http://localhost:${environment.API_DEFAULT_PORT}`;
+		return configs.port ? `http://localhost:${configs.port}` : `http://localhost:${environment.API_DEFAULT_PORT}`;
 	}
 };
 
@@ -341,13 +321,10 @@ const getApiBaseUrl = (configs) => {
 app.on('ready', async () => {
 	const configs: any = store.get('configs');
 	const settings: any = store.get('appSetting');
-	const autoLaunch: boolean =
-		settings && typeof settings.autoLaunch === 'boolean'
-			? settings.autoLaunch
-			: true;
+	const autoLaunch: boolean = settings && typeof settings.autoLaunch === 'boolean' ? settings.autoLaunch : true;
 	if (provider.dialect === 'sqlite') {
 		try {
-			const res = await knex.raw(`pragma journal_mode = WAL;`)
+			const res = await knex.raw(`pragma journal_mode = WAL;`);
 			console.log(res);
 		} catch (error) {
 			console.log('ERROR', error);
@@ -369,87 +346,50 @@ app.on('ready', async () => {
 					{ role: 'about', label: 'About' },
 					{ type: 'separator' },
 					{ type: 'separator' },
-					{ role: 'quit', label: 'Exit' },
-				],
-			},
+					{ role: 'quit', label: 'Exit' }
+				]
+			}
 		])
 	);
 
 	/* create window */
-	timeTrackerWindow = await createTimeTrackerWindow(
-		timeTrackerWindow,
-		pathWindow.timeTrackerUi
-	);
-	settingsWindow = await createSettingsWindow(
-		settingsWindow,
-		pathWindow.timeTrackerUi
-	);
-	updaterWindow = await createUpdaterWindow(
-		updaterWindow,
-		pathWindow.timeTrackerUi
-	);
+	timeTrackerWindow = await createTimeTrackerWindow(timeTrackerWindow, pathWindow.timeTrackerUi);
+	settingsWindow = await createSettingsWindow(settingsWindow, pathWindow.timeTrackerUi);
+	updaterWindow = await createUpdaterWindow(updaterWindow, pathWindow.timeTrackerUi);
 	imageView = await createImageViewerWindow(imageView, pathWindow.timeTrackerUi);
 
 	/* Set Menu */
-	new AppMenu(
-		timeTrackerWindow,
-		settingsWindow,
-		updaterWindow,
-		knex,
-		pathWindow,
-		null,
-		true
-	);
+	new AppMenu(timeTrackerWindow, settingsWindow, updaterWindow, knex, pathWindow, null, true);
 
 	if (configs && configs.isSetup) {
 		if (!configs.serverConfigConnected) {
-			setupWindow = await createSetupWindow(
-				setupWindow,
-				false,
-				pathWindow.timeTrackerUi
-			);
+			setupWindow = await createSetupWindow(setupWindow, false, pathWindow.timeTrackerUi);
 			setupWindow.show();
 			setupWindow.webContents.send('setup-data', {
-				...configs,
+				...configs
 			});
 		} else {
 			global.variableGlobal = {
 				API_BASE_URL: getApiBaseUrl(configs),
-				IS_INTEGRATED_DESKTOP: configs.isLocalServer,
+				IS_INTEGRATED_DESKTOP: configs.isLocalServer
 			};
-			setupWindow = await createSetupWindow(
-				setupWindow,
-				true,
-				pathWindow.timeTrackerUi
-			);
+			setupWindow = await createSetupWindow(setupWindow, true, pathWindow.timeTrackerUi);
 			await startServer(configs);
 		}
 	} else {
-		setupWindow = await createSetupWindow(
-			setupWindow,
-			false,
-			pathWindow.timeTrackerUi
-		);
+		setupWindow = await createSetupWindow(setupWindow, false, pathWindow.timeTrackerUi);
 		setupWindow.show();
 	}
 	updater.settingWindow = settingsWindow;
 	updater.gauzyWindow = gauzyWindow;
 	updater.checkUpdate();
 	removeMainListener();
-	ipcMainHandler(
-		store,
-		startServer,
-		knex,
-		{ ...environment },
-		timeTrackerWindow
-	);
+	ipcMainHandler(store, startServer, knex, { ...environment }, timeTrackerWindow);
 	if (gauzyWindow) {
 		gauzyWindow.webContents.setZoomFactor(1.0);
 		gauzyWindow.webContents
 			.setVisualZoomLevelLimits(1, 5)
-			.then(() =>
-				console.log('Zoom levels have been set between 100% and 500%')
-			)
+			.then(() => console.log('Zoom levels have been set between 100% and 500%'))
 			.catch((err) => console.log(err));
 	}
 });
@@ -463,7 +403,7 @@ ipcMain.on('server_is_ready', async () => {
 	const appConfig = LocalStore.getStore('configs');
 	appConfig.serverConfigConnected = true;
 	store.set({
-		configs: appConfig,
+		configs: appConfig
 	});
 	onWaitingServer = false;
 	if (!isAlreadyRun) {
@@ -511,11 +451,11 @@ ipcMain.on('restart_app', async (event, arg) => {
 	const configs = LocalStore.getStore('configs');
 	global.variableGlobal = {
 		API_BASE_URL: getApiBaseUrl(configs),
-		IS_INTEGRATED_DESKTOP: configs.isLocalServer,
+		IS_INTEGRATED_DESKTOP: configs.isLocalServer
 	};
 	await startServer(configs, tray ? true : false);
 	setupWindow.webContents.send('server_ping_restart', {
-		host: getApiBaseUrl(configs),
+		host: getApiBaseUrl(configs)
 	});
 });
 
@@ -569,8 +509,8 @@ ipcMain.on('check_database_connection', async (event, arg) => {
 			databaseOptions = {
 				client: 'sqlite',
 				connection: {
-					filename: sqlite3filename,
-				},
+					filename: sqlite3filename
+				}
 			};
 		}
 		const dbConn = require('knex')(databaseOptions);
@@ -578,14 +518,12 @@ ipcMain.on('check_database_connection', async (event, arg) => {
 		event.sender.send('database_status', {
 			status: true,
 			message:
-				provider === 'postgres'
-					? 'Connection to PostgresSQL DB Succeeds'
-					: 'Connection to SQLITE DB Succeeds',
+				provider === 'postgres' ? 'Connection to PostgresSQL DB Succeeds' : 'Connection to SQLITE DB Succeeds'
 		});
 	} catch (error) {
 		event.sender.send('database_status', {
 			status: false,
-			message: error.message,
+			message: error.message
 		});
 	}
 });
@@ -595,19 +533,10 @@ app.on('activate', async () => {
 		if (LocalStore.getStore('configs').gauzyWindow) {
 			gauzyWindow.show();
 		}
-	} else if (
-		!onWaitingServer &&
-		LocalStore.getStore('configs') &&
-		LocalStore.getStore('configs').isSetup
-	) {
+	} else if (!onWaitingServer && LocalStore.getStore('configs') && LocalStore.getStore('configs').isSetup) {
 		// On macOS it's common to re-create a window in the app when the
 		// dock icon is clicked and there are no other windows open.
-		await createGauzyWindow(
-			gauzyWindow,
-			serve,
-			{ ...environment },
-			pathWindow.timeTrackerUi
-		);
+		await createGauzyWindow(gauzyWindow, serve, { ...environment }, pathWindow.timeTrackerUi);
 	} else {
 		if (setupWindow) {
 			setupWindow.show();
@@ -622,7 +551,7 @@ app.on('before-quit', (e) => {
 		e.preventDefault();
 		setTimeout(() => {
 			timeTrackerWindow.webContents.send('stop_from_tray', {
-				quitApp: true,
+				quitApp: true
 			});
 		}, 1000);
 	} else {
@@ -649,7 +578,7 @@ function launchAtStartup(autoLaunch, hidden) {
 		case 'darwin':
 			app.setLoginItemSettings({
 				openAtLogin: autoLaunch,
-				openAsHidden: hidden,
+				openAsHidden: hidden
 			});
 			break;
 		case 'win32':
@@ -658,23 +587,14 @@ function launchAtStartup(autoLaunch, hidden) {
 				openAsHidden: hidden,
 				path: app.getPath('exe'),
 				args: hidden
-					? [
-							'--processStart',
-							`"${exeName}"`,
-							'--process-start-args',
-							`"--hidden"`,
-					  ]
-					: [
-							'--processStart',
-							`"${exeName}"`,
-							'--process-start-args',
-					  ],
+					? ['--processStart', `"${exeName}"`, '--process-start-args', `"--hidden"`]
+					: ['--processStart', `"${exeName}"`, '--process-start-args']
 			});
 			break;
 		case 'linux':
 			app.setLoginItemSettings({
 				openAtLogin: autoLaunch,
-				openAsHidden: hidden,
+				openAsHidden: hidden
 			});
 			break;
 		default:
@@ -683,5 +603,5 @@ function launchAtStartup(autoLaunch, hidden) {
 }
 
 app.on('browser-window-created', (_, window) => {
-	require("@electron/remote/main").enable(window.webContents)
-})
+	require('@electron/remote/main').enable(window.webContents);
+});

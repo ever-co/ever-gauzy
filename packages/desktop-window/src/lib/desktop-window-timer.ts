@@ -50,8 +50,7 @@ const windowSetting = () => {
 		height: height,
 		title: 'Time Tracker',
 		maximizable: false,
-		show: false,
-
+		show: false
 	};
 
 	if (process.platform === 'linux') {

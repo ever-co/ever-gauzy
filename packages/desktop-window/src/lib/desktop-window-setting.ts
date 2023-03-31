@@ -8,7 +8,7 @@ export async function createSettingsWindow(settingsWindow, filePath) {
 	const mainWindowSettings: Electron.BrowserWindowConstructorOptions = windowSetting();
 
 	settingsWindow = new BrowserWindow(mainWindowSettings);
-	remoteMain.enable(settingsWindow.webContents)
+	remoteMain.enable(settingsWindow.webContents);
 	const launchPath = url.format({
 		pathname: filePath,
 		protocol: 'file:',

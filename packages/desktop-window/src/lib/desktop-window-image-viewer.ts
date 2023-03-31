@@ -4,7 +4,6 @@ import * as remoteMain from '@electron/remote/main';
 const Store = require('electron-store');
 const store = new Store();
 
-
 export async function createImageViewerWindow(imageViewWindow, filePath) {
 	const mainWindowSettings: Electron.BrowserWindowConstructorOptions = windowSetting();
 	imageViewWindow = new BrowserWindow(mainWindowSettings);

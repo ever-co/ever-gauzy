@@ -3,8 +3,7 @@ import * as url from 'url';
 import * as remoteMain from '@electron/remote/main';
 
 export async function createAboutWindow(filePath) {
-	const mainWindowSettings: Electron.BrowserWindowConstructorOptions =
-		windowSetting();
+	const mainWindowSettings: Electron.BrowserWindowConstructorOptions = windowSetting();
 
 	const window = new BrowserWindow(mainWindowSettings);
 	remoteMain.enable(window.webContents);
@@ -20,8 +19,7 @@ export async function createAboutWindow(filePath) {
 	window.setMenu(null);
 
 	window.on('show', () => {
-		Menu.getApplicationMenu().getMenuItemById('gauzy-about').enabled =
-			false;
+		Menu.getApplicationMenu().getMenuItemById('gauzy-about').enabled = false;
 	});
 
 	window.on('close', (event) => {
