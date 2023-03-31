@@ -388,15 +388,6 @@ export class SearchComponent extends PaginationFilterBaseComponent
 					filter: false,
 					sort: false
 				},
-				jobDateCreated: {
-					title: this.getTranslation('JOBS.CREATED_DATE'),
-					type: 'text',
-					width: '15%',
-					filter: false,
-					valuePrepareFunction: (cell, row: IEmployeeJobPost) => {
-						return moment(row.jobPost.jobDateCreated).format('LLL');
-					}
-				},
 				jobStatus: {
 					title: this.getTranslation('JOBS.STATUS'),
 					width: '5%',
