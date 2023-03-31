@@ -118,7 +118,7 @@ export class ServerDataSource extends LocalDataSource {
     }
 
     /**
-     * Add addtional smart datatable filters
+     * Add additional smart datatables filters
      *
      * @returns
      */
