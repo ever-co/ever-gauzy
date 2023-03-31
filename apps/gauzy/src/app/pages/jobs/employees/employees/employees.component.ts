@@ -3,12 +3,13 @@ import { HttpClient } from '@angular/common/http';
 import {
 	IEmployee,
 	IEmployeeJobsStatisticsResponse,
-	IOrganization
+	IOrganization,
+	ISelectedEmployee
 } from '@gauzy/contracts';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { distinctUntilChange } from '@gauzy/common-angular';
 import { TranslateService } from '@ngx-translate/core';
-import { Subject } from 'rxjs';
+import { combineLatest, Subject } from 'rxjs';
 import { debounceTime, filter, tap } from 'rxjs/operators';
 import { EmployeeLinksComponent } from './../../../../@shared/table-components';
 import { IPaginationBase, PaginationFilterBaseComponent } from './../../../../@shared/pagination/pagination-filter-base.component';
@@ -28,13 +29,13 @@ export class EmployeesComponent extends PaginationFilterBaseComponent
 
 	loading: boolean = false;
 	settingsSmartTable: any;
-
 	employees$: Subject<any> = new Subject();
 	smartTableSource: ServerDataSource;
-	organization: IOrganization;
+	public selectedEmployeeId: ISelectedEmployee['id'];
+	public organization: IOrganization;
 
 	constructor(
-		private readonly httpClient: HttpClient,
+		private readonly http: HttpClient,
 		private readonly store: Store,
 		public readonly translateService: TranslateService,
 		private readonly employeesService: EmployeesService,
@@ -52,7 +53,7 @@ export class EmployeesComponent extends PaginationFilterBaseComponent
 		this.employees$
 			.pipe(
 				debounceTime(100),
-				tap(() => this._getEmployees()),
+				tap(() => this.getActiveJobEmployees()),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -64,46 +65,77 @@ export class EmployeesComponent extends PaginationFilterBaseComponent
 				untilDestroyed(this)
 			)
 			.subscribe();
-		this.store.selectedOrganization$
+		const storeOrganization$ = this.store.selectedOrganization$;
+		const storeEmployee$ = this.store.selectedEmployee$;
+		combineLatest([storeOrganization$, storeEmployee$])
 			.pipe(
+				debounceTime(100),
 				distinctUntilChange(),
-				filter((organization: IOrganization) => !!organization),
-				tap((organization: IOrganization) => this.organization = organization),
+				filter(([organization]) => !!organization),
+				tap(([organization, employee]) => {
+					this.organization = organization;
+					this.selectedEmployeeId = employee ? employee.id : null;
+				}),
 				tap(() => this.employees$.next(true)),
 				untilDestroyed(this)
 			)
 			.subscribe();
 	}
 
-	private _getEmployees() {
+	/*
+	 * Register Smart Table Source Config
+	 */
+	setSmartTableSource() {
+		if (!this.organization) {
+			return;
+		}
+		this.loading = true;
+
+		const { tenantId } = this.store.user;
+		const { id: organizationId } = this.organization;
+
+		this.smartTableSource = new ServerDataSource(this.http, {
+			endPoint: `${API_PREFIX}/employee/job-statistics`,
+			relations: ['user'],
+			where: {
+				tenantId,
+				organizationId,
+				isActive: true,
+				...(this.selectedEmployeeId
+					? {
+						id: this.selectedEmployeeId
+					}
+					: {}),
+				...(this.filters.where ? this.filters.where : {})
+			},
+			finalize: () => {
+				this.setPagination({
+					...this.getPagination(),
+					totalItems: this.smartTableSource.count()
+				});
+				this.loading = false;
+			}
+		});
+	}
+
+	/**
+	 * Get jobs active employees
+	 *
+	 * @returns
+	 */
+	async getActiveJobEmployees() {
 		if (!this.organization) {
 			return;
 		}
 		try {
-			this.loading = true;
+			this.setSmartTableSource();
 
-			const { tenantId } = this.store.user;
-			const { id: organizationId } = this.organization;
-
-			this.smartTableSource = new ServerDataSource(this.httpClient, {
-				endPoint: `${API_PREFIX}/employee/job-statistics`,
-				relations: ['user'],
-				where: {
-					tenantId,
-					organizationId,
-					isActive: true,
-					...(this.filters.where ? this.filters.where : {})
-				},
-				finalize: () => {
-					this.setPagination({
-						...this.getPagination(),
-						totalItems: this.smartTableSource.count()
-					});
-					this.loading = false;
-				}
-			});
 			const { activePage, itemsPerPage } = this.getPagination();
-			this.smartTableSource.setPaging(activePage, itemsPerPage, false);
+			this.smartTableSource.setPaging(
+				activePage,
+				itemsPerPage,
+				false
+			);
 		} catch (error) {
 			this.toastrService.danger(error);
 		}
@@ -113,8 +145,8 @@ export class EmployeesComponent extends PaginationFilterBaseComponent
 		const pagination: IPaginationBase = this.getPagination();
 		this.settingsSmartTable = {
 			selectedRowIndex: -1,
-			editable: false,
 			actions: false,
+			editable: false,
 			hideSubHeader: true,
 			noDataMessage: this.getTranslation('SM_TABLE.NO_DATA.EMPLOYEE'),
 			pager: {
@@ -227,7 +259,7 @@ export class EmployeesComponent extends PaginationFilterBaseComponent
 			.subscribe();
 	}
 
-	public handleGridSelected({ isSelected, data }): void {}
+	public handleGridSelected({ isSelected, data }): void { }
 
-	ngOnDestroy(): void {}
+	ngOnDestroy(): void { }
 }
