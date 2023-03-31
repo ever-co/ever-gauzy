@@ -1,22 +1,29 @@
 import { AfterViewInit, Component, OnDestroy, OnInit } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { distinctUntilChange } from '@gauzy/common-angular';
+import { TranslateService } from '@ngx-translate/core';
+import { BehaviorSubject, combineLatest, Subject } from 'rxjs';
+import { debounceTime, filter, tap } from 'rxjs/operators';
+import { NbTabComponent } from '@nebular/theme';
 import {
 	IEmployee,
 	IEmployeeJobsStatisticsResponse,
 	IOrganization,
 	ISelectedEmployee
 } from '@gauzy/contracts';
-import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { distinctUntilChange } from '@gauzy/common-angular';
-import { TranslateService } from '@ngx-translate/core';
-import { combineLatest, Subject } from 'rxjs';
-import { debounceTime, filter, tap } from 'rxjs/operators';
 import { EmployeeLinksComponent } from './../../../../@shared/table-components';
 import { IPaginationBase, PaginationFilterBaseComponent } from './../../../../@shared/pagination/pagination-filter-base.component';
 import { EmployeesService, Store, ToastrService } from './../../../../@core/services';
 import { SmartTableToggleComponent } from './../../../../@shared/smart-table/smart-table-toggle/smart-table-toggle.component';
 import { ServerDataSource } from './../../../../@core/utils/smart-table';
 import { API_PREFIX } from './../../../../@core/constants';
+
+export enum JobSearchTabsEnum {
+	BROWSE = 'BROWSE',
+	SEARCH = 'SEARCH',
+	HISTORY = 'HISTORY'
+}
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -27,12 +34,14 @@ import { API_PREFIX } from './../../../../@core/constants';
 export class EmployeesComponent extends PaginationFilterBaseComponent
 	implements AfterViewInit, OnInit, OnDestroy {
 
+	jobSearchTabsEnum = JobSearchTabsEnum;
 	loading: boolean = false;
 	settingsSmartTable: any;
 	employees$: Subject<any> = new Subject();
 	smartTableSource: ServerDataSource;
 	public selectedEmployeeId: ISelectedEmployee['id'];
 	public organization: IOrganization;
+	nbTab$: Subject<string> = new BehaviorSubject(JobSearchTabsEnum.BROWSE);
 
 	constructor(
 		private readonly http: HttpClient,
@@ -258,6 +267,13 @@ export class EmployeesComponent extends PaginationFilterBaseComponent
 			)
 			.subscribe();
 	}
+
+	/**
+	 * On change tab
+	 *
+	 * @param tab
+	 */
+	onTabChange(tab: NbTabComponent) { }
 
 	public handleGridSelected({ isSelected, data }): void { }
 
