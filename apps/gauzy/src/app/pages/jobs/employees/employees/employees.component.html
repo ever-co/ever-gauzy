@@ -18,18 +18,27 @@
 				[buttonTemplate]="actionButtons"
 			></ngx-gauzy-button-action>
 		</div>
-		<nb-tabset class="mt-4">
-			<nb-tab [tabTitle]="'JOB_EMPLOYEE.BROWSE' | translate">
+		<nb-tabset (changeTab)="onTabChange($event)" class="mt-4">
+			<nb-tab
+				[tabTitle]="'JOB_EMPLOYEE.BROWSE' | translate"
+				[tabId]="jobSearchTabsEnum.BROWSE"
+			>
 				<ng-container>
 					<ng-template
 						[ngTemplateOutlet]="tableLayout"
 					></ng-template>
 				</ng-container>
 			</nb-tab>
-			<nb-tab [tabTitle]="'JOB_EMPLOYEE.SEARCH' | translate">
+			<nb-tab
+				[tabTitle]="'JOB_EMPLOYEE.SEARCH' | translate"
+				[tabId]="jobSearchTabsEnum.SEARCH"
+			>
 				<ga-wip></ga-wip>
 			</nb-tab>
-			<nb-tab [tabTitle]="'JOB_EMPLOYEE.HISTORY' | translate">
+			<nb-tab
+				[tabTitle]="'JOB_EMPLOYEE.HISTORY' | translate"
+				[tabId]="jobSearchTabsEnum.HISTORY"
+			>
 				<ga-wip></ga-wip>
 			</nb-tab>
 		</nb-tabset>
@@ -65,45 +74,47 @@
 	let-buttonSize="buttonSize"
 	let-selectedItem="selectedItem"
 >
-	<div class="btn-group actions">
-		<ng-template ngxPermissionsOnly="ORG_JOB_EMPLOYEE_VIEW">
-			<button
-				status="basic"
-				class="action secondary"
-				size="small"
-				nbButton
-			>
-				<nb-icon icon="eye-outline" pack="eva"></nb-icon>
-				<span> {{ 'BUTTONS.VIEW' | translate }} </span>
-			</button>
-		</ng-template>
-		<ng-template ngxPermissionsOnly="ORG_JOB_EMPLOYEE_VIEW">
-			<button
-				size="small"
-				style="cursor: pointer"
-				status="basic"
-				class="action primary"
-				nbButton
-			>
-				<nb-icon icon="edit-outline" pack="eva"></nb-icon>
-				<span>{{ 'BUTTONS.EDIT' | translate }}</span>
-			</button>
-			<button
-				style="cursor: pointer"
-				status="basic"
-				class="action"
-				size="small"
-				[nbTooltip]="'BUTTONS.DELETE' | translate"
-				nbButton
-			>
-				<nb-icon
-					status="danger"
-					icon="trash-2-outline"
-					pack="eva"
-				></nb-icon>
-			</button>
-		</ng-template>
-	</div>
+	<ng-template [ngxPermissionsOnly]="['ORG_JOB_EMPLOYEE_VIEW']">
+		<div class="btn-group actions">
+			<ng-template ngxPermissionsOnly="ORG_JOB_EMPLOYEE_VIEW">
+				<button
+					status="basic"
+					class="action secondary"
+					size="small"
+					nbButton
+				>
+					<nb-icon icon="eye-outline" pack="eva"></nb-icon>
+					<span> {{ 'BUTTONS.VIEW' | translate }} </span>
+				</button>
+			</ng-template>
+			<ng-template ngxPermissionsOnly="ORG_JOB_EMPLOYEE_VIEW">
+				<button
+					size="small"
+					style="cursor: pointer"
+					status="basic"
+					class="action primary"
+					nbButton
+				>
+					<nb-icon icon="edit-outline" pack="eva"></nb-icon>
+					<span>{{ 'BUTTONS.EDIT' | translate }}</span>
+				</button>
+				<button
+					style="cursor: pointer"
+					status="basic"
+					class="action"
+					size="small"
+					[nbTooltip]="'BUTTONS.DELETE' | translate"
+					nbButton
+				>
+					<nb-icon
+						status="danger"
+						icon="trash-2-outline"
+						pack="eva"
+					></nb-icon>
+				</button>
+			</ng-template>
+		</div>
+	</ng-template>
 </ng-template>
 
 <ng-template #visibleButton>
