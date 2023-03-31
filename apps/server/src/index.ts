@@ -93,28 +93,28 @@ LocalStore.setFilePath({
 	iconPath: path.join(__dirname, 'icons', 'icon.png'),
 });
 
-const runSetup = () => {
+const runSetup = async () => {
 	if (setupWindow) {
 		setupWindow.show();
 		return;
 	}
-	setupWindow = createSetupWindow(setupWindow, false, pathWindow.ui);
+	setupWindow = await createSetupWindow(setupWindow, false, pathWindow.ui);
 	setupWindow.show();
 };
 
-const appState = () => {
+const appState = async () => {
 	const config = LocalStore.getStore('configs');
 	if (!config) {
-		runSetup();
+		await runSetup();
 		return;
 	}
 
-	runMainWindow();
+	await runMainWindow();
 	return;
 };
 
-const runMainWindow = () => {
-	serverWindow = createServerWindow(serverWindow, null, pathWindow.ui);
+const runMainWindow = async () => {
+	serverWindow = await createServerWindow(serverWindow, null, pathWindow.ui);
 	serverWindow.show();
 	if (!tray) {
 		createTray();
@@ -349,15 +349,15 @@ ipcMain.on('stop_gauzy_server', (event, arg) => {
 	stopServer(false);
 });
 
-app.on('ready', () => {
+app.on('ready', async () => {
 	LocalStore.setDefaultApplicationSetting();
 	if (!settingsWindow) {
-		settingsWindow = createSettingsWindow(settingsWindow, pathWindow.ui);
+		settingsWindow = await createSettingsWindow(settingsWindow, pathWindow.ui);
 	}
-	appState();
+	await appState();
 	updater.settingWindow = settingsWindow;
 	updater.gauzyWindow = serverWindow;
-	updater.checkUpdate();
+	await updater.checkUpdate();
 });
 
 ipcMain.on('restart_app', (event, arg) => {
@@ -490,3 +490,7 @@ app.commandLine.appendSwitch('disable-http2');
 ipcMain.on('update_app_setting', (event, arg) => {
 	LocalStore.updateApplicationSetting(arg.values);
 });
+
+app.on('browser-window-created', (_, window) => {
+	require("@electron/remote/main").enable(window.webContents)
+})
