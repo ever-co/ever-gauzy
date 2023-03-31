@@ -344,7 +344,6 @@ export function ipcTimer(
 		console.log('Api connected...');
 		try {
 			timeTrackerWindow.webContents.send('offline-handler', false);
-			await countIntervalQueue(timeTrackerWindow, false);
 			await sequentialSyncQueue(timeTrackerWindow);
 		} catch (error) {
 			console.log('Error', error);
@@ -648,14 +647,14 @@ export function ipcTimer(
 		}
 	});
 
-	ipcMain.on('open_setting_window', (event, arg) => {
+	ipcMain.on('open_setting_window', async (event, arg) => {
 		const appSetting = LocalStore.getStore('appSetting');
 		const config = LocalStore.getStore('configs');
 		const auth = LocalStore.getStore('auth');
 		const addSetting = LocalStore.getStore('additionalSetting');
 
 		if (!settingWindow) {
-			settingWindow = createSettingsWindow(
+			settingWindow = await createSettingsWindow(
 				settingWindow,
 				windowPath.timeTrackerUi
 			);
@@ -880,21 +879,9 @@ async function sequentialSyncQueue(window: BrowserWindow) {
 		if (offlineMode.enabled) return;
 		isQueueThreadTimerLocked = true;
 		const timers = await timerService.findToSynced();
-		const timersToSynced: {
-			timer: TimerTO;
-			intervals: IntervalTO[];
-		}[] = [];
-		console.log('---> PREPARE TO SYNC <---');
-		let count = timers.length;
-		for (const timer of timers) {
-			console.log('waiting...', count);
-			const sequence = await timer;
-			timersToSynced.push(sequence);
-			count--;
-		}
-		console.log('---> SEND TO SYNC <---');
-		if (timersToSynced.length > 0) {
-			window.webContents.send('backup-timers-no-synced', timersToSynced);
+		if (timers.length > 0) {
+			await countIntervalQueue(window, true);
+			window.webContents.send('backup-timers-no-synced', timers);
 		} else {
 			isQueueThreadTimerLocked = false;
 		}

@@ -38,9 +38,9 @@ export class TrayIcon {
 			{
 				id: '4',
 				label: 'Setting',
-				click() {
+				async click() {
 					if (!settingsWindow) {
-						settingsWindow = createSettingsWindow(
+						settingsWindow = await createSettingsWindow(
 							settingsWindow,
 							windowPath.timeTrackerUi
 						);
@@ -56,9 +56,9 @@ export class TrayIcon {
 			{
 				id: '6',
 				label: 'Check For Update',
-				click() {
+				async click() {
 					if (!settingsWindow) {
-						settingsWindow = createSettingsWindow(
+						settingsWindow = await createSettingsWindow(
 							settingsWindow,
 							windowPath.timeTrackerUi
 						);
@@ -83,9 +83,9 @@ export class TrayIcon {
 			{
 				id: '4',
 				label: 'Setting',
-				click() {
+				async click() {
 					if (!settingsWindow) {
-						settingsWindow = createSettingsWindow(
+						settingsWindow = await createSettingsWindow(
 							settingsWindow,
 							windowPath.timeTrackerUi
 						);
@@ -101,9 +101,9 @@ export class TrayIcon {
 			{
 				id: '6',
 				label: 'Check For Update',
-				click() {
+				async click() {
 					if (!settingsWindow) {
-						settingsWindow = createSettingsWindow(
+						settingsWindow = await createSettingsWindow(
 							settingsWindow,
 							windowPath.timeTrackerUi
 						);
@@ -175,9 +175,9 @@ export class TrayIcon {
 			{
 				id: '6',
 				label: 'Check For Update',
-				click() {
+				async click() {
 					if (!settingsWindow) {
-						settingsWindow = createSettingsWindow(
+						settingsWindow = await createSettingsWindow(
 							settingsWindow,
 							windowPath.timeTrackerUi
 						);
@@ -193,9 +193,9 @@ export class TrayIcon {
 			{
 				id: '4',
 				label: 'Setting',
-				click() {
+				async click() {
 					if (!settingsWindow) {
-						settingsWindow = createSettingsWindow(
+						settingsWindow = await createSettingsWindow(
 							settingsWindow,
 							windowPath.timeTrackerUi
 						);

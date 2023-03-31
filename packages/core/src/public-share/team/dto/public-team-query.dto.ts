@@ -18,7 +18,6 @@ export enum PublicTeamRelationEnum {
     'tasks.teams' = 'tasks.teams'
 }
 
-// OrganizationTeamStatisticDTO
 export class PublicTeamQueryDTO extends IntersectionType(
     PickType(OrganizationTeamStatisticDTO, ['withLaskWorkedTask']),
     PickType(DateRangeQueryDTO, ['startDate', 'endDate'])

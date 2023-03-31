@@ -4,7 +4,7 @@ import * as remoteMain from '@electron/remote/main';
 const Store = require('electron-store');
 const store = new Store();
 
-export function createSetupWindow(setupWindow, value, filePath) {
+export async function createSetupWindow(setupWindow, value, filePath) {
 	const mainWindowSettings: Electron.BrowserWindowConstructorOptions = windowSetting();
 
 	setupWindow = new BrowserWindow(mainWindowSettings);
@@ -20,7 +20,7 @@ export function createSetupWindow(setupWindow, value, filePath) {
 	if (value) {
 		setupWindow.hide();
 	}
-	setupWindow.loadURL(launchPath);
+	await setupWindow.loadURL(launchPath);
 	setupWindow.setMenu(
 		Menu.buildFromTemplate([
 			{
@@ -49,7 +49,7 @@ const windowSetting = () => {
 		fullscreenable: false,
 		webPreferences: {
 			nodeIntegration: true,
-			webSecurity: false,			
+			webSecurity: false,
 			contextIsolation: false,
 			sandbox: false
 		},

@@ -21,8 +21,8 @@ export class AppMenu {
 						id: 'gauzy-about',
 						label: 'About',
 						enabled: true,
-						click() {
-							const window: BrowserWindow = createAboutWindow(
+						async click() {
+							const window: BrowserWindow = await createAboutWindow(
 								windowPath.timeTrackerUi
 							);
 							window.show();
@@ -31,9 +31,9 @@ export class AppMenu {
 					{ type: 'separator' },
 					{
 						label: 'Check For Update',
-						click() {
+						async click() {
 							if (!settingsWindow) {
-								settingsWindow = createSettingsWindow(
+								settingsWindow = await createSettingsWindow(
 									settingsWindow,
 									windowPath.timeTrackerUi
 								);
@@ -86,9 +86,9 @@ export class AppMenu {
 						id: 'window-setting',
 						label: 'Setting',
 						enabled: true,
-						click() {
+						async click() {
 							if (!settingsWindow) {
-								settingsWindow = createSettingsWindow(
+								settingsWindow = await createSettingsWindow(
 									settingsWindow,
 									windowPath.timeTrackerUi
 								);
@@ -146,9 +146,9 @@ export class AppMenu {
 						id: 'devtools-setting',
 						label: 'Setting Developer Mode',
 						enabled: true,
-						click() {
+						async click() {
 							if (!settingsWindow) {
-								settingsWindow = createSettingsWindow(
+								settingsWindow = await createSettingsWindow(
 									settingsWindow,
 									windowPath.timeTrackerUi
 								);
