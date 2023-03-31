@@ -544,7 +544,7 @@ img {
   font-size: 14px;
 
   &.spin {
-    animation: rotate 1s ease-in-out 0s infinite;
+    animation: rotate 1s linear 0s infinite;
   }
 }
 
