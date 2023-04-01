@@ -7,63 +7,94 @@ import {
 	Index
 } from 'typeorm';
 import { IEmployee, ITimesheet, IUser, TimesheetStatus } from '@gauzy/contracts';
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
 	Employee,
 	TenantOrganizationBaseEntity,
 	User
 } from './../../core/entities/internal';
+import { IsBoolean, IsDateString, IsEnum, IsNumber, IsOptional, IsUUID } from 'class-validator';
 
 @Entity('timesheet')
 export class Timesheet extends TenantOrganizationBaseEntity
 	implements ITimesheet {
 
-	@ApiProperty({ type: () => Number })
+	@ApiPropertyOptional({ type: () => Number, default: 0 })
+	@IsOptional()
+	@IsNumber()
 	@Column({ default: 0 })
 	duration?: number;
 
-	@ApiProperty({ type: () => Number })
+	@ApiPropertyOptional({ type: () => Number, default: 0 })
+	@IsOptional()
+	@IsNumber()
 	@Column({ default: 0 })
 	keyboard?: number;
 
-	@ApiProperty({ type: () => Number })
+	@ApiPropertyOptional({ type: () => Number, default: 0 })
+	@IsOptional()
+	@IsNumber()
 	@Column({ default: 0 })
 	mouse?: number;
 
-	@ApiProperty({ type: () => Number })
+	@ApiPropertyOptional({ type: () => Number, default: 0 })
+	@IsOptional()
+	@IsNumber()
 	@Column({ default: 0 })
 	overall?: number;
 
 	@ApiProperty({ type: () => 'timestamptz' })
-	@Column({ nullable: true, default: null })
+	@IsDateString()
+	@Index()
+	@Column({ nullable: true })
 	startedAt?: Date;
 
 	@ApiProperty({ type: () => 'timestamptz' })
-	@Column({ nullable: true, default: null })
+	@IsDateString()
+	@Index()
+	@Column({ nullable: true })
 	stoppedAt?: Date;
 
-	@ApiProperty({ type: () => 'timestamptz' })
-	@Column({ nullable: true, default: null })
+	@ApiPropertyOptional({ type: () => 'timestamptz' })
+	@IsOptional()
+	@IsDateString()
+	@Index()
+	@Column({ nullable: true })
 	approvedAt?: Date;
 
-	@ApiProperty({ type: () => 'timestamptz' })
-	@Column({ nullable: true, default: null })
+	@ApiPropertyOptional({ type: () => 'timestamptz' })
+	@IsOptional()
+	@IsDateString()
+	@Index()
+	@Column({ nullable: true })
 	submittedAt?: Date;
 
-	@ApiProperty({ type: () => 'timestamptz' })
-	@Column({ nullable: true, default: null })
+	@ApiPropertyOptional({ type: () => 'timestamptz' })
+	@IsOptional()
+	@IsDateString()
+	@Index()
+	@Column({ nullable: true })
 	lockedAt?: Date;
 
-	@ApiProperty({ type: () => Boolean })
+	@ApiPropertyOptional({ type: () => Boolean, default: false })
+	@IsOptional()
+	@IsBoolean()
+	@Index()
 	@Column({ default: false })
 	isBilled?: boolean;
 
-	@ApiProperty({ type: () => String, enum: TimesheetStatus })
+	@ApiPropertyOptional({ type: () => String, enum: TimesheetStatus, default: TimesheetStatus.PENDING })
+	@IsOptional()
+	@IsEnum(TimesheetStatus)
+	@Index()
 	@Column({ default: TimesheetStatus.PENDING })
 	status: string;
 
-	@ApiProperty({ type: () => 'timestamptz' })
-	@Column({ nullable: true, default: null })
+	@ApiPropertyOptional({ type: () => 'timestamptz' })
+	@IsOptional()
+	@IsDateString()
+	@Index()
+	@Column({ nullable: true })
 	deletedAt?: Date;
 
 	/*
@@ -75,12 +106,16 @@ export class Timesheet extends TenantOrganizationBaseEntity
 	/**
 	 * Employee
 	 */
+	@ApiPropertyOptional({ type: () => Employee })
+	@IsOptional()
 	@ManyToOne(() => Employee, (employee) => employee.timesheets, {
 		onDelete: 'CASCADE'
 	})
+	@JoinColumn()
 	employee: IEmployee;
 
 	@ApiProperty({ type: () => String })
+	@IsUUID()
 	@RelationId((it: Timesheet) => it.employee)
 	@Index()
 	@Column()
@@ -89,14 +124,17 @@ export class Timesheet extends TenantOrganizationBaseEntity
 	/**
 	 * Approve By Employee
 	 */
-	@ApiProperty({ type: () => Employee })
-	@ManyToOne(() => User, { nullable: true })
+	@ApiPropertyOptional({ type: () => Employee })
+	@IsOptional()
+	@ManyToOne(() => User)
 	@JoinColumn()
 	approvedBy?: IUser;
 
-	@ApiProperty({ type: () => String })
+	@ApiPropertyOptional({ type: () => String })
+	@IsOptional()
+	@IsUUID()
 	@RelationId((it: Timesheet) => it.approvedBy)
 	@Index()
 	@Column({ nullable: true })
-	approvedById?: string;
+	approvedById?: IUser['id'];
 }

@@ -7,14 +7,14 @@ import {
 } from '@angular/core';
 import { FormBuilder, FormGroup } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
-import { BehaviorSubject, Subject, Subscription, timer } from 'rxjs';
+import { BehaviorSubject, combineLatest, Subject, Subscription, timer } from 'rxjs';
 import { debounceTime, filter, tap } from 'rxjs/operators';
-import * as moment from 'moment';
 import {
 	IApplyJobPostInput,
 	IEmployeeJobPost,
 	IGetEmployeeJobPostFilters,
 	IJobMatchings,
+	IOrganization,
 	ISelectedEmployee,
 	IVisibilityJobPostInput,
 	JobPostSourceEnum,
@@ -27,18 +27,15 @@ import { distinctUntilChange } from '@gauzy/common-angular';
 import { NbTabComponent } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
-import { JobService, Store, ToastrService } from './../../../../@core/services';
-import {
-	Nl2BrPipe,
-	TruncatePipe
-} from './../../../../@shared/pipes';
 import { EmployeeLinksComponent } from './../../../../@shared/table-components';
-import { StatusBadgeComponent } from './../../../../@shared/status-badge/status-badge.component';
 import { IPaginationBase, PaginationFilterBaseComponent } from '../../../../@shared/pagination/pagination-filter-base.component';
-import { ProposalTemplateService } from '../../proposal-template/proposal-template.service';
+import { JobService, Store, ToastrService } from './../../../../@core/services';
+import { StatusBadgeComponent } from './../../../../@shared/status-badge';
 import { API_PREFIX } from './../../../../@core/constants';
-import { ServerDataSource } from './../../../../@core/utils/smart-table';
 import { AtLeastOneFieldValidator } from './../../../../@core/validators';
+import { ServerDataSource } from './../../../../@core/utils/smart-table';
+import { ProposalTemplateService } from '../../proposal-template/proposal-template.service';
+import { JobTitleDescriptionDetailsComponent } from '../../table-components';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -69,7 +66,6 @@ export class SearchComponent extends PaginationFilterBaseComponent
 	};
 
 	jobs$: Subject<any> = this.subject$;
-	selectedEmployee: ISelectedEmployee;
 	smartTableSource: ServerDataSource;
 	autoRefreshTimer: Subscription;
 
@@ -81,13 +77,16 @@ export class SearchComponent extends PaginationFilterBaseComponent
 	jobSearchTabsEnum = JobSearchTabsEnum;
 	nbTab$: Subject<string> = new BehaviorSubject(JobSearchTabsEnum.ACTIONS);
 
+	public organization: IOrganization;
+	public selectedEmployeeId: ISelectedEmployee['id'];
+
 	/*
 	* Search Tab Form
 	*/
 	public form: FormGroup = SearchComponent.buildForm(this.fb);
 	static buildForm(fb: FormBuilder): FormGroup {
 		return fb.group({
-			search: [],
+			title: [],
 			jobSource: [],
 			jobType: [],
 			jobStatus: [],
@@ -104,22 +103,17 @@ export class SearchComponent extends PaginationFilterBaseComponent
 		public readonly translateService: TranslateService,
 		public readonly proposalTemplateService: ProposalTemplateService,
 		private readonly toastrService: ToastrService,
-		private readonly jobService: JobService,
-		private readonly nl2BrPipe: Nl2BrPipe,
-		private readonly truncatePipe: TruncatePipe
+		private readonly jobService: JobService
 	) {
 		super(translateService);
 	}
 
 	ngOnInit(): void {
 		this._applyTranslationOnSmartTable();
-		this._loadSmartTableSettings();
-	}
-
-	ngAfterViewInit(): void {
 		this.jobs$
 			.pipe(
 				debounceTime(100),
+				tap(() => this._loadSmartTableSettings()),
 				tap(() => this.getEmployeesJob()),
 				untilDestroyed(this)
 			)
@@ -140,33 +134,29 @@ export class SearchComponent extends PaginationFilterBaseComponent
 				untilDestroyed(this)
 			)
 			.subscribe();
-		this.store.selectedEmployee$
+	}
+
+	ngAfterViewInit(): void {
+		const storeOrganization$ = this.store.selectedOrganization$;
+		const storeEmployee$ = this.store.selectedEmployee$;
+		combineLatest([storeOrganization$, storeEmployee$])
 			.pipe(
-				filter((employee: ISelectedEmployee) => !!employee),
-				tap((employee: ISelectedEmployee) => {
-					if (employee && employee.id) {
-						this.selectedEmployee = employee;
-						this.jobRequest.employeeIds = [employee.id];
-					} else {
-						this.selectedEmployee = null;
-						this.jobRequest.employeeIds = [];
-					}
+				debounceTime(100),
+				distinctUntilChange(),
+				filter(([organization]) => !!organization),
+				tap(([organization, employee]) => {
+					this.organization = organization;
+					this.selectedEmployeeId = employee ? employee.id : null;
+					this.jobRequest.employeeIds = this.selectedEmployeeId ? [this.selectedEmployeeId] : [];
 				}),
-				tap(() => this.refreshPagination()),
 				tap(() => this.jobs$.next(true)),
 				untilDestroyed(this)
 			)
 			.subscribe();
 	}
 
-	redirectToView() {}
-
-	applyFilter() {
-		this.jobs$.next(true);
-	}
-
-	getEmployeeDefaultProposalTemplate(job: IJobMatchings) {
-		return this.proposalTemplateService
+	async getEmployeeDefaultProposalTemplate(job: IJobMatchings) {
+		return await this.proposalTemplateService
 			.getAll({
 				where: {
 					employeeId: job.employeeId,
@@ -353,69 +343,35 @@ export class SearchComponent extends PaginationFilterBaseComponent
 				perPage: pagination ? pagination.itemsPerPage : 10
 			},
 			columns: {
-				...(!this.selectedEmployee
+				...(!this.selectedEmployeeId
 					? {
 						employee: {
-								title: this.getTranslation('JOBS.EMPLOYEE'),
+							title: this.getTranslation('JOBS.EMPLOYEE'),
 
-								filter: false,
-								width: '15%',
-								type: 'custom',
-								sort: false,
-								renderComponent: EmployeeLinksComponent,
-								valuePrepareFunction: (
-									cell,
-									row: IEmployeeJobPost
-								) => {
-									return {
-										name:
-											row.employee && row.employee.user
-												? row.employee.user.name
-												: null,
-										imageUrl:
-											row.employee && row.employee.user
-												? row.employee.user.imageUrl
-												: null,
-										id: row.employee
-											? row.employee.id
-											: null
-									};
-								}
+							filter: false,
+							width: '15%',
+							type: 'custom',
+							sort: false,
+							renderComponent: EmployeeLinksComponent,
+							valuePrepareFunction: (
+								cell,
+								row: IEmployeeJobPost
+							) => {
+								return {
+									name: row.employee && row.employee.user ? row.employee.user.name : null,
+									imageUrl: row.employee && row.employee.user ? row.employee.user.imageUrl : null,
+									id: row.employee ? row.employee.id : null
+								};
 							}
-					  }
+						}
+					}
 					: {}),
-				title: {
-					title: this.getTranslation('JOBS.TITLE'),
-					type: 'text',
-					width: '20%',
+				jobDetails: {
+					title: this.getTranslation('JOBS.JOB_DETAILS'),
+					type: 'custom',
+					renderComponent: JobTitleDescriptionDetailsComponent,
 					filter: false,
-					sort: false,
-					valuePrepareFunction: (cell, row: IEmployeeJobPost) => {
-						return `${row.jobPost.title.slice(0, 150)}`;
-					}
-				},
-				description: {
-					title: this.getTranslation('JOBS.DESCRIPTION'),
-					type: 'html',
-					width: '30%',
-					filter: false,
-					sort: false,
-					valuePrepareFunction: (cell, row: IEmployeeJobPost) => {
-						let value = this.nl2BrPipe.transform(
-							row.jobPost.description
-						);
-						value = this.truncatePipe.transform(value, 500);
-						return value;
-					}
-				},
-				jobDateCreated: {
-					title: this.getTranslation('JOBS.CREATED_DATE'),
-					type: 'text',
-					width: '15%',
-					filter: false,
-					valuePrepareFunction: (cell, row: IEmployeeJobPost) => {
-						return moment(row.jobPost.jobDateCreated).format('LLL');
-					}
+					sort: false
 				},
 				jobStatus: {
 					title: this.getTranslation('JOBS.STATUS'),
@@ -463,12 +419,24 @@ export class SearchComponent extends PaginationFilterBaseComponent
 	* Register Smart Table Source Config
 	*/
 	setSmartTableSource() {
+		if (!this.organization) {
+			return;
+		}
 		try {
+			console.log('this is calling multiple times!', this.smartTableSource);
+			/**
+			 * If smart table source configuration already initiate
+			 */
+			if (this.smartTableSource) {
+				return;
+			}
+			/**
+			 * Initiate smart table source configuration
+			 */
 			this.smartTableSource = new ServerDataSource(this.http, {
 				endPoint: `${API_PREFIX}/employee-job`,
 				pagerPageKey: 'page',
 				pagerLimitKey: 'limit',
-				relations: [],
 				finalize: () => {
 					this.setPagination({
 						...this.getPagination(),
@@ -483,19 +451,95 @@ export class SearchComponent extends PaginationFilterBaseComponent
 	}
 
 	private async getEmployeesJob() {
+		console.log('call employee job posts API!');
+
+		if (!this.organization) {
+			return;
+		}
+
 		try {
 			this.setSmartTableSource();
+		} catch (error) {
+			console.log('Error while set smart table source configuration', error);
+		}
 
+		try {
 			const { activePage, itemsPerPage } = this.getPagination();
+			const { title, jobSource, jobType, jobStatus, budget } = this.form.value;
+			/**
+			 * Set header selectors filters configuration
+			 */
+			this.smartTableSource.setFilter(
+				[
+					...(
+						this.selectedEmployeeId ? [
+							{
+								field: 'employeeIds',
+								search: [
+									this.selectedEmployeeId
+								]
+							}
+						] : []
+					),
+					...(
+						title ? [
+							{
+								field: 'title',
+								search: title
+							}
+						] : []
+					),
+					...(
+						jobSource ? [
+							{
+								field: 'jobSource',
+								search: jobSource
+							}
+						] : []
+					),
+					...(
+						jobType ? [
+							{
+								field: 'jobType',
+								search: jobType
+							}
+						] : []
+					),
+					...(
+						jobStatus ? [
+							{
+								field: 'jobStatus',
+								search: jobStatus
+							}
+						] : []
+					),
+					...(
+						budget ? [
+							{
+								field: 'budget',
+								search: budget
+							}
+						] : []
+					),
+				],
+				false,
+				false
+			);
+			/**
+			 * Set smart table sorting filters configuration
+			 */
 			this.smartTableSource.setSort(
 				[
 					{
 						field: 'status',
-						direction: 'asc'
+						direction: 'ASC'
 					}
 				],
 				false
 			);
+			/**
+			 * Applied smart table pagination configuration
+			 */
 			this.smartTableSource.setPaging(
 				activePage,
 				itemsPerPage,
@@ -509,7 +553,7 @@ export class SearchComponent extends PaginationFilterBaseComponent
 	private _applyTranslationOnSmartTable() {
 		this.translateService.onLangChange
 			.pipe(
-				tap(() => this.jobs$.next(true)),
+				tap(() => this._loadSmartTableSettings()),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -521,8 +565,8 @@ export class SearchComponent extends PaginationFilterBaseComponent
 	hideAll() {
 		const request: IVisibilityJobPostInput = {
 			hide: true,
-			...(this.selectedEmployee && this.selectedEmployee.id
-				? { employeeId: this.selectedEmployee.id }
+			...(this.selectedEmployeeId
+				? { employeeId: this.selectedEmployeeId }
 				: {})
 		};
 		this.jobService.hideJob(request).then(() => {
@@ -539,22 +583,7 @@ export class SearchComponent extends PaginationFilterBaseComponent
 		if (this.form.invalid) {
 			return;
 		}
-		const { search, jobSource, jobType, jobStatus, budget } = this.form.getRawValue();
-		if (search) {
-			this.setFilter({ field: 'search', search: search }, false);
-		}
-		if (jobSource) {
-			this.setFilter({ field: 'jobSource', search: jobSource }, false);
-		}
-		if (jobType) {
-			this.setFilter({ field: 'jobType', search: jobType }, false);
-		}
-		if (jobStatus) {
-			this.setFilter({ field: 'jobStatus', search: jobStatus }, false);
-		}
-		if (budget) {
-			this.setFilter({ field: 'budget', search: budget }, false);
-		}
+		this.jobs$.next(true);
 	}
 
 	reset() {
@@ -563,5 +592,5 @@ export class SearchComponent extends PaginationFilterBaseComponent
 		this.jobs$.next(true);
 	}
 
-	ngOnDestroy(): void {}
+	ngOnDestroy(): void { }
 }

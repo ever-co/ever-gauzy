@@ -3,7 +3,7 @@ import * as url from 'url';
 import * as remoteMain from '@electron/remote/main';
 const Store = require('electron-store');
 const store = new Store();
-export function createUpdaterWindow(updaterWindow, filePath) {
+export async function createUpdaterWindow(updaterWindow, filePath) {
 	const mainWindowSettings: Electron.BrowserWindowConstructorOptions = windowSetting();
 	updaterWindow = new BrowserWindow(mainWindowSettings);
 	remoteMain.enable(updaterWindow.webContents);
@@ -15,7 +15,7 @@ export function createUpdaterWindow(updaterWindow, filePath) {
 	});
 
 	updaterWindow.hide();
-	updaterWindow.loadURL(launchPath);
+	await updaterWindow.loadURL(launchPath);
 	updaterWindow.setMenu(null);
 
 	// updaterWindow.webContents.toggleDevTools();
@@ -38,7 +38,7 @@ const windowSetting = () => {
 		webPreferences: {
 			nodeIntegration: true,
 			webSecurity: false,
-			devTools: true,			
+			devTools: true,
 			contextIsolation: false,
 			sandbox: false
 		},

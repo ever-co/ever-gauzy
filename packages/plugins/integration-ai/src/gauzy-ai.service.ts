@@ -254,7 +254,7 @@ export class GauzyAIService {
 	 * @param applied This will set isApplied and appliedDate fields in Gauzy AI
 	 * @param employeeId Employee who applied for a job
 	 * @param providerCode e.g. 'upwork'
-	 * @p  aram providerJobId Unique job id in the provider, e.g. in Upwork
+	 * @param providerJobId Unique job id in the provider, e.g. in Upwork
 	 */
 	public async updateApplied(
 		input: IApplyJobPostInput
@@ -783,9 +783,7 @@ export class GauzyAIService {
 
 		console.log(`getEmployeesJobPosts. Data ${JSON.stringify(data)}`);
 
-		const filters: IGetEmployeeJobPostFilters = data.filters
-			? JSON.parse(<any>data.filters)
-			: undefined;
+		const filters: IGetEmployeeJobPostFilters = data.filters ? <any>data.filters : undefined;
 
 		console.log(`getEmployeesJobPosts. Filters ${JSON.stringify(filters)}`);
 

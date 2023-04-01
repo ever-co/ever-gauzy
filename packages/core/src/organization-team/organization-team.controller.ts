@@ -134,7 +134,7 @@ export class OrganizationTeamController extends CrudController<OrganizationTeam>
 	 */
 	@Permissions(PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.ORG_TEAM_VIEW)
 	@Get(':id')
-	@UsePipes(new ValidationPipe())
+	@UsePipes(new ValidationPipe({ transform: true }))
 	async findById(
 		@Param('id', UUIDValidationPipe) id: IOrganizationTeam['id'],
 		@Query() options: OrganizationTeamStatisticDTO

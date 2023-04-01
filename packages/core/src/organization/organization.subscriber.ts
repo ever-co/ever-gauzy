@@ -21,11 +21,15 @@ export class OrganizationSubscriber implements EntitySubscriberInterface<Organiz
      * @param event
      */
     afterLoad(entity: Organization, event?: LoadEvent<Organization>): void | Promise<any> {
-        if (!entity.imageUrl) {
-            entity.imageUrl = getOrganizationDummyImage(entity.name || entity.officialName);
-        }
-        if (!!entity['image']) {
-            entity.imageUrl = entity.image.fullUrl || entity.imageUrl;
+        try {
+            if (!entity.imageUrl) {
+                entity.imageUrl = getOrganizationDummyImage(entity.name || entity.officialName);
+            }
+            if (!!entity['image']) {
+                entity.imageUrl = entity.image.fullUrl || entity.imageUrl;
+            }
+        } catch (error) {
+            console.log(error);
         }
     }
 

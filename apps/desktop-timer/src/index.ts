@@ -104,10 +104,6 @@ const sqlite3filename = `${process.env.GAUZY_USER_PATH}/gauzy.sqlite3`;
 log.info(`Sqlite DB path: ${sqlite3filename}`);
 
 const provider = ProviderFactory.instance;
-(async () => {
-	await provider.createDatabase();
-	await provider.migrate();
-})();
 const knex = provider.connection;
 
 const exeName = path.basename(process.execPath);
@@ -204,7 +200,7 @@ async function startServer(value, restart = false) {
 	if (value.serverConfigConnected || !value.isLocalServer) {
 		setupWindow.hide();
 		if (!timeTrackerWindow) {
-			timeTrackerWindow = createTimeTrackerWindow(
+			timeTrackerWindow = await createTimeTrackerWindow(
 				timeTrackerWindow,
 				pathWindow.timeTrackerUi
 			);
@@ -287,6 +283,20 @@ app.on('ready', async () => {
 			? settings.autoLaunch
 			: true;
 	launchAtStartup(autoLaunch, false);
+	if (provider.dialect === 'sqlite') {
+		try {
+			const res = await knex.raw(`pragma journal_mode = WAL;`)
+			console.log(res);
+		} catch (error) {
+			console.log('ERROR', error);
+		}
+	}
+	try {
+		await provider.createDatabase();
+		await provider.migrate();
+	} catch (error) {
+		console.log('ERROR', error);
+	}
 	Menu.setApplicationMenu(
 		Menu.buildFromTemplate([
 			{
@@ -307,19 +317,19 @@ app.on('ready', async () => {
 		API_BASE_URL: getApiBaseUrl({}),
 		IS_INTEGRATED_DESKTOP: false,
 	};
-	timeTrackerWindow = createTimeTrackerWindow(
+	timeTrackerWindow = await createTimeTrackerWindow(
 		timeTrackerWindow,
 		pathWindow.timeTrackerUi
 	);
-	settingsWindow = createSettingsWindow(
+	settingsWindow = await createSettingsWindow(
 		settingsWindow,
 		pathWindow.timeTrackerUi
 	);
-	updaterWindow = createUpdaterWindow(
+	updaterWindow = await createUpdaterWindow(
 		updaterWindow,
 		pathWindow.timeTrackerUi
 	);
-	imageView = createImageViewerWindow(imageView, pathWindow.timeTrackerUi);
+	imageView = await createImageViewerWindow(imageView, pathWindow.timeTrackerUi);
 
 	/* Set Menu */
 
@@ -328,14 +338,14 @@ app.on('ready', async () => {
 			API_BASE_URL: getApiBaseUrl(configs),
 			IS_INTEGRATED_DESKTOP: configs.isLocalServer,
 		};
-		setupWindow = createSetupWindow(
+		setupWindow = await createSetupWindow(
 			setupWindow,
 			true,
 			pathWindow.timeTrackerUi
 		);
 		await startServer(configs);
 	} else {
-		setupWindow = createSetupWindow(
+		setupWindow = await createSetupWindow(
 			setupWindow,
 			false,
 			pathWindow.timeTrackerUi
@@ -357,7 +367,13 @@ app.on('ready', async () => {
 	);
 });
 
-app.on('window-all-closed', quit);
+app.on('window-all-closed', () => {
+	// On OS X it is common for applications and their menu bar
+	// to stay active until the user quits explicitly with Cmd + Q
+	if (process.platform !== 'darwin') {
+		app.quit();
+	}
+});
 
 app.commandLine.appendSwitch('disable-http2');
 
@@ -403,47 +419,46 @@ ipcMain.on('restore', () => {
 	gauzyWindow.restore();
 });
 
-ipcMain.on('restart_app', (event, arg) => {
+ipcMain.on('restart_app', async (event, arg) => {
 	dialogErr = false;
 	LocalStore.updateConfigSetting(arg);
 	if (timeTrackerWindow) {
 		timeTrackerWindow.destroy();
-		timeTrackerWindow = createTimeTrackerWindow(
+		timeTrackerWindow = await createTimeTrackerWindow(
 			timeTrackerWindow,
 			pathWindow.timeTrackerUi
 		);
 	}
 	if (serverGauzy) serverGauzy.kill();
-	if (gauzyWindow) gauzyWindow.destroy();
-	gauzyWindow = null;
+	if (gauzyWindow) {
+		gauzyWindow.destroy();
+		gauzyWindow = null;
+	}
+
 	isAlreadyRun = false;
-	setTimeout(async () => {
-		if (!gauzyWindow) {
-			const configs = LocalStore.getStore('configs');
-			global.variableGlobal = {
-				API_BASE_URL: getApiBaseUrl(configs),
-				IS_INTEGRATED_DESKTOP: configs.isLocalServer,
-			};
-			await startServer(configs, !!tray);
-			removeMainListener();
-			ipcMainHandler(
-				store,
-				startServer,
-				knex,
-				{ ...environment },
-				timeTrackerWindow
-			);
-			setupWindow.webContents.send('server_ping_restart', {
-				host: getApiBaseUrl(configs),
-			});
-		}
-		/* Killing the provider. */
-		await provider.kill();
-		/* Creating a database if not exit. */
-		await ProviderFactory.instance.createDatabase();
-		app.relaunch({ args: process.argv.slice(1).concat(['--relaunch']) });
-		app.exit(0);
-	}, 100);
+	const configs = LocalStore.getStore('configs');
+	global.variableGlobal = {
+		API_BASE_URL: getApiBaseUrl(configs),
+		IS_INTEGRATED_DESKTOP: configs.isLocalServer,
+	};
+	await startServer(configs, !!tray);
+	removeMainListener();
+	ipcMainHandler(
+		store,
+		startServer,
+		knex,
+		{ ...environment },
+		timeTrackerWindow
+	);
+	setupWindow.webContents.send('server_ping_restart', {
+		host: getApiBaseUrl(configs),
+	});
+	/* Killing the provider. */
+	await provider.kill();
+	/* Creating a database if not exit. */
+	await ProviderFactory.instance.createDatabase();
+	app.relaunch({ args: process.argv.slice(1).concat(['--relaunch']) });
+	app.exit(0);
 });
 
 ipcMain.on('save_additional_setting', (event, arg) => {
@@ -459,7 +474,11 @@ ipcMain.on('server_already_start', () => {
 });
 
 ipcMain.on('open_browser', async (event, arg) => {
-	await shell.openExternal(arg.url);
+	try {
+		await shell.openExternal(arg.url);
+	} catch (error) {
+		console.log('ERROR', error);
+	}
 });
 
 ipcMain.on('restart_and_update', () => {
@@ -489,7 +508,7 @@ ipcMain.on('check_database_connection', async (event, arg) => {
 			};
 		} else {
 			databaseOptions = {
-				client: 'sqlite',
+				client: 'sqlite3',
 				connection: {
 					filename: sqlite3filename,
 				},
@@ -548,12 +567,10 @@ app.on('before-quit', (e) => {
 	const appSetting = LocalStore.getStore('appSetting');
 	if (appSetting && appSetting.timerStarted) {
 		e.preventDefault();
-		setTimeout(() => {
-			willQuit = true;
-			timeTrackerWindow.webContents.send('stop_from_tray', {
-				quitApp: true,
-			});
-		}, 1000);
+		willQuit = true;
+		timeTrackerWindow.webContents.send('stop_from_tray', {
+			quitApp: true,
+		});
 	} else {
 		// soft download cancellation
 		try {
@@ -632,8 +649,12 @@ app.on('web-contents-created', (e, contents) => {
 				'https://accounts.google.com',
 			].findIndex((str) => url.indexOf(str) > -1) > -1
 		) {
-			e.preventDefault();
-			await showPopup(url, defaultBrowserConfig);
+			try {
+				e.preventDefault();
+				await showPopup(url, defaultBrowserConfig);
+			} catch (error) {
+				console.log('ERROR', error);
+			}
 			return;
 		}
 
@@ -654,7 +675,11 @@ app.on('web-contents-created', (e, contents) => {
 		}
 
 		if (url.indexOf('/auth/register') > -1) {
-			await shell.openExternal(url);
+			try {
+				await shell.openExternal(url);
+			} catch (error) {
+				console.log('ERROR', error);
+			}
 		}
 	});
 });
@@ -673,3 +698,7 @@ const showPopup = async (url: string, options: any) => {
 	await popupWin.loadURL(url, { userAgent: userAgentWb });
 	popupWin.show();
 };
+
+app.on('browser-window-created', (_, window) => {
+	require("@electron/remote/main").enable(window.webContents)
+})

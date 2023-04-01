@@ -93,28 +93,28 @@ LocalStore.setFilePath({
 	iconPath: path.join(__dirname, 'icons', 'icon.png'),
 });
 
-const runSetup = () => {
+const runSetup = async () => {
 	if (setupWindow) {
 		setupWindow.show();
 		return;
 	}
-	setupWindow = createSetupWindow(setupWindow, false, pathWindow.ui);
+	setupWindow = await createSetupWindow(setupWindow, false, pathWindow.ui);
 	setupWindow.show();
 };
 
-const appState = () => {
+const appState = async () => {
 	const config = LocalStore.getStore('configs');
 	if (!config) {
-		runSetup();
+		await runSetup();
 		return;
 	}
 
-	runMainWindow();
+	await runMainWindow();
 	return;
 };
 
-const runMainWindow = () => {
-	serverWindow = createServerWindow(serverWindow, null, pathWindow.ui);
+const runMainWindow = async () => {
+	serverWindow = await createServerWindow(serverWindow, null, pathWindow.ui);
 	serverWindow.show();
 	if (!tray) {
 		createTray();
@@ -155,7 +155,7 @@ const updateConfigUi = (config) => {
 	let fileStr = readFileSync(pathWindow.gauzyUi, 'utf8');
 
 	const configStr = `
-		<script> window._env = { api: '${apiBaseUrl}' }; 
+		<script> window._env = { api: '${apiBaseUrl}' };
 		if (typeof global === "undefined") {
 			var global = window;
 		}; </script>`;
@@ -349,15 +349,15 @@ ipcMain.on('stop_gauzy_server', (event, arg) => {
 	stopServer(false);
 });
 
-app.on('ready', () => {
+app.on('ready', async () => {
 	LocalStore.setDefaultApplicationSetting();
 	if (!settingsWindow) {
-		settingsWindow = createSettingsWindow(settingsWindow, pathWindow.ui);
+		settingsWindow = await createSettingsWindow(settingsWindow, pathWindow.ui);
 	}
-	appState();
+	await appState();
 	updater.settingWindow = settingsWindow;
 	updater.gauzyWindow = serverWindow;
-	updater.checkUpdate();
+	await updater.checkUpdate();
 });
 
 ipcMain.on('restart_app', (event, arg) => {
@@ -380,34 +380,35 @@ ipcMain.on('save_additional_setting', (event, arg) => {
 ipcMain.on('quit', quit);
 
 ipcMain.on('check_database_connection', async (event, arg) => {
-	let databaseOptions = {};
-	if (arg.db == 'postgres') {
-		databaseOptions = {
-			client: 'pg',
-			connection: {
-				host: arg.dbHost,
-				user: arg.dbUsername,
-				password: arg.dbPassword,
-				database: arg.dbName,
-				port: arg.dbPort,
-			},
-		};
-	} else {
-		databaseOptions = {
-			client: 'sqlite',
-			connection: {
-				filename: sqlite3filename,
-			},
-		};
-	}
-	const dbConn = require('knex')(databaseOptions);
 	try {
+		const provider = arg.db;
+		let databaseOptions;
+		if (provider === 'postgres') {
+			databaseOptions = {
+				client: 'pg',
+				connection: {
+					host: arg[provider].dbHost,
+					user: arg[provider].dbUsername,
+					password: arg[provider].dbPassword,
+					database: arg[provider].dbName,
+					port: arg[provider].dbPort
+				}
+			};
+		} else {
+			databaseOptions = {
+				client: 'sqlite',
+				connection: {
+					filename: sqlite3filename,
+				},
+			};
+		}
+		const dbConn = require('knex')(databaseOptions);
 		await dbConn.raw('select 1+1 as result');
 		event.sender.send('database_status', {
 			status: true,
 			message:
-				arg.db === 'postgres'
-					? 'Connection to PostgreSQL DB Succeeds'
+				provider === 'postgres'
+					? 'Connection to PostgresSQL DB Succeeds'
 					: 'Connection to SQLITE DB Succeeds',
 		});
 	} catch (error) {
@@ -489,3 +490,7 @@ app.commandLine.appendSwitch('disable-http2');
 ipcMain.on('update_app_setting', (event, arg) => {
 	LocalStore.updateApplicationSetting(arg.values);
 });
+
+app.on('browser-window-created', (_, window) => {
+	require("@electron/remote/main").enable(window.webContents)
+})

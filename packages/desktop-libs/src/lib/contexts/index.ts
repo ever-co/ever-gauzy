@@ -4,3 +4,4 @@ export * from './sleep-tracking';
 export * from './sleep-inactivity-tracking';
 export * from './update-context';
 export * from './network-state-manager';
+export * from './automatic-update';

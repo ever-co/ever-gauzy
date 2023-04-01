@@ -1,7 +1,7 @@
 import { BrowserWindow, app, ipcMain } from 'electron';
 import { autoUpdater, UpdateInfo, UpdateDownloadedEvent } from 'electron-updater';
 import { LOCAL_SERVER_UPDATE_CONFIG } from './config';
-import { UpdateContext } from './contexts';
+import { AutomaticUpdate, UpdateContext } from './contexts';
 import {
 	DialogConfirmInstallDownload,
 	DialogConfirmUpgradeDownload,
@@ -23,15 +23,18 @@ export class DesktopUpdater {
 	private _settingWindow: BrowserWindow;
 	private _gauzyWindow: BrowserWindow;
 	private _config: IUpdaterConfig;
+	private _automaticUpdate: AutomaticUpdate;
 
 	constructor(config: IUpdaterConfig) {
 		this._updateContext = new UpdateContext();
 		this._updateContext.strategy = new DigitalOceanCdn(new CdnUpdate(config));
 		this._updateServer = new DesktopLocalUpdateServer();
 		this._strategy = new GithubCdn(new CdnUpdate(config));
+		this._automaticUpdate = new AutomaticUpdate(this._updateContext, this.settingWindow);
 		this._config = config;
 		this._mainProcess();
 		this._updaterProcess();
+		this._automaticUpdate.start();
 	}
 
 	private _mainProcess(): void {
@@ -102,10 +105,17 @@ export class DesktopUpdater {
 		ipcMain.on('download_update', () => {
 			this._updateContext.update();
 		});
+
+		ipcMain.on('automatic_update_setting', (event, args) => {
+			const { isEnabled, automaticUpdateDelay } = args;
+			isEnabled
+				? (this._automaticUpdate.delay = automaticUpdateDelay)
+				: this._automaticUpdate.stop();
+		});
 	}
 
 	private _updaterProcess(): void {
-		autoUpdater.once('update-available', (info: UpdateInfo) => {
+		autoUpdater.once('update-available', async (info: UpdateInfo) => {
 			const setting = LocalStore.getStore('appSetting');
 			if (setting && !setting.automaticUpdate) return;
 			const dialog = new DialogConfirmUpgradeDownload(
@@ -123,14 +133,13 @@ export class DesktopUpdater {
 					' is available. Upgrade the application by downloading the updates for v' +
 					app.getVersion()
 			};
-			dialog.show().then(async (button) => {
-				if (button.response === 0) {
-					this._updateContext.update();
-				}
-			});
+			const button = await dialog.show();
+			if (button?.response === 0) {
+				this._updateContext.update();
+			}
 		});
 
-		autoUpdater.on('update-downloaded', (event: UpdateDownloadedEvent) => {
+		autoUpdater.on('update-downloaded', async (event: UpdateDownloadedEvent) => {
 			const setting = LocalStore.getStore('appSetting');
 			this._settingWindow.webContents.send('update_downloaded');
 			if (setting && !setting.automaticUpdate) return;
@@ -145,11 +154,10 @@ export class DesktopUpdater {
 				'A new version v' +
 				event.version +
 				' has been downloaded. Restart the application to apply the updates.';
-			dialog.show().then((button) => {
-				if (button.response === 0) {
-					this._settingWindow.webContents.send('_logout_quit_install_');
-				}
-			});
+			const button = await dialog.show();
+			if (button?.response === 0) {
+				this._settingWindow.webContents.send('_logout_quit_install_');
+			}
 			this._updateServer.stop();
 		});
 

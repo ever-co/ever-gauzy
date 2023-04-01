@@ -50,11 +50,11 @@ export class SetupComponent implements OnInit {
 			}
 			if (arg.db === 'postgres') {
 				this.databaseConfig.postgre = {
-					host: arg.dbHost,
-					dbPort: arg.dbPort,
-					dbName: arg.dbName,
-					dbUser: arg.dbUsername,
-					dbPassword: arg.dbPassword,
+					host: arg[arg.db]?.dbHost,
+					dbPort: arg[arg.db]?.dbPort,
+					dbName: arg[arg.db]?.dbName,
+					dbUser: arg[arg.db]?.dbUsername,
+					dbPassword: arg[arg.db]?.dbPassword,
 				};
 			}
 		});
@@ -278,11 +278,13 @@ export class SetupComponent implements OnInit {
 	getDataBaseConfig() {
 		if (this.databaseDriver.postgre) {
 			return {
-				dbHost: this.databaseConfig.postgre.host,
-				dbPort: this.databaseConfig.postgre.dbPort,
-				dbName: this.databaseConfig.postgre.dbName,
-				dbUsername: this.databaseConfig.postgre.dbUser,
-				dbPassword: this.databaseConfig.postgre.dbPassword,
+				postgres: {
+					dbHost: this.databaseConfig.postgre.host,
+					dbPort: this.databaseConfig.postgre.dbPort,
+					dbName: this.databaseConfig.postgre.dbName,
+					dbUsername: this.databaseConfig.postgre.dbUser,
+					dbPassword: this.databaseConfig.postgre.dbPassword,
+				},
 				db: 'postgres',
 			};
 		}
@@ -323,29 +325,20 @@ export class SetupComponent implements OnInit {
 		this.checkConnection(true);
 	}
 
-	pingAw() {
-		this.awCheck = false;
-		this.setupService
-			.pingAw(`${this.awAPI}/api`)
-			.then((res) => {
-				this.iconAw = './assets/icons/toggle-right.svg';
-				this.awCheck = true;
-				this.statusIcon = 'success';
-				this._cdr.detectChanges();
-			})
-			.catch((e) => {
-				if (e.status === 200) {
-					this.iconAw = './assets/icons/toggle-right.svg';
-					this.awCheck = true;
-					this.statusIcon = 'success';
-					this._cdr.detectChanges();
-				} else {
-					this.iconAw = './assets/icons/toggle-left.svg';
-					this.awCheck = true;
-					this.statusIcon = 'danger';
-					this._cdr.detectChanges();
-				}
-			});
+	async pingAw(): Promise<void> {
+		try {
+			this.awCheck = false;
+			await this.setupService.pingAw(`${this.awAPI}/api`)
+			this.iconAw = './assets/icons/toggle-right.svg';
+			this.awCheck = true;
+			this.statusIcon = 'success';
+			this._cdr.detectChanges();
+		} catch (error) {
+			this.iconAw = './assets/icons/toggle-left.svg';
+			this.awCheck = true;
+			this.statusIcon = 'danger';
+			this._cdr.detectChanges();
+		}
 	}
 
 	validation() {
@@ -431,28 +424,13 @@ export class SetupComponent implements OnInit {
 				}
 			})
 			.catch((e) => {
-				if (e.status === 404) {
-					if (this.runApp) {
-						this.saveAndRun();
-					} else {
-						this.dialogData = {
-							title: 'Success',
-							message: `Connection to Server ${serverHostOptions.serverUrl} Succeeds`,
-							status: 'success',
-						};
-						let elBtn: HTMLElement =
-							this.btnDialogOpen.nativeElement;
-						elBtn.click();
-					}
-				} else {
-					this.dialogData = {
-						title: 'Error',
-						message: e.message,
-						status: 'danger',
-					};
-					let elBtn: HTMLElement = this.btnDialogOpen.nativeElement;
-					elBtn.click();
-				}
+				this.dialogData = {
+					title: 'Error',
+					message: e.message,
+					status: 'danger',
+				};
+				let elBtn: HTMLElement = this.btnDialogOpen.nativeElement;
+				elBtn.click();
 			});
 	}
 

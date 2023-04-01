@@ -40,6 +40,7 @@ export interface AppState {
 export interface PersistState {
 	organizationId?: string;
 	clientId?: string;
+	tenantId: string;
 	token: string;
 	userId: string;
 	serverConnection: number;
@@ -67,6 +68,7 @@ export function createInitialPersistState(): PersistState {
 		parseInt(localStorage.getItem('serverConnection')) || null;
 	const preferredLanguage = localStorage.getItem('preferredLanguage') || null;
 	const componentLayout = localStorage.getItem('componentLayout') || [];
+	const tenantId = localStorage.getItem('tenantId') || null;
 
 	return {
 		token,
@@ -75,6 +77,7 @@ export function createInitialPersistState(): PersistState {
 		serverConnection,
 		preferredLanguage,
 		componentLayout,
+		tenantId
 	} as PersistState;
 }
 
@@ -467,6 +470,17 @@ export class Store {
 	set componentLayout(componentLayout: any[]) {
 		this.persistStore.update({
 			componentLayout,
+		});
+	}
+
+	get tenantId(): string | null {
+		const { tenantId } = this.persistQuery.getValue();
+		return tenantId;
+	}
+
+	set tenantId(value: string) {
+		this.persistStore.update({
+			tenantId: value
 		});
 	}
 }

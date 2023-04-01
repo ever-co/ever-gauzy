@@ -310,11 +310,7 @@ export interface IScreenshotMap {
 	timeSlots: ITimeSlot[];
 }
 
-export interface ITimerStatusInput
-	extends IBasePerTenantAndOrganizationEntityModel,
-		IBaseRelationsEntityModel,
-		IRelationalEmployee,
-		IRelationalOrganizationTeam {
+export interface ITimerStatusInput extends IBasePerTenantAndOrganizationEntityModel, IBaseRelationsEntityModel, IRelationalEmployee, IRelationalOrganizationTeam {
 	source?: TimeLogSourceEnum;
 }
 
@@ -323,6 +319,7 @@ export interface ITimerStatus {
 	running?: boolean;
 	lastLog?: ITimeLog;
 	lastWorkedTask?: ITask;
+	timerStatus?: 'running' | 'pause' | 'idle';
 }
 export interface TimerState {
 	showTimerWindow: boolean;

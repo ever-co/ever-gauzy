@@ -1,7 +1,6 @@
 # Ever Gauzy Platform
 
 [uri_gauzy]: https://gauzy.co
-[uri_gauzy_github]: https://github.com/ever-co/ever-gauzy
 [uri_license]: https://www.gnu.org/licenses/agpl-3.0.html
 [uri_license_image]: https://img.shields.io/badge/License-AGPL%20v3-blue.svg
 
@@ -76,7 +75,7 @@ More detailed list of the features available in the platform:
 - Organization Clients and Vendors
 - Help Center / Knowledge Base
 - Tags / Labels
-- Reports
+- Reports / Insights / Analytics
 - Organization and Employee Public Pages
 - Integrations (Upwork, HubStaff, etc.)
 - Email History / Email Templates
@@ -188,25 +187,24 @@ Please refer to our official [Platform Documentation](https://docs.gauzy.co) and
 
 Together with Gauzy, Docker Compose will run following:
 
-- [PostgreSQL](https://www.postgresql.org) - Object-relational database system.
-- [Redis](https://github.com/redis/redis) - In-memory data store.
+- [PostgreSQL](https://www.postgresql.org) - Primary Database.
+- [Pgweb](https://github.com/sosedoff/pgweb) - Cross-platform client for PostgreSQL DBs, available on <http://localhost:8081>.
+- [Redis](https://github.com/redis/redis) - In-memory data store/caching.
 - [ElasticSearch](https://github.com/elastic/elasticsearch) - Search Engine.
-- [MinIO](https://github.com/minio/minio) - Multi-Cloud ☁️ Object Storage.
-- [Pgweb](https://github.com/sosedoff/pgweb) - Cross-platform client for PostgreSQL DBs, on <http://localhost:8081>.
+- [Dejavu](https://github.com/appbaseio/dejavu) - Web UI for ElasticSearch, available on <http://localhost:1358>.
+- [MinIO](https://github.com/minio/minio) - Multi-Cloud ☁️ Object Storage (AWS S3 compatible).
+- [Cube](https://github.com/cube-js/cube) - "Semantic Layer" used for Reports, Dashboards, Analytics and other BI related features, with UI available on <http://localhost:4000>.
 
 ### Manually
 
+#### Required
+
 - Install [NodeJs](https://nodejs.org/en/download) LTS version or later, e.g. 18.x.
-- Optionally (recommended for production) install and run [PostgreSQL](https://www.postgresql.org) version 14 or later. Note: other DB can be configured manually in TypeORM. The default DB is set to SQLite (recommended for testing/demo purposes only).
-- Optionally (recommended for production) install and run [Redis](https://github.com/redis/redis). Note: the platform will work without Redis using in-memory caching strategy instead of distributed one (recommended for testing/demo purposes only).
-- Optionally (recommended for production) install and run [ElasticSearch](https://github.com/elastic/elasticsearch). Note: the platform will work without ElasticSearch using DB build-in search capabilities (recommended for testing/demo purposes only).
-- Optionally install and run [MinIO](https://github.com/minio/minio) or [LocalStack](https://github.com/localstack/localstack). Note: the platform will work without MinIO / LocalStack or other S3 compatible storage using local filesystem based storage (recommended for testing/demo purposes only).
 - Install [Yarn](https://github.com/yarnpkg/yarn) (if you don't have it) with `npm i -g yarn`.
 - Install NPM packages and bootstrap solution using command `yarn bootstrap`.
 - If you will need to make code changes (and push to Git repo), please run `yarn prepare:husky`.
 - Adjust settings in the [`.env.local`](https://github.com/ever-co/ever-gauzy/blob/develop/.env.local) which used in local runs.
 - Alternatively, you can copy [`.env.sample`](https://github.com/ever-co/ever-gauzy/blob/develop/.env.sample) to `.env` and change default settings there, e.g. database type, name, user, password, etc.
-- Optionally, if you want to seed a lot of fake data for demo testing, run `yarn seed:all`.
 - Run both API and UI with single command: `yarn start`.
 - Open Gauzy UI on <http://localhost:4200> in your browser (API runs on <http://localhost:3000/api>).
 - Login with email `admin@ever.co` and password: `admin` for Super Admin user.
@@ -218,6 +216,14 @@ Notes:
 - during the first API start, DB will be automatically seed with minimum set of initial data if no users found.
 - you can run seed any moment manually (e.g. if you changed entities schemas) with `yarn seed` command to re-initialize DB (warning: unsafe for production!).
 - it is possible to run generation of extremely large amount of fake data for demo purposes / testing with `yarn seed:all` (warning: takes ~10 min to complete)
+
+#### Optional / Recommended for Production
+
+- Optionally (recommended for production) install and run [PostgreSQL](https://www.postgresql.org) version 14 or later. Note: other DB can be configured manually in TypeORM. The default DB is set to SQLite (recommended for testing/demo purposes only).
+- Optionally (recommended for production) install and run [Redis](https://github.com/redis/redis). Note: the platform will work without Redis using in-memory caching strategy instead of distributed one (recommended for testing/demo purposes only).
+- Optionally (recommended for production) install and run [ElasticSearch](https://github.com/elastic/elasticsearch). Note: the platform will work without ElasticSearch using DB build-in search capabilities (recommended for testing/demo purposes only).
+- Optionally install and run [MinIO](https://github.com/minio/minio) or [LocalStack](https://github.com/localstack/localstack). Note: the platform will work without MinIO / LocalStack or other S3 compatible storage using local filesystem based storage (recommended for testing/demo purposes only). For production, we recommend to use Wasabi or AWS S3 storage.
+- Optionally (recommended for production) install and run [Cube](https://github.com/cube-js/cube).
 
 ### Production
 
@@ -288,7 +294,7 @@ You can also view full list of our [contributors tracked by Github](https://gith
 
 ## ©️ Copyrigh
 
-#### Copyright © 2019-present, Ever Co. LTD. All rights reserved.
+#### Copyright © 2019-present, Ever Co. LTD. All rights reserved
 
 [![huntr](https://cdn.huntr.dev/huntr_security_badge_mono.svg)](https://huntr.dev)
 [![Circle CI](https://circleci.com/gh/ever-co/ever-gauzy.svg?style=svg)](https://circleci.com/gh/ever-co/ever-gauzy)
@@ -301,7 +307,7 @@ You can also view full list of our [contributors tracked by Github](https://gith
 [![FOSSA Status](https://app.fossa.io/api/projects/git%2Bgithub.com%2Fever-co%2Fever-gauzy.svg?type=shield)](https://app.fossa.io/projects/git%2Bgithub.com%2Fever-co%2Fgauzy?ref=badge_shield)
 [![Crowdin](https://badges.crowdin.net/e/1d2b3405d65a56ec116d0984fd579cc9/localized.svg)](https://ever.crowdin.com/gauzy)
 
-## 🔥 P.S.
+## 🔥 P.S
 
 - If you interested to run on-demand (delivery) or digital marketplace business, check open-source [Ever Demand Platform](https://github.com/ever-co/ever-demand)
 - [We are Hiring: remote TypeScript / NestJS / Angular developers](https://github.com/ever-co/jobs#available-positions)

@@ -3,11 +3,12 @@ import {
 	Column,
 	RelationId,
 	ManyToOne,
-	Index
+	Index,
+	JoinColumn
 } from 'typeorm';
 import { FileStorageProviderEnum, IScreenshot, ITimeSlot } from '@gauzy/contracts';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsString, IsOptional, IsNumber, IsDateString, IsUUID } from 'class-validator';
+import { IsString, IsOptional, IsDateString, IsUUID, IsNotEmpty, IsEnum } from 'class-validator';
 import { Exclude } from 'class-transformer';
 import {
 	TenantOrganizationBaseEntity,
@@ -18,30 +19,37 @@ import {
 export class Screenshot extends TenantOrganizationBaseEntity
 	implements IScreenshot {
 
-	@ApiProperty({ type: () => String })
+	@ApiProperty({ type: () => String, required: true })
+	@IsNotEmpty()
 	@IsString()
 	@Column()
 	file: string;
 
-	@ApiProperty({ type: () => String })
-	@IsString()
+	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()
-	@Column({ default: null, nullable: true })
+	@IsString()
+	@Column({ nullable: true })
 	thumb?: string;
 
-	@ApiProperty({ type: () => 'timestamptz' })
-	@IsNumber()
+	@ApiPropertyOptional({ type: () => 'timestamptz' })
 	@IsOptional()
-	@Column({ default: null, nullable: true })
+	@IsDateString()
+	@Index()
+	@Column({ nullable: true })
 	recordedAt?: Date;
 
-	@ApiProperty({ type: () => 'timestamptz' })
+	@ApiPropertyOptional({ type: () => 'timestamptz' })
+	@IsOptional()
 	@IsDateString()
-	@Column({ nullable: true, default: null })
+	@Index()
+	@Column({ nullable: true })
 	deletedAt?: Date;
 
 	@ApiPropertyOptional({ type: () => String, enum: FileStorageProviderEnum })
+	@IsOptional()
+	@IsEnum(FileStorageProviderEnum)
 	@Exclude({ toPlainOnly: true })
+	@Index()
 	@Column({
 		type: 'simple-enum',
 		nullable: true,
@@ -64,9 +72,11 @@ export class Screenshot extends TenantOrganizationBaseEntity
 	@ManyToOne(() => TimeSlot, (timeSlot) => timeSlot.screenshots, {
 		onDelete: 'CASCADE'
 	})
+	@JoinColumn()
 	timeSlot?: ITimeSlot;
 
-	@ApiProperty({ type: () => String })
+	@ApiPropertyOptional({ type: () => String })
+	@IsOptional()
 	@IsUUID()
 	@RelationId((it: Screenshot) => it.timeSlot)
 	@Index()

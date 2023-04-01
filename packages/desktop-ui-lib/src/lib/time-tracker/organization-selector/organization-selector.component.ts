@@ -41,8 +41,6 @@ export class OrganizationSelectorComponent implements OnInit, AfterViewInit {
 				this._ngZone.run(async () => {
 					try {
 						const payload = {
-							tenantId: arg.tenantId,
-							token: arg.token,
 							apiHost: arg.apiHost
 						}
 						if (!Object.values(payload).includes(null || undefined)) {

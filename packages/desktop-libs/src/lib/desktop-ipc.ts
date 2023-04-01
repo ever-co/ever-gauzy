@@ -344,7 +344,6 @@ export function ipcTimer(
 		console.log('Api connected...');
 		try {
 			timeTrackerWindow.webContents.send('offline-handler', false);
-			await countIntervalQueue(timeTrackerWindow, false);
 			await sequentialSyncQueue(timeTrackerWindow);
 		} catch (error) {
 			console.log('Error', error);
@@ -353,33 +352,39 @@ export function ipcTimer(
 
 	offlineMode.trigger();
 
-	ipcMain.on('start_timer', (event, arg) => {
-		powerManager = new DesktopPowerManager(timeTrackerWindow);
-		powerManagerPreventSleep = new PowerManagerPreventDisplaySleep(
-			powerManager
-		);
-		powerManagerDetectInactivity = new PowerManagerDetectInactivity(
-			powerManager
-		);
-		new DesktopOsInactivityHandler(powerManagerDetectInactivity);
-		const setting = LocalStore.getStore('appSetting');
-		log.info(`Timer Start: ${moment().format()}`);
-		store.set({
-			project: {
-				projectId: arg.projectId,
-				taskId: arg.taskId,
-				note: arg.note,
-				aw: arg.aw,
-				organizationContactId: arg.organizationContactId
+	ipcMain.on('start_timer', async (event, arg) => {
+		try {
+			powerManager = new DesktopPowerManager(timeTrackerWindow);
+			powerManagerPreventSleep = new PowerManagerPreventDisplaySleep(
+				powerManager
+			);
+			powerManagerDetectInactivity = new PowerManagerDetectInactivity(
+				powerManager
+			);
+			new DesktopOsInactivityHandler(powerManagerDetectInactivity);
+			const setting = LocalStore.getStore('appSetting');
+			log.info(`Timer Start: ${moment().format()}`);
+			store.set({
+				project: {
+					projectId: arg.projectId,
+					taskId: arg.taskId,
+					note: arg.note,
+					aw: arg.aw,
+					organizationContactId: arg.organizationContactId
+				}
+			});
+			await timerHandler.startTimer(setupWindow, knex, timeTrackerWindow, arg.timeLog);
+			settingWindow.webContents.send('app_setting_update', {
+				setting: LocalStore.getStore('appSetting')
+			});
+			if (setting && setting.preventDisplaySleep) {
+				powerManagerPreventSleep.start();
 			}
-		});
-		timerHandler.startTimer(setupWindow, knex, timeTrackerWindow, arg.timeLog);
-		settingWindow.webContents.send('app_setting_update', {
-			setting: LocalStore.getStore('appSetting')
-		});
-		if (setting && setting.preventDisplaySleep)
-			powerManagerPreventSleep.start();
-		powerManagerDetectInactivity.startInactivityDetection();
+			powerManagerDetectInactivity.startInactivityDetection();
+		} catch (error) {
+			timeTrackerWindow.webContents.send('emergency_stop');
+			console.log('ERROR', error)
+		}
 	});
 
 	ipcMain.on('delete_time_slot', async (event, intervalId: number) => {
@@ -642,14 +647,14 @@ export function ipcTimer(
 		}
 	});
 
-	ipcMain.on('open_setting_window', (event, arg) => {
+	ipcMain.on('open_setting_window', async (event, arg) => {
 		const appSetting = LocalStore.getStore('appSetting');
 		const config = LocalStore.getStore('configs');
 		const auth = LocalStore.getStore('auth');
 		const addSetting = LocalStore.getStore('additionalSetting');
 
 		if (!settingWindow) {
-			settingWindow = createSettingsWindow(
+			settingWindow = await createSettingsWindow(
 				settingWindow,
 				windowPath.timeTrackerUi
 			);
@@ -874,21 +879,9 @@ async function sequentialSyncQueue(window: BrowserWindow) {
 		if (offlineMode.enabled) return;
 		isQueueThreadTimerLocked = true;
 		const timers = await timerService.findToSynced();
-		const timersToSynced: {
-			timer: TimerTO;
-			intervals: IntervalTO[];
-		}[] = [];
-		console.log('---> PREPARE TO SYNC <---');
-		let count = timers.length;
-		for (const timer of timers) {
-			console.log('waiting...', count);
-			const sequence = await timer;
-			timersToSynced.push(sequence);
-			count--;
-		}
-		console.log('---> SEND TO SYNC <---');
-		if (timersToSynced.length > 0) {
-			window.webContents.send('backup-timers-no-synced', timersToSynced);
+		if (timers.length > 0) {
+			await countIntervalQueue(window, true);
+			window.webContents.send('backup-timers-no-synced', timers);
 		} else {
 			isQueueThreadTimerLocked = false;
 		}
