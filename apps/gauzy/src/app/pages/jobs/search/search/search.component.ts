@@ -86,7 +86,7 @@ export class SearchComponent extends PaginationFilterBaseComponent
 	public form: FormGroup = SearchComponent.buildForm(this.fb);
 	static buildForm(fb: FormBuilder): FormGroup {
 		return fb.group({
-			search: [],
+			title: [],
 			jobSource: [],
 			jobType: [],
 			jobStatus: [],
@@ -153,12 +153,6 @@ export class SearchComponent extends PaginationFilterBaseComponent
 				untilDestroyed(this)
 			)
 			.subscribe();
-	}
-
-	redirectToView() { }
-
-	applyFilter() {
-		this.jobs$.next(true);
 	}
 
 	async getEmployeeDefaultProposalTemplate(job: IJobMatchings) {
@@ -471,6 +465,7 @@ export class SearchComponent extends PaginationFilterBaseComponent
 
 		try {
 			const { activePage, itemsPerPage } = this.getPagination();
+			const { title, jobSource, jobType, jobStatus, budget } = this.form.value;
 			/**
 			 * Set header selectors filters configuration
 			 */
@@ -485,7 +480,47 @@ export class SearchComponent extends PaginationFilterBaseComponent
 								]
 							}
 						] : []
-					)
+					),
+					...(
+						title ? [
+							{
+								field: 'title',
+								search: title
+							}
+						] : []
+					),
+					...(
+						jobSource ? [
+							{
+								field: 'jobSource',
+								search: jobSource
+							}
+						] : []
+					),
+					...(
+						jobType ? [
+							{
+								field: 'jobType',
+								search: jobType
+							}
+						] : []
+					),
+					...(
+						jobStatus ? [
+							{
+								field: 'jobStatus',
+								search: jobStatus
+							}
+						] : []
+					),
+					...(
+						budget ? [
+							{
+								field: 'budget',
+								search: budget
+							}
+						] : []
+					),
 				],
 				false,
 				false
@@ -548,22 +583,7 @@ export class SearchComponent extends PaginationFilterBaseComponent
 		if (this.form.invalid) {
 			return;
 		}
-		const { search, jobSource, jobType, jobStatus, budget } = this.form.getRawValue();
-		if (search) {
-			this.setFilter({ field: 'search', search: search }, false);
-		}
-		if (jobSource) {
-			this.setFilter({ field: 'jobSource', search: jobSource }, false);
-		}
-		if (jobType) {
-			this.setFilter({ field: 'jobType', search: jobType }, false);
-		}
-		if (jobStatus) {
-			this.setFilter({ field: 'jobStatus', search: jobStatus }, false);
-		}
-		if (budget) {
-			this.setFilter({ field: 'budget', search: budget }, false);
-		}
+		this.jobs$.next(true);
 	}
 
 	reset() {
