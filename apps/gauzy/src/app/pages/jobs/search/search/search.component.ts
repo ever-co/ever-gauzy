@@ -26,11 +26,11 @@ import {
 import { distinctUntilChange } from '@gauzy/common-angular';
 import { NbTabComponent } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { TranslateService } from '@ngx-translate/core';
 import { EmployeeLinksComponent } from './../../../../@shared/table-components';
 import { IPaginationBase, PaginationFilterBaseComponent } from '../../../../@shared/pagination/pagination-filter-base.component';
 import { JobService, Store, ToastrService } from './../../../../@core/services';
 import { StatusBadgeComponent } from './../../../../@shared/status-badge';
-import { TranslateService } from '@ngx-translate/core';
 import { API_PREFIX } from './../../../../@core/constants';
 import { AtLeastOneFieldValidator } from './../../../../@core/validators';
 import { ServerDataSource } from './../../../../@core/utils/smart-table';
@@ -110,10 +110,10 @@ export class SearchComponent extends PaginationFilterBaseComponent
 
 	ngOnInit(): void {
 		this._applyTranslationOnSmartTable();
-		this._loadSmartTableSettings();
 		this.jobs$
 			.pipe(
 				debounceTime(100),
+				tap(() => this._loadSmartTableSettings()),
 				tap(() => this.getEmployeesJob()),
 				untilDestroyed(this)
 			)
@@ -364,17 +364,9 @@ export class SearchComponent extends PaginationFilterBaseComponent
 								row: IEmployeeJobPost
 							) => {
 								return {
-									name:
-										row.employee && row.employee.user
-											? row.employee.user.name
-											: null,
-									imageUrl:
-										row.employee && row.employee.user
-											? row.employee.user.imageUrl
-											: null,
-									id: row.employee
-										? row.employee.id
-										: null
+									name: row.employee && row.employee.user ? row.employee.user.name : null,
+									imageUrl: row.employee && row.employee.user ? row.employee.user.imageUrl : null,
+									id: row.employee ? row.employee.id : null
 								};
 							}
 						}
@@ -433,7 +425,20 @@ export class SearchComponent extends PaginationFilterBaseComponent
 	* Register Smart Table Source Config
 	*/
 	setSmartTableSource() {
+		if (!this.organization) {
+			return;
+		}
 		try {
+			console.log('this is calling multiple times!', this.smartTableSource);
+			/**
+			 * If smart table source configuration already initiate
+			 */
+			if (this.smartTableSource) {
+				return;
+			}
+			/**
+			 * Initiate smart table source configuration
+			 */
 			this.smartTableSource = new ServerDataSource(this.http, {
 				endPoint: `${API_PREFIX}/employee-job`,
 				pagerPageKey: 'page',
@@ -452,9 +457,23 @@ export class SearchComponent extends PaginationFilterBaseComponent
 	}
 
 	private async getEmployeesJob() {
+		console.log('call employee job posts API!');
+
+		if (!this.organization) {
+			return;
+		}
+
 		try {
 			this.setSmartTableSource();
+		} catch (error) {
+			console.log('Error while set smart table source configuration', error);
+		}
+
+		try {
 			const { activePage, itemsPerPage } = this.getPagination();
+			/**
+			 * Set header selectors filters configuration
+			 */
 			this.smartTableSource.setFilter(
 				[
 					...(
@@ -471,6 +490,9 @@ export class SearchComponent extends PaginationFilterBaseComponent
 				false,
 				false
 			);
+			/**
+			 * Set smart table sorting filters configuration
+			 */
 			this.smartTableSource.setSort(
 				[
 					{
@@ -480,6 +502,9 @@ export class SearchComponent extends PaginationFilterBaseComponent
 				],
 				false
 			);
+			/**
+			 * Applied smart table pagination configuration
+			 */
 			this.smartTableSource.setPaging(
 				activePage,
 				itemsPerPage,
@@ -493,7 +518,7 @@ export class SearchComponent extends PaginationFilterBaseComponent
 	private _applyTranslationOnSmartTable() {
 		this.translateService.onLangChange
 			.pipe(
-				tap(() => this.jobs$.next(true)),
+				tap(() => this._loadSmartTableSettings()),
 				untilDestroyed(this)
 			)
 			.subscribe();
