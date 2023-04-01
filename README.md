@@ -10,10 +10,11 @@
 
 ## 💡 What's New
 
-We released [Ever Gauzy Teams](https://github.com/ever-co/ever-gauzy-teams) platform for Work & Project Management, see <https://github.com/ever-co/ever-gauzy-teams>.  
-Built with React / ReactNative stack and connects to headless Ever Gauzy Platform APIs.
+We released [Ever Gauzy Teams](https://github.com/ever-co/ever-gauzy-teams) platform for Work & Project Management.  
+Please check <https://github.com/ever-co/ever-gauzy-teams> and make it ⭐ on GitHub!  
+It's built with React / ReactNative stack and connects to headless Ever Gauzy Platform APIs.
 
-## ⭐️ What is it
+## 🌟 What is it
 
 [Ever® Gauzy™][uri_gauzy] - **Open-Source Business Management Platform** for On-Demand and Sharing Economies.
 
