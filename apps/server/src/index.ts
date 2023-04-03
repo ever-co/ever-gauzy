@@ -205,16 +205,19 @@ const getEnvApi = () => {
 	const config = LocalStore.getStore('configs');
 	updateConfigUi(config);
 	const addsConfig = LocalStore.getAdditionalConfig();
+	const provider = config.db;
 	return {
 		IS_ELECTRON: 'true',
 		DB_PATH: sqlite3filename,
-		DB_TYPE: config.db,
-		DB_HOST: config.dbHost,
-		DB_PORT: config.dbPort ? config.dbPort.toString() : '',
-		DB_NAME: config.dbName,
-		DB_USER: config.dbUsername,
-		DB_PASS: config.dbPassword,
-		API_PORT: config.port ? config.port.toString() : '',
+		DB_TYPE: provider,
+		...(provider === 'postgres' && {
+			DB_HOST: config[provider]?.dbHost,
+			DB_PORT: String(config[provider]?.dbPort),
+			DB_NAME: config[provider]?.dbName,
+			DB_USER: config[provider]?.dbUsername,
+			DB_PASS: config[provider]?.dbPassword,
+		}),
+		API_PORT: String(config.port),
 		...addsConfig,
 	};
 };
@@ -249,15 +252,11 @@ const contextMenu = () => {
 			label: 'Check For Update',
 			click() {
 				settingsWindow.show();
-				setTimeout(() => {
-					settingsWindow.webContents.send('goto_update');
-				}, 100);
-				setTimeout(() => {
+				settingsWindow.webContents.send('goto_update');
 					settingsWindow.webContents.send(
 						'app_setting',
 						LocalStore.getApplicationConfig()
 					);
-				}, 500);
 			},
 		},
 		{
@@ -449,15 +448,36 @@ ipcMain.on('expand_window', (event, arg) => {
 	const { width, height } = display.workArea;
 	console.log('width ', width);
 	console.log('height ', height);
+	const wx = 640;
+	const hx = 480;
+	switch (process.platform) {
+		case 'linux':
+			{
+				serverWindow.setMinimumSize(wx, hx);
+				serverWindow.setSize(wx, hx, true);
+				serverWindow.setResizable(false);
+			}
+			break;
+		case 'darwin':
+			{
+				serverWindow.setSize(wx, hx, true);
+				if (serverWindow) serverWindow.center();
+			}
+			break;
+		default:
+			{
 	serverWindow.setBounds(
 		{
-			width: 980,
-			height: 860,
-			x: (width - 980) * 0.5,
-			y: (height - 860) * 0.5,
+			width: wx,
+			height: hx,
+			x: (width - wx) * 0.5,
+			y: (height - hx) * 0.5
 		},
 		true
 	);
+			}
+			break;
+	}
 });
 
 function quit() {
@@ -486,6 +506,7 @@ app.on('before-quit', (e) => {
 app.on('window-all-closed', quit);
 
 app.commandLine.appendSwitch('disable-http2');
+app.commandLine.appendSwitch('in-process-gpu');
 
 ipcMain.on('update_app_setting', (event, arg) => {
 	LocalStore.updateApplicationSetting(arg.values);
