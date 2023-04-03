@@ -2426,7 +2426,7 @@
 		"UPWORK": "crwdns9960:0crwdne9960:0",
 		"WEB": "crwdns9962:0crwdne9962:0",
 		"HOURLY": "crwdns9964:0crwdne9964:0",
-		"FIX_PRICE": "crwdns9966:0crwdne9966:0",
+		"FIXED": "crwdns9966:0crwdne9966:0",
 		"FILTER": {
 			"TITLE": "crwdns8284:0crwdne8284:0",
 			"SOURCE": "crwdns8286:0crwdne8286:0",

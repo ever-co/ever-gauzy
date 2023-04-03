@@ -2448,7 +2448,7 @@
 		"UPWORK": "Upwork",
 		"WEB": "Web",
 		"HOURLY": "Hourly",
-		"FIX_PRICE": "Fixed Price",
+		"FIXED": "Fixed",
 		"FILTER": {
 			"TITLE": "Advanced Filter",
 			"SOURCE": "Source",

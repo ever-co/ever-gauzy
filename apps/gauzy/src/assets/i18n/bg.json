@@ -2447,8 +2447,8 @@
 		"ACTIONS": "Actions",
 		"UPWORK": "Upwork",
 		"WEB": "Web",
-		"HOURLY": "Hourly",
-		"FIX_PRICE": "Fixed Price",
+		"HOURLY": "Почасово",
+		"FIXED": "Фиксиран",
 		"FILTER": {
 			"TITLE": "Advanced Filter",
 			"SOURCE": "Source",
