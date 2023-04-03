@@ -6,7 +6,7 @@ import {
 	EmployeeJobPostsQuery,
 	EmployeeQuery,
 	UpdateEmployeeJobPost,
-	UpworkJobsSearchCriterion
+	UpworkJobsSearchCriterion,
 } from './sdk/gauzy-ai-sdk';
 import { TypedDocumentNode as DocumentNode } from '@graphql-typed-document-node/core';
 import fetch from 'cross-fetch';
@@ -18,7 +18,7 @@ import {
 	InMemoryCache,
 	DefaultOptions,
 	NetworkStatus,
-	gql
+	gql,
 } from '@apollo/client/core';
 import {
 	IEmployeeUpworkJobsSearchCriterion,
@@ -33,7 +33,7 @@ import {
 	IGetEmployeeJobPostFilters,
 	JobPostStatusEnum,
 	JobPostTypeEnum,
-	IEmployeeJobsStatistics
+	IEmployeeJobsStatistics,
 } from '@gauzy/contracts';
 
 @Injectable()
@@ -45,16 +45,16 @@ export class GauzyAIService {
 	private readonly defaultOptions: DefaultOptions = {
 		watchQuery: {
 			fetchPolicy: 'no-cache',
-			errorPolicy: 'ignore'
+			errorPolicy: 'ignore',
 		},
 		query: {
 			fetchPolicy: 'no-cache',
-			errorPolicy: 'all'
+			errorPolicy: 'all',
 		},
 		mutate: {
 			fetchPolicy: 'no-cache',
-			errorPolicy: 'all'
-		}
+			errorPolicy: 'all',
+		},
 	};
 
 	private gauzyAIGraphQLEndpoint: string;
@@ -65,10 +65,10 @@ export class GauzyAIService {
 			link: new HttpLink({
 				// TODO: use endpoint from .env. We probably should inject settings into constructor for this.
 				uri: this.gauzyAIGraphQLEndpoint,
-				fetch
+				fetch,
 			}),
 			cache: new InMemoryCache(),
-			defaultOptions: this.defaultOptions
+			defaultOptions: this.defaultOptions,
 		});
 	}
 
@@ -99,11 +99,10 @@ export class GauzyAIService {
 							}
 						`;
 
-						const employeesQueryResult: ApolloQueryResult<EmployeeQuery> = await this._client.query<EmployeeQuery>(
-							{
-								query: employeesQuery
-							}
-						);
+						const employeesQueryResult: ApolloQueryResult<EmployeeQuery> =
+							await this._client.query<EmployeeQuery>({
+								query: employeesQuery,
+							});
 
 						if (
 							employeesQueryResult.networkStatus ===
@@ -211,7 +210,7 @@ export class GauzyAIService {
 					employeeId: employeeId,
 					jobPostId: jobPostId,
 					isActive: !input.hide,
-					isArchived: input.hide
+					isArchived: input.hide,
 				};
 
 				const updateEmployeeJobPostMutation: DocumentNode<any> = gql`
@@ -234,9 +233,9 @@ export class GauzyAIService {
 					variables: {
 						input: {
 							id: employeeJobPostId,
-							update: update
-						}
-					}
+							update: update,
+						},
+					},
 				});
 
 				return true;
@@ -292,7 +291,7 @@ export class GauzyAIService {
 			const update: UpdateEmployeeJobPost = {
 				employeeId: employeeId,
 				jobPostId: jobPostId,
-				isApplied: input.applied
+				isApplied: input.applied,
 			};
 
 			const updateEmployeeJobPostMutation: DocumentNode<any> = gql`
@@ -315,9 +314,9 @@ export class GauzyAIService {
 				variables: {
 					input: {
 						id: employeeJobPostId,
-						update: update
-					}
-				}
+						update: update,
+					},
+				},
 			});
 		}
 
@@ -364,7 +363,7 @@ export class GauzyAIService {
 				upworkJobSearchCriteria: undefined,
 				upworkJobSearchCriteriaAggregate: undefined,
 				firstName: employee.user.firstName,
-				lastName: employee.user.lastName
+				lastName: employee.user.lastName,
 			});
 
 			console.log(`Synced Employee ${JSON.stringify(gauzyAIEmployee)}`);
@@ -387,14 +386,14 @@ export class GauzyAIService {
 					input: {
 						filter: {
 							isActive: {
-								is: true
+								is: true,
 							},
 							employeeId: {
-								eq: gauzyAIEmployee.id
-							}
-						}
-					}
-				}
+								eq: gauzyAIEmployee.id,
+							},
+						},
+					},
+				},
 			});
 
 			console.log(
@@ -416,12 +415,12 @@ export class GauzyAIService {
 							employeeId: gauzyAIEmployee.id,
 							isActive: true,
 							isArchived: false,
-							jobType: 'hourly', // TODO: criterion.jobType
+							jobType: criterion.jobType,
 							keyword: criterion.keyword,
 							category: criterion.category?.name,
 							categoryId: criterion.categoryId,
 							occupation: criterion.occupation?.name,
-							occupationId: criterion.occupationId
+							occupationId: criterion.occupationId,
 						});
 					}
 				);
@@ -440,9 +439,9 @@ export class GauzyAIService {
 					mutation: createCriteriaMutation,
 					variables: {
 						input: {
-							upworkJobsSearchCriteria: gauzyAICriteria
-						}
-					}
+							upworkJobsSearchCriteria: gauzyAICriteria,
+						},
+					},
 				});
 
 				console.log(
@@ -485,7 +484,7 @@ export class GauzyAIService {
 						upworkJobSearchCriteria: undefined,
 						upworkJobSearchCriteriaAggregate: undefined,
 						firstName: employee.user.firstName,
-						lastName: employee.user.lastName
+						lastName: employee.user.lastName,
 					});
 
 					console.log(
@@ -530,8 +529,8 @@ export class GauzyAIService {
 			query: employeeJobPostsQuery,
 			variables: {
 				employeeIdFilter: employeeId,
-				jobPostIdFilter: jobPostId
-			}
+				jobPostIdFilter: jobPostId,
+			},
 		});
 
 		const employeeJobPostsResponse =
@@ -574,8 +573,8 @@ export class GauzyAIService {
 			query: jobPostsQuery,
 			variables: {
 				providerCodeFilter: providerCode,
-				providerJobIdFilter: providerJobId
-			}
+				providerJobIdFilter: providerJobId,
+			},
 		});
 
 		const jobPostsResponse = jobPostsQueryResult.data.jobPosts.edges;
@@ -610,14 +609,13 @@ export class GauzyAIService {
 			}
 		`;
 
-		const employeesQueryResult: ApolloQueryResult<EmployeeQuery> = await this._client.query<EmployeeQuery>(
-			{
+		const employeesQueryResult: ApolloQueryResult<EmployeeQuery> =
+			await this._client.query<EmployeeQuery>({
 				query: employeesQuery,
 				variables: {
-					externalEmployeeIdFilter: externalEmployeeId
-				}
-			}
-		);
+					externalEmployeeIdFilter: externalEmployeeId,
+				},
+			});
 
 		const employeesResponse = employeesQueryResult.data.employees.edges;
 
@@ -655,14 +653,13 @@ export class GauzyAIService {
 			}
 		`;
 
-		let employeesQueryResult: ApolloQueryResult<EmployeeQuery> = await this._client.query<EmployeeQuery>(
-			{
+		let employeesQueryResult: ApolloQueryResult<EmployeeQuery> =
+			await this._client.query<EmployeeQuery>({
 				query: employeesQuery,
 				variables: {
-					externalEmployeeIdFilter: employee.externalEmployeeId
-				}
-			}
-		);
+					externalEmployeeIdFilter: employee.externalEmployeeId,
+				},
+			});
 
 		let employeesResponse = employeesQueryResult.data.employees.edges;
 
@@ -703,8 +700,8 @@ export class GauzyAIService {
 				query: employeesQuery,
 				variables: {
 					firstNameFilter: employee.firstName,
-					lastNameFilter: employee.lastName
-				}
+					lastNameFilter: employee.lastName,
+				},
 			});
 
 			employeesResponse = employeesQueryResult.data.employees.edges;
@@ -733,9 +730,9 @@ export class GauzyAIService {
 					mutation: createEmployeeMutation,
 					variables: {
 						input: {
-							employee
-						}
-					}
+							employee,
+						},
+					},
 				});
 
 				return newEmployee.data.createOneEmployee;
@@ -763,9 +760,9 @@ export class GauzyAIService {
 			variables: {
 				input: {
 					id: id,
-					update: employee
-				}
-			}
+					update: employee,
+				},
+			},
 		});
 
 		return <Employee>employeesResponse[0].node;
@@ -783,7 +780,9 @@ export class GauzyAIService {
 
 		console.log(`getEmployeesJobPosts. Data ${JSON.stringify(data)}`);
 
-		const filters: IGetEmployeeJobPostFilters = data.filters ? <any>data.filters : undefined;
+		const filters: IGetEmployeeJobPostFilters = data.filters
+			? <any>data.filters
+			: undefined;
 
 		console.log(`getEmployeesJobPosts. Filters ${JSON.stringify(filters)}`);
 
@@ -867,12 +866,12 @@ export class GauzyAIService {
 
 			const filter = {
 				isActive: {
-					is: true
+					is: true,
 				},
 				isArchived: {
-					is: false
+					is: false,
 				},
-				employeeId: undefined
+				employeeId: undefined,
 			};
 
 			if (employeeIdFilter) {
@@ -881,7 +880,7 @@ export class GauzyAIService {
 				);
 
 				filter.employeeId = {
-					eq: employeeId
+					eq: employeeId,
 				};
 			}
 
@@ -901,8 +900,8 @@ export class GauzyAIService {
 			let totalCount;
 
 			do {
-				const result: ApolloQueryResult<EmployeeJobPostsQuery> = await this._client.query<EmployeeJobPostsQuery>(
-					{
+				const result: ApolloQueryResult<EmployeeJobPostsQuery> =
+					await this._client.query<EmployeeJobPostsQuery>({
 						query: employeesQuery,
 						variables: {
 							after: after,
@@ -910,13 +909,12 @@ export class GauzyAIService {
 							sorting: [
 								{
 									field: 'jobDateCreated',
-									direction: 'DESC'
-								}
+									direction: 'DESC',
+								},
 							],
-							filter: filter
-						}
-					}
-				);
+							filter: filter,
+						},
+					});
 
 				const jobsResponse = result.data.employeeJobPosts.edges.map(
 					(it) => {
@@ -943,7 +941,7 @@ export class GauzyAIService {
 							isActive: rec.isActive,
 							isArchived: rec.isArchived,
 							createdAt: rec.createdAt,
-							updatedAt: rec.updatedAt
+							updatedAt: rec.updatedAt,
 						};
 
 						return res;
@@ -974,7 +972,7 @@ export class GauzyAIService {
 
 			const response: IPagination<IEmployeeJobPost> = {
 				items: this.paginate(jobResponses, data.limit, data.page),
-				total: totalCount
+				total: totalCount,
 			};
 
 			// console.log(`Found Records: ${JSON.stringify(response)}`);

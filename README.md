@@ -8,13 +8,20 @@
 [![License: AGPL v3][uri_license_image]][uri_license]
 [![Gitpod Ready-to-Code](https://img.shields.io/badge/Gitpod-Ready--to--Code-blue?logo=gitpod)](https://gitpod.io/#https://github.com/ever-co/ever-gauzy)
 
-## ⭐️ What is it?
+## 💡 What's New
+
+We released [Ever Gauzy Teams](https://github.com/ever-co/ever-gauzy-teams) platform for Work & Project Management.  
+Please check <https://github.com/ever-co/ever-gauzy-teams> and make it ⭐ on GitHub!  
+It's built with React / ReactNative stack and connects to headless Ever Gauzy Platform APIs.
+
+## 🌟 What is it
 
 [Ever® Gauzy™][uri_gauzy] - **Open-Source Business Management Platform** for On-Demand and Sharing Economies.
 
-- **Enterprise Resource Planning** (ERP) software
-- **Customer Relationship Management** (CRM) software
-- **Human Resource Management** (HRM) software with employee **Time and Activity Tracking** functionality
+- **Enterprise Resource Planning** (ERP) software.
+- **Customer Relationship Management** (CRM) software.
+- **Human Resource Management** (HRM) software with employee **Time and Activity Tracking** functionality.
+- **Work and Project Management** software. 
 
 ![overview](https://docs.gauzy.co/docs/assets/overview.png)
 
