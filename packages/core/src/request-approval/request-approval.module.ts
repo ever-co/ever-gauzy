@@ -17,17 +17,14 @@ import { OrganizationModule } from './../organization/organization.module';
 import { EquipmentSharingModule } from './../equipment-sharing/equipment-sharing.module';
 import { TimeOffRequestModule } from './../time-off-request/time-off-request.module';
 import { CommandHandlers } from './commands/handlers';
+import { TaskModule } from './../tasks/task.module';
 
 @Module({
 	imports: [
 		RouterModule.forRoutes([
-			{ path: '/request-approval', module: RequestApprovalModule }
+			{ path: '/request-approval', module: RequestApprovalModule },
 		]),
-		TypeOrmModule.forFeature([
-			RequestApproval,
-			Employee,
-			OrganizationTeam
-		]),
+		TypeOrmModule.forFeature([RequestApproval, Employee, OrganizationTeam]),
 		CqrsModule,
 		OrganizationTeamEmployeeModule,
 		TenantModule,
@@ -35,15 +32,16 @@ import { CommandHandlers } from './commands/handlers';
 		RoleModule,
 		OrganizationModule,
 		EquipmentSharingModule,
-		TimeOffRequestModule
+		TimeOffRequestModule,
+		TaskModule,
 	],
 	controllers: [RequestApprovalControler],
 	providers: [
 		RequestApprovalService,
 		OrganizationTeamService,
 		EmployeeService,
-		...CommandHandlers
+		...CommandHandlers,
 	],
-	exports: [RequestApprovalService]
+	exports: [RequestApprovalService],
 })
 export class RequestApprovalModule {}
