@@ -462,7 +462,7 @@
 															config?.serverType === serverTypes?.live
 														" status="basic" />
 													</div>
-													<div class="col-5">
+													<div *ngIf="!isServer && !config?.isLocalServer" class="col-5">
 														<button nbButton status="basic" class="check-db" [nbSpinner]="(isCheckHost$ | async)?.isLoading" nbSpinnerSize="tiny" nbSpinner
 															(click)="checkHostConnectivity()" [disabled]="appSetting?.timerStarted">
 															<ng-container *ngIf="!(isCheckHost$ | async)?.isLoading">

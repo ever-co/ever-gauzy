@@ -23,7 +23,7 @@ export class ServerDashboardComponent implements OnInit {
 	loading = false;
 	btn: any = {
 		name: 'Start',
-		icon: 'play-circle-outline',
+		icon: 'arrow-right-outline',
 	};
 	logContents: any = [];
 	isExpandWindow = false;
@@ -41,7 +41,7 @@ export class ServerDashboardComponent implements OnInit {
 			this.loading = false;
 			this.btn = {
 				name: arg ? 'Stop' : 'Start',
-				icon: arg ? 'stop-circle-outline' : 'play-circle-outline',
+				icon: arg ? 'stop-circle-outline' : 'arrow-right-outline',
 			};
 			this.running = arg;
 			event.sender.send('running_state', arg);

@@ -497,7 +497,11 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 				this.checkDatabaseConnectivity();
 				this.authSetting = auth;
 				this.mappingAdditionalSetting(additionalSetting || null);
-				await this.checkHostConnectivity();
+				if (!this.isServer && !this.config?.isLocalServer) {
+					await this.checkHostConnectivity();
+				} else {
+					this._isCheckHost$.next({ ...this._isCheckHost, status: true })
+				}
 				this.config.awPort = this.config.timeTrackerWindow
 					? this.config.awHost.split('t:')[1]
 					: null;
