@@ -1,8 +1,8 @@
-.button-big {
-    font-size: 16px;
-    font-weight: bold;
-    height: 56px;
-    width: 180px;
+  .button-big {
+    font-size: 14px;
+    font-weight: 600;
+    height: 28px;
+    width: 94px;
   }
 
   .button-small {
@@ -17,7 +17,12 @@
   }
 
   .margin-content {
-    margin-top: 35px !important;
+    h4, h5 {
+      font-family: monospace;
+    }
+    .button {
+      margin-top: auto !important;
+    }
   }
 
   .col-center {
@@ -25,8 +30,8 @@
   }
 
   .margin-icon {
-    margin-top: 35px;
-    height: 56px;
+    margin-top: 0px;
+    height: 30px;
   }
 
   .margin-icon-small {
@@ -35,7 +40,7 @@
   }
 
   .content-body {
-    margin-top: 25px;
+    height: 100%;
   }
 
   .top-bottom-space {
@@ -50,18 +55,23 @@
   }
 
   .log-content {
-    min-height: 300px;
     overflow-y: auto;
-    max-height: 300px;
+    font-family: monospace;
+    height: calc(100vh - 15.5rem) !important;
+  }
+
+  .accordion {
+    height: calc(100vh - 11rem) !important;
   }
 
   .content-text {
-    color: white;
+    color: #08c234;
     font-size: 11px;
+    font-family: monospace !important;
   }
 
   .card-body {
-    min-height: 775px;
+    padding: 1rem;
   }
 
   .btn-bottom {
@@ -76,4 +86,8 @@
 
   .fh {
     height: 100%;
+  }
+
+  nb-accordion-item-header{
+    font-family: monospace;
   }
