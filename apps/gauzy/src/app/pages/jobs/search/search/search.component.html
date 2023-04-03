@@ -100,6 +100,7 @@
 									[formGroup]="form"
 									(ngSubmit)="searchJobs()"
 								>
+									{{ form.value | json }}
 									<div class="row">
 										<div
 											class="col-xl-6 col-md-8 col-12 form-group m-0"
@@ -144,7 +145,7 @@
 														let source of JobPostSourceEnum
 															| keyvalue
 													"
-													[value]="source?.value"
+													[value]="source?.value | lowercase"
 													>{{
 														'JOBS.' + source.value
 															| translate
@@ -179,7 +180,7 @@
 														let type of JobPostTypeEnum
 															| keyvalue
 													"
-													[value]="type.value"
+													[value]="type.value | lowercase"
 													>{{
 														'JOBS.' + type.key
 															| translate
@@ -213,7 +214,7 @@
 														let type of JobPostStatusEnum
 															| keyvalue
 													"
-													[value]="type.value"
+													[value]="type.value | lowercase"
 													>{{
 														'JOBS.STATUS_' +
 															type.value
