@@ -111,12 +111,12 @@ export enum JobPostStatusEnum {
 
 export enum JobPostTypeEnum {
 	HOURLY = 'HOURLY',
-	FIX_PRICE = 'FIX_PRICE'
+	FIXED = 'FIXED'
 }
 
 export enum JobSearchTabsEnum {
-    ACTIONS = "ACTIONS",
-    SEARCH = "SEARCH"
+	ACTIONS = "ACTIONS",
+	SEARCH = "SEARCH"
 }
 
 export interface IUpdateEmployeeJobPostAppliedResult {
