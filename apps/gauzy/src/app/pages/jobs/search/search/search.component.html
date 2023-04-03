@@ -310,13 +310,15 @@
 </nb-card>
 <ng-template #tableLayout>
 	<div class="table-scroll-container">
-		<ng2-smart-table
-			style="cursor: pointer"
-			[settings]="settingsSmartTable"
-			(userRowSelect)="onSelectJob($event)"
-			[source]="smartTableSource"
-			#jobSearchTable
-		></ng2-smart-table>
+		<ng-template [ngIf]="settingsSmartTable">
+			<ng2-smart-table
+				style="cursor: pointer"
+				[settings]="settingsSmartTable"
+				(userRowSelect)="onSelectJob($event)"
+				[source]="smartTableSource"
+				#jobSearchTable
+			></ng2-smart-table>
+		</ng-template>
 	</div>
 	<div class="pagination-container">
 		<ng-container *ngIf="pagination.totalItems > minItemPerPage">

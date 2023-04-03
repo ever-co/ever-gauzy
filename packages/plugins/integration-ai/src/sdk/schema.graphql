@@ -68,6 +68,10 @@ input UpworkJobsSearchCriterionFilter {
   or: [UpworkJobsSearchCriterionFilter!]
   id: IDFilterComparison
   employeeId: StringFieldComparison
+  category: StringFieldComparison
+  categoryId: StringFieldComparison
+  occupation: StringFieldComparison
+  occupationId: StringFieldComparison
   jobType: StringFieldComparison
   isActive: BooleanFieldComparison
   isArchived: BooleanFieldComparison
@@ -121,6 +125,10 @@ input UpworkJobsSearchCriterionSort {
 enum UpworkJobsSearchCriterionSortFields {
   id
   employeeId
+  category
+  categoryId
+  occupation
+  occupationId
   jobType
   isActive
   isArchived
@@ -143,6 +151,10 @@ input UpworkJobsSearchCriterionAggregateFilter {
   or: [UpworkJobsSearchCriterionAggregateFilter!]
   id: IDFilterComparison
   employeeId: StringFieldComparison
+  category: StringFieldComparison
+  categoryId: StringFieldComparison
+  occupation: StringFieldComparison
+  occupationId: StringFieldComparison
   jobType: StringFieldComparison
   isActive: BooleanFieldComparison
   isArchived: BooleanFieldComparison
@@ -162,6 +174,7 @@ type JobPost {
   duration: String
   workload: String
   skills: String
+  contractToHire: Boolean
   category: String
   subcategory: String
   country: String
@@ -220,6 +233,11 @@ type EmployeeJobApplication {
   providerJobApplicationId: String
   isViewedByClient: Boolean
   appliedDate: DateTime
+  proposal: String
+  qa: String
+  attachments: String
+  rate: Float
+  terms: String
   createdAt: DateTime
   updatedAt: DateTime
   isActive: Boolean!
@@ -240,7 +258,10 @@ type AutomationTask {
   providerCode: String!
   providerJobId: String
   commandType: String!
+  command: String
+  commandResult: String
   status: String!
+  executionTime: Float
   createdAt: DateTime
   updatedAt: DateTime
   isActive: Boolean!
@@ -269,6 +290,7 @@ type JobPostDeleteResponse {
   duration: String
   workload: String
   skills: String
+  contractToHire: Boolean
   category: String
   subcategory: String
   country: String
@@ -346,6 +368,11 @@ type JobPostCountAggregate {
   country: Int
   englishLevel: Int
   clientPaymentVerificationStatus: Int
+  searchCategory: Int
+  searchCategoryId: Int
+  searchOccupation: Int
+  searchOccupationId: Int
+  searchJobType: Int
   createdAt: Int
   updatedAt: Int
   isActive: Int
@@ -361,6 +388,11 @@ type JobPostMinAggregate {
   jobType: String
   country: String
   englishLevel: String
+  searchCategory: String
+  searchCategoryId: String
+  searchOccupation: String
+  searchOccupationId: String
+  searchJobType: String
   createdAt: DateTime
   updatedAt: DateTime
 }
@@ -374,6 +406,11 @@ type JobPostMaxAggregate {
   jobType: String
   country: String
   englishLevel: String
+  searchCategory: String
+  searchCategoryId: String
+  searchOccupation: String
+  searchOccupationId: String
+  searchJobType: String
   createdAt: DateTime
   updatedAt: DateTime
 }
@@ -421,6 +458,10 @@ type UpworkJobsSearchCriterionConnection {
 type UpworkJobsSearchCriterionCountAggregate {
   id: Int
   employeeId: Int
+  category: Int
+  categoryId: Int
+  occupation: Int
+  occupationId: Int
   jobType: Int
   isActive: Int
   isArchived: Int
@@ -429,12 +470,20 @@ type UpworkJobsSearchCriterionCountAggregate {
 type UpworkJobsSearchCriterionMinAggregate {
   id: ID
   employeeId: String
+  category: String
+  categoryId: String
+  occupation: String
+  occupationId: String
   jobType: String
 }
 
 type UpworkJobsSearchCriterionMaxAggregate {
   id: ID
   employeeId: String
+  category: String
+  categoryId: String
+  occupation: String
+  occupationId: String
   jobType: String
 }
 
@@ -537,6 +586,10 @@ type EmployeeAggregateResponse {
 type EmployeeUpworkJobSearchCriteriaCountAggregate {
   id: Int
   employeeId: Int
+  category: Int
+  categoryId: Int
+  occupation: Int
+  occupationId: Int
   jobType: Int
   isActive: Int
   isArchived: Int
@@ -545,12 +598,20 @@ type EmployeeUpworkJobSearchCriteriaCountAggregate {
 type EmployeeUpworkJobSearchCriteriaMinAggregate {
   id: ID
   employeeId: String
+  category: String
+  categoryId: String
+  occupation: String
+  occupationId: String
   jobType: String
 }
 
 type EmployeeUpworkJobSearchCriteriaMaxAggregate {
   id: ID
   employeeId: String
+  category: String
+  categoryId: String
+  occupation: String
+  occupationId: String
   jobType: String
 }
 
@@ -660,6 +721,11 @@ type EmployeeJobApplicationDeleteResponse {
   providerJobApplicationId: String
   isViewedByClient: Boolean
   appliedDate: DateTime
+  proposal: String
+  qa: String
+  attachments: String
+  rate: Float
+  terms: String
   createdAt: DateTime
   updatedAt: DateTime
   isActive: Boolean
@@ -753,7 +819,10 @@ type AutomationTaskDeleteResponse {
   providerCode: String
   providerJobId: String
   commandType: String
+  command: String
+  commandResult: String
   status: String
+  executionTime: Float
   createdAt: DateTime
   updatedAt: DateTime
   isActive: Boolean
@@ -972,6 +1041,11 @@ input JobPostFilter {
   country: StringFieldComparison
   englishLevel: StringFieldComparison
   clientPaymentVerificationStatus: BooleanFieldComparison
+  searchCategory: StringFieldComparison
+  searchCategoryId: StringFieldComparison
+  searchOccupation: StringFieldComparison
+  searchOccupationId: StringFieldComparison
+  searchJobType: StringFieldComparison
   createdAt: DateFieldComparison
   updatedAt: DateFieldComparison
   isActive: BooleanFieldComparison
@@ -1014,6 +1088,11 @@ enum JobPostSortFields {
   country
   englishLevel
   clientPaymentVerificationStatus
+  searchCategory
+  searchCategoryId
+  searchOccupation
+  searchOccupationId
+  searchJobType
   createdAt
   updatedAt
   isActive
@@ -1032,6 +1111,11 @@ input JobPostAggregateFilter {
   country: StringFieldComparison
   englishLevel: StringFieldComparison
   clientPaymentVerificationStatus: BooleanFieldComparison
+  searchCategory: StringFieldComparison
+  searchCategoryId: StringFieldComparison
+  searchOccupation: StringFieldComparison
+  searchOccupationId: StringFieldComparison
+  searchJobType: StringFieldComparison
   createdAt: DateFieldComparison
   updatedAt: DateFieldComparison
   isActive: BooleanFieldComparison
@@ -1132,6 +1216,11 @@ input EmployeeJobPostFilterJobPostFilter {
   country: StringFieldComparison
   englishLevel: StringFieldComparison
   clientPaymentVerificationStatus: BooleanFieldComparison
+  searchCategory: StringFieldComparison
+  searchCategoryId: StringFieldComparison
+  searchOccupation: StringFieldComparison
+  searchOccupationId: StringFieldComparison
+  searchJobType: StringFieldComparison
   createdAt: DateFieldComparison
   updatedAt: DateFieldComparison
   isActive: BooleanFieldComparison
@@ -1254,6 +1343,11 @@ input EmployeeJobApplicationFilterJobPostFilter {
   country: StringFieldComparison
   englishLevel: StringFieldComparison
   clientPaymentVerificationStatus: BooleanFieldComparison
+  searchCategory: StringFieldComparison
+  searchCategoryId: StringFieldComparison
+  searchOccupation: StringFieldComparison
+  searchOccupationId: StringFieldComparison
+  searchJobType: StringFieldComparison
   createdAt: DateFieldComparison
   updatedAt: DateFieldComparison
   isActive: BooleanFieldComparison
@@ -1379,6 +1473,11 @@ input AutomationTaskFilterJobPostFilter {
   country: StringFieldComparison
   englishLevel: StringFieldComparison
   clientPaymentVerificationStatus: BooleanFieldComparison
+  searchCategory: StringFieldComparison
+  searchCategoryId: StringFieldComparison
+  searchOccupation: StringFieldComparison
+  searchOccupationId: StringFieldComparison
+  searchJobType: StringFieldComparison
   createdAt: DateFieldComparison
   updatedAt: DateFieldComparison
   isActive: BooleanFieldComparison
@@ -1529,6 +1628,11 @@ input JobPostDeleteFilter {
   country: StringFieldComparison
   englishLevel: StringFieldComparison
   clientPaymentVerificationStatus: BooleanFieldComparison
+  searchCategory: StringFieldComparison
+  searchCategoryId: StringFieldComparison
+  searchOccupation: StringFieldComparison
+  searchOccupationId: StringFieldComparison
+  searchJobType: StringFieldComparison
   createdAt: DateFieldComparison
   updatedAt: DateFieldComparison
   isActive: BooleanFieldComparison
@@ -1557,6 +1661,7 @@ input UpdateJobPost {
   duration: String
   workload: String
   skills: String
+  contractToHire: Boolean
   category: String
   subcategory: String
   country: String
@@ -1603,6 +1708,11 @@ input JobPostUpdateFilter {
   country: StringFieldComparison
   englishLevel: StringFieldComparison
   clientPaymentVerificationStatus: BooleanFieldComparison
+  searchCategory: StringFieldComparison
+  searchCategoryId: StringFieldComparison
+  searchOccupation: StringFieldComparison
+  searchOccupationId: StringFieldComparison
+  searchJobType: StringFieldComparison
   createdAt: DateFieldComparison
   updatedAt: DateFieldComparison
   isActive: BooleanFieldComparison
@@ -1628,6 +1738,7 @@ input CreateJobPost {
   duration: String
   workload: String
   skills: String
+  contractToHire: Boolean
   category: String
   subcategory: String
   country: String
@@ -1669,6 +1780,10 @@ input UpworkJobsSearchCriterionDeleteFilter {
   or: [UpworkJobsSearchCriterionDeleteFilter!]
   id: IDFilterComparison
   employeeId: StringFieldComparison
+  category: StringFieldComparison
+  categoryId: StringFieldComparison
+  occupation: StringFieldComparison
+  occupationId: StringFieldComparison
   jobType: StringFieldComparison
   isActive: BooleanFieldComparison
   isArchived: BooleanFieldComparison
@@ -1710,6 +1825,10 @@ input UpworkJobsSearchCriterionUpdateFilter {
   or: [UpworkJobsSearchCriterionUpdateFilter!]
   id: IDFilterComparison
   employeeId: StringFieldComparison
+  category: StringFieldComparison
+  categoryId: StringFieldComparison
+  occupation: StringFieldComparison
+  occupationId: StringFieldComparison
   jobType: StringFieldComparison
   isActive: BooleanFieldComparison
   isArchived: BooleanFieldComparison
@@ -2011,6 +2130,11 @@ input UpdateEmployeeJobApplication {
   providerJobApplicationId: String
   isViewedByClient: Boolean
   appliedDate: DateTime
+  proposal: String
+  qa: String
+  attachments: String
+  rate: Float
+  terms: String
   createdAt: DateTime
   updatedAt: DateTime
   isActive: Boolean
@@ -2064,6 +2188,11 @@ input CreateEmployeeJobApplication {
   providerJobApplicationId: String
   isViewedByClient: Boolean
   appliedDate: DateTime
+  proposal: String
+  qa: String
+  attachments: String
+  rate: Float
+  terms: String
   createdAt: DateTime
   updatedAt: DateTime
   isActive: Boolean
@@ -2119,7 +2248,10 @@ input UpdateAutomationTask {
   providerCode: String
   providerJobId: String
   commandType: String
+  command: String
+  commandResult: String
   status: String
+  executionTime: Float
   createdAt: DateTime
   updatedAt: DateTime
   isActive: Boolean
@@ -2170,7 +2302,10 @@ input CreateAutomationTask {
   providerCode: String
   providerJobId: String
   commandType: String
+  command: String
+  commandResult: String
   status: String
+  executionTime: Float
   createdAt: DateTime
   updatedAt: DateTime
   isActive: Boolean
@@ -2232,6 +2367,11 @@ input JobPostSubscriptionFilter {
   country: StringFieldComparison
   englishLevel: StringFieldComparison
   clientPaymentVerificationStatus: BooleanFieldComparison
+  searchCategory: StringFieldComparison
+  searchCategoryId: StringFieldComparison
+  searchOccupation: StringFieldComparison
+  searchOccupationId: StringFieldComparison
+  searchJobType: StringFieldComparison
   createdAt: DateFieldComparison
   updatedAt: DateFieldComparison
   isActive: BooleanFieldComparison
@@ -2258,6 +2398,10 @@ input UpworkJobsSearchCriterionSubscriptionFilter {
   or: [UpworkJobsSearchCriterionSubscriptionFilter!]
   id: IDFilterComparison
   employeeId: StringFieldComparison
+  category: StringFieldComparison
+  categoryId: StringFieldComparison
+  occupation: StringFieldComparison
+  occupationId: StringFieldComparison
   jobType: StringFieldComparison
   isActive: BooleanFieldComparison
   isArchived: BooleanFieldComparison
