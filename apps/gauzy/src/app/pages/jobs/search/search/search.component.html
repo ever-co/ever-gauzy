@@ -140,16 +140,11 @@
 												formControlName="jobSource"
 											>
 												<nb-option
-													*ngFor="
-														let source of JobPostSourceEnum
-															| keyvalue
-													"
+													*ngFor=" let source of JobPostSourceEnum | keyvalue"
 													[value]="source?.value | lowercase"
-													>{{
-														'JOBS.' + source.value
-															| translate
-													}}</nb-option
 												>
+													{{ 'JOBS.' + source.key | translate }}
+												</nb-option>
 											</nb-select>
 										</div>
 										<div
@@ -175,15 +170,10 @@
 												formControlName="jobType"
 											>
 												<nb-option
-													*ngFor="
-														let type of JobPostTypeEnum
-															| keyvalue
-													"
+													*ngFor=" let type of JobPostTypeEnum | keyvalue "
 													[value]="type.value | lowercase"
-													>{{
-														'JOBS.' + type.key
-															| translate
-													}}
+												>
+													{{ 'JOBS.' + type.key | translate }}
 												</nb-option>
 											</nb-select>
 										</div>
@@ -209,16 +199,10 @@
 												formControlName="jobStatus"
 											>
 												<nb-option
-													*ngFor="
-														let type of JobPostStatusEnum
-															| keyvalue
-													"
+													*ngFor=" let type of JobPostStatusEnum | keyvalue"
 													[value]="type.value | lowercase"
-													>{{
-														'JOBS.STATUS_' +
-															type.value
-															| translate
-													}}
+												>
+													{{ 'JOBS.' + type.key | translate }}
 												</nb-option>
 											</nb-select>
 										</div>

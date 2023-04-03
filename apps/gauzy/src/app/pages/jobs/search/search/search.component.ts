@@ -390,19 +390,19 @@ export class SearchComponent extends PaginationFilterBaseComponent
 							JobPostStatusEnum.CLOSED.toLowerCase()
 						) {
 							badgeClass = 'danger';
-							cell = this.getTranslation('JOBS.STATUS_CLOSED');
+							cell = this.getTranslation('JOBS.CLOSED');
 						} else if (
 							row.jobPost.jobStatus.toLowerCase() ===
 							JobPostStatusEnum.OPEN.toLowerCase()
 						) {
 							badgeClass = 'success';
-							cell = this.getTranslation('JOBS.STATUS_OPEN');
+							cell = this.getTranslation('JOBS.OPEN');
 						} else if (
 							row.jobPost.jobStatus.toLowerCase() ===
 							JobPostStatusEnum.APPLIED.toLowerCase()
 						) {
 							badgeClass = 'warning';
-							cell = this.getTranslation('JOBS.STATUS_APPLIED');
+							cell = this.getTranslation('JOBS.APPLIED');
 						} else {
 							badgeClass = 'default';
 							cell = row.jobPost.jobStatus;
