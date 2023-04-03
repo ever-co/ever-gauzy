@@ -171,7 +171,7 @@ export class OrganizationTeamEmployeeService extends TenantAwareCrudService<Orga
 						organizationTeamId,
 					},
 				});
-				await this.taskService.deleteEmployeeFromTasks(
+				await this.taskService.unassignEmployeeFromTeamTasks(
 					member.employeeId,
 					organizationTeamId
 				);
@@ -196,7 +196,7 @@ export class OrganizationTeamEmployeeService extends TenantAwareCrudService<Orga
 									organizationTeamId,
 								},
 							});
-							await this.taskService.deleteEmployeeFromTasks(
+							await this.taskService.unassignEmployeeFromTeamTasks(
 								member.employeeId,
 								organizationTeamId
 							);

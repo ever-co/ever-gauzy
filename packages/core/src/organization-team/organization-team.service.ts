@@ -431,7 +431,7 @@ export class OrganizationTeamService extends TenantAwareCrudService<Organization
 								roleId: IsNull(),
 							}
 						);
-					await this.taskService.deleteEmployeeFromTasks(
+					await this.taskService.unassignEmployeeFromTeamTasks(
 						employeeId,
 						organizationTeamEmployee.organizationTeamId
 					);

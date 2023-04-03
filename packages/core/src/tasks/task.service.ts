@@ -246,10 +246,6 @@ export class TaskService extends TenantAwareCrudService<Task> {
 	async findTeamTasks(
 		options: PaginationParams<Task>
 	): Promise<IPagination<ITask>> {
-		this.deleteEmployeeFromTasks(
-			'd3a85fab-073b-4b89-a23a-98c48006e307',
-			'0fdddca5-cd61-4f25-a6e7-e1125b67a969'
-		);
 		try {
 			const { where } = options;
 			const {
@@ -456,7 +452,7 @@ export class TaskService extends TenantAwareCrudService<Task> {
 		}
 	}
 
-	public async deleteEmployeeFromTasks(
+	public async unassignEmployeeFromTeamTasks(
 		employeeId: string,
 		organizationTeamId: string
 	) {
