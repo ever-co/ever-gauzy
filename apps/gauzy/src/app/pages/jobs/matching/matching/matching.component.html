@@ -19,9 +19,9 @@
 					>
 						<nb-option
 							*ngFor="let source of JobPostSourceEnum | keyvalue"
-							[value]="source.value"
+							[value]="source.value | lowercase"
 						>
-							{{ 'JOBS.' + source.value | translate }}</nb-option
+							{{ 'JOBS.' + source.key | translate }}</nb-option
 						>
 					</nb-select>
 				</div>
@@ -180,7 +180,7 @@
 											let type of JobPostTypeEnum
 												| keyvalue
 										"
-										[value]="type.value"
+										[value]="type.value | lowercase"
 									>
 										{{ 'JOBS.' + type.key | translate }}
 									</nb-radio>

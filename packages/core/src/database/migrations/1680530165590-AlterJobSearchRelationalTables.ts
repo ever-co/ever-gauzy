@@ -1,9 +1,9 @@
 
 import { MigrationInterface, QueryRunner } from "typeorm";
 
-export class AlterJobSearchRelationalTables1680516063501 implements MigrationInterface {
+export class AlterJobSearchRelationalTables1680530165590 implements MigrationInterface {
 
-    name = 'AlterJobSearchRelationalTables1680516063501';
+    name = 'AlterJobSearchRelationalTables1680530165590';
 
     /**
     * Up Migration
@@ -37,8 +37,8 @@ export class AlterJobSearchRelationalTables1680516063501 implements MigrationInt
     * @param queryRunner
     */
     public async postgresUpQueryRunner(queryRunner: QueryRunner): Promise<any> {
-        await queryRunner.query(`ALTER TABLE "job_search_category" ALTER COLUMN "jobSource" DROP DEFAULT`);
-        await queryRunner.query(`ALTER TABLE "job_search_occupation" ALTER COLUMN "jobSource" DROP DEFAULT`);
+        await queryRunner.query(`ALTER TABLE "job_search_category" ALTER COLUMN "jobSource" SET DEFAULT 'upwork'`);
+        await queryRunner.query(`ALTER TABLE "job_search_occupation" ALTER COLUMN "jobSource" SET DEFAULT 'upwork'`);
     }
 
     /**
@@ -62,7 +62,7 @@ export class AlterJobSearchRelationalTables1680516063501 implements MigrationInt
         await queryRunner.query(`DROP INDEX "IDX_3b335bbcbf7d5e00853acaa165"`);
         await queryRunner.query(`DROP INDEX "IDX_86381fb6d28978b101b3aec8ca"`);
         await queryRunner.query(`DROP INDEX "IDX_35e120f2b6e5188391cf068d3b"`);
-        await queryRunner.query(`CREATE TABLE "temporary_job_search_category" ("id" varchar PRIMARY KEY NOT NULL, "createdAt" datetime NOT NULL DEFAULT (datetime('now')), "updatedAt" datetime NOT NULL DEFAULT (datetime('now')), "tenantId" varchar, "organizationId" varchar, "name" varchar NOT NULL, "jobSourceCategoryId" varchar, "jobSource" text NOT NULL, CONSTRAINT "FK_86381fb6d28978b101b3aec8ca4" FOREIGN KEY ("organizationId") REFERENCES "organization" ("id") ON DELETE CASCADE ON UPDATE CASCADE, CONSTRAINT "FK_35e120f2b6e5188391cf068d3ba" FOREIGN KEY ("tenantId") REFERENCES "tenant" ("id") ON DELETE CASCADE ON UPDATE NO ACTION)`);
+        await queryRunner.query(`CREATE TABLE "temporary_job_search_category" ("id" varchar PRIMARY KEY NOT NULL, "createdAt" datetime NOT NULL DEFAULT (datetime('now')), "updatedAt" datetime NOT NULL DEFAULT (datetime('now')), "tenantId" varchar, "organizationId" varchar, "name" varchar NOT NULL, "jobSourceCategoryId" varchar, "jobSource" text NOT NULL DEFAULT ('upwork'), CONSTRAINT "FK_86381fb6d28978b101b3aec8ca4" FOREIGN KEY ("organizationId") REFERENCES "organization" ("id") ON DELETE CASCADE ON UPDATE CASCADE, CONSTRAINT "FK_35e120f2b6e5188391cf068d3ba" FOREIGN KEY ("tenantId") REFERENCES "tenant" ("id") ON DELETE CASCADE ON UPDATE NO ACTION)`);
         await queryRunner.query(`INSERT INTO "temporary_job_search_category"("id", "createdAt", "updatedAt", "tenantId", "organizationId", "name", "jobSourceCategoryId", "jobSource") SELECT "id", "createdAt", "updatedAt", "tenantId", "organizationId", "name", "jobSourceCategoryId", "jobSource" FROM "job_search_category"`);
         await queryRunner.query(`DROP TABLE "job_search_category"`);
         await queryRunner.query(`ALTER TABLE "temporary_job_search_category" RENAME TO "job_search_category"`);
@@ -76,7 +76,7 @@ export class AlterJobSearchRelationalTables1680516063501 implements MigrationInt
         await queryRunner.query(`DROP INDEX "IDX_9f1288205ae91f91cf356cac2f"`);
         await queryRunner.query(`DROP INDEX "IDX_1a62a99e1016e4a2b461e886ec"`);
         await queryRunner.query(`DROP INDEX "IDX_44e22d88b47daf2095491b7cac"`);
-        await queryRunner.query(`CREATE TABLE "temporary_job_search_occupation" ("id" varchar PRIMARY KEY NOT NULL, "createdAt" datetime NOT NULL DEFAULT (datetime('now')), "updatedAt" datetime NOT NULL DEFAULT (datetime('now')), "tenantId" varchar, "organizationId" varchar, "name" varchar NOT NULL, "jobSourceOccupationId" varchar, "jobSource" text NOT NULL, CONSTRAINT "FK_1a62a99e1016e4a2b461e886ecd" FOREIGN KEY ("organizationId") REFERENCES "organization" ("id") ON DELETE CASCADE ON UPDATE CASCADE, CONSTRAINT "FK_44e22d88b47daf2095491b7cac3" FOREIGN KEY ("tenantId") REFERENCES "tenant" ("id") ON DELETE CASCADE ON UPDATE NO ACTION)`);
+        await queryRunner.query(`CREATE TABLE "temporary_job_search_occupation" ("id" varchar PRIMARY KEY NOT NULL, "createdAt" datetime NOT NULL DEFAULT (datetime('now')), "updatedAt" datetime NOT NULL DEFAULT (datetime('now')), "tenantId" varchar, "organizationId" varchar, "name" varchar NOT NULL, "jobSourceOccupationId" varchar, "jobSource" text NOT NULL DEFAULT ('upwork'), CONSTRAINT "FK_1a62a99e1016e4a2b461e886ecd" FOREIGN KEY ("organizationId") REFERENCES "organization" ("id") ON DELETE CASCADE ON UPDATE CASCADE, CONSTRAINT "FK_44e22d88b47daf2095491b7cac3" FOREIGN KEY ("tenantId") REFERENCES "tenant" ("id") ON DELETE CASCADE ON UPDATE NO ACTION)`);
         await queryRunner.query(`INSERT INTO "temporary_job_search_occupation"("id", "createdAt", "updatedAt", "tenantId", "organizationId", "name", "jobSourceOccupationId", "jobSource") SELECT "id", "createdAt", "updatedAt", "tenantId", "organizationId", "name", "jobSourceOccupationId", "jobSource" FROM "job_search_occupation"`);
         await queryRunner.query(`DROP TABLE "job_search_occupation"`);
         await queryRunner.query(`ALTER TABLE "temporary_job_search_occupation" RENAME TO "job_search_occupation"`);
