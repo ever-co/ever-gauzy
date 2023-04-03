@@ -1,0 +1,55 @@
+<nb-card class="main">
+	<nb-card-header class="d-flex flex-column">
+        <span class="cancel">
+            <i class="fas fa-times" (click)="close()"></i>
+        </span>
+        <h5 class="title">
+            {{ 'JOBS.APPLY_JOB_TITLE' | translate }}
+        </h5>
+	</nb-card-header>
+	<nb-card-body class="body">
+        <form [formGroup]="form" #formDirective="ngForm" (ngSubmit)="onSubmit()">
+            <div class="form-group">
+				<label class="label" for="proposal">
+					{{ 'FORM.LABELS.COVER_LETTER' | translate }}
+				</label>
+				<ckeditor id="proposal" formControlName="proposal" [config]="ckConfig"></ckeditor>
+			</div>
+            <div class="form-group">
+				<label class="label" for="details">
+					{{ 'FORM.LABELS.DETAILS' | translate }}
+				</label>
+                <ckeditor id="details" formControlName="details" [config]="ckConfig"></ckeditor>
+			</div>
+            <div class="form-group">
+                <label class="label" for="hourly_rate">
+                    {{ 'FORM.LABELS.HOURLY_RATE' | translate }}
+                </label>
+                <input
+                    id="hourly_rate"
+                    fullWidth
+                    nbInput
+                    type="number"
+                    class="form-control"
+                />
+            </div>
+        </form>
+	</nb-card-body>
+	<nb-card-footer class="text-left">
+        <button
+            status="basic"
+            outline
+            class="mr-3"
+            nbButton
+        >
+			{{ 'BUTTONS.CANCEL' | translate }}
+		</button>
+        <button
+			[disabled]="form.invalid"
+			status="success"
+			nbButton
+		>
+			{{ 'BUTTONS.SEND' | translate }}
+		</button>
+	</nb-card-footer>
+</nb-card>

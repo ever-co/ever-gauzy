@@ -412,7 +412,10 @@
 			"DEFAULT": "Default Organization",
 			"INVITATION_EXPIRATION": "Invitation Expiration",
 			"PERIOD": "Period",
-			"REGISTER_AS_EMPLOYEE_OF_ORGANIZATION": "Do you want to register as Employee of Organization?"
+			"REGISTER_AS_EMPLOYEE_OF_ORGANIZATION": "Do you want to register as Employee of Organization?",
+			"COVER_LETTER": "Cover Letter",
+			"DETAILS": "Details",
+			"HOURLY_RATE": "Hourly Rate"
 		},
 		"PLACEHOLDERS": {
 			"NAME": "Name",
@@ -2484,7 +2487,8 @@
 		"HISTORY": "History",
 		"EMPLOYEES": "Employees",
 		"MATCHINGS": "Matchings",
-		"PROPOSALS_TEMPLATE": "Proposals Template"
+		"PROPOSALS_TEMPLATE": "Proposals Template",
+		"APPLY_JOB_TITLE": "Apply for Job"
 	},
 	"JOB_MATCHING": {
 		"CONFIGURE_EMPLOYEES_TO_JOBS_MATCHING": "Configure Employees to Jobs Matching",

@@ -24,7 +24,7 @@ import {
 	PermissionsEnum
 } from '@gauzy/contracts';
 import { distinctUntilChange } from '@gauzy/common-angular';
-import { NbTabComponent } from '@nebular/theme';
+import { NbDialogService, NbTabComponent } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
 import { EmployeeLinksComponent } from './../../../../@shared/table-components';
@@ -35,6 +35,7 @@ import { API_PREFIX } from './../../../../@core/constants';
 import { AtLeastOneFieldValidator } from './../../../../@core/validators';
 import { ServerDataSource } from './../../../../@core/utils/smart-table';
 import { ProposalTemplateService } from '../../proposal-template/proposal-template.service';
+import { ApplyJobManuallyComponent } from '../components';
 import { JobTitleDescriptionDetailsComponent } from '../../table-components';
 
 @UntilDestroy({ checkProperties: true })
@@ -96,6 +97,7 @@ export class SearchComponent extends PaginationFilterBaseComponent
 	constructor(
 		private readonly fb: FormBuilder,
 		private readonly http: HttpClient,
+		private readonly dialogService: NbDialogService,
 		private readonly store: Store,
 		public readonly translateService: TranslateService,
 		public readonly proposalTemplateService: ProposalTemplateService,
@@ -306,33 +308,43 @@ export class SearchComponent extends PaginationFilterBaseComponent
 		});
 	}
 
-	public applyToJob() {
-		if (!this.selectedJob) {
-			return;
-		}
-		const { employeeId, providerCode, providerJobId } = this.selectedJob;
-		const applyRequest: IApplyJobPostInput = {
-			applied: true,
-			employeeId: employeeId,
-			providerCode: providerCode,
-			providerJobId: providerJobId
-		};
-		this.jobService.applyJob(applyRequest).then(async (resp) => {
-			this.toastrService.success('TOASTR.MESSAGE.JOB_APPLIED');
-			this.smartTableSource.refresh();
-
-			if (resp.isRedirectRequired) {
-				const proposalTemplate =
-					await this.getEmployeeDefaultProposalTemplate(
-						this.selectedJob
-					);
-				if (proposalTemplate) {
-					await this.copyTextToClipboard(proposalTemplate.content);
-				}
-				window.open(this.selectedJob.jobPost.url, '_blank');
-			}
-		});
+	/**
+	 *
+	 */
+	async applyToJob(): Promise<void> {
+		const dialog = this.dialogService.open(
+			ApplyJobManuallyComponent
+		);
+		console.log(dialog);
 	}
+
+	// public applyToJob() {
+	// 	if (!this.selectedJob) {
+	// 		return;
+	// 	}
+	// 	const { employeeId, providerCode, providerJobId } = this.selectedJob;
+	// 	const applyRequest: IApplyJobPostInput = {
+	// 		applied: true,
+	// 		employeeId: employeeId,
+	// 		providerCode: providerCode,
+	// 		providerJobId: providerJobId
+	// 	};
+	// 	this.jobService.applyJob(applyRequest).then(async (resp) => {
+	// 		this.toastrService.success('TOASTR.MESSAGE.JOB_APPLIED');
+	// 		this.smartTableSource.refresh();
+
+	// 		if (resp.isRedirectRequired) {
+	// 			const proposalTemplate =
+	// 				await this.getEmployeeDefaultProposalTemplate(
+	// 					this.selectedJob
+	// 				);
+	// 			if (proposalTemplate) {
+	// 				await this.copyTextToClipboard(proposalTemplate.content);
+	// 			}
+	// 			window.open(this.selectedJob.jobPost.url, '_blank');
+	// 		}
+	// 	});
+	// }
 
 	private _loadSmartTableSettings() {
 		const pagination: IPaginationBase = this.getPagination();
