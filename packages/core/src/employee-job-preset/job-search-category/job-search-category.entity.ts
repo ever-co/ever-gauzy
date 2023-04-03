@@ -16,14 +16,14 @@ import {
 @Entity('job_search_category')
 export class JobSearchCategory extends TenantOrganizationBaseEntity implements IJobPreset {
 
-	@ApiProperty({ type: () => String, required: true })
+	@ApiProperty({ type: () => String })
 	@IsNotEmpty()
 	@IsString()
 	@Index()
 	@Column()
 	name?: string;
 
-	// Id of category in the job source (e.g. Upwork)
+	// Id of category in the job source (e.g. upwork)
 	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()
 	@IsString()
@@ -31,11 +31,11 @@ export class JobSearchCategory extends TenantOrganizationBaseEntity implements I
 	@Column({ nullable: true })
 	jobSourceCategoryId?: string;
 
-	@ApiProperty({ type: () => String, enum: JobPostSourceEnum, required: true })
+	@ApiProperty({ type: () => String, enum: JobPostSourceEnum })
 	@IsNotEmpty()
 	@IsEnum(JobPostSourceEnum)
 	@Index()
-	@Column({ type: 'text', default: JobPostSourceEnum.UPWORK })
+	@Column({ type: 'text' })
 	jobSource?: JobPostSourceEnum;
 
 	/*

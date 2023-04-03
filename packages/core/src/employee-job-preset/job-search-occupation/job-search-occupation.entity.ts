@@ -16,14 +16,14 @@ import {
 @Entity('job_search_occupation')
 export class JobSearchOccupation extends TenantOrganizationBaseEntity implements IJobSearchOccupation {
 
-	@ApiProperty({ type: () => String, required: true })
+	@ApiProperty({ type: () => String })
 	@IsNotEmpty()
 	@IsString()
 	@Index()
 	@Column()
 	name?: string;
 
-	// Id of occupation in the job source (e.g. Upwork)
+	// Id of occupation in the job source (e.g. upwork)
 	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()
 	@IsString()
@@ -31,11 +31,11 @@ export class JobSearchOccupation extends TenantOrganizationBaseEntity implements
 	@Column({ nullable: true })
 	jobSourceOccupationId?: string;
 
-	@ApiProperty({ type: () => String, enum: JobPostSourceEnum, required: true })
+	@ApiProperty({ type: () => String, enum: JobPostSourceEnum })
 	@IsNotEmpty()
 	@IsEnum(JobPostSourceEnum)
 	@Index()
-	@Column({ type: 'text', default: JobPostSourceEnum.UPWORK })
+	@Column({ type: 'text' })
 	jobSource?: JobPostSourceEnum;
 
 	/*

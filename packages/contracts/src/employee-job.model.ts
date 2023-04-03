@@ -99,19 +99,20 @@ export interface IJobPost {
 }
 
 export enum JobPostSourceEnum {
-	UPWORK = 'UPWORK',
-	WEB = 'WEB'
+	UPWORK = 'upwork',
+	WEB = 'web'
 }
 
 export enum JobPostStatusEnum {
-	OPEN = 'OPEN',
-	APPLIED = 'APPLIED',
-	CLOSED = 'CLOSED'
+	OPEN = 'open',
+	APPLIED = 'applied',
+	COMPLETED = 'completed',
+	CLOSED = 'closed'
 }
 
 export enum JobPostTypeEnum {
-	HOURLY = 'HOURLY',
-	FIXED = 'FIXED'
+	HOURLY = 'hourly',
+	FIXED = 'fixed'
 }
 
 export enum JobSearchTabsEnum {
