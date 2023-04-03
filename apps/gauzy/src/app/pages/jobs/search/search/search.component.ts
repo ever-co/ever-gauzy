@@ -56,6 +56,7 @@ export class SearchComponent extends PaginationFilterBaseComponent
 	JobPostTypeEnum = JobPostTypeEnum;
 	JobPostStatusEnum = JobPostStatusEnum;
 	PermissionsEnum = PermissionsEnum;
+	JobSearchTabsEnum = JobSearchTabsEnum;
 
 	jobRequest: IGetEmployeeJobPostFilters = {
 		employeeIds: [],
@@ -68,13 +69,9 @@ export class SearchComponent extends PaginationFilterBaseComponent
 	jobs$: Subject<any> = this.subject$;
 	smartTableSource: ServerDataSource;
 	autoRefreshTimer: Subscription;
+	disableButton: boolean = true;
+	selectedJob: IEmployeeJobPost;
 
-	selectedJob = {
-		data: null,
-		isSelected: false
-	};
-
-	jobSearchTabsEnum = JobSearchTabsEnum;
 	nbTab$: Subject<string> = new BehaviorSubject(JobSearchTabsEnum.ACTIONS);
 
 	public organization: IOrganization;
@@ -273,16 +270,22 @@ export class SearchComponent extends PaginationFilterBaseComponent
 		}
 	}
 
-	onSelectJob(event: any) {
-		this.selectedJob = event;
+	/**
+	 * On select job search Row
+	 *
+	 * @param param0
+	 */
+	onSelectJob({ isSelected, data }) {
+		this.disableButton = !isSelected;
+		this.selectedJob = isSelected ? data : null;
 	}
 
 	public viewJob() {
 		if (!this.selectedJob) {
 			return;
 		}
-		if (this.selectedJob.data.jobPost) {
-			window.open(this.selectedJob.data.jobPost.url, '_blank');
+		if (this.selectedJob.jobPost) {
+			window.open(this.selectedJob.jobPost.url, '_blank');
 		}
 	}
 
@@ -290,7 +293,7 @@ export class SearchComponent extends PaginationFilterBaseComponent
 		if (!this.selectedJob) {
 			return;
 		}
-		const { employeeId, providerCode, providerJobId } = this.selectedJob.data;
+		const { employeeId, providerCode, providerJobId } = this.selectedJob;
 		const hideRequest: IVisibilityJobPostInput = {
 			hide: true,
 			employeeId: employeeId,
@@ -307,7 +310,7 @@ export class SearchComponent extends PaginationFilterBaseComponent
 		if (!this.selectedJob) {
 			return;
 		}
-		const { employeeId, providerCode, providerJobId } = this.selectedJob.data;
+		const { employeeId, providerCode, providerJobId } = this.selectedJob;
 		const applyRequest: IApplyJobPostInput = {
 			applied: true,
 			employeeId: employeeId,
@@ -321,12 +324,12 @@ export class SearchComponent extends PaginationFilterBaseComponent
 			if (resp.isRedirectRequired) {
 				const proposalTemplate =
 					await this.getEmployeeDefaultProposalTemplate(
-						this.selectedJob.data
+						this.selectedJob
 					);
 				if (proposalTemplate) {
 					await this.copyTextToClipboard(proposalTemplate.content);
 				}
-				window.open(this.selectedJob.data.jobPost.url, '_blank');
+				window.open(this.selectedJob.jobPost.url, '_blank');
 			}
 		});
 	}

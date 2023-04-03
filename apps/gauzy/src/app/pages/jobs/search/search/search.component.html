@@ -47,8 +47,8 @@
 	<nb-card-body class="p-0">
 		<div class="gauzy-button-container">
 			<ngx-gauzy-button-action
+				[isDisable]="disableButton"
 				[buttonTemplateVisible]="visibleButton"
-				[isDisable]="!selectedJob.isSelected"
 				[buttonTemplate]="actionButtons"
 				[hasLayoutSelector]="false"
 			></ngx-gauzy-button-action>
@@ -79,17 +79,17 @@
 		</div>
 		<nb-tabset (changeTab)="onTabChange($event)" class="mt-4">
 			<nb-tab
-				[tabId]="jobSearchTabsEnum.ACTIONS"
+				[tabId]="JobSearchTabsEnum.ACTIONS"
 				[tabTitle]="'JOBS.BROWSE' | translate"
 			>
 				<ng-container
-					*ngIf="(nbTab$ | async) === jobSearchTabsEnum.ACTIONS"
+					*ngIf="(nbTab$ | async) === JobSearchTabsEnum.ACTIONS"
 				>
 					<ng-template [ngTemplateOutlet]="tableLayout"></ng-template>
 				</ng-container>
 			</nb-tab>
 			<nb-tab
-				[tabId]="jobSearchTabsEnum.SEARCH"
+				[tabId]="JobSearchTabsEnum.SEARCH"
 				[tabTitle]="'JOBS.SEARCH' | translate"
 			>
 				<div class="job-filters">
@@ -100,7 +100,6 @@
 									[formGroup]="form"
 									(ngSubmit)="searchJobs()"
 								>
-									{{ form.value | json }}
 									<div class="row">
 										<div
 											class="col-xl-6 col-md-8 col-12 form-group m-0"
@@ -301,7 +300,7 @@
 					</div>
 				</div>
 				<ng-container
-					*ngIf="(nbTab$ | async) === jobSearchTabsEnum.SEARCH"
+					*ngIf="(nbTab$ | async) === JobSearchTabsEnum.SEARCH"
 				>
 					<ng-template [ngTemplateOutlet]="tableLayout"></ng-template>
 				</ng-container>
