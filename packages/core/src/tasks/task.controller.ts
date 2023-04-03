@@ -281,7 +281,7 @@ export class TaskController extends CrudController<Task> {
 		@Query('organizationTeamId', UUIDValidationPipe)
 		organizationTeamId: IOrganizationTeam['id']
 	) {
-		return await this.taskService.deleteEmployeeFromTasks(
+		return await this.taskService.unassignEmployeeFromTeamTasks(
 			employeeId,
 			organizationTeamId
 		);

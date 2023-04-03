@@ -452,6 +452,12 @@ export class TaskService extends TenantAwareCrudService<Task> {
 		}
 	}
 
+	/**
+	 * Unassign employee from specified team
+	 *
+	 * @param employeeId
+	 * @param organizationTeamId
+	 */
 	public async unassignEmployeeFromTeamTasks(
 		employeeId: string,
 		organizationTeamId: string
@@ -475,6 +481,35 @@ export class TaskService extends TenantAwareCrudService<Task> {
 		tasks.forEach((task) => {
 			task.members = task.members.filter(
 				(member) => member.id !== employeeId
+			);
+		});
+
+		// Save updated entities to DB
+		await this.repository.save(tasks);
+	}
+
+	/**
+	 * Unassign employee from all the teams
+	 *
+	 * @param userId
+	 */
+	public async unassignEmployeeFromAllTeamTasks(userId: string) {
+		// Find all assigned tasks of employee
+		const tasks = await this.repository.find({
+			where: {
+				members: {
+					userId,
+				},
+			},
+			relations: {
+				members: true,
+			},
+		});
+
+		// Unassign member from All the Team Tasks
+		tasks.forEach((task) => {
+			task.members = task.members.filter(
+				(member) => member.userId !== userId
 			);
 		});
 
