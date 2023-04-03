@@ -48,7 +48,7 @@ export class SearchComponent extends PaginationFilterBaseComponent
 
 	loading: boolean = false;
 	autoRefresh: boolean = false;
-	settingsSmartTable: any;
+	settingsSmartTable: object;
 	isOpenAdvancedFilter: boolean = false;
 	jobs: IEmployeeJobPost[] = [];
 
@@ -426,13 +426,6 @@ export class SearchComponent extends PaginationFilterBaseComponent
 			return;
 		}
 		try {
-			console.log('this is calling multiple times!', this.smartTableSource);
-			/**
-			 * If smart table source configuration already initiate
-			 */
-			if (this.smartTableSource) {
-				return;
-			}
 			/**
 			 * Initiate smart table source configuration
 			 */
@@ -454,8 +447,6 @@ export class SearchComponent extends PaginationFilterBaseComponent
 	}
 
 	private async getEmployeesJob() {
-		console.log('call employee job posts API!');
-
 		if (!this.organization) {
 			return;
 		}
