@@ -6,6 +6,8 @@ export class UpdateEmployeeJobSearchStatusCommand implements ICommand {
 
 	constructor(
 		public readonly employeeId: string,
+		public readonly tenantId: string,
+		public readonly orgId: string,
 		public readonly request: UpdateEmployeeJobsStatistics
 	) {}
 }

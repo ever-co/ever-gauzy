@@ -5,6 +5,7 @@ import {
 	EmployeeJobPostsDocument,
 	EmployeeJobPostsQuery,
 	EmployeeQuery,
+	UpdateEmployee,
 	UpdateEmployeeJobPost,
 	UpworkJobsSearchCriterion,
 } from './sdk/gauzy-ai-sdk';
@@ -145,6 +146,8 @@ export class GauzyAIService {
 	 */
 	public async updateEmployeeStatus(
 		employeeId: string,
+		tenantId: string,
+		orgId: string,
 		isJobSearchActive: boolean
 	): Promise<boolean> {
 		if (this._client == null) {
@@ -155,8 +158,38 @@ export class GauzyAIService {
 		const gauzyAIEmployeeId = await this.getEmployeeGauzyAIId(employeeId);
 
 		console.log(
-			`updateVisibility called. EmployeeId: ${employeeId}. Gauzy AI EmployeeId: ${gauzyAIEmployeeId}`
+			`updateEmployeeStatus called. EmployeeId: ${employeeId}. Gauzy AI EmployeeId: ${gauzyAIEmployeeId}`
 		);
+
+		const update: UpdateEmployee = {
+			externalEmployeeId: employeeId,
+			externalTenantId: tenantId,
+			externalOrgId: orgId,
+			isActive: isJobSearchActive,
+			isArchived: !isJobSearchActive,
+		};
+
+		const updateEmployeeMutation: DocumentNode<any> = gql`
+			mutation updateOneEmployee($input: UpdateOneEmployeeInput!) {
+				updateOneEmployee(input: $input) {
+					externalEmployeeId
+					externalTenantId
+					externalOrgId
+					isActive
+					isArchived
+				}
+			}
+		`;
+
+		await this._client.mutate({
+			mutation: updateEmployeeMutation,
+			variables: {
+				input: {
+					id: gauzyAIEmployeeId,
+					update: update,
+				},
+			},
+		});
 
 		return true;
 	}

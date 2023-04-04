@@ -7,22 +7,26 @@ import { UpdateEmployeeJobSearchStatusCommand } from '../update-employee-job-sea
 
 @CommandHandler(UpdateEmployeeJobSearchStatusCommand)
 export class UpdateEmployeeJobSearchStatusHandler
-	implements ICommandHandler<UpdateEmployeeJobSearchStatusCommand> {
-
+	implements ICommandHandler<UpdateEmployeeJobSearchStatusCommand>
+{
 	constructor(
 		private readonly employeeService: EmployeeService,
 		private readonly gauzyAIService: GauzyAIService
 	) {}
 
-	public async execute(command: UpdateEmployeeJobSearchStatusCommand): Promise<IEmployee | UpdateResult> {
-		const { employeeId, request } = command;
+	public async execute(
+		command: UpdateEmployeeJobSearchStatusCommand
+	): Promise<IEmployee | UpdateResult> {
+		const { employeeId, tenantId, orgId, request } = command;
 
 		this.gauzyAIService.updateEmployeeStatus(
 			employeeId,
+			tenantId,
+			orgId,
 			request.isJobSearchActive
 		);
 		return await this.employeeService.update(employeeId, {
-			isJobSearchActive: request.isJobSearchActive
+			isJobSearchActive: request.isJobSearchActive,
 		});
 	}
 }
