@@ -1,6 +1,6 @@
 import { Column, Entity, Index, OneToMany } from 'typeorm';
-import { ApiProperty } from '@nestjs/swagger';
-import { IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { IsEnum, IsNotEmpty, IsOptional, IsString } from 'class-validator';
 import {
 	JobPostSourceEnum,
 	IJobPreset,
@@ -14,62 +14,51 @@ import {
 } from '../../core/entities/internal';
 
 @Entity('job_search_category')
-export class JobSearchCategory
-	extends TenantOrganizationBaseEntity
-	implements IJobPreset {
+export class JobSearchCategory extends TenantOrganizationBaseEntity implements IJobPreset {
+
 	@ApiProperty({ type: () => String })
-	@IsString()
 	@IsNotEmpty()
+	@IsString()
 	@Index()
 	@Column()
 	name?: string;
 
-	// Id of category in the job source (e.g. Upwork)
-	@ApiProperty({ type: () => String })
-	@IsString()
+	// Id of category in the job source (e.g. upwork)
+	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()
+	@IsString()
 	@Index()
 	@Column({ nullable: true })
 	jobSourceCategoryId?: string;
 
-	@ApiProperty({ type: () => String })
-	@IsString()
+	@ApiProperty({ type: () => String, enum: JobPostSourceEnum })
 	@IsNotEmpty()
+	@IsEnum(JobPostSourceEnum)
 	@Index()
 	@Column({ type: 'text', default: JobPostSourceEnum.UPWORK })
 	jobSource?: JobPostSourceEnum;
 
 	/*
-    |--------------------------------------------------------------------------
-    | @OneToMany 
-    |--------------------------------------------------------------------------
-    */
+	|--------------------------------------------------------------------------
+	| @OneToMany
+	|--------------------------------------------------------------------------
+	*/
 
 	/**
 	 * EmployeeUpworkJobsSearchCriterion
 	 */
 	@ApiProperty({ type: () => EmployeeUpworkJobsSearchCriterion, isArray: true })
-	@OneToMany(
-		() => EmployeeUpworkJobsSearchCriterion,
-		(employeeUpworkJobsSearchCriterion) =>
-			employeeUpworkJobsSearchCriterion.jobPreset,
-		{
-			onDelete: 'CASCADE'
-		}
-	)
+	@OneToMany(() => EmployeeUpworkJobsSearchCriterion, (it) => it.jobPreset, {
+		onDelete: 'CASCADE'
+	})
 	employeeCriterions?: IEmployeeUpworkJobsSearchCriterion[];
 
 	/**
 	 * JobPresetUpworkJobSearchCriterion
 	 */
 	@ApiProperty({ type: () => JobPresetUpworkJobSearchCriterion, isArray: true })
-	@OneToMany(
-		() => JobPresetUpworkJobSearchCriterion,
-		(jobPresetUpworkJobSearchCriterion) =>
-			jobPresetUpworkJobSearchCriterion.jobPreset,
-		{
-			onDelete: 'CASCADE'
-		}
-	)
+	@OneToMany(() => JobPresetUpworkJobSearchCriterion, (it) => it.jobPreset, {
+		onDelete: 'CASCADE'
+	})
 	jobPresetCriterions?: IJobPresetUpworkJobSearchCriterion[];
 }

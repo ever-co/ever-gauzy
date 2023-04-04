@@ -47,8 +47,8 @@
 	<nb-card-body class="p-0">
 		<div class="gauzy-button-container">
 			<ngx-gauzy-button-action
+				[isDisable]="disableButton"
 				[buttonTemplateVisible]="visibleButton"
-				[isDisable]="!selectedJob.isSelected"
 				[buttonTemplate]="actionButtons"
 				[hasLayoutSelector]="false"
 			></ngx-gauzy-button-action>
@@ -79,17 +79,17 @@
 		</div>
 		<nb-tabset (changeTab)="onTabChange($event)" class="mt-4">
 			<nb-tab
-				[tabId]="jobSearchTabsEnum.ACTIONS"
+				[tabId]="JobSearchTabsEnum.ACTIONS"
 				[tabTitle]="'JOBS.BROWSE' | translate"
 			>
 				<ng-container
-					*ngIf="(nbTab$ | async) === jobSearchTabsEnum.ACTIONS"
+					*ngIf="(nbTab$ | async) === JobSearchTabsEnum.ACTIONS"
 				>
 					<ng-template [ngTemplateOutlet]="tableLayout"></ng-template>
 				</ng-container>
 			</nb-tab>
 			<nb-tab
-				[tabId]="jobSearchTabsEnum.SEARCH"
+				[tabId]="JobSearchTabsEnum.SEARCH"
 				[tabTitle]="'JOBS.SEARCH' | translate"
 			>
 				<div class="job-filters">
@@ -140,16 +140,11 @@
 												formControlName="jobSource"
 											>
 												<nb-option
-													*ngFor="
-														let source of JobPostSourceEnum
-															| keyvalue
-													"
-													[value]="source?.value"
-													>{{
-														'JOBS.' + source.value
-															| translate
-													}}</nb-option
+													*ngFor=" let source of JobPostSourceEnum | keyvalue"
+													[value]="source?.value | lowercase"
 												>
+													{{ 'JOBS.' + source.key | translate }}
+												</nb-option>
 											</nb-select>
 										</div>
 										<div
@@ -175,15 +170,10 @@
 												formControlName="jobType"
 											>
 												<nb-option
-													*ngFor="
-														let type of JobPostTypeEnum
-															| keyvalue
-													"
-													[value]="type.value"
-													>{{
-														'JOBS.' + type.key
-															| translate
-													}}
+													*ngFor=" let type of JobPostTypeEnum | keyvalue "
+													[value]="type.value | lowercase"
+												>
+													{{ 'JOBS.' + type.key | translate }}
 												</nb-option>
 											</nb-select>
 										</div>
@@ -209,16 +199,10 @@
 												formControlName="jobStatus"
 											>
 												<nb-option
-													*ngFor="
-														let type of JobPostStatusEnum
-															| keyvalue
-													"
-													[value]="type.value"
-													>{{
-														'JOBS.STATUS_' +
-															type.value
-															| translate
-													}}
+													*ngFor=" let type of JobPostStatusEnum | keyvalue"
+													[value]="type.value | lowercase"
+												>
+													{{ 'JOBS.' + type.key | translate }}
 												</nb-option>
 											</nb-select>
 										</div>
@@ -300,7 +284,7 @@
 					</div>
 				</div>
 				<ng-container
-					*ngIf="(nbTab$ | async) === jobSearchTabsEnum.SEARCH"
+					*ngIf="(nbTab$ | async) === JobSearchTabsEnum.SEARCH"
 				>
 					<ng-template [ngTemplateOutlet]="tableLayout"></ng-template>
 				</ng-container>
@@ -355,7 +339,7 @@
 				style="cursor: pointer"
 				status="basic"
 				class="action success"
-				(click)="applyToJob()"
+				(click)="applyToJobManually()"
 				nbButton
 			>
 				<nb-icon icon="checkmark-outline" pack="eva"></nb-icon>
@@ -366,6 +350,7 @@
 				style="cursor: pointer"
 				status="basic"
 				class="action success"
+				(click)="applyToJobAutomatically()"
 				nbButton
 			>
 				<nb-icon icon="checkmark-outline" pack="eva"></nb-icon>

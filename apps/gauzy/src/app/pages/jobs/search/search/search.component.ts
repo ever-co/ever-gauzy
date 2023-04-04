@@ -7,7 +7,7 @@ import {
 } from '@angular/core';
 import { FormBuilder, FormGroup } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
-import { BehaviorSubject, combineLatest, Subject, Subscription, timer } from 'rxjs';
+import { BehaviorSubject, combineLatest, firstValueFrom, Subject, Subscription, timer } from 'rxjs';
 import { debounceTime, filter, tap } from 'rxjs/operators';
 import {
 	IApplyJobPostInput,
@@ -24,7 +24,7 @@ import {
 	PermissionsEnum
 } from '@gauzy/contracts';
 import { distinctUntilChange } from '@gauzy/common-angular';
-import { NbTabComponent } from '@nebular/theme';
+import { NbDialogService, NbTabComponent } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
 import { EmployeeLinksComponent } from './../../../../@shared/table-components';
@@ -35,6 +35,7 @@ import { API_PREFIX } from './../../../../@core/constants';
 import { AtLeastOneFieldValidator } from './../../../../@core/validators';
 import { ServerDataSource } from './../../../../@core/utils/smart-table';
 import { ProposalTemplateService } from '../../proposal-template/proposal-template.service';
+import { ApplyJobManuallyComponent } from '../components';
 import { JobTitleDescriptionDetailsComponent } from '../../table-components';
 
 @UntilDestroy({ checkProperties: true })
@@ -56,6 +57,7 @@ export class SearchComponent extends PaginationFilterBaseComponent
 	JobPostTypeEnum = JobPostTypeEnum;
 	JobPostStatusEnum = JobPostStatusEnum;
 	PermissionsEnum = PermissionsEnum;
+	JobSearchTabsEnum = JobSearchTabsEnum;
 
 	jobRequest: IGetEmployeeJobPostFilters = {
 		employeeIds: [],
@@ -68,13 +70,9 @@ export class SearchComponent extends PaginationFilterBaseComponent
 	jobs$: Subject<any> = this.subject$;
 	smartTableSource: ServerDataSource;
 	autoRefreshTimer: Subscription;
+	disableButton: boolean = true;
+	selectedJob: IEmployeeJobPost;
 
-	selectedJob = {
-		data: null,
-		isSelected: false
-	};
-
-	jobSearchTabsEnum = JobSearchTabsEnum;
 	nbTab$: Subject<string> = new BehaviorSubject(JobSearchTabsEnum.ACTIONS);
 
 	public organization: IOrganization;
@@ -99,6 +97,7 @@ export class SearchComponent extends PaginationFilterBaseComponent
 	constructor(
 		private readonly fb: FormBuilder,
 		private readonly http: HttpClient,
+		private readonly dialogService: NbDialogService,
 		private readonly store: Store,
 		public readonly translateService: TranslateService,
 		public readonly proposalTemplateService: ProposalTemplateService,
@@ -155,20 +154,25 @@ export class SearchComponent extends PaginationFilterBaseComponent
 			.subscribe();
 	}
 
+	/** Get employee default proposal template */
 	async getEmployeeDefaultProposalTemplate(job: IJobMatchings) {
-		return await this.proposalTemplateService
-			.getAll({
-				where: {
-					employeeId: job.employeeId,
-					isDefault: true
-				}
-			})
-			.then(async (resp) => {
-				if (resp.items.length > 0) {
-					return resp.items[0];
-				}
-				return null;
-			});
+		if (!this.organization) {
+			return;
+		}
+
+		const { tenantId } = this.store.user;
+		const { id: organizationId } = this.organization;
+		const { employeeId } = job;
+
+		const { items = [] } = await this.proposalTemplateService.getAll({
+			where: {
+				tenantId,
+				organizationId,
+				employeeId,
+				isDefault: true
+			}
+		});
+		return items.length > 0 ? items[0] : null;
 	}
 
 	copyTextToClipboard(text) {
@@ -273,16 +277,22 @@ export class SearchComponent extends PaginationFilterBaseComponent
 		}
 	}
 
-	onSelectJob(event: any) {
-		this.selectedJob = event;
+	/**
+	 * On select job search Row
+	 *
+	 * @param param0
+	 */
+	onSelectJob({ isSelected, data }) {
+		this.disableButton = !isSelected;
+		this.selectedJob = isSelected ? data : null;
 	}
 
 	public viewJob() {
 		if (!this.selectedJob) {
 			return;
 		}
-		if (this.selectedJob.data.jobPost) {
-			window.open(this.selectedJob.data.jobPost.url, '_blank');
+		if (this.selectedJob.jobPost) {
+			window.open(this.selectedJob.jobPost.url, '_blank');
 		}
 	}
 
@@ -290,7 +300,7 @@ export class SearchComponent extends PaginationFilterBaseComponent
 		if (!this.selectedJob) {
 			return;
 		}
-		const { employeeId, providerCode, providerJobId } = this.selectedJob.data;
+		const { employeeId, providerCode, providerJobId } = this.selectedJob;
 		const hideRequest: IVisibilityJobPostInput = {
 			hide: true,
 			employeeId: employeeId,
@@ -303,32 +313,88 @@ export class SearchComponent extends PaginationFilterBaseComponent
 		});
 	}
 
-	public applyToJob() {
+	/** Apply For Job Post */
+	async applyToJob(applyJobPost: IApplyJobPostInput): Promise<void> {
 		if (!this.selectedJob) {
 			return;
 		}
-		const { employeeId, providerCode, providerJobId } = this.selectedJob.data;
-		const applyRequest: IApplyJobPostInput = {
-			applied: true,
-			employeeId: employeeId,
-			providerCode: providerCode,
-			providerJobId: providerJobId
-		};
-		this.jobService.applyJob(applyRequest).then(async (resp) => {
+		try {
+			const appliedJob = await this.jobService.applyJob(applyJobPost);
+
 			this.toastrService.success('TOASTR.MESSAGE.JOB_APPLIED');
 			this.smartTableSource.refresh();
 
-			if (resp.isRedirectRequired) {
-				const proposalTemplate =
-					await this.getEmployeeDefaultProposalTemplate(
-						this.selectedJob.data
-					);
+			if (appliedJob.isRedirectRequired) {
+				const proposalTemplate = await this.getEmployeeDefaultProposalTemplate(
+					this.selectedJob
+				);
 				if (proposalTemplate) {
 					await this.copyTextToClipboard(proposalTemplate.content);
 				}
-				window.open(this.selectedJob.data.jobPost.url, '_blank');
+				window.open(this.selectedJob.jobPost.url, '_blank');
+			}
+		} catch (error) {
+			console.log('Error while applying job post', error);
+		}
+	}
+
+	/** Apply For Job Automatically */
+	async applyToJobAutomatically() {
+		if (!this.selectedJob) {
+			return;
+		}
+		try {
+			const { providerCode, providerJobId, employeeId } = this.selectedJob;
+			const applyJobPost: IApplyJobPostInput = {
+				applied: true,
+				...(this.selectedEmployeeId
+					? {
+						employeeId: this.selectedEmployeeId
+					}
+					: {
+						employeeId
+					}),
+				providerCode,
+				providerJobId,
+			};
+			await this.applyToJob(applyJobPost);
+		} catch (error) {
+			console.log('Error while applying job post automatically', error);
+		}
+	}
+
+	/** Apply For Job Manually */
+	async applyToJobManually() {
+		if (!this.selectedJob) {
+			return;
+		}
+		const dialog = this.dialogService.open(ApplyJobManuallyComponent, {
+			context: {
+				jobPost: this.selectedJob,
+				selectedEmployeeId: this.selectedEmployeeId
 			}
 		});
+		const result = await firstValueFrom<IApplyJobPostInput>(dialog.onClose);
+		if (result) {
+			const { providerCode, providerJobId } = this.selectedJob;
+			const { applied, employeeId, proposal, rate, details, attachments } = result;
+
+			try {
+				const applyJobPost: IApplyJobPostInput = {
+					applied,
+					employeeId,
+					proposal,
+					rate,
+					details,
+					attachments,
+					providerCode,
+					providerJobId,
+				};
+				await this.applyToJob(applyJobPost);
+			} catch (error) {
+				console.log('Error while applying job post manually', error);
+			}
+		}
 	}
 
 	private _loadSmartTableSettings() {
@@ -387,19 +453,19 @@ export class SearchComponent extends PaginationFilterBaseComponent
 							JobPostStatusEnum.CLOSED.toLowerCase()
 						) {
 							badgeClass = 'danger';
-							cell = this.getTranslation('JOBS.STATUS_CLOSED');
+							cell = this.getTranslation('JOBS.CLOSED');
 						} else if (
 							row.jobPost.jobStatus.toLowerCase() ===
 							JobPostStatusEnum.OPEN.toLowerCase()
 						) {
 							badgeClass = 'success';
-							cell = this.getTranslation('JOBS.STATUS_OPEN');
+							cell = this.getTranslation('JOBS.OPEN');
 						} else if (
 							row.jobPost.jobStatus.toLowerCase() ===
 							JobPostStatusEnum.APPLIED.toLowerCase()
 						) {
 							badgeClass = 'warning';
-							cell = this.getTranslation('JOBS.STATUS_APPLIED');
+							cell = this.getTranslation('JOBS.APPLIED');
 						} else {
 							badgeClass = 'default';
 							cell = row.jobPost.jobStatus;

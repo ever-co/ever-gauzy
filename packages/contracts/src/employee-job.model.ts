@@ -13,6 +13,10 @@ export interface IApplyJobPostInput {
 	employeeId: string;
 	providerCode: string;
 	providerJobId: string;
+	proposal?: string;
+	rate?: number;
+	details?: string;
+	attachments?: string;
 }
 
 export interface IVisibilityJobPostInput {
@@ -99,24 +103,25 @@ export interface IJobPost {
 }
 
 export enum JobPostSourceEnum {
-	UPWORK = 'UPWORK',
-	WEB = 'WEB'
+	UPWORK = 'upwork',
+	WEB = 'web'
 }
 
 export enum JobPostStatusEnum {
-	OPEN = 'OPEN',
-	APPLIED = 'APPLIED',
-	CLOSED = 'CLOSED'
+	OPEN = 'open',
+	APPLIED = 'applied',
+	COMPLETED = 'completed',
+	CLOSED = 'closed'
 }
 
 export enum JobPostTypeEnum {
-	HOURLY = 'HOURLY',
-	FIX_PRICE = 'FIX_PRICE'
+	HOURLY = 'hourly',
+	FIXED = 'fixed'
 }
 
 export enum JobSearchTabsEnum {
-    ACTIONS = "ACTIONS",
-    SEARCH = "SEARCH"
+	ACTIONS = "ACTIONS",
+	SEARCH = "SEARCH"
 }
 
 export interface IUpdateEmployeeJobPostAppliedResult {

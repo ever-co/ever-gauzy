@@ -4,11 +4,11 @@ import {
 	Get,
 	Query,
 	Post,
-	Body
+	Body,
+	UsePipes,
+	ValidationPipe
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
-import { EmployeeJobPostService } from './employee-job.service';
-import { EmployeeJobPost } from './employee-job.entity';
 import {
 	IApplyJobPostInput,
 	IEmployeeJobPost,
@@ -16,6 +16,8 @@ import {
 	IPagination,
 	IVisibilityJobPostInput
 } from '@gauzy/contracts';
+import { EmployeeJobPostService } from './employee-job.service';
+import { EmployeeJobPost } from './employee-job.entity';
 
 @ApiTags('EmployeeJobPost')
 @Controller()
@@ -44,16 +46,19 @@ export class EmployeeJobPostController {
 	@ApiOperation({ summary: 'Apply on job' })
 	@ApiResponse({
 		status: HttpStatus.OK,
-		description: 'Found employee job posts',
+		description: 'Applied for employee job',
 		type: EmployeeJobPost
 	})
 	@ApiResponse({
 		status: HttpStatus.NOT_FOUND,
 		description: 'Record not found'
 	})
+	@UsePipes(new ValidationPipe())
 	@Post('applied')
-	async updateApplied(@Body() data: IApplyJobPostInput) {
-		return this.employeeJobPostService.updateApplied(data);
+	async updateApplied(
+		@Body() input: IApplyJobPostInput
+	) {
+		return await this.employeeJobPostService.updateApplied(input);
 	}
 
 	@ApiOperation({ summary: 'Hide job' })
