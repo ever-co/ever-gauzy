@@ -8,30 +8,63 @@
         </h5>
 	</nb-card-header>
 	<nb-card-body class="body">
-        <form [formGroup]="form" #formDirective="ngForm" (ngSubmit)="onSubmit()">
+        <form
+            #formDirective="ngForm"
+            [formGroup]="form"
+            (ngSubmit)="onSubmit()"
+        >
             <div class="form-group">
-				<label class="label" for="proposal">
-					{{ 'FORM.LABELS.COVER_LETTER' | translate }}
-				</label>
-				<ckeditor id="proposal" formControlName="proposal" [config]="ckConfig"></ckeditor>
-			</div>
-            <div class="form-group">
-				<label class="label" for="details">
-					{{ 'FORM.LABELS.DETAILS' | translate }}
-				</label>
-                <ckeditor id="details" formControlName="details" [config]="ckConfig"></ckeditor>
-			</div>
+                <ga-employee-multi-select
+                    [label]="'HEADER.SELECT_EMPLOYEE' | translate"
+                    [placeholder]="'HEADER.SELECT_EMPLOYEE' | translate"
+                    [multiple]="false"
+                    formControlName="employeeId"
+                ></ga-employee-multi-select>
+            </div>
+            <ng-template
+                [ngIf]="JobPostSourceEnum.UPWORK === jobPost?.providerCode"
+            >
+                <div class="form-group">
+                    <label class="label" for="proposal">
+                        {{ 'FORM.LABELS.COVER_LETTER' | translate }}
+                    </label>
+                    <ckeditor
+                        id="proposal"
+                        formControlName="proposal"
+                        [config]="ckConfig"
+                    ></ckeditor>
+                </div>
+            </ng-template>
+            <ng-template
+                [ngIf]="JobPostSourceEnum.UPWORK !== jobPost?.providerCode"
+            >
+                <div class="form-group">
+                    <label class="label" for="details">
+                        {{ 'FORM.LABELS.DETAILS' | translate }}
+                    </label>
+                    <ckeditor
+                        id="details"
+                        formControlName="details"
+                        [config]="ckConfig"
+                    ></ckeditor>
+                </div>
+            </ng-template>
             <div class="form-group">
                 <label class="label" for="hourly_rate">
                     {{ 'FORM.LABELS.HOURLY_RATE' | translate }}
                 </label>
-                <input
-                    id="hourly_rate"
-                    fullWidth
-                    nbInput
-                    type="number"
-                    class="form-control"
-                />
+                <nb-form-field>
+                    <button type="button" nbPrefix nbButton ghost>$</button>
+                    <input
+                        id="hourly_rate"
+                        min="1"
+                        fullWidth
+                        nbInput
+                        type="number"
+                        class="form-control"
+                        formControlName="rate"
+                    />
+                </nb-form-field>
             </div>
         </form>
 	</nb-card-body>
@@ -41,6 +74,7 @@
             outline
             class="mr-3"
             nbButton
+            (click)="close()"
         >
 			{{ 'BUTTONS.CANCEL' | translate }}
 		</button>
@@ -48,6 +82,7 @@
 			[disabled]="form.invalid"
 			status="success"
 			nbButton
+            (click)="formDirective.ngSubmit.emit()"
 		>
 			{{ 'BUTTONS.SEND' | translate }}
 		</button>

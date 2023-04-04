@@ -7,7 +7,7 @@ import {
 } from '@angular/core';
 import { FormBuilder, FormGroup } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
-import { BehaviorSubject, combineLatest, Subject, Subscription, timer } from 'rxjs';
+import { BehaviorSubject, combineLatest, firstValueFrom, Subject, Subscription, timer } from 'rxjs';
 import { debounceTime, filter, tap } from 'rxjs/operators';
 import {
 	IApplyJobPostInput,
@@ -154,20 +154,25 @@ export class SearchComponent extends PaginationFilterBaseComponent
 			.subscribe();
 	}
 
+	/** Get employee default proposal template */
 	async getEmployeeDefaultProposalTemplate(job: IJobMatchings) {
-		return await this.proposalTemplateService
-			.getAll({
-				where: {
-					employeeId: job.employeeId,
-					isDefault: true
-				}
-			})
-			.then(async (resp) => {
-				if (resp.items.length > 0) {
-					return resp.items[0];
-				}
-				return null;
-			});
+		if (!this.organization) {
+			return;
+		}
+
+		const { tenantId } = this.store.user;
+		const { id: organizationId } = this.organization;
+		const { employeeId } = job;
+
+		const { items = [] } = await this.proposalTemplateService.getAll({
+			where: {
+				tenantId,
+				organizationId,
+				employeeId,
+				isDefault: true
+			}
+		});
+		return items.length > 0 ? items[0] : null;
 	}
 
 	copyTextToClipboard(text) {
@@ -308,43 +313,53 @@ export class SearchComponent extends PaginationFilterBaseComponent
 		});
 	}
 
-	/**
-	 *
-	 */
+	/** Apply For Job Manually */
 	async applyToJob(): Promise<void> {
-		const dialog = this.dialogService.open(
-			ApplyJobManuallyComponent
-		);
-		console.log(dialog);
+		if (!this.selectedJob) {
+			return;
+		}
+		const dialog = this.dialogService.open(ApplyJobManuallyComponent, {
+			context: {
+				jobPost: this.selectedJob,
+				selectedEmployeeId: this.selectedEmployeeId
+			}
+		});
+		const result = await firstValueFrom<IApplyJobPostInput>(dialog.onClose);
+		if (result) {
+			const { providerCode, providerJobId } = this.selectedJob;
+			const { applied, employeeId, proposal, rate, details, attachments } = result;
+
+			const applyJobPost: IApplyJobPostInput = {
+				applied,
+				employeeId,
+				proposal,
+				rate,
+				details,
+				attachments,
+				providerCode,
+				providerJobId,
+			};
+
+			try {
+				const appliedJob = await this.jobService.applyJob(applyJobPost);
+
+				this.toastrService.success('TOASTR.MESSAGE.JOB_APPLIED');
+				this.smartTableSource.refresh();
+
+				if (appliedJob.isRedirectRequired) {
+					const proposalTemplate = await this.getEmployeeDefaultProposalTemplate(
+						this.selectedJob
+					);
+					if (proposalTemplate) {
+						await this.copyTextToClipboard(proposalTemplate.content);
+					}
+					window.open(this.selectedJob.jobPost.url, '_blank');
+				}
+			} catch (error) {
+				console.log('Error while applying job post', error);
+			}
+		}
 	}
-
-	// public applyToJob() {
-	// 	if (!this.selectedJob) {
-	// 		return;
-	// 	}
-	// 	const { employeeId, providerCode, providerJobId } = this.selectedJob;
-	// 	const applyRequest: IApplyJobPostInput = {
-	// 		applied: true,
-	// 		employeeId: employeeId,
-	// 		providerCode: providerCode,
-	// 		providerJobId: providerJobId
-	// 	};
-	// 	this.jobService.applyJob(applyRequest).then(async (resp) => {
-	// 		this.toastrService.success('TOASTR.MESSAGE.JOB_APPLIED');
-	// 		this.smartTableSource.refresh();
-
-	// 		if (resp.isRedirectRequired) {
-	// 			const proposalTemplate =
-	// 				await this.getEmployeeDefaultProposalTemplate(
-	// 					this.selectedJob
-	// 				);
-	// 			if (proposalTemplate) {
-	// 				await this.copyTextToClipboard(proposalTemplate.content);
-	// 			}
-	// 			window.open(this.selectedJob.jobPost.url, '_blank');
-	// 		}
-	// 	});
-	// }
 
 	private _loadSmartTableSettings() {
 		const pagination: IPaginationBase = this.getPagination();

@@ -13,6 +13,10 @@ export interface IApplyJobPostInput {
 	employeeId: string;
 	providerCode: string;
 	providerJobId: string;
+	proposal?: string;
+	rate?: number;
+	details?: string;
+	attachments?: string;
 }
 
 export interface IVisibilityJobPostInput {
