@@ -50,6 +50,20 @@
                 </div>
             </ng-template>
             <div class="form-group">
+                <label class="label" for="attachments">
+                    {{ 'FORM.LABELS.ATTACHMENTS' | translate }}
+                </label>
+                <div
+                    ng2FileDrop
+                    [uploader]="uploader"
+                    (fileOver)="fileOverBase($event)"
+                    [ngClass]="{'nv-file-over': hasDropZoneOver}"
+                    class="well my-drop-zone"
+                >
+                    {{ 'FORM.PLACEHOLDERS.DRAG_DROP_FILE' | translate }}
+                </div>
+            </div>
+            <div class="form-group">
                 <label class="label" for="hourly_rate">
                     {{ 'FORM.LABELS.HOURLY_RATE' | translate }}
                 </label>

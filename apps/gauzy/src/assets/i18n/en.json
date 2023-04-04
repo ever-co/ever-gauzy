@@ -415,7 +415,8 @@
 			"REGISTER_AS_EMPLOYEE_OF_ORGANIZATION": "Do you want to register as Employee of Organization?",
 			"COVER_LETTER": "Cover Letter",
 			"DETAILS": "Details",
-			"HOURLY_RATE": "Hourly Rate"
+			"HOURLY_RATE": "Hourly Rate",
+			"ATTACHMENTS": "Attachments"
 		},
 		"PLACEHOLDERS": {
 			"NAME": "Name",
@@ -591,7 +592,8 @@
 			"INVITATION_EXPIRATION": "Invitation Expiration",
 			"ADD_PROJECT": "Add project",
 			"ADD_EMPLOYEE": "Add employee",
-			"ADD_ORGANIZATION": "Add organization"
+			"ADD_ORGANIZATION": "Add organization",
+			"DRAG_DROP_FILE": "Drag and Drop the file here"
 		},
 		"RATES": {
 			"DEFAULT_RATE": "Default Rate",
