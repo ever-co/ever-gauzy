@@ -21,4 +21,4 @@ import { DirectivesModule } from '../directives/directives.module';
 	exports: [FileUploaderInputComponent],
 	declarations: [FileUploaderInputComponent]
 })
-export class FileUploaderModule { }
+export class FileUploaderModule {}
