@@ -313,8 +313,58 @@ export class SearchComponent extends PaginationFilterBaseComponent
 		});
 	}
 
+	/** Apply For Job Post */
+	async applyToJob(applyJobPost: IApplyJobPostInput): Promise<void> {
+		if (!this.selectedJob) {
+			return;
+		}
+		try {
+			const appliedJob = await this.jobService.applyJob(applyJobPost);
+
+			this.toastrService.success('TOASTR.MESSAGE.JOB_APPLIED');
+			this.smartTableSource.refresh();
+
+			if (appliedJob.isRedirectRequired) {
+				const proposalTemplate = await this.getEmployeeDefaultProposalTemplate(
+					this.selectedJob
+				);
+				if (proposalTemplate) {
+					await this.copyTextToClipboard(proposalTemplate.content);
+				}
+				window.open(this.selectedJob.jobPost.url, '_blank');
+			}
+		} catch (error) {
+			console.log('Error while applying job post', error);
+		}
+	}
+
+	/** Apply For Job Automatically */
+	async applyToJobAutomatically() {
+		if (!this.selectedJob) {
+			return;
+		}
+		try {
+			const { providerCode, providerJobId, employeeId } = this.selectedJob;
+			const applyJobPost: IApplyJobPostInput = {
+				applied: true,
+				...(this.selectedEmployeeId
+					? {
+						employeeId: this.selectedEmployeeId
+					}
+					: {
+						employeeId
+					}),
+				providerCode,
+				providerJobId,
+			};
+			await this.applyToJob(applyJobPost);
+		} catch (error) {
+			console.log('Error while applying job post automatically', error);
+		}
+	}
+
 	/** Apply For Job Manually */
-	async applyToJob(): Promise<void> {
+	async applyToJobManually() {
 		if (!this.selectedJob) {
 			return;
 		}
@@ -329,34 +379,20 @@ export class SearchComponent extends PaginationFilterBaseComponent
 			const { providerCode, providerJobId } = this.selectedJob;
 			const { applied, employeeId, proposal, rate, details, attachments } = result;
 
-			const applyJobPost: IApplyJobPostInput = {
-				applied,
-				employeeId,
-				proposal,
-				rate,
-				details,
-				attachments,
-				providerCode,
-				providerJobId,
-			};
-
 			try {
-				const appliedJob = await this.jobService.applyJob(applyJobPost);
-
-				this.toastrService.success('TOASTR.MESSAGE.JOB_APPLIED');
-				this.smartTableSource.refresh();
-
-				if (appliedJob.isRedirectRequired) {
-					const proposalTemplate = await this.getEmployeeDefaultProposalTemplate(
-						this.selectedJob
-					);
-					if (proposalTemplate) {
-						await this.copyTextToClipboard(proposalTemplate.content);
-					}
-					window.open(this.selectedJob.jobPost.url, '_blank');
-				}
+				const applyJobPost: IApplyJobPostInput = {
+					applied,
+					employeeId,
+					proposal,
+					rate,
+					details,
+					attachments,
+					providerCode,
+					providerJobId,
+				};
+				await this.applyToJob(applyJobPost);
 			} catch (error) {
-				console.log('Error while applying job post', error);
+				console.log('Error while applying job post manually', error);
 			}
 		}
 	}
