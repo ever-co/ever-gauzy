@@ -4,14 +4,10 @@ import { TenantIssueTypeBulkCreateCommand } from '../tenant-issue-type-bulk-crea
 import { IssueTypeService } from '../../issue-type.service';
 
 @CommandHandler(TenantIssueTypeBulkCreateCommand)
-export class TenantIssueTypeBulkCreateHandler
-	implements ICommandHandler<TenantIssueTypeBulkCreateCommand>
-{
+export class TenantIssueTypeBulkCreateHandler implements ICommandHandler<TenantIssueTypeBulkCreateCommand> {
 	constructor(private readonly issueTypeService: IssueTypeService) {}
 
-	public async execute(
-		command: TenantIssueTypeBulkCreateCommand
-	): Promise<IIssueType[]> {
+	public async execute(command: TenantIssueTypeBulkCreateCommand): Promise<IIssueType[]> {
 		const { tenants } = command;
 
 		// Create issue types of the tenant.

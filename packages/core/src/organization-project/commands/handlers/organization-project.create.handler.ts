@@ -9,42 +9,28 @@ import { OrganizationProjectTaskSizeBulkCreateCommand } from './../../../tasks/s
 import { OrganizationProjectIssueTypeBulkCreateCommand } from './../../../tasks/issue-type/commands';
 
 @CommandHandler(OrganizationProjectCreateCommand)
-export class OrganizationProjectCreateHandler
-	implements ICommandHandler<OrganizationProjectCreateCommand>
-{
+export class OrganizationProjectCreateHandler implements ICommandHandler<OrganizationProjectCreateCommand> {
 	constructor(
 		private readonly _commandBus: CommandBus,
 		private readonly _organizationProjectService: OrganizationProjectService
 	) {}
 
-	public async execute(
-		command: OrganizationProjectCreateCommand
-	): Promise<IOrganizationProject> {
+	public async execute(command: OrganizationProjectCreateCommand): Promise<IOrganizationProject> {
 		try {
 			const { input } = command;
-			const project = await this._organizationProjectService.create(
-				input
-			);
+			const project = await this._organizationProjectService.create(input);
 
 			// 1. Create task statuses for relative organization project.
-			this._commandBus.execute(
-				new OrganizationProjectStatusBulkCreateCommand(project)
-			);
+			this._commandBus.execute(new OrganizationProjectStatusBulkCreateCommand(project));
 
 			// 2. Create task priorities for relative organization project.
-			this._commandBus.execute(
-				new OrganizationProjectTaskPriorityBulkCreateCommand(project)
-			);
+			this._commandBus.execute(new OrganizationProjectTaskPriorityBulkCreateCommand(project));
 
 			// 3. Create task sizes for relative organization project.
-			this._commandBus.execute(
-				new OrganizationProjectTaskSizeBulkCreateCommand(project)
-			);
+			this._commandBus.execute(new OrganizationProjectTaskSizeBulkCreateCommand(project));
 
 			// 4. Create issue types for relative organization project.
-			this._commandBus.execute(
-				new OrganizationProjectIssueTypeBulkCreateCommand(project)
-			);
+			this._commandBus.execute(new OrganizationProjectIssueTypeBulkCreateCommand(project));
 
 			return project;
 		} catch (error) {

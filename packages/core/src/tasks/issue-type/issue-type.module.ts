@@ -10,15 +10,13 @@ import { CommandHandlers } from './commands/handlers';
 
 @Module({
 	imports: [
-		RouterModule.forRoutes([
-			{ path: '/issue-types', module: IssueTypeModule },
-		]),
+		RouterModule.forRoutes([{ path: '/issue-types', module: IssueTypeModule }]),
 		TypeOrmModule.forFeature([IssueType]),
 		CqrsModule,
-		TenantModule,
+		TenantModule
 	],
 	controllers: [IssueTypeController],
 	providers: [IssueTypeService, ...CommandHandlers],
-	exports: [],
+	exports: []
 })
 export class IssueTypeModule {}

@@ -9,40 +9,28 @@ import { OrganizationTeamTaskStatusBulkCreateCommand } from './../../../tasks/st
 import { OrganizationTeamIssueTypeBulkCreateCommand } from './../../../tasks/issue-type/commands';
 
 @CommandHandler(OrganizationTeamCreateCommand)
-export class OrganizationTeamCreateHandler
-	implements ICommandHandler<OrganizationTeamCreateCommand>
-{
+export class OrganizationTeamCreateHandler implements ICommandHandler<OrganizationTeamCreateCommand> {
 	constructor(
 		private readonly _commandBus: CommandBus,
 		private readonly _organizationTeamService: OrganizationTeamService
 	) {}
 
-	public async execute(
-		command: OrganizationTeamCreateCommand
-	): Promise<IOrganizationTeam> {
+	public async execute(command: OrganizationTeamCreateCommand): Promise<IOrganizationTeam> {
 		try {
 			const { input } = command;
 			const team = await this._organizationTeamService.create(input);
 
 			// 1. Create task statuses for relative organization team.
-			this._commandBus.execute(
-				new OrganizationTeamTaskStatusBulkCreateCommand(team)
-			);
+			this._commandBus.execute(new OrganizationTeamTaskStatusBulkCreateCommand(team));
 
 			// 2. Create task priorities for relative organization team.
-			this._commandBus.execute(
-				new OrganizationTeamTaskPriorityBulkCreateCommand(team)
-			);
+			this._commandBus.execute(new OrganizationTeamTaskPriorityBulkCreateCommand(team));
 
 			// 3. Create task sizes for relative organization team.
-			this._commandBus.execute(
-				new OrganizationTeamTaskSizeBulkCreateCommand(team)
-			);
+			this._commandBus.execute(new OrganizationTeamTaskSizeBulkCreateCommand(team));
 
 			// 4. Create issue types for relative organization team.
-			this._commandBus.execute(
-				new OrganizationTeamIssueTypeBulkCreateCommand(team)
-			);
+			this._commandBus.execute(new OrganizationTeamIssueTypeBulkCreateCommand(team));
 
 			return team;
 		} catch (error) {

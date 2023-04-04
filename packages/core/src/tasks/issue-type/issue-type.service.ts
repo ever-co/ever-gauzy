@@ -7,7 +7,7 @@ import {
 	IIssueTypeFindInput,
 	IOrganization,
 	IPagination,
-	ITenant,
+	ITenant
 } from '@gauzy/contracts';
 import { IssueType } from './issue-type.entity';
 import { TaskStatusPrioritySizeService } from './../task-status-priority-size.service';
@@ -32,8 +32,8 @@ export class IssueTypeService extends TaskStatusPrioritySizeService<IssueType> {
 	async delete(id: IIssueType['id']): Promise<DeleteResult> {
 		return await super.delete(id, {
 			where: {
-				isSystem: false,
-			},
+				isSystem: false
+			}
 		});
 	}
 
@@ -44,9 +44,7 @@ export class IssueTypeService extends TaskStatusPrioritySizeService<IssueType> {
 	 * @param params
 	 * @returns
 	 */
-	async findAllIssueTypes(
-		params: IIssueTypeFindInput
-	): Promise<IPagination<IIssueType>> {
+	async findAllIssueTypes(params: IIssueTypeFindInput): Promise<IPagination<IIssueType>> {
 		try {
 			/**
 			 * Find at least one record or get global records
@@ -60,13 +58,11 @@ export class IssueTypeService extends TaskStatusPrioritySizeService<IssueType> {
 			/**
 			 * Find task issue types for given params
 			 */
-			const query = this.repository
-				.createQueryBuilder(this.alias)
-				.setFindOptions({
-					relations: {
-						image: true,
-					},
-				});
+			const query = this.repository.createQueryBuilder(this.alias).setFindOptions({
+				relations: {
+					image: true
+				}
+			});
 			query.where((qb: SelectQueryBuilder<IssueType>) => {
 				this.getFilterQuery(qb, params);
 			});
@@ -82,9 +78,7 @@ export class IssueTypeService extends TaskStatusPrioritySizeService<IssueType> {
 	 *
 	 * @param tenants '
 	 */
-	async bulkCreateTenantsIssueTypes(
-		tenants: ITenant[]
-	): Promise<IIssueType[]> {
+	async bulkCreateTenantsIssueTypes(tenants: ITenant[]): Promise<IIssueType[]> {
 		try {
 			const issueTypes: IIssueType[] = [];
 
@@ -94,7 +88,7 @@ export class IssueTypeService extends TaskStatusPrioritySizeService<IssueType> {
 						...issueType,
 						icon: `ever-icons/${issueType.icon}`,
 						tenant,
-						isSystem: false,
+						isSystem: false
 					});
 					issueTypes.push(create);
 				}
@@ -112,15 +106,13 @@ export class IssueTypeService extends TaskStatusPrioritySizeService<IssueType> {
 	 *
 	 * @param organization
 	 */
-	async bulkCreateOrganizationIssueType(
-		organization: IOrganization
-	): Promise<IIssueType[]> {
+	async bulkCreateOrganizationIssueType(organization: IOrganization): Promise<IIssueType[]> {
 		try {
 			const tenantId = RequestContext.currentTenantId();
 
 			const issueTypes: IIssueType[] = [];
 			const { items = [] } = await this.findEntitiesByParams({
-				tenantId,
+				tenantId
 			});
 
 			for (const item of items) {
@@ -134,7 +126,7 @@ export class IssueTypeService extends TaskStatusPrioritySizeService<IssueType> {
 					icon,
 					color,
 					organization,
-					isSystem: false,
+					isSystem: false
 				});
 				issueTypes.push(create);
 			}
@@ -150,9 +142,7 @@ export class IssueTypeService extends TaskStatusPrioritySizeService<IssueType> {
 	 * @param entity
 	 * @returns
 	 */
-	async createBulkIssueTypeByEntity(
-		entity: Partial<IIssueTypeCreateInput>
-	): Promise<IIssueType[]> {
+	async createBulkIssueTypeByEntity(entity: Partial<IIssueTypeCreateInput>): Promise<IIssueType[]> {
 		try {
 			const { organizationId } = entity;
 			const tenantId = RequestContext.currentTenantId();
@@ -160,7 +150,7 @@ export class IssueTypeService extends TaskStatusPrioritySizeService<IssueType> {
 			const issueTypes: IIssueType[] = [];
 			const { items = [] } = await this.findEntitiesByParams({
 				tenantId,
-				organizationId,
+				organizationId
 			});
 
 			for (const item of items) {
@@ -173,7 +163,7 @@ export class IssueTypeService extends TaskStatusPrioritySizeService<IssueType> {
 					description,
 					icon,
 					color,
-					isSystem: false,
+					isSystem: false
 				});
 				issueTypes.push(issueType);
 			}

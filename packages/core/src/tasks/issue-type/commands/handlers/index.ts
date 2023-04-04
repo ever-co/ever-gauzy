@@ -7,5 +7,5 @@ export const CommandHandlers = [
 	OrganizationTeamIssueTypeBulkCreateHandler,
 	TenantIssueTypeBulkCreateHandler,
 	OrganizationIssueTypeBulkCreateHandler,
-	OrganizationProjectIssueTypeBulkCreateHandler,
+	OrganizationProjectIssueTypeBulkCreateHandler
 ];

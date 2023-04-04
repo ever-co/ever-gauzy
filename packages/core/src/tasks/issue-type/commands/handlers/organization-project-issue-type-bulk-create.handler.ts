@@ -9,16 +9,14 @@ export class OrganizationProjectIssueTypeBulkCreateHandler
 {
 	constructor(private readonly issueTypeService: IssueTypeService) {}
 
-	public async execute(
-		command: OrganizationProjectIssueTypeBulkCreateCommand
-	): Promise<IIssueType[]> {
+	public async execute(command: OrganizationProjectIssueTypeBulkCreateCommand): Promise<IIssueType[]> {
 		const { input } = command;
 		const { id: projectId, organizationId } = input;
 
 		// Create issue types of the organization project.
 		return await this.issueTypeService.createBulkIssueTypeByEntity({
 			organizationId,
-			projectId,
+			projectId
 		});
 	}
 }

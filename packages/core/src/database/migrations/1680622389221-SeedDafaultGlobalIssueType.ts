@@ -2,9 +2,7 @@ import { DEFAULT_GLOBAL_ISSUE_TYPES } from './../../tasks/issue-type/default-glo
 import { v4 as uuidV4 } from 'uuid';
 import { MigrationInterface, QueryRunner } from 'typeorm';
 
-export class SeedDafaultGlobalIssueType1680622389221
-	implements MigrationInterface
-{
+export class SeedDafaultGlobalIssueType1680622389221 implements MigrationInterface {
 	name = 'SeedDafaultGlobalIssueType1680622389221';
 
 	/**
@@ -44,10 +42,7 @@ export class SeedDafaultGlobalIssueType1680622389221
 			}
 		} catch (error) {
 			// since we have errors let's rollback changes we made
-			console.log(
-				'Error while insert default global issue types in production server',
-				error
-			);
+			console.log('Error while insert default global issue types in production server', error);
 		}
 	}
 }

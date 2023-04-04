@@ -34,18 +34,12 @@ export class SeedIssueTypeIcon1680623178558 implements MigrationInterface {
 				const filepath = `ever-icons/${icon}`;
 
 				const query = `UPDATE "issue_type" SET "icon" = '${filepath}', "color" = '${color}' WHERE ("name" = $1 AND "value" = $2) AND ("tenantId" IS NULL AND "organizationId" IS NULL)`;
-				await queryRunner.connection.manager.query(query, [
-					name,
-					value,
-				]);
+				await queryRunner.connection.manager.query(query, [name, value]);
 				copyEverIcons(issueType.icon, this.config);
 			}
 		} catch (error) {
 			// since we have errors let's rollback changes we made
-			console.log(
-				'Error while updating issue types icon & color in production server',
-				error
-			);
+			console.log('Error while updating issue types icon & color in production server', error);
 		}
 	}
 }

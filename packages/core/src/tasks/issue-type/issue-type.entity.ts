@@ -1,31 +1,16 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import {
-	Column,
-	Entity,
-	Index,
-	JoinColumn,
-	ManyToOne,
-	RelationId,
-} from 'typeorm';
+import { Column, Entity, Index, JoinColumn, ManyToOne, RelationId } from 'typeorm';
 import { IsNotEmpty, IsOptional, IsString, IsUUID } from 'class-validator';
-import {
-	IImageAsset,
-	IIssueType,
-	IOrganizationProject,
-	IOrganizationTeam,
-} from '@gauzy/contracts';
+import { IImageAsset, IIssueType, IOrganizationProject, IOrganizationTeam } from '@gauzy/contracts';
 import {
 	ImageAsset,
 	OrganizationProject,
 	OrganizationTeam,
-	TenantOrganizationBaseEntity,
+	TenantOrganizationBaseEntity
 } from './../../core/entities/internal';
 
 @Entity('issue_type')
-export class IssueType
-	extends TenantOrganizationBaseEntity
-	implements IIssueType
-{
+export class IssueType extends TenantOrganizationBaseEntity implements IIssueType {
 	@ApiProperty({ type: () => String })
 	@IsNotEmpty()
 	@IsString()
@@ -73,7 +58,7 @@ export class IssueType
 		onDelete: 'SET NULL',
 
 		/** Eager relations are always loaded automatically when relation's owner entity is loaded using find* methods. */
-		eager: true,
+		eager: true
 	})
 	@JoinColumn()
 	image?: IImageAsset;
@@ -90,7 +75,7 @@ export class IssueType
 	 * Organization Project
 	 */
 	@ManyToOne(() => OrganizationProject, {
-		onDelete: 'CASCADE',
+		onDelete: 'CASCADE'
 	})
 	project?: IOrganizationProject;
 
@@ -106,7 +91,7 @@ export class IssueType
 	 * Organization Team
 	 */
 	@ManyToOne(() => OrganizationTeam, {
-		onDelete: 'CASCADE',
+		onDelete: 'CASCADE'
 	})
 	organizationTeam?: IOrganizationTeam;
 
