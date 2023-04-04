@@ -22,7 +22,7 @@ import {
 export class EmployeeJobPostController {
 	constructor(
 		private readonly employeeJobPostService: EmployeeJobPostService
-	) {}
+	) { }
 
 	@ApiOperation({ summary: 'Find all employee job posts' })
 	@ApiResponse({
@@ -36,9 +36,9 @@ export class EmployeeJobPostController {
 	})
 	@Get()
 	async findAll(
-		@Query() data: IGetEmployeeJobPostInput
+		@Query() input: IGetEmployeeJobPostInput
 	): Promise<IPagination<IEmployeeJobPost>> {
-		return this.employeeJobPostService.findAll(data);
+		return await this.employeeJobPostService.findAll(input);
 	}
 
 	@ApiOperation({ summary: 'Apply on job' })

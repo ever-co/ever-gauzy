@@ -310,6 +310,7 @@ import { createRandomWarehouses } from './../../warehouse/warehouse.seed';
 import { createDefaultStatuses } from './../../tasks/statuses/status.seed';
 import { createDefaultPriorities } from './../../tasks/priorities/priority.seed';
 import { createDefaultSizes } from './../../tasks/sizes/size.seed';
+import { createDefaultIssueTypes } from './../../tasks/issue-type/issue-type.seed';
 
 export enum SeederTypeEnum {
 	ALL = 'all',
@@ -614,6 +615,8 @@ export class SeedDataService {
 		await this.tryExecute('Priorities', createDefaultPriorities(this.dataSource));
 
 		await this.tryExecute('Sizes', createDefaultSizes(this.dataSource));
+
+		await this.tryExecute('Issue Types', createDefaultIssueTypes(this.dataSource));
 
 		// default and internal tenant
 		const tenantName =

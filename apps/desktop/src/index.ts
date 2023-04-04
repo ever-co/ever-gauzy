@@ -161,7 +161,7 @@ if (process.platform === 'win32') {
 	app.setAppUserModelId('com.ever.gauzydesktop');
 }
 
-function startServer(value, restart = false) {
+async function startServer(value, restart = false) {
 	process.env.IS_ELECTRON = 'true';
 	if (value.db === 'sqlite') {
 		process.env.DB_PATH = sqlite3filename;
@@ -185,7 +185,7 @@ function startServer(value, restart = false) {
 		serverGauzy = fork(path.join(__dirname, './api/main.js'), {
 			silent: true,
 		});
-		serverGauzy.stdout.on('data', (data) => {
+		serverGauzy.stdout.on('data', async (data) => {
 			const msgData = data.toString();
 			console.log('log -- ', msgData);
 			setupWindow.webContents.send('setup-progress', {
@@ -195,7 +195,7 @@ function startServer(value, restart = false) {
 				if (msgData.indexOf('Listening at http') > -1) {
 					setupWindow.hide();
 					// isAlreadyRun = true;
-					gauzyWindow = createGauzyWindow(
+					gauzyWindow = await createGauzyWindow(
 						gauzyWindow,
 						serve,
 						{ ...environment, gauzyWindow: value.gauzyWindow },
@@ -243,7 +243,7 @@ function startServer(value, restart = false) {
 	/* create main window */
 	if (value.serverConfigConnected || !value.isLocalServer) {
 		setupWindow.hide();
-		gauzyWindow = createGauzyWindow(
+		gauzyWindow = await createGauzyWindow(
 			gauzyWindow,
 			serve,
 			{ ...environment, gauzyWindow: value.gauzyWindow },
@@ -300,13 +300,13 @@ const dialogMessage = (msg) => {
 		message: msg,
 	};
 
-	dialog.showMessageBox(null, options).then((response) => {
+	dialog.showMessageBox(null, options).then(async (response) => {
 		if (response.response === 1) app.quit();
 		else {
 			if (settingsWindow) settingsWindow.show();
 			else {
 				if (!settingsWindow) {
-					settingsWindow = createSettingsWindow(
+					settingsWindow = await createSettingsWindow(
 						settingsWindow,
 						pathWindow.timeTrackerUi
 					);
@@ -376,19 +376,19 @@ app.on('ready', async () => {
 	);
 
 	/* create window */
-	timeTrackerWindow = createTimeTrackerWindow(
+	timeTrackerWindow = await createTimeTrackerWindow(
 		timeTrackerWindow,
 		pathWindow.timeTrackerUi
 	);
-	settingsWindow = createSettingsWindow(
+	settingsWindow = await createSettingsWindow(
 		settingsWindow,
 		pathWindow.timeTrackerUi
 	);
-	updaterWindow = createUpdaterWindow(
+	updaterWindow = await createUpdaterWindow(
 		updaterWindow,
 		pathWindow.timeTrackerUi
 	);
-	imageView = createImageViewerWindow(imageView, pathWindow.timeTrackerUi);
+	imageView = await createImageViewerWindow(imageView, pathWindow.timeTrackerUi);
 
 	/* Set Menu */
 	new AppMenu(
@@ -403,31 +403,29 @@ app.on('ready', async () => {
 
 	if (configs && configs.isSetup) {
 		if (!configs.serverConfigConnected) {
-			setupWindow = createSetupWindow(
+			setupWindow = await createSetupWindow(
 				setupWindow,
 				false,
 				pathWindow.timeTrackerUi
 			);
 			setupWindow.show();
-			setTimeout(() => {
-				setupWindow.webContents.send('setup-data', {
-					...configs,
-				});
-			}, 1000);
+			setupWindow.webContents.send('setup-data', {
+				...configs,
+			});
 		} else {
 			global.variableGlobal = {
 				API_BASE_URL: getApiBaseUrl(configs),
 				IS_INTEGRATED_DESKTOP: configs.isLocalServer,
 			};
-			setupWindow = createSetupWindow(
+			setupWindow = await createSetupWindow(
 				setupWindow,
 				true,
 				pathWindow.timeTrackerUi
 			);
-			startServer(configs);
+			await startServer(configs);
 		}
 	} else {
-		setupWindow = createSetupWindow(
+		setupWindow = await createSetupWindow(
 			setupWindow,
 			false,
 			pathWindow.timeTrackerUi
@@ -460,7 +458,7 @@ app.on('window-all-closed', quit);
 
 app.commandLine.appendSwitch('disable-http2');
 
-ipcMain.on('server_is_ready', () => {
+ipcMain.on('server_is_ready', async () => {
 	LocalStore.setDefaultApplicationSetting();
 	const appConfig = LocalStore.getStore('configs');
 	appConfig.serverConfigConnected = true;
@@ -470,7 +468,7 @@ ipcMain.on('server_is_ready', () => {
 	onWaitingServer = false;
 	if (!isAlreadyRun) {
 		serverDesktop = fork(path.join(__dirname, './desktop-api/main.js'));
-		gauzyWindow.loadURL(gauzyPage(pathWindow.gauzyWindow));
+		await gauzyWindow.loadURL(gauzyPage(pathWindow.gauzyWindow));
 		removeTimerListener();
 		ipcTimer(
 			store,
@@ -503,36 +501,32 @@ ipcMain.on('restore', () => {
 	gauzyWindow.restore();
 });
 
-ipcMain.on('restart_app', (event, arg) => {
+ipcMain.on('restart_app', async (event, arg) => {
 	dialogErr = false;
 	LocalStore.updateConfigSetting(arg);
 	if (serverGauzy) serverGauzy.kill();
 	if (gauzyWindow) gauzyWindow.destroy();
 	gauzyWindow = null;
 	isAlreadyRun = false;
-	setTimeout(() => {
-		if (!gauzyWindow) {
-			const configs = LocalStore.getStore('configs');
-			global.variableGlobal = {
-				API_BASE_URL: getApiBaseUrl(configs),
-				IS_INTEGRATED_DESKTOP: configs.isLocalServer,
-			};
-			startServer(configs, tray ? true : false);
-			setupWindow.webContents.send('server_ping_restart', {
-				host: getApiBaseUrl(configs),
-			});
-		}
-	}, 100);
+	const configs = LocalStore.getStore('configs');
+	global.variableGlobal = {
+		API_BASE_URL: getApiBaseUrl(configs),
+		IS_INTEGRATED_DESKTOP: configs.isLocalServer,
+	};
+	await startServer(configs, tray ? true : false);
+	setupWindow.webContents.send('server_ping_restart', {
+		host: getApiBaseUrl(configs),
+	});
 });
 
 ipcMain.on('save_additional_setting', (event, arg) => {
 	LocalStore.updateAdditionalSetting(arg);
 });
 
-ipcMain.on('server_already_start', () => {
+ipcMain.on('server_already_start', async () => {
 	if (!gauzyWindow && !isAlreadyRun) {
 		const configs: any = store.get('configs');
-		gauzyWindow = createGauzyWindow(
+		gauzyWindow = await createGauzyWindow(
 			gauzyWindow,
 			serve,
 			{ ...environment, gauzyWindow: configs.gauzyWindow },
@@ -596,7 +590,7 @@ ipcMain.on('check_database_connection', async (event, arg) => {
 	}
 });
 
-app.on('activate', () => {
+app.on('activate', async () => {
 	if (gauzyWindow) {
 		if (LocalStore.getStore('configs').gauzyWindow) {
 			gauzyWindow.show();
@@ -608,7 +602,7 @@ app.on('activate', () => {
 	) {
 		// On macOS it's common to re-create a window in the app when the
 		// dock icon is clicked and there are no other windows open.
-		createGauzyWindow(
+		await createGauzyWindow(
 			gauzyWindow,
 			serve,
 			{ ...environment },
@@ -687,3 +681,7 @@ function launchAtStartup(autoLaunch, hidden) {
 			break;
 	}
 }
+
+app.on('browser-window-created', (_, window) => {
+	require("@electron/remote/main").enable(window.webContents)
+})

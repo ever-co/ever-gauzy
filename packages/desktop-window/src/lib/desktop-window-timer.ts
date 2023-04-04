@@ -3,8 +3,7 @@ import * as url from 'url';
 import * as remoteMain from '@electron/remote/main';
 const Store = require('electron-store');
 const store = new Store();
-
-export function createTimeTrackerWindow(timeTrackerWindow, filePath) {
+export async function createTimeTrackerWindow(timeTrackerWindow, filePath) {
 	const mainWindowSettings: Electron.BrowserWindowConstructorOptions = windowSetting();
 
 	timeTrackerWindow = new BrowserWindow(mainWindowSettings);
@@ -19,7 +18,7 @@ export function createTimeTrackerWindow(timeTrackerWindow, filePath) {
 	// timeTrackerWindow.webContents.openDevTools();
 
 	timeTrackerWindow.hide();
-	timeTrackerWindow.loadURL(launchPath);
+	await timeTrackerWindow.loadURL(launchPath);
 	timeTrackerWindow.setMenu(null);
 	timeTrackerWindow.on('close', (event) => {
 		event.preventDefault();
@@ -42,7 +41,7 @@ const windowSetting = () => {
 		fullscreenable: false,
 		webPreferences: {
 			nodeIntegration: true,
-			webSecurity: false,			
+			webSecurity: false,
 			contextIsolation: false,
 			zoomFactor: zoomF,
 			sandbox: false
@@ -52,7 +51,7 @@ const windowSetting = () => {
 		title: 'Time Tracker',
 		maximizable: false,
 		show: false,
-		
+
 	};
 
 	if (process.platform === 'linux') {

@@ -16,7 +16,7 @@ export class AppService {
 	) {}
 
 	pingServer(values) {
-		return firstValueFrom(this.http.get(values.host));
+		return firstValueFrom(this.http.get(values.host + '/api'));
 	}
 
 	startTime(id): Promise<any> {

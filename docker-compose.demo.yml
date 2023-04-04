@@ -2,13 +2,13 @@ version: '3.8'
 
 services:
     db:
-        image: postgres:14-alpine
+        image: postgres:15-alpine
         container_name: db
         restart: always
         environment:
-            POSTGRES_DB: ${DB_NAME:-postgres}
+            POSTGRES_DB: ${DB_NAME:-gauzy}
             POSTGRES_USER: ${DB_USER:-postgres}
-            POSTGRES_PASSWORD: ${DB_PASS:-root}
+            POSTGRES_PASSWORD: ${DB_PASS:-gauzy_password}
         healthcheck:
             test:
                 [
@@ -16,23 +16,60 @@ services:
                     'psql postgres://$${POSTGRES_USER}:$${POSTGRES_PASSWORD}@localhost:5432/$${POSTGRES_DB} || exit 1'
                 ]
         volumes:
-            - postgres_data:/var/lib/postgresql/data
+            - postgres_data:/var/lib/postgresql/data/
+            - ./.deploy/db/init-user-db.sh:/docker-entrypoint-initdb.d/init-user-db.sh
         ports:
             - '5432:5432'
         networks:
             - overlay
 
+    cube:
+        image: cubejs/cube:latest
+        container_name: cube
+        ports:
+            - '4000:4000' # Cube Playground
+            - '5430:5430' # Port for Cube SQL
+        environment:
+            - CUBEJS_DEV_MODE=true
+            - CUBEJS_DB_TYPE=postgres
+            - CUBEJS_DB_HOST=db
+            - CUBEJS_DB_PORT=5432
+            - CUBEJS_DB_NAME=${DB_NAME:-gauzy}
+            - CUBEJS_DB_USER=${DB_USER:-postgres}
+            - CUBEJS_DB_PASS=${DB_PASS:-gauzy_password}
+            # Credentails to connect to Cube SQL APIs
+            - CUBEJS_PG_SQL_PORT=5430
+            - CUBEJS_SQL_USER=${CUBE_USER:-cube_user}
+            - CUBEJS_SQL_PASSWORD=${CUBE_PASS:-cube_pass}
+        volumes:
+            - "cube_data:/cube/conf"
+        links:
+            - db
+        networks:
+            - overlay
+
     elasticsearch:
         image: "elasticsearch:7.17.7"
+        container_name: elasticsearch
         volumes:
             - elasticsearch_data:/usr/share/elasticsearch/data
         environment:
             ES_JAVA_OPTS: -Xms512m -Xmx1024m
             discovery.type: single-node
+            http.port: 9200
+            http.cors.enabled: true
+            http.cors.allow-origin: http://localhost:3000,http://127.0.0.1:3000,http://localhost:1358,http://127.0.0.1:1358
+            http.cors.allow-headers: X-Requested-With,X-Auth-Token,Content-Type,Content-Length,Authorization
+            http.cors.allow-credentials: true
+            bootstrap.memory_lock: true
             xpack.security.enabled: "false"
         ports:
             - "9200"
             - "9300"
+        ulimits:
+            memlock:
+               soft: -1
+               hard: -1
         healthcheck:
             test: [ "CMD", "curl", "-f", "http://localhost:9200/_cat/health" ]
             interval: 5s
@@ -42,16 +79,32 @@ services:
         networks:
             - overlay
 
+    # Elasticsearch Management UI
+    dejavu:
+      image: appbaseio/dejavu:3.6.0
+      container_name: dejavu
+      ports:
+          - '1358:1358'
+      links:
+          - elasticsearch
+      networks:
+          - overlay
+
     redis:
         image: "redis:7.0.2-alpine"
+        container_name: redis
+        restart: unless-stopped
         ports:
             - "6379"
+        volumes:
+            - redis_data:/data
         networks:
             - overlay
 
     minio:
         restart: always
         image: quay.io/minio/minio:latest
+        container_name: minio
         volumes:
             - minio_data:/data
         environment:
@@ -92,10 +145,10 @@ services:
         links:
             - db:${DB_HOST:-db}
         environment:
-            POSTGRES_DB: ${DB_NAME:-postgres}
+            POSTGRES_DB: ${DB_NAME:-gauzy}
             POSTGRES_USER: ${DB_USER:-postgres}
-            POSTGRES_PASSWORD: ${DB_PASS:-root}
-            PGWEB_DATABASE_URL: postgres://${DB_USER:-postgres}:${DB_PASS:-root}@${DB_HOST:-db}:${DB_PORT:-5432}/${DB_NAME:-postgres}?sslmode=disable
+            POSTGRES_PASSWORD: ${DB_PASS:-gauzy_password}
+            PGWEB_DATABASE_URL: postgres://${DB_USER:-postgres}:${DB_PASS:-gauzy_password}@${DB_HOST:-db}:${DB_PORT:-5432}/${DB_NAME:-gauzy}?sslmode=disable
         ports:
             - '8081:8081'
         networks:
@@ -113,7 +166,9 @@ services:
             CLIENT_BASE_URL: ${CLIENT_BASE_URL:-http://localhost:4200}
             SENTRY_DSN: ${SENTRY_DSN:-}
         env_file:
-            - .env.docker
+            - .env.compose
+        entrypoint: './entrypoint.compose.sh'
+        command: ['node', 'main.js']
         restart: on-failure
         depends_on:
             db:
@@ -126,10 +181,14 @@ services:
                 condition: service_started
             elasticsearch:
                 condition: service_healthy
+            cube:
+                condition: service_started
         links:
             - db:${DB_HOST:-db}
-        entrypoint: './entrypoint.compose.sh'
-        command: ['node', 'main.js']
+            - cube:${CUBE_HOST:-cube}
+            - redis:${REDIS_HOST:-redis}
+            - minio:${MINIO_HOST:-minio}
+            - elasticsearch:${ES_HOST:-elasticsearch}
         # volumes:
         # - webapp_node_modules:/srv/gauzy/node_modules
         # - api_node_modules:/srv/gauzy/apps/api/node_modules
@@ -159,12 +218,18 @@ services:
             DEMO: 'true'
             API_HOST: ${API_HOST:-api}
             API_PORT: ${API_PORT:-3000}
+        entrypoint: './entrypoint.compose.sh'
+        command: ['nginx', '-g', 'daemon off;']
         env_file:
-            - .env.docker
+            - .env.compose
         restart: on-failure
         links:
             - db:${DB_HOST:-db}
             - api:${API_HOST:-api}
+            - cube:${CUBE_HOST:-cube}
+            - redis:${REDIS_HOST:-redis}
+            - minio:${MINIO_HOST:-minio}
+            - elasticsearch:${ES_HOST:-elasticsearch}
         depends_on:
             db:
                 condition: service_healthy
@@ -178,8 +243,6 @@ services:
                 condition: service_healthy
             api:
                 condition: service_started
-        entrypoint: './entrypoint.compose.sh'
-        command: ['nginx', '-g', 'daemon off;']
         # volumes:
         # - webapp_node_modules:/srv/gauzy/node_modules
         ports:
@@ -190,9 +253,11 @@ services:
 volumes:
     # webapp_node_modules:
     # api_node_modules:
+    redis_data: {}
     postgres_data: {}
     elasticsearch_data: {}
     minio_data: {}
+    cube_data: {}
     certificates: {}
 
 networks:

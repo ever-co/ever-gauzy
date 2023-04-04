@@ -200,7 +200,7 @@ async function startServer(value, restart = false) {
 	if (value.serverConfigConnected || !value.isLocalServer) {
 		setupWindow.hide();
 		if (!timeTrackerWindow) {
-			timeTrackerWindow = createTimeTrackerWindow(
+			timeTrackerWindow = await createTimeTrackerWindow(
 				timeTrackerWindow,
 				pathWindow.timeTrackerUi
 			);
@@ -317,19 +317,19 @@ app.on('ready', async () => {
 		API_BASE_URL: getApiBaseUrl({}),
 		IS_INTEGRATED_DESKTOP: false,
 	};
-	timeTrackerWindow = createTimeTrackerWindow(
+	timeTrackerWindow = await createTimeTrackerWindow(
 		timeTrackerWindow,
 		pathWindow.timeTrackerUi
 	);
-	settingsWindow = createSettingsWindow(
+	settingsWindow = await createSettingsWindow(
 		settingsWindow,
 		pathWindow.timeTrackerUi
 	);
-	updaterWindow = createUpdaterWindow(
+	updaterWindow = await createUpdaterWindow(
 		updaterWindow,
 		pathWindow.timeTrackerUi
 	);
-	imageView = createImageViewerWindow(imageView, pathWindow.timeTrackerUi);
+	imageView = await createImageViewerWindow(imageView, pathWindow.timeTrackerUi);
 
 	/* Set Menu */
 
@@ -338,14 +338,14 @@ app.on('ready', async () => {
 			API_BASE_URL: getApiBaseUrl(configs),
 			IS_INTEGRATED_DESKTOP: configs.isLocalServer,
 		};
-		setupWindow = createSetupWindow(
+		setupWindow = await createSetupWindow(
 			setupWindow,
 			true,
 			pathWindow.timeTrackerUi
 		);
 		await startServer(configs);
 	} else {
-		setupWindow = createSetupWindow(
+		setupWindow = await createSetupWindow(
 			setupWindow,
 			false,
 			pathWindow.timeTrackerUi
@@ -367,7 +367,13 @@ app.on('ready', async () => {
 	);
 });
 
-app.on('window-all-closed', quit);
+app.on('window-all-closed', () => {
+	// On OS X it is common for applications and their menu bar
+	// to stay active until the user quits explicitly with Cmd + Q
+	if (process.platform !== 'darwin') {
+		app.quit();
+	}
+});
 
 app.commandLine.appendSwitch('disable-http2');
 
@@ -418,7 +424,7 @@ ipcMain.on('restart_app', async (event, arg) => {
 	LocalStore.updateConfigSetting(arg);
 	if (timeTrackerWindow) {
 		timeTrackerWindow.destroy();
-		timeTrackerWindow = createTimeTrackerWindow(
+		timeTrackerWindow = await createTimeTrackerWindow(
 			timeTrackerWindow,
 			pathWindow.timeTrackerUi
 		);
@@ -561,12 +567,10 @@ app.on('before-quit', (e) => {
 	const appSetting = LocalStore.getStore('appSetting');
 	if (appSetting && appSetting.timerStarted) {
 		e.preventDefault();
-		setTimeout(() => {
-			willQuit = true;
-			timeTrackerWindow.webContents.send('stop_from_tray', {
-				quitApp: true,
-			});
-		}, 1000);
+		willQuit = true;
+		timeTrackerWindow.webContents.send('stop_from_tray', {
+			quitApp: true,
+		});
 	} else {
 		// soft download cancellation
 		try {
@@ -694,3 +698,7 @@ const showPopup = async (url: string, options: any) => {
 	await popupWin.loadURL(url, { userAgent: userAgentWb });
 	popupWin.show();
 };
+
+app.on('browser-window-created', (_, window) => {
+	require("@electron/remote/main").enable(window.webContents)
+})

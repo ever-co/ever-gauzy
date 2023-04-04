@@ -231,7 +231,7 @@ export class TimeTrackerService {
 	}
 
 	pingAw(host) {
-		return firstValueFrom(this.http.get(host));
+		return firstValueFrom(this.http.get(host, { responseType: 'text' }));
 	}
 
 	toggleApiStart(values) {

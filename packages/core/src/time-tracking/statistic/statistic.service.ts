@@ -907,7 +907,7 @@ export class StatisticService {
 	 * @returns
 	 */
 	async getTasks(request: IGetTasksStatistics) {
-		const { organizationId, startDate, endDate, take } = request;
+		const { organizationId, startDate, endDate, take, onlyMe = false, organizationTeamId } = request;
 		let { employeeIds = [], projectIds = [], taskIds = [], defaultRange, unitOfTime } = request;
 
 		const user = RequestContext.currentUser();
@@ -937,8 +937,12 @@ export class StatisticService {
 		/*
 		 *  Get employees id of the organization or get current employee id
 		 */
-		if ((user && user.employeeId) && (request.onlyMe || !RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE))) {
-			employeeIds = [user.employeeId];
+		if ((user && user.employeeId) && (onlyMe || !RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE))) {
+			if (isNotEmpty(organizationTeamId)) {
+				employeeIds = [...employeeIds];
+			} else {
+				employeeIds = [user.employeeId];
+			}
 		} else {
 			employeeIds = await this.getEmployeesIds(
 				organizationId,

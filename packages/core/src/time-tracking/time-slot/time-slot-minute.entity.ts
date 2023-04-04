@@ -4,7 +4,8 @@ import {
 	RelationId,
 	ManyToOne,
 	Unique,
-	Index
+	Index,
+	JoinColumn
 } from 'typeorm';
 import { ITimeSlot, ITimeSlotMinute } from '@gauzy/contracts';
 import { ApiProperty } from '@nestjs/swagger';
@@ -34,15 +35,16 @@ export class TimeSlotMinute
 	datetime?: Date;
 
 	/*
-    |--------------------------------------------------------------------------
-    | @ManyToOne 
-    |--------------------------------------------------------------------------
-    */
+	|--------------------------------------------------------------------------
+	| @ManyToOne
+	|--------------------------------------------------------------------------
+	*/
 
 	@ApiProperty({ type: () => TimeSlot })
 	@ManyToOne(() => TimeSlot, (timeSlot) => timeSlot.timeSlotMinutes, {
 		onDelete: 'CASCADE'
 	})
+	@JoinColumn()
 	timeSlot?: ITimeSlot;
 
 	@ApiProperty({ type: () => String, readOnly: true })

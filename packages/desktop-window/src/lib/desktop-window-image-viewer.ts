@@ -1,12 +1,11 @@
 import { BrowserWindow } from 'electron';
-
 import * as url from 'url';
 import * as remoteMain from '@electron/remote/main';
 const Store = require('electron-store');
 const store = new Store();
 
 
-export function createImageViewerWindow(imageViewWindow, filePath) {
+export async function createImageViewerWindow(imageViewWindow, filePath) {
 	const mainWindowSettings: Electron.BrowserWindowConstructorOptions = windowSetting();
 	imageViewWindow = new BrowserWindow(mainWindowSettings);
 	remoteMain.enable(imageViewWindow.webContents);
@@ -18,7 +17,7 @@ export function createImageViewerWindow(imageViewWindow, filePath) {
 	});
 
 	imageViewWindow.hide();
-	imageViewWindow.loadURL(launchPath);
+	await imageViewWindow.loadURL(launchPath);
 	imageViewWindow.setMenu(null);
 
 	// imageViewWindow.webContents.toggleDevTools();
@@ -39,7 +38,7 @@ const windowSetting = () => {
 		webPreferences: {
 			nodeIntegration: true,
 			webSecurity: false,
-			devTools: true,			
+			devTools: true,
 			contextIsolation: false,
 			sandbox: false
 		},

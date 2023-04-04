@@ -3,8 +3,8 @@ import * as url from 'url';
 import * as remoteMain from '@electron/remote/main';
 const Store = require('electron-store');
 const store = new Store();
- 
-export function createSettingsWindow(settingsWindow, filePath) {
+
+export async function createSettingsWindow(settingsWindow, filePath) {
 	const mainWindowSettings: Electron.BrowserWindowConstructorOptions = windowSetting();
 
 	settingsWindow = new BrowserWindow(mainWindowSettings);
@@ -17,7 +17,7 @@ export function createSettingsWindow(settingsWindow, filePath) {
 	});
 
 	settingsWindow.hide();
-	settingsWindow.loadURL(launchPath);
+	await settingsWindow.loadURL(launchPath);
 	settingsWindow.setMenu(null);
 
 	settingsWindow.on('close', (event) => {
@@ -39,7 +39,7 @@ const windowSetting = () => {
 		webPreferences: {
 			nodeIntegration: true,
 			webSecurity: false,
-			devTools: true,			
+			devTools: true,
 			contextIsolation: false,
 			sandbox: false
 		},

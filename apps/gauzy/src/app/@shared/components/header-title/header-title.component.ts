@@ -5,7 +5,7 @@ import {
 	Input
 } from '@angular/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { IOrganization, ISelectedEmployee, IUser } from '@gauzy/contracts';
+import { IOrganization, ISelectedEmployee, IUser, PermissionsEnum } from '@gauzy/contracts';
 import { combineLatest } from 'rxjs';
 import { filter, tap } from 'rxjs/operators';
 import { Store } from './../../../@core';
@@ -34,6 +34,8 @@ import { Store } from './../../../@core';
 	]
 })
 export class HeaderTitleComponent implements AfterViewInit {
+
+	PermissionsEnum: typeof PermissionsEnum = PermissionsEnum
 	user: IUser;
 	organization: IOrganization;
 	employee: ISelectedEmployee;

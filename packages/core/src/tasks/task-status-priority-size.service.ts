@@ -1,10 +1,12 @@
 import { isNotEmpty } from "@gauzy/common";
 import { Injectable } from "@nestjs/common";
-import { IPagination, ITaskPriorityFindInput, ITaskSizeFindInput, ITaskStatusFindInput } from "@gauzy/contracts";
+import { IIssueTypeFindInput, IPagination, ITaskPriorityFindInput, ITaskSizeFindInput, ITaskStatusFindInput } from "@gauzy/contracts";
 import { Brackets, Repository, SelectQueryBuilder, WhereExpressionBuilder } from "typeorm";
 import { TenantBaseEntity } from "../core/entities/internal";
 import { RequestContext } from "../core/context";
 import { TenantAwareCrudService } from "../core/crud";
+
+export type IFindEntityByParams = ITaskStatusFindInput | ITaskPriorityFindInput | ITaskSizeFindInput | IIssueTypeFindInput;
 
 @Injectable()
 export class TaskStatusPrioritySizeService<BaseEntity extends TenantBaseEntity> extends TenantAwareCrudService<BaseEntity> {
@@ -15,7 +17,7 @@ export class TaskStatusPrioritySizeService<BaseEntity extends TenantBaseEntity> 
 	}
 
 	async findEntitiesByParams(
-		params: ITaskStatusFindInput | ITaskPriorityFindInput | ITaskSizeFindInput
+		params: IFindEntityByParams
 	): Promise<IPagination<BaseEntity>> {
 		try {
 			/**
@@ -74,7 +76,7 @@ export class TaskStatusPrioritySizeService<BaseEntity extends TenantBaseEntity> 
 	 */
 	getFilterQuery(
 		query: SelectQueryBuilder<BaseEntity>,
-		request: ITaskStatusFindInput | ITaskPriorityFindInput | ITaskSizeFindInput
+		request: IFindEntityByParams
 	) {
 		const { tenantId, organizationId, projectId, organizationTeamId } = request;
 		/**

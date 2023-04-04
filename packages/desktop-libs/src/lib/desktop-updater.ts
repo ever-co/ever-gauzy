@@ -1,7 +1,7 @@
 import { BrowserWindow, app, ipcMain } from 'electron';
 import { autoUpdater, UpdateInfo, UpdateDownloadedEvent } from 'electron-updater';
 import { LOCAL_SERVER_UPDATE_CONFIG } from './config';
-import { UpdateContext } from './contexts';
+import { AutomaticUpdate, UpdateContext } from './contexts';
 import {
 	DialogConfirmInstallDownload,
 	DialogConfirmUpgradeDownload,
@@ -23,15 +23,18 @@ export class DesktopUpdater {
 	private _settingWindow: BrowserWindow;
 	private _gauzyWindow: BrowserWindow;
 	private _config: IUpdaterConfig;
+	private _automaticUpdate: AutomaticUpdate;
 
 	constructor(config: IUpdaterConfig) {
 		this._updateContext = new UpdateContext();
 		this._updateContext.strategy = new DigitalOceanCdn(new CdnUpdate(config));
 		this._updateServer = new DesktopLocalUpdateServer();
 		this._strategy = new GithubCdn(new CdnUpdate(config));
+		this._automaticUpdate = new AutomaticUpdate(this._updateContext, this.settingWindow);
 		this._config = config;
 		this._mainProcess();
 		this._updaterProcess();
+		this._automaticUpdate.start();
 	}
 
 	private _mainProcess(): void {
@@ -101,6 +104,13 @@ export class DesktopUpdater {
 
 		ipcMain.on('download_update', () => {
 			this._updateContext.update();
+		});
+
+		ipcMain.on('automatic_update_setting', (event, args) => {
+			const { isEnabled, automaticUpdateDelay } = args;
+			isEnabled
+				? (this._automaticUpdate.delay = automaticUpdateDelay)
+				: this._automaticUpdate.stop();
 		});
 	}
 

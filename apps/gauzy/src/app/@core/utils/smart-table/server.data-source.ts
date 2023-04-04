@@ -97,6 +97,7 @@ export class ServerDataSource extends LocalDataSource {
             ...(this.conf.relations ? { relations: this.conf.relations } : {}),
             ...(this.conf.withDeleted ? { withDeleted: this.conf.withDeleted } : {}),
             ...this.addSortRequestParams(),
+            ...this.addFilterRequestParams(),
             ...this.addPagerRequestParams(),
         }
         return toParams(requestParams);
@@ -110,6 +111,27 @@ export class ServerDataSource extends LocalDataSource {
             });
             return {
                 [this.conf.sortDirKey]: orders
+            }
+        } else {
+            return {}
+        }
+    }
+
+    /**
+     * Add additional smart datatables filters
+     *
+     * @returns
+     */
+    protected addFilterRequestParams() {
+        if (this.filterConf.filters) {
+            const filters: any = {}
+            this.filterConf.filters.forEach((fieldConf) => {
+                if (fieldConf['search']) {
+                    filters[fieldConf['field']] = fieldConf.search;
+                }
+            });
+            return {
+                [this.conf.filterFieldKey]: filters
             }
         } else {
             return {}

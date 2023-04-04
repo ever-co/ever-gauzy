@@ -13,6 +13,8 @@ import { ElectronService } from '../electron/services';
 import { BehaviorSubject, Observable, filter, tap } from 'rxjs';
 import { AboutComponent } from '../dialogs/about/about.component';
 import { SetupService } from '../setup/setup.service';
+import { ToastrNotificationService } from '@gauzy/desktop-timer/src/app/services';
+import * as moment from 'moment';
 @Component({
 	selector: 'ngx-settings',
 	templateUrl: './settings.component.html',
@@ -54,7 +56,7 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 			? './assets/images/logos/logo_Gauzy.svg'
 			: '../assets/images/logos/logo_Gauzy.svg';
 
-	monitorsOption = [
+	private _monitorsOption$: BehaviorSubject<any> = new BehaviorSubject([
 		{
 			value: 'all',
 			title: 'Capture All Monitors',
@@ -70,8 +72,7 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 			accent: 'basic',
 			status: 'basic',
 		},
-	];
-
+	]);
 	thirdPartyConfig = [
 		{
 			title: 'Unleash',
@@ -329,7 +330,6 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 	private get _selectedMenu(): string {
 		return this._selectedMenu$.getValue();
 	}
-	monitorOptionSelected = null;
 	/* Set Default Value */
 	appSetting = {
 		timerStarted: false,
@@ -337,7 +337,7 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 		trackOnPcSleep: false,
 		preventDisplaySleep: false,
 		visibleAwOption: true,
-		visibleWakatimeOption: false
+		visibleWakatimeOption: false,
 	};
 	periodOption = [1, 3, 5, 10];
 	selectedPeriod = 5;
@@ -350,14 +350,14 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 			dbHost: '127.0.0.1',
 			dbPort: 3306,
 			dbUsername: 'root',
-			dbPassword: ''
+			dbPassword: '',
 		},
 		/* Default PostgresSQL config */
 		postgres: {
 			dbHost: '127.0.0.1',
 			dbPort: 5432,
 			dbUsername: 'postgres',
-			dbPassword: 'postgres'
+			dbPassword: 'postgres',
 		},
 		timeTrackerWindow: null,
 		isLocalServer: false,
@@ -365,7 +365,7 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 		serverUrl: null,
 		awPort: null,
 		awHost: null,
-		port: 5620
+		port: 5620,
 	};
 	version = '0.0.0';
 	message = {
@@ -392,7 +392,7 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 		: [
 			this.serverTypes.integrated,
 			this.serverTypes.custom,
-			this.serverTypes.live
+			this.serverTypes.live,
 		  ];
 
 	driverOptions = [
@@ -402,20 +402,26 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 	];
 	muted: boolean;
 
+	delayOptions: number[] = [0.5, 1, 3, 24];
+
 	private _loading$: BehaviorSubject<boolean>;
 	private _automaticUpdate$: BehaviorSubject<boolean>;
+	private _automaticUpdateDelay$: BehaviorSubject<number>;
 	private _available$: BehaviorSubject<boolean>;
 	private _updaterServer$: BehaviorSubject<any>;
 	private _file$: BehaviorSubject<any>;
 	private _prerelease$: BehaviorSubject<boolean>;
 	private _isCheckDatabase$: BehaviorSubject<boolean>;
 	private _isCheckHost$: BehaviorSubject<{
-		isLoading: boolean,
-		isHidden: boolean,
-		message: string,
-		status: boolean
+		isLoading: boolean;
+		isHidden: boolean;
+		message: string;
+		status: boolean;
 	}>;
-	private _isConnectedDatabase$: BehaviorSubject<{ status: boolean, message: string }>;
+	private _isConnectedDatabase$: BehaviorSubject<{
+		status: boolean;
+		message: string;
+	}>;
 	private _restartDisable$: BehaviorSubject<boolean>;
 	private _isHidden$: BehaviorSubject<boolean>;
 	private _argMain = null;
@@ -426,10 +432,12 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 		private readonly timeTrackerService: TimeTrackerService,
 		private toastrService: NbToastrService,
 		private _dialogService: NbDialogService,
-		private _setupService: SetupService
+		private _setupService: SetupService,
+		private _notifier: ToastrNotificationService
 	) {
 		this._loading$ = new BehaviorSubject(false);
 		this._automaticUpdate$ = new BehaviorSubject(false);
+		this._automaticUpdateDelay$ = new BehaviorSubject(1);
 		this._available$ = new BehaviorSubject(false);
 		this._file$ = new BehaviorSubject({ uri: null });
 		this._updaterServer$ = new BehaviorSubject({
@@ -444,9 +452,12 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 			isLoading: false,
 			isHidden: true,
 			status: false,
-			message: ''
+			message: '',
 		});
-		this._isConnectedDatabase$ = new BehaviorSubject({ status: false, message: null });
+		this._isConnectedDatabase$ = new BehaviorSubject({
+			status: false,
+			message: null,
+		});
 		this._restartDisable$ = new BehaviorSubject(false);
 		this._isHidden$ = new BehaviorSubject(true);
 	}
@@ -460,13 +471,14 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 				filter(() => !this._isCheckHost.status),
 				tap(() => this._restartDisable$.next(true))
 			)
-			.subscribe()
+			.subscribe();
 		this.isCheckHost$
 			.pipe(
 				tap(({ status }) => this._restartDisable$.next(!status)),
 				filter(() => !this._isConnectedDatabase.status),
-				tap(() => this._restartDisable$.next(true)))
-			.subscribe()
+				tap(() => this._restartDisable$.next(true))
+			)
+			.subscribe();
 	}
 
 	ngAfterViewInit(): void {
@@ -475,36 +487,39 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 				const { setting, config, auth, additionalSetting } = arg;
 				this.appSetting = {
 					...this.appSetting,
-					...setting
+					...setting,
 				};
 				this.config = {
 					...this.config,
-					...config
+					...config,
 				};
 				this._argMain = arg;
 				this.checkDatabaseConnectivity();
 				this.authSetting = auth;
 				this.mappingAdditionalSetting(additionalSetting || null);
-				await this.checkHostConnectivity();
+				if (!this.isServer && !this.config?.isLocalServer) {
+					await this.checkHostConnectivity();
+				} else {
+					this._isCheckHost$.next({ ...this._isCheckHost, status: true })
+				}
 				this.config.awPort = this.config.timeTrackerWindow
 					? this.config.awHost.split('t:')[1]
 					: null;
 				this.serverConnectivity();
-				this.selectMonitorOption({
-					value: setting?.monitor?.captured,
-				});
+				this._monitorsOption = { value: setting?.monitor?.captured };
 				this.screenshotNotification = setting?.screenshotNotification;
 				this.muted = setting?.mutedNotification;
 				this.autoLaunch = setting?.autoLaunch;
 				this.minimizeOnStartup = setting?.minimizeOnStartup;
 				this._automaticUpdate$.next(setting?.automaticUpdate);
+				this._automaticUpdateDelay$.next(setting?.automaticUpdateDelay);
 				this._prerelease$.next(setting?.prerelease);
 				this._updaterServer$ = new BehaviorSubject({
 					github: setting?.cdnUpdater?.github == true,
 					digitalOcean: setting?.cdnUpdater?.digitalOcean == true,
 					local: false,
 				});
-				this.selectPeriod(setting?.timer?.updatePeriod);
+				this.selectedPeriod = setting?.timer?.updatePeriod;
 				if (!this.isServer) {
 					await this.getUserDetails();
 				}
@@ -673,13 +688,16 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 				this._isConnectedDatabase$.next(arg);
 				this._isHidden$.next(false);
 			});
-		})
+		});
 
-		this.electronService.ipcRenderer.on('_logout_quit_install_', (event, arg) => {
+		this.electronService.ipcRenderer.on(
+			'_logout_quit_install_',
+			(event, arg) => {
 			this._ngZone.run(() => {
 				this.logout(true);
-			})
-		})
+			});
+			}
+		);
 	}
 
 	mappingAdditionalSetting(values) {
@@ -693,10 +711,13 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 	}
 
 	selectMonitorOption(item) {
-		this.monitorOptionSelected = item.value;
-		this.updateSetting({ captured: item.value }, 'monitor');
-		this.monitorsOption = this.monitorsOption.map((x) => {
-			if (x.value === item.value) {
+		this._monitorsOption = item;
+		this.updateSetting({ captured: item?.value }, 'monitor');
+	}
+
+	private set _monitorsOption(item) {
+		this._monitorsOption$.next(this._monitorsOption.map((x) => {
+			if (x.value === item?.value) {
 				x.accent = 'primary';
 				x.status = 'primary';
 			} else {
@@ -704,18 +725,23 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 				x.status = 'basic';
 			}
 			return x;
-		});
+		}))
 	}
 
 	selectMenu(menu) {
 		this._selectedMenu$.next(menu);
 	}
 
-	updateSetting(value, type) {
+	updateSetting(value, type: string) {
 		this.appSetting[type] = value;
 		this.electronService.ipcRenderer.send('update_app_setting', {
 			values: this.appSetting,
 		});
+		this._notifier.success(
+			'Update ' +
+			type.replace(/([a-z])([A-Z])/g, '$1 $2').toLowerCase() +
+			' setting successfully'
+		);
 	}
 
 	selectPeriod(value) {
@@ -758,6 +784,19 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 	toggleAutomaticUpdate(value) {
 		this._automaticUpdate$.next(value);
 		this.updateSetting(value, 'automaticUpdate');
+		this.electronService.ipcRenderer.send('automatic_update_setting', {
+			isEnabled: value,
+			delay: this._automaticUpdateDelay$.getValue(),
+		});
+	}
+
+	selectAutomaticUpdateDelay(value) {
+		this._automaticUpdateDelay$.next(value);
+		this.updateSetting(value, 'automaticUpdateDelay');
+		this.electronService.ipcRenderer.send('automatic_update_setting', {
+			isEnabled: this._automaticUpdate$.getValue(),
+			delay: value,
+		});
 	}
 
 	togglePrerelease(value) {
@@ -1072,12 +1111,15 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 		return this._selectedMenu$.asObservable();
 	}
 
-	public get _isConnectedDatabase(): { status: boolean, message: string } {
+	public get _isConnectedDatabase(): { status: boolean; message: string } {
 		return this._isConnectedDatabase$.getValue();
 	}
 
-	public get isConnectedDatabase$(): Observable<{ status: boolean, message: string }> {
-		return this._isConnectedDatabase$.asObservable()
+	public get isConnectedDatabase$(): Observable<{
+		status: boolean;
+		message: string;
+	}> {
+		return this._isConnectedDatabase$.asObservable();
 	}
 
 	public get _isCheckDatabase(): boolean {
@@ -1085,19 +1127,19 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 	}
 
 	public get _isCheckHost(): {
-		isLoading: boolean,
-		isHidden: boolean,
-		message: string,
-		status: boolean
+		isLoading: boolean;
+		isHidden: boolean;
+		message: string;
+		status: boolean;
 	} {
 		return this._isCheckHost$.getValue();
 	}
 
 	public get isCheckHost$(): Observable<{
-		isLoading: boolean,
-		isHidden: boolean,
-		message: string,
-		status: boolean
+		isLoading: boolean;
+		isHidden: boolean;
+		message: string;
+		status: boolean;
 	}> {
 		return this._isCheckHost$.asObservable();
 	}
@@ -1147,19 +1189,32 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 				});
 			}
 		} catch (error) {
-			const isOkAnyway = error.status === 404;
 			this._isCheckHost$.next({
-				status: isOkAnyway,
+				status: false,
 				isHidden: false,
 				isLoading: false,
-				message: isOkAnyway
-					? `Connection to Server ${this.config.serverUrl} Succeeds`
-					: error.message,
+				message: error.message
 			});
 		}
 	}
 
 	public onHostChange(host: string) {
 		this._restartDisable$.next(true);
+	}
+
+	private get _monitorsOption() {
+		return this._monitorsOption$.getValue();
+	}
+
+	public get monitorsOption$(): Observable<any> {
+		return this._monitorsOption$.asObservable();
+	}
+
+	public humanize(value: number): string {
+		return moment.duration(value, 'hours').humanize(false, {});
+	}
+
+	public get automaticUpdateDelay$(): Observable<number> {
+		return this._automaticUpdateDelay$.asObservable();
 	}
 }
