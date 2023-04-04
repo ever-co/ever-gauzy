@@ -356,6 +356,7 @@ export class UserService extends TenantAwareCrudService<User> {
 
 			const user = await this.findOneByIdString(criteria, options);
 			if (!!user) {
+				// TODO: Call taskSerice.unassignEmployeeFromAllTeamTasks here
 				return await super.delete(criteria, options);
 			}
 			throw new ForbiddenException();

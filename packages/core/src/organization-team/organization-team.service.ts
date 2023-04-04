@@ -424,16 +424,16 @@ export class OrganizationTeamService extends TenantAwareCrudService<Organization
 			const { employeeId } = user;
 			try {
 				if (isNotEmpty(employeeId)) {
-					const organizationTeamEmployee =
-						await this.organizationTeamEmployeeService.findOneByWhereOptions(
-							{
-								employeeId,
-								roleId: IsNull(),
-							}
-						);
-					await this.taskService.unassignEmployeeFromTeamTasks(
-						employeeId,
-						organizationTeamEmployee.organizationTeamId
+					await this.organizationTeamEmployeeService.findOneByWhereOptions(
+						{
+							employeeId,
+							roleId: IsNull(),
+						}
+					);
+
+					// Unassign this user from all the Task of Current Team
+					await this.taskService.unassignEmployeeFromAllTeamTasks(
+						userId
 					);
 					return await this.organizationTeamEmployeeService.delete({
 						roleId: IsNull(),
