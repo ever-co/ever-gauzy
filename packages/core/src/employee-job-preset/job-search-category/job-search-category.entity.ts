@@ -15,7 +15,6 @@ import {
 
 @Entity('job_search_category')
 export class JobSearchCategory extends TenantOrganizationBaseEntity implements IJobPreset {
-
 	@ApiProperty({ type: () => String })
 	@IsNotEmpty()
 	@IsString()

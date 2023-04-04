@@ -29,9 +29,7 @@ import { ckEditorConfig } from './../../../../../@shared/ckeditor.config';
 	templateUrl: './apply-job-manually.component.html',
 	styleUrls: ['./apply-job-manually.component.scss']
 })
-export class ApplyJobManuallyComponent extends TranslationBaseComponent
-	implements AfterViewInit, OnInit, OnDestroy {
-
+export class ApplyJobManuallyComponent extends TranslationBaseComponent implements AfterViewInit, OnInit, OnDestroy {
 	public JobPostSourceEnum: typeof JobPostSourceEnum = JobPostSourceEnum;
 	public FormHelpers: typeof FormHelpers = FormHelpers;
 	public ckConfig: CKEditor4.Config = ckEditorConfig;
@@ -139,7 +137,7 @@ export class ApplyJobManuallyComponent extends TranslationBaseComponent
 		};
 	}
 
-	ngOnDestroy(): void { }
+	ngOnDestroy(): void {}
 
 	private _loadUploaderSettings() {
 		if (!this.store.user) {
@@ -148,7 +146,7 @@ export class ApplyJobManuallyComponent extends TranslationBaseComponent
 		const { token } = this.store;
 		const { tenantId } = this.store.user;
 
-		const headers: Array<{ name: string; value: string; }> = [];
+		const headers: Array<{ name: string; value: string }> = [];
 		headers.push({ name: 'Authorization', value: `Bearer ${token}` });
 		headers.push({ name: 'Tenant-Id', value: tenantId });
 

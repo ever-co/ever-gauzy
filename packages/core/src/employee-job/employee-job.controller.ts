@@ -1,13 +1,4 @@
-import {
-	Controller,
-	HttpStatus,
-	Get,
-	Query,
-	Post,
-	Body,
-	UsePipes,
-	ValidationPipe
-} from '@nestjs/common';
+import { Controller, HttpStatus, Get, Query, Post, Body, UsePipes, ValidationPipe } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import {
 	IApplyJobPostInput,
@@ -22,9 +13,7 @@ import { EmployeeJobPost } from './employee-job.entity';
 @ApiTags('EmployeeJobPost')
 @Controller()
 export class EmployeeJobPostController {
-	constructor(
-		private readonly employeeJobPostService: EmployeeJobPostService
-	) { }
+	constructor(private readonly employeeJobPostService: EmployeeJobPostService) {}
 
 	@ApiOperation({ summary: 'Find all employee job posts' })
 	@ApiResponse({
@@ -37,9 +26,7 @@ export class EmployeeJobPostController {
 		description: 'Record not found'
 	})
 	@Get()
-	async findAll(
-		@Query() input: IGetEmployeeJobPostInput
-	): Promise<IPagination<IEmployeeJobPost>> {
+	async findAll(@Query() input: IGetEmployeeJobPostInput): Promise<IPagination<IEmployeeJobPost>> {
 		return await this.employeeJobPostService.findAll(input);
 	}
 
@@ -55,9 +42,7 @@ export class EmployeeJobPostController {
 	})
 	@UsePipes(new ValidationPipe())
 	@Post('applied')
-	async updateApplied(
-		@Body() input: IApplyJobPostInput
-	) {
+	async updateApplied(@Body() input: IApplyJobPostInput) {
 		return await this.employeeJobPostService.updateApplied(input);
 	}
 

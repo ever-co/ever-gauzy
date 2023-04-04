@@ -15,7 +15,6 @@ import {
 
 @Entity('job_search_occupation')
 export class JobSearchOccupation extends TenantOrganizationBaseEntity implements IJobSearchOccupation {
-
 	@ApiProperty({ type: () => String })
 	@IsNotEmpty()
 	@IsString()

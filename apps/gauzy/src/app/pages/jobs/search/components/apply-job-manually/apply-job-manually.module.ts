@@ -10,9 +10,7 @@ import { EmployeeMultiSelectModule } from './../../../../../@shared/employee/emp
 
 @NgModule({
 	providers: [],
-	declarations: [
-		ApplyJobManuallyComponent
-	],
+	declarations: [ApplyJobManuallyComponent],
 	imports: [
 		CommonModule,
 		FormsModule,
@@ -29,4 +27,4 @@ import { EmployeeMultiSelectModule } from './../../../../../@shared/employee/emp
 	],
 	exports: []
 })
-export class ApplyJobManuallyModule { }
+export class ApplyJobManuallyModule {}

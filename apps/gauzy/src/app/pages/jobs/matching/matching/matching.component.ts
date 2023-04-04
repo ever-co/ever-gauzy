@@ -34,7 +34,6 @@ import {
 	styleUrls: ['./matching.component.scss']
 })
 export class MatchingComponent implements AfterViewInit, OnInit {
-
 	criterionForm = {
 		jobSource: JobPostSourceEnum.UPWORK,
 		jobPresetId: null
@@ -96,14 +95,9 @@ export class MatchingComponent implements AfterViewInit, OnInit {
 						jobPresetId: null
 					};
 					if (employee && employee.id) {
-						this.jobPresetService
-							.getJobPresets({ employeeId: employee.id })
-							.then((jobPresets) => {
-								this.criterionForm.jobPresetId =
-									jobPresets.length > 0
-										? jobPresets[0].id
-										: null;
-							});
+						this.jobPresetService.getJobPresets({ employeeId: employee.id }).then((jobPresets) => {
+							this.criterionForm.jobPresetId = jobPresets.length > 0 ? jobPresets[0].id : null;
+						});
 						await this.getEmployeeCriterions();
 					} else {
 						this.selectedEmployeeId = null;
@@ -183,11 +177,9 @@ export class MatchingComponent implements AfterViewInit, OnInit {
 				name,
 				...(this.selectedEmployeeId
 					? {
-						employees: [
-							{ id: this.selectedEmployeeId }
-						]
-					}
-					: []),
+							employees: [{ id: this.selectedEmployeeId }]
+					  }
+					: [])
 			});
 			this.jobPresets = this.jobPresets.concat([jobPreset]);
 			this.criterionForm.jobPresetId = jobPreset.id;
@@ -203,11 +195,9 @@ export class MatchingComponent implements AfterViewInit, OnInit {
 			if (this.selectedEmployeeId) {
 				await this.updateEmployeePreset();
 			} else {
-				await this.jobPresetService
-					.getJobPreset(jobPreset.id)
-					.then(({ jobPresetCriterions }) => {
-						this.criterions = jobPresetCriterions;
-					});
+				await this.jobPresetService.getJobPreset(jobPreset.id).then(({ jobPresetCriterions }) => {
+					this.criterions = jobPresetCriterions;
+				});
 			}
 		} else {
 			this.criterions = [];
@@ -230,19 +220,14 @@ export class MatchingComponent implements AfterViewInit, OnInit {
 				jobPresetIds: [this.criterionForm.jobPresetId],
 				employeeId: this.selectedEmployeeId
 			};
-			await this.jobPresetService
-				.saveEmployeePreset(request)
-				.then((criterions) => {
-					this.criterions = criterions;
-				});
+			await this.jobPresetService.saveEmployeePreset(request).then((criterions) => {
+				this.criterions = criterions;
+			});
 		}
 	}
 
 	async checkForEmptyCriterion() {
-		if (
-			(this.selectedEmployeeId || this.criterionForm.jobPresetId) &&
-			this.criterions.length === 0
-		) {
+		if ((this.selectedEmployeeId || this.criterionForm.jobPresetId) && this.criterions.length === 0) {
 			this.addNewCriterion();
 		}
 	}
@@ -255,20 +240,13 @@ export class MatchingComponent implements AfterViewInit, OnInit {
 			if (this.criterions && this.criterions.length > 0) {
 				request.jobPresetCriterions = this.criterions.map(
 					(employeeCriterion): IJobPresetUpworkJobSearchCriterion => {
-						return _.omit(
-							employeeCriterion,
-							'employeeId',
-							'id',
-							'jobPresetId'
-						);
+						return _.omit(employeeCriterion, 'employeeId', 'id', 'jobPresetId');
 					}
 				);
-				request.jobPresetCriterions = request.jobPresetCriterions.filter(
-					(employeeCriterion) => {
-						const values = Object.values(employeeCriterion);
-						return values.length > 0;
-					}
-				);
+				request.jobPresetCriterions = request.jobPresetCriterions.filter((employeeCriterion) => {
+					const values = Object.values(employeeCriterion);
+					return values.length > 0;
+				});
 			}
 			this.jobPresetService.createJobPreset(request).then(() => {
 				this.hasAnyChanges = false;
@@ -281,15 +259,9 @@ export class MatchingComponent implements AfterViewInit, OnInit {
 		let req: any;
 		this.hasAnyChanges = true;
 		if (this.selectedEmployeeId) {
-			req = this.jobPresetService.createEmployeeCriterion(
-				this.selectedEmployeeId,
-				criterion
-			);
+			req = this.jobPresetService.createEmployeeCriterion(this.selectedEmployeeId, criterion);
 		} else {
-			req = this.jobPresetService.createJobPresetCriterion(
-				this.criterionForm.jobPresetId,
-				criterion
-			);
+			req = this.jobPresetService.createJobPresetCriterion(this.criterionForm.jobPresetId, criterion);
 		}
 
 		req.then((newCreation) => {
@@ -306,31 +278,18 @@ export class MatchingComponent implements AfterViewInit, OnInit {
 			this.hasAnyChanges = true;
 			if (this.selectedEmployeeId) {
 				try {
-					await this.jobPresetService.deleteEmployeeCriterion(
-						this.selectedEmployeeId,
-						criterion.id
-					);
-					this.toastrService.success(
-						'TOASTR.MESSAGE.JOB_MATCHING_DELETED'
-					);
+					await this.jobPresetService.deleteEmployeeCriterion(this.selectedEmployeeId, criterion.id);
+					this.toastrService.success('TOASTR.MESSAGE.JOB_MATCHING_DELETED');
 				} catch (error) {
-					this.toastrService.error(
-						'TOASTR.MESSAGE.JOB_MATCHING_ERROR'
-					);
+					this.toastrService.error('TOASTR.MESSAGE.JOB_MATCHING_ERROR');
 					return;
 				}
 			} else {
 				try {
-					await this.jobPresetService.deleteJobPresetCriterion(
-						criterion.id
-					);
-					this.toastrService.success(
-						'TOASTR.MESSAGE.JOB_MATCHING_DELETED'
-					);
+					await this.jobPresetService.deleteJobPresetCriterion(criterion.id);
+					this.toastrService.success('TOASTR.MESSAGE.JOB_MATCHING_DELETED');
 				} catch (error) {
-					this.toastrService.error(
-						'TOASTR.MESSAGE.JOB_MATCHING_ERROR'
-					);
+					this.toastrService.error('TOASTR.MESSAGE.JOB_MATCHING_ERROR');
 					return;
 				}
 			}
