@@ -23,17 +23,18 @@ const runServerApi = () => {
         DB_PATH: dbPath,
         DB_TYPE: db,
         DB_HOST: dbHost,
-        DB_PORT: dbPort ? dbPort.toString() : '',
+        DB_PORT: String(dbPort),
         DB_NAME: dbName,
         DB_USER: dbUsername,
         DB_PASS: dbPassword,
-        API_PORT: port ? port.toString() : '',
+        API_PORT: String(port),
         API_HOST: apiHost,
         API_BASE_URL: apiBaseUrl
     }
-    const uiService = fork(apiPath, { silent: true, detached: true, env: {
-        ...process.env,
-        IS_ELECTRON: apiEnv.IS_ELECTRON
+    const uiService = fork(apiPath, {
+        silent: true, detached: true, env: {
+            ...process.env,
+            IS_ELECTRON: apiEnv.IS_ELECTRON
     }});
     uiService.stdout.on('data', (data) => {
         console.log('SERVER API STATE LOGS -> ', data.toString());
@@ -56,27 +57,23 @@ const prepareServerApi = (): {
     apiHost: string
 } => {
     const {
-        port, 
+        port,
         db,
-        apiPath, 
+        apiPath,
         dbPath,
-        dbHost,
-        dbPort,
-        dbName,
-        dbUsername,
-        dbPassword,
+        postgres,
         apiBaseUrl
     } = LocalStore.getStore('configs');
     return {
         apiPath,
         db,
-        dbPort: dbPort || null,
-        dbName: dbName || null,
-        dbPassword: dbPassword || null,
-        dbUsername: dbUsername || null,
+        dbPort: postgres?.dbPort || null,
+        dbName: postgres?.dbName || null,
+        dbPassword: postgres?.dbPassword || null,
+        dbUsername: postgres?.dbUsername || null,
+        dbHost: postgres?.dbHost || null,
         port,
         dbPath,
-        dbHost,
         apiBaseUrl,
         apiHost: '0.0.0.0'
     };
@@ -86,5 +83,3 @@ export default function () {
     console.log('Before Run Api Server');
     runServerApi();
 }
-
-

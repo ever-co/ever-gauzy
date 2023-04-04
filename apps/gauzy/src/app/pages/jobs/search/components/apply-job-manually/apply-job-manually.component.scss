@@ -1,0 +1,30 @@
+@import 'gauzy/_gauzy-dialogs';
+:host {
+	display: block;
+	nb-card {
+		background-color: nb-theme(background-basic-color-1);
+	}
+	::ng-deep {
+		.cancel {
+			@include nb-rtl(justify-content, flex-start);
+		}
+		.title {
+			@include nb-rtl(text-align, right);
+		}
+	}
+	.well {
+		height: 100px;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		color: var(--gauzy-text-color-2);
+	}
+	.my-drop-zone {
+		border: dashed 3px var(--gauzy-border-default-color);
+		border-radius: var(--border-radius);
+	}
+	.nv-file-over {
+		border: dashed 3px red;
+		border-radius: var(--border-radius);
+	}
+}

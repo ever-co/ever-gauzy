@@ -7,10 +7,10 @@
                         <img [src]="gauzyIcon" [class]="styles.icon" />
                     </div>
                     <div class="col-12 text-center margin-content">
-                        <h4 *ngIf="isExpandWindow">GAUZY SERVER</h4>
-                        <h5 *ngIf="!isExpandWindow">GAUZY SERVER</h5>
+                        <h4 *ngIf="isExpandWindow">SERVER</h4>
+                        <h5 *ngIf="!isExpandWindow">SERVER</h5>
                     </div>
-                    <div class="col-12 text-center margin-content" *ngIf="isExpandWindow">
+                    <div class="col-12 text-center accordion margin-content" *ngIf="isExpandWindow">
                         <nb-accordion multi>
                             <nb-accordion-item #logServer [expanded]="logIsOpen"
                                 (collapsedChange)="logBoxChange($event)">
@@ -27,11 +27,11 @@
                             </nb-accordion-item>
                         </nb-accordion>
                     </div>
-                    <div class="col-12 text-center margin-content">
+                    <div [class]="'col-12 text-'+(logIsOpen ? 'left': 'center')+' button margin-content'">
                         <button nbButton status="primary" [class]="styles.btnStart"
                             (click)="running ? stopServer() : runServer()" [disabled]="loading" [nbSpinner]="loading"
                             nbSpinnerStatus="warning">
-                            {{btn.name}}<nb-icon [icon]="btn.icon" class="icon-medium"></nb-icon>
+                            <nb-icon [icon]="btn.icon" class="icon-medium"></nb-icon> {{btn.name}}
                         </button>
                     </div>
                 </div>

@@ -237,6 +237,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 		});
 		this._permissions$
 			.pipe(
+				filter((permissions: any[]) => permissions.length > 0),
 				tap((permissions: any[]) => {
 					this.hasTaskPermission$.next(
 						permissions.includes(PermissionsEnum.ORG_TASK_ADD)
@@ -327,6 +328,8 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 						if (idx > -1) {
 							tasks[idx].isSelected = true;
 						}
+					} else {
+						tasks = [];
 					}
 					this.tableData = tasks;
 					await this._sourceData.load(this.tableData);
@@ -1559,6 +1562,10 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 	}
 
 	public rowSelect(value): void {
+		if (!value?.source?.data?.length) {
+			this.taskSelect = null;
+			return;
+		}
 		this.taskSelect = value.data.id;
 		value.data.isSelected = true;
 		const selectedLast = value.source.data.findIndex(
