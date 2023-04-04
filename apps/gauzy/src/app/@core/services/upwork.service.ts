@@ -9,12 +9,12 @@ import {
 	IUpworkApiConfig,
 	IIntegrationMap,
 	IntegrationEnum,
-	IUpworkClientSecretPair
+	IUpworkClientSecretPair,
 } from '@gauzy/contracts';
 import { API_PREFIX } from '../constants/app.constants';
 
 @Injectable({
-	providedIn: 'root'
+	providedIn: 'root',
 })
 export class UpworkService {
 	constructor(private http: HttpClient) {}
@@ -85,9 +85,9 @@ export class UpworkService {
 	}
 
 	/*
-	 * Check remember state for upwork integration
+	 * Check remember state for Upwork integration
 	 */
-	checkRemeberState(organizationId: string) {
+	checkRememberState(organizationId: string) {
 		return this.http.get<any>(
 			`${API_PREFIX}/integration/check/state/${IntegrationEnum.UPWORK}/${organizationId}`
 		);
