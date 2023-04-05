@@ -74,6 +74,7 @@ import {
 	TimeSlot,
 	User
 } from '../core/entities/internal';
+import { IsOptional, IsString } from 'class-validator';
 
 @Entity('employee')
 export class Employee extends TenantOrganizationBaseEntity implements IEmployee {
@@ -280,6 +281,20 @@ export class Employee extends TenantOrganizationBaseEntity implements IEmployee 
 	@ApiPropertyOptional({ type: () => Boolean, default: true })
 	@Column({ default: true })
 	allowScreenshotCapture?: boolean;
+
+	/** Upwork ID */
+	@ApiPropertyOptional({ type: () => String })
+	@IsOptional()
+	@IsString()
+	@Column({ nullable: true })
+	upworkId?: string;
+
+	/** LinkedIn ID */
+	@ApiPropertyOptional({ type: () => String })
+	@IsOptional()
+	@IsString()
+	@Column({ nullable: true })
+	linkedInId?: string;
 
 	/**
 	 * Soft Delete
