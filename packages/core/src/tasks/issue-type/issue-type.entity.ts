@@ -22,10 +22,8 @@ import {
 } from './../../core/entities/internal';
 
 @Entity('issue_type')
-export class IssueType
-	extends TenantOrganizationBaseEntity
-	implements IIssueType
-{
+export class IssueType extends TenantOrganizationBaseEntity implements IIssueType {
+
 	@ApiProperty({ type: () => String })
 	@IsNotEmpty()
 	@IsString()

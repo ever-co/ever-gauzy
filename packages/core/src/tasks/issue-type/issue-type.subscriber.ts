@@ -11,9 +11,7 @@ import { FileStorage } from './../../core/file-storage';
 import { IssueType } from './issue-type.entity';
 
 @EventSubscriber()
-export class IssueTypeSubscriber
-	implements EntitySubscriberInterface<IssueType>
-{
+export class IssueTypeSubscriber implements EntitySubscriberInterface<IssueType> {
 	/**
 	 * Indicates that this subscriber only listen to IssueType events.
 	 */
@@ -33,15 +31,11 @@ export class IssueTypeSubscriber
 	): void | Promise<any> {
 		try {
 			if (!!entity['image']) {
-				entity.icon = entity.image.fullUrl || entity.icon;
+				entity.fullIconUrl = entity.image.fullUrl || entity.icon;
 			}
 			if (entity.icon) {
-				const store = new FileStorage().setProvider(
-					FileStorageProviderEnum.LOCAL
-				);
-				entity.fullIconUrl = store
-					.getProviderInstance()
-					.url(entity.icon);
+				const store = new FileStorage().setProvider(FileStorageProviderEnum.LOCAL);
+				entity.fullIconUrl = store.getProviderInstance().url(entity.icon);
 			}
 		} catch (error) {
 			console.log(error);
@@ -65,10 +59,7 @@ export class IssueTypeSubscriber
 				}
 			}
 		} catch (error) {
-			console.log(
-				'Error while creating issue type : subscriber : ',
-				error
-			);
+			console.log('Error while creating issue type : subscriber : ', error);
 		}
 	}
 }
