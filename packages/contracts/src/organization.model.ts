@@ -110,6 +110,8 @@ export interface IOrganization extends IBasePerTenantEntityModel, IRelationalIma
 	activityProofDuration?: number;
 	isRemoveIdleTime?: boolean;
 	allowScreenshotCapture?: boolean;
+	/** Upwork Organization ID For Gauzy AI*/
+	upworkOrganizationId?: string;
 }
 
 export interface IOrganizationFindInput extends IBasePerTenantEntityModel {
