@@ -393,6 +393,8 @@ export class GauzyAIService {
 				externalEmployeeId: employee.id,
 				externalTenantId: employee.tenantId,
 				externalOrgId: employee.organizationId,
+				upworkId: employee.upworkId,
+				linkedInId: employee.linkedInId,
 				isActive: employee.isActive,
 				isArchived: false,
 				upworkJobSearchCriteria: undefined,
@@ -516,6 +518,8 @@ export class GauzyAIService {
 						externalEmployeeId: employee.id,
 						externalTenantId: employee.tenantId,
 						externalOrgId: employee.organizationId,
+						upworkId: employee.upworkId,
+						linkedInId: employee.linkedInId,
 						isActive: employee.isActive,
 						isArchived: false,
 						upworkJobSearchCriteria: undefined,
@@ -758,6 +762,8 @@ export class GauzyAIService {
 							externalEmployeeId,
 							externalTenantId,
 							externalOrgId,
+							upworkId,
+							linkedInId,
 							firstName
 							lastName
 						}
@@ -787,6 +793,8 @@ export class GauzyAIService {
 					externalEmployeeId,
 					externalTenantId,
 					externalOrgId,
+					upworkId,
+					linkedInId,
 					isActive
 					isArchived
 					firstName
