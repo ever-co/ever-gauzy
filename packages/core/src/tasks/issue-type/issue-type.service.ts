@@ -12,7 +12,7 @@ import {
 import { IssueType } from './issue-type.entity';
 import { TaskStatusPrioritySizeService } from './../task-status-priority-size.service';
 import { DEFAULT_GLOBAL_ISSUE_TYPES } from './default-global-issue-types';
-import { RequestContext } from 'core';
+import { RequestContext } from './../../core/context';
 
 @Injectable()
 export class IssueTypeService extends TaskStatusPrioritySizeService<IssueType> {
@@ -60,13 +60,11 @@ export class IssueTypeService extends TaskStatusPrioritySizeService<IssueType> {
 			/**
 			 * Find task issue types for given params
 			 */
-			const query = this.repository
-				.createQueryBuilder(this.alias)
-				.setFindOptions({
-					relations: {
-						image: true,
-					},
-				});
+			const query = this.repository.createQueryBuilder(this.alias).setFindOptions({
+				relations: {
+					image: true
+				}
+			});
 			query.where((qb: SelectQueryBuilder<IssueType>) => {
 				this.getFilterQuery(qb, params);
 			});
@@ -119,7 +117,7 @@ export class IssueTypeService extends TaskStatusPrioritySizeService<IssueType> {
 			const tenantId = RequestContext.currentTenantId();
 
 			const issueTypes: IIssueType[] = [];
-			const { items = [] } = await this.findEntitiesByParams({
+			const { items = [] } = await this.findAllIssueTypes({
 				tenantId,
 			});
 
@@ -158,7 +156,7 @@ export class IssueTypeService extends TaskStatusPrioritySizeService<IssueType> {
 			const tenantId = RequestContext.currentTenantId();
 
 			const issueTypes: IIssueType[] = [];
-			const { items = [] } = await this.findEntitiesByParams({
+			const { items = [] } = await this.findAllIssueTypes({
 				tenantId,
 				organizationId,
 			});

@@ -4,9 +4,9 @@ import * as path from 'path';
 import * as fs from 'fs';
 import { imageSize } from 'image-size';
 import { getConfig } from '@gauzy/config';
+import { FileStorageProviderEnum } from '@gauzy/contracts';
 import { copyEverIcons } from './../../core/seeds/utils';
 import { DEFAULT_GLOBAL_ISSUE_TYPES } from './../../tasks/issue-type/default-global-issue-types';
-import { FileStorageProviderEnum } from '@gauzy/contracts';
 
 export class SeedDafaultGlobalIssueType1680622389221 implements MigrationInterface {
 

@@ -7,7 +7,7 @@ import { IssueTypeService } from './../../issue-type.service';
 export class OrganizationTeamIssueTypeBulkCreateHandler
 	implements ICommandHandler<OrganizationTeamIssueTypeBulkCreateCommand>
 {
-	constructor(private readonly issueTypeService: IssueTypeService) {}
+	constructor(private readonly issueTypeService: IssueTypeService) { }
 
 	public async execute(
 		command: OrganizationTeamIssueTypeBulkCreateCommand
@@ -18,7 +18,7 @@ export class OrganizationTeamIssueTypeBulkCreateHandler
 		/**
 		 * Create bulk issue types for specific organization team
 		 */
-		return this.issueTypeService.createBulkIssueTypeByEntity({
+		return await this.issueTypeService.createBulkIssueTypeByEntity({
 			organizationId,
 			organizationTeamId,
 		});
