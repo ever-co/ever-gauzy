@@ -28,7 +28,8 @@ export class UpdateEmployeeJobSearchStatusHandler
 					tenantId: RequestContext.currentTenantId()
 				},
 				relations: {
-					user: true
+					user: true,
+					organization: true
 				}
 			});
 
