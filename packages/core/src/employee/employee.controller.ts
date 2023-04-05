@@ -280,8 +280,8 @@ export class EmployeeController extends CrudController<Employee> {
 					},
 					...(params && params.relations
 						? {
-								relations: params.relations,
-						  }
+							relations: params.relations,
+						}
 						: {}),
 					withDeleted: true,
 				})
@@ -418,14 +418,12 @@ export class EmployeeController extends CrudController<Employee> {
 	@Put('/:id/job-search-status')
 	@UsePipes(new ValidationPipe({ whitelist: true }))
 	async updateJobSearchStatus(
-		@Param('id', UUIDValidationPipe) employeeId: string,
+		@Param('id', UUIDValidationPipe) employeeId: IEmployee['id'],
 		@Body() entity: EmployeeJobStatisticDTO
 	): Promise<IEmployee | UpdateResult> {
 		return await this.commandBus.execute(
 			new UpdateEmployeeJobSearchStatusCommand(
 				employeeId,
-				entity.tenantId,
-				entity.organizationId,
 				entity
 			)
 		);
