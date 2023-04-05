@@ -347,7 +347,7 @@ export class EmployeeController extends CrudController<Employee> {
 	@Put(':id')
 	@UsePipes(new ValidationPipe({ whitelist: true }))
 	async update(
-		@Param('id', UUIDValidationPipe) id: string,
+		@Param('id', UUIDValidationPipe) id: IEmployee['id'],
 		@Body() entity: UpdateEmployeeDTO
 	): Promise<IEmployee> {
 		try {
