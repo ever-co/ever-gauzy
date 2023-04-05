@@ -6,24 +6,19 @@ import { TenantModule } from './../../tenant/tenant.module';
 import { IssueTypeController } from './issue-type.controller';
 import { IssueType } from './issue-type.entity';
 import { IssueTypeService } from './issue-type.service';
+import { CommandHandlers } from './commands/handlers';
 
 @Module({
 	imports: [
 		RouterModule.forRoutes([
-			{ path: '/issue-types', module: IssueTypeModule }
+			{ path: '/issue-types', module: IssueTypeModule },
 		]),
-		TypeOrmModule.forFeature([
-			IssueType
-		]),
+		TypeOrmModule.forFeature([IssueType]),
 		CqrsModule,
-		TenantModule
+		TenantModule,
 	],
-	controllers: [
-		IssueTypeController
-	],
-	providers: [
-		IssueTypeService
-	],
+	controllers: [IssueTypeController],
+	providers: [IssueTypeService, ...CommandHandlers],
 	exports: [],
 })
-export class IssueTypeModule { }
+export class IssueTypeModule {}

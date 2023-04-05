@@ -1,25 +1,17 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { FormGroup, FormBuilder, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
-import {
-	tap,
-	switchMap,
-	filter,
-	debounceTime
-} from 'rxjs/operators';
+import { tap, switchMap, filter, debounceTime } from 'rxjs/operators';
 import { EMPTY } from 'rxjs';
 import { IOrganization } from '@gauzy/contracts';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import {
-	Store,
-	UpworkService
-} from './../../../../@core/services';
+import { Store, UpworkService } from './../../../../@core/services';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ngx-upwork-authorize',
 	templateUrl: './upwork-authorize.component.html',
-	styleUrls: ['./upwork-authorize.component.scss']
+	styleUrls: ['./upwork-authorize.component.scss'],
 })
 export class UpworkAuthorizeComponent implements OnInit, OnDestroy {
 	rememberState: boolean;
@@ -29,7 +21,7 @@ export class UpworkAuthorizeComponent implements OnInit, OnDestroy {
 	static buildForm(fb: FormBuilder): FormGroup {
 		return fb.group({
 			consumerKey: ['', Validators.required],
-			consumerSecret: ['', Validators.required]
+			consumerSecret: ['', Validators.required],
 		});
 	}
 
@@ -45,7 +37,10 @@ export class UpworkAuthorizeComponent implements OnInit, OnDestroy {
 		this._store.selectedOrganization$
 			.pipe(
 				filter((organization: IOrganization) => !!organization),
-				tap((organization: IOrganization) => this.organization = organization),
+				tap(
+					(organization: IOrganization) =>
+						(this.organization = organization)
+				),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -53,7 +48,7 @@ export class UpworkAuthorizeComponent implements OnInit, OnDestroy {
 			.pipe(
 				debounceTime(100),
 				filter(({ state }) => !!state),
-				tap(({ state }) => this.rememberState = state),
+				tap(({ state }) => (this.rememberState = state)),
 				tap(() => this._getUpworkVerifier()),
 				untilDestroyed(this)
 			)
@@ -70,7 +65,7 @@ export class UpworkAuthorizeComponent implements OnInit, OnDestroy {
 							return this._upworkService.getAccessToken(
 								{
 									requestToken: params.oauth_token,
-									verifier: params.oauth_verifier
+									verifier: params.oauth_verifier,
 								},
 								organizationId
 							);
@@ -78,7 +73,7 @@ export class UpworkAuthorizeComponent implements OnInit, OnDestroy {
 					}
 					// if remember state is true
 					if (this.rememberState) {
-						this._checkRemeberState();
+						this._checkRememberState();
 					}
 					return EMPTY;
 				}),
@@ -90,13 +85,13 @@ export class UpworkAuthorizeComponent implements OnInit, OnDestroy {
 			.subscribe();
 	}
 
-	private _checkRemeberState() {
+	private _checkRememberState() {
 		if (!this.organization) {
 			return;
 		}
 		const { id: organizationId } = this.organization;
 		this._upworkService
-			.checkRemeberState(organizationId)
+			.checkRememberState(organizationId)
 			.pipe(
 				tap((res) => {
 					if (res.success) {
@@ -131,5 +126,5 @@ export class UpworkAuthorizeComponent implements OnInit, OnDestroy {
 		this._router.navigate(['pages/integrations/upwork', integrationId]);
 	}
 
-	ngOnDestroy(): void { }
+	ngOnDestroy(): void {}
 }
