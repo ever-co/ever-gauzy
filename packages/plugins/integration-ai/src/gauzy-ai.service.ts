@@ -391,6 +391,8 @@ export class GauzyAIService {
 		try {
 			const gauzyAIEmployee: Employee = await this.syncEmployee({
 				externalEmployeeId: employee.id,
+				externalTenantId: employee.tenantId,
+				externalOrgId: employee.organizationId,
 				isActive: employee.isActive,
 				isArchived: false,
 				upworkJobSearchCriteria: undefined,
@@ -512,6 +514,8 @@ export class GauzyAIService {
 				try {
 					const gauzyAIEmployee: Employee = await this.syncEmployee({
 						externalEmployeeId: employee.id,
+						externalTenantId: employee.tenantId,
+						externalOrgId: employee.organizationId,
 						isActive: employee.isActive,
 						isArchived: false,
 						upworkJobSearchCriteria: undefined,
@@ -665,7 +669,6 @@ export class GauzyAIService {
 	 */
 	private async syncEmployee(employee: Employee): Promise<Employee> {
 		// First, let's search by employee.externalEmployeeId (which is Gauzy employeeId)
-
 		let employeesQuery: DocumentNode<EmployeeQuery> = gql`
 			query employeeByExternalEmployeeId(
 				$externalEmployeeIdFilter: String!
@@ -752,7 +755,9 @@ export class GauzyAIService {
 					) {
 						createOneEmployee(input: $input) {
 							id
-							externalEmployeeId
+							externalEmployeeId,
+							externalTenantId,
+							externalOrgId,
 							firstName
 							lastName
 						}
@@ -779,7 +784,9 @@ export class GauzyAIService {
 		const updateEmployeeMutation: DocumentNode<any> = gql`
 			mutation updateOneEmployee($input: UpdateOneEmployeeInput!) {
 				updateOneEmployee(input: $input) {
-					externalEmployeeId
+					externalEmployeeId,
+					externalTenantId,
+					externalOrgId,
 					isActive
 					isArchived
 					firstName
