@@ -171,6 +171,8 @@ export interface IOrganizationCreateInput extends IContact, IRegisterAsEmployee 
 	isImporting?: boolean;
 	sourceId?: string;
 	userOrganizationSourceId?: string;
+	/** Upwork Organization ID For Gauzy AI*/
+	upworkOrganizationId?: string;
 }
 
 export interface IOrganizationUpdateInput extends IOrganizationCreateInput {

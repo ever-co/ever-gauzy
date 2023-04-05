@@ -72,6 +72,7 @@ export class OrganizationCreateHandler
 			// 3. Create organization
 			const createdOrganization: IOrganization = await this.organizationService.create({
 				...input,
+				upworkOrganizationId: input.upworkOrganizationId || null,
 				futureDateAllowed: input.futureDateAllowed === false ? false : true,
 				show_profits: input.show_profits === true ? true : false,
 				show_bonuses_paid: input.show_bonuses_paid === true ? true : false,

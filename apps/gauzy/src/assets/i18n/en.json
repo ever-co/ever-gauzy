@@ -416,7 +416,8 @@
 			"COVER_LETTER": "Cover Letter",
 			"DETAILS": "Details",
 			"HOURLY_RATE": "Hourly Rate",
-			"ATTACHMENTS": "Attachments"
+			"ATTACHMENTS": "Attachments",
+			"UPWORK_ORGANIZATION_ID": "Upwork Organization ID"
 		},
 		"PLACEHOLDERS": {
 			"NAME": "Name",
@@ -593,7 +594,8 @@
 			"ADD_PROJECT": "Add project",
 			"ADD_EMPLOYEE": "Add employee",
 			"ADD_ORGANIZATION": "Add organization",
-			"DRAG_DROP_FILE": "Drag and Drop the file here"
+			"DRAG_DROP_FILE": "Drag and Drop the file here",
+			"UPWORK_ORGANIZATION_ID": "Upwork Organization ID"
 		},
 		"RATES": {
 			"DEFAULT_RATE": "Default Rate",
@@ -1815,6 +1817,8 @@
 			"PROJECT_URL": "Project Url",
 			"VISIBILITY": "Visibility",
 			"MEMBERS": "Employee/Teams",
+			"INTEGRATIONS": "Integrations",
+			"UPWORK": "Upwork",
 			"SETTINGS": {
 				"TIMER_SETTINGS": "Timer Settings",
 				"ALLOW_MODIFY_TIME": "Allow Modify Time",
