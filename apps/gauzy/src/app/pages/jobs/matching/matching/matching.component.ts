@@ -1,7 +1,6 @@
 import { AfterViewInit, Component, OnInit } from '@angular/core';
 import {
 	IEmployeePresetInput,
-	IGetJobPresetInput,
 	IOrganization,
 	JobPostSourceEnum,
 	IJobPreset,
@@ -12,10 +11,11 @@ import {
 	JobPostTypeEnum,
 	IUser,
 	ITenant,
-	ISelectedEmployee
+	ISelectedEmployee,
+	IGetJobPresetInput
 } from '@gauzy/contracts';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { combineLatest } from 'rxjs';
+import { Observable, combineLatest, map, switchMap, of as observableOf, BehaviorSubject } from 'rxjs';
 import { debounceTime, filter, tap } from 'rxjs/operators';
 import * as _ from 'underscore';
 import { distinctUntilChange } from '@gauzy/common-angular';
@@ -46,9 +46,11 @@ export class MatchingComponent implements AfterViewInit, OnInit {
 	occupations: IJobSearchOccupation[] = [];
 	criterions: IMatchingCriterions[] = [];
 	hasAnyChanges: boolean = false;
-	tenantId: ITenant['id'];
+	public hasAddPreset$: Observable<boolean>;
+	public tenantId: ITenant['id'];
 	public selectedEmployeeId: ISelectedEmployee['id'];
 	public organization: IOrganization;
+	private payloads$: BehaviorSubject<object | null> = new BehaviorSubject(null);
 
 	constructor(
 		private readonly jobPresetService: JobPresetService,
@@ -56,62 +58,48 @@ export class MatchingComponent implements AfterViewInit, OnInit {
 		private readonly jobSearchCategoryService: JobSearchCategoryService,
 		private readonly toastrService: ToastrService,
 		private readonly store: Store
-	) {
-		this.addPreset = this.addPreset.bind(this);
-		this.createNewCategories = this.createNewCategories.bind(this);
-		this.createNewOccupations = this.createNewOccupations.bind(this);
-	}
+	) { }
 
 	ngOnInit(): void {
+		this.hasAddPreset$ = this.store.selectedEmployee$.pipe(
+			map((employee: ISelectedEmployee) => !(!!employee && !!employee.id))
+		);
+		this.payloads$
+			.pipe(
+				debounceTime(100),
+				distinctUntilChange(),
+				filter((payloads: IGetJobPresetInput) => !!payloads),
+				tap(() => this.getJobPresets()),
+				untilDestroyed(this)
+			)
+			.subscribe();
 		const storeOrganization$ = this.store.selectedOrganization$;
 		const storeEmployee$ = this.store.selectedEmployee$;
 		combineLatest([storeOrganization$, storeEmployee$])
 			.pipe(
-				debounceTime(100),
 				distinctUntilChange(),
 				filter(([organization]) => !!organization),
-				tap(([organization, employee]) => {
+				switchMap(([organization, employee]) => {
 					this.organization = organization;
 					this.selectedEmployeeId = employee ? employee.id : null;
+					return observableOf(employee);
 				}),
-				tap(() => {
-					this.getJobPresets();
-					this.getCategories();
-					this.getOccupations();
-				}),
+				tap(() => this.preparePayloads()),
+				filter((employee: ISelectedEmployee) => !!employee && !!employee.id),
+				tap(() => this.getEmployeeCriterions()),
 				untilDestroyed(this)
 			)
 			.subscribe();
-		storeEmployee$
+		storeOrganization$
 			.pipe(
-				filter((employee) => !!employee),
-				untilDestroyed(this),
-				debounceTime(500)
+				debounceTime(100),
+				distinctUntilChange(),
+				filter((organization: IOrganization) => !!organization),
+				tap(() => this.getCategories()),
+				tap(() => this.getOccupations()),
+				untilDestroyed(this)
 			)
-			.subscribe((employee) => {
-				setTimeout(async () => {
-					this.criterions = [];
-					this.criterionForm = {
-						jobSource: JobPostSourceEnum.UPWORK,
-						jobPresetId: null
-					};
-					if (employee && employee.id) {
-						this.jobPresetService
-							.getJobPresets({ employeeId: employee.id })
-							.then((jobPresets) => {
-								this.criterionForm.jobPresetId =
-									jobPresets.length > 0
-										? jobPresets[0].id
-										: null;
-							});
-						await this.getEmployeeCriterions();
-					} else {
-						this.selectedEmployeeId = null;
-						this.criterions = [];
-					}
-					this.checkForEmptyCriterion();
-				});
-			});
+			.subscribe();
 	}
 
 	ngAfterViewInit() {
@@ -124,6 +112,30 @@ export class MatchingComponent implements AfterViewInit, OnInit {
 	}
 
 	/**
+	 * Prepare Unique Payloads
+	 *
+	 * @returns
+	 */
+	preparePayloads() {
+		if (!this.organization) {
+			return;
+		}
+		const { id: organizationId } = this.organization;
+		const { tenantId } = this.store.user;
+
+		const request: IGetJobPresetInput = {
+			tenantId,
+			organizationId,
+			...(this.selectedEmployeeId
+				? {
+					employeeId: this.selectedEmployeeId
+				}
+				: {}),
+		};
+		this.payloads$.next(request);
+	}
+
+	/**
 	 * Get Job Presets
 	 *
 	 * @returns
@@ -133,15 +145,13 @@ export class MatchingComponent implements AfterViewInit, OnInit {
 			return;
 		}
 		try {
-			const { tenantId } = this;
-			const { id: organizationId } = this.organization;
+			const payloads: IGetJobPresetInput = this.payloads$.getValue();
+			const jobPresets = await this.jobPresetService.getJobPresets(payloads);
+			this.jobPresets = jobPresets;
 
-			const request: IGetJobPresetInput = {
-				organizationId,
-				tenantId
-			};
-
-			this.jobPresets = await this.jobPresetService.getJobPresets(request);
+			if (this.selectedEmployeeId) {
+				this.criterionForm.jobPresetId = jobPresets.length > 0 ? jobPresets[0].id : null;
+			}
 		} catch (error) {
 			console.error('Error while retrieving job presets', error);
 		}
