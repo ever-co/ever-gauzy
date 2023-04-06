@@ -21,10 +21,10 @@ import { EmployeeModule } from './../employee/employee.module';
 		RoleModule,
 		EmployeeModule,
 		OrganizationProjectModule,
-		CqrsModule,
+		CqrsModule
 	],
 	controllers: [TaskController],
 	providers: [TaskService, ...CommandHandlers],
-	exports: [TypeOrmModule, TaskService],
+	exports: [TypeOrmModule, TaskService]
 })
 export class TaskModule {}

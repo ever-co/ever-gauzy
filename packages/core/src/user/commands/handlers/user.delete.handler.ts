@@ -13,8 +13,8 @@ export class UserDeleteHandler implements ICommandHandler<UserDeleteCommand> {
 			let { userId } = command;
 			return await this.userService.delete(userId, {
 				relations: {
-					employee: true,
-				},
+					employee: true
+				}
 			});
 		} catch (error) {
 			throw new ForbiddenException();

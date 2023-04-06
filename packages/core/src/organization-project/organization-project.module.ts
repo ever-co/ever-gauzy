@@ -14,16 +14,16 @@ import { TenantModule } from '../tenant/tenant.module';
 		RouterModule.forRoutes([
 			{
 				path: '/organization-projects',
-				module: OrganizationProjectModule,
-			},
+				module: OrganizationProjectModule
+			}
 		]),
 		TypeOrmModule.forFeature([OrganizationProject]),
 		CqrsModule,
 		forwardRef(() => TenantModule),
-		forwardRef(() => UserModule),
+		forwardRef(() => UserModule)
 	],
 	controllers: [OrganizationProjectController],
 	providers: [OrganizationProjectService, ...CommandHandlers],
-	exports: [TypeOrmModule, OrganizationProjectService],
+	exports: [TypeOrmModule, OrganizationProjectService]
 })
 export class OrganizationProjectModule {}

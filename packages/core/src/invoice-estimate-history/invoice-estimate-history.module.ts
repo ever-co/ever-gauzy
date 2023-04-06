@@ -14,15 +14,15 @@ import { TaskModule } from '../tasks/task.module';
 		RouterModule.forRoutes([
 			{
 				path: '/invoice-estimate-history',
-				module: InvoiceEstimateHistoryModule,
-			},
+				module: InvoiceEstimateHistoryModule
+			}
 		]),
 		TypeOrmModule.forFeature([User, InvoiceEstimateHistory]),
 		TenantModule,
-		TaskModule,
+		TaskModule
 	],
 	controllers: [InvoiceEstimateHistoryController],
 	providers: [InvoiceEstimateHistoryService, UserService],
-	exports: [InvoiceEstimateHistoryService, UserService],
+	exports: [InvoiceEstimateHistoryService, UserService]
 })
 export class InvoiceEstimateHistoryModule {}

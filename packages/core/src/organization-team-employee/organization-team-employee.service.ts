@@ -8,7 +8,7 @@ import {
 	IOrganizationTeamEmployeeFindInput,
 	IOrganizationTeamEmployeeUpdateInput,
 	PermissionsEnum,
-	RolesEnum,
+	RolesEnum
 } from '@gauzy/contracts';
 import { isNotEmpty } from '@gauzy/common';
 import { TenantAwareCrudService } from './../core/crud';
@@ -42,18 +42,16 @@ export class OrganizationTeamEmployeeService extends TenantAwareCrudService<Orga
 			where: {
 				tenantId,
 				organizationId,
-				organizationTeamId,
+				organizationTeamId
 			},
 			relations: {
-				role: true,
-			},
+				role: true
+			}
 		});
 
 		// 1. Remove employee members from the organization team
 		const removedMemberIds =
-			teamMembers
-				.filter((employee) => !members.includes(employee.employeeId))
-				.map((emp) => emp.id) || [];
+			teamMembers.filter((employee) => !members.includes(employee.employeeId)).map((emp) => emp.id) || [];
 		if (isNotEmpty(removedMemberIds)) {
 			this.deleteMemberByIds(removedMemberIds);
 		}
@@ -64,26 +62,21 @@ export class OrganizationTeamEmployeeService extends TenantAwareCrudService<Orga
 			.forEach(async (member: IOrganizationTeamEmployee) => {
 				const { id, employeeId } = member;
 				await this.repository.update(id, {
-					role: managerIds.includes(employeeId) ? role : null,
+					role: managerIds.includes(employeeId) ? role : null
 				});
 			});
 
 		// 3. Add new team members
-		const existingMembers = teamMembers.map(
-			(member: IOrganizationTeamEmployee) => member.employeeId
-		);
+		const existingMembers = teamMembers.map((member: IOrganizationTeamEmployee) => member.employeeId);
 		employees
 			.filter((member: IEmployee) => !existingMembers.includes(member.id))
 			.forEach(async (employee: IEmployee) => {
 				const organizationTeamEmployee = new OrganizationTeamEmployee();
-				organizationTeamEmployee.organizationTeamId =
-					organizationTeamId;
+				organizationTeamEmployee.organizationTeamId = organizationTeamId;
 				organizationTeamEmployee.employeeId = employee.id;
 				organizationTeamEmployee.tenantId = tenantId;
 				organizationTeamEmployee.organizationId = organizationId;
-				organizationTeamEmployee.role = managerIds.includes(employee.id)
-					? role
-					: null;
+				organizationTeamEmployee.role = managerIds.includes(employee.id) ? role : null;
 
 				this.save(organizationTeamEmployee);
 			});
@@ -113,32 +106,22 @@ export class OrganizationTeamEmployeeService extends TenantAwareCrudService<Orga
 	): Promise<OrganizationTeamEmployee | UpdateResult> {
 		try {
 			const { organizationId, organizationTeamId } = entity;
-			if (
-				!RequestContext.hasPermission(
-					PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
-				)
-			) {
+			if (!RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE)) {
 				try {
 					await this.findOneByWhereOptions({
 						employeeId: RequestContext.currentEmployeeId(),
 						organizationId,
 						organizationTeamId,
 						role: {
-							name: RolesEnum.MANAGER,
-						},
+							name: RolesEnum.MANAGER
+						}
 					});
-					return await super.update(
-						{ id: memberId, organizationId, organizationTeamId },
-						entity
-					);
+					return await super.update({ id: memberId, organizationId, organizationTeamId }, entity);
 				} catch (error) {
 					throw new ForbiddenException();
 				}
 			}
-			return await super.update(
-				{ id: memberId, organizationId, organizationTeamId },
-				entity
-			);
+			return await super.update({ id: memberId, organizationId, organizationTeamId }, entity);
 		} catch (error) {
 			throw new ForbiddenException();
 		}
@@ -159,22 +142,15 @@ export class OrganizationTeamEmployeeService extends TenantAwareCrudService<Orga
 			const { organizationId, organizationTeamId } = options;
 			const tenantId = RequestContext.currentTenantId();
 
-			if (
-				RequestContext.hasPermission(
-					PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
-				)
-			) {
+			if (RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE)) {
 				const member = await this.findOneByIdString(memberId, {
 					where: {
 						organizationId,
 						tenantId,
-						organizationTeamId,
-					},
+						organizationTeamId
+					}
 				});
-				await this.taskService.unassignEmployeeFromTeamTasks(
-					member.employeeId,
-					organizationTeamId
-				);
+				await this.taskService.unassignEmployeeFromTeamTasks(member.employeeId, organizationTeamId);
 				return await this.repository.remove(member);
 			} else {
 				const employeeId = RequestContext.currentEmployeeId();
@@ -184,8 +160,8 @@ export class OrganizationTeamEmployeeService extends TenantAwareCrudService<Orga
 							organizationId,
 							organizationTeamId,
 							role: {
-								name: RolesEnum.MANAGER,
-							},
+								name: RolesEnum.MANAGER
+							}
 						});
 						if (manager) {
 							const member = await this.repository.findOneOrFail({
@@ -193,13 +169,10 @@ export class OrganizationTeamEmployeeService extends TenantAwareCrudService<Orga
 									id: memberId,
 									organizationId,
 									tenantId,
-									organizationTeamId,
-								},
+									organizationTeamId
+								}
 							});
-							await this.taskService.unassignEmployeeFromTeamTasks(
-								member.employeeId,
-								organizationTeamId
-							);
+							await this.taskService.unassignEmployeeFromTeamTasks(member.employeeId, organizationTeamId);
 							return await this.repository.remove(member);
 						}
 					} catch (error) {

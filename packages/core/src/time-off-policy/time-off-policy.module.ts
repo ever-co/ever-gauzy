@@ -12,15 +12,13 @@ import { TaskModule } from '../tasks/task.module';
 
 @Module({
 	imports: [
-		RouterModule.forRoutes([
-			{ path: 'time-off-policy', module: TimeOffPolicyModule },
-		]),
+		RouterModule.forRoutes([{ path: 'time-off-policy', module: TimeOffPolicyModule }]),
 		TypeOrmModule.forFeature([User, TimeOffPolicy, Employee]),
 		TenantModule,
-		TaskModule,
+		TaskModule
 	],
 	controllers: [TimeOffPolicyController],
 	providers: [TimeOffPolicyService, UserService],
-	exports: [TypeOrmModule, UserService],
+	exports: [TypeOrmModule, UserService]
 })
 export class TimeOffPolicyModule {}

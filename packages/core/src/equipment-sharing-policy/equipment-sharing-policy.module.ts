@@ -14,15 +14,15 @@ import { TaskModule } from '../tasks/task.module';
 		RouterModule.forRoutes([
 			{
 				path: '/equipment-sharing-policy',
-				module: EquipmentSharingPolicyModule,
-			},
+				module: EquipmentSharingPolicyModule
+			}
 		]),
 		TypeOrmModule.forFeature([User, EquipmentSharingPolicy]),
 		TenantModule,
-		TaskModule,
+		TaskModule
 	],
 	controllers: [EquipmentSharingPolicyController],
 	providers: [EquipmentSharingPolicyService, UserService],
-	exports: [TypeOrmModule, EquipmentSharingPolicyService],
+	exports: [TypeOrmModule, EquipmentSharingPolicyService]
 })
 export class EquipmentSharingPolicyModule {}

@@ -13,16 +13,14 @@ import { TaskModule } from '../tasks/task.module';
 
 @Module({
 	imports: [
-		RouterModule.forRoutes([
-			{ path: '/invoice-item', module: InvoiceItemModule },
-		]),
+		RouterModule.forRoutes([{ path: '/invoice-item', module: InvoiceItemModule }]),
 		TypeOrmModule.forFeature([InvoiceItem, User]),
 		CqrsModule,
 		TenantModule,
-		TaskModule,
+		TaskModule
 	],
 	controllers: [InvoiceItemController],
 	providers: [InvoiceItemService, UserService, ...CommandHandlers],
-	exports: [InvoiceItemService],
+	exports: [InvoiceItemService]
 })
 export class InvoiceItemModule {}

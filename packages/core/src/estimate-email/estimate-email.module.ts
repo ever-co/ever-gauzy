@@ -13,15 +13,13 @@ import { TaskModule } from '../tasks/task.module';
 
 @Module({
 	imports: [
-		RouterModule.forRoutes([
-			{ path: '/estimate-email', module: EstimateEmailModule },
-		]),
+		RouterModule.forRoutes([{ path: '/estimate-email', module: EstimateEmailModule }]),
 		TypeOrmModule.forFeature([User, EstimateEmail, Invoice, Organization]),
 		TenantModule,
-		TaskModule,
+		TaskModule
 	],
 	controllers: [EstimateEmailController],
 	providers: [EstimateEmailService, UserService],
-	exports: [EstimateEmailService, UserService],
+	exports: [EstimateEmailService, UserService]
 })
 export class EstimateEmailModule {}

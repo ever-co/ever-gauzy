@@ -21,10 +21,10 @@ import { TaskModule } from './../tasks/task.module';
 		forwardRef(() => TenantModule),
 		CqrsModule,
 		FactoryResetModule,
-		forwardRef(() => TaskModule),
+		forwardRef(() => TaskModule)
 	],
 	controllers: [UserController],
 	providers: [UserService, ...CommandHandlers],
-	exports: [TypeOrmModule, UserService],
+	exports: [TypeOrmModule, UserService]
 })
 export class UserModule {}

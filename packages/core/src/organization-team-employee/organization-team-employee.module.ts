@@ -13,16 +13,16 @@ import { TaskModule } from './../tasks/task.module';
 		RouterModule.forRoutes([
 			{
 				path: '/organization-team-employee',
-				module: OrganizationTeamEmployeeModule,
-			},
+				module: OrganizationTeamEmployeeModule
+			}
 		]),
 		TypeOrmModule.forFeature([OrganizationTeamEmployee]),
 		TenantModule,
 		UserModule,
-		TaskModule,
+		TaskModule
 	],
 	controllers: [OrganizationTeamEmployeeController],
 	providers: [OrganizationTeamEmployeeService],
-	exports: [TypeOrmModule, OrganizationTeamEmployeeService],
+	exports: [TypeOrmModule, OrganizationTeamEmployeeService]
 })
 export class OrganizationTeamEmployeeModule {}

@@ -25,10 +25,10 @@ import { RoleModule } from './../role/role.module';
 		forwardRef(() => TenantModule),
 		forwardRef(() => UserModule),
 		RoleModule,
-		forwardRef(() => AuthModule),
+		forwardRef(() => AuthModule)
 	],
 	controllers: [EmployeeController],
 	providers: [EmployeeService, GauzyAIService, ...CommandHandlers],
-	exports: [TypeOrmModule, EmployeeService],
+	exports: [TypeOrmModule, EmployeeService]
 })
 export class EmployeeModule {}

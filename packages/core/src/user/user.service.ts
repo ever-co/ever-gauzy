@@ -8,7 +8,7 @@ import {
 	Inject,
 	Injectable,
 	NotFoundException,
-	UnauthorizedException,
+	UnauthorizedException
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import {
@@ -20,17 +20,11 @@ import {
 	In,
 	UpdateResult,
 	DeleteResult,
-	FindOneOptions,
+	FindOneOptions
 } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 import { JwtPayload } from 'jsonwebtoken';
-import {
-	ComponentLayoutStyleEnum,
-	IUser,
-	LanguagesEnum,
-	PermissionsEnum,
-	RolesEnum,
-} from '@gauzy/contracts';
+import { ComponentLayoutStyleEnum, IUser, LanguagesEnum, PermissionsEnum, RolesEnum } from '@gauzy/contracts';
 import { isNotEmpty } from '@gauzy/common';
 import { ConfigService, environment as env } from '@gauzy/config';
 import { User } from './user.entity';
@@ -64,7 +58,7 @@ export class UserService extends TenantAwareCrudService<User> {
 				emailVerifiedAt: freshTimestamp(),
 				emailToken: null,
 				code: null,
-				codeExpireAt: null,
+				codeExpireAt: null
 			}
 		);
 	}
@@ -77,7 +71,7 @@ export class UserService extends TenantAwareCrudService<User> {
 	 */
 	async getUserByEmail(email: string): Promise<IUser | null> {
 		return await this.repository.findOneBy({
-			email,
+			email
 		});
 	}
 
@@ -90,7 +84,7 @@ export class UserService extends TenantAwareCrudService<User> {
 	async getOAuthLoginEmail(email: string): Promise<IUser> {
 		try {
 			return await this.repository.findOneByOrFail({
-				email,
+				email
 			});
 		} catch (error) {
 			throw new NotFoundException(`The requested record was not found`);
@@ -105,31 +99,31 @@ export class UserService extends TenantAwareCrudService<User> {
 	 */
 	async checkIfExistsEmail(email: string): Promise<boolean> {
 		return !!(await this.repository.findOneBy({
-			email,
+			email
 		}));
 	}
 
 	async checkIfExists(id: string): Promise<boolean> {
 		return !!(await this.repository.findOneBy({
-			id,
+			id
 		}));
 	}
 
 	async checkIfExistsThirdParty(thirdPartyId: string): Promise<boolean> {
 		return !!(await this.repository.findOneBy({
-			thirdPartyId,
+			thirdPartyId
 		}));
 	}
 
 	async getIfExists(id: string): Promise<User> {
 		return await this.repository.findOneBy({
-			id,
+			id
 		});
 	}
 
 	async getIfExistsThirdParty(thirdPartyId: string): Promise<User> {
 		return await this.repository.findOneBy({
-			thirdPartyId,
+			thirdPartyId
 		});
 	}
 
@@ -167,19 +161,15 @@ export class UserService extends TenantAwareCrudService<User> {
 			if (typeof id == 'string') {
 				user = await this.findOneByIdString(id, {
 					relations: {
-						role: true,
-					},
+						role: true
+					}
 				});
 			}
 			/**
 			 * If user try to update Super Admin without permission
 			 */
 			if (user.role.name === RolesEnum.SUPER_ADMIN) {
-				if (
-					!RequestContext.hasPermission(
-						PermissionsEnum.SUPER_ADMIN_EDIT
-					)
-				) {
+				if (!RequestContext.hasPermission(PermissionsEnum.SUPER_ADMIN_EDIT)) {
 					throw new ForbiddenException();
 				}
 			}
@@ -191,7 +181,7 @@ export class UserService extends TenantAwareCrudService<User> {
 			try {
 				return await this.findOneByWhereOptions({
 					id: id as string,
-					tenantId: RequestContext.currentTenantId(),
+					tenantId: RequestContext.currentTenantId()
 				});
 			} catch {}
 		} catch (error) {
@@ -204,27 +194,25 @@ export class UserService extends TenantAwareCrudService<User> {
 			join: {
 				alias: 'user',
 				leftJoin: {
-					role: 'user.role',
-				},
+					role: 'user.role'
+				}
 			},
 			where: {
 				tenantId,
 				role: {
-					name: In([RolesEnum.SUPER_ADMIN, RolesEnum.ADMIN]),
-				},
-			},
+					name: In([RolesEnum.SUPER_ADMIN, RolesEnum.ADMIN])
+				}
+			}
 		});
 	}
 
 	/*
 	 * Update user preferred language
 	 */
-	async updatePreferredLanguage(
-		preferredLanguage: LanguagesEnum
-	): Promise<IUser | UpdateResult> {
+	async updatePreferredLanguage(preferredLanguage: LanguagesEnum): Promise<IUser | UpdateResult> {
 		try {
 			return await this.update(RequestContext.currentUserId(), {
-				preferredLanguage,
+				preferredLanguage
 			});
 		} catch (err) {
 			throw new NotFoundException(`The record was not found`, err);
@@ -239,7 +227,7 @@ export class UserService extends TenantAwareCrudService<User> {
 	): Promise<IUser | UpdateResult> {
 		try {
 			return await this.update(RequestContext.currentUserId(), {
-				preferredComponentLayout,
+				preferredComponentLayout
 			});
 		} catch (err) {
 			throw new NotFoundException(`The record was not found`, err);
@@ -258,7 +246,7 @@ export class UserService extends TenantAwareCrudService<User> {
 				refreshToken = await bcrypt.hash(refreshToken, 10);
 			}
 			return await this.repository.update(userId, {
-				refreshToken: refreshToken,
+				refreshToken: refreshToken
 			});
 		} catch (error) {
 			console.log('Error while set current refresh token', error);
@@ -281,7 +269,7 @@ export class UserService extends TenantAwareCrudService<User> {
 				await this.repository.update(
 					{ id: userId, tenantId },
 					{
-						refreshToken: null,
+						refreshToken: null
 					}
 				);
 			} catch (error) {
@@ -299,10 +287,7 @@ export class UserService extends TenantAwareCrudService<User> {
 	 * @param payload
 	 * @returns
 	 */
-	async getUserIfRefreshTokenMatches(
-		refreshToken: string,
-		payload: JwtPayload
-	) {
+	async getUserIfRefreshTokenMatches(refreshToken: string, payload: JwtPayload) {
 		try {
 			const { id, email, tenantId, role } = payload;
 			const query = this.repository.createQueryBuilder('user');
@@ -310,26 +295,23 @@ export class UserService extends TenantAwareCrudService<User> {
 				join: {
 					alias: 'user',
 					leftJoin: {
-						role: 'user.role',
-					},
-				},
+						role: 'user.role'
+					}
+				}
 			});
 			query.where((query: SelectQueryBuilder<User>) => {
 				query.andWhere(
 					new Brackets((web: WhereExpressionBuilder) => {
 						web.andWhere(`"${query.alias}"."id" = :id`, { id });
 						web.andWhere(`"${query.alias}"."email" = :email`, {
-							email,
+							email
 						});
 					})
 				);
 				query.andWhere(
 					new Brackets((web: WhereExpressionBuilder) => {
 						if (isNotEmpty(tenantId)) {
-							web.andWhere(
-								`"${query.alias}"."tenantId" = :tenantId`,
-								{ tenantId }
-							);
+							web.andWhere(`"${query.alias}"."tenantId" = :tenantId`, { tenantId });
 						}
 						if (isNotEmpty(role)) {
 							web.andWhere(`"role"."name" = :role`, { role });
@@ -339,10 +321,7 @@ export class UserService extends TenantAwareCrudService<User> {
 				query.orderBy(`"${query.alias}"."createdAt"`, 'DESC');
 			});
 			const user = await query.getOneOrFail();
-			const isRefreshTokenMatching = await bcrypt.compare(
-				refreshToken,
-				user.refreshToken
-			);
+			const isRefreshTokenMatching = await bcrypt.compare(refreshToken, user.refreshToken);
 			if (isRefreshTokenMatching) {
 				return user;
 			} else {
@@ -365,7 +344,7 @@ export class UserService extends TenantAwareCrudService<User> {
 	 */
 	public async findMe(relations: string[]): Promise<IUser> {
 		return await this.findOneByIdString(RequestContext.currentUserId(), {
-			relations,
+			relations
 		});
 	}
 
@@ -376,10 +355,7 @@ export class UserService extends TenantAwareCrudService<User> {
 	 * @param options
 	 * @returns
 	 */
-	public async delete(
-		criteria: IUser['id'],
-		options?: FindOneOptions<User>
-	): Promise<DeleteResult> {
+	public async delete(criteria: IUser['id'], options?: FindOneOptions<User>): Promise<DeleteResult> {
 		try {
 			const userId = RequestContext.currentUserId();
 
@@ -389,11 +365,7 @@ export class UserService extends TenantAwareCrudService<User> {
 			}
 
 			// If user don't have enough permission (CHANGE_SELECTED_EMPLOYEE).
-			if (
-				!RequestContext.hasPermission(
-					PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
-				)
-			) {
+			if (!RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE)) {
 				// If user try to delete someone other user account, just denied the request.
 				if (userId != criteria) {
 					throw new ForbiddenException();
@@ -404,10 +376,7 @@ export class UserService extends TenantAwareCrudService<User> {
 			if (!!user) {
 				// Unassign all the task assigned to this user
 				if (user.employeeId) {
-					await this._taskService.unassignEmployeeFromTeamTasks(
-						user.employeeId,
-						undefined
-					);
+					await this._taskService.unassignEmployeeFromTeamTasks(user.employeeId, undefined);
 				}
 
 				return await super.delete(criteria, options);

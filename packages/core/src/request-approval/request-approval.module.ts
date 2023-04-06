@@ -21,9 +21,7 @@ import { TaskModule } from './../tasks/task.module';
 
 @Module({
 	imports: [
-		RouterModule.forRoutes([
-			{ path: '/request-approval', module: RequestApprovalModule },
-		]),
+		RouterModule.forRoutes([{ path: '/request-approval', module: RequestApprovalModule }]),
 		TypeOrmModule.forFeature([RequestApproval, Employee, OrganizationTeam]),
 		CqrsModule,
 		OrganizationTeamEmployeeModule,
@@ -33,15 +31,10 @@ import { TaskModule } from './../tasks/task.module';
 		OrganizationModule,
 		EquipmentSharingModule,
 		TimeOffRequestModule,
-		TaskModule,
+		TaskModule
 	],
 	controllers: [RequestApprovalControler],
-	providers: [
-		RequestApprovalService,
-		OrganizationTeamService,
-		EmployeeService,
-		...CommandHandlers,
-	],
-	exports: [RequestApprovalService],
+	providers: [RequestApprovalService, OrganizationTeamService, EmployeeService, ...CommandHandlers],
+	exports: [RequestApprovalService]
 })
 export class RequestApprovalModule {}

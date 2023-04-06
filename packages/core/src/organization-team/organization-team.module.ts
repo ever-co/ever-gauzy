@@ -19,9 +19,7 @@ import { TaskModule } from './../tasks/task.module';
 
 @Module({
 	imports: [
-		RouterModule.forRoutes([
-			{ path: '/organization-team', module: OrganizationTeamModule },
-		]),
+		RouterModule.forRoutes([{ path: '/organization-team', module: OrganizationTeamModule }]),
 		TypeOrmModule.forFeature([OrganizationTeam]),
 		OrganizationTeamEmployeeModule,
 		TenantModule,
@@ -32,10 +30,10 @@ import { TaskModule } from './../tasks/task.module';
 		TimerModule,
 		CqrsModule,
 		StatisticModule,
-		TaskModule,
+		TaskModule
 	],
 	controllers: [OrganizationTeamController],
 	providers: [...QueryHandlers, ...CommandHandlers, OrganizationTeamService],
-	exports: [TypeOrmModule, OrganizationTeamService],
+	exports: [TypeOrmModule, OrganizationTeamService]
 })
 export class OrganizationTeamModule {}

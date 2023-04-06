@@ -17,21 +17,16 @@ import { TaskModule } from '../tasks/task.module';
 		RouterModule.forRoutes([
 			{
 				path: '/employee-recurring-expense',
-				module: EmployeeRecurringExpenseModule,
-			},
+				module: EmployeeRecurringExpenseModule
+			}
 		]),
 		TypeOrmModule.forFeature([EmployeeRecurringExpense, User]),
 		CqrsModule,
 		TenantModule,
-		TaskModule,
+		TaskModule
 	],
 	controllers: [EmployeeRecurringExpenseController],
-	providers: [
-		EmployeeRecurringExpenseService,
-		...QueryHandlers,
-		UserService,
-		...CommandHandlers,
-	],
-	exports: [EmployeeRecurringExpenseService],
+	providers: [EmployeeRecurringExpenseService, ...QueryHandlers, UserService, ...CommandHandlers],
+	exports: [EmployeeRecurringExpenseService]
 })
 export class EmployeeRecurringExpenseModule {}
