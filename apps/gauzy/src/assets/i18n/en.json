@@ -412,7 +412,11 @@
 			"DEFAULT": "Default Organization",
 			"INVITATION_EXPIRATION": "Invitation Expiration",
 			"PERIOD": "Period",
-			"REGISTER_AS_EMPLOYEE_OF_ORGANIZATION": "Do you want to register as Employee of Organization?"
+			"REGISTER_AS_EMPLOYEE_OF_ORGANIZATION": "Do you want to register as Employee of Organization?",
+			"COVER_LETTER": "Cover Letter",
+			"DETAILS": "Details",
+			"HOURLY_RATE": "Hourly Rate",
+			"ATTACHMENTS": "Attachments"
 		},
 		"PLACEHOLDERS": {
 			"NAME": "Name",
@@ -588,7 +592,8 @@
 			"INVITATION_EXPIRATION": "Invitation Expiration",
 			"ADD_PROJECT": "Add project",
 			"ADD_EMPLOYEE": "Add employee",
-			"ADD_ORGANIZATION": "Add organization"
+			"ADD_ORGANIZATION": "Add organization",
+			"DRAG_DROP_FILE": "Drag and Drop the file here"
 		},
 		"RATES": {
 			"DEFAULT_RATE": "Default Rate",
@@ -2455,10 +2460,10 @@
 		"ACTION": "Action",
 		"APPLY": "Apply Manually",
 		"APPLY_AUTO": "Auto Apply",
+		"CLOSED": "Closed",
+		"OPEN": "Open",
 		"APPLIED": "Applied",
-		"STATUS_CLOSED": "Closed",
-		"STATUS_OPEN": "Open",
-		"STATUS_APPLIED": "Applied",
+		"COMPLETED": "Completed",
 		"VIEW": "View",
 		"HIDE": "Hide",
 		"NO_JOBS": "No Jobs found",
@@ -2470,7 +2475,7 @@
 		"UPWORK": "Upwork",
 		"WEB": "Web",
 		"HOURLY": "Hourly",
-		"FIX_PRICE": "Fixed Price",
+		"FIXED": "Fixed",
 		"FILTER": {
 			"TITLE": "Advanced Filter",
 			"SOURCE": "Source",
@@ -2484,7 +2489,8 @@
 		"HISTORY": "History",
 		"EMPLOYEES": "Employees",
 		"MATCHINGS": "Matchings",
-		"PROPOSALS_TEMPLATE": "Proposals Template"
+		"PROPOSALS_TEMPLATE": "Proposals Template",
+		"APPLY_JOB_TITLE": "Apply for Job"
 	},
 	"JOB_MATCHING": {
 		"CONFIGURE_EMPLOYEES_TO_JOBS_MATCHING": "Configure Employees to Jobs Matching",

@@ -20,6 +20,7 @@ import { Role, User } from './../core/entities/internal';
 import { TenantSettingSaveCommand } from './tenant-setting/commands';
 import { TenantTaskSizeBulkCreateCommand } from './../tasks/sizes/commands';
 import { TenantTaskPriorityBulkCreateCommand } from './../tasks/priorities/commands';
+import { TenantIssueTypeBulkCreateCommand } from './../tasks/issue-type/commands';
 
 @Injectable()
 export class TenantService extends CrudService<Tenant> {
@@ -71,6 +72,11 @@ export class TenantService extends CrudService<Tenant> {
 		// Create default task priorities for relative tenants.
 		await this.commandBus.execute(
 			new TenantTaskPriorityBulkCreateCommand([tenant])
+		);
+
+		// Create default issue types for relative tenants.
+		await this.commandBus.execute(
+			new TenantIssueTypeBulkCreateCommand([tenant])
 		);
 
 		// Create tenant default file storage setting (LOCAL)

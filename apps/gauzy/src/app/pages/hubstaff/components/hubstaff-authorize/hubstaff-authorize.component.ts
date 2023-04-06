@@ -4,37 +4,15 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { filter, tap } from 'rxjs/operators';
 import { IOrganization } from '@gauzy/contracts';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import {
-	HubstaffService,
-	Store
-} from './../../../../@core/services';
+import { HubstaffService, Store } from './../../../../@core/services';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ngx-hubstaff-authorize',
 	templateUrl: './hubstaff-authorize.component.html',
-	styleUrls: ['./hubstaff-authorize.component.scss']
+	styleUrls: ['./hubstaff-authorize.component.scss'],
 })
 export class HubstaffAuthorizeComponent implements OnInit, OnDestroy {
-
-	hubStaffAuthorizeCode: string;
-	public organization: IOrganization;
-
-	public clientIdForm: FormGroup = HubstaffAuthorizeComponent.buildClientIdForm(this._fb);
-	static buildClientIdForm(fb: FormBuilder): FormGroup {
-		return fb.group({
-			client_id: ['', Validators.required]
-		});
-	}
-	
-	public clientSecretForm: FormGroup = HubstaffAuthorizeComponent.buildClientSecretForm(this._fb);
-	static buildClientSecretForm(fb: FormBuilder): FormGroup {
-		return fb.group({
-			client_secret: ['', Validators.required],
-			authorization_code: ['', Validators.required]
-		});
-	}
-
 	constructor(
 		private readonly _activatedRoute: ActivatedRoute,
 		private readonly _hubstaffService: HubstaffService,
@@ -42,12 +20,34 @@ export class HubstaffAuthorizeComponent implements OnInit, OnDestroy {
 		private readonly _router: Router,
 		private readonly _store: Store
 	) {}
+	hubStaffAuthorizeCode: string;
+	public organization: IOrganization;
+
+	public clientIdForm: FormGroup =
+		HubstaffAuthorizeComponent.buildClientIdForm(this._fb);
+
+	public clientSecretForm: FormGroup =
+		HubstaffAuthorizeComponent.buildClientSecretForm(this._fb);
+	static buildClientIdForm(fb: FormBuilder): FormGroup {
+		return fb.group({
+			client_id: ['', Validators.required],
+		});
+	}
+	static buildClientSecretForm(fb: FormBuilder): FormGroup {
+		return fb.group({
+			client_secret: ['', Validators.required],
+			authorization_code: ['', Validators.required],
+		});
+	}
 
 	ngOnInit() {
 		this._store.selectedOrganization$
 			.pipe(
 				filter((organization) => !!organization),
-				tap((organization: IOrganization) => this.organization = organization),
+				tap(
+					(organization: IOrganization) =>
+						(this.organization = organization)
+				),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -61,7 +61,9 @@ export class HubstaffAuthorizeComponent implements OnInit, OnDestroy {
 				tap(({ code }) => (this.hubStaffAuthorizeCode = code)),
 				tap(({ code, state }) => {
 					this.clientIdForm.patchValue({ client_id: state });
-					this.clientSecretForm.patchValue({ authorization_code: code });
+					this.clientSecretForm.patchValue({
+						authorization_code: code,
+					});
 				}),
 				untilDestroyed(this)
 			)
@@ -77,7 +79,7 @@ export class HubstaffAuthorizeComponent implements OnInit, OnDestroy {
 			.pipe(
 				// if remember state is true
 				filter(({ state }) => !!state && state === true),
-				tap(() => this._checkRemeberState()),
+				tap(() => this._checkRememberState()),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -86,13 +88,13 @@ export class HubstaffAuthorizeComponent implements OnInit, OnDestroy {
 	/**
 	 * Hubstaff integration remember state API call
 	 */
-	private _checkRemeberState() {
+	private _checkRememberState() {
 		if (!this.organization) {
 			return;
 		}
 		const { id: organizationId } = this.organization;
 		this._hubstaffService
-			.checkRemeberState(organizationId)
+			.checkRememberState(organizationId)
 			.pipe(
 				tap((res) => {
 					if (res.success) {
@@ -131,7 +133,7 @@ export class HubstaffAuthorizeComponent implements OnInit, OnDestroy {
 				code: this.hubStaffAuthorizeCode,
 				client_secret,
 				client_id,
-				organizationId
+				organizationId,
 			})
 			.pipe(
 				tap(({ id }) => {
@@ -142,5 +144,5 @@ export class HubstaffAuthorizeComponent implements OnInit, OnDestroy {
 			.subscribe();
 	}
 
-	ngOnDestroy() { }
+	ngOnDestroy() {}
 }

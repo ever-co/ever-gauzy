@@ -19,9 +19,9 @@
 					>
 						<nb-option
 							*ngFor="let source of JobPostSourceEnum | keyvalue"
-							[value]="source.value"
+							[value]="source.value | lowercase"
 						>
-							{{ 'JOBS.' + source.value | translate }}</nb-option
+							{{ 'JOBS.' + source.key | translate }}</nb-option
 						>
 					</nb-select>
 				</div>
@@ -180,7 +180,7 @@
 											let type of JobPostTypeEnum
 												| keyvalue
 										"
-										[value]="type.value"
+										[value]="type.value | lowercase"
 									>
 										{{ 'JOBS.' + type.key | translate }}
 									</nb-radio>
@@ -188,15 +188,6 @@
 							</div>
 
 							<div class="col-auto footer-buttons">
-								<button
-									type="submit"
-									nbButton
-									status="success"
-									size="small"
-								>
-									<nb-icon icon="save-outline"></nb-icon>
-									{{ 'JOB_MATCHING.SAVE' | translate }}
-								</button>
 								<button
 									nbButton
 									status="danger"
@@ -213,6 +204,15 @@
 								>
 									<nb-icon icon="trash-outline"></nb-icon>
 									{{ 'JOB_MATCHING.DELETE' | translate }}
+								</button>
+								<button
+									type="submit"
+									nbButton
+									status="success"
+									size="small"
+								>
+									<nb-icon icon="save-outline"></nb-icon>
+									{{ 'JOB_MATCHING.SAVE' | translate }}
 								</button>
 							</div>
 						</div>
