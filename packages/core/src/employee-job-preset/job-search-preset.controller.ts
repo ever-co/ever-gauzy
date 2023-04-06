@@ -13,7 +13,6 @@ import {
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import {
 	IGetJobPresetCriterionInput,
-	IGetJobPresetInput,
 	IJobPreset,
 	IMatchingCriterions
 } from '@gauzy/contracts';
