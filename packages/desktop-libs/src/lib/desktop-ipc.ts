@@ -351,7 +351,7 @@ export function ipcTimer(
 
 	offlineMode.trigger();
 
-	ipcMain.on('start_timer', async (event, arg) => {
+	ipcMain.handle('START_TIMER', async (event, arg) => {
 		try {
 			powerManager = new DesktopPowerManager(timeTrackerWindow);
 			powerManagerPreventSleep = new PowerManagerPreventDisplaySleep(
@@ -372,7 +372,7 @@ export function ipcTimer(
 					organizationContactId: arg.organizationContactId
 				}
 			});
-			await timerHandler.startTimer(setupWindow, knex, timeTrackerWindow, arg.timeLog);
+			const timerResponse = await timerHandler.startTimer(setupWindow, knex, timeTrackerWindow, arg.timeLog);
 			settingWindow.webContents.send('app_setting_update', {
 				setting: LocalStore.getStore('appSetting')
 			});
@@ -380,6 +380,7 @@ export function ipcTimer(
 				powerManagerPreventSleep.start();
 			}
 			powerManagerDetectInactivity.startInactivityDetection();
+			return timerResponse;
 		} catch (error) {
 			timeTrackerWindow.webContents.send('emergency_stop');
 			console.log('ERROR', error)
@@ -477,15 +478,19 @@ export function ipcTimer(
 		}
 	});
 
-	ipcMain.on('stop_timer', async (event, arg) => {
+	ipcMain.handle('STOP_TIMER', async (event, arg) => {
 		log.info(`Timer Stop: ${moment().format()}`);
-		await timerHandler.stopTimer(setupWindow, timeTrackerWindow, knex, arg.quitApp);
+		const timerResponse = await timerHandler.stopTimer(setupWindow, timeTrackerWindow, knex, arg.quitApp);
 		settingWindow.webContents.send('app_setting_update', {
 			setting: LocalStore.getStore('appSetting')
 		});
-		if (powerManagerPreventSleep) powerManagerPreventSleep.stop();
-		if (powerManagerDetectInactivity)
+		if (powerManagerPreventSleep) {
+			powerManagerPreventSleep.stop();
+		}
+		if (powerManagerDetectInactivity) {
 			powerManagerDetectInactivity.stopInactivityDetection();
+		}
+		return timerResponse;
 	});
 
 	ipcMain.on('return_time_slot', async (event, arg) => {
@@ -830,7 +835,6 @@ export function removeMainListener() {
 
 export function removeTimerListener() {
 	const timerListeners = [
-		'start_timer',
 		'data_push_activity',
 		'remove_aw_local_data',
 		'remove_wakatime_local_data',
@@ -863,7 +867,8 @@ export function removeAllHandlers() {
 		'DESKTOP_CAPTURER_GET_SOURCES',
 		'FINISH_SYNCED_TIMER',
 		'TAKE_SCREEN_CAPTURE',
-		'START_SERVER'
+		'START_SERVER',
+		'START_TIMER'
 	];
 	channels.forEach((channel: string) => {
 		ipcMain.removeHandler(channel);
