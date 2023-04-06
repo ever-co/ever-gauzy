@@ -18,7 +18,7 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { Observable, combineLatest, map, switchMap, of as observableOf, BehaviorSubject } from 'rxjs';
 import { debounceTime, filter, tap } from 'rxjs/operators';
 import * as _ from 'underscore';
-import { distinctUntilChange } from '@gauzy/common-angular';
+import { distinctUntilChange, isEmpty, isNotEmpty } from '@gauzy/common-angular';
 import {
 	JobPresetService,
 	JobSearchCategoryService,
@@ -77,6 +77,7 @@ export class MatchingComponent implements AfterViewInit, OnInit {
 		const storeEmployee$ = this.store.selectedEmployee$;
 		combineLatest([storeOrganization$, storeEmployee$])
 			.pipe(
+				debounceTime(100),
 				distinctUntilChange(),
 				filter(([organization]) => !!organization),
 				switchMap(([organization, employee]) => {
@@ -85,7 +86,7 @@ export class MatchingComponent implements AfterViewInit, OnInit {
 					return observableOf(employee);
 				}),
 				tap(() => this.preparePayloads()),
-				filter((employee: ISelectedEmployee) => !!employee && !!employee.id),
+				filter((employee: ISelectedEmployee) => !!employee),
 				tap(() => this.getEmployeeCriterions()),
 				untilDestroyed(this)
 			)
@@ -167,22 +168,28 @@ export class MatchingComponent implements AfterViewInit, OnInit {
 			return;
 		}
 		try {
-			this.criterions = await this.jobPresetService.getEmployeeCriterions(this.selectedEmployeeId);
+			this.criterions = [];
+			if (this.selectedEmployeeId) {
+				this.criterions = await this.jobPresetService.getEmployeeCriterions(this.selectedEmployeeId);
+
+				if (isEmpty(this.criterions)) {
+					this.addNewCriterion();
+				}
+			}
 		} catch (error) {
 			console.error('Error while retrieving employee criterions', error);
 		}
 	}
 
 	/**
-	 *
+	 * Add new preset from here
 	 *
 	 * @param name
 	 */
-	async addPreset(name?: IJobPreset['name']) {
+	addPreset = async (name: IJobPreset['name']) => {
 		if (!this.organization) {
 			return;
 		}
-
 		try {
 			const { tenantId } = this;
 			const { id: organizationId } = this.organization;
@@ -202,34 +209,37 @@ export class MatchingComponent implements AfterViewInit, OnInit {
 			this.jobPresets = this.jobPresets.concat([jobPreset]);
 			this.criterionForm.jobPresetId = jobPreset.id;
 
-			this.checkForEmptyCriterion();
+			this.criterions = [];
+			this.addNewCriterion();
 		} catch (error) {
 			console.error('Error while creating job presets', error);
 		}
 	}
 
 	async onPresetSelected(jobPreset: IJobPreset) {
-		if (jobPreset) {
-			if (this.selectedEmployeeId) {
-				await this.updateEmployeePreset();
-			} else {
-				await this.jobPresetService
-					.getJobPreset(jobPreset.id)
-					.then(({ jobPresetCriterions }) => {
-						this.criterions = jobPresetCriterions;
-					});
-			}
-		} else {
+		try {
 			this.criterions = [];
+			if (jobPreset) {
+				if (this.selectedEmployeeId) {
+					await this.updateEmployeePreset();
+				} else {
+					const { jobPresetCriterions = [] } = await this.jobPresetService.getJobPreset(jobPreset.id);
+					if (isNotEmpty(jobPresetCriterions)) {
+						this.criterions = jobPresetCriterions;
+					} else {
+						this.addNewCriterion();
+					}
+				}
+			}
+			this.hasAnyChanges = false;
+		} catch (error) {
+			console.log('Error while change job preset', error);
 		}
-		this.hasAnyChanges = false;
-		this.checkForEmptyCriterion();
 	}
 
 	onSourceSelected() {
 		this.criterionForm.jobPresetId = null;
 		this.updateEmployeePreset();
-		this.checkForEmptyCriterion();
 	}
 
 	async updateEmployeePreset() {
@@ -245,15 +255,6 @@ export class MatchingComponent implements AfterViewInit, OnInit {
 				.then((criterions) => {
 					this.criterions = criterions;
 				});
-		}
-	}
-
-	async checkForEmptyCriterion() {
-		if (
-			(this.selectedEmployeeId || this.criterionForm.jobPresetId) &&
-			this.criterions.length === 0
-		) {
-			this.addNewCriterion();
 		}
 	}
 
@@ -415,7 +416,7 @@ export class MatchingComponent implements AfterViewInit, OnInit {
 	 * @param name
 	 * @returns
 	 */
-	async createNewCategories(name: IJobSearchCategory['name']) {
+	createNewCategories = async (name: IJobSearchCategory['name']) => {
 		if (!this.organization) {
 			return;
 		}
@@ -442,7 +443,7 @@ export class MatchingComponent implements AfterViewInit, OnInit {
 	 * @param name
 	 * @returns
 	 */
-	async createNewOccupations(name: IJobSearchOccupation['name']) {
+	createNewOccupations = async (name: IJobSearchOccupation['name']) => {
 		if (!this.organization) {
 			return;
 		}
