@@ -21,9 +21,8 @@ import {
 } from '../core/entities/internal';
 
 @Entity('job_preset')
-export class JobPreset
-	extends TenantOrganizationBaseEntity
-	implements IJobPreset {
+export class JobPreset extends TenantOrganizationBaseEntity implements IJobPreset {
+
 	@ApiProperty({ type: () => String })
 	@IsString()
 	@IsNotEmpty()
@@ -31,6 +30,36 @@ export class JobPreset
 	@Column()
 	name?: string;
 
+	/*
+	|--------------------------------------------------------------------------
+	| @OneToMany
+	|--------------------------------------------------------------------------
+	*/
+	/**
+	 * Employee Job Criterions
+	 */
+	@OneToMany(() => EmployeeUpworkJobsSearchCriterion, (it) => it.jobPreset, {
+		onDelete: 'CASCADE'
+	})
+	employeeCriterions?: IEmployeeUpworkJobsSearchCriterion[];
+
+	/**
+	 * Job Criterions
+	 */
+	@OneToMany(() => JobPresetUpworkJobSearchCriterion, (it) => it.jobPreset, {
+		onDelete: 'CASCADE'
+	})
+	jobPresetCriterions?: IJobPresetUpworkJobSearchCriterion[];
+
+	/*
+	|--------------------------------------------------------------------------
+	| @ManyToMany
+	|--------------------------------------------------------------------------
+	*/
+
+	/**
+	 * Job Preset Employees
+	 */
 	@ManyToMany(() => Employee, (employee) => employee.jobPresets, {
 		cascade: true
 	})
@@ -38,24 +67,4 @@ export class JobPreset
 		name: 'employee_job_preset'
 	})
 	employees?: Employee[];
-
-	@OneToMany(
-		() => EmployeeUpworkJobsSearchCriterion,
-		(employeeUpworkJobsSearchCriterion) =>
-			employeeUpworkJobsSearchCriterion.jobPreset,
-		{
-			onDelete: 'CASCADE'
-		}
-	)
-	employeeCriterions?: IEmployeeUpworkJobsSearchCriterion[];
-
-	@OneToMany(
-		() => JobPresetUpworkJobSearchCriterion,
-		(jobPresetUpworkJobSearchCriterion) =>
-			jobPresetUpworkJobSearchCriterion.jobPreset,
-		{
-			onDelete: 'CASCADE'
-		}
-	)
-	jobPresetCriterions?: IJobPresetUpworkJobSearchCriterion[];
 }
