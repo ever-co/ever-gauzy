@@ -312,12 +312,10 @@ const dialogMessage = (msg) => {
 					);
 				}
 				settingsWindow.show();
-				setTimeout(() => {
-					settingsWindow.webContents.send(
-						'app_setting',
-						LocalStore.getApplicationConfig()
-					);
-				}, 500);
+				settingsWindow.webContents.send(
+					'app_setting',
+					LocalStore.getApplicationConfig()
+				);
 			}
 		}
 	});
@@ -434,7 +432,7 @@ app.on('ready', async () => {
 	}
 	updater.settingWindow = settingsWindow;
 	updater.gauzyWindow = gauzyWindow;
-	updater.checkUpdate();
+	await updater.checkUpdate();
 	removeMainListener();
 	ipcMainHandler(
 		store,
@@ -444,17 +442,21 @@ app.on('ready', async () => {
 		timeTrackerWindow
 	);
 	if (gauzyWindow) {
-		gauzyWindow.webContents.setZoomFactor(1.0);
-		gauzyWindow.webContents
-			.setVisualZoomLevelLimits(1, 5)
-			.then(() =>
-				console.log('Zoom levels have been set between 100% and 500%')
-			)
-			.catch((err) => console.log(err));
+		try {
+			gauzyWindow.webContents.setZoomFactor(1.0);
+			await gauzyWindow.webContents.setVisualZoomLevelLimits(1, 5);
+			console.log('Zoom levels have been set between 100% and 500%');
+		} catch (error) {
+			console.log(error);
+		}
 	}
 });
 
-app.on('window-all-closed', quit);
+app.on('window-all-closed', () => {
+	if (process.platform !== 'darwin') {
+		app.quit();
+	}
+});
 
 app.commandLine.appendSwitch('disable-http2');
 
@@ -513,7 +515,7 @@ ipcMain.on('restart_app', async (event, arg) => {
 		API_BASE_URL: getApiBaseUrl(configs),
 		IS_INTEGRATED_DESKTOP: configs.isLocalServer,
 	};
-	await startServer(configs, tray ? true : false);
+	await startServer(configs, !!tray);
 	setupWindow.webContents.send('server_ping_restart', {
 		host: getApiBaseUrl(configs),
 	});
@@ -536,8 +538,12 @@ ipcMain.on('server_already_start', async () => {
 	}
 });
 
-ipcMain.on('open_browser', (event, arg) => {
-	shell.openExternal(arg.url);
+ipcMain.on('open_browser', async (event, arg) => {
+	try {
+		await shell.openExternal(arg.url);
+	} catch (error) {
+		console.log('ERROR', error);
+	}
 });
 
 ipcMain.on('restart_and_update', () => {
@@ -620,11 +626,9 @@ app.on('before-quit', (e) => {
 	const appSetting = LocalStore.getStore('appSetting');
 	if (appSetting && appSetting.timerStarted) {
 		e.preventDefault();
-		setTimeout(() => {
-			timeTrackerWindow.webContents.send('stop_from_tray', {
-				quitApp: true,
-			});
-		}, 1000);
+		timeTrackerWindow.webContents.send('stop_from_tray', {
+			quitApp: true,
+		});
 	} else {
 		// soft download cancellation
 		try {
