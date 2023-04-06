@@ -355,10 +355,19 @@ export class MatchingComponent implements AfterViewInit, OnInit {
 	 * Get Categories
 	 */
 	async getCategories() {
+		if (!this.organization) {
+			return;
+		}
 		try {
+			const { tenantId } = this;
+			const { id: organizationId } = this.organization;
+			const { jobSource } = this.criterionForm;
+
 			this.categories = (
 				await this.jobSearchCategoryService.getAll({
-					jobSource: this.criterionForm.jobSource
+					tenantId,
+					organizationId,
+					jobSource
 				})
 			).items;
 		} catch (error) {
@@ -370,10 +379,19 @@ export class MatchingComponent implements AfterViewInit, OnInit {
 	 * Get Occupations
 	 */
 	async getOccupations() {
+		if (!this.organization) {
+			return;
+		}
 		try {
+			const { tenantId } = this;
+			const { id: organizationId } = this.organization;
+			const { jobSource } = this.criterionForm;
+
 			this.occupations = (
 				await this.jobSearchOccupationService.getAll({
-					jobSource: this.criterionForm.jobSource
+					tenantId,
+					organizationId,
+					jobSource
 				})
 			).items;
 		} catch (error) {
