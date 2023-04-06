@@ -6,7 +6,9 @@ import {
 	Post,
 	Body,
 	Param,
-	Delete
+	Delete,
+	ValidationPipe,
+	UsePipes
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import {
@@ -22,6 +24,7 @@ import { JobPresetUpworkJobSearchCriterion } from './job-preset-upwork-job-searc
 import { EmployeeUpworkJobsSearchCriterion } from './employee-upwork-jobs-search-criterion.entity';
 import { EmployeeService } from '../employee/employee.service';
 import { UUIDValidationPipe } from './../shared/pipes';
+import { JobPresetQuerDTO } from './dto';
 
 @ApiTags('JobSearchPreset')
 @Controller()
@@ -30,7 +33,7 @@ export class JobSearchPresetController {
 		private readonly jobPresetService: JobPresetService,
 		private readonly employeeService: EmployeeService,
 		private readonly gauzyAIService: GauzyAIService
-	) {}
+	) { }
 
 	@ApiOperation({ summary: 'Find all employee job posts' })
 	@ApiResponse({
@@ -43,7 +46,10 @@ export class JobSearchPresetController {
 		description: 'Record not found'
 	})
 	@Get()
-	async getAll(@Query() data: IGetJobPresetInput) {
+	@UsePipes(new ValidationPipe({ whitelist: true }))
+	async getAll(
+		@Query() input: JobPresetQuerDTO
+	) {
 		console.log('GetAll Presets called. We will sync all employees now');
 
 		// TODO: we can actually sync just for one employee if data.employeeId is defined
@@ -52,7 +58,7 @@ export class JobSearchPresetController {
 
 		await this.gauzyAIService.syncEmployees(employees);
 
-		return this.jobPresetService.getAll(data);
+		return await this.jobPresetService.getAll(input);
 	}
 
 	@ApiOperation({ summary: 'Find all employee job posts' })
