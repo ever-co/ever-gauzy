@@ -2248,13 +2248,21 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 			}
 			asapScheduler.schedule(async () => {
 				try {
-					await this.electronService.ipcRenderer.invoke(
-						'UPDATE_SYNCED_TIMER',
-						{
-							config: { isTakeScreenCapture: true },
-							lastTimer: timelog,
-							...lastTimer,
-						}
+					await Promise.allSettled(
+						[
+							this.electronService.ipcRenderer.invoke(
+								'TAKE_SCREEN_CAPTURE',
+								{ quitApp: this.quitApp }
+							),
+							this.electronService.ipcRenderer.invoke(
+								'UPDATE_SYNCED_TIMER',
+								{
+									lastTimer: timelog,
+									...lastTimer,
+								}
+							),
+							this.getTimerStatus(params)
+						]
 					);
 				} catch (error) {
 					this._errorHandlerService.handleError(error);

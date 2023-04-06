@@ -259,14 +259,6 @@ export function ipcMainHandler(
 					})
 				);
 			}
-			if (arg.config) {
-				if (arg.config.isTakeScreenCapture) {
-					await timerHandler.makeScreenshot(null, knex, timeTrackerWindow, false);
-				}
-				timeTrackerWindow.webContents.send('timer_status', {
-					...LocalStore.beforeRequestParams()
-				});
-			}
 		} catch (error) {
 			console.log('[UPDATE_SYNCED_TIME_ERROR]', error);
 		}
