@@ -10,6 +10,7 @@ import { SetupService } from './setup.service';
 import { NbDialogService } from '@nebular/theme';
 import { AlertComponent } from '../../lib/dialogs/alert/alert.component';
 import { ElectronService } from '../electron/services';
+import { ErrorHandlerService } from 'apps/desktop-timer/src/app/services';
 
 // Import logging for electron and override default console logging
 const log = window.require('electron-log');
@@ -28,7 +29,8 @@ export class SetupComponent implements OnInit {
 		private setupService: SetupService,
 		private _cdr: ChangeDetectorRef,
 		private dialogService: NbDialogService,
-		private electronService: ElectronService
+		private electronService: ElectronService,
+		private _errorHandlerService: ErrorHandlerService
 	) {
 		electronService.ipcRenderer.on('setup-data', (event, arg) => {
 			this.desktopFeatures.gauzyPlatform = arg.gauzyWindow;
@@ -305,7 +307,7 @@ export class SetupComponent implements OnInit {
 		};
 	}
 
-	saveAndRun() {
+	public async saveAndRun() {
 		if (this.connectivity.integrated) {
 			this.onProgress = true;
 		}
@@ -315,9 +317,14 @@ export class SetupComponent implements OnInit {
 			...this.getThirdPartyConfig(),
 			...this.getFeature(),
 		};
-
-		this.electronService.ipcRenderer.send('start_server', gauzyConfig);
-		this.electronService.ipcRenderer.send('app_is_init');
+		try {
+			const isStarted = await this.electronService.ipcRenderer.invoke('START_SERVER', gauzyConfig);
+			if (isStarted) {
+				this.electronService.ipcRenderer.send('app_is_init');
+			}
+		} catch (error) {
+			this._errorHandlerService.handleError(error);
+		}
 	}
 
 	saveChange() {

@@ -846,81 +846,6 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 		);
 		this.electronService.ipcRenderer.send('time_tracker_ready');
 		this.electronService.ipcRenderer.on(
-			'toggle_timer_state',
-			(event, arg) => {
-				this._ngZone.run(async () => {
-					try {
-						const { lastTimer, isStarted } = arg;
-						const params = {
-							token: this.token,
-							note: this.note,
-							projectId: this.projectSelect,
-							taskId: this.taskSelect,
-							organizationId: this._store.organizationId,
-							tenantId: this._store.tenantId,
-							organizationContactId: this.organizationContactId,
-							apiHost: this.apiHost,
-						};
-						let timelog = null;
-						console.log('[TIMER_STATE]', lastTimer);
-						if (isStarted) {
-							if (!this._isOffline) {
-								timelog =
-									await this.timeTrackerService.toggleApiStart(
-										{
-											...lastTimer,
-											...params,
-										}
-									);
-							}
-							this.loading = false;
-						} else {
-							if (!this._isOffline) {
-								timelog =
-									await this.timeTrackerService.toggleApiStop(
-										{
-											...lastTimer,
-											...params,
-										}
-									);
-							}
-							this.start$.next(false);
-							this.loading = false;
-						}
-						asapScheduler.schedule(async () => {
-							try {
-								await this.electronService.ipcRenderer.invoke(
-									'UPDATE_SYNCED_TIMER',
-									{
-										config: { isTakeScreenCapture: true },
-										lastTimer: timelog,
-										...lastTimer,
-									}
-								);
-							} catch (error) {
-								this._errorHandlerService.handleError(error);
-							}
-						});
-					} catch (error) {
-						this.loading = false;
-						let messageError = error.message;
-						if (messageError.includes('Http failure response')) {
-							messageError = `Can't connect to api server`;
-						} else {
-							messageError = 'Internal server error';
-						}
-						this.toastrService.show(messageError, `Warning`, {
-							status: 'danger',
-						});
-						log.info(
-							`Timer Toggle Catch: ${moment().format()}`,
-							error
-						);
-					}
-				});
-			}
-		);
-		this.electronService.ipcRenderer.on(
 			'remove_idle_time',
 			(event, arg) => {
 				this._ngZone.run(async () => {
@@ -1049,7 +974,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 		if (this.validationField()) {
 			if (val) {
 				if (!this.start) {
-					this.startTimer();
+					await this.startTimer();
 				} else {
 					this.loading = false;
 					console.log('Error', 'Timer is already running');
@@ -1114,28 +1039,42 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 		}
 	}
 
-	startTimer() {
-		this.start$.next(true);
-		this.electronService.ipcRenderer.send('update_tray_start');
-		this.electronService.ipcRenderer.send('start_timer', {
-			projectId: this.projectSelect,
-			taskId: this.taskSelect,
-			note: this.note,
-			organizationContactId: this.organizationContactId,
-			aw: {
-				host: this.defaultAwAPI,
-				isAw: this.aw,
-			},
-			timeLog: null,
-		});
-		this.electronService.ipcRenderer.send('request_permission');
+	public async startTimer(): Promise<void> {
+		try {
+			this.start$.next(true);
+			this.electronService.ipcRenderer.send('update_tray_start');
+			const timer = await this.electronService.ipcRenderer.invoke(
+				'START_TIMER',
+				{
+					projectId: this.projectSelect,
+					taskId: this.taskSelect,
+					note: this.note,
+					organizationContactId: this.organizationContactId,
+					aw: {
+						host: this.defaultAwAPI,
+						isAw: this.aw,
+					},
+					timeLog: null,
+				}
+			);
+			await this._toggle(timer);
+			this.electronService.ipcRenderer.send('request_permission');
+		} catch (error) {
+			this.start$.next(false);
+			this.loading = false;
+			this._errorHandlerService.handleError(error);
+		}
 	}
 
 
-	async stopTimer() {
+	public async stopTimer(): Promise<void> {
 		try {
-			const config = { quitApp: this.quitApp }
-			this.electronService.ipcRenderer.send('stop_timer', config);
+			const config = { quitApp: this.quitApp };
+			const timer = await this.electronService.ipcRenderer.invoke(
+				'STOP_TIMER',
+				config
+			);
+			await this._toggle(timer);
 			this.electronService.ipcRenderer.send('update_tray_stop');
 		} catch (error) {
 			console.log('[ERROR_STOP_TIMER]', error);
@@ -2266,5 +2205,84 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 	 */
 	private get _isMidnight(): boolean {
 		return moment(Date.now()).isSame(moment(new Date).startOf('day'));
+	}
+
+	private async _toggle(timer: any) {
+		try {
+			const { lastTimer, isStarted } = timer;
+			const params = {
+				token: this.token,
+				note: this.note,
+				projectId: this.projectSelect,
+				taskId: this.taskSelect,
+				organizationId: this._store.organizationId,
+				tenantId: this._store.tenantId,
+				organizationContactId: this.organizationContactId,
+				apiHost: this.apiHost,
+			};
+			let timelog = null;
+			console.log('[TIMER_STATE]', lastTimer);
+			if (isStarted) {
+				if (!this._isOffline) {
+					timelog =
+						await this.timeTrackerService.toggleApiStart(
+							{
+								...lastTimer,
+								...params,
+							}
+						);
+				}
+				this.loading = false;
+			} else {
+				if (!this._isOffline) {
+					timelog =
+						await this.timeTrackerService.toggleApiStop(
+							{
+								...lastTimer,
+								...params,
+							}
+						);
+				}
+				this.start$.next(false);
+				this.loading = false;
+			}
+			asapScheduler.schedule(async () => {
+				try {
+					await Promise.allSettled(
+						[
+							this.electronService.ipcRenderer.invoke(
+								'TAKE_SCREEN_CAPTURE',
+								{ quitApp: this.quitApp }
+							),
+							this.electronService.ipcRenderer.invoke(
+								'UPDATE_SYNCED_TIMER',
+								{
+									lastTimer: timelog,
+									...lastTimer,
+								}
+							),
+							this.getTimerStatus(params)
+						]
+					);
+				} catch (error) {
+					this._errorHandlerService.handleError(error);
+				}
+			});
+		} catch (error) {
+			this.loading = false;
+			let messageError = error.message;
+			if (messageError.includes('Http failure response')) {
+				messageError = `Can't connect to api server`;
+			} else {
+				messageError = 'Internal server error';
+			}
+			this.toastrService.show(messageError, `Warning`, {
+				status: 'danger',
+			});
+			log.info(
+				`Timer Toggle Catch: ${moment().format()}`,
+				error
+			);
+		}
 	}
 }
