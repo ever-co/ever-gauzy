@@ -52,13 +52,12 @@ export function ipcMainHandler(
 	config,
 	timeTrackerWindow
 ) {
-	ipcMain.removeAllListeners('start_server');
 	ipcMain.removeAllListeners('remove_afk_local_Data');
 	ipcMain.removeAllListeners('return_time_sheet');
 	ipcMain.removeAllListeners('return_toggle_api');
 	ipcMain.removeAllListeners('set_project_task');
 	removeAllHandlers();
-	ipcMain.on('start_server', (event, arg) => {
+	ipcMain.handle('START_SERVER', async (event, arg) => {
 		global.variableGlobal = {
 			API_BASE_URL: arg.serverUrl
 				? arg.serverUrl
@@ -67,7 +66,7 @@ export function ipcMainHandler(
 					: `http://localhost:${config.API_DEFAULT_PORT}`,
 			IS_INTEGRATED_DESKTOP: arg.isLocalServer
 		};
-		startServer(arg);
+		return await startServer(arg);
 	});
 
 	ipcMain.on('remove_afk_local_Data', async (event, arg) => {
@@ -863,7 +862,8 @@ export function removeAllHandlers() {
 		'UPDATE_SYNCED',
 		'DESKTOP_CAPTURER_GET_SOURCES',
 		'FINISH_SYNCED_TIMER',
-		'TAKE_SCREEN_CAPTURE'
+		'TAKE_SCREEN_CAPTURE',
+		'START_SERVER'
 	];
 	channels.forEach((channel: string) => {
 		ipcMain.removeHandler(channel);
