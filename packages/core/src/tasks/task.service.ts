@@ -453,8 +453,7 @@ export class TaskService extends TenantAwareCrudService<Task> {
 	}
 
 	/**
-	 * Unassign employee from specified team
-	 *
+	 * Unassign employee from team task
 	 * @param employeeId
 	 * @param organizationTeamId
 	 */
@@ -462,58 +461,105 @@ export class TaskService extends TenantAwareCrudService<Task> {
 		employeeId: string,
 		organizationTeamId: string
 	) {
-		// Find all assigned tasks of employee
-		const tasks = await this.repository.find({
-			where: {
-				members: {
-					id: employeeId,
-				},
-				teams: {
-					id: organizationTeamId,
-				},
-			},
-			relations: {
-				members: true,
-			},
-		});
+		try {
+			const query = this.taskRepository.createQueryBuilder(this.alias);
+			query.leftJoinAndSelect(`${query.alias}.members`, 'members');
+			if (organizationTeamId) {
+				query.leftJoinAndSelect(
+					`${query.alias}.teams`,
+					'teams',
+					'teams.id = :organizationTeamId',
+					{ organizationTeamId }
+				);
+			} else {
+				query.leftJoinAndSelect(`${query.alias}.teams`, 'teams');
+			}
 
-		// Unassign member from Tasks
-		tasks.forEach((task) => {
-			task.members = task.members.filter(
-				(member) => member.id !== employeeId
+			query.andWhere(
+				new Brackets((qb: WhereExpressionBuilder) => {
+					const tenantId = RequestContext.currentTenantId();
+					qb.andWhere(`"${query.alias}"."tenantId" = :tenantId`, {
+						tenantId,
+					});
+				})
 			);
-		});
+			query.andWhere(
+				new Brackets((web: WhereExpressionBuilder) => {
+					web.andWhere((qb: SelectQueryBuilder<Task>) => {
+						const subQuery = qb.subQuery();
+						subQuery
+							.select('"task_employee"."taskId"')
+							.from('task_employee', 'task_employee');
+						subQuery.andWhere(
+							'"task_employee"."employeeId" = :employeeId',
+							{ employeeId }
+						);
+						return (
+							'"task_members"."taskId" IN ' +
+							subQuery.distinct(true).getQuery()
+						);
+					});
+					web.orWhere((qb: SelectQueryBuilder<Task>) => {
+						const subQuery = qb.subQuery();
+						subQuery
+							.select('"task_team"."taskId"')
+							.from('task_team', 'task_team');
+						subQuery.leftJoin(
+							'organization_team_employee',
+							'organization_team_employee',
+							'"organization_team_employee"."organizationTeamId" = "task_team"."organizationTeamId"'
+						);
+						subQuery.andWhere(
+							'"organization_team_employee"."employeeId" = :employeeId',
+							{ employeeId }
+						);
 
-		// Save updated entities to DB
-		await this.repository.save(tasks);
-	}
-
-	/**
-	 * Unassign employee from all the teams
-	 *
-	 * @param userId
-	 */
-	public async unassignEmployeeFromAllTeamTasks(userId: string) {
-		// Find all assigned tasks of employee
-		const tasks = await this.repository.find({
-			where: {
-				members: {
-					userId,
-				},
-			},
-			relations: {
-				members: true,
-			},
-		});
-
-		// Unassign member from All the Team Tasks
-		tasks.forEach((task) => {
-			task.members = task.members.filter(
-				(member) => member.userId !== userId
+						return (
+							'"task_teams"."taskId" IN ' +
+							subQuery.distinct(true).getQuery()
+						);
+					});
+				})
 			);
-		});
 
-		// Save updated entities to DB
-		await this.repository.save(tasks);
+			// If unassigning for specific team
+			if (organizationTeamId) {
+				query.andWhere(
+					new Brackets((web: WhereExpressionBuilder) => {
+						web.andWhere((qb: SelectQueryBuilder<Task>) => {
+							const subQuery = qb.subQuery();
+							subQuery
+								.select('"task_team"."taskId"')
+								.from('task_team', 'task_team');
+							subQuery.andWhere(
+								'"task_teams"."organizationTeamId" = :organizationTeamId',
+								{ employeeId }
+							);
+							return (
+								'"task_teams"."taskId" IN ' +
+								subQuery.distinct(true).getQuery()
+							);
+						});
+					})
+				);
+			}
+
+			// Find all assigned tasks of employee
+			const tasks = await query.getMany();
+
+			// Unassign member from All the Team Tasks
+			tasks.forEach((task) => {
+				if (task.teams.length) {
+					task.members = task.members.filter(
+						(member) => member.id !== employeeId
+					);
+				}
+			});
+
+			// Save updated entities to DB
+			await this.repository.save(tasks);
+		} catch (error) {
+			throw new BadRequestException(error);
+		}
 	}
 }
