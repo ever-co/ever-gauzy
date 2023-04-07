@@ -1,27 +1,23 @@
 import { Component, OnInit, Input } from '@angular/core';
-import { Validators, FormBuilder } from '@angular/forms';
+import { Validators, FormBuilder, FormGroup, AbstractControl } from '@angular/forms';
+import { IImageAsset } from '@gauzy/contracts';
 
 @Component({
 	selector: 'ga-upload-doc',
 	templateUrl: './upload-document.component.html'
 })
 export class UploadDocumentComponent implements OnInit {
-	@Input() documentUrl: any;
-	@Input() isDocument: false;
 
-	form: any;
-	docUrl: any;
+	@Input() documentUrl: string;
+	@Input() isDocument: boolean = false;
 
-	constructor(private readonly fb: FormBuilder) {}
-
-	ngOnInit(): void {
-		this.loadFormData();
-	}
-
-	loadFormData = () => {
-		this.form = this.fb.group({
+	public form: FormGroup = UploadDocumentComponent.buildForm(this.fb);
+	static buildForm(
+		fb: FormBuilder
+	): FormGroup {
+		return fb.group({
 			docUrl: [
-				'',
+				null,
 				Validators.compose([
 					Validators.pattern(
 						new RegExp(
@@ -32,6 +28,47 @@ export class UploadDocumentComponent implements OnInit {
 				])
 			]
 		});
-		this.docUrl = this.form.get('docUrl');
-	};
+	}
+
+	get docUrl(): AbstractControl {
+		return this.form.get('docUrl');
+	}
+
+	constructor(
+		private readonly fb: FormBuilder
+	) { }
+
+	ngOnInit(): void { }
+
+	/**
+	 * Upload document asset
+	 *
+	 * @param document
+	 */
+	uploadedDocumentAsset(document: IImageAsset) {
+		try {
+			if (document) {
+				this.docUrl.setValue(document.fullUrl);
+				this.docUrl.updateValueAndValidity();
+			}
+		} catch (error) {
+			console.log('Error while uploading documents by asset');
+		}
+	}
+
+	/**
+	 * Upload document asset via third party document
+	 *
+	 * @param documentUrl
+	 */
+	uploadedDocumentUrl(documentUrl: string) {
+		try {
+			if (documentUrl) {
+				this.docUrl.setValue(documentUrl);
+				this.docUrl.updateValueAndValidity();
+			}
+		} catch (error) {
+			console.log('Error while uploading documents by third party URL');
+		}
+	}
 }
