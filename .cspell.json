@@ -248,7 +248,9 @@
         "xplat",
         "Sqls",
         "Whitespaces",
-        "datatables"
+        "datatables",
+        "dbname",
+        "EOSQL"
     ],
     "useGitignore": true,
     "ignorePaths": [
