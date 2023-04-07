@@ -280,6 +280,7 @@
         "**/migrations/**",
         "packages/**/*.seed.json",
         "**/*.svg",
-        "tools/build/webpack.config.js"
+        "tools/build/webpack.config.js",
+        "docker-compose.demo.yml"
     ]
 }
