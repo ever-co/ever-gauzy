@@ -51,7 +51,6 @@ export class FileUploaderInputComponent extends ImageUploaderBaseComponent imple
 		return this._fileUrl;
 	}
 	@Input() set fileUrl(fileUrl: string) {
-		console.log({ fileUrl });
 		this._fileUrl = fileUrl;
 	}
 

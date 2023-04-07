@@ -92,7 +92,9 @@ export class BasicInfoFormComponent
 				'',
 				Validators.compose([Validators.required, Validators.email])
 			],
-			imageUrl: [],
+			imageUrl: [
+				{ value: null, disabled: true }
+			],
 			imageId: [],
 			password: [
 				'',
@@ -234,8 +236,15 @@ export class BasicInfoFormComponent
 		}
 	}
 
+	/**
+	 * Delete existing image
+	 *
+	 */
 	deleteImageUrl() {
-		this.form.get('imageUrl').setValue('');
+		this.form.get('imageId').setValue(null);
+		this.form.get('imageId').updateValueAndValidity();
+
+		this.form.get('imageUrl').setValue(null);
 		this.form.get('imageUrl').updateValueAndValidity();
 	}
 

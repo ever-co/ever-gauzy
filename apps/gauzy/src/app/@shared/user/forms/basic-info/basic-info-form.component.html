@@ -1,5 +1,4 @@
 <form [formGroup]="form" autocomplete-off no-validate>
-	{{ form.value | json }}
 	<div class="row">
 		<div class="col-3">
 			<div class="form-group row" [hidden]="form.get('imageUrl').invalid">
