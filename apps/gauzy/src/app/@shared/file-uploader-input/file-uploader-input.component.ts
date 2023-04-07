@@ -52,6 +52,9 @@ export class FileUploaderInputComponent extends ImageUploaderBaseComponent imple
 	}
 	@Input() set fileUrl(fileUrl: string) {
 		this._fileUrl = fileUrl;
+
+		this.inputControl.setValue(fileUrl);
+		this.inputControl.updateValueAndValidity();
 	}
 
 	@Output() uploadedImageAsset = new EventEmitter<IImageAsset>();
