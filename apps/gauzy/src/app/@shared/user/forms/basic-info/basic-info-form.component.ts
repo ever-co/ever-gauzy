@@ -6,7 +6,7 @@ import {
 	OnInit,
 	AfterViewInit
 } from '@angular/core';
-import { Validators, FormBuilder, FormGroup } from '@angular/forms';
+import { Validators, FormBuilder, FormGroup, FormControl } from '@angular/forms';
 import { Location } from '@angular/common';
 import {
 	RolesEnum,
@@ -258,7 +258,7 @@ export class BasicInfoFormComponent
 	}
 
 	/**
-	 * Upload organization image/avatar
+	 * Upload profile image/avatar
 	 *
 	 * @param image
 	 */
@@ -268,9 +268,32 @@ export class BasicInfoFormComponent
 				this.form.get('imageId').setValue(image.id);
 				this.form.get('imageUrl').setValue(image.fullUrl);
 				this.form.updateValueAndValidity();
+
+				const imageUrlControl = <FormControl>this.form.get('imageUrl');
+				imageUrlControl.disable();
 			}
 		} catch (error) {
-			console.log('Error while updating user avatars');
+			console.log('Error while updating user profile/avatar by uploading');
+		}
+	}
+
+	/**
+	 * Upload third party URL as image/avatar
+	 *
+	 * @param image
+	 */
+	updateImageUrl(imageUrl: string) {
+		try {
+			const imageUrlControl = <FormControl>this.form.get('imageUrl');
+			if (imageUrl) {
+				imageUrlControl.enable();
+				imageUrlControl.setValue(imageUrl);
+			} else {
+				imageUrlControl.setValue(null);
+				imageUrlControl.disable();
+			}
+		} catch (error) {
+			console.log('Error while updating user profile/avatar by third party URL');
 		}
 	}
 

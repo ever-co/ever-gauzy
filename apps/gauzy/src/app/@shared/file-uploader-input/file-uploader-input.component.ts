@@ -98,13 +98,14 @@ export class FileUploaderInputComponent extends ImageUploaderBaseComponent imple
 	 * @param event
 	 */
 	async inputUrlChanged() {
-		try {
-			const fileUrl = this.inputControl.value;
-			if (fileUrl) {
+		const fileUrl = this.inputControl.value;
+		if (fileUrl) {
+			try {
 				await this._setupImage(fileUrl);
+				this.uploadedImgUrl.emit(fileUrl);
+			} catch (error) {
+				console.log('Error while retrieving image from URL', error);
 			}
-		} catch (error) {
-			console.log('Error while retrieving image from URL', error);
 		}
 	}
 
@@ -117,51 +118,13 @@ export class FileUploaderInputComponent extends ImageUploaderBaseComponent imple
 		}
 	}
 
-	// async imageUrlChanged() {
-	// 	const newValue =
-	// 		this.fileUrl &&
-	// 		this.fileUrl.replace(this.oldValue || '', '').trim();
-
-	// 	this.loading = true;
-
-	// 	if (this.uploader.queue.length > 0) {
-	// 		this.uploader.queue[this.uploader.queue.length - 1].upload();
-	// 	} else {
-	// 		await this._setupImage(newValue);
-
-	// 		this.uploadedImgUrl.emit(this.fileUrl);
-	// 		this.oldValue = this.fileUrl;
-	// 	}
-
-	// 	this.uploader.onSuccessItem = (
-	// 		item: any,
-	// 		response: string,
-	// 		status: number
-	// 	) => {
-	// 		const data = JSON.parse(response);
-	// 		this.fileUrl = data.url;
-	// 		// const locale = this.locale;
-	// 		// const width = data.width;
-	// 		// const height = data.height;
-	// 		// const orientation = width !== height ? (width > height ? 2 : 1) : 0;
-	// 		// const url = data.url;
-
-	// 		// const newImage = {
-	// 		// 	locale,
-	// 		// 	url,
-	// 		// 	width,
-	// 		// 	height,
-	// 		// 	orientation
-	// 		// };
-
-	// 		this.loading = false;
-	// 		this.uploadedImgUrl.emit(data.url);
-	// 		this.uploadedImgData.emit(data);
-	// 		this.oldValue = this.fileUrl;
-	// 	};
-	// }
-
-	private async _setupImage(imgUrl: string) {
+	/**
+	 * Get image metadata and setup image object
+	 *
+	 * @param imgUrl
+	 * @returns
+	 */
+	private async _setupImage(imgUrl: string): Promise<Object> {
 		try {
 			const img = await this.getImageMetadata(imgUrl);
 			const width = img['width'];
@@ -169,7 +132,6 @@ export class FileUploaderInputComponent extends ImageUploaderBaseComponent imple
 			const orientation = width !== height ? (width > height ? 2 : 1) : 0;
 			const locale = this.locale;
 			const url = imgUrl;
-
 			return {
 				locale,
 				url,

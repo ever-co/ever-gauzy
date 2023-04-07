@@ -68,6 +68,7 @@
 							[placeholder]="'FORM.PLACEHOLDERS.UPLOADER_PLACEHOLDER' | translate"
 							[fileUrl]="form.get('imageUrl').value"
 							(uploadedImageAsset)="updateImageAsset($event)"
+							(uploadedImgUrl)="updateImageUrl($event)"
 						></ngx-file-uploader-input>
 					</div>
 				</div>
