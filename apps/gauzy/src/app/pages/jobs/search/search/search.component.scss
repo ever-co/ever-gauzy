@@ -81,7 +81,8 @@
     flex-grow: 10;
     max-height: unset;
     ng2-smart-table table tr td {
-      vertical-align: top !important;
+      	vertical-align: top !important;
+		border-bottom: 20px solid var(--gauzy-border-table);
     }
   }
 }
