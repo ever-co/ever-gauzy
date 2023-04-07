@@ -13,7 +13,7 @@ services:
             test:
                 [
                     'CMD-SHELL',
-                    'psql postgres://$${POSTGRES_USER}:$${POSTGRES_PASSWORD}@localhost:5432/$${POSTGRES_DB} || exit 1'
+                    'psql postgres://$${POSTGRES_USER}:$${POSTGRES_PASSWORD}@localhost:5432/$${POSTGRES_DB} || exit 1',
                 ]
         volumes:
             - postgres_data:/var/lib/postgresql/data/
@@ -37,19 +37,19 @@ services:
             - CUBEJS_DB_NAME=${DB_NAME:-gauzy}
             - CUBEJS_DB_USER=${DB_USER:-postgres}
             - CUBEJS_DB_PASS=${DB_PASS:-gauzy_password}
-            # Credentails to connect to Cube SQL APIs
+            # Credentials to connect to Cube SQL APIs
             - CUBEJS_PG_SQL_PORT=5430
             - CUBEJS_SQL_USER=${CUBE_USER:-cube_user}
             - CUBEJS_SQL_PASSWORD=${CUBE_PASS:-cube_pass}
         volumes:
-            - "cube_data:/cube/conf"
+            - 'cube_data:/cube/conf'
         links:
             - db
         networks:
             - overlay
 
     elasticsearch:
-        image: "elasticsearch:7.17.7"
+        image: 'elasticsearch:7.17.7'
         container_name: elasticsearch
         volumes:
             - elasticsearch_data:/usr/share/elasticsearch/data
@@ -62,16 +62,16 @@ services:
             http.cors.allow-headers: X-Requested-With,X-Auth-Token,Content-Type,Content-Length,Authorization
             http.cors.allow-credentials: true
             bootstrap.memory_lock: true
-            xpack.security.enabled: "false"
+            xpack.security.enabled: 'false'
         ports:
-            - "9200"
-            - "9300"
+            - '9200'
+            - '9300'
         ulimits:
             memlock:
-               soft: -1
-               hard: -1
+                soft: -1
+                hard: -1
         healthcheck:
-            test: [ "CMD", "curl", "-f", "http://localhost:9200/_cat/health" ]
+            test: ['CMD', 'curl', '-f', 'http://localhost:9200/_cat/health']
             interval: 5s
             timeout: 5s
             retries: 10
@@ -81,21 +81,21 @@ services:
 
     # Elasticsearch Management UI
     dejavu:
-      image: appbaseio/dejavu:3.6.0
-      container_name: dejavu
-      ports:
-          - '1358:1358'
-      links:
-          - elasticsearch
-      networks:
-          - overlay
+        image: appbaseio/dejavu:3.6.0
+        container_name: dejavu
+        ports:
+            - '1358:1358'
+        links:
+            - elasticsearch
+        networks:
+            - overlay
 
     redis:
-        image: "redis:7.0.2-alpine"
+        image: 'redis:7.0.2-alpine'
         container_name: redis
         restart: unless-stopped
         ports:
-            - "6379"
+            - '6379'
         volumes:
             - redis_data:/data
         networks:
@@ -123,14 +123,14 @@ services:
             - MINIO_ROOT_USER=ever-gauzy-access-key
             - MINIO_ROOT_PASSWORD=ever-gauzy-secret-key
         entrypoint:
-            - "/bin/sh"
-            - "-c"
+            - '/bin/sh'
+            - '-c'
         command:
             - "until (/usr/bin/mc alias set minio http://minio:9000 $$MINIO_ROOT_USER $$MINIO_ROOT_PASSWORD) do
-                    echo 'Waiting to start minio...' && sleep 1;
-               done;
-               /usr/bin/mc mb minio/ever-gauzy --region=eu-north-1;
-               exit 0;"
+              echo 'Waiting to start minio...' && sleep 1;
+              done;
+              /usr/bin/mc mb minio/ever-gauzy --region=eu-north-1;
+              exit 0;"
         depends_on:
             - minio
         networks:
