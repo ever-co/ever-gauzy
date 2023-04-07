@@ -872,6 +872,11 @@ export class GauzyAIService {
 					is: false,
 				},
 				employeeId: undefined,
+				...(filters && filters.jobDateCreated
+					? {
+						jobDateCreated: filters.jobDateCreated
+					}
+					: {})
 			};
 
 			if (employeeIdFilter) {
