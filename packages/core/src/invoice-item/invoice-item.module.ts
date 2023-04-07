@@ -9,18 +9,20 @@ import { TenantModule } from '../tenant/tenant.module';
 import { UserService } from '../user/user.service';
 import { User } from '../user/user.entity';
 import { CommandHandlers } from './commands/handlers';
+import { TaskModule } from '../tasks/task.module';
 
 @Module({
 	imports: [
 		RouterModule.forRoutes([
-			{ path: '/invoice-item', module: InvoiceItemModule }
+			{ path: '/invoice-item', module: InvoiceItemModule },
 		]),
 		TypeOrmModule.forFeature([InvoiceItem, User]),
 		CqrsModule,
-		TenantModule
+		TenantModule,
+		TaskModule,
 	],
 	controllers: [InvoiceItemController],
 	providers: [InvoiceItemService, UserService, ...CommandHandlers],
-	exports: [InvoiceItemService]
+	exports: [InvoiceItemService],
 })
 export class InvoiceItemModule {}

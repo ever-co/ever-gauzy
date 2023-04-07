@@ -11,7 +11,7 @@ import {
 	Post,
 	Delete,
 	ValidationPipe,
-	UsePipes
+	UsePipes,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { CommandBus } from '@nestjs/cqrs';
@@ -20,7 +20,8 @@ import {
 	PermissionsEnum,
 	ITask,
 	IPagination,
-	IEmployee
+	IEmployee,
+	IOrganizationTeam,
 } from '@gauzy/contracts';
 import { UUIDValidationPipe } from './../shared/pipes';
 import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
@@ -53,9 +54,7 @@ export class TaskController extends CrudController<Task> {
 	@Permissions(PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.ORG_TASK_VIEW)
 	@Get('count')
 	@UsePipes(new ValidationPipe())
-	async getCount(
-		@Query() options: CountQueryDTO<Task>
-	): Promise<number> {
+	async getCount(@Query() options: CountQueryDTO<Task>): Promise<number> {
 		return await this.taskService.countBy(options);
 	}
 
@@ -84,11 +83,11 @@ export class TaskController extends CrudController<Task> {
 	@ApiResponse({
 		status: HttpStatus.OK,
 		description: 'Found maximum task number',
-		type: Task
+		type: Task,
 	})
 	@ApiResponse({
 		status: HttpStatus.NOT_FOUND,
-		description: 'Records not found'
+		description: 'Records not found',
 	})
 	@Permissions(PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.ORG_TASK_VIEW)
 	@Get('max-number')
@@ -109,11 +108,11 @@ export class TaskController extends CrudController<Task> {
 	@ApiResponse({
 		status: HttpStatus.OK,
 		description: 'Found tasks',
-		type: Task
+		type: Task,
 	})
 	@ApiResponse({
 		status: HttpStatus.NOT_FOUND,
-		description: 'Records not found'
+		description: 'Records not found',
 	})
 	@Permissions(PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.ORG_TASK_VIEW)
 	@Get('me')
@@ -134,11 +133,11 @@ export class TaskController extends CrudController<Task> {
 	@ApiResponse({
 		status: HttpStatus.OK,
 		description: 'Found tasks',
-		type: Task
+		type: Task,
 	})
 	@ApiResponse({
 		status: HttpStatus.NOT_FOUND,
-		description: 'Records not found'
+		description: 'Records not found',
 	})
 	@Permissions(PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.ORG_TASK_VIEW)
 	@Get('employee')
@@ -159,11 +158,11 @@ export class TaskController extends CrudController<Task> {
 	@ApiResponse({
 		status: HttpStatus.OK,
 		description: 'Found tasks',
-		type: Task
+		type: Task,
 	})
 	@ApiResponse({
 		status: HttpStatus.NOT_FOUND,
-		description: 'Records not found'
+		description: 'Records not found',
 	})
 	@Permissions(PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.ORG_TASK_VIEW)
 	@Get('team')
@@ -182,16 +181,16 @@ export class TaskController extends CrudController<Task> {
 	 * @returns
 	 */
 	@ApiOperation({
-		summary: 'Find Employee Task.'
+		summary: 'Find Employee Task.',
 	})
 	@ApiResponse({
 		status: HttpStatus.OK,
 		description: 'Found Employee Task',
-		type: Task
+		type: Task,
 	})
 	@ApiResponse({
 		status: HttpStatus.NOT_FOUND,
-		description: 'Record not found'
+		description: 'Record not found',
 	})
 	@Permissions(PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.ORG_TASK_VIEW)
 	@Get('employee/:id')
@@ -207,11 +206,11 @@ export class TaskController extends CrudController<Task> {
 	@ApiResponse({
 		status: HttpStatus.OK,
 		description: 'Found tasks',
-		type: Task
+		type: Task,
 	})
 	@ApiResponse({
 		status: HttpStatus.NOT_FOUND,
-		description: 'Record not found'
+		description: 'Record not found',
 	})
 	@Permissions(PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.ORG_TASK_VIEW)
 	@Get()
@@ -225,38 +224,34 @@ export class TaskController extends CrudController<Task> {
 	@ApiOperation({ summary: 'create a task' })
 	@ApiResponse({
 		status: HttpStatus.CREATED,
-		description: 'The record has been successfully created.'
+		description: 'The record has been successfully created.',
 	})
 	@ApiResponse({
 		status: HttpStatus.BAD_REQUEST,
 		description:
-			'Invalid input, The response body may contain clues as to what went wrong'
+			'Invalid input, The response body may contain clues as to what went wrong',
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
 	@Permissions(PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ORG_TASK_ADD)
 	@Post()
 	@UsePipes(new ValidationPipe({ whitelist: true }))
-	async create(
-		@Body() entity: CreateTaskDTO
-	): Promise<ITask> {
-		return await this.commandBus.execute(
-			new TaskCreateCommand(entity)
-		);
+	async create(@Body() entity: CreateTaskDTO): Promise<ITask> {
+		return await this.commandBus.execute(new TaskCreateCommand(entity));
 	}
 
 	@ApiOperation({ summary: 'Update an existing task' })
 	@ApiResponse({
 		status: HttpStatus.CREATED,
-		description: 'The record has been successfully edited.'
+		description: 'The record has been successfully edited.',
 	})
 	@ApiResponse({
 		status: HttpStatus.NOT_FOUND,
-		description: 'Record not found'
+		description: 'Record not found',
 	})
 	@ApiResponse({
 		status: HttpStatus.BAD_REQUEST,
 		description:
-			'Invalid input, The response body may contain clues as to what went wrong'
+			'Invalid input, The response body may contain clues as to what went wrong',
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
 	@Permissions(PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ORG_TASK_EDIT)
@@ -266,9 +261,7 @@ export class TaskController extends CrudController<Task> {
 		@Param('id', UUIDValidationPipe) id: ITask['id'],
 		@Body() entity: UpdateTaskDTO
 	): Promise<ITask> {
-		return await this.commandBus.execute(
-			new TaskUpdateCommand(id, entity)
-		);
+		return await this.commandBus.execute(new TaskUpdateCommand(id, entity));
 	}
 
 	@Permissions(PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ORG_TASK_DELETE)
@@ -277,5 +270,20 @@ export class TaskController extends CrudController<Task> {
 		@Param('id', UUIDValidationPipe) id: ITask['id']
 	): Promise<DeleteResult> {
 		return await this.taskService.delete(id);
+	}
+
+	@HttpCode(HttpStatus.OK)
+	@Permissions(PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ORG_TASK_EDIT)
+	@Delete('employee/:employeeId')
+	@UsePipes(new ValidationPipe({ whitelist: true }))
+	async deleteEmployeeFromTasks(
+		@Param('employeeId', UUIDValidationPipe) employeeId: IEmployee['id'],
+		@Query('organizationTeamId', UUIDValidationPipe)
+		organizationTeamId: IOrganizationTeam['id']
+	) {
+		return await this.taskService.unassignEmployeeFromTeamTasks(
+			employeeId,
+			organizationTeamId
+		);
 	}
 }
