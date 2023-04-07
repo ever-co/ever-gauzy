@@ -182,8 +182,8 @@ export class TaskService extends TenantAwareCrudService<Task> {
 			query.setFindOptions({
 				...(isNotEmpty(options) && isNotEmpty(options.where)
 					? {
-							where: options.where,
-					  }
+						where: options.where,
+					}
 					: {}),
 			});
 			query.andWhere(
@@ -522,7 +522,7 @@ export class TaskService extends TenantAwareCrudService<Task> {
 				})
 			);
 
-			// If unassigning for specific team
+			// If unassigned for specific team
 			if (organizationTeamId) {
 				query.andWhere(
 					new Brackets((web: WhereExpressionBuilder) => {
