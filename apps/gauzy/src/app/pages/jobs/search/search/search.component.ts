@@ -413,7 +413,6 @@ export class SearchComponent extends PaginationFilterBaseComponent
 					? {
 						employee: {
 							title: this.getTranslation('JOBS.EMPLOYEE'),
-
 							filter: false,
 							width: '15%',
 							type: 'custom',

@@ -77,9 +77,12 @@
       $default-box-shadow
     );
   }
-  .table-scroll-container {
+  ::ng-deep .table-scroll-container {
     flex-grow: 10;
     max-height: unset;
+    ng2-smart-table table tr td {
+      vertical-align: top !important;
+    }
   }
 }
 
