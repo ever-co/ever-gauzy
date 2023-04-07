@@ -111,7 +111,7 @@ export class EmployeeMutationComponent implements OnInit, AfterViewInit {
 			rejectDate,
 			tags
 		};
-		// Check form validity before to add an employe to the array of employees.
+		// Check form validity before to add an employee to the array of employees.
 		if (this.form.valid) this.employees.push(employee);
 		// Reset form and stepper.
 		this.form.reset();
@@ -141,7 +141,7 @@ export class EmployeeMutationComponent implements OnInit, AfterViewInit {
 	}
 
 	/**
-	 * Removed one employe in the array of employees.
+	 * Removed one employee in the array of employees.
 	 * @param tag
 	 */
 	onEmployeeRemove(tag: NbTagComponent): void {
