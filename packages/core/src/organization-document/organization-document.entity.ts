@@ -6,7 +6,6 @@ import { ImageAsset, TenantOrganizationBaseEntity } from '../core/entities/inter
 
 @Entity('organization_document')
 export class OrganizationDocument extends TenantOrganizationBaseEntity implements IOrganizationDocument {
-
 	@ApiProperty({ type: () => String })
 	@IsNotEmpty()
 	@IsString()

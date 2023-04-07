@@ -7,7 +7,6 @@ import { IImageAsset } from '@gauzy/contracts';
 	templateUrl: './upload-document.component.html'
 })
 export class UploadDocumentComponent implements OnInit {
-
 	@Input() documentUrl: string;
 	@Input() documentId: string;
 	@Input() isDocument: boolean = false;
@@ -17,16 +16,9 @@ export class UploadDocumentComponent implements OnInit {
 		return fb.group({
 			docUrl: [
 				null,
-				Validators.compose([
-					Validators.pattern(
-						new RegExp(
-							`(http)?s?:?(\/\/[^"']*\.(?:doc|docx|pdf|))`,
-							'g'
-						)
-					)
-				])
+				Validators.compose([Validators.pattern(new RegExp(`(http)?s?:?(\/\/[^"']*\.(?:doc|docx|pdf|))`, 'g'))])
 			],
-			documentId: [],
+			documentId: []
 		});
 	}
 
@@ -38,11 +30,9 @@ export class UploadDocumentComponent implements OnInit {
 		return this.form.get('documentId');
 	}
 
-	constructor(
-		private readonly fb: FormBuilder
-	) { }
+	constructor(private readonly fb: FormBuilder) {}
 
-	ngOnInit(): void { }
+	ngOnInit(): void {}
 
 	/**
 	 * Upload document asset

@@ -2,16 +2,14 @@ import { IBasePerTenantAndOrganizationEntityModel } from './base-entity.model';
 import { IEmployee } from './employee.model';
 import { IImageAsset as IDocumentAsset } from './image-asset.model';
 
-export interface ITimeOffPolicy
-	extends IBasePerTenantAndOrganizationEntityModel {
+export interface ITimeOffPolicy extends IBasePerTenantAndOrganizationEntityModel {
 	name: string;
 	requiresApproval: boolean;
 	paid: boolean;
 	employees?: IEmployee[];
 }
 
-export interface ITimeOffPolicyCreateInput
-	extends IBasePerTenantAndOrganizationEntityModel {
+export interface ITimeOffPolicyCreateInput extends IBasePerTenantAndOrganizationEntityModel {
 	employees?: IEmployee[];
 	// teams?: OrganizationTeams[];
 	name?: string;
@@ -19,8 +17,7 @@ export interface ITimeOffPolicyCreateInput
 	paid?: boolean;
 }
 
-export interface ITimeOffPolicyUpdateInput
-	extends IBasePerTenantAndOrganizationEntityModel {
+export interface ITimeOffPolicyUpdateInput extends IBasePerTenantAndOrganizationEntityModel {
 	employees?: IEmployee[];
 	// teams?: OrganizationTeams[];
 	name?: string;
@@ -28,8 +25,7 @@ export interface ITimeOffPolicyUpdateInput
 	paid?: boolean;
 }
 
-export interface ITimeOffPolicyFindInput
-	extends IBasePerTenantAndOrganizationEntityModel {
+export interface ITimeOffPolicyFindInput extends IBasePerTenantAndOrganizationEntityModel {
 	employees?: IEmployee[];
 	// teams?: OrganizationTeams[];
 	name?: string;
@@ -55,8 +51,7 @@ export interface ITimeOff extends IBasePerTenantAndOrganizationEntityModel {
 	isArchived?: boolean;
 }
 
-export interface ITimeOffFindInput
-	extends IBasePerTenantAndOrganizationEntityModel {
+export interface ITimeOffFindInput extends IBasePerTenantAndOrganizationEntityModel {
 	employeeId?: string;
 	isArchived?: boolean;
 	startDate?: Date;
@@ -67,8 +62,7 @@ export interface ITimeOffUpdateInput {
 	status?: string;
 }
 
-export interface ITimeOffCreateInput
-	extends IBasePerTenantAndOrganizationEntityModel {
+export interface ITimeOffCreateInput extends IBasePerTenantAndOrganizationEntityModel {
 	employees?: IEmployee[];
 	description?: string;
 	policy?: ITimeOffPolicy;
