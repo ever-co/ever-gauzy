@@ -30,20 +30,20 @@ import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
 @ApiTags('RequestApproval')
 @UseGuards(TenantPermissionGuard, PermissionGuard)
 @Controller()
-export class RequestApprovalControler extends CrudController<RequestApproval> {
+export class RequestApprovalController extends CrudController<RequestApproval> {
 	constructor(
 		private readonly requestApprovalService: RequestApprovalService,
 		private readonly commandBus: CommandBus
 	) {
 		super(requestApprovalService);
 	}
-	
+
 	/**
 	 * GET all request approval by employee
-	 * 
-	 * @param id 
-	 * @param data 
-	 * @returns 
+	 *
+	 * @param id
+	 * @param data
+	 * @returns
 	 */
 	@ApiOperation({ summary: 'Find all request approval.' })
 	@ApiResponse({
@@ -71,9 +71,9 @@ export class RequestApprovalControler extends CrudController<RequestApproval> {
 
 	/**
 	 * UPDATE employee accept request approval
-	 * 
-	 * @param id 
-	 * @returns 
+	 *
+	 * @param id
+	 * @returns
 	 */
 	@ApiOperation({ summary: 'employee accept request approval.' })
 	@ApiResponse({
@@ -101,9 +101,9 @@ export class RequestApprovalControler extends CrudController<RequestApproval> {
 
 	/**
 	 * UPDATE employee refuse request approval
-	 * 
-	 * @param id 
-	 * @returns 
+	 *
+	 * @param id
+	 * @returns
 	 */
 	@ApiOperation({ summary: 'employee refuse request approval.' })
 	@ApiResponse({
@@ -131,9 +131,9 @@ export class RequestApprovalControler extends CrudController<RequestApproval> {
 
 	/**
 	 * GET all request approvals
-	 * 
-	 * @param data 
-	 * @returns 
+	 *
+	 * @param data
+	 * @returns
 	 */
 	@ApiOperation({ summary: 'Find all request approvals.' })
 	@ApiResponse({
@@ -159,9 +159,9 @@ export class RequestApprovalControler extends CrudController<RequestApproval> {
 
 	/**
 	 * CREATE request approval
-	 * 
-	 * @param entity 
-	 * @returns 
+	 *
+	 * @param entity
+	 * @returns
 	 */
 	@ApiOperation({ summary: 'create a request approval.' })
 	@ApiResponse({
@@ -183,10 +183,10 @@ export class RequestApprovalControler extends CrudController<RequestApproval> {
 
 	/**
 	 * UPDATE request approval by id
-	 * 
-	 * @param id 
-	 * @param entity 
-	 * @returns 
+	 *
+	 * @param id
+	 * @param entity
+	 * @returns
 	 */
 	@ApiOperation({ summary: 'update a request approval.' })
 	@ApiResponse({

@@ -86,9 +86,9 @@
 				<div class="col-6">
 					<div class="form-group">
 						<div>
-							<label class="label" for="end">{{
-								'FORM.LABELS.DOWNLOAD_REQUEST_FORM' | translate
-							}}</label>
+							<label class="label" for="end">
+								{{ 'FORM.LABELS.DOWNLOAD_REQUEST_FORM' | translate }}
+							</label>
 						</div>
 						<button
 							nbButton
@@ -114,14 +114,12 @@
 							{{ 'TIME_OFF_PAGE.UPLOAD_REQUEST_DOCUMENT' | translate }}
 						</div>
 						<ngx-file-uploader-input
-							[placeholder]="
-								'FORM.PLACEHOLDERS.UPLOADER_DOCUMENT_PLACEHOLDER'
-									| translate
-							"
+							[placeholder]=" 'FORM.PLACEHOLDERS.UPLOADER_DOCUMENT_PLACEHOLDER' | translate "
 							[fileUrl]="form.get('documentUrl').value"
 							(uploadedImgUrl)="form.get('documentUrl').setValue($event)"
-						>
-						</ngx-file-uploader-input>
+							(uploadedImageAsset)="uploadDocumentAsset($event)"
+							(uploadedImgUrl)="uploadDocumentAssetUrl($event)"
+						></ngx-file-uploader-input>
 					</div>
 				</div>
 			</div>

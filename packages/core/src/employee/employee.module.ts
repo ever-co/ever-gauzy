@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { forwardRef, Module } from '@nestjs/common';
 import { CqrsModule } from '@nestjs/cqrs';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { RouterModule } from 'nest-router';
@@ -17,27 +17,18 @@ import { RoleModule } from './../role/role.module';
 
 @Module({
 	imports: [
-		RouterModule.forRoutes([
-			{ path: '/employee', module: EmployeeModule }
-		]),
-		TypeOrmModule.forFeature([
-			Employee,
-			TimeLog
-		]),
-		EmailModule,
-		UserOrganizationModule,
+		RouterModule.forRoutes([{ path: '/employee', module: EmployeeModule }]),
+		TypeOrmModule.forFeature([Employee, TimeLog]),
+		forwardRef(() => EmailModule),
+		forwardRef(() => UserOrganizationModule),
 		CqrsModule,
-		TenantModule,
-		UserModule,
+		forwardRef(() => TenantModule),
+		forwardRef(() => UserModule),
 		RoleModule,
-		AuthModule
+		forwardRef(() => AuthModule),
 	],
 	controllers: [EmployeeController],
-	providers: [
-		EmployeeService,
-		GauzyAIService,
-		...CommandHandlers
-	],
-	exports: [TypeOrmModule, EmployeeService]
+	providers: [EmployeeService, GauzyAIService, ...CommandHandlers],
+	exports: [TypeOrmModule, EmployeeService],
 })
 export class EmployeeModule {}
