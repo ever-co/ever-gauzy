@@ -95,7 +95,7 @@ export class DocumentsComponent extends PaginationFilterBaseComponent implements
 		private readonly organizationDocumentsService: OrganizationDocumentsService,
 		private readonly toastrService: ToastrService,
 		private readonly route: ActivatedRoute,
-		private readonly _errorhandlingService: ErrorHandlingService
+		private readonly _errorHandlingService: ErrorHandlingService
 	) {
 		super(translateService);
 		this.setView();
@@ -303,7 +303,7 @@ export class DocumentsComponent extends PaginationFilterBaseComponent implements
 					});
 				},
 				error: () =>
-					this._errorhandlingService.handleError(
+					this._errorHandlingService.handleError(
 						this.getTranslation(
 							'NOTES.ORGANIZATIONS.EDIT_ORGANIZATION_DOCS.ERR_LOAD'
 						)
@@ -378,7 +378,7 @@ export class DocumentsComponent extends PaginationFilterBaseComponent implements
 								this.subject$.next(true);
 							},
 							error: () =>
-								this._errorhandlingService.handleError(
+								this._errorHandlingService.handleError(
 									this.getTranslation(
 										'NOTES.ORGANIZATIONS.EDIT_ORGANIZATION_DOCS.ERR_DELETED'
 									)
