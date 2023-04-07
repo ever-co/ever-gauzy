@@ -116,7 +116,6 @@ export class SearchComponent extends PaginationFilterBaseComponent
 		this.jobs$
 			.pipe(
 				debounceTime(100),
-				tap(() => this._loadSmartTableSettings()),
 				tap(() => this.getEmployeesJob()),
 				untilDestroyed(this)
 			)
@@ -154,6 +153,7 @@ export class SearchComponent extends PaginationFilterBaseComponent
 					this.selectedEmployeeId = employee ? employee.id : null;
 					this.jobRequest.employeeIds = this.selectedEmployeeId ? [this.selectedEmployeeId] : [];
 				}),
+				tap(() => this._loadSmartTableSettings()),
 				tap(() => this.jobs$.next(true)),
 				untilDestroyed(this)
 			)
