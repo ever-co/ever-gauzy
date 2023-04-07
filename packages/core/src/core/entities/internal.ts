@@ -155,6 +155,7 @@ export * from './../../image-asset/image-asset.subscriber';
 export * from './../../invite/invite.subscriber';
 export * from './../../invoice/invoice.subscriber';
 export * from './../../organization-contact/organization-contact.subscriber';
+export * from './../../organization-document/organization-document.subscriber';
 export * from './../../organization-project/organization-project.subscriber';
 export * from './../../organization-team-employee/organization-team-employee.subscriber';
 export * from './../../organization-team-join-request/organization-team-join-request.subscriber';
