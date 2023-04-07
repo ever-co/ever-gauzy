@@ -85,10 +85,10 @@ export default class TimerHandler {
 		}
 
 		const lastTimer = await TimerData.getLastTimer(knex, null);
-		timeTrackerWindow.webContents.send('toggle_timer_state', {
+		return {
 			isStarted: true,
 			lastTimer: lastTimer
-		});
+		}
 	}
 
 	/*
@@ -504,12 +504,12 @@ export default class TimerHandler {
 		 */
 		await this.stopTimerIntervalPeriod();
 		const lastTimer = await TimerData.getLastTimer(knex, null);
-		timeTrackerWindow.webContents.send('toggle_timer_state', {
-			isStarted: false,
-			lastTimer: lastTimer
-		})
 		this.updateToggle(setupWindow, knex, true);
 		this.isPaused = true;
+		return {
+			isStarted: false,
+			lastTimer: lastTimer
+		}
 	}
 
 	async createTimer(knex, timeLog) {

@@ -7,20 +7,22 @@ import { InvoiceEstimateHistory } from './invoice-estimate-history.entity';
 import { User } from '../user/user.entity';
 import { UserService } from '../user/user.service';
 import { TenantModule } from '../tenant/tenant.module';
+import { TaskModule } from '../tasks/task.module';
 
 @Module({
 	imports: [
 		RouterModule.forRoutes([
 			{
 				path: '/invoice-estimate-history',
-				module: InvoiceEstimateHistoryModule
-			}
+				module: InvoiceEstimateHistoryModule,
+			},
 		]),
 		TypeOrmModule.forFeature([User, InvoiceEstimateHistory]),
-		TenantModule
+		TenantModule,
+		TaskModule,
 	],
 	controllers: [InvoiceEstimateHistoryController],
 	providers: [InvoiceEstimateHistoryService, UserService],
-	exports: [InvoiceEstimateHistoryService, UserService]
+	exports: [InvoiceEstimateHistoryService, UserService],
 })
 export class InvoiceEstimateHistoryModule {}

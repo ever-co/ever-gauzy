@@ -12,19 +12,19 @@ import { UserService } from './user.service';
 import { UserController } from './user.controller';
 import { TenantModule } from '../tenant/tenant.module';
 import { FactoryResetModule } from './factory-reset/factory-reset.module';
+import { TaskModule } from './../tasks/task.module';
 
 @Module({
 	imports: [
-		RouterModule.forRoutes([
-			{ path: '/user', module: UserModule }
-		]),
-		forwardRef(() => TypeOrmModule.forFeature([ User ])),
+		RouterModule.forRoutes([{ path: '/user', module: UserModule }]),
+		forwardRef(() => TypeOrmModule.forFeature([User])),
 		forwardRef(() => TenantModule),
 		CqrsModule,
 		FactoryResetModule,
+		forwardRef(() => TaskModule),
 	],
 	controllers: [UserController],
 	providers: [UserService, ...CommandHandlers],
-	exports: [TypeOrmModule, UserService]
+	exports: [TypeOrmModule, UserService],
 })
 export class UserModule {}
