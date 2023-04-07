@@ -11,6 +11,7 @@ import { BehaviorSubject, combineLatest, firstValueFrom, Subject, Subscription, 
 import { debounceTime, filter, tap } from 'rxjs/operators';
 import {
 	IApplyJobPostInput,
+	IDateRangePicker,
 	IEmployeeJobPost,
 	IGetEmployeeJobPostFilters,
 	IJobMatchings,
@@ -23,13 +24,13 @@ import {
 	JobSearchTabsEnum,
 	PermissionsEnum
 } from '@gauzy/contracts';
-import { distinctUntilChange } from '@gauzy/common-angular';
+import { distinctUntilChange, toUTC } from '@gauzy/common-angular';
 import { NbDialogService, NbTabComponent } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
 import { EmployeeLinksComponent } from './../../../../@shared/table-components';
 import { IPaginationBase, PaginationFilterBaseComponent } from '../../../../@shared/pagination/pagination-filter-base.component';
-import { JobService, Store, ToastrService } from './../../../../@core/services';
+import { DateRangePickerBuilderService, JobService, Store, ToastrService } from './../../../../@core/services';
 import { StatusBadgeComponent } from './../../../../@shared/status-badge';
 import { API_PREFIX } from './../../../../@core/constants';
 import { AtLeastOneFieldValidator } from './../../../../@core/validators';
@@ -37,6 +38,7 @@ import { ServerDataSource } from './../../../../@core/utils/smart-table';
 import { ProposalTemplateService } from '../../proposal-template/proposal-template.service';
 import { ApplyJobManuallyComponent } from '../components';
 import { JobTitleDescriptionDetailsComponent } from '../../table-components';
+import { getAdjustDateRangeFutureAllowed } from './../../../../@theme/components/header/selectors/date-range-picker';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -77,6 +79,7 @@ export class SearchComponent extends PaginationFilterBaseComponent
 
 	public organization: IOrganization;
 	public selectedEmployeeId: ISelectedEmployee['id'];
+	public selectedDateRange: IDateRangePicker;
 
 	/*
 	* Search Tab Form
@@ -102,7 +105,8 @@ export class SearchComponent extends PaginationFilterBaseComponent
 		public readonly translateService: TranslateService,
 		public readonly proposalTemplateService: ProposalTemplateService,
 		private readonly toastrService: ToastrService,
-		private readonly jobService: JobService
+		private readonly jobService: JobService,
+		private readonly dateRangePickerBuilderService: DateRangePickerBuilderService
 	) {
 		super(translateService);
 	}
@@ -138,13 +142,15 @@ export class SearchComponent extends PaginationFilterBaseComponent
 	ngAfterViewInit(): void {
 		const storeOrganization$ = this.store.selectedOrganization$;
 		const storeEmployee$ = this.store.selectedEmployee$;
-		combineLatest([storeOrganization$, storeEmployee$])
+		const selectedDateRange$ = this.dateRangePickerBuilderService.selectedDateRange$;
+		combineLatest([storeOrganization$, selectedDateRange$, storeEmployee$])
 			.pipe(
 				debounceTime(100),
 				distinctUntilChange(),
-				filter(([organization]) => !!organization),
-				tap(([organization, employee]) => {
+				filter(([organization, dateRange]) => !!organization && !!dateRange),
+				tap(([organization, dateRange, employee]) => {
 					this.organization = organization;
+					this.selectedDateRange = dateRange;
 					this.selectedEmployeeId = employee ? employee.id : null;
 					this.jobRequest.employeeIds = this.selectedEmployeeId ? [this.selectedEmployeeId] : [];
 				}),
@@ -522,6 +528,8 @@ export class SearchComponent extends PaginationFilterBaseComponent
 		try {
 			const { activePage, itemsPerPage } = this.getPagination();
 			const { title, jobSource, jobType, jobStatus, budget } = this.form.value;
+			const { startDate, endDate } = getAdjustDateRangeFutureAllowed(this.selectedDateRange);
+
 			/**
 			 * Set header selectors filters configuration
 			 */
@@ -534,6 +542,19 @@ export class SearchComponent extends PaginationFilterBaseComponent
 								search: [
 									this.selectedEmployeeId
 								]
+							}
+						] : []
+					),
+					...(
+						startDate && endDate ? [
+							{
+								field: 'jobDateCreated',
+								search: {
+									between: {
+										lower: toUTC(startDate).format('YYYY-MM-DD HH:mm:ss'),
+										upper: toUTC(endDate).format('YYYY-MM-DD HH:mm:ss')
+									}
+								}
 							}
 						] : []
 					),
