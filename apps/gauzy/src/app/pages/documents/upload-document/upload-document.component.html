@@ -6,7 +6,7 @@
 				[folder]="'documents'"
 				[placeholder]="'FORM.PLACEHOLDERS.UPLOADER_DOCUMENT_PLACEHOLDER' | translate"
 				[fileUrl]="isDocument ? documentUrl : docUrl.value"
-				(uploadedImageAsset)="uploadedDocumentAsset($event?.fullUrl)"
+				(uploadedImageAsset)="uploadedDocumentAsset($event)"
 				(uploadedImgUrl)="uploadedDocumentUrl($event)"
 			></ngx-file-uploader-input>
 		</div>

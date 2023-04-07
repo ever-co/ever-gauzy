@@ -9,12 +9,11 @@ import { IImageAsset } from '@gauzy/contracts';
 export class UploadDocumentComponent implements OnInit {
 
 	@Input() documentUrl: string;
+	@Input() documentId: string;
 	@Input() isDocument: boolean = false;
 
 	public form: FormGroup = UploadDocumentComponent.buildForm(this.fb);
-	static buildForm(
-		fb: FormBuilder
-	): FormGroup {
+	static buildForm(fb: FormBuilder): FormGroup {
 		return fb.group({
 			docUrl: [
 				null,
@@ -26,12 +25,17 @@ export class UploadDocumentComponent implements OnInit {
 						)
 					)
 				])
-			]
+			],
+			documentId: [],
 		});
 	}
 
 	get docUrl(): AbstractControl {
 		return this.form.get('docUrl');
+	}
+
+	get docId(): AbstractControl {
+		return this.form.get('documentId');
 	}
 
 	constructor(
@@ -48,8 +52,9 @@ export class UploadDocumentComponent implements OnInit {
 	uploadedDocumentAsset(document: IImageAsset) {
 		try {
 			if (document) {
+				this.docId.setValue(document.id);
 				this.docUrl.setValue(document.fullUrl);
-				this.docUrl.updateValueAndValidity();
+				this.form.updateValueAndValidity();
 			}
 		} catch (error) {
 			console.log('Error while uploading documents by asset');

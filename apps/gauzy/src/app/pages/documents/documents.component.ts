@@ -43,14 +43,11 @@ import { Subject } from 'rxjs/internal/Subject';
 	templateUrl: './documents.component.html',
 	styleUrls: ['documents.component.scss']
 })
-export class DocumentsComponent
-	extends PaginationFilterBaseComponent
-	implements OnInit, OnDestroy
-{
-	@ViewChild('uploadDoc')
-	uploadDoc: UploadDocumentComponent;
-	@ViewChild('addEditTemplate')
-	addEditTemplate: TemplateRef<any>;
+export class DocumentsComponent extends PaginationFilterBaseComponent implements OnInit, OnDestroy {
+
+	@ViewChild('uploadDoc') uploadDoc: UploadDocumentComponent;
+	@ViewChild('addEditTemplate') addEditTemplate: TemplateRef<any>;
+
 	addEditDialogRef: NbDialogRef<any>;
 	formDocument: FormGroup;
 	documentUrl = '';
@@ -82,8 +79,9 @@ export class DocumentsComponent
 		const documentForm = form.controls.documents as FormArray;
 		documentForm.push(
 			fb.group({
-				name: ['', Validators.required],
-				documentUrl: ['', Validators.required]
+				name: [null, Validators.required],
+				documentUrl: [null, Validators.required],
+				documentId: [null]
 			})
 		);
 		return form;
@@ -215,6 +213,7 @@ export class DocumentsComponent
 		const formValue = { ...documentForm.value[0] };
 		this.formDocument = this.uploadDoc.form;
 		formValue.documentUrl = this.formDocument.get('docUrl').value;
+		formValue.documentId = this.formDocument.get('documentId').value;
 
 		if (this.documentId !== null) {
 			formValue.documentUrl =
@@ -437,5 +436,5 @@ export class DocumentsComponent
 		this.selectedDocument = this.selected.document;
 	}
 
-	ngOnDestroy(): void {}
+	ngOnDestroy(): void { }
 }
