@@ -1,10 +1,4 @@
-
-import {
-	Component,
-	OnDestroy,
-	OnInit,
-	AfterViewInit
-} from '@angular/core';
+import { Component, OnDestroy, OnInit, AfterViewInit } from '@angular/core';
 import { FormBuilder, FormGroup } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
 import { BehaviorSubject, combineLatest, firstValueFrom, Subject, Subscription, timer } from 'rxjs';
@@ -29,7 +23,10 @@ import { NbDialogService, NbTabComponent } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
 import { EmployeeLinksComponent } from './../../../../@shared/table-components';
-import { IPaginationBase, PaginationFilterBaseComponent } from '../../../../@shared/pagination/pagination-filter-base.component';
+import {
+	IPaginationBase,
+	PaginationFilterBaseComponent
+} from '../../../../@shared/pagination/pagination-filter-base.component';
 import { DateRangePickerBuilderService, JobService, Store, ToastrService } from './../../../../@core/services';
 import { StatusBadgeComponent } from './../../../../@shared/status-badge';
 import { API_PREFIX } from './../../../../@core/constants';
@@ -46,9 +43,7 @@ import { getAdjustDateRangeFutureAllowed } from './../../../../@theme/components
 	templateUrl: './search.component.html',
 	styleUrls: ['./search.component.scss']
 })
-export class SearchComponent extends PaginationFilterBaseComponent
-	implements OnInit, OnDestroy, AfterViewInit {
-
+export class SearchComponent extends PaginationFilterBaseComponent implements OnInit, OnDestroy, AfterViewInit {
 	loading: boolean = false;
 	autoRefresh: boolean = false;
 	settingsSmartTable: object;
@@ -82,19 +77,22 @@ export class SearchComponent extends PaginationFilterBaseComponent
 	public selectedDateRange: IDateRangePicker;
 
 	/*
-	* Search Tab Form
-	*/
+	 * Search Tab Form
+	 */
 	public form: FormGroup = SearchComponent.buildForm(this.fb);
 	static buildForm(fb: FormBuilder): FormGroup {
-		return fb.group({
-			title: [],
-			jobSource: [],
-			jobType: [],
-			jobStatus: [],
-			budget: []
-		}, {
-			validators: [AtLeastOneFieldValidator]
-		});
+		return fb.group(
+			{
+				title: [],
+				jobSource: [],
+				jobType: [],
+				jobStatus: [],
+				budget: []
+			},
+			{
+				validators: [AtLeastOneFieldValidator]
+			}
+		);
 	}
 
 	constructor(
@@ -251,14 +249,9 @@ export class SearchComponent extends PaginationFilterBaseComponent
 					this.smartTableSource.refresh();
 
 					if (resp.isRedirectRequired) {
-						const proposalTemplate =
-							await this.getEmployeeDefaultProposalTemplate(
-								$event.data
-							);
+						const proposalTemplate = await this.getEmployeeDefaultProposalTemplate($event.data);
 						if (proposalTemplate) {
-							await this.copyTextToClipboard(
-								proposalTemplate.content
-							);
+							await this.copyTextToClipboard(proposalTemplate.content);
 						}
 						window.open($event.data.jobPost.url, '_blank');
 					}
@@ -331,9 +324,7 @@ export class SearchComponent extends PaginationFilterBaseComponent
 			this.smartTableSource.refresh();
 
 			if (appliedJob.isRedirectRequired) {
-				const proposalTemplate = await this.getEmployeeDefaultProposalTemplate(
-					this.selectedJob
-				);
+				const proposalTemplate = await this.getEmployeeDefaultProposalTemplate(this.selectedJob);
 				if (proposalTemplate) {
 					await this.copyTextToClipboard(proposalTemplate.content);
 				}
@@ -355,13 +346,13 @@ export class SearchComponent extends PaginationFilterBaseComponent
 				applied: true,
 				...(this.selectedEmployeeId
 					? {
-						employeeId: this.selectedEmployeeId
-					}
+							employeeId: this.selectedEmployeeId
+					  }
 					: {
-						employeeId
-					}),
+							employeeId
+					  }),
 				providerCode,
-				providerJobId,
+				providerJobId
 			};
 			await this.applyToJob(applyJobPost);
 		} catch (error) {
@@ -394,7 +385,7 @@ export class SearchComponent extends PaginationFilterBaseComponent
 					details,
 					attachments,
 					providerCode,
-					providerJobId,
+					providerJobId
 				};
 				await this.applyToJob(applyJobPost);
 			} catch (error) {
@@ -417,25 +408,22 @@ export class SearchComponent extends PaginationFilterBaseComponent
 			columns: {
 				...(!this.selectedEmployeeId
 					? {
-						employee: {
-							title: this.getTranslation('JOBS.EMPLOYEE'),
-							filter: false,
-							width: '15%',
-							type: 'custom',
-							sort: false,
-							renderComponent: EmployeeLinksComponent,
-							valuePrepareFunction: (
-								cell,
-								row: IEmployeeJobPost
-							) => {
-								return {
-									name: row.employee && row.employee.user ? row.employee.user.name : null,
-									imageUrl: row.employee && row.employee.user ? row.employee.user.imageUrl : null,
-									id: row.employee ? row.employee.id : null
-								};
+							employee: {
+								title: this.getTranslation('JOBS.EMPLOYEE'),
+								filter: false,
+								width: '15%',
+								type: 'custom',
+								sort: false,
+								renderComponent: EmployeeLinksComponent,
+								valuePrepareFunction: (cell, row: IEmployeeJobPost) => {
+									return {
+										name: row.employee && row.employee.user ? row.employee.user.name : null,
+										imageUrl: row.employee && row.employee.user ? row.employee.user.imageUrl : null,
+										id: row.employee ? row.employee.id : null
+									};
+								}
 							}
-						}
-					}
+					  }
 					: {}),
 				jobDetails: {
 					title: this.getTranslation('JOBS.JOB_DETAILS'),
@@ -453,22 +441,13 @@ export class SearchComponent extends PaginationFilterBaseComponent
 					renderComponent: StatusBadgeComponent,
 					valuePrepareFunction: (cell, row: IEmployeeJobPost) => {
 						let badgeClass;
-						if (
-							row.jobPost.jobStatus.toLowerCase() ===
-							JobPostStatusEnum.CLOSED.toLowerCase()
-						) {
+						if (row.jobPost.jobStatus.toLowerCase() === JobPostStatusEnum.CLOSED.toLowerCase()) {
 							badgeClass = 'danger';
 							cell = this.getTranslation('JOBS.CLOSED');
-						} else if (
-							row.jobPost.jobStatus.toLowerCase() ===
-							JobPostStatusEnum.OPEN.toLowerCase()
-						) {
+						} else if (row.jobPost.jobStatus.toLowerCase() === JobPostStatusEnum.OPEN.toLowerCase()) {
 							badgeClass = 'success';
 							cell = this.getTranslation('JOBS.OPEN');
-						} else if (
-							row.jobPost.jobStatus.toLowerCase() ===
-							JobPostStatusEnum.APPLIED.toLowerCase()
-						) {
+						} else if (row.jobPost.jobStatus.toLowerCase() === JobPostStatusEnum.APPLIED.toLowerCase()) {
 							badgeClass = 'warning';
 							cell = this.getTranslation('JOBS.APPLIED');
 						} else {
@@ -487,8 +466,8 @@ export class SearchComponent extends PaginationFilterBaseComponent
 	}
 
 	/*
-	* Register Smart Table Source Config
-	*/
+	 * Register Smart Table Source Config
+	 */
 	setSmartTableSource() {
 		if (!this.organization) {
 			return;
@@ -535,69 +514,67 @@ export class SearchComponent extends PaginationFilterBaseComponent
 			 */
 			this.smartTableSource.setFilter(
 				[
-					...(
-						this.selectedEmployeeId ? [
-							{
-								field: 'employeeIds',
-								search: [
-									this.selectedEmployeeId
-								]
-							}
-						] : []
-					),
-					...(
-						startDate && endDate ? [
-							{
-								field: 'jobDateCreated',
-								search: {
-									between: {
-										lower: toUTC(startDate).format('YYYY-MM-DD HH:mm:ss'),
-										upper: toUTC(endDate).format('YYYY-MM-DD HH:mm:ss')
+					...(this.selectedEmployeeId
+						? [
+								{
+									field: 'employeeIds',
+									search: [this.selectedEmployeeId]
+								}
+						  ]
+						: []),
+					...(startDate && endDate
+						? [
+								{
+									field: 'jobDateCreated',
+									search: {
+										between: {
+											lower: toUTC(startDate).format('YYYY-MM-DD HH:mm:ss'),
+											upper: toUTC(endDate).format('YYYY-MM-DD HH:mm:ss')
+										}
 									}
 								}
-							}
-						] : []
-					),
-					...(
-						title ? [
-							{
-								field: 'title',
-								search: title
-							}
-						] : []
-					),
-					...(
-						jobSource ? [
-							{
-								field: 'jobSource',
-								search: jobSource
-							}
-						] : []
-					),
-					...(
-						jobType ? [
-							{
-								field: 'jobType',
-								search: jobType
-							}
-						] : []
-					),
-					...(
-						jobStatus ? [
-							{
-								field: 'jobStatus',
-								search: jobStatus
-							}
-						] : []
-					),
-					...(
-						budget ? [
-							{
-								field: 'budget',
-								search: budget
-							}
-						] : []
-					),
+						  ]
+						: []),
+					...(title
+						? [
+								{
+									field: 'title',
+									search: title
+								}
+						  ]
+						: []),
+					...(jobSource
+						? [
+								{
+									field: 'jobSource',
+									search: jobSource
+								}
+						  ]
+						: []),
+					...(jobType
+						? [
+								{
+									field: 'jobType',
+									search: jobType
+								}
+						  ]
+						: []),
+					...(jobStatus
+						? [
+								{
+									field: 'jobStatus',
+									search: jobStatus
+								}
+						  ]
+						: []),
+					...(budget
+						? [
+								{
+									field: 'budget',
+									search: budget
+								}
+						  ]
+						: [])
 				],
 				false,
 				false
@@ -617,11 +594,7 @@ export class SearchComponent extends PaginationFilterBaseComponent
 			/**
 			 * Applied smart table pagination configuration
 			 */
-			this.smartTableSource.setPaging(
-				activePage,
-				itemsPerPage,
-				false
-			);
+			this.smartTableSource.setPaging(activePage, itemsPerPage, false);
 		} catch (error) {
 			this.toastrService.danger(error);
 		}
@@ -642,9 +615,7 @@ export class SearchComponent extends PaginationFilterBaseComponent
 	hideAll() {
 		const request: IVisibilityJobPostInput = {
 			hide: true,
-			...(this.selectedEmployeeId
-				? { employeeId: this.selectedEmployeeId }
-				: {})
+			...(this.selectedEmployeeId ? { employeeId: this.selectedEmployeeId } : {})
 		};
 		this.jobService.hideJob(request).then(() => {
 			this.toastrService.success('TOASTR.MESSAGE.JOB_HIDDEN');
@@ -669,5 +640,5 @@ export class SearchComponent extends PaginationFilterBaseComponent
 		this.jobs$.next(true);
 	}
 
-	ngOnDestroy(): void { }
+	ngOnDestroy(): void {}
 }
