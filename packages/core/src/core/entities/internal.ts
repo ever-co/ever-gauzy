@@ -171,6 +171,7 @@ export * from './../../tasks/sizes/size.subscriber';
 export * from './../../tasks/statuses/status.subscriber';
 export * from './../../tasks/task.subscriber';
 export * from './../../tenant/tenant.subscriber';
+export * from './../../time-off-request/time-off-request.subscriber';
 export * from './../../time-tracking/activity/activity.subscriber';
 export * from './../../time-tracking/screenshot/screenshot.subscriber';
 export * from './../../time-tracking/time-slot/time-slot.subscriber';
