@@ -11,7 +11,8 @@ import {
 	IEmployee,
 	ITimeOff as ITimeOffRequest,
 	ITimeOffPolicy,
-	StatusTypesEnum
+	StatusTypesEnum,
+	IImageAsset as IDocumentAsset
 } from '@gauzy/contracts';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
@@ -19,28 +20,28 @@ import {
 	IsEnum,
 	IsOptional,
 	IsDate,
-	IsBoolean
+	IsBoolean,
+	IsUUID
 } from 'class-validator';
 import {
 	Employee,
+	ImageAsset,
 	TenantOrganizationBaseEntity,
 	TimeOffPolicy
 } from '../core/entities/internal';
 
 @Entity('time_off_request')
-export class TimeOffRequest
-	extends TenantOrganizationBaseEntity
-	implements ITimeOffRequest {
-	
+export class TimeOffRequest extends TenantOrganizationBaseEntity implements ITimeOffRequest {
+
 	@ApiPropertyOptional({ type: () => String })
-	@IsString()
 	@IsOptional()
+	@IsString()
 	@Column({ nullable: true })
 	documentUrl?: string;
 
-	@ApiProperty({ type: () => String })
-	@IsString()
+	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()
+	@IsString()
 	@Column({ nullable: true })
 	description?: string;
 
@@ -61,25 +62,26 @@ export class TimeOffRequest
 
 	@ApiProperty({ type: () => String, enum: StatusTypesEnum })
 	@IsEnum(StatusTypesEnum)
-	@Column({ nullable: false })
+	@Column()
 	status?: string;
 
-	@ApiProperty({ type: () => Boolean })
+	@ApiPropertyOptional({ type: () => Boolean, default: false })
+	@IsOptional()
 	@IsBoolean()
 	@Column({ nullable: true, default: false })
 	isHoliday?: boolean;
 
-	@ApiPropertyOptional({ type: () => Boolean })
+	@ApiPropertyOptional({ type: () => Boolean, default: false })
 	@IsBoolean()
 	@IsOptional()
 	@Column({ nullable: true, default: false })
 	isArchived?: boolean;
 
 	/*
-    |--------------------------------------------------------------------------
-    | @ManyToOne 
-    |--------------------------------------------------------------------------
-    */
+	|--------------------------------------------------------------------------
+	| @ManyToOne
+	|--------------------------------------------------------------------------
+	*/
 	// TimeOff Policy
 	@ApiProperty({ type: () => TimeOffPolicy })
 	@ManyToOne(() => TimeOffPolicy, (policy) => policy.timeOffRequests, {
@@ -89,17 +91,38 @@ export class TimeOffRequest
 	policy?: ITimeOffPolicy;
 
 	@ApiProperty({ type: () => String })
+	@IsUUID()
 	@RelationId((it: TimeOffRequest) => it.policy)
-	@IsString()
 	@Index()
 	@Column()
 	policyId?: string;
 
+	/**
+	 * Document Asset
+	 */
+	@ManyToOne(() => ImageAsset, {
+		/** Database cascade action on delete. */
+		onDelete: 'SET NULL',
+
+		/** Eager relations are always loaded automatically when relation's owner entity is loaded using find* methods. */
+		eager: true
+	})
+	@JoinColumn()
+	document?: IDocumentAsset;
+
+	@ApiPropertyOptional({ type: () => String })
+	@IsOptional()
+	@IsUUID()
+	@RelationId((it: TimeOffRequest) => it.document)
+	@Index()
+	@Column({ nullable: true })
+	documentId?: IDocumentAsset['id'];
+
 	/*
-    |--------------------------------------------------------------------------
-    | @ManyToMany 
-    |--------------------------------------------------------------------------
-    */
+	|--------------------------------------------------------------------------
+	| @ManyToMany
+	|--------------------------------------------------------------------------
+	*/
 	@ApiProperty({ type: () => Employee })
 	@ManyToMany(() => Employee, (employee) => employee.timeOffRequests, {
 		onUpdate: 'CASCADE',

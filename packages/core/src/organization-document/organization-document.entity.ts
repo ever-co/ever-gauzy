@@ -26,7 +26,7 @@ export class OrganizationDocument extends TenantOrganizationBaseEntity implement
 	*/
 
 	/**
-	 * ImageAsset
+	 * Document Asset
 	 */
 	@ManyToOne(() => ImageAsset, {
 		/** Database cascade action on delete. */
