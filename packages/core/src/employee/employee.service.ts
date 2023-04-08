@@ -24,7 +24,10 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 		if (user && user.tenantId) {
 			return await this.repository.find({
 				where: { isActive: true, tenantId: user.tenantId },
-				relations: ['user']
+				relations: {
+					user: true,
+					organization: true
+				}
 			});
 		}
 	}
