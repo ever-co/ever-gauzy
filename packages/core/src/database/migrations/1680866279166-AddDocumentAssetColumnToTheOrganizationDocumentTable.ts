@@ -1,127 +1,183 @@
-
-import { MigrationInterface, QueryRunner } from "typeorm";
+import { MigrationInterface, QueryRunner } from 'typeorm';
 
 export class AddDocumentAssetColumnToTheOrganizationDocumentTable1680866279166 implements MigrationInterface {
+	name = 'AddDocumentAssetColumnToTheOrganizationDocumentTable1680866279166';
 
-    name = 'AddDocumentAssetColumnToTheOrganizationDocumentTable1680866279166';
+	/**
+	 * Up Migration
+	 *
+	 * @param queryRunner
+	 */
+	public async up(queryRunner: QueryRunner): Promise<any> {
+		if (queryRunner.connection.options.type === 'sqlite') {
+			await this.sqliteUpQueryRunner(queryRunner);
+		} else {
+			await this.postgresUpQueryRunner(queryRunner);
+		}
+	}
 
-    /**
-    * Up Migration
-    *
-    * @param queryRunner
-    */
-    public async up(queryRunner: QueryRunner): Promise<any> {
-        if (queryRunner.connection.options.type === 'sqlite') {
-            await this.sqliteUpQueryRunner(queryRunner);
-        } else {
-            await this.postgresUpQueryRunner(queryRunner);
-        }
-    }
+	/**
+	 * Down Migration
+	 *
+	 * @param queryRunner
+	 */
+	public async down(queryRunner: QueryRunner): Promise<any> {
+		if (queryRunner.connection.options.type === 'sqlite') {
+			await this.sqliteDownQueryRunner(queryRunner);
+		} else {
+			await this.postgresDownQueryRunner(queryRunner);
+		}
+	}
 
-    /**
-    * Down Migration
-    *
-    * @param queryRunner
-    */
-    public async down(queryRunner: QueryRunner): Promise<any> {
-        if (queryRunner.connection.options.type === 'sqlite') {
-            await this.sqliteDownQueryRunner(queryRunner);
-        } else {
-            await this.postgresDownQueryRunner(queryRunner);
-        }
-    }
+	/**
+	 * PostgresDB Up Migration
+	 *
+	 * @param queryRunner
+	 */
+	public async postgresUpQueryRunner(queryRunner: QueryRunner): Promise<any> {
+		await queryRunner.query(`ALTER TABLE "organization_document" ADD "documentId" uuid`);
+		await queryRunner.query(`ALTER TABLE "organization_document" ALTER COLUMN "documentUrl" DROP NOT NULL`);
+		await queryRunner.query(
+			`CREATE INDEX "IDX_c129dee7d1cb84e01e69b5e2c6" ON "organization_document" ("documentId") `
+		);
+		await queryRunner.query(
+			`ALTER TABLE "organization_document" ADD CONSTRAINT "FK_c129dee7d1cb84e01e69b5e2c66" FOREIGN KEY ("documentId") REFERENCES "image_asset"("id") ON DELETE SET NULL ON UPDATE NO ACTION`
+		);
+	}
 
-    /**
-    * PostgresDB Up Migration
-    *
-    * @param queryRunner
-    */
-    public async postgresUpQueryRunner(queryRunner: QueryRunner): Promise<any> {
-        await queryRunner.query(`ALTER TABLE "organization_document" ADD "documentId" uuid`);
-        await queryRunner.query(`ALTER TABLE "organization_document" ALTER COLUMN "documentUrl" DROP NOT NULL`);
-        await queryRunner.query(`CREATE INDEX "IDX_c129dee7d1cb84e01e69b5e2c6" ON "organization_document" ("documentId") `);
-        await queryRunner.query(`ALTER TABLE "organization_document" ADD CONSTRAINT "FK_c129dee7d1cb84e01e69b5e2c66" FOREIGN KEY ("documentId") REFERENCES "image_asset"("id") ON DELETE SET NULL ON UPDATE NO ACTION`);
-    }
+	/**
+	 * PostgresDB Down Migration
+	 *
+	 * @param queryRunner
+	 */
+	public async postgresDownQueryRunner(queryRunner: QueryRunner): Promise<any> {
+		await queryRunner.query(`ALTER TABLE "organization_document" DROP CONSTRAINT "FK_c129dee7d1cb84e01e69b5e2c66"`);
+		await queryRunner.query(`DROP INDEX "public"."IDX_c129dee7d1cb84e01e69b5e2c6"`);
+		await queryRunner.query(`ALTER TABLE "organization_document" ALTER COLUMN "documentUrl" SET NOT NULL`);
+		await queryRunner.query(`ALTER TABLE "organization_document" DROP COLUMN "documentId"`);
+	}
 
-    /**
-    * PostgresDB Down Migration
-    *
-    * @param queryRunner
-    */
-    public async postgresDownQueryRunner(queryRunner: QueryRunner): Promise<any> {
-        await queryRunner.query(`ALTER TABLE "organization_document" DROP CONSTRAINT "FK_c129dee7d1cb84e01e69b5e2c66"`);
-        await queryRunner.query(`DROP INDEX "public"."IDX_c129dee7d1cb84e01e69b5e2c6"`);
-        await queryRunner.query(`ALTER TABLE "organization_document" ALTER COLUMN "documentUrl" SET NOT NULL`);
-        await queryRunner.query(`ALTER TABLE "organization_document" DROP COLUMN "documentId"`);
-    }
+	/**
+	 * SqliteDB Up Migration
+	 *
+	 * @param queryRunner
+	 */
+	public async sqliteUpQueryRunner(queryRunner: QueryRunner): Promise<any> {
+		await queryRunner.query(`DROP INDEX "IDX_1057ec001a4c6b258658143047"`);
+		await queryRunner.query(`DROP INDEX "IDX_4bc83945c022a862a33629ff1e"`);
+		await queryRunner.query(
+			`CREATE TABLE "temporary_organization_document" ("id" varchar PRIMARY KEY NOT NULL, "createdAt" datetime NOT NULL DEFAULT (datetime('now')), "updatedAt" datetime NOT NULL DEFAULT (datetime('now')), "tenantId" varchar, "organizationId" varchar, "name" varchar NOT NULL, "documentUrl" varchar NOT NULL, "documentId" varchar, CONSTRAINT "FK_1057ec001a4c6b258658143047a" FOREIGN KEY ("organizationId") REFERENCES "organization" ("id") ON DELETE CASCADE ON UPDATE CASCADE, CONSTRAINT "FK_4bc83945c022a862a33629ff1e1" FOREIGN KEY ("tenantId") REFERENCES "tenant" ("id") ON DELETE CASCADE ON UPDATE NO ACTION)`
+		);
+		await queryRunner.query(
+			`INSERT INTO "temporary_organization_document"("id", "createdAt", "updatedAt", "tenantId", "organizationId", "name", "documentUrl") SELECT "id", "createdAt", "updatedAt", "tenantId", "organizationId", "name", "documentUrl" FROM "organization_document"`
+		);
+		await queryRunner.query(`DROP TABLE "organization_document"`);
+		await queryRunner.query(`ALTER TABLE "temporary_organization_document" RENAME TO "organization_document"`);
+		await queryRunner.query(
+			`CREATE INDEX "IDX_1057ec001a4c6b258658143047" ON "organization_document" ("organizationId") `
+		);
+		await queryRunner.query(
+			`CREATE INDEX "IDX_4bc83945c022a862a33629ff1e" ON "organization_document" ("tenantId") `
+		);
+		await queryRunner.query(`DROP INDEX "IDX_1057ec001a4c6b258658143047"`);
+		await queryRunner.query(`DROP INDEX "IDX_4bc83945c022a862a33629ff1e"`);
+		await queryRunner.query(
+			`CREATE TABLE "temporary_organization_document" ("id" varchar PRIMARY KEY NOT NULL, "createdAt" datetime NOT NULL DEFAULT (datetime('now')), "updatedAt" datetime NOT NULL DEFAULT (datetime('now')), "tenantId" varchar, "organizationId" varchar, "name" varchar NOT NULL, "documentUrl" varchar, "documentId" varchar, CONSTRAINT "FK_1057ec001a4c6b258658143047a" FOREIGN KEY ("organizationId") REFERENCES "organization" ("id") ON DELETE CASCADE ON UPDATE CASCADE, CONSTRAINT "FK_4bc83945c022a862a33629ff1e1" FOREIGN KEY ("tenantId") REFERENCES "tenant" ("id") ON DELETE CASCADE ON UPDATE NO ACTION)`
+		);
+		await queryRunner.query(
+			`INSERT INTO "temporary_organization_document"("id", "createdAt", "updatedAt", "tenantId", "organizationId", "name", "documentUrl", "documentId") SELECT "id", "createdAt", "updatedAt", "tenantId", "organizationId", "name", "documentUrl", "documentId" FROM "organization_document"`
+		);
+		await queryRunner.query(`DROP TABLE "organization_document"`);
+		await queryRunner.query(`ALTER TABLE "temporary_organization_document" RENAME TO "organization_document"`);
+		await queryRunner.query(
+			`CREATE INDEX "IDX_1057ec001a4c6b258658143047" ON "organization_document" ("organizationId") `
+		);
+		await queryRunner.query(
+			`CREATE INDEX "IDX_4bc83945c022a862a33629ff1e" ON "organization_document" ("tenantId") `
+		);
+		await queryRunner.query(
+			`CREATE INDEX "IDX_c129dee7d1cb84e01e69b5e2c6" ON "organization_document" ("documentId") `
+		);
+		await queryRunner.query(`DROP INDEX "IDX_1057ec001a4c6b258658143047"`);
+		await queryRunner.query(`DROP INDEX "IDX_4bc83945c022a862a33629ff1e"`);
+		await queryRunner.query(`DROP INDEX "IDX_c129dee7d1cb84e01e69b5e2c6"`);
+		await queryRunner.query(
+			`CREATE TABLE "temporary_organization_document" ("id" varchar PRIMARY KEY NOT NULL, "createdAt" datetime NOT NULL DEFAULT (datetime('now')), "updatedAt" datetime NOT NULL DEFAULT (datetime('now')), "tenantId" varchar, "organizationId" varchar, "name" varchar NOT NULL, "documentUrl" varchar, "documentId" varchar, CONSTRAINT "FK_1057ec001a4c6b258658143047a" FOREIGN KEY ("organizationId") REFERENCES "organization" ("id") ON DELETE CASCADE ON UPDATE CASCADE, CONSTRAINT "FK_4bc83945c022a862a33629ff1e1" FOREIGN KEY ("tenantId") REFERENCES "tenant" ("id") ON DELETE CASCADE ON UPDATE NO ACTION, CONSTRAINT "FK_c129dee7d1cb84e01e69b5e2c66" FOREIGN KEY ("documentId") REFERENCES "image_asset" ("id") ON DELETE SET NULL ON UPDATE NO ACTION)`
+		);
+		await queryRunner.query(
+			`INSERT INTO "temporary_organization_document"("id", "createdAt", "updatedAt", "tenantId", "organizationId", "name", "documentUrl", "documentId") SELECT "id", "createdAt", "updatedAt", "tenantId", "organizationId", "name", "documentUrl", "documentId" FROM "organization_document"`
+		);
+		await queryRunner.query(`DROP TABLE "organization_document"`);
+		await queryRunner.query(`ALTER TABLE "temporary_organization_document" RENAME TO "organization_document"`);
+		await queryRunner.query(
+			`CREATE INDEX "IDX_1057ec001a4c6b258658143047" ON "organization_document" ("organizationId") `
+		);
+		await queryRunner.query(
+			`CREATE INDEX "IDX_4bc83945c022a862a33629ff1e" ON "organization_document" ("tenantId") `
+		);
+		await queryRunner.query(
+			`CREATE INDEX "IDX_c129dee7d1cb84e01e69b5e2c6" ON "organization_document" ("documentId") `
+		);
+	}
 
-    /**
-    * SqliteDB Up Migration
-    *
-    * @param queryRunner
-    */
-    public async sqliteUpQueryRunner(queryRunner: QueryRunner): Promise<any> {
-        await queryRunner.query(`DROP INDEX "IDX_1057ec001a4c6b258658143047"`);
-        await queryRunner.query(`DROP INDEX "IDX_4bc83945c022a862a33629ff1e"`);
-        await queryRunner.query(`CREATE TABLE "temporary_organization_document" ("id" varchar PRIMARY KEY NOT NULL, "createdAt" datetime NOT NULL DEFAULT (datetime('now')), "updatedAt" datetime NOT NULL DEFAULT (datetime('now')), "tenantId" varchar, "organizationId" varchar, "name" varchar NOT NULL, "documentUrl" varchar NOT NULL, "documentId" varchar, CONSTRAINT "FK_1057ec001a4c6b258658143047a" FOREIGN KEY ("organizationId") REFERENCES "organization" ("id") ON DELETE CASCADE ON UPDATE CASCADE, CONSTRAINT "FK_4bc83945c022a862a33629ff1e1" FOREIGN KEY ("tenantId") REFERENCES "tenant" ("id") ON DELETE CASCADE ON UPDATE NO ACTION)`);
-        await queryRunner.query(`INSERT INTO "temporary_organization_document"("id", "createdAt", "updatedAt", "tenantId", "organizationId", "name", "documentUrl") SELECT "id", "createdAt", "updatedAt", "tenantId", "organizationId", "name", "documentUrl" FROM "organization_document"`);
-        await queryRunner.query(`DROP TABLE "organization_document"`);
-        await queryRunner.query(`ALTER TABLE "temporary_organization_document" RENAME TO "organization_document"`);
-        await queryRunner.query(`CREATE INDEX "IDX_1057ec001a4c6b258658143047" ON "organization_document" ("organizationId") `);
-        await queryRunner.query(`CREATE INDEX "IDX_4bc83945c022a862a33629ff1e" ON "organization_document" ("tenantId") `);
-        await queryRunner.query(`DROP INDEX "IDX_1057ec001a4c6b258658143047"`);
-        await queryRunner.query(`DROP INDEX "IDX_4bc83945c022a862a33629ff1e"`);
-        await queryRunner.query(`CREATE TABLE "temporary_organization_document" ("id" varchar PRIMARY KEY NOT NULL, "createdAt" datetime NOT NULL DEFAULT (datetime('now')), "updatedAt" datetime NOT NULL DEFAULT (datetime('now')), "tenantId" varchar, "organizationId" varchar, "name" varchar NOT NULL, "documentUrl" varchar, "documentId" varchar, CONSTRAINT "FK_1057ec001a4c6b258658143047a" FOREIGN KEY ("organizationId") REFERENCES "organization" ("id") ON DELETE CASCADE ON UPDATE CASCADE, CONSTRAINT "FK_4bc83945c022a862a33629ff1e1" FOREIGN KEY ("tenantId") REFERENCES "tenant" ("id") ON DELETE CASCADE ON UPDATE NO ACTION)`);
-        await queryRunner.query(`INSERT INTO "temporary_organization_document"("id", "createdAt", "updatedAt", "tenantId", "organizationId", "name", "documentUrl", "documentId") SELECT "id", "createdAt", "updatedAt", "tenantId", "organizationId", "name", "documentUrl", "documentId" FROM "organization_document"`);
-        await queryRunner.query(`DROP TABLE "organization_document"`);
-        await queryRunner.query(`ALTER TABLE "temporary_organization_document" RENAME TO "organization_document"`);
-        await queryRunner.query(`CREATE INDEX "IDX_1057ec001a4c6b258658143047" ON "organization_document" ("organizationId") `);
-        await queryRunner.query(`CREATE INDEX "IDX_4bc83945c022a862a33629ff1e" ON "organization_document" ("tenantId") `);
-        await queryRunner.query(`CREATE INDEX "IDX_c129dee7d1cb84e01e69b5e2c6" ON "organization_document" ("documentId") `);
-        await queryRunner.query(`DROP INDEX "IDX_1057ec001a4c6b258658143047"`);
-        await queryRunner.query(`DROP INDEX "IDX_4bc83945c022a862a33629ff1e"`);
-        await queryRunner.query(`DROP INDEX "IDX_c129dee7d1cb84e01e69b5e2c6"`);
-        await queryRunner.query(`CREATE TABLE "temporary_organization_document" ("id" varchar PRIMARY KEY NOT NULL, "createdAt" datetime NOT NULL DEFAULT (datetime('now')), "updatedAt" datetime NOT NULL DEFAULT (datetime('now')), "tenantId" varchar, "organizationId" varchar, "name" varchar NOT NULL, "documentUrl" varchar, "documentId" varchar, CONSTRAINT "FK_1057ec001a4c6b258658143047a" FOREIGN KEY ("organizationId") REFERENCES "organization" ("id") ON DELETE CASCADE ON UPDATE CASCADE, CONSTRAINT "FK_4bc83945c022a862a33629ff1e1" FOREIGN KEY ("tenantId") REFERENCES "tenant" ("id") ON DELETE CASCADE ON UPDATE NO ACTION, CONSTRAINT "FK_c129dee7d1cb84e01e69b5e2c66" FOREIGN KEY ("documentId") REFERENCES "image_asset" ("id") ON DELETE SET NULL ON UPDATE NO ACTION)`);
-        await queryRunner.query(`INSERT INTO "temporary_organization_document"("id", "createdAt", "updatedAt", "tenantId", "organizationId", "name", "documentUrl", "documentId") SELECT "id", "createdAt", "updatedAt", "tenantId", "organizationId", "name", "documentUrl", "documentId" FROM "organization_document"`);
-        await queryRunner.query(`DROP TABLE "organization_document"`);
-        await queryRunner.query(`ALTER TABLE "temporary_organization_document" RENAME TO "organization_document"`);
-        await queryRunner.query(`CREATE INDEX "IDX_1057ec001a4c6b258658143047" ON "organization_document" ("organizationId") `);
-        await queryRunner.query(`CREATE INDEX "IDX_4bc83945c022a862a33629ff1e" ON "organization_document" ("tenantId") `);
-        await queryRunner.query(`CREATE INDEX "IDX_c129dee7d1cb84e01e69b5e2c6" ON "organization_document" ("documentId") `);
-    }
-
-    /**
-    * SqliteDB Down Migration
-    *
-    * @param queryRunner
-    */
-    public async sqliteDownQueryRunner(queryRunner: QueryRunner): Promise<any> {
-        await queryRunner.query(`DROP INDEX "IDX_c129dee7d1cb84e01e69b5e2c6"`);
-        await queryRunner.query(`DROP INDEX "IDX_4bc83945c022a862a33629ff1e"`);
-        await queryRunner.query(`DROP INDEX "IDX_1057ec001a4c6b258658143047"`);
-        await queryRunner.query(`ALTER TABLE "organization_document" RENAME TO "temporary_organization_document"`);
-        await queryRunner.query(`CREATE TABLE "organization_document" ("id" varchar PRIMARY KEY NOT NULL, "createdAt" datetime NOT NULL DEFAULT (datetime('now')), "updatedAt" datetime NOT NULL DEFAULT (datetime('now')), "tenantId" varchar, "organizationId" varchar, "name" varchar NOT NULL, "documentUrl" varchar, "documentId" varchar, CONSTRAINT "FK_1057ec001a4c6b258658143047a" FOREIGN KEY ("organizationId") REFERENCES "organization" ("id") ON DELETE CASCADE ON UPDATE CASCADE, CONSTRAINT "FK_4bc83945c022a862a33629ff1e1" FOREIGN KEY ("tenantId") REFERENCES "tenant" ("id") ON DELETE CASCADE ON UPDATE NO ACTION)`);
-        await queryRunner.query(`INSERT INTO "organization_document"("id", "createdAt", "updatedAt", "tenantId", "organizationId", "name", "documentUrl", "documentId") SELECT "id", "createdAt", "updatedAt", "tenantId", "organizationId", "name", "documentUrl", "documentId" FROM "temporary_organization_document"`);
-        await queryRunner.query(`DROP TABLE "temporary_organization_document"`);
-        await queryRunner.query(`CREATE INDEX "IDX_c129dee7d1cb84e01e69b5e2c6" ON "organization_document" ("documentId") `);
-        await queryRunner.query(`CREATE INDEX "IDX_4bc83945c022a862a33629ff1e" ON "organization_document" ("tenantId") `);
-        await queryRunner.query(`CREATE INDEX "IDX_1057ec001a4c6b258658143047" ON "organization_document" ("organizationId") `);
-        await queryRunner.query(`DROP INDEX "IDX_c129dee7d1cb84e01e69b5e2c6"`);
-        await queryRunner.query(`DROP INDEX "IDX_4bc83945c022a862a33629ff1e"`);
-        await queryRunner.query(`DROP INDEX "IDX_1057ec001a4c6b258658143047"`);
-        await queryRunner.query(`ALTER TABLE "organization_document" RENAME TO "temporary_organization_document"`);
-        await queryRunner.query(`CREATE TABLE "organization_document" ("id" varchar PRIMARY KEY NOT NULL, "createdAt" datetime NOT NULL DEFAULT (datetime('now')), "updatedAt" datetime NOT NULL DEFAULT (datetime('now')), "tenantId" varchar, "organizationId" varchar, "name" varchar NOT NULL, "documentUrl" varchar NOT NULL, "documentId" varchar, CONSTRAINT "FK_1057ec001a4c6b258658143047a" FOREIGN KEY ("organizationId") REFERENCES "organization" ("id") ON DELETE CASCADE ON UPDATE CASCADE, CONSTRAINT "FK_4bc83945c022a862a33629ff1e1" FOREIGN KEY ("tenantId") REFERENCES "tenant" ("id") ON DELETE CASCADE ON UPDATE NO ACTION)`);
-        await queryRunner.query(`INSERT INTO "organization_document"("id", "createdAt", "updatedAt", "tenantId", "organizationId", "name", "documentUrl", "documentId") SELECT "id", "createdAt", "updatedAt", "tenantId", "organizationId", "name", "documentUrl", "documentId" FROM "temporary_organization_document"`);
-        await queryRunner.query(`DROP TABLE "temporary_organization_document"`);
-        await queryRunner.query(`CREATE INDEX "IDX_4bc83945c022a862a33629ff1e" ON "organization_document" ("tenantId") `);
-        await queryRunner.query(`CREATE INDEX "IDX_1057ec001a4c6b258658143047" ON "organization_document" ("organizationId") `);
-        await queryRunner.query(`DROP INDEX "IDX_4bc83945c022a862a33629ff1e"`);
-        await queryRunner.query(`DROP INDEX "IDX_1057ec001a4c6b258658143047"`);
-        await queryRunner.query(`ALTER TABLE "organization_document" RENAME TO "temporary_organization_document"`);
-        await queryRunner.query(`CREATE TABLE "organization_document" ("id" varchar PRIMARY KEY NOT NULL, "createdAt" datetime NOT NULL DEFAULT (datetime('now')), "updatedAt" datetime NOT NULL DEFAULT (datetime('now')), "tenantId" varchar, "organizationId" varchar, "name" varchar NOT NULL, "documentUrl" varchar NOT NULL, CONSTRAINT "FK_1057ec001a4c6b258658143047a" FOREIGN KEY ("organizationId") REFERENCES "organization" ("id") ON DELETE CASCADE ON UPDATE CASCADE, CONSTRAINT "FK_4bc83945c022a862a33629ff1e1" FOREIGN KEY ("tenantId") REFERENCES "tenant" ("id") ON DELETE CASCADE ON UPDATE NO ACTION)`);
-        await queryRunner.query(`INSERT INTO "organization_document"("id", "createdAt", "updatedAt", "tenantId", "organizationId", "name", "documentUrl") SELECT "id", "createdAt", "updatedAt", "tenantId", "organizationId", "name", "documentUrl" FROM "temporary_organization_document"`);
-        await queryRunner.query(`DROP TABLE "temporary_organization_document"`);
-        await queryRunner.query(`CREATE INDEX "IDX_4bc83945c022a862a33629ff1e" ON "organization_document" ("tenantId") `);
-        await queryRunner.query(`CREATE INDEX "IDX_1057ec001a4c6b258658143047" ON "organization_document" ("organizationId") `);
-    }
+	/**
+	 * SqliteDB Down Migration
+	 *
+	 * @param queryRunner
+	 */
+	public async sqliteDownQueryRunner(queryRunner: QueryRunner): Promise<any> {
+		await queryRunner.query(`DROP INDEX "IDX_c129dee7d1cb84e01e69b5e2c6"`);
+		await queryRunner.query(`DROP INDEX "IDX_4bc83945c022a862a33629ff1e"`);
+		await queryRunner.query(`DROP INDEX "IDX_1057ec001a4c6b258658143047"`);
+		await queryRunner.query(`ALTER TABLE "organization_document" RENAME TO "temporary_organization_document"`);
+		await queryRunner.query(
+			`CREATE TABLE "organization_document" ("id" varchar PRIMARY KEY NOT NULL, "createdAt" datetime NOT NULL DEFAULT (datetime('now')), "updatedAt" datetime NOT NULL DEFAULT (datetime('now')), "tenantId" varchar, "organizationId" varchar, "name" varchar NOT NULL, "documentUrl" varchar, "documentId" varchar, CONSTRAINT "FK_1057ec001a4c6b258658143047a" FOREIGN KEY ("organizationId") REFERENCES "organization" ("id") ON DELETE CASCADE ON UPDATE CASCADE, CONSTRAINT "FK_4bc83945c022a862a33629ff1e1" FOREIGN KEY ("tenantId") REFERENCES "tenant" ("id") ON DELETE CASCADE ON UPDATE NO ACTION)`
+		);
+		await queryRunner.query(
+			`INSERT INTO "organization_document"("id", "createdAt", "updatedAt", "tenantId", "organizationId", "name", "documentUrl", "documentId") SELECT "id", "createdAt", "updatedAt", "tenantId", "organizationId", "name", "documentUrl", "documentId" FROM "temporary_organization_document"`
+		);
+		await queryRunner.query(`DROP TABLE "temporary_organization_document"`);
+		await queryRunner.query(
+			`CREATE INDEX "IDX_c129dee7d1cb84e01e69b5e2c6" ON "organization_document" ("documentId") `
+		);
+		await queryRunner.query(
+			`CREATE INDEX "IDX_4bc83945c022a862a33629ff1e" ON "organization_document" ("tenantId") `
+		);
+		await queryRunner.query(
+			`CREATE INDEX "IDX_1057ec001a4c6b258658143047" ON "organization_document" ("organizationId") `
+		);
+		await queryRunner.query(`DROP INDEX "IDX_c129dee7d1cb84e01e69b5e2c6"`);
+		await queryRunner.query(`DROP INDEX "IDX_4bc83945c022a862a33629ff1e"`);
+		await queryRunner.query(`DROP INDEX "IDX_1057ec001a4c6b258658143047"`);
+		await queryRunner.query(`ALTER TABLE "organization_document" RENAME TO "temporary_organization_document"`);
+		await queryRunner.query(
+			`CREATE TABLE "organization_document" ("id" varchar PRIMARY KEY NOT NULL, "createdAt" datetime NOT NULL DEFAULT (datetime('now')), "updatedAt" datetime NOT NULL DEFAULT (datetime('now')), "tenantId" varchar, "organizationId" varchar, "name" varchar NOT NULL, "documentUrl" varchar NOT NULL, "documentId" varchar, CONSTRAINT "FK_1057ec001a4c6b258658143047a" FOREIGN KEY ("organizationId") REFERENCES "organization" ("id") ON DELETE CASCADE ON UPDATE CASCADE, CONSTRAINT "FK_4bc83945c022a862a33629ff1e1" FOREIGN KEY ("tenantId") REFERENCES "tenant" ("id") ON DELETE CASCADE ON UPDATE NO ACTION)`
+		);
+		await queryRunner.query(
+			`INSERT INTO "organization_document"("id", "createdAt", "updatedAt", "tenantId", "organizationId", "name", "documentUrl", "documentId") SELECT "id", "createdAt", "updatedAt", "tenantId", "organizationId", "name", "documentUrl", "documentId" FROM "temporary_organization_document"`
+		);
+		await queryRunner.query(`DROP TABLE "temporary_organization_document"`);
+		await queryRunner.query(
+			`CREATE INDEX "IDX_4bc83945c022a862a33629ff1e" ON "organization_document" ("tenantId") `
+		);
+		await queryRunner.query(
+			`CREATE INDEX "IDX_1057ec001a4c6b258658143047" ON "organization_document" ("organizationId") `
+		);
+		await queryRunner.query(`DROP INDEX "IDX_4bc83945c022a862a33629ff1e"`);
+		await queryRunner.query(`DROP INDEX "IDX_1057ec001a4c6b258658143047"`);
+		await queryRunner.query(`ALTER TABLE "organization_document" RENAME TO "temporary_organization_document"`);
+		await queryRunner.query(
+			`CREATE TABLE "organization_document" ("id" varchar PRIMARY KEY NOT NULL, "createdAt" datetime NOT NULL DEFAULT (datetime('now')), "updatedAt" datetime NOT NULL DEFAULT (datetime('now')), "tenantId" varchar, "organizationId" varchar, "name" varchar NOT NULL, "documentUrl" varchar NOT NULL, CONSTRAINT "FK_1057ec001a4c6b258658143047a" FOREIGN KEY ("organizationId") REFERENCES "organization" ("id") ON DELETE CASCADE ON UPDATE CASCADE, CONSTRAINT "FK_4bc83945c022a862a33629ff1e1" FOREIGN KEY ("tenantId") REFERENCES "tenant" ("id") ON DELETE CASCADE ON UPDATE NO ACTION)`
+		);
+		await queryRunner.query(
+			`INSERT INTO "organization_document"("id", "createdAt", "updatedAt", "tenantId", "organizationId", "name", "documentUrl") SELECT "id", "createdAt", "updatedAt", "tenantId", "organizationId", "name", "documentUrl" FROM "temporary_organization_document"`
+		);
+		await queryRunner.query(`DROP TABLE "temporary_organization_document"`);
+		await queryRunner.query(
+			`CREATE INDEX "IDX_4bc83945c022a862a33629ff1e" ON "organization_document" ("tenantId") `
+		);
+		await queryRunner.query(
+			`CREATE INDEX "IDX_1057ec001a4c6b258658143047" ON "organization_document" ("organizationId") `
+		);
+	}
 }
