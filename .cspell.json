@@ -248,7 +248,9 @@
         "xplat",
         "Sqls",
         "Whitespaces",
-        "datatables"
+        "datatables",
+        "dbname",
+        "EOSQL"
     ],
     "useGitignore": true,
     "ignorePaths": [
@@ -278,6 +280,8 @@
         "**/migrations/**",
         "packages/**/*.seed.json",
         "**/*.svg",
-        "tools/build/webpack.config.js"
+        "tools/build/webpack.config.js",
+        "docker-compose.demo.yml",
+        "docker-compose.yml"
     ]
 }

@@ -1,7 +1,6 @@
 import { AfterViewInit, Component, OnInit } from '@angular/core';
 import {
 	IEmployeePresetInput,
-	IGetJobPresetInput,
 	IOrganization,
 	JobPostSourceEnum,
 	IJobPreset,
@@ -12,13 +11,14 @@ import {
 	JobPostTypeEnum,
 	IUser,
 	ITenant,
-	ISelectedEmployee
+	ISelectedEmployee,
+	IGetJobPresetInput
 } from '@gauzy/contracts';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { combineLatest } from 'rxjs';
+import { Observable, combineLatest, map, switchMap, of as observableOf, BehaviorSubject } from 'rxjs';
 import { debounceTime, filter, tap } from 'rxjs/operators';
 import * as _ from 'underscore';
-import { distinctUntilChange } from '@gauzy/common-angular';
+import { distinctUntilChange, isEmpty, isNotEmpty } from '@gauzy/common-angular';
 import {
 	JobPresetService,
 	JobSearchCategoryService,
@@ -46,9 +46,11 @@ export class MatchingComponent implements AfterViewInit, OnInit {
 	occupations: IJobSearchOccupation[] = [];
 	criterions: IMatchingCriterions[] = [];
 	hasAnyChanges: boolean = false;
-	tenantId: ITenant['id'];
+	public hasAddPreset$: Observable<boolean>;
+	public tenantId: ITenant['id'];
 	public selectedEmployeeId: ISelectedEmployee['id'];
 	public organization: IOrganization;
+	private payloads$: BehaviorSubject<object | null> = new BehaviorSubject(null);
 
 	constructor(
 		private readonly jobPresetService: JobPresetService,
@@ -56,13 +58,21 @@ export class MatchingComponent implements AfterViewInit, OnInit {
 		private readonly jobSearchCategoryService: JobSearchCategoryService,
 		private readonly toastrService: ToastrService,
 		private readonly store: Store
-	) {
-		this.addPreset = this.addPreset.bind(this);
-		this.createNewCategories = this.createNewCategories.bind(this);
-		this.createNewOccupations = this.createNewOccupations.bind(this);
-	}
+	) { }
 
 	ngOnInit(): void {
+		this.hasAddPreset$ = this.store.selectedEmployee$.pipe(
+			map((employee: ISelectedEmployee) => !(!!employee && !!employee.id))
+		);
+		this.payloads$
+			.pipe(
+				debounceTime(100),
+				distinctUntilChange(),
+				filter((payloads: IGetJobPresetInput) => !!payloads),
+				tap(() => this.getJobPresets()),
+				untilDestroyed(this)
+			)
+			.subscribe();
 		const storeOrganization$ = this.store.selectedOrganization$;
 		const storeEmployee$ = this.store.selectedEmployee$;
 		combineLatest([storeOrganization$, storeEmployee$])
@@ -70,48 +80,27 @@ export class MatchingComponent implements AfterViewInit, OnInit {
 				debounceTime(100),
 				distinctUntilChange(),
 				filter(([organization]) => !!organization),
-				tap(([organization, employee]) => {
+				switchMap(([organization, employee]) => {
 					this.organization = organization;
 					this.selectedEmployeeId = employee ? employee.id : null;
+					return observableOf(employee);
 				}),
-				tap(() => {
-					this.getJobPresets();
-					this.getCategories();
-					this.getOccupations();
-				}),
+				tap(() => this.preparePayloads()),
+				filter((employee: ISelectedEmployee) => !!employee),
+				tap(() => this.getEmployeeCriterions()),
 				untilDestroyed(this)
 			)
 			.subscribe();
-		storeEmployee$
+		storeOrganization$
 			.pipe(
-				filter((employee) => !!employee),
-				untilDestroyed(this),
-				debounceTime(500)
+				debounceTime(100),
+				distinctUntilChange(),
+				filter((organization: IOrganization) => !!organization),
+				tap(() => this.getCategories()),
+				tap(() => this.getOccupations()),
+				untilDestroyed(this)
 			)
-			.subscribe((employee) => {
-				setTimeout(async () => {
-					this.criterions = [];
-					this.criterionForm = {
-						jobSource: JobPostSourceEnum.UPWORK,
-						jobPresetId: null
-					};
-					if (employee && employee.id) {
-						this.jobPresetService
-							.getJobPresets({ employeeId: employee.id })
-							.then((jobPresets) => {
-								this.criterionForm.jobPresetId =
-									jobPresets.length > 0
-										? jobPresets[0].id
-										: null;
-							});
-						await this.getEmployeeCriterions();
-					} else {
-						this.selectedEmployeeId = null;
-						this.criterions = [];
-					}
-					this.checkForEmptyCriterion();
-				});
-			});
+			.subscribe();
 	}
 
 	ngAfterViewInit() {
@@ -124,6 +113,30 @@ export class MatchingComponent implements AfterViewInit, OnInit {
 	}
 
 	/**
+	 * Prepare Unique Payloads
+	 *
+	 * @returns
+	 */
+	preparePayloads() {
+		if (!this.organization) {
+			return;
+		}
+		const { id: organizationId } = this.organization;
+		const { tenantId } = this.store.user;
+
+		const request: IGetJobPresetInput = {
+			tenantId,
+			organizationId,
+			...(this.selectedEmployeeId
+				? {
+					employeeId: this.selectedEmployeeId
+				}
+				: {}),
+		};
+		this.payloads$.next(request);
+	}
+
+	/**
 	 * Get Job Presets
 	 *
 	 * @returns
@@ -133,15 +146,13 @@ export class MatchingComponent implements AfterViewInit, OnInit {
 			return;
 		}
 		try {
-			const { tenantId } = this;
-			const { id: organizationId } = this.organization;
+			const payloads: IGetJobPresetInput = this.payloads$.getValue();
+			const jobPresets = await this.jobPresetService.getJobPresets(payloads);
+			this.jobPresets = jobPresets;
 
-			const request: IGetJobPresetInput = {
-				organizationId,
-				tenantId
-			};
-
-			this.jobPresets = await this.jobPresetService.getJobPresets(request);
+			if (this.selectedEmployeeId) {
+				this.criterionForm.jobPresetId = jobPresets.length > 0 ? jobPresets[0].id : null;
+			}
 		} catch (error) {
 			console.error('Error while retrieving job presets', error);
 		}
@@ -157,22 +168,28 @@ export class MatchingComponent implements AfterViewInit, OnInit {
 			return;
 		}
 		try {
-			this.criterions = await this.jobPresetService.getEmployeeCriterions(this.selectedEmployeeId);
+			this.criterions = [];
+			if (this.selectedEmployeeId) {
+				this.criterions = await this.jobPresetService.getEmployeeCriterions(this.selectedEmployeeId);
+
+				if (isEmpty(this.criterions)) {
+					this.addNewCriterion();
+				}
+			}
 		} catch (error) {
 			console.error('Error while retrieving employee criterions', error);
 		}
 	}
 
 	/**
-	 *
+	 * Add new preset from here
 	 *
 	 * @param name
 	 */
-	async addPreset(name?: IJobPreset['name']) {
+	addPreset = async (name: IJobPreset['name']) => {
 		if (!this.organization) {
 			return;
 		}
-
 		try {
 			const { tenantId } = this;
 			const { id: organizationId } = this.organization;
@@ -192,34 +209,37 @@ export class MatchingComponent implements AfterViewInit, OnInit {
 			this.jobPresets = this.jobPresets.concat([jobPreset]);
 			this.criterionForm.jobPresetId = jobPreset.id;
 
-			this.checkForEmptyCriterion();
+			this.criterions = [];
+			this.addNewCriterion();
 		} catch (error) {
 			console.error('Error while creating job presets', error);
 		}
 	}
 
 	async onPresetSelected(jobPreset: IJobPreset) {
-		if (jobPreset) {
-			if (this.selectedEmployeeId) {
-				await this.updateEmployeePreset();
-			} else {
-				await this.jobPresetService
-					.getJobPreset(jobPreset.id)
-					.then(({ jobPresetCriterions }) => {
-						this.criterions = jobPresetCriterions;
-					});
-			}
-		} else {
+		try {
 			this.criterions = [];
+			if (jobPreset) {
+				if (this.selectedEmployeeId) {
+					await this.updateEmployeePreset();
+				} else {
+					const { jobPresetCriterions = [] } = await this.jobPresetService.getJobPreset(jobPreset.id);
+					if (isNotEmpty(jobPresetCriterions)) {
+						this.criterions = jobPresetCriterions;
+					} else {
+						this.addNewCriterion();
+					}
+				}
+			}
+			this.hasAnyChanges = false;
+		} catch (error) {
+			console.log('Error while change job preset', error);
 		}
-		this.hasAnyChanges = false;
-		this.checkForEmptyCriterion();
 	}
 
 	onSourceSelected() {
 		this.criterionForm.jobPresetId = null;
 		this.updateEmployeePreset();
-		this.checkForEmptyCriterion();
 	}
 
 	async updateEmployeePreset() {
@@ -235,15 +255,6 @@ export class MatchingComponent implements AfterViewInit, OnInit {
 				.then((criterions) => {
 					this.criterions = criterions;
 				});
-		}
-	}
-
-	async checkForEmptyCriterion() {
-		if (
-			(this.selectedEmployeeId || this.criterionForm.jobPresetId) &&
-			this.criterions.length === 0
-		) {
-			this.addNewCriterion();
 		}
 	}
 
@@ -355,10 +366,19 @@ export class MatchingComponent implements AfterViewInit, OnInit {
 	 * Get Categories
 	 */
 	async getCategories() {
+		if (!this.organization) {
+			return;
+		}
 		try {
+			const { tenantId } = this;
+			const { id: organizationId } = this.organization;
+			const { jobSource } = this.criterionForm;
+
 			this.categories = (
 				await this.jobSearchCategoryService.getAll({
-					jobSource: this.criterionForm.jobSource
+					tenantId,
+					organizationId,
+					jobSource
 				})
 			).items;
 		} catch (error) {
@@ -370,10 +390,19 @@ export class MatchingComponent implements AfterViewInit, OnInit {
 	 * Get Occupations
 	 */
 	async getOccupations() {
+		if (!this.organization) {
+			return;
+		}
 		try {
+			const { tenantId } = this;
+			const { id: organizationId } = this.organization;
+			const { jobSource } = this.criterionForm;
+
 			this.occupations = (
 				await this.jobSearchOccupationService.getAll({
-					jobSource: this.criterionForm.jobSource
+					tenantId,
+					organizationId,
+					jobSource
 				})
 			).items;
 		} catch (error) {
@@ -387,7 +416,7 @@ export class MatchingComponent implements AfterViewInit, OnInit {
 	 * @param name
 	 * @returns
 	 */
-	async createNewCategories(name: IJobSearchCategory['name']) {
+	createNewCategories = async (name: IJobSearchCategory['name']) => {
 		if (!this.organization) {
 			return;
 		}
@@ -414,7 +443,7 @@ export class MatchingComponent implements AfterViewInit, OnInit {
 	 * @param name
 	 * @returns
 	 */
-	async createNewOccupations(name: IJobSearchOccupation['name']) {
+	createNewOccupations = async (name: IJobSearchOccupation['name']) => {
 		if (!this.organization) {
 			return;
 		}

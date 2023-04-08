@@ -22,6 +22,7 @@ import {
 	SaveEmployeePresetCommand,
 	SavePresetCriterionCommand
 } from './commands';
+import { isNotEmpty } from 'class-validator';
 
 @Injectable()
 export class JobPresetService extends TenantAwareCrudService<JobPreset> {
@@ -44,6 +45,9 @@ export class JobPresetService extends TenantAwareCrudService<JobPreset> {
 	}
 
 	public async getAll(request?: IGetJobPresetInput) {
+		const tenantId = RequestContext.currentTenantId() || request.tenantId;
+		const { organizationId, search, employeeId } = request;
+
 		const query = this.jobPresetRepository.createQueryBuilder('job_preset');
 		query.setFindOptions({
 			join: {
@@ -60,22 +64,21 @@ export class JobPresetService extends TenantAwareCrudService<JobPreset> {
 			},
 		});
 		query.where((qb: SelectQueryBuilder<JobPreset>) => {
-			const tenantId = RequestContext.currentTenantId();
 			qb.andWhere(`"${qb.alias}"."tenantId" = :tenantId`, { tenantId });
 
-			if (request.search) {
-				qb.andWhere('name LIKE :search', {
-					search: request.search
-				});
-			}
-			if (request.organizationId) {
+			if (isNotEmpty(organizationId)) {
 				qb.andWhere(`"${qb.alias}"."organizationId" = :organizationId`, {
-					organizationId: request.organizationId
+					organizationId
 				});
 			}
-			if (request.employeeId) {
+			if (isNotEmpty(search)) {
+				qb.andWhere(`"${query.alias}"."name" ILIKE :search`, {
+					search: `%${search}%`
+				});
+			}
+			if (isNotEmpty(employeeId)) {
 				qb.andWhere(`"employees"."id" = :employeeId`, {
-					employeeId: request.employeeId
+					employeeId
 				});
 			}
 		});

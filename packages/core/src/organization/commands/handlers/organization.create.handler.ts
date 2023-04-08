@@ -16,26 +16,33 @@ import { ImportRecordUpdateOrCreateCommand } from './../../../export-import/impo
 import { OrganizationStatusBulkCreateCommand } from './../../../tasks/statuses/commands';
 import { OrganizationTaskSizeBulkCreateCommand } from './../../../tasks/sizes/commands';
 import { OrganizationTaskPriorityBulkCreateCommand } from './../../../tasks/priorities/commands';
+import { OrganizationIssueTypeBulkCreateCommand } from './../../../tasks/issue-type/commands';
 
 @CommandHandler(OrganizationCreateCommand)
 export class OrganizationCreateHandler
-	implements ICommandHandler<OrganizationCreateCommand> {
-
+	implements ICommandHandler<OrganizationCreateCommand>
+{
 	constructor(
 		private readonly commandBus: CommandBus,
 		private readonly organizationService: OrganizationService,
 		private readonly userOrganizationService: UserOrganizationService,
 		private readonly userService: UserService,
-		@InjectRepository(Organization) private readonly organizationRepository: Repository<Organization>,
-		@InjectRepository(UserOrganization) private readonly userOrganizationRepository: Repository<UserOrganization>,
-	) { }
+		@InjectRepository(Organization)
+		private readonly organizationRepository: Repository<Organization>,
+		@InjectRepository(UserOrganization)
+		private readonly userOrganizationRepository: Repository<UserOrganization>
+	) {}
 
 	public async execute(
 		command: OrganizationCreateCommand
 	): Promise<IOrganization> {
 		try {
 			const { input } = command;
-			const { isImporting = false, sourceId = null, userOrganizationSourceId = null } = input;
+			const {
+				isImporting = false,
+				sourceId = null,
+				userOrganizationSourceId = null,
+			} = input;
 			const tenantId = RequestContext.currentTenantId();
 
 			const admins: IUser[] = [];
@@ -46,9 +53,9 @@ export class OrganizationCreateHandler
 					tenantId,
 					role: {
 						name: RolesEnum.SUPER_ADMIN,
-						tenantId
-					}
-				}
+						tenantId,
+					},
+				},
 			});
 			admins.push(...superAdminUsers);
 
@@ -59,9 +66,9 @@ export class OrganizationCreateHandler
 						tenantId,
 						role: {
 							name: RolesEnum.ADMIN,
-							tenantId
-						}
-					}
+							tenantId,
+						},
+					},
 				});
 				admins.push(...adminUsers);
 			}
@@ -70,6 +77,7 @@ export class OrganizationCreateHandler
 			delete input['contact'];
 
 			// 3. Create organization
+
 			const createdOrganization: IOrganization = await this.organizationService.create({
 				...input,
 				upworkOrganizationId: input.upworkOrganizationId || null,
@@ -89,38 +97,41 @@ export class OrganizationCreateHandler
 			// 4. Take each super admin user and add him/her to created organization
 			try {
 				for await (const admin of admins) {
-					const userOrganization = await this.userOrganizationService.create(
-						new UserOrganization({
-							organization: createdOrganization,
-							tenantId,
-							user: admin
-						})
-					);
+					const userOrganization =
+						await this.userOrganizationService.create(
+							new UserOrganization({
+								organization: createdOrganization,
+								tenantId,
+								user: admin,
+							})
+						);
 					if (isImporting && userOrganizationSourceId) {
 						await this.commandBus.execute(
 							new ImportRecordUpdateOrCreateCommand({
-								entityType: this.userOrganizationRepository.metadata.tableName,
+								entityType:
+									this.userOrganizationRepository.metadata
+										.tableName,
 								sourceId: userOrganizationSourceId,
 								destinationId: userOrganization.id,
-								tenantId
+								tenantId,
 							})
 						);
 					}
 				}
 			} catch (e) {
-				console.log('caught', e)
+				console.log('caught', e);
 			}
 
 			// 5. Create contact details of created organization
 			const { id } = createdOrganization;
 			contact = Object.assign({}, contact, {
 				organizationId: id,
-				tenantId
+				tenantId,
 			});
 
 			const organization = await this.organizationService.create({
 				contact,
-				...createdOrganization
+				...createdOrganization,
 			});
 
 			// 6. Create Enabled/Disabled reports for relative organization.
@@ -143,22 +154,31 @@ export class OrganizationCreateHandler
 				new OrganizationTaskPriorityBulkCreateCommand(organization)
 			);
 
+			// 9. Create issue types for relative organization.
+			await this.commandBus.execute(
+				new OrganizationIssueTypeBulkCreateCommand(organization)
+			);
+
 			// 10. Create Import Records while migrating for relative organization.
 			if (isImporting && sourceId) {
 				const { sourceId } = input;
 				await this.commandBus.execute(
 					new ImportRecordUpdateOrCreateCommand({
-						entityType: this.organizationRepository.metadata.tableName,
+						entityType:
+							this.organizationRepository.metadata.tableName,
 						sourceId,
 						destinationId: organization.id,
-						tenantId
+						tenantId,
 					})
 				);
 			}
 			return await this.organizationService.findOneByIdString(id);
 		} catch (error) {
 			console.log(error, 'Error while creating organization');
-			throw new BadRequestException(error, 'Error while creating organization');
+			throw new BadRequestException(
+				error,
+				'Error while creating organization'
+			);
 		}
 	}
 }
