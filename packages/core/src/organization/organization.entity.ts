@@ -10,7 +10,7 @@ import {
 	RelationId
 } from 'typeorm';
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { IsOptional, IsUUID } from 'class-validator';
+import { IsOptional, IsString, IsUUID } from 'class-validator';
 import {
 	DefaultValueDateTypeEnum,
 	IOrganization,
@@ -260,6 +260,14 @@ export class Organization extends TenantBaseEntity implements IOrganization {
 
 	@Column({ default: true })
 	allowScreenshotCapture?: boolean;
+
+	/** Upwork Organization ID */
+	@ApiPropertyOptional({ type: () => String })
+	@IsOptional()
+	@IsString()
+	@Column({ nullable: true })
+	upworkOrganizationId?: string;
+
 	/*
 	|--------------------------------------------------------------------------
 	| @ManyToOne

@@ -10,26 +10,28 @@ import { QueryHandlers } from './queries/handlers';
 import { User } from '../user/user.entity';
 import { UserService } from '../user/user.service';
 import { TenantModule } from '../tenant/tenant.module';
+import { TaskModule } from '../tasks/task.module';
 
 @Module({
 	imports: [
 		RouterModule.forRoutes([
 			{
 				path: '/employee-recurring-expense',
-				module: EmployeeRecurringExpenseModule
-			}
+				module: EmployeeRecurringExpenseModule,
+			},
 		]),
 		TypeOrmModule.forFeature([EmployeeRecurringExpense, User]),
 		CqrsModule,
-		TenantModule
+		TenantModule,
+		TaskModule,
 	],
 	controllers: [EmployeeRecurringExpenseController],
 	providers: [
 		EmployeeRecurringExpenseService,
 		...QueryHandlers,
 		UserService,
-		...CommandHandlers
+		...CommandHandlers,
 	],
-	exports: [EmployeeRecurringExpenseService]
+	exports: [EmployeeRecurringExpenseService],
 })
 export class EmployeeRecurringExpenseModule {}

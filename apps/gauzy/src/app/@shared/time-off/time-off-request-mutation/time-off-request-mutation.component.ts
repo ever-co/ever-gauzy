@@ -5,17 +5,15 @@ import {
 	ITimeOffPolicy,
 	ITimeOff,
 	IOrganization,
-	StatusTypesEnum
+	StatusTypesEnum,
+	IImageAsset as IDocumentAsset
 } from '@gauzy/contracts';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { FormBuilder, FormControl, FormGroup, Validators } from '@angular/forms';
 import { debounceTime, filter, first, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { distinctUntilChange, isNotEmpty } from '@gauzy/common-angular';
 import { EmployeeSelectorComponent } from '../../../@theme/components/header/selectors/employee/employee.component';
-import {
-	OrganizationDocumentsService,
-	Store,
-} from '../../../@core/services';
+import { OrganizationDocumentsService, Store, } from '../../../@core/services';
 import { CompareDateValidator } from '../../../@core/validators';
 import { FormHelpers } from '../../forms/helpers';
 
@@ -27,17 +25,17 @@ import { FormHelpers } from '../../forms/helpers';
 })
 export class TimeOffRequestMutationComponent implements OnInit {
 
-	FormHelpers: typeof FormHelpers = FormHelpers;
-
 	constructor(
 		protected readonly dialogRef: NbDialogRef<TimeOffRequestMutationComponent>,
 		private readonly fb: FormBuilder,
 		private readonly documentsService: OrganizationDocumentsService,
 		private readonly store: Store,
-    	private dateService: NbDateService<Date>
+		private dateService: NbDateService<Date>
 	) {
-    	this.minDate = this.dateService.addMonth(this.dateService.today(),0);
-  	}
+		this.minDate = this.dateService.addMonth(this.dateService.today(), 0);
+	}
+
+	FormHelpers: typeof FormHelpers = FormHelpers;
 
 	/**
 	 * Employee Selector
@@ -65,7 +63,7 @@ export class TimeOffRequestMutationComponent implements OnInit {
 	employeesArr: IEmployee[] = [];
 	selectedEmployee: any;
 	isEditMode = false;
-	minDate : Date;
+	minDate: Date;
 	public organization: IOrganization;
 
 	/*
@@ -74,11 +72,14 @@ export class TimeOffRequestMutationComponent implements OnInit {
 	public form: FormGroup = TimeOffRequestMutationComponent.buildForm(this.fb);
 	static buildForm(fb: FormBuilder): FormGroup {
 		const form = fb.group({
-			start: ['', Validators.required],
-			end: ['', Validators.required],
-			policy: ['', Validators.required],
-			policyId: ['', Validators.required],
-			documentUrl: [],
+			start: [null, Validators.required],
+			end: [null, Validators.required],
+			policy: [null, Validators.required],
+			policyId: [null, Validators.required],
+			documentUrl: [
+				{ value: null, disabled: true }
+			],
+			documentId: [],
 			status: [],
 			description: []
 		}, {
@@ -103,6 +104,41 @@ export class TimeOffRequestMutationComponent implements OnInit {
 	}
 
 	/**
+	 * Upload document asset
+	 *
+	 * @param image
+	 */
+	uploadDocumentAsset(document: IDocumentAsset) {
+		try {
+			this.form.get('documentId').setValue(document.id);
+			this.form.get('documentUrl').setValue(document.fullUrl);
+			this.form.updateValueAndValidity();
+		} catch (error) {
+			console.log('Error while uploading document asset', error);
+		}
+	}
+
+	/**
+	 * Upload document asset URL
+	 *
+	 * @param image
+	 */
+	uploadDocumentAssetUrl(documentUrl: IDocumentAsset['fullUrl']) {
+		try {
+			const documentUrlControl = <FormControl>this.form.get('documentUrl');
+			if (documentUrl) {
+				documentUrlControl.enable();
+				documentUrlControl.setValue(documentUrl);
+			} else {
+				documentUrlControl.setValue(null);
+				documentUrlControl.disable();
+			}
+		} catch (error) {
+			console.log('Error while uploading document asset', error);
+		}
+	}
+
+	/**
 	 * Patch form value on edit section
 	 */
 	patchFormValue() {
@@ -115,7 +151,8 @@ export class TimeOffRequestMutationComponent implements OnInit {
 				policy: this.timeOff.policy,
 				policyId: this.timeOff.policyId,
 				status: this.timeOff.status,
-				documentUrl: this.timeOff.documentUrl
+				documentUrl: this.timeOff.documentUrl,
+				documentId: this.timeOff.documentId,
 			});
 
 			this.selectedEmployee = this.timeOff['employees'][0];
@@ -167,7 +204,7 @@ export class TimeOffRequestMutationComponent implements OnInit {
 					isHoliday: false,
 					requestDate: new Date()
 				},
-				this.form.getRawValue()
+				this.form.value
 			)
 		);
 	}

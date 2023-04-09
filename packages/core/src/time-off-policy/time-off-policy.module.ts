@@ -8,17 +8,19 @@ import { TimeOffPolicyController } from './time-off-policy.controller';
 import { User } from '../user/user.entity';
 import { UserService } from '../user/user.service';
 import { TenantModule } from '../tenant/tenant.module';
+import { TaskModule } from '../tasks/task.module';
 
 @Module({
 	imports: [
 		RouterModule.forRoutes([
-			{ path: 'time-off-policy', module: TimeOffPolicyModule }
+			{ path: 'time-off-policy', module: TimeOffPolicyModule },
 		]),
 		TypeOrmModule.forFeature([User, TimeOffPolicy, Employee]),
-		TenantModule
+		TenantModule,
+		TaskModule,
 	],
 	controllers: [TimeOffPolicyController],
 	providers: [TimeOffPolicyService, UserService],
-	exports: [TypeOrmModule, UserService]
+	exports: [TypeOrmModule, UserService],
 })
 export class TimeOffPolicyModule {}

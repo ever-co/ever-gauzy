@@ -42,6 +42,11 @@
 					}}
 				</li>
 			</span>
+			<span (click)="integrations.toggle()">
+				<li [ngClass]="{ active: integrations?.expanded }">
+					{{ 'ORGANIZATIONS_PAGE.EDIT.INTEGRATIONS' | translate }}
+				</li>
+			</span>
 		</ul>
 	</aside>
 	<section class="fields-section">
@@ -1024,6 +1029,30 @@
 										</nb-option>
 									</nb-select>
 								</div>
+								</div>
+							</div>
+						</div>
+					</nb-accordion-item-body>
+				</nb-accordion-item>
+				<nb-accordion-item #integrations>
+					<nb-accordion-item-header>
+						{{ 'ORGANIZATIONS_PAGE.EDIT.INTEGRATIONS' | translate }}
+					</nb-accordion-item-header>
+					<nb-accordion-item-body>
+						<div class="fields">
+							<div class="row">
+								<div class="col-6">
+									<div class="form-group">
+										<label class="label">
+											{{ 'FORM.LABELS.UPWORK_ORGANIZATION_ID' | translate }}
+										</label>
+										<input
+											[placeholder]="'FORM.PLACEHOLDERS.UPWORK_ORGANIZATION_ID' | translate"
+											formControlName="upworkOrganizationId"
+											fullWidth
+											nbInput
+										/>
+									</div>
 								</div>
 							</div>
 						</div>

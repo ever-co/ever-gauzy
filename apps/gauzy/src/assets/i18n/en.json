@@ -416,7 +416,10 @@
 			"COVER_LETTER": "Cover Letter",
 			"DETAILS": "Details",
 			"HOURLY_RATE": "Hourly Rate",
-			"ATTACHMENTS": "Attachments"
+			"ATTACHMENTS": "Attachments",
+			"UPWORK_ORGANIZATION_ID": "Upwork Organization ID",
+			"UPWORK_ID": "Upwork ID",
+			"LINKEDIN_ID": "LinkedIn ID"
 		},
 		"PLACEHOLDERS": {
 			"NAME": "Name",
@@ -593,7 +596,10 @@
 			"ADD_PROJECT": "Add project",
 			"ADD_EMPLOYEE": "Add employee",
 			"ADD_ORGANIZATION": "Add organization",
-			"DRAG_DROP_FILE": "Drag and Drop the file here"
+			"DRAG_DROP_FILE": "Drag and Drop the file here",
+			"UPWORK_ORGANIZATION_ID": "Upwork Organization ID",
+			"UPWORK_ID": "Upwork ID",
+			"LINKEDIN_ID": "LinkedIn ID"
 		},
 		"RATES": {
 			"DEFAULT_RATE": "Default Rate",
@@ -1298,6 +1304,7 @@
 		"BACK_TO_WORK": "Back to Work",
 		"SELECT_EMPLOYEE_MSG": "Please select employee from the menu above.",
 		"EDIT_EMPLOYEE": {
+			"SETTINGS_SECTION": "Settings Section",
 			"HEADER": "Manage Employee",
 			"DEVELOPER": "Developer",
 			"DEPARTMENT": "Department",
@@ -1323,7 +1330,8 @@
 			"VETTED": "Vetted",
 			"HR": "hr",
 			"SETTINGS": "Settings",
-			"GENERAL_SETTINGS": "General Settings"
+			"GENERAL_SETTINGS": "General Settings",
+			"INTEGRATIONS": "Integrations"
 		},
 		"ADD_EMPLOYEES": {
 			"STEP_1": "Step 1",
@@ -1815,6 +1823,7 @@
 			"PROJECT_URL": "Project Url",
 			"VISIBILITY": "Visibility",
 			"MEMBERS": "Employee/Teams",
+			"INTEGRATIONS": "Integrations",
 			"SETTINGS": {
 				"TIMER_SETTINGS": "Timer Settings",
 				"ALLOW_MODIFY_TIME": "Allow Modify Time",

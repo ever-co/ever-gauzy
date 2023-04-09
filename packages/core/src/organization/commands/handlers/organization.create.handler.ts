@@ -77,30 +77,22 @@ export class OrganizationCreateHandler
 			delete input['contact'];
 
 			// 3. Create organization
-			const createdOrganization: IOrganization =
-				await this.organizationService.create({
-					...input,
-					futureDateAllowed:
-						input.futureDateAllowed === false ? false : true,
-					show_profits: input.show_profits === true ? true : false,
-					show_bonuses_paid:
-						input.show_bonuses_paid === true ? true : false,
-					show_income: input.show_income === true ? true : false,
-					show_total_hours:
-						input.show_total_hours === true ? true : false,
-					show_projects_count:
-						input.show_projects_count === false ? false : true,
-					show_minimum_project_size:
-						input.show_minimum_project_size === false
-							? false
-							: true,
-					show_clients_count:
-						input.show_clients_count === false ? false : true,
-					show_clients: input.show_clients === false ? false : true,
-					show_employees_count:
-						input.show_employees_count === false ? false : true,
-					brandColor: faker.internet.color(),
-				});
+
+			const createdOrganization: IOrganization = await this.organizationService.create({
+				...input,
+				upworkOrganizationId: input.upworkOrganizationId || null,
+				futureDateAllowed: input.futureDateAllowed === false ? false : true,
+				show_profits: input.show_profits === true ? true : false,
+				show_bonuses_paid: input.show_bonuses_paid === true ? true : false,
+				show_income: input.show_income === true ? true : false,
+				show_total_hours: input.show_total_hours === true ? true : false,
+				show_projects_count: input.show_projects_count === false ? false : true,
+				show_minimum_project_size: input.show_minimum_project_size === false ? false : true,
+				show_clients_count: input.show_clients_count === false ? false : true,
+				show_clients: input.show_clients === false ? false : true,
+				show_employees_count: input.show_employees_count === false ? false : true,
+				brandColor: faker.internet.color()
+			});
 
 			// 4. Take each super admin user and add him/her to created organization
 			try {

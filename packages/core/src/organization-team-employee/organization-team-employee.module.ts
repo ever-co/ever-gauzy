@@ -6,27 +6,23 @@ import { TenantModule } from './../tenant/tenant.module';
 import { OrganizationTeamEmployeeController } from './organization-team-employee.controller';
 import { OrganizationTeamEmployee } from './organization-team-employee.entity';
 import { OrganizationTeamEmployeeService } from './organization-team-employee.service';
+import { TaskModule } from './../tasks/task.module';
 
 @Module({
 	imports: [
 		RouterModule.forRoutes([
-			{ path: '/organization-team-employee', module: OrganizationTeamEmployeeModule }
+			{
+				path: '/organization-team-employee',
+				module: OrganizationTeamEmployeeModule,
+			},
 		]),
-		TypeOrmModule.forFeature([
-			OrganizationTeamEmployee
-		]),
+		TypeOrmModule.forFeature([OrganizationTeamEmployee]),
 		TenantModule,
-		UserModule
+		UserModule,
+		TaskModule,
 	],
-	controllers: [
-		OrganizationTeamEmployeeController
-	],
-	providers: [
-		OrganizationTeamEmployeeService
-	],
-	exports: [
-		TypeOrmModule,
-		OrganizationTeamEmployeeService
-	]
+	controllers: [OrganizationTeamEmployeeController],
+	providers: [OrganizationTeamEmployeeService],
+	exports: [TypeOrmModule, OrganizationTeamEmployeeService],
 })
 export class OrganizationTeamEmployeeModule {}

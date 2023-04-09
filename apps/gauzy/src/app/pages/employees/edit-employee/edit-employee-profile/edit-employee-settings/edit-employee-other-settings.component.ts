@@ -31,6 +31,7 @@ export class EditEmployeeOtherSettingsComponent implements OnInit, OnDestroy {
 	 * Nebular Accordion Item Components
 	 */
 	@ViewChild('general') general: NbAccordionItemComponent;
+	@ViewChild('integrations') integrations: NbAccordionItemComponent;
 
 	/**
 	 * Employee other settings settings
@@ -38,7 +39,9 @@ export class EditEmployeeOtherSettingsComponent implements OnInit, OnDestroy {
 	public form: FormGroup = EditEmployeeOtherSettingsComponent.buildForm(this.fb);
 	static buildForm(fb: FormBuilder): FormGroup {
 		return fb.group({
-			timeZone: []
+			timeZone: [],
+			upworkId: [],
+			linkedInId: []
 		});
 	}
 
@@ -75,7 +78,9 @@ export class EditEmployeeOtherSettingsComponent implements OnInit, OnDestroy {
 		}
 		const { user } = employee;
 		this.form.patchValue({
-			timeZone: user.timeZone || moment.tz.guess() // set current timezone, if employee don't have any timezone
+			timeZone: user.timeZone || moment.tz.guess(), // set current timezone, if employee don't have any timezone
+			upworkId: employee.upworkId,
+			linkedInId: employee.linkedInId,
 		});
 		this.form.updateValueAndValidity();
 	}
@@ -89,12 +94,25 @@ export class EditEmployeeOtherSettingsComponent implements OnInit, OnDestroy {
 		if (form.invalid) {
 			return;
 		}
-		this.employeeStore.userForm = this.form.getRawValue();
+		const { organizationId, tenantId } = this.selectedEmployee;
+		const { timeZone, upworkId, linkedInId } = this.form.value;
+
+		/** Update user fields */
+		this.employeeStore.userForm = {
+			timeZone
+		};
+
+		/** Update employee fields */
+		this.employeeStore.employeeForm = {
+			upworkId,
+			linkedInId,
+			organizationId,
+			tenantId
+		};
 	}
 
 	/**
 	 *
 	 */
-	ngOnDestroy(): void {
-	}
+	ngOnDestroy(): void { }
 }

@@ -15,15 +15,14 @@ import { QueryHandlers } from './queries/handlers';
 import { CommandHandlers } from './commands/handlers';
 import { TimerModule } from './../time-tracking/timer/timer.module';
 import { StatisticModule } from './../time-tracking/statistic/statistic.module';
+import { TaskModule } from './../tasks/task.module';
 
 @Module({
 	imports: [
 		RouterModule.forRoutes([
-			{ path: '/organization-team', module: OrganizationTeamModule }
+			{ path: '/organization-team', module: OrganizationTeamModule },
 		]),
-		TypeOrmModule.forFeature([
-			OrganizationTeam
-		]),
+		TypeOrmModule.forFeature([OrganizationTeam]),
 		OrganizationTeamEmployeeModule,
 		TenantModule,
 		RoleModule,
@@ -32,19 +31,11 @@ import { StatisticModule } from './../time-tracking/statistic/statistic.module';
 		EmployeeModule,
 		TimerModule,
 		CqrsModule,
-		StatisticModule
+		StatisticModule,
+		TaskModule,
 	],
-	controllers: [
-		OrganizationTeamController
-	],
-	providers: [
-		...QueryHandlers,
-		...CommandHandlers,
-		OrganizationTeamService
-	],
-	exports: [
-		TypeOrmModule,
-		OrganizationTeamService
-	]
+	controllers: [OrganizationTeamController],
+	providers: [...QueryHandlers, ...CommandHandlers, OrganizationTeamService],
+	exports: [TypeOrmModule, OrganizationTeamService],
 })
-export class OrganizationTeamModule { }
+export class OrganizationTeamModule {}

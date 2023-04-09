@@ -135,7 +135,8 @@ export class EditOrganizationOtherSettingsComponent extends NotesWithTagsCompone
 			receiptTemplate: [],
 			isDefault: [],
 			isRemoveIdleTime: [false],
-			allowScreenshotCapture: [true]
+			allowScreenshotCapture: [true],
+			upworkOrganizationId: [null]
 		});
 	}
 
@@ -160,6 +161,7 @@ export class EditOrganizationOtherSettingsComponent extends NotesWithTagsCompone
 	@ViewChild('invites') invites: NbAccordionItemComponent;
 	@ViewChild('dateLimit') dateLimit: NbAccordionItemComponent;
 	@ViewChild('timer') timer: NbAccordionItemComponent;
+	@ViewChild('integrations') integrations: NbAccordionItemComponent;
 
 	constructor(
 		private readonly route: ActivatedRoute,
@@ -460,7 +462,8 @@ export class EditOrganizationOtherSettingsComponent extends NotesWithTagsCompone
 			daysUntilDue: this.organization.daysUntilDue,
 			isDefault: this.organization.isDefault,
 			isRemoveIdleTime: this.organization.isRemoveIdleTime,
-			allowScreenshotCapture: this.organization.allowScreenshotCapture
+			allowScreenshotCapture: this.organization.allowScreenshotCapture,
+			upworkOrganizationId: this.organization.upworkOrganizationId
 		});
 		this.form.updateValueAndValidity();
 

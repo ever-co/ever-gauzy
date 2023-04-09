@@ -13,8 +13,8 @@
 	<nb-card-body class="p-0">
 		<div class="gauzy-button-container">
 			<ngx-gauzy-button-action
+				[isDisable]="disableButton"
 				[buttonTemplateVisible]="visibleButton"
-				[isDisable]="true"
 				[buttonTemplate]="actionButtons"
 			></ngx-gauzy-button-action>
 		</div>
@@ -51,8 +51,7 @@
 				style="cursor: pointer"
 				[settings]="settingsSmartTable"
 				[source]="smartTableSource"
-				(userRowSelect)="handleGridSelected($event)"
-				#jobEmployeesTable
+				(userRowSelect)="onSelectEmployee($event)"
 			></ng2-smart-table>
 		</div>
 		<div class="pagination-container">
@@ -74,9 +73,9 @@
 	let-buttonSize="buttonSize"
 	let-selectedItem="selectedItem"
 >
-	<ng-template [ngxPermissionsOnly]="['ORG_JOB_EMPLOYEE_VIEW']">
+	<ng-template [ngxPermissionsOnly]="['ORG_JOB_EMPLOYEE_VIEW', 'ORG_EMPLOYEES_EDIT']">
 		<div class="btn-group actions">
-			<ng-template ngxPermissionsOnly="ORG_JOB_EMPLOYEE_VIEW">
+			<!-- <ng-template ngxPermissionsOnly="ORG_JOB_EMPLOYEE_VIEW">
 				<button
 					status="basic"
 					class="action secondary"
@@ -86,9 +85,10 @@
 					<nb-icon icon="eye-outline" pack="eva"></nb-icon>
 					<span> {{ 'BUTTONS.VIEW' | translate }} </span>
 				</button>
-			</ng-template>
-			<ng-template ngxPermissionsOnly="ORG_JOB_EMPLOYEE_VIEW">
+			</ng-template> -->
+			<ng-template ngxPermissionsOnly="ORG_EMPLOYEES_EDIT">
 				<button
+					(click)="edit(selectedItem)"
 					size="small"
 					style="cursor: pointer"
 					status="basic"
@@ -98,6 +98,8 @@
 					<nb-icon icon="edit-outline" pack="eva"></nb-icon>
 					<span>{{ 'BUTTONS.EDIT' | translate }}</span>
 				</button>
+			</ng-template>
+			<!-- <ng-template ngxPermissionsOnly="ORG_EMPLOYEES_EDIT">
 				<button
 					style="cursor: pointer"
 					status="basic"
@@ -112,7 +114,7 @@
 						pack="eva"
 					></nb-icon>
 				</button>
-			</ng-template>
+			</ng-template> -->
 		</div>
 	</ng-template>
 </ng-template>
