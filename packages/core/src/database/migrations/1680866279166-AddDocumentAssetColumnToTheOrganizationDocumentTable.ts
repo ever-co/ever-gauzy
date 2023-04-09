@@ -37,9 +37,6 @@ export class AddDocumentAssetColumnToTheOrganizationDocumentTable1680866279166 i
     * @param queryRunner
     */
     public async postgresUpQueryRunner(queryRunner: QueryRunner): Promise<any> {
-        await queryRunner.query(`ALTER TABLE "employee" DROP COLUMN "upworkId"`);
-        await queryRunner.query(`ALTER TABLE "employee" DROP COLUMN "linkedInId"`);
-        await queryRunner.query(`ALTER TABLE "organization" DROP COLUMN "upworkOrganizationId"`);
         await queryRunner.query(`ALTER TABLE "organization_document" ADD "documentId" uuid`);
         await queryRunner.query(`ALTER TABLE "organization_document" ALTER COLUMN "documentUrl" DROP NOT NULL`);
         await queryRunner.query(`CREATE INDEX "IDX_c129dee7d1cb84e01e69b5e2c6" ON "organization_document" ("documentId") `);
@@ -56,9 +53,6 @@ export class AddDocumentAssetColumnToTheOrganizationDocumentTable1680866279166 i
         await queryRunner.query(`DROP INDEX "public"."IDX_c129dee7d1cb84e01e69b5e2c6"`);
         await queryRunner.query(`ALTER TABLE "organization_document" ALTER COLUMN "documentUrl" SET NOT NULL`);
         await queryRunner.query(`ALTER TABLE "organization_document" DROP COLUMN "documentId"`);
-        await queryRunner.query(`ALTER TABLE "organization" ADD "upworkOrganizationId" character varying`);
-        await queryRunner.query(`ALTER TABLE "employee" ADD "linkedInId" character varying`);
-        await queryRunner.query(`ALTER TABLE "employee" ADD "upworkId" character varying`);
     }
 
     /**
