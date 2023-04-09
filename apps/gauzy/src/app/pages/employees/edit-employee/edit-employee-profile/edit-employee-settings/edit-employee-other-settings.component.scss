@@ -17,6 +17,49 @@
     overflow: hidden;
     height: calc(100vh - 19.25rem);
 }
+.aside-nav {
+    width: 180px;
+    background-color: nb-theme(gauzy-card-3);
+    padding: 13px 18px;
+    border-radius: nb-theme(border-radius);
+    height: fit-content;
+    & .settings-section-header {
+        font-size: 14px;
+        font-style: normal;
+        font-weight: 600;
+        line-height: 17px;
+        letter-spacing: 0em;
+        text-align: left;
+        margin-bottom: 18px;
+    }
+    ul {
+        padding-left: 0;
+        padding-right: 0;
+        display: inline-flex;
+        flex-direction: column;
+        height: fit-content;
+        & li {
+            display: inline-flex;
+            padding: 10px 15px;
+            margin-bottom: 10px;
+            font-size: 13px;
+            font-style: normal;
+            font-weight: 400;
+            line-height: 16px;
+            letter-spacing: 0em;
+            text-align: left;
+            background: nb-theme(gauzy-sidebar-background-3);
+            border-radius: nb-theme(button-rectangle-border-radius);
+            list-style: none;
+            cursor: pointer;
+            box-shadow: 0px 1px 1px rgba(0, 0, 0, 0.15);
+            &.active {
+                background: nb-theme(background-basic-color-1);
+                box-shadow: 0px 1px 1px rgba(0, 0, 0, 0.15) inset;
+            }
+        }
+    }
+}
 .actions {
     margin-bottom: 20px;
 }

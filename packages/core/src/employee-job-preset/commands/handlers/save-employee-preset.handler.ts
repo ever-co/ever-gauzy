@@ -21,7 +21,7 @@ export class SaveEmployeePresetHandler
 
 		@InjectRepository(EmployeeUpworkJobsSearchCriterion)
 		private readonly employeeUpworkJobsSearchCriterionRepository: Repository<EmployeeUpworkJobsSearchCriterion>
-	) {}
+	) { }
 
 	public async execute(
 		command: SaveEmployeePresetCommand
@@ -32,7 +32,8 @@ export class SaveEmployeePresetHandler
 				id: input.employeeId
 			},
 			relations: {
-				jobPresets: true
+				jobPresets: true,
+				organization: true
 			}
 		});
 		const jobPreset = await this.jobPresetRepository.findOne({

@@ -19,7 +19,7 @@ export class SaveEmployeeCriterionHandler
 		private readonly employeeUpworkJobsSearchCriterionRepository: Repository<EmployeeUpworkJobsSearchCriterion>,
 
 		private readonly gauzyAIService: GauzyAIService
-	) {}
+	) { }
 
 	public async execute(
 		command: SaveEmployeeCriterionCommand
@@ -43,7 +43,8 @@ export class SaveEmployeeCriterionHandler
 				id: input.employeeId
 			},
 			relations: {
-				user: true
+				user: true,
+				organization: true
 			}
 		});
 		const criteria = await this.employeeUpworkJobsSearchCriterionRepository.findBy({
