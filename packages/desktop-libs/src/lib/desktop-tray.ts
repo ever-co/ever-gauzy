@@ -317,7 +317,10 @@ export class TrayIcon {
 				timeTrackerWindow.show();
 			}
 			if (timeTrackerWindow) {
-				timeTrackerWindow.webContents.send('auth_success_tray_init');
+				timeTrackerWindow.webContents.send(
+					'auth_success_tray_init',
+					arg
+				);
 			}
 		});
 
