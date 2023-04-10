@@ -10,7 +10,7 @@ export class EmployeeUpdateHandler
 	implements ICommandHandler<EmployeeUpdateCommand> {
 	constructor(
 		private readonly employeeService: EmployeeService,
-	) {}
+	) { }
 
 	public async execute(command: EmployeeUpdateCommand): Promise<IEmployee> {
 		const { input } = command;
@@ -33,8 +33,10 @@ export class EmployeeUpdateHandler
 			//We are using create here because create calls the method save()
 			//We need save() to save ManyToMany relations
 			return await this.employeeService.create({
-				id,
-				...input
+				...input,
+				upworkId: input.upworkId || null,
+				linkedInId: input.linkedInId || null,
+				id
 			});
 		} catch (error) {
 			throw new BadRequestException(error);

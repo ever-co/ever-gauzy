@@ -12,6 +12,7 @@ import {
 	InvoiceSubscriber,
 	IssueTypeSubscriber,
 	OrganizationContactSubscriber,
+	OrganizationDocumentSubscriber,
 	OrganizationProjectSubscriber,
 	OrganizationSubscriber,
 	OrganizationTeamEmployeeSubscriber,
@@ -27,6 +28,7 @@ import {
 	TaskStatusSubscriber,
 	TaskSubscriber,
 	TenantSubscriber,
+	TimeOffRequestSubscriber,
 	TimeSlotSubscriber,
 	UserSubscriber,
 } from './internal';
@@ -48,6 +50,7 @@ export const coreSubscribers = [
 	InvoiceSubscriber,
 	IssueTypeSubscriber,
 	OrganizationContactSubscriber,
+	OrganizationDocumentSubscriber,
 	OrganizationProjectSubscriber,
 	OrganizationSubscriber,
 	OrganizationTeamEmployeeSubscriber,
@@ -63,6 +66,7 @@ export const coreSubscribers = [
 	TaskStatusSubscriber,
 	TaskSubscriber,
 	TenantSubscriber,
+	TimeOffRequestSubscriber,
 	TimeSlotSubscriber,
-	UserSubscriber,
+	UserSubscriber
 ];

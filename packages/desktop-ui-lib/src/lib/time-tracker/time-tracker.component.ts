@@ -1093,7 +1093,8 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 
 	async getProjects(arg) {
 		try {
-			this._projects$.next(await this.timeTrackerService.getProjects(arg));
+			const res = await this.timeTrackerService.getProjects(arg);
+			this._projects$.next(res || []);
 		} catch (error) {
 			this._projects$.next([]);
 			console.log('ERROR', error);
@@ -1102,9 +1103,8 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 
 	async getClient(arg) {
 		try {
-			this._organizationContacts$.next(
-				await this.timeTrackerService.getClient(arg)
-			);
+			const res = await this.timeTrackerService.getClient(arg);
+			this._organizationContacts$.next(res || []);
 		} catch (error) {
 			this._organizationContacts$.next([]);
 			console.log('ERROR', error);
@@ -1148,20 +1148,16 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 			organizationContactId: this.organizationContactId,
 		});
 		if (item) {
-			this._projects$.next(
-				await this.timeTrackerService.getProjects({
-					...this.argFromMain,
-					organizationContactId: this.organizationContactId,
-				})
-			);
+			await this.getProjects({
+				...this.argFromMain,
+				organizationContactId: this.organizationContactId,
+			});
 			this._tasks$.next([]);
 			this.projectSelect = null;
 			this.taskSelect = null;
 			this.errors.client = false;
 		} else {
-			this._projects$.next(
-				await this.timeTrackerService.getProjects(this.argFromMain)
-			);
+			await this.getProjects(this.argFromMain);
 		}
 	}
 
@@ -1172,18 +1168,16 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 				projectId: this.projectSelect,
 			});
 			if (item) {
-				const res = await this.timeTrackerService.getTasks({
+				await this.getTask({
 					...this.argFromMain,
 					projectId: this.projectSelect,
 				});
-				this._tasks$.next(res || []);
 				this.taskSelect = null;
 				this.errors.project = false;
 			} else {
-				const res = await this.timeTrackerService.getTasks({
-					...this.argFromMain,
+				await this.getTask({
+					...this.argFromMain
 				});
-				this._tasks$.next(res || []);
 			}
 			this.errorBind();
 		} catch (error) {
