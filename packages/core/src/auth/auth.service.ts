@@ -118,9 +118,12 @@ export class AuthService extends SocialAuthService {
 		languageCode: LanguagesEnum,
 		originUrl?: string
 	): Promise<boolean | BadRequestException> {
+		const { email } = request;
+
 		try {
 			await this.userRepository.findOneByOrFail({
-				email: request.email
+				email,
+				isActive: true
 			});
 		} catch (error) {
 			throw new BadRequestException('Forgot password request failed!');
@@ -129,7 +132,8 @@ export class AuthService extends SocialAuthService {
 		try {
 			const user = await this.userService.findOneByOptions({
 				where: {
-					email: request.email
+					email,
+					isActive: true
 				},
 				relations: {
 					role: true,
