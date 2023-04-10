@@ -161,6 +161,9 @@ if (process.platform === 'win32') {
 	app.setAppUserModelId('com.ever.gauzydesktop');
 }
 
+// Set unlimited listeners
+ipcMain.setMaxListeners(0);
+
 async function startServer(value, restart = false) {
 	process.env.IS_ELECTRON = 'true';
 	if (value.db === 'sqlite') {
@@ -470,7 +473,18 @@ ipcMain.on('server_is_ready', async () => {
 	onWaitingServer = false;
 	if (!isAlreadyRun) {
 		serverDesktop = fork(path.join(__dirname, './desktop-api/main.js'));
-		await gauzyWindow.loadURL(gauzyPage(pathWindow.gauzyWindow));
+		try {
+			if (!gauzyWindow) {
+				gauzyWindow = await createGauzyWindow(
+					gauzyWindow,
+					serve,
+					{ ...environment, gauzyWindow: appConfig.gauzyWindow },
+					pathWindow.gauzyWindow
+				);
+			}
+		} catch (error) {
+			console.log(error)
+		}
 		removeTimerListener();
 		ipcTimer(
 			store,
