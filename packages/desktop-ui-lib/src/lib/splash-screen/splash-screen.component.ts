@@ -1,5 +1,5 @@
 import { Component, OnInit, NgZone } from '@angular/core';
-import { ElectronService } from 'ngx-electron';
+import { ElectronService } from '../electron/services';
 @Component({
 	selector: 'ngx-screen-capture',
 	templateUrl: './splash-screen.component.html',
