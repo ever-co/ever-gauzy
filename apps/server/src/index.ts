@@ -93,6 +93,9 @@ LocalStore.setFilePath({
 	iconPath: path.join(__dirname, 'icons', 'icon.png'),
 });
 
+// Set unlimited listeners
+ipcMain.setMaxListeners(0);
+
 const runSetup = async () => {
 	if (setupWindow) {
 		setupWindow.show();
