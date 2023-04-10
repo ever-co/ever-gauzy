@@ -65,7 +65,8 @@ export class AuthService extends SocialAuthService {
 		try {
 			const user = await this.userService.findOneByOptions({
 				where: {
-					email
+					email,
+					isActive: true
 				},
 				relations: {
 					employee: true,
@@ -77,11 +78,6 @@ export class AuthService extends SocialAuthService {
 					createdAt: 'DESC'
 				}
 			});
-
-			// If users are inactive
-			if (user.isActive === false) {
-				throw new UnauthorizedException();
-			}
 			// If employees are inactive
 			if (isNotEmpty(user.employee) && user.employee.isActive === false) {
 				throw new UnauthorizedException();
