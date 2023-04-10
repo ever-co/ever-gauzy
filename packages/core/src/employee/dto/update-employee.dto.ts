@@ -17,30 +17,42 @@ export class UpdateEmployeeDTO extends IntersectionType(
     @ApiPropertyOptional({ type: () => Boolean })
     @IsOptional()
     @IsBoolean()
-    readonly isActive?: boolean;
+    isActive?: boolean;
 
     @ApiPropertyOptional({ type: () => Boolean })
     @IsOptional()
     @IsBoolean()
-    readonly isJobSearchActive?: boolean;
+    isJobSearchActive?: boolean;
 
     @ApiPropertyOptional({ type: () => Boolean })
     @IsOptional()
     @IsBoolean()
-    readonly isVerified?: boolean;
+    isVerified?: boolean;
 
     @ApiPropertyOptional({ type: () => Boolean })
     @IsOptional()
     @IsBoolean()
-    readonly isVetted?: boolean;
+    isVetted?: boolean;
 
     @ApiPropertyOptional({ type: () => Boolean })
     @IsOptional()
     @IsBoolean()
-    readonly isTrackingEnabled: boolean;
+    isTrackingEnabled: boolean;
 
     @ApiPropertyOptional({ type: () => Boolean })
     @IsOptional()
     @IsBoolean()
-    readonly allowScreenshotCapture?: boolean;
+    allowScreenshotCapture?: boolean;
+
+    /** Employee status (Online/Offline) */
+    @ApiPropertyOptional({ type: () => Boolean })
+    @IsOptional()
+    @IsBoolean()
+    isOnline?: boolean;
+
+    /** Employee time tracking status */
+    @ApiPropertyOptional({ type: () => Boolean })
+    @IsOptional()
+    @IsBoolean()
+    isTrackingTime?: boolean;
 }
