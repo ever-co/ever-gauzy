@@ -166,9 +166,7 @@ export class TimerService {
 			tenantId,
 		});
 		if (!employee) {
-			throw new NotFoundException(
-				"We couldn't find the employee you were looking for."
-			);
+			throw new NotFoundException("We couldn't find the employee you were looking for.");
 		}
 		const { id: employeeId } = employee;
 		const lastLog = await this.getLastRunningLog(request);
@@ -186,6 +184,11 @@ export class TimerService {
 				new ScheduleTimeLogEntriesCommand(lastLog)
 			);
 		}
+
+		await this.employeeRepository.update({ id: employeeId }, {
+			isOnline: true, // Employee status (Online/Offline)
+			isTrackingTime: true // Employee time tracking status
+		});
 
 		const {
 			source,
@@ -230,7 +233,17 @@ export class TimerService {
 	 */
 	async stopTimer(request: ITimerToggleInput): Promise<ITimeLog> {
 		const tenantId = RequestContext.currentTenantId() || request.tenantId;
+		const userId = RequestContext.currentUserId();
 
+		const employee = await this.employeeRepository.findOneBy({
+			userId,
+			tenantId,
+		});
+		if (!employee) {
+			throw new NotFoundException("We couldn't find the employee you were looking for.");
+		}
+
+		const { id: employeeId } = employee;
 		let lastLog = await this.getLastRunningLog(request);
 		if (!lastLog) {
 			/**
@@ -244,6 +257,11 @@ export class TimerService {
 
 		const now = moment.utc().toDate();
 		const stoppedAt = request.stoppedAt ? moment.utc(request.stoppedAt).toDate() : now;
+
+		await this.employeeRepository.update({ id: employeeId }, {
+			isOnline: false, // Employee status (Online/Offline)
+			isTrackingTime: false // Employee time tracking status
+		});
 
 		lastLog = await this.commandBus.execute(
 			new TimeLogUpdateCommand(

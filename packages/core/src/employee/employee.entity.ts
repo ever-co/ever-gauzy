@@ -267,13 +267,35 @@ export class Employee extends TenantOrganizationBaseEntity implements IEmployee 
 	/**
 	 * Enabled/Disabled Time Tracking Feature
 	 */
-	@ApiPropertyOptional({ type: () => Boolean, default: true })
+	@ApiPropertyOptional({ type: () => Boolean, default: false })
 	@Column({
 		type: Boolean,
 		nullable: true,
 		default: false
 	})
 	isTrackingEnabled: boolean;
+
+	/**
+	 * Employee status (Online/Offline)
+	 */
+	@ApiPropertyOptional({ type: () => Boolean, default: false })
+	@Column({
+		type: Boolean,
+		nullable: true,
+		default: false
+	})
+	isOnline?: boolean;
+
+	/**
+	 * Employee time tracking status
+	 */
+	@ApiPropertyOptional({ type: () => Boolean, default: false })
+	@Column({
+		type: Boolean,
+		nullable: true,
+		default: false
+	})
+	isTrackingTime?: boolean;
 
 	/**
 	 * Enabled/Disabled Screen Capture Feature
