@@ -91,5 +91,5 @@ import { Router } from '@angular/router';
 	bootstrap: [AppComponent],
 })
 export class AppModule {
-	constructor(trace: Sentry.TraceService) { }
+	constructor() { }
 }
