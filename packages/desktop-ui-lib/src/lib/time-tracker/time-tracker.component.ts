@@ -17,7 +17,7 @@ import { CustomRenderComponent } from './custom-render-cell.component';
 import { LocalDataSource, Ng2SmartTableComponent } from 'ng2-smart-table';
 import { DomSanitizer } from '@angular/platform-browser';
 import { asapScheduler, BehaviorSubject, filter, Observable, Subject, tap } from 'rxjs';
-import { ElectronService } from '../electron/services';
+import { ElectronService, LoggerService } from '../electron/services';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import 'moment-duration-format';
 import {
@@ -32,12 +32,6 @@ import {
 import { Store } from '@gauzy/desktop-timer/src/app/auth/services/store.service';
 import { compressImage } from '@gauzy/common-angular';
 import { ErrorHandlerService, NativeNotificationService, ToastrNotificationService } from 'apps/desktop-timer/src/app/services';
-
-
-// Import logging for electron and override default console logging
-const log = window.require('electron-log');
-console.log = log.log;
-Object.assign(console, log.functions);
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -229,7 +223,8 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 		private _errorHandlerService: ErrorHandlerService,
 		private _nativeNotifier: NativeNotificationService,
 		private _toastrNotifier: ToastrNotificationService,
-		private _store: Store
+		private _store: Store,
+		private _loggerService: LoggerService
 	) {
 		this.iconLibraries.registerFontPack('font-awesome', {
 			packClass: 'fas',
@@ -451,7 +446,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 		this.electronService.ipcRenderer.on('take_screenshot', (event, arg) =>
 			this._ngZone.run(async () => {
 				try {
-					log.info(`Take Screenshot:`, arg);
+					this._loggerService.log.info(`Take Screenshot:`, arg);
 					const screens = [];
 					const thumbSize = this.determineScreenshot(arg.screenSize);
 					const sources = await this.electronService.desktopCapturer
@@ -460,13 +455,13 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 							thumbnailSize: thumbSize,
 						});
 					sources.forEach((source) => {
-						log.info('screenshot_res', source);
+						this._loggerService.log.info('screenshot_res', source);
 						screens.push({
 							img: source.thumbnail.toPNG(),
 							name: source.name,
 							id: source.display_id,
 						});
-						log.info('screenshot data', screens);
+						this._loggerService.log.info('screenshot data', screens);
 					});
 					if (!arg.isTemp) {
 						event.sender.send('save_screen_shoot', {
@@ -1550,7 +1545,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 			});
 			const screens = [];
 			sources.forEach((source) => {
-				log.info('screenshot_res', source);
+				this._loggerService.log.info('screenshot_res', source);
 				if (
 					this.appSetting &&
 					this.appSetting.monitor &&
@@ -1577,7 +1572,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 					}
 				}
 			});
-			log.info('screenshot data', screens);
+			this._loggerService.log.info('screenshot data', screens);
 			return screens;
 		} catch (error) {
 			this._errorHandlerService.handleError(error);
@@ -1614,7 +1609,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 					arg.end
 				);
 		} catch (error) {
-			log.info('failed collect from AW');
+			this._loggerService.log.info('failed collect from AW');
 		}
 
 		return this.mappingActivities(arg, [
@@ -2273,7 +2268,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 			this.toastrService.show(messageError, `Warning`, {
 				status: 'danger',
 			});
-			log.info(
+			this._loggerService.log.info(
 				`Timer Toggle Catch: ${moment().format()}`,
 				error
 			);
