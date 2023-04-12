@@ -12,10 +12,6 @@ import { NbToastrService } from '@nebular/theme';
 import { Color, rgbString } from '@kurkle/color';
 import * as moment from 'moment';
 
-const log = window.require('electron-log');
-console.log = log.log;
-Object.assign(console, log.functions);
-
 @Component({
 	selector: 'ngx-tasks',
 	templateUrl: './tasks.component.html',

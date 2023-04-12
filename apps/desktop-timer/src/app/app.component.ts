@@ -10,9 +10,6 @@ import { NbToastrService } from '@nebular/theme';
 import * as _ from 'underscore';
 import { Router } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
-const log = window.require('electron-log');
-console.log = log.log;
-Object.assign(console, log.functions);
 
 @UntilDestroy({ checkProperties: true })
 @Component({
