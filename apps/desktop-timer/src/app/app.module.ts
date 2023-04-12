@@ -49,7 +49,7 @@ import { ServerConnectionService } from './auth/services/server-connection.servi
 import { environment } from '../../../gauzy/src/environments/environment';
 import { Router } from '@angular/router';
 import { TranslateModule, TranslateLoader } from '@ngx-translate/core';
-import * as Sentry from '@sentry/angular';
+import * as Sentry from '@sentry/angular-ivy';
 import { ErrorHandlerService } from './services/error-handler.service';
 
 @NgModule({
