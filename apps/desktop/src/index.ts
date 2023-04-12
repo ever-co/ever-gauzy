@@ -70,7 +70,6 @@ import {
 } from '@gauzy/desktop-libs';
 import {
 	createGauzyWindow,
-	gauzyPage,
 	createSetupWindow,
 	createTimeTrackerWindow,
 	createSettingsWindow,
