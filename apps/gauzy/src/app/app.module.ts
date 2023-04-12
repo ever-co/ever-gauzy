@@ -42,12 +42,11 @@ import { ServerConnectionService } from './@core/services/server-connection.serv
 import { Store } from './@core/services/store.service';
 import { AppModuleGuard } from './app.module.guards';
 import { DangerZoneMutationModule } from './@shared/settings/danger-zone-mutation.module';
-import {
+import Sentry, {
   routingInstrumentation,
 	init as sentryInit,
 	TraceService as SentryTraceService
-} from '@sentry/angular';
-import { BrowserTracing } from "@sentry/tracing";
+} from '@sentry/angular-ivy';
 import { SentryErrorHandler } from './@core/sentry-error.handler';
 import { TimeTrackerModule } from './@shared/time-tracker/time-tracker.module';
 import { SharedModule } from './@shared/shared.module';
@@ -89,8 +88,8 @@ if (environment.SENTRY_DSN && environment.SENTRY_DSN === 'DOCKER_SENTRY_DSN') {
       // Registers and configures the Tracing integration,
       // which automatically instruments your application to monitor its
       // performance, including custom Angular routing instrumentation
-      new BrowserTracing({
-        tracingOrigins: ["localhost", "https://apidemo.gauzy.co/api", "https://api.gauzy.co/api"],
+			new Sentry.BrowserTracing({
+				tracingOrigins: ["localhost", "https://apidemo.gauzy.co/api", "https://api.gauzy.co/api", "https://apistage.gauzy.co/api"],
         routingInstrumentation: routingInstrumentation,
       })
 		],
