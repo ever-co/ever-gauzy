@@ -21,6 +21,7 @@ import {
 	SetupModule,
 	ServerDashboardModule,
 	ElectronService,
+	LoggerService,
 	AboutModule,
 } from '@gauzy/desktop-ui-lib';
 import { NbCardModule, NbButtonModule } from '@nebular/theme';
@@ -56,6 +57,7 @@ import { Router } from '@angular/router';
 		HttpClientModule,
 		NbDialogService,
 		ElectronService,
+		LoggerService,
 		{
 			provide: ErrorHandler,
 			useValue: Sentry.createErrorHandler({

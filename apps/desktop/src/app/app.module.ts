@@ -22,6 +22,7 @@ import {
 	TimeTrackerModule,
 	SetupModule,
 	ElectronService,
+	LoggerService,
 	AboutModule,
 } from '@gauzy/desktop-ui-lib';
 import { NbCardModule, NbButtonModule } from '@nebular/theme';
@@ -61,6 +62,7 @@ import { Router } from '@angular/router';
 		HttpClientModule,
 		NbDialogService,
 		ElectronService,
+		LoggerService,
 		{
 			provide: HTTP_INTERCEPTORS,
 			useClass: TokenInterceptor,
