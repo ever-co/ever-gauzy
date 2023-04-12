@@ -149,7 +149,9 @@ import { ErrorHandlerService } from './services/error-handler.service';
 	bootstrap: [AppComponent],
 	exports: [NgSelectModule]
 })
-export class AppModule {}
+export class AppModule {
+	constructor(trace: Sentry.TraceService) { }
+}
 
 export function serverConnectionFactory(
 	provider: ServerConnectionService,
