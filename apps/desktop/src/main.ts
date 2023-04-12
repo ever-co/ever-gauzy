@@ -4,6 +4,7 @@ import { AppModule } from './app/app.module';
 import { environment } from './environments/environment';
 import { enableAkitaProdMode, persistState } from '@datorama/akita';
 import { akitaConfig } from '@datorama/akita';
+import * as Sentry from "@sentry/angular-ivy";
 
 if (environment.production) {
 	enableProdMode();
@@ -16,6 +17,29 @@ persistState({
 
 akitaConfig({
 	resettable: true
+});
+
+Sentry.init({
+	dsn: environment.SENTRY_DSN,
+	integrations: [
+		// Registers and configures the Tracing integration,
+		// which automatically instruments your application to monitor its
+		// performance, including custom Angular routing instrumentation
+		new Sentry.BrowserTracing({
+			tracePropagationTargets: [
+				'localhost',
+				'https://apidemo.gauzy.co',
+				'https://apistage.gauzy.co',
+				'https://api.gauzy.co',
+			],
+			routingInstrumentation: Sentry.routingInstrumentation,
+		}),
+	],
+
+	// Set tracesSampleRate to 1.0 to capture 100%
+	// of transactions for performance monitoring.
+	// We recommend adjusting this value in production
+	tracesSampleRate: 1.0,
 });
 
 platformBrowserDynamic()
