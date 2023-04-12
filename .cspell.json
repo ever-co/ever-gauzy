@@ -251,7 +251,7 @@
         "datatables",
         "dbname",
         "EOSQL",
-        "checkRememberdMe"
+        "rememberMe"
     ],
     "useGitignore": true,
     "ignorePaths": [
