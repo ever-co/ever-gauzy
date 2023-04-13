@@ -1,5 +1,5 @@
 import { Injectable, ErrorHandler } from '@angular/core';
-import * as Sentry from '@sentry/angular';
+import * as Sentry from '@sentry/angular-ivy';
 import { environment } from '../../environments/environment';
 
 @Injectable()

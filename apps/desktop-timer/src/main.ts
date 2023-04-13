@@ -5,8 +5,7 @@ import { environment } from './environments/environment';
 
 import { enableAkitaProdMode, persistState } from '@datorama/akita';
 import { akitaConfig } from '@datorama/akita';
-import * as Sentry from '@sentry/angular';
-import { BrowserTracing } from '@sentry/tracing';
+import * as Sentry from '@sentry/angular-ivy';
 
 if (environment.production) {
 	enableProdMode();
@@ -27,8 +26,13 @@ Sentry.init({
 		// Registers and configures the Tracing integration,
 		// which automatically instruments your application to monitor its
 		// performance, including custom Angular routing instrumentation
-		new BrowserTracing({
-			tracePropagationTargets: ['localhost'],
+		new Sentry.BrowserTracing({
+			tracePropagationTargets: [
+				'localhost',
+				'https://apidemo.gauzy.co',
+				'https://apistage.gauzy.co',
+				'https://api.gauzy.co',
+			],
 			routingInstrumentation: Sentry.routingInstrumentation
 		})
 	],

@@ -1,5 +1,5 @@
 import { BrowserModule } from '@angular/platform-browser';
-import { NgModule } from '@angular/core';
+import { APP_INITIALIZER, ErrorHandler, NgModule } from '@angular/core';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { AppComponent } from './app.component';
 import { AppRoutingModule } from './app-routing.module';
@@ -22,6 +22,7 @@ import {
 	TimeTrackerModule,
 	SetupModule,
 	ElectronService,
+	LoggerService,
 	AboutModule,
 } from '@gauzy/desktop-ui-lib';
 import { NbCardModule, NbButtonModule } from '@nebular/theme';
@@ -29,6 +30,8 @@ import { RouterModule } from '@angular/router';
 import { HTTP_INTERCEPTORS } from '@angular/common/http';
 import { TenantInterceptor } from './interceptors/tenant.interceptor';
 import { TokenInterceptor } from './interceptors/token.interceptor';
+import * as Sentry from "@sentry/angular-ivy";
+import { Router } from '@angular/router';
 
 @NgModule({
 	declarations: [AppComponent],
@@ -59,6 +62,7 @@ import { TokenInterceptor } from './interceptors/token.interceptor';
 		HttpClientModule,
 		NbDialogService,
 		ElectronService,
+		LoggerService,
 		{
 			provide: HTTP_INTERCEPTORS,
 			useClass: TokenInterceptor,
@@ -68,8 +72,26 @@ import { TokenInterceptor } from './interceptors/token.interceptor';
 			provide: HTTP_INTERCEPTORS,
 			useClass: TenantInterceptor,
 			multi: true,
-		}
+		},
+		{
+			provide: ErrorHandler,
+			useValue: Sentry.createErrorHandler({
+				showDialog: true,
+			}),
+		},
+		{
+			provide: Sentry.TraceService,
+			deps: [Router],
+		},
+		{
+			provide: APP_INITIALIZER,
+			useFactory: () => () => { },
+			deps: [Sentry.TraceService],
+			multi: true,
+		},
 	],
 	bootstrap: [AppComponent],
 })
-export class AppModule {}
+export class AppModule {
+	constructor() { }
+}

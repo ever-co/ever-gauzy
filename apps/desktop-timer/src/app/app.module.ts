@@ -28,7 +28,8 @@ import {
 	SetupModule,
 	SplashScreenModule,
 	ElectronService,
-	AboutModule
+	AboutModule,
+	LoggerService
 } from '@gauzy/desktop-ui-lib';
 import { NbCardModule, NbButtonModule } from '@nebular/theme';
 import { HttpLoaderFactory } from '../../../gauzy/src/app/@shared/translate/translate.module';
@@ -49,7 +50,7 @@ import { ServerConnectionService } from './auth/services/server-connection.servi
 import { environment } from '../../../gauzy/src/environments/environment';
 import { Router } from '@angular/router';
 import { TranslateModule, TranslateLoader } from '@ngx-translate/core';
-import * as Sentry from '@sentry/angular';
+import * as Sentry from '@sentry/angular-ivy';
 import { ErrorHandlerService } from './services/error-handler.service';
 
 @NgModule({
@@ -98,6 +99,7 @@ import { ErrorHandlerService } from './services/error-handler.service';
 		AuthService,
 		ServerConnectionService,
 		ElectronService,
+		LoggerService,
 		{
 			provide: ErrorHandler,
 			useClass: ErrorHandlerService
@@ -149,7 +151,9 @@ import { ErrorHandlerService } from './services/error-handler.service';
 	bootstrap: [AppComponent],
 	exports: [NgSelectModule]
 })
-export class AppModule {}
+export class AppModule {
+	constructor() { }
+}
 
 export function serverConnectionFactory(
 	provider: ServerConnectionService,
