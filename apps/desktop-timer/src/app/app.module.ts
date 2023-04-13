@@ -28,7 +28,8 @@ import {
 	SetupModule,
 	SplashScreenModule,
 	ElectronService,
-	AboutModule
+	AboutModule,
+	LoggerService
 } from '@gauzy/desktop-ui-lib';
 import { NbCardModule, NbButtonModule } from '@nebular/theme';
 import { HttpLoaderFactory } from '../../../gauzy/src/app/@shared/translate/translate.module';
@@ -98,6 +99,7 @@ import { ErrorHandlerService } from './services/error-handler.service';
 		AuthService,
 		ServerConnectionService,
 		ElectronService,
+		LoggerService,
 		{
 			provide: ErrorHandler,
 			useClass: ErrorHandlerService

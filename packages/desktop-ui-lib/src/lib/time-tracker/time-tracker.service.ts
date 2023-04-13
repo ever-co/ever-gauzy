@@ -21,11 +21,7 @@ import { UserOrganizationService } from './organization-selector/user-organizati
 import { EmployeeCacheService } from '../services/employee-cache.service';
 import { TagCacheService } from '../services/tag-cache.service';
 import { TimeLogCacheService } from '../services/time-log-cache.service';
-
-// Import logging for electron and override default console logging
-const log = window.require('electron-log');
-console.log = log.log;
-Object.assign(console, log.functions);
+import { LoggerService } from '../electron/services';
 
 @Injectable({
 	providedIn: 'root',
@@ -46,7 +42,8 @@ export class TimeTrackerService {
 		private readonly _employeeCacheService: EmployeeCacheService,
 		private readonly _tagCacheService: TagCacheService,
 		private readonly _userOrganizationService: UserOrganizationService,
-		private readonly _timeLogService: TimeLogCacheService
+		private readonly _timeLogService: TimeLogCacheService,
+		private readonly _loggerService: LoggerService
 	) {}
 
 	createAuthorizationHeader(headers: Headers) {
@@ -214,7 +211,7 @@ export class TimeTrackerService {
 	}
 
 	async getTimeSlot(values) {
-		log.info(`Get Time Slot: ${moment().format()}`);
+		this._loggerService.log.info(`Get Time Slot: ${moment().format()}`);
 		let timeSlots$ = this._timeSlotCacheService.getValue(values.timeSlotId);
 		if (!timeSlots$) {
 			timeSlots$ = this.http
@@ -250,7 +247,7 @@ export class TimeTrackerService {
 			version: values.version,
 			startedAt: moment(values.startedAt).utc().toISOString(),
 		};
-		log.info(`Toggle Start Timer Request: ${moment().format()}`, body);
+		this._loggerService.log.info(`Toggle Start Timer Request: ${moment().format()}`, body);
 		return firstValueFrom(
 			this.http.post(
 				`${values.apiHost}/api/timesheet/timer/start`,
@@ -276,7 +273,7 @@ export class TimeTrackerService {
 			startedAt: moment(values.startedAt).utc().toISOString(),
 			stoppedAt: moment(values.stoppedAt).utc().toISOString(),
 		};
-		log.info(`Toggle Stop Timer Request: ${moment().format()}`, body);
+		this._loggerService.log.info(`Toggle Stop Timer Request: ${moment().format()}`, body);
 		return firstValueFrom(
 			this.http.post(
 				`${values.apiHost}/api/timesheet/timer/stop`,

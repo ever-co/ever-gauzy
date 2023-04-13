@@ -9,13 +9,8 @@ import {
 import { SetupService } from './setup.service';
 import { NbDialogService } from '@nebular/theme';
 import { AlertComponent } from '../../lib/dialogs/alert/alert.component';
-import { ElectronService } from '../electron/services';
+import { ElectronService, LoggerService } from '../electron/services';
 import { ErrorHandlerService } from 'apps/desktop-timer/src/app/services';
-
-// Import logging for electron and override default console logging
-const log = window.require('electron-log');
-console.log = log.log;
-Object.assign(console, log.functions);
 
 @Component({
 	selector: 'ngx-setup',
@@ -30,7 +25,8 @@ export class SetupComponent implements OnInit {
 		private _cdr: ChangeDetectorRef,
 		private dialogService: NbDialogService,
 		private electronService: ElectronService,
-		private _errorHandlerService: ErrorHandlerService
+		private _errorHandlerService: ErrorHandlerService,
+		private _loggerServer: LoggerService
 	) {
 		electronService.ipcRenderer.on('setup-data', (event, arg) => {
 			this.desktopFeatures.gauzyPlatform = arg.gauzyWindow;
@@ -268,7 +264,7 @@ export class SetupComponent implements OnInit {
 			};
 		}
 
-		log.info(`Server Config:`, this.serverConfig);
+		this._loggerServer.log.info(`Server Config:`, this.serverConfig);
 		if (this.connectivity.live) {
 			return {
 				serverUrl: this.serverConfig.live.url,

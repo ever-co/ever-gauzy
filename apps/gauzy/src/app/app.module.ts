@@ -62,6 +62,7 @@ import { AppInitService } from './@core/services/app-init-service';
 import { NbEvaIconsModule } from '@nebular/eva-icons';
 import { CookieService } from 'ngx-cookie-service';
 import { NgxDaterangepickerMd } from 'ngx-daterangepicker-material';
+import { ElectronService, LoggerService } from '@gauzy/desktop-ui-lib';
 
 // TODO: we should use some internal function which returns version of Gauzy;
 const version = '0.1.0';
@@ -208,7 +209,9 @@ if (environment.SENTRY_DSN && environment.SENTRY_DSN === 'DOCKER_SENTRY_DSN') {
 		},
 		AppModuleGuard,
 		ColorPickerService,
-		CookieService
+		CookieService,
+		ElectronService,
+		LoggerService
 	]
 })
 export class AppModule {
