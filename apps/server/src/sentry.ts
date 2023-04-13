@@ -1,7 +1,5 @@
 const { init, IPCMode } =
-	process.type === 'browser'
-		? require('@sentry/electron/main')
-		: require('@sentry/electron/renderer');
+	process.type === 'browser' ? require('@sentry/electron/main') : require('@sentry/electron/renderer');
 
 import { environment } from './environments/environment';
 
@@ -16,14 +14,14 @@ export function initSentry() {
 				// The maximum number of events to keep in the queue.
 				maxQueueCount: 30,
 				// Called every time the number of requests in the queue changes.
-				queuedLengthChanged: (length) => { },
+				queuedLengthChanged: (length) => {},
 				// Called before attempting to send an event to Sentry. Used to override queuing behavior.
 				//
 				// Return 'send' to attempt to send the event.
 				// Return 'queue' to queue and persist the event for sending later.
 				// Return 'drop' to drop the event.
-				beforeSend: (request) => (isOnline() ? 'send' : 'queue'),
-			},
+				beforeSend: (request) => (isOnline() ? 'send' : 'queue')
+			}
 		});
 	}
 }

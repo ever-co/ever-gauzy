@@ -10,7 +10,7 @@ import {
 	NbDialogService,
 	NbLayoutModule,
 	NbMenuModule,
-	NbSidebarModule,
+	NbSidebarModule
 } from '@nebular/theme';
 import { NgxElectronModule } from 'ngx-electron';
 import { AppService } from './app.service';
@@ -22,7 +22,7 @@ import {
 	ServerDashboardModule,
 	ElectronService,
 	LoggerService,
-	AboutModule,
+	AboutModule
 } from '@gauzy/desktop-ui-lib';
 import { NbCardModule, NbButtonModule } from '@nebular/theme';
 import { RouterModule } from '@angular/router';
@@ -50,7 +50,7 @@ import { Router } from '@angular/router';
 		SettingsModule,
 		UpdaterModule,
 		ServerDashboardModule,
-		AboutModule,
+		AboutModule
 	],
 	providers: [
 		AppService,
@@ -61,22 +61,22 @@ import { Router } from '@angular/router';
 		{
 			provide: ErrorHandler,
 			useValue: Sentry.createErrorHandler({
-				showDialog: true,
-			}),
+				showDialog: true
+			})
 		},
 		{
 			provide: Sentry.TraceService,
-			deps: [Router],
+			deps: [Router]
 		},
 		{
 			provide: APP_INITIALIZER,
-			useFactory: () => () => { },
+			useFactory: () => () => {},
 			deps: [Sentry.TraceService],
-			multi: true,
+			multi: true
 		}
 	],
-	bootstrap: [AppComponent],
+	bootstrap: [AppComponent]
 })
 export class AppModule {
-	constructor() { }
+	constructor() {}
 }

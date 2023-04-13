@@ -8,9 +8,7 @@ export class SentryErrorHandler implements ErrorHandler {
 
 	handleError(error) {
 		if (environment.SENTRY_DSN) {
-			const eventId = Sentry.captureException(
-				error.originalError || error
-			);
+			const eventId = Sentry.captureException(error.originalError || error);
 			Sentry.showReportDialog({ eventId });
 		}
 

@@ -11,7 +11,7 @@ import {
 	IOrganizationProjectsCreateInput,
 	IOrganizationProject,
 	IOrganizationContactCreateInput,
-	IOrganizationContact,
+	IOrganizationContact
 } from '@gauzy/contracts';
 import { ClientCacheService } from '../services/client-cache.service';
 import { TaskCacheService } from '../services/task-cache.service';
@@ -24,7 +24,7 @@ import { TimeLogCacheService } from '../services/time-log-cache.service';
 import { LoggerService } from '../electron/services';
 
 @Injectable({
-	providedIn: 'root',
+	providedIn: 'root'
 })
 export class TimeTrackerService {
 	AW_HOST = 'http://localhost:5600';
@@ -57,22 +57,19 @@ export class TimeTrackerService {
 				tenantId: values.tenantId,
 				...(values.projectId
 					? {
-							projectId: values.projectId,
+							projectId: values.projectId
 					  }
-					: {}),
-			},
+					: {})
+			}
 		};
 		let tasks$ = this._taskCacheService.getValue(request);
 		if (!tasks$) {
 			tasks$ = this.http
-				.get(
-					`${values.apiHost}/api/tasks/employee/${values.employeeId}`,
-					{
-						params: toParams({
-							...request,
-						}),
-					}
-				)
+				.get(`${values.apiHost}/api/tasks/employee/${values.employeeId}`, {
+					params: toParams({
+						...request
+					})
+				})
 				.pipe(
 					map((response: any) => response),
 					shareReplay(1)
@@ -87,16 +84,16 @@ export class TimeTrackerService {
 				relations: ['user'],
 				findInput: {
 					organization: {
-						id: values.organizationId,
-					},
-				},
-			}),
+						id: values.organizationId
+					}
+				}
+			})
 		};
 		let employee$ = this._employeeCacheService.getValue(params);
 		if (!employee$) {
 			employee$ = this.http
 				.get(`${values.apiHost}/api/employee/${values.employeeId}`, {
-					params: toParams(params),
+					params: toParams(params)
 				})
 				.pipe(
 					map((response: any) => response),
@@ -111,7 +108,7 @@ export class TimeTrackerService {
 		const params = values.organizationId
 			? {
 					organizationId: values.organizationId,
-					tenantId: values.tenantId,
+					tenantId: values.tenantId
 			  }
 			: {};
 		let tags$ = this._tagCacheService.getValue(params);
@@ -136,19 +133,16 @@ export class TimeTrackerService {
 			tenantId: values.tenantId,
 			...(values.organizationContactId
 				? {
-						organizationContactId: values.organizationContactId,
+						organizationContactId: values.organizationContactId
 				  }
-				: {}),
+				: {})
 		};
 		let projects$ = this._projectCacheService.getValue(params);
 		if (!projects$) {
 			projects$ = this.http
-				.get(
-					`${values.apiHost}/api/organization-projects/employee/${values.employeeId}`,
-					{
-						params: toParams(params),
-					}
-				)
+				.get(`${values.apiHost}/api/organization-projects/employee/${values.employeeId}`, {
+					params: toParams(params)
+				})
 				.pipe(
 					map((response: any) => response),
 					shareReplay(1)
@@ -160,17 +154,14 @@ export class TimeTrackerService {
 
 	async getClient(values) {
 		const params = {
-			organizationId: values.organizationId,
+			organizationId: values.organizationId
 		};
 		let clients$ = this._clientCacheService.getValue(params);
 		if (!clients$) {
 			clients$ = this.http
-				.get(
-					`${values.apiHost}/api/organization-contact/employee/${values.employeeId}`,
-					{
-						params
-					}
-				)
+				.get(`${values.apiHost}/api/organization-contact/employee/${values.employeeId}`, {
+					params
+				})
 				.pipe(
 					map((response: any) => response),
 					shareReplay(1)
@@ -193,13 +184,9 @@ export class TimeTrackerService {
 						tenantId: values.tenantId,
 						organizationId: values.organizationId,
 						employeeIds: [values.employeeId],
-						todayStart: toUTC(moment().startOf('day')).format(
-							'YYYY-MM-DD HH:mm:ss'
-						),
-						todayEnd: toUTC(moment().endOf('day')).format(
-							'YYYY-MM-DD HH:mm:ss'
-						),
-					}),
+						todayStart: toUTC(moment().startOf('day')).format('YYYY-MM-DD HH:mm:ss'),
+						todayEnd: toUTC(moment().endOf('day')).format('YYYY-MM-DD HH:mm:ss')
+					})
 				})
 				.pipe(
 					map((response: any) => response),
@@ -245,15 +232,10 @@ export class TimeTrackerService {
 			organizationContactId: values.organizationContactId,
 			isRunning: true,
 			version: values.version,
-			startedAt: moment(values.startedAt).utc().toISOString(),
+			startedAt: moment(values.startedAt).utc().toISOString()
 		};
 		this._loggerService.log.info(`Toggle Start Timer Request: ${moment().format()}`, body);
-		return firstValueFrom(
-			this.http.post(
-				`${values.apiHost}/api/timesheet/timer/start`,
-				{ ...body }
-			)
-		);
+		return firstValueFrom(this.http.post(`${values.apiHost}/api/timesheet/timer/start`, { ...body }));
 	}
 
 	toggleApiStop(values) {
@@ -271,15 +253,10 @@ export class TimeTrackerService {
 			isRunning: false,
 			version: values.version,
 			startedAt: moment(values.startedAt).utc().toISOString(),
-			stoppedAt: moment(values.stoppedAt).utc().toISOString(),
+			stoppedAt: moment(values.stoppedAt).utc().toISOString()
 		};
 		this._loggerService.log.info(`Toggle Stop Timer Request: ${moment().format()}`, body);
-		return firstValueFrom(
-			this.http.post(
-				`${values.apiHost}/api/timesheet/timer/stop`,
-				{ ...body }
-			)
-		);
+		return firstValueFrom(this.http.post(`${values.apiHost}/api/timesheet/timer/stop`, { ...body }));
 	}
 
 	deleteTimeSlot(values) {
@@ -300,7 +277,7 @@ export class TimeTrackerService {
 		const params = toParams({
 			ids: [...values.timeslotIds],
 			tenantId: values.tenantId,
-			organizationId: values.organizationId,
+			organizationId: values.organizationId
 		});
 
 		return firstValueFrom(
@@ -317,15 +294,15 @@ export class TimeTrackerService {
 					tenantId: values.tenantId,
 					organizationId: values.organizationId,
 					employeeId: values.employeeId,
-					source: 'DESKTOP',
-				},
+					source: 'DESKTOP'
+				}
 			})
 		);
 	}
 
 	deleteInvalidTimeLog(values) {
 		const params = toParams({
-			logIds: values.timeLogIds,
+			logIds: values.timeLogIds
 		});
 
 		return firstValueFrom(
@@ -342,7 +319,7 @@ export class TimeTrackerService {
 					source: 'DESKTOP',
 					tenantId: values.tenantId,
 					organizationId: values.organizationId,
-					relations: ['employee', 'employee.user'],
+					relations: ['employee', 'employee.user']
 				}
 			})
 		);
@@ -433,7 +410,7 @@ export class TimeTrackerService {
 			organizationId: values.organizationId,
 			tenantId: values.tenantId,
 			organizationContactId: values.organizationContactId,
-			recordedAt: moment(values.recordedAt).utc().toISOString(),
+			recordedAt: moment(values.recordedAt).utc().toISOString()
 		};
 
 		console.log('Params', params);
@@ -445,17 +422,15 @@ export class TimeTrackerService {
 		// }
 
 		return firstValueFrom(
-			this.http
-				.post(`${values.apiHost}/api/timesheet/time-slot`, params)
-				.pipe(
-					catchError((error) => {
-						error.error = {
-							...error.error,
-							params: JSON.stringify(params),
-						};
-						return throwError(() => new Error(error));
-					})
-				)
+			this.http.post(`${values.apiHost}/api/timesheet/time-slot`, params).pipe(
+				catchError((error) => {
+					error.error = {
+						...error.error,
+						params: JSON.stringify(params)
+					};
+					return throwError(() => new Error(error));
+				})
+			)
 		);
 	}
 
@@ -468,22 +443,17 @@ export class TimeTrackerService {
 		formData.append('timeSlotId', values.timeSlotId);
 		formData.append('tenantId', values.tenantId);
 		formData.append('organizationId', values.organizationId);
-		formData.append(
-			'recordedAt',
-			moment(values.recordedAt).utc().toISOString()
-		);
+		formData.append('recordedAt', moment(values.recordedAt).utc().toISOString());
 		return firstValueFrom(
-			this.http
-				.post(`${values.apiHost}/api/timesheet/screenshot`, formData)
-				.pipe(
-					catchError((error) => {
-						error.error = {
-							...error.error,
-							params: JSON.stringify(formData),
-						};
-						return throwError(() => new Error(error));
-					})
-				)
+			this.http.post(`${values.apiHost}/api/timesheet/screenshot`, formData).pipe(
+				catchError((error) => {
+					error.error = {
+						...error.error,
+						params: JSON.stringify(formData)
+					};
+					return throwError(() => new Error(error));
+				})
+			)
 		);
 	}
 
@@ -491,11 +461,7 @@ export class TimeTrackerService {
 		const byteCharacters = atob(b64Data);
 		const byteArrays = [];
 
-		for (
-			let offset = 0;
-			offset < byteCharacters.length;
-			offset += sliceSize
-		) {
+		for (let offset = 0; offset < byteCharacters.length; offset += sliceSize) {
 			const slice = byteCharacters.slice(offset, offset + sliceSize);
 
 			const byteNumbers = new Array(slice.length);
@@ -539,53 +505,37 @@ export class TimeTrackerService {
 
 	saveNewTask(values, payload) {
 		return firstValueFrom(
-			this.http
-				.post(`${values.apiHost}/api/tasks`, payload)
-				.pipe(
-					tap(() => this._taskCacheService.clear()),
-					catchError((error) => {
-						error.error = {
-							...error.error,
-						};
-						return throwError(() => new Error(error));
-					})
-				)
+			this.http.post(`${values.apiHost}/api/tasks`, payload).pipe(
+				tap(() => this._taskCacheService.clear()),
+				catchError((error) => {
+					error.error = {
+						...error.error
+					};
+					return throwError(() => new Error(error));
+				})
+			)
 		);
 	}
 
-	createNewProject(
-		createInput: IOrganizationProjectsCreateInput,
-		data
-	): Promise<IOrganizationProject> {
+	createNewProject(createInput: IOrganizationProjectsCreateInput, data): Promise<IOrganizationProject> {
 		return firstValueFrom(
 			this.http
-				.post<IOrganizationProject>(
-					data.apiHost + '/api/organization-projects',
-					createInput
-				)
+				.post<IOrganizationProject>(data.apiHost + '/api/organization-projects', createInput)
 				.pipe(tap(() => this._projectCacheService.clear()))
 		);
 	}
 
-	createNewContact(
-		input: IOrganizationContactCreateInput,
-		values
-	): Promise<IOrganizationContact> {
+	createNewContact(input: IOrganizationContactCreateInput, values): Promise<IOrganizationContact> {
 		return firstValueFrom(
-			this.http
-				.post<IOrganizationContact>(
-					`${values.apiHost}/api/organization-contact`,
-					input
-				)
-				.pipe(
-					tap(() => this._clientCacheService.clear()),
-					catchError((error) => {
-						error.error = {
-							...error.error,
-						};
-						return throwError(() => new Error(error));
-					})
-				)
+			this.http.post<IOrganizationContact>(`${values.apiHost}/api/organization-contact`, input).pipe(
+				tap(() => this._clientCacheService.clear()),
+				catchError((error) => {
+					error.error = {
+						...error.error
+					};
+					return throwError(() => new Error(error));
+				})
+			)
 		);
 	}
 }

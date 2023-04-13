@@ -4,7 +4,7 @@ import { AppModule } from './app/app.module';
 import { environment } from './environments/environment';
 import { enableAkitaProdMode, persistState } from '@datorama/akita';
 import { akitaConfig } from '@datorama/akita';
-import * as Sentry from "@sentry/angular-ivy";
+import * as Sentry from '@sentry/angular-ivy';
 
 if (environment.production) {
 	enableProdMode();
@@ -30,16 +30,16 @@ Sentry.init({
 				'localhost',
 				'https://apidemo.gauzy.co',
 				'https://apistage.gauzy.co',
-				'https://api.gauzy.co',
+				'https://api.gauzy.co'
 			],
-			routingInstrumentation: Sentry.routingInstrumentation,
-		}),
+			routingInstrumentation: Sentry.routingInstrumentation
+		})
 	],
 
 	// Set tracesSampleRate to 1.0 to capture 100%
 	// of transactions for performance monitoring.
 	// We recommend adjusting this value in production
-	tracesSampleRate: 1.0,
+	tracesSampleRate: 1.0
 });
 
 platformBrowserDynamic()

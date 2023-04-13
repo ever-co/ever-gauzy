@@ -9,7 +9,7 @@ import {
 	NbToastrModule,
 	NbDialogService,
 	NbLayoutModule,
-	NbDatepickerModule,
+	NbDatepickerModule
 } from '@nebular/theme';
 import { NgxElectronModule } from 'ngx-electron';
 import { AppService } from './app.service';
@@ -23,14 +23,14 @@ import {
 	SetupModule,
 	ElectronService,
 	LoggerService,
-	AboutModule,
+	AboutModule
 } from '@gauzy/desktop-ui-lib';
 import { NbCardModule, NbButtonModule } from '@nebular/theme';
 import { RouterModule } from '@angular/router';
 import { HTTP_INTERCEPTORS } from '@angular/common/http';
 import { TenantInterceptor } from './interceptors/tenant.interceptor';
 import { TokenInterceptor } from './interceptors/token.interceptor';
-import * as Sentry from "@sentry/angular-ivy";
+import * as Sentry from '@sentry/angular-ivy';
 import { Router } from '@angular/router';
 
 @NgModule({
@@ -55,7 +55,7 @@ import { Router } from '@angular/router';
 		UpdaterModule,
 		ImageViewerModule,
 		NbDatepickerModule.forRoot(),
-		AboutModule,
+		AboutModule
 	],
 	providers: [
 		AppService,
@@ -66,32 +66,32 @@ import { Router } from '@angular/router';
 		{
 			provide: HTTP_INTERCEPTORS,
 			useClass: TokenInterceptor,
-			multi: true,
+			multi: true
 		},
 		{
 			provide: HTTP_INTERCEPTORS,
 			useClass: TenantInterceptor,
-			multi: true,
+			multi: true
 		},
 		{
 			provide: ErrorHandler,
 			useValue: Sentry.createErrorHandler({
-				showDialog: true,
-			}),
+				showDialog: true
+			})
 		},
 		{
 			provide: Sentry.TraceService,
-			deps: [Router],
+			deps: [Router]
 		},
 		{
 			provide: APP_INITIALIZER,
-			useFactory: () => () => { },
+			useFactory: () => () => {},
 			deps: [Sentry.TraceService],
-			multi: true,
-		},
+			multi: true
+		}
 	],
-	bootstrap: [AppComponent],
+	bootstrap: [AppComponent]
 })
 export class AppModule {
-	constructor() { }
+	constructor() {}
 }

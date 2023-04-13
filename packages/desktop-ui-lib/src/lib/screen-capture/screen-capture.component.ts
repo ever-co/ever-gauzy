@@ -19,16 +19,11 @@ export class ScreenCaptureComponent implements OnInit {
 
 	ngOnInit(): void {
 		const imgSrc = this.electronService.remote.getGlobal('variableGlobal');
-		this.electronService.ipcRenderer.on(
-			'show_popup_screen_capture',
-			(event, arg) => {
-				this._ngZone.run(() => {
-					this.note = arg.note;
-				});
-			}
-		);
-		this.screenCaptureUrl = this.domSanitizer.bypassSecurityTrustUrl(
-			imgSrc.screenshotSrc
-		);
+		this.electronService.ipcRenderer.on('show_popup_screen_capture', (event, arg) => {
+			this._ngZone.run(() => {
+				this.note = arg.note;
+			});
+		});
+		this.screenCaptureUrl = this.domSanitizer.bypassSecurityTrustUrl(imgSrc.screenshotSrc);
 	}
 }

@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { ElectronService } from '..';
 
 @Injectable({
-	providedIn: 'root',
+	providedIn: 'root'
 })
 export class LoggerService {
 	private _log: any;

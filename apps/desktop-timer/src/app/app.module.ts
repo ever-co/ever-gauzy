@@ -13,11 +13,7 @@ import {
 } from '@nebular/theme';
 import { NgxElectronModule } from 'ngx-electron';
 import { AppService } from './app.service';
-import {
-	HttpClientModule,
-	HTTP_INTERCEPTORS,
-	HttpClient
-} from '@angular/common/http';
+import { HttpClientModule, HTTP_INTERCEPTORS, HttpClient } from '@angular/common/http';
 import {
 	NgxLoginModule,
 	ImageViewerModule,
@@ -152,14 +148,10 @@ import { ErrorHandlerService } from './services/error-handler.service';
 	exports: [NgSelectModule]
 })
 export class AppModule {
-	constructor() { }
+	constructor() {}
 }
 
-export function serverConnectionFactory(
-	provider: ServerConnectionService,
-	store: Store,
-	router: Router
-) {
+export function serverConnectionFactory(provider: ServerConnectionService, store: Store, router: Router) {
 	return () => {
 		return provider
 			.checkServerConnection(environment.API_BASE_URL)

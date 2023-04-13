@@ -6,7 +6,7 @@ import { ErrorServerService } from './error-server.service';
 import { LoggerService } from '@gauzy/desktop-ui-lib';
 
 @Injectable({
-	providedIn: 'root',
+	providedIn: 'root'
 })
 export class ErrorHandlerService implements ErrorHandler {
 	constructor(

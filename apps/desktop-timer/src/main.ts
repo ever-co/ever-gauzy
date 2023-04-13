@@ -31,7 +31,7 @@ Sentry.init({
 				'localhost',
 				'https://apidemo.gauzy.co',
 				'https://apistage.gauzy.co',
-				'https://api.gauzy.co',
+				'https://api.gauzy.co'
 			],
 			routingInstrumentation: Sentry.routingInstrumentation
 		})

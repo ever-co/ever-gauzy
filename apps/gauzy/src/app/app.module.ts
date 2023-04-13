@@ -33,10 +33,7 @@ import { HttpClient } from '@angular/common/http';
 import { TranslateModule, TranslateLoader } from '@ngx-translate/core';
 import { Cloudinary as CloudinaryCore } from 'cloudinary-core';
 import { CloudinaryModule } from '@cloudinary/angular-5.x';
-import {
-	cloudinaryConfiguration,
-	environment
-} from '../environments/environment';
+import { cloudinaryConfiguration, environment } from '../environments/environment';
 import { FileUploadModule } from 'ng2-file-upload';
 import { ServerConnectionService } from './@core/services/server-connection.service';
 import { Store } from './@core/services/store.service';
@@ -74,7 +71,6 @@ export const cloudinary = {
 if (environment.SENTRY_DSN && environment.SENTRY_DSN === 'DOCKER_SENTRY_DSN') {
 	console.warn('You are running inside Docker but does not have SENTRY_DSN env set');
 } else if (environment.SENTRY_DSN && environment.SENTRY_DSN !== 'DOCKER_SENTRY_DSN') {
-
 	console.log(`Enabling Sentry with DSN: ${environment.SENTRY_DSN}`);
 
 	Sentry.init({
@@ -82,13 +78,18 @@ if (environment.SENTRY_DSN && environment.SENTRY_DSN === 'DOCKER_SENTRY_DSN') {
 		environment: environment.production ? 'production' : 'development',
 		// this enables automatic instrumentation
 		integrations: [
-      // Registers and configures the Tracing integration,
-      // which automatically instruments your application to monitor its
-      // performance, including custom Angular routing instrumentation
+			// Registers and configures the Tracing integration,
+			// which automatically instruments your application to monitor its
+			// performance, including custom Angular routing instrumentation
 			new Sentry.BrowserTracing({
-				tracingOrigins: ["localhost", "https://apidemo.gauzy.co/api", "https://api.gauzy.co/api", "https://apistage.gauzy.co/api"],
-				routingInstrumentation: Sentry.routingInstrumentation,
-      })
+				tracingOrigins: [
+					'localhost',
+					'https://apidemo.gauzy.co/api',
+					'https://api.gauzy.co/api',
+					'https://apistage.gauzy.co/api'
+				],
+				routingInstrumentation: Sentry.routingInstrumentation
+			})
 		],
 		// TODO: we should use some internal function which returns version of Gauzy
 		release: 'gauzy@' + version,
@@ -136,7 +137,7 @@ if (environment.SENTRY_DSN && environment.SENTRY_DSN === 'DOCKER_SENTRY_DSN') {
 		NgxElectronModule,
 		FeatureToggleModule,
 		NgxPermissionsModule.forRoot(),
-    	NgxDaterangepickerMd.forRoot()
+		NgxDaterangepickerMd.forRoot()
 	],
 	bootstrap: [AppComponent],
 	providers: [
@@ -226,11 +227,7 @@ export class AppModule {
 	}
 }
 
-export function serverConnectionFactory(
-	provider: ServerConnectionService,
-	store: Store,
-	router: Router
-) {
+export function serverConnectionFactory(provider: ServerConnectionService, store: Store, router: Router) {
 	return () =>
 		provider
 			.checkServerConnection(environment.API_BASE_URL)
@@ -246,10 +243,7 @@ export function googleMapsLoaderFactory(provider: GoogleMapsLoaderService) {
 	return () => provider.load(environment.GOOGLE_MAPS_API_KEY);
 }
 
-export function featureToggleLoaderFactory(
-	provider: FeatureService,
-	store: Store
-) {
+export function featureToggleLoaderFactory(provider: FeatureService, store: Store) {
 	return () =>
 		provider
 			.getFeatureToggleDefinition()
