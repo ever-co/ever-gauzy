@@ -8,7 +8,7 @@ import {
 import { firstValueFrom } from 'rxjs';
 import { AuthService } from '../services/auth.service';
 import { AuthStrategy } from './auth-strategy.service';
-import { ElectronService } from 'ngx-electron';
+import { ElectronService } from '@gauzy/desktop-ui-lib';
 import { Store } from '../services/store.service';
 
 @Injectable()
@@ -39,7 +39,7 @@ export class AuthGuard implements CanActivate {
         }
 
         // not logged in so redirect to login page with the return url
-        if (this.electronService.isElectronApp) {
+        if (this.electronService.isElectron) {
 			try {
 				this.electronService.ipcRenderer.send('logout');
 			} catch (error) {}

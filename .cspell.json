@@ -250,7 +250,9 @@
         "Whitespaces",
         "datatables",
         "dbname",
-        "EOSQL"
+        "EOSQL",
+        "rememberMe",
+        "Rememberd"
     ],
     "useGitignore": true,
     "ignorePaths": [

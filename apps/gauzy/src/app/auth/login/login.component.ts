@@ -2,7 +2,7 @@ import { ChangeDetectorRef, Component, Inject, OnInit, ViewChild } from '@angula
 import { Router } from '@angular/router';
 import { FormGroupDirective } from '@angular/forms';
 import { NbAuthService, NbLoginComponent, NB_AUTH_OPTIONS } from '@nebular/auth';
-import { ElectronService } from 'ngx-electron';
+import { ElectronService } from '@gauzy/desktop-ui-lib';
 import { RolesEnum } from '@gauzy/contracts';
 import { environment } from './../../../environments/environment';
 import { CookieService } from 'ngx-cookie-service';

@@ -169,6 +169,9 @@ if (process.platform === 'win32') {
 	app.setAppUserModelId('com.ever.gauzydesktoptimer');
 }
 
+/* Set unlimited listeners */
+ipcMain.setMaxListeners(0);
+
 async function startServer(value, restart = false) {
 	const dataModel = new DataModel();
 	await dataModel.createNewTable(knex);

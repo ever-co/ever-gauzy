@@ -8,7 +8,7 @@ import { distinctUntilChange, isNotEmpty } from '@gauzy/common-angular';
 import { NbAuthStrategyClass } from '@nebular/auth/auth.options';
 import { AuthService } from '../services/auth.service';
 import { Store } from '../services/store.service';
-import { ElectronService } from 'ngx-electron';
+import { ElectronService } from '@gauzy/desktop-ui-lib';
 import { TimeTrackerService } from '../../@shared/time-tracker/time-tracker.service';
 import { TimesheetFilterService } from '../../@shared/timesheet/timesheet-filter.service';
 import { CookieService } from 'ngx-cookie-service';
@@ -269,7 +269,7 @@ export class AuthStrategy extends NbAuthStrategy {
 
 		this.store.clear();
 		this.store.serverConnection = 200;
-		if (this.electronService.isElectronApp) {
+		if (this.electronService.isElectron) {
 			try {
 				this.electronService.ipcRenderer.send('logout');
 			} catch (error) {}
@@ -350,7 +350,7 @@ export class AuthStrategy extends NbAuthStrategy {
 
 	public electronAuthentication({ user, token }: IAuthResponse) {
 		try {
-			if (this.electronService.isElectronApp) {
+			if (this.electronService.isElectron) {
 				this.electronService.ipcRenderer.send('auth_success', {
 					user: user,
 					token: token,
