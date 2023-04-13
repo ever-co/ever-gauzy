@@ -229,8 +229,8 @@ export class AuthService extends SocialAuthService {
 			tenant,
 			...(input.password
 				? {
-						hash: await this.getPasswordHash(input.password)
-				  }
+					hash: await this.getPasswordHash(input.password)
+				}
 				: {})
 		});
 		const entity = await this.userRepository.save(create);
@@ -239,8 +239,8 @@ export class AuthService extends SocialAuthService {
 		await this.userRepository.update(entity.id, {
 			...(input.inviteId
 				? {
-						emailVerifiedAt: freshTimestamp()
-				  }
+					emailVerifiedAt: freshTimestamp()
+				}
 				: {})
 		});
 
@@ -256,7 +256,7 @@ export class AuthService extends SocialAuthService {
 			}
 		});
 
-		if (input.organizationId) {
+		if (isNotEmpty(input.organizationId)) {
 			await this.userOrganizationService.addUserToOrganization(user, input.organizationId);
 		}
 
