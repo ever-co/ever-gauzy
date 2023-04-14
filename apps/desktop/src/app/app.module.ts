@@ -24,12 +24,14 @@ import {
 	ElectronService,
 	LoggerService,
 	AboutModule,
+	TokenInterceptor,
+	TenantInterceptor,
+	ErrorHandlerService,
+	ServerErrorInterceptor,
 } from '@gauzy/desktop-ui-lib';
 import { NbCardModule, NbButtonModule } from '@nebular/theme';
 import { RouterModule } from '@angular/router';
 import { HTTP_INTERCEPTORS } from '@angular/common/http';
-import { TenantInterceptor } from './interceptors/tenant.interceptor';
-import { TokenInterceptor } from './interceptors/token.interceptor';
 import * as Sentry from "@sentry/angular-ivy";
 import { Router } from '@angular/router';
 
@@ -89,6 +91,15 @@ import { Router } from '@angular/router';
 			deps: [Sentry.TraceService],
 			multi: true,
 		},
+		{
+			provide: ErrorHandler,
+			useClass: ErrorHandlerService
+		},
+		{
+			provide: HTTP_INTERCEPTORS,
+			useClass: ServerErrorInterceptor,
+			multi: true
+		}
 	],
 	bootstrap: [AppComponent],
 })

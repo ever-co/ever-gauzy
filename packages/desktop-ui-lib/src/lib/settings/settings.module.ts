@@ -18,9 +18,11 @@ import {
 	NbToastrService,
 	NbAccordionModule,
 	NbTooltipModule,
-	NbSpinnerModule
+	NbSpinnerModule,
+	NbDialogService
 } from '@nebular/theme';
 import { FormsModule } from '@angular/forms';
+import { TimeTrackerService } from '../time-tracker/time-tracker.service';
 
 @NgModule({
 	declarations: [SettingsComponent],
@@ -45,7 +47,9 @@ import { FormsModule } from '@angular/forms';
 		NbSpinnerModule
 	],
 	providers: [
-		NbToastrService
+		NbToastrService,
+		TimeTrackerService,
+		NbDialogService
 	],
 	exports: [SettingsComponent]
 })

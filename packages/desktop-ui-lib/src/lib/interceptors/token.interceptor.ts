@@ -6,16 +6,16 @@ import {
 	HttpInterceptor
 } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { Store } from './services/store.service';
+import { Store } from '../services';
 
 @Injectable()
 export class TokenInterceptor implements HttpInterceptor {
-	constructor(private store: Store) {}
+	constructor(private store: Store) { }
 	intercept(
 		request: HttpRequest<any>,
 		next: HttpHandler
 	): Observable<HttpEvent<any>> {
-		const token = this.store.token;		
+		const token = this.store.token;
 		if (token) {
 			request = request.clone({
 				setHeaders: {

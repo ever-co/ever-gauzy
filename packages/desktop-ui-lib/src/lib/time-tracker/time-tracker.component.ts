@@ -29,9 +29,8 @@ import {
 	ProjectOwnerEnum,
 	TaskStatusEnum
 } from '@gauzy/contracts';
-import { Store } from '@gauzy/desktop-timer/src/app/auth/services/store.service';
 import { compressImage } from '@gauzy/common-angular';
-import { ErrorHandlerService, NativeNotificationService, ToastrNotificationService } from 'apps/desktop-timer/src/app/services';
+import { Store, ErrorHandlerService, NativeNotificationService, ToastrNotificationService } from '../services';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

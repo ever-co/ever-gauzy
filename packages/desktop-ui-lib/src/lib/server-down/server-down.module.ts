@@ -4,6 +4,9 @@ import { FormsModule } from '@angular/forms';
 import { Routes, RouterModule } from '@angular/router';
 import { ServerDownPage } from './server-down.page';
 import { NbSidebarModule, NbLayoutModule } from '@nebular/theme';
+import { ServerConnectionService, Store } from '../services';
+
+export * from './server-down.page';
 
 const routes: Routes = [
 	{
@@ -20,6 +23,7 @@ const routes: Routes = [
 		NbLayoutModule,
 		RouterModule.forChild(routes)
 	],
-	declarations: [ServerDownPage]
+	declarations: [ServerDownPage],
+	providers: [Store, ServerConnectionService]
 })
-export class ServerDownModule {}
+export class ServerDownModule { }
