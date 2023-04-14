@@ -50,7 +50,7 @@ import { NgSelectModule } from '@ng-select/ng-select';
 import { AppModuleGuard } from './app.module.guards';
 import { Router } from '@angular/router';
 import { TranslateModule, TranslateLoader } from '@ngx-translate/core';
-import * as Sentry from '@sentry/angular-ivy';
+import * as Sentry from '@sentry/angular';
 
 @NgModule({
 	declarations: [AppComponent],

@@ -4,7 +4,7 @@ import { AppModule } from './app/app.module';
 import { environment } from './environments/environment';
 import { enableAkitaProdMode, persistState } from '@datorama/akita';
 import { akitaConfig } from '@datorama/akita';
-import * as Sentry from "@sentry/angular-ivy";
+import * as Sentry from "@sentry/angular";
 
 if (environment.production) {
 	enableProdMode();
