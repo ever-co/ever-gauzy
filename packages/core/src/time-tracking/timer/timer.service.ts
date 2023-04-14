@@ -391,13 +391,14 @@ export class TimerService {
 	public async getTimerWorkedStatus(request: ITimerStatusInput): Promise<ITimerStatus> {
 		const userId = RequestContext.currentUserId();
 		const tenantId = RequestContext.currentTenantId() || request.tenantId;
+		const { organizationId, organizationTeamId } = request;
 
 		let employee = await this.employeeRepository.findOneBy({
 			userId,
 			tenantId,
 		});
 
-		if ((RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE) || isNotEmpty(request.organizationTeamId)) && isNotEmpty(request.employeeId)) {
+		if ((RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE) || isNotEmpty(organizationTeamId)) && isNotEmpty(request.employeeId)) {
 			employee = await this.employeeRepository.findOneBy({
 				id: request.employeeId,
 				tenantId,
@@ -424,7 +425,12 @@ export class TimerService {
 				stoppedAt: Not(IsNull()),
 				employeeId,
 				tenantId,
-				organizationId: request.organizationId,
+				organizationId,
+				...(isNotEmpty(organizationTeamId)
+					? {
+						organizationTeamId
+					}
+					: {}),
 			},
 			order: {
 				startedAt: 'DESC',
