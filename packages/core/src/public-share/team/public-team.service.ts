@@ -116,11 +116,13 @@ export class PublicTeamService {
 							totalWorkedTasks: await this._statisticService.getTasks({
 								organizationId,
 								tenantId,
+								organizationTeamId,
 								employeeIds: [employeeId]
 							}),
 							totalTodayTasks: await this._statisticService.getTasks({
 								organizationId,
 								tenantId,
+								organizationTeamId,
 								employeeIds: [employeeId],
 								startDate,
 								endDate
