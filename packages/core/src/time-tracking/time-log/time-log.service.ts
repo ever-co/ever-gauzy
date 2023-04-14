@@ -124,8 +124,8 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 			},
 			...(request && request.relations
 				? {
-						relations: request.relations
-				  }
+					relations: request.relations
+				}
 				: {}),
 			order: {
 				startedAt: 'ASC'
@@ -1121,9 +1121,7 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 		const { employeeId, startedAt, stoppedAt, organizationId } = request;
 
 		if (!startedAt || !stoppedAt) {
-			throw new BadRequestException(
-				'Please select valid Date, start time and end time'
-			);
+			throw new BadRequestException('Please select valid Date, start time and end time');
 		}
 
 		/**
@@ -1144,9 +1142,7 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 		);
 
 		if (!isDateAllow) {
-			throw new BadRequestException(
-				'Please select valid Date, start time and end time'
-			);
+			throw new BadRequestException('Please select valid Date, start time and end time');
 		}
 
 		const conflicts = await this.checkConflictTime({
@@ -1279,8 +1275,8 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 				)
 					? {}
 					: {
-							employeeId: user.employeeId
-					  })
+						employeeId: user.employeeId
+					})
 			});
 			db.andWhere(
 				new Brackets((web: WhereExpressionBuilder) => {

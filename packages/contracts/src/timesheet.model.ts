@@ -1,6 +1,6 @@
 import { IBasePerTenantAndOrganizationEntityModel, IBaseRelationsEntityModel } from './base-entity.model';
 import { IOrganizationContact, OrganizationContactBudgetTypeEnum } from './organization-contact.model';
-import { IOrganizationProject, OrganizationProjectBudgetTypeEnum } from './organization-projects.model';
+import { IOrganizationProject, IRelationalOrganizationProject, OrganizationProjectBudgetTypeEnum } from './organization-projects.model';
 import { IEmployee, IEmployeeFindInput, IRelationalEmployee } from './employee.model';
 import { ITask } from './task.model';
 import { ITag } from './tag.model';
@@ -88,7 +88,7 @@ export interface IDateRange {
 	start: Date;
 	end: Date;
 }
-export interface ITimeLog extends IBasePerTenantAndOrganizationEntityModel {
+export interface ITimeLog extends IBasePerTenantAndOrganizationEntityModel, IRelationalOrganizationProject, IRelationalOrganizationTeam {
 	[x: string]: any;
 	employee: IEmployee;
 	timesheet?: ITimesheet;
@@ -105,7 +105,6 @@ export interface ITimeLog extends IBasePerTenantAndOrganizationEntityModel {
 	duration: number;
 	isBillable: boolean;
 	employeeId: string;
-	projectId?: string;
 	organizationContactId?: string;
 	taskId?: string;
 	tags?: string[];
@@ -335,7 +334,7 @@ export interface ITimerPosition {
 	y: number;
 }
 
-export interface ITimerToggleInput extends IBasePerTenantAndOrganizationEntityModel {
+export interface ITimerToggleInput extends IBasePerTenantAndOrganizationEntityModel, Pick<IRelationalOrganizationTeam, 'organizationTeamId'> {
 	projectId?: string;
 	taskId?: string;
 	organizationContactId?: string;

@@ -1,3 +1,3 @@
-export { DeleteTimeLogDTO } from './delete-time-log.dto';
-export { UpdateManualTimeLogDTO } from './update-time-log.dto';
-export { CreateManualTimeLogDTO } from './create-time-log.dto';
+export * from './delete-time-log.dto';
+export * from './update-time-log.dto';
+export * from './create-time-log.dto';

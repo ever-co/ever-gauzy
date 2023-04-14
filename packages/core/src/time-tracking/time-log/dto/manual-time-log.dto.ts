@@ -1,27 +1,28 @@
 import { ApiProperty } from "@nestjs/swagger";
-import { IsNotEmpty } from "class-validator";
-import { IManualTimeInput } from "@gauzy/contracts";
+import { IsNotEmpty, IsUUID } from "class-validator";
+import { IEmployee, IManualTimeInput } from "@gauzy/contracts";
 import { IsBeforeDate } from "./../../../shared/validators";
 import { TenantOrganizationBaseDTO } from "./../../../core/dto";
 
 export class ManualTimeLogDTO extends TenantOrganizationBaseDTO implements IManualTimeInput {
 
-    @ApiProperty({ type: () => Date, readOnly: true })
+    @ApiProperty({ type: () => Date })
     @IsNotEmpty({
         message: "Started date should not be empty"
     })
     @IsBeforeDate(ManualTimeLogDTO, (it) => it.stoppedAt, {
         message: "Started date must be before stopped date"
     })
-    readonly startedAt: Date;
+    startedAt: Date;
 
-    @ApiProperty({ type: () => Date, readOnly: true })
+    @ApiProperty({ type: () => Date })
     @IsNotEmpty({
         message: "Stopped date should not be empty"
     })
-    readonly stoppedAt: Date;
+    stoppedAt: Date;
 
-    @ApiProperty({ type: () => String, readOnly: true })
+    @ApiProperty({ type: () => String })
     @IsNotEmpty()
-    employeeId: string;
+    @IsUUID()
+    employeeId: IEmployee['id'];
 }
