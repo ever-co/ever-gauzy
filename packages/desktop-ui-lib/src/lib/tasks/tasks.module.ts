@@ -50,7 +50,7 @@ import { TimeTrackerService } from '../time-tracker/time-tracker.service';
 	],
 	providers: [
 		NbToastrService,
-        TimeTrackerService
+		TimeTrackerService
 	],
 	exports: [TasksComponent]
 })

@@ -32,6 +32,8 @@ import { NoDataMessageComponent } from './no-data-message/no-data-message.compon
 import { HumanizePipe } from './pipes/humanize.pipe';
 import { UserOrganizationService } from './organization-selector/user-organization.service';
 import { OrganizationSelectorComponent } from './organization-selector/organization-selector.component';
+import { ErrorHandlerService, NativeNotificationService, Store, ToastrNotificationService } from '../services';
+import { ElectronService, LoggerService } from '../electron/services';
 
 @NgModule({
 	declarations: [
@@ -73,6 +75,12 @@ import { OrganizationSelectorComponent } from './organization-selector/organizat
 		NbDialogService,
 		NbToastrService,
 		UserOrganizationService,
+		ErrorHandlerService,
+		NativeNotificationService,
+		ToastrNotificationService,
+		ElectronService,
+		LoggerService,
+		Store
 	],
 	exports: [TimeTrackerComponent],
 })

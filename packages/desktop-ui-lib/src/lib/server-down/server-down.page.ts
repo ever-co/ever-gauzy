@@ -1,9 +1,8 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
-import { Location } from '@angular/common';
-import { Store } from '../auth/services/store.service';
-import { ServerConnectionService } from '../auth/services/server-connection.service';
-import { environment } from '../../../../gauzy/src/environments/environment';
 import { Router } from '@angular/router';
+import { ServerConnectionService, Store } from '../services';
+// @ts-ignore
+import { environment } from '@env/environment';
 
 @Component({
 	styleUrls: ['./server-down.page.scss'],
@@ -15,7 +14,6 @@ export class ServerDownPage implements OnInit, OnDestroy {
 
 	constructor(
 		private store: Store,
-		private location: Location,
 		private serverConnectionService: ServerConnectionService,
 		private readonly router: Router
 	) {
@@ -41,5 +39,5 @@ export class ServerDownPage implements OnInit, OnDestroy {
 		}, 5000);
 	}
 
-	ngOnDestroy(): void {}
+	ngOnDestroy(): void { }
 }

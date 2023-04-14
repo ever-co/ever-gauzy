@@ -1,7 +1,7 @@
 import * as moment from 'moment';
 import { Observable } from 'rxjs';
 import { ICache, StorageService } from './storage.service';
-import { Store } from '@gauzy/desktop-timer/src/app/auth/services/store.service';
+import { Store } from '../services';
 import hash from 'hash-it';
 
 export abstract class AbstractCacheService<T> {
@@ -32,7 +32,7 @@ export abstract class AbstractCacheService<T> {
 			return null;
 		}
 		if (this._store.isOffline) {
-			/* 
+			/*
 			^_^ Ignore expire date
 			 */
 		} else if (moment(new Date()).isAfter(item.expiresAt)) {

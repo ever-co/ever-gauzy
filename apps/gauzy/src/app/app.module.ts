@@ -211,7 +211,11 @@ if (environment.SENTRY_DSN && environment.SENTRY_DSN === 'DOCKER_SENTRY_DSN') {
 		ColorPickerService,
 		CookieService,
 		ElectronService,
-		LoggerService
+		LoggerService,
+		{
+			provide: 'gauzyEnv',
+			useValue: environment
+		}
 	]
 })
 export class AppModule {

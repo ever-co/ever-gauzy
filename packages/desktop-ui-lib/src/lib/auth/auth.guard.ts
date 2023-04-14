@@ -6,9 +6,9 @@ import {
 	RouterStateSnapshot
 } from '@angular/router';
 import { AuthService } from './services/auth.service';
-import { AuthStrategy } from './auth-strategy.service';
+import { AuthStrategy } from './services/auth-strategy.service';
 import { ElectronService } from '@gauzy/desktop-ui-lib';
-import { Store } from './services/store.service';
+import { Store } from '../services';
 
 @Injectable()
 export class AuthGuard implements CanActivate {
@@ -18,7 +18,7 @@ export class AuthGuard implements CanActivate {
 		private readonly electronService: ElectronService,
 		private readonly authStrategy: AuthStrategy,
 		private readonly store: Store
-	) {}
+	) { }
 
 	async canActivate(
 		route: ActivatedRouteSnapshot,
@@ -39,7 +39,7 @@ export class AuthGuard implements CanActivate {
 			if (this.electronService.isElectron) {
 				try {
 					this.electronService.ipcRenderer.send('logout');
-				} catch (error) {}
+				} catch (error) { }
 			}
 
 			// logout and clear local store

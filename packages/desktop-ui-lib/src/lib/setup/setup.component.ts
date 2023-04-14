@@ -10,7 +10,7 @@ import { SetupService } from './setup.service';
 import { NbDialogService } from '@nebular/theme';
 import { AlertComponent } from '../../lib/dialogs/alert/alert.component';
 import { ElectronService, LoggerService } from '../electron/services';
-import { ErrorHandlerService } from 'apps/desktop-timer/src/app/services';
+import { ErrorHandlerService } from '../services';
 
 @Component({
 	selector: 'ngx-setup',
