@@ -4,9 +4,9 @@ import { catchError, map } from 'rxjs/operators';
 import { Injectable } from '@angular/core';
 import { IAuthResponse } from '@gauzy/contracts';
 import { NbAuthStrategyClass } from '@nebular/auth/auth.options';
-import { AuthService } from './services/auth.service';
-import { Store } from './services/store.service';
+import { AuthService } from './auth.service';
 import { ElectronService } from '@gauzy/desktop-ui-lib';
+import { Store } from '../../services';
 
 @Injectable()
 export class AuthStrategy extends NbAuthStrategy {
@@ -166,7 +166,7 @@ export class AuthStrategy extends NbAuthStrategy {
 		if (this.electronService.isElectron) {
 			try {
 				this.electronService.ipcRenderer.send('logout');
-			} catch (error) {}
+			} catch (error) { }
 		}
 
 		return new NbAuthResult(

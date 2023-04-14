@@ -13,8 +13,8 @@ import { ElectronService } from '../electron/services';
 import { BehaviorSubject, Observable, filter, tap } from 'rxjs';
 import { AboutComponent } from '../dialogs/about/about.component';
 import { SetupService } from '../setup/setup.service';
-import { ToastrNotificationService } from '@gauzy/desktop-timer/src/app/services';
 import * as moment from 'moment';
+import { ToastrNotificationService } from '../services';
 @Component({
 	selector: 'ngx-settings',
 	templateUrl: './settings.component.html',

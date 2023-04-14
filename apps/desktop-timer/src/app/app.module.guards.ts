@@ -5,7 +5,7 @@ import {
 	ActivatedRouteSnapshot,
 	RouterStateSnapshot
 } from '@angular/router';
-import { Store } from './auth/services/store.service';
+import { Store } from '@gauzy/desktop-ui-lib';
 
 @Injectable()
 export class AppModuleGuard implements CanActivate {

@@ -1,12 +1,16 @@
 import { NgModule } from '@angular/core';
 import { NbAuthModule } from '@nebular/auth';
 import { CommonModule } from '@angular/common';
-import { environment } from '../../../../gauzy/src/environments/environment';
 import { AuthGuard } from './auth.guard';
-import { AuthStrategy } from './auth-strategy.service';
-import { AuthService } from './services/auth.service';
-import { Store } from './services/store.service';
 import { NoAuthGuard } from './no-auth.guard';
+import { Store } from '../services';
+import { AuthService, AuthStrategy } from './services';
+// @ts-ignore
+import { environment } from '@env/environment';
+
+export * from './services';
+export * from './auth.guard';
+export * from './no-auth.guard';
 
 const socialLinks = [
 	{
@@ -65,4 +69,5 @@ const socialLinks = [
 		Store
 	]
 })
-export class AuthModule {}
+export class AuthModule {
+}
