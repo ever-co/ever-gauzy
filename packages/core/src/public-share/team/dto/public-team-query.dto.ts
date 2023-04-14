@@ -15,7 +15,11 @@ export enum PublicTeamRelationEnum {
     'members.employee.user' = 'members.employee.user',
     'tasks' = 'tasks',
     'tasks.members' = 'tasks.members',
-    'tasks.teams' = 'tasks.teams'
+    'tasks.teams' = 'tasks.teams',
+    'statuses' = 'statuses',
+    'priorities' = 'priorities',
+    'sizes' = 'sizes',
+    'labels' = 'labels',
 }
 
 export class PublicTeamQueryDTO extends IntersectionType(
