@@ -1,14 +1,7 @@
-import {
-	ApiPropertyOptional,
-	IntersectionType,
-	PickType,
-} from '@nestjs/swagger';
+import { ApiPropertyOptional, IntersectionType, PickType } from '@nestjs/swagger';
 import { IsEnum, IsOptional } from 'class-validator';
 import { Transform, TransformFnParams } from 'class-transformer';
-import {
-	IDateRangePicker,
-	IOrganizationTeamStatisticInput,
-} from '@gauzy/contracts';
+import { IDateRangePicker, IOrganizationTeamStatisticInput } from '@gauzy/contracts';
 import { DateRangeQueryDTO } from './../../../shared/dto';
 import { OrganizationTeamStatisticDTO } from './../../../organization-team/dto';
 
@@ -27,7 +20,7 @@ export enum PublicTeamRelationEnum {
 	'priorities' = 'priorities',
 	'sizes' = 'sizes',
 	'labels' = 'labels',
-	'issueTypes' = 'issueTypes',
+	'issueTypes' = 'issueTypes'
 }
 
 export class PublicTeamQueryDTO
@@ -40,8 +33,6 @@ export class PublicTeamQueryDTO
 	@ApiPropertyOptional({ type: () => String, enum: PublicTeamRelationEnum })
 	@IsOptional()
 	@IsEnum(PublicTeamRelationEnum, { each: true })
-	@Transform(({ value }: TransformFnParams) =>
-		value ? value.map((element: string) => element.trim()) : {}
-	)
+	@Transform(({ value }: TransformFnParams) => (value ? value.map((element: string) => element.trim()) : {}))
 	readonly relations: string[];
 }
