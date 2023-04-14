@@ -1,7 +1,6 @@
 import { AfterViewInit, Component, NgZone, OnInit } from '@angular/core';
-import { ElectronService } from '@gauzy/desktop-ui-lib';
+import { ElectronService, Store } from '@gauzy/desktop-ui-lib';
 import { AppService } from './app.service';
-import { Store } from '@gauzy/desktop-timer/src/app/auth/services/store.service';
 
 @Component({
 	selector: 'gauzy-root',
