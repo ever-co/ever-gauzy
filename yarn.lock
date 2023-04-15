@@ -4638,6 +4638,13 @@
     call-me-maybe "^1.0.1"
     glob-to-regexp "^0.3.0"
 
+"@nebular/auth@^11.0.0":
+  version "11.0.0"
+  resolved "https://registry.yarnpkg.com/@nebular/auth/-/auth-11.0.0.tgz#137702361e3755e228c5f6e85b43170ae5e04b33"
+  integrity sha512-SpbnZwlEYzI9WdYAjcIpzGQp9diOyv0PLVA8DndIXrOTxhawex2xdz/J5ovtc9fmQ7Rh8XY6Wi/WYYFiaWjigg==
+  dependencies:
+    tslib "^2.3.0"
+
 "@nebular/auth@^9.0.3":
   version "9.0.3"
   resolved "https://registry.yarnpkg.com/@nebular/auth/-/auth-9.0.3.tgz#f8aae8cb317c127dbefe602066681e58bfd85b95"
