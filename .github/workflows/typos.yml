@@ -1,7 +1,7 @@
 name: 'Check Spelling and Typos with cspell'
 on:
     push:
-        branches: [develop, stage, master]
+        branches: [develop, temp, stage, master]
     pull_request:
         branches: [develop]
 

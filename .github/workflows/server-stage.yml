@@ -3,7 +3,7 @@ name: Server Build Stage
 on:
     workflow_run:
         workflows: ['Release Stage']
-        branches: [stage]
+        branches: [stage, temp]
         types:
             - completed
 
