@@ -163,7 +163,7 @@ RUN mkdir dist
 
 COPY --chown=node:node --from=development /srv/gauzy .
 
-ENV NODE_OPTIONS=${NODE_OPTIONS:-"--max-old-space-size=2048"}
+ENV NODE_OPTIONS=${NODE_OPTIONS:-"--max-old-space-size=7000"}
 ENV NODE_ENV=${NODE_ENV:-production}
 ENV DEMO=${DEMO:-false}
 
@@ -200,7 +200,7 @@ RUN npm install pm2 -g && \
 
 USER node:node
 
-ENV NODE_OPTIONS=${NODE_OPTIONS:-"--max-old-space-size=2048"}
+ENV NODE_OPTIONS=${NODE_OPTIONS:-"--max-old-space-size=7000"}
 ENV NODE_ENV=${NODE_ENV:-production}
 ENV API_HOST=${API_HOST:-api}
 ENV API_PORT=${API_PORT:-3000}
