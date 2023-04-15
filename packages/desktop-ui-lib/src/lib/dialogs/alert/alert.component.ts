@@ -1,5 +1,6 @@
 import { Component, OnInit, Input } from '@angular/core';
 import { NbDialogRef } from '@nebular/theme';
+
 export interface AlertDialogOptions {
 	title?: string;
 	message?: string;
@@ -8,7 +9,7 @@ export interface AlertDialogOptions {
 @Component({
 	selector: 'ngx-alert',
 	templateUrl: './alert.component.html',
-	styleUrls: ['./alert.component.scss']
+	styleUrls: ['./alert.component.scss'],
 })
 export class AlertComponent implements OnInit {
 	@Input() data: AlertDialogOptions;

@@ -1,5 +1,4 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-
 import { ImageViewerComponent } from './image-viewer.component';
 
 describe('ImageViewerComponent', () => {
@@ -8,7 +7,7 @@ describe('ImageViewerComponent', () => {
 
 	beforeEach(async () => {
 		await TestBed.configureTestingModule({
-			declarations: [ImageViewerComponent]
+			declarations: [ImageViewerComponent],
 		}).compileComponents();
 	});
 
