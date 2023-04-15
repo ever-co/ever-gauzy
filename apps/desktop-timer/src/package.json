@@ -125,6 +125,8 @@
 	},
 	"dependencies": {
 		"@electron/remote": "^2.0.8",
+		"@datorama/akita": "^7.1.1",
+		"@datorama/akita-ngdevtools": "^7.0.0",
 		"@gauzy/contracts": "^0.1.0",
 		"@gauzy/desktop-libs": "^0.1.0",
 		"@gauzy/desktop-window": "^0.1.0",

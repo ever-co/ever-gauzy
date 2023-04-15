@@ -18,10 +18,11 @@ import {
 	NbProgressBarModule,
 	NbFormFieldModule,
 	NbDialogService,
-	NbDialogModule
+	NbDialogModule,
 } from '@nebular/theme';
 import { FormsModule } from '@angular/forms';
 import { NbEvaIconsModule } from '@nebular/eva-icons';
+
 @NgModule({
 	declarations: [SetupComponent],
 	imports: [
@@ -42,9 +43,9 @@ import { NbEvaIconsModule } from '@nebular/eva-icons';
 		NbRadioModule,
 		NbProgressBarModule,
 		NbFormFieldModule,
-		NbDialogModule
+		NbDialogModule,
 	],
 	exports: [SetupComponent],
-	providers: [SetupService, NbDialogService]
+	providers: [SetupService, NbDialogService],
 })
 export class SetupModule {}

@@ -3,7 +3,7 @@ import { Injectable, ErrorHandler } from '@angular/core';
 import { ToastrNotificationService } from './toastr-notification.service';
 import { ErrorClientService } from './error-client.service';
 import { ErrorServerService } from './error-server.service';
-import { LoggerService } from '@gauzy/desktop-ui-lib';
+import { LoggerService } from '../electron/services';
 
 @Injectable({
 	providedIn: 'root',

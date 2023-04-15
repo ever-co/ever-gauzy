@@ -15,6 +15,7 @@ import { AboutComponent } from '../dialogs/about/about.component';
 import { SetupService } from '../setup/setup.service';
 import * as moment from 'moment';
 import { ToastrNotificationService } from '../services';
+
 @Component({
 	selector: 'ngx-settings',
 	templateUrl: './settings.component.html',
@@ -390,9 +391,9 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 	serverOptions = this.isDesktopTimer
 		? [this.serverTypes.custom, this.serverTypes.live]
 		: [
-			this.serverTypes.integrated,
-			this.serverTypes.custom,
-			this.serverTypes.live,
+				this.serverTypes.integrated,
+				this.serverTypes.custom,
+				this.serverTypes.live,
 		  ];
 
 	driverOptions = [
@@ -500,7 +501,10 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 				if (!this.isServer && !this.config?.isLocalServer) {
 					await this.checkHostConnectivity();
 				} else {
-					this._isCheckHost$.next({ ...this._isCheckHost, status: true })
+					this._isCheckHost$.next({
+						...this._isCheckHost,
+						status: true,
+					});
 				}
 				this.config.awPort = this.config.timeTrackerWindow
 					? this.config.awHost.split('t:')[1]
@@ -526,17 +530,17 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 				this.menus = this.isServer
 					? ['Update', 'Advanced Setting', 'About']
 					: [
-						...(auth && auth.allowScreenshotCapture
-							? ['Screen Capture']
-							: []),
-						'Timer',
-						'Update',
-						'Advanced Setting',
-						'About',
-					];
+							...(auth && auth.allowScreenshotCapture
+								? ['Screen Capture']
+								: []),
+							'Timer',
+							'Update',
+							'Advanced Setting',
+							'About',
+					  ];
 				const lastMenu =
 					this._selectedMenu &&
-						this.menus.includes(this._selectedMenu)
+					this.menus.includes(this._selectedMenu)
 						? this._selectedMenu
 						: this.menus[0];
 				this._selectedMenu$.next(lastMenu);
@@ -638,7 +642,7 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 			this._ngZone.run(() => {
 				const lastMenu =
 					this._selectedMenu &&
-						this.menus.includes(this._selectedMenu)
+					this.menus.includes(this._selectedMenu)
 						? this._selectedMenu
 						: this.menus[0];
 				this.selectMenu(lastMenu);
@@ -693,9 +697,9 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 		this.electronService.ipcRenderer.on(
 			'_logout_quit_install_',
 			(event, arg) => {
-			this._ngZone.run(() => {
-				this.logout(true);
-			});
+				this._ngZone.run(() => {
+					this.logout(true);
+				});
 			}
 		);
 	}
@@ -716,16 +720,18 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 	}
 
 	private set _monitorsOption(item) {
-		this._monitorsOption$.next(this._monitorsOption.map((x) => {
-			if (x.value === item?.value) {
-				x.accent = 'primary';
-				x.status = 'primary';
-			} else {
-				x.accent = 'basic';
-				x.status = 'basic';
-			}
-			return x;
-		}))
+		this._monitorsOption$.next(
+			this._monitorsOption.map((x) => {
+				if (x.value === item?.value) {
+					x.accent = 'primary';
+					x.status = 'primary';
+				} else {
+					x.accent = 'basic';
+					x.status = 'basic';
+				}
+				return x;
+			})
+		);
 	}
 
 	selectMenu(menu) {
@@ -739,8 +745,8 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 		});
 		this._notifier.success(
 			'Update ' +
-			type.replace(/([a-z])([A-Z])/g, '$1 $2').toLowerCase() +
-			' setting successfully'
+				type.replace(/([a-z])([A-Z])/g, '$1 $2').toLowerCase() +
+				' setting successfully'
 		);
 	}
 
@@ -868,7 +874,10 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 		this._isHidden$.next(false);
 		this._restartDisable$.next(true);
 		this._isCheckDatabase$.next(true);
-		this.electronService.ipcRenderer.send('check_database_connection', this.config);
+		this.electronService.ipcRenderer.send(
+			'check_database_connection',
+			this.config
+		);
 	}
 
 	checkForUpdate() {
@@ -906,15 +915,15 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 		const request = {
 			...this.authSetting,
 			...this.config,
-			apiHost: this.config.serverUrl
+			apiHost: this.config.serverUrl,
 		};
 		if (this.authSetting) {
 			try {
 				const payload = {
 					tenantId: request.tenantId,
 					token: request.token,
-					apiHost: request.apiHost
-				}
+					apiHost: request.apiHost,
+				};
 				if (Object.values(payload).includes(null || undefined)) {
 					this.currentUser$.next(null);
 					if (typeof this.authSetting.isLogout !== 'undefined') {
@@ -923,9 +932,13 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 						}
 					}
 				} else {
-					const user = await this.timeTrackerService.getUserDetail(payload);
-					this.currentUser$.next(this.authSetting.isLogout ? null : user);
-				};
+					const user = await this.timeTrackerService.getUserDetail(
+						payload
+					);
+					this.currentUser$.next(
+						this.authSetting.isLogout ? null : user
+					);
+				}
 			} catch (error) {
 				console.log('User Detail error', error);
 			}
@@ -1163,7 +1176,7 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 	public onHideApi() {
 		this._isCheckHost$.next({
 			...this._isCheckHost,
-			isHidden: true
+			isHidden: true,
 		});
 	}
 
@@ -1193,7 +1206,7 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 				status: false,
 				isHidden: false,
 				isLoading: false,
-				message: error.message
+				message: error.message,
 			});
 		}
 	}

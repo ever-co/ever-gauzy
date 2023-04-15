@@ -1,9 +1,10 @@
 import { Component, OnInit, NgZone } from '@angular/core';
 import { ElectronService } from '../electron/services';
+
 @Component({
 	selector: 'ngx-screen-capture',
 	templateUrl: './splash-screen.component.html',
-	styleUrls: ['./splash-screen.component.scss']
+	styleUrls: ['./splash-screen.component.scss'],
 })
 export class SplashScreenComponent implements OnInit {
 	screenCaptureUrl: string;
