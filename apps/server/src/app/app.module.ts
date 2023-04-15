@@ -1,5 +1,5 @@
 import { BrowserModule } from '@angular/platform-browser';
-import { NgModule } from '@angular/core';
+import { APP_INITIALIZER, ErrorHandler, NgModule } from '@angular/core';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { AppComponent } from './app.component';
 import { AppRoutingModule } from './app-routing.module';
@@ -10,7 +10,7 @@ import {
 	NbDialogService,
 	NbLayoutModule,
 	NbMenuModule,
-	NbSidebarModule
+	NbSidebarModule,
 } from '@nebular/theme';
 import { NgxElectronModule } from 'ngx-electron';
 import { AppService } from './app.service';
@@ -21,10 +21,13 @@ import {
 	SetupModule,
 	ServerDashboardModule,
 	ElectronService,
-	AboutModule
+	LoggerService,
+	AboutModule,
 } from '@gauzy/desktop-ui-lib';
 import { NbCardModule, NbButtonModule } from '@nebular/theme';
 import { RouterModule } from '@angular/router';
+import * as Sentry from '@sentry/angular';
+import { Router } from '@angular/router';
 
 @NgModule({
 	declarations: [AppComponent],
@@ -47,9 +50,33 @@ import { RouterModule } from '@angular/router';
 		SettingsModule,
 		UpdaterModule,
 		ServerDashboardModule,
-		AboutModule
+		AboutModule,
 	],
-	providers: [AppService, HttpClientModule, NbDialogService, ElectronService],
-	bootstrap: [AppComponent]
+	providers: [
+		AppService,
+		HttpClientModule,
+		NbDialogService,
+		ElectronService,
+		LoggerService,
+		{
+			provide: ErrorHandler,
+			useValue: Sentry.createErrorHandler({
+				showDialog: true,
+			}),
+		},
+		{
+			provide: Sentry.TraceService,
+			deps: [Router],
+		},
+		{
+			provide: APP_INITIALIZER,
+			useFactory: () => () => {},
+			deps: [Sentry.TraceService],
+			multi: true,
+		},
+	],
+	bootstrap: [AppComponent],
 })
-export class AppModule {}
+export class AppModule {
+	constructor() {}
+}

@@ -681,10 +681,12 @@ export function ipcTimer(
 		}
 	});
 
-	ipcMain.on('navigate_to_login', () => {
+	ipcMain.on('navigate_to_login', async () => {
 		try {
 			if (timeTrackerWindow) {
-				timeTrackerWindow.loadURL(timeTrackerPage(windowPath.timeTrackerUi));
+				await timeTrackerWindow.loadURL(
+					timeTrackerPage(windowPath.timeTrackerUi)
+				);
 			}
 			LocalStore.updateAuthSetting({ isLogout: true });
 			if (settingWindow) {
@@ -807,7 +809,6 @@ export function ipcTimer(
 export function removeMainListener() {
 	const mainListeners = [
 		'update_timer_auth_config',
-		'start_server',
 		'remove_afk_local_Data',
 		'return_time_sheet',
 		'return_toggle_api',
@@ -817,7 +818,12 @@ export function removeMainListener() {
 		'get_last_screen_capture',
 		'update_app_setting',
 		'update_project_on',
-		'request_permission'
+		'request_permission',
+		'update_locally',
+		'change_update_strategy',
+		'check_for_update',
+		'download_update',
+		'automatic_update_setting'
 	];
 
 	mainListeners.forEach((listener) => {
@@ -845,7 +851,15 @@ export function removeTimerListener() {
 		'navigate_to_login',
 		'expand',
 		'timer_stopped',
-		'reset_permissions'
+		'reset_permissions',
+		'failed_synced_timeslot',
+		'create-synced-interval',
+		'delete_time_slot',
+		'refresh-timer',
+		'aw_status',
+		'set_tp_aw',
+		'notify',
+		'update_session'
 	];
 	timerListeners.forEach((listener) => {
 		ipcMain.removeAllListeners(listener);

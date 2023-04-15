@@ -8,11 +8,10 @@ import { distinctUntilChange, isNotEmpty } from '@gauzy/common-angular';
 import { NbAuthStrategyClass } from '@nebular/auth/auth.options';
 import { AuthService } from '../services/auth.service';
 import { Store } from '../services/store.service';
-import { ElectronService } from 'ngx-electron';
 import { TimeTrackerService } from '../../@shared/time-tracker/time-tracker.service';
 import { TimesheetFilterService } from '../../@shared/timesheet/timesheet-filter.service';
 import { CookieService } from 'ngx-cookie-service';
-// tslint:disable-next-line: nx-enforce-module-boundaries
+import { ElectronService } from './ElectronService';
 
 @Injectable()
 export class AuthStrategy extends NbAuthStrategy {
@@ -72,7 +71,6 @@ export class AuthStrategy extends NbAuthStrategy {
 		private readonly store: Store,
 		private readonly timeTrackerService: TimeTrackerService,
 		private readonly timesheetFilterService: TimesheetFilterService,
-		private readonly electronService: ElectronService,
 		private readonly cookieService: CookieService
 	) {
 		super();
@@ -269,9 +267,9 @@ export class AuthStrategy extends NbAuthStrategy {
 
 		this.store.clear();
 		this.store.serverConnection = 200;
-		if (this.electronService.isElectronApp) {
+		if (ElectronService.isElectron) {
 			try {
-				this.electronService.ipcRenderer.send('logout');
+				ElectronService.ipcRenderer.send('logout');
 			} catch (error) {}
 		}
 
@@ -350,8 +348,8 @@ export class AuthStrategy extends NbAuthStrategy {
 
 	public electronAuthentication({ user, token }: IAuthResponse) {
 		try {
-			if (this.electronService.isElectronApp) {
-				this.electronService.ipcRenderer.send('auth_success', {
+			if (ElectronService.isElectron) {
+				ElectronService.ipcRenderer.send('auth_success', {
 					user: user,
 					token: token,
 					userId: user.id,

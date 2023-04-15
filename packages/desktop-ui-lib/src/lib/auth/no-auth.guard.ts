@@ -5,8 +5,8 @@ import {
 	Router,
 	RouterStateSnapshot
 } from '@angular/router';
+import { Store } from '../services';
 import { AuthService } from './services/auth.service';
-import { Store } from './services/store.service';
 
 /**
  * Use for routes which only need to be displayed if user is NOT logged in
@@ -17,7 +17,7 @@ export class NoAuthGuard implements CanActivate {
 		private readonly router: Router,
 		private authService: AuthService,
 		private readonly store: Store
-	) {}
+	) { }
 
 	async canActivate(
 		route: ActivatedRouteSnapshot,

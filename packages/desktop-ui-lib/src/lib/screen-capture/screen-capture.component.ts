@@ -1,9 +1,7 @@
 import { Component, OnInit, NgZone } from '@angular/core';
 import { DomSanitizer, SafeUrl } from '@angular/platform-browser';
 import { ElectronService } from '../electron/services';
-const log = window.require('electron-log');
-console.log = log.log;
-Object.assign(console, log.functions);
+
 @Component({
 	selector: 'ngx-screen-capture',
 	templateUrl: './screen-capture.component.html',

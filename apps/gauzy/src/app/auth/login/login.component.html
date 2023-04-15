@@ -8,7 +8,7 @@
       <div class="headings-inner">
         <h2 id="title" class="title">{{ 'LOGIN_PAGE.TITLE' | translate }}</h2>
         <p class="sub-title">{{ 'LOGIN_PAGE.SUB_TITLE' | translate }}</p>
-        <nb-accordion *ngIf="!electronService.isElectronApp && isDemo" class="demo-credentials-select">
+        <nb-accordion *ngIf="!electronService?.isElectron && isDemo" class="demo-credentials-select">
           <nb-accordion-item class="demo-credentials-select-item">
             <nb-accordion-item-header class="demo-credentials-header">
               <div class="demo-credentials-head-text">
@@ -263,7 +263,7 @@
     </section>
   </div>
   <div class="features-wrapper">
-    <ng-container *ngIf="(!electronService.isElectronApp && isDemo); else whatsNew">
+    <ng-container *ngIf="(!electronService?.isElectron && isDemo); else whatsNew">
       <div class="demo-credentials-buttons">
         <nb-card class="features-card">
           <nb-card-body class="card-body">
@@ -293,4 +293,3 @@
     </ng-template>
   </div>
 </section>
-

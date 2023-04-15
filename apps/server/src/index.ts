@@ -39,7 +39,7 @@ import {
 	createServerWindow,
 	createSettingsWindow,
 } from '@gauzy/desktop-window';
-// import { initSentry } from './sentry';
+import { initSentry } from './sentry';
 import { readFileSync, writeFileSync, accessSync, constants } from 'fs';
 import * as remoteMain from '@electron/remote/main';
 import { autoUpdater } from 'electron-updater';
@@ -54,7 +54,7 @@ log.info(`GAUZY_USER_PATH: ${process.env.GAUZY_USER_PATH}`);
 const sqlite3filename = `${process.env.GAUZY_USER_PATH}/gauzy.sqlite3`;
 log.info(`Sqlite DB path: ${sqlite3filename}`);
 
-// initSentry();
+initSentry();
 
 let setupWindow: BrowserWindow;
 let serverWindow: BrowserWindow;
@@ -92,6 +92,9 @@ if (process.platform === 'win32') {
 LocalStore.setFilePath({
 	iconPath: path.join(__dirname, 'icons', 'icon.png'),
 });
+
+// Set unlimited listeners
+ipcMain.setMaxListeners(0);
 
 const runSetup = async () => {
 	if (setupWindow) {

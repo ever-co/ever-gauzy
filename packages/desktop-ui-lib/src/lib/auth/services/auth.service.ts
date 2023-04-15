@@ -9,11 +9,11 @@ import {
 	IAuthResponse
 } from '@gauzy/contracts';
 import { Observable, firstValueFrom } from 'rxjs';
-import { API_PREFIX } from '../constants/app.constants';
+import { API_PREFIX } from '../../constants/app.constants';
 
 @Injectable()
 export class AuthService {
-	constructor(private http: HttpClient) {}
+	constructor(private http: HttpClient) { }
 
 	isAuthenticated(): Promise<boolean> {
 		return firstValueFrom(this.http

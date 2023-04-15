@@ -11,12 +11,14 @@ import {
 	ITask,
 	IOrganizationProject,
 	IOrganizationContact,
-	ITimeSlot
+	ITimeSlot,
+	IOrganizationTeam
 } from '@gauzy/contracts';
 import {
 	Employee,
 	OrganizationContact,
 	OrganizationProject,
+	OrganizationTeam,
 	Task,
 	TenantOrganizationBaseEntity,
 	Timesheet,
@@ -150,7 +152,7 @@ export class TimeLog extends TenantOrganizationBaseEntity implements ITimeLog {
 	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()
 	@IsUUID()
-	@RelationId((timeLog: TimeLog) => timeLog.project)
+	@RelationId((it: TimeLog) => it.project)
 	@Index()
 	@Column({ nullable: true })
 	projectId?: string;
@@ -170,10 +172,10 @@ export class TimeLog extends TenantOrganizationBaseEntity implements ITimeLog {
 	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()
 	@IsUUID()
-	@RelationId((timeLog: TimeLog) => timeLog.task)
+	@RelationId((it: TimeLog) => it.task)
 	@Index()
 	@Column({ nullable: true })
-	taskId?: string;
+	taskId?: ITask['id'];
 
 	/**
 	 * OrganizationContact
@@ -190,10 +192,30 @@ export class TimeLog extends TenantOrganizationBaseEntity implements ITimeLog {
 	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()
 	@IsUUID()
-	@RelationId((timeLog: TimeLog) => timeLog.organizationContact)
+	@RelationId((it: TimeLog) => it.organizationContact)
 	@Index()
 	@Column({ nullable: true })
-	organizationContactId?: string;
+	organizationContactId?: IOrganizationContact['id'];
+
+	/**
+	 * Organization Team
+	 */
+	@ApiPropertyOptional({ type: () => OrganizationTeam })
+	@IsOptional()
+	@ManyToOne(() => OrganizationTeam, {
+		nullable: true,
+		onDelete: 'SET NULL'
+	})
+	@JoinColumn()
+	organizationTeam?: IOrganizationTeam;
+
+	@ApiPropertyOptional({ type: () => String })
+	@IsOptional()
+	@IsUUID()
+	@RelationId((it: TimeLog) => it.organizationTeam)
+	@Index()
+	@Column({ nullable: true })
+	organizationTeamId?: IOrganizationTeam['id'];
 
 	/*
 	|--------------------------------------------------------------------------
