@@ -70,13 +70,13 @@ import { Router } from '@angular/router';
 		},
 		{
 			provide: APP_INITIALIZER,
-			useFactory: () => () => { },
+			useFactory: () => () => {},
 			deps: [Sentry.TraceService],
 			multi: true,
-		}
+		},
 	],
 	bootstrap: [AppComponent],
 })
 export class AppModule {
-	constructor() { }
+	constructor() {}
 }

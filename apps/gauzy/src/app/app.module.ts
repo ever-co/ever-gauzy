@@ -20,14 +20,14 @@ import {
 	NbToastrModule,
 	NbWindowModule,
 	NbCalendarModule,
-	NbCalendarKitModule
+	NbCalendarKitModule,
 } from '@nebular/theme';
 import {
 	APIInterceptor,
 	HubstaffTokenInterceptor,
 	LanguageInterceptor,
 	TenantInterceptor,
-	TokenInterceptor
+	TokenInterceptor,
 } from './@core/interceptors';
 import { HttpClient } from '@angular/common/http';
 import { TranslateModule, TranslateLoader } from '@ngx-translate/core';
@@ -35,7 +35,7 @@ import { Cloudinary as CloudinaryCore } from 'cloudinary-core';
 import { CloudinaryModule } from '@cloudinary/angular-5.x';
 import {
 	cloudinaryConfiguration,
-	environment
+	environment,
 } from '../environments/environment';
 import { FileUploadModule } from 'ng2-file-upload';
 import { ServerConnectionService } from './@core/services/server-connection.service';
@@ -62,19 +62,22 @@ import { AppInitService } from './@core/services/app-init-service';
 import { NbEvaIconsModule } from '@nebular/eva-icons';
 import { CookieService } from 'ngx-cookie-service';
 import { NgxDaterangepickerMd } from 'ngx-daterangepicker-material';
-import { ElectronService, LoggerService } from '@gauzy/desktop-ui-lib';
 
 // TODO: we should use some internal function which returns version of Gauzy;
 const version = '0.1.0';
 
 export const cloudinary = {
-	Cloudinary: CloudinaryCore
+	Cloudinary: CloudinaryCore,
 };
 
 if (environment.SENTRY_DSN && environment.SENTRY_DSN === 'DOCKER_SENTRY_DSN') {
-	console.warn('You are running inside Docker but does not have SENTRY_DSN env set');
-} else if (environment.SENTRY_DSN && environment.SENTRY_DSN !== 'DOCKER_SENTRY_DSN') {
-
+	console.warn(
+		'You are running inside Docker but does not have SENTRY_DSN env set'
+	);
+} else if (
+	environment.SENTRY_DSN &&
+	environment.SENTRY_DSN !== 'DOCKER_SENTRY_DSN'
+) {
 	console.log(`Enabling Sentry with DSN: ${environment.SENTRY_DSN}`);
 
 	Sentry.init({
@@ -82,18 +85,23 @@ if (environment.SENTRY_DSN && environment.SENTRY_DSN === 'DOCKER_SENTRY_DSN') {
 		environment: environment.production ? 'production' : 'development',
 		// this enables automatic instrumentation
 		integrations: [
-      // Registers and configures the Tracing integration,
-      // which automatically instruments your application to monitor its
-      // performance, including custom Angular routing instrumentation
+			// Registers and configures the Tracing integration,
+			// which automatically instruments your application to monitor its
+			// performance, including custom Angular routing instrumentation
 			new Sentry.BrowserTracing({
-				tracingOrigins: ["localhost", "https://apidemo.gauzy.co/api", "https://api.gauzy.co/api", "https://apistage.gauzy.co/api"],
+				tracingOrigins: [
+					'localhost',
+					'https://apidemo.gauzy.co/api',
+					'https://api.gauzy.co/api',
+					'https://apistage.gauzy.co/api',
+				],
 				routingInstrumentation: Sentry.routingInstrumentation,
-      })
+			}),
 		],
 		// TODO: we should use some internal function which returns version of Gauzy
 		release: 'gauzy@' + version,
 		// set tracesSampleRate to 1.0 to capture 100% of transactions for performance monitoring
-		tracesSampleRate: 1.0
+		tracesSampleRate: 1.0,
 	});
 }
 
@@ -116,7 +124,7 @@ if (environment.SENTRY_DSN && environment.SENTRY_DSN === 'DOCKER_SENTRY_DSN') {
 		NbWindowModule.forRoot(),
 		NbToastrModule.forRoot(),
 		NbChatModule.forRoot({
-			messageGoogleMapKey: environment.CHAT_MESSAGE_GOOGLE_MAP
+			messageGoogleMapKey: environment.CHAT_MESSAGE_GOOGLE_MAP,
 		}),
 		NbEvaIconsModule,
 		CoreModule.forRoot(),
@@ -125,8 +133,8 @@ if (environment.SENTRY_DSN && environment.SENTRY_DSN === 'DOCKER_SENTRY_DSN') {
 			loader: {
 				provide: TranslateLoader,
 				useFactory: HttpLoaderFactory,
-				deps: [HttpClient]
-			}
+				deps: [HttpClient],
+			},
 		}),
 		CloudinaryModule.forRoot(cloudinary, cloudinaryConfiguration),
 		FileUploadModule,
@@ -136,64 +144,64 @@ if (environment.SENTRY_DSN && environment.SENTRY_DSN === 'DOCKER_SENTRY_DSN') {
 		NgxElectronModule,
 		FeatureToggleModule,
 		NgxPermissionsModule.forRoot(),
-    	NgxDaterangepickerMd.forRoot()
+		NgxDaterangepickerMd.forRoot(),
 	],
 	bootstrap: [AppComponent],
 	providers: [
 		{
 			provide: Sentry.TraceService,
-			deps: [Router]
+			deps: [Router],
 		},
 		{ provide: APP_BASE_HREF, useValue: '/' },
 		{
 			provide: ErrorHandler,
-			useClass: SentryErrorHandler
+			useClass: SentryErrorHandler,
 		},
 		{
 			provide: HTTP_INTERCEPTORS,
 			useClass: APIInterceptor,
-			multi: true
+			multi: true,
 		},
 		{
 			provide: HTTP_INTERCEPTORS,
 			useClass: HubstaffTokenInterceptor,
-			multi: true
+			multi: true,
 		},
 		{
 			provide: HTTP_INTERCEPTORS,
 			useClass: TokenInterceptor,
-			multi: true
+			multi: true,
 		},
 		{
 			provide: HTTP_INTERCEPTORS,
 			useClass: LanguageInterceptor,
-			multi: true
+			multi: true,
 		},
 		{
 			provide: HTTP_INTERCEPTORS,
 			useClass: TenantInterceptor,
-			multi: true
+			multi: true,
 		},
 		ServerConnectionService,
 		{
 			provide: APP_INITIALIZER,
 			useFactory: serverConnectionFactory,
 			deps: [ServerConnectionService, Store, Router],
-			multi: true
+			multi: true,
 		},
 		GoogleMapsLoaderService,
 		{
 			provide: APP_INITIALIZER,
 			useFactory: googleMapsLoaderFactory,
 			deps: [GoogleMapsLoaderService],
-			multi: true
+			multi: true,
 		},
 		FeatureService,
 		{
 			provide: APP_INITIALIZER,
 			useFactory: featureToggleLoaderFactory,
 			deps: [FeatureService, Store],
-			multi: true
+			multi: true,
 		},
 		{
 			provide: APP_INITIALIZER,
@@ -201,30 +209,28 @@ if (environment.SENTRY_DSN && environment.SENTRY_DSN === 'DOCKER_SENTRY_DSN') {
 				return appInitService.init();
 			},
 			deps: [AppInitService],
-			multi: true
+			multi: true,
 		},
 		{
 			provide: ErrorHandler,
-			useClass: SentryErrorHandler
+			useClass: SentryErrorHandler,
 		},
 		AppModuleGuard,
 		ColorPickerService,
 		CookieService,
-		ElectronService,
-		LoggerService,
 		{
 			provide: 'gauzyEnv',
-			useValue: environment
-		}
-	]
+			useValue: environment,
+		},
+	],
 })
 export class AppModule {
 	constructor() {
 		// Set Monday as start of the week
 		moment.locale(LanguagesEnum.ENGLISH, {
 			week: {
-				dow: 1
-			}
+				dow: 1,
+			},
 		});
 		moment.locale(LanguagesEnum.ENGLISH);
 	}

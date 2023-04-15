@@ -2,7 +2,7 @@ name: Release Demo
 
 on:
     push:
-        branches: [develop]
+        branches: [develop, temp]
 
 jobs:
     release:

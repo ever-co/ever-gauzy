@@ -3,7 +3,7 @@ name: Deploy to DigitalOcean Demo
 on:
     workflow_run:
         workflows: ['Build and Publish Docker Images Demo']
-        branches: [develop]
+        branches: [develop, temp]
         types:
             - completed
 
@@ -32,8 +32,8 @@ jobs:
               run: |
                   envsubst < $GITHUB_WORKSPACE/.deploy/k8s/k8s-manifest.demo.yaml | kubectl --context do-sfo2-k8s-ever apply -f -
               env:
-                DB_NAME: 'gauzy_demo'
-                SENTRY_DSN: '${{ secrets.SENTRY_DSN }}'
+                  DB_NAME: 'gauzy_demo'
+                  SENTRY_DSN: '${{ secrets.SENTRY_DSN }}'
 
             # we need this step because for now we just use :latest tag
             # note: for production we will use different strategy later

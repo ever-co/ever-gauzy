@@ -1,14 +1,12 @@
 import { Injectable } from '@angular/core';
-import { ElectronService } from '@gauzy/desktop-ui-lib';
+import { ElectronService } from '../electron/services';
 import { NotificationService } from './notification.service';
 
 @Injectable({
 	providedIn: 'root',
 })
 export class NativeNotificationService extends NotificationService {
-	constructor(
-		private readonly _electronService: ElectronService
-	) {
+	constructor(private readonly _electronService: ElectronService) {
 		super();
 	}
 

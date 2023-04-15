@@ -26,9 +26,15 @@
 		"electron-packager": "^17.1.1",
 		"electron-reload": "~1.5.0",
 		"node-polyfill-webpack-plugin": "^1.1.4",
-		"terser-webpack-plugin": "^5.2.5"
+		"terser-webpack-plugin": "^5.2.5",
+		"@types/moment-duration-format": "^2.2.3"
 	},
 	"dependencies": {
+		"@angular/animations": "13.2.2",
+		"@angular/common": "13.2.2",
+		"@angular/core": "13.2.2",
+		"@angular/forms": "13.2.2",
+		"@angular/router": "13.2.2",
 		"@angular/cdk": "13.2.2",
 		"@angular/material": "13.2.2",
 		"@electron/remote": "^2.0.8",
@@ -64,6 +70,9 @@
 		"knex": "^2.4.0",
 		"mac-screen-capture-permissions": "^2.0.0",
 		"moment": "^2.29.4",
+		"moment-duration-format": "^2.3.2",
+		"moment-range": "^4.0.2",
+		"moment-timezone": "^0.5.40",
 		"ngx-electron": "^2.2.0",
 		"node-fetch": "^2.6.7",
 		"node-notifier": "^8.0.0",
