@@ -8,6 +8,7 @@ import {
 import { transition, trigger, style, animate } from '@angular/animations';
 import { ElectronService } from '../electron/services';
 import { DomSanitizer } from '@angular/platform-browser';
+
 export const fadeInOutAnimation = trigger('fadeInOut', [
 	transition(':enter', [
 		// :enter is alias to 'void => *'
