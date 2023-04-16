@@ -27,7 +27,7 @@ export * from './lib/dialogs/about/about.component';
 export * from './lib/dialogs/about/about.module';
 export * from './lib/services';
 export * from './lib/time-tracker/organization-selector/user-organization.service';
-export * from './lib/auth/auth.module';
+export * from './lib/auth';
 export * from './lib/server-down/server-down.module';
 export * from './lib/interceptors';
 
