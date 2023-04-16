@@ -1,6 +1,5 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { first } from 'rxjs/operators';
 import {
 	IUser,
 	RolesEnum,
@@ -17,8 +16,7 @@ export class AuthService {
 
 	isAuthenticated(): Promise<boolean> {
 		return firstValueFrom(this.http
-			.get<boolean>(`${API_PREFIX}/auth/authenticated`)
-			.pipe(first()));
+			.get<boolean>(`${API_PREFIX}/auth/authenticated`));
 	}
 
 	login(loginInput): Observable<IAuthResponse> {

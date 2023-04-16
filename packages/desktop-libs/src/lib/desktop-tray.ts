@@ -324,7 +324,7 @@ export class TrayIcon {
 			}
 		});
 
-		ipcMain.on('logout', () => {
+		ipcMain.on('logout', async () => {
 			this.tray.setContextMenu(Menu.buildFromTemplate(unAuthMenu));
 			menuWindowTime.enabled = false;
 
@@ -347,7 +347,7 @@ export class TrayIcon {
 						API_BASE_URL: getApiBaseUrl(serverConfig, config),
 						IS_INTEGRATED_DESKTOP: serverConfig.isLocalServer,
 					};
-					timeTrackerWindow.loadURL(
+					await timeTrackerWindow.loadURL(
 						loginPage(windowPath.gauzyWindow)
 					);
 					timeTrackerWindow.webContents.once(

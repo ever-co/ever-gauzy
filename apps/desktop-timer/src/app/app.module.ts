@@ -42,6 +42,7 @@ import {
 	TenantInterceptor,
 	TokenInterceptor,
 	serverConnectionFactory,
+	APIInterceptor,
 	ServerDownModule,
 } from '@gauzy/desktop-ui-lib';
 import { NbCardModule, NbButtonModule } from '@nebular/theme';
@@ -77,6 +78,7 @@ import * as Sentry from '@sentry/angular';
 		NgSelectModule,
 		SplashScreenModule,
 		ServerDownModule,
+		NbLayoutModule,
 		TranslateModule.forRoot({
 			loader: {
 				provide: TranslateLoader,
@@ -118,6 +120,11 @@ import * as Sentry from '@sentry/angular';
 		{
 			provide: HTTP_INTERCEPTORS,
 			useClass: TenantInterceptor,
+			multi: true
+		},
+		{
+			provide: HTTP_INTERCEPTORS,
+			useClass: APIInterceptor,
 			multi: true
 		},
 		{
