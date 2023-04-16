@@ -17,8 +17,7 @@ export class AuthService {
 
 	isAuthenticated(): Promise<boolean> {
 		return firstValueFrom(this.http
-			.get<boolean>(`${API_PREFIX}/auth/authenticated`)
-			.pipe(first()));
+			.get<boolean>(`${API_PREFIX}/auth/authenticated`));
 	}
 
 	login(loginInput): Observable<IAuthResponse> {
