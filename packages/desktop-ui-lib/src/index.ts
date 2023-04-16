@@ -31,7 +31,6 @@ export * from './lib/auth';
 export * from './lib/server-down/server-down.module';
 export * from './lib/interceptors';
 
-
 /**
  * Auth Module
  */

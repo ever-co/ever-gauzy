@@ -13,11 +13,7 @@ import {
 } from '@nebular/theme';
 import { NgxElectronModule } from 'ngx-electron';
 import { AppService } from './app.service';
-import {
-	HttpClientModule,
-	HTTP_INTERCEPTORS,
-	HttpClient
-} from '@angular/common/http';
+import { HttpClientModule, HTTP_INTERCEPTORS, HttpClient } from '@angular/common/http';
 import {
 	NgxLoginModule,
 	ImageViewerModule,
@@ -43,7 +39,7 @@ import {
 	TokenInterceptor,
 	serverConnectionFactory,
 	APIInterceptor,
-	ServerDownModule,
+	ServerDownModule
 } from '@gauzy/desktop-ui-lib';
 import { NbCardModule, NbButtonModule } from '@nebular/theme';
 import { HttpLoaderFactory } from '../../../gauzy/src/app/@shared/translate/translate.module';
@@ -152,4 +148,4 @@ import * as Sentry from '@sentry/angular';
 	bootstrap: [AppComponent],
 	exports: []
 })
-export class AppModule { }
+export class AppModule {}
