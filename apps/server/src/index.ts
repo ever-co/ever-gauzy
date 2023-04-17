@@ -311,7 +311,6 @@ const contextMenu = () => {
 };
 
 ipcMain.on('start_server', async (event, arg) => {
-	console.log('Start Server', arg)
 	await initializeConfig(arg);
 });
 
