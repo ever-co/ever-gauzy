@@ -314,7 +314,16 @@ export class SetupComponent implements OnInit {
 			...this.getFeature(),
 		};
 		try {
-			const isStarted = await this.electronService.ipcRenderer.invoke('START_SERVER', gauzyConfig);
+			let isStarted = false;
+			if (this._isServer) {
+				this.electronService.ipcRenderer.send('start_server', gauzyConfig);
+				isStarted = true;
+			} else {
+				isStarted = await this.electronService.ipcRenderer.invoke(
+					'START_SERVER',
+					gauzyConfig
+				);
+			}
 			if (isStarted) {
 				this.electronService.ipcRenderer.send('app_is_init');
 			}
@@ -331,7 +340,7 @@ export class SetupComponent implements OnInit {
 	async pingAw(): Promise<void> {
 		try {
 			this.awCheck = false;
-			await this.setupService.pingAw(`${this.awAPI}/api`)
+			await this.setupService.pingAw(`${this.awAPI}/api`);
 			this.iconAw = './assets/icons/toggle-right.svg';
 			this.awCheck = true;
 			this.statusIcon = 'success';
@@ -485,5 +494,9 @@ export class SetupComponent implements OnInit {
 			}
 		});
 		this.validation();
+	}
+
+	private get _isServer(): boolean {
+		return this.appName === 'gauzy-server';
 	}
 }

@@ -138,10 +138,14 @@ const runMainWindow = async () => {
 	if (setupWindow) setupWindow.hide();
 };
 
-const initializeConfig = (val) => {
-	LocalStore.updateConfigSetting(val);
-	updateConfigUi(val);
-	runMainWindow();
+const initializeConfig = async (val) => {
+	try {
+		LocalStore.updateConfigSetting(val);
+		updateConfigUi(val);
+		await runMainWindow();
+	} catch (error) {
+		console.log(error)
+	}
 };
 
 const getApiBaseUrl = (config) => {
@@ -306,8 +310,9 @@ const contextMenu = () => {
 	return serverMenu;
 };
 
-ipcMain.on('start_server', (event, arg) => {
-	initializeConfig(arg);
+ipcMain.on('start_server', async (event, arg) => {
+	console.log('Start Server', arg)
+	await initializeConfig(arg);
 });
 
 ipcMain.on('run_gauzy_server', (event, arg) => {
