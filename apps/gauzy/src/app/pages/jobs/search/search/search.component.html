@@ -197,6 +197,7 @@
 												"
 												fullWidth
 												formControlName="jobStatus"
+												[multiple]="true"
 											>
 												<nb-option
 													*ngFor=" let type of JobPostStatusEnum | keyvalue"

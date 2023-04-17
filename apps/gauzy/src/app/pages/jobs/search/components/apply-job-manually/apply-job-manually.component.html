@@ -8,79 +8,135 @@
         </h5>
 	</nb-card-header>
 	<nb-card-body class="body">
-        <form
-            #formDirective="ngForm"
-            [formGroup]="form"
-            (ngSubmit)="onSubmit()"
-        >
-            <div class="form-group">
-                <ga-employee-multi-select
-                    [label]="'HEADER.SELECT_EMPLOYEE' | translate"
-                    [placeholder]="'HEADER.SELECT_EMPLOYEE' | translate"
-                    [multiple]="false"
-                    formControlName="employeeId"
-                ></ga-employee-multi-select>
+        <div class="row">
+            <div class="col-5">
+                <nb-card>
+                    <nb-card-header>
+                        {{ 'JOBS.JOB_DETAILS' | translate }}
+                    </nb-card-header>
+                    <nb-card-body>
+                        <job-title-description-details
+                            [rowData]="jobPost"
+                        ></job-title-description-details>
+                    </nb-card-body>
+                </nb-card>
             </div>
-            <ng-template
-                [ngIf]="JobPostSourceEnum.UPWORK === jobPost?.providerCode"
-            >
-                <div class="form-group">
-                    <label class="label" for="proposal">
-                        {{ 'FORM.LABELS.COVER_LETTER' | translate }}
-                    </label>
-                    <ckeditor
-                        id="proposal"
-                        formControlName="proposal"
-                        [config]="ckConfig"
-                    ></ckeditor>
-                </div>
-            </ng-template>
-            <ng-template
-                [ngIf]="JobPostSourceEnum.UPWORK !== jobPost?.providerCode"
-            >
-                <div class="form-group">
-                    <label class="label" for="details">
-                        {{ 'FORM.LABELS.DETAILS' | translate }}
-                    </label>
-                    <ckeditor
-                        id="details"
-                        formControlName="details"
-                        [config]="ckConfig"
-                    ></ckeditor>
-                </div>
-            </ng-template>
-            <div class="form-group">
-                <label class="label" for="attachments">
-                    {{ 'FORM.LABELS.ATTACHMENTS' | translate }}
-                </label>
-                <div
-                    ng2FileDrop
-                    [uploader]="uploader"
-                    (fileOver)="fileOverBase($event)"
-                    [ngClass]="{'nv-file-over': hasDropZoneOver}"
-                    class="well my-drop-zone"
-                >
-                    {{ 'FORM.PLACEHOLDERS.DRAG_DROP_FILE' | translate }}
-                </div>
+            <div class="col-7">
+                <nb-card>
+                    <nb-card-header>
+                        {{ 'PROPOSALS_PAGE.PROPOSAL_DETAILS.PROPOSAL_DETAILS' | translate }}
+                    </nb-card-header>
+                    <nb-card-body>
+                        <form
+                            #formDirective="ngForm"
+                            [formGroup]="form"
+                            (ngSubmit)="onSubmit()"
+                        >
+                            <div class="row">
+                                <div class="col-6">
+                                    <div class="form-group">
+                                        <ga-employee-multi-select
+                                            [label]="'HEADER.SELECT_EMPLOYEE' | translate"
+                                            [placeholder]="'HEADER.SELECT_EMPLOYEE' | translate"
+                                            [multiple]="false"
+                                            formControlName="employeeId"
+                                            [selectedEmployeeIds]="form.get('employeeId').value"
+                                        ></ga-employee-multi-select>
+                                    </div>
+                                </div>
+                                <div class="col-6">
+                                    <div class="form-group">
+                                        <label class="label" for="hourly_rate">
+                                            {{ 'FORM.LABELS.HOURLY_RATE' | translate }}
+                                        </label>
+                                        <nb-form-field>
+                                            <button type="button" nbPrefix nbButton ghost>$</button>
+                                            <input
+                                                id="hourly_rate"
+                                                min="1"
+                                                fullWidth
+                                                nbInput
+                                                type="number"
+                                                class="form-control"
+                                                formControlName="rate"
+                                            />
+                                        </nb-form-field>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-12">
+                                    <div class="form-group">
+                                        <label class="label" for="proposal_template">
+                                            {{ 'PROPOSALS_PAGE.REGISTER.TEMPLATE' | translate }}
+                                        </label>
+                                        <ngx-proposal-template-select
+                                            id="proposal_template"
+                                            [employeeId]="form.get('employeeId').value"
+                                            (selectedChange)="onProposalTemplateChange($event)"
+                                        ></ngx-proposal-template-select>
+                                    </div>
+                                </div>
+                            </div>
+                            <ng-template
+                                [ngIf]="JobPostSourceEnum.UPWORK === jobPost?.providerCode"
+                            >
+                                <div class="row">
+                                    <div class="col-12">
+                                        <div class="form-group">
+                                            <label class="label" for="proposal">
+                                                {{ 'FORM.LABELS.COVER_LETTER' | translate }}
+                                            </label>
+                                            <ckeditor
+                                                id="proposal"
+                                                formControlName="proposal"
+                                                [config]="ckConfig"
+                                            ></ckeditor>
+                                        </div>
+                                    </div>
+                                </div>
+                            </ng-template>
+                            <ng-template
+                                [ngIf]="JobPostSourceEnum.UPWORK !== jobPost?.providerCode"
+                            >
+                                <div class="row">
+                                    <div class="col-12">
+                                        <div class="form-group">
+                                            <label class="label" for="details">
+                                                {{ 'FORM.LABELS.DETAILS' | translate }}
+                                            </label>
+                                            <ckeditor
+                                                id="details"
+                                                formControlName="details"
+                                                [config]="ckConfig"
+                                            ></ckeditor>
+                                        </div>
+                                    </div>
+                                </div>
+                            </ng-template>
+                            <div class="row">
+                                <div class="col-12">
+                                    <div class="form-group">
+                                        <label class="label" for="attachments">
+                                            {{ 'FORM.LABELS.ATTACHMENTS' | translate }}
+                                        </label>
+                                        <div
+                                            ng2FileDrop
+                                            [uploader]="uploader"
+                                            (fileOver)="fileOverBase($event)"
+                                            [ngClass]="{'nv-file-over': hasDropZoneOver}"
+                                            class="well my-drop-zone"
+                                        >
+                                            {{ 'FORM.PLACEHOLDERS.DRAG_DROP_FILE' | translate }}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </form>
+                    </nb-card-body>
+                </nb-card>
             </div>
-            <div class="form-group">
-                <label class="label" for="hourly_rate">
-                    {{ 'FORM.LABELS.HOURLY_RATE' | translate }}
-                </label>
-                <nb-form-field>
-                    <button type="button" nbPrefix nbButton ghost>$</button>
-                    <input
-                        id="hourly_rate"
-                        min="1"
-                        fullWidth
-                        nbInput
-                        type="number"
-                        class="form-control"
-                        formControlName="rate"
-                    />
-                </nb-form-field>
-            </div>
-        </form>
+        </div>
 	</nb-card-body>
 	<nb-card-footer class="text-left">
         <button

@@ -818,12 +818,7 @@ export function removeMainListener() {
 		'get_last_screen_capture',
 		'update_app_setting',
 		'update_project_on',
-		'request_permission',
-		'update_locally',
-		'change_update_strategy',
-		'check_for_update',
-		'download_update',
-		'automatic_update_setting'
+		'request_permission'
 	];
 
 	mainListeners.forEach((listener) => {
@@ -851,15 +846,7 @@ export function removeTimerListener() {
 		'navigate_to_login',
 		'expand',
 		'timer_stopped',
-		'reset_permissions',
-		'failed_synced_timeslot',
-		'create-synced-interval',
-		'delete_time_slot',
-		'refresh-timer',
-		'aw_status',
-		'set_tp_aw',
-		'notify',
-		'update_session'
+		'reset_permissions'
 	];
 	timerListeners.forEach((listener) => {
 		ipcMain.removeAllListeners(listener);

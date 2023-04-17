@@ -10,6 +10,7 @@ import { FileUploader, FileUploaderOptions } from 'ng2-file-upload';
 import {
 	IApplyJobPostInput,
 	IEmployeeJobPost,
+	IEmployeeProposalTemplate,
 	IImageAsset,
 	IOrganization,
 	ISelectedEmployee,
@@ -29,9 +30,7 @@ import { ckEditorConfig } from './../../../../../@shared/ckeditor.config';
 	templateUrl: './apply-job-manually.component.html',
 	styleUrls: ['./apply-job-manually.component.scss']
 })
-export class ApplyJobManuallyComponent extends TranslationBaseComponent
-	implements AfterViewInit, OnInit, OnDestroy {
-
+export class ApplyJobManuallyComponent extends TranslationBaseComponent implements AfterViewInit, OnInit, OnDestroy {
 	public JobPostSourceEnum: typeof JobPostSourceEnum = JobPostSourceEnum;
 	public FormHelpers: typeof FormHelpers = FormHelpers;
 	public ckConfig: CKEditor4.Config = ckEditorConfig;
@@ -52,15 +51,15 @@ export class ApplyJobManuallyComponent extends TranslationBaseComponent
 	}
 
 	/**  Getter & Setter for Selected Employee */
-	_selectedEmployeeId: ISelectedEmployee['id'];
-	get selectedEmployeeId(): ISelectedEmployee['id'] {
-		return this._selectedEmployeeId;
+	_selectedEmployee: ISelectedEmployee;
+	get selectedEmployee(): ISelectedEmployee {
+		return this._selectedEmployee;
 	}
-	@Input() set selectedEmployeeId(employeeId: ISelectedEmployee['id']) {
-		this._selectedEmployeeId = employeeId;
+	@Input() set selectedEmployee(employee: ISelectedEmployee) {
+		this._selectedEmployee = employee;
 		/** Set default select employee */
-		if (isNotEmpty(employeeId) && this.form.get('employeeId')) {
-			this.form.get('employeeId').setValue(employeeId);
+		if (isNotEmpty(employee) && this.form.get('employeeId')) {
+			this.form.get('employeeId').setValue(employee.id);
 			this.form.get('employeeId').updateValueAndValidity();
 		}
 	}
@@ -70,8 +69,8 @@ export class ApplyJobManuallyComponent extends TranslationBaseComponent
 	get jobPost(): IEmployeeJobPost {
 		return this._jobPost;
 	}
-	@Input() set jobPost(value: IEmployeeJobPost) {
-		this._jobPost = value;
+	@Input() set jobPost(jobPost: IEmployeeJobPost) {
+		this._jobPost = jobPost;
 		this.patchFormValue();
 	}
 
@@ -99,7 +98,7 @@ export class ApplyJobManuallyComponent extends TranslationBaseComponent
 				filter(([organization]) => !!organization),
 				tap(([organization, employee]) => {
 					this.organization = organization;
-					this.selectedEmployeeId = employee ? employee.id : null;
+					this.selectedEmployee = employee && employee.id ? employee : null;
 				}),
 				untilDestroyed(this)
 			)
@@ -139,7 +138,7 @@ export class ApplyJobManuallyComponent extends TranslationBaseComponent
 		};
 	}
 
-	ngOnDestroy(): void { }
+	ngOnDestroy(): void {}
 
 	private _loadUploaderSettings() {
 		if (!this.store.user) {
@@ -148,7 +147,7 @@ export class ApplyJobManuallyComponent extends TranslationBaseComponent
 		const { token } = this.store;
 		const { tenantId } = this.store.user;
 
-		const headers: Array<{ name: string; value: string; }> = [];
+		const headers: Array<{ name: string; value: string }> = [];
 		headers.push({ name: 'Authorization', value: `Bearer ${token}` });
 		headers.push({ name: 'Tenant-Id', value: tenantId });
 
@@ -191,6 +190,20 @@ export class ApplyJobManuallyComponent extends TranslationBaseComponent
 				details.setValidators([Validators.required]);
 			}
 			this.form.updateValueAndValidity();
+		}
+	}
+
+	/**
+	 * On Proposal template change
+	 *
+	 * @param item
+	 */
+	onProposalTemplateChange(item: IEmployeeProposalTemplate | null): void {
+		if (isNotEmpty(item)) {
+			const { content } = item;
+			this.form.patchValue({ details: content, proposal: content });
+		} else {
+			this.form.patchValue({ proposal: null, details: null });
 		}
 	}
 
