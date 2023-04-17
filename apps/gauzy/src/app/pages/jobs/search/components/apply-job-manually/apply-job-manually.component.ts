@@ -71,8 +71,8 @@ export class ApplyJobManuallyComponent extends TranslationBaseComponent
 	get jobPost(): IEmployeeJobPost {
 		return this._jobPost;
 	}
-	@Input() set jobPost(value: IEmployeeJobPost) {
-		this._jobPost = value;
+	@Input() set jobPost(jobPost: IEmployeeJobPost) {
+		this._jobPost = jobPost;
 		this.patchFormValue();
 	}
 

@@ -3,23 +3,19 @@ import { CommonModule } from '@angular/common';
 
 import { JobsRoutingModule } from './jobs-routing.module';
 
-import { JobTitleDescriptionDetailsComponent } from './table-components';
 import { JobLayoutComponent } from './job-layout/job-layout.component';
 import { SharedModule } from '../../@shared/shared.module';
-
-const COMPONENTS = [
-	JobTitleDescriptionDetailsComponent
-];
+import { JobTableComponentsModule } from './table-components/job-table-components.module';
 
 @NgModule({
 	declarations: [
-		...COMPONENTS,
 		JobLayoutComponent
 	],
 	imports: [
 		CommonModule,
 		JobsRoutingModule,
-		SharedModule
+		SharedModule,
+		JobTableComponentsModule
 	]
 })
 export class JobsModule { }

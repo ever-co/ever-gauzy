@@ -5,6 +5,7 @@ import { NbButtonModule, NbCardModule, NbFormFieldModule, NbIconModule, NbInputM
 import { CKEditorModule } from 'ckeditor4-angular';
 import { FileUploadModule } from 'ng2-file-upload';
 import { ApplyJobManuallyComponent } from './apply-job-manually.component';
+import { JobTableComponentsModule } from '../../../table-components';
 import { TranslateModule } from './../../../../../@shared/translate/translate.module';
 import { EmployeeMultiSelectModule } from './../../../../../@shared/employee/employee-multi-select/employee-multi-select.module';
 import { ProposalTemplateSelectModule } from './../../../../../@shared/proposal-template-select/proposal-template-select.module';
@@ -27,7 +28,8 @@ import { ProposalTemplateSelectModule } from './../../../../../@shared/proposal-
 		NbInputModule,
 		TranslateModule,
 		EmployeeMultiSelectModule,
-		ProposalTemplateSelectModule
+		ProposalTemplateSelectModule,
+		JobTableComponentsModule
 	],
 	exports: []
 })
