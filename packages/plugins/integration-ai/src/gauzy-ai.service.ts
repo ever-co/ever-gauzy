@@ -928,7 +928,37 @@ export class GauzyAIService {
 					? {
 						jobDateCreated: filters.jobDateCreated
 					}
-					: {})
+					: {}),
+				...(filters && filters.title
+					? {
+						jobPost: {
+							title: {
+								iLike: `%${filters.title}%`
+							}
+						}
+					}
+					: {}),
+				...(filters && filters.jobType
+					? {
+						jobType: {
+							in: filters.jobType
+						}
+					}
+					: {}),
+				...(filters && filters.jobStatus
+					? {
+						jobStatus: {
+							in: filters.jobStatus
+						}
+					}
+					: {}),
+				...(filters && filters.jobSource
+					? {
+						providerCode: {
+							in: filters.jobSource
+						}
+					}
+					: {}),
 			};
 
 			if (employeeIdFilter) {
