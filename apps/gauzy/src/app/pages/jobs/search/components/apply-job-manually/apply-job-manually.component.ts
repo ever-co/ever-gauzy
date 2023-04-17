@@ -10,6 +10,7 @@ import { FileUploader, FileUploaderOptions } from 'ng2-file-upload';
 import {
 	IApplyJobPostInput,
 	IEmployeeJobPost,
+	IEmployeeProposalTemplate,
 	IImageAsset,
 	IOrganization,
 	ISelectedEmployee,
@@ -191,6 +192,20 @@ export class ApplyJobManuallyComponent extends TranslationBaseComponent
 				details.setValidators([Validators.required]);
 			}
 			this.form.updateValueAndValidity();
+		}
+	}
+
+	/**
+	 * On Proposal template change
+	 *
+	 * @param item
+	 */
+	onProposalTemplateChange(item: IEmployeeProposalTemplate | null): void {
+		if (isNotEmpty(item)) {
+			const { content } = item;
+			this.form.patchValue({ details: content, proposal: content });
+		} else {
+			this.form.patchValue({ proposal: null, details: null });
 		}
 	}
 

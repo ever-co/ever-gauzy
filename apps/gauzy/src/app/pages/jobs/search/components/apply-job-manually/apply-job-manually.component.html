@@ -45,6 +45,20 @@
                     </div>
                 </div>
             </div>
+            <div class="row">
+                <div class="col-5">
+                    <div class="form-group">
+                        <label class="label" for="proposal_template">
+                            {{ 'PROPOSALS_PAGE.REGISTER.TEMPLATE' | translate }}
+                        </label>
+                        <ngx-proposal-template-select
+                            id="proposal_template"
+                            [employeeId]="form.get('employeeId').value"
+                            (selectedChange)="onProposalTemplateChange($event)"
+                        ></ngx-proposal-template-select>
+                    </div>
+                </div>
+            </div>
             <ng-template
                 [ngIf]="JobPostSourceEnum.UPWORK === jobPost?.providerCode"
             >
