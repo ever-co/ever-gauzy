@@ -23,6 +23,7 @@ export enum PublicTeamRelationEnum {
 	'tasks' = 'tasks',
 	'tasks.members' = 'tasks.members',
 	'tasks.teams' = 'tasks.teams',
+	'tasks.tags' = 'tasks.tags',
 	'statuses' = 'statuses',
 	'priorities' = 'priorities',
 	'sizes' = 'sizes',
