@@ -10,6 +10,7 @@ import { FileUploader, FileUploaderOptions } from 'ng2-file-upload';
 import {
 	IApplyJobPostInput,
 	IEmployeeJobPost,
+	IEmployeeProposalTemplate,
 	IImageAsset,
 	IOrganization,
 	ISelectedEmployee,
@@ -52,15 +53,15 @@ export class ApplyJobManuallyComponent extends TranslationBaseComponent
 	}
 
 	/**  Getter & Setter for Selected Employee */
-	_selectedEmployeeId: ISelectedEmployee['id'];
-	get selectedEmployeeId(): ISelectedEmployee['id'] {
-		return this._selectedEmployeeId;
+	_selectedEmployee: ISelectedEmployee;
+	get selectedEmployee(): ISelectedEmployee {
+		return this._selectedEmployee;
 	}
-	@Input() set selectedEmployeeId(employeeId: ISelectedEmployee['id']) {
-		this._selectedEmployeeId = employeeId;
+	@Input() set selectedEmployee(employee: ISelectedEmployee) {
+		this._selectedEmployee = employee;
 		/** Set default select employee */
-		if (isNotEmpty(employeeId) && this.form.get('employeeId')) {
-			this.form.get('employeeId').setValue(employeeId);
+		if (isNotEmpty(employee) && this.form.get('employeeId')) {
+			this.form.get('employeeId').setValue(employee.id);
 			this.form.get('employeeId').updateValueAndValidity();
 		}
 	}
@@ -99,7 +100,7 @@ export class ApplyJobManuallyComponent extends TranslationBaseComponent
 				filter(([organization]) => !!organization),
 				tap(([organization, employee]) => {
 					this.organization = organization;
-					this.selectedEmployeeId = employee ? employee.id : null;
+					this.selectedEmployee = employee && employee.id ? employee : null;
 				}),
 				untilDestroyed(this)
 			)
@@ -191,6 +192,20 @@ export class ApplyJobManuallyComponent extends TranslationBaseComponent
 				details.setValidators([Validators.required]);
 			}
 			this.form.updateValueAndValidity();
+		}
+	}
+
+	/**
+	 * On Proposal template change
+	 *
+	 * @param item
+	 */
+	onProposalTemplateChange(item: IEmployeeProposalTemplate | null): void {
+		if (isNotEmpty(item)) {
+			const { content } = item;
+			this.form.patchValue({ details: content, proposal: content });
+		} else {
+			this.form.patchValue({ proposal: null, details: null });
 		}
 	}
 
