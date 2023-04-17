@@ -12,9 +12,7 @@ import { ProposalTemplateSelectModule } from './../../../../../@shared/proposal-
 
 @NgModule({
 	providers: [],
-	declarations: [
-		ApplyJobManuallyComponent
-	],
+	declarations: [ApplyJobManuallyComponent],
 	imports: [
 		CommonModule,
 		FormsModule,
@@ -33,4 +31,4 @@ import { ProposalTemplateSelectModule } from './../../../../../@shared/proposal-
 	],
 	exports: []
 })
-export class ApplyJobManuallyModule { }
+export class ApplyJobManuallyModule {}

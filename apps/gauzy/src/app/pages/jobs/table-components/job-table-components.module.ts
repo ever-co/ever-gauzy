@@ -4,15 +4,8 @@ import { JobTitleDescriptionDetailsComponent } from './job-title-description-det
 import { SharedModule } from '../../../@shared/shared.module';
 
 @NgModule({
-    imports: [
-        CommonModule,
-        SharedModule
-    ],
-    declarations: [
-        JobTitleDescriptionDetailsComponent
-    ],
-    exports: [
-        JobTitleDescriptionDetailsComponent
-    ]
+	imports: [CommonModule, SharedModule],
+	declarations: [JobTitleDescriptionDetailsComponent],
+	exports: [JobTitleDescriptionDetailsComponent]
 })
-export class JobTableComponentsModule { }
+export class JobTableComponentsModule {}
