@@ -121,8 +121,8 @@ export enum JobPostTypeEnum {
 }
 
 export enum JobSearchTabsEnum {
-	ACTIONS = "ACTIONS",
-	SEARCH = "SEARCH"
+	ACTIONS = 'ACTIONS',
+	SEARCH = 'SEARCH'
 }
 
 export interface IUpdateEmployeeJobPostAppliedResult {
