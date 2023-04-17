@@ -8,14 +8,7 @@ import { SharedModule } from '../../@shared/shared.module';
 import { JobTableComponentsModule } from './table-components/job-table-components.module';
 
 @NgModule({
-	declarations: [
-		JobLayoutComponent
-	],
-	imports: [
-		CommonModule,
-		JobsRoutingModule,
-		SharedModule,
-		JobTableComponentsModule
-	]
+	declarations: [JobLayoutComponent],
+	imports: [CommonModule, JobsRoutingModule, SharedModule, JobTableComponentsModule]
 })
-export class JobsModule { }
+export class JobsModule {}
