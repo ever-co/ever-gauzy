@@ -827,11 +827,11 @@ export function removeMainListener() {
 }
 
 export function removeTimerListener() {
+	removeTimerHandlers();
 	const timerListeners = [
 		'data_push_activity',
 		'remove_aw_local_data',
 		'remove_wakatime_local_data',
-		'stop_timer',
 		'return_time_slot',
 		'show_screenshot_notif_window',
 		'save_screen_shoot',
@@ -860,8 +860,17 @@ export function removeAllHandlers() {
 		'DESKTOP_CAPTURER_GET_SOURCES',
 		'FINISH_SYNCED_TIMER',
 		'TAKE_SCREEN_CAPTURE',
-		'START_SERVER',
-		'START_TIMER'
+		'START_SERVER'
+	];
+	channels.forEach((channel: string) => {
+		ipcMain.removeHandler(channel);
+	});
+}
+
+export function removeTimerHandlers() {
+	const channels = [
+		'START_TIMER',
+		'STOP_TIMER'
 	];
 	channels.forEach((channel: string) => {
 		ipcMain.removeHandler(channel);
