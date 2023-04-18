@@ -168,8 +168,8 @@ export class CreateTimeSlotHandler
 					qb.andWhere(`"${qb.alias}"."id" IN (:...timeLogIds)`, {
 						timeLogIds
 					});
-					console.log(qb.getQueryAndParameters(), `Timelog query for timeLog IDs for employee (${user.name})`);
 				});
+				console.log(query.getQueryAndParameters(), `Timelog query for timeLog IDs for employee (${user.name})`);
 				const timeLogs = await query.getMany();
 				console.log(timeLogs, `Found recent time logs using timelog ids for employee (${user.name})`);
 				timeSlot.timeLogs.push(...timeLogs);
