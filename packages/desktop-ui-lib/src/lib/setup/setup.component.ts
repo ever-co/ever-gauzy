@@ -324,7 +324,7 @@ export class SetupComponent implements OnInit {
 					gauzyConfig
 				);
 			}
-			if (isStarted) {
+			if (isStarted && !gauzyConfig.isLocalServer) {
 				this.electronService.ipcRenderer.send('app_is_init');
 			}
 		} catch (error) {
