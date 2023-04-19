@@ -1,6 +1,7 @@
 // import * as _ from 'underscore';
 import { Injectable, Logger } from '@nestjs/common';
 import {
+	CreateEmployeeJobApplication,
 	Employee,
 	EmployeeJobPostsDocument,
 	EmployeeJobPostsQuery,
@@ -327,10 +328,72 @@ export class GauzyAIService {
 		);
 
 		if (employeeId && jobPostId && employeeJobPostId) {
+			const applicationDate = new Date();
+
+			// ------------------ Create Employee Job Application ------------------
+			// This will Apply to the job using Automation system
+
+			const createEmployeeJobApplication: CreateEmployeeJobApplication = {
+				employeeId: employeeId,
+				jobPostId: jobPostId,
+				proposal: input.proposal,
+				rate: input.rate,
+				// details: input.details,
+				attachments: input.attachments,
+				appliedDate: applicationDate,
+				employeeJobPostId: employeeJobPostId,
+				isActive: true,
+				isArchived: false,
+				providerCode: input.providerCode,
+				providerJobId: input.providerJobId,
+				jobType: input.jobType,
+				jobStatus: input.jobStatus,
+				terms: input.terms,
+				qa: input.qa,
+				// Note: isViewedByClient will be updated by our Automation system
+				// Note: providerJobApplicationId will be set by Automation system when it's applied to the job
+			};
+
+			const createEmployeeJobApplicationMutation: DocumentNode<any> = gql`
+				mutation createEmployeeJobApplication(
+					$input: createEmployeeJobApplicationInput!
+				) {
+					employeeId,
+					jobPostId,
+					proposal,
+					rate,
+					// details,
+					attachments,
+					appliedDate,
+					employeeJobPostId,
+					isActive,
+					isArchived,
+					providerCode,
+					providerJobId,
+					jobType,
+					jobStatus,
+					terms,
+					qa
+				}
+			`;
+
+			await this._client.mutate({
+				mutation: createEmployeeJobApplicationMutation,
+				variables: {
+					input: {
+						createEmployeeJobApplication,
+					},
+				},
+			});
+
+			// ------------------ Update Employee Job Post Record ------------------
+			// Note: it's just set isApplied and appliedDate fields in Gauzy AI
+
 			const update: UpdateEmployeeJobPost = {
 				employeeId: employeeId,
 				jobPostId: jobPostId,
 				isApplied: input.applied,
+				appliedDate: applicationDate,
 			};
 
 			const updateEmployeeJobPostMutation: DocumentNode<any> = gql`
@@ -934,38 +997,39 @@ export class GauzyAIService {
 				employeeId: undefined,
 				...(filters && filters.jobDateCreated
 					? {
-						jobDateCreated: filters.jobDateCreated
-					}
+							jobDateCreated: filters.jobDateCreated,
+					  }
 					: {}),
 				...(filters && filters.title
 					? {
-						jobPost: {
-							title: {
-								iLike: `%${filters.title}%`
-							}
-						}
-					}
+							jobPost: {
+								title: {
+									iLike: `%${filters.title}%`,
+								},
+							},
+					  }
 					: {}),
 				...(filters && filters.jobType
 					? {
-						jobType: {
-							in: filters.jobType
-						}
-					}
+							jobType: {
+								in: filters.jobType,
+							},
+					  }
 					: {}),
 				...(filters && filters.jobStatus
 					? {
-						jobStatus: {
-							in: filters.jobStatus
-						}
-					}
+							jobStatus: {
+								in: filters.jobStatus,
+							},
+					  }
 					: {}),
 				...(filters && filters.jobSource
 					? {
-						providerCode: {
-							in: filters.jobSource
-						}
-					} : {}),
+							providerCode: {
+								in: filters.jobSource,
+							},
+					  }
+					: {}),
 			};
 
 			if (employeeIdFilter) {
