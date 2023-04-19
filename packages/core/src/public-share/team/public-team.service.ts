@@ -5,6 +5,7 @@ import {
 	IOrganizationTeamStatisticInput
 } from '@gauzy/contracts';
 import { Injectable, NotFoundException } from '@nestjs/common';
+import { parseToBoolean } from '@gauzy/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { FindOptionsWhere, Repository } from 'typeorm';
 import { OrganizationTeam } from './../../core/entities/internal';
@@ -104,14 +105,14 @@ export class PublicTeamService {
 							organizationId,
 							tenantId,
 							...(
-								(Boolean(withLaskWorkedTask)) ? {
+								(parseToBoolean(withLaskWorkedTask)) ? {
 									relations: ['task']
 								} : {}
 							),
 						});
 						return {
 							...member,
-							lastWorkedTask: Boolean(withLaskWorkedTask) ? timerWorkedStatus.lastLog?.task : null,
+							lastWorkedTask: parseToBoolean(withLaskWorkedTask) ? timerWorkedStatus.lastLog?.task : null,
 							timerStatus: timerWorkedStatus?.timerStatus,
 							totalWorkedTasks: await this._statisticService.getTasks({
 								organizationId,
