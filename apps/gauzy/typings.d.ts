@@ -12,3 +12,7 @@ interface NodeModule {
 }
 
 declare var echarts: any;
+
+interface Window {
+	require: NodeRequire;
+}
