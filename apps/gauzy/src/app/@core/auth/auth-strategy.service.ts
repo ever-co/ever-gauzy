@@ -269,9 +269,7 @@ export class AuthStrategy extends NbAuthStrategy {
 		this.store.clear();
 		this.store.serverConnection = 200;
 		if (this.electronService.isElectron) {
-			try {
-				this.electronService.ipcRenderer.send('logout_desktop');
-			} catch (error) {}
+			this.electronService.ipcRenderer.send('logout');
 		}
 
 		return new NbAuthResult(
