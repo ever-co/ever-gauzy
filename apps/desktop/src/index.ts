@@ -532,6 +532,8 @@ ipcMain.on('restart_app', async (event, arg) => {
 	setupWindow.webContents.send('server_ping_restart', {
 		host: getApiBaseUrl(configs),
 	});
+	app.relaunch({ args: process.argv.slice(1).concat(['--relaunch']) });
+	app.exit(0);
 });
 
 ipcMain.on('save_additional_setting', (event, arg) => {
