@@ -101,9 +101,9 @@ export class SetupComponent implements OnInit {
 	};
 
 	connectivity: any = {
-		integrated: this.appName === 'gauzy-desktop-timer' ? false : true,
-		custom: this.appName === 'gauzy-desktop-timer' ? false : true,
-		live: this.appName === 'gauzy-desktop-timer' ? true : false,
+		integrated: false,
+		custom: false,
+		live: true,
 	};
 
 	thirdParty: any = {
@@ -324,7 +324,7 @@ export class SetupComponent implements OnInit {
 					gauzyConfig
 				);
 			}
-			if (isStarted) {
+			if (isStarted && !gauzyConfig.isLocalServer) {
 				this.electronService.ipcRenderer.send('app_is_init');
 			}
 		} catch (error) {

@@ -325,6 +325,7 @@ export class TrayIcon {
 		});
 
 		ipcMain.on('logout', async () => {
+			const userService = new UserService();
 			this.tray.setContextMenu(Menu.buildFromTemplate(unAuthMenu));
 			menuWindowTime.enabled = false;
 
@@ -360,6 +361,7 @@ export class TrayIcon {
 					loginPageAlreadyShow = true;
 				}
 			}
+			await userService.remove();
 		});
 
 		ipcMain.on('user_detail', (event, arg) => {
