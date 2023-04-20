@@ -101,9 +101,9 @@ export class SetupComponent implements OnInit {
 	};
 
 	connectivity: any = {
-		integrated: false,
+		integrated: this._isServer,
 		custom: false,
-		live: true,
+		live: !this._isServer,
 	};
 
 	thirdParty: any = {
