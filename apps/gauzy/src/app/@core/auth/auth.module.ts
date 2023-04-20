@@ -7,6 +7,7 @@ import { AuthStrategy } from './auth-strategy.service';
 import { AuthService } from '../services/auth.service';
 import { Store } from '../services/store.service';
 import { NoAuthGuard } from './no-auth.guard';
+import { ElectronService } from './electron.service';
 
 const socialLinks = [
 	{
@@ -53,7 +54,8 @@ const socialLinks = [
 		NoAuthGuard,
 		AuthStrategy,
 		AuthService,
-		Store
+		Store,
+		ElectronService
 	]
 })
 export class AuthModule {}

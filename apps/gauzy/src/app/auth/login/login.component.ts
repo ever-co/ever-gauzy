@@ -15,7 +15,7 @@ import {
 import { RolesEnum } from '@gauzy/contracts';
 import { environment } from './../../../environments/environment';
 import { CookieService } from 'ngx-cookie-service';
-import { ElectronService } from '../../@core/auth/ElectronService';
+import { ElectronService } from '../../@core/auth/electron.service';
 
 @Component({
 	selector: 'ngx-login',
@@ -29,13 +29,13 @@ export class NgxLoginComponent extends NbLoginComponent implements OnInit {
 	RolesEnum = RolesEnum;
 	isDemo: boolean = environment.DEMO;
 	showPassword = false;
-	electronService = ElectronService;
 
 	constructor(
 		private readonly cookieService: CookieService,
 		public readonly nbAuthService: NbAuthService,
 		public readonly cdr: ChangeDetectorRef,
 		public readonly router: Router,
+		public readonly electronService: ElectronService,
 		@Inject(NB_AUTH_OPTIONS) options
 	) {
 		super(nbAuthService, options, cdr, router);

@@ -9,7 +9,7 @@ import { firstValueFrom } from 'rxjs';
 import { AuthService } from '../services/auth.service';
 import { AuthStrategy } from './auth-strategy.service';
 import { Store } from '../services/store.service';
-import { ElectronService } from './ElectronService';
+import { ElectronService } from './electron.service';
 
 @Injectable()
 export class AuthGuard implements CanActivate {
@@ -17,7 +17,8 @@ export class AuthGuard implements CanActivate {
 		private readonly router: Router,
 		private readonly authService: AuthService,
 		private readonly authStrategy: AuthStrategy,
-		private readonly store: Store
+		private readonly store: Store,
+		private readonly electronService: ElectronService
 	) {}
 
 	async canActivate(
@@ -38,9 +39,9 @@ export class AuthGuard implements CanActivate {
 		}
 
 		// not logged in so redirect to login page with the return url
-		if (ElectronService.isElectron) {
+		if (this.electronService.isElectron) {
 			try {
-				ElectronService.ipcRenderer.send('logout');
+				this.electronService.ipcRenderer.send('logout');
 			} catch (error) {}
 		}
 
