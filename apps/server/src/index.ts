@@ -38,6 +38,7 @@ import {
 	createSetupWindow,
 	createServerWindow,
 	createSettingsWindow,
+	SplashScreen,
 } from '@gauzy/desktop-window';
 import { initSentry } from './sentry';
 import { readFileSync, writeFileSync, accessSync, constants } from 'fs';
@@ -59,6 +60,7 @@ initSentry();
 let setupWindow: BrowserWindow;
 let serverWindow: BrowserWindow;
 let settingsWindow: BrowserWindow;
+let splashScreen: SplashScreen;
 let tray: Tray;
 let isServerRun: boolean;
 
@@ -98,6 +100,7 @@ ipcMain.setMaxListeners(0);
 
 const runSetup = async () => {
 	if (setupWindow) {
+		splashScreen.close();
 		setupWindow.show();
 		return;
 	}
@@ -118,6 +121,7 @@ const appState = async () => {
 
 const runMainWindow = async () => {
 	serverWindow = await createServerWindow(serverWindow, null, pathWindow.ui);
+	splashScreen.close();
 	serverWindow.show();
 	if (!tray) {
 		createTray();
@@ -356,6 +360,9 @@ ipcMain.on('stop_gauzy_server', (event, arg) => {
 });
 
 app.on('ready', async () => {
+	splashScreen = new SplashScreen(pathWindow.ui);
+	await splashScreen.loadURL();
+	splashScreen.show();
 	LocalStore.setDefaultApplicationSetting();
 	if (!settingsWindow) {
 		settingsWindow = await createSettingsWindow(settingsWindow, pathWindow.ui);

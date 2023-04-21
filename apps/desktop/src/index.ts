@@ -75,6 +75,7 @@ import {
 	createSettingsWindow,
 	createUpdaterWindow,
 	createImageViewerWindow,
+	SplashScreen
 } from '@gauzy/desktop-window';
 import { fork } from 'child_process';
 import { autoUpdater } from 'electron-updater';
@@ -109,6 +110,7 @@ let NotificationWindow: BrowserWindow = null;
 let settingsWindow: BrowserWindow = null;
 let updaterWindow: BrowserWindow = null;
 let imageView: BrowserWindow = null;
+let splashScreen: SplashScreen = null;
 
 console.log('App UI Render Path:', path.join(__dirname, './index.html'));
 
@@ -203,6 +205,7 @@ async function startServer(value, restart = false) {
 						{ ...environment, gauzyWindow: value.gauzyWindow },
 						pathWindow.gauzyWindow
 					);
+					splashScreen.close();
 					gauzyWindow.show();
 				}
 			}
@@ -251,6 +254,7 @@ async function startServer(value, restart = false) {
 			{ ...environment, gauzyWindow: value.gauzyWindow },
 			pathWindow.gauzyWindow
 		);
+		splashScreen.close();
 		gauzyWindow.show();
 	}
 	const auth = store.get('auth');
@@ -345,6 +349,9 @@ app.on('ready', async () => {
 		settings && typeof settings.autoLaunch === 'boolean'
 			? settings.autoLaunch
 			: true;
+	splashScreen = new SplashScreen(pathWindow.timeTrackerUi);
+	await splashScreen.loadURL();
+	splashScreen.show();
 	if (provider.dialect === 'sqlite') {
 		try {
 			const res = await knex.raw(`pragma journal_mode = WAL;`)
@@ -408,6 +415,7 @@ app.on('ready', async () => {
 				false,
 				pathWindow.timeTrackerUi
 			);
+			splashScreen.close();
 			setupWindow.show();
 			setupWindow.webContents.send('setup-data', {
 				...configs,
@@ -430,6 +438,7 @@ app.on('ready', async () => {
 			false,
 			pathWindow.timeTrackerUi
 		);
+		splashScreen.close();
 		setupWindow.show();
 	}
 	updater.settingWindow = settingsWindow;

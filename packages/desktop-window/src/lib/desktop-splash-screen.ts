@@ -17,9 +17,17 @@ export class SplashScreen {
 		this._filePath = path;
 		this._options = {
 			frame: false,
-			transparent: true,
+			resizable: false,
+			webPreferences: {
+				nodeIntegration: true,
+				webSecurity: false,
+				contextIsolation: false,
+				sandbox: false
+			},
 			width: 300,
 			height: 240,
+			title: '',
+			show: false,
 			center: true
 		}
 		this._window = new BrowserWindow(this._options);
