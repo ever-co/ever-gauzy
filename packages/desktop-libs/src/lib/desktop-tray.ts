@@ -325,7 +325,6 @@ export class TrayIcon {
 		});
 
 		ipcMain.on('logout', async () => {
-			const userService = new UserService();
 			this.tray.setContextMenu(Menu.buildFromTemplate(unAuthMenu));
 			menuWindowTime.enabled = false;
 
@@ -337,6 +336,7 @@ export class TrayIcon {
 			if (settingsWindow) settingsWindow.hide();
 
 			if (LocalStore.getStore('configs').gauzyWindow) {
+				timeTrackerWindow.webContents.send('clear_store');
 				timeTrackerWindow.hide();
 			} else {
 				if (
@@ -361,7 +361,6 @@ export class TrayIcon {
 					loginPageAlreadyShow = true;
 				}
 			}
-			await userService.remove();
 		});
 
 		ipcMain.on('user_detail', (event, arg) => {

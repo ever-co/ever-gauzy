@@ -954,6 +954,14 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 				}
 			});
 		});
+
+		this.electronService.ipcRenderer.on('clear_store', (event, arg) => {
+			this._ngZone.run(async () => {
+				await this.getTimerStatus(this.argFromMain);
+				this._store.clear();
+				event.sender.send('remove_current_user');
+			});
+		});
 	}
 
 	async toggleStart(val) {

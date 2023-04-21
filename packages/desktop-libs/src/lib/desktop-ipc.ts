@@ -804,6 +804,14 @@ export function ipcTimer(
 	ipcMain.on('update_session', (event, timer: TimerTO) => {
 		timerHandler.timeStart = moment(timer.startedAt);
 	})
+
+	ipcMain.on('remove_current_user', async (event, arg) => {
+		try {
+			await userService.remove();
+		} catch (error) {
+			console.log('ERROR', error);
+		}
+	})
 }
 
 export function removeMainListener() {
