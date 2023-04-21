@@ -74,7 +74,7 @@ const routes: Routes = [
 		component: ImageViewerComponent
 	},
 	{
-		path: 'splash',
+		path: 'splash-screen',
 		component: SplashScreenComponent
 	},
 	{

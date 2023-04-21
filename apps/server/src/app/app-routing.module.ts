@@ -5,7 +5,8 @@ import {
 	SetupComponent,
 	UpdaterComponent,
 	ServerDashboardComponent,
-	AboutComponent
+	AboutComponent,
+	SplashScreenComponent
 } from '@gauzy/desktop-ui-lib';
 
 const routes: Routes = [
@@ -32,6 +33,10 @@ const routes: Routes = [
 	{
 		path: 'about',
 		component: AboutComponent
+	},
+	{
+		path: 'splash-screen',
+		component: SplashScreenComponent
 	}
 ];
 
