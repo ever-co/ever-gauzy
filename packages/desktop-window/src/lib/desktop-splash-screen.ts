@@ -29,7 +29,7 @@ export class SplashScreen {
 			title: '',
 			show: false,
 			center: true
-		}
+		};
 		this._window = new BrowserWindow(this._options);
 		remoteMain.enable(this._window.webContents);
 		this._window.setMenuBarVisibility(false);
@@ -52,7 +52,7 @@ export class SplashScreen {
 			await this._window.loadURL(launchPath);
 			console.log('launched electron with:', launchPath);
 		} catch (error) {
-			console.log(error)
+			console.log(error);
 		}
 	}
 

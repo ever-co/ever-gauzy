@@ -15,7 +15,7 @@ import {
 	Menu,
 	shell,
 	MenuItemConstructorOptions,
-	screen,
+	screen
 } from 'electron';
 import { environment } from './environments/environment';
 
@@ -28,18 +28,8 @@ app.setName('gauzy-server');
 
 console.log('Node Modules Path', path.join(__dirname, 'node_modules'));
 
-import {
-	LocalStore,
-	apiServer,
-	AppMenu,
-	DesktopUpdater,
-} from '@gauzy/desktop-libs';
-import {
-	createSetupWindow,
-	createServerWindow,
-	createSettingsWindow,
-	SplashScreen,
-} from '@gauzy/desktop-window';
+import { LocalStore, apiServer, AppMenu, DesktopUpdater } from '@gauzy/desktop-libs';
+import { createSetupWindow, createServerWindow, createSettingsWindow, SplashScreen } from '@gauzy/desktop-window';
 import { initSentry } from './sentry';
 import { readFileSync, writeFileSync, accessSync, constants } from 'fs';
 import * as remoteMain from '@electron/remote/main';
@@ -67,7 +57,7 @@ let isServerRun: boolean;
 const updater = new DesktopUpdater({
 	repository: 'ever-gauzy-server',
 	owner: 'ever-co',
-	typeRelease: 'releases',
+	typeRelease: 'releases'
 });
 
 const pathWindow: {
@@ -80,10 +70,8 @@ const pathWindow: {
 		? path.join(__dirname, '../data/ui/index.html')
 		: path.join(__dirname, './data/ui/index.html'),
 	ui: path.join(__dirname, 'index.html'),
-	dir: app.isPackaged
-		? path.join(__dirname, '../data/ui')
-		: path.join(__dirname, './data/ui'),
-	timeTrackerUi: path.join(__dirname, 'index.html'),
+	dir: app.isPackaged ? path.join(__dirname, '../data/ui') : path.join(__dirname, './data/ui'),
+	timeTrackerUi: path.join(__dirname, 'index.html')
 };
 
 /* Setting the app user model id for the app. */
@@ -92,7 +80,7 @@ if (process.platform === 'win32') {
 }
 
 LocalStore.setFilePath({
-	iconPath: path.join(__dirname, 'icons', 'icon.png'),
+	iconPath: path.join(__dirname, 'icons', 'icon.png')
 });
 
 // Set unlimited listeners
@@ -127,17 +115,8 @@ const runMainWindow = async () => {
 		createTray();
 	}
 
-	new AppMenu(
-		null,
-		settingsWindow,
-		null,
-		null,
-		pathWindow,
-		serverWindow,
-		false
-	);
-	const menuWindowSetting =
-		Menu.getApplicationMenu().getMenuItemById('window-setting');
+	new AppMenu(null, settingsWindow, null, null, pathWindow, serverWindow, false);
+	const menuWindowSetting = Menu.getApplicationMenu().getMenuItemById('window-setting');
 	if (menuWindowSetting) menuWindowSetting.enabled = true;
 	if (setupWindow) setupWindow.hide();
 };
@@ -148,16 +127,14 @@ const initializeConfig = async (val) => {
 		updateConfigUi(val);
 		await runMainWindow();
 	} catch (error) {
-		console.log(error)
+		console.log(error);
 	}
 };
 
 const getApiBaseUrl = (config) => {
 	if (config.serverUrl) return config.serverUrl;
 	else {
-		return config.port
-			? `http://localhost:${config.port}`
-			: `http://localhost:${environment.API_DEFAULT_PORT}`;
+		return config.port ? `http://localhost:${config.port}` : `http://localhost:${environment.API_DEFAULT_PORT}`;
 	}
 };
 
@@ -171,8 +148,7 @@ const updateConfigUi = (config) => {
 			var global = window;
 		}; </script>`;
 
-	const elementToReplace =
-		'<script src="https://cdn.ckeditor.com/4.6.1/full-all/ckeditor.js"></script>';
+	const elementToReplace = '<script src="https://cdn.ckeditor.com/4.6.1/full-all/ckeditor.js"></script>';
 
 	fileStr = fileStr.replace(
 		elementToReplace,
@@ -203,7 +179,7 @@ const runServer = (isRestart) => {
 	apiServer(
 		{
 			ui: path.join(__dirname, 'preload', 'ui-server.js'),
-			api: path.join(__dirname, 'api/main.js'),
+			api: path.join(__dirname, 'api/main.js')
 		},
 		envVal,
 		serverWindow,
@@ -226,10 +202,10 @@ const getEnvApi = () => {
 			DB_PORT: String(config[provider]?.dbPort),
 			DB_NAME: config[provider]?.dbName,
 			DB_USER: config[provider]?.dbUsername,
-			DB_PASS: config[provider]?.dbPassword,
+			DB_PASS: config[provider]?.dbPassword
 		}),
 		API_PORT: String(config.port),
-		...addsConfig,
+		...addsConfig
 	};
 };
 
@@ -239,9 +215,7 @@ const getUiPort = () => {
 };
 
 const createTray = () => {
-	const iconNativePath = nativeImage.createFromPath(
-		path.join(__dirname, 'assets', 'icons', 'icon.png')
-	);
+	const iconNativePath = nativeImage.createFromPath(path.join(__dirname, 'assets', 'icons', 'icon.png'));
 	iconNativePath.resize({ width: 16, height: 16 });
 	tray = new Tray(iconNativePath);
 	const serverMenu = contextMenu();
@@ -256,7 +230,7 @@ const contextMenu = () => {
 			click() {
 				const config = LocalStore.getStore('configs');
 				shell.openExternal(`http://localhost:${config.portUi}`);
-			},
+			}
 		},
 		{
 			id: 'check_for_update',
@@ -264,51 +238,48 @@ const contextMenu = () => {
 			click() {
 				settingsWindow.show();
 				settingsWindow.webContents.send('goto_update');
-					settingsWindow.webContents.send(
-						'app_setting',
-						LocalStore.getApplicationConfig()
-					);
-			},
+				settingsWindow.webContents.send('app_setting', LocalStore.getApplicationConfig());
+			}
 		},
 		{
-			type: 'separator',
+			type: 'separator'
 		},
 		{
 			id: 'start_server',
 			label: 'Start Server',
 			click() {
 				runServer(false);
-			},
+			}
 		},
 		{
 			id: 'stop_server',
 			label: 'Stop Server',
 			click() {
 				stopServer(false);
-			},
+			}
 		},
 		{
-			type: 'separator',
+			type: 'separator'
 		},
 		{
 			id: 'server_help',
 			label: 'Help',
 			click() {
 				shell.openExternal('https://gauzy.co');
-			},
+			}
 		},
 		{
 			id: 'server_about',
 			label: 'About',
-			role: 'about',
+			role: 'about'
 		},
 		{
 			id: 'server_exit',
 			label: 'Exit',
 			click() {
 				app.quit();
-			},
-		},
+			}
+		}
 	];
 
 	return serverMenu;
@@ -331,7 +302,7 @@ const stopServer = (isRestart) => {
 		try {
 			process.kill(config.apiPid);
 			LocalStore.updateConfigSetting({
-				apiPid: null,
+				apiPid: null
 			});
 			serverWindow.webContents.send('log_state', { msg: 'Api stopped' });
 		} catch (error) {
@@ -342,7 +313,7 @@ const stopServer = (isRestart) => {
 		try {
 			process.kill(config.uiPid);
 			LocalStore.updateConfigSetting({
-				uiPid: null,
+				uiPid: null
 			});
 			serverWindow.webContents.send('log_state', { msg: 'UI stopped' });
 			if (isRestart) {
@@ -411,8 +382,8 @@ ipcMain.on('check_database_connection', async (event, arg) => {
 			databaseOptions = {
 				client: 'sqlite',
 				connection: {
-					filename: sqlite3filename,
-				},
+					filename: sqlite3filename
+				}
 			};
 		}
 		const dbConn = require('knex')(databaseOptions);
@@ -420,14 +391,12 @@ ipcMain.on('check_database_connection', async (event, arg) => {
 		event.sender.send('database_status', {
 			status: true,
 			message:
-				provider === 'postgres'
-					? 'Connection to PostgresSQL DB Succeeds'
-					: 'Connection to SQLITE DB Succeeds',
+				provider === 'postgres' ? 'Connection to PostgresSQL DB Succeeds' : 'Connection to SQLITE DB Succeeds'
 		});
 	} catch (error) {
 		event.sender.send('database_status', {
 			status: false,
-			message: error.message,
+			message: error.message
 		});
 	}
 });
@@ -480,15 +449,15 @@ ipcMain.on('expand_window', (event, arg) => {
 			break;
 		default:
 			{
-	serverWindow.setBounds(
-		{
-			width: wx,
-			height: hx,
-			x: (width - wx) * 0.5,
-			y: (height - hx) * 0.5
-		},
-		true
-	);
+				serverWindow.setBounds(
+					{
+						width: wx,
+						height: hx,
+						x: (width - wx) * 0.5,
+						y: (height - hx) * 0.5
+					},
+					true
+				);
 			}
 			break;
 	}
@@ -527,5 +496,5 @@ ipcMain.on('update_app_setting', (event, arg) => {
 });
 
 app.on('browser-window-created', (_, window) => {
-	require("@electron/remote/main").enable(window.webContents)
-})
+	require('@electron/remote/main').enable(window.webContents);
+});

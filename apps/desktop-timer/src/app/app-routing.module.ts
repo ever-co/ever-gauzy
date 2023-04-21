@@ -14,11 +14,7 @@ import {
 	NoAuthGuard,
 	ServerDownPage
 } from '@gauzy/desktop-ui-lib';
-import {
-	NbAuthComponent,
-	NbRequestPasswordComponent,
-	NbResetPasswordComponent
-} from '@nebular/auth';
+import { NbAuthComponent, NbRequestPasswordComponent, NbResetPasswordComponent } from '@nebular/auth';
 import { AppModuleGuard } from './app.module.guards';
 
 const routes: Routes = [

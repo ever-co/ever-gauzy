@@ -6,6 +6,6 @@ import { NbLayoutModule, NbCardModule, NbSpinnerModule } from '@nebular/theme';
 @NgModule({
 	declarations: [SplashScreenComponent],
 	imports: [CommonModule, NbLayoutModule, NbCardModule, NbSpinnerModule],
-	exports: [SplashScreenComponent],
+	exports: [SplashScreenComponent]
 })
 export class SplashScreenModule {}
