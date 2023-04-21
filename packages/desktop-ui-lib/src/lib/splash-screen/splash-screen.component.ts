@@ -1,8 +1,8 @@
-import { Component, OnInit, NgZone } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { ElectronService } from '../electron/services';
 
 @Component({
-	selector: 'ngx-screen-capture',
+	selector: 'ngx-splash-screen',
 	templateUrl: './splash-screen.component.html',
 	styleUrls: ['./splash-screen.component.scss'],
 })
@@ -25,7 +25,7 @@ export class SplashScreenComponent implements OnInit {
 					letter.toUpperCase()
 				),
 			version: _electronService.remote.app.getVersion(),
-			iconPath: './assets/images/logos/logo_Gauzy.png'
+			iconPath: './assets/images/logos/logo_Gauzy.svg'
 		};
 	}
 
