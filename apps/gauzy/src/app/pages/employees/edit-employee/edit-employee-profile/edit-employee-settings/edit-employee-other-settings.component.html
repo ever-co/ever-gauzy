@@ -1,4 +1,21 @@
 <form class="main-form" #ngForm="ngForm" [formGroup]="form" (ngSubmit)="onSubmit(ngForm)" novalidate>
+	<aside class="aside-nav">
+		<h4 class="settings-section-header">
+			{{ 'EMPLOYEES_PAGE.EDIT_EMPLOYEE.SETTINGS_SECTION' | translate }}
+		</h4>
+		<ul>
+			<span (click)="general.toggle()">
+				<li [ngClass]="{ active: general?.expanded }">
+					{{ 'EMPLOYEES_PAGE.EDIT_EMPLOYEE.GENERAL_SETTINGS' | translate }}
+				</li>
+			</span>
+			<span (click)="integrations.toggle()">
+				<li [ngClass]="{ active: integrations?.expanded }">
+					{{ 'EMPLOYEES_PAGE.EDIT_EMPLOYEE.INTEGRATIONS' | translate }}
+				</li>
+			</span>
+		</ul>
+	</aside>
 	<section class="fields-section">
 		<div class="actions">
 			<button
@@ -21,6 +38,43 @@
 									<ga-timezone-selector
 										formControlName="timeZone"
 									></ga-timezone-selector>
+								</div>
+							</div>
+						</div>
+					</nb-accordion-item-body>
+				</nb-accordion-item>
+				<nb-accordion-item #integrations>
+					<nb-accordion-item-header>
+						{{ 'EMPLOYEES_PAGE.EDIT_EMPLOYEE.INTEGRATIONS' | translate }}
+					</nb-accordion-item-header>
+					<nb-accordion-item-body>
+						<div class="fields">
+							<div class="row">
+								<div class="col-6">
+									<div class="form-group">
+										<label class="label">
+											{{ 'FORM.LABELS.UPWORK_ID' | translate }}
+										</label>
+										<input
+											[placeholder]="'FORM.PLACEHOLDERS.UPWORK_ID' | translate"
+											formControlName="upworkId"
+											fullWidth
+											nbInput
+										/>
+									</div>
+								</div>
+								<div class="col-6">
+									<div class="form-group">
+										<label class="label">
+											{{ 'FORM.LABELS.LINKEDIN_ID' | translate }}
+										</label>
+										<input
+											[placeholder]="'FORM.PLACEHOLDERS.LINKEDIN_ID' | translate"
+											formControlName="linkedInId"
+											fullWidth
+											nbInput
+										/>
+									</div>
 								</div>
 							</div>
 						</div>

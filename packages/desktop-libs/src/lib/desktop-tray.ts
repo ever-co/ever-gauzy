@@ -317,11 +317,14 @@ export class TrayIcon {
 				timeTrackerWindow.show();
 			}
 			if (timeTrackerWindow) {
-				timeTrackerWindow.webContents.send('auth_success_tray_init');
+				timeTrackerWindow.webContents.send(
+					'auth_success_tray_init',
+					arg
+				);
 			}
 		});
 
-		ipcMain.on('logout', () => {
+		ipcMain.on('logout', async () => {
 			this.tray.setContextMenu(Menu.buildFromTemplate(unAuthMenu));
 			menuWindowTime.enabled = false;
 
@@ -333,6 +336,7 @@ export class TrayIcon {
 			if (settingsWindow) settingsWindow.hide();
 
 			if (LocalStore.getStore('configs').gauzyWindow) {
+				timeTrackerWindow.webContents.send('clear_store');
 				timeTrackerWindow.hide();
 			} else {
 				if (
@@ -344,7 +348,7 @@ export class TrayIcon {
 						API_BASE_URL: getApiBaseUrl(serverConfig, config),
 						IS_INTEGRATED_DESKTOP: serverConfig.isLocalServer,
 					};
-					timeTrackerWindow.loadURL(
+					await timeTrackerWindow.loadURL(
 						loginPage(windowPath.gauzyWindow)
 					);
 					timeTrackerWindow.webContents.once(

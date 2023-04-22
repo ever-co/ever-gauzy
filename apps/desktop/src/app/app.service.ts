@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { environment } from '../environments/environment';
 import { catchError } from 'rxjs/operators';
-import { throwError } from 'rxjs';
+import { firstValueFrom, throwError } from 'rxjs';
 
 @Injectable({
 	providedIn: 'root',
@@ -10,10 +10,10 @@ import { throwError } from 'rxjs';
 export class AppService {
 	AW_HOST = environment.AWHost;
 	buckets: any = {};
-	constructor(private http: HttpClient) { }
+	constructor(private http: HttpClient) {}
 
-	pingServer(values) {
-		return this.http.get(values.host).pipe().toPromise();
+	public async pingServer(values) {
+		return await firstValueFrom(this.http.get(values.host + '/api'));
 	}
 
 	startTime(id): Promise<any> {

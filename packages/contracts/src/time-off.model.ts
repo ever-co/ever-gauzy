@@ -1,5 +1,6 @@
 import { IBasePerTenantAndOrganizationEntityModel } from './base-entity.model';
 import { IEmployee } from './employee.model';
+import { IImageAsset as IDocumentAsset } from './image-asset.model';
 
 export interface ITimeOffPolicy
 	extends IBasePerTenantAndOrganizationEntityModel {
@@ -41,6 +42,8 @@ export interface ITimeOff extends IBasePerTenantAndOrganizationEntityModel {
 	description?: string;
 	policy?: ITimeOffPolicy;
 	policyId?: ITimeOffPolicy['id'];
+	document?: IDocumentAsset | null;
+	documentId?: IDocumentAsset['id'] | null;
 	start: Date;
 	end: Date;
 	requestDate: Date;

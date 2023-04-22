@@ -35,6 +35,10 @@ export class CreateTimeSlotHandler
 		const { input } = command;
 		let { organizationId, employeeId, activities = [] } = input;
 
+		/** Get already running TimeLog based on source and logType */
+		const source = input.source || TimeLogSourceEnum.DESKTOP;
+		const logType = input.logType || TimeLogType.TRACKED;
+
 		console.log('Time Slot Interval Request', {
 			input
 		});
@@ -124,14 +128,15 @@ export class CreateTimeSlotHandler
 						web.andWhere(`"${qb.alias}"."tenantId" = :tenantId`, { tenantId });
 						web.andWhere(`"${qb.alias}"."organizationId" = :organizationId`, { organizationId });
 						web.andWhere(`"${qb.alias}"."employeeId" = :employeeId`, { employeeId });
-						web.andWhere(`"${qb.alias}"."source" = :source`, { source: TimeLogSourceEnum.DESKTOP });
-						web.andWhere(`"${qb.alias}"."logType" = :logType`, { logType: TimeLogType.TRACKED });
+						web.andWhere(`"${qb.alias}"."source" = :source`, { source });
+						web.andWhere(`"${qb.alias}"."logType" = :logType`, { logType });
 						web.andWhere(`"${qb.alias}"."stoppedAt" IS NOT NULL`);
 						web.andWhere(`"${qb.alias}"."deletedAt" IS NULL`);
 					})
 				);
 				qb.addOrderBy(`"${qb.alias}"."createdAt"`, 'DESC');
 			});
+			console.log('Find timelog for specific timeslot range query', query.getQueryAndParameters());
 			const timeLog = await query.getOneOrFail();
 			console.log(timeLog, `Found latest worked timelog for employee (${user.name})!`);
 			timeSlot.timeLogs.push(timeLog);
@@ -153,8 +158,8 @@ export class CreateTimeSlotHandler
 						new Brackets((web: WhereExpressionBuilder) => {
 							web.andWhere(`"${qb.alias}"."tenantId" = :tenantId`, { tenantId });
 							web.andWhere(`"${qb.alias}"."organizationId" = :organizationId`, { organizationId });
-							web.andWhere(`"${qb.alias}"."source" = :source`, { source: TimeLogSourceEnum.DESKTOP });
-							web.andWhere(`"${qb.alias}"."logType" = :logType`, { logType: TimeLogType.TRACKED });
+							web.andWhere(`"${qb.alias}"."source" = :source`, { source });
+							web.andWhere(`"${qb.alias}"."logType" = :logType`, { logType });
 							web.andWhere(`"${qb.alias}"."employeeId" = :employeeId`, { employeeId });
 							web.andWhere(`"${qb.alias}"."stoppedAt" IS NOT NULL`);
 							web.andWhere(`"${qb.alias}"."deletedAt" IS NULL`);
@@ -163,8 +168,8 @@ export class CreateTimeSlotHandler
 					qb.andWhere(`"${qb.alias}"."id" IN (:...timeLogIds)`, {
 						timeLogIds
 					});
-					console.log(qb.getQueryAndParameters(), `Timelog query for timeLog IDs for employee (${user.name})`);
 				});
+				console.log(query.getQueryAndParameters(), `Timelog query for timeLog IDs for employee (${user.name})`);
 				const timeLogs = await query.getMany();
 				console.log(timeLogs, `Found recent time logs using timelog ids for employee (${user.name})`);
 				timeSlot.timeLogs.push(...timeLogs);

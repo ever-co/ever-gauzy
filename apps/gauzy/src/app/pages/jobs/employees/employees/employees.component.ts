@@ -1,5 +1,6 @@
 import { AfterViewInit, Component, OnDestroy, OnInit } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
+import { Router } from '@angular/router';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { distinctUntilChange } from '@gauzy/common-angular';
 import { TranslateService } from '@ngx-translate/core';
@@ -42,9 +43,12 @@ export class EmployeesComponent extends PaginationFilterBaseComponent
 	public selectedEmployeeId: ISelectedEmployee['id'];
 	public organization: IOrganization;
 	nbTab$: Subject<string> = new BehaviorSubject(JobSearchTabsEnum.BROWSE);
+	selectedEmployee: IEmployee;
+	disableButton: boolean = true;
 
 	constructor(
 		private readonly http: HttpClient,
+		private readonly router: Router,
 		private readonly store: Store,
 		public readonly translateService: TranslateService,
 		private readonly employeesService: EmployeesService,
@@ -275,7 +279,30 @@ export class EmployeesComponent extends PaginationFilterBaseComponent
 	 */
 	onTabChange(tab: NbTabComponent) { }
 
-	public handleGridSelected({ isSelected, data }): void { }
+	/**
+	 * On select employee
+	 *
+	 * @param param0
+	 */
+	onSelectEmployee({ isSelected, data }) {
+		this.disableButton = !isSelected;
+		this.selectedEmployee = isSelected ? data : null;
+	}
+
+	/**
+	 * Edit employee
+	 *
+	 * @param selectedItem
+	 */
+	edit(selectedItem?: IEmployee) {
+		if (selectedItem) {
+			this.onSelectEmployee({
+				isSelected: true,
+				data: selectedItem
+			});
+		}
+		this.router.navigate(['/pages/employees/edit/', this.selectedEmployee.id]);
+	}
 
 	ngOnDestroy(): void { }
 }

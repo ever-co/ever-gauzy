@@ -28,6 +28,7 @@ import { ThemeSelectorModule } from '../@theme/components/theme-sidebar/theme-se
 import { NgxResetPasswordComponent } from "./reset-password/reset-password.component";
 import { NgxFaqModule } from '../@shared/faq';
 import { ConfirmEmailModule } from './confirm-email';
+import { ElectronService } from '../@core/auth/electron.service';
 
 @NgModule({
 	imports: [
@@ -60,7 +61,8 @@ import { ConfirmEmailModule } from './confirm-email';
 		NgxRegisterSideSingleFeatureComponent,
 		NgxAuthComponent,
 		NgxRegisterComponent,
-		NgxResetPasswordComponent,
+		NgxResetPasswordComponent
 	],
+	providers: [ElectronService]
 })
 export class NgxAuthModule {}

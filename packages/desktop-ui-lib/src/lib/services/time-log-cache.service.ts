@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { ICountsStatistics } from '@gauzy/contracts';
 import { StorageService } from './storage.service';
 import { AbstractCacheService } from './abstract-cache.service';
-import { Store } from 'apps/desktop-timer/src/app/auth/services/store.service';
+import { Store } from '../services';
 
 @Injectable({
 	providedIn: 'root',

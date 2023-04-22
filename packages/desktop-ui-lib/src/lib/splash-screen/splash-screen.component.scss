@@ -1,25 +1,14 @@
-.screen-capture-img {
-  width: 100%;
+@import '../dialogs/about/about.component.scss';
+
+.ga-logo {
+	img {
+		height: 32px;
+	}
 }
 
-.top-bottom-space {
-  padding: 1px !important;
-}
-
-.icon-logo {
-  position: relative;
-  left: -5px;
-  top: 10px;
-}
-
-.title-window {
-  font-weight: bolder;
-}
-
-.margin-p {
-  margin-bottom: 6px;
-}
-
-::ng-deep body {
-  overflow: hidden !important;
+.splash-screen {
+	height: 100%;
+	display: flex;
+	align-items: center;
+	justify-content: center;
 }

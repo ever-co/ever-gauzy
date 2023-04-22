@@ -19,11 +19,14 @@ import { CommandBus } from '@nestjs/cqrs';
 import { FindOptionsWhere } from 'typeorm';
 import { v4 as uuid } from 'uuid';
 import * as path from 'path';
-import { IImageAsset, IPagination, PermissionsEnum } from '@gauzy/contracts';
+import * as fs from 'fs';
+import * as Jimp from 'jimp';
+import { IImageAsset, IPagination, PermissionsEnum, UploadedFile } from '@gauzy/contracts';
 import { CrudController, PaginationParams } from './../core/crud';
 import { FileStorage, UploadedFileStorage } from './../core/file-storage';
 import { LazyFileInterceptor } from './../core/interceptors';
 import { RequestContext } from './../core/context';
+import { tempFile } from './../core/utils';
 import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
 import { Permissions } from './../shared/decorators';
 import { UUIDValidationPipe } from './../shared/pipes';
@@ -70,11 +73,44 @@ export class ImageAssetController extends CrudController<ImageAsset> {
 		@Body() entity: UploadImageAsset
 	) {
 		const provider = new FileStorage().getProvider();
+		let thumbnail: UploadedFile;
+
+		try {
+			const fileContent = await provider.getFile(file.key);
+			const inputFile = await tempFile('media-asset-thumb');
+			const outputFile = await tempFile('media-asset-thumb');
+
+			await fs.promises.writeFile(inputFile, fileContent);
+			await new Promise(async (resolve, reject) => {
+				const image = await Jimp.read(inputFile);
+
+				// we are using Jimp.AUTO for height instead of hardcode (e.g. 150px)
+				image.resize(250, Jimp.AUTO);
+				try {
+					await image.writeAsync(outputFile);
+					resolve(image);
+				} catch (error) {
+					reject(error);
+				}
+			});
+			const data = await fs.promises.readFile(outputFile);
+			await fs.promises.unlink(inputFile);
+			await fs.promises.unlink(outputFile);
+
+			const thumbName = `thumb-${file.filename}`;
+			const thumbDir = path.dirname(file.key);
+
+			thumbnail = await provider.putFile(data, path.join(thumbDir, thumbName));
+		} catch (error) {
+			console.log('Error while uploading media asset into file storage provider:', error);
+		}
+
 		return await this._commandBus.execute(
 			new ImageAssetCreateCommand({
 				...entity,
 				name: file.filename,
 				url: file.key,
+				thumb: thumbnail.key,
 				size: file.size,
 				storageProvider: provider.name
 			})

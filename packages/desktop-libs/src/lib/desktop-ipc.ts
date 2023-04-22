@@ -681,10 +681,12 @@ export function ipcTimer(
 		}
 	});
 
-	ipcMain.on('navigate_to_login', () => {
+	ipcMain.on('navigate_to_login', async () => {
 		try {
 			if (timeTrackerWindow) {
-				timeTrackerWindow.loadURL(timeTrackerPage(windowPath.timeTrackerUi));
+				await timeTrackerWindow.loadURL(
+					timeTrackerPage(windowPath.timeTrackerUi)
+				);
 			}
 			LocalStore.updateAuthSetting({ isLogout: true });
 			if (settingWindow) {
@@ -802,12 +804,19 @@ export function ipcTimer(
 	ipcMain.on('update_session', (event, timer: TimerTO) => {
 		timerHandler.timeStart = moment(timer.startedAt);
 	})
+
+	ipcMain.on('remove_current_user', async (event, arg) => {
+		try {
+			await userService.remove();
+		} catch (error) {
+			console.log('ERROR', error);
+		}
+	})
 }
 
 export function removeMainListener() {
 	const mainListeners = [
 		'update_timer_auth_config',
-		'start_server',
 		'remove_afk_local_Data',
 		'return_time_sheet',
 		'return_toggle_api',
@@ -826,11 +835,11 @@ export function removeMainListener() {
 }
 
 export function removeTimerListener() {
+	removeTimerHandlers();
 	const timerListeners = [
 		'data_push_activity',
 		'remove_aw_local_data',
 		'remove_wakatime_local_data',
-		'stop_timer',
 		'return_time_slot',
 		'show_screenshot_notif_window',
 		'save_screen_shoot',
@@ -859,8 +868,17 @@ export function removeAllHandlers() {
 		'DESKTOP_CAPTURER_GET_SOURCES',
 		'FINISH_SYNCED_TIMER',
 		'TAKE_SCREEN_CAPTURE',
-		'START_SERVER',
-		'START_TIMER'
+		'START_SERVER'
+	];
+	channels.forEach((channel: string) => {
+		ipcMain.removeHandler(channel);
+	});
+}
+
+export function removeTimerHandlers() {
+	const channels = [
+		'START_TIMER',
+		'STOP_TIMER'
 	];
 	channels.forEach((channel: string) => {
 		ipcMain.removeHandler(channel);

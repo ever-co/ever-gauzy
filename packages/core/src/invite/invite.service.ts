@@ -649,11 +649,7 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 					: {}),
 				where: {
 					tenantId: RequestContext.currentTenantId(),
-					...(options && isNotEmpty(options.where)
-						? {
-							organizationId: options.where.organizationId,
-						}
-						: {}),
+					...(isNotEmpty(options) && isNotEmpty(options.where) ? options.where : {}),
 					...(isNotEmpty(options) && isNotEmpty(options.where)
 						? isNotEmpty(options.where.role)
 							? {

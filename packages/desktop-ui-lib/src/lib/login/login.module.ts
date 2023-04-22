@@ -37,7 +37,7 @@ export function HttpLoaderFactory(http: HttpClient) {
 		NbIconModule,
 		NbInputModule,
     	NbFormFieldModule,
-		NgxTranslateModule.forChild({
+		NgxTranslateModule.forRoot({
 			loader: {
 				provide: TranslateLoader,
 				useFactory: HttpLoaderFactory,
