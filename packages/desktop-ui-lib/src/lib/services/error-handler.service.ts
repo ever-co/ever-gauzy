@@ -29,6 +29,12 @@ export class ErrorHandlerService implements ErrorHandler {
 			message = this._errorClientService.message;
 			this._loggerService.log.debug(this._errorClientService.stack);
 		}
+
+		/** Override the AW error message */
+		if (message.includes('localhost:5600/api')) {
+			message = 'ActivityWatch service is not available'
+		}
+
 		this._toastrNotifierService.error(message);
 		console.error(error);
 	}
