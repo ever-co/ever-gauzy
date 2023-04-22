@@ -58,6 +58,9 @@ COPY --chown=node:node packages/plugins/product-reviews/package.json ./packages/
 COPY --chown=node:node packages/plugins/knowledge-base/package.json ./packages/plugins/knowledge-base/
 COPY --chown=node:node packages/plugins/changelog/package.json ./packages/plugins/changelog/
 
+# We do not build here Wakatime plugin, because it used in Desktop Apps for now
+# COPY --chown=node:node packages/plugins/integration-wakatime/package.json ./packages/plugins/integration-wakatime/
+
 COPY --chown=node:node decorate-angular-cli.js lerna.json package.json yarn.lock ./
 
 RUN yarn install --network-timeout 1000000 --frozen-lockfile && yarn cache clean
@@ -81,7 +84,7 @@ RUN mkdir dist
 
 COPY --chown=node:node --from=development /srv/gauzy .
 
-ENV NODE_OPTIONS=${NODE_OPTIONS:-"--max-old-space-size=2048"}
+ENV NODE_OPTIONS=${NODE_OPTIONS:-"--max-old-space-size=7000"}
 ENV NODE_ENV=${NODE_ENV:-production}
 
 ENV IS_DOCKER=true

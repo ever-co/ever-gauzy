@@ -50,6 +50,7 @@ export class TimeLogCreateHandler
 			projectId: input.projectId || null,
 			taskId: input.taskId || null,
 			organizationContactId: input.organizationContactId || null,
+			organizationTeamId: input.organizationTeamId || null,
 			logType: input.logType || TimeLogType.MANUAL,
 			description: input.description || null,
 			reason: input.reason || null,

@@ -9,16 +9,16 @@ import {
 	UpdaterComponent,
 	SplashScreenComponent,
 	NgxLoginComponent,
-	AboutComponent
+	AboutComponent,
+	AuthGuard,
+	NoAuthGuard,
+	ServerDownPage
 } from '@gauzy/desktop-ui-lib';
 import {
 	NbAuthComponent,
 	NbRequestPasswordComponent,
 	NbResetPasswordComponent
 } from '@nebular/auth';
-import { AuthGuard } from './auth/auth.guard';
-import { NoAuthGuard } from './auth/no-auth.guard';
-import { ServerDownPage } from './server-down/server-down.page';
 import { AppModuleGuard } from './app.module.guards';
 
 const routes: Routes = [
@@ -74,7 +74,7 @@ const routes: Routes = [
 		component: ImageViewerComponent
 	},
 	{
-		path: 'splash',
+		path: 'splash-screen',
 		component: SplashScreenComponent
 	},
 	{

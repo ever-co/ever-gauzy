@@ -33,7 +33,7 @@ export interface IEmployeeJobsStatistics {
 }
 
 export interface IGetEmployeeJobPostFilters {
-	search?: string;
+	title?: string;
 	employeeIds?: string[];
 	budget?: string[];
 	jobStatus?: JobPostStatusEnum[];

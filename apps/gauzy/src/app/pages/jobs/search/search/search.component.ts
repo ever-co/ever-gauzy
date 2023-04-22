@@ -24,7 +24,7 @@ import {
 	JobSearchTabsEnum,
 	PermissionsEnum
 } from '@gauzy/contracts';
-import { distinctUntilChange, toUTC } from '@gauzy/common-angular';
+import { distinctUntilChange, isEmpty, isNotEmpty, toUTC } from '@gauzy/common-angular';
 import { NbDialogService, NbTabComponent } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
@@ -78,7 +78,7 @@ export class SearchComponent extends PaginationFilterBaseComponent
 	nbTab$: Subject<string> = new BehaviorSubject(JobSearchTabsEnum.ACTIONS);
 
 	public organization: IOrganization;
-	public selectedEmployeeId: ISelectedEmployee['id'];
+	public selectedEmployee: ISelectedEmployee;
 	public selectedDateRange: IDateRangePicker;
 
 	/*
@@ -150,8 +150,8 @@ export class SearchComponent extends PaginationFilterBaseComponent
 				tap(([organization, dateRange, employee]) => {
 					this.organization = organization;
 					this.selectedDateRange = dateRange;
-					this.selectedEmployeeId = employee ? employee.id : null;
-					this.jobRequest.employeeIds = this.selectedEmployeeId ? [this.selectedEmployeeId] : [];
+					this.selectedEmployee = employee && employee.id ? employee : null;
+					this.jobRequest.employeeIds = this.selectedEmployee ? [this.selectedEmployee.id] : [];
 				}),
 				tap(() => this._loadSmartTableSettings()),
 				tap(() => this.jobs$.next(true)),
@@ -353,9 +353,9 @@ export class SearchComponent extends PaginationFilterBaseComponent
 			const { providerCode, providerJobId, employeeId } = this.selectedJob;
 			const applyJobPost: IApplyJobPostInput = {
 				applied: true,
-				...(this.selectedEmployeeId
+				...(isNotEmpty(this.selectedEmployee)
 					? {
-						employeeId: this.selectedEmployeeId
+						employeeId: this.selectedEmployee.id
 					}
 					: {
 						employeeId
@@ -377,7 +377,7 @@ export class SearchComponent extends PaginationFilterBaseComponent
 		const dialog = this.dialogService.open(ApplyJobManuallyComponent, {
 			context: {
 				jobPost: this.selectedJob,
-				selectedEmployeeId: this.selectedEmployeeId
+				selectedEmployee: this.selectedEmployee
 			}
 		});
 		const result = await firstValueFrom<IApplyJobPostInput>(dialog.onClose);
@@ -415,7 +415,7 @@ export class SearchComponent extends PaginationFilterBaseComponent
 				perPage: pagination ? pagination.itemsPerPage : 10
 			},
 			columns: {
-				...(!this.selectedEmployeeId
+				...(isEmpty(this.selectedEmployee)
 					? {
 						employee: {
 							title: this.getTranslation('JOBS.EMPLOYEE'),
@@ -536,11 +536,11 @@ export class SearchComponent extends PaginationFilterBaseComponent
 			this.smartTableSource.setFilter(
 				[
 					...(
-						this.selectedEmployeeId ? [
+						isNotEmpty(this.selectedEmployee) ? [
 							{
 								field: 'employeeIds',
 								search: [
-									this.selectedEmployeeId
+									this.selectedEmployee.id
 								]
 							}
 						] : []
@@ -642,8 +642,8 @@ export class SearchComponent extends PaginationFilterBaseComponent
 	hideAll() {
 		const request: IVisibilityJobPostInput = {
 			hide: true,
-			...(this.selectedEmployeeId
-				? { employeeId: this.selectedEmployeeId }
+			...(isNotEmpty(this.selectedEmployee)
+				? { employeeId: this.selectedEmployee.id }
 				: {})
 		};
 		this.jobService.hideJob(request).then(() => {

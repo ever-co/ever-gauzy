@@ -85,6 +85,7 @@ import {
 	createSettingsWindow,
 	createUpdaterWindow,
 	createImageViewerWindow,
+	SplashScreen,
 } from '@gauzy/desktop-window';
 import { fork } from 'child_process';
 import { autoUpdater } from 'electron-updater';
@@ -132,6 +133,7 @@ let dialogErr = false;
 let willQuit = true;
 let serverDesktop = null;
 let popupWin: BrowserWindow | null = null;
+let splashScreen: SplashScreen = null;
 
 console.log(
 	'Time Tracker UI Render Path:',
@@ -168,6 +170,9 @@ if (!gotTheLock) {
 if (process.platform === 'win32') {
 	app.setAppUserModelId('com.ever.gauzydesktoptimer');
 }
+
+/* Set unlimited listeners */
+ipcMain.setMaxListeners(0);
 
 async function startServer(value, restart = false) {
 	const dataModel = new DataModel();
@@ -219,6 +224,7 @@ async function startServer(value, restart = false) {
 			}
 		}
 		gauzyWindow = timeTrackerWindow;
+		splashScreen.close();
 		gauzyWindow.show();
 	}
 	const auth = store.get('auth');
@@ -282,6 +288,9 @@ app.on('ready', async () => {
 		settings && typeof settings.autoLaunch === 'boolean'
 			? settings.autoLaunch
 			: true;
+	splashScreen = new SplashScreen(pathWindow.timeTrackerUi);
+	await splashScreen.loadURL();
+	splashScreen.show();
 	launchAtStartup(autoLaunch, false);
 	if (provider.dialect === 'sqlite') {
 		try {
@@ -350,6 +359,7 @@ app.on('ready', async () => {
 			false,
 			pathWindow.timeTrackerUi
 		);
+		splashScreen.close();
 		setupWindow.show();
 	}
 

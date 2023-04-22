@@ -1011,6 +1011,11 @@ export class StatisticService {
 							taskIds
 						});
 					}
+					if (isNotEmpty(organizationTeamId)) {
+						qb.andWhere(`"${query.alias}"."organizationTeamId" = :organizationTeamId`, {
+							organizationTeamId
+						});
+					}
 				})
 			)
 			.groupBy(`"${query.alias}"."id"`)
@@ -1068,6 +1073,11 @@ export class StatisticService {
 					if (isNotEmpty(projectIds)) {
 						qb.andWhere(`"${totalDurationQuery.alias}"."projectId" IN (:...projectIds)`, {
 							projectIds
+						});
+					}
+					if (isNotEmpty(organizationTeamId)) {
+						qb.andWhere(`"${totalDurationQuery.alias}"."organizationTeamId" = :organizationTeamId`, {
+							organizationTeamId
 						});
 					}
 				})

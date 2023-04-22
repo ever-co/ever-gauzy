@@ -1,36 +1,40 @@
 @import 'themes';
-.user-container{
-  display: flex;
-  align-items: center;
-  cursor: pointer;
-  gap: 10px;
-  .img-container{
-    border: 3px solid nb-theme(text-primary-color);
-    border-radius: 32px;
-    position: relative;
-    img{
-      width: 28px;
-      height: 28px;
-      border-radius: 32px;
-    }
-    >div{
-      position: absolute;
-      width: 10px;
-      height: 10px;
-      background-color: #00D060;
-      border-radius: 8px;
-      border: 2px solid #ebebeb;
-      right: 0;
-      top: 0;
-    }
-  }
-  .identity-container {
-    width: 100%;
-    .email {
-      color: nb-theme(text-primary-color);
-      width: 100%;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-  }
+.user-container {
+	display: flex;
+	align-items: center;
+	cursor: pointer;
+	gap: 10px;
+	.img-container {
+		border: 3px solid nb-theme(text-primary-color);
+		border-radius: 32px;
+		position: relative;
+		img {
+			width: 28px;
+			height: 28px;
+			border-radius: 32px;
+		} > div {
+			position: absolute;
+			width: 10px;
+			height: 10px;
+			border-radius: 8px;
+			border: 2px solid #ebebeb;
+			right: 0;
+			top: 0;
+		}
+		.online {
+			background-color: #00D060;
+		}
+		.offline {
+			background-color: #ff0000;
+		}
+	}
+  	.identity-container {
+    	width: 100%;
+		.email {
+			color: nb-theme(text-primary-color);
+			width: 100%;
+			overflow: hidden;
+			text-overflow: ellipsis;
+		}
+  	}
 }

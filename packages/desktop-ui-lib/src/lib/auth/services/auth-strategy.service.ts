@@ -4,9 +4,9 @@ import { catchError, map } from 'rxjs/operators';
 import { Injectable } from '@angular/core';
 import { IAuthResponse } from '@gauzy/contracts';
 import { NbAuthStrategyClass } from '@nebular/auth/auth.options';
-import { AuthService } from './services/auth.service';
-import { Store } from './services/store.service';
-import { ElectronService } from '@gauzy/desktop-ui-lib';
+import { AuthService } from './auth.service';
+import { Store } from '../../services';
+import { ElectronService } from '../../electron/services';
 
 @Injectable()
 export class AuthStrategy extends NbAuthStrategy {
@@ -14,49 +14,49 @@ export class AuthStrategy extends NbAuthStrategy {
 		login: {
 			redirect: {
 				success: '/time-tracker',
-				failure: null
+				failure: null,
 			},
 			defaultErrors: [
-				'Login/Email combination is not correct, please try again.'
+				'Login/Email combination is not correct, please try again.',
 			],
 			defaultMessages: ['You have been successfully logged in.'],
-			roleErrors: ['Your account is not an employee']
+			roleErrors: ['Your account is not an employee'],
 		},
 		register: {
 			redirect: {
 				success: '/time-tracker',
-				failure: null
+				failure: null,
 			},
 			defaultErrors: ['Something went wrong, please try again.'],
-			defaultMessages: ['You have been successfully registered.']
+			defaultMessages: ['You have been successfully registered.'],
 		},
 		logout: {
 			redirect: {
 				success: '/auth/login',
-				failure: null
+				failure: null,
 			},
 			defaultErrors: ['Something went wrong, please try again.'],
-			defaultMessages: ['You have been successfully logged out.']
+			defaultMessages: ['You have been successfully logged out.'],
 		},
 		requestPass: {
 			redirect: {
 				success: '/',
-				failure: null
+				failure: null,
 			},
 			defaultErrors: ['Email is not correct, please try again.'],
 			defaultMessages: [
-				'Reset password instructions have been sent to your email.'
-			]
+				'Reset password instructions have been sent to your email.',
+			],
 		},
 		resetPass: {
 			redirect: {
 				success: '/',
-				failure: null
+				failure: null,
 			},
 			resetPasswordTokenKey: 'reset_password_token',
 			defaultErrors: ['Something went wrong, please try again.'],
-			defaultMessages: ['Your password has been successfully changed.']
-		}
+			defaultMessages: ['Your password has been successfully changed.'],
+		},
 	};
 
 	constructor(
@@ -81,7 +81,7 @@ export class AuthStrategy extends NbAuthStrategy {
 		// const rememberMe = !!args.rememberMe;
 		return this.login({
 			email,
-			password
+			password,
 		});
 	}
 
@@ -113,7 +113,7 @@ export class AuthStrategy extends NbAuthStrategy {
 		const { email } = args;
 		return this.authService
 			.requestPassword({
-				email
+				email,
 			})
 			.pipe(
 				map((res: { token: string }) => {
@@ -248,7 +248,7 @@ export class AuthStrategy extends NbAuthStrategy {
 					organizationId: user.employee
 						? user.employee.organizationId
 						: null,
-					tenantId: user.tenantId ? user.tenantId : null
+					tenantId: user.tenantId ? user.tenantId : null,
 				});
 			}
 		} catch (error) {

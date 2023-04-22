@@ -1,17 +1,16 @@
 import { IDeleteTimeLog } from "@gauzy/contracts";
-import { ApiProperty } from "@nestjs/swagger";
+import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
 import { ArrayNotEmpty, IsBoolean, IsOptional } from "class-validator";
 import { TenantOrganizationBaseDTO } from "./../../../core/dto";
 
-export class DeleteTimeLogDTO extends TenantOrganizationBaseDTO
-	implements IDeleteTimeLog {
+export class DeleteTimeLogDTO extends TenantOrganizationBaseDTO implements IDeleteTimeLog {
 
-	@ApiProperty({ type: () => Array, readOnly: true })
+	@ApiProperty({ type: () => Array })
 	@ArrayNotEmpty()
-    readonly logIds: string[] = [];
+	logIds: string[] = [];
 
-	@ApiProperty({ type: () => Boolean, readOnly: true })
+	@ApiPropertyOptional({ type: () => Boolean })
 	@IsOptional()
 	@IsBoolean()
-	readonly forceDelete: boolean = true;
+	forceDelete: boolean = true;
 }

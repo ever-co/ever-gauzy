@@ -283,10 +283,16 @@ export class GauzyAIService {
 
 	/**
 	 * Updates if Employee Applied to a job
-	 * @param applied This will set isApplied and appliedDate fields in Gauzy AI
-	 * @param employeeId Employee who applied for a job
-	 * @param providerCode e.g. 'upwork'
-	 * @param providerJobId Unique job id in the provider, e.g. in Upwork
+	 *
+	 * Inside interface IApplyJobPostInput we get below fields
+	 *	applied: boolean; <- This will set isApplied and appliedDate fields in Gauzy AI
+	 *	employeeId: string; <- Employee who applied for a job
+	 *	providerCode: string; <- e.g. 'upwork'
+	 *	providerJobId: string; <- Unique job id in the provider, e.g. in Upwork
+	 * 	proposal?: string; <- Proposal text (optional)
+	 * 	rate?: number; <- Rate (optional, number)
+	 *	details?: string; <- Details (optional)
+	 * 	attachments?: string; <- Attachments (optional, comma separated list of file names)
 	 */
 	public async updateApplied(
 		input: IApplyJobPostInput
@@ -393,7 +399,8 @@ export class GauzyAIService {
 				externalEmployeeId: employee.id,
 				externalTenantId: employee.tenantId,
 				externalOrgId: employee.organizationId,
-				upworkOrganizationId: employee.organization.upworkOrganizationId,
+				upworkOrganizationId:
+					employee.organization.upworkOrganizationId,
 				upworkId: employee.upworkId,
 				linkedInId: employee.linkedInId,
 				isActive: employee.isActive,
@@ -519,7 +526,8 @@ export class GauzyAIService {
 						externalEmployeeId: employee.id,
 						externalTenantId: employee.tenantId,
 						externalOrgId: employee.organizationId,
-						upworkOrganizationId: employee.organization.upworkOrganizationId,
+						upworkOrganizationId:
+							employee.organization.upworkOrganizationId,
 						upworkId: employee.upworkId,
 						linkedInId: employee.linkedInId,
 						isActive: employee.isActive,
@@ -761,12 +769,12 @@ export class GauzyAIService {
 					) {
 						createOneEmployee(input: $input) {
 							id
-							externalEmployeeId,
-							externalTenantId,
-							externalOrgId,
-							upworkOrganizationId,
-							upworkId,
-							linkedInId,
+							externalEmployeeId
+							externalTenantId
+							externalOrgId
+							upworkOrganizationId
+							upworkId
+							linkedInId
 							firstName
 							lastName
 						}
@@ -793,12 +801,12 @@ export class GauzyAIService {
 		const updateEmployeeMutation: DocumentNode<any> = gql`
 			mutation updateOneEmployee($input: UpdateOneEmployeeInput!) {
 				updateOneEmployee(input: $input) {
-					externalEmployeeId,
-					externalTenantId,
-					externalOrgId,
-					upworkOrganizationId,
-					upworkId,
-					linkedInId,
+					externalEmployeeId
+					externalTenantId
+					externalOrgId
+					upworkOrganizationId
+					upworkId
+					linkedInId
 					isActive
 					isArchived
 					firstName
@@ -928,7 +936,36 @@ export class GauzyAIService {
 					? {
 						jobDateCreated: filters.jobDateCreated
 					}
-					: {})
+					: {}),
+				...(filters && filters.title
+					? {
+						jobPost: {
+							title: {
+								iLike: `%${filters.title}%`
+							}
+						}
+					}
+					: {}),
+				...(filters && filters.jobType
+					? {
+						jobType: {
+							in: filters.jobType
+						}
+					}
+					: {}),
+				...(filters && filters.jobStatus
+					? {
+						jobStatus: {
+							in: filters.jobStatus
+						}
+					}
+					: {}),
+				...(filters && filters.jobSource
+					? {
+						providerCode: {
+							in: filters.jobSource
+						}
+					} : {}),
 			};
 
 			if (employeeIdFilter) {

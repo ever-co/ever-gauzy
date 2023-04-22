@@ -1,10 +1,5 @@
 import { CommandBus } from '@nestjs/cqrs';
-import {
-	BadRequestException,
-	Injectable,
-	InternalServerErrorException,
-	UnauthorizedException
-} from '@nestjs/common';
+import { BadRequestException, Injectable, InternalServerErrorException, UnauthorizedException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { In, MoreThanOrEqual, Repository } from 'typeorm';
 import {
@@ -39,7 +34,6 @@ import { EmailConfirmationService } from './email-confirmation.service';
 
 @Injectable()
 export class AuthService extends SocialAuthService {
-
 	constructor(
 		@InjectRepository(User)
 		private readonly userRepository: Repository<User>,
@@ -65,7 +59,8 @@ export class AuthService extends SocialAuthService {
 		try {
 			const user = await this.userService.findOneByOptions({
 				where: {
-					email
+					email,
+					isActive: true
 				},
 				relations: {
 					employee: true,
@@ -77,11 +72,6 @@ export class AuthService extends SocialAuthService {
 					createdAt: 'DESC'
 				}
 			});
-
-			// If users are inactive
-			if (user.isActive === false) {
-				throw new UnauthorizedException();
-			}
 			// If employees are inactive
 			if (isNotEmpty(user.employee) && user.employee.isActive === false) {
 				throw new UnauthorizedException();
@@ -118,9 +108,12 @@ export class AuthService extends SocialAuthService {
 		languageCode: LanguagesEnum,
 		originUrl?: string
 	): Promise<boolean | BadRequestException> {
+		const { email } = request;
+
 		try {
 			await this.userRepository.findOneByOrFail({
-				email: request.email
+				email,
+				isActive: true
 			});
 		} catch (error) {
 			throw new BadRequestException('Forgot password request failed!');
@@ -129,7 +122,8 @@ export class AuthService extends SocialAuthService {
 		try {
 			const user = await this.userService.findOneByOptions({
 				where: {
-					email: request.email
+					email,
+					isActive: true
 				},
 				relations: {
 					role: true,
@@ -157,13 +151,7 @@ export class AuthService extends SocialAuthService {
 						tenantId
 					}
 				});
-				this.emailService.requestPassword(
-					user,
-					url,
-					languageCode,
-					organizationId,
-					originUrl
-				);
+				this.emailService.requestPassword(user, url, languageCode, organizationId, originUrl);
 				return true;
 			}
 		} catch (error) {
@@ -192,27 +180,24 @@ export class AuthService extends SocialAuthService {
 				tenantId: string;
 			};
 			try {
-				const user = await this.userService.findOneByIdString(
-					id,
-					{
-						where: {
-							tenantId
-						},
-						relations: {
-							tenant: true
-						}
+				const user = await this.userService.findOneByIdString(id, {
+					where: {
+						tenantId
+					},
+					relations: {
+						tenant: true
 					}
-				);
+				});
 				if (user) {
 					const hash = await this.getPasswordHash(password);
 					await this.userService.changePassword(user.id, hash);
 					return true;
 				}
 			} catch (error) {
-				throw new BadRequestException('Password Reset Failed.')
+				throw new BadRequestException('Password Reset Failed.');
 			}
 		} catch (error) {
-			throw new BadRequestException('Password Reset Failed.')
+			throw new BadRequestException('Password Reset Failed.');
 		}
 	}
 
@@ -228,14 +213,11 @@ export class AuthService extends SocialAuthService {
 	): Promise<User> {
 		let tenant = input.user.tenant;
 		if (input.createdById) {
-			const creatingUser = await this.userService.findOneByIdString(
-				input.createdById,
-				{
-					relations: {
-						tenant: true
-					}
+			const creatingUser = await this.userService.findOneByIdString(input.createdById, {
+				relations: {
+					tenant: true
 				}
-			);
+			});
 			tenant = creatingUser.tenant;
 		}
 
@@ -274,11 +256,8 @@ export class AuthService extends SocialAuthService {
 			}
 		});
 
-		if (input.organizationId) {
-			await this.userOrganizationService.addUserToOrganization(
-				user,
-				input.organizationId
-			);
+		if (isNotEmpty(input.organizationId)) {
+			await this.userOrganizationService.addUserToOrganization(user, input.organizationId);
 		}
 
 		//6. Create Import Records while migrating for relative user.
@@ -307,28 +286,17 @@ export class AuthService extends SocialAuthService {
 				appEmailConfirmationUrl
 			});
 		}
-		this.emailService.welcomeUser(
-			input.user,
-			languageCode,
-			input.organizationId,
-			input.originalUrl,
-			{
-				appName,
-				appLogo,
-				appSignature,
-				appLink
-			}
-		);
+		this.emailService.welcomeUser(input.user, languageCode, input.organizationId, input.originalUrl, {
+			appName,
+			appLogo,
+			appSignature,
+			appLink
+		});
 		return user;
 	}
 
-	async getAuthenticatedUser(
-		id: string,
-		thirdPartyId?: string
-	): Promise<User> {
-		return thirdPartyId
-			? this.userService.getIfExistsThirdParty(thirdPartyId)
-			: this.userService.getIfExists(id);
+	async getAuthenticatedUser(id: string, thirdPartyId?: string): Promise<User> {
+		return thirdPartyId ? this.userService.getIfExistsThirdParty(thirdPartyId) : this.userService.getIfExists(id);
 	}
 
 	async isAuthenticated(token: string): Promise<boolean> {
@@ -390,22 +358,20 @@ export class AuthService extends SocialAuthService {
 	async hasPermissions(permissions: PermissionsEnum[] = []): Promise<boolean> {
 		try {
 			const roleId = RequestContext.currentRoleId();
-			return !!await this.roleService.findOneByIdString(roleId, {
+			return !!(await this.roleService.findOneByIdString(roleId, {
 				where: {
 					rolePermissions: {
 						permission: In(permissions),
 						enabled: true
 					}
 				}
-			});
+			}));
 		} catch (error) {
 			return false;
 		}
 	}
 
-	async validateOAuthLoginEmail(
-		emails: Array<{ value: string; verified: boolean }>
-	): Promise<{
+	async validateOAuthLoginEmail(emails: Array<{ value: string; verified: boolean }>): Promise<{
 		success: boolean;
 		authData: { jwt: string; userId: string };
 	}> {
@@ -416,9 +382,7 @@ export class AuthService extends SocialAuthService {
 
 		try {
 			for (const { value } of emails) {
-				const userExist = await this.userService.checkIfExistsEmail(
-					value
-				);
+				const userExist = await this.userService.checkIfExistsEmail(value);
 				if (userExist) {
 					const user = await this.userService.getOAuthLoginEmail(value);
 					const token = await this.getJwtAccessToken(user);
@@ -431,10 +395,7 @@ export class AuthService extends SocialAuthService {
 			}
 			return response;
 		} catch (err) {
-			throw new InternalServerErrorException(
-				'validateOAuthLoginEmail',
-				err.message
-			);
+			throw new InternalServerErrorException('validateOAuthLoginEmail', err.message);
 		}
 	}
 
@@ -467,21 +428,15 @@ export class AuthService extends SocialAuthService {
 				payload.role = user.role.name;
 				if (user.role.rolePermissions) {
 					payload.permissions = user.role.rolePermissions
-						.filter(
-							(rolePermission: IRolePermission) =>
-								rolePermission.enabled
-						)
-						.map(
-							(rolePermission: IRolePermission) =>
-								rolePermission.permission
-						);
+						.filter((rolePermission: IRolePermission) => rolePermission.enabled)
+						.map((rolePermission: IRolePermission) => rolePermission.permission);
 				} else {
 					payload.permissions = null;
 				}
 			} else {
 				payload.role = null;
 			}
-			const accessToken = sign(payload, environment.JWT_SECRET, {})
+			const accessToken = sign(payload, environment.JWT_SECRET, {});
 			return accessToken;
 		} catch (error) {
 			console.log('Error while getting jwt access token', error);
@@ -499,8 +454,8 @@ export class AuthService extends SocialAuthService {
 			const payload: JwtPayload = {
 				id: user.id,
 				email: user.email,
-				tenantId: (user.tenantId) || null,
-				role: (user.role) ? (user.role.name) : null
+				tenantId: user.tenantId || null,
+				role: user.role ? user.role.name : null
 			};
 			const refreshToken = sign(payload, environment.JWT_REFRESH_TOKEN_SECRET, {
 				expiresIn: `${environment.JWT_REFRESH_TOKEN_EXPIRATION_TIME}s`
@@ -521,7 +476,7 @@ export class AuthService extends SocialAuthService {
 			const user = RequestContext.currentUser();
 			return {
 				token: await this.getJwtAccessToken(user)
-			}
+			};
 		} catch (error) {
 			console.log('Error while getting jwt access token from refresh token', error);
 		}
@@ -547,7 +502,9 @@ export class AuthService extends SocialAuthService {
 				if (!!existed) {
 					await this.userRepository.update(existed.id, {
 						code: generateRandomInteger(6),
-						codeExpireAt: moment(new Date()).add(environment.AUTHENTICATION_CODE_EXPIRATION_TIME, 'seconds').toDate()
+						codeExpireAt: moment(new Date())
+							.add(environment.AUTHENTICATION_CODE_EXPIRATION_TIME, 'seconds')
+							.toDate()
 					});
 					const user = await this.userRepository.findOneOrFail({
 						where: {
@@ -562,17 +519,13 @@ export class AuthService extends SocialAuthService {
 					if (callbackUrl) {
 						callbackUrl = `${callbackUrl}?email=${user.email}&code=${user.code}`;
 					}
-					this.emailService.passwordLessAuthentication(
-						user,
-						user.preferredLanguage as LanguagesEnum,
-						{
-							appName,
-							appLogo,
-							appSignature,
-							appLink,
-							callbackUrl
-						}
-					);
+					this.emailService.passwordLessAuthentication(user, user.preferredLanguage as LanguagesEnum, {
+						appName,
+						appLogo,
+						appSignature,
+						appLink,
+						callbackUrl
+					});
 				}
 			}
 		} catch (error) {

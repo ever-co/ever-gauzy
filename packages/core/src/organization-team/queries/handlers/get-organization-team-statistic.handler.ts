@@ -1,6 +1,7 @@
 import { BadRequestException } from '@nestjs/common';
 import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
 import { IDateRangePicker, IOrganizationTeam, IOrganizationTeamEmployee, IOrganizationTeamStatisticInput } from '@gauzy/contracts';
+import { parseToBoolean } from '@gauzy/common';
 import { GetOrganizationTeamStatisticQuery } from '../get-organization-team-statistic.query';
 import { OrganizationTeamService } from '../../organization-team.service';
 import { TimerService } from '../../../time-tracking/timer/timer.service';
@@ -68,7 +69,7 @@ export class GetOrganizationTeamStatisticHandler
 							organizationTeamId,
 							organizationId,
 							tenantId,
-							...(Boolean(withLaskWorkedTask)
+							...(parseToBoolean(withLaskWorkedTask)
 								? {
 									relations: ['task'],
 								}
@@ -77,7 +78,7 @@ export class GetOrganizationTeamStatisticHandler
 
 					return {
 						...member,
-						lastWorkedTask: Boolean(withLaskWorkedTask) ? timerWorkedStatus.lastLog?.task : null,
+						lastWorkedTask: parseToBoolean(withLaskWorkedTask) ? timerWorkedStatus.lastLog?.task : null,
 						running: timerWorkedStatus?.running,
 						duration: timerWorkedStatus?.duration,
 						timerStatus: timerWorkedStatus?.timerStatus,

@@ -1,6 +1,7 @@
 @import 'gauzy/_gauzy-dialogs';
 :host {
 	display: block;
+	width: 1024px;
 	nb-card {
 		background-color: nb-theme(background-basic-color-1);
 	}

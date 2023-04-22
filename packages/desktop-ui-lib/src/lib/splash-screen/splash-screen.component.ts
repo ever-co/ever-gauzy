@@ -1,28 +1,37 @@
-import { Component, OnInit, NgZone } from '@angular/core';
-import { ElectronService } from 'ngx-electron';
+import { Component, OnInit } from '@angular/core';
+import { ElectronService } from '../electron/services';
+
 @Component({
-	selector: 'ngx-screen-capture',
+	selector: 'ngx-splash-screen',
 	templateUrl: './splash-screen.component.html',
-	styleUrls: ['./splash-screen.component.scss']
+	styleUrls: ['./splash-screen.component.scss'],
 })
 export class SplashScreenComponent implements OnInit {
-	screenCaptureUrl: string;
-	note: string;
+	private _application = {
+		name: 'gauzy-dev',
+		version: 'dev',
+		iconPath: ''
+	};
 
 	constructor(
-		private readonly electronService: ElectronService,
-		private _ngZone: NgZone
-	) {}
+		private readonly _electronService: ElectronService,
+	) {
+		this._application = {
+			name: _electronService.remote.app
+				.getName()
+				.split('-')
+				.join(' ')
+				.replace(/(^\w{1})|(\s+\w{1})/g, (letter) =>
+					letter.toUpperCase()
+				),
+			version: _electronService.remote.app.getVersion(),
+			iconPath: './assets/images/logos/logo_Gauzy.svg'
+		};
+	}
 
-	ngOnInit(): void {
-		this.electronService.ipcRenderer.on(
-			'show_popup_screen_capture',
-			(event, arg) => {
-				this._ngZone.run(() => {
-					this.screenCaptureUrl = arg.imgUrl;
-					this.note = arg.note;
-				});
-			}
-		);
+	ngOnInit(): void { }
+
+	public get application() {
+		return this._application;
 	}
 }

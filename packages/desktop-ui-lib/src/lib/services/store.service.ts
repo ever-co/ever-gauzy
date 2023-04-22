@@ -118,7 +118,7 @@ export class Store {
 		protected appQuery: AppQuery,
 		protected persistStore: PersistStore,
 		protected persistQuery: PersistQuery
-	) {}
+	) { }
 
 	user$ = this.appQuery.select((state) => state.user);
 	selectedOrganization$ = this.appQuery.select(
@@ -382,8 +382,8 @@ export class Store {
 	getDateFromOrganizationSettings() {
 		const dateObj = this.selectedDate;
 		switch (
-			this.selectedOrganization &&
-			this.selectedOrganization.defaultValueDateType
+		this.selectedOrganization &&
+		this.selectedOrganization.defaultValueDateType
 		) {
 			case DefaultValueDateTypeEnum.TODAY: {
 				return new Date(Date.now());

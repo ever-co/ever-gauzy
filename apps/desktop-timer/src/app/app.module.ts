@@ -28,29 +28,30 @@ import {
 	SetupModule,
 	SplashScreenModule,
 	ElectronService,
-	AboutModule
+	AboutModule,
+	LoggerService,
+	AuthModule,
+	AuthGuard,
+	AuthService,
+	AuthStrategy,
+	ErrorHandlerService,
+	NoAuthGuard,
+	ServerConnectionService,
+	ServerErrorInterceptor,
+	Store,
+	TenantInterceptor,
+	TokenInterceptor,
+	serverConnectionFactory,
+	APIInterceptor,
+	ServerDownModule,
 } from '@gauzy/desktop-ui-lib';
 import { NbCardModule, NbButtonModule } from '@nebular/theme';
 import { HttpLoaderFactory } from '../../../gauzy/src/app/@shared/translate/translate.module';
 import { NgSelectModule } from '@ng-select/ng-select';
-import { AuthModule } from './auth/auth.module';
-import { AuthGuard } from './auth/auth.guard';
-import { AuthStrategy } from './auth//auth-strategy.service';
-import { AuthService } from './auth/services/auth.service';
-import { Store } from './auth/services/store.service';
-import { NoAuthGuard } from './auth/no-auth.guard';
 import { AppModuleGuard } from './app.module.guards';
-import { APIInterceptor } from '../../../gauzy/src/app/@core/interceptors/api.interceptor';
-import { TokenInterceptor } from './auth/token.interceptor';
-import { ServerErrorInterceptor } from './interceptors/server-error.interceptor';
-import { TenantInterceptor } from './auth/tenant.interceptor';
-import { ServerDownModule } from './server-down/server-down.module';
-import { ServerConnectionService } from './auth/services/server-connection.service';
-import { environment } from '../../../gauzy/src/environments/environment';
 import { Router } from '@angular/router';
 import { TranslateModule, TranslateLoader } from '@ngx-translate/core';
 import * as Sentry from '@sentry/angular';
-import { ErrorHandlerService } from './services/error-handler.service';
 
 @NgModule({
 	declarations: [AppComponent],
@@ -77,6 +78,7 @@ import { ErrorHandlerService } from './services/error-handler.service';
 		NgSelectModule,
 		SplashScreenModule,
 		ServerDownModule,
+		NbLayoutModule,
 		TranslateModule.forRoot({
 			loader: {
 				provide: TranslateLoader,
@@ -98,6 +100,7 @@ import { ErrorHandlerService } from './services/error-handler.service';
 		AuthService,
 		ServerConnectionService,
 		ElectronService,
+		LoggerService,
 		{
 			provide: ErrorHandler,
 			useClass: ErrorHandlerService
@@ -111,17 +114,17 @@ import { ErrorHandlerService } from './services/error-handler.service';
 		Store,
 		{
 			provide: HTTP_INTERCEPTORS,
-			useClass: APIInterceptor,
-			multi: true
-		},
-		{
-			provide: HTTP_INTERCEPTORS,
 			useClass: TokenInterceptor,
 			multi: true
 		},
 		{
 			provide: HTTP_INTERCEPTORS,
 			useClass: TenantInterceptor,
+			multi: true
+		},
+		{
+			provide: HTTP_INTERCEPTORS,
+			useClass: APIInterceptor,
 			multi: true
 		},
 		{
@@ -147,24 +150,6 @@ import { ErrorHandlerService } from './services/error-handler.service';
 		}
 	],
 	bootstrap: [AppComponent],
-	exports: [NgSelectModule]
+	exports: []
 })
-export class AppModule {}
-
-export function serverConnectionFactory(
-	provider: ServerConnectionService,
-	store: Store,
-	router: Router
-) {
-	return () => {
-		return provider
-			.checkServerConnection(environment.API_BASE_URL)
-			.finally(() => {
-				// if (store.serverConnection !== 200) {
-				// 	router.navigate(['server-down']);
-				// }
-			})
-			.catch(() => {});
-		// return true;
-	};
-}
+export class AppModule { }

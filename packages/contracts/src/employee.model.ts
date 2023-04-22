@@ -92,6 +92,10 @@ export interface IEmployee extends IBasePerTenantAndOrganizationEntityModel {
 	upworkId?: string;
 	/** LinkedIn ID For Gauzy AI*/
 	linkedInId?: string;
+	/** Employee status (Online/Offline) */
+	isOnline?: boolean;
+	/** Employee time tracking status */
+	isTrackingTime?: boolean;
 }
 
 export type IEmployeeJobsStatisticsResponse = IEmployee & IEmployeeJobsStatistics;
@@ -110,6 +114,10 @@ export interface IEmployeeFindInput {
 	tags?: ITag[];
 	skills?: ISkill[];
 	profile_link?: string;
+	/** Employee status (Online/Offline) */
+	isOnline?: boolean;
+	/** Employee time tracking status */
+	isTrackingTime?: boolean;
 }
 
 export interface IEmployeeUpdateInput extends IBasePerTenantAndOrganizationEntityModel {
@@ -143,6 +151,10 @@ export interface IEmployeeUpdateInput extends IBasePerTenantAndOrganizationEntit
 	upworkId?: string;
 	/** LinkedIn ID For Gauzy AI*/
 	linkedInId?: string;
+	/** Employee status (Online/Offline) */
+	isOnline?: boolean;
+	/** Employee time tracking status */
+	isTrackingTime?: boolean;
 }
 
 export interface IEmployeeCreateInput extends IBasePerTenantAndOrganizationEntityModel {
@@ -164,6 +176,10 @@ export interface IEmployeeCreateInput extends IBasePerTenantAndOrganizationEntit
 	upworkId?: string;
 	/** LinkedIn ID For Gauzy AI*/
 	linkedInId?: string;
+	/** Employee status (Online/Offline) */
+	isOnline?: boolean;
+	/** Employee time tracking status */
+	isTrackingTime?: boolean;
 }
 
 export interface ISelectedEmployee {
