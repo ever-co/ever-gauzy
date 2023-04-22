@@ -6,7 +6,7 @@ import { ErrorServerService } from './error-server.service';
 import { LoggerService } from '../electron/services';
 
 @Injectable({
-	providedIn: 'root',
+	providedIn: 'root'
 })
 export class ErrorHandlerService implements ErrorHandler {
 	constructor(
@@ -32,7 +32,7 @@ export class ErrorHandlerService implements ErrorHandler {
 
 		/** Override the AW error message */
 		if (message.includes('localhost:5600/api')) {
-			message = 'ActivityWatch service is not available'
+			message = 'ActivityWatch service is not available';
 		}
 
 		this._toastrNotifierService.error(message);
