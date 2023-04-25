@@ -17,6 +17,10 @@ export interface IApplyJobPostInput {
 	rate?: number;
 	details?: string;
 	attachments?: string;
+	jobType?: JobPostTypeEnum;
+	jobStatus?: JobPostStatusEnum;
+	terms?: string;
+	qa?: string;
 }
 
 export interface IVisibilityJobPostInput {
