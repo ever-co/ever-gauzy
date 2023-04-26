@@ -653,6 +653,7 @@ export class SearchComponent extends PaginationFilterBaseComponent
 	}
 
 	onTabChange(tab: NbTabComponent) {
+		this.form.reset();
 		this.nbTab$.next(tab.tabId);
 	}
 
