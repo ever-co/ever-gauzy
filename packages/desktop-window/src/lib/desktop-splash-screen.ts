@@ -11,9 +11,6 @@ export class SplashScreen {
 
 	constructor(private readonly path: string) {
 		const filePath = store.get('filePath');
-		if (process.platform === 'linux') {
-			this._options.icon = filePath.iconPath;
-		}
 		this._filePath = path;
 		this._options = {
 			frame: false,
@@ -22,14 +19,15 @@ export class SplashScreen {
 				nodeIntegration: true,
 				webSecurity: false,
 				contextIsolation: false,
-				sandbox: false
+				sandbox: false,
 			},
 			width: 300,
 			height: 240,
 			title: '',
 			show: false,
-			center: true
-		}
+			center: true,
+			...(process.platform === 'linux' && { icon: filePath.iconPath }),
+		};
 		this._window = new BrowserWindow(this._options);
 		remoteMain.enable(this._window.webContents);
 		this._window.setMenuBarVisibility(false);
@@ -47,12 +45,12 @@ export class SplashScreen {
 				pathname: this._filePath,
 				protocol: 'file:',
 				slashes: true,
-				hash: '/splash-screen'
+				hash: '/splash-screen',
 			});
 			await this._window.loadURL(launchPath);
 			console.log('launched electron with:', launchPath);
 		} catch (error) {
-			console.log(error)
+			console.log(error);
 		}
 	}
 
