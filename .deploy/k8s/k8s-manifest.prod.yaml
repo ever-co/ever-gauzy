@@ -59,7 +59,7 @@ spec:
         spec:
             containers:
                 - name: gauzy-prod-api
-                  image: ghcr.io/ever-co/gauzy-api:latest
+                  image: registry.digitalocean.com/ever/gauzy-api:latest
                   env:
                       - name: API_HOST
                         value: 0.0.0.0
@@ -175,6 +175,12 @@ spec:
                         value: '$UNLEASH_METRICS_INTERVAL'
                       - name: UNLEASH_API_KEY
                         value: '$UNLEASH_API_KEY'
+                      - name: PM2_PUBLIC_KEY
+                        value: '$PM2_PUBLIC_KEY'
+                      - name: PM2_SECRET_KEY
+                        value: '$PM2_SECRET_KEY'
+                      - name: PM2_MACHINE_NAME
+                        value: '$PM2_MACHINE_NAME'
 
                   ports:
                       - containerPort: 3000
@@ -196,7 +202,7 @@ spec:
         spec:
             containers:
                 - name: gauzy-prod-webapp
-                  image: ghcr.io/ever-co/gauzy-webapp:latest
+                  image: registry.digitalocean.com/ever/gauzy-webapp:latest
                   env:
                       - name: DEMO
                         value: 'false'
