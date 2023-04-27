@@ -24,6 +24,8 @@ pm2.connect(function () {
 				WEB_PORT: port,
 				PM2_PUBLIC_KEY: PUBLIC_KEY,
 				PM2_SECRET_KEY: PRIVATE_KEY,
+				KEYMETRICS_PUBLIC: PUBLIC_KEY,
+				KEYMETRICS_SECRET: PRIVATE_KEY,
 			},
 			post_update: ['yarn install'], // Commands to execute once we do a pull from Keymetrics
 		},
