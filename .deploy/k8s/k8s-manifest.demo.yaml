@@ -59,7 +59,7 @@ spec:
         spec:
             containers:
                 - name: gauzy-demo-api
-                  image: ghcr.io/ever-co/gauzy-api-demo:latest
+                  image: registry.digitalocean.com/ever/gauzy-api-demo:latest
                   env:
                       - name: API_HOST
                         value: 0.0.0.0
@@ -105,7 +105,7 @@ spec:
         spec:
             containers:
                 - name: gauzy-demo-webapp
-                  image: ghcr.io/ever-co/gauzy-webapp-demo:latest
+                  image: registry.digitalocean.com/ever/gauzy-webapp-demo:latest
                   env:
                       - name: DEMO
                         value: 'true'
