@@ -175,6 +175,12 @@ spec:
                         value: '$UNLEASH_METRICS_INTERVAL'
                       - name: UNLEASH_API_KEY
                         value: '$UNLEASH_API_KEY'
+                      - name: PM2_PUBLIC_KEY
+                        value: '$PM2_PUBLIC_KEY'
+                      - name: PM2_SECRET_KEY
+                        value: '$PM2_SECRET_KEY'
+                      - name: PM2_MACHINE_NAME
+                        value: '$PM2_MACHINE_NAME'
 
                   ports:
                       - containerPort: 3000
