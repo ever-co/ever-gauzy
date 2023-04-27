@@ -3,8 +3,8 @@ dotenv.config();
 
 const pm2 = require('pm2');
 
-const PRIVATE_KEY = process.env.KEYMETRICS_SECRET_KEY || '';
-const PUBLIC_KEY = process.env.KEYMETRICS_PUBLIC_KEY || '';
+const PRIVATE_KEY = process.env.PM2_SECRET_KEY || '';
+const PUBLIC_KEY = process.env.PM2_PUBLIC_KEY || '';
 const appName = process.env.PM2_API_NAME || 'GauzyApi';
 const instances = process.env.WEB_CONCURRENCY || 1;
 const maxMemory = process.env.WEB_MEMORY || 4096;
@@ -22,10 +22,10 @@ pm2.connect(function () {
 				// If needed declare some environment variables
 				NODE_ENV: 'production',
 				API_PORT: port,
-				KEYMETRICS_PUBLIC: PUBLIC_KEY,
-				KEYMETRICS_SECRET: PRIVATE_KEY
+				PM2_PUBLIC_KEY: PUBLIC_KEY,
+				PM2_SECRET_KEY: PRIVATE_KEY,
 			},
-			post_update: ['yarn install'] // Commands to execute once we do a pull from Keymetrics
+			post_update: ['yarn install'], // Commands to execute once we do a pull from Keymetrics
 		},
 		function () {
 			pm2.dump(console.error);
