@@ -61,6 +61,8 @@ export class ApplyJobManuallyComponent extends TranslationBaseComponent implemen
 		if (isNotEmpty(employee) && this.form.get('employeeId')) {
 			this.form.get('employeeId').setValue(employee.id);
 			this.form.get('employeeId').updateValueAndValidity();
+
+			this.setDefaultEmployeeRates(employee);
 		}
 	}
 
@@ -138,7 +140,7 @@ export class ApplyJobManuallyComponent extends TranslationBaseComponent implemen
 		};
 	}
 
-	ngOnDestroy(): void {}
+	ngOnDestroy(): void { }
 
 	private _loadUploaderSettings() {
 		if (!this.store.user) {
@@ -233,6 +235,14 @@ export class ApplyJobManuallyComponent extends TranslationBaseComponent implemen
 			this.dialogRef.close(applyJobPost);
 		} catch (error) {
 			console.log('Error while applying job post', error);
+		}
+	}
+
+	/** Set default employee rates */
+	setDefaultEmployeeRates(employee: ISelectedEmployee) {
+		if (employee && employee.billRateValue) {
+			this.form.get('rate').setValue(employee.billRateValue);
+			this.form.get('rate').updateValueAndValidity();
 		}
 	}
 
