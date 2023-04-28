@@ -190,6 +190,8 @@ export interface ISelectedEmployee {
 	imageUrl: string;
 	shortDescription?: string;
 	employeeLevel?: string;
+	billRateCurrency?: string;
+	billRateValue?: number;
 	defaultType?: DEFAULT_TYPE;
 	tags?: ITag[];
 	skills?: ISkill[];
