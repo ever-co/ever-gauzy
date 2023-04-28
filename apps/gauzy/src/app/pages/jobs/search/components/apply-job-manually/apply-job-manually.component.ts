@@ -140,7 +140,7 @@ export class ApplyJobManuallyComponent extends TranslationBaseComponent implemen
 		};
 	}
 
-	ngOnDestroy(): void { }
+	ngOnDestroy(): void {}
 
 	private _loadUploaderSettings() {
 		if (!this.store.user) {

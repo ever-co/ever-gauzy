@@ -322,24 +322,22 @@ export class GauzyAIService {
 			};
 
 			const createOneEmployeeJobApplicationMutation: DocumentNode<any> = gql`
-				mutation createOneEmployeeJobApplication(
-					$input: CreateOneEmployeeJobApplicationInput!
-				) {
+				mutation createOneEmployeeJobApplication($input: CreateOneEmployeeJobApplicationInput!) {
 					createOneEmployeeJobApplication(input: $input) {
-						employeeId,
-						jobPostId,
-						proposal,
-						rate,
-						attachments,
-						appliedDate,
-						employeeJobPostId,
-						isActive,
-						isArchived,
-						providerCode,
-						providerJobId,
-						jobType,
-						jobStatus,
-						terms,
+						employeeId
+						jobPostId
+						proposal
+						rate
+						attachments
+						appliedDate
+						employeeJobPostId
+						isActive
+						isArchived
+						providerCode
+						providerJobId
+						jobType
+						jobStatus
+						terms
 						qa
 					}
 				}
@@ -896,38 +894,38 @@ export class GauzyAIService {
 				employeeId: undefined,
 				...(filters && filters.jobDateCreated
 					? {
-						jobDateCreated: filters.jobDateCreated
-					}
+							jobDateCreated: filters.jobDateCreated
+					  }
 					: {}),
 				...(filters && filters.title
 					? {
-						jobPost: {
-							title: {
-								iLike: `%${filters.title}%`
+							jobPost: {
+								title: {
+									iLike: `%${filters.title}%`
+								}
 							}
-						}
-					}
+					  }
 					: {}),
 				...(filters && filters.jobType
 					? {
-						jobType: {
-							in: filters.jobType
-						}
-					}
+							jobType: {
+								in: filters.jobType
+							}
+					  }
 					: {}),
 				...(filters && filters.jobStatus
 					? {
-						jobStatus: {
-							in: filters.jobStatus
-						}
-					}
+							jobStatus: {
+								in: filters.jobStatus
+							}
+					  }
 					: {}),
 				...(filters && filters.jobSource
 					? {
-						providerCode: {
-							in: filters.jobSource
-						}
-					}
+							providerCode: {
+								in: filters.jobSource
+							}
+					  }
 					: {})
 			};
 

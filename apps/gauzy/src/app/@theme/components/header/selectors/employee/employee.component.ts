@@ -40,8 +40,7 @@ import { TruncatePipe } from './../../../../../@shared/pipes';
 	styleUrls: ['./employee.component.scss'],
 	changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class EmployeeSelectorComponent
-	implements OnInit, OnDestroy, AfterViewInit {
+export class EmployeeSelectorComponent implements OnInit, OnDestroy, AfterViewInit {
 	/*
 	 * Getter & Setter for dynamic add tag option
 	 */
@@ -121,23 +120,18 @@ export class EmployeeSelectorComponent
 		private readonly toastrService: ToastrService,
 		private readonly _truncatePipe: TruncatePipe,
 		private readonly router: Router
-	) { }
+	) {}
 
 	ngOnInit() {
 		this._selectedEmployee();
 		this.hasEditEmployee$ = this.store.userRolePermissions$.pipe(
-			map(() =>
-				this.store.hasPermission(PermissionsEnum.ORG_EMPLOYEES_EDIT)
-			)
+			map(() => this.store.hasPermission(PermissionsEnum.ORG_EMPLOYEES_EDIT))
 		);
 		this.subject$
 			.pipe(
 				debounceTime(200),
 				switchMap(async ([organization, dateRange]) => {
-					await this.loadWorkingEmployeesIfRequired(
-						organization,
-						dateRange
-					);
+					await this.loadWorkingEmployeesIfRequired(organization, dateRange);
 				}),
 				untilDestroyed(this)
 			)
@@ -165,8 +159,7 @@ export class EmployeeSelectorComponent
 			)
 			.subscribe();
 		const storeOrganization$ = this.store.selectedOrganization$;
-		const selectedDateRange$ =
-			this.dateRangePickerBuilderService.selectedDateRange$;
+		const selectedDateRange$ = this.dateRangePickerBuilderService.selectedDateRange$;
 		combineLatest([storeOrganization$, selectedDateRange$])
 			.pipe(
 				filter(([organization]) => !!organization),
@@ -228,9 +221,7 @@ export class EmployeeSelectorComponent
 	deleteEmployee(employee: IEmployee) {
 		let people: ISelectedEmployee[] = this.people || [];
 		if (Array.isArray(people) && people.length) {
-			people = people.filter(
-				(item: ISelectedEmployee) => item.id !== employee.id
-			);
+			people = people.filter((item: ISelectedEmployee) => item.id !== employee.id);
 		}
 		this.people = [...people].filter(isNotEmpty);
 	}
@@ -260,9 +251,7 @@ export class EmployeeSelectorComponent
 	}
 
 	selectEmployeeById(employeeId: string) {
-		const employee = this.people.find(
-			(employee: ISelectedEmployee) => employeeId === employee.id
-		);
+		const employee = this.people.find((employee: ISelectedEmployee) => employeeId === employee.id);
 		if (employee) {
 			this.selectEmployee(employee);
 		}
@@ -297,18 +286,12 @@ export class EmployeeSelectorComponent
 			// This is so selected employee doesn't get reset when it's already set from somewhere else
 			this.selectEmployee(this.people[0]);
 		}
-		if (
-			!this.defaultSelected &&
-			this.selectedEmployee === ALL_EMPLOYEES_SELECTED
-		) {
+		if (!this.defaultSelected && this.selectedEmployee === ALL_EMPLOYEES_SELECTED) {
 			this.selectedEmployee = null;
 		}
 	}
 
-	loadWorkingEmployeesIfRequired = async (
-		organization: IOrganization,
-		selectedDateRange: IDateRangePicker
-	) => {
+	loadWorkingEmployeesIfRequired = async (organization: IOrganization, selectedDateRange: IDateRangePicker) => {
 		//If no organization, then something is wrong
 		if (!organization) {
 			this.people = [];
@@ -318,10 +301,7 @@ export class EmployeeSelectorComponent
 		await this.getEmployees(organization, selectedDateRange);
 	};
 
-	private getEmployees = async (
-		organization: IOrganization,
-		selectedDateRange: IDateRangePicker
-	) => {
+	private getEmployees = async (organization: IOrganization, selectedDateRange: IDateRangePicker) => {
 		if (!organization) {
 			this.people = [];
 			return;
@@ -329,12 +309,7 @@ export class EmployeeSelectorComponent
 		const { tenantId } = this.store.user;
 		const { id: organizationId } = organization;
 
-		const { items } = await this.employeesService.getWorking(
-			organizationId,
-			tenantId,
-			selectedDateRange,
-			true
-		);
+		const { items } = await this.employeesService.getWorking(organizationId, tenantId, selectedDateRange, true);
 
 		this.people = [
 			...items.map((employee: IEmployee) => {
@@ -353,28 +328,19 @@ export class EmployeeSelectorComponent
 		];
 
 		//Insert All Employees Option
-		if (
-			this.showAllEmployeesOption &&
-			this.store.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE)
-		) {
+		if (this.showAllEmployeesOption && this.store.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE)) {
 			this.people.unshift(ALL_EMPLOYEES_SELECTED);
 		}
 
 		//Set selected employee if no employee selected
 		if (items.length > 0 && !this.store.selectedEmployee) {
-			this.store.selectedEmployee =
-				this.people[0] || ALL_EMPLOYEES_SELECTED;
+			this.store.selectedEmployee = this.people[0] || ALL_EMPLOYEES_SELECTED;
 		}
 	};
 
 	ngOnDestroy() {
-		if (
-			this.people.length > 0 &&
-			!this.store.selectedEmployee &&
-			!this.skipGlobalChange
-		) {
-			this.store.selectedEmployee =
-				this.people[0] || ALL_EMPLOYEES_SELECTED;
+		if (this.people.length > 0 && !this.store.selectedEmployee && !this.skipGlobalChange) {
+			this.store.selectedEmployee = this.people[0] || ALL_EMPLOYEES_SELECTED;
 		}
 	}
 
@@ -384,19 +350,12 @@ export class EmployeeSelectorComponent
 	 * @returns
 	 */
 	isClearable(): boolean {
-		if (
-			this.selectedEmployee &&
-			this.selectedEmployee.hasOwnProperty('defaultType')
-		) {
-			if (
-				this.selectedEmployee.defaultType === DEFAULT_TYPE.ALL_EMPLOYEE
-			) {
+		if (this.selectedEmployee && this.selectedEmployee.hasOwnProperty('defaultType')) {
+			if (this.selectedEmployee.defaultType === DEFAULT_TYPE.ALL_EMPLOYEE) {
 				return false;
 			}
 		}
-		return !!this.store.hasPermission(
-			PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
-		);
+		return !!this.store.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE);
 	}
 
 	/**
