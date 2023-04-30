@@ -200,7 +200,7 @@ COPY --chown=node:node apps/api/src/assets/seed apps/api/public
 
 COPY --chown=node:node --from=build /srv/gauzy/dist/apps/api .
 
-RUN npm install pm2 -g && \
+RUN npm install pm2@4.5.1 -g && \
 	mkdir /import && chown node:node /import && \
 	touch ormlogs.log && chown node:node ormlogs.log && chown node:node wait && \
 	chmod +x wait entrypoint.compose.sh entrypoint.prod.sh && chown -R node:node apps/
@@ -271,4 +271,4 @@ EXPOSE ${API_PORT}
 
 ENTRYPOINT [ "./entrypoint.prod.sh" ]
 
-CMD [ "pm2-runtime", "main.js" ]
+CMD [ "node", "main.js" ]
