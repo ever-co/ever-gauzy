@@ -271,4 +271,4 @@ EXPOSE ${API_PORT}
 
 ENTRYPOINT [ "./entrypoint.prod.sh" ]
 
-CMD [ "pm2-runtime", "main.js" ]
+CMD [ "node", "main.js" ]
