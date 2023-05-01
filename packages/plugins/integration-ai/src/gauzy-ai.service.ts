@@ -12,6 +12,7 @@ import {
 } from './sdk/gauzy-ai-sdk';
 import { TypedDocumentNode as DocumentNode } from '@graphql-typed-document-node/core';
 import fetch from 'cross-fetch';
+import * as chalk from 'chalk';
 import {
 	ApolloClient,
 	ApolloQueryResult,
@@ -281,20 +282,17 @@ export class GauzyAIService {
 
 		// First we need to get employee id because we have only externalId
 		const employeeId = await this.getEmployeeGauzyAIId(input.employeeId);
-
-		console.log(`updateApplied called. EmployeeId: ${employeeId}`);
+		console.log(chalk.green(`updateApplied called. EmployeeId: ${employeeId}`));
 
 		// Next we need to get a job using providerCode and providerJobId
 		const jobPostId = await this.getJobPostId(input.providerCode, input.providerJobId);
-
-		console.log(`updateApplied called. jobPostId: ${jobPostId}`);
+		console.log(chalk.green(`updateApplied called. jobPostId: ${jobPostId}`));
 
 		// Next, we need to find `public employee job post` table record in Gauzy AI to get id of record.
 		// We can find by employeeId and jobPostId
 
 		const employeeJobPostId = await this.getEmployeeJobPostId(employeeId, jobPostId);
-
-		console.log(`updateApplied called. employeeJobPostId: ${employeeJobPostId}`);
+		console.log(chalk.green(`updateApplied called. employeeJobPostId: ${employeeJobPostId}`));
 
 		if (employeeId && jobPostId && employeeJobPostId) {
 			const applicationDate = new Date();
@@ -302,7 +300,7 @@ export class GauzyAIService {
 			// ------------------ Create Employee Job Application ------------------
 			// This will Apply to the job using Automation system
 
-			const createEmployeeJobApplication: CreateEmployeeJobApplication = {
+			const createOneEmployeeJobApplication: CreateEmployeeJobApplication = {
 				employeeId: employeeId,
 				jobPostId: jobPostId,
 				proposal: input.proposal,
@@ -323,34 +321,35 @@ export class GauzyAIService {
 				// Note: providerJobApplicationId will be set by Automation system when it's applied to the job
 			};
 
-			const createEmployeeJobApplicationMutation: DocumentNode<any> = gql`
-				mutation createEmployeeJobApplication(
-					$input: createEmployeeJobApplicationInput!
+			const createOneEmployeeJobApplicationMutation: DocumentNode<any> = gql`
+				mutation createOneEmployeeJobApplication(
+					$input: CreateOneEmployeeJobApplicationInput!
 				) {
-					employeeId,
-					jobPostId,
-					proposal,
-					rate,
-					// details,
-					attachments,
-					appliedDate,
-					employeeJobPostId,
-					isActive,
-					isArchived,
-					providerCode,
-					providerJobId,
-					jobType,
-					jobStatus,
-					terms,
-					qa
+					createOneEmployeeJobApplication(input: $input) {
+						employeeId,
+						jobPostId,
+						proposal,
+						rate,
+						attachments,
+						appliedDate,
+						employeeJobPostId,
+						isActive,
+						isArchived,
+						providerCode,
+						providerJobId,
+						jobType,
+						jobStatus,
+						terms,
+						qa
+					}
 				}
 			`;
 
 			await this._client.mutate({
-				mutation: createEmployeeJobApplicationMutation,
+				mutation: createOneEmployeeJobApplicationMutation,
 				variables: {
 					input: {
-						createEmployeeJobApplication
+						employeeJobApplication: createOneEmployeeJobApplication
 					}
 				}
 			});
@@ -361,7 +360,7 @@ export class GauzyAIService {
 			const update: UpdateEmployeeJobPost = {
 				employeeId: employeeId,
 				jobPostId: jobPostId,
-				isApplied: input.applied,
+				isApplied: input.applied || true,
 				appliedDate: applicationDate
 			};
 
@@ -897,38 +896,38 @@ export class GauzyAIService {
 				employeeId: undefined,
 				...(filters && filters.jobDateCreated
 					? {
-							jobDateCreated: filters.jobDateCreated
-					  }
+						jobDateCreated: filters.jobDateCreated
+					}
 					: {}),
 				...(filters && filters.title
 					? {
-							jobPost: {
-								title: {
-									iLike: `%${filters.title}%`
-								}
+						jobPost: {
+							title: {
+								iLike: `%${filters.title}%`
 							}
-					  }
+						}
+					}
 					: {}),
 				...(filters && filters.jobType
 					? {
-							jobType: {
-								in: filters.jobType
-							}
-					  }
+						jobType: {
+							in: filters.jobType
+						}
+					}
 					: {}),
 				...(filters && filters.jobStatus
 					? {
-							jobStatus: {
-								in: filters.jobStatus
-							}
-					  }
+						jobStatus: {
+							in: filters.jobStatus
+						}
+					}
 					: {}),
 				...(filters && filters.jobSource
 					? {
-							providerCode: {
-								in: filters.jobSource
-							}
-					  }
+						providerCode: {
+							in: filters.jobSource
+						}
+					}
 					: {})
 			};
 

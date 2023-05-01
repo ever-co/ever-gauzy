@@ -29,13 +29,13 @@ import { ProposalTemplateService } from '../../../pages/jobs/proposal-template/p
 	]
 })
 export class ProposalTemplateSelectComponent implements OnInit {
-	
+
 	proposalTemplates: IEmployeeProposalTemplate[] = [];
 	organization: IOrganization;
 	subject$: Subject<any> = new Subject();
 
-	onChange: any = () => {};
-	onTouched: any = () => {};
+	onChange: any = () => { };
+	onTouched: any = () => { };
 
 	@Output() selectedChange: EventEmitter<any> = new EventEmitter();
 
@@ -45,7 +45,7 @@ export class ProposalTemplateSelectComponent implements OnInit {
 	/*
 	* Getter & Setter for employeeId
 	*/
-	private  _employeeId: string;
+	private _employeeId: string;
 	public get employeeId(): string {
 		return this._employeeId;
 	}
@@ -67,7 +67,7 @@ export class ProposalTemplateSelectComponent implements OnInit {
 	constructor(
 		private readonly _proposalTemplateService: ProposalTemplateService,
 		private readonly _store: Store
-	) {}
+	) { }
 
 	ngOnInit() {
 		this.subject$
@@ -122,7 +122,7 @@ export class ProposalTemplateSelectComponent implements OnInit {
 		this._proposalTemplateService
 			.getAll({
 				where: {
-					organizationId, 
+					organizationId,
 					tenantId,
 					...(this.employeeId ? { employeeId: this.employeeId } : {}),
 				}

@@ -41,8 +41,7 @@ import { TruncatePipe } from './../../../../../@shared/pipes';
 	changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class EmployeeSelectorComponent
-	implements OnInit, OnDestroy, AfterViewInit
-{
+	implements OnInit, OnDestroy, AfterViewInit {
 	/*
 	 * Getter & Setter for dynamic add tag option
 	 */
@@ -122,7 +121,7 @@ export class EmployeeSelectorComponent
 		private readonly toastrService: ToastrService,
 		private readonly _truncatePipe: TruncatePipe,
 		private readonly router: Router
-	) {}
+	) { }
 
 	ngOnInit() {
 		this._selectedEmployee();
@@ -338,15 +337,17 @@ export class EmployeeSelectorComponent
 		);
 
 		this.people = [
-			...items.map((e) => {
+			...items.map((employee: IEmployee) => {
 				return {
-					id: e.id,
-					firstName: e.user.firstName,
-					lastName: e.user.lastName,
-					fullName: e.user.name,
-					imageUrl: e.user.imageUrl,
-					shortDescription: e.short_description,
-					employeeLevel: e.employeeLevel
+					id: employee.id,
+					firstName: employee.user.firstName,
+					lastName: employee.user.lastName,
+					fullName: employee.user.name,
+					imageUrl: employee.user.imageUrl,
+					shortDescription: employee.short_description,
+					employeeLevel: employee.employeeLevel,
+					billRateCurrency: employee.billRateCurrency,
+					billRateValue: employee.billRateValue
 				} as ISelectedEmployee;
 			})
 		];
