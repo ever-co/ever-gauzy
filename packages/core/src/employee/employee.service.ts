@@ -64,6 +64,8 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 				averageBonus: true,
 				startedWorkOn: true,
 				isTrackingEnabled: true,
+				billRateCurrency: true,
+				billRateValue: true,
 				user: {
 					id: true,
 					firstName: true,

@@ -99,6 +99,7 @@
 								<form
 									[formGroup]="form"
 									(ngSubmit)="searchJobs()"
+									(keydown.enter)="handleSubmitOnEnter()"
 								>
 									<div class="row">
 										<div
