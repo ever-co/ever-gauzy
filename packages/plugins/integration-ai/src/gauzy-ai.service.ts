@@ -1,5 +1,6 @@
 // import * as _ from 'underscore';
 import { Injectable, Logger } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import {
 	CreateEmployeeJobApplication,
 	Employee,
@@ -12,7 +13,7 @@ import {
 } from './sdk/gauzy-ai-sdk';
 import { TypedDocumentNode as DocumentNode } from '@graphql-typed-document-node/core';
 import fetch from 'cross-fetch';
-import * as chalk from 'chalk';
+import chalk from 'chalk';
 import {
 	ApolloClient,
 	ApolloQueryResult,
@@ -75,10 +76,12 @@ export class GauzyAIService {
 		});
 	}
 
-	constructor() {
+	constructor(
+		protected readonly configService: ConfigService
+	) {
 		try {
-			// TODO: read from constructor injected parameter (e.g. config service)
-			this.gauzyAIGraphQLEndpoint = process.env.GAUZY_AI_GRAPHQL_ENDPOINT;
+			this.gauzyAIGraphQLEndpoint = configService.get<string>('guazyAI.gauzyAIGraphQLEndpoint');
+			console.log(chalk.magenta(`GauzyAI GraphQL Endpoint: ${this.gauzyAIGraphQLEndpoint}`));
 
 			if (this.gauzyAIGraphQLEndpoint) {
 				this._logger.log('Gauzy AI Endpoint configured in the environment');
