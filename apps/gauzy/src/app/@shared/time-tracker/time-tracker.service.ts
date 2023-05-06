@@ -17,8 +17,9 @@ import { Store as AppStore } from '../../@core/services/store.service';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { filter } from 'rxjs/operators';
 import { BehaviorSubject } from 'rxjs/internal/BehaviorSubject';
-import { firstValueFrom, Observable } from 'rxjs';
+import { firstValueFrom, Observable, tap } from 'rxjs';
 import { API_PREFIX } from '../../@core/constants/app.constants';
+import { TimeTrackerCounterService } from './time-tracker-counter.service';
 
 export function createInitialTimerState(): TimerState {
 	let timerConfig = {
@@ -89,15 +90,22 @@ export class TimeTrackerService implements OnDestroy {
 		this.timeType
 	);
 	public trackType$: Observable<string> = this._trackType$.asObservable();
-	private _worker: Worker;
 
 	constructor(
 		protected timerStore: TimerStore,
 		protected timerQuery: TimerQuery,
 		protected store: AppStore,
+		private _timeTrackerCounterService: TimeTrackerCounterService,
 		private http: HttpClient
 	) {
-		this._runWorker();
+		this._timeTrackerCounterService.counter$
+			.pipe(
+				tap((counter) => {
+					this.currentSessionDuration += counter;
+					this.duration += counter;
+				})
+			)
+			.subscribe();
 		this.store.selectedOrganization$
 			.pipe(
 				filter((organization) => !!organization),
@@ -259,19 +267,13 @@ export class TimeTrackerService implements OnDestroy {
 	turnOnTimer() {
 		this.running = true;
 		// post state of timer to worker on start timer
-		this._worker.postMessage({
-			isRunning: this.running,
-			session: this.currentSessionDuration,
-			duration: this.duration
-		});
+		this._timeTrackerCounterService.state$.next(this.running);
 	}
 
 	turnOffTimer() {
 		this.running = false;
 		// post running state to worker on turning off
-		this._worker.postMessage({
-			isRunning: this.running
-		});
+		this._timeTrackerCounterService.state$.next(this.running);
 	}
 
 	canStartTimer() {
@@ -319,24 +321,6 @@ export class TimeTrackerService implements OnDestroy {
 	 */
 	clearTimeTracker() {
 		this.timerStore.reset();
-	}
-
-	private _runWorker(): void {
-		if (typeof Worker !== 'undefined') {
-			// Initialize worker
-			this._worker = new Worker(
-				new URL('./time-tracker.worker', import.meta.url)
-			);
-			// // retrieve message post from time tracker worker
-			this._worker.onmessage = ({ data }) => {
-				this.currentSessionDuration = data.session;
-				this.duration = data.todayWorked;
-			};
-		} else {
-			// Web Workers are not supported in this environment.
-			// You should add a fallback so that your program still executes correctly.
-			console.log('Web worker does not supported on your browser');
-		}
 	}
 
 	ngOnDestroy(): void { }
