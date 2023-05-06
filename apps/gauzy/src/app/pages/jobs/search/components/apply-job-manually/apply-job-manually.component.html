@@ -84,9 +84,12 @@
                                 <div class="row">
                                     <div class="col-12">
                                         <div class="form-group">
-                                            <label class="label" for="proposal">
-                                                {{ 'FORM.LABELS.COVER_LETTER' | translate }}
-                                            </label>
+                                            <div class="sync-container">
+                                                <label class="label" for="proposal">
+                                                    {{ 'FORM.LABELS.COVER_LETTER' | translate }}
+                                                </label>
+                                                <nb-icon class="sync" icon="sync-outline"></nb-icon>
+                                            </div>
                                             <ckeditor
                                                 id="proposal"
                                                 formControlName="proposal"
@@ -102,9 +105,12 @@
                                 <div class="row">
                                     <div class="col-12">
                                         <div class="form-group">
-                                            <label class="label" for="details">
-                                                {{ 'FORM.LABELS.DETAILS' | translate }}
-                                            </label>
+                                            <div class="sync-container">
+                                                <label class="label" for="details">
+                                                    {{ 'FORM.LABELS.DETAILS' | translate }}
+                                                </label>
+                                                <nb-icon class="sync" icon="sync-outline"></nb-icon>
+                                            </div>
                                             <ckeditor
                                                 id="details"
                                                 formControlName="details"
