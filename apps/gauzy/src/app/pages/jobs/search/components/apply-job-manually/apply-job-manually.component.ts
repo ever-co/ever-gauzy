@@ -9,6 +9,7 @@ import { CKEditor4 } from 'ckeditor4-angular';
 import { FileUploader, FileUploaderOptions } from 'ng2-file-upload';
 import {
 	IApplyJobPostInput,
+	IEmployee,
 	IEmployeeJobPost,
 	IEmployeeProposalTemplate,
 	IImageAsset,
@@ -30,7 +31,9 @@ import { ckEditorConfig } from './../../../../../@shared/ckeditor.config';
 	templateUrl: './apply-job-manually.component.html',
 	styleUrls: ['./apply-job-manually.component.scss']
 })
-export class ApplyJobManuallyComponent extends TranslationBaseComponent implements AfterViewInit, OnInit, OnDestroy {
+export class ApplyJobManuallyComponent extends TranslationBaseComponent
+	implements AfterViewInit, OnInit, OnDestroy {
+
 	public JobPostSourceEnum: typeof JobPostSourceEnum = JobPostSourceEnum;
 	public FormHelpers: typeof FormHelpers = FormHelpers;
 	public ckConfig: CKEditor4.Config = ckEditorConfig;
@@ -38,7 +41,7 @@ export class ApplyJobManuallyComponent extends TranslationBaseComponent implemen
 	public uploader: FileUploader;
 	public hasDropZoneOver: boolean = false;
 
-	/** Apply Job Manually Form */
+	/** Apply Job Manually Mutation Form */
 	public form: FormGroup = ApplyJobManuallyComponent.buildForm(this.fb);
 	static buildForm(fb: FormBuilder): FormGroup {
 		return fb.group({
@@ -50,23 +53,19 @@ export class ApplyJobManuallyComponent extends TranslationBaseComponent implemen
 		});
 	}
 
-	/**  Getter & Setter for Selected Employee */
+	/**  Getter and setter for selected Employee */
 	_selectedEmployee: ISelectedEmployee;
 	get selectedEmployee(): ISelectedEmployee {
 		return this._selectedEmployee;
 	}
 	@Input() set selectedEmployee(employee: ISelectedEmployee) {
 		this._selectedEmployee = employee;
-		/** Set default select employee */
-		if (isNotEmpty(employee) && this.form.get('employeeId')) {
-			this.form.get('employeeId').setValue(employee.id);
-			this.form.get('employeeId').updateValueAndValidity();
 
-			this.setDefaultEmployeeRates(employee);
-		}
+		/** Set default select employee */
+		this.setDefaultEmployee(employee);
 	}
 
-	/**  Getter & Setter for Job Post */
+	/**  Getter and setter for selected Job Post */
 	_jobPost: IEmployeeJobPost;
 	get jobPost(): IEmployeeJobPost {
 		return this._jobPost;
@@ -178,7 +177,8 @@ export class ApplyJobManuallyComponent extends TranslationBaseComponent implemen
 	 */
 	patchFormValue() {
 		if (this.jobPost) {
-			const { providerCode } = this.jobPost;
+			const { providerCode, employee } = this.jobPost;
+			this.setDefaultEmployee(employee);
 
 			const proposal = <FormControl>this.form.get('proposal');
 			const details = <FormControl>this.form.get('details');
@@ -238,8 +238,18 @@ export class ApplyJobManuallyComponent extends TranslationBaseComponent implemen
 		}
 	}
 
+	/** Set default employee for job apply */
+	setDefaultEmployee(employee: ISelectedEmployee | IEmployee) {
+		if (isNotEmpty(employee) && this.form.get('employeeId')) {
+			this.form.get('employeeId').setValue(employee.id);
+			this.form.get('employeeId').updateValueAndValidity();
+
+			this.setDefaultEmployeeRates(employee);
+		}
+	}
+
 	/** Set default employee rates */
-	setDefaultEmployeeRates(employee: ISelectedEmployee) {
+	setDefaultEmployeeRates(employee: ISelectedEmployee | IEmployee) {
 		if (employee && employee.billRateValue) {
 			this.form.get('rate').setValue(employee.billRateValue);
 			this.form.get('rate').updateValueAndValidity();

@@ -19,6 +19,7 @@ import { filter } from 'rxjs/operators';
 import { BehaviorSubject } from 'rxjs/internal/BehaviorSubject';
 import { firstValueFrom, Observable } from 'rxjs';
 import { API_PREFIX } from '../../@core/constants/app.constants';
+import { environment } from '../../../environments/environment';
 
 export function createInitialTimerState(): TimerState {
 	let timerConfig = {
@@ -325,9 +326,10 @@ export class TimeTrackerService implements OnDestroy {
 		if (typeof Worker !== 'undefined') {
 			// Initialize worker
 			this._worker = new Worker(
-				new URL('./time-tracker.worker', import.meta.url)
+				new URL(environment.CLIENT_BASE_URL + '/assets/workers/time-tracker.js'),
+				{ type: 'module' }
 			);
-			// // retrieve message post from time tracker worker
+			// retrieve message post from time tracker worker
 			this._worker.onmessage = ({ data }) => {
 				this.currentSessionDuration = data.session;
 				this.duration = data.todayWorked;
