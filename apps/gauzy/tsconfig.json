@@ -11,5 +11,5 @@
 		"strictTemplates": false,
 		"strictInjectionParameters": false
 	},
-	"include": ["**/*.ts"]
+	"include": ["**/*.ts", "**/workers/*.js"]
 }
