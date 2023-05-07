@@ -69,7 +69,8 @@
 							"cloudinary-core",
 							"angular2-chartjs",
 							"brace/mode/handlebars"
-						]
+						],
+						"webWorkerTsConfig": "apps/gauzy/tsconfig.worker.json"
 					},
 					"configurations": {
 						"production": {
@@ -156,7 +157,8 @@
 					"options": {
 						"jestConfig": "apps/gauzy/jest.config.js",
 						"tsConfig": "apps/gauzy/tsconfig.spec.json",
-						"setupFile": "apps/gauzy/src/test-setup.ts"
+						"setupFile": "apps/gauzy/src/test-setup.ts",
+						"webWorkerTsConfig": "apps/gauzy/tsconfig.worker.json"
 					}
 				}
 			}
