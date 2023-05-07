@@ -10,7 +10,7 @@ addEventListener('message', ({ data }) => {
 			// Pre-increment session and duration values each 1 sec and send to time tracker service
 			postMessage({
 				session: ++data.session,
-				todayWorked: ++data.duration
+				todayWorked: ++data.duration,
 			});
 		}, 1000);
 	} else {
