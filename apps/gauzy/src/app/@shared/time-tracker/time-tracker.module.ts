@@ -21,7 +21,6 @@ import { NgxPermissionsModule } from 'ngx-permissions';
 import { ContactSelectorModule } from '../contact-selector/contact-selector.module';
 import { TaskSelectModule } from '../tasks/task-select/task-select.module';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
-import { TimeTrackerCounterService } from './time-tracker-counter.service';
 
 @NgModule({
 	declarations: [TimeTrackerComponent],
@@ -42,7 +41,7 @@ import { TimeTrackerCounterService } from './time-tracker-counter.service';
 		NgxDraggableDomModule,
 		NgxPermissionsModule,
 		ContactSelectorModule,
-		FontAwesomeModule,
+    	FontAwesomeModule,
 		NbAlertModule
 	],
 	exports: [TimeTrackerComponent]
@@ -51,7 +50,7 @@ export class TimeTrackerModule {
 	static forRoot(): ModuleWithProviders<TimeTrackerModule> {
 		return {
 			ngModule: TimeTrackerModule,
-			providers: [TimeTrackerService, TimeTrackerCounterService],
+			providers: [TimeTrackerService]
 		};
 	}
 }
