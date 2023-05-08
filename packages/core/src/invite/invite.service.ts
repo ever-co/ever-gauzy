@@ -201,22 +201,22 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 		const { items: existedInvites } = await this.findAll({
 			...(isNotEmpty(teamIds)
 				? {
-					relations: {
-						teams: true,
-					},
-				}
+						relations: {
+							teams: true,
+						},
+				  }
 				: {}),
 			where: {
 				tenantId: RequestContext.currentTenantId(),
 				...(isNotEmpty(organizationId)
 					? {
-						organizationId,
-					}
+							organizationId,
+					  }
 					: {}),
 				...(isNotEmpty(emailIds)
 					? {
-						email: In(emailIds),
-					}
+							email: In(emailIds),
+					  }
 					: {}),
 			},
 		});
@@ -224,6 +224,22 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 		let ignoreInvites = 0;
 		const invites: Invite[] = [];
 		for await (const email of emailIds) {
+			const organizationTeamEmployees =
+				await this.organizationTeamEmployeeRepository.find({
+					where: {
+						employee: {
+							user: {
+								email,
+							},
+						},
+						organizationTeamId: In(teamIds),
+					},
+				});
+			const alreadyInTeamIds = organizationTeamEmployees.map(
+				(organizationTeamEmployee) =>
+					organizationTeamEmployee.organizationTeamId
+			);
+
 			const code = generateRandomInteger(6);
 			const token: string = sign(
 				{ email, code },
@@ -243,8 +259,9 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 				}
 				const needsToInviteTeams = organizationTeams.filter(
 					(item: IOrganizationTeam) =>
-						!existedTeams.some(
-							(team: IOrganizationTeam) => team.id === item.id
+						!alreadyInTeamIds.includes(item.id) &&
+						matchedInvites.every(
+							(item) => item.status !== InviteStatusEnum.INVITED
 						)
 				);
 				if (isNotEmpty(needsToInviteTeams)) {
@@ -552,8 +569,8 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 							status: InviteStatusEnum.INVITED,
 							...(payload['code']
 								? {
-									code: payload['code'],
-								}
+										code: payload['code'],
+								  }
 								: {}),
 						});
 						qb.andWhere([
@@ -634,34 +651,36 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 			return await super.findAll({
 				...(options && options.skip
 					? {
-						skip: options.take * (options.skip - 1),
-					}
+							skip: options.take * (options.skip - 1),
+					  }
 					: {}),
 				...(options && options.take
 					? {
-						take: options.take,
-					}
+							take: options.take,
+					  }
 					: {}),
 				...(options && options.relations
 					? {
-						relations: options.relations,
-					}
+							relations: options.relations,
+					  }
 					: {}),
 				where: {
 					tenantId: RequestContext.currentTenantId(),
-					...(isNotEmpty(options) && isNotEmpty(options.where) ? options.where : {}),
+					...(isNotEmpty(options) && isNotEmpty(options.where)
+						? options.where
+						: {}),
 					...(isNotEmpty(options) && isNotEmpty(options.where)
 						? isNotEmpty(options.where.role)
 							? {
-								role: {
-									...options.where.role,
-								},
-							}
+									role: {
+										...options.where.role,
+									},
+							  }
 							: {
-								role: {
-									name: Not(RolesEnum.EMPLOYEE),
-								},
-							}
+									role: {
+										name: Not(RolesEnum.EMPLOYEE),
+									},
+							  }
 						: {}),
 					/**
 					 * Organization invites filter by specific projects
@@ -669,10 +688,10 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 					...(isNotEmpty(options) && isNotEmpty(options.where)
 						? isNotEmpty(options.where.projects)
 							? {
-								projects: {
-									id: In(options.where.projects.id),
-								},
-							}
+									projects: {
+										id: In(options.where.projects.id),
+									},
+							  }
 							: {}
 						: {}),
 					/**
@@ -681,10 +700,10 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 					...(isNotEmpty(options) && isNotEmpty(options.where)
 						? isNotEmpty(options.where.teams)
 							? {
-								teams: {
-									id: In(options.where.teams.id),
-								},
-							}
+									teams: {
+										id: In(options.where.teams.id),
+									},
+							  }
 							: {}
 						: {}),
 				},
@@ -872,8 +891,9 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 				const newTenantUser = await this.createUser(
 					{
 						user: {
-							firstName: names && names.length && names[0] || '',
-							lastName: names && names.length && names[1] || '',
+							firstName:
+								(names && names.length && names[0]) || '',
+							lastName: (names && names.length && names[1]) || '',
 							email: email,
 							tenant: tenant,
 							role: role,
@@ -938,10 +958,10 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 			tenant,
 			...(input.password
 				? {
-					hash: await this.authService.getPasswordHash(
-						input.password
-					),
-				}
+						hash: await this.authService.getPasswordHash(
+							input.password
+						),
+				  }
 				: {}),
 		});
 		const entity = await this.userRepository.save(create);
@@ -952,8 +972,8 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 		await this.userRepository.update(entity.id, {
 			...(input.inviteId
 				? {
-					emailVerifiedAt: freshTimestamp(),
-				}
+						emailVerifiedAt: freshTimestamp(),
+				  }
 				: {}),
 		});
 
