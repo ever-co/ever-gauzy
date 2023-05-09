@@ -366,7 +366,7 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 		serverUrl: null,
 		awPort: null,
 		awHost: null,
-		port: 5620,
+		port: 3000,
 	};
 	version = '0.0.0';
 	message = {
@@ -961,7 +961,7 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 		switch (val) {
 			case this.serverTypes.integrated:
 				this.config.isLocalServer = true;
-				this.config.port = 5620;
+				this.config.port = 3000;
 				this.config.serverUrl = null;
 				break;
 			case this.serverTypes.custom:
