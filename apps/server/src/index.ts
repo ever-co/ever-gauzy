@@ -171,16 +171,9 @@ const updateConfigUi = (config) => {
 			var global = window;
 		}; </script>`;
 
-	const elementToReplace =
-		'<script src="https://cdn.ckeditor.com/4.6.1/full-all/ckeditor.js"></script>';
+	const elementToReplace = '</body>';
 
-	fileStr = fileStr.replace(
-		elementToReplace,
-		`
-		${configStr}
-		${elementToReplace}
-	`
-	);
+	fileStr = fileStr.replace(elementToReplace, configStr.concat('\n').concat(elementToReplace));
 
 	// write file new html
 
