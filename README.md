@@ -151,7 +151,7 @@ More information about our Server & Desktop Apps:
 - You can also setup Gauzy Desktop App (can run independently or connect to Gauzy Server) or Gauzy Desktop Timer App (should be connected to Gauzy Server)
 - You can login with `admin@ever.co` and password `admin` to check Admin functionality if you installed Gauzy Server or Gauzy Desktop App. Note: such Admin user is not an employee, so you will not be able to track time.
 - You can login with `employee@ever.co` and password `123456` to check Employee related functionality in Gauzy UI or to run Desktop Timer from "Employee" perspective (such user is an Employee and can track time).
-- If you install Gauzy Server, it is possible to connect to it using browser (by default on <http://localhost:8084>) or using Gauzy Desktop Apps (make sure to configure Desktop apps to connect to Gauzy API on <http://127.0.0.1:5620/api> because it's where Gauzy Server API runs by default).
+- If you install Gauzy Server, it is possible to connect to it using browser (by default on <http://localhost:4200>) or using Gauzy Desktop Apps (make sure to configure Desktop apps to connect to Gauzy API on <http://127.0.0.1:3000/api> because it's where Gauzy Server API runs by default).
 - You can read more information about our Desktop Apps in the [Desktop Apps Wiki Page](https://github.com/ever-co/ever-gauzy/wiki/Gauzy-Desktop-Apps) and about our Server in the [Server Wiki Page](https://github.com/ever-co/ever-gauzy/wiki/Gauzy-Server).
 
 ## 🧱 Technology Stack and Requirements
