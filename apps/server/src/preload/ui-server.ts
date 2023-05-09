@@ -8,7 +8,7 @@ const url = require('url');
 console.log('server started');
 
 async function runServer() {
-    const portUi = process.env.uiPort ? Number(process.env.uiPort) : 8084;
+    const portUi = process.env.uiPort ? Number(process.env.uiPort) : 4200;
     http.createServer(function (req, res) {
         file.serve(req, res);
         console.log('server ui started');
