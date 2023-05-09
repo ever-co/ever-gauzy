@@ -118,8 +118,8 @@ export class SetupComponent implements OnInit {
 
 	serverConfig: any = {
 		integrated: {
-			port: '5620',
-			portUi: '8084',
+			port: '3000',
+			portUi: '4200',
 		},
 		custom: {
 			apiHost: '127.0.0.1',
