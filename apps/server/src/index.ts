@@ -190,6 +190,8 @@ const updateConfigUi = (config) => {
 	}
 };
 
+const controller = new AbortController()
+const { signal } = controller;
 const runServer = (isRestart) => {
 	const envVal = getEnvApi();
 	const uiPort = getUiPort();
@@ -201,7 +203,8 @@ const runServer = (isRestart) => {
 		envVal,
 		serverWindow,
 		uiPort,
-		isRestart
+		isRestart,
+		signal
 	);
 };
 
@@ -503,6 +506,8 @@ ipcMain.on('restart_and_update', () => {
 
 app.on('before-quit', (e) => {
 	e.preventDefault();
+	// Kill child processes
+	controller.abort();
 	// soft download cancellation
 	try {
 		updater.cancel();
