@@ -3,13 +3,17 @@ import { app } from 'electron';
 import {
     LocalStore
 } from './desktop-store';
-export async function apiServer(servicePath, envValue, serverWindow, uiPort, isRestart) {
+export async function apiServer(servicePath, envValue, serverWindow, uiPort, isRestart, signal) {
 	try {
         // console.log(envValue);
-		const uiService = fork(servicePath.api, { silent: true, env: {
+		const uiService = fork(servicePath.api, {
+			silent: true,
+			signal,
+			env: {
             ...process.env,
             ...envValue
-        } });
+			}
+		});
         serverWindow.webContents.send('loading_state', true);
 
         console.log('new api pid', uiService.pid);
@@ -17,11 +21,11 @@ export async function apiServer(servicePath, envValue, serverWindow, uiPort, isR
         LocalStore.updateConfigSetting({
             apiPid: uiService.pid
         })
-        
+
         uiService.stdout.on('data', (data) => {
             const msgData = data.toString()
             if (msgData.indexOf('Listening at http') > -1) {
-                UiServerTask(servicePath.ui, serverWindow, uiPort.toString(), isRestart)
+				UiServerTask(servicePath.ui, serverWindow, uiPort.toString(), isRestart, signal)
             }
             serverWindow.webContents.send('log_state', { msg: msgData });
             // uiService.unref();
@@ -40,13 +44,17 @@ export async function apiServer(servicePath, envValue, serverWindow, uiPort, isR
 	}
   }
 
-export async function UiServerTask(uiPath, serverWindow, uiPort, isRestart) {
+export async function UiServerTask(uiPath, serverWindow, uiPort, isRestart, signal) {
 	try {
-        const uiService = fork(uiPath, { silent: true, env: {
+		const uiService = fork(uiPath, {
+			silent: true,
+			signal,
+			env: {
             ...process.env,
             isPackaged: app.isPackaged.toString(),
             uiPort
-        } });
+			}
+		});
         console.log('new ui pid', uiService.pid);
         LocalStore.updateConfigSetting({
             uiPid: uiService.pid
@@ -61,7 +69,7 @@ export async function UiServerTask(uiPath, serverWindow, uiPort, isRestart) {
                     serverWindow.webContents.send('resp_msg', {type: 'start_server', status: 'success'});
                 }
             }
-            
+
             // uiService.unref();
             // process.exit(0);
         });
