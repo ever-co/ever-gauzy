@@ -5,9 +5,9 @@ import { GauzyAIService } from './gauzy-ai.service';
 import gauzyAI from './config/gauzy-ai';
 
 @Module({
-	imports: [,
+	imports: [
 		HttpModule.registerAsync({
-            imports: [ConfigModule],
+			imports: [ConfigModule],
 			useFactory: (configService: ConfigService) => ({
 				baseURL: configService.get<string>('guazyAI.gauzyAIEndpoint'),
 				timeout: 60 * 5 * 1000,
@@ -16,9 +16,9 @@ import gauzyAI from './config/gauzy-ai';
 					'Content-Type': 'application/json',
 				},
 			}),
-            inject: [ConfigService],
+			inject: [ConfigService],
 		}),
-        ConfigModule.forRoot({
+		ConfigModule.forRoot({
 			load: [gauzyAI]
 		}),
 	],
@@ -26,4 +26,4 @@ import gauzyAI from './config/gauzy-ai';
 	providers: [GauzyAIService],
 	exports: [GauzyAIService],
 })
-export class GauzyAIModule {}
+export class GauzyAIModule { }

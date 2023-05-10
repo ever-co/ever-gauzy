@@ -77,7 +77,7 @@ export class GauzyAIService {
 	}
 
 	constructor(
-		protected readonly configService: ConfigService
+		private readonly configService: ConfigService
 	) {
 		try {
 			this.gauzyAIGraphQLEndpoint = configService.get<string>('guazyAI.gauzyAIGraphQLEndpoint');
