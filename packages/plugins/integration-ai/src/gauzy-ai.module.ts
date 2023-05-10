@@ -13,17 +13,17 @@ import gauzyAI from './config/gauzy-ai';
 				timeout: 60 * 5 * 1000,
 				maxRedirects: 5,
 				headers: {
-					'Content-Type': 'application/json',
-				},
+					'Content-Type': 'application/json'
+				}
 			}),
-			inject: [ConfigService],
+			inject: [ConfigService]
 		}),
 		ConfigModule.forRoot({
 			load: [gauzyAI]
-		}),
+		})
 	],
 	controllers: [],
 	providers: [GauzyAIService],
-	exports: [GauzyAIService],
+	exports: [GauzyAIService]
 })
-export class GauzyAIModule { }
+export class GauzyAIModule {}
