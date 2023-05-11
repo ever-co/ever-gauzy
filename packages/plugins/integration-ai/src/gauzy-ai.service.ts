@@ -2,6 +2,9 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { HttpService } from '@nestjs/axios';
+import { AxiosResponse } from 'axios';
+import { firstValueFrom } from 'rxjs';
+import { map } from 'rxjs/operators';
 import {
 	CreateEmployeeJobApplication,
 	Employee,
@@ -128,6 +131,22 @@ export class GauzyAIService {
 			this._logger.error(err);
 			this._client = null;
 		}
+	}
+
+	/**
+	 * Generate employee proposal text
+	 *
+	 * @param params
+	 * @returns
+	 */
+	public async generateEmployeeProposal(
+		params: IApplyJobPostInput
+	): Promise<any> {
+		return firstValueFrom(
+			this._http.post('api/employee/job/application/pre-process', params).pipe(
+				map((resp: AxiosResponse<any, any>) => resp),
+			)
+		);
 	}
 
 	/**
@@ -978,6 +997,9 @@ export class GauzyAIService {
 					const rec = it.node;
 
 					const res: IEmployeeJobPost = {
+						/** Employee Job Post Matching ID */
+						id: rec.id,
+
 						employeeId: rec.employee.externalEmployeeId,
 						employee: undefined,
 						jobPostId: rec.jobPost.id,
