@@ -16,7 +16,7 @@
                     </nb-card-header>
                     <nb-card-body>
                         <job-title-description-details
-                            [rowData]="jobPost"
+                            [rowData]="employeeJobPost"
                         ></job-title-description-details>
                     </nb-card-body>
                 </nb-card>
@@ -79,7 +79,7 @@
                                 </div>
                             </div>
                             <ng-template
-                                [ngIf]="JobPostSourceEnum.UPWORK === jobPost?.providerCode"
+                                [ngIf]="JobPostSourceEnum.UPWORK === employeeJobPost?.jobPost?.providerCode"
                             >
                                 <div class="row">
                                     <div class="col-12">
@@ -105,7 +105,7 @@
                                 </div>
                             </ng-template>
                             <ng-template
-                                [ngIf]="JobPostSourceEnum.UPWORK !== jobPost?.providerCode"
+                                [ngIf]="JobPostSourceEnum.UPWORK !== employeeJobPost?.jobPost?.providerCode"
                             >
                                 <div class="row">
                                     <div class="col-12">

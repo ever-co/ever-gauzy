@@ -19,7 +19,7 @@ import {
 	JobPostSourceEnum
 } from '@gauzy/contracts';
 import { distinctUntilChange, isNotEmpty } from '@gauzy/common-angular';
-import { Store, ToastrService } from './../../../../../@core/services';
+import { JobService, Store, ToastrService } from './../../../../../@core/services';
 import { API_PREFIX } from './../../../../../@core/constants';
 import { FormHelpers } from './../../../../../@shared/forms';
 import { TranslationBaseComponent } from './../../../../../@shared/language-base';
@@ -41,6 +41,7 @@ export class ApplyJobManuallyComponent extends TranslationBaseComponent
 	public uploader: FileUploader;
 	public hasDropZoneOver: boolean = false;
 	public proposal$: Subject<boolean> = new Subject();
+	public proposalTemplate: IEmployeeProposalTemplate;
 
 	/** Apply Job Manually Mutation Form */
 	public form: FormGroup = ApplyJobManuallyComponent.buildForm(this.fb);
@@ -67,12 +68,12 @@ export class ApplyJobManuallyComponent extends TranslationBaseComponent
 	}
 
 	/**  Getter and setter for selected Job Post */
-	_jobPost: IEmployeeJobPost;
-	get jobPost(): IEmployeeJobPost {
-		return this._jobPost;
+	_employeeJobPost: IEmployeeJobPost;
+	get employeeJobPost(): IEmployeeJobPost {
+		return this._employeeJobPost;
 	}
-	@Input() set jobPost(jobPost: IEmployeeJobPost) {
-		this._jobPost = jobPost;
+	@Input() set employeeJobPost(value: IEmployeeJobPost) {
+		this._employeeJobPost = value;
 		this.patchFormValue();
 	}
 
@@ -84,6 +85,7 @@ export class ApplyJobManuallyComponent extends TranslationBaseComponent
 		private readonly dialogRef: NbDialogRef<ApplyJobManuallyComponent>,
 		public readonly translateService: TranslateService,
 		private readonly store: Store,
+		private readonly jobService: JobService,
 		private readonly toastrService: ToastrService
 	) {
 		super(translateService);
@@ -114,7 +116,7 @@ export class ApplyJobManuallyComponent extends TranslationBaseComponent
 			.subscribe();
 		this.proposal$
 			.pipe(
-				tap(() => console.log('Generate Proposal Text!')),
+				tap(() => this.generateEmployeeProposal()),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -183,8 +185,8 @@ export class ApplyJobManuallyComponent extends TranslationBaseComponent
 	 * Patch job provider details after load page
 	 */
 	patchFormValue() {
-		if (this.jobPost) {
-			const { providerCode, employee } = this.jobPost;
+		if (this.employeeJobPost) {
+			const { providerCode, employee } = this.employeeJobPost;
 			this.setDefaultEmployee(employee);
 
 			const proposal = <FormControl>this.form.get('proposal');
@@ -209,14 +211,14 @@ export class ApplyJobManuallyComponent extends TranslationBaseComponent
 	 */
 	onProposalTemplateChange(item: IEmployeeProposalTemplate | null): void {
 		/** Generate proposal using GauzyAI */
+		this.proposalTemplate = item || null;
 		this.proposal$.next(true);
-
-		if (isNotEmpty(item)) {
-			const { content } = item;
-			this.form.patchValue({ details: content, proposal: content });
-		} else {
-			this.form.patchValue({ proposal: null, details: null });
-		}
+		// if (isNotEmpty(item)) {
+		// 	const { content } = item;
+		// 	this.form.patchValue({ details: content, proposal: content });
+		// } else {
+		// 	this.form.patchValue({ proposal: null, details: null });
+		// }
 	}
 
 	/**
@@ -227,7 +229,7 @@ export class ApplyJobManuallyComponent extends TranslationBaseComponent
 			return;
 		}
 		const { employeeId, proposal, rate, details, attachments } = this.form.value;
-		const { providerCode, providerJobId } = this.jobPost;
+		const { providerCode, providerJobId } = this.employeeJobPost;
 
 		/** Apply job post input */
 		const applyJobPost: IApplyJobPostInput = {
@@ -264,6 +266,42 @@ export class ApplyJobManuallyComponent extends TranslationBaseComponent
 			this.form.get('rate').setValue(employee.billRateValue);
 			this.form.get('rate').updateValueAndValidity();
 		}
+	}
+
+	/**
+	 * Generate employee proposal text
+	 *
+	 */
+	async generateEmployeeProposal() {
+		/** Generate proposal for employee */
+		const employeeId = this.form.get('employeeId').value;
+		const rate = this.form.get('rate').value;
+
+		const proposalTemplate = this.proposalTemplate.content;
+		const jobPost = this.employeeJobPost.jobPost;
+		const { id: employeeJobPostId, isActive, isArchived } = this.employeeJobPost;
+
+		/** Generate proposal request parameters */
+		const generateProposalRequest = {
+			employeeId: employeeId,
+			proposalTemplate: proposalTemplate,
+			employeeJobPostId: employeeJobPostId,
+			jobPostId: jobPost.id,
+			jobPost: jobPost,
+			providerCode: jobPost.providerCode,
+			providerJobId: jobPost.providerJobId,
+			jobStatus: jobPost.jobStatus,
+			jobType: jobPost.jobType,
+			jobDateCreated: jobPost.jobDateCreated,
+			rate: rate,
+			isActive: isActive,
+			isArchived: isArchived,
+			attachments: "{}",
+			qa: "{}",
+			terms: "{}"
+		}
+		const employeeJobApplication = await this.jobService.generateEmployeeProposal(generateProposalRequest);
+		console.log(employeeJobApplication, generateProposalRequest);
 	}
 
 	/**
