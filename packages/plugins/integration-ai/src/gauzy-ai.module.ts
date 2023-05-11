@@ -10,7 +10,7 @@ import gauzyAI from './config/gauzy-ai';
 			imports: [ConfigModule],
 			useFactory: (configService: ConfigService) => ({
 				baseURL: configService.get<string>('guazyAI.gauzyAIEndpoint'),
-				timeout: 60 * 5 * 1000,
+				timeout: configService.get<number>('guazyAI.gauzyAIRequestTimeout'),
 				maxRedirects: 5,
 				headers: {
 					'Content-Type': 'application/json',

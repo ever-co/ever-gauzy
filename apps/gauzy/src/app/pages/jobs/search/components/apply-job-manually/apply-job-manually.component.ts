@@ -213,12 +213,13 @@ export class ApplyJobManuallyComponent extends TranslationBaseComponent
 		/** Generate proposal using GauzyAI */
 		this.proposalTemplate = item || null;
 		this.proposal$.next(true);
-		// if (isNotEmpty(item)) {
-		// 	const { content } = item;
-		// 	this.form.patchValue({ details: content, proposal: content });
-		// } else {
-		// 	this.form.patchValue({ proposal: null, details: null });
-		// }
+
+		if (isNotEmpty(item)) {
+			const { content } = item;
+			this.form.patchValue({ details: content, proposal: content });
+		} else {
+			this.form.patchValue({ proposal: null, details: null });
+		}
 	}
 
 	/**
