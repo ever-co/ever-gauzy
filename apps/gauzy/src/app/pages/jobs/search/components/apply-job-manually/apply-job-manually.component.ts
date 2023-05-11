@@ -1,6 +1,6 @@
 import { AfterViewInit, Component, Input, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { FormBuilder, FormControl, FormGroup, FormGroupDirective, Validators } from '@angular/forms';
-import { combineLatest } from 'rxjs';
+import { Subject, combineLatest } from 'rxjs';
 import { debounceTime, filter, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { NbDialogRef } from '@nebular/theme';
@@ -40,6 +40,7 @@ export class ApplyJobManuallyComponent extends TranslationBaseComponent
 	public organization: IOrganization;
 	public uploader: FileUploader;
 	public hasDropZoneOver: boolean = false;
+	public proposal$: Subject<boolean> = new Subject();
 
 	/** Apply Job Manually Mutation Form */
 	public form: FormGroup = ApplyJobManuallyComponent.buildForm(this.fb);
@@ -108,6 +109,12 @@ export class ApplyJobManuallyComponent extends TranslationBaseComponent
 			.pipe(
 				filter((user: IUser) => !!user),
 				tap(() => this._loadUploaderSettings()),
+				untilDestroyed(this)
+			)
+			.subscribe();
+		this.proposal$
+			.pipe(
+				tap(() => console.log('Generate Proposal Text!')),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -201,6 +208,9 @@ export class ApplyJobManuallyComponent extends TranslationBaseComponent
 	 * @param item
 	 */
 	onProposalTemplateChange(item: IEmployeeProposalTemplate | null): void {
+		/** Generate proposal using GauzyAI */
+		this.proposal$.next(true);
+
 		if (isNotEmpty(item)) {
 			const { content } = item;
 			this.form.patchValue({ details: content, proposal: content });

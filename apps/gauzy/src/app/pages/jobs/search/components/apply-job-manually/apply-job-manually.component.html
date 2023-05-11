@@ -88,7 +88,12 @@
                                                 <label class="label" for="proposal">
                                                     {{ 'FORM.LABELS.COVER_LETTER' | translate }}
                                                 </label>
-                                                <nb-icon class="sync" icon="sync-outline"></nb-icon>
+                                                <nb-icon
+                                                    class="sync"
+                                                    icon="sync-outline"
+                                                    debounceClick
+                                                    (throttledClick)="proposal$.next(true)"
+                                                ></nb-icon>
                                             </div>
                                             <ckeditor
                                                 id="proposal"

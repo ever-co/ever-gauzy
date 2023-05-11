@@ -1,6 +1,7 @@
 // import * as _ from 'underscore';
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { HttpService } from '@nestjs/axios';
 import {
 	CreateEmployeeJobApplication,
 	Employee,
@@ -77,10 +78,11 @@ export class GauzyAIService {
 	}
 
 	constructor(
-		protected readonly configService: ConfigService
+		private readonly _configService: ConfigService,
+		private readonly _http: HttpService
 	) {
 		try {
-			this.gauzyAIGraphQLEndpoint = configService.get<string>('guazyAI.gauzyAIGraphQLEndpoint');
+			this.gauzyAIGraphQLEndpoint = this._configService.get<string>('guazyAI.gauzyAIGraphQLEndpoint');
 			console.log(chalk.magenta(`GauzyAI GraphQL Endpoint: ${this.gauzyAIGraphQLEndpoint}`));
 
 			if (this.gauzyAIGraphQLEndpoint) {
