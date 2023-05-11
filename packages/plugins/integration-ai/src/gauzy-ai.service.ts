@@ -77,12 +77,10 @@ export class GauzyAIService {
 	}
 
 	constructor(
-		// private readonly configService: ConfigService
+		protected readonly configService: ConfigService
 	) {
 		try {
-			// TODO: read from constructor injected parameter (e.g. config service)
-			// this.gauzyAIGraphQLEndpoint = configService.get<string>('guazyAI.gauzyAIGraphQLEndpoint');
-			this.gauzyAIGraphQLEndpoint = process.env.GAUZY_AI_ENDPOINT;
+			this.gauzyAIGraphQLEndpoint = configService.get<string>('guazyAI.gauzyAIGraphQLEndpoint');
 			console.log(chalk.magenta(`GauzyAI GraphQL Endpoint: ${this.gauzyAIGraphQLEndpoint}`));
 
 			if (this.gauzyAIGraphQLEndpoint) {

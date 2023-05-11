@@ -18,12 +18,10 @@ import gauzyAI from './config/gauzy-ai';
 			}),
 			inject: [ConfigService],
 		}),
-		ConfigModule.forRoot({
-			load: [gauzyAI]
-		}),
+		ConfigModule.forFeature(gauzyAI),
 	],
 	controllers: [],
-	providers: [GauzyAIService],
+	providers: [GauzyAIService, ConfigService],
 	exports: [GauzyAIService],
 })
 export class GauzyAIModule { }
