@@ -13,7 +13,7 @@ import {
 } from './sdk/gauzy-ai-sdk';
 import { TypedDocumentNode as DocumentNode } from '@graphql-typed-document-node/core';
 import fetch from 'cross-fetch';
-import chalk from 'chalk';
+import * as chalk from 'chalk';
 import {
 	ApolloClient,
 	ApolloQueryResult,
@@ -77,10 +77,12 @@ export class GauzyAIService {
 	}
 
 	constructor(
-		private readonly configService: ConfigService
+		// private readonly configService: ConfigService
 	) {
 		try {
-			this.gauzyAIGraphQLEndpoint = configService.get<string>('guazyAI.gauzyAIGraphQLEndpoint');
+			// TODO: read from constructor injected parameter (e.g. config service)
+			// this.gauzyAIGraphQLEndpoint = configService.get<string>('guazyAI.gauzyAIGraphQLEndpoint');
+			this.gauzyAIGraphQLEndpoint = process.env.GAUZY_AI_ENDPOINT;
 			console.log(chalk.magenta(`GauzyAI GraphQL Endpoint: ${this.gauzyAIGraphQLEndpoint}`));
 
 			if (this.gauzyAIGraphQLEndpoint) {
