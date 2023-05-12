@@ -47,6 +47,8 @@ export interface IGetEmployeeJobPostFilters {
 }
 
 export interface IEmployeeJobPost {
+	id?: string;
+
 	employeeId: string;
 	employee: IEmployee;
 	jobPostId: string;
