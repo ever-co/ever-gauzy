@@ -213,13 +213,6 @@ export class ApplyJobManuallyComponent extends TranslationBaseComponent
 		/** Generate proposal using GauzyAI */
 		this.proposalTemplate = item || null;
 		this.proposal$.next(true);
-
-		if (isNotEmpty(item)) {
-			const { content } = item;
-			this.form.patchValue({ details: content, proposal: content });
-		} else {
-			this.form.patchValue({ proposal: null, details: null });
-		}
 	}
 
 	/**
@@ -302,7 +295,14 @@ export class ApplyJobManuallyComponent extends TranslationBaseComponent
 			terms: "{}"
 		}
 		const employeeJobApplication = await this.jobService.generateEmployeeProposal(generateProposalRequest);
-		console.log(employeeJobApplication, generateProposalRequest);
+
+		/** If employee proposal generated successfully */
+		if (isNotEmpty(employeeJobApplication)) {
+			const { proposal } = employeeJobApplication;
+			this.form.patchValue({ details: proposal, proposal: proposal });
+		} else {
+			this.form.patchValue({ proposal: proposalTemplate, details: proposalTemplate });
+		}
 	}
 
 	/**

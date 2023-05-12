@@ -144,10 +144,11 @@ export class GauzyAIService {
 	): Promise<any> {
 		// First we need to get employee id because we have only externalId
 		params.employeeId = await this.getEmployeeGauzyAIId(params.employeeId);
+		console.log('Generate Proposal Parameters: ', params);
 
 		return firstValueFrom(
 			this._http.post('api/employee/job/application/pre-process', params).pipe(
-				map((resp: AxiosResponse<any, any>) => resp),
+				map((resp: AxiosResponse<any, any>) => resp.data),
 			)
 		);
 	}
