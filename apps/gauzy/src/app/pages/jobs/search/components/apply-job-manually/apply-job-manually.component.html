@@ -16,13 +16,17 @@
                     </nb-card-header>
                     <nb-card-body>
                         <job-title-description-details
-                            [rowData]="jobPost"
+                            [rowData]="employeeJobPost"
                         ></job-title-description-details>
                     </nb-card-body>
                 </nb-card>
             </div>
             <div class="col-7">
-                <nb-card>
+                <nb-card
+                    [nbSpinner]="loading"
+                    nbSpinnerStatus="primary"
+                    nbSpinnerSize="medium"
+                >
                     <nb-card-header>
                         {{ 'PROPOSALS_PAGE.PROPOSAL_DETAILS.PROPOSAL_DETAILS' | translate }}
                     </nb-card-header>
@@ -79,14 +83,22 @@
                                 </div>
                             </div>
                             <ng-template
-                                [ngIf]="JobPostSourceEnum.UPWORK === jobPost?.providerCode"
+                                [ngIf]="JobPostSourceEnum.UPWORK === employeeJobPost?.jobPost?.providerCode"
                             >
                                 <div class="row">
                                     <div class="col-12">
                                         <div class="form-group">
-                                            <label class="label" for="proposal">
-                                                {{ 'FORM.LABELS.COVER_LETTER' | translate }}
-                                            </label>
+                                            <div class="sync-container">
+                                                <label class="label" for="proposal">
+                                                    {{ 'FORM.LABELS.COVER_LETTER' | translate }}
+                                                </label>
+                                                <nb-icon
+                                                    class="sync"
+                                                    icon="sync-outline"
+                                                    debounceClick
+                                                    (throttledClick)="proposal$.next(true)"
+                                                ></nb-icon>
+                                            </div>
                                             <ckeditor
                                                 id="proposal"
                                                 formControlName="proposal"
@@ -97,14 +109,17 @@
                                 </div>
                             </ng-template>
                             <ng-template
-                                [ngIf]="JobPostSourceEnum.UPWORK !== jobPost?.providerCode"
+                                [ngIf]="JobPostSourceEnum.UPWORK !== employeeJobPost?.jobPost?.providerCode"
                             >
                                 <div class="row">
                                     <div class="col-12">
                                         <div class="form-group">
-                                            <label class="label" for="details">
-                                                {{ 'FORM.LABELS.DETAILS' | translate }}
-                                            </label>
+                                            <div class="sync-container">
+                                                <label class="label" for="details">
+                                                    {{ 'FORM.LABELS.DETAILS' | translate }}
+                                                </label>
+                                                <nb-icon class="sync" icon="sync-outline"></nb-icon>
+                                            </div>
                                             <ckeditor
                                                 id="details"
                                                 formControlName="details"

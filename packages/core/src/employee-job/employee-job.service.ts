@@ -1,6 +1,6 @@
-import { environment as env } from '@gauzy/config';
 import { Injectable } from '@nestjs/common';
 import { faker } from '@faker-js/faker';
+import { environment as env } from '@gauzy/config';
 import { GauzyAIService } from '@gauzy/integration-ai';
 import {
 	IApplyJobPostInput,
@@ -157,5 +157,15 @@ export class EmployeeJobPostService {
 			items: employeesJobs,
 			total: 100
 		};
+	}
+
+	/**
+	 * Generate employee proposal text
+	 *
+	 * @param input
+	 * @returns
+	 */
+	public async generateEmployeeProposal(input: IApplyJobPostInput) {
+		return await this.gauzyAIService.generateEmployeeProposal(input);
 	}
 }

@@ -1,6 +1,6 @@
 import { AfterViewInit, Component, Input, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { FormBuilder, FormControl, FormGroup, FormGroupDirective, Validators } from '@angular/forms';
-import { combineLatest } from 'rxjs';
+import { Subject, combineLatest } from 'rxjs';
 import { debounceTime, filter, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { NbDialogRef } from '@nebular/theme';
@@ -19,7 +19,7 @@ import {
 	JobPostSourceEnum
 } from '@gauzy/contracts';
 import { distinctUntilChange, isNotEmpty } from '@gauzy/common-angular';
-import { Store, ToastrService } from './../../../../../@core/services';
+import { JobService, Store, ToastrService } from './../../../../../@core/services';
 import { API_PREFIX } from './../../../../../@core/constants';
 import { FormHelpers } from './../../../../../@shared/forms';
 import { TranslationBaseComponent } from './../../../../../@shared/language-base';
@@ -40,6 +40,9 @@ export class ApplyJobManuallyComponent extends TranslationBaseComponent
 	public organization: IOrganization;
 	public uploader: FileUploader;
 	public hasDropZoneOver: boolean = false;
+	public loading: boolean = false;
+	public proposal$: Subject<boolean> = new Subject();
+	public proposalTemplate: IEmployeeProposalTemplate;
 
 	/** Apply Job Manually Mutation Form */
 	public form: FormGroup = ApplyJobManuallyComponent.buildForm(this.fb);
@@ -66,12 +69,12 @@ export class ApplyJobManuallyComponent extends TranslationBaseComponent
 	}
 
 	/**  Getter and setter for selected Job Post */
-	_jobPost: IEmployeeJobPost;
-	get jobPost(): IEmployeeJobPost {
-		return this._jobPost;
+	_employeeJobPost: IEmployeeJobPost;
+	get employeeJobPost(): IEmployeeJobPost {
+		return this._employeeJobPost;
 	}
-	@Input() set jobPost(jobPost: IEmployeeJobPost) {
-		this._jobPost = jobPost;
+	@Input() set employeeJobPost(value: IEmployeeJobPost) {
+		this._employeeJobPost = value;
 		this.patchFormValue();
 	}
 
@@ -83,6 +86,7 @@ export class ApplyJobManuallyComponent extends TranslationBaseComponent
 		private readonly dialogRef: NbDialogRef<ApplyJobManuallyComponent>,
 		public readonly translateService: TranslateService,
 		private readonly store: Store,
+		private readonly jobService: JobService,
 		private readonly toastrService: ToastrService
 	) {
 		super(translateService);
@@ -108,6 +112,12 @@ export class ApplyJobManuallyComponent extends TranslationBaseComponent
 			.pipe(
 				filter((user: IUser) => !!user),
 				tap(() => this._loadUploaderSettings()),
+				untilDestroyed(this)
+			)
+			.subscribe();
+		this.proposal$
+			.pipe(
+				tap(() => this.generateEmployeeProposal()),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -176,8 +186,8 @@ export class ApplyJobManuallyComponent extends TranslationBaseComponent
 	 * Patch job provider details after load page
 	 */
 	patchFormValue() {
-		if (this.jobPost) {
-			const { providerCode, employee } = this.jobPost;
+		if (this.employeeJobPost) {
+			const { providerCode, employee } = this.employeeJobPost;
 			this.setDefaultEmployee(employee);
 
 			const proposal = <FormControl>this.form.get('proposal');
@@ -201,11 +211,10 @@ export class ApplyJobManuallyComponent extends TranslationBaseComponent
 	 * @param item
 	 */
 	onProposalTemplateChange(item: IEmployeeProposalTemplate | null): void {
+		/** Generate proposal using GauzyAI */
+		this.proposalTemplate = item || null;
 		if (isNotEmpty(item)) {
-			const { content } = item;
-			this.form.patchValue({ details: content, proposal: content });
-		} else {
-			this.form.patchValue({ proposal: null, details: null });
+			this.proposal$.next(true);
 		}
 	}
 
@@ -217,7 +226,7 @@ export class ApplyJobManuallyComponent extends TranslationBaseComponent
 			return;
 		}
 		const { employeeId, proposal, rate, details, attachments } = this.form.value;
-		const { providerCode, providerJobId } = this.jobPost;
+		const { providerCode, providerJobId } = this.employeeJobPost;
 
 		/** Apply job post input */
 		const applyJobPost: IApplyJobPostInput = {
@@ -253,6 +262,55 @@ export class ApplyJobManuallyComponent extends TranslationBaseComponent
 		if (employee && employee.billRateValue) {
 			this.form.get('rate').setValue(employee.billRateValue);
 			this.form.get('rate').updateValueAndValidity();
+		}
+	}
+
+	/** Generate employee proposal text */
+	public async generateEmployeeProposal() {
+		/** Generate proposal for employee */
+		const employeeId = this.form.get('employeeId').value;
+		const rate = this.form.get('rate').value;
+
+		const proposalTemplate = this.proposalTemplate.content;
+		const jobPost = this.employeeJobPost.jobPost;
+		const { id: employeeJobPostId, isActive, isArchived } = this.employeeJobPost;
+
+		try {
+			this.loading = true;
+			/** Generate proposal request parameters */
+			const generateProposalRequest = {
+				employeeId: employeeId,
+				proposalTemplate: proposalTemplate,
+				employeeJobPostId: employeeJobPostId,
+				jobPostId: jobPost.id,
+				jobPost: jobPost,
+				providerCode: jobPost.providerCode,
+				providerJobId: jobPost.providerJobId,
+				jobStatus: jobPost.jobStatus,
+				jobType: jobPost.jobType,
+				jobDateCreated: jobPost.jobDateCreated,
+				rate: rate,
+				isActive: isActive,
+				isArchived: isArchived,
+				attachments: "{}",
+				qa: "{}",
+				terms: "{}"
+			}
+			const employeeJobApplication = await this.jobService.generateEmployeeProposal(generateProposalRequest);
+
+			/** If employee proposal generated successfully from Gauzy AI */
+			if (isNotEmpty(employeeJobApplication)) {
+				const { proposal } = employeeJobApplication;
+				this.form.patchValue({ details: proposal, proposal: proposal });
+			} else {
+				this.form.patchValue({ proposal: proposalTemplate, details: proposalTemplate });
+			}
+		} catch (error) {
+			/** Proposal text should be null, if proposal generation failed from Gauzy AI */
+			this.form.patchValue({ proposal: null, details: null });
+			console.error('Error while generating proposal text', error);
+		} finally {
+			this.loading = false;
 		}
 	}
 

@@ -75,4 +75,16 @@ export class EmployeeJobPostController {
 	async updateVisibility(@Body() data: IVisibilityJobPostInput) {
 		return this.employeeJobPostService.updateVisibility(data);
 	}
+
+	/**
+	 * Generate employee job proposal
+	 *
+	 * @param data
+	 * @returns
+	 */
+	@ApiOperation({ summary: 'Generate employee proposal' })
+	@Post('generate-proposal')
+	async generateProposal(@Body() data: IApplyJobPostInput) {
+		return await this.employeeJobPostService.generateEmployeeProposal(data);
+	}
 }

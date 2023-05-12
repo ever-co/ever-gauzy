@@ -1,11 +1,9 @@
 import { Module } from '@nestjs/common';
 import { RouterModule } from 'nest-router';
-import { TypeOrmModule } from '@nestjs/typeorm';
-import { GauzyAIService } from '@gauzy/integration-ai';
+import { GauzyAIModule } from '@gauzy/integration-ai';
 import { EmployeeJobPostService } from './employee-job.service';
 import { EmployeeJobPostController } from './employee-job.controller';
-import { Employee } from '../employee/employee.entity';
-import { EmployeeService } from '../employee/employee.service';
+import { EmployeeModule } from './../employee/employee.module';
 import { CountryModule } from './../country/country.module';
 
 @Module({
@@ -13,11 +11,12 @@ import { CountryModule } from './../country/country.module';
 		RouterModule.forRoutes([
 			{ path: '/employee-job', module: EmployeeJobPostModule }
 		]),
-		TypeOrmModule.forFeature([Employee]),
-		CountryModule
+		CountryModule,
+		EmployeeModule,
+		GauzyAIModule
 	],
 	controllers: [EmployeeJobPostController],
-	providers: [EmployeeJobPostService, EmployeeService, GauzyAIService],
+	providers: [EmployeeJobPostService],
 	exports: [EmployeeJobPostService]
 })
-export class EmployeeJobPostModule {}
+export class EmployeeJobPostModule { }

@@ -28,4 +28,14 @@
 		border: dashed 3px red;
 		border-radius: var(--border-radius);
 	}
+	.sync-container {
+		.sync {
+			color: var(--gauzy-text-color-2);
+			font-size: 14px;
+			float: right;
+			&.spin {
+				animation: rotate 1s linear 0s infinite;
+			}
+		}
+	}
 }
