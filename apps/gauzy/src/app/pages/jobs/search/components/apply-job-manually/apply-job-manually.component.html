@@ -22,7 +22,11 @@
                 </nb-card>
             </div>
             <div class="col-7">
-                <nb-card>
+                <nb-card
+                    [nbSpinner]="loading"
+                    nbSpinnerStatus="primary"
+                    nbSpinnerSize="medium"
+                >
                     <nb-card-header>
                         {{ 'PROPOSALS_PAGE.PROPOSAL_DETAILS.PROPOSAL_DETAILS' | translate }}
                     </nb-card-header>

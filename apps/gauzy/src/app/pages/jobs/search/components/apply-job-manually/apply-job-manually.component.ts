@@ -40,6 +40,7 @@ export class ApplyJobManuallyComponent extends TranslationBaseComponent
 	public organization: IOrganization;
 	public uploader: FileUploader;
 	public hasDropZoneOver: boolean = false;
+	public loading: boolean = false;
 	public proposal$: Subject<boolean> = new Subject();
 	public proposalTemplate: IEmployeeProposalTemplate;
 
@@ -212,7 +213,9 @@ export class ApplyJobManuallyComponent extends TranslationBaseComponent
 	onProposalTemplateChange(item: IEmployeeProposalTemplate | null): void {
 		/** Generate proposal using GauzyAI */
 		this.proposalTemplate = item || null;
-		this.proposal$.next(true);
+		if (isNotEmpty(item)) {
+			this.proposal$.next(true);
+		}
 	}
 
 	/**
@@ -262,11 +265,8 @@ export class ApplyJobManuallyComponent extends TranslationBaseComponent
 		}
 	}
 
-	/**
-	 * Generate employee proposal text
-	 *
-	 */
-	async generateEmployeeProposal() {
+	/** Generate employee proposal text */
+	public async generateEmployeeProposal() {
 		/** Generate proposal for employee */
 		const employeeId = this.form.get('employeeId').value;
 		const rate = this.form.get('rate').value;
@@ -275,33 +275,42 @@ export class ApplyJobManuallyComponent extends TranslationBaseComponent
 		const jobPost = this.employeeJobPost.jobPost;
 		const { id: employeeJobPostId, isActive, isArchived } = this.employeeJobPost;
 
-		/** Generate proposal request parameters */
-		const generateProposalRequest = {
-			employeeId: employeeId,
-			proposalTemplate: proposalTemplate,
-			employeeJobPostId: employeeJobPostId,
-			jobPostId: jobPost.id,
-			jobPost: jobPost,
-			providerCode: jobPost.providerCode,
-			providerJobId: jobPost.providerJobId,
-			jobStatus: jobPost.jobStatus,
-			jobType: jobPost.jobType,
-			jobDateCreated: jobPost.jobDateCreated,
-			rate: rate,
-			isActive: isActive,
-			isArchived: isArchived,
-			attachments: "{}",
-			qa: "{}",
-			terms: "{}"
-		}
-		const employeeJobApplication = await this.jobService.generateEmployeeProposal(generateProposalRequest);
+		try {
+			this.loading = true;
+			/** Generate proposal request parameters */
+			const generateProposalRequest = {
+				employeeId: employeeId,
+				proposalTemplate: proposalTemplate,
+				employeeJobPostId: employeeJobPostId,
+				jobPostId: jobPost.id,
+				jobPost: jobPost,
+				providerCode: jobPost.providerCode,
+				providerJobId: jobPost.providerJobId,
+				jobStatus: jobPost.jobStatus,
+				jobType: jobPost.jobType,
+				jobDateCreated: jobPost.jobDateCreated,
+				rate: rate,
+				isActive: isActive,
+				isArchived: isArchived,
+				attachments: "{}",
+				qa: "{}",
+				terms: "{}"
+			}
+			const employeeJobApplication = await this.jobService.generateEmployeeProposal(generateProposalRequest);
 
-		/** If employee proposal generated successfully */
-		if (isNotEmpty(employeeJobApplication)) {
-			const { proposal } = employeeJobApplication;
-			this.form.patchValue({ details: proposal, proposal: proposal });
-		} else {
-			this.form.patchValue({ proposal: proposalTemplate, details: proposalTemplate });
+			/** If employee proposal generated successfully from Gauzy AI */
+			if (isNotEmpty(employeeJobApplication)) {
+				const { proposal } = employeeJobApplication;
+				this.form.patchValue({ details: proposal, proposal: proposal });
+			} else {
+				this.form.patchValue({ proposal: proposalTemplate, details: proposalTemplate });
+			}
+		} catch (error) {
+			/** Proposal text should be null, if proposal generation failed from Gauzy AI */
+			this.form.patchValue({ proposal: null, details: null });
+			console.error('Error while generating proposal text', error);
+		} finally {
+			this.loading = false;
 		}
 	}
 
