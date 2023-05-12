@@ -251,12 +251,6 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 				(invite: IInvite) => invite.email === email
 			);
 			if (isNotEmpty(matchedInvites)) {
-				const existedTeams: IOrganizationTeam[] = [];
-				for (const invite of matchedInvites) {
-					if (isNotEmpty(invite.teams)) {
-						existedTeams.push(...invite.teams);
-					}
-				}
 				const needsToInviteTeams = organizationTeams.filter(
 					(item: IOrganizationTeam) =>
 						!alreadyInTeamIds.includes(item.id) &&
