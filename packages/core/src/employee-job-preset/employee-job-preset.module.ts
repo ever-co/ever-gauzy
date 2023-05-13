@@ -1,10 +1,9 @@
-import { GauzyAIService } from '@gauzy/integration-ai';
 import { Module } from '@nestjs/common';
 import { CqrsModule } from '@nestjs/cqrs';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { RouterModule } from 'nest-router';
-import { Employee } from '../employee/employee.entity';
-import { EmployeeService } from '../employee/employee.service';
+import { GauzyAIModule } from '@gauzy/integration-ai';
+import { EmployeeModule } from './../employee/employee.module';
 import { Handlers } from './commands/handlers';
 import { EmployeePresetController } from './employee-preset.controller';
 import { EmployeeUpworkJobsSearchCriterion } from './employee-upwork-jobs-search-criterion.entity';
@@ -29,10 +28,11 @@ import { JobSearchPresetController } from './job-search-preset.controller';
 			JobPresetUpworkJobSearchCriterion,
 			EmployeeUpworkJobsSearchCriterion,
 			JobSearchOccupation,
-			JobSearchCategory,
-			Employee
+			JobSearchCategory
 		]),
-		CqrsModule
+		EmployeeModule,
+		CqrsModule,
+		GauzyAIModule
 	],
 	controllers: [
 		JobSearchOccupationController,
@@ -42,11 +42,9 @@ import { JobSearchPresetController } from './job-search-preset.controller';
 	],
 	providers: [
 		...Handlers,
-		EmployeeService,
 		JobPresetService,
 		JobSearchCategoryService,
-		JobSearchOccupationService,
-		GauzyAIService
+		JobSearchOccupationService
 	],
 	exports: [
 		JobPresetService,
@@ -54,4 +52,4 @@ import { JobSearchPresetController } from './job-search-preset.controller';
 		JobSearchOccupationService
 	]
 })
-export class EmployeeJobPresetModule {}
+export class EmployeeJobPresetModule { }

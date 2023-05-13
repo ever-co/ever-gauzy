@@ -2,7 +2,7 @@ import { forwardRef, Module } from '@nestjs/common';
 import { CqrsModule } from '@nestjs/cqrs';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { RouterModule } from 'nest-router';
-import { GauzyAIService } from '@gauzy/integration-ai';
+import { GauzyAIModule } from '@gauzy/integration-ai';
 import { TimeLog } from './../core/entities/internal';
 import { Employee } from './employee.entity';
 import { UserModule } from './../user/user.module';
@@ -17,18 +17,24 @@ import { RoleModule } from './../role/role.module';
 
 @Module({
 	imports: [
-		RouterModule.forRoutes([{ path: '/employee', module: EmployeeModule }]),
-		TypeOrmModule.forFeature([Employee, TimeLog]),
+		RouterModule.forRoutes([
+			{ path: '/employee', module: EmployeeModule }
+		]),
+		TypeOrmModule.forFeature([
+			Employee,
+			TimeLog
+		]),
 		forwardRef(() => EmailModule),
 		forwardRef(() => UserOrganizationModule),
-		CqrsModule,
 		forwardRef(() => TenantModule),
 		forwardRef(() => UserModule),
-		RoleModule,
 		forwardRef(() => AuthModule),
+		RoleModule,
+		CqrsModule,
+		GauzyAIModule
 	],
 	controllers: [EmployeeController],
-	providers: [EmployeeService, GauzyAIService, ...CommandHandlers],
+	providers: [EmployeeService, ...CommandHandlers],
 	exports: [TypeOrmModule, EmployeeService],
 })
-export class EmployeeModule {}
+export class EmployeeModule { }

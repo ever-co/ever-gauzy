@@ -1,5 +1,10 @@
 // import * as _ from 'underscore';
 import { Injectable, Logger } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import { HttpService } from '@nestjs/axios';
+import { AxiosResponse } from 'axios';
+import { firstValueFrom } from 'rxjs';
+import { map } from 'rxjs/operators';
 import {
 	CreateEmployeeJobApplication,
 	Employee,
@@ -75,10 +80,13 @@ export class GauzyAIService {
 		});
 	}
 
-	constructor() {
+	constructor(
+		private readonly _configService: ConfigService,
+		private readonly _http: HttpService
+	) {
 		try {
-			// TODO: read from constructor injected parameter (e.g. config service)
-			this.gauzyAIGraphQLEndpoint = process.env.GAUZY_AI_GRAPHQL_ENDPOINT;
+			this.gauzyAIGraphQLEndpoint = this._configService.get<string>('guazyAI.gauzyAIGraphQLEndpoint');
+			console.log(chalk.magenta(`GauzyAI GraphQL Endpoint: ${this.gauzyAIGraphQLEndpoint}`));
 
 			if (this.gauzyAIGraphQLEndpoint) {
 				this._logger.log('Gauzy AI Endpoint configured in the environment');
@@ -123,6 +131,26 @@ export class GauzyAIService {
 			this._logger.error(err);
 			this._client = null;
 		}
+	}
+
+	/**
+	 * Generate employee proposal text
+	 *
+	 * @param params
+	 * @returns
+	 */
+	public async generateEmployeeProposal(
+		params: IApplyJobPostInput
+	): Promise<any> {
+		// First we need to get employee id because we have only externalId
+		params.employeeId = await this.getEmployeeGauzyAIId(params.employeeId);
+		console.log('Generate Proposal Parameters: ', params);
+
+		return firstValueFrom(
+			this._http.post('api/employee/job/application/pre-process', params).pipe(
+				map((resp: AxiosResponse<any, any>) => resp.data),
+			)
+		);
 	}
 
 	/**
@@ -973,6 +1001,9 @@ export class GauzyAIService {
 					const rec = it.node;
 
 					const res: IEmployeeJobPost = {
+						/** Employee Job Post Matching ID */
+						id: rec.id,
+
 						employeeId: rec.employee.externalEmployeeId,
 						employee: undefined,
 						jobPostId: rec.jobPost.id,

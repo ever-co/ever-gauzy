@@ -23,10 +23,7 @@ import { NbDialogService, NbTabComponent } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
 import { EmployeeLinksComponent } from './../../../../@shared/table-components';
-import {
-	IPaginationBase,
-	PaginationFilterBaseComponent
-} from '../../../../@shared/pagination/pagination-filter-base.component';
+import { IPaginationBase, PaginationFilterBaseComponent } from '../../../../@shared/pagination/pagination-filter-base.component';
 import { DateRangePickerBuilderService, JobService, Store, ToastrService } from './../../../../@core/services';
 import { StatusBadgeComponent } from './../../../../@shared/status-badge';
 import { API_PREFIX } from './../../../../@core/constants';
@@ -367,7 +364,7 @@ export class SearchComponent extends PaginationFilterBaseComponent implements On
 		}
 		const dialog = this.dialogService.open(ApplyJobManuallyComponent, {
 			context: {
-				jobPost: this.selectedJob,
+				employeeJobPost: this.selectedJob,
 				selectedEmployee: this.selectedEmployee
 			}
 		});
