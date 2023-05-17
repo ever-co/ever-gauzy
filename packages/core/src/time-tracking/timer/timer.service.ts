@@ -17,6 +17,7 @@ import {
 	ITimeLog,
 	PermissionsEnum,
 	ITimeSlot,
+	IEmployee,
 } from '@gauzy/contracts';
 import { isNotEmpty } from '@gauzy/common';
 import { Employee, TimeLog } from './../../core/entities/internal';
@@ -47,30 +48,34 @@ export class TimerService {
 	 * @returns
 	 */
 	async getTimerStatus(request: ITimerStatusInput): Promise<ITimerStatus> {
-		const userId = RequestContext.currentUserId();
-		const tenantId = RequestContext.currentTenantId();
+		const tenantId = RequestContext.currentTenantId() || request.tenantId;
+		const { organizationId, source } = request;
 
-		let employee = await this.employeeRepository.findOneBy({
-			userId,
-			tenantId,
-		});
+		let employee: IEmployee;
 
-		if (
-			RequestContext.hasPermission(
-				PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
-			) &&
-			isNotEmpty(request.employeeId)
-		) {
+		/** SUPER_ADMIN have ability to see employees timer status by specific employee (employeeId) */
+		if (isNotEmpty(request.employeeId) && RequestContext.hasPermission(
+			PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
+		)) {
+			const { employeeId } = request;
+			/** Get specific employee */
 			employee = await this.employeeRepository.findOneBy({
-				id: request.employeeId,
+				id: employeeId,
 				tenantId,
+				organizationId
+			});
+		} else {
+			const userId = RequestContext.currentUserId();
+			/** EMPLOYEE have ability to see only own timer status */
+			employee = await this.employeeRepository.findOneBy({
+				userId,
+				tenantId,
+				organizationId
 			});
 		}
 
 		if (!employee) {
-			throw new NotFoundException(
-				"We couldn't find the employee you were looking for."
-			);
+			throw new NotFoundException("We couldn't find the employee you were looking for.");
 		}
 
 		const { id: employeeId } = employee;
@@ -86,12 +91,12 @@ export class TimerService {
 			},
 			where: {
 				deletedAt: IsNull(),
-				source: request.source || TimeLogSourceEnum.WEB_TIMER,
+				source: source || TimeLogSourceEnum.WEB_TIMER,
 				startedAt: Between(start, end),
 				stoppedAt: Not(IsNull()),
 				employeeId,
 				tenantId,
-				organizationId: request.organizationId,
+				organizationId,
 				isRunning: false,
 			},
 			order: {
@@ -104,12 +109,12 @@ export class TimerService {
 		const lastLog = await this.timeLogRepository.findOne({
 			where: {
 				deletedAt: IsNull(),
-				source: request.source || TimeLogSourceEnum.WEB_TIMER,
+				source: source || TimeLogSourceEnum.WEB_TIMER,
 				startedAt: Between(start, end),
 				stoppedAt: Not(IsNull()),
 				employeeId,
 				tenantId,
-				organizationId: request.organizationId,
+				organizationId,
 			},
 			order: {
 				startedAt: 'DESC',
@@ -136,10 +141,7 @@ export class TimerService {
 
 		// Calculate last TimeLog duration
 		if (lastLog) {
-			console.log(
-				'----------------------------------Timer Status----------------------------------',
-				lastLog.isRunning
-			);
+			console.log('----------------------------------Timer Status----------------------------------', lastLog.isRunning);
 			status.lastLog = lastLog;
 			status.running = lastLog.isRunning;
 			if (status.running) {

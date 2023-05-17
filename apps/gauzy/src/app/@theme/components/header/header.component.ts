@@ -589,11 +589,12 @@ export class HeaderComponent extends TranslationBaseComponent
 		}
 		if (this.isEnabledTimeTracking()) {
 			const { id: organizationId } = this.organization;
-			const { tenantId } = this.user;
+			const { tenantId, employeeId } = this.user;
 
 			await this.timeTrackerService.checkTimerStatus({
 				organizationId,
 				tenantId,
+				employeeId,
 				source: TimeLogSourceEnum.WEB_TIMER
 			});
 		}
@@ -611,9 +612,9 @@ export class HeaderComponent extends TranslationBaseComponent
 		return isTrackingEnabled && hasPermission && !this.isElectron;
 	}
 
-	onCollapse(event: boolean){
+	onCollapse(event: boolean) {
 		this.isCollapse = event;
 	}
 
-	ngOnDestroy() {}
+	ngOnDestroy() { }
 }

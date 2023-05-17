@@ -28,7 +28,7 @@ export class TimerController {
 
 	constructor(
 		private readonly timerService: TimerService
-	) {}
+	) { }
 
 	/**
 	 * GET timer today's status
@@ -37,6 +37,7 @@ export class TimerController {
 	 * @returns
 	 */
 	@Get('/status')
+	@Permissions(PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.TIME_TRACKER)
 	@UsePipes(new ValidationPipe({ whitelist: true }))
 	async getTimerStatus(
 		@Query() query: TimerStatusQueryDTO

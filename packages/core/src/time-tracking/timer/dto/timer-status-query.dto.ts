@@ -7,7 +7,14 @@ import { RelationsQueryDTO } from "./../../../shared/dto";
 
 export class TimerStatusQueryDTO extends IntersectionType(
     TenantOrganizationBaseDTO,
-    IntersectionType(PartialType(PickType(EmployeeFeatureDTO, ['employeeId'] as const)), RelationsQueryDTO)
+    IntersectionType(
+        PartialType(
+            PickType(
+                EmployeeFeatureDTO, ['employeeId'] as const
+            )
+        ),
+        RelationsQueryDTO
+    )
 ) implements ITimerStatusInput {
 
     @ApiProperty({ type: () => String, enum: TimeLogSourceEnum })
