@@ -13,8 +13,8 @@ import {
 import { isNotEmpty } from '@gauzy/common';
 import { TenantAwareCrudService } from './../core/crud';
 import { RequestContext } from './../core/context';
+import { Role } from './../core/entities/internal';
 import { OrganizationTeamEmployee } from './organization-team-employee.entity';
-import { Role } from '../role/role.entity';
 import { TaskService } from './../tasks/task.service';
 
 @Injectable()
@@ -159,17 +159,16 @@ export class OrganizationTeamEmployeeService extends TenantAwareCrudService<Orga
 			const { organizationId, organizationTeamId } = options;
 			const tenantId = RequestContext.currentTenantId();
 
-			if (
-				RequestContext.hasPermission(
-					PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
-				)
-			) {
-				const member = await this.findOneByIdString(memberId, {
+			if (RequestContext.hasPermission(
+				PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
+			)) {
+				const member = await this.repository.findOneOrFail({
 					where: {
-						organizationId,
+						id: memberId,
 						tenantId,
+						organizationId,
 						organizationTeamId,
-					},
+					}
 				});
 				await this.taskService.unassignEmployeeFromTeamTasks(
 					member.employeeId,
@@ -179,33 +178,43 @@ export class OrganizationTeamEmployeeService extends TenantAwareCrudService<Orga
 			} else {
 				const employeeId = RequestContext.currentEmployeeId();
 				if (employeeId) {
+					let member: OrganizationTeamEmployee;
 					try {
-						const manager = await this.findOneByWhereOptions({
+						/** If employee has manager of the team, he/she should be able to remove members from team */
+						await this.findOneByWhereOptions({
 							organizationId,
 							organizationTeamId,
 							role: {
-								name: RolesEnum.MANAGER,
+								name: RolesEnum.MANAGER
 							},
 						});
-						if (manager) {
-							const member = await this.repository.findOneOrFail({
-								where: {
-									id: memberId,
-									organizationId,
-									tenantId,
-									organizationTeamId,
-								},
-							});
-							await this.taskService.unassignEmployeeFromTeamTasks(
-								member.employeeId,
-								organizationTeamId
-							);
-							return await this.repository.remove(member);
-						}
+						member = await this.repository.findOneOrFail({
+							where: {
+								id: memberId,
+								organizationId,
+								tenantId,
+								organizationTeamId,
+							},
+						});
 					} catch (error) {
-						throw new ForbiddenException();
+						/** If employee has member of the team, he/she should be able to remove own self from team */
+						member = await this.repository.findOneOrFail({
+							where: {
+								employeeId,
+								organizationId,
+								tenantId,
+								organizationTeamId
+							},
+						});
 					}
+					/** Unassigned employee all tasks before remove from team  */
+					await this.taskService.unassignEmployeeFromTeamTasks(
+						member.employeeId,
+						organizationTeamId
+					);
+					return await this.repository.remove(member);
 				}
+				throw new ForbiddenException();
 			}
 		} catch (error) {
 			throw new ForbiddenException();
