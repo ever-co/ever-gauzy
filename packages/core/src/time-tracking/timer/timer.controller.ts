@@ -52,6 +52,7 @@ export class TimerController {
 	 * @returns
 	 */
 	@Get('/status/worked')
+	@Permissions(PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.TIME_TRACKER)
 	@UsePipes(new ValidationPipe({ whitelist: true }))
 	async getTimerWorkedStatus(
 		@Query() query: TimerStatusQueryDTO
