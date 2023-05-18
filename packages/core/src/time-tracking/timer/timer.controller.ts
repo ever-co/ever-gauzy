@@ -1,20 +1,6 @@
-import {
-	Controller,
-	UseGuards,
-	HttpStatus,
-	Post,
-	Body,
-	Get,
-	Query,
-	UsePipes,
-	ValidationPipe
-} from '@nestjs/common';
+import { Controller, UseGuards, HttpStatus, Post, Body, Get, Query, UsePipes, ValidationPipe } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
-import {
-	ITimeLog,
-	ITimerStatus,
-	PermissionsEnum
-} from '@gauzy/contracts';
+import { ITimeLog, ITimerStatus, PermissionsEnum } from '@gauzy/contracts';
 import { TimerService } from './timer.service';
 import { PermissionGuard, TenantPermissionGuard } from './../../shared/guards';
 import { Permissions } from './../../shared/decorators';
@@ -25,10 +11,7 @@ import { StartTimerDTO, StopTimerDTO, TimerStatusQueryDTO } from './dto';
 @Permissions(PermissionsEnum.TIME_TRACKER)
 @Controller()
 export class TimerController {
-
-	constructor(
-		private readonly timerService: TimerService
-	) { }
+	constructor(private readonly timerService: TimerService) {}
 
 	/**
 	 * GET timer today's status
@@ -39,9 +22,7 @@ export class TimerController {
 	@Get('/status')
 	@Permissions(PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.TIME_TRACKER)
 	@UsePipes(new ValidationPipe({ whitelist: true }))
-	async getTimerStatus(
-		@Query() query: TimerStatusQueryDTO
-	): Promise<ITimerStatus> {
+	async getTimerStatus(@Query() query: TimerStatusQueryDTO): Promise<ITimerStatus> {
 		return await this.timerService.getTimerStatus(query);
 	}
 
@@ -54,9 +35,7 @@ export class TimerController {
 	@Get('/status/worked')
 	@Permissions(PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.TIME_TRACKER)
 	@UsePipes(new ValidationPipe({ whitelist: true }))
-	async getTimerWorkedStatus(
-		@Query() query: TimerStatusQueryDTO
-	): Promise<ITimerStatus> {
+	async getTimerWorkedStatus(@Query() query: TimerStatusQueryDTO): Promise<ITimerStatus> {
 		return await this.timerService.getTimerWorkedStatus(query);
 	}
 
@@ -67,14 +46,11 @@ export class TimerController {
 	})
 	@ApiResponse({
 		status: HttpStatus.BAD_REQUEST,
-		description:
-			'Invalid input, The response body may contain clues as to what went wrong'
+		description: 'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@Post('/toggle')
 	@UsePipes(new ValidationPipe())
-	async toggleTimer(
-		@Body() entity: StartTimerDTO
-	): Promise<ITimeLog | null> {
+	async toggleTimer(@Body() entity: StartTimerDTO): Promise<ITimeLog | null> {
 		return await this.timerService.toggleTimeLog(entity);
 	}
 
@@ -89,9 +65,7 @@ export class TimerController {
 	})
 	@Post('/start')
 	@UsePipes(new ValidationPipe())
-	async startTimer(
-		@Body() entity: StartTimerDTO
-	): Promise<ITimeLog> {
+	async startTimer(@Body() entity: StartTimerDTO): Promise<ITimeLog> {
 		console.log('----------------------------------Start Timer----------------------------------', entity);
 		return await this.timerService.startTimer(entity);
 	}
@@ -103,14 +77,11 @@ export class TimerController {
 	})
 	@ApiResponse({
 		status: HttpStatus.BAD_REQUEST,
-		description:
-			'Invalid input, The response body may contain clues as to what went wrong'
+		description: 'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@Post('/stop')
 	@UsePipes(new ValidationPipe())
-	async stopTimer(
-		@Body() entity: StopTimerDTO
-	): Promise<ITimeLog | null> {
+	async stopTimer(@Body() entity: StopTimerDTO): Promise<ITimeLog | null> {
 		console.log('----------------------------------Stop Timer----------------------------------', entity);
 		return await this.timerService.stopTimer(entity);
 	}
