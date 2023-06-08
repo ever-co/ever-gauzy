@@ -64,6 +64,24 @@ export class OrganizationTeam
 	@IsOptional()
 	@IsString()
 	@Column({ nullable: true })
+	color?: string;
+
+	@ApiPropertyOptional({ type: () => String })
+	@IsOptional()
+	@IsString()
+	@Column({ nullable: true })
+	emoji?: string;
+
+	@ApiPropertyOptional({ type: () => String })
+	@IsOptional()
+	@IsString()
+	@Column({ nullable: true })
+	teamSize?: string;
+
+	@ApiPropertyOptional({ type: () => String })
+	@IsOptional()
+	@IsString()
+	@Column({ nullable: true })
 	logo: string;
 
 	/**
