@@ -1,17 +1,6 @@
-import {
-	Component,
-	Input,
-	OnDestroy,
-	OnInit,
-	AfterViewInit
-} from '@angular/core';
+import { Component, Input, OnDestroy, OnInit, AfterViewInit } from '@angular/core';
 import { Router, NavigationEnd } from '@angular/router';
-import {
-	NbMenuService,
-	NbSidebarService,
-	NbThemeService,
-	NbMenuItem
-} from '@nebular/theme';
+import { NbMenuService, NbSidebarService, NbThemeService, NbMenuItem } from '@nebular/theme';
 import { combineLatest, firstValueFrom, lastValueFrom, Subject } from 'rxjs';
 import { debounceTime, filter, tap } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
@@ -28,10 +17,7 @@ import {
 	TimeLogType
 } from '@gauzy/contracts';
 import { environment } from '../../../../environments/environment';
-import {
-	ALL_EMPLOYEES_SELECTED,
-	NO_EMPLOYEE_SELECTED
-} from './selectors/employee';
+import { ALL_EMPLOYEES_SELECTED, NO_EMPLOYEE_SELECTED } from './selectors/employee';
 import { TimeTrackerService } from '../../../@shared/time-tracker/time-tracker.service';
 import {
 	DateRangePickerBuilderService,
@@ -46,11 +32,7 @@ import {
 	Store,
 	UsersOrganizationsService
 } from '../../../@core/services';
-import {
-	DEFAULT_SELECTOR_VISIBILITY,
-	ISelectorVisibility,
-	SelectorBuilderService
-} from '../../../@core/services';
+import { DEFAULT_SELECTOR_VISIBILITY, ISelectorVisibility, SelectorBuilderService } from '../../../@core/services';
 import { LayoutService } from '../../../@core/utils';
 import { TranslationBaseComponent } from '../../../@shared/language-base';
 import { ChangeDetectorRef } from '@angular/core';
@@ -61,9 +43,7 @@ import { ChangeDetectorRef } from '@angular/core';
 	styleUrls: ['./header.component.scss'],
 	templateUrl: './header.component.html'
 })
-export class HeaderComponent extends TranslationBaseComponent
-	implements OnInit, OnDestroy, AfterViewInit {
-
+export class HeaderComponent extends TranslationBaseComponent implements OnInit, OnDestroy, AfterViewInit {
 	isEmployee = false;
 	isElectron: boolean = environment.IS_ELECTRON;
 	isDemo: boolean = environment.DEMO;
@@ -132,11 +112,7 @@ export class HeaderComponent extends TranslationBaseComponent
 				distinctUntilChange(),
 				debounceTime(200),
 				tap((selectors) => {
-					this.selectorsVisibility = Object.assign(
-						{},
-						DEFAULT_SELECTOR_VISIBILITY,
-						selectors
-					);
+					this.selectorsVisibility = Object.assign({}, DEFAULT_SELECTOR_VISIBILITY, selectors);
 				}),
 				tap(() => this.subject$.next(true)),
 				untilDestroyed(this)
@@ -149,15 +125,11 @@ export class HeaderComponent extends TranslationBaseComponent
 				untilDestroyed(this)
 			)
 			.subscribe();
-		this.timeTrackerService.duration$
-			.pipe(untilDestroyed(this))
-			.subscribe((time) => {
-				if (!isNaN(time)) {
-					this.timerDuration = moment
-						.utc(time * 1000)
-						.format('HH:mm:ss');
-				}
-			});
+		this.timeTrackerService.duration$.pipe(untilDestroyed(this)).subscribe((time) => {
+			if (!isNaN(time)) {
+				this.timerDuration = moment.utc(time * 1000).format('HH:mm:ss');
+			}
+		});
 		this.menuService
 			.onItemClick()
 			.pipe(
@@ -168,9 +140,7 @@ export class HeaderComponent extends TranslationBaseComponent
 				if (e.item.data && e.item.data.action) {
 					switch (e.item.data.action) {
 						case this.actions.START_TIMER:
-							this.timeTrackerService.setTimeLogType(
-								TimeLogType.TRACKED
-							);
+							this.timeTrackerService.setTimeLogType(TimeLogType.TRACKED);
 							this.timeTrackerService.openAndStartTimer();
 							break;
 					}
@@ -185,8 +155,8 @@ export class HeaderComponent extends TranslationBaseComponent
 		this.store.user$
 			.pipe(
 				filter((user: IUser) => !!user),
-				tap((user: IUser) => this.user = user),
-				tap((user: IUser) => this.isEmployee = !!user && !!user.employeeId),
+				tap((user: IUser) => (this.user = user)),
+				tap((user: IUser) => (this.isEmployee = !!user && !!user.employeeId)),
 				untilDestroyed(this)
 			)
 			.subscribe(async (user) => {
@@ -230,21 +200,24 @@ export class HeaderComponent extends TranslationBaseComponent
 	 */
 	checkProjectSelectorVisibility() {
 		// hidden project selector if not activate for current page
-		if (!this.organization || !this.selectorsVisibility.project || !this.store.hasAnyPermission(
-			PermissionsEnum.ALL_ORG_VIEW,
-			PermissionsEnum.ORG_PROJECT_VIEW
-		)) {
+		if (
+			!this.organization ||
+			!this.selectorsVisibility.project ||
+			!this.store.hasAnyPermission(PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.ORG_PROJECT_VIEW)
+		) {
 			return;
 		}
 		const { id: organizationId } = this.organization;
 		const { tenantId } = this.store.user;
 
-		this.organizationProjectsService.getCount({
-			organizationId,
-			tenantId
-		}).then((count) => {
-			this.showProjectsSelector = count > 0;
-		});
+		this.organizationProjectsService
+			.getCount({
+				organizationId,
+				tenantId
+			})
+			.then((count) => {
+				this.showProjectsSelector = count > 0;
+			});
 	}
 
 	/**
@@ -257,11 +230,7 @@ export class HeaderComponent extends TranslationBaseComponent
 		if (!this.organization || !this.selectorsVisibility.employee) {
 			return;
 		}
-		if (
-			this.store.hasPermission(
-				PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
-			)
-		) {
+		if (this.store.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE)) {
 			const { id: organizationId } = this.organization;
 			const { tenantId } = this.store.user;
 			const { total: employeeCount } = await this.employeesService.getWorkingCount(
@@ -277,9 +246,7 @@ export class HeaderComponent extends TranslationBaseComponent
 		} else {
 			if (this.isEmployee) {
 				const { employeeId } = this.user;
-				const employee = await firstValueFrom(
-					this.employeesService.getEmployeeById(employeeId)
-				);
+				const employee = await firstValueFrom(this.employeesService.getEmployeeById(employeeId));
 				if (isNotEmpty(employee)) {
 					this.store.selectedEmployee = {
 						id: employee.id,
@@ -300,19 +267,11 @@ export class HeaderComponent extends TranslationBaseComponent
 
 		const { userId } = this.store;
 		const { tenantId } = this.store.user;
-		const { items: userOrg } = await this.usersOrganizationsService.getAll(
-			[],
-			{
-				userId,
-				tenantId
-			}
-		);
-		if (
-			this.store.hasPermission(
-				PermissionsEnum.CHANGE_SELECTED_ORGANIZATION
-			) &&
-			userOrg.length > 1
-		) {
+		const { items: userOrg } = await this.usersOrganizationsService.getAll([], {
+			userId,
+			tenantId
+		});
+		if (this.store.hasPermission(PermissionsEnum.CHANGE_SELECTED_ORGANIZATION) && userOrg.length > 1) {
 			this.showOrganizationsSelector = true;
 		} else {
 			if (userOrg.length > 0) {
@@ -320,10 +279,7 @@ export class HeaderComponent extends TranslationBaseComponent
 				/**
 				 * GET organization for employee
 				 */
-				const organization$ = this.organizationsService.getById(
-					firstUserOrg.organizationId,
-					['contact'],
-				);
+				const organization$ = this.organizationsService.getById(firstUserOrg.organizationId, ['contact']);
 				const organization = await lastValueFrom(organization$);
 
 				this.store.selectedOrganization = organization;
@@ -335,9 +291,7 @@ export class HeaderComponent extends TranslationBaseComponent
 	ngAfterViewInit(): void {
 		this.organizationEditStore.organizationAction$
 			.pipe(
-				filter(
-					({ action, organization }) => !!action && !!organization
-				),
+				filter(({ action, organization }) => !!action && !!organization),
 				tap(() => this.organizationEditStore.destroy()),
 				untilDestroyed(this)
 			)
@@ -384,8 +338,7 @@ export class HeaderComponent extends TranslationBaseComponent
 	}
 
 	toggleTimerWindow() {
-		this.timeTrackerService.showTimerWindow =
-			!this.timeTrackerService.showTimerWindow;
+		this.timeTrackerService.showTimerWindow = !this.timeTrackerService.showTimerWindow;
 	}
 
 	toggleSidebarActions(item: ISidebarActionConfig) {
@@ -429,124 +382,153 @@ export class HeaderComponent extends TranslationBaseComponent
 	}
 
 	toggleExtraActions(bool?: boolean) {
-		this.showExtraActions =
-			bool !== undefined ? bool : !this.showExtraActions;
+		this.showExtraActions = bool !== undefined ? bool : !this.showExtraActions;
 	}
 
 	private _loadContextMenus() {
 		this.createContextMenu = [
-			...(this.store.hasAnyPermission(PermissionsEnum.TIME_TRACKER) ? [
-				{
-					title: this.getTranslation('CONTEXT_MENU.TIMER'),
-					icon: 'clock-outline',
-					hidden: !this.isEmployee || this.isElectron,
-					data: {
-						action: this.actions.START_TIMER //This opens the timer popup in the header, managed by menu.itemClick TOO: Start the timer also
-					}
-				}
-			] : []),
+			...(this.store.hasAnyPermission(PermissionsEnum.TIME_TRACKER)
+				? [
+						{
+							title: this.getTranslation('CONTEXT_MENU.TIMER'),
+							icon: 'clock-outline',
+							hidden: !this.isEmployee || this.isElectron,
+							data: {
+								action: this.actions.START_TIMER //This opens the timer popup in the header, managed by menu.itemClick TOO: Start the timer also
+							}
+						}
+				  ]
+				: []),
 			// TODO: divider
-			...(this.store.hasAnyPermission(PermissionsEnum.ORG_INCOMES_EDIT, PermissionsEnum.ALL_ORG_EDIT) ? [
-				{
-					title: this.getTranslation('CONTEXT_MENU.ADD_INCOME'),
-					icon: 'plus-circle-outline',
-					link: 'pages/accounting/income'
-				}
-			] : []),
-			...(this.store.hasAnyPermission(PermissionsEnum.ORG_EXPENSES_EDIT, PermissionsEnum.ALL_ORG_EDIT) ? [
-				{
-					title: this.getTranslation('CONTEXT_MENU.ADD_EXPENSE'),
-					icon: 'minus-circle-outline',
-					link: 'pages/accounting/expenses'
-				}
-			] : []),
+			...(this.store.hasAnyPermission(PermissionsEnum.ORG_INCOMES_EDIT, PermissionsEnum.ALL_ORG_EDIT)
+				? [
+						{
+							title: this.getTranslation('CONTEXT_MENU.ADD_INCOME'),
+							icon: 'plus-circle-outline',
+							link: 'pages/accounting/income'
+						}
+				  ]
+				: []),
+			...(this.store.hasAnyPermission(PermissionsEnum.ORG_EXPENSES_EDIT, PermissionsEnum.ALL_ORG_EDIT)
+				? [
+						{
+							title: this.getTranslation('CONTEXT_MENU.ADD_EXPENSE'),
+							icon: 'minus-circle-outline',
+							link: 'pages/accounting/expenses'
+						}
+				  ]
+				: []),
 			// TODO: divider
-			...(this.store.hasAnyPermission(PermissionsEnum.INVOICES_EDIT, PermissionsEnum.ALL_ORG_EDIT) ? [
-				{
-					title: this.getTranslation('CONTEXT_MENU.INVOICE'),
-					icon: 'archive-outline',
-					link: 'pages/accounting/invoices/add'
-				}
-			] : []),
-			...(this.store.hasAnyPermission(PermissionsEnum.ESTIMATES_EDIT, PermissionsEnum.ALL_ORG_EDIT) ? [
-				{
-					title: this.getTranslation('CONTEXT_MENU.ESTIMATE'),
-					icon: 'file-outline',
-					link: 'pages/accounting/invoices/estimates/add'
-				}
-			] : []),
-			...(this.store.hasAnyPermission(PermissionsEnum.ORG_PAYMENT_ADD_EDIT, PermissionsEnum.ALL_ORG_EDIT) ? [
-				{
-					title: this.getTranslation('CONTEXT_MENU.PAYMENT'),
-					icon: 'clipboard-outline',
-					link: 'pages/accounting/payments'
-				}
-			] : []),
-			...(this.store.hasAnyPermission(PermissionsEnum.TIMESHEET_EDIT_TIME, PermissionsEnum.ALL_ORG_EDIT) ? [
-				{
-					title: this.getTranslation('CONTEXT_MENU.TIME_LOG'),
-					icon: 'clock-outline',
-					link: 'pages/employees/timesheets/daily'
-				}
-			] : []),
-			...(this.store.hasAnyPermission(PermissionsEnum.ORG_CANDIDATES_EDIT, PermissionsEnum.ALL_ORG_EDIT) ? [
-				{
-					title: this.getTranslation('CONTEXT_MENU.CANDIDATE'),
-					icon: 'person-done-outline',
-					link: 'pages/employees/candidates'
-				}
-			] : []),
-			...(this.store.hasAnyPermission(PermissionsEnum.ORG_PROPOSALS_EDIT, PermissionsEnum.ALL_ORG_EDIT) ? [
-				{
-					title: this.getTranslation('CONTEXT_MENU.PROPOSAL'),
-					icon: 'paper-plane-outline',
-					link: 'pages/sales/proposals/register'
-				}
-			] : []),
-			...(this.store.hasAnyPermission(PermissionsEnum.ORG_CONTRACT_EDIT, PermissionsEnum.ALL_ORG_EDIT) ? [
-				{
-					title: this.getTranslation('CONTEXT_MENU.CONTRACT'),
-					icon: 'file-text-outline',
-					link: 'pages/integrations/upwork'
-				}
-			] : []),
+			...(this.store.hasAnyPermission(PermissionsEnum.INVOICES_EDIT, PermissionsEnum.ALL_ORG_EDIT)
+				? [
+						{
+							title: this.getTranslation('CONTEXT_MENU.INVOICE'),
+							icon: 'archive-outline',
+							link: 'pages/accounting/invoices/add'
+						}
+				  ]
+				: []),
+			...(this.store.hasAnyPermission(PermissionsEnum.ESTIMATES_EDIT, PermissionsEnum.ALL_ORG_EDIT)
+				? [
+						{
+							title: this.getTranslation('CONTEXT_MENU.ESTIMATE'),
+							icon: 'file-outline',
+							link: 'pages/accounting/invoices/estimates/add'
+						}
+				  ]
+				: []),
+			...(this.store.hasAnyPermission(PermissionsEnum.ORG_PAYMENT_ADD_EDIT, PermissionsEnum.ALL_ORG_EDIT)
+				? [
+						{
+							title: this.getTranslation('CONTEXT_MENU.PAYMENT'),
+							icon: 'clipboard-outline',
+							link: 'pages/accounting/payments'
+						}
+				  ]
+				: []),
+			...(this.store.hasAnyPermission(PermissionsEnum.TIMESHEET_EDIT_TIME, PermissionsEnum.ALL_ORG_EDIT)
+				? [
+						{
+							title: this.getTranslation('CONTEXT_MENU.TIME_LOG'),
+							icon: 'clock-outline',
+							link: 'pages/employees/timesheets/daily'
+						}
+				  ]
+				: []),
+			...(this.store.hasAnyPermission(PermissionsEnum.ORG_CANDIDATES_EDIT, PermissionsEnum.ALL_ORG_EDIT)
+				? [
+						{
+							title: this.getTranslation('CONTEXT_MENU.CANDIDATE'),
+							icon: 'person-done-outline',
+							link: 'pages/employees/candidates'
+						}
+				  ]
+				: []),
+			...(this.store.hasAnyPermission(PermissionsEnum.ORG_PROPOSALS_EDIT, PermissionsEnum.ALL_ORG_EDIT)
+				? [
+						{
+							title: this.getTranslation('CONTEXT_MENU.PROPOSAL'),
+							icon: 'paper-plane-outline',
+							link: 'pages/sales/proposals/register'
+						}
+				  ]
+				: []),
+			...(this.store.hasAnyPermission(PermissionsEnum.ORG_CONTRACT_EDIT, PermissionsEnum.ALL_ORG_EDIT)
+				? [
+						{
+							title: this.getTranslation('CONTEXT_MENU.CONTRACT'),
+							icon: 'file-text-outline',
+							link: 'pages/integrations/upwork'
+						}
+				  ]
+				: []),
 			// TODO: divider
-			...(this.store.hasAnyPermission(PermissionsEnum.ORG_TEAM_ADD, PermissionsEnum.ALL_ORG_EDIT) ? [
-				{
-					title: this.getTranslation('CONTEXT_MENU.TEAM'),
-					icon: 'people-outline',
-					link: `pages/organization/teams`
-				}
-			] : []),
-			...(this.store.hasAnyPermission(PermissionsEnum.ORG_TASK_EDIT, PermissionsEnum.ALL_ORG_EDIT) ? [
-				{
-					title: this.getTranslation('CONTEXT_MENU.TASK'),
-					icon: 'calendar-outline',
-					link: 'pages/tasks/dashboard'
-				}
-			] : []),
-			...(this.store.hasAnyPermission(PermissionsEnum.ORG_CONTACT_EDIT, PermissionsEnum.ALL_ORG_EDIT) ? [
-				{
-					title: this.getTranslation('CONTEXT_MENU.CONTACT'),
-					icon: 'person-done-outline',
-					link: `pages/contacts`
-				}
-			] : []),
-			...(this.store.hasAnyPermission(PermissionsEnum.ORG_PROJECT_ADD, PermissionsEnum.ALL_ORG_EDIT) ? [
-				{
-					title: this.getTranslation('CONTEXT_MENU.PROJECT'),
-					icon: 'color-palette-outline',
-					link: `pages/organization/projects`
-				}
-			] : []),
+			...(this.store.hasAnyPermission(PermissionsEnum.ORG_TEAM_ADD, PermissionsEnum.ALL_ORG_EDIT)
+				? [
+						{
+							title: this.getTranslation('CONTEXT_MENU.TEAM'),
+							icon: 'people-outline',
+							link: `pages/organization/teams`
+						}
+				  ]
+				: []),
+			...(this.store.hasAnyPermission(PermissionsEnum.ORG_TASK_EDIT, PermissionsEnum.ALL_ORG_EDIT)
+				? [
+						{
+							title: this.getTranslation('CONTEXT_MENU.TASK'),
+							icon: 'calendar-outline',
+							link: 'pages/tasks/dashboard'
+						}
+				  ]
+				: []),
+			...(this.store.hasAnyPermission(PermissionsEnum.ORG_CONTACT_EDIT, PermissionsEnum.ALL_ORG_EDIT)
+				? [
+						{
+							title: this.getTranslation('CONTEXT_MENU.CONTACT'),
+							icon: 'person-done-outline',
+							link: `pages/contacts`
+						}
+				  ]
+				: []),
+			...(this.store.hasAnyPermission(PermissionsEnum.ORG_PROJECT_ADD, PermissionsEnum.ALL_ORG_EDIT)
+				? [
+						{
+							title: this.getTranslation('CONTEXT_MENU.PROJECT'),
+							icon: 'color-palette-outline',
+							link: `pages/organization/projects`
+						}
+				  ]
+				: []),
 			// TODO: divider
-			...(this.store.hasAnyPermission(PermissionsEnum.ORG_EMPLOYEES_EDIT, PermissionsEnum.ALL_ORG_EDIT) ? [
-				{
-					title: this.getTranslation('CONTEXT_MENU.ADD_EMPLOYEE'),
-					icon: 'people-outline',
-					link: 'pages/employees'
-				}
-			] : [])
+			...(this.store.hasAnyPermission(PermissionsEnum.ORG_EMPLOYEES_EDIT, PermissionsEnum.ALL_ORG_EDIT)
+				? [
+						{
+							title: this.getTranslation('CONTEXT_MENU.ADD_EMPLOYEE'),
+							icon: 'people-outline',
+							link: 'pages/employees'
+						}
+				  ]
+				: [])
 		];
 		this.supportContextMenu = [
 			{
@@ -589,11 +571,12 @@ export class HeaderComponent extends TranslationBaseComponent
 		}
 		if (this.isEnabledTimeTracking()) {
 			const { id: organizationId } = this.organization;
-			const { tenantId } = this.user;
+			const { tenantId, employeeId } = this.user;
 
 			await this.timeTrackerService.checkTimerStatus({
 				organizationId,
 				tenantId,
+				employeeId,
 				source: TimeLogSourceEnum.WEB_TIMER
 			});
 		}
@@ -605,13 +588,11 @@ export class HeaderComponent extends TranslationBaseComponent
 	isEnabledTimeTracking() {
 		const { employee } = this.user;
 		const isTrackingEnabled = employee?.id && employee?.isTrackingEnabled;
-		const hasPermission = this.store.hasPermission(
-			PermissionsEnum.TIME_TRACKER
-		);
+		const hasPermission = this.store.hasPermission(PermissionsEnum.TIME_TRACKER);
 		return isTrackingEnabled && hasPermission && !this.isElectron;
 	}
 
-	onCollapse(event: boolean){
+	onCollapse(event: boolean) {
 		this.isCollapse = event;
 	}
 
