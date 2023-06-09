@@ -1,9 +1,4 @@
-import {
-	ApiPropertyOptional,
-	IntersectionType,
-	PartialType,
-	PickType,
-} from '@nestjs/swagger';
+import { ApiPropertyOptional, IntersectionType, PartialType, PickType } from '@nestjs/swagger';
 import { IsArray, IsBoolean, IsOptional, IsString } from 'class-validator';
 import { IOrganizationTeam } from '@gauzy/contracts';
 import { TenantOrganizationBaseDTO } from './../../core/dto';
@@ -12,10 +7,7 @@ import { OrganizationTeam } from './../organization-team.entity';
 
 export class OrganizationTeamDTO
 	extends IntersectionType(
-		IntersectionType(
-			TenantOrganizationBaseDTO,
-			PartialType(RelationalTagDTO)
-		),
+		IntersectionType(TenantOrganizationBaseDTO, PartialType(RelationalTagDTO)),
 		PickType(OrganizationTeam, ['logo', 'prefix', 'imageId'])
 	)
 	implements Omit<IOrganizationTeam, 'name'>
