@@ -8,6 +8,9 @@ import { IRelationalImageAsset } from './image-asset.model';
 
 export interface IOrganizationTeam extends IBasePerTenantAndOrganizationEntityModel, IRelationalImageAsset {
 	name: string;
+	color?: string;
+	emoji?: string;
+	teamSize?: string;
 	logo: string;
 	prefix?: string;
 	public?: boolean;
@@ -27,6 +30,9 @@ export interface IOrganizationTeamFindInput extends IBasePerTenantAndOrganizatio
 
 export interface IOrganizationTeamCreateInput extends IBasePerTenantAndOrganizationEntityModel, IRelationalImageAsset {
 	name: string;
+	emoji?: string;
+	teamSize?: string;
+	color?: string;
 	logo?: string;
 	prefix?: string;
 	public?: boolean;
