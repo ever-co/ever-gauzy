@@ -30,7 +30,7 @@ services:
             - '4000:4000' # Cube Playground
             - '5430:5430' # Port for Cube SQL
         environment:
-            CUBEJS_DEV_MODE: "true"
+            CUBEJS_DEV_MODE: 'true'
             CUBEJS_DB_TYPE: postgres
             CUBEJS_DB_HOST: db
             CUBEJS_DB_PORT: 5432
@@ -48,6 +48,35 @@ services:
         networks:
             - overlay
 
+    jitsu:
+        container_name: jitsu
+        image: jitsucom/jitsu
+        extra_hosts:
+            - 'host.docker.internal:host-gateway'
+        environment:
+            - REDIS_URL=redis://redis:6379
+            # Retroactive users recognition can affect RAM significant.
+            # Read more about the solution https://jitsu.com/docs/other-features/retroactive-user-recognition
+            - USER_RECOGNITION_ENABLED=true
+            - USER_RECOGNITION_REDIS_URL=redis://jitsu_redis_users_recognition:6380
+            - TERM=xterm-256color
+        depends_on:
+            redis:
+                condition: service_healthy
+            jitsu_redis_users_recognition:
+                condition: service_healthy
+        volumes:
+            - ./.deploy/jitsu/configurator/data/logs:/home/configurator/data/logs
+            - ./.deploy/jitsu/server/data/logs:/home/eventnative/data/logs
+            - ./.deploy/jitsu/server/data/logs/events:/home/eventnative/data/logs/events
+            - /var/run/docker.sock:/var/run/docker.sock
+            - jitsu_data:/home/eventnative/data/airbyte
+        restart: always
+        ports:
+            - '8000:8000'
+        networks:
+            - overlay
+
     elasticsearch:
         image: 'elasticsearch:7.17.7'
         container_name: elasticsearch
@@ -57,12 +86,12 @@ services:
             ES_JAVA_OPTS: -Xms512m -Xmx1024m
             discovery.type: single-node
             http.port: 9200
-            http.cors.enabled: "true"
+            http.cors.enabled: 'true'
             http.cors.allow-origin: http://localhost:3000,http://127.0.0.1:3000,http://localhost:1358,http://127.0.0.1:1358
             http.cors.allow-headers: X-Requested-With,X-Auth-Token,Content-Type,Content-Length,Authorization
-            http.cors.allow-credentials: "true"
-            bootstrap.memory_lock: "true"
-            xpack.security.enabled: "false"
+            http.cors.allow-credentials: 'true'
+            bootstrap.memory_lock: 'true'
+            xpack.security.enabled: 'false'
         ports:
             - '9200'
             - '9300'
@@ -90,19 +119,41 @@ services:
         networks:
             - overlay
 
+    # TODO: For now used in Jitsu, but we will need to create another one dedicated for Jitsu later
     redis:
         image: 'redis:7.0.2-alpine'
         container_name: redis
         restart: unless-stopped
+        healthcheck:
+            test: ['CMD-SHELL', 'redis-cli -h localhost -p 6379 PING']
+            interval: 1s
+            timeout: 30s
         ports:
             - '6379'
         volumes:
-            - redis_data:/data
+            - ./.deploy/redis/data:/data
+        networks:
+            - overlay
+
+    jitsu_redis_users_recognition:
+        image: 'redis:7.0.2-alpine'
+        container_name: jitsu_redis_users_recognition
+        command: redis-server /usr/local/etc/redis/redis.conf
+        restart: unless-stopped
+        healthcheck:
+            test: ['CMD-SHELL', 'redis-cli -h localhost -p 6380 PING']
+            interval: 1s
+            timeout: 30s
+        ports:
+            - '6380'
+        volumes:
+            - ./.deploy/redis/jitsu_users_recognition/data:/data
+            - ./.deploy/redis/jitsu_users_recognition/redis.conf:/usr/local/etc/redis/redis.conf
         networks:
             - overlay
 
     minio:
-        restart: always
+        restart: unless-stopped
         image: quay.io/minio/minio:latest
         container_name: minio
         volumes:
@@ -215,7 +266,7 @@ services:
             DEFAULT_LATITUDE: ${DEFAULT_LATITUDE:-42.6459136}
             DEFAULT_LONGITUDE: ${DEFAULT_LONGITUDE:-23.3332736}
             DEFAULT_CURRENCY: ${DEFAULT_CURRENCY:-USD}
-            DEMO: "true"
+            DEMO: 'true'
             API_HOST: ${API_HOST:-api}
             API_PORT: ${API_PORT:-3000}
         entrypoint: './entrypoint.compose.sh'
@@ -259,6 +310,7 @@ volumes:
     minio_data: {}
     cube_data: {}
     certificates: {}
+    jitsu_data: {}
 
 networks:
     overlay:
