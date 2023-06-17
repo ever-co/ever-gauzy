@@ -10,8 +10,8 @@
 
 ## 💡 What's New
 
-We released [Ever Gauzy Teams](https://github.com/ever-co/ever-gauzy-teams) platform for Work & Project Management.  
-Please check <https://github.com/ever-co/ever-gauzy-teams> and make it ⭐ on GitHub!  
+We released [Ever Gauzy Teams](https://github.com/ever-co/ever-gauzy-teams) platform for Work & Project Management.
+Please check <https://github.com/ever-co/ever-gauzy-teams> and make it ⭐ on GitHub!
 It's built with React / ReactNative stack and connects to headless Ever Gauzy Platform APIs.
 
 ## 🌟 What is it
@@ -21,7 +21,7 @@ It's built with React / ReactNative stack and connects to headless Ever Gauzy Pl
 - **Enterprise Resource Planning** (ERP) software.
 - **Customer Relationship Management** (CRM) software.
 - **Human Resource Management** (HRM) software with employee **Time and Activity Tracking** functionality.
-- **Work and Project Management** software. 
+- **Work and Project Management** software.
 
 ![overview](https://docs.gauzy.co/docs/assets/overview.png)
 
@@ -196,10 +196,11 @@ Together with Gauzy, Docker Compose will run following:
 
 - [PostgreSQL](https://www.postgresql.org) - Primary Database.
 - [Pgweb](https://github.com/sosedoff/pgweb) - Cross-platform client for PostgreSQL DBs, available on <http://localhost:8081>.
-- [Redis](https://github.com/redis/redis) - In-memory data store/caching.
 - [ElasticSearch](https://github.com/elastic/elasticsearch) - Search Engine.
 - [Dejavu](https://github.com/appbaseio/dejavu) - Web UI for ElasticSearch, available on <http://localhost:1358>.
 - [MinIO](https://github.com/minio/minio) - Multi-Cloud ☁️ Object Storage (AWS S3 compatible).
+- [Jitsu](https://github.com/jitsucom/jitsu) - Jitsu is an open-source Segment alternative. Fully-scriptable data ingestion engine for modern data teams.
+- [Redis](https://github.com/redis/redis) - In-memory data store/caching (also used by Jitsu)
 - [Cube](https://github.com/cube-js/cube) - "Semantic Layer" used for Reports, Dashboards, Analytics and other BI related features, with UI available on <http://localhost:4000>.
 
 ### Manually
@@ -227,10 +228,11 @@ Notes:
 #### Optional / Recommended for Production
 
 - Optionally (recommended for production) install and run [PostgreSQL](https://www.postgresql.org) version 14 or later. Note: other DB can be configured manually in TypeORM. The default DB is set to SQLite (recommended for testing/demo purposes only).
-- Optionally (recommended for production) install and run [Redis](https://github.com/redis/redis). Note: the platform will work without Redis using in-memory caching strategy instead of distributed one (recommended for testing/demo purposes only).
+- Optionally (recommended for production) install and run [Redis](https://github.com/redis/redis). Notes: the platform will work without Redis using in-memory caching strategy instead of distributed one (recommended for testing/demo purposes only). Please note however that Redis is required for Jitsu.
 - Optionally (recommended for production) install and run [ElasticSearch](https://github.com/elastic/elasticsearch). Note: the platform will work without ElasticSearch using DB build-in search capabilities (recommended for testing/demo purposes only).
-- Optionally install and run [MinIO](https://github.com/minio/minio) or [LocalStack](https://github.com/localstack/localstack). Note: the platform will work without MinIO / LocalStack or other S3 compatible storage using local filesystem based storage (recommended for testing/demo purposes only). For production, we recommend to use Wasabi or AWS S3 storage.
-- Optionally (recommended for production) install and run [Cube](https://github.com/cube-js/cube).
+- Optionally install and run [MinIO](https://github.com/minio/minio) or [LocalStack](https://github.com/localstack/localstack). Note: the platform will work without MinIO / LocalStack or other S3 compatible storage using local filesystem based storage (recommended for testing/demo purposes only). For production, we recommend to use Wasabi or AWS S3 storage or another S3-compatible cloud storage.
+- Optionally (recommended for production) install and run [Jitsu](https://github.com/jitsucom/jitsu). Note: the platform will work without Jitsu, however data ingestion will be disabled for additional analyses / real-time pipelines.
+- Optionally (recommended for production) install and run [Cube](https://github.com/cube-js/cube). Note: the platform will work without Cube, however some advanced (dynamic) reporting and data processing capabilities will be disabled.
 
 ### Production
 
@@ -299,7 +301,7 @@ You can also view full list of our [contributors tracked by Github](https://gith
 
 <img src="https://contributors-img.web.app/image?repo=ever-co/ever-gauzy" />
 
-## ©️ Copyrigh
+## ©️ Copyright
 
 #### Copyright © 2019-present, Ever Co. LTD. All rights reserved
 
