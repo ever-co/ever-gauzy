@@ -73,3 +73,9 @@ ormlogs.log
 /apps/api/*.tsbuildinfo
 
 megalinter-reports/
+
+/.deploy/jitsu/configurator/data/logs/*.log
+/.deploy/jitsu/server/data/logs/*.log
+/.deploy/redis/data/*.rdb
+/.deploy/redis/jitsu_users_recognition/data/*.rdb
+/.deploy/jitsu/server/data/logs/events

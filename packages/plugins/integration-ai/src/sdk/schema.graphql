@@ -234,6 +234,8 @@ type EmployeeJobApplication {
   isViewedByClient: Boolean
   appliedDate: DateTime
   proposal: String
+  isProposalGeneratedByAI: Boolean
+  proposalTemplate: String
   qa: String
   attachments: String
   rate: Float
@@ -362,6 +364,7 @@ type JobPostCountAggregate {
   id: Int
   providerCode: Int
   providerJobId: Int
+  title: Int
   jobDateCreated: Int
   jobStatus: Int
   jobType: Int
@@ -383,6 +386,7 @@ type JobPostMinAggregate {
   id: ID
   providerCode: String
   providerJobId: String
+  title: String
   jobDateCreated: DateTime
   jobStatus: String
   jobType: String
@@ -401,6 +405,7 @@ type JobPostMaxAggregate {
   id: ID
   providerCode: String
   providerJobId: String
+  title: String
   jobDateCreated: DateTime
   jobStatus: String
   jobType: String
@@ -722,6 +727,8 @@ type EmployeeJobApplicationDeleteResponse {
   isViewedByClient: Boolean
   appliedDate: DateTime
   proposal: String
+  isProposalGeneratedByAI: Boolean
+  proposalTemplate: String
   qa: String
   attachments: String
   rate: Float
@@ -1035,6 +1042,7 @@ input JobPostFilter {
   id: IDFilterComparison
   providerCode: StringFieldComparison
   providerJobId: StringFieldComparison
+  title: StringFieldComparison
   jobDateCreated: DateFieldComparison
   jobStatus: StringFieldComparison
   jobType: StringFieldComparison
@@ -1082,6 +1090,7 @@ enum JobPostSortFields {
   id
   providerCode
   providerJobId
+  title
   jobDateCreated
   jobStatus
   jobType
@@ -1105,6 +1114,7 @@ input JobPostAggregateFilter {
   id: IDFilterComparison
   providerCode: StringFieldComparison
   providerJobId: StringFieldComparison
+  title: StringFieldComparison
   jobDateCreated: DateFieldComparison
   jobStatus: StringFieldComparison
   jobType: StringFieldComparison
@@ -1210,6 +1220,7 @@ input EmployeeJobPostFilterJobPostFilter {
   id: IDFilterComparison
   providerCode: StringFieldComparison
   providerJobId: StringFieldComparison
+  title: StringFieldComparison
   jobDateCreated: DateFieldComparison
   jobStatus: StringFieldComparison
   jobType: StringFieldComparison
@@ -1337,6 +1348,7 @@ input EmployeeJobApplicationFilterJobPostFilter {
   id: IDFilterComparison
   providerCode: StringFieldComparison
   providerJobId: StringFieldComparison
+  title: StringFieldComparison
   jobDateCreated: DateFieldComparison
   jobStatus: StringFieldComparison
   jobType: StringFieldComparison
@@ -1467,6 +1479,7 @@ input AutomationTaskFilterJobPostFilter {
   id: IDFilterComparison
   providerCode: StringFieldComparison
   providerJobId: StringFieldComparison
+  title: StringFieldComparison
   jobDateCreated: DateFieldComparison
   jobStatus: StringFieldComparison
   jobType: StringFieldComparison
@@ -1622,6 +1635,7 @@ input JobPostDeleteFilter {
   id: IDFilterComparison
   providerCode: StringFieldComparison
   providerJobId: StringFieldComparison
+  title: StringFieldComparison
   jobDateCreated: DateFieldComparison
   jobStatus: StringFieldComparison
   jobType: StringFieldComparison
@@ -1702,6 +1716,7 @@ input JobPostUpdateFilter {
   id: IDFilterComparison
   providerCode: StringFieldComparison
   providerJobId: StringFieldComparison
+  title: StringFieldComparison
   jobDateCreated: DateFieldComparison
   jobStatus: StringFieldComparison
   jobType: StringFieldComparison
@@ -2131,6 +2146,8 @@ input UpdateEmployeeJobApplication {
   isViewedByClient: Boolean
   appliedDate: DateTime
   proposal: String
+  isProposalGeneratedByAI: Boolean
+  proposalTemplate: String
   qa: String
   attachments: String
   rate: Float
@@ -2189,6 +2206,8 @@ input CreateEmployeeJobApplication {
   isViewedByClient: Boolean
   appliedDate: DateTime
   proposal: String
+  isProposalGeneratedByAI: Boolean
+  proposalTemplate: String
   qa: String
   attachments: String
   rate: Float
@@ -2361,6 +2380,7 @@ input JobPostSubscriptionFilter {
   id: IDFilterComparison
   providerCode: StringFieldComparison
   providerJobId: StringFieldComparison
+  title: StringFieldComparison
   jobDateCreated: DateFieldComparison
   jobStatus: StringFieldComparison
   jobType: StringFieldComparison
