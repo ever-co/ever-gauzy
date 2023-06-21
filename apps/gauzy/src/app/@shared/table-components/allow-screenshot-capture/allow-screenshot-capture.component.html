@@ -3,6 +3,6 @@
 	[checked]="rowData?.allowScreenshotCapture"
 	(checkedChange)="onCheckedChange($event)"
 	>{{
-		(rowData?.allowScreenshotCapture ? 'EMPLOYEES_PAGE.ENABLED' : 'EMPLOYEES_PAGE.DISABLED') | translate
+		((allowed$ | async) ? 'EMPLOYEES_PAGE.ENABLED' : 'EMPLOYEES_PAGE.DISABLED') | translate
 	}}</nb-toggle
 >

@@ -777,9 +777,6 @@ export class EmployeesComponent extends PaginationFilterBaseComponent
 			);
 		} catch (error) {
 			this.errorHandler.handleError(error)
-		} finally {
-			this._refresh$.next(true);
-			this.employees$.next(true);
 		}
 	}
 
