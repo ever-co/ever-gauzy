@@ -1,13 +1,16 @@
-import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
+import { Component, EventEmitter, Input, OnDestroy, OnInit, Output } from '@angular/core';
 import { ViewCell } from 'ng2-smart-table';
 import { IEmployee } from '@gauzy/contracts';
 import { BehaviorSubject, tap } from 'rxjs';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 
+@UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'gauzy-allow-screenshot-capture',
 	templateUrl: './allow-screenshot-capture.component.html',
 	styleUrls: ['./allow-screenshot-capture.component.scss']
 })
+
 export class AllowScreenshotCaptureComponent implements OnInit, ViewCell {
 	@Input()
 	value: string | number;
@@ -24,7 +27,10 @@ export class AllowScreenshotCaptureComponent implements OnInit, ViewCell {
 	ngOnInit(): void {
 		this._allowed$.next(this.rowData.allowScreenshotCapture);
 		this.allowScreenshotCaptureChange
-			.pipe(tap((allowed) => this._allowed$.next(allowed)))
+			.pipe(
+				tap((allowed) => this._allowed$.next(allowed)),
+				untilDestroyed(this)
+			)
 			.subscribe();
 	}
 
