@@ -14,6 +14,8 @@ export interface IApplyJobPostInput {
 	providerCode: string;
 	providerJobId: string;
 	proposal?: string;
+	isProposalGeneratedByAI?: boolean;
+	proposalTemplate?: string;
 	rate?: number;
 	details?: string;
 	attachments?: string;
@@ -111,24 +113,25 @@ export interface IJobPost {
 
 export enum JobPostSourceEnum {
 	UPWORK = 'upwork',
-	WEB = 'web'
+	WEB = 'web',
+	LINKEDIN = 'linkedin',
 }
 
 export enum JobPostStatusEnum {
 	OPEN = 'open',
 	APPLIED = 'applied',
 	COMPLETED = 'completed',
-	CLOSED = 'closed'
+	CLOSED = 'closed',
 }
 
 export enum JobPostTypeEnum {
 	HOURLY = 'hourly',
-	FIXED = 'fixed'
+	FIXED = 'fixed',
 }
 
 export enum JobSearchTabsEnum {
 	ACTIONS = 'ACTIONS',
-	SEARCH = 'SEARCH'
+	SEARCH = 'SEARCH',
 }
 
 export interface IUpdateEmployeeJobPostAppliedResult {
