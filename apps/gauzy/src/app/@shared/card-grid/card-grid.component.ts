@@ -17,6 +17,7 @@ import {
 	Observable
 } from 'rxjs';
 import { tap } from 'rxjs/operators';
+import { CustomViewComponent } from './card-grid-custom.component';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -43,6 +44,8 @@ export class CardGridComponent implements OnInit, OnDestroy {
 		return this._grid$.getValue();
 	}
 	private _showMore: boolean = false;
+
+	private _selectedCustomViewComponent: CustomViewComponent;
 
 	/*
 	 * Getter & Setter for dynamic columns settings
@@ -91,6 +94,14 @@ export class CardGridComponent implements OnInit, OnDestroy {
 				? { isSelected: !this.selected.isSelected, data: item }
 				: { isSelected: true, data: item };
 		this.onSelectedItem.emit(this.selected);
+	}
+
+	public selectCustomViewComponent(component: CustomViewComponent) {
+		this._selectedCustomViewComponent = component;
+	}
+
+	public customComponentInstance<T>(): T {
+		return this._selectedCustomViewComponent.customComponent.instance as T;
 	}
 
 	onScroll() {
