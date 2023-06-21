@@ -5,7 +5,7 @@ import { BehaviorSubject } from 'rxjs';
 @Component({
 	selector: 'gauzy-project-organization-grid',
 	templateUrl: './project-organization-grid.component.html',
-	styleUrls: ['./project-organization-grid.component.scss'],
+	styleUrls: ['./project-organization-grid.component.scss']
 })
 export class ProjectOrganizationGridComponent implements ViewCell {
 	@Input()
@@ -24,9 +24,7 @@ export class ProjectOrganizationGridComponent implements ViewCell {
 
 	public get visibility(): boolean {
 		if (this._visibility$.getValue() === null) {
-			this._visibility$.next(
-				this.rowData.public === null ? false : this.rowData.public
-			);
+			this._visibility$.next(this.rowData.public === null ? false : this.rowData.public);
 		}
 		return this._visibility$.getValue();
 	}
