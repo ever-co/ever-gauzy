@@ -9,15 +9,30 @@ import { ViewCell } from 'ng2-smart-table';
 export class VisibilityComponent implements OnInit, ViewCell {
 	@Input()
 	value: string | number;
-	@Input()
-	rowData: any;
+
 	@Output()
-	visibilityChange: EventEmitter<boolean> = new EventEmitter();
-	constructor() {}
+	visibilityChange: EventEmitter<boolean>;
+
+	private _rowData: any;
+
+	constructor() {
+		this.visibilityChange = new EventEmitter();
+	}
 
 	ngOnInit(): void {}
 
 	onCheckedChange(event: boolean) {
 		this.visibilityChange.emit(event);
+	}
+
+	@Input()
+	public set rowData(value: any) {
+		if (value) {
+			this._rowData = value;
+		}
+	}
+
+	public get rowData() {
+		return this._rowData;
 	}
 }
