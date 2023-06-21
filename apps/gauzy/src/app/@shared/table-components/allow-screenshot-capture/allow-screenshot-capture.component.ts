@@ -1,7 +1,7 @@
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { ViewCell } from 'ng2-smart-table';
 import { IEmployee } from '@gauzy/contracts';
-import { BehaviorSubject, tap } from 'rxjs';
+import { BehaviorSubject, Observable, tap } from 'rxjs';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 
 @UntilDestroy({ checkProperties: true })
@@ -40,6 +40,10 @@ export class AllowScreenshotCaptureComponent implements OnInit, ViewCell {
 
 	public get allowed(): boolean {
 		return this._allowed$.getValue();
+	}
+
+	public get allowed$(): Observable<boolean> {
+		return this._allowed$.asObservable();
 	}
 
 	@Input()
