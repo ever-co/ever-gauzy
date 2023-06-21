@@ -4,7 +4,9 @@ import { ITaskPriority } from "@gauzy/contracts";
 import { CrudService } from "../crud/crud.service";
 import { API_PREFIX } from "../../constants";
 
-@Injectable()
+@Injectable({
+    providedIn: 'root'
+})
 export class TaskPrioritiesService extends CrudService<ITaskPriority> {
 
     static readonly API_URL = `${API_PREFIX}/task-priorities`;

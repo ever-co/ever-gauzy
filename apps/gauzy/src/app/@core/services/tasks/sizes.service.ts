@@ -4,7 +4,9 @@ import { ITaskSize } from "@gauzy/contracts";
 import { CrudService } from "../crud/crud.service";
 import { API_PREFIX } from "../../constants";
 
-@Injectable()
+@Injectable({
+    providedIn: 'root'
+})
 export class TaskSizesService extends CrudService<ITaskSize> {
 
     static readonly API_URL = `${API_PREFIX}/task-sizes`;
