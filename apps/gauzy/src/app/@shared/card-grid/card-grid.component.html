@@ -40,12 +40,14 @@
 					<div *ngSwitchCase="'function'">{{ item[key].name }}</div>
 					<div *ngSwitchCase="'custom'">
 						<ga-custom-component
+							#component
 							[renderComponent]="
 								settings.columns[key].renderComponent
 							"
 							[value]="item[key]"
 							[rowData]="item"
 							class="custom"
+							(click)="selectCustomViewComponent(component)"
 						>
 						</ga-custom-component>
 					</div>

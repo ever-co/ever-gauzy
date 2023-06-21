@@ -42,6 +42,7 @@ import { ProjectOrganizationGridComponent } from '../../@shared/table-components
 import { ProjectOrganizationGridDetailsComponent } from '../../@shared/table-components/project-organization-grid-details/project-organization-grid-details.component';
 import { TagsColorFilterComponent } from '../../@shared/table-filters';
 import { ProjectOrganizationEmployeesComponent } from '../../@shared/table-components/project-organization-employees/project-organization-employees.component';
+import { CardGridComponent } from '../../@shared/card-grid/card-grid.component';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -49,9 +50,7 @@ import { ProjectOrganizationEmployeesComponent } from '../../@shared/table-compo
 	templateUrl: './projects.component.html',
 	styleUrls: ['./projects.component.scss']
 })
-export class ProjectsComponent extends PaginationFilterBaseComponent
-	implements OnInit, OnDestroy {
-
+export class ProjectsComponent extends PaginationFilterBaseComponent implements OnInit, OnDestroy {
 	loading: boolean = false;
 	settingsSmartTable: any;
 	viewComponentName: ComponentEnum;
@@ -75,6 +74,13 @@ export class ProjectsComponent extends PaginationFilterBaseComponent
 		if (content) {
 			this.projectsTable = content;
 			this.onChangedSource();
+		}
+	}
+
+	private _grid: CardGridComponent;
+	@ViewChild('grid') set grid(content: CardGridComponent) {
+		if (content) {
+			this._grid = content;
 		}
 	}
 
@@ -118,21 +124,14 @@ export class ProjectsComponent extends PaginationFilterBaseComponent
 				untilDestroyed(this)
 			)
 			.subscribe();
-		this.store.userRolePermissions$
-			.pipe(untilDestroyed(this))
-			.subscribe(() => {
-				this.viewPrivateProjects = this.store.hasPermission(
-					PermissionsEnum.ACCESS_PRIVATE_PROJECTS
-				);
-			});
-		this.route.queryParamMap
-			.pipe(untilDestroyed(this))
-			.subscribe((params) => {
-				if (params.get('openAddDialog')) {
-					this.showAddCard =
-						params.get('openAddDialog') === 'true' ? true : false;
-				}
-			});
+		this.store.userRolePermissions$.pipe(untilDestroyed(this)).subscribe(() => {
+			this.viewPrivateProjects = this.store.hasPermission(PermissionsEnum.ACCESS_PRIVATE_PROJECTS);
+		});
+		this.route.queryParamMap.pipe(untilDestroyed(this)).subscribe((params) => {
+			if (params.get('openAddDialog')) {
+				this.showAddCard = params.get('openAddDialog') === 'true' ? true : false;
+			}
+		});
 		this.pagination$
 			.pipe(
 				debounceTime(100),
@@ -143,11 +142,7 @@ export class ProjectsComponent extends PaginationFilterBaseComponent
 			.subscribe();
 		this._refresh$
 			.pipe(
-				filter(
-					() =>
-						this.dataLayoutStyle ===
-						ComponentLayoutStyleEnum.CARDS_GRID
-				),
+				filter(() => this.dataLayoutStyle === ComponentLayoutStyleEnum.CARDS_GRID),
 				tap(() => this.refreshPagination()),
 				tap(() => (this.projects = [])),
 				untilDestroyed(this)
@@ -165,17 +160,10 @@ export class ProjectsComponent extends PaginationFilterBaseComponent
 			.componentLayout$(this.viewComponentName)
 			.pipe(
 				debounceTime(300),
-				tap(
-					(componentLayout) =>
-						(this.dataLayoutStyle = componentLayout)
-				),
+				tap((componentLayout) => (this.dataLayoutStyle = componentLayout)),
 				tap(() => this._loadSmartTableSettings()),
 				tap(() => this.refreshPagination()),
-				filter(
-					(componentLayout) =>
-						componentLayout ===
-						this.componentLayoutStyleEnum.CARDS_GRID
-				),
+				filter((componentLayout) => componentLayout === this.componentLayoutStyleEnum.CARDS_GRID),
 				tap(() => (this.projects = [])),
 				tap(() => this.project$.next(true)),
 				untilDestroyed(this)
@@ -199,20 +187,15 @@ export class ProjectsComponent extends PaginationFilterBaseComponent
 		);
 		if (result) {
 			const { id, name } = this.selectedProject;
-			await this.organizationProjectsService
-				.delete(id)
-				.then(() => {
-					this.organizationProjectStore.organizationProjectAction = {
-						project: this.selectedProject,
-						action: CrudActionEnum.DELETED
-					};
-				});
-			this.toastrService.success(
-				'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_PROJECTS.REMOVE_PROJECT',
-				{
-					name
-				}
-			);
+			await this.organizationProjectsService.delete(id).then(() => {
+				this.organizationProjectStore.organizationProjectAction = {
+					project: this.selectedProject,
+					action: CrudActionEnum.DELETED
+				};
+			});
+			this.toastrService.success('NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_PROJECTS.REMOVE_PROJECT', {
+				name
+			});
 			this.cancel();
 			this._refresh$.next(true);
 			this.project$.next(true);
@@ -239,46 +222,33 @@ export class ProjectsComponent extends PaginationFilterBaseComponent
 		switch (action) {
 			case 'add':
 				if (project.name) {
-					await this.organizationProjectsService
-						.create(project)
-						.then((project: IOrganizationProject) => {
-							this.organizationProjectStore.organizationProjectAction =
-								{
-									project,
-									action: CrudActionEnum.CREATED
-								};
-						});
+					await this.organizationProjectsService.create(project).then((project: IOrganizationProject) => {
+						this.organizationProjectStore.organizationProjectAction = {
+							project,
+							action: CrudActionEnum.CREATED
+						};
+					});
 				} else {
 					this.toastrService.danger(
-						this.getTranslation(
-							'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_PROJECTS.INVALID_PROJECT_NAME'
-						),
-						this.getTranslation(
-							'TOASTR.MESSAGE.NEW_ORGANIZATION_PROJECT_INVALID_NAME'
-						)
+						this.getTranslation('NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_PROJECTS.INVALID_PROJECT_NAME'),
+						this.getTranslation('TOASTR.MESSAGE.NEW_ORGANIZATION_PROJECT_INVALID_NAME')
 					);
 				}
 				break;
 
 			case 'edit':
-				await this.organizationProjectsService
-					.edit(project)
-					.then((project: IOrganizationProject) => {
-						this.organizationProjectStore.organizationProjectAction =
-							{
-								project,
-								action: CrudActionEnum.UPDATED
-							};
-					});
+				await this.organizationProjectsService.edit(project).then((project: IOrganizationProject) => {
+					this.organizationProjectStore.organizationProjectAction = {
+						project,
+						action: CrudActionEnum.UPDATED
+					};
+				});
 				break;
 		}
 
-		this.toastrService.success(
-			'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_PROJECTS.ADD_PROJECT',
-			{
-				name: project.name
-			}
-		);
+		this.toastrService.success('NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_PROJECTS.ADD_PROJECT', {
+			name: project.name
+		});
 		this.cancel();
 		this._refresh$.next(true);
 		this.project$.next(true);
@@ -297,13 +267,7 @@ export class ProjectsComponent extends PaginationFilterBaseComponent
 
 		this.smartTableSource = new ServerDataSource(this.httpClient, {
 			endPoint: `${API_PREFIX}/organization-projects/pagination`,
-			relations: [
-				'organizationContact',
-				'organization',
-				'members',
-				'members.user',
-				'tags'
-			],
+			relations: ['organizationContact', 'organization', 'members', 'members.user', 'tags'],
 			join: {
 				alias: 'organization_project',
 				leftJoin: {
@@ -342,9 +306,7 @@ export class ProjectsComponent extends PaginationFilterBaseComponent
 	}
 
 	private get _isGridCardLayout(): boolean {
-		return (
-			this.dataLayoutStyle === this.componentLayoutStyleEnum.CARDS_GRID
-		);
+		return this.dataLayoutStyle === this.componentLayoutStyleEnum.CARDS_GRID;
 	}
 
 	async loadProjects() {
@@ -372,9 +334,7 @@ export class ProjectsComponent extends PaginationFilterBaseComponent
 			? project
 			: project.public
 			? project
-			: project.members.map(
-					(member: IEmployee) => member.id === this.store.userId
-			  );
+			: project.members.map((member: IEmployee) => member.id === this.store.userId);
 	}
 
 	private _loadSmartTableSettings() {
@@ -384,9 +344,7 @@ export class ProjectsComponent extends PaginationFilterBaseComponent
 			actions: false,
 			pager: {
 				display: false,
-				perPage: pagination
-					? this.pagination.itemsPerPage
-					: this.minItemPerPage
+				perPage: pagination ? this.pagination.itemsPerPage : this.minItemPerPage
 			},
 			columns: { ...this.columnsSmartTableMapper() }
 		};
@@ -404,19 +362,14 @@ export class ProjectsComponent extends PaginationFilterBaseComponent
 						renderComponent: ProjectOrganizationComponent
 					},
 					public: {
-						title: this.getTranslation(
-							'ORGANIZATIONS_PAGE.EDIT.VISIBILITY'
-						),
+						title: this.getTranslation('ORGANIZATIONS_PAGE.EDIT.VISIBILITY'),
 						type: 'custom',
 						filter: false,
 						renderComponent: VisibilityComponent,
 						onComponentInitFunction: (instance: any) => {
 							instance.visibilityChange.subscribe({
 								next: (visibility: boolean) => {
-									this.updateProjectVisibility(
-										instance.rowData.id,
-										visibility
-									);
+									this.updateProjectVisibility(instance.rowData.id, visibility);
 								},
 								error: (err: any) => {
 									console.warn(err);
@@ -425,35 +378,27 @@ export class ProjectsComponent extends PaginationFilterBaseComponent
 						}
 					},
 					organizationContact: {
-						title: this.getTranslation(
-							'ORGANIZATIONS_PAGE.EDIT.CONTACT'
-						),
+						title: this.getTranslation('ORGANIZATIONS_PAGE.EDIT.CONTACT'),
 						type: 'custom',
 						class: 'text-center',
 						renderComponent: ContactLinksComponent
 					},
 					startDate: {
-						title: this.getTranslation(
-							'ORGANIZATIONS_PAGE.EDIT.START_DATE'
-						),
+						title: this.getTranslation('ORGANIZATIONS_PAGE.EDIT.START_DATE'),
 						type: 'custom',
 						filter: false,
 						renderComponent: DateViewComponent,
 						class: 'text-center'
 					},
 					endDate: {
-						title: this.getTranslation(
-							'ORGANIZATIONS_PAGE.EDIT.END_DATE'
-						),
+						title: this.getTranslation('ORGANIZATIONS_PAGE.EDIT.END_DATE'),
 						type: 'custom',
 						filter: false,
 						renderComponent: DateViewComponent,
 						class: 'text-center'
 					},
 					employeesMergedTeams: {
-						title: this.getTranslation(
-							'ORGANIZATIONS_PAGE.EDIT.MEMBERS'
-						),
+						title: this.getTranslation('ORGANIZATIONS_PAGE.EDIT.MEMBERS'),
 						type: 'custom',
 						renderComponent: EmployeesMergedTeamsComponent
 					},
@@ -507,6 +452,14 @@ export class ProjectsComponent extends PaginationFilterBaseComponent
 	async selectProject({ isSelected, data }) {
 		this.disableButton = !isSelected;
 		this.selectedProject = isSelected ? data : null;
+		if (this._isGridCardLayout && this._grid) {
+			if (this._grid.customComponentInstance().constructor === ProjectOrganizationGridComponent) {
+				this.disableButton = true;
+				const projectOrganizationGrid: ProjectOrganizationGridComponent =
+					this._grid.customComponentInstance<ProjectOrganizationGridComponent>();
+				this.updateProjectVisibility(data.id, !projectOrganizationGrid.visibility);
+			}
+		}
 	}
 
 	private _applyTranslationOnSmartTable() {
@@ -518,24 +471,16 @@ export class ProjectsComponent extends PaginationFilterBaseComponent
 			.subscribe();
 	}
 
-	private async updateProjectVisibility(
-		projectId: string,
-		visibility: boolean
-	) {
+	private async updateProjectVisibility(projectId: string, visibility: boolean) {
 		await this.organizationProjectsService
 			.edit({
 				public: visibility,
 				id: projectId
 			})
 			.then(() => {
-				this.toastrService.success(
-					'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_PROJECTS.VISIBILITY',
-					{
-						name: visibility
-							? this.getTranslation('BUTTONS.PRIVATE')
-							: this.getTranslation('BUTTONS.PUBLIC')
-					}
-				);
+				this.toastrService.success('NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_PROJECTS.VISIBILITY', {
+					name: visibility ? this.getTranslation('BUTTONS.PRIVATE') : this.getTranslation('BUTTONS.PUBLIC')
+				});
 			})
 			.finally(() => {
 				this._refresh$.next(true);
