@@ -525,6 +525,7 @@ export class ProjectsComponent extends PaginationFilterBaseComponent
 				this._grid.customComponentInstance().constructor ===
 				ProjectOrganizationGridComponent
 			) {
+				this.disableButton = true;
 				const projectOrganizationGrid: ProjectOrganizationGridComponent =
 					this._grid.customComponentInstance<ProjectOrganizationGridComponent>();
 				this.updateProjectVisibility(
