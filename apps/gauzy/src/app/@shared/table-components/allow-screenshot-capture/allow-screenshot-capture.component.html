@@ -1,6 +1,6 @@
 <nb-toggle
 	status="primary"
-	[checked]="rowData?.allowScreenshotCapture"
+	[checked]="allowed$ | async"
 	(checkedChange)="onCheckedChange($event)"
 	>{{
 		((allowed$ | async) ? 'EMPLOYEES_PAGE.ENABLED' : 'EMPLOYEES_PAGE.DISABLED') | translate
