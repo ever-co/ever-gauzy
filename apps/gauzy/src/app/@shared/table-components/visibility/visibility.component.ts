@@ -1,6 +1,9 @@
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
+import { untilDestroyed, UntilDestroy } from '@ngneat/until-destroy';
 import { ViewCell } from 'ng2-smart-table';
+import { BehaviorSubject, Observable, tap } from 'rxjs';
 
+@UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'gauzy-visibility',
 	templateUrl: './visibility.component.html',
@@ -14,15 +17,29 @@ export class VisibilityComponent implements OnInit, ViewCell {
 	visibilityChange: EventEmitter<boolean>;
 
 	private _rowData: any;
+	private _visibility$: BehaviorSubject<boolean>;
 
 	constructor() {
 		this.visibilityChange = new EventEmitter();
+		this._visibility$ = new BehaviorSubject(false);
 	}
 
-	ngOnInit(): void {}
+	ngOnInit(): void {
+		this._visibility$.next(this.rowData.public);
+		this.visibilityChange
+			.pipe(
+				tap((isPublic: boolean) => this._visibility$.next(isPublic)),
+				untilDestroyed(this)
+			)
+			.subscribe()
+	}
 
 	onCheckedChange(event: boolean) {
 		this.visibilityChange.emit(event);
+	}
+
+	public get visibility$(): Observable<boolean> {
+		return this._visibility$.asObservable();
 	}
 
 	@Input()

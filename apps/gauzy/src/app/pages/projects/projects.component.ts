@@ -482,10 +482,6 @@ export class ProjectsComponent extends PaginationFilterBaseComponent implements 
 					name: visibility ? this.getTranslation('BUTTONS.PRIVATE') : this.getTranslation('BUTTONS.PUBLIC')
 				});
 			})
-			.finally(() => {
-				this._refresh$.next(true);
-				this.project$.next(true);
-			});
 	}
 
 	private loadOrganizationContacts() {
