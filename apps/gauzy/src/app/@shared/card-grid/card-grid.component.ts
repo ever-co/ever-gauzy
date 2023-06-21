@@ -101,7 +101,14 @@ export class CardGridComponent implements OnInit, OnDestroy {
 	}
 
 	public customComponentInstance<T>(): T {
-		return this._selectedCustomViewComponent.customComponent.instance as T;
+		return this._selectedCustomViewComponent?.customComponent?.instance as T;
+	}
+
+	public clearCustomViewComponent(): void {
+		if (this._selectedCustomViewComponent) {
+			this._selectedCustomViewComponent = null;
+			this.selected = { isSelected: false, data: null };
+		}
 	}
 
 	onScroll() {
