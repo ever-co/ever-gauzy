@@ -1,21 +1,8 @@
-import {
-	Component,
-	OnDestroy,
-	OnInit,
-	Input,
-	ViewChild,
-	ElementRef
-} from '@angular/core';
+import { Component, OnDestroy, OnInit, Input, ViewChild, ElementRef } from '@angular/core';
 
 import { Output, EventEmitter } from '@angular/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import {
-	BehaviorSubject,
-	combineLatest,
-	debounceTime,
-	filter,
-	Observable
-} from 'rxjs';
+import { BehaviorSubject, combineLatest, debounceTime, filter, Observable } from 'rxjs';
 import { tap } from 'rxjs/operators';
 import { CustomViewComponent } from './card-grid-custom.component';
 
@@ -145,9 +132,7 @@ export class CardGridComponent implements OnInit, OnDestroy {
 	}
 
 	private _hasScrollbar(grid: ElementRef) {
-		return (
-			grid.nativeElement.scrollHeight > grid.nativeElement.clientHeight
-		);
+		return grid.nativeElement.scrollHeight > grid.nativeElement.clientHeight;
 	}
 
 	public get showMore(): boolean {
