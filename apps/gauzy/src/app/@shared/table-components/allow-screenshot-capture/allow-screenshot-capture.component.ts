@@ -1,23 +1,49 @@
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { ViewCell } from 'ng2-smart-table';
+import { IEmployee } from '@gauzy/contracts';
+import { BehaviorSubject, tap } from 'rxjs';
 
 @Component({
-  selector: 'gauzy-allow-screenshot-capture',
-  templateUrl: './allow-screenshot-capture.component.html',
-  styleUrls: ['./allow-screenshot-capture.component.scss']
+	selector: 'gauzy-allow-screenshot-capture',
+	templateUrl: './allow-screenshot-capture.component.html',
+	styleUrls: ['./allow-screenshot-capture.component.scss']
 })
 export class AllowScreenshotCaptureComponent implements OnInit, ViewCell {
-  @Input()
-  value: string | number;
-  @Input()
-  rowData: any;
-  @Output()
-  allowScreenshotCaptureChange: EventEmitter<boolean> = new EventEmitter();
-  constructor() { }
+	@Input()
+	value: string | number;
+	@Output()
+	allowScreenshotCaptureChange: EventEmitter<boolean>;
+	private _rowData: IEmployee;
+	private _allowed$: BehaviorSubject<boolean>;
+	constructor() {
+		this.allowScreenshotCaptureChange = new EventEmitter();
+		this._allowed$ = new BehaviorSubject(false);
+		this._rowData = null;
+	}
 
-  ngOnInit(): void { }
+	ngOnInit(): void {
+		this._allowed$.next(this.rowData.allowScreenshotCapture);
+		this.allowScreenshotCaptureChange
+			.pipe(tap((allowed) => this._allowed$.next(allowed)))
+			.subscribe();
+	}
 
-  onCheckedChange(event: boolean) {
-    this.allowScreenshotCaptureChange.emit(event);
-  }
+	public onCheckedChange(event: boolean) {
+		this.allowScreenshotCaptureChange.emit(event);
+	}
+
+	public get allowed(): boolean {
+		return this._allowed$.getValue();
+	}
+
+	@Input()
+	public set rowData(value: IEmployee) {
+		if (value) {
+			this._rowData = value;
+		}
+	}
+
+	public get rowData(): IEmployee {
+		return this._rowData;
+	}
 }
