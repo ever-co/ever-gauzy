@@ -1,4 +1,9 @@
-import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import {
+	Component,
+	OnDestroy,
+	OnInit,
+	ViewChild
+} from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { NbDialogService } from '@nebular/theme';
@@ -42,6 +47,7 @@ import { ProjectOrganizationGridComponent } from '../../@shared/table-components
 import { ProjectOrganizationGridDetailsComponent } from '../../@shared/table-components/project-organization-grid-details/project-organization-grid-details.component';
 import { TagsColorFilterComponent } from '../../@shared/table-filters';
 import { ProjectOrganizationEmployeesComponent } from '../../@shared/table-components/project-organization-employees/project-organization-employees.component';
+import { CardGridComponent } from '../../@shared/card-grid/card-grid.component';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -75,6 +81,13 @@ export class ProjectsComponent extends PaginationFilterBaseComponent
 		if (content) {
 			this.projectsTable = content;
 			this.onChangedSource();
+		}
+	}
+
+	private _grid: CardGridComponent;
+	@ViewChild('grid') set grid(content: CardGridComponent) {
+		if (content) {
+			this._grid = content;
 		}
 	}
 
@@ -507,6 +520,20 @@ export class ProjectsComponent extends PaginationFilterBaseComponent
 	async selectProject({ isSelected, data }) {
 		this.disableButton = !isSelected;
 		this.selectedProject = isSelected ? data : null;
+		if (this._isGridCardLayout && this._grid) {
+			if (
+				this._grid.customComponentInstance().constructor ===
+				ProjectOrganizationGridComponent
+			) {
+				this.disableButton = true;
+				const projectOrganizationGrid: ProjectOrganizationGridComponent =
+					this._grid.customComponentInstance<ProjectOrganizationGridComponent>();
+				this.updateProjectVisibility(
+					data.id,
+					!projectOrganizationGrid.visibility
+				);
+			}
+		}
 	}
 
 	private _applyTranslationOnSmartTable() {
