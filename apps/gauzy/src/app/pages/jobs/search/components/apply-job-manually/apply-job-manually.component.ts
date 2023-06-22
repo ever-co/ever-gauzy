@@ -1,6 +1,6 @@
 import { AfterViewInit, Component, Input, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { FormBuilder, FormControl, FormGroup, FormGroupDirective, Validators } from '@angular/forms';
-import { Subject, combineLatest } from 'rxjs';
+import { Subject, Subscription, combineLatest, switchMap, timer } from 'rxjs';
 import { debounceTime, filter, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { NbDialogRef } from '@nebular/theme';
@@ -18,7 +18,7 @@ import {
 	IUser,
 	JobPostSourceEnum
 } from '@gauzy/contracts';
-import { distinctUntilChange, isNotEmpty } from '@gauzy/common-angular';
+import { distinctUntilChange, isNotEmpty, sleep } from '@gauzy/common-angular';
 import { JobService, Store, ToastrService } from './../../../../../@core/services';
 import { API_PREFIX } from './../../../../../@core/constants';
 import { FormHelpers } from './../../../../../@shared/forms';
@@ -31,9 +31,7 @@ import { ckEditorConfig } from './../../../../../@shared/ckeditor.config';
 	templateUrl: './apply-job-manually.component.html',
 	styleUrls: ['./apply-job-manually.component.scss']
 })
-export class ApplyJobManuallyComponent extends TranslationBaseComponent
-	implements AfterViewInit, OnInit, OnDestroy {
-
+export class ApplyJobManuallyComponent extends TranslationBaseComponent implements AfterViewInit, OnInit, OnDestroy {
 	public JobPostSourceEnum: typeof JobPostSourceEnum = JobPostSourceEnum;
 	public FormHelpers: typeof FormHelpers = FormHelpers;
 	public ckConfig: CKEditor4.Config = ckEditorConfig;
@@ -81,6 +79,14 @@ export class ApplyJobManuallyComponent extends TranslationBaseComponent
 	/** Form group directive */
 	@ViewChild('formDirective') formDirective: FormGroupDirective;
 
+	/**
+	 * Newly generate employee job application
+	 */
+	application$: Subject<any> = new Subject();
+
+	// After get AI generated proposal successfully
+	private retryUntil$: Subscription;
+
 	constructor(
 		private readonly fb: FormBuilder,
 		private readonly dialogRef: NbDialogRef<ApplyJobManuallyComponent>,
@@ -117,7 +123,13 @@ export class ApplyJobManuallyComponent extends TranslationBaseComponent
 			.subscribe();
 		this.proposal$
 			.pipe(
-				tap(() => this.generateEmployeeProposal()),
+				tap(() => this.callPreProcessEmployeeJobApplication()),
+				untilDestroyed(this)
+			)
+			.subscribe();
+		this.application$
+			.pipe(
+				tap((application: any) => this.generateAIProposal(application)),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -149,7 +161,9 @@ export class ApplyJobManuallyComponent extends TranslationBaseComponent
 		};
 	}
 
-	ngOnDestroy(): void { }
+	ngOnDestroy(): void {
+		this.retryUntil$.unsubscribe();
+	}
 
 	private _loadUploaderSettings() {
 		if (!this.store.user) {
@@ -265,9 +279,10 @@ export class ApplyJobManuallyComponent extends TranslationBaseComponent
 		}
 	}
 
-	/** Generate employee proposal text */
-	public async generateEmployeeProposal() {
-		/** Generate proposal for employee */
+	/** Create employee job application record. */
+
+	private async callPreProcessEmployeeJobApplication() {
+		/** Generate job application record for employee */
 		const employeeId = this.form.get('employeeId').value;
 		const rate = this.form.get('rate').value;
 
@@ -276,8 +291,7 @@ export class ApplyJobManuallyComponent extends TranslationBaseComponent
 		const { id: employeeJobPostId, isActive, isArchived } = this.employeeJobPost;
 
 		try {
-			this.loading = true;
-			/** Generate proposal request parameters */
+			/** Generate employee job application request parameters */
 			const generateProposalRequest = {
 				employeeId: employeeId,
 				proposalTemplate: proposalTemplate,
@@ -286,32 +300,88 @@ export class ApplyJobManuallyComponent extends TranslationBaseComponent
 				jobPost: jobPost,
 				providerCode: jobPost.providerCode,
 				providerJobId: jobPost.providerJobId,
+				isProposalGeneratedByAI: true,
 				jobStatus: jobPost.jobStatus,
 				jobType: jobPost.jobType,
 				jobDateCreated: jobPost.jobDateCreated,
 				rate: rate,
 				isActive: isActive,
 				isArchived: isArchived,
-				attachments: "{}",
-				qa: "{}",
-				terms: "{}"
-			}
-			const employeeJobApplication = await this.jobService.generateEmployeeProposal(generateProposalRequest);
-
-			/** If employee proposal generated successfully from Gauzy AI */
-			if (isNotEmpty(employeeJobApplication)) {
-				const { proposal } = employeeJobApplication;
-				this.form.patchValue({ details: proposal, proposal: proposal });
-			} else {
-				this.form.patchValue({ proposal: proposalTemplate, details: proposalTemplate });
-			}
+				attachments: '{}',
+				qa: '{}',
+				terms: '{}'
+			};
+			// send the employee job application
+			this.application$.next(await this.jobService.preProcessEmployeeJobApplication(generateProposalRequest));
 		} catch (error) {
-			/** Proposal text should be null, if proposal generation failed from Gauzy AI */
-			this.form.patchValue({ proposal: null, details: null });
-			console.error('Error while generating proposal text', error);
-		} finally {
-			this.loading = false;
+			console.error('Error while creating employee job application', error);
 		}
+	}
+
+	/**
+	 * Generate AI proposal for employee job application
+	 *
+	 * @param application
+	 */
+	public async generateAIProposal(employeeJobApplication: any) {
+		try {
+			const employeeJobApplicationId = employeeJobApplication.id;
+			await this.jobService.generateAIProposal(employeeJobApplicationId);
+
+			// Sleeps for 10 seconds before get proposal.
+			const sleepDelay = 10000;
+			await sleep(sleepDelay);
+
+			// try to get AI generated proposal for specific employee job application
+			await this.getAIGeneratedProposal(employeeJobApplicationId);
+		} catch (error) {
+			console.error('Error while initiate process for generate AI proposal by employee job application', error);
+		}
+	}
+
+	/**
+	 * Get AI generated proposal for employee job application
+	 * Every 3 seconds try to get proposal
+	 *
+	 * @param employeeJobApplicationId
+	 */
+	async getAIGeneratedProposal(employeeJobApplicationId: string) {
+		if (this.retryUntil$) {
+			this.retryUntil$.unsubscribe();
+		}
+		const retryDelay = 5000; // Delay between retries in milliseconds
+		// sleep for every 3 seconds
+
+		const source$ = timer(0, retryDelay);
+		this.retryUntil$ = source$
+			.pipe(
+				filter((timer) => !!timer),
+				tap(() => (this.loading = true)),
+				switchMap(() => this.jobService.getEmployeeJobApplication(employeeJobApplicationId)),
+				tap((application) => {
+					const { isProposalGeneratedByAI } = application;
+					// Stop making API calls as the desired parameter is found
+					if (isProposalGeneratedByAI) {
+						try {
+							/** If employee proposal generated successfully from Gauzy AI */
+							if (isNotEmpty(application)) {
+								const { proposal } = application;
+								this.form.patchValue({ details: proposal, proposal: proposal });
+							} else {
+								this.form.patchValue({
+									proposal: this.proposalTemplate,
+									details: this.proposalTemplate
+								});
+							}
+						} finally {
+							this.loading = false;
+							this.retryUntil$.unsubscribe();
+						}
+					}
+				}),
+				untilDestroyed(this)
+			)
+			.subscribe();
 	}
 
 	/**

@@ -14,6 +14,8 @@ export interface IApplyJobPostInput {
 	providerCode: string;
 	providerJobId: string;
 	proposal?: string;
+	isProposalGeneratedByAI?: boolean;
+	proposalTemplate?: string;
 	rate?: number;
 	details?: string;
 	attachments?: string;
@@ -111,7 +113,8 @@ export interface IJobPost {
 
 export enum JobPostSourceEnum {
 	UPWORK = 'upwork',
-	WEB = 'web'
+	WEB = 'web',
+	LINKEDIN = 'linkedin'
 }
 
 export enum JobPostStatusEnum {
