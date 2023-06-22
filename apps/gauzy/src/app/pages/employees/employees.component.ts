@@ -62,6 +62,7 @@ import { ServerDataSource } from '../../@core/utils/smart-table';
 import { ToggleFilterComponent } from "../../@shared/table-filters";
 import { DateFormatPipe } from '../../@shared/pipes';
 import { AllowScreenshotCaptureComponent } from '../../@shared/table-components';
+import { CardGridComponent } from '../../@shared/card-grid/card-grid.component';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -90,6 +91,13 @@ export class EmployeesComponent extends PaginationFilterBaseComponent
 		if (content) {
 			this.employeesTable = content;
 			this.onChangedSource();
+		}
+	}
+
+	private _grid: CardGridComponent;
+	@ViewChild('grid') set grid(content: CardGridComponent) {
+		if (content) {
+			this._grid = content;
 		}
 	}
 
@@ -217,6 +225,25 @@ export class EmployeesComponent extends PaginationFilterBaseComponent
 	selectEmployee({ isSelected, data }) {
 		this.disableButton = !isSelected;
 		this.selectedEmployee = isSelected ? data : null;
+		if (
+			this.dataLayoutStyle === ComponentLayoutStyleEnum.CARDS_GRID &&
+			this._grid
+		) {
+			if (
+				this._grid?.customComponentInstance()?.constructor ===
+				AllowScreenshotCaptureComponent
+			) {
+				this.disableButton = true;
+				const instance: AllowScreenshotCaptureComponent =
+					this._grid.customComponentInstance<AllowScreenshotCaptureComponent>();
+				this._updateAllowScreenshotCapture(
+					instance.rowData,
+					!instance.allowed
+				);
+				this._grid.clearCustomViewComponent();
+				this.clearItem();
+			}
+		}
 	}
 
 	async add() {
@@ -750,9 +777,6 @@ export class EmployeesComponent extends PaginationFilterBaseComponent
 			);
 		} catch (error) {
 			this.errorHandler.handleError(error)
-		} finally {
-			this._refresh$.next(true);
-			this.employees$.next(true);
 		}
 	}
 

@@ -1,22 +1,10 @@
-import {
-	Component,
-	OnDestroy,
-	OnInit,
-	Input,
-	ViewChild,
-	ElementRef
-} from '@angular/core';
+import { Component, OnDestroy, OnInit, Input, ViewChild, ElementRef } from '@angular/core';
 
 import { Output, EventEmitter } from '@angular/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import {
-	BehaviorSubject,
-	combineLatest,
-	debounceTime,
-	filter,
-	Observable
-} from 'rxjs';
+import { BehaviorSubject, combineLatest, debounceTime, filter, Observable } from 'rxjs';
 import { tap } from 'rxjs/operators';
+import { CustomViewComponent } from './card-grid-custom.component';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -43,6 +31,8 @@ export class CardGridComponent implements OnInit, OnDestroy {
 		return this._grid$.getValue();
 	}
 	private _showMore: boolean = false;
+
+	private _selectedCustomViewComponent: CustomViewComponent;
 
 	/*
 	 * Getter & Setter for dynamic columns settings
@@ -93,6 +83,21 @@ export class CardGridComponent implements OnInit, OnDestroy {
 		this.onSelectedItem.emit(this.selected);
 	}
 
+	public selectCustomViewComponent(component: CustomViewComponent) {
+		this._selectedCustomViewComponent = component;
+	}
+
+	public customComponentInstance<T>(): T {
+		return this._selectedCustomViewComponent?.customComponent?.instance as T;
+	}
+
+	public clearCustomViewComponent(): void {
+		if (this._selectedCustomViewComponent) {
+			this._selectedCustomViewComponent = null;
+			this.selected = { isSelected: false, data: null };
+		}
+	}
+
 	onScroll() {
 		this.scroll.emit();
 	}
@@ -127,9 +132,7 @@ export class CardGridComponent implements OnInit, OnDestroy {
 	}
 
 	private _hasScrollbar(grid: ElementRef) {
-		return (
-			grid.nativeElement.scrollHeight > grid.nativeElement.clientHeight
-		);
+		return grid.nativeElement.scrollHeight > grid.nativeElement.clientHeight;
 	}
 
 	public get showMore(): boolean {
