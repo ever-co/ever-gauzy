@@ -31,9 +31,7 @@ import { ckEditorConfig } from './../../../../../@shared/ckeditor.config';
 	templateUrl: './apply-job-manually.component.html',
 	styleUrls: ['./apply-job-manually.component.scss']
 })
-export class ApplyJobManuallyComponent extends TranslationBaseComponent
-	implements AfterViewInit, OnInit, OnDestroy {
-
+export class ApplyJobManuallyComponent extends TranslationBaseComponent implements AfterViewInit, OnInit, OnDestroy {
 	public JobPostSourceEnum: typeof JobPostSourceEnum = JobPostSourceEnum;
 	public FormHelpers: typeof FormHelpers = FormHelpers;
 	public ckConfig: CKEditor4.Config = ckEditorConfig;
@@ -284,7 +282,6 @@ export class ApplyJobManuallyComponent extends TranslationBaseComponent
 	/** Create employee job application record. */
 
 	private async callPreProcessEmployeeJobApplication() {
-
 		/** Generate job application record for employee */
 		const employeeId = this.form.get('employeeId').value;
 		const rate = this.form.get('rate').value;
@@ -310,17 +307,12 @@ export class ApplyJobManuallyComponent extends TranslationBaseComponent
 				rate: rate,
 				isActive: isActive,
 				isArchived: isArchived,
-				attachments: "{}",
-				qa: "{}",
-				terms: "{}"
-			}
+				attachments: '{}',
+				qa: '{}',
+				terms: '{}'
+			};
 			// send the employee job application
-			this.application$.next(
-				await this.jobService.preProcessEmployeeJobApplication(
-					generateProposalRequest
-				)
-			);
-
+			this.application$.next(await this.jobService.preProcessEmployeeJobApplication(generateProposalRequest));
 		} catch (error) {
 			console.error('Error while creating employee job application', error);
 		}
@@ -361,30 +353,35 @@ export class ApplyJobManuallyComponent extends TranslationBaseComponent
 		// sleep for every 3 seconds
 
 		const source$ = timer(0, retryDelay);
-		this.retryUntil$ = source$.pipe(
-			filter((timer) => !!timer),
-			tap(() => this.loading = true),
-			switchMap(() => this.jobService.getEmployeeJobApplication(employeeJobApplicationId)),
-			tap((application) => {
-				const { isProposalGeneratedByAI } = application;
-				// Stop making API calls as the desired parameter is found
-				if (isProposalGeneratedByAI) {
-					try {
-						/** If employee proposal generated successfully from Gauzy AI */
-						if (isNotEmpty(application)) {
-							const { proposal } = application;
-							this.form.patchValue({ details: proposal, proposal: proposal });
-						} else {
-							this.form.patchValue({ proposal: this.proposalTemplate, details: this.proposalTemplate });
+		this.retryUntil$ = source$
+			.pipe(
+				filter((timer) => !!timer),
+				tap(() => (this.loading = true)),
+				switchMap(() => this.jobService.getEmployeeJobApplication(employeeJobApplicationId)),
+				tap((application) => {
+					const { isProposalGeneratedByAI } = application;
+					// Stop making API calls as the desired parameter is found
+					if (isProposalGeneratedByAI) {
+						try {
+							/** If employee proposal generated successfully from Gauzy AI */
+							if (isNotEmpty(application)) {
+								const { proposal } = application;
+								this.form.patchValue({ details: proposal, proposal: proposal });
+							} else {
+								this.form.patchValue({
+									proposal: this.proposalTemplate,
+									details: this.proposalTemplate
+								});
+							}
+						} finally {
+							this.loading = false;
+							this.retryUntil$.unsubscribe();
 						}
-					} finally {
-						this.loading = false;
-						this.retryUntil$.unsubscribe();
 					}
-				}
-			}),
-			untilDestroyed(this)
-		).subscribe();
+				}),
+				untilDestroyed(this)
+			)
+			.subscribe();
 	}
 
 	/**
