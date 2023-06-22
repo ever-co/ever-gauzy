@@ -286,6 +286,7 @@ export class ApplyJobManuallyComponent extends TranslationBaseComponent
 				jobPost: jobPost,
 				providerCode: jobPost.providerCode,
 				providerJobId: jobPost.providerJobId,
+				isProposalGeneratedByAI: false,
 				jobStatus: jobPost.jobStatus,
 				jobType: jobPost.jobType,
 				jobDateCreated: jobPost.jobDateCreated,
