@@ -16,31 +16,23 @@ import { API_PREFIX } from '../constants/app.constants';
 	providedIn: 'root'
 })
 export class JobService {
-	constructor(private http: HttpClient) { }
+	constructor(private http: HttpClient) {}
 
 	getJobs(request?: IGetEmployeeJobPostInput) {
 		return firstValueFrom(
-			this.http
-				.get<IPagination<IEmployeeJobPost>>(`${API_PREFIX}/employee-job`, {
-					params: request ? toParams(request) : {}
-				})
+			this.http.get<IPagination<IEmployeeJobPost>>(`${API_PREFIX}/employee-job`, {
+				params: request ? toParams(request) : {}
+			})
 		);
 	}
 
 	hideJob(request: IVisibilityJobPostInput) {
-		return firstValueFrom(
-			this.http
-				.post<boolean>(`${API_PREFIX}/employee-job/hide`, request)
-		);
+		return firstValueFrom(this.http.post<boolean>(`${API_PREFIX}/employee-job/hide`, request));
 	}
 
 	applyJob(request: IApplyJobPostInput) {
 		return firstValueFrom(
-			this.http
-				.post<IUpdateEmployeeJobPostAppliedResult>(
-					`${API_PREFIX}/employee-job/applied`,
-					request
-				)
+			this.http.post<IUpdateEmployeeJobPostAppliedResult>(`${API_PREFIX}/employee-job/applied`, request)
 		);
 	}
 
@@ -52,9 +44,7 @@ export class JobService {
 	 * @returns
 	 */
 	preProcessEmployeeJobApplication(request: any): Promise<IApplyJobPostInput> {
-		return firstValueFrom(
-			this.http.post<any>(`${API_PREFIX}/employee-job/pre-process`, request)
-		);
+		return firstValueFrom(this.http.post<any>(`${API_PREFIX}/employee-job/pre-process`, request));
 	}
 
 	/**

@@ -1,14 +1,4 @@
-import {
-	Controller,
-	HttpStatus,
-	Get,
-	Query,
-	Post,
-	Body,
-	UsePipes,
-	ValidationPipe,
-	Param
-} from '@nestjs/common';
+import { Controller, HttpStatus, Get, Query, Post, Body, UsePipes, ValidationPipe, Param } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import {
 	IApplyJobPostInput,
@@ -24,9 +14,7 @@ import { EmployeeJobPost } from './employee-job.entity';
 @ApiTags('EmployeeJobPost')
 @Controller()
 export class EmployeeJobPostController {
-	constructor(
-		private readonly employeeJobPostService: EmployeeJobPostService
-	) { }
+	constructor(private readonly employeeJobPostService: EmployeeJobPostService) {}
 
 	@ApiOperation({ summary: 'Find all employee job posts' })
 	@ApiResponse({
@@ -39,9 +27,7 @@ export class EmployeeJobPostController {
 		description: 'Record not found'
 	})
 	@Get()
-	async findAll(
-		@Query() input: IGetEmployeeJobPostInput
-	): Promise<IPagination<IEmployeeJobPost>> {
+	async findAll(@Query() input: IGetEmployeeJobPostInput): Promise<IPagination<IEmployeeJobPost>> {
 		return await this.employeeJobPostService.findAll(input);
 	}
 
@@ -57,9 +43,7 @@ export class EmployeeJobPostController {
 	})
 	@UsePipes(new ValidationPipe())
 	@Post('applied')
-	async updateApplied(
-		@Body() input: IApplyJobPostInput
-	) {
+	async updateApplied(@Body() input: IApplyJobPostInput) {
 		return await this.employeeJobPostService.updateApplied(input);
 	}
 
@@ -86,9 +70,7 @@ export class EmployeeJobPostController {
 	 */
 	@ApiOperation({ summary: 'Create employee job application record' })
 	@Post('/pre-process')
-	async preProcessEmployeeJobApplication(
-		@Body() input: IApplyJobPostInput
-	): Promise<Partial<IApplyJobPostInput>> {
+	async preProcessEmployeeJobApplication(@Body() input: IApplyJobPostInput): Promise<Partial<IApplyJobPostInput>> {
 		return await this.employeeJobPostService.preProcessEmployeeJobApplication(input);
 	}
 
@@ -101,7 +83,7 @@ export class EmployeeJobPostController {
 	@ApiOperation({ summary: 'Get AI generated proposal for employee job application.' })
 	@Get('/application/:employeeJobApplicationId')
 	async getEmployeeJobApplication(
-		@Param('employeeJobApplicationId', UUIDValidationPipe) employeeJobApplicationId: string,
+		@Param('employeeJobApplicationId', UUIDValidationPipe) employeeJobApplicationId: string
 	) {
 		return await this.employeeJobPostService.getEmployeeJobApplication(employeeJobApplicationId);
 	}
@@ -114,9 +96,7 @@ export class EmployeeJobPostController {
 	 */
 	@ApiOperation({ summary: 'Generate AI proposal for employee job application' })
 	@Post('/generate-proposal/:employeeJobApplicationId')
-	async generateAIProposal(
-		@Param('employeeJobApplicationId', UUIDValidationPipe) employeeJobApplicationId: string,
-	) {
+	async generateAIProposal(@Param('employeeJobApplicationId', UUIDValidationPipe) employeeJobApplicationId: string) {
 		return await this.employeeJobPostService.generateAIProposal(employeeJobApplicationId);
 	}
 }

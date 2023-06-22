@@ -80,10 +80,7 @@ export class GauzyAIService {
 		});
 	}
 
-	constructor(
-		private readonly _configService: ConfigService,
-		private readonly _http: HttpService
-	) {
+	constructor(private readonly _configService: ConfigService, private readonly _http: HttpService) {
 		try {
 			this.gauzyAIGraphQLEndpoint = this._configService.get<string>('guazyAI.gauzyAIGraphQLEndpoint');
 			console.log(chalk.magenta(`GauzyAI GraphQL Endpoint: ${this.gauzyAIGraphQLEndpoint}`));
@@ -139,16 +136,14 @@ export class GauzyAIService {
 	 * @param params
 	 * @returns
 	 */
-	public async preProcessEmployeeJobApplication(
-		params: IApplyJobPostInput
-	): Promise<any> {
+	public async preProcessEmployeeJobApplication(params: IApplyJobPostInput): Promise<any> {
 		// First we need to get employee id because we have only externalId
 		params.employeeId = await this.getEmployeeGauzyAIId(params.employeeId);
 
 		return firstValueFrom(
-			this._http.post('api/employee/job/application/pre-process', params).pipe(
-				map((resp: AxiosResponse<any, any>) => resp.data),
-			)
+			this._http
+				.post('api/employee/job/application/pre-process', params)
+				.pipe(map((resp: AxiosResponse<any, any>) => resp.data))
 		);
 	}
 
@@ -162,7 +157,7 @@ export class GauzyAIService {
 		return firstValueFrom(
 			this._http.post(`api/employee/job/application/generate-proposal/${employeeJobApplicationId}`).pipe(
 				tap((resp: AxiosResponse<any, any>) => console.log(resp)),
-				map((resp: AxiosResponse<any, any>) => resp.data),
+				map((resp: AxiosResponse<any, any>) => resp.data)
 			)
 		);
 	}
@@ -175,9 +170,9 @@ export class GauzyAIService {
 	 */
 	public async getEmployeeJobApplication(employeeJobApplicationId: string): Promise<void> {
 		return firstValueFrom(
-			this._http.get(`api/employee/job/application/${employeeJobApplicationId}`).pipe(
-				map((resp: AxiosResponse<any, any>) => resp.data),
-			)
+			this._http
+				.get(`api/employee/job/application/${employeeJobApplicationId}`)
+				.pipe(map((resp: AxiosResponse<any, any>) => resp.data))
 		);
 	}
 
@@ -378,24 +373,22 @@ export class GauzyAIService {
 			};
 
 			const createOneEmployeeJobApplicationMutation: DocumentNode<any> = gql`
-				mutation createOneEmployeeJobApplication(
-					$input: CreateOneEmployeeJobApplicationInput!
-				) {
+				mutation createOneEmployeeJobApplication($input: CreateOneEmployeeJobApplicationInput!) {
 					createOneEmployeeJobApplication(input: $input) {
-						employeeId,
-						jobPostId,
-						proposal,
-						rate,
-						attachments,
-						appliedDate,
-						employeeJobPostId,
-						isActive,
-						isArchived,
-						providerCode,
-						providerJobId,
-						jobType,
-						jobStatus,
-						terms,
+						employeeId
+						jobPostId
+						proposal
+						rate
+						attachments
+						appliedDate
+						employeeJobPostId
+						isActive
+						isArchived
+						providerCode
+						providerJobId
+						jobType
+						jobStatus
+						terms
 						qa
 					}
 				}
@@ -952,38 +945,38 @@ export class GauzyAIService {
 				employeeId: undefined,
 				...(filters && filters.jobDateCreated
 					? {
-						jobDateCreated: filters.jobDateCreated
-					}
+							jobDateCreated: filters.jobDateCreated
+					  }
 					: {}),
 				...(filters && filters.title
 					? {
-						jobPost: {
-							title: {
-								iLike: `%${filters.title}%`
+							jobPost: {
+								title: {
+									iLike: `%${filters.title}%`
+								}
 							}
-						}
-					}
+					  }
 					: {}),
 				...(filters && filters.jobType
 					? {
-						jobType: {
-							in: filters.jobType
-						}
-					}
+							jobType: {
+								in: filters.jobType
+							}
+					  }
 					: {}),
 				...(filters && filters.jobStatus
 					? {
-						jobStatus: {
-							in: filters.jobStatus
-						}
-					}
+							jobStatus: {
+								in: filters.jobStatus
+							}
+					  }
 					: {}),
 				...(filters && filters.jobSource
 					? {
-						providerCode: {
-							in: filters.jobSource
-						}
-					}
+							providerCode: {
+								in: filters.jobSource
+							}
+					  }
 					: {})
 			};
 

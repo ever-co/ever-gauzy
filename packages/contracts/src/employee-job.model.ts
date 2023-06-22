@@ -114,24 +114,24 @@ export interface IJobPost {
 export enum JobPostSourceEnum {
 	UPWORK = 'upwork',
 	WEB = 'web',
-	LINKEDIN = 'linkedin',
+	LINKEDIN = 'linkedin'
 }
 
 export enum JobPostStatusEnum {
 	OPEN = 'open',
 	APPLIED = 'applied',
 	COMPLETED = 'completed',
-	CLOSED = 'closed',
+	CLOSED = 'closed'
 }
 
 export enum JobPostTypeEnum {
 	HOURLY = 'hourly',
-	FIXED = 'fixed',
+	FIXED = 'fixed'
 }
 
 export enum JobSearchTabsEnum {
 	ACTIONS = 'ACTIONS',
-	SEARCH = 'SEARCH',
+	SEARCH = 'SEARCH'
 }
 
 export interface IUpdateEmployeeJobPostAppliedResult {
