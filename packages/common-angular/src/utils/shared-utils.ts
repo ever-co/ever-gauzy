@@ -368,3 +368,13 @@ export function compressImage(base64Image: string, width: number, height: number
 		img.onerror = error => reject(error);
 	})
 }
+
+/**
+ * How To Make A Sleep Function In TypeScript?
+ *
+ * @param ms
+ * @returns
+ */
+export function sleep(ms: number) {
+	return new Promise((r) => setTimeout(r, ms));
+}
