@@ -732,14 +732,15 @@ export class PagesComponent extends TranslationBaseComponent
 					featureKey: FeatureEnum.FEATURE_CONTACT
 				},
 				children: [
-					{
-						title: 'Visitors',
-						icon: 'fas fa-id-badge',
-						link: `/pages/contacts/visitors`,
-						data: {
-							translationKey: 'CONTACTS_PAGE.VISITORS'
-						}
-					},
+					// TODO: Before to uncomment, be sure that page vistors is implemented
+					// {
+					// 	title: 'Visitors',
+					// 	icon: 'fas fa-id-badge',
+					// 	link: `/pages/contacts/visitors`,
+					// 	data: {
+					// 		translationKey: 'CONTACTS_PAGE.VISITORS'
+					// 	}
+					// },
 					{
 						title: 'Leads',
 						icon: 'fas fa-id-badge',
