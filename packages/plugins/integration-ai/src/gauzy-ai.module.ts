@@ -9,8 +9,12 @@ import gauzyAI from './config/gauzy-ai';
 		HttpModule.registerAsync({
 			imports: [ConfigModule],
 			useFactory: (configService: ConfigService) => ({
-				baseURL: configService.get<string>('guazyAI.gauzyAIEndpoint'),
-				timeout: configService.get<number>('guazyAI.gauzyAIRequestTimeout'),
+				baseURL: configService.get<string>(
+					'guazyAI.gauzyAIRESTEndpoint'
+				),
+				timeout: configService.get<number>(
+					'guazyAI.gauzyAIRequestTimeout'
+				),
 				maxRedirects: 5,
 				headers: {
 					'Content-Type': 'application/json',
@@ -24,4 +28,4 @@ import gauzyAI from './config/gauzy-ai';
 	providers: [GauzyAIService, ConfigService],
 	exports: [GauzyAIService],
 })
-export class GauzyAIModule { }
+export class GauzyAIModule {}

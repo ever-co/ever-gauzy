@@ -19,7 +19,7 @@ import {
 	ITwitterConfig,
 	IUnleashConfig,
 	IUpworkConfig,
-	IWasabiConfig
+	IWasabiConfig,
 } from '@gauzy/common';
 
 export type LogLevel = 'debug' | 'info' | 'warn' | 'error';
@@ -127,6 +127,12 @@ export interface IEnvironment {
 	 * Endpoint for Gauzy AI API (optional), e.g.: http://localhost:3005/graphql
 	 */
 	gauzyAIGraphQLEndpoint?: string;
+
+	/**
+	 * Endpoint for Gauzy AI REST API (optional), e.g.: http://localhost:3005/api
+	 */
+	gauzyAIRESTEndpoint?: string;
+
 	gauzyCloudEndpoint?: string;
 
 	smtpConfig?: ISMTPConfig;
