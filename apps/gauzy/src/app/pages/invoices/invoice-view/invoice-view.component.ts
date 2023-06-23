@@ -143,4 +143,16 @@ export class InvoiceViewComponent
 			}
 		}
 	}
+
+	public async print(): Promise<void> {
+		const { id: invoiceId } = this.invoice;
+		const blob = await firstValueFrom(
+			this.invoicesService.downloadInvoicePdf(invoiceId)
+		);
+		const fileURL = URL.createObjectURL(blob);
+		const iframe = document.createElement('iframe');
+		iframe.src = fileURL;
+		document.body.appendChild(iframe);
+		iframe.onload = () => iframe.contentWindow.print();
+	}
 }
