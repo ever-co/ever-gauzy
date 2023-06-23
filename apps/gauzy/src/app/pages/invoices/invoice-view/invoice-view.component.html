@@ -27,6 +27,7 @@
 			class="action secondary"
 			[disabled]="disableButton"
 			size="small"
+			(click)="print()"
 		>
 			<nb-icon icon="printer-outline" pack="eva"></nb-icon>
 			{{ 'BUTTONS.PRINT' | translate }}
