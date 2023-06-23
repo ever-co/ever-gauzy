@@ -18,6 +18,7 @@ import { TranslateModule } from '../../@shared/translate/translate.module';
 import { HeaderTitleModule } from '../../@shared/components/header-title/header-title.module';
 import { GauzyButtonActionModule } from '../../@shared/gauzy-button-action/gauzy-button-action.module';
 import { NoDataMessageModule } from '../../@shared/no-data-message/no-data-message.module';
+import { DirectivesModule } from '../../@shared/directives/directives.module';
 
 
 @NgModule({
@@ -37,7 +38,8 @@ import { NoDataMessageModule } from '../../@shared/no-data-message/no-data-messa
 		HeaderTitleModule,
 		NgxPermissionsModule.forChild(),
 		GauzyButtonActionModule,
-		NoDataMessageModule
+		NoDataMessageModule,
+		DirectivesModule
 	],
 	declarations: [ExpenseRecurringComponent]
 })
