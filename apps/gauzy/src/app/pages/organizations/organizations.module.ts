@@ -33,6 +33,7 @@ import { TranslateModule } from '../../@shared/translate/translate.module';
 import { GauzyButtonActionModule } from '../../@shared/gauzy-button-action/gauzy-button-action.module';
 import { CardGridModule } from '../../@shared/card-grid/card-grid.module';
 import { PaginationModule } from '../../@shared/pagination/pagination.module';
+import { DirectivesModule } from '../../@shared/directives/directives.module';
 
 @NgModule({
 	imports: [
@@ -65,7 +66,8 @@ import { PaginationModule } from '../../@shared/pagination/pagination.module';
 		NgxPermissionsModule.forChild(),
 		GauzyButtonActionModule,
 		CardGridModule,
-		PaginationModule
+		PaginationModule,
+		DirectivesModule
 	],
 	declarations: [
 		OrganizationsComponent,
