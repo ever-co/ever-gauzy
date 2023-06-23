@@ -79,7 +79,7 @@
 		</ng-template>
 		<ng-template #gridLayout>
 			<div class="grid">
-				<ga-card-grid 
+				<ga-card-grid
 					[totalItems]="pagination?.totalItems"
 					[settings]="settingsSmartTable"
 					[source]="users"
@@ -99,6 +99,7 @@
 				status="basic"
 				class="action secondary"
 				size="small"
+				underContruction
 			>
 				<nb-icon class="mr-1" icon="eye-outline"></nb-icon
 				>{{ 'BUTTONS.VIEW' | translate }}
