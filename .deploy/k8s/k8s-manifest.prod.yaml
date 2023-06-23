@@ -165,7 +165,7 @@ spec:
                         value: '$GAUZY_AI_GRAPHQL_ENDPOINT'
                       - name: GAUZY_AI_REST_ENDPOINT
                         value: '$GAUZY_AI_REST_ENDPOINT'
-					  - name: UNLEASH_APP_NAME
+                      - name: UNLEASH_APP_NAME
                         value: '$UNLEASH_APP_NAME'
                       - name: UNLEASH_API_URL
                         value: '$UNLEASH_API_URL'
