@@ -81,6 +81,7 @@ jobs:
                   UPWORK_CALLBACK_URL: '${{ secrets.UPWORK_CALLBACK_URL }}'
                   FILE_PROVIDER: '${{ secrets.FILE_PROVIDER }}'
                   GAUZY_AI_GRAPHQL_ENDPOINT: '${{ secrets.GAUZY_AI_GRAPHQL_ENDPOINT }}'
+                  GAUZY_AI_REST_ENDPOINT: '${{ secrets.GAUZY_AI_REST_ENDPOINT }}'
                   UNLEASH_APP_NAME: '${{ secrets.UNLEASH_APP_NAME }}'
                   UNLEASH_API_URL: '${{ secrets.UNLEASH_API_URL }}'
                   UNLEASH_INSTANCE_ID: '${{ secrets.UNLEASH_INSTANCE_ID }}'
