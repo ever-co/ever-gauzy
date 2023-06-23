@@ -1,6 +1,17 @@
-import { BadRequestException, ConflictException, Injectable, HttpStatus } from '@nestjs/common';
+import {
+	BadRequestException,
+	ConflictException,
+	Injectable,
+	HttpStatus,
+	NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { MoreThanOrEqual, Repository, SelectQueryBuilder, IsNull } from 'typeorm';
+import {
+	MoreThanOrEqual,
+	Repository,
+	SelectQueryBuilder,
+	IsNull,
+} from 'typeorm';
 import { JwtPayload, sign } from 'jsonwebtoken';
 import { environment } from '@gauzy/config';
 import { IAppIntegrationConfig } from '@gauzy/common';
@@ -8,8 +19,10 @@ import {
 	IOrganizationTeamJoinRequest,
 	IOrganizationTeamJoinRequestCreateInput,
 	IOrganizationTeamJoinRequestValidateInput,
+	IRole,
 	LanguagesEnum,
-	OrganizationTeamJoinRequestStatusEnum
+	OrganizationTeamJoinRequestStatusEnum,
+	RolesEnum,
 } from '@gauzy/contracts';
 import * as moment from 'moment';
 import { TenantAwareCrudService } from './../core/crud';
@@ -17,6 +30,9 @@ import { generateRandomInteger } from './../core/utils';
 import { EmailService } from './../email/email.service';
 import { OrganizationTeamJoinRequest } from './organization-team-join-request.entity';
 import { OrganizationTeamService } from './../organization-team/organization-team.service';
+import { OrganizationTeamEmployee, RequestContext, User } from 'core';
+import { InviteService } from '../invite/invite.service';
+import { RoleService } from 'role/role.service';
 
 @Injectable()
 export class OrganizationTeamJoinRequestService extends TenantAwareCrudService<OrganizationTeamJoinRequest> {
@@ -25,7 +41,15 @@ export class OrganizationTeamJoinRequestService extends TenantAwareCrudService<O
 		private readonly _organizationTeamJoinRequestRepository: Repository<OrganizationTeamJoinRequest>,
 
 		private readonly _organizationTeamService: OrganizationTeamService,
-		private readonly _emailService: EmailService
+		private readonly _emailService: EmailService,
+		private readonly _inviteService: InviteService,
+		private readonly _roleService: RoleService,
+
+		@InjectRepository(User)
+		protected readonly userRepository: Repository<User>,
+
+		@InjectRepository(OrganizationTeamEmployee)
+		protected readonly organizationTeamEmployeeRepository: Repository<OrganizationTeamEmployee>
 	) {
 		super(_organizationTeamJoinRequestRepository);
 	}
@@ -37,7 +61,8 @@ export class OrganizationTeamJoinRequestService extends TenantAwareCrudService<O
 	 * @returns
 	 */
 	async create(
-		entity: IOrganizationTeamJoinRequestCreateInput & Partial<IAppIntegrationConfig>,
+		entity: IOrganizationTeamJoinRequestCreateInput &
+			Partial<IAppIntegrationConfig>,
 		languageCode?: LanguagesEnum
 	): Promise<IOrganizationTeamJoinRequest> {
 		const { organizationTeamId, email } = entity;
@@ -46,23 +71,29 @@ export class OrganizationTeamJoinRequestService extends TenantAwareCrudService<O
 		const request = await this.repository.findOne({
 			where: {
 				organizationTeamId,
-				email
-			}
+				email,
+			},
 		});
 		if (!!request) {
-			throw new ConflictException('You have sent already join request for this team, please wait for manager response.');
+			throw new ConflictException(
+				'You have sent already join request for this team, please wait for manager response.'
+			);
 		}
 
 		/** create new team join request */
 		try {
-			const organizationTeam = await this._organizationTeamService.findOneByIdString(organizationTeamId, {
-				where: {
-					public: true
-				},
-				relations: {
-					organization: true
-				}
-			});
+			const organizationTeam =
+				await this._organizationTeamService.findOneByIdString(
+					organizationTeamId,
+					{
+						where: {
+							public: true,
+						},
+						relations: {
+							organization: true,
+						},
+					}
+				);
 			const { organization, organizationId, tenantId } = organizationTeam;
 			const code = generateRandomInteger(6);
 
@@ -71,23 +102,24 @@ export class OrganizationTeamJoinRequestService extends TenantAwareCrudService<O
 				tenantId,
 				organizationId,
 				organizationTeamId,
-				code
+				code,
 			};
 			/** Generate JWT token using above JWT payload */
 			const token: string = sign(payload, environment.JWT_SECRET, {
-				expiresIn: `${environment.TEAM_JOIN_REQUEST_EXPIRATION_TIME}s`
+				expiresIn: `${environment.TEAM_JOIN_REQUEST_EXPIRATION_TIME}s`,
 			});
 
-			const organizationTeamJoinRequest: IOrganizationTeamJoinRequest = await this.repository.save(
-				this.repository.create({
-					...entity,
-					organizationId,
-					tenantId,
-					code,
-					token,
-					status: null
-				})
-			);
+			const organizationTeamJoinRequest: IOrganizationTeamJoinRequest =
+				await this.repository.save(
+					this.repository.create({
+						...entity,
+						organizationId,
+						tenantId,
+						code,
+						token,
+						status: null,
+					})
+				);
 
 			/** Place here organization team join request email to send verification code*/
 			let { appName, appLogo, appSignature, appLink } = entity;
@@ -100,13 +132,15 @@ export class OrganizationTeamJoinRequestService extends TenantAwareCrudService<O
 					appName,
 					appLogo,
 					appSignature,
-					appLink
+					appLink,
 				}
 			);
 
 			return organizationTeamJoinRequest;
 		} catch (error) {
-			throw new BadRequestException('Error while requesting join organization team');
+			throw new BadRequestException(
+				'Error while requesting join organization team'
+			);
 		}
 	}
 
@@ -126,25 +160,26 @@ export class OrganizationTeamJoinRequestService extends TenantAwareCrudService<O
 				select: {
 					id: true,
 					email: true,
-					organizationTeamId: true
-				}
+					organizationTeamId: true,
+				},
 			});
-			query.where((qb: SelectQueryBuilder<OrganizationTeamJoinRequest>) => {
-				qb.andWhere({
-					email,
-					organizationTeamId,
-					expiredAt: MoreThanOrEqual(new Date()),
-					status: IsNull()
-				})
-				qb.andWhere([
-					{
-						code
-					},
-					{
-						token
-					}
-				]);
-			}
+			query.where(
+				(qb: SelectQueryBuilder<OrganizationTeamJoinRequest>) => {
+					qb.andWhere({
+						email,
+						organizationTeamId,
+						expiredAt: MoreThanOrEqual(new Date()),
+						status: IsNull(),
+					});
+					qb.andWhere([
+						{
+							code,
+						},
+						{
+							token,
+						},
+					]);
+				}
 			);
 			const record = await query.getOneOrFail();
 
@@ -175,9 +210,9 @@ export class OrganizationTeamJoinRequestService extends TenantAwareCrudService<O
 				},
 				relations: {
 					organizationTeam: {
-						organization: true
-					}
-				}
+						organization: true,
+					},
+				},
 			});
 
 			const code = generateRandomInteger(6);
@@ -228,6 +263,125 @@ export class OrganizationTeamJoinRequestService extends TenantAwareCrudService<O
 			return new Object({
 				status: HttpStatus.OK,
 				message: `OK`,
+			});
+		}
+	}
+
+	async acceptRequestToJoin(
+		id: string,
+		action: OrganizationTeamJoinRequestStatusEnum,
+		languageCode: LanguagesEnum
+	) {
+		const tenantId = RequestContext.currentTenantId();
+		const currentUserId = RequestContext.currentUserId();
+
+		const request = await this.repository.findOne({
+			where: {
+				id,
+				tenantId,
+			},
+		});
+		if (!request) {
+			throw new NotFoundException('Request not found.');
+		}
+
+		/**
+		 * ACCEPTED
+		 */
+		if (action === OrganizationTeamJoinRequestStatusEnum.ACCEPTED) {
+			/**
+			 * Fetch user if already present in current tenant
+			 */
+			let currentTenantUser: User = await this.userRepository.findOne({
+				where: {
+					email: request.email,
+					tenantId,
+				},
+				relations: {
+					tenant: true,
+					role: true,
+					employee: true,
+				},
+			});
+
+			/**
+			 * Accepted Case - 1
+			 * Current user is already part of tenant as separate user
+			 */
+			if (currentTenantUser) {
+				/**
+				 * Check if user is already part of requested team
+				 */
+				let employeePresentInTeam = null;
+				try {
+					employeePresentInTeam =
+						await this._organizationTeamService.findOneByWhereOptions(
+							{
+								members: {
+									employeeId: currentTenantUser.employeeId,
+								},
+								id: request.organizationTeamId,
+							}
+						);
+				} catch (error) {}
+
+				/**
+				 * Add employee to team
+				 */
+				if (!employeePresentInTeam) {
+					await this.organizationTeamEmployeeRepository.save({
+						employeeId: currentTenantUser.employeeId,
+						organizationTeamId: request.organizationTeamId,
+						tenantId,
+						organizationId: request.organizationId,
+					});
+					await this.repository.update(id, {
+						status: OrganizationTeamJoinRequestStatusEnum.ACCEPTED,
+						userId: currentTenantUser.id,
+					});
+				}
+			}
+
+			/**
+			 * Accepted Case - 2
+			 * Current user is not belong to this tenant
+			 */
+			if (!currentTenantUser) {
+				const names = request?.fullName?.split(' ');
+
+				const role: IRole =
+					await this._roleService.findOneByWhereOptions({
+						name: RolesEnum.EMPLOYEE,
+					});
+				const newTenantUser = await this._inviteService.createUser(
+					{
+						user: {
+							firstName:
+								(names && names.length && names[0]) || '',
+							lastName: (names && names.length && names[1]) || '',
+							email: request.email,
+							tenantId: tenantId,
+							role: role,
+						},
+						organizationId: request.organizationId,
+						createdById: currentUserId,
+					},
+					request.organizationTeamId,
+					languageCode
+				);
+				await this.repository.update(id, {
+					status: OrganizationTeamJoinRequestStatusEnum.ACCEPTED,
+					userId: newTenantUser.id,
+				});
+			}
+		}
+
+		/**
+		 * REJECTED
+		 */
+		if (action === OrganizationTeamJoinRequestStatusEnum.REJECTED) {
+			await this.repository.update(id, {
+				status: OrganizationTeamJoinRequestStatusEnum.REJECTED,
 			});
 		}
 	}
