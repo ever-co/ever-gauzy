@@ -1,7 +1,27 @@
-import { Body, Controller, Get, HttpCode, HttpStatus, Post, Query, UseGuards, UsePipes, ValidationPipe } from '@nestjs/common';
+import {
+	Body,
+	Controller,
+	Get,
+	HttpCode,
+	HttpStatus,
+	Param,
+	Post,
+	Put,
+	Query,
+	Req,
+	UseGuards,
+	UsePipes,
+	ValidationPipe,
+} from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { CommandBus } from '@nestjs/cqrs';
-import { IOrganizationTeamJoinRequest, IPagination, LanguagesEnum, PermissionsEnum } from '@gauzy/contracts';
+import {
+	IOrganizationTeamJoinRequest,
+	IPagination,
+	LanguagesEnum,
+	OrganizationTeamJoinRequestStatusEnum,
+	PermissionsEnum,
+} from '@gauzy/contracts';
 import { Public } from '@gauzy/common';
 import { PaginationParams } from './../core/crud';
 import { LanguageDecorator } from './../shared/decorators';
@@ -11,15 +31,16 @@ import { OrganizationTeamJoinRequestCreateCommand } from './commands';
 import { OrganizationTeamJoinRequest } from './organization-team-join-request.entity';
 import { OrganizationTeamJoinRequestService } from './organization-team-join-request.service';
 import { ValidateJoinRequestDTO } from './dto';
+import { I18nLang } from 'nestjs-i18n';
+import { UUIDValidationPipe } from 'shared';
 
 @ApiTags('OrganizationTeamJoinRequest')
 @Controller()
 export class OrganizationTeamJoinRequestController {
-
 	constructor(
 		private readonly _commandBus: CommandBus,
-		private readonly _organizationTeamJoinRequestService: OrganizationTeamJoinRequestService,
-	) { }
+		private readonly _organizationTeamJoinRequestService: OrganizationTeamJoinRequestService
+	) {}
 
 	/**
 	 * Validate organization team join request
@@ -48,7 +69,10 @@ export class OrganizationTeamJoinRequestController {
 	@HttpCode(HttpStatus.OK)
 	@Get()
 	@UseGuards(TenantPermissionGuard, PermissionGuard)
-	@Permissions(PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.ORG_TEAM_JOIN_REQUEST_VIEW)
+	@Permissions(
+		PermissionsEnum.ALL_ORG_VIEW,
+		PermissionsEnum.ORG_TEAM_JOIN_REQUEST_VIEW
+	)
 	@UsePipes(new ValidationPipe())
 	async findAll(
 		@Query() params: PaginationParams<OrganizationTeamJoinRequest>
@@ -71,10 +95,7 @@ export class OrganizationTeamJoinRequestController {
 		@LanguageDecorator() languageCode: LanguagesEnum
 	): Promise<Object> {
 		return await this._commandBus.execute(
-			new OrganizationTeamJoinRequestCreateCommand(
-				entity,
-				languageCode
-			)
+			new OrganizationTeamJoinRequestCreateCommand(entity, languageCode)
 		);
 	}
 
@@ -92,6 +113,24 @@ export class OrganizationTeamJoinRequestController {
 	): Promise<Object> {
 		return await this._organizationTeamJoinRequestService.resendConfirmationCode(
 			entity
+		);
+	}
+
+	@Put(':id/:action')
+	@UseGuards(TenantPermissionGuard, PermissionGuard)
+	@Permissions(
+		PermissionsEnum.ORG_TEAM_JOIN_REQUEST_VIEW,
+		PermissionsEnum.ORG_TEAM_JOIN_REQUEST_EDIT
+	)
+	public async acceptRequestToJoin(
+		@Param('id', UUIDValidationPipe) id: string,
+		@Param('action') action: OrganizationTeamJoinRequestStatusEnum,
+		@I18nLang() languageCode: LanguagesEnum
+	) {
+		return this._organizationTeamJoinRequestService.acceptRequestToJoin(
+			id,
+			action,
+			languageCode
 		);
 	}
 }
