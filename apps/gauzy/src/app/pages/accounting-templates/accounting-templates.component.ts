@@ -57,7 +57,7 @@ export class AccountingTemplatesComponent
 		this.subject$
 			.pipe(
 				debounceTime(200),
-				tap(() => this.getTemplate()),
+				tap(async () => await this.getTemplate()),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -128,7 +128,14 @@ export class AccountingTemplatesComponent
 			templateType,
 			organizationId,
 			tenantId
-		})
+		});
+
+		if (!result) {
+			this.previewTemplate = null;
+			this.templateEditor.value = null;
+			return;
+		}
+
 		this.templateEditor.value = result.mjml;
 
 		const html = await this.accountingTemplateService.generateTemplatePreview({
