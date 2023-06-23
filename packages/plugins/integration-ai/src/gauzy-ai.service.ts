@@ -13,7 +13,7 @@ import {
 	EmployeeQuery,
 	UpdateEmployee,
 	UpdateEmployeeJobPost,
-	UpworkJobsSearchCriterion
+	UpworkJobsSearchCriterion,
 } from './sdk/gauzy-ai-sdk';
 import { TypedDocumentNode as DocumentNode } from '@graphql-typed-document-node/core';
 import fetch from 'cross-fetch';
@@ -26,7 +26,7 @@ import {
 	InMemoryCache,
 	DefaultOptions,
 	NetworkStatus,
-	gql
+	gql,
 } from '@apollo/client/core';
 import {
 	IEmployeeUpworkJobsSearchCriterion,
@@ -41,7 +41,7 @@ import {
 	IGetEmployeeJobPostFilters,
 	JobPostStatusEnum,
 	JobPostTypeEnum,
-	IEmployeeJobsStatistics
+	IEmployeeJobsStatistics,
 } from '@gauzy/contracts';
 
 @Injectable()
@@ -53,16 +53,16 @@ export class GauzyAIService {
 	private readonly defaultOptions: DefaultOptions = {
 		watchQuery: {
 			fetchPolicy: 'no-cache',
-			errorPolicy: 'ignore'
+			errorPolicy: 'ignore',
 		},
 		query: {
 			fetchPolicy: 'no-cache',
-			errorPolicy: 'all'
+			errorPolicy: 'all',
 		},
 		mutate: {
 			fetchPolicy: 'no-cache',
-			errorPolicy: 'all'
-		}
+			errorPolicy: 'all',
+		},
 	};
 
 	private gauzyAIGraphQLEndpoint: string;
@@ -71,22 +71,41 @@ export class GauzyAIService {
 		this._client = new ApolloClient({
 			typeDefs: EmployeeJobPostsDocument,
 			link: new HttpLink({
-				// TODO: use endpoint from .env. We probably should inject settings into constructor for this.
 				uri: this.gauzyAIGraphQLEndpoint,
-				fetch
+				fetch,
 			}),
 			cache: new InMemoryCache(),
-			defaultOptions: this.defaultOptions
+			defaultOptions: this.defaultOptions,
 		});
 	}
 
-	constructor(private readonly _configService: ConfigService, private readonly _http: HttpService) {
+	constructor(
+		private readonly _configService: ConfigService,
+		private readonly _http: HttpService
+	) {
 		try {
-			this.gauzyAIGraphQLEndpoint = this._configService.get<string>('guazyAI.gauzyAIGraphQLEndpoint');
-			console.log(chalk.magenta(`GauzyAI GraphQL Endpoint: ${this.gauzyAIGraphQLEndpoint}`));
+			const gauzyAIRESTEndpoint = this._configService.get<string>(
+				'guazyAI.gauzyAIRESTEndpoint'
+			);
 
-			if (this.gauzyAIGraphQLEndpoint) {
-				this._logger.log('Gauzy AI Endpoint configured in the environment');
+			console.log(
+				chalk.magenta(`GauzyAI REST Endpoint: ${gauzyAIRESTEndpoint}`)
+			);
+
+			this.gauzyAIGraphQLEndpoint = this._configService.get<string>(
+				'guazyAI.gauzyAIGraphQLEndpoint'
+			);
+
+			console.log(
+				chalk.magenta(
+					`GauzyAI GraphQL Endpoint: ${this.gauzyAIGraphQLEndpoint}`
+				)
+			);
+
+			if (this.gauzyAIGraphQLEndpoint && gauzyAIRESTEndpoint) {
+				this._logger.log(
+					'Gauzy AI Endpoints (GraphQL & REST) are configured in the environment'
+				);
 
 				this.initClient();
 
@@ -107,10 +126,13 @@ export class GauzyAIService {
 
 						const employeesQueryResult: ApolloQueryResult<EmployeeQuery> =
 							await this._client.query<EmployeeQuery>({
-								query: employeesQuery
+								query: employeesQuery,
 							});
 
-						if (employeesQueryResult.networkStatus === NetworkStatus.error) {
+						if (
+							employeesQueryResult.networkStatus ===
+							NetworkStatus.error
+						) {
 							this._client = null;
 						}
 					} catch (err) {
@@ -121,10 +143,15 @@ export class GauzyAIService {
 
 				testConnectionQuery();
 			} else {
-				this._logger.warn('Gauzy AI Endpoint not configured in the environment');
+				this._logger.warn(
+					'Gauzy AI Endpoints are not configured in the environment'
+				);
 				this._client = null;
 			}
 		} catch (err) {
+			this._logger.warn(
+				'Gauzy AI Endpoints are not configured in the environment'
+			);
 			this._logger.error(err);
 			this._client = null;
 		}
@@ -136,13 +163,15 @@ export class GauzyAIService {
 	 * @param params
 	 * @returns
 	 */
-	public async preProcessEmployeeJobApplication(params: IApplyJobPostInput): Promise<any> {
+	public async preProcessEmployeeJobApplication(
+		params: IApplyJobPostInput
+	): Promise<any> {
 		// First we need to get employee id because we have only externalId
 		params.employeeId = await this.getEmployeeGauzyAIId(params.employeeId);
 
 		return firstValueFrom(
 			this._http
-				.post('api/employee/job/application/pre-process', params)
+				.post('employee/job/application/pre-process', params)
 				.pipe(map((resp: AxiosResponse<any, any>) => resp.data))
 		);
 	}
@@ -153,12 +182,18 @@ export class GauzyAIService {
 	 * @param employeeJobApplicationId
 	 * @returns
 	 */
-	public async generateAIProposalForEmployeeJobApplication(employeeJobApplicationId: string): Promise<void> {
+	public async generateAIProposalForEmployeeJobApplication(
+		employeeJobApplicationId: string
+	): Promise<void> {
 		return firstValueFrom(
-			this._http.post(`api/employee/job/application/generate-proposal/${employeeJobApplicationId}`).pipe(
-				tap((resp: AxiosResponse<any, any>) => console.log(resp)),
-				map((resp: AxiosResponse<any, any>) => resp.data)
-			)
+			this._http
+				.post(
+					`employee/job/application/generate-proposal/${employeeJobApplicationId}`
+				)
+				.pipe(
+					tap((resp: AxiosResponse<any, any>) => console.log(resp)),
+					map((resp: AxiosResponse<any, any>) => resp.data)
+				)
 		);
 	}
 
@@ -168,10 +203,12 @@ export class GauzyAIService {
 	 * @param employeeJobApplicationId
 	 * @returns
 	 */
-	public async getEmployeeJobApplication(employeeJobApplicationId: string): Promise<void> {
+	public async getEmployeeJobApplication(
+		employeeJobApplicationId: string
+	): Promise<void> {
 		return firstValueFrom(
 			this._http
-				.get(`api/employee/job/application/${employeeJobApplicationId}`)
+				.get(`employee/job/application/${employeeJobApplicationId}`)
 				.pipe(map((resp: AxiosResponse<any, any>) => resp.data))
 		);
 	}
@@ -212,7 +249,7 @@ export class GauzyAIService {
 			externalTenantId: tenantId,
 			externalOrgId: orgId,
 			isActive: isJobSearchActive,
-			isArchived: !isJobSearchActive
+			isArchived: !isJobSearchActive,
 		};
 
 		const updateEmployeeMutation: DocumentNode<any> = gql`
@@ -232,9 +269,9 @@ export class GauzyAIService {
 			variables: {
 				input: {
 					id: gauzyAIEmployeeId,
-					update: update
-				}
-			}
+					update: update,
+				},
+			},
 		});
 
 		return true;
@@ -248,7 +285,9 @@ export class GauzyAIService {
 	 * @param providerCode e.g. 'upwork'
 	 * @param providerJobId Unique job id in the provider, e.g. in Upwork. If this value is not set, it will update ALL jobs for given provider
 	 */
-	public async updateVisibility(input: IVisibilityJobPostInput): Promise<boolean> {
+	public async updateVisibility(
+		input: IVisibilityJobPostInput
+	): Promise<boolean> {
 		if (this._client == null) {
 			return false;
 		}
@@ -256,32 +295,44 @@ export class GauzyAIService {
 		// If it's for specific employee and specific job
 		if (input.employeeId && input.providerCode && input.providerJobId) {
 			// First we need to get employee id because we have only externalId
-			const employeeId = await this.getEmployeeGauzyAIId(input.employeeId);
+			const employeeId = await this.getEmployeeGauzyAIId(
+				input.employeeId
+			);
 
 			console.log(`updateVisibility called. EmployeeId: ${employeeId}`);
 
 			// Next we need to get a job using providerCode and providerJobId
-			const jobPostId = await this.getJobPostId(input.providerCode, input.providerJobId);
+			const jobPostId = await this.getJobPostId(
+				input.providerCode,
+				input.providerJobId
+			);
 
 			console.log(`updateVisibility called. jobPostId: ${jobPostId}`);
 
 			// Next, we need to find `public employee job post` table record in Gauzy AI to get id of record.
 			// We can find by employeeId and jobPostId
 
-			const employeeJobPostId = await this.getEmployeeJobPostId(employeeId, jobPostId);
+			const employeeJobPostId = await this.getEmployeeJobPostId(
+				employeeId,
+				jobPostId
+			);
 
-			console.log(`updateVisibility called. employeeJobPostId: ${employeeJobPostId}`);
+			console.log(
+				`updateVisibility called. employeeJobPostId: ${employeeJobPostId}`
+			);
 
 			if (employeeId && jobPostId && employeeJobPostId) {
 				const update: UpdateEmployeeJobPost = {
 					employeeId: employeeId,
 					jobPostId: jobPostId,
 					isActive: !input.hide,
-					isArchived: input.hide
+					isArchived: input.hide,
 				};
 
 				const updateEmployeeJobPostMutation: DocumentNode<any> = gql`
-					mutation updateOneEmployeeJobPost($input: UpdateOneEmployeeJobPostInput!) {
+					mutation updateOneEmployeeJobPost(
+						$input: UpdateOneEmployeeJobPostInput!
+					) {
 						updateOneEmployeeJobPost(input: $input) {
 							employeeId
 							jobPostId
@@ -298,9 +349,9 @@ export class GauzyAIService {
 					variables: {
 						input: {
 							id: employeeJobPostId,
-							update: update
-						}
-					}
+							update: update,
+						},
+					},
 				});
 
 				return true;
@@ -326,24 +377,40 @@ export class GauzyAIService {
 	 *	details?: string; <- Details (optional)
 	 * 	attachments?: string; <- Attachments (optional, comma separated list of file names)
 	 */
-	public async updateApplied(input: IApplyJobPostInput): Promise<IUpdateEmployeeJobPostAppliedResult> {
+	public async updateApplied(
+		input: IApplyJobPostInput
+	): Promise<IUpdateEmployeeJobPostAppliedResult> {
 		if (this._client == null) {
 			return { isRedirectRequired: true };
 		}
 
 		// First we need to get employee id because we have only externalId
 		const employeeId = await this.getEmployeeGauzyAIId(input.employeeId);
-		console.log(chalk.green(`updateApplied called. EmployeeId: ${employeeId}`));
+		console.log(
+			chalk.green(`updateApplied called. EmployeeId: ${employeeId}`)
+		);
 
 		// Next we need to get a job using providerCode and providerJobId
-		const jobPostId = await this.getJobPostId(input.providerCode, input.providerJobId);
-		console.log(chalk.green(`updateApplied called. jobPostId: ${jobPostId}`));
+		const jobPostId = await this.getJobPostId(
+			input.providerCode,
+			input.providerJobId
+		);
+		console.log(
+			chalk.green(`updateApplied called. jobPostId: ${jobPostId}`)
+		);
 
 		// Next, we need to find `public employee job post` table record in Gauzy AI to get id of record.
 		// We can find by employeeId and jobPostId
 
-		const employeeJobPostId = await this.getEmployeeJobPostId(employeeId, jobPostId);
-		console.log(chalk.green(`updateApplied called. employeeJobPostId: ${employeeJobPostId}`));
+		const employeeJobPostId = await this.getEmployeeJobPostId(
+			employeeId,
+			jobPostId
+		);
+		console.log(
+			chalk.green(
+				`updateApplied called. employeeJobPostId: ${employeeJobPostId}`
+			)
+		);
 
 		if (employeeId && jobPostId && employeeJobPostId) {
 			const applicationDate = new Date();
@@ -351,29 +418,32 @@ export class GauzyAIService {
 			// ------------------ Create Employee Job Application ------------------
 			// This will Apply to the job using Automation system
 
-			const createOneEmployeeJobApplication: CreateEmployeeJobApplication = {
-				employeeId: employeeId,
-				jobPostId: jobPostId,
-				proposal: input.proposal,
-				rate: input.rate,
-				// details: input.details,
-				attachments: input.attachments,
-				appliedDate: applicationDate,
-				employeeJobPostId: employeeJobPostId,
-				isActive: true,
-				isArchived: false,
-				providerCode: input.providerCode,
-				providerJobId: input.providerJobId,
-				jobType: input.jobType,
-				jobStatus: input.jobStatus,
-				terms: input.terms,
-				qa: input.qa
-				// Note: isViewedByClient will be updated by our Automation system
-				// Note: providerJobApplicationId will be set by Automation system when it's applied to the job
-			};
+			const createOneEmployeeJobApplication: CreateEmployeeJobApplication =
+				{
+					employeeId: employeeId,
+					jobPostId: jobPostId,
+					proposal: input.proposal,
+					rate: input.rate,
+					// details: input.details,
+					attachments: input.attachments,
+					appliedDate: applicationDate,
+					employeeJobPostId: employeeJobPostId,
+					isActive: true,
+					isArchived: false,
+					providerCode: input.providerCode,
+					providerJobId: input.providerJobId,
+					jobType: input.jobType,
+					jobStatus: input.jobStatus,
+					terms: input.terms,
+					qa: input.qa,
+					// Note: isViewedByClient will be updated by our Automation system
+					// Note: providerJobApplicationId will be set by Automation system when it's applied to the job
+				};
 
 			const createOneEmployeeJobApplicationMutation: DocumentNode<any> = gql`
-				mutation createOneEmployeeJobApplication($input: CreateOneEmployeeJobApplicationInput!) {
+				mutation createOneEmployeeJobApplication(
+					$input: CreateOneEmployeeJobApplicationInput!
+				) {
 					createOneEmployeeJobApplication(input: $input) {
 						employeeId
 						jobPostId
@@ -398,9 +468,9 @@ export class GauzyAIService {
 				mutation: createOneEmployeeJobApplicationMutation,
 				variables: {
 					input: {
-						employeeJobApplication: createOneEmployeeJobApplication
-					}
-				}
+						employeeJobApplication: createOneEmployeeJobApplication,
+					},
+				},
 			});
 
 			// ------------------ Update Employee Job Post Record ------------------
@@ -410,11 +480,13 @@ export class GauzyAIService {
 				employeeId: employeeId,
 				jobPostId: jobPostId,
 				isApplied: input.applied || true,
-				appliedDate: applicationDate
+				appliedDate: applicationDate,
 			};
 
 			const updateEmployeeJobPostMutation: DocumentNode<any> = gql`
-				mutation updateOneEmployeeJobPost($input: UpdateOneEmployeeJobPostInput!) {
+				mutation updateOneEmployeeJobPost(
+					$input: UpdateOneEmployeeJobPostInput!
+				) {
 					updateOneEmployeeJobPost(input: $input) {
 						employeeId
 						jobPostId
@@ -431,9 +503,9 @@ export class GauzyAIService {
 				variables: {
 					input: {
 						id: employeeJobPostId,
-						update: update
-					}
-				}
+						update: update,
+					},
+				},
 			});
 		}
 
@@ -477,7 +549,8 @@ export class GauzyAIService {
 				externalEmployeeId: employee.id,
 				externalTenantId: employee.tenantId,
 				externalOrgId: employee.organizationId,
-				upworkOrganizationId: employee.organization.upworkOrganizationId,
+				upworkOrganizationId:
+					employee.organization.upworkOrganizationId,
 				upworkId: employee.upworkId,
 				linkedInId: employee.linkedInId,
 				isActive: employee.isActive,
@@ -485,7 +558,7 @@ export class GauzyAIService {
 				upworkJobSearchCriteria: undefined,
 				upworkJobSearchCriteriaAggregate: undefined,
 				firstName: employee.user.firstName,
-				lastName: employee.user.lastName
+				lastName: employee.user.lastName,
 			});
 
 			console.log(`Synced Employee ${JSON.stringify(gauzyAIEmployee)}`);
@@ -493,7 +566,9 @@ export class GauzyAIService {
 			// let's delete all criteria for Employee
 
 			const deleteAllCriteriaMutation: DocumentNode<any> = gql`
-				mutation deleteManyUpworkJobsSearchCriteria($input: DeleteManyUpworkJobsSearchCriteriaInput!) {
+				mutation deleteManyUpworkJobsSearchCriteria(
+					$input: DeleteManyUpworkJobsSearchCriteriaInput!
+				) {
 					deleteManyUpworkJobsSearchCriteria(input: $input) {
 						deletedCount
 					}
@@ -506,19 +581,20 @@ export class GauzyAIService {
 					input: {
 						filter: {
 							isActive: {
-								is: true
+								is: true,
 							},
 							employeeId: {
-								eq: gauzyAIEmployee.id
-							}
-						}
-					}
-				}
+								eq: gauzyAIEmployee.id,
+							},
+						},
+					},
+				},
 			});
 
 			console.log(
 				`Delete Existed Criterions count: ${JSON.stringify(
-					deleteMutationResult.data.deleteManyUpworkJobsSearchCriteria.deletedCount
+					deleteMutationResult.data.deleteManyUpworkJobsSearchCriteria
+						.deletedCount
 				)}`
 			);
 
@@ -527,23 +603,27 @@ export class GauzyAIService {
 			if (criteria && criteria.length > 0) {
 				const gauzyAICriteria: UpworkJobsSearchCriterion[] = [];
 
-				criteria.forEach((criterion: IEmployeeUpworkJobsSearchCriterion) => {
-					gauzyAICriteria.push({
-						employee: undefined,
-						employeeId: gauzyAIEmployee.id,
-						isActive: true,
-						isArchived: false,
-						jobType: criterion.jobType,
-						keyword: criterion.keyword,
-						category: criterion.category?.name,
-						categoryId: criterion.categoryId,
-						occupation: criterion.occupation?.name,
-						occupationId: criterion.occupationId
-					});
-				});
+				criteria.forEach(
+					(criterion: IEmployeeUpworkJobsSearchCriterion) => {
+						gauzyAICriteria.push({
+							employee: undefined,
+							employeeId: gauzyAIEmployee.id,
+							isActive: true,
+							isArchived: false,
+							jobType: criterion.jobType,
+							keyword: criterion.keyword,
+							category: criterion.category?.name,
+							categoryId: criterion.categoryId,
+							occupation: criterion.occupation?.name,
+							occupationId: criterion.occupationId,
+						});
+					}
+				);
 
 				const createCriteriaMutation: DocumentNode<any> = gql`
-					mutation createManyUpworkJobsSearchCriteria($input: CreateManyUpworkJobsSearchCriteriaInput!) {
+					mutation createManyUpworkJobsSearchCriteria(
+						$input: CreateManyUpworkJobsSearchCriteriaInput!
+					) {
 						createManyUpworkJobsSearchCriteria(input: $input) {
 							id
 						}
@@ -554,14 +634,15 @@ export class GauzyAIService {
 					mutation: createCriteriaMutation,
 					variables: {
 						input: {
-							upworkJobsSearchCriteria: gauzyAICriteria
-						}
-					}
+							upworkJobsSearchCriteria: gauzyAICriteria,
+						},
+					},
 				});
 
 				console.log(
 					`Create New Criteria result: ${JSON.stringify(
-						createNewCriteriaResult.data.createManyUpworkJobsSearchCriteria
+						createNewCriteriaResult.data
+							.createManyUpworkJobsSearchCriteria
 					)}`
 				);
 			}
@@ -595,7 +676,8 @@ export class GauzyAIService {
 						externalEmployeeId: employee.id,
 						externalTenantId: employee.tenantId,
 						externalOrgId: employee.organizationId,
-						upworkOrganizationId: employee.organization.upworkOrganizationId,
+						upworkOrganizationId:
+							employee.organization.upworkOrganizationId,
 						upworkId: employee.upworkId,
 						linkedInId: employee.linkedInId,
 						isActive: employee.isActive,
@@ -603,10 +685,12 @@ export class GauzyAIService {
 						upworkJobSearchCriteria: undefined,
 						upworkJobSearchCriteriaAggregate: undefined,
 						firstName: employee.user.firstName,
-						lastName: employee.user.lastName
+						lastName: employee.user.lastName,
 					});
 
-					console.log(`Synced Employee ${JSON.stringify(gauzyAIEmployee)}`);
+					console.log(
+						`Synced Employee ${JSON.stringify(gauzyAIEmployee)}`
+					);
 				} catch (err) {
 					this._logger.error(err);
 				}
@@ -616,11 +700,20 @@ export class GauzyAIService {
 		return true;
 	}
 
-	private async getEmployeeJobPostId(employeeId: string, jobPostId: string): Promise<string> {
+	private async getEmployeeJobPostId(
+		employeeId: string,
+		jobPostId: string
+	): Promise<string> {
 		const employeeJobPostsQuery = gql`
-			query employeeJobPostsByEmployeeIdJobPostId($employeeIdFilter: String!, $jobPostIdFilter: String!) {
+			query employeeJobPostsByEmployeeIdJobPostId(
+				$employeeIdFilter: String!
+				$jobPostIdFilter: String!
+			) {
 				employeeJobPosts(
-					filter: { employeeId: { eq: $employeeIdFilter }, jobPostId: { eq: $jobPostIdFilter } }
+					filter: {
+						employeeId: { eq: $employeeIdFilter }
+						jobPostId: { eq: $jobPostIdFilter }
+					}
 				) {
 					edges {
 						node {
@@ -637,11 +730,12 @@ export class GauzyAIService {
 			query: employeeJobPostsQuery,
 			variables: {
 				employeeIdFilter: employeeId,
-				jobPostIdFilter: jobPostId
-			}
+				jobPostIdFilter: jobPostId,
+			},
 		});
 
-		const employeeJobPostsResponse = employeeJobPostsQueryResult.data.employeeJobPosts.edges;
+		const employeeJobPostsResponse =
+			employeeJobPostsQueryResult.data.employeeJobPosts.edges;
 
 		if (employeeJobPostsResponse && employeeJobPostsResponse.length > 0) {
 			return employeeJobPostsResponse[0].node.id;
@@ -650,11 +744,20 @@ export class GauzyAIService {
 		return null;
 	}
 
-	private async getJobPostId(providerCode: string, providerJobId: string): Promise<string> {
+	private async getJobPostId(
+		providerCode: string,
+		providerJobId: string
+	): Promise<string> {
 		const jobPostsQuery = gql`
-			query jobPosts($providerCodeFilter: String!, $providerJobIdFilter: String!) {
+			query jobPosts(
+				$providerCodeFilter: String!
+				$providerJobIdFilter: String!
+			) {
 				jobPosts(
-					filter: { providerCode: { eq: $providerCodeFilter }, providerJobId: { eq: $providerJobIdFilter } }
+					filter: {
+						providerCode: { eq: $providerCodeFilter }
+						providerJobId: { eq: $providerJobIdFilter }
+					}
 				) {
 					edges {
 						node {
@@ -671,8 +774,8 @@ export class GauzyAIService {
 			query: jobPostsQuery,
 			variables: {
 				providerCodeFilter: providerCode,
-				providerJobIdFilter: providerJobId
-			}
+				providerJobIdFilter: providerJobId,
+			},
 		});
 
 		const jobPostsResponse = jobPostsQueryResult.data.jobPosts.edges;
@@ -684,10 +787,18 @@ export class GauzyAIService {
 		return null;
 	}
 
-	private async getEmployeeGauzyAIId(externalEmployeeId: string): Promise<string> {
+	private async getEmployeeGauzyAIId(
+		externalEmployeeId: string
+	): Promise<string> {
 		const employeesQuery: DocumentNode<EmployeeQuery> = gql`
-			query employeeByExternalEmployeeId($externalEmployeeIdFilter: String!) {
-				employees(filter: { externalEmployeeId: { eq: $externalEmployeeIdFilter } }) {
+			query employeeByExternalEmployeeId(
+				$externalEmployeeIdFilter: String!
+			) {
+				employees(
+					filter: {
+						externalEmployeeId: { eq: $externalEmployeeIdFilter }
+					}
+				) {
 					edges {
 						node {
 							id
@@ -699,12 +810,13 @@ export class GauzyAIService {
 			}
 		`;
 
-		const employeesQueryResult: ApolloQueryResult<EmployeeQuery> = await this._client.query<EmployeeQuery>({
-			query: employeesQuery,
-			variables: {
-				externalEmployeeIdFilter: externalEmployeeId
-			}
-		});
+		const employeesQueryResult: ApolloQueryResult<EmployeeQuery> =
+			await this._client.query<EmployeeQuery>({
+				query: employeesQuery,
+				variables: {
+					externalEmployeeIdFilter: externalEmployeeId,
+				},
+			});
 
 		const employeesResponse = employeesQueryResult.data.employees.edges;
 
@@ -722,8 +834,14 @@ export class GauzyAIService {
 	private async syncEmployee(employee: Employee): Promise<Employee> {
 		// First, let's search by employee.externalEmployeeId (which is Gauzy employeeId)
 		let employeesQuery: DocumentNode<EmployeeQuery> = gql`
-			query employeeByExternalEmployeeId($externalEmployeeIdFilter: String!) {
-				employees(filter: { externalEmployeeId: { eq: $externalEmployeeIdFilter } }) {
+			query employeeByExternalEmployeeId(
+				$externalEmployeeIdFilter: String!
+			) {
+				employees(
+					filter: {
+						externalEmployeeId: { eq: $externalEmployeeIdFilter }
+					}
+				) {
 					edges {
 						node {
 							id
@@ -735,12 +853,13 @@ export class GauzyAIService {
 			}
 		`;
 
-		let employeesQueryResult: ApolloQueryResult<EmployeeQuery> = await this._client.query<EmployeeQuery>({
-			query: employeesQuery,
-			variables: {
-				externalEmployeeIdFilter: employee.externalEmployeeId
-			}
-		});
+		let employeesQueryResult: ApolloQueryResult<EmployeeQuery> =
+			await this._client.query<EmployeeQuery>({
+				query: employeesQuery,
+				variables: {
+					externalEmployeeIdFilter: employee.externalEmployeeId,
+				},
+			});
 
 		let employeesResponse = employeesQueryResult.data.employees.edges;
 
@@ -754,8 +873,16 @@ export class GauzyAIService {
 			// OK, so we can't find by employee.externalEmployeeId value, let's try to search by name
 
 			employeesQuery = gql`
-				query employeeByName($firstNameFilter: String!, $lastNameFilter: String!) {
-					employees(filter: { firstName: { eq: $firstNameFilter }, lastName: { eq: $lastNameFilter } }) {
+				query employeeByName(
+					$firstNameFilter: String!
+					$lastNameFilter: String!
+				) {
+					employees(
+						filter: {
+							firstName: { eq: $firstNameFilter }
+							lastName: { eq: $lastNameFilter }
+						}
+					) {
 						edges {
 							node {
 								id
@@ -773,8 +900,8 @@ export class GauzyAIService {
 				query: employeesQuery,
 				variables: {
 					firstNameFilter: employee.firstName,
-					lastNameFilter: employee.lastName
-				}
+					lastNameFilter: employee.lastName,
+				},
 			});
 
 			employeesResponse = employeesQueryResult.data.employees.edges;
@@ -787,7 +914,9 @@ export class GauzyAIService {
 
 			if (!isAlreadyCreated) {
 				const createEmployeeMutation: DocumentNode<any> = gql`
-					mutation createOneEmployee($input: CreateOneEmployeeInput!) {
+					mutation createOneEmployee(
+						$input: CreateOneEmployeeInput!
+					) {
 						createOneEmployee(input: $input) {
 							id
 							externalEmployeeId
@@ -806,9 +935,9 @@ export class GauzyAIService {
 					mutation: createEmployeeMutation,
 					variables: {
 						input: {
-							employee
-						}
-					}
+							employee,
+						},
+					},
 				});
 
 				return newEmployee.data.createOneEmployee;
@@ -841,9 +970,9 @@ export class GauzyAIService {
 			variables: {
 				input: {
 					id: id,
-					update: employee
-				}
-			}
+					update: employee,
+				},
+			},
 		});
 
 		return <Employee>employeesResponse[0].node;
@@ -852,19 +981,25 @@ export class GauzyAIService {
 	/**
 	 * Get Jobs available for registered employees
 	 */
-	public async getEmployeesJobPosts(data: IGetEmployeeJobPostInput): Promise<IPagination<IEmployeeJobPost>> {
+	public async getEmployeesJobPosts(
+		data: IGetEmployeeJobPostInput
+	): Promise<IPagination<IEmployeeJobPost>> {
 		if (this._client == null) {
 			return null;
 		}
 
 		console.log(`getEmployeesJobPosts. Data ${JSON.stringify(data)}`);
 
-		const filters: IGetEmployeeJobPostFilters = data.filters ? <any>data.filters : undefined;
+		const filters: IGetEmployeeJobPostFilters = data.filters
+			? <any>data.filters
+			: undefined;
 
 		console.log(`getEmployeesJobPosts. Filters ${JSON.stringify(filters)}`);
 
 		const employeeIdFilter =
-			filters && filters.employeeIds && filters.employeeIds.length > 0 ? filters.employeeIds[0] : undefined;
+			filters && filters.employeeIds && filters.employeeIds.length > 0
+				? filters.employeeIds[0]
+				: undefined;
 
 		try {
 			// TODO: use Query saved in SDK, not hard-code it here. Note: we may add much more fields to that query as we need more info!
@@ -875,7 +1010,11 @@ export class GauzyAIService {
 					$filter: EmployeeJobPostFilter!
 					$sorting: [EmployeeJobPostSort!]
 				) {
-					employeeJobPosts(paging: { after: $after, first: $first }, filter: $filter, sorting: $sorting) {
+					employeeJobPosts(
+						paging: { after: $after, first: $first }
+						filter: $filter
+						sorting: $sorting
+					) {
 						totalCount
 						pageInfo {
 							hasNextPage
@@ -937,54 +1076,56 @@ export class GauzyAIService {
 
 			const filter = {
 				isActive: {
-					is: true
+					is: true,
 				},
 				isArchived: {
-					is: false
+					is: false,
 				},
 				employeeId: undefined,
 				...(filters && filters.jobDateCreated
 					? {
-							jobDateCreated: filters.jobDateCreated
+							jobDateCreated: filters.jobDateCreated,
 					  }
 					: {}),
 				...(filters && filters.title
 					? {
 							jobPost: {
 								title: {
-									iLike: `%${filters.title}%`
-								}
-							}
+									iLike: `%${filters.title}%`,
+								},
+							},
 					  }
 					: {}),
 				...(filters && filters.jobType
 					? {
 							jobType: {
-								in: filters.jobType
-							}
+								in: filters.jobType,
+							},
 					  }
 					: {}),
 				...(filters && filters.jobStatus
 					? {
 							jobStatus: {
-								in: filters.jobStatus
-							}
+								in: filters.jobStatus,
+							},
 					  }
 					: {}),
 				...(filters && filters.jobSource
 					? {
 							providerCode: {
-								in: filters.jobSource
-							}
+								in: filters.jobSource,
+							},
 					  }
-					: {})
+					: {}),
 			};
 
 			if (employeeIdFilter) {
-				const employeeId = await this.getEmployeeGauzyAIId(employeeIdFilter);
+				const employeeId = await this.getEmployeeGauzyAIId(
+					employeeIdFilter
+				);
 
 				filter.employeeId = {
-					eq: employeeId
+					eq: employeeId,
 				};
 			}
 
@@ -993,7 +1134,9 @@ export class GauzyAIService {
 			const graphQLPageSize = 50;
 
 			// e.g. if it's page 7 and limit is 10, it mean we need to load first 70 records, i.e. do 2 trips to server because each trip get 50 records
-			const loadCounts = Math.ceil((data.page * data.limit) / graphQLPageSize);
+			const loadCounts = Math.ceil(
+				(data.page * data.limit) / graphQLPageSize
+			);
 
 			console.log(`Round trips to Gauzy API: ${loadCounts}`);
 
@@ -1011,49 +1154,59 @@ export class GauzyAIService {
 							sorting: [
 								{
 									field: 'jobDateCreated',
-									direction: 'DESC'
-								}
+									direction: 'DESC',
+								},
 							],
-							filter: filter
-						}
+							filter: filter,
+						},
 					});
 
-				const jobsResponse = result.data.employeeJobPosts.edges.map((it) => {
-					const rec = it.node;
+				const jobsResponse = result.data.employeeJobPosts.edges.map(
+					(it) => {
+						const rec = it.node;
 
-					const res: IEmployeeJobPost = {
-						/** Employee Job Post Matching ID */
-						id: rec.id,
+						const res: IEmployeeJobPost = {
+							/** Employee Job Post Matching ID */
+							id: rec.id,
 
-						employeeId: rec.employee.externalEmployeeId,
-						employee: undefined,
-						jobPostId: rec.jobPost.id,
-						jobPost: <IJobPost>rec.jobPost,
+							employeeId: rec.employee.externalEmployeeId,
+							employee: undefined,
+							jobPostId: rec.jobPost.id,
+							jobPost: <IJobPost>rec.jobPost,
 
-						jobDateCreated: rec.jobDateCreated,
-						providerCode: rec.providerCode,
-						providerJobId: rec.providerJobId,
-						jobStatus: rec.jobStatus ? JobPostStatusEnum[rec.jobStatus] : undefined,
-						jobType: rec.jobType ? JobPostTypeEnum[rec.jobType] : undefined,
+							jobDateCreated: rec.jobDateCreated,
+							providerCode: rec.providerCode,
+							providerJobId: rec.providerJobId,
+							jobStatus: rec.jobStatus
+								? JobPostStatusEnum[rec.jobStatus]
+								: undefined,
+							jobType: rec.jobType
+								? JobPostTypeEnum[rec.jobType]
+								: undefined,
 
-						isApplied: rec.isApplied,
-						appliedDate: rec.appliedDate,
-						isActive: rec.isActive,
-						isArchived: rec.isArchived,
-						createdAt: rec.createdAt,
-						updatedAt: rec.updatedAt
-					};
+							isApplied: rec.isApplied,
+							appliedDate: rec.appliedDate,
+							isActive: rec.isActive,
+							isArchived: rec.isArchived,
+							createdAt: rec.createdAt,
+							updatedAt: rec.updatedAt,
+						};
 
-					return res;
-				});
+						return res;
+					}
+				);
 
-				isContinue = result.data.employeeJobPosts.pageInfo.hasNextPage && currentCount < loadCounts;
+				isContinue =
+					result.data.employeeJobPosts.pageInfo.hasNextPage &&
+					currentCount < loadCounts;
 				after = result.data.employeeJobPosts.pageInfo.endCursor;
 				totalCount = result.data.employeeJobPosts.totalCount;
 
 				jobResponses.push(...jobsResponse);
 
-				console.log(`Found ${jobsResponse.length} job records. IsContinue: ${isContinue}. After: ${after}`);
+				console.log(
+					`Found ${jobsResponse.length} job records. IsContinue: ${isContinue}. After: ${after}`
+				);
 
 				currentCount++;
 			} while (isContinue);
@@ -1061,11 +1214,13 @@ export class GauzyAIService {
 			// Note: possible to do additional client side filtering like below:
 			// jobResponses = _.filter(jobResponses, (it) => it.isActive === true && it.isArchived === false);
 
-			console.log(`getEmployeesJobPosts. Total Count: ${totalCount}. Page ${data.page}`);
+			console.log(
+				`getEmployeesJobPosts. Total Count: ${totalCount}. Page ${data.page}`
+			);
 
 			const response: IPagination<IEmployeeJobPost> = {
 				items: this.paginate(jobResponses, data.limit, data.page),
-				total: totalCount
+				total: totalCount,
 			};
 
 			// console.log(`Found Records: ${JSON.stringify(response)}`);
@@ -1079,6 +1234,9 @@ export class GauzyAIService {
 
 	private paginate(array, page_size, page_number) {
 		// human-readable page numbers usually start with 1, so we reduce 1 in the first argument
-		return array.slice((page_number - 1) * page_size, page_number * page_size);
+		return array.slice(
+			(page_number - 1) * page_size,
+			page_number * page_size
+		);
 	}
 }
