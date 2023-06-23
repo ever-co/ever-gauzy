@@ -17,10 +17,7 @@ import { NbDialogService } from '@nebular/theme';
 	templateUrl: './invoice-view.component.html',
 	styleUrls: ['./invoice-view.component.scss']
 })
-export class InvoiceViewComponent
-	extends TranslationBaseComponent
-	implements OnInit
-{
+export class InvoiceViewComponent extends TranslationBaseComponent implements OnInit {
 	invoiceId: string;
 	tenantId: string;
 	invoice: IInvoice;
@@ -40,11 +37,9 @@ export class InvoiceViewComponent
 	}
 
 	ngOnInit() {
-		this.route.paramMap
-			.pipe(untilDestroyed(this))
-			.subscribe(async (params) => {
-				this.invoiceId = params.get('id');
-			});
+		this.route.paramMap.pipe(untilDestroyed(this)).subscribe(async (params) => {
+			this.invoiceId = params.get('id');
+		});
 		this.store.user$
 			.pipe(
 				filter((user) => !!user),
@@ -108,10 +103,7 @@ export class InvoiceViewComponent
 	edit() {
 		const id = this.invoiceId;
 		if (this.isEstimate) {
-			this.router.navigate([
-				`/pages/accounting/invoices/estimates/edit`,
-				id
-			]);
+			this.router.navigate([`/pages/accounting/invoices/estimates/edit`, id]);
 		} else {
 			this.router.navigate([`/pages/accounting/invoices/edit`, id]);
 		}
@@ -131,16 +123,22 @@ export class InvoiceViewComponent
 		if (result) {
 			await this.invoicesService.delete(this.invoiceId);
 			if (this.isEstimate) {
-				this.toastrService.success(
-					'INVOICES_PAGE.INVOICES_DELETE_ESTIMATE'
-				);
+				this.toastrService.success('INVOICES_PAGE.INVOICES_DELETE_ESTIMATE');
 				this.router.navigate([`/pages/accounting/invoices/estimates`]);
 			} else {
-				this.toastrService.success(
-					'INVOICES_PAGE.INVOICES_DELETE_INVOICE'
-				);
+				this.toastrService.success('INVOICES_PAGE.INVOICES_DELETE_INVOICE');
 				this.router.navigate([`/pages/accounting/invoices`]);
 			}
 		}
+	}
+
+	public async print(): Promise<void> {
+		const { id: invoiceId } = this.invoice;
+		const blob = await firstValueFrom(this.invoicesService.downloadInvoicePdf(invoiceId));
+		const fileURL = URL.createObjectURL(blob);
+		const iframe = document.createElement('iframe');
+		iframe.src = fileURL;
+		document.body.appendChild(iframe);
+		iframe.onload = () => iframe.contentWindow.print();
 	}
 }

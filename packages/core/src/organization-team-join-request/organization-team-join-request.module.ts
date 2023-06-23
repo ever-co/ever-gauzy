@@ -10,31 +10,32 @@ import { CommandHandlers } from './commands/handlers';
 import { OrganizationTeamJoinRequestController } from './organization-team-join-request.controller';
 import { OrganizationTeamJoinRequest } from './organization-team-join-request.entity';
 import { OrganizationTeamJoinRequestService } from './organization-team-join-request.service';
+import { InviteModule } from 'invite/invite.module';
+import { OrganizationTeamEmployee } from 'core';
+import { RoleModule } from 'role/role.module';
 
 @Module({
 	imports: [
 		RouterModule.forRoutes([
-			{ path: '/organization-team-join', module: OrganizationTeamJoinRequestModule }
+			{
+				path: '/organization-team-join',
+				module: OrganizationTeamJoinRequestModule,
+			},
 		]),
 		TypeOrmModule.forFeature([
-			OrganizationTeamJoinRequest
+			OrganizationTeamJoinRequest,
+			OrganizationTeamEmployee,
 		]),
 		CqrsModule,
 		TenantModule,
 		UserModule,
 		OrganizationTeamModule,
-		EmailModule
+		EmailModule,
+		InviteModule,
+		RoleModule,
 	],
-	controllers: [
-		OrganizationTeamJoinRequestController
-	],
-	providers: [
-		OrganizationTeamJoinRequestService,
-		...CommandHandlers
-	],
-	exports: [
-		TypeOrmModule,
-		OrganizationTeamJoinRequestService
-	]
+	controllers: [OrganizationTeamJoinRequestController],
+	providers: [OrganizationTeamJoinRequestService, ...CommandHandlers],
+	exports: [TypeOrmModule, OrganizationTeamJoinRequestService],
 })
-export class OrganizationTeamJoinRequestModule { }
+export class OrganizationTeamJoinRequestModule {}
