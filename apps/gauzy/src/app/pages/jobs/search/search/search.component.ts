@@ -1,10 +1,17 @@
 import { Component, OnDestroy, OnInit, AfterViewInit } from '@angular/core';
 import { FormBuilder, FormGroup } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
-import { BehaviorSubject, combineLatest, firstValueFrom, Subject, Subscription, timer } from 'rxjs';
+import {
+	BehaviorSubject,
+	combineLatest,
+	firstValueFrom,
+	Subject,
+	Subscription,
+	timer,
+} from 'rxjs';
 import { debounceTime, filter, tap } from 'rxjs/operators';
 import {
-	IApplyJobPostInput,
+	IEmployeeJobApplication,
 	IDateRangePicker,
 	IEmployeeJobPost,
 	IGetEmployeeJobPostFilters,
@@ -16,15 +23,28 @@ import {
 	JobPostStatusEnum,
 	JobPostTypeEnum,
 	JobSearchTabsEnum,
-	PermissionsEnum
+	PermissionsEnum,
 } from '@gauzy/contracts';
-import { distinctUntilChange, isEmpty, isNotEmpty, toUTC } from '@gauzy/common-angular';
+import {
+	distinctUntilChange,
+	isEmpty,
+	isNotEmpty,
+	toUTC,
+} from '@gauzy/common-angular';
 import { NbDialogService, NbTabComponent } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
 import { EmployeeLinksComponent } from './../../../../@shared/table-components';
-import { IPaginationBase, PaginationFilterBaseComponent } from '../../../../@shared/pagination/pagination-filter-base.component';
-import { DateRangePickerBuilderService, JobService, Store, ToastrService } from './../../../../@core/services';
+import {
+	IPaginationBase,
+	PaginationFilterBaseComponent,
+} from '../../../../@shared/pagination/pagination-filter-base.component';
+import {
+	DateRangePickerBuilderService,
+	JobService,
+	Store,
+	ToastrService,
+} from './../../../../@core/services';
 import { StatusBadgeComponent } from './../../../../@shared/status-badge';
 import { API_PREFIX } from './../../../../@core/constants';
 import { AtLeastOneFieldValidator } from './../../../../@core/validators';
@@ -38,9 +58,12 @@ import { getAdjustDateRangeFutureAllowed } from './../../../../@theme/components
 @Component({
 	selector: 'ga-job-search',
 	templateUrl: './search.component.html',
-	styleUrls: ['./search.component.scss']
+	styleUrls: ['./search.component.scss'],
 })
-export class SearchComponent extends PaginationFilterBaseComponent implements OnInit, OnDestroy, AfterViewInit {
+export class SearchComponent
+	extends PaginationFilterBaseComponent
+	implements OnInit, OnDestroy, AfterViewInit
+{
 	loading: boolean = false;
 	autoRefresh: boolean = false;
 	settingsSmartTable: object;
@@ -58,7 +81,7 @@ export class SearchComponent extends PaginationFilterBaseComponent implements On
 		jobSource: [],
 		jobType: [],
 		jobStatus: null,
-		budget: []
+		budget: [],
 	};
 
 	jobs$: Subject<any> = this.subject$;
@@ -84,10 +107,10 @@ export class SearchComponent extends PaginationFilterBaseComponent implements On
 				jobSource: [],
 				jobType: [],
 				jobStatus: [],
-				budget: []
+				budget: [],
 			},
 			{
-				validators: [AtLeastOneFieldValidator]
+				validators: [AtLeastOneFieldValidator],
 			}
 		);
 	}
@@ -136,17 +159,23 @@ export class SearchComponent extends PaginationFilterBaseComponent implements On
 	ngAfterViewInit(): void {
 		const storeOrganization$ = this.store.selectedOrganization$;
 		const storeEmployee$ = this.store.selectedEmployee$;
-		const selectedDateRange$ = this.dateRangePickerBuilderService.selectedDateRange$;
+		const selectedDateRange$ =
+			this.dateRangePickerBuilderService.selectedDateRange$;
 		combineLatest([storeOrganization$, selectedDateRange$, storeEmployee$])
 			.pipe(
 				debounceTime(100),
 				distinctUntilChange(),
-				filter(([organization, dateRange]) => !!organization && !!dateRange),
+				filter(
+					([organization, dateRange]) => !!organization && !!dateRange
+				),
 				tap(([organization, dateRange, employee]) => {
 					this.organization = organization;
 					this.selectedDateRange = dateRange;
-					this.selectedEmployee = employee && employee.id ? employee : null;
-					this.jobRequest.employeeIds = this.selectedEmployee ? [this.selectedEmployee.id] : [];
+					this.selectedEmployee =
+						employee && employee.id ? employee : null;
+					this.jobRequest.employeeIds = this.selectedEmployee
+						? [this.selectedEmployee.id]
+						: [];
 				}),
 				tap(() => this._loadSmartTableSettings()),
 				tap(() => this.jobs$.next(true)),
@@ -170,8 +199,8 @@ export class SearchComponent extends PaginationFilterBaseComponent implements On
 				tenantId,
 				organizationId,
 				employeeId,
-				isDefault: true
-			}
+				isDefault: true,
+			},
 		});
 		return items.length > 0 ? items[0] : null;
 	}
@@ -235,20 +264,25 @@ export class SearchComponent extends PaginationFilterBaseComponent implements On
 				break;
 
 			case 'apply':
-				const applyRequest: IApplyJobPostInput = {
+				const applyRequest: IEmployeeJobApplication = {
 					applied: true,
 					employeeId: $event.data.employeeId,
 					providerCode: $event.data.jobPost.providerCode,
-					providerJobId: $event.data.jobPost.providerJobId
+					providerJobId: $event.data.jobPost.providerJobId,
 				};
 				this.jobService.applyJob(applyRequest).then(async (resp) => {
 					this.toastrService.success('TOASTR.MESSAGE.JOB_APPLIED');
 					this.smartTableSource.refresh();
 
 					if (resp.isRedirectRequired) {
-						const proposalTemplate = await this.getEmployeeDefaultProposalTemplate($event.data);
+						const proposalTemplate =
+							await this.getEmployeeDefaultProposalTemplate(
+								$event.data
+							);
 						if (proposalTemplate) {
-							await this.copyTextToClipboard(proposalTemplate.content);
+							await this.copyTextToClipboard(
+								proposalTemplate.content
+							);
 						}
 						window.open($event.data.jobPost.url, '_blank');
 					}
@@ -260,7 +294,7 @@ export class SearchComponent extends PaginationFilterBaseComponent implements On
 					hide: true,
 					employeeId: $event.data.employeeId,
 					providerCode: $event.data.jobPost.providerCode,
-					providerJobId: $event.data.jobPost.providerJobId
+					providerJobId: $event.data.jobPost.providerJobId,
 				};
 				this.jobService.hideJob(hideRequest).then(() => {
 					this.toastrService.success('TOASTR.MESSAGE.JOB_HIDDEN');
@@ -301,7 +335,7 @@ export class SearchComponent extends PaginationFilterBaseComponent implements On
 			hide: true,
 			employeeId: employeeId,
 			providerCode: providerCode,
-			providerJobId: providerJobId
+			providerJobId: providerJobId,
 		};
 		this.jobService.hideJob(hideRequest).then(() => {
 			this.toastrService.success('TOASTR.MESSAGE.JOB_HIDDEN');
@@ -310,10 +344,11 @@ export class SearchComponent extends PaginationFilterBaseComponent implements On
 	}
 
 	/** Apply For Job Post */
-	async applyToJob(applyJobPost: IApplyJobPostInput): Promise<void> {
+	async applyToJob(applyJobPost: IEmployeeJobApplication): Promise<void> {
 		if (!this.selectedJob) {
 			return;
 		}
+
 		try {
 			const appliedJob = await this.jobService.applyJob(applyJobPost);
 
@@ -321,10 +356,22 @@ export class SearchComponent extends PaginationFilterBaseComponent implements On
 			this.smartTableSource.refresh();
 
 			if (appliedJob.isRedirectRequired) {
-				const proposalTemplate = await this.getEmployeeDefaultProposalTemplate(this.selectedJob);
-				if (proposalTemplate) {
-					await this.copyTextToClipboard(proposalTemplate.content);
+				// If we have generated proposal, let's copy to clipboard
+				if (appliedJob.proposal) {
+					await this.copyTextToClipboard(appliedJob.proposal);
+				} else {
+					const proposalTemplate =
+						await this.getEmployeeDefaultProposalTemplate(
+							this.selectedJob
+						);
+
+					if (proposalTemplate) {
+						await this.copyTextToClipboard(
+							proposalTemplate.content
+						);
+					}
 				}
+
 				window.open(this.selectedJob.jobPost.url, '_blank');
 			}
 		} catch (error) {
@@ -338,19 +385,22 @@ export class SearchComponent extends PaginationFilterBaseComponent implements On
 			return;
 		}
 		try {
-			const { providerCode, providerJobId, employeeId } = this.selectedJob;
-			const applyJobPost: IApplyJobPostInput = {
+			const { providerCode, providerJobId, employeeId } =
+				this.selectedJob;
+
+			const applyJobPost: IEmployeeJobApplication = {
 				applied: true,
 				...(isNotEmpty(this.selectedEmployee)
 					? {
-						employeeId: this.selectedEmployee.id
-					}
+							employeeId: this.selectedEmployee.id,
+					  }
 					: {
-						employeeId
-					}),
+							employeeId,
+					  }),
 				providerCode,
-				providerJobId
+				providerJobId,
 			};
+
 			await this.applyToJob(applyJobPost);
 		} catch (error) {
 			console.log('Error while applying job post automatically', error);
@@ -362,19 +412,32 @@ export class SearchComponent extends PaginationFilterBaseComponent implements On
 		if (!this.selectedJob) {
 			return;
 		}
+
 		const dialog = this.dialogService.open(ApplyJobManuallyComponent, {
 			context: {
 				employeeJobPost: this.selectedJob,
-				selectedEmployee: this.selectedEmployee
-			}
+				selectedEmployee: this.selectedEmployee,
+			},
 		});
-		const result = await firstValueFrom<IApplyJobPostInput>(dialog.onClose);
+
+		const result = await firstValueFrom<IEmployeeJobApplication>(
+			dialog.onClose
+		);
+
 		if (result) {
 			const { providerCode, providerJobId } = this.selectedJob;
-			const { applied, employeeId, proposal, rate, details, attachments } = result;
+
+			const {
+				applied,
+				employeeId,
+				proposal,
+				rate,
+				details,
+				attachments,
+			} = result;
 
 			try {
-				const applyJobPost: IApplyJobPostInput = {
+				const applyJobPost: IEmployeeJobApplication = {
 					applied,
 					employeeId,
 					proposal,
@@ -382,8 +445,9 @@ export class SearchComponent extends PaginationFilterBaseComponent implements On
 					details,
 					attachments,
 					providerCode,
-					providerJobId
+					providerJobId,
 				};
+
 				await this.applyToJob(applyJobPost);
 			} catch (error) {
 				console.log('Error while applying job post manually', error);
@@ -400,34 +464,45 @@ export class SearchComponent extends PaginationFilterBaseComponent implements On
 			actions: false,
 			pager: {
 				display: false,
-				perPage: pagination ? pagination.itemsPerPage : 10
+				perPage: pagination ? pagination.itemsPerPage : 10,
 			},
 			columns: {
 				...(isEmpty(this.selectedEmployee)
 					? {
-						employee: {
-							title: this.getTranslation('JOBS.EMPLOYEE'),
-							filter: false,
-							width: '15%',
-							type: 'custom',
-							sort: false,
-							renderComponent: EmployeeLinksComponent,
-							valuePrepareFunction: (cell, row: IEmployeeJobPost) => {
-								return {
-									name: row.employee && row.employee.user ? row.employee.user.name : null,
-									imageUrl: row.employee && row.employee.user ? row.employee.user.imageUrl : null,
-									id: row.employee ? row.employee.id : null
-								};
-							}
-						}
-					}
+							employee: {
+								title: this.getTranslation('JOBS.EMPLOYEE'),
+								filter: false,
+								width: '15%',
+								type: 'custom',
+								sort: false,
+								renderComponent: EmployeeLinksComponent,
+								valuePrepareFunction: (
+									cell,
+									row: IEmployeeJobPost
+								) => {
+									return {
+										name:
+											row.employee && row.employee.user
+												? row.employee.user.name
+												: null,
+										imageUrl:
+											row.employee && row.employee.user
+												? row.employee.user.imageUrl
+												: null,
+										id: row.employee
+											? row.employee.id
+											: null,
+									};
+								},
+							},
+					  }
 					: {}),
 				jobDetails: {
 					title: this.getTranslation('JOBS.JOB_DETAILS'),
 					type: 'custom',
 					renderComponent: JobTitleDescriptionDetailsComponent,
 					filter: false,
-					sort: false
+					sort: false,
 				},
 				jobStatus: {
 					title: this.getTranslation('JOBS.STATUS'),
@@ -438,13 +513,22 @@ export class SearchComponent extends PaginationFilterBaseComponent implements On
 					renderComponent: StatusBadgeComponent,
 					valuePrepareFunction: (cell, row: IEmployeeJobPost) => {
 						let badgeClass;
-						if (row.jobPost.jobStatus.toLowerCase() === JobPostStatusEnum.CLOSED.toLowerCase()) {
+						if (
+							row.jobPost.jobStatus.toLowerCase() ===
+							JobPostStatusEnum.CLOSED.toLowerCase()
+						) {
 							badgeClass = 'danger';
 							cell = this.getTranslation('JOBS.CLOSED');
-						} else if (row.jobPost.jobStatus.toLowerCase() === JobPostStatusEnum.OPEN.toLowerCase()) {
+						} else if (
+							row.jobPost.jobStatus.toLowerCase() ===
+							JobPostStatusEnum.OPEN.toLowerCase()
+						) {
 							badgeClass = 'success';
 							cell = this.getTranslation('JOBS.OPEN');
-						} else if (row.jobPost.jobStatus.toLowerCase() === JobPostStatusEnum.APPLIED.toLowerCase()) {
+						} else if (
+							row.jobPost.jobStatus.toLowerCase() ===
+							JobPostStatusEnum.APPLIED.toLowerCase()
+						) {
 							badgeClass = 'warning';
 							cell = this.getTranslation('JOBS.APPLIED');
 						} else {
@@ -454,11 +538,11 @@ export class SearchComponent extends PaginationFilterBaseComponent implements On
 
 						return {
 							text: cell,
-							class: badgeClass
+							class: badgeClass,
 						};
-					}
-				}
-			}
+					},
+				},
+			},
 		};
 	}
 
@@ -480,10 +564,10 @@ export class SearchComponent extends PaginationFilterBaseComponent implements On
 				finalize: () => {
 					this.setPagination({
 						...this.getPagination(),
-						totalItems: this.smartTableSource.count()
+						totalItems: this.smartTableSource.count(),
 					});
 					this.loading = false;
-				}
+				},
 			});
 		} catch (error) {
 			console.log('Error while retrieving employee Job searches', error);
@@ -498,13 +582,19 @@ export class SearchComponent extends PaginationFilterBaseComponent implements On
 		try {
 			this.setSmartTableSource();
 		} catch (error) {
-			console.log('Error while set smart table source configuration', error);
+			console.log(
+				'Error while set smart table source configuration',
+				error
+			);
 		}
 
 		try {
 			const { activePage, itemsPerPage } = this.getPagination();
-			const { title, jobSource, jobType, jobStatus, budget } = this.form.value;
-			const { startDate, endDate } = getAdjustDateRangeFutureAllowed(this.selectedDateRange);
+			const { title, jobSource, jobType, jobStatus, budget } =
+				this.form.value;
+			const { startDate, endDate } = getAdjustDateRangeFutureAllowed(
+				this.selectedDateRange
+			);
 
 			/**
 			 * Set header selectors filters configuration
@@ -513,65 +603,69 @@ export class SearchComponent extends PaginationFilterBaseComponent implements On
 				[
 					...(isNotEmpty(this.selectedEmployee)
 						? [
-							{
-								field: 'employeeIds',
-								search: [this.selectedEmployee.id]
-							}
-						]
+								{
+									field: 'employeeIds',
+									search: [this.selectedEmployee.id],
+								},
+						  ]
 						: []),
 					...(startDate && endDate
 						? [
-							{
-								field: 'jobDateCreated',
-								search: {
-									between: {
-										lower: toUTC(startDate).format('YYYY-MM-DD HH:mm:ss'),
-										upper: toUTC(endDate).format('YYYY-MM-DD HH:mm:ss')
-									}
-								}
-							}
-						]
+								{
+									field: 'jobDateCreated',
+									search: {
+										between: {
+											lower: toUTC(startDate).format(
+												'YYYY-MM-DD HH:mm:ss'
+											),
+											upper: toUTC(endDate).format(
+												'YYYY-MM-DD HH:mm:ss'
+											),
+										},
+									},
+								},
+						  ]
 						: []),
 					...(title
 						? [
-							{
-								field: 'title',
-								search: title
-							}
-						]
+								{
+									field: 'title',
+									search: title,
+								},
+						  ]
 						: []),
 					...(jobSource
 						? [
-							{
-								field: 'jobSource',
-								search: jobSource
-							}
-						]
+								{
+									field: 'jobSource',
+									search: jobSource,
+								},
+						  ]
 						: []),
 					...(jobType
 						? [
-							{
-								field: 'jobType',
-								search: jobType
-							}
-						]
+								{
+									field: 'jobType',
+									search: jobType,
+								},
+						  ]
 						: []),
 					...(jobStatus
 						? [
-							{
-								field: 'jobStatus',
-								search: jobStatus
-							}
-						]
+								{
+									field: 'jobStatus',
+									search: jobStatus,
+								},
+						  ]
 						: []),
 					...(budget
 						? [
-							{
-								field: 'budget',
-								search: budget
-							}
-						]
-						: [])
+								{
+									field: 'budget',
+									search: budget,
+								},
+						  ]
+						: []),
 				],
 				false,
 				false
@@ -583,8 +677,8 @@ export class SearchComponent extends PaginationFilterBaseComponent implements On
 				[
 					{
 						field: 'status',
-						direction: 'ASC'
-					}
+						direction: 'ASC',
+					},
 				],
 				false
 			);
@@ -612,7 +706,9 @@ export class SearchComponent extends PaginationFilterBaseComponent implements On
 	hideAll() {
 		const request: IVisibilityJobPostInput = {
 			hide: true,
-			...(isNotEmpty(this.selectedEmployee) ? { employeeId: this.selectedEmployee.id } : {})
+			...(isNotEmpty(this.selectedEmployee)
+				? { employeeId: this.selectedEmployee.id }
+				: {}),
 		};
 		this.jobService.hideJob(request).then(() => {
 			this.toastrService.success('TOASTR.MESSAGE.JOB_HIDDEN');
@@ -643,5 +739,5 @@ export class SearchComponent extends PaginationFilterBaseComponent implements On
 		this.jobs$.next(true);
 	}
 
-	ngOnDestroy(): void { }
+	ngOnDestroy(): void {}
 }
