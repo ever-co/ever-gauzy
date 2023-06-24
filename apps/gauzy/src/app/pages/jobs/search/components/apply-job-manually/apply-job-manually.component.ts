@@ -50,8 +50,7 @@ import { ckEditorConfig } from './../../../../../@shared/ckeditor.config';
 })
 export class ApplyJobManuallyComponent
 	extends TranslationBaseComponent
-	implements AfterViewInit, OnInit, OnDestroy
-{
+	implements AfterViewInit, OnInit, OnDestroy {
 
 	public JobPostSourceEnum: typeof JobPostSourceEnum = JobPostSourceEnum;
 	public FormHelpers: typeof FormHelpers = FormHelpers;
@@ -195,7 +194,9 @@ export class ApplyJobManuallyComponent
 	}
 
 	ngOnDestroy(): void {
-		this.retryUntil$.unsubscribe();
+		if (this.retryUntil$) {
+			this.retryUntil$.unsubscribe();
+		}
 	}
 
 	private _loadUploaderSettings() {
