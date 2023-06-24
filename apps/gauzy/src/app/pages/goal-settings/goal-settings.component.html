@@ -258,6 +258,7 @@
 			[disabled]="disableButton"
 			size="small"
 			*ngIf="selectedTab === 'kpi'"
+			underConstruction
 		>
 			<nb-icon icon="eye-outline" pack="eva"></nb-icon>
 			{{ 'BUTTONS.VIEW' | translate }}
@@ -269,6 +270,7 @@
 			[disabled]="disableButton"
 			size="small"
 			*ngIf="selectedTab !== 'kpi'"
+			underConstruction
 		>
 			<nb-icon icon="eye-outline" pack="eva"></nb-icon>
 			{{ 'BUTTONS.VIEW' | translate }}
@@ -347,7 +349,7 @@
 	</div>
 </ng-template>
 <ng-template #gridLayout>
-	<ga-card-grid 
+	<ga-card-grid
 		[totalItems]="pagination?.totalItems"
 		[settings]="smartTableSettings"
 		[source]="goalTimeFrames"

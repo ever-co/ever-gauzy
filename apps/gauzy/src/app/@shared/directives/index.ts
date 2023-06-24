@@ -2,6 +2,7 @@ import { AutocompleteOffDirective } from './autocomplete-off.directive';
 import { DebounceClickDirective } from './debounce-click.directive';
 import { ImgDirective } from './img.directive';
 import { OutsideDirective } from './outside.directive';
+import { UnderConstructionDirective } from './under-construction.directive';
 import { ReadMoreDirective } from './read-more';
 import { TimeTrackingAuthorizedDirective } from './time-tracking-authorized-directive';
 
@@ -11,5 +12,6 @@ export const DIRECTIVES = [
     ImgDirective,
     ReadMoreDirective,
     TimeTrackingAuthorizedDirective,
-    OutsideDirective
+	OutsideDirective,
+	UnderConstructionDirective
 ];

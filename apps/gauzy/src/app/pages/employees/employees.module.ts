@@ -74,6 +74,7 @@ import { NbTabsetModule, NbToggleModule } from '@nebular/theme';
 import { PaginationModule } from '../../@shared/pagination/pagination.module';
 import { CardGridModule } from '../../@shared/card-grid/card-grid.module';
 import { TimeZoneSelectorModule } from '../../@shared/selectors';
+import { DirectivesModule } from '../../@shared/directives/directives.module';
 
 const COMPONENTS = [
 	EmployeesComponent,
@@ -143,7 +144,8 @@ const COMPONENTS = [
 		NbToggleModule,
 		PaginationModule,
 		CardGridModule,
-		TimeZoneSelectorModule
+		TimeZoneSelectorModule,
+		DirectivesModule
 	],
 	declarations: [...COMPONENTS],
 	providers: [

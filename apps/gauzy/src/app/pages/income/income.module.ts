@@ -26,6 +26,7 @@ import { HeaderTitleModule } from '../../@shared/components/header-title/header-
 import { PaginationModule } from '../../@shared/pagination/pagination.module';
 import { TableFiltersModule } from '../../@shared/table-filters/table-filters.module';
 import { GauzyButtonActionModule } from '../../@shared/gauzy-button-action/gauzy-button-action.module';
+import { DirectivesModule } from '../../@shared/directives/directives.module';
 
 @NgModule({
 	imports: [
@@ -52,7 +53,8 @@ import { GauzyButtonActionModule } from '../../@shared/gauzy-button-action/gauzy
 		HeaderTitleModule,
 		PaginationModule,
 		TableFiltersModule,
-   	 	GauzyButtonActionModule
+		GauzyButtonActionModule,
+		DirectivesModule
 	],
 	declarations: [IncomeComponent],
 	providers: [IncomeService]

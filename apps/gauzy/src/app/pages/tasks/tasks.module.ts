@@ -51,6 +51,7 @@ import { GauzyButtonActionModule } from '../../@shared/gauzy-button-action/gauzy
 import { TaskNumberFieldModule } from '../../@shared/tasks/task-number/task-number-field.module';
 import { TaskPrioritySelectModule } from '../../@shared/tasks/task-priority-select/task-priority-select.module';
 import { TaskSizeSelectModule } from '../../@shared/tasks/task-size-select/task-size-select.module';
+import { DirectivesModule } from '../../@shared/directives/directives.module';
 
 @NgModule({
 	declarations: [
@@ -106,7 +107,8 @@ import { TaskSizeSelectModule } from '../../@shared/tasks/task-size-select/task-
 		TaskStatusSelectModule,
 		GauzyButtonActionModule,
 		TaskNumberFieldModule,
-		NgxPermissionsModule.forChild()
+		NgxPermissionsModule.forChild(),
+		DirectivesModule
 	]
 })
 export class TasksModule {}

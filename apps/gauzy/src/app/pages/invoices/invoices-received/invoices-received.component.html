@@ -55,7 +55,7 @@
 			</div>
 		</ng-template>
 		<ng-template #gridLayout>
-			<ga-card-grid 
+			<ga-card-grid
 				[totalItems]="pagination?.totalItems"
 				[settings]="settingsSmartTable"
 				[source]="invoices"
@@ -145,10 +145,11 @@
 	</div>
 </ng-template>
 <ng-template #visibleButton>
-	<button 
+	<button
 		nbButton
 		status="success"
 		size="small"
+		underConstruction
 	>
 		<nb-icon [icon]="isEstimate ? 'plus-outline' : 'credit-card-outline'"></nb-icon>
 		{{ (isEstimate ? 'BUTTONS.ADD' : 'BUTTONS.PAY') | translate }}

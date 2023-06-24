@@ -3,8 +3,7 @@ import {
 	Input,
 	OnInit,
 	Output,
-	EventEmitter,
-	TemplateRef
+	EventEmitter
 } from '@angular/core';
 import { NbDialogService } from '@nebular/theme';
 import { IUser } from '@gauzy/contracts';
@@ -54,9 +53,5 @@ export class UserMenuComponent implements OnInit {
 	onClickOutside(event: boolean) {
 		this.clicks.push(event);
 		if (!event && this.clicks.length > 1) this.onClick();
-	}
-
-	open(dialog: TemplateRef<any>) {
-		this.dialogService.open(dialog);
 	}
 }
