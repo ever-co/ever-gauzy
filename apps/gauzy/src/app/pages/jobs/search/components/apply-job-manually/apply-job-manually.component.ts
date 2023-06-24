@@ -147,6 +147,7 @@ export class ApplyJobManuallyComponent
 			.subscribe();
 		this.proposal$
 			.pipe(
+				tap(() => this.loading = true),
 				tap(() => this.callPreProcessEmployeeJobApplication()),
 				untilDestroyed(this)
 			)
@@ -405,7 +406,6 @@ export class ApplyJobManuallyComponent
 		this.retryUntil$ = source$
 			.pipe(
 				filter(() => !!employeeJobApplicationId),
-				tap(() => (this.loading = true)),
 				switchMap(() =>
 					this.jobService.getEmployeeJobApplication(
 						employeeJobApplicationId
