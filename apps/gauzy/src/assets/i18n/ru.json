@@ -128,7 +128,8 @@
 		"COLLAPSE": "Свернуть",
 		"EXPAND": "Развернуть",
 		"SHOW_MORE": "Показать больше",
-		"START_WORK": "Начать работу"
+		"START_WORK": "Начать работу",
+		"APPLY": "Применять"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {
