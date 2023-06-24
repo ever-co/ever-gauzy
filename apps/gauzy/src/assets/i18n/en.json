@@ -2485,6 +2485,7 @@
 		"WEB": "Web",
 		"HOURLY": "Hourly",
 		"FIXED": "Fixed",
+		"LINKEDIN": "LinkedIn",
 		"FILTER": {
 			"TITLE": "Advanced Filter",
 			"SOURCE": "Source",

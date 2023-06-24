@@ -1,9 +1,12 @@
 @import 'gauzy/_gauzy-dialogs';
 :host {
 	display: block;
-	width: 1024px;
+	width: 100%;
 	nb-card {
 		background-color: nb-theme(background-basic-color-1);
+		nb-card-body {
+			overflow: hidden !important;
+		}
 	}
 	::ng-deep {
 		.cancel {
@@ -14,7 +17,7 @@
 		}
 	}
 	.well {
-		height: 100px;
+		height: 80px;
 		display: flex;
 		align-items: center;
 		justify-content: center;

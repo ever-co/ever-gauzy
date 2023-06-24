@@ -23,7 +23,12 @@ import { UserFormsModule } from '../../@shared/user/forms/user-forms.module';
 import { ThemeModule } from '../../@theme/theme.module';
 import { OrganizationsRoutingModule } from './organizations-routing.module';
 import { OrganizationsComponent } from './organizations.component';
-import { OrganizationsCurrencyComponent, OrganizationsEmployeesComponent, OrganizationsFullnameComponent, OrganizationsStatusComponent } from './table-components';
+import {
+	OrganizationsCurrencyComponent,
+	OrganizationsEmployeesComponent,
+	OrganizationsFullnameComponent,
+	OrganizationsStatusComponent
+} from './table-components';
 import { OrganizationEmploymentTypesService } from '../../@core/services/organization-employment-types.service';
 import { RecurringExpenseHistoryModule } from '../../@shared/expenses/recurring-expense-history/recurring-expense-history.module';
 import { RecurringExpenseBlockModule } from '../../@shared/expenses/recurring-expense-block/recurring-expense-block.module';
@@ -33,6 +38,7 @@ import { TranslateModule } from '../../@shared/translate/translate.module';
 import { GauzyButtonActionModule } from '../../@shared/gauzy-button-action/gauzy-button-action.module';
 import { CardGridModule } from '../../@shared/card-grid/card-grid.module';
 import { PaginationModule } from '../../@shared/pagination/pagination.module';
+import { DirectivesModule } from '../../@shared/directives/directives.module';
 
 @NgModule({
 	imports: [
@@ -65,7 +71,8 @@ import { PaginationModule } from '../../@shared/pagination/pagination.module';
 		NgxPermissionsModule.forChild(),
 		GauzyButtonActionModule,
 		CardGridModule,
-		PaginationModule
+		PaginationModule,
+		DirectivesModule
 	],
 	declarations: [
 		OrganizationsComponent,
