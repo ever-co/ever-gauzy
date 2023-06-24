@@ -57,7 +57,8 @@ export class ApplyJobManuallyComponent
 	public ckConfig: CKEditor4.Config = {
 		...ckEditorConfig,
 		toolbar: [
-			{ name: 'basicstyles', items: ['Bold', 'Italic', 'Underline', 'Strike', 'Subscript', 'Superscript', '-', 'CopyFormatting', 'RemoveFormat'] }
+			{ name: 'basicstyles', items: ['Bold', 'Italic', 'Underline', 'Strike', 'Subscript', 'Superscript', '-', 'CopyFormatting', 'RemoveFormat'] },
+			{ name: 'clipboard', items: ['Cut', 'Copy', 'Paste', 'PasteText', 'PasteFromWord', '-', 'Undo', 'Redo'] },
 		],
 		height: '150px', // Set the desired height here
 	};
