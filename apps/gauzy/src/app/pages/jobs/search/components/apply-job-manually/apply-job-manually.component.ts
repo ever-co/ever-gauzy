@@ -56,6 +56,9 @@ export class ApplyJobManuallyComponent
 	public FormHelpers: typeof FormHelpers = FormHelpers;
 	public ckConfig: CKEditor4.Config = {
 		...ckEditorConfig,
+		toolbar: [
+			{ name: 'basicstyles', items: ['Bold', 'Italic', 'Underline', 'Strike', 'Subscript', 'Superscript', '-', 'CopyFormatting', 'RemoveFormat'] }
+		],
 		height: '150px', // Set the desired height here
 	};
 	public organization: IOrganization;
