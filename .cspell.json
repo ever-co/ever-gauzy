@@ -252,7 +252,8 @@
         "dbname",
         "EOSQL",
         "rememberMe",
-        "Rememberd"
+        "Rememberd",
+        "basicstyles"
     ],
     "useGitignore": true,
     "ignorePaths": [
