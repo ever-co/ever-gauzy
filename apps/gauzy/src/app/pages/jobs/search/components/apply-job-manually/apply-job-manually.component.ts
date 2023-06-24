@@ -55,7 +55,10 @@ export class ApplyJobManuallyComponent
 
 	public JobPostSourceEnum: typeof JobPostSourceEnum = JobPostSourceEnum;
 	public FormHelpers: typeof FormHelpers = FormHelpers;
-	public ckConfig: CKEditor4.Config = ckEditorConfig;
+	public ckConfig: CKEditor4.Config = {
+		...ckEditorConfig,
+		height: '150px', // Set the desired height here
+	};
 	public organization: IOrganization;
 	public uploader: FileUploader;
 	public hasDropZoneOver: boolean = false;

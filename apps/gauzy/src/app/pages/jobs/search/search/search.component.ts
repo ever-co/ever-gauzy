@@ -326,7 +326,7 @@ export class SearchComponent
 		}
 	}
 
-	public hideJob() {
+	public async hideJob() {
 		if (!this.selectedJob) {
 			return;
 		}
@@ -337,10 +337,14 @@ export class SearchComponent
 			providerCode: providerCode,
 			providerJobId: providerJobId,
 		};
-		this.jobService.hideJob(hideRequest).then(() => {
+
+		try {
+			await this.jobService.hideJob(hideRequest);
 			this.toastrService.success('TOASTR.MESSAGE.JOB_HIDDEN');
 			this.smartTableSource.refresh();
-		});
+		} catch (error) {
+			console.log('Error while hide job', error);
+		}
 	}
 
 	/** Apply For Job Post */
