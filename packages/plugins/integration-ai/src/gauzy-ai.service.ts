@@ -204,7 +204,10 @@ export class GauzyAIService {
 		input: IEmployeeJobApplication
 	): Promise<IEmployeeJobApplicationAppliedResult> {
 		if (this._client == null) {
-			return { isRedirectRequired: true };
+			return {
+				...input,
+				isRedirectRequired: true,
+			};
 		}
 
 		// First we need to get employee id because we have only externalId
