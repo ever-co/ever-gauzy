@@ -1,5 +1,18 @@
-import { AfterViewInit, Component, Input, OnDestroy, OnInit, ViewChild } from '@angular/core';
-import { FormBuilder, FormControl, FormGroup, FormGroupDirective, Validators } from '@angular/forms';
+import {
+	AfterViewInit,
+	Component,
+	Input,
+	OnDestroy,
+	OnInit,
+	ViewChild,
+} from '@angular/core';
+import {
+	FormBuilder,
+	FormControl,
+	FormGroup,
+	FormGroupDirective,
+	Validators,
+} from '@angular/forms';
 import { Subject, Subscription, combineLatest, switchMap, timer } from 'rxjs';
 import { debounceTime, filter, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
@@ -8,7 +21,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { CKEditor4 } from 'ckeditor4-angular';
 import { FileUploader, FileUploaderOptions } from 'ng2-file-upload';
 import {
-	IApplyJobPostInput,
+	IEmployeeJobApplication,
 	IEmployee,
 	IEmployeeJobPost,
 	IEmployeeProposalTemplate,
@@ -16,10 +29,14 @@ import {
 	IOrganization,
 	ISelectedEmployee,
 	IUser,
-	JobPostSourceEnum
+	JobPostSourceEnum,
 } from '@gauzy/contracts';
 import { distinctUntilChange, isNotEmpty, sleep } from '@gauzy/common-angular';
-import { JobService, Store, ToastrService } from './../../../../../@core/services';
+import {
+	JobService,
+	Store,
+	ToastrService,
+} from './../../../../../@core/services';
 import { API_PREFIX } from './../../../../../@core/constants';
 import { FormHelpers } from './../../../../../@shared/forms';
 import { TranslationBaseComponent } from './../../../../../@shared/language-base';
@@ -29,12 +46,19 @@ import { ckEditorConfig } from './../../../../../@shared/ckeditor.config';
 @Component({
 	selector: 'ga-apply-job-manually',
 	templateUrl: './apply-job-manually.component.html',
-	styleUrls: ['./apply-job-manually.component.scss']
+	styleUrls: ['./apply-job-manually.component.scss'],
 })
-export class ApplyJobManuallyComponent extends TranslationBaseComponent implements AfterViewInit, OnInit, OnDestroy {
+export class ApplyJobManuallyComponent
+	extends TranslationBaseComponent
+	implements AfterViewInit, OnInit, OnDestroy
+{
+
 	public JobPostSourceEnum: typeof JobPostSourceEnum = JobPostSourceEnum;
 	public FormHelpers: typeof FormHelpers = FormHelpers;
-	public ckConfig: CKEditor4.Config = ckEditorConfig;
+	public ckConfig: CKEditor4.Config = {
+		...ckEditorConfig,
+		height: '150px', // Set the desired height here
+	};
 	public organization: IOrganization;
 	public uploader: FileUploader;
 	public hasDropZoneOver: boolean = false;
@@ -50,7 +74,7 @@ export class ApplyJobManuallyComponent extends TranslationBaseComponent implemen
 			details: [], // Proposal details
 			attachments: [],
 			rate: [null, Validators.required], // Hourly Rate
-			employeeId: [null, Validators.required]
+			employeeId: [null, Validators.required],
 		});
 	}
 
@@ -109,7 +133,8 @@ export class ApplyJobManuallyComponent extends TranslationBaseComponent implemen
 				filter(([organization]) => !!organization),
 				tap(([organization, employee]) => {
 					this.organization = organization;
-					this.selectedEmployee = employee && employee.id ? employee : null;
+					this.selectedEmployee =
+						employee && employee.id ? employee : null;
 				}),
 				untilDestroyed(this)
 			)
@@ -136,7 +161,11 @@ export class ApplyJobManuallyComponent extends TranslationBaseComponent implemen
 	}
 
 	ngAfterViewInit() {
-		this.uploader.onSuccessItem = (item: any, response: string, status: number) => {
+		this.uploader.onSuccessItem = (
+			item: any,
+			response: string,
+			status: number
+		) => {
 			try {
 				if (response) {
 					const image: IImageAsset = JSON.parse(response);
@@ -149,7 +178,11 @@ export class ApplyJobManuallyComponent extends TranslationBaseComponent implemen
 				console.log('Error while uploaded project files', error);
 			}
 		};
-		this.uploader.onErrorItem = (item: any, response: string, status: number) => {
+		this.uploader.onErrorItem = (
+			item: any,
+			response: string,
+			status: number
+		) => {
 			try {
 				if (response) {
 					const error = JSON.parse(response);
@@ -187,7 +220,7 @@ export class ApplyJobManuallyComponent extends TranslationBaseComponent implemen
 			// Calculate progress independently for each uploaded file
 			removeAfterUpload: true,
 			// XHR request headers
-			headers: headers
+			headers: headers,
 		};
 		this.uploader = new FileUploader(uploaderOptions);
 	}
@@ -239,11 +272,12 @@ export class ApplyJobManuallyComponent extends TranslationBaseComponent implemen
 		if (this.form.invalid) {
 			return;
 		}
-		const { employeeId, proposal, rate, details, attachments } = this.form.value;
+		const { employeeId, proposal, rate, details, attachments } =
+			this.form.value;
 		const { providerCode, providerJobId } = this.employeeJobPost;
 
 		/** Apply job post input */
-		const applyJobPost: IApplyJobPostInput = {
+		const applyJobPost: IEmployeeJobApplication = {
 			applied: true,
 			employeeId,
 			proposal,
@@ -251,7 +285,7 @@ export class ApplyJobManuallyComponent extends TranslationBaseComponent implemen
 			details,
 			attachments,
 			providerCode,
-			providerJobId
+			providerJobId,
 		};
 
 		try {
@@ -288,7 +322,11 @@ export class ApplyJobManuallyComponent extends TranslationBaseComponent implemen
 
 		const proposalTemplate = this.proposalTemplate.content;
 		const jobPost = this.employeeJobPost.jobPost;
-		const { id: employeeJobPostId, isActive, isArchived } = this.employeeJobPost;
+		const {
+			id: employeeJobPostId,
+			isActive,
+			isArchived,
+		} = this.employeeJobPost;
 
 		try {
 			/** Generate employee job application request parameters */
@@ -309,12 +347,19 @@ export class ApplyJobManuallyComponent extends TranslationBaseComponent implemen
 				isArchived: isArchived,
 				attachments: '{}',
 				qa: '{}',
-				terms: '{}'
+				terms: '{}',
 			};
 			// send the employee job application
-			this.application$.next(await this.jobService.preProcessEmployeeJobApplication(generateProposalRequest));
+			this.application$.next(
+				await this.jobService.preProcessEmployeeJobApplication(
+					generateProposalRequest
+				)
+			);
 		} catch (error) {
-			console.error('Error while creating employee job application', error);
+			console.error(
+				'Error while creating employee job application',
+				error
+			);
 		}
 	}
 
@@ -335,7 +380,10 @@ export class ApplyJobManuallyComponent extends TranslationBaseComponent implemen
 			// try to get AI generated proposal for specific employee job application
 			await this.getAIGeneratedProposal(employeeJobApplicationId);
 		} catch (error) {
-			console.error('Error while initiate process for generate AI proposal by employee job application', error);
+			console.error(
+				'Error while initiate process for generate AI proposal by employee job application',
+				error
+			);
 		}
 	}
 
@@ -355,9 +403,13 @@ export class ApplyJobManuallyComponent extends TranslationBaseComponent implemen
 		const source$ = timer(0, retryDelay);
 		this.retryUntil$ = source$
 			.pipe(
-				filter((timer) => !!timer),
+				filter(() => !!employeeJobApplicationId),
 				tap(() => (this.loading = true)),
-				switchMap(() => this.jobService.getEmployeeJobApplication(employeeJobApplicationId)),
+				switchMap(() =>
+					this.jobService.getEmployeeJobApplication(
+						employeeJobApplicationId
+					)
+				),
 				tap((application) => {
 					const { isProposalGeneratedByAI } = application;
 					// Stop making API calls as the desired parameter is found
@@ -366,11 +418,14 @@ export class ApplyJobManuallyComponent extends TranslationBaseComponent implemen
 							/** If employee proposal generated successfully from Gauzy AI */
 							if (isNotEmpty(application)) {
 								const { proposal } = application;
-								this.form.patchValue({ details: proposal, proposal: proposal });
+								this.form.patchValue({
+									details: proposal,
+									proposal: proposal,
+								});
 							} else {
 								this.form.patchValue({
 									proposal: this.proposalTemplate,
-									details: this.proposalTemplate
+									details: this.proposalTemplate,
 								});
 							}
 						} finally {

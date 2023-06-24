@@ -32,8 +32,9 @@ import {
 	IEmployeeUpworkJobsSearchCriterion,
 	IEmployee,
 	IVisibilityJobPostInput,
-	IApplyJobPostInput,
+	IEmployeeJobApplication,
 	IUpdateEmployeeJobPostAppliedResult,
+	IEmployeeJobApplicationAppliedResult,
 	IGetEmployeeJobPostInput,
 	IPagination,
 	IEmployeeJobPost,
@@ -67,94 +68,11 @@ export class GauzyAIService {
 
 	private gauzyAIGraphQLEndpoint: string;
 
-	private initClient() {
-		this._client = new ApolloClient({
-			typeDefs: EmployeeJobPostsDocument,
-			link: new HttpLink({
-				uri: this.gauzyAIGraphQLEndpoint,
-				fetch,
-			}),
-			cache: new InMemoryCache(),
-			defaultOptions: this.defaultOptions,
-		});
-	}
-
 	constructor(
 		private readonly _configService: ConfigService,
 		private readonly _http: HttpService
 	) {
-		try {
-			const gauzyAIRESTEndpoint = this._configService.get<string>(
-				'guazyAI.gauzyAIRESTEndpoint'
-			);
-
-			console.log(
-				chalk.magenta(`GauzyAI REST Endpoint: ${gauzyAIRESTEndpoint}`)
-			);
-
-			this.gauzyAIGraphQLEndpoint = this._configService.get<string>(
-				'guazyAI.gauzyAIGraphQLEndpoint'
-			);
-
-			console.log(
-				chalk.magenta(
-					`GauzyAI GraphQL Endpoint: ${this.gauzyAIGraphQLEndpoint}`
-				)
-			);
-
-			if (this.gauzyAIGraphQLEndpoint && gauzyAIRESTEndpoint) {
-				this._logger.log(
-					'Gauzy AI Endpoints (GraphQL & REST) are configured in the environment'
-				);
-
-				this.initClient();
-
-				const testConnectionQuery = async () => {
-					try {
-						const employeesQuery: DocumentNode<EmployeeQuery> = gql`
-							query employee {
-								employees {
-									edges {
-										node {
-											id
-										}
-									}
-									totalCount
-								}
-							}
-						`;
-
-						const employeesQueryResult: ApolloQueryResult<EmployeeQuery> =
-							await this._client.query<EmployeeQuery>({
-								query: employeesQuery,
-							});
-
-						if (
-							employeesQueryResult.networkStatus ===
-							NetworkStatus.error
-						) {
-							this._client = null;
-						}
-					} catch (err) {
-						this._logger.error(err);
-						this._client = null;
-					}
-				};
-
-				testConnectionQuery();
-			} else {
-				this._logger.warn(
-					'Gauzy AI Endpoints are not configured in the environment'
-				);
-				this._client = null;
-			}
-		} catch (err) {
-			this._logger.warn(
-				'Gauzy AI Endpoints are not configured in the environment'
-			);
-			this._logger.error(err);
-			this._client = null;
-		}
+		this.init();
 	}
 
 	/**
@@ -164,7 +82,7 @@ export class GauzyAIService {
 	 * @returns
 	 */
 	public async preProcessEmployeeJobApplication(
-		params: IApplyJobPostInput
+		params: IEmployeeJobApplication
 	): Promise<any> {
 		// First we need to get employee id because we have only externalId
 		params.employeeId = await this.getEmployeeGauzyAIId(params.employeeId);
@@ -278,6 +196,95 @@ export class GauzyAIService {
 	}
 
 	/**
+	 * Apply for a Job
+	 * @param input
+	 * @returns
+	 */
+	public async apply(
+		input: IEmployeeJobApplication
+	): Promise<IEmployeeJobApplicationAppliedResult> {
+		if (this._client == null) {
+			return {
+				...input,
+				isRedirectRequired: true,
+			};
+		}
+
+		// First we need to get employee id because we have only externalId
+		const employeeId = await this.getEmployeeGauzyAIId(input.employeeId);
+		console.log(
+			chalk.green(`Method 'apply' is called. EmployeeId: ${employeeId}`)
+		);
+
+		// Next we need to get a job using providerCode and providerJobId
+		const jobPostId = await this.getJobPostId(
+			input.providerCode,
+			input.providerJobId
+		);
+		console.log(
+			chalk.green(`Method 'apply' is called. jobPostId: ${jobPostId}`)
+		);
+
+		// Next, we need to find `public employee job post` table record in Gauzy AI to get id of record.
+		// We can find by employeeId and jobPostId
+
+		const employeeJobPostId = await this.getEmployeeJobPostId(
+			employeeId,
+			jobPostId
+		);
+		console.log(
+			chalk.green(
+				`Method 'apply' is called. employeeJobPostId: ${employeeJobPostId}`
+			)
+		);
+
+		if (employeeId && jobPostId && employeeJobPostId) {
+			const applicationDate = new Date();
+
+			// ------------------ Create Employee Job Application ------------------
+			// This will Apply to the job using Automation system
+
+			const createOneEmployeeJobApplication: CreateEmployeeJobApplication =
+				{
+					employeeId: employeeId,
+					jobPostId: jobPostId,
+					proposal: input.proposal,
+					rate: input.rate,
+					// details: input.details,
+					attachments: input.attachments,
+					appliedDate: applicationDate,
+					employeeJobPostId: employeeJobPostId,
+					isActive: true,
+					isArchived: false,
+					providerCode: input.providerCode,
+					providerJobId: input.providerJobId,
+					jobType: input.jobType,
+					jobStatus: input.jobStatus,
+					terms: input.terms,
+					qa: input.qa,
+					// Note: isViewedByClient will be updated by our Automation system
+					// Note: providerJobApplicationId will be set by Automation system when it's applied to the job
+				};
+
+			const response = await firstValueFrom(
+				this._http
+					.post(
+						'employee/job/application/process',
+						createOneEmployeeJobApplication
+					)
+					.pipe(map((resp: AxiosResponse<any, any>) => resp.data))
+			);
+
+			return {
+				...response,
+				isRedirectRequired: false,
+			};
+		} else {
+			return { ...input, isRedirectRequired: true };
+		}
+	}
+
+	/**
 	 * Updates job visibility
 	 * @param hide Should job be hidden or visible. This will set isActive field to false in Gauzy AI
 	 * @param employeeId If employeeId set, job will be set not active only for that specific employee (using EmployeeJobPost record update in Gauzy AI)
@@ -365,9 +372,10 @@ export class GauzyAIService {
 	}
 
 	/**
-	 * Updates if Employee Applied to a job
+	 * Create Employee Job Application and updates Employee Job Post record that employee applied for a job
+	 * NOTE: We will not use this method for now.
 	 *
-	 * Inside interface IApplyJobPostInput we get below fields
+	 * Inside interface IEmployeeJobApplication we get below fields
 	 *	applied: boolean; <- This will set isApplied and appliedDate fields in Gauzy AI
 	 *	employeeId: string; <- Employee who applied for a job
 	 *	providerCode: string; <- e.g. 'upwork'
@@ -378,7 +386,7 @@ export class GauzyAIService {
 	 * 	attachments?: string; <- Attachments (optional, comma separated list of file names)
 	 */
 	public async updateApplied(
-		input: IApplyJobPostInput
+		input: IEmployeeJobApplication
 	): Promise<IUpdateEmployeeJobPostAppliedResult> {
 		if (this._client == null) {
 			return { isRedirectRequired: true };
@@ -700,284 +708,6 @@ export class GauzyAIService {
 		return true;
 	}
 
-	private async getEmployeeJobPostId(
-		employeeId: string,
-		jobPostId: string
-	): Promise<string> {
-		const employeeJobPostsQuery = gql`
-			query employeeJobPostsByEmployeeIdJobPostId(
-				$employeeIdFilter: String!
-				$jobPostIdFilter: String!
-			) {
-				employeeJobPosts(
-					filter: {
-						employeeId: { eq: $employeeIdFilter }
-						jobPostId: { eq: $jobPostIdFilter }
-					}
-				) {
-					edges {
-						node {
-							id
-							isActive
-							isArchived
-						}
-					}
-				}
-			}
-		`;
-
-		const employeeJobPostsQueryResult = await this._client.query<any>({
-			query: employeeJobPostsQuery,
-			variables: {
-				employeeIdFilter: employeeId,
-				jobPostIdFilter: jobPostId,
-			},
-		});
-
-		const employeeJobPostsResponse =
-			employeeJobPostsQueryResult.data.employeeJobPosts.edges;
-
-		if (employeeJobPostsResponse && employeeJobPostsResponse.length > 0) {
-			return employeeJobPostsResponse[0].node.id;
-		}
-
-		return null;
-	}
-
-	private async getJobPostId(
-		providerCode: string,
-		providerJobId: string
-	): Promise<string> {
-		const jobPostsQuery = gql`
-			query jobPosts(
-				$providerCodeFilter: String!
-				$providerJobIdFilter: String!
-			) {
-				jobPosts(
-					filter: {
-						providerCode: { eq: $providerCodeFilter }
-						providerJobId: { eq: $providerJobIdFilter }
-					}
-				) {
-					edges {
-						node {
-							id
-							isActive
-							isArchived
-						}
-					}
-				}
-			}
-		`;
-
-		const jobPostsQueryResult = await this._client.query<any>({
-			query: jobPostsQuery,
-			variables: {
-				providerCodeFilter: providerCode,
-				providerJobIdFilter: providerJobId,
-			},
-		});
-
-		const jobPostsResponse = jobPostsQueryResult.data.jobPosts.edges;
-
-		if (jobPostsResponse && jobPostsResponse.length > 0) {
-			return jobPostsResponse[0].node.id;
-		}
-
-		return null;
-	}
-
-	private async getEmployeeGauzyAIId(
-		externalEmployeeId: string
-	): Promise<string> {
-		const employeesQuery: DocumentNode<EmployeeQuery> = gql`
-			query employeeByExternalEmployeeId(
-				$externalEmployeeIdFilter: String!
-			) {
-				employees(
-					filter: {
-						externalEmployeeId: { eq: $externalEmployeeIdFilter }
-					}
-				) {
-					edges {
-						node {
-							id
-							externalEmployeeId
-						}
-					}
-					totalCount
-				}
-			}
-		`;
-
-		const employeesQueryResult: ApolloQueryResult<EmployeeQuery> =
-			await this._client.query<EmployeeQuery>({
-				query: employeesQuery,
-				variables: {
-					externalEmployeeIdFilter: externalEmployeeId,
-				},
-			});
-
-		const employeesResponse = employeesQueryResult.data.employees.edges;
-
-		if (employeesResponse.length > 0) {
-			return employeesResponse[0].node.id;
-		}
-
-		return null;
-	}
-
-	/** Sync Employee between Gauzy and Gauzy AI
-	 *  Creates new Employee in Gauzy AI if it's not yet exists there yet (it try to find by externalEmployeeId field value or by name)
-	 *  Update existed Gauzy AI Employee record with new data from Gauzy DB
-	 */
-	private async syncEmployee(employee: Employee): Promise<Employee> {
-		// First, let's search by employee.externalEmployeeId (which is Gauzy employeeId)
-		let employeesQuery: DocumentNode<EmployeeQuery> = gql`
-			query employeeByExternalEmployeeId(
-				$externalEmployeeIdFilter: String!
-			) {
-				employees(
-					filter: {
-						externalEmployeeId: { eq: $externalEmployeeIdFilter }
-					}
-				) {
-					edges {
-						node {
-							id
-							externalEmployeeId
-						}
-					}
-					totalCount
-				}
-			}
-		`;
-
-		let employeesQueryResult: ApolloQueryResult<EmployeeQuery> =
-			await this._client.query<EmployeeQuery>({
-				query: employeesQuery,
-				variables: {
-					externalEmployeeIdFilter: employee.externalEmployeeId,
-				},
-			});
-
-		let employeesResponse = employeesQueryResult.data.employees.edges;
-
-		let isAlreadyCreated = employeesResponse.length > 0;
-
-		console.log(
-			`Is Employee ${employee.externalEmployeeId} already exists in Gauzy AI: ${isAlreadyCreated} by externalEmployeeId field`
-		);
-
-		if (!isAlreadyCreated) {
-			// OK, so we can't find by employee.externalEmployeeId value, let's try to search by name
-
-			employeesQuery = gql`
-				query employeeByName(
-					$firstNameFilter: String!
-					$lastNameFilter: String!
-				) {
-					employees(
-						filter: {
-							firstName: { eq: $firstNameFilter }
-							lastName: { eq: $lastNameFilter }
-						}
-					) {
-						edges {
-							node {
-								id
-								firstName
-								lastName
-								externalEmployeeId
-							}
-						}
-						totalCount
-					}
-				}
-			`;
-
-			employeesQueryResult = await this._client.query<EmployeeQuery>({
-				query: employeesQuery,
-				variables: {
-					firstNameFilter: employee.firstName,
-					lastNameFilter: employee.lastName,
-				},
-			});
-
-			employeesResponse = employeesQueryResult.data.employees.edges;
-
-			isAlreadyCreated = employeesResponse.length > 0;
-
-			console.log(
-				`Is Employee ${employee.externalEmployeeId} already exists in Gauzy AI: ${isAlreadyCreated} by name fields`
-			);
-
-			if (!isAlreadyCreated) {
-				const createEmployeeMutation: DocumentNode<any> = gql`
-					mutation createOneEmployee(
-						$input: CreateOneEmployeeInput!
-					) {
-						createOneEmployee(input: $input) {
-							id
-							externalEmployeeId
-							externalTenantId
-							externalOrgId
-							upworkOrganizationId
-							upworkId
-							linkedInId
-							firstName
-							lastName
-						}
-					}
-				`;
-
-				const newEmployee = await this._client.mutate({
-					mutation: createEmployeeMutation,
-					variables: {
-						input: {
-							employee,
-						},
-					},
-				});
-
-				return newEmployee.data.createOneEmployee;
-			}
-		}
-
-		// update record of employee
-
-		const id = employeesResponse[0].node.id;
-
-		const updateEmployeeMutation: DocumentNode<any> = gql`
-			mutation updateOneEmployee($input: UpdateOneEmployeeInput!) {
-				updateOneEmployee(input: $input) {
-					externalEmployeeId
-					externalTenantId
-					externalOrgId
-					upworkOrganizationId
-					upworkId
-					linkedInId
-					isActive
-					isArchived
-					firstName
-					lastName
-				}
-			}
-		`;
-
-		await this._client.mutate({
-			mutation: updateEmployeeMutation,
-			variables: {
-				input: {
-					id: id,
-					update: employee,
-				},
-			},
-		});
-
-		return <Employee>employeesResponse[0].node;
-	}
-
 	/**
 	 * Get Jobs available for registered employees
 	 */
@@ -1238,5 +968,370 @@ export class GauzyAIService {
 			(page_number - 1) * page_size,
 			page_number * page_size
 		);
+	}
+
+	private async getEmployeeJobPostId(
+		employeeId: string,
+		jobPostId: string
+	): Promise<string> {
+		const employeeJobPostsQuery = gql`
+			query employeeJobPostsByEmployeeIdJobPostId(
+				$employeeIdFilter: String!
+				$jobPostIdFilter: String!
+			) {
+				employeeJobPosts(
+					filter: {
+						employeeId: { eq: $employeeIdFilter }
+						jobPostId: { eq: $jobPostIdFilter }
+					}
+				) {
+					edges {
+						node {
+							id
+							isActive
+							isArchived
+						}
+					}
+				}
+			}
+		`;
+
+		const employeeJobPostsQueryResult = await this._client.query<any>({
+			query: employeeJobPostsQuery,
+			variables: {
+				employeeIdFilter: employeeId,
+				jobPostIdFilter: jobPostId,
+			},
+		});
+
+		const employeeJobPostsResponse =
+			employeeJobPostsQueryResult.data.employeeJobPosts.edges;
+
+		if (employeeJobPostsResponse && employeeJobPostsResponse.length > 0) {
+			return employeeJobPostsResponse[0].node.id;
+		}
+
+		return null;
+	}
+
+	private async getJobPostId(
+		providerCode: string,
+		providerJobId: string
+	): Promise<string> {
+		const jobPostsQuery = gql`
+			query jobPosts(
+				$providerCodeFilter: String!
+				$providerJobIdFilter: String!
+			) {
+				jobPosts(
+					filter: {
+						providerCode: { eq: $providerCodeFilter }
+						providerJobId: { eq: $providerJobIdFilter }
+					}
+				) {
+					edges {
+						node {
+							id
+							isActive
+							isArchived
+						}
+					}
+				}
+			}
+		`;
+
+		const jobPostsQueryResult = await this._client.query<any>({
+			query: jobPostsQuery,
+			variables: {
+				providerCodeFilter: providerCode,
+				providerJobIdFilter: providerJobId,
+			},
+		});
+
+		const jobPostsResponse = jobPostsQueryResult.data.jobPosts.edges;
+
+		if (jobPostsResponse && jobPostsResponse.length > 0) {
+			return jobPostsResponse[0].node.id;
+		}
+
+		return null;
+	}
+
+	private async getEmployeeGauzyAIId(
+		externalEmployeeId: string
+	): Promise<string> {
+		const employeesQuery: DocumentNode<EmployeeQuery> = gql`
+			query employeeByExternalEmployeeId(
+				$externalEmployeeIdFilter: String!
+			) {
+				employees(
+					filter: {
+						externalEmployeeId: { eq: $externalEmployeeIdFilter }
+					}
+				) {
+					edges {
+						node {
+							id
+							externalEmployeeId
+						}
+					}
+					totalCount
+				}
+			}
+		`;
+
+		const employeesQueryResult: ApolloQueryResult<EmployeeQuery> =
+			await this._client.query<EmployeeQuery>({
+				query: employeesQuery,
+				variables: {
+					externalEmployeeIdFilter: externalEmployeeId,
+				},
+			});
+
+		const employeesResponse = employeesQueryResult.data.employees.edges;
+
+		if (employeesResponse.length > 0) {
+			return employeesResponse[0].node.id;
+		}
+
+		return null;
+	}
+
+	private initClient() {
+		this._client = new ApolloClient({
+			typeDefs: EmployeeJobPostsDocument,
+			link: new HttpLink({
+				uri: this.gauzyAIGraphQLEndpoint,
+				fetch,
+			}),
+			cache: new InMemoryCache(),
+			defaultOptions: this.defaultOptions,
+		});
+	}
+
+	private init() {
+		try {
+			const gauzyAIRESTEndpoint = this._configService.get<string>(
+				'guazyAI.gauzyAIRESTEndpoint'
+			);
+
+			console.log(
+				chalk.magenta(`GauzyAI REST Endpoint: ${gauzyAIRESTEndpoint}`)
+			);
+
+			this.gauzyAIGraphQLEndpoint = this._configService.get<string>(
+				'guazyAI.gauzyAIGraphQLEndpoint'
+			);
+
+			console.log(
+				chalk.magenta(
+					`GauzyAI GraphQL Endpoint: ${this.gauzyAIGraphQLEndpoint}`
+				)
+			);
+
+			if (this.gauzyAIGraphQLEndpoint && gauzyAIRESTEndpoint) {
+				this._logger.log(
+					'Gauzy AI Endpoints (GraphQL & REST) are configured in the environment'
+				);
+
+				this.initClient();
+
+				const testConnectionQuery = async () => {
+					try {
+						const employeesQuery: DocumentNode<EmployeeQuery> = gql`
+							query employee {
+								employees {
+									edges {
+										node {
+											id
+										}
+									}
+									totalCount
+								}
+							}
+						`;
+
+						const employeesQueryResult: ApolloQueryResult<EmployeeQuery> =
+							await this._client.query<EmployeeQuery>({
+								query: employeesQuery,
+							});
+
+						if (
+							employeesQueryResult.networkStatus ===
+							NetworkStatus.error
+						) {
+							this._client = null;
+						}
+					} catch (err) {
+						this._logger.error(err);
+						this._client = null;
+					}
+				};
+
+				testConnectionQuery();
+			} else {
+				this._logger.warn(
+					'Gauzy AI Endpoints are not configured in the environment'
+				);
+				this._client = null;
+			}
+		} catch (err) {
+			this._logger.warn(
+				'Gauzy AI Endpoints are not configured in the environment'
+			);
+			this._logger.error(err);
+			this._client = null;
+		}
+	}
+
+	/** Sync Employee between Gauzy and Gauzy AI
+	 *  Creates new Employee in Gauzy AI if it's not yet exists there yet (it try to find by externalEmployeeId field value or by name)
+	 *  Update existed Gauzy AI Employee record with new data from Gauzy DB
+	 */
+	private async syncEmployee(employee: Employee): Promise<Employee> {
+		// First, let's search by employee.externalEmployeeId (which is Gauzy employeeId)
+		let employeesQuery: DocumentNode<EmployeeQuery> = gql`
+			query employeeByExternalEmployeeId(
+				$externalEmployeeIdFilter: String!
+			) {
+				employees(
+					filter: {
+						externalEmployeeId: { eq: $externalEmployeeIdFilter }
+					}
+				) {
+					edges {
+						node {
+							id
+							externalEmployeeId
+						}
+					}
+					totalCount
+				}
+			}
+		`;
+
+		let employeesQueryResult: ApolloQueryResult<EmployeeQuery> =
+			await this._client.query<EmployeeQuery>({
+				query: employeesQuery,
+				variables: {
+					externalEmployeeIdFilter: employee.externalEmployeeId,
+				},
+			});
+
+		let employeesResponse = employeesQueryResult.data.employees.edges;
+
+		let isAlreadyCreated = employeesResponse.length > 0;
+
+		console.log(
+			`Is Employee ${employee.externalEmployeeId} already exists in Gauzy AI: ${isAlreadyCreated} by externalEmployeeId field`
+		);
+
+		if (!isAlreadyCreated) {
+			// OK, so we can't find by employee.externalEmployeeId value, let's try to search by name
+
+			employeesQuery = gql`
+				query employeeByName(
+					$firstNameFilter: String!
+					$lastNameFilter: String!
+				) {
+					employees(
+						filter: {
+							firstName: { eq: $firstNameFilter }
+							lastName: { eq: $lastNameFilter }
+						}
+					) {
+						edges {
+							node {
+								id
+								firstName
+								lastName
+								externalEmployeeId
+							}
+						}
+						totalCount
+					}
+				}
+			`;
+
+			employeesQueryResult = await this._client.query<EmployeeQuery>({
+				query: employeesQuery,
+				variables: {
+					firstNameFilter: employee.firstName,
+					lastNameFilter: employee.lastName,
+				},
+			});
+
+			employeesResponse = employeesQueryResult.data.employees.edges;
+
+			isAlreadyCreated = employeesResponse.length > 0;
+
+			console.log(
+				`Is Employee ${employee.externalEmployeeId} already exists in Gauzy AI: ${isAlreadyCreated} by name fields`
+			);
+
+			if (!isAlreadyCreated) {
+				const createEmployeeMutation: DocumentNode<any> = gql`
+					mutation createOneEmployee(
+						$input: CreateOneEmployeeInput!
+					) {
+						createOneEmployee(input: $input) {
+							id
+							externalEmployeeId
+							externalTenantId
+							externalOrgId
+							upworkOrganizationId
+							upworkId
+							linkedInId
+							firstName
+							lastName
+						}
+					}
+				`;
+
+				const newEmployee = await this._client.mutate({
+					mutation: createEmployeeMutation,
+					variables: {
+						input: {
+							employee,
+						},
+					},
+				});
+
+				return newEmployee.data.createOneEmployee;
+			}
+		}
+
+		// update record of employee
+
+		const id = employeesResponse[0].node.id;
+
+		const updateEmployeeMutation: DocumentNode<any> = gql`
+			mutation updateOneEmployee($input: UpdateOneEmployeeInput!) {
+				updateOneEmployee(input: $input) {
+					externalEmployeeId
+					externalTenantId
+					externalOrgId
+					upworkOrganizationId
+					upworkId
+					linkedInId
+					isActive
+					isArchived
+					firstName
+					lastName
+				}
+			}
+		`;
+
+		await this._client.mutate({
+			mutation: updateEmployeeMutation,
+			variables: {
+				input: {
+					id: id,
+					update: employee,
+				},
+			},
+		});
+
+		return <Employee>employeesResponse[0].node;
 	}
 }

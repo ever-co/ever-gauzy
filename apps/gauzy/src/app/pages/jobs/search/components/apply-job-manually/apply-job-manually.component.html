@@ -22,11 +22,7 @@
                 </nb-card>
             </div>
             <div class="col-7">
-                <nb-card
-                    [nbSpinner]="loading"
-                    nbSpinnerStatus="primary"
-                    nbSpinnerSize="medium"
-                >
+                <nb-card>
                     <nb-card-header>
                         {{ 'PROPOSALS_PAGE.PROPOSAL_DETAILS.PROPOSAL_DETAILS' | translate }}
                     </nb-card-header>
@@ -99,11 +95,18 @@
                                                     (throttledClick)="proposal$.next(true)"
                                                 ></nb-icon>
                                             </div>
-                                            <ckeditor
-                                                id="proposal"
-                                                formControlName="proposal"
-                                                [config]="ckConfig"
-                                            ></ckeditor>
+                                            <div
+                                                class="editor-container"
+                                                [nbSpinner]="loading"
+                                                nbSpinnerStatus="primary"
+                                                nbSpinnerSize="medium"
+                                            >
+                                                <ckeditor
+                                                    id="proposal"
+                                                    formControlName="proposal"
+                                                    [config]="ckConfig"
+                                                ></ckeditor>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>

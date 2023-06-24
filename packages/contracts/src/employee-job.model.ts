@@ -8,21 +8,24 @@ export interface IGetEmployeeJobPostInput {
 	filters: IGetEmployeeJobPostFilters;
 }
 
-export interface IApplyJobPostInput {
+export interface IEmployeeJobApplication {
+	id?: string;
 	applied: boolean;
 	employeeId: string;
+	jobPostId?: string;
+	employeeJobPostId?: string;
 	providerCode: string;
 	providerJobId: string;
 	proposal?: string;
 	isProposalGeneratedByAI?: boolean;
 	proposalTemplate?: string;
-	rate?: number;
 	details?: string;
-	attachments?: string;
 	jobType?: JobPostTypeEnum;
 	jobStatus?: JobPostStatusEnum;
-	terms?: string;
 	qa?: string;
+	attachments?: string;
+	rate?: number;
+	terms?: string;
 }
 
 export interface IVisibilityJobPostInput {
@@ -114,26 +117,31 @@ export interface IJobPost {
 export enum JobPostSourceEnum {
 	UPWORK = 'upwork',
 	WEB = 'web',
-	LINKEDIN = 'linkedin'
+	LINKEDIN = 'linkedin',
 }
 
 export enum JobPostStatusEnum {
 	OPEN = 'open',
 	APPLIED = 'applied',
 	COMPLETED = 'completed',
-	CLOSED = 'closed'
+	CLOSED = 'closed',
 }
 
 export enum JobPostTypeEnum {
 	HOURLY = 'hourly',
-	FIXED = 'fixed'
+	FIXED = 'fixed',
 }
 
 export enum JobSearchTabsEnum {
 	ACTIONS = 'ACTIONS',
-	SEARCH = 'SEARCH'
+	SEARCH = 'SEARCH',
 }
 
 export interface IUpdateEmployeeJobPostAppliedResult {
+	isRedirectRequired: boolean;
+}
+
+export interface IEmployeeJobApplicationAppliedResult
+	extends IEmployeeJobApplication {
 	isRedirectRequired: boolean;
 }

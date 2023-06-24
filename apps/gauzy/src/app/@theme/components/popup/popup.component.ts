@@ -1,18 +1,31 @@
-import { Component, OnInit, Output, EventEmitter } from '@angular/core';
+import { Component, Output, EventEmitter, TemplateRef, ViewChild } from '@angular/core';
+import { NbCardComponent } from '@nebular/theme';
 
 @Component({
 	selector: 'gauzy-popup',
 	templateUrl: './popup.component.html',
 	styleUrls: ['./popup.component.scss']
 })
-export class PopupComponent implements OnInit {
-	@Output() onClosed: EventEmitter<any> = new EventEmitter<any>(null);
+export class PopupComponent {
+	@Output() onClosed: EventEmitter<any>;
+	private _popup: TemplateRef<NbCardComponent>;
 
-	constructor() {}
+	constructor() {
+		this.onClosed = new EventEmitter();
+	}
 
-	ngOnInit(): void {}
-
-	close() {
+	public close() {
 		this.onClosed.emit();
+	}
+
+	@ViewChild('popup')
+	public set popup(content: TemplateRef<NbCardComponent>) {
+		if (content) {
+			this._popup = content;
+		}
+	}
+
+	public get popup(): TemplateRef<NbCardComponent> {
+		return this._popup;
 	}
 }
