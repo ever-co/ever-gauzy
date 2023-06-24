@@ -32,6 +32,7 @@ import { ckEditorConfig } from './../../../../../@shared/ckeditor.config';
 	styleUrls: ['./apply-job-manually.component.scss']
 })
 export class ApplyJobManuallyComponent extends TranslationBaseComponent implements AfterViewInit, OnInit, OnDestroy {
+
 	public JobPostSourceEnum: typeof JobPostSourceEnum = JobPostSourceEnum;
 	public FormHelpers: typeof FormHelpers = FormHelpers;
 	public ckConfig: CKEditor4.Config = ckEditorConfig;
@@ -355,7 +356,7 @@ export class ApplyJobManuallyComponent extends TranslationBaseComponent implemen
 		const source$ = timer(0, retryDelay);
 		this.retryUntil$ = source$
 			.pipe(
-				filter((timer) => !!timer),
+				filter(() => !!employeeJobApplicationId),
 				tap(() => (this.loading = true)),
 				switchMap(() => this.jobService.getEmployeeJobApplication(employeeJobApplicationId)),
 				tap((application) => {
