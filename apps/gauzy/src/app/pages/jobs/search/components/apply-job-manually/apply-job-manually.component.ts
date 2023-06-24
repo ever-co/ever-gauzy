@@ -321,7 +321,7 @@ export class ApplyJobManuallyComponent
 		const employeeId = this.form.get('employeeId').value;
 		const rate = this.form.get('rate').value;
 
-		const proposalTemplate = this.proposalTemplate.content;
+		const proposalTemplate = this.proposalTemplate?.content || null;
 		const jobPost = this.employeeJobPost.jobPost;
 		const {
 			id: employeeJobPostId,
