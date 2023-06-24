@@ -93,20 +93,14 @@
                                                     icon="sync-outline"
                                                     debounceClick
                                                     (throttledClick)="proposal$.next(true)"
+                                                    [ngClass]="{ 'spin' : loading }"
                                                 ></nb-icon>
                                             </div>
-                                            <div
-                                                class="editor-container"
-                                                [nbSpinner]="loading"
-                                                nbSpinnerStatus="primary"
-                                                nbSpinnerSize="medium"
-                                            >
-                                                <ckeditor
-                                                    id="proposal"
-                                                    formControlName="proposal"
-                                                    [config]="ckConfig"
-                                                ></ckeditor>
-                                            </div>
+                                            <ckeditor
+                                                id="proposal"
+                                                formControlName="proposal"
+                                                [config]="ckConfig"
+                                            ></ckeditor>
                                         </div>
                                     </div>
                                 </div>
@@ -121,7 +115,13 @@
                                                 <label class="label" for="details">
                                                     {{ 'FORM.LABELS.DETAILS' | translate }}
                                                 </label>
-                                                <nb-icon class="sync" icon="sync-outline"></nb-icon>
+                                                <nb-icon
+                                                    class="sync"
+                                                    icon="sync-outline"
+                                                    debounceClick
+                                                    (throttledClick)="proposal$.next(true)"
+                                                    [ngClass]="{ 'spin' : loading }"
+                                                ></nb-icon>
                                             </div>
                                             <ckeditor
                                                 id="details"
@@ -156,7 +156,7 @@
             </div>
         </div>
 	</nb-card-body>
-	<nb-card-footer class="text-left">
+	<nb-card-footer class="text-right">
         <button
             status="basic"
             outline
@@ -172,7 +172,7 @@
 			nbButton
             (click)="formDirective.ngSubmit.emit()"
 		>
-			{{ 'BUTTONS.SEND' | translate }}
+			{{ 'BUTTONS.APPLY' | translate }}
 		</button>
 	</nb-card-footer>
 </nb-card>

@@ -50,13 +50,16 @@ import { ckEditorConfig } from './../../../../../@shared/ckeditor.config';
 })
 export class ApplyJobManuallyComponent
 	extends TranslationBaseComponent
-	implements AfterViewInit, OnInit, OnDestroy
-{
+	implements AfterViewInit, OnInit, OnDestroy {
 
 	public JobPostSourceEnum: typeof JobPostSourceEnum = JobPostSourceEnum;
 	public FormHelpers: typeof FormHelpers = FormHelpers;
 	public ckConfig: CKEditor4.Config = {
 		...ckEditorConfig,
+		toolbar: [
+			{ name: 'basicstyles', items: ['Bold', 'Italic', 'Underline', 'Strike', 'Subscript', 'Superscript', '-', 'CopyFormatting', 'RemoveFormat'] },
+			{ name: 'clipboard', items: ['Cut', 'Copy', 'Paste', 'PasteText', 'PasteFromWord', '-', 'Undo', 'Redo'] },
+		],
 		height: '150px', // Set the desired height here
 	};
 	public organization: IOrganization;
@@ -148,6 +151,7 @@ export class ApplyJobManuallyComponent
 			.subscribe();
 		this.proposal$
 			.pipe(
+				tap(() => this.loading = true),
 				tap(() => this.callPreProcessEmployeeJobApplication()),
 				untilDestroyed(this)
 			)
@@ -195,7 +199,9 @@ export class ApplyJobManuallyComponent
 	}
 
 	ngOnDestroy(): void {
-		this.retryUntil$.unsubscribe();
+		if (this.retryUntil$) {
+			this.retryUntil$.unsubscribe();
+		}
 	}
 
 	private _loadUploaderSettings() {
@@ -320,7 +326,7 @@ export class ApplyJobManuallyComponent
 		const employeeId = this.form.get('employeeId').value;
 		const rate = this.form.get('rate').value;
 
-		const proposalTemplate = this.proposalTemplate.content;
+		const proposalTemplate = this.proposalTemplate?.content || null;
 		const jobPost = this.employeeJobPost.jobPost;
 		const {
 			id: employeeJobPostId,
@@ -404,7 +410,6 @@ export class ApplyJobManuallyComponent
 		this.retryUntil$ = source$
 			.pipe(
 				filter(() => !!employeeJobApplicationId),
-				tap(() => (this.loading = true)),
 				switchMap(() =>
 					this.jobService.getEmployeeJobApplication(
 						employeeJobApplicationId
