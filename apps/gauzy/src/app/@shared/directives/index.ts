@@ -7,11 +7,11 @@ import { ReadMoreDirective } from './read-more';
 import { TimeTrackingAuthorizedDirective } from './time-tracking-authorized-directive';
 
 export const DIRECTIVES = [
-    AutocompleteOffDirective,
-    DebounceClickDirective,
-    ImgDirective,
-    ReadMoreDirective,
-    TimeTrackingAuthorizedDirective,
+	AutocompleteOffDirective,
+	DebounceClickDirective,
+	ImgDirective,
+	ReadMoreDirective,
+	TimeTrackingAuthorizedDirective,
 	OutsideDirective,
 	UnderConstructionDirective
 ];

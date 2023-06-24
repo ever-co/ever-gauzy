@@ -1,10 +1,4 @@
-import {
-	Component,
-	Input,
-	OnInit,
-	Output,
-	EventEmitter
-} from '@angular/core';
+import { Component, Input, OnInit, Output, EventEmitter } from '@angular/core';
 import { NbDialogService } from '@nebular/theme';
 import { IUser } from '@gauzy/contracts';
 

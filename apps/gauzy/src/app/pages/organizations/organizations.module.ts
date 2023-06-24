@@ -23,7 +23,12 @@ import { UserFormsModule } from '../../@shared/user/forms/user-forms.module';
 import { ThemeModule } from '../../@theme/theme.module';
 import { OrganizationsRoutingModule } from './organizations-routing.module';
 import { OrganizationsComponent } from './organizations.component';
-import { OrganizationsCurrencyComponent, OrganizationsEmployeesComponent, OrganizationsFullnameComponent, OrganizationsStatusComponent } from './table-components';
+import {
+	OrganizationsCurrencyComponent,
+	OrganizationsEmployeesComponent,
+	OrganizationsFullnameComponent,
+	OrganizationsStatusComponent
+} from './table-components';
 import { OrganizationEmploymentTypesService } from '../../@core/services/organization-employment-types.service';
 import { RecurringExpenseHistoryModule } from '../../@shared/expenses/recurring-expense-history/recurring-expense-history.module';
 import { RecurringExpenseBlockModule } from '../../@shared/expenses/recurring-expense-block/recurring-expense-block.module';

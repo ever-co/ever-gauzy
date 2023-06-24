@@ -5,7 +5,7 @@ import {
 	Directive,
 	ElementRef,
 	HostListener,
-	Injector,
+	Injector
 } from '@angular/core';
 import { NbCardComponent, NbDialogRef, NbDialogService } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
@@ -14,7 +14,7 @@ import { PopupComponent } from '../../@theme/components/popup/popup.component';
 
 @UntilDestroy({ checkProperties: true })
 @Directive({
-	selector: '[underConstruction]',
+	selector: '[underContruction]'
 })
 export class UnderConstructionDirective {
 	private _popupComponentRef: ComponentRef<PopupComponent>;
@@ -31,10 +31,7 @@ export class UnderConstructionDirective {
 		const popup = document.createElement('popup-component');
 
 		// Create the component and wire it up with the element
-		const factory =
-			this._componentFactoryResolver.resolveComponentFactory(
-				PopupComponent
-			);
+		const factory = this._componentFactoryResolver.resolveComponentFactory(PopupComponent);
 		this._popupComponentRef = factory.create(this._injector, [], popup);
 
 		// Attach to the view so that the change detector knows to run
@@ -56,9 +53,7 @@ export class UnderConstructionDirective {
 		}
 		const clicked = this._elementRef.nativeElement.contains(targetElement);
 		if (clicked) {
-			this._dialogRef = this._dialogService.open(
-				this._popupComponentRef.instance.popup
-			);
+			this._dialogRef = this._dialogService.open(this._popupComponentRef.instance.popup);
 		}
 	}
 }

@@ -1,16 +1,10 @@
-import {
-	Component,
-	Output,
-	EventEmitter,
-	TemplateRef,
-	ViewChild,
-} from '@angular/core';
+import { Component, Output, EventEmitter, TemplateRef, ViewChild } from '@angular/core';
 import { NbCardComponent } from '@nebular/theme';
 
 @Component({
 	selector: 'gauzy-popup',
 	templateUrl: './popup.component.html',
-	styleUrls: ['./popup.component.scss'],
+	styleUrls: ['./popup.component.scss']
 })
 export class PopupComponent {
 	@Output() onClosed: EventEmitter<any>;
