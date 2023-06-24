@@ -20,7 +20,6 @@ import { GauzyButtonActionModule } from '../../@shared/gauzy-button-action/gauzy
 import { NoDataMessageModule } from '../../@shared/no-data-message/no-data-message.module';
 import { DirectivesModule } from '../../@shared/directives/directives.module';
 
-
 @NgModule({
 	imports: [
 		ExpenseRecurringRoutingModule,

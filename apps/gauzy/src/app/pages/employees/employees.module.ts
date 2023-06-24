@@ -148,12 +148,6 @@ const COMPONENTS = [
 		DirectivesModule
 	],
 	declarations: [...COMPONENTS],
-	providers: [
-		OrganizationsService,
-		InviteGuard,
-		CandidatesService,
-		OrganizationEmploymentTypesService,
-		SkillsService
-	]
+	providers: [OrganizationsService, InviteGuard, CandidatesService, OrganizationEmploymentTypesService, SkillsService]
 })
-export class EmployeesModule { }
+export class EmployeesModule {}
