@@ -20,6 +20,7 @@ import {
 	IOrganizationProject,
 	ISelectedEmployee,
 	ITask,
+	PermissionsEnum,
 	TaskStatusEnum,
 } from '@gauzy/contracts';
 import { distinctUntilChange } from '@gauzy/common-angular';
@@ -52,6 +53,7 @@ export class ProjectManagementDetailsComponent
 	private _task$: Subject<boolean> = this.subject$;
 	private _projects: IOrganizationProject[] = [];
 	public status = TaskStatusEnum;
+	public readonly permissions = PermissionsEnum;
 
 	constructor(
 		readonly translateService: TranslateService,
