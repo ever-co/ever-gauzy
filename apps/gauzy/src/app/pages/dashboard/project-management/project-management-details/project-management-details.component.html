@@ -14,7 +14,7 @@
 			{{ 'TIMESHEET.TODAY' | translate }}
 		</nb-card-header>
 		<nb-card-body>
-			<button status="primary" size="small" outline nbButton>
+			<button underConstruction status="primary" size="small" outline nbButton>
 				{{ 'DASHBOARD_PAGE.PLAN_MY_DAY' | translate }}
 			</button>
 			<div
@@ -44,7 +44,7 @@
 					></ngx-no-data-message>
 				</ng-template>
 			</div>
-			<div (click)="addTodo()" class="more">
+			<div *ngxPermissionsOnly="[permissions.ORG_TASK_ADD]" (click)="addTodo()" class="more">
 				<i class="fas fa-plus"></i>
 				{{ 'DASHBOARD_PAGE.ADD_TODO' | translate }}
 			</div>
