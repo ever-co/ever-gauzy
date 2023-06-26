@@ -101,6 +101,7 @@
                                                 id="proposal"
                                                 formControlName="proposal"
                                                 [config]="ckConfig"
+                                                (ngModelChange)="onEditorChange($event)"
                                             ></ckeditor>
                                         </div>
                                     </div>

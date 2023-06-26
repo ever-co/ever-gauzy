@@ -54,7 +54,7 @@ export class ApplyJobManuallyComponent extends TranslationBaseComponent implemen
 			},
 			{ name: 'clipboard', items: ['Cut', 'Copy', 'Paste', 'PasteText', 'PasteFromWord', '-', 'Undo', 'Redo'] }
 		],
-		height: '150px' // Set the desired height here
+		height: '150px', // Set the desired height here
 	};
 	public organization: IOrganization;
 	public uploader: FileUploader;
@@ -391,7 +391,13 @@ export class ApplyJobManuallyComponent extends TranslationBaseComponent implemen
 						try {
 							/** If employee proposal generated successfully from Gauzy AI */
 							if (isNotEmpty(application)) {
-								const { proposal } = application;
+								// Replace line breaks with spaces
+								const proposal = application.proposal.replace(/\n\n/g, '<br/><br>').replace(/\n/g, '<br/>');
+
+								// Set ckeditor html content
+								this.ckeditor.instance.document.getBody().setHtml(proposal);
+
+								/** Patch proposal value inside form directive */
 								this.form.patchValue({
 									details: proposal,
 									proposal: proposal
@@ -408,6 +414,7 @@ export class ApplyJobManuallyComponent extends TranslationBaseComponent implemen
 						}
 					}
 				}),
+
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -431,6 +438,11 @@ export class ApplyJobManuallyComponent extends TranslationBaseComponent implemen
 		const plainText = element.textContent || element.innerText || '';
 		return plainText.trim();
 	}
+
+	/**
+	 * On editor change
+	 */
+	onEditorChange(content: string): void { }
 
 	/**
 	 * Close dialog
