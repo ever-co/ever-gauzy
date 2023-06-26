@@ -1,14 +1,44 @@
 <div class="job-detail">
-	<div class="job-date-created">
-		<p>
-			{{ rowData?.jobPost?.jobDateCreated | dateTimeFormat }}
-		</p>
+	<div class="job-header">
+		<span class="job-view-link">
+			<a href="#" (click)="openJob()">
+				<nb-icon icon="eye-outline" pack="eva" [nbTooltip]="rowData?.jobPost?.title"></nb-icon>
+			</a>
+		</span>
+		<ng-template [ngIf]="rowData?.providerCode">
+			<span class="job-provider">
+				{{ rowData?.providerCode | titlecase }}
+			</span>
+		</ng-template>
+		<ng-template [ngIf]="rowData?.jobPost?.jobDateCreated">
+			<span class="job-date-created">
+				{{ rowData?.jobPost?.jobDateCreated | dateTimeFormat }}
+			</span>
+		</ng-template>
+		<ng-template [ngIf]="rowData?.jobPost?.jobType">
+			<span class="job-type">
+				{{ rowData?.jobPost?.jobType | titlecase }}
+			</span>
+		</ng-template>
+		<ng-template [ngIf]="rowData?.jobPost?.budget">
+			<span class="job-budget">
+				{{ rowData?.jobPost?.budget | budget }}
+			</span>
+		</ng-template>
+		<div class="job-title">
+			<a href="#" (click)="openJob()">
+				<!-- <nb-icon icon="eye-outline" pack="eva" [nbTooltip]="rowData?.jobPost?.title"></nb-icon> -->
+				{{ rowData?.jobPost?.title }}
+			</a>
+		</div>
 	</div>
-	<h6 class="job-title">
-		{{ rowData?.jobPost?.title }}
-	</h6>
 	<br/>
-	<div class="job-description">
-		<p [innerHTML]="rowData?.jobPost?.description | nl2br"></p>
+
+	<div class="job-body">
+		<div class="job-description">
+			<p [innerHTML]="rowData?.jobPost?.description | nl2br"></p>
+		</div>
 	</div>
+
+	<div class="job-footer"></div>
 </div>

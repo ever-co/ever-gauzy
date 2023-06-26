@@ -3,17 +3,22 @@
     .job-detail {
         letter-spacing: 0em;
         text-align: left;
-        .job-date-created {
-            margin-bottom: 10px;
+        .job-header {
+            .job-date-created {
+                margin-bottom: 10px;
+            }
+            .job-title {
+                font-size: 16px;
+                font-weight: 700;
+                text-decoration: none;
+            }
         }
-        .job-title {
-            font-size: 16px;
-            font-weight: 700;
-        }
-        .job-description {
-            font-size: 14px;
-            margin-top: 10px;
-            line-height: 17px
+        .job-body {
+            .job-description {
+                font-size: 14px;
+                margin-top: 10px;
+                line-height: 17px
+            }
         }
     }
 }
