@@ -14,10 +14,19 @@
             }
         }
         .job-body {
+            margin-top: 20px;
             .job-description {
                 font-size: 14px;
                 margin-top: 10px;
                 line-height: 17px
+            }
+        }
+        .job-footer {
+            .job-search-container, .job-category-container {
+                font-size: 14px;
+                display: block;
+                margin-top: 10px;
+                margin-bottom: 10px;
             }
         }
     }

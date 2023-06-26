@@ -32,7 +32,6 @@
 			</a>
 		</div>
 	</div>
-	<br/>
 
 	<div class="job-body">
 		<div class="job-description">
@@ -40,5 +39,78 @@
 		</div>
 	</div>
 
-	<div class="job-footer"></div>
+	<div class="job-footer">
+		<div class="job-search-container">
+			<div class="search-category">
+				<span>
+					<span>Search Category:</span>
+					<nb-tag
+						*ngIf="rowData?.jobPost?.searchCategory"
+						[text]="rowData?.jobPost?.searchCategory"
+						status="primary"
+						size="tiny"
+					></nb-tag>
+				</span>
+			</div>
+			<div class="search-occupation">
+				<span>
+					<span>Search Occupation:</span>
+					<nb-tag
+						*ngIf="rowData?.jobPost?.searchOccupation"
+						[text]="rowData?.jobPost?.searchOccupation"
+						status="primary"
+						size="tiny"
+					></nb-tag>
+				</span>
+			</div>
+			<div class="search-keyword">
+				<span>
+					<span>Search Keyword:</span>
+					<nb-tag
+						*ngIf="rowData?.jobPost?.searchKeyword"
+						[text]="rowData?.jobPost?.searchKeyword"
+						status="primary"
+						size="tiny"
+					></nb-tag>
+				</span>
+			</div>
+		</div>
+		<div class="job-category-container">
+			<div class="job-category">
+				<span>
+					<span>Category:</span>
+					<nb-tag
+						*ngIf="rowData?.jobPost?.category"
+						[text]="rowData?.jobPost?.category"
+						status="primary"
+						size="tiny"
+					></nb-tag>
+				</span>
+			</div>
+			<div class="job-country">
+				<span>
+					<span>Country:</span>
+					<nb-tag
+						*ngIf="rowData?.jobPost?.country"
+						[text]="rowData?.jobPost?.country"
+						status="primary"
+						size="tiny"
+					></nb-tag>
+				</span>
+			</div>
+			<div class="job-skills">
+				<span>
+					<span>Skills:</span>
+					<nb-tag-list *ngIf="rowData?.jobPost?.skills">
+						<nb-tag
+							*ngFor="let skill of rowData?.jobPost?.skills?.split(',')"
+							[text]="skill"
+							status="primary"
+							size="tiny"
+						></nb-tag>
+					</nb-tag-list>
+				</span>
+			</div>
+		</div>
+	</div>
 </div>
