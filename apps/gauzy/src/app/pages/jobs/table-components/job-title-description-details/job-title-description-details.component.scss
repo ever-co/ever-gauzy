@@ -5,12 +5,26 @@
         text-align: left;
         .job-header {
             .job-date-created {
-                margin-bottom: 10px;
+                font-weight: 600;
             }
             .job-title {
                 font-size: 18px;
                 font-weight: 700;
                 text-decoration: none;
+                padding-top: 10px;
+                color: #000000;
+                a {
+                    color: #000000 !important;
+                }
+            }
+            // add provider color
+            .job-provider {
+                &.upwork {
+                    color: #14a800;
+                }
+                &.linkedin {
+                    color: #0a66c2;
+                }
             }
         }
         .job-body {

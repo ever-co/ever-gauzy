@@ -1,7 +1,7 @@
 <div class="job-detail">
 	<div class="job-header">
 		<ng-template [ngIf]="rowData?.providerCode">
-			<span class="job-provider">
+			<span class="job-provider" [ngClass]="rowData?.providerCode">
 				{{ rowData?.providerCode | titlecase }}
 			</span>
 		</ng-template>
