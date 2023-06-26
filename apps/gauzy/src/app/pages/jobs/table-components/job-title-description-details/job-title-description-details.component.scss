@@ -12,9 +12,8 @@
                 font-weight: 700;
                 text-decoration: none;
                 padding-top: 10px;
-                color: #000000;
                 a {
-                    color: #000000 !important;
+                    color: var(--text-basic-color);
                 }
             }
             // add provider color
@@ -39,9 +38,25 @@
             .job-search-container, .job-category-container {
                 font-size: 14px;
                 display: block;
-                margin-top: 10px;
-                margin-bottom: 10px;
+                margin-top: 15px;
             }
+            .badge {
+                margin-left: 10px;
+            }
+        }
+        /* CSS for fixed-width labels and badges */
+        span.label {
+            display: inline-block;
+            width: 110px;
+            margin-top: 5px;
+            color: var(--text-basic-color);
+        }
+        .badge {
+            color: var(--tag-filled-basic-text-color);
+            display: inline-block;
+            padding: 4px 8px;
+            background-color: var(--tag-filled-basic-background-color);
+            border-radius: 4px;
         }
     }
 }

@@ -6,19 +6,13 @@
 			</span>
 		</ng-template>
 		<ng-template [ngIf]="rowData?.jobPost?.jobDateCreated">
-			<span class="job-date-created">
-				| {{ rowData?.jobPost?.jobDateCreated | dateTimeFormat }}
-			</span>
+			| <span class="job-date-created">{{ rowData?.jobPost?.jobDateCreated | dateTimeFormat }}</span>
 		</ng-template>
 		<ng-template [ngIf]="rowData?.jobPost?.jobType">
-			<span class="job-type">
-				| <nb-tag [text]="rowData?.jobPost?.jobType" size="tiny"></nb-tag>
-			</span>
+			| <span class="badge">{{ rowData?.jobPost?.jobType | titlecase }}</span>
 		</ng-template>
 		<ng-template [ngIf]="rowData?.jobPost?.budget">
-			<span class="job-budget">
-				| <nb-tag [text]="rowData?.jobPost?.budget | budget" size="tiny" ></nb-tag>
-			</span>
+			| <span class="badge">{{ rowData?.jobPost?.budget | budget }}</span>
 		</ng-template>
 		<div class="job-title">
 			<a href="javascript:void(0)" (click)="openJob()">
@@ -38,77 +32,41 @@
 		<div class="job-search-container">
 			<ng-template [ngIf]="rowData?.jobPost?.searchCategory">
 				<div class="search-category">
-					<span>
-						<span>Search Category:</span>
-						<nb-tag
-							*ngIf="rowData?.jobPost?.searchCategory"
-							[text]="rowData?.jobPost?.searchCategory"
-							size="tiny"
-						></nb-tag>
-					</span>
+					<span class="label">Search Category:</span>
+					<span class="badge">{{ rowData?.jobPost?.searchCategory }}</span>
 				</div>
 			</ng-template>
 			<ng-template [ngIf]="rowData?.jobPost?.searchOccupation">
 				<div class="search-occupation">
-					<span>
-						<span>Search Occupation:</span>
-						<nb-tag
-							*ngIf="rowData?.jobPost?.searchOccupation"
-							[text]="rowData?.jobPost?.searchOccupation"
-							size="tiny"
-						></nb-tag>
-					</span>
+					<span class="label">Search Occupation:</span>
+					<span class="badge">{{ rowData?.jobPost?.searchOccupation }}</span>
 				</div>
 			</ng-template>
 			<ng-template [ngIf]="rowData?.jobPost?.searchKeyword">
 				<div class="search-keyword">
-					<span>
-						<span>Search Keyword:</span>
-						<nb-tag
-							*ngIf="rowData?.jobPost?.searchKeyword"
-							[text]="rowData?.jobPost?.searchKeyword"
-							size="tiny"
-						></nb-tag>
-					</span>
+					<span class="label">Search Keyword:</span>
+					<span class="badge">{{ rowData?.jobPost?.searchKeyword }}</span>
 				</div>
 			</ng-template>
 		</div>
 		<div class="job-category-container">
 			<ng-template [ngIf]="rowData?.jobPost?.category">
 				<div class="job-category">
-					<span>
-						<span>Category:</span>
-						<nb-tag
-							*ngIf="rowData?.jobPost?.category"
-							[text]="rowData?.jobPost?.category"
-							size="tiny"
-						></nb-tag>
-					</span>
+					<span class="label">Category:</span>
+					<span class="badge">{{ rowData?.jobPost?.category }}</span>
 				</div>
 			</ng-template>
 			<ng-template [ngIf]="rowData?.jobPost?.country">
 				<div class="job-country">
-					<span>
-						<span>Country:</span>
-						<nb-tag
-							*ngIf="rowData?.jobPost?.country"
-							[text]="rowData?.jobPost?.country"
-							size="tiny"
-						></nb-tag>
-					</span>
+					<span class="label">Country:</span>
+					<span class="badge">{{ rowData?.jobPost?.country }}</span>
 				</div>
 			</ng-template>
 			<ng-template [ngIf]="rowData?.jobPost?.skills">
 				<div class="job-skills">
-					<span>
-						<span>Skills:</span>
-						<nb-tag-list *ngIf="rowData?.jobPost?.skills">
-							<nb-tag
-								*ngFor="let skill of rowData?.jobPost?.skills?.split(',')"
-								[text]="skill"
-								size="tiny"
-							></nb-tag>
-						</nb-tag-list>
+					<span class="label">Skills:</span>
+					<span class="badge" *ngFor="let skill of rowData?.jobPost?.skills?.split(',')">
+						{{ skill }}
 					</span>
 				</div>
 			</ng-template>
