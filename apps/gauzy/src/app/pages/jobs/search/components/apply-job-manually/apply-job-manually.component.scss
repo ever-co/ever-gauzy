@@ -4,9 +4,9 @@
 	width: 100%;
 	nb-card {
 		background-color: nb-theme(background-basic-color-1);
-		nb-card-body {
-			overflow: hidden !important;
-		}
+		// nb-card-body {
+		// 	overflow: hidden !important;
+		// }
 	}
 	::ng-deep {
 		.cancel {
@@ -38,6 +38,15 @@
 			float: right;
 			&.spin {
 				animation: rotate 1s linear 0s infinite;
+				color: var(--text-primary-color);
+			}
+			@keyframes rotate {
+				0% {
+					transform: rotate(0deg);
+				}
+				100% {
+					transform: rotate(360deg);
+				}
 			}
 		}
 	}

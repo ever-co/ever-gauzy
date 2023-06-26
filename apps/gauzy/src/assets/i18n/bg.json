@@ -128,7 +128,8 @@
 		"COLLAPSE": "Collapse",
 		"EXPAND": "Expand",
 		"SHOW_MORE": "Show More",
-		"START_WORK": "Start Work"
+		"START_WORK": "Start Work",
+		"APPLY": "Приложи"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {

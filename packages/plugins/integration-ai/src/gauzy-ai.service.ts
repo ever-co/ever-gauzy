@@ -245,26 +245,26 @@ export class GauzyAIService {
 			// This will Apply to the job using Automation system
 
 			const createOneEmployeeJobApplication: CreateEmployeeJobApplication =
-				{
-					employeeId: employeeId,
-					jobPostId: jobPostId,
-					proposal: input.proposal,
-					rate: input.rate,
-					// details: input.details,
-					attachments: input.attachments,
-					appliedDate: applicationDate,
-					employeeJobPostId: employeeJobPostId,
-					isActive: true,
-					isArchived: false,
-					providerCode: input.providerCode,
-					providerJobId: input.providerJobId,
-					jobType: input.jobType,
-					jobStatus: input.jobStatus,
-					terms: input.terms,
-					qa: input.qa,
-					// Note: isViewedByClient will be updated by our Automation system
-					// Note: providerJobApplicationId will be set by Automation system when it's applied to the job
-				};
+			{
+				employeeId: employeeId,
+				jobPostId: jobPostId,
+				proposal: input.proposal,
+				rate: input.rate,
+				// details: input.details,
+				attachments: input.attachments,
+				appliedDate: applicationDate,
+				employeeJobPostId: employeeJobPostId,
+				isActive: true,
+				isArchived: false,
+				providerCode: input.providerCode,
+				providerJobId: input.providerJobId,
+				jobType: input.jobType,
+				jobStatus: input.jobStatus,
+				terms: input.terms,
+				qa: input.qa,
+				// Note: isViewedByClient will be updated by our Automation system
+				// Note: providerJobApplicationId will be set by Automation system when it's applied to the job
+			};
 
 			const response = await firstValueFrom(
 				this._http
@@ -427,26 +427,26 @@ export class GauzyAIService {
 			// This will Apply to the job using Automation system
 
 			const createOneEmployeeJobApplication: CreateEmployeeJobApplication =
-				{
-					employeeId: employeeId,
-					jobPostId: jobPostId,
-					proposal: input.proposal,
-					rate: input.rate,
-					// details: input.details,
-					attachments: input.attachments,
-					appliedDate: applicationDate,
-					employeeJobPostId: employeeJobPostId,
-					isActive: true,
-					isArchived: false,
-					providerCode: input.providerCode,
-					providerJobId: input.providerJobId,
-					jobType: input.jobType,
-					jobStatus: input.jobStatus,
-					terms: input.terms,
-					qa: input.qa,
-					// Note: isViewedByClient will be updated by our Automation system
-					// Note: providerJobApplicationId will be set by Automation system when it's applied to the job
-				};
+			{
+				employeeId: employeeId,
+				jobPostId: jobPostId,
+				proposal: input.proposal,
+				rate: input.rate,
+				// details: input.details,
+				attachments: input.attachments,
+				appliedDate: applicationDate,
+				employeeJobPostId: employeeJobPostId,
+				isActive: true,
+				isArchived: false,
+				providerCode: input.providerCode,
+				providerJobId: input.providerJobId,
+				jobType: input.jobType,
+				jobStatus: input.jobStatus,
+				terms: input.terms,
+				qa: input.qa,
+				// Note: isViewedByClient will be updated by our Automation system
+				// Note: providerJobApplicationId will be set by Automation system when it's applied to the job
+			};
 
 			const createOneEmployeeJobApplicationMutation: DocumentNode<any> = gql`
 				mutation createOneEmployeeJobApplication(
@@ -792,6 +792,9 @@ export class GauzyAIService {
 									clientJobsPosted
 									clientPastHires
 									clientPaymentVerificationStatus
+									searchCategory
+									searchOccupation
+									searchKeyword
 								}
 							}
 						}
@@ -814,38 +817,38 @@ export class GauzyAIService {
 				employeeId: undefined,
 				...(filters && filters.jobDateCreated
 					? {
-							jobDateCreated: filters.jobDateCreated,
-					  }
+						jobDateCreated: filters.jobDateCreated,
+					}
 					: {}),
 				...(filters && filters.title
 					? {
-							jobPost: {
-								title: {
-									iLike: `%${filters.title}%`,
-								},
+						jobPost: {
+							title: {
+								iLike: `%${filters.title}%`,
 							},
-					  }
+						},
+					}
 					: {}),
 				...(filters && filters.jobType
 					? {
-							jobType: {
-								in: filters.jobType,
-							},
-					  }
+						jobType: {
+							in: filters.jobType,
+						},
+					}
 					: {}),
 				...(filters && filters.jobStatus
 					? {
-							jobStatus: {
-								in: filters.jobStatus,
-							},
-					  }
+						jobStatus: {
+							in: filters.jobStatus,
+						},
+					}
 					: {}),
 				...(filters && filters.jobSource
 					? {
-							providerCode: {
-								in: filters.jobSource,
-							},
-					  }
+						providerCode: {
+							in: filters.jobSource,
+						},
+					}
 					: {}),
 			};
 

@@ -1,24 +1,11 @@
-import {
-	AfterViewInit,
-	Component,
-	Input,
-	OnDestroy,
-	OnInit,
-	ViewChild,
-} from '@angular/core';
-import {
-	FormBuilder,
-	FormControl,
-	FormGroup,
-	FormGroupDirective,
-	Validators,
-} from '@angular/forms';
+import { AfterViewInit, Component, Input, OnDestroy, OnInit, SecurityContext, ViewChild } from '@angular/core';
+import { FormBuilder, FormControl, FormGroup, FormGroupDirective, Validators } from '@angular/forms';
 import { Subject, Subscription, combineLatest, switchMap, timer } from 'rxjs';
 import { debounceTime, filter, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { NbDialogRef } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
-import { CKEditor4 } from 'ckeditor4-angular';
+import { CKEditor4, CKEditorComponent } from 'ckeditor4-angular';
 import { FileUploader, FileUploaderOptions } from 'ng2-file-upload';
 import {
 	IEmployeeJobApplication,
@@ -29,34 +16,44 @@ import {
 	IOrganization,
 	ISelectedEmployee,
 	IUser,
-	JobPostSourceEnum,
+	JobPostSourceEnum
 } from '@gauzy/contracts';
 import { distinctUntilChange, isNotEmpty, sleep } from '@gauzy/common-angular';
-import {
-	JobService,
-	Store,
-	ToastrService,
-} from './../../../../../@core/services';
+import { JobService, Store, ToastrService } from './../../../../../@core/services';
 import { API_PREFIX } from './../../../../../@core/constants';
 import { FormHelpers } from './../../../../../@shared/forms';
 import { TranslationBaseComponent } from './../../../../../@shared/language-base';
 import { ckEditorConfig } from './../../../../../@shared/ckeditor.config';
+import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ga-apply-job-manually',
 	templateUrl: './apply-job-manually.component.html',
-	styleUrls: ['./apply-job-manually.component.scss'],
+	styleUrls: ['./apply-job-manually.component.scss']
 })
-export class ApplyJobManuallyComponent
-	extends TranslationBaseComponent
-	implements AfterViewInit, OnInit, OnDestroy
-{
-
+export class ApplyJobManuallyComponent extends TranslationBaseComponent implements AfterViewInit, OnInit, OnDestroy {
 	public JobPostSourceEnum: typeof JobPostSourceEnum = JobPostSourceEnum;
 	public FormHelpers: typeof FormHelpers = FormHelpers;
 	public ckConfig: CKEditor4.Config = {
 		...ckEditorConfig,
+		toolbar: [
+			{
+				name: 'basicstyles',
+				items: [
+					'Bold',
+					'Italic',
+					'Underline',
+					'Strike',
+					'Subscript',
+					'Superscript',
+					'-',
+					'CopyFormatting',
+					'RemoveFormat'
+				]
+			},
+			{ name: 'clipboard', items: ['Cut', 'Copy', 'Paste', 'PasteText', 'PasteFromWord', '-', 'Undo', 'Redo'] }
+		],
 		height: '150px', // Set the desired height here
 	};
 	public organization: IOrganization;
@@ -74,7 +71,7 @@ export class ApplyJobManuallyComponent
 			details: [], // Proposal details
 			attachments: [],
 			rate: [null, Validators.required], // Hourly Rate
-			employeeId: [null, Validators.required],
+			employeeId: [null, Validators.required]
 		});
 	}
 
@@ -103,6 +100,9 @@ export class ApplyJobManuallyComponent
 	/** Form group directive */
 	@ViewChild('formDirective') formDirective: FormGroupDirective;
 
+	/** Ckeditor component */
+	@ViewChild('ckeditor', { static: false }) ckeditor: CKEditorComponent;
+
 	/**
 	 * Newly generate employee job application
 	 */
@@ -113,6 +113,7 @@ export class ApplyJobManuallyComponent
 
 	constructor(
 		private readonly fb: FormBuilder,
+		private readonly _sanitizer: DomSanitizer,
 		private readonly dialogRef: NbDialogRef<ApplyJobManuallyComponent>,
 		public readonly translateService: TranslateService,
 		private readonly store: Store,
@@ -133,8 +134,7 @@ export class ApplyJobManuallyComponent
 				filter(([organization]) => !!organization),
 				tap(([organization, employee]) => {
 					this.organization = organization;
-					this.selectedEmployee =
-						employee && employee.id ? employee : null;
+					this.selectedEmployee = employee && employee.id ? employee : null;
 				}),
 				untilDestroyed(this)
 			)
@@ -148,6 +148,7 @@ export class ApplyJobManuallyComponent
 			.subscribe();
 		this.proposal$
 			.pipe(
+				tap(() => (this.loading = true)),
 				tap(() => this.callPreProcessEmployeeJobApplication()),
 				untilDestroyed(this)
 			)
@@ -161,11 +162,7 @@ export class ApplyJobManuallyComponent
 	}
 
 	ngAfterViewInit() {
-		this.uploader.onSuccessItem = (
-			item: any,
-			response: string,
-			status: number
-		) => {
+		this.uploader.onSuccessItem = (item: any, response: string, status: number) => {
 			try {
 				if (response) {
 					const image: IImageAsset = JSON.parse(response);
@@ -178,11 +175,7 @@ export class ApplyJobManuallyComponent
 				console.log('Error while uploaded project files', error);
 			}
 		};
-		this.uploader.onErrorItem = (
-			item: any,
-			response: string,
-			status: number
-		) => {
+		this.uploader.onErrorItem = (item: any, response: string, status: number) => {
 			try {
 				if (response) {
 					const error = JSON.parse(response);
@@ -195,7 +188,9 @@ export class ApplyJobManuallyComponent
 	}
 
 	ngOnDestroy(): void {
-		this.retryUntil$.unsubscribe();
+		if (this.retryUntil$) {
+			this.retryUntil$.unsubscribe();
+		}
 	}
 
 	private _loadUploaderSettings() {
@@ -220,7 +215,7 @@ export class ApplyJobManuallyComponent
 			// Calculate progress independently for each uploaded file
 			removeAfterUpload: true,
 			// XHR request headers
-			headers: headers,
+			headers: headers
 		};
 		this.uploader = new FileUploader(uploaderOptions);
 	}
@@ -272,8 +267,7 @@ export class ApplyJobManuallyComponent
 		if (this.form.invalid) {
 			return;
 		}
-		const { employeeId, proposal, rate, details, attachments } =
-			this.form.value;
+		const { employeeId, proposal, rate, details, attachments } = this.form.value;
 		const { providerCode, providerJobId } = this.employeeJobPost;
 
 		/** Apply job post input */
@@ -285,9 +279,8 @@ export class ApplyJobManuallyComponent
 			details,
 			attachments,
 			providerCode,
-			providerJobId,
+			providerJobId
 		};
-
 		try {
 			this.dialogRef.close(applyJobPost);
 		} catch (error) {
@@ -320,13 +313,9 @@ export class ApplyJobManuallyComponent
 		const employeeId = this.form.get('employeeId').value;
 		const rate = this.form.get('rate').value;
 
-		const proposalTemplate = this.proposalTemplate.content;
+		const proposalTemplate = this.proposalTemplate?.content || null;
 		const jobPost = this.employeeJobPost.jobPost;
-		const {
-			id: employeeJobPostId,
-			isActive,
-			isArchived,
-		} = this.employeeJobPost;
+		const { id: employeeJobPostId, isActive, isArchived } = this.employeeJobPost;
 
 		try {
 			/** Generate employee job application request parameters */
@@ -347,19 +336,12 @@ export class ApplyJobManuallyComponent
 				isArchived: isArchived,
 				attachments: '{}',
 				qa: '{}',
-				terms: '{}',
+				terms: '{}'
 			};
 			// send the employee job application
-			this.application$.next(
-				await this.jobService.preProcessEmployeeJobApplication(
-					generateProposalRequest
-				)
-			);
+			this.application$.next(await this.jobService.preProcessEmployeeJobApplication(generateProposalRequest));
 		} catch (error) {
-			console.error(
-				'Error while creating employee job application',
-				error
-			);
+			console.error('Error while creating employee job application', error);
 		}
 	}
 
@@ -380,10 +362,7 @@ export class ApplyJobManuallyComponent
 			// try to get AI generated proposal for specific employee job application
 			await this.getAIGeneratedProposal(employeeJobApplicationId);
 		} catch (error) {
-			console.error(
-				'Error while initiate process for generate AI proposal by employee job application',
-				error
-			);
+			console.error('Error while initiate process for generate AI proposal by employee job application', error);
 		}
 	}
 
@@ -404,12 +383,7 @@ export class ApplyJobManuallyComponent
 		this.retryUntil$ = source$
 			.pipe(
 				filter(() => !!employeeJobApplicationId),
-				tap(() => (this.loading = true)),
-				switchMap(() =>
-					this.jobService.getEmployeeJobApplication(
-						employeeJobApplicationId
-					)
-				),
+				switchMap(() => this.jobService.getEmployeeJobApplication(employeeJobApplicationId)),
 				tap((application) => {
 					const { isProposalGeneratedByAI } = application;
 					// Stop making API calls as the desired parameter is found
@@ -417,15 +391,21 @@ export class ApplyJobManuallyComponent
 						try {
 							/** If employee proposal generated successfully from Gauzy AI */
 							if (isNotEmpty(application)) {
-								const { proposal } = application;
+								// Replace line breaks with spaces
+								const proposal = application.proposal.replace(/\n\n/g, '<br/><br>').replace(/\n/g, '<br/>');
+
+								// Set ckeditor html content
+								this.ckeditor.instance.document.getBody().setHtml(proposal);
+
+								/** Patch proposal value inside form directive */
 								this.form.patchValue({
 									details: proposal,
-									proposal: proposal,
+									proposal: proposal
 								});
 							} else {
 								this.form.patchValue({
 									proposal: this.proposalTemplate,
-									details: this.proposalTemplate,
+									details: this.proposalTemplate
 								});
 							}
 						} finally {
@@ -434,10 +414,35 @@ export class ApplyJobManuallyComponent
 						}
 					}
 				}),
+
 				untilDestroyed(this)
 			)
 			.subscribe();
 	}
+
+	/**
+	 * Get plain text from proposal
+	 *
+	 */
+	getPlainText(): string {
+		const content: SafeHtml = this.ckeditor.instance.getData();
+		/**
+		 * Create temporary div element
+		 */
+		const element = document.createElement('div');
+		element.innerHTML = this._sanitizer.sanitize(
+			SecurityContext.HTML, // Set bypassSecurityTrustHtml to allow the HTML content
+			content
+		);
+
+		const plainText = element.textContent || element.innerText || '';
+		return plainText.trim();
+	}
+
+	/**
+	 * On editor change
+	 */
+	onEditorChange(content: string): void { }
 
 	/**
 	 * Close dialog

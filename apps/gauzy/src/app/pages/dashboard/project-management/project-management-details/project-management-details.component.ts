@@ -1,14 +1,7 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
-import {
-	combineLatest,
-	debounceTime,
-	filter,
-	first,
-	firstValueFrom,
-	Subject,
-} from 'rxjs';
+import { combineLatest, debounceTime, filter, first, firstValueFrom, Subject } from 'rxjs';
 import { tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
@@ -20,14 +13,11 @@ import {
 	IOrganizationProject,
 	ISelectedEmployee,
 	ITask,
-	TaskStatusEnum,
+	PermissionsEnum,
+	TaskStatusEnum
 } from '@gauzy/contracts';
 import { distinctUntilChange } from '@gauzy/common-angular';
-import {
-	ErrorHandlingService,
-	Store,
-	TasksService,
-} from './../../../../@core/services';
+import { ErrorHandlingService, Store, TasksService } from './../../../../@core/services';
 import { API_PREFIX } from './../../../../@core/constants';
 import { PaginationFilterBaseComponent } from './../../../../@shared/pagination/pagination-filter-base.component';
 import { AddTaskDialogComponent } from './../../../../@shared/tasks/add-task-dialog/add-task-dialog.component';
@@ -37,12 +27,9 @@ import { MyTaskDialogComponent } from '../../../tasks/components/my-task-dialog/
 @Component({
 	selector: 'gauzy-project-management-details',
 	templateUrl: './project-management-details.component.html',
-	styleUrls: ['./project-management-details.component.scss'],
+	styleUrls: ['./project-management-details.component.scss']
 })
-export class ProjectManagementDetailsComponent
-	extends PaginationFilterBaseComponent
-	implements OnInit, OnDestroy
-{
+export class ProjectManagementDetailsComponent extends PaginationFilterBaseComponent implements OnInit, OnDestroy {
 	private _smartTableSource: ServerDataSource;
 	private _tasks: ITask[] = [];
 	private _selectedEmployee: ISelectedEmployee;
@@ -52,6 +39,7 @@ export class ProjectManagementDetailsComponent
 	private _task$: Subject<boolean> = this.subject$;
 	private _projects: IOrganizationProject[] = [];
 	public status = TaskStatusEnum;
+	public readonly permissions = PermissionsEnum;
 
 	constructor(
 		readonly translateService: TranslateService,
@@ -118,10 +106,10 @@ export class ProjectManagementDetailsComponent
 		this._smartTableSource = new ServerDataSource(this._httpClient, {
 			...(this.selectedEmployeeId
 				? {
-						endPoint: `${API_PREFIX}/tasks/employee`,
+						endPoint: `${API_PREFIX}/tasks/employee`
 				  }
 				: {
-						endPoint: `${API_PREFIX}/tasks/pagination`,
+						endPoint: `${API_PREFIX}/tasks/pagination`
 				  }),
 			relations: ['project', 'tags'],
 			where: {
@@ -129,16 +117,16 @@ export class ProjectManagementDetailsComponent
 				tenantId,
 				...(this.selectedEmployeeId
 					? {
-							employeeId: this.selectedEmployeeId,
+							employeeId: this.selectedEmployeeId
 					  }
 					: {}),
 				...(this.selectedProjectId
 					? {
-							projectId: this.selectedProjectId,
+							projectId: this.selectedProjectId
 					  }
 					: {}),
-				...(this.filters.where ? this.filters.where : {}),
-			},
+				...(this.filters.where ? this.filters.where : {})
+			}
 		});
 	}
 
@@ -167,13 +155,8 @@ export class ProjectManagementDetailsComponent
 		projects.forEach(({ id }) => {
 			count[id] = (count[id] || 0) + 1;
 		});
-		this.projects = projects.filter(
-			(value, index, self) =>
-				index === self.findIndex(({ id }) => id === value.id)
-		);
-		this.projects.sort(
-			(current, next) => -(count[current.id] - count[next.id])
-		);
+		this.projects = projects.filter((value, index, self) => index === self.findIndex(({ id }) => id === value.id));
+		this.projects.sort((current, next) => -(count[current.id] - count[next.id]));
 	}
 
 	public get isMyTask() {
@@ -187,7 +170,7 @@ export class ProjectManagementDetailsComponent
 		const activePage = this.pagination.activePage + 1;
 		this.setPagination({
 			...this.getPagination(),
-			activePage: activePage,
+			activePage: activePage
 		});
 	}
 
@@ -208,9 +191,7 @@ export class ProjectManagementDetailsComponent
 	}
 
 	public get assigned(): ITask[] {
-		return this.tasks
-			.filter(({ status }) => status === this.status.OPEN)
-			.reverse();
+		return this.tasks.filter(({ status }) => status === this.status.OPEN).reverse();
 	}
 
 	public async addTodo() {
@@ -224,26 +205,21 @@ export class ProjectManagementDetailsComponent
 					selectedTask: this.selectedEmployeeId
 						? ({
 								members: [{ ...this._selectedEmployee }] as any,
-								status: this.status.OPEN,
+								status: this.status.OPEN
 						  } as ITask)
-						: ({} as ITask),
-				},
+						: ({} as ITask)
+				}
 			});
 		} else {
 			dialog = this._dialogService.open(MyTaskDialogComponent, {
-				context: {},
+				context: {}
 			});
 		}
 		if (dialog) {
-			const data: any = await firstValueFrom(
-				dialog.onClose.pipe(first())
-			);
+			const data: any = await firstValueFrom(dialog.onClose.pipe(first()));
 			if (data) {
 				const { estimateDays, estimateHours, estimateMinutes } = data;
-				const estimate =
-					estimateDays * 24 * 60 * 60 +
-					estimateHours * 60 * 60 +
-					estimateMinutes * 60;
+				const estimate = estimateDays * 24 * 60 * 60 + estimateHours * 60 * 60 + estimateMinutes * 60;
 
 				estimate ? (data.estimate = estimate) : (data.estimate = null);
 
@@ -251,7 +227,7 @@ export class ProjectManagementDetailsComponent
 				const { id: organizationId } = this._organization;
 				const payload = Object.assign(data, {
 					organizationId,
-					tenantId,
+					tenantId
 				});
 				this._tasksService
 					.createTask(payload)
