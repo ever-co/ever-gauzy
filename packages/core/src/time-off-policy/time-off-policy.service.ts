@@ -1,13 +1,13 @@
 import { Injectable, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { In, Repository } from 'typeorm';
-import { TimeOffPolicy } from './time-off-policy.entity';
-import { TenantAwareCrudService } from './../core/crud';
-import { Employee } from '../employee/employee.entity';
 import {
 	ITimeOffPolicyCreateInput,
 	ITimeOffPolicyUpdateInput
 } from '@gauzy/contracts';
+import { TimeOffPolicy } from './time-off-policy.entity';
+import { TenantAwareCrudService } from './../core/crud';
+import { Employee } from '../employee/employee.entity';
 
 @Injectable()
 export class TimeOffPolicyService extends TenantAwareCrudService<TimeOffPolicy> {

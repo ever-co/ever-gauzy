@@ -3,10 +3,9 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { RouterModule } from 'nest-router';
 import { TimeOffPolicyService } from './time-off-policy.service';
 import { TimeOffPolicy } from './time-off-policy.entity';
-import { Employee } from '../employee/employee.entity';
 import { TimeOffPolicyController } from './time-off-policy.controller';
-import { User } from '../user/user.entity';
-import { UserService } from '../user/user.service';
+import { EmployeeModule } from './../employee/employee.module';
+import { UserModule } from './../user/user.module';
 import { TenantModule } from '../tenant/tenant.module';
 import { TaskModule } from '../tasks/task.module';
 
@@ -15,12 +14,19 @@ import { TaskModule } from '../tasks/task.module';
 		RouterModule.forRoutes([
 			{ path: 'time-off-policy', module: TimeOffPolicyModule },
 		]),
-		TypeOrmModule.forFeature([User, TimeOffPolicy, Employee]),
+		TypeOrmModule.forFeature([
+			TimeOffPolicy
+		]),
 		TenantModule,
-		TaskModule,
+		UserModule,
+		EmployeeModule,
+		TaskModule
 	],
 	controllers: [TimeOffPolicyController],
-	providers: [TimeOffPolicyService, UserService],
-	exports: [TypeOrmModule, UserService],
+	providers: [TimeOffPolicyService],
+	exports: [
+		TypeOrmModule,
+		TimeOffPolicyService
+	],
 })
-export class TimeOffPolicyModule {}
+export class TimeOffPolicyModule { }

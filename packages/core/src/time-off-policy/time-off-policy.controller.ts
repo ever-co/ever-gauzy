@@ -39,7 +39,7 @@ export class TimeOffPolicyController extends CrudController<TimeOffPolicy> {
 
 	/**
 	 * GET all time off policies using pagination
-	 * 
+	 *
 	 */
 	@UseGuards(PermissionGuard)
 	@Permissions(PermissionsEnum.POLICY_VIEW)
@@ -53,9 +53,9 @@ export class TimeOffPolicyController extends CrudController<TimeOffPolicy> {
 
 	/**
 	 * GET all time off policies
-	 * 
-	 * @param data 
-	 * @returns 
+	 *
+	 * @param data
+	 * @returns
 	 */
 	@ApiOperation({ summary: 'Find all policies.' })
 	@ApiResponse({
@@ -82,9 +82,9 @@ export class TimeOffPolicyController extends CrudController<TimeOffPolicy> {
 
 	/**
 	 * CREATE time off policy
-	 * 
-	 * @param entity 
-	 * @returns 
+	 *
+	 * @param entity
+	 * @returns
 	 */
 	@ApiOperation({ summary: 'Create new record' })
 	@ApiResponse({
@@ -102,15 +102,15 @@ export class TimeOffPolicyController extends CrudController<TimeOffPolicy> {
 	async create(
 		@Body() entity: ITimeOffPolicyCreateInput,
 	): Promise<ITimeOffPolicy> {
-		return this.timeOffPolicyService.create(entity);
+		return await this.timeOffPolicyService.create(entity);
 	}
 
 	/**
 	 * UPDATE time off policy by id
-	 * 
-	 * @param id 
-	 * @param entity 
-	 * @returns 
+	 *
+	 * @param id
+	 * @param entity
+	 * @returns
 	 */
 	@ApiOperation({ summary: 'Update record' })
 	@ApiResponse({
@@ -131,9 +131,9 @@ export class TimeOffPolicyController extends CrudController<TimeOffPolicy> {
 	@Permissions(PermissionsEnum.POLICY_EDIT)
 	@Put(':id')
 	async update(
-		@Param('id', UUIDValidationPipe) id: string,
+		@Param('id', UUIDValidationPipe) id: ITimeOffPolicy['id'],
 		@Body() entity: ITimeOffPolicyUpdateInput
 	): Promise<ITimeOffPolicy> {
-		return this.timeOffPolicyService.update(id, entity);
+		return await this.timeOffPolicyService.update(id, entity);
 	}
 }

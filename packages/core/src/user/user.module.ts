@@ -16,15 +16,19 @@ import { TaskModule } from './../tasks/task.module';
 
 @Module({
 	imports: [
-		RouterModule.forRoutes([{ path: '/user', module: UserModule }]),
-		forwardRef(() => TypeOrmModule.forFeature([User])),
+		RouterModule.forRoutes([
+			{ path: '/user', module: UserModule }
+		]),
+		forwardRef(() => TypeOrmModule.forFeature([
+			User
+		])),
 		forwardRef(() => TenantModule),
+		forwardRef(() => TaskModule),
 		CqrsModule,
 		FactoryResetModule,
-		forwardRef(() => TaskModule),
 	],
 	controllers: [UserController],
 	providers: [UserService, ...CommandHandlers],
 	exports: [TypeOrmModule, UserService],
 })
-export class UserModule {}
+export class UserModule { }
