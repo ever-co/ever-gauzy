@@ -1,11 +1,11 @@
-import { AfterViewInit, Component, Input, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { AfterViewInit, Component, Input, OnDestroy, OnInit, SecurityContext, ViewChild } from '@angular/core';
 import { FormBuilder, FormControl, FormGroup, FormGroupDirective, Validators } from '@angular/forms';
 import { Subject, Subscription, combineLatest, switchMap, timer } from 'rxjs';
 import { debounceTime, filter, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { NbDialogRef } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
-import { CKEditor4 } from 'ckeditor4-angular';
+import { CKEditor4, CKEditorComponent } from 'ckeditor4-angular';
 import { FileUploader, FileUploaderOptions } from 'ng2-file-upload';
 import {
 	IEmployeeJobApplication,
@@ -24,6 +24,7 @@ import { API_PREFIX } from './../../../../../@core/constants';
 import { FormHelpers } from './../../../../../@shared/forms';
 import { TranslationBaseComponent } from './../../../../../@shared/language-base';
 import { ckEditorConfig } from './../../../../../@shared/ckeditor.config';
+import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -99,6 +100,9 @@ export class ApplyJobManuallyComponent extends TranslationBaseComponent implemen
 	/** Form group directive */
 	@ViewChild('formDirective') formDirective: FormGroupDirective;
 
+	/** Ckeditor component */
+	@ViewChild('ckeditor', { static: false }) ckeditor: CKEditorComponent;
+
 	/**
 	 * Newly generate employee job application
 	 */
@@ -109,6 +113,7 @@ export class ApplyJobManuallyComponent extends TranslationBaseComponent implemen
 
 	constructor(
 		private readonly fb: FormBuilder,
+		private readonly _sanitizer: DomSanitizer,
 		private readonly dialogRef: NbDialogRef<ApplyJobManuallyComponent>,
 		public readonly translateService: TranslateService,
 		private readonly store: Store,
@@ -276,7 +281,6 @@ export class ApplyJobManuallyComponent extends TranslationBaseComponent implemen
 			providerCode,
 			providerJobId
 		};
-
 		try {
 			this.dialogRef.close(applyJobPost);
 		} catch (error) {
@@ -407,6 +411,25 @@ export class ApplyJobManuallyComponent extends TranslationBaseComponent implemen
 				untilDestroyed(this)
 			)
 			.subscribe();
+	}
+
+	/**
+	 * Get plain text from proposal
+	 *
+	 */
+	getPlainText(): string {
+		const content: SafeHtml = this.ckeditor.instance.getData();
+		/**
+		 * Create temporary div element
+		 */
+		const element = document.createElement('div');
+		element.innerHTML = this._sanitizer.sanitize(
+			SecurityContext.HTML, // Set bypassSecurityTrustHtml to allow the HTML content
+			content
+		);
+
+		const plainText = element.textContent || element.innerText || '';
+		return plainText.trim();
 	}
 
 	/**
