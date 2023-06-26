@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { faker } from '@faker-js/faker';
+import { htmlToText } from 'html-to-text';
 import { environment as env } from '@gauzy/config';
 import { GauzyAIService } from '@gauzy/integration-ai';
 import {
@@ -27,7 +28,7 @@ export class EmployeeJobPostService {
 		private readonly employeeService: EmployeeService,
 		private readonly gauzyAIService: GauzyAIService,
 		private readonly countryService: CountryService
-	) {}
+	) { }
 
 	/**
 	 * Updates job visibility
@@ -64,6 +65,14 @@ export class EmployeeJobPostService {
 	public async apply(
 		input: IEmployeeJobApplication
 	): Promise<IEmployeeJobApplicationAppliedResult> {
+		try {
+			const plainText = htmlToText(input.proposal, {
+				wordwrap: 120 // Specify the desired line width for word wrapping
+			});
+			input.proposal = plainText;
+		} catch (error) {
+			console.log('Error while applying job', error);
+		}
 		return await this.gauzyAIService.apply(input);
 	}
 
