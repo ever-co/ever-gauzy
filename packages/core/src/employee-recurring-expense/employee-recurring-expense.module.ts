@@ -7,8 +7,7 @@ import { EmployeeRecurringExpenseController } from './employee-recurring-expense
 import { EmployeeRecurringExpense } from './employee-recurring-expense.entity';
 import { EmployeeRecurringExpenseService } from './employee-recurring-expense.service';
 import { QueryHandlers } from './queries/handlers';
-import { User } from '../user/user.entity';
-import { UserService } from '../user/user.service';
+import { UserModule } from './../user/user.module';
 import { TenantModule } from '../tenant/tenant.module';
 import { TaskModule } from '../tasks/task.module';
 
@@ -20,18 +19,23 @@ import { TaskModule } from '../tasks/task.module';
 				module: EmployeeRecurringExpenseModule,
 			},
 		]),
-		TypeOrmModule.forFeature([EmployeeRecurringExpense, User]),
+		TypeOrmModule.forFeature([
+			EmployeeRecurringExpense
+		]),
 		CqrsModule,
 		TenantModule,
-		TaskModule,
+		UserModule,
+		TaskModule
 	],
 	controllers: [EmployeeRecurringExpenseController],
 	providers: [
 		EmployeeRecurringExpenseService,
 		...QueryHandlers,
-		UserService,
-		...CommandHandlers,
+		...CommandHandlers
 	],
-	exports: [EmployeeRecurringExpenseService],
+	exports: [
+		TypeOrmModule,
+		EmployeeRecurringExpenseService
+	],
 })
-export class EmployeeRecurringExpenseModule {}
+export class EmployeeRecurringExpenseModule { }
