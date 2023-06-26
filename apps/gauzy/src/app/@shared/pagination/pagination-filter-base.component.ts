@@ -50,7 +50,6 @@ export class PaginationFilterBaseComponent extends TranslationBaseComponent
 
 	protected subject$: Subject<any> = new Subject();
 
-
 	/*
 	 * getter setter for filters
 	 */
@@ -62,11 +61,13 @@ export class PaginationFilterBaseComponent extends TranslationBaseComponent
 		return this._filters;
 	}
 
-	constructor(public readonly translateService: TranslateService) {
+	constructor(
+		public readonly translateService: TranslateService
+	) {
 		super(translateService);
 	}
 
-	ngAfterViewInit() {}
+	ngAfterViewInit() { }
 
 	/*
 	 * refresh pagination
@@ -84,7 +85,7 @@ export class PaginationFilterBaseComponent extends TranslationBaseComponent
 		if (isNotEmpty(filter.search) || 'boolean' === typeof (filter.search)) {
 			const search = filter.search;
 			const keys = fields.reduceRight(
-				(value: string, key: string) => ({[key]: value}),
+				(value: string, key: string) => ({ [key]: value }),
 				search
 			);
 			this.filters = {
@@ -108,6 +109,9 @@ export class PaginationFilterBaseComponent extends TranslationBaseComponent
 			...this.getPagination(),
 			activePage: selectedPage
 		});
+
+		// Scroll to the table top
+		this.scrollTop();
 	}
 
 	protected getPagination(): IPaginationBase {
@@ -136,5 +140,19 @@ export class PaginationFilterBaseComponent extends TranslationBaseComponent
 			...this.getPagination(),
 			activePage: activePage
 		});
+	}
+
+	/**
+	 * Scroll to the table top after set pagination
+	 */
+	protected scrollTop() {
+		try {
+			const table = document.querySelector('ng2-smart-table > table');
+			if (!!table) {
+				table.scrollIntoView({ behavior: 'smooth', block: 'start' });
+			}
+		} catch (error) {
+			console.log('Error while scrolling to the table top', error);
+		}
 	}
 }
