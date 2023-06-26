@@ -4,9 +4,9 @@
 	width: 100%;
 	nb-card {
 		background-color: nb-theme(background-basic-color-1);
-		nb-card-body {
-			overflow: hidden !important;
-		}
+		// nb-card-body {
+		// 	overflow: hidden !important;
+		// }
 	}
 	::ng-deep {
 		.cancel {
