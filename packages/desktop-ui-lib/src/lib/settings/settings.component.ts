@@ -425,7 +425,7 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 	}>;
 	private _restartDisable$: BehaviorSubject<boolean>;
 	private _isHidden$: BehaviorSubject<boolean>;
-	private _argMain = null;
+	private _simpleScreenshotNotification$: BehaviorSubject<boolean>;
 
 	constructor(
 		private electronService: ElectronService,
@@ -461,6 +461,7 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 		});
 		this._restartDisable$ = new BehaviorSubject(false);
 		this._isHidden$ = new BehaviorSubject(true);
+		this._simpleScreenshotNotification$ = new BehaviorSubject(false);
 	}
 
 	ngOnInit(): void {
@@ -494,7 +495,6 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 					...this.config,
 					...config,
 				};
-				this._argMain = arg;
 				this.checkDatabaseConnectivity();
 				this.authSetting = auth;
 				this.mappingAdditionalSetting(additionalSetting || null);
@@ -523,6 +523,9 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 					digitalOcean: setting?.cdnUpdater?.digitalOcean == true,
 					local: false,
 				});
+				this._simpleScreenshotNotification$.next(
+					setting?.simpleScreenshotNotification
+				);
 				this.selectedPeriod = setting?.timer?.updatePeriod;
 				if (!this.isServer) {
 					await this.getUserDetails();
@@ -757,13 +760,20 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 
 	toggleNotificationChange(value) {
 		this.updateSetting(value, 'screenshotNotification');
-		this.updateSetting(!value, 'simpleScreenshotNotification');
+		this.screenshotNotification = value;
+		if (value && this.simpleScreenshotNotification) {
+			this.updateSetting(false, 'simpleScreenshotNotification');
+			this._simpleScreenshotNotification$.next(false);
+		}
 	}
 
 	toggleSimpleNotificationChange(value) {
 		this.updateSetting(value, 'simpleScreenshotNotification');
-		this.updateSetting(!value, 'screenshotNotification');
-		this.screenshotNotification = !value;
+		this._simpleScreenshotNotification$.next(value);
+		if (value && this.screenshotNotification) {
+			this.updateSetting(false, 'screenshotNotification');
+			this.screenshotNotification = false;
+		}
 	}
 
 	toggleNotificationSoundChange(value) {
@@ -1229,5 +1239,13 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 
 	public get automaticUpdateDelay$(): Observable<number> {
 		return this._automaticUpdateDelay$.asObservable();
+	}
+
+	public get simpleScreenshotNotification$(): Observable<boolean> {
+		return this._simpleScreenshotNotification$.asObservable();
+	}
+
+	public get simpleScreenshotNotification(): boolean {
+		return this._simpleScreenshotNotification$.getValue();
 	}
 }
