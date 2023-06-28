@@ -28,7 +28,11 @@ export class EmployeeRatesComponent implements OnInit, OnDestroy {
 			payPeriod: [],
 			billRateValue: ['', Validators.min(0)],
 			billRateCurrency: [],
-			reWeeklyLimit: ['', Validators.compose([Validators.min(0), Validators.max(168)])]
+			reWeeklyLimit: [
+				'',
+				Validators.compose([Validators.min(0), Validators.max(168)])
+			],
+			minimumBillingRate: ['', Validators.min(0)]
 		});
 	}
 
@@ -37,7 +41,7 @@ export class EmployeeRatesComponent implements OnInit, OnDestroy {
 		private readonly store: Store,
 		private readonly employeeStore: EmployeeStore,
 		private readonly candidateStore: CandidateStore
-	) {}
+	) { }
 
 	ngOnInit() {
 		this.employeeStore.selectedEmployee$
@@ -82,14 +86,15 @@ export class EmployeeRatesComponent implements OnInit, OnDestroy {
 			payPeriod: user.payPeriod,
 			billRateValue: user.billRateValue,
 			billRateCurrency: user.billRateCurrency,
-			reWeeklyLimit: user.reWeeklyLimit
+			reWeeklyLimit: user.reWeeklyLimit,
+			minimumBillingRate: user.minimumBillingRate
 		});
 	}
 
 	/*
 	 * On Changed Currency Event Emitter
 	 */
-	currencyChanged($event: ICurrency) {}
+	currencyChanged($event: ICurrency) { }
 
 	public get reWeeklyLimit() {
 		return this.form.get('reWeeklyLimit');
@@ -103,5 +108,9 @@ export class EmployeeRatesComponent implements OnInit, OnDestroy {
 		return this.form.get('billRateCurrency');
 	}
 
-	ngOnDestroy() {}
+	public get minimumBillingRate() {
+		return this.form.get('minimumBillingRate');
+	}
+
+	ngOnDestroy() { }
 }
