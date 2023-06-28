@@ -35,13 +35,20 @@
                             <div class="row">
                                 <div class="col-6">
                                     <div class="form-group">
-                                        <ga-employee-multi-select
-                                            [label]="'HEADER.SELECT_EMPLOYEE' | translate"
+                                        <label class="label" for="job_employee">
+                                            {{ 'HEADER.SELECT_EMPLOYEE' | translate }}
+                                        </label>
+                                        <ga-employee-selector
+                                            #employee
                                             [placeholder]="'HEADER.SELECT_EMPLOYEE' | translate"
-                                            [multiple]="false"
-                                            formControlName="employeeId"
-                                            [selectedEmployeeIds]="form.get('employeeId').value"
-                                        ></ga-employee-multi-select>
+                                            [clearable]="false"
+                                            [addTag]="false"
+                                            [defaultSelected]="false"
+                                            [showAllEmployeesOption]="false"
+                                            [skipGlobalChange]="true"
+                                            (selectionChanged)="setDefaultEmployee($event)"
+                                            [selectedEmployee]="selectedEmployee"
+                                        ></ga-employee-selector>
                                     </div>
                                 </div>
                                 <div class="col-6">
