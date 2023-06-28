@@ -1,190 +1,192 @@
-<nb-card class="main">
-	<nb-card-header class="d-flex flex-column">
-        <span class="cancel">
-            <i class="fas fa-times" (click)="close()"></i>
-        </span>
-        <h5 class="title">
-            {{ 'JOBS.APPLY_JOB_TITLE' | translate }}
-        </h5>
-	</nb-card-header>
-	<nb-card-body class="body">
-        <div class="row">
-            <div class="col-5">
-                <nb-card>
-                    <nb-card-header>
-                        {{ 'JOBS.JOB_DETAILS' | translate }}
-                    </nb-card-header>
-                    <nb-card-body>
-                        <job-title-description-details
-                            [rowData]="employeeJobPost"
-                        ></job-title-description-details>
-                    </nb-card-body>
-                </nb-card>
-            </div>
-            <div class="col-7">
-                <nb-card>
-                    <nb-card-header>
-                        {{ 'PROPOSALS_PAGE.PROPOSAL_DETAILS.PROPOSAL_DETAILS' | translate }}
-                    </nb-card-header>
-                    <nb-card-body>
-                        <form
-                            #formDirective="ngForm"
-                            [formGroup]="form"
-                            (ngSubmit)="onSubmit()"
-                        >
-                            <div class="row">
-                                <div class="col-6">
-                                    <div class="form-group">
-                                        <label class="label" for="job_employee">
-                                            {{ 'HEADER.SELECT_EMPLOYEE' | translate }}
-                                        </label>
-                                        <ga-employee-selector
-                                            #employeeSelector
-                                            [placeholder]="'HEADER.SELECT_EMPLOYEE' | translate"
-                                            [clearable]="false"
-                                            [addTag]="false"
-                                            [defaultSelected]="false"
-                                            [showAllEmployeesOption]="false"
-                                            [skipGlobalChange]="true"
-                                            (selectionChanged)="setDefaultEmployee($event)"
-                                            [selectedEmployee]="selectedEmployee"
-                                        ></ga-employee-selector>
-                                    </div>
-                                </div>
-                                <div class="col-6">
-                                    <div class="form-group">
-                                        <label class="label" for="hourly_rate">
-                                            {{ 'FORM.LABELS.HOURLY_RATE' | translate }}
-                                        </label>
-                                        <nb-form-field>
-                                            <button type="button" nbPrefix nbButton ghost>$</button>
-                                            <input
-                                                id="hourly_rate"
-                                                min="1"
-                                                fullWidth
-                                                nbInput
-                                                type="number"
-                                                class="form-control"
-                                                formControlName="rate"
-                                            />
-                                        </nb-form-field>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="row">
-                                <div class="col-12">
-                                    <div class="form-group">
-                                        <label class="label" for="proposal_template">
-                                            {{ 'PROPOSALS_PAGE.REGISTER.TEMPLATE' | translate }}
-                                        </label>
-                                        <ngx-proposal-template-select
-                                            id="proposal_template"
-                                            [employeeId]="form.get('employeeId').value"
-                                            (selectedChange)="onProposalTemplateChange($event)"
-                                        ></ngx-proposal-template-select>
-                                    </div>
-                                </div>
-                            </div>
-                            <ng-template
-                                [ngIf]="JobPostSourceEnum.UPWORK === employeeJobPost?.jobPost?.providerCode"
-                            >
-                                <div class="row">
-                                    <div class="col-12">
-                                        <div class="form-group">
-                                            <label class="label" for="proposal">
-                                                {{ 'FORM.LABELS.COVER_LETTER' | translate }}
-                                            </label>
-                                            <div class="sync-container">
-                                                <nb-icon
-                                                    class="sync caption-2"
-                                                    icon="sync-outline"
-                                                    debounceClick
-                                                    (throttledClick)="proposal$.next(true)"
-                                                    [ngClass]="{ 'spin' : loading }"
-                                                ></nb-icon>
-                                                <ng-template [ngIf]="loading">
-                                                    <span class="ml-1 caption-2">Generating Proposal ...</span>
-                                                </ng-template>
-                                            </div>
-                                            <ckeditor
-                                                #ckeditor
-                                                id="proposal"
-                                                formControlName="proposal"
-                                                [config]="ckConfig"
-                                                (ngModelChange)="onEditorChange($event)"
-                                            ></ckeditor>
-                                        </div>
-                                    </div>
-                                </div>
-                            </ng-template>
-                            <ng-template
-                                [ngIf]="JobPostSourceEnum.UPWORK !== employeeJobPost?.jobPost?.providerCode"
-                            >
-                                <div class="row">
-                                    <div class="col-12">
-                                        <div class="form-group">
-                                            <div class="sync-container">
-                                                <label class="label" for="details">
-                                                    {{ 'FORM.LABELS.DETAILS' | translate }}
-                                                </label>
-                                                <nb-icon
-                                                    class="sync"
-                                                    icon="sync-outline"
-                                                    debounceClick
-                                                    (throttledClick)="proposal$.next(true)"
-                                                    [ngClass]="{ 'spin' : loading }"
-                                                ></nb-icon>
-                                            </div>
-                                            <ckeditor
-                                                id="details"
-                                                formControlName="details"
-                                                [config]="ckConfig"
-                                            ></ckeditor>
-                                        </div>
-                                    </div>
-                                </div>
-                            </ng-template>
-                            <div class="row">
-                                <div class="col-12">
-                                    <div class="form-group">
-                                        <label class="label" for="attachments">
-                                            {{ 'FORM.LABELS.ATTACHMENTS' | translate }}
-                                        </label>
-                                        <div
-                                            ng2FileDrop
-                                            [uploader]="uploader"
-                                            (fileOver)="fileOverBase($event)"
-                                            [ngClass]="{'nv-file-over': hasDropZoneOver}"
-                                            class="well my-drop-zone"
-                                        >
-                                            {{ 'FORM.PLACEHOLDERS.DRAG_DROP_FILE' | translate }}
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </form>
-                    </nb-card-body>
-                </nb-card>
-            </div>
-        </div>
-	</nb-card-body>
-	<nb-card-footer class="text-right">
-        <button
-            status="basic"
-            outline
-            class="mr-3"
-            nbButton
-            (click)="close()"
-        >
-			{{ 'BUTTONS.CANCEL' | translate }}
-		</button>
-        <button
-			[disabled]="form.invalid"
-			status="success"
-			nbButton
-            (click)="formDirective.ngSubmit.emit()"
-		>
-			{{ 'BUTTONS.APPLY' | translate }}
-		</button>
-	</nb-card-footer>
-</nb-card>
+<div class="main">
+	<nb-card>
+		<nb-card-header class="d-flex flex-column">
+			<span class="cancel">
+				<i class="fas fa-times" (click)="close()"></i>
+			</span>
+			<h5 class="title">
+				{{ 'JOBS.APPLY_JOB_TITLE' | translate }}
+			</h5>
+		</nb-card-header>
+		<nb-card-body class="body">
+			<div class="row">
+				<div class="col-5">
+					<nb-card>
+						<nb-card-header>
+							{{ 'JOBS.JOB_DETAILS' | translate }}
+						</nb-card-header>
+						<nb-card-body>
+							<job-title-description-details
+								[rowData]="employeeJobPost"
+							></job-title-description-details>
+						</nb-card-body>
+					</nb-card>
+				</div>
+				<div class="col-7">
+					<nb-card>
+						<nb-card-header>
+							{{ 'PROPOSALS_PAGE.PROPOSAL_DETAILS.PROPOSAL_DETAILS' | translate }}
+						</nb-card-header>
+						<nb-card-body>
+							<form
+								#formDirective="ngForm"
+								[formGroup]="form"
+								(ngSubmit)="onSubmit()"
+							>
+								<div class="row">
+									<div class="col-6">
+										<div class="form-group">
+											<label class="label" for="job_employee">
+												{{ 'HEADER.SELECT_EMPLOYEE' | translate }}
+											</label>
+											<ga-employee-selector
+												#employeeSelector
+												[placeholder]="'HEADER.SELECT_EMPLOYEE' | translate"
+												[clearable]="false"
+												[addTag]="false"
+												[defaultSelected]="false"
+												[showAllEmployeesOption]="false"
+												[skipGlobalChange]="true"
+												(selectionChanged)="setDefaultEmployee($event)"
+												[selectedEmployee]="selectedEmployee"
+											></ga-employee-selector>
+										</div>
+									</div>
+									<div class="col-6">
+										<div class="form-group">
+											<label class="label" for="hourly_rate">
+												{{ 'FORM.LABELS.HOURLY_RATE' | translate }}
+											</label>
+											<nb-form-field>
+												<button type="button" nbPrefix nbButton ghost>$</button>
+												<input
+													id="hourly_rate"
+													min="1"
+													fullWidth
+													nbInput
+													type="number"
+													class="form-control"
+													formControlName="rate"
+												/>
+											</nb-form-field>
+										</div>
+									</div>
+								</div>
+								<div class="row">
+									<div class="col-12">
+										<div class="form-group">
+											<label class="label" for="proposal_template">
+												{{ 'PROPOSALS_PAGE.REGISTER.TEMPLATE' | translate }}
+											</label>
+											<ngx-proposal-template-select
+												id="proposal_template"
+												[employeeId]="form.get('employeeId').value"
+												(selectedChange)="onProposalTemplateChange($event)"
+											></ngx-proposal-template-select>
+										</div>
+									</div>
+								</div>
+								<ng-template
+									[ngIf]="JobPostSourceEnum.UPWORK === employeeJobPost?.jobPost?.providerCode"
+								>
+									<div class="row">
+										<div class="col-12">
+											<div class="form-group">
+												<label class="label" for="proposal">
+													{{ 'FORM.LABELS.COVER_LETTER' | translate }}
+												</label>
+												<div class="sync-container">
+													<nb-icon
+														class="sync caption-2"
+														icon="sync-outline"
+														debounceClick
+														(throttledClick)="proposal$.next(true)"
+														[ngClass]="{ 'spin' : loading }"
+													></nb-icon>
+													<ng-template [ngIf]="loading">
+														<span class="ml-1 caption-2">Generating Proposal ...</span>
+													</ng-template>
+												</div>
+												<ckeditor
+													#ckeditor
+													id="proposal"
+													formControlName="proposal"
+													[config]="ckConfig"
+													(ngModelChange)="onEditorChange($event)"
+												></ckeditor>
+											</div>
+										</div>
+									</div>
+								</ng-template>
+								<ng-template
+									[ngIf]="JobPostSourceEnum.UPWORK !== employeeJobPost?.jobPost?.providerCode"
+								>
+									<div class="row">
+										<div class="col-12">
+											<div class="form-group">
+												<div class="sync-container">
+													<label class="label m-0" for="details">
+														{{ 'FORM.LABELS.DETAILS' | translate }}
+													</label>
+													<nb-icon
+														class="sync"
+														icon="sync-outline"
+														debounceClick
+														(throttledClick)="proposal$.next(true)"
+														[ngClass]="{ 'spin' : loading }"
+													></nb-icon>
+												</div>
+												<ckeditor
+													id="details"
+													formControlName="details"
+													[config]="ckConfig"
+												></ckeditor>
+											</div>
+										</div>
+									</div>
+								</ng-template>
+								<div class="row">
+									<div class="col-12">
+										<div class="form-group">
+											<label class="label" for="attachments">
+												{{ 'FORM.LABELS.ATTACHMENTS' | translate }}
+											</label>
+											<div
+												ng2FileDrop
+												[uploader]="uploader"
+												(fileOver)="fileOverBase($event)"
+												[ngClass]="{'nv-file-over': hasDropZoneOver}"
+												class="well my-drop-zone"
+											>
+												{{ 'FORM.PLACEHOLDERS.DRAG_DROP_FILE' | translate }}
+											</div>
+										</div>
+									</div>
+								</div>
+							</form>
+						</nb-card-body>
+					</nb-card>
+				</div>
+			</div>
+		</nb-card-body>
+		<nb-card-footer class="text-right">
+			<button
+				status="basic"
+				outline
+				class="mr-3"
+				nbButton
+				(click)="close()"
+			>
+				{{ 'BUTTONS.CANCEL' | translate }}
+			</button>
+			<button
+				[disabled]="form.invalid"
+				status="success"
+				nbButton
+				(click)="formDirective.ngSubmit.emit()"
+			>
+				{{ 'BUTTONS.APPLY' | translate }}
+			</button>
+		</nb-card-footer>
+	</nb-card>
+</div>
