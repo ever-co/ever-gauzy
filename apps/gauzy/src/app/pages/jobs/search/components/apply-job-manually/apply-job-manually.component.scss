@@ -32,13 +32,12 @@
 		border-radius: var(--border-radius);
 	}
 	.sync-container {
+		float: right;
 		.sync {
 			color: var(--gauzy-text-color-2);
-			font-size: 14px;
-			float: right;
 			&.spin {
-				animation: rotate 1s linear 0s infinite;
 				color: var(--text-primary-color);
+				animation: rotate 1s linear 0s infinite;
 			}
 			@keyframes rotate {
 				0% {
@@ -48,6 +47,9 @@
 					transform: rotate(360deg);
 				}
 			}
+		}
+		span {
+			color: var(--text-primary-color);
 		}
 	}
 }

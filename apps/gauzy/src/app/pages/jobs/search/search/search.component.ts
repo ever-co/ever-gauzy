@@ -46,7 +46,6 @@ import {
 	Store,
 	ToastrService,
 } from './../../../../@core/services';
-import { StatusBadgeComponent } from './../../../../@shared/status-badge';
 import { API_PREFIX } from './../../../../@core/constants';
 import { AtLeastOneFieldValidator } from './../../../../@core/validators';
 import { ServerDataSource } from './../../../../@core/utils/smart-table';
@@ -509,49 +508,12 @@ export class SearchComponent extends PaginationFilterBaseComponent implements On
 					: {}),
 				jobDetails: {
 					title: this.getTranslation('JOBS.JOB_DETAILS'),
+					width: '85%',
 					type: 'custom',
 					renderComponent: JobTitleDescriptionDetailsComponent,
 					filter: false,
 					sort: false,
-				},
-				jobStatus: {
-					title: this.getTranslation('JOBS.STATUS'),
-					width: '5%',
-					filter: false,
-					type: 'custom',
-					sort: false,
-					renderComponent: StatusBadgeComponent,
-					valuePrepareFunction: (cell, row: IEmployeeJobPost) => {
-						let badgeClass;
-						if (
-							row.jobPost.jobStatus.toLowerCase() ===
-							JobPostStatusEnum.CLOSED.toLowerCase()
-						) {
-							badgeClass = 'danger';
-							cell = this.getTranslation('JOBS.CLOSED');
-						} else if (
-							row.jobPost.jobStatus.toLowerCase() ===
-							JobPostStatusEnum.OPEN.toLowerCase()
-						) {
-							badgeClass = 'success';
-							cell = this.getTranslation('JOBS.OPEN');
-						} else if (
-							row.jobPost.jobStatus.toLowerCase() ===
-							JobPostStatusEnum.APPLIED.toLowerCase()
-						) {
-							badgeClass = 'warning';
-							cell = this.getTranslation('JOBS.APPLIED');
-						} else {
-							badgeClass = 'default';
-							cell = row.jobPost.jobStatus;
-						}
-
-						return {
-							text: cell,
-							class: badgeClass,
-						};
-					},
-				},
+				}
 			},
 		};
 	}
