@@ -1,7 +1,7 @@
 import { AfterViewInit, Component, Input, OnDestroy, OnInit, SecurityContext, ViewChild } from '@angular/core';
 import { FormBuilder, FormControl, FormGroup, FormGroupDirective, Validators } from '@angular/forms';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
-import { Subject, Subscription, combineLatest, delay, switchMap, timer } from 'rxjs';
+import { Subject, Subscription, combineLatest, switchMap, timer } from 'rxjs';
 import { debounceTime, filter, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { NbDialogRef } from '@nebular/theme';
@@ -83,9 +83,6 @@ export class ApplyJobManuallyComponent extends TranslationBaseComponent implemen
 	}
 	@Input() set selectedEmployee(employee: ISelectedEmployee) {
 		this._selectedEmployee = employee;
-
-		/** Set default select employee */
-		this.setDefaultEmployee(employee);
 	}
 
 	/**  Getter and setter for selected Job Post */
@@ -105,7 +102,7 @@ export class ApplyJobManuallyComponent extends TranslationBaseComponent implemen
 	@ViewChild('ckeditor', { static: false }) ckeditor: CKEditorComponent;
 
 	/** Employee selector component */
-	@ViewChild('employee') employee: EmployeeSelectorComponent;
+	@ViewChild('employeeSelector') employeeSelector: EmployeeSelectorComponent;
 
 	/**
 	 * Newly generate employee job application
@@ -128,7 +125,6 @@ export class ApplyJobManuallyComponent extends TranslationBaseComponent implemen
 	}
 
 	ngOnInit(): void {
-		const storeUser$ = this.store.user$;
 		const storeOrganization$ = this.store.selectedOrganization$;
 		const storeEmployee$ = this.store.selectedEmployee$;
 		combineLatest([storeOrganization$, storeEmployee$])
@@ -140,12 +136,13 @@ export class ApplyJobManuallyComponent extends TranslationBaseComponent implemen
 					this.organization = organization;
 					this.selectedEmployee = employee && employee.id ? employee : null;
 				}),
-				delay(200),
-				tap(() => this.employee.selectEmployeeById(this.selectedEmployee?.id)),
+				tap(() => this.employeeSelector.selectEmployeeById(
+					this.selectedEmployee?.id
+				)),
 				untilDestroyed(this)
 			)
 			.subscribe();
-		storeUser$
+		this.store.user$
 			.pipe(
 				filter((user: IUser) => !!user),
 				tap(() => this._loadUploaderSettings()),
