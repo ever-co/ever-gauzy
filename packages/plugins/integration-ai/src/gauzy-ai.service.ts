@@ -815,6 +815,13 @@ export class GauzyAIService {
 					is: false,
 				},
 				employeeId: undefined,
+				...(filters && filters.isApplied
+					? {
+						isApplied: {
+							is: JSON.parse(filters.isApplied)
+						}
+					}
+					: {}),
 				...(filters && filters.jobDateCreated
 					? {
 						jobDateCreated: filters.jobDateCreated,

@@ -49,6 +49,7 @@ export interface IGetEmployeeJobPostFilters {
 	jobSource?: JobPostSourceEnum[];
 	jobType?: JobPostTypeEnum[];
 	jobDateCreated?: object;
+	isApplied?: string;
 }
 
 export interface IEmployeeJobPost {
