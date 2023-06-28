@@ -20,6 +20,12 @@ export class RatesDTO extends TenantOrganizationBaseDTO {
     @Transform((params: TransformFnParams) => parseInt(params.value || 0, 10))
     readonly billRateValue?: number;
 
+	@ApiPropertyOptional({ type: () => Number })
+	@IsOptional()
+	@IsNumber()
+	@Transform((params: TransformFnParams) => parseInt(params.value || 0, 10))
+	readonly minimumBillingRate?: number;
+
     @ApiPropertyOptional({ type: () => Number })
     @IsOptional()
     @IsNumber()
