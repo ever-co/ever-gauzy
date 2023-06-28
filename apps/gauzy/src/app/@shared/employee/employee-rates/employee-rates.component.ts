@@ -37,6 +37,7 @@ export class EmployeeRatesComponent implements OnInit, OnDestroy {
 				'',
 				Validators.compose([Validators.min(0), Validators.max(168)])
 			],
+			minimumBillRate: ['', Validators.min(0)]
 		});
 	}
 
@@ -95,7 +96,8 @@ export class EmployeeRatesComponent implements OnInit, OnDestroy {
 			payPeriod: user.payPeriod,
 			billRateValue: user.billRateValue,
 			billRateCurrency: user.billRateCurrency,
-			reWeeklyLimit: user.reWeeklyLimit
+			reWeeklyLimit: user.reWeeklyLimit,
+			minimumBillingRate: user.minimumBillingRate
 		});
 	}
 
@@ -114,6 +116,10 @@ export class EmployeeRatesComponent implements OnInit, OnDestroy {
 
 	public get billRateCurrency() {
 		return this.form.get('billRateCurrency');
+	}
+
+	public get minimumBillingRate() {
+		return this.form.get('minimumBillingRate');
 	}
 
 	ngOnDestroy() { }
