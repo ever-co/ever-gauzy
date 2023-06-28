@@ -2527,7 +2527,9 @@
 		"JOB_SEARCH_STATUS": "Job Search Status",
 		"BROWSE": "Browse",
 		"SEARCH": "Search",
-		"HISTORY": "History"
+		"HISTORY": "History",
+		"BILLING_RATE": "Billing Rate",
+		"MINIMUM_BILLING_RATE": "Minimum Billing Rate"
 	},
 	"PROPOSAL_TEMPLATE": {
 		"PROPOSAL_TEMPLATE": "Proposal Template",
