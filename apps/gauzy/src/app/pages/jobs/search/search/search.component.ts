@@ -352,6 +352,23 @@ export class SearchComponent extends PaginationFilterBaseComponent implements On
 		}
 	}
 
+	/**
+	 * Already applied job from provider site
+	 *
+	 * @returns
+	 */
+	async appliedJob() {
+		if (!this.selectedJob) {
+			return;
+		}
+		const { employeeId, providerCode, providerJobId } = this.selectedJob;
+		try {
+			console.log({ employeeId, providerCode, providerJobId });
+		} catch (error) {
+			console.log('Error while applied job', error);
+		}
+	}
+
 	/** Apply For Job Post */
 	async applyToJob(applyJobPost: IEmployeeJobApplication): Promise<void> {
 		if (!this.selectedJob) {
