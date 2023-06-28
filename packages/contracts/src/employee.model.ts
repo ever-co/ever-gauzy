@@ -123,6 +123,7 @@ export interface IEmployeeFindInput {
 export interface IEmployeeUpdateInput extends IBasePerTenantAndOrganizationEntityModel {
 	payPeriod?: string;
 	billRateValue?: number;
+	minimumBillRate?: number;
 	billRateCurrency?: string;
 	reWeeklyLimit?: number;
 	organizationDepartment?: IOrganizationDepartment;
