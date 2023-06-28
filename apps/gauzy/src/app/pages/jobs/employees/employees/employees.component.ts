@@ -181,7 +181,7 @@ export class EmployeesComponent extends PaginationFilterBaseComponent
 			columns: {
 				employeeId: {
 					title: this.getTranslation('JOB_EMPLOYEE.EMPLOYEE'),
-					width: '40%',
+					width: '30%',
 					type: 'custom',
 					sort: false,
 					editable: false,
@@ -231,7 +231,7 @@ export class EmployeesComponent extends PaginationFilterBaseComponent
 				minimumBillingRate: {
 					title: this.getTranslation('JOB_EMPLOYEE.MINIMUM_BILLING_RATE'),
 					type: 'text',
-					width: '10%',
+					width: '20%',
 					sort: false,
 					editable: true,
 					editor: {
