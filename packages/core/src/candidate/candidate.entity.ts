@@ -50,9 +50,7 @@ import {
 import { ColumnNumericTransformerPipe } from './../shared/pipes';
 
 @Entity('candidate')
-export class Candidate extends TenantOrganizationBaseEntity
-	implements ICandidate {
-
+export class Candidate extends TenantOrganizationBaseEntity implements ICandidate {
 	@ApiPropertyOptional({ type: () => Number })
 	@Column({
 		nullable: true,
@@ -269,7 +267,7 @@ export class Candidate extends TenantOrganizationBaseEntity
 	 */
 	@ManyToMany(() => OrganizationDepartment, (department) => department.candidates, {
 		onUpdate: 'CASCADE',
-		onDelete: 'CASCADE',
+		onDelete: 'CASCADE'
 	})
 	organizationDepartments?: IOrganizationDepartment[];
 
