@@ -2528,7 +2528,8 @@
 		"BROWSE": "Browse",
 		"SEARCH": "Search",
 		"HISTORY": "History",
-		"BILLING_RATE": "Billing Rate"
+		"BILLING_RATE": "Billing Rate",
+		"MINIMUM_BILLING_RATE": "Minimum Billing Rate"
 	},
 	"PROPOSAL_TEMPLATE": {
 		"PROPOSAL_TEMPLATE": "Proposal Template",

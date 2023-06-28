@@ -24,10 +24,16 @@ export class RatesDTO extends TenantOrganizationBaseDTO {
     @IsOptional()
     @IsNumber()
     @Transform((params: TransformFnParams) => parseInt(params.value || 0, 10))
+    readonly minimumBillRate?: number;
+
+    @ApiPropertyOptional({ type: () => Number })
+    @IsOptional()
+    @IsNumber()
+    @Transform((params: TransformFnParams) => parseInt(params.value || 0, 10))
     readonly reWeeklyLimit?: number;
 
     @ApiPropertyOptional({ type: () => String, enum: CurrenciesEnum })
-	@IsOptional()
-	@IsEnum(CurrenciesEnum)
-	readonly billRateCurrency?: string;
+    @IsOptional()
+    @IsEnum(CurrenciesEnum)
+    readonly billRateCurrency?: string;
 }

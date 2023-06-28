@@ -2489,7 +2489,9 @@
 		"JOB_SEARCH_STATUS": "Job Search Status",
 		"BROWSE": "Browse",
 		"SEARCH": "Search",
-		"HISTORY": "History"
+		"HISTORY": "History",
+		"BILLING_RATE": "תעריף חיוב",
+		"MINIMUM_BILLING_RATE": "תעריף חיוב מינימלי"
 	},
 	"PROPOSAL_TEMPLATE": {
 		"PROPOSAL_TEMPLATE": "Proposal Template",

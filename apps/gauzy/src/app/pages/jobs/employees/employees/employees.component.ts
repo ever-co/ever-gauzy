@@ -216,7 +216,18 @@ export class EmployeesComponent extends PaginationFilterBaseComponent
 					type: 'text',
 					width: '10%',
 					sort: false,
-					editable: true, // Editable
+					editable: true,
+					editor: {
+						type: 'custom',
+						component: NumberEditorComponent,
+					},
+				},
+				minimumBillRate: {
+					title: this.getTranslation('JOB_EMPLOYEE.MINIMUM_BILLING_RATE'),
+					type: 'text',
+					width: '10%',
+					sort: false,
+					editable: true,
 					editor: {
 						type: 'custom',
 						component: NumberEditorComponent,
@@ -258,18 +269,23 @@ export class EmployeesComponent extends PaginationFilterBaseComponent
 			const { id: organizationId } = this.organization;
 
 			const employeeId = event.data?.id;
+
 			const billRateValue = event.newData?.billRateValue;
+			const minimumBillRate = event.newData?.billRateValue;
 
 			// Update employee bill rates
-			const employee = await this.employeesService.updateProfile(employeeId, {
+			await this.employeesService.updateProfile(employeeId, {
+				// minimumBillRate,
 				billRateValue,
 				tenantId,
 				organizationId
 			});
-			await event.confirm.resolve(employee);
 		} catch (error) {
 			console.log('Error while updating employee rates', error);
 			await event.confirm.reject();
+		} finally {
+			// Refresh smart table source
+			this.employees$.next(true);
 		}
 	}
 
