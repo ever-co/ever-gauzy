@@ -84,17 +84,20 @@
                                 <div class="row">
                                     <div class="col-12">
                                         <div class="form-group">
+                                            <label class="label" for="proposal">
+                                                {{ 'FORM.LABELS.COVER_LETTER' | translate }}
+                                            </label>
                                             <div class="sync-container">
-                                                <label class="label" for="proposal">
-                                                    {{ 'FORM.LABELS.COVER_LETTER' | translate }}
-                                                </label>
                                                 <nb-icon
-                                                    class="sync"
+                                                    class="sync caption-2"
                                                     icon="sync-outline"
                                                     debounceClick
                                                     (throttledClick)="proposal$.next(true)"
                                                     [ngClass]="{ 'spin' : loading }"
                                                 ></nb-icon>
+                                                <ng-template [ngIf]="loading">
+                                                    <span class="ml-1 caption-2">Generating Proposal ...</span>
+                                                </ng-template>
                                             </div>
                                             <ckeditor
                                                 #ckeditor
