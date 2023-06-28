@@ -35,7 +35,7 @@ export class EmployeeRatesComponent implements OnInit, OnDestroy {
 			billRateCurrency: [],
 			reWeeklyLimit: [
 				'',
-				Validators.compose([Validators.min(0), Validators.max(128)])
+				Validators.compose([Validators.min(0), Validators.max(168)])
 			],
 		});
 	}
