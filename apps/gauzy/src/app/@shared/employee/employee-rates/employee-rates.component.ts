@@ -37,7 +37,7 @@ export class EmployeeRatesComponent implements OnInit, OnDestroy {
 				'',
 				Validators.compose([Validators.min(0), Validators.max(168)])
 			],
-			minimumBillRate: ['', Validators.min(0)]
+			minimumBillingRate: ['', Validators.min(0)]
 		});
 	}
 
