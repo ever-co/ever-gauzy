@@ -1,5 +1,29 @@
 @import '../../../pipelines/pipelines.component.scss';
 
 :host nb-card-body {
-  height: calc(100vh - 13.5rem) !important;
+    height: calc(100vh - 13.5rem) !important;
+	::ng-deep ng2-smart-table {
+		.ng2-smart-actions {
+			width: 5%;
+			a {
+				transform: scale(0.6);
+				border-radius: 0.5rem;
+			}
+			a:nth-child(1) {
+				background-color: #00d68f !important;
+				color: white;
+			}
+			a:nth-child(2) {
+				background-color: white !important;
+				color: #ff3d71;
+				box-shadow: var(--gauzy-shadow);
+			}
+		}
+		.ng2-smart-actions-title {
+			a {
+				background-color: #00d68f !important;
+				transform: scale(0.9);
+			}
+		}
+	}
 }
