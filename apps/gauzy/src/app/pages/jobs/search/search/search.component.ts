@@ -652,6 +652,15 @@ export class SearchComponent extends PaginationFilterBaseComponent implements On
 							},
 						]
 						: []),
+					// Get only fresh jobs (not applied yet)
+					...(true
+						? [
+							{
+								field: 'isApplied',
+								search: 'false',
+							},
+						]
+						: []),
 				],
 				false,
 				false
