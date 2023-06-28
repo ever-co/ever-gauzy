@@ -1,11 +1,6 @@
 import { Component, OnDestroy, OnInit, Input } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
-import {
-	IEmployee,
-	PayPeriodEnum,
-	ICandidate,
-	ICurrency
-} from '@gauzy/contracts';
+import { IEmployee, PayPeriodEnum, ICandidate, ICurrency } from '@gauzy/contracts';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { filter, tap } from 'rxjs';
 import { CandidateStore, EmployeeStore, Store } from '../../../@core/services';
@@ -52,9 +47,7 @@ export class EmployeeRatesComponent implements OnInit, OnDestroy {
 		this.employeeStore.selectedEmployee$
 			.pipe(
 				filter((employee: IEmployee) => !!employee),
-				tap(
-					(employee: IEmployee) => (this.selectedEmployee = employee)
-				),
+				tap((employee: IEmployee) => (this.selectedEmployee = employee)),
 				tap((employee: IEmployee) => this._syncRates(employee)),
 				untilDestroyed(this)
 			)
@@ -62,10 +55,7 @@ export class EmployeeRatesComponent implements OnInit, OnDestroy {
 		this.candidateStore.selectedCandidate$
 			.pipe(
 				filter((candidate: ICandidate) => !!candidate),
-				tap(
-					(candidate: ICandidate) =>
-						(this.selectedCandidate = candidate)
-				),
+				tap((candidate: ICandidate) => (this.selectedCandidate = candidate)),
 				tap((candidate: ICandidate) => this._syncRates(candidate)),
 				untilDestroyed(this)
 			)
