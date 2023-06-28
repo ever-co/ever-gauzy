@@ -4,6 +4,7 @@ import { Cell, DefaultEditor } from 'ng2-smart-table';
 @Component({
     template: `<input
         class="form-control"
+        [min]="0"
         [type]="'number'"
         [(ngModel)]="cell.newValue"
         [name]="cell.getId()"

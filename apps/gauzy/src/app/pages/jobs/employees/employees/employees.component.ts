@@ -284,7 +284,7 @@ export class EmployeesComponent extends PaginationFilterBaseComponent
 
 			// Update employee bill rates
 			await this.employeesService.updateProfile(employeeId, {
-				// minimumBillRate,
+				minimumBillRate,
 				billRateValue,
 				tenantId,
 				organizationId
