@@ -97,9 +97,9 @@ export class Candidate extends TenantOrganizationBaseEntity
 	@Column({ nullable: true })
 	billRateValue?: number;
 
-	// @ApiPropertyOptional({ type: () => Number })
-	// @Column({ nullable: true })
-	// minimumBillingRate?: number;
+	@ApiPropertyOptional({ type: () => Number })
+	@Column({ nullable: true })
+	minimumBillingRate?: number;
 
 	@ApiProperty({ type: () => String, enum: PayPeriodEnum })
 	@Column({ nullable: true })
