@@ -19,6 +19,7 @@ import { EmployeesService, Store, ToastrService } from './../../../../@core/serv
 import { SmartTableToggleComponent } from './../../../../@shared/smart-table/smart-table-toggle/smart-table-toggle.component';
 import { ServerDataSource } from './../../../../@core/utils/smart-table';
 import { API_PREFIX } from './../../../../@core/constants';
+import { NumberEditorComponent } from 'apps/gauzy/src/app/@shared/table-components/editors/number-editor.component';
 
 export enum JobSearchTabsEnum {
 	BROWSE = 'BROWSE',
@@ -158,13 +159,21 @@ export class EmployeesComponent extends PaginationFilterBaseComponent
 		const pagination: IPaginationBase = this.getPagination();
 		this.settingsSmartTable = {
 			selectedRowIndex: -1,
-			actions: false,
-			editable: false,
 			hideSubHeader: true,
 			noDataMessage: this.getTranslation('SM_TABLE.NO_DATA.EMPLOYEE'),
+			editable: true,
+			actions: {
+				delete: false
+			},
 			pager: {
 				display: false,
 				perPage: pagination ? pagination.itemsPerPage : 10
+			},
+			edit: {
+				editButtonContent: '<i class="nb-edit"></i>',
+				saveButtonContent: '<i class="nb-checkmark"></i>',
+				cancelButtonContent: '<i class="nb-close"></i>',
+				confirmSave: true
 			},
 			columns: {
 				employeeId: {
@@ -172,11 +181,9 @@ export class EmployeesComponent extends PaginationFilterBaseComponent
 					width: '40%',
 					type: 'custom',
 					sort: false,
+					editable: false,
 					renderComponent: EmployeeLinksComponent,
-					valuePrepareFunction: (
-						cell,
-						row: IEmployeeJobsStatisticsResponse
-					) => {
+					valuePrepareFunction: (cell, row: IEmployeeJobsStatisticsResponse) => {
 						return {
 							name: row.user ? row.user.name : null,
 							imageUrl: row.user ? row.user.imageUrl : null,
@@ -187,26 +194,33 @@ export class EmployeesComponent extends PaginationFilterBaseComponent
 				availableJobs: {
 					title: this.getTranslation('JOB_EMPLOYEE.AVAILABLE_JOBS'),
 					type: 'text',
-					width: '20%',
+					width: '10%',
 					sort: false,
-					valuePrepareFunction: (
-						cell,
-						row: IEmployeeJobsStatisticsResponse
-					) => {
+					editable: false,
+					valuePrepareFunction: (cell, row: IEmployeeJobsStatisticsResponse) => {
 						return row.availableJobs || 0;
 					}
 				},
 				appliedJobs: {
 					title: this.getTranslation('JOB_EMPLOYEE.APPLIED_JOBS'),
-					type: 'html',
-					width: '20%',
+					type: 'text',
+					width: '10%',
 					sort: false,
-					valuePrepareFunction: (
-						cell,
-						row: IEmployeeJobsStatisticsResponse
-					) => {
+					editable: false,
+					valuePrepareFunction: (cell, row: IEmployeeJobsStatisticsResponse) => {
 						return row.appliedJobs || 0;
 					}
+				},
+				billRateValue: {
+					title: this.getTranslation('JOB_EMPLOYEE.BILLING_RATE'),
+					type: 'text',
+					width: '10%',
+					sort: false,
+					editable: true, // Editable
+					editor: {
+						type: 'custom',
+						component: NumberEditorComponent,
+					},
 				},
 				isJobSearchActive: {
 					title: this.getTranslation(
@@ -214,11 +228,9 @@ export class EmployeesComponent extends PaginationFilterBaseComponent
 					),
 					type: 'custom',
 					width: '20%',
+					editable: false,
 					renderComponent: SmartTableToggleComponent,
-					valuePrepareFunction: (
-						cell,
-						row: IEmployeeJobsStatisticsResponse
-					) => {
+					valuePrepareFunction: (cell, row: IEmployeeJobsStatisticsResponse) => {
 						return {
 							checked: row.isJobSearchActive,
 							onChange: (toggleValue: boolean) => this.updateJobSearchAvailability(
@@ -230,6 +242,35 @@ export class EmployeesComponent extends PaginationFilterBaseComponent
 				}
 			}
 		};
+	}
+
+	/**
+	 * Edit editable field event
+	 *
+	 * @param event
+	 */
+	async onEditConfirm(event: any) {
+		if (!this.organization) {
+			return;
+		}
+		try {
+			const { tenantId } = this.store.user;
+			const { id: organizationId } = this.organization;
+
+			const employeeId = event.data?.id;
+			const billRateValue = event.newData?.billRateValue;
+
+			// Update employee bill rates
+			const employee = await this.employeesService.updateProfile(employeeId, {
+				billRateValue,
+				tenantId,
+				organizationId
+			});
+			await event.confirm.resolve(employee);
+		} catch (error) {
+			console.log('Error while updating employee rates', error);
+			await event.confirm.reject();
+		}
 	}
 
 	async updateJobSearchAvailability(
