@@ -7,7 +7,8 @@ import {
 	EventEmitter,
 	AfterViewInit,
 	ChangeDetectorRef,
-	ChangeDetectionStrategy
+	ChangeDetectionStrategy,
+	OnChanges
 } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import {
@@ -40,8 +41,19 @@ import { TruncatePipe } from './../../../../../@shared/pipes';
 	styleUrls: ['./employee.component.scss'],
 	changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class EmployeeSelectorComponent
-	implements OnInit, OnDestroy, AfterViewInit {
+export class EmployeeSelectorComponent implements OnInit, OnDestroy, OnChanges, AfterViewInit {
+
+	/*
+	* Getter & Setter for dynamic clearable option
+	*/
+	_clearable: boolean = true;
+	get clearable(): boolean {
+		return this._clearable;
+	}
+	@Input() set clearable(value: boolean) {
+		this._clearable = value;
+	}
+
 	/*
 	 * Getter & Setter for dynamic add tag option
 	 */
@@ -61,6 +73,9 @@ export class EmployeeSelectorComponent
 		this._skipGlobalChange = value;
 	}
 
+	/*
+	* Getter & Setter for dynamic disabled element
+	*/
 	private _disabled: boolean = false;
 	get disabled(): boolean {
 		return this._disabled;
@@ -69,6 +84,9 @@ export class EmployeeSelectorComponent
 		this._disabled = value;
 	}
 
+	/*
+	* Getter & Setter for dynamic placeholder
+	*/
 	private _placeholder: string;
 	get placeholder(): string {
 		return this._placeholder;
@@ -77,6 +95,9 @@ export class EmployeeSelectorComponent
 		this._placeholder = value;
 	}
 
+	/**
+	 *
+	 */
 	private _defaultSelected: boolean = true;
 	get defaultSelected(): boolean {
 		return this._defaultSelected;
@@ -85,6 +106,9 @@ export class EmployeeSelectorComponent
 		this._defaultSelected = value;
 	}
 
+	/**
+	 *
+	 */
 	private _showAllEmployeesOption: boolean = true;
 	get showAllEmployeesOption(): boolean {
 		return this._showAllEmployeesOption;
@@ -93,6 +117,9 @@ export class EmployeeSelectorComponent
 		this._showAllEmployeesOption = value;
 	}
 
+	/**
+	 *
+	 */
 	private _selectedDateRange?: IDateRangePicker;
 	get selectedDateRange(): IDateRangePicker {
 		return this._selectedDateRange;
@@ -102,12 +129,21 @@ export class EmployeeSelectorComponent
 		this.subject$.next([this.store.selectedOrganization, range]);
 	}
 
-	@Output()
-	selectionChanged: EventEmitter<ISelectedEmployee> = new EventEmitter();
+	/**
+	 *
+	 */
+	private _selectedEmployee: ISelectedEmployee;
+	get selectedEmployee(): ISelectedEmployee {
+		return this._selectedEmployee;
+	}
+	@Input() set selectedEmployee(employee: ISelectedEmployee) {
+		this._selectedEmployee = employee;
+	}
+
+	@Output() selectionChanged: EventEmitter<ISelectedEmployee> = new EventEmitter();
 
 	public hasEditEmployee$: Observable<boolean>;
 	public organization: IOrganization;
-	selectedEmployee: ISelectedEmployee;
 	people: ISelectedEmployee[] = [];
 	subject$: Subject<any> = new Subject();
 
@@ -124,7 +160,7 @@ export class EmployeeSelectorComponent
 	) { }
 
 	ngOnInit() {
-		this._selectedEmployee();
+		this.onSelectEmployee();
 		this.hasEditEmployee$ = this.store.userRolePermissions$.pipe(
 			map(() =>
 				this.store.hasPermission(PermissionsEnum.ORG_EMPLOYEES_EDIT)
@@ -165,8 +201,7 @@ export class EmployeeSelectorComponent
 			)
 			.subscribe();
 		const storeOrganization$ = this.store.selectedOrganization$;
-		const selectedDateRange$ =
-			this.dateRangePickerBuilderService.selectedDateRange$;
+		const selectedDateRange$ = this.dateRangePickerBuilderService.selectedDateRange$;
 		combineLatest([storeOrganization$, selectedDateRange$])
 			.pipe(
 				filter(([organization]) => !!organization),
@@ -201,6 +236,10 @@ export class EmployeeSelectorComponent
 						break;
 				}
 			});
+	}
+
+	ngOnChanges() {
+		this.cdRef.detectChanges();
 	}
 
 	/*
@@ -292,7 +331,7 @@ export class EmployeeSelectorComponent
 		}
 	}
 
-	private _selectedEmployee() {
+	private onSelectEmployee() {
 		if (!this.selectedEmployee && isNotEmpty(this.people)) {
 			// This is so selected employee doesn't get reset when it's already set from somewhere else
 			this.selectEmployee(this.people[0]);
@@ -384,19 +423,21 @@ export class EmployeeSelectorComponent
 	 * @returns
 	 */
 	isClearable(): boolean {
-		if (
-			this.selectedEmployee &&
-			this.selectedEmployee.hasOwnProperty('defaultType')
-		) {
+		if (this.clearable) {
 			if (
-				this.selectedEmployee.defaultType === DEFAULT_TYPE.ALL_EMPLOYEE
+				this.selectedEmployee &&
+				this.selectedEmployee.hasOwnProperty('defaultType')
 			) {
-				return false;
+				if (
+					this.selectedEmployee.defaultType === DEFAULT_TYPE.ALL_EMPLOYEE
+				) {
+					return false;
+				}
 			}
+			return !!this.store.hasPermission(
+				PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
+			);
 		}
-		return !!this.store.hasPermission(
-			PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
-		);
 	}
 
 	/**
