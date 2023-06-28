@@ -1,4 +1,5 @@
 import { AfterViewInit, Component, OnDestroy, OnInit } from '@angular/core';
+import { CurrencyPipe } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
@@ -31,7 +32,8 @@ export enum JobSearchTabsEnum {
 @Component({
 	selector: 'ga-job-employees',
 	templateUrl: './employees.component.html',
-	styleUrls: ['./employees.component.scss']
+	styleUrls: ['./employees.component.scss'],
+	providers: [CurrencyPipe]
 })
 export class EmployeesComponent extends PaginationFilterBaseComponent
 	implements AfterViewInit, OnInit, OnDestroy {
@@ -53,7 +55,8 @@ export class EmployeesComponent extends PaginationFilterBaseComponent
 		private readonly store: Store,
 		public readonly translateService: TranslateService,
 		private readonly employeesService: EmployeesService,
-		private readonly toastrService: ToastrService
+		private readonly toastrService: ToastrService,
+		private readonly currencyPipe: CurrencyPipe
 	) {
 		super(translateService);
 	}
@@ -221,6 +224,9 @@ export class EmployeesComponent extends PaginationFilterBaseComponent
 						type: 'custom',
 						component: NumberEditorComponent,
 					},
+					valuePrepareFunction: (cell: number, row: IEmployeeJobsStatisticsResponse) => {
+						return this.currencyPipe.transform(cell, row?.billRateCurrency);
+					}
 				},
 				minimumBillRate: {
 					title: this.getTranslation('JOB_EMPLOYEE.MINIMUM_BILLING_RATE'),
@@ -232,6 +238,9 @@ export class EmployeesComponent extends PaginationFilterBaseComponent
 						type: 'custom',
 						component: NumberEditorComponent,
 					},
+					valuePrepareFunction: (cell: number, row: IEmployeeJobsStatisticsResponse) => {
+						return this.currencyPipe.transform(cell, row?.billRateCurrency);
+					}
 				},
 				isJobSearchActive: {
 					title: this.getTranslation(
