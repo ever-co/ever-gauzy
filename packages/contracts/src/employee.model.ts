@@ -124,6 +124,7 @@ export interface IEmployeeFindInput {
 export interface IEmployeeUpdateInput extends IBasePerTenantAndOrganizationEntityModel {
 	payPeriod?: string;
 	billRateValue?: number;
+	minimumBillingRate?: number;
 	billRateCurrency?: string;
 	reWeeklyLimit?: number;
 	organizationDepartment?: IOrganizationDepartment;
@@ -193,6 +194,7 @@ export interface ISelectedEmployee {
 	employeeLevel?: string;
 	billRateCurrency?: string;
 	billRateValue?: number;
+	minimumBillingRate?: number;
 	defaultType?: DEFAULT_TYPE;
 	tags?: ITag[];
 	skills?: ISkill[];

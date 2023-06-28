@@ -86,6 +86,7 @@ export interface ICandidateUpdateInput extends IBasePerTenantAndOrganizationEnti
 	rejectDate?: Date;
 	cvUrl?: string;
 	candidateLevel?: string;
+	minimumBillingRate?: number;
 }
 
 export interface ICandidateCreateInput extends IBasePerTenantAndOrganizationEntityModel {
