@@ -8,11 +8,7 @@ import {
 } from '@gauzy/contracts';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { filter, tap } from 'rxjs';
-import {
-	CandidateStore,
-	EmployeeStore,
-	Store
-} from '../../../@core/services';
+import { CandidateStore, EmployeeStore, Store } from '../../../@core/services';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -21,7 +17,6 @@ import {
 	styleUrls: ['employee-rates.component.scss']
 })
 export class EmployeeRatesComponent implements OnInit, OnDestroy {
-
 	@Input() public isEmployee: boolean;
 	@Input() public isCandidate: boolean;
 
@@ -30,19 +25,18 @@ export class EmployeeRatesComponent implements OnInit, OnDestroy {
 	payPeriods = Object.values(PayPeriodEnum);
 
 	/*
-	* Employee Rates Form
-	*/
+	 * Employee Rates Form
+	 */
 	public form: FormGroup = EmployeeRatesComponent.buildForm(this.fb);
 	static buildForm(fb: FormBuilder): FormGroup {
 		return fb.group({
 			payPeriod: [],
-			billRateValue: [],
+			billRateValue: ['', Validators.min(0)],
 			billRateCurrency: [],
-			reWeeklyLimit: ['', Validators.compose([
-					Validators.min(1),
-					Validators.max(128)
-				])
-			]
+			reWeeklyLimit: [
+				'',
+				Validators.compose([Validators.min(1), Validators.max(128)])
+			],
 		});
 	}
 
@@ -57,7 +51,9 @@ export class EmployeeRatesComponent implements OnInit, OnDestroy {
 		this.employeeStore.selectedEmployee$
 			.pipe(
 				filter((employee: IEmployee) => !!employee),
-				tap((employee: IEmployee) => this.selectedEmployee = employee),
+				tap(
+					(employee: IEmployee) => (this.selectedEmployee = employee)
+				),
 				tap((employee: IEmployee) => this._syncRates(employee)),
 				untilDestroyed(this)
 			)
@@ -65,7 +61,10 @@ export class EmployeeRatesComponent implements OnInit, OnDestroy {
 		this.candidateStore.selectedCandidate$
 			.pipe(
 				filter((candidate: ICandidate) => !!candidate),
-				tap((candidate: ICandidate) => this.selectedCandidate = candidate),
+				tap(
+					(candidate: ICandidate) =>
+						(this.selectedCandidate = candidate)
+				),
 				tap((candidate: ICandidate) => this._syncRates(candidate)),
 				untilDestroyed(this)
 			)
@@ -104,6 +103,18 @@ export class EmployeeRatesComponent implements OnInit, OnDestroy {
 	 * On Changed Currency Event Emitter
 	 */
 	currencyChanged($event: ICurrency) { }
+
+	public get reWeeklyLimit() {
+		return this.form.get('reWeeklyLimit');
+	}
+
+	public get billRateValue() {
+		return this.form.get('billRateValue');
+	}
+
+	public get billRateCurrency() {
+		return this.form.get('billRateCurrency');
+	}
 
 	ngOnDestroy() { }
 }
