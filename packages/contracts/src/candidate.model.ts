@@ -40,6 +40,7 @@ export interface ICandidate extends IBasePerTenantAndOrganizationEntityModel {
 	billRateValue?: number;
 	billRateCurrency?: string;
 	reWeeklyLimit?: number;
+	minimumBillingRate?: number;
 	documents?: ICandidateDocument[];
 	educations?: ICandidateEducation[];
 	source?: ICandidateSource;
