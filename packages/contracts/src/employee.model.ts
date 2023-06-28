@@ -38,6 +38,7 @@ export interface IEmployee extends IBasePerTenantAndOrganizationEntityModel {
 	payPeriod?: string;
 	billRateValue?: number;
 	billRateCurrency?: string;
+	minimumBillingRate?: number;
 	reWeeklyLimit?: number;
 	organizationDepartments?: IOrganizationDepartment[];
 	organizationContacts?: IOrganizationContact[];

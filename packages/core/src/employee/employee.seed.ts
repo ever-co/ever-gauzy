@@ -42,6 +42,7 @@ export const createDefaultEmployees = async (
 		);
 		employee.billRateValue = faker.number.int({ min: 15, max: 40 });
 		employee.billRateCurrency = organization.currency || env.defaultCurrency;
+		employee.minimumBillingRate = faker.number.int({ min: 2, max: 1000 });
 		employee.reWeeklyLimit = faker.number.int({ min: 10, max: 40 });
 		employees.push(employee);
 	}
