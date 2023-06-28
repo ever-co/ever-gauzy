@@ -605,7 +605,12 @@
 		"RATES": {
 			"DEFAULT_RATE": "Default Rate",
 			"EXPECTED_RATE": "Expected Rate",
-			"LIMITS": "Limits"
+			"LIMITS": "Limits",
+			"ERRORS": {
+				"LIMIT_MAX": "Recurring Weekly Limit (hours) should not be above {{ max }} hours.",
+				"LIMIT_MIN": "Recurring Weekly Limit (hours) should not be under {{ min }} hour.",
+				"BILL_RATE_MIN": "The bill Rate can't be under {{ min }}{{ currency}}/hour "
+			}
 		},
 		"CHECKBOXES": {
 			"INCLUDE_DELETED": "Show Deleted",
