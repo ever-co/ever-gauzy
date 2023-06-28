@@ -14,6 +14,9 @@
 		<ng-template [ngIf]="rowData?.jobPost?.budget">
 			| <span class="badge">{{ rowData?.jobPost?.budget | budget }}</span>
 		</ng-template>
+		<ng-template [ngIf]="rowData?.jobPost?.jobStatus">
+			| <job-status [rowData]="rowData"></job-status>
+		</ng-template>
 		<div class="job-title">
 			<a href="javascript:void(0)" (click)="openJob()">
 				<nb-icon icon="eye-outline" pack="eva" [nbTooltip]="rowData?.jobPost?.title"></nb-icon>

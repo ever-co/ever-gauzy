@@ -211,6 +211,7 @@ type EmployeeJobPost {
   providerCode: String!
   providerJobId: String!
   isApplied: Boolean
+  appliedStatus: String
   appliedDate: DateTime
   createdAt: DateTime
   updatedAt: DateTime
@@ -233,6 +234,7 @@ type EmployeeJobApplication {
   providerJobApplicationId: String
   isViewedByClient: Boolean
   appliedDate: DateTime
+  appliedStatus: String
   proposal: String
   isProposalGeneratedByAI: Boolean
   proposalTemplate: String
@@ -636,6 +638,7 @@ type EmployeeJobPostDeleteResponse {
   providerCode: String
   providerJobId: String
   isApplied: Boolean
+  appliedStatus: String
   appliedDate: DateTime
   createdAt: DateTime
   updatedAt: DateTime
@@ -672,6 +675,7 @@ type EmployeeJobPostCountAggregate {
   providerCode: Int
   providerJobId: Int
   isApplied: Int
+  appliedStatus: Int
   appliedDate: Int
   createdAt: Int
   updatedAt: Int
@@ -688,6 +692,7 @@ type EmployeeJobPostMinAggregate {
   jobType: String
   providerCode: String
   providerJobId: String
+  appliedStatus: String
   appliedDate: DateTime
   createdAt: DateTime
   updatedAt: DateTime
@@ -702,6 +707,7 @@ type EmployeeJobPostMaxAggregate {
   jobType: String
   providerCode: String
   providerJobId: String
+  appliedStatus: String
   appliedDate: DateTime
   createdAt: DateTime
   updatedAt: DateTime
@@ -726,6 +732,7 @@ type EmployeeJobApplicationDeleteResponse {
   providerJobApplicationId: String
   isViewedByClient: Boolean
   appliedDate: DateTime
+  appliedStatus: String
   proposal: String
   isProposalGeneratedByAI: Boolean
   proposalTemplate: String
@@ -771,6 +778,7 @@ type EmployeeJobApplicationCountAggregate {
   providerJobApplicationId: Int
   isViewedByClient: Int
   appliedDate: Int
+  appliedStatus: Int
   createdAt: Int
   updatedAt: Int
   isActive: Int
@@ -789,6 +797,7 @@ type EmployeeJobApplicationMinAggregate {
   providerJobId: String
   providerJobApplicationId: String
   appliedDate: DateTime
+  appliedStatus: String
   createdAt: DateTime
   updatedAt: DateTime
 }
@@ -805,6 +814,7 @@ type EmployeeJobApplicationMaxAggregate {
   providerJobId: String
   providerJobApplicationId: String
   appliedDate: DateTime
+  appliedStatus: String
   createdAt: DateTime
   updatedAt: DateTime
 }
@@ -1205,6 +1215,7 @@ input EmployeeJobPostFilter {
   providerCode: StringFieldComparison
   providerJobId: StringFieldComparison
   isApplied: BooleanFieldComparison
+  appliedStatus: StringFieldComparison
   appliedDate: DateFieldComparison
   createdAt: DateFieldComparison
   updatedAt: DateFieldComparison
@@ -1273,6 +1284,7 @@ enum EmployeeJobPostSortFields {
   providerCode
   providerJobId
   isApplied
+  appliedStatus
   appliedDate
   createdAt
   updatedAt
@@ -1292,6 +1304,7 @@ input EmployeeJobPostAggregateFilter {
   providerCode: StringFieldComparison
   providerJobId: StringFieldComparison
   isApplied: BooleanFieldComparison
+  appliedStatus: StringFieldComparison
   appliedDate: DateFieldComparison
   createdAt: DateFieldComparison
   updatedAt: DateFieldComparison
@@ -1314,6 +1327,7 @@ input EmployeeJobApplicationFilter {
   providerJobApplicationId: StringFieldComparison
   isViewedByClient: BooleanFieldComparison
   appliedDate: DateFieldComparison
+  appliedStatus: StringFieldComparison
   createdAt: DateFieldComparison
   updatedAt: DateFieldComparison
   isActive: BooleanFieldComparison
@@ -1335,6 +1349,7 @@ input EmployeeJobApplicationFilterEmployeeJobPostFilter {
   providerCode: StringFieldComparison
   providerJobId: StringFieldComparison
   isApplied: BooleanFieldComparison
+  appliedStatus: StringFieldComparison
   appliedDate: DateFieldComparison
   createdAt: DateFieldComparison
   updatedAt: DateFieldComparison
@@ -1404,6 +1419,7 @@ enum EmployeeJobApplicationSortFields {
   providerJobApplicationId
   isViewedByClient
   appliedDate
+  appliedStatus
   createdAt
   updatedAt
   isActive
@@ -1425,6 +1441,7 @@ input EmployeeJobApplicationAggregateFilter {
   providerJobApplicationId: StringFieldComparison
   isViewedByClient: BooleanFieldComparison
   appliedDate: DateFieldComparison
+  appliedStatus: StringFieldComparison
   createdAt: DateFieldComparison
   updatedAt: DateFieldComparison
   isActive: BooleanFieldComparison
@@ -1466,6 +1483,7 @@ input AutomationTaskFilterEmployeeJobPostFilter {
   providerCode: StringFieldComparison
   providerJobId: StringFieldComparison
   isApplied: BooleanFieldComparison
+  appliedStatus: StringFieldComparison
   appliedDate: DateFieldComparison
   createdAt: DateFieldComparison
   updatedAt: DateFieldComparison
@@ -2012,6 +2030,7 @@ input EmployeeJobPostDeleteFilter {
   providerCode: StringFieldComparison
   providerJobId: StringFieldComparison
   isApplied: BooleanFieldComparison
+  appliedStatus: StringFieldComparison
   appliedDate: DateFieldComparison
   createdAt: DateFieldComparison
   updatedAt: DateFieldComparison
@@ -2037,6 +2056,7 @@ input UpdateEmployeeJobPost {
   providerCode: String
   providerJobId: String
   isApplied: Boolean
+  appliedStatus: String
   appliedDate: DateTime
   createdAt: DateTime
   updatedAt: DateTime
@@ -2064,6 +2084,7 @@ input EmployeeJobPostUpdateFilter {
   providerCode: StringFieldComparison
   providerJobId: StringFieldComparison
   isApplied: BooleanFieldComparison
+  appliedStatus: StringFieldComparison
   appliedDate: DateFieldComparison
   createdAt: DateFieldComparison
   updatedAt: DateFieldComparison
@@ -2086,6 +2107,7 @@ input CreateEmployeeJobPost {
   providerCode: String
   providerJobId: String
   isApplied: Boolean
+  appliedStatus: String
   appliedDate: DateTime
   createdAt: DateTime
   updatedAt: DateTime
@@ -2118,6 +2140,7 @@ input EmployeeJobApplicationDeleteFilter {
   providerJobApplicationId: StringFieldComparison
   isViewedByClient: BooleanFieldComparison
   appliedDate: DateFieldComparison
+  appliedStatus: StringFieldComparison
   createdAt: DateFieldComparison
   updatedAt: DateFieldComparison
   isActive: BooleanFieldComparison
@@ -2145,6 +2168,7 @@ input UpdateEmployeeJobApplication {
   providerJobApplicationId: String
   isViewedByClient: Boolean
   appliedDate: DateTime
+  appliedStatus: String
   proposal: String
   isProposalGeneratedByAI: Boolean
   proposalTemplate: String
@@ -2181,6 +2205,7 @@ input EmployeeJobApplicationUpdateFilter {
   providerJobApplicationId: StringFieldComparison
   isViewedByClient: BooleanFieldComparison
   appliedDate: DateFieldComparison
+  appliedStatus: StringFieldComparison
   createdAt: DateFieldComparison
   updatedAt: DateFieldComparison
   isActive: BooleanFieldComparison
@@ -2205,6 +2230,7 @@ input CreateEmployeeJobApplication {
   providerJobApplicationId: String
   isViewedByClient: Boolean
   appliedDate: DateTime
+  appliedStatus: String
   proposal: String
   isProposalGeneratedByAI: Boolean
   proposalTemplate: String
@@ -2488,6 +2514,7 @@ input EmployeeJobPostSubscriptionFilter {
   providerCode: StringFieldComparison
   providerJobId: StringFieldComparison
   isApplied: BooleanFieldComparison
+  appliedStatus: StringFieldComparison
   appliedDate: DateFieldComparison
   createdAt: DateFieldComparison
   updatedAt: DateFieldComparison
@@ -2525,6 +2552,7 @@ input EmployeeJobApplicationSubscriptionFilter {
   providerJobApplicationId: StringFieldComparison
   isViewedByClient: BooleanFieldComparison
   appliedDate: DateFieldComparison
+  appliedStatus: StringFieldComparison
   createdAt: DateFieldComparison
   updatedAt: DateFieldComparison
   isActive: BooleanFieldComparison

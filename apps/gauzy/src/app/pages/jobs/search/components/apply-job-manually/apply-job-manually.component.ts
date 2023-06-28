@@ -1,5 +1,6 @@
 import { AfterViewInit, Component, Input, OnDestroy, OnInit, SecurityContext, ViewChild } from '@angular/core';
 import { FormBuilder, FormControl, FormGroup, FormGroupDirective, Validators } from '@angular/forms';
+import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { Subject, Subscription, combineLatest, switchMap, timer } from 'rxjs';
 import { debounceTime, filter, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
@@ -19,12 +20,12 @@ import {
 	JobPostSourceEnum
 } from '@gauzy/contracts';
 import { distinctUntilChange, isNotEmpty, sleep } from '@gauzy/common-angular';
+import { EmployeeSelectorComponent } from './../../../../../@theme/components/header/selectors/employee';
 import { JobService, Store, ToastrService } from './../../../../../@core/services';
 import { API_PREFIX } from './../../../../../@core/constants';
 import { FormHelpers } from './../../../../../@shared/forms';
 import { TranslationBaseComponent } from './../../../../../@shared/language-base';
 import { ckEditorConfig } from './../../../../../@shared/ckeditor.config';
-import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -82,9 +83,6 @@ export class ApplyJobManuallyComponent extends TranslationBaseComponent implemen
 	}
 	@Input() set selectedEmployee(employee: ISelectedEmployee) {
 		this._selectedEmployee = employee;
-
-		/** Set default select employee */
-		this.setDefaultEmployee(employee);
 	}
 
 	/**  Getter and setter for selected Job Post */
@@ -102,6 +100,9 @@ export class ApplyJobManuallyComponent extends TranslationBaseComponent implemen
 
 	/** Ckeditor component */
 	@ViewChild('ckeditor', { static: false }) ckeditor: CKEditorComponent;
+
+	/** Employee selector component */
+	@ViewChild('employeeSelector') employeeSelector: EmployeeSelectorComponent;
 
 	/**
 	 * Newly generate employee job application
@@ -124,7 +125,6 @@ export class ApplyJobManuallyComponent extends TranslationBaseComponent implemen
 	}
 
 	ngOnInit(): void {
-		const storeUser$ = this.store.user$;
 		const storeOrganization$ = this.store.selectedOrganization$;
 		const storeEmployee$ = this.store.selectedEmployee$;
 		combineLatest([storeOrganization$, storeEmployee$])
@@ -136,10 +136,13 @@ export class ApplyJobManuallyComponent extends TranslationBaseComponent implemen
 					this.organization = organization;
 					this.selectedEmployee = employee && employee.id ? employee : null;
 				}),
+				tap(() => this.employeeSelector.selectEmployeeById(
+					this.selectedEmployee?.id
+				)),
 				untilDestroyed(this)
 			)
 			.subscribe();
-		storeUser$
+		this.store.user$
 			.pipe(
 				filter((user: IUser) => !!user),
 				tap(() => this._loadUploaderSettings()),
@@ -300,8 +303,8 @@ export class ApplyJobManuallyComponent extends TranslationBaseComponent implemen
 
 	/** Set default employee rates */
 	setDefaultEmployeeRates(employee: ISelectedEmployee | IEmployee) {
-		if (employee && employee.billRateValue) {
-			this.form.get('rate').setValue(employee.billRateValue);
+		if (employee) {
+			this.form.get('rate').setValue(employee?.billRateValue);
 			this.form.get('rate').updateValueAndValidity();
 		}
 	}

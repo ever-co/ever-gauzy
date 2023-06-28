@@ -302,7 +302,7 @@
 			"END_TIME": "Default Work Day End Time",
 			"POSTCODE": "Пощенски код (Zip)",
 			"PAY_PERIOD": "Период на Плащане",
-			"BILL_RATE": "Заплащане по часово",
+			"BILL_RATE": "Таксуване (на час)",
 			"CURRENCY_PER_HOUR": "Валута",
 			"RECURRING_WEEKLY_LIMIT": "Седмичен лимит (часове)",
 			"ROLE": "Роля",
@@ -2489,7 +2489,9 @@
 		"JOB_SEARCH_STATUS": "Job Search Status",
 		"BROWSE": "Browse",
 		"SEARCH": "Search",
-		"HISTORY": "History"
+		"HISTORY": "History",
+		"BILLING_RATE": "Таксуване",
+		"MINIMUM_BILLING_RATE": "Минимална фактурна ставка"
 	},
 	"PROPOSAL_TEMPLATE": {
 		"PROPOSAL_TEMPLATE": "Proposal Template",
