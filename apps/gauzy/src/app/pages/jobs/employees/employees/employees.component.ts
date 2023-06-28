@@ -181,7 +181,7 @@ export class EmployeesComponent extends PaginationFilterBaseComponent
 			columns: {
 				employeeId: {
 					title: this.getTranslation('JOB_EMPLOYEE.EMPLOYEE'),
-					width: '40%',
+					width: '30%',
 					type: 'custom',
 					sort: false,
 					editable: false,
@@ -228,10 +228,10 @@ export class EmployeesComponent extends PaginationFilterBaseComponent
 						return this.currencyPipe.transform(cell, row?.billRateCurrency);
 					}
 				},
-				minimumBillRate: {
+				minimumBillingRate: {
 					title: this.getTranslation('JOB_EMPLOYEE.MINIMUM_BILLING_RATE'),
 					type: 'text',
-					width: '10%',
+					width: '20%',
 					sort: false,
 					editable: true,
 					editor: {
@@ -280,11 +280,11 @@ export class EmployeesComponent extends PaginationFilterBaseComponent
 			const employeeId = event.data?.id;
 
 			const billRateValue = event.newData?.billRateValue;
-			const minimumBillRate = event.newData?.billRateValue;
+			const minimumBillingRate = event.newData?.minimumBillingRate;
 
 			// Update employee bill rates
 			await this.employeesService.updateProfile(employeeId, {
-				minimumBillRate,
+				minimumBillingRate,
 				billRateValue,
 				tenantId,
 				organizationId
