@@ -8,14 +8,12 @@ import { TranslateService } from '@ngx-translate/core';
 import { BehaviorSubject, combineLatest, Subject } from 'rxjs';
 import { debounceTime, filter, tap } from 'rxjs/operators';
 import { NbTabComponent } from '@nebular/theme';
-import {
-	IEmployee,
-	IEmployeeJobsStatisticsResponse,
-	IOrganization,
-	ISelectedEmployee
-} from '@gauzy/contracts';
+import { IEmployee, IEmployeeJobsStatisticsResponse, IOrganization, ISelectedEmployee } from '@gauzy/contracts';
 import { EmployeeLinksComponent } from './../../../../@shared/table-components';
-import { IPaginationBase, PaginationFilterBaseComponent } from './../../../../@shared/pagination/pagination-filter-base.component';
+import {
+	IPaginationBase,
+	PaginationFilterBaseComponent
+} from './../../../../@shared/pagination/pagination-filter-base.component';
 import { EmployeesService, Store, ToastrService } from './../../../../@core/services';
 import { SmartTableToggleComponent } from './../../../../@shared/smart-table/smart-table-toggle/smart-table-toggle.component';
 import { ServerDataSource } from './../../../../@core/utils/smart-table';
@@ -35,9 +33,7 @@ export enum JobSearchTabsEnum {
 	styleUrls: ['./employees.component.scss'],
 	providers: [CurrencyPipe]
 })
-export class EmployeesComponent extends PaginationFilterBaseComponent
-	implements AfterViewInit, OnInit, OnDestroy {
-
+export class EmployeesComponent extends PaginationFilterBaseComponent implements AfterViewInit, OnInit, OnDestroy {
 	jobSearchTabsEnum = JobSearchTabsEnum;
 	loading: boolean = false;
 	settingsSmartTable: any;
@@ -120,8 +116,8 @@ export class EmployeesComponent extends PaginationFilterBaseComponent
 				isActive: true,
 				...(this.selectedEmployeeId
 					? {
-						id: this.selectedEmployeeId
-					}
+							id: this.selectedEmployeeId
+					  }
 					: {}),
 				...(this.filters.where ? this.filters.where : {})
 			},
@@ -148,11 +144,7 @@ export class EmployeesComponent extends PaginationFilterBaseComponent
 			this.setSmartTableSource();
 
 			const { activePage, itemsPerPage } = this.getPagination();
-			this.smartTableSource.setPaging(
-				activePage,
-				itemsPerPage,
-				false
-			);
+			this.smartTableSource.setPaging(activePage, itemsPerPage, false);
 		} catch (error) {
 			this.toastrService.danger(error);
 		}
@@ -222,7 +214,7 @@ export class EmployeesComponent extends PaginationFilterBaseComponent
 					editable: true,
 					editor: {
 						type: 'custom',
-						component: NumberEditorComponent,
+						component: NumberEditorComponent
 					},
 					valuePrepareFunction: (cell: number, row: IEmployeeJobsStatisticsResponse) => {
 						return this.currencyPipe.transform(cell, row?.billRateCurrency);
@@ -236,16 +228,14 @@ export class EmployeesComponent extends PaginationFilterBaseComponent
 					editable: true,
 					editor: {
 						type: 'custom',
-						component: NumberEditorComponent,
+						component: NumberEditorComponent
 					},
 					valuePrepareFunction: (cell: number, row: IEmployeeJobsStatisticsResponse) => {
 						return this.currencyPipe.transform(cell, row?.billRateCurrency);
 					}
 				},
 				isJobSearchActive: {
-					title: this.getTranslation(
-						'JOB_EMPLOYEE.JOB_SEARCH_STATUS'
-					),
+					title: this.getTranslation('JOB_EMPLOYEE.JOB_SEARCH_STATUS'),
 					type: 'custom',
 					width: '20%',
 					editable: false,
@@ -253,10 +243,7 @@ export class EmployeesComponent extends PaginationFilterBaseComponent
 					valuePrepareFunction: (cell, row: IEmployeeJobsStatisticsResponse) => {
 						return {
 							checked: row.isJobSearchActive,
-							onChange: (toggleValue: boolean) => this.updateJobSearchAvailability(
-								row,
-								toggleValue
-							)
+							onChange: (toggleValue: boolean) => this.updateJobSearchAvailability(row, toggleValue)
 						};
 					}
 				}
@@ -298,10 +285,7 @@ export class EmployeesComponent extends PaginationFilterBaseComponent
 		}
 	}
 
-	async updateJobSearchAvailability(
-		employee: IEmployee,
-		isJobSearchActive: boolean
-	): Promise<void> {
+	async updateJobSearchAvailability(employee: IEmployee, isJobSearchActive: boolean): Promise<void> {
 		if (!this.organization) {
 			return;
 		}
@@ -309,21 +293,23 @@ export class EmployeesComponent extends PaginationFilterBaseComponent
 			const { tenantId } = this.store.user;
 			const { id: organizationId } = this.organization;
 
-			await this.employeesService.updateJobSearchStatus(employee.id, {
-				isJobSearchActive,
-				organizationId,
-				tenantId
-			}).then(() => {
-				if (isJobSearchActive) {
-					this.toastrService.success('TOASTR.MESSAGE.EMPLOYEE_JOB_STATUS_ACTIVE', {
-						name: employee.fullName.trim()
-					});
-				} else {
-					this.toastrService.success('TOASTR.MESSAGE.EMPLOYEE_JOB_STATUS_INACTIVE', {
-						name: employee.fullName.trim()
-					});
-				}
-			});
+			await this.employeesService
+				.updateJobSearchStatus(employee.id, {
+					isJobSearchActive,
+					organizationId,
+					tenantId
+				})
+				.then(() => {
+					if (isJobSearchActive) {
+						this.toastrService.success('TOASTR.MESSAGE.EMPLOYEE_JOB_STATUS_ACTIVE', {
+							name: employee.fullName.trim()
+						});
+					} else {
+						this.toastrService.success('TOASTR.MESSAGE.EMPLOYEE_JOB_STATUS_INACTIVE', {
+							name: employee.fullName.trim()
+						});
+					}
+				});
 		} catch (error) {
 			this.toastrService.danger(error);
 		}
@@ -343,7 +329,7 @@ export class EmployeesComponent extends PaginationFilterBaseComponent
 	 *
 	 * @param tab
 	 */
-	onTabChange(tab: NbTabComponent) { }
+	onTabChange(tab: NbTabComponent) {}
 
 	/**
 	 * On select employee
@@ -370,5 +356,5 @@ export class EmployeesComponent extends PaginationFilterBaseComponent
 		this.router.navigate(['/pages/employees/edit/', this.selectedEmployee.id]);
 	}
 
-	ngOnDestroy(): void { }
+	ngOnDestroy(): void {}
 }
