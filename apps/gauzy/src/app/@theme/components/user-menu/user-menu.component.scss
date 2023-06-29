@@ -2,7 +2,8 @@
 :host {
   .main-menu {
     width: 36rem;
-    height: 30.5625rem;
+    //height: 30.5625rem; // After implement features revert to this height
+    height: 18rem;
     box-shadow: 0rem 0.25rem 1rem rgba(0, 0, 0, 0.25);
     border-radius: nb-theme(border-radius) nb-theme(border-radius)
       nb-theme(border-radius) 0rem;
