@@ -11,15 +11,13 @@ import { QueryHandlers } from './queries/handlers';
 
 @Module({
 	imports: [
-		RouterModule.forRoutes([
-			{ path: '/task-versions', module: TaskVersionModule },
-		]),
+		RouterModule.forRoutes([{ path: '/task-versions', module: TaskVersionModule }]),
 		TypeOrmModule.forFeature([TaskVersion]),
 		TenantModule,
-		CqrsModule,
+		CqrsModule
 	],
 	controllers: [TaskVersionController],
 	providers: [TaskVersionService, ...QueryHandlers, ...CommandHandlers],
-	exports: [TaskVersionService],
+	exports: [TaskVersionService]
 })
 export class TaskVersionModule {}

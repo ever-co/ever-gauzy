@@ -134,7 +134,7 @@ import {
 	Warehouse,
 	WarehouseProduct,
 	WarehouseProductVariant,
-	TaskVersion,
+	TaskVersion
 } from './internal';
 
 export const coreEntities = [
@@ -273,5 +273,5 @@ export const coreEntities = [
 	UserOrganization,
 	Warehouse,
 	WarehouseProduct,
-	WarehouseProductVariant,
+	WarehouseProductVariant
 ];

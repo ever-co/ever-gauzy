@@ -4,8 +4,5 @@ import { TenantOrganizationBaseDTO } from '../../../core/dto';
 import { TaskVersion } from '../version.entity';
 
 export class UpdatesVersionDTO
-	extends IntersectionType(
-		PartialType(TenantOrganizationBaseDTO),
-		PartialType(TaskVersion)
-	)
+	extends IntersectionType(PartialType(TenantOrganizationBaseDTO), PartialType(TaskVersion))
 	implements ITaskVersionUpdateInput {}

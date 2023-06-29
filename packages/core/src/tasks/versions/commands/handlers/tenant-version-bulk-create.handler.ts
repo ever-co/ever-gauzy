@@ -5,14 +5,10 @@ import { TaskVersionService } from '../../version.service';
 import { TaskVersion } from '../../version.entity';
 
 @CommandHandler(TenantVersionBulkCreateCommand)
-export class TenantVersionBulkCreateHandler
-	implements ICommandHandler<TenantVersionBulkCreateCommand>
-{
+export class TenantVersionBulkCreateHandler implements ICommandHandler<TenantVersionBulkCreateCommand> {
 	constructor(private readonly taskVersionService: TaskVersionService) {}
 
-	public async execute(
-		command: TenantVersionBulkCreateCommand
-	): Promise<ITaskVersion[] & TaskVersion[]> {
+	public async execute(command: TenantVersionBulkCreateCommand): Promise<ITaskVersion[] & TaskVersion[]> {
 		const { tenants } = command;
 
 		//1. Create Versions of the tenant.
