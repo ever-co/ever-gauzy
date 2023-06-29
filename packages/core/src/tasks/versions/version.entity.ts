@@ -1,22 +1,11 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Column, Entity, Index, ManyToOne, RelationId } from 'typeorm';
-import {
-	IOrganizationProject,
-	IOrganizationTeam,
-	ITaskVersion,
-} from '@gauzy/contracts';
+import { IOrganizationProject, IOrganizationTeam, ITaskVersion } from '@gauzy/contracts';
 import { IsNotEmpty, IsOptional, IsString, IsUUID } from 'class-validator';
-import {
-	OrganizationProject,
-	OrganizationTeam,
-	TenantOrganizationBaseEntity,
-} from '../../core/entities/internal';
+import { OrganizationProject, OrganizationTeam, TenantOrganizationBaseEntity } from '../../core/entities/internal';
 
 @Entity('task_version')
-export class TaskVersion
-	extends TenantOrganizationBaseEntity
-	implements ITaskVersion
-{
+export class TaskVersion extends TenantOrganizationBaseEntity implements ITaskVersion {
 	@ApiProperty({ type: () => String })
 	@IsNotEmpty()
 	@IsString()
@@ -59,7 +48,7 @@ export class TaskVersion
 	 * Organization Project
 	 */
 	@ManyToOne(() => OrganizationProject, (project) => project.versions, {
-		onDelete: 'CASCADE',
+		onDelete: 'CASCADE'
 	})
 	project?: IOrganizationProject;
 
@@ -75,7 +64,7 @@ export class TaskVersion
 	 * Organization Team
 	 */
 	@ManyToOne(() => OrganizationTeam, (team) => team.versions, {
-		onDelete: 'CASCADE',
+		onDelete: 'CASCADE'
 	})
 	organizationTeam?: IOrganizationTeam;
 

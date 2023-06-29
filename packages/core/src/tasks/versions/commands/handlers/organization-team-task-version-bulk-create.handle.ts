@@ -9,9 +9,7 @@ export class OrganizationTeamTaskVersionBulkCreateHandler
 {
 	constructor(private readonly taskVersionService: TaskVersionService) {}
 
-	public async execute(
-		command: OrganizationTeamTaskVersionBulkCreateCommand
-	): Promise<ITaskVersion[]> {
+	public async execute(command: OrganizationTeamTaskVersionBulkCreateCommand): Promise<ITaskVersion[]> {
 		const { input } = command;
 		const { id: organizationTeamId, organizationId } = input;
 
@@ -20,7 +18,7 @@ export class OrganizationTeamTaskVersionBulkCreateHandler
 		 */
 		return this.taskVersionService.createBulkVersionsByEntity({
 			organizationId,
-			organizationTeamId,
+			organizationTeamId
 		});
 	}
 }

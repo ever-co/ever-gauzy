@@ -7,9 +7,7 @@ import { FindVersionsQuery } from '../find-versions.query';
 export class FindVersionesHandler implements IQueryHandler<FindVersionsQuery> {
 	constructor(private readonly taskVersionService: TaskVersionService) {}
 
-	async execute(
-		query: FindVersionsQuery
-	): Promise<IPagination<ITaskVersion>> {
+	async execute(query: FindVersionsQuery): Promise<IPagination<ITaskVersion>> {
 		const { options } = query;
 		return await this.taskVersionService.findTaskVersiones(options);
 	}

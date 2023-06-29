@@ -21,7 +21,7 @@ export class OrganizationProjectVersionBulkCreateHandler
 		 */
 		return await this.taskVersionService.createBulkVersionsByEntity({
 			organizationId,
-			projectId,
+			projectId
 		});
 	}
 }

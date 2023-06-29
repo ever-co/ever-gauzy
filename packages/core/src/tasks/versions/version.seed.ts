@@ -9,9 +9,7 @@ import { TaskVersion } from './version.entity';
  * @param dataSource
  * @returns
  */
-export const createDefaultVersions = async (
-	dataSource: DataSource
-): Promise<ITaskVersion[]> => {
+export const createDefaultVersions = async (dataSource: DataSource): Promise<ITaskVersion[]> => {
 	let versions: TaskVersion[] = [];
 	for await (const version of DEFAULT_GLOBAL_VERSIONS) {
 		versions.push(new TaskVersion(version));

@@ -7,7 +7,7 @@ export const DEFAULT_GLOBAL_VERSIONS: ITaskVersion[] = [
 		description: 'Version 1',
 		icon: null,
 		color: '#FFFFFF',
-		isSystem: true,
+		isSystem: true
 	},
 	{
 		name: TaskVersionEnum.VERSION_TWO,
@@ -15,7 +15,7 @@ export const DEFAULT_GLOBAL_VERSIONS: ITaskVersion[] = [
 		description: 'Version 2',
 		icon: null,
 		color: '#FFFFFF',
-		isSystem: true,
+		isSystem: true
 	},
 	{
 		name: TaskVersionEnum.VERSION_THREE,
@@ -23,7 +23,7 @@ export const DEFAULT_GLOBAL_VERSIONS: ITaskVersion[] = [
 		description: 'Version 3',
 		icon: null,
 		color: '#FFFFFF',
-		isSystem: true,
+		isSystem: true
 	},
 	{
 		name: TaskVersionEnum.VERSION_FOUR,
@@ -31,6 +31,6 @@ export const DEFAULT_GLOBAL_VERSIONS: ITaskVersion[] = [
 		description: 'Version 4',
 		icon: null,
 		color: '#FFFFFF',
-		isSystem: true,
-	},
+		isSystem: true
+	}
 ];

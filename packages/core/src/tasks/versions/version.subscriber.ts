@@ -1,9 +1,4 @@
-import {
-	EntitySubscriberInterface,
-	EventSubscriber,
-	InsertEvent,
-	LoadEvent,
-} from 'typeorm';
+import { EntitySubscriberInterface, EventSubscriber, InsertEvent, LoadEvent } from 'typeorm';
 import { faker } from '@faker-js/faker';
 import { sluggable } from '@gauzy/common';
 import { FileStorageProviderEnum } from '@gauzy/contracts';
@@ -11,9 +6,7 @@ import { FileStorage } from '../../core/file-storage';
 import { TaskVersion } from './version.entity';
 
 @EventSubscriber()
-export class TaskVersionSubscriber
-	implements EntitySubscriberInterface<TaskVersion>
-{
+export class TaskVersionSubscriber implements EntitySubscriberInterface<TaskVersion> {
 	/**
 	 * Indicates that this subscriber only listen to TaskVersion events.
 	 */
@@ -27,18 +20,11 @@ export class TaskVersionSubscriber
 	 * @param entity
 	 * @param event
 	 */
-	afterLoad(
-		entity: TaskVersion | Partial<TaskVersion>,
-		event?: LoadEvent<TaskVersion>
-	): void | Promise<any> {
+	afterLoad(entity: TaskVersion | Partial<TaskVersion>, event?: LoadEvent<TaskVersion>): void | Promise<any> {
 		try {
 			if (entity.icon) {
-				const store = new FileStorage().setProvider(
-					FileStorageProviderEnum.LOCAL
-				);
-				entity.fullIconUrl = store
-					.getProviderInstance()
-					.url(entity.icon);
+				const store = new FileStorage().setProvider(FileStorageProviderEnum.LOCAL);
+				entity.fullIconUrl = store.getProviderInstance().url(entity.icon);
 			}
 		} catch (error) {
 			console.log(error);

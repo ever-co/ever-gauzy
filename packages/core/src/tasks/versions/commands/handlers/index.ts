@@ -7,5 +7,5 @@ export const CommandHandlers = [
 	OrganizationProjectVersionBulkCreateHandler,
 	OrganizationVersionBulkCreateHandler,
 	OrganizationTeamTaskVersionBulkCreateHandler,
-	TenantVersionBulkCreateHandler,
+	TenantVersionBulkCreateHandler
 ];
