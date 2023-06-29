@@ -377,27 +377,25 @@ export class SearchComponent extends PaginationFilterBaseComponent implements On
 
 		try {
 			const appliedJob = await this.jobService.applyJob(applyJobPost);
-
 			this.toastrService.success('TOASTR.MESSAGE.JOB_APPLIED');
-			this.smartTableSource.refresh();
+
+			// removed selected row from table after applied
+			const row = document.querySelector('ng2-smart-table > table > tbody > .ng2-smart-row.selected');
+			if (!!row) {
+				row.remove();
+				this.onSelectJob({ isSelected: false, data: null });
+			}
 
 			if (appliedJob.isRedirectRequired) {
 				// If we have generated proposal, let's copy to clipboard
 				if (appliedJob.proposal) {
 					await this.copyTextToClipboard(appliedJob.proposal);
 				} else {
-					const proposalTemplate =
-						await this.getEmployeeDefaultProposalTemplate(
-							this.selectedJob
-						);
-
+					const proposalTemplate = await this.getEmployeeDefaultProposalTemplate(this.selectedJob);
 					if (proposalTemplate) {
-						await this.copyTextToClipboard(
-							proposalTemplate.content
-						);
+						await this.copyTextToClipboard(proposalTemplate.content);
 					}
 				}
-
 				window.open(this.selectedJob.jobPost.url, '_blank');
 			}
 		} catch (error) {
@@ -411,9 +409,7 @@ export class SearchComponent extends PaginationFilterBaseComponent implements On
 			return;
 		}
 		try {
-			const { providerCode, providerJobId, employeeId } =
-				this.selectedJob;
-
+			const { providerCode, providerJobId, employeeId } = this.selectedJob;
 			const applyJobPost: IEmployeeJobApplication = {
 				applied: true,
 				...(isNotEmpty(this.selectedEmployee)

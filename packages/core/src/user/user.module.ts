@@ -19,12 +19,12 @@ import { TaskModule } from './../tasks/task.module';
 		RouterModule.forRoutes([{ path: '/user', module: UserModule }]),
 		forwardRef(() => TypeOrmModule.forFeature([User])),
 		forwardRef(() => TenantModule),
-		CqrsModule,
-		FactoryResetModule,
 		forwardRef(() => TaskModule),
+		CqrsModule,
+		FactoryResetModule
 	],
 	controllers: [UserController],
 	providers: [UserService, ...CommandHandlers],
-	exports: [TypeOrmModule, UserService],
+	exports: [TypeOrmModule, UserService]
 })
 export class UserModule {}

@@ -8,8 +8,8 @@
                 font-weight: 600;
             }
             .job-title {
-                font-size: 18px;
-                font-weight: 700;
+                font-size: 16px;
+                font-weight: 600;
                 text-decoration: none;
                 padding-top: 10px;
                 a {
@@ -51,13 +51,13 @@
         span.label {
             display: inline-block;
             width: 110px;
-            margin-top: 5px;
+            margin-top: 10px;
             color: var(--text-basic-color);
         }
         .badge {
             color: var(--tag-filled-basic-text-color);
             display: inline-block;
-            padding: 4px 8px;
+            padding: 6px 4px !important;
             background-color: var(--tag-filled-basic-background-color);
             border-radius: 4px;
         }
