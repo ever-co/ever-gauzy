@@ -15,7 +15,7 @@ import * as path from 'path';
 @Module({
 	imports: [ConfigModule],
 	providers: [SeedDataService],
-	exports: [SeedDataService],
+	exports: [SeedDataService]
 })
 export class SeederModule {
 	static forPlugins(): DynamicModule {
@@ -29,12 +29,12 @@ export class SeederModule {
 					fallbackLanguage: LanguagesEnum.ENGLISH,
 					loaderOptions: {
 						path: path.resolve(__dirname, '../../i18n/'),
-						watch: !environment.production,
+						watch: !environment.production
 					},
-					resolvers: [new HeaderResolver(['language'])],
-				}),
+					resolvers: [new HeaderResolver(['language'])]
+				})
 			],
-			exports: [],
+			exports: []
 		} as DynamicModule;
 	}
 }

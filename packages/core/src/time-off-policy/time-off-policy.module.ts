@@ -11,12 +11,8 @@ import { TaskModule } from '../tasks/task.module';
 
 @Module({
 	imports: [
-		RouterModule.forRoutes([
-			{ path: 'time-off-policy', module: TimeOffPolicyModule },
-		]),
-		TypeOrmModule.forFeature([
-			TimeOffPolicy
-		]),
+		RouterModule.forRoutes([{ path: 'time-off-policy', module: TimeOffPolicyModule }]),
+		TypeOrmModule.forFeature([TimeOffPolicy]),
 		TenantModule,
 		UserModule,
 		EmployeeModule,
@@ -24,9 +20,6 @@ import { TaskModule } from '../tasks/task.module';
 	],
 	controllers: [TimeOffPolicyController],
 	providers: [TimeOffPolicyService],
-	exports: [
-		TypeOrmModule,
-		TimeOffPolicyService
-	],
+	exports: [TypeOrmModule, TimeOffPolicyService]
 })
-export class TimeOffPolicyModule { }
+export class TimeOffPolicyModule {}
