@@ -1,5 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { NgModule } from '@angular/core';
+import { FormsModule } from '@angular/forms';
 import {
 	NbIconModule,
 	NbTooltipModule,
@@ -40,10 +41,12 @@ import { ProjectOrganizationGridDetailsComponent } from './project-organization-
 import { ProjectOrganizationEmployeesComponent } from './project-organization-employees/project-organization-employees.component';
 import { PhoneUrlComponent } from './phone-url/phone-url.component';
 import { AllowScreenshotCaptureComponent } from './allow-screenshot-capture/allow-screenshot-capture.component';
+import { NumberEditorComponent } from './editors/number-editor.component';
 
 @NgModule({
 	imports: [
 		CommonModule,
+		FormsModule,
 		NbIconModule,
 		NbTooltipModule,
 		NbBadgeModule,
@@ -83,7 +86,9 @@ import { AllowScreenshotCaptureComponent } from './allow-screenshot-capture/allo
 		ProjectOrganizationGridDetailsComponent,
 		ProjectOrganizationEmployeesComponent,
 		PhoneUrlComponent,
-		AllowScreenshotCaptureComponent
+		AllowScreenshotCaptureComponent,
+		// smart table field editor
+		NumberEditorComponent
 	],
 	exports: [
 		NotesWithTagsComponent,

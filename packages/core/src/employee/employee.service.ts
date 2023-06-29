@@ -1,4 +1,10 @@
-import { IBasePerTenantAndOrganizationEntityModel, IDateRangePicker, IEmployee, IPagination, PermissionsEnum } from '@gauzy/contracts';
+import {
+	IBasePerTenantAndOrganizationEntityModel,
+	IDateRangePicker,
+	IEmployee,
+	IPagination,
+	PermissionsEnum
+} from '@gauzy/contracts';
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { isNotEmpty } from '@gauzy/common';
@@ -53,7 +59,7 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 		query.setFindOptions({
 			/**
 			 * Load selected table properties/fields for self & relational select.
-			*/
+			 */
 			select: {
 				id: true,
 				isActive: true,
@@ -66,6 +72,7 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 				isTrackingEnabled: true,
 				billRateCurrency: true,
 				billRateValue: true,
+				minimumBillingRate: true,
 				user: {
 					id: true,
 					firstName: true,
@@ -110,9 +117,7 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 					);
 				}
 			}
-			if (!RequestContext.hasPermission(
-				PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
-			)) {
+			if (!RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE)) {
 				const employeeId = RequestContext.currentEmployeeId();
 				qb.andWhere(`"${qb.alias}"."id" = :employeeId`, { employeeId });
 			}
@@ -136,11 +141,7 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 		forRange: IDateRangePicker | any,
 		withUser: boolean
 	): Promise<{ total: number }> {
-		const { total } = await this.findWorkingEmployees(
-			organizationId,
-			forRange,
-			withUser
-		);
+		const { total } = await this.findWorkingEmployees(organizationId, forRange, withUser);
 		return {
 			total
 		};
@@ -152,9 +153,7 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 	 * @param options
 	 * @returns
 	 */
-	public async pagination(
-		options: PaginationParams<any>
-	): Promise<IPagination<IEmployee>> {
+	public async pagination(options: PaginationParams<any>): Promise<IPagination<IEmployee>> {
 		try {
 			const query = this.repository.createQueryBuilder(this.alias);
 			/**
@@ -167,8 +166,8 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 			 * Set skip/take options for pagination
 			 */
 			query.setFindOptions({
-				skip: options && options.skip ? (options.take * (options.skip - 1)) : 0,
-				take: options && options.take ? (options.take) : 10
+				skip: options && options.skip ? options.take * (options.skip - 1) : 0,
+				take: options && options.take ? options.take : 10
 			});
 			query.setFindOptions({
 				/**
@@ -198,19 +197,19 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 				/**
 				 * Load tables relations.
 				 */
-				...(
-					(options && options.relations) ? {
-						relations: options.relations
-					} : {}
-				),
+				...(options && options.relations
+					? {
+							relations: options.relations
+					  }
+					: {}),
 				/**
 				 * Indicates if soft-deleted rows should be included in entity result.
 				 */
-				...(
-					(options && 'withDeleted' in options) ? {
-						withDeleted: options.withDeleted
-					} : {}
-				)
+				...(options && 'withDeleted' in options
+					? {
+							withDeleted: options.withDeleted
+					  }
+					: {})
 			});
 			query.where((qb: SelectQueryBuilder<Employee>) => {
 				qb.andWhere(
@@ -237,8 +236,7 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 								web.andWhere(`"${qb.alias}"."isActive" = :isActive`, {
 									isActive: Boolean(JSON.parse(where.isActive))
 								});
-							}
-							)
+							})
 						);
 					}
 					if ('isTrackingEnabled' in where) {

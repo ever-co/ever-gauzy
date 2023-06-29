@@ -50,9 +50,7 @@ import {
 import { ColumnNumericTransformerPipe } from './../shared/pipes';
 
 @Entity('candidate')
-export class Candidate extends TenantOrganizationBaseEntity
-	implements ICandidate {
-
+export class Candidate extends TenantOrganizationBaseEntity implements ICandidate {
 	@ApiPropertyOptional({ type: () => Number })
 	@Column({
 		nullable: true,
@@ -97,6 +95,10 @@ export class Candidate extends TenantOrganizationBaseEntity
 	@Column({ nullable: true })
 	billRateValue?: number;
 
+	@ApiPropertyOptional({ type: () => Number })
+	@Column({ nullable: true })
+	minimumBillingRate?: number;
+
 	@ApiProperty({ type: () => String, enum: PayPeriodEnum })
 	@Column({ nullable: true })
 	payPeriod?: PayPeriodEnum;
@@ -113,10 +115,10 @@ export class Candidate extends TenantOrganizationBaseEntity
 	alreadyHired?: boolean;
 
 	/*
-    |--------------------------------------------------------------------------
-    | @OneToOne
-    |--------------------------------------------------------------------------
-    */
+	|--------------------------------------------------------------------------
+	| @OneToOne
+	|--------------------------------------------------------------------------
+	*/
 
 	/**
 	 * Contact
@@ -136,10 +138,10 @@ export class Candidate extends TenantOrganizationBaseEntity
 	readonly contactId?: string;
 
 	/*
-    |--------------------------------------------------------------------------
-    | @ManyToOne
-    |--------------------------------------------------------------------------
-    */
+	|--------------------------------------------------------------------------
+	| @ManyToOne
+	|--------------------------------------------------------------------------
+	*/
 	@ApiProperty({ type: () => OrganizationPosition })
 	@ManyToOne(() => OrganizationPosition, { nullable: true })
 	@JoinColumn()
@@ -152,10 +154,10 @@ export class Candidate extends TenantOrganizationBaseEntity
 	organizationPositionId?: IOrganizationPosition['id'];
 
 	/*
-    |--------------------------------------------------------------------------
-    | @OneToOne
-    |--------------------------------------------------------------------------
-    */
+	|--------------------------------------------------------------------------
+	| @OneToOne
+	|--------------------------------------------------------------------------
+	*/
 
 	@ApiProperty({ type: () => CandidateSource })
 	@OneToOne(() => CandidateSource, {
@@ -181,7 +183,7 @@ export class Candidate extends TenantOrganizationBaseEntity
 		onDelete: 'CASCADE'
 	})
 	@JoinColumn()
-    user: IUser;
+	user: IUser;
 
 	@ApiProperty({ type: () => String })
 	@RelationId((it: Candidate) => it.user)
@@ -195,7 +197,7 @@ export class Candidate extends TenantOrganizationBaseEntity
 	@ApiProperty({ type: () => Employee })
 	@OneToOne(() => Employee, (employee) => employee.candidate)
 	@JoinColumn()
-    employee?: IEmployee;
+	employee?: IEmployee;
 
 	@ApiProperty({ type: () => String })
 	@RelationId((it: Candidate) => it.employee)
@@ -204,10 +206,10 @@ export class Candidate extends TenantOrganizationBaseEntity
 	employeeId?: IEmployee['id'];
 
 	/*
-    |--------------------------------------------------------------------------
-    | @OneToMany
-    |--------------------------------------------------------------------------
-    */
+	|--------------------------------------------------------------------------
+	| @OneToMany
+	|--------------------------------------------------------------------------
+	*/
 	@OneToMany(() => CandidateEducation, (education) => education.candidate, {
 		onDelete: 'SET NULL'
 	})
@@ -245,10 +247,10 @@ export class Candidate extends TenantOrganizationBaseEntity
 	feedbacks?: ICandidateFeedback[];
 
 	/*
-    |--------------------------------------------------------------------------
-    | @ManyToMany
-    |--------------------------------------------------------------------------
-    */
+	|--------------------------------------------------------------------------
+	| @ManyToMany
+	|--------------------------------------------------------------------------
+	*/
 
 	@ApiProperty({ type: () => Tag, isArray: true })
 	@ManyToMany(() => Tag, (tag) => tag.candidates, {
@@ -264,14 +266,14 @@ export class Candidate extends TenantOrganizationBaseEntity
 	 * Organization Departments
 	 */
 	@ManyToMany(() => OrganizationDepartment, (department) => department.candidates, {
-        onUpdate: 'CASCADE',
-		onDelete: 'CASCADE',
-    })
-    organizationDepartments?: IOrganizationDepartment[];
+		onUpdate: 'CASCADE',
+		onDelete: 'CASCADE'
+	})
+	organizationDepartments?: IOrganizationDepartment[];
 
 	/**
 	 * Organization Employment Types
 	 */
 	@ManyToMany(() => OrganizationEmploymentType, (employmentType) => employmentType.candidates)
-    organizationEmploymentTypes?: IOrganizationEmploymentType[];
+	organizationEmploymentTypes?: IOrganizationEmploymentType[];
 }

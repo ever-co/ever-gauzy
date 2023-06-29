@@ -46,7 +46,6 @@ import {
 	Store,
 	ToastrService,
 } from './../../../../@core/services';
-import { StatusBadgeComponent } from './../../../../@shared/status-badge';
 import { API_PREFIX } from './../../../../@core/constants';
 import { AtLeastOneFieldValidator } from './../../../../@core/validators';
 import { ServerDataSource } from './../../../../@core/utils/smart-table';
@@ -353,6 +352,23 @@ export class SearchComponent extends PaginationFilterBaseComponent implements On
 		}
 	}
 
+	/**
+	 * Already applied job from provider site
+	 *
+	 * @returns
+	 */
+	async appliedJob() {
+		if (!this.selectedJob) {
+			return;
+		}
+		const { employeeId, providerCode, providerJobId } = this.selectedJob;
+		try {
+			console.log({ employeeId, providerCode, providerJobId });
+		} catch (error) {
+			console.log('Error while applied job', error);
+		}
+	}
+
 	/** Apply For Job Post */
 	async applyToJob(applyJobPost: IEmployeeJobApplication): Promise<void> {
 		if (!this.selectedJob) {
@@ -361,27 +377,25 @@ export class SearchComponent extends PaginationFilterBaseComponent implements On
 
 		try {
 			const appliedJob = await this.jobService.applyJob(applyJobPost);
-
 			this.toastrService.success('TOASTR.MESSAGE.JOB_APPLIED');
-			this.smartTableSource.refresh();
+
+			// removed selected row from table after applied
+			const row = document.querySelector('ng2-smart-table > table > tbody > .ng2-smart-row.selected');
+			if (!!row) {
+				row.remove();
+				this.onSelectJob({ isSelected: false, data: null });
+			}
 
 			if (appliedJob.isRedirectRequired) {
 				// If we have generated proposal, let's copy to clipboard
 				if (appliedJob.proposal) {
 					await this.copyTextToClipboard(appliedJob.proposal);
 				} else {
-					const proposalTemplate =
-						await this.getEmployeeDefaultProposalTemplate(
-							this.selectedJob
-						);
-
+					const proposalTemplate = await this.getEmployeeDefaultProposalTemplate(this.selectedJob);
 					if (proposalTemplate) {
-						await this.copyTextToClipboard(
-							proposalTemplate.content
-						);
+						await this.copyTextToClipboard(proposalTemplate.content);
 					}
 				}
-
 				window.open(this.selectedJob.jobPost.url, '_blank');
 			}
 		} catch (error) {
@@ -395,9 +409,7 @@ export class SearchComponent extends PaginationFilterBaseComponent implements On
 			return;
 		}
 		try {
-			const { providerCode, providerJobId, employeeId } =
-				this.selectedJob;
-
+			const { providerCode, providerJobId, employeeId } = this.selectedJob;
 			const applyJobPost: IEmployeeJobApplication = {
 				applied: true,
 				...(isNotEmpty(this.selectedEmployee)
@@ -509,49 +521,12 @@ export class SearchComponent extends PaginationFilterBaseComponent implements On
 					: {}),
 				jobDetails: {
 					title: this.getTranslation('JOBS.JOB_DETAILS'),
+					width: '85%',
 					type: 'custom',
 					renderComponent: JobTitleDescriptionDetailsComponent,
 					filter: false,
 					sort: false,
-				},
-				jobStatus: {
-					title: this.getTranslation('JOBS.STATUS'),
-					width: '5%',
-					filter: false,
-					type: 'custom',
-					sort: false,
-					renderComponent: StatusBadgeComponent,
-					valuePrepareFunction: (cell, row: IEmployeeJobPost) => {
-						let badgeClass;
-						if (
-							row.jobPost.jobStatus.toLowerCase() ===
-							JobPostStatusEnum.CLOSED.toLowerCase()
-						) {
-							badgeClass = 'danger';
-							cell = this.getTranslation('JOBS.CLOSED');
-						} else if (
-							row.jobPost.jobStatus.toLowerCase() ===
-							JobPostStatusEnum.OPEN.toLowerCase()
-						) {
-							badgeClass = 'success';
-							cell = this.getTranslation('JOBS.OPEN');
-						} else if (
-							row.jobPost.jobStatus.toLowerCase() ===
-							JobPostStatusEnum.APPLIED.toLowerCase()
-						) {
-							badgeClass = 'warning';
-							cell = this.getTranslation('JOBS.APPLIED');
-						} else {
-							badgeClass = 'default';
-							cell = row.jobPost.jobStatus;
-						}
-
-						return {
-							text: cell,
-							class: badgeClass,
-						};
-					},
-				},
+				}
 			},
 		};
 	}
@@ -670,6 +645,15 @@ export class SearchComponent extends PaginationFilterBaseComponent implements On
 							{
 								field: 'budget',
 								search: budget,
+							},
+						]
+						: []),
+					// Get only fresh jobs (not applied yet)
+					...(true
+						? [
+							{
+								field: 'isApplied',
+								search: 'false',
 							},
 						]
 						: []),

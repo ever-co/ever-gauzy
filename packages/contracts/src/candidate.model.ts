@@ -40,6 +40,7 @@ export interface ICandidate extends IBasePerTenantAndOrganizationEntityModel {
 	billRateValue?: number;
 	billRateCurrency?: string;
 	reWeeklyLimit?: number;
+	minimumBillingRate?: number;
 	documents?: ICandidateDocument[];
 	educations?: ICandidateEducation[];
 	source?: ICandidateSource;
@@ -85,6 +86,7 @@ export interface ICandidateUpdateInput extends IBasePerTenantAndOrganizationEnti
 	rejectDate?: Date;
 	cvUrl?: string;
 	candidateLevel?: string;
+	minimumBillingRate?: number;
 }
 
 export interface ICandidateCreateInput extends IBasePerTenantAndOrganizationEntityModel {

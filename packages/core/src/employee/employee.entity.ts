@@ -110,6 +110,10 @@ export class Employee extends TenantOrganizationBaseEntity implements IEmployee 
 	@Column({ nullable: true })
 	billRateValue?: number;
 
+	@ApiProperty({ type: () => Number })
+	@Column({ nullable: true })
+	minimumBillingRate?: number;
+
 	@ApiProperty({ type: () => String, enum: CurrenciesEnum })
 	@Column({ nullable: true })
 	billRateCurrency?: string;

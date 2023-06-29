@@ -1,18 +1,21 @@
 <div class="job-detail">
 	<div class="job-header">
 		<ng-template [ngIf]="rowData?.providerCode">
-			<span class="job-provider" [ngClass]="rowData?.providerCode">
+			<span class="job-provider mr-2" [ngClass]="rowData?.providerCode">
 				{{ rowData?.providerCode | titlecase }}
 			</span>
 		</ng-template>
 		<ng-template [ngIf]="rowData?.jobPost?.jobDateCreated">
-			| <span class="job-date-created">{{ rowData?.jobPost?.jobDateCreated | dateTimeFormat }}</span>
+			 <span class="job-date-created mr-2">{{ rowData?.jobPost?.jobDateCreated | dateTimeFormat }}</span>
 		</ng-template>
 		<ng-template [ngIf]="rowData?.jobPost?.jobType">
-			| <span class="badge">{{ rowData?.jobPost?.jobType | titlecase }}</span>
+			 <span class="badge mr-2">{{ rowData?.jobPost?.jobType | titlecase }}</span>
 		</ng-template>
 		<ng-template [ngIf]="rowData?.jobPost?.budget">
-			| <span class="badge">{{ rowData?.jobPost?.budget | budget }}</span>
+			 <span class="badge mr-2">{{ rowData?.jobPost?.budget | budget }}</span>
+		</ng-template>
+		<ng-template [ngIf]="rowData?.jobPost?.jobStatus">
+			 <job-status [rowData]="rowData"></job-status>
 		</ng-template>
 		<div class="job-title">
 			<a href="javascript:void(0)" (click)="openJob()">
@@ -28,7 +31,7 @@
 		</div>
 	</div>
 
-	<div class="job-footer">
+	<div class="job-footer mb-3">
 		<div class="job-search-container">
 			<ng-template [ngIf]="rowData?.jobPost?.searchCategory">
 				<div class="search-category">
