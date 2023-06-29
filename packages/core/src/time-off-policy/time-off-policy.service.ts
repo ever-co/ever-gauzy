@@ -1,13 +1,10 @@
 import { Injectable, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { In, Repository } from 'typeorm';
+import { ITimeOffPolicyCreateInput, ITimeOffPolicyUpdateInput } from '@gauzy/contracts';
 import { TimeOffPolicy } from './time-off-policy.entity';
 import { TenantAwareCrudService } from './../core/crud';
 import { Employee } from '../employee/employee.entity';
-import {
-	ITimeOffPolicyCreateInput,
-	ITimeOffPolicyUpdateInput
-} from '@gauzy/contracts';
 
 @Injectable()
 export class TimeOffPolicyService extends TenantAwareCrudService<TimeOffPolicy> {
@@ -37,15 +34,12 @@ export class TimeOffPolicyService extends TenantAwareCrudService<TimeOffPolicy> 
 			relations: {
 				user: true
 			}
-		})
+		});
 		policy.employees = employees;
 		return this.policyRepository.save(policy);
 	}
 
-	async update(
-		id: string,
-		entity: ITimeOffPolicyUpdateInput
-	): Promise<TimeOffPolicy> {
+	async update(id: string, entity: ITimeOffPolicyUpdateInput): Promise<TimeOffPolicy> {
 		try {
 			await this.policyRepository.delete(id);
 			const policy = new TimeOffPolicy();
