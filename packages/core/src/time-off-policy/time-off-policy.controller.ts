@@ -31,9 +31,7 @@ import { TimeOffPolicyService } from './time-off-policy.service';
 @UseGuards(TenantPermissionGuard)
 @Controller()
 export class TimeOffPolicyController extends CrudController<TimeOffPolicy> {
-	constructor(
-		private readonly timeOffPolicyService: TimeOffPolicyService
-	) {
+	constructor(private readonly timeOffPolicyService: TimeOffPolicyService) {
 		super(timeOffPolicyService);
 	}
 
@@ -45,9 +43,7 @@ export class TimeOffPolicyController extends CrudController<TimeOffPolicy> {
 	@Permissions(PermissionsEnum.POLICY_VIEW)
 	@Get('pagination')
 	@UsePipes(new ValidationPipe({ transform: true }))
-	async pagination(
-		@Query() filter: PaginationParams<TimeOffPolicy>
-	): Promise<IPagination<ITimeOffPolicy>> {
+	async pagination(@Query() filter: PaginationParams<TimeOffPolicy>): Promise<IPagination<ITimeOffPolicy>> {
 		return this.timeOffPolicyService.paginate(filter);
 	}
 
@@ -70,9 +66,7 @@ export class TimeOffPolicyController extends CrudController<TimeOffPolicy> {
 	@UseGuards(PermissionGuard)
 	@Permissions(PermissionsEnum.POLICY_VIEW)
 	@Get()
-	async findAll(
-		@Query('data', ParseJsonPipe) data: any
-	): Promise<IPagination<ITimeOffPolicy>> {
+	async findAll(@Query('data', ParseJsonPipe) data: any): Promise<IPagination<ITimeOffPolicy>> {
 		const { relations, findInput } = data;
 		return this.timeOffPolicyService.findAll({
 			where: findInput,
@@ -93,15 +87,12 @@ export class TimeOffPolicyController extends CrudController<TimeOffPolicy> {
 	})
 	@ApiResponse({
 		status: HttpStatus.BAD_REQUEST,
-		description:
-			'Invalid input, The response body may contain clues as to what went wrong'
+		description: 'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@UseGuards(PermissionGuard)
 	@Permissions(PermissionsEnum.POLICY_EDIT)
 	@Post()
-	async create(
-		@Body() entity: ITimeOffPolicyCreateInput,
-	): Promise<ITimeOffPolicy> {
+	async create(@Body() entity: ITimeOffPolicyCreateInput): Promise<ITimeOffPolicy> {
 		return await this.timeOffPolicyService.create(entity);
 	}
 
@@ -123,8 +114,7 @@ export class TimeOffPolicyController extends CrudController<TimeOffPolicy> {
 	})
 	@ApiResponse({
 		status: HttpStatus.BAD_REQUEST,
-		description:
-			'Invalid input, The response body may contain clues as to what went wrong'
+		description: 'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
 	@UseGuards(PermissionGuard)
