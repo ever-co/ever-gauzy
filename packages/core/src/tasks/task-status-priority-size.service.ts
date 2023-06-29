@@ -1,18 +1,35 @@
-import { isNotEmpty } from "@gauzy/common";
-import { Injectable } from "@nestjs/common";
-import { IIssueTypeFindInput, IPagination, ITaskPriorityFindInput, ITaskSizeFindInput, ITaskStatusFindInput } from "@gauzy/contracts";
-import { Brackets, Repository, SelectQueryBuilder, WhereExpressionBuilder } from "typeorm";
-import { TenantBaseEntity } from "../core/entities/internal";
-import { RequestContext } from "../core/context";
-import { TenantAwareCrudService } from "../core/crud";
+import { isNotEmpty } from '@gauzy/common';
+import { Injectable } from '@nestjs/common';
+import {
+	IIssueTypeFindInput,
+	IPagination,
+	ITaskPriorityFindInput,
+	ITaskSizeFindInput,
+	ITaskStatusFindInput,
+	ITaskVersionFindInput,
+} from '@gauzy/contracts';
+import {
+	Brackets,
+	Repository,
+	SelectQueryBuilder,
+	WhereExpressionBuilder,
+} from 'typeorm';
+import { TenantBaseEntity } from '../core/entities/internal';
+import { RequestContext } from '../core/context';
+import { TenantAwareCrudService } from '../core/crud';
 
-export type IFindEntityByParams = ITaskStatusFindInput | ITaskPriorityFindInput | ITaskSizeFindInput | IIssueTypeFindInput;
+export type IFindEntityByParams =
+	| ITaskStatusFindInput
+	| ITaskPriorityFindInput
+	| ITaskSizeFindInput
+	| IIssueTypeFindInput
+	| ITaskVersionFindInput;
 
 @Injectable()
-export class TaskStatusPrioritySizeService<BaseEntity extends TenantBaseEntity> extends TenantAwareCrudService<BaseEntity> {
-	constructor(
-		protected readonly repository: Repository<BaseEntity>
-	) {
+export class TaskStatusPrioritySizeService<
+	BaseEntity extends TenantBaseEntity
+> extends TenantAwareCrudService<BaseEntity> {
+	constructor(protected readonly repository: Repository<BaseEntity>) {
 		super(repository);
 	}
 
@@ -58,7 +75,7 @@ export class TaskStatusPrioritySizeService<BaseEntity extends TenantBaseEntity> 
 					bck.andWhere(`"${qb.alias}"."projectId" IS NULL`);
 					bck.andWhere(`"${qb.alias}"."organizationTeamId" IS NULL`);
 					bck.andWhere(`"${qb.alias}"."isSystem" = :isSystem`, {
-						isSystem: true
+						isSystem: true,
 					});
 				})
 			);
@@ -78,13 +95,14 @@ export class TaskStatusPrioritySizeService<BaseEntity extends TenantBaseEntity> 
 		query: SelectQueryBuilder<BaseEntity>,
 		request: IFindEntityByParams
 	) {
-		const { tenantId, organizationId, projectId, organizationTeamId } = request;
+		const { tenantId, organizationId, projectId, organizationTeamId } =
+			request;
 		/**
 		 * GET by tenant level
 		 */
 		if (isNotEmpty(tenantId)) {
 			query.andWhere(`"${query.alias}"."tenantId" = :tenantId`, {
-				tenantId: RequestContext.currentTenantId()
+				tenantId: RequestContext.currentTenantId(),
 			});
 		} else {
 			query.andWhere(`"${query.alias}"."tenantId" IS NULL`);
@@ -93,9 +111,12 @@ export class TaskStatusPrioritySizeService<BaseEntity extends TenantBaseEntity> 
 		 * GET by organization level
 		 */
 		if (isNotEmpty(organizationId)) {
-			query.andWhere(`"${query.alias}"."organizationId" = :organizationId`, {
-				organizationId
-			});
+			query.andWhere(
+				`"${query.alias}"."organizationId" = :organizationId`,
+				{
+					organizationId,
+				}
+			);
 		} else {
 			query.andWhere(`"${query.alias}"."organizationId" IS NULL`);
 		}
@@ -104,7 +125,7 @@ export class TaskStatusPrioritySizeService<BaseEntity extends TenantBaseEntity> 
 		 */
 		if (isNotEmpty(projectId)) {
 			query.andWhere(`"${query.alias}"."projectId" = :projectId`, {
-				projectId
+				projectId,
 			});
 		} else {
 			query.andWhere(`"${query.alias}"."projectId" IS NULL`);
@@ -114,9 +135,12 @@ export class TaskStatusPrioritySizeService<BaseEntity extends TenantBaseEntity> 
 		 * GET by team level
 		 */
 		if (isNotEmpty(organizationTeamId)) {
-			query.andWhere(`"${query.alias}"."organizationTeamId" = :organizationTeamId`, {
-				organizationTeamId
-			});
+			query.andWhere(
+				`"${query.alias}"."organizationTeamId" = :organizationTeamId`,
+				{
+					organizationTeamId,
+				}
+			);
 		} else {
 			query.andWhere(`"${query.alias}"."organizationTeamId" IS NULL`);
 		}

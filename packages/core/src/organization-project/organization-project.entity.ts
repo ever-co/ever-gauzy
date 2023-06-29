@@ -27,6 +27,7 @@ import {
 	ITaskPriority,
 	ITaskSize,
 	ITaskStatus,
+	ITaskVersion,
 	ITimeLog,
 	OrganizationProjectBudgetTypeEnum,
 	ProjectBillingEnum,
@@ -50,11 +51,13 @@ import {
 	TenantOrganizationBaseEntity,
 	TimeLog,
 } from '../core/entities/internal';
+import { TaskVersion } from 'tasks/versions/version.entity';
 
 @Entity('organization_project')
-export class OrganizationProject extends TenantOrganizationBaseEntity
-	implements IOrganizationProject {
-
+export class OrganizationProject
+	extends TenantOrganizationBaseEntity
+	implements IOrganizationProject
+{
 	@Index()
 	@Column()
 	name: string;
@@ -151,7 +154,7 @@ export class OrganizationProject extends TenantOrganizationBaseEntity
 		onDelete: 'SET NULL',
 
 		/** Eager relations are always loaded automatically when relation's owner entity is loaded using find* methods. */
-		eager: true
+		eager: true,
 	})
 	@JoinColumn()
 	image?: IImageAsset;
@@ -228,6 +231,12 @@ export class OrganizationProject extends TenantOrganizationBaseEntity
 	 */
 	@OneToMany(() => TaskSize, (size) => size.project)
 	sizes?: ITaskSize[];
+
+	/**
+	 * Project Versions
+	 */
+	@OneToMany(() => TaskVersion, (version) => version.project)
+	versions?: ITaskVersion[];
 
 	/*
 	|--------------------------------------------------------------------------

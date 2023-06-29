@@ -26,6 +26,7 @@ import {
 	TaskPrioritySubscriber,
 	TaskSizeSubscriber,
 	TaskStatusSubscriber,
+	TaskVersionSubscriber,
 	TaskSubscriber,
 	TenantSubscriber,
 	TimeOffRequestSubscriber,
@@ -64,9 +65,10 @@ export const coreSubscribers = [
 	TaskPrioritySubscriber,
 	TaskSizeSubscriber,
 	TaskStatusSubscriber,
+	TaskVersionSubscriber,
 	TaskSubscriber,
 	TenantSubscriber,
 	TimeOffRequestSubscriber,
 	TimeSlotSubscriber,
-	UserSubscriber
+	UserSubscriber,
 ];
