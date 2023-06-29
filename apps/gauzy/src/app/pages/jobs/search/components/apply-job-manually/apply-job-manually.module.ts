@@ -10,6 +10,7 @@ import { DirectivesModule } from './../../../../../@shared/directives/directives
 import { TranslateModule } from './../../../../../@shared/translate/translate.module';
 import { EmployeeMultiSelectModule } from './../../../../../@shared/employee/employee-multi-select/employee-multi-select.module';
 import { ProposalTemplateSelectModule } from './../../../../../@shared/proposal-template-select/proposal-template-select.module';
+import { EmployeeSelectorsModule } from './../../../../../@theme/components/header/selectors/employee';
 
 @NgModule({
 	providers: [],
@@ -30,7 +31,8 @@ import { ProposalTemplateSelectModule } from './../../../../../@shared/proposal-
 		EmployeeMultiSelectModule,
 		ProposalTemplateSelectModule,
 		JobTableComponentsModule,
-		DirectivesModule
+		DirectivesModule,
+		EmployeeSelectorsModule
 	],
 	exports: []
 })

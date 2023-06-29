@@ -302,7 +302,7 @@
 			"END_TIME": "Время окончания рабочего дня по умолчанию",
 			"POSTCODE": "Postcode (Zip)",
 			"PAY_PERIOD": "Период оплаты",
-			"BILL_RATE": "Ставка счета / час",
+			"BILL_RATE": "Ставка выставления счетов (в час)",
 			"CURRENCY_PER_HOUR": "Валюта",
 			"RECURRING_WEEKLY_LIMIT": "Повторяющийся еженедельный лимит (часы)",
 			"ROLE": "Роль",
@@ -2489,7 +2489,9 @@
 		"JOB_SEARCH_STATUS": "Статус поиска Вакансии",
 		"BROWSE": "Обзор",
 		"SEARCH": "Искать",
-		"HISTORY": "История"
+		"HISTORY": "История",
+		"BILLING_RATE": "Платежная ставка",
+		"MINIMUM_BILLING_RATE": "Минимальная ставка счета"
 	},
 	"PROPOSAL_TEMPLATE": {
 		"PROPOSAL_TEMPLATE": "Шаблон предложения",

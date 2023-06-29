@@ -11,54 +11,120 @@
 							{{ 'FORM.RATES.EXPECTED_RATE' | translate }}
 						</nb-card-header>
 						<nb-card-body>
-							<div class="col-12">
-								<div class="form-group">
-									<label for="payPeriodsSelect" class="label">
-										{{ 'FORM.LABELS.PAY_PERIOD' | translate }}
-									</label>
-									<nb-select
-										id="payPeriodsSelect"
-										formControlName="payPeriod"
-										[placeholder]="'FORM.LABELS.PAY_PERIOD' | translate"
-										class="d-block"
-										size="medium"
-										fullWidth
-									>
-										<nb-option
-											*ngFor="let payPeriod of payPeriods"
-											[value]="payPeriod"
+							<div class="row">
+								<div class="col-6">
+									<div class="form-group">
+										<label
+											for="payPeriodsSelect"
+											class="label"
 										>
 											{{
-												payPeriod
-													| replace: '_':' '
-														| titlecase
+												'FORM.LABELS.PAY_PERIOD'
+													| translate
 											}}
-										</nb-option>
-									</nb-select>
+										</label>
+										<nb-select
+											id="payPeriodsSelect"
+											formControlName="payPeriod"
+											[placeholder]="
+												'FORM.LABELS.PAY_PERIOD'
+													| translate
+											"
+											class="d-block"
+											size="medium"
+											fullWidth
+										>
+											<nb-option
+												*ngFor="
+													let payPeriod of payPeriods
+												"
+												[value]="payPeriod"
+											>
+												{{
+													payPeriod
+														| replace : '_' : ' '
+														| titlecase
+												}}
+											</nb-option>
+										</nb-select>
+									</div>
+								</div>
+								<div class="col-6">
+									<ga-currency
+										formControlName="billRateCurrency"
+										(optionChange)="currencyChanged($event)"
+									></ga-currency>
 								</div>
 							</div>
-							<div class="col-6 float-left">
-								<div class="form-group">
-									<label class="label" for="billRateValueInput">
-										{{ 'FORM.LABELS.BILL_RATE' | translate }}
-									</label>
-									<input
-										fullWidth
-										id="billRateValueInput"
-										type="number"
-										[min]="0"
-										step="0.1"
-										nbInput
-										formControlName="billRateValue"
-										[placeholder]="'FORM.PLACEHOLDERS.BILL_RATE' | translate"
-									/>
+							<div class="row">
+								<div class="col-6">
+									<div class="form-group">
+										<label
+											class="label"
+											for="billRateValueInput"
+										>
+											{{
+												'FORM.LABELS.BILL_RATE'
+													| translate
+											}}
+										</label>
+										<input
+											fullWidth
+											id="billRateValueInput"
+											type="number"
+											[min]="minimumBillingRate.value || 0"
+											step="0.1"
+											nbInput
+											formControlName="billRateValue"
+											[placeholder]="
+												'FORM.PLACEHOLDERS.BILL_RATE'
+													| translate
+											"
+										/>
+									</div>
+									<div
+										class="caption status-danger"
+										*ngIf="billRateValue.errors?.['min']"
+									>
+										{{ 'FORM.RATES.ERRORS.BILL_RATE' | translate: { min:
+										billRateValue.errors?.['min']?.min, currency:
+										billRateCurrency.value } }}
+									</div>
 								</div>
-							</div>
-							<div class="col-6 float-left">
-								<ga-currency
-									formControlName="billRateCurrency"
-									(optionChange)="currencyChanged($event)"
-								></ga-currency>
+								<div class="col-6">
+									<div class="form-group">
+										<label
+											class="label"
+											for="minimumBillingRateInput"
+										>
+											{{
+												'FORM.LABELS.BILL_RATE_MIN'
+													| translate
+											}}
+										</label>
+										<input
+											fullWidth
+											id="minimumBillingRateInput"
+											type="number"
+											[min]="0"
+											step="0.1"
+											nbInput
+											formControlName="minimumBillingRate"
+											[placeholder]="
+												'FORM.PLACEHOLDERS.BILL_RATE_MIN'
+													| translate
+											"
+										/>
+									</div>
+									<div
+										class="caption status-danger"
+										*ngIf="minimumBillingRate.errors?.['min']"
+									>
+										{{ 'FORM.RATES.ERRORS.BILL_RATE_MIN' | translate: { min:
+										minimumBillingRate.errors?.['min']?.min, currency:
+										billRateCurrency.value } }}
+									</div>
+								</div>
 							</div>
 						</nb-card-body>
 					</nb-card>
@@ -71,19 +137,42 @@
 						<nb-card-body>
 							<div class="form-group">
 								<label class="label" for="reWeeklyLimitInput">
-									{{ 'FORM.LABELS.RECURRING_WEEKLY_LIMIT' | translate }}
+									{{
+										'FORM.LABELS.RECURRING_WEEKLY_LIMIT'
+											| translate
+									}}
 								</label>
 								<input
 									fullWidth
 									id="reWeeklyLimitInput"
 									nbInput
 									type="number"
-									[min]="1"
-									[max]="128"
+									[min]="0"
+									[max]="168"
 									step="0.1"
 									formControlName="reWeeklyLimit"
-									[placeholder]="'FORM.PLACEHOLDERS.RECURRING_WEEKLY_LIMIT' | translate"
+									[placeholder]="
+										'FORM.PLACEHOLDERS.RECURRING_WEEKLY_LIMIT'
+											| translate
+									"
+									autofocus
 								/>
+							</div>
+							<div
+								class="caption status-danger"
+								*ngIf="reWeeklyLimit.errors?.['max']"
+							>
+								{{
+									'FORM.RATES.ERRORS.LIMIT_MAX' | translate : { max: reWeeklyLimit.errors?.['max']?.max
+								} }}
+							</div>
+							<div
+								class="caption status-danger"
+								*ngIf="reWeeklyLimit.errors?.['min']"
+							>
+								{{
+									'FORM.RATES.ERRORS.LIMIT_MIN' | translate: { min: reWeeklyLimit.errors?.['min']?.min
+								} }}
 							</div>
 						</nb-card-body>
 					</nb-card>
