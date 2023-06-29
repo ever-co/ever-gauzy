@@ -302,7 +302,7 @@
 			"END_TIME": "Default Work Day End Time",
 			"POSTCODE": "Postcode (Zip)",
 			"PAY_PERIOD": "Pay Period",
-			"BILL_RATE": "Bill Rate / hr",
+			"BILL_RATE": "תעריף חיוב (לשעה)",
 			"CURRENCY_PER_HOUR": "מטבע",
 			"RECURRING_WEEKLY_LIMIT": "Recurring Weekly Limit (hours)",
 			"ROLE": "Role",
@@ -2489,7 +2489,9 @@
 		"JOB_SEARCH_STATUS": "Job Search Status",
 		"BROWSE": "Browse",
 		"SEARCH": "Search",
-		"HISTORY": "History"
+		"HISTORY": "History",
+		"BILLING_RATE": "תעריף חיוב",
+		"MINIMUM_BILLING_RATE": "תעריף חיוב מינימלי"
 	},
 	"PROPOSAL_TEMPLATE": {
 		"PROPOSAL_TEMPLATE": "Proposal Template",

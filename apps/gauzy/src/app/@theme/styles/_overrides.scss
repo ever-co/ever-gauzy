@@ -356,10 +356,10 @@ body {
 ng2-smart-table tbody tr {
   background: rgba(126, 126, 143, 0.05);
   &:hover {
-    background: rgba(126, 126, 143, 0.05);
+    background: var(--gauzy-card-2)
   }
   &.selected {
-    box-shadow: 12.5px 0px 0px -5px rgba(126, 126, 143, 0.05) inset !important;
+    box-shadow: 12.5px 0px 0px -5px var(--gauzy-card-2) inset !important;
     &:first-child {
       border-top-left-radius: var(--border-radius);
       border-top-right-radius: var(--border-radius);
@@ -674,4 +674,3 @@ ng2-smart-table table tr.ng2-smart-titles th a.sort {
     }
   }
 }
-

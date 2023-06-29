@@ -1,14 +1,78 @@
 <div class="job-detail">
-	<div class="job-date-created">
-		<p>
-			{{ rowData?.jobPost?.jobDateCreated | dateTimeFormat }}
-		</p>
+	<div class="job-header">
+		<ng-template [ngIf]="rowData?.providerCode">
+			<span class="job-provider mr-2" [ngClass]="rowData?.providerCode">
+				{{ rowData?.providerCode | titlecase }}
+			</span>
+		</ng-template>
+		<ng-template [ngIf]="rowData?.jobPost?.jobDateCreated">
+			 <span class="job-date-created mr-2">{{ rowData?.jobPost?.jobDateCreated | dateTimeFormat }}</span>
+		</ng-template>
+		<ng-template [ngIf]="rowData?.jobPost?.jobType">
+			 <span class="badge mr-2">{{ rowData?.jobPost?.jobType | titlecase }}</span>
+		</ng-template>
+		<ng-template [ngIf]="rowData?.jobPost?.budget">
+			 <span class="badge mr-2">{{ rowData?.jobPost?.budget | budget }}</span>
+		</ng-template>
+		<ng-template [ngIf]="rowData?.jobPost?.jobStatus">
+			 <job-status [rowData]="rowData"></job-status>
+		</ng-template>
+		<div class="job-title">
+			<a href="javascript:void(0)" (click)="openJob()">
+				<nb-icon icon="eye-outline" pack="eva" [nbTooltip]="rowData?.jobPost?.title"></nb-icon>
+				{{ rowData?.jobPost?.title }}
+			</a>
+		</div>
 	</div>
-	<h6 class="job-title">
-		{{ rowData?.jobPost?.title }}
-	</h6>
-	<br/>
-	<div class="job-description">
-		<p [innerHTML]="rowData?.jobPost?.description | nl2br"></p>
+
+	<div class="job-body">
+		<div class="job-description">
+			<p [innerHTML]="rowData?.jobPost?.description | nl2br"></p>
+		</div>
+	</div>
+
+	<div class="job-footer mb-3">
+		<div class="job-search-container">
+			<ng-template [ngIf]="rowData?.jobPost?.searchCategory">
+				<div class="search-category">
+					<span class="label">Search Category:</span>
+					<span class="badge">{{ rowData?.jobPost?.searchCategory }}</span>
+				</div>
+			</ng-template>
+			<ng-template [ngIf]="rowData?.jobPost?.searchOccupation">
+				<div class="search-occupation">
+					<span class="label">Search Occupation:</span>
+					<span class="badge">{{ rowData?.jobPost?.searchOccupation }}</span>
+				</div>
+			</ng-template>
+			<ng-template [ngIf]="rowData?.jobPost?.searchKeyword">
+				<div class="search-keyword">
+					<span class="label">Search Keyword:</span>
+					<span class="badge">{{ rowData?.jobPost?.searchKeyword }}</span>
+				</div>
+			</ng-template>
+		</div>
+		<div class="job-category-container">
+			<ng-template [ngIf]="rowData?.jobPost?.category">
+				<div class="job-category">
+					<span class="label">Category:</span>
+					<span class="badge">{{ rowData?.jobPost?.category }}</span>
+				</div>
+			</ng-template>
+			<ng-template [ngIf]="rowData?.jobPost?.country">
+				<div class="job-country">
+					<span class="label">Country:</span>
+					<span class="badge">{{ rowData?.jobPost?.country }}</span>
+				</div>
+			</ng-template>
+			<ng-template [ngIf]="rowData?.jobPost?.skills">
+				<div class="job-skills">
+					<span class="label">Skills:</span>
+					<span class="badge" *ngFor="let skill of rowData?.jobPost?.skills?.split(',')">
+						{{ skill }}
+					</span>
+				</div>
+			</ng-template>
+		</div>
 	</div>
 </div>

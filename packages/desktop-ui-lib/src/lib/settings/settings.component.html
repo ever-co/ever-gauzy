@@ -106,7 +106,7 @@
 								<div class="col-6">
 									<div class="row d-flex flex-column">
 									<div class="col-12">
-										<nb-toggle [checked]="!screenshotNotification" [disabled]="appSetting?.timerStarted"
+										<nb-toggle [checked]="simpleScreenshotNotification$ | async" [disabled]="appSetting?.timerStarted"
 											(checkedChange)="toggleSimpleNotificationChange($event)" status="basic"> Simple
 											Notification
 										</nb-toggle>

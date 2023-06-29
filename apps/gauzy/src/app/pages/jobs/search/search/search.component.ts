@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, AfterViewInit } from '@angular/core';
+import { Component, OnDestroy, OnInit, AfterViewInit, ViewChild } from '@angular/core';
 import { FormBuilder, FormGroup } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
 import {
@@ -34,6 +34,7 @@ import {
 import { NbDialogService, NbTabComponent } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
+import { Ng2SmartTableComponent } from 'ng2-smart-table';
 import { EmployeeLinksComponent } from './../../../../@shared/table-components';
 import {
 	IPaginationBase,
@@ -45,7 +46,6 @@ import {
 	Store,
 	ToastrService,
 } from './../../../../@core/services';
-import { StatusBadgeComponent } from './../../../../@shared/status-badge';
 import { API_PREFIX } from './../../../../@core/constants';
 import { AtLeastOneFieldValidator } from './../../../../@core/validators';
 import { ServerDataSource } from './../../../../@core/utils/smart-table';
@@ -60,10 +60,8 @@ import { getAdjustDateRangeFutureAllowed } from './../../../../@theme/components
 	templateUrl: './search.component.html',
 	styleUrls: ['./search.component.scss'],
 })
-export class SearchComponent
-	extends PaginationFilterBaseComponent
-	implements OnInit, OnDestroy, AfterViewInit
-{
+export class SearchComponent extends PaginationFilterBaseComponent implements OnInit, OnDestroy, AfterViewInit {
+
 	loading: boolean = false;
 	autoRefresh: boolean = false;
 	settingsSmartTable: object;
@@ -113,6 +111,13 @@ export class SearchComponent
 				validators: [AtLeastOneFieldValidator],
 			}
 		);
+	}
+
+	table: Ng2SmartTableComponent;
+	@ViewChild('table') set content(content: Ng2SmartTableComponent) {
+		if (content) {
+			this.table = content;
+		}
 	}
 
 	constructor(
@@ -347,6 +352,23 @@ export class SearchComponent
 		}
 	}
 
+	/**
+	 * Already applied job from provider site
+	 *
+	 * @returns
+	 */
+	async appliedJob() {
+		if (!this.selectedJob) {
+			return;
+		}
+		const { employeeId, providerCode, providerJobId } = this.selectedJob;
+		try {
+			console.log({ employeeId, providerCode, providerJobId });
+		} catch (error) {
+			console.log('Error while applied job', error);
+		}
+	}
+
 	/** Apply For Job Post */
 	async applyToJob(applyJobPost: IEmployeeJobApplication): Promise<void> {
 		if (!this.selectedJob) {
@@ -396,11 +418,11 @@ export class SearchComponent
 				applied: true,
 				...(isNotEmpty(this.selectedEmployee)
 					? {
-							employeeId: this.selectedEmployee.id,
-					  }
+						employeeId: this.selectedEmployee.id,
+					}
 					: {
-							employeeId,
-					  }),
+						employeeId,
+					}),
 				providerCode,
 				providerJobId,
 			};
@@ -473,79 +495,42 @@ export class SearchComponent
 			columns: {
 				...(isEmpty(this.selectedEmployee)
 					? {
-							employee: {
-								title: this.getTranslation('JOBS.EMPLOYEE'),
-								filter: false,
-								width: '15%',
-								type: 'custom',
-								sort: false,
-								renderComponent: EmployeeLinksComponent,
-								valuePrepareFunction: (
-									cell,
-									row: IEmployeeJobPost
-								) => {
-									return {
-										name:
-											row.employee && row.employee.user
-												? row.employee.user.name
-												: null,
-										imageUrl:
-											row.employee && row.employee.user
-												? row.employee.user.imageUrl
-												: null,
-										id: row.employee
-											? row.employee.id
+						employee: {
+							title: this.getTranslation('JOBS.EMPLOYEE'),
+							filter: false,
+							width: '15%',
+							type: 'custom',
+							sort: false,
+							renderComponent: EmployeeLinksComponent,
+							valuePrepareFunction: (
+								cell,
+								row: IEmployeeJobPost
+							) => {
+								return {
+									name:
+										row.employee && row.employee.user
+											? row.employee.user.name
 											: null,
-									};
-								},
+									imageUrl:
+										row.employee && row.employee.user
+											? row.employee.user.imageUrl
+											: null,
+									id: row.employee
+										? row.employee.id
+										: null,
+								};
 							},
-					  }
+						},
+					}
 					: {}),
 				jobDetails: {
 					title: this.getTranslation('JOBS.JOB_DETAILS'),
+					width: '85%',
 					type: 'custom',
 					renderComponent: JobTitleDescriptionDetailsComponent,
 					filter: false,
 					sort: false,
-				},
-				jobStatus: {
-					title: this.getTranslation('JOBS.STATUS'),
-					width: '5%',
-					filter: false,
-					type: 'custom',
-					sort: false,
-					renderComponent: StatusBadgeComponent,
-					valuePrepareFunction: (cell, row: IEmployeeJobPost) => {
-						let badgeClass;
-						if (
-							row.jobPost.jobStatus.toLowerCase() ===
-							JobPostStatusEnum.CLOSED.toLowerCase()
-						) {
-							badgeClass = 'danger';
-							cell = this.getTranslation('JOBS.CLOSED');
-						} else if (
-							row.jobPost.jobStatus.toLowerCase() ===
-							JobPostStatusEnum.OPEN.toLowerCase()
-						) {
-							badgeClass = 'success';
-							cell = this.getTranslation('JOBS.OPEN');
-						} else if (
-							row.jobPost.jobStatus.toLowerCase() ===
-							JobPostStatusEnum.APPLIED.toLowerCase()
-						) {
-							badgeClass = 'warning';
-							cell = this.getTranslation('JOBS.APPLIED');
-						} else {
-							badgeClass = 'default';
-							cell = row.jobPost.jobStatus;
-						}
-
-						return {
-							text: cell,
-							class: badgeClass,
-						};
-					},
-				},
+				}
 			},
 		};
 	}
@@ -594,11 +579,8 @@ export class SearchComponent
 
 		try {
 			const { activePage, itemsPerPage } = this.getPagination();
-			const { title, jobSource, jobType, jobStatus, budget } =
-				this.form.value;
-			const { startDate, endDate } = getAdjustDateRangeFutureAllowed(
-				this.selectedDateRange
-			);
+			const { title, jobSource, jobType, jobStatus, budget } = this.form.value;
+			const { startDate, endDate } = getAdjustDateRangeFutureAllowed(this.selectedDateRange);
 
 			/**
 			 * Set header selectors filters configuration
@@ -607,68 +589,77 @@ export class SearchComponent
 				[
 					...(isNotEmpty(this.selectedEmployee)
 						? [
-								{
-									field: 'employeeIds',
-									search: [this.selectedEmployee.id],
-								},
-						  ]
+							{
+								field: 'employeeIds',
+								search: [this.selectedEmployee.id],
+							},
+						]
 						: []),
 					...(startDate && endDate
 						? [
-								{
-									field: 'jobDateCreated',
-									search: {
-										between: {
-											lower: toUTC(startDate).format(
-												'YYYY-MM-DD HH:mm:ss'
-											),
-											upper: toUTC(endDate).format(
-												'YYYY-MM-DD HH:mm:ss'
-											),
-										},
+							{
+								field: 'jobDateCreated',
+								search: {
+									between: {
+										lower: toUTC(startDate).format(
+											'YYYY-MM-DD HH:mm:ss'
+										),
+										upper: toUTC(endDate).format(
+											'YYYY-MM-DD HH:mm:ss'
+										),
 									},
 								},
-						  ]
+							},
+						]
 						: []),
 					...(title
 						? [
-								{
-									field: 'title',
-									search: title,
-								},
-						  ]
+							{
+								field: 'title',
+								search: title,
+							},
+						]
 						: []),
 					...(jobSource
 						? [
-								{
-									field: 'jobSource',
-									search: jobSource,
-								},
-						  ]
+							{
+								field: 'jobSource',
+								search: jobSource,
+							},
+						]
 						: []),
 					...(jobType
 						? [
-								{
-									field: 'jobType',
-									search: jobType,
-								},
-						  ]
+							{
+								field: 'jobType',
+								search: jobType,
+							},
+						]
 						: []),
 					...(jobStatus
 						? [
-								{
-									field: 'jobStatus',
-									search: jobStatus,
-								},
-						  ]
+							{
+								field: 'jobStatus',
+								search: jobStatus,
+							},
+						]
 						: []),
 					...(budget
 						? [
-								{
-									field: 'budget',
-									search: budget,
-								},
-						  ]
+							{
+								field: 'budget',
+								search: budget,
+							},
+						]
+						: []),
+					// Get only fresh jobs (not applied yet)
+					...(true
+						? [
+							{
+								field: 'isApplied',
+								search: 'false',
+							},
+						]
 						: []),
 				],
 				false,
@@ -743,5 +734,5 @@ export class SearchComponent
 		this.jobs$.next(true);
 	}
 
-	ngOnDestroy(): void {}
+	ngOnDestroy(): void { }
 }

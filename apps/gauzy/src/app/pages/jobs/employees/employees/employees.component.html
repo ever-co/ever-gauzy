@@ -51,6 +51,7 @@
 				style="cursor: pointer"
 				[settings]="settingsSmartTable"
 				[source]="smartTableSource"
+				(editConfirm)="onEditConfirm($event)"
 				(userRowSelect)="onSelectEmployee($event)"
 			></ng2-smart-table>
 		</div>

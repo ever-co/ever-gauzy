@@ -302,7 +302,7 @@
 				[settings]="settingsSmartTable"
 				(userRowSelect)="onSelectJob($event)"
 				[source]="smartTableSource"
-				#jobSearchTable
+				#table
 			></ng2-smart-table>
 		</ng-template>
 	</div>
@@ -357,6 +357,17 @@
 			>
 				<nb-icon icon="checkmark-outline" pack="eva"></nb-icon>
 				<span>{{ 'JOBS.APPLY_AUTO' | translate }}</span>
+			</button>
+			<button
+				size="small"
+				style="cursor: pointer"
+				status="basic"
+				class="action primary"
+				nbButton
+				(click)="appliedJob()"
+			>
+				<nb-icon icon="checkmark-outline" pack="eva"></nb-icon>
+				<span>{{ 'JOBS.APPLIED' | translate }}</span>
 			</button>
 			<button
 				style="cursor: pointer"
