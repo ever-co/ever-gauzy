@@ -290,6 +290,14 @@ export class Employee extends TenantOrganizationBaseEntity implements IEmployee 
 	})
 	isOnline?: boolean;
 
+	@ApiPropertyOptional({ type: () => Boolean, default: false })
+	@Column({
+		type: Boolean,
+		nullable: true,
+		default: false
+	})
+	isAway?: boolean;
+
 	/**
 	 * Employee time tracking status
 	 */
