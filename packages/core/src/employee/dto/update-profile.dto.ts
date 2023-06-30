@@ -1,6 +1,6 @@
 import { IContact, IEmployeeUpdateInput } from "@gauzy/contracts";
 import { ApiPropertyOptional, PickType } from "@nestjs/swagger";
-import { IsObject, IsOptional, IsString } from "class-validator";
+import { IsBoolean, IsObject, IsOptional, IsString } from "class-validator";
 import { IntersectionType } from '@nestjs/mapped-types';
 import { SocialNetworksDTO } from "./network.dto";
 import { EmploymentDTO } from "./employment.dto";
@@ -31,4 +31,9 @@ export class UpdateProfileDTO extends IntersectionType(
     @IsObject()
     @IsOptional()
     readonly contact?: IContact;
+
+	@ApiPropertyOptional({ type: () => Boolean })
+	@IsOptional()
+	@IsBoolean()
+	isAway?: boolean;
 }
