@@ -24,8 +24,8 @@ export class TaskVersionService extends TaskStatusPrioritySizeService<TaskVersio
 	}
 
 	/**
-	 * GET versionses by filters
-	 * If parameters not match, retrieve global versionses
+	 * GET versions by filters
+	 * If parameters not match, retrieve global versions
 	 *
 	 * @param params
 	 * @returns
@@ -41,7 +41,7 @@ export class TaskVersionService extends TaskStatusPrioritySizeService<TaskVersio
 	}
 
 	/**
-	 * Few Versionses can't be removed/delete because they are global
+	 * Few Versions can't be removed/delete because they are global
 	 *
 	 * @param id
 	 * @returns
@@ -55,31 +55,31 @@ export class TaskVersionService extends TaskStatusPrioritySizeService<TaskVersio
 	}
 
 	/**
-	 * Create bulk versionses for specific tenants
+	 * Create bulk versions for specific tenants
 	 *
 	 * @param tenants '
 	 */
 	async bulkCreateTenantsVersions(
 		tenants: ITenant[]
 	): Promise<ITaskVersion[] & TaskVersion[]> {
-		const versionses: ITaskVersion[] = [];
+		const versions: ITaskVersion[] = [];
 		for (const tenant of tenants) {
-			for (const versions of DEFAULT_GLOBAL_VERSIONS) {
-				versionses.push(
+			for (const version of DEFAULT_GLOBAL_VERSIONS) {
+				versions.push(
 					new TaskVersion({
-						...versions,
-						icon: `ever-icons/${versions.icon}`,
+						...version,
+						icon: `ever-icons/${version.icon}`,
 						isSystem: false,
 						tenant,
 					})
 				);
 			}
 		}
-		return await this.repository.save(versionses);
+		return await this.repository.save(versions);
 	}
 
 	/**
-	 * Create bulk versionses for specific organization
+	 * Create bulk versions for specific organization
 	 *
 	 * @param organization
 	 */
@@ -87,7 +87,7 @@ export class TaskVersionService extends TaskStatusPrioritySizeService<TaskVersio
 		organization: IOrganization
 	): Promise<ITaskVersion[] & TaskVersion[]> {
 		try {
-			const versionses: ITaskVersion[] = [];
+			const versions: ITaskVersion[] = [];
 
 			const tenantId = RequestContext.currentTenantId();
 			const { items = [] } = await this.findEntitiesByParams({
@@ -97,7 +97,7 @@ export class TaskVersionService extends TaskStatusPrioritySizeService<TaskVersio
 			for (const item of items) {
 				const { tenantId, name, value, description, icon, color } =
 					item;
-				const versions = new TaskVersion({
+				const version = new TaskVersion({
 					tenantId,
 					name,
 					value,
@@ -107,9 +107,9 @@ export class TaskVersionService extends TaskStatusPrioritySizeService<TaskVersio
 					organization,
 					isSystem: false,
 				});
-				versionses.push(versions);
+				versions.push(version);
 			}
-			return await this.repository.save(versionses);
+			return await this.repository.save(versions);
 		} catch (error) {
 			throw new BadRequestException(error);
 		}
@@ -128,7 +128,7 @@ export class TaskVersionService extends TaskStatusPrioritySizeService<TaskVersio
 			const { organizationId } = entity;
 			const tenantId = RequestContext.currentTenantId();
 
-			const versionses: ITaskVersion[] = [];
+			const versions: ITaskVersion[] = [];
 			const { items = [] } = await this.findEntitiesByParams({
 				tenantId,
 				organizationId,
@@ -137,7 +137,7 @@ export class TaskVersionService extends TaskStatusPrioritySizeService<TaskVersio
 			for (const item of items) {
 				const { name, value, description, icon, color } = item;
 
-				const versions = await this.create({
+				const version = await this.create({
 					...entity,
 					name,
 					value,
@@ -146,10 +146,10 @@ export class TaskVersionService extends TaskStatusPrioritySizeService<TaskVersio
 					color,
 					isSystem: false,
 				});
-				versionses.push(versions);
+				versions.push(version);
 			}
 
-			return versionses;
+			return versions;
 		} catch (error) {
 			throw new BadRequestException(error);
 		}
