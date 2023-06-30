@@ -1,3 +1,3 @@
-import { FindVersionesHandler } from './find-versions.handler';
+import { FindVersionsHandler } from './find-versions.handler';
 
-export const QueryHandlers = [FindVersionesHandler];
+export const QueryHandlers = [FindVersionsHandler];

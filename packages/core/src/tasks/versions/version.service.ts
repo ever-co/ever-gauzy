@@ -7,7 +7,7 @@ import {
 	ITaskVersion,
 	ITaskVersionCreateInput,
 	ITaskVersionFindInput,
-	ITenant
+	ITenant,
 } from '@gauzy/contracts';
 import { TaskStatusPrioritySizeService } from '../task-status-priority-size.service';
 import { RequestContext } from '../../core/context';
@@ -30,7 +30,9 @@ export class TaskVersionService extends TaskStatusPrioritySizeService<TaskVersio
 	 * @param params
 	 * @returns
 	 */
-	async findTaskVersiones(params: ITaskVersionFindInput): Promise<IPagination<TaskVersion>> {
+	async findTaskVersions(
+		params: ITaskVersionFindInput
+	): Promise<IPagination<TaskVersion>> {
 		try {
 			return await this.findEntitiesByParams(params);
 		} catch (error) {
@@ -47,8 +49,8 @@ export class TaskVersionService extends TaskStatusPrioritySizeService<TaskVersio
 	async delete(id: ITaskVersion['id']): Promise<DeleteResult> {
 		return await super.delete(id, {
 			where: {
-				isSystem: false
-			}
+				isSystem: false,
+			},
 		});
 	}
 
@@ -57,7 +59,9 @@ export class TaskVersionService extends TaskStatusPrioritySizeService<TaskVersio
 	 *
 	 * @param tenants '
 	 */
-	async bulkCreateTenantsVersions(tenants: ITenant[]): Promise<ITaskVersion[] & TaskVersion[]> {
+	async bulkCreateTenantsVersions(
+		tenants: ITenant[]
+	): Promise<ITaskVersion[] & TaskVersion[]> {
 		const versionses: ITaskVersion[] = [];
 		for (const tenant of tenants) {
 			for (const versions of DEFAULT_GLOBAL_VERSIONS) {
@@ -66,7 +70,7 @@ export class TaskVersionService extends TaskStatusPrioritySizeService<TaskVersio
 						...versions,
 						icon: `ever-icons/${versions.icon}`,
 						isSystem: false,
-						tenant
+						tenant,
 					})
 				);
 			}
@@ -79,17 +83,20 @@ export class TaskVersionService extends TaskStatusPrioritySizeService<TaskVersio
 	 *
 	 * @param organization
 	 */
-	async bulkCreateOrganizationVersions(organization: IOrganization): Promise<ITaskVersion[] & TaskVersion[]> {
+	async bulkCreateOrganizationVersions(
+		organization: IOrganization
+	): Promise<ITaskVersion[] & TaskVersion[]> {
 		try {
 			const versionses: ITaskVersion[] = [];
 
 			const tenantId = RequestContext.currentTenantId();
 			const { items = [] } = await this.findEntitiesByParams({
-				tenantId
+				tenantId,
 			});
 
 			for (const item of items) {
-				const { tenantId, name, value, description, icon, color } = item;
+				const { tenantId, name, value, description, icon, color } =
+					item;
 				const versions = new TaskVersion({
 					tenantId,
 					name,
@@ -98,7 +105,7 @@ export class TaskVersionService extends TaskStatusPrioritySizeService<TaskVersio
 					icon,
 					color,
 					organization,
-					isSystem: false
+					isSystem: false,
 				});
 				versionses.push(versions);
 			}
@@ -114,7 +121,9 @@ export class TaskVersionService extends TaskStatusPrioritySizeService<TaskVersio
 	 * @param entity
 	 * @returns
 	 */
-	async createBulkVersionsByEntity(entity: Partial<ITaskVersionCreateInput>): Promise<ITaskVersion[]> {
+	async createBulkVersionsByEntity(
+		entity: Partial<ITaskVersionCreateInput>
+	): Promise<ITaskVersion[]> {
 		try {
 			const { organizationId } = entity;
 			const tenantId = RequestContext.currentTenantId();
@@ -122,7 +131,7 @@ export class TaskVersionService extends TaskStatusPrioritySizeService<TaskVersio
 			const versionses: ITaskVersion[] = [];
 			const { items = [] } = await this.findEntitiesByParams({
 				tenantId,
-				organizationId
+				organizationId,
 			});
 
 			for (const item of items) {
@@ -135,7 +144,7 @@ export class TaskVersionService extends TaskStatusPrioritySizeService<TaskVersio
 					description,
 					icon,
 					color,
-					isSystem: false
+					isSystem: false,
 				});
 				versionses.push(versions);
 			}

@@ -1,36 +1,36 @@
-import { ITaskVersion, TaskVersionEnum } from '@gauzy/contracts';
+import { ITaskVersion } from '@gauzy/contracts';
 
 export const DEFAULT_GLOBAL_VERSIONS: ITaskVersion[] = [
 	{
-		name: TaskVersionEnum.VERSION_ONE,
-		value: TaskVersionEnum.VERSION_ONE,
+		name: 'Version 1',
+		value: 'Version 1',
 		description: 'Version 1',
 		icon: null,
 		color: '#FFFFFF',
-		isSystem: true
+		isSystem: true,
 	},
 	{
-		name: TaskVersionEnum.VERSION_TWO,
-		value: TaskVersionEnum.VERSION_TWO,
+		name: 'Version 2',
+		value: 'Version 2',
 		description: 'Version 2',
 		icon: null,
 		color: '#FFFFFF',
-		isSystem: true
+		isSystem: true,
 	},
 	{
-		name: TaskVersionEnum.VERSION_THREE,
-		value: TaskVersionEnum.VERSION_THREE,
+		name: 'Version 3',
+		value: 'Version 3',
 		description: 'Version 3',
 		icon: null,
 		color: '#FFFFFF',
-		isSystem: true
+		isSystem: true,
 	},
 	{
-		name: TaskVersionEnum.VERSION_FOUR,
-		value: TaskVersionEnum.VERSION_FOUR,
+		name: 'Version 4',
+		value: 'Version 4',
 		description: 'Version 4',
 		icon: null,
 		color: '#FFFFFF',
-		isSystem: true
-	}
+		isSystem: true,
+	},
 ];

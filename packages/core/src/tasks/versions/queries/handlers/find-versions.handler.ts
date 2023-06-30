@@ -4,11 +4,13 @@ import { TaskVersionService } from '../../version.service';
 import { FindVersionsQuery } from '../find-versions.query';
 
 @QueryHandler(FindVersionsQuery)
-export class FindVersionesHandler implements IQueryHandler<FindVersionsQuery> {
+export class FindVersionsHandler implements IQueryHandler<FindVersionsQuery> {
 	constructor(private readonly taskVersionService: TaskVersionService) {}
 
-	async execute(query: FindVersionsQuery): Promise<IPagination<ITaskVersion>> {
+	async execute(
+		query: FindVersionsQuery
+	): Promise<IPagination<ITaskVersion>> {
 		const { options } = query;
-		return await this.taskVersionService.findTaskVersiones(options);
+		return await this.taskVersionService.findTaskVersions(options);
 	}
 }

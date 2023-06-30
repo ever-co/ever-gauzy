@@ -1,4 +1,14 @@
-import { Column, Entity, Index, OneToMany, ManyToMany, JoinTable, ManyToOne, JoinColumn, RelationId } from 'typeorm';
+import {
+	Column,
+	Entity,
+	Index,
+	OneToMany,
+	ManyToMany,
+	JoinTable,
+	ManyToOne,
+	JoinColumn,
+	RelationId,
+} from 'typeorm';
 import {
 	IEquipmentSharing,
 	IGoal,
@@ -13,10 +23,16 @@ import {
 	ITaskSize,
 	ITaskStatus,
 	ITaskVersion,
-	IUser
+	IUser,
 } from '@gauzy/contracts';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsBoolean, IsNotEmpty, IsOptional, IsString, IsUUID } from 'class-validator';
+import {
+	IsBoolean,
+	IsNotEmpty,
+	IsOptional,
+	IsString,
+	IsUUID,
+} from 'class-validator';
 import {
 	EquipmentSharing,
 	Goal,
@@ -29,13 +45,16 @@ import {
 	TaskPriority,
 	TaskSize,
 	TaskStatus,
+	TaskVersion,
 	TenantOrganizationBaseEntity,
-	User
+	User,
 } from '../core/entities/internal';
-import { TaskVersion } from 'tasks/versions/version.entity';
 
 @Entity('organization_team')
-export class OrganizationTeam extends TenantOrganizationBaseEntity implements IOrganizationTeam {
+export class OrganizationTeam
+	extends TenantOrganizationBaseEntity
+	implements IOrganizationTeam
+{
 	@ApiProperty({ type: () => String, required: true })
 	@IsNotEmpty()
 	@IsString()
@@ -102,7 +121,7 @@ export class OrganizationTeam extends TenantOrganizationBaseEntity implements IO
 	 * User
 	 */
 	@ManyToOne(() => User, (user) => user.teams, {
-		onDelete: 'SET NULL'
+		onDelete: 'SET NULL',
 	})
 	@JoinColumn()
 	createdBy?: IUser;
@@ -120,7 +139,7 @@ export class OrganizationTeam extends TenantOrganizationBaseEntity implements IO
 		onDelete: 'SET NULL',
 
 		/** Eager relations are always loaded automatically when relation's owner entity is loaded using find* methods. */
-		eager: true
+		eager: true,
 	})
 	@JoinColumn()
 	image?: IImageAsset;
@@ -142,9 +161,13 @@ export class OrganizationTeam extends TenantOrganizationBaseEntity implements IO
 	/**
 	 * OrganizationTeamEmployee
 	 */
-	@OneToMany(() => OrganizationTeamEmployee, (entity) => entity.organizationTeam, {
-		cascade: true
-	})
+	@OneToMany(
+		() => OrganizationTeamEmployee,
+		(entity) => entity.organizationTeam,
+		{
+			cascade: true,
+		}
+	)
 	members?: IOrganizationTeamEmployee[];
 
 	/**
@@ -157,7 +180,7 @@ export class OrganizationTeam extends TenantOrganizationBaseEntity implements IO
 	 * Goal
 	 */
 	@OneToMany(() => Goal, (it) => it.ownerTeam, {
-		onDelete: 'SET NULL'
+		onDelete: 'SET NULL',
 	})
 	goals?: IGoal[];
 
@@ -182,7 +205,7 @@ export class OrganizationTeam extends TenantOrganizationBaseEntity implements IO
 	/**
 	 * Team Versions
 	 */
-	@OneToMany(() => TaskVersion, (size) => size.organizationTeam)
+	@OneToMany(() => TaskVersion, (version) => version.organizationTeam)
 	versions?: ITaskVersion[];
 
 	/**
@@ -204,10 +227,10 @@ export class OrganizationTeam extends TenantOrganizationBaseEntity implements IO
 	*/
 	@ManyToMany(() => Tag, (tag) => tag.organizationTeams, {
 		onUpdate: 'CASCADE',
-		onDelete: 'CASCADE'
+		onDelete: 'CASCADE',
 	})
 	@JoinTable({
-		name: 'tag_organization_team'
+		name: 'tag_organization_team',
 	})
 	tags?: ITag[];
 
@@ -216,7 +239,7 @@ export class OrganizationTeam extends TenantOrganizationBaseEntity implements IO
 	 */
 	@ManyToMany(() => Task, (task) => task.teams, {
 		onUpdate: 'CASCADE',
-		onDelete: 'CASCADE'
+		onDelete: 'CASCADE',
 	})
 	@JoinTable()
 	tasks?: ITask[];
@@ -226,7 +249,7 @@ export class OrganizationTeam extends TenantOrganizationBaseEntity implements IO
 	 */
 	@ManyToMany(() => EquipmentSharing, (it) => it.teams, {
 		onUpdate: 'CASCADE',
-		onDelete: 'CASCADE'
+		onDelete: 'CASCADE',
 	})
 	equipmentSharings?: IEquipmentSharing[];
 }
