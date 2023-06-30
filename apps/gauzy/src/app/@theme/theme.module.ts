@@ -15,7 +15,8 @@ import {
 	NbThemeModule,
 	NbPopoverModule,
 	NbTooltipModule,
-	NbLayoutDirectionService
+	NbLayoutDirectionService,
+	NbSpinnerModule
 } from '@nebular/theme';
 import { NbEvaIconsModule } from '@nebular/eva-icons';
 import { NbSecurityModule } from '@nebular/security';
@@ -88,7 +89,8 @@ const NB_MODULES = [
 	NbEvaIconsModule,
 	NbAccordionModule,
 	NbToggleModule,
-	NbCardModule
+	NbCardModule,
+	NbSpinnerModule
 ];
 
 const MODULES = [
