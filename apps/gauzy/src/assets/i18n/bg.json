@@ -129,7 +129,8 @@
 		"EXPAND": "Expand",
 		"SHOW_MORE": "Show More",
 		"START_WORK": "Start Work",
-		"APPLY": "Приложи"
+		"APPLY": "Приложи",
+		"GENERATE_PROPOSAL": "Генериране на предложение"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {
