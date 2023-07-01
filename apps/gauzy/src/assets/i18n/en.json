@@ -130,7 +130,8 @@
 		"EXPAND": "Expand",
 		"SHOW_MORE": "Show More",
 		"START_WORK": "Start Work",
-		"APPLY": "Apply"
+		"APPLY": "Apply",
+		"GENERATE_PROPOSAL": "Generate Proposal"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {
