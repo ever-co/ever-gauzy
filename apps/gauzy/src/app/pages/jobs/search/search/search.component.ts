@@ -257,53 +257,49 @@ export class SearchComponent extends PaginationFilterBaseComponent implements On
 		}
 	}
 
-	onCustom($event) {
+	/**
+	 * Custom events
+	 *
+	 * @param $event
+	 */
+	async onCustomEvents($event: {
+		action: string,
+		data: any
+	}) {
 		switch ($event.action) {
 			case 'view':
 				if ($event.data.jobPost) {
 					window.open($event.data.jobPost.url, '_blank');
 				}
 				break;
-
 			case 'apply':
 				const applyRequest: IEmployeeJobApplication = {
 					applied: true,
 					employeeId: $event.data.employeeId,
-					providerCode: $event.data.jobPost.providerCode,
-					providerJobId: $event.data.jobPost.providerJobId,
+					providerCode: $event.data.providerCode,
+					providerJobId: $event.data.providerJobId,
 				};
 				this.jobService.applyJob(applyRequest).then(async (resp) => {
 					this.toastrService.success('TOASTR.MESSAGE.JOB_APPLIED');
 					this.smartTableSource.refresh();
 
 					if (resp.isRedirectRequired) {
-						const proposalTemplate =
-							await this.getEmployeeDefaultProposalTemplate(
-								$event.data
-							);
+						const proposalTemplate = await this.getEmployeeDefaultProposalTemplate($event.data);
 						if (proposalTemplate) {
-							await this.copyTextToClipboard(
-								proposalTemplate.content
-							);
+							await this.copyTextToClipboard(proposalTemplate.content);
 						}
 						window.open($event.data.jobPost.url, '_blank');
 					}
 				});
 				break;
-
 			case 'hide':
-				const hideRequest: IVisibilityJobPostInput = {
+				await this.hideJobPost({
 					hide: true,
 					employeeId: $event.data.employeeId,
-					providerCode: $event.data.jobPost.providerCode,
-					providerJobId: $event.data.jobPost.providerJobId,
-				};
-				this.jobService.hideJob(hideRequest).then(() => {
-					this.toastrService.success('TOASTR.MESSAGE.JOB_HIDDEN');
-					this.smartTableSource.refresh();
+					providerCode: $event.data.providerCode,
+					providerJobId: $event.data.providerJobId,
 				});
 				break;
-
 			default:
 				break;
 		}
@@ -328,22 +324,46 @@ export class SearchComponent extends PaginationFilterBaseComponent implements On
 		}
 	}
 
+	/**
+	 * Updates job visibility
+	 *
+	 * @returns
+	 */
 	public async hideJob() {
 		if (!this.selectedJob) {
 			return;
 		}
-		const { employeeId, providerCode, providerJobId } = this.selectedJob;
-		const hideRequest: IVisibilityJobPostInput = {
-			hide: true,
-			employeeId: employeeId,
-			providerCode: providerCode,
-			providerJobId: providerJobId,
-		};
 
 		try {
-			await this.jobService.hideJob(hideRequest);
+			const { employeeId, providerCode, providerJobId } = this.selectedJob;
+			await this.hideJobPost({ hide: true, employeeId, providerCode, providerJobId });
+
 			this.toastrService.success('TOASTR.MESSAGE.JOB_HIDDEN');
 			this.smartTableSource.refresh();
+
+			this.onSelectJob({ isSelected: false, data: null });
+		} catch (error) {
+			console.log('Error while hide job', error);
+		}
+	}
+
+	/**
+	 * Updates job visibility
+	 *
+	 * @param input
+	 */
+	public async hideJobPost(input: IVisibilityJobPostInput) {
+		try {
+			const { employeeId, providerCode, providerJobId } = input;
+			if (providerCode && providerJobId) {
+				const payload: IVisibilityJobPostInput = {
+					hide: true,
+					employeeId: employeeId,
+					providerCode: providerCode,
+					providerJobId: providerJobId,
+				};
+				await this.jobService.hideJob(payload);
+			}
 		} catch (error) {
 			console.log('Error while hide job', error);
 		}
@@ -358,15 +378,20 @@ export class SearchComponent extends PaginationFilterBaseComponent implements On
 		if (!this.selectedJob) {
 			return;
 		}
-		const { employeeId, providerCode, providerJobId } = this.selectedJob;
 		try {
+			const { employeeId, providerCode, providerJobId } = this.selectedJob;
 			console.log({ employeeId, providerCode, providerJobId });
 		} catch (error) {
 			console.log('Error while applied job', error);
 		}
 	}
 
-	/** Apply For Job Post */
+	/**
+	 * Apply For Job Post
+	 *
+	 * @param applyJobPost
+	 * @returns
+	 */
 	async applyToJob(applyJobPost: IEmployeeJobApplication): Promise<void> {
 		if (!this.selectedJob) {
 			return;
@@ -475,6 +500,8 @@ export class SearchComponent extends PaginationFilterBaseComponent implements On
 	}
 
 	private _loadSmartTableSettings() {
+		const self: SearchComponent = this;
+
 		const pagination: IPaginationBase = this.getPagination();
 		this.settingsSmartTable = {
 			selectedRowIndex: -1,
@@ -523,6 +550,11 @@ export class SearchComponent extends PaginationFilterBaseComponent implements On
 					renderComponent: JobTitleDescriptionDetailsComponent,
 					filter: false,
 					sort: false,
+					onComponentInitFunction(instance: any) {
+						instance.hideJobEvent.subscribe((event: IVisibilityJobPostInput) => {
+							self.onCustomEvents({ action: 'hide', data: event });
+						});
+					}
 				}
 			},
 		};

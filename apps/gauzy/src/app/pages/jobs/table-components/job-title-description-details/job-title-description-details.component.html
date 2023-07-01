@@ -6,16 +6,30 @@
 			</span>
 		</ng-template>
 		<ng-template [ngIf]="rowData?.jobPost?.jobDateCreated">
-			 <span class="job-date-created mr-2">{{ rowData?.jobPost?.jobDateCreated | dateTimeFormat }}</span>
+			<span class="job-date-created mr-2">{{ rowData?.jobPost?.jobDateCreated | dateTimeFormat }}</span>
 		</ng-template>
 		<ng-template [ngIf]="rowData?.jobPost?.jobType">
-			 <span class="badge mr-2">{{ rowData?.jobPost?.jobType | titlecase }}</span>
+			<span class="badge mr-2">{{ rowData?.jobPost?.jobType | titlecase }}</span>
 		</ng-template>
 		<ng-template [ngIf]="rowData?.jobPost?.budget">
-			 <span class="badge mr-2">{{ rowData?.jobPost?.budget | budget }}</span>
+			<span class="badge mr-2">{{ rowData?.jobPost?.budget | budget }}</span>
 		</ng-template>
 		<ng-template [ngIf]="rowData?.jobPost?.jobStatus">
-			 <job-status [rowData]="rowData"></job-status>
+			<job-status [rowData]="rowData"></job-status>
+		</ng-template>
+		<ng-template [ngIf]="rowData?.isActive && !rowData?.isArchived">
+			<button
+				style="cursor: pointer"
+				status="basic"
+				class="action warning ml-1"
+				size="small"
+				(throttledClick)="hideJob($event)"
+				[nbTooltip]="'JOBS.HIDE' | translate"
+				debounceClick
+				nbButton
+			>
+				<nb-icon icon="eye-off-outline" pack="eva"></nb-icon>
+			</button>
 		</ng-template>
 		<div class="job-title">
 			<a href="javascript:void(0)" (click)="openJob()">
