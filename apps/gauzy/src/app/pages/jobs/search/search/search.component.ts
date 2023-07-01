@@ -139,6 +139,7 @@ export class SearchComponent extends PaginationFilterBaseComponent implements On
 		this.jobs$
 			.pipe(
 				debounceTime(100),
+				tap(() => this.onSelectJob({ isSelected: false, data: null })),
 				tap(() => this.getEmployeesJob()),
 				untilDestroyed(this)
 			)
@@ -164,23 +165,19 @@ export class SearchComponent extends PaginationFilterBaseComponent implements On
 	ngAfterViewInit(): void {
 		const storeOrganization$ = this.store.selectedOrganization$;
 		const storeEmployee$ = this.store.selectedEmployee$;
-		const selectedDateRange$ =
-			this.dateRangePickerBuilderService.selectedDateRange$;
+		const selectedDateRange$ = this.dateRangePickerBuilderService.selectedDateRange$;
 		combineLatest([storeOrganization$, selectedDateRange$, storeEmployee$])
 			.pipe(
 				debounceTime(100),
 				distinctUntilChange(),
 				filter(
-					([organization, dateRange]) => !!organization && !!dateRange
+					([organization, dateRange, employee]) => !!organization && !!dateRange
 				),
 				tap(([organization, dateRange, employee]) => {
 					this.organization = organization;
 					this.selectedDateRange = dateRange;
-					this.selectedEmployee =
-						employee && employee.id ? employee : null;
-					this.jobRequest.employeeIds = this.selectedEmployee
-						? [this.selectedEmployee.id]
-						: [];
+					this.selectedEmployee = employee && employee.id ? employee : null;
+					this.jobRequest.employeeIds = this.selectedEmployee ? [this.selectedEmployee.id] : [];
 				}),
 				tap(() => this._loadSmartTableSettings()),
 				tap(() => this.jobs$.next(true)),
