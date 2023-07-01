@@ -97,6 +97,8 @@ export interface IEmployee extends IBasePerTenantAndOrganizationEntityModel {
 	isOnline?: boolean;
 	/** Employee time tracking status */
 	isTrackingTime?: boolean;
+	// True mean active, false away
+	isAway?: boolean;
 }
 
 export type IEmployeeJobsStatisticsResponse = IEmployee & IEmployeeJobsStatistics;
@@ -119,6 +121,8 @@ export interface IEmployeeFindInput {
 	isOnline?: boolean;
 	/** Employee time tracking status */
 	isTrackingTime?: boolean;
+	// True mean active, false away
+	isAway?: boolean;
 }
 
 export interface IEmployeeUpdateInput extends IBasePerTenantAndOrganizationEntityModel {
@@ -157,6 +161,8 @@ export interface IEmployeeUpdateInput extends IBasePerTenantAndOrganizationEntit
 	isOnline?: boolean;
 	/** Employee time tracking status */
 	isTrackingTime?: boolean;
+	// True mean active, false away
+	isAway?: boolean;
 }
 
 export interface IEmployeeCreateInput extends IBasePerTenantAndOrganizationEntityModel {
@@ -182,6 +188,8 @@ export interface IEmployeeCreateInput extends IBasePerTenantAndOrganizationEntit
 	isOnline?: boolean;
 	/** Employee time tracking status */
 	isTrackingTime?: boolean;
+	// True mean active, false away
+	isAway?: boolean;
 }
 
 export interface ISelectedEmployee {

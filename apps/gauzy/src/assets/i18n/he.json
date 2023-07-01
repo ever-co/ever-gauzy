@@ -129,7 +129,8 @@
 		"EXPAND": "Expand",
 		"SHOW_MORE": "Show More",
 		"START_WORK": "Start Work",
-		"APPLY": "להגיש מועמדות"
+		"APPLY": "להגיש מועמדות",
+		"GENERATE_PROPOSAL": "צור הצעה"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {

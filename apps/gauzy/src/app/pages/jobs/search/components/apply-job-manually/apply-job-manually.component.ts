@@ -53,7 +53,19 @@ export class ApplyJobManuallyComponent extends TranslationBaseComponent implemen
 					'RemoveFormat'
 				]
 			},
-			{ name: 'clipboard', items: ['Cut', 'Copy', 'Paste', 'PasteText', 'PasteFromWord', '-', 'Undo', 'Redo'] }
+			{
+				name: 'clipboard',
+				items: [
+					'Cut',
+					'Copy',
+					'Paste',
+					'PasteText',
+					'PasteFromWord',
+					'-',
+					'Undo',
+					'Redo'
+				]
+			}
 		],
 		height: '150px', // Set the desired height here
 	};
@@ -107,7 +119,7 @@ export class ApplyJobManuallyComponent extends TranslationBaseComponent implemen
 	/**
 	 * Newly generate employee job application
 	 */
-	application$: Subject<any> = new Subject();
+	application$: Subject<IEmployeeJobApplication> = new Subject();
 
 	// After get AI generated proposal successfully
 	private retryUntil$: Subscription;
@@ -127,6 +139,7 @@ export class ApplyJobManuallyComponent extends TranslationBaseComponent implemen
 	ngOnInit(): void {
 		const storeOrganization$ = this.store.selectedOrganization$;
 		const storeEmployee$ = this.store.selectedEmployee$;
+
 		combineLatest([storeOrganization$, storeEmployee$])
 			.pipe(
 				debounceTime(100),
@@ -151,14 +164,14 @@ export class ApplyJobManuallyComponent extends TranslationBaseComponent implemen
 			.subscribe();
 		this.proposal$
 			.pipe(
-				tap(() => (this.loading = true)),
+				filter(() => !!this.form.get('employeeId').value),
 				tap(() => this.callPreProcessEmployeeJobApplication()),
 				untilDestroyed(this)
 			)
 			.subscribe();
 		this.application$
 			.pipe(
-				tap((application: any) => this.generateAIProposal(application)),
+				tap((application: IEmployeeJobApplication) => this.generateAIProposal(application)),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -258,9 +271,6 @@ export class ApplyJobManuallyComponent extends TranslationBaseComponent implemen
 	onProposalTemplateChange(item: IEmployeeProposalTemplate | null): void {
 		/** Generate proposal using GauzyAI */
 		this.proposalTemplate = item || null;
-		if (isNotEmpty(item)) {
-			this.proposal$.next(true);
-		}
 	}
 
 	/**
@@ -272,6 +282,8 @@ export class ApplyJobManuallyComponent extends TranslationBaseComponent implemen
 		}
 		const { employeeId, proposal, rate, details, attachments } = this.form.value;
 		const { providerCode, providerJobId } = this.employeeJobPost;
+
+		console.log(this.getPlainText());
 
 		/** Apply job post input */
 		const applyJobPost: IEmployeeJobApplication = {
@@ -314,6 +326,10 @@ export class ApplyJobManuallyComponent extends TranslationBaseComponent implemen
 	private async callPreProcessEmployeeJobApplication() {
 		/** Generate job application record for employee */
 		const employeeId = this.form.get('employeeId').value;
+		if (!employeeId) {
+			return;
+		}
+
 		const rate = this.form.get('rate').value;
 
 		const proposalTemplate = this.proposalTemplate?.content || null;
@@ -341,8 +357,12 @@ export class ApplyJobManuallyComponent extends TranslationBaseComponent implemen
 				qa: '{}',
 				terms: '{}'
 			};
+
+			this.loading = true;
 			// send the employee job application
-			this.application$.next(await this.jobService.preProcessEmployeeJobApplication(generateProposalRequest));
+			this.application$.next(
+				await this.jobService.preProcessEmployeeJobApplication(generateProposalRequest)
+			);
 		} catch (error) {
 			console.error('Error while creating employee job application', error);
 		}
@@ -353,7 +373,9 @@ export class ApplyJobManuallyComponent extends TranslationBaseComponent implemen
 	 *
 	 * @param application
 	 */
-	public async generateAIProposal(employeeJobApplication: any) {
+	public async generateAIProposal(
+		employeeJobApplication: IEmployeeJobApplication
+	) {
 		try {
 			const employeeJobApplicationId = employeeJobApplication.id;
 			await this.jobService.generateAIProposal(employeeJobApplicationId);
@@ -396,6 +418,7 @@ export class ApplyJobManuallyComponent extends TranslationBaseComponent implemen
 							if (isNotEmpty(application)) {
 								// Replace line breaks with spaces
 								const proposal = application.proposal.replace(/\n\n/g, '<br/><br>').replace(/\n/g, '<br/>');
+								console.log(proposal);
 
 								// Set ckeditor html content
 								this.ckeditor.instance.document.getBody().setHtml(proposal);
