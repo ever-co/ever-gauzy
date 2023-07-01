@@ -28,7 +28,7 @@ export class EmployeeJobPostService {
 		private readonly employeeService: EmployeeService,
 		private readonly gauzyAIService: GauzyAIService,
 		private readonly countryService: CountryService
-	) {}
+	) { }
 
 	/**
 	 * Updates job visibility
@@ -61,7 +61,7 @@ export class EmployeeJobPostService {
 	public async apply(input: IEmployeeJobApplication): Promise<IEmployeeJobApplicationAppliedResult> {
 		try {
 			const plainText = htmlToText(input.proposal, {
-				wordwrap: 120 // Specify the desired line width for word wrapping
+				wordwrap: false // Specify the desired line width for word wrapping
 			});
 			input.proposal = plainText;
 		} catch (error) {
