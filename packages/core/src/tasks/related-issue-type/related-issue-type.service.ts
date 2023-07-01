@@ -7,7 +7,6 @@ import {
 	ITaskRelatedIssueType,
 	ITaskRelatedIssueTypeCreateInput,
 	ITaskRelatedIssueTypeFindInput,
-	ITenant,
 } from '@gauzy/contracts';
 import { TaskStatusPrioritySizeService } from '../task-status-priority-size.service';
 import { RequestContext } from '../../core/context';
