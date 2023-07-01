@@ -20,6 +20,7 @@ import {
 	ITag,
 	ITask,
 	ITaskPriority,
+	ITaskRelatedIssueType,
 	ITaskSize,
 	ITaskStatus,
 	ITaskVersion,
@@ -43,6 +44,7 @@ import {
 	Tag,
 	Task,
 	TaskPriority,
+	TaskRelatedIssueTypes,
 	TaskSize,
 	TaskStatus,
 	TaskVersion,
@@ -189,6 +191,15 @@ export class OrganizationTeam
 	 */
 	@OneToMany(() => TaskStatus, (status) => status.organizationTeam)
 	statuses?: ITaskStatus[];
+
+	/**
+	 * Team Related Status type
+	 */
+	@OneToMany(
+		() => TaskRelatedIssueTypes,
+		(relatedIssueType) => relatedIssueType.organizationTeam
+	)
+	relatedIssueTypes?: ITaskRelatedIssueType[];
 
 	/**
 	 * Team Priorities
