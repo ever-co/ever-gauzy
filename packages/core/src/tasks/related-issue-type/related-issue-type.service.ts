@@ -6,7 +6,7 @@ import {
 	IPagination,
 	ITaskRelatedIssueType,
 	ITaskRelatedIssueTypeCreateInput,
-	ITaskRelatedIssueTypeFindInput,
+	ITaskRelatedIssueTypeFindInput
 } from '@gauzy/contracts';
 import { TaskStatusPrioritySizeService } from '../task-status-priority-size.service';
 import { RequestContext } from '../../core/context';
@@ -47,8 +47,8 @@ export class TaskRelatedIssueTypesService extends TaskStatusPrioritySizeService<
 	async delete(id: ITaskRelatedIssueType['id']): Promise<DeleteResult> {
 		return await super.delete(id, {
 			where: {
-				isSystem: false,
-			},
+				isSystem: false
+			}
 		});
 	}
 
@@ -65,12 +65,11 @@ export class TaskRelatedIssueTypesService extends TaskStatusPrioritySizeService<
 
 			const tenantId = RequestContext.currentTenantId();
 			const { items = [] } = await this.findEntitiesByParams({
-				tenantId,
+				tenantId
 			});
 
 			for (const item of items) {
-				const { tenantId, name, value, description, icon, color } =
-					item;
+				const { tenantId, name, value, description, icon, color } = item;
 				const status = new TaskRelatedIssueTypes({
 					tenantId,
 					name,
@@ -79,7 +78,7 @@ export class TaskRelatedIssueTypesService extends TaskStatusPrioritySizeService<
 					icon,
 					color,
 					organization,
-					isSystem: false,
+					isSystem: false
 				});
 				statuses.push(status);
 			}
@@ -105,7 +104,7 @@ export class TaskRelatedIssueTypesService extends TaskStatusPrioritySizeService<
 			const statuses: ITaskRelatedIssueType[] = [];
 			const { items = [] } = await this.findEntitiesByParams({
 				tenantId,
-				organizationId,
+				organizationId
 			});
 
 			for (const item of items) {
@@ -118,7 +117,7 @@ export class TaskRelatedIssueTypesService extends TaskStatusPrioritySizeService<
 					description,
 					icon,
 					color,
-					isSystem: false,
+					isSystem: false
 				});
 				statuses.push(status);
 			}

@@ -1,9 +1,4 @@
-import {
-	EntitySubscriberInterface,
-	EventSubscriber,
-	InsertEvent,
-	LoadEvent,
-} from 'typeorm';
+import { EntitySubscriberInterface, EventSubscriber, InsertEvent, LoadEvent } from 'typeorm';
 import { faker } from '@faker-js/faker';
 import { sluggable } from '@gauzy/common';
 import { FileStorageProviderEnum } from '@gauzy/contracts';
@@ -11,9 +6,7 @@ import { FileStorage } from '../../core/file-storage';
 import { TaskRelatedIssueTypes } from './related-issue-type.entity';
 
 @EventSubscriber()
-export class TaskRelatedIssueTypesSubscriber
-	implements EntitySubscriberInterface<TaskRelatedIssueTypes>
-{
+export class TaskRelatedIssueTypesSubscriber implements EntitySubscriberInterface<TaskRelatedIssueTypes> {
 	/**
 	 * Indicates that this subscriber only listen to TaskRelatedIssueTypes events.
 	 */
@@ -33,12 +26,8 @@ export class TaskRelatedIssueTypesSubscriber
 	): void | Promise<any> {
 		try {
 			if (entity.icon) {
-				const store = new FileStorage().setProvider(
-					FileStorageProviderEnum.LOCAL
-				);
-				entity.fullIconUrl = store
-					.getProviderInstance()
-					.url(entity.icon);
+				const store = new FileStorage().setProvider(FileStorageProviderEnum.LOCAL);
+				entity.fullIconUrl = store.getProviderInstance().url(entity.icon);
 			}
 		} catch (error) {
 			console.log(error);

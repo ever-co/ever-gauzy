@@ -1,22 +1,11 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Column, Entity, Index, ManyToOne, RelationId } from 'typeorm';
-import {
-	IOrganizationProject,
-	IOrganizationTeam,
-	ITaskRelatedIssueType,
-} from '@gauzy/contracts';
+import { IOrganizationProject, IOrganizationTeam, ITaskRelatedIssueType } from '@gauzy/contracts';
 import { IsNotEmpty, IsOptional, IsString, IsUUID } from 'class-validator';
-import {
-	OrganizationProject,
-	OrganizationTeam,
-	TenantOrganizationBaseEntity,
-} from '../../core/entities/internal';
+import { OrganizationProject, OrganizationTeam, TenantOrganizationBaseEntity } from '../../core/entities/internal';
 
 @Entity('task_related_issue_type')
-export class TaskRelatedIssueTypes
-	extends TenantOrganizationBaseEntity
-	implements ITaskRelatedIssueType
-{
+export class TaskRelatedIssueTypes extends TenantOrganizationBaseEntity implements ITaskRelatedIssueType {
 	@ApiProperty({ type: () => String })
 	@IsNotEmpty()
 	@IsString()
@@ -59,7 +48,7 @@ export class TaskRelatedIssueTypes
 	 * Organization Project
 	 */
 	@ManyToOne(() => OrganizationProject, (project) => project.statuses, {
-		onDelete: 'CASCADE',
+		onDelete: 'CASCADE'
 	})
 	project?: IOrganizationProject;
 
@@ -75,7 +64,7 @@ export class TaskRelatedIssueTypes
 	 * Organization Team
 	 */
 	@ManyToOne(() => OrganizationTeam, (team) => team.statuses, {
-		onDelete: 'CASCADE',
+		onDelete: 'CASCADE'
 	})
 	organizationTeam?: IOrganizationTeam;
 

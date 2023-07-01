@@ -8,16 +8,12 @@ import { TaskRelatedIssueTypes } from '../../related-issue-type.entity';
 export class OrganizationRelatedIssueTypeBulkCreateHandler
 	implements ICommandHandler<OrganizationRelatedIssueTypeBulkCreateCommand>
 {
-	constructor(
-		private readonly taskRelatedIssueTypeService: TaskRelatedIssueTypesService
-	) {}
+	constructor(private readonly taskRelatedIssueTypeService: TaskRelatedIssueTypesService) {}
 
 	public async execute(
 		command: OrganizationRelatedIssueTypeBulkCreateCommand
 	): Promise<ITaskRelatedIssueType[] | TaskRelatedIssueTypes[]> {
 		const { input } = command;
-		return await this.taskRelatedIssueTypeService.bulkCreateOrganizationRelatedIssueTypes(
-			input
-		);
+		return await this.taskRelatedIssueTypeService.bulkCreateOrganizationRelatedIssueTypes(input);
 	}
 }

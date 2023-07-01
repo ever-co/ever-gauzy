@@ -5,5 +5,5 @@ import { OrganizationTeamTaskRelatedIssueTypeBulkCreateHandler } from './organiz
 export const CommandHandlers = [
 	OrganizationProjectRelatedIssueTypeBulkCreateHandler,
 	OrganizationRelatedIssueTypeBulkCreateHandler,
-	OrganizationTeamTaskRelatedIssueTypeBulkCreateHandler,
+	OrganizationTeamTaskRelatedIssueTypeBulkCreateHandler
 ];

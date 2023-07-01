@@ -4,8 +4,5 @@ import { TenantOrganizationBaseDTO } from '../../../core/dto';
 import { TaskRelatedIssueTypes } from '../related-issue-type.entity';
 
 export class UpdatesRelatedIssueTypeDTO
-	extends IntersectionType(
-		PartialType(TenantOrganizationBaseDTO),
-		PartialType(TaskRelatedIssueTypes)
-	)
+	extends IntersectionType(PartialType(TenantOrganizationBaseDTO), PartialType(TaskRelatedIssueTypes))
 	implements ITaskRelatedIssueTypeUpdateInput {}

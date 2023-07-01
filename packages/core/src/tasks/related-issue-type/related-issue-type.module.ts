@@ -14,19 +14,15 @@ import { QueryHandlers } from './queries/handlers';
 		RouterModule.forRoutes([
 			{
 				path: '/task-related-issue-types',
-				module: TaskRelatedIssueTypesModule,
-			},
+				module: TaskRelatedIssueTypesModule
+			}
 		]),
 		TypeOrmModule.forFeature([TaskRelatedIssueTypes]),
 		TenantModule,
-		CqrsModule,
+		CqrsModule
 	],
 	controllers: [TaskRelatedIssueTypesController],
-	providers: [
-		TaskRelatedIssueTypesService,
-		...QueryHandlers,
-		...CommandHandlers,
-	],
-	exports: [TaskRelatedIssueTypesService],
+	providers: [TaskRelatedIssueTypesService, ...QueryHandlers, ...CommandHandlers],
+	exports: [TaskRelatedIssueTypesService]
 })
 export class TaskRelatedIssueTypesModule {}

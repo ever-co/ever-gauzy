@@ -5,12 +5,9 @@ import { TaskRelatedIssueTypesService } from '../../related-issue-type.service';
 
 @CommandHandler(OrganizationTeamTaskRelatedIssueTypeBulkCreateCommand)
 export class OrganizationTeamTaskRelatedIssueTypeBulkCreateHandler
-	implements
-		ICommandHandler<OrganizationTeamTaskRelatedIssueTypeBulkCreateCommand>
+	implements ICommandHandler<OrganizationTeamTaskRelatedIssueTypeBulkCreateCommand>
 {
-	constructor(
-		private readonly taskRelatedIssueTypeService: TaskRelatedIssueTypesService
-	) {}
+	constructor(private readonly taskRelatedIssueTypeService: TaskRelatedIssueTypesService) {}
 
 	public async execute(
 		command: OrganizationTeamTaskRelatedIssueTypeBulkCreateCommand
@@ -21,11 +18,9 @@ export class OrganizationTeamTaskRelatedIssueTypeBulkCreateHandler
 		/**
 		 * Create bulk task statuses for specific organization team
 		 */
-		return this.taskRelatedIssueTypeService.createBulkRelatedIssueTypesByEntity(
-			{
-				organizationId,
-				organizationTeamId,
-			}
-		);
+		return this.taskRelatedIssueTypeService.createBulkRelatedIssueTypesByEntity({
+			organizationId,
+			organizationTeamId
+		});
 	}
 }

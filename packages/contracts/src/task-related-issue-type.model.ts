@@ -2,9 +2,7 @@ import { IBasePerTenantAndOrganizationEntityModel } from './base-entity.model';
 import { IOrganizationProject } from './organization-projects.model';
 import { IRelationalOrganizationTeam } from './organization-team.model';
 
-export interface ITaskRelatedIssueType
-	extends IBasePerTenantAndOrganizationEntityModel,
-		IRelationalOrganizationTeam {
+export interface ITaskRelatedIssueType extends IBasePerTenantAndOrganizationEntityModel, IRelationalOrganizationTeam {
 	name: string;
 	value: string;
 	description?: string;
@@ -20,8 +18,7 @@ export interface ITaskRelatedIssueTypeCreateInput
 	extends Omit<ITaskRelatedIssueType, 'isSystem'>,
 		Omit<ITaskRelatedIssueType, 'value'> {}
 
-export interface ITaskRelatedIssueTypeUpdateInput
-	extends Partial<ITaskRelatedIssueTypeCreateInput> {
+export interface ITaskRelatedIssueTypeUpdateInput extends Partial<ITaskRelatedIssueTypeCreateInput> {
 	id?: string;
 }
 
