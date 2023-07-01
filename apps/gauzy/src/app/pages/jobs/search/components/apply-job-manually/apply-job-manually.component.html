@@ -72,20 +72,35 @@
 										</div>
 									</div>
 								</div>
-								<div class="row">
-									<div class="col-12">
-										<div class="form-group">
-											<label class="label" for="proposal_template">
-												{{ 'PROPOSALS_PAGE.REGISTER.TEMPLATE' | translate }}
-											</label>
-											<ngx-proposal-template-select
-												id="proposal_template"
-												[employeeId]="form.get('employeeId').value"
-												(selectedChange)="onProposalTemplateChange($event)"
-											></ngx-proposal-template-select>
+
+								<ng-container *ngIf="form.get('employeeId').value">
+									<div class="row">
+										<div class="col-10">
+											<div class="form-group">
+												<label class="label" for="proposal_template">
+													{{ 'PROPOSALS_PAGE.REGISTER.TEMPLATE' | translate }}
+												</label>
+												<ngx-proposal-template-select
+													id="proposal_template"
+													[employeeId]="form.get('employeeId').value"
+													(selectedChange)="onProposalTemplateChange($event)"
+												>
+													<button
+														status="primary"
+														outline
+														nbButton
+														class="ml-3 mb-1"
+														debounceClick
+														(throttledClick)="proposal$.next(true)"
+													>
+														{{ 'BUTTONS.GENERATE_PROPOSAL' | translate }}
+													</button>
+												</ngx-proposal-template-select>
+											</div>
 										</div>
 									</div>
-								</div>
+								</ng-container>
+
 								<ng-template
 									[ngIf]="JobPostSourceEnum.UPWORK === employeeJobPost?.jobPost?.providerCode"
 								>

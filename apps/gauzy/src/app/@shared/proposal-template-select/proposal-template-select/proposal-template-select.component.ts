@@ -115,22 +115,24 @@ export class ProposalTemplateSelectComponent implements OnInit {
 		this.disabled = isDisabled;
 	}
 
-	getProposalTemplates() {
+	async getProposalTemplates() {
 		const { tenantId } = this._store.user;
 		const { id: organizationId } = this.organization;
+		const { employeeId } = this;
 
-		this._proposalTemplateService
-			.getAll({
+		try {
+			const { items = [] } = await this._proposalTemplateService.getAll({
 				where: {
 					organizationId,
 					tenantId,
-					...(this.employeeId ? { employeeId: this.employeeId } : {}),
+					...(employeeId ? { employeeId } : {}),
 				}
-			})
-			.then(({ items }) => {
-				this.proposalTemplates = items;
-				this.defaultSelectedTemplate();
 			});
+			this.proposalTemplates = items;
+			this.defaultSelectedTemplate();
+		} catch (error) {
+			console.log('Error while getting proposal templates', error);
+		}
 	}
 
 	defaultSelectedTemplate() {
