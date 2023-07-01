@@ -293,12 +293,19 @@ export class SearchComponent extends PaginationFilterBaseComponent implements On
 				});
 				break;
 			case 'hide':
-				await this.hideJobPost({
-					hide: true,
-					employeeId: $event.data.employeeId,
-					providerCode: $event.data.providerCode,
-					providerJobId: $event.data.providerJobId,
-				});
+				try {
+					await this.hideJobPost({
+						hide: true,
+						employeeId: $event.data.employeeId,
+						providerCode: $event.data.providerCode,
+						providerJobId: $event.data.providerJobId,
+					});
+
+					this.toastrService.success('TOASTR.MESSAGE.JOB_HIDDEN');
+					this.smartTableSource.refresh();
+				} catch (error) {
+					console.log('Error while hide job', error);
+				}
 				break;
 			default:
 				break;

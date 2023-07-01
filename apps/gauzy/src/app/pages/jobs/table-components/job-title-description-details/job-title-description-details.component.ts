@@ -22,6 +22,7 @@ export class JobTitleDescriptionDetailsComponent extends TranslationBaseComponen
 	}
 
 	@Input() rowData: any;
+	@Input() hideJobIcon: boolean = true;
 
 	value: string | number;
 

@@ -17,7 +17,7 @@
 		<ng-template [ngIf]="rowData?.jobPost?.jobStatus">
 			<job-status [rowData]="rowData"></job-status>
 		</ng-template>
-		<ng-template [ngIf]="rowData?.isActive && !rowData?.isArchived">
+		<ng-template [ngIf]="hideJobIcon">
 			<button
 				style="cursor: pointer"
 				status="basic"
