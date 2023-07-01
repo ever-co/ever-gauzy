@@ -4,7 +4,7 @@ import { TaskRelatedIssueTypesService } from '../../related-issue-type.service';
 import { FindRelatedIssueTypesQuery } from '../find-related-issue-type.query';
 
 @QueryHandler(FindRelatedIssueTypesQuery)
-export class FindRelatedIssueTypeesHandler
+export class FindRelatedIssueTypesHandler
 	implements IQueryHandler<FindRelatedIssueTypesQuery>
 {
 	constructor(

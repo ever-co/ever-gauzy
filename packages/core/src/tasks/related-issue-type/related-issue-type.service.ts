@@ -40,7 +40,7 @@ export class TaskRelatedIssueTypesService extends TaskStatusPrioritySizeService<
 	}
 
 	/**
-	 * Few RelatedIssueTypeses can't be removed/delete because they are global
+	 * Few RelatedIssueTypes can't be removed/delete because they are global
 	 *
 	 * @param id
 	 * @returns
@@ -96,7 +96,7 @@ export class TaskRelatedIssueTypesService extends TaskStatusPrioritySizeService<
 	 * @param entity
 	 * @returns
 	 */
-	async createBulkRelatedIssueTypesesByEntity(
+	async createBulkRelatedIssueTypesByEntity(
 		entity: Partial<ITaskRelatedIssueTypeCreateInput>
 	): Promise<ITaskRelatedIssueType[]> {
 		try {

@@ -22,7 +22,7 @@ export class OrganizationProjectRelatedIssueTypeBulkCreateHandler
 		/**
 		 * Create bulk task Related Issue Type for specific organization project
 		 */
-		return await this.taskRelatedIssueTypeService.createBulkRelatedIssueTypesesByEntity(
+		return await this.taskRelatedIssueTypeService.createBulkRelatedIssueTypesByEntity(
 			{
 				organizationId,
 				projectId,

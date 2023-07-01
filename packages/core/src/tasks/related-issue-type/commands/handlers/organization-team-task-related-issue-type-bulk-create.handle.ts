@@ -21,7 +21,7 @@ export class OrganizationTeamTaskRelatedIssueTypeBulkCreateHandler
 		/**
 		 * Create bulk task statuses for specific organization team
 		 */
-		return this.taskRelatedIssueTypeService.createBulkRelatedIssueTypesesByEntity(
+		return this.taskRelatedIssueTypeService.createBulkRelatedIssueTypesByEntity(
 			{
 				organizationId,
 				organizationTeamId,

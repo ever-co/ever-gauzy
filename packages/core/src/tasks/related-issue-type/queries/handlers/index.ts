@@ -1,3 +1,3 @@
-import { FindRelatedIssueTypeesHandler } from './find-related-issue-type.handler';
+import { FindRelatedIssueTypesHandler } from './find-related-issue-type.handler';
 
-export const QueryHandlers = [FindRelatedIssueTypeesHandler];
+export const QueryHandlers = [FindRelatedIssueTypesHandler];
