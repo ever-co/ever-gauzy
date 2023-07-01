@@ -25,6 +25,7 @@ import {
 	ITag,
 	ITask,
 	ITaskPriority,
+	ITaskRelatedIssueType,
 	ITaskSize,
 	ITaskStatus,
 	ITimeLog,
@@ -45,6 +46,7 @@ import {
 	Tag,
 	Task,
 	TaskPriority,
+	TaskRelatedIssueTypes,
 	TaskSize,
 	TaskStatus,
 	TenantOrganizationBaseEntity,
@@ -52,9 +54,10 @@ import {
 } from '../core/entities/internal';
 
 @Entity('organization_project')
-export class OrganizationProject extends TenantOrganizationBaseEntity
-	implements IOrganizationProject {
-
+export class OrganizationProject
+	extends TenantOrganizationBaseEntity
+	implements IOrganizationProject
+{
 	@Index()
 	@Column()
 	name: string;
@@ -151,7 +154,7 @@ export class OrganizationProject extends TenantOrganizationBaseEntity
 		onDelete: 'SET NULL',
 
 		/** Eager relations are always loaded automatically when relation's owner entity is loaded using find* methods. */
-		eager: true
+		eager: true,
 	})
 	@JoinColumn()
 	image?: IImageAsset;
@@ -216,6 +219,15 @@ export class OrganizationProject extends TenantOrganizationBaseEntity
 	 */
 	@OneToMany(() => TaskStatus, (status) => status.project)
 	statuses?: ITaskStatus[];
+
+	/**
+	 * Project Related Issue Type
+	 */
+	@OneToMany(
+		() => TaskRelatedIssueTypes,
+		(relatedIssueType) => relatedIssueType.organizationTeam
+	)
+	relatedIssueTypes?: ITaskRelatedIssueType[];
 
 	/**
 	 * Project Priorities
