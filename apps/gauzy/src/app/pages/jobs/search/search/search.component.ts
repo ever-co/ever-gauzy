@@ -387,7 +387,15 @@ export class SearchComponent extends PaginationFilterBaseComponent implements On
 		}
 		try {
 			const { employeeId, providerCode, providerJobId } = this.selectedJob;
-			console.log({ employeeId, providerCode, providerJobId });
+			await this.jobService.updateApplied({
+				employeeId,
+				providerCode,
+				providerJobId,
+				applied: true
+			});
+
+			this.toastrService.success('TOASTR.MESSAGE.JOB_APPLIED');
+			this.smartTableSource.refresh();
 		} catch (error) {
 			console.log('Error while applied job', error);
 		}
