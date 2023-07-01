@@ -28,6 +28,7 @@ import {
 	ITaskRelatedIssueType,
 	ITaskSize,
 	ITaskStatus,
+	ITaskVersion,
 	ITimeLog,
 	OrganizationProjectBudgetTypeEnum,
 	ProjectBillingEnum,
@@ -52,6 +53,7 @@ import {
 	TenantOrganizationBaseEntity,
 	TimeLog,
 } from '../core/entities/internal';
+import { TaskVersion } from 'tasks/versions/version.entity';
 
 @Entity('organization_project')
 export class OrganizationProject
@@ -240,6 +242,12 @@ export class OrganizationProject
 	 */
 	@OneToMany(() => TaskSize, (size) => size.project)
 	sizes?: ITaskSize[];
+
+	/**
+	 * Project Versions
+	 */
+	@OneToMany(() => TaskVersion, (version) => version.project)
+	versions?: ITaskVersion[];
 
 	/*
 	|--------------------------------------------------------------------------

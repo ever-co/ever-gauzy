@@ -27,11 +27,12 @@ import {
 	TaskSizeSubscriber,
 	TaskRelatedIssueTypesSubscriber,
 	TaskStatusSubscriber,
+	TaskVersionSubscriber,
 	TaskSubscriber,
 	TenantSubscriber,
 	TimeOffRequestSubscriber,
 	TimeSlotSubscriber,
-	UserSubscriber,
+	UserSubscriber
 } from './internal';
 
 /**
@@ -66,6 +67,7 @@ export const coreSubscribers = [
 	TaskSizeSubscriber,
 	TaskRelatedIssueTypesSubscriber,
 	TaskStatusSubscriber,
+	TaskVersionSubscriber,
 	TaskSubscriber,
 	TenantSubscriber,
 	TimeOffRequestSubscriber,

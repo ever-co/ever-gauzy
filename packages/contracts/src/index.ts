@@ -104,6 +104,7 @@ export * from './task-priority.model';
 export * from './task-size.model';
 export * from './task-related-issue-type.model';
 export * from './task-status.model';
+export * from './task-version.model';
 export * from './task.model';
 export * from './tenant.model';
 export * from './time-off.model';

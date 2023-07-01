@@ -29,6 +29,7 @@ import { InvoiceModule } from './invoice/invoice.module';
 import { InvoiceItemModule } from './invoice-item/invoice-item.module';
 import { TagModule } from './tags/tag.module';
 import { TaskStatusModule } from './tasks/statuses/status.module';
+import { TaskVersionModule } from './tasks/versions/version.module';
 import { SkillModule } from './skills/skill.module';
 import { LanguageModule } from './language/language.module';
 import { AppController } from './app.controller';
@@ -336,6 +337,7 @@ if (process.env.DB_TYPE === 'postgres') {
 		TaskRelatedIssueTypesModule,
 		TaskSizeModule,
 		TaskStatusModule,
+		TaskVersionModule,
 		OrganizationEmploymentTypeModule,
 		TimeTrackingModule,
 		FeatureModule,

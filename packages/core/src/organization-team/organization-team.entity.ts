@@ -23,6 +23,7 @@ import {
 	ITaskRelatedIssueType,
 	ITaskSize,
 	ITaskStatus,
+	ITaskVersion,
 	IUser,
 } from '@gauzy/contracts';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
@@ -46,6 +47,7 @@ import {
 	TaskRelatedIssueTypes,
 	TaskSize,
 	TaskStatus,
+	TaskVersion,
 	TenantOrganizationBaseEntity,
 	User,
 } from '../core/entities/internal';
@@ -210,6 +212,12 @@ export class OrganizationTeam
 	 */
 	@OneToMany(() => TaskSize, (size) => size.organizationTeam)
 	sizes?: ITaskSize[];
+
+	/**
+	 * Team Versions
+	 */
+	@OneToMany(() => TaskVersion, (version) => version.organizationTeam)
+	versions?: ITaskVersion[];
 
 	/**
 	 * Team Labels

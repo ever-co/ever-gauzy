@@ -135,6 +135,7 @@ import {
 	Warehouse,
 	WarehouseProduct,
 	WarehouseProductVariant,
+	TaskVersion,
 } from './internal';
 
 export const coreEntities = [
@@ -261,6 +262,7 @@ export const coreEntities = [
 	TaskSize,
 	TaskRelatedIssueTypes,
 	TaskStatus,
+	TaskVersion,
 	Tenant,
 	TenantSetting,
 	TimeLog,
