@@ -129,7 +129,8 @@
 		"EXPAND": "Развернуть",
 		"SHOW_MORE": "Показать больше",
 		"START_WORK": "Начать работу",
-		"APPLY": "Применять"
+		"APPLY": "Применять",
+		"GENERATE_PROPOSAL": "Создать предложение"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {
