@@ -13,7 +13,7 @@ import { GetTimeLogGroupByEmployeeCommand } from '../get-time-log-group-by-emplo
 export class GetTimeLogGroupByEmployeeHandler
 	implements ICommandHandler<GetTimeLogGroupByEmployeeCommand>
 {
-	constructor() {}
+	constructor() { }
 
 	public async execute(
 		command: GetTimeLogGroupByEmployeeCommand
@@ -40,7 +40,7 @@ export class GetTimeLogGroupByEmployeeHandler
 					.value();
 				const avgActivity =
 					(reduce(pluck(slots, 'overall'), ArraySum, 0) * 100) /
-						reduce(pluck(slots, 'duration'), ArraySum, 0) || 0;
+					reduce(pluck(slots, 'duration'), ArraySum, 0) || 0;
 
 				const employee =
 					byEmployeeLogs.length > 0
@@ -80,11 +80,11 @@ export class GetTimeLogGroupByEmployeeHandler
 										0
 									) *
 										100) /
-										reduce(
-											pluck(slots, 'duration'),
-											ArraySum,
-											0
-										) || 0;
+									reduce(
+										pluck(slots, 'duration'),
+										ArraySum,
+										0
+									) || 0;
 
 								const project =
 									byProjectLogs.length > 0
@@ -100,10 +100,13 @@ export class GetTimeLogGroupByEmployeeHandler
 									byProjectLogs.length > 0
 										? byProjectLogs[0].organizationContact
 										: project
-										? project.organizationContact
-										: null;
+											? project.organizationContact
+											: null;
+
+								const description = byProjectLogs.length > 0 ? byProjectLogs[0].description : null;
 
 								return {
+									description,
 									task,
 									project,
 									client,
