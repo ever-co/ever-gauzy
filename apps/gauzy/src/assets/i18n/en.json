@@ -1059,6 +1059,7 @@
 		"TIME": "Time",
 		"PROJECT": "Project",
 		"CLIENT": "Client",
+		"NOTES": "Notes",
 		"PROJECTS_WORKED": "Projects Worked",
 		"APPS_AND_URLS_REPORT": "Apps & URLs Report",
 		"ACTIVITY": "Activity",

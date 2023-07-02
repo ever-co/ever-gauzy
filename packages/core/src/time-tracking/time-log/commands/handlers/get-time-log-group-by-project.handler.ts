@@ -13,7 +13,7 @@ import { ArraySum } from '@gauzy/common';
 export class GetTimeLogGroupByProjectHandler
 	implements ICommandHandler<GetTimeLogGroupByProjectCommand>
 {
-	constructor() {}
+	constructor() { }
 
 	public async execute(
 		command: GetTimeLogGroupByProjectCommand
@@ -40,7 +40,7 @@ export class GetTimeLogGroupByProjectHandler
 					.value();
 				const avgActivity =
 					(reduce(pluck(slots, 'overall'), ArraySum, 0) * 100) /
-						reduce(pluck(slots, 'duration'), ArraySum, 0) || 0;
+					reduce(pluck(slots, 'duration'), ArraySum, 0) || 0;
 
 				const project =
 					byProjectLogs.length > 0 ? byProjectLogs[0].project : null;
@@ -49,8 +49,8 @@ export class GetTimeLogGroupByProjectHandler
 					byProjectLogs.length > 0
 						? byProjectLogs[0].organizationContact
 						: project
-						? project.organizationContact
-						: null;
+							? project.organizationContact
+							: null;
 
 				const byDate = chain(byProjectLogs)
 					.groupBy((log) =>
@@ -85,11 +85,11 @@ export class GetTimeLogGroupByProjectHandler
 										0
 									) *
 										100) /
-										reduce(
-											pluck(slots, 'duration'),
-											ArraySum,
-											0
-										) || 0;
+									reduce(
+										pluck(slots, 'duration'),
+										ArraySum,
+										0
+									) || 0;
 
 								const task =
 									byEmployeeLogs.length > 0
@@ -101,7 +101,13 @@ export class GetTimeLogGroupByProjectHandler
 										? byEmployeeLogs[0].employee
 										: null;
 
+								const description = byEmployeeLogs.length > 0
+									? byEmployeeLogs[0].description
+									: null;
+
+
 								return {
+									description,
 									task,
 									employee,
 									sum,
