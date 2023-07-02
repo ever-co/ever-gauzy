@@ -17,7 +17,7 @@ import {
 	ITimeLog
 } from '@gauzy/contracts';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsNumber, IsDateString, IsUUID, IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import { IsNumber, IsDateString, IsUUID, IsNotEmpty, IsOptional } from 'class-validator';
 import {
 	Activity,
 	Employee,
@@ -30,12 +30,6 @@ import { TimeSlotMinute } from './time-slot-minute.entity';
 @Entity('time_slot')
 export class TimeSlot extends TenantOrganizationBaseEntity
 	implements ITimeSlot {
-
-	@ApiPropertyOptional({ type: () => String })
-	@IsOptional()
-	@IsString()
-	@Column({ nullable: true })
-	description?: string;
 
 	@ApiPropertyOptional({ type: () => Number, default: 0 })
 	@IsOptional()

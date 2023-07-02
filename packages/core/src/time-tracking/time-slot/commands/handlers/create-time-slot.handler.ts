@@ -33,7 +33,7 @@ export class CreateTimeSlotHandler
 
 	public async execute(command: CreateTimeSlotCommand): Promise<TimeSlot> {
 		const { input } = command;
-		let { organizationId, employeeId, activities = [], description = null } = input;
+		let { organizationId, employeeId, activities = [] } = input;
 
 		/** Get already running TimeLog based on source and logType */
 		const source = input.source || TimeLogSourceEnum.DESKTOP;
@@ -112,7 +112,6 @@ export class CreateTimeSlotHandler
 				timeSlot.tenantId = tenantId;
 				timeSlot.organizationId = organizationId;
 				timeSlot.employeeId = employeeId;
-				timeSlot.description = description;
 				timeSlot.timeLogs = [];
 			}
 		}

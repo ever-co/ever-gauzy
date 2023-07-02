@@ -190,7 +190,6 @@ export interface ITimeSlot extends IBasePerTenantAndOrganizationEntityModel {
 	timeSlotMinutes?: ITimeSlotMinute[];
 	project?: IOrganizationProject;
 	projectId?: string;
-	description?: string;
 	duration?: number;
 	keyboard?: number;
 	mouse?: number;
