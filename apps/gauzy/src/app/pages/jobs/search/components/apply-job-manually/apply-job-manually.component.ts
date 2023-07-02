@@ -271,6 +271,12 @@ export class ApplyJobManuallyComponent extends TranslationBaseComponent implemen
 	onProposalTemplateChange(item: IEmployeeProposalTemplate | null): void {
 		/** Generate proposal using GauzyAI */
 		this.proposalTemplate = item || null;
+
+		/** Patch proposal value inside form directive */
+		this.form.patchValue({
+			proposal: this.proposalTemplate?.content || null,
+			details: this.proposalTemplate?.content || null,
+		});
 	}
 
 	/**
@@ -282,8 +288,6 @@ export class ApplyJobManuallyComponent extends TranslationBaseComponent implemen
 		}
 		const { employeeId, proposal, rate, details, attachments } = this.form.value;
 		const { providerCode, providerJobId } = this.employeeJobPost;
-
-		console.log(this.getPlainText());
 
 		/** Apply job post input */
 		const applyJobPost: IEmployeeJobApplication = {
@@ -418,7 +422,6 @@ export class ApplyJobManuallyComponent extends TranslationBaseComponent implemen
 							if (isNotEmpty(application)) {
 								// Replace line breaks with spaces
 								const proposal = application.proposal.replace(/\n\n/g, '<br/><br>').replace(/\n/g, '<br/>');
-								console.log(proposal);
 
 								// Set ckeditor html content
 								this.ckeditor.instance.document.getBody().setHtml(proposal);
