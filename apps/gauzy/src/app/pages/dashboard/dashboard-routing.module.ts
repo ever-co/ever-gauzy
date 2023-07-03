@@ -87,7 +87,7 @@ const routes: Routes = [
 					},
 					selectors: {
 						project: false,
-						employee: false
+						employee: true
 					},
 					permissions: {
 						only: [PermissionsEnum.ALL_ORG_VIEW]
