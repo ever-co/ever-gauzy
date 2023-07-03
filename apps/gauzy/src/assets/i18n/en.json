@@ -2966,7 +2966,11 @@
 		"FILTER_BY_AUTHOR": "Filter by author",
 		"CATEGORY_EDIT_ADDED": "Category was added",
 		"CATEGORY_EDIT_UPDATED": "Category was changed",
-		"CATEGORY_EDIT_DELETED": "Category was removed"
+		"CATEGORY_EDIT_DELETED": "Category was removed",
+		"ERRORS": {
+			"NAME_REQUIRE": "Name of base is require.",
+			"MAXIMUM_LENGTH": "Maximum length exceeded 255 characters."
+		}
 	},
 	"PROJECT_MANAGEMENT_PAGE": {
 		"THIS_TAB_WILL_SHOW_PROJECT_MANAGEMENT_CHARTS_AND_AGGREGATED_DATA": "This tab will show project management charts and aggregated data."
