@@ -10,7 +10,7 @@ import { Subject } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
 import { CKEditor4 } from 'ckeditor4-angular/ckeditor';
 import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { AbstractControl, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { HelpCenterArticleService } from '../../../@core/services/help-center-article.service';
 import { EmployeesService } from '../../../@core/services';
 import { takeUntil } from 'rxjs/operators';
@@ -59,7 +59,7 @@ export class AddArticleComponent
 	selectedEmployeeIds = null;
 	employeeIds: string[] = [];
 	organization: IOrganization;
-	ckConfig : CKEditor4.Config = {
+	ckConfig: CKEditor4.Config = {
 		...ckEditorConfig,
 		height: "100"
 	};
@@ -67,8 +67,20 @@ export class AddArticleComponent
 	ngOnInit() {
 		this.organization = this.store.selectedOrganization;
 		this.form = this.fb.group({
-			name: ['', Validators.required],
-			desc: ['', Validators.required],
+			name: [
+				'',
+				Validators.compose([
+					Validators.required,
+					Validators.maxLength(255),
+				])
+			],
+			desc: [
+				'',
+				Validators.compose([
+					Validators.required,
+					Validators.maxLength(255),
+				])
+			],
 			data: ['', Validators.required],
 			valid: [null, Validators.required]
 		});
@@ -197,5 +209,13 @@ export class AddArticleComponent
 	ngOnDestroy() {
 		this._ngDestroy$.next();
 		this._ngDestroy$.complete();
+	}
+
+	public get name(): AbstractControl {
+		return this.form.get('name');
+	}
+
+	public get desc(): AbstractControl {
+		return this.form.get('desc');
 	}
 }
