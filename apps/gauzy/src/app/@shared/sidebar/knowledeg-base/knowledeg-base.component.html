@@ -139,14 +139,20 @@
 							"
 							type="text"
 							size="24"
-							maxlength="18"
 							fullWidth
 							nbInput
 							id="name"
 							[status]="
 								isInvalidControl('name') ? 'danger' : 'basic'
 							"
+							class="mb-1"
 						/>
+						<div *ngIf="name.touched && name.hasError('required')" class="caption status-danger">
+							{{ 'HELP_PAGE.ERRORS.NAME_REQUIRE' | translate }}
+						</div>
+						<div *ngIf="name.hasError('maxlength')" class="caption status-danger">
+							{{ 'HELP_PAGE.ERRORS.MAXIMUM_LENGTH' | translate }}
+						</div>
 					</div>
 				</div>
 				<div class="col-12">
@@ -159,11 +165,14 @@
 							[placeholder]="'HELP_PAGE.DESCRIPTION' | translate"
 							type="text"
 							size="30"
-							maxlength="26"
 							fullWidth
 							nbInput
 							id="description"
+							class="mb-1"
 						/>
+						<div *ngIf="description.hasError('maxlength')" class="caption status-danger">
+							{{ 'HELP_PAGE.ERRORS.MAXIMUM_LENGTH' | translate }}
+						</div>
 					</div>
 				</div>
 			</div>
