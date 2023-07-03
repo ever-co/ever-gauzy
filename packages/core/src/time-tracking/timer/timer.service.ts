@@ -134,7 +134,7 @@ export class TimerService {
 						TimeLogSourceEnum.WEB_TIMER,
 					]),
 				startedAt: Between(start, end),
-				stoppedAt: Not(IsNull()),
+				stoppedAt: source ? Not(IsNull()) : undefined,
 				employeeId,
 				tenantId,
 				organizationId,
