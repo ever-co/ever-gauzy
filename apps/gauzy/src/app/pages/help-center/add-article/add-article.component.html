@@ -48,9 +48,15 @@
 							formControlName="name"
 							type="text"
 							size="24"
-							maxlength="18"
 							nbInput
+							class="mb-1"
 						/>
+						<div *ngIf="name.touched && name.hasError('required')" class="caption status-danger">
+							{{ 'HELP_PAGE.ERRORS.ARTICLE_NAME_REQUIRE' | translate }}
+						</div>
+						<div *ngIf="name.hasError('maxlength')" class="caption status-danger">
+							{{ 'HELP_PAGE.ERRORS.MAXIMUM_LENGTH' | translate }}
+						</div>
 					</div>
 					<div class="second-row">
 						<p class="label">
@@ -60,9 +66,15 @@
 							formControlName="desc"
 							type="text"
 							size="30"
-							maxlength="26"
 							nbInput
-						/>
+							class="mb-1"
+							/>
+						<div *ngIf="desc.touched && desc.hasError('required')" class="caption status-danger">
+							{{ 'HELP_PAGE.ERRORS.ARTICLE_DESC_REQUIRE' | translate }}
+						</div>
+						<div *ngIf="desc.hasError('maxlength')" class="caption status-danger">
+							{{ 'HELP_PAGE.ERRORS.MAXIMUM_LENGTH' | translate }}
+						</div>
 					</div>
 				</div>
 			</div>
