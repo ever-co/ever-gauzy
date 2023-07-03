@@ -291,6 +291,7 @@ export class TeamComponent extends BaseSelectorFilterComponent implements OnInit
 			data: null,
 			isSelected: false
 		};
+		this.request = {};
 	}
 
 	private _groupBy(searchId: string, array: any[]): any[] {
