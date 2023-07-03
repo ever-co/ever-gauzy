@@ -4,6 +4,7 @@ import {
 	IGetTimeLogReportInput,
 	IOrganizationTeam,
 	IOrganizationTeamEmployee,
+	ISelectedEmployee,
 	ITimeLog,
 	ReportGroupFilterEnum
 } from '@gauzy/contracts';
@@ -25,6 +26,7 @@ export class TeamComponent extends BaseSelectorFilterComponent implements OnInit
 	private _logs: ITimeLog[] = [];
 	private _countsStatistics: any;
 	private _dailyLogs: any[] = [];
+	private _selectedEmployee: ISelectedEmployee;
 
 	constructor(
 		private readonly _organizationTeamsService: OrganizationTeamsService,
@@ -130,6 +132,15 @@ export class TeamComponent extends BaseSelectorFilterComponent implements OnInit
 				untilDestroyed(this)
 			)
 			.subscribe();
+		this._store.selectedEmployee$
+			.pipe(
+				tap((employee: ISelectedEmployee) => {
+					this._selectedEmployee = employee;
+				}),
+				tap(() => this.subject$.next(true)),
+				untilDestroyed(this)
+			)
+			.subscribe();
 	}
 
 	public fnTracker = (index: number, item: IOrganizationTeam) => {
@@ -178,6 +189,12 @@ export class TeamComponent extends BaseSelectorFilterComponent implements OnInit
 		let allMembers = [];
 		let allMembersWorking = [];
 		this._todayTeamsWorkers = this._teams.map((team) => {
+			const isTeamMember = team.members.some(
+				(member) => member.employeeId === this._selectedEmployee.id
+			);
+			if (!isTeamMember && this._selectedEmployee.id) {
+				return null;
+			}
 			const members = team.members.map((member) => {
 				const memberDailyLog = this._dailyLogs.filter(
 					(dailyLog) => dailyLog.employee.userId === member.employee.userId
@@ -215,7 +232,6 @@ export class TeamComponent extends BaseSelectorFilterComponent implements OnInit
 					activity: memberDailyLog ? memberDailyLog.activity : null
 				};
 			});
-
 			const membersOnline = members.filter((member) => member.isRunningTimer);
 			const membersWorkingToday = members.filter((member) => member.isWorkingToday);
 			const membersNotWorkingToday = members.filter((member) => !member.isWorkingToday);
@@ -233,7 +249,7 @@ export class TeamComponent extends BaseSelectorFilterComponent implements OnInit
 					countTotal: members.length
 				}
 			};
-		});
+		}).filter((team) => !!team);
 
 		projects = this._uniques(projects);
 		allMembers = this._uniques(allMembers);
