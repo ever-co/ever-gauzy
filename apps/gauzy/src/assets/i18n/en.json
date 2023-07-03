@@ -2969,7 +2969,9 @@
 		"CATEGORY_EDIT_DELETED": "Category was removed",
 		"ERRORS": {
 			"NAME_REQUIRE": "Name of base is require.",
-			"MAXIMUM_LENGTH": "Maximum length exceeded 255 characters."
+			"MAXIMUM_LENGTH": "Maximum length exceeded 255 characters.",
+			"ARTICLE_DESC_REQUIRE": "Article description is require",
+			"ARTICLE_NAME_REQUIRE": "Name of the article is require."
 		}
 	},
 	"PROJECT_MANAGEMENT_PAGE": {
