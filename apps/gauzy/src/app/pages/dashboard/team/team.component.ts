@@ -188,68 +188,68 @@ export class TeamComponent extends BaseSelectorFilterComponent implements OnInit
 		let projects = [];
 		let allMembers = [];
 		let allMembersWorking = [];
-		this._todayTeamsWorkers = this._teams.map((team) => {
-			const isTeamMember = team.members.some(
-				(member) => member.employeeId === this._selectedEmployee.id
-			);
-			if (!isTeamMember && this._selectedEmployee.id) {
-				return null;
-			}
-			const members = team.members.map((member) => {
-				const memberDailyLog = this._dailyLogs.filter(
-					(dailyLog) => dailyLog.employee.userId === member.employee.userId
-				)[0];
-				const logs = this._logs
-					.map((log) => (log.employee.userId === member.employee.userId ? log : null))
-					.filter((log) => !!log);
-				const isWorkingToday = logs.length > 0;
-				const groupByTask = isWorkingToday ? this._groupBy('taskId', logs) : [];
-				const groupByProject = isWorkingToday ? this._groupBy('projectId', logs) : [];
-				const projectKeys = Object.keys(groupByProject);
-				const taskKeys = Object.keys(groupByTask);
-				const tasks = taskKeys.map((value: string) => {
-					return {
-						...groupByTask[value][0].task,
-						duration: groupByTask[value].reduce((accumulator, log) => {
-							return accumulator + log.duration;
-						}, 0)
-					};
-				});
-				const proj = projectKeys.map((value: string) => {
-					return {
-						...groupByProject[value][0].project
-					};
-				});
-				projects.push(...proj);
-				return {
-					...member,
-					isRunningTimer: isWorkingToday ? logs.reverse()[0].isRunning : false,
-					todayWorkDuration: memberDailyLog ? memberDailyLog.sum : null,
-					isWorkingToday: isWorkingToday,
-					tasks: tasks,
-					projects: proj,
-					workPeriod: this._period,
-					activity: memberDailyLog ? memberDailyLog.activity : null
-				};
-			});
-			const membersOnline = members.filter((member) => member.isRunningTimer);
-			const membersWorkingToday = members.filter((member) => member.isWorkingToday);
-			const membersNotWorkingToday = members.filter((member) => !member.isWorkingToday);
-			allMembers.push(...members);
-			allMembersWorking.push(...membersWorkingToday);
-			return {
-				...team,
-				membersWorkingToday: this._uniques(membersWorkingToday),
-				membersNotWorkingToday: this._uniques(membersNotWorkingToday),
-				membersOnline: this._uniques(membersOnline),
-				statistics: {
-					countOnline: membersOnline.length,
-					countWorking: membersWorkingToday.length,
-					countNotWorking: membersNotWorkingToday.length,
-					countTotal: members.length
+		this._todayTeamsWorkers = this._teams
+			.map((team) => {
+				const isTeamMember = team.members.some((member) => member.employeeId === this._selectedEmployee.id);
+				if (!isTeamMember && this._selectedEmployee.id) {
+					return null;
 				}
-			};
-		}).filter((team) => !!team);
+				const members = team.members.map((member) => {
+					const memberDailyLog = this._dailyLogs.filter(
+						(dailyLog) => dailyLog.employee.userId === member.employee.userId
+					)[0];
+					const logs = this._logs
+						.map((log) => (log.employee.userId === member.employee.userId ? log : null))
+						.filter((log) => !!log);
+					const isWorkingToday = logs.length > 0;
+					const groupByTask = isWorkingToday ? this._groupBy('taskId', logs) : [];
+					const groupByProject = isWorkingToday ? this._groupBy('projectId', logs) : [];
+					const projectKeys = Object.keys(groupByProject);
+					const taskKeys = Object.keys(groupByTask);
+					const tasks = taskKeys.map((value: string) => {
+						return {
+							...groupByTask[value][0].task,
+							duration: groupByTask[value].reduce((accumulator, log) => {
+								return accumulator + log.duration;
+							}, 0)
+						};
+					});
+					const proj = projectKeys.map((value: string) => {
+						return {
+							...groupByProject[value][0].project
+						};
+					});
+					projects.push(...proj);
+					return {
+						...member,
+						isRunningTimer: isWorkingToday ? logs.reverse()[0].isRunning : false,
+						todayWorkDuration: memberDailyLog ? memberDailyLog.sum : null,
+						isWorkingToday: isWorkingToday,
+						tasks: tasks,
+						projects: proj,
+						workPeriod: this._period,
+						activity: memberDailyLog ? memberDailyLog.activity : null
+					};
+				});
+				const membersOnline = members.filter((member) => member.isRunningTimer);
+				const membersWorkingToday = members.filter((member) => member.isWorkingToday);
+				const membersNotWorkingToday = members.filter((member) => !member.isWorkingToday);
+				allMembers.push(...members);
+				allMembersWorking.push(...membersWorkingToday);
+				return {
+					...team,
+					membersWorkingToday: this._uniques(membersWorkingToday),
+					membersNotWorkingToday: this._uniques(membersNotWorkingToday),
+					membersOnline: this._uniques(membersOnline),
+					statistics: {
+						countOnline: membersOnline.length,
+						countWorking: membersWorkingToday.length,
+						countNotWorking: membersNotWorkingToday.length,
+						countTotal: members.length
+					}
+				};
+			})
+			.filter((team) => !!team);
 
 		projects = this._uniques(projects);
 		allMembers = this._uniques(allMembers);
