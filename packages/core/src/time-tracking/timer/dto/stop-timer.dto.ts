@@ -7,9 +7,8 @@ export class StopTimerDTO extends StartTimerDTO implements ITimerToggleInput {
 	@ApiProperty({
 		type: () => String,
 		enum: TimeLogSourceEnum,
-		required: true,
 	})
-	@IsEnum(TimeLogSourceEnum)
 	@IsOptional()
+	@IsEnum(TimeLogSourceEnum)
 	readonly source: TimeLogSourceEnum;
 }

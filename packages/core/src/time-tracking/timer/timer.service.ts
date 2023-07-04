@@ -96,22 +96,13 @@ export class TimerService {
 			},
 			where: {
 				deletedAt: IsNull(),
-				source:
-					source ||
-					In([
-						TimeLogSourceEnum.BROWSER_EXTENSION,
-						TimeLogSourceEnum.DESKTOP,
-						TimeLogSourceEnum.HUBSTAFF,
-						TimeLogSourceEnum.MOBILE,
-						TimeLogSourceEnum.UPWORK,
-						TimeLogSourceEnum.WEB_TIMER,
-					]),
+				...(source
+					? { source, stoppedAt: Not(IsNull()), isRunning: false }
+					: {}),
 				startedAt: Between(start, end),
-				stoppedAt: source ? Not(IsNull()) : undefined,
 				employeeId,
 				tenantId,
 				organizationId,
-				isRunning: source ? false : undefined,
 			},
 			order: {
 				startedAt: 'DESC',
@@ -123,16 +114,7 @@ export class TimerService {
 		const lastLog = await this.timeLogRepository.findOne({
 			where: {
 				deletedAt: IsNull(),
-				source:
-					source ||
-					In([
-						TimeLogSourceEnum.BROWSER_EXTENSION,
-						TimeLogSourceEnum.DESKTOP,
-						TimeLogSourceEnum.HUBSTAFF,
-						TimeLogSourceEnum.MOBILE,
-						TimeLogSourceEnum.UPWORK,
-						TimeLogSourceEnum.WEB_TIMER,
-					]),
+				...(source ? { source, stoppedAt: Not(IsNull()) } : {}),
 				startedAt: Between(start, end),
 				stoppedAt: source ? Not(IsNull()) : undefined,
 				employeeId,
