@@ -5,7 +5,7 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { CommandBus } from '@nestjs/cqrs';
-import { Repository, IsNull, Between, Not, In } from 'typeorm';
+import { Repository, IsNull, Between, Not } from 'typeorm';
 import * as moment from 'moment';
 import {
 	TimeLogType,
