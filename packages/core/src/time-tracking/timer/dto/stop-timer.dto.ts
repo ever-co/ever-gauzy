@@ -6,7 +6,7 @@ import { StartTimerDTO } from './start-timer.dto';
 export class StopTimerDTO extends StartTimerDTO implements ITimerToggleInput {
 	@ApiProperty({
 		type: () => String,
-		enum: TimeLogSourceEnum,
+		enum: TimeLogSourceEnum
 	})
 	@IsOptional()
 	@IsEnum(TimeLogSourceEnum)
