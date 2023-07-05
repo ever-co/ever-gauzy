@@ -1,12 +1,16 @@
 <nb-card>
-	<nb-card-header class="header d-flex justify-content-between align-items-center p-3">
+	<nb-card-header
+		class="header d-flex justify-content-between align-items-center p-3"
+	>
 		<h4>
 			<ngx-header-title>
 				{{ 'JOBS.JOB_SEARCH' | translate }}
 			</ngx-header-title>
 		</h4>
 		<div>
-			<ng-template [ngxPermissionsOnly]="PermissionsEnum.ORG_JOB_EMPLOYEE_VIEW">
+			<ng-template
+				[ngxPermissionsOnly]="PermissionsEnum.ORG_JOB_EMPLOYEE_VIEW"
+			>
 				<button
 					status="primary"
 					[routerLink]="'/pages/jobs/employee'"
@@ -18,7 +22,9 @@
 					{{ 'JOBS.EMPLOYEES' | translate }}
 				</button>
 			</ng-template>
-			<ng-template [ngxPermissionsOnly]="PermissionsEnum.ORG_JOB_MATCHING_VIEW">
+			<ng-template
+				[ngxPermissionsOnly]="PermissionsEnum.ORG_JOB_MATCHING_VIEW"
+			>
 				<button
 					status="primary"
 					[routerLink]="'/pages/jobs/matching'"
@@ -30,7 +36,11 @@
 					{{ 'JOBS.MATCHINGS' | translate }}
 				</button>
 			</ng-template>
-			<ng-template [ngxPermissionsOnly]="PermissionsEnum.ORG_PROPOSAL_TEMPLATES_VIEW">
+			<ng-template
+				[ngxPermissionsOnly]="
+					PermissionsEnum.ORG_PROPOSAL_TEMPLATES_VIEW
+				"
+			>
 				<button
 					status="primary"
 					[routerLink]="'/pages/jobs/proposal-template'"
@@ -63,16 +73,20 @@
 				>
 					{{ 'BUTTONS.AUTO_REFRESH' | translate }}
 				</nb-toggle>
+				<ng-container *ngIf="autoRefresh">
+					<ng-container *ngTemplateOutlet="sync"></ng-container>
+				</ng-container>
 				<button
 					*ngIf="!autoRefresh"
 					type="button"
-					(click)="smartTableSource.refresh()"
+					(click)="refresh()"
 					nbButton
 					status="basic"
 					outline
 					size="small"
+					class="refresh-button"
 				>
-					<nb-icon icon="refresh-outline"></nb-icon>
+					<ng-container *ngTemplateOutlet="sync"></ng-container>
 					{{ 'BUTTONS.REFRESH' | translate }}
 				</button>
 			</div>
@@ -141,10 +155,19 @@
 												formControlName="jobSource"
 											>
 												<nb-option
-													*ngFor=" let source of JobPostSourceEnum | keyvalue"
-													[value]="source?.value | lowercase"
+													*ngFor="
+														let source of JobPostSourceEnum
+															| keyvalue
+													"
+													[value]="
+														source?.value
+															| lowercase
+													"
 												>
-													{{ 'JOBS.' + source.key | translate }}
+													{{
+														'JOBS.' + source.key
+															| translate
+													}}
 												</nb-option>
 											</nb-select>
 										</div>
@@ -171,10 +194,18 @@
 												formControlName="jobType"
 											>
 												<nb-option
-													*ngFor=" let type of JobPostTypeEnum | keyvalue "
-													[value]="type.value | lowercase"
+													*ngFor="
+														let type of JobPostTypeEnum
+															| keyvalue
+													"
+													[value]="
+														type.value | lowercase
+													"
 												>
-													{{ 'JOBS.' + type.key | translate }}
+													{{
+														'JOBS.' + type.key
+															| translate
+													}}
 												</nb-option>
 											</nb-select>
 										</div>
@@ -201,10 +232,18 @@
 												[multiple]="true"
 											>
 												<nb-option
-													*ngFor=" let type of JobPostStatusEnum | keyvalue"
-													[value]="type.value | lowercase"
+													*ngFor="
+														let type of JobPostStatusEnum
+															| keyvalue
+													"
+													[value]="
+														type.value | lowercase
+													"
 												>
-													{{ 'JOBS.' + type.key | translate }}
+													{{
+														'JOBS.' + type.key
+															| translate
+													}}
 												</nb-option>
 											</nb-select>
 										</div>
@@ -402,4 +441,15 @@
 			{{ 'BUTTONS.HIDE_ALL' | translate }}
 		</button>
 	</ng-template>
+</ng-template>
+
+<ng-template #sync>
+	<div class="sync-container">
+		<nb-icon
+			class="sync"
+			icon="sync-outline"
+			[ngClass]="{ spin: isRefresh }"
+			size="small"
+		></nb-icon>
+	</div>
 </ng-template>

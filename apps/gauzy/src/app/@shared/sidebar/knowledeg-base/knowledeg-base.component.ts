@@ -3,7 +3,7 @@ import { NbDialogRef } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { TranslationBaseComponent } from '../../language-base/translation-base.component';
 import { HelpCenterActionEnum, HelpCenterFlagEnum, IHelpCenter, ILanguage } from '@gauzy/contracts';
-import { FormGroup, FormBuilder, Validators } from '@angular/forms';
+import { FormGroup, FormBuilder, Validators, AbstractControl } from '@angular/forms';
 import { HelpCenterService, Store } from '../../../@core';
 
 @Component({
@@ -45,9 +45,15 @@ export class KnowledgeBaseComponent
 
 	static buildForm(formBuilder: FormBuilder): FormGroup {
 		const form = formBuilder.group({
-			name: ['', Validators.required],
+			name: [
+				'',
+				Validators.compose([
+					Validators.required,
+					Validators.maxLength(255),
+				]),
+			],
 			color: ['#d53636'],
-			description: [],
+			description: ['', Validators.maxLength(255)],
 			language: ['', Validators.required],
 			icon: ['', Validators.required],
 			privacy: [false]
@@ -92,35 +98,35 @@ export class KnowledgeBaseComponent
 	}
 
 	togglePrivacy(event: boolean) {
-		this.form.patchValue({ 
-			privacy: event 
+		this.form.patchValue({
+			privacy: event
 		});
 	}
 
 	selectedLanguage(event: ILanguage) {
-		this.form.patchValue({ 
+		this.form.patchValue({
 			language: event.code
 		});
 	}
 
 	selectedColor(event) {
-		this.form.patchValue({ 
-			color: event 
+		this.form.patchValue({
+			color: event
 		});
 	}
 
 	patchValue(data: any) {
  		const { name, description, color, language, icon, privacy } = data;
 		const selectedIcon = this.icons.find((item) => item.value === icon);
-		this.form.setValue({ 
-			name, 
-			description, 
-			color, 
-			language, 
+		this.form.setValue({
+			name,
+			description,
+			color,
+			language,
 			icon: selectedIcon,
 			privacy: (privacy === 'eye-outline') ? true : false
 		});
-		this.form.updateValueAndValidity();	
+		this.form.updateValueAndValidity();
 	}
 
 	async submit() {
@@ -140,7 +146,7 @@ export class KnowledgeBaseComponent
 
 		if (this.editType === HelpCenterActionEnum.EDIT) {
 			this.base = await this.helpCenterService.update(
-				this.base.id, 
+				this.base.id,
 				{ ...contextRequest }
 			);
 		} else {
@@ -182,6 +188,14 @@ export class KnowledgeBaseComponent
 	*/
 	get icon() {
 		return this.form.get('icon').value;
+	}
+
+	public get name(): AbstractControl {
+		return this.form.get('name');
+	}
+
+	public get description(): AbstractControl {
+		return this.form.get('description');
 	}
 
 	isInvalidControl(control: string) {

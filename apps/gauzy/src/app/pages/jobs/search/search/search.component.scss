@@ -87,6 +87,35 @@
   }
 }
 
+.sync-container {
+	.sync {
+		color: var(--gauzy-text-color-2);
+		cursor: pointer;
+		margin: 0 !important;
+		&.spin {
+			color: var(--text-primary-color);
+			animation: rotate 1s linear 0s infinite;
+		}
+		@keyframes rotate {
+			0% {
+				transform: rotate(0deg);
+			}
+			100% {
+				transform: rotate(360deg);
+			}
+		}
+	}
+	span {
+		color: var(--text-primary-color);
+	}
+}
+
+.refresh-button {
+	display: flex;
+	align-items: center;
+	gap: 4px;
+}
+
 :host .gauzy-button-container {
   position: absolute;
   @include nb-ltr(right, 1rem);
