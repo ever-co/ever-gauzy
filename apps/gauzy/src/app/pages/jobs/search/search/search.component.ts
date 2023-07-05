@@ -1,14 +1,7 @@
 import { Component, OnDestroy, OnInit, AfterViewInit, ViewChild } from '@angular/core';
 import { FormBuilder, FormGroup } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
-import {
-	BehaviorSubject,
-	combineLatest,
-	firstValueFrom,
-	Subject,
-	Subscription,
-	timer,
-} from 'rxjs';
+import { BehaviorSubject, combineLatest, firstValueFrom, Subject, Subscription, timer } from 'rxjs';
 import { debounceTime, filter, tap } from 'rxjs/operators';
 import {
 	IEmployeeJobApplication,
@@ -23,14 +16,9 @@ import {
 	JobPostStatusEnum,
 	JobPostTypeEnum,
 	JobSearchTabsEnum,
-	PermissionsEnum,
+	PermissionsEnum
 } from '@gauzy/contracts';
-import {
-	distinctUntilChange,
-	isEmpty,
-	isNotEmpty,
-	toUTC,
-} from '@gauzy/common-angular';
+import { distinctUntilChange, isEmpty, isNotEmpty, toUTC } from '@gauzy/common-angular';
 import { NbDialogService, NbTabComponent } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
@@ -38,14 +26,9 @@ import { Ng2SmartTableComponent } from 'ng2-smart-table';
 import { EmployeeLinksComponent } from './../../../../@shared/table-components';
 import {
 	IPaginationBase,
-	PaginationFilterBaseComponent,
+	PaginationFilterBaseComponent
 } from '../../../../@shared/pagination/pagination-filter-base.component';
-import {
-	DateRangePickerBuilderService,
-	JobService,
-	Store,
-	ToastrService,
-} from './../../../../@core/services';
+import { DateRangePickerBuilderService, JobService, Store, ToastrService } from './../../../../@core/services';
 import { API_PREFIX } from './../../../../@core/constants';
 import { AtLeastOneFieldValidator } from './../../../../@core/validators';
 import { ServerDataSource } from './../../../../@core/utils/smart-table';
@@ -58,11 +41,11 @@ import { getAdjustDateRangeFutureAllowed } from './../../../../@theme/components
 @Component({
 	selector: 'ga-job-search',
 	templateUrl: './search.component.html',
-	styleUrls: ['./search.component.scss'],
+	styleUrls: ['./search.component.scss']
 })
 export class SearchComponent extends PaginationFilterBaseComponent implements OnInit, OnDestroy, AfterViewInit {
-
 	loading: boolean = false;
+	isRefresh: boolean = false;
 	autoRefresh: boolean = false;
 	settingsSmartTable: object;
 	isOpenAdvancedFilter: boolean = false;
@@ -79,7 +62,7 @@ export class SearchComponent extends PaginationFilterBaseComponent implements On
 		jobSource: [],
 		jobType: [],
 		jobStatus: null,
-		budget: [],
+		budget: []
 	};
 
 	jobs$: Subject<any> = this.subject$;
@@ -105,10 +88,10 @@ export class SearchComponent extends PaginationFilterBaseComponent implements On
 				jobSource: [],
 				jobType: [],
 				jobStatus: [],
-				budget: [],
+				budget: []
 			},
 			{
-				validators: [AtLeastOneFieldValidator],
+				validators: [AtLeastOneFieldValidator]
 			}
 		);
 	}
@@ -140,7 +123,8 @@ export class SearchComponent extends PaginationFilterBaseComponent implements On
 			.pipe(
 				debounceTime(100),
 				tap(() => this.onSelectJob({ isSelected: false, data: null })),
-				tap(() => this.getEmployeesJob()),
+				tap(async () => await this.getEmployeesJob()),
+				tap(() => (this.isRefresh = false)),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -170,9 +154,7 @@ export class SearchComponent extends PaginationFilterBaseComponent implements On
 			.pipe(
 				debounceTime(100),
 				distinctUntilChange(),
-				filter(
-					([organization, dateRange, employee]) => !!organization && !!dateRange
-				),
+				filter(([organization, dateRange, employee]) => !!organization && !!dateRange),
 				tap(([organization, dateRange, employee]) => {
 					this.organization = organization;
 					this.selectedDateRange = dateRange;
@@ -201,8 +183,8 @@ export class SearchComponent extends PaginationFilterBaseComponent implements On
 				tenantId,
 				organizationId,
 				employeeId,
-				isDefault: true,
-			},
+				isDefault: true
+			}
 		});
 		return items.length > 0 ? items[0] : null;
 	}
@@ -246,7 +228,7 @@ export class SearchComponent extends PaginationFilterBaseComponent implements On
 		if (value) {
 			this.autoRefreshTimer = timer(0, 60000)
 				.pipe(
-					tap(() => this.jobs$.next(true)),
+					tap(() => this.refresh()),
 					untilDestroyed(this)
 				)
 				.subscribe();
@@ -262,10 +244,7 @@ export class SearchComponent extends PaginationFilterBaseComponent implements On
 	 *
 	 * @param $event
 	 */
-	async onCustomEvents($event: {
-		action: string,
-		data: any
-	}) {
+	async onCustomEvents($event: { action: string; data: any }) {
 		switch ($event.action) {
 			case 'view':
 				if ($event.data.jobPost) {
@@ -277,7 +256,7 @@ export class SearchComponent extends PaginationFilterBaseComponent implements On
 					applied: true,
 					employeeId: $event.data.employeeId,
 					providerCode: $event.data.providerCode,
-					providerJobId: $event.data.providerJobId,
+					providerJobId: $event.data.providerJobId
 				};
 				this.jobService.applyJob(applyRequest).then(async (resp) => {
 					this.toastrService.success('TOASTR.MESSAGE.JOB_APPLIED');
@@ -298,7 +277,7 @@ export class SearchComponent extends PaginationFilterBaseComponent implements On
 						hide: true,
 						employeeId: $event.data.employeeId,
 						providerCode: $event.data.providerCode,
-						providerJobId: $event.data.providerJobId,
+						providerJobId: $event.data.providerJobId
 					});
 
 					this.toastrService.success('TOASTR.MESSAGE.JOB_HIDDEN');
@@ -367,7 +346,7 @@ export class SearchComponent extends PaginationFilterBaseComponent implements On
 					hide: true,
 					employeeId: employeeId,
 					providerCode: providerCode,
-					providerJobId: providerJobId,
+					providerJobId: providerJobId
 				};
 				await this.jobService.hideJob(payload);
 			}
@@ -451,13 +430,13 @@ export class SearchComponent extends PaginationFilterBaseComponent implements On
 				applied: true,
 				...(isNotEmpty(this.selectedEmployee)
 					? {
-						employeeId: this.selectedEmployee.id,
-					}
+							employeeId: this.selectedEmployee.id
+					  }
 					: {
-						employeeId,
-					}),
+							employeeId
+					  }),
 				providerCode,
-				providerJobId,
+				providerJobId
 			};
 
 			await this.applyToJob(applyJobPost);
@@ -475,25 +454,16 @@ export class SearchComponent extends PaginationFilterBaseComponent implements On
 		const dialog = this.dialogService.open(ApplyJobManuallyComponent, {
 			context: {
 				employeeJobPost: this.selectedJob,
-				selectedEmployee: this.selectedEmployee,
-			},
+				selectedEmployee: this.selectedEmployee
+			}
 		});
 
-		const result = await firstValueFrom<IEmployeeJobApplication>(
-			dialog.onClose
-		);
+		const result = await firstValueFrom<IEmployeeJobApplication>(dialog.onClose);
 
 		if (result) {
 			const { providerCode, providerJobId } = this.selectedJob;
 
-			const {
-				applied,
-				employeeId,
-				proposal,
-				rate,
-				details,
-				attachments,
-			} = result;
+			const { applied, employeeId, proposal, rate, details, attachments } = result;
 
 			try {
 				const applyJobPost: IEmployeeJobApplication = {
@@ -504,7 +474,7 @@ export class SearchComponent extends PaginationFilterBaseComponent implements On
 					details,
 					attachments,
 					providerCode,
-					providerJobId,
+					providerJobId
 				};
 
 				await this.applyToJob(applyJobPost);
@@ -525,38 +495,27 @@ export class SearchComponent extends PaginationFilterBaseComponent implements On
 			actions: false,
 			pager: {
 				display: false,
-				perPage: pagination ? pagination.itemsPerPage : 10,
+				perPage: pagination ? pagination.itemsPerPage : 10
 			},
 			columns: {
 				...(isEmpty(this.selectedEmployee)
 					? {
-						employee: {
-							title: this.getTranslation('JOBS.EMPLOYEE'),
-							filter: false,
-							width: '15%',
-							type: 'custom',
-							sort: false,
-							renderComponent: EmployeeLinksComponent,
-							valuePrepareFunction: (
-								cell,
-								row: IEmployeeJobPost
-							) => {
-								return {
-									name:
-										row.employee && row.employee.user
-											? row.employee.user.name
-											: null,
-									imageUrl:
-										row.employee && row.employee.user
-											? row.employee.user.imageUrl
-											: null,
-									id: row.employee
-										? row.employee.id
-										: null,
-								};
-							},
-						},
-					}
+							employee: {
+								title: this.getTranslation('JOBS.EMPLOYEE'),
+								filter: false,
+								width: '15%',
+								type: 'custom',
+								sort: false,
+								renderComponent: EmployeeLinksComponent,
+								valuePrepareFunction: (cell, row: IEmployeeJobPost) => {
+									return {
+										name: row.employee && row.employee.user ? row.employee.user.name : null,
+										imageUrl: row.employee && row.employee.user ? row.employee.user.imageUrl : null,
+										id: row.employee ? row.employee.id : null
+									};
+								}
+							}
+					  }
 					: {}),
 				jobDetails: {
 					title: this.getTranslation('JOBS.JOB_DETAILS'),
@@ -571,7 +530,7 @@ export class SearchComponent extends PaginationFilterBaseComponent implements On
 						});
 					}
 				}
-			},
+			}
 		};
 	}
 
@@ -593,10 +552,10 @@ export class SearchComponent extends PaginationFilterBaseComponent implements On
 				finalize: () => {
 					this.setPagination({
 						...this.getPagination(),
-						totalItems: this.smartTableSource.count(),
+						totalItems: this.smartTableSource.count()
 					});
 					this.loading = false;
-				},
+				}
 			});
 		} catch (error) {
 			console.log('Error while retrieving employee Job searches', error);
@@ -611,10 +570,7 @@ export class SearchComponent extends PaginationFilterBaseComponent implements On
 		try {
 			this.setSmartTableSource();
 		} catch (error) {
-			console.log(
-				'Error while set smart table source configuration',
-				error
-			);
+			console.log('Error while set smart table source configuration', error);
 		}
 
 		try {
@@ -629,78 +585,74 @@ export class SearchComponent extends PaginationFilterBaseComponent implements On
 				[
 					...(isNotEmpty(this.selectedEmployee)
 						? [
-							{
-								field: 'employeeIds',
-								search: [this.selectedEmployee.id],
-							},
-						]
+								{
+									field: 'employeeIds',
+									search: [this.selectedEmployee.id]
+								}
+						  ]
 						: []),
 					...(startDate && endDate
 						? [
-							{
-								field: 'jobDateCreated',
-								search: {
-									between: {
-										lower: toUTC(startDate).format(
-											'YYYY-MM-DD HH:mm:ss'
-										),
-										upper: toUTC(endDate).format(
-											'YYYY-MM-DD HH:mm:ss'
-										),
-									},
-								},
-							},
-						]
+								{
+									field: 'jobDateCreated',
+									search: {
+										between: {
+											lower: toUTC(startDate).format('YYYY-MM-DD HH:mm:ss'),
+											upper: toUTC(endDate).format('YYYY-MM-DD HH:mm:ss')
+										}
+									}
+								}
+						  ]
 						: []),
 					...(title
 						? [
-							{
-								field: 'title',
-								search: title,
-							},
-						]
+								{
+									field: 'title',
+									search: title
+								}
+						  ]
 						: []),
 					...(jobSource
 						? [
-							{
-								field: 'jobSource',
-								search: jobSource,
-							},
-						]
+								{
+									field: 'jobSource',
+									search: jobSource
+								}
+						  ]
 						: []),
 					...(jobType
 						? [
-							{
-								field: 'jobType',
-								search: jobType,
-							},
-						]
+								{
+									field: 'jobType',
+									search: jobType
+								}
+						  ]
 						: []),
 					...(jobStatus
 						? [
-							{
-								field: 'jobStatus',
-								search: jobStatus,
-							},
-						]
+								{
+									field: 'jobStatus',
+									search: jobStatus
+								}
+						  ]
 						: []),
 					...(budget
 						? [
-							{
-								field: 'budget',
-								search: budget,
-							},
-						]
+								{
+									field: 'budget',
+									search: budget
+								}
+						  ]
 						: []),
 					// Get only fresh jobs (not applied yet)
 					...(true
 						? [
-							{
-								field: 'isApplied',
-								search: 'false',
-							},
-						]
-						: []),
+								{
+									field: 'isApplied',
+									search: 'false'
+								}
+						  ]
+						: [])
 				],
 				false,
 				false
@@ -712,8 +664,8 @@ export class SearchComponent extends PaginationFilterBaseComponent implements On
 				[
 					{
 						field: 'status',
-						direction: 'ASC',
-					},
+						direction: 'ASC'
+					}
 				],
 				false
 			);
@@ -741,9 +693,7 @@ export class SearchComponent extends PaginationFilterBaseComponent implements On
 	hideAll() {
 		const request: IVisibilityJobPostInput = {
 			hide: true,
-			...(isNotEmpty(this.selectedEmployee)
-				? { employeeId: this.selectedEmployee.id }
-				: {}),
+			...(isNotEmpty(this.selectedEmployee) ? { employeeId: this.selectedEmployee.id } : {})
 		};
 		this.jobService.hideJob(request).then(() => {
 			this.toastrService.success('TOASTR.MESSAGE.JOB_HIDDEN');
@@ -771,8 +721,19 @@ export class SearchComponent extends PaginationFilterBaseComponent implements On
 	reset() {
 		this.form.reset();
 		this._filters = {};
+		this.refresh();
+	}
+
+	public refresh(): void {
+		this.isRefresh = true;
+		this.pagination = {
+			...this.pagination,
+			activePage: 1,
+			itemsPerPage: this.minItemPerPage
+		};
+		this.scrollTop();
 		this.jobs$.next(true);
 	}
 
-	ngOnDestroy(): void { }
+	ngOnDestroy(): void {}
 }
