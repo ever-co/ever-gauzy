@@ -63,6 +63,7 @@ import { getAdjustDateRangeFutureAllowed } from './../../../../@theme/components
 export class SearchComponent extends PaginationFilterBaseComponent implements OnInit, OnDestroy, AfterViewInit {
 
 	loading: boolean = false;
+	isRefresh: boolean = false;
 	autoRefresh: boolean = false;
 	settingsSmartTable: object;
 	isOpenAdvancedFilter: boolean = false;
@@ -140,7 +141,8 @@ export class SearchComponent extends PaginationFilterBaseComponent implements On
 			.pipe(
 				debounceTime(100),
 				tap(() => this.onSelectJob({ isSelected: false, data: null })),
-				tap(() => this.getEmployeesJob()),
+				tap(async () => await this.getEmployeesJob()),
+				tap(() => this.isRefresh = false),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -246,7 +248,7 @@ export class SearchComponent extends PaginationFilterBaseComponent implements On
 		if (value) {
 			this.autoRefreshTimer = timer(0, 60000)
 				.pipe(
-					tap(() => this.jobs$.next(true)),
+					tap(() => this.refresh()),
 					untilDestroyed(this)
 				)
 				.subscribe();
@@ -771,6 +773,17 @@ export class SearchComponent extends PaginationFilterBaseComponent implements On
 	reset() {
 		this.form.reset();
 		this._filters = {};
+		this.refresh();
+	}
+
+	public refresh(): void {
+		this.isRefresh = true;
+		this.pagination = {
+			...this.pagination,
+			activePage: 1,
+			itemsPerPage: this.minItemPerPage,
+		}
+		this.scrollTop();
 		this.jobs$.next(true);
 	}
 
