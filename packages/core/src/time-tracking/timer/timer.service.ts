@@ -96,13 +96,13 @@ export class TimerService {
 			},
 			where: {
 				deletedAt: IsNull(),
-				...(source
-					? { source, stoppedAt: Not(IsNull()), isRunning: false }
-					: {}),
+				...(source ? { source } : {}),
 				startedAt: Between(start, end),
+				stoppedAt: Not(IsNull()),
 				employeeId,
 				tenantId,
 				organizationId,
+				isRunning: false,
 			},
 			order: {
 				startedAt: 'DESC',
@@ -114,9 +114,9 @@ export class TimerService {
 		const lastLog = await this.timeLogRepository.findOne({
 			where: {
 				deletedAt: IsNull(),
-				...(source ? { source, stoppedAt: Not(IsNull()) } : {}),
+				...(source ? { source } : {}),
 				startedAt: Between(start, end),
-				stoppedAt: source ? Not(IsNull()) : undefined,
+				stoppedAt: Not(IsNull()),
 				employeeId,
 				tenantId,
 				organizationId,
