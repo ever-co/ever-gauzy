@@ -123,6 +123,9 @@ div.button-action {
     flex-direction: column;
     background-color: var(--gauzy-card-2);
     padding: 12px;
+	.table {
+		margin: 0;
+	}
     div.btn-action {
       align-self: flex-end;
       display: flex;

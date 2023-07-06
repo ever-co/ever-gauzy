@@ -19,14 +19,13 @@ import {
 	ExpenseStatusesEnum
 } from '@gauzy/contracts';
 import { filter, tap } from 'rxjs/operators';
-import { compareDate, isEmpty, isNotEmpty } from '@gauzy/common-angular';
+import { compareDate, distinctUntilChange, isEmpty, isNotEmpty } from '@gauzy/common-angular';
 import { LocalDataSource, Ng2SmartTableComponent } from 'ng2-smart-table';
 import { Observable, firstValueFrom } from 'rxjs';
 import { Router } from '@angular/router';
 import { NbDialogService } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import * as moment from 'moment';
-import { TranslationBaseComponent } from '../../../@shared/language-base';
 import {
 	ExpensesService,
 	InvoiceEstimateHistoryService,
@@ -48,6 +47,7 @@ import {
 	InvoiceProjectsSelectorComponent,
 	InvoiceTasksSelectorComponent
 } from '../table-components';
+import { IPaginationBase, PaginationFilterBaseComponent } from '../../../@shared/pagination/pagination-filter-base.component';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -55,7 +55,7 @@ import {
 	templateUrl: './invoice-add.component.html',
 	styleUrls: ['./invoice-add.component.scss']
 })
-export class InvoiceAddComponent extends TranslationBaseComponent
+export class InvoiceAddComponent extends PaginationFilterBaseComponent
 	implements OnInit, OnDestroy {
 
 	settingsSmartTable: object;
@@ -101,7 +101,7 @@ export class InvoiceAddComponent extends TranslationBaseComponent
 		return this.form.get('currency');
 	}
 
-	private _isEstimate: boolean = false;
+	private _isEstimate = false;
 	@Input() set isEstimate(val: boolean) {
 		this._isEstimate = val;
 	}
@@ -169,6 +169,26 @@ export class InvoiceAddComponent extends TranslationBaseComponent
 			.subscribe((languageEvent) => {
 				this.selectedLanguage = languageEvent.lang;
 			});
+		this.subject$
+			.pipe(
+				tap(() => {
+					const { activePage, itemsPerPage } = this.getPagination();
+					this.smartTableSource.setPaging(
+						activePage,
+						itemsPerPage,
+						false
+					);
+					this.smartTableSource.refresh();
+				})
+			)
+			.subscribe();
+		this.pagination$
+			.pipe(
+				distinctUntilChange(),
+				tap(() => this.subject$.next(true)),
+				untilDestroyed(this)
+			)
+			.subscribe();
 	}
 
 	initializeForm() {
@@ -214,10 +234,11 @@ export class InvoiceAddComponent extends TranslationBaseComponent
 	}
 
 	loadSmartTable() {
+		const pagination: IPaginationBase = this.getPagination();
 		this.settingsSmartTable = {
 			pager: {
-				display: true,
-				perPage: 5
+				display: false,
+				perPage: pagination ? pagination.itemsPerPage : 10
 			},
 			add: {
 				addButtonContent: '<i class="nb-plus"></i>',
@@ -1094,6 +1115,11 @@ export class InvoiceAddComponent extends TranslationBaseComponent
 		if (this.total < 0) {
 			this.total = 0;
 		}
+		this.setPagination({
+			...this.getPagination(),
+			totalItems: this.smartTableSource.count()
+		});
+		this.refreshPagination();
 	}
 
 	async applyDiscountAfterTax($event) {
@@ -1190,7 +1216,7 @@ export class InvoiceAddComponent extends TranslationBaseComponent
 	}
 
 	getNextMonth() {
-		var date = new Date();
+		const date = new Date();
 		if (this.organization.daysUntilDue !== null) {
 			date.setDate(date.getDate() + this.organization.daysUntilDue);
 		} else {

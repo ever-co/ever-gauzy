@@ -1,5 +1,4 @@
 import { Component, OnInit, OnDestroy, Input, ViewChild } from '@angular/core';
-import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';
 import { FormGroup, FormBuilder, Validators } from '@angular/forms';
 import { TranslateService } from '@ngx-translate/core';
 import {
@@ -38,6 +37,7 @@ import {
 	InvoiceTasksSelectorComponent
 } from '../table-components';
 import { any } from 'underscore';
+import { IPaginationBase, PaginationFilterBaseComponent } from '../../../@shared/pagination/pagination-filter-base.component';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -45,7 +45,7 @@ import { any } from 'underscore';
 	templateUrl: './invoice-edit.component.html',
 	styleUrls: ['./invoice-edit.component.scss']
 })
-export class InvoiceEditComponent extends TranslationBaseComponent
+export class InvoiceEditComponent extends PaginationFilterBaseComponent
 	implements OnInit, OnDestroy {
 
 	shouldLoadTable = false;
@@ -77,7 +77,7 @@ export class InvoiceEditComponent extends TranslationBaseComponent
 		return this.form.get('currency');
 	}
 
-	private _isEstimate: boolean = false;
+	private _isEstimate = false;
 	@Input() set isEstimate(val: boolean) {
 		this._isEstimate = val;
 	}
@@ -145,6 +145,26 @@ export class InvoiceEditComponent extends TranslationBaseComponent
 				tap(() => (this.loading = true)),
 				tap((organization) => (this.organization = organization)),
 				tap(() => this.getInvoiceById()),
+				untilDestroyed(this)
+			)
+			.subscribe();
+		this.subject$
+			.pipe(
+				tap(() => {
+					const { activePage, itemsPerPage } = this.getPagination();
+					this.smartTableSource.setPaging(
+						activePage,
+						itemsPerPage,
+						false
+					);
+					this.smartTableSource.refresh();
+				})
+			)
+			.subscribe();
+		this.pagination$
+			.pipe(
+				distinctUntilChange(),
+				tap(() => this.subject$.next(true)),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -241,10 +261,11 @@ export class InvoiceEditComponent extends TranslationBaseComponent
 	}
 
 	async loadSmartTable() {
+		const pagination: IPaginationBase = this.getPagination();
 		this.settingsSmartTable = {
 			pager: {
-				display: true,
-				perPage: 5
+				display: false,
+				perPage: pagination ? pagination.itemsPerPage : 10
 			},
 			add: {
 				addButtonContent: '<i class="nb-plus"></i>',
@@ -911,6 +932,11 @@ export class InvoiceEditComponent extends TranslationBaseComponent
 
 		this.alreadyPaid = +this.invoice.alreadyPaid;
 		this.amountDue = +this.total - +this.alreadyPaid;
+		this.setPagination({
+			...this.getPagination(),
+			totalItems: this.smartTableSource.count()
+		});
+		this.refreshPagination();
 	}
 
 	async onCurrencyChange($event) {
