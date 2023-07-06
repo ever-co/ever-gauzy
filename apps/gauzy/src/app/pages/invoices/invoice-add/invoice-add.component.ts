@@ -47,7 +47,10 @@ import {
 	InvoiceProjectsSelectorComponent,
 	InvoiceTasksSelectorComponent
 } from '../table-components';
-import { IPaginationBase, PaginationFilterBaseComponent } from '../../../@shared/pagination/pagination-filter-base.component';
+import {
+	IPaginationBase,
+	PaginationFilterBaseComponent
+} from '../../../@shared/pagination/pagination-filter-base.component';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -55,9 +58,7 @@ import { IPaginationBase, PaginationFilterBaseComponent } from '../../../@shared
 	templateUrl: './invoice-add.component.html',
 	styleUrls: ['./invoice-add.component.scss']
 })
-export class InvoiceAddComponent extends PaginationFilterBaseComponent
-	implements OnInit, OnDestroy {
-
+export class InvoiceAddComponent extends PaginationFilterBaseComponent implements OnInit, OnDestroy {
 	settingsSmartTable: object;
 	loading: boolean;
 	form: FormGroup;
@@ -144,10 +145,7 @@ export class InvoiceAddComponent extends PaginationFilterBaseComponent
 				filter((organization) => !!organization),
 				tap((organization) => (this.organization = organization)),
 				tap(({ currency }) => (this.currencyString = currency)),
-				tap(
-					(organization) =>
-						(this.discountAfterTax = organization.discountAfterTax)
-				),
+				tap((organization) => (this.discountAfterTax = organization.discountAfterTax)),
 				tap(() => {
 					this.initializeForm();
 					this._initializeMethods();
@@ -164,20 +162,14 @@ export class InvoiceAddComponent extends PaginationFilterBaseComponent
 		this.observableTasks.pipe(untilDestroyed(this)).subscribe((data) => {
 			this.tasks = data;
 		});
-		this.translateService.onLangChange
-			.pipe(untilDestroyed(this))
-			.subscribe((languageEvent) => {
-				this.selectedLanguage = languageEvent.lang;
-			});
+		this.translateService.onLangChange.pipe(untilDestroyed(this)).subscribe((languageEvent) => {
+			this.selectedLanguage = languageEvent.lang;
+		});
 		this.subject$
 			.pipe(
 				tap(() => {
 					const { activePage, itemsPerPage } = this.getPagination();
-					this.smartTableSource.setPaging(
-						activePage,
-						itemsPerPage,
-						false
-					);
+					this.smartTableSource.setPaging(activePage, itemsPerPage, false);
 					this.smartTableSource.refresh();
 				})
 			)
@@ -193,33 +185,14 @@ export class InvoiceAddComponent extends PaginationFilterBaseComponent
 
 	initializeForm() {
 		this.form = this.fb.group({
-			invoiceDate: [
-				this.store.getDateFromOrganizationSettings(),
-				Validators.required
-			],
-			invoiceNumber: [
-				this.formInvoiceNumber,
-				Validators.compose([Validators.required, Validators.min(1)])
-			],
+			invoiceDate: [this.store.getDateFromOrganizationSettings(), Validators.required],
+			invoiceNumber: [this.formInvoiceNumber, Validators.compose([Validators.required, Validators.min(1)])],
 			dueDate: [this.getNextMonth(), Validators.required],
 			currency: ['', Validators.required],
-			discountValue: [
-				0,
-				Validators.compose([Validators.required, Validators.min(0)])
-			],
-			tax: [
-				0,
-				Validators.compose([Validators.required, Validators.min(0)])
-			],
-			tax2: [
-				0,
-				Validators.compose([Validators.required, Validators.min(0)])
-			],
-			terms: [
-				this.organization
-					? this.organization.defaultInvoiceEstimateTerms || ''
-					: ''
-			],
+			discountValue: [0, Validators.compose([Validators.required, Validators.min(0)])],
+			tax: [0, Validators.compose([Validators.required, Validators.min(0)])],
+			tax2: [0, Validators.compose([Validators.required, Validators.min(0)])],
+			terms: [this.organization ? this.organization.defaultInvoiceEstimateTerms || '' : ''],
 			organizationContact: ['', Validators.required],
 			discountType: [],
 			taxType: [],
@@ -263,9 +236,7 @@ export class InvoiceAddComponent extends PaginationFilterBaseComponent
 		switch (this.invoiceType) {
 			case InvoiceTypeEnum.BY_EMPLOYEE_HOURS:
 				this.settingsSmartTable['columns']['selectedItem'] = {
-					title: this.getTranslation(
-						'INVOICES_PAGE.INVOICE_ITEM.EMPLOYEE'
-					),
+					title: this.getTranslation('INVOICES_PAGE.INVOICE_ITEM.EMPLOYEE'),
 					width: '13%',
 					editor: {
 						type: 'custom',
@@ -279,9 +250,7 @@ export class InvoiceAddComponent extends PaginationFilterBaseComponent
 				break;
 			case InvoiceTypeEnum.BY_PROJECT_HOURS:
 				this.settingsSmartTable['columns']['selectedItem'] = {
-					title: this.getTranslation(
-						'INVOICES_PAGE.INVOICE_ITEM.PROJECT'
-					),
+					title: this.getTranslation('INVOICES_PAGE.INVOICE_ITEM.PROJECT'),
 					width: '13%',
 					editor: {
 						type: 'custom',
@@ -295,9 +264,7 @@ export class InvoiceAddComponent extends PaginationFilterBaseComponent
 				break;
 			case InvoiceTypeEnum.BY_TASK_HOURS:
 				this.settingsSmartTable['columns']['selectedItem'] = {
-					title: this.getTranslation(
-						'INVOICES_PAGE.INVOICE_ITEM.TASK'
-					),
+					title: this.getTranslation('INVOICES_PAGE.INVOICE_ITEM.TASK'),
 					width: '13%',
 					editor: {
 						type: 'custom',
@@ -311,9 +278,7 @@ export class InvoiceAddComponent extends PaginationFilterBaseComponent
 				break;
 			case InvoiceTypeEnum.BY_PRODUCTS:
 				this.settingsSmartTable['columns']['selectedItem'] = {
-					title: this.getTranslation(
-						'INVOICES_PAGE.INVOICE_ITEM.PRODUCT'
-					),
+					title: this.getTranslation('INVOICES_PAGE.INVOICE_ITEM.PRODUCT'),
 					width: '13%',
 					editor: {
 						type: 'custom',
@@ -321,18 +286,13 @@ export class InvoiceAddComponent extends PaginationFilterBaseComponent
 					},
 					valuePrepareFunction: (cell) => {
 						const product = cell;
-						return `${this.translatableService.getTranslatedProperty(
-							product,
-							'name'
-						)}`;
+						return `${this.translatableService.getTranslatedProperty(product, 'name')}`;
 					}
 				};
 				break;
 			case InvoiceTypeEnum.BY_EXPENSES:
 				this.settingsSmartTable['columns']['selectedItem'] = {
-					title: this.getTranslation(
-						'INVOICES_PAGE.INVOICE_ITEM.EXPENSE'
-					),
+					title: this.getTranslation('INVOICES_PAGE.INVOICE_ITEM.EXPENSE'),
 					width: '13%',
 					editor: {
 						type: 'custom',
@@ -354,9 +314,7 @@ export class InvoiceAddComponent extends PaginationFilterBaseComponent
 			this.invoiceType === InvoiceTypeEnum.BY_TASK_HOURS
 		) {
 			price = {
-				title: this.getTranslation(
-					'INVOICES_PAGE.INVOICE_ITEM.HOURLY_RATE'
-				),
+				title: this.getTranslation('INVOICES_PAGE.INVOICE_ITEM.HOURLY_RATE'),
 				type: 'text',
 				filter: false,
 				width: '13%',
@@ -365,9 +323,7 @@ export class InvoiceAddComponent extends PaginationFilterBaseComponent
 				}
 			};
 			quantity = {
-				title: this.getTranslation(
-					'INVOICES_PAGE.INVOICE_ITEM.HOURS_WORKED'
-				),
+				title: this.getTranslation('INVOICES_PAGE.INVOICE_ITEM.HOURS_WORKED'),
 				type: 'text',
 				filter: false,
 				width: '13%'
@@ -387,27 +343,21 @@ export class InvoiceAddComponent extends PaginationFilterBaseComponent
 				}
 			};
 			quantity = {
-				title: this.getTranslation(
-					'INVOICES_PAGE.INVOICE_ITEM.QUANTITY'
-				),
+				title: this.getTranslation('INVOICES_PAGE.INVOICE_ITEM.QUANTITY'),
 				type: 'text',
 				width: '13%',
 				filter: false
 			};
 		}
 		this.settingsSmartTable['columns']['description'] = {
-			title: this.getTranslation(
-				'INVOICES_PAGE.INVOICE_ITEM.DESCRIPTION'
-			),
+			title: this.getTranslation('INVOICES_PAGE.INVOICE_ITEM.DESCRIPTION'),
 			type: 'text',
 			width: '13%'
 		};
 		this.settingsSmartTable['columns']['price'] = price;
 		this.settingsSmartTable['columns']['quantity'] = quantity;
 		this.settingsSmartTable['columns']['totalValue'] = {
-			title: this.getTranslation(
-				'INVOICES_PAGE.INVOICE_ITEM.TOTAL_VALUE'
-			),
+			title: this.getTranslation('INVOICES_PAGE.INVOICE_ITEM.TOTAL_VALUE'),
 			type: 'text',
 			addable: false,
 			editable: false,
@@ -558,10 +508,7 @@ export class InvoiceAddComponent extends PaginationFilterBaseComponent
 			invoiceItems.push(itemToAdd);
 		}
 		try {
-			return await this.invoiceItemService.createBulk(
-				createdInvoice.id,
-				invoiceItems
-			);
+			return await this.invoiceItemService.createBulk(createdInvoice.id, invoiceItems);
 		} catch (error) {
 			this.toastrService.danger(error);
 		}
@@ -600,11 +547,7 @@ export class InvoiceAddComponent extends PaginationFilterBaseComponent
 		}
 
 		const { invoiceNumber, invoiceDate, dueDate } = this.form.value;
-		if (
-			!invoiceDate ||
-			!dueDate ||
-			compareDate(invoiceDate, dueDate)
-		) {
+		if (!invoiceDate || !dueDate || compareDate(invoiceDate, dueDate)) {
 			this.toastrService.danger(
 				this.getTranslation('INVOICES_PAGE.INVALID_DATES'),
 				this.getTranslation('TOASTR.TITLE.WARNING')
@@ -635,7 +578,7 @@ export class InvoiceAddComponent extends PaginationFilterBaseComponent
 			);
 			this.router.navigate(['/pages/accounting/invoices/estimates'], {
 				queryParams: {
-					date: moment(invoiceDate).format("MM-DD-YYYY")
+					date: moment(invoiceDate).format('MM-DD-YYYY')
 				}
 			});
 		} else {
@@ -645,7 +588,7 @@ export class InvoiceAddComponent extends PaginationFilterBaseComponent
 			);
 			this.router.navigate(['/pages/accounting/invoices'], {
 				queryParams: {
-					date: moment(invoiceDate).format("MM-DD-YYYY")
+					date: moment(invoiceDate).format('MM-DD-YYYY')
 				}
 			});
 		}
@@ -660,19 +603,16 @@ export class InvoiceAddComponent extends PaginationFilterBaseComponent
 		const { organizationContact } = this.form.value;
 
 		if (organizationContact.id) {
-			await this.addInvoice(
-				InvoiceStatusTypesEnum.SENT,
-				organizationContact.id
-			);
+			await this.addInvoice(InvoiceStatusTypesEnum.SENT, organizationContact.id);
 			try {
 				await this.invoiceEstimateHistoryService.add({
 					action: this.isEstimate
 						? this.getTranslation('INVOICES_PAGE.ESTIMATE_SENT_TO', {
 								name: organizationContact.name
-						})
+						  })
 						: this.getTranslation('INVOICES_PAGE.INVOICE_SENT_TO', {
 								name: organizationContact.name
-						}),
+						  }),
 					invoice: this.createdInvoice,
 					invoiceId: this.createdInvoice.id,
 					user: this.store.user,
@@ -682,7 +622,7 @@ export class InvoiceAddComponent extends PaginationFilterBaseComponent
 					tenantId
 				});
 			} catch (error) {
-				console.log(error, "error")
+				console.log(error, 'error');
 			}
 		} else {
 			this.toastrService.danger(
@@ -703,11 +643,7 @@ export class InvoiceAddComponent extends PaginationFilterBaseComponent
 		}
 
 		const { invoiceNumber, invoiceDate, dueDate } = this.form.value;
-		if (
-			!invoiceDate ||
-			!dueDate ||
-			compareDate(invoiceDate, dueDate)
-		) {
+		if (!invoiceDate || !dueDate || compareDate(invoiceDate, dueDate)) {
 			this.toastrService.danger(
 				this.getTranslation('INVOICES_PAGE.INVALID_DATES'),
 				this.getTranslation('TOASTR.TITLE.WARNING')
@@ -726,20 +662,18 @@ export class InvoiceAddComponent extends PaginationFilterBaseComponent
 			return;
 		}
 
-		const invoice = await this.createInvoiceEstimate(
-			InvoiceStatusTypesEnum.SENT
-		);
+		const invoice = await this.createInvoiceEstimate(InvoiceStatusTypesEnum.SENT);
 		const invoiceItems = await this.createInvoiceEstimateItems();
 
-		await firstValueFrom(this.dialogService
-			.open(InvoiceEmailMutationComponent, {
+		await firstValueFrom(
+			this.dialogService.open(InvoiceEmailMutationComponent, {
 				context: {
 					invoice: invoice,
 					invoiceItems: invoiceItems,
 					isEstimate: this.isEstimate
 				}
-			})
-			.onClose);
+			}).onClose
+		);
 
 		if (this.isEstimate) {
 			this.toastrService.success(
@@ -748,7 +682,7 @@ export class InvoiceAddComponent extends PaginationFilterBaseComponent
 			);
 			this.router.navigate(['/pages/accounting/invoices/estimates'], {
 				queryParams: {
-					date: moment(invoiceDate).format("MM-DD-YYYY")
+					date: moment(invoiceDate).format('MM-DD-YYYY')
 				}
 			});
 		} else {
@@ -758,7 +692,7 @@ export class InvoiceAddComponent extends PaginationFilterBaseComponent
 			);
 			this.router.navigate(['/pages/accounting/invoices'], {
 				queryParams: {
-					date: moment(invoiceDate).format("MM-DD-YYYY")
+					date: moment(invoiceDate).format('MM-DD-YYYY')
 				}
 			});
 		}
@@ -766,9 +700,7 @@ export class InvoiceAddComponent extends PaginationFilterBaseComponent
 
 	private async _getInvoiceNumber() {
 		const { tenantId } = this.store.user;
-		const invoiceNumber = await this.invoicesService.getHighestInvoiceNumber(
-			tenantId
-		);
+		const invoiceNumber = await this.invoicesService.getHighestInvoiceNumber(tenantId);
 		if (invoiceNumber['max']) {
 			this.formInvoiceNumber = +invoiceNumber['max'] + 1;
 		} else {
@@ -779,11 +711,7 @@ export class InvoiceAddComponent extends PaginationFilterBaseComponent
 	private getAllTasks() {
 		const { tenantId } = this.store.user;
 		const { id: organizationId } = this.organization;
-		this.tasksStore
-			.fetchTasks(tenantId, organizationId)
-			.pipe(
-				untilDestroyed(this)
-			).subscribe();
+		this.tasksStore.fetchTasks(tenantId, organizationId).pipe(untilDestroyed(this)).subscribe();
 	}
 
 	private async _initializeMethods() {
@@ -806,11 +734,9 @@ export class InvoiceAddComponent extends PaginationFilterBaseComponent
 		const { id: organizationId } = this.organization;
 		const { tenantId } = this.store.user;
 
-		this.organizationProjectsService
-			.getAll([], { organizationId, tenantId })
-			.then(({ items }) => {
-				this.projects = JSON.parse(JSON.stringify(items));
-			});
+		this.organizationProjectsService.getAll([], { organizationId, tenantId }).then(({ items }) => {
+			this.projects = JSON.parse(JSON.stringify(items));
+		});
 	}
 
 	private getAllProducts() {
@@ -818,11 +744,7 @@ export class InvoiceAddComponent extends PaginationFilterBaseComponent
 		const { tenantId } = this.store.user;
 
 		this.productService
-			.getAll(
-				['translations'],
-				{ organizationId, tenantId },
-				this.selectedLanguage
-			)
+			.getAll(['translations'], { organizationId, tenantId }, this.selectedLanguage)
 			.then(({ items }) => {
 				this.products = items;
 			});
@@ -901,9 +823,7 @@ export class InvoiceAddComponent extends PaginationFilterBaseComponent
 			case InvoiceTypeEnum.BY_EMPLOYEE_HOURS:
 				if (isNotEmpty(this.selectedEmployeeIds)) {
 					for (const employeeId of this.selectedEmployeeIds) {
-						const employee = this.employees.find(
-							(employee) => employee.id === employeeId
-						);
+						const employee = this.employees.find((employee) => employee.id === employeeId);
 						const data = {
 							description: 'Desc',
 							price: fakePrice,
@@ -1042,17 +962,9 @@ export class InvoiceAddComponent extends PaginationFilterBaseComponent
 
 	async calculateTotal() {
 		const discountValue =
-			this.form.value.discountValue && this.form.value.discountValue > 0
-				? this.form.value.discountValue
-				: 0;
-		const tax =
-			this.form.value.tax && this.form.value.tax > 0
-				? this.form.value.tax
-				: 0;
-		const tax2 =
-			this.form.value.tax2 && this.form.value.tax2 > 0
-				? this.form.value.tax2
-				: 0;
+			this.form.value.discountValue && this.form.value.discountValue > 0 ? this.form.value.discountValue : 0;
+		const tax = this.form.value.tax && this.form.value.tax > 0 ? this.form.value.tax : 0;
+		const tax2 = this.form.value.tax2 && this.form.value.tax2 > 0 ? this.form.value.tax2 : 0;
 
 		let totalDiscount = 0;
 		let totalTax = 0;
@@ -1089,8 +1001,7 @@ export class InvoiceAddComponent extends PaginationFilterBaseComponent
 				switch (this.form.value.discountType) {
 					case DiscountTaxTypeEnum.PERCENT:
 						if (!this.discountAfterTax) {
-							totalDiscount +=
-								item.totalValue * (+discountValue / 100);
+							totalDiscount += item.totalValue * (+discountValue / 100);
 						}
 						break;
 					case DiscountTaxTypeEnum.FLAT_VALUE:
@@ -1103,10 +1014,7 @@ export class InvoiceAddComponent extends PaginationFilterBaseComponent
 			}
 		}
 
-		if (
-			this.discountAfterTax &&
-			this.form.value.discountType === DiscountTaxTypeEnum.PERCENT
-		) {
+		if (this.discountAfterTax && this.form.value.discountType === DiscountTaxTypeEnum.PERCENT) {
 			totalDiscount = (this.subtotal + totalTax) * (+discountValue / 100);
 		}
 
@@ -1139,8 +1047,7 @@ export class InvoiceAddComponent extends PaginationFilterBaseComponent
 			event.newData.quantity &&
 			event.newData.price &&
 			event.newData.description &&
-			(event.newData.selectedItem ||
-				this.selectedInvoiceType === InvoiceTypeEnum.DETAILED_ITEMS)
+			(event.newData.selectedItem || this.selectedInvoiceType === InvoiceTypeEnum.DETAILED_ITEMS)
 		) {
 			const newData = event.newData;
 			const itemTotal = +event.newData.quantity * +event.newData.price;
@@ -1164,8 +1071,7 @@ export class InvoiceAddComponent extends PaginationFilterBaseComponent
 			event.newData.quantity &&
 			event.newData.price &&
 			event.newData.description &&
-			(event.newData.selectedItem ||
-				this.selectedInvoiceType === InvoiceTypeEnum.DETAILED_ITEMS)
+			(event.newData.selectedItem || this.selectedInvoiceType === InvoiceTypeEnum.DETAILED_ITEMS)
 		) {
 			const newData = event.newData;
 			const oldValue = +event.data.quantity * +event.data.price;
