@@ -33,3 +33,16 @@ export interface IHelpCenterAuthorFind
 	extends IBasePerTenantAndOrganizationEntityModel {
 	id?: string;
 }
+
+export interface IHelpCenterArticleUpdate
+	extends IBasePerTenantAndOrganizationEntityModel {
+	name?: string;
+	description?: string;
+	data: string;
+	index?: number;
+	draft?: boolean;
+	privacy?: boolean;
+	categoryId?: string;
+	employees?: IEmployee[];
+	authors?: IHelpCenterAuthor[];
+}
