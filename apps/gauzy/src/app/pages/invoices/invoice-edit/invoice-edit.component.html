@@ -367,16 +367,6 @@
 		</form>
 		<div *ngIf="shouldLoadTable">
 			<div class="table-scroll-container custom-table">
-				<ng-container>
-					<div class="btn-action">
-						<ngx-gauzy-button-action
-							[buttonTemplateVisible]="visible"
-							[isDisable]="!selectedItem?.isSelected"
-							[buttonTemplate]="actionButtons"
-							[hasLayoutSelector]="false"
-						></ngx-gauzy-button-action>
-					</div>
-				</ng-container>
 				<ng2-smart-table
 					class="table"
 					[settings]="settingsSmartTable"
@@ -388,6 +378,20 @@
 					(userRowSelect)="selectItem($event)"
 					#invoiceItemTable
 				></ng2-smart-table>
+			</div>
+			<div
+				class="pagination-container"
+			>
+				<ng-container *ngIf="pagination.totalItems > minItemPerPage">
+					<ga-pagination
+						(selectedOption)="onUpdateOption($event)"
+						(selectedPage)="onPageChange($event)"
+						[doEmit]="false"
+						[totalItems]="pagination?.totalItems"
+						[itemsPerPage]="pagination?.itemsPerPage"
+						[activePage]="pagination?.activePage"
+					></ga-pagination>
+				</ng-container>
 			</div>
 			<div class="total d-flex">
 				<div class="d-flex">
