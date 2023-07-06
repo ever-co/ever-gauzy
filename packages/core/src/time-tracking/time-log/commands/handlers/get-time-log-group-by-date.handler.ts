@@ -9,7 +9,7 @@ import { GetTimeLogGroupByDateCommand } from '../get-time-log-group-by-date.comm
 export class GetTimeLogGroupByDateHandler
 	implements ICommandHandler<GetTimeLogGroupByDateCommand>
 {
-	constructor() {}
+	constructor() { }
 
 	public async execute(
 		command: GetTimeLogGroupByDateCommand
@@ -36,7 +36,7 @@ export class GetTimeLogGroupByDateHandler
 					.value();
 				const avgActivity =
 					(reduce(pluck(slots, 'overall'), ArraySum, 0) * 100) /
-						reduce(pluck(slots, 'duration'), ArraySum, 0) || 0;
+					reduce(pluck(slots, 'duration'), ArraySum, 0) || 0;
 
 				const byProject = chain(byDateLogs)
 					.groupBy('projectId')
@@ -50,8 +50,8 @@ export class GetTimeLogGroupByDateHandler
 							byProjectLogs.length > 0
 								? byProjectLogs[0].organizationContact
 								: project
-								? project.organizationContact
-								: null;
+									? project.organizationContact
+									: null;
 
 						const byEmployee = chain(byProjectLogs)
 							.groupBy('employeeId')
@@ -83,11 +83,11 @@ export class GetTimeLogGroupByDateHandler
 										0
 									) *
 										100) /
-										reduce(
-											pluck(slots, 'duration'),
-											ArraySum,
-											0
-										) || 0;
+									reduce(
+										pluck(slots, 'duration'),
+										ArraySum,
+										0
+									) || 0;
 
 								const employee =
 									byEmployeeLogs.length > 0
@@ -99,7 +99,12 @@ export class GetTimeLogGroupByDateHandler
 										? byEmployeeLogs[0].task
 										: null;
 
+								const description = byEmployeeLogs.length > 0
+									? byEmployeeLogs[0].description
+									: null;
+
 								return {
+									description,
 									employee,
 									sum: sum,
 									task,

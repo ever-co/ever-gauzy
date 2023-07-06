@@ -357,6 +357,7 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 				employeeId: true,
 				startedAt: true,
 				stoppedAt: true,
+				description: true,
 				project: {
 					id: true,
 					name: true,

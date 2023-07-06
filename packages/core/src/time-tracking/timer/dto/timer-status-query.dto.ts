@@ -1,6 +1,6 @@
 import { ITimerStatusInput, TimeLogSourceEnum } from '@gauzy/contracts';
 import { ApiProperty, IntersectionType, PartialType, PickType } from '@nestjs/swagger';
-import { IsEnum } from 'class-validator';
+import { IsEnum, IsOptional } from 'class-validator';
 import { EmployeeFeatureDTO } from './../../../employee/dto';
 import { TenantOrganizationBaseDTO } from './../../../core/dto';
 import { RelationsQueryDTO } from './../../../shared/dto';
@@ -14,5 +14,6 @@ export class TimerStatusQueryDTO
 {
 	@ApiProperty({ type: () => String, enum: TimeLogSourceEnum })
 	@IsEnum(TimeLogSourceEnum)
+	@IsOptional()
 	readonly source: TimeLogSourceEnum;
 }

@@ -85,7 +85,7 @@ export class TimerService {
 			},
 			where: {
 				deletedAt: IsNull(),
-				source: source || TimeLogSourceEnum.WEB_TIMER,
+				...(source ? { source } : {}),
 				startedAt: Between(start, end),
 				stoppedAt: Not(IsNull()),
 				employeeId,
@@ -103,7 +103,7 @@ export class TimerService {
 		const lastLog = await this.timeLogRepository.findOne({
 			where: {
 				deletedAt: IsNull(),
-				source: source || TimeLogSourceEnum.WEB_TIMER,
+				...(source ? { source } : {}),
 				startedAt: Between(start, end),
 				stoppedAt: Not(IsNull()),
 				employeeId,

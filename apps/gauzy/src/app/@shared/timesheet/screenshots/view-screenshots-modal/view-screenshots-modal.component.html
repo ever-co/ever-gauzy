@@ -160,7 +160,7 @@
 									[rowData]="timeLog"
 								></ngx-project>
 							</div>
-							<div>
+							<div class="mb-2">
 								<div class="subtitle"
 									>{{ 'TIMESHEET.TODO' | translate }}:
 								</div>
@@ -170,6 +170,14 @@
 											? timeLog?.task?.title
 											: ('TIMESHEET.NO_TODO' | translate)
 									}}
+								</div>
+							</div>
+							<div>
+								<div class="subtitle">
+									{{ 'TIMESHEET.NOTES' | translate }}:
+								</div>
+								<div>
+									{{ timeLog?.description }}
 								</div>
 							</div>
 						</div>
