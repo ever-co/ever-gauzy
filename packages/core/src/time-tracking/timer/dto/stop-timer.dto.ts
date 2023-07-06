@@ -1,14 +1,7 @@
-import { ITimerToggleInput, TimeLogSourceEnum } from '@gauzy/contracts';
-import { ApiProperty } from '@nestjs/swagger';
-import { IsEnum } from 'class-validator';
+import { ITimerToggleInput } from '@gauzy/contracts';
+import { IntersectionType, PartialType, PickType } from '@nestjs/swagger';
 import { StartTimerDTO } from './start-timer.dto';
 
-export class StopTimerDTO extends StartTimerDTO implements ITimerToggleInput {
-	@ApiProperty({
-		type: () => String,
-		enum: TimeLogSourceEnum,
-		required: true,
-	})
-	@IsEnum(TimeLogSourceEnum)
-	readonly source: TimeLogSourceEnum;
-}
+export class StopTimerDTO extends IntersectionType(StartTimerDTO, PartialType(
+	PickType(StartTimerDTO, ['source'] as const) )
+) implements ITimerToggleInput { }
