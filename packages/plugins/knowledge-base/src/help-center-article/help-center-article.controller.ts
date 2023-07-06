@@ -9,7 +9,11 @@ import {
 	UseGuards,
 	Get,
 	Param,
-	Delete
+	Delete,
+	HttpCode,
+	Put,
+	UsePipes,
+	ValidationPipe
 } from '@nestjs/common';
 import {
 	Permissions,
@@ -22,6 +26,8 @@ import { AuthGuard } from '@nestjs/passport';
 import { CommandBus } from '@nestjs/cqrs';
 import { HelpCenterArticleService } from './help-center-article.service';
 import { KnowledgeBaseCategoryBulkDeleteCommand } from './commands';
+import { HelpCenterUpdateArticleCommand } from './commands/help-center-article.update.command';
+import { UpdateHelpCenterArticleDTO } from './dto';
 
 @ApiTags('KnowledgeBaseArticle')
 @UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
@@ -90,6 +96,39 @@ export class HelpCenterArticleController extends CrudController<HelpCenterArticl
 	): Promise<any> {
 		return this.commandBus.execute(
 			new KnowledgeBaseCategoryBulkDeleteCommand(categoryId)
+		);
+	}
+
+	/**
+	 * UPDATE Help Center Article By Id
+	 *
+	 * @param id
+	 * @param updateInput
+	 * @returns
+	 */
+	@ApiOperation({ summary: 'Update an existing record' })
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'The record has been successfully edited.'
+	})
+	@ApiResponse({
+		status: HttpStatus.NOT_FOUND,
+		description: 'Record not found'
+	})
+	@ApiResponse({
+		status: HttpStatus.BAD_REQUEST,
+		description:
+			'Invalid input, The response body may contain clues as to what went wrong'
+	})
+	@HttpCode(HttpStatus.ACCEPTED)
+	@Put(':id')
+	@UsePipes(new ValidationPipe({ transform: true }))
+	async update(
+		@Param('id', UUIDValidationPipe) id: IHelpCenterArticle['id'],
+		@Body() updateInput: UpdateHelpCenterArticleDTO
+	): Promise<void> {
+		return await this.commandBus.execute(
+			new HelpCenterUpdateArticleCommand(id, updateInput)
 		);
 	}
 }
