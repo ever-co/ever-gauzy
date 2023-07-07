@@ -150,6 +150,7 @@ import { ContactModule } from './contact/contact.module';
 import { PublicShareModule } from './public-share/public-share.module';
 import { TransformInterceptor } from './core/interceptors';
 import { EmailResetModule } from './email-reset/email-reset.module';
+import { OrganizationTasksSettingsModule } from './organization-tasks-settings/organization-tasks-settings.module';
 
 const { unleashConfig } = environment;
 
@@ -371,6 +372,7 @@ if (process.env.DB_TYPE === 'postgres') {
 		PublicShareModule,
 		EmailResetModule,
 		IssueTypeModule,
+		OrganizationTasksSettingsModule,
 	],
 	controllers: [AppController],
 	providers: [

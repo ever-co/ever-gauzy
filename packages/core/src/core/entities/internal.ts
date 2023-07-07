@@ -93,6 +93,7 @@ export * from '../../organization-team-employee/organization-team-employee.entit
 export * from '../../organization-team-join-request/organization-team-join-request.entity';
 export * from '../../organization-team/organization-team.entity';
 export * from '../../organization-vendor/organization-vendor.entity';
+export * from '../../organization-tasks-settings/organization-tasks-settings.entity';
 export * from '../../organization/organization.entity';
 export * from '../../password-reset/password-reset.entity';
 export * from '../../payment/payment.entity';

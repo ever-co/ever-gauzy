@@ -136,6 +136,7 @@ import {
 	WarehouseProduct,
 	WarehouseProductVariant,
 	TaskVersion,
+	OrganizationTasksSettings,
 } from './internal';
 
 export const coreEntities = [
@@ -228,6 +229,7 @@ export const coreEntities = [
 	OrganizationTeamEmployee,
 	OrganizationTeamJoinRequest,
 	OrganizationVendor,
+	OrganizationTasksSettings,
 	PasswordReset,
 	Payment,
 	Pipeline,
