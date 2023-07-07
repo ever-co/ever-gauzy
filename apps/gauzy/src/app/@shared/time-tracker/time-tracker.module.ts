@@ -21,9 +21,10 @@ import { NgxPermissionsModule } from 'ngx-permissions';
 import { ContactSelectorModule } from '../contact-selector/contact-selector.module';
 import { TaskSelectModule } from '../tasks/task-select/task-select.module';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
+import { TimeTrackerStatusComponent } from './components/time-tracker-status/time-tracker-status.component';
 
 @NgModule({
-	declarations: [TimeTrackerComponent],
+	declarations: [TimeTrackerComponent, TimeTrackerStatusComponent],
 	imports: [
 		CommonModule,
 		RouterModule,
