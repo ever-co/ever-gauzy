@@ -12,7 +12,7 @@ import { distinctUntilChange } from 'packages/common-angular/dist';
 @Component({
 	selector: 'ga-time-tracker-status',
 	templateUrl: './time-tracker-status.component.html',
-	styleUrls: ['./time-tracker-status.component.scss'],
+	styleUrls: ['./time-tracker-status.component.scss']
 })
 export class TimeTrackerStatusComponent implements OnInit {
 	private _icon$: BehaviorSubject<ITimerIcon>;
@@ -47,10 +47,7 @@ export class TimeTrackerStatusComponent implements OnInit {
 		this._external
 			.pipe(
 				distinctUntilChange(),
-				tap(
-					(synced: ITimerSynced) =>
-						(this._timeTrackerService.timerSynced = synced)
-				),
+				tap((synced: ITimerSynced) => (this._timeTrackerService.timerSynced = synced)),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -61,11 +58,10 @@ export class TimeTrackerStatusComponent implements OnInit {
 	}
 
 	private get _status(): Promise<ITimerStatus> {
-		const { tenantId, organizationId } =
-			this._timeTrackerService.timerConfig;
+		const { tenantId, organizationId } = this._timeTrackerService.timerConfig;
 		return this._timeTrackerService.getTimerStatus({
 			tenantId,
-			organizationId,
+			organizationId
 		});
 	}
 	@Output()

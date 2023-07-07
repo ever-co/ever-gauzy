@@ -14,7 +14,6 @@ export class TimerSynced implements ITimerSynced {
 		this._startedAt = timeLog.startedAt;
 		this._stoppedAt = timeLog.stoppedAt;
 		this._lastLog = timeLog;
-
 	}
 
 	public get isExternalSource(): boolean {

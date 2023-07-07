@@ -42,7 +42,7 @@ import { TimeTrackerStatusComponent } from './components/time-tracker-status/tim
 		NgxDraggableDomModule,
 		NgxPermissionsModule,
 		ContactSelectorModule,
-    	FontAwesomeModule,
+		FontAwesomeModule,
 		NbAlertModule
 	],
 	exports: [TimeTrackerComponent]

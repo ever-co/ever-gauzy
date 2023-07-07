@@ -1,4 +1,4 @@
-import { ITimeLog, TimeLogSourceEnum } from "@gauzy/contracts";
+import { ITimeLog, TimeLogSourceEnum } from '@gauzy/contracts';
 
 export interface ITimerSynced {
 	source: TimeLogSourceEnum;

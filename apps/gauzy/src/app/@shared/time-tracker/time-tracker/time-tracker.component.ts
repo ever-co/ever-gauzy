@@ -6,7 +6,7 @@ import {
 	TimeLogType,
 	PermissionsEnum,
 	TimeLogSourceEnum,
-	IEmployee,
+	IEmployee
 } from '@gauzy/contracts';
 import { NgxDraggableDomMoveEvent, NgxDraggablePoint } from 'ngx-draggable-dom';
 import { NbThemeService } from '@nebular/theme';
@@ -15,7 +15,7 @@ import { distinctUntilChange, toLocal, toUTC } from '@gauzy/common-angular';
 import { NgForm } from '@angular/forms';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { NgxPermissionsService } from 'ngx-permissions';
-import { faStopwatch, faPlay, faPause }  from '@fortawesome/free-solid-svg-icons';
+import { faStopwatch, faPlay, faPause } from '@fortawesome/free-solid-svg-icons';
 import { filter, tap } from 'rxjs/operators';
 import { Observable } from 'rxjs';
 import { TimeTrackerService } from '../time-tracker.service';
@@ -29,12 +29,10 @@ import { ITimerSynced } from '../components/time-tracker-status/interfaces';
 	templateUrl: './time-tracker.component.html',
 	styleUrls: ['./time-tracker.component.scss']
 })
-export class TimeTrackerComponent implements
-	OnInit, OnDestroy {
-
-  	play = faPlay;
-  	pause = faPause;
-  	stopwatch = faStopwatch;
+export class TimeTrackerComponent implements OnInit, OnDestroy {
+	play = faPlay;
+	pause = faPause;
+	stopwatch = faStopwatch;
 	isDisable = false;
 	isOpen = false;
 	isExpanded = true;
@@ -64,7 +62,7 @@ export class TimeTrackerComponent implements
 		private readonly _errorHandlingService: ErrorHandlingService,
 		private readonly themeService: NbThemeService,
 		private readonly ngxPermissionsService: NgxPermissionsService
-	) { }
+	) {}
 
 	public get isBillable(): boolean {
 		return this.timeTrackerService.timerConfig.isBillable;
@@ -157,39 +155,39 @@ export class TimeTrackerComponent implements
 		this.store.user$
 			.pipe(
 				filter((user: IUser) => !!user),
-				tap((user: IUser) => this.user = user),
-				tap((user: IUser) => this.employeeId = user.employeeId),
+				tap((user: IUser) => (this.user = user)),
+				tap((user: IUser) => (this.employeeId = user.employeeId)),
 				untilDestroyed(this)
 			)
 			.subscribe();
 		this.timeTrackerService.duration$
 			.pipe(
-				tap((time) => this.todaySessionTime = moment.utc(time * 1000).format('HH:mm:ss')),
+				tap((time) => (this.todaySessionTime = moment.utc(time * 1000).format('HH:mm:ss'))),
 				untilDestroyed(this)
 			)
 			.subscribe();
 		this.timeTrackerService.showTimerWindow$
 			.pipe(
-				tap((isOpen) => this.isOpen = isOpen),
+				tap((isOpen) => (this.isOpen = isOpen)),
 				untilDestroyed(this)
 			)
 			.subscribe();
 		this.timeTrackerService.currentSessionDuration$
 			.pipe(
-				tap((time) => this.currentSessionTime = moment.utc(time * 1000).format('HH:mm:ss')),
+				tap((time) => (this.currentSessionTime = moment.utc(time * 1000).format('HH:mm:ss'))),
 				untilDestroyed(this)
 			)
 			.subscribe();
 		this.timeTrackerService.$running
 			.pipe(
-				tap((isRunning) => this.running = isRunning),
+				tap((isRunning) => (this.running = isRunning)),
 				untilDestroyed(this)
 			)
 			.subscribe();
 		this.themeService
 			.onThemeChange()
 			.pipe(
-				tap((theme) => this.theme = theme.name),
+				tap((theme) => (this.theme = theme.name)),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -219,11 +217,8 @@ export class TimeTrackerComponent implements
 
 		this.isDisable = true;
 		try {
-			const isStopTimer =
-				onClick && this.timeTrackerService.timerSynced?.running;
-			const isRemoteStartTimer =
-				!onClick &&
-				this.timeTrackerService.timerSynced?.isExternalSource;
+			const isStopTimer = onClick && this.timeTrackerService.timerSynced?.running;
+			const isRemoteStartTimer = !onClick && this.timeTrackerService.timerSynced?.isExternalSource;
 			this.xor(isRemoteStartTimer, isStopTimer)
 				? await this.timeTrackerService.remoteToggle(isStopTimer)
 				: await this.timeTrackerService.toggle();
@@ -245,9 +240,7 @@ export class TimeTrackerComponent implements
 		const { allowManualTime, id: organizationId } = this.organization;
 		const { tenantId } = this.store.user;
 
-		if (!(allowManualTime && await this.ngxPermissionsService.hasPermission(
-			PermissionsEnum.ALLOW_MANUAL_TIME
-		))) {
+		if (!(allowManualTime && (await this.ngxPermissionsService.hasPermission(PermissionsEnum.ALLOW_MANUAL_TIME)))) {
 			return;
 		}
 
@@ -272,14 +265,8 @@ export class TimeTrackerComponent implements
 					tenantId,
 					source: TimeLogSourceEnum.WEB_TIMER
 				});
-				if (
-					moment
-						.utc(timeLog.startedAt)
-						.local()
-						.isSame(new Date(), 'day')
-				) {
-					this.timeTrackerService.duration =
-						this.timeTrackerService.duration + timeLog.duration;
+				if (moment.utc(timeLog.startedAt).local().isSame(new Date(), 'day')) {
+					this.timeTrackerService.duration = this.timeTrackerService.duration + timeLog.duration;
 				}
 
 				this.form.resetForm();
@@ -307,10 +294,7 @@ export class TimeTrackerComponent implements
 
 	public async onExternalRun(synced: ITimerSynced) {
 		if (this.xor(this.running, synced.running)) {
-			this.timeTrackerService.currentSessionDuration = moment().diff(
-				toLocal(synced.startedAt),
-				'seconds'
-			);
+			this.timeTrackerService.currentSessionDuration = moment().diff(toLocal(synced.startedAt), 'seconds');
 			await this.toggleTimer(false);
 		}
 	}
@@ -319,5 +303,5 @@ export class TimeTrackerComponent implements
 		return (!a && b) || (a && !b);
 	}
 
-	ngOnDestroy() { }
+	ngOnDestroy() {}
 }
