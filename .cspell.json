@@ -253,7 +253,8 @@
 		"EOSQL",
 		"rememberMe",
 		"Rememberd",
-		"basicstyles"
+		"basicstyles",
+		"itimer"
 	],
 	"useGitignore": true,
 	"ignorePaths": [
