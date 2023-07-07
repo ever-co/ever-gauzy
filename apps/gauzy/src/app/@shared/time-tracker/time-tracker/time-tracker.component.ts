@@ -6,12 +6,12 @@ import {
 	TimeLogType,
 	PermissionsEnum,
 	TimeLogSourceEnum,
-	IEmployee
+	IEmployee,
 } from '@gauzy/contracts';
 import { NgxDraggableDomMoveEvent, NgxDraggablePoint } from 'ngx-draggable-dom';
 import { NbThemeService } from '@nebular/theme';
 import * as moment from 'moment';
-import { distinctUntilChange, toUTC } from '@gauzy/common-angular';
+import { distinctUntilChange, toLocal, toUTC } from '@gauzy/common-angular';
 import { NgForm } from '@angular/forms';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { NgxPermissionsService } from 'ngx-permissions';
@@ -21,6 +21,7 @@ import { Observable } from 'rxjs';
 import { TimeTrackerService } from '../time-tracker.service';
 import { TimesheetService } from '../../timesheet/timesheet.service';
 import { ErrorHandlingService, Store, ToastrService } from '../../../@core/services';
+import { ITimerSynced } from '../components/time-tracker-status/interfaces';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -34,9 +35,9 @@ export class TimeTrackerComponent implements
   	play = faPlay;
   	pause = faPause;
   	stopwatch = faStopwatch;
-	isDisable: boolean = false;
-	isOpen: boolean = false;
-  	isExpanded: boolean = true;
+	isDisable = false;
+	isOpen = false;
+	isExpanded = true;
 	futureDateAllowed: IOrganization['futureDateAllowed'] = false;
 	employeeId: IEmployee['id'];
 	todaySessionTime = moment().set({ hour: 0, minute: 0, second: 0 }).format('HH:mm:ss');
@@ -210,25 +211,31 @@ export class TimeTrackerComponent implements
 		this.timeTrackerService.showTimerWindow = false;
 	}
 
-	async toggleTimer() {
+	async toggleTimer(onClick?: boolean) {
 		if (!this.running && this.form.invalid) {
 			this.form.resetForm();
 			return;
 		}
 
 		this.isDisable = true;
-		await this.timeTrackerService.toggle()
-			.catch((error) => {
-				if (this.timeTrackerService.interval) {
-					this.timeTrackerService.turnOffTimer();
-				} else {
-					this.timeTrackerService.turnOnTimer();
-				}
-				this._errorHandlingService.handleError(error);
-			})
-			.finally(() => {
-				this.isDisable = false;
-			});
+		try {
+			const isStopTimer =
+				onClick && this.timeTrackerService.timerSynced?.running;
+			const isRemoteStartTimer =
+				!onClick &&
+				this.timeTrackerService.timerSynced?.isExternalSource;
+			this.xor(isRemoteStartTimer, isStopTimer)
+				? await this.timeTrackerService.remoteToggle(isStopTimer)
+				: await this.timeTrackerService.toggle();
+		} catch (error) {
+			if (this.timeTrackerService.interval) {
+				this.timeTrackerService.turnOffTimer();
+			} else {
+				this.timeTrackerService.turnOnTimer();
+			}
+			this._errorHandlingService.handleError(error);
+		}
+		this.isDisable = false;
 	}
 
 	async addTime() {
@@ -296,6 +303,20 @@ export class TimeTrackerComponent implements
 	 */
 	draggablePosition(event: NgxDraggableDomMoveEvent) {
 		this.position = event.position as NgxDraggablePoint;
+	}
+
+	public async onExternalRun(synced: ITimerSynced) {
+		if (this.xor(this.running, synced.running)) {
+			this.timeTrackerService.currentSessionDuration = moment().diff(
+				toLocal(synced.startedAt),
+				'seconds'
+			);
+			await this.toggleTimer(false);
+		}
+	}
+
+	public xor(a: boolean, b: boolean): boolean {
+		return (!a && b) || (a && !b);
 	}
 
 	ngOnDestroy() { }

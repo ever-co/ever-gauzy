@@ -52,6 +52,7 @@
 				>
 					<nb-icon icon="close-outline"></nb-icon>
 				</button>
+				<ga-time-tracker-status (external)="onExternalRun($event)" class="status"></ga-time-tracker-status>
 			</div>
 			<form #form="ngForm">
 				<div
@@ -125,7 +126,7 @@
 															: 'TIMER_TRACKER.START_TIMER'
 														) | translate
 													"
-													(click)="toggleTimer()"
+													(click)="toggleTimer(true)"
 													[disabled]="isDisable"
 												>
 													<fa-icon
@@ -383,7 +384,7 @@
 								"
 								size="medium"
 								[disabled]="running"
-								(click)="toggleTimer()"
+								(click)="toggleTimer(true)"
 							>
 								{{ 'TIMER_TRACKER.START_TIMER' | translate }}
 							</button>
