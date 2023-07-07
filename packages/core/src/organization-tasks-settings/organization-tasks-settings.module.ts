@@ -6,6 +6,7 @@ import { OrganizationTasksSettingsController } from './organization-tasks-settin
 import { OrganizationTasksSettingsService } from './organization-tasks-settings.service';
 import { TenantModule } from '../tenant/tenant.module';
 import { OrganizationTasksSettings } from './organization-tasks-settings.entity';
+import { CommandHandlers } from './commands/handlers';
 
 @Module({
 	imports: [
@@ -20,6 +21,7 @@ import { OrganizationTasksSettings } from './organization-tasks-settings.entity'
 		TenantModule,
 	],
 	controllers: [OrganizationTasksSettingsController],
-	providers: [OrganizationTasksSettingsService],
+	providers: [OrganizationTasksSettingsService, ...CommandHandlers],
+	exports: [OrganizationTasksSettingsService],
 })
 export class OrganizationTasksSettingsModule {}
