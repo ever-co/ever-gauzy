@@ -67,15 +67,12 @@ export class TimeTrackerComponent implements OnInit, OnDestroy {
 	) {
 		this._timeTrackerStatusService.external$
 			.pipe(
-				filter((timerSynced: ITimerSynced) =>
-					this.xor(this.running, timerSynced.running)
-				),
+				filter((timerSynced: ITimerSynced) => this.xor(this.running, timerSynced.running)),
 				tap(async (timerSynced: ITimerSynced) => {
-					this.timeTrackerService.currentSessionDuration =
-						moment().diff(
-							toLocal(timerSynced.startedAt),
-							'seconds'
-						);
+					this.timeTrackerService.currentSessionDuration = moment().diff(
+						toLocal(timerSynced.startedAt),
+						'seconds'
+					);
 					await this.toggleTimer(false);
 				}),
 				untilDestroyed(this)
@@ -241,15 +238,10 @@ export class TimeTrackerComponent implements OnInit, OnDestroy {
 		try {
 			this.isDisable = true;
 			this.timeTrackerService.timerSynced &&
-				this.xor(
-					this.running,
-					this.timeTrackerService.timerSynced.running
-				) &&
-				!onClick
-				?
-				this.timeTrackerService.remoteToggle()
-				:
-				await this.timeTrackerService.toggle();
+			this.xor(this.running, this.timeTrackerService.timerSynced.running) &&
+			!onClick
+				? this.timeTrackerService.remoteToggle()
+				: await this.timeTrackerService.toggle();
 		} catch (error) {
 			if (this.timeTrackerService.interval) {
 				this.timeTrackerService.turnOffTimer();

@@ -6,17 +6,10 @@ import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { TranslateModule } from '@ngx-translate/core';
 import { NbTooltipModule } from '@nebular/theme';
 
-
-
 @NgModule({
 	declarations: [TimeTrackerStatusComponent],
-	imports: [
-		CommonModule,
-		FontAwesomeModule,
-		TranslateModule,
-		NbTooltipModule
-	],
+	imports: [CommonModule, FontAwesomeModule, TranslateModule, NbTooltipModule],
 	exports: [TimeTrackerStatusComponent],
 	providers: [TimeTrackerStatusService]
 })
-export class TimeTrackerStatusModule { }
+export class TimeTrackerStatusModule {}

@@ -11,30 +11,23 @@ import { Store } from '../../../../@core';
 
 @UntilDestroy({ checkProperties: true })
 @Injectable({
-	providedIn: 'root',
+	providedIn: 'root'
 })
 export class TimeTrackerStatusService {
-	private _icon$: BehaviorSubject<ITimerIcon> =
-		new BehaviorSubject<ITimerIcon>(null);
+	private _icon$: BehaviorSubject<ITimerIcon> = new BehaviorSubject<ITimerIcon>(null);
 	private _external$: Subject<ITimerSynced> = new Subject<ITimerSynced>();
-	constructor(
-		private readonly _timeTrackerService: TimeTrackerService,
-		private readonly _store: Store
-	) {
+	constructor(private readonly _timeTrackerService: TimeTrackerService, private readonly _store: Store) {
 		this._timeTrackerService.timer$
 			.pipe(
-				filter(
-					() => !!this._store.token && !!this._store.user?.employee
-				),
+				filter(() => !!this._store.token && !!this._store.user?.employee),
 				tap(async () => {
 					const status = await this.status();
 					const timer = new TimerSynced({
 						...status.lastLog,
-						duration: status.duration,
+						duration: status.duration
 					});
 					this._icon$.next(TimerIconFactory.create(timer.source));
-					if (!timer.running || !timer.isExternalSource)
-						this._icon$.next(null);
+					if (!timer.running || !timer.isExternalSource) this._icon$.next(null);
 					if (timer.isExternalSource) {
 						this._external$.next(timer);
 					}
@@ -45,10 +38,7 @@ export class TimeTrackerStatusService {
 		this.external$
 			.pipe(
 				distinctUntilChange(),
-				tap(
-					(synced: ITimerSynced) =>
-						(this._timeTrackerService.timerSynced = synced)
-				),
+				tap((synced: ITimerSynced) => (this._timeTrackerService.timerSynced = synced)),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -63,11 +53,10 @@ export class TimeTrackerStatusService {
 	}
 
 	public status(): Promise<ITimerStatus> {
-		const { tenantId, organizationId } =
-			this._timeTrackerService.timerConfig;
+		const { tenantId, organizationId } = this._timeTrackerService.timerConfig;
 		return this._timeTrackerService.getTimerStatus({
 			tenantId,
-			organizationId,
+			organizationId
 		});
 	}
 }
