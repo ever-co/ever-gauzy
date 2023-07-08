@@ -96,10 +96,10 @@ export interface ITimeLog extends IBasePerTenantAndOrganizationEntityModel, IRel
 	timeSlots?: ITimeSlot[];
 	project?: IOrganizationProject;
 	organizationContact?: IOrganizationContact;
-	source?: string;
+	source?: TimeLogSourceEnum;
 	startedAt?: Date;
 	stoppedAt?: Date;
-	logType: string;
+	logType: TimeLogType;
 	description?: string;
 	reason?: string;
 	duration: number;
