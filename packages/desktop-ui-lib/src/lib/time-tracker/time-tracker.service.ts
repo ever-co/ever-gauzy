@@ -22,16 +22,12 @@ import { EmployeeCacheService } from '../services/employee-cache.service';
 import { TagCacheService } from '../services/tag-cache.service';
 import { TimeLogCacheService } from '../services/time-log-cache.service';
 import { LoggerService } from '../electron/services';
+import { ITimerSynced } from './time-tracker-status/interfaces';
 
 @Injectable({
 	providedIn: 'root',
 })
 export class TimeTrackerService {
-	AW_HOST = 'http://localhost:5600';
-	token = '';
-	userId = '';
-	employeeId = '';
-	buckets: any = {};
 
 	constructor(
 		private readonly http: HttpClient,
@@ -45,6 +41,21 @@ export class TimeTrackerService {
 		private readonly _timeLogService: TimeLogCacheService,
 		private readonly _loggerService: LoggerService
 	) {}
+
+	public get timerSynced(): ITimerSynced {
+		return this._timerSynced;
+	}
+
+	public set timerSynced(value: ITimerSynced) {
+		this._timerSynced = value;
+	}
+	AW_HOST = 'http://localhost:5600';
+	token = '';
+	userId = '';
+	employeeId = '';
+	buckets: any = {};
+
+	private _timerSynced: ITimerSynced;
 
 	createAuthorizationHeader(headers: Headers) {
 		headers.append('Authorization', 'Basic ' + btoa('username:password'));
