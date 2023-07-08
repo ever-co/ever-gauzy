@@ -229,9 +229,9 @@ export class TimeTrackerService implements OnDestroy {
 			this.turnOffTimer();
 			this.timerConfig = {
 				...this.timerConfig,
-				stoppedAt: toUTC(moment()).toDate(),
-				source: TimeLogSourceEnum.WEB_TIMER
+				stoppedAt: toUTC(moment()).toDate()
 			};
+			this.currentSessionDuration = 0;
 			return firstValueFrom(this.http.post<ITimeLog>(`${API_PREFIX}/timesheet/timer/stop`, this.timerConfig));
 		} else {
 			this.currentSessionDuration = 0;
@@ -321,8 +321,8 @@ export class TimeTrackerService implements OnDestroy {
 		}
 	}
 
-	public remoteToggle(isStopTimer: boolean): Promise<ITimeLog> | ITimeLog {
-		if (this.running && this.timerSynced.running) {
+	public remoteToggle(): ITimeLog {
+		if (this.running) {
 			this.turnOffTimer();
 			this.timerConfig = {
 				...this.timerConfig,
@@ -331,9 +331,7 @@ export class TimeTrackerService implements OnDestroy {
 				stoppedAt: this.timerSynced.stoppedAt
 			};
 			this.currentSessionDuration = 0;
-			return isStopTimer
-				? firstValueFrom(this.http.post<ITimeLog>(`${API_PREFIX}/timesheet/timer/stop`, this.timerConfig))
-				: this.timerSynced.lastLog;
+			return this.timerSynced.lastLog;
 		} else {
 			this.duration = this.timerSynced.lastLog.duration;
 			this.timerConfig = {
