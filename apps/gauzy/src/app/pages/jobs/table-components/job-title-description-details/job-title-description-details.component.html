@@ -14,6 +14,9 @@
 		<ng-template [ngIf]="rowData?.jobPost?.budget">
 			<span class="badge mr-2">{{ rowData?.jobPost?.budget | budget }}</span>
 		</ng-template>
+		<ng-template [ngIf]="rowData?.jobPost?.country">
+			<span class="badge mr-2">{{ rowData?.jobPost?.country }}</span>
+		</ng-template>
 		<ng-template [ngIf]="rowData?.jobPost?.jobStatus">
 			<job-status [rowData]="rowData"></job-status>
 		</ng-template>
@@ -71,12 +74,6 @@
 				<div class="job-category">
 					<span class="label">Category:</span>
 					<span class="badge">{{ rowData?.jobPost?.category }}</span>
-				</div>
-			</ng-template>
-			<ng-template [ngIf]="rowData?.jobPost?.country">
-				<div class="job-country">
-					<span class="label">Country:</span>
-					<span class="badge">{{ rowData?.jobPost?.country }}</span>
 				</div>
 			</ng-template>
 			<ng-template [ngIf]="rowData?.jobPost?.skills">
