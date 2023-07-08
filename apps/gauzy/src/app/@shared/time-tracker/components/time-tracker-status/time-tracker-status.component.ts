@@ -1,12 +1,12 @@
 import { Component, EventEmitter, OnInit, Output } from '@angular/core';
 import { ITimerStatus, TimeLogSourceEnum } from '@gauzy/contracts';
 import { BehaviorSubject, Observable, tap } from 'rxjs';
-import { TimeTrackerService } from '../../time-tracker.service';
 import { untilDestroyed, UntilDestroy } from '@ngneat/until-destroy';
+import { distinctUntilChange } from '@gauzy/common-angular';
+import { TimeTrackerService } from '../../time-tracker.service';
 import { TimerIconFactory } from './factory';
 import { ITimerSynced, ITimerIcon } from './interfaces';
 import { TimerSynced } from './concretes';
-import { distinctUntilChange } from 'packages/common-angular/dist';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

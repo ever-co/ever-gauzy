@@ -1,4 +1,4 @@
-import { ITimeLog, TimeLogSourceEnum } from 'packages/contracts/dist';
+import { ITimeLog, TimeLogSourceEnum } from '@gauzy/contracts';
 import { ITimerSynced } from '../interfaces';
 
 export class TimerSynced implements ITimerSynced {
