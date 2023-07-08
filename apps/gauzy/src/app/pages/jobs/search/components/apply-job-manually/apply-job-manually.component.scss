@@ -21,6 +21,11 @@
 		.title {
 			@include nb-rtl(text-align, right);
 		}
+		job-title-description-details {
+			div.job-detail {
+				max-height: 500px !important;
+			}
+		}
 	}
 	.well {
 		height: 50px;
