@@ -1,6 +1,7 @@
+import { IOrganizationProject } from 'organization-projects.model';
 import { IBasePerTenantAndOrganizationEntityModel } from './base-entity.model';
 
-export interface IOrganizationTasksSettings
+export interface IOrganizationProjectTasksSettings
 	extends IBasePerTenantAndOrganizationEntityModel {
 	isTasksPrivacyEnabled: boolean;
 	isTasksMultipleAssigneesEnabled: boolean;
@@ -28,14 +29,12 @@ export interface IOrganizationTasksSettings
 	tasksAutoArchivePeriodDays: number;
 
 	isTasksAutoStatusEnabled: boolean;
+
+	projectId?: string;
+	project?: IOrganizationProject;
 }
 
-export enum TasksProofOfCompletionTypeEnum {
-	PUBLIC = 'PUBLIC',
-	PRIVATE = 'PRIVATE',
-}
-
-export interface IOrganizationTasksSettingsUpdateInput {
+export interface IOrganizationProjectTasksSettingsUpdateInput {
 	isTasksPrivacyEnabled: boolean;
 	isTasksMultipleAssigneesEnabled: boolean;
 	isTasksManualTimeEnabled: boolean;
@@ -62,4 +61,7 @@ export interface IOrganizationTasksSettingsUpdateInput {
 	tasksAutoArchivePeriodDays: number;
 
 	isTasksAutoStatusEnabled: boolean;
+
+	projectId?: string;
+	project?: IOrganizationProject;
 }

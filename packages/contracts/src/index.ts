@@ -117,6 +117,7 @@ export * from './user-organization.model';
 export * from './user.model';
 export * from './wakatime.model';
 export * from './organization-tasks-settings.model';
+export * from './organization-project-tasks-settings.model';
 
 export { IBaseEntityModel as BaseEntityModel } from './base-entity.model';
 export {
