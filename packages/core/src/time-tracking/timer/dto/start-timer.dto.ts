@@ -5,11 +5,11 @@ import { TenantOrganizationBaseDTO } from "./../../../core/dto";
 
 export class StartTimerDTO extends TenantOrganizationBaseDTO implements ITimerToggleInput {
 
-    @ApiProperty({ type: () => String, enum: TimeLogType, required: true })
+    @ApiProperty({ type: () => String, enum: TimeLogType })
     @IsEnum(TimeLogType)
     readonly logType: TimeLogType;
 
-    @ApiProperty({ type: () => String, enum: TimeLogSourceEnum, required: true })
+    @ApiProperty({ type: () => String, enum: TimeLogSourceEnum })
     @IsEnum(TimeLogSourceEnum)
     readonly source: TimeLogSourceEnum;
 
@@ -46,7 +46,7 @@ export class StartTimerDTO extends TenantOrganizationBaseDTO implements ITimerTo
     /**
      * Version of the sources (Desktop/Web/Browser/Mobile) timer
      */
-    @ApiPropertyOptional({ type: () => String })
+    @ApiPropertyOptional({ type: () => String, example: '1.0.1' })
     @IsOptional()
     @IsString()
     readonly version: string;

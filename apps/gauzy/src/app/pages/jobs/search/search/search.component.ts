@@ -430,11 +430,11 @@ export class SearchComponent extends PaginationFilterBaseComponent implements On
 				applied: true,
 				...(isNotEmpty(this.selectedEmployee)
 					? {
-							employeeId: this.selectedEmployee.id
-					  }
+						employeeId: this.selectedEmployee.id
+					}
 					: {
-							employeeId
-					  }),
+						employeeId
+					}),
 				providerCode,
 				providerJobId
 			};
@@ -455,7 +455,8 @@ export class SearchComponent extends PaginationFilterBaseComponent implements On
 			context: {
 				employeeJobPost: this.selectedJob,
 				selectedEmployee: this.selectedEmployee
-			}
+			},
+			hasScroll: false
 		});
 
 		const result = await firstValueFrom<IEmployeeJobApplication>(dialog.onClose);
@@ -500,22 +501,22 @@ export class SearchComponent extends PaginationFilterBaseComponent implements On
 			columns: {
 				...(isEmpty(this.selectedEmployee)
 					? {
-							employee: {
-								title: this.getTranslation('JOBS.EMPLOYEE'),
-								filter: false,
-								width: '15%',
-								type: 'custom',
-								sort: false,
-								renderComponent: EmployeeLinksComponent,
-								valuePrepareFunction: (cell, row: IEmployeeJobPost) => {
-									return {
-										name: row.employee && row.employee.user ? row.employee.user.name : null,
-										imageUrl: row.employee && row.employee.user ? row.employee.user.imageUrl : null,
-										id: row.employee ? row.employee.id : null
-									};
-								}
+						employee: {
+							title: this.getTranslation('JOBS.EMPLOYEE'),
+							filter: false,
+							width: '15%',
+							type: 'custom',
+							sort: false,
+							renderComponent: EmployeeLinksComponent,
+							valuePrepareFunction: (cell, row: IEmployeeJobPost) => {
+								return {
+									name: row.employee && row.employee.user ? row.employee.user.name : null,
+									imageUrl: row.employee && row.employee.user ? row.employee.user.imageUrl : null,
+									id: row.employee ? row.employee.id : null
+								};
 							}
-					  }
+						}
+					}
 					: {}),
 				jobDetails: {
 					title: this.getTranslation('JOBS.JOB_DETAILS'),
@@ -585,73 +586,73 @@ export class SearchComponent extends PaginationFilterBaseComponent implements On
 				[
 					...(isNotEmpty(this.selectedEmployee)
 						? [
-								{
-									field: 'employeeIds',
-									search: [this.selectedEmployee.id]
-								}
-						  ]
+							{
+								field: 'employeeIds',
+								search: [this.selectedEmployee.id]
+							}
+						]
 						: []),
 					...(startDate && endDate
 						? [
-								{
-									field: 'jobDateCreated',
-									search: {
-										between: {
-											lower: toUTC(startDate).format('YYYY-MM-DD HH:mm:ss'),
-											upper: toUTC(endDate).format('YYYY-MM-DD HH:mm:ss')
-										}
+							{
+								field: 'jobDateCreated',
+								search: {
+									between: {
+										lower: toUTC(startDate).format('YYYY-MM-DD HH:mm:ss'),
+										upper: toUTC(endDate).format('YYYY-MM-DD HH:mm:ss')
 									}
 								}
-						  ]
+							}
+						]
 						: []),
 					...(title
 						? [
-								{
-									field: 'title',
-									search: title
-								}
-						  ]
+							{
+								field: 'title',
+								search: title
+							}
+						]
 						: []),
 					...(jobSource
 						? [
-								{
-									field: 'jobSource',
-									search: jobSource
-								}
-						  ]
+							{
+								field: 'jobSource',
+								search: jobSource
+							}
+						]
 						: []),
 					...(jobType
 						? [
-								{
-									field: 'jobType',
-									search: jobType
-								}
-						  ]
+							{
+								field: 'jobType',
+								search: jobType
+							}
+						]
 						: []),
 					...(jobStatus
 						? [
-								{
-									field: 'jobStatus',
-									search: jobStatus
-								}
-						  ]
+							{
+								field: 'jobStatus',
+								search: jobStatus
+							}
+						]
 						: []),
 					...(budget
 						? [
-								{
-									field: 'budget',
-									search: budget
-								}
-						  ]
+							{
+								field: 'budget',
+								search: budget
+							}
+						]
 						: []),
 					// Get only fresh jobs (not applied yet)
 					...(true
 						? [
-								{
-									field: 'isApplied',
-									search: 'false'
-								}
-						  ]
+							{
+								field: 'isApplied',
+								search: 'false'
+							}
+						]
 						: [])
 				],
 				false,
@@ -735,5 +736,5 @@ export class SearchComponent extends PaginationFilterBaseComponent implements On
 		this.jobs$.next(true);
 	}
 
-	ngOnDestroy(): void {}
+	ngOnDestroy(): void { }
 }

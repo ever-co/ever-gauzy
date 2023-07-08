@@ -17,9 +17,10 @@ import { Store as AppStore } from '../../@core/services/store.service';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { filter } from 'rxjs/operators';
 import { BehaviorSubject } from 'rxjs/internal/BehaviorSubject';
-import { firstValueFrom, Observable } from 'rxjs';
+import { firstValueFrom, Observable, timer } from 'rxjs';
 import { API_PREFIX } from '../../@core/constants/app.constants';
 import { environment } from '../../../environments/environment';
+import { ITimerSynced } from './components/time-tracker-status/interfaces';
 
 export function createInitialTimerState(): TimerState {
 	let timerConfig = {
@@ -44,7 +45,7 @@ export function createInitialTimerState(): TimerState {
 				...JSON.parse(config)
 			};
 		}
-	} catch (error) { }
+	} catch (error) {}
 	return {
 		showTimerWindow: false,
 		duration: 0,
@@ -79,18 +80,16 @@ export class TimeTrackerService implements OnDestroy {
 
 	showTimerWindow$ = this.timerQuery.select((state) => state.showTimerWindow);
 	duration$ = this.timerQuery.select((state) => state.duration);
-	currentSessionDuration$ = this.timerQuery.select(
-		(state) => state.currentSessionDuration
-	);
+	currentSessionDuration$ = this.timerQuery.select((state) => state.currentSessionDuration);
 	$running = this.timerQuery.select((state) => state.running);
 	$timerConfig = this.timerQuery.select((state) => state.timerConfig);
 	organization: IOrganization;
 
-	private _trackType$: BehaviorSubject<string> = new BehaviorSubject(
-		this.timeType
-	);
+	private _trackType$: BehaviorSubject<string> = new BehaviorSubject(this.timeType);
 	public trackType$: Observable<string> = this._trackType$.asObservable();
 	private _worker: Worker;
+	private _timerSynced: ITimerSynced;
+	public timer$: Observable<number> = timer(0, 5000);
 
 	constructor(
 		protected timerStore: TimerStore,
@@ -127,10 +126,7 @@ export class TimeTrackerService implements OnDestroy {
 			.then((status: ITimerStatus) => {
 				this.duration = status.duration;
 				if (status.lastLog && status.lastLog.isRunning) {
-					this.currentSessionDuration = moment().diff(
-						toLocal(status.lastLog.startedAt),
-						'seconds'
-					);
+					this.currentSessionDuration = moment().diff(toLocal(status.lastLog.startedAt), 'seconds');
 				} else {
 					this.currentSessionDuration = 0;
 				}
@@ -141,7 +137,7 @@ export class TimeTrackerService implements OnDestroy {
 					this.turnOnTimer();
 				}
 			})
-			.catch(() => { });
+			.catch(() => {});
 	}
 
 	public get showTimerWindow(): boolean {
@@ -233,27 +229,19 @@ export class TimeTrackerService implements OnDestroy {
 			this.turnOffTimer();
 			this.timerConfig = {
 				...this.timerConfig,
-				stoppedAt: toUTC(moment()).toDate()
+				stoppedAt: toUTC(moment()).toDate(),
+				source: TimeLogSourceEnum.WEB_TIMER
 			};
-			return firstValueFrom(
-				this.http.post<ITimeLog>(
-					`${API_PREFIX}/timesheet/timer/stop`,
-					this.timerConfig
-				)
-			);
+			return firstValueFrom(this.http.post<ITimeLog>(`${API_PREFIX}/timesheet/timer/stop`, this.timerConfig));
 		} else {
 			this.currentSessionDuration = 0;
 			this.turnOnTimer();
 			this.timerConfig = {
 				...this.timerConfig,
-				startedAt: toUTC(moment()).toDate()
+				startedAt: toUTC(moment()).toDate(),
+				source: TimeLogSourceEnum.WEB_TIMER
 			};
-			return firstValueFrom(
-				this.http.post<ITimeLog>(
-					`${API_PREFIX}/timesheet/timer/start`,
-					this.timerConfig
-				)
-			);
+			return firstValueFrom(this.http.post<ITimeLog>(`${API_PREFIX}/timesheet/timer/start`, this.timerConfig));
 		}
 	}
 
@@ -278,19 +266,13 @@ export class TimeTrackerService implements OnDestroy {
 	canStartTimer() {
 		let isValid = true;
 		if (this.organization) {
-			if (
-				this.organization.requireProject &&
-				!this.timerConfig.projectId
-			) {
+			if (this.organization.requireProject && !this.timerConfig.projectId) {
 				isValid = false;
 			}
 			if (this.organization.requireTask && !this.timerConfig.taskId) {
 				isValid = false;
 			}
-			if (
-				this.organization.requireDescription &&
-				!this.timerConfig.description
-			) {
+			if (this.organization.requireDescription && !this.timerConfig.description) {
 				isValid = false;
 			}
 		} else {
@@ -301,8 +283,7 @@ export class TimeTrackerService implements OnDestroy {
 
 	setTimeLogType(timeType: string) {
 		this._trackType$.next(timeType);
-		this.timeType =
-			timeType === TimeLogType.TRACKED ? TimeLogType.TRACKED : TimeLogType.MANUAL;
+		this.timeType = timeType === TimeLogType.TRACKED ? TimeLogType.TRACKED : TimeLogType.MANUAL;
 	}
 
 	public get timeType(): TimeLogType {
@@ -325,10 +306,9 @@ export class TimeTrackerService implements OnDestroy {
 	private _runWorker(): void {
 		if (typeof Worker !== 'undefined') {
 			// Initialize worker
-			this._worker = new Worker(
-				new URL(environment.CLIENT_BASE_URL + '/assets/workers/time-tracker.js'),
-				{ type: 'module' }
-			);
+			this._worker = new Worker(new URL(environment.CLIENT_BASE_URL + '/assets/workers/time-tracker.js'), {
+				type: 'module'
+			});
 			// retrieve message post from time tracker worker
 			this._worker.onmessage = ({ data }) => {
 				this.currentSessionDuration = data.session;
@@ -341,5 +321,48 @@ export class TimeTrackerService implements OnDestroy {
 		}
 	}
 
-	ngOnDestroy(): void { }
+	public remoteToggle(isStopTimer: boolean): Promise<ITimeLog> | ITimeLog {
+		if (this.running && this.timerSynced.running) {
+			this.turnOffTimer();
+			this.timerConfig = {
+				...this.timerConfig,
+				source: this.timerSynced.source,
+				startedAt: this.timerSynced.startedAt,
+				stoppedAt: this.timerSynced.stoppedAt
+			};
+			this.currentSessionDuration = 0;
+			return isStopTimer
+				? firstValueFrom(this.http.post<ITimeLog>(`${API_PREFIX}/timesheet/timer/stop`, this.timerConfig))
+				: this.timerSynced.lastLog;
+		} else {
+			this.duration = this.timerSynced.lastLog.duration;
+			this.timerConfig = {
+				...this.timerConfig,
+				organizationId: this.timerSynced.lastLog.organizationId,
+				tenantId: this.timerSynced.lastLog.tenantId,
+				projectId: this.timerSynced.lastLog.projectId,
+				taskId: this.timerSynced.lastLog.taskId,
+				organizationContactId: this.timerSynced.lastLog.organizationContactId,
+				description: this.timerSynced.lastLog.description,
+				source: this.timerSynced.source,
+				tags: this.timerSynced.lastLog.tags,
+				startedAt: this.timerSynced.startedAt,
+				stoppedAt: this.timerSynced.stoppedAt
+			};
+			this.turnOnTimer();
+			return this.timerSynced.lastLog;
+		}
+	}
+
+	public get timerSynced(): ITimerSynced {
+		return this._timerSynced;
+	}
+
+	public set timerSynced(value: ITimerSynced) {
+		this._timerSynced = value;
+	}
+
+	ngOnDestroy(): void {
+		this._worker.terminate();
+	}
 }

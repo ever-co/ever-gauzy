@@ -1,19 +1,12 @@
-import { ITimerStatusInput, TimeLogSourceEnum } from '@gauzy/contracts';
-import { ApiProperty, IntersectionType, PartialType, PickType } from '@nestjs/swagger';
-import { IsEnum, IsOptional } from 'class-validator';
+import { ITimerStatusInput } from '@gauzy/contracts';
+import { IntersectionType, PartialType, PickType } from '@nestjs/swagger';
 import { EmployeeFeatureDTO } from './../../../employee/dto';
 import { TenantOrganizationBaseDTO } from './../../../core/dto';
 import { RelationsQueryDTO } from './../../../shared/dto';
+import { StartTimerDTO } from './start-timer.dto';
 
-export class TimerStatusQueryDTO
-	extends IntersectionType(
-		TenantOrganizationBaseDTO,
-		IntersectionType(PartialType(PickType(EmployeeFeatureDTO, ['employeeId'] as const)), RelationsQueryDTO)
-	)
-	implements ITimerStatusInput
-{
-	@ApiProperty({ type: () => String, enum: TimeLogSourceEnum })
-	@IsEnum(TimeLogSourceEnum)
-	@IsOptional()
-	readonly source: TimeLogSourceEnum;
-}
+export class TimerStatusQueryDTO extends IntersectionType(TenantOrganizationBaseDTO, IntersectionType(
+	PartialType(PickType(EmployeeFeatureDTO, ['employeeId'] as const)),
+	PartialType(PickType(StartTimerDTO, ['source'] as const)),
+	RelationsQueryDTO
+)) implements ITimerStatusInput { }
