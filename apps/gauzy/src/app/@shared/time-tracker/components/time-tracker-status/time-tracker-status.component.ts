@@ -15,13 +15,10 @@ import { TimerSynced } from './concretes';
 	styleUrls: ['./time-tracker-status.component.scss']
 })
 export class TimeTrackerStatusComponent implements OnInit {
-
 	private _icon$: BehaviorSubject<ITimerIcon> = new BehaviorSubject<ITimerIcon>(null);
 	private _external: EventEmitter<ITimerSynced> = new EventEmitter<ITimerSynced>();
 
-	constructor(
-		private readonly _timeTrackerService: TimeTrackerService
-	) { }
+	constructor(private readonly _timeTrackerService: TimeTrackerService) {}
 
 	ngOnInit(): void {
 		this._timeTrackerService.timer$

@@ -45,7 +45,7 @@ export function createInitialTimerState(): TimerState {
 				...JSON.parse(config)
 			};
 		}
-	} catch (error) { }
+	} catch (error) {}
 	return {
 		showTimerWindow: false,
 		duration: 0,
@@ -137,7 +137,7 @@ export class TimeTrackerService implements OnDestroy {
 					this.turnOnTimer();
 				}
 			})
-			.catch(() => { });
+			.catch(() => {});
 	}
 
 	public get showTimerWindow(): boolean {
