@@ -4,7 +4,6 @@ import { TranslateService } from '@ngx-translate/core';
 import { ViewCell } from 'ng2-smart-table';
 import { IVisibilityJobPostInput } from '@gauzy/contracts';
 import { TranslationBaseComponent } from './../../../../@shared/language-base';
-import { ToastrService } from './../../../../@core/services';
 
 @Component({
 	selector: 'job-title-description-details',
@@ -15,8 +14,7 @@ import { ToastrService } from './../../../../@core/services';
 export class JobTitleDescriptionDetailsComponent extends TranslationBaseComponent implements ViewCell {
 
 	constructor(
-		public readonly translateService: TranslateService,
-		private readonly toastrService: ToastrService
+		public readonly translateService: TranslateService
 	) {
 		super(translateService);
 	}
