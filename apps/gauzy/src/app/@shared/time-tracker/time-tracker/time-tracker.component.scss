@@ -5,6 +5,11 @@
   z-index: 999;
   right: 20px;
   top: 80px;
+  .status {
+	position: absolute;
+	right: 72px;
+	bottom: 6px;
+  }
   nb-card {
     border: none;
   }
@@ -232,7 +237,7 @@ nb-card-footer{
   width: calc(100% + 48px);
   left: -24px;
   bottom: -128px;
-  
+
     .alert {
       width: 100%;
       display: flex;
@@ -241,7 +246,7 @@ nb-card-footer{
       gap: 0.25rem;
       font-size: 12px;
       border-radius: var(--border-radius);
-  
+
       nb-icon {
         width: 30px;
         height: 18px;
@@ -250,7 +255,7 @@ nb-card-footer{
       div {
         line-height: 1.5em;
       }
-  
+
       ::ng-deep {
         .close {
           padding: 4px 8px;

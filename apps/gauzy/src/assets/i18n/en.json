@@ -3622,7 +3622,8 @@
 		"VIEW_TIMESHEET": "View timesheet",
 		"ADD_TIME": "Add Time",
 		"TODAY": "Today",
-		"ALERT_DESKTOP_DOWNLOAD": "For more flexible time and activity tracking, please <a href=\"https://web.gauzy.co/downloads\" rel=\"noopener\" target=\"_blank\">Download</a> and use the <a href=\"https://web.gauzy.co/downloads\" rel=\"noopener\" target=\"_blank\">Gauzy Desktop Timer App</a>."
+		"ALERT_DESKTOP_DOWNLOAD": "For more flexible time and activity tracking, please <a href=\"https://web.gauzy.co/downloads\" rel=\"noopener\" target=\"_blank\">Download</a> and use the <a href=\"https://web.gauzy.co/downloads\" rel=\"noopener\" target=\"_blank\">Gauzy Desktop Timer App</a>.",
+		"STATUS": "The time tracker is already running in the {{ source }}"
 	},
 	"TIMESHEET": {
 		"TODAY": "Today",

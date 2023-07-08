@@ -3570,7 +3570,8 @@
 		},
 		"VIEW_TIMESHEET": "View timesheet",
 		"ADD_TIME": "Add Time",
-		"TODAY": "היום"
+		"TODAY": "היום",
+		"STATUS": "גשש הזמן כבר פועל ב- {{ source }}"
 	},
 	"TIMESHEET": {
 		"TODAY": "היום",
