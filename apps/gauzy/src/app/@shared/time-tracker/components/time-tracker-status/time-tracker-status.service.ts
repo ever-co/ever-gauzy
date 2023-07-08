@@ -33,7 +33,8 @@ export class TimeTrackerStatusService {
 						duration: status.duration,
 					});
 					this._icon$.next(TimerIconFactory.create(timer.source));
-					if (!timer.running) this._icon$.next(null);
+					if (!timer.running || !timer.isExternalSource)
+						this._icon$.next(null);
 					if (timer.isExternalSource) {
 						this._external$.next(timer);
 					}
