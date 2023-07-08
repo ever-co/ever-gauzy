@@ -15,14 +15,13 @@ import { TimerSynced } from './concretes';
 	styleUrls: ['./time-tracker-status.component.scss']
 })
 export class TimeTrackerStatusComponent implements OnInit {
-	private _icon$: BehaviorSubject<ITimerIcon>;
-	private _external: EventEmitter<ITimerSynced>;
-	private readonly _sourceContext = TimeLogSourceEnum.WEB_TIMER;
 
-	constructor(private readonly _timeTrackerService: TimeTrackerService) {
-		this._icon$ = new BehaviorSubject<ITimerIcon>(null);
-		this._external = new EventEmitter<ITimerSynced>();
-	}
+	private _icon$: BehaviorSubject<ITimerIcon> = new BehaviorSubject<ITimerIcon>(null);
+	private _external: EventEmitter<ITimerSynced> = new EventEmitter<ITimerSynced>();
+
+	constructor(
+		private readonly _timeTrackerService: TimeTrackerService
+	) { }
 
 	ngOnInit(): void {
 		this._timeTrackerService.timer$
@@ -32,7 +31,7 @@ export class TimeTrackerStatusComponent implements OnInit {
 					const source = status.lastLog.source as TimeLogSourceEnum;
 					this._icon$.next(TimerIconFactory.create(source));
 					if (!status.running) this._icon$.next(null);
-					if (status.lastLog.source !== this._sourceContext) {
+					if (status.lastLog.source !== TimeLogSourceEnum.WEB_TIMER) {
 						this._external.emit(
 							new TimerSynced({
 								...status.lastLog,

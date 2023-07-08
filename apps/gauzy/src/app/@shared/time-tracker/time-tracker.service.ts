@@ -45,7 +45,7 @@ export function createInitialTimerState(): TimerState {
 				...JSON.parse(config)
 			};
 		}
-	} catch (error) {}
+	} catch (error) { }
 	return {
 		showTimerWindow: false,
 		duration: 0,
@@ -89,7 +89,7 @@ export class TimeTrackerService implements OnDestroy {
 	public trackType$: Observable<string> = this._trackType$.asObservable();
 	private _worker: Worker;
 	private _timerSynced: ITimerSynced;
-	public timer$: Observable<number>;
+	public timer$: Observable<number> = timer(0, 5000);
 
 	constructor(
 		protected timerStore: TimerStore,
@@ -98,7 +98,6 @@ export class TimeTrackerService implements OnDestroy {
 		private http: HttpClient
 	) {
 		this._runWorker();
-		this.timer$ = timer(0, 5000);
 		this.store.selectedOrganization$
 			.pipe(
 				filter((organization) => !!organization),
@@ -138,7 +137,7 @@ export class TimeTrackerService implements OnDestroy {
 					this.turnOnTimer();
 				}
 			})
-			.catch(() => {});
+			.catch(() => { });
 	}
 
 	public get showTimerWindow(): boolean {
