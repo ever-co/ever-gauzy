@@ -4,6 +4,7 @@ import { TimeTrackerStatusService } from './time-tracker-status.service';
 import { TimeTrackerStatusComponent } from './time-tracker-status.component';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { TranslateModule } from '@ngx-translate/core';
+import { NbTooltipModule } from '@nebular/theme';
 
 
 
@@ -12,7 +13,8 @@ import { TranslateModule } from '@ngx-translate/core';
 	imports: [
 		CommonModule,
 		FontAwesomeModule,
-		TranslateModule
+		TranslateModule,
+		NbTooltipModule
 	],
 	exports: [TimeTrackerStatusComponent],
 	providers: [TimeTrackerStatusService]
