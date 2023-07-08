@@ -35,7 +35,7 @@
 								(ngSubmit)="onSubmit()"
 							>
 								<div class="row">
-									<div class="col-6">
+									<div class="col-3">
 										<div class="form-group">
 											<label class="label" for="job_employee">
 												{{ 'HEADER.SELECT_EMPLOYEE' | translate }}
@@ -53,7 +53,7 @@
 											></ga-employee-selector>
 										</div>
 									</div>
-									<div class="col-6">
+									<div class="col-2">
 										<div class="form-group">
 											<label class="label" for="hourly_rate">
 												{{ 'FORM.LABELS.HOURLY_RATE' | translate }}
@@ -72,11 +72,8 @@
 											</nb-form-field>
 										</div>
 									</div>
-								</div>
-
-								<ng-container *ngIf="form.get('employeeId').value">
-									<div class="row">
-										<div class="col-10">
+									<ng-container *ngIf="form.get('employeeId').value">
+										<div class="col-7">
 											<div class="form-group">
 												<label class="label" for="proposal_template">
 													{{ 'PROPOSALS_PAGE.REGISTER.TEMPLATE' | translate }}
@@ -99,9 +96,8 @@
 												</ngx-proposal-template-select>
 											</div>
 										</div>
-									</div>
-								</ng-container>
-
+									</ng-container>
+								</div>
 								<ng-template
 									[ngIf]="JobPostSourceEnum.UPWORK === employeeJobPost?.jobPost?.providerCode"
 								>
