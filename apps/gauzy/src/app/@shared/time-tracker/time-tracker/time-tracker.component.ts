@@ -229,13 +229,17 @@ export class TimeTrackerComponent implements OnInit, OnDestroy {
 	}
 
 	async toggleTimer(onClick?: boolean) {
-		if (!this.running && this.form.invalid) {
-			this.form.resetForm();
-			return;
-		}
-
-		this.isDisable = true;
 		try {
+			if (!this.running && this.form.invalid) {
+				this.form.resetForm();
+				return;
+			}
+		} catch (error) {
+			this.toggleWindow();
+			this.isExpanded = false;
+		}
+		try {
+			this.isDisable = true;
 			this.timeTrackerService.timerSynced &&
 				this.xor(
 					this.running,
