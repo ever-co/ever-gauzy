@@ -67,7 +67,7 @@ export class ApplyJobManuallyComponent extends TranslationBaseComponent implemen
 				]
 			}
 		],
-		height: '150px', // Set the desired height here
+		height: '190px', // Set the desired height here
 	};
 	public organization: IOrganization;
 	public uploader: FileUploader;
