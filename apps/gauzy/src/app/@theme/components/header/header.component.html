@@ -106,7 +106,7 @@
 		<nb-action
       		*ngIf="supportContextMenu"
 			icon="message-circle-outline"
-			class="toggle-layout"
+			class="toggle-layout help"
 			[nbContextMenu]="supportContextMenu"
 		></nb-action>
 
@@ -117,7 +117,7 @@
 		>
 			<nb-icon icon="clock-outline"></nb-icon>
 			<span>{{ timerDuration }}</span>
-			<ga-time-tracker-status></ga-time-tracker-status>
+			<ga-time-tracker-status class="status"></ga-time-tracker-status>
 		</nb-action>
 
 		<nb-action
