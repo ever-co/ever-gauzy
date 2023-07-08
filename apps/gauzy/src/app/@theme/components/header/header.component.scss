@@ -191,6 +191,8 @@ $orange: #f56d58;
 }
 
 .timer-action {
+  display: flex;
+  gap: 4px;
   cursor: pointer;
   span {
     width: 64px;

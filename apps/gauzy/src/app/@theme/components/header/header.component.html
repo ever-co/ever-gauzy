@@ -115,8 +115,9 @@
 			class="timer-action"
 			(click)="toggleTimerWindow()"
 		>
-			<nb-icon class="mr-3" icon="clock-outline"></nb-icon>
+			<nb-icon icon="clock-outline"></nb-icon>
 			<span>{{ timerDuration }}</span>
+			<ga-time-tracker-status></ga-time-tracker-status>
 		</nb-action>
 
 		<nb-action
@@ -190,4 +191,3 @@
 </ng-template>
 
 </div>
-
