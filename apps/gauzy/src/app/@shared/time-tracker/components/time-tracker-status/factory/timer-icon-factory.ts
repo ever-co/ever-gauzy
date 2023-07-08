@@ -1,5 +1,12 @@
 import { TimeLogSourceEnum } from '@gauzy/contracts';
-import { BrowserExtensionTimerIcon, DesktopTimerIcon, HubstaffTimerIcon, MobileTimerIcon, UpworkTimerIcon, WebTimerIcon } from '../concretes';
+import {
+	BrowserExtensionTimerIcon,
+	DesktopTimerIcon,
+	HubstaffTimerIcon,
+	MobileTimerIcon,
+	UpworkTimerIcon,
+	WebTimerIcon
+} from '../concretes';
 import { ITimerIcon } from '../interfaces/itimer-icon';
 
 export class TimerIconFactory {
