@@ -99,6 +99,7 @@ export class OrganizationProjectTasksSettings extends TenantOrganizationBaseEnti
 	@IsBoolean()
 	@Column({ default: true })
 	isTasksAutoCloseEnabled: boolean;
+
 	@ApiProperty({ type: () => Number })
 	@IsNumber()
 	@Column({ default: 7 })
@@ -108,6 +109,7 @@ export class OrganizationProjectTasksSettings extends TenantOrganizationBaseEnti
 	@IsBoolean()
 	@Column({ default: true })
 	isTasksAutoArchiveEnabled: boolean;
+
 	@ApiProperty({ type: () => Number })
 	@IsNumber()
 	@Column({ default: 7 })
