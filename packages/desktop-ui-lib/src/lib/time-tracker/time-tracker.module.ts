@@ -21,7 +21,7 @@ import {
 	NbToastrService,
 	NbFormFieldModule,
 	NbTooltipModule,
-	NbBadgeModule,
+	NbBadgeModule
 } from '@nebular/theme';
 import { NbEvaIconsModule } from '@nebular/eva-icons';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
@@ -42,7 +42,7 @@ import { TimeTrackerStatusModule } from './time-tracker-status/time-tracker-stat
 		CustomRenderComponent,
 		NoDataMessageComponent,
 		HumanizePipe,
-		OrganizationSelectorComponent,
+		OrganizationSelectorComponent
 	],
 	imports: [
 		CommonModule,
@@ -84,6 +84,6 @@ import { TimeTrackerStatusModule } from './time-tracker-status/time-tracker-stat
 		LoggerService,
 		Store
 	],
-	exports: [TimeTrackerComponent],
+	exports: [TimeTrackerComponent]
 })
 export class TimeTrackerModule {}
