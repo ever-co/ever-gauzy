@@ -18,11 +18,8 @@ import {
 } from '../core/entities/internal';
 
 @Entity('organization_project_tasks_settings')
-export class OrganizationProjectTasksSettings
-	extends TenantOrganizationBaseEntity
-	implements IOrganizationProjectTasksSettings
-{
-	deletedAt?: Date;
+export class OrganizationProjectTasksSettings extends TenantOrganizationBaseEntity implements IOrganizationProjectTasksSettings {
+
 	@ApiProperty({ type: () => Boolean })
 	@IsBoolean()
 	@Column({ default: true })
@@ -57,10 +54,11 @@ export class OrganizationProjectTasksSettings
 	@IsBoolean()
 	@Column({ default: true })
 	isTasksProofOfCompletionEnabled: boolean;
+
 	@ApiProperty({ type: () => String, enum: TasksProofOfCompletionTypeEnum })
 	@IsString()
 	@Column({ default: TasksProofOfCompletionTypeEnum.PRIVATE })
-	tasksProofOfCompletionType: string;
+	tasksProofOfCompletionType: TasksProofOfCompletionTypeEnum;
 
 	@ApiProperty({ type: () => Boolean })
 	@IsBoolean()
@@ -91,6 +89,7 @@ export class OrganizationProjectTasksSettings
 	@IsBoolean()
 	@Column({ default: true })
 	isTasksNotifyLeftEnabled: boolean;
+
 	@ApiProperty({ type: () => Number })
 	@IsNumber()
 	@Column({ default: 7 })
@@ -119,13 +118,13 @@ export class OrganizationProjectTasksSettings
 	@Column({ default: true })
 	isTasksAutoStatusEnabled: boolean;
 
-	@ApiPropertyOptional({ type: () => String })
-	@IsOptional()
-	@IsUUID()
-	@Column({ nullable: true })
-	projectId?: IOrganizationProject['id'];
+	/*
+	|--------------------------------------------------------------------------
+	| @OneToOne
+	|--------------------------------------------------------------------------
+	*/
 
-	@ApiProperty({ type: () => OrganizationProject })
+	@ApiPropertyOptional({ type: () => OrganizationProject })
 	@OneToOne(() => OrganizationProject, {
 		nullable: true,
 		onDelete: 'SET NULL',
@@ -135,4 +134,10 @@ export class OrganizationProjectTasksSettings
 	})
 	@JoinColumn()
 	project?: OrganizationProject;
+
+	@ApiPropertyOptional({ type: () => String })
+	@IsOptional()
+	@IsUUID()
+	@Column({ nullable: true })
+	projectId?: IOrganizationProject['id'];
 }

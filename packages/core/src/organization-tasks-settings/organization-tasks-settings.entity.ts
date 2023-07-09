@@ -8,10 +8,8 @@ import { IsBoolean, IsNumber, IsString } from 'class-validator';
 import { TenantOrganizationBaseEntity } from '../core/entities/internal';
 
 @Entity('organization_tasks_settings')
-export class OrganizationTasksSettings
-	extends TenantOrganizationBaseEntity
-	implements IOrganizationTasksSettings
-{
+export class OrganizationTasksSettings extends TenantOrganizationBaseEntity implements IOrganizationTasksSettings {
+
 	@ApiProperty({ type: () => Boolean })
 	@IsBoolean()
 	@Column({ default: true })
@@ -46,10 +44,11 @@ export class OrganizationTasksSettings
 	@IsBoolean()
 	@Column({ default: true })
 	isTasksProofOfCompletionEnabled: boolean;
+
 	@ApiProperty({ type: () => String, enum: TasksProofOfCompletionTypeEnum })
 	@IsString()
 	@Column({ default: TasksProofOfCompletionTypeEnum.PRIVATE })
-	tasksProofOfCompletionType: string;
+	tasksProofOfCompletionType: TasksProofOfCompletionTypeEnum;
 
 	@ApiProperty({ type: () => Boolean })
 	@IsBoolean()
@@ -89,6 +88,7 @@ export class OrganizationTasksSettings
 	@IsBoolean()
 	@Column({ default: true })
 	isTasksAutoCloseEnabled: boolean;
+
 	@ApiProperty({ type: () => Number })
 	@IsNumber()
 	@Column({ default: 7 })
