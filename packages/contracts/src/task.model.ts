@@ -1,4 +1,7 @@
-import { IBasePerTenantAndOrganizationEntityModel, IBaseRelationsEntityModel } from './base-entity.model';
+import {
+	IBasePerTenantAndOrganizationEntityModel,
+	IBaseRelationsEntityModel,
+} from './base-entity.model';
 import { IEmployee } from './employee.model';
 import { IInvoiceItem } from './invoice-item.model';
 import { IOrganizationProject } from './organization-projects.model';
@@ -30,9 +33,14 @@ export interface ITask extends IBasePerTenantAndOrganizationEntityModel {
 	organizationSprintId?: IOrganizationSprint['id'];
 	creator?: IUser;
 	creatorId?: IUser['id'];
+
+	parent?: ITask;
+	parentId?: ITask['id']; // Optional field for specifying the parent task ID
+	children?: ITask[];
 }
 
-export interface IGetTaskOptions extends IBasePerTenantAndOrganizationEntityModel {
+export interface IGetTaskOptions
+	extends IBasePerTenantAndOrganizationEntityModel {
 	projectId?: IOrganizationProject['id'];
 }
 
@@ -40,14 +48,14 @@ export interface IGetTaskByEmployeeOptions extends IBaseRelationsEntityModel {
 	where?: IGetTaskOptions;
 }
 
-export interface IGetSprintsOptions extends IGetTaskOptions {}
+export interface IGetSprintsOptions extends IGetTaskOptions { }
 
 export enum TaskParticipantEnum {
 	EMPLOYEES = 'employees',
-	TEAMS = 'teams'
+	TEAMS = 'teams',
 }
 
-export interface ITaskCreateInput extends ITask {}
+export interface ITaskCreateInput extends ITask { }
 
 export interface ITaskUpdateInput extends ITaskCreateInput {
 	id?: string;
