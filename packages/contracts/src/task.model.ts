@@ -34,8 +34,8 @@ export interface ITask extends IBasePerTenantAndOrganizationEntityModel {
 	creator?: IUser;
 	creatorId?: IUser['id'];
 
-	parentId?: ITask['id'];
 	parent?: ITask;
+	parentId?: ITask['id']; // Optional field for specifying the parent task ID
 	children?: ITask[];
 }
 
@@ -48,14 +48,14 @@ export interface IGetTaskByEmployeeOptions extends IBaseRelationsEntityModel {
 	where?: IGetTaskOptions;
 }
 
-export interface IGetSprintsOptions extends IGetTaskOptions {}
+export interface IGetSprintsOptions extends IGetTaskOptions { }
 
 export enum TaskParticipantEnum {
 	EMPLOYEES = 'employees',
 	TEAMS = 'teams',
 }
 
-export interface ITaskCreateInput extends ITask {}
+export interface ITaskCreateInput extends ITask { }
 
 export interface ITaskUpdateInput extends ITaskCreateInput {
 	id?: string;

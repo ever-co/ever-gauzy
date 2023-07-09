@@ -135,15 +135,6 @@ export class Task extends TenantOrganizationBaseEntity implements ITask {
 	version?: string;
 
 	/**
-	 * Referring to same entity
-	 */
-	@ApiPropertyOptional({ type: () => String })
-	@IsOptional()
-	@IsUUID()
-	@Column({ nullable: true })
-	parentId?: string;
-
-	/**
 	 * Additional exposed fields
 	 */
 	taskNumber?: string;
@@ -153,14 +144,22 @@ export class Task extends TenantOrganizationBaseEntity implements ITask {
 	| @ManyToOne
 	|--------------------------------------------------------------------------
 	*/
-	@ApiPropertyOptional({ type: () => Object })
+
+	// Define the parent-child relationship
+	@ApiPropertyOptional({ type: () => Task })
 	@IsOptional()
 	@IsObject()
 	@ManyToOne(() => Task, (task) => task.children, {
-		onDelete: 'SET NULL',
+		onDelete: 'SET NULL'
 	})
-	@JoinColumn({ name: 'parentId' })
 	parent?: Task;
+
+	// Define the parent-child relationship
+	@ApiPropertyOptional({ type: () => String })
+	@IsOptional()
+	@IsUUID()
+	@Column({ nullable: true })
+	parentId?: Task['id'];
 
 	/**
 	 * Organization Project
