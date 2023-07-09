@@ -122,6 +122,7 @@ export class TimeTrackerService implements OnDestroy {
 	 * Check current timer status for employee only
 	 */
 	public async checkTimerStatus(payload: ITimerStatusInput) {
+		delete payload.source;
 		await this.getTimerStatus(payload)
 			.then((status: ITimerStatus) => {
 				this.duration = status.duration;
