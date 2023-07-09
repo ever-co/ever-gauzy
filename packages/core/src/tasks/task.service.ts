@@ -182,8 +182,8 @@ export class TaskService extends TenantAwareCrudService<Task> {
 			query.setFindOptions({
 				...(isNotEmpty(options) && isNotEmpty(options.where)
 					? {
-						where: options.where,
-					}
+							where: options.where,
+					  }
 					: {}),
 			});
 			query.andWhere(
@@ -258,7 +258,10 @@ export class TaskService extends TenantAwareCrudService<Task> {
 			const { organizationId, projectId, members } = where;
 
 			const query = this.taskRepository.createQueryBuilder(this.alias);
-			query.innerJoin(`${query.alias}.teams`, 'teams');
+			query
+				.innerJoin(`${query.alias}.teams`, 'teams')
+				.leftJoinAndSelect(`${query.alias}.parent`, 'parent')
+				.leftJoinAndSelect(`${query.alias}.children`, 'children');
 			/**
 			 * If find options
 			 */
