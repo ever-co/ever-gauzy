@@ -1,0 +1,9 @@
+<div *ngIf="icon$ | async">
+	<fa-icon
+		[nbTooltip]="
+			'TIMER_TRACKER.STATUS'
+				| translate : { source: (icon$ | async).source }
+		"
+		[icon]="(icon$ | async).name"
+	></fa-icon>
+</div>

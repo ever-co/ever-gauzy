@@ -21,6 +21,7 @@ import { NgxPermissionsModule } from 'ngx-permissions';
 import { ContactSelectorModule } from '../contact-selector/contact-selector.module';
 import { TaskSelectModule } from '../tasks/task-select/task-select.module';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
+import { TimeTrackerStatusModule } from './components/time-tracker-status/time-tracker-status.module';
 
 @NgModule({
 	declarations: [TimeTrackerComponent],
@@ -41,8 +42,9 @@ import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 		NgxDraggableDomModule,
 		NgxPermissionsModule,
 		ContactSelectorModule,
-    	FontAwesomeModule,
-		NbAlertModule
+		FontAwesomeModule,
+		NbAlertModule,
+		TimeTrackerStatusModule
 	],
 	exports: [TimeTrackerComponent]
 })

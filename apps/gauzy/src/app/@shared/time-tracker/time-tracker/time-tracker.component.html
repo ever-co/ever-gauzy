@@ -102,6 +102,7 @@
 												}}
 												{{ todaySessionTime }}
 											</span>
+											<ga-time-tracker-status class="status"></ga-time-tracker-status>
 										</div>
 										<div class="actions">
 											<div class="toggle">
@@ -125,7 +126,7 @@
 															: 'TIMER_TRACKER.START_TIMER'
 														) | translate
 													"
-													(click)="toggleTimer()"
+													(click)="toggleTimer(true)"
 													[disabled]="isDisable"
 												>
 													<fa-icon
@@ -383,7 +384,7 @@
 								"
 								size="medium"
 								[disabled]="running"
-								(click)="toggleTimer()"
+								(click)="toggleTimer(true)"
 							>
 								{{ 'TIMER_TRACKER.START_TIMER' | translate }}
 							</button>

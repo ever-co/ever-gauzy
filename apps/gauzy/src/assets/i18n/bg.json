@@ -3570,7 +3570,8 @@
 		},
 		"VIEW_TIMESHEET": "View timesheet",
 		"ADD_TIME": "Add Time",
-		"TODAY": "Днес"
+		"TODAY": "Днес",
+		"STATUS": "Проследяването на времето вече работи в {{ source }}"
 	},
 	"TIMESHEET": {
 		"TODAY": "Днес",
