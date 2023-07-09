@@ -23,11 +23,13 @@ import { TagCacheService } from '../services/tag-cache.service';
 import { TimeLogCacheService } from '../services/time-log-cache.service';
 import { LoggerService } from '../electron/services';
 import { ITimerSynced } from './time-tracker-status/interfaces';
+import { API_PREFIX } from '../constants/app.constants';
 
 @Injectable({
 	providedIn: 'root',
 })
 export class TimeTrackerService {
+	private _timerSynced: ITimerSynced;
 
 	constructor(
 		private readonly http: HttpClient,
@@ -42,20 +44,11 @@ export class TimeTrackerService {
 		private readonly _loggerService: LoggerService
 	) {}
 
-	public get timerSynced(): ITimerSynced {
-		return this._timerSynced;
-	}
-
-	public set timerSynced(value: ITimerSynced) {
-		this._timerSynced = value;
-	}
 	AW_HOST = 'http://localhost:5600';
 	token = '';
 	userId = '';
 	employeeId = '';
 	buckets: any = {};
-
-	private _timerSynced: ITimerSynced;
 
 	createAuthorizationHeader(headers: Headers) {
 		headers.append('Authorization', 'Basic ' + btoa('username:password'));
@@ -77,7 +70,7 @@ export class TimeTrackerService {
 		if (!tasks$) {
 			tasks$ = this.http
 				.get(
-					`${values.apiHost}/api/tasks/employee/${values.employeeId}`,
+					`${API_PREFIX}/tasks/employee/${values.employeeId}`,
 					{
 						params: toParams({
 							...request,
@@ -106,7 +99,7 @@ export class TimeTrackerService {
 		let employee$ = this._employeeCacheService.getValue(params);
 		if (!employee$) {
 			employee$ = this.http
-				.get(`${values.apiHost}/api/employee/${values.employeeId}`, {
+				.get(`${API_PREFIX}/employee/${values.employeeId}`, {
 					params: toParams(params),
 				})
 				.pipe(
@@ -128,7 +121,7 @@ export class TimeTrackerService {
 		let tags$ = this._tagCacheService.getValue(params);
 		if (!tags$) {
 			tags$ = this.http
-				.get(`${values.apiHost}/api/tags/level`, {
+				.get(`${API_PREFIX}/tags/level`, {
 					params: toParams(params)
 				})
 				.pipe(
@@ -155,7 +148,7 @@ export class TimeTrackerService {
 		if (!projects$) {
 			projects$ = this.http
 				.get(
-					`${values.apiHost}/api/organization-projects/employee/${values.employeeId}`,
+					`${API_PREFIX}/organization-projects/employee/${values.employeeId}`,
 					{
 						params: toParams(params),
 					}
@@ -177,7 +170,7 @@ export class TimeTrackerService {
 		if (!clients$) {
 			clients$ = this.http
 				.get(
-					`${values.apiHost}/api/organization-contact/employee/${values.employeeId}`,
+					`${API_PREFIX}/organization-contact/employee/${values.employeeId}`,
 					{
 						params
 					}
@@ -199,7 +192,7 @@ export class TimeTrackerService {
 		let timeLogs$ = this._timeLogService.getValue('counts');
 		if (!timeLogs$) {
 			timeLogs$ = this.http
-				.get(`${values.apiHost}/api/timesheet/statistics/counts`, {
+				.get(`${API_PREFIX}/timesheet/statistics/counts`, {
 					params: toParams({
 						tenantId: values.tenantId,
 						organizationId: values.organizationId,
@@ -227,7 +220,7 @@ export class TimeTrackerService {
 		if (!timeSlots$) {
 			timeSlots$ = this.http
 				.get(
-					`${values.apiHost}/api/timesheet/time-slot/${values.timeSlotId}?relations[]=screenshots&relations[]=activities&relations[]=employee`
+					`${API_PREFIX}/timesheet/time-slot/${values.timeSlotId}?relations[]=screenshots&relations[]=activities&relations[]=employee`
 				)
 				.pipe(
 					map((response: any) => response),
@@ -261,7 +254,7 @@ export class TimeTrackerService {
 		this._loggerService.log.info(`Toggle Start Timer Request: ${moment().format()}`, body);
 		return firstValueFrom(
 			this.http.post(
-				`${values.apiHost}/api/timesheet/timer/start`,
+				`${API_PREFIX}/timesheet/timer/start`,
 				{ ...body }
 			)
 		);
@@ -274,7 +267,6 @@ export class TimeTrackerService {
 			logType: TimeLogType.TRACKED,
 			projectId: values.projectId,
 			taskId: values.taskId,
-			source: TimeLogSourceEnum.DESKTOP,
 			manualTimeSlot: values.manualTimeSlot,
 			organizationId: values.organizationId,
 			tenantId: values.tenantId,
@@ -287,7 +279,7 @@ export class TimeTrackerService {
 		this._loggerService.log.info(`Toggle Stop Timer Request: ${moment().format()}`, body);
 		return firstValueFrom(
 			this.http.post(
-				`${values.apiHost}/api/timesheet/timer/stop`,
+				`${API_PREFIX}/timesheet/timer/stop`,
 				{ ...body }
 			)
 		);
@@ -301,7 +293,7 @@ export class TimeTrackerService {
 		});
 
 		return firstValueFrom(
-			this.http.delete(`${values.apiHost}/api/timesheet/time-slot`, {
+			this.http.delete(`${API_PREFIX}/timesheet/time-slot`, {
 				params
 			})
 		);
@@ -315,7 +307,7 @@ export class TimeTrackerService {
 		});
 
 		return firstValueFrom(
-			this.http.delete(`${values.apiHost}/api/timesheet/time-slot`, {
+			this.http.delete(`${API_PREFIX}/timesheet/time-slot`, {
 				params
 			})
 		);
@@ -323,12 +315,12 @@ export class TimeTrackerService {
 
 	getInvalidTimeLog(values) {
 		return firstValueFrom(
-			this.http.get(`${values.apiHost}/api/timesheet/time-log/`, {
+			this.http.get(`${API_PREFIX}/timesheet/time-log/`, {
 				params: {
 					tenantId: values.tenantId,
 					organizationId: values.organizationId,
 					employeeId: values.employeeId,
-					source: 'DESKTOP',
+					source: TimeLogSourceEnum.DESKTOP
 				},
 			})
 		);
@@ -340,7 +332,7 @@ export class TimeTrackerService {
 		});
 
 		return firstValueFrom(
-			this.http.delete(`${values.apiHost}/api/timesheet/time-log`, {
+			this.http.delete(`${API_PREFIX}/timesheet/time-log`, {
 				params
 			})
 		);
@@ -348,9 +340,8 @@ export class TimeTrackerService {
 
 	getTimerStatus(values) {
 		return firstValueFrom(
-			this.http.get(`${values.apiHost}/api/timesheet/timer/status`, {
+			this.http.get(`${API_PREFIX}/timesheet/timer/status`, {
 				params: {
-					source: 'DESKTOP',
 					tenantId: values.tenantId,
 					organizationId: values.organizationId,
 					relations: ['employee', 'employee.user'],
@@ -457,7 +448,7 @@ export class TimeTrackerService {
 
 		return firstValueFrom(
 			this.http
-				.post(`${values.apiHost}/api/timesheet/time-slot`, params)
+				.post(`${API_PREFIX}/timesheet/time-slot`, params)
 				.pipe(
 					catchError((error) => {
 						error.error = {
@@ -485,7 +476,7 @@ export class TimeTrackerService {
 		);
 		return firstValueFrom(
 			this.http
-				.post(`${values.apiHost}/api/timesheet/screenshot`, formData)
+				.post(`${API_PREFIX}/timesheet/screenshot`, formData)
 				.pipe(
 					catchError((error) => {
 						error.error = {
@@ -551,7 +542,7 @@ export class TimeTrackerService {
 	saveNewTask(values, payload) {
 		return firstValueFrom(
 			this.http
-				.post(`${values.apiHost}/api/tasks`, payload)
+				.post(`${API_PREFIX}/tasks`, payload)
 				.pipe(
 					tap(() => this._taskCacheService.clear()),
 					catchError((error) => {
@@ -585,7 +576,7 @@ export class TimeTrackerService {
 		return firstValueFrom(
 			this.http
 				.post<IOrganizationContact>(
-					`${values.apiHost}/api/organization-contact`,
+					`${API_PREFIX}/organization-contact`,
 					input
 				)
 				.pipe(
@@ -598,5 +589,13 @@ export class TimeTrackerService {
 					})
 				)
 		);
+	}
+
+	public get timerSynced(): ITimerSynced {
+		return this._timerSynced;
+	}
+
+	public set timerSynced(value: ITimerSynced) {
+		this._timerSynced = value;
 	}
 }
