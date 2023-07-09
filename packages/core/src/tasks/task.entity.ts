@@ -135,7 +135,7 @@ export class Task extends TenantOrganizationBaseEntity implements ITask {
 	version?: string;
 
 	/**
-	 * Refering to same entity
+	 * Referring to same entity
 	 */
 	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()
