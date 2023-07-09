@@ -8,25 +8,20 @@ import { OrganizationProjectTasksSettingsUpdateCommand } from '../organization-p
 export class OrganizationProjectTasksSettingsUpdateHandler
 	implements ICommandHandler<OrganizationProjectTasksSettingsUpdateCommand>
 {
-	constructor(
-		private readonly organizationProjectTasksSettingsService: OrganizationProjectTasksSettingsService
-	) {}
+	constructor(private readonly organizationProjectTasksSettingsService: OrganizationProjectTasksSettingsService) {}
 
 	public async execute(
 		command: OrganizationProjectTasksSettingsUpdateCommand
 	): Promise<IOrganizationProjectTasksSettings> {
 		const { id, input } = command;
-		const record =
-			await this.organizationProjectTasksSettingsService.findOneByIdString(
-				id
-			);
+		const record = await this.organizationProjectTasksSettingsService.findOneByIdString(id);
 		if (!record) {
 			throw new NotFoundException(`The requested record was not found`);
 		}
 		//This will call save() with the id so that task[] also get saved accordingly
 		return this.organizationProjectTasksSettingsService.create({
 			id,
-			...input,
+			...input
 		});
 	}
 }
