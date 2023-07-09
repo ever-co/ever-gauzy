@@ -1,7 +1,7 @@
 <div *ngIf="icon$ | async">
 	<fa-icon
 		[nbTooltip]="
-			'The time tracker is already running in the' +
+			'The time tracker is already running in the ' +
 			(icon$ | async).source
 		"
 		[icon]="(icon$ | async).name"

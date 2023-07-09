@@ -22,15 +22,12 @@ import { EmployeeCacheService } from '../services/employee-cache.service';
 import { TagCacheService } from '../services/tag-cache.service';
 import { TimeLogCacheService } from '../services/time-log-cache.service';
 import { LoggerService } from '../electron/services';
-import { ITimerSynced } from './time-tracker-status/interfaces';
 import { API_PREFIX } from '../constants/app.constants';
 
 @Injectable({
 	providedIn: 'root',
 })
 export class TimeTrackerService {
-	private _timerSynced: ITimerSynced;
-
 	constructor(
 		private readonly http: HttpClient,
 		private readonly _clientCacheService: ClientCacheService,
@@ -589,13 +586,5 @@ export class TimeTrackerService {
 					})
 				)
 		);
-	}
-
-	public get timerSynced(): ITimerSynced {
-		return this._timerSynced;
-	}
-
-	public set timerSynced(value: ITimerSynced) {
-		this._timerSynced = value;
 	}
 }
