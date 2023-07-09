@@ -52,6 +52,13 @@
   margin-bottom: auto;
 }
 
+.status {
+	position: absolute;
+    right: -20px;
+    top: 0;
+    z-index: 2;
+}
+
 .start-button {
   font-size: 48px !important;
   cursor: pointer;

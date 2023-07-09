@@ -34,6 +34,7 @@ import { UserOrganizationService } from './organization-selector/user-organizati
 import { OrganizationSelectorComponent } from './organization-selector/organization-selector.component';
 import { ErrorHandlerService, NativeNotificationService, Store, ToastrNotificationService } from '../services';
 import { ElectronService, LoggerService } from '../electron/services';
+import { TimeTrackerStatusModule } from './time-tracker-status/time-tracker-status.module';
 
 @NgModule({
 	declarations: [
@@ -68,6 +69,7 @@ import { ElectronService, LoggerService } from '../electron/services';
 		NbBadgeModule,
 		PaginationModule,
 		NbTooltipModule,
+		TimeTrackerStatusModule
 	],
 	providers: [
 		NbSidebarService,
