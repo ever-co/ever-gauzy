@@ -10,7 +10,7 @@ export interface IOrganizationTasksSettings
 	isTasksEstimationInStoryPointsEnabled: boolean;
 
 	isTasksProofOfCompletionEnabled: boolean;
-	tasksProofOfCompletionType: string; // ENUM PUBLIC | PRIVATE
+	tasksProofOfCompletionType: TasksProofOfCompletionTypeEnum; // ENUM PUBLIC | PRIVATE
 
 	isTasksLinkedEnabled: boolean;
 	isTasksCommentsEnabled: boolean;
@@ -44,7 +44,7 @@ export interface IOrganizationTasksSettingsUpdateInput {
 	isTasksEstimationInStoryPointsEnabled: boolean;
 
 	isTasksProofOfCompletionEnabled: boolean;
-	tasksProofOfCompletionType: string; // ENUM PUBLIC | PRIVATE
+	tasksProofOfCompletionType: TasksProofOfCompletionTypeEnum; // ENUM PUBLIC | PRIVATE
 
 	isTasksLinkedEnabled: boolean;
 	isTasksCommentsEnabled: boolean;

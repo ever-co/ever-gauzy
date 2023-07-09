@@ -1,5 +1,6 @@
-import { IOrganizationProject } from 'organization-projects.model';
 import { IBasePerTenantAndOrganizationEntityModel } from './base-entity.model';
+import { IOrganizationProject, IRelationalOrganizationProject } from './organization-projects.model';
+import { TasksProofOfCompletionTypeEnum } from './organization-tasks-settings.model';
 
 export interface IOrganizationProjectTasksSettings
 	extends IBasePerTenantAndOrganizationEntityModel {
@@ -11,7 +12,7 @@ export interface IOrganizationProjectTasksSettings
 	isTasksEstimationInStoryPointsEnabled: boolean;
 
 	isTasksProofOfCompletionEnabled: boolean;
-	tasksProofOfCompletionType: string; // ENUM PUBLIC | PRIVATE
+	tasksProofOfCompletionType: TasksProofOfCompletionTypeEnum; // ENUM PUBLIC | PRIVATE
 
 	isTasksLinkedEnabled: boolean;
 	isTasksCommentsEnabled: boolean;
@@ -34,7 +35,7 @@ export interface IOrganizationProjectTasksSettings
 	project?: IOrganizationProject;
 }
 
-export interface IOrganizationProjectTasksSettingsUpdateInput {
+export interface IOrganizationProjectTasksSettingsUpdateInput extends IRelationalOrganizationProject {
 	isTasksPrivacyEnabled: boolean;
 	isTasksMultipleAssigneesEnabled: boolean;
 	isTasksManualTimeEnabled: boolean;
@@ -43,7 +44,7 @@ export interface IOrganizationProjectTasksSettingsUpdateInput {
 	isTasksEstimationInStoryPointsEnabled: boolean;
 
 	isTasksProofOfCompletionEnabled: boolean;
-	tasksProofOfCompletionType: string; // ENUM PUBLIC | PRIVATE
+	tasksProofOfCompletionType: TasksProofOfCompletionTypeEnum; // ENUM PUBLIC | PRIVATE
 
 	isTasksLinkedEnabled: boolean;
 	isTasksCommentsEnabled: boolean;
@@ -61,7 +62,4 @@ export interface IOrganizationProjectTasksSettingsUpdateInput {
 	tasksAutoArchivePeriodDays: number;
 
 	isTasksAutoStatusEnabled: boolean;
-
-	projectId?: string;
-	project?: IOrganizationProject;
 }
