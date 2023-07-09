@@ -13,15 +13,15 @@ import { CommandHandlers } from './commands/handlers';
 		RouterModule.forRoutes([
 			{
 				path: '/organization-project-tasks-settings',
-				module: OrganizationProjectTasksSettingsModule,
-			},
+				module: OrganizationProjectTasksSettingsModule
+			}
 		]),
 		TypeOrmModule.forFeature([OrganizationProjectTasksSettings]),
 		CqrsModule,
-		TenantModule,
+		TenantModule
 	],
 	controllers: [OrganizationProjectTasksSettingsController],
 	providers: [OrganizationProjectTasksSettingsService, ...CommandHandlers],
-	exports: [OrganizationProjectTasksSettingsService],
+	exports: [OrganizationProjectTasksSettingsService]
 })
 export class OrganizationProjectTasksSettingsModule {}

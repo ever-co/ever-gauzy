@@ -5,26 +5,19 @@ import { OrganizationTasksSettingsService } from '../../organization-tasks-setti
 import { OrganizationTasksSettingsUpdateCommand } from '../organization-tasks-settings.update.command';
 
 @CommandHandler(OrganizationTasksSettingsUpdateCommand)
-export class OrganizationTasksSettingsUpdateHandler
-	implements ICommandHandler<OrganizationTasksSettingsUpdateCommand>
-{
-	constructor(
-		private readonly organizationTasksSettingsService: OrganizationTasksSettingsService
-	) {}
+export class OrganizationTasksSettingsUpdateHandler implements ICommandHandler<OrganizationTasksSettingsUpdateCommand> {
+	constructor(private readonly organizationTasksSettingsService: OrganizationTasksSettingsService) {}
 
-	public async execute(
-		command: OrganizationTasksSettingsUpdateCommand
-	): Promise<IOrganizationTasksSettings> {
+	public async execute(command: OrganizationTasksSettingsUpdateCommand): Promise<IOrganizationTasksSettings> {
 		const { id, input } = command;
-		const record =
-			await this.organizationTasksSettingsService.findOneByIdString(id);
+		const record = await this.organizationTasksSettingsService.findOneByIdString(id);
 		if (!record) {
 			throw new NotFoundException(`The requested record was not found`);
 		}
 		//This will call save() with the id so that task[] also get saved accordingly
 		return this.organizationTasksSettingsService.create({
 			id,
-			...input,
+			...input
 		});
 	}
 }

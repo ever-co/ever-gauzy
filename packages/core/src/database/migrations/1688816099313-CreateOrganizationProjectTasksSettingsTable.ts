@@ -1,8 +1,6 @@
 import { MigrationInterface, QueryRunner } from 'typeorm';
 
-export class CreateOrganizationProjectTasksSettingsTable1688816099313
-	implements MigrationInterface
-{
+export class CreateOrganizationProjectTasksSettingsTable1688816099313 implements MigrationInterface {
 	name = 'CreateOrganizationProjectTasksSettingsTable1688816099313';
 
 	/**
@@ -62,9 +60,7 @@ export class CreateOrganizationProjectTasksSettingsTable1688816099313
 	 *
 	 * @param queryRunner
 	 */
-	public async postgresDownQueryRunner(
-		queryRunner: QueryRunner
-	): Promise<any> {
+	public async postgresDownQueryRunner(queryRunner: QueryRunner): Promise<any> {
 		await queryRunner.query(
 			`ALTER TABLE "organization_project_tasks_settings" DROP CONSTRAINT "FK_1cebd9d414775b23feb20e77401"`
 		);
@@ -74,15 +70,9 @@ export class CreateOrganizationProjectTasksSettingsTable1688816099313
 		await queryRunner.query(
 			`ALTER TABLE "organization_project_tasks_settings" DROP CONSTRAINT "FK_1c6981fb835e6878704cc4f7b36"`
 		);
-		await queryRunner.query(
-			`DROP INDEX "public"."IDX_febcbc959ce953c6de98b1238b"`
-		);
-		await queryRunner.query(
-			`DROP INDEX "public"."IDX_1c6981fb835e6878704cc4f7b3"`
-		);
-		await queryRunner.query(
-			`DROP TABLE "organization_project_tasks_settings"`
-		);
+		await queryRunner.query(`DROP INDEX "public"."IDX_febcbc959ce953c6de98b1238b"`);
+		await queryRunner.query(`DROP INDEX "public"."IDX_1c6981fb835e6878704cc4f7b3"`);
+		await queryRunner.query(`DROP TABLE "organization_project_tasks_settings"`);
 	}
 
 	/**
@@ -108,9 +98,7 @@ export class CreateOrganizationProjectTasksSettingsTable1688816099313
 		await queryRunner.query(
 			`INSERT INTO "temporary_organization_project_tasks_settings"("id", "createdAt", "updatedAt", "tenantId", "organizationId", "isTasksPrivacyEnabled", "isTasksMultipleAssigneesEnabled", "isTasksManualTimeEnabled", "isTasksGroupEstimationEnabled", "isTasksEstimationInHoursEnabled", "isTasksEstimationInStoryPointsEnabled", "isTasksProofOfCompletionEnabled", "tasksProofOfCompletionType", "isTasksLinkedEnabled", "isTasksCommentsEnabled", "isTasksHistoryEnabled", "isTasksAcceptanceCriteriaEnabled", "isTasksDraftsEnabled", "isTasksNotifyLeftEnabled", "tasksNotifyLeftPeriodDays", "isTasksAutoCloseEnabled", "tasksAutoClosePeriodDays", "isTasksAutoArchiveEnabled", "tasksAutoArchivePeriodDays", "isTasksAutoStatusEnabled", "projectId") SELECT "id", "createdAt", "updatedAt", "tenantId", "organizationId", "isTasksPrivacyEnabled", "isTasksMultipleAssigneesEnabled", "isTasksManualTimeEnabled", "isTasksGroupEstimationEnabled", "isTasksEstimationInHoursEnabled", "isTasksEstimationInStoryPointsEnabled", "isTasksProofOfCompletionEnabled", "tasksProofOfCompletionType", "isTasksLinkedEnabled", "isTasksCommentsEnabled", "isTasksHistoryEnabled", "isTasksAcceptanceCriteriaEnabled", "isTasksDraftsEnabled", "isTasksNotifyLeftEnabled", "tasksNotifyLeftPeriodDays", "isTasksAutoCloseEnabled", "tasksAutoClosePeriodDays", "isTasksAutoArchiveEnabled", "tasksAutoArchivePeriodDays", "isTasksAutoStatusEnabled", "projectId" FROM "organization_project_tasks_settings"`
 		);
-		await queryRunner.query(
-			`DROP TABLE "organization_project_tasks_settings"`
-		);
+		await queryRunner.query(`DROP TABLE "organization_project_tasks_settings"`);
 		await queryRunner.query(
 			`ALTER TABLE "temporary_organization_project_tasks_settings" RENAME TO "organization_project_tasks_settings"`
 		);
@@ -139,9 +127,7 @@ export class CreateOrganizationProjectTasksSettingsTable1688816099313
 		await queryRunner.query(
 			`INSERT INTO "organization_project_tasks_settings"("id", "createdAt", "updatedAt", "tenantId", "organizationId", "isTasksPrivacyEnabled", "isTasksMultipleAssigneesEnabled", "isTasksManualTimeEnabled", "isTasksGroupEstimationEnabled", "isTasksEstimationInHoursEnabled", "isTasksEstimationInStoryPointsEnabled", "isTasksProofOfCompletionEnabled", "tasksProofOfCompletionType", "isTasksLinkedEnabled", "isTasksCommentsEnabled", "isTasksHistoryEnabled", "isTasksAcceptanceCriteriaEnabled", "isTasksDraftsEnabled", "isTasksNotifyLeftEnabled", "tasksNotifyLeftPeriodDays", "isTasksAutoCloseEnabled", "tasksAutoClosePeriodDays", "isTasksAutoArchiveEnabled", "tasksAutoArchivePeriodDays", "isTasksAutoStatusEnabled", "projectId") SELECT "id", "createdAt", "updatedAt", "tenantId", "organizationId", "isTasksPrivacyEnabled", "isTasksMultipleAssigneesEnabled", "isTasksManualTimeEnabled", "isTasksGroupEstimationEnabled", "isTasksEstimationInHoursEnabled", "isTasksEstimationInStoryPointsEnabled", "isTasksProofOfCompletionEnabled", "tasksProofOfCompletionType", "isTasksLinkedEnabled", "isTasksCommentsEnabled", "isTasksHistoryEnabled", "isTasksAcceptanceCriteriaEnabled", "isTasksDraftsEnabled", "isTasksNotifyLeftEnabled", "tasksNotifyLeftPeriodDays", "isTasksAutoCloseEnabled", "tasksAutoClosePeriodDays", "isTasksAutoArchiveEnabled", "tasksAutoArchivePeriodDays", "isTasksAutoStatusEnabled", "projectId" FROM "temporary_organization_project_tasks_settings"`
 		);
-		await queryRunner.query(
-			`DROP TABLE "temporary_organization_project_tasks_settings"`
-		);
+		await queryRunner.query(`DROP TABLE "temporary_organization_project_tasks_settings"`);
 		await queryRunner.query(
 			`CREATE INDEX "IDX_febcbc959ce953c6de98b1238b" ON "organization_project_tasks_settings" ("organizationId") `
 		);
@@ -150,8 +136,6 @@ export class CreateOrganizationProjectTasksSettingsTable1688816099313
 		);
 		await queryRunner.query(`DROP INDEX "IDX_febcbc959ce953c6de98b1238b"`);
 		await queryRunner.query(`DROP INDEX "IDX_1c6981fb835e6878704cc4f7b3"`);
-		await queryRunner.query(
-			`DROP TABLE "organization_project_tasks_settings"`
-		);
+		await queryRunner.query(`DROP TABLE "organization_project_tasks_settings"`);
 	}
 }

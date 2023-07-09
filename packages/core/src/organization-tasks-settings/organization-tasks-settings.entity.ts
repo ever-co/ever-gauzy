@@ -1,15 +1,11 @@
 import { Entity, Column } from 'typeorm';
-import {
-	IOrganizationTasksSettings,
-	TasksProofOfCompletionTypeEnum,
-} from '@gauzy/contracts';
+import { IOrganizationTasksSettings, TasksProofOfCompletionTypeEnum } from '@gauzy/contracts';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsBoolean, IsNumber, IsString } from 'class-validator';
 import { TenantOrganizationBaseEntity } from '../core/entities/internal';
 
 @Entity('organization_tasks_settings')
 export class OrganizationTasksSettings extends TenantOrganizationBaseEntity implements IOrganizationTasksSettings {
-
 	@ApiProperty({ type: () => Boolean })
 	@IsBoolean()
 	@Column({ default: true })

@@ -1,7 +1,6 @@
 import { IBasePerTenantAndOrganizationEntityModel } from './base-entity.model';
 
-export interface IOrganizationTasksSettings
-	extends IBasePerTenantAndOrganizationEntityModel {
+export interface IOrganizationTasksSettings extends IBasePerTenantAndOrganizationEntityModel {
 	isTasksPrivacyEnabled: boolean;
 	isTasksMultipleAssigneesEnabled: boolean;
 	isTasksManualTimeEnabled: boolean;
@@ -32,7 +31,7 @@ export interface IOrganizationTasksSettings
 
 export enum TasksProofOfCompletionTypeEnum {
 	PUBLIC = 'PUBLIC',
-	PRIVATE = 'PRIVATE',
+	PRIVATE = 'PRIVATE'
 }
 
 export interface IOrganizationTasksSettingsUpdateInput {

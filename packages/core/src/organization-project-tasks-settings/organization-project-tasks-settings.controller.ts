@@ -1,15 +1,4 @@
-import {
-	Body,
-	Controller,
-	Get,
-	HttpCode,
-	HttpStatus,
-	Param,
-	Put,
-	Query,
-	UseGuards,
-	Post,
-} from '@nestjs/common';
+import { Body, Controller, Get, HttpCode, HttpStatus, Param, Put, Query, UseGuards, Post } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { OrganizationProjectTasksSettings } from './organization-project-tasks-settings.entity';
 import { CommandBus } from '@nestjs/cqrs';
@@ -18,7 +7,7 @@ import { OrganizationProjectTasksSettingsService } from './organization-project-
 import {
 	IOrganizationProjectTasksSettings,
 	IOrganizationProjectTasksSettingsUpdateInput,
-	IPagination,
+	IPagination
 } from '@gauzy/contracts';
 import { ParseJsonPipe, UUIDValidationPipe } from '../shared/pipes';
 import { TenantPermissionGuard } from '../shared/guards';
@@ -42,25 +31,23 @@ export class OrganizationProjectTasksSettingsController extends CrudController<O
 	 * @returns
 	 */
 	@ApiOperation({
-		summary: 'Find all organization sprint.',
+		summary: 'Find all organization sprint.'
 	})
 	@ApiResponse({
 		status: HttpStatus.OK,
 		description: 'Found organization project task settings',
-		type: OrganizationProjectTasksSettings,
+		type: OrganizationProjectTasksSettings
 	})
 	@ApiResponse({
 		status: HttpStatus.NOT_FOUND,
-		description: 'Record not found',
+		description: 'Record not found'
 	})
 	@Get()
-	async findAll(
-		@Query('data', ParseJsonPipe) data: any
-	): Promise<IPagination<IOrganizationProjectTasksSettings>> {
+	async findAll(@Query('data', ParseJsonPipe) data: any): Promise<IPagination<IOrganizationProjectTasksSettings>> {
 		const { relations, findInput } = data;
 		return this.organizationProjectTasksSettingsService.findAll({
 			where: findInput,
-			relations,
+			relations
 		});
 	}
 
@@ -74,12 +61,11 @@ export class OrganizationProjectTasksSettingsController extends CrudController<O
 	@ApiOperation({ summary: 'Create new record' })
 	@ApiResponse({
 		status: HttpStatus.CREATED,
-		description: 'The record has been successfully created.',
+		description: 'The record has been successfully created.'
 	})
 	@ApiResponse({
 		status: HttpStatus.BAD_REQUEST,
-		description:
-			'Invalid input, The response body may contain clues as to what went wrong',
+		description: 'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@Post()
 	async create(
@@ -99,16 +85,15 @@ export class OrganizationProjectTasksSettingsController extends CrudController<O
 	@ApiOperation({ summary: 'Update an existing record' })
 	@ApiResponse({
 		status: HttpStatus.CREATED,
-		description: 'The record has been successfully edited.',
+		description: 'The record has been successfully edited.'
 	})
 	@ApiResponse({
 		status: HttpStatus.NOT_FOUND,
-		description: 'Record not found',
+		description: 'Record not found'
 	})
 	@ApiResponse({
 		status: HttpStatus.BAD_REQUEST,
-		description:
-			'Invalid input, The response body may contain clues as to what went wrong',
+		description: 'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
 	@Put(':id')
@@ -116,8 +101,6 @@ export class OrganizationProjectTasksSettingsController extends CrudController<O
 		@Param('id', UUIDValidationPipe) id: string,
 		@Body() body: IOrganizationProjectTasksSettingsUpdateInput
 	): Promise<OrganizationProjectTasksSettings> {
-		return this.commandBus.execute(
-			new OrganizationProjectTasksSettingsUpdateCommand(id, body)
-		);
+		return this.commandBus.execute(new OrganizationProjectTasksSettingsUpdateCommand(id, body));
 	}
 }

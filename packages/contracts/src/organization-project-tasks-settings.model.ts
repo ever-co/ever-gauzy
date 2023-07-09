@@ -2,8 +2,7 @@ import { IBasePerTenantAndOrganizationEntityModel } from './base-entity.model';
 import { IOrganizationProject, IRelationalOrganizationProject } from './organization-projects.model';
 import { TasksProofOfCompletionTypeEnum } from './organization-tasks-settings.model';
 
-export interface IOrganizationProjectTasksSettings
-	extends IBasePerTenantAndOrganizationEntityModel {
+export interface IOrganizationProjectTasksSettings extends IBasePerTenantAndOrganizationEntityModel {
 	isTasksPrivacyEnabled: boolean;
 	isTasksMultipleAssigneesEnabled: boolean;
 	isTasksManualTimeEnabled: boolean;

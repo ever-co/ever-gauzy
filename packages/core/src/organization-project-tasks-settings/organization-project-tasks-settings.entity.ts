@@ -2,24 +2,17 @@ import { Entity, Column, JoinColumn, OneToOne } from 'typeorm';
 import {
 	IOrganizationProject,
 	IOrganizationProjectTasksSettings,
-	TasksProofOfCompletionTypeEnum,
+	TasksProofOfCompletionTypeEnum
 } from '@gauzy/contracts';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import {
-	IsBoolean,
-	IsNumber,
-	IsOptional,
-	IsString,
-	IsUUID,
-} from 'class-validator';
-import {
-	OrganizationProject,
-	TenantOrganizationBaseEntity,
-} from '../core/entities/internal';
+import { IsBoolean, IsNumber, IsOptional, IsString, IsUUID } from 'class-validator';
+import { OrganizationProject, TenantOrganizationBaseEntity } from '../core/entities/internal';
 
 @Entity('organization_project_tasks_settings')
-export class OrganizationProjectTasksSettings extends TenantOrganizationBaseEntity implements IOrganizationProjectTasksSettings {
-
+export class OrganizationProjectTasksSettings
+	extends TenantOrganizationBaseEntity
+	implements IOrganizationProjectTasksSettings
+{
 	@ApiProperty({ type: () => Boolean })
 	@IsBoolean()
 	@Column({ default: true })
@@ -132,7 +125,7 @@ export class OrganizationProjectTasksSettings extends TenantOrganizationBaseEnti
 		onDelete: 'SET NULL',
 
 		/** Eager relations are always loaded automatically when relation's owner entity is loaded using find* methods. */
-		eager: true,
+		eager: true
 	})
 	@JoinColumn()
 	project?: OrganizationProject;
