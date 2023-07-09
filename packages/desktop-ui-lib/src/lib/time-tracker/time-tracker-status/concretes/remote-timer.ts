@@ -1,7 +1,7 @@
 import { ITimeLog, TimeLogSourceEnum } from '@gauzy/contracts';
-import { ITimerSynced } from '../interfaces';
+import { IRemoteTimer } from '../interfaces';
 
-export class TimerSynced implements ITimerSynced {
+export class RemoteTimer implements IRemoteTimer {
 	private _source: TimeLogSourceEnum;
 	private _isRunning: boolean;
 	private _startedAt: Date;

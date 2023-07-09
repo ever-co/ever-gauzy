@@ -1,6 +1,6 @@
 import { ITimeLog, TimeLogSourceEnum } from '@gauzy/contracts';
 
-export interface ITimerSynced {
+export interface IRemoteTimer {
 	source: TimeLogSourceEnum;
 	running: boolean;
 	startedAt: Date;
