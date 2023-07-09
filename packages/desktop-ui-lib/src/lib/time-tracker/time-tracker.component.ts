@@ -390,13 +390,16 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 				filter((remoteTimer: IRemoteTimer) =>
 					this.xor(this.start, remoteTimer.running)
 				),
-				tap((remoteTimer: IRemoteTimer) => {
+				tap(async (remoteTimer: IRemoteTimer) => {
 					this.projectSelect = remoteTimer.lastLog.projectId;
 					this.taskSelect = remoteTimer.lastLog.taskId;
 					this.note = remoteTimer.lastLog.description;
 					this.organizationContactId =
 						remoteTimer.lastLog.organizationContactId;
-					this.toggleStart(remoteTimer.running, false);
+					await this.toggleStart(remoteTimer.running, false);
+					this.electronService.ipcRenderer.send('update_session', {
+						startedAt: remoteTimer.startedAt
+					});
 				}),
 				untilDestroyed(this)
 			)
