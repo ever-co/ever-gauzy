@@ -245,7 +245,8 @@ export class TimeTrackerComponent implements OnInit, OnDestroy {
 					this.running,
 					this.timeTrackerService.timerSynced.running
 				) &&
-				!onClick
+				!onClick &&
+				this.timeTrackerService.timerSynced.isExternalSource
 				?
 				this.timeTrackerService.remoteToggle()
 				:

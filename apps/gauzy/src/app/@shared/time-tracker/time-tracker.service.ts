@@ -227,6 +227,7 @@ export class TimeTrackerService implements OnDestroy {
 	toggle() {
 		if (this.running) {
 			this.turnOffTimer();
+			delete this.timerConfig.source;
 			this.timerConfig = {
 				...this.timerConfig,
 				stoppedAt: toUTC(moment()).toDate()
