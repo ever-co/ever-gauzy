@@ -23,16 +23,16 @@ export class TimeTrackerStatusService {
 	) {
 		timer(0, 5000)
 			.pipe(
-				filter(
-					() => !!this._store.token && !!this._store.user?.employee
-				),
+				filter(() => !!this._store.token && !this._store.isOffline),
 				tap(async () => {
 					const status = await this.status();
 					const timerSynced = new TimerSynced({
 						...status.lastLog,
 						duration: status.duration,
 					});
-					this._icon$.next(TimerIconFactory.create(timerSynced.source));
+					this._icon$.next(
+						TimerIconFactory.create(timerSynced.source)
+					);
 					if (!timerSynced.running || !timerSynced.isExternalSource)
 						this._icon$.next(null);
 					if (timerSynced.isExternalSource) {
