@@ -150,7 +150,7 @@ export class Task extends TenantOrganizationBaseEntity implements ITask {
 	@IsOptional()
 	@IsObject()
 	@ManyToOne(() => Task, (task) => task.children, {
-		onDelete: 'SET NULL'
+		onDelete: 'SET NULL',
 	})
 	parent?: Task;
 
@@ -297,4 +297,19 @@ export class Task extends TenantOrganizationBaseEntity implements ITask {
 		name: 'task_team',
 	})
 	teams?: IOrganizationTeam[];
+
+	/**
+	 * Related Issues
+	 */
+	@ApiPropertyOptional({ type: () => Array, isArray: true })
+	@IsOptional()
+	@IsArray()
+	@ManyToMany(() => Task, (task) => task.relatedIssues, {
+		onUpdate: 'CASCADE',
+		onDelete: 'CASCADE',
+	})
+	@JoinTable({
+		name: 'task_related_issues',
+	})
+	relatedIssues?: Task[];
 }
