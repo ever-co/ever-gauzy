@@ -17,10 +17,10 @@ import { BACKGROUND_SYNC_INTERVAL } from '../../constants/app.constants';
 export class TimeTrackerStatusService {
 	private _icon$: BehaviorSubject<ITimerIcon> = new BehaviorSubject<ITimerIcon>(null);
 	private _external$: Subject<IRemoteTimer> = new Subject<IRemoteTimer>();
-	private _backgroudSync$: Observable<number> = timer(0, BACKGROUND_SYNC_INTERVAL);
+	private _backgroundSync$: Observable<number> = timer(0, BACKGROUND_SYNC_INTERVAL);
 	private _remoteTimer: IRemoteTimer;
 	constructor(private readonly _timeTrackerService: TimeTrackerService, private readonly _store: Store) {
-		this._backgroudSync$
+		this._backgroundSync$
 			.pipe(
 				filter(() => !!this._store.token && !this._store.isOffline),
 				tap(async () => {
