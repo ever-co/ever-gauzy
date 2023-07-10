@@ -2029,10 +2029,10 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 						}),
 						this.getTimerStatus(params)
 					];
-					const takeScreenCapturePromise = this.electronService.ipcRenderer.invoke('TAKE_SCREEN_CAPTURE', {
-						quitApp: this.quitApp
-					});
 					if (!this._timeTrackerStatus.remoteTimer?.isExternalSource) {
+						const takeScreenCapturePromise = this.electronService.ipcRenderer.invoke('TAKE_SCREEN_CAPTURE', {
+							quitApp: this.quitApp
+						});
 						promises.push(takeScreenCapturePromise);
 					}
 					await Promise.allSettled(promises);
