@@ -18,7 +18,7 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { filter } from 'rxjs/operators';
 import { BehaviorSubject } from 'rxjs/internal/BehaviorSubject';
 import { firstValueFrom, Observable, timer } from 'rxjs';
-import { API_PREFIX } from '../../@core/constants/app.constants';
+import { API_PREFIX, BACKGROUND_SYNC_INTERVAL } from '../../@core/constants/app.constants';
 import { environment } from '../../../environments/environment';
 import { ITimerSynced } from './components/time-tracker-status/interfaces';
 
@@ -89,7 +89,7 @@ export class TimeTrackerService implements OnDestroy {
 	public trackType$: Observable<string> = this._trackType$.asObservable();
 	private _worker: Worker;
 	private _timerSynced: ITimerSynced;
-	public timer$: Observable<number> = timer(0, 5000);
+	public timer$: Observable<number> = timer(0, BACKGROUND_SYNC_INTERVAL);
 
 	constructor(
 		protected timerStore: TimerStore,
