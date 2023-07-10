@@ -1,0 +1,7 @@
+div {
+	cursor: pointer;
+}
+
+:host ::ng-deep svg {
+	width: 1rem;
+}
