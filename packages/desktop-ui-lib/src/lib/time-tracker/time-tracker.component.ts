@@ -1105,6 +1105,8 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 			await this.timeTrackerService.pingAw(`${host || this.defaultAwAPI}/api`);
 			this.iconAw$.next('checkmark-square-outline');
 			this.statusIcon$.next('success');
+			this.electronService.ipcRenderer.send('aw_status', true);
+			this._activityWatchLog$.next("Activity Watch's connected");
 		} catch (e) {
 			this.iconAw$.next('close-square-outline');
 			this.statusIcon$.next('danger');
