@@ -1,4 +1,4 @@
-import { Module, forwardRef } from '@nestjs/common';
+import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { CqrsModule } from '@nestjs/cqrs';
 import { RouterModule } from 'nest-router';
@@ -17,15 +17,13 @@ import { UserModule } from './../user/user.module';
 		RouterModule.forRoutes([
 			{ path: '/organization-contact', module: OrganizationContactModule }
 		]),
-		TypeOrmModule.forFeature([
-			OrganizationContact
-		]),
-		forwardRef(() => TenantModule),
-		forwardRef(() => UserModule),
-		forwardRef(() => OrganizationProjectModule),
-		forwardRef(() => OrganizationModule),
-		forwardRef(() => EmailModule),
+		TypeOrmModule.forFeature([OrganizationContact]),
 		CqrsModule,
+		TenantModule,
+		OrganizationModule,
+		UserModule,
+		EmailModule,
+		OrganizationProjectModule
 	],
 	controllers: [OrganizationContactController],
 	providers: [

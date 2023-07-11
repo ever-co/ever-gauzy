@@ -8,7 +8,6 @@ import { OrganizationProjectService } from './organization-project.service';
 import { CommandHandlers } from './commands/handlers';
 import { UserModule } from './../user/user.module';
 import { TenantModule } from '../tenant/tenant.module';
-import { OrganizationContactModule } from './../organization-contact/organization-contact.module';
 
 @Module({
 	imports: [
@@ -18,22 +17,13 @@ import { OrganizationContactModule } from './../organization-contact/organizatio
 				module: OrganizationProjectModule,
 			},
 		]),
-		TypeOrmModule.forFeature([
-			OrganizationProject
-		]),
+		TypeOrmModule.forFeature([OrganizationProject]),
+		CqrsModule,
 		forwardRef(() => TenantModule),
 		forwardRef(() => UserModule),
-		forwardRef(() => OrganizationContactModule),
-		CqrsModule,
 	],
 	controllers: [OrganizationProjectController],
-	providers: [
-		OrganizationProjectService,
-		...CommandHandlers
-	],
-	exports: [
-		TypeOrmModule,
-		OrganizationProjectService
-	],
+	providers: [OrganizationProjectService, ...CommandHandlers],
+	exports: [TypeOrmModule, OrganizationProjectService],
 })
-export class OrganizationProjectModule { }
+export class OrganizationProjectModule {}
