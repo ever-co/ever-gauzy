@@ -9,6 +9,7 @@ import { CommandHandlers } from './commands/handlers';
 import { EmailModule } from './../email/email.module';
 import { TenantModule } from '../tenant/tenant.module';
 import { OrganizationModule } from './../organization/organization.module';
+import { OrganizationProjectModule } from './../organization-project/organization-project.module';
 import { UserModule } from './../user/user.module';
 
 @Module({
@@ -16,12 +17,13 @@ import { UserModule } from './../user/user.module';
 		RouterModule.forRoutes([
 			{ path: '/organization-contact', module: OrganizationContactModule }
 		]),
-		TypeOrmModule.forFeature([ OrganizationContact ]),
+		TypeOrmModule.forFeature([OrganizationContact]),
 		CqrsModule,
 		TenantModule,
 		OrganizationModule,
 		UserModule,
-		EmailModule
+		EmailModule,
+		OrganizationProjectModule
 	],
 	controllers: [OrganizationContactController],
 	providers: [
@@ -33,4 +35,4 @@ import { UserModule } from './../user/user.module';
 		OrganizationContactService
 	]
 })
-export class OrganizationContactModule {}
+export class OrganizationContactModule { }
