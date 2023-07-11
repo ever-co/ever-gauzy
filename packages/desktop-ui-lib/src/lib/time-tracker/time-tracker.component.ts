@@ -342,17 +342,25 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 			.subscribe();
 		this._timeTrackerStatus.external$
 			.pipe(
-				filter((remoteTimer: IRemoteTimer) => this.xor(this.start, remoteTimer.running)),
+				filter((remoteTimer: IRemoteTimer) =>
+					this.xor(this.start, remoteTimer.running)
+				),
 				tap(async (remoteTimer: IRemoteTimer) => {
 					this.projectSelect = remoteTimer.lastLog.projectId;
 					this.taskSelect = remoteTimer.lastLog.taskId;
 					this.note = remoteTimer.lastLog.description;
-					this.organizationContactId = remoteTimer.lastLog.organizationContactId;
+					this.organizationContactId =
+						remoteTimer.lastLog.organizationContactId;
 					await this.toggleStart(remoteTimer.running, false);
-					this.electronService.ipcRenderer.send('update_session', {
-						startedAt: remoteTimer.startedAt
-					});
 				}),
+				filter(
+					(remoteTimer: IRemoteTimer) => remoteTimer.isExternalSource
+				),
+				tap((remoteTimer: IRemoteTimer) =>
+					this.electronService.ipcRenderer.send('update_session', {
+						startedAt: remoteTimer.startedAt,
+					})
+				),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -1097,8 +1105,6 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 			await this.timeTrackerService.pingAw(`${host || this.defaultAwAPI}/api`);
 			this.iconAw$.next('checkmark-square-outline');
 			this.statusIcon$.next('success');
-			this.electronService.ipcRenderer.send('aw_status', true);
-			this._activityWatchLog$.next("Activity Watch's connected");
 		} catch (e) {
 			this.iconAw$.next('close-square-outline');
 			this.statusIcon$.next('danger');
