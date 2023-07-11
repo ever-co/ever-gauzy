@@ -46,13 +46,7 @@ export class OrganizationContactCreateHandler implements ICommandHandler<Organiz
 				}
 			}
 
-			const contact = await this.organizationContactService.create(input);
-
-			await this.eventBus.publish(
-				new OrganizationContactSyncMembersEvent(contact)
-			);
-
-			return contact;
+			return await this.organizationContactService.create(input);
 		} catch (error) {
 			console.log('Error while creating new organization contact', error);
 		}
