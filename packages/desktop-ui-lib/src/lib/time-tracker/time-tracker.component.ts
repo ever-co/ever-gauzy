@@ -349,10 +349,13 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 					this.note = remoteTimer.lastLog.description;
 					this.organizationContactId = remoteTimer.lastLog.organizationContactId;
 					await this.toggleStart(remoteTimer.running, false);
+				}),
+				filter((remoteTimer: IRemoteTimer) => remoteTimer.isExternalSource),
+				tap((remoteTimer: IRemoteTimer) =>
 					this.electronService.ipcRenderer.send('update_session', {
 						startedAt: remoteTimer.startedAt
-					});
-				}),
+					})
+				),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -2030,9 +2033,12 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 						this.getTimerStatus(params)
 					];
 					if (!this._timeTrackerStatus.remoteTimer?.isExternalSource) {
-						const takeScreenCapturePromise = this.electronService.ipcRenderer.invoke('TAKE_SCREEN_CAPTURE', {
-							quitApp: this.quitApp
-						});
+						const takeScreenCapturePromise = this.electronService.ipcRenderer.invoke(
+							'TAKE_SCREEN_CAPTURE',
+							{
+								quitApp: this.quitApp
+							}
+						);
 						promises.push(takeScreenCapturePromise);
 					}
 					await Promise.allSettled(promises);

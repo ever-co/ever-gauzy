@@ -117,7 +117,11 @@
 		},
 		"extraResources": [
 			"./data/**/*",
-			"databaseDir"
+			"databaseDir",
+			{
+				"from": "assets",
+				"to": "assets"
+			}
 		],
 		"extraFiles": [
 			"./**/desktop-libs/**/migrations/*"
