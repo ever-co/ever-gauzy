@@ -1,4 +1,4 @@
-import { Component, NgZone, OnInit, AfterViewInit } from '@angular/core';
+import { Component, NgZone, OnInit, AfterViewInit, Renderer2 } from '@angular/core';
 import { ElectronService, Store, AuthStrategy } from '@gauzy/desktop-ui-lib';
 import { AppService } from './app.service';
 import { TranslateService } from '@ngx-translate/core';
@@ -24,11 +24,15 @@ export class AppComponent implements OnInit, AfterViewInit {
 		public readonly translate: TranslateService,
 		private store: Store,
 		private toastrService: NbToastrService,
-		private _ngZone: NgZone
+		private _ngZone: NgZone,
+		private _renderer: Renderer2
 	) { }
 
 	ngOnInit(): void {
 		console.log('On Init');
+		const nebularLinkMedia = document.querySelector('link[media="print"]');
+		if (nebularLinkMedia)
+			this._renderer.setAttribute(nebularLinkMedia, 'media', 'all');
 		this.electronService.ipcRenderer.send('app_is_init');
 		this.store.systemLanguages$
 			.pipe(untilDestroyed(this))
