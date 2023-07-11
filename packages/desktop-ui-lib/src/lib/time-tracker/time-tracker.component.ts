@@ -342,23 +342,18 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 			.subscribe();
 		this._timeTrackerStatus.external$
 			.pipe(
-				filter((remoteTimer: IRemoteTimer) =>
-					this.xor(this.start, remoteTimer.running)
-				),
+				filter((remoteTimer: IRemoteTimer) => this.xor(this.start, remoteTimer.running)),
 				tap(async (remoteTimer: IRemoteTimer) => {
 					this.projectSelect = remoteTimer.lastLog.projectId;
 					this.taskSelect = remoteTimer.lastLog.taskId;
 					this.note = remoteTimer.lastLog.description;
-					this.organizationContactId =
-						remoteTimer.lastLog.organizationContactId;
+					this.organizationContactId = remoteTimer.lastLog.organizationContactId;
 					await this.toggleStart(remoteTimer.running, false);
 				}),
-				filter(
-					(remoteTimer: IRemoteTimer) => remoteTimer.isExternalSource
-				),
+				filter((remoteTimer: IRemoteTimer) => remoteTimer.isExternalSource),
 				tap((remoteTimer: IRemoteTimer) =>
 					this.electronService.ipcRenderer.send('update_session', {
-						startedAt: remoteTimer.startedAt,
+						startedAt: remoteTimer.startedAt
 					})
 				),
 				untilDestroyed(this)
@@ -2038,9 +2033,12 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 						this.getTimerStatus(params)
 					];
 					if (!this._timeTrackerStatus.remoteTimer?.isExternalSource) {
-						const takeScreenCapturePromise = this.electronService.ipcRenderer.invoke('TAKE_SCREEN_CAPTURE', {
-							quitApp: this.quitApp
-						});
+						const takeScreenCapturePromise = this.electronService.ipcRenderer.invoke(
+							'TAKE_SCREEN_CAPTURE',
+							{
+								quitApp: this.quitApp
+							}
+						);
 						promises.push(takeScreenCapturePromise);
 					}
 					await Promise.allSettled(promises);
