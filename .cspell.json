@@ -254,7 +254,8 @@
 		"rememberMe",
 		"Rememberd",
 		"basicstyles",
-		"itimer"
+		"itimer",
+		"iremote"
 	],
 	"useGitignore": true,
 	"ignorePaths": [

@@ -52,7 +52,6 @@
 				>
 					<nb-icon icon="close-outline"></nb-icon>
 				</button>
-				<ga-time-tracker-status (external)="onExternalRun($event)" class="status"></ga-time-tracker-status>
 			</div>
 			<form #form="ngForm">
 				<div
@@ -103,6 +102,7 @@
 												}}
 												{{ todaySessionTime }}
 											</span>
+											<ga-time-tracker-status class="status"></ga-time-tracker-status>
 										</div>
 										<div class="actions">
 											<div class="toggle">

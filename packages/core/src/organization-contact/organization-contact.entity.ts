@@ -56,9 +56,6 @@ export class OrganizationContact extends TenantOrganizationBaseEntity
 	@Column({ nullable: true })
 	primaryEmail: string;
 
-	@ApiPropertyOptional({ type: () => String, isArray: true })
-	emailAddresses?: string[];
-
 	@ApiProperty({ type: () => String })
 	@Column({ nullable: true })
 	primaryPhone: string;
@@ -117,12 +114,16 @@ export class OrganizationContact extends TenantOrganizationBaseEntity
 	@ApiProperty({ type: () => Contact })
 	@OneToOne(() => Contact, (contact) => contact.organizationContact, {
 		cascade: true,
+
+		/** Database cascade action on delete. */
 		onDelete: 'SET NULL'
 	})
 	@JoinColumn()
 	contact?: IContact;
 
 	@ApiProperty({ type: () => String })
+	@IsOptional()
+	@IsUUID()
 	@RelationId((it: OrganizationContact) => it.contact)
 	@Index()
 	@Column({ nullable: true })
