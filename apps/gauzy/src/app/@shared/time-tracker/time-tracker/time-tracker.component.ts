@@ -22,6 +22,7 @@ import { TimeTrackerService } from '../time-tracker.service';
 import { TimesheetService } from '../../timesheet/timesheet.service';
 import { ErrorHandlingService, Store, ToastrService } from '../../../@core/services';
 import { ITimerSynced } from '../components/time-tracker-status/interfaces';
+import { TimeTrackerStatusService } from '../components/time-tracker-status/time-tracker-status.service';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -61,8 +62,23 @@ export class TimeTrackerComponent implements OnInit, OnDestroy {
 		private readonly store: Store,
 		private readonly _errorHandlingService: ErrorHandlingService,
 		private readonly themeService: NbThemeService,
-		private readonly ngxPermissionsService: NgxPermissionsService
-	) {}
+		private readonly ngxPermissionsService: NgxPermissionsService,
+		private readonly _timeTrackerStatusService: TimeTrackerStatusService
+	) {
+		this._timeTrackerStatusService.external$
+			.pipe(
+				filter((timerSynced: ITimerSynced) => this.xor(this.running, timerSynced.running)),
+				tap(async (timerSynced: ITimerSynced) => {
+					this.timeTrackerService.currentSessionDuration = moment().diff(
+						toLocal(timerSynced.startedAt),
+						'seconds'
+					);
+					await this.toggleTimer(false);
+				}),
+				untilDestroyed(this)
+			)
+			.subscribe();
+	}
 
 	public get isBillable(): boolean {
 		return this.timeTrackerService.timerConfig.isBillable;
@@ -210,17 +226,22 @@ export class TimeTrackerComponent implements OnInit, OnDestroy {
 	}
 
 	async toggleTimer(onClick?: boolean) {
-		if (!this.running && this.form.invalid) {
-			this.form.resetForm();
-			return;
-		}
-
-		this.isDisable = true;
 		try {
-			const isStopTimer = onClick && this.timeTrackerService.timerSynced?.running;
-			const isRemoteStartTimer = !onClick && this.timeTrackerService.timerSynced?.isExternalSource;
-			this.xor(isRemoteStartTimer, isStopTimer)
-				? await this.timeTrackerService.remoteToggle(isStopTimer)
+			if (!this.running && this.form.invalid) {
+				this.form.resetForm();
+				return;
+			}
+		} catch (error) {
+			this.toggleWindow();
+			this.isExpanded = false;
+		}
+		try {
+			this.isDisable = true;
+			this.timeTrackerService.timerSynced &&
+			this.xor(this.running, this.timeTrackerService.timerSynced.running) &&
+			!onClick &&
+			this.timeTrackerService.timerSynced.isExternalSource
+				? this.timeTrackerService.remoteToggle()
 				: await this.timeTrackerService.toggle();
 		} catch (error) {
 			if (this.timeTrackerService.interval) {
@@ -290,13 +311,6 @@ export class TimeTrackerComponent implements OnInit, OnDestroy {
 	 */
 	draggablePosition(event: NgxDraggableDomMoveEvent) {
 		this.position = event.position as NgxDraggablePoint;
-	}
-
-	public async onExternalRun(synced: ITimerSynced) {
-		if (this.xor(this.running, synced.running)) {
-			this.timeTrackerService.currentSessionDuration = moment().diff(toLocal(synced.startedAt), 'seconds');
-			await this.toggleTimer(false);
-		}
 	}
 
 	public xor(a: boolean, b: boolean): boolean {

@@ -30,6 +30,12 @@ export interface ITask extends IBasePerTenantAndOrganizationEntityModel {
 	organizationSprintId?: IOrganizationSprint['id'];
 	creator?: IUser;
 	creatorId?: IUser['id'];
+
+	parent?: ITask;
+	parentId?: ITask['id']; // Optional field for specifying the parent task ID
+	children?: ITask[];
+
+	relatedIssues?: ITask[];
 }
 
 export interface IGetTaskOptions extends IBasePerTenantAndOrganizationEntityModel {

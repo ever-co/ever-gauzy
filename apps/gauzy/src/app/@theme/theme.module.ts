@@ -71,6 +71,7 @@ import { WorkspacesModule } from '../@shared/workspaces/workspaces.module';
 import { PopupComponent } from './components/popup/popup.component';
 import { SidebarMenuModule } from '../@shared/sidebar-menu/sidebar-menu.module';
 import { DirectivesModule } from "../@shared/directives/directives.module";
+import { TimeTrackerStatusModule } from '../@shared/time-tracker/components/time-tracker-status/time-tracker-status.module';
 
 const NB_MODULES = [
 	NbLayoutModule,
@@ -105,7 +106,8 @@ const MODULES = [
 	WorkspacesModule,
 	NgxPermissionsModule.forChild(),
 	SidebarMenuModule,
-	DirectivesModule
+	DirectivesModule,
+	TimeTrackerStatusModule
 ];
 
 const COMPONENTS = [

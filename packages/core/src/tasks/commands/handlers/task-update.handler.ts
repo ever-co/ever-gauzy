@@ -29,7 +29,8 @@ export class TaskUpdateHandler implements ICommandHandler<TaskUpdateCommand> {
 	): Promise<ITask> {
 		try {
 			const task = await this._taskService.findOneByIdString(id);
-			if ('projectId' in request) {
+
+			if (request.projectId) {
 				const { projectId } = request;
 				/**
 				 * If, project changed for task, just update latest task number

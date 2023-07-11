@@ -1,3 +1,5 @@
+import { IOptionsSelect } from "@gauzy/contracts";
+
 export class ServerSourceConf {
 
     protected static readonly SORT_FIELD_KEY = 'orderBy';
@@ -23,6 +25,7 @@ export class ServerSourceConf {
     resultMap: any;
     finalize: any;
     withDeleted: boolean;
+    select: IOptionsSelect<any>;
 
     constructor({
         resultMap = null,
@@ -38,7 +41,8 @@ export class ServerSourceConf {
         where = '',
         join = '',
         relations = [],
-        withDeleted = false
+        withDeleted = false,
+        select = {}
     } = {}) {
 
         this.endPoint = endPoint ? endPoint : '';
@@ -56,5 +60,6 @@ export class ServerSourceConf {
         this.resultMap = resultMap;
         this.finalize = finalize;
         this.withDeleted = withDeleted;
+        this.select = select;
     }
 }
