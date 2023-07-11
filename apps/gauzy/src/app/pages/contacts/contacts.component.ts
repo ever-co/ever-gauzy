@@ -51,7 +51,7 @@ import { InputFilterComponent } from '../../@shared/table-filters';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ga-contacts',
+	selector: 'ngx-contacts-list',
 	templateUrl: './contacts.component.html',
 	styleUrls: ['./contacts.component.scss']
 })
@@ -461,10 +461,7 @@ export class ContactsComponent extends PaginationFilterBaseComponent
 			this.smartTableSource = new ServerDataSource(this.http, {
 				endPoint: `${API_PREFIX}/organization-contact/pagination`,
 				relations: [
-					'projects',
 					'projects.members',
-					'projects.organization',
-					'members',
 					'members.user',
 					'tags',
 					'contact'
@@ -685,5 +682,5 @@ export class ContactsComponent extends PaginationFilterBaseComponent
 		return find ? find.country : row.country;
 	}
 
-	ngOnDestroy(): void {}
+	ngOnDestroy(): void { }
 }
