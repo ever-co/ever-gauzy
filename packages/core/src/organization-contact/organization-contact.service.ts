@@ -126,40 +126,40 @@ export class OrganizationContactService extends TenantAwareCrudService<Organizat
 		id: string,
 		relations: string[]
 	): Promise<IOrganizationContact> {
-        return await this.findOneByIdString(id, { relations });
-    }
+		return await this.findOneByIdString(id, { relations });
+	}
 
 	/**
 	 * Organization contact by pagination
 	 *
-	 * @param filter
+	 * @param params
 	 * @returns
 	 */
 	public async pagination(
-		filter?: PaginationParams<any>
+		params?: PaginationParams<any>
 	): Promise<IPagination<IOrganizationContact>> {
 		// Custom Filters
-		if ('where' in filter) {
-			const { where } = filter;
+		if ('where' in params) {
+			const { where } = params;
 			if ('name' in where) {
 				const { name } = where;
-				filter['where']['name'] = Raw((alias) => `${alias} ILIKE '%${name}%'`);
+				params['where']['name'] = Raw((alias) => `${alias} ILIKE '%${name}%'`);
 			}
 			if ('primaryPhone' in where) {
 				const { primaryPhone } = where;
-				filter['where']['primaryPhone'] = Raw((alias) => `${alias} ILIKE '%${primaryPhone}%'`);
+				params['where']['primaryPhone'] = Raw((alias) => `${alias} ILIKE '%${primaryPhone}%'`);
 			}
 			if ('primaryEmail' in where) {
 				const { primaryEmail } = where;
-				filter['where']['primaryEmail'] = Raw((alias) => `${alias} ILIKE '%${primaryEmail}%'`);
+				params['where']['primaryEmail'] = Raw((alias) => `${alias} ILIKE '%${primaryEmail}%'`);
 			}
 			if ('members' in where) {
 				const { members } = where;
-				filter['where']['members'] = {
+				params['where']['members'] = {
 					id: In(members)
 				}
 			}
 		}
-		return await super.paginate(filter);
+		return await super.paginate(params);
 	}
 }

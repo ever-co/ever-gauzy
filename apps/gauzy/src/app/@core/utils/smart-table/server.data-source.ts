@@ -3,7 +3,7 @@ import { firstValueFrom, Observable } from 'rxjs';
 import { ServerSourceConf } from './server-source.conf';
 import { LocalDataSource } from 'ng2-smart-table';
 import { catchError, map, tap } from 'rxjs/operators';
-import { toParams } from '@gauzy/common-angular';
+import { isNotEmpty, toParams } from '@gauzy/common-angular';
 
 export class ServerDataSource extends LocalDataSource {
 
@@ -96,6 +96,7 @@ export class ServerDataSource extends LocalDataSource {
             ...(this.conf.join ? { join: this.conf.join } : {}),
             ...(this.conf.relations ? { relations: this.conf.relations } : {}),
             ...(this.conf.withDeleted ? { withDeleted: this.conf.withDeleted } : {}),
+            ...(isNotEmpty(this.conf.select) ? { select: this.conf.select } : {}),
             ...this.addSortRequestParams(),
             ...this.addFilterRequestParams(),
             ...this.addPagerRequestParams(),

@@ -13,7 +13,6 @@ export interface IOrganizationContact extends IBaseEntityWithMembers, IRelationa
 	name: string;
 	contactType: ContactType;
 	primaryEmail: string;
-	emailAddresses?: string[];
 	primaryPhone: string;
 	phones?: string[];
 	projects?: IOrganizationProject[];
@@ -49,7 +48,6 @@ export interface IOrganizationContactCreateInput extends IContact, IBasePerTenan
 	name: string;
 	contactId?: string;
 	primaryEmail?: string;
-	emailAddresses?: string[];
 	primaryPhone?: string;
 	phones?: string[];
 	projects?: IOrganizationProject[];
