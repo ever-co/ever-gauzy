@@ -20,11 +20,7 @@ export const createDefaultOrganizationContact = async (
 	tenant: ITenant,
 	noOfContactsPerOrganization: number
 ): Promise<IOrganizationContact[]> => {
-	return await createOrganizationContact(
-		dataSource,
-		tenant,
-		noOfContactsPerOrganization
-	)
+	return await createOrganizationContact(dataSource, tenant, noOfContactsPerOrganization);
 };
 
 export const createRandomOrganizationContact = async (
@@ -33,11 +29,7 @@ export const createRandomOrganizationContact = async (
 	noOfContactsPerOrganization: number
 ) => {
 	for await (const tenant of tenants) {
-		await createOrganizationContact(
-			dataSource,
-			tenant,
-			noOfContactsPerOrganization
-		)
+		await createOrganizationContact(dataSource, tenant, noOfContactsPerOrganization);
 	}
 };
 
@@ -63,24 +55,15 @@ const createOrganizationContact = async (
 			tenantId
 		});
 		for (let i = 0; i < noOfContactsPerOrganization; i++) {
-			const orgContact = await generateOrganizationContact(
-				tenant,
-				organization,
-				tags
-			)
+			const orgContact = await generateOrganizationContact(tenant, organization, tags);
 			organizationContacts.push(orgContact);
 		}
 		await dataSource.manager.save(organizationContacts);
-		await assignOrganizationContactToEmployee(
-			dataSource,
-			tenant,
-			organization,
-			employees
-		);
+		await assignOrganizationContactToEmployee(dataSource, tenant, organization, employees);
 		allOrganizationContacts.push(...organizationContacts);
 	}
 	return allOrganizationContacts;
-}
+};
 
 const generateOrganizationContact = async (
 	tenant: ITenant,
@@ -95,9 +78,7 @@ const generateOrganizationContact = async (
 	orgContact.tenant = tenant;
 	orgContact.contact = contact;
 	orgContact.contactType = faker.helpers.arrayElement(Object.values(ContactType));
-	orgContact.budgetType = faker.helpers.arrayElement(
-		Object.values(OrganizationContactBudgetTypeEnum)
-	);
+	orgContact.budgetType = faker.helpers.arrayElement(Object.values(OrganizationContactBudgetTypeEnum));
 	orgContact.budget =
 		orgContact.budgetType == OrganizationContactBudgetTypeEnum.COST
 			? faker.number.int({ min: 500, max: 5000 })
@@ -109,7 +90,11 @@ const generateOrganizationContact = async (
 	const phone = faker.phone.number();
 	orgContact.primaryEmail = email;
 	orgContact.primaryPhone = phone;
-	orgContact.imageUrl = getDummyImage(330, 300, (orgContact.name || faker.person.firstName()).charAt(0).toUpperCase());
+	orgContact.imageUrl = getDummyImage(
+		330,
+		300,
+		(orgContact.name || faker.person.firstName()).charAt(0).toUpperCase()
+	);
 	orgContact.tags = _.chain(tags)
 		.shuffle()
 		.take(faker.number.int({ min: 1, max: 2 }))
@@ -119,8 +104,8 @@ const generateOrganizationContact = async (
 };
 
 /*
-* Assign Organization Contact To Respective Employees
-*/
+ * Assign Organization Contact To Respective Employees
+ */
 export const assignOrganizationContactToEmployee = async (
 	dataSource: DataSource,
 	tenant: ITenant,

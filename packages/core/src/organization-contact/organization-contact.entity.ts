@@ -44,9 +44,7 @@ import {
 } from '../core/entities/internal';
 
 @Entity('organization_contact')
-export class OrganizationContact extends TenantOrganizationBaseEntity
-	implements IOrganizationContact {
-
+export class OrganizationContact extends TenantOrganizationBaseEntity implements IOrganizationContact {
 	@ApiProperty({ type: () => String })
 	@Index()
 	@Column()

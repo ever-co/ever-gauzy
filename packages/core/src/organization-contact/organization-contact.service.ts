@@ -80,9 +80,7 @@ export class OrganizationContactService extends TenantAwareCrudService<Organizat
 		const { employeeId, organizationId, contactType } = findInput;
 		const { tenantId, id: createdBy } = RequestContext.currentUser();
 
-		const query = this.organizationContactRepository.createQueryBuilder(
-			'organization_contact'
-		);
+		const query = this.organizationContactRepository.createQueryBuilder('organization_contact');
 		if (relations.length > 0) {
 			relations.forEach((relation: string) => {
 				if (relation.indexOf('.') !== -1) {
@@ -90,10 +88,7 @@ export class OrganizationContactService extends TenantAwareCrudService<Organizat
 					query.leftJoinAndSelect(`${relation}`, alias);
 				} else {
 					const alias = relation;
-					query.leftJoinAndSelect(
-						`${query.alias}.${relation}`,
-						alias
-					);
+					query.leftJoinAndSelect(`${query.alias}.${relation}`, alias);
 				}
 			});
 		}
@@ -122,10 +117,7 @@ export class OrganizationContactService extends TenantAwareCrudService<Organizat
 		return { items, total };
 	}
 
-	async findById(
-		id: string,
-		relations: string[]
-	): Promise<IOrganizationContact> {
+	async findById(id: string, relations: string[]): Promise<IOrganizationContact> {
 		return await this.findOneByIdString(id, { relations });
 	}
 
@@ -135,9 +127,7 @@ export class OrganizationContactService extends TenantAwareCrudService<Organizat
 	 * @param params
 	 * @returns
 	 */
-	public async pagination(
-		params?: PaginationParams<any>
-	): Promise<IPagination<IOrganizationContact>> {
+	public async pagination(params?: PaginationParams<any>): Promise<IPagination<IOrganizationContact>> {
 		// Custom Filters
 		if ('where' in params) {
 			const { where } = params;
@@ -157,7 +147,7 @@ export class OrganizationContactService extends TenantAwareCrudService<Organizat
 				const { members } = where;
 				params['where']['members'] = {
 					id: In(members)
-				}
+				};
 			}
 		}
 		return await super.paginate(params);

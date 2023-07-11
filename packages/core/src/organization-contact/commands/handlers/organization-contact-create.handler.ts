@@ -9,15 +9,12 @@ import { RequestContext } from './../../../core/context';
 
 @CommandHandler(OrganizationContactCreateCommand)
 export class OrganizationContactCreateHandler implements ICommandHandler<OrganizationContactCreateCommand> {
-
 	constructor(
 		private readonly organizationContactService: OrganizationContactService,
 		private readonly organizationProjectService: OrganizationProjectService
-	) { }
+	) {}
 
-	public async execute(
-		command: OrganizationContactCreateCommand
-	): Promise<IOrganizationContact> {
+	public async execute(command: OrganizationContactCreateCommand): Promise<IOrganizationContact> {
 		try {
 			const { input } = command;
 
