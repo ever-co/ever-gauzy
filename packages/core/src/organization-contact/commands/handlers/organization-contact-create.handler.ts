@@ -1,5 +1,5 @@
 import { IEmployee, IOrganizationContact, IOrganizationProject } from '@gauzy/contracts';
-import { CommandHandler, EventBus, ICommandHandler } from '@nestjs/cqrs';
+import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { isEmpty } from '@gauzy/common';
 import { In } from 'typeorm';
 import { OrganizationContactCreateCommand } from '../organization-contact-create.command';
@@ -12,8 +12,7 @@ export class OrganizationContactCreateHandler implements ICommandHandler<Organiz
 
 	constructor(
 		private readonly organizationContactService: OrganizationContactService,
-		private readonly organizationProjectService: OrganizationProjectService,
-		private readonly eventBus: EventBus,
+		private readonly organizationProjectService: OrganizationProjectService
 	) { }
 
 	public async execute(
