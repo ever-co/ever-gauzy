@@ -5,13 +5,9 @@ import { OrganizationTaskSettingUpdateCommand } from '../organization-task-setti
 
 @CommandHandler(OrganizationTaskSettingUpdateCommand)
 export class OrganizationTaskSettingUpdateHandler implements ICommandHandler<OrganizationTaskSettingUpdateCommand> {
-	constructor(
-		private readonly organizationTaskSettingService: OrganizationTaskSettingService
-	) {}
+	constructor(private readonly organizationTaskSettingService: OrganizationTaskSettingService) {}
 
-	public async execute(
-		command: OrganizationTaskSettingUpdateCommand
-	): Promise<IOrganizationTaskSetting> {
+	public async execute(command: OrganizationTaskSettingUpdateCommand): Promise<IOrganizationTaskSetting> {
 		const { id, input } = command;
 		await this.organizationTaskSettingService.update(id, input);
 

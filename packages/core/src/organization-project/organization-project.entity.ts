@@ -1,14 +1,4 @@
-import {
-	Column,
-	Entity,
-	Index,
-	JoinColumn,
-	ManyToOne,
-	ManyToMany,
-	OneToMany,
-	RelationId,
-	JoinTable,
-} from 'typeorm';
+import { Column, Entity, Index, JoinColumn, ManyToOne, ManyToMany, OneToMany, RelationId, JoinTable } from 'typeorm';
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { IsOptional, IsUUID } from 'class-validator';
 import {
@@ -33,7 +23,7 @@ import {
 	OrganizationProjectBudgetTypeEnum,
 	ProjectBillingEnum,
 	ProjectOwnerEnum,
-	TaskListTypeEnum,
+	TaskListTypeEnum
 } from '@gauzy/contracts';
 import {
 	Activity,
@@ -51,13 +41,12 @@ import {
 	TaskSize,
 	TaskStatus,
 	TenantOrganizationBaseEntity,
-	TimeLog,
+	TimeLog
 } from '../core/entities/internal';
 import { TaskVersion } from 'tasks/versions/version.entity';
 
 @Entity('organization_project')
 export class OrganizationProject extends TenantOrganizationBaseEntity implements IOrganizationProject {
-
 	@Index()
 	@Column()
 	name: string;
@@ -114,7 +103,7 @@ export class OrganizationProject extends TenantOrganizationBaseEntity implements
 	@Column({
 		type: 'text',
 		nullable: true,
-		default: OrganizationProjectBudgetTypeEnum.COST,
+		default: OrganizationProjectBudgetTypeEnum.COST
 	})
 	budgetType?: OrganizationProjectBudgetTypeEnum;
 
@@ -136,7 +125,7 @@ export class OrganizationProject extends TenantOrganizationBaseEntity implements
 	@ManyToOne(() => OrganizationContact, (it) => it.projects, {
 		nullable: true,
 		onUpdate: 'CASCADE',
-		onDelete: 'SET NULL',
+		onDelete: 'SET NULL'
 	})
 	@JoinColumn()
 	organizationContact?: IOrganizationContact;
@@ -154,7 +143,7 @@ export class OrganizationProject extends TenantOrganizationBaseEntity implements
 		onDelete: 'SET NULL',
 
 		/** Eager relations are always loaded automatically when relation's owner entity is loaded using find* methods. */
-		eager: true,
+		eager: true
 	})
 	@JoinColumn()
 	image?: IImageAsset;
@@ -174,7 +163,7 @@ export class OrganizationProject extends TenantOrganizationBaseEntity implements
 	*/
 	// Organization Tasks
 	@OneToMany(() => Task, (it) => it.project, {
-		onDelete: 'SET NULL',
+		onDelete: 'SET NULL'
 	})
 	tasks?: ITask[];
 
@@ -184,19 +173,19 @@ export class OrganizationProject extends TenantOrganizationBaseEntity implements
 
 	// Organization Invoice Items
 	@OneToMany(() => InvoiceItem, (it) => it.project, {
-		onDelete: 'SET NULL',
+		onDelete: 'SET NULL'
 	})
 	invoiceItems?: IInvoiceItem[];
 
 	// Organization Sprints
 	@OneToMany(() => OrganizationSprint, (it) => it.project, {
-		onDelete: 'SET NULL',
+		onDelete: 'SET NULL'
 	})
 	organizationSprints?: IOrganizationSprint[];
 
 	// Organization Payments
 	@OneToMany(() => Payment, (it) => it.project, {
-		onDelete: 'SET NULL',
+		onDelete: 'SET NULL'
 	})
 	payments?: IPayment[];
 
@@ -204,7 +193,7 @@ export class OrganizationProject extends TenantOrganizationBaseEntity implements
 	 * Expense
 	 */
 	@OneToMany(() => Expense, (it) => it.project, {
-		onDelete: 'SET NULL',
+		onDelete: 'SET NULL'
 	})
 	expenses?: IExpense[];
 
@@ -223,10 +212,7 @@ export class OrganizationProject extends TenantOrganizationBaseEntity implements
 	/**
 	 * Project Related Issue Type
 	 */
-	@OneToMany(
-		() => TaskRelatedIssueTypes,
-		(relatedIssueType) => relatedIssueType.organizationTeam
-	)
+	@OneToMany(() => TaskRelatedIssueTypes, (relatedIssueType) => relatedIssueType.organizationTeam)
 	relatedIssueTypes?: ITaskRelatedIssueType[];
 
 	/**
@@ -255,17 +241,17 @@ export class OrganizationProject extends TenantOrganizationBaseEntity implements
 	// Organization Project Tags
 	@ManyToMany(() => Tag, (tag) => tag.organizationProjects, {
 		onUpdate: 'CASCADE',
-		onDelete: 'CASCADE',
+		onDelete: 'CASCADE'
 	})
 	@JoinTable({
-		name: 'tag_organization_project',
+		name: 'tag_organization_project'
 	})
 	tags: ITag[];
 
 	// Organization Project Employees
 	@ManyToMany(() => Employee, (employee) => employee.projects, {
 		onUpdate: 'CASCADE',
-		onDelete: 'CASCADE',
+		onDelete: 'CASCADE'
 	})
 	members?: IEmployee[];
 }

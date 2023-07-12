@@ -1,19 +1,10 @@
-import {
-	Body,
-	Controller,
-	HttpCode,
-	HttpStatus,
-	Param,
-	Put,
-	UseGuards,
-	Post,
-} from '@nestjs/common';
+import { Body, Controller, HttpCode, HttpStatus, Param, Put, UseGuards, Post } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import {
 	IOrganizationTaskSetting,
 	IOrganizationTaskSettingCreateInput,
 	IOrganizationTaskSettingUpdateInput,
-	PermissionsEnum,
+	PermissionsEnum
 } from '@gauzy/contracts';
 import { OrganizationTaskSetting } from './organization-task-setting.entity';
 import { CommandBus } from '@nestjs/cqrs';
@@ -43,21 +34,19 @@ export class OrganizationTaskSettingController extends CrudController<Organizati
 	 * @returns
 	 */
 	@ApiOperation({
-		summary: 'Create new record',
+		summary: 'Create new record'
 	})
 	@ApiResponse({
 		status: HttpStatus.CREATED,
-		description: 'The record has been successfully created.',
+		description: 'The record has been successfully created.'
 	})
 	@ApiResponse({
 		status: HttpStatus.BAD_REQUEST,
-		description: 'Invalid input, The response body may contain clues as to what went wrong',
+		description: 'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@HttpCode(HttpStatus.OK)
 	@Post()
-	async create(
-		@Body() body: IOrganizationTaskSettingCreateInput
-	): Promise<IOrganizationTaskSetting> {
+	async create(@Body() body: IOrganizationTaskSettingCreateInput): Promise<IOrganizationTaskSetting> {
 		return await this.organizationTaskSettingService.create(body);
 	}
 
@@ -71,16 +60,15 @@ export class OrganizationTaskSettingController extends CrudController<Organizati
 	@ApiOperation({ summary: 'Update an existing record' })
 	@ApiResponse({
 		status: HttpStatus.CREATED,
-		description: 'The record has been successfully edited.',
+		description: 'The record has been successfully edited.'
 	})
 	@ApiResponse({
 		status: HttpStatus.NOT_FOUND,
-		description: 'Record not found',
+		description: 'Record not found'
 	})
 	@ApiResponse({
 		status: HttpStatus.BAD_REQUEST,
-		description:
-			'Invalid input, The response body may contain clues as to what went wrong',
+		description: 'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
 	@Put(':id')
@@ -88,8 +76,6 @@ export class OrganizationTaskSettingController extends CrudController<Organizati
 		@Param('id', UUIDValidationPipe) id: IOrganizationTaskSetting['id'],
 		@Body() body: IOrganizationTaskSettingUpdateInput
 	): Promise<IOrganizationTaskSetting> {
-		return this.commandBus.execute(
-			new OrganizationTaskSettingUpdateCommand(id, body)
-		);
+		return this.commandBus.execute(new OrganizationTaskSettingUpdateCommand(id, body));
 	}
 }

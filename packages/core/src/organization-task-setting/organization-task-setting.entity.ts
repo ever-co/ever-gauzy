@@ -3,26 +3,19 @@ import {
 	IOrganizationProject,
 	IOrganizationTaskSetting,
 	IOrganizationTeam,
-	TaskProofOfCompletionTypeEnum,
+	TaskProofOfCompletionTypeEnum
 } from '@gauzy/contracts';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import {
-	IsBoolean,
-	IsNumber,
-	IsOptional,
-	IsString,
-	IsUUID,
-} from 'class-validator';
+import { IsBoolean, IsNumber, IsOptional, IsString, IsUUID } from 'class-validator';
 import {
 	OrganizationProject,
 	OrganizationTeam,
 	TaskSize,
-	TenantOrganizationBaseEntity,
+	TenantOrganizationBaseEntity
 } from '../core/entities/internal';
 
 @Entity('organization_task_setting')
 export class OrganizationTaskSetting extends TenantOrganizationBaseEntity implements IOrganizationTaskSetting {
-
 	@ApiProperty({ type: () => Boolean })
 	@IsBoolean()
 	@Column({ default: true })
