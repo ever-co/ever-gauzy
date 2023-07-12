@@ -28,6 +28,7 @@ import {
 	TimeLog,
 	User
 } from '../core/entities/internal';
+import { TaskLinkedIssue } from './linked-issue/task-linked-issue.entity';
 
 @Entity('task')
 @Index('taskNumber', ['projectId', 'number'], { unique: true })
@@ -227,6 +228,13 @@ export class Task extends TenantOrganizationBaseEntity implements ITask {
 	@OneToMany(() => Activity, (activity) => activity.task)
 	@JoinColumn()
 	activities?: IActivity[];
+
+	/**
+	 * Linked Task Issues
+	 */
+	@OneToMany(() => TaskLinkedIssue, (it) => it.taskTo)
+	@JoinColumn()
+	linkedIssues?: Task[];
 
 	/*
 	|--------------------------------------------------------------------------

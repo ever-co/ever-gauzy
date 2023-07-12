@@ -118,10 +118,12 @@ import {
 	Skill,
 	Tag,
 	Task,
+	TaskLinkedIssue,
 	TaskPriority,
-	TaskSize,
 	TaskRelatedIssueTypes,
+	TaskSize,
 	TaskStatus,
+	TaskVersion,
 	Tenant,
 	TenantSetting,
 	TimeLog,
@@ -134,8 +136,7 @@ import {
 	UserOrganization,
 	Warehouse,
 	WarehouseProduct,
-	WarehouseProductVariant,
-	TaskVersion,
+	WarehouseProductVariant
 } from './internal';
 
 export const coreEntities = [
@@ -258,9 +259,10 @@ export const coreEntities = [
 	Skill,
 	Tag,
 	Task,
+	TaskLinkedIssue,
 	TaskPriority,
-	TaskSize,
 	TaskRelatedIssueTypes,
+	TaskSize,
 	TaskStatus,
 	TaskVersion,
 	Tenant,
@@ -275,5 +277,5 @@ export const coreEntities = [
 	UserOrganization,
 	Warehouse,
 	WarehouseProduct,
-	WarehouseProductVariant,
+	WarehouseProductVariant
 ];
