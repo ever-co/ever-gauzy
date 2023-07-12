@@ -16,7 +16,6 @@ import {
 import {
 	OrganizationProject,
 	OrganizationTeam,
-	TaskSize,
 	TenantOrganizationBaseEntity,
 } from '../core/entities/internal';
 
