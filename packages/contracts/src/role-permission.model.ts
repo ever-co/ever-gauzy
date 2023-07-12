@@ -113,6 +113,7 @@ export enum PermissionsEnum {
 	ORG_TEAM_VIEW = 'ORG_TEAM_VIEW',
 	ORG_TEAM_EDIT = 'ORG_TEAM_EDIT',
 	ORG_TEAM_DELETE = 'ORG_TEAM_DELETE',
+	ORG_TASK_SETTING = 'ORG_TASK_SETTING',
 	/** Organization Team Join Request Permissions */
 	ORG_TEAM_JOIN_REQUEST_VIEW = 'ORG_TEAM_JOIN_REQUEST_VIEW',
 	ORG_TEAM_JOIN_REQUEST_EDIT = 'ORG_TEAM_JOIN_REQUEST_EDIT',
@@ -154,7 +155,7 @@ export enum PermissionsEnum {
 	ALLOW_DELETE_TIME = 'ALLOW_DELETE_TIME',
 	ALLOW_MODIFY_TIME = 'ALLOW_MODIFY_TIME',
 	ALLOW_MANUAL_TIME = 'ALLOW_MANUAL_TIME',
-	DELETE_SCREENSHOTS = 'DELETE_SCREENSHOTS'
+	DELETE_SCREENSHOTS = 'DELETE_SCREENSHOTS',
 }
 
 export const PermissionGroups = {
@@ -233,6 +234,7 @@ export const PermissionGroups = {
 		PermissionsEnum.ORG_TEAM_VIEW,
 		PermissionsEnum.ORG_TEAM_EDIT,
 		PermissionsEnum.ORG_TEAM_DELETE,
+		PermissionsEnum.ORG_TASK_SETTING,
 		PermissionsEnum.ORG_TEAM_JOIN_REQUEST_VIEW,
 		PermissionsEnum.ORG_TEAM_JOIN_REQUEST_EDIT,
 		PermissionsEnum.ORG_CONTRACT_EDIT,
@@ -258,7 +260,7 @@ export const PermissionGroups = {
 		PermissionsEnum.ALLOW_MODIFY_TIME,
 		PermissionsEnum.ALLOW_MANUAL_TIME,
 		PermissionsEnum.DELETE_SCREENSHOTS,
-		PermissionsEnum.ACCESS_DELETE_ACCOUNT
+		PermissionsEnum.ACCESS_DELETE_ACCOUNT,
 	],
 
 	//Readonly permissions, are only enabled for Super Admin/Admin role
@@ -279,6 +281,6 @@ export const PermissionGroups = {
 		PermissionsEnum.CUSTOM_SMTP_VIEW,
 		PermissionsEnum.IMPORT_EXPORT_VIEW,
 		PermissionsEnum.ACCESS_DELETE_ALL_DATA,
-		PermissionsEnum.TENANT_SETTING
-	]
+		PermissionsEnum.TENANT_SETTING,
+	],
 };

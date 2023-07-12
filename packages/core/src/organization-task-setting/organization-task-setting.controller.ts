@@ -11,6 +11,7 @@ import {
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { OrganizationTaskSetting } from './organization-task-setting.entity';
 import { CommandBus } from '@nestjs/cqrs';
+import { Permissions } from './../shared/decorators';
 import { CrudController } from './../core/crud';
 import { OrganizationTaskSettingService } from './organization-task-setting.service';
 import {
@@ -51,6 +52,7 @@ export class OrganizationTaskSettingController extends CrudController<Organizati
 		description:
 			'Invalid input, The response body may contain clues as to what went wrong',
 	})
+	@Permissions(PermissionsEnum.ORG_TASK_SETTING)
 	@Post()
 	async create(
 		@Body() body: OrganizationTaskSetting,
@@ -80,6 +82,7 @@ export class OrganizationTaskSettingController extends CrudController<Organizati
 		description:
 			'Invalid input, The response body may contain clues as to what went wrong',
 	})
+	@Permissions(PermissionsEnum.ORG_TASK_SETTING)
 	@HttpCode(HttpStatus.ACCEPTED)
 	@Put(':id')
 	async update(
