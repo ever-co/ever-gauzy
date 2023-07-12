@@ -1,11 +1,9 @@
-import { IRelationalOrganizationProject } from 'organization-projects.model';
-import { IRelationalOrganizationTeam } from 'organization-team.model';
+import { IRelationalOrganizationProject } from './organization-projects.model';
+import { IRelationalOrganizationTeam } from './organization-team.model';
 import { IBasePerTenantAndOrganizationEntityModel } from './base-entity.model';
 
-export interface IOrganizationTaskSetting
-	extends IBasePerTenantAndOrganizationEntityModel,
-		IRelationalOrganizationTeam,
-		IRelationalOrganizationProject {
+export interface IOrganizationTaskSetting extends IBasePerTenantAndOrganizationEntityModel, IRelationalOrganizationTeam, IRelationalOrganizationProject {
+
 	isTasksPrivacyEnabled: boolean;
 	isTasksMultipleAssigneesEnabled: boolean;
 	isTasksManualTimeEnabled: boolean;
@@ -14,7 +12,7 @@ export interface IOrganizationTaskSetting
 	isTasksEstimationInStoryPointsEnabled: boolean;
 
 	isTasksProofOfCompletionEnabled: boolean;
-	tasksProofOfCompletionType: TaskProofOfCompletionTypeEnum; // ENUM PUBLIC | PRIVATE
+	tasksProofOfCompletionType: TaskProofOfCompletionTypeEnum;
 
 	isTasksLinkedEnabled: boolean;
 	isTasksCommentsEnabled: boolean;
@@ -38,10 +36,9 @@ export enum TaskProofOfCompletionTypeEnum {
 	PUBLIC = 'PUBLIC',
 	PRIVATE = 'PRIVATE',
 }
-export interface IOrganizationTaskSettingCreateInput
-	extends IOrganizationTaskSetting {}
 
-export interface IOrganizationTaskSettingUpdateInput
-	extends Partial<IOrganizationTaskSettingCreateInput> {
-	id?: string;
+export interface IOrganizationTaskSettingCreateInput extends IOrganizationTaskSetting {}
+
+export interface IOrganizationTaskSettingUpdateInput extends Partial<IOrganizationTaskSettingCreateInput> {
+	id?: IOrganizationTaskSetting['id'];
 }

@@ -113,6 +113,7 @@ export enum PermissionsEnum {
 	ORG_TEAM_VIEW = 'ORG_TEAM_VIEW',
 	ORG_TEAM_EDIT = 'ORG_TEAM_EDIT',
 	ORG_TEAM_DELETE = 'ORG_TEAM_DELETE',
+	/** Organization Task Setting */
 	ORG_TASK_SETTING = 'ORG_TASK_SETTING',
 	/** Organization Team Join Request Permissions */
 	ORG_TEAM_JOIN_REQUEST_VIEW = 'ORG_TEAM_JOIN_REQUEST_VIEW',
