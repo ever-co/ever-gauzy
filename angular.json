@@ -675,6 +675,11 @@
 								"input": "apps/desktop-timer/src/",
 								"ignore": ["**/*.ts"],
 								"output": ""
+							},
+							{
+								"glob": "**/*",
+								"input": "node_modules/@nebular/eva-icons/icons",
+								"output": "/assets/eva-icons/"
 							}
 						],
 						"styles": [
@@ -688,7 +693,7 @@
 							"node_modules/nebular-icons/scss/nebular-icons.scss",
 							"apps/gauzy/node_modules/@circlon/angular-tree-component/css/angular-tree-component.css",
 							"node_modules/leaflet/dist/leaflet.css",
-							"apps/gauzy/src/app/@theme/styles/styles.scss"
+							"apps/desktop-timer/src/assets/styles/styles.scss"
 						],
 						"scripts": []
 					},
