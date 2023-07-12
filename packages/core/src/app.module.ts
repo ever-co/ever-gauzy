@@ -1,13 +1,24 @@
 import { HttpException, Module } from '@nestjs/common';
 import { APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
 import { MulterModule } from '@nestjs/platform-express';
-import { ThrottlerGuard, ThrottlerModule, ThrottlerModuleOptions } from '@nestjs/throttler';
+import {
+	ThrottlerGuard,
+	ThrottlerModule,
+	ThrottlerModuleOptions,
+} from '@nestjs/throttler';
 import { SentryInterceptor, SentryModule } from '@ntegral/nestjs-sentry';
-import { ServeStaticModule, ServeStaticModuleOptions } from '@nestjs/serve-static';
+import {
+	ServeStaticModule,
+	ServeStaticModuleOptions,
+} from '@nestjs/serve-static';
 import { HeaderResolver, I18nModule } from 'nestjs-i18n';
 import { Integrations as SentryIntegrations } from '@sentry/node';
 import { Integrations as TrackingIntegrations } from '@sentry/tracing';
-import { initialize as initializeUnleash, InMemStorageProvider, UnleashConfig } from 'unleash-client';
+import {
+	initialize as initializeUnleash,
+	InMemStorageProvider,
+	UnleashConfig,
+} from 'unleash-client';
 import { LanguagesEnum } from '@gauzy/contracts';
 import { ConfigService, environment } from '@gauzy/config';
 import * as path from 'path';
@@ -139,9 +150,7 @@ import { ContactModule } from './contact/contact.module';
 import { PublicShareModule } from './public-share/public-share.module';
 import { TransformInterceptor } from './core/interceptors';
 import { EmailResetModule } from './email-reset/email-reset.module';
-import { OrganizationTasksSettingsModule } from './organization-tasks-settings/organization-tasks-settings.module';
-import { OrganizationProjectTasksSettingsModule } from './organization-project-tasks-settings/organization-project-tasks-settings.module';
-
+import { OrganizationTaskSettingModule } from './organization-task-setting/organization-task-setting.module';
 const { unleashConfig } = environment;
 
 if (unleashConfig.url) {
@@ -156,16 +165,18 @@ if (unleashConfig.url) {
 		disableMetrics: false,
 
 		// we may use Redis storage provider instead of in memory
-		storageProvider: new InMemStorageProvider()
+		storageProvider: new InMemStorageProvider(),
 	};
 
 	if (unleashConfig.apiKey) {
 		unleashInstanceConfig.customHeaders = {
-			Authorization: unleashConfig.apiKey
+			Authorization: unleashConfig.apiKey,
 		};
 	}
 
-	console.log(`Using Unleash Config: ${JSON.stringify(unleashInstanceConfig)}`);
+	console.log(
+		`Using Unleash Config: ${JSON.stringify(unleashInstanceConfig)}`
+	);
 
 	const instance = initializeUnleash(unleashInstanceConfig);
 
@@ -177,7 +188,9 @@ if (unleashConfig.url) {
 	instance.on('error', console.error);
 	instance.on('warn', console.log);
 } else {
-	console.log('Unleash Client Not Registered. UNLEASH_API_URL configuration is not provided.');
+	console.log(
+		'Unleash Client Not Registered. UNLEASH_API_URL configuration is not provided.'
+	);
 }
 
 const sentryIntegrations = [];
@@ -194,33 +207,37 @@ if (process.env.DB_TYPE === 'postgres') {
 @Module({
 	imports: [
 		ServeStaticModule.forRootAsync({
-			useFactory: async (configService: ConfigService): Promise<ServeStaticModuleOptions[]> => {
+			useFactory: async (
+				configService: ConfigService
+			): Promise<ServeStaticModuleOptions[]> => {
 				return await resolveServeStaticPath(configService);
 			},
 			inject: [ConfigService],
-			imports: []
+			imports: [],
 		}),
 		MulterModule.register(),
 		I18nModule.forRoot({
 			fallbackLanguage: LanguagesEnum.ENGLISH,
 			loaderOptions: {
 				path: path.resolve(__dirname, 'i18n/'),
-				watch: !environment.production
+				watch: !environment.production,
 			},
-			resolvers: [new HeaderResolver(['language'])]
+			resolvers: [new HeaderResolver(['language'])],
 		}),
 		...(environment.sentry
 			? [
 					SentryModule.forRoot({
 						dsn: environment.sentry.dns,
 						debug: !environment.production,
-						environment: environment.production ? 'production' : 'development',
+						environment: environment.production
+							? 'production'
+							: 'development',
 						// TODO: we should use some internal function which returns version of Gauzy
 						release: 'gauzy@' + process.env.npm_package_version,
 						logLevels: ['error'],
 						integrations: sentryIntegrations,
-						tracesSampleRate: 1.0
-					})
+						tracesSampleRate: 1.0,
+					}),
 			  ]
 			: []),
 		ThrottlerModule.forRootAsync({
@@ -228,8 +245,8 @@ if (process.env.DB_TYPE === 'postgres') {
 			useFactory: (config: ConfigService): ThrottlerModuleOptions =>
 				({
 					ttl: config.get('THROTTLE_TTL'),
-					limit: config.get('THROTTLE_LIMIT')
-				} as ThrottlerModuleOptions)
+					limit: config.get('THROTTLE_LIMIT'),
+				} as ThrottlerModuleOptions),
 		}),
 		CoreModule,
 		AuthModule,
@@ -354,19 +371,18 @@ if (process.env.DB_TYPE === 'postgres') {
 		PublicShareModule,
 		EmailResetModule,
 		IssueTypeModule,
-		OrganizationTasksSettingsModule,
-		OrganizationProjectTasksSettingsModule
+		OrganizationTaskSettingModule,
 	],
 	controllers: [AppController],
 	providers: [
 		AppService,
 		{
 			provide: APP_GUARD,
-			useClass: ThrottlerGuard
+			useClass: ThrottlerGuard,
 		},
 		{
 			provide: APP_INTERCEPTOR,
-			useClass: TransformInterceptor
+			useClass: TransformInterceptor,
 		},
 		{
 			provide: APP_INTERCEPTOR,
@@ -375,21 +391,22 @@ if (process.env.DB_TYPE === 'postgres') {
 					filters: [
 						{
 							type: HttpException,
-							filter: (exception: HttpException) => 500 > exception.getStatus() // Only report 500 errors
-						}
-					]
-				})
-		}
+							filter: (exception: HttpException) =>
+								500 > exception.getStatus(), // Only report 500 errors
+						},
+					],
+				}),
+		},
 	],
-	exports: []
+	exports: [],
 })
 export class AppModule {
 	constructor() {
 		// Set Monday as start of the week
 		moment.locale(LanguagesEnum.ENGLISH, {
 			week: {
-				dow: 1
-			}
+				dow: 1,
+			},
 		});
 		moment.locale(LanguagesEnum.ENGLISH);
 	}

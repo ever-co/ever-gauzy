@@ -1,17 +1,29 @@
-import { Entity, Column, JoinColumn, OneToOne } from 'typeorm';
+import { Entity, Column, ManyToOne, Index, RelationId } from 'typeorm';
 import {
 	IOrganizationProject,
-	IOrganizationProjectTasksSettings,
-	TasksProofOfCompletionTypeEnum
+	IOrganizationTaskSetting,
+	IOrganizationTeam,
+	TaskProofOfCompletionTypeEnum,
 } from '@gauzy/contracts';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsBoolean, IsNumber, IsOptional, IsString, IsUUID } from 'class-validator';
-import { OrganizationProject, TenantOrganizationBaseEntity } from '../core/entities/internal';
+import {
+	IsBoolean,
+	IsNumber,
+	IsOptional,
+	IsString,
+	IsUUID,
+} from 'class-validator';
+import {
+	OrganizationProject,
+	OrganizationTeam,
+	TaskSize,
+	TenantOrganizationBaseEntity,
+} from '../core/entities/internal';
 
-@Entity('organization_project_tasks_settings')
-export class OrganizationProjectTasksSettings
+@Entity('organization_task_setting')
+export class OrganizationTaskSetting
 	extends TenantOrganizationBaseEntity
-	implements IOrganizationProjectTasksSettings
+	implements IOrganizationTaskSetting
 {
 	@ApiProperty({ type: () => Boolean })
 	@IsBoolean()
@@ -48,10 +60,10 @@ export class OrganizationProjectTasksSettings
 	@Column({ default: true })
 	isTasksProofOfCompletionEnabled: boolean;
 
-	@ApiProperty({ type: () => String, enum: TasksProofOfCompletionTypeEnum })
+	@ApiProperty({ type: () => String, enum: TaskProofOfCompletionTypeEnum })
 	@IsString()
-	@Column({ default: TasksProofOfCompletionTypeEnum.PRIVATE })
-	tasksProofOfCompletionType: TasksProofOfCompletionTypeEnum;
+	@Column({ default: TaskProofOfCompletionTypeEnum.PRIVATE })
+	tasksProofOfCompletionType: TaskProofOfCompletionTypeEnum;
 
 	@ApiProperty({ type: () => Boolean })
 	@IsBoolean()
@@ -113,26 +125,35 @@ export class OrganizationProjectTasksSettings
 	@Column({ default: true })
 	isTasksAutoStatusEnabled: boolean;
 
-	/*
-	|--------------------------------------------------------------------------
-	| @OneToOne
-	|--------------------------------------------------------------------------
-	*/
-
-	@ApiPropertyOptional({ type: () => OrganizationProject })
-	@OneToOne(() => OrganizationProject, {
-		nullable: true,
-		onDelete: 'SET NULL',
-
-		/** Eager relations are always loaded automatically when relation's owner entity is loaded using find* methods. */
-		eager: true
+	/**
+	 * Organization Project
+	 */
+	@ManyToOne(() => OrganizationProject, (project) => project.sizes, {
+		onDelete: 'CASCADE',
 	})
-	@JoinColumn()
-	project?: OrganizationProject;
+	project?: IOrganizationProject;
 
 	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()
 	@IsUUID()
+	@RelationId((it: TaskSize) => it.project)
+	@Index()
 	@Column({ nullable: true })
 	projectId?: IOrganizationProject['id'];
+
+	/**
+	 * Organization Team
+	 */
+	@ManyToOne(() => OrganizationTeam, (team) => team.sizes, {
+		onDelete: 'CASCADE',
+	})
+	organizationTeam?: IOrganizationTeam;
+
+	@ApiPropertyOptional({ type: () => String })
+	@IsOptional()
+	@IsUUID()
+	@RelationId((it: TaskSize) => it.organizationTeam)
+	@Index()
+	@Column({ nullable: true })
+	organizationTeamId?: IOrganizationTeam['id'];
 }

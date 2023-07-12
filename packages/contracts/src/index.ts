@@ -116,13 +116,12 @@ export * from './upwork.model';
 export * from './user-organization.model';
 export * from './user.model';
 export * from './wakatime.model';
-export * from './organization-tasks-settings.model';
-export * from './organization-project-tasks-settings.model';
+export * from './organization-task-setting.model';
 
 export { IBaseEntityModel as BaseEntityModel } from './base-entity.model';
 export {
 	IBasePerTenantAndOrganizationEntityModel,
 	IBasePerTenantEntityModel,
 	IBaseSoftDeleteEntityModel,
-	IBaseRelationsEntityModel
+	IBaseRelationsEntityModel,
 } from './base-entity.model';
