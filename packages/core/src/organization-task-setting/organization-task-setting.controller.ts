@@ -9,21 +9,24 @@ import {
 	Post,
 } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { OrganizationTaskSetting } from './organization-task-setting.entity';
-import { CommandBus } from '@nestjs/cqrs';
-import { Permissions } from './../shared/decorators';
-import { CrudController } from './../core/crud';
-import { OrganizationTaskSettingService } from './organization-task-setting.service';
 import {
+	IOrganizationTaskSetting,
+	IOrganizationTaskSettingCreateInput,
 	IOrganizationTaskSettingUpdateInput,
 	PermissionsEnum,
 } from '@gauzy/contracts';
+import { OrganizationTaskSetting } from './organization-task-setting.entity';
+import { CommandBus } from '@nestjs/cqrs';
+import { CrudController } from './../core/crud';
+import { OrganizationTaskSettingService } from './organization-task-setting.service';
+import { Permissions } from './../shared/decorators';
 import { UUIDValidationPipe } from './../shared/pipes';
-import { TenantPermissionGuard } from './../shared/guards';
+import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
 import { OrganizationTaskSettingUpdateCommand } from './commands';
 
 @ApiTags('OrganizationTaskSetting')
-@UseGuards(TenantPermissionGuard)
+@UseGuards(TenantPermissionGuard, PermissionGuard)
+@Permissions(PermissionsEnum.ORG_TASK_SETTING)
 @Controller()
 export class OrganizationTaskSettingController extends CrudController<OrganizationTaskSetting> {
 	constructor(
@@ -34,10 +37,9 @@ export class OrganizationTaskSettingController extends CrudController<Organizati
 	}
 
 	/**
-	 * CREATE organization task settings
+	 * CREATE organization task setting
 	 *
-	 * @param entity
-	 * @param options
+	 * @param body
 	 * @returns
 	 */
 	@ApiOperation({
@@ -49,23 +51,21 @@ export class OrganizationTaskSettingController extends CrudController<Organizati
 	})
 	@ApiResponse({
 		status: HttpStatus.BAD_REQUEST,
-		description:
-			'Invalid input, The response body may contain clues as to what went wrong',
+		description: 'Invalid input, The response body may contain clues as to what went wrong',
 	})
-	@Permissions(PermissionsEnum.ORG_TASK_SETTING)
+	@HttpCode(HttpStatus.OK)
 	@Post()
 	async create(
-		@Body() body: OrganizationTaskSetting,
-		...options: any[]
-	): Promise<OrganizationTaskSetting> {
-		return this.organizationTaskSettingService.create(body);
+		@Body() body: IOrganizationTaskSettingCreateInput
+	): Promise<IOrganizationTaskSetting> {
+		return await this.organizationTaskSettingService.create(body);
 	}
 
 	/**
-	 * UPDATE organization tasks settings
+	 * UPDATE organization tasks setting
 	 *
 	 * @param id
-	 * @param entity
+	 * @param body
 	 * @returns
 	 */
 	@ApiOperation({ summary: 'Update an existing record' })
@@ -82,13 +82,12 @@ export class OrganizationTaskSettingController extends CrudController<Organizati
 		description:
 			'Invalid input, The response body may contain clues as to what went wrong',
 	})
-	@Permissions(PermissionsEnum.ORG_TASK_SETTING)
 	@HttpCode(HttpStatus.ACCEPTED)
 	@Put(':id')
 	async update(
-		@Param('id', UUIDValidationPipe) id: string,
+		@Param('id', UUIDValidationPipe) id: IOrganizationTaskSetting['id'],
 		@Body() body: IOrganizationTaskSettingUpdateInput
-	): Promise<OrganizationTaskSetting> {
+	): Promise<IOrganizationTaskSetting> {
 		return this.commandBus.execute(
 			new OrganizationTaskSettingUpdateCommand(id, body)
 		);

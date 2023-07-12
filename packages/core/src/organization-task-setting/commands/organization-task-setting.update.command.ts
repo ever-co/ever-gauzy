@@ -1,11 +1,11 @@
-import { IOrganizationTaskSettingUpdateInput } from '@gauzy/contracts';
+import { IOrganizationTaskSetting, IOrganizationTaskSettingUpdateInput } from '@gauzy/contracts';
 import { ICommand } from '@nestjs/cqrs';
 
 export class OrganizationTaskSettingUpdateCommand implements ICommand {
-	static readonly type = '[OrganizationTaskSetting] Update';
+	static readonly type = '[Organization Task Setting] Update';
 
 	constructor(
-		public readonly id: string,
+		public readonly id: IOrganizationTaskSetting['id'],
 		public readonly input: IOrganizationTaskSettingUpdateInput
 	) {}
 }
