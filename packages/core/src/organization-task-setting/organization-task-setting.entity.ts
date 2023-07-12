@@ -21,10 +21,8 @@ import {
 } from '../core/entities/internal';
 
 @Entity('organization_task_setting')
-export class OrganizationTaskSetting
-	extends TenantOrganizationBaseEntity
-	implements IOrganizationTaskSetting
-{
+export class OrganizationTaskSetting extends TenantOrganizationBaseEntity implements IOrganizationTaskSetting {
+
 	@ApiProperty({ type: () => Boolean })
 	@IsBoolean()
 	@Column({ default: true })
@@ -128,15 +126,15 @@ export class OrganizationTaskSetting
 	/**
 	 * Organization Project
 	 */
-	@ManyToOne(() => OrganizationProject, (project) => project.sizes, {
-		onDelete: 'CASCADE',
+	@ManyToOne(() => OrganizationProject, {
+		onDelete: 'CASCADE'
 	})
 	project?: IOrganizationProject;
 
 	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()
 	@IsUUID()
-	@RelationId((it: TaskSize) => it.project)
+	@RelationId((it: OrganizationTaskSetting) => it.project)
 	@Index()
 	@Column({ nullable: true })
 	projectId?: IOrganizationProject['id'];
@@ -144,15 +142,15 @@ export class OrganizationTaskSetting
 	/**
 	 * Organization Team
 	 */
-	@ManyToOne(() => OrganizationTeam, (team) => team.sizes, {
-		onDelete: 'CASCADE',
+	@ManyToOne(() => OrganizationTeam, {
+		onDelete: 'CASCADE'
 	})
 	organizationTeam?: IOrganizationTeam;
 
 	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()
 	@IsUUID()
-	@RelationId((it: TaskSize) => it.organizationTeam)
+	@RelationId((it: OrganizationTaskSetting) => it.organizationTeam)
 	@Index()
 	@Column({ nullable: true })
 	organizationTeamId?: IOrganizationTeam['id'];
