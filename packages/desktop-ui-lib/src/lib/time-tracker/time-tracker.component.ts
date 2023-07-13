@@ -861,6 +861,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 			this._ngZone.run(async () => {
 				await this.getTimerStatus(this.argFromMain);
 				this._store.clear();
+				localStorage.clear();
 				event.sender.send('remove_current_user');
 			});
 		});
