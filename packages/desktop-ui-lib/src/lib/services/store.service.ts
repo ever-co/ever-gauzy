@@ -47,6 +47,7 @@ export interface PersistState {
 	preferredLanguage: LanguagesEnum;
 	preferredComponentLayout: ComponentLayoutStyleEnum;
 	componentLayout: any[]; //This would be a Map but since Maps can't be serialized/deserialized it is stored as an array
+	host: string;
 }
 
 export function createInitialAppState(): AppState {
@@ -69,6 +70,7 @@ export function createInitialPersistState(): PersistState {
 	const preferredLanguage = localStorage.getItem('preferredLanguage') || null;
 	const componentLayout = localStorage.getItem('componentLayout') || [];
 	const tenantId = localStorage.getItem('tenantId') || null;
+	const host = localStorage.getItem('_host') || null;
 
 	return {
 		token,
@@ -77,7 +79,8 @@ export function createInitialPersistState(): PersistState {
 		serverConnection,
 		preferredLanguage,
 		componentLayout,
-		tenantId
+		tenantId,
+		host
 	} as PersistState;
 }
 
@@ -482,5 +485,16 @@ export class Store {
 		this.persistStore.update({
 			tenantId: value
 		});
+	}
+
+	get host(): string {
+		const { host } = this.persistQuery.getValue();
+		return host;
+	}
+
+	set host(value: string) {
+		this.persistStore.update({
+			host: value
+		})
 	}
 }

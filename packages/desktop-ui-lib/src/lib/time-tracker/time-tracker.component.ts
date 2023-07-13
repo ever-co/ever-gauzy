@@ -374,6 +374,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 		this.electronService.ipcRenderer.on('timer_tracker_show', (event, arg) =>
 			this._ngZone.run(async () => {
 				this._isOffline$.next(arg.isOffline ? arg.isOffline : this._isOffline);
+				this._store.host = arg.apiHost;
 				this.apiHost = arg.apiHost;
 				this.argFromMain = arg;
 				this.taskSelect = arg.taskId;
