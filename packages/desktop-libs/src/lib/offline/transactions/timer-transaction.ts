@@ -15,14 +15,14 @@ export class TimerTransaction implements ITimerTransaction {
 					trx.insert(value)
 						.into(TABLE_NAME_TIMERS)
 						.then(() => {
-							trx.commit;
+							trx.commit();
 							console.log(
 								'[TIMERTRX]: ',
 								'insertion transaction committed...'
 							);
 						})
 						.catch((error) => {
-							trx.rollback;
+							trx.rollback();
 							console.log(
 								'[TIMERTRXER]: ',
 								'insertion transaction rollback...'
