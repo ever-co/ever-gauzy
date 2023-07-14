@@ -381,6 +381,18 @@ export class Store {
 		);
 	}
 
+
+	/**
+	 * The method checks if a user has all the specified permissions.
+	 * @param {PermissionsEnum[]} permissions - An array of permissions that are of type PermissionsEnum.
+	 * @returns a boolean value.
+	 */
+	hasAllPermissions(...permissions: PermissionsEnum[]) {
+		return permissions.reduce((acc, permission) => {
+			return this.hasPermission(permission) && acc
+		}, true)
+	}
+
 	/**
 	 * Check any permissions exists
 	 */
