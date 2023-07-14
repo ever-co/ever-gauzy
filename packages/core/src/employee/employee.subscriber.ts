@@ -136,6 +136,7 @@ export class EmployeeSubscriber implements EntitySubscriberInterface<Employee> {
         try {
 			if (!entity || !entity.user) {
 				console.error("Entity or User object is not defined.");
+				return;
 			}
 
 			const { user } = entity;
@@ -143,12 +144,12 @@ export class EmployeeSubscriber implements EntitySubscriberInterface<Employee> {
 			if (user.firstName || user.lastName) { // Use first &/or last name to create slug
 				entity.profile_link = sluggable(`${user.firstName || ''} ${user.lastName || ''}`.trim());
 			} else if (user.username) { // Use username to create slug if first & last name not found
-				entity.profile_link = sluggable(`${user.username}`);
+				entity.profile_link = sluggable(user.username);
             } else { // Use email to create slug if nothing found
-				entity.profile_link = sluggable(`${retrieveNameFromEmail(user.email)}`);
+				entity.profile_link = sluggable(retrieveNameFromEmail(user.email));
             }
         } catch (error) {
-			console.error(error);
+			console.error(`Error creating slug for entity with id ${entity.id}: `, error);
         }
     }
 
