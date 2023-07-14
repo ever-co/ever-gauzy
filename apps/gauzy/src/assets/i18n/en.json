@@ -1996,7 +1996,8 @@
 			"ORG_TASK_ADD": "Create Tasks",
 			"ORG_TASK_VIEW": "View Tasks",
 			"ORG_TASK_EDIT": "Edit Tasks",
-			"ORG_TASK_DELETE": "Delete Tasks"
+			"ORG_TASK_DELETE": "Delete Tasks",
+			"ORG_TASK_SETTING":"Task Settings"
 		},
 		"BILLING": "Billing",
 		"BUDGET": "Budget",
