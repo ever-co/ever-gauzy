@@ -15,10 +15,7 @@ import {
 } from '@gauzy/contracts';
 import { Injectable } from '@angular/core';
 import { StoreConfig, Store as AkitaStore, Query } from '@datorama/akita';
-import {
-	ComponentEnum,
-	SYSTEM_DEFAULT_LAYOUT
-} from '../constants/layout.constants';
+import { ComponentEnum, SYSTEM_DEFAULT_LAYOUT } from '../constants/layout.constants';
 import { map } from 'rxjs/operators';
 import { merge, Subject } from 'rxjs';
 import * as _ from 'underscore';
@@ -57,7 +54,7 @@ export function createInitialAppState(): AppState {
 		featureToggles: [],
 		featureOrganizations: [],
 		featureTenant: [],
-		isOffline: false,
+		isOffline: false
 	} as AppState;
 }
 
@@ -65,8 +62,7 @@ export function createInitialPersistState(): PersistState {
 	const token = localStorage.getItem('token') || null;
 	const userId = localStorage.getItem('_userId') || null;
 	const organizationId = localStorage.getItem('_organizationId') || null;
-	const serverConnection =
-		parseInt(localStorage.getItem('serverConnection')) || null;
+	const serverConnection = parseInt(localStorage.getItem('serverConnection')) || null;
 	const preferredLanguage = localStorage.getItem('preferredLanguage') || null;
 	const componentLayout = localStorage.getItem('componentLayout') || [];
 	const tenantId = localStorage.getItem('tenantId') || null;
@@ -121,28 +117,18 @@ export class Store {
 		protected appQuery: AppQuery,
 		protected persistStore: PersistStore,
 		protected persistQuery: PersistQuery
-	) { }
+	) {}
 
 	user$ = this.appQuery.select((state) => state.user);
-	selectedOrganization$ = this.appQuery.select(
-		(state) => state.selectedOrganization
-	);
+	selectedOrganization$ = this.appQuery.select((state) => state.selectedOrganization);
 	selectedProject$ = this.appQuery.select((state) => state.selectedProject);
 	selectedDate$ = this.appQuery.select((state) => state.selectedDate);
-	userRolePermissions$ = this.appQuery.select(
-		(state) => state.userRolePermissions
-	);
+	userRolePermissions$ = this.appQuery.select((state) => state.userRolePermissions);
 	featureToggles$ = this.appQuery.select((state) => state.featureToggles);
-	featureOrganizations$ = this.appQuery.select(
-		(state) => state.featureOrganizations
-	);
+	featureOrganizations$ = this.appQuery.select((state) => state.featureOrganizations);
 	featureTenant$ = this.appQuery.select((state) => state.featureTenant);
-	preferredLanguage$ = this.persistQuery.select(
-		(state) => state.preferredLanguage
-	);
-	preferredComponentLayout$ = this.persistQuery.select(
-		(state) => state.preferredComponentLayout
-	);
+	preferredLanguage$ = this.persistQuery.select((state) => state.preferredLanguage);
+	preferredComponentLayout$ = this.persistQuery.select((state) => state.preferredComponentLayout);
 	componentLayoutMap$ = this.persistQuery
 		.select((state) => state.componentLayout)
 		.pipe(map((componentLayout) => new Map(componentLayout)));
@@ -166,13 +152,8 @@ export class Store {
 				.select((state) => state.preferredComponentLayout)
 				.pipe(
 					map((preferredLayout) => {
-						const dataLayout =
-							this.getLayoutForComponent(component);
-						return (
-							dataLayout ||
-							preferredLayout ||
-							SYSTEM_DEFAULT_LAYOUT
-						);
+						const dataLayout = this.getLayoutForComponent(component);
+						return dataLayout || preferredLayout || SYSTEM_DEFAULT_LAYOUT;
 					})
 				),
 			this.persistQuery
@@ -180,11 +161,7 @@ export class Store {
 				.pipe(
 					map((componentLayout) => {
 						const componentMap = new Map(componentLayout);
-						return (
-							componentMap.get(component) ||
-							this.preferredComponentLayout ||
-							SYSTEM_DEFAULT_LAYOUT
-						);
+						return componentMap.get(component) || this.preferredComponentLayout || SYSTEM_DEFAULT_LAYOUT;
 					})
 				)
 		);
@@ -197,19 +174,19 @@ export class Store {
 
 	set selectedOrganization(organization: IOrganization) {
 		this.appStore.update({
-			selectedOrganization: organization,
+			selectedOrganization: organization
 		});
 	}
 
 	set selectedProject(project: IOrganizationProject) {
 		this.appStore.update({
-			selectedProject: project,
+			selectedProject: project
 		});
 	}
 
 	set systemLanguages(languages: ILanguage[]) {
 		this.appStore.update({
-			systemLanguages: languages,
+			systemLanguages: languages
 		});
 	}
 
@@ -225,7 +202,7 @@ export class Store {
 
 	set token(token: string) {
 		this.persistStore.update({
-			token: token,
+			token: token
 		});
 	}
 
@@ -236,7 +213,7 @@ export class Store {
 
 	set userId(id: IUser['id'] | null) {
 		this.persistStore.update({
-			userId: id,
+			userId: id
 		});
 	}
 
@@ -247,7 +224,7 @@ export class Store {
 
 	set organizationId(id: IOrganization['id'] | null) {
 		this.persistStore.update({
-			organizationId: id,
+			organizationId: id
 		});
 	}
 
@@ -258,7 +235,7 @@ export class Store {
 
 	set user(user: IUser) {
 		this.appStore.update({
-			user: user,
+			user: user
 		});
 	}
 
@@ -270,7 +247,7 @@ export class Store {
 
 		const date = new Date(selectedDate);
 		this.appStore.update({
-			selectedDate: date,
+			selectedDate: date
 		});
 
 		return date;
@@ -278,7 +255,7 @@ export class Store {
 
 	set selectedDate(date: Date) {
 		this.appStore.update({
-			selectedDate: date,
+			selectedDate: date
 		});
 	}
 
@@ -289,7 +266,7 @@ export class Store {
 
 	set selectedProposal(proposal: IProposalViewModel) {
 		this.appStore.update({
-			selectedProposal: proposal,
+			selectedProposal: proposal
 		});
 	}
 
@@ -300,7 +277,7 @@ export class Store {
 
 	set featureToggles(featureToggles: IFeatureToggle[]) {
 		this.appStore.update({
-			featureToggles: featureToggles,
+			featureToggles: featureToggles
 		});
 	}
 
@@ -311,7 +288,7 @@ export class Store {
 
 	set featureTenant(featureOrganizations: IFeatureOrganization[]) {
 		this.appStore.update({
-			featureTenant: featureOrganizations,
+			featureTenant: featureOrganizations
 		});
 	}
 
@@ -322,7 +299,7 @@ export class Store {
 
 	set featureOrganizations(featureOrganizations: IFeatureOrganization[]) {
 		this.appStore.update({
-			featureOrganizations: featureOrganizations,
+			featureOrganizations: featureOrganizations
 		});
 	}
 
@@ -330,26 +307,15 @@ export class Store {
 	 * Check features are enabled/disabled for tenant organization
 	 */
 	hasFeatureEnabled(feature: FeatureEnum) {
-		const {
-			featureTenant = [],
-			featureOrganizations = [],
-			featureToggles = [],
-		} = this.appQuery.getValue();
-		const filtered = _.uniq(
-			[...featureOrganizations, ...featureTenant],
-			(x) => x.featureId
-		);
+		const { featureTenant = [], featureOrganizations = [], featureToggles = [] } = this.appQuery.getValue();
+		const filtered = _.uniq([...featureOrganizations, ...featureTenant], (x) => x.featureId);
 
-		const unleashToggle = featureToggles.find(
-			(toggle) => toggle.name === feature && toggle.enabled === false
-		);
+		const unleashToggle = featureToggles.find((toggle) => toggle.name === feature && toggle.enabled === false);
 		if (unleashToggle) {
 			return unleashToggle.enabled;
 		}
 
-		return !!filtered.find(
-			(item) => item.feature.code === feature && item.isEnabled
-		);
+		return !!filtered.find((item) => item.feature.code === feature && item.isEnabled);
 	}
 
 	get userRolePermissions(): IRolePermission[] {
@@ -359,7 +325,7 @@ export class Store {
 
 	set userRolePermissions(rolePermissions: IRolePermission[]) {
 		this.appStore.update({
-			userRolePermissions: rolePermissions,
+			userRolePermissions: rolePermissions
 		});
 		// this.loadPermissions();
 	}
@@ -371,23 +337,18 @@ export class Store {
 
 	set isOffline(value: boolean) {
 		this.appStore.update({
-			isOffline: value,
+			isOffline: value
 		});
 	}
 
 	hasPermission(permission: PermissionsEnum) {
 		const { userRolePermissions } = this.appQuery.getValue();
-		return !!(userRolePermissions || []).find(
-			(p) => p.permission === permission && p.enabled
-		);
+		return !!(userRolePermissions || []).find((p) => p.permission === permission && p.enabled);
 	}
 
 	getDateFromOrganizationSettings() {
 		const dateObj = this.selectedDate;
-		switch (
-		this.selectedOrganization &&
-		this.selectedOrganization.defaultValueDateType
-		) {
+		switch (this.selectedOrganization && this.selectedOrganization.defaultValueDateType) {
 			case DefaultValueDateTypeEnum.TODAY: {
 				return new Date(Date.now());
 			}
@@ -410,7 +371,7 @@ export class Store {
 
 	set serverConnection(val: number) {
 		this.persistStore.update({
-			serverConnection: val,
+			serverConnection: val
 		});
 	}
 
@@ -421,7 +382,7 @@ export class Store {
 
 	set preferredLanguage(preferredLanguage) {
 		this.persistStore.update({
-			preferredLanguage: preferredLanguage,
+			preferredLanguage: preferredLanguage
 		});
 	}
 
@@ -432,7 +393,7 @@ export class Store {
 
 	set preferredComponentLayout(preferredComponentLayout) {
 		this.persistStore.update({
-			preferredComponentLayout: preferredComponentLayout,
+			preferredComponentLayout: preferredComponentLayout
 		});
 	}
 
@@ -445,34 +406,25 @@ export class Store {
 		const { user } = this.appQuery.getValue();
 	}
 
-	getLayoutForComponent(
-		componentName: ComponentEnum
-	): ComponentLayoutStyleEnum {
+	getLayoutForComponent(componentName: ComponentEnum): ComponentLayoutStyleEnum {
 		const { componentLayout } = this.persistQuery.getValue();
 		const componentLayoutMap = new Map(componentLayout);
-		return componentLayoutMap.get(
-			componentName
-		) as ComponentLayoutStyleEnum;
+		return componentLayoutMap.get(componentName) as ComponentLayoutStyleEnum;
 	}
 
-	setLayoutForComponent(
-		componentName: ComponentEnum,
-		style: ComponentLayoutStyleEnum
-	) {
+	setLayoutForComponent(componentName: ComponentEnum, style: ComponentLayoutStyleEnum) {
 		const { componentLayout } = this.persistQuery.getValue();
 		const componentLayoutMap = new Map(componentLayout);
 		componentLayoutMap.set(componentName, style);
-		const componentLayoutArray = Array.from(
-			componentLayoutMap.entries()
-		) as any;
+		const componentLayoutArray = Array.from(componentLayoutMap.entries()) as any;
 		this.persistStore.update({
-			componentLayout: componentLayoutArray,
+			componentLayout: componentLayoutArray
 		});
 	}
 
 	set componentLayout(componentLayout: any[]) {
 		this.persistStore.update({
-			componentLayout,
+			componentLayout
 		});
 	}
 
@@ -495,6 +447,6 @@ export class Store {
 	set host(value: string) {
 		this.persistStore.update({
 			host: value
-		})
+		});
 	}
 }

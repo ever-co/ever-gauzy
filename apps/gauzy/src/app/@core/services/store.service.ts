@@ -20,10 +20,7 @@ import { NgxPermissionsService, NgxRolesService } from 'ngx-permissions';
 import { merge, Subject } from 'rxjs';
 import { map } from 'rxjs/operators';
 import * as _ from 'underscore';
-import {
-	ComponentEnum,
-	SYSTEM_DEFAULT_LAYOUT
-} from '../constants/layout.constants';
+import { ComponentEnum, SYSTEM_DEFAULT_LAYOUT } from '../constants/layout.constants';
 import { GuiDrag } from '../../@shared/dashboard/interfaces/gui-drag.abstract';
 import { DateRangePickerBuilderService } from './selector-builder';
 
@@ -51,8 +48,8 @@ export interface PersistState {
 	preferredComponentLayout: ComponentLayoutStyleEnum;
 	componentLayout: any[]; //This would be a Map but since Maps can't be serialized/deserialized it is stored as an array
 	themeName: string;
-	windows: Partial<GuiDrag>[],
-	widgets: Partial<GuiDrag>[]
+	windows: Partial<GuiDrag>[];
+	widgets: Partial<GuiDrag>[];
 }
 
 export function createInitialAppState(): AppState {
@@ -72,7 +69,7 @@ export function createInitialPersistState(): PersistState {
 	const serverConnection = parseInt(localStorage.getItem('serverConnection')) || null;
 	const preferredLanguage = localStorage.getItem('preferredLanguage') || null;
 	const componentLayout = localStorage.getItem('componentLayout') || [];
-	const themeName = localStorage.getItem('themeName')|| null;
+	const themeName = localStorage.getItem('themeName') || null;
 	const widgets = JSON.parse(localStorage.getItem('_widgets'));
 	const windows = JSON.parse(localStorage.getItem('_windows'));
 
@@ -133,25 +130,15 @@ export class Store {
 	) {}
 
 	user$ = this.appQuery.select((state) => state.user);
-	selectedOrganization$ = this.appQuery.select(
-		(state) => state.selectedOrganization
-	);
+	selectedOrganization$ = this.appQuery.select((state) => state.selectedOrganization);
 	selectedEmployee$ = this.appQuery.select((state) => state.selectedEmployee);
 	selectedProject$ = this.appQuery.select((state) => state.selectedProject);
-	userRolePermissions$ = this.appQuery.select(
-		(state) => state.userRolePermissions
-	);
+	userRolePermissions$ = this.appQuery.select((state) => state.userRolePermissions);
 	featureToggles$ = this.appQuery.select((state) => state.featureToggles);
-	featureOrganizations$ = this.appQuery.select(
-		(state) => state.featureOrganizations
-	);
+	featureOrganizations$ = this.appQuery.select((state) => state.featureOrganizations);
 	featureTenant$ = this.appQuery.select((state) => state.featureTenant);
-	preferredLanguage$ = this.persistQuery.select(
-		(state) => state.preferredLanguage
-	);
-	preferredComponentLayout$ = this.persistQuery.select(
-		(state) => state.preferredComponentLayout
-	);
+	preferredLanguage$ = this.persistQuery.select((state) => state.preferredLanguage);
+	preferredComponentLayout$ = this.persistQuery.select((state) => state.preferredComponentLayout);
 	componentLayoutMap$ = this.persistQuery
 		.select((state) => state.componentLayout)
 		.pipe(map((componentLayout) => new Map(componentLayout)));
@@ -174,13 +161,8 @@ export class Store {
 				.select((state) => state.preferredComponentLayout)
 				.pipe(
 					map((preferredLayout) => {
-						const dataLayout =
-							this.getLayoutForComponent(component);
-						return (
-							dataLayout ||
-							preferredLayout ||
-							SYSTEM_DEFAULT_LAYOUT
-						);
+						const dataLayout = this.getLayoutForComponent(component);
+						return dataLayout || preferredLayout || SYSTEM_DEFAULT_LAYOUT;
 					})
 				),
 			this.persistQuery
@@ -188,11 +170,7 @@ export class Store {
 				.pipe(
 					map((componentLayout) => {
 						const componentMap = new Map(componentLayout);
-						return (
-							componentMap.get(component) ||
-							this.preferredComponentLayout ||
-							SYSTEM_DEFAULT_LAYOUT
-						);
+						return componentMap.get(component) || this.preferredComponentLayout || SYSTEM_DEFAULT_LAYOUT;
 					})
 				)
 		);
@@ -340,26 +318,15 @@ export class Store {
 	 * Check features are enabled/disabled for tenant organization
 	 */
 	hasFeatureEnabled(feature: FeatureEnum) {
-		const {
-			featureTenant = [],
-			featureOrganizations = [],
-			featureToggles = []
-		} = this.appQuery.getValue();
-		const filtered = _.uniq(
-			[...featureOrganizations, ...featureTenant],
-			(x) => x.featureId
-		);
+		const { featureTenant = [], featureOrganizations = [], featureToggles = [] } = this.appQuery.getValue();
+		const filtered = _.uniq([...featureOrganizations, ...featureTenant], (x) => x.featureId);
 
-		const unleashToggle = featureToggles.find(
-			(toggle) => toggle.name === feature && toggle.enabled === false
-		);
+		const unleashToggle = featureToggles.find((toggle) => toggle.name === feature && toggle.enabled === false);
 		if (unleashToggle) {
 			return unleashToggle.enabled;
 		}
 
-		return !!filtered.find(
-			(item) => item.feature.code === feature && item.isEnabled
-		);
+		return !!filtered.find((item) => item.feature.code === feature && item.isEnabled);
 	}
 
 	get userRolePermissions(): IRolePermission[] {
@@ -376,11 +343,8 @@ export class Store {
 
 	hasPermission(permission: PermissionsEnum) {
 		const { userRolePermissions } = this.appQuery.getValue();
-		return !!(userRolePermissions || []).find(
-			(p) => p.permission === permission && p.enabled
-		);
+		return !!(userRolePermissions || []).find((p) => p.permission === permission && p.enabled);
 	}
-
 
 	/**
 	 * The method checks if a user has all the specified permissions.
@@ -389,8 +353,8 @@ export class Store {
 	 */
 	hasAllPermissions(...permissions: PermissionsEnum[]) {
 		return permissions.reduce((acc, permission) => {
-			return this.hasPermission(permission) && acc
-		}, true)
+			return this.hasPermission(permission) && acc;
+		}, true);
 	}
 
 	/**
@@ -408,10 +372,7 @@ export class Store {
 		if (this.dateRangePickerBuilderService.selectedDateRange) {
 			startDate = this.dateRangePickerBuilderService.selectedDateRange.startDate;
 		}
-		switch (
-			this.selectedOrganization &&
-			this.selectedOrganization.defaultValueDateType
-		) {
+		switch (this.selectedOrganization && this.selectedOrganization.defaultValueDateType) {
 			case DefaultValueDateTypeEnum.TODAY: {
 				return new Date(Date.now());
 			}
@@ -475,37 +436,24 @@ export class Store {
 		let permissions = [];
 		// User permissions load here
 		const userPermissions = Object.keys(PermissionsEnum)
-			.map(
-				(key) => PermissionsEnum[key]
-			)
-			.filter(
-				(permission) => this.hasPermission(permission)
-			);
+			.map((key) => PermissionsEnum[key])
+			.filter((permission) => this.hasPermission(permission));
 		permissions = permissions.concat(userPermissions);
 		this.permissionsService.flushPermissions();
 		this.permissionsService.loadPermissions(permissions);
 	}
 
-	getLayoutForComponent(
-		componentName: ComponentEnum
-	): ComponentLayoutStyleEnum {
+	getLayoutForComponent(componentName: ComponentEnum): ComponentLayoutStyleEnum {
 		const { componentLayout } = this.persistQuery.getValue();
 		const componentLayoutMap = new Map(componentLayout);
-		return componentLayoutMap.get(
-			componentName
-		) as ComponentLayoutStyleEnum;
+		return componentLayoutMap.get(componentName) as ComponentLayoutStyleEnum;
 	}
 
-	setLayoutForComponent(
-		componentName: ComponentEnum,
-		style: ComponentLayoutStyleEnum
-	) {
+	setLayoutForComponent(componentName: ComponentEnum, style: ComponentLayoutStyleEnum) {
 		const { componentLayout } = this.persistQuery.getValue();
 		const componentLayoutMap = new Map(componentLayout);
 		componentLayoutMap.set(componentName, style);
-		const componentLayoutArray = Array.from(
-			componentLayoutMap.entries()
-		) as any;
+		const componentLayoutArray = Array.from(componentLayoutMap.entries()) as any;
 		this.persistStore.update({
 			componentLayout: componentLayoutArray
 		});
@@ -522,31 +470,31 @@ export class Store {
 		return themeName;
 	}
 
-	set currentTheme(name: string){
+	set currentTheme(name: string) {
 		this.persistStore.update({
 			themeName: name
-		})
+		});
 	}
 
 	get windows(): Partial<GuiDrag>[] {
 		const { windows } = this.persistQuery.getValue();
-		return windows as  Partial<GuiDrag>[];
+		return windows as Partial<GuiDrag>[];
 	}
 
-	set windows(values: Partial<GuiDrag>[]){
+	set windows(values: Partial<GuiDrag>[]) {
 		this.persistStore.update({
 			windows: values
-		})
+		});
 	}
 
 	get widgets(): Partial<GuiDrag>[] {
 		const { widgets } = this.persistQuery.getValue();
-		return widgets as  Partial<GuiDrag>[];
+		return widgets as Partial<GuiDrag>[];
 	}
 
-	set widgets(values: Partial<GuiDrag>[]){
+	set widgets(values: Partial<GuiDrag>[]) {
 		this.persistStore.update({
 			widgets: values
-		})
+		});
 	}
 }
