@@ -134,7 +134,7 @@ export class EmployeeSubscriber implements EntitySubscriberInterface<Employee> {
      */
     createSlug(entity: Employee) {
         try {
-            if (entity.user.firstName || entity.user.lastName) { // Use first & last name to create slug
+			if (entity.user.firstName && entity.user.lastName) { // Use first & last name to create slug
                 const { firstName, lastName } = entity.user;
                 entity.profile_link = sluggable(`${firstName} ${lastName}`);
             } else if (entity.user.username) { // Use username to create slug if first & last name not found
