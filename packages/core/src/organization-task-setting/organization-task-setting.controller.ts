@@ -9,12 +9,7 @@ import {
 	Post,
 } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import {
-	IOrganizationTaskSetting,
-	IOrganizationTaskSettingCreateInput,
-	IOrganizationTaskSettingUpdateInput,
-	PermissionsEnum,
-} from '@gauzy/contracts';
+import { IOrganizationTaskSetting, PermissionsEnum } from '@gauzy/contracts';
 import { OrganizationTaskSetting } from './organization-task-setting.entity';
 import { CommandBus } from '@nestjs/cqrs';
 import { CrudController } from './../core/crud';
@@ -23,6 +18,8 @@ import { Permissions } from './../shared/decorators';
 import { UUIDValidationPipe } from './../shared/pipes';
 import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
 import { OrganizationTaskSettingUpdateCommand } from './commands';
+import { OrganizationTaskSettingDTO } from './dto/organization-task-setting.dto';
+import { UpdateOrganizationTaskSettingDTO } from './dto';
 
 @ApiTags('OrganizationTaskSetting')
 @UseGuards(TenantPermissionGuard, PermissionGuard)
@@ -51,12 +48,13 @@ export class OrganizationTaskSettingController extends CrudController<Organizati
 	})
 	@ApiResponse({
 		status: HttpStatus.BAD_REQUEST,
-		description: 'Invalid input, The response body may contain clues as to what went wrong',
+		description:
+			'Invalid input, The response body may contain clues as to what went wrong',
 	})
 	@HttpCode(HttpStatus.OK)
 	@Post()
 	async create(
-		@Body() body: IOrganizationTaskSettingCreateInput
+		@Body() body: OrganizationTaskSettingDTO
 	): Promise<IOrganizationTaskSetting> {
 		return await this.organizationTaskSettingService.create(body);
 	}
@@ -86,7 +84,7 @@ export class OrganizationTaskSettingController extends CrudController<Organizati
 	@Put(':id')
 	async update(
 		@Param('id', UUIDValidationPipe) id: IOrganizationTaskSetting['id'],
-		@Body() body: IOrganizationTaskSettingUpdateInput
+		@Body() body: UpdateOrganizationTaskSettingDTO
 	): Promise<IOrganizationTaskSetting> {
 		return this.commandBus.execute(
 			new OrganizationTaskSettingUpdateCommand(id, body)
