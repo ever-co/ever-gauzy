@@ -1,7 +1,7 @@
-import { IOrganizationTaskSetting } from '@gauzy/contracts';
-import { IntersectionType } from '@nestjs/swagger';
+import { IOrganizationTaskSettingCreateInput } from '@gauzy/contracts';
 import { OrganizationTaskSettingDTO } from './organization-task-setting.dto';
 
-export class CreateOrganizationTaskSettingDTO
-	extends IntersectionType(OrganizationTaskSettingDTO)
-	implements IOrganizationTaskSetting {}
+/**
+ * Create organization task setting
+ */
+export class CreateOrganizationTaskSettingDTO extends OrganizationTaskSettingDTO implements IOrganizationTaskSettingCreateInput { }
