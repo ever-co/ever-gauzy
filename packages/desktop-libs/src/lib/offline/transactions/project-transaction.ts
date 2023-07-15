@@ -15,14 +15,14 @@ export class ProjectTransaction implements ITransaction<ProjectTO> {
 					trx.insert(value)
 						.into(TABLE_NAME_PROJECTS)
 						.then(() => {
-							trx.commit;
+							trx.commit();
 							console.log(
 								'[trx]: ',
 								'insertion transaction committed...'
 							);
 						})
 						.catch((error) => {
-							trx.rollback;
+							trx.rollback(error);
 							console.log(
 								'[trx]: ',
 								'insertion transaction rollback...'
