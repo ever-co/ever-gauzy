@@ -6,15 +6,15 @@ import { OrganizationTaskSettingUpdateCommand } from '../organization-task-setti
 @CommandHandler(OrganizationTaskSettingUpdateCommand)
 export class OrganizationTaskSettingUpdateHandler implements ICommandHandler<OrganizationTaskSettingUpdateCommand> {
 	constructor(
-		private readonly organizationTaskSettingService: OrganizationTaskSettingService
-	) {}
+		private readonly _organizationTaskSettingService: OrganizationTaskSettingService
+	) { }
 
 	public async execute(
 		command: OrganizationTaskSettingUpdateCommand
 	): Promise<IOrganizationTaskSetting> {
 		const { id, input } = command;
-		await this.organizationTaskSettingService.update(id, input);
+		await this._organizationTaskSettingService.update(id, input);
 
-		return await this.organizationTaskSettingService.findOneByIdString(id);
+		return await this._organizationTaskSettingService.findOneByIdString(id);
 	}
 }

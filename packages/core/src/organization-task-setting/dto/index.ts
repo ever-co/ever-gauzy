@@ -1,2 +1,2 @@
-export { CreateOrganizationTaskSettingDTO } from './create-organization-task-setting.dto';
-export { UpdateOrganizationTaskSettingDTO } from './update-organization-task-setting.dto';
+export * from './create-organization-task-setting.dto';
+export * from './update-organization-task-setting.dto';

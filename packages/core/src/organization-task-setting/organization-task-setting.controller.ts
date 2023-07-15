@@ -7,31 +7,27 @@ import {
 	Put,
 	UseGuards,
 	Post,
+	UsePipes,
+	ValidationPipe,
 } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { IOrganizationTaskSetting, PermissionsEnum } from '@gauzy/contracts';
-import { OrganizationTaskSetting } from './organization-task-setting.entity';
 import { CommandBus } from '@nestjs/cqrs';
-import { CrudController } from './../core/crud';
-import { OrganizationTaskSettingService } from './organization-task-setting.service';
+import { IOrganizationTaskSetting, PermissionsEnum } from '@gauzy/contracts';
 import { Permissions } from './../shared/decorators';
 import { UUIDValidationPipe } from './../shared/pipes';
 import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
-import { OrganizationTaskSettingUpdateCommand } from './commands';
-import { OrganizationTaskSettingDTO } from './dto/organization-task-setting.dto';
-import { UpdateOrganizationTaskSettingDTO } from './dto';
+import { OrganizationTaskSettingCreateCommand, OrganizationTaskSettingUpdateCommand } from './commands';
+import { CreateOrganizationTaskSettingDTO, UpdateOrganizationTaskSettingDTO } from './dto';
 
 @ApiTags('OrganizationTaskSetting')
 @UseGuards(TenantPermissionGuard, PermissionGuard)
-@Permissions(PermissionsEnum.ORG_TASK_SETTING)
+@Permissions(PermissionsEnum.ALL_ORG_EDIT)
 @Controller()
-export class OrganizationTaskSettingController extends CrudController<OrganizationTaskSetting> {
+export class OrganizationTaskSettingController {
+
 	constructor(
-		private readonly organizationTaskSettingService: OrganizationTaskSettingService,
 		private readonly commandBus: CommandBus
-	) {
-		super(organizationTaskSettingService);
-	}
+	) { }
 
 	/**
 	 * CREATE organization task setting
@@ -51,12 +47,16 @@ export class OrganizationTaskSettingController extends CrudController<Organizati
 		description:
 			'Invalid input, The response body may contain clues as to what went wrong',
 	})
-	@HttpCode(HttpStatus.OK)
+	@HttpCode(HttpStatus.CREATED)
+	@Permissions(PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ORG_TASK_SETTING)
 	@Post()
+	@UsePipes(new ValidationPipe())
 	async create(
-		@Body() body: OrganizationTaskSettingDTO
+		@Body() body: CreateOrganizationTaskSettingDTO
 	): Promise<IOrganizationTaskSetting> {
-		return await this.organizationTaskSettingService.create(body);
+		return this.commandBus.execute(
+			new OrganizationTaskSettingCreateCommand(body)
+		);
 	}
 
 	/**
@@ -80,8 +80,10 @@ export class OrganizationTaskSettingController extends CrudController<Organizati
 		description:
 			'Invalid input, The response body may contain clues as to what went wrong',
 	})
-	@HttpCode(HttpStatus.ACCEPTED)
+	@HttpCode(HttpStatus.OK)
+	@Permissions(PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ORG_TASK_SETTING)
 	@Put(':id')
+	@UsePipes(new ValidationPipe())
 	async update(
 		@Param('id', UUIDValidationPipe) id: IOrganizationTaskSetting['id'],
 		@Body() body: UpdateOrganizationTaskSettingDTO
