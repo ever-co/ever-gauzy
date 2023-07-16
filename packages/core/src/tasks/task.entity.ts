@@ -234,7 +234,7 @@ export class Task extends TenantOrganizationBaseEntity implements ITask {
 	 */
 	@OneToMany(() => TaskLinkedIssue, (it) => it.taskTo)
 	@JoinColumn()
-	linkedIssues?: Task[];
+	linkedIssues?: TaskLinkedIssue[];
 
 	/*
 	|--------------------------------------------------------------------------
