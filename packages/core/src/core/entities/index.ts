@@ -84,6 +84,7 @@ import {
 	OrganizationProject,
 	OrganizationRecurringExpense,
 	OrganizationSprint,
+	OrganizationTaskSetting,
 	OrganizationTeam,
 	OrganizationTeamEmployee,
 	OrganizationTeamJoinRequest,
@@ -136,7 +137,7 @@ import {
 	UserOrganization,
 	Warehouse,
 	WarehouseProduct,
-	WarehouseProductVariant
+	WarehouseProductVariant,
 } from './internal';
 
 export const coreEntities = [
@@ -225,6 +226,7 @@ export const coreEntities = [
 	OrganizationProject,
 	OrganizationRecurringExpense,
 	OrganizationSprint,
+	OrganizationTaskSetting,
 	OrganizationTeam,
 	OrganizationTeamEmployee,
 	OrganizationTeamJoinRequest,
@@ -277,5 +279,5 @@ export const coreEntities = [
 	UserOrganization,
 	Warehouse,
 	WarehouseProduct,
-	WarehouseProductVariant
+	WarehouseProductVariant,
 ];

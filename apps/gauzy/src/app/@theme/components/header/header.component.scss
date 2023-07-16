@@ -193,7 +193,7 @@ $orange: #f56d58;
 .timer-action {
   display: flex;
   align-items: center;
-  margin: 0 24px !important;
+  margin: 0 24px 0 14px !important;
   gap: 2px;
   nb-icon {
 	color: var(--gauzy-text-color-1);
@@ -216,10 +216,6 @@ $orange: #f56d58;
     top: 0px;
     padding: 2px;
   }
-}
-
-.toggle-layout.help {
-	margin: 0 !important;
 }
 
 .organization-selector-container {
