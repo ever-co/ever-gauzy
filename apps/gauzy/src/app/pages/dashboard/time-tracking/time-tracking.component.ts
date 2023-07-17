@@ -1,4 +1,5 @@
 import {
+	AfterViewChecked,
 	AfterViewInit,
 	ChangeDetectorRef,
 	Component,
@@ -75,6 +76,15 @@ export enum RangePeriod {
 	PERIOD = 'PERIOD'
 }
 
+enum Windows {
+	RECENT_ACTIVITIES = 0,
+	MANUAL_TIMES = 1,
+	TASKS = 2,
+	PROJECTS = 3,
+	APPS_URLS = 4,
+	MEMBERS = 5
+}
+
 @UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ga-time-tracking-dashboard',
@@ -82,7 +92,7 @@ export enum RangePeriod {
 	styleUrls: ['./time-tracking.component.scss']
 })
 export class TimeTrackingComponent extends TranslationBaseComponent
-	implements AfterViewInit, OnInit, OnDestroy {
+	implements AfterViewInit, OnInit, OnDestroy, AfterViewChecked {
 
 	user: IUser;
 	timeSlotEmployees: ITimeSlotStatistics[] = [];
@@ -114,7 +124,7 @@ export class TimeTrackingComponent extends TranslationBaseComponent
 	projectIds: string[] = [];
 
 	private autoRefresh$: Subscription;
-	autoRefresh: boolean = true;
+	autoRefresh = true;
 
 	private _selectedDateRange: IDateRangePicker;
 	get selectedDateRange(): IDateRangePicker {
@@ -211,7 +221,7 @@ export class TimeTrackingComponent extends TranslationBaseComponent
 						}
 					});
 					this.windowService.windows.forEach((windows: GuiDrag) => {
-						if (windows.position === 5 && this.employeeIds[0]) {
+						if (windows.position === Windows.MEMBERS && this.employeeIds[0]) {
 							windows.hide = true;
 						}
 					});
@@ -299,6 +309,7 @@ export class TimeTrackingComponent extends TranslationBaseComponent
 	}
 
 	async getTimeSlots() {
+		if (this.windows[Windows.RECENT_ACTIVITIES].hide) return;
 		const request: IGetTimeSlotStatistics = this.payloads$.getValue();
 		try {
 			this.timeSlotLoading = true;
@@ -323,6 +334,7 @@ export class TimeTrackingComponent extends TranslationBaseComponent
 	}
 
 	async getActivities() {
+		if (this.windows[Windows.APPS_URLS].hide) return;
 		const request: IGetActivitiesStatistics = this.payloads$.getValue();
 		try {
 			this.activitiesLoading = true;
@@ -345,6 +357,7 @@ export class TimeTrackingComponent extends TranslationBaseComponent
 	}
 
 	async getProjects() {
+		if (this.windows[Windows.PROJECTS].hide) return;
 		const request: IGetProjectsStatistics = this.payloads$.getValue();
 		try {
 			this.projectsLoading = true;
@@ -357,6 +370,7 @@ export class TimeTrackingComponent extends TranslationBaseComponent
 	}
 
 	async getTasks() {
+		if (this.windows[Windows.TASKS].hide) return;
 		const request: IGetTasksStatistics = this.payloads$.getValue();
 		const take = 5;
 		try {
@@ -373,6 +387,7 @@ export class TimeTrackingComponent extends TranslationBaseComponent
 	}
 
 	async getManualTimes() {
+		if (this.windows[Windows.MANUAL_TIMES].hide) return;
 		const request: IGetManualTimesStatistics = this.payloads$.getValue();
 		try {
 			this.manualTimeLoading = true;
@@ -714,10 +729,13 @@ export class TimeTrackingComponent extends TranslationBaseComponent
 		return isWidget ? widgetsTitles[position] : windowsTitles[position];
 	}
 
-	public updateWindowVisibility(value: GuiDrag) {
+	public async updateWindowVisibility(value: GuiDrag): Promise<void> {
 		value.hide = !value.hide;
 		this.windowService.updateWindow(value);
 		this.windowService.save();
+		if (!value.hide) {
+			await this.recover(value.position);
+		}
 	}
 
 	public updateWidgetVisibility(value: GuiDrag) {
@@ -738,5 +756,33 @@ export class TimeTrackingComponent extends TranslationBaseComponent
 
 	public slidePrev(swiper: SwiperComponent) {
 		swiper.swiperRef.slidePrev(100);
+	}
+
+	public async recover(position: number) {
+		if (!this.organization) {
+			return;
+		}
+		switch (position) {
+			case Windows.APPS_URLS:
+				await this.getActivities();
+				break;
+			case Windows.MANUAL_TIMES:
+				await this.getManualTimes();
+				break;
+			case Windows.MEMBERS:
+				await this.getMembers();
+				break;
+			case Windows.PROJECTS:
+				await this.getProjects();
+				break;
+			case Windows.RECENT_ACTIVITIES:
+				await this.getTimeSlots();
+				break;
+			case Windows.TASKS:
+				await this.getTasks();
+				break;
+			default:
+				break;
+		}
 	}
 }
