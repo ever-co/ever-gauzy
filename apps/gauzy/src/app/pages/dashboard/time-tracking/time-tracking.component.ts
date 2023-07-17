@@ -311,7 +311,7 @@ export class TimeTrackingComponent extends TranslationBaseComponent
 	}
 
 	async getTimeSlots() {
-		if (this.windows[Windows.RECENT_ACTIVITIES].hide) return;
+		if (this._isWindowHidden(Windows.RECENT_ACTIVITIES)) return;
 		const request: IGetTimeSlotStatistics = this.payloads$.getValue();
 		try {
 			this.timeSlotLoading = true;
@@ -337,7 +337,7 @@ export class TimeTrackingComponent extends TranslationBaseComponent
 	}
 
 	async getActivities() {
-		if (this.windows[Windows.APPS_URLS].hide) return;
+		if (this._isWindowHidden(Windows.APPS_URLS)) return;
 		const request: IGetActivitiesStatistics = this.payloads$.getValue();
 		try {
 			this.activitiesLoading = true;
@@ -360,7 +360,7 @@ export class TimeTrackingComponent extends TranslationBaseComponent
 	}
 
 	async getProjects() {
-		if (this.windows[Windows.PROJECTS].hide) return;
+		if (this._isWindowHidden(Windows.PROJECTS)) return;
 		const request: IGetProjectsStatistics = this.payloads$.getValue();
 		try {
 			this.projectsLoading = true;
@@ -373,7 +373,7 @@ export class TimeTrackingComponent extends TranslationBaseComponent
 	}
 
 	async getTasks() {
-		if (this.windows[Windows.TASKS].hide) return;
+		if (this._isWindowHidden(Windows.TASKS)) return;
 		const request: IGetTasksStatistics = this.payloads$.getValue();
 		const take = 5;
 		try {
@@ -390,7 +390,7 @@ export class TimeTrackingComponent extends TranslationBaseComponent
 	}
 
 	async getManualTimes() {
-		if (this.windows[Windows.MANUAL_TIMES].hide) return;
+		if (this._isWindowHidden(Windows.MANUAL_TIMES)) return;
 		const request: IGetManualTimesStatistics = this.payloads$.getValue();
 		try {
 			this.manualTimeLoading = true;
@@ -404,7 +404,7 @@ export class TimeTrackingComponent extends TranslationBaseComponent
 
 	async getMembers() {
 		if (!await this.ngxPermissionsService.hasPermission(
-			PermissionsEnum.CHANGE_SELECTED_EMPLOYEE)
+			PermissionsEnum.CHANGE_SELECTED_EMPLOYEE) || this._isWindowHidden(Windows.MEMBERS)
 		) {
 			return;
 		}
@@ -796,5 +796,12 @@ export class TimeTrackingComponent extends TranslationBaseComponent
 		return this.widgets.reduce((acc, widget) => {
 			return acc && widget.hide
 		}, true);
+	}
+
+	private _isWindowHidden(position: number): boolean {
+		const window = this.windows.filter(
+			(win: GuiDrag) => win.position === position
+		)[0];
+		return window.hide;
 	}
 }
