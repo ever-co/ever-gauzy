@@ -48,14 +48,12 @@ export class TimeTrackerStatusService {
 			.pipe(
 				distinctUntilChange(),
 				filter((employee: IEmployee) => !!employee),
-				tap(
-					(employee: IEmployee) => {
-						this._store.user = {
-							...this._store.user,
-							employee,
-						}
-					}
-				),
+				tap((employee: IEmployee) => {
+					this._store.user = {
+						...this._store.user,
+						employee
+					};
+				}),
 				untilDestroyed(this)
 			)
 			.subscribe();

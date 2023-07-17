@@ -16,15 +16,12 @@ export class UserComponent implements OnInit {
 
 	online$: Observable<boolean>;
 
-	constructor() { }
+	constructor() {}
 
 	ngOnInit(): void {
 		this.online$ = this.user$.pipe(
 			filter((user: IUser) => !!user && !!user.employee),
-			map(
-				(user: IUser) =>
-					user?.employee?.isOnline && !user?.employee?.isAway
-			)
+			map((user: IUser) => user?.employee?.isOnline && !user?.employee?.isAway)
 		);
 	}
 

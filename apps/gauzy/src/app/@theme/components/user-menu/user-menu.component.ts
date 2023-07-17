@@ -9,7 +9,7 @@ import { EmployeesService, ErrorHandlingService } from '../../../@core';
 @Component({
 	selector: 'gauzy-user-menu',
 	templateUrl: './user-menu.component.html',
-	styleUrls: ['./user-menu.component.scss'],
+	styleUrls: ['./user-menu.component.scss']
 })
 export class UserMenuComponent implements OnInit {
 	private _user$: Observable<IUser>;
@@ -24,24 +24,24 @@ export class UserMenuComponent implements OnInit {
 	public downloadApps = [
 		{
 			link: 'https://web.gauzy.co/downloads#desktop/apple',
-			icon: 'fab fa-apple',
+			icon: 'fab fa-apple'
 		},
 		{
 			link: 'https://web.gauzy.co/downloads#desktop/windows',
-			icon: 'fa-brands fa-windows',
+			icon: 'fa-brands fa-windows'
 		},
 		{
 			link: 'https://web.gauzy.co/downloads#desktop/linux',
-			icon: 'fa-brands fa-linux',
+			icon: 'fa-brands fa-linux'
 		},
 		{
 			link: 'https://web.gauzy.co/downloads#mobile',
-			icon: 'fas fa-mobile',
+			icon: 'fas fa-mobile'
 		},
 		{
 			link: 'https://web.gauzy.co/downloads#extensions',
-			icon: 'fa-brands fa-chrome',
-		},
+			icon: 'fa-brands fa-chrome'
+		}
 	];
 
 	constructor(
@@ -60,12 +60,9 @@ export class UserMenuComponent implements OnInit {
 				filter(({ employee }) => !!employee),
 				tap(async (user: IUser) => {
 					this._isSubmit$.next(true);
-					const employee = await firstValueFrom(
-						this._employeeService.getEmployeeById(user.employeeId)
-					);
+					const employee = await firstValueFrom(this._employeeService.getEmployeeById(user.employeeId));
 					this._employee$.next(employee);
 					this._isSubmit$.next(false);
-
 				}),
 
 				untilDestroyed(this)
@@ -92,7 +89,7 @@ export class UserMenuComponent implements OnInit {
 			const payload: IEmployeeUpdateInput = {
 				isAway: !isAway,
 				tenantId,
-				organizationId,
+				organizationId
 			};
 			await this._employeeService.updateProfile(id, payload);
 			this._employee$.next({ ...this.employee, ...payload });
@@ -113,7 +110,7 @@ export class UserMenuComponent implements OnInit {
 	@Input()
 	public set user$(value: Observable<IUser>) {
 		if (value) {
-			this._user$ = value
+			this._user$ = value;
 		}
 	}
 

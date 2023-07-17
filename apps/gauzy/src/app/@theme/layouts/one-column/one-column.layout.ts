@@ -1,12 +1,4 @@
-import {
-	AfterViewInit,
-	Component,
-	Inject,
-	PLATFORM_ID,
-	ViewChild,
-	OnInit,
-	OnDestroy
-} from '@angular/core';
+import { AfterViewInit, Component, Inject, PLATFORM_ID, ViewChild, OnInit, OnDestroy } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
 import { NbLayoutComponent, NbSidebarService } from '@nebular/theme';
 import { IUser } from '@gauzy/contracts';
@@ -23,9 +15,7 @@ import { Observable } from 'rxjs';
 	styleUrls: ['./one-column.layout.scss'],
 	templateUrl: './one-column.layout.html'
 })
-export class OneColumnLayoutComponent
-	implements OnInit, AfterViewInit, OnDestroy
-{
+export class OneColumnLayoutComponent implements OnInit, AfterViewInit, OnDestroy {
 	@ViewChild(NbLayoutComponent) layout: NbLayoutComponent;
 
 	private _user$: Observable<IUser>;
@@ -73,7 +63,7 @@ export class OneColumnLayoutComponent
 		if (this.isExpanded) {
 			this.sidebarService.expand('menu-sidebar');
 		} else {
-      this.trigger = true;
+			this.trigger = true;
 			this.sidebarService.toggle(true, 'menu-sidebar');
 			this.layoutService.changeLayoutSize();
 		}
@@ -86,7 +76,7 @@ export class OneColumnLayoutComponent
 
 	onStateChange(event) {
 		this.isExpanded = event === 'expanded' ? true : false;
-    this.trigger = event === 'compacted' ? true : this.isCollapse;
+		this.trigger = event === 'compacted' ? true : this.isCollapse;
 	}
 
 	ngOnDestroy() {
