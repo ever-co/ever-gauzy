@@ -177,7 +177,7 @@ export class TimeTrackingComponent extends TranslationBaseComponent
 			.pipe(
 				debounceTime(200),
 				tap(() => this.galleryService.clearGallery()),
-				tap(() => this.getStatistics()),
+				tap(async () => await this.getStatistics()),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -251,13 +251,15 @@ export class TimeTrackingComponent extends TranslationBaseComponent
 		if (!this.organization) {
 			return;
 		}
-		this.getCounts();
-		this.getTimeSlots();
-		this.getActivities();
-		this.getProjects();
-		this.getTasks();
-		this.getManualTimes();
-		this.getMembers();
+		await Promise.allSettled([
+			this.getCounts(),
+			this.getTimeSlots(),
+			this.getActivities(),
+			this.getProjects(),
+			this.getTasks(),
+			this.getManualTimes(),
+			this.getMembers()
+		])
 	}
 
 	/**
