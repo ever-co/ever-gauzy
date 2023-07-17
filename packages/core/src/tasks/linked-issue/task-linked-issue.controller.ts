@@ -1,13 +1,4 @@
-import {
-	Body,
-	Controller,
-	HttpCode,
-	HttpStatus,
-	Post,
-	UseGuards,
-	UsePipes,
-	ValidationPipe,
-} from '@nestjs/common';
+import { Body, Controller, HttpCode, HttpStatus, Post, UseGuards, UsePipes, ValidationPipe } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { ITaskLinkedIssue, PermissionsEnum } from '@gauzy/contracts';
 import { PermissionGuard, TenantPermissionGuard } from './../../shared/guards';
@@ -22,9 +13,7 @@ import { CreateTaskLinkedIssueDTO } from './dto';
 @Permissions(PermissionsEnum.ALL_ORG_EDIT)
 @Controller()
 export class TaskLinkedIssueController extends CrudController<TaskLinkedIssue> {
-	constructor(
-		protected readonly taskLinkedIssueService: TaskLinkedIssueService
-	) {
+	constructor(protected readonly taskLinkedIssueService: TaskLinkedIssueService) {
 		super(taskLinkedIssueService);
 	}
 
@@ -39,9 +28,7 @@ export class TaskLinkedIssueController extends CrudController<TaskLinkedIssue> {
 	@Permissions(PermissionsEnum.ORG_TASK_ADD)
 	@Post()
 	@UsePipes(new ValidationPipe({ whitelist: true }))
-	async create(
-		@Body() entity: CreateTaskLinkedIssueDTO
-	): Promise<ITaskLinkedIssue> {
+	async create(@Body() entity: CreateTaskLinkedIssueDTO): Promise<ITaskLinkedIssue> {
 		return await this.taskLinkedIssueService.create(entity);
 	}
 }

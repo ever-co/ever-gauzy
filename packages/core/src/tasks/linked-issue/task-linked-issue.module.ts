@@ -11,16 +11,14 @@ import { UserModule } from '../../user/user.module';
 
 @Module({
 	imports: [
-		RouterModule.forRoutes([
-			{ path: '/task-linked-issue', module: TaskLinkedIssueModule },
-		]),
+		RouterModule.forRoutes([{ path: '/task-linked-issue', module: TaskLinkedIssueModule }]),
 		TypeOrmModule.forFeature([TaskLinkedIssue]),
 		TenantModule,
 		CqrsModule,
-		UserModule,
+		UserModule
 	],
 	controllers: [TaskLinkedIssueController],
 	providers: [TaskLinkedIssueService],
-	exports: [TaskLinkedIssueService],
+	exports: [TaskLinkedIssueService]
 })
 export class TaskLinkedIssueModule {}

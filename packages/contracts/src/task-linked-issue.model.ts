@@ -8,11 +8,10 @@ export enum TaskRelatedIssuesRelationEnum {
 	CLONES = 4,
 	IS_DUPLICATED_BY = 5,
 	DUPLICATES = 6,
-	RELATES_TO = 7,
+	RELATES_TO = 7
 }
 
-export interface ITaskLinkedIssue
-	extends IBasePerTenantAndOrganizationEntityModel {
+export interface ITaskLinkedIssue extends IBasePerTenantAndOrganizationEntityModel {
 	action: TaskRelatedIssuesRelationEnum;
 	taskFrom: ITask;
 	taskFromId: ITask['id'];
@@ -22,8 +21,7 @@ export interface ITaskLinkedIssue
 
 export interface ITaskLinkedIssueCreateInput extends ITaskLinkedIssue {}
 
-export interface ITaskLinkedIssueUpdateInput
-	extends Partial<ITaskLinkedIssueCreateInput> {
+export interface ITaskLinkedIssueUpdateInput extends Partial<ITaskLinkedIssueCreateInput> {
 	id?: string;
 }
 
