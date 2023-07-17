@@ -324,7 +324,7 @@ export class TimeTrackingComponent extends TranslationBaseComponent
 	}
 
 	async getCounts() {
-		if (this._isAllWidgetshidden()) return;
+		if (this._isAllWidgetsHidden()) return;
 		const request: IGetCountsStatistics = this.payloads$.getValue();
 		try {
 			this.countsLoading = true;
@@ -792,7 +792,7 @@ export class TimeTrackingComponent extends TranslationBaseComponent
 		}
 	}
 
-	private _isAllWidgetshidden(): boolean {
+	private _isAllWidgetsHidden(): boolean {
 		return this.widgets.reduce((acc, widget) => {
 			return acc && widget.hide
 		}, true);
