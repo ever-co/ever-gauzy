@@ -18,7 +18,8 @@ import { CrudController } from './../../core/crud';
 import { CreateTaskLinkedIssueDTO } from './dto';
 
 @ApiTags('Linked Issue')
-@UseGuards(TenantPermissionGuard)
+@UseGuards(TenantPermissionGuard, PermissionGuard)
+@Permissions(PermissionsEnum.ALL_ORG_EDIT)
 @Controller()
 export class TaskLinkedIssueController extends CrudController<TaskLinkedIssue> {
 	constructor(
@@ -35,7 +36,7 @@ export class TaskLinkedIssueController extends CrudController<TaskLinkedIssue> {
 	 */
 	@HttpCode(HttpStatus.CREATED)
 	@UseGuards(PermissionGuard)
-	@Permissions(PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ORG_TAGS_ADD)
+	@Permissions(PermissionsEnum.ORG_TASK_ADD)
 	@Post()
 	@UsePipes(new ValidationPipe({ whitelist: true }))
 	async create(
