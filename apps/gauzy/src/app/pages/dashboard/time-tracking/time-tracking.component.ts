@@ -1,4 +1,5 @@
 import {
+	AfterViewChecked,
 	AfterViewInit,
 	ChangeDetectorRef,
 	Component,
@@ -75,6 +76,15 @@ export enum RangePeriod {
 	PERIOD = 'PERIOD'
 }
 
+enum Windows {
+	RECENT_ACTIVITIES = 0,
+	MANUAL_TIMES = 1,
+	TASKS = 2,
+	PROJECTS = 3,
+	APPS_URLS = 4,
+	MEMBERS = 5
+}
+
 @UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ga-time-tracking-dashboard',
@@ -82,7 +92,7 @@ export enum RangePeriod {
 	styleUrls: ['./time-tracking.component.scss']
 })
 export class TimeTrackingComponent extends TranslationBaseComponent
-	implements AfterViewInit, OnInit, OnDestroy {
+	implements AfterViewInit, OnInit, OnDestroy, AfterViewChecked {
 
 	user: IUser;
 	timeSlotEmployees: ITimeSlotStatistics[] = [];
@@ -114,7 +124,7 @@ export class TimeTrackingComponent extends TranslationBaseComponent
 	projectIds: string[] = [];
 
 	private autoRefresh$: Subscription;
-	autoRefresh: boolean = true;
+	autoRefresh = true;
 
 	private _selectedDateRange: IDateRangePicker;
 	get selectedDateRange(): IDateRangePicker {
@@ -167,7 +177,7 @@ export class TimeTrackingComponent extends TranslationBaseComponent
 			.pipe(
 				debounceTime(200),
 				tap(() => this.galleryService.clearGallery()),
-				tap(() => this.getStatistics()),
+				tap(async () => await this.getStatistics()),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -211,7 +221,7 @@ export class TimeTrackingComponent extends TranslationBaseComponent
 						}
 					});
 					this.windowService.windows.forEach((windows: GuiDrag) => {
-						if (windows.position === 5 && this.employeeIds[0]) {
+						if (windows.position === Windows.MEMBERS && this.employeeIds[0]) {
 							windows.hide = true;
 						}
 					});
@@ -241,13 +251,15 @@ export class TimeTrackingComponent extends TranslationBaseComponent
 		if (!this.organization) {
 			return;
 		}
-		this.getCounts();
-		this.getTimeSlots();
-		this.getActivities();
-		this.getProjects();
-		this.getTasks();
-		this.getManualTimes();
-		this.getMembers();
+		await Promise.allSettled([
+			this.getCounts(),
+			this.getTimeSlots(),
+			this.getActivities(),
+			this.getProjects(),
+			this.getTasks(),
+			this.getManualTimes(),
+			this.getMembers()
+		])
 	}
 
 	/**
@@ -299,6 +311,7 @@ export class TimeTrackingComponent extends TranslationBaseComponent
 	}
 
 	async getTimeSlots() {
+		if (this._isWindowHidden(Windows.RECENT_ACTIVITIES)) return;
 		const request: IGetTimeSlotStatistics = this.payloads$.getValue();
 		try {
 			this.timeSlotLoading = true;
@@ -311,6 +324,7 @@ export class TimeTrackingComponent extends TranslationBaseComponent
 	}
 
 	async getCounts() {
+		if (this._isAllWidgetsHidden()) return;
 		const request: IGetCountsStatistics = this.payloads$.getValue();
 		try {
 			this.countsLoading = true;
@@ -323,6 +337,7 @@ export class TimeTrackingComponent extends TranslationBaseComponent
 	}
 
 	async getActivities() {
+		if (this._isWindowHidden(Windows.APPS_URLS)) return;
 		const request: IGetActivitiesStatistics = this.payloads$.getValue();
 		try {
 			this.activitiesLoading = true;
@@ -345,6 +360,7 @@ export class TimeTrackingComponent extends TranslationBaseComponent
 	}
 
 	async getProjects() {
+		if (this._isWindowHidden(Windows.PROJECTS)) return;
 		const request: IGetProjectsStatistics = this.payloads$.getValue();
 		try {
 			this.projectsLoading = true;
@@ -357,6 +373,7 @@ export class TimeTrackingComponent extends TranslationBaseComponent
 	}
 
 	async getTasks() {
+		if (this._isWindowHidden(Windows.TASKS)) return;
 		const request: IGetTasksStatistics = this.payloads$.getValue();
 		const take = 5;
 		try {
@@ -373,6 +390,7 @@ export class TimeTrackingComponent extends TranslationBaseComponent
 	}
 
 	async getManualTimes() {
+		if (this._isWindowHidden(Windows.MANUAL_TIMES)) return;
 		const request: IGetManualTimesStatistics = this.payloads$.getValue();
 		try {
 			this.manualTimeLoading = true;
@@ -386,7 +404,7 @@ export class TimeTrackingComponent extends TranslationBaseComponent
 
 	async getMembers() {
 		if (!await this.ngxPermissionsService.hasPermission(
-			PermissionsEnum.CHANGE_SELECTED_EMPLOYEE)
+			PermissionsEnum.CHANGE_SELECTED_EMPLOYEE) || this._isWindowHidden(Windows.MEMBERS)
 		) {
 			return;
 		}
@@ -714,16 +732,22 @@ export class TimeTrackingComponent extends TranslationBaseComponent
 		return isWidget ? widgetsTitles[position] : windowsTitles[position];
 	}
 
-	public updateWindowVisibility(value: GuiDrag) {
+	public async updateWindowVisibility(value: GuiDrag): Promise<void> {
 		value.hide = !value.hide;
 		this.windowService.updateWindow(value);
 		this.windowService.save();
+		if (!value.hide) {
+			await this.recover(value.position);
+		}
 	}
 
-	public updateWidgetVisibility(value: GuiDrag) {
+	public async updateWidgetVisibility(value: GuiDrag): Promise<void> {
 		value.hide = !value.hide;
 		this.widgetService.updateWidget(value);
 		this.widgetService.save();
+		if (!value.hide) {
+			await this.getCounts();
+		}
 	}
 
 	public undo(isWindow?: boolean) {
@@ -738,5 +762,46 @@ export class TimeTrackingComponent extends TranslationBaseComponent
 
 	public slidePrev(swiper: SwiperComponent) {
 		swiper.swiperRef.slidePrev(100);
+	}
+
+	public async recover(position: number) {
+		if (!this.organization) {
+			return;
+		}
+		switch (position) {
+			case Windows.APPS_URLS:
+				await this.getActivities();
+				break;
+			case Windows.MANUAL_TIMES:
+				await this.getManualTimes();
+				break;
+			case Windows.MEMBERS:
+				await this.getMembers();
+				break;
+			case Windows.PROJECTS:
+				await this.getProjects();
+				break;
+			case Windows.RECENT_ACTIVITIES:
+				await this.getTimeSlots();
+				break;
+			case Windows.TASKS:
+				await this.getTasks();
+				break;
+			default:
+				break;
+		}
+	}
+
+	private _isAllWidgetsHidden(): boolean {
+		return this.widgets.reduce((acc, widget) => {
+			return acc && widget.hide
+		}, true);
+	}
+
+	private _isWindowHidden(position: number): boolean {
+		const window = this.windows.filter(
+			(win: GuiDrag) => win.position === position
+		)[0];
+		return window.hide;
 	}
 }

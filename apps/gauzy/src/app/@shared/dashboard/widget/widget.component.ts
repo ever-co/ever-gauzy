@@ -87,5 +87,10 @@ export class WidgetComponent
 		);
 	}
 
+	public hideWidget() {
+		this.widgetService.hideWidget(this.position);
+		this.widgetService.save();
+	}
+
 	ngOnDestroy(): void {}
 }
