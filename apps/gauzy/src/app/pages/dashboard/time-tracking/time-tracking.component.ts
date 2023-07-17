@@ -324,6 +324,7 @@ export class TimeTrackingComponent extends TranslationBaseComponent
 	}
 
 	async getCounts() {
+		if (this._isAllWidgetshidden()) return;
 		const request: IGetCountsStatistics = this.payloads$.getValue();
 		try {
 			this.countsLoading = true;
@@ -740,10 +741,13 @@ export class TimeTrackingComponent extends TranslationBaseComponent
 		}
 	}
 
-	public updateWidgetVisibility(value: GuiDrag) {
+	public async updateWidgetVisibility(value: GuiDrag): Promise<void> {
 		value.hide = !value.hide;
 		this.widgetService.updateWidget(value);
 		this.widgetService.save();
+		if (!value.hide) {
+			await this.getCounts();
+		}
 	}
 
 	public undo(isWindow?: boolean) {
@@ -786,5 +790,11 @@ export class TimeTrackingComponent extends TranslationBaseComponent
 			default:
 				break;
 		}
+	}
+
+	private _isAllWidgetshidden(): boolean {
+		return this.widgets.reduce((acc, widget) => {
+			return acc && widget.hide
+		}, true);
 	}
 }
