@@ -9,13 +9,13 @@ import {
 } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
 import { NbLayoutComponent, NbSidebarService } from '@nebular/theme';
-import { filter, tap } from 'rxjs/operators';
 import { IUser } from '@gauzy/contracts';
 import { WindowModeBlockScrollService } from '../../services/window-mode-block-scroll.service';
 import { NavigationBuilderService, Store } from '../../../@core/services';
 import { DEFAULT_SIDEBARS } from '../../components/theme-sidebar/default-sidebars';
-import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { UntilDestroy } from '@ngneat/until-destroy';
 import { LayoutService } from '../../../@core/utils/layout.service';
+import { Observable } from 'rxjs';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -28,17 +28,17 @@ export class OneColumnLayoutComponent
 {
 	@ViewChild(NbLayoutComponent) layout: NbLayoutComponent;
 
-	user: IUser;
+	private _user$: Observable<IUser>;
 	loading: boolean;
 	userMenu = [
 		{ title: 'Profile', link: '/pages/auth/profile' },
 		{ title: 'Log out', link: '/auth/logout' }
 	];
 
-	isOpen: boolean = false;
-	isExpanded: boolean = true;
-	isCollapse: boolean = true;
-  	trigger: boolean = true;
+	isOpen = false;
+	isExpanded = true;
+	isCollapse = true;
+	trigger = true;
 
 	constructor(
 		@Inject(PLATFORM_ID) private platformId,
@@ -53,17 +53,12 @@ export class OneColumnLayoutComponent
 			navigationBuilderService.addSidebarActionItem(config.actionItem);
 		});
 		navigationBuilderService.getSidebarWidgets();
+		this._user$ = new Observable();
 	}
 
 	ngOnInit() {
 		this.loading = true;
-		this.store.user$
-			.pipe(
-				filter((user: IUser) => !!user),
-				tap((user: IUser) => (this.user = user)),
-				untilDestroyed(this)
-			)
-			.subscribe();
+		this.user$ = this.store.user$;
 		this.loading = false;
 	}
 
@@ -97,5 +92,13 @@ export class OneColumnLayoutComponent
 	ngOnDestroy() {
 		this.navigationBuilderService.clearSidebars();
 		this.navigationBuilderService.clearActionBars();
+	}
+
+	public get user$(): Observable<IUser> {
+		return this._user$;
+	}
+
+	public set user$(value: Observable<IUser>) {
+		this._user$ = value;
 	}
 }
