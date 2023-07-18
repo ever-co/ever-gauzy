@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { distinctUntilChange } from '@gauzy/common-angular';
-import { ITimerStatus } from '@gauzy/contracts';
+import { IEmployee, ITimerStatus, IUser } from '@gauzy/contracts';
 import { BehaviorSubject, filter, Observable, Subject, tap } from 'rxjs';
 import { TimeTrackerService } from '../../time-tracker.service';
 import { TimerIconFactory } from './factory';
@@ -16,6 +16,7 @@ import { Store } from '../../../../@core';
 export class TimeTrackerStatusService {
 	private _icon$: BehaviorSubject<ITimerIcon> = new BehaviorSubject<ITimerIcon>(null);
 	private _external$: Subject<ITimerSynced> = new Subject<ITimerSynced>();
+	private _userUpdate$: Subject<IUser> = new Subject();
 	constructor(private readonly _timeTrackerService: TimeTrackerService, private readonly _store: Store) {
 		this._timeTrackerService.timer$
 			.pipe(
@@ -36,7 +37,25 @@ export class TimeTrackerStatusService {
 		this.external$
 			.pipe(
 				distinctUntilChange(),
-				tap((synced: ITimerSynced) => (this._timeTrackerService.timerSynced = synced)),
+				tap((synced: ITimerSynced) => {
+					this._timeTrackerService.timerSynced = synced;
+					this._userUpdate$.next(synced.lastLog.employee);
+				}),
+				untilDestroyed(this)
+			)
+			.subscribe();
+		this._userUpdate$
+			.pipe(
+				distinctUntilChange(),
+				filter((employee: IEmployee) => !!employee),
+				tap(
+					(employee: IEmployee) => {
+						this._store.user = {
+							...this._store.user,
+							employee,
+						}
+					}
+				),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -54,7 +73,8 @@ export class TimeTrackerStatusService {
 		const { tenantId, organizationId } = this._timeTrackerService.timerConfig;
 		return this._timeTrackerService.getTimerStatus({
 			tenantId,
-			organizationId
+			organizationId,
+			relations: ['employee']
 		});
 	}
 }

@@ -68,5 +68,10 @@ export class WindowComponent
 		this._windowDragEnded = value;
 	}
 
+	public hideWindow() {
+		this.windowService.hideWindow(this.position);
+		this.windowService.save();
+	}
+
 	ngOnDestroy(): void {}
 }
