@@ -16,7 +16,7 @@ export class DashboardComponent extends TranslationBaseComponent
 	implements AfterContentChecked, OnInit, OnDestroy {
 
 	public tabs: NbRouteTab[] = [];
-	public loading: boolean = true;
+	public loading = true;
 	public selectedEmployee: ISelectedEmployee;
 
 	constructor(
@@ -48,7 +48,7 @@ export class DashboardComponent extends TranslationBaseComponent
 
 	loadTabs() {
 		this.tabs = [
-			...(this.store.hasAnyPermission(PermissionsEnum.ADMIN_DASHBOARD_VIEW, PermissionsEnum.TEAM_DASHBOARD) ? [
+			...(this.store.hasAllPermissions(PermissionsEnum.ADMIN_DASHBOARD_VIEW, PermissionsEnum.TEAM_DASHBOARD) ? [
 				{
 					title: this.getTranslation('ORGANIZATIONS_PAGE.TEAMS'),
 					icon: 'people-outline',
@@ -56,7 +56,7 @@ export class DashboardComponent extends TranslationBaseComponent
 					route: this.getRoute('teams')
 				}
 			] : []),
-			...(this.store.hasAnyPermission(PermissionsEnum.ADMIN_DASHBOARD_VIEW, PermissionsEnum.PROJECT_MANAGEMENT_DASHBOARD) ? [
+			...(this.store.hasAllPermissions(PermissionsEnum.ADMIN_DASHBOARD_VIEW, PermissionsEnum.PROJECT_MANAGEMENT_DASHBOARD) ? [
 				{
 					title: this.getTranslation('DASHBOARD_PAGE.PROJECT_MANAGEMENT'),
 					icon: 'browser-outline',
@@ -64,7 +64,7 @@ export class DashboardComponent extends TranslationBaseComponent
 					route: this.getRoute('project-management')
 				}
 			] : []),
-			...(this.store.hasAnyPermission(PermissionsEnum.ADMIN_DASHBOARD_VIEW, PermissionsEnum.TIME_TRACKING_DASHBOARD) ? [
+			...(this.store.hasAllPermissions(PermissionsEnum.ADMIN_DASHBOARD_VIEW, PermissionsEnum.TIME_TRACKING_DASHBOARD) ? [
 				{
 					title: this.getTranslation('DASHBOARD_PAGE.TIME_TRACKING'),
 					icon: 'clock-outline',
@@ -72,7 +72,7 @@ export class DashboardComponent extends TranslationBaseComponent
 					route: this.getRoute('time-tracking')
 				}
 			] : []),
-			...(this.store.hasAnyPermission(PermissionsEnum.ADMIN_DASHBOARD_VIEW, PermissionsEnum.ACCOUNTING_DASHBOARD) ? [
+			...(this.store.hasAllPermissions(PermissionsEnum.ADMIN_DASHBOARD_VIEW, PermissionsEnum.ACCOUNTING_DASHBOARD) ? [
 				...(!this.selectedEmployee || !this.selectedEmployee.id ? [
 					{
 						title: this.getTranslation('DASHBOARD_PAGE.ACCOUNTING'),
@@ -82,7 +82,7 @@ export class DashboardComponent extends TranslationBaseComponent
 					}
 				] : [])
 			] : []),
-			...(this.store.hasAnyPermission(PermissionsEnum.ADMIN_DASHBOARD_VIEW, PermissionsEnum.HUMAN_RESOURCE_DASHBOARD) ? [
+			...(this.store.hasAllPermissions(PermissionsEnum.ADMIN_DASHBOARD_VIEW, PermissionsEnum.HUMAN_RESOURCE_DASHBOARD) ? [
 				...(this.selectedEmployee && this.selectedEmployee.id ? [
 					{
 						title: this.getTranslation('DASHBOARD_PAGE.HUMAN_RESOURCES'),
