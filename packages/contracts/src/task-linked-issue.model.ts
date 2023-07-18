@@ -14,9 +14,9 @@ export enum TaskRelatedIssuesRelationEnum {
 export interface ITaskLinkedIssue
 	extends IBasePerTenantAndOrganizationEntityModel {
 	action: TaskRelatedIssuesRelationEnum;
-	taskFrom: ITask;
+	taskFrom?: ITask;
 	taskFromId: ITask['id'];
-	taskTo: ITask;
+	taskTo?: ITask;
 	taskToId: ITask['id'];
 }
 

@@ -1,8 +1,6 @@
 import { ITaskLinkedIssue } from '@gauzy/contracts';
-import { IntersectionType } from '@nestjs/swagger';
-import { TaskLinkedIssue } from '../task-linked-issue.entity';
-import { TenantOrganizationBaseDTO } from '../../../core/dto';
+import { TaskLinkedIssueDTO } from './task-linked-issue.dto';
 
 export class CreateTaskLinkedIssueDTO
-	extends IntersectionType(TenantOrganizationBaseDTO, TaskLinkedIssue)
+	extends TaskLinkedIssueDTO
 	implements ITaskLinkedIssue {}
