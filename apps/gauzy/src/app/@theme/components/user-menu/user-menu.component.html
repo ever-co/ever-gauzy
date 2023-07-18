@@ -56,7 +56,7 @@
 		<div class="sub-user-menu">
 			<gauzy-user
 				showIdentity="true"
-				[user]="user$ | async"
+				[user$]="user$"
 				(clicked)="onClick()"
 			></gauzy-user>
 		</div>
