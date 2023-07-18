@@ -1,4 +1,4 @@
-name: Deploy to DigitalOcean Demo
+name: Deploy to Fly Demo
 
 on:
     workflow_run:
