@@ -68,8 +68,8 @@ export class ContactsComponent extends PaginationFilterBaseComponent
 	contactOrganizationInviteStatus = ContactOrganizationInviteStatus;
 	settingsSmartTable: object;
 	countries: ICountry[] = [];
-	disableButton: boolean = true;
-	loading: boolean = false;
+	disableButton = true;
+	loading = false;
 	smartTableSource: ServerDataSource;
 
 	contacts$: Subject<any> = this.subject$;
@@ -133,8 +133,10 @@ export class ContactsComponent extends PaginationFilterBaseComponent
 			.pipe(
 				debounceTime(100),
 				tap(() => this.clearItem()),
-				tap(() => this.getContacts()),
-				tap(() => this.loadProjectsWithoutOrganizationContacts()),
+				tap(async () => {
+					await this.loadProjectsWithoutOrganizationContacts();
+					await this.getContacts();
+				}),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -177,8 +179,8 @@ export class ContactsComponent extends PaginationFilterBaseComponent
 			.pipe(
 				filter((params: ParamMap) => !!params),
 				filter((params: ParamMap) => !!params.get('id')),
-				tap((params: ParamMap) =>
-					this._initEditMethod(params.get('id'))
+				tap(async (params: ParamMap) =>
+					await this._initEditMethod(params.get('id'))
 				),
 				untilDestroyed(this)
 			)
@@ -203,31 +205,27 @@ export class ContactsComponent extends PaginationFilterBaseComponent
 			.subscribe();
 	}
 
-	private _initEditMethod(id: string) {
+	private async _initEditMethod(id: string) {
 		if (id) {
+			this.loading = true;
 			const { tenantId } = this.store.user;
-			this.organizationContactService
-				.getById(id, tenantId, [
-					'projects',
-					'members',
-					'members.user',
-					'tags',
-					'contact'
-				])
-				.then((items) => {
-					if (items) {
-						this.editOrganizationContact(items);
-					}
-				})
-				.catch(() => {
-					this.toastrService.danger(
-						this.getTranslation('TOASTR.TITLE.ERROR')
-					);
-				})
-				.finally(() => {
-					this.loading = false;
-					this.cd.detectChanges();
-				});
+			try {
+				const items = await this.organizationContactService.getById(
+					id,
+					tenantId,
+					['projects', 'members', 'members.user', 'tags', 'contact']
+				);
+
+				if (items) {
+					this.editOrganizationContact(items);
+				}
+			} catch (error) {
+				this.toastrService.danger(
+					this.getTranslation('TOASTR.TITLE.ERROR')
+				);
+			}
+			this.loading = false;
+			this.cd.detectChanges();
 		}
 	}
 
@@ -452,7 +450,6 @@ export class ContactsComponent extends PaginationFilterBaseComponent
 		if (!this.organization) {
 			return;
 		}
-		this.loading = true;
 
 		const { tenantId } = this.store.user;
 		const { id: organizationId } = this.organization;
@@ -544,28 +541,25 @@ export class ContactsComponent extends PaginationFilterBaseComponent
 		if (!this.organization) {
 			return;
 		}
-
+		this.loading = true;
 		const { tenantId } = this.store.user;
 		const { id: organizationId } = this.organization;
-
-		this.organizationProjectsService
-			.getAll(['organizationContact'], {
-				organizationId,
-				tenantId,
-				organizationContactId: null
-			})
-			.then(({ items }) => {
-				this.projectsWithoutOrganizationContacts = items;
-			})
-			.catch(() => {
-				this.toastrService.danger(
-					this.getTranslation('TOASTR.TITLE.ERROR')
-				);
-			})
-			.finally(() => {
-				this.loading = false;
-				this.cd.detectChanges();
-			});
+		try {
+			const { items } = await this.organizationProjectsService.getAll(
+				['organizationContact'],
+				{
+					organizationId,
+					tenantId,
+					organizationContactId: null,
+				}
+			);
+			this.projectsWithoutOrganizationContacts = items;
+		} catch (error) {
+			this.toastrService.danger(
+				this.getTranslation('TOASTR.TITLE.ERROR')
+			);
+		}
+		this.cd.detectChanges();
 	}
 
 	cancel() {
