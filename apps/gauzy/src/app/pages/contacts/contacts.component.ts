@@ -563,6 +563,7 @@ export class ContactsComponent extends PaginationFilterBaseComponent
 	}
 
 	cancel() {
+		this.loading = true;
 		this.selectedOrganizationContact = null;
 		this.showAddCard = !this.showAddCard;
 	}
@@ -571,6 +572,7 @@ export class ContactsComponent extends PaginationFilterBaseComponent
 		await this.loadProjectsWithoutOrganizationContacts();
 		this.selectedOrganizationContact = organizationContact;
 		this.showAddCard = true;
+		this.loading = false;
 	}
 
 	async add() {
