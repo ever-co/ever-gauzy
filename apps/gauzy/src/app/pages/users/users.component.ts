@@ -529,8 +529,9 @@ export class UsersComponent extends PaginationFilterBaseComponent
 
 	private employeeMapper(employee: IEmployee) {
 		if (employee) {
-			const { endWork, startedWorkOn, isTrackingEnabled } = employee;
+			const { endWork, startedWorkOn, isTrackingEnabled, id } = employee;
 			return {
+				employeeId: id,
 				endWork: endWork ? new Date(endWork) : '',
 				workStatus: endWork
 					? new Date(endWork).getDate() +
