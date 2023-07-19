@@ -116,6 +116,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 	loading = false;
 	appSetting$: BehaviorSubject<any> = new BehaviorSubject(null);
 	isExpand$: BehaviorSubject<boolean> = new BehaviorSubject(false);
+	isCollapse$: BehaviorSubject<boolean> = new BehaviorSubject(true);
 	dialogType = {
 		deleteLog: {
 			name: 'deleteLog',
@@ -1368,6 +1369,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 	}
 
 	public expand(): void {
+		this.isCollapse$.next(this.isExpand);
 		this.electronService.ipcRenderer.send('expand', !this.isExpand);
 	}
 
