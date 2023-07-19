@@ -34,6 +34,12 @@ import { Store, ErrorHandlerService, NativeNotificationService, ToastrNotificati
 import { TimeTrackerStatusService } from './time-tracker-status/time-tracker-status.service';
 import { IRemoteTimer } from './time-tracker-status/interfaces';
 
+enum TimerStartMode {
+	MANUAL = 'manual',
+	REMOTE = 'remote',
+	STOP = 'stop'
+}
+
 @UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ngx-desktop-time-tracker',
@@ -173,6 +179,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 	private _isOver$: BehaviorSubject<boolean> = new BehaviorSubject(false);
 	private _lastTime = 0;
 	private _isLockSyncProcess = false;
+	private _startMode = TimerStartMode.STOP;
 
 	public hasTaskPermission$: BehaviorSubject<boolean> = new BehaviorSubject(false);
 	private get _hasTaskPermission(): boolean {
@@ -342,15 +349,23 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 			.subscribe();
 		this._timeTrackerStatus.external$
 			.pipe(
-				filter((remoteTimer: IRemoteTimer) => this.xor(this.start, remoteTimer.running)),
+				filter((remoteTimer: IRemoteTimer) =>
+					this.xor(this.start, remoteTimer.running)
+				),
 				tap(async (remoteTimer: IRemoteTimer) => {
 					this.projectSelect = remoteTimer.lastLog.projectId;
 					this.taskSelect = remoteTimer.lastLog.taskId;
 					this.note = remoteTimer.lastLog.description;
-					this.organizationContactId = remoteTimer.lastLog.organizationContactId;
+					this.organizationContactId =
+						remoteTimer.lastLog.organizationContactId;
+					this._startMode = TimerStartMode.REMOTE;
 					await this.toggleStart(remoteTimer.running, false);
 				}),
-				filter((remoteTimer: IRemoteTimer) => remoteTimer.isExternalSource),
+				filter(
+					(remoteTimer: IRemoteTimer) =>
+						remoteTimer.isExternalSource ||
+						this._startMode === TimerStartMode.REMOTE
+				),
 				tap((remoteTimer: IRemoteTimer) =>
 					this.electronService.ipcRenderer.send('update_session', {
 						startedAt: remoteTimer.startedAt
@@ -640,7 +655,11 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 				}[]
 			) => {
 				this._ngZone.run(async () => {
-					if (this._isLockSyncProcess || this._timeTrackerStatus.remoteTimer.isExternalSource) {
+					if (
+						this._isLockSyncProcess ||
+						this._timeTrackerStatus.remoteTimer.isExternalSource ||
+						this._startMode === TimerStartMode.REMOTE
+					) {
 						return;
 					} else {
 						this._isLockSyncProcess = true;
@@ -936,6 +955,9 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 
 	public async startTimer(onClick = true): Promise<void> {
 		try {
+			this._startMode = onClick
+				? TimerStartMode.MANUAL
+				: TimerStartMode.REMOTE;
 			this.start$.next(true);
 			this.electronService.ipcRenderer.send('update_tray_start');
 			const timer = await this.electronService.ipcRenderer.invoke('START_TIMER', {
@@ -964,6 +986,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 			const timer = await this.electronService.ipcRenderer.invoke('STOP_TIMER', config);
 			await this._toggle(timer, onClick);
 			this.electronService.ipcRenderer.send('update_tray_stop');
+			this._startMode = TimerStartMode.STOP;
 		} catch (error) {
 			console.log('[ERROR_STOP_TIMER]', error);
 		}
@@ -1489,7 +1512,10 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 	}
 
 	public async sendActivities(arg): Promise<void> {
-		if (this._timeTrackerStatus.remoteTimer.isExternalSource) {
+		if (
+			this._timeTrackerStatus.remoteTimer.isExternalSource ||
+			this._startMode === TimerStartMode.REMOTE
+		) {
 			return;
 		}
 		// screenshot process
@@ -1989,7 +2015,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 			const isRemote =
 				this._timeTrackerStatus.remoteTimer &&
 				this.xor(!isStarted, this._timeTrackerStatus.remoteTimer.running) &&
-				!onClick;
+				this._startMode === TimerStartMode.REMOTE;
 			const params = {
 				token: this.token,
 				note: this.note,
@@ -2034,7 +2060,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 						}),
 						this.getTimerStatus(params)
 					];
-					if (!this._timeTrackerStatus.remoteTimer?.isExternalSource) {
+					if (!this._timeTrackerStatus.remoteTimer?.isExternalSource || this._startMode === TimerStartMode.MANUAL) {
 						const takeScreenCapturePromise = this.electronService.ipcRenderer.invoke(
 							'TAKE_SCREEN_CAPTURE',
 							{
