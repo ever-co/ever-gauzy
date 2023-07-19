@@ -3,7 +3,6 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { TaskEstimation } from './task-estimation.entity';
 import { TenantAwareCrudService } from '../../core/crud';
-import { CreateTaskEstimationDTO } from './dto';
 
 @Injectable()
 export class TaskEstimationService extends TenantAwareCrudService<TaskEstimation> {

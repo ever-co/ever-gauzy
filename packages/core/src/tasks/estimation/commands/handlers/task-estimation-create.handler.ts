@@ -5,7 +5,7 @@ import { CommandBus } from '@nestjs/cqrs';
 import { TaskEstimationCreateCommand } from './../task-estimation-create.command';
 import { TaskEstimationService } from '../../task-estimation.service';
 import { TaskEstimationCalculateCommand } from './../task-estimation-calculate.command';
-import { TaskEstimation } from 'core';
+import { TaskEstimation } from '../../task-estimation.entity';
 
 @CommandHandler(TaskEstimationCreateCommand)
 export class TaskEstimationCreateHandler
