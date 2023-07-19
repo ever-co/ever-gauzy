@@ -138,6 +138,7 @@ import {
 	Warehouse,
 	WarehouseProduct,
 	WarehouseProductVariant,
+	TaskEstimation,
 } from './internal';
 
 export const coreEntities = [
@@ -280,4 +281,5 @@ export const coreEntities = [
 	Warehouse,
 	WarehouseProduct,
 	WarehouseProductVariant,
+	TaskEstimation,
 ];

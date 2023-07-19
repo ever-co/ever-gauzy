@@ -5,9 +5,9 @@ name: MegaLinter
 
 on:
     push:
-        branches: [develop, temp, stage, master]
+        branches: [lint]
     pull_request:
-        branches: [develop]
+        branches: [lint]
 
 env:
     # Apply linter fixes configuration

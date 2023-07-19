@@ -4,7 +4,7 @@
 			<nb-icon [icon]="expandIcon"></nb-icon>
 		</button>
 		<div class="timer-window-container">
-			<div [ngClass]="{ expanded: isExpand$ | async }" class="no-padding full-width timer">
+			<div [ngClass]="{ expanded: isExpand$ | async, collapsed: isCollapse$ | async }" class="no-padding full-width timer">
 				<nb-card class="full-height max-width">
 					<nb-card-body class="timer-body">
 						<div class="row mb-3">

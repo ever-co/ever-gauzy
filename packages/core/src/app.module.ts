@@ -152,6 +152,7 @@ import { TransformInterceptor } from './core/interceptors';
 import { EmailResetModule } from './email-reset/email-reset.module';
 import { TaskLinkedIssueModule } from './tasks/linked-issue/task-linked-issue.module';
 import { OrganizationTaskSettingModule } from './organization-task-setting/organization-task-setting.module';
+import { TaskEstimationModule } from './tasks/estimation/task-estimation.module';
 const { unleashConfig } = environment;
 
 if (unleashConfig.url) {
@@ -374,6 +375,7 @@ if (process.env.DB_TYPE === 'postgres') {
 		IssueTypeModule,
 		TaskLinkedIssueModule,
 		OrganizationTaskSettingModule,
+		TaskEstimationModule,
 	],
 	controllers: [AppController],
 	providers: [

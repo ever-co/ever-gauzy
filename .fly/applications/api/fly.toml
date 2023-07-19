@@ -2,7 +2,7 @@ app = "ever-gauzy-api"
 primary_region = "lax"
 
 [build]
-  image = "flyio/hellofly:latest"
+  image = "ghcr.io/ever-co/gauzy-api-demo:latest"
 
 [http_service]
   internal_port = 8080
