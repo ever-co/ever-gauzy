@@ -18,28 +18,14 @@ import { NbDialogService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { LocalDataSource, Ng2SmartTableComponent } from 'ng2-smart-table';
 import { filter, tap } from 'rxjs/operators';
-import {
-	debounceTime,
-	firstValueFrom,
-	Subject,
-	of as observableOf,
-	map,
-	finalize
-} from 'rxjs';
+import { debounceTime, firstValueFrom, Subject, of as observableOf, map, finalize } from 'rxjs';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { distinctUntilChange } from '@gauzy/common-angular';
-import {
-	Store,
-	ToastrService,
-	UsersOrganizationsService
-} from '../../@core/services';
+import { Store, ToastrService, UsersOrganizationsService } from '../../@core/services';
 import { DeleteConfirmationComponent } from '../../@shared/user/forms';
 import { UserMutationComponent } from '../../@shared/user/user-mutation/user-mutation.component';
 import { InviteMutationComponent } from '../../@shared/invite/invite-mutation/invite-mutation.component';
-import {
-	PictureNameTagsComponent,
-	TagsOnlyComponent
-} from '../../@shared/table-components';
+import { PictureNameTagsComponent, TagsOnlyComponent } from '../../@shared/table-components';
 import { ComponentEnum } from '../../@core/constants';
 import {
 	IPaginationBase,
@@ -55,9 +41,7 @@ import { EmailComponent, RoleComponent } from '../../@shared/table-components';
 	templateUrl: './users.component.html',
 	styleUrls: ['./users.component.scss']
 })
-export class UsersComponent extends PaginationFilterBaseComponent
-	implements OnInit, OnDestroy {
-
+export class UsersComponent extends PaginationFilterBaseComponent implements OnInit, OnDestroy {
 	settingsSmartTable: object;
 	sourceSmartTable = new LocalDataSource();
 	selectedUser: IUserViewModel;
@@ -115,14 +99,8 @@ export class UsersComponent extends PaginationFilterBaseComponent
 			.pipe(
 				filter((organization: IOrganization) => !!organization),
 				distinctUntilChange(),
-				tap(
-					(organization: IOrganization) =>
-						(this.organization = organization)
-				),
-				tap(
-					({ invitesAllowed }: IOrganization) =>
-						(this.organizationInvitesAllowed = invitesAllowed)
-				),
+				tap((organization: IOrganization) => (this.organization = organization)),
+				tap(({ invitesAllowed }: IOrganization) => (this.organizationInvitesAllowed = invitesAllowed)),
 				tap(() => this._refresh$.next(true)),
 				tap(() => this.subject$.next(true)),
 				untilDestroyed(this)
@@ -130,22 +108,15 @@ export class UsersComponent extends PaginationFilterBaseComponent
 			.subscribe();
 		this.store.userRolePermissions$
 			.pipe(
-				filter(
-					(permissions: IRolePermission[]) => permissions.length > 0
-				),
+				filter((permissions: IRolePermission[]) => permissions.length > 0),
 				untilDestroyed(this)
 			)
 			.subscribe(() => {
-				this.hasSuperAdminPermission = this.store.hasPermission(
-					PermissionsEnum.SUPER_ADMIN_EDIT
-				);
+				this.hasSuperAdminPermission = this.store.hasPermission(PermissionsEnum.SUPER_ADMIN_EDIT);
 			});
 		this.route.queryParamMap
 			.pipe(
-				filter(
-					(params) =>
-						!!params && params.get('openAddDialog') === 'true'
-				),
+				filter((params) => !!params && params.get('openAddDialog') === 'true'),
 				debounceTime(1000),
 				tap(() => this.add()),
 				untilDestroyed(this)
@@ -175,10 +146,7 @@ export class UsersComponent extends PaginationFilterBaseComponent
 			.componentLayout$(this.viewComponentName)
 			.pipe(
 				distinctUntilChange(),
-				tap(
-					(componentLayout: ComponentLayoutStyleEnum) =>
-						(this.dataLayoutStyle = componentLayout)
-				),
+				tap((componentLayout: ComponentLayoutStyleEnum) => (this.dataLayoutStyle = componentLayout)),
 				tap(() => this.refreshPagination()),
 				filter(() => this._isGridLayout),
 				tap(() => (this.users = [])),
@@ -189,9 +157,7 @@ export class UsersComponent extends PaginationFilterBaseComponent
 	}
 
 	private get _isGridLayout(): boolean {
-		return (
-			this.componentLayoutStyleEnum.CARDS_GRID === this.dataLayoutStyle
-		);
+		return this.componentLayoutStyleEnum.CARDS_GRID === this.dataLayoutStyle;
 	}
 
 	selectUser({ isSelected, data }) {
@@ -205,9 +171,7 @@ export class UsersComponent extends PaginationFilterBaseComponent
 
 		if (data && data.role === RolesEnum.SUPER_ADMIN) {
 			this.disableButton = !this.hasSuperAdminPermission;
-			this.selectedUser = this.hasSuperAdminPermission
-				? this.selectedUser
-				: null;
+			this.selectedUser = this.hasSuperAdminPermission ? this.selectedUser : null;
 		}
 	}
 
@@ -219,13 +183,10 @@ export class UsersComponent extends PaginationFilterBaseComponent
 			if (data.user.firstName || data.user.lastName) {
 				this.userName = data.user.firstName + ' ' + data.user.lastName;
 			}
-			this.toastrService.success(
-				'NOTES.ORGANIZATIONS.ADD_NEW_USER_TO_ORGANIZATION',
-				{
-					username: this.userName.trim(),
-					orgname: this.store.selectedOrganization.name
-				}
-			);
+			this.toastrService.success('NOTES.ORGANIZATIONS.ADD_NEW_USER_TO_ORGANIZATION', {
+				username: this.userName.trim(),
+				orgname: this.store.selectedOrganization.name
+			});
 			this._refresh$.next(true);
 			this.subject$.next(true);
 		}
@@ -235,13 +196,10 @@ export class UsersComponent extends PaginationFilterBaseComponent
 		if (user.isActive) {
 			await firstValueFrom(this.userOrganizationsService.create(user));
 
-			this.toastrService.success(
-				'NOTES.ORGANIZATIONS.ADD_NEW_USER_TO_ORGANIZATION',
-				{
-					username: this.userName.trim(),
-					orgname: this.store.selectedOrganization.name
-				}
-			);
+			this.toastrService.success('NOTES.ORGANIZATIONS.ADD_NEW_USER_TO_ORGANIZATION', {
+				username: this.userName.trim(),
+				orgname: this.store.selectedOrganization.name
+			});
 			this._refresh$.next(true);
 			this.subject$.next(true);
 		}
@@ -280,25 +238,17 @@ export class UsersComponent extends PaginationFilterBaseComponent
 		this.dialogService
 			.open(DeleteConfirmationComponent, {
 				context: {
-					recordType:
-						this.selectedUser.fullName +
-						' ' +
-						this.getTranslation('FORM.DELETE_CONFIRMATION.USER')
+					recordType: this.selectedUser.fullName + ' ' + this.getTranslation('FORM.DELETE_CONFIRMATION.USER')
 				}
 			})
 			.onClose.pipe(untilDestroyed(this))
 			.subscribe(async (result) => {
 				if (result) {
 					try {
-						await this.userOrganizationsService.setUserAsInactive(
-							this.selectedUser.id
-						);
-						this.toastrService.success(
-							'NOTES.ORGANIZATIONS.DELETE_USER_FROM_ORGANIZATION',
-							{
-								username: this.userName
-							}
-						);
+						await this.userOrganizationsService.setUserAsInactive(this.selectedUser.id);
+						this.toastrService.success('NOTES.ORGANIZATIONS.DELETE_USER_FROM_ORGANIZATION', {
+							username: this.userName
+						});
 						this._refresh$.next(true);
 						this.subject$.next(true);
 					} catch (error) {
@@ -314,38 +264,28 @@ export class UsersComponent extends PaginationFilterBaseComponent
 
 	async remove(selectedOrganization: IUserViewModel) {
 		const { userOrganizationId } = selectedOrganization;
-		const fullName =
-			selectedOrganization.fullName.trim() || selectedOrganization.email;
+		const fullName = selectedOrganization.fullName.trim() || selectedOrganization.email;
 
 		/**
 		 *  User belongs to only 1 organization -> delete user
 		 *	User belongs multiple organizations -> remove user from Organization
 		 *
 		 */
-		const count =
-			await this.userOrganizationsService.getUserOrganizationCount(
-				userOrganizationId
-			);
+		const count = await this.userOrganizationsService.getUserOrganizationCount(userOrganizationId);
 		const confirmationMessage =
-			count === 1
-				? 'FORM.DELETE_CONFIRMATION.DELETE_USER'
-				: 'FORM.DELETE_CONFIRMATION.REMOVE_USER';
+			count === 1 ? 'FORM.DELETE_CONFIRMATION.DELETE_USER' : 'FORM.DELETE_CONFIRMATION.REMOVE_USER';
 
 		this.dialogService
 			.open(DeleteConfirmationComponent, {
 				context: {
-					recordType: `${fullName} ${this.getTranslation(
-						confirmationMessage
-					)}`
+					recordType: `${fullName} ${this.getTranslation(confirmationMessage)}`
 				}
 			})
 			.onClose.pipe(untilDestroyed(this))
 			.subscribe(async (result) => {
 				if (result) {
 					try {
-						await this.userOrganizationsService.removeUserFromOrg(
-							userOrganizationId
-						);
+						await this.userOrganizationsService.removeUserFromOrg(userOrganizationId);
 						this.toastrService.success('USERS_PAGE.REMOVE_USER', {
 							name: fullName
 						});
@@ -367,38 +307,26 @@ export class UsersComponent extends PaginationFilterBaseComponent
 		this.loading = true;
 		observableOf(
 			(
-				await this.userOrganizationsService.getAll(
-					['user', 'user.role', 'user.tags', 'user.employee'],
-					{ organizationId, tenantId }
-				)
+				await this.userOrganizationsService.getAll(['user', 'user.role', 'user.tags', 'user.employee'], {
+					organizationId,
+					tenantId
+				})
 			).items
 		)
 			.pipe(
 				map((organizations: IUserOrganization[]) =>
 					organizations
-						.filter(
-							(organization: IUserOrganization) =>
-								organization.isActive
-						)
-						.filter(
-							(organization: IUserOrganization) =>
-								organization.user.role
-						)
+						.filter((organization: IUserOrganization) => organization.isActive)
+						.filter((organization: IUserOrganization) => organization.user.role)
 				),
-				tap((users: IUserOrganization[]) =>
-					organizations.push(...users)
-				),
+				tap((users: IUserOrganization[]) => organizations.push(...users)),
 				untilDestroyed(this),
 				finalize(() => (this.loading = false))
 			)
 			.subscribe();
 
 		const users = [];
-		for (const {
-			id: userOrganizationId,
-			user,
-			isActive
-		} of organizations) {
+		for (const { id: userOrganizationId, user, isActive } of organizations) {
 			users.push({
 				id: user.id,
 				fullName: user.name,
@@ -423,10 +351,7 @@ export class UsersComponent extends PaginationFilterBaseComponent
 	private async _loadDataGridLayout() {
 		if (this._isGridLayout) {
 			this.users.push(...(await this.sourceSmartTable.getElements()));
-			this.users = this.users.filter(
-				(user, index, self) =>
-					index === self.findIndex(({ id }) => user.id === id)
-			);
+			this.users = this.users.filter((user, index, self) => index === self.findIndex(({ id }) => user.id === id));
 		}
 	}
 

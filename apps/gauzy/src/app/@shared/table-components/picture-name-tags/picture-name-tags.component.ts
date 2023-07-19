@@ -5,12 +5,7 @@ import { NotesWithTagsComponent } from '../notes-with-tags/notes-with-tags.compo
 @Component({
 	selector: 'ga-picture-name-tags',
 	template: `
-		<ngx-avatar
-			[src]="avatar?.imageUrl"
-			[name]="avatar?.name"
-			[id]="avatar?.id"
-			class="report-table"
-		></ngx-avatar>
+		<ngx-avatar [src]="avatar?.imageUrl" [name]="avatar?.name" [id]="avatar?.id" class="report-table"></ngx-avatar>
 		<ng-template [ngIf]="rowData?.isDefault">
 			<nb-badge
 				class="color"
@@ -72,24 +67,16 @@ import { NotesWithTagsComponent } from '../notes-with-tags/notes-with-tags.compo
 	],
 	styleUrls: ['./picture-name-tags.component.scss']
 })
-export class PictureNameTagsComponent
-	extends NotesWithTagsComponent
-	implements ViewCell
-{
+export class PictureNameTagsComponent extends NotesWithTagsComponent implements ViewCell {
 	@Input()
 	isTags = true;
 
 	public get avatar() {
-		const employeeId =
-			this.rowData.employeeId === this.rowData.id
-				? this.rowData.id
-				: this.rowData.employeeId;
+		const employeeId = this.rowData.employeeId === this.rowData.id ? this.rowData.id : this.rowData.employeeId;
 		return {
 			...this.rowData,
 			id: employeeId ? employeeId : null,
-			name: this.rowData.fullName
-				? this.rowData.fullName
-				: this.rowData.name,
+			name: this.rowData.fullName ? this.rowData.fullName : this.rowData.name
 		};
 	}
 }
