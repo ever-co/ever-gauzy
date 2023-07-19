@@ -602,6 +602,7 @@ export class EmployeesComponent extends PaginationFilterBaseComponent
 			averageExpenses: Math.floor(averageExpenses),
 			averageBonus: Math.floor(averageBonus),
 			bonusDate: Date.now(),
+			employeeId: id,
 			startedWorkOn,
 			isTrackingEnabled,
 			isDeleted
