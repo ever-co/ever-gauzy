@@ -1,5 +1,17 @@
-import { AfterViewInit, ChangeDetectorRef, Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
-import { FormBuilder, FormControl, FormGroup, Validators } from '@angular/forms';
+import {
+	AfterViewInit,
+	ChangeDetectorRef,
+	Component,
+	OnDestroy,
+	OnInit,
+	ViewChild,
+} from '@angular/core';
+import {
+	FormBuilder,
+	FormControl,
+	FormGroup,
+	Validators,
+} from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { formatDate } from '@angular/common';
 import * as moment from 'moment';
@@ -22,19 +34,24 @@ import {
 	IKeyValuePair,
 	IOrganization,
 	RegionsEnum,
-	WeekDaysEnum
+	WeekDaysEnum,
+	IOrganizationTaskSetting,
 } from '@gauzy/contracts';
 import { TranslateService } from '@ngx-translate/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { debounceTime, filter, map, tap } from 'rxjs/operators';
-import { NbAccordionComponent, NbAccordionItemComponent, NbThemeService } from "@nebular/theme";
+import {
+	NbAccordionComponent,
+	NbAccordionItemComponent,
+	NbThemeService,
+} from '@nebular/theme';
 import { isEmpty } from '@gauzy/common-angular';
 import {
 	AccountingTemplateService,
 	OrganizationEditStore,
 	OrganizationsService,
 	Store,
-	ToastrService
+	ToastrService,
 } from './../../../../../@core/services';
 import { NotesWithTagsComponent } from './../../../../../@shared/table-components';
 
@@ -42,15 +59,49 @@ import { NotesWithTagsComponent } from './../../../../../@shared/table-component
 @Component({
 	selector: 'ga-edit-org-other-settings',
 	templateUrl: './edit-organization-other-settings.component.html',
-	styleUrls: ['./edit-organization-other-settings.component.scss']
+	styleUrls: ['./edit-organization-other-settings.component.scss'],
 })
-export class EditOrganizationOtherSettingsComponent extends NotesWithTagsComponent
-	implements AfterViewInit, OnInit, OnDestroy {
+export class EditOrganizationOtherSettingsComponent
+	extends NotesWithTagsComponent
+	implements AfterViewInit, OnInit, OnDestroy
+{
+	@ViewChild('accordion') set content(content: NbAccordionComponent) {
+		if (content) {
+			this.accordion = content;
+			this.cdr.detectChanges();
+		}
+	}
+
+	constructor(
+		private readonly route: ActivatedRoute,
+		private readonly router: Router,
+		private readonly fb: FormBuilder,
+		private readonly cdr: ChangeDetectorRef,
+		private readonly organizationService: OrganizationsService,
+		private readonly toastrService: ToastrService,
+		private readonly organizationEditStore: OrganizationEditStore,
+		public readonly translateService: TranslateService,
+		private readonly store: Store,
+		private readonly accountingTemplateService: AccountingTemplateService,
+		public readonly themeService: NbThemeService
+	) {
+		super(themeService, translateService);
+	}
+
+	public get isTrackInactivity(): boolean {
+		return this.form.get('allowTrackInactivity').value;
+	}
+
+	public get isTasksProofOfCompletionEnabled(): boolean {
+		return this.taskSettingForm.get('isTasksProofOfCompletionEnabled')
+			.value;
+	}
 
 	public organization: IOrganization;
+	public organizationTaskSetting: IOrganizationTaskSetting;
 	defaultOrganizationSelection: IKeyValuePair[] = [
 		{ key: 'Yes', value: true },
-		{ key: 'No', value: false }
+		{ key: 'No', value: false },
 	];
 	defaultValueDateTypes: string[] = Object.values(DefaultValueDateTypeEnum);
 	defaultAlignmentTypes: string[] = Object.values(AlignmentOptions);
@@ -75,9 +126,36 @@ export class EditOrganizationOtherSettingsComponent extends NotesWithTagsCompone
 	regions = Object.values(RegionsEnum);
 
 	/*
-	* Organization Mutation Form
-	*/
-	public form: FormGroup = EditOrganizationOtherSettingsComponent.buildForm(this.fb);
+	 * Organization Mutation Form
+	 */
+	public form: FormGroup = EditOrganizationOtherSettingsComponent.buildForm(
+		this.fb
+	);
+
+	/*
+	 * Organization Task Setting
+	 */
+	public taskSettingForm: FormGroup =
+		EditOrganizationOtherSettingsComponent.buildTaskSettingForm(this.fb);
+
+	/**
+	 * Nebular Accordion Main Component
+	 */
+	accordion: NbAccordionComponent;
+
+	/**
+	 * Nebular Accordion Item Components
+	 */
+	@ViewChild('general') general: NbAccordionItemComponent;
+	@ViewChild('design') design: NbAccordionItemComponent;
+	@ViewChild('accounting') accounting: NbAccordionItemComponent;
+	@ViewChild('bonus') bonus: NbAccordionItemComponent;
+	@ViewChild('invites') invites: NbAccordionItemComponent;
+	@ViewChild('dateLimit') dateLimit: NbAccordionItemComponent;
+	@ViewChild('timer') timer: NbAccordionItemComponent;
+	@ViewChild('integrations') integrations: NbAccordionItemComponent;
+	@ViewChild('taskSetting') taskSetting: NbAccordionItemComponent;
+
 	static buildForm(fb: FormBuilder): FormGroup {
 		return fb.group({
 			name: [],
@@ -101,14 +179,14 @@ export class EditOrganizationOtherSettingsComponent extends NotesWithTagsCompone
 					new Date(`01/01/${new Date().getFullYear()}`),
 					'yyyy-MM-dd',
 					'en'
-				)
+				),
 			],
 			fiscalEndDate: [
 				formatDate(
 					new Date(`12/31/${new Date().getFullYear()}`),
 					'yyyy-MM-dd',
 					'en'
-				)
+				),
 			],
 			futureDateAllowed: [false],
 			allowManualTime: [],
@@ -136,47 +214,33 @@ export class EditOrganizationOtherSettingsComponent extends NotesWithTagsCompone
 			isDefault: [],
 			isRemoveIdleTime: [false],
 			allowScreenshotCapture: [true],
-			upworkOrganizationId: [null]
+			upworkOrganizationId: [null],
 		});
 	}
 
-	/**
-	 * Nebular Accordion Main Component
-	 */
-	accordion: NbAccordionComponent;
-	@ViewChild('accordion') set content(content: NbAccordionComponent) {
-		if (content) {
-			this.accordion = content;
-			this.cdr.detectChanges();
-		}
-	}
-
-	/**
-	 * Nebular Accordion Item Components
-	 */
-	@ViewChild('general') general: NbAccordionItemComponent;
-	@ViewChild('design') design: NbAccordionItemComponent;
-	@ViewChild('accounting') accounting: NbAccordionItemComponent;
-	@ViewChild('bonus') bonus: NbAccordionItemComponent;
-	@ViewChild('invites') invites: NbAccordionItemComponent;
-	@ViewChild('dateLimit') dateLimit: NbAccordionItemComponent;
-	@ViewChild('timer') timer: NbAccordionItemComponent;
-	@ViewChild('integrations') integrations: NbAccordionItemComponent;
-
-	constructor(
-		private readonly route: ActivatedRoute,
-		private readonly router: Router,
-		private readonly fb: FormBuilder,
-		private readonly cdr: ChangeDetectorRef,
-		private readonly organizationService: OrganizationsService,
-		private readonly toastrService: ToastrService,
-		private readonly organizationEditStore: OrganizationEditStore,
-		public readonly translateService: TranslateService,
-		private readonly store: Store,
-		private readonly accountingTemplateService: AccountingTemplateService,
-		public readonly themeService: NbThemeService
-	) {
-		super(themeService, translateService);
+	static buildTaskSettingForm(fb: FormBuilder): FormGroup {
+		return fb.group({
+			isTasksPrivacyEnabled: [],
+			isTasksMultipleAssigneesEnabled: [],
+			isTasksManualTimeEnabled: [],
+			isTasksGroupEstimationEnabled: [],
+			isTasksEstimationInHoursEnabled: [],
+			isTasksEstimationInStoryPointsEnabled: [],
+			isTasksProofOfCompletionEnabled: [],
+			tasksProofOfCompletionType: [], // Enum
+			isTasksLinkedEnabled: [],
+			isTasksCommentsEnabled: [],
+			isTasksHistoryEnabled: [],
+			isTasksAcceptanceCriteriaEnabled: [],
+			isTasksDraftsEnabled: [],
+			isTasksNotifyLeftEnabled: [],
+			tasksNotifyLeftPeriodDays: [],
+			isTasksAutoCloseEnabled: [],
+			tasksAutoClosePeriodDays: [],
+			isTasksAutoArchiveEnabled: [],
+			tasksAutoArchivePeriodDays: [],
+			isTasksAutoStatusEnabled: [],
+		});
 	}
 
 	ngOnInit(): void {
@@ -208,7 +272,10 @@ export class EditOrganizationOtherSettingsComponent extends NotesWithTagsCompone
 		const regionCode = <FormControl>this.form.get('regionCode');
 		regionCode.valueChanges
 			.pipe(
-				tap((value: IOrganization['regionCode']) => this.regionCode = value),
+				tap(
+					(value: IOrganization['regionCode']) =>
+						(this.regionCode = value)
+				),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -224,25 +291,31 @@ export class EditOrganizationOtherSettingsComponent extends NotesWithTagsCompone
 					this.onChangedBonusPercentage(bonusType as BonusTypeEnum);
 				}),
 				untilDestroyed(this)
-			).subscribe();
+			)
+			.subscribe();
 
 		/**
 		 * Emits an event every time the value of the control changes.
 		 * It also emits an event each time you call enable() or disable()
 		 */
-		const invitesAllowedControl = <FormControl>this.form.get('invitesAllowed');
+		const invitesAllowedControl = <FormControl>(
+			this.form.get('invitesAllowed')
+		);
 		invitesAllowedControl.valueChanges
 			.pipe(
 				tap((invitesAllowed: IOrganization['invitesAllowed']) => {
 					this.toggleInviteExpiryPeriod(invitesAllowed);
 				}),
 				untilDestroyed(this)
-			).subscribe();
+			)
+			.subscribe();
 	}
 
 	dateFormatPreview(format: string) {
 		if (format) {
-			return moment().locale(this.regionCode || RegionsEnum.EN).format(format);
+			return moment()
+				.locale(this.regionCode || RegionsEnum.EN)
+				.format(format);
 		}
 	}
 
@@ -263,7 +336,7 @@ export class EditOrganizationOtherSettingsComponent extends NotesWithTagsCompone
 		return number.toLocaleString(`${code}`, {
 			style: 'currency',
 			currency: `${format}`,
-			currencyDisplay: 'symbol'
+			currencyDisplay: 'symbol',
 		});
 	}
 
@@ -274,7 +347,7 @@ export class EditOrganizationOtherSettingsComponent extends NotesWithTagsCompone
 				if (organization) {
 					this.organizationEditStore.organizationAction = {
 						organization,
-						action: CrudActionEnum.UPDATED
+						action: CrudActionEnum.UPDATED,
 					};
 					this.store.selectedOrganization = organization;
 				}
@@ -287,7 +360,7 @@ export class EditOrganizationOtherSettingsComponent extends NotesWithTagsCompone
 		this.toastrService.success(
 			`TOASTR.MESSAGE.ORGANIZATION_SETTINGS_UPDATED`,
 			{
-				name: this.organization.name
+				name: this.organization.name,
 			}
 		);
 		this.goBack();
@@ -295,25 +368,33 @@ export class EditOrganizationOtherSettingsComponent extends NotesWithTagsCompone
 
 	goBack() {
 		this.router.navigate([
-			`/pages/organizations/edit/${this.organization.id}`
+			`/pages/organizations/edit/${this.organization.id}`,
 		]);
 	}
 
 	onChangedBonusPercentage(bonusType: BonusTypeEnum) {
-		const bonusPercentageControl = <FormControl>(this.form.get('bonusPercentage'));
+		const bonusPercentageControl = <FormControl>(
+			this.form.get('bonusPercentage')
+		);
 		if (bonusType) {
 			bonusPercentageControl.setValidators([
 				Validators.required,
 				Validators.min(0),
-				Validators.max(100)
+				Validators.max(100),
 			]);
 			switch (bonusType) {
 				case BonusTypeEnum.PROFIT_BASED_BONUS:
-					bonusPercentageControl.setValue(this.organization.bonusPercentage || DEFAULT_PROFIT_BASED_BONUS);
+					bonusPercentageControl.setValue(
+						this.organization.bonusPercentage ||
+							DEFAULT_PROFIT_BASED_BONUS
+					);
 					bonusPercentageControl.enable();
 					break;
 				case BonusTypeEnum.REVENUE_BASED_BONUS:
-					bonusPercentageControl.setValue(this.organization.bonusPercentage || DEFAULT_REVENUE_BASED_BONUS);
+					bonusPercentageControl.setValue(
+						this.organization.bonusPercentage ||
+							DEFAULT_REVENUE_BASED_BONUS
+					);
 					bonusPercentageControl.enable();
 					break;
 			}
@@ -333,20 +414,24 @@ export class EditOrganizationOtherSettingsComponent extends NotesWithTagsCompone
 	 * @returns
 	 */
 	toggleInviteExpiryPeriod(inviteExpiry: boolean) {
-		const inviteExpiryPeriodControl = <FormControl>this.form.get('inviteExpiryPeriod');
+		const inviteExpiryPeriodControl = <FormControl>(
+			this.form.get('inviteExpiryPeriod')
+		);
 		const { inviteExpiryPeriod } = this.organization;
 
 		if (inviteExpiry) {
 			inviteExpiryPeriodControl.enable();
 			inviteExpiryPeriodControl.setValidators([
 				Validators.required,
-				Validators.min(1)
+				Validators.min(1),
 			]);
 		} else {
 			inviteExpiryPeriodControl.disable();
 			inviteExpiryPeriodControl.setValidators(null);
 		}
-		inviteExpiryPeriodControl.setValue(inviteExpiryPeriod || DEFAULT_INVITE_EXPIRY_PERIOD);
+		inviteExpiryPeriodControl.setValue(
+			inviteExpiryPeriod || DEFAULT_INVITE_EXPIRY_PERIOD
+		);
 		inviteExpiryPeriodControl.updateValueAndValidity();
 	}
 
@@ -360,7 +445,7 @@ export class EditOrganizationOtherSettingsComponent extends NotesWithTagsCompone
 		const { items = [] } = await this.accountingTemplateService.getAll([], {
 			languageCode: this.store.preferredLanguage,
 			organizationId,
-			tenantId
+			tenantId,
 		});
 
 		items.forEach((template: IAccountingTemplate) => {
@@ -416,7 +501,7 @@ export class EditOrganizationOtherSettingsComponent extends NotesWithTagsCompone
 	 * @returns
 	 */
 	private _setFormValues() {
-		if (!this.organization) {
+		if (!this.organization || !this.organizationTaskSetting) {
 			return;
 		}
 		this.organizationEditStore.selectedOrganization = this.organization;
@@ -453,33 +538,97 @@ export class EditOrganizationOtherSettingsComponent extends NotesWithTagsCompone
 			requireTask: this.organization.requireTask,
 			requireClient: this.organization.requireClient,
 			timeFormat: this.organization.timeFormat,
-			separateInvoiceItemTaxAndDiscount: this.organization.separateInvoiceItemTaxAndDiscount,
-			defaultInvoiceEstimateTerms: this.organization.defaultInvoiceEstimateTerms,
+			separateInvoiceItemTaxAndDiscount:
+				this.organization.separateInvoiceItemTaxAndDiscount,
+			defaultInvoiceEstimateTerms:
+				this.organization.defaultInvoiceEstimateTerms,
 			fiscalInformation: this.organization.fiscalInformation,
 			currencyPosition: this.organization.currencyPosition,
 			discountAfterTax: this.organization.discountAfterTax,
-			convertAcceptedEstimates: this.organization.convertAcceptedEstimates,
+			convertAcceptedEstimates:
+				this.organization.convertAcceptedEstimates,
 			daysUntilDue: this.organization.daysUntilDue,
 			isDefault: this.organization.isDefault,
 			isRemoveIdleTime: this.organization.isRemoveIdleTime,
 			allowScreenshotCapture: this.organization.allowScreenshotCapture,
-			upworkOrganizationId: this.organization.upworkOrganizationId
+			upworkOrganizationId: this.organization.upworkOrganizationId,
 		});
 		this.form.updateValueAndValidity();
 
+		this.taskSettingForm.patchValue({
+			isTasksPrivacyEnabled:
+				this.organizationTaskSetting.isTasksPrivacyEnabled,
+			isTasksMultipleAssigneesEnabled:
+				this.organizationTaskSetting.isTasksMultipleAssigneesEnabled,
+			isTasksManualTimeEnabled:
+				this.organizationTaskSetting.isTasksManualTimeEnabled,
+			isTasksGroupEstimationEnabled:
+				this.organizationTaskSetting.isTasksGroupEstimationEnabled,
+			isTasksEstimationInHoursEnabled:
+				this.organizationTaskSetting.isTasksEstimationInHoursEnabled,
+			isTasksEstimationInStoryPointsEnabled:
+				this.organizationTaskSetting
+					.isTasksEstimationInStoryPointsEnabled,
+			isTasksProofOfCompletionEnabled:
+				this.organizationTaskSetting.isTasksProofOfCompletionEnabled,
+			tasksProofOfCompletionType:
+				this.organizationTaskSetting.tasksProofOfCompletionType, // Enum
+			isTasksLinkedEnabled:
+				this.organizationTaskSetting.isTasksLinkedEnabled,
+			isTasksCommentsEnabled:
+				this.organizationTaskSetting.isTasksCommentsEnabled,
+			isTasksHistoryEnabled:
+				this.organizationTaskSetting.isTasksHistoryEnabled,
+			isTasksAcceptanceCriteriaEnabled:
+				this.organizationTaskSetting.isTasksAcceptanceCriteriaEnabled,
+			isTasksDraftsEnabled:
+				this.organizationTaskSetting.isTasksDraftsEnabled,
+			isTasksNotifyLeftEnabled:
+				this.organizationTaskSetting.isTasksNotifyLeftEnabled,
+			tasksNotifyLeftPeriodDays:
+				this.organizationTaskSetting.tasksNotifyLeftPeriodDays,
+			isTasksAutoCloseEnabled:
+				this.organizationTaskSetting.isTasksAutoCloseEnabled,
+			tasksAutoClosePeriodDays:
+				this.organizationTaskSetting.tasksAutoClosePeriodDays,
+			isTasksAutoArchiveEnabled:
+				this.organizationTaskSetting.isTasksAutoArchiveEnabled,
+			tasksAutoArchivePeriodDays:
+				this.organizationTaskSetting.tasksAutoArchivePeriodDays,
+			isTasksAutoStatusEnabled:
+				this.organizationTaskSetting.isTasksAutoStatusEnabled,
+		});
 		/**
 		 * Default selected accounting templates dropdowns
 		 */
-		const invoiceTemplateControl = this.form.get('invoiceTemplate') as FormControl;
-		invoiceTemplateControl.setValue(this.selectedInvoiceTemplate ? this.selectedInvoiceTemplate.id : null);
+		const invoiceTemplateControl = this.form.get(
+			'invoiceTemplate'
+		) as FormControl;
+		invoiceTemplateControl.setValue(
+			this.selectedInvoiceTemplate
+				? this.selectedInvoiceTemplate.id
+				: null
+		);
 		invoiceTemplateControl.updateValueAndValidity();
 
-		const estimateTemplateControl = this.form.get('estimateTemplate') as FormControl;
-		estimateTemplateControl.setValue(this.selectedEstimateTemplate ? this.selectedEstimateTemplate.id : null);
+		const estimateTemplateControl = this.form.get(
+			'estimateTemplate'
+		) as FormControl;
+		estimateTemplateControl.setValue(
+			this.selectedEstimateTemplate
+				? this.selectedEstimateTemplate.id
+				: null
+		);
 		estimateTemplateControl.updateValueAndValidity();
 
-		const receiptTemplateControl = this.form.get('receiptTemplate') as FormControl;
-		receiptTemplateControl.setValue(this.selectedReceiptTemplate ? this.selectedReceiptTemplate.id : null);
+		const receiptTemplateControl = this.form.get(
+			'receiptTemplate'
+		) as FormControl;
+		receiptTemplateControl.setValue(
+			this.selectedReceiptTemplate
+				? this.selectedReceiptTemplate.id
+				: null
+		);
 		receiptTemplateControl.updateValueAndValidity();
 	}
 
@@ -489,32 +638,32 @@ export class EditOrganizationOtherSettingsComponent extends NotesWithTagsCompone
 	 * @returns
 	 */
 	private _setDefaultAccountingTemplates() {
-		if (!this.organization || isEmpty(this.organization.accountingTemplates)) {
+		if (
+			!this.organization ||
+			isEmpty(this.organization.accountingTemplates)
+		) {
 			return;
 		}
 		if (this.organization.accountingTemplates) {
-			this.organization.accountingTemplates.forEach((template: IAccountingTemplate) => {
-				switch (template.templateType) {
-					case AccountingTemplateTypeEnum.INVOICE:
-						this.selectedInvoiceTemplate = template;
-						break;
-					case AccountingTemplateTypeEnum.ESTIMATE:
-						this.selectedEstimateTemplate = template;
-						break;
-					case AccountingTemplateTypeEnum.RECEIPT:
-						this.selectedReceiptTemplate = template;
-						break;
-					default:
-						break;
+			this.organization.accountingTemplates.forEach(
+				(template: IAccountingTemplate) => {
+					switch (template.templateType) {
+						case AccountingTemplateTypeEnum.INVOICE:
+							this.selectedInvoiceTemplate = template;
+							break;
+						case AccountingTemplateTypeEnum.ESTIMATE:
+							this.selectedEstimateTemplate = template;
+							break;
+						case AccountingTemplateTypeEnum.RECEIPT:
+							this.selectedReceiptTemplate = template;
+							break;
+						default:
+							break;
+					}
 				}
-			});
+			);
 		}
 	}
 
-	public get isTrackInactivity(): boolean {
-		return this.form.get('allowTrackInactivity').value;
-	}
-
-	ngOnDestroy(): void {
-	}
+	ngOnDestroy(): void {}
 }

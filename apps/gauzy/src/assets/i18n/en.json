@@ -1863,7 +1863,24 @@
 				"DELETE_IDLE_TIME": "Enable deletion of idle time",
 				"DELETE_IDLE_TIME_INFO": "Enable - the system will delete idle time. Disable - the system will not delete idle time",
 				"ALLOW_SCREEN_CAPTURE": "Allow Screen Capture",
-				"ALLOW_SCREEN_CAPTURE_INFO": "Enable - the timer will take screenshot. Disable - the timer will run without to take screenshot for all organization members"
+				"ALLOW_SCREEN_CAPTURE_INFO": "Enable - the timer will take screenshot. Disable - the timer will run without to take screenshot for all organization members",
+				"TASK_SETTING":"Task Settings",
+				"TASK_PRIVACY":"Task Privacy",
+				"MULTIPLE_ASSIGNEE":"Multiple Assignees",
+				"MANUAL_TIME":"Manual Time",
+				"GROUP_ESTIMATION":"Group Estimation",
+				"ESTIMATION_IN_HOUR":"Estimation in hour",
+				"ESTIMATION_IN_STORY_POINT":"Estimation in story point",
+				"PROOF_OF_COMPLETION":"Proof of Completion",
+				"LINKED_ISSUE":"Linked Issue",
+				"COMMENT":"Comment",
+				"HISTORY":"History",
+				"ACCEPTANCE_CRITERIA":"Acceptance Criteria",
+				"DRAFT_ISSUE":"Draft Issues",
+				"AUTO_CLOSE_ISSUE":"Auto Close Issue",
+				"AUTO_ARCHIEVE_ISSUE":"Auto Archieve Issue",
+				"AUTO_STATUS":"Auto Status"
+
 			},
 			"TEAMS_PAGE": {
 				"MANAGERS": "Managers",
