@@ -176,7 +176,6 @@ export * from './../../tasks/sizes/size.subscriber';
 export * from './../../tasks/related-issue-type/related-issue-type.subscriber';
 export * from './../../tasks/statuses/status.subscriber';
 export * from './../../tasks/versions/version.subscriber';
-export * from './../../tasks/estimation/task-estimation.subscriber';
 export * from './../../tasks/task.subscriber';
 export * from './../../tenant/tenant.subscriber';
 export * from './../../time-off-request/time-off-request.subscriber';

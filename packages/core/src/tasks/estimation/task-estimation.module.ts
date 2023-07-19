@@ -9,6 +9,7 @@ import { TaskEstimationController } from './task-estimation.controller';
 import { TaskEstimationService } from './task-estimation.service';
 import { UserModule } from '../../user/user.module';
 import { TaskModule } from '../task.module';
+import { CommandHandlers } from './commands/handlers';
 
 @Module({
 	imports: [
@@ -22,7 +23,7 @@ import { TaskModule } from '../task.module';
 		TaskModule,
 	],
 	controllers: [TaskEstimationController],
-	providers: [TaskEstimationService],
+	providers: [TaskEstimationService, ...CommandHandlers],
 	exports: [TaskEstimationService],
 })
 export class TaskEstimationModule {}
