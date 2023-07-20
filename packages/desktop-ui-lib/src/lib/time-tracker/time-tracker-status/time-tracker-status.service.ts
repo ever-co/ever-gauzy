@@ -2,7 +2,19 @@ import { Injectable } from '@angular/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { distinctUntilChange } from '@gauzy/common-angular';
 import { ITimerStatus } from '@gauzy/contracts';
-import { BehaviorSubject, filter, Observable, Subject, tap, timer } from 'rxjs';
+import {
+	BehaviorSubject,
+	defer,
+	EMPTY,
+	from,
+	Observable,
+	of,
+	repeat,
+	Subject,
+	switchMap,
+	tap,
+	timer,
+} from 'rxjs';
 import { TimerIconFactory } from './factory';
 import { ITimerIcon, IRemoteTimer } from './interfaces';
 import { RemoteTimer } from './concretes';
@@ -17,21 +29,36 @@ import { BACKGROUND_SYNC_INTERVAL } from '../../constants/app.constants';
 export class TimeTrackerStatusService {
 	private _icon$: BehaviorSubject<ITimerIcon> = new BehaviorSubject<ITimerIcon>(null);
 	private _external$: Subject<IRemoteTimer> = new Subject<IRemoteTimer>();
-	private _backgroundSync$: Observable<number> = timer(0, BACKGROUND_SYNC_INTERVAL);
+	private _backgroundSync$: Observable<number> = timer(BACKGROUND_SYNC_INTERVAL);
 	private _remoteTimer: IRemoteTimer;
-	constructor(private readonly _timeTrackerService: TimeTrackerService, private readonly _store: Store) {
-		this._backgroundSync$
+	constructor(
+		private readonly _timeTrackerService: TimeTrackerService,
+		private readonly _store: Store
+	) {
+		defer(() =>
+			of<boolean>(
+				!!this._store.token && !this._store.isOffline
+			).pipe(
+				switchMap((isEmployeeLoggedIn: boolean) =>
+					isEmployeeLoggedIn ? from(this.status()) : EMPTY
+				)
+			)
+		)
 			.pipe(
-				filter(() => !!this._store.token && !this._store.isOffline),
-				tap(async () => {
-					const status = await this.status();
+				tap((status: ITimerStatus) => {
 					const remoteTimer = new RemoteTimer({
 						...status.lastLog,
-						duration: status.duration
+						duration: status.duration,
 					});
-					this._icon$.next(TimerIconFactory.create(remoteTimer.source));
-					if (!remoteTimer.running || !remoteTimer.isExternalSource) this._icon$.next(null);
+					this._icon$.next(
+						TimerIconFactory.create(remoteTimer.source)
+					);
+					if (!remoteTimer.running || !remoteTimer.isExternalSource)
+						this._icon$.next(null);
 					this._external$.next(remoteTimer);
+				}),
+				repeat({
+					delay: () => this._backgroundSync$,
 				}),
 				untilDestroyed(this)
 			)
