@@ -404,7 +404,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 				await this.getProjects(arg);
 				await this.getTask(arg);
 				await this.getTodayTime(arg);
-				await this.setTimerDetails(arg);
+				await this.setTimerDetails();
 				if (arg.timeSlotId) {
 					await this.getLastTimeSlotImage(arg);
 				}
@@ -418,7 +418,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 				this.projectSelect = arg.projectId;
 				this.note = arg.note;
 				this._aw$.next(arg.aw && arg.aw.isAw ? arg.aw.isAw : false);
-				await this.setTimerDetails(arg);
+				await this.setTimerDetails();
 				await this.toggleStart(true);
 			})
 		);
@@ -506,7 +506,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 		this.electronService.ipcRenderer.on('get_user_detail', (event, arg) =>
 			this._ngZone.run(async () => {
 				try {
-					const res = await this.timeTrackerService.getUserDetail(arg);
+					const res = await this.timeTrackerService.getUserDetail();
 					if (res) {
 						event.sender.send('user_detail', res);
 					}
@@ -1253,9 +1253,9 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 		}
 	}
 
-	public async setTimerDetails(arg): Promise<void> {
+	public async setTimerDetails(): Promise<void> {
 		try {
-			const res: any = await this.timeTrackerService.getUserDetail(arg);
+			const res: any = await this.timeTrackerService.getUserDetail();
 			if (res.employee && res.employee.organization) {
 				this.userData = res;
 				if (res.role && res.role.rolePermissions) {

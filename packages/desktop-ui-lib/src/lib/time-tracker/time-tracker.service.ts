@@ -172,8 +172,8 @@ export class TimeTrackerService {
 		return firstValueFrom(clients$);
 	}
 
-	getUserDetail(values) {
-		return this._userOrganizationService.detail(values);
+	getUserDetail() {
+		return this._userOrganizationService.detail();
 	}
 
 	async getTimeLogs(values) {
@@ -519,7 +519,7 @@ export class TimeTrackerService {
 	createNewProject(createInput: IOrganizationProjectsCreateInput, data): Promise<IOrganizationProject> {
 		return firstValueFrom(
 			this.http
-				.post<IOrganizationProject>(data.apiHost + '/api/organization-projects', createInput)
+				.post<IOrganizationProject>(`${API_PREFIX}/organization-projects`, createInput)
 				.pipe(tap(() => this._projectCacheService.clear()))
 		);
 	}
