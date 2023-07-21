@@ -89,7 +89,7 @@ export class TimeTrackerService implements OnDestroy {
 	public trackType$: Observable<string> = this._trackType$.asObservable();
 	private _worker: Worker;
 	private _timerSynced: ITimerSynced;
-	public timer$: Observable<number> = timer(0, BACKGROUND_SYNC_INTERVAL);
+	public timer$: Observable<number> = timer(BACKGROUND_SYNC_INTERVAL);
 
 	constructor(
 		protected timerStore: TimerStore,

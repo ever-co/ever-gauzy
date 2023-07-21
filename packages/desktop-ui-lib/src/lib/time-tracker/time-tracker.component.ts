@@ -658,7 +658,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 				this._ngZone.run(async () => {
 					if (
 						this._isLockSyncProcess ||
-						this._timeTrackerStatus.remoteTimer.isExternalSource ||
+						this._timeTrackerStatus.remoteTimer?.isExternalSource ||
 						this._startMode === TimerStartMode.REMOTE
 					) {
 						return;
@@ -1515,7 +1515,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 
 	public async sendActivities(arg): Promise<void> {
 		if (
-			this._timeTrackerStatus.remoteTimer.isExternalSource ||
+			this._timeTrackerStatus.remoteTimer?.isExternalSource ||
 			this._startMode === TimerStartMode.REMOTE
 		) {
 			return;
