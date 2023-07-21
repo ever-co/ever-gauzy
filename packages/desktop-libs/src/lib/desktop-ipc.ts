@@ -136,27 +136,32 @@ export function ipcMainHandler(
 
 	ipcMain.on('time_tracker_ready', async (event, arg) => {
 		const auth = LocalStore.getStore('auth');
+		const logout = async () => {
+			await userService.remove();
+			timeTrackerWindow.webContents.send('logout');
+			LocalStore.updateAuthSetting({ isLogout: true });
+		}
 		if (auth && auth.userId) {
 			try {
 				const user = await userService.retrieve();
 				console.log('Current User', user);
 				if (user) {
 					if (auth.userId !== user.remoteId) {
-						timeTrackerWindow.webContents.send('logout');
+						await logout();
 					}
 				} else {
-					const userService = new UserService();
 					const user = new User({ ...auth });
 					user.remoteId = auth.userId;
 					user.organizationId = auth.organizationId;
 					await userService.save(user.toObject());
+					LocalStore.updateAuthSetting({ isLogout: false });
 				}
 			} catch (error) {
-				timeTrackerWindow.webContents.send('logout');
+				await logout();
 				console.log('[ERROR_ON_INIT]', error);
 			}
 		} else {
-			timeTrackerWindow.webContents.send('logout');
+			await logout();
 			return;
 		}
 		try {
@@ -675,6 +680,7 @@ export function ipcTimer(
 		try {
 			console.log('masuk logout main');
 			await userService.remove();
+			LocalStore.updateAuthSetting({ isLogout: true });
 			timeTrackerWindow.webContents.send('logout', arg);
 		} catch (error) {
 			console.log('Error', error);
