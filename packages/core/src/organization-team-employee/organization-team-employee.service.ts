@@ -64,7 +64,11 @@ export class OrganizationTeamEmployeeService extends TenantAwareCrudService<Orga
 			.forEach(async (member: IOrganizationTeamEmployee) => {
 				const { id, employeeId } = member;
 				await this.repository.update(id, {
-					role: managerIds.includes(employeeId) ? role : null,
+					role: managerIds.includes(employeeId)
+						? role
+						: member.role.id !== role.id // Check if current member's role is not same as role(params)
+						? member.role // Keep old role as it is, to avoid setting null while updating team.(PUT /organization-team API)
+						: null, // When the employeeId is not present in managerIds and the employee does not already have a MANAGER role.
 				});
 			});
 
@@ -159,16 +163,18 @@ export class OrganizationTeamEmployeeService extends TenantAwareCrudService<Orga
 			const { organizationId, organizationTeamId } = options;
 			const tenantId = RequestContext.currentTenantId();
 
-			if (RequestContext.hasPermission(
-				PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
-			)) {
+			if (
+				RequestContext.hasPermission(
+					PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
+				)
+			) {
 				const member = await this.repository.findOneOrFail({
 					where: {
 						id: memberId,
 						tenantId,
 						organizationId,
 						organizationTeamId,
-					}
+					},
 				});
 				await this.taskService.unassignEmployeeFromTeamTasks(
 					member.employeeId,
@@ -185,7 +191,7 @@ export class OrganizationTeamEmployeeService extends TenantAwareCrudService<Orga
 							organizationId,
 							organizationTeamId,
 							role: {
-								name: RolesEnum.MANAGER
+								name: RolesEnum.MANAGER,
 							},
 						});
 						member = await this.repository.findOneOrFail({
@@ -203,7 +209,7 @@ export class OrganizationTeamEmployeeService extends TenantAwareCrudService<Orga
 								employeeId,
 								organizationId,
 								tenantId,
-								organizationTeamId
+								organizationTeamId,
 							},
 						});
 					}
