@@ -145,7 +145,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 				type: 'text',
 				valuePrepareFunction: (due) => {
 					return moment(due).format(
-						this.userData ? this.userData.employee.organization.dateFormat : 'YYYY-MM-DD'
+						this.userData ? this.userData?.employee?.organization?.dateFormat : 'YYYY-MM-DD'
 					);
 				}
 			}
@@ -572,6 +572,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 				if (this.isExpand) this.expand();
 				if (this.start) await this.stopTimer();
 				if (arg) event.sender.send('restart_and_update');
+				localStorage.clear();
 			})
 		);
 
@@ -1771,7 +1772,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 	private _passedAllAuthorizations(): boolean {
 		let isPassed = false;
 		// Verify if tracking is enabled
-		if (!this.userData.employee.isTrackingEnabled) {
+		if (!this.userData?.employee?.isTrackingEnabled) {
 			this.toastrService.show("Your can't run timer for the moment", `Warning`, {
 				status: 'danger'
 			});
@@ -1779,18 +1780,18 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 		}
 		// Verify work status of user
 		else if (
-			!this.userData.employee.startedWorkOn ||
-			!this.userData.employee.isActive ||
-			this.userData.employee.workStatus
+			!this.userData?.employee?.startedWorkOn ||
+			!this.userData?.employee?.isActive ||
+			this.userData?.employee?.workStatus
 		) {
 			// Verify if user are already started to work for organization, if yes you can run time tracker else no
-			if (!this.userData.employee.startedWorkOn) {
+			if (!this.userData?.employee?.startedWorkOn) {
 				this.toastrService.show('Your are not authorized to work', `Warning`, {
 					status: 'danger'
 				});
 			}
 			// Verify if user are deleted for organization, if yes can't run time tracker
-			if (this.userData.employee.startedWorkOn && !this.userData.employee.isActive) {
+			if (this.userData?.employee?.startedWorkOn && !this.userData?.employee?.isActive) {
 				this.toastrService.show('Your account it already deleted', `Warning`, {
 					status: 'danger'
 				});
