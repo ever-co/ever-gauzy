@@ -4,6 +4,7 @@ import { distinctUntilChange } from '@gauzy/common-angular';
 import { IEmployee, ITimerStatus, IUser } from '@gauzy/contracts';
 import {
 	BehaviorSubject,
+	catchError,
 	defer,
 	EMPTY,
 	filter,
@@ -40,9 +41,13 @@ export class TimeTrackerStatusService {
 			).pipe(
 				switchMap((isEmployeeLoggedIn: boolean) =>
 					isEmployeeLoggedIn
-						? from(this.status())
+						? from(this.status()).pipe(
+							catchError(() => EMPTY),
+							untilDestroyed(this)
+						)
 						: EMPTY
-				)
+				),
+				untilDestroyed(this)
 			)
 		)
 			.pipe(
