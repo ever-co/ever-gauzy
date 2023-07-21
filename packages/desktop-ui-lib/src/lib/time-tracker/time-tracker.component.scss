@@ -41,6 +41,10 @@
   &.expanded {
     max-width: 360px !important;
   }
+
+  &.collapsed {
+	width: 100%;
+  }
 }
 
 .search {

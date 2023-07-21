@@ -32,7 +32,7 @@ import {
 	TenantSubscriber,
 	TimeOffRequestSubscriber,
 	TimeSlotSubscriber,
-	UserSubscriber
+	UserSubscriber,
 } from './internal';
 
 /**

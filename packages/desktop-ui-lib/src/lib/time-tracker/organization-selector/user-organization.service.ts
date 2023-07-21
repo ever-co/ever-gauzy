@@ -8,6 +8,7 @@ import { toParams } from '@gauzy/common-angular';
 import { firstValueFrom, map, shareReplay } from 'rxjs';
 import { OrganizationsCacheService } from '../../services/organizations-cache.service';
 import { UserOrganizationCacheService } from '../../services/user-organization-cache.service';
+import { API_PREFIX } from '../../constants/app.constants';
 
 @Injectable({
 	providedIn: 'root',
@@ -21,8 +22,7 @@ export class UserOrganizationService {
 
 	public all(
 		relations?: string[],
-		findInput?: IUserOrganizationFindInput,
-		config?
+		findInput?: IUserOrganizationFindInput
 	): Promise<{ items: IUserOrganization[]; total: number }> {
 		const data = JSON.stringify({ relations, findInput });
 		let usersOrganizations$ =
@@ -32,7 +32,7 @@ export class UserOrganizationService {
 				.get<{
 					items: IUserOrganization[];
 					total: number;
-				}>(`${config.apiHost}/api/user-organization`, {
+				}>(`${API_PREFIX}/user-organization`, {
 					params: { data }
 				})
 				.pipe(
@@ -47,7 +47,7 @@ export class UserOrganizationService {
 		return firstValueFrom(usersOrganizations$);
 	}
 
-	public async detail(values): Promise<IUserOrganization> {
+	public async detail(): Promise<IUserOrganization> {
 		const params = toParams({
 			relations: [
 				'tenant',
@@ -61,7 +61,7 @@ export class UserOrganizationService {
 			this._userOrganizationCacheService.getValue('me');
 		if (!userOrganizations$) {
 			userOrganizations$ = this._http
-				.get<IUserOrganization>(`${values.apiHost}/api/user/me`, {
+				.get<IUserOrganization>(`${API_PREFIX}/user/me`, {
 					params
 				})
 				.pipe(
