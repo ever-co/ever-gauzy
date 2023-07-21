@@ -10,7 +10,16 @@ import {
 	Index,
 } from 'typeorm';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsArray, IsBoolean, IsNotEmpty, IsNumber, IsObject, IsOptional, IsString, IsUUID } from 'class-validator';
+import {
+	IsArray,
+	IsBoolean,
+	IsNotEmpty,
+	IsNumber,
+	IsObject,
+	IsOptional,
+	IsString,
+	IsUUID,
+} from 'class-validator';
 import {
 	IActivity,
 	IEmployee,
@@ -37,13 +46,13 @@ import {
 	TenantOrganizationBaseEntity,
 	TimeLog,
 	User,
+	TaskEstimation,
+	TaskLinkedIssue,
 } from '../core/entities/internal';
 
 @Entity('task')
 @Index('taskNumber', ['projectId', 'number'], { unique: true })
-export class Task extends TenantOrganizationBaseEntity
-	implements ITask {
-
+export class Task extends TenantOrganizationBaseEntity implements ITask {
 	@Column({ nullable: true })
 	number?: number;
 
@@ -137,6 +146,23 @@ export class Task extends TenantOrganizationBaseEntity
 	| @ManyToOne
 	|--------------------------------------------------------------------------
 	*/
+
+	// Define the parent-child relationship
+	@ApiPropertyOptional({ type: () => Task })
+	@IsOptional()
+	@IsObject()
+	@ManyToOne(() => Task, (task) => task.children, {
+		onDelete: 'SET NULL',
+	})
+	parent?: Task;
+
+	// Define the parent-child relationship
+	@ApiPropertyOptional({ type: () => String })
+	@IsOptional()
+	@IsUUID()
+	@Column({ nullable: true })
+	parentId?: Task['id'];
+
 	/**
 	 * Organization Project
 	 */
@@ -195,6 +221,19 @@ export class Task extends TenantOrganizationBaseEntity
 	| @OneToMany
 	|--------------------------------------------------------------------------
 	*/
+
+	/**
+	 * Estimations
+	 */
+	@OneToMany(() => TaskEstimation, (it) => it.task)
+	estimations?: TaskEstimation[];
+
+	/**
+	 * Children Tasks
+	 */
+	@OneToMany(() => Task, (task) => task.parent)
+	children?: Task[];
+
 	/**
 	 * InvoiceItem
 	 */
@@ -215,6 +254,13 @@ export class Task extends TenantOrganizationBaseEntity
 	@OneToMany(() => Activity, (activity) => activity.task)
 	@JoinColumn()
 	activities?: IActivity[];
+
+	/**
+	 * Linked Task Issues
+	 */
+	@OneToMany(() => TaskLinkedIssue, (it) => it.taskTo)
+	@JoinColumn()
+	linkedIssues?: TaskLinkedIssue[];
 
 	/*
 	|--------------------------------------------------------------------------

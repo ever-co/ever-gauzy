@@ -1,12 +1,4 @@
-import {
-	Component,
-	OnInit,
-	ViewChild,
-	Input,
-	OnDestroy,
-	ChangeDetectorRef,
-	TemplateRef
-} from '@angular/core';
+import { Component, OnInit, ViewChild, Input, OnDestroy, ChangeDetectorRef, TemplateRef } from '@angular/core';
 import { ActivatedRoute, Data, ParamMap, Router } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import {
@@ -37,11 +29,7 @@ import {
 } from '../../@core/services';
 import { API_PREFIX, ComponentEnum } from '../../@core/constants';
 import { DeleteConfirmationComponent } from '../../@shared/user/forms';
-import {
-	ContactWithTagsComponent,
-	EmployeeWithLinksComponent,
-	ProjectComponent
-} from '../../@shared/table-components';
+import { ContactWithTagsComponent, EmployeeWithLinksComponent, ProjectComponent } from '../../@shared/table-components';
 import {
 	IPaginationBase,
 	PaginationFilterBaseComponent
@@ -51,13 +39,11 @@ import { InputFilterComponent } from '../../@shared/table-filters';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ga-contacts',
+	selector: 'ngx-contacts-list',
 	templateUrl: './contacts.component.html',
 	styleUrls: ['./contacts.component.scss']
 })
-export class ContactsComponent extends PaginationFilterBaseComponent
-	implements OnInit, OnDestroy {
-
+export class ContactsComponent extends PaginationFilterBaseComponent implements OnInit, OnDestroy {
 	showAddCard: boolean;
 	organizationContacts: IOrganizationContact[] = [];
 	projectsWithoutOrganizationContacts: IOrganizationProject[] = [];
@@ -68,8 +54,8 @@ export class ContactsComponent extends PaginationFilterBaseComponent
 	contactOrganizationInviteStatus = ContactOrganizationInviteStatus;
 	settingsSmartTable: object;
 	countries: ICountry[] = [];
-	disableButton: boolean = true;
-	loading: boolean = false;
+	disableButton = true;
+	loading = false;
 	smartTableSource: ServerDataSource;
 
 	contacts$: Subject<any> = this.subject$;
@@ -133,8 +119,10 @@ export class ContactsComponent extends PaginationFilterBaseComponent
 			.pipe(
 				debounceTime(100),
 				tap(() => this.clearItem()),
-				tap(() => this.getContacts()),
-				tap(() => this.loadProjectsWithoutOrganizationContacts()),
+				tap(async () => {
+					await this.loadProjectsWithoutOrganizationContacts();
+					await this.getContacts();
+				}),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -165,9 +153,7 @@ export class ContactsComponent extends PaginationFilterBaseComponent
 		this.route.queryParamMap
 			.pipe(
 				filter((params: ParamMap) => !!params),
-				filter(
-					(params: ParamMap) => params.get('openAddDialog') === 'true'
-				),
+				filter((params: ParamMap) => params.get('openAddDialog') === 'true'),
 				debounceTime(1000),
 				tap(() => this.add()),
 				untilDestroyed(this)
@@ -177,9 +163,7 @@ export class ContactsComponent extends PaginationFilterBaseComponent
 			.pipe(
 				filter((params: ParamMap) => !!params),
 				filter((params: ParamMap) => !!params.get('id')),
-				tap((params: ParamMap) =>
-					this._initEditMethod(params.get('id'))
-				),
+				tap(async (params: ParamMap) => await this._initEditMethod(params.get('id'))),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -191,11 +175,7 @@ export class ContactsComponent extends PaginationFilterBaseComponent
 			.subscribe();
 		this._refresh$
 			.pipe(
-				filter(
-					() =>
-						this.dataLayoutStyle ===
-						ComponentLayoutStyleEnum.CARDS_GRID
-				),
+				filter(() => this.dataLayoutStyle === ComponentLayoutStyleEnum.CARDS_GRID),
 				tap(() => this.refreshPagination()),
 				tap(() => (this.organizationContacts = [])),
 				untilDestroyed(this)
@@ -203,31 +183,27 @@ export class ContactsComponent extends PaginationFilterBaseComponent
 			.subscribe();
 	}
 
-	private _initEditMethod(id: string) {
+	private async _initEditMethod(id: string) {
 		if (id) {
+			this.loading = true;
 			const { tenantId } = this.store.user;
-			this.organizationContactService
-				.getById(id, tenantId, [
+			try {
+				const items = await this.organizationContactService.getById(id, tenantId, [
 					'projects',
 					'members',
 					'members.user',
 					'tags',
 					'contact'
-				])
-				.then((items) => {
-					if (items) {
-						this.editOrganizationContact(items);
-					}
-				})
-				.catch(() => {
-					this.toastrService.danger(
-						this.getTranslation('TOASTR.TITLE.ERROR')
-					);
-				})
-				.finally(() => {
-					this.loading = false;
-					this.cd.detectChanges();
-				});
+				]);
+
+				if (items) {
+					this.editOrganizationContact(items);
+				}
+			} catch (error) {
+				this.toastrService.danger(this.getTranslation('TOASTR.TITLE.ERROR'));
+			}
+			this.loading = false;
+			this.cd.detectChanges();
 		}
 	}
 
@@ -256,9 +232,7 @@ export class ContactsComponent extends PaginationFilterBaseComponent
 					}
 				},
 				members: {
-					title: this.getTranslation(
-						'ORGANIZATIONS_PAGE.EDIT.TEAMS_PAGE.MEMBERS'
-					),
+					title: this.getTranslation('ORGANIZATIONS_PAGE.EDIT.TEAMS_PAGE.MEMBERS'),
 					type: 'custom',
 					renderComponent: EmployeeWithLinksComponent,
 					filter: false
@@ -350,19 +324,12 @@ export class ContactsComponent extends PaginationFilterBaseComponent
 
 		if (result) {
 			await this.organizationContactService.delete(
-				this.selectedOrganizationContact
-					? this.selectedOrganizationContact.id
-					: id
+				this.selectedOrganizationContact ? this.selectedOrganizationContact.id : id
 			);
 
-			this.toastrService.success(
-				'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_CONTACTS.REMOVE_CONTACT',
-				{
-					name: this.selectedOrganizationContact
-						? this.selectedOrganizationContact.name
-						: name
-				}
-			);
+			this.toastrService.success('NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_CONTACTS.REMOVE_CONTACT', {
+				name: this.selectedOrganizationContact ? this.selectedOrganizationContact.name : name
+			});
 			this._refresh$.next(true);
 			this.contacts$.next(true);
 		}
@@ -384,15 +351,9 @@ export class ContactsComponent extends PaginationFilterBaseComponent
 			.componentLayout$(this.viewComponentName)
 			.pipe(
 				distinctUntilChange(),
-				tap(
-					(componentLayout) =>
-						(this.dataLayoutStyle = componentLayout)
-				),
+				tap((componentLayout) => (this.dataLayoutStyle = componentLayout)),
 				tap(() => this.refreshPagination()),
-				filter(
-					(componentLayout) =>
-						componentLayout === ComponentLayoutStyleEnum.CARDS_GRID
-				),
+				filter((componentLayout) => componentLayout === ComponentLayoutStyleEnum.CARDS_GRID),
 				tap(() => (this.organizationContacts = [])),
 				tap(() => this.contacts$.next(true)),
 				untilDestroyed(this)
@@ -400,9 +361,7 @@ export class ContactsComponent extends PaginationFilterBaseComponent
 			.subscribe();
 	}
 
-	public async addOrEditOrganizationContact(
-		organizationContact: IOrganizationContactCreateInput
-	) {
+	public async addOrEditOrganizationContact(organizationContact: IOrganizationContactCreateInput) {
 		const contact: IContact = {
 			country: organizationContact.country,
 			city: organizationContact.city,
@@ -452,7 +411,6 @@ export class ContactsComponent extends PaginationFilterBaseComponent
 		if (!this.organization) {
 			return;
 		}
-		this.loading = true;
 
 		const { tenantId } = this.store.user;
 		const { id: organizationId } = this.organization;
@@ -460,15 +418,7 @@ export class ContactsComponent extends PaginationFilterBaseComponent
 		try {
 			this.smartTableSource = new ServerDataSource(this.http, {
 				endPoint: `${API_PREFIX}/organization-contact/pagination`,
-				relations: [
-					'projects',
-					'projects.members',
-					'projects.organization',
-					'members',
-					'members.user',
-					'tags',
-					'contact'
-				],
+				relations: ['projects.members', 'members.user', 'tags', 'contact'],
 				join: {
 					alias: 'organization_contact',
 					leftJoin: {
@@ -481,8 +431,8 @@ export class ContactsComponent extends PaginationFilterBaseComponent
 					contactType: this.contactType,
 					...(this.selectedEmployeeId
 						? {
-							members: [this.selectedEmployeeId]
-						}
+								members: [this.selectedEmployeeId]
+						  }
 						: {}),
 					...(this.filters.where ? this.filters.where : {})
 				},
@@ -491,17 +441,11 @@ export class ContactsComponent extends PaginationFilterBaseComponent
 						country: contact.contact ? contact.contact.country : '',
 						city: contact.contact ? contact.contact.city : '',
 						street: contact.contact ? contact.contact.address : '',
-						street2: contact.contact
-							? contact.contact.address2
-							: '',
-						postcode: contact.contact
-							? contact.contact.postcode
-							: null,
+						street2: contact.contact ? contact.contact.address2 : '',
+						postcode: contact.contact ? contact.contact.postcode : null,
 						fax: contact.contact ? contact.contact.fax : '',
 						website: contact.contact ? contact.contact.website : '',
-						fiscalInformation: contact.contact
-							? contact.contact.fiscalInformation
-							: ''
+						fiscalInformation: contact.contact ? contact.contact.fiscalInformation : ''
 					});
 				},
 				finalize: () => {
@@ -513,9 +457,7 @@ export class ContactsComponent extends PaginationFilterBaseComponent
 				}
 			});
 		} catch (error) {
-			this.toastrService.danger(
-				this.getTranslation('TOASTR.TITLE.ERROR')
-			);
+			this.toastrService.danger(this.getTranslation('TOASTR.TITLE.ERROR'));
 		}
 	}
 
@@ -537,9 +479,7 @@ export class ContactsComponent extends PaginationFilterBaseComponent
 
 	private async _loadGridLayoutData() {
 		if (this.dataLayoutStyle === ComponentLayoutStyleEnum.CARDS_GRID) {
-			this.organizationContacts.push(
-				...(await this.smartTableSource.getElements())
-			);
+			this.organizationContacts.push(...(await this.smartTableSource.getElements()));
 		}
 	}
 
@@ -547,31 +487,24 @@ export class ContactsComponent extends PaginationFilterBaseComponent
 		if (!this.organization) {
 			return;
 		}
-
+		this.loading = true;
 		const { tenantId } = this.store.user;
 		const { id: organizationId } = this.organization;
-
-		this.organizationProjectsService
-			.getAll(['organizationContact'], {
+		try {
+			const { items } = await this.organizationProjectsService.getAll(['organizationContact'], {
 				organizationId,
 				tenantId,
 				organizationContactId: null
-			})
-			.then(({ items }) => {
-				this.projectsWithoutOrganizationContacts = items;
-			})
-			.catch(() => {
-				this.toastrService.danger(
-					this.getTranslation('TOASTR.TITLE.ERROR')
-				);
-			})
-			.finally(() => {
-				this.loading = false;
-				this.cd.detectChanges();
 			});
+			this.projectsWithoutOrganizationContacts = items;
+		} catch (error) {
+			this.toastrService.danger(this.getTranslation('TOASTR.TITLE.ERROR'));
+		}
+		this.cd.detectChanges();
 	}
 
 	cancel() {
+		this.loading = true;
 		this.selectedOrganizationContact = null;
 		this.showAddCard = !this.showAddCard;
 	}
@@ -580,6 +513,7 @@ export class ContactsComponent extends PaginationFilterBaseComponent
 		await this.loadProjectsWithoutOrganizationContacts();
 		this.selectedOrganizationContact = organizationContact;
 		this.showAddCard = true;
+		this.loading = false;
 	}
 
 	async add() {
@@ -623,17 +557,12 @@ export class ContactsComponent extends PaginationFilterBaseComponent
 			if (result) {
 				this._refresh$.next(true);
 				this.contacts$.next(true);
-				this.toastrService.success(
-					'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_CONTACTS.INVITE_CONTACT',
-					{
-						name: result.name
-					}
-				);
+				this.toastrService.success('NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_CONTACTS.INVITE_CONTACT', {
+					name: result.name
+				});
 			}
 		} catch (error) {
-			this.toastrService.danger(
-				'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_CONTACTS.INVITE_CONTACT_ERROR'
-			);
+			this.toastrService.danger('NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_CONTACTS.INVITE_CONTACT_ERROR');
 		}
 	}
 
@@ -679,9 +608,7 @@ export class ContactsComponent extends PaginationFilterBaseComponent
 	}
 
 	getCountry(row) {
-		const find: ICountry = this.countries.find(
-			(item) => item.isoCode === row.country
-		);
+		const find: ICountry = this.countries.find((item) => item.isoCode === row.country);
 		return find ? find.country : row.country;
 	}
 

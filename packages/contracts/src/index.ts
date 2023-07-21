@@ -106,6 +106,7 @@ export * from './task-related-issue-type.model';
 export * from './task-status.model';
 export * from './task-version.model';
 export * from './task.model';
+export * from './task-linked-issue.model';
 export * from './tenant.model';
 export * from './time-off.model';
 export * from './timesheet-statistics.model';
@@ -116,6 +117,8 @@ export * from './upwork.model';
 export * from './user-organization.model';
 export * from './user.model';
 export * from './wakatime.model';
+export * from './organization-task-setting.model';
+export * from './task-estimation.model';
 
 export { IBaseEntityModel as BaseEntityModel } from './base-entity.model';
 export {

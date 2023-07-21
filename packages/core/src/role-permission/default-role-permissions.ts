@@ -26,6 +26,8 @@ export const DEFAULT_ROLE_PERMISSIONS = [
 			PermissionsEnum.ORG_TASK_VIEW,
 			PermissionsEnum.ORG_TASK_EDIT,
 			PermissionsEnum.ORG_TASK_DELETE,
+			/** Organization Task Setting */
+			PermissionsEnum.ORG_TASK_SETTING,
 			PermissionsEnum.ORG_EMPLOYEES_VIEW,
 			PermissionsEnum.ORG_EMPLOYEES_EDIT,
 			PermissionsEnum.ORG_CANDIDATES_VIEW,
@@ -156,6 +158,8 @@ export const DEFAULT_ROLE_PERMISSIONS = [
 			PermissionsEnum.ORG_TASK_VIEW,
 			PermissionsEnum.ORG_TASK_EDIT,
 			PermissionsEnum.ORG_TASK_DELETE,
+			/** Organization Task Setting */
+			PermissionsEnum.ORG_TASK_SETTING,
 			PermissionsEnum.ORG_EMPLOYEES_VIEW,
 			PermissionsEnum.ORG_EMPLOYEES_EDIT,
 			PermissionsEnum.ORG_CANDIDATES_VIEW,

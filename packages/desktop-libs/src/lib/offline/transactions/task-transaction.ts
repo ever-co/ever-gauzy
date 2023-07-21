@@ -16,14 +16,14 @@ export class TaskTransaction implements ITaskTransaction {
 					trx.insert(value)
 						.into(TABLE_NAME_TASKS)
 						.then(() => {
-							trx.commit;
+							trx.commit();
 							console.log(
 								'[trx]: ',
 								'insertion transaction committed...'
 							);
 						})
 						.catch((error) => {
-							trx.rollback;
+							trx.rollback();
 							console.log(
 								'[trx]: ',
 								'insertion transaction rollback...'

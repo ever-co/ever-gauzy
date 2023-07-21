@@ -259,6 +259,7 @@ export class TaskService extends TenantAwareCrudService<Task> {
 
 			const query = this.taskRepository.createQueryBuilder(this.alias);
 			query.innerJoin(`${query.alias}.teams`, 'teams');
+
 			/**
 			 * If find options
 			 */

@@ -1,8 +1,7 @@
 import { Component, OnInit, Input, Output, EventEmitter } from '@angular/core';
 import { IUser } from '@gauzy/contracts';
-import { of as ObservableOf } from 'rxjs';
 import { filter, map } from 'rxjs/operators';
-import { Observable } from 'rxjs/internal/Observable';
+import { Observable } from 'rxjs';
 
 @Component({
 	selector: 'gauzy-user',
@@ -10,8 +9,8 @@ import { Observable } from 'rxjs/internal/Observable';
 	styleUrls: ['./user.component.scss']
 })
 export class UserComponent implements OnInit {
-	@Input() showIdentity: boolean = false;
-	@Input() user: IUser;
+	@Input() showIdentity = false;
+	@Input() user$: Observable<IUser>;
 
 	@Output() clicked: EventEmitter<any> = new EventEmitter<boolean>();
 
@@ -20,9 +19,12 @@ export class UserComponent implements OnInit {
 	constructor() { }
 
 	ngOnInit(): void {
-		this.online$ = ObservableOf(this.user).pipe(
+		this.online$ = this.user$.pipe(
 			filter((user: IUser) => !!user && !!user.employee),
-			map((user: IUser) => user?.employee?.isOnline),
+			map(
+				(user: IUser) =>
+					user?.employee?.isOnline && !user?.employee?.isAway
+			)
 		);
 	}
 

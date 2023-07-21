@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
+import { Injectable, NotFoundException, ForbiddenException, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { CommandBus } from '@nestjs/cqrs';
 import { Repository, IsNull, Between, Not } from 'typeorm';
@@ -30,12 +30,10 @@ import {
 @Injectable()
 export class TimerService {
 	constructor(
-		@InjectRepository(TimeLog)
-		private readonly timeLogRepository: Repository<TimeLog>,
-		@InjectRepository(Employee)
-		private readonly employeeRepository: Repository<Employee>,
+		@InjectRepository(TimeLog) private readonly timeLogRepository: Repository<TimeLog>,
+		@InjectRepository(Employee) private readonly employeeRepository: Repository<Employee>,
 		private readonly commandBus: CommandBus
-	) {}
+	) { }
 
 	/**
 	 * Get timer status
@@ -114,12 +112,12 @@ export class TimerService {
 				startedAt: 'DESC',
 				createdAt: 'DESC'
 			},
+			relationLoadStrategy: 'query',
 			...(request['relations']
 				? {
-						relations: request['relations']
-				  }
+					relations: request['relations']
+				}
 				: {}),
-			relationLoadStrategy: 'query'
 		});
 
 		const status: ITimerStatus = {
@@ -153,6 +151,16 @@ export class TimerService {
 	 * @returns
 	 */
 	async startTimer(request: ITimerToggleInput): Promise<ITimeLog> {
+		const { organizationId, source, logType } = request;
+		/**
+		 * If source, logType not found in request then reject the request.
+		 */
+		const c1 = Object.values(TimeLogSourceEnum).includes(source);
+		const c2 = Object.values(TimeLogType).includes(logType);
+		if (!c1 || !c2) {
+			throw new BadRequestException();
+		}
+
 		const userId = RequestContext.currentUserId();
 		const tenantId = RequestContext.currentTenantId() || request.tenantId;
 
@@ -178,25 +186,12 @@ export class TimerService {
 			await this.commandBus.execute(new ScheduleTimeLogEntriesCommand(lastLog));
 		}
 
-		await this.employeeRepository.update(
-			{ id: employeeId },
-			{
-				isOnline: true, // Employee status (Online/Offline)
-				isTrackingTime: true // Employee time tracking status
-			}
-		);
+		await this.employeeRepository.update({ id: employeeId }, {
+			isOnline: true, // Employee status (Online/Offline)
+			isTrackingTime: true // Employee time tracking status
+		});
 
-		const {
-			source,
-			projectId,
-			taskId,
-			organizationContactId,
-			organizationTeamId,
-			logType,
-			description,
-			isBillable,
-			organizationId
-		} = request;
+		const { projectId, taskId, organizationContactId, organizationTeamId, description, isBillable, version } = request;
 
 		const now = moment.utc().toDate();
 		const startedAt = request.startedAt ? moment.utc(request.startedAt).toDate() : now;
@@ -210,14 +205,14 @@ export class TimerService {
 				stoppedAt: startedAt,
 				duration: 0,
 				source: source || TimeLogSourceEnum.WEB_TIMER,
+				logType: logType || TimeLogType.TRACKED,
 				projectId: projectId || null,
 				taskId: taskId || null,
 				organizationContactId: organizationContactId || null,
 				organizationTeamId: organizationTeamId || null,
-				logType: logType || TimeLogType.TRACKED,
 				description: description || null,
 				isBillable: isBillable || false,
-				version: request.version || null,
+				version: version || null,
 				isRunning: true
 			})
 		);
@@ -230,6 +225,8 @@ export class TimerService {
 	 * @returns
 	 */
 	async stopTimer(request: ITimerToggleInput): Promise<ITimeLog> {
+		const { organizationId } = request;
+
 		const tenantId = RequestContext.currentTenantId() || request.tenantId;
 		const userId = RequestContext.currentUserId();
 
@@ -256,13 +253,10 @@ export class TimerService {
 		const now = moment.utc().toDate();
 		const stoppedAt = request.stoppedAt ? moment.utc(request.stoppedAt).toDate() : now;
 
-		await this.employeeRepository.update(
-			{ id: employeeId },
-			{
-				isOnline: false, // Employee status (Online/Offline)
-				isTrackingTime: false // Employee time tracking status
-			}
-		);
+		await this.employeeRepository.update({ id: employeeId }, {
+			isOnline: false, // Employee status (Online/Offline)
+			isTrackingTime: false // Employee time tracking status
+		});
 
 		lastLog = await this.commandBus.execute(
 			new TimeLogUpdateCommand(
@@ -283,7 +277,7 @@ export class TimerService {
 					startDate: lastLog.startedAt,
 					endDate: lastLog.stoppedAt,
 					employeeId: lastLog.employeeId,
-					organizationId: request.organizationId || lastLog.organizationId,
+					organizationId: organizationId || lastLog.organizationId,
 					tenantId
 				})
 			);
@@ -425,16 +419,16 @@ export class TimerService {
 		const lastLog = await this.timeLogRepository.findOne({
 			where: {
 				deletedAt: IsNull(),
-				source: source || TimeLogSourceEnum.WEB_TIMER,
 				startedAt: Not(IsNull()),
 				stoppedAt: Not(IsNull()),
 				employeeId,
 				tenantId,
 				organizationId,
+				...(source ? { source } : {}),
 				...(isNotEmpty(organizationTeamId)
 					? {
-							organizationTeamId
-					  }
+						organizationTeamId
+					}
 					: {})
 			},
 			order: {
@@ -444,8 +438,8 @@ export class TimerService {
 			relationLoadStrategy: 'query',
 			...(request['relations']
 				? {
-						relations: request['relations']
-				  }
+					relations: request['relations']
+				}
 				: {})
 		});
 		/**
@@ -459,8 +453,8 @@ export class TimerService {
 			status.timerStatus = lastLog.isRunning
 				? 'running'
 				: moment(lastLog.stoppedAt).diff(new Date(), 'day') > 0
-				? 'idle'
-				: 'pause';
+					? 'idle'
+					: 'pause';
 		}
 		return status;
 	}

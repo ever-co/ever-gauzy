@@ -116,7 +116,7 @@ $orange: #f56d58;
         white-space: nowrap;
         text-decoration: none;
 
-        .gauzy-simbol {
+        .gauzy-symbol {
           font-size: 0.6rem !important;
           margin-left: 76px;
           margin-top: -25px;
@@ -191,9 +191,19 @@ $orange: #f56d58;
 }
 
 .timer-action {
+  display: flex;
+  align-items: center;
+  margin: 0 24px 0 14px !important;
+  gap: 2px;
+  nb-icon {
+	color: var(--gauzy-text-color-1);
+  }
   cursor: pointer;
   span {
     width: 64px;
+  }
+  .status ::ng-deep svg {
+	width: 10px;
   }
 }
 .timer-card {

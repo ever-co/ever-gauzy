@@ -41,6 +41,10 @@
   &.expanded {
     max-width: 360px !important;
   }
+
+  &.collapsed {
+	width: 100%;
+  }
 }
 
 .search {
@@ -50,6 +54,13 @@
 .timer-box {
   margin-top: auto;
   margin-bottom: auto;
+}
+
+.status {
+	position: absolute;
+    right: -20px;
+    top: 0;
+    z-index: 2;
 }
 
 .start-button {

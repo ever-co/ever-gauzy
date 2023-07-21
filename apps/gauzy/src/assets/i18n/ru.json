@@ -1012,7 +1012,7 @@
 		"GAUZY_LIGHT": "Гаузивый свет",
 		"GAUZY_DARK": "Gauzy Dark",
 		"LANGUAGE": "Язык",
-		"ENGLISH": "Russian",
+		"ENGLISH": "Английский",
 		"BULGARIAN": "Болгарский",
 		"HEBREW": "Иврит",
 		"RUSSIAN": "Русский",
@@ -1956,7 +1956,8 @@
 			"ALLOW_DELETE_TIME": "Разрешить удаление времени",
 			"ALLOW_MODIFY_TIME": "Разрешить изменять время",
 			"ALLOW_MANUAL_TIME": "Разрешить ручное время",
-			"DELETE_SCREENSHOTS": "Разрешить удаление скриншота"
+			"DELETE_SCREENSHOTS": "Разрешить удаление скриншота",
+			"ORG_TASK_SETTING": "Параметры задачи"
 		},
 		"BILLING": "Биллинг",
 		"BUDGET": "Бюджет",
@@ -3570,7 +3571,8 @@
 		},
 		"VIEW_TIMESHEET": "Просмотр графика",
 		"ADD_TIME": "Добавить время",
-		"TODAY": "Сегодня"
+		"TODAY": "Сегодня",
+		"STATUS": "Тайм-трекер уже работает в {{ source }}"
 	},
 	"TIMESHEET": {
 		"TODAY": "Сегодня",

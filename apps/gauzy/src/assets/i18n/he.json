@@ -1956,7 +1956,8 @@
 			"ALLOW_DELETE_TIME": "Allow Delete Time",
 			"ALLOW_MODIFY_TIME": "Allow Modify Time",
 			"ALLOW_MANUAL_TIME": "Allow Manual Time",
-			"DELETE_SCREENSHOTS": "Allow Delete Screenshot"
+			"DELETE_SCREENSHOTS": "Allow Delete Screenshot",
+			"ORG_TASK_SETTING":"Task Settings"
 		},
 		"BILLING": "Billing",
 		"BUDGET": "Budget",
@@ -3570,7 +3571,8 @@
 		},
 		"VIEW_TIMESHEET": "View timesheet",
 		"ADD_TIME": "Add Time",
-		"TODAY": "היום"
+		"TODAY": "היום",
+		"STATUS": "גשש הזמן כבר פועל ב- {{ source }}"
 	},
 	"TIMESHEET": {
 		"TODAY": "היום",

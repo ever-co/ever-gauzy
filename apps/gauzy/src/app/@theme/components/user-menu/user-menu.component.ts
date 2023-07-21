@@ -1,6 +1,7 @@
 import { Component, Input, OnInit, Output, EventEmitter } from '@angular/core';
 import { IEmployee, IUser, IEmployeeUpdateInput } from '@gauzy/contracts';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { distinctUntilChange } from '@gauzy/common-angular';
 import { BehaviorSubject, tap, Observable, filter, firstValueFrom } from 'rxjs';
 import { EmployeesService, ErrorHandlingService } from '../../../@core';
 
@@ -11,7 +12,7 @@ import { EmployeesService, ErrorHandlingService } from '../../../@core';
 	styleUrls: ['./user-menu.component.scss'],
 })
 export class UserMenuComponent implements OnInit {
-	private _user$: BehaviorSubject<IUser>;
+	private _user$: Observable<IUser>;
 	private _employee$: BehaviorSubject<IEmployee>;
 	private _isSubmit$: BehaviorSubject<boolean>;
 
@@ -47,7 +48,7 @@ export class UserMenuComponent implements OnInit {
 		private readonly _employeeService: EmployeesService,
 		private readonly _errorHandler: ErrorHandlingService
 	) {
-		this._user$ = new BehaviorSubject(null);
+		this._user$ = new Observable();
 		this._employee$ = new BehaviorSubject(null);
 		this._isSubmit$ = new BehaviorSubject(false);
 	}
@@ -55,6 +56,7 @@ export class UserMenuComponent implements OnInit {
 	ngOnInit(): void {
 		this.user$
 			.pipe(
+				distinctUntilChange(),
 				filter(({ employee }) => !!employee),
 				tap(async (user: IUser) => {
 					this._isSubmit$.next(true);
@@ -109,18 +111,14 @@ export class UserMenuComponent implements OnInit {
 	}
 
 	@Input()
-	public set user(value: IUser) {
+	public set user$(value: Observable<IUser>) {
 		if (value) {
-			this._user$.next(value);
+			this._user$ = value
 		}
 	}
 
-	public get user(): IUser {
-		return this._user$.getValue();
-	}
-
 	public get user$(): Observable<IUser> {
-		return this._user$.asObservable();
+		return this._user$;
 	}
 
 	public get isSubmit$(): Observable<boolean> {
