@@ -248,7 +248,8 @@
 			"EN": "English (United States)",
 			"RU": "Русский (Россия)",
 			"HE": "עברית ישראל",
-			"FR": "Français (France)"
+			"FR": "Français (France)",
+			"ES": "Español (España)"
 		},
 		"CURRENT_VALUE": "Current value",
 		"TARGET_VALUE": "Target value",
@@ -1015,6 +1016,7 @@
 		"LANGUAGE": "Език (Language)",
 		"ENGLISH": "Английски",
 		"FRENCH": "Френски",
+		"SPANISH": "Испански",
 		"BULGARIAN": "Български",
 		"HEBREW": "Иврит",
 		"RUSSIAN": "Руски",
