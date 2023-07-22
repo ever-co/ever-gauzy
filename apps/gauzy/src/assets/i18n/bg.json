@@ -247,7 +247,8 @@
 			"BG": "Български (България)",
 			"EN": "English (United States)",
 			"RU": "Русский (Россия)",
-			"HE": "עברית ישראל"
+			"HE": "עברית ישראל",
+			"FR": "Français (France)"
 		},
 		"CURRENT_VALUE": "Current value",
 		"TARGET_VALUE": "Target value",
@@ -1012,7 +1013,8 @@
 		"GAUZY_LIGHT": "Gauzy Light",
 		"GAUZY_DARK": "Gauzy Dark",
 		"LANGUAGE": "Език (Language)",
-		"ENGLISH": "English",
+		"ENGLISH": "Английски",
+		"FRENCH": "Френски",
 		"BULGARIAN": "Български",
 		"HEBREW": "Иврит",
 		"RUSSIAN": "Руски",
