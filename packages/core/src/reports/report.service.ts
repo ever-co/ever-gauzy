@@ -4,9 +4,13 @@ import {
 	IPagination,
 	IReport,
 	IReportOrganization,
-	UpdateReportMenuInput
+	UpdateReportMenuInput,
 } from '@gauzy/contracts';
-import { Injectable, InternalServerErrorException } from '@nestjs/common';
+import {
+	Injectable,
+	InternalServerErrorException,
+	Logger,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { indexBy } from 'underscore';
@@ -26,12 +30,28 @@ export class ReportService extends CrudService<Report> {
 		super(reportRepository);
 	}
 
+	private readonly logger = new Logger(ReportService.name);
+
 	public async findAll(filter?: any): Promise<IPagination<Report>> {
+		const start = new Date();
+
 		const { items, total } = await super.findAll(filter);
 
+		this.logger.log(`ReportService.findAll find ${total} items`);
+		console.log(`ReportService.findAll find ${total} items`);
+
 		const menuItems = await this.getMenuItems({
-			organizationId: filter.organizationId
+			organizationId: filter.organizationId,
 		});
+
+		this.logger.log(
+			`ReportService.getMenuItems find ${menuItems.length} items`
+		);
+
+		console.log(
+			`ReportService.getMenuItems find ${menuItems.length} items`
+		);
+
 		const orgMenuItems = indexBy(menuItems, 'id');
 
 		const mapItems = items.map((item) => {
@@ -42,6 +62,13 @@ export class ReportService extends CrudService<Report> {
 			}
 			return item;
 		});
+
+		const end = new Date();
+		const time = (end.getTime() - start.getTime()) / 1000;
+
+		this.logger.log(`ReportService.findAll took ${time} seconds`);
+		console.log(`ReportService.findAll took ${time} seconds`);
+
 		return { items: mapItems, total };
 	}
 
@@ -50,32 +77,31 @@ export class ReportService extends CrudService<Report> {
 			join: {
 				alias: 'reports',
 				innerJoin: {
-					reportOrganizations: 'reports.reportOrganizations'
-				}
+					reportOrganizations: 'reports.reportOrganizations',
+				},
 			},
 			relationLoadStrategy: 'query',
 			relations: {
-				reportOrganizations: true
+				reportOrganizations: true,
 			},
 			where: {
 				reportOrganizations: {
 					organizationId: filter.organizationId,
-					isEnabled: true
-				}
-			}
+					isEnabled: true,
+				},
+			},
 		});
 	}
 
 	async updateReportMenu(
 		input: UpdateReportMenuInput
 	): Promise<ReportOrganization> {
-		let reportOrganization = await this.reportOrganizationRepository.findOne(
-			{
+		let reportOrganization =
+			await this.reportOrganizationRepository.findOne({
 				where: {
-					reportId: input.reportId
-				}
-			}
-		);
+					reportId: input.reportId,
+				},
+			});
 
 		if (!reportOrganization) {
 			reportOrganization = new ReportOrganization(input);
@@ -90,8 +116,8 @@ export class ReportService extends CrudService<Report> {
 	}
 
 	/*
-	* Bulk Create Organization Default Reports Menu
-	*/
+	 * Bulk Create Organization Default Reports Menu
+	 */
 	async bulkCreateOrganizationReport(input: IOrganization) {
 		try {
 			const { id: organizationId } = input;
@@ -102,9 +128,9 @@ export class ReportService extends CrudService<Report> {
 				reportOrganizations.push(
 					new ReportOrganization({
 						report,
-						organizationId
+						organizationId,
 					})
-				)
+				);
 			});
 
 			this.reportOrganizationRepository.save(reportOrganizations);
