@@ -248,7 +248,8 @@
 			"EN": "English (United States)",
 			"RU": "Русский (Россия)",
 			"HE": "עברית ישראל",
-			"FR": "Français (France)"
+			"FR": "Français (France)",
+			"ES": "Español (España)"
 		},
 		"CURRENT_VALUE": "Current value",
 		"TARGET_VALUE": "Target value",
@@ -1018,6 +1019,7 @@
 		"BULGARIAN": "בולגרית",
 		"HEBREW": "עִברִית",
 		"RUSSIAN": "רוּסִי",
+		"SPANISH": "ספרדית",
 		"PREFERRED_LAYOUT": "Layout",
 		"PREFERRED_LAYOUT_TOOLTIP": "This will only set the default layout and not change the layout on each page if you have already changed it once.",
 		"RESET_LAYOUT": "Reset Layout",
