@@ -589,8 +589,8 @@ export default {
         "nativeName": "Sesotho"
     },
     "es": {
-        "name": "Spanish; Castilian",
-        "nativeName": "español, castellano"
+		"name": "Spanish",
+		"nativeName": "Español, Castellano"
     },
     "su": {
         "name": "Sundanese",
