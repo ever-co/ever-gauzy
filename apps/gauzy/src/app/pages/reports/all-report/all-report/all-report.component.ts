@@ -8,7 +8,7 @@ import {
 } from '@gauzy/contracts';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
-import { filter } from 'rxjs/operators';
+import { filter, tap } from 'rxjs/operators';
 import { chain } from 'underscore';
 import { ReportService } from '../report.service';
 
@@ -19,25 +19,26 @@ import { ReportService } from '../report.service';
 	styleUrls: ['./all-report.component.scss']
 })
 export class AllReportComponent implements OnInit {
-	PermissionsEnum = PermissionsEnum;
-	organization: IOrganization;
-	loading: boolean;
-	reportCategories: IReportCategory[];
 
-	constructor(private reportService: ReportService, private store: Store) {}
+	PermissionsEnum = PermissionsEnum;
+	public organization: IOrganization;
+	public loading: boolean;
+	public reportCategories: IReportCategory[];
+
+	constructor(
+		private readonly reportService: ReportService,
+		private readonly store: Store
+	) { }
 
 	ngOnInit(): void {
 		this.store.selectedOrganization$
 			.pipe(
 				filter((organization: IOrganization) => !!organization),
+				tap((organization: IOrganization) => this.organization = organization),
+				tap(() => this.getReports()),
 				untilDestroyed(this)
 			)
-			.subscribe((organization) => {
-				if (organization) {
-					this.organization = organization;
-					this.getReports();
-				}
-			});
+			.subscribe();
 	}
 
 	updateShowInMenu(isEnabled: boolean, report): void {
@@ -58,27 +59,38 @@ export class AllReportComponent implements OnInit {
 			});
 	}
 
-	getReports() {
-		const request: IGetReportCategory = {
-			relations: ['category'],
-			organizationId: this.organization.id
-		};
-		this.loading = true;
-		this.reportService
-			.getReports(request)
-			.then((resp) => {
-				this.reportCategories = chain(resp.items)
-					.groupBy('categoryId')
-					.map((reports: IReport[]) => {
-						return {
-							...reports[0].category,
-							reports
-						};
-					})
-					.value();
-			})
-			.finally(() => {
-				this.loading = false;
-			});
+	/**
+	 * Organization all reports
+	 *
+	 * @returns
+	 */
+	async getReports() {
+		if (!this.organization) {
+			return false;
+		}
+		try {
+			this.loading = true;
+
+			const { id: organizationId, tenantId } = this.organization;
+			const request: IGetReportCategory = {
+				organizationId,
+				tenantId,
+				relations: ['category'],
+			};
+
+			const { items = [] } = await this.reportService.getReports(request);
+
+			const categories = chain(items).groupBy('categoryId');
+			this.reportCategories = categories
+				.map((reports: IReport[]) => ({
+					...reports[0].category,
+					reports
+				}))
+				.value();
+		} catch (error) {
+			console.log('Error while retriving report with category', error);
+		} finally {
+			this.loading = false;
+		}
 	}
 }

@@ -15,6 +15,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { indexBy } from 'underscore';
 import { CrudService } from '../core/crud';
+import { RequestContext } from './../core/context';
 import { ReportOrganization } from './report-organization.entity';
 import { Report } from './report.entity';
 
@@ -36,22 +37,8 @@ export class ReportService extends CrudService<Report> {
 		const start = new Date();
 
 		const { items, total } = await super.findAll(filter);
-
-		this.logger.log(`ReportService.findAll find ${total} items`);
-		console.log(`ReportService.findAll find ${total} items`);
-
-		const menuItems = await this.getMenuItems({
-			organizationId: filter.organizationId,
-		});
-
-		this.logger.log(
-			`ReportService.getMenuItems find ${menuItems.length} items`
-		);
-
-		console.log(
-			`ReportService.getMenuItems find ${menuItems.length} items`
-		);
-
+		const menuItems = await this.getMenuItems(filter);
+		    
 		const orgMenuItems = indexBy(menuItems, 'id');
 
 		const mapItems = items.map((item) => {
@@ -72,25 +59,44 @@ export class ReportService extends CrudService<Report> {
 		return { items: mapItems, total };
 	}
 
-	public getMenuItems(filter: GetReportMenuItemsInput): Promise<Report[]> {
-		return this.repository.find({
+	/**
+	 * Get reports menus
+	 *
+	 * @param options
+	 * @returns
+	 */
+	public async getMenuItems(
+		options: GetReportMenuItemsInput
+	): Promise<IReport[]> {
+
+    const start = new Date();
+
+		const { organizationId } = options;
+		const tenantId = RequestContext.currentTenantId() || options.tenantId;
+
+		const res = await this.repository.find({
 			join: {
-				alias: 'reports',
+				alias: this.alias,
 				innerJoin: {
-					reportOrganizations: 'reports.reportOrganizations',
-				},
-			},
-			relationLoadStrategy: 'query',
-			relations: {
-				reportOrganizations: true,
+					reportOrganizations: `${this.alias}.reportOrganizations`,
+				}
 			},
 			where: {
 				reportOrganizations: {
-					organizationId: filter.organizationId,
-					isEnabled: true,
-				},
-			},
+					organizationId,
+					tenantId,
+					isEnabled: true
+				}
+			}
 		});
+      
+    const end = new Date();
+		const time = (end.getTime() - start.getTime()) / 1000;
+
+		this.logger.log(`getMenuItems took ${time} seconds`);
+		console.log(`getMenuItems took ${time} seconds`);
+      
+    return res;
 	}
 
 	async updateReportMenu(
@@ -120,7 +126,7 @@ export class ReportService extends CrudService<Report> {
 	 */
 	async bulkCreateOrganizationReport(input: IOrganization) {
 		try {
-			const { id: organizationId } = input;
+			const { id: organizationId, tenantId } = input;
 			const { items } = await super.findAll();
 
 			const reportOrganizations: IReportOrganization[] = [];
@@ -129,6 +135,7 @@ export class ReportService extends CrudService<Report> {
 					new ReportOrganization({
 						report,
 						organizationId,
+						tenantId
 					})
 				);
 			});

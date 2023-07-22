@@ -5,15 +5,24 @@ import {
 } from '@gauzy/contracts';
 import { Body, Controller, Get, HttpStatus, Post, Query } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { FindOptionsWhere } from 'typeorm';
+import { FindManyOptions } from 'typeorm';
 import { Report } from './report.entity';
 import { ReportService } from './report.service';
 
 @ApiTags('Report')
 @Controller()
 export class ReportController {
-	constructor(private readonly reportService: ReportService) {}
 
+	constructor(
+		private readonly reportService: ReportService
+	) { }
+
+	/**
+	 * Get all reports
+	 *
+	 * @param options
+	 * @returns
+	 */
 	@ApiOperation({ summary: 'Find all' })
 	@ApiResponse({
 		status: HttpStatus.OK,
@@ -21,7 +30,7 @@ export class ReportController {
 	})
 	@Get()
 	async findAll(
-		@Query() options: FindOptionsWhere<Report>
+		@Query() options: FindManyOptions<Report>
 	): Promise<IPagination<Report>> {
 		return await this.reportService.findAll(options);
 	}
