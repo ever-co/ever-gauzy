@@ -22,6 +22,8 @@ akitaConfig({
 
 Sentry.init({
 	dsn: environment.SENTRY_DSN,
+	environment: environment.production ? 'production' : 'development',
+	debug: !environment.production,
 	integrations: [
 		// Registers and configures the Tracing integration,
 		// which automatically instruments your application to monitor its
