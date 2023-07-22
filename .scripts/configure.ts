@@ -17,6 +17,12 @@ if (!env.GOOGLE_MAPS_API_KEY) {
 	);
 }
 
+if (!env.SENTRY_DSN) {
+	console.warn(
+		'WARNING: No Sentry DSN defined in the .env file. Sentry logging may not be working!'
+	);
+}
+
 if (!env.CLOUDINARY_CLOUD_NAME || !env.CLOUDINARY_API_KEY) {
 	console.warn('WARNING: No Cloudinary API keys defined in the .env file.');
 }
