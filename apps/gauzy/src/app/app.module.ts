@@ -83,6 +83,7 @@ if (environment.SENTRY_DSN && environment.SENTRY_DSN === 'DOCKER_SENTRY_DSN') {
 	Sentry.init({
 		dsn: environment.SENTRY_DSN,
 		environment: environment.production ? 'production' : 'development',
+		debug: !environment.production,
 		// this enables automatic instrumentation
 		integrations: [
 			// Registers and configures the Tracing integration,
@@ -101,7 +102,9 @@ if (environment.SENTRY_DSN && environment.SENTRY_DSN === 'DOCKER_SENTRY_DSN') {
 		// TODO: we should use some internal function which returns version of Gauzy
 		release: 'gauzy@' + version,
 		// set tracesSampleRate to 1.0 to capture 100% of transactions for performance monitoring
-		tracesSampleRate: 1.0,
+		tracesSampleRate: environment.SENTRY_TRACES_SAMPLE_RATE
+			? parseInt(environment.SENTRY_TRACES_SAMPLE_RATE)
+			: 0.01,
 	});
 }
 
