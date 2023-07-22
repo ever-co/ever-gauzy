@@ -1,5 +1,6 @@
 import {
 	GetReportMenuItemsInput,
+	IGetReport,
 	IOrganization,
 	IPagination,
 	IReport,
@@ -11,6 +12,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { indexBy } from 'underscore';
 import { CrudService } from '../core/crud';
+import { RequestContext } from './../core/context';
 import { ReportOrganization } from './report-organization.entity';
 import { Report } from './report.entity';
 
@@ -26,12 +28,10 @@ export class ReportService extends CrudService<Report> {
 		super(reportRepository);
 	}
 
-	public async findAll(filter?: any): Promise<IPagination<Report>> {
+	public async getReports(filter?: IGetReport): Promise<IPagination<Report>> {
 		const { items, total } = await super.findAll(filter);
+		const menuItems = await this.getMenuItems(filter);
 
-		const menuItems = await this.getMenuItems({
-			organizationId: filter.organizationId
-		});
 		const orgMenuItems = indexBy(menuItems, 'id');
 
 		const mapItems = items.map((item) => {
@@ -45,21 +45,27 @@ export class ReportService extends CrudService<Report> {
 		return { items: mapItems, total };
 	}
 
-	public getMenuItems(filter: GetReportMenuItemsInput): Promise<Report[]> {
-		return this.repository.find({
+	/**
+	 * Get reports menus
+	 *
+	 * @param options
+	 * @returns
+	 */
+	public async getMenuItems(options: GetReportMenuItemsInput): Promise<IReport[]> {
+		const tenantId = RequestContext.currentTenantId() || options.tenantId;
+		const { organizationId } = options;
+
+		return await this.repository.find({
 			join: {
-				alias: 'reports',
+				alias: this.alias,
 				innerJoin: {
-					reportOrganizations: 'reports.reportOrganizations'
+					reportOrganizations: `${this.alias}.reportOrganizations`,
 				}
-			},
-			relationLoadStrategy: 'query',
-			relations: {
-				reportOrganizations: true
 			},
 			where: {
 				reportOrganizations: {
-					organizationId: filter.organizationId,
+					organizationId,
+					tenantId,
 					isEnabled: true
 				}
 			}
@@ -94,7 +100,7 @@ export class ReportService extends CrudService<Report> {
 	*/
 	async bulkCreateOrganizationReport(input: IOrganization) {
 		try {
-			const { id: organizationId } = input;
+			const { id: organizationId, tenantId } = input;
 			const { items } = await super.findAll();
 
 			const reportOrganizations: IReportOrganization[] = [];
@@ -102,7 +108,8 @@ export class ReportService extends CrudService<Report> {
 				reportOrganizations.push(
 					new ReportOrganization({
 						report,
-						organizationId
+						organizationId,
+						tenantId
 					})
 				)
 			});
