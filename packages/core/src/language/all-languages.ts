@@ -590,7 +590,7 @@ export default {
     },
     "es": {
 		"name": "Spanish",
-		"nativeName": "Español, Castellano"
+		"nativeName": "Español"
     },
     "su": {
         "name": "Sundanese",
