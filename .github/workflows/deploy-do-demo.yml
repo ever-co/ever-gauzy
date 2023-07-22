@@ -34,6 +34,9 @@ jobs:
               env:
                   DB_NAME: 'gauzy_demo'
                   SENTRY_DSN: '${{ secrets.SENTRY_DSN }}'
+                  SENTRY_TRACES_SAMPLE_RATE: '${{ secrets.SENTRY_TRACES_SAMPLE_RATE }}'
+                  SENTRY_HTTP_TRACING_ENABLED: '${{ secrets.SENTRY_HTTP_TRACING_ENABLED }}'
+                  SENTRY_POSTGRES_TRACKING_ENABLED: '${{ secrets.SENTRY_POSTGRES_TRACKING_ENABLED }}'
 
             # we need this step because for now we just use :latest tag
             # note: for production we will use different strategy later
