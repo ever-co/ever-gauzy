@@ -26,11 +26,11 @@ jobs:
               run: doctl registry login --expiry-seconds 600
 
             - name: Save DigitalOcean kubeconfig with short-lived credentials
-              run: doctl kubernetes cluster kubeconfig save --expiry-seconds 600 k8s-ever
+              run: doctl kubernetes cluster kubeconfig save --expiry-seconds 600 k8s-gauzy
 
             - name: Apply k8s manifests changes in DigitalOcean k8s cluster (if any)
               run: |
-                  envsubst < $GITHUB_WORKSPACE/.deploy/k8s/k8s-manifest.demo.yaml | kubectl --context do-sfo2-k8s-ever apply -f -
+                  envsubst < $GITHUB_WORKSPACE/.deploy/k8s/k8s-manifest.demo.yaml | kubectl --context do-sfo2-k8s-gauzy apply -f -
               env:
                   DB_NAME: 'gauzy_demo'
                   SENTRY_DSN: '${{ secrets.SENTRY_DSN }}'
@@ -39,5 +39,5 @@ jobs:
             # note: for production we will use different strategy later
             - name: Restart Pods to pick up :latest tag version
               run: |
-                  kubectl --context do-sfo2-k8s-ever rollout restart deployment/gauzy-demo-api
-                  kubectl --context do-sfo2-k8s-ever rollout restart deployment/gauzy-demo-webapp
+                  kubectl --context do-sfo2-k8s-gauzy rollout restart deployment/gauzy-demo-api
+                  kubectl --context do-sfo2-k8s-gauzy rollout restart deployment/gauzy-demo-webapp
