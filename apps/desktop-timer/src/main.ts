@@ -13,11 +13,11 @@ if (environment.production) {
 }
 
 persistState({
-	key: '_gauzyStore'
+	key: '_gauzyStore',
 });
 
 akitaConfig({
-	resettable: true
+	resettable: true,
 });
 
 Sentry.init({
@@ -33,19 +33,21 @@ Sentry.init({
 				'https://apistage.gauzy.co',
 				'https://api.gauzy.co',
 			],
-			routingInstrumentation: Sentry.routingInstrumentation
-		})
+			routingInstrumentation: Sentry.routingInstrumentation,
+		}),
 	],
 
 	// Set tracesSampleRate to 1.0 to capture 100%
 	// of transactions for performance monitoring.
 	// We recommend adjusting this value in production
-	tracesSampleRate: 1.0
+	tracesSampleRate: environment.SENTRY_TRACES_SAMPLE_RATE
+		? parseInt(environment.SENTRY_TRACES_SAMPLE_RATE)
+		: 0.01,
 });
 
 platformBrowserDynamic()
 	.bootstrapModule(AppModule, {
-		preserveWhitespaces: false
+		preserveWhitespaces: false,
 	})
 	.then((success) => console.log(`Bootstrap success`))
 	.catch((err) => console.error(err));
