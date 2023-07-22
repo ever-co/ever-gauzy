@@ -1,16 +1,9 @@
 import {
 	GetReportMenuItemsInput,
 	IPagination,
-	UpdateReportMenuInput
+	UpdateReportMenuInput,
 } from '@gauzy/contracts';
-import {
-	Body,
-	Controller,
-	Get,
-	HttpStatus,
-	Post,
-	Query
-} from '@nestjs/common';
+import { Body, Controller, Get, HttpStatus, Post, Query } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { FindManyOptions } from 'typeorm';
 import { Report } from './report.entity';
@@ -19,6 +12,7 @@ import { ReportService } from './report.service';
 @ApiTags('Report')
 @Controller()
 export class ReportController {
+
 	constructor(
 		private readonly reportService: ReportService
 	) { }
@@ -32,7 +26,7 @@ export class ReportController {
 	@ApiOperation({ summary: 'Find all' })
 	@ApiResponse({
 		status: HttpStatus.OK,
-		description: 'Found records'
+		description: 'Found records',
 	})
 	@Get()
 	async findAll(
@@ -44,7 +38,7 @@ export class ReportController {
 	@ApiOperation({ summary: 'Find all' })
 	@ApiResponse({
 		status: HttpStatus.OK,
-		description: 'Found records'
+		description: 'Found records',
 	})
 	@Get('menu-items')
 	async getMenuItems(
@@ -56,7 +50,7 @@ export class ReportController {
 	@ApiOperation({ summary: 'Find all' })
 	@ApiResponse({
 		status: HttpStatus.OK,
-		description: 'Found records'
+		description: 'Found records',
 	})
 	@Post('menu-item')
 	async updateReportMenu(@Body() input?: UpdateReportMenuInput) {

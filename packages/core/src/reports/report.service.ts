@@ -4,9 +4,13 @@ import {
 	IPagination,
 	IReport,
 	IReportOrganization,
-	UpdateReportMenuInput
+	UpdateReportMenuInput,
 } from '@gauzy/contracts';
-import { Injectable, InternalServerErrorException } from '@nestjs/common';
+import {
+	Injectable,
+	InternalServerErrorException,
+	Logger,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { indexBy } from 'underscore';
@@ -27,10 +31,14 @@ export class ReportService extends CrudService<Report> {
 		super(reportRepository);
 	}
 
+	private readonly logger = new Logger(ReportService.name);
+
 	public async findAll(filter?: any): Promise<IPagination<Report>> {
+		const start = new Date();
+
 		const { items, total } = await super.findAll(filter);
 		const menuItems = await this.getMenuItems(filter);
-
+		    
 		const orgMenuItems = indexBy(menuItems, 'id');
 
 		const mapItems = items.map((item) => {
@@ -41,6 +49,13 @@ export class ReportService extends CrudService<Report> {
 			}
 			return item;
 		});
+
+		const end = new Date();
+		const time = (end.getTime() - start.getTime()) / 1000;
+
+		this.logger.log(`ReportService.findAll took ${time} seconds`);
+		console.log(`ReportService.findAll took ${time} seconds`);
+
 		return { items: mapItems, total };
 	}
 
@@ -54,10 +69,12 @@ export class ReportService extends CrudService<Report> {
 		options: GetReportMenuItemsInput
 	): Promise<IReport[]> {
 
+    const start = new Date();
+
 		const { organizationId } = options;
 		const tenantId = RequestContext.currentTenantId() || options.tenantId;
 
-		return await this.repository.find({
+		const res = await this.repository.find({
 			join: {
 				alias: this.alias,
 				innerJoin: {
@@ -72,18 +89,25 @@ export class ReportService extends CrudService<Report> {
 				}
 			}
 		});
+      
+    const end = new Date();
+		const time = (end.getTime() - start.getTime()) / 1000;
+
+		this.logger.log(`getMenuItems took ${time} seconds`);
+		console.log(`getMenuItems took ${time} seconds`);
+      
+    return res;
 	}
 
 	async updateReportMenu(
 		input: UpdateReportMenuInput
 	): Promise<ReportOrganization> {
-		let reportOrganization = await this.reportOrganizationRepository.findOne(
-			{
+		let reportOrganization =
+			await this.reportOrganizationRepository.findOne({
 				where: {
-					reportId: input.reportId
-				}
-			}
-		);
+					reportId: input.reportId,
+				},
+			});
 
 		if (!reportOrganization) {
 			reportOrganization = new ReportOrganization(input);
@@ -98,8 +122,8 @@ export class ReportService extends CrudService<Report> {
 	}
 
 	/*
-	* Bulk Create Organization Default Reports Menu
-	*/
+	 * Bulk Create Organization Default Reports Menu
+	 */
 	async bulkCreateOrganizationReport(input: IOrganization) {
 		try {
 			const { id: organizationId, tenantId } = input;
@@ -113,7 +137,7 @@ export class ReportService extends CrudService<Report> {
 						organizationId,
 						tenantId
 					})
-				)
+				);
 			});
 
 			this.reportOrganizationRepository.save(reportOrganizations);

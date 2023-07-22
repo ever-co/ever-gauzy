@@ -170,7 +170,7 @@ export const environment: IEnvironment = {
 	},
 
 	sentry: {
-		dns: process.env.SENTRY_DSN,
+		dsn: process.env.SENTRY_DSN,
 	},
 
 	defaultIntegratedUserPass:
