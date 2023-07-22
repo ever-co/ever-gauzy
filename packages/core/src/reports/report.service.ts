@@ -1,6 +1,5 @@
 import {
 	GetReportMenuItemsInput,
-	IGetReport,
 	IOrganization,
 	IPagination,
 	IReport,
@@ -28,7 +27,7 @@ export class ReportService extends CrudService<Report> {
 		super(reportRepository);
 	}
 
-	public async getReports(filter?: IGetReport): Promise<IPagination<Report>> {
+	public async findAll(filter?: any): Promise<IPagination<Report>> {
 		const { items, total } = await super.findAll(filter);
 		const menuItems = await this.getMenuItems(filter);
 
@@ -51,9 +50,12 @@ export class ReportService extends CrudService<Report> {
 	 * @param options
 	 * @returns
 	 */
-	public async getMenuItems(options: GetReportMenuItemsInput): Promise<IReport[]> {
-		const tenantId = RequestContext.currentTenantId() || options.tenantId;
+	public async getMenuItems(
+		options: GetReportMenuItemsInput
+	): Promise<IReport[]> {
+
 		const { organizationId } = options;
+		const tenantId = RequestContext.currentTenantId() || options.tenantId;
 
 		return await this.repository.find({
 			join: {
