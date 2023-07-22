@@ -10,6 +10,7 @@ sed -i "s#DOCKER_API_BASE_URL#$API_BASE_URL#g" *.js
 sed -i "s#DOCKER_CLIENT_BASE_URL#$CLIENT_BASE_URL#g" *.js
 sed -i "s#DOCKER_GAUZY_CLOUD_APP#$GAUZY_CLOUD_APP#g" *.js
 sed -i "s#DOCKER_SENTRY_DSN#$SENTRY_DSN#g" *.js
+sed -i "s#DOCKER_SENTRY_TRACES_SAMPLE_RATE#$SENTRY_TRACES_SAMPLE_RATE#g" *.js
 sed -i "s#DOCKER_CHATWOOT_SDK_TOKEN#$CHATWOOT_SDK_TOKEN#g" *.js
 sed -i "s#DOCKER_CHAT_MESSAGE_GOOGLE_MAP#$CHAT_MESSAGE_GOOGLE_MAP#g" *.js
 sed -i "s#DOCKER_CLOUDINARY_CLOUD_NAME#$CLOUDINARY_CLOUD_NAME#g" *.js
@@ -25,7 +26,7 @@ sed -i "s#DOCKER_DEMO#$DEMO#g" *.js
 sed -i "s#DOCKER_WEB_HOST#$WEB_HOST#g" *.js
 sed -i "s#DOCKER_WEB_PORT#$WEB_PORT#g" *.js
 
-# We may not need to use that env vars now in nginx.config, but we may want later. 
+# We may not need to use that env vars now in nginx.config, but we may want later.
 # Also we just need to copy nginx.conf to correct place anyway...
 envsubst '' < /etc/nginx/conf.d/prod.conf.template > /etc/nginx/nginx.conf
 
