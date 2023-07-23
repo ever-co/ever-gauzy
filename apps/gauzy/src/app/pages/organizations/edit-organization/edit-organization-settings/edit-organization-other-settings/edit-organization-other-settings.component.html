@@ -1090,8 +1090,7 @@
 						</div>
 					</nb-accordion-item-body>
 				</nb-accordion-item>
-
-				<nb-accordion-item #taskSetting>
+                <nb-accordion-item #taskSetting [formGroup]="taskSettingForm">
 					<nb-accordion-item-header>
 						{{
 							'ORGANIZATIONS_PAGE.EDIT.SETTINGS.TASK_SETTING'
@@ -1195,21 +1194,42 @@
 									</div>
 								</div>
 
-								<div class="col-6">
-									<div class="form-group invite-toggle">
-										<nb-toggle
-											class="d-block"
-											formControlName="isTasksProofOfCompletionEnabled"
-											status="primary"
-											labelPosition="start"
-										>
-											{{
-												'ORGANIZATIONS_PAGE.EDIT.SETTINGS.PROOF_OF_COMPLETION'
-													| translate
-											}}
-										</nb-toggle>
-									</div>
-								</div>
+                                <div class="col-12 row">
+                                    <div class="col-6">
+                                        <div class="form-group invite-toggle">
+                                            <nb-toggle class="d-block" formControlName="isTasksProofOfCompletionEnabled" status="primary"
+                                                labelPosition="start">
+                                                {{
+                                                'ORGANIZATIONS_PAGE.EDIT.SETTINGS.PROOF_OF_COMPLETION'
+                                                | translate
+                                                }}
+                                            </nb-toggle>
+                                        </div>
+                                    </div>
+                                    <div class="col-6">
+                                        <div class="form-group">
+                                            <nb-select class="d-block" size="medium" formControlName="tasksProofOfCompletionType" [placeholder]="
+                                    													'ORGANIZATIONS_PAGE.EDIT.SETTINGS.PROOF_OF_COMPLETION_TYPE'
+                                    														| translate
+                                    												" fullWidth>
+                                                <nb-option [value]="null">
+                                                    {{
+                                                    'ORGANIZATIONS_PAGE.EDIT.SETTINGS.PROOF_OF_COMPLETION_TYPE_DROPDOWN.NONE'
+                                                    | translate
+                                                    }}
+                                                </nb-option>
+                                                <nb-option *ngFor="
+                                    														let type of defaultTaskProofOfCompletionTypes
+                                    													" [value]="type">
+                                                    {{
+                                                    'ORGANIZATIONS_PAGE.EDIT.SETTINGS.PROOF_OF_COMPLETION_TYPE_DROPDOWN.' +
+                                                    type | translate
+                                                    }}
+                                                </nb-option>
+                                            </nb-select>
+                                        </div>
+                                    </div>
+                                    </div>
 
 								<div class="col-6">
 									<div class="form-group invite-toggle">
@@ -1290,36 +1310,83 @@
 										</nb-toggle>
 									</div>
 								</div>
+                                <div class="col-12 row">
+                                    <div class="col-6">
+                                        <div class="form-group invite-toggle">
+                                            <nb-toggle class="d-block" formControlName="isTasksNotifyLeftEnabled" status="primary"
+                                                labelPosition="start">
+                                                {{
+                                                'ORGANIZATIONS_PAGE.EDIT.SETTINGS.NOTIFY_TASK_LEFT'
+                                                | translate
+                                                }}
+                                            </nb-toggle>
+                                        </div>
+                                    </div>
+                                    <div class="col-6">
+                                        <div class="form-group">
+                                            <input nbInput type="number" [min]="0" formControlName="tasksNotifyLeftPeriodDays" [placeholder]="
+                                													'ORGANIZATIONS_PAGE.EDIT.SETTINGS.NOTIFY_TASK_LEFT_PERIOD'
+                                														| translate
+                                												" fullWidth class="d-block" [ngClass]="{
+                                													'status-danger':
+                                														taskSettingForm.get(
+                                															'tasksNotifyLeftPeriodDays'
+                                														).invalid
+                                												}" />
+                                        </div>
+                                    </div>
+                                </div>
 
-								<div class="col-6">
-									<div class="form-group invite-toggle">
-										<nb-toggle
-											class="d-block"
-											formControlName="isTasksAutoCloseEnabled"
-											status="primary"
-											labelPosition="start"
-										>
-											{{
-												'ORGANIZATIONS_PAGE.EDIT.SETTINGS.AUTO_CLOSE_ISSUE'
-													| translate
-											}}
-										</nb-toggle>
-									</div>
-								</div>
+                                <div class="col-12 row">
+                                    <div class="col-6">
+                                        <div class="form-group invite-toggle">
+                                            <nb-toggle class="d-block" formControlName="isTasksAutoCloseEnabled" status="primary" labelPosition="start">
+                                                {{
+                                                'ORGANIZATIONS_PAGE.EDIT.SETTINGS.AUTO_CLOSE_ISSUE'
+                                                | translate
+                                                }}
+                                            </nb-toggle>
+                                        </div>
+                                    </div>
+                                    <div class="col-6">
+                                        <div class="form-group">
+                                            <input nbInput type="number" [min]="0" formControlName="tasksAutoClosePeriodDays" [placeholder]="
+                                    													'ORGANIZATIONS_PAGE.EDIT.SETTINGS.AUTO_CLOSE_ISSUE_PERIOD'
+                                    														| translate
+                                    												" fullWidth class="d-block" [ngClass]="{
+                                    													'status-danger':
+                                    														taskSettingForm.get(
+                                    															'tasksAutoClosePeriodDays'
+                                    														).invalid
+                                    												}" />
+                                        </div>
+                                    </div>
+                                    </div>
 
-								<div class="col-6">
-									<div class="form-group invite-toggle">
-										<nb-toggle
-											class="d-block"
-											formControlName="isTasksAutoArchiveEnabled"
-											status="primary"
-											labelPosition="start"
-										>
-											{{
-												'ORGANIZATIONS_PAGE.EDIT.SETTINGS.AUTO_ARCHIEVE_ISSUE'
-													| translate
-											}}
-										</nb-toggle>
+                                <div class="col-12 row">
+                                    <div class="col-6">
+                                        <div class="form-group invite-toggle">
+                                            <nb-toggle class="d-block" formControlName="isTasksAutoArchiveEnabled" status="primary" labelPosition="start">
+                                                {{
+                                                    'ORGANIZATIONS_PAGE.EDIT.SETTINGS.AUTO_ARCHIVE_ISSUE'
+                                                    | translate
+                                                    }}
+                                                    </nb-toggle>
+                                        </div>
+                                        </div>
+                                        
+                                        <div class="col-6">
+                                            <div class="form-group">
+                                                <input nbInput type="number" [min]="0" formControlName="tasksAutoArchivePeriodDays" [placeholder]="
+                                        													'ORGANIZATIONS_PAGE.EDIT.SETTINGS.AUTO_ARCHIVE_ISSUE_PERIOD'
+                                        														| translate
+                                        												" fullWidth class="d-block" [ngClass]="{
+                                        													'status-danger':
+                                        														taskSettingForm.get(
+                                        															'tasksAutoArchivePeriodDays'
+                                        														).invalid
+                                        												}" />
+                                            </div>
 									</div>
 								</div>
 
@@ -1341,8 +1408,7 @@
 							</div>
 						</div>
 					</nb-accordion-item-body>
-				</nb-accordion-item>
-
+                </nb-accordion-item>
 				<nb-accordion-item #integrations>
 					<nb-accordion-item-header>
 						{{ 'ORGANIZATIONS_PAGE.EDIT.INTEGRATIONS' | translate }}
