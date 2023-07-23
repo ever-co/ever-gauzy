@@ -639,6 +639,11 @@
 			"ENABLED": "enabled",
 			"DISABLED": "disabled",
 			"WAIT_UNTIL_RELOAD": "Please wait till application reloads"
+		},
+		"ERROR": {
+			"PROJECT_NAME": "נדרש שם הפרויקט.",
+			"PROJECT_URL":"כתובת האתר של הפרויקט אינה חוקית.",
+			"OPEN_SOURCE_PROJECT_URL": "כתובת האתר של פרוייקט קוד פתוח אינה חוקית."
 		}
 	},
 	"POP_UPS": {

@@ -659,6 +659,11 @@
 			"ENABLED": "enabled",
 			"DISABLED": "disabled",
 			"WAIT_UNTIL_RELOAD": "Please wait till application reloads"
+		},
+		"ERROR": {
+			"PROJECT_NAME": "El nombre del proyecto es obligatorio.",
+			"PROJECT_URL":"La url del proyecto no es válida.",
+			"OPEN_SOURCE_PROJECT_URL": "La url del proyecto de código abierto no es válida."
 		}
 	},
 	"POP_UPS": {
