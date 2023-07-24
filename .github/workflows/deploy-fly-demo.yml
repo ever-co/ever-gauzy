@@ -6,48 +6,25 @@ on:
         branches: [develop, temp]
         types:
             - completed
-env:
-  FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+
 jobs:
-  deploy:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      
-      - name: Deploy API
-        uses: superfly/flyctl-actions@master
-        with:
-          args: deploy --config ./.fly/applications/api/fly.toml --image ${{ steps.build.outputs.image }}
-          
-      - name: Build image
-        uses: docker/build-push-action@v2
-        with:
-          context: .
-          file: ./.deploy/api/Dockerfile
-          tags: ${{ steps.prep.outputs.tagged_image }}
-          cache-from: type=local,src=/tmp/.buildx-cache
-          cache-to: type=local,mode=max,dest=/tmp/.buildx-cache-new
-          
-      - name: Move cache
-        run: |
-          rm -rf /tmp/.buildx-cache
-          mv /tmp/.buildx-cache-new /tmp/.buildx-cache
-          
-      - name: Deploy Webapp
-        uses: superfly/flyctl-actions@master
-        with:
-          args: deploy --config ./.fly/applications/webapp/fly.toml --image ${{ steps.build.outputs.image }}
-          
-      - name: Build image
-        uses: docker/build-push-action@v2
-        with:
-          context: .
-          file: ./.deploy/webapp/Dockerfile
-          tags: ${{ steps.prep.outputs.tagged_image }}
-          cache-from: type=local,src=/tmp/.buildx-cache
-          cache-to: type=local,mode=max,dest=/tmp/.buildx-cache-new
-          
-      - name: Move cache
-        run: |
-          rm -rf /tmp/.buildx-cache
-          mv /tmp/.buildx-cache-new /tmp/.buildx-cache          
+    deploy-demo:
+        runs-on: ubuntu-latest
+
+        environment: demo
+
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v3
+
+            - uses: superfly/flyctl-actions/setup-flyctl@master
+
+            - name: Deploy API
+              run: flyctl deploy --remote-only --config ./.fly/applications/api/fly.toml
+              env:
+                  FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+
+            - name: Deploy Frontend
+              run: flyctl deploy --remote-only --config ./.fly/applications/webapp/fly.toml
+              env:
+                  FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
