@@ -4,13 +4,18 @@ import {
 	IPagination,
 	IReport,
 	IReportOrganization,
-	UpdateReportMenuInput
+	UpdateReportMenuInput,
 } from '@gauzy/contracts';
-import { Injectable, InternalServerErrorException } from '@nestjs/common';
+import {
+	Injectable,
+	InternalServerErrorException,
+	Logger,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { indexBy } from 'underscore';
 import { CrudService } from '../core/crud';
+import { RequestContext } from './../core/context';
 import { ReportOrganization } from './report-organization.entity';
 import { Report } from './report.entity';
 
@@ -26,12 +31,14 @@ export class ReportService extends CrudService<Report> {
 		super(reportRepository);
 	}
 
-	public async findAll(filter?: any): Promise<IPagination<Report>> {
-		const { items, total } = await super.findAll(filter);
+	private readonly logger = new Logger(ReportService.name);
 
-		const menuItems = await this.getMenuItems({
-			organizationId: filter.organizationId
-		});
+	public async findAll(filter?: any): Promise<IPagination<Report>> {
+		const start = new Date();
+
+		const { items, total } = await super.findAll(filter);
+		const menuItems = await this.getMenuItems(filter);
+		    
 		const orgMenuItems = indexBy(menuItems, 'id');
 
 		const mapItems = items.map((item) => {
@@ -42,40 +49,65 @@ export class ReportService extends CrudService<Report> {
 			}
 			return item;
 		});
+
+		const end = new Date();
+		const time = (end.getTime() - start.getTime()) / 1000;
+
+		this.logger.log(`ReportService.findAll took ${time} seconds`);
+		console.log(`ReportService.findAll took ${time} seconds`);
+
 		return { items: mapItems, total };
 	}
 
-	public getMenuItems(filter: GetReportMenuItemsInput): Promise<Report[]> {
-		return this.repository.find({
+	/**
+	 * Get reports menus
+	 *
+	 * @param options
+	 * @returns
+	 */
+	public async getMenuItems(
+		options: GetReportMenuItemsInput
+	): Promise<IReport[]> {
+
+    const start = new Date();
+
+		const { organizationId } = options;
+		const tenantId = RequestContext.currentTenantId() || options.tenantId;
+
+		const res = await this.repository.find({
 			join: {
-				alias: 'reports',
+				alias: this.alias,
 				innerJoin: {
-					reportOrganizations: 'reports.reportOrganizations'
+					reportOrganizations: `${this.alias}.reportOrganizations`,
 				}
-			},
-			relationLoadStrategy: 'query',
-			relations: {
-				reportOrganizations: true
 			},
 			where: {
 				reportOrganizations: {
-					organizationId: filter.organizationId,
+					organizationId,
+					tenantId,
 					isEnabled: true
 				}
 			}
 		});
+      
+    const end = new Date();
+		const time = (end.getTime() - start.getTime()) / 1000;
+
+		this.logger.log(`getMenuItems took ${time} seconds`);
+		console.log(`getMenuItems took ${time} seconds`);
+      
+    return res;
 	}
 
 	async updateReportMenu(
 		input: UpdateReportMenuInput
 	): Promise<ReportOrganization> {
-		let reportOrganization = await this.reportOrganizationRepository.findOne(
-			{
+		let reportOrganization =
+			await this.reportOrganizationRepository.findOne({
 				where: {
-					reportId: input.reportId
-				}
-			}
-		);
+					reportId: input.reportId,
+				},
+			});
 
 		if (!reportOrganization) {
 			reportOrganization = new ReportOrganization(input);
@@ -90,11 +122,11 @@ export class ReportService extends CrudService<Report> {
 	}
 
 	/*
-	* Bulk Create Organization Default Reports Menu
-	*/
+	 * Bulk Create Organization Default Reports Menu
+	 */
 	async bulkCreateOrganizationReport(input: IOrganization) {
 		try {
-			const { id: organizationId } = input;
+			const { id: organizationId, tenantId } = input;
 			const { items } = await super.findAll();
 
 			const reportOrganizations: IReportOrganization[] = [];
@@ -102,9 +134,10 @@ export class ReportService extends CrudService<Report> {
 				reportOrganizations.push(
 					new ReportOrganization({
 						report,
-						organizationId
+						organizationId,
+						tenantId
 					})
-				)
+				);
 			});
 
 			this.reportOrganizationRepository.save(reportOrganizations);

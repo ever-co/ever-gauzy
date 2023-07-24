@@ -110,7 +110,7 @@ export interface IEnvironment {
 	auth0Config: IAuth0Config;
 
 	sentry?: {
-		dns: string;
+		dsn: string;
 	};
 
 	/**

@@ -40,16 +40,8 @@ export class OrganizationSelectorComponent implements OnInit, AfterViewInit {
 			(event, arg) => {
 				this._ngZone.run(async () => {
 					try {
-						const payload = {
-							apiHost: arg.apiHost
-						}
-						if (!Object.values(payload).includes(null || undefined)) {
-							this._auth = payload;
-							this.user = await this._userOrganizationService.detail(
-								payload
-							);
-							await this.loadOrganizations();
-						}
+						this.user = await this._userOrganizationService.detail();
+						await this.loadOrganizations();
 					} catch (error) {
 						console.log('[error]', error)
 					}
@@ -80,8 +72,7 @@ export class OrganizationSelectorComponent implements OnInit, AfterViewInit {
 				'organization.featureOrganizations',
 				'organization.featureOrganizations.feature',
 			],
-			{ userId, tenantId },
-			this._auth
+			{ userId, tenantId }
 		);
 
 		const organizations: IOrganization[] = items
