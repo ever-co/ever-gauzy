@@ -1834,7 +1834,26 @@
 				"INACTIVITY_TIME_LIMIT_INFO": "Таймаут отслеживания бездействия (то есть, сколько секунд бездействия разрешено)",
 				"ACTIVITY_PROOF_DURATION": "Длительность проверки активности",
 				"ACTIVITY_PROOF_DURATION_INFO": "Длительность диалогового окна для проверки активности, оно отображает количество секунд, заданных для доказательства активности",
-				"ALLOW_TRACK_INACTIVITY": "Разрешить отслеживать бездействие"
+                "ALLOW_TRACK_INACTIVITY": "Разрешить отслеживать бездействие",
+                "PROOF_OF_COMPLETION": "Доказательство завершения",
+                "PROOF_OF_COMPLETION_TYPE": "Тип подтверждения завершения",
+                "PROOF_OF_COMPLETION_TYPE_DROPDOWN": {
+                    "NONE": "Никто",
+                    "PRIVATE": "Частный",
+                    "PUBLIC": "Общедоступный"
+                },
+                "LINKED_ISSUE": "Связанная проблема",
+                "COMMENT": "Комментарий",
+                "HISTORY": "«История»",
+                "ACCEPTANCE_CRITERIA": "Критерии приемлемости",
+                "DRAFT_ISSUE": "Черновики задач",
+                "NOTIFY_TASK_LEFT": "Уведомить об оставшейся задаче",
+                "NOTIFY_TASK_LEFT_PERIOD": "Период задачи уведомления (в днях)",
+                "AUTO_CLOSE_ISSUE": "Автоматическое закрытие задачи",
+                "AUTO_CLOSE_ISSUE_PERIOD": "Период автоматического закрытия задачи (в днях)",
+                "AUTO_ARCHIVE_ISSUE": "Проблема автоматического архивирования",
+                "AUTO_ARCHIVE_ISSUE_PERIOD": "Период выпуска автоархива (в днях)",
+                "AUTO_STATUS": "Автостатус"
 			},
 			"TEAMS_PAGE": {
 				"MANAGERS": "Менеджеры",

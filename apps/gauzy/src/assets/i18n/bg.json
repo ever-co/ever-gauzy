@@ -1834,7 +1834,26 @@
 				"INACTIVITY_TIME_LIMIT_INFO": "Inactivity tracking timeout (i.e., how many seconds of inactivity is allowed)",
 				"ACTIVITY_PROOF_DURATION": "Activity proof duration",
 				"ACTIVITY_PROOF_DURATION_INFO": "Duration of activity proof countdown dialog, it represent an amount of seconds given to prove activity",
-				"ALLOW_TRACK_INACTIVITY": "Allow to track inactivity"
+                "ALLOW_TRACK_INACTIVITY": "Allow to track inactivity",
+                "PROOF_OF_COMPLETION": "Доказателство за завършване",
+                "PROOF_OF_COMPLETION_TYPE": "Тип доказателство за завършване",
+                "LINKED_ISSUE": "Свързан проблем",
+                "COMMENT": "Коментар",
+                "HISTORY": "История",
+                "ACCEPTANCE_CRITERIA": "Критерии за приемане",
+                "DRAFT_ISSUE": "Проблеми с чернови",
+                "PROOF_OF_COMPLETION_TYPE_DROPDOWN": {
+                    "NONE": "Няма",
+                    "PRIVATE": "Частен",
+                    "PUBLIC": "Обществено"
+                },
+                "NOTIFY_TASK_LEFT": "Известие за оставена задача",
+                "NOTIFY_TASK_LEFT_PERIOD": "Период на задачата за известяване (в дни)",
+                "AUTO_CLOSE_ISSUE": "Автоматично затваряне на проблем",
+                "AUTO_CLOSE_ISSUE_PERIOD": "Период на издаване на автоматично затваряне (в дни)",
+                "AUTO_ARCHIVE_ISSUE": "Проблем с автоматичното архивиране",
+                "AUTO_ARCHIVE_ISSUE_PERIOD": "Период на издаване на автоматично архивиране (в дни)",
+                "AUTO_STATUS": "Автоматично състояние"
 			},
 			"TEAMS_PAGE": {
 				"MANAGERS": "Managers",
@@ -3312,6 +3331,7 @@
 			"ORGANIZATION_LOCATION_UPDATED": "'{{ name }}' organization location was changed",
 			"ORGANIZATION_INFO_UPDATED": "'{{ name }}' organization main info was changed",
 			"ORGANIZATION_SETTINGS_UPDATED": "'{{ name }}' organization settings was changed",
+            "ORGANIZATION_TASK_SETTINGS_UPDATE_ERROR": "Възникна грешка при опит за актуализиране на настройката на задачата на организацията.",
 			"SETTINGS_SAVED": "Settings saved successfully",
 			"KEY_RESULTS_CREATED": "Key Results Created",
 			"INVITE_EMAIL_DELETED": "{{ name }} has been deleted.",
