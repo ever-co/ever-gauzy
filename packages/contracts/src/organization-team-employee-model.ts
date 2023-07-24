@@ -3,6 +3,7 @@ import { IRelationalOrganizationTeam } from './organization-team.model';
 import { IRelationalEmployee } from './employee.model';
 import { IRelationalRole } from './role.model';
 import { ITimerStatus } from './timesheet.model';
+import { ITask } from './task.model';
 
 export interface IOrganizationTeamEmployee
 	extends IBasePerTenantAndOrganizationEntityModel,
@@ -11,6 +12,8 @@ export interface IOrganizationTeamEmployee
 		IRelationalRole,
 		ITimerStatus {
 	isTrackingEnabled?: boolean;
+	activeTaskId?: ITask['id'];
+	activeTask?: ITask;
 }
 
 export interface IOrganizationTeamEmployeeFindInput

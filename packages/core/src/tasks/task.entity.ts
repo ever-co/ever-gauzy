@@ -48,6 +48,7 @@ import {
 	User,
 	TaskEstimation,
 	TaskLinkedIssue,
+	OrganizationTeamEmployee,
 } from '../core/entities/internal';
 
 @Entity('task')
@@ -221,6 +222,12 @@ export class Task extends TenantOrganizationBaseEntity implements ITask {
 	| @OneToMany
 	|--------------------------------------------------------------------------
 	*/
+
+	/**
+	 * Organization Team Employees
+	 */
+	@OneToMany(() => OrganizationTeamEmployee, (it) => it.activeTask)
+	organizationTeamEmployees?: OrganizationTeamEmployee[];
 
 	/**
 	 * Estimations
