@@ -4,6 +4,20 @@ primary_region = "lax"
 [build]
   image = "ghcr.io/ever-co/gauzy-webapp-demo:latest"
 
+[env]
+  DEMO='true'
+  API_BASE_URL='https://apidemofly.gauzy.co'
+  CLIENT_BASE_URL='https://demofly.gauzy.co'
+  SENTRY_DSN='https://7cd381188b6f446ca0e69185227b9031@o51327.ingest.sentry.io/4397292'
+  CHATWOOT_SDK_TOKEN=''
+  CLOUDINARY_API_KEY=''
+  CLOUDINARY_CLOUD_NAME=''
+  GOOGLE_MAPS_API_KEY=''
+  GOOGLE_PLACE_AUTOCOMPLETE='true'
+  DEFAULT_LATITUDE='42.6459136'
+  DEFAULT_LONGITUDE='23.3332736'
+  DEFAULT_CURRENCY='USD'
+
 [http_service]
   internal_port = 8080
   force_https = true
