@@ -6,7 +6,7 @@ import
     IOrganizationTaskSetting,
     IOrganizationTaskSettingUpdateInput,
 } from '@gauzy/contracts';
-import { Observable } from 'rxjs';
+import { firstValueFrom, Observable } from 'rxjs';
 import { API_PREFIX } from '../constants/app.constants';
 
 @Injectable({
@@ -20,26 +20,27 @@ export class OrganizationTaskSettingService
 
     create(
         body: IOrganizationTaskSettingCreateInput
-    ): Observable<IOrganizationTaskSetting>
+    ): Promise<IOrganizationTaskSetting>
     {
-        return this.http.post<IOrganizationTaskSetting>(this.API_URL, body)
+        return firstValueFrom(this.http.post<IOrganizationTaskSetting>(this.API_URL, body));
 
     }
 
     edit(
         body: Partial<IOrganizationTaskSettingUpdateInput>
-    ): Observable<IOrganizationTaskSetting>
+    ): Promise<IOrganizationTaskSetting>
     {
-        return this.http.put<IOrganizationTaskSetting>(
+        return firstValueFrom(this.http.put<IOrganizationTaskSetting>(
             `${this.API_URL}/${body.id}`,
             body
-        );
+        ));
 
     }
 
-    getByOrganizationId(id: IOrganizationTaskSetting['id']): Observable<IOrganizationTaskSetting>
+    getById(id: IOrganizationTaskSetting['id'])
     {
-        return this.http.get<IOrganizationTaskSetting>(`${this.API_URL}/organization/${id}`);
-
+        return firstValueFrom(
+            this.http.get<IOrganizationTaskSetting>(`${this.API_URL}/${id}`)
+        );
     }
 }
