@@ -34,15 +34,4 @@ export interface IHelpCenterAuthorFind
 	id?: string;
 }
 
-export interface IHelpCenterArticleUpdate
-	extends IBasePerTenantAndOrganizationEntityModel {
-	name?: string;
-	description?: string;
-	data: string;
-	index?: number;
-	draft?: boolean;
-	privacy?: boolean;
-	categoryId?: string;
-	employees?: IEmployee[];
-	authors?: IHelpCenterAuthor[];
-}
+export interface IHelpCenterArticleUpdate extends Partial<IHelpCenterArticle> { }
