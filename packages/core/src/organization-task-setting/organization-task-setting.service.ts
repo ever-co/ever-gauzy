@@ -10,8 +10,7 @@ export class OrganizationTaskSettingService extends TenantAwareCrudService<Organ
     constructor(
         @InjectRepository(OrganizationTaskSetting)
         private readonly organizationTaskSettingRepository: Repository<OrganizationTaskSetting>
-    )
-    {
+    ) {
         super(organizationTaskSettingRepository);
     }
 
@@ -24,15 +23,16 @@ export class OrganizationTaskSettingService extends TenantAwareCrudService<Organ
      */
     async findByOrganizationId(
         organizationId: IOrganizationTaskSetting['id'],
-    ): Promise<IOrganizationTaskSetting>
-    {
-        const organizationTaskSetting = await this.organizationTaskSettingRepository.findOne({
+    ): Promise<IOrganizationTaskSetting> {
+        const {
+            record
+        } = await this.findOneOrFailByOptions({
             where: {
                 organizationId
             }
         });
 
-        return organizationTaskSetting;
+        return record;
     }
 
 }
