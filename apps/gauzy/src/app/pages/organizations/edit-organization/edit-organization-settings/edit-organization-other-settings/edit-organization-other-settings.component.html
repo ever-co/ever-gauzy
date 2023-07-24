@@ -42,6 +42,14 @@
 					}}
 				</li>
 			</span>
+            <span (click)="taskSetting.toggle()">
+                <li [ngClass]="{ active: taskSetting?.expanded }">
+                    {{
+                    'ORGANIZATIONS_PAGE.EDIT.SETTINGS.TASK_SETTING'
+                    | translate
+                    }}
+                </li>
+            </span>
 			<span (click)="integrations.toggle()">
 				<li [ngClass]="{ active: integrations?.expanded }">
 					{{ 'ORGANIZATIONS_PAGE.EDIT.INTEGRATIONS' | translate }}
