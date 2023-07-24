@@ -6,8 +6,8 @@ primary_region = "lax"
 
 [env]
   DEMO='true'
-  API_BASE_URL='https://apidemofly.gauzy.co'
-  CLIENT_BASE_URL='https://demofly.gauzy.co'
+  API_BASE_URL='https://ever-gauzy-api.fly.dev'
+  CLIENT_BASE_URL='https://ever-gauzy-webapp.fly.dev'
   SENTRY_DSN='https://7cd381188b6f446ca0e69185227b9031@o51327.ingest.sentry.io/4397292'
   CHATWOOT_SDK_TOKEN='jFoSXEjGmqhUhqU3zfgkFfMt'
   CLOUDINARY_API_KEY='256868982483961'
