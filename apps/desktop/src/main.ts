@@ -4,7 +4,7 @@ import { AppModule } from './app/app.module';
 import { environment } from './environments/environment';
 import { enableAkitaProdMode, persistState } from '@datorama/akita';
 import { akitaConfig } from '@datorama/akita';
-import * as Sentry from "@sentry/angular";
+import * as Sentry from '@sentry/angular';
 
 if (environment.production) {
 	enableProdMode();
@@ -12,15 +12,17 @@ if (environment.production) {
 }
 
 persistState({
-	key: '_gauzyStore'
+	key: '_gauzyStore',
 });
 
 akitaConfig({
-	resettable: true
+	resettable: true,
 });
 
 Sentry.init({
 	dsn: environment.SENTRY_DSN,
+	debug: !environment.production,
+	environment: environment.production ? 'production' : 'development',
 	integrations: [
 		// Registers and configures the Tracing integration,
 		// which automatically instruments your application to monitor its
@@ -39,7 +41,9 @@ Sentry.init({
 	// Set tracesSampleRate to 1.0 to capture 100%
 	// of transactions for performance monitoring.
 	// We recommend adjusting this value in production
-	tracesSampleRate: 1.0,
+	tracesSampleRate: environment.SENTRY_TRACES_SAMPLE_RATE
+		? parseInt(environment.SENTRY_TRACES_SAMPLE_RATE)
+		: 0.01,
 });
 
 platformBrowserDynamic()

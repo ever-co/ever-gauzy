@@ -197,13 +197,19 @@ if (unleashConfig.url) {
 
 const sentryIntegrations = [];
 
-sentryIntegrations.push(
-	// enable HTTP calls tracing
-	new SentryIntegrations.Http({ tracing: true })
-);
+if (environment.sentry && environment.sentry.dsn) {
+	if (process.env.SENTRY_HTTP_TRACING_ENABLED === 'true') {
+		sentryIntegrations.push(
+			// enable HTTP calls tracing
+			new SentryIntegrations.Http({ tracing: true })
+		);
+	}
 
-if (process.env.DB_TYPE === 'postgres') {
-	sentryIntegrations.push(new TrackingIntegrations.Postgres());
+	if (process.env.DB_TYPE === 'postgres') {
+		if (process.env.SENTRY_POSTGRES_TRACKING_ENABLED === 'true') {
+			sentryIntegrations.push(new TrackingIntegrations.Postgres());
+		}
+	}
 }
 
 @Module({
@@ -226,10 +232,10 @@ if (process.env.DB_TYPE === 'postgres') {
 			},
 			resolvers: [new HeaderResolver(['language'])],
 		}),
-		...(environment.sentry
+		...(environment.sentry && environment.sentry.dsn
 			? [
 					SentryModule.forRoot({
-						dsn: environment.sentry.dns,
+						dsn: environment.sentry.dsn,
 						debug: !environment.production,
 						environment: environment.production
 							? 'production'
@@ -238,7 +244,9 @@ if (process.env.DB_TYPE === 'postgres') {
 						release: 'gauzy@' + process.env.npm_package_version,
 						logLevels: ['error'],
 						integrations: sentryIntegrations,
-						tracesSampleRate: 1.0,
+						tracesSampleRate: process.env.SENTRY_TRACES_SAMPLE_RATE
+							? parseInt(process.env.SENTRY_TRACES_SAMPLE_RATE)
+							: 0.01,
 					}),
 			  ]
 			: []),

@@ -46,11 +46,16 @@ export const LocalStore = {
 			if (!authConfig) {
 				const defaultConfig = {
 					allowScreenshotCapture: true,
+					isLogout: true
 				};
 				store.set({
 					auth: defaultConfig,
 				});
 			} else {
+				authConfig.auth =
+					typeof authConfig.isLogout === 'undefined'
+						? true
+						: authConfig.isLogout;
 				authConfig.allowScreenshotCapture =
 					typeof authConfig.allowScreenshotCapture === 'undefined'
 						? true
@@ -124,7 +129,7 @@ export const LocalStore = {
 	},
 
 	updateApplicationSetting: (values) => {
-		let appSetting = store.get('appSetting');
+		const appSetting = store.get('appSetting');
 		store.set({
 			appSetting: {...appSetting, ...values}
 		});
@@ -139,7 +144,7 @@ export const LocalStore = {
 	},
 
 	updateConfigProject: (values) => {
-		let projects = store.get('project');
+		const projects = store.get('project');
 		store.set({
 			project: { ...projects, ...values }
 		});
@@ -156,7 +161,7 @@ export const LocalStore = {
 	},
 
 	updateAdditionalSetting: (values) => {
-		let addSetting = store.get('additionalSetting');
+		const addSetting = store.get('additionalSetting');
 		store.set({
 			additionalSetting: { ...addSetting, ...values }
 		});

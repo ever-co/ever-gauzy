@@ -49,14 +49,14 @@ export class ReportService {
 		private http: HttpClient,
 		protected reportStore: ReportFilterStore,
 		protected reportQuery: ReportFilterQuery
-	) {}
+	) { }
 
 	getReportMenuItems(request: GetReportMenuItemsInput = {}) {
 		return firstValueFrom(
 			this.http
-			.get<IReport[]>(`${API_PREFIX}/report/menu-items`, {
-				params: request ? toParams(request) : {}
-			})
+				.get<IReport[]>(`${API_PREFIX}/report/menu-items`, {
+					params: request ? toParams(request) : {}
+				})
 		).then((resp) => {
 			this.menuItems = resp;
 			return resp;
@@ -66,28 +66,28 @@ export class ReportService {
 	getReports(request?: IGetReport) {
 		return firstValueFrom(
 			this.http
-			.get<IPagination<IReport>>(`${API_PREFIX}/report`, {
-				params: request ? toParams(request) : {}
-			})
+				.get<IPagination<IReport>>(`${API_PREFIX}/report`, {
+					params: request ? toParams(request) : {}
+				})
 		);
 	}
 
 	updateReport(request?: UpdateReportMenuInput) {
 		return firstValueFrom(
 			this.http
-			.post<IPagination<IReport>>(
-				`${API_PREFIX}/report/menu-item`,
-				request
-			)
+				.post<IPagination<IReport>>(
+					`${API_PREFIX}/report/menu-item`,
+					request
+				)
 		);
 	}
 
 	getReportCategories(request?: IGetReportCategory) {
 		return firstValueFrom(
 			this.http
-			.get<IPagination<IReport>>(`${API_PREFIX}/report/category`, {
-				params: request ? toParams(request) : {}
-			})
+				.get<IPagination<IReport>>(`${API_PREFIX}/report/category`, {
+					params: request ? toParams(request) : {}
+				})
 		);
 	}
 }

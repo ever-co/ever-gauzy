@@ -73,6 +73,10 @@ spec:
                         value: 'info'
                       - name: SENTRY_DSN
                         value: '$SENTRY_DSN'
+                      - name: SENTRY_HTTP_TRACING_ENABLED
+                        value: 'false'
+                      - name: SENTRY_POSTGRES_TRACKING_ENABLED
+                        value: 'false'
                       - name: API_BASE_URL
                         value: 'https://api.gauzy.co'
                       - name: CLIENT_BASE_URL
@@ -221,9 +225,9 @@ spec:
                       - name: CLOUDINARY_CLOUD_NAME
                         value: 'dv6ezkfxg'
                       - name: GOOGLE_MAPS_API_KEY
-                        value: ''
+                        value: 'AIzaSyCJmnKzgTSq5Pc93HXar5bZrdmANTwtSIo'
                       - name: GOOGLE_PLACE_AUTOCOMPLETE
-                        value: 'false'
+                        value: 'true'
                       - name: DEFAULT_LATITUDE
                         value: '42.6459136'
                       - name: DEFAULT_LONGITUDE

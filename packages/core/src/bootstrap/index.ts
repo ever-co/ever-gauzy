@@ -35,7 +35,15 @@ export async function bootstrap(
 	const reflector = app.get(Reflector);
 	app.useGlobalGuards(new AuthGuard(reflector));
 
-	app.useLogger(app.get(SentryService));
+	// Assuming `env` contains the environment configuration, including Sentry DSN
+	const { sentry } = env;
+
+	// Initialize Sentry if the DSN is available
+	if (sentry && sentry.dsn) {
+		// Attach the Sentry logger to the app
+		app.useLogger(app.get(SentryService));
+	}
+
 	app.use(json({ limit: '50mb' }));
 	app.use(urlencoded({ extended: true, limit: '50mb' }));
 

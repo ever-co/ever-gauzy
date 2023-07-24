@@ -135,7 +135,7 @@ export class AppService {
 		);
 	}
 
-	async getUserDetail(values) {
-		return this._userOrganizationService.detail(values);
+	async getUserDetail() {
+		return await this._userOrganizationService.detail();
 	}
 }
