@@ -17,9 +17,6 @@ primary_region = "lax"
   JWT_REFRESH_TOKEN_SECRET='refreshSecretKey'
   JWT_REFRESH_TOKEN_EXPIRATION_TIME='86400'
 
-[build]
-  image = "ghcr.io/ever-co/gauzy-api-demo:latest"
-
 [http_service]
   internal_port = 8080
   force_https = true
