@@ -1,6 +1,22 @@
 app = "ever-gauzy-api"
 primary_region = "lax"
 
+[env]
+  API_HOST=0.0.0.0
+  DEMO='true'
+  NODE_ENV='development'
+  ADMIN_PASSWORD_RESET='true'
+  LOG_LEVEL='info'
+  SENTRY_DSN='https://7cd381188b6f446ca0e69185227b9031@o51327.ingest.sentry.io/4397292'
+  SENTRY_HTTP_TRACING_ENABLED='false'
+  SENTRY_POSTGRES_TRACKING_ENABLED='false'
+  API_BASE_URL='https://apidemo.gauzy.co'
+  CLIENT_BASE_URL='https://demo.gauzy.co'
+  EXPRESS_SESSION_SECRET='gauzy'
+  JWT_SECRET='secretKey'
+  JWT_REFRESH_TOKEN_SECRET='refreshSecretKey'
+  JWT_REFRESH_TOKEN_EXPIRATION_TIME='86400'
+
 [build]
   image = "ghcr.io/ever-co/gauzy-api-demo:latest"
 
@@ -11,3 +27,7 @@ primary_region = "lax"
   auto_start_machines = true
   min_machines_running = 0
   processes = ["app"]
+
+
+
+  
