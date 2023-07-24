@@ -1,6 +1,9 @@
 app = "ever-gauzy-webapp"
 primary_region = "lax"
 
+[build]
+  image = "ghcr.io/ever-co/gauzy-webapp-demo:latest"
+
 [env]
   DEMO='true'
   API_BASE_URL='https://apidemo.gauzy.co'
