@@ -77,17 +77,23 @@ export class TimerService implements ITimerService<TimerTO> {
 			const noSyncedTimers = await this.findNoSynced();
 			return await Promise.all(
 				noSyncedTimers.map(async (timer) => {
-					timer.stoppedAt = timer.stoppedAt
-						? timer.stoppedAt
-						: new Date();
-					const intervals = await this._intervalDAO.backedUpNoSynced(
-						timer.startedAt,
-						timer.stoppedAt,
+					const intervals = await this._intervalDAO.findAllSynced(
+						false,
 						user
 					);
 					return {
 						timer: timer,
-						intervals: intervals,
+						intervals: intervals.map((interval) => {
+							return {
+								...interval,
+								activities: JSON.parse(
+									interval.activities as any
+								),
+								screenshots: JSON.parse(
+									interval.screenshots as any
+								),
+							};
+						}),
 					};
 				})
 			);
