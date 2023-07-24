@@ -6,9 +6,9 @@ primary_region = "lax"
 
 [env]
   DEMO='true'
-  API_BASE_URL='https://apidemo.gauzy.co'
-  CLIENT_BASE_URL='https://demo.gauzy.co'
-  SENTRY_DSN=''
+  API_BASE_URL='https://apidemofly.gauzy.co'
+  CLIENT_BASE_URL='https://demofly.gauzy.co'
+  SENTRY_DSN='https://7cd381188b6f446ca0e69185227b9031@o51327.ingest.sentry.io/4397292'
   CHATWOOT_SDK_TOKEN=''
   CLOUDINARY_API_KEY=''
   CLOUDINARY_CLOUD_NAME=''
