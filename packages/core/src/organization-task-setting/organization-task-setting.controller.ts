@@ -11,7 +11,6 @@ import
     UsePipes,
     ValidationPipe,
     Get,
-    Query,
 } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { CommandBus } from '@nestjs/cqrs';
