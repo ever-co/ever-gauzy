@@ -4,6 +4,11 @@ kill_timeout = 300
 mounts = []
 primary_region = "lax"
 
+[mounts]
+  source = "api_data"
+  destination = "/srv/gauzy/apps/api/data"
+  processes= ["app"]
+
 [build]
   image = "ghcr.io/ever-co/gauzy-api-demo:latest"
 
