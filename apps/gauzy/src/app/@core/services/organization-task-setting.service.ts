@@ -1,11 +1,11 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import {
-IOrganizationTaskSettingCreateInput,
-IOrganizationTaskSetting,
-IOrganizationTaskSettingUpdateInput,
+    IOrganizationTaskSettingCreateInput,
+    IOrganizationTaskSetting,
+    IOrganizationTaskSettingUpdateInput,
 } from '@gauzy/contracts';
-import { firstValueFrom, Observable } from 'rxjs';
+import { Observable } from 'rxjs';
 import { API_PREFIX } from '../constants/app.constants';
 
 @Injectable({

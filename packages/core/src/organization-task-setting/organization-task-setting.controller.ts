@@ -1,16 +1,15 @@
-import
-{
-    Body,
-    Controller,
-    HttpCode,
-    HttpStatus,
-    Param,
-    Put,
-    UseGuards,
-    Post,
-    UsePipes,
-    ValidationPipe,
-    Get,
+import {
+Body,
+Controller,
+HttpCode,
+HttpStatus,
+Param,
+Put,
+UseGuards,
+Post,
+UsePipes,
+ValidationPipe,
+Get,
 } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { CommandBus } from '@nestjs/cqrs';
@@ -27,8 +26,7 @@ import { OrganizationTaskSettingService } from './organization-task-setting.serv
 @UseGuards(TenantPermissionGuard, PermissionGuard)
 @Permissions(PermissionsEnum.ALL_ORG_EDIT)
 @Controller()
-export class OrganizationTaskSettingController
-{
+export class OrganizationTaskSettingController {
 
     constructor(
         private readonly commandBus: CommandBus,
@@ -59,10 +57,9 @@ export class OrganizationTaskSettingController
     )
     @Get('organization/:organizationId')
     @UsePipes(new ValidationPipe())
-    async findByEmployee(
+    async findByOrganizationId(
         @Param('organizationId', UUIDValidationPipe) organizationId: IOrganizationTaskSetting['id'],
-    ): Promise<IOrganizationTaskSetting>
-    {
+    ): Promise<IOrganizationTaskSetting> {
         return await this.organizationTaskSettingService.findByOrganizationId(organizationId);
     }
 
@@ -90,8 +87,7 @@ export class OrganizationTaskSettingController
     @UsePipes(new ValidationPipe())
     async create(
         @Body() body: CreateOrganizationTaskSettingDTO
-    ): Promise<IOrganizationTaskSetting>
-    {
+    ): Promise<IOrganizationTaskSetting> {
         return this.commandBus.execute(
             new OrganizationTaskSettingCreateCommand(body)
         );
@@ -125,8 +121,7 @@ export class OrganizationTaskSettingController
     async update(
         @Param('id', UUIDValidationPipe) id: IOrganizationTaskSetting['id'],
         @Body() body: UpdateOrganizationTaskSettingDTO
-    ): Promise<IOrganizationTaskSetting>
-    {
+    ): Promise<IOrganizationTaskSetting> {
         return this.commandBus.execute(
             new OrganizationTaskSettingUpdateCommand(id, body)
         );
