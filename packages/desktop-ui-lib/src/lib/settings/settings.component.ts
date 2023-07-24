@@ -48,7 +48,7 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 		logs.push(value);
 		this._logContents$.next(logs);
 	}
-	logIsOpen: boolean = false;
+	logIsOpen = false;
 
 	appName: string = this.electronService.remote.app.getName();
 	menus = [];
@@ -876,29 +876,14 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 	 * Get logged in user details
 	 */
 	public async getUserDetails() {
-		const request = {
-			...this.authSetting,
-			...this.config,
-			apiHost: this.config.serverUrl
-		};
 		if (this.authSetting) {
 			try {
-				const payload = {
-					tenantId: request.tenantId,
-					token: request.token,
-					apiHost: request.apiHost
-				};
-				if (Object.values(payload).includes(null || undefined)) {
+				if (this.authSetting.isLogout) {
 					this.currentUser$.next(null);
-					if (typeof this.authSetting.isLogout !== 'undefined') {
-						if (!this.authSetting.isLogout) {
-							this.logout();
-						}
-					}
-				} else {
-					const user = await this.timeTrackerService.getUserDetail(payload);
-					this.currentUser$.next(this.authSetting.isLogout ? null : user);
+					return;
 				}
+				const user = await this.timeTrackerService.getUserDetail();
+				this.currentUser$.next(user);
 			} catch (error) {
 				console.log('User Detail error', error);
 			}

@@ -27,7 +27,7 @@ jobs:
               run: doctl registry login --expiry-seconds 600
 
             - name: Save DigitalOcean kubeconfig with short-lived credentials
-              run: doctl kubernetes cluster kubeconfig save --expiry-seconds 600 k8s-ever
+              run: doctl kubernetes cluster kubeconfig save --expiry-seconds 600 k8s-gauzy
 
             - name: Write PostgreSQL Certificate file
               run: |
@@ -37,7 +37,7 @@ jobs:
 
             - name: Apply k8s manifests changes in DigitalOcean k8s cluster (if any)
               run: |
-                  envsubst < $GITHUB_WORKSPACE/.deploy/k8s/k8s-manifest.stage.yaml | kubectl --context do-sfo2-k8s-ever apply -f -
+                  envsubst < $GITHUB_WORKSPACE/.deploy/k8s/k8s-manifest.stage.yaml | kubectl --context do-sfo2-k8s-gauzy apply -f -
               env:
                   DB_TYPE: '${{ secrets.DB_TYPE }}'
                   DB_URI: '${{ secrets.DB_URI }}'
@@ -50,6 +50,9 @@ jobs:
                   DB_CA_CERT: '${{ secrets.DB_CA_CERT }}'
                   DB_SSL_MODE: '${{ secrets.DB_SSL_MODE }}'
                   SENTRY_DSN: '${{ secrets.SENTRY_DSN }}'
+                  SENTRY_TRACES_SAMPLE_RATE: '${{ secrets.SENTRY_TRACES_SAMPLE_RATE }}'
+                  SENTRY_HTTP_TRACING_ENABLED: '${{ secrets.SENTRY_HTTP_TRACING_ENABLED }}'
+                  SENTRY_POSTGRES_TRACKING_ENABLED: '${{ secrets.SENTRY_POSTGRES_TRACKING_ENABLED }}'
                   AWS_ACCESS_KEY_ID: '${{ secrets.AWS_ACCESS_KEY_ID }}'
                   AWS_SECRET_ACCESS_KEY: '${{ secrets.AWS_SECRET_ACCESS_KEY }}'
                   AWS_REGION: '${{ secrets.AWS_REGION }}'
@@ -98,5 +101,5 @@ jobs:
             # note: for production we will use different strategy later
             - name: Restart Pods to pick up :latest tag version
               run: |
-                  kubectl --context do-sfo2-k8s-ever rollout restart deployment/gauzy-stage-api
-                  kubectl --context do-sfo2-k8s-ever rollout restart deployment/gauzy-stage-webapp
+                  kubectl --context do-sfo2-k8s-gauzy rollout restart deployment/gauzy-stage-api
+                  kubectl --context do-sfo2-k8s-gauzy rollout restart deployment/gauzy-stage-webapp

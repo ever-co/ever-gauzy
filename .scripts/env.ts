@@ -17,6 +17,7 @@ export type Env = Readonly<{
 	API_BASE_URL: string;
 
 	SENTRY_DSN: string;
+	SENTRY_TRACES_SAMPLE_RATE: string;
 
 	CLOUDINARY_CLOUD_NAME: string;
 	CLOUDINARY_API_KEY: string;
@@ -67,6 +68,7 @@ export const env: Env = cleanEnv(
 		API_BASE_URL: str({ default: 'http://localhost:3000' }),
 
 		SENTRY_DSN: str({ default: '' }),
+		SENTRY_TRACES_SAMPLE_RATE: str({ default: '' }),
 
 		CLOUDINARY_CLOUD_NAME: str({ default: '' }),
 		CLOUDINARY_API_KEY: str({ default: '' }),
@@ -74,7 +76,9 @@ export const env: Env = cleanEnv(
 		GOOGLE_MAPS_API_KEY: str({ default: '' }),
 		GOOGLE_PLACE_AUTOCOMPLETE: bool({ default: false }),
 
-		HUBSTAFF_REDIRECT_URI: str({ default: 'http://localhost:3000/api/integrations/hubstaff/callback' }),
+		HUBSTAFF_REDIRECT_URI: str({
+			default: 'http://localhost:3000/api/integrations/hubstaff/callback',
+		}),
 
 		DEFAULT_LATITUDE: num({ default: 42.6459136 }),
 		DEFAULT_LONGITUDE: num({ default: 23.3332736 }),

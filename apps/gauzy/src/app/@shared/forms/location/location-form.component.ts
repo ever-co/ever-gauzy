@@ -8,7 +8,7 @@ import {
 	AfterViewInit,
 	Inject,
 	Renderer2,
-	ChangeDetectorRef
+	ChangeDetectorRef,
 } from '@angular/core';
 import { FormArray, FormBuilder, FormGroup } from '@angular/forms';
 import { FormHelpers } from '../helpers';
@@ -26,11 +26,12 @@ import { DOCUMENT } from '@angular/common';
 @Component({
 	selector: 'ga-location-form',
 	styleUrls: ['./location-form.component.scss'],
-	templateUrl: 'location-form.component.html'
+	templateUrl: 'location-form.component.html',
 })
-export class LocationFormComponent extends TranslationBaseComponent
-	implements AfterViewInit {
-
+export class LocationFormComponent
+	extends TranslationBaseComponent
+	implements AfterViewInit
+{
 	FormHelpers: typeof FormHelpers = FormHelpers;
 
 	private _lastUsedAddressText: string;
@@ -82,8 +83,8 @@ export class LocationFormComponent extends TranslationBaseComponent
 			postcode: [],
 			loc: formBuilder.group({
 				type: ['Point'],
-				coordinates: formBuilder.array([null, null])
-			})
+				coordinates: formBuilder.array([null, null]),
+			}),
 		});
 		return form;
 	}
@@ -104,6 +105,7 @@ export class LocationFormComponent extends TranslationBaseComponent
 
 	ngAfterViewInit() {
 		const { GOOGLE_PLACE_AUTOCOMPLETE, GOOGLE_MAPS_API_KEY } = env;
+
 		if (!GOOGLE_PLACE_AUTOCOMPLETE || !GOOGLE_MAPS_API_KEY) {
 			this.showAutocompleteSearch = false;
 		}
@@ -163,7 +165,7 @@ export class LocationFormComponent extends TranslationBaseComponent
 		}
 		this.form.setValue({
 			postcode: geoLocation.postcode || '',
-			...(pick(geoLocation, Object.keys(this.getValue())) as any)
+			...(pick(geoLocation, Object.keys(this.getValue())) as any),
 		});
 		this.form.updateValueAndValidity();
 
@@ -210,8 +212,8 @@ export class LocationFormComponent extends TranslationBaseComponent
 				{
 					address: `${address} ${address2}, ${city}`,
 					componentRestrictions: {
-						country: country
-					}
+						country: country,
+					},
 				},
 				(results, status) => {
 					if (status === google.maps.GeocoderStatus.OK) {
@@ -238,7 +240,7 @@ export class LocationFormComponent extends TranslationBaseComponent
 		const geocoder = new google.maps.Geocoder();
 		geocoder.geocode(
 			{
-				location: { lng: this._lng, lat: this._lat }
+				location: { lng: this._lng, lat: this._lat },
 			},
 			(results, status) => {
 				if (status === google.maps.GeocoderStatus.OK) {
@@ -303,7 +305,8 @@ export class LocationFormComponent extends TranslationBaseComponent
 		autocomplete: google.maps.places.Autocomplete
 	) {
 		autocomplete.addListener('place_changed', (_) => {
-			const place: google.maps.places.PlaceResult = autocomplete.getPlace();
+			const place: google.maps.places.PlaceResult =
+				autocomplete.getPlace();
 			this._applyNewPlaceOnTheMap(place);
 		});
 	}
@@ -329,7 +332,7 @@ export class LocationFormComponent extends TranslationBaseComponent
 			administrative_area_level_2: shortName,
 			administrative_area_level_3: shortName,
 			administrative_area_level_4: shortName,
-			administrative_area_level_5: shortName
+			administrative_area_level_5: shortName,
 		};
 
 		let addressInput: string = '';
@@ -387,9 +390,8 @@ export class LocationFormComponent extends TranslationBaseComponent
 	 */
 	private _removeGoogleAutocompleteApi() {
 		const body = this._document.body;
-		const container = this._document.body.getElementsByClassName(
-			'pac-container'
-		);
+		const container =
+			this._document.body.getElementsByClassName('pac-container');
 		if (container.length > 0) {
 			this.renderer.removeChild(body, container[0]);
 		}

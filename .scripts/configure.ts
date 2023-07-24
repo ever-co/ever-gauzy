@@ -17,6 +17,12 @@ if (!env.GOOGLE_MAPS_API_KEY) {
 	);
 }
 
+if (!env.SENTRY_DSN) {
+	console.warn(
+		'WARNING: No Sentry DSN defined in the .env file. Sentry logging may not be working!'
+	);
+}
+
 if (!env.CLOUDINARY_CLOUD_NAME || !env.CLOUDINARY_API_KEY) {
 	console.warn('WARNING: No Cloudinary API keys defined in the .env file.');
 }
@@ -60,13 +66,13 @@ if (!env.IS_DOCKER) {
 		if (window._env && window._env.api) {
 			API_BASE_URL= window._env.api;
 		}
-	
+
 		if (window._env && window._env.api) {
 			CLIENT_BASE_URL = window.location.origin;
 		}
 	} catch(e) {}
 
-	export const environment: Environment = 
+	export const environment: Environment =
 	{
 		production:  ${isProd},
 
@@ -97,6 +103,7 @@ if (!env.IS_DOCKER) {
 		NO_INTERNET_LOGO: 'assets/images/logos/logo_Gauzy.svg',
 
 		SENTRY_DSN: '${env.SENTRY_DSN}',
+		SENTRY_TRACES_SAMPLE_RATE: '${env.SENTRY_TRACES_SAMPLE_RATE}',
 
 		HUBSTAFF_REDIRECT_URI: '${env.HUBSTAFF_REDIRECT_URI}',
 
@@ -127,7 +134,7 @@ if (!env.IS_DOCKER) {
 		GAUZY_CLOUD_APP: '${env.GAUZY_CLOUD_APP}',
 
 		FILE_PROVIDER: '${env.FILE_PROVIDER}',
-	};	
+	};
 	`;
 } else {
 	envFileContent += `
@@ -152,7 +159,7 @@ if (!env.IS_DOCKER) {
 		}
 	}
 
-	export const environment: Environment = 
+	export const environment: Environment =
 	{
 		production:  ${isProd},
 
@@ -183,6 +190,7 @@ if (!env.IS_DOCKER) {
 		NO_INTERNET_LOGO: 'assets/images/logos/logo_Gauzy.svg',
 
 		SENTRY_DSN: 'DOCKER_SENTRY_DSN',
+		SENTRY_TRACES_SAMPLE_RATE: 'DOCKER_SENTRY_TRACES_SAMPLE_RATE',
 
 		HUBSTAFF_REDIRECT_URI: 'DOCKER_HUBSTAFF_REDIRECT_URI',
 

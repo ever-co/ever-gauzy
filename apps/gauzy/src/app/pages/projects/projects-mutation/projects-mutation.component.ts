@@ -1,5 +1,5 @@
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { AbstractControl, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import {
 	IEmployee,
 	IOrganization,
@@ -379,5 +379,17 @@ export class ProjectsMutationComponent extends TranslationBaseComponent
 
 	handleImageUploadError(error) {
 		this.toastrService.danger(error);
+	}
+
+	public get projectName(): AbstractControl {
+		return this.form.get('name');
+	}
+
+	public get projectUrl(): AbstractControl {
+		return this.form.get('projectUrl');
+	}
+
+	public get openSourceProjectUrl(): AbstractControl {
+		return this.form.get('openSourceProjectUrl');
 	}
 }

@@ -259,6 +259,7 @@
 	],
 	"useGitignore": true,
 	"ignorePaths": [
+		".deploy/*",
 		".git/*",
 		".git/!{COMMIT_EDITMSG,EDITMSG}",
 		".git/*/**",

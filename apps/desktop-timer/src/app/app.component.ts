@@ -182,12 +182,7 @@ export class AppComponent implements OnInit, AfterViewInit {
 		const jwtParsed: any = await this.jwtDecode(arg.token);
 		if (jwtParsed) {
 			if (jwtParsed.employeeId) {
-				const user: any = await this.appService.getUserDetail({
-					...arg,
-					token: arg.token,
-					userId: arg.userId,
-					tenantId: jwtParsed.tenantId
-				});
+				const user: any = await this.appService.getUserDetail();
 				this.electronService.ipcRenderer.send('auth_success', {
 					user: user,
 					token: arg.token,
