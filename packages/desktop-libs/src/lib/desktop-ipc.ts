@@ -911,17 +911,14 @@ async function sequentialSyncQueue(window: BrowserWindow) {
 	}
 }
 
-let queueSync = Infinity;
+let size = Infinity;
 
-async function countIntervalQueue(window: BrowserWindow, isSyncing: boolean) {
+async function countIntervalQueue(window: BrowserWindow, inProgress: boolean) {
 	if (!window) return;
 	try {
-		queueSync = await intervalService.countNoSynced();
-		if (queueSync < 1) isQueueThreadTimerLocked = false;
-		window.webContents.send('count-synced', {
-			queue: queueSync,
-			isSyncing: isSyncing
-		});
+		size = await intervalService.countNoSynced();
+		if (size < 1) isQueueThreadTimerLocked = false;
+		window.webContents.send('count-synced', { size, inProgress });
 	} catch (error) {
 		console.log('ERROR_COUNT', error);
 	}
