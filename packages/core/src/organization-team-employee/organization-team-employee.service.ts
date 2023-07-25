@@ -66,7 +66,7 @@ export class OrganizationTeamEmployeeService extends TenantAwareCrudService<Orga
 				await this.repository.update(id, {
 					role: managerIds.includes(employeeId)
 						? role
-						: member.role.id !== role.id // Check if current member's role is not same as role(params)
+						: member.roleId !== role.id // Check if current member's role is not same as role(params)
 						? member.role // Keep old role as it is, to avoid setting null while updating team.(PUT /organization-team API)
 						: null, // When the employeeId is not present in managerIds and the employee does not already have a MANAGER role.
 				});
