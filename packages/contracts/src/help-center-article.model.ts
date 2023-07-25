@@ -33,3 +33,5 @@ export interface IHelpCenterAuthorFind
 	extends IBasePerTenantAndOrganizationEntityModel {
 	id?: string;
 }
+
+export interface IHelpCenterArticleUpdate extends Partial<IHelpCenterArticle> { }

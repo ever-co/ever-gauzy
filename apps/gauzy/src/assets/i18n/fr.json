@@ -659,6 +659,11 @@
 			"ENABLED": "enabled",
 			"DISABLED": "disabled",
 			"WAIT_UNTIL_RELOAD": "Please wait till application reloads"
+		},
+		"ERROR": {
+			"PROJECT_NAME": "Le nom du projet est requis.",
+			"PROJECT_URL":"L'url du projet n'est pas valide.",
+			"OPEN_SOURCE_PROJECT_URL": "L'url du projet open source n'est pas valide."
 		}
 	},
 	"POP_UPS": {
