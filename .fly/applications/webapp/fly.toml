@@ -4,7 +4,7 @@ kill_timeout = 30
 primary_region = "lax"
 
 [build]
-  image = "ghcr.io/ever-co/gauzy-webapp-demo:latest"
+  image = "ghcr.io/ever-co/gauzy-webapp:latest"
 
 [env]
   DEMO="true"
