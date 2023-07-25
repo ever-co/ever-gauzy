@@ -4,22 +4,14 @@ import { Node } from './node';
 export class LinkedList<T> implements ILinkedList<T> {
 	private _head: ILinkedListNode<T>;
 	private _tail: ILinkedListNode<T>;
-	private _size: number;
-	constructor(data?: T) {
-		if (data === null || data === undefined) {
-			this._head = null;
-			this._tail = null;
-			this._size = 0;
-		} else {
-			const node = new Node(data);
-			this._head = node;
-			this._tail = node;
-			this._size = 1;
-		}
+
+	constructor() {
+		this._head = null;
+		this._tail = null;
 	}
 
 	public get size(): number {
-		return this._size;
+		return this.toArray().length;
 	}
 
 	public get tail(): ILinkedListNode<T> {
@@ -42,6 +34,18 @@ export class LinkedList<T> implements ILinkedList<T> {
 		}
 		return linkedList;
 	}
+
+	public search(data: T): ILinkedListNode<T> {
+		let temp = this.head;
+		while (temp) {
+			if (temp.data === data) {
+				return temp;
+			}
+			temp = temp.next;
+		}
+		return null;
+	}
+
 	public isEmpty(): boolean {
 		return this._head === null;
 	}
@@ -55,32 +59,6 @@ export class LinkedList<T> implements ILinkedList<T> {
 		return arr;
 	}
 
-	public get(index: number): ILinkedListNode<T> {
-		if (index < 0 || index > this._size) return null;
-		let node: ILinkedListNode<T> = this._head;
-		for (let i = 0; i < index; i++) {
-			node = node.next;
-		}
-		return node;
-	}
-	public set(index: number, data: T): ILinkedListNode<T> {
-		const node: ILinkedListNode<T> = this.get(index);
-		if (!node) return null;
-		node.data = data;
-		return node;
-	}
-	public insert(index: number, data: T): ILinkedListNode<T> {
-		if (!index) return this.prepend(data);
-		if (index === this._size) return this.append(data);
-		if (index < 0 || index > this._size) return null;
-		const node: ILinkedListNode<T> = new Node(data);
-		const temp: ILinkedListNode<T> = this.get(index - 1);
-		node.next = temp.next;
-		temp.next = node;
-		this._size++;
-		return node;
-	}
-
 	public append(data: T): ILinkedListNode<T> {
 		const node = new Node(data);
 		if (this.isEmpty()) {
@@ -90,18 +68,17 @@ export class LinkedList<T> implements ILinkedList<T> {
 			this._tail.next = node;
 			this._tail = node;
 		}
-		this._size++;
 		return node;
 	}
+
 	public prepend(data: T): ILinkedListNode<T> {
 		const node = new Node(data);
-		if (!this.isEmpty()) {
+		if (this.isEmpty()) {
 			this._tail = node;
 		} else {
 			node.next = this._head;
 		}
 		this._head = node;
-		this._size++;
 		return node;
 	}
 
@@ -115,8 +92,6 @@ export class LinkedList<T> implements ILinkedList<T> {
 		} else {
 			this.head = this.head.next;
 		}
-
-		this._size--;
 
 		return node;
 	}
@@ -136,7 +111,6 @@ export class LinkedList<T> implements ILinkedList<T> {
 			current.next = null;
 			this.tail = current;
 		}
-		this._size--;
 		return node;
 	}
 
@@ -147,7 +121,7 @@ export class LinkedList<T> implements ILinkedList<T> {
 
 		if (this.head.data === data) {
 			this.head = this.head.next;
-			if (this.head === null) {
+			if (this.isEmpty()) {
 				this.tail = null;
 			}
 			return;
@@ -164,6 +138,16 @@ export class LinkedList<T> implements ILinkedList<T> {
 			}
 			current = current.next;
 		}
-		this._size--;
+	}
+
+	public toString(): string {
+		let temp = this.head;
+		let result = '';
+		while (temp) {
+			result += `${temp.data} -> `;
+			temp = temp.next;
+		}
+		result += 'null';
+		return result;
 	}
 }
