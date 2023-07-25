@@ -637,6 +637,11 @@
 			"ENABLED": "включен",
 			"DISABLED": "отключено",
 			"WAIT_UNTIL_RELOAD": "Пожалуйста, дождитесь перезагрузки приложения"
+		},
+		"ERROR": {
+			"PROJECT_NAME": "Необходимо название проекта.",
+			"PROJECT_URL":"Недопустимый URL проекта.",
+			"OPEN_SOURCE_PROJECT_URL": "Недопустимый URL-адрес проекта с открытым исходным кодом."
 		}
 	},
 	"POP_UPS": {
@@ -1012,8 +1017,10 @@
 		"GAUZY_LIGHT": "Гаузивый свет",
 		"GAUZY_DARK": "Gauzy Dark",
 		"LANGUAGE": "Язык",
-		"ENGLISH": "Russian",
+		"ENGLISH": "Английский",
 		"BULGARIAN": "Болгарский",
+		"FRENCH": "Французский",
+		"SPANISH": "Испанский",
 		"HEBREW": "Иврит",
 		"RUSSIAN": "Русский",
 		"PREFERRED_LAYOUT": "Макет",
@@ -1976,7 +1983,7 @@
 			"ALLOW_MODIFY_TIME": "Разрешить изменять время",
 			"ALLOW_MANUAL_TIME": "Разрешить ручное время",
 			"DELETE_SCREENSHOTS": "Разрешить удаление скриншота",
-			"ORG_TASK_SETTING":"Параметры задачи"
+			"ORG_TASK_SETTING": "Параметры задачи"
 		},
 		"BILLING": "Биллинг",
 		"BUDGET": "Бюджет",

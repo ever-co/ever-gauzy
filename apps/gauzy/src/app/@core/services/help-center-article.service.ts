@@ -1,4 +1,4 @@
-import { IHelpCenterArticle } from '@gauzy/contracts';
+import { IHelpCenterArticle, IHelpCenterArticleUpdate } from '@gauzy/contracts';
 import { HttpClient } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
 import { Injectable } from '@angular/core';
@@ -29,7 +29,7 @@ export class HelpCenterArticleService {
 		);
 	}
 
-	update(id: string, updateInput: any): Promise<any> {
+	update(id: string, updateInput: IHelpCenterArticleUpdate): Promise<any> {
 		return firstValueFrom(
 			this.http
 			.put(`${API_PREFIX}/help-center-article/${id}`, updateInput)

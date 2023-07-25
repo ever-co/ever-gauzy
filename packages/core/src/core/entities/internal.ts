@@ -146,6 +146,7 @@ export * from '../../user/user.entity';
 export * from '../../warehouse/warehouse-product-variant.entity';
 export * from '../../warehouse/warehouse-product.entity';
 export * from '../../warehouse/warehouse.entity';
+export * from '../../tasks/estimation/task-estimation.entity';
 
 //core subscribers
 export * from './../../candidate/candidate.subscriber';

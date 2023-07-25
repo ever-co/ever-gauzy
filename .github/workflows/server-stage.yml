@@ -57,6 +57,9 @@ jobs:
                   GH_TOKEN: ${{ secrets.GH_TOKEN }}
                   EP_GH_IGNORE_TIME: true
                   SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
+                  SENTRY_TRACES_SAMPLE_RATE: '${{ secrets.SENTRY_TRACES_SAMPLE_RATE }}'
+                  SENTRY_HTTP_TRACING_ENABLED: '${{ secrets.SENTRY_HTTP_TRACING_ENABLED }}'
+                  SENTRY_POSTGRES_TRACKING_ENABLED: '${{ secrets.SENTRY_POSTGRES_TRACKING_ENABLED }}'
                   DO_KEY_ID: ${{ secrets.DO_KEY_ID }}
                   DO_SECRET_KEY: ${{ secrets.DO_SECRET_KEY }}
 
@@ -103,6 +106,9 @@ jobs:
                   GH_TOKEN: ${{ secrets.GH_TOKEN }}
                   EP_GH_IGNORE_TIME: true
                   SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
+                  SENTRY_TRACES_SAMPLE_RATE: '${{ secrets.SENTRY_TRACES_SAMPLE_RATE }}'
+                  SENTRY_HTTP_TRACING_ENABLED: '${{ secrets.SENTRY_HTTP_TRACING_ENABLED }}'
+                  SENTRY_POSTGRES_TRACKING_ENABLED: '${{ secrets.SENTRY_POSTGRES_TRACKING_ENABLED }}'
                   DO_KEY_ID: ${{ secrets.DO_KEY_ID }}
                   DO_SECRET_KEY: ${{ secrets.DO_SECRET_KEY }}
 
@@ -149,5 +155,8 @@ jobs:
                   GH_TOKEN: ${{ secrets.GH_TOKEN }}
                   EP_GH_IGNORE_TIME: true
                   SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
+                  SENTRY_TRACES_SAMPLE_RATE: '${{ secrets.SENTRY_TRACES_SAMPLE_RATE }}'
+                  SENTRY_HTTP_TRACING_ENABLED: '${{ secrets.SENTRY_HTTP_TRACING_ENABLED }}'
+                  SENTRY_POSTGRES_TRACKING_ENABLED: '${{ secrets.SENTRY_POSTGRES_TRACKING_ENABLED }}'
                   DO_KEY_ID: ${{ secrets.DO_KEY_ID }}
                   DO_SECRET_KEY: ${{ secrets.DO_SECRET_KEY }}

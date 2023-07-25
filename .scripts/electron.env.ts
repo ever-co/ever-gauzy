@@ -18,7 +18,8 @@ if (isProd) {
         API_DEFAULT_PORT: 3000,
         GAUZY_UI_DEFAULT_PORT: 5621,
         SCREENSHOTS_ENGINE_METHOD: 'ScreenshotDesktopLib', // ElectronDesktopCapturer || ScreenshotDesktopLib
-        SENTRY_DSN: '${env.SENTRY_DSN}'
+        SENTRY_DSN: '${env.SENTRY_DSN}',
+		SENTRY_TRACES_SAMPLE_RATE: '${env.SENTRY_TRACES_SAMPLE_RATE}',
     }
     `;
 	try {
@@ -117,8 +118,7 @@ if (isProd) {
 				}
 			}
 		);
-	} else 
-		throw `Incorrect value of desktop parameter ${desktop}`;
+	} else throw `Incorrect value of desktop parameter ${desktop}`;
 }
 
 // we always want first to remove old generated files (one of them is not needed for current build)

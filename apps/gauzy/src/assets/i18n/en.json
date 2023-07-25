@@ -247,7 +247,9 @@
 			"BG": "Български (България)",
 			"EN": "English (United States)",
 			"RU": "Русский (Россия)",
-			"HE": "עברית ישראל"
+			"HE": "עברית ישראל",
+			"FR": "Français (France)",
+			"ES": "Español (España)"
 		},
 		"CURRENT_VALUE": "Current value",
 		"TARGET_VALUE": "Target value",
@@ -657,6 +659,11 @@
 			"ENABLED": "enabled",
 			"DISABLED": "disabled",
 			"WAIT_UNTIL_RELOAD": "Please wait till application reloads"
+		},
+		"ERROR": {
+			"PROJECT_NAME": "Project name is required.",
+			"PROJECT_URL":"Project url is invalid.",
+			"OPEN_SOURCE_PROJECT_URL": "Open source project url is invalid."
 		}
 	},
 	"POP_UPS": {
@@ -1033,6 +1040,8 @@
 		"GAUZY_DARK": "Gauzy Dark",
 		"LANGUAGE": "Language",
 		"ENGLISH": "English",
+		"FRENCH": "French",
+		"SPANISH": "Spanish",
 		"BULGARIAN": "Bulgarian",
 		"HEBREW": "Hebrew",
 		"RUSSIAN": "Russian",

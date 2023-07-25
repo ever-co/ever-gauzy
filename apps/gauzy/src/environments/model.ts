@@ -28,6 +28,7 @@ export interface Environment {
 	NO_INTERNET_LOGO: string;
 
 	SENTRY_DSN?: string;
+	SENTRY_TRACES_SAMPLE_RATE?: string;
 
 	HUBSTAFF_REDIRECT_URI?: string;
 

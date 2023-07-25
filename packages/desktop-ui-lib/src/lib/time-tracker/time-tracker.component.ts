@@ -34,6 +34,12 @@ import { Store, ErrorHandlerService, NativeNotificationService, ToastrNotificati
 import { TimeTrackerStatusService } from './time-tracker-status/time-tracker-status.service';
 import { IRemoteTimer } from './time-tracker-status/interfaces';
 
+enum TimerStartMode {
+	MANUAL = 'manual',
+	REMOTE = 'remote',
+	STOP = 'stop'
+}
+
 @UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ngx-desktop-time-tracker',
@@ -110,6 +116,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 	loading = false;
 	appSetting$: BehaviorSubject<any> = new BehaviorSubject(null);
 	isExpand$: BehaviorSubject<boolean> = new BehaviorSubject(false);
+	isCollapse$: BehaviorSubject<boolean> = new BehaviorSubject(true);
 	dialogType = {
 		deleteLog: {
 			name: 'deleteLog',
@@ -138,7 +145,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 				type: 'text',
 				valuePrepareFunction: (due) => {
 					return moment(due).format(
-						this.userData ? this.userData.employee.organization.dateFormat : 'YYYY-MM-DD'
+						this.userData ? this.userData?.employee?.organization?.dateFormat : 'YYYY-MM-DD'
 					);
 				}
 			}
@@ -173,6 +180,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 	private _isOver$: BehaviorSubject<boolean> = new BehaviorSubject(false);
 	private _lastTime = 0;
 	private _isLockSyncProcess = false;
+	private _startMode = TimerStartMode.STOP;
 
 	public hasTaskPermission$: BehaviorSubject<boolean> = new BehaviorSubject(false);
 	private get _hasTaskPermission(): boolean {
@@ -342,15 +350,23 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 			.subscribe();
 		this._timeTrackerStatus.external$
 			.pipe(
-				filter((remoteTimer: IRemoteTimer) => this.xor(this.start, remoteTimer.running)),
+				filter((remoteTimer: IRemoteTimer) =>
+					this.xor(this.start, remoteTimer.running)
+				),
 				tap(async (remoteTimer: IRemoteTimer) => {
 					this.projectSelect = remoteTimer.lastLog.projectId;
 					this.taskSelect = remoteTimer.lastLog.taskId;
 					this.note = remoteTimer.lastLog.description;
-					this.organizationContactId = remoteTimer.lastLog.organizationContactId;
+					this.organizationContactId =
+						remoteTimer.lastLog.organizationContactId;
+					this._startMode = TimerStartMode.REMOTE;
 					await this.toggleStart(remoteTimer.running, false);
 				}),
-				filter((remoteTimer: IRemoteTimer) => remoteTimer.isExternalSource),
+				filter(
+					(remoteTimer: IRemoteTimer) =>
+						remoteTimer.isExternalSource ||
+						this._startMode === TimerStartMode.REMOTE
+				),
 				tap((remoteTimer: IRemoteTimer) =>
 					this.electronService.ipcRenderer.send('update_session', {
 						startedAt: remoteTimer.startedAt
@@ -388,7 +404,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 				await this.getProjects(arg);
 				await this.getTask(arg);
 				await this.getTodayTime(arg);
-				await this.setTimerDetails(arg);
+				await this.setTimerDetails();
 				if (arg.timeSlotId) {
 					await this.getLastTimeSlotImage(arg);
 				}
@@ -402,7 +418,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 				this.projectSelect = arg.projectId;
 				this.note = arg.note;
 				this._aw$.next(arg.aw && arg.aw.isAw ? arg.aw.isAw : false);
-				await this.setTimerDetails(arg);
+				await this.setTimerDetails();
 				await this.toggleStart(true);
 			})
 		);
@@ -490,7 +506,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 		this.electronService.ipcRenderer.on('get_user_detail', (event, arg) =>
 			this._ngZone.run(async () => {
 				try {
-					const res = await this.timeTrackerService.getUserDetail(arg);
+					const res = await this.timeTrackerService.getUserDetail();
 					if (res) {
 						event.sender.send('user_detail', res);
 					}
@@ -556,6 +572,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 				if (this.isExpand) this.expand();
 				if (this.start) await this.stopTimer();
 				if (arg) event.sender.send('restart_and_update');
+				localStorage.clear();
 			})
 		);
 
@@ -640,7 +657,11 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 				}[]
 			) => {
 				this._ngZone.run(async () => {
-					if (this._isLockSyncProcess || this._timeTrackerStatus.remoteTimer.isExternalSource) {
+					if (
+						this._isLockSyncProcess ||
+						this._timeTrackerStatus.remoteTimer?.isExternalSource ||
+						this._startMode === TimerStartMode.REMOTE
+					) {
 						return;
 					} else {
 						this._isLockSyncProcess = true;
@@ -936,6 +957,9 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 
 	public async startTimer(onClick = true): Promise<void> {
 		try {
+			this._startMode = onClick
+				? TimerStartMode.MANUAL
+				: TimerStartMode.REMOTE;
 			this.start$.next(true);
 			this.electronService.ipcRenderer.send('update_tray_start');
 			const timer = await this.electronService.ipcRenderer.invoke('START_TIMER', {
@@ -964,6 +988,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 			const timer = await this.electronService.ipcRenderer.invoke('STOP_TIMER', config);
 			await this._toggle(timer, onClick);
 			this.electronService.ipcRenderer.send('update_tray_stop');
+			this._startMode = TimerStartMode.STOP;
 		} catch (error) {
 			console.log('[ERROR_STOP_TIMER]', error);
 		}
@@ -1229,9 +1254,9 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 		}
 	}
 
-	public async setTimerDetails(arg): Promise<void> {
+	public async setTimerDetails(): Promise<void> {
 		try {
-			const res: any = await this.timeTrackerService.getUserDetail(arg);
+			const res: any = await this.timeTrackerService.getUserDetail();
 			if (res.employee && res.employee.organization) {
 				this.userData = res;
 				if (res.role && res.role.rolePermissions) {
@@ -1345,6 +1370,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 	}
 
 	public expand(): void {
+		this.isCollapse$.next(this.isExpand);
 		this.electronService.ipcRenderer.send('expand', !this.isExpand);
 	}
 
@@ -1489,7 +1515,10 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 	}
 
 	public async sendActivities(arg): Promise<void> {
-		if (this._timeTrackerStatus.remoteTimer.isExternalSource) {
+		if (
+			this._timeTrackerStatus.remoteTimer?.isExternalSource ||
+			this._startMode === TimerStartMode.REMOTE
+		) {
 			return;
 		}
 		// screenshot process
@@ -1743,7 +1772,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 	private _passedAllAuthorizations(): boolean {
 		let isPassed = false;
 		// Verify if tracking is enabled
-		if (!this.userData.employee.isTrackingEnabled) {
+		if (!this.userData?.employee?.isTrackingEnabled) {
 			this.toastrService.show("Your can't run timer for the moment", `Warning`, {
 				status: 'danger'
 			});
@@ -1751,18 +1780,18 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 		}
 		// Verify work status of user
 		else if (
-			!this.userData.employee.startedWorkOn ||
-			!this.userData.employee.isActive ||
-			this.userData.employee.workStatus
+			!this.userData?.employee?.startedWorkOn ||
+			!this.userData?.employee?.isActive ||
+			this.userData?.employee?.workStatus
 		) {
 			// Verify if user are already started to work for organization, if yes you can run time tracker else no
-			if (!this.userData.employee.startedWorkOn) {
+			if (!this.userData?.employee?.startedWorkOn) {
 				this.toastrService.show('Your are not authorized to work', `Warning`, {
 					status: 'danger'
 				});
 			}
 			// Verify if user are deleted for organization, if yes can't run time tracker
-			if (this.userData.employee.startedWorkOn && !this.userData.employee.isActive) {
+			if (this.userData?.employee?.startedWorkOn && !this.userData?.employee?.isActive) {
 				this.toastrService.show('Your account it already deleted', `Warning`, {
 					status: 'danger'
 				});
@@ -1989,7 +2018,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 			const isRemote =
 				this._timeTrackerStatus.remoteTimer &&
 				this.xor(!isStarted, this._timeTrackerStatus.remoteTimer.running) &&
-				!onClick;
+				this._startMode === TimerStartMode.REMOTE;
 			const params = {
 				token: this.token,
 				note: this.note,
@@ -2034,7 +2063,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 						}),
 						this.getTimerStatus(params)
 					];
-					if (!this._timeTrackerStatus.remoteTimer?.isExternalSource) {
+					if (!this._timeTrackerStatus.remoteTimer?.isExternalSource || this._startMode === TimerStartMode.MANUAL) {
 						const takeScreenCapturePromise = this.electronService.ipcRenderer.invoke(
 							'TAKE_SCREEN_CAPTURE',
 							{

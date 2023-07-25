@@ -925,6 +925,10 @@ export class PagesComponent extends TranslationBaseComponent
 	}
 
 	async getReportsMenus() {
+		if (!this.organization) {
+			return;
+		}
+
 		const { tenantId } = this.store.user;
 		const { id: organizationId } = this.organization;
 

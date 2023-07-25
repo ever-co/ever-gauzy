@@ -6,9 +6,9 @@ import { NotesWithTagsComponent } from '../notes-with-tags/notes-with-tags.compo
 	selector: 'ga-picture-name-tags',
 	template: `
 		<ngx-avatar
-			[src]="rowData?.imageUrl"
-			[name]="rowData?.fullName ? rowData?.fullName : rowData?.name"
-			[id]="rowData?.id"
+			[src]="avatar?.imageUrl"
+			[name]="avatar?.name"
+			[id]="avatar?.id"
 			class="report-table"
 		></ngx-avatar>
 		<ng-template [ngIf]="rowData?.isDefault">
@@ -78,4 +78,18 @@ export class PictureNameTagsComponent
 {
 	@Input()
 	isTags = true;
+
+	public get avatar() {
+		const employeeId =
+			this.rowData.employeeId === this.rowData.id
+				? this.rowData.id
+				: this.rowData.employeeId;
+		return {
+			...this.rowData,
+			id: employeeId ? employeeId : null,
+			name: this.rowData.fullName
+				? this.rowData.fullName
+				: this.rowData.name,
+		};
+	}
 }

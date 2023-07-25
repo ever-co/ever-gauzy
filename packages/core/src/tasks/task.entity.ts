@@ -46,8 +46,10 @@ import {
 	TenantOrganizationBaseEntity,
 	TimeLog,
 	User,
+	TaskEstimation,
+	TaskLinkedIssue,
+	OrganizationTeamEmployee,
 } from '../core/entities/internal';
-import { TaskLinkedIssue } from './linked-issue/task-linked-issue.entity';
 
 @Entity('task')
 @Index('taskNumber', ['projectId', 'number'], { unique: true })
@@ -220,6 +222,18 @@ export class Task extends TenantOrganizationBaseEntity implements ITask {
 	| @OneToMany
 	|--------------------------------------------------------------------------
 	*/
+
+	/**
+	 * Organization Team Employees
+	 */
+	@OneToMany(() => OrganizationTeamEmployee, (it) => it.activeTask)
+	organizationTeamEmployees?: OrganizationTeamEmployee[];
+
+	/**
+	 * Estimations
+	 */
+	@OneToMany(() => TaskEstimation, (it) => it.task)
+	estimations?: TaskEstimation[];
 
 	/**
 	 * Children Tasks

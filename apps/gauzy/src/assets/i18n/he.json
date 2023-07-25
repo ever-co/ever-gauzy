@@ -247,7 +247,9 @@
 			"BG": "Български (България)",
 			"EN": "English (United States)",
 			"RU": "Русский (Россия)",
-			"HE": "עברית ישראל"
+			"HE": "עברית ישראל",
+			"FR": "Français (France)",
+			"ES": "Español (España)"
 		},
 		"CURRENT_VALUE": "Current value",
 		"TARGET_VALUE": "Target value",
@@ -637,6 +639,11 @@
 			"ENABLED": "enabled",
 			"DISABLED": "disabled",
 			"WAIT_UNTIL_RELOAD": "Please wait till application reloads"
+		},
+		"ERROR": {
+			"PROJECT_NAME": "נדרש שם הפרויקט.",
+			"PROJECT_URL":"כתובת האתר של הפרויקט אינה חוקית.",
+			"OPEN_SOURCE_PROJECT_URL": "כתובת האתר של פרוייקט קוד פתוח אינה חוקית."
 		}
 	},
 	"POP_UPS": {
@@ -1012,10 +1019,12 @@
 		"GAUZY_LIGHT": "Gauzy Light",
 		"GAUZY_DARK": "Gauzy Dark",
 		"LANGUAGE": "Language",
-		"ENGLISH": "English",
-		"BULGARIAN": "Bulgarian",
-		"HEBREW": "Hebrew",
-		"RUSSIAN": "Russian",
+		"ENGLISH": "אנגלית",
+		"FRENCH": "צָרְפָתִית",
+		"BULGARIAN": "בולגרית",
+		"HEBREW": "עִברִית",
+		"RUSSIAN": "רוּסִי",
+		"SPANISH": "ספרדית",
 		"PREFERRED_LAYOUT": "Layout",
 		"PREFERRED_LAYOUT_TOOLTIP": "This will only set the default layout and not change the layout on each page if you have already changed it once.",
 		"RESET_LAYOUT": "Reset Layout",
