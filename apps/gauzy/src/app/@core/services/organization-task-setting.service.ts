@@ -1,10 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import {
-    IOrganizationTaskSettingCreateInput,
-    IOrganizationTaskSetting,
-    IOrganizationTaskSettingUpdateInput,
-} from '@gauzy/contracts';
+import { IOrganizationTaskSettingCreateInput, IOrganizationTaskSetting, IOrganizationTaskSettingUpdateInput } from '@gauzy/contracts';
 import { Observable } from 'rxjs';
 import { API_PREFIX } from '../constants/app.constants';
 
@@ -18,6 +14,7 @@ export class OrganizationTaskSettingService {
 
     create(
         body: IOrganizationTaskSettingCreateInput
+
     ): Observable<IOrganizationTaskSetting> {
         return this.http.post<IOrganizationTaskSetting>(this.API_URL, body);
     }

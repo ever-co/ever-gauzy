@@ -1,68 +1,69 @@
 import
-    {
-        AfterViewInit,
-        ChangeDetectorRef,
-        Component,
-        OnDestroy,
-        OnInit,
-        ViewChild,
-    } from '@angular/core';
+{
+    AfterViewInit,
+    ChangeDetectorRef,
+    Component,
+    OnDestroy,
+    OnInit,
+    ViewChild,
+} from '@angular/core';
 import
-    {
-        FormBuilder,
-        FormControl,
-        FormGroup,
-        Validators,
-    } from '@angular/forms';
+{
+    FormBuilder,
+    FormControl,
+    FormGroup,
+    Validators,
+} from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { formatDate } from '@angular/common';
 import * as moment from 'moment';
 import
-    {
-        AccountingTemplateTypeEnum,
-        AlignmentOptions,
-        BonusTypeEnum,
-        CrudActionEnum,
-        CurrenciesEnum,
-        CurrencyPosition,
-        DEFAULT_ACTIVITY_PROOF_DURATIONS,
-        DEFAULT_DATE_FORMATS,
-        DEFAULT_INACTIVITY_TIME_LIMITS,
-        DEFAULT_INVITE_EXPIRY_PERIOD,
-        DEFAULT_PROFIT_BASED_BONUS,
-        DEFAULT_REVENUE_BASED_BONUS,
-        DEFAULT_TIME_FORMATS,
-        DEFAULT_TASK_NOTIFY_PERIOD,
-        DEFAULT_PROOF_COMPLETION_TYPE,
-        DefaultValueDateTypeEnum,
-        IAccountingTemplate,
-        IKeyValuePair,
-        IOrganization,
-        RegionsEnum,
-        WeekDaysEnum,
-        IOrganizationTaskSetting,
-        TaskProofOfCompletionTypeEnum,
-        DEFAULT_AUTO_CLOSE_ISSUE_PERIOD,
-    } from '@gauzy/contracts';
+{
+    AccountingTemplateTypeEnum,
+    AlignmentOptions,
+    BonusTypeEnum,
+    CrudActionEnum,
+    CurrenciesEnum,
+    CurrencyPosition,
+    DEFAULT_ACTIVITY_PROOF_DURATIONS,
+    DEFAULT_DATE_FORMATS,
+    DEFAULT_INACTIVITY_TIME_LIMITS,
+    DEFAULT_INVITE_EXPIRY_PERIOD,
+    DEFAULT_PROFIT_BASED_BONUS,
+    DEFAULT_REVENUE_BASED_BONUS,
+    DEFAULT_TIME_FORMATS,
+    DEFAULT_TASK_NOTIFY_PERIOD,
+    DEFAULT_PROOF_COMPLETION_TYPE,
+    DefaultValueDateTypeEnum,
+    IAccountingTemplate,
+    IKeyValuePair,
+    IOrganization,
+    RegionsEnum,
+    WeekDaysEnum,
+    IOrganizationTaskSetting,
+    TaskProofOfCompletionTypeEnum,
+    DEFAULT_AUTO_CLOSE_ISSUE_PERIOD,
+} from '@gauzy/contracts';
 import { TranslateService } from '@ngx-translate/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { debounceTime, filter, map, tap } from 'rxjs/operators';
 import
-    {
-        NbAccordionComponent,
-        NbAccordionItemComponent,
-        NbThemeService,
-    } from '@nebular/theme';
+{
+    NbAccordionComponent,
+    NbAccordionItemComponent,
+    NbThemeService,
+} from '@nebular/theme';
 import { isEmpty } from '@gauzy/common-angular';
 import
-    {
-        AccountingTemplateService,
-        OrganizationEditStore,
-        OrganizationsService,
-        Store,
-        ToastrService,
-    } from './../../../../../@core/services';
+{
+    AccountingTemplateService,
+    OrganizationEditStore,
+    OrganizationsService,
+    Store,
+    ToastrService,
+} from './../../../../../@core/services';
 import { NotesWithTagsComponent } from './../../../../../@shared/table-components';
+import { OrganizationTaskSettingService } from 'apps/gauzy/src/app/@core/services/organization-task-setting.service';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -89,6 +90,7 @@ export class EditOrganizationOtherSettingsComponent
         private readonly fb: FormBuilder,
         private readonly cdr: ChangeDetectorRef,
         private readonly organizationService: OrganizationsService,
+        private readonly organizationTaskSettingService: OrganizationTaskSettingService,
         private readonly toastrService: ToastrService,
         private readonly organizationEditStore: OrganizationEditStore,
         public readonly translateService: TranslateService,
@@ -103,12 +105,6 @@ export class EditOrganizationOtherSettingsComponent
     public get isTrackInactivity(): boolean
     {
         return this.form.get('allowTrackInactivity').value;
-    }
-
-    public get isTasksProofOfCompletionEnabled(): boolean
-    {
-        return this.taskSettingForm.get('isTasksProofOfCompletionEnabled')
-            .value;
     }
 
     public organization: IOrganization;
@@ -267,15 +263,19 @@ export class EditOrganizationOtherSettingsComponent
         this.route.parent.data
             .pipe(
                 debounceTime(100),
-                filter((data) => !!data && !!data.organization),
-                map(({ organization }) => organization),
+                filter((data) => { return !!data && (!!data.organization || !!data.organizationTaskSetting) }),
+                map(({ organization, organizationTaskSetting }) => { return { organization, organizationTaskSetting } }),
                 tap(
-                    (organization: IOrganization) =>
-                        (this.organization = organization)
+                    (data: { organization: IOrganization, organizationTaskSetting: IOrganizationTaskSetting }) =>
+                    {
+
+                        (this.organization = data.organization);
+                        this.organizationTaskSetting = data.organizationTaskSetting
+                    }
                 ),
                 tap(
-                    (organization: IOrganization) =>
-                        (this.regionCode = organization.regionCode)
+                    (data: { organization: IOrganization, organizationTaskSetting: IOrganizationTaskSetting }) =>
+                        (this.regionCode = data.organization.regionCode)
                 ),
                 tap(() => this._setFormValues()),
                 tap(() => this._getTemplates()),
@@ -484,6 +484,31 @@ export class EditOrganizationOtherSettingsComponent
             }
         );
         this.goBack();
+    }
+    async updateOrganizationTaskSetting()
+    {
+        const editTaskSettingInput: IOrganizationTaskSetting = {
+            ...this.taskSettingForm.value,
+            organizationId: this.organization.id,
+            id: this.organizationTaskSetting.id
+        }
+        this.organizationTaskSettingService
+            .edit(editTaskSettingInput)
+            .subscribe({
+                next: (orgTaskSetting: IOrganizationTaskSetting) =>
+                {
+                    if (orgTaskSetting)
+                    {
+                        this.store.selectedOrganizationTaskSetting = orgTaskSetting;
+                    }
+                },
+                error: () =>
+                {
+                    this.toastrService.error(
+                        `TOASTR.MESSAGE.ORGANIZATION_TASK_SETTINGS_UPDATE_ERROR`
+                    );
+                }
+            })
     }
 
     goBack()
@@ -863,6 +888,8 @@ export class EditOrganizationOtherSettingsComponent
             isTasksAutoStatusEnabled:
                 this.organizationTaskSetting.isTasksAutoStatusEnabled,
         });
+        this.taskSettingForm.updateValueAndValidity();
+
         /**
          * Default selected accounting templates dropdowns
          */

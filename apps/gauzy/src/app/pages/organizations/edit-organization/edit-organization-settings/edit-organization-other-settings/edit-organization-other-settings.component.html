@@ -42,6 +42,14 @@
 					}}
 				</li>
 			</span>
+            <span (click)="taskSetting.toggle()">
+                <li [ngClass]="{ active: taskSetting?.expanded }">
+                    {{
+                    'ORGANIZATIONS_PAGE.EDIT.SETTINGS.TASK_SETTING'
+                    | translate
+                    }}
+                </li>
+            </span>
 			<span (click)="integrations.toggle()">
 				<li [ngClass]="{ active: integrations?.expanded }">
 					{{ 'ORGANIZATIONS_PAGE.EDIT.INTEGRATIONS' | translate }}
@@ -52,8 +60,8 @@
 	<section class="fields-section">
 		<div class="actions">
 			<button
-				[disabled]="form.invalid"
-				(click)="updateOrganizationSettings()"
+				[disabled]="form.invalid || taskSettingForm.invalid"
+				(click)="updateOrganizationSettings();updateOrganizationTaskSetting();"
 				nbButton
 				status="success"
 			>
@@ -1374,7 +1382,7 @@
                                                     </nb-toggle>
                                         </div>
                                         </div>
-                                        
+
                                         <div class="col-6">
                                             <div class="form-group">
                                                 <input nbInput type="number" [min]="0" formControlName="tasksAutoArchivePeriodDays" [placeholder]="
