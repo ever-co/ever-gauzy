@@ -1,14 +1,13 @@
 import { UserService } from '.';
-import { IntervalDAO, Timer, TimerDAO, TimerTO } from '..';
-import { ITimerService } from '../../interfaces';
+import { Timer, TimerDAO, TimerTO } from '..';
+import { ISequence, ITimerService } from '../../interfaces';
 
 export class TimerService implements ITimerService<TimerTO> {
 	private _timerDAO: TimerDAO;
 	private _userService: UserService;
-	private _intervalDAO: IntervalDAO;
+
 	constructor() {
 		this._timerDAO = new TimerDAO();
-		this._intervalDAO = new IntervalDAO();
 		this._userService = new UserService();
 	}
 	public async findLastOne(): Promise<TimerTO> {
@@ -62,43 +61,12 @@ export class TimerService implements ITimerService<TimerTO> {
 		}
 	}
 
-	public async findNoSynced(): Promise<TimerTO[]> {
+	public async findToSynced(): Promise<ISequence[]> {
 		try {
 			const user = await this._userService.retrieve();
 			return await this._timerDAO.findAllNoSynced(user);
 		} catch (error) {
 			console.error('[NO_SYNCED_TIMER_ERROR]: ', error);
-		}
-	}
-
-	public async findToSynced() {
-		try {
-			const user = await this._userService.retrieve();
-			const noSyncedTimers = await this.findNoSynced();
-			return await Promise.all(
-				noSyncedTimers.map(async (timer) => {
-					const intervals = await this._intervalDAO.findAllSynced(
-						false,
-						user
-					);
-					return {
-						timer: timer,
-						intervals: intervals.map((interval) => {
-							return {
-								...interval,
-								activities: JSON.parse(
-									interval.activities as any
-								),
-								screenshots: JSON.parse(
-									interval.screenshots as any
-								),
-							};
-						}),
-					};
-				})
-			);
-		} catch (error) {
-			console.log('ERROR_TO_SYNCED', error);
 		}
 	}
 }
