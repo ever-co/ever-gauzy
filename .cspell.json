@@ -255,7 +255,9 @@
 		"Rememberd",
 		"basicstyles",
 		"itimer",
-		"iremote"
+		"iremote",
+		"iqueue",
+		"ilinked"
 	],
 	"useGitignore": true,
 	"ignorePaths": [
