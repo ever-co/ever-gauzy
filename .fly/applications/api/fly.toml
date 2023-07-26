@@ -9,7 +9,7 @@ primary_region = "lax"
   processes= ["app"]
 
 [build]
-  image = "ghcr.io/ever-co/gauzy-api:latest"
+  image = "ghcr.io/ever-co/gauzy-api-demo:latest"
 
 [env]
   API_HOST="0.0.0.0"
