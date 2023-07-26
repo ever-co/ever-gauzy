@@ -13,8 +13,7 @@ export class OrganizationTaskSettingService {
     constructor(private readonly http: HttpClient) { }
 
     create(
-        body: IOrganizationTaskSettingCreateInput
-
+        body: Partial<IOrganizationTaskSettingCreateInput>
     ): Observable<IOrganizationTaskSetting> {
         return this.http.post<IOrganizationTaskSetting>(this.API_URL, body);
     }

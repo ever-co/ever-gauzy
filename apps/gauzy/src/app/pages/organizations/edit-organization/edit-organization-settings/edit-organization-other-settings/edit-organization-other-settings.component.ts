@@ -46,7 +46,7 @@ import
 } from '@gauzy/contracts';
 import { TranslateService } from '@ngx-translate/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { debounceTime, filter, map, tap } from 'rxjs/operators';
+import {forkJoin,of,filter, tap, debounceTime, map, mergeMap} from 'rxjs';
 import
 {
     NbAccordionComponent,
@@ -265,18 +265,24 @@ export class EditOrganizationOtherSettingsComponent
                 debounceTime(100),
                 filter((data) => { return !!data && (!!data.organization || !!data.organizationTaskSetting) }),
                 map(({ organization, organizationTaskSetting }) => { return { organization, organizationTaskSetting } }),
-                tap(
-                    (data: { organization: IOrganization, organizationTaskSetting: IOrganizationTaskSetting }) =>
-                    {
+                tap((data: { organization: IOrganization, organizationTaskSetting: IOrganizationTaskSetting }) => { this.organization = data.organization }),
+                tap((data: { organization: IOrganization, organizationTaskSetting: IOrganizationTaskSetting }) => (this.regionCode = data.organization.regionCode)),
+                mergeMap((data: { organization: IOrganization, organizationTaskSetting: IOrganizationTaskSetting }) => {
 
-                        (this.organization = data.organization);
-                        this.organizationTaskSetting = data.organizationTaskSetting
+                    if (data.organizationTaskSetting === null) {
+                        return this.organizationTaskSettingService.create({
+                            organizationId: this.organization.id
+                        }).pipe(
+                            mergeMap((newTaskSetting) => {
+                                this.organizationTaskSetting = newTaskSetting;
+                                return forkJoin([of(this.organizationTaskSetting), of(data.organization)]);
+                            })
+                        );
+                    } else {
+                        this.organizationTaskSetting = data.organizationTaskSetting;
+                        return of([this.organizationTaskSetting, data.organization]);
                     }
-                ),
-                tap(
-                    (data: { organization: IOrganization, organizationTaskSetting: IOrganizationTaskSetting }) =>
-                        (this.regionCode = data.organization.regionCode)
-                ),
+                }),
                 tap(() => this._setFormValues()),
                 tap(() => this._getTemplates()),
                 untilDestroyed(this)
