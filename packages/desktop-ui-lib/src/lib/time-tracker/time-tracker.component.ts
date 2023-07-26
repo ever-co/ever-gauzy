@@ -711,6 +711,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 						this.timeTrackerService,
 						this._timeTrackerStatus
 					);
+					console.log('⌗', args);
 					for (const arg of args) sequenceQueue.enqueue(arg);
 					args = []; // empty the array
 					console.log('🚀 - Begin processing sequence queue');

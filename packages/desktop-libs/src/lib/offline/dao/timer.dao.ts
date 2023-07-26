@@ -104,13 +104,17 @@ export class TimerDAO implements DAO<TimerTO> {
 			).values(),
 		];
 
-		const timersWithIntervals = uniqueTimers.map((timer) => ({
+		const timersWithIntervals = uniqueTimers.map((timer: TimerTO) => ({
 			timer,
-			intervals: intervals.map((interval: IntervalTO) => ({
-				...interval,
-				activities: JSON.parse(interval.activities as any),
-				screenshots: JSON.parse(interval.screenshots as any),
-			})),
+			intervals: intervals
+				.map((interval: IntervalTO) => ({
+					...interval,
+					activities: JSON.parse(interval.activities as any),
+					screenshots: JSON.parse(interval.screenshots as any),
+				}))
+				.filter(
+					(interval: IntervalTO) => interval.timerId === timer.id
+				),
 		}));
 
 		return timersWithIntervals;
