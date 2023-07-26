@@ -23,6 +23,7 @@ import { TagCacheService } from '../services/tag-cache.service';
 import { TimeLogCacheService } from '../services/time-log-cache.service';
 import { LoggerService } from '../electron/services';
 import { API_PREFIX } from '../constants/app.constants';
+import { Store } from '../services';
 
 @Injectable({
 	providedIn: 'root',
@@ -38,7 +39,8 @@ export class TimeTrackerService {
 		private readonly _tagCacheService: TagCacheService,
 		private readonly _userOrganizationService: UserOrganizationService,
 		private readonly _timeLogService: TimeLogCacheService,
-		private readonly _loggerService: LoggerService
+		private readonly _loggerService: LoggerService,
+		private readonly _store: Store
 	) {}
 
 	AW_HOST = 'http://localhost:5600';
@@ -211,11 +213,18 @@ export class TimeTrackerService {
 
 	async getTimeSlot(values) {
 		this._loggerService.log.info(`Get Time Slot: ${moment().format()}`);
+		const { tenantId, organizationId } = this._store;
+		const params = toParams({
+			tenantId,
+			organizationId,
+			relations: ['screenshots']
+		});
 		let timeSlots$ = this._timeSlotCacheService.getValue(values.timeSlotId);
 		if (!timeSlots$) {
 			timeSlots$ = this.http
 				.get(
-					`${API_PREFIX}/timesheet/time-slot/${values.timeSlotId}?relations[]=screenshots&relations[]=activities&relations[]=employee`
+					`${API_PREFIX}/timesheet/time-slot/${values.timeSlotId}`,
+					{ params }
 				)
 				.pipe(
 					map((response: any) => response),
