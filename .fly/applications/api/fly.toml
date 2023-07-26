@@ -1,10 +1,9 @@
 app = "ever-gauzy-api"
 kill_signal = "SIGINT"
 kill_timeout = 300
-mounts = []
 primary_region = "lax"
 
-[mounts]
+[[mounts]]
   source = "api_data"
   destination = "/srv/gauzy/apps/api/data"
   processes= ["app"]
@@ -36,3 +35,13 @@ primary_region = "lax"
   auto_start_machines = true
   min_machines_running = 0
   processes = ["app"]
+
+[checks]
+  [checks.http_health_check]
+    port = 3000
+    type = "http"
+    interval = "15s"
+    timeout = "60s"
+    grace_period = "60s"
+    method = "get"
+    path = "/api/health"
