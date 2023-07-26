@@ -1843,7 +1843,26 @@
 				"INACTIVITY_TIME_LIMIT_INFO": "Inactivity tracking timeout (i.e., how many seconds of inactivity is allowed)",
 				"ACTIVITY_PROOF_DURATION": "Activity proof duration",
 				"ACTIVITY_PROOF_DURATION_INFO": "Duration of activity proof countdown dialog, it represent an amount of seconds given to prove activity",
-				"ALLOW_TRACK_INACTIVITY": "Allow to track inactivity"
+                "ALLOW_TRACK_INACTIVITY": "Allow to track inactivity",
+                "PROOF_OF_COMPLETION": "הוכחת השלמה",
+                "PROOF_OF_COMPLETION_TYPE": "סוג הוכחת השלמה",
+                "LINKED_ISSUE": "בעיה מקושרת",
+                "COMMENT": "תגובה",
+                "HISTORY": "הִיסטוֹרִיָה",
+                "ACCEPTANCE_CRITERIA": "קריטריונים לקבלה",
+                "DRAFT_ISSUE": "טיוטת סוגיות",
+                "PROOF_OF_COMPLETION_TYPE_DROPDOWN": {
+                    "NONE": "אף אחד",
+                    "PRIVATE": "פְּרָטִי",
+                    "PUBLIC": "פּוּמְבֵּי"
+                },
+                "NOTIFY_TASK_LEFT": "הודע על משימה שנשארה",
+                "NOTIFY_TASK_LEFT_PERIOD": "הודע על תקופת המשימה (בימים)",
+                "AUTO_CLOSE_ISSUE": "בעיה אוטומטית בסגירה",
+                "AUTO_CLOSE_ISSUE_PERIOD": "תקופת סגירה אוטומטית (בימים)",
+                "AUTO_ARCHIVE_ISSUE": "בעיה בארכיון אוטומטי",
+                "AUTO_ARCHIVE_ISSUE_PERIOD": "תקופת הנפקת ארכיון אוטומטי (בימים)",
+                "AUTO_STATUS": "מצב אוטומטי"
 			},
 			"TEAMS_PAGE": {
 				"MANAGERS": "Managers",

@@ -4,6 +4,8 @@ import { Repository } from 'typeorm';
 import { TenantAwareCrudService } from '@gauzy/core';
 import { isNotEmpty } from '@gauzy/common';
 import { HelpCenterArticle } from './help-center-article.entity';
+import { IHelpCenterArticleUpdate } from '@gauzy/contracts';
+
 
 @Injectable()
 export class HelpCenterArticleService extends TenantAwareCrudService<HelpCenterArticle> {
@@ -20,7 +22,7 @@ export class HelpCenterArticleService extends TenantAwareCrudService<HelpCenterA
 		return await this.repository
 			.createQueryBuilder('knowledge_base_article')
 			.where('knowledge_base_article.categoryId = :categoryId', {
-				categoryId
+				categoryId,
 			})
 			.getMany();
 	}
@@ -29,5 +31,12 @@ export class HelpCenterArticleService extends TenantAwareCrudService<HelpCenterA
 		if (isNotEmpty(ids)) {
 			return await this.repository.delete(ids);
 		}
+	}
+
+	public async updateArticleById(
+		id: string,
+		input: IHelpCenterArticleUpdate
+	): Promise<void> {
+		await this.repository.update(id, input);
 	}
 }
