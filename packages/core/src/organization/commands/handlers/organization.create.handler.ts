@@ -17,6 +17,7 @@ import { OrganizationStatusBulkCreateCommand } from './../../../tasks/statuses/c
 import { OrganizationTaskSizeBulkCreateCommand } from './../../../tasks/sizes/commands';
 import { OrganizationTaskPriorityBulkCreateCommand } from './../../../tasks/priorities/commands';
 import { OrganizationIssueTypeBulkCreateCommand } from './../../../tasks/issue-type/commands';
+import { OrganizationTaskSettingCreateCommand } from 'organization-task-setting/commands';
 
 @CommandHandler(OrganizationCreateCommand)
 export class OrganizationCreateHandler
@@ -159,7 +160,14 @@ export class OrganizationCreateHandler
 				new OrganizationIssueTypeBulkCreateCommand(organization)
 			);
 
-			// 10. Create Import Records while migrating for relative organization.
+            // 10. Create task setting for relative organization.
+			await this.commandBus.execute(
+				new OrganizationTaskSettingCreateCommand({
+                    organizationId :organization.id
+                })
+			);
+
+			// 11. Create Import Records while migrating for relative organization.
 			if (isImporting && sourceId) {
 				const { sourceId } = input;
 				await this.commandBus.execute(
