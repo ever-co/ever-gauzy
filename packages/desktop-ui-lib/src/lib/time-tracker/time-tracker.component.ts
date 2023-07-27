@@ -910,9 +910,12 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 
 	public async startTimer(onClick = true): Promise<void> {
 		try {
-			this._startMode = onClick
-				? TimerStartMode.MANUAL
-				: TimerStartMode.REMOTE;
+			if (onClick) {
+				await this.getTodayTime(this.argFromMain);
+				this._startMode = TimerStartMode.MANUAL
+			} else {
+				this._startMode = TimerStartMode.REMOTE
+			}
 			this.start$.next(true);
 			this.electronService.ipcRenderer.send('update_tray_start');
 			const timer = await this.electronService.ipcRenderer.invoke('START_TIMER', {
@@ -929,6 +932,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 			await this._toggle(timer, onClick);
 			this.electronService.ipcRenderer.send('request_permission');
 		} catch (error) {
+			this._startMode = TimerStartMode.STOP;
 			this.start$.next(false);
 			this.loading = false;
 			this._errorHandlerService.handleError(error);
