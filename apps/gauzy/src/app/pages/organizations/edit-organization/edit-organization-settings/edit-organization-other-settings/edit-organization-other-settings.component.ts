@@ -483,7 +483,7 @@ export class EditOrganizationOtherSettingsComponent
         );
         this.goBack();
     }
-    async updateOrganizationTaskSetting() {
+    updateOrganizationTaskSetting() {
         let taskSettingInputFormObj: IOrganizationTaskSetting = {
             ...this.taskSettingForm.value,
             organizationId: this.organization.id,
@@ -491,8 +491,7 @@ export class EditOrganizationOtherSettingsComponent
         if(this.organizationTaskSetting)
         taskSettingInputFormObj.id = this.organizationTaskSetting.id ;
 
-        (this.organizationTaskSetting ? this.organizationTaskSettingService.edit(taskSettingInputFormObj) : this.organizationTaskSettingService.create(taskSettingInputFormObj)).subscribe({
-            next: () => {},
+       return (this.organizationTaskSetting ? this.organizationTaskSettingService.edit(taskSettingInputFormObj) : this.organizationTaskSettingService.create(taskSettingInputFormObj)).subscribe({
             error: () => {
                 this.toastrService.error(
                     `TOASTR.MESSAGE.ORGANIZATION_TASK_SETTINGS_UPDATE_ERROR`
