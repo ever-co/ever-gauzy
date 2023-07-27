@@ -47,7 +47,7 @@ import
 } from '@gauzy/contracts';
 import { TranslateService } from '@ngx-translate/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import {filter, tap, debounceTime, map} from 'rxjs';
+import {filter, tap, debounceTime, map} from 'rxjs/operators';
 import
 {
     NbAccordionComponent,
@@ -492,11 +492,7 @@ export class EditOrganizationOtherSettingsComponent
         taskSettingInputFormObj.id = this.organizationTaskSetting.id ;
 
         (this.organizationTaskSetting ? this.organizationTaskSettingService.edit(taskSettingInputFormObj) : this.organizationTaskSettingService.create(taskSettingInputFormObj)).subscribe({
-            next: (orgTaskSetting: IOrganizationTaskSetting) => {
-                if (orgTaskSetting) {
-                    this.store.selectedOrganizationTaskSetting = orgTaskSetting;
-                }
-            },
+            next: () => {},
             error: () => {
                 this.toastrService.error(
                     `TOASTR.MESSAGE.ORGANIZATION_TASK_SETTINGS_UPDATE_ERROR`
