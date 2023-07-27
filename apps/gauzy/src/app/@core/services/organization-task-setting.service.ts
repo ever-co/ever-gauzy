@@ -14,7 +14,6 @@ export class OrganizationTaskSettingService {
 
     create(
         body: IOrganizationTaskSettingCreateInput
-
     ): Observable<IOrganizationTaskSetting> {
         return this.http.post<IOrganizationTaskSetting>(this.API_URL, body);
     }

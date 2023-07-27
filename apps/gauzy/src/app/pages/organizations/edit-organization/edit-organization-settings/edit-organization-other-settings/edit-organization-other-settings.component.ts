@@ -43,10 +43,11 @@ import
     IOrganizationTaskSetting,
     TaskProofOfCompletionTypeEnum,
     DEFAULT_AUTO_CLOSE_ISSUE_PERIOD,
+    DEFAULT_AUTO_ARCHIVE_ISSUE_PERIOD,
 } from '@gauzy/contracts';
 import { TranslateService } from '@ngx-translate/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { debounceTime, filter, map, tap } from 'rxjs/operators';
+import {filter, tap, debounceTime, map} from 'rxjs/operators';
 import
 {
     NbAccordionComponent,
@@ -258,18 +259,15 @@ export class EditOrganizationOtherSettingsComponent
         });
     }
 
-    ngOnInit(): void
-    {
+    ngOnInit(): void {
         this.route.parent.data
             .pipe(
                 debounceTime(100),
                 filter((data) => { return !!data && (!!data.organization || !!data.organizationTaskSetting) }),
                 map(({ organization, organizationTaskSetting }) => { return { organization, organizationTaskSetting } }),
                 tap(
-                    (data: { organization: IOrganization, organizationTaskSetting: IOrganizationTaskSetting }) =>
-                    {
-
-                        (this.organization = data.organization);
+                    (data: { organization: IOrganization, organizationTaskSetting: IOrganizationTaskSetting }) => {
+                        this.organization = data.organization;
                         this.organizationTaskSetting = data.organizationTaskSetting
                     }
                 ),
@@ -283,7 +281,7 @@ export class EditOrganizationOtherSettingsComponent
             )
             .subscribe();
     }
-
+    
     ngAfterViewInit(): void
     {
         /**
@@ -369,7 +367,7 @@ export class EditOrganizationOtherSettingsComponent
                     (
                         taskNotifyEnabled: IOrganizationTaskSetting['isTasksNotifyLeftEnabled']
                     ) =>
-                    {
+                    {                        
                         this.toggleTasksNotifyLeftPeriodDays(taskNotifyEnabled);
                     }
                 ),
@@ -485,30 +483,21 @@ export class EditOrganizationOtherSettingsComponent
         );
         this.goBack();
     }
-    async updateOrganizationTaskSetting()
-    {
-        const editTaskSettingInput: IOrganizationTaskSetting = {
+    updateOrganizationTaskSetting() {
+        let taskSettingInputFormObj: IOrganizationTaskSetting = {
             ...this.taskSettingForm.value,
             organizationId: this.organization.id,
-            id: this.organizationTaskSetting.id
-        }
-        this.organizationTaskSettingService
-            .edit(editTaskSettingInput)
-            .subscribe({
-                next: (orgTaskSetting: IOrganizationTaskSetting) =>
-                {
-                    if (orgTaskSetting)
-                    {
-                        this.store.selectedOrganizationTaskSetting = orgTaskSetting;
-                    }
-                },
-                error: () =>
-                {
-                    this.toastrService.error(
-                        `TOASTR.MESSAGE.ORGANIZATION_TASK_SETTINGS_UPDATE_ERROR`
-                    );
-                }
-            })
+        };
+        if(this.organizationTaskSetting)
+        taskSettingInputFormObj.id = this.organizationTaskSetting.id ;
+
+       return (this.organizationTaskSetting ? this.organizationTaskSettingService.edit(taskSettingInputFormObj) : this.organizationTaskSettingService.create(taskSettingInputFormObj)).subscribe({
+            error: () => {
+                this.toastrService.error(
+                    `TOASTR.MESSAGE.ORGANIZATION_TASK_SETTINGS_UPDATE_ERROR`
+                );
+            }
+        });
     }
 
     goBack()
@@ -600,7 +589,7 @@ export class EditOrganizationOtherSettingsComponent
         const taskProofOfCompletionTypeControl = <FormControl>(
             this.taskSettingForm.get('tasksProofOfCompletionType')
         );
-        const { tasksProofOfCompletionType } = this.organizationTaskSetting;
+        const { tasksProofOfCompletionType } = this.organizationTaskSetting || {};
 
         if (taskProofCompletion)
         {
@@ -631,7 +620,7 @@ export class EditOrganizationOtherSettingsComponent
         const taskNotifyPeriodControl = <FormControl>(
             this.taskSettingForm.get('tasksNotifyLeftPeriodDays')
         );
-        const { tasksNotifyLeftPeriodDays } = this.organizationTaskSetting;
+        const { tasksNotifyLeftPeriodDays } = this.organizationTaskSetting || {};
 
         if (taskNotify)
         {
@@ -663,7 +652,7 @@ export class EditOrganizationOtherSettingsComponent
         const taskAutoClosePeriodControl = <FormControl>(
             this.taskSettingForm.get('tasksAutoClosePeriodDays')
         );
-        const { tasksAutoClosePeriodDays } = this.organizationTaskSetting;
+        const { tasksAutoClosePeriodDays } = this.organizationTaskSetting || {};
 
         if (taskAutoClose)
         {
@@ -695,7 +684,7 @@ export class EditOrganizationOtherSettingsComponent
         const taskAutoArchivePeriodControl = <FormControl>(
             this.taskSettingForm.get('tasksAutoArchivePeriodDays')
         );
-        const { tasksAutoArchivePeriodDays } = this.organizationTaskSetting;
+        const { tasksAutoArchivePeriodDays } = this.organizationTaskSetting || {};
 
         if (taskAutoArchive)
         {
@@ -790,7 +779,7 @@ export class EditOrganizationOtherSettingsComponent
      */
     private _setFormValues()
     {
-        if (!this.organization || !this.organizationTaskSetting)
+        if (!this.organization)
         {
             return;
         }
@@ -846,48 +835,29 @@ export class EditOrganizationOtherSettingsComponent
         this.form.updateValueAndValidity();
 
         this.taskSettingForm.patchValue({
-            isTasksPrivacyEnabled:
-                this.organizationTaskSetting.isTasksPrivacyEnabled,
-            isTasksMultipleAssigneesEnabled:
-                this.organizationTaskSetting.isTasksMultipleAssigneesEnabled,
-            isTasksManualTimeEnabled:
-                this.organizationTaskSetting.isTasksManualTimeEnabled,
-            isTasksGroupEstimationEnabled:
-                this.organizationTaskSetting.isTasksGroupEstimationEnabled,
-            isTasksEstimationInHoursEnabled:
-                this.organizationTaskSetting.isTasksEstimationInHoursEnabled,
-            isTasksEstimationInStoryPointsEnabled:
-                this.organizationTaskSetting
-                    .isTasksEstimationInStoryPointsEnabled,
-            isTasksProofOfCompletionEnabled:
-                this.organizationTaskSetting.isTasksProofOfCompletionEnabled,
-            tasksProofOfCompletionType:
-                this.organizationTaskSetting.tasksProofOfCompletionType, // Enum
-            isTasksLinkedEnabled:
-                this.organizationTaskSetting.isTasksLinkedEnabled,
-            isTasksCommentsEnabled:
-                this.organizationTaskSetting.isTasksCommentsEnabled,
-            isTasksHistoryEnabled:
-                this.organizationTaskSetting.isTasksHistoryEnabled,
-            isTasksAcceptanceCriteriaEnabled:
-                this.organizationTaskSetting.isTasksAcceptanceCriteriaEnabled,
-            isTasksDraftsEnabled:
-                this.organizationTaskSetting.isTasksDraftsEnabled,
-            isTasksNotifyLeftEnabled:
-                this.organizationTaskSetting.isTasksNotifyLeftEnabled,
-            tasksNotifyLeftPeriodDays:
-                this.organizationTaskSetting.tasksNotifyLeftPeriodDays,
-            isTasksAutoCloseEnabled:
-                this.organizationTaskSetting.isTasksAutoCloseEnabled,
-            tasksAutoClosePeriodDays:
-                this.organizationTaskSetting.tasksAutoClosePeriodDays,
-            isTasksAutoArchiveEnabled:
-                this.organizationTaskSetting.isTasksAutoArchiveEnabled,
-            tasksAutoArchivePeriodDays:
-                this.organizationTaskSetting.tasksAutoArchivePeriodDays,
-            isTasksAutoStatusEnabled:
-                this.organizationTaskSetting.isTasksAutoStatusEnabled,
-        });
+            isTasksPrivacyEnabled: this.organizationTaskSetting ? this.organizationTaskSetting.isTasksPrivacyEnabled : false,
+            isTasksMultipleAssigneesEnabled: this.organizationTaskSetting ? this.organizationTaskSetting.isTasksMultipleAssigneesEnabled : false,
+            isTasksManualTimeEnabled: this.organizationTaskSetting ? this.organizationTaskSetting.isTasksManualTimeEnabled : false,
+            isTasksGroupEstimationEnabled: this.organizationTaskSetting ? this.organizationTaskSetting.isTasksGroupEstimationEnabled : false,
+            isTasksEstimationInHoursEnabled: this.organizationTaskSetting ? this.organizationTaskSetting.isTasksEstimationInHoursEnabled : false,
+            isTasksEstimationInStoryPointsEnabled: this.organizationTaskSetting ? this.organizationTaskSetting.isTasksEstimationInStoryPointsEnabled : false,
+            isTasksProofOfCompletionEnabled: this.organizationTaskSetting ? this.organizationTaskSetting.isTasksProofOfCompletionEnabled : false,
+            tasksProofOfCompletionType: this.organizationTaskSetting ? this.organizationTaskSetting.tasksProofOfCompletionType : DEFAULT_PROOF_COMPLETION_TYPE,
+            isTasksLinkedEnabled: this.organizationTaskSetting ? this.organizationTaskSetting.isTasksLinkedEnabled : false,
+            isTasksCommentsEnabled: this.organizationTaskSetting ? this.organizationTaskSetting.isTasksCommentsEnabled : false,
+            isTasksHistoryEnabled: this.organizationTaskSetting ? this.organizationTaskSetting.isTasksHistoryEnabled : false,
+            isTasksAcceptanceCriteriaEnabled: this.organizationTaskSetting ? this.organizationTaskSetting.isTasksAcceptanceCriteriaEnabled : false,
+            isTasksDraftsEnabled: this.organizationTaskSetting ? this.organizationTaskSetting.isTasksDraftsEnabled : false,
+            isTasksNotifyLeftEnabled: this.organizationTaskSetting ? this.organizationTaskSetting.isTasksNotifyLeftEnabled : false,
+            tasksNotifyLeftPeriodDays: this.organizationTaskSetting ? this.organizationTaskSetting.tasksNotifyLeftPeriodDays : DEFAULT_TASK_NOTIFY_PERIOD,
+            isTasksAutoCloseEnabled: this.organizationTaskSetting ? this.organizationTaskSetting.isTasksAutoCloseEnabled : false,
+            tasksAutoClosePeriodDays: this.organizationTaskSetting ? this.organizationTaskSetting.tasksAutoClosePeriodDays : DEFAULT_AUTO_CLOSE_ISSUE_PERIOD,
+            isTasksAutoArchiveEnabled: this.organizationTaskSetting ? this.organizationTaskSetting.isTasksAutoArchiveEnabled : false,
+            tasksAutoArchivePeriodDays: this.organizationTaskSetting ? this.organizationTaskSetting.tasksAutoArchivePeriodDays : DEFAULT_AUTO_ARCHIVE_ISSUE_PERIOD,
+            isTasksAutoStatusEnabled: this.organizationTaskSetting ? this.organizationTaskSetting.isTasksAutoStatusEnabled : false,
+          });
+          
+        
         this.taskSettingForm.updateValueAndValidity();
 
         /**

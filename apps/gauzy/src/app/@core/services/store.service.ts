@@ -15,7 +15,6 @@ import
         FeatureEnum,
         ISelectedEmployee,
         ComponentLayoutStyleEnum,
-        IOrganizationTaskSetting
     } from '@gauzy/contracts';
 import { StoreConfig, Store as AkitaStore, Query } from '@datorama/akita';
 import { NgxPermissionsService, NgxRolesService } from 'ngx-permissions';
@@ -35,7 +34,6 @@ export interface AppState
     user: IUser;
     userRolePermissions: IRolePermission[];
     selectedOrganization: IOrganization;
-    selectedOrganizationTaskSetting: IOrganizationTaskSetting;
     selectedEmployee: ISelectedEmployee;
     selectedProposal: IProposalViewModel;
     selectedProject: IOrganizationProject;
@@ -149,9 +147,6 @@ export class Store
     selectedOrganization$ = this.appQuery.select(
         (state) => state.selectedOrganization
     );
-    selectedOrganizationTaskSetting$ = this.appQuery.select(
-        (state) => state.selectedOrganizationTaskSetting
-    );
     selectedEmployee$ = this.appQuery.select((state) => state.selectedEmployee);
     selectedProject$ = this.appQuery.select((state) => state.selectedProject);
     userRolePermissions$ = this.appQuery.select(
@@ -221,19 +216,6 @@ export class Store
     {
         const { selectedOrganization } = this.appQuery.getValue();
         return selectedOrganization;
-    }
-
-    get selectedOrganizationTaskSetting(): IOrganizationTaskSetting
-    {
-        const { selectedOrganizationTaskSetting } = this.appQuery.getValue();
-        return selectedOrganizationTaskSetting;
-    }
-
-    set selectedOrganizationTaskSetting(organizationTaskSetting: IOrganizationTaskSetting)
-    {
-        this.appStore.update({
-            selectedOrganizationTaskSetting: organizationTaskSetting
-        });
     }
 
     set selectedEmployee(employee: ISelectedEmployee)
