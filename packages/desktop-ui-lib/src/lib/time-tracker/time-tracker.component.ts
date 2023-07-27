@@ -380,7 +380,6 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 					this.note = remoteTimer.lastLog.description;
 					this.organizationContactId =
 						remoteTimer.lastLog.organizationContactId;
-					this._startMode = TimerStartMode.REMOTE;
 					await this.toggleStart(remoteTimer.running, false);
 				}),
 				filter(
@@ -2051,5 +2050,9 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 			});
 			this._loggerService.log.info(`Timer Toggle Catch: ${moment().format()}`, error);
 		}
+	}
+
+	public get isRemoteTimer(): boolean {
+		return this._startMode === TimerStartMode.REMOTE;
 	}
 }
