@@ -35,6 +35,7 @@ import { OrganizationSelectorComponent } from './organization-selector/organizat
 import { ErrorHandlerService, NativeNotificationService, Store, ToastrNotificationService } from '../services';
 import { ElectronService, LoggerService } from '../electron/services';
 import { TimeTrackerStatusModule } from './time-tracker-status/time-tracker-status.module';
+import { TimeSlotQueueService } from '../offline-sync';
 
 @NgModule({
 	declarations: [
@@ -82,7 +83,8 @@ import { TimeTrackerStatusModule } from './time-tracker-status/time-tracker-stat
 		ToastrNotificationService,
 		ElectronService,
 		LoggerService,
-		Store
+		Store,
+		TimeSlotQueueService
 	],
 	exports: [TimeTrackerComponent]
 })

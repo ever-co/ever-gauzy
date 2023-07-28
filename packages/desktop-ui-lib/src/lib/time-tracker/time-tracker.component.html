@@ -15,7 +15,7 @@
 						</div>
 						<div class="row d-flex justify-content-between">
 							<div class="col-9 timer-box mt-2 pr-0 mb-2">
-								<div class="timer-container">
+								<div [ngStyle]="{opacity: isRemoteTimer ? '50%': '100%'}" class="timer-container">
 									{{ timeRun$ | async }}
 								</div>
 								<div class="mt-3 d-flex justify-content-between">
@@ -293,14 +293,14 @@
 			{{(isOffline$ | async)
 			? 'Offline' : 'Online'}}
 		</div>
-		<div *ngIf="(inQueue$ | async)?.queue === 0" nbTooltip="Synced" class="sync-container">
+		<div *ngIf="(inQueue$ | async)?.size === 0" nbTooltip="Synced" class="sync-container">
 			<nb-icon class="sync-check" size="tiny" status="success" icon="check-circle" pack="font-awesome"></nb-icon>
 		</div>
-		<div *ngIf="(inQueue$ | async)?.queue" class="sync-container">
+		<div *ngIf="(inQueue$ | async)?.size" class="sync-container">
 			<nb-badge class="sync-badge" position="top right" size="small" status="info"
-				[text]="(inQueue$ | async)?.queue"></nb-badge>
-			<nb-icon [nbTooltip]="(inQueue$ | async)?.isSyncing ? 'Synced in progress':' Waiting for synced'"
-				size="tiny" class="sync" [ngClass]="{spin: (inQueue$ | async)?.isSyncing }" icon="sync-alt"
+				[text]="(inQueue$ | async)?.size"></nb-badge>
+			<nb-icon [nbTooltip]="(inQueue$ | async)?.inProgress ? 'Synced in progress':' Waiting for synced'"
+				size="tiny" class="sync" [ngClass]="{spin: (inQueue$ | async)?.inProgress }" icon="sync-alt"
 				pack="font-awesome"></nb-icon>
 		</div>
 	</nb-layout-footer>
