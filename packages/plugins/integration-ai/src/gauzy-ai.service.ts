@@ -557,8 +557,8 @@ export class GauzyAIService {
 				externalEmployeeId: employee.id,
 				externalTenantId: employee.tenantId,
 				externalOrgId: employee.organizationId,
-				upworkOrganizationId:
-					employee.organization.upworkOrganizationId,
+				upworkOrganizationId: employee.organization.upworkOrganizationId,
+				upworkOrganizationName: employee.organization.upworkOrganizationName,
 				upworkId: employee.upworkId,
 				linkedInId: employee.linkedInId,
 				isActive: employee.isActive,
@@ -684,8 +684,8 @@ export class GauzyAIService {
 						externalEmployeeId: employee.id,
 						externalTenantId: employee.tenantId,
 						externalOrgId: employee.organizationId,
-						upworkOrganizationId:
-							employee.organization.upworkOrganizationId,
+						upworkOrganizationId: employee.organization.upworkOrganizationId,
+						upworkOrganizationName: employee.organization.upworkOrganizationName,
 						upworkId: employee.upworkId,
 						linkedInId: employee.linkedInId,
 						isActive: employee.isActive,
@@ -1290,6 +1290,7 @@ export class GauzyAIService {
 							externalTenantId
 							externalOrgId
 							upworkOrganizationId
+							upworkOrganizationName
 							upworkId
 							linkedInId
 							firstName
@@ -1322,6 +1323,7 @@ export class GauzyAIService {
 					externalTenantId
 					externalOrgId
 					upworkOrganizationId
+					upworkOrganizationName
 					upworkId
 					linkedInId
 					isActive

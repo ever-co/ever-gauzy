@@ -238,13 +238,7 @@
 						<label class="label">{{
 							'TASKS_PAGE.TASKS_DESCRIPTION' | translate
 						}}</label>
-						<textarea
-							formControlName="description"
-							nbInput
-							fullWidth
-							class="description"
-							[placeholder]="'FORM.PLACEHOLDERS.DESCRIPTION' | translate"
-						></textarea>
+						<ckeditor class="description" formControlName="description" [config]="ckConfig"></ckeditor>
 					</div>
 				</div>
 			</div>
