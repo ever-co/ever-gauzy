@@ -32,7 +32,7 @@ export class OrganizationCreateHandler
 		private readonly organizationRepository: Repository<Organization>,
 		@InjectRepository(UserOrganization)
 		private readonly userOrganizationRepository: Repository<UserOrganization>
-	) {}
+	) { }
 
 	public async execute(
 		command: OrganizationCreateCommand
@@ -82,6 +82,7 @@ export class OrganizationCreateHandler
 			const createdOrganization: IOrganization = await this.organizationService.create({
 				...input,
 				upworkOrganizationId: input.upworkOrganizationId || null,
+				upworkOrganizationName: input.upworkOrganizationName || null,
 				futureDateAllowed: input.futureDateAllowed === false ? false : true,
 				show_profits: input.show_profits === true ? true : false,
 				show_bonuses_paid: input.show_bonuses_paid === true ? true : false,
@@ -160,11 +161,11 @@ export class OrganizationCreateHandler
 				new OrganizationIssueTypeBulkCreateCommand(organization)
 			);
 
-            // 10. Create task setting for relative organization.
+			// 10. Create task setting for relative organization.
 			await this.commandBus.execute(
 				new OrganizationTaskSettingCreateCommand({
-                    organizationId :organization.id
-                })
+					organizationId: organization.id
+				})
 			);
 
 			// 11. Create Import Records while migrating for relative organization.
