@@ -268,6 +268,13 @@ export class Organization extends TenantBaseEntity implements IOrganization {
 	@Column({ nullable: true })
 	upworkOrganizationId?: string;
 
+	/** Upwork Organization Name */
+	@ApiPropertyOptional({ type: () => String })
+	@IsOptional()
+	@IsString()
+	@Column({ nullable: true })
+	upworkOrganizationName?: string;
+
 	/*
 	|--------------------------------------------------------------------------
 	| @ManyToOne

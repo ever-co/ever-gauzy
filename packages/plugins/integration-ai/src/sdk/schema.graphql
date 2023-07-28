@@ -32,6 +32,7 @@ type Employee {
   lastName: String
   name: String
   upworkOrganizationId: String
+  upworkOrganizationName: String
   upworkId: String
   linkedInId: String
   jobType: String
@@ -509,6 +510,7 @@ type EmployeeDeleteResponse {
   lastName: String
   name: String
   upworkOrganizationId: String
+  upworkOrganizationName: String
   upworkId: String
   linkedInId: String
   jobType: String
@@ -545,6 +547,7 @@ type EmployeeCountAggregate {
   firstName: Int
   lastName: Int
   upworkOrganizationId: Int
+  upworkOrganizationName: Int
   upworkId: Int
   linkedInId: Int
   jobType: Int
@@ -562,6 +565,7 @@ type EmployeeMinAggregate {
   firstName: String
   lastName: String
   upworkOrganizationId: String
+  upworkOrganizationName: String
   upworkId: String
   linkedInId: String
   jobType: String
@@ -577,6 +581,7 @@ type EmployeeMaxAggregate {
   firstName: String
   lastName: String
   upworkOrganizationId: String
+  upworkOrganizationName: String
   upworkId: String
   linkedInId: String
   jobType: String
@@ -1152,6 +1157,7 @@ input EmployeeFilter {
   firstName: StringFieldComparison
   lastName: StringFieldComparison
   upworkOrganizationId: StringFieldComparison
+  upworkOrganizationName: StringFieldComparison
   upworkId: StringFieldComparison
   linkedInId: StringFieldComparison
   jobType: StringFieldComparison
@@ -1175,6 +1181,7 @@ enum EmployeeSortFields {
   firstName
   lastName
   upworkOrganizationId
+  upworkOrganizationName
   upworkId
   linkedInId
   jobType
@@ -1194,6 +1201,7 @@ input EmployeeAggregateFilter {
   firstName: StringFieldComparison
   lastName: StringFieldComparison
   upworkOrganizationId: StringFieldComparison
+  upworkOrganizationName: StringFieldComparison
   upworkId: StringFieldComparison
   linkedInId: StringFieldComparison
   jobType: StringFieldComparison
@@ -1259,6 +1267,7 @@ input EmployeeJobPostFilterEmployeeFilter {
   firstName: StringFieldComparison
   lastName: StringFieldComparison
   upworkOrganizationId: StringFieldComparison
+  upworkOrganizationName: StringFieldComparison
   upworkId: StringFieldComparison
   linkedInId: StringFieldComparison
   jobType: StringFieldComparison
@@ -1391,6 +1400,7 @@ input EmployeeJobApplicationFilterEmployeeFilter {
   firstName: StringFieldComparison
   lastName: StringFieldComparison
   upworkOrganizationId: StringFieldComparison
+  upworkOrganizationName: StringFieldComparison
   upworkId: StringFieldComparison
   linkedInId: StringFieldComparison
   jobType: StringFieldComparison
@@ -1525,6 +1535,7 @@ input AutomationTaskFilterEmployeeFilter {
   firstName: StringFieldComparison
   lastName: StringFieldComparison
   upworkOrganizationId: StringFieldComparison
+  upworkOrganizationName: StringFieldComparison
   upworkId: StringFieldComparison
   linkedInId: StringFieldComparison
   jobType: StringFieldComparison
@@ -1915,6 +1926,7 @@ input EmployeeDeleteFilter {
   firstName: StringFieldComparison
   lastName: StringFieldComparison
   upworkOrganizationId: StringFieldComparison
+  upworkOrganizationName: StringFieldComparison
   upworkId: StringFieldComparison
   linkedInId: StringFieldComparison
   jobType: StringFieldComparison
@@ -1941,6 +1953,7 @@ input UpdateEmployee {
   lastName: String
   name: String
   upworkOrganizationId: String
+  upworkOrganizationName: String
   upworkId: String
   linkedInId: String
   jobType: String
@@ -1968,6 +1981,7 @@ input EmployeeUpdateFilter {
   firstName: StringFieldComparison
   lastName: StringFieldComparison
   upworkOrganizationId: StringFieldComparison
+  upworkOrganizationName: StringFieldComparison
   upworkId: StringFieldComparison
   linkedInId: StringFieldComparison
   jobType: StringFieldComparison
@@ -1991,6 +2005,7 @@ input CreateEmployee {
   lastName: String
   name: String
   upworkOrganizationId: String
+  upworkOrganizationName: String
   upworkId: String
   linkedInId: String
   jobType: String
@@ -2478,6 +2493,7 @@ input EmployeeSubscriptionFilter {
   firstName: StringFieldComparison
   lastName: StringFieldComparison
   upworkOrganizationId: StringFieldComparison
+  upworkOrganizationName: StringFieldComparison
   upworkId: StringFieldComparison
   linkedInId: StringFieldComparison
   jobType: StringFieldComparison

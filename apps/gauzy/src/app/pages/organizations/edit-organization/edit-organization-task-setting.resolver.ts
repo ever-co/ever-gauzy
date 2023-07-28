@@ -1,10 +1,9 @@
 import { Injectable } from '@angular/core';
 import { ActivatedRouteSnapshot, Resolve, Router } from '@angular/router';
-import { debounceTime, EMPTY, Observable, of as observableOf } from 'rxjs';
-import { catchError, tap } from 'rxjs/operators';
+import { EMPTY, Observable, of as observableOf } from 'rxjs';
+import { catchError } from 'rxjs/operators';
 import { IOrganizationTaskSetting } from '@gauzy/contracts';
 import { isEmpty } from '@gauzy/common-angular';
-import { Store } from '../../../@core/services';
 import { OrganizationTaskSettingService } from '../../../@core/services/organization-task-setting.service';
 
 @Injectable({
@@ -13,9 +12,8 @@ import { OrganizationTaskSettingService } from '../../../@core/services/organiza
 export class EditOrganizationTaskSettingResolver implements Resolve<Observable<IOrganizationTaskSetting | Observable<never>>> {
     constructor(
         private readonly organizationsTaskSettingService: OrganizationTaskSettingService,
-        private readonly router: Router,
-        private readonly store: Store,
-    ) { }
+        private readonly router: Router
+        ) { }
 
     resolve(
         route: ActivatedRouteSnapshot
@@ -26,11 +24,6 @@ export class EditOrganizationTaskSettingResolver implements Resolve<Observable<I
         try
         {
             return this.organizationsTaskSettingService.getByOrganizationId(organizationId).pipe(
-                debounceTime(200),
-                tap((organizationTaskSetting: IOrganizationTaskSetting) =>
-                {
-                    this.store.selectedOrganizationTaskSetting = organizationTaskSetting;
-                }),
                 catchError((error) => observableOf(error))
             );
         } catch (error)

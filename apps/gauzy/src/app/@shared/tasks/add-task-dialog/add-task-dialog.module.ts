@@ -22,6 +22,7 @@ import { TaskPrioritySelectModule } from '../task-priority-select/task-priority-
 import { TaskSizeSelectModule } from '../task-size-select/task-size-select.module';
 import { TaskStatusSelectModule } from '../task-status-select/task-status-select.module';
 import { TaskNumberFieldModule } from '../task-number/task-number-field.module';
+import { CKEditorModule } from 'ckeditor4-angular';
 
 @NgModule({
 	declarations: [AddTaskDialogComponent],
@@ -48,7 +49,8 @@ import { TaskNumberFieldModule } from '../task-number/task-number-field.module';
 		TaskStatusSelectModule,
 		TaskPrioritySelectModule,
 		TaskSizeSelectModule,
-		TaskNumberFieldModule
+		TaskNumberFieldModule,
+		CKEditorModule
 	]
 })
-export class AddTaskDialogModule {}
+export class AddTaskDialogModule { }
