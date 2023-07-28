@@ -42,31 +42,31 @@ RUN REPEATABLE docker-compose -f docker-compose.demo.yml up -d --build --force-r
 # We probably should make some kind of env var to allow easy to use that because it's pretty common
 
 # Postgres
-EXPOSE WEBSITE localhost:5432
+# EXPOSE WEBSITE localhost:5432
 
 # Cube
-EXPOSE WEBSITE localhost:4000
-EXPOSE WEBSITE localhost:5430
+# EXPOSE WEBSITE localhost:4000
+# EXPOSE WEBSITE localhost:5430
 
 # Jitsu
-EXPOSE WEBSITE localhost:8000
+# EXPOSE WEBSITE localhost:8000
 
 # ES
-EXPOSE WEBSITE localhost:9200
-EXPOSE WEBSITE localhost:9300
+# EXPOSE WEBSITE localhost:9200
+# EXPOSE WEBSITE localhost:9300
 
 # dejavu
-EXPOSE WEBSITE localhost:1358
+# EXPOSE WEBSITE localhost:1358
 
 # Redis
-EXPOSE WEBSITE localhost:6379
+# EXPOSE WEBSITE localhost:6379
 
 # Jitsu Redis
-EXPOSE WEBSITE localhost:6380
+# EXPOSE WEBSITE localhost:6380
 
 # Minio
-EXPOSE WEBSITE localhost:9000
-EXPOSE WEBSITE localhost:9001
+# EXPOSE WEBSITE localhost:9000
+# EXPOSE WEBSITE localhost:9001
 
 # Pgweb
 EXPOSE WEBSITE localhost:8001
