@@ -19,6 +19,8 @@ import {
 	Store,
 	ToastrService,
 } from '../../../../@core/services';
+import { CKEditor4 } from 'ckeditor4-angular/ckeditor';
+import { ckEditorConfig } from "../../../../@shared/ckeditor.config";
 
 const initialTaskValue = {
 	title: '',
@@ -51,6 +53,7 @@ export class TeamTaskDialogComponent extends TranslationBaseComponent
 	organizationId: string;
 	tenantId: string;
 	tags: ITag[] = [];
+	public ckConfig: CKEditor4.Config = ckEditorConfig;
 	@Input() task: Partial<ITask> = {};
 
 	constructor(
@@ -68,6 +71,7 @@ export class TeamTaskDialogComponent extends TranslationBaseComponent
 	}
 
 	ngOnInit() {
+		this.ckConfig.editorplaceholder = this.translateService.instant('FORM.PLACEHOLDERS.DESCRIPTION');
 		this.tenantId = this.store.user.tenantId;
 		this.organizationId = this._organizationsStore.selectedOrganization.id;
 
