@@ -268,6 +268,29 @@ export class EditOrganizationOtherSettingsComponent extends NotesWithTagsCompone
 
     ngAfterViewInit(): void {
         /**
+         * Organization upwork organization integration ID controls value changes
+         */
+        const upworkOrganizationId = <FormControl>this.form.get('upworkOrganizationId');
+        const upworkOrganizationName = <FormControl>this.form.get('upworkOrganizationName');
+
+        /**
+         * Emits an event every time the value of the control changes.
+         * It also emits an event each time you call enable() or disable()
+         */
+        upworkOrganizationId.valueChanges
+            .pipe(
+                tap((value: IOrganization['upworkOrganizationId']) => {
+                    if (value) {
+                        upworkOrganizationName.setValidators([Validators.required]);
+                    } else {
+                        upworkOrganizationName.setValidators(null);
+                    }
+                    upworkOrganizationName.updateValueAndValidity();
+                })
+            )
+            .subscribe();
+
+        /**
          * Emits an event every time the value of the control changes.
          * It also emits an event each time you call enable() or disable()
          */
@@ -428,38 +451,54 @@ export class EditOrganizationOtherSettingsComponent extends NotesWithTagsCompone
         });
     }
 
+    /**
+     * Update organization settings
+     */
     async updateOrganizationSettings() {
-        this.organizationService
-            .update(this.organization.id, this.form.value)
-            .then((organization: IOrganization) => {
-                if (organization) {
-                    this.organizationEditStore.organizationAction = {
-                        organization,
-                        action: CrudActionEnum.UPDATED,
-                    };
-                    this.store.selectedOrganization = organization;
-                }
-            });
+        if (this.form.invalid || !this.organization) {
+            return;
+        }
+
+        try {
+            const { id: organizationId } = this.organization;
+            const organization: IOrganization = await this.organizationService.update(organizationId, this.form.value);
+            this.organizationEditStore.organizationAction = {
+                organization,
+                action: CrudActionEnum.UPDATED,
+            };
+            this.store.selectedOrganization = organization;
+        } catch (error) {
+            console.log('Error while updating organization settings', error);
+        }
+
+        // Update organization task settings
+        this.updateOrganizationTaskSetting();
 
         await this.saveTemplate(this.selectedInvoiceTemplate);
         await this.saveTemplate(this.selectedEstimateTemplate);
         await this.saveTemplate(this.selectedReceiptTemplate);
 
-        this.toastrService.success(
-            `TOASTR.MESSAGE.ORGANIZATION_SETTINGS_UPDATED`,
-            {
-                name: this.organization.name,
-            }
-        );
+        this.toastrService.success(`TOASTR.MESSAGE.ORGANIZATION_SETTINGS_UPDATED`, {
+            name: this.organization.name
+        });
         this.goBack();
     }
+
+    /**
+    * Update organization task settings
+    */
     updateOrganizationTaskSetting() {
+        if (!this.organization) {
+            return;
+        }
         let taskSettingInputFormObj: IOrganizationTaskSetting = {
             ...this.taskSettingForm.value,
             organizationId: this.organization.id,
         };
-        if (this.organizationTaskSetting)
+
+        if (this.organizationTaskSetting) {
             taskSettingInputFormObj.id = this.organizationTaskSetting.id;
+        }
 
         return (this.organizationTaskSetting ? this.organizationTaskSettingService.edit(taskSettingInputFormObj) : this.organizationTaskSettingService.create(taskSettingInputFormObj)).subscribe({
             error: () => {

@@ -60,8 +60,9 @@
 	<section class="fields-section">
 		<div class="actions">
 			<button
-				[disabled]="form.invalid || taskSettingForm.invalid"
-				(click)="updateOrganizationSettings();updateOrganizationTaskSetting();"
+				[disabled]="form.invalid"
+				(throttledClick)="updateOrganizationSettings();"
+				debounceClick
 				nbButton
 				status="success"
 			>
