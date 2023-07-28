@@ -25,6 +25,8 @@ import {
 	Store,
 	TasksService,
 } from '../../../@core/services';
+import { CKEditor4 } from 'ckeditor4-angular/ckeditor';
+import { ckEditorConfig } from '../../ckeditor.config';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -43,6 +45,7 @@ export class AddTaskDialogComponent extends TranslationBaseComponent
 	organization: IOrganization;
 	taskParticipantEnum = TaskParticipantEnum;
 	participants = TaskParticipantEnum.EMPLOYEES;
+	public ckConfig: CKEditor4.Config = ckEditorConfig;
 
 	@Input() createTask = false;
 
@@ -95,6 +98,7 @@ export class AddTaskDialogComponent extends TranslationBaseComponent
 	}
 
 	ngOnInit() {
+		this.ckConfig.editorplaceholder = this.translateService.instant('FORM.PLACEHOLDERS.DESCRIPTION');
 		const storeOrganization$ = this.store.selectedOrganization$;
 		const storeEmployee$ = this.store.selectedEmployee$;
 		const storeProject$ = this.store.selectedProject$;
