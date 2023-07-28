@@ -1,3 +1,4 @@
+import { ISequence } from '.';
 import { Timer } from '../offline';
 
 export interface ITimerService<T> {
@@ -8,5 +9,5 @@ export interface ITimerService<T> {
 	update(timer: Partial<Timer>): Promise<void>;
 	findLastOne(): Promise<T>;
 	findLastCapture(): Promise<T>;
-	findNoSynced(): Promise<T[]>;
+	findToSynced(): Promise<ISequence[]>;
 }

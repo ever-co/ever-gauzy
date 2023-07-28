@@ -18,6 +18,7 @@ export class Interval
 	private _startedAt: Date;
 	private _stoppedAt: Date;
 	private _synced: boolean;
+	private _timerId: number;
 
 	constructor(interval: IntervalTO) {
 		super(
@@ -38,6 +39,13 @@ export class Interval
 		this._startedAt = interval.startedAt;
 		this._stoppedAt = interval.stoppedAt;
 		this._synced = interval.synced;
+	}
+
+	public get timerId(): number {
+		return this._timerId;
+	}
+	public set timerId(value: number) {
+		this._timerId = value;
 	}
 
 	public get activities(): any {
@@ -126,6 +134,7 @@ export class Interval
 			duration: this._duration,
 			employeeId: this._employeeId,
 			projectId: this._projectId,
+			timerId: this._timerId,
 			...super.toObject()
 		};
 	}

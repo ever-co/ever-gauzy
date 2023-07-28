@@ -122,6 +122,7 @@ export function ipcMainHandler(
 			interval.screenshots = arg.params.b64Imgs;
 			interval.stoppedAt = new Date();
 			interval.synced = false;
+			interval.timerId = timerHandler.lastTimer?.id;
 			await intervalService.create(interval.toObject());
 			await countIntervalQueue(timeTrackerWindow, false);
 			await latestScreenshots(timeTrackerWindow);
@@ -324,6 +325,7 @@ export function ipcTimer(
 			interval.screenshots = arg.b64Imgs;
 			interval.stoppedAt = new Date();
 			interval.synced = true;
+			interval.timerId = timerHandler.lastTimer?.id;
 			await intervalService.create(interval.toObject());
 			await latestScreenshots(timeTrackerWindow);
 		} catch (error) {
@@ -899,10 +901,10 @@ async function sequentialSyncQueue(window: BrowserWindow) {
 		await offlineMode.connectivity();
 		if (offlineMode.enabled) return;
 		isQueueThreadTimerLocked = true;
-		const timers = await timerService.findToSynced();
-		if (timers.length > 0) {
+		const sequences = await timerService.findToSynced();
+		if (sequences.length > 0) {
 			await countIntervalQueue(window, true);
-			window.webContents.send('backup-timers-no-synced', timers);
+			window.webContents.send('backup-timers-no-synced', sequences);
 		} else {
 			isQueueThreadTimerLocked = false;
 		}
@@ -911,17 +913,14 @@ async function sequentialSyncQueue(window: BrowserWindow) {
 	}
 }
 
-let queueSync = Infinity;
+let size = Infinity;
 
-async function countIntervalQueue(window: BrowserWindow, isSyncing: boolean) {
+async function countIntervalQueue(window: BrowserWindow, inProgress: boolean) {
 	if (!window) return;
 	try {
-		queueSync = await intervalService.countNoSynced();
-		if (queueSync < 1) isQueueThreadTimerLocked = false;
-		window.webContents.send('count-synced', {
-			queue: queueSync,
-			isSyncing: isSyncing
-		});
+		size = await intervalService.countNoSynced();
+		if (size < 1) isQueueThreadTimerLocked = false;
+		window.webContents.send('count-synced', { size, inProgress });
 	} catch (error) {
 		console.log('ERROR_COUNT', error);
 	}

@@ -13,6 +13,7 @@ export interface IntervalTO extends BaseTO {
 	startedAt: Date;
 	stoppedAt: Date;
 	synced: boolean;
+	timerId: number;
 }
 
-export const TABLE_NAME_INTERVALS: string = 'intervals';
+export const TABLE_NAME_INTERVALS = 'intervals';
