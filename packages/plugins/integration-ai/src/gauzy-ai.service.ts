@@ -1113,6 +1113,10 @@ export class GauzyAIService {
 			link: new HttpLink({
 				uri: this.gauzyAIGraphQLEndpoint,
 				fetch,
+				headers: {
+					'X-APP-ID': this._configService.get<string>('guazyAI.gauzyAiApiKey', ''),
+					'X-API-KEY': this._configService.get<string>('guazyAI.gauzyAiApiSecret', '')
+				},
 			}),
 			cache: new InMemoryCache(),
 			defaultOptions: this.defaultOptions,
