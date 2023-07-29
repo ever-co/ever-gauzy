@@ -99,9 +99,9 @@ export class RequestApprovalService extends TenantAwareCrudService<RequestApprov
 					sqb.where('time_off_request.organizationId =:organizationId', {
 						organizationId
 					})
-					.andWhere('time_off_request.tenantId =:tenantId', {
-						tenantId
-					});
+						.andWhere('time_off_request.tenantId =:tenantId', {
+							tenantId
+						});
 				})
 			)
 			.orWhere(
@@ -125,10 +125,12 @@ export class RequestApprovalService extends TenantAwareCrudService<RequestApprov
 	): Promise<IPagination<IRequestApproval>> {
 		try {
 			const tenantId = RequestContext.currentTenantId();
+			const currentUser = RequestContext.currentUser();
+
 			const { organizationId } = findInput;
 			const result = await this.requestApprovalRepository.find({
 				where: {
-					createdBy: id,
+					createdBy: currentUser.id,
 					organizationId,
 					tenantId
 				}
