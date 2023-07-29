@@ -44,6 +44,8 @@ import {
 	serverConnectionFactory,
 	APIInterceptor,
 	ServerDownModule,
+	TimeoutInterceptor,
+	DEFAULT_TIMEOUT
 } from '@gauzy/desktop-ui-lib';
 import { NbCardModule, NbButtonModule } from '@nebular/theme';
 import { HttpLoaderFactory } from '../../../gauzy/src/app/@shared/translate/translate.module';
@@ -147,9 +149,15 @@ import * as Sentry from '@sentry/angular';
 			useFactory: () => () => {},
 			deps: [Sentry.TraceService],
 			multi: true
-		}
+		},
+		{
+			provide: HTTP_INTERCEPTORS,
+			useClass: TimeoutInterceptor,
+			multi: true
+		},
+		{ provide: DEFAULT_TIMEOUT, useValue: 180000 }
 	],
 	bootstrap: [AppComponent],
-	exports: []
+	exports: [],
 })
 export class AppModule { }
