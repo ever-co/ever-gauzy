@@ -29,7 +29,7 @@ export class ImageCacheService extends AbstractCacheService<string> {
 		this.duration = 10 * 60 * 1000; // 10 minutes;
 		this._lastCached = new Date();
 		this._imageCacheList = new LinkedList();
-		this._limit = 10; // Max 10 images in localstorage;
+		this._limit = 10; // Max 10 images in local storage;
 	}
 
 	public clear() {
