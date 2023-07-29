@@ -1114,16 +1114,8 @@ export class GauzyAIService {
 				uri: this.gauzyAIGraphQLEndpoint,
 				fetch,
 				headers: {
-					...(this._configService.get<string>('guazyAI.gauzyAiApiKey')
-						? {
-							'X-APP-ID': this._configService.get<string>('guazyAI.gauzyAiApiKey')
-						}
-						: {}),
-					...(this._configService.get<string>('guazyAI.gauzyAiApiSecret')
-						? {
-							'X-API-KEY': this._configService.get<string>('guazyAI.gauzyAiApiSecret')
-						}
-						: {})
+					'X-APP-ID': this._configService.get<string>('guazyAI.gauzyAiApiKey', ''),
+					'X-API-KEY': this._configService.get<string>('guazyAI.gauzyAiApiSecret', '')
 				},
 			}),
 			cache: new InMemoryCache(),
