@@ -36,6 +36,7 @@ import { ErrorHandlerService, NativeNotificationService, Store, ToastrNotificati
 import { ElectronService, LoggerService } from '../electron/services';
 import { TimeTrackerStatusModule } from './time-tracker-status/time-tracker-status.module';
 import { TimeSlotQueueService } from '../offline-sync';
+import { ImageViewerModule } from '../image-viewer/image-viewer.module';
 
 @NgModule({
 	declarations: [
@@ -70,7 +71,8 @@ import { TimeSlotQueueService } from '../offline-sync';
 		NbBadgeModule,
 		PaginationModule,
 		NbTooltipModule,
-		TimeTrackerStatusModule
+		TimeTrackerStatusModule,
+		ImageViewerModule
 	],
 	providers: [
 		NbSidebarService,
