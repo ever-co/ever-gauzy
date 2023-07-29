@@ -6,6 +6,6 @@ export default registerAs('guazyAI', () => ({
 	gauzyAIRequestTimeout: parseInt(process.env.GAUZY_AI_REQUEST_TIMEOUT) || 60 * 5 * 1000,
 
 	// Gauzy AI API keys Pair
-	gauzyAiApiKey: process.env.GAUZY_AI_API_KEY,
-	gauzyAiApiSecret: process.env.GAUZY_AI_API_SECRET
+	gauzyAiApiKey: process.env.GAUZY_AI_API_KEY || '',
+	gauzyAiApiSecret: process.env.GAUZY_AI_API_SECRET || ''
 }));

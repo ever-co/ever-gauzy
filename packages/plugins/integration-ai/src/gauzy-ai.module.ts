@@ -14,8 +14,16 @@ import gauzyAI from './config/gauzy-ai';
 				maxRedirects: 5,
 				headers: {
 					'Content-Type': 'application/json',
-					'X-APP-ID': config.get<string>('guazyAI.gauzyAiApiKey'),
-					'X-API-KEY': config.get<string>('guazyAI.gauzyAiApiSecret'),
+					...(config.get<string>('guazyAI.gauzyAiApiKey')
+						? {
+							'X-APP-ID': config.get<string>('guazyAI.gauzyAiApiKey')
+						}
+						: {}),
+					...(config.get<string>('guazyAI.gauzyAiApiSecret')
+						? {
+							'X-API-KEY': config.get<string>('guazyAI.gauzyAiApiSecret')
+						}
+						: {})
 				},
 			}),
 			inject: [ConfigService],
