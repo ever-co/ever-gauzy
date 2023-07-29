@@ -18,7 +18,7 @@ interface IImageCache<T> {
 export class ImageCacheService extends AbstractCacheService<string> {
 	private _lastCached: Date;
 	private _limit: number;
-	private _imageCachelist: LinkedList<IImageCache<string>>;
+	private _imageCacheList: LinkedList<IImageCache<string>>;
 
 	constructor(
 		protected _storageService: StorageService<string>,
@@ -28,7 +28,7 @@ export class ImageCacheService extends AbstractCacheService<string> {
 		this.prefix = ImageCacheService.name.toString();
 		this.duration = 10 * 60 * 1000; // 10 minutes;
 		this._lastCached = new Date();
-		this._imageCachelist = new LinkedList();
+		this._imageCacheList = new LinkedList();
 		this._limit = 10; // Max 10 images in localstorage;
 	}
 
@@ -44,17 +44,17 @@ export class ImageCacheService extends AbstractCacheService<string> {
 
 	public setValue(value: Observable<string>, object: string) {
 		if (this._size > this._limit) {
-			const imageCache = this._imageCachelist.tail;
+			const imageCache = this._imageCacheList.tail;
 			imageCache
 				? this._storageService.removeItem(this._key(imageCache.data.object))
 				: super.clear();
 		}
-		this._imageCachelist.append({ value, object });
+		this._imageCacheList.append({ value, object });
 		super.setValue(value, object);
 	}
 
 	public getValue(object: string): Observable<string> {
-		let temp = this._imageCachelist.head;
+		let temp = this._imageCacheList.head;
 		let item = null;
 		while (!!temp) {
 			if (temp.data.object === object) {
