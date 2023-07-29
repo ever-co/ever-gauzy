@@ -12,7 +12,7 @@ import {
 } from '@nebular/theme';
 import { dateTimePipe } from '../time-tracker/pipes/date-time.pipe';
 import { ImageViewerService } from './image-viewer.service';
-import { ImageCacheService } from '../services';
+import { ImageCacheService, StorageService, Store } from '../services';
 import { NbEvaIconsModule } from '@nebular/eva-icons';
 
 @NgModule({
@@ -28,6 +28,12 @@ import { NbEvaIconsModule } from '@nebular/eva-icons';
 		NbEvaIconsModule
 	],
 	exports: [ImageViewerComponent],
-	providers: [NbDialogService, ImageViewerService, ImageCacheService]
+	providers: [
+		NbDialogService,
+		ImageViewerService,
+		ImageCacheService,
+		StorageService,
+		Store
+	],
 })
 export class ImageViewerModule {}
