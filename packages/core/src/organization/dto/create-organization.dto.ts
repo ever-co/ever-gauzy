@@ -11,7 +11,11 @@ import { OrganizationSettingDTO } from "./organization-setting.dto";
  *
  */
 export class CreateOrganizationDTO extends IntersectionType(
-	IntersectionType(OrganizationBonusesDTO, PickType(Organization, ['imageId', 'upworkOrganizationId'])),
+	IntersectionType(OrganizationBonusesDTO, PickType(Organization, [
+		'imageId',
+		'upworkOrganizationId',
+		'upworkOrganizationName'
+	])),
 	IntersectionType(OrganizationSettingDTO, RelationalTagDTO)
 ) implements IOrganizationCreateInput {
 

@@ -52,6 +52,7 @@ import { TaskNumberFieldModule } from '../../@shared/tasks/task-number/task-numb
 import { TaskPrioritySelectModule } from '../../@shared/tasks/task-priority-select/task-priority-select.module';
 import { TaskSizeSelectModule } from '../../@shared/tasks/task-size-select/task-size-select.module';
 import { DirectivesModule } from '../../@shared/directives/directives.module';
+import { CKEditorModule } from 'ckeditor4-angular';
 
 @NgModule({
 	declarations: [
@@ -108,7 +109,8 @@ import { DirectivesModule } from '../../@shared/directives/directives.module';
 		GauzyButtonActionModule,
 		TaskNumberFieldModule,
 		NgxPermissionsModule.forChild(),
-		DirectivesModule
+		DirectivesModule,
+		CKEditorModule
 	]
 })
-export class TasksModule {}
+export class TasksModule { }

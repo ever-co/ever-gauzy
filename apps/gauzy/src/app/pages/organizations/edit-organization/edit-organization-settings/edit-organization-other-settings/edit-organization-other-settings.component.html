@@ -60,8 +60,9 @@
 	<section class="fields-section">
 		<div class="actions">
 			<button
-				[disabled]="form.invalid || taskSettingForm.invalid"
-				(click)="updateOrganizationSettings();updateOrganizationTaskSetting();"
+				[disabled]="form.invalid"
+				(throttledClick)="updateOrganizationSettings();"
+				debounceClick
 				nbButton
 				status="success"
 			>
@@ -1438,6 +1439,25 @@
 													| translate
 											"
 											formControlName="upworkOrganizationId"
+											fullWidth
+											nbInput
+										/>
+									</div>
+								</div>
+								<div class="col-6">
+									<div class="form-group">
+										<label class="label">
+											{{
+												'FORM.LABELS.UPWORK_ORGANIZATION_NAME'
+													| translate
+											}}
+										</label>
+										<input
+											[placeholder]="
+												'FORM.PLACEHOLDERS.UPWORK_ORGANIZATION_NAME'
+													| translate
+											"
+											formControlName="upworkOrganizationName"
 											fullWidth
 											nbInput
 										/>

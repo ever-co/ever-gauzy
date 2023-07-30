@@ -557,8 +557,8 @@ export class GauzyAIService {
 				externalEmployeeId: employee.id,
 				externalTenantId: employee.tenantId,
 				externalOrgId: employee.organizationId,
-				upworkOrganizationId:
-					employee.organization.upworkOrganizationId,
+				upworkOrganizationId: employee.organization.upworkOrganizationId,
+				upworkOrganizationName: employee.organization.upworkOrganizationName,
 				upworkId: employee.upworkId,
 				linkedInId: employee.linkedInId,
 				isActive: employee.isActive,
@@ -684,8 +684,8 @@ export class GauzyAIService {
 						externalEmployeeId: employee.id,
 						externalTenantId: employee.tenantId,
 						externalOrgId: employee.organizationId,
-						upworkOrganizationId:
-							employee.organization.upworkOrganizationId,
+						upworkOrganizationId: employee.organization.upworkOrganizationId,
+						upworkOrganizationName: employee.organization.upworkOrganizationName,
 						upworkId: employee.upworkId,
 						linkedInId: employee.linkedInId,
 						isActive: employee.isActive,
@@ -1113,6 +1113,10 @@ export class GauzyAIService {
 			link: new HttpLink({
 				uri: this.gauzyAIGraphQLEndpoint,
 				fetch,
+				headers: {
+					'X-APP-ID': this._configService.get<string>('guazyAI.gauzyAiApiKey', ''),
+					'X-API-KEY': this._configService.get<string>('guazyAI.gauzyAiApiSecret', '')
+				},
 			}),
 			cache: new InMemoryCache(),
 			defaultOptions: this.defaultOptions,
@@ -1290,6 +1294,7 @@ export class GauzyAIService {
 							externalTenantId
 							externalOrgId
 							upworkOrganizationId
+							upworkOrganizationName
 							upworkId
 							linkedInId
 							firstName
@@ -1322,6 +1327,7 @@ export class GauzyAIService {
 					externalTenantId
 					externalOrgId
 					upworkOrganizationId
+					upworkOrganizationName
 					upworkId
 					linkedInId
 					isActive
