@@ -44,6 +44,7 @@ export type Employee = {
   lastName?: Maybe<Scalars['String']>;
   name?: Maybe<Scalars['String']>;
   upworkOrganizationId?: Maybe<Scalars['String']>;
+  upworkOrganizationName?: Maybe<Scalars['String']>;
   upworkId?: Maybe<Scalars['String']>;
   linkedInId?: Maybe<Scalars['String']>;
   jobType?: Maybe<Scalars['String']>;
@@ -531,6 +532,7 @@ export type EmployeeDeleteResponse = {
   lastName?: Maybe<Scalars['String']>;
   name?: Maybe<Scalars['String']>;
   upworkOrganizationId?: Maybe<Scalars['String']>;
+  upworkOrganizationName?: Maybe<Scalars['String']>;
   upworkId?: Maybe<Scalars['String']>;
   linkedInId?: Maybe<Scalars['String']>;
   jobType?: Maybe<Scalars['String']>;
@@ -567,6 +569,7 @@ export type EmployeeCountAggregate = {
   firstName?: Maybe<Scalars['Int']>;
   lastName?: Maybe<Scalars['Int']>;
   upworkOrganizationId?: Maybe<Scalars['Int']>;
+  upworkOrganizationName?: Maybe<Scalars['Int']>;
   upworkId?: Maybe<Scalars['Int']>;
   linkedInId?: Maybe<Scalars['Int']>;
   jobType?: Maybe<Scalars['Int']>;
@@ -585,6 +588,7 @@ export type EmployeeMinAggregate = {
   firstName?: Maybe<Scalars['String']>;
   lastName?: Maybe<Scalars['String']>;
   upworkOrganizationId?: Maybe<Scalars['String']>;
+  upworkOrganizationName?: Maybe<Scalars['String']>;
   upworkId?: Maybe<Scalars['String']>;
   linkedInId?: Maybe<Scalars['String']>;
   jobType?: Maybe<Scalars['String']>;
@@ -601,6 +605,7 @@ export type EmployeeMaxAggregate = {
   firstName?: Maybe<Scalars['String']>;
   lastName?: Maybe<Scalars['String']>;
   upworkOrganizationId?: Maybe<Scalars['String']>;
+  upworkOrganizationName?: Maybe<Scalars['String']>;
   upworkId?: Maybe<Scalars['String']>;
   linkedInId?: Maybe<Scalars['String']>;
   jobType?: Maybe<Scalars['String']>;
@@ -1203,6 +1208,7 @@ export type EmployeeFilter = {
   firstName?: Maybe<StringFieldComparison>;
   lastName?: Maybe<StringFieldComparison>;
   upworkOrganizationId?: Maybe<StringFieldComparison>;
+  upworkOrganizationName?: Maybe<StringFieldComparison>;
   upworkId?: Maybe<StringFieldComparison>;
   linkedInId?: Maybe<StringFieldComparison>;
   jobType?: Maybe<StringFieldComparison>;
@@ -1226,6 +1232,7 @@ export enum EmployeeSortFields {
   FirstName = 'firstName',
   LastName = 'lastName',
   UpworkOrganizationId = 'upworkOrganizationId',
+  UpworkOrganizationName = 'upworkOrganizationName',
   UpworkId = 'upworkId',
   LinkedInId = 'linkedInId',
   JobType = 'jobType',
@@ -1245,6 +1252,7 @@ export type EmployeeAggregateFilter = {
   firstName?: Maybe<StringFieldComparison>;
   lastName?: Maybe<StringFieldComparison>;
   upworkOrganizationId?: Maybe<StringFieldComparison>;
+  upworkOrganizationName?: Maybe<StringFieldComparison>;
   upworkId?: Maybe<StringFieldComparison>;
   linkedInId?: Maybe<StringFieldComparison>;
   jobType?: Maybe<StringFieldComparison>;
@@ -1310,6 +1318,7 @@ export type EmployeeJobPostFilterEmployeeFilter = {
   firstName?: Maybe<StringFieldComparison>;
   lastName?: Maybe<StringFieldComparison>;
   upworkOrganizationId?: Maybe<StringFieldComparison>;
+  upworkOrganizationName?: Maybe<StringFieldComparison>;
   upworkId?: Maybe<StringFieldComparison>;
   linkedInId?: Maybe<StringFieldComparison>;
   jobType?: Maybe<StringFieldComparison>;
@@ -1442,6 +1451,7 @@ export type EmployeeJobApplicationFilterEmployeeFilter = {
   firstName?: Maybe<StringFieldComparison>;
   lastName?: Maybe<StringFieldComparison>;
   upworkOrganizationId?: Maybe<StringFieldComparison>;
+  upworkOrganizationName?: Maybe<StringFieldComparison>;
   upworkId?: Maybe<StringFieldComparison>;
   linkedInId?: Maybe<StringFieldComparison>;
   jobType?: Maybe<StringFieldComparison>;
@@ -1576,6 +1586,7 @@ export type AutomationTaskFilterEmployeeFilter = {
   firstName?: Maybe<StringFieldComparison>;
   lastName?: Maybe<StringFieldComparison>;
   upworkOrganizationId?: Maybe<StringFieldComparison>;
+  upworkOrganizationName?: Maybe<StringFieldComparison>;
   upworkId?: Maybe<StringFieldComparison>;
   linkedInId?: Maybe<StringFieldComparison>;
   jobType?: Maybe<StringFieldComparison>;
@@ -2242,6 +2253,7 @@ export type EmployeeDeleteFilter = {
   firstName?: Maybe<StringFieldComparison>;
   lastName?: Maybe<StringFieldComparison>;
   upworkOrganizationId?: Maybe<StringFieldComparison>;
+  upworkOrganizationName?: Maybe<StringFieldComparison>;
   upworkId?: Maybe<StringFieldComparison>;
   linkedInId?: Maybe<StringFieldComparison>;
   jobType?: Maybe<StringFieldComparison>;
@@ -2267,6 +2279,7 @@ export type UpdateEmployee = {
   lastName?: Maybe<Scalars['String']>;
   name?: Maybe<Scalars['String']>;
   upworkOrganizationId?: Maybe<Scalars['String']>;
+  upworkOrganizationName?: Maybe<Scalars['String']>;
   upworkId?: Maybe<Scalars['String']>;
   linkedInId?: Maybe<Scalars['String']>;
   jobType?: Maybe<Scalars['String']>;
@@ -2293,6 +2306,7 @@ export type EmployeeUpdateFilter = {
   firstName?: Maybe<StringFieldComparison>;
   lastName?: Maybe<StringFieldComparison>;
   upworkOrganizationId?: Maybe<StringFieldComparison>;
+  upworkOrganizationName?: Maybe<StringFieldComparison>;
   upworkId?: Maybe<StringFieldComparison>;
   linkedInId?: Maybe<StringFieldComparison>;
   jobType?: Maybe<StringFieldComparison>;
@@ -2316,6 +2330,7 @@ export type CreateEmployee = {
   lastName?: Maybe<Scalars['String']>;
   name?: Maybe<Scalars['String']>;
   upworkOrganizationId?: Maybe<Scalars['String']>;
+  upworkOrganizationName?: Maybe<Scalars['String']>;
   upworkId?: Maybe<Scalars['String']>;
   linkedInId?: Maybe<Scalars['String']>;
   jobType?: Maybe<Scalars['String']>;
@@ -2887,6 +2902,7 @@ export type EmployeeSubscriptionFilter = {
   firstName?: Maybe<StringFieldComparison>;
   lastName?: Maybe<StringFieldComparison>;
   upworkOrganizationId?: Maybe<StringFieldComparison>;
+  upworkOrganizationName?: Maybe<StringFieldComparison>;
   upworkId?: Maybe<StringFieldComparison>;
   linkedInId?: Maybe<StringFieldComparison>;
   jobType?: Maybe<StringFieldComparison>;
