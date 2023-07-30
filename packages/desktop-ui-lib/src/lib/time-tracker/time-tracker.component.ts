@@ -1478,12 +1478,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 	}
 
 	public async sendActivities(arg): Promise<void> {
-		if (
-			this._timeTrackerStatus.remoteTimer?.isExternalSource ||
-			this._startMode === TimerStartMode.REMOTE
-		) {
-			return;
-		}
+		if (this.isRemoteTimer) return;
 		// screenshot process
 		let screenshotImg = [];
 		let thumbScreenshotImg = [];
