@@ -28,9 +28,7 @@ import {
 	TenantInterceptor,
 	ErrorHandlerService,
 	ServerErrorInterceptor,
-	APIInterceptor,
-	TimeoutInterceptor,
-	DEFAULT_TIMEOUT
+	APIInterceptor
 } from '@gauzy/desktop-ui-lib';
 import { NbCardModule, NbButtonModule } from '@nebular/theme';
 import { RouterModule } from '@angular/router';
@@ -106,13 +104,7 @@ import { Router } from '@angular/router';
 			provide: HTTP_INTERCEPTORS,
 			useClass: APIInterceptor,
 			multi: true
-		},
-		{
-			provide: HTTP_INTERCEPTORS,
-			useClass: TimeoutInterceptor,
-			multi: true
-		},
-		{ provide: DEFAULT_TIMEOUT, useValue: 80000 }
+		}
 	],
 	bootstrap: [AppComponent],
 })
