@@ -112,7 +112,7 @@ import { Router } from '@angular/router';
 			useClass: TimeoutInterceptor,
 			multi: true
 		},
-		{ provide: DEFAULT_TIMEOUT, useValue: 180000 }
+		{ provide: DEFAULT_TIMEOUT, useValue: 80000 }
 	],
 	bootstrap: [AppComponent],
 })
