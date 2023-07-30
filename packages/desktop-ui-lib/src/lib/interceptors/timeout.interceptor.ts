@@ -1,6 +1,6 @@
 /**
- * Author Harbir Chahal
- * https://gist.github.com/harbirchahal/84d3d7dd1d0838479d298a06b1c51928
+ * Idea of how to handle timeout is taken from https://gist.github.com/harbirchahal/84d3d7dd1d0838479d298a06b1c51928
+ * Original code author: Harbir Chahal (https://github.com/harbirchahal)
  */
 import { Inject, Injectable, InjectionToken } from '@angular/core';
 import {
