@@ -1,36 +1,80 @@
 <nb-layout>
 	<nb-layout-column class="top-bottom-space">
 		<div class="gallery-inner" [@fadeInOut]>
-			<div class="gallery-header d-flex p-2">
-				<span class="spacer"></span>
-			</div>
-			<div class="gallery-content" (click)="close()">
+			<div class="gallery-content">
 				<div class="left-button">
-					<button class="nav-button" nbButton status="primary" [disabled]="active_index == 0"
-						(click)="prev($event)">
-						<nb-icon icon="arrow-left"></nb-icon>
+					<button
+						class="nav-button"
+						nbButton
+						status="primary"
+						[disabled]="active_index == 0"
+						(click)="prev($event)"
+					>
+						<nb-icon
+							pack="font-awesome"
+							icon="angle-left"
+						></nb-icon>
 					</button>
 				</div>
 				<div class="media-viewer" (click)="$event.stopPropagation()">
-					<img #imageMedia [src]="sanitizeImgUrl(item?.fullUrl)" />
-					<div class="date">{{ item?.recordedAt | dateTime: 'llll' }}</div>
+					<ng-template
+							[ngTemplateOutlet]="defaultLoader"
+							[ngTemplateOutletContext]="{
+								$implicit: !(item?.fullUrl | async)
+							}"
+						></ng-template>
+					<img
+						#imageMedia
+						[nbSpinner]="!(item?.fullUrl | async)"
+						loading="eager"
+						[src]="item?.fullUrl | async"
+					/>
+					<div *ngIf="item?.fullUrl | async" class="date">
+						{{ item?.recordedAt | dateTime : 'llll' }}
+					</div>
 				</div>
 				<div class="right-button">
-					<button class="nav-button" nbButton [disabled]="active_index == items.length - 1" status="primary"
-						(click)="next($event)">
-						<nb-icon icon="arrow-right"></nb-icon>
+					<button
+						class="nav-button"
+						nbButton
+						[disabled]="active_index == items.length - 1"
+						status="primary"
+						(click)="next($event)"
+					>
+						<nb-icon
+							pack="font-awesome"
+							icon="angle-right"
+						></nb-icon>
 					</button>
 				</div>
 			</div>
 			<div class="gallery-footer">
 				<div class="thumb-items custom-scroll" #customScroll>
-					<div class="thumb-item" *ngFor="let thumb of items; let index = index"
-						[ngClass]="{ 'thumb-item-active': item == thumb }" (click)="setFocus(thumb)">
-						<img *ngIf="thumb" [src]="sanitizeImgUrl(thumb?.thumbUrl)" />
-						<div class="thumb date ">{{ thumb?.recordedAt | dateTime }}</div>
+					<div
+						class="thumb-item"
+						*ngFor="let thumb of items; let index = index; ; trackBy: trackById"
+						[ngClass]="{ 'thumb-item-active': item == thumb }"
+						(click)="setFocus(thumb)"
+					>
+						<ng-template
+							[ngTemplateOutlet]="defaultLoader"
+							[ngTemplateOutletContext]="{
+								$implicit: !(thumb?.thumbUrl | async)
+							}"
+						></ng-template>
+						<img loading="eager" [src]="thumb?.thumbUrl | async" />
+						<div *ngIf="thumb?.thumbUrl | async" class="date-box">
+							<div class="thumb-date">
+								{{ thumb?.recordedAt | dateTime }}
+							</div>
+						</div>
 					</div>
 				</div>
 			</div>
 		</div>
 	</nb-layout-column>
 </nb-layout>
+
+<ng-template #defaultLoader let-loading>
+	<div *ngIf="loading" [nbSpinner]=loading class="loading"></div>
+</ng-template>

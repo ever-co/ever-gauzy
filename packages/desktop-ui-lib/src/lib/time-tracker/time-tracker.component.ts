@@ -51,6 +51,7 @@ import {
 import { TimeTrackerStatusService } from './time-tracker-status/time-tracker-status.service';
 import { IRemoteTimer } from './time-tracker-status/interfaces';
 import { ISequence, SequenceQueue, TimeSlotQueueService, ViewQueueStateUpdater } from '../offline-sync';
+import { ImageViewerService } from '../image-viewer/image-viewer.service';
 
 enum TimerStartMode {
 	MANUAL = 'manual',
@@ -231,7 +232,8 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 		private _store: Store,
 		private _loggerService: LoggerService,
 		private _timeTrackerStatus: TimeTrackerStatusService,
-		private _timeSlotQueueService: TimeSlotQueueService
+		private _timeSlotQueueService: TimeSlotQueueService,
+		private _imageViewerService: ImageViewerService
 	) {
 		this.iconLibraries.registerFontPack('font-awesome', {
 			packClass: 'fas',
@@ -1178,7 +1180,12 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 
 	public async localImage(img, originalBase64Image?: string): Promise<void> {
 		try {
-			const convScreenshot = img && img.thumbUrl ? await this.getBase64ImageFromUrl(img.thumbUrl) : img;
+			const convScreenshot =
+				img && img.thumbUrl
+					? await this._imageViewerService.getBase64ImageFromUrl(
+						img.thumbUrl
+					)
+					: img;
 			localStorage.setItem(
 				'lastScreenCapture',
 				JSON.stringify({
@@ -1658,27 +1665,6 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 	fileNameFormat(imgs) {
 		const fileName = `screenshot-${moment().format('YYYYMMDDHHmmss')}-${imgs.name}.png`;
 		return this.convertToSlug(fileName);
-	}
-
-	async getBase64ImageFromUrl(imageUrl) {
-		const res = await fetch(imageUrl);
-		const blob = await res.blob();
-
-		return new Promise((resolve, reject) => {
-			const reader = new FileReader();
-			reader.addEventListener(
-				'load',
-				function () {
-					resolve(reader.result);
-				},
-				false
-			);
-
-			reader.onerror = () => {
-				return reject(this);
-			};
-			reader.readAsDataURL(blob);
-		});
 	}
 
 	public refreshTimer(): void {

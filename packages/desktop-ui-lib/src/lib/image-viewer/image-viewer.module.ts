@@ -7,9 +7,13 @@ import {
 	NbIconModule,
 	NbDialogModule,
 	NbDialogService,
-	NbButtonModule
+	NbButtonModule,
+	NbSpinnerModule
 } from '@nebular/theme';
 import { dateTimePipe } from '../time-tracker/pipes/date-time.pipe';
+import { ImageViewerService } from './image-viewer.service';
+import { ImageCacheService, StorageService, Store } from '../services';
+import { NbEvaIconsModule } from '@nebular/eva-icons';
 
 @NgModule({
 	declarations: [ImageViewerComponent, dateTimePipe],
@@ -19,9 +23,17 @@ import { dateTimePipe } from '../time-tracker/pipes/date-time.pipe';
 		NbCardModule,
 		NbIconModule,
 		NbDialogModule,
-		NbButtonModule
+		NbButtonModule,
+		NbSpinnerModule,
+		NbEvaIconsModule
 	],
 	exports: [ImageViewerComponent],
-	providers: [NbDialogService]
+	providers: [
+		NbDialogService,
+		ImageViewerService,
+		ImageCacheService,
+		StorageService,
+		Store
+	],
 })
 export class ImageViewerModule {}
