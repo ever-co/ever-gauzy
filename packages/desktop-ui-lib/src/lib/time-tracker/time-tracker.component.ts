@@ -2009,7 +2009,9 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 						}),
 						this.getTimerStatus(params)
 					];
-					if (this._startMode === TimerStartMode.MANUAL) {
+					if (
+						!this._timeTrackerStatus.remoteTimer?.isExternalSource ||
+						this._startMode === TimerStartMode.MANUAL) {
 						const takeScreenCapturePromise = this.electronService.ipcRenderer.invoke(
 							'TAKE_SCREEN_CAPTURE',
 							{
@@ -2018,7 +2020,11 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 						);
 						promises.push(takeScreenCapturePromise);
 					}
-					await Promise.allSettled(promises.reverse());
+					const result = await Promise.allSettled(promises);
+					const size = result.length;
+					if (size === 3 && result[size - 1].status === 'rejected') {
+						await promises[size - 1];
+					}
 				} catch (error) {
 					this._errorHandlerService.handleError(error);
 				}
