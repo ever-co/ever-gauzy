@@ -29,9 +29,8 @@
                     </div>
                     <div [class]="'col-12 text-'+(logIsOpen ? 'left': 'center')+' button margin-content'">
                         <button nbButton status="primary" [class]="styles.btnStart"
-                            (click)="running ? stopServer() : runServer()" [disabled]="loading" [nbSpinner]="loading"
-                            nbSpinnerStatus="warning">
-                            <nb-icon [icon]="btn.icon" class="icon-medium"></nb-icon> {{btn.name}}
+                            (click)="running ? stopServer() : runServer()" [disabled]="loading">
+                            <nb-icon *gauzySpinnerButton="loading" [icon]="btn.icon" class="icon-medium"></nb-icon> {{btn.name}}
                         </button>
                     </div>
                 </div>
