@@ -11,6 +11,7 @@ import {
 import { NbToastrService } from '@nebular/theme';
 import { Color, rgbString } from '@kurkle/color';
 import * as moment from 'moment';
+import { map, Observable } from 'rxjs';
 
 @Component({
 	selector: 'ngx-tasks',
@@ -196,7 +197,7 @@ export class TasksComponent implements OnInit {
 	};
 
 	public background(bgColor: string) {
-		let color = new Color(bgColor);
+		const color = new Color(bgColor);
 		return color.valid ? bgColor : this._test(bgColor);
 	}
 
@@ -240,5 +241,11 @@ export class TasksComponent implements OnInit {
 			.split('-')
 			.join(' ')
 			.replace(/(^\w{1})|(\s+\w{1})/g, (letter) => letter.toUpperCase());
+	}
+
+	public get isSaving$(): Observable<boolean> {
+		return this.newTaskCallback
+			.asObservable()
+			.pipe(map(({ isSuccess }) => isSuccess));
 	}
 }
