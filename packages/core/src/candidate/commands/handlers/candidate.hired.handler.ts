@@ -16,7 +16,7 @@ export class CandidateHiredHandler
 		private readonly employeeService: EmployeeService,
 		private readonly userService: UserService,
 		private readonly roleService: RoleService
-	) {}
+	) { }
 
 	public async execute(command: CandidateHiredCommand): Promise<ICandidate> {
 		const { id } = command;
@@ -24,8 +24,7 @@ export class CandidateHiredHandler
 			relations: {
 				user: true,
 				tags: true
-			},
-			relationLoadStrategy: 'query'
+			}
 		});
 		if (candidate.alreadyHired) {
 			throw new ConflictException('The candidate is already hired, you can not hired it.');
