@@ -20,6 +20,8 @@ import { ErrorHandlerService } from '../services';
 })
 export class SetupComponent implements OnInit {
 	@ViewChild('dialogOpenBtn') btnDialogOpen: ElementRef<HTMLElement>;
+	public isSaving = false;
+	public isCheckConnection = false;
 	constructor(
 		private setupService: SetupService,
 		private _cdr: ChangeDetectorRef,
@@ -183,10 +185,10 @@ export class SetupComponent implements OnInit {
 		status: 'success',
 	};
 
-	runApp: boolean = false;
-	welcomeTitle: string =
+	runApp = false;
+	welcomeTitle =
 		'Welcome to Ever® Gauzy™ - Open-Source Business Management Platform (ERP/CRM/HRM)';
-	welcomeLabel: string = `
+	welcomeLabel = `
 		Gauzy Desktop App provides the full
 		functionality of the Gauzy Platform
 		available directly on your desktop
@@ -330,9 +332,11 @@ export class SetupComponent implements OnInit {
 		} catch (error) {
 			this._errorHandlerService.handleError(error);
 		}
+		this.isSaving = false;
 	}
 
 	saveChange() {
+		this.isSaving = true;
 		this.runApp = true;
 		this.checkConnection(true);
 	}
@@ -422,17 +426,18 @@ export class SetupComponent implements OnInit {
 			.pingServer({
 				host: serverHostOptions.serverUrl,
 			})
-			.then((res) => {
+			.then(async (res) => {
 				if (this.runApp) {
-					this.saveAndRun();
+					await this.saveAndRun();
 				} else {
 					this.dialogData = {
 						title: 'Success',
 						message: `Connection to Server ${serverHostOptions.serverUrl} Succeeds`,
 						status: 'success',
 					};
-					let elBtn: HTMLElement = this.btnDialogOpen.nativeElement;
+					const elBtn: HTMLElement = this.btnDialogOpen.nativeElement;
 					elBtn.click();
+					this.isCheckConnection = false;
 				}
 			})
 			.catch((e) => {
@@ -441,13 +446,18 @@ export class SetupComponent implements OnInit {
 					message: e.message,
 					status: 'danger',
 				};
-				let elBtn: HTMLElement = this.btnDialogOpen.nativeElement;
+				const elBtn: HTMLElement = this.btnDialogOpen.nativeElement;
 				elBtn.click();
+				this.isSaving = false;
+				this.isCheckConnection = false;
 			});
 	}
 
 	checkConnection(notRun = false) {
 		this.runApp = notRun;
+		if (!notRun) {
+			this.isCheckConnection = true;
+		}
 		if (this.connectivity.integrated) {
 			this.checkDatabaseConn();
 		} else {
@@ -489,9 +499,11 @@ export class SetupComponent implements OnInit {
 			if (arg.status && this.runApp) {
 				this.saveAndRun();
 			} else {
-				let elBtn: HTMLElement = this.btnDialogOpen.nativeElement;
+				const elBtn: HTMLElement = this.btnDialogOpen.nativeElement;
 				elBtn.click();
 			}
+			this.isSaving = false;
+			this.isCheckConnection = false;
 		});
 		this.validation();
 	}
