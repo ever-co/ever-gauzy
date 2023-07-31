@@ -49,6 +49,7 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 		this._logContents$.next(logs);
 	}
 	logIsOpen = false;
+	isRestart = false;
 
 	appName: string = this.electronService.remote.app.getName();
 	menus = [];
