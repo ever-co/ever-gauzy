@@ -11,7 +11,6 @@ import {
 import { NbToastrService } from '@nebular/theme';
 import { Color, rgbString } from '@kurkle/color';
 import * as moment from 'moment';
-import { map, Observable } from 'rxjs';
 
 @Component({
 	selector: 'ngx-tasks',
@@ -28,6 +27,7 @@ export class TasksComponent implements OnInit {
 		isSuccess: boolean;
 		message: string;
 	}> = new EventEmitter();
+	public isSaving: boolean;
 
 	form: FormGroup;
 	projects: IOrganizationProject[] = [];
@@ -63,7 +63,9 @@ export class TasksComponent implements OnInit {
 	constructor(
 		private timeTrackerService: TimeTrackerService,
 		private toastrService: NbToastrService
-	) {}
+	) {
+		this.isSaving = false;
+	}
 
 	ngOnInit() {
 		(async () => {
@@ -136,6 +138,7 @@ export class TasksComponent implements OnInit {
 
 	public async save(): Promise<void> {
 		if (this.form.invalid) return;
+		this.isSaving = true;
 		const { estimateDays, estimateHours, estimateMinutes, project } =
 			this.form.value;
 		const days = estimateDays ? estimateDays * 24 * 3600 : 0;
@@ -165,6 +168,8 @@ export class TasksComponent implements OnInit {
 				message: error.message,
 			});
 		}
+
+		this.isSaving = false;
 	}
 
 	public addProject = async (name: string) => {
@@ -241,11 +246,5 @@ export class TasksComponent implements OnInit {
 			.split('-')
 			.join(' ')
 			.replace(/(^\w{1})|(\s+\w{1})/g, (letter) => letter.toUpperCase());
-	}
-
-	public get isSaving$(): Observable<boolean> {
-		return this.newTaskCallback
-			.asObservable()
-			.pipe(map(({ isSuccess }) => isSuccess));
 	}
 }

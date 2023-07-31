@@ -106,7 +106,7 @@
 		</button>
 		<button [disabled]="form?.invalid" status="success" nbButton (click)="save()">
 			Save
-			<nb-icon [ngStyle]="{'display': 'none'}" *gauzySpinnerButton="isSaving$ | async" ></nb-icon>
+			<nb-icon [ngStyle]="{'display': 'none'}" *gauzySpinnerButton="isSaving" ></nb-icon>
 		</button>
 	</nb-card-footer>
 </nb-card>
