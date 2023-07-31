@@ -5,6 +5,7 @@ import * as path from 'path';
 import * as fs from 'fs';
 import * as os from 'os';
 import { getConfig } from '@gauzy/config';
+import { BadRequestException } from '@nestjs/common';
 
 namespace Utils {
 	export function generatedLogoColor() {
@@ -271,7 +272,7 @@ export function getDaysBetweenDates(
  */
 export function generateRandomInteger(length = 6) {
 	return Math.floor(
-		Math.pow(10, length-1) + Math.random() * (Math.pow(10, length) - Math.pow(10, length-1) - 1)
+		Math.pow(10, length - 1) + Math.random() * (Math.pow(10, length) - Math.pow(10, length - 1) - 1)
 	);
 }
 
@@ -280,7 +281,34 @@ export function generateRandomInteger(length = 6) {
  *
  * @returns {Date}
  */
-export function freshTimestamp(): Date
-{
+export function freshTimestamp(): Date {
 	return new Date(moment.now());
+}
+
+/**
+ * Function that performs the date range validation
+ *
+ * @param startedAt
+ * @param stoppedAt
+ * @returns
+ */
+export function validateDateRange(startedAt: Date, stoppedAt: Date): void {
+	try {
+		const start = moment(startedAt);
+		const end = moment(stoppedAt);
+
+		console.log('------ Stopped Timer ------', start.toDate(), end.toDate());
+
+		if (!start.isValid() || !end.isValid()) {
+			throw 'Started and Stopped date must be valid date.';
+			// If either start or end date is invalid, return without throwing an exception
+		}
+
+		if (end.isBefore(start)) {
+			throw 'Stopped date must be greater than started date.';
+		}
+	} catch (error) {
+		// If any error occurs during date validation, throw a BadRequestException
+		throw new BadRequestException(error);
+	}
 }
