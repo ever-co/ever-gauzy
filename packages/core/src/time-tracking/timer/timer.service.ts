@@ -112,7 +112,6 @@ export class TimerService {
 				startedAt: 'DESC',
 				createdAt: 'DESC'
 			},
-			relationLoadStrategy: 'query',
 			...(request['relations']
 				? {
 					relations: request['relations']
@@ -435,7 +434,6 @@ export class TimerService {
 				startedAt: 'DESC',
 				createdAt: 'DESC'
 			},
-			relationLoadStrategy: 'query',
 			...(request['relations']
 				? {
 					relations: request['relations']
