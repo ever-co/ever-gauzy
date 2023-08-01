@@ -12,9 +12,9 @@ import { isEmpty } from '@gauzy/common-angular';
 	pure: false
 })
 export class DateTimeFormatPipe implements PipeTransform {
-	
+
 	timeFormat: number = 12;
-	dateFormat: string = 'd MMMM, y H:mm';
+	dateFormat: string = 'D MMMM, y H:mm';
 	regionCode: string = RegionsEnum.EN;
 
 	constructor(private store: Store) {
