@@ -97,18 +97,23 @@ export class PaymentMutationComponent extends TranslationBaseComponent
 			});
 	}
 
-	ngAfterViewInit() {
+	async ngAfterViewInit() {
 		if (!this.organization) {
 			return;
 		}
-		const { tenantId } = this.store.user;
-		const { id: organizationId } = this.organization;
+		try {
+			const { tenantId } = this.store.user;
+			const { id: organizationId } = this.organization;
 
-		this.invoicesService
-			.getAll({ organizationId, tenantId, isEstimate: false })
-			.then(({ items }) => {
-				this.invoices = items;
+			const { items = [] } = await this.invoicesService.getAll({
+				organizationId,
+				tenantId,
+				isEstimate: 0
 			});
+			this.invoices = items;
+		} catch (error) {
+			console.log('Error while getting organization invoices', error);
+		}
 	}
 
 	initializeForm() {
