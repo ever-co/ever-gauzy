@@ -660,13 +660,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 		this.electronService.ipcRenderer.on('offline-handler', (event, isOffline) => {
 			this._ngZone.run(() => {
 				this._isOffline$.next(isOffline);
-				// this.toastrService.show(
-				// 	'You switched to ' + (isOffline ? 'offline' : 'online') + ' mode now',
-				// 	`Warning`,
-				// 	{
-				// 		status: isOffline ? 'danger' : 'success'
-				// 	}
-				// );
+				this._loggerService.log.info('You switched to ' + (isOffline ? 'offline' : 'online') + ' mode now');
 				if (!isOffline) {
 					this.refreshTimer();
 				}
