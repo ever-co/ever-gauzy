@@ -1,10 +1,10 @@
 import { Pipe, PipeTransform } from '@angular/core';
-import { IOrganization, RegionsEnum } from '@gauzy/contracts';
-import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { filter } from 'rxjs/operators';
 import * as moment from 'moment';
-import { Store } from '../../@core/services/store.service';
+import { filter } from 'rxjs/operators';
+import { IOrganization, RegionsEnum } from '@gauzy/contracts';
 import { isEmpty } from '@gauzy/common-angular';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { Store } from '../../@core/services';
 
 @UntilDestroy({ checkProperties: true })
 @Pipe({
@@ -12,7 +12,7 @@ import { isEmpty } from '@gauzy/common-angular';
 	pure: false
 })
 export class DateTimeFormatPipe implements PipeTransform {
-	
+
 	timeFormat: number = 12;
 	dateFormat: string = 'd MMMM, y H:mm';
 	regionCode: string = RegionsEnum.EN;

@@ -77,14 +77,13 @@ export interface IInvoiceUpdateInput extends IInvoiceCreateInput {
 	hasRemainingAmountInvoiced?: boolean;
 	isArchived?: boolean;
 }
-export interface IInvoiceFindInput
-	extends IBasePerTenantAndOrganizationEntityModel {
+export interface IInvoiceFindInput extends IBasePerTenantAndOrganizationEntityModel {
 	organizationContactId?: string;
 	invoiceId?: string;
 	sentTo?: string;
 	invoiceNumber?: string;
 	tags?: ITag[];
-	isEstimate?: boolean;
+	isEstimate?: boolean | number;
 	isArchived?: boolean;
 }
 

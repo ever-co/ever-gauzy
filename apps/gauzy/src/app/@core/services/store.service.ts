@@ -20,6 +20,7 @@ import { StoreConfig, Store as AkitaStore, Query } from '@datorama/akita';
 import { NgxPermissionsService, NgxRolesService } from 'ngx-permissions';
 import { merge, Subject } from 'rxjs';
 import { map } from 'rxjs/operators';
+import * as moment from 'moment';
 import * as _ from 'underscore';
 import
     {
@@ -450,29 +451,20 @@ export class Store
         );
     }
 
-    getDateFromOrganizationSettings()
-    {
+    getDateFromOrganizationSettings() {
         let startDate = new Date();
-        if (this.dateRangePickerBuilderService.selectedDateRange)
-        {
+        if (this.dateRangePickerBuilderService.selectedDateRange) {
             startDate = this.dateRangePickerBuilderService.selectedDateRange.startDate;
         }
-        switch (
-        this.selectedOrganization &&
-        this.selectedOrganization.defaultValueDateType
-        )
-        {
-            case DefaultValueDateTypeEnum.TODAY: {
-                return new Date(Date.now());
-            }
+        switch (this.selectedOrganization && this.selectedOrganization.defaultValueDateType) {
             case DefaultValueDateTypeEnum.END_OF_MONTH: {
-                return new Date(startDate.getFullYear(), startDate.getMonth(), 0);
+               return moment(startDate).endOf('month').toDate();
             }
             case DefaultValueDateTypeEnum.START_OF_MONTH: {
-                return new Date(startDate.getFullYear(), startDate.getMonth(), 1);
+                return moment(startDate).startOf('month').toDate();
             }
             default: {
-                return new Date(Date.now());
+                return moment().toDate();
             }
         }
     }
