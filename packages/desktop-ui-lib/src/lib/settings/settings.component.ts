@@ -49,6 +49,7 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 		this._logContents$.next(logs);
 	}
 	logIsOpen = false;
+	isRestart = false;
 
 	appName: string = this.electronService.remote.app.getName();
 	menus = [];
@@ -804,6 +805,7 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 		if (this.config.timeTrackerWindow) newConfig.awHost = `http://localhost:${this.config.awPort}`;
 		this.electronService.ipcRenderer.send('restart_app', newConfig);
 		this.electronService.ipcRenderer.send('save_additional_setting', thConfig);
+		if (this.isServer) this.isRestart = false;
 	}
 
 	portChange(val, type) {
@@ -954,6 +956,7 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 				break;
 		}
 		this.toastrService.show(message, `Success`, { status: arg.status });
+		this.isRestart = false;
 	}
 
 	logBoxChange(e) {

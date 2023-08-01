@@ -8,6 +8,11 @@ import {
 } from '@angular/core';
 import { ElectronService } from '../electron/services';
 
+export enum ServerStatus {
+	START = 'Start',
+	STOP = 'Stop'
+}
+
 @Component({
 	selector: 'ngx-server-dashboard',
 	templateUrl: './server-dashboard.component.html',
@@ -27,7 +32,7 @@ export class ServerDashboardComponent implements OnInit {
 	};
 	logContents: any = [];
 	isExpandWindow = false;
-	logIsOpen: boolean = false;
+	logIsOpen = false;
 	styles = {
 		btnStart: 'button-small',
 		icon: 'margin-icon-small',
@@ -40,7 +45,7 @@ export class ServerDashboardComponent implements OnInit {
 		this.electronService.ipcRenderer.on('running_state', (event, arg) => {
 			this.loading = false;
 			this.btn = {
-				name: arg ? 'Stop' : 'Start',
+				name: arg ? ServerStatus.STOP : ServerStatus.START,
 				icon: arg ? 'stop-circle-outline' : 'arrow-right-outline',
 			};
 			this.running = arg;
@@ -89,7 +94,7 @@ export class ServerDashboardComponent implements OnInit {
 		this.logContents = [];
 		this.loading = true;
 		this.btn = {
-			name: '',
+			name: ServerStatus.START,
 			icon: '',
 		};
 		this.logIsOpen = true;
@@ -104,7 +109,7 @@ export class ServerDashboardComponent implements OnInit {
 	stopServer() {
 		this.loading = true;
 		this.btn = {
-			name: '',
+			name: ServerStatus.STOP,
 			icon: '',
 		};
 		this.logIsOpen = true;

@@ -660,13 +660,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 		this.electronService.ipcRenderer.on('offline-handler', (event, isOffline) => {
 			this._ngZone.run(() => {
 				this._isOffline$.next(isOffline);
-				this.toastrService.show(
-					'You switched to ' + (isOffline ? 'offline' : 'online') + ' mode now',
-					`Warning`,
-					{
-						status: isOffline ? 'danger' : 'success'
-					}
-				);
+				this._loggerService.log.info('You switched to ' + (isOffline ? 'offline' : 'online') + ' mode now');
 				if (!isOffline) {
 					this.refreshTimer();
 				}
@@ -694,15 +688,19 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 				args: ISequence[]
 			) => {
 				this._ngZone.run(async () => {
-					if (
-						this._isLockSyncProcess ||
-						this._timeTrackerStatus.remoteTimer?.isExternalSource ||
-						this._startMode === TimerStartMode.REMOTE
-					) {
+					if (this._isLockSyncProcess || this.isRemoteTimer) {
+						this._inQueue$.next({
+							...this.inQueue,
+							inProgress: false
+						});
 						return;
 					} else {
 						this._isLockSyncProcess = true;
 					}
+					this._inQueue$.next({
+						...this.inQueue,
+						inProgress: true
+					});
 					console.log('🛠 - Preprocessing sequence');
 					const sequenceQueue = new SequenceQueue(
 						this.electronService,

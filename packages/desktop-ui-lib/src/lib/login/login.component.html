@@ -120,6 +120,7 @@
 					<button type="submit" nbButton size="small" class="submit-btn" [disabled]="submitted || !form.valid"
 						[class.btn-pulse]="submitted">
 						{{ 'BUTTONS.LOGIN' | translate }}
+						<nb-icon [ngStyle]="{'display': 'none'}" *gauzySpinnerButton="submitted"></nb-icon>
 					</button>
 
 				</div>

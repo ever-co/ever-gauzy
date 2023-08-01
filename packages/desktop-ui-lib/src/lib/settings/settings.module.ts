@@ -23,6 +23,7 @@ import {
 } from '@nebular/theme';
 import { FormsModule } from '@angular/forms';
 import { TimeTrackerService } from '../time-tracker/time-tracker.service';
+import { DesktopDirectiveModule } from '../directives/desktop-directive.module';
 
 @NgModule({
 	declarations: [SettingsComponent],
@@ -44,7 +45,8 @@ import { TimeTrackerService } from '../time-tracker/time-tracker.service';
 		NbTabsetModule,
 		NbAccordionModule,
 		NbTooltipModule,
-		NbSpinnerModule
+		NbSpinnerModule,
+		DesktopDirectiveModule
 	],
 	providers: [
 		NbToastrService,
