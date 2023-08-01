@@ -694,15 +694,19 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 				args: ISequence[]
 			) => {
 				this._ngZone.run(async () => {
-					if (
-						this._isLockSyncProcess ||
-						this._timeTrackerStatus.remoteTimer?.isExternalSource ||
-						this._startMode === TimerStartMode.REMOTE
-					) {
+					if (this._isLockSyncProcess || this.isRemoteTimer) {
+						this._inQueue$.next({
+							...this.inQueue,
+							inProgress: false
+						});
 						return;
 					} else {
 						this._isLockSyncProcess = true;
 					}
+					this._inQueue$.next({
+						...this.inQueue,
+						inProgress: true
+					});
 					console.log('🛠 - Preprocessing sequence');
 					const sequenceQueue = new SequenceQueue(
 						this.electronService,
