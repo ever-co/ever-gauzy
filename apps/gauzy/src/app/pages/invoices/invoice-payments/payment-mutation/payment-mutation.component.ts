@@ -49,14 +49,14 @@ export class PaymentMutationComponent extends TranslationBaseComponent
 		self: PaymentMutationComponent
 	): FormGroup {
 		return fb.group({
-			amount: ['', Validators.compose([
+			amount: [null, Validators.compose([
 				Validators.required,
 				Validators.min(1)
 			])],
 			currency: [],
 			paymentDate: [self.store.getDateFromOrganizationSettings(), Validators.required],
 			note: [],
-			paymentMethod: ['', Validators.required],
+			paymentMethod: [null, Validators.required],
 			invoice: [],
 			organizationContact: [],
 			organizationContactId: [],
@@ -97,7 +97,14 @@ export class PaymentMutationComponent extends TranslationBaseComponent
 			});
 	}
 
-	async ngAfterViewInit() {
+	ngAfterViewInit() {
+		this.getInvoices();
+	}
+
+	/**
+	 *
+	 */
+	async getInvoices() {
 		if (!this.organization) {
 			return;
 		}
@@ -122,7 +129,7 @@ export class PaymentMutationComponent extends TranslationBaseComponent
 			this.form.patchValue({
 				amount,
 				currency,
-				paymentDate: new Date(paymentDate),
+				paymentDate: moment(paymentDate).toDate(),
 				note,
 				paymentMethod,
 				invoice,
@@ -148,6 +155,8 @@ export class PaymentMutationComponent extends TranslationBaseComponent
 		const { tenantId } = this.store.user;
 		const { id: organizationId } = this.organization;
 		const { amount, paymentDate, note, paymentMethod, organizationContact, project, tags, invoice } = this.form.value;
+		console.log(paymentDate);
+
 		const payment = {
 			amount,
 			paymentDate: moment(paymentDate).startOf('day').toDate(),
@@ -186,9 +195,17 @@ export class PaymentMutationComponent extends TranslationBaseComponent
 		this.form.get('organizationContact').updateValueAndValidity();
 	}
 
-	selectProject(organizationProject: IOrganizationProject) {
-		this.form.get('project').setValue(organizationProject);
+	/**
+	 * On select project
+	 *
+	 * @param project
+	 */
+	selectProject(project: IOrganizationProject) {
+		this.form.get('project').setValue(project);
 		this.form.get('project').updateValueAndValidity();
+
+		this.form.get('projectId').setValue(project.id);
+		this.form.get('projectId').updateValueAndValidity();
 	}
 
 	cancel() {
