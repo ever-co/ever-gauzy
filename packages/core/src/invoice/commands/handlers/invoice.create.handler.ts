@@ -6,10 +6,10 @@ import { InvoiceCreateCommand } from '../invoice.create.command';
 @CommandHandler(InvoiceCreateCommand)
 export class InvoiceCreateHandler
 	implements ICommandHandler<InvoiceCreateCommand> {
-	constructor(private readonly invoiceService: InvoiceService) {}
+	constructor(private readonly invoiceService: InvoiceService) { }
 
 	public async execute(command: InvoiceCreateCommand): Promise<IInvoice> {
 		const { input } = command;
-		return this.invoiceService.create(input);
+		return await this.invoiceService.create(input);
 	}
 }
