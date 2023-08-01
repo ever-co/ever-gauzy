@@ -956,6 +956,7 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 				break;
 		}
 		this.toastrService.show(message, `Success`, { status: arg.status });
+		this.isRestart = false;
 	}
 
 	logBoxChange(e) {
