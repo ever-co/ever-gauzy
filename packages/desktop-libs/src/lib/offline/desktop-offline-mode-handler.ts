@@ -27,8 +27,6 @@ export class DesktopOfflineModeHandler
 		this._PING_INTERVAL = 30 * 1000;
 
 		this.on('offline', () => {
-			// Turn offline mode on
-			this._isEnabled = true;
 			// Date on trigger offline mode
 			this._startedAt = new Date(Date.now());
 		});
@@ -49,6 +47,8 @@ export class DesktopOfflineModeHandler
 			// If connection is not restored
 			if (!connectivityEstablished) {
 				if (!this._isEnabled) {
+					// Turn offline mode on
+					this._isEnabled = true;
 					// Notify that offline mode is enabled
 					this.emit('offline');
 				}
