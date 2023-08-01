@@ -20,7 +20,7 @@ export const ckEditorDescriptionConfig: CKEditor4.Config = {
 	toolbar: [
 		{ name: 'document', items: ['Source'] },
 		{ name: 'basicstyles', items: ['Bold', 'Italic', 'Underline'] },
-		{ name: 'paragraph', items: ['JustifyLeft', 'JustifyCenter', 'JustifyRight', 'JustifyBlock', 'NumberedList', 'BulletedList', 'Checkbox', 'Indent', 'Code'] },
+		{ name: 'paragraph', items: ['JustifyLeft', 'JustifyCenter', 'JustifyRight', 'JustifyBlock', 'NumberedList', 'BulletedList', 'Checkbox', 'Blockquote', 'Code'] },
 		{ name: 'styles', items: ['Format', 'Link', 'Heading'] }
 	],
 	toolbarCanCollapse: true,
