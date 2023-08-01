@@ -371,6 +371,9 @@ export function ipcTimer(
 					organizationContactId: arg.organizationContactId
 				}
 			});
+			// Check api connection before to start
+			await offlineMode.connectivity();
+			// Start Timer
 			const timerResponse = await timerHandler.startTimer(setupWindow, knex, timeTrackerWindow, arg.timeLog);
 			settingWindow.webContents.send('app_setting_update', {
 				setting: LocalStore.getStore('appSetting')
@@ -479,6 +482,9 @@ export function ipcTimer(
 
 	ipcMain.handle('STOP_TIMER', async (event, arg) => {
 		log.info(`Timer Stop: ${moment().format()}`);
+		// Check api connection before to stop
+		await offlineMode.connectivity();
+		// Stop Timer
 		const timerResponse = await timerHandler.stopTimer(setupWindow, timeTrackerWindow, knex, arg.quitApp);
 		settingWindow.webContents.send('app_setting_update', {
 			setting: LocalStore.getStore('appSetting')
@@ -819,6 +825,11 @@ export function ipcTimer(
 		} catch (error) {
 			console.log('ERROR', error);
 		}
+	})
+
+	ipcMain.on('server-down', async (event, arg) => {
+		// Check api connection
+		await offlineMode.connectivity();
 	})
 }
 
