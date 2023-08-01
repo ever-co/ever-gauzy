@@ -11,6 +11,7 @@ import {
 	NbSpinnerModule,
 	NbAccordionModule
 } from '@nebular/theme';
+import { DesktopDirectiveModule } from '../directives/desktop-directive.module';
 
 @NgModule({
 	declarations: [ServerDashboardComponent],
@@ -22,7 +23,8 @@ import {
 		NbDialogModule,
 		NbButtonModule,
 		NbSpinnerModule,
-		NbAccordionModule
+		NbAccordionModule,
+		DesktopDirectiveModule
 	],
 	exports: [ServerDashboardComponent],
 	providers: [NbDialogService]

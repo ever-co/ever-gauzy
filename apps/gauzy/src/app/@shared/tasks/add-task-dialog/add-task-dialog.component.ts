@@ -26,7 +26,7 @@ import {
 	TasksService,
 } from '../../../@core/services';
 import { CKEditor4 } from 'ckeditor4-angular/ckeditor';
-import { ckEditorConfig } from '../../ckeditor.config';
+import { richTextCKEditorConfig } from '../../ckeditor.config';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -45,7 +45,7 @@ export class AddTaskDialogComponent extends TranslationBaseComponent
 	organization: IOrganization;
 	taskParticipantEnum = TaskParticipantEnum;
 	participants = TaskParticipantEnum.EMPLOYEES;
-	public ckConfig: CKEditor4.Config = ckEditorConfig;
+	public ckConfig: CKEditor4.Config = richTextCKEditorConfig;
 
 	@Input() createTask = false;
 

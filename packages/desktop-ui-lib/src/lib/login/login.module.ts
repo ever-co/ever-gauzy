@@ -19,6 +19,7 @@ import {
 } from '@nebular/theme';
 import { HttpClient } from '@angular/common/http';
 import { NgxLoginComponent } from './login.component';
+import { DesktopDirectiveModule } from '../directives/desktop-directive.module';
 
 export function HttpLoaderFactory(http: HttpClient) {
 	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
@@ -37,6 +38,7 @@ export function HttpLoaderFactory(http: HttpClient) {
 		NbIconModule,
 		NbInputModule,
     	NbFormFieldModule,
+		DesktopDirectiveModule,
 		NgxTranslateModule.forRoot({
 			loader: {
 				provide: TranslateLoader,

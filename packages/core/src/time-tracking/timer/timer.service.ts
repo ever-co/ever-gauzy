@@ -18,7 +18,7 @@ import {
 import { isNotEmpty } from '@gauzy/common';
 import { Employee, TimeLog } from './../../core/entities/internal';
 import { RequestContext } from '../../core/context';
-import { getDateRange } from './../../core/utils';
+import { getDateRange, validateDateRange } from './../../core/utils';
 import {
 	DeleteTimeSpanCommand,
 	IGetConflictTimeLogCommand,
@@ -112,7 +112,6 @@ export class TimerService {
 				startedAt: 'DESC',
 				createdAt: 'DESC'
 			},
-			relationLoadStrategy: 'query',
 			...(request['relations']
 				? {
 					relations: request['relations']
@@ -151,6 +150,7 @@ export class TimerService {
 	 * @returns
 	 */
 	async startTimer(request: ITimerToggleInput): Promise<ITimeLog> {
+		console.log('----------------------------------Started Timer Date----------------------------------', moment.utc(request.startedAt).toDate());
 		const { organizationId, source, logType } = request;
 		/**
 		 * If source, logType not found in request then reject the request.
@@ -225,6 +225,7 @@ export class TimerService {
 	 * @returns
 	 */
 	async stopTimer(request: ITimerToggleInput): Promise<ITimeLog> {
+		console.log('----------------------------------Stopped Timer Date----------------------------------', moment.utc(request.stoppedAt).toDate());
 		const { organizationId } = request;
 
 		const tenantId = RequestContext.currentTenantId() || request.tenantId;
@@ -239,6 +240,11 @@ export class TimerService {
 		}
 
 		const { id: employeeId } = employee;
+		await this.employeeRepository.update({ id: employeeId }, {
+			isOnline: false, // Employee status (Online/Offline)
+			isTrackingTime: false // Employee time tracking status
+		});
+
 		let lastLog = await this.getLastRunningLog(request);
 		if (!lastLog) {
 			/**
@@ -253,10 +259,12 @@ export class TimerService {
 		const now = moment.utc().toDate();
 		const stoppedAt = request.stoppedAt ? moment.utc(request.stoppedAt).toDate() : now;
 
-		await this.employeeRepository.update({ id: employeeId }, {
-			isOnline: false, // Employee status (Online/Offline)
-			isTrackingTime: false // Employee time tracking status
-		});
+		/** Function that performs the date range validation */
+		try {
+			validateDateRange(lastLog.startedAt, stoppedAt);
+		} catch (error) {
+			throw new BadRequestException(error);
+		}
 
 		lastLog = await this.commandBus.execute(
 			new TimeLogUpdateCommand(
@@ -435,7 +443,6 @@ export class TimerService {
 				startedAt: 'DESC',
 				createdAt: 'DESC'
 			},
-			relationLoadStrategy: 'query',
 			...(request['relations']
 				? {
 					relations: request['relations']

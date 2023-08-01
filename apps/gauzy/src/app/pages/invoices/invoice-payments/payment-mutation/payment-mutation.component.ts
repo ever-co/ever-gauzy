@@ -49,14 +49,14 @@ export class PaymentMutationComponent extends TranslationBaseComponent
 		self: PaymentMutationComponent
 	): FormGroup {
 		return fb.group({
-			amount: ['', Validators.compose([
+			amount: [null, Validators.compose([
 				Validators.required,
 				Validators.min(1)
 			])],
 			currency: [],
 			paymentDate: [self.store.getDateFromOrganizationSettings(), Validators.required],
 			note: [],
-			paymentMethod: ['', Validators.required],
+			paymentMethod: [null, Validators.required],
 			invoice: [],
 			organizationContact: [],
 			organizationContactId: [],
@@ -98,17 +98,29 @@ export class PaymentMutationComponent extends TranslationBaseComponent
 	}
 
 	ngAfterViewInit() {
+		this.getInvoices();
+	}
+
+	/**
+	 *
+	 */
+	async getInvoices() {
 		if (!this.organization) {
 			return;
 		}
-		const { tenantId } = this.store.user;
-		const { id: organizationId } = this.organization;
+		try {
+			const { tenantId } = this.store.user;
+			const { id: organizationId } = this.organization;
 
-		this.invoicesService
-			.getAll({ organizationId, tenantId, isEstimate: false })
-			.then(({ items }) => {
-				this.invoices = items;
+			const { items = [] } = await this.invoicesService.getAll({
+				organizationId,
+				tenantId,
+				isEstimate: 0
 			});
+			this.invoices = items;
+		} catch (error) {
+			console.log('Error while getting organization invoices', error);
+		}
 	}
 
 	initializeForm() {
@@ -117,7 +129,7 @@ export class PaymentMutationComponent extends TranslationBaseComponent
 			this.form.patchValue({
 				amount,
 				currency,
-				paymentDate: new Date(paymentDate),
+				paymentDate: moment(paymentDate).toDate(),
 				note,
 				paymentMethod,
 				invoice,
@@ -143,6 +155,8 @@ export class PaymentMutationComponent extends TranslationBaseComponent
 		const { tenantId } = this.store.user;
 		const { id: organizationId } = this.organization;
 		const { amount, paymentDate, note, paymentMethod, organizationContact, project, tags, invoice } = this.form.value;
+		console.log(paymentDate);
+
 		const payment = {
 			amount,
 			paymentDate: moment(paymentDate).startOf('day').toDate(),
@@ -181,9 +195,17 @@ export class PaymentMutationComponent extends TranslationBaseComponent
 		this.form.get('organizationContact').updateValueAndValidity();
 	}
 
-	selectProject(organizationProject: IOrganizationProject) {
-		this.form.get('project').setValue(organizationProject);
+	/**
+	 * On select project
+	 *
+	 * @param project
+	 */
+	selectProject(project: IOrganizationProject) {
+		this.form.get('project').setValue(project);
 		this.form.get('project').updateValueAndValidity();
+
+		this.form.get('projectId').setValue(project.id);
+		this.form.get('projectId').updateValueAndValidity();
 	}
 
 	cancel() {
