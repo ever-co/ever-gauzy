@@ -13,3 +13,15 @@ export const ckEditorConfig: CKEditor4.Config = {
 	],
 	toolbarCanCollapse: true,
 };
+
+export const ckEditorDescriptionConfig: CKEditor4.Config = {
+	width: '100%',
+	height: '320',
+	toolbar: [
+		{ name: 'document', items: ['Source'] },
+		{ name: 'basicstyles', items: ['Bold', 'Italic', 'Underline'] },
+		{ name: 'paragraph', items: ['JustifyLeft', 'JustifyCenter', 'JustifyRight', 'JustifyBlock', 'NumberedList', 'BulletedList', 'Checkbox', 'Indent', 'Code'] },
+		{ name: 'styles', items: ['Format', 'Link', 'Heading'] }
+	],
+	toolbarCanCollapse: true,
+}

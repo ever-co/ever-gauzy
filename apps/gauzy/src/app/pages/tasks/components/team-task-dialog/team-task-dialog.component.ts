@@ -20,7 +20,7 @@ import {
 	ToastrService,
 } from '../../../../@core/services';
 import { CKEditor4 } from 'ckeditor4-angular/ckeditor';
-import { ckEditorConfig } from "../../../../@shared/ckeditor.config";
+import { ckEditorDescriptionConfig } from "../../../../@shared/ckeditor.config";
 
 const initialTaskValue = {
 	title: '',
@@ -53,7 +53,7 @@ export class TeamTaskDialogComponent extends TranslationBaseComponent
 	organizationId: string;
 	tenantId: string;
 	tags: ITag[] = [];
-	public ckConfig: CKEditor4.Config = ckEditorConfig;
+	public ckConfig: CKEditor4.Config = ckEditorDescriptionConfig;
 	@Input() task: Partial<ITask> = {};
 
 	constructor(
