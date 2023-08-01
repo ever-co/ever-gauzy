@@ -14,7 +14,7 @@ export const ckEditorConfig: CKEditor4.Config = {
 	toolbarCanCollapse: true,
 };
 
-export const ckEditorDescriptionConfig: CKEditor4.Config = {
+export const richTextCKEditorConfig: CKEditor4.Config = {
 	width: '100%',
 	height: '320',
 	toolbar: [

@@ -20,7 +20,7 @@ import {
 	ToastrService,
 } from '../../../../@core/services';
 import { CKEditor4 } from 'ckeditor4-angular/ckeditor';
-import { ckEditorDescriptionConfig } from 'apps/gauzy/src/app/@shared/ckeditor.config';
+import { richTextCKEditorConfig } from 'apps/gauzy/src/app/@shared/ckeditor.config';
 
 
 const initialTaskValue = {
@@ -55,7 +55,7 @@ export class MyTaskDialogComponent extends TranslationBaseComponent
 	employeeId;
 	tags: ITag[] = [];
 	@Input() task: Partial<ITask> = {};
-	public ckConfig: CKEditor4.Config = ckEditorDescriptionConfig;
+	public ckConfig: CKEditor4.Config = richTextCKEditorConfig;
 
 	constructor(
 		public readonly dialogRef: NbDialogRef<MyTaskDialogComponent>,
