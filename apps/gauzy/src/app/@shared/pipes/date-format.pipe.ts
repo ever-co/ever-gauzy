@@ -12,7 +12,7 @@ import { Store } from '../../@core/services';
 	pure: false
 })
 export class DateFormatPipe implements PipeTransform {
-	dateFormat: string = 'd MMMM, y';
+	dateFormat: string = 'D MMMM, y';
 	regionCode: string = RegionsEnum.EN;
 
 	constructor(
@@ -24,7 +24,7 @@ export class DateFormatPipe implements PipeTransform {
 				filter((organization: IOrganization) => !!organization),
 				tap((organization: IOrganization) => {
 					this.regionCode = organization.regionCode || RegionsEnum.EN;
-					this.dateFormat = organization.dateFormat || 'd MMMM, y';
+					this.dateFormat = organization.dateFormat || 'D MMMM, y';
 				}),
 				untilDestroyed(this)
 			)
