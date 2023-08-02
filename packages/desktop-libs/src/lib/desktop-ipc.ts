@@ -481,21 +481,28 @@ export function ipcTimer(
 	});
 
 	ipcMain.handle('STOP_TIMER', async (event, arg) => {
-		log.info(`Timer Stop: ${moment().format()}`);
-		// Check api connection before to stop
-		await offlineMode.connectivity();
-		// Stop Timer
-		const timerResponse = await timerHandler.stopTimer(setupWindow, timeTrackerWindow, knex, arg.quitApp);
-		settingWindow.webContents.send('app_setting_update', {
-			setting: LocalStore.getStore('appSetting')
-		});
-		if (powerManagerPreventSleep) {
-			powerManagerPreventSleep.stop();
+		try {
+			log.info(`Timer Stop: ${moment().format()}`);
+			// Check api connection before to stop
+			if (!arg.isEmergency) {
+				await offlineMode.connectivity();
+			}
+			// Stop Timer
+			const timerResponse = await timerHandler.stopTimer(setupWindow, timeTrackerWindow, knex, arg.quitApp);
+			settingWindow.webContents.send('app_setting_update', {
+				setting: LocalStore.getStore('appSetting')
+			});
+			if (powerManagerPreventSleep) {
+				powerManagerPreventSleep.stop();
+			}
+			if (powerManagerDetectInactivity) {
+				powerManagerDetectInactivity.stopInactivityDetection();
+			}
+			return timerResponse;
+		} catch (error) {
+			timeTrackerWindow.webContents.send('emergency_stop');
+			console.log('ERROR', error);
 		}
-		if (powerManagerDetectInactivity) {
-			powerManagerDetectInactivity.stopInactivityDetection();
-		}
-		return timerResponse;
 	});
 
 	ipcMain.on('return_time_slot', async (event, arg) => {
