@@ -197,6 +197,8 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 	private _lastTime = 0;
 	private _isLockSyncProcess = false;
 	private _startMode = TimerStartMode.STOP;
+	private _isSpecialLogout = false;
+	private _isRestartAndUpdate = false;
 
 	public hasTaskPermission$: BehaviorSubject<boolean> = new BehaviorSubject(false);
 	private get _hasTaskPermission(): boolean {
@@ -440,14 +442,17 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 				this.note = arg.note;
 				this._aw$.next(arg.aw && arg.aw.isAw ? arg.aw.isAw : false);
 				this.appSetting$.next(arg.settings);
-				await this.getClient(arg);
-				await this.getProjects(arg);
-				await this.getTask(arg);
-				await this.getTodayTime(arg);
-				await this.setTimerDetails();
+				const parallelizedTasks = [
+					this.getClient(arg),
+					this.getProjects(arg),
+					this.getTask(arg),
+					this.getTodayTime(arg),
+					this.setTimerDetails()
+				];
 				if (arg.timeSlotId) {
-					await this.getLastTimeSlotImage(arg);
+					parallelizedTasks.push(this.getLastTimeSlotImage(arg));
 				}
+				await Promise.allSettled(parallelizedTasks);
 				this._isReady = true;
 				this._isRefresh$.next(false);
 				if (!this._isLockSyncProcess && this.inQueue.size > 0) {
@@ -613,10 +618,16 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 
 		this.electronService.ipcRenderer.on('logout', (event, arg) =>
 			this._ngZone.run(async () => {
+				this._isRestartAndUpdate = arg;
 				if (this.isExpand) this.expand();
-				if (this.start) await this.stopTimer();
-				if (arg) event.sender.send('restart_and_update');
-				localStorage.clear();
+				if (this.start && !this.isRemoteTimer) {
+					this._isSpecialLogout = true;
+					await this.stopTimer();
+				}
+				if (!this._isSpecialLogout) {
+					localStorage.clear();
+					event.sender.send('final_logout', this._isRestartAndUpdate);
+				}
 			})
 		);
 
@@ -1658,6 +1669,19 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 					})
 				}
 			});
+		}
+
+		if (this._isSpecialLogout) {
+			this._isSpecialLogout = false;
+			localStorage.clear();
+			this.electronService.ipcRenderer.send(
+				'final_logout',
+				this._isRestartAndUpdate
+			);
+		}
+
+		if (this.quitApp) {
+			this.electronService.remote.app.quit();
 		}
 	}
 

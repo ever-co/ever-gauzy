@@ -34,6 +34,8 @@ import {
 	User,
 	UserService,
 } from './offline';
+import { DialogStopTimerLogoutConfirmation } from './decorators/concretes/dialog-stop-timer-logout-confirmation';
+import { DesktopDialog } from './desktop-dialog';
 
 const timerHandler = new TimerHandler();
 
@@ -139,7 +141,7 @@ export function ipcMainHandler(
 		const auth = LocalStore.getStore('auth');
 		const logout = async () => {
 			await userService.remove();
-			timeTrackerWindow.webContents.send('logout');
+			timeTrackerWindow.webContents.send('__logout__');
 			LocalStore.updateAuthSetting({ isLogout: true });
 		}
 		if (auth && auth.userId) {
@@ -694,8 +696,6 @@ export function ipcTimer(
 	ipcMain.on('logout_desktop', async (event, arg) => {
 		try {
 			console.log('masuk logout main');
-			await userService.remove();
-			LocalStore.updateAuthSetting({ isLogout: true });
 			timeTrackerWindow.webContents.send('logout', arg);
 		} catch (error) {
 			console.log('Error', error);
@@ -854,6 +854,10 @@ export function ipcTimer(
 			console.log(error)
 		}
 	})
+
+	ipcMain.handle('LOGOUT_STOP', async (event, arg) => {
+		return await handleLogoutDialog(timeTrackerWindow);
+	});
 }
 
 export function removeMainListener() {
@@ -920,7 +924,8 @@ export function removeAllHandlers() {
 export function removeTimerHandlers() {
 	const channels = [
 		'START_TIMER',
-		'STOP_TIMER'
+		'STOP_TIMER',
+		'LOGOUT_STOP'
 	];
 	channels.forEach((channel: string) => {
 		ipcMain.removeHandler(channel);
@@ -988,4 +993,16 @@ async function sequentialSyncInterruptionsQueue(window: BrowserWindow) {
 	} catch (error) {
 		console.log('Error', error);
 	}
+}
+
+export async function handleLogoutDialog(window: BrowserWindow): Promise<boolean> {
+	const dialog = new DialogStopTimerLogoutConfirmation(
+		new DesktopDialog(
+			'Gauzy Desktop Timer',
+			'Are you sure you want to logout?',
+			window
+		)
+	);
+	const button = await dialog.show();
+	return button.response === 0;
 }
