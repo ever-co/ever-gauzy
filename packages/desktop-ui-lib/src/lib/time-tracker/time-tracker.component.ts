@@ -386,16 +386,6 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 						remoteTimer.lastLog.organizationContactId;
 					await this.toggleStart(remoteTimer.running, false);
 				}),
-				filter(
-					(remoteTimer: IRemoteTimer) =>
-						remoteTimer.isExternalSource ||
-						this._startMode === TimerStartMode.REMOTE
-				),
-				tap((remoteTimer: IRemoteTimer) =>
-					this.electronService.ipcRenderer.send('update_session', {
-						startedAt: remoteTimer.startedAt
-					})
-				),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -995,6 +985,12 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 				},
 				timeLog: null
 			});
+			// update counter
+			if (this.isRemoteTimer) {
+				this.electronService.ipcRenderer.send('update_session', {
+					startedAt: this._timeTrackerStatus.remoteTimer.startedAt
+				})
+			}
 			await this._toggle(timer, onClick);
 			this.electronService.ipcRenderer.send('request_permission');
 		} catch (error) {
