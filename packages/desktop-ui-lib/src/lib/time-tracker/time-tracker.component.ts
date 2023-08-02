@@ -50,7 +50,7 @@ import {
 } from '../services';
 import { TimeTrackerStatusService } from './time-tracker-status/time-tracker-status.service';
 import { IRemoteTimer } from './time-tracker-status/interfaces';
-import { ISequence, SequenceQueue, TimeSlotQueueService, ViewQueueStateUpdater } from '../offline-sync';
+import { InterruptedSequenceQueue, ISequence, SequenceQueue, TimeSlotQueueService, ViewQueueStateUpdater } from '../offline-sync';
 import { ImageViewerService } from '../image-viewer/image-viewer.service';
 
 enum TimerStartMode {
@@ -450,6 +450,9 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 				}
 				this._isReady = true;
 				this._isRefresh$.next(false);
+				if (!this._isLockSyncProcess && this.inQueue.size > 0) {
+					this.electronService.ipcRenderer.send('check-interrupted-sequences');
+				}
 			})
 		);
 
@@ -724,6 +727,8 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 							this._isLockSyncProcess = false;
 							if (!this.start) {
 								this.refreshTimer();
+							} else {
+								this.electronService.ipcRenderer.send('check-interrupted-sequences');
 							}
 							console.log('✅ - Finish synced');
 						} catch (error) {
@@ -838,6 +843,57 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 				event.sender.send('remove_current_user');
 			});
 		});
+
+		this.electronService.ipcRenderer.on(
+			'interrupted-sequences',
+			(event, args: ISequence[]) => this._ngZone.run(async () => {
+				if (this._isLockSyncProcess || this.isRemoteTimer) {
+					this._inQueue$.next({
+						...this.inQueue,
+						inProgress: false
+					});
+					return;
+				} else {
+					this._isLockSyncProcess = true;
+				}
+				this._inQueue$.next({
+					...this.inQueue,
+					inProgress: true
+				});
+				console.log('🛠 - Preprocessing sequence');
+				const sequenceQueue = new InterruptedSequenceQueue(
+					this.electronService,
+					this._errorHandlerService,
+					this._store,
+					this._timeSlotQueueService,
+					this.timeTrackerService,
+					this._timeTrackerStatus
+				);
+				console.log('⌗', args);
+				for (const arg of args) sequenceQueue.enqueue(arg);
+				args = []; // empty the array
+				console.log('🚀 - Begin processing interrupted sequence queue');
+				await sequenceQueue.process();
+				console.log('🚨 - End processing interrupted sequence queue');
+				asapScheduler.schedule(async () => {
+					try {
+						await this.electronService.ipcRenderer.invoke(
+							'FINISH_SYNCED_TIMER'
+						);
+						this._isLockSyncProcess = false;
+						if (!this.start) {
+							this.refreshTimer();
+						}
+						console.log('✅ - Finish synced');
+						if (this.inQueue.size > 0) {
+							this.electronService.ipcRenderer.send('check-waiting-sequences');
+						}
+					} catch (error) {
+						this._errorHandlerService.handleError(error);
+					}
+				});
+			})
+		);
 	}
 
 	async toggleStart(val, onClick = true) {

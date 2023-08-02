@@ -832,8 +832,20 @@ export function ipcTimer(
 		await offlineMode.connectivity();
 	})
 
-	ipcMain.on('check-interruptions', async (event, arg) => {
-		await sequentialSyncInterruptionsQueue(timeTrackerWindow);
+	ipcMain.on('check-interrupted-sequences', async (event, arg) => {
+		try {
+			await sequentialSyncInterruptionsQueue(timeTrackerWindow);
+		} catch (error) {
+			console.log(error)
+		}
+	})
+
+	ipcMain.on('check-waiting-sequences', async (event, arg) => {
+		try {
+			await sequentialSyncQueue(timeTrackerWindow);
+		} catch (error) {
+			console.log(error)
+		}
 	})
 }
 
@@ -962,7 +974,7 @@ async function sequentialSyncInterruptionsQueue(window: BrowserWindow) {
 		const sequences = await timerService.interruptions();
 		if (sequences.length > 0) {
 			await countIntervalQueue(window, true);
-			window.webContents.send('interruptions', sequences);
+			window.webContents.send('interrupted-sequences', sequences);
 		} else {
 			isQueueThreadTimerLocked = false;
 		}
