@@ -440,6 +440,7 @@ export class TimeTrackerService {
 			tenantId: values.tenantId,
 			organizationContactId: values.organizationContactId,
 			recordedAt: moment(values.recordedAt).utc().toISOString(),
+			...(values.timesheetId && { timesheetId: values.timesheetId })
 		};
 
 		console.log('Params', params);
