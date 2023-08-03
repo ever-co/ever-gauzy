@@ -10,7 +10,7 @@ export class DialogStopTimerLogoutConfirmation
 		this.options = {
 			...this.options,
 			buttons: ['Logout', 'Cancel'],
-			detail: 'Click Exit to Stop the Timer and Logout from the application.',
+			detail: 'Click Logout to Stop the Timer and Logout from the application.',
 		};
 	}
 }
