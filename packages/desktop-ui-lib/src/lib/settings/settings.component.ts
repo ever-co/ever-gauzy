@@ -670,8 +670,8 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 		});
 
 		this.electronService.ipcRenderer.on('_logout_quit_install_', (event, arg) => {
-			this._ngZone.run(() => {
-				this.logout(true);
+			this._ngZone.run(async () => {
+				await this.restartAndUpdate();
 			});
 		});
 	}
@@ -787,11 +787,11 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 		this.updateSetting(value, 'prerelease');
 	}
 
-	restartApp() {
+	public async restartApp(): Promise<void> {
 		if (this.isServer && this.serverIsRunning) {
 			this._restartDisable$.next(true);
 		} else {
-			this.logout();
+			await this.logout();
 		}
 		const thConfig = {};
 		this.thirdPartyConfig.forEach((item) => {
@@ -852,8 +852,8 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 		this.electronService.ipcRenderer.send('check_for_update');
 	}
 
-	restartAndUpdate() {
-		this.logout(true);
+	public async restartAndUpdate(): Promise<void> {
+		await this.logout(true);
 	}
 
 	toggleAwView(value) {
@@ -897,10 +897,26 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 	/*
 	 * Logout desktop timer
 	 */
-	logout(isAfterUpgrade?: boolean) {
-		console.log('On Logout');
-		localStorage.clear();
-		this.electronService.ipcRenderer.send('logout_desktop', isAfterUpgrade);
+	public async logout(isAfterUpgrade?: boolean): Promise<void> {
+		let isLogout = true;
+
+		if (this.appSetting?.timerStarted) {
+			isLogout = await this.electronService.ipcRenderer.invoke(
+				'LOGOUT_STOP'
+			);
+		} else {
+			localStorage.clear();
+		}
+
+		if (isLogout) {
+			console.log('On Logout');
+			this.electronService.ipcRenderer.send(
+				'logout_desktop',
+				isAfterUpgrade
+			);
+		} else {
+			console.log('Logout Cancelled');
+		}
 	}
 
 	onServerChange(val) {

@@ -70,7 +70,9 @@ import {
 	DesktopUpdater,
 	removeMainListener,
 	removeTimerListener,
-	ProviderFactory
+	ProviderFactory,
+	DesktopDialog,
+	DialogStopTimerExitConfirmation
 } from '@gauzy/desktop-libs';
 import {
 	createSetupWindow,
@@ -515,15 +517,25 @@ app.on('activate', () => {
 	}
 });
 
-app.on('before-quit', (e) => {
+app.on('before-quit', async (e) => {
 	e.preventDefault();
 	const appSetting = LocalStore.getStore('appSetting');
 	if (appSetting && appSetting.timerStarted) {
 		e.preventDefault();
-		willQuit = true;
-		timeTrackerWindow.webContents.send('stop_from_tray', {
-			quitApp: true
-		});
+		const exitConfirmationDialog = new DialogStopTimerExitConfirmation(
+			new DesktopDialog(
+				'Gauzy Desktop Timer',
+				'Are you sure you want to exit?',
+				timeTrackerWindow
+			)
+		);
+		const button = await exitConfirmationDialog.show();
+		if (button.response === 0) {
+			willQuit = true;
+			timeTrackerWindow.webContents.send('stop_from_tray', {
+				quitApp: true,
+			});
+		}
 	} else {
 		// soft download cancellation
 		try {
@@ -634,7 +646,7 @@ const showPopup = async (url: string, options: any) => {
 	options.height = 768;
 	if (popupWin) popupWin.destroy();
 	popupWin = new BrowserWindow(options);
-	let userAgentWb = 'Chrome/104.0.0.0';
+	const userAgentWb = 'Chrome/104.0.0.0';
 	await popupWin.loadURL(url, { userAgent: userAgentWb });
 	popupWin.show();
 };
