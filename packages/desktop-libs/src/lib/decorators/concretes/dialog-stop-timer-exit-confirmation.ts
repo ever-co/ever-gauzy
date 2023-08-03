@@ -10,7 +10,7 @@ export class DialogStopTimerExitConfirmation
 		this.options = {
 			...this.options,
 			buttons: ['Exit', 'Cancel'],
-			detail: 'Clicking on exit, the timer will stop and then close.',
+			detail: 'Click Exit to Stop the Timer and Exit from the application.',
 		};
 	}
 }
