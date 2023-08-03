@@ -1,11 +1,11 @@
 @import 'gauzy/_gauzy-dialogs';
 :host {
-	display: block;
-	width: 100%;
 	.main {
-		padding: 100px;
+		display: flex;
+		justify-content: center;
 	}
 	nb-card {
+		width: 95%;
 		background-color: var(--gauzy-card-1);
 		nb-card-body {
 			background-color: var(--gauzy-card-2);
@@ -66,5 +66,12 @@
 		span {
 			color: var(--text-primary-color);
 		}
+	}
+	.button-generate-proposal {
+		width: 100%;
+		white-space: nowrap;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		display: block;
 	}
 }

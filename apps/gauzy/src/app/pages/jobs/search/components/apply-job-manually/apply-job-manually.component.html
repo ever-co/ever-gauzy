@@ -35,7 +35,7 @@
 								(ngSubmit)="onSubmit()"
 							>
 								<div class="row">
-									<div class="col-3">
+									<div class="col-lg-3 col-md-7">
 										<div class="form-group">
 											<label class="label" for="job_employee">
 												{{ 'HEADER.SELECT_EMPLOYEE' | translate }}
@@ -53,7 +53,7 @@
 											></ga-employee-selector>
 										</div>
 									</div>
-									<div class="col-2">
+									<div class="col-lg-2 col-md-5">
 										<div class="form-group">
 											<label class="label" for="hourly_rate">
 												{{ 'FORM.LABELS.HOURLY_RATE' | translate }}
@@ -73,27 +73,30 @@
 										</div>
 									</div>
 									<ng-container *ngIf="form.get('employeeId').value">
-										<div class="col-7">
-											<div class="form-group">
-												<label class="label" for="proposal_template">
-													{{ 'PROPOSALS_PAGE.REGISTER.TEMPLATE' | translate }}
-												</label>
-												<ngx-proposal-template-select
-													id="proposal_template"
-													[employeeId]="form.get('employeeId').value"
-													(selectedChange)="onProposalTemplateChange($event)"
-												>
-													<button
+										<div class="col-lg-7 col-md-12">
+											<div class="form-group row">
+													<div class="col-7">
+														<label class="label" for="proposal_template">
+															{{ 'PROPOSALS_PAGE.REGISTER.TEMPLATE' | translate }}
+														</label>
+														<ngx-proposal-template-select
+															id="proposal_template"
+															[employeeId]="form.get('employeeId').value"
+															(selectedChange)="onProposalTemplateChange($event)"
+														></ngx-proposal-template-select>
+													</div>
+													<div class="col-5 align-self-end">
+														<button
 														status="primary"
+														class="button-generate-proposal"
 														outline
 														nbButton
-														class="ml-3 mb-1"
 														debounceClick
 														(throttledClick)="proposal$.next(true)"
 													>
 														{{ 'BUTTONS.GENERATE_PROPOSAL' | translate }}
 													</button>
-												</ngx-proposal-template-select>
+												</div>
 											</div>
 										</div>
 									</ng-container>
