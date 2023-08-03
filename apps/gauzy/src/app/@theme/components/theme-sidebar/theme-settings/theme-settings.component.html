@@ -1,3 +1,4 @@
+<div gauzyOutside (clickOutside)="onClickOutside($event)">
 <div class="header">
 	<span class="cancel">
 		<i class="fas fa-times" (click)="closeSidebar()"></i>
@@ -6,7 +7,7 @@
 </div>
 <nb-list>
 	<nb-list-item>
-		<gauzy-switch-theme 
+		<gauzy-switch-theme
 			class="theme"
 		></gauzy-switch-theme>
 	</nb-list-item>
@@ -22,8 +23,9 @@
 		></gauzy-theme-selector>
 	</nb-list-item>
 	<nb-list-item>
-		<gauzy-layout-selector 
+		<gauzy-layout-selector
 			class="theme"
 		></gauzy-layout-selector>
 	</nb-list-item>
 </nb-list>
+</div>
