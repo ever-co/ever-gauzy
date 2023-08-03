@@ -830,7 +830,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 		this.electronService.ipcRenderer.on('emergency_stop', (event, arg) => {
 			this._ngZone.run(async () => {
 				if (this.start) {
-					await this.stopTimer();
+					await this.stopTimer(!this.isRemoteTimer, true);
 				}
 			});
 		});
@@ -994,9 +994,9 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 		}
 	}
 
-	public async stopTimer(onClick = true): Promise<void> {
+	public async stopTimer(onClick = true, isEmergency = false): Promise<void> {
 		try {
-			const config = { quitApp: this.quitApp };
+			const config = { quitApp: this.quitApp, isEmergency };
 			const timer = await this.electronService.ipcRenderer.invoke('STOP_TIMER', config);
 			await this._toggle(timer, onClick);
 			this.electronService.ipcRenderer.send('update_tray_stop');
