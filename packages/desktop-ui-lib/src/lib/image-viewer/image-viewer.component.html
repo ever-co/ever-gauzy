@@ -20,13 +20,13 @@
 					<ng-template
 							[ngTemplateOutlet]="defaultLoader"
 							[ngTemplateOutletContext]="{
-								$implicit: !(item?.fullUrl | async)
+								$implicit: (item?.thumbUrl | async)
 							}"
 						></ng-template>
 					<img
 						#imageMedia
-						[nbSpinner]="!(item?.fullUrl | async)"
 						loading="eager"
+						[ngClass]="{'blur-transition': (item?.fullUrl | async)}"
 						[src]="item?.fullUrl | async"
 					/>
 					<div *ngIf="item?.fullUrl | async" class="date">
@@ -59,10 +59,10 @@
 						<ng-template
 							[ngTemplateOutlet]="defaultLoader"
 							[ngTemplateOutletContext]="{
-								$implicit: !(thumb?.thumbUrl | async)
+								$implicit: (thumb?.thumbUrl | async)
 							}"
 						></ng-template>
-						<img loading="eager" [src]="thumb?.thumbUrl | async" />
+						<img loading="eager" [ngClass]="{'blur-transition': (thumb?.thumbUrl | async)}" [src]="thumb?.thumbUrl | async" />
 						<div *ngIf="thumb?.thumbUrl | async" class="date-box">
 							<div class="thumb-date">
 								{{ thumb?.recordedAt | dateTime }}
@@ -75,6 +75,9 @@
 	</nb-layout-column>
 </nb-layout>
 
-<ng-template #defaultLoader let-loading>
-	<div *ngIf="loading" [nbSpinner]=loading class="loading"></div>
+<ng-template #defaultLoader let-thumb>
+	<div *ngIf="!thumb; else bluredImage" [nbSpinner]="!thumb" class="loading"></div>
+	<ng-template #bluredImage>
+		<img class="loading-thumb" [src]="thumb">
+	</ng-template>
 </ng-template>

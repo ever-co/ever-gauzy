@@ -114,3 +114,18 @@ img {
 		filter: blur(1rem);
 	}
 }
+
+.loading-thumb {
+	position: absolute;
+	width: 100%;
+	height: 100%;
+	border-radius: var(--border-radius);
+}
+
+img {
+	filter: blur(1rem);
+	&.blur-transition {
+		filter: blur(0);
+		transition: filter 0.8s ease;
+	}
+}
