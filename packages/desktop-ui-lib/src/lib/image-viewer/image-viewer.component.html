@@ -76,8 +76,8 @@
 </nb-layout>
 
 <ng-template #defaultLoader let-thumb>
-	<div *ngIf="!thumb; else bluredImage" [nbSpinner]="!thumb" class="loading"></div>
-	<ng-template #bluredImage>
+	<div *ngIf="!thumb; else blurredImage" [nbSpinner]="!thumb" class="loading"></div>
+	<ng-template #blurredImage>
 		<img class="loading-thumb" [src]="thumb">
 	</ng-template>
 </ng-template>
