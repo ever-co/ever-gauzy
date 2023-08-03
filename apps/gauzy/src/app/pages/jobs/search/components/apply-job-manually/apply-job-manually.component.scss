@@ -4,13 +4,17 @@
 		display: flex;
 		justify-content: center;
 	}
-	nb-card {
+	.main > nb-card {
+		height: 100vh;
 		width: 95%;
+	}
+	nb-card {
 		background-color: var(--gauzy-card-1);
 		nb-card-body {
 			background-color: var(--gauzy-card-2);
 			nb-card, nb-card-body {
 				background-color: var(--gauzy-card-1);
+				border-radius: var(--border-radius);
 			}
 		}
 	}
@@ -23,7 +27,12 @@
 		}
 		job-title-description-details {
 			div.job-detail {
-				max-height: 500px !important;
+				display: flex;
+				flex-direction: column;
+				.job-body {
+					overflow: auto;
+					max-height: calc(100vh - 30.75rem);
+				}
 			}
 		}
 	}
@@ -43,10 +52,11 @@
 		border-radius: var(--border-radius);
 	}
 	.sync-container {
-		float: right;
 		display: flex;
 		align-items: center;
+		justify-content: flex-end;
 		gap: 4px;
+		margin-bottom: 4px;
 		.sync {
 			color: var(--gauzy-text-color-2);
 			cursor: pointer;
@@ -73,5 +83,19 @@
 		overflow: hidden;
 		text-overflow: ellipsis;
 		display: block;
+		margin-bottom: 5.5px;
+	}
+
+	form {
+		height: calc(100vh - 22.5rem);
+		display: flex;
+		flex-direction: column;
+		.drag-drop {
+			margin-top: auto;
+		}
+	}
+
+	::ng-deep .cke_reset {
+		height: calc(100vh - 40.5rem) !important;
 	}
 }
