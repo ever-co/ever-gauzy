@@ -16,7 +16,7 @@
 						></nb-icon>
 					</button>
 				</div>
-				<div class="media-viewer" (click)="$event.stopPropagation()">
+				<div [nbSpinner]="!(item?.fullUrl | async)" nbSpinnerStatus="primary" class="media-viewer" (click)="$event.stopPropagation()">
 					<ng-template
 							[ngTemplateOutlet]="defaultLoader"
 							[ngTemplateOutletContext]="{
