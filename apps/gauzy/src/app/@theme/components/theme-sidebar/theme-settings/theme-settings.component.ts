@@ -1,7 +1,9 @@
 import { Component, OnInit, OnDestroy, AfterViewChecked } from '@angular/core';
 import { NbSidebarService } from '@nebular/theme';
+import { untilDestroyed, UntilDestroy } from '@ngneat/until-destroy';
 import { tap } from 'rxjs/operators';
 
+@UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ngx-theme-settings',
 	styleUrls: ['./theme-settings.component.scss'],
@@ -25,6 +27,7 @@ export class ThemeSettingsComponent implements OnInit, AfterViewChecked, OnDestr
 					(state) =>
 						(this.state = state === 'expanded' ? true : false)
 				),
+				untilDestroyed(this)
 			)
 			.subscribe();
 	}
