@@ -69,4 +69,13 @@ export class TimerService implements ITimerService<TimerTO> {
 			console.error('[NO_SYNCED_TIMER_ERROR]: ', error);
 		}
 	}
+
+	public async interruptions(): Promise<ISequence[]> {
+		try {
+			const user = await this._userService.retrieve();
+			return await this._timerDAO.findAllInterruptions(user);
+		} catch (error) {
+			console.error('[INTERRUPTIONS_TIMER_ERROR]: ', error);
+		}
+	}
 }

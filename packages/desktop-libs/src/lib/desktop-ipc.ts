@@ -831,6 +831,22 @@ export function ipcTimer(
 		// Check api connection
 		await offlineMode.connectivity();
 	})
+
+	ipcMain.on('check-interrupted-sequences', async (event, arg) => {
+		try {
+			await sequentialSyncInterruptionsQueue(timeTrackerWindow);
+		} catch (error) {
+			console.log(error)
+		}
+	})
+
+	ipcMain.on('check-waiting-sequences', async (event, arg) => {
+		try {
+			await sequentialSyncQueue(timeTrackerWindow);
+		} catch (error) {
+			console.log(error)
+		}
+	})
 }
 
 export function removeMainListener() {
@@ -946,5 +962,23 @@ async function latestScreenshots(window: BrowserWindow): Promise<void> {
 		);
 	} catch (error) {
 		console.log('ERROR_SCREENSHOTS', error);
+	}
+}
+
+async function sequentialSyncInterruptionsQueue(window: BrowserWindow) {
+	if (!window) return;
+	try {
+		await offlineMode.connectivity();
+		if (offlineMode.enabled) return;
+		isQueueThreadTimerLocked = true;
+		const sequences = await timerService.interruptions();
+		if (sequences.length > 0) {
+			await countIntervalQueue(window, true);
+			window.webContents.send('interrupted-sequences', sequences);
+		} else {
+			isQueueThreadTimerLocked = false;
+		}
+	} catch (error) {
+		console.log('Error', error);
 	}
 }

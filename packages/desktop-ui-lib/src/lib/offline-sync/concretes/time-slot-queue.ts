@@ -32,7 +32,7 @@ export class TimeSlotQueue extends OfflineQueue<ITimeSlot> {
 		await this._uploadScreenshots(screenshots, interval, timeSlotId);
 		await this._electronService.ipcRenderer.invoke(
 			'UPDATE_SYNCED',
-			{ ...interval, remoteId: interval.timeSlotId }
+			{ ...interval, remoteId: timeSlotId }
 		)
 		this._timeSlotQueueService.updater = { ...interval, timeSlotId };
 	}

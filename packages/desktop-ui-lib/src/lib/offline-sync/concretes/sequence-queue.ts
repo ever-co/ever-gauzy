@@ -28,12 +28,12 @@ export interface ISequence {
 
 export class SequenceQueue extends OfflineQueue<ISequence> {
 	constructor(
-		private _electronService: ElectronService,
-		private _errorHandlerService: ErrorHandlerService,
-		private _store: Store,
-		private _timeSlotQueueService: TimeSlotQueueService,
-		private _timeTrackerService: TimeTrackerService,
-		private _timeTrackerStatusService: TimeTrackerStatusService
+		protected _electronService: ElectronService,
+		protected _errorHandlerService: ErrorHandlerService,
+		protected _store: Store,
+		protected _timeSlotQueueService: TimeSlotQueueService,
+		protected _timeTrackerService: TimeTrackerService,
+		protected _timeTrackerStatusService: TimeTrackerStatusService
 	) {
 		super();
 		this.state = new BlockedSequenceState(this);
