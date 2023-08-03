@@ -10,6 +10,7 @@ import {
 } from '@gauzy/desktop-window';
 import TitleOptions = Electron.TitleOptions;
 import { User, UserService } from './offline';
+import { handleLogoutDialog } from './desktop-ipc';
 
 export class TrayIcon {
 	tray: Tray;
@@ -34,6 +35,7 @@ export class TrayIcon {
 		iconNativePath.resize({ width: 16, height: 16 });
 		this.tray = new Tray(iconNativePath);
 		this.tray.setTitle('--:--:--', options);
+		const userService = new UserService();
 		let contextMenu: any = [
 			{
 				id: '4',
@@ -212,8 +214,16 @@ export class TrayIcon {
 				id: '7',
 				label: 'Logout',
 				visible: app.getName() === 'gauzy-desktop-timer',
-				click() {
-					timeTrackerWindow.webContents.send('logout');
+				async click() {
+					const appSetting = store.get('appSetting');
+					let isLogout = true;
+
+					if (appSetting?.timerStarted) {
+						isLogout = await handleLogoutDialog(timeTrackerWindow);
+					}
+					if (isLogout) {
+						timeTrackerWindow.webContents.send('logout');
+					}
 				},
 			},
 			{
@@ -280,7 +290,6 @@ export class TrayIcon {
 		ipcMain.on('auth_success', async (event, arg) => {
 			console.log('Auth Success:', arg);
 			try {
-				const userService = new UserService();
 				const user = new User({ ...arg, ...arg.user });
 				user.remoteId = arg.userId;
 				user.organizationId = arg.organizationId;
@@ -324,7 +333,7 @@ export class TrayIcon {
 			}
 		});
 
-		ipcMain.on('logout', async () => {
+		ipcMain.on('final_logout', async (event, arg) => {
 			this.tray.setContextMenu(Menu.buildFromTemplate(unAuthMenu));
 			menuWindowTime.enabled = false;
 
@@ -359,7 +368,14 @@ export class TrayIcon {
 					);
 					timeTrackerWindow.show();
 					loginPageAlreadyShow = true;
+					LocalStore.updateAuthSetting({ isLogout: true });
 				}
+			}
+
+			await userService.remove();
+
+			if (timeTrackerWindow) {
+				timeTrackerWindow.webContents.send('__logout__', arg);
 			}
 		});
 
@@ -386,7 +402,7 @@ export class TrayIcon {
 			'update_tray_time_update',
 			'update_tray_time_title',
 			'auth_success',
-			'logout',
+			'final_logout',
 			'user_detail',
 		];
 

@@ -8,3 +8,5 @@ export * from './concretes/digital-ocean-cdn';
 export * from './concretes/github-cdn';
 export * from './concretes/dialog-local-update';
 export * from './concretes/dialog-acknowledge-inactivity';
+export * from './concretes/dialog-stop-timer-exit-confirmation';
+export * from './concretes/dialog-stop-timer-logout-confirmation';

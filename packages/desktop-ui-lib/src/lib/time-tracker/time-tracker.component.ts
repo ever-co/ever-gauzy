@@ -50,7 +50,7 @@ import {
 } from '../services';
 import { TimeTrackerStatusService } from './time-tracker-status/time-tracker-status.service';
 import { IRemoteTimer } from './time-tracker-status/interfaces';
-import { ISequence, SequenceQueue, TimeSlotQueueService, ViewQueueStateUpdater } from '../offline-sync';
+import { InterruptedSequenceQueue, ISequence, SequenceQueue, TimeSlotQueueService, ViewQueueStateUpdater } from '../offline-sync';
 import { ImageViewerService } from '../image-viewer/image-viewer.service';
 
 enum TimerStartMode {
@@ -197,6 +197,8 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 	private _lastTime = 0;
 	private _isLockSyncProcess = false;
 	private _startMode = TimerStartMode.STOP;
+	private _isSpecialLogout = false;
+	private _isRestartAndUpdate = false;
 
 	public hasTaskPermission$: BehaviorSubject<boolean> = new BehaviorSubject(false);
 	private get _hasTaskPermission(): boolean {
@@ -384,16 +386,6 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 						remoteTimer.lastLog.organizationContactId;
 					await this.toggleStart(remoteTimer.running, false);
 				}),
-				filter(
-					(remoteTimer: IRemoteTimer) =>
-						remoteTimer.isExternalSource ||
-						this._startMode === TimerStartMode.REMOTE
-				),
-				tap((remoteTimer: IRemoteTimer) =>
-					this.electronService.ipcRenderer.send('update_session', {
-						startedAt: remoteTimer.startedAt
-					})
-				),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -440,16 +432,22 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 				this.note = arg.note;
 				this._aw$.next(arg.aw && arg.aw.isAw ? arg.aw.isAw : false);
 				this.appSetting$.next(arg.settings);
-				await this.getClient(arg);
-				await this.getProjects(arg);
-				await this.getTask(arg);
-				await this.getTodayTime(arg);
-				await this.setTimerDetails();
+				const parallelizedTasks = [
+					this.getClient(arg),
+					this.getProjects(arg),
+					this.getTask(arg),
+					this.getTodayTime(arg),
+					this.setTimerDetails()
+				];
 				if (arg.timeSlotId) {
-					await this.getLastTimeSlotImage(arg);
+					parallelizedTasks.push(this.getLastTimeSlotImage(arg));
 				}
+				await Promise.allSettled(parallelizedTasks);
 				this._isReady = true;
 				this._isRefresh$.next(false);
+				if (!this._isLockSyncProcess && this.inQueue.size > 0) {
+					this.electronService.ipcRenderer.send('check-interrupted-sequences');
+				}
 			})
 		);
 
@@ -610,10 +608,16 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 
 		this.electronService.ipcRenderer.on('logout', (event, arg) =>
 			this._ngZone.run(async () => {
+				this._isRestartAndUpdate = arg;
 				if (this.isExpand) this.expand();
-				if (this.start) await this.stopTimer();
-				if (arg) event.sender.send('restart_and_update');
-				localStorage.clear();
+				if (this.start && !this.isRemoteTimer) {
+					this._isSpecialLogout = true;
+					await this.stopTimer();
+				}
+				if (!this._isSpecialLogout) {
+					localStorage.clear();
+					event.sender.send('final_logout', this._isRestartAndUpdate);
+				}
 			})
 		);
 
@@ -724,6 +728,8 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 							this._isLockSyncProcess = false;
 							if (!this.start) {
 								this.refreshTimer();
+							} else {
+								this.electronService.ipcRenderer.send('check-interrupted-sequences');
 							}
 							console.log('✅ - Finish synced');
 						} catch (error) {
@@ -825,7 +831,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 		this.electronService.ipcRenderer.on('emergency_stop', (event, arg) => {
 			this._ngZone.run(async () => {
 				if (this.start) {
-					await this.stopTimer();
+					await this.stopTimer(!this.isRemoteTimer, true);
 				}
 			});
 		});
@@ -838,6 +844,57 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 				event.sender.send('remove_current_user');
 			});
 		});
+
+		this.electronService.ipcRenderer.on(
+			'interrupted-sequences',
+			(event, args: ISequence[]) => this._ngZone.run(async () => {
+				if (this._isLockSyncProcess || this.isRemoteTimer) {
+					this._inQueue$.next({
+						...this.inQueue,
+						inProgress: false
+					});
+					return;
+				} else {
+					this._isLockSyncProcess = true;
+				}
+				this._inQueue$.next({
+					...this.inQueue,
+					inProgress: true
+				});
+				console.log('🛠 - Preprocessing sequence');
+				const sequenceQueue = new InterruptedSequenceQueue(
+					this.electronService,
+					this._errorHandlerService,
+					this._store,
+					this._timeSlotQueueService,
+					this.timeTrackerService,
+					this._timeTrackerStatus
+				);
+				console.log('⌗', args);
+				for (const arg of args) sequenceQueue.enqueue(arg);
+				args = []; // empty the array
+				console.log('🚀 - Begin processing interrupted sequence queue');
+				await sequenceQueue.process();
+				console.log('🚨 - End processing interrupted sequence queue');
+				asapScheduler.schedule(async () => {
+					try {
+						await this.electronService.ipcRenderer.invoke(
+							'FINISH_SYNCED_TIMER'
+						);
+						this._isLockSyncProcess = false;
+						if (!this.start) {
+							this.refreshTimer();
+						}
+						console.log('✅ - Finish synced');
+						if (this.inQueue.size > 0) {
+							this.electronService.ipcRenderer.send('check-waiting-sequences');
+						}
+					} catch (error) {
+						this._errorHandlerService.handleError(error);
+					}
+				});
+			})
+		);
 	}
 
 	async toggleStart(val, onClick = true) {
@@ -928,6 +985,12 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 				},
 				timeLog: null
 			});
+			// update counter
+			if (this.isRemoteTimer) {
+				this.electronService.ipcRenderer.send('update_session', {
+					startedAt: this._timeTrackerStatus.remoteTimer.startedAt
+				})
+			}
 			await this._toggle(timer, onClick);
 			this.electronService.ipcRenderer.send('request_permission');
 		} catch (error) {
@@ -938,9 +1001,9 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 		}
 	}
 
-	public async stopTimer(onClick = true): Promise<void> {
+	public async stopTimer(onClick = true, isEmergency = false): Promise<void> {
 		try {
-			const config = { quitApp: this.quitApp };
+			const config = { quitApp: this.quitApp, isEmergency };
 			const timer = await this.electronService.ipcRenderer.invoke('STOP_TIMER', config);
 			await this._toggle(timer, onClick);
 			this.electronService.ipcRenderer.send('update_tray_stop');
@@ -1602,6 +1665,19 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 					})
 				}
 			});
+		}
+
+		if (this._isSpecialLogout) {
+			this._isSpecialLogout = false;
+			localStorage.clear();
+			this.electronService.ipcRenderer.send(
+				'final_logout',
+				this._isRestartAndUpdate
+			);
+		}
+
+		if (this.quitApp) {
+			this.electronService.remote.app.quit();
 		}
 	}
 

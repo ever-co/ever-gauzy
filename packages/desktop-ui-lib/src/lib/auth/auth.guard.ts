@@ -39,7 +39,7 @@ export class AuthGuard implements CanActivate {
 			if (this.electronService.isElectron) {
 				try {
 					this.electronService.ipcRenderer.send('logout');
-				} catch (error) {}
+				} catch (error) { }
 			}
 
 			// logout and clear local store

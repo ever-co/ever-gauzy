@@ -15,7 +15,7 @@
 						<nb-card-header>
 							{{ 'JOBS.JOB_DETAILS' | translate }}
 						</nb-card-header>
-						<nb-card-body>
+						<nb-card-body class="p-3">
 							<job-title-description-details
 								[rowData]="employeeJobPost"
 								[hideJobIcon]="false"
@@ -35,8 +35,8 @@
 								(ngSubmit)="onSubmit()"
 							>
 								<div class="row">
-									<div class="col-3">
-										<div class="form-group">
+									<div class="col-xl-3 col-lg-7">
+										<div class="form-group m-0">
 											<label class="label" for="job_employee">
 												{{ 'HEADER.SELECT_EMPLOYEE' | translate }}
 											</label>
@@ -53,8 +53,8 @@
 											></ga-employee-selector>
 										</div>
 									</div>
-									<div class="col-2">
-										<div class="form-group">
+									<div class="col-xl-2 col-lg-5">
+										<div class="form-group m-0">
 											<label class="label" for="hourly_rate">
 												{{ 'FORM.LABELS.HOURLY_RATE' | translate }}
 											</label>
@@ -73,27 +73,30 @@
 										</div>
 									</div>
 									<ng-container *ngIf="form.get('employeeId').value">
-										<div class="col-7">
-											<div class="form-group">
-												<label class="label" for="proposal_template">
-													{{ 'PROPOSALS_PAGE.REGISTER.TEMPLATE' | translate }}
-												</label>
-												<ngx-proposal-template-select
-													id="proposal_template"
-													[employeeId]="form.get('employeeId').value"
-													(selectedChange)="onProposalTemplateChange($event)"
-												>
-													<button
+										<div class="col-xl-7 col-lg-12">
+											<div class="row">
+													<div class="col-7">
+														<label class="label" for="proposal_template">
+															{{ 'PROPOSALS_PAGE.REGISTER.TEMPLATE' | translate }}
+														</label>
+														<ngx-proposal-template-select
+															id="proposal_template"
+															[employeeId]="form.get('employeeId').value"
+															(selectedChange)="onProposalTemplateChange($event)"
+														></ngx-proposal-template-select>
+													</div>
+													<div class="col-5 h-100 align-self-end">
+														<button
 														status="primary"
+														class="button-generate-proposal"
 														outline
 														nbButton
-														class="ml-3 mb-1"
 														debounceClick
 														(throttledClick)="proposal$.next(true)"
 													>
 														{{ 'BUTTONS.GENERATE_PROPOSAL' | translate }}
 													</button>
-												</ngx-proposal-template-select>
+												</div>
 											</div>
 										</div>
 									</ng-container>
@@ -157,7 +160,7 @@
 										</div>
 									</div>
 								</ng-template>
-								<div class="row">
+								<div class="row drag-drop">
 									<div class="col-12">
 										<div class="form-group">
 											<label class="label" for="attachments">
