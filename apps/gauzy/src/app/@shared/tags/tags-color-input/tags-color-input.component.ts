@@ -4,7 +4,9 @@ import {
 	Input,
 	Output,
 	EventEmitter,
-	OnDestroy
+	OnDestroy,
+	ElementRef,
+	HostListener,
 } from '@angular/core';
 import { ITag, IOrganization, PermissionsEnum, ITagCreateInput } from '@gauzy/contracts';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
@@ -33,6 +35,7 @@ export class TagsColorInputComponent extends PictureNameTagsComponent
 	public tags: ITag[] = [];
 	public loading: boolean;
 	private organization: IOrganization;
+	private selectedTagsOverflow: boolean;
 
 	/*
 	* Getter & Setter selected tags
@@ -43,6 +46,7 @@ export class TagsColorInputComponent extends PictureNameTagsComponent
 	}
 	@Input() set selectedTags(value: ITag[]) {
 		this._selectedTags = value;
+		this.checkTagsFit();
 	}
 
 	/*
@@ -102,11 +106,17 @@ export class TagsColorInputComponent extends PictureNameTagsComponent
 
 	@Output() selectedTagsEvent = new EventEmitter<ITag[]>();
 
+	@HostListener('window:resize')
+	onResize(): void {
+		this.checkTagsFit()
+	}
+
 	constructor(
 		private readonly tagsService: TagsService,
 		private readonly store: Store,
 		public readonly themeService: NbThemeService,
-		public readonly translateService: TranslateService
+		public readonly translateService: TranslateService,
+		private el: ElementRef
 	) {
 		super(themeService, translateService);
 	}
@@ -135,6 +145,20 @@ export class TagsColorInputComponent extends PictureNameTagsComponent
 				untilDestroyed(this)
 			)
 			.subscribe();
+	}
+
+	/**
+	 * Check if selected tags fits on the screen
+	 */
+	checkTagsFit() {
+		const selectedContainer = this.el.nativeElement.querySelector('.ng-value-container')
+		const tags = this.el.nativeElement.querySelectorAll('.ng-value');
+
+		const containerWidth = selectedContainer.offsetWidth;
+		const tagWidths = Array.from(tags).map(tag => tag['offsetWidth']);
+
+		const totalTagWidth = tagWidths.reduce((acc, width) => acc + width, containerWidth * 0.1);
+		this.selectedTagsOverflow = totalTagWidth > containerWidth;
 	}
 
 	/**
