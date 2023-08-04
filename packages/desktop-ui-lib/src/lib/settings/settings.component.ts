@@ -15,7 +15,9 @@ import { AboutComponent } from '../dialogs/about/about.component';
 import { SetupService } from '../setup/setup.service';
 import * as moment from 'moment';
 import { ToastrNotificationService } from '../services';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 
+@UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ngx-settings',
 	templateUrl: './settings.component.html',
@@ -380,7 +382,7 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 	autoLaunch = null;
 	minimizeOnStartup = null;
 	authSetting = null;
-	currentUser$: BehaviorSubject<any> = new BehaviorSubject({});
+	currentUser$: BehaviorSubject<any> = new BehaviorSubject(null);
 	serverTypes = {
 		integrated: 'Integrated',
 		custom: 'Custom',
@@ -464,14 +466,16 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 			.pipe(
 				tap(({ status }) => this._restartDisable$.next(!status)),
 				filter(() => !this._isCheckHost.status),
-				tap(() => this._restartDisable$.next(true))
+				tap(() => this._restartDisable$.next(true)),
+				untilDestroyed(this)
 			)
 			.subscribe();
 		this.isCheckHost$
 			.pipe(
 				tap(({ status }) => this._restartDisable$.next(!status)),
 				filter(() => !this._isConnectedDatabase.status),
-				tap(() => this._restartDisable$.next(true))
+				tap(() => this._restartDisable$.next(true)),
+				untilDestroyed(this)
 			)
 			.subscribe();
 	}
@@ -791,7 +795,9 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 		if (this.isServer && this.serverIsRunning) {
 			this._restartDisable$.next(true);
 		} else {
-			await this.logout();
+			if (!this.authSetting.isLogout) {
+				await this.logout();
+			}
 		}
 		const thConfig = {};
 		this.thirdPartyConfig.forEach((item) => {
