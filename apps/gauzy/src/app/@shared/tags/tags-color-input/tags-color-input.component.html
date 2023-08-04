@@ -38,6 +38,11 @@
 				(click)="clear(tag)"
 			></nb-badge>
 		</ng-template>
+		<ng-template ng-multi-label-tmp let-items="items">
+			<div class="selected-items-container">
+				<div class="selected-item">Tags({{ selectedTags.length }})</div>
+			</div>
+		</ng-template>
 		<ng-template ng-tag-tmp let-newTagName="searchTerm">
 			<b>{{ 'TAGS_PAGE.ADD_NEW_TAG' | translate }}</b>: {{ newTagName }}
 		</ng-template>
