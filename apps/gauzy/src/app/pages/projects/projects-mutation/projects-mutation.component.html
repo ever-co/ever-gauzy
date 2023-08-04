@@ -8,12 +8,8 @@
 							<div class="project-image-photo">
 								<ngx-image-uploader
 									(changeHoverState)="hoverState = $event"
-									(uploadedImageAsset)="
-										form.get('imageUrl').setValue($event)
-									"
-									(uploadImageAssetError)="
-										handleImageUploadError($event)
-									"
+									(uploadedImageAsset)="updateImageAsset($event)"
+									(uploadImageAssetError)="handleImageUploadError($event)"
 								></ngx-image-uploader>
 								<svg
 									*ngIf="form && form.get('imageUrl').value"

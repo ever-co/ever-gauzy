@@ -11,7 +11,8 @@ import {
 	TaskListTypeEnum,
 	ContactType,
 	ICurrency,
-	OrganizationProjectBudgetTypeEnum
+	OrganizationProjectBudgetTypeEnum,
+	IImageAsset
 } from '@gauzy/contracts';
 import { TranslateService } from '@ngx-translate/core';
 import { Router } from '@angular/router';
@@ -38,26 +39,7 @@ import { ckEditorConfig } from "../../../@shared/ckeditor.config";
 export class ProjectsMutationComponent extends TranslationBaseComponent
 	implements OnInit {
 
-	/*
-	* Getter & Setter for dynamic project element
-	*/
-	_project: IOrganizationProject;
-	get project(): IOrganizationProject {
-		return this._project;
-	}
-	@Input() set project(project: IOrganizationProject) {
-		this._project = project;
-	}
-
-	@Output()
-	canceled = new EventEmitter();
-
-	@Output()
-	addOrEditProject = new EventEmitter();
-
-	@Input()
-	organizationContacts: Object[] = [];
-
+	FormHelpers: typeof FormHelpers = FormHelpers;
 	OrganizationProjectBudgetTypeEnum = OrganizationProjectBudgetTypeEnum;
 	TaskListTypeEnum = TaskListTypeEnum;
 	members: string[] = [];
@@ -67,12 +49,8 @@ export class ProjectsMutationComponent extends TranslationBaseComponent
 	taskViewModeTypes: TaskListTypeEnum[] = Object.values(TaskListTypeEnum);
 	showSprintManage = false;
 	ckConfig: CKEditor4.Config = ckEditorConfig;
-
 	public organization: IOrganization;
 	employees: IEmployee[] = [];
-
-	FormHelpers: typeof FormHelpers = FormHelpers;
-
 	hoverState: boolean;
 
 	/*
@@ -81,7 +59,8 @@ export class ProjectsMutationComponent extends TranslationBaseComponent
 	public form: FormGroup = ProjectsMutationComponent.buildForm(this.fb);
 	static buildForm(fb: FormBuilder): FormGroup {
 		return fb.group({
-			imageUrl: [null],
+			imageUrl: [],
+			imageId: [],
 			tags: [],
 			public: [],
 			billable: [],
@@ -99,13 +78,13 @@ export class ProjectsMutationComponent extends TranslationBaseComponent
 			budget: [],
 			budgetType: [OrganizationProjectBudgetTypeEnum.HOURS],
 			openSource: [],
-			projectUrl: ['', Validators.compose([
-					Validators.pattern(new RegExp(patterns.websiteUrl))
-				])
+			projectUrl: [null, Validators.compose([
+				Validators.pattern(new RegExp(patterns.websiteUrl))
+			])
 			],
-			openSourceProjectUrl: ['', Validators.compose([
-					Validators.pattern(new RegExp(patterns.websiteUrl))
-				])
+			openSourceProjectUrl: [null, Validators.compose([
+				Validators.pattern(new RegExp(patterns.websiteUrl))
+			])
 			]
 		}, {
 			validators: [
@@ -113,6 +92,22 @@ export class ProjectsMutationComponent extends TranslationBaseComponent
 			]
 		});
 	}
+
+	/*
+	* Getter & Setter for dynamic project element
+	*/
+	private _project: IOrganizationProject;
+	get project(): IOrganizationProject {
+		return this._project;
+	}
+	@Input() set project(project: IOrganizationProject) {
+		this._project = project;
+	}
+
+	@Input() organizationContacts: any[] = [];
+
+	@Output() canceled = new EventEmitter();
+	@Output() addOrEditProject = new EventEmitter();
 
 	constructor(
 		private readonly fb: FormBuilder,
@@ -129,9 +124,9 @@ export class ProjectsMutationComponent extends TranslationBaseComponent
 	ngOnInit() {
 		this.store.selectedOrganization$
 			.pipe(
-				filter((organization) => !!organization),
 				distinctUntilChange(),
 				debounceTime(100),
+				filter((organization: IOrganization) => !!organization),
 				tap((organization: IOrganization) => this.organization = organization),
 				tap(() => this._loadDefaultCurrency()),
 				tap(() => this._syncProject()),
@@ -195,6 +190,7 @@ export class ProjectsMutationComponent extends TranslationBaseComponent
 		this.members = this.selectedEmployeeIds;
 		this.form.patchValue({
 			imageUrl: project.imageUrl || null,
+			imageId: project.imageId || null,
 			tags: project.tags || [],
 			public: project.public || false,
 			billable: project.billable || false,
@@ -207,8 +203,8 @@ export class ProjectsMutationComponent extends TranslationBaseComponent
 			owner: project.owner || ProjectOwnerEnum.CLIENT,
 			taskListType: project.taskListType || TaskListTypeEnum.GRID,
 			description: project.description || null,
-			code:  project.code || null,
-			color:  project.color || null,
+			code: project.code || null,
+			color: project.color || null,
 			budget: project.budget || null,
 			budgetType: project.budgetType || OrganizationProjectBudgetTypeEnum.HOURS,
 			openSource: project.openSource || null,
@@ -265,16 +261,13 @@ export class ProjectsMutationComponent extends TranslationBaseComponent
 		const { tenantId } = this.store.user;
 		const { id: organizationId } = this.organization;
 
-		const { name, code, projectUrl, owner, organizationContact, startDate, endDate } = this.form.getRawValue();
-		const { description, tags } = this.form.getRawValue();
-		const { billing, currency } = this.form.getRawValue();
-		const { budget, budgetType } = this.form.getRawValue();
-		const { openSource, openSourceProjectUrl } = this.form.getRawValue();
-		const { color, taskListType, public: isPublic, billable } = this.form.getRawValue();
-		let { imageUrl } = this.form.getRawValue();
-		if (imageUrl === DUMMY_PROFILE_IMAGE) {
-			imageUrl = null;
-		}
+		const { name, code, projectUrl, owner, organizationContact, startDate, endDate } = this.form.value;
+		const { description, tags } = this.form.value;
+		const { billing, currency } = this.form.value;
+		const { budget, budgetType } = this.form.value;
+		const { openSource, openSourceProjectUrl } = this.form.value;
+		const { color, taskListType, public: isPublic, billable } = this.form.value;
+		const { imageId } = this.form.value;
 
 		this.addOrEditProject.emit({
 			action: !this.project ? 'add' : 'edit',
@@ -316,7 +309,7 @@ export class ProjectsMutationComponent extends TranslationBaseComponent
 
 				organizationId,
 				tenantId,
-				imageUrl
+				imageId
 			}
 		});
 	}
@@ -377,10 +370,6 @@ export class ProjectsMutationComponent extends TranslationBaseComponent
 		this.employees = employees;
 	}
 
-	handleImageUploadError(error) {
-		this.toastrService.danger(error);
-	}
-
 	public get projectName(): AbstractControl {
 		return this.form.get('name');
 	}
@@ -391,5 +380,29 @@ export class ProjectsMutationComponent extends TranslationBaseComponent
 
 	public get openSourceProjectUrl(): AbstractControl {
 		return this.form.get('openSourceProjectUrl');
+	}
+
+	/**
+	 * Upload project logo
+	 *
+	 * @param image
+	 */
+	updateImageAsset(image: IImageAsset) {
+		try {
+			if (image && image.id) {
+				this.form.get('imageId').setValue(image.id);
+				this.form.get('imageUrl').setValue(image.fullUrl);
+			} else {
+				this.form.get('imageUrl').setValue(DUMMY_PROFILE_IMAGE);
+			}
+			this.form.updateValueAndValidity();
+		} catch (error) {
+			console.log('Error while uploading project logo', error);
+			this.handleImageUploadError(error);
+		}
+	}
+
+	handleImageUploadError(error: any) {
+		this.toastrService.danger(error);
 	}
 }
