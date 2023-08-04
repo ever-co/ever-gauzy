@@ -151,14 +151,15 @@ export class TagsColorInputComponent extends PictureNameTagsComponent
 	 * Check if selected tags fits on the screen
 	 */
 	checkTagsFit() {
+		if (this.selectedTags.length <= 0) { this.selectedTagsOverflow = false; return; }
 		const selectedContainer = this.el.nativeElement.querySelector('.ng-value-container')
 		const tags = this.el.nativeElement.querySelectorAll('.ng-value');
 
 		const containerWidth = selectedContainer.offsetWidth;
 		const tagWidths = Array.from(tags).map(tag => tag['offsetWidth']);
-
-		const totalTagWidth = tagWidths.reduce((acc, width) => acc + width, containerWidth * 0.1);
-		this.selectedTagsOverflow = totalTagWidth > containerWidth;
+		const totalTagWidth = tagWidths.reduce((acc, width) => acc + width, containerWidth * 0.15);
+		if (!this.selectedTagsOverflow)
+			this.selectedTagsOverflow = totalTagWidth > containerWidth;
 	}
 
 	/**
