@@ -93,7 +93,6 @@ import * as Sentry from '@sentry/angular';
 	],
 	providers: [
 		AppService,
-		HttpClientModule,
 		NbDialogService,
 		AuthGuard,
 		NoAuthGuard,
