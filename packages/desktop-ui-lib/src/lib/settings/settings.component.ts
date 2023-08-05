@@ -10,12 +10,13 @@ import {
 import { TimeTrackerService } from '../time-tracker/time-tracker.service';
 import { NbDialogService, NbToastrService } from '@nebular/theme';
 import { ElectronService } from '../electron/services';
-import { BehaviorSubject, Observable, filter, tap } from 'rxjs';
+import { BehaviorSubject, Observable, filter, tap, firstValueFrom } from 'rxjs';
 import { AboutComponent } from '../dialogs/about/about.component';
 import { SetupService } from '../setup/setup.service';
 import * as moment from 'moment';
 import { ToastrNotificationService } from '../services';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { AuthStrategy } from '../auth';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -429,7 +430,8 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 		private toastrService: NbToastrService,
 		private _dialogService: NbDialogService,
 		private _setupService: SetupService,
-		private _notifier: ToastrNotificationService
+		private _notifier: ToastrNotificationService,
+		private _authStrategy: AuthStrategy
 	) {
 		this._loading$ = new BehaviorSubject(false);
 		this._automaticUpdate$ = new BehaviorSubject(false);
@@ -796,7 +798,9 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 			this._restartDisable$.next(true);
 		} else {
 			if (!this.authSetting.isLogout) {
-				await this.logout();
+				await firstValueFrom(this._authStrategy.logout());
+				this.currentUser$.next(null);
+				localStorage.clear();
 			}
 		}
 		const thConfig = {};
