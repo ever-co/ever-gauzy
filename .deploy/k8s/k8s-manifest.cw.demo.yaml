@@ -69,9 +69,9 @@ spec:
                       - name: SENTRY_POSTGRES_TRACKING_ENABLED
                         value: 'false'
                       - name: API_BASE_URL
-                        value: 'https://gauzy-api.alfaromeo-bg.com'
+                        value: 'https://apicw.gauzy.co'
                       - name: CLIENT_BASE_URL
-                        value: 'https://gauzy.alfaromeo-bg.com'
+                        value: 'https://democw.gauzy.co'
                       - name: EXPRESS_SESSION_SECRET
                         value: 'gauzy'
                       - name: JWT_SECRET
