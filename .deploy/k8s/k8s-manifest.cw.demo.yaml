@@ -69,7 +69,7 @@ spec:
                       - name: SENTRY_POSTGRES_TRACKING_ENABLED
                         value: 'false'
                       - name: API_BASE_URL
-                        value: 'https://apicw.gauzy.co'
+                        value: 'https://apidemocw.gauzy.co'
                       - name: CLIENT_BASE_URL
                         value: 'https://democw.gauzy.co'
                       - name: EXPRESS_SESSION_SECRET
@@ -114,7 +114,7 @@ spec:
                       - name: DEMO
                         value: 'true'
                       - name: API_BASE_URL
-                        value: 'https://apicw.gauzy.co'
+                        value: 'https://apidemocw.gauzy.co'
                       - name: CLIENT_BASE_URL
                         value: 'https://democw.gauzy.co'
                       - name: SENTRY_DSN
@@ -171,7 +171,7 @@ spec:
     tls:
       - hosts:
           - democw.gauzy.co
-        secretName: gauzy.co-tls
+        secretName: democw.gauzy.co-tls
 ---
 apiVersion: networking.k8s.io/v1
 kind: Ingress
@@ -182,7 +182,7 @@ metadata:
         traefik.ingress.kubernetes.io/router.middlewares: tenant-acb888-ever-https-redirect@kubernetescrd
 spec:
     rules:
-      - host: apicw.gauzy.co
+      - host: apidemocw.gauzy.co
         http:
             paths:
               - backend:
@@ -194,5 +194,5 @@ spec:
                 pathType: Prefix
     tls:
       - hosts:
-          - apicw.gauzy.co
-        secretName: gauzy.co-tls
+          - apidemocw.gauzy.co
+        secretName: apidemocw.gauzy.co-tls
