@@ -26,6 +26,7 @@ export class TrayIcon {
 		mainWindow
 	) {
 		this.removeTrayListener();
+		this.removeTimerHandlers();
 		let loginPageAlreadyShow = false;
 		const options: TitleOptions = { fontType: 'monospacedDigit' };
 		const appConfig = LocalStore.getStore('configs');
@@ -320,7 +321,7 @@ export class TrayIcon {
 			}
 
 			if (!appConfig.gauzyWindow) {
-				timeTrackerWindow.loadURL(
+				await timeTrackerWindow.loadURL(
 					timeTrackerPage(windowPath.timeTrackerUi)
 				);
 				timeTrackerWindow.show();
@@ -333,7 +334,7 @@ export class TrayIcon {
 			}
 		});
 
-		ipcMain.on('final_logout', async (event, arg) => {
+		ipcMain.handle('FINAL_LOGOUT', async (event, arg) => {
 			this.tray.setContextMenu(Menu.buildFromTemplate(unAuthMenu));
 			menuWindowTime.enabled = false;
 
@@ -368,15 +369,11 @@ export class TrayIcon {
 					);
 					timeTrackerWindow.show();
 					loginPageAlreadyShow = true;
-					LocalStore.updateAuthSetting({ isLogout: true });
 				}
 			}
 
 			await userService.remove();
-
-			if (timeTrackerWindow) {
-				timeTrackerWindow.webContents.send('__logout__', arg);
-			}
+			LocalStore.updateAuthSetting({ isLogout: true });
 		});
 
 		ipcMain.on('user_detail', (event, arg) => {
@@ -395,6 +392,15 @@ export class TrayIcon {
 		this.tray.destroy();
 	}
 
+	removeTimerHandlers() {
+		const channels = [
+			'FINAL_LOGOUT'
+		];
+		channels.forEach((channel: string) => {
+			ipcMain.removeHandler(channel);
+		});
+	}
+
 	removeTrayListener() {
 		const trayListener = [
 			'update_tray_start',
@@ -402,7 +408,6 @@ export class TrayIcon {
 			'update_tray_time_update',
 			'update_tray_time_title',
 			'auth_success',
-			'final_logout',
 			'user_detail',
 		];
 
