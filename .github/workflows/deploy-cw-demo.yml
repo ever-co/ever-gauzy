@@ -22,7 +22,7 @@ jobs:
                 mkdir ${HOME}/.kube
                 echo ${{ secrets.CW_KUBECONFIG }} | base64 --decode > ${HOME}/.kube/config
 
-            - name: Generate TLS Secrets
+            - name: Generate TLS Secrets for DemoCW and APIDemoCW
               run: |
                  echo ${{ secrets.INGRESS_API_CERT }} | base64 --decode > ${HOME}/ingress.api.crt
                  echo ${{ secrets.INGRESS_API_CERT_KEY }} | base64 --decode > ${HOME}/ingress.api.key
