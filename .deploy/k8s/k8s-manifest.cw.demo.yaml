@@ -114,9 +114,9 @@ spec:
                       - name: DEMO
                         value: 'true'
                       - name: API_BASE_URL
-                        value: 'https://gauzy-api.alfaromeo-bg.com'
+                        value: 'https://apicw.gauzy.co'
                       - name: CLIENT_BASE_URL
-                        value: 'https://gauzy.alfaromeo-bg.com'
+                        value: 'https://democw.gauzy.co'
                       - name: SENTRY_DSN
                         value: 'https://7cd381188b6f446ca0e69185227b9031@o51327.ingest.sentry.io/4397292'
                       - name: CHATWOOT_SDK_TOKEN
@@ -158,7 +158,7 @@ metadata:
     traefik.ingress.kubernetes.io/router.middlewares: tenant-acb888-ever-https-redirect@kubernetescrd
 spec:
     rules:
-      - host: gauzy.alfaromeo-bg.com
+      - host: democw.gauzy.co
         http:
             paths:
               - backend:
@@ -170,8 +170,8 @@ spec:
                 pathType: Prefix
     tls:
       - hosts:
-          - gauzy.alfaromeo-bg.com
-        secretName: gauzy.alfaromeo-bg.com-tls
+          - democw.gauzy.co
+        secretName: gauzy.co-tls
 ---
 apiVersion: networking.k8s.io/v1
 kind: Ingress
@@ -182,7 +182,7 @@ metadata:
         traefik.ingress.kubernetes.io/router.middlewares: tenant-acb888-ever-https-redirect@kubernetescrd
 spec:
     rules:
-      - host: gauzy-api.alfaromeo-bg.com
+      - host: apicw.gauzy.co
         http:
             paths:
               - backend:
@@ -194,5 +194,5 @@ spec:
                 pathType: Prefix
     tls:
       - hosts:
-          - gauzy.alfaromeo-bg.com
-        secretName: gauzy.alfaromeo-bg.com-tls
+          - apicw.gauzy.co
+        secretName: gauzy.co-tls
