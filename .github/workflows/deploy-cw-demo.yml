@@ -20,7 +20,7 @@ jobs:
             - name: Create kubeconfig
               run: |
                 mkdir ${HOME}/.kube
-                echo ${{ secrets.KUBE_CONFIG }} | base64 --decode > ${HOME}/.kube/config
+                echo ${{ secrets.CW_KUBECONFIG }} | base64 --decode > ${HOME}/.kube/config
 
             - name: Apply k8s manifests changes in CoreWeave k8s cluster (if any)
               run: |
