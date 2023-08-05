@@ -140,6 +140,15 @@ spec:
                       - containerPort: 4200
                         protocol: TCP
 ---
+apiVersion: traefik.containo.us/v1alpha1
+kind: Middleware
+metadata:
+  name: https-redirect
+spec:
+  redirectScheme:
+    permanent: true
+    scheme: https
+---
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
