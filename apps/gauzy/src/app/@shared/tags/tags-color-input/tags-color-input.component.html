@@ -39,15 +39,9 @@
 			></nb-badge>
 		</ng-template>
 		<ng-template ng-multi-label-tmp let-items="items">
-			<ng-template #labelWithCount>
 				<div class="ng-value">
 					<div class="ng-value-label">Tags({{ selectedTags.length }})</div>
 				</div>
-			</ng-template>
-			<div class="ng-value" *ngIf="!selectedTagsOverflow else labelWithCount ">
-				<nb-badge class="tag-color tag-label" *ngFor="let tag of selectedTags" [style.background]="background(tag.color)"
-					[style.color]="backgroundContrast(tag.color)" [text]="tag.name" (click)="clear(tag)"></nb-badge>
-			</div>
 		</ng-template>
 		<ng-template ng-tag-tmp let-newTagName="searchTerm">
 			<b>{{ 'TAGS_PAGE.ADD_NEW_TAG' | translate }}</b>: {{ newTagName }}
