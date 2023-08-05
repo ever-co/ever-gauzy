@@ -24,6 +24,7 @@ import {
 	Store
 } from './@core/services';
 import { environment } from '../environments/environment';
+import moment from 'moment';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -137,15 +138,31 @@ export class AppComponent implements OnInit, AfterViewInit {
 						DEFAULT_DATE_PICKER_CONFIG,
 						datePicker
 					);
-					if (isNotEmpty(dates)) {
+
+					const queryParams = this.activatedRoute.snapshot.queryParams;
+					const hasCustomDates = 'date' in queryParams && 'date_end' in queryParams;
+
+					if (hasCustomDates) {
+						// Use queryParams values
+						const startDate = moment(queryParams.date, 'MM-DD-YYYY');
+						const endDate = moment(queryParams.date_end, 'MM-DD-YYYY');
+						const customDates: IDateRangePicker = {
+							startDate: startDate.toDate(),
+							endDate: endDate.toDate(),
+							isCustomDate: true
+						};
+
+						this.dateRangePickerBuilderService.setDateRangePicker(customDates);
+					} else if (isNotEmpty(dates)) {
 						this.dateRangePickerBuilderService.setDateRangePicker(dates);
 					}
+
 					this.dateRangePickerBuilderService.setDatePickerConfig(datePickerConfig);
 				}),
 				tap(({ selectors }: {
 					selectors: ISelectorVisibility
 				}) => {
-					Object.entries(Object.assign( {}, DEFAULT_SELECTOR_VISIBILITY, selectors)).forEach(([id, value]) => {
+					Object.entries(Object.assign({}, DEFAULT_SELECTOR_VISIBILITY, selectors)).forEach(([id, value]) => {
 						this.selectorBuilderService.setSelectorsVisibility(id, value as boolean);
 					});
 					this.selectorBuilderService.getSelectorsVisibility();
