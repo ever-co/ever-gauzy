@@ -376,6 +376,12 @@ export class TrayIcon {
 			LocalStore.updateAuthSetting({ isLogout: true });
 		});
 
+		ipcMain.on('logout', async (evt, arg) => {
+			if (timeTrackerWindow) {
+				timeTrackerWindow.webContents.send('logout');
+			}
+		});
+
 		ipcMain.on('user_detail', (event, arg) => {
 			if (
 				arg.employee &&
