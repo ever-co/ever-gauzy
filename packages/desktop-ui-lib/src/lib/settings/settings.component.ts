@@ -5,7 +5,8 @@ import {
 	ViewChild,
 	ElementRef,
 	NgZone,
-	AfterViewInit
+	AfterViewInit,
+	Optional
 } from '@angular/core';
 import { TimeTrackerService } from '../time-tracker/time-tracker.service';
 import { NbDialogService, NbToastrService } from '@nebular/theme';
@@ -431,6 +432,7 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 		private _dialogService: NbDialogService,
 		private _setupService: SetupService,
 		private _notifier: ToastrNotificationService,
+		@Optional()
 		private _authStrategy: AuthStrategy
 	) {
 		this._loading$ = new BehaviorSubject(false);
