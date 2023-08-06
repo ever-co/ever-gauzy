@@ -30,7 +30,11 @@ import {
 	ServerErrorInterceptor,
 	APIInterceptor,
 	TimeoutInterceptor,
-	DEFAULT_TIMEOUT
+	DEFAULT_TIMEOUT,
+	AuthGuard,
+	NoAuthGuard,
+	AuthStrategy,
+	AuthService
 } from '@gauzy/desktop-ui-lib';
 import { NbCardModule, NbButtonModule } from '@nebular/theme';
 import { RouterModule } from '@angular/router';
@@ -67,6 +71,10 @@ import { Router } from '@angular/router';
 		NbDialogService,
 		ElectronService,
 		LoggerService,
+		AuthGuard,
+		NoAuthGuard,
+		AuthStrategy,
+		AuthService,
 		{
 			provide: HTTP_INTERCEPTORS,
 			useClass: TokenInterceptor,
