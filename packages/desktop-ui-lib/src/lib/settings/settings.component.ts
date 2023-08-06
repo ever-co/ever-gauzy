@@ -522,7 +522,7 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 				});
 				this._simpleScreenshotNotification$.next(setting?.simpleScreenshotNotification);
 				this.selectedPeriod = setting?.timer?.updatePeriod;
-				if (!this.isServer) {
+				if (this.isDesktopTimer) {
 					await this.getUserDetails();
 				}
 				this.menus = this.isServer
