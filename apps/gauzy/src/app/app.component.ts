@@ -8,15 +8,17 @@ import { Router, ActivatedRoute, NavigationEnd } from '@angular/router';
 import { SeoService } from './@core/utils/seo.service';
 import { TranslateService } from '@ngx-translate/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { IDateRangePicker, ILanguage, LanguagesEnum } from '@gauzy/contracts';
+import { IDateRangePicker, ILanguage, ISelectedEmployee, LanguagesEnum } from '@gauzy/contracts';
 import { isNotEmpty } from '@gauzy/common-angular';
 import { filter, map, mergeMap, tap } from 'rxjs/operators';
+import { of, switchMap } from 'rxjs';
 import { AnalyticsService } from './@core/utils/analytics.service';
 import * as _ from 'underscore';
 import {
 	DateRangePickerBuilderService,
 	DEFAULT_DATE_PICKER_CONFIG,
 	DEFAULT_SELECTOR_VISIBILITY,
+	EmployeesService,
 	IDatePickerConfig,
 	ISelectorVisibility,
 	LanguagesService,
@@ -44,7 +46,8 @@ export class AppComponent implements OnInit, AfterViewInit {
 		private readonly router: Router,
 		private readonly activatedRoute: ActivatedRoute,
 		public readonly selectorBuilderService: SelectorBuilderService,
-		private readonly dateRangePickerBuilderService: DateRangePickerBuilderService
+		private readonly dateRangePickerBuilderService: DateRangePickerBuilderService,
+		private readonly employeeService: EmployeesService
 	) {
 		this.getActivateRouterDataEvent();
 	}
@@ -124,7 +127,29 @@ export class AppComponent implements OnInit, AfterViewInit {
 					return route;
 				}),
 				filter((route) => route.outlet === 'primary'),
-				mergeMap((route) => route.data),
+				mergeMap((route) => {
+					const hasEmployeeId = 'employeeId' in route.snapshot.queryParams;
+					if (isNotEmpty(hasEmployeeId)) {
+						return this.employeeService.getEmployeeById(route.snapshot.queryParams['employeeId'], ['user']).pipe(
+							tap(employee => {
+								this.store.selectedEmployee = {
+									id: employee.id,
+									firstName: employee.user.firstName,
+									lastName: employee.user.lastName,
+									fullName: employee.user.name,
+									imageUrl: employee.user.imageUrl,
+									shortDescription: employee.short_description,
+									employeeLevel: employee.employeeLevel,
+									billRateCurrency: employee.billRateCurrency,
+									billRateValue: employee.billRateValue
+								} as ISelectedEmployee
+							}),
+							switchMap(() => route.data))
+					}
+					else {
+						return route.data
+					}
+				}),
 				/**
 				 * Set Date Range Picker Default Unit
 				 */
@@ -151,12 +176,11 @@ export class AppComponent implements OnInit, AfterViewInit {
 							endDate: endDate.toDate(),
 							isCustomDate: true
 						};
-
 						this.dateRangePickerBuilderService.setDateRangePicker(customDates);
+
 					} else if (isNotEmpty(dates)) {
 						this.dateRangePickerBuilderService.setDateRangePicker(dates);
 					}
-
 					this.dateRangePickerBuilderService.setDatePickerConfig(datePickerConfig);
 				}),
 				tap(({ selectors }: {

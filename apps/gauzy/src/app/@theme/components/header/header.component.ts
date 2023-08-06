@@ -1,5 +1,5 @@
 import { Component, Input, OnDestroy, OnInit, AfterViewInit } from '@angular/core';
-import { Router, NavigationEnd } from '@angular/router';
+import { Router, NavigationEnd, ActivatedRoute } from '@angular/router';
 import { NbMenuService, NbSidebarService, NbThemeService, NbMenuItem } from '@nebular/theme';
 import { combineLatest, firstValueFrom, lastValueFrom, Subject } from 'rxjs';
 import { debounceTime, filter, tap } from 'rxjs/operators';
@@ -11,6 +11,7 @@ import {
 	CrudActionEnum,
 	IDateRangePicker,
 	IOrganization,
+	ISelectedEmployee,
 	IUser,
 	PermissionsEnum,
 	TimeLogSourceEnum,
@@ -92,7 +93,8 @@ export class HeaderComponent extends TranslationBaseComponent implements OnInit,
 		private readonly organizationProjectStore: OrganizationProjectStore,
 		private readonly employeeStore: EmployeeStore,
 		private readonly selectorBuilderService: SelectorBuilderService,
-		private readonly cd: ChangeDetectorRef
+		private readonly cd: ChangeDetectorRef,
+		private readonly activatedRoute: ActivatedRoute
 	) {
 		super(translate);
 	}
@@ -389,145 +391,145 @@ export class HeaderComponent extends TranslationBaseComponent implements OnInit,
 		this.createContextMenu = [
 			...(this.store.hasAnyPermission(PermissionsEnum.TIME_TRACKER)
 				? [
-						{
-							title: this.getTranslation('CONTEXT_MENU.TIMER'),
-							icon: 'clock-outline',
-							hidden: !this.isEmployee || this.isElectron,
-							data: {
-								action: this.actions.START_TIMER //This opens the timer popup in the header, managed by menu.itemClick TOO: Start the timer also
-							}
+					{
+						title: this.getTranslation('CONTEXT_MENU.TIMER'),
+						icon: 'clock-outline',
+						hidden: !this.isEmployee || this.isElectron,
+						data: {
+							action: this.actions.START_TIMER //This opens the timer popup in the header, managed by menu.itemClick TOO: Start the timer also
 						}
-				  ]
+					}
+				]
 				: []),
 			// TODO: divider
 			...(this.store.hasAnyPermission(PermissionsEnum.ORG_INCOMES_EDIT, PermissionsEnum.ALL_ORG_EDIT)
 				? [
-						{
-							title: this.getTranslation('CONTEXT_MENU.ADD_INCOME'),
-							icon: 'plus-circle-outline',
-							link: 'pages/accounting/income'
-						}
-				  ]
+					{
+						title: this.getTranslation('CONTEXT_MENU.ADD_INCOME'),
+						icon: 'plus-circle-outline',
+						link: 'pages/accounting/income'
+					}
+				]
 				: []),
 			...(this.store.hasAnyPermission(PermissionsEnum.ORG_EXPENSES_EDIT, PermissionsEnum.ALL_ORG_EDIT)
 				? [
-						{
-							title: this.getTranslation('CONTEXT_MENU.ADD_EXPENSE'),
-							icon: 'minus-circle-outline',
-							link: 'pages/accounting/expenses'
-						}
-				  ]
+					{
+						title: this.getTranslation('CONTEXT_MENU.ADD_EXPENSE'),
+						icon: 'minus-circle-outline',
+						link: 'pages/accounting/expenses'
+					}
+				]
 				: []),
 			// TODO: divider
 			...(this.store.hasAnyPermission(PermissionsEnum.INVOICES_EDIT, PermissionsEnum.ALL_ORG_EDIT)
 				? [
-						{
-							title: this.getTranslation('CONTEXT_MENU.INVOICE'),
-							icon: 'archive-outline',
-							link: 'pages/accounting/invoices/add'
-						}
-				  ]
+					{
+						title: this.getTranslation('CONTEXT_MENU.INVOICE'),
+						icon: 'archive-outline',
+						link: 'pages/accounting/invoices/add'
+					}
+				]
 				: []),
 			...(this.store.hasAnyPermission(PermissionsEnum.ESTIMATES_EDIT, PermissionsEnum.ALL_ORG_EDIT)
 				? [
-						{
-							title: this.getTranslation('CONTEXT_MENU.ESTIMATE'),
-							icon: 'file-outline',
-							link: 'pages/accounting/invoices/estimates/add'
-						}
-				  ]
+					{
+						title: this.getTranslation('CONTEXT_MENU.ESTIMATE'),
+						icon: 'file-outline',
+						link: 'pages/accounting/invoices/estimates/add'
+					}
+				]
 				: []),
 			...(this.store.hasAnyPermission(PermissionsEnum.ORG_PAYMENT_ADD_EDIT, PermissionsEnum.ALL_ORG_EDIT)
 				? [
-						{
-							title: this.getTranslation('CONTEXT_MENU.PAYMENT'),
-							icon: 'clipboard-outline',
-							link: 'pages/accounting/payments'
-						}
-				  ]
+					{
+						title: this.getTranslation('CONTEXT_MENU.PAYMENT'),
+						icon: 'clipboard-outline',
+						link: 'pages/accounting/payments'
+					}
+				]
 				: []),
 			...(this.store.hasAnyPermission(PermissionsEnum.TIMESHEET_EDIT_TIME, PermissionsEnum.ALL_ORG_EDIT)
 				? [
-						{
-							title: this.getTranslation('CONTEXT_MENU.TIME_LOG'),
-							icon: 'clock-outline',
-							link: 'pages/employees/timesheets/daily'
-						}
-				  ]
+					{
+						title: this.getTranslation('CONTEXT_MENU.TIME_LOG'),
+						icon: 'clock-outline',
+						link: 'pages/employees/timesheets/daily'
+					}
+				]
 				: []),
 			...(this.store.hasAnyPermission(PermissionsEnum.ORG_CANDIDATES_EDIT, PermissionsEnum.ALL_ORG_EDIT)
 				? [
-						{
-							title: this.getTranslation('CONTEXT_MENU.CANDIDATE'),
-							icon: 'person-done-outline',
-							link: 'pages/employees/candidates'
-						}
-				  ]
+					{
+						title: this.getTranslation('CONTEXT_MENU.CANDIDATE'),
+						icon: 'person-done-outline',
+						link: 'pages/employees/candidates'
+					}
+				]
 				: []),
 			...(this.store.hasAnyPermission(PermissionsEnum.ORG_PROPOSALS_EDIT, PermissionsEnum.ALL_ORG_EDIT)
 				? [
-						{
-							title: this.getTranslation('CONTEXT_MENU.PROPOSAL'),
-							icon: 'paper-plane-outline',
-							link: 'pages/sales/proposals/register'
-						}
-				  ]
+					{
+						title: this.getTranslation('CONTEXT_MENU.PROPOSAL'),
+						icon: 'paper-plane-outline',
+						link: 'pages/sales/proposals/register'
+					}
+				]
 				: []),
 			...(this.store.hasAnyPermission(PermissionsEnum.ORG_CONTRACT_EDIT, PermissionsEnum.ALL_ORG_EDIT)
 				? [
-						{
-							title: this.getTranslation('CONTEXT_MENU.CONTRACT'),
-							icon: 'file-text-outline',
-							link: 'pages/integrations/upwork'
-						}
-				  ]
+					{
+						title: this.getTranslation('CONTEXT_MENU.CONTRACT'),
+						icon: 'file-text-outline',
+						link: 'pages/integrations/upwork'
+					}
+				]
 				: []),
 			// TODO: divider
 			...(this.store.hasAnyPermission(PermissionsEnum.ORG_TEAM_ADD, PermissionsEnum.ALL_ORG_EDIT)
 				? [
-						{
-							title: this.getTranslation('CONTEXT_MENU.TEAM'),
-							icon: 'people-outline',
-							link: `pages/organization/teams`
-						}
-				  ]
+					{
+						title: this.getTranslation('CONTEXT_MENU.TEAM'),
+						icon: 'people-outline',
+						link: `pages/organization/teams`
+					}
+				]
 				: []),
 			...(this.store.hasAnyPermission(PermissionsEnum.ORG_TASK_EDIT, PermissionsEnum.ALL_ORG_EDIT)
 				? [
-						{
-							title: this.getTranslation('CONTEXT_MENU.TASK'),
-							icon: 'calendar-outline',
-							link: 'pages/tasks/dashboard'
-						}
-				  ]
+					{
+						title: this.getTranslation('CONTEXT_MENU.TASK'),
+						icon: 'calendar-outline',
+						link: 'pages/tasks/dashboard'
+					}
+				]
 				: []),
 			...(this.store.hasAnyPermission(PermissionsEnum.ORG_CONTACT_EDIT, PermissionsEnum.ALL_ORG_EDIT)
 				? [
-						{
-							title: this.getTranslation('CONTEXT_MENU.CONTACT'),
-							icon: 'person-done-outline',
-							link: `pages/contacts`
-						}
-				  ]
+					{
+						title: this.getTranslation('CONTEXT_MENU.CONTACT'),
+						icon: 'person-done-outline',
+						link: `pages/contacts`
+					}
+				]
 				: []),
 			...(this.store.hasAnyPermission(PermissionsEnum.ORG_PROJECT_ADD, PermissionsEnum.ALL_ORG_EDIT)
 				? [
-						{
-							title: this.getTranslation('CONTEXT_MENU.PROJECT'),
-							icon: 'color-palette-outline',
-							link: `pages/organization/projects`
-						}
-				  ]
+					{
+						title: this.getTranslation('CONTEXT_MENU.PROJECT'),
+						icon: 'color-palette-outline',
+						link: `pages/organization/projects`
+					}
+				]
 				: []),
 			// TODO: divider
 			...(this.store.hasAnyPermission(PermissionsEnum.ORG_EMPLOYEES_EDIT, PermissionsEnum.ALL_ORG_EDIT)
 				? [
-						{
-							title: this.getTranslation('CONTEXT_MENU.ADD_EMPLOYEE'),
-							icon: 'people-outline',
-							link: 'pages/employees'
-						}
-				  ]
+					{
+						title: this.getTranslation('CONTEXT_MENU.ADD_EMPLOYEE'),
+						icon: 'people-outline',
+						link: 'pages/employees'
+					}
+				]
 				: [])
 		];
 		this.supportContextMenu = [
@@ -596,5 +598,19 @@ export class HeaderComponent extends TranslationBaseComponent implements OnInit,
 		this.isCollapse = event;
 	}
 
-	ngOnDestroy() {}
+	onEmployeeSelect(employee: ISelectedEmployee) {
+		const param = {
+			employeeId: employee.id
+		}
+		this.setAttributesToParams(param)
+	}
+	private setAttributesToParams(params: Object) {
+		this.router.navigate([], {
+			relativeTo: this.activatedRoute,
+			queryParams: { ...params },
+			queryParamsHandling: 'merge',
+		});
+	}
+
+	ngOnDestroy() { }
 }
