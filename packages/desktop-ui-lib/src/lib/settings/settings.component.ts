@@ -12,13 +12,17 @@ import { TimeTrackerService } from '../time-tracker/time-tracker.service';
 import { NbDialogService, NbToastrService } from '@nebular/theme';
 import { ElectronService } from '../electron/services';
 import { BehaviorSubject, Observable, filter, tap, firstValueFrom } from 'rxjs';
+import { BehaviorSubject, Observable, filter, tap, firstValueFrom } from 'rxjs';
 import { AboutComponent } from '../dialogs/about/about.component';
 import { SetupService } from '../setup/setup.service';
 import * as moment from 'moment';
 import { ToastrNotificationService } from '../services';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { AuthStrategy } from '../auth';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { AuthStrategy } from '../auth';
 
+@UntilDestroy({ checkProperties: true })
 @UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ngx-settings',
@@ -385,6 +389,7 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 	minimizeOnStartup = null;
 	authSetting = null;
 	currentUser$: BehaviorSubject<any> = new BehaviorSubject(null);
+	currentUser$: BehaviorSubject<any> = new BehaviorSubject(null);
 	serverTypes = {
 		integrated: 'Integrated',
 		custom: 'Custom',
@@ -473,6 +478,8 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 				filter(() => !this._isCheckHost.status),
 				tap(() => this._restartDisable$.next(true)),
 				untilDestroyed(this)
+				tap(() => this._restartDisable$.next(true)),
+				untilDestroyed(this)
 			)
 			.subscribe();
 		this.isCheckHost$
@@ -534,21 +541,22 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 				this._simpleScreenshotNotification$.next(setting?.simpleScreenshotNotification);
 				this.selectedPeriod = setting?.timer?.updatePeriod;
 				if (this.isDesktopTimer) {
-					await this.getUserDetails();
-				}
-				this.menus = this.isServer
-					? ['Update', 'Advanced Setting', 'About']
-					: [
+					if (this.isDesktopTimer) {
+						await this.getUserDetails();
+					}
+					this.menus = this.isServer
+						? ['Update', 'Advanced Setting', 'About']
+						: [
 							...(auth && auth.allowScreenshotCapture ? ['Screen Capture'] : []),
 							'Timer',
 							'Update',
 							'Advanced Setting',
 							'About'
-					  ];
-				const lastMenu =
-					this._selectedMenu && this.menus.includes(this._selectedMenu) ? this._selectedMenu : this.menus[0];
-				this._selectedMenu$.next(lastMenu);
-			})
+						];
+					const lastMenu =
+						this._selectedMenu && this.menus.includes(this._selectedMenu) ? this._selectedMenu : this.menus[0];
+					this._selectedMenu$.next(lastMenu);
+				})
 		);
 
 		this.electronService.ipcRenderer.on('app_setting_update', (event, arg) =>
