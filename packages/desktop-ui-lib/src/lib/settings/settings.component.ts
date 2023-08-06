@@ -52,7 +52,7 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 		this._logContents$.next(logs);
 	}
 	logIsOpen = false;
-	isRestart = false;
+	private _isRestart$: BehaviorSubject<boolean>;
 
 	appName: string = this.electronService.remote.app.getName();
 	menus = [];
@@ -459,6 +459,7 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 		this._restartDisable$ = new BehaviorSubject(false);
 		this._isHidden$ = new BehaviorSubject(true);
 		this._simpleScreenshotNotification$ = new BehaviorSubject(false);
+		this._isRestart$ = new BehaviorSubject(false);
 	}
 
 	ngOnInit(): void {
@@ -477,6 +478,14 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 				tap(({ status }) => this._restartDisable$.next(!status)),
 				filter(() => !this._isConnectedDatabase.status),
 				tap(() => this._restartDisable$.next(true)),
+				untilDestroyed(this)
+			)
+			.subscribe();
+		this.isRestart$
+			.pipe(
+				tap((isRestart: boolean) =>
+					this._restartDisable$.next(isRestart)
+				),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -794,14 +803,11 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 	}
 
 	public async restartApp(): Promise<void> {
-		if (this.isServer && this.serverIsRunning) {
-			this._restartDisable$.next(true);
-		} else {
-			if (!this.authSetting.isLogout) {
-				await firstValueFrom(this._authStrategy.logout());
-				this.currentUser$.next(null);
-				localStorage.clear();
-			}
+		this._isRestart$.next(true);
+		if (!this.isServer && !this.authSetting.isLogout) {
+			await firstValueFrom(this._authStrategy.logout());
+			this.currentUser$.next(null);
+			localStorage.clear();
 		}
 		const thConfig = {};
 		this.thirdPartyConfig.forEach((item) => {
@@ -815,7 +821,6 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 		if (this.config.timeTrackerWindow) newConfig.awHost = `http://localhost:${this.config.awPort}`;
 		this.electronService.ipcRenderer.send('restart_app', newConfig);
 		this.electronService.ipcRenderer.send('save_additional_setting', thConfig);
-		if (this.isServer) this.isRestart = false;
 	}
 
 	portChange(val, type) {
@@ -982,7 +987,7 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 				break;
 		}
 		this.toastrService.show(message, `Success`, { status: arg.status });
-		this.isRestart = false;
+		this._isRestart$.next(false);
 	}
 
 	logBoxChange(e) {
@@ -1200,5 +1205,9 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 
 	public get simpleScreenshotNotification(): boolean {
 		return this._simpleScreenshotNotification$.getValue();
+	}
+
+	public get isRestart$(): Observable<boolean> {
+		return this._isRestart$.asObservable();
 	}
 }
