@@ -8,10 +8,9 @@ import { Router, ActivatedRoute, NavigationEnd } from '@angular/router';
 import { SeoService } from './@core/utils/seo.service';
 import { TranslateService } from '@ngx-translate/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { IDateRangePicker, ILanguage, ISelectedEmployee, LanguagesEnum } from '@gauzy/contracts';
+import { IDateRangePicker, ILanguage, LanguagesEnum } from '@gauzy/contracts';
 import { isNotEmpty } from '@gauzy/common-angular';
 import { filter, map, mergeMap, tap } from 'rxjs/operators';
-import { of, switchMap } from 'rxjs';
 import { AnalyticsService } from './@core/utils/analytics.service';
 import * as _ from 'underscore';
 import {
@@ -127,29 +126,7 @@ export class AppComponent implements OnInit, AfterViewInit {
 					return route;
 				}),
 				filter((route) => route.outlet === 'primary'),
-				mergeMap((route) => {
-					const hasEmployeeId = 'employeeId' in route.snapshot.queryParams;
-					if (isNotEmpty(hasEmployeeId)) {
-						return this.employeeService.getEmployeeById(route.snapshot.queryParams['employeeId'], ['user']).pipe(
-							tap(employee => {
-								this.store.selectedEmployee = {
-									id: employee.id,
-									firstName: employee.user.firstName,
-									lastName: employee.user.lastName,
-									fullName: employee.user.name,
-									imageUrl: employee.user.imageUrl,
-									shortDescription: employee.short_description,
-									employeeLevel: employee.employeeLevel,
-									billRateCurrency: employee.billRateCurrency,
-									billRateValue: employee.billRateValue
-								} as ISelectedEmployee
-							}),
-							switchMap(() => route.data))
-					}
-					else {
-						return route.data
-					}
-				}),
+				mergeMap((route) => route.data),
 				/**
 				 * Set Date Range Picker Default Unit
 				 */
