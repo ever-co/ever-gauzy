@@ -290,12 +290,24 @@ export class EmployeeSelectorComponent implements OnInit, OnDestroy, OnChanges, 
 	selectEmployee(employee: ISelectedEmployee) {
 		if (!this.skipGlobalChange) {
 			this.store.selectedEmployee = employee || ALL_EMPLOYEES_SELECTED;
+			if (isNotEmpty(employee)) {
+				this.setAttributesToParams({ employeeId: employee.id })
+			}
 		} else {
 			this.selectedEmployee = employee || ALL_EMPLOYEES_SELECTED;
 		}
 		if (isNotEmpty(employee)) {
 			this.selectionChanged.emit(employee);
 		}
+	}
+
+
+	private setAttributesToParams(params: Object) {
+		this.router.navigate([], {
+			relativeTo: this.activatedRoute,
+			queryParams: { ...params },
+			queryParamsHandling: 'merge',
+		});
 	}
 
 	selectEmployeeById(employeeId: string) {
