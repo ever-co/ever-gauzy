@@ -207,6 +207,7 @@ export const DEFAULT_INTEGRATIONS = [
 	{
 		name: IntegrationEnum.HUBSTAFF,
 		imgSrc: 'hubstaff.svg',
+		isComingSoon: false,
 		integrationTypesMap: <string[]>[
 			IntegrationTypeNameEnum.ALL_INTEGRATIONS
 		],
@@ -215,6 +216,7 @@ export const DEFAULT_INTEGRATIONS = [
 	{
 		name: IntegrationEnum.UPWORK,
 		imgSrc: 'upwork.svg',
+		isComingSoon: false,
 		integrationTypesMap: <string[]>[
 			IntegrationTypeNameEnum.ALL_INTEGRATIONS
 		],
@@ -223,6 +225,7 @@ export const DEFAULT_INTEGRATIONS = [
 	{
 		name: IntegrationEnum.GAUZY_AI,
 		imgSrc: 'ever-ai.svg',
+		isComingSoon: false,
 		integrationTypesMap: <string[]>[
 			IntegrationTypeNameEnum.ALL_INTEGRATIONS
 		],
