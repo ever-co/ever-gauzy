@@ -45,10 +45,10 @@ import {
 	APIInterceptor,
 	ServerDownModule,
 	TimeoutInterceptor,
-	DEFAULT_TIMEOUT
+	DEFAULT_TIMEOUT,
+	HttpLoaderFactory
 } from '@gauzy/desktop-ui-lib';
 import { NbCardModule, NbButtonModule } from '@nebular/theme';
-import { HttpLoaderFactory } from '../../../gauzy/src/app/@shared/translate/translate.module';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { AppModuleGuard } from './app.module.guards';
 import { Router } from '@angular/router';
