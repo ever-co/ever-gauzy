@@ -1,12 +1,14 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Column, Entity, ManyToMany, JoinTable } from 'typeorm';
-import { IIntegration, IIntegrationType, ITag } from '@gauzy/contracts';
 import { IsNumber } from 'class-validator';
-import { BaseEntity, IntegrationType, Tag } from '../core/entities/internal';
+import { IIntegration, IIntegrationType, ITag } from '@gauzy/contracts';
 import { ColumnNumericTransformerPipe } from './../shared/pipes';
+import { BaseEntity, Tag } from '../core/entities/internal';
+import { IntegrationType } from './integration-type.entity';
 
 @Entity('integration')
 export class Integration extends BaseEntity implements IIntegration {
+
 	@ApiProperty({ type: () => String })
 	@Column({ nullable: false })
 	name: string;
@@ -49,11 +51,13 @@ export class Integration extends BaseEntity implements IIntegration {
 	@Column({ nullable: true })
 	order?: number;
 
+	fullImgUrl?: string;
+
 	/*
-    |--------------------------------------------------------------------------
-    | @ManyToMany 
-    |--------------------------------------------------------------------------
-    */
+	|--------------------------------------------------------------------------
+	| @ManyToMany
+	|--------------------------------------------------------------------------
+	*/
 	@ApiProperty({ type: () => IntegrationType, isArray: true })
 	@ManyToMany(() => IntegrationType, (integrationType) => integrationType.integrations)
 	@JoinTable({

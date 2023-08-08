@@ -5,7 +5,7 @@ import * as fs from 'fs';
 import { imageSize } from 'image-size';
 import { getConfig } from '@gauzy/config';
 import { FileStorageProviderEnum } from '@gauzy/contracts';
-import { copyEverIcons } from './../../core/seeds/utils';
+import { copyAssets } from './../../core/seeds/utils';
 import { DEFAULT_GLOBAL_ISSUE_TYPES } from './../../tasks/issue-type/default-global-issue-types';
 
 export class SeedDafaultGlobalIssueType1680622389221 implements MigrationInterface {
@@ -41,7 +41,7 @@ export class SeedDafaultGlobalIssueType1680622389221 implements MigrationInterfa
 
 				/** Move issue types icons to the public static folder */
 				const filepath = path.join('ever-icons', icon);
-				copyEverIcons(icon, this.config);
+				copyAssets(icon, this.config);
 
 				const iconPath = path.join(this.config.assetOptions.assetPath, ...['seed', 'ever-icons', icon]);
 				const { height, width } = imageSize(iconPath);

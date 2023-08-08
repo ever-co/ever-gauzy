@@ -65,6 +65,7 @@ export interface IIntegration {
 	order?: number;
 	integrationTypes?: IIntegrationType[];
 	tags?: ITag[];
+	fullImgUrl?: string;
 }
 
 export interface IIntegrationType extends IBaseEntityModel {
@@ -145,7 +146,8 @@ export interface IIntegrationTenantCreateDto
 
 export enum IntegrationEnum {
 	UPWORK = 'Upwork',
-	HUBSTAFF = 'Hubstaff'
+	HUBSTAFF = 'Hubstaff',
+	GAUZY_AI = 'Gauzy AI'
 }
 
 export enum IntegrationEntity {
@@ -204,7 +206,7 @@ export const DEFAULT_INTEGRATION_PAID_FILTERS = [
 export const DEFAULT_INTEGRATIONS = [
 	{
 		name: IntegrationEnum.HUBSTAFF,
-		imgSrc: 'assets/images/integrations/hubstaff.svg',
+		imgSrc: 'hubstaff.svg',
 		integrationTypesMap: <string[]>[
 			IntegrationTypeNameEnum.ALL_INTEGRATIONS
 		],
@@ -212,21 +214,29 @@ export const DEFAULT_INTEGRATIONS = [
 	},
 	{
 		name: IntegrationEnum.UPWORK,
-		imgSrc: 'assets/images/integrations/upwork.svg',
+		imgSrc: 'upwork.svg',
 		integrationTypesMap: <string[]>[
 			IntegrationTypeNameEnum.ALL_INTEGRATIONS
 		],
 		order: 2
 	},
 	{
+		name: IntegrationEnum.GAUZY_AI,
+		imgSrc: 'ever-ai.svg',
+		integrationTypesMap: <string[]>[
+			IntegrationTypeNameEnum.ALL_INTEGRATIONS
+		],
+		order: 3
+	},
+	{
 		name: 'Import/Export',
-		imgSrc: 'assets/images/integrations/import-export.svg',
+		imgSrc: 'import-export.svg',
 		isComingSoon: true,
 		integrationTypesMap: <string[]>[
 			IntegrationTypeNameEnum.ALL_INTEGRATIONS,
 			IntegrationTypeNameEnum.CRM
 		],
-		order: 3
+		order: 4
 	}
 ];
 
