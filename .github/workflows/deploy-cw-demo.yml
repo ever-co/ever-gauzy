@@ -29,8 +29,8 @@ jobs:
                   echo ${{ secrets.INGRESS_API_CERT_KEY }} | base64 --decode > ${HOME}/ingress.api.key
                   echo ${{ secrets.INGRESS_WEBAPP_CERT }} | base64 --decode > ${HOME}/ingress.webapp.crt
                   echo ${{ secrets.INGRESS_WEBAPP_CERT_KEY }} | base64 --decode > ${HOME}/ingress.webapp.key
-                  kubectl create secret tls apidemocw.gauzy.co-tls --cert=${HOME}/ingress.api.crt --key=${HOME}/ingress.api.key
-                  kubectl create secret tls democw.gauzy.co-tls --cert=${HOME}/ingress.webapp.crt --key=${HOME}/ingress.webapp.key
+                  kubectl create secret tls apidemocw.gauzy.co-tls --save-config --dry-run=client --from-file==${HOME}/ingress.api.key --from-file=${HOME}/ingress.api.crt -o yaml | kubectl apply -f -
+                  kubectl create secret tls democw.gauzy.co-tls --save-config --dry-run=client --from-file=${HOME}/ingress.webapp.key --from-file=${HOME}/ingress.webapp.crt -o yaml | kubectl apply -f -
 
             - name: Apply k8s manifests changes in CoreWeave k8s cluster (if any)
               run: |
