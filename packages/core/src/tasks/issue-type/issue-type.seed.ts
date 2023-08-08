@@ -5,7 +5,7 @@ import { imageSize } from 'image-size';
 import { getConfig } from '@gauzy/config';
 import { FileStorageProviderEnum, IIssueType } from '@gauzy/contracts';
 import { ImageAsset } from './../../core/entities/internal';
-import { cleanEverIcons, copyEverIcons } from './../../core/seeds/utils';
+import { cleanAssets, copyAssets } from './../../core/seeds/utils';
 import { DEFAULT_GLOBAL_ISSUE_TYPES } from './default-global-issue-types';
 import { IssueType } from './issue-type.entity';
 
@@ -20,7 +20,7 @@ const config = getConfig();
 export const createDefaultIssueTypes = async (
 	dataSource: DataSource
 ): Promise<IIssueType[]> => {
-	await cleanEverIcons(config, 'ever-icons/task-issue-types');
+	await cleanAssets(config, 'ever-icons/task-issue-types');
 
 	let issueTypes: IIssueType[] = [];
 	try {
@@ -42,7 +42,7 @@ export const createDefaultIssueTypes = async (
 			issueTypes.push(
 				new IssueType({
 					...issueType,
-					icon: copyEverIcons(issueType.icon, config),
+					icon: copyAssets(issueType.icon, config),
 					image
 				})
 			);
