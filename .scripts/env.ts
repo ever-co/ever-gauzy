@@ -16,6 +16,9 @@ export type Env = Readonly<{
 	// Base API URL
 	API_BASE_URL: string;
 
+	// Platform website
+	PLATFORM_WEBSITE_URL: string;
+
 	SENTRY_DSN: string;
 	SENTRY_TRACES_SAMPLE_RATE: string;
 
@@ -66,6 +69,8 @@ export const env: Env = cleanEnv(
 		CLIENT_BASE_URL: str({ default: 'http://localhost:4200' }),
 
 		API_BASE_URL: str({ default: 'http://localhost:3000' }),
+
+		PLATFORM_WEBSITE_URL: str({ default: 'https://web.gauzy.co' }),
 
 		SENTRY_DSN: str({ default: '' }),
 		SENTRY_TRACES_SAMPLE_RATE: str({ default: '' }),

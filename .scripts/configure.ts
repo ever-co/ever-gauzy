@@ -44,6 +44,7 @@ if (!env.IS_DOCKER) {
 
 	let API_BASE_URL = '${env.API_BASE_URL}';
 	let CLIENT_BASE_URL = '${env.CLIENT_BASE_URL}';
+	let PLATFORM_WEBSITE_URL = '${env.PLATFORM_WEBSITE_URL}';
 
 	let IS_ELECTRON = false;
 	let IS_INTEGRATED_DESKTOP = false;
@@ -78,6 +79,14 @@ if (!env.IS_DOCKER) {
 
 		API_BASE_URL: API_BASE_URL,
 		CLIENT_BASE_URL: CLIENT_BASE_URL,
+
+		PLATFORM_WEBSITE_URL: PLATFORM_WEBSITE_URL,
+		PLATFORM_WEBSITE_DOWNLOAD_URL: PLATFORM_WEBSITE_URL + '/downloads',
+		DESKTOP_APP_DOWNLOAD_LINK_APPLE: PLATFORM_WEBSITE_URL + '/downloads#desktop/apple',
+		DESKTOP_APP_DOWNLOAD_LINK_WINDOWS: PLATFORM_WEBSITE_URL + '/downloads#desktop/windows',
+		DESKTOP_APP_DOWNLOAD_LINK_LINUX: PLATFORM_WEBSITE_URL + '/downloads#desktop/linux',
+		MOBILE_APP_DOWNLOAD_LINK: PLATFORM_WEBSITE_URL + '/downloads#mobile',
+		EXTENSION_DOWNLOAD_LINK: PLATFORM_WEBSITE_URL + '/downloads#extensions',
 
 		COMPANY_NAME: 'Ever Co. LTD',
 		COMPANY_SITE: 'Gauzy',
@@ -141,6 +150,7 @@ if (!env.IS_DOCKER) {
 
 	let API_BASE_URL = 'DOCKER_API_BASE_URL';
 	let CLIENT_BASE_URL = 'DOCKER_CLIENT_BASE_URL';
+	let PLATFORM_WEBSITE_URL = 'DOCKER_PLATFORM_WEBSITE_URL';
 
 	let IS_ELECTRON = false;
 	let IS_INTEGRATED_DESKTOP = false;
@@ -165,6 +175,14 @@ if (!env.IS_DOCKER) {
 
 		API_BASE_URL: API_BASE_URL,
 		CLIENT_BASE_URL: CLIENT_BASE_URL,
+
+		PLATFORM_WEBSITE_URL: PLATFORM_WEBSITE_URL,
+		PLATFORM_WEBSITE_DOWNLOAD_URL: PLATFORM_WEBSITE_URL + '/downloads',
+		DESKTOP_APP_DOWNLOAD_LINK_APPLE: PLATFORM_WEBSITE_URL + '/downloads#desktop/apple',
+		DESKTOP_APP_DOWNLOAD_LINK_WINDOWS: PLATFORM_WEBSITE_URL + '/downloads#desktop/windows',
+		DESKTOP_APP_DOWNLOAD_LINK_LINUX: PLATFORM_WEBSITE_URL + '/downloads#desktop/linux',
+		MOBILE_APP_DOWNLOAD_LINK: PLATFORM_WEBSITE_URL + '/downloads#mobile',
+		EXTENSION_DOWNLOAD_LINK: PLATFORM_WEBSITE_URL + '/downloads#extensions',
 
 		COMPANY_NAME: 'Ever Co. LTD',
 		COMPANY_SITE: 'Gauzy',
@@ -250,10 +268,10 @@ if (!isProd) {
 // we always want first to remove old generated files (one of them is not needed for current build)
 try {
 	unlinkSync(`./apps/gauzy/src/environments/environment.ts`);
-} catch {}
+} catch { }
 try {
 	unlinkSync(`./apps/gauzy/src/environments/environment.prod.ts`);
-} catch {}
+} catch { }
 
 const envFileDest: string = isProd ? 'environment.prod.ts' : 'environment.ts';
 const envFileDestOther: string = !isProd
