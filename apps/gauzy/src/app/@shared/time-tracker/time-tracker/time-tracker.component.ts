@@ -51,7 +51,7 @@ export class TimeTrackerComponent implements OnInit, OnDestroy {
 	PermissionsEnum = PermissionsEnum;
 	timeLogType = TimeLogType;
 	hideAlert = false;
-	environment: Environment = environment;
+	readonly environment: Environment = environment;
 
 
 	@ViewChild(NgForm) form: NgForm;
