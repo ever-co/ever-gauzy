@@ -16,7 +16,7 @@ export class SeedIntegrationTable1691494801748 implements MigrationInterface {
     * @param queryRunner
     */
     public async up(queryRunner: QueryRunner): Promise<any> {
-        await this.upsertIntegrationForPostgres(queryRunner);
+        await this.upsertIntegrationsAndIntegrationTypes(queryRunner);
     }
 
     /**
@@ -30,7 +30,7 @@ export class SeedIntegrationTable1691494801748 implements MigrationInterface {
     *
     * @param queryRunner
     */
-    public async upsertIntegrationForPostgres(queryRunner: QueryRunner): Promise<any> {
+    public async upsertIntegrationsAndIntegrationTypes(queryRunner: QueryRunner): Promise<any> {
         const destDir = 'integrations';
 
         for await (const { name, imgSrc, isComingSoon, order, integrationTypesMap } of DEFAULT_INTEGRATIONS) {
