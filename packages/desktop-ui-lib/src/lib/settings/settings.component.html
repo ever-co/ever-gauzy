@@ -692,10 +692,10 @@
 <ng-template #restart>
 	<div class="restart-btn-container" nbTooltip="Check database connectivity"
 		[nbTooltipDisabled]="(isConnectedDatabase$ | async)?.status">
-		<button nbButton status="primary" (click)="restartApp(); isRestart = true"
+		<button nbButton status="primary" (click)="restartApp()"
 			[disabled]="(restartDisable$ | async) || appSetting?.timerStarted">
 			{{ isServer ? 'Save' : 'Save & Restart' }}
-			<nb-icon [icon]="isServer ? 'save': 'refresh-outline'" *gauzySpinnerButton="isRestart"></nb-icon>
+			<nb-icon [icon]="isServer ? 'save': 'refresh-outline'" *gauzySpinnerButton="(isRestart$ | async)"></nb-icon>
 		</button>
 	</div>
 </ng-template>

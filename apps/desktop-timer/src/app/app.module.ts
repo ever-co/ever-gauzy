@@ -80,7 +80,6 @@ import * as Sentry from '@sentry/angular';
 		NgSelectModule,
 		SplashScreenModule,
 		ServerDownModule,
-		NbLayoutModule,
 		TranslateModule.forRoot({
 			loader: {
 				provide: TranslateLoader,
@@ -93,7 +92,6 @@ import * as Sentry from '@sentry/angular';
 	],
 	providers: [
 		AppService,
-		HttpClientModule,
 		NbDialogService,
 		AuthGuard,
 		NoAuthGuard,
@@ -103,16 +101,6 @@ import * as Sentry from '@sentry/angular';
 		ServerConnectionService,
 		ElectronService,
 		LoggerService,
-		{
-			provide: ErrorHandler,
-			useClass: ErrorHandlerService
-		},
-		{
-			provide: APP_INITIALIZER,
-			useFactory: serverConnectionFactory,
-			deps: [ServerConnectionService, Store, Router],
-			multi: true
-		},
 		Store,
 		{
 			provide: HTTP_INTERCEPTORS,
@@ -131,7 +119,22 @@ import * as Sentry from '@sentry/angular';
 		},
 		{
 			provide: HTTP_INTERCEPTORS,
+			useClass: TimeoutInterceptor,
+			multi: true
+		},
+		{
+			provide: HTTP_INTERCEPTORS,
 			useClass: ServerErrorInterceptor,
+			multi: true
+		},
+		{
+			provide: ErrorHandler,
+			useClass: ErrorHandlerService
+		},
+		{
+			provide: APP_INITIALIZER,
+			useFactory: serverConnectionFactory,
+			deps: [ServerConnectionService, Store, Router],
 			multi: true
 		},
 		{
@@ -148,11 +151,6 @@ import * as Sentry from '@sentry/angular';
 			provide: APP_INITIALIZER,
 			useFactory: () => () => {},
 			deps: [Sentry.TraceService],
-			multi: true
-		},
-		{
-			provide: HTTP_INTERCEPTORS,
-			useClass: TimeoutInterceptor,
 			multi: true
 		},
 		{ provide: DEFAULT_TIMEOUT, useValue: 80000 }

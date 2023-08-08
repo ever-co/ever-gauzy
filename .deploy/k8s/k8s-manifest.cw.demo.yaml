@@ -1,0 +1,198 @@
+---
+kind: Service
+apiVersion: v1
+metadata:
+    name: gauzy-demo
+spec:
+    selector:
+        app: gauzy-demo-webapp
+    ports:
+        - name: web
+          protocol: TCP
+          port: 4200
+          targetPort: 4200
+---
+kind: Service
+apiVersion: v1
+metadata:
+    name: gauzy-demo-api
+spec:
+    selector:
+        app: gauzy-demo-api
+    ports:
+        - name: web
+          protocol: TCP
+          port: 3000
+          targetPort: 3000
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+    name: gauzy-demo-api
+spec:
+    replicas: 1
+    selector:
+        matchLabels:
+            app: gauzy-demo-api
+    template:
+        metadata:
+            labels:
+                app: gauzy-demo-api
+        spec:
+            affinity:
+                nodeAffinity:
+                    requiredDuringSchedulingIgnoredDuringExecution:
+                        nodeSelectorTerms:
+                          - matchExpressions:
+                              - key: topology.kubernetes.io/region
+                                operator: In
+                                values:
+                                  - ORD1
+            containers:
+                - name: gauzy-demo-api
+                  image: everco/gauzy-api-demo:latest
+                  env:
+                      - name: API_HOST
+                        value: 0.0.0.0
+                      - name: DEMO
+                        value: 'true'
+                      - name: NODE_ENV
+                        value: 'development'
+                      - name: ADMIN_PASSWORD_RESET
+                        value: 'true'
+                      - name: LOG_LEVEL
+                        value: 'info'
+                      - name: SENTRY_DSN
+                        value: 'https://7cd381188b6f446ca0e69185227b9031@o51327.ingest.sentry.io/4397292'
+                      - name: SENTRY_HTTP_TRACING_ENABLED
+                        value: 'false'
+                      - name: SENTRY_POSTGRES_TRACKING_ENABLED
+                        value: 'false'
+                      - name: API_BASE_URL
+                        value: 'https://apidemocw.gauzy.co'
+                      - name: CLIENT_BASE_URL
+                        value: 'https://democw.gauzy.co'
+                      - name: EXPRESS_SESSION_SECRET
+                        value: 'gauzy'
+                      - name: JWT_SECRET
+                        value: 'secretKey'
+                      - name: JWT_REFRESH_TOKEN_SECRET
+                        value: 'refreshSecretKey'
+                      - name: JWT_REFRESH_TOKEN_EXPIRATION_TIME
+                        value: '86400'
+                  ports:
+                      - containerPort: 3000
+                        protocol: TCP
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+    name: gauzy-demo-webapp
+spec:
+    replicas: 1
+    selector:
+        matchLabels:
+            app: gauzy-demo-webapp
+    template:
+        metadata:
+            labels:
+                app: gauzy-demo-webapp
+        spec:
+            affinity:
+                nodeAffinity:
+                    requiredDuringSchedulingIgnoredDuringExecution:
+                        nodeSelectorTerms:
+                          - matchExpressions:
+                              - key: topology.kubernetes.io/region
+                                operator: In
+                                values:
+                                  - ORD1
+            containers:
+                - name: gauzy-demo-webapp
+                  image: everco/gauzy-webapp-demo:latest
+                  env:
+                      - name: DEMO
+                        value: 'true'
+                      - name: API_BASE_URL
+                        value: 'https://apidemocw.gauzy.co'
+                      - name: CLIENT_BASE_URL
+                        value: 'https://democw.gauzy.co'
+                      - name: SENTRY_DSN
+                        value: 'https://7cd381188b6f446ca0e69185227b9031@o51327.ingest.sentry.io/4397292'
+                      - name: CHATWOOT_SDK_TOKEN
+                        value: 'jFoSXEjGmqhUhqU3zfgkFfMt'
+                      - name: CLOUDINARY_API_KEY
+                        value: '256868982483961'
+                      - name: CLOUDINARY_CLOUD_NAME
+                        value: 'dv6ezkfxg'
+                      - name: GOOGLE_MAPS_API_KEY
+                        value: 'AIzaSyCJmnKzgTSq5Pc93HXar5bZrdmANTwtSIo'
+                      - name: GOOGLE_PLACE_AUTOCOMPLETE
+                        value: 'true'
+                      - name: DEFAULT_LATITUDE
+                        value: '42.6459136'
+                      - name: DEFAULT_LONGITUDE
+                        value: '23.3332736'
+                      - name: DEFAULT_CURRENCY
+                        value: 'USD'
+                  ports:
+
+                      - containerPort: 4200
+                        protocol: TCP
+---
+apiVersion: traefik.containo.us/v1alpha1
+kind: Middleware
+metadata:
+  name: https-redirect
+spec:
+  redirectScheme:
+    permanent: true
+    scheme: https
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: gauzy-demo
+  annotations:
+    kubernetes.io/ingress.class: traefik-everco
+    traefik.ingress.kubernetes.io/router.middlewares: tenant-acb888-ever-https-redirect@kubernetescrd
+spec:
+    rules:
+      - host: democw.gauzy.co
+        http:
+            paths:
+              - backend:
+                    service:
+                        name: gauzy-demo
+                        port:
+                            number: 4200
+                path: /
+                pathType: Prefix
+    tls:
+      - hosts:
+          - democw.gauzy.co
+        secretName: democw.gauzy.co-tls
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+    name: gauzy-demo-api
+    annotations:
+        kubernetes.io/ingress.class: traefik-everco
+        traefik.ingress.kubernetes.io/router.middlewares: tenant-acb888-ever-https-redirect@kubernetescrd
+spec:
+    rules:
+      - host: apidemocw.gauzy.co
+        http:
+            paths:
+              - backend:
+                    service:
+                        name: gauzy-demo-api
+                        port:
+                            number: 3000
+                path: /
+                pathType: Prefix
+    tls:
+      - hosts:
+          - apidemocw.gauzy.co
+        secretName: apidemocw.gauzy.co-tls
