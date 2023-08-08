@@ -23,6 +23,8 @@ import { TimesheetService } from '../../timesheet/timesheet.service';
 import { ErrorHandlingService, Store, ToastrService } from '../../../@core/services';
 import { ITimerSynced } from '../components/time-tracker-status/interfaces';
 import { TimeTrackerStatusService } from '../components/time-tracker-status/time-tracker-status.service';
+import { Environment } from '@env/model';
+import { environment } from '@env/environment';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -49,6 +51,8 @@ export class TimeTrackerComponent implements OnInit, OnDestroy {
 	PermissionsEnum = PermissionsEnum;
 	timeLogType = TimeLogType;
 	hideAlert = false;
+	environment: Environment = environment;
+
 
 	@ViewChild(NgForm) form: NgForm;
 
@@ -238,9 +242,9 @@ export class TimeTrackerComponent implements OnInit, OnDestroy {
 		try {
 			this.isDisable = true;
 			this.timeTrackerService.timerSynced &&
-			this.xor(this.running, this.timeTrackerService.timerSynced.running) &&
-			!onClick &&
-			this.timeTrackerService.timerSynced.isExternalSource
+				this.xor(this.running, this.timeTrackerService.timerSynced.running) &&
+				!onClick &&
+				this.timeTrackerService.timerSynced.isExternalSource
 				? this.timeTrackerService.remoteToggle()
 				: await this.timeTrackerService.toggle();
 		} catch (error) {
@@ -317,5 +321,5 @@ export class TimeTrackerComponent implements OnInit, OnDestroy {
 		return (!a && b) || (a && !b);
 	}
 
-	ngOnDestroy() {}
+	ngOnDestroy() { }
 }
