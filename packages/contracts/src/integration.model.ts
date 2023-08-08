@@ -53,7 +53,7 @@ export interface IIntegrationTenant extends IBasePerTenantAndOrganizationEntityM
 	settings?: IIntegrationSetting[];
 }
 
-export interface IIntegration {
+export interface IIntegration extends IBaseEntityModel {
 	name: string;
 	imgSrc: string;
 	isComingSoon?: boolean;
