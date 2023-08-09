@@ -33,6 +33,7 @@ import {
 	TimeOffRequestSubscriber,
 	TimeSlotSubscriber,
 	UserSubscriber,
+	IntegrationSubscriber,
 } from './internal';
 
 /**
@@ -48,6 +49,7 @@ export const coreSubscribers = [
 	FeatureSubscriber,
 	ImageAssetSubscriber,
 	ImportHistorySubscriber,
+	IntegrationSubscriber,
 	InviteSubscriber,
 	InvoiceSubscriber,
 	IssueTypeSubscriber,
@@ -64,13 +66,13 @@ export const coreSubscribers = [
 	ScreenshotSubscriber,
 	TagSubscriber,
 	TaskPrioritySubscriber,
-	TaskSizeSubscriber,
 	TaskRelatedIssueTypesSubscriber,
+	TaskSizeSubscriber,
 	TaskStatusSubscriber,
-	TaskVersionSubscriber,
 	TaskSubscriber,
+	TaskVersionSubscriber,
 	TenantSubscriber,
 	TimeOffRequestSubscriber,
 	TimeSlotSubscriber,
-	UserSubscriber,
+	UserSubscriber
 ];

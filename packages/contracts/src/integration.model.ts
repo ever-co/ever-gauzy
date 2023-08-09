@@ -53,18 +53,20 @@ export interface IIntegrationTenant extends IBasePerTenantAndOrganizationEntityM
 	settings?: IIntegrationSetting[];
 }
 
-export interface IIntegration {
+export interface IIntegration extends IBaseEntityModel {
 	name: string;
 	imgSrc: string;
 	isComingSoon?: boolean;
 	isPaid?: boolean;
 	version?: string;
 	docUrl?: string;
+	navigationUrl?: string;
 	isFreeTrial?: boolean;
 	freeTrialPeriod?: number;
 	order?: number;
 	integrationTypes?: IIntegrationType[];
 	tags?: ITag[];
+	fullImgUrl?: string;
 }
 
 export interface IIntegrationType extends IBaseEntityModel {
@@ -145,7 +147,8 @@ export interface IIntegrationTenantCreateDto
 
 export enum IntegrationEnum {
 	UPWORK = 'Upwork',
-	HUBSTAFF = 'Hubstaff'
+	HUBSTAFF = 'Hubstaff',
+	GAUZY_AI = 'Gauzy AI'
 }
 
 export enum IntegrationEntity {
@@ -204,29 +207,44 @@ export const DEFAULT_INTEGRATION_PAID_FILTERS = [
 export const DEFAULT_INTEGRATIONS = [
 	{
 		name: IntegrationEnum.HUBSTAFF,
-		imgSrc: 'assets/images/integrations/hubstaff.svg',
+		imgSrc: 'hubstaff.svg',
+		isComingSoon: false,
 		integrationTypesMap: <string[]>[
 			IntegrationTypeNameEnum.ALL_INTEGRATIONS
 		],
-		order: 1
+		order: 1,
+		navigationUrl: 'hubstaff'
 	},
 	{
 		name: IntegrationEnum.UPWORK,
-		imgSrc: 'assets/images/integrations/upwork.svg',
+		imgSrc: 'upwork.svg',
+		isComingSoon: false,
 		integrationTypesMap: <string[]>[
 			IntegrationTypeNameEnum.ALL_INTEGRATIONS
 		],
-		order: 2
+		order: 2,
+		navigationUrl: 'upwork'
+	},
+	{
+		name: IntegrationEnum.GAUZY_AI,
+		imgSrc: 'ever-ai.svg',
+		isComingSoon: false,
+		integrationTypesMap: <string[]>[
+			IntegrationTypeNameEnum.ALL_INTEGRATIONS
+		],
+		order: 3,
+		navigationUrl: 'ever-ai'
 	},
 	{
 		name: 'Import/Export',
-		imgSrc: 'assets/images/integrations/import-export.svg',
+		imgSrc: 'import-export.svg',
 		isComingSoon: true,
 		integrationTypesMap: <string[]>[
 			IntegrationTypeNameEnum.ALL_INTEGRATIONS,
 			IntegrationTypeNameEnum.CRM
 		],
-		order: 3
+		order: 4,
+		navigationUrl: 'import-export'
 	}
 ];
 

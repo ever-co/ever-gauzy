@@ -1,6 +1,10 @@
 import { DataSource } from 'typeorm';
+import { getConfig } from '@gauzy/config';
 import { IIntegration, DEFAULT_INTEGRATIONS, IIntegrationType } from '@gauzy/contracts';
+import { cleanAssets, copyAssets } from './../core/seeds/utils';
 import { Integration } from './integration.entity';
+
+const config = getConfig();
 
 export const createDefaultIntegrations = async (
 	dataSource: DataSource,
@@ -13,26 +17,26 @@ export const createDefaultIntegrations = async (
 		return;
 	}
 
+	const destDir = 'integrations';
+	await cleanAssets(config, destDir);
+
 	const integrations: IIntegration[] = [];
-	DEFAULT_INTEGRATIONS.forEach(
-		({ name, imgSrc, isComingSoon, integrationTypesMap, order }) => {
-			const entity = new Integration();
-			entity.name = name;
-			entity.imgSrc = imgSrc;
-			entity.isComingSoon = isComingSoon;
-			entity.order = order;
-			entity.integrationTypes = integrationTypes.filter((it) =>
-				integrationTypesMap.includes(it.name)
-			);
+	for await (const integration of DEFAULT_INTEGRATIONS) {
+		const { name, imgSrc, isComingSoon, integrationTypesMap, order, navigationUrl } = integration;
 
-			integrations.push(entity);
-		}
-	);
+		const entity = new Integration();
+		entity.name = name;
+		entity.imgSrc = copyAssets(imgSrc, config, destDir);
+		entity.isComingSoon = isComingSoon;
+		entity.order = order;
+		entity.navigationUrl = navigationUrl;
+		entity.integrationTypes = integrationTypes.filter((it) =>
+			integrationTypesMap.includes(it.name)
+		);
+		integrations.push(entity);
+	}
 
-	return insertIntegrations(dataSource, integrations);
+	return await insertIntegrations(dataSource, integrations);
 };
 
-const insertIntegrations = async (
-	dataSource: DataSource,
-	integrations: IIntegration[]
-) => await dataSource.manager.save(integrations);
+const insertIntegrations = async (dataSource: DataSource, integrations: IIntegration[]) => await dataSource.manager.save(integrations);
