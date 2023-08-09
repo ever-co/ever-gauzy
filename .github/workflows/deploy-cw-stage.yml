@@ -26,6 +26,7 @@ jobs:
 
             - name: Generate TLS Secrets for DemoCW and APIDemoCW
               run: |
+                rm -f ${HOME}/ingress.api.crt ${HOME}/ingress.api.key ${HOME}/ingress.webapp.crt ${HOME}/ingress.webapp.key
                 echo ${{ secrets.INGRESS_API_CERT }} | base64 --decode > ${HOME}/ingress.api.crt
                 echo ${{ secrets.INGRESS_API_CERT_KEY }} | base64 --decode > ${HOME}/ingress.api.key
                 echo ${{ secrets.INGRESS_WEBAPP_CERT }} | base64 --decode > ${HOME}/ingress.webapp.crt
@@ -45,7 +46,8 @@ jobs:
               env:
                   DB_TYPE: '${{ secrets.DB_TYPE }}'
                   DB_URI: '${{ secrets.DB_URI }}'
-                  DB_HOST: '${{ secrets.DB_HOST }}'
+                  # Note: for now we are using DB in different provider, so we have to use public hostname
+                  DB_HOST: '${{ secrets.DB_HOST_PUBLIC }}'
                   DB_USER: '${{ secrets.DB_USER }}'
                   DB_PASS: '${{ secrets.DB_PASS }}'
                   # Note that for staging we are using for now same server, just different DB name
