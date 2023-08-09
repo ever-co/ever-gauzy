@@ -584,6 +584,8 @@
 			"ALL_PROJECTS": "All Projects",
 			"UPWORK_API_KEY": "Upwork API key",
 			"UPWORK_SECRET": "Upwork Secret",
+			"GAUZY_API_KEY": "Gauzy AI Key",
+			"GAUZY_API_SECRET": "Gauzy AI Secret",
 			"SELECT_COMPANY": "Select Company",
 			"TYPE_SEARCH_REQUEST": "Type your search request here...",
 			"SELECT_ICON": "Select Icon",
@@ -767,6 +769,7 @@
 		"POSITIONS": "Positions",
 		"INTEGRATIONS": "Apps & Integrations",
 		"UPWORK": "Upwork",
+		"GAUZY_AI": "Gauzy AI",
 		"PROPOSALS": "Proposals",
 		"TIME_OFF": "Time Off",
 		"APPROVALS": "Approvals",
@@ -1161,6 +1164,10 @@
 			"CONTRACTS_RELATED_DATA": "Synced Contracts related entities",
 			"DATE_RANGE_PLACEHOLDER": "Choose date between",
 			"HOURLY": "Hourly"
+		},
+		"GAUZY_AI_PAGE": {
+			"API_KEY": "Gauzy AI key",
+			"API_SECRET": "Gauzy AI Secret"
 		},
 		"COMING_SOON": "Coming soon",
 		"RE_INTEGRATE": "Re-integrate",
