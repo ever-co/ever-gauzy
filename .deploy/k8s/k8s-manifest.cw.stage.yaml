@@ -51,7 +51,7 @@ spec:
                                   - ORD1
             containers:
                 - name: gauzy-stage-api
-                  image: everco/gauzy-api-stage:latest
+                  image: ever-registry.tenant-acb888-ever.ord1.ingress.coreweave.cloud/ever-co/gauzy-api-stage:latest
                   env:
                       - name: API_HOST
                         value: 0.0.0.0
@@ -76,7 +76,7 @@ spec:
                       - name: DB_URI
                         value: '$DB_URI'
                       - name: DB_HOST
-                        value: '$DB_HOST'
+                        value: '$DB_HOST_PUBLIC'
                       - name: DB_SSL_MODE
                         value: '$DB_SSL_MODE'
                       - name: DB_CA_CERT
@@ -203,7 +203,7 @@ spec:
                                   - ORD1
             containers:
                 - name: gauzy-stage-webapp
-                  image: everco/gauzy-api-demo:latest
+                  image: ever-registry.tenant-acb888-ever.ord1.ingress.coreweave.cloud/ever-co/gauzy-api-demo:latest
                   env:
                       - name: DEMO
                         value: 'false'
