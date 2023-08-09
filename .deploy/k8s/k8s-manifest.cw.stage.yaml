@@ -76,7 +76,7 @@ spec:
                       - name: DB_URI
                         value: '$DB_URI'
                       - name: DB_HOST
-                        value: '$DB_HOST_PUBLIC'
+                        value: '$DB_HOST'
                       - name: DB_SSL_MODE
                         value: '$DB_SSL_MODE'
                       - name: DB_CA_CERT
