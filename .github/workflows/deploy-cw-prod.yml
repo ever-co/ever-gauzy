@@ -19,17 +19,18 @@ jobs:
 
             - name: Create kubeconfig
               run: |
-                mkdir ${HOME}/.kube
-                echo ${{ secrets.CW_KUBECONFIG }} | base64 --decode > ${HOME}/.kube/config
+                  mkdir ${HOME}/.kube
+                  echo ${{ secrets.CW_KUBECONFIG }} | base64 --decode > ${HOME}/.kube/config
 
             - name: Generate TLS Secrets for DemoCW and APIDemoCW
               run: |
-                echo ${{ secrets.INGRESS_API_CERT }} | base64 --decode > ${HOME}/ingress.api.crt
-                echo ${{ secrets.INGRESS_API_CERT_KEY }} | base64 --decode > ${HOME}/ingress.api.key
-                echo ${{ secrets.INGRESS_WEBAPP_CERT }} | base64 --decode > ${HOME}/ingress.webapp.crt
-                echo ${{ secrets.INGRESS_WEBAPP_CERT_KEY }} | base64 --decode > ${HOME}/ingress.webapp.key
-                kubectl create secret tls apicw.gauzy.co-tls --save-config --dry-run=client --cert=${HOME}/ingress.api.crt --key=${HOME}/ingress.api.key -o yaml | kubectl --context coreweave apply -f -
-                kubectl create secret tls appcw.gauzy.co-tls --save-config --dry-run=client --cert=${HOME}/ingress.webapp.crt --key=${HOME}/ingress.webapp.key -o yaml | kubectl --context coreweave apply -f -
+                  rm -f ${HOME}/ingress.api.crt ${HOME}/ingress.api.key ${HOME}/ingress.webapp.crt ${HOME}/ingress.webapp.key
+                  echo ${{ secrets.INGRESS_API_CERT }} | base64 --decode > ${HOME}/ingress.api.crt
+                  echo ${{ secrets.INGRESS_API_CERT_KEY }} | base64 --decode > ${HOME}/ingress.api.key
+                  echo ${{ secrets.INGRESS_WEBAPP_CERT }} | base64 --decode > ${HOME}/ingress.webapp.crt
+                  echo ${{ secrets.INGRESS_WEBAPP_CERT_KEY }} | base64 --decode > ${HOME}/ingress.webapp.key
+                  kubectl create secret tls apicw.gauzy.co-tls --save-config --dry-run=client --cert=${HOME}/ingress.api.crt --key=${HOME}/ingress.api.key -o yaml | kubectl --context coreweave apply -f -
+                  kubectl create secret tls appcw.gauzy.co-tls --save-config --dry-run=client --cert=${HOME}/ingress.webapp.crt --key=${HOME}/ingress.webapp.key -o yaml | kubectl --context coreweave apply -f -
 
             - name: Write PostgreSQL Certificate file
               run: |
@@ -43,7 +44,8 @@ jobs:
               env:
                   DB_TYPE: '${{ secrets.DB_TYPE }}'
                   DB_URI: '${{ secrets.DB_URI }}'
-                  DB_HOST: '${{ secrets.DB_HOST }}'
+                  # Note: for now we are using DB in different provider, so we have to use public hostname
+                  DB_HOST: '${{ secrets.DB_HOST_PUBLIC }}'
                   DB_USER: '${{ secrets.DB_USER }}'
                   DB_PASS: '${{ secrets.DB_PASS }}'
                   DB_NAME: 'gauzy-pool'
