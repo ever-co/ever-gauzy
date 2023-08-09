@@ -1,17 +1,16 @@
-name: Deploy to CoreWeave Stage
+name: Deploy to CoreWeave Prod
 
 on:
     workflow_run:
-        workflows: ['Build and Publish Docker Images Stage']
-        branches: [stage]
+        workflows: ['Build and Publish Docker Images Prod']
+        branches: [master]
         types:
             - completed
 
 jobs:
-    deploy-stage:
+    deploy-prod:
         runs-on: ubuntu-22.04
 
-        # Stage using same Secrets for now as Production in Github Secrets Environments
         environment: prod
 
         steps:
@@ -30,8 +29,8 @@ jobs:
                   echo ${{ secrets.INGRESS_API_CERT_KEY }} | base64 --decode > ${HOME}/ingress.api.key
                   echo ${{ secrets.INGRESS_WEBAPP_CERT }} | base64 --decode > ${HOME}/ingress.webapp.crt
                   echo ${{ secrets.INGRESS_WEBAPP_CERT_KEY }} | base64 --decode > ${HOME}/ingress.webapp.key
-                  kubectl create secret tls apistagecw.gauzy.co-tls --save-config --dry-run=client --cert=${HOME}/ingress.api.crt --key=${HOME}/ingress.api.key -o yaml | kubectl --context coreweave apply -f -
-                  kubectl create secret tls stagecw.gauzy.co-tls --save-config --dry-run=client --cert=${HOME}/ingress.webapp.crt --key=${HOME}/ingress.webapp.key -o yaml | kubectl --context coreweave apply -f -
+                  kubectl create secret tls apicw.gauzy.co-tls --save-config --dry-run=client --cert=${HOME}/ingress.api.crt --key=${HOME}/ingress.api.key -o yaml | kubectl --context coreweave apply -f -
+                  kubectl create secret tls appcw.gauzy.co-tls --save-config --dry-run=client --cert=${HOME}/ingress.webapp.crt --key=${HOME}/ingress.webapp.key -o yaml | kubectl --context coreweave apply -f -
 
             - name: Write PostgreSQL Certificate file
               run: |
@@ -41,7 +40,7 @@ jobs:
 
             - name: Apply k8s manifests changes in DigitalOcean k8s cluster (if any)
               run: |
-                  envsubst < $GITHUB_WORKSPACE/.deploy/k8s/k8s-manifest.cw.stage.yaml | kubectl --context coreweave apply -f -
+                  envsubst < $GITHUB_WORKSPACE/.deploy/k8s/k8s-manifest.cw.prod.yaml | kubectl --context coreweave apply -f -
               env:
                   DB_TYPE: '${{ secrets.DB_TYPE }}'
                   DB_URI: '${{ secrets.DB_URI }}'
@@ -49,8 +48,7 @@ jobs:
                   DB_HOST: '${{ secrets.DB_HOST_PUBLIC }}'
                   DB_USER: '${{ secrets.DB_USER }}'
                   DB_PASS: '${{ secrets.DB_PASS }}'
-                  # Note that for staging we are using for now same server, just different DB name
-                  DB_NAME: 'gauzy-stage-pool'
+                  DB_NAME: 'gauzy-pool'
                   DB_PORT: '${{ secrets.DB_PORT }}'
                   DB_CA_CERT: '${{ secrets.DB_CA_CERT }}'
                   DB_SSL_MODE: '${{ secrets.DB_SSL_MODE }}'
@@ -106,5 +104,5 @@ jobs:
             # note: for production we will use different strategy later
             - name: Restart Pods to pick up :latest tag version
               run: |
-                  kubectl --context coreweave rollout restart deployment/gauzy-stage-api
-                  kubectl --context coreweave rollout restart deployment/gauzy-stage-webapp
+                  kubectl --context coreweave rollout restart deployment/gauzy-prod-api
+                  kubectl --context coreweave rollout restart deployment/gauzy-prod-webapp
