@@ -109,9 +109,9 @@
 			>
 				<ng-container *ngFor="let integration of integrations">
 					<a
-						[class.disabled]="'disabled' ? integration.isComingSoon : ''"
-						[routerLink]="[integration.navigation_url]"
 						class="list-item"
+						[ngClass]="integration.isComingSoon ? 'disabled': ''"
+						[routerLink]="['../', integration.navigationUrl]"
 					>
 						<img
 							[src]="integration.fullImgUrl"

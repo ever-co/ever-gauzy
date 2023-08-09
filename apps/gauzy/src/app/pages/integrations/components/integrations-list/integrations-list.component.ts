@@ -5,15 +5,16 @@ import {
 	Renderer2,
 	ViewChild
 } from '@angular/core';
+import { Observable } from 'rxjs';
 import {
 	IIntegrationViewModel,
-	DEFAULT_INTEGRATION_PAID_FILTERS
+	DEFAULT_INTEGRATION_PAID_FILTERS,
+	IIntegration
 } from '@gauzy/contracts';
 import {
 	InitialFilter,
 	IntegrationsStoreService
-} from '../../../../@core/services/integrations-store.service';
-import { Observable } from 'rxjs';
+} from '../../../../@core/services';
 
 @Component({
 	selector: 'ngx-integrations-list',
@@ -21,14 +22,10 @@ import { Observable } from 'rxjs';
 	styleUrls: ['./integrations-list.component.scss']
 })
 export class IntegrationsListComponent implements OnInit {
-	integrations$: Observable<IIntegrationViewModel[]> = this._integrationsStore
-		.integrations$;
-	integrationGroups$: Observable<any[]> = this._integrationsStore
-		.integrationGroups$;
-	selectedIntegrationTypeId$: Observable<string> = this._integrationsStore
-		.selectedIntegrationTypeId$;
-	selectedIntegrationFilter$: Observable<string> = this._integrationsStore
-		.selectedIntegrationFilter$;
+	integrations$: Observable<IIntegrationViewModel[]> = this._integrationsStore.integrations$;
+	integrationGroups$: Observable<any[]> = this._integrationsStore.integrationGroups$;
+	selectedIntegrationTypeId$: Observable<string> = this._integrationsStore.selectedIntegrationTypeId$;
+	selectedIntegrationFilter$: Observable<string> = this._integrationsStore.selectedIntegrationFilter$;
 	isLoading$: Observable<boolean> = this._integrationsStore.isLoading$;
 
 	@ViewChild('searchElement', { static: true }) searchElement: ElementRef;
@@ -37,9 +34,9 @@ export class IntegrationsListComponent implements OnInit {
 	constructor(
 		private _integrationsStore: IntegrationsStoreService,
 		private renderer: Renderer2
-	) {}
+	) { }
 
-	ngOnInit() {}
+	ngOnInit() { }
 
 	setSelectedIntegrationType(integrationTypeId) {
 		this._integrationsStore.setSelectedIntegrationTypeId(integrationTypeId);

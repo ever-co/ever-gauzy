@@ -3,7 +3,8 @@ import {
 	IIntegrationViewModel,
 	IIntegrationFilter,
 	IntegrationTypeNameEnum,
-	IntegrationTypeGroupEnum
+	IntegrationTypeGroupEnum,
+	IIntegration
 } from '@gauzy/contracts';
 import { BehaviorSubject, Observable, of } from 'rxjs';
 import { IntegrationsService } from './integrations.service';
@@ -16,7 +17,6 @@ import {
 	finalize,
 	mergeMap
 } from 'rxjs/operators';
-import { DomSanitizer } from '@angular/platform-browser';
 import { ErrorHandlingService } from './error-handling.service';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 
@@ -63,7 +63,6 @@ export class IntegrationsStoreService {
 	);
 
 	constructor(
-		private sanitizer: DomSanitizer,
 		private _integrationsService: IntegrationsService,
 		private _errorHandlingService: ErrorHandlingService
 	) {
@@ -87,15 +86,6 @@ export class IntegrationsStoreService {
 						)
 						: of([]);
 				}),
-				// map((integrations) =>
-				// 	integrations.map((item) => ({
-				// 		...item,
-				// 		navigation_url: `../${item.name.toLowerCase()}`,
-				// 		imgSrc: this.sanitizer.bypassSecurityTrustResourceUrl(
-				// 			item.imgSrc
-				// 		)
-				// 	}))
-				// ),
 				tap((integrations) => this._integrations$.next(integrations)),
 				catchError((error) => {
 					this._errorHandlingService.handleError(error);
