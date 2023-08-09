@@ -2,10 +2,10 @@
 kind: Service
 apiVersion: v1
 metadata:
-    name: gauzy-stage
+    name: gauzy-prod
 spec:
     selector:
-        app: gauzy-stage-webapp
+        app: gauzy-prod-webapp
     ports:
         - name: web
           protocol: TCP
@@ -15,10 +15,10 @@ spec:
 kind: Service
 apiVersion: v1
 metadata:
-    name: gauzy-stage-api
+    name: gauzy-prod-api
 spec:
     selector:
-        app: gauzy-stage-api
+        app: gauzy-prod-api
     ports:
         - name: web
           protocol: TCP
@@ -28,16 +28,16 @@ spec:
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-    name: gauzy-stage-api
+    name: gauzy-prod-api
 spec:
-    replicas: 4
+    replicas: 16
     selector:
         matchLabels:
-            app: gauzy-stage-api
+            app: gauzy-prod-api
     template:
         metadata:
             labels:
-                app: gauzy-stage-api
+                app: gauzy-prod-api
         spec:
             affinity:
                 nodeAffinity:
@@ -49,8 +49,8 @@ spec:
                                 values:
                                   - ORD1
             containers:
-                - name: gauzy-stage-api
-                  image: everco/gauzy-api-stage:latest
+                - name: gauzy-prod-api
+                  image: everco/gauzy-api-prod:latest
                   env:
                       - name: API_HOST
                         value: 0.0.0.0
@@ -69,9 +69,9 @@ spec:
                       - name: SENTRY_POSTGRES_TRACKING_ENABLED
                         value: 'false'
                       - name: API_BASE_URL
-                        value: 'https://apistagecw.gauzy.co'
+                        value: 'https://apicw.gauzy.co'
                       - name: CLIENT_BASE_URL
-                        value: 'https://stagecw.gauzy.co'
+                        value: 'https://appcw.gauzy.co'
                       - name: DB_URI
                         value: '$DB_URI'
                       - name: DB_HOST
@@ -172,6 +172,12 @@ spec:
                         value: '$UNLEASH_METRICS_INTERVAL'
                       - name: UNLEASH_API_KEY
                         value: '$UNLEASH_API_KEY'
+                      - name: PM2_PUBLIC_KEY
+                        value: '$PM2_PUBLIC_KEY'
+                      - name: PM2_SECRET_KEY
+                        value: '$PM2_SECRET_KEY'
+                      - name: PM2_MACHINE_NAME
+                        value: '$PM2_MACHINE_NAME'
 
                   ports:
                       - containerPort: 3000
@@ -180,16 +186,16 @@ spec:
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-    name: gauzy-stage-webapp
+    name: gauzy-prod-webapp
 spec:
-    replicas: 4
+    replicas: 8
     selector:
         matchLabels:
-            app: gauzy-stage-webapp
+            app: gauzy-prod-webapp
     template:
         metadata:
             labels:
-                app: gauzy-stage-webapp
+                app: gauzy-prod-webapp
         spec:
             affinity:
                 nodeAffinity:
@@ -201,15 +207,15 @@ spec:
                                 values:
                                   - ORD1
             containers:
-                - name: gauzy-stage-webapp
-                  image: everco/gauzy-webapp-stage:latest
+                - name: gauzy-prod-webapp
+                  image: everco/gauzy-webapp-prod:latest
                   env:
                       - name: DEMO
                         value: 'false'
                       - name: API_BASE_URL
-                        value: 'https://apistagecw.gauzy.co'
+                        value: 'https://apicw.gauzy.co'
                       - name: CLIENT_BASE_URL
-                        value: 'https://stagecw.gauzy.co'
+                        value: 'https://appcw.gauzy.co'
                       - name: SENTRY_DSN
                         value: 'https://7cd381188b6f446ca0e69185227b9031@o51327.ingest.sentry.io/4397292'
                       - name: CHATWOOT_SDK_TOKEN
@@ -250,20 +256,20 @@ metadata:
     traefik.ingress.kubernetes.io/router.middlewares: tenant-acb888-ever-https-redirect@kubernetescrd
 spec:
     rules:
-      - host: stagecw.gauzy.co
+      - host: appcw.gauzy.co
         http:
             paths:
               - backend:
                     service:
-                        name: gauzy-stage
+                        name: gauzy-prod
                         port:
                             number: 4200
                 path: /
                 pathType: Prefix
     tls:
       - hosts:
-          - stagecw.gauzy.co
-        secretName: stagecw.gauzy.co-tls
+          - appcw.gauzy.co
+        secretName: appcw.gauzy.co-tls
 ---
 apiVersion: networking.k8s.io/v1
 kind: Ingress
@@ -274,17 +280,17 @@ metadata:
         traefik.ingress.kubernetes.io/router.middlewares: tenant-acb888-ever-https-redirect@kubernetescrd
 spec:
     rules:
-      - host: apistagecw.gauzy.co
+      - host: apicw.gauzy.co
         http:
             paths:
               - backend:
                     service:
-                        name: gauzy-stage-api
+                        name: gauzy-prod-api
                         port:
                             number: 3000
                 path: /
                 pathType: Prefix
     tls:
       - hosts:
-          - apistagecw.gauzy.co
-        secretName: apistagecw.gauzy.co-tls
+          - apicw.gauzy.co
+        secretName: apicw.gauzy.co-tls
