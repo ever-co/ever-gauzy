@@ -48,9 +48,11 @@ spec:
                                 operator: In
                                 values:
                                   - ORD1
+            imagePullSecrets:
+              - name: ever-registry-docker-registry-credentials
             containers:
                 - name: gauzy-prod-api
-                  image: everco/gauzy-api-prod:latest
+                  image: ever-registry.tenant-acb888-ever.ord1.ingress.coreweave.cloud/ever-co/gauzy-api:latest
                   env:
                       - name: API_HOST
                         value: 0.0.0.0
@@ -206,9 +208,11 @@ spec:
                                 operator: In
                                 values:
                                   - ORD1
+            imagePullSecrets:
+              - name: ever-registry-docker-registry-credentials
             containers:
                 - name: gauzy-prod-webapp
-                  image: everco/gauzy-webapp-prod:latest
+                  image: ever-registry.tenant-acb888-ever.ord1.ingress.coreweave.cloud/ever-co/gauzy-webapp:latest
                   env:
                       - name: DEMO
                         value: 'false'
