@@ -34,6 +34,10 @@ export class Integration extends BaseEntity implements IIntegration {
 	@Column({ nullable: true })
 	docUrl?: string;
 
+	@ApiPropertyOptional({ type: () => String })
+	@Column({ nullable: true })
+	navigationUrl?: string;
+
 	@ApiPropertyOptional({ type: () => Boolean, default: false })
 	@Column({ default: false })
 	isFreeTrial?: boolean;

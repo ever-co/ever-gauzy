@@ -60,6 +60,7 @@ export interface IIntegration extends IBaseEntityModel {
 	isPaid?: boolean;
 	version?: string;
 	docUrl?: string;
+	navigationUrl?: string;
 	isFreeTrial?: boolean;
 	freeTrialPeriod?: number;
 	order?: number;
@@ -211,7 +212,8 @@ export const DEFAULT_INTEGRATIONS = [
 		integrationTypesMap: <string[]>[
 			IntegrationTypeNameEnum.ALL_INTEGRATIONS
 		],
-		order: 1
+		order: 1,
+		navigationUrl: 'hubstaff'
 	},
 	{
 		name: IntegrationEnum.UPWORK,
@@ -220,7 +222,8 @@ export const DEFAULT_INTEGRATIONS = [
 		integrationTypesMap: <string[]>[
 			IntegrationTypeNameEnum.ALL_INTEGRATIONS
 		],
-		order: 2
+		order: 2,
+		navigationUrl: 'upwork'
 	},
 	{
 		name: IntegrationEnum.GAUZY_AI,
@@ -229,7 +232,8 @@ export const DEFAULT_INTEGRATIONS = [
 		integrationTypesMap: <string[]>[
 			IntegrationTypeNameEnum.ALL_INTEGRATIONS
 		],
-		order: 3
+		order: 3,
+		navigationUrl: 'ever-ai'
 	},
 	{
 		name: 'Import/Export',
@@ -239,7 +243,8 @@ export const DEFAULT_INTEGRATIONS = [
 			IntegrationTypeNameEnum.ALL_INTEGRATIONS,
 			IntegrationTypeNameEnum.CRM
 		],
-		order: 4
+		order: 4,
+		navigationUrl: 'import-export'
 	}
 ];
 

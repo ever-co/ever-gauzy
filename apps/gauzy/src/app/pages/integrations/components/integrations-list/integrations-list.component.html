@@ -107,30 +107,28 @@
 				class="integrations-list"
 				*ngIf="integrations$ | async as integrations"
 			>
-				<a
-					[class.disabled]="
-						'disabled' ? integration.isComingSoon : ''
-					"
-					*ngFor="let integration of integrations"
-					[routerLink]="[integration.navigation_url]"
-					class="list-item"
-				>
-					<img
-						[src]="integration.fullImgUrl"
-						width="100%"
-						height="100%"
-						alt="image not found"
-						[title]="integration.name"
-					/>
-					<div
-						class="comingSoon-wrapper"
-						*ngIf="integration.isComingSoon"
+				<ng-container *ngFor="let integration of integrations">
+					<a
+						[class.disabled]="'disabled' ? integration.isComingSoon : ''"
+						[routerLink]="[integration.navigation_url]"
+						class="list-item"
 					>
-						<span class="comingSoon">{{
-							'INTEGRATIONS.COMING_SOON' | translate
-						}}</span>
-					</div>
-				</a>
+						<img
+							[src]="integration.fullImgUrl"
+							width="100%"
+							height="100%"
+							alt="image not found"
+							[title]="integration.name"
+						/>
+						<ng-container *ngIf="integration.isComingSoon">
+							<div class="comingSoon-wrapper">
+								<span class="comingSoon">
+									{{ 'INTEGRATIONS.COMING_SOON' | translate }}
+								</span>
+							</div>
+						</ng-container>
+					</a>
+				</ng-container>
 			</div>
 		</div>
 	</nb-card-body>
