@@ -4,6 +4,7 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { distinctUntilChange } from '@gauzy/common-angular';
 import { BehaviorSubject, tap, Observable, filter, firstValueFrom } from 'rxjs';
 import { EmployeesService, ErrorHandlingService } from '../../../@core';
+import { environment } from '@env/environment';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -23,23 +24,23 @@ export class UserMenuComponent implements OnInit {
 
 	public downloadApps = [
 		{
-			link: 'https://web.gauzy.co/downloads#desktop/apple',
+			link: environment.DESKTOP_APP_DOWNLOAD_LINK_APPLE,
 			icon: 'fab fa-apple',
 		},
 		{
-			link: 'https://web.gauzy.co/downloads#desktop/windows',
+			link: environment.DESKTOP_APP_DOWNLOAD_LINK_WINDOWS,
 			icon: 'fa-brands fa-windows',
 		},
 		{
-			link: 'https://web.gauzy.co/downloads#desktop/linux',
+			link: environment.DESKTOP_APP_DOWNLOAD_LINK_LINUX,
 			icon: 'fa-brands fa-linux',
 		},
 		{
-			link: 'https://web.gauzy.co/downloads#mobile',
+			link: environment.MOBILE_APP_DOWNLOAD_LINK,
 			icon: 'fas fa-mobile',
 		},
 		{
-			link: 'https://web.gauzy.co/downloads#extensions',
+			link: environment.EXTENSION_DOWNLOAD_LINK,
 			icon: 'fa-brands fa-chrome',
 		},
 	];
