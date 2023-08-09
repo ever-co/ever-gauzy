@@ -48,6 +48,17 @@ spec:
                                 operator: In
                                 values:
                                   - ORD1
+                podAntiAffinity:
+                    preferredDuringSchedulingIgnoredDuringExecution:
+                      - podAffinityTerm:
+                            labelSelector:
+                                matchExpressions:
+                                  - key: app
+                                    operator: In
+                                    values:
+                                      - gauzy-prode-api
+                            topologyKey: kubernetes.io/hostname
+                        weight: 1
             imagePullSecrets:
               - name: ever-registry-docker-registry-credentials
             containers:
@@ -208,6 +219,17 @@ spec:
                                 operator: In
                                 values:
                                   - ORD1
+                podAntiAffinity:
+                    preferredDuringSchedulingIgnoredDuringExecution:
+                      - podAffinityTerm:
+                            labelSelector:
+                                matchExpressions:
+                                  - key: app
+                                    operator: In
+                                    values:
+                                      - gauzy-prod-webapp
+                            topologyKey: kubernetes.io/hostname
+                        weight: 1
             imagePullSecrets:
               - name: ever-registry-docker-registry-credentials
             containers:
