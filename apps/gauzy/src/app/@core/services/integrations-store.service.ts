@@ -3,8 +3,7 @@ import {
 	IIntegrationViewModel,
 	IIntegrationFilter,
 	IntegrationTypeNameEnum,
-	IntegrationTypeGroupEnum,
-	IIntegration
+	IntegrationTypeGroupEnum
 } from '@gauzy/contracts';
 import { BehaviorSubject, Observable, of } from 'rxjs';
 import { IntegrationsService } from './integrations.service';

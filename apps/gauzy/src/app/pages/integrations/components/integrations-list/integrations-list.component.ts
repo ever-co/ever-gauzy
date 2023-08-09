@@ -8,8 +8,7 @@ import {
 import { Observable } from 'rxjs';
 import {
 	IIntegrationViewModel,
-	DEFAULT_INTEGRATION_PAID_FILTERS,
-	IIntegration
+	DEFAULT_INTEGRATION_PAID_FILTERS
 } from '@gauzy/contracts';
 import {
 	InitialFilter,
