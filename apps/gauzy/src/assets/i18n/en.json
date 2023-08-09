@@ -584,6 +584,8 @@
 			"ALL_PROJECTS": "All Projects",
 			"UPWORK_API_KEY": "Upwork API key",
 			"UPWORK_SECRET": "Upwork Secret",
+			"GAUZY_API_KEY": "Gauzy AI Key",
+			"GAUZY_API_SECRET": "Gauzy AI Secret",
 			"SELECT_COMPANY": "Select Company",
 			"TYPE_SEARCH_REQUEST": "Type your search request here...",
 			"SELECT_ICON": "Select Icon",
@@ -767,6 +769,7 @@
 		"POSITIONS": "Positions",
 		"INTEGRATIONS": "Apps & Integrations",
 		"UPWORK": "Upwork",
+		"GAUZY_AI": "Gauzy AI",
 		"PROPOSALS": "Proposals",
 		"TIME_OFF": "Time Off",
 		"APPROVALS": "Approvals",
@@ -1124,7 +1127,7 @@
 			"MANUAL_ACTIVITY": "No records found. Please select date range, employee or project.",
 			"AMOUNT_OWED": "No Amount Owed",
 			"WEEKLY_TIME_AND_ACTIVITY": "You have not any tracked time and activity yet for these day's.",
-			"DAILY_TIME_AND_ACTIVITY": "There is no time and activity tracked yet for this day. Please use the <a href=\"https://web.gauzy.co/downloads\" rel=\"noopener\" target=\"_blank\">Gauzy Desktop Timer App</a>.",
+			"DAILY_TIME_AND_ACTIVITY": "There is no time and activity tracked yet for this day. Please use the <a href={{downloadURL}} rel=\"noopener\" target=\"_blank\">Gauzy Desktop Timer App</a>.",
 			"PROJECT_BUDGET": "You have not created any project with budget.",
 			"CLIENT_BUDGET": "You have not created any client with budget."
 		}
@@ -1161,6 +1164,10 @@
 			"CONTRACTS_RELATED_DATA": "Synced Contracts related entities",
 			"DATE_RANGE_PLACEHOLDER": "Choose date between",
 			"HOURLY": "Hourly"
+		},
+		"GAUZY_AI_PAGE": {
+			"API_KEY": "Gauzy AI key",
+			"API_SECRET": "Gauzy AI Secret"
 		},
 		"COMING_SOON": "Coming soon",
 		"RE_INTEGRATE": "Re-integrate",
@@ -3661,7 +3668,7 @@
 		"VIEW_TIMESHEET": "View timesheet",
 		"ADD_TIME": "Add Time",
 		"TODAY": "Today",
-		"ALERT_DESKTOP_DOWNLOAD": "For more flexible time and activity tracking, please <a href=\"https://web.gauzy.co/downloads\" rel=\"noopener\" target=\"_blank\">Download</a> and use the <a href=\"https://web.gauzy.co/downloads\" rel=\"noopener\" target=\"_blank\">Gauzy Desktop Timer App</a>.",
+		"ALERT_DESKTOP_DOWNLOAD": "For more flexible time and activity tracking, please <a href={{downloadURL}} rel=\"noopener\" target=\"_blank\">Download</a> and use the <a href={{downloadURL}} rel=\"noopener\" target=\"_blank\">Gauzy Desktop Timer App</a>.",
 		"STATUS": "The time tracker is already running in the {{ source }}"
 	},
 	"TIMESHEET": {

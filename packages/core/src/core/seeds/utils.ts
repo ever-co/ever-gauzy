@@ -12,7 +12,7 @@ import { environment as env } from '@gauzy/config';
  * @param config
  * @returns
  */
-export function copyEverIcons(
+export function copyAssets(
     filename: string,
     config: Partial<IPluginConfig>,
     destDir: string = 'ever-icons'
@@ -69,11 +69,11 @@ export function copyEverIcons(
  * @param config
  * @param destDir
  */
-export async function cleanEverIcons(
+export async function cleanAssets(
     config: Partial<IPluginConfig>,
     destDir: string
 ) {
-    console.log(chalk.green(`CLEANING UP EVER ICONS...`));
+    console.log(chalk.green(`CLEANING UP SEED ASSETS FOR ${destDir}`));
 
     await new Promise((resolve, reject) => {
         const dir = env.isElectron

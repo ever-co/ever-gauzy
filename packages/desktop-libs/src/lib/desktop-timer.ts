@@ -192,6 +192,7 @@ export default class TimerHandler {
 			})
 		);
 		this.intervalUpdateTime = setInterval(async () => {
+			await this._activeWindow.updateActivities();
 			console.log('Last Timer Id:', this.lastTimer ? this.lastTimer.id : null);
 			await this.getSetActivity(knex, setupWindow, this.timeSlotStart, timeTrackerWindow, false);
 			console.log('Timeslot Start Time', this.timeSlotStart);
@@ -385,7 +386,7 @@ export default class TimerHandler {
 	}
 
 	afkCount(afkList) {
-		let afkTime: number = 0;
+		let afkTime = 0;
 
 		const afkOnly = afkList.filter((afk) => {
 			const jsonData = JSON.parse(afk.data);
