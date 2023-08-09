@@ -227,13 +227,13 @@ export const DEFAULT_INTEGRATIONS = [
 	},
 	{
 		name: IntegrationEnum.GAUZY_AI,
-		imgSrc: 'gauzy-ai.svg',
+		imgSrc: 'ever-ai.svg',
 		isComingSoon: false,
 		integrationTypesMap: <string[]>[
 			IntegrationTypeNameEnum.ALL_INTEGRATIONS
 		],
 		order: 3,
-		navigationUrl: 'gauzy-ai'
+		navigationUrl: 'ever-ai'
 	},
 	{
 		name: 'Import/Export',
