@@ -44,11 +44,11 @@ spec:
                 nodeAffinity:
                     requiredDuringSchedulingIgnoredDuringExecution:
                         nodeSelectorTerms:
-                          - matchExpressions:
-                              - key: topology.kubernetes.io/region
-                                operator: In
-                                values:
-                                  - ORD1
+                            - matchExpressions:
+                                  - key: topology.kubernetes.io/region
+                                    operator: In
+                                    values:
+                                        - ORD1
             containers:
                 - name: gauzy-stage-api
                   image: ever-registry.tenant-acb888-ever.ord1.ingress.coreweave.cloud/ever-co/gauzy-api-stage:latest
@@ -190,17 +190,17 @@ spec:
     template:
         metadata:
             labels:
-                app: everco/gauzy-webapp-stage:latest
+                app: gauzy-stage-webapp
         spec:
             affinity:
                 nodeAffinity:
                     requiredDuringSchedulingIgnoredDuringExecution:
                         nodeSelectorTerms:
-                          - matchExpressions:
-                              - key: topology.kubernetes.io/region
-                                operator: In
-                                values:
-                                  - ORD1
+                            - matchExpressions:
+                                  - key: topology.kubernetes.io/region
+                                    operator: In
+                                    values:
+                                        - ORD1
             containers:
                 - name: gauzy-stage-webapp
                   image: ever-registry.tenant-acb888-ever.ord1.ingress.coreweave.cloud/ever-co/gauzy-api-demo:latest
@@ -236,35 +236,35 @@ spec:
 apiVersion: traefik.containo.us/v1alpha1
 kind: Middleware
 metadata:
-  name: https-redirect
+    name: https-redirect
 spec:
-  redirectScheme:
-    permanent: true
-    scheme: https
+    redirectScheme:
+        permanent: true
+        scheme: https
 ---
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: gauzy-stage
-  annotations:
-    kubernetes.io/ingress.class: traefik-everco
-    traefik.ingress.kubernetes.io/router.middlewares: tenant-acb888-ever-https-redirect@kubernetescrd
+    name: gauzy-stage
+    annotations:
+        kubernetes.io/ingress.class: traefik-everco
+        traefik.ingress.kubernetes.io/router.middlewares: tenant-acb888-ever-https-redirect@kubernetescrd
 spec:
     rules:
-      - host: stagecw.gauzy.co
-        http:
-            paths:
-              - backend:
-                    service:
-                        name: gauzy-stage
-                        port:
-                            number: 4200
-                path: /
-                pathType: Prefix
+        - host: stagecw.gauzy.co
+          http:
+              paths:
+                  - backend:
+                        service:
+                            name: gauzy-stage
+                            port:
+                                number: 4200
+                    path: /
+                    pathType: Prefix
     tls:
-      - hosts:
-          - stagecw.gauzy.co
-        secretName: stagecw.gauzy.co-tls
+        - hosts:
+              - stagecw.gauzy.co
+          secretName: stagecw.gauzy.co-tls
 ---
 apiVersion: networking.k8s.io/v1
 kind: Ingress
@@ -275,17 +275,17 @@ metadata:
         traefik.ingress.kubernetes.io/router.middlewares: tenant-acb888-ever-https-redirect@kubernetescrd
 spec:
     rules:
-      - host: apistagecw.gauzy.co
-        http:
-            paths:
-              - backend:
-                    service:
-                        name: gauzy-stage-api
-                        port:
-                            number: 3000
-                path: /
-                pathType: Prefix
+        - host: apistagecw.gauzy.co
+          http:
+              paths:
+                  - backend:
+                        service:
+                            name: gauzy-stage-api
+                            port:
+                                number: 3000
+                    path: /
+                    pathType: Prefix
     tls:
-      - hosts:
-          - apistagecw.gauzy.co
-        secretName: apistagecw.gauzy.co-tls
+        - hosts:
+              - apistagecw.gauzy.co
+          secretName: apistagecw.gauzy.co-tls
