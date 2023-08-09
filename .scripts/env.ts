@@ -19,6 +19,13 @@ export type Env = Readonly<{
 	// Platform website
 	PLATFORM_WEBSITE_URL: string;
 
+	// Platform website Download URLS
+	PLATFORM_WEBSITE_DOWNLOAD_URL: string;
+	DESKTOP_APP_DOWNLOAD_LINK_APPLE: string;
+	DESKTOP_APP_DOWNLOAD_LINK_WINDOWS: string;
+	DESKTOP_APP_DOWNLOAD_LINK_LINUX: string;
+	MOBILE_APP_DOWNLOAD_LINK: string;
+	EXTENSION_DOWNLOAD_LINK: string;
 	SENTRY_DSN: string;
 	SENTRY_TRACES_SAMPLE_RATE: string;
 
@@ -70,7 +77,13 @@ export const env: Env = cleanEnv(
 
 		API_BASE_URL: str({ default: 'http://localhost:3000' }),
 
-		PLATFORM_WEBSITE_URL: str({ default: 'https://web.gauzy.co' }),
+		PLATFORM_WEBSITE_URL: str({ default: 'https://gauzy.co' }),
+		PLATFORM_WEBSITE_DOWNLOAD_URL: str({ default: 'https://gauzy.co/downloads' }),
+		DESKTOP_APP_DOWNLOAD_LINK_APPLE: str({ default: 'https://gauzy.co/downloads#desktop/apple' }),
+		DESKTOP_APP_DOWNLOAD_LINK_WINDOWS: str({ default: 'https://gauzy.co/downloads#desktop/windows' }),
+		DESKTOP_APP_DOWNLOAD_LINK_LINUX: str({ default: 'https://gauzy.co/downloads#desktop/linux' }),
+		MOBILE_APP_DOWNLOAD_LINK: str({ default: 'https://gauzy.co/downloads#mobile' }),
+		EXTENSION_DOWNLOAD_LINK: str({ default: 'https://gauzy.co/downloads#extensions' }),
 
 		SENTRY_DSN: str({ default: '' }),
 		SENTRY_TRACES_SAMPLE_RATE: str({ default: '' }),
