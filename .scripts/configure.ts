@@ -79,7 +79,6 @@ if (!env.IS_DOCKER) {
 		API_BASE_URL: API_BASE_URL,
 		CLIENT_BASE_URL: CLIENT_BASE_URL,
 
-		PLATFORM_WEBSITE_URL: 'https://gauzy.co/',
 		PLATFORM_WEBSITE_DOWNLOAD_URL: 'https://gauzy.co/downloads',
 		DESKTOP_APP_DOWNLOAD_LINK_APPLE: 'https://gauzy.co/downloads#desktop/apple',
 		DESKTOP_APP_DOWNLOAD_LINK_WINDOWS: 'https://gauzy.co/downloads#desktop/windows',
@@ -174,7 +173,6 @@ if (!env.IS_DOCKER) {
 		API_BASE_URL: API_BASE_URL,
 		CLIENT_BASE_URL: CLIENT_BASE_URL,
 
-		PLATFORM_WEBSITE_URL: 'https://gauzy.co/',
 	PLATFORM_WEBSITE_DOWNLOAD_URL: 'https://gauzy.co/downloads',
 	DESKTOP_APP_DOWNLOAD_LINK_APPLE: 'https://gauzy.co/downloads#desktop/apple',
 	DESKTOP_APP_DOWNLOAD_LINK_WINDOWS: 'https://gauzy.co/downloads#desktop/windows',

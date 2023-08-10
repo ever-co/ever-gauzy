@@ -16,9 +16,6 @@ export type Env = Readonly<{
 	// Base API URL
 	API_BASE_URL: string;
 
-	// Platform website
-	PLATFORM_WEBSITE_URL: string;
-
 	// Platform website Download URLS
 	PLATFORM_WEBSITE_DOWNLOAD_URL: string;
 	DESKTOP_APP_DOWNLOAD_LINK_APPLE: string;
@@ -77,7 +74,6 @@ export const env: Env = cleanEnv(
 
 		API_BASE_URL: str({ default: 'http://localhost:3000' }),
 
-		PLATFORM_WEBSITE_URL: str({ default: 'https://gauzy.co' }),
 		PLATFORM_WEBSITE_DOWNLOAD_URL: str({ default: 'https://gauzy.co/downloads' }),
 		DESKTOP_APP_DOWNLOAD_LINK_APPLE: str({ default: 'https://gauzy.co/downloads#desktop/apple' }),
 		DESKTOP_APP_DOWNLOAD_LINK_WINDOWS: str({ default: 'https://gauzy.co/downloads#desktop/windows' }),
