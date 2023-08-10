@@ -9,7 +9,7 @@
 				<p class="sub-title">{{ 'LOGIN_PAGE.SUB_TITLE' | translate }}</p>
 			</div>
 		</div>
-		<nb-alert *ngIf="showMessages.error && errors?.length && !submitted" outline="danger" role="alert">
+		<nb-alert class="w-100" *ngIf="showMessages.error && errors?.length && !submitted" outline="danger" role="alert">
 			<p class="alert-title"><b>Oh snap!</b></p>
 			<ul class="alert-message-list">
 				<li *ngFor="let error of errors" class="alert-message">
@@ -17,7 +17,7 @@
 				</li>
 			</ul>
 		</nb-alert>
-		<nb-alert *ngIf="showMessages.success && messages?.length && !submitted" outline="success" role="alert">
+		<nb-alert class="w-100" *ngIf="showMessages.success && messages?.length && !submitted" outline="success" role="alert">
 			<p class="alert-title"><b>Hooray!</b></p>
 			<ul class="alert-message-list">
 				<li *ngFor="let message of messages" class="alert-message">
@@ -120,6 +120,7 @@
 					<button type="submit" nbButton size="small" class="submit-btn" [disabled]="submitted || !form.valid"
 						[class.btn-pulse]="submitted">
 						{{ 'BUTTONS.LOGIN' | translate }}
+						<nb-icon [ngStyle]="{'display': 'none'}" *gauzySpinnerButton="submitted"></nb-icon>
 					</button>
 
 				</div>

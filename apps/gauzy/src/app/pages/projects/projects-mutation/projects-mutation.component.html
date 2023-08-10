@@ -8,12 +8,8 @@
 							<div class="project-image-photo">
 								<ngx-image-uploader
 									(changeHoverState)="hoverState = $event"
-									(uploadedImageAsset)="
-										form.get('imageUrl').setValue($event)
-									"
-									(uploadImageAssetError)="
-										handleImageUploadError($event)
-									"
+									(uploadedImageAsset)="updateImageAsset($event)"
+									(uploadImageAssetError)="handleImageUploadError($event)"
 								></ngx-image-uploader>
 								<svg
 									*ngIf="form && form.get('imageUrl').value"
@@ -104,6 +100,12 @@
 												: 'basic'
 										"
 									/>
+									<div
+										class="caption status-danger position-absolute"
+										*ngIf="projectName.hasError('required')"
+									>
+										{{ 'FORM.ERROR.PROJECT_NAME' | translate }}
+									</div>
 								</div>
 								<div class="form-group col-6">
 									<label for="code" class="label">{{
@@ -149,6 +151,12 @@
 												: 'basic'
 										"
 									/>
+									<div
+										class="caption status-danger position-absolute"
+										*ngIf="projectUrl.hasError('pattern')"
+									>
+										{{ 'FORM.ERROR.PROJECT_URL' | translate }}
+									</div>
 								</div>
 							</div>
 							<div class="row">
@@ -459,6 +467,12 @@
 										: 'basic'
 								"
 							/>
+							<div
+								class="caption status-danger position-absolute"
+								*ngIf="openSourceProjectUrl.hasError('pattern')"
+							>
+								{{ 'FORM.ERROR.OPEN_SOURCE_PROJECT_URL' | translate }}
+							</div>
 						</div>
 					</div>
 				</nb-tab>

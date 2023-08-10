@@ -17,6 +17,12 @@ if (!env.GOOGLE_MAPS_API_KEY) {
 	);
 }
 
+if (!env.SENTRY_DSN) {
+	console.warn(
+		'WARNING: No Sentry DSN defined in the .env file. Sentry logging may not be working!'
+	);
+}
+
 if (!env.CLOUDINARY_CLOUD_NAME || !env.CLOUDINARY_API_KEY) {
 	console.warn('WARNING: No Cloudinary API keys defined in the .env file.');
 }
@@ -72,6 +78,14 @@ if (!env.IS_DOCKER) {
 
 		API_BASE_URL: API_BASE_URL,
 		CLIENT_BASE_URL: CLIENT_BASE_URL,
+
+		PLATFORM_WEBSITE_URL: '${env.PLATFORM_WEBSITE_URL}',
+		PLATFORM_WEBSITE_DOWNLOAD_URL: '${env.PLATFORM_WEBSITE_DOWNLOAD_URL}',
+		DESKTOP_APP_DOWNLOAD_LINK_APPLE: '${env.DESKTOP_APP_DOWNLOAD_LINK_APPLE}',
+		DESKTOP_APP_DOWNLOAD_LINK_WINDOWS: '${env.DESKTOP_APP_DOWNLOAD_LINK_WINDOWS}',
+		DESKTOP_APP_DOWNLOAD_LINK_LINUX: '${env.DESKTOP_APP_DOWNLOAD_LINK_LINUX}',
+		MOBILE_APP_DOWNLOAD_LINK: '${env.MOBILE_APP_DOWNLOAD_LINK}',
+		EXTENSION_DOWNLOAD_LINK: '${env.EXTENSION_DOWNLOAD_LINK}',
 
 		COMPANY_NAME: 'Ever Co. LTD',
 		COMPANY_SITE: 'Gauzy',
@@ -160,6 +174,14 @@ if (!env.IS_DOCKER) {
 		API_BASE_URL: API_BASE_URL,
 		CLIENT_BASE_URL: CLIENT_BASE_URL,
 
+		PLATFORM_WEBSITE_URL: '${env.PLATFORM_WEBSITE_URL}',
+		PLATFORM_WEBSITE_DOWNLOAD_URL: '${env.PLATFORM_WEBSITE_DOWNLOAD_URL}',
+		DESKTOP_APP_DOWNLOAD_LINK_APPLE: '${env.DESKTOP_APP_DOWNLOAD_LINK_APPLE}',
+		DESKTOP_APP_DOWNLOAD_LINK_WINDOWS: '${env.DESKTOP_APP_DOWNLOAD_LINK_WINDOWS}',
+		DESKTOP_APP_DOWNLOAD_LINK_LINUX: '${env.DESKTOP_APP_DOWNLOAD_LINK_LINUX}',
+		MOBILE_APP_DOWNLOAD_LINK: '${env.MOBILE_APP_DOWNLOAD_LINK}',
+		EXTENSION_DOWNLOAD_LINK: '${env.EXTENSION_DOWNLOAD_LINK}',
+
 		COMPANY_NAME: 'Ever Co. LTD',
 		COMPANY_SITE: 'Gauzy',
 		COMPANY_LINK: 'https://ever.co/',
@@ -244,10 +266,10 @@ if (!isProd) {
 // we always want first to remove old generated files (one of them is not needed for current build)
 try {
 	unlinkSync(`./apps/gauzy/src/environments/environment.ts`);
-} catch {}
+} catch { }
 try {
 	unlinkSync(`./apps/gauzy/src/environments/environment.prod.ts`);
-} catch {}
+} catch { }
 
 const envFileDest: string = isProd ? 'environment.prod.ts' : 'environment.ts';
 const envFileDestOther: string = !isProd

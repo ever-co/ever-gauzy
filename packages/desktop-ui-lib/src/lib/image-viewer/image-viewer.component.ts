@@ -7,7 +7,10 @@ import {
 } from '@angular/core';
 import { transition, trigger, style, animate } from '@angular/animations';
 import { ElectronService } from '../electron/services';
-import { DomSanitizer } from '@angular/platform-browser';
+import { SafeUrl } from '@angular/platform-browser';
+import { ImageViewerService } from './image-viewer.service';
+import { from } from 'rxjs';
+import { NbIconLibraries } from '@nebular/theme';
 
 export const fadeInOutAnimation = trigger('fadeInOut', [
 	transition(':enter', [
@@ -38,28 +41,43 @@ export class ImageViewerComponent implements OnInit {
 	item: any = {};
 	constructor(
 		// private dialogRef: NbDialogRef<any>
-		private electronService: ElectronService,
+		private readonly _electronService: ElectronService,
 		private readonly _ngZone: NgZone,
-		private readonly _sanitize: DomSanitizer
-	) {}
+		private readonly _imageViewerService: ImageViewerService,
+		private readonly _iconLibraries: NbIconLibraries
+	) {
+		this._iconLibraries.registerFontPack('font-awesome', {
+			packClass: 'fas',
+			iconClassPrefix: 'fa'
+		});
+	}
 
 	ngOnInit(): void {
-		this.electronService.ipcRenderer.on('show_image', (event, arg) => {
-			this._ngZone.run(() => {
-				this.items = arg.sort((a, b) => {
-					const c: any = new Date(b.recordedAt);
-					const d: any = new Date(a.recordedAt);
-					return c - d;
+		this._electronService.ipcRenderer.on(
+			'show_image',
+			(event, arg: any[]) => {
+				this._ngZone.run(() => {
+					this.items = arg
+						.sort((a, b) => {
+							const c: any = new Date(b.recordedAt);
+							const d: any = new Date(a.recordedAt);
+							return c - d;
+						})
+						.map((img) => ({
+							...img,
+							fullUrl: from(this.sanitizeImgUrl(img.fullUrl)),
+							thumbUrl: from(this.sanitizeImgUrl(img.thumbUrl)),
+						}));
+					this.item = this.items[0];
 				});
-				this.item = this.items[0];
-			});
-		});
+			}
+		);
 		this.active_index = 0;
 	}
 
 	close() {
 		// this.dialogRef.close();
-		this.electronService.ipcRenderer.send('close_image_view');
+		this._electronService.ipcRenderer.send('close_image_view');
 	}
 
 	next($event) {
@@ -80,9 +98,7 @@ export class ImageViewerComponent implements OnInit {
 	}
 
 	setFocus(selectedItem) {
-		const foundItem = this.items.find(
-			(item) => item.fullUrl === selectedItem.fullUrl
-		);
+		const foundItem = this.items.find((item) => item === selectedItem);
 		if (this.item) {
 			const index = this.items.indexOf(this.item);
 			this.active_index = index;
@@ -115,7 +131,11 @@ export class ImageViewerComponent implements OnInit {
 		}
 	}
 
-	sanitizeImgUrl(img: string) {
-		return this._sanitize.bypassSecurityTrustUrl(img);
+	public async sanitizeImgUrl(img: string): Promise<SafeUrl> {
+		return await this._imageViewerService.sanitizeImgUrl(img);
+	}
+
+	public trackById(index: number, item: any): number {
+		return item.id;
 	}
 }

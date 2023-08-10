@@ -13,6 +13,7 @@ import { ThemeSelectorModule } from './components/theme-selector/theme-selector.
 import { NbCardModule, NbListModule } from '@nebular/theme';
 import { ThemeSelectorComponent } from './components/theme-selector/theme-selector.component';
 import { LayoutSelectorModule } from './components/layout-selector/layout-selector.module';
+import { DirectivesModule } from 'apps/gauzy/src/app/@shared/directives/directives.module';
 
 @NgModule({
 	imports: [
@@ -26,7 +27,8 @@ import { LayoutSelectorModule } from './components/layout-selector/layout-select
 		LayoutSelectorModule,
 		ThemeSelectorModule,
 		NbCardModule,
-		NbListModule
+		NbListModule,
+		DirectivesModule
 	],
 	exports: [
 		ThemeSettingsComponent,
@@ -37,4 +39,4 @@ import { LayoutSelectorModule } from './components/layout-selector/layout-select
 	],
 	providers: []
 })
-export class ThemeSettingsModule {}
+export class ThemeSettingsModule { }

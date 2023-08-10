@@ -28,7 +28,13 @@ import {
 	TenantInterceptor,
 	ErrorHandlerService,
 	ServerErrorInterceptor,
-	APIInterceptor
+	APIInterceptor,
+	TimeoutInterceptor,
+	DEFAULT_TIMEOUT,
+	AuthGuard,
+	NoAuthGuard,
+	AuthStrategy,
+	AuthService
 } from '@gauzy/desktop-ui-lib';
 import { NbCardModule, NbButtonModule } from '@nebular/theme';
 import { RouterModule } from '@angular/router';
@@ -65,6 +71,10 @@ import { Router } from '@angular/router';
 		NbDialogService,
 		ElectronService,
 		LoggerService,
+		AuthGuard,
+		NoAuthGuard,
+		AuthStrategy,
+		AuthService,
 		{
 			provide: HTTP_INTERCEPTORS,
 			useClass: TokenInterceptor,
@@ -104,7 +114,13 @@ import { Router } from '@angular/router';
 			provide: HTTP_INTERCEPTORS,
 			useClass: APIInterceptor,
 			multi: true
-		}
+		},
+		{
+			provide: HTTP_INTERCEPTORS,
+			useClass: TimeoutInterceptor,
+			multi: true
+		},
+		{ provide: DEFAULT_TIMEOUT, useValue: 80000 }
 	],
 	bootstrap: [AppComponent],
 })

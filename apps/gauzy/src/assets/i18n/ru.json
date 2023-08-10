@@ -413,7 +413,15 @@
 			"DEFAULT": "Организация по умолчанию",
 			"INVITATION_EXPIRATION": "Срок приглашения истекает",
 			"PERIOD": "Период",
-			"REGISTER_AS_EMPLOYEE_OF_ORGANIZATION": "Вы хотите зарегистрироваться как сотрудник Организации?"
+			"REGISTER_AS_EMPLOYEE_OF_ORGANIZATION": "Вы хотите зарегистрироваться как сотрудник Организации?",
+			"COVER_LETTER": "Cover Letter",
+			"DETAILS": "Details",
+			"HOURLY_RATE": "Hourly Rate",
+			"ATTACHMENTS": "Attachments",
+			"UPWORK_ORGANIZATION_ID": "Upwork Organization ID",
+			"UPWORK_ORGANIZATION_NAME": "Upwork Organization Name",
+			"UPWORK_ID": "Upwork ID",
+			"LINKEDIN_ID": "LinkedIn ID"
 		},
 		"PLACEHOLDERS": {
 			"NAME": "Имя",
@@ -589,7 +597,12 @@
 			"INVITATION_EXPIRATION": "Срок приглашения истекает",
 			"ADD_PROJECT": "Добавить проект",
 			"ADD_EMPLOYEE": "Добавить сотрудника",
-			"ADD_ORGANIZATION": "Добавить организацию"
+			"ADD_ORGANIZATION": "Добавить организацию",
+			"DRAG_DROP_FILE": "Drag and Drop the file here",
+			"UPWORK_ORGANIZATION_ID": "Upwork Organization ID",
+			"UPWORK_ORGANIZATION_NAME": "Upwork Organization Name",
+			"UPWORK_ID": "Upwork ID",
+			"LINKEDIN_ID": "LinkedIn ID"
 		},
 		"RATES": {
 			"DEFAULT_RATE": "Стандартная ставка",
@@ -637,6 +650,11 @@
 			"ENABLED": "включен",
 			"DISABLED": "отключено",
 			"WAIT_UNTIL_RELOAD": "Пожалуйста, дождитесь перезагрузки приложения"
+		},
+		"ERROR": {
+			"PROJECT_NAME": "Необходимо название проекта.",
+			"PROJECT_URL":"Недопустимый URL проекта.",
+			"OPEN_SOURCE_PROJECT_URL": "Недопустимый URL-адрес проекта с открытым исходным кодом."
 		}
 	},
 	"POP_UPS": {
@@ -1095,7 +1113,7 @@
 			"MANUAL_ACTIVITY": "Записи не найдены. Пожалуйста, выберите диапазон дат, сотрудник или проект.",
 			"AMOUNT_OWED": "Недостаточно сумм",
 			"WEEKLY_TIME_AND_ACTIVITY": "Вы еще не отслеживали время и активность в этот день.",
-			"DAILY_TIME_AND_ACTIVITY": "В этот день еще не отслеживается время и активность. Пожалуйста, используйте <a href=\"https://web.gauzy.co/downloads\" rel=\"noopener\" target=\"_blank\">Gauzy Desktop Timer App</a>.",
+			"DAILY_TIME_AND_ACTIVITY": "В этот день еще не отслеживается время и активность. Пожалуйста, используйте <a href={{downloadURL}} rel=\"noopener\" target=\"_blank\">Gauzy Desktop Timer App</a>.",
 			"PROJECT_BUDGET": "Вы не создали ни одного проекта с бюджетом.",
 			"CLIENT_BUDGET": "Вы не создали ни одного клиента с бюджетом."
 		}
@@ -1836,7 +1854,26 @@
 				"INACTIVITY_TIME_LIMIT_INFO": "Таймаут отслеживания бездействия (то есть, сколько секунд бездействия разрешено)",
 				"ACTIVITY_PROOF_DURATION": "Длительность проверки активности",
 				"ACTIVITY_PROOF_DURATION_INFO": "Длительность диалогового окна для проверки активности, оно отображает количество секунд, заданных для доказательства активности",
-				"ALLOW_TRACK_INACTIVITY": "Разрешить отслеживать бездействие"
+                "ALLOW_TRACK_INACTIVITY": "Разрешить отслеживать бездействие",
+                "PROOF_OF_COMPLETION": "Доказательство завершения",
+                "PROOF_OF_COMPLETION_TYPE": "Тип подтверждения завершения",
+                "PROOF_OF_COMPLETION_TYPE_DROPDOWN": {
+                    "NONE": "Никто",
+                    "PRIVATE": "Частный",
+                    "PUBLIC": "Общедоступный"
+                },
+                "LINKED_ISSUE": "Связанная проблема",
+                "COMMENT": "Комментарий",
+                "HISTORY": "«История»",
+                "ACCEPTANCE_CRITERIA": "Критерии приемлемости",
+                "DRAFT_ISSUE": "Черновики задач",
+                "NOTIFY_TASK_LEFT": "Уведомить об оставшейся задаче",
+                "NOTIFY_TASK_LEFT_PERIOD": "Период задачи уведомления (в днях)",
+                "AUTO_CLOSE_ISSUE": "Автоматическое закрытие задачи",
+                "AUTO_CLOSE_ISSUE_PERIOD": "Период автоматического закрытия задачи (в днях)",
+                "AUTO_ARCHIVE_ISSUE": "Проблема автоматического архивирования",
+                "AUTO_ARCHIVE_ISSUE_PERIOD": "Период выпуска автоархива (в днях)",
+                "AUTO_STATUS": "Автостатус"
 			},
 			"TEAMS_PAGE": {
 				"MANAGERS": "Менеджеры",

@@ -34,6 +34,8 @@ import {
 	User,
 	UserService,
 } from './offline';
+import { DialogStopTimerLogoutConfirmation } from './decorators/concretes/dialog-stop-timer-logout-confirmation';
+import { DesktopDialog } from './desktop-dialog';
 
 const timerHandler = new TimerHandler();
 
@@ -122,6 +124,7 @@ export function ipcMainHandler(
 			interval.screenshots = arg.params.b64Imgs;
 			interval.stoppedAt = new Date();
 			interval.synced = false;
+			interval.timerId = timerHandler.lastTimer?.id;
 			await intervalService.create(interval.toObject());
 			await countIntervalQueue(timeTrackerWindow, false);
 			await latestScreenshots(timeTrackerWindow);
@@ -138,7 +141,7 @@ export function ipcMainHandler(
 		const auth = LocalStore.getStore('auth');
 		const logout = async () => {
 			await userService.remove();
-			timeTrackerWindow.webContents.send('logout');
+			timeTrackerWindow.webContents.send('__logout__');
 			LocalStore.updateAuthSetting({ isLogout: true });
 		}
 		if (auth && auth.userId) {
@@ -324,6 +327,7 @@ export function ipcTimer(
 			interval.screenshots = arg.b64Imgs;
 			interval.stoppedAt = new Date();
 			interval.synced = true;
+			interval.timerId = timerHandler.lastTimer?.id;
 			await intervalService.create(interval.toObject());
 			await latestScreenshots(timeTrackerWindow);
 		} catch (error) {
@@ -369,6 +373,9 @@ export function ipcTimer(
 					organizationContactId: arg.organizationContactId
 				}
 			});
+			// Check api connection before to start
+			await offlineMode.connectivity();
+			// Start Timer
 			const timerResponse = await timerHandler.startTimer(setupWindow, knex, timeTrackerWindow, arg.timeLog);
 			settingWindow.webContents.send('app_setting_update', {
 				setting: LocalStore.getStore('appSetting')
@@ -476,18 +483,28 @@ export function ipcTimer(
 	});
 
 	ipcMain.handle('STOP_TIMER', async (event, arg) => {
-		log.info(`Timer Stop: ${moment().format()}`);
-		const timerResponse = await timerHandler.stopTimer(setupWindow, timeTrackerWindow, knex, arg.quitApp);
-		settingWindow.webContents.send('app_setting_update', {
-			setting: LocalStore.getStore('appSetting')
-		});
-		if (powerManagerPreventSleep) {
-			powerManagerPreventSleep.stop();
+		try {
+			log.info(`Timer Stop: ${moment().format()}`);
+			// Check api connection before to stop
+			if (!arg.isEmergency) {
+				await offlineMode.connectivity();
+			}
+			// Stop Timer
+			const timerResponse = await timerHandler.stopTimer(setupWindow, timeTrackerWindow, knex, arg.quitApp);
+			settingWindow.webContents.send('app_setting_update', {
+				setting: LocalStore.getStore('appSetting')
+			});
+			if (powerManagerPreventSleep) {
+				powerManagerPreventSleep.stop();
+			}
+			if (powerManagerDetectInactivity) {
+				powerManagerDetectInactivity.stopInactivityDetection();
+			}
+			return timerResponse;
+		} catch (error) {
+			timeTrackerWindow.webContents.send('emergency_stop');
+			console.log('ERROR', error);
 		}
-		if (powerManagerDetectInactivity) {
-			powerManagerDetectInactivity.stopInactivityDetection();
-		}
-		return timerResponse;
 	});
 
 	ipcMain.on('return_time_slot', async (event, arg) => {
@@ -679,8 +696,6 @@ export function ipcTimer(
 	ipcMain.on('logout_desktop', async (event, arg) => {
 		try {
 			console.log('masuk logout main');
-			await userService.remove();
-			LocalStore.updateAuthSetting({ isLogout: true });
 			timeTrackerWindow.webContents.send('logout', arg);
 		} catch (error) {
 			console.log('Error', error);
@@ -818,6 +833,31 @@ export function ipcTimer(
 			console.log('ERROR', error);
 		}
 	})
+
+	ipcMain.on('server-down', async (event, arg) => {
+		// Check api connection
+		await offlineMode.connectivity();
+	})
+
+	ipcMain.on('check-interrupted-sequences', async (event, arg) => {
+		try {
+			await sequentialSyncInterruptionsQueue(timeTrackerWindow);
+		} catch (error) {
+			console.log(error)
+		}
+	})
+
+	ipcMain.on('check-waiting-sequences', async (event, arg) => {
+		try {
+			await sequentialSyncQueue(timeTrackerWindow);
+		} catch (error) {
+			console.log(error)
+		}
+	})
+
+	ipcMain.handle('LOGOUT_STOP', async (event, arg) => {
+		return await handleLogoutDialog(timeTrackerWindow);
+	});
 }
 
 export function removeMainListener() {
@@ -884,7 +924,8 @@ export function removeAllHandlers() {
 export function removeTimerHandlers() {
 	const channels = [
 		'START_TIMER',
-		'STOP_TIMER'
+		'STOP_TIMER',
+		'LOGOUT_STOP'
 	];
 	channels.forEach((channel: string) => {
 		ipcMain.removeHandler(channel);
@@ -899,10 +940,10 @@ async function sequentialSyncQueue(window: BrowserWindow) {
 		await offlineMode.connectivity();
 		if (offlineMode.enabled) return;
 		isQueueThreadTimerLocked = true;
-		const timers = await timerService.findToSynced();
-		if (timers.length > 0) {
+		const sequences = await timerService.findToSynced();
+		if (sequences.length > 0) {
 			await countIntervalQueue(window, true);
-			window.webContents.send('backup-timers-no-synced', timers);
+			window.webContents.send('backup-timers-no-synced', sequences);
 		} else {
 			isQueueThreadTimerLocked = false;
 		}
@@ -911,17 +952,14 @@ async function sequentialSyncQueue(window: BrowserWindow) {
 	}
 }
 
-let queueSync = Infinity;
+let size = Infinity;
 
-async function countIntervalQueue(window: BrowserWindow, isSyncing: boolean) {
+async function countIntervalQueue(window: BrowserWindow, inProgress: boolean) {
 	if (!window) return;
 	try {
-		queueSync = await intervalService.countNoSynced();
-		if (queueSync < 1) isQueueThreadTimerLocked = false;
-		window.webContents.send('count-synced', {
-			queue: queueSync,
-			isSyncing: isSyncing
-		});
+		size = await intervalService.countNoSynced();
+		if (size < 1) isQueueThreadTimerLocked = false;
+		window.webContents.send('count-synced', { size, inProgress });
 	} catch (error) {
 		console.log('ERROR_COUNT', error);
 	}
@@ -937,4 +975,34 @@ async function latestScreenshots(window: BrowserWindow): Promise<void> {
 	} catch (error) {
 		console.log('ERROR_SCREENSHOTS', error);
 	}
+}
+
+async function sequentialSyncInterruptionsQueue(window: BrowserWindow) {
+	if (!window) return;
+	try {
+		await offlineMode.connectivity();
+		if (offlineMode.enabled) return;
+		isQueueThreadTimerLocked = true;
+		const sequences = await timerService.interruptions();
+		if (sequences.length > 0) {
+			await countIntervalQueue(window, true);
+			window.webContents.send('interrupted-sequences', sequences);
+		} else {
+			isQueueThreadTimerLocked = false;
+		}
+	} catch (error) {
+		console.log('Error', error);
+	}
+}
+
+export async function handleLogoutDialog(window: BrowserWindow): Promise<boolean> {
+	const dialog = new DialogStopTimerLogoutConfirmation(
+		new DesktopDialog(
+			'Gauzy Desktop Timer',
+			'Are you sure you want to logout?',
+			window
+		)
+	);
+	const button = await dialog.show();
+	return button.response === 0;
 }

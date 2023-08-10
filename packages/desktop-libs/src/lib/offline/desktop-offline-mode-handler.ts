@@ -26,13 +26,6 @@ export class DesktopOfflineModeHandler
 		// Default ping timer interval
 		this._PING_INTERVAL = 30 * 1000;
 
-		this.on('offline', () => {
-			// Turn offline mode on
-			this._isEnabled = true;
-			// Date on trigger offline mode
-			this._startedAt = new Date(Date.now());
-		});
-
 		this.on('connection-restored', () => {
 			// Date on cancels offline mode
 			this._stoppedAt = new Date(Date.now());
@@ -49,6 +42,10 @@ export class DesktopOfflineModeHandler
 			// If connection is not restored
 			if (!connectivityEstablished) {
 				if (!this._isEnabled) {
+					// Date on trigger offline mode
+					this._startedAt = new Date(Date.now());
+					// Turn offline mode on
+					this._isEnabled = true;
 					// Notify that offline mode is enabled
 					this.emit('offline');
 				}

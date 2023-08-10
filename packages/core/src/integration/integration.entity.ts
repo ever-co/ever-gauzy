@@ -1,41 +1,48 @@
-import { ApiProperty } from '@nestjs/swagger';
-import { Column, Entity, ManyToMany, JoinTable } from 'typeorm';
-import { IIntegration, IIntegrationType, ITag } from '@gauzy/contracts';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { Column, Entity, ManyToMany, JoinTable, Unique } from 'typeorm';
 import { IsNumber } from 'class-validator';
-import { BaseEntity, IntegrationType, Tag } from '../core/entities/internal';
+import { IIntegration, IIntegrationType, ITag } from '@gauzy/contracts';
 import { ColumnNumericTransformerPipe } from './../shared/pipes';
+import { BaseEntity, Tag } from '../core/entities/internal';
+import { IntegrationType } from './integration-type.entity';
 
 @Entity('integration')
+@Unique(['name'])
 export class Integration extends BaseEntity implements IIntegration {
-	@ApiProperty({ type: () => String })
-	@Column({ nullable: false })
-	name: string;
 
 	@ApiProperty({ type: () => String })
+	@Column() // Define a unique constraint on the "name" column
+	name: string;
+
+	@ApiPropertyOptional({ type: () => String })
 	@Column({ nullable: true })
 	imgSrc: string;
 
-	@ApiProperty({ type: () => Boolean, default: false })
+	@ApiPropertyOptional({ type: () => Boolean, default: false })
 	@Column({ default: false })
 	isComingSoon?: boolean;
 
-	@ApiProperty({ type: () => Boolean, default: false })
+	@ApiPropertyOptional({ type: () => Boolean, default: false })
 	@Column({ default: false })
 	isPaid?: boolean;
 
-	@ApiProperty({ type: () => String })
+	@ApiPropertyOptional({ type: () => String })
 	@Column({ nullable: true })
 	version?: string;
 
-	@ApiProperty({ type: () => String })
+	@ApiPropertyOptional({ type: () => String })
 	@Column({ nullable: true })
 	docUrl?: string;
 
-	@ApiProperty({ type: () => Boolean, default: false })
+	@ApiPropertyOptional({ type: () => String })
+	@Column({ nullable: true })
+	navigationUrl?: string;
+
+	@ApiPropertyOptional({ type: () => Boolean, default: false })
 	@Column({ default: false })
 	isFreeTrial?: boolean;
 
-	@ApiProperty({ type: () => Number })
+	@ApiPropertyOptional({ type: () => Number })
 	@IsNumber()
 	@Column({
 		nullable: true,
@@ -45,23 +52,29 @@ export class Integration extends BaseEntity implements IIntegration {
 	})
 	freeTrialPeriod?: number;
 
-	@ApiProperty({ type: () => Number })
+	@ApiPropertyOptional({ type: () => Number })
 	@Column({ nullable: true })
 	order?: number;
 
+	fullImgUrl?: string;
+
 	/*
-    |--------------------------------------------------------------------------
-    | @ManyToMany 
-    |--------------------------------------------------------------------------
-    */
-	@ApiProperty({ type: () => IntegrationType, isArray: true })
-	@ManyToMany(() => IntegrationType, (integrationType) => integrationType.integrations)
+	|--------------------------------------------------------------------------
+	| @ManyToMany
+	|--------------------------------------------------------------------------
+	*/
+	/**
+	 *
+	 */
+	@ManyToMany(() => IntegrationType, (it) => it.integrations)
 	@JoinTable({
 		name: 'integration_integration_type'
 	})
 	integrationTypes?: IIntegrationType[];
 
-	@ApiProperty({ type: () => Tag, isArray: true })
+	/**
+	 *
+	 */
 	@ManyToMany(() => Tag, (tag) => tag.integrations, {
 		onUpdate: 'CASCADE',
 		onDelete: 'CASCADE'

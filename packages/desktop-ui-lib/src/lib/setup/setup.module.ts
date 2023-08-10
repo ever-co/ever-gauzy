@@ -22,6 +22,7 @@ import {
 } from '@nebular/theme';
 import { FormsModule } from '@angular/forms';
 import { NbEvaIconsModule } from '@nebular/eva-icons';
+import { DesktopDirectiveModule } from '../directives/desktop-directive.module';
 
 @NgModule({
 	declarations: [SetupComponent],
@@ -44,6 +45,7 @@ import { NbEvaIconsModule } from '@nebular/eva-icons';
 		NbProgressBarModule,
 		NbFormFieldModule,
 		NbDialogModule,
+		DesktopDirectiveModule
 	],
 	exports: [SetupComponent],
 	providers: [SetupService, NbDialogService],

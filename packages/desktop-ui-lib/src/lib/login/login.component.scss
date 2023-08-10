@@ -402,6 +402,17 @@
 
 :host {
 	@include input-fields-color;
+	$input-background-color: var(--gauzy-card-1);
+	$height: 42px;
+
+	::ng-deep input,
+	::ng-deep nb-select.appearance-outline.status-basic .select-button,
+	::ng-deep .ng-select .ng-select-container {
+		background-color: $input-background-color !important;
+		border: none;
+		height: $height !important;
+		min-height: unset;
+	}
 }
 
 ::ng-deep .remember-me .text {

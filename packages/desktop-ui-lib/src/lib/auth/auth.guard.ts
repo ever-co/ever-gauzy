@@ -38,8 +38,8 @@ export class AuthGuard implements CanActivate {
 			// not logged in so logout from desktop timer
 			if (this.electronService.isElectron) {
 				try {
-					this.electronService.ipcRenderer.send('logout');
-				} catch (error) {}
+					this.electronService.ipcRenderer.send('logout_desktop');
+				} catch (error) { }
 			}
 
 			// logout and clear local store

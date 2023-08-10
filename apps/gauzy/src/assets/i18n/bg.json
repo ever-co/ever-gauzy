@@ -415,7 +415,15 @@
 			"DEFAULT": "Default Organization",
 			"INVITATION_EXPIRATION": "Invitation Expiration",
 			"PERIOD": "Period",
-			"REGISTER_AS_EMPLOYEE_OF_ORGANIZATION": "Do you want to register as Employee of Organization?"
+			"REGISTER_AS_EMPLOYEE_OF_ORGANIZATION": "Do you want to register as Employee of Organization?",
+			"COVER_LETTER": "Cover Letter",
+			"DETAILS": "Details",
+			"HOURLY_RATE": "Hourly Rate",
+			"ATTACHMENTS": "Attachments",
+			"UPWORK_ORGANIZATION_ID": "Upwork Organization ID",
+			"UPWORK_ORGANIZATION_NAME": "Upwork Organization Name",
+			"UPWORK_ID": "Upwork ID",
+			"LINKEDIN_ID": "LinkedIn ID"
 		},
 		"PLACEHOLDERS": {
 			"NAME": "Име",
@@ -591,7 +599,12 @@
 			"INVITATION_EXPIRATION": "Invitation Expiration",
 			"ADD_PROJECT": "Add project",
 			"ADD_EMPLOYEE": "Add employee",
-			"ADD_ORGANIZATION": "Add organization"
+			"ADD_ORGANIZATION": "Add organization",
+			"DRAG_DROP_FILE": "Drag and Drop the file here",
+			"UPWORK_ORGANIZATION_ID": "Upwork Organization ID",
+			"UPWORK_ORGANIZATION_NAME": "Upwork Organization Name",
+			"UPWORK_ID": "Upwork ID",
+			"LINKEDIN_ID": "LinkedIn ID"
 		},
 		"RATES": {
 			"DEFAULT_RATE": "Норма по подразбиране",
@@ -639,6 +652,11 @@
 			"ENABLED": "enabled",
 			"DISABLED": "disabled",
 			"WAIT_UNTIL_RELOAD": "Please wait till application reloads"
+		},
+		"ERROR": {
+			"PROJECT_NAME": "Името на проекта е задължително.",
+			"PROJECT_URL":"URL адресът на проекта е невалиден.",
+			"OPEN_SOURCE_PROJECT_URL": "URL адресът на проекта с отворен код е невалиден."
 		}
 	},
 	"POP_UPS": {
@@ -1097,7 +1115,7 @@
 			"MANUAL_ACTIVITY": "No records found. Please select date range, employee or project.",
 			"AMOUNT_OWED": "No Amount Owed",
 			"WEEKLY_TIME_AND_ACTIVITY": "You have not any tracked time and activity yet for these day's.",
-			"DAILY_TIME_AND_ACTIVITY": "There is no time and activity tracked yet for this day. Please use the <a href=\"https://web.gauzy.co/downloads\" rel=\"noopener\" target=\"_blank\">Gauzy Desktop Timer App</a>.",
+			"DAILY_TIME_AND_ACTIVITY": "There is no time and activity tracked yet for this day. Please use the <a href={{downloadURL}} rel=\"noopener\" target=\"_blank\">Gauzy Desktop Timer App</a>.",
 			"PROJECT_BUDGET": "You have not created any project with budget.",
 			"CLIENT_BUDGET": "You have not created any client with budget."
 		}
@@ -1838,7 +1856,26 @@
 				"INACTIVITY_TIME_LIMIT_INFO": "Inactivity tracking timeout (i.e., how many seconds of inactivity is allowed)",
 				"ACTIVITY_PROOF_DURATION": "Activity proof duration",
 				"ACTIVITY_PROOF_DURATION_INFO": "Duration of activity proof countdown dialog, it represent an amount of seconds given to prove activity",
-				"ALLOW_TRACK_INACTIVITY": "Allow to track inactivity"
+                "ALLOW_TRACK_INACTIVITY": "Allow to track inactivity",
+                "PROOF_OF_COMPLETION": "Доказателство за завършване",
+                "PROOF_OF_COMPLETION_TYPE": "Тип доказателство за завършване",
+                "LINKED_ISSUE": "Свързан проблем",
+                "COMMENT": "Коментар",
+                "HISTORY": "История",
+                "ACCEPTANCE_CRITERIA": "Критерии за приемане",
+                "DRAFT_ISSUE": "Проблеми с чернови",
+                "PROOF_OF_COMPLETION_TYPE_DROPDOWN": {
+                    "NONE": "Няма",
+                    "PRIVATE": "Частен",
+                    "PUBLIC": "Обществено"
+                },
+                "NOTIFY_TASK_LEFT": "Известие за оставена задача",
+                "NOTIFY_TASK_LEFT_PERIOD": "Период на задачата за известяване (в дни)",
+                "AUTO_CLOSE_ISSUE": "Автоматично затваряне на проблем",
+                "AUTO_CLOSE_ISSUE_PERIOD": "Период на издаване на автоматично затваряне (в дни)",
+                "AUTO_ARCHIVE_ISSUE": "Проблем с автоматичното архивиране",
+                "AUTO_ARCHIVE_ISSUE_PERIOD": "Период на издаване на автоматично архивиране (в дни)",
+                "AUTO_STATUS": "Автоматично състояние"
 			},
 			"TEAMS_PAGE": {
 				"MANAGERS": "Managers",
@@ -3316,6 +3353,7 @@
 			"ORGANIZATION_LOCATION_UPDATED": "'{{ name }}' organization location was changed",
 			"ORGANIZATION_INFO_UPDATED": "'{{ name }}' organization main info was changed",
 			"ORGANIZATION_SETTINGS_UPDATED": "'{{ name }}' organization settings was changed",
+            "ORGANIZATION_TASK_SETTINGS_UPDATE_ERROR": "Възникна грешка при опит за актуализиране на настройката на задачата на организацията.",
 			"SETTINGS_SAVED": "Settings saved successfully",
 			"KEY_RESULTS_CREATED": "Key Results Created",
 			"INVITE_EMAIL_DELETED": "{{ name }} has been deleted.",

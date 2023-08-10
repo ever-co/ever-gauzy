@@ -22,16 +22,18 @@ export enum OrganizationPermissionsEnum {
 	ALLOW_MANUAL_TIME = 'ALLOW_MANUAL_TIME',
 	ALLOW_MODIFY_TIME = 'ALLOW_MODIFY_TIME',
 	ALLOW_DELETE_TIME = 'ALLOW_DELETE_TIME',
-	ALLOW_FUTURE_DATE = "FUTURE_DATE_ALLOWED"
+	ALLOW_FUTURE_DATE = 'FUTURE_DATE_ALLOWED',
 }
 
 export enum ListsInputTypeEnum {
 	DEPARTMENTS = 'DEPARTMENTS',
 	POSITIONS = 'POSITIONS',
-	VENDORS = 'VENDORS'
+	VENDORS = 'VENDORS',
 }
 
-export interface IOrganization extends IBasePerTenantEntityModel, IRelationalImageAsset {
+export interface IOrganization
+	extends IBasePerTenantEntityModel,
+		IRelationalImageAsset {
 	name: string;
 	isDefault: boolean;
 	profile_link: string;
@@ -110,8 +112,9 @@ export interface IOrganization extends IBasePerTenantEntityModel, IRelationalIma
 	activityProofDuration?: number;
 	isRemoveIdleTime?: boolean;
 	allowScreenshotCapture?: boolean;
-	/** Upwork Organization ID For Gauzy AI*/
+	/** Upwork Organization For Gauzy AI*/
 	upworkOrganizationId?: string;
+	upworkOrganizationName?: string;
 }
 
 export interface IOrganizationFindInput extends IBasePerTenantEntityModel {
@@ -127,7 +130,9 @@ export interface IOrganizationFindInput extends IBasePerTenantEntityModel {
 	tags?: ITag[];
 }
 
-export interface IOrganizationCreateInput extends IContact, IRegisterAsEmployee {
+export interface IOrganizationCreateInput
+	extends IContact,
+		IRegisterAsEmployee {
 	name: string;
 	isDefault?: boolean;
 	profile_link?: string;
@@ -171,8 +176,9 @@ export interface IOrganizationCreateInput extends IContact, IRegisterAsEmployee 
 	isImporting?: boolean;
 	sourceId?: string;
 	userOrganizationSourceId?: string;
-	/** Upwork Organization ID For Gauzy AI*/
+	/** Upwork Organization For Gauzy AI*/
 	upworkOrganizationId?: string;
+	upworkOrganizationName?: string;
 }
 
 export interface IOrganizationUpdateInput extends IOrganizationCreateInput {
@@ -189,37 +195,37 @@ export enum OrganizationSelectInput {
 	createdAt = 'createdAt',
 	updatedAt = 'updatedAt',
 	isActive = 'isActive',
-	tags = 'tags'
+	tags = 'tags',
 }
 
 export enum RegionsEnum {
 	'EN' = 'English (United States)',
 	'BG' = 'Bulgarian (Bulgaria)',
 	'HE' = 'Hebrew (Israel)',
-	'RU' = 'Rusian (Russia)'
+	'RU' = 'Russian (Russia)',
 }
 
 export enum DefaultValueDateTypeEnum {
 	TODAY = 'TODAY',
 	END_OF_MONTH = 'END_OF_MONTH',
-	START_OF_MONTH = 'START_OF_MONTH'
+	START_OF_MONTH = 'START_OF_MONTH',
 }
 
 export enum ProjectBillingEnum {
 	RATE = 'RATE',
 	FLAT_FEE = 'FLAT_FEE',
-	MILESTONES = 'MILESTONES'
+	MILESTONES = 'MILESTONES',
 }
 
 export enum AlignmentOptions {
 	LEFT = 'LEFT',
 	RIGHT = 'RIGHT',
-	CENTER = 'CENTER'
+	CENTER = 'CENTER',
 }
 
 export enum CurrencyPosition {
 	LEFT = 'LEFT',
-	RIGHT = 'RIGHT'
+	RIGHT = 'RIGHT',
 }
 
 export enum WeekDaysEnum {
@@ -229,24 +235,24 @@ export enum WeekDaysEnum {
 	THURSDAY = 'THURSDAY',
 	FRIDAY = 'FRIDAY',
 	SATURDAY = 'SATURDAY',
-	SUNDAY = 'SUNDAY'
+	SUNDAY = 'SUNDAY',
 }
 
 export enum BonusTypeEnum {
 	PROFIT_BASED_BONUS = 'PROFIT_BASED_BONUS',
-	REVENUE_BASED_BONUS = 'REVENUE_BASED_BONUS'
+	REVENUE_BASED_BONUS = 'REVENUE_BASED_BONUS',
 }
 
 export enum ClientFocusEnum {
 	VERY_SMALL_BUSINESSES = 'Very Small Businesses',
 	SMALL_BUSINESSES = 'Small Businesses',
 	MEDIUM_BUSINESSES = 'Medium Businesses',
-	LARGE_BUSINESSES = 'Large Businesses'
+	LARGE_BUSINESSES = 'Large Businesses',
 }
 
 export enum ProjectOwnerEnum {
 	CLIENT = 'CLIENT',
-	INTERNAL = 'INTERNAL'
+	INTERNAL = 'INTERNAL',
 }
 
 export enum MinimumProjectSizeEnum {
@@ -255,7 +261,7 @@ export enum MinimumProjectSizeEnum {
 	TEN_THOUSAND = '10000+',
 	TWENTY_FIVE_THOUSAND = '25000+',
 	FIFTY_THOUSAND = '50000+',
-	ONE_HUNDRED_THOUSAND = '100000+'
+	ONE_HUNDRED_THOUSAND = '100000+',
 }
 
 export const DEFAULT_PROFIT_BASED_BONUS = 75;
@@ -270,7 +276,7 @@ export interface IOrganizationStoreState {
 export enum CrudActionEnum {
 	CREATED = 'CREATED',
 	UPDATED = 'UPDATED',
-	DELETED = 'DELETED'
+	DELETED = 'DELETED',
 }
 
 export const DEFAULT_DATE_FORMATS: string[] = ['L', 'LL', 'dddd, LL'];

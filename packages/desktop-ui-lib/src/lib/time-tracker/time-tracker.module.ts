@@ -35,6 +35,8 @@ import { OrganizationSelectorComponent } from './organization-selector/organizat
 import { ErrorHandlerService, NativeNotificationService, Store, ToastrNotificationService } from '../services';
 import { ElectronService, LoggerService } from '../electron/services';
 import { TimeTrackerStatusModule } from './time-tracker-status/time-tracker-status.module';
+import { TimeSlotQueueService } from '../offline-sync';
+import { ImageViewerModule } from '../image-viewer/image-viewer.module';
 
 @NgModule({
 	declarations: [
@@ -69,7 +71,8 @@ import { TimeTrackerStatusModule } from './time-tracker-status/time-tracker-stat
 		NbBadgeModule,
 		PaginationModule,
 		NbTooltipModule,
-		TimeTrackerStatusModule
+		TimeTrackerStatusModule,
+		ImageViewerModule
 	],
 	providers: [
 		NbSidebarService,
@@ -82,7 +85,8 @@ import { TimeTrackerStatusModule } from './time-tracker-status/time-tracker-stat
 		ToastrNotificationService,
 		ElectronService,
 		LoggerService,
-		Store
+		Store,
+		TimeSlotQueueService
 	],
 	exports: [TimeTrackerComponent]
 })

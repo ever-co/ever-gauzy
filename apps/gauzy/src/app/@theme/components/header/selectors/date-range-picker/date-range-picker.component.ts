@@ -22,6 +22,7 @@ import { Next, Previous } from './arrow/strategies';
 import { TranslationBaseComponent } from './../../../../../@shared/language-base';
 import { DateRangeKeyEnum, dayOfWeekAsString } from './date-range-picker.setting';
 import { TimesheetFilterService } from './../../../../../@shared/timesheet/timesheet-filter.service';
+import { ActivatedRoute, Router } from '@angular/router';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -183,7 +184,9 @@ export class DateRangePickerComponent extends TranslationBaseComponent implement
 		public readonly translateService: TranslateService,
 		private readonly organizationService: OrganizationsService,
 		private readonly dateRangePickerBuilderService: DateRangePickerBuilderService,
-		private readonly timesheetFilterService: TimesheetFilterService
+		private readonly timesheetFilterService: TimesheetFilterService,
+		private router: Router,
+		private activatedRoute: ActivatedRoute
 	) {
 		super(translateService);
 	}
@@ -257,6 +260,15 @@ export class DateRangePickerComponent extends TranslationBaseComponent implement
 				distinctUntilChange(),
 				tap((range: IDateRangePicker) => {
 					this.dateRangePickerBuilderService.selectedDateRange = range;
+
+					this.router.navigate([], {
+						relativeTo: this.activatedRoute,
+						queryParams: {
+							date: moment(range.startDate).format('MM-DD-YYYY'),
+							date_end: moment(range.endDate).format('MM-DD-YYYY'),
+						},
+						queryParamsHandling: 'merge',
+					});
 				}),
 				untilDestroyed(this)
 			)
@@ -518,5 +530,5 @@ export class DateRangePickerComponent extends TranslationBaseComponent implement
 		};
 	}
 
-	ngOnDestroy(): void {}
+	ngOnDestroy(): void { }
 }

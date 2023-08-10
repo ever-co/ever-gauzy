@@ -463,13 +463,11 @@
 														" status="basic" />
 													</div>
 													<div *ngIf="!isServer && !config?.isLocalServer" class="col-5">
-														<button nbButton status="basic" class="check-db" [nbSpinner]="(isCheckHost$ | async)?.isLoading" nbSpinnerSize="tiny" nbSpinner
+														<button nbButton status="basic" class="check-db"
 															(click)="checkHostConnectivity()" [disabled]="appSetting?.timerStarted">
-															<ng-container *ngIf="!(isCheckHost$ | async)?.isLoading">
-																<nb-icon [status]="(isCheckHost$ | async)?.status ? 'success': 'danger'"
+																<nb-icon *gauzySpinnerButton="(isCheckHost$ | async)?.isLoading" [status]="(isCheckHost$ | async)?.status ? 'success': 'danger'"
 																	[icon]="(isCheckHost$ | async)?.status ? 'checkmark-circle-2-outline': 'close-circle-outline'"></nb-icon>
 																Check
-															</ng-container>
 														</button>
 													</div>
 													<div *ngIf="!(isCheckHost$ | async)?.isHidden" class="col-7 warn-container">
@@ -509,13 +507,11 @@
 												</div>
 												<div class="row">
 													<div class="col-5">
-														<button nbButton status="basic" class="check-db" [nbSpinner]="(isCheckDatabase$ | async)" nbSpinnerSize="tiny" nbSpinner
+														<button nbButton status="basic" class="check-db"
 															(click)="checkDatabaseConnectivity()" [disabled]="appSetting?.timerStarted">
-															<ng-container *ngIf="!(isCheckDatabase$ | async)">
-																<nb-icon [status]="(isConnectedDatabase$ | async)?.status ? 'success': 'danger'"
+																<nb-icon *gauzySpinnerButton="(isCheckDatabase$ | async)" [status]="(isConnectedDatabase$ | async)?.status ? 'success': 'danger'"
 																	[icon]="(isConnectedDatabase$ | async)?.status ? 'checkmark-circle-2-outline': 'close-circle-outline'"></nb-icon>
 																Check
-															</ng-container>
 														</button>
 													</div>
 													<div *ngIf="!(isHidden$ | async)" class="col-7 warn-container">
@@ -699,6 +695,7 @@
 		<button nbButton status="primary" (click)="restartApp()"
 			[disabled]="(restartDisable$ | async) || appSetting?.timerStarted">
 			{{ isServer ? 'Save' : 'Save & Restart' }}
+			<nb-icon [icon]="isServer ? 'save': 'refresh-outline'" *gauzySpinnerButton="(isRestart$ | async)"></nb-icon>
 		</button>
 	</div>
 </ng-template>
