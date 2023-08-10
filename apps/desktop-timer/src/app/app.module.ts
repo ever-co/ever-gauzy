@@ -46,7 +46,8 @@ import {
 	ServerDownModule,
 	TimeoutInterceptor,
 	DEFAULT_TIMEOUT,
-	HttpLoaderFactory
+	HttpLoaderFactory,
+	LanguageInterceptor
 } from '@gauzy/desktop-ui-lib';
 import { NbCardModule, NbButtonModule } from '@nebular/theme';
 import { NgSelectModule } from '@ng-select/ng-select';
@@ -81,6 +82,7 @@ import * as Sentry from '@sentry/angular';
 		SplashScreenModule,
 		ServerDownModule,
 		TranslateModule.forRoot({
+			extend: true,
 			loader: {
 				provide: TranslateLoader,
 				useFactory: HttpLoaderFactory,
@@ -115,6 +117,11 @@ import * as Sentry from '@sentry/angular';
 		{
 			provide: HTTP_INTERCEPTORS,
 			useClass: APIInterceptor,
+			multi: true
+		},
+		{
+			provide: HTTP_INTERCEPTORS,
+			useClass: LanguageInterceptor,
 			multi: true
 		},
 		{
