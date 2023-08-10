@@ -40,6 +40,7 @@ jobs:
                       ghcr.io/ever-co/gauzy-api-stage:latest
                       everco/gauzy-api-stage:latest
                       registry.digitalocean.com/ever/gauzy-api-stage:latest
+                      ${{ secrets.CW_DOCKER_REGISTRY }}/ever-co/gauzy-api-stage:latest
                   cache-from: type=registry,ref=everco/gauzy-api-stage:latest
                   cache-to: type=inline
 
@@ -125,6 +126,7 @@ jobs:
                       ghcr.io/ever-co/gauzy-webapp-stage:latest
                       everco/gauzy-webapp-stage:latest
                       registry.digitalocean.com/ever/gauzy-webapp-stage:latest
+                      ${{ secrets.CW_DOCKER_REGISTRY }}/ever-co/gauzy-webapp-stage:latest
                   cache-from: type=registry,ref=everco/gauzy-webapp-stage:latest
                   cache-to: type=inline
 
