@@ -1,7 +1,7 @@
 
 import { MigrationInterface, QueryRunner } from "typeorm";
 import { getConfig } from "@gauzy/config";
-import { copyEverIcons } from "./../../core/seeds/utils";
+import { copyAssets } from "./../../core/seeds/utils";
 import { DEFAULT_GLOBAL_PRIORITIES } from "./../../tasks/priorities/default-global-priorities";
 import { DEFAULT_GLOBAL_SIZES } from "./../../tasks/sizes/default-global-sizes";
 import { DEFAULT_GLOBAL_STATUSES } from "./../../tasks/statuses/default-global-statuses";
@@ -41,7 +41,7 @@ export class SeedTaskPriorityAndSizeAndStatusIcon1676870424741 implements Migrat
 
                 const query = `UPDATE "task_status" SET "icon" = '${filepath}', "color" = '${color}' WHERE ("name" = $1 AND "value" = $2) AND ("tenantId" IS NULL AND "organizationId" IS NULL)`;
                 await queryRunner.connection.manager.query(query, [name, value]);
-                copyEverIcons(status.icon, this.config);
+                copyAssets(status.icon, this.config);
             }
         } catch (error) {
             // since we have errors let's rollback changes we made
@@ -61,7 +61,7 @@ export class SeedTaskPriorityAndSizeAndStatusIcon1676870424741 implements Migrat
 
                 const query = `UPDATE "task_priority" SET "icon" = '${filepath}', "color" = '${color}' WHERE ("name" = $1 AND "value" = $2) AND ("tenantId" IS NULL AND "organizationId" IS NULL)`;
                 await queryRunner.connection.manager.query(query, [name, value]);
-                copyEverIcons(priority.icon, this.config);
+                copyAssets(priority.icon, this.config);
             }
         } catch (error) {
             // since we have errors let's rollback changes we made
@@ -81,7 +81,7 @@ export class SeedTaskPriorityAndSizeAndStatusIcon1676870424741 implements Migrat
 
                 const query = `UPDATE "task_size" SET "icon" = '${filepath}', "color" = '${color}' WHERE ("name" = $1 AND "value" = $2) AND ("tenantId" IS NULL AND "organizationId" IS NULL)`;
                 await queryRunner.connection.manager.query(query, [name, value]);
-                copyEverIcons(size.icon, this.config);
+                copyAssets(size.icon, this.config);
             }
         } catch (error) {
             // since we have errors let's rollback changes we made

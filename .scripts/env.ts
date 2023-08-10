@@ -23,6 +23,7 @@ export type Env = Readonly<{
 	DESKTOP_APP_DOWNLOAD_LINK_LINUX: string;
 	MOBILE_APP_DOWNLOAD_LINK: string;
 	EXTENSION_DOWNLOAD_LINK: string;
+
 	SENTRY_DSN: string;
 	SENTRY_TRACES_SAMPLE_RATE: string;
 

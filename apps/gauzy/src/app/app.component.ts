@@ -11,7 +11,7 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { IDateRangePicker, ILanguage, ISelectedEmployee, LanguagesEnum } from '@gauzy/contracts';
 import { isNotEmpty } from '@gauzy/common-angular';
 import { filter, map, mergeMap, tap } from 'rxjs/operators';
-import { of, switchMap } from 'rxjs';
+import { switchMap } from 'rxjs';
 import { AnalyticsService } from './@core/utils/analytics.service';
 import * as _ from 'underscore';
 import {

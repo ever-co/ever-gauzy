@@ -28,7 +28,7 @@ export class DesktopActiveWindow extends EventEmitter {
 		super();
 		this._pollingTimerId = null;
 		this._currentApplication = new CurrentApplication(
-			moment(new Date()).format(),
+			moment(new Date()).utc().toISOString(),
 			0,
 			new DataApplication(null, null, null, null)
 		);
@@ -47,6 +47,9 @@ export class DesktopActiveWindow extends EventEmitter {
 	 */
 	public start(): boolean {
 		if (this.active) return false;
+		this._currentApplication.timestamp = moment(new Date())
+			.utc()
+			.toISOString();
 		this._pollingTimerId = setInterval(async () => {
 			if (this.isActivityWatch) return;
 			await this.getWindow();
@@ -78,7 +81,7 @@ export class DesktopActiveWindow extends EventEmitter {
 		this._currentApplication.data.name = window.owner.name;
 		this._currentApplication.data.url = window.url;
 		this.emit('updated', this._currentApplication.toObject());
-		this._currentApplication.timestamp = now.format();
+		this._currentApplication.timestamp = now.utc().toISOString();
 	}
 
 	/**
@@ -112,5 +115,9 @@ export class DesktopActiveWindow extends EventEmitter {
 		return (
 			project && project.aw && project.aw.isAw && setting.awIsConnected
 		);
+	}
+
+	public async updateActivities(): Promise<void> {
+		await this.getWindow(true);
 	}
 }

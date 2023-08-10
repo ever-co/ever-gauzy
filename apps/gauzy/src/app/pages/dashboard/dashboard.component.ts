@@ -53,24 +53,27 @@ export class DashboardComponent extends TranslationBaseComponent
 					title: this.getTranslation('ORGANIZATIONS_PAGE.TEAMS'),
 					icon: 'people-outline',
 					responsive: true,
-					route: this.getRoute('teams')
-				}
+					route: this.getRoute('teams'),
+					queryParamsHandling: 'merge'
+				} as NbRouteTab
 			] : []),
 			...(this.store.hasAllPermissions(PermissionsEnum.ADMIN_DASHBOARD_VIEW, PermissionsEnum.PROJECT_MANAGEMENT_DASHBOARD) ? [
 				{
 					title: this.getTranslation('DASHBOARD_PAGE.PROJECT_MANAGEMENT'),
 					icon: 'browser-outline',
 					responsive: true,
-					route: this.getRoute('project-management')
-				}
+					route: this.getRoute('project-management'),
+					queryParamsHandling: 'merge'
+				} as NbRouteTab
 			] : []),
 			...(this.store.hasAllPermissions(PermissionsEnum.ADMIN_DASHBOARD_VIEW, PermissionsEnum.TIME_TRACKING_DASHBOARD) ? [
 				{
 					title: this.getTranslation('DASHBOARD_PAGE.TIME_TRACKING'),
 					icon: 'clock-outline',
 					responsive: true,
-					route: this.getRoute('time-tracking')
-				}
+					route: this.getRoute('time-tracking'),
+					queryParamsHandling: 'merge'
+				} as NbRouteTab
 			] : []),
 			...(this.store.hasAllPermissions(PermissionsEnum.ADMIN_DASHBOARD_VIEW, PermissionsEnum.ACCOUNTING_DASHBOARD) ? [
 				...(!this.selectedEmployee || !this.selectedEmployee.id ? [
@@ -78,8 +81,9 @@ export class DashboardComponent extends TranslationBaseComponent
 						title: this.getTranslation('DASHBOARD_PAGE.ACCOUNTING'),
 						icon: 'credit-card-outline',
 						responsive: true,
-						route: this.getRoute('accounting')
-					}
+						route: this.getRoute('accounting'),
+						queryParamsHandling: 'merge'
+					} as NbRouteTab
 				] : [])
 			] : []),
 			...(this.store.hasAllPermissions(PermissionsEnum.ADMIN_DASHBOARD_VIEW, PermissionsEnum.HUMAN_RESOURCE_DASHBOARD) ? [
@@ -88,8 +92,9 @@ export class DashboardComponent extends TranslationBaseComponent
 						title: this.getTranslation('DASHBOARD_PAGE.HUMAN_RESOURCES'),
 						icon: 'person-outline',
 						responsive: true,
-						route: this.getRoute('hr')
-					}
+						route: this.getRoute('hr'),
+						queryParamsHandling: 'merge'
+					} as NbRouteTab
 				] : [])
 			] : []),
 		];
@@ -105,5 +110,5 @@ export class DashboardComponent extends TranslationBaseComponent
 			.subscribe();
 	}
 
-	ngOnDestroy() {}
+	ngOnDestroy() { }
 }
