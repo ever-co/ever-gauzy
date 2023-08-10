@@ -4,7 +4,6 @@ export interface Environment {
 	API_BASE_URL: string;
 	CLIENT_BASE_URL: string;
 
-	PLATFORM_WEBSITE_URL: string;
 	PLATFORM_WEBSITE_DOWNLOAD_URL: string;
 	DESKTOP_APP_DOWNLOAD_LINK_APPLE: string;
 	DESKTOP_APP_DOWNLOAD_LINK_WINDOWS: string;
