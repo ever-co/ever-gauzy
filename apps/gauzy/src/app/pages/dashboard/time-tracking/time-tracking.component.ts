@@ -300,7 +300,7 @@ export class TimeTrackingComponent extends TranslationBaseComponent
 			this.autoRefresh$.unsubscribe();
 		}
 		if (value) {
-			this.autoRefresh$ = timer(0, 60000 * 2)
+			this.autoRefresh$ = timer(0, 60000 * 5)
 				.pipe(
 					filter((timer) => !!timer),
 					tap(() => this.logs$.next(true)),

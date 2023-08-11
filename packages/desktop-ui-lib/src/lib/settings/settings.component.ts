@@ -5,17 +5,21 @@ import {
 	ViewChild,
 	ElementRef,
 	NgZone,
-	AfterViewInit
+	AfterViewInit,
+	Optional
 } from '@angular/core';
 import { TimeTrackerService } from '../time-tracker/time-tracker.service';
 import { NbDialogService, NbToastrService } from '@nebular/theme';
 import { ElectronService } from '../electron/services';
-import { BehaviorSubject, Observable, filter, tap } from 'rxjs';
+import { BehaviorSubject, Observable, filter, tap, firstValueFrom } from 'rxjs';
 import { AboutComponent } from '../dialogs/about/about.component';
 import { SetupService } from '../setup/setup.service';
 import * as moment from 'moment';
 import { ToastrNotificationService } from '../services';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { AuthStrategy } from '../auth';
 
+@UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ngx-settings',
 	templateUrl: './settings.component.html',
@@ -49,7 +53,7 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 		this._logContents$.next(logs);
 	}
 	logIsOpen = false;
-	isRestart = false;
+	private _isRestart$: BehaviorSubject<boolean>;
 
 	appName: string = this.electronService.remote.app.getName();
 	menus = [];
@@ -380,7 +384,7 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 	autoLaunch = null;
 	minimizeOnStartup = null;
 	authSetting = null;
-	currentUser$: BehaviorSubject<any> = new BehaviorSubject({});
+	currentUser$: BehaviorSubject<any> = new BehaviorSubject(null);
 	serverTypes = {
 		integrated: 'Integrated',
 		custom: 'Custom',
@@ -427,7 +431,9 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 		private toastrService: NbToastrService,
 		private _dialogService: NbDialogService,
 		private _setupService: SetupService,
-		private _notifier: ToastrNotificationService
+		private _notifier: ToastrNotificationService,
+		@Optional()
+		private _authStrategy: AuthStrategy
 	) {
 		this._loading$ = new BehaviorSubject(false);
 		this._automaticUpdate$ = new BehaviorSubject(false);
@@ -455,6 +461,7 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 		this._restartDisable$ = new BehaviorSubject(false);
 		this._isHidden$ = new BehaviorSubject(true);
 		this._simpleScreenshotNotification$ = new BehaviorSubject(false);
+		this._isRestart$ = new BehaviorSubject(false);
 	}
 
 	ngOnInit(): void {
@@ -464,14 +471,24 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 			.pipe(
 				tap(({ status }) => this._restartDisable$.next(!status)),
 				filter(() => !this._isCheckHost.status),
-				tap(() => this._restartDisable$.next(true))
+				tap(() => this._restartDisable$.next(true)),
+				untilDestroyed(this)
 			)
 			.subscribe();
 		this.isCheckHost$
 			.pipe(
 				tap(({ status }) => this._restartDisable$.next(!status)),
 				filter(() => !this._isConnectedDatabase.status),
-				tap(() => this._restartDisable$.next(true))
+				tap(() => this._restartDisable$.next(true)),
+				untilDestroyed(this)
+			)
+			.subscribe();
+		this.isRestart$
+			.pipe(
+				tap((isRestart: boolean) =>
+					this._restartDisable$.next(isRestart)
+				),
+				untilDestroyed(this)
 			)
 			.subscribe();
 	}
@@ -516,18 +533,18 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 				});
 				this._simpleScreenshotNotification$.next(setting?.simpleScreenshotNotification);
 				this.selectedPeriod = setting?.timer?.updatePeriod;
-				if (!this.isServer) {
+				if (this.isDesktopTimer) {
 					await this.getUserDetails();
 				}
 				this.menus = this.isServer
 					? ['Update', 'Advanced Setting', 'About']
 					: [
-							...(auth && auth.allowScreenshotCapture ? ['Screen Capture'] : []),
-							'Timer',
-							'Update',
-							'Advanced Setting',
-							'About'
-					  ];
+						...(auth && auth.allowScreenshotCapture ? ['Screen Capture'] : []),
+						'Timer',
+						'Update',
+						'Advanced Setting',
+						'About'
+					];
 				const lastMenu =
 					this._selectedMenu && this.menus.includes(this._selectedMenu) ? this._selectedMenu : this.menus[0];
 				this._selectedMenu$.next(lastMenu);
@@ -788,10 +805,11 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 	}
 
 	public async restartApp(): Promise<void> {
-		if (this.isServer && this.serverIsRunning) {
-			this._restartDisable$.next(true);
-		} else {
-			await this.logout();
+		this._isRestart$.next(true);
+		if (!this.isServer && !this.authSetting.isLogout) {
+			await firstValueFrom(this._authStrategy.logout());
+			this.currentUser$.next(null);
+			localStorage.clear();
 		}
 		const thConfig = {};
 		this.thirdPartyConfig.forEach((item) => {
@@ -805,7 +823,6 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 		if (this.config.timeTrackerWindow) newConfig.awHost = `http://localhost:${this.config.awPort}`;
 		this.electronService.ipcRenderer.send('restart_app', newConfig);
 		this.electronService.ipcRenderer.send('save_additional_setting', thConfig);
-		if (this.isServer) this.isRestart = false;
 	}
 
 	portChange(val, type) {
@@ -972,7 +989,7 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 				break;
 		}
 		this.toastrService.show(message, `Success`, { status: arg.status });
-		this.isRestart = false;
+		this._isRestart$.next(false);
 	}
 
 	logBoxChange(e) {
@@ -1190,5 +1207,9 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 
 	public get simpleScreenshotNotification(): boolean {
 		return this._simpleScreenshotNotification$.getValue();
+	}
+
+	public get isRestart$(): Observable<boolean> {
+		return this._isRestart$.asObservable();
 	}
 }

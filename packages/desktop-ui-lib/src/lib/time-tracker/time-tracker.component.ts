@@ -24,6 +24,7 @@ import {
 	asapScheduler,
 	BehaviorSubject,
 	filter,
+	firstValueFrom,
 	from,
 	Observable,
 	Subject,
@@ -52,6 +53,7 @@ import { TimeTrackerStatusService } from './time-tracker-status/time-tracker-sta
 import { IRemoteTimer } from './time-tracker-status/interfaces';
 import { InterruptedSequenceQueue, ISequence, SequenceQueue, TimeSlotQueueService, ViewQueueStateUpdater } from '../offline-sync';
 import { ImageViewerService } from '../image-viewer/image-viewer.service';
+import { AuthStrategy } from '../auth';
 
 enum TimerStartMode {
 	MANUAL = 'manual',
@@ -235,7 +237,8 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 		private _loggerService: LoggerService,
 		private _timeTrackerStatus: TimeTrackerStatusService,
 		private _timeSlotQueueService: TimeSlotQueueService,
-		private _imageViewerService: ImageViewerService
+		private _imageViewerService: ImageViewerService,
+		private _authStrategy: AuthStrategy
 	) {
 		this.iconLibraries.registerFontPack('font-awesome', {
 			packClass: 'fas',
@@ -615,8 +618,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 					await this.stopTimer();
 				}
 				if (!this._isSpecialLogout) {
-					localStorage.clear();
-					event.sender.send('final_logout', this._isRestartAndUpdate);
+					await this.logout();
 				}
 			})
 		);
@@ -1669,11 +1671,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 
 		if (this._isSpecialLogout) {
 			this._isSpecialLogout = false;
-			localStorage.clear();
-			this.electronService.ipcRenderer.send(
-				'final_logout',
-				this._isRestartAndUpdate
-			);
+			await this.logout();
 		}
 
 		if (this.quitApp) {
@@ -2115,5 +2113,15 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 
 	public get isRemoteTimer(): boolean {
 		return this._startMode === TimerStartMode.REMOTE;
+	}
+
+	public async logout() {
+		await firstValueFrom(this._authStrategy.logout());
+		this.electronService.ipcRenderer.send(
+			this._isRestartAndUpdate
+				? 'restart_and_update'
+				: 'navigate_to_login'
+		);
+		localStorage.clear();
 	}
 }

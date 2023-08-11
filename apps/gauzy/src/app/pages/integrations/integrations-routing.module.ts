@@ -1,9 +1,9 @@
 import { NgModule } from '@angular/core';
 import { Routes, RouterModule } from '@angular/router';
-import { IntegrationsListComponent } from './components/integrations-list/integrations-list.component';
-import { WorkspaceComponent } from '../../@shared/components/workspace/workspace.component';
 import { NgxPermissionsGuard } from 'ngx-permissions';
 import { PermissionsEnum } from '@gauzy/contracts';
+import { IntegrationsListComponent } from './components/integrations-list/integrations-list.component';
+import { WorkspaceComponent } from '../../@shared/components/workspace/workspace.component';
 
 const routes: Routes = [
 	{
@@ -34,17 +34,45 @@ const routes: Routes = [
 			},
 			{
 				path: 'upwork',
-				loadChildren: () =>
-					import('../upwork/upwork.module').then(
-						(m) => m.UpworkModule
-					)
+				loadChildren: () => import('../upwork/upwork.module').then(
+					(m) => m.UpworkModule
+				),
+				data: {
+					selectors: {
+						project: false,
+						employee: false,
+						organization: false,
+						date: false
+					}
+				}
 			},
 			{
 				path: 'hubstaff',
-				loadChildren: () =>
-					import('../hubstaff/hubstaff.module').then(
-						(m) => m.HubstaffModule
-					)
+				loadChildren: () => import('../hubstaff/hubstaff.module').then(
+					(m) => m.HubstaffModule
+				),
+				data: {
+					selectors: {
+						project: false,
+						employee: false,
+						organization: false,
+						date: false
+					}
+				}
+			},
+			{
+				path: 'ever-ai',
+				loadChildren: () => import('./gauzy-ai/gauzy-ai.module').then(
+					(m) => m.GauzyAIModule
+				),
+				data: {
+					selectors: {
+						project: false,
+						employee: false,
+						organization: false,
+						date: false
+					}
+				}
 			}
 		]
 	}
@@ -54,4 +82,4 @@ const routes: Routes = [
 	imports: [RouterModule.forChild(routes)],
 	exports: [RouterModule]
 })
-export class IntegrationsRoutingModule {}
+export class IntegrationsRoutingModule { }
