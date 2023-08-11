@@ -858,6 +858,10 @@ export function ipcTimer(
 	ipcMain.handle('LOGOUT_STOP', async (event, arg) => {
 		return await handleLogoutDialog(timeTrackerWindow);
 	});
+
+	ipcMain.on('preferred_language_change', (event, arg) => {
+		timeTrackerWindow.webContents.send('preferred_language_change', arg);
+	})
 }
 
 export function removeMainListener() {
