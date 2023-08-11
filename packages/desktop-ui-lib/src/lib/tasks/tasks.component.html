@@ -1,16 +1,16 @@
 <nb-card [formGroup]="form">
 	<nb-card-header class="d-flex">
 		<h5>
-			Add Task
+			{{ "TASKS_PAGE.ADD_TASKS" | translate }}
 		</h5>
 	</nb-card-header>
 	<nb-card-body class="body">
 		<div class="row">
 			<div class="col-sm-6">
 				<div class="form-group">
-					<label class="label">Projects</label>
+					<label class="label">{{ "TASKS_PAGE.TASKS_PROJECT" | translate }}</label>
 					<ng-select [addTag]="hasProjectPermission ? addProject: null" addTagText="Add project"
-						[clearable]="true" placeholder="Project" [items]="projects" bindLabel="name"
+						[clearable]="true" [placeholder]="'TASKS_PAGE.TASKS_PROJECT' | translate" [items]="projects" bindLabel="name"
 						formControlName="project">
 						<ng-template ng-option-tmp let-item="item" let-index="index">
 							<img *ngIf="item.imageUrl" [src]="item.imageUrl" width="20px" height="20px" />
@@ -31,8 +31,8 @@
 			</div>
 			<div class="col-sm-6 pl-0">
 				<div class="form-group">
-					<label class="label">Status</label>
-					<ng-select [searchable]="false" [clearable]="true" placeholder="Status" [items]="statuses"
+					<label class="label">{{ "TASKS_PAGE.TASKS_STATUS" | translate }}</label>
+					<ng-select [searchable]="false" [clearable]="true" [placeholder]="'TASKS_PAGE.TASKS_STATUS' | translate" [items]="statuses"
 						bindValue="id" bindLabel="name" formControlName="status">
 					</ng-select>
 				</div>
@@ -41,16 +41,16 @@
 		<div class="row">
 			<div class="col-sm-12">
 				<div class="form-group">
-					<label class="label">Title</label>
-					<input class="name-input" formControlName="title" type="text" nbInput placeholder="Title" />
+					<label class="label">{{ "TASKS_PAGE.TASKS_TITLE" | translate }}</label>
+					<input class="name-input" formControlName="title" type="text" nbInput [placeholder]="'TASKS_PAGE.TASKS_TITLE' | translate" />
 				</div>
 			</div>
 			<div class="col-sm-12">
 				<label class="label">
-					Tags
+					{{ "SM_TABLE.TAGS" | translate }}
 				</label>
 				<div class="form-group">
-					<ng-select [clearable]="true" placeholder="Tags" formControlName="tags" [items]="tags"
+					<ng-select [clearable]="true" [placeholder]="'SM_TABLE.TAGS'|translate" formControlName="tags" [items]="tags"
 						bindLabel="name" [multiple]="true">
 						<ng-template ng-option-tmp let-tag="item" let-tag$="item$">
 							<div class="d-flex align-items-center">
@@ -74,38 +74,38 @@
 		<div class="row">
 			<div class="col-sm-6">
 				<div class="form-group">
-					<label for="dueDate" class="label">Due Date</label>
-					<input type="text" formControlName="dueDate" nbInput placeholder="Due Date"
+					<label for="dueDate" class="label">{{ "TASKS_PAGE.DUE_DATE" | translate }}</label>
+					<input type="text" formControlName="dueDate" nbInput [placeholder]="'TASKS_PAGE.DUE_DATE' | translate"
 						[nbDatepicker]="taskDueDatePicker" id="dueDate" fullWidth />
 					<nb-datepicker #taskDueDatePicker></nb-datepicker>
 				</div>
 			</div>
 			<div class="col-sm-6 pl-0">
-				<label for="estimate" class="label">Estimate</label>
+				<label for="estimate" class="label">{{ "TASKS_PAGE.ESTIMATE" | translate }}</label>
 				<div class="estimate-inputs">
-					<input formControlName="estimateDays" type="number" [min]="0" nbInput placeholder="Days" />
+					<input formControlName="estimateDays" type="number" [min]="0" nbInput [placeholder]="'TASKS_PAGE.ESTIMATE_DAYS' | translate" />
 
-					<input formControlName="estimateHours" type="number" min="0" max="23" nbInput placeholder="Hours" />
+					<input formControlName="estimateHours" type="number" min="0" max="23" nbInput [placeholder]="'TASKS_PAGE.ESTIMATE_HOURS' | translate" />
 
 					<input formControlName="estimateMinutes" type="number" [min]="0" min="0" max="59" nbInput
-						placeholder="Mins" />
+						[placeholder]="'TASKS_PAGE.ESTIMATE_MINUTES' | translate" />
 				</div>
 			</div>
 		</div>
 		<div class="row">
 			<div class="col-sm-12">
-				<label class="label">Description</label>
+				<label class="label">{{ "TASKS_PAGE.TASKS_DESCRIPTION" | translate }}</label>
 				<textarea formControlName="description" nbInput fullWidth class="description"
-					placeholder="Description"></textarea>
+					[placeholder]="'TASKS_PAGE.TASKS_DESCRIPTION' | translate"></textarea>
 			</div>
 		</div>
 	</nb-card-body>
 	<nb-card-footer>
 		<button status="basic" outline nbButton (click)="close()">
-			Cancel
+			{{ "BUTTONS.CANCEL" | translate }}
 		</button>
 		<button [disabled]="form?.invalid" status="success" nbButton (click)="save()">
-			Save
+			{{ "BUTTONS.SAVE" | translate }}
 			<nb-icon [ngStyle]="{'display': 'none'}" *gauzySpinnerButton="isSaving" ></nb-icon>
 		</button>
 	</nb-card-footer>

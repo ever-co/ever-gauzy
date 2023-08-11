@@ -39,6 +39,7 @@ import {
 	IOrganization,
 	IOrganizationContact,
 	ITask,
+	LanguagesEnum,
 	PermissionsEnum,
 	ProjectOwnerEnum,
 	TaskStatusEnum
@@ -55,6 +56,8 @@ import { IRemoteTimer } from './time-tracker-status/interfaces';
 import { InterruptedSequenceQueue, ISequence, SequenceQueue, TimeSlotQueueService, ViewQueueStateUpdater } from '../offline-sync';
 import { ImageViewerService } from '../image-viewer/image-viewer.service';
 import { AuthStrategy } from '../auth';
+import { LanguageSelectorService } from '../language/language-selector.service';
+import { TranslateService } from '@ngx-translate/core';
 
 enum TimerStartMode {
 	MANUAL = 'manual',
@@ -241,7 +244,9 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 		private _timeTrackerStatus: TimeTrackerStatusService,
 		private _timeSlotQueueService: TimeSlotQueueService,
 		private _imageViewerService: ImageViewerService,
-		private _authStrategy: AuthStrategy
+		private _authStrategy: AuthStrategy,
+		private _languageSelectorService: LanguageSelectorService,
+		private _translateService: TranslateService
 	) {
 		this.iconLibraries.registerFontPack('font-awesome', {
 			packClass: 'fas',
@@ -919,6 +924,23 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 					}
 				});
 			})
+		);
+
+		this.electronService.ipcRenderer.on(
+			'preferred_language_change',
+			(event, language: LanguagesEnum) => {
+				this._ngZone.run(() => {
+					this._languageSelectorService.setLanguage(
+						language,
+						this._translateService
+					);
+				});
+			}
+		);
+
+		this._languageSelectorService.setLanguage(
+			this._store?.preferredLanguage || LanguagesEnum.ENGLISH,
+			this._translateService
 		);
 	}
 

@@ -24,6 +24,9 @@ import {
 import { FormsModule } from '@angular/forms';
 import { TimeTrackerService } from '../time-tracker/time-tracker.service';
 import { DesktopDirectiveModule } from '../directives/desktop-directive.module';
+import { LanguageModule } from '../language/language.module';
+import { NgxTranslateModule } from '../ngx-translate';
+import { TranslateModule } from '@ngx-translate/core';
 
 @NgModule({
 	declarations: [SettingsComponent],
@@ -46,7 +49,9 @@ import { DesktopDirectiveModule } from '../directives/desktop-directive.module';
 		NbAccordionModule,
 		NbTooltipModule,
 		NbSpinnerModule,
-		DesktopDirectiveModule
+		DesktopDirectiveModule,
+		LanguageModule,
+		TranslateModule
 	],
 	providers: [
 		NbToastrService,

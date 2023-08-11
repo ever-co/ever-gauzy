@@ -1,4 +1,10 @@
-import { ChangeDetectorRef, Component, Inject, OnInit } from '@angular/core';
+import {
+	ChangeDetectorRef,
+	Component,
+	Inject,
+	NgZone,
+	OnInit,
+} from '@angular/core';
 import { Router } from '@angular/router';
 import {
 	NbAuthService,
@@ -8,6 +14,8 @@ import {
 import { TranslateService } from '@ngx-translate/core';
 import { LanguagesEnum } from '@gauzy/contracts';
 import { ElectronService } from '../electron/services';
+import { LanguageSelectorService } from '../language/language-selector.service';
+import { Store } from '../services';
 
 @Component({
 	selector: 'ngx-desktop-timer-login',
@@ -15,7 +23,7 @@ import { ElectronService } from '../electron/services';
 	styleUrls: ['./login.component.scss'],
 })
 export class NgxLoginComponent extends NbLoginComponent implements OnInit {
-	showPassword: boolean = false;
+	showPassword = false;
 
 	constructor(
 		public readonly electronService: ElectronService,
@@ -23,16 +31,31 @@ export class NgxLoginComponent extends NbLoginComponent implements OnInit {
 		public translate: TranslateService,
 		public readonly cdr: ChangeDetectorRef,
 		public readonly router: Router,
+		private _languageSelectorService: LanguageSelectorService,
+		private _store: Store,
+		private _ngZone: NgZone,
 		@Inject(NB_AUTH_OPTIONS) options
 	) {
 		super(nbAuthService, options, cdr, router);
-		// this language will be used as a fallback when a translation isn't found in the current language
-		translate.setDefaultLang(LanguagesEnum.ENGLISH);
-		// the lang to use, if the lang isn't available, it will use the current loader to get them
-		translate.use(LanguagesEnum.ENGLISH);
 	}
 
-	ngOnInit() { }
+	ngOnInit() {
+		this.electronService.ipcRenderer.on(
+			'preferred_language_change',
+			(event, language: LanguagesEnum) => {
+				this._ngZone.run(() => {
+					this._languageSelectorService.setLanguage(
+						language,
+						this.translate
+					);
+				});
+			}
+		);
+		this._languageSelectorService.setLanguage(
+			this._store?.preferredLanguage || LanguagesEnum.ENGLISH,
+			this.translate
+		);
+	}
 
 	public forgot(): void {
 		this.electronService.shell.openExternal(

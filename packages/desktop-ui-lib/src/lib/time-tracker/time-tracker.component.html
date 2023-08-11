@@ -21,7 +21,7 @@
 								<div class="mt-3 d-flex justify-content-between">
 									<div class="work-duration-container">
 										<div class="work-today-duration">{{ todayDuration$ | async }}</div>
-										<div class="work-today">Today</div>
+										<div class="work-today">{{'TIMER_TRACKER.TODAY' | translate }}</div>
 									</div>
 									<div [ngClass]="{ over: (isOver$ | async) }" nbTooltipStatus="danger" nbTooltipIcon="alert-triangle-outline"
 										nbTooltip="Weekly limit exceeded" [nbTooltipDisabled]="!(isOver$ | async)" class="work-duration-container">
@@ -55,13 +55,13 @@
 						</div>
 						<div class="row">
 							<div class="col-12 form-group tp-padding">
-								<label>Client</label>
+								<label>{{ "CONTEXT_MENU.CLIENT" | translate }}</label>
 								<ng-select [disabled]="(start$ | async)" nbTooltip="Please stop the timer before changing the client"
 									nbTooltipStatus="warning" [nbTooltipDisabled]="!(start$ | async)"
 									[addTag]=" (hasContactPermission$ | async) ? addContact: null"
 									addTagText="Add contact" [class]="
 										errors?.client ? 'error-border' : ''
-									" [clearable]="true" placeholder="Client" [(ngModel)]="organizationContactId"
+									" [clearable]="true" [placeholder]="'TIMER_TRACKER.SELECT_CLIENT' | translate" [(ngModel)]="organizationContactId"
 									[items]="organizationContacts$ | async" bindValue="id" bindLabel="name"
 									(ngModelChange)="setClient($event, dialog)" (clear)="refreshTimer()">
 									<ng-template ng-option-tmp let-item="item" let-index="index">
@@ -84,12 +84,12 @@
 						</div>
 						<div class="row">
 							<div class="col-12 form-group">
-								<label>Project</label>
+								<label>{{"CONTEXT_MENU.PROJECT" | translate}}</label>
 								<ng-select [disabled]="(start$ | async)" nbTooltip="Please stop the timer before changing the project"
 									nbTooltipStatus="warning" [nbTooltipDisabled]="!(start$ | async)"
 									[addTag]="(hasProjectPermission$ | async) ? addProject: null"
-									addTagText="Add project" [class]="errors?.project ? 'error-border' : ''"
-									[clearable]="true" placeholder="Project" [(ngModel)]="projectSelect"
+									[addTagText]="'FORM.PLACEHOLDERS.ADD_PROJECT' | translate" [class]="errors?.project ? 'error-border' : ''"
+									[clearable]="true" [placeholder]="'TIMER_TRACKER.SELECT_PROJECT' | translate" [(ngModel)]="projectSelect"
 									[items]="projects$ | async" bindValue="id" bindLabel="name"
 									(ngModelChange)="setProject($event)" (clear)="refreshTimer()">
 									<ng-template ng-option-tmp let-item="item" let-index="index">
@@ -112,12 +112,12 @@
 						</div>
 						<div class="row">
 							<div class="col-12 form-group" *ngIf="!isExpand">
-								<label>Task</label>
+								<label>{{"CONTEXT_MENU.TASK" | translate}}</label>
 								<ng-select [disabled]="(start$ | async)" nbTooltip="Please stop the timer before changing the task"
 									nbTooltipStatus="warning" [nbTooltipDisabled]="!(start$ | async)"
 									[addTag]="(hasTaskPermission$ | async)  ? addNewTask: null"
 									addTagText="Add task" [class]="errors?.task ? 'error-border' : ''"
-									[clearable]="true" placeholder="Task" [(ngModel)]="taskSelect"
+									[clearable]="true" [placeholder]="'TIMER_TRACKER.SELECT_TASK' | translate" [(ngModel)]="taskSelect"
 									[items]="tasks$ | async" bindValue="id" bindLabel="title"
 									(ngModelChange)="setTask($event)" (clear)="refreshTimer()">
 									<ng-template ng-option-tmp let-item="item">
@@ -138,8 +138,8 @@
 						<div class="row">
 							<div class="col-12 form-group" nbTooltip="Please stop the timer before changing the description"
 								nbTooltipStatus="warning" [nbTooltipDisabled]="!(start$ | async)">
-								<label>Working on:</label>
-								<textarea nbInput [disabled]="(start$ | async)" fullWidth placeholder="Note" status="basic" [(ngModel)]="note"
+								<label>{{ "TIMER_TRACKER.DESCRIPTION" | translate }}</label>
+								<textarea nbInput [disabled]="(start$ | async)" fullWidth [placeholder]="'TIMER_TRACKER.DESCRIPTION' | translate" status="basic" [(ngModel)]="note"
 									[status]="errors?.note ? 'danger' : 'basic'"
 									(ngModelChange)="descriptionChange($event)"></textarea>
 							</div>
@@ -234,11 +234,11 @@
 					<nb-card-body>
 						<div class="row">
 							<div class="col-12 search">
-								<button nbButton nbTooltipStatus="warning"
+								<button nbButton nbTooltipStatus="warning" size="small"
 									[nbTooltip]="!(hasTaskPermission$ | async) ?'Request permission from the organization administrator' : (isOffline$ | async) ? 'Return online' : null"
 									[nbTooltipDisabled]="(hasTaskPermission$ | async) && !(isOffline$ | async)"
 									nbTooltipStatus="warning" class="mb-2" status="success" (click)="addTask()">
-									<nb-icon icon="plus" pack="font-awesome"></nb-icon>Add
+									<nb-icon class="icon-task" icon="tasks" pack="font-awesome"></nb-icon>{{'BUTTONS.ADD' | translate}}
 								</button>
 							</div>
 						</div>
@@ -264,7 +264,7 @@
 							</div>
 							<ng-template #noTask>
 								<div class="no-data">
-									<ngx-no-data-message message="No Assigned Task">
+									<ngx-no-data-message [message]="'SM_TABLE.NO_DATA.TASK'| translate">
 									</ngx-no-data-message>
 								</div>
 							</ng-template>
@@ -315,12 +315,12 @@
 			<div class="row">
 				<div class="col-3">
 					<button status="primary" nbButton (click)="ref?.close(false)">
-						No
+						{{ "BUTTONS.NO" | translate }}
 					</button>
 				</div>
 				<div class="col-3">
 					<button status="danger" nbButton (click)="ref?.close(true)">
-						Yes
+						{{ "BUTTONS.YES" | translate }}
 					</button>
 				</div>
 			</div>
