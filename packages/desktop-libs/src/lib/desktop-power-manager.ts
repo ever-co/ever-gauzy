@@ -5,6 +5,8 @@ import {LocalStore} from "./desktop-store";
 
 export class DesktopPowerManager implements IPowerManager {
 	private _suspendDetected: boolean;
+	private _sleepTracking: ISleepTracking;
+	private _window: BrowserWindow;
 
 	constructor(window: BrowserWindow) {
 		this._sleepTracking = new SleepTracking(window);
@@ -31,19 +33,25 @@ export class DesktopPowerManager implements IPowerManager {
 		});
 	}
 
-	private _sleepTracking: ISleepTracking;
-
-	get sleepTracking(): ISleepTracking {
+	public get sleepTracking(): ISleepTracking {
 		return this._sleepTracking;
 	}
 
-	set sleepTracking(value: ISleepTracking) {
+	public set sleepTracking(value: ISleepTracking) {
 		this._sleepTracking = value;
 	}
 
-	get trackerStatusActive(): boolean {
+	public get trackerStatusActive(): boolean {
 		const setting = LocalStore.getStore('appSetting');
 		return setting ? setting.timerStarted : false;
+	}
+
+	public get window() {
+		return this._window;
+	}
+
+	public set window(value: BrowserWindow) {
+		this._window = value;
 	}
 
 	public pauseTracking(): void {
@@ -60,15 +68,5 @@ export class DesktopPowerManager implements IPowerManager {
 			this._sleepTracking.strategy.resume();
 			console.log('Tracker resumed.');
 		}
-	}
-
-	private _window: BrowserWindow;
-
-	get window() {
-		return this._window;
-	}
-
-	set window(value: BrowserWindow) {
-		this._window = value;
 	}
 }
