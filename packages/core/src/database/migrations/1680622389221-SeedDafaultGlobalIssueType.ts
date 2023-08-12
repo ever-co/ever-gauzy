@@ -1,11 +1,11 @@
 import { MigrationInterface, QueryRunner } from 'typeorm';
-import { v4 as uuidV4 } from 'uuid';
+import { v4 as uuidv4 } from 'uuid';
 import * as path from 'path';
 import * as fs from 'fs';
 import { imageSize } from 'image-size';
 import { getConfig } from '@gauzy/config';
 import { FileStorageProviderEnum } from '@gauzy/contracts';
-import { copyEverIcons } from './../../core/seeds/utils';
+import { copyAssets } from './../../core/seeds/utils';
 import { DEFAULT_GLOBAL_ISSUE_TYPES } from './../../tasks/issue-type/default-global-issue-types';
 
 export class SeedDafaultGlobalIssueType1680622389221 implements MigrationInterface {
@@ -41,7 +41,7 @@ export class SeedDafaultGlobalIssueType1680622389221 implements MigrationInterfa
 
 				/** Move issue types icons to the public static folder */
 				const filepath = path.join('ever-icons', icon);
-				copyEverIcons(icon, this.config);
+				copyAssets(icon, this.config);
 
 				const iconPath = path.join(this.config.assetOptions.assetPath, ...['seed', 'ever-icons', icon]);
 				const { height, width } = imageSize(iconPath);
@@ -66,19 +66,46 @@ export class SeedDafaultGlobalIssueType1680622389221 implements MigrationInterfa
 				];
 
 				if (queryRunner.connection.options.type === 'sqlite') {
-					imageAsset.push(uuidV4());
+					const imageAssetId = uuidv4();
+					imageAsset.push(imageAssetId);
 
-					const image_asset = await queryRunner.connection.manager.query(`INSERT INTO "image_asset" ("name", "url", "storageProvider", "height", "width", "size", "id") VALUES($1, $2, $3, $4, $5, $6, $7) RETURNING id`, imageAsset);
-					const imageAssetId = image_asset[0]['id'];
+					const insertQuery = `
+						INSERT INTO image_asset (
+							"name", "url", "storageProvider", "height", "width", "size", "id"
+						)
+						VALUES (
+							$1, $2, $3, $4, $5, $6, $7
+						);
+					`;
+					await queryRunner.connection.manager.query(insertQuery, imageAsset);
 
-					payload.push(uuidV4(), imageAssetId);
-					await queryRunner.connection.manager.query(`INSERT INTO "issue_type" ("name", "value", "description", "icon", "color", "isSystem", "id", "imageId") VALUES($1, $2, $3, $4, $5, $6, $7, $8)`, payload);
+					payload.push(uuidv4(), imageAssetId);
+					await queryRunner.connection.manager.query(`
+						INSERT INTO "issue_type" (
+							"name", "value", "description", "icon", "color", "isSystem", "id", "imageId"
+						) VALUES (
+							$1, $2, $3, $4, $5, $6, $7, $8);
+						`, payload);
 				} else {
-					const image_asset = await queryRunner.connection.manager.query(`INSERT INTO "image_asset" ("name", "url", "storageProvider", "height", "width", "size") VALUES($1, $2, $3, $4, $5, $6) RETURNING id`, imageAsset);
+					const insertQuery = `
+						INSERT INTO "image_asset" (
+							"name", "url", "storageProvider", "height", "width", "size"
+						) VALUES (
+							$1, $2, $3, $4, $5, $6
+						)
+						RETURNING id;
+					`;
+					const image_asset = await queryRunner.connection.manager.query(insertQuery, imageAsset);
 					const imageAssetId = image_asset[0]['id'];
 
 					payload.push(imageAssetId);
-					await queryRunner.connection.manager.query(`INSERT INTO "issue_type" ("name", "value", "description", "icon", "color", "isSystem", "imageId") VALUES($1, $2, $3, $4, $5, $6, $7)`, payload);
+					await queryRunner.connection.manager.query(`
+						INSERT INTO "issue_type" (
+							"name", "value", "description", "icon", "color", "isSystem", "imageId"
+						) VALUES (
+							$1, $2, $3, $4, $5, $6, $7
+						);
+					`, payload);
 				}
 			}
 		} catch (error) {

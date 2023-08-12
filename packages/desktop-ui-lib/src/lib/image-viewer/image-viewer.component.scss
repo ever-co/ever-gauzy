@@ -21,6 +21,7 @@
 		height: calc(100% - 98px);
 		.media-viewer {
 			height: 100%;
+			border-radius: var(--border-radius);
 			img {
 				width: 100%;
 				height: 100%;
@@ -111,6 +112,21 @@ img {
 	background-color: #00000099;
 	border-radius: var(--border-radius);
 	& + img {
-		filter: blur(1rem);
+		filter: blur(0.25rem);
+	}
+}
+
+.loading-thumb {
+	position: absolute;
+	width: 100%;
+	height: 100%;
+	border-radius: var(--border-radius);
+}
+
+img {
+	filter: blur(0.25rem);
+	&.blur-transition {
+		filter: blur(0);
+		transition: filter 0.8s ease;
 	}
 }

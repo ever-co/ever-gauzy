@@ -10,6 +10,7 @@ import {
 } from '@gauzy/desktop-window';
 import TitleOptions = Electron.TitleOptions;
 import { User, UserService } from './offline';
+import { handleLogoutDialog } from './desktop-ipc';
 
 export class TrayIcon {
 	tray: Tray;
@@ -25,6 +26,7 @@ export class TrayIcon {
 		mainWindow
 	) {
 		this.removeTrayListener();
+		this.removeTimerHandlers();
 		let loginPageAlreadyShow = false;
 		const options: TitleOptions = { fontType: 'monospacedDigit' };
 		const appConfig = LocalStore.getStore('configs');
@@ -34,6 +36,7 @@ export class TrayIcon {
 		iconNativePath.resize({ width: 16, height: 16 });
 		this.tray = new Tray(iconNativePath);
 		this.tray.setTitle('--:--:--', options);
+		const userService = new UserService();
 		let contextMenu: any = [
 			{
 				id: '4',
@@ -212,8 +215,16 @@ export class TrayIcon {
 				id: '7',
 				label: 'Logout',
 				visible: app.getName() === 'gauzy-desktop-timer',
-				click() {
-					timeTrackerWindow.webContents.send('logout');
+				async click() {
+					const appSetting = store.get('appSetting');
+					let isLogout = true;
+
+					if (appSetting?.timerStarted) {
+						isLogout = await handleLogoutDialog(timeTrackerWindow);
+					}
+					if (isLogout) {
+						timeTrackerWindow.webContents.send('logout');
+					}
 				},
 			},
 			{
@@ -280,7 +291,6 @@ export class TrayIcon {
 		ipcMain.on('auth_success', async (event, arg) => {
 			console.log('Auth Success:', arg);
 			try {
-				const userService = new UserService();
 				const user = new User({ ...arg, ...arg.user });
 				user.remoteId = arg.userId;
 				user.organizationId = arg.organizationId;
@@ -311,7 +321,7 @@ export class TrayIcon {
 			}
 
 			if (!appConfig.gauzyWindow) {
-				timeTrackerWindow.loadURL(
+				await timeTrackerWindow.loadURL(
 					timeTrackerPage(windowPath.timeTrackerUi)
 				);
 				timeTrackerWindow.show();
@@ -324,7 +334,7 @@ export class TrayIcon {
 			}
 		});
 
-		ipcMain.on('logout', async () => {
+		ipcMain.handle('FINAL_LOGOUT', async (event, arg) => {
 			this.tray.setContextMenu(Menu.buildFromTemplate(unAuthMenu));
 			menuWindowTime.enabled = false;
 
@@ -361,6 +371,15 @@ export class TrayIcon {
 					loginPageAlreadyShow = true;
 				}
 			}
+
+			await userService.remove();
+			LocalStore.updateAuthSetting({ isLogout: true });
+		});
+
+		ipcMain.on('logout', async (evt, arg) => {
+			if (timeTrackerWindow) {
+				timeTrackerWindow.webContents.send('logout');
+			}
 		});
 
 		ipcMain.on('user_detail', (event, arg) => {
@@ -379,6 +398,15 @@ export class TrayIcon {
 		this.tray.destroy();
 	}
 
+	removeTimerHandlers() {
+		const channels = [
+			'FINAL_LOGOUT'
+		];
+		channels.forEach((channel: string) => {
+			ipcMain.removeHandler(channel);
+		});
+	}
+
 	removeTrayListener() {
 		const trayListener = [
 			'update_tray_start',
@@ -386,7 +414,6 @@ export class TrayIcon {
 			'update_tray_time_update',
 			'update_tray_time_title',
 			'auth_success',
-			'logout',
 			'user_detail',
 		];
 

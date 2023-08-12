@@ -13,14 +13,17 @@ import {
 	IntervalTO,
 } from '../dto';
 import { TimerTransaction } from '../transactions';
+import { IntervalDAO } from './interval.dao';
 
 export class TimerDAO implements DAO<TimerTO> {
 	private _trx: ITimerTransaction;
 	private _provider: IDatabaseProvider;
+	private _intervalDao: IntervalDAO;
 
 	constructor() {
 		this._provider = ProviderFactory.instance;
 		this._trx = new TimerTransaction(this._provider);
+		this._intervalDao = new IntervalDAO();
 	}
 	public async findAll(): Promise<TimerTO[]> {
 		return await this._provider
@@ -122,5 +125,32 @@ export class TimerDAO implements DAO<TimerTO> {
 
 	private _removeColumn(column: string, arr: any[]): any[] {
 		return arr.map(({ [column]: value, ...rest }) => rest);
+	}
+
+	public async findAllInterruptions(user: UserTO): Promise<ISequence[]> {
+		const intervals = await this._intervalDao.findAllSynced(false, user);
+		const timerIds = intervals.map((interval) => interval.timerId);
+		const timers = await this._provider
+			.connection<TimerTO>(TABLE_NAME_TIMERS)
+			.select('*')
+			.distinct(`${TABLE_NAME_TIMERS}.id`)
+			.whereIn(`${TABLE_NAME_TIMERS}.id`, timerIds)
+			.andWhere(`${TABLE_NAME_TIMERS}.synced`, true)
+			.orderBy(`${TABLE_NAME_TIMERS}.id`, 'asc');
+
+		const timersWithIntervals = timers.map((timer: TimerTO) => ({
+			timer,
+			intervals: intervals
+				.map((interval: IntervalTO) => ({
+					...interval,
+					activities: JSON.parse(interval.activities as any),
+					screenshots: JSON.parse(interval.screenshots as any),
+				}))
+				.filter(
+					(interval: IntervalTO) => interval.timerId === timer.id
+				),
+		}));
+
+		return timersWithIntervals
 	}
 }

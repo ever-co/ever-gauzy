@@ -34,6 +34,8 @@ import {
 	User,
 	UserService,
 } from './offline';
+import { DialogStopTimerLogoutConfirmation } from './decorators/concretes/dialog-stop-timer-logout-confirmation';
+import { DesktopDialog } from './desktop-dialog';
 
 const timerHandler = new TimerHandler();
 
@@ -139,7 +141,7 @@ export function ipcMainHandler(
 		const auth = LocalStore.getStore('auth');
 		const logout = async () => {
 			await userService.remove();
-			timeTrackerWindow.webContents.send('logout');
+			timeTrackerWindow.webContents.send('__logout__');
 			LocalStore.updateAuthSetting({ isLogout: true });
 		}
 		if (auth && auth.userId) {
@@ -481,21 +483,28 @@ export function ipcTimer(
 	});
 
 	ipcMain.handle('STOP_TIMER', async (event, arg) => {
-		log.info(`Timer Stop: ${moment().format()}`);
-		// Check api connection before to stop
-		await offlineMode.connectivity();
-		// Stop Timer
-		const timerResponse = await timerHandler.stopTimer(setupWindow, timeTrackerWindow, knex, arg.quitApp);
-		settingWindow.webContents.send('app_setting_update', {
-			setting: LocalStore.getStore('appSetting')
-		});
-		if (powerManagerPreventSleep) {
-			powerManagerPreventSleep.stop();
+		try {
+			log.info(`Timer Stop: ${moment().format()}`);
+			// Check api connection before to stop
+			if (!arg.isEmergency) {
+				await offlineMode.connectivity();
+			}
+			// Stop Timer
+			const timerResponse = await timerHandler.stopTimer(setupWindow, timeTrackerWindow, knex, arg.quitApp);
+			settingWindow.webContents.send('app_setting_update', {
+				setting: LocalStore.getStore('appSetting')
+			});
+			if (powerManagerPreventSleep) {
+				powerManagerPreventSleep.stop();
+			}
+			if (powerManagerDetectInactivity) {
+				powerManagerDetectInactivity.stopInactivityDetection();
+			}
+			return timerResponse;
+		} catch (error) {
+			timeTrackerWindow.webContents.send('emergency_stop');
+			console.log('ERROR', error);
 		}
-		if (powerManagerDetectInactivity) {
-			powerManagerDetectInactivity.stopInactivityDetection();
-		}
-		return timerResponse;
 	});
 
 	ipcMain.on('return_time_slot', async (event, arg) => {
@@ -687,8 +696,6 @@ export function ipcTimer(
 	ipcMain.on('logout_desktop', async (event, arg) => {
 		try {
 			console.log('masuk logout main');
-			await userService.remove();
-			LocalStore.updateAuthSetting({ isLogout: true });
 			timeTrackerWindow.webContents.send('logout', arg);
 		} catch (error) {
 			console.log('Error', error);
@@ -831,6 +838,26 @@ export function ipcTimer(
 		// Check api connection
 		await offlineMode.connectivity();
 	})
+
+	ipcMain.on('check-interrupted-sequences', async (event, arg) => {
+		try {
+			await sequentialSyncInterruptionsQueue(timeTrackerWindow);
+		} catch (error) {
+			console.log(error)
+		}
+	})
+
+	ipcMain.on('check-waiting-sequences', async (event, arg) => {
+		try {
+			await sequentialSyncQueue(timeTrackerWindow);
+		} catch (error) {
+			console.log(error)
+		}
+	})
+
+	ipcMain.handle('LOGOUT_STOP', async (event, arg) => {
+		return await handleLogoutDialog(timeTrackerWindow);
+	});
 }
 
 export function removeMainListener() {
@@ -897,7 +924,8 @@ export function removeAllHandlers() {
 export function removeTimerHandlers() {
 	const channels = [
 		'START_TIMER',
-		'STOP_TIMER'
+		'STOP_TIMER',
+		'LOGOUT_STOP'
 	];
 	channels.forEach((channel: string) => {
 		ipcMain.removeHandler(channel);
@@ -947,4 +975,34 @@ async function latestScreenshots(window: BrowserWindow): Promise<void> {
 	} catch (error) {
 		console.log('ERROR_SCREENSHOTS', error);
 	}
+}
+
+async function sequentialSyncInterruptionsQueue(window: BrowserWindow) {
+	if (!window) return;
+	try {
+		await offlineMode.connectivity();
+		if (offlineMode.enabled) return;
+		isQueueThreadTimerLocked = true;
+		const sequences = await timerService.interruptions();
+		if (sequences.length > 0) {
+			await countIntervalQueue(window, true);
+			window.webContents.send('interrupted-sequences', sequences);
+		} else {
+			isQueueThreadTimerLocked = false;
+		}
+	} catch (error) {
+		console.log('Error', error);
+	}
+}
+
+export async function handleLogoutDialog(window: BrowserWindow): Promise<boolean> {
+	const dialog = new DialogStopTimerLogoutConfirmation(
+		new DesktopDialog(
+			'Gauzy Desktop Timer',
+			'Are you sure you want to logout?',
+			window
+		)
+	);
+	const button = await dialog.show();
+	return button.response === 0;
 }
