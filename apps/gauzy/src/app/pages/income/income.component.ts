@@ -74,7 +74,7 @@ export class IncomeComponent extends PaginationFilterBaseComponent
 	selectedDateRange: IDateRangePicker;
 	smartTableSource: ServerDataSource;
 	disableButton: boolean = true;
-	loading: boolean = false;
+	loading: boolean = true;
 	viewComponentName: ComponentEnum;
 	incomes: IIncome[] = [];
 	dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
@@ -198,6 +198,7 @@ export class IncomeComponent extends PaginationFilterBaseComponent
 					(componentLayout) =>
 						(this.dataLayoutStyle = componentLayout)
 				),
+				tap(() => this.loading = true),
 				tap(() => this.refreshPagination()),
 				filter(
 					(componentLayout) =>
@@ -462,11 +463,11 @@ export class IncomeComponent extends PaginationFilterBaseComponent
 					try {
 						const { id, employee, employeeId, organizationId } = this.selectedIncome;
 						await this.incomeService.delete(id, {
-								employeeId,
-								organizationId
-							})
+							employeeId,
+							organizationId
+						})
 							.then(() => {
-								this.toastrService.success( 'NOTES.INCOME.DELETE_INCOME', {
+								this.toastrService.success('NOTES.INCOME.DELETE_INCOME', {
 									name: this.employeeName(employee)
 								});
 							})
@@ -488,9 +489,6 @@ export class IncomeComponent extends PaginationFilterBaseComponent
 		if (!this.organization) {
 			return;
 		}
-
-		this.loading = true;
-
 		const { tenantId } = this.store.user;
 		const { id: organizationId } = this.organization;
 		const { startDate, endDate } = getAdjustDateRangeFutureAllowed(this.selectedDateRange);
@@ -516,8 +514,8 @@ export class IncomeComponent extends PaginationFilterBaseComponent
 				tenantId,
 				...(this.selectedEmployeeId
 					? {
-							employeeId: this.selectedEmployeeId
-					  }
+						employeeId: this.selectedEmployeeId
+					}
 					: {}),
 				valueDate: {
 					startDate: toUTC(startDate).format('YYYY-MM-DD HH:mm:ss'),
@@ -594,5 +592,5 @@ export class IncomeComponent extends PaginationFilterBaseComponent
 			: ALL_EMPLOYEES_SELECTED.firstName;
 	}
 
-	ngOnDestroy() {}
+	ngOnDestroy() { }
 }

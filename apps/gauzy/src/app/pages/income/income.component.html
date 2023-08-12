@@ -28,6 +28,7 @@
 			<div class="table-scroll-container">
 				<ng2-smart-table
 					class="income-table"
+					[hidden]="loading"
 					(userRowSelect)="selectIncome($event)"
 					[settings]="smartTableSettings"
 					[source]="smartTableSource"
@@ -50,6 +51,7 @@
 		</ng-template>
 		<ng-template #gridLayout>
 			<ga-card-grid
+				[hidden]="loading"
 				[totalItems]="pagination?.totalItems"
 				[settings]="smartTableSettings"
 				[source]="incomes"
