@@ -30,7 +30,7 @@ kind: Deployment
 metadata:
     name: gauzy-stage-api
 spec:
-    replicas: 4
+    replicas: 2
     selector:
         matchLabels:
             app: gauzy-stage-api
@@ -48,6 +48,10 @@ spec:
                                 operator: In
                                 values:
                                   - ORD1
+                              - key: node.coreweave.cloud/cpu
+                                operator: In
+                                values:
+                                - intel-xeon-v3
                 podAntiAffinity:
                     preferredDuringSchedulingIgnoredDuringExecution:
                       - podAffinityTerm:
@@ -189,13 +193,20 @@ spec:
                   ports:
                       - containerPort: 3000
                         protocol: TCP
+                  resources:
+                    requests:
+                      cpu: "0"
+                      memory: "0"
+                    limits:
+                      cpu: "4"
+                      memory: 16Gi
 ---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
     name: gauzy-stage-webapp
 spec:
-    replicas: 4
+    replicas: 2
     selector:
         matchLabels:
             app: gauzy-stage-webapp
@@ -212,7 +223,11 @@ spec:
                               - key: topology.kubernetes.io/region
                                 operator: In
                                 values:
-                                  - ORD1
+                                - ORD1
+                              - key: node.coreweave.cloud/cpu
+                                operator: In
+                                values:
+                                - intel-xeon-v3
                 podAntiAffinity:
                     preferredDuringSchedulingIgnoredDuringExecution:
                       - podAffinityTerm:
@@ -257,6 +272,13 @@ spec:
                   ports:
                       - containerPort: 4200
                         protocol: TCP
+                  resources:
+                    requests:
+                      cpu: "0"
+                      memory: "0"
+                    limits:
+                      cpu: "4"
+                      memory: 16Gi
 ---
 apiVersion: traefik.containo.us/v1alpha1
 kind: Middleware
