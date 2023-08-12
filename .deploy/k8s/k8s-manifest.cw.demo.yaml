@@ -91,8 +91,8 @@ spec:
                         protocol: TCP
                   resources:
                     requests:
-                      cpu: "0"
-                      memory: "0"
+                      cpu: "0.5"
+                      memory: 2Gi
                     limits:
                       cpu: "4"
                       memory: 16Gi
@@ -160,8 +160,8 @@ spec:
                         protocol: TCP
                   resources:
                     requests:
-                      cpu: "0"
-                      memory: "0"
+                      cpu: "0.5"
+                      memory: 2Gi
                     limits:
                       cpu: "4"
                       memory: 16Gi
