@@ -74,7 +74,8 @@ export class IncomeComponent extends PaginationFilterBaseComponent
 	selectedDateRange: IDateRangePicker;
 	smartTableSource: ServerDataSource;
 	disableButton: boolean = true;
-	loading: boolean = true;
+	loading: boolean = false;
+	hideTable: boolean = true;
 	viewComponentName: ComponentEnum;
 	incomes: IIncome[] = [];
 	dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
@@ -198,7 +199,7 @@ export class IncomeComponent extends PaginationFilterBaseComponent
 					(componentLayout) =>
 						(this.dataLayoutStyle = componentLayout)
 				),
-				tap(() => this.loading = true),
+				tap(() => this.hideTable = true),
 				tap(() => this.refreshPagination()),
 				filter(
 					(componentLayout) =>
@@ -493,6 +494,7 @@ export class IncomeComponent extends PaginationFilterBaseComponent
 		const { id: organizationId } = this.organization;
 		const { startDate, endDate } = getAdjustDateRangeFutureAllowed(this.selectedDateRange);
 
+		this.loading = true;
 		this.smartTableSource = new ServerDataSource(this.httpClient, {
 			endPoint: `${API_PREFIX}/income/pagination`,
 			relations: [
@@ -543,6 +545,7 @@ export class IncomeComponent extends PaginationFilterBaseComponent
 					totalItems: this.smartTableSource.count()
 				});
 				this.loading = false;
+				this.hideTable = false
 			}
 		});
 	}
