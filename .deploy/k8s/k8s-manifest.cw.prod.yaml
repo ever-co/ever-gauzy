@@ -51,7 +51,7 @@ spec:
                               - key: node.coreweave.cloud/cpu
                                 operator: In
                                 values:
-                                - intel-xeon-v3
+                                  - intel-xeon-v3
                 podAntiAffinity:
                     preferredDuringSchedulingIgnoredDuringExecution:
                       - podAffinityTerm:
@@ -201,8 +201,8 @@ spec:
                         protocol: TCP
                   resources:
                     requests:
-                      cpu: "0"
-                      memory: "0"
+                      cpu: "1"
+                      memory: 4Gi
                     limits:
                       cpu: "4"
                       memory: 16Gi
@@ -233,7 +233,7 @@ spec:
                               - key: node.coreweave.cloud/cpu
                                 operator: In
                                 values:
-                                - intel-xeon-v3
+                                  - intel-xeon-v3
                 podAntiAffinity:
                     preferredDuringSchedulingIgnoredDuringExecution:
                       - podAffinityTerm:
@@ -280,8 +280,8 @@ spec:
                         protocol: TCP
                   resources:
                     requests:
-                      cpu: "0"
-                      memory: "0"
+                      cpu: "1"
+                      memory: 4Gi
                     limits:
                       cpu: "4"
                       memory: 16Gi
