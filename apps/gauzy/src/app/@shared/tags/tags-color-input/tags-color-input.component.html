@@ -11,7 +11,7 @@
 		bindLabel="name"
 		appendTo="body"
 		[loading]="loading"
-		[addTag]="((hasAddTag$ | async) && addTag) ? createNewTag : null"
+		[addTag]="(hasAddTag$ | async) && addTag ? createNewTag : null"
 		(change)="selectedTagsEvent.emit(selectedTags)"
 		[(ngModel)]="selectedTags"
 		[closeOnSelect]="false"
@@ -29,22 +29,30 @@
 				<span class="text">{{ tag.name }}</span>
 			</div>
 		</ng-template>
-		<ng-template ng-label-tmp let-tag="item" let-clear="clear">
-			<nb-badge
-				class="tag-color tag-label"
-				[style.background]="background(tag.color)"
-				[style.color]="backgroundContrast(tag.color)"
-				[text]="tag.name"
-				(click)="clear(tag)"
-			></nb-badge>
-		</ng-template>
-		<ng-template ng-multi-label-tmp let-items="items">
-				<div class="ng-value">
-					<div class="ng-value-label">Tags({{ selectedTags.length }})</div>
+		<ng-template ng-multi-label-tmp let-tags="selectedTags" let-clear="clear">
+			<ng-container *ngIf="!!noOfTagsFits; else notOverflown">
+				<div class="ng-value" *ngFor="
+								let item of selectedTags
+									| slice : 0 : noOfTagsFits || selectedTags.length
+							">
+					<nb-badge class="tag-color tag-label" [style.background]="background(item.color)"
+						[style.color]="backgroundContrast(item.color)" [text]="item.name" (click)="clear(item)"></nb-badge>
 				</div>
-		</ng-template>
-		<ng-template ng-tag-tmp let-newTagName="searchTerm">
-			<b>{{ 'TAGS_PAGE.ADD_NEW_TAG' | translate }}</b>: {{ newTagName }}
+				<div class="ng-value" *ngIf="selectedTags && selectedTags.length > noOfTagsFits">
+					<span class="ng-value-label">...</span>
+				</div>
+			</ng-container>
+		
+			<ng-template #notOverflown>
+				<div class="ng-value" *ngFor="let item of selectedTags">
+					<nb-badge class="tag-color tag-label"
+						[style.background]="background(item.color)"
+						[style.color]="backgroundContrast(item.color)"
+						[text]="item.name"
+						(click)="clear(item)"
+					></nb-badge>
+				</div>
+			</ng-template>
 		</ng-template>
 	</ng-select>
 </div>
