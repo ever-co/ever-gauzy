@@ -25,4 +25,7 @@ export abstract class BasePowerManagerDecorator implements IPowerManager {
 	public get window(): BrowserWindow {
 		return this._decorator.window;
 	}
+	public get suspendDetected(): boolean {
+		return this._decorator.suspendDetected;
+	}
 }

@@ -54,6 +54,10 @@ export class DesktopPowerManager implements IPowerManager {
 		this._window = value;
 	}
 
+	public get suspendDetected(): boolean {
+		return this._suspendDetected;
+	}
+
 	public pauseTracking(): void {
 		if (this.trackerStatusActive && !this._suspendDetected) {
 			this._suspendDetected = true;

@@ -13,4 +13,6 @@ export interface IPowerManager {
 	set sleepTracking(value: ISleepTracking);
 
 	get window(): BrowserWindow;
+
+	get suspendDetected(): boolean;
 }
