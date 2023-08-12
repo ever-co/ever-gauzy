@@ -51,7 +51,7 @@ spec:
                               - key: node.coreweave.cloud/cpu
                                 operator: In
                                 values:
-                                - intel-xeon-v3
+                                  - intel-xeon-v3
                 podAntiAffinity:
                     preferredDuringSchedulingIgnoredDuringExecution:
                       - podAffinityTerm:
@@ -195,11 +195,11 @@ spec:
                         protocol: TCP
                   resources:
                     requests:
-                      cpu: "0"
-                      memory: "0"
+                      cpu: "0.5"
+                      memory: 2Gi
                     limits:
-                      cpu: "4"
-                      memory: 16Gi
+                      cpu: "2"
+                      memory: 8Gi
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -223,11 +223,11 @@ spec:
                               - key: topology.kubernetes.io/region
                                 operator: In
                                 values:
-                                - ORD1
+                                  - ORD1
                               - key: node.coreweave.cloud/cpu
                                 operator: In
                                 values:
-                                - intel-xeon-v3
+                                  - intel-xeon-v3
                 podAntiAffinity:
                     preferredDuringSchedulingIgnoredDuringExecution:
                       - podAffinityTerm:
@@ -274,11 +274,11 @@ spec:
                         protocol: TCP
                   resources:
                     requests:
-                      cpu: "0"
-                      memory: "0"
+                      cpu: "0.5"
+                      memory: 2Gi
                     limits:
-                      cpu: "4"
-                      memory: 16Gi
+                      cpu: "2"
+                      memory: 8Gi
 ---
 apiVersion: traefik.containo.us/v1alpha1
 kind: Middleware
