@@ -40,6 +40,11 @@ export class DesktopOsInactivityHandler {
 					'Are you still working?',
 					powerManager.window
 				);
+				if (powerManager.suspendDetected) {
+					powerManager.window.webContents.send(
+						'activity-proof-request'
+					);
+				}
 				const button = await this._dialog.show();
 				if (button?.response === 0) {
 					if (!this._inactivityResultAccepted) {
@@ -80,6 +85,11 @@ export class DesktopOsInactivityHandler {
 							)
 						);
 						dialogPromise = dialog.show();
+						if (powerManager.suspendDetected) {
+							powerManager.window.webContents.send(
+								'inactivity-result-not-accepted'
+							);
+						}
 					}
 					/* Handle multiple promises in parallel. */
 					try {
