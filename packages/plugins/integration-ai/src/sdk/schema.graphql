@@ -256,6 +256,7 @@ type AutomationTask {
   id: ID
   employeeJobPostId: String
   employeeId: String
+  executedByEmployeeId: String
   jobPostId: String
   jobDateCreated: DateTime
   jobStatus: String
@@ -267,6 +268,7 @@ type AutomationTask {
   commandResult: String
   status: String!
   executionTime: Float
+  executedDate: DateTime
   createdAt: DateTime
   updatedAt: DateTime
   isActive: Boolean!
@@ -834,6 +836,7 @@ type AutomationTaskDeleteResponse {
   id: ID
   employeeJobPostId: String
   employeeId: String
+  executedByEmployeeId: String
   jobPostId: String
   jobDateCreated: DateTime
   jobStatus: String
@@ -845,6 +848,7 @@ type AutomationTaskDeleteResponse {
   commandResult: String
   status: String
   executionTime: Float
+  executedDate: DateTime
   createdAt: DateTime
   updatedAt: DateTime
   isActive: Boolean
@@ -874,6 +878,7 @@ type AutomationTaskCountAggregate {
   id: Int
   employeeJobPostId: Int
   employeeId: Int
+  executedByEmployeeId: Int
   jobPostId: Int
   jobDateCreated: Int
   jobStatus: Int
@@ -882,6 +887,7 @@ type AutomationTaskCountAggregate {
   providerJobId: Int
   commandType: Int
   status: Int
+  executedDate: Int
   createdAt: Int
   updatedAt: Int
   isActive: Int
@@ -892,6 +898,7 @@ type AutomationTaskMinAggregate {
   id: ID
   employeeJobPostId: String
   employeeId: String
+  executedByEmployeeId: String
   jobPostId: String
   jobDateCreated: DateTime
   jobStatus: String
@@ -900,6 +907,7 @@ type AutomationTaskMinAggregate {
   providerJobId: String
   commandType: String
   status: String
+  executedDate: DateTime
   createdAt: DateTime
   updatedAt: DateTime
 }
@@ -908,6 +916,7 @@ type AutomationTaskMaxAggregate {
   id: ID
   employeeJobPostId: String
   employeeId: String
+  executedByEmployeeId: String
   jobPostId: String
   jobDateCreated: DateTime
   jobStatus: String
@@ -916,6 +925,7 @@ type AutomationTaskMaxAggregate {
   providerJobId: String
   commandType: String
   status: String
+  executedDate: DateTime
   createdAt: DateTime
   updatedAt: DateTime
 }
@@ -1464,6 +1474,7 @@ input AutomationTaskFilter {
   id: IDFilterComparison
   employeeJobPostId: StringFieldComparison
   employeeId: StringFieldComparison
+  executedByEmployeeId: StringFieldComparison
   jobPostId: StringFieldComparison
   jobDateCreated: DateFieldComparison
   jobStatus: StringFieldComparison
@@ -1472,6 +1483,7 @@ input AutomationTaskFilter {
   providerJobId: StringFieldComparison
   commandType: StringFieldComparison
   status: StringFieldComparison
+  executedDate: DateFieldComparison
   createdAt: DateFieldComparison
   updatedAt: DateFieldComparison
   isActive: BooleanFieldComparison
@@ -1555,6 +1567,7 @@ enum AutomationTaskSortFields {
   id
   employeeJobPostId
   employeeId
+  executedByEmployeeId
   jobPostId
   jobDateCreated
   jobStatus
@@ -1563,6 +1576,7 @@ enum AutomationTaskSortFields {
   providerJobId
   commandType
   status
+  executedDate
   createdAt
   updatedAt
   isActive
@@ -1575,6 +1589,7 @@ input AutomationTaskAggregateFilter {
   id: IDFilterComparison
   employeeJobPostId: StringFieldComparison
   employeeId: StringFieldComparison
+  executedByEmployeeId: StringFieldComparison
   jobPostId: StringFieldComparison
   jobDateCreated: DateFieldComparison
   jobStatus: StringFieldComparison
@@ -1583,6 +1598,7 @@ input AutomationTaskAggregateFilter {
   providerJobId: StringFieldComparison
   commandType: StringFieldComparison
   status: StringFieldComparison
+  executedDate: DateFieldComparison
   createdAt: DateFieldComparison
   updatedAt: DateFieldComparison
   isActive: BooleanFieldComparison
@@ -2275,6 +2291,7 @@ input AutomationTaskDeleteFilter {
   id: IDFilterComparison
   employeeJobPostId: StringFieldComparison
   employeeId: StringFieldComparison
+  executedByEmployeeId: StringFieldComparison
   jobPostId: StringFieldComparison
   jobDateCreated: DateFieldComparison
   jobStatus: StringFieldComparison
@@ -2283,6 +2300,7 @@ input AutomationTaskDeleteFilter {
   providerJobId: StringFieldComparison
   commandType: StringFieldComparison
   status: StringFieldComparison
+  executedDate: DateFieldComparison
   createdAt: DateFieldComparison
   updatedAt: DateFieldComparison
   isActive: BooleanFieldComparison
@@ -2301,6 +2319,7 @@ input UpdateAutomationTask {
   id: ID
   employeeJobPostId: String
   employeeId: String
+  executedByEmployeeId: String
   jobPostId: String
   jobDateCreated: DateTime
   jobStatus: String
@@ -2312,6 +2331,7 @@ input UpdateAutomationTask {
   commandResult: String
   status: String
   executionTime: Float
+  executedDate: DateTime
   createdAt: DateTime
   updatedAt: DateTime
   isActive: Boolean
@@ -2332,6 +2352,7 @@ input AutomationTaskUpdateFilter {
   id: IDFilterComparison
   employeeJobPostId: StringFieldComparison
   employeeId: StringFieldComparison
+  executedByEmployeeId: StringFieldComparison
   jobPostId: StringFieldComparison
   jobDateCreated: DateFieldComparison
   jobStatus: StringFieldComparison
@@ -2340,6 +2361,7 @@ input AutomationTaskUpdateFilter {
   providerJobId: StringFieldComparison
   commandType: StringFieldComparison
   status: StringFieldComparison
+  executedDate: DateFieldComparison
   createdAt: DateFieldComparison
   updatedAt: DateFieldComparison
   isActive: BooleanFieldComparison
@@ -2355,6 +2377,7 @@ input CreateAutomationTask {
   id: ID
   employeeJobPostId: String
   employeeId: String
+  executedByEmployeeId: String
   jobPostId: String
   jobDateCreated: DateTime
   jobStatus: String
@@ -2366,6 +2389,7 @@ input CreateAutomationTask {
   commandResult: String
   status: String
   executionTime: Float
+  executedDate: DateTime
   createdAt: DateTime
   updatedAt: DateTime
   isActive: Boolean
@@ -2596,6 +2620,7 @@ input AutomationTaskSubscriptionFilter {
   id: IDFilterComparison
   employeeJobPostId: StringFieldComparison
   employeeId: StringFieldComparison
+  executedByEmployeeId: StringFieldComparison
   jobPostId: StringFieldComparison
   jobDateCreated: DateFieldComparison
   jobStatus: StringFieldComparison
@@ -2604,6 +2629,7 @@ input AutomationTaskSubscriptionFilter {
   providerJobId: StringFieldComparison
   commandType: StringFieldComparison
   status: StringFieldComparison
+  executedDate: DateFieldComparison
   createdAt: DateFieldComparison
   updatedAt: DateFieldComparison
   isActive: BooleanFieldComparison
