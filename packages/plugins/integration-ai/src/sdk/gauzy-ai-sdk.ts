@@ -231,8 +231,8 @@ export type EmployeeJobPost = {
   updatedAt?: Maybe<Scalars['DateTime']>;
   isActive: Scalars['Boolean'];
   isArchived: Scalars['Boolean'];
-  jobPost: JobPost;
-  employee: Employee;
+  jobPost?: Maybe<JobPost>;
+  employee?: Maybe<Employee>;
 };
 
 export type EmployeeJobApplication = {
@@ -261,9 +261,9 @@ export type EmployeeJobApplication = {
   updatedAt?: Maybe<Scalars['DateTime']>;
   isActive: Scalars['Boolean'];
   isArchived: Scalars['Boolean'];
-  employeeJobPost: EmployeeJobPost;
-  jobPost: JobPost;
-  employee: Employee;
+  employeeJobPost?: Maybe<EmployeeJobPost>;
+  jobPost?: Maybe<JobPost>;
+  employee?: Maybe<Employee>;
 };
 
 export type AutomationTask = {
@@ -288,10 +288,10 @@ export type AutomationTask = {
   updatedAt?: Maybe<Scalars['DateTime']>;
   isActive: Scalars['Boolean'];
   isArchived: Scalars['Boolean'];
-  employeeJobPost: EmployeeJobPost;
-  jobPost: JobPost;
-  executedByEmployee: Employee;
-  employee: Employee;
+  employeeJobPost?: Maybe<EmployeeJobPost>;
+  jobPost?: Maybe<JobPost>;
+  executedByEmployee?: Maybe<Employee>;
+  employee?: Maybe<Employee>;
 };
 
 export type DeleteManyResponse = {
@@ -3090,13 +3090,13 @@ export type EmployeeJobPostsQuery = (
       & { node: (
         { __typename?: 'EmployeeJobPost' }
         & Pick<EmployeeJobPost, 'id' | 'isApplied' | 'appliedDate' | 'createdAt' | 'updatedAt' | 'isActive' | 'isArchived' | 'providerCode' | 'providerJobId' | 'jobDateCreated' | 'jobStatus' | 'jobType'>
-        & { employee: (
+        & { employee?: Maybe<(
           { __typename?: 'Employee' }
           & Pick<Employee, 'id' | 'externalEmployeeId'>
-        ), jobPost: (
+        )>, jobPost?: Maybe<(
           { __typename?: 'JobPost' }
           & Pick<JobPost, 'id' | 'providerCode' | 'providerJobId' | 'title' | 'description' | 'jobDateCreated' | 'jobStatus' | 'jobType' | 'url' | 'budget' | 'duration' | 'workload' | 'skills' | 'category' | 'subcategory' | 'country' | 'clientFeedback' | 'clientReviewsCount' | 'clientJobsPosted' | 'clientPastHires' | 'clientPaymentVerificationStatus'>
-        ) }
+        )> }
       ) }
     )> }
   ) }

@@ -218,8 +218,8 @@ type EmployeeJobPost {
   updatedAt: DateTime
   isActive: Boolean!
   isArchived: Boolean!
-  jobPost: JobPost!
-  employee: Employee!
+  jobPost: JobPost
+  employee: Employee
 }
 
 type EmployeeJobApplication {
@@ -247,9 +247,9 @@ type EmployeeJobApplication {
   updatedAt: DateTime
   isActive: Boolean!
   isArchived: Boolean!
-  employeeJobPost: EmployeeJobPost!
-  jobPost: JobPost!
-  employee: Employee!
+  employeeJobPost: EmployeeJobPost
+  jobPost: JobPost
+  employee: Employee
 }
 
 type AutomationTask {
@@ -273,10 +273,10 @@ type AutomationTask {
   updatedAt: DateTime
   isActive: Boolean!
   isArchived: Boolean!
-  employeeJobPost: EmployeeJobPost!
-  jobPost: JobPost!
-  executedByEmployee: Employee!
-  employee: Employee!
+  employeeJobPost: EmployeeJobPost
+  jobPost: JobPost
+  executedByEmployee: Employee
+  employee: Employee
 }
 
 type DeleteManyResponse {
