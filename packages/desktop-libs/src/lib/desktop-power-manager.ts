@@ -7,10 +7,12 @@ export class DesktopPowerManager implements IPowerManager {
 	private _suspendDetected: boolean;
 	private _sleepTracking: ISleepTracking;
 	private _window: BrowserWindow;
+	private _isLockedScreen: boolean;
 
 	constructor(window: BrowserWindow) {
 		this._sleepTracking = new SleepTracking(window);
 		this._suspendDetected = false;
+		this._isLockedScreen = false;
 		this._window = window;
 		powerMonitor.on('suspend', () => {
 			console.log('System going to sleep.');
@@ -19,16 +21,20 @@ export class DesktopPowerManager implements IPowerManager {
 
 		powerMonitor.on('resume', () => {
 			console.log('System resumed from sleep state.');
-			this.resumeTracking();
+			if (!this._isLockedScreen) {
+				this.resumeTracking();
+			}
 		});
 
 		powerMonitor.on('lock-screen', () => {
 			console.log('System locked');
+			this._isLockedScreen = true;
 			this.pauseTracking();
 		});
 
 		powerMonitor.on('unlock-screen', () => {
 			console.log('System unlocked');
+			this._isLockedScreen = false;
 			this.resumeTracking();
 		});
 	}
