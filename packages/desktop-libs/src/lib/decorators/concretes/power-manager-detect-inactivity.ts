@@ -1,6 +1,5 @@
 import { BasePowerManagerDecorator } from '../abstracts/base-power-manager-decorator';
-import { SleepInactivityTracking, SleepTracking } from '../../contexts';
-import { ControlledSleepTracking } from '../../strategies';
+import { SleepTracking } from '../../contexts';
 import { IPowerManager } from '../../interfaces';
 import { powerMonitor } from 'electron';
 import EventEmitter from 'events';
@@ -27,20 +26,15 @@ export class PowerManagerDetectInactivity extends BasePowerManagerDecorator {
 				clearTimeout(this._activityProofTimeoutIntervalId);
 				this._activityProofTimeoutIntervalId = null;
 			}
-			if (!powerManager.trackerStatusActive) return;
 			if (res) {
 				this._detectionEmitter.emit(
 					'activity-proof-result-accepted',
 					true
 				);
 				this.startInactivityDetection();
-				return;
+			} else {
+				this._detectionEmitter.emit('activity-proof-result-not-accepted');
 			}
-			this._detectionEmitter.emit('activity-proof-result-not-accepted');
-			powerManager.sleepTracking = new SleepInactivityTracking(
-				new ControlledSleepTracking(powerManager.window)
-			);
-			powerManager.pauseTracking();
 		});
 	}
 

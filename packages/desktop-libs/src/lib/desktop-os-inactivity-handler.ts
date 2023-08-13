@@ -8,6 +8,11 @@ import { BrowserWindow } from 'electron';
 import { LocalStore } from './desktop-store';
 import { IntervalService, TimerService } from './offline';
 import moment from 'moment';
+import {
+	AlwaysSleepTracking,
+	NeverSleepTracking,
+} from './strategies';
+import { SleepInactivityTracking, SleepTracking } from './contexts';
 
 export class DesktopOsInactivityHandler {
 	private _inactivityResultAccepted: boolean;
@@ -18,7 +23,6 @@ export class DesktopOsInactivityHandler {
 	private _stoppedAt: Date;
 	private _intervalService: IntervalService;
 	private _timerService: TimerService;
-
 
 	constructor(powerManager: PowerManagerDetectInactivity) {
 		this._notify = new NotificationDesktop();
@@ -40,11 +44,6 @@ export class DesktopOsInactivityHandler {
 					'Are you still working?',
 					powerManager.window
 				);
-				if (powerManager.suspendDetected) {
-					powerManager.window.webContents.send(
-						'activity-proof-request'
-					);
-				}
 				const button = await this._dialog.show();
 				if (button?.response === 0) {
 					if (!this._inactivityResultAccepted) {
@@ -101,12 +100,38 @@ export class DesktopOsInactivityHandler {
 						console.log('Error', error);
 					}
 				}
+				if (powerManager.suspendDetected) {
+					powerManager.window.webContents.send(
+						'activity-proof-request'
+					);
+				}
 				if (!res)
 					this._notify.customNotification(
 						'Tracker was stopped due to inactivity!',
 						'Gauzy'
 					);
 				this._inactivityResultAccepted = true;
+			}
+		);
+
+		this._powerManager.detectInactivity.on(
+			'activity-proof-result-not-accepted',
+			() => {
+				this._powerManager.sleepTracking = new SleepInactivityTracking(
+					this._powerManager.suspendDetected && this.isTrackingOnSleep
+						? new AlwaysSleepTracking(this._powerManager.window)
+						: new NeverSleepTracking(this._powerManager.window)
+				);
+				this._powerManager.pauseTracking();
+			}
+		);
+
+		this._powerManager.detectInactivity.on(
+			'activity-proof-result-accepted',
+			() => {
+				this._powerManager.sleepTracking = new SleepTracking(
+					this._powerManager.window
+				);
 			}
 		);
 	}
@@ -148,5 +173,10 @@ export class DesktopOsInactivityHandler {
 			isWorking: isStillWorking,
 			timeslotIds
 		});
+	}
+
+	public get isTrackingOnSleep(): boolean {
+		const setting = LocalStore.getStore('appSetting');
+		return setting ? setting.trackOnPcSleep : false;
 	}
 }
