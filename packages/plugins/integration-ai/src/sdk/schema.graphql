@@ -275,6 +275,7 @@ type AutomationTask {
   isArchived: Boolean!
   employeeJobPost: EmployeeJobPost!
   jobPost: JobPost!
+  executedByEmployee: Employee!
   employee: Employee!
 }
 
@@ -1490,6 +1491,7 @@ input AutomationTaskFilter {
   isArchived: BooleanFieldComparison
   employeeJobPost: AutomationTaskFilterEmployeeJobPostFilter
   jobPost: AutomationTaskFilterJobPostFilter
+  executedByEmployee: AutomationTaskFilterEmployeeFilter
   employee: AutomationTaskFilterEmployeeFilter
 }
 
@@ -1658,9 +1660,11 @@ type Mutation {
   createManyAutomationTasks(input: CreateManyAutomationTasksInput!): [AutomationTask!]!
   removeEmployeeJobPostFromAutomationTask(input: RelationInput!): AutomationTask!
   removeJobPostFromAutomationTask(input: RelationInput!): AutomationTask!
+  removeExecutedByEmployeeFromAutomationTask(input: RelationInput!): AutomationTask!
   removeEmployeeFromAutomationTask(input: RelationInput!): AutomationTask!
   setEmployeeJobPostOnAutomationTask(input: RelationInput!): AutomationTask!
   setJobPostOnAutomationTask(input: RelationInput!): AutomationTask!
+  setExecutedByEmployeeOnAutomationTask(input: RelationInput!): AutomationTask!
   setEmployeeOnAutomationTask(input: RelationInput!): AutomationTask!
 }
 

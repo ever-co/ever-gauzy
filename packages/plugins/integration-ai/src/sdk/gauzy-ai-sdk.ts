@@ -290,6 +290,7 @@ export type AutomationTask = {
   isArchived: Scalars['Boolean'];
   employeeJobPost: EmployeeJobPost;
   jobPost: JobPost;
+  executedByEmployee: Employee;
   employee: Employee;
 };
 
@@ -1541,6 +1542,7 @@ export type AutomationTaskFilter = {
   isArchived?: Maybe<BooleanFieldComparison>;
   employeeJobPost?: Maybe<AutomationTaskFilterEmployeeJobPostFilter>;
   jobPost?: Maybe<AutomationTaskFilterJobPostFilter>;
+  executedByEmployee?: Maybe<AutomationTaskFilterEmployeeFilter>;
   employee?: Maybe<AutomationTaskFilterEmployeeFilter>;
 };
 
@@ -1710,9 +1712,11 @@ export type Mutation = {
   createManyAutomationTasks: Array<AutomationTask>;
   removeEmployeeJobPostFromAutomationTask: AutomationTask;
   removeJobPostFromAutomationTask: AutomationTask;
+  removeExecutedByEmployeeFromAutomationTask: AutomationTask;
   removeEmployeeFromAutomationTask: AutomationTask;
   setEmployeeJobPostOnAutomationTask: AutomationTask;
   setJobPostOnAutomationTask: AutomationTask;
+  setExecutedByEmployeeOnAutomationTask: AutomationTask;
   setEmployeeOnAutomationTask: AutomationTask;
 };
 
@@ -1977,6 +1981,11 @@ export type MutationRemoveJobPostFromAutomationTaskArgs = {
 };
 
 
+export type MutationRemoveExecutedByEmployeeFromAutomationTaskArgs = {
+  input: RelationInput;
+};
+
+
 export type MutationRemoveEmployeeFromAutomationTaskArgs = {
   input: RelationInput;
 };
@@ -1988,6 +1997,11 @@ export type MutationSetEmployeeJobPostOnAutomationTaskArgs = {
 
 
 export type MutationSetJobPostOnAutomationTaskArgs = {
+  input: RelationInput;
+};
+
+
+export type MutationSetExecutedByEmployeeOnAutomationTaskArgs = {
   input: RelationInput;
 };
 
