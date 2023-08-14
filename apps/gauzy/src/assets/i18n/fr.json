@@ -3636,7 +3636,8 @@
 		"TODAY": "Aujourd'hui",
 		"ALERT_DESKTOP_DOWNLOAD": "Pour un suivi plus flexible du temps et des activités, veuillez <a href={{downloadURL}} rel=\"noopener\" target=\"_blank\">Télécharger</a> et utiliser l'<a href={{downloadURL}} rel=\"noopener\" target=\"_blank\">Application Gauzy Desktop Timer</a>.",
 		"STATUS": "Le suivi du temps est déjà en cours d'exécution dans le {{ source }}",
-		"VERSION": "Version v{{ version }}"
+		"VERSION": "Version v{{ version }}",
+		"WAIT_FOR": "En attente du démarrage de {{ name }}..."
 	},
 	"TIMESHEET": {
 		"TODAY": "Today",

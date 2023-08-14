@@ -3670,7 +3670,8 @@
 		"TODAY": "Today",
 		"ALERT_DESKTOP_DOWNLOAD": "For more flexible time and activity tracking, please <a href={{downloadURL}} rel=\"noopener\" target=\"_blank\">Download</a> and use the <a href={{downloadURL}} rel=\"noopener\" target=\"_blank\">Gauzy Desktop Timer App</a>.",
 		"STATUS": "The time tracker is already running in the {{ source }}",
-		"VERSION": "Version v{{ version }}"
+		"VERSION": "Version v{{ version }}",
+		"WAIT_FOR": "Waiting for {{ name }} to start..."
 	},
 	"TIMESHEET": {
 		"TODAY": "Today",

@@ -3612,7 +3612,8 @@
 		"ADD_TIME": "Добавить время",
 		"TODAY": "Сегодня",
 		"STATUS": "Тайм-трекер уже работает в {{ source }}",
-		"VERSION": "Версия v{{ version }}"
+		"VERSION": "Версия v{{ version }}",
+		"WAIT_FOR": "Ожидание запуска {{ name }}..."
 	},
 	"TIMESHEET": {
 		"TODAY": "Сегодня",

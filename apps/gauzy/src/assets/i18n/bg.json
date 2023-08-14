@@ -3615,7 +3615,8 @@
 		"ADD_TIME": "Add Time",
 		"TODAY": "Днес",
 		"STATUS": "Проследяването на времето вече работи в {{ source }}",
-		"VERSION": "Версия v{{ version }}"
+		"VERSION": "Версия v{{ version }}",
+		"WAIT_FOR": "Изчаква се {{ name }} да започне..."
 	},
 	"TIMESHEET": {
 		"TODAY": "Днес",
