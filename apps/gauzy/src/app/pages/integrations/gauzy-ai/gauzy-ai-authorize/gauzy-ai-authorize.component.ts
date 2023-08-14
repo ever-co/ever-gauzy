@@ -1,9 +1,10 @@
-import { Component, OnInit, OnDestroy, ViewChild } from '@angular/core';
+import { Component, OnInit, OnDestroy, ViewChild, AfterViewInit } from '@angular/core';
+import { ActivatedRoute, Router } from '@angular/router';
 import { FormGroup, FormBuilder, Validators, FormGroupDirective } from '@angular/forms';
 import { filter, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { IOrganization } from '@gauzy/contracts';
-import { GauzyAIService, Store } from './../../../../@core/services';
+import { IIntegrationTenant, IOrganization, IntegrationEnum } from '@gauzy/contracts';
+import { GauzyAIService, IntegrationsService, Store } from './../../../../@core/services';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -11,24 +12,27 @@ import { GauzyAIService, Store } from './../../../../@core/services';
 	templateUrl: './gauzy-ai-authorize.component.html',
 	styleUrls: ['./gauzy-ai-authorize.component.scss'],
 })
-export class GauzyAIAuthorizeComponent implements OnInit, OnDestroy {
+export class GauzyAIAuthorizeComponent implements AfterViewInit, OnInit, OnDestroy {
 
 	@ViewChild('formDirective') formDirective: FormGroupDirective;
 
-	readonly form: FormGroup = GauzyAIAuthorizeComponent.buildForm(this._fb);
+	readonly form: FormGroup = GauzyAIAuthorizeComponent.buildForm(this._formBuilder);
 	static buildForm(fb: FormBuilder): FormGroup {
 		return fb.group({
-			apiKey: [null, Validators.required],
-			apiSecret: [null, Validators.required],
+			client_id: [null, Validators.required],
+			client_secret: [null, Validators.required],
 		});
 	}
 
 	public organization: IOrganization;
 
 	constructor(
-		private readonly _fb: FormBuilder,
+		private readonly _formBuilder: FormBuilder,
+		private readonly _activatedRoute: ActivatedRoute,
+		private readonly _router: Router,
 		private readonly _store: Store,
-		private readonly _gauzyAIService: GauzyAIService
+		private readonly _gauzyAIService: GauzyAIService,
+		private readonly _integrationsService: IntegrationsService
 	) { }
 
 	ngOnInit() {
@@ -41,7 +45,48 @@ export class GauzyAIAuthorizeComponent implements OnInit, OnDestroy {
 			.subscribe();
 	}
 
+	ngAfterViewInit(): void {
+		this._activatedRoute.data
+			.pipe(
+				// if remember state is true
+				filter(({ state }) => !!state && state === true),
+				tap(() => this._checkRememberState()),
+				untilDestroyed(this)
+			)
+			.subscribe();
+	}
+
 	ngOnDestroy(): void { }
+
+	/**
+	 *
+	 * @returns
+	 */
+	private _checkRememberState() {
+		if (!this.organization) {
+			return;
+		}
+		const { id: organizationId, tenantId } = this.organization;
+		const state$ = this._integrationsService.checkRememberState({
+			name: IntegrationEnum.GAUZY_AI,
+			organizationId,
+			tenantId
+		});
+		state$.pipe(
+			filter((integration: IIntegrationTenant) => !!integration.id),
+			tap((integration: IIntegrationTenant) => {
+				this._redirectToGauzyAIIntegration(integration.id);
+			}),
+			untilDestroyed(this)
+		).subscribe();
+	}
+
+	/**
+	 * Gauzy AI integration remember state API call
+	 */
+	private _redirectToGauzyAIIntegration(integrationId: string) {
+		this._router.navigate(['pages/integrations/ever-ai', integrationId]);
+	}
 
 	/**
 	 *
@@ -52,13 +97,14 @@ export class GauzyAIAuthorizeComponent implements OnInit, OnDestroy {
 			return;
 		}
 		try {
-			const { apiKey, apiSecret } = this.form.value;
-			const { id: organizationId } = this.organization;
+			const { client_id, client_secret } = this.form.value;
+			const { id: organizationId, tenantId } = this.organization;
 
 			this._gauzyAIService.addIntegration({
-				client_id: apiKey,
-				client_secret: apiSecret,
-				organizationId
+				client_id,
+				client_secret,
+				organizationId,
+				tenantId
 			}).pipe(
 				untilDestroyed(this)
 			).subscribe();

@@ -48,7 +48,7 @@ export interface IIntegrationViewModel {
 }
 
 export interface IIntegrationTenant extends IBasePerTenantAndOrganizationEntityModel {
-	name: string;
+	name: IntegrationEnum;
 	entitySettings?: IIntegrationEntitySetting[];
 	settings?: IIntegrationSetting[];
 }
@@ -138,9 +138,8 @@ export interface IIntegrationMapSyncEntityInput
 	entity: string;
 }
 
-export interface IIntegrationTenantCreateDto
-	extends IBasePerTenantAndOrganizationEntityModel {
-	name: string;
+export interface IIntegrationTenantCreateDto extends IBasePerTenantAndOrganizationEntityModel {
+	name: IntegrationEnum;
 	entitySettings?: IIntegrationEntitySetting[];
 	settings?: IIntegrationSetting[];
 }

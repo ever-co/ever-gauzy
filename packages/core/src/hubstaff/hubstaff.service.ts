@@ -78,7 +78,7 @@ export class HubstaffService {
 		private readonly _organizationService: OrganizationService,
 		private readonly _userService: UserService,
 		private readonly _commandBus: CommandBus
-	) {}
+	) { }
 
 	async fetchIntegration<T = any>(url: string, token: string): Promise<any> {
 		const headers = {
@@ -87,7 +87,7 @@ export class HubstaffService {
 		return firstValueFrom(
 			this._httpService.get(url, { headers }).pipe(
 				catchError((error: AxiosError<any>) => {
-					const response: AxiosResponse<any>  = error.response;
+					const response: AxiosResponse<any> = error.response;
 
 					const status = response.status;
 					const statusText = response.statusText;
@@ -156,11 +156,11 @@ export class HubstaffService {
 			const tokens$ = this._httpService.post(`${HUBSTAFF_AUTHORIZATION_URL}/access_tokens`, urlParams, {
 				headers
 			})
-			.pipe(
-				map(
-					(response: AxiosResponse<any>) => response.data
-				)
-			);
+				.pipe(
+					map(
+						(response: AxiosResponse<any>) => response.data
+					)
+				);
 			const tokens = await lastValueFrom(tokens$);
 			const settingsDto = settings.map((setting) => {
 				if (setting.settingsName === 'access_token') {
@@ -223,9 +223,9 @@ export class HubstaffService {
 		).map((settingEntity) =>
 			settingEntity.entity === IntegrationEntity.PROJECT
 				? {
-						...settingEntity,
-						tiedEntities: tiedEntities
-				  }
+					...settingEntity,
+					tiedEntities: tiedEntities
+				}
 				: settingEntity
 		) as IIntegrationEntitySetting[];
 
@@ -237,7 +237,7 @@ export class HubstaffService {
 			})
 			.pipe(
 				switchMap(({ data }) =>
-					this._integrationTenantService.addIntegration({
+					this._integrationTenantService.create({
 						organizationId,
 						tenantId,
 						name: IntegrationEnum.HUBSTAFF,
@@ -260,7 +260,7 @@ export class HubstaffService {
 								settingsValue: data.refresh_token
 							}
 						].map((setting) => {
-							return { organizationId,  ...setting };
+							return { organizationId, ...setting };
 						})
 					})
 				),
@@ -278,7 +278,7 @@ export class HubstaffService {
 	async fetchOrganizations({
 		token
 	}): Promise<IHubstaffOrganization[]> {
-	const { organizations } = await this.fetchIntegration<IHubstaffOrganizationsResponse[]>(
+		const { organizations } = await this.fetchIntegration<IHubstaffOrganizationsResponse[]>(
 			'organizations',
 			token
 		);
@@ -320,7 +320,7 @@ export class HubstaffService {
 						let budget = {};
 						if (project.budget) {
 							budget['budgetType'] = project.budget.type || OrganizationProjectBudgetTypeEnum.COST;
-							budget['startDate'] =  project.budget.start_date || null;
+							budget['startDate'] = project.budget.start_date || null;
 							budget['budget'] = project.budget[budget['budgetType']];
 						}
 						const payload = {
@@ -543,7 +543,7 @@ export class HubstaffService {
 				token,
 				integrationId,
 				organizationId
-		 	});
+			});
 		}
 	}
 
@@ -753,11 +753,11 @@ export class HubstaffService {
 				token
 			);
 			const projectMap = projects.map(({ name, id, billable, description }) => ({
-					name,
-					sourceId: id,
-					billable,
-					description
-				})
+				name,
+				sourceId: id,
+				billable,
+				description
+			})
 			);
 			return await this.syncProjects({
 				integrationId,
@@ -1317,7 +1317,7 @@ export class HubstaffService {
 		const dates: IDateRange[] = mergeOverlappingDateRanges(range);
 
 		if (isNotEmpty(dates)) {
-			dates.forEach(({ start, end}) => {
+			dates.forEach(({ start, end }) => {
 				let i = 0;
 				const timeSlots = new Array();
 
@@ -1329,7 +1329,7 @@ export class HubstaffService {
 					i++;
 				}
 
-				const [ activity ] = this.getLogsActivityFromSlots(timeSlots);
+				const [activity] = this.getLogsActivityFromSlots(timeSlots);
 				timeLogs.push({
 					startedAt: start,
 					stoppedAt: end,
@@ -1355,28 +1355,28 @@ export class HubstaffService {
 				...prev,
 				[current.date]: prevLog
 					? {
-							id: current.id,
-							date: current.date,
-							user_id: prevLog.user_id,
-							project_id: prevLog.project_id || null,
-							task_id: prevLog.task_id || null,
-							// this will take the last chunk(slot), maybe we should allow percentage for this, as one time log can have both manual and tracked
-							logType:
-								current.client === 'windows'
-									? TimeLogType.TRACKED
-									: TimeLogType.MANUAL
-					  }
+						id: current.id,
+						date: current.date,
+						user_id: prevLog.user_id,
+						project_id: prevLog.project_id || null,
+						task_id: prevLog.task_id || null,
+						// this will take the last chunk(slot), maybe we should allow percentage for this, as one time log can have both manual and tracked
+						logType:
+							current.client === 'windows'
+								? TimeLogType.TRACKED
+								: TimeLogType.MANUAL
+					}
 					: {
-							id: current.id,
-							date: current.date,
-							user_id: current.user_id,
-							project_id: current.project_id || null,
-							task_id: current.task_id || null,
-							logType:
-								current.client === 'windows'
-									? TimeLogType.TRACKED
-									: TimeLogType.MANUAL
-					  }
+						id: current.id,
+						date: current.date,
+						user_id: current.user_id,
+						project_id: current.project_id || null,
+						task_id: current.task_id || null,
+						logType:
+							current.client === 'windows'
+								? TimeLogType.TRACKED
+								: TimeLogType.MANUAL
+					}
 			};
 		}, {});
 		return Object.values(timeLogs);
