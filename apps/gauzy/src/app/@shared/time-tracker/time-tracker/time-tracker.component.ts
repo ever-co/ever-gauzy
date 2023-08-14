@@ -18,13 +18,13 @@ import { NgxPermissionsService } from 'ngx-permissions';
 import { faStopwatch, faPlay, faPause } from '@fortawesome/free-solid-svg-icons';
 import { filter, tap } from 'rxjs/operators';
 import { Observable } from 'rxjs';
+import { Environment } from '@env/model';
+import { environment } from '@env/environment';
 import { TimeTrackerService } from '../time-tracker.service';
 import { TimesheetService } from '../../timesheet/timesheet.service';
 import { ErrorHandlingService, Store, ToastrService } from '../../../@core/services';
 import { ITimerSynced } from '../components/time-tracker-status/interfaces';
 import { TimeTrackerStatusService } from '../components/time-tracker-status/time-tracker-status.service';
-import { Environment } from '@env/model';
-import { environment } from '@env/environment';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -33,6 +33,10 @@ import { environment } from '@env/environment';
 	styleUrls: ['./time-tracker.component.scss']
 })
 export class TimeTrackerComponent implements OnInit, OnDestroy {
+
+	// This constant holds the URL for downloading content from the platform's website.
+	readonly PLATFORM_WEBSITE_DOWNLOAD_URL: Environment['PLATFORM_WEBSITE_DOWNLOAD_URL'] = environment.PLATFORM_WEBSITE_DOWNLOAD_URL;
+
 	play = faPlay;
 	pause = faPause;
 	stopwatch = faStopwatch;
@@ -51,8 +55,6 @@ export class TimeTrackerComponent implements OnInit, OnDestroy {
 	PermissionsEnum = PermissionsEnum;
 	timeLogType = TimeLogType;
 	hideAlert = false;
-	readonly environment: Environment = environment;
-
 
 	@ViewChild(NgForm) form: NgForm;
 

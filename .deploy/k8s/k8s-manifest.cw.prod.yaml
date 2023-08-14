@@ -30,7 +30,7 @@ kind: Deployment
 metadata:
     name: gauzy-prod-api
 spec:
-    replicas: 16
+    replicas: 8
     selector:
         matchLabels:
             app: gauzy-prod-api
@@ -48,6 +48,10 @@ spec:
                                 operator: In
                                 values:
                                   - ORD1
+                              - key: node.coreweave.cloud/cpu
+                                operator: In
+                                values:
+                                  - intel-xeon-v3
                 podAntiAffinity:
                     preferredDuringSchedulingIgnoredDuringExecution:
                       - podAffinityTerm:
@@ -56,7 +60,7 @@ spec:
                                   - key: app
                                     operator: In
                                     values:
-                                      - gauzy-prode-api
+                                      - gauzy-prod-api
                             topologyKey: kubernetes.io/hostname
                         weight: 1
             imagePullSecrets:
@@ -195,13 +199,20 @@ spec:
                   ports:
                       - containerPort: 3000
                         protocol: TCP
+                  resources:
+                    requests:
+                      cpu: "1"
+                      memory: 4Gi
+                    limits:
+                      cpu: "4"
+                      memory: 16Gi
 ---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
     name: gauzy-prod-webapp
 spec:
-    replicas: 8
+    replicas: 4
     selector:
         matchLabels:
             app: gauzy-prod-webapp
@@ -219,6 +230,10 @@ spec:
                                 operator: In
                                 values:
                                   - ORD1
+                              - key: node.coreweave.cloud/cpu
+                                operator: In
+                                values:
+                                  - intel-xeon-v3
                 podAntiAffinity:
                     preferredDuringSchedulingIgnoredDuringExecution:
                       - podAffinityTerm:
@@ -263,6 +278,13 @@ spec:
                   ports:
                       - containerPort: 4200
                         protocol: TCP
+                  resources:
+                    requests:
+                      cpu: "1"
+                      memory: 4Gi
+                    limits:
+                      cpu: "4"
+                      memory: 16Gi
 ---
 apiVersion: traefik.containo.us/v1alpha1
 kind: Middleware
@@ -276,7 +298,7 @@ spec:
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: gauzy-stage
+  name: gauzy-prod
   annotations:
     kubernetes.io/ingress.class: traefik-everco
     traefik.ingress.kubernetes.io/router.middlewares: tenant-acb888-ever-https-redirect@kubernetescrd
@@ -300,7 +322,7 @@ spec:
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-    name: gauzy-stage-api
+    name: gauzy-prod-api
     annotations:
         kubernetes.io/ingress.class: traefik-everco
         traefik.ingress.kubernetes.io/router.middlewares: tenant-acb888-ever-https-redirect@kubernetescrd

@@ -18,10 +18,13 @@ import { filter, tap } from 'rxjs/operators';
 import { BehaviorSubject } from 'rxjs/internal/BehaviorSubject';
 import { pick } from 'underscore';
 import { distinctUntilChange, isEmpty, progressStatus } from '@gauzy/common-angular';
+import { Environment } from '@env/model';
+import { environment } from '@env/environment';
 import { TranslateService } from '@ngx-translate/core';
 import { DateRangePickerBuilderService, Store } from '../../../@core/services';
 import { TimesheetService } from '../../timesheet/timesheet.service';
 import { BaseSelectorFilterComponent } from '../../timesheet/gauzy-filters/base-selector-filter/base-selector-filter.component';
+
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -31,6 +34,9 @@ import { BaseSelectorFilterComponent } from '../../timesheet/gauzy-filters/base-
 })
 export class DailyGridComponent extends BaseSelectorFilterComponent
 	implements OnInit, AfterViewInit, OnDestroy {
+
+	// This constant holds the URL for downloading content from the platform's website.
+	readonly PLATFORM_WEBSITE_DOWNLOAD_URL: Environment['PLATFORM_WEBSITE_DOWNLOAD_URL'] = environment.PLATFORM_WEBSITE_DOWNLOAD_URL;
 
 	payloads$: BehaviorSubject<ITimeLogFilters> = new BehaviorSubject(null);
 
@@ -135,5 +141,5 @@ export class DailyGridComponent extends BaseSelectorFilterComponent
 		return progressStatus(value)
 	}
 
-	ngOnDestroy() {}
+	ngOnDestroy() { }
 }

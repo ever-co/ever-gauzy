@@ -66,7 +66,7 @@ export class ScreenshotController {
 	)
 	async create(
 		@Body() entity: Screenshot,
-		@UploadedFileStorage() file
+		@UploadedFileStorage() file: UploadedFile
 	) {
 		console.log('Screenshot Http Request', { entity, file });
 		const user = RequestContext.currentUser();
@@ -105,6 +105,7 @@ export class ScreenshotController {
 		}
 
 		try {
+			entity.userId = RequestContext.currentUserId();
 			entity.file = file.key;
 			entity.thumb = thumb.key;
 			entity.storageProvider = provider.name.toUpperCase() as FileStorageProviderEnum;
