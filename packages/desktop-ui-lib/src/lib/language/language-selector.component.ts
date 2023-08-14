@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, OnInit } from '@angular/core';
+import { AfterViewInit, Component, Input, NgZone, OnInit } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import {
 	ILanguage,
@@ -9,7 +9,14 @@ import {
 import { UserOrganizationService } from '../time-tracker/organization-selector/user-organization.service';
 import { LanguageService } from './language.service';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { tap, filter, from, BehaviorSubject, Observable } from 'rxjs';
+import {
+	tap,
+	filter,
+	from,
+	BehaviorSubject,
+	Observable,
+	concatMap,
+} from 'rxjs';
 import { Store } from '../services';
 import { LanguageSelectorService } from './language-selector.service';
 import { ElectronService } from '../electron/services';
@@ -31,7 +38,8 @@ export class LanguageSelectorComponent implements OnInit, AfterViewInit {
 		private readonly _translate: TranslateService,
 		private readonly _languageService: LanguageService,
 		private readonly _languageSelelectorService: LanguageSelectorService,
-		private readonly _electronService: ElectronService
+		private readonly _electronService: ElectronService,
+		private readonly _ngZone: NgZone
 	) {
 		this._languages$ = new BehaviorSubject([]);
 		this._preferredLanguage = LanguagesEnum.ENGLISH;
@@ -76,6 +84,11 @@ export class LanguageSelectorComponent implements OnInit, AfterViewInit {
 						preferredLanguage
 					)
 				),
+				concatMap((preferredLanguage: LanguagesEnum) =>
+					this.changePreferredLanguage({
+						preferredLanguage,
+					})
+				),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -86,6 +99,14 @@ export class LanguageSelectorComponent implements OnInit, AfterViewInit {
 		if (!systemLanguages) {
 			from(this._loadLanguages());
 		}
+		this._electronService.ipcRenderer.on(
+			'preferred_language_change',
+			(event, language: LanguagesEnum) => {
+				this._ngZone.run(async () => {
+					this.updatePreferredLanguage = language;
+				});
+			}
+		);
 	}
 
 	private async _loadLanguages() {
@@ -120,10 +141,7 @@ export class LanguageSelectorComponent implements OnInit, AfterViewInit {
 	}
 
 	public async switchLanguage(): Promise<void> {
-		this._store.preferredLanguage = this._preferredLanguage;
-		await this.changePreferredLanguage({
-			preferredLanguage: this._preferredLanguage,
-		});
+		this.updatePreferredLanguage = this._preferredLanguage;
 	}
 
 	public setLanguage(): void {
@@ -154,5 +172,12 @@ export class LanguageSelectorComponent implements OnInit, AfterViewInit {
 
 	public set preferredLanguage(value: LanguagesEnum) {
 		this._preferredLanguage = value;
+	}
+
+	@Input('preferredLanguage')
+	public set updatePreferredLanguage(language: LanguagesEnum) {
+		if (language) {
+			this._store.preferredLanguage = language;
+		}
 	}
 }
