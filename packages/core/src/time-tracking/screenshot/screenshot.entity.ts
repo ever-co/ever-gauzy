@@ -6,20 +6,21 @@ import {
 	Index,
 	JoinColumn
 } from 'typeorm';
-import { FileStorageProviderEnum, IScreenshot, ITimeSlot } from '@gauzy/contracts';
+import { FileStorageProviderEnum, IScreenshot, ITimeSlot, IUser } from '@gauzy/contracts';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsString, IsOptional, IsDateString, IsUUID, IsNotEmpty, IsEnum } from 'class-validator';
 import { Exclude } from 'class-transformer';
 import {
 	TenantOrganizationBaseEntity,
-	TimeSlot
+	TimeSlot,
+	User
 } from './../../core/entities/internal';
 
 @Entity('screenshot')
 export class Screenshot extends TenantOrganizationBaseEntity
 	implements IScreenshot {
 
-	@ApiProperty({ type: () => String, required: true })
+	@ApiProperty({ type: () => String, })
 	@IsNotEmpty()
 	@IsString()
 	@Column()
@@ -68,7 +69,6 @@ export class Screenshot extends TenantOrganizationBaseEntity
 	/**
 	 * TimeSlot
 	 */
-	@ApiProperty({ type: () => TimeSlot })
 	@ManyToOne(() => TimeSlot, (timeSlot) => timeSlot.screenshots, {
 		onDelete: 'CASCADE'
 	})
@@ -82,4 +82,21 @@ export class Screenshot extends TenantOrganizationBaseEntity
 	@Index()
 	@Column({ nullable: true })
 	timeSlotId?: ITimeSlot['id'];
+
+	/**
+	 * User
+	 */
+	@ManyToOne(() => User, {
+		onDelete: 'CASCADE'
+	})
+	@JoinColumn()
+	user?: IUser;
+
+	@ApiPropertyOptional({ type: () => String })
+	@IsOptional()
+	@IsUUID()
+	@RelationId((it: Screenshot) => it.user)
+	@Index()
+	@Column({ nullable: true })
+	userId?: IUser['id'];
 }

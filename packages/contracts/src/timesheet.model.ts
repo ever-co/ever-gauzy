@@ -7,7 +7,7 @@ import { ITag } from './tag.model';
 import { IPaginationInput } from './core.model';
 import { ReportGroupByFilter } from './report.model';
 import { FileStorageProviderEnum } from './file-provider';
-import { IUser } from './user.model';
+import { IRelationalUser, IUser } from './user.model';
 import { IRelationalOrganizationTeam } from './organization-team.model';
 
 export interface ITimesheet extends IBasePerTenantAndOrganizationEntityModel {
@@ -291,7 +291,7 @@ export interface ICreateScreenshotInput extends IBasePerTenantAndOrganizationEnt
 	recordedAt: Date | string;
 }
 
-export interface IScreenshot extends IBasePerTenantAndOrganizationEntityModel, IRelationalEmployee {
+export interface IScreenshot extends IBasePerTenantAndOrganizationEntityModel, IRelationalEmployee, IRelationalUser {
 	[x: string]: any;
 	timeSlot?: ITimeSlot;
 	timeSlotId?: ITimeSlot['id'];
