@@ -76,7 +76,7 @@ export class IntegrationTenantController {
 	@Get('remember/state')
 	async checkRememberState(
 		@Query() query: IntegrationRememberStateQueryDTO
-	): Promise<IIntegrationTenant> {
+	): Promise<IIntegrationTenant | boolean> {
 		return await this._integrationTenantService.checkIntegrationRememberState(query);
 	}
 }

@@ -41,10 +41,13 @@ export class IntegrationTenantService extends TenantAwareCrudService<Integration
 		});
 	}
 
-	/*
-	 * Check upwork remember state for logged in user
+	/**
+	 * Check integration remember state.
+	 *
+	 * @param options - The options for checking integration remember state.
+	 * @returns The integration tenant if found, or `false` if not found or an error occurred.
 	 */
-	public async checkIntegrationRememberState(options: IIntegrationTenant): Promise<IIntegrationTenant> {
+	public async checkIntegrationRememberState(options: IIntegrationTenant): Promise<IIntegrationTenant | boolean> {
 		try {
 			const tenantId = RequestContext.currentTenantId();
 			const { organizationId, name } = options;
@@ -57,13 +60,10 @@ export class IntegrationTenantService extends TenantAwareCrudService<Integration
 				},
 				order: {
 					updatedAt: 'DESC'
-				},
-				relations: {
-					settings: true
 				}
 			});
 		} catch (error) {
-			throw new BadRequestException(error);
+			return false;
 		}
 	}
 }
