@@ -244,6 +244,7 @@ export class IncomeComponent extends PaginationFilterBaseComponent
 				client: {
 					title: this.getTranslation('SM_TABLE.CONTACT'),
 					type: 'custom',
+					width: '20%',
 					renderComponent: ContactLinksComponent,
 					filter: {
 						type: 'custom',
@@ -259,6 +260,7 @@ export class IncomeComponent extends PaginationFilterBaseComponent
 				employee: {
 					title: this.getTranslation('SM_TABLE.EMPLOYEE'),
 					filter: false,
+					width: '15%',
 					type: 'custom',
 					sort: false,
 					renderComponent: EmployeeLinksComponent
@@ -266,7 +268,7 @@ export class IncomeComponent extends PaginationFilterBaseComponent
 				amount: {
 					title: this.getTranslation('SM_TABLE.VALUE'),
 					type: 'custom',
-					width: '15%',
+					width: '10%',
 					filter: false,
 					renderComponent: IncomeExpenseAmountComponent
 				},
@@ -274,6 +276,7 @@ export class IncomeComponent extends PaginationFilterBaseComponent
 					title: this.getTranslation('SM_TABLE.NOTES'),
 					type: 'text',
 					class: 'align-row',
+					width: '25%',
 					filter: {
 						type: 'custom',
 						component: InputFilterComponent
@@ -285,7 +288,7 @@ export class IncomeComponent extends PaginationFilterBaseComponent
 				tags: {
 					title: this.getTranslation('SM_TABLE.TAGS'),
 					type: 'custom',
-					width: '10%',
+					width: '15%',
 					class: 'align-row',
 					renderComponent: TagsOnlyComponent,
 					filter: {
@@ -462,11 +465,11 @@ export class IncomeComponent extends PaginationFilterBaseComponent
 					try {
 						const { id, employee, employeeId, organizationId } = this.selectedIncome;
 						await this.incomeService.delete(id, {
-								employeeId,
-								organizationId
-							})
+							employeeId,
+							organizationId
+						})
 							.then(() => {
-								this.toastrService.success( 'NOTES.INCOME.DELETE_INCOME', {
+								this.toastrService.success('NOTES.INCOME.DELETE_INCOME', {
 									name: this.employeeName(employee)
 								});
 							})
@@ -516,8 +519,8 @@ export class IncomeComponent extends PaginationFilterBaseComponent
 				tenantId,
 				...(this.selectedEmployeeId
 					? {
-							employeeId: this.selectedEmployeeId
-					  }
+						employeeId: this.selectedEmployeeId
+					}
 					: {}),
 				valueDate: {
 					startDate: toUTC(startDate).format('YYYY-MM-DD HH:mm:ss'),
@@ -594,5 +597,5 @@ export class IncomeComponent extends PaginationFilterBaseComponent
 			: ALL_EMPLOYEES_SELECTED.firstName;
 	}
 
-	ngOnDestroy() {}
+	ngOnDestroy() { }
 }
