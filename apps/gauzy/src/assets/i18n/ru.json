@@ -3611,7 +3611,8 @@
 		"VIEW_TIMESHEET": "Просмотр графика",
 		"ADD_TIME": "Добавить время",
 		"TODAY": "Сегодня",
-		"STATUS": "Тайм-трекер уже работает в {{ source }}"
+		"STATUS": "Тайм-трекер уже работает в {{ source }}",
+		"VERSION": "Версия v{{ version }}"
 	},
 	"TIMESHEET": {
 		"TODAY": "Сегодня",

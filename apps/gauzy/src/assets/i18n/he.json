@@ -3613,7 +3613,8 @@
 		"VIEW_TIMESHEET": "View timesheet",
 		"ADD_TIME": "Add Time",
 		"TODAY": "היום",
-		"STATUS": "גשש הזמן כבר פועל ב- {{ source }}"
+		"STATUS": "גשש הזמן כבר פועל ב- {{ source }}",
+		"VERSION": "v{{ version }} גרסה"
 	},
 	"TIMESHEET": {
 		"TODAY": "היום",
