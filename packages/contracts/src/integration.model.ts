@@ -260,3 +260,8 @@ export interface IDateRangeActivityFilter {
 	start: Date;
 	end: Date;
 }
+
+export interface IIntegrationKeySecretPairInput extends IBasePerTenantAndOrganizationEntityModel {
+	client_id: string;
+	client_secret: string;
+}
