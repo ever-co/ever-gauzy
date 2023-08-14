@@ -3614,7 +3614,7 @@
 		"ADD_TIME": "Add Time",
 		"TODAY": "היום",
 		"STATUS": "גשש הזמן כבר פועל ב- {{ source }}",
-		"VERSION": "v{{ version }} גרסה"
+		"VERSION": "גרסה v{{ version }}"
 	},
 	"TIMESHEET": {
 		"TODAY": "היום",
