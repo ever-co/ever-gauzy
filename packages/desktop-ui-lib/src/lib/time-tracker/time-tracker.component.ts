@@ -9,6 +9,7 @@ import {
 	ViewChild
 } from '@angular/core';
 import {
+	NbDialogRef,
 	NbDialogService,
 	NbIconLibraries,
 	NbToastrService
@@ -201,6 +202,8 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 	private _startMode = TimerStartMode.STOP;
 	private _isSpecialLogout = false;
 	private _isRestartAndUpdate = false;
+	private _isOpenDialog = false;
+	private _dialog: NbDialogRef<any> = null;
 
 	public hasTaskPermission$: BehaviorSubject<boolean> = new BehaviorSubject(false);
 	private get _hasTaskPermission(): boolean {
@@ -467,7 +470,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 
 		this.electronService.ipcRenderer.on('stop_from_tray', (event, arg) =>
 			this._ngZone.run(async () => {
-				await this.toggleStart(false);
+				if (this.start) await this.toggleStart(false);
 				if (arg && arg.quitApp) this.quitApp = true;
 			})
 		);
@@ -572,7 +575,24 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 
 		this.electronService.ipcRenderer.on('device_sleep', () =>
 			this._ngZone.run(async () => {
-				await this.toggleStart(false);
+				if (this.start) await this.toggleStart(false);
+			})
+		);
+
+		this.electronService.ipcRenderer.on('activity-proof-request', () => {
+			this._ngZone.run(() => {
+				this._dialog?.close();
+				this._isOpenDialog = false;
+			});
+		})
+
+		this.electronService.ipcRenderer.on('inactivity-result-not-accepted', (event, arg) =>
+			this._ngZone.run(async () => {
+				if (this.start) {
+					await this.toggleStart(false);
+					this._dialog?.close();
+					this._isOpenDialog = false;
+				}
 			})
 		);
 
@@ -590,8 +610,11 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 
 		this.electronService.ipcRenderer.on('device_wake_up', () =>
 			this._ngZone.run(() => {
-				const elBtn: HTMLElement = this.btnDialogOpen.nativeElement;
-				elBtn.click();
+				if (!this._isOpenDialog) {
+					const elBtn: HTMLElement = this.btnDialogOpen.nativeElement;
+					elBtn.click();
+					this._isOpenDialog = true;
+				}
 			})
 		);
 
@@ -1323,29 +1346,33 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 	public open(dialog: TemplateRef<any>, option): void {
 		try {
 			this.selectedTimeSlot = this.lastTimeSlot;
-			this.dialogService
-				.open(dialog, {
-					context: this.dialogType[option.type].message
-				})
-				.onClose.subscribe(async (selectedOption) => {
-					if (selectedOption) {
-						switch (option.type) {
-							case this.dialogType.changeClient.name:
-								await this.selectClient(option.val);
-								break;
-							case this.dialogType.deleteLog.name:
-								this.deleteTimeSlot();
-								break;
-							case this.dialogType.timeTrackingOption.name:
-								await this.toggleStart(true);
-								break;
-							default:
-								break;
-						}
-					} else if (this.start && option.type === this.dialogType.timeTrackingOption.name) {
-						await this.stopTimer();
+			this._dialog = this.dialogService.open(dialog, {
+				context: this.dialogType[option.type].message,
+			});
+			this._dialog.onClose.subscribe(async (selectedOption) => {
+				if (selectedOption) {
+					switch (option.type) {
+						case this.dialogType.changeClient.name:
+							await this.selectClient(option.val);
+							break;
+						case this.dialogType.deleteLog.name:
+							this.deleteTimeSlot();
+							break;
+						case this.dialogType.timeTrackingOption.name:
+							this._isOpenDialog = false;
+							await this.toggleStart(true);
+							break;
+						default:
+							break;
 					}
-				});
+				} else if (
+					this.start &&
+					option.type === this.dialogType.timeTrackingOption.name
+				) {
+					this._isOpenDialog = false;
+					await this.stopTimer();
+				}
+			});
 		} catch (error) {
 			console.log('ERROR', error);
 		}

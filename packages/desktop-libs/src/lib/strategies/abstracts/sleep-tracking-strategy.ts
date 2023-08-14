@@ -8,9 +8,7 @@ export abstract class SleepTrackingStrategy implements ISleepTrackingStrategy {
 		this._window = window;
 	}
 
-	resume(): void {
-	}
+	public abstract resume(): void;
 
-	pause(): void {
-	}
+	public abstract pause(): void;
 }

@@ -5,10 +5,14 @@ import {LocalStore} from "./desktop-store";
 
 export class DesktopPowerManager implements IPowerManager {
 	private _suspendDetected: boolean;
+	private _sleepTracking: ISleepTracking;
+	private _window: BrowserWindow;
+	private _isLockedScreen: boolean;
 
 	constructor(window: BrowserWindow) {
 		this._sleepTracking = new SleepTracking(window);
 		this._suspendDetected = false;
+		this._isLockedScreen = false;
 		this._window = window;
 		powerMonitor.on('suspend', () => {
 			console.log('System going to sleep.');
@@ -17,33 +21,47 @@ export class DesktopPowerManager implements IPowerManager {
 
 		powerMonitor.on('resume', () => {
 			console.log('System resumed from sleep state.');
-			this.resumeTracking();
+			if (!this._isLockedScreen) {
+				this.resumeTracking();
+			}
 		});
 
 		powerMonitor.on('lock-screen', () => {
 			console.log('System locked');
+			this._isLockedScreen = true;
 			this.pauseTracking();
 		});
 
 		powerMonitor.on('unlock-screen', () => {
 			console.log('System unlocked');
+			this._isLockedScreen = false;
 			this.resumeTracking();
 		});
 	}
 
-	private _sleepTracking: ISleepTracking;
-
-	get sleepTracking(): ISleepTracking {
+	public get sleepTracking(): ISleepTracking {
 		return this._sleepTracking;
 	}
 
-	set sleepTracking(value: ISleepTracking) {
+	public set sleepTracking(value: ISleepTracking) {
 		this._sleepTracking = value;
 	}
 
-	get trackerStatusActive(): boolean {
+	public get trackerStatusActive(): boolean {
 		const setting = LocalStore.getStore('appSetting');
 		return setting ? setting.timerStarted : false;
+	}
+
+	public get window() {
+		return this._window;
+	}
+
+	public set window(value: BrowserWindow) {
+		this._window = value;
+	}
+
+	public get suspendDetected(): boolean {
+		return this._suspendDetected;
 	}
 
 	public pauseTracking(): void {
@@ -60,15 +78,5 @@ export class DesktopPowerManager implements IPowerManager {
 			this._sleepTracking.strategy.resume();
 			console.log('Tracker resumed.');
 		}
-	}
-
-	private _window: BrowserWindow;
-
-	get window() {
-		return this._window;
-	}
-
-	set window(value: BrowserWindow) {
-		this._window = value;
 	}
 }
