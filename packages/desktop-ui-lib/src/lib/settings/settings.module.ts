@@ -25,8 +25,8 @@ import { FormsModule } from '@angular/forms';
 import { TimeTrackerService } from '../time-tracker/time-tracker.service';
 import { DesktopDirectiveModule } from '../directives/desktop-directive.module';
 import { LanguageModule } from '../language/language.module';
-import { NgxTranslateModule } from '../ngx-translate';
 import { TranslateModule } from '@ngx-translate/core';
+import { Store } from '../services';
 
 @NgModule({
 	declarations: [SettingsComponent],
@@ -56,7 +56,8 @@ import { TranslateModule } from '@ngx-translate/core';
 	providers: [
 		NbToastrService,
 		TimeTrackerService,
-		NbDialogService
+		NbDialogService,
+		Store
 	],
 	exports: [SettingsComponent]
 })
