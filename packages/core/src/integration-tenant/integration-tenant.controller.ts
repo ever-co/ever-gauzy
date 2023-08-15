@@ -30,7 +30,7 @@ export class IntegrationTenantController {
 	 * @param id
 	 * @returns
 	 */
-	@ApiOperation({ summary: 'Find tntegration tenant.' })
+	@ApiOperation({ summary: 'Find integration tenant.' })
 	@ApiResponse({
 		status: HttpStatus.OK,
 		description: 'Found integration tenant',
