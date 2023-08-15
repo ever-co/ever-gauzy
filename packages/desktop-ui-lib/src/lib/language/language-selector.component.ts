@@ -99,7 +99,7 @@ export class LanguageSelectorComponent implements OnInit, AfterViewInit {
 	ngAfterViewInit() {
 		const systemLanguages = this._store.systemLanguages;
 		if (!systemLanguages) {
-			from(this._loadLanguages());
+			from(this._loadLanguages()).subscribe();
 		}
 		this._electronService.ipcRenderer.on(
 			'preferred_language_change',
