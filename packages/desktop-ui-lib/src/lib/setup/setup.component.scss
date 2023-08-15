@@ -219,3 +219,9 @@ $border-radius: calc(2 * var(--border-radius));
 h4 {
   font-weight: 600;
 }
+
+.lang-selector {
+	position: absolute;
+	left: 2rem;
+	top: 4rem;
+}
