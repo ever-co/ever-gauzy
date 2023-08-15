@@ -303,17 +303,6 @@ export function ipcMainHandler(
 			console.log('...FINISH SYNC');
 		}
 	});
-
-	ipcMain.handle('PREFERRED_LANGUAGE', (event, arg) => {
-		const setting = store.get('appSetting');
-		if (arg) {
-			if (!setting) LocalStore.setDefaultApplicationSetting();
-			LocalStore.updateApplicationSetting({
-				preferredLanguage: arg,
-			});
-		}
-		return setting?.preferredLanguage;
-	});
 }
 
 function isScreenUnauthorized() {
@@ -876,6 +865,7 @@ export function ipcTimer(
 	});
 
 	ipcMain.on('preferred_language_change', (event, arg) => {
+		LocalStore.updateApplicationSetting({ preferredLanguage: arg });
 		timeTrackerWindow.webContents.send('preferred_language_change', arg);
 	})
 }
@@ -934,8 +924,7 @@ export function removeAllHandlers() {
 		'DESKTOP_CAPTURER_GET_SOURCES',
 		'FINISH_SYNCED_TIMER',
 		'TAKE_SCREEN_CAPTURE',
-		'START_SERVER',
-		'PREFERRED_LANGUAGE'
+		'START_SERVER'
 	];
 	channels.forEach((channel: string) => {
 		ipcMain.removeHandler(channel);

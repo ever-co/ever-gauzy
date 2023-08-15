@@ -165,6 +165,8 @@ if (process.platform === 'win32') {
 
 /* Set unlimited listeners */
 ipcMain.setMaxListeners(0);
+/* Remove handler if exist */
+ipcMain.removeHandler('PREFERRED_LANGUAGE');
 
 async function startServer(value, restart = false) {
 	const dataModel = new DataModel();
@@ -515,6 +517,18 @@ app.on('activate', () => {
 			setupWindow.show();
 		}
 	}
+});
+
+
+ipcMain.handle('PREFERRED_LANGUAGE', (event, arg) => {
+	const setting = store.get('appSetting');
+	if (arg) {
+		if (!setting) LocalStore.setDefaultApplicationSetting();
+		LocalStore.updateApplicationSetting({
+			preferredLanguage: arg,
+		});
+	}
+	return setting?.preferredLanguage;
 });
 
 app.on('before-quit', async (e) => {
