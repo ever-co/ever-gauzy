@@ -7,6 +7,7 @@ import { tap } from 'rxjs/operators';
 import { Store } from './../../../../@core/services';
 import { RouteUtil } from './../../../../@core/services/route-utils';
 import { TranslationBaseComponent } from './../../../../@shared/language-base/translation-base.component';
+import { QueryParamsHandling } from '@angular/router';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -58,25 +59,25 @@ export class ActivityLayoutComponent extends TranslationBaseComponent
 						title: this.getTranslation('ACTIVITY.TIME_AND_ACTIVITIES'),
 						responsive: true,
 						route: '/pages/employees/activity/time-activities',
-						queryParamsHandling: 'merge'
+						queryParamsHandling: 'merge' as QueryParamsHandling
 					} as NbRouteTab,
 					{
 						title: this.getTranslation('ACTIVITY.SCREENSHOTS'),
 						responsive: true,
 						route: '/pages/employees/activity/screenshots',
-						queryParamsHandling: 'merge'
+						queryParamsHandling: 'merge' as QueryParamsHandling
 					} as NbRouteTab,
 					{
 						title: this.getTranslation('ACTIVITY.APPS'),
 						responsive: true,
 						route: '/pages/employees/activity/apps',
-						queryParamsHandling: 'merge'
+						queryParamsHandling: 'merge' as QueryParamsHandling
 					} as NbRouteTab,
 					{
 						title: this.getTranslation('ACTIVITY.VISITED_SITES'),
 						responsive: true,
 						route: '/pages/employees/activity/urls',
-						queryParamsHandling: 'merge'
+						queryParamsHandling: 'merge' as QueryParamsHandling
 					} as NbRouteTab,
 				] : [])
 		];

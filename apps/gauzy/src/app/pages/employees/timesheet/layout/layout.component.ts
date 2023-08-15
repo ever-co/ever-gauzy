@@ -1,4 +1,5 @@
 import { Component, OnInit, OnDestroy, ChangeDetectorRef, AfterContentChecked } from '@angular/core';
+import { QueryParamsHandling } from '@angular/router';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
 import { NbRouteTab } from '@nebular/theme';
@@ -46,20 +47,20 @@ export class TimesheetLayoutComponent extends TranslationBaseComponent
 					title: this.getTranslation('TIMESHEET.DAILY'),
 					responsive: true,
 					route: '/pages/employees/timesheets/daily',
-					queryParamsHandling: 'merge'
-				} as NbRouteTab,
+					queryParamsHandling: 'merge' as QueryParamsHandling
+				},
 				{
 					title: this.getTranslation('TIMESHEET.WEEKLY'),
 					responsive: true,
 					route: '/pages/employees/timesheets/weekly',
-					queryParamsHandling: 'merge'
-				} as NbRouteTab,
+					queryParamsHandling: 'merge' as QueryParamsHandling
+				},
 				{
 					title: this.getTranslation('TIMESHEET.CALENDAR'),
 					responsive: true,
 					route: '/pages/employees/timesheets/calendar',
-					queryParamsHandling: 'merge'
-				} as NbRouteTab
+					queryParamsHandling: 'merge' as QueryParamsHandling
+				}
 			] : []),
 			...(this.store.hasAnyPermission(PermissionsEnum.CAN_APPROVE_TIMESHEET) ?
 				[
@@ -67,8 +68,8 @@ export class TimesheetLayoutComponent extends TranslationBaseComponent
 						title: this.getTranslation('TIMESHEET.APPROVALS'),
 						responsive: true,
 						route: '/pages/employees/timesheets/approvals',
-						queryParamsHandling: 'merge'
-					} as NbRouteTab
+						queryParamsHandling: 'merge' as QueryParamsHandling
+					}
 				] : []),
 		];
 	}
