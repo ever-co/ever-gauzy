@@ -876,7 +876,7 @@ export class HubstaffService {
 	}
 
 	/*
-	 * auto sync for urls activities for separte project
+	 * auto sync for urls activities for separate project
 	 */
 	private async _handleUrlActivities(
 		projectsMap: IIntegrationMap[],
@@ -1007,7 +1007,7 @@ export class HubstaffService {
 	}
 
 	/*
-	 * auto sync for application activities for separte project
+	 * auto sync for application activities for separate project
 	 */
 	private async _handleAppActivities(
 		projectsMap: IIntegrationMap[],
