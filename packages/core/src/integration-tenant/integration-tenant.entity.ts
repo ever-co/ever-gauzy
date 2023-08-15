@@ -1,6 +1,7 @@
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { ApiProperty } from '@nestjs/swagger';
 import { Column, Entity, JoinColumn, OneToMany } from 'typeorm';
-import { IIntegrationEntitySetting, IIntegrationMap, IIntegrationSetting, IIntegrationTenant } from '@gauzy/contracts';
+import { IsEnum, IsNotEmpty } from 'class-validator';
+import { IIntegrationEntitySetting, IIntegrationMap, IIntegrationSetting, IIntegrationTenant, IntegrationEnum } from '@gauzy/contracts';
 import {
 	IntegrationEntitySetting,
 	IntegrationMap,
@@ -9,24 +10,23 @@ import {
 } from '../core/entities/internal';
 
 @Entity('integration_tenant')
-export class IntegrationTenant
-	extends TenantOrganizationBaseEntity
-	implements IIntegrationTenant {
-	
-	@ApiProperty({ type: () => String })
+export class IntegrationTenant extends TenantOrganizationBaseEntity implements IIntegrationTenant {
+
+	@ApiProperty({ type: () => String, enum: IntegrationEnum })
+	@IsNotEmpty()
+	@IsEnum(IntegrationEnum)
 	@Column()
-	name: string;
+	name: IntegrationEnum;
 
 	/*
-    |--------------------------------------------------------------------------
-    | @OneToMany 
-    |--------------------------------------------------------------------------
-    */
+	|--------------------------------------------------------------------------
+	| @OneToMany
+	|--------------------------------------------------------------------------
+	*/
 
 	/**
 	 * IntegrationSetting
 	 */
-	@ApiPropertyOptional({ type: () => IntegrationSetting, isArray: true })
 	@OneToMany(() => IntegrationSetting, (setting) => setting.integration, {
 		cascade: true
 	})
@@ -36,7 +36,6 @@ export class IntegrationTenant
 	/**
 	 * IntegrationEntitySetting
 	 */
-	@ApiPropertyOptional({ type: () => IntegrationEntitySetting, isArray: true })
 	@OneToMany(() => IntegrationEntitySetting, (setting) => setting.integration, {
 		cascade: true
 	})
@@ -46,7 +45,6 @@ export class IntegrationTenant
 	/**
 	 * IntegrationMap
 	 */
-	@ApiPropertyOptional({ type: () => IntegrationMap, isArray: true })
 	@OneToMany(() => IntegrationMap, (map) => map.integration, {
 		cascade: true
 	})

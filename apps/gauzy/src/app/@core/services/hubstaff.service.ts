@@ -10,7 +10,6 @@ import {
 	DefaultValueDateTypeEnum,
 	IIntegrationMap,
 	IntegrationEntity,
-	IntegrationEnum,
 	IDateRangeActivityFilter,
 	IEntitySettingToSync,
 } from '@gauzy/contracts';
@@ -49,7 +48,7 @@ export class HubstaffService {
 
 	integrationId: string;
 
-	constructor(private readonly _http: HttpClient) {}
+	constructor(private readonly _http: HttpClient) { }
 
 	getIntegration(integrationId): Observable<IIntegrationEntitySetting[]> {
 		const data = JSON.stringify({
@@ -114,9 +113,8 @@ export class HubstaffService {
 	}
 
 	authorizeClient(client_id: string): void {
-		const url = `https://account.hubstaff.com/authorizations/new?response_type=code&redirect_uri=${
-			environment.HUBSTAFF_REDIRECT_URI
-		}&realm=hubstaff&client_id=${client_id}&scope=hubstaff:read&state=${client_id}&nonce=${uuid()}`;
+		const url = `https://account.hubstaff.com/authorizations/new?response_type=code&redirect_uri=${environment.HUBSTAFF_REDIRECT_URI
+			}&realm=hubstaff&client_id=${client_id}&scope=hubstaff:read&state=${client_id}&nonce=${uuid()}`;
 
 		window.location.replace(url);
 	}
@@ -259,15 +257,6 @@ export class HubstaffService {
 				description,
 				client_id,
 			})
-		);
-	}
-
-	/*
-	 * Check remember state for HubStaff integration
-	 */
-	checkRememberState(organizationId: string) {
-		return this._http.get<any>(
-			`${API_PREFIX}/integration/check/state/${IntegrationEnum.HUBSTAFF}/${organizationId}`
 		);
 	}
 }

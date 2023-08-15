@@ -8,7 +8,6 @@ import {
 	IEngagement,
 	IUpworkApiConfig,
 	IIntegrationMap,
-	IntegrationEnum,
 	IUpworkClientSecretPair,
 } from '@gauzy/contracts';
 import { API_PREFIX } from '../constants/app.constants';
@@ -17,7 +16,7 @@ import { API_PREFIX } from '../constants/app.constants';
 	providedIn: 'root',
 })
 export class UpworkService {
-	constructor(private http: HttpClient) {}
+	constructor(private http: HttpClient) { }
 
 	uploadTransaction(formData: FormData): Observable<any> {
 		return this.http.post(
@@ -81,15 +80,6 @@ export class UpworkService {
 		return this.http.get<any>(
 			`${API_PREFIX}/integrations/upwork/report/${integrationId}`,
 			{ params: { data } }
-		);
-	}
-
-	/*
-	 * Check remember state for Upwork integration
-	 */
-	checkRememberState(organizationId: string) {
-		return this.http.get<any>(
-			`${API_PREFIX}/integration/check/state/${IntegrationEnum.UPWORK}/${organizationId}`
 		);
 	}
 }

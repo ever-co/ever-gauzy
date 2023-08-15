@@ -2,9 +2,9 @@ import { Component, OnInit, OnDestroy } from '@angular/core';
 import { Validators, FormGroup, FormBuilder } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { filter, tap } from 'rxjs/operators';
-import { IOrganization } from '@gauzy/contracts';
+import { IIntegrationTenant, IOrganization, IntegrationEnum } from '@gauzy/contracts';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { HubstaffService, Store } from './../../../../@core/services';
+import { HubstaffService, IntegrationsService, Store } from './../../../../@core/services';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -13,32 +13,35 @@ import { HubstaffService, Store } from './../../../../@core/services';
 	styleUrls: ['./hubstaff-authorize.component.scss'],
 })
 export class HubstaffAuthorizeComponent implements OnInit, OnDestroy {
-	constructor(
-		private readonly _activatedRoute: ActivatedRoute,
-		private readonly _hubstaffService: HubstaffService,
-		private readonly _fb: FormBuilder,
-		private readonly _router: Router,
-		private readonly _store: Store
-	) {}
-	hubStaffAuthorizeCode: string;
+
+	public hubStaffAuthorizeCode: string;
 	public organization: IOrganization;
 
-	public clientIdForm: FormGroup =
-		HubstaffAuthorizeComponent.buildClientIdForm(this._fb);
-
-	public clientSecretForm: FormGroup =
-		HubstaffAuthorizeComponent.buildClientSecretForm(this._fb);
+	/** */
+	public clientIdForm: FormGroup = HubstaffAuthorizeComponent.buildClientIdForm(this._fb);
 	static buildClientIdForm(fb: FormBuilder): FormGroup {
 		return fb.group({
 			client_id: ['', Validators.required],
 		});
 	}
+
+	/** */
+	public clientSecretForm: FormGroup = HubstaffAuthorizeComponent.buildClientSecretForm(this._fb);
 	static buildClientSecretForm(fb: FormBuilder): FormGroup {
 		return fb.group({
 			client_secret: ['', Validators.required],
 			authorization_code: ['', Validators.required],
 		});
 	}
+
+	constructor(
+		private readonly _activatedRoute: ActivatedRoute,
+		private readonly _hubstaffService: HubstaffService,
+		private readonly _fb: FormBuilder,
+		private readonly _router: Router,
+		private readonly _store: Store,
+		private readonly _integrationsService: IntegrationsService
+	) { }
 
 	ngOnInit() {
 		this._store.selectedOrganization$
@@ -92,19 +95,19 @@ export class HubstaffAuthorizeComponent implements OnInit, OnDestroy {
 		if (!this.organization) {
 			return;
 		}
-		const { id: organizationId } = this.organization;
-		this._hubstaffService
-			.checkRememberState(organizationId)
-			.pipe(
-				tap((res) => {
-					if (res.success) {
-						const { record } = res;
-						this._redirectToHubstaffIntegration(record.id);
-					}
-				}),
-				untilDestroyed(this)
-			)
-			.subscribe();
+		const { id: organizationId, tenantId } = this.organization;
+		const state$ = this._integrationsService.checkRememberState({
+			name: IntegrationEnum.HUBSTAFF,
+			organizationId,
+			tenantId
+		});
+		state$.pipe(
+			filter((integration: IIntegrationTenant) => !!integration.id),
+			tap((integration: IIntegrationTenant) => {
+				this._redirectToHubstaffIntegration(integration.id);
+			}),
+			untilDestroyed(this)
+		).subscribe();
 	}
 
 	/**
@@ -144,5 +147,5 @@ export class HubstaffAuthorizeComponent implements OnInit, OnDestroy {
 			.subscribe();
 	}
 
-	ngOnDestroy() {}
+	ngOnDestroy() { }
 }
