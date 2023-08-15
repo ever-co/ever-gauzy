@@ -17,7 +17,6 @@ import {
 	DateRangePickerBuilderService,
 	DEFAULT_DATE_PICKER_CONFIG,
 	DEFAULT_SELECTOR_VISIBILITY,
-	EmployeesService,
 	IDatePickerConfig,
 	ISelectorVisibility,
 	LanguagesService,
@@ -45,8 +44,7 @@ export class AppComponent implements OnInit, AfterViewInit {
 		private readonly router: Router,
 		private readonly activatedRoute: ActivatedRoute,
 		public readonly selectorBuilderService: SelectorBuilderService,
-		private readonly dateRangePickerBuilderService: DateRangePickerBuilderService,
-		private readonly employeeService: EmployeesService
+		private readonly dateRangePickerBuilderService: DateRangePickerBuilderService
 	) {
 		this.getActivateRouterDataEvent();
 	}
