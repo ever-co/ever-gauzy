@@ -33,12 +33,14 @@ export class FeatureComponent extends TranslationBaseComponent
 		this.tabs = [
 			{
 				title: this.getTranslation('MENU.TENANT'),
-				route: this.getRoute('tenant')
-			},
+				route: this.getRoute('tenant'),
+				queryParamsHandling: 'merge'
+			} as NbRouteTab,
 			{
 				title: this.getTranslation('MENU.ORGANIZATION'),
-				route: this.getRoute('organization')
-			}
+				route: this.getRoute('organization'),
+				queryParamsHandling: 'merge'
+			} as NbRouteTab,
 		];
 	}
 

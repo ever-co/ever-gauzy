@@ -52,20 +52,23 @@ export class EditOrganizationSettingsComponent extends TranslationBaseComponent
 				title: this.getTranslation('ORGANIZATIONS_PAGE.MAIN'),
 				icon: 'person-outline',
 				responsive: true,
-				route: this.getRoute('main')
-			},
+				route: this.getRoute('main'),
+				queryParamsHandling: 'merge'
+			} as NbRouteTab,
 			{
 				title: this.getTranslation('ORGANIZATIONS_PAGE.LOCATION'),
 				icon: 'pin-outline',
 				responsive: true,
-				route: this.getRoute('location')
-			},
+				route: this.getRoute('location'),
+				queryParamsHandling: 'merge'
+			} as NbRouteTab,
 			{
 				title: this.getTranslation('ORGANIZATIONS_PAGE.SETTINGS'),
 				icon: 'settings-outline',
 				responsive: true,
-				route: this.getRoute('settings')
-			}
+				route: this.getRoute('settings'),
+				queryParamsHandling: 'merge'
+			} as NbRouteTab
 		];
 	}
 

@@ -53,28 +53,32 @@ export class ActivityLayoutComponent extends TranslationBaseComponent
 				PermissionsEnum.TIME_TRACKING_DASHBOARD,
 				PermissionsEnum.TIME_TRACKER
 			) ?
-			[
-				{
-					title: this.getTranslation('ACTIVITY.TIME_AND_ACTIVITIES'),
-					responsive: true,
-					route: '/pages/employees/activity/time-activities'
-				},
-				{
-					title: this.getTranslation('ACTIVITY.SCREENSHOTS'),
-					responsive: true,
-					route: '/pages/employees/activity/screenshots'
-				},
-				{
-					title: this.getTranslation('ACTIVITY.APPS'),
-					responsive: true,
-					route: '/pages/employees/activity/apps'
-				},
-				{
-					title: this.getTranslation('ACTIVITY.VISITED_SITES'),
-					responsive: true,
-					route: '/pages/employees/activity/urls'
-				}
-			] : [])
+				[
+					{
+						title: this.getTranslation('ACTIVITY.TIME_AND_ACTIVITIES'),
+						responsive: true,
+						route: '/pages/employees/activity/time-activities',
+						queryParamsHandling: 'merge'
+					} as NbRouteTab,
+					{
+						title: this.getTranslation('ACTIVITY.SCREENSHOTS'),
+						responsive: true,
+						route: '/pages/employees/activity/screenshots',
+						queryParamsHandling: 'merge'
+					} as NbRouteTab,
+					{
+						title: this.getTranslation('ACTIVITY.APPS'),
+						responsive: true,
+						route: '/pages/employees/activity/apps',
+						queryParamsHandling: 'merge'
+					} as NbRouteTab,
+					{
+						title: this.getTranslation('ACTIVITY.VISITED_SITES'),
+						responsive: true,
+						route: '/pages/employees/activity/urls',
+						queryParamsHandling: 'merge'
+					} as NbRouteTab,
+				] : [])
 		];
 	}
 
@@ -87,5 +91,5 @@ export class ActivityLayoutComponent extends TranslationBaseComponent
 			.subscribe();
 	}
 
-	ngOnDestroy(): void {}
+	ngOnDestroy(): void { }
 }

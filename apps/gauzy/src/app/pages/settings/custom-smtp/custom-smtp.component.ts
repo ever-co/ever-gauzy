@@ -31,12 +31,14 @@ export class CustomSmtpComponent extends TranslationBaseComponent
 		this.tabs = [
 			{
 				title: this.getTranslation('MENU.TENANT'),
-				route: this._getRoute('tenant')
-			},
+				route: this._getRoute('tenant'),
+				queryParamsHandling: 'merge'
+			} as NbRouteTab,
 			{
 				title: this.getTranslation('MENU.ORGANIZATION'),
-				route: this._getRoute('organization')
-			}
+				route: this._getRoute('organization'),
+				queryParamsHandling: 'merge'
+			} as NbRouteTab,
 		];
 	}
 

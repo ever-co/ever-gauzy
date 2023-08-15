@@ -45,27 +45,31 @@ export class TimesheetLayoutComponent extends TranslationBaseComponent
 				{
 					title: this.getTranslation('TIMESHEET.DAILY'),
 					responsive: true,
-					route: '/pages/employees/timesheets/daily'
-				},
+					route: '/pages/employees/timesheets/daily',
+					queryParamsHandling: 'merge'
+				} as NbRouteTab,
 				{
 					title: this.getTranslation('TIMESHEET.WEEKLY'),
 					responsive: true,
-					route: '/pages/employees/timesheets/weekly'
-				},
+					route: '/pages/employees/timesheets/weekly',
+					queryParamsHandling: 'merge'
+				} as NbRouteTab,
 				{
 					title: this.getTranslation('TIMESHEET.CALENDAR'),
 					responsive: true,
-					route: '/pages/employees/timesheets/calendar'
-				}
+					route: '/pages/employees/timesheets/calendar',
+					queryParamsHandling: 'merge'
+				} as NbRouteTab
 			] : []),
 			...(this.store.hasAnyPermission(PermissionsEnum.CAN_APPROVE_TIMESHEET) ?
-			[
-				{
-					title: this.getTranslation('TIMESHEET.APPROVALS'),
-					responsive: true,
-					route: '/pages/employees/timesheets/approvals'
-				}
-			] : []),
+				[
+					{
+						title: this.getTranslation('TIMESHEET.APPROVALS'),
+						responsive: true,
+						route: '/pages/employees/timesheets/approvals',
+						queryParamsHandling: 'merge'
+					} as NbRouteTab
+				] : []),
 		];
 	}
 
@@ -81,5 +85,5 @@ export class TimesheetLayoutComponent extends TranslationBaseComponent
 			.subscribe();
 	}
 
-	ngOnDestroy(): void {}
+	ngOnDestroy(): void { }
 }
