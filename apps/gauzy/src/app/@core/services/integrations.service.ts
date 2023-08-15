@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { IIntegration, IIntegrationTenant } from '@gauzy/contracts';
+import { IBaseRelationsEntityModel, IIntegration, IIntegrationTenant } from '@gauzy/contracts';
 import { HttpClient } from '@angular/common/http';
 import { map } from 'rxjs/operators';
 import { Observable } from 'rxjs';
@@ -67,6 +67,21 @@ export class IntegrationsService {
 	checkRememberState(input: IIntegrationTenant) {
 		return this._http.get<any>(`${API_PREFIX}/integration-tenant/remember/state`, {
 			params: toParams({ ...input })
+		});
+	}
+
+	/**
+	 *
+	 * @param integrationId
+	 * @param relations
+	 * @returns
+	 */
+	fetchIntegrationTenant(
+		integrationId: IIntegrationTenant['id'],
+		relations: IBaseRelationsEntityModel
+	) {
+		return this._http.get<any>(`${API_PREFIX}/integration-tenant/${integrationId}`, {
+			params: toParams({ ...relations })
 		});
 	}
 }

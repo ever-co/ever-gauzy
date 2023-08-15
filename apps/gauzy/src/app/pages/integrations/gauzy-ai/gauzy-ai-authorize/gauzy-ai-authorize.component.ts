@@ -1,9 +1,9 @@
 import { Component, OnInit, OnDestroy, ViewChild, AfterViewInit } from '@angular/core';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Params, Router } from '@angular/router';
 import { FormGroup, FormBuilder, Validators, FormGroupDirective } from '@angular/forms';
 import { filter, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { IIntegrationTenant, IOrganization, IntegrationEnum } from '@gauzy/contracts';
+import { IIntegrationSetting, IIntegrationTenant, IOrganization, IntegrationEnum } from '@gauzy/contracts';
 import { GauzyAIService, IntegrationsService, Store } from './../../../../@core/services';
 
 @UntilDestroy({ checkProperties: true })
@@ -43,6 +43,13 @@ export class GauzyAIAuthorizeComponent implements AfterViewInit, OnInit, OnDestr
 				untilDestroyed(this)
 			)
 			.subscribe();
+		this._activatedRoute.params
+			.pipe(
+				filter((params) => !!params && !!params.id),
+				tap(() => this.getIntegrationTenant()),
+				untilDestroyed(this)
+			)
+			.subscribe();
 	}
 
 	ngAfterViewInit(): void {
@@ -57,6 +64,31 @@ export class GauzyAIAuthorizeComponent implements AfterViewInit, OnInit, OnDestr
 	}
 
 	ngOnDestroy(): void { }
+
+	/**
+	 *
+	 */
+	getIntegrationTenant() {
+		const integrationId = this._activatedRoute.snapshot.paramMap.get('id');
+		if (integrationId) {
+			const integration$ = this._integrationsService.fetchIntegrationTenant(integrationId, {
+				relations: ['settings']
+			});
+			integration$.pipe(
+				filter((integration: IIntegrationTenant) => !!integration.id),
+				tap(({ settings }: IIntegrationTenant) => {
+					const apiKey = settings.find((setting: IIntegrationSetting) => setting.settingsName === 'apiKey').settingsValue;
+					const apiSecret = settings.find((setting: IIntegrationSetting) => setting.settingsName === 'apiSecret').settingsValue;
+
+					this.form.patchValue({
+						client_id: apiKey,
+						client_secret: apiSecret
+					});
+				}),
+				untilDestroyed(this)
+			).subscribe();
+		}
+	}
 
 	/**
 	 *
