@@ -108,7 +108,8 @@ export const LocalStore = {
 						github: false,
 						digitalOcean: true
 					},
-					prerelease: false
+					prerelease: false,
+					preferredLanguage: 'en'
 				};
 				store.set({
 					appSetting: defaultAppSetting
