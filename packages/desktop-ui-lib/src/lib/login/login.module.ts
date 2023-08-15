@@ -15,7 +15,6 @@ import {
 import { NgxLoginComponent } from './login.component';
 import { DesktopDirectiveModule } from '../directives/desktop-directive.module';
 import { NgxTranslateModule } from '../ngx-translate';
-import { LanguageModule } from '../language/language.module';
 import { LanguageSelectorService } from '../language/language-selector.service';
 
 @NgModule({

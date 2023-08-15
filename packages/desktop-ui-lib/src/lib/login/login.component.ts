@@ -15,8 +15,10 @@ import { TranslateService } from '@ngx-translate/core';
 import { LanguagesEnum } from '@gauzy/contracts';
 import { ElectronService } from '../electron/services';
 import { LanguageSelectorService } from '../language/language-selector.service';
-import { Store } from '../services';
+import { from, tap } from 'rxjs';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 
+@UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ngx-desktop-timer-login',
 	templateUrl: './login.component.html',
@@ -32,7 +34,6 @@ export class NgxLoginComponent extends NbLoginComponent implements OnInit {
 		public readonly cdr: ChangeDetectorRef,
 		public readonly router: Router,
 		private _languageSelectorService: LanguageSelectorService,
-		private _store: Store,
 		private _ngZone: NgZone,
 		@Inject(NB_AUTH_OPTIONS) options
 	) {
@@ -51,10 +52,17 @@ export class NgxLoginComponent extends NbLoginComponent implements OnInit {
 				});
 			}
 		);
-		this._languageSelectorService.setLanguage(
-			this._store?.preferredLanguage || LanguagesEnum.ENGLISH,
-			this.translate
-		);
+		from(this.electronService.ipcRenderer.invoke('PREFERRED_LANGUAGE'))
+			.pipe(
+				tap((language) => {
+					this._languageSelectorService.setLanguage(
+						language,
+						this.translate
+					);
+				}),
+				untilDestroyed(this)
+			)
+			.subscribe();
 	}
 
 	public forgot(): void {
