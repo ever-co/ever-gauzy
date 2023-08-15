@@ -194,7 +194,6 @@ export class EmployeeSelectorComponent implements OnInit, OnDestroy, OnChanges, 
 			.subscribe();
 		this.activatedRoute.queryParams
 			.pipe(
-				debounceTime(500),
 				filter((query) => !!query.employeeId),
 				tap(({ employeeId }) => this.selectEmployeeById(employeeId)),
 				untilDestroyed(this)
@@ -290,9 +289,7 @@ export class EmployeeSelectorComponent implements OnInit, OnDestroy, OnChanges, 
 	selectEmployee(employee: ISelectedEmployee) {
 		if (!this.skipGlobalChange) {
 			this.store.selectedEmployee = employee || ALL_EMPLOYEES_SELECTED;
-			if (isNotEmpty(employee)) {
-				this.setAttributesToParams({ employeeId: employee.id })
-			}
+			this.setAttributesToParams({ employeeId: employee?.id })
 		} else {
 			this.selectedEmployee = employee || ALL_EMPLOYEES_SELECTED;
 		}

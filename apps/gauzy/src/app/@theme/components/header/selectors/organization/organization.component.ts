@@ -1,7 +1,7 @@
 import { Component, OnInit, OnDestroy, AfterViewInit, Input } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { IOrganization, CrudActionEnum, PermissionsEnum } from '@gauzy/contracts';
-import { debounceTime, filter, map, tap } from 'rxjs/operators';
+import { filter, map, tap } from 'rxjs/operators';
 import { Observable } from 'rxjs/internal/Observable';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { distinctUntilChange, isNotEmpty } from '@gauzy/common-angular';
@@ -55,7 +55,6 @@ export class OrganizationSelectorComponent
 		);
 		this.activatedRoute.queryParams
 			.pipe(
-				debounceTime(500),
 				filter((query) => !!query.organizationId),
 				tap(({ organizationId }) => this.selectOrganizationById(organizationId)),
 				untilDestroyed(this)
@@ -79,7 +78,6 @@ export class OrganizationSelectorComponent
 		this.router.navigate([], {
 			relativeTo: this.activatedRoute,
 			queryParams: { ...params },
-			queryParamsHandling: 'merge',
 		});
 	}
 

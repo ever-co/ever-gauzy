@@ -15,7 +15,7 @@ import {
 	PermissionsEnum
 } from '@gauzy/contracts';
 import { NG_VALUE_ACCESSOR } from '@angular/forms';
-import { debounceTime, map, Observable, Subject, switchMap } from 'rxjs';
+import { map, Observable, Subject, switchMap } from 'rxjs';
 import { filter, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import {
@@ -163,7 +163,6 @@ export class ProjectSelectorComponent
 
 		this.activatedRoute.queryParams
 			.pipe(
-				debounceTime(500),
 				filter((query) => !!query.projectId),
 				tap(({ projectId }) => this.selectProjectById(projectId)),
 				untilDestroyed(this)
@@ -353,12 +352,10 @@ export class ProjectSelectorComponent
 	selectProject(project: IOrganizationProject): void {
 		if (!this.skipGlobalChange) {
 			this.store.selectedProject = project || ALL_PROJECT_SELECTED;
-			if (isNotEmpty(project) && project.id) {
-				this.setAttributesToParams({ projectId: project.id })
-			}
+			this.setAttributesToParams({ projectId: project?.id || null })
 		}
 		this.selectedProject = project || ALL_PROJECT_SELECTED;
-		this.projectId = this.selectedProject.id;
+		this.projectId = this.selectedProject.id || null;
 		this.onChanged.emit(project);
 	}
 
