@@ -130,7 +130,9 @@
 		"SHOW_MORE": "Show More",
 		"START_WORK": "Start Work",
 		"APPLY": "Приложи",
-		"GENERATE_PROPOSAL": "Генериране на предложение"
+		"GENERATE_PROPOSAL": "Генериране на предложение",
+		"LET_S_GO": "Нека отидем",
+		"CHECK": "Проверка"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {
