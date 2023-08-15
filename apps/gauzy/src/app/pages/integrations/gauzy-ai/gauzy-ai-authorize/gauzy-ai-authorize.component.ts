@@ -138,6 +138,9 @@ export class GauzyAIAuthorizeComponent implements AfterViewInit, OnInit, OnDestr
 				organizationId,
 				tenantId
 			}).pipe(
+				tap((integration: IIntegrationTenant) => {
+					this._redirectToGauzyAIIntegration(integration.id);
+				}),
 				untilDestroyed(this)
 			).subscribe();
 		} catch (error) {
