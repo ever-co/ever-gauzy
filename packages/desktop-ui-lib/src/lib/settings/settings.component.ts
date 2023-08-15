@@ -764,9 +764,9 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 		}
 	}
 
-	toggleNotificationSoundChange(value) {
-		this.updateSetting(value, 'mutedNotification');
-		this.muted = value;
+	toggleNotificationSoundChange(value: boolean) {
+		this.updateSetting(!value, 'mutedNotification');
+		this.muted = !value;
 	}
 
 	toggleAutoLaunch(value) {

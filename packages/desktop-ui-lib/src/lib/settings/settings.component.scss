@@ -293,6 +293,7 @@ nb-card-body {
 .main-layout {
   overflow: auto;
   height: calc(100vh - 2.25rem);
+  overflow-x: hidden;
 }
 
 .disabled-monitors {

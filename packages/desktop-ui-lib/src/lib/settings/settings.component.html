@@ -246,7 +246,7 @@
 					<nb-card>
 						<nb-card-body>
 							<nb-toggle
-								[checked]="muted"
+								[checked]="!muted"
 								[disabled]="appSetting?.timerStarted"
 								(checkedChange)="
 									toggleNotificationSoundChange($event)
@@ -295,9 +295,7 @@
 								<nb-option
 									*ngFor="let item of periodOption"
 									[value]="item"
-									>{{ item }} Minute<span *ngIf="item > 1"
-										>s</span
-									>
+									>{{ humanize(item / 60) | titlecase }}
 								</nb-option>
 							</nb-select>
 							<nb-toggle
