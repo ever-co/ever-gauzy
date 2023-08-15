@@ -355,7 +355,7 @@ export class ProjectSelectorComponent
 			this.setAttributesToParams({ projectId: project?.id || null })
 		}
 		this.selectedProject = project || ALL_PROJECT_SELECTED;
-		this.projectId = this.selectedProject.id || null;
+		this.projectId = this.selectedProject.id;
 		this.onChanged.emit(project);
 	}
 
