@@ -1,5 +1,5 @@
 import { Component, OnInit, OnDestroy, AfterViewInit, Input } from '@angular/core';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { IOrganization, CrudActionEnum, PermissionsEnum } from '@gauzy/contracts';
 import { filter, map, tap } from 'rxjs/operators';
 import { Observable } from 'rxjs/internal/Observable';
@@ -43,8 +43,9 @@ export class OrganizationSelectorComponent
 		private readonly toastrService: ToastrService,
 		private readonly store: Store,
 		private readonly userOrganizationService: UsersOrganizationsService,
-		private readonly _organizationEditStore: OrganizationEditStore
-	) {}
+		private readonly _organizationEditStore: OrganizationEditStore,
+		private readonly activatedRoute: ActivatedRoute
+	) { }
 
 	ngOnInit() {
 		this.hasEditOrganization$ = this.store.userRolePermissions$.pipe(
@@ -52,8 +53,19 @@ export class OrganizationSelectorComponent
 				this.store.hasPermission(PermissionsEnum.ALL_ORG_EDIT)
 			)
 		);
+
 		this.loadSelectedOrganization();
-		this.loadOrganizations();
+
+		this.loadOrganizations().then(() => {
+			this.activatedRoute.queryParams
+				.pipe(
+					filter((query) => !!query.organizationId),
+					tap(({ organizationId }) => this.selectOrganizationById(organizationId)),
+					untilDestroyed(this)
+				)
+				.subscribe();
+		});
+
 	}
 
 	selectOrganization(organization: IOrganization) {
@@ -61,7 +73,15 @@ export class OrganizationSelectorComponent
 			this.store.selectedOrganization = organization;
 			this.store.organizationId = organization.id;
 			this.store.selectedEmployee = null;
+			this.setAttributesToParams({ organizationId: organization.id })
 		}
+	}
+
+	private setAttributesToParams(params: Object) {
+		this.router.navigate([], {
+			relativeTo: this.activatedRoute,
+			queryParams: { ...params },
+		});
 	}
 
 	private async loadOrganizations(): Promise<void> {
@@ -216,9 +236,18 @@ export class OrganizationSelectorComponent
 		}
 	};
 
-	onClickOutside(event){
-		if(this.isOpen && !event) this.isOpen = false;
+	onClickOutside(event) {
+		if (this.isOpen && !event) this.isOpen = false;
 	}
 
-	ngOnDestroy() {}
+	selectOrganizationById(organizationId: string) {
+		const organization = this.organizations.find(
+			(organization: IOrganization) => organizationId === organization.id
+		);
+		if (organization) {
+			this.selectOrganization(organization);
+		}
+	}
+
+	ngOnDestroy() { }
 }
