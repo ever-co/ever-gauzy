@@ -168,6 +168,11 @@ export function ipcMainHandler(
 			return;
 		}
 		try {
+			const setting = LocalStore.getStore('appSetting');
+			timeTrackerWindow.webContents.send(
+				'preferred_language_change',
+				setting?.preferredLanguage
+			);
 			const lastTime = await TimerData.getLastCaptureTimeSlot(
 				knex,
 				LocalStore.beforeRequestParams()
@@ -297,6 +302,17 @@ export function ipcMainHandler(
 			isQueueThreadTimerLocked = false;
 			console.log('...FINISH SYNC');
 		}
+	});
+
+	ipcMain.handle('PREFERRED_LANGUAGE', (event, arg) => {
+		const setting = store.get('appSetting');
+		if (arg) {
+			if (!setting) LocalStore.setDefaultApplicationSetting();
+			LocalStore.updateApplicationSetting({
+				preferredLanguage: arg,
+			});
+		}
+		return setting?.preferredLanguage;
 	});
 }
 
@@ -918,7 +934,8 @@ export function removeAllHandlers() {
 		'DESKTOP_CAPTURER_GET_SOURCES',
 		'FINISH_SYNCED_TIMER',
 		'TAKE_SCREEN_CAPTURE',
-		'START_SERVER'
+		'START_SERVER',
+		'PREFERRED_LANGUAGE'
 	];
 	channels.forEach((channel: string) => {
 		ipcMain.removeHandler(channel);
