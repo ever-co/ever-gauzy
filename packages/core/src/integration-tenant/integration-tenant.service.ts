@@ -1,7 +1,7 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { IBaseRelationsEntityModel, IIntegrationSetting, IIntegrationTenant } from '@gauzy/contracts';
+import { IIntegrationSetting, IIntegrationTenant } from '@gauzy/contracts';
 import { TenantAwareCrudService } from './../core/crud';
 import { RequestContext } from './../core/context';
 import { IntegrationTenant } from './integration-tenant.entity';
