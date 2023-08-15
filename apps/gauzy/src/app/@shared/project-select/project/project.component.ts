@@ -8,6 +8,7 @@ import {
 	Output,
 	EventEmitter
 } from '@angular/core';
+import { ActivatedRoute, Router } from '@angular/router';
 import {
 	IOrganization,
 	IOrganizationProject,
@@ -31,7 +32,6 @@ import {
 	ToastrService
 } from '../../../@core/services';
 import { TruncatePipe } from '../../pipes';
-import { ActivatedRoute, Router } from '@angular/router';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
