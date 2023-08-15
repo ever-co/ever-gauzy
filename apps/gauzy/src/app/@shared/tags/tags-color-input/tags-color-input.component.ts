@@ -4,7 +4,10 @@ import {
 	Input,
 	Output,
 	EventEmitter,
-	OnDestroy
+	OnDestroy,
+	ElementRef,
+	HostListener,
+	Renderer2,
 } from '@angular/core';
 import { ITag, IOrganization, PermissionsEnum, ITagCreateInput } from '@gauzy/contracts';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
@@ -102,11 +105,21 @@ export class TagsColorInputComponent extends PictureNameTagsComponent
 
 	@Output() selectedTagsEvent = new EventEmitter<ITag[]>();
 
+	selectedTagsOverflow: boolean = false;
+	noOfTagsFits: number = 0;
+
+	@HostListener('window:resize')
+	onResize(): void {
+		this.checkTagsFit(this.selectedTags);
+	}
+
 	constructor(
 		private readonly tagsService: TagsService,
 		private readonly store: Store,
 		public readonly themeService: NbThemeService,
-		public readonly translateService: TranslateService
+		public readonly translateService: TranslateService,
+		private readonly el: ElementRef,
+		private readonly renderer: Renderer2,
 	) {
 		super(themeService, translateService);
 	}
@@ -135,6 +148,10 @@ export class TagsColorInputComponent extends PictureNameTagsComponent
 				untilDestroyed(this)
 			)
 			.subscribe();
+
+		this.selectedTagsEvent.pipe(untilDestroyed(this)).subscribe((selectedTags: ITag[]) => {
+			this.checkTagsFit(selectedTags);
+		});
 	}
 
 	/**
@@ -196,6 +213,50 @@ export class TagsColorInputComponent extends PictureNameTagsComponent
 			this.loading = false;
 		}
 	};
+
+	/**
+	  * Check if selected tags fits on the screen
+	  */
+	private checkTagsFit(selectedTags: ITag[]) {
+
+		const selectedContainer = this.el.nativeElement.querySelector('.ng-value-container')
+		const containerWidth = selectedContainer.offsetWidth;
+		this.noOfTagsFits = 0;
+
+		const totalTagWidth = selectedTags.reduce((acc, tag, currentIndex) => {
+			const totalWidth = this.getTagWidth(tag.name) + acc;
+
+			if (totalWidth >= containerWidth && this.noOfTagsFits === 0)
+				this.noOfTagsFits = currentIndex;
+
+			return totalWidth;
+		}, 30) // 30px is the additional buffer
+
+		this.selectedTagsOverflow = totalTagWidth >= containerWidth;
+	}
+
+	private getTagWidth(badgeText: string) {
+		const container = this.el.nativeElement;
+		const testBadge = this.renderer.createElement('nb-badge');
+
+		// Set badge text
+		this.renderer.setProperty(testBadge, 'innerHTML', badgeText);
+
+		// Append test badge to the container (not in DOM)
+		this.renderer.appendChild(container, testBadge);
+
+		// Add multiple classes to badge
+		const badgeClasses = ['tag-color', 'tag-label', 'status-basic', 'position-top', 'position-right'];
+		badgeClasses.forEach(badgeClass => {
+			this.renderer.addClass(testBadge, badgeClass);
+		});
+
+		const badgeWidth = testBadge.offsetWidth + 10; // 10px is the padding
+
+		// Remove test badge from container (not in DOM)
+		this.renderer.removeChild(container, testBadge);
+		return badgeWidth;
+	}
 
 	ngOnDestroy(): void { }
 }

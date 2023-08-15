@@ -12,4 +12,11 @@ export class AlwaysSleepTracking extends SleepTrackingStrategy {
 	resume(): void {
 		this._window.webContents.send('device_wake_up');
 	}
+
+	/**
+	 * @override
+	 */
+	public pause(): void {
+		// Do nothing
+	}
 }
