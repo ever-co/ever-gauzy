@@ -78,9 +78,17 @@ export class OrganizationSelectorComponent
 	}
 
 	private setAttributesToParams(params: Object) {
+		// Remove all query params except 'date' and 'date_end'
+		const queryParams = { ...this.activatedRoute.snapshot.queryParams };
+		Object.keys(queryParams).forEach((key) => {
+			if (key !== 'date' && key !== 'date_end') {
+				delete queryParams[key];
+			}
+		});
+
 		this.router.navigate([], {
 			relativeTo: this.activatedRoute,
-			queryParams: { ...params },
+			queryParams: { ...params, ...queryParams },
 		});
 	}
 
