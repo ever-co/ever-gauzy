@@ -20,6 +20,7 @@ import {
 import { Store } from '../services';
 import { LanguageSelectorService } from './language-selector.service';
 import { ElectronService } from '../electron/services';
+import { distinctUntilChange } from '@gauzy/common-angular';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -73,6 +74,7 @@ export class LanguageSelectorComponent implements OnInit, AfterViewInit {
 				filter(
 					(preferredLanguage: LanguagesEnum) => !!preferredLanguage
 				),
+				distinctUntilChange(),
 				tap(
 					(preferredLanguage: LanguagesEnum) =>
 						(this._preferredLanguage = preferredLanguage)
