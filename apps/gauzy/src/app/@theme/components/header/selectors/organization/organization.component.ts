@@ -53,16 +53,19 @@ export class OrganizationSelectorComponent
 				this.store.hasPermission(PermissionsEnum.ALL_ORG_EDIT)
 			)
 		);
-		this.activatedRoute.queryParams
-			.pipe(
-				filter((query) => !!query.organizationId),
-				tap(({ organizationId }) => this.selectOrganizationById(organizationId)),
-				untilDestroyed(this)
-			)
-			.subscribe();
 
 		this.loadSelectedOrganization();
-		this.loadOrganizations();
+
+		this.loadOrganizations().then(() => {
+			this.activatedRoute.queryParams
+				.pipe(
+					filter((query) => !!query.organizationId),
+					tap(({ organizationId }) => this.selectOrganizationById(organizationId)),
+					untilDestroyed(this)
+				)
+				.subscribe();
+		});
+
 	}
 
 	selectOrganization(organization: IOrganization) {
