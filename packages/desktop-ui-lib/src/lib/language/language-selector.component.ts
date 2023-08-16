@@ -38,7 +38,7 @@ export class LanguageSelectorComponent implements OnInit, AfterViewInit {
 		private readonly _userService: UserOrganizationService,
 		private readonly _translate: TranslateService,
 		private readonly _languageService: LanguageService,
-		private readonly _languageSelelectorService: LanguageSelectorService,
+		private readonly _languageSelectorService: LanguageSelectorService,
 		private readonly _electronService: ElectronService,
 		private readonly _ngZone: NgZone
 	) {
@@ -147,7 +147,7 @@ export class LanguageSelectorComponent implements OnInit, AfterViewInit {
 	}
 
 	public setLanguage(): void {
-		this._languageSelelectorService.setLanguage(
+		this._languageSelectorService.setLanguage(
 			this.preferredLanguage,
 			this._translate
 		);

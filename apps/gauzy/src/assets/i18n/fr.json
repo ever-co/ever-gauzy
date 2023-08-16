@@ -3719,7 +3719,7 @@
 			"UPDATE_AVAILABLE_NOTE": "Une nouvelle mise à jour est disponible ! Veuillez cliquer sur le bouton Télécharger maintenant ci-dessous.",
 			"CHECK_UPDATE_NOTE": "Vous pouvez vérifier les mises à jour en cliquant sur le bouton Vérifier les mises à jour ci-dessous.",
 			"UPDATE_LOGS": "Journaux de mise à jour",
-			"AVANCED_SETTINGS": "Paramètres avancés",
+			"ADVANCED_SETTINGS": "Paramètres avancés",
 			"WARNING_STOP_TIMER": "Veuillez arrêter le minuteur si vous souhaitez modifier la configuration",
 			"GENERAL": "Général",
 			"API_CONFIG": "Configuration de l'API",

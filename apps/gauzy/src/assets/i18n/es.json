@@ -3719,7 +3719,7 @@
 			"UPDATE_AVAILABLE_NOTE": "¡Hay una nueva actualización disponible! Haz clic en el botón Descargar ahora a continuación.",
 			"CHECK_UPDATE_NOTE": "Puedes verificar las actualizaciones haciendo clic en el botón Verificar actualización a continuación.",
 			"UPDATE_LOGS": "Registros de actualización",
-			"AVANCED_SETTINGS": "Configuraciones avanzadas",
+			"ADVANCED_SETTINGS": "Configuraciones avanzadas",
 			"WARNING_STOP_TIMER": "Por favor, detén el temporizador si deseas cambiar la configuración",
 			"GENERAL": "General",
 			"API_CONFIG": "Configuración de API",
