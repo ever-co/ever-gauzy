@@ -5,26 +5,28 @@ import {
 	EventEmitter,
 	Output,
 	ChangeDetectorRef,
-	Input
+	Input,
+	AfterViewInit
 } from '@angular/core';
 import { NbThemeService } from '@nebular/theme';
 import { untilDestroyed, UntilDestroy } from '@ngneat/until-destroy';
 import { tap, debounceTime, filter } from 'rxjs/operators';
+import { distinctUntilChange } from '@gauzy/common-angular';
 import { FeatureEnum, IOrganization, PermissionsEnum } from '@gauzy/contracts';
 import { Store } from '../../../@core/services';
-import { distinctUntilChange } from '@gauzy/common-angular';
+
 @UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ngx-gauzy-logo',
 	templateUrl: './gauzy-logo.component.html',
 	styleUrls: ['./gauzy-logo.component.scss']
 })
-export class GauzyLogoComponent implements OnInit, OnDestroy {
+export class GauzyLogoComponent implements AfterViewInit, OnInit, OnDestroy {
 	theme: string;
 	isCollapse: boolean = true;
 	organization: IOrganization;
 
-  @Input() controlled: boolean = true;
+	@Input() controlled: boolean = true;
 	@Input() isAccordion: boolean = true;
 
 	@Output() onCollapsed: EventEmitter<boolean> = new EventEmitter<boolean>(
@@ -38,8 +40,11 @@ export class GauzyLogoComponent implements OnInit, OnDestroy {
 			link: '/pages/employees',
 			data: {
 				translationKey: 'MENU.INVITE_PEOPLE',
-				permissionKeys: [PermissionsEnum.IMPORT_EXPORT_VIEW],
-				featureKey: FeatureEnum.FEATURE_IMPORT_EXPORT
+				permissionKeys: [
+					PermissionsEnum.ALL_ORG_VIEW,
+					PermissionsEnum.ORG_INVITE_VIEW
+				],
+				featureKey: FeatureEnum.FEATURE_MANAGE_INVITE
 			}
 		},
 		{
@@ -61,7 +66,11 @@ export class GauzyLogoComponent implements OnInit, OnDestroy {
 			link: '/pages/settings/import-export',
 			data: {
 				translationKey: 'MENU.IMPORT_EXPORT.IMPORT_EXPORT',
-				permissionKeys: [PermissionsEnum.IMPORT_EXPORT_VIEW],
+				permissionKeys: [
+					PermissionsEnum.ALL_ORG_VIEW,
+					PermissionsEnum.IMPORT_VIEW,
+					PermissionsEnum.EXPORT_VIEW
+				],
 				featureKey: FeatureEnum.FEATURE_IMPORT_EXPORT
 			}
 		},
@@ -209,7 +218,7 @@ export class GauzyLogoComponent implements OnInit, OnDestroy {
 		private readonly themeService: NbThemeService,
 		private readonly store: Store,
 		private readonly cd: ChangeDetectorRef
-	) {}
+	) { }
 
 	ngOnInit(): void {
 		this.store.selectedOrganization$
@@ -224,19 +233,24 @@ export class GauzyLogoComponent implements OnInit, OnDestroy {
 				untilDestroyed(this)
 			)
 			.subscribe();
+	}
+
+	ngAfterViewInit() {
 		this.themeService.onThemeChange().subscribe((theme) => {
 			this.theme = theme.name;
 			this.cd.detectChanges();
 		});
 	}
+
 	onCollapse(event: boolean) {
 		this.isCollapse = event;
 		this.onCollapsed.emit(this.isCollapse);
 	}
+
 	navigateHome() {
 		//this.menuService.navigateHome();
 		return false;
 	}
 
-	ngOnDestroy(): void {}
+	ngOnDestroy(): void { }
 }

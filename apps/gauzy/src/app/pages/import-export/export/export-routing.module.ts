@@ -11,7 +11,10 @@ const routes: Routes = [
 		canActivate: [NgxPermissionsGuard],
 		data: {
 			permissions: {
-				only: [PermissionsEnum.IMPORT_EXPORT_VIEW],
+				only: [
+					PermissionsEnum.ALL_ORG_VIEW,
+					PermissionsEnum.EXPORT_VIEW
+				],
 				redirectTo: '/pages/settings'
 			}
 		}
@@ -22,4 +25,4 @@ const routes: Routes = [
 	imports: [RouterModule.forChild(routes)],
 	exports: [RouterModule]
 })
-export class ExportRoutingModule {}
+export class ExportRoutingModule { }
