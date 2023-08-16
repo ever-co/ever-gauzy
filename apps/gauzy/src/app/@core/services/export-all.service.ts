@@ -11,6 +11,13 @@ export class ExportAllService {
 		private readonly http: HttpClient
 	) { }
 
+	downloadAllData() {
+		return this.http.get(`${API_PREFIX}/download`, {
+			responseType: 'blob',
+			params: {}
+		});
+	}
+
 	downloadExportTemplates() {
 		return this.http.get(`${API_PREFIX}/export/template`, {
 			responseType: 'blob'
