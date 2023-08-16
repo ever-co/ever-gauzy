@@ -36,7 +36,7 @@ import {
 import { DeleteConfirmationComponent } from '../../@shared/user/forms';
 import {
 	EmployeeWithLinksComponent,
-	NotesWithTagsComponent
+	TagsOnlyComponent
 } from '../../@shared/table-components';
 import {
 	EmployeesService,
@@ -478,7 +478,7 @@ export class TeamsComponent extends PaginationFilterBaseComponent
 					title: this.getTranslation('MENU.TAGS'),
 					type: 'custom',
 					class: 'align-row',
-					renderComponent: NotesWithTagsComponent,
+					renderComponent: TagsOnlyComponent,
 					filter: {
 						type: 'custom',
 						component: TagsColorFilterComponent
