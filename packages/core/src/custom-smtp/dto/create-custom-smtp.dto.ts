@@ -12,12 +12,12 @@ export class CreateCustomSmtpDTO extends IntersectionType(
     CustomSmtpQueryDTO
 ) implements ICustomSmtpCreateInput {
 
-    @ApiProperty({ type: () => String, required: true })
+    @ApiProperty({ type: () => String })
     @IsNotEmpty()
     @IsString()
     readonly username: string;
 
-    @ApiProperty({ type: () => String, required: true })
+    @ApiProperty({ type: () => String })
     @IsNotEmpty()
     @IsString()
     readonly password: string;
