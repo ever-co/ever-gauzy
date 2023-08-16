@@ -3242,11 +3242,11 @@
 		"ABOUT": "About"
 	},
 	"FOOTER": {
-		"BY": "by",
-		"RIGHTS_RESERVED": "All rights reserved.",
-		"PRESENT": "Present",
-		"TERMS_OF_SERVICE": "Terms Of Service",
-		"PRIVACY_POLICY": "Privacy Policy"
+		"BY": "par",
+		"RIGHTS_RESERVED": "Tous droits réservés.",
+		"PRESENT": "Présent",
+		"TERMS_OF_SERVICE": "Conditions d'utilisation",
+		"PRIVACY_POLICY": "Politique de confidentialité"
 	},
 	"TOASTR": {
 		"TITLE": {
@@ -3737,7 +3737,7 @@
 			"AW_PORT": "Port Activity Watch",
 			"VISIBLE_AW": "Option Activity Watch visible dans la fenêtre",
 			"VISIBLE_WAKATIME": "Option Wakatime visible dans la fenêtre",
-			"SIGN_IN_AS": "Connecté en tant que {{ name }} {{ email }}",
+			"SIGN_IN_AS": "Connecté en tant que {{ name }} ({{ email }})",
 			"SIGN_OUT": "Déconnexion",
 			"DB_PASSWORD": "Mot de passe de la base de données",
 			"DB_USERNAME": "Nom d'utilisateur de la base de données",

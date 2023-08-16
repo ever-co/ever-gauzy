@@ -670,7 +670,7 @@
 		},
 		"ERROR": {
 			"PROJECT_NAME": "El nombre del proyecto es obligatorio.",
-			"PROJECT_URL":"La url del proyecto no es válida.",
+			"PROJECT_URL": "La url del proyecto no es válida.",
 			"OPEN_SOURCE_PROJECT_URL": "La url del proyecto de código abierto no es válida."
 		}
 	},
@@ -2014,7 +2014,7 @@
 			"ORG_TASK_VIEW": "View Tasks",
 			"ORG_TASK_EDIT": "Edit Tasks",
 			"ORG_TASK_DELETE": "Delete Tasks",
-			"ORG_TASK_SETTING":"Task Settings"
+			"ORG_TASK_SETTING": "Task Settings"
 		},
 		"BILLING": "Billing",
 		"BUDGET": "Budget",
@@ -3242,11 +3242,11 @@
 		"ABOUT": "About"
 	},
 	"FOOTER": {
-		"BY": "by",
-		"RIGHTS_RESERVED": "All rights reserved.",
-		"PRESENT": "Present",
-		"TERMS_OF_SERVICE": "Terms Of Service",
-		"PRIVACY_POLICY": "Privacy Policy"
+		"BY": "por",
+		"RIGHTS_RESERVED": "Todos los derechos reservados.",
+		"PRESENT": "Presente",
+		"TERMS_OF_SERVICE": "Términos de servicio",
+		"PRIVACY_POLICY": "Política de privacidad"
 	},
 	"TOASTR": {
 		"TITLE": {
@@ -3737,7 +3737,7 @@
 			"AW_PORT": "Puerto de Activity Watch",
 			"VISIBLE_AW": "Opción Activity Watch visible en la ventana",
 			"VISIBLE_WAKATIME": "Opción Wakatime visible en la ventana",
-			"SIGN_IN_AS": "Sesión iniciada como {{ name }} {{ email }}",
+			"SIGN_IN_AS": "Sesión iniciada como {{ name }} ({{ email }})",
 			"SIGN_OUT": "Cerrar sesión",
 			"DB_PASSWORD": "Contraseña de la base de datos",
 			"DB_USERNAME": "Nombre de usuario de la base de datos",

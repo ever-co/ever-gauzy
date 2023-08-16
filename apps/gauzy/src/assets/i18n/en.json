@@ -3772,7 +3772,7 @@
 			"AW_PORT": "Activity Watch Port",
 			"VISIBLE_AW": "Visible Activity Watch option on window",
 			"VISIBLE_WAKATIME": "Visible Wakatime option on window",
-			"SIGN_IN_AS": "Signed in as {{ name }} {{ email }}",
+			"SIGN_IN_AS": "Signed in as {{ name }} ({{ email }})",
 			"SIGN_OUT": "Sign Out",
 			"DB_PASSWORD": "Database Password",
 			"DB_USERNAME": "Database UserName",

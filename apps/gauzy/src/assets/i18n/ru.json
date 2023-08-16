@@ -3714,7 +3714,7 @@
 			"AW_PORT": "Порт Activity Watch",
 			"VISIBLE_AW": "Видимость опции Activity Watch в окне",
 			"VISIBLE_WAKATIME": "Видимость опции Wakatime в окне",
-			"SIGN_IN_AS": "Вход в систему как {{ name }} {{ email }}",
+			"SIGN_IN_AS": "Вход в систему как {{ name }} ({{ email }})",
 			"SIGN_OUT": "Выход",
 			"DB_PASSWORD": "Пароль базы данных",
 			"DB_USERNAME": "Имя пользователя базы данных",
