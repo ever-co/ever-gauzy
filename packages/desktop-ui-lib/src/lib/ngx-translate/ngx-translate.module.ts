@@ -7,7 +7,8 @@ import {
 } from '@ngx-translate/core';
 import { HttpLoaderFactory } from '../ngx-translate';
 import { HttpClient } from '@angular/common/http';
-import { configureTranslate } from './ngx-translate.config';
+import { LanguageInitializerFactory } from './language-initializer.factory';
+import { ElectronService } from '../electron/services';
 
 @NgModule({
 	declarations: [],
@@ -24,10 +25,10 @@ import { configureTranslate } from './ngx-translate.config';
 	providers: [
 		{
 			provide: APP_INITIALIZER,
-			useFactory: configureTranslate,
-			deps: [TranslateService],
-			multi: true,
-		},
+			useFactory: LanguageInitializerFactory,
+			deps: [TranslateService, ElectronService],
+			multi: true
+		}
 	],
 	exports: [TranslateModule],
 })
