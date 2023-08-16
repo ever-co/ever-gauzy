@@ -153,7 +153,7 @@ export interface IRepositoryModel<T> {
 }
 
 @Injectable()
-export class ExportAllService implements OnModuleInit {
+export class ExportService implements OnModuleInit {
 	private _dirname: string;
 	private _basename = '/export';
 
@@ -543,7 +543,7 @@ export class ExportAllService implements OnModuleInit {
 		private readonly dataSource: Connection,
 
 		private readonly configService: ConfigService
-	) {}
+	) { }
 
 	async onModuleInit() {
 		const public_path = this.configService.assetOptions.assetPublicPath || __dirname;
@@ -635,7 +635,7 @@ export class ExportAllService implements OnModuleInit {
 		* Replace condition with default condition
 		*/
 		if (isNotEmpty(item.condition) && isNotEmpty(conditions['where'])) {
-			const { condition : { replace = 'tenantId', column = 'id' } } = item;
+			const { condition: { replace = 'tenantId', column = 'id' } } = item;
 			if (`${replace}` in conditions['where']) {
 				delete conditions['where'][replace];
 				conditions['where'][column] = where[replace];
@@ -645,7 +645,7 @@ export class ExportAllService implements OnModuleInit {
 		const { repository } = item;
 		const nameFile = repository.metadata.tableName;
 
-		const [ items, count ] = await repository.findAndCount(conditions);
+		const [items, count] = await repository.findAndCount(conditions);
 		if (count > 0) {
 			return await this.csvWriter(nameFile, items);
 		}
@@ -826,7 +826,7 @@ export class ExportAllService implements OnModuleInit {
 		for await (const item of repository.metadata.manyToManyRelations) {
 			const relation = relations.find((relation: IColumnRelationMetadata) => relation.joinTableName === item.joinTableName);
 			if (relation) {
-				const [ joinColumn ] = item.joinColumns as ColumnMetadata[];
+				const [joinColumn] = item.joinColumns as ColumnMetadata[];
 				if (joinColumn) {
 					const { entityMetadata, propertyName, referencedColumn } = joinColumn;
 

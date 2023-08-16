@@ -1,7 +1,6 @@
 import {
 	Controller,
 	HttpStatus,
-	Get,
 	Post,
 	UseInterceptors,
 	Body,
@@ -11,44 +10,28 @@ import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { FileInterceptor } from '@nestjs/platform-express';
 import * as path from 'path';
 import { CommandBus } from '@nestjs/cqrs';
-import { IImportHistory, ImportStatusEnum, ImportTypeEnum, IPagination, PermissionsEnum, UploadedFile } from '@gauzy/contracts';
-import { ImportAllService } from './import-all.service';
-import { RequestContext } from './../../core/context';
+import { ImportStatusEnum, ImportTypeEnum, UploadedFile } from '@gauzy/contracts';
+import { ImportService } from './import.service';
+import { RequestContext } from '../../core/context';
 import { FileStorage, UploadedFileStorage } from '../../core/file-storage';
-import { ImportHistoryCreateCommand, ImportHistoryService } from './../import-history';
-import { PermissionGuard, TenantPermissionGuard } from './../../shared/guards';
-import { Permissions } from './../../shared/decorators';
+import { ImportHistoryCreateCommand } from '../import-history';
+import { PermissionGuard, TenantPermissionGuard } from '../../shared/guards';
 
 @ApiTags('Import')
-@UseGuards(TenantPermissionGuard)
+@UseGuards(TenantPermissionGuard, PermissionGuard)
 @Controller()
-export class ImportAllController {
+export class ImportController {
 	constructor(
-		private readonly importAllService: ImportAllService,
-		private readonly importHistoryService: ImportHistoryService,
-		private readonly commandBus: CommandBus
-	) {}
+		private readonly _importService: ImportService,
+		private readonly _commandBus: CommandBus
+	) { }
 
-	@ApiOperation({ summary: 'Find all imports history.' })
-	@ApiResponse({
-		status: HttpStatus.OK,
-		description: 'Found import history'
-	})
-	@ApiResponse({
-		status: HttpStatus.NOT_FOUND,
-		description: 'Record not found'
-	})
-	@UseGuards(PermissionGuard)
-	@Permissions(PermissionsEnum.IMPORT_EXPORT_VIEW)
-	@Get()
-	async importAll(): Promise<IPagination<IImportHistory>> {
-		return this.importHistoryService.findAll({
-			order: {
-				importDate: 'DESC'
-			}
-		});
-	}
-
+	/**
+	 *
+	 * @param param0
+	 * @param file
+	 * @returns
+	 */
 	@UseInterceptors(
 		FileInterceptor('file', {
 			storage: new FileStorage().storage({
@@ -78,20 +61,28 @@ export class ImportAllController {
 			size: size,
 			tenantId: RequestContext.currentTenantId()
 		}
+
 		try {
-			await this.importAllService.unzipAndParse(
+			/** */
+			await this._importService.unzipAndParse(
 				key,
 				importType === ImportTypeEnum.CLEAN
 			);
-			this.importAllService.removeExtractedFiles();
-			return await this.commandBus.execute(
+			this._importService.removeExtractedFiles();
+			/**
+			 *
+			 */
+			return await this._commandBus.execute(
 				new ImportHistoryCreateCommand({
 					...history,
 					status: ImportStatusEnum.SUCCESS
 				})
 			);
 		} catch (error) {
-			return await this.commandBus.execute(
+			/**
+			 *
+			 */
+			return await this._commandBus.execute(
 				new ImportHistoryCreateCommand({
 					...history,
 					status: ImportStatusEnum.FAILED

@@ -13,8 +13,8 @@ import * as chalk from 'chalk';
 import { ConfigService } from '@gauzy/config';
 import { getEntitiesFromPlugins } from '@gauzy/plugin';
 import { isFunction, isNotEmpty } from '@gauzy/common';
-import { convertToDatetime } from './../../core/utils';
-import { FileStorage } from './../../core/file-storage';
+import { convertToDatetime } from '../../core/utils';
+import { FileStorage } from '../../core/file-storage';
 import {
 	AccountingTemplate,
 	Activity,
@@ -138,10 +138,10 @@ import {
 	Warehouse,
 	WarehouseProduct,
 	WarehouseProductVariant
-} from './../../core/entities/internal';
-import { RequestContext } from './../../core';
+} from '../../core/entities/internal';
+import { RequestContext } from '../../core';
 import { ImportEntityFieldMapOrCreateCommand } from './commands';
-import { ImportRecordFindOrFailCommand, ImportRecordUpdateOrCreateCommand } from './../import-record';
+import { ImportRecordFindOrFailCommand, ImportRecordUpdateOrCreateCommand } from '../import-record';
 
 export interface IForeignKey<T> {
 	column: string;
@@ -166,7 +166,7 @@ export interface IRepositoryModel<T> {
 }
 
 @Injectable()
-export class ImportAllService implements OnModuleInit {
+export class ImportService implements OnModuleInit {
 
 	private _dirname: string;
 	private _extractPath: string;
@@ -546,7 +546,7 @@ export class ImportAllService implements OnModuleInit {
 
 		private readonly configService: ConfigService,
 		private readonly commandBus: CommandBus
-	) {}
+	) { }
 
 	async onModuleInit() {
 		//base import csv directory path
@@ -578,7 +578,7 @@ export class ImportAllService implements OnModuleInit {
 
 	async parse(cleanup: boolean = false) {
 		/**
-	 	* Can only run in a particular order
+		  * Can only run in a particular order
 		*/
 		const tenantId = RequestContext.currentTenantId();
 		for await (const item of this.repositories) {
@@ -722,7 +722,7 @@ export class ImportAllService implements OnModuleInit {
 						where.push({ tenantId: RequestContext.currentTenantId() });
 					}
 					for (const unique of uniqueIdentifier) {
-						where.push({ [unique.column] : entity[unique.column] });
+						where.push({ [unique.column]: entity[unique.column] });
 					}
 				}
 				const desination = await this.commandBus.execute(
@@ -899,32 +899,32 @@ export class ImportAllService implements OnModuleInit {
 			{
 				repository: this.reportCategoryRepository,
 				isStatic: true,
-				uniqueIdentifier: [ { column: 'name' } ]
+				uniqueIdentifier: [{ column: 'name' }]
 			},
 			{
 				repository: this.reportRepository,
 				isStatic: true,
-				uniqueIdentifier: [ { column: 'name' }, { column: 'slug' } ]
+				uniqueIdentifier: [{ column: 'name' }, { column: 'slug' }]
 			},
 			{
 				repository: this.featureRepository,
 				isStatic: true,
-				uniqueIdentifier:  [ { column: 'name' }, { column: 'code' } ]
+				uniqueIdentifier: [{ column: 'name' }, { column: 'code' }]
 			},
 			{
 				repository: this.languageRepository,
 				isStatic: true,
-				uniqueIdentifier: [ { column: 'name' }, { column: 'code' } ]
+				uniqueIdentifier: [{ column: 'name' }, { column: 'code' }]
 			},
 			{
 				repository: this.integrationRepository,
 				isStatic: true,
-				uniqueIdentifier: [ { column: 'name' } ]
+				uniqueIdentifier: [{ column: 'name' }]
 			},
 			{
 				repository: this.integrationTypeRepository,
 				isStatic: true,
-				uniqueIdentifier: [ { column: 'name' }, { column: 'groupName' } ],
+				uniqueIdentifier: [{ column: 'name' }, { column: 'groupName' }],
 				relations: [
 					{
 						joinTableName: 'integration_integration_type',
@@ -961,7 +961,7 @@ export class ImportAllService implements OnModuleInit {
 			{
 				repository: this.userRepository,
 				isStatic: true,
-			 	isCheckRelation: true,
+				isCheckRelation: true,
 				foreignKeys: [
 					{ column: 'roleId', repository: this.roleRepository }
 				]
@@ -1206,7 +1206,7 @@ export class ImportAllService implements OnModuleInit {
 			*/
 			{
 				repository: this.skillRepository,
-				uniqueIdentifier: [ { column: 'name' } ],
+				uniqueIdentifier: [{ column: 'name' }],
 				relations: [
 					{
 						joinTableName: 'skill_employee',
@@ -1671,7 +1671,7 @@ export class ImportAllService implements OnModuleInit {
 			},
 			{
 				repository: this.warehouseRepository,
-				uniqueIdentifier:  [ { column: 'email' }, { column: 'code' } ],
+				uniqueIdentifier: [{ column: 'email' }, { column: 'code' }],
 				isCheckRelation: true,
 				foreignKeys: [
 					{ column: 'logoId', repository: this.imageAssetRepository },
@@ -1680,7 +1680,7 @@ export class ImportAllService implements OnModuleInit {
 			},
 			{
 				repository: this.merchantRepository,
-				uniqueIdentifier:  [ { column: 'email' }, { column: 'code' } ],
+				uniqueIdentifier: [{ column: 'email' }, { column: 'code' }],
 				isCheckRelation: true,
 				foreignKeys: [
 					{ column: 'logoId', repository: this.imageAssetRepository },

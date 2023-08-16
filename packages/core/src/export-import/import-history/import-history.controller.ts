@@ -12,7 +12,7 @@ import { ImportHistoryService } from './import-history.service';
 
 @ApiTags('Import History')
 @UseGuards(TenantPermissionGuard, PermissionGuard)
-@Permissions(PermissionsEnum.IMPORT_VIEW)
+@Permissions(PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.IMPORT_VIEW)
 @Controller()
 export class ImportHistoryController {
 
