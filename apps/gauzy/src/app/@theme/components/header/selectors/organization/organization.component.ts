@@ -73,14 +73,36 @@ export class OrganizationSelectorComponent
 			this.store.selectedOrganization = organization;
 			this.store.organizationId = organization.id;
 			this.store.selectedEmployee = null;
-			this.setAttributesToParams({ organizationId: organization.id })
+
+			this.updateQueryParams({ organizationId: organization.id })
 		}
 	}
 
-	private setAttributesToParams(params: Object) {
+	/**
+	 * Updates query parameters while preserving specified parameters.
+	 * @param newParams New query parameters to be added or updated.
+	 */
+	private updateQueryParams(newParams: { [key: string]: any }): void {
+		// Preserve existing query parameters for 'date' and 'date_end'
+		const preservedQueryParams = ['date', 'date_end'];
+
+		// Get the current query parameters from the activated route snapshot
+		const currentQueryParams = { ...this.activatedRoute.snapshot.queryParams };
+
+		// Create a new object to store the query parameters to be updated
+		const updatedQueryParams: { [key: string]: any } = {};
+
+		// Loop through the preserved parameters and add them to the updatedQueryParams
+		preservedQueryParams.forEach((key) => {
+			if (currentQueryParams.hasOwnProperty(key)) {
+				updatedQueryParams[key] = currentQueryParams[key];
+			}
+		});
+
+		// Navigate to the updated route with the new query parameters
 		this.router.navigate([], {
 			relativeTo: this.activatedRoute,
-			queryParams: { ...params },
+			queryParams: { ...updatedQueryParams, ...newParams },
 		});
 	}
 
