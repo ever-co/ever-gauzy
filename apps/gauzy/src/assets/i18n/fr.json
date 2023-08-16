@@ -4213,28 +4213,28 @@
 		}
 	},
 	"LOGIN_PAGE": {
-		"TITLE": "Login",
-		"SUB_TITLE": "Hello! Log in with your email.",
-		"REMEMBER_ME_TITLE": "Remember me",
-		"DO_NOT_HAVE_ACCOUNT_TITLE": "Don't have an account?",
-		"FORGOT_PASSWORD_TITLE": "Forgot Password?",
+		"TITLE": "Connectez-vous",
+		"SUB_TITLE": "Bonjour! Connectez-vous avec votre adresse e-mail.",
+		"REMEMBER_ME_TITLE": "Se souvenir de moi",
+		"DO_NOT_HAVE_ACCOUNT_TITLE": "Vous n'avez pas de compte?",
+		"FORGOT_PASSWORD_TITLE": "Mot de passe oublié?",
 		"LABELS": {
-			"EMAIL": "Email address:",
-			"PASSWORD": "Password:"
+			"EMAIL": "Adresse e-mail:",
+			"PASSWORD": "Mot de passe:"
 		},
 		"PLACEHOLDERS": {
-			"EMAIL": "Email address",
-			"PASSWORD": "Password"
+			"EMAIL": "Adresse e-mail",
+			"PASSWORD": "Mot de passe"
 		},
 		"VALIDATION": {
-			"EMAIL_REQUIRED": "Email is required!",
-			"EMAIL_REAL_REQUIRED": "Email should be the real one!",
-			"PASSWORD_REQUIRED": "Password is required!",
-			"PASSWORD_SHOULD_CONTAIN": "Password should contain from {{ minLength }} to {{ maxLength }} characters!"
+			"EMAIL_REQUIRED": "L'adresse e-mail est obligatoire!",
+			"EMAIL_REAL_REQUIRED": "L'adresse e-mail doit être réelle!",
+			"PASSWORD_REQUIRED": "Le mot de passe est obligatoire!",
+			"PASSWORD_SHOULD_CONTAIN": "Le mot de passe doit contenir entre {{ minLength }} et {{ maxLength }} caractères!"
 		},
 		"DEMO": {
-			"TITLE": "Login Automatically into Demo accounts",
-			"SUB_TITLE": "Please select account type below."
+			"TITLE": "Connexion automatique aux comptes de démonstration",
+			"SUB_TITLE": "Veuillez sélectionner le type de compte ci-dessous."
 		}
 	},
 	"FORGOT_PASSWORD_PAGE": {
