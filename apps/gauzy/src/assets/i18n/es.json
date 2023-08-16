@@ -3763,6 +3763,7 @@
 		"TIME_TRACKER_DISABLED": "El rastreador de tiempo ha sido desactivado",
 		"STOP_TIMER_CHANGE_CLIENT": "Por favor, detén el temporizador antes de cambiar el cliente",
 		"ADD_CONTACT": "Agregar contacto",
+		"ADD_TASK": "Añadir Tarea",
 		"STOP_TIMER_CHANGE_PROJECT": "Por favor, detén el temporizador antes de cambiar el proyecto",
 		"STOP_TIMER_CHANGE_TASK": "Por favor, detén el temporizador antes de cambiar la tarea",
 		"STOP_TIMER_CHANGE_DESCRIPTION": "Por favor, detén el temporizador antes de cambiar la descripción",

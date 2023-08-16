@@ -3763,6 +3763,7 @@
 		"TIME_TRACKER_DISABLED": "Le suivi du temps a été désactivé",
 		"STOP_TIMER_CHANGE_CLIENT": "Veuillez arrêter le chronomètre avant de changer de client",
 		"ADD_CONTACT": "Ajouter un contact",
+		"ADD_TASK": "Ajouter une tâche",
 		"STOP_TIMER_CHANGE_PROJECT": "Veuillez arrêter le chronomètre avant de changer de projet",
 		"STOP_TIMER_CHANGE_TASK": "Veuillez arrêter le chronomètre avant de changer de tâche",
 		"STOP_TIMER_CHANGE_DESCRIPTION": "Veuillez arrêter le chronomètre avant de changer la description",

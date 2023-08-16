@@ -3742,6 +3742,7 @@
 		"TIME_TRACKER_DISABLED": "מעקב הזמן כבוי",
 		"STOP_TIMER_CHANGE_CLIENT": "אנא עצור את הטיימר לפני שתשנה את הלקוח",
 		"ADD_CONTACT": "הוסף איש קשר",
+		"ADD_TASK": "הוסף משימה",
 		"STOP_TIMER_CHANGE_PROJECT": "אנא עצור את הטיימר לפני שתשנה את הפרויקט",
 		"STOP_TIMER_CHANGE_TASK": "אנא עצור את הטיימר לפני שתשנה את המשימה",
 		"STOP_TIMER_CHANGE_DESCRIPTION": "אנא עצור את הטיימר לפני שתשנה את התיאור",
