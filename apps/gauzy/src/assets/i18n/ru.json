@@ -3734,6 +3734,48 @@
 				"SERVER_RESTARTED": "Сервер успешно перезапущен",
 				"CONNECTION_SUCCEEDS": "Подключение к серверу {{ url }} успешно"
 			}
+		},
+		"WEEKLY_LIMIT_EXCEEDED": "Еженедельный лимит превышен",
+		"OF_HRS": "Из {{ limit }} часов",
+		"TIME_TRACKER_DISABLED": "Отслеживание времени отключено",
+		"STOP_TIMER_CHANGE_CLIENT": "Пожалуйста, остановите таймер перед изменением клиента",
+		"ADD_CONTACT": "Добавить контакт",
+		"STOP_TIMER_CHANGE_PROJECT": "Пожалуйста, остановите таймер перед изменением проекта",
+		"STOP_TIMER_CHANGE_TASK": "Пожалуйста, остановите таймер перед изменением задачи",
+		"STOP_TIMER_CHANGE_DESCRIPTION": "Пожалуйста, остановите таймер перед изменением описания",
+		"ACTIVITY_WATCH_INTEGRATION": "Интеграция с ActivityWatch",
+		"LAST_CAPTURE_TAKEN": "Последний снимок экрана был сделан",
+		"REQUEST_TASK_PERMISSION": "Запросить разрешение у администратора организации",
+		"RETURN_ONLINE": "Вернуться в онлайн",
+		"SEARCH": "Поиск",
+		"OPEN_SETTINGS": "Открыть настройки",
+		"REFRESH": "Обновить",
+		"SWITCHED_OFFLINE": "Вы переключились в автономный режим",
+		"SWITCHED_ONLINE": "Вы переключились в режим онлайн",
+		"ONLINE": "В сети",
+		"OFFLINE": "Не в сети",
+		"SYNCED": "Синхронизировано",
+		"SYNCED_PROGRESS": "Синхронизируется",
+		"WAIT_SYNCED": "Ожидание синхронизации",
+		"DIALOG": {
+			"WARNING": "Предупреждение",
+			"REMOVE_SCREENSHOT": "Вы действительно хотите удалить этот снимок экрана и журнал действий?",
+			"CHANGE_CLIENT": "Вы уверены, что хотите изменить клиента?",
+			"RESUME_TIMER": "Ваш таймер работал, когда ПК был заблокирован. Возобновить таймер?"
+		},
+		"NO_LIMIT": "∞ Без лимита",
+		"TASK": "Задача",
+		"DUE": "Срок",
+		"AW_CONNECTED": "ActivityWatch подключено",
+		"AW_DISCONNECTED": "ActivityWatch отключено",
+		"TOASTR": {
+			"REMOVE_SCREENSHOT": "Последний снимок экрана и действия успешно удалены",
+			"CANT_RUN_TIMER": "Вы не можете запустить таймер на данный момент",
+			"NOT_AUTHORIZED": "У вас нет разрешения на работу",
+			"ACCOUNT_DELETED": "Ваш аккаунт уже удален",
+			"PROJECT_ADDED": "Проект успешно добавлен",
+			"TASK_ADDED": "Задача успешно добавлена",
+			"CLIENT_ADDED": "Клиент успешно добавлен"
 		}
 	},
 	"TIMESHEET": {

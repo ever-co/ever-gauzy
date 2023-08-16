@@ -3792,6 +3792,48 @@
 				"SERVER_RESTARTED": "Server Restarted Successfully",
 				"CONNECTION_SUCCEEDS": "Connection to Server {{ url }} Succeeds"
 			}
+		},
+		"WEEKLY_LIMIT_EXCEEDED": "Weekly limit exceeded",
+		"OF_HRS": "Of {{ limit }} hrs",
+		"TIME_TRACKER_DISABLED": "Time tracker has been disabled",
+		"STOP_TIMER_CHANGE_CLIENT": "Please stop the timer before changing the client",
+		"ADD_CONTACT": "Add contact",
+		"STOP_TIMER_CHANGE_PROJECT": "Please stop the timer before changing the project",
+		"STOP_TIMER_CHANGE_TASK": "Please stop the timer before changing the task",
+		"STOP_TIMER_CHANGE_DESCRIPTION": "Please stop the timer before changing the description",
+		"ACTIVITY_WATCH_INTEGRATION": "ActivityWatch Integration",
+		"LAST_CAPTURE_TAKEN": "Last screen capture taken",
+		"REQUEST_TASK_PERMISSION": "Request permission from the organization administrator",
+		"RETURN_ONLINE": "Return Online",
+		"SEARCH": "Search",
+		"OPEN_SETTINGS": "Open Settings",
+		"REFRESH": "Refresh",
+		"SWITCHED_OFFLINE": "You switched to offline mode now",
+		"SWITCHED_ONLINE": "You switched to online mode now",
+		"ONLINE": "Online",
+		"OFFLINE": "Offline",
+		"SYNCED": "Synced",
+		"SYNCED_PROGRESS": "Synced in progress",
+		"WAIT_SYNCED": "Waiting for synced",
+		"DIALOG": {
+			"WARNING": "Warning",
+			"REMOVE_SCREENSHOT": "Do you really want to remove this screenshot and activities log?",
+			"CHANGE_CLIENT": "Are you sure you want to change Client?",
+			"RESUME_TIMER": "Your timer was running when PC was locked. Resume timer?"
+		},
+		"NO_LIMIT": "∞ No Limit",
+		"TASK": "Task",
+		"DUE": "Due",
+		"AW_CONNECTED": "ActivityWatch's connected",
+		"AW_DISCONNECTED": "ActivityWatch's disconnected",
+		"TOASTR": {
+			"REMOVE_SCREENSHOT": "Successfully remove last screenshot and activities",
+			"CANT_RUN_TIMER": "Your can't run timer for the moment",
+			"NOT_AUTHORIZED": "Your are not authorized to work",
+			"ACCOUNT_DELETED": "Your account is already deleted",
+			"PROJECT_ADDED": "Project added successfully",
+			"TASK_ADDED": "Task added successfully",
+			"CLIENT_ADDED": "Client added successfully"
 		}
 	},
 	"TIMESHEET": {

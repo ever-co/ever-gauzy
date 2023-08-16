@@ -3736,6 +3736,48 @@
 				"SERVER_RESTARTED": "השרת הופעל מחדש בהצלחה",
 				"CONNECTION_SUCCEEDS": "התחברות לשרת {{ url }} הצליחה"
 			}
+		},
+		"WEEKLY_LIMIT_EXCEEDED": "הגעת למגבלת השבוע",
+		"OF_HRS": "מתוך {{ limit }} שעות",
+		"TIME_TRACKER_DISABLED": "מעקב הזמן כבוי",
+		"STOP_TIMER_CHANGE_CLIENT": "אנא עצור את הטיימר לפני שתשנה את הלקוח",
+		"ADD_CONTACT": "הוסף איש קשר",
+		"STOP_TIMER_CHANGE_PROJECT": "אנא עצור את הטיימר לפני שתשנה את הפרויקט",
+		"STOP_TIMER_CHANGE_TASK": "אנא עצור את הטיימר לפני שתשנה את המשימה",
+		"STOP_TIMER_CHANGE_DESCRIPTION": "אנא עצור את הטיימר לפני שתשנה את התיאור",
+		"ACTIVITY_WATCH_INTEGRATION": "שליחת פעילות ל־ActivityWatch",
+		"LAST_CAPTURE_TAKEN": "נתפסה לכם צילום מסך אחרון",
+		"REQUEST_TASK_PERMISSION": "בקש הרשאה ממנהל הארגון",
+		"RETURN_ONLINE": "חזור למצב מקוון",
+		"SEARCH": "חיפוש",
+		"OPEN_SETTINGS": "פתח הגדרות",
+		"REFRESH": "רענון",
+		"SWITCHED_OFFLINE": "החלפת למצב לא מקוון",
+		"SWITCHED_ONLINE": "החלפת למצב מקוון",
+		"ONLINE": "מקוון",
+		"OFFLINE": "לא מקוון",
+		"SYNCED": "מסונכרן",
+		"SYNCED_PROGRESS": "מתבצע סינכרון",
+		"WAIT_SYNCED": "ממתין לסנכרון",
+		"DIALOG": {
+			"WARNING": "אזהרה",
+			"REMOVE_SCREENSHOT": "האם אתה בטוח שברצונך למחוק את התמונה האחרונה ויומן הפעילות?",
+			"CHANGE_CLIENT": "האם אתה בטוח שברצונך לשנות את הלקוח?",
+			"RESUME_TIMER": "הטיימר שלך התמשך בזמן לנעימת המחשב. האם להמשיך את הטיימר?"
+		},
+		"NO_LIMIT": "∞ אין הגבלה",
+		"TASK": "משימה",
+		"DUE": "מועדו",
+		"AW_CONNECTED": "קיימת חיבור ל־ActivityWatch",
+		"AW_DISCONNECTED": "אין חיבור ל־ActivityWatch",
+		"TOASTR": {
+			"REMOVE_SCREENSHOT": "הסרת התמונה האחרונה ויומן הפעילות בוצעה בהצלחה",
+			"CANT_RUN_TIMER": "אינך יכול להפעיל את הטיימר כרגע",
+			"NOT_AUTHORIZED": "אין לך הרשאות עבודה",
+			"ACCOUNT_DELETED": "החשבון שלך כבר נמחק",
+			"PROJECT_ADDED": "הפרויקט נוסף בהצלחה",
+			"TASK_ADDED": "המשימה נוספה בהצלחה",
+			"CLIENT_ADDED": "הלקוח נוסף בהצלחה"
 		}
 	},
 	"TIMESHEET": {

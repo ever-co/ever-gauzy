@@ -3737,6 +3737,48 @@
 				"SERVER_RESTARTED": "Сървърът бе рестартиран успешно",
 				"CONNECTION_SUCCEEDS": "Установена успешна връзка със сървъра {{ url }}"
 			}
+		},
+		"WEEKLY_LIMIT_EXCEEDED": "Седмичната лимита е превишена",
+		"OF_HRS": "От {{ limit }} часа",
+		"TIME_TRACKER_DISABLED": "Отслежването на времето е деактивирано",
+		"STOP_TIMER_CHANGE_CLIENT": "Моля, спрете таймера преди да промените клиента",
+		"ADD_CONTACT": "Добави контакт",
+		"STOP_TIMER_CHANGE_PROJECT": "Моля, спрете таймера преди да промените проекта",
+		"STOP_TIMER_CHANGE_TASK": "Моля, спрете таймера преди да промените задачата",
+		"STOP_TIMER_CHANGE_DESCRIPTION": "Моля, спрете таймера преди да промените описанието",
+		"ACTIVITY_WATCH_INTEGRATION": "Интеграция с ActivityWatch",
+		"LAST_CAPTURE_TAKEN": "Последната заснета екранна снимка",
+		"REQUEST_TASK_PERMISSION": "Изисква се разрешение от администратора на организацията",
+		"RETURN_ONLINE": "Върни се онлайн",
+		"SEARCH": "Търси",
+		"OPEN_SETTINGS": "Отвори настройките",
+		"REFRESH": "Обнови",
+		"SWITCHED_OFFLINE": "Вече сте преминали в офлайн режим",
+		"SWITCHED_ONLINE": "Вече сте преминали в онлайн режим",
+		"ONLINE": "Онлайн",
+		"OFFLINE": "Офлайн",
+		"SYNCED": "Синхронизиран",
+		"SYNCED_PROGRESS": "Синхронизиране в процес",
+		"WAIT_SYNCED": "Изчакване за синхронизиране",
+		"DIALOG": {
+			"WARNING": "Предупреждение",
+			"REMOVE_SCREENSHOT": "Наистина ли искате да премахнете тази снимка на екрана и дневника на дейностите?",
+			"CHANGE_CLIENT": "Сигурни ли сте, че искате да смените клиента?",
+			"RESUME_TIMER": "Вашият таймер продължи да работи, когато компютърът е бил заключен. Да се продължи ли таймера?"
+		},
+		"NO_LIMIT": "∞ Без лимит",
+		"TASK": "Задача",
+		"DUE": "Дължим",
+		"AW_CONNECTED": "Connected към ActivityWatch",
+		"AW_DISCONNECTED": "Disconnected към ActivityWatch",
+		"TOASTR": {
+			"REMOVE_SCREENSHOT": "Успешно премахнахте последната снимка на екрана и дейностите",
+			"CANT_RUN_TIMER": "В момента не може да стартирате таймера",
+			"NOT_AUTHORIZED": "Вие нямате разрешение да работите",
+			"ACCOUNT_DELETED": "Вашият акаунт вече е изтрит",
+			"PROJECT_ADDED": "Проектът беше успешно добавен",
+			"TASK_ADDED": "Задачата беше успешно добавена",
+			"CLIENT_ADDED": "Клиентът беше успешно добавен"
 		}
 	},
 	"TIMESHEET": {
