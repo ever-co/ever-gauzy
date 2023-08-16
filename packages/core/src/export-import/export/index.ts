@@ -1,2 +1,2 @@
-export { ExportAllModule } from './export-all.module';
-export { ExportAllService } from './export-all.service';
+export { ExportModule } from './export.module';
+export { ExportService } from './export.service';

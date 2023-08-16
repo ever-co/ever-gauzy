@@ -1,34 +1,41 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Entity, Column } from 'typeorm';
-import { IsDate } from 'class-validator';
+import { IsDate, IsEnum, IsNotEmpty, IsNumber, IsOptional } from 'class-validator';
 import { Exclude } from 'class-transformer';
-import { IImportHistory } from '@gauzy/contracts';
+import { IImportHistory, ImportStatusEnum } from '@gauzy/contracts';
 import { TenantBaseEntity } from '../../core/entities/internal';
 
 @Entity('import-history')
 export class ImportHistory extends TenantBaseEntity implements IImportHistory {
 
 	@ApiProperty({ type: () => String })
-	@Column({ nullable: false })
+	@IsNotEmpty()
+	@Column()
 	file: string;
 
 	@Exclude({ toPlainOnly: true })
 	@ApiProperty({ type: () => String })
-	@Column({ nullable: false })
+	@IsNotEmpty()
+	@Column()
 	path: string;
 
-	@ApiProperty({ type: () => Number })
+	@ApiPropertyOptional({ type: () => Number })
+	@IsOptional()
+	@IsNumber()
 	@Column({ nullable: true })
 	size: number;
 
-    @ApiProperty({ type: () => String })
-	@Column({ nullable: false })
-	status: string;
+	@ApiProperty({ type: () => String, enum: ImportStatusEnum })
+	@IsNotEmpty()
+	@IsEnum(ImportStatusEnum)
+	@Column()
+	status: ImportStatusEnum;
 
-	@ApiProperty({ type: () => Date })
-    @IsDate()
-	@Column({ nullable: false, default: () => 'CURRENT_TIMESTAMP'})
+	@ApiPropertyOptional({ type: () => Date })
+	@IsOptional()
+	@IsDate()
+	@Column({ default: () => 'CURRENT_TIMESTAMP' })
 	importDate?: Date;
 
-	fullUrl?: string;
+	public fullUrl?: string;
 }
