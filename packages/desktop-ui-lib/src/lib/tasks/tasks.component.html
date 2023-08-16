@@ -9,7 +9,7 @@
 			<div class="col-sm-6">
 				<div class="form-group">
 					<label class="label">{{ "TASKS_PAGE.TASKS_PROJECT" | translate }}</label>
-					<ng-select [addTag]="hasProjectPermission ? addProject: null" addTagText="Add project"
+					<ng-select [addTag]="hasProjectPermission ? addProject: null" [addTagText]="'FORM.PLACEHOLDERS.ADD_PROJECT' | translate"
 						[clearable]="true" [placeholder]="'TASKS_PAGE.TASKS_PROJECT' | translate" [items]="projects" bindLabel="name"
 						formControlName="project">
 						<ng-template ng-option-tmp let-item="item" let-index="index">
