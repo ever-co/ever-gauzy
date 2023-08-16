@@ -613,13 +613,13 @@ export class ImportService implements OnModuleInit {
 					}
 
 					let results = [];
-					const rstream = fs.createReadStream(csvPath, 'utf8').pipe(csv());
-					rstream.on('data', (data) => { results.push(data); });
-					rstream.on('error', (error) => {
+					const stream = fs.createReadStream(csvPath, 'utf8').pipe(csv());
+					stream.on('data', (data) => { results.push(data); });
+					stream.on('error', (error) => {
 						console.log(chalk.red(`Failed to parse CSV for table: ${masterTable}`), error);
 						reject(error);
 					});
-					rstream.on('end', async () => {
+					stream.on('end', async () => {
 						results = results.filter(isNotEmpty);
 						try {
 							for await (const data of results) {
@@ -669,13 +669,13 @@ export class ImportService implements OnModuleInit {
 			await new Promise(async (resolve, reject) => {
 				try {
 					let results = [];
-					const rstream = fs.createReadStream(csvPath, 'utf8').pipe(csv());
-					rstream.on('data', (data) => { results.push(data); });
-					rstream.on('error', (error) => {
+					const stream = fs.createReadStream(csvPath, 'utf8').pipe(csv());
+					stream.on('data', (data) => { results.push(data); });
+					stream.on('error', (error) => {
 						console.log(chalk.red(`Failed to parse CSV for table: ${joinTableName}`), error);
 						reject(error);
 					});
-					rstream.on('end', async () => {
+					stream.on('end', async () => {
 						results = results.filter(isNotEmpty);
 
 						for await (const data of results) {
