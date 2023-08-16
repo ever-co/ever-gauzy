@@ -273,7 +273,10 @@
 		"itimer",
 		"iremote",
 		"iqueue",
-		"ilinked"
+		"ilinked",
+		"swatchbook",
+		"uuidv4",
+		"reference"
 	],
 	"useGitignore": true,
 	"ignorePaths": [

@@ -6,7 +6,10 @@ import { API_PREFIX } from '../constants/app.constants';
 	providedIn: 'root'
 })
 export class ExportAllService {
-	constructor(private http: HttpClient) {}
+
+	constructor(
+		private readonly http: HttpClient
+	) { }
 
 	downloadAllData() {
 		return this.http.get(`${API_PREFIX}/download`, {
@@ -15,15 +18,15 @@ export class ExportAllService {
 		});
 	}
 
-	downloadTemplates() {
-		return this.http.get(`${API_PREFIX}/download/template`, {
+	downloadExportTemplates() {
+		return this.http.get(`${API_PREFIX}/export/template`, {
 			responseType: 'blob'
 		});
 	}
 
-	downloadSpecificData(names: string[]) {
+	downloadSpecificTable(names: string[]) {
 		const data = JSON.stringify({ entities: { names } });
-		return this.http.get(`${API_PREFIX}/download/filter`, {
+		return this.http.get(`${API_PREFIX}/export/filter`, {
 			responseType: 'blob',
 			params: { data }
 		});

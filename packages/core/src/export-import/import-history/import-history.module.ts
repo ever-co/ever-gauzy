@@ -1,16 +1,31 @@
-import { forwardRef, Module } from '@nestjs/common';
+import { Module } from '@nestjs/common';
 import { CqrsModule } from '@nestjs/cqrs';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { CommandHandlers } from './commands/handlers' 
+import { TenantModule } from './../../tenant/tenant.module';
+import { UserModule } from './../../user/user.module';
+import { CommandHandlers } from './commands/handlers'
 import { ImportHistory } from './import-history.entity';
 import { ImportHistoryService } from './import-history.service';
+import { ImportHistoryController } from './import-history.controller';
 
 @Module({
-	imports: [
-		CqrsModule,
-		forwardRef(() => TypeOrmModule.forFeature([ ImportHistory ])),
+	controllers: [
+		ImportHistoryController
 	],
-	providers: [ ImportHistoryService, ...CommandHandlers ],
-	exports: [ ImportHistoryService ]
+	imports: [
+		TypeOrmModule.forFeature([
+			ImportHistory
+		]),
+		TenantModule,
+		UserModule,
+		CqrsModule
+	],
+	providers: [
+		ImportHistoryService,
+		...CommandHandlers
+	],
+	exports: [
+		ImportHistoryService
+	]
 })
-export class ImportHistoryModule {}
+export class ImportHistoryModule { }
