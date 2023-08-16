@@ -541,12 +541,12 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 					await this.getUserDetails();
 				}
 				this.menus = this.isServer
-					? ['TIMER_TRACKER.SETTINGS.UPDATE', 'TIMER_TRACKER.SETTINGS.AVANCED_SETTINGS', 'MENU.ABOUT']
+					? ['TIMER_TRACKER.SETTINGS.UPDATE', 'TIMER_TRACKER.SETTINGS.ADVANCED_SETTINGS', 'MENU.ABOUT']
 					: [
 						...(auth && auth.allowScreenshotCapture ? ['TIMER_TRACKER.SETTINGS.SCREEN_CAPTURE'] : []),
 						'TIMER_TRACKER.TIMER',
 						'TIMER_TRACKER.SETTINGS.UPDATE',
-						'TIMER_TRACKER.SETTINGS.AVANCED_SETTINGS',
+						'TIMER_TRACKER.SETTINGS.ADVANCED_SETTINGS',
 						'MENU.ABOUT'
 					];
 				const lastMenu =
@@ -649,7 +649,7 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 		);
 
 		this.electronService.ipcRenderer.on('goto_advanced_setting', () => {
-			this.selectMenu('TIMER_TRACKER.SETTINGS.AVANCED_SETTINGS');
+			this.selectMenu('TIMER_TRACKER.SETTINGS.ADVANCED_SETTINGS');
 		});
 
 		this.electronService.ipcRenderer.on('logout_success', () =>
