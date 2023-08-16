@@ -27,7 +27,7 @@
 										[nbTooltip]="'TIMER_TRACKER.WEEKLY_LIMIT_EXCEEDED'| translate" [nbTooltipDisabled]="!(isOver$ | async)" class="work-duration-container">
 										<div class="work-weekly-duration">
 											<div>{{ weeklyDuration$ | async }}</div>
-											<small *ngIf="!noLimit(weeklyLimit$ | async); else limitLess">{{ "TIMER_TRACKER.WEEKLY_LIMIT_EXCEEDED"| translate:{ limit: (weeklyLimit$ | async)} }}</small>
+											<small *ngIf="!noLimit(weeklyLimit$ | async); else limitLess">{{ "TIMER_TRACKER.OF_HRS"| translate:{ limit: (weeklyLimit$ | async)} }}</small>
 										</div>
 										<div class="work-weekly">{{'TIMESHEET.THIS_WEEK'| translate}}</div>
 									</div>
@@ -116,7 +116,7 @@
 								<ng-select [disabled]="(start$ | async)" [nbTooltip]="'TIMER_TRACKER.STOP_TIMER_CHANGE_TASK'|translate"
 									nbTooltipStatus="warning" [nbTooltipDisabled]="!(start$ | async)"
 									[addTag]="(hasTaskPermission$ | async)  ? addNewTask: null"
-									addTagText="Add task" [class]="errors?.task ? 'error-border' : ''"
+									[addTagText]="'TIMER_TRACKER.ADD_TASK'|translate" [class]="errors?.task ? 'error-border' : ''"
 									[clearable]="true" [placeholder]="'TIMER_TRACKER.SELECT_TASK' | translate" [(ngModel)]="taskSelect"
 									[items]="tasks$ | async" bindValue="id" bindLabel="title"
 									(ngModelChange)="setTask($event)" (clear)="refreshTimer()">
@@ -235,7 +235,7 @@
 						<div class="row">
 							<div class="col-12 search">
 								<button nbButton nbTooltipStatus="warning" size="small"
-									[nbTooltip]="(!(hasTaskPermission$ | async) ?'TIMER_TRACKER.LAST_CAPTURE_TAKEN' : (isOffline$ | async) ? 'TIMER_TRACKER.RETURN_ONLINE' : null)|translate"
+									[nbTooltip]="(!(hasTaskPermission$ | async) ?'TIMER_TRACKER.REQUEST_TASK_PERMISSION' : (isOffline$ | async) ? 'TIMER_TRACKER.RETURN_ONLINE' : null)|translate"
 									[nbTooltipDisabled]="(hasTaskPermission$ | async) && !(isOffline$ | async)"
 									nbTooltipStatus="warning" class="mb-2" status="success" (click)="addTask()">
 									<nb-icon class="icon-task" icon="tasks" pack="font-awesome"></nb-icon>{{'BUTTONS.ADD' | translate}}
@@ -246,7 +246,7 @@
 							<div class="col-12 search">
 								<nb-form-field>
 									<nb-icon nbPrefix icon="search-outline"></nb-icon>
-									<input type="text" fullWidth nbInput [disabled]="(start$ | async)" [placeholder]="'TIMER_TRACKER.LAST_CAPTURE_TAKEN'|translate" #search
+									<input type="text" fullWidth nbInput [disabled]="(start$ | async)" [placeholder]="'TIMER_TRACKER.SEARCH'|translate" #search
 										(keydown.enter)="onSearch(search?.value)">
 								</nb-form-field>
 							</div>
@@ -254,7 +254,7 @@
 						<div class="row" [ngClass]="{'disabled-table': (start$ | async)}">
 							<div *ngIf="tableData?.length > 0; else noTask" class="col-12 custom-table">
 								<div class="table-scroll-container">
-									<ng2-smart-table #taskTable style="cursor: pointer" [settings]="tableHeader"
+									<ng2-smart-table #taskTable style="cursor: pointer" [settings]="smartTableSettings"
 										[source]="sourceData$ | async" (userRowSelect)="rowSelect($event)">
 									</ng2-smart-table>
 								</div>
@@ -291,7 +291,7 @@
 			class="state-container" [ngClass]="{offline: isOffline$ | async}">
 			<div class="state" [ngClass]="{offline: isOffline$ | async}"></div>
 			{{((isOffline$ | async)
-			? 'TIMER_TRACKER.SWITCHED_OFFLINE' : 'TIMER_TRACKER.SWITCHED_ONLINE') | translate}}
+			? 'TIMER_TRACKER.OFFLINE' : 'TIMER_TRACKER.ONLINE') | translate}}
 		</div>
 		<div *ngIf="(inQueue$ | async)?.size === 0" [nbTooltip]="'TIMER_TRACKER.SWITCHED_ONLINE'|translate" class="sync-container">
 			<nb-icon class="sync-check" size="tiny" status="success" icon="check-circle" pack="font-awesome"></nb-icon>
