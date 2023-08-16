@@ -725,7 +725,7 @@ export class ImportService implements OnModuleInit {
 						where.push({ [unique.column]: entity[unique.column] });
 					}
 				}
-				const desination = await this.commandBus.execute(
+				const destination = await this.commandBus.execute(
 					new ImportEntityFieldMapOrCreateCommand(
 						repository,
 						where,
@@ -733,10 +733,10 @@ export class ImportService implements OnModuleInit {
 						source.id
 					)
 				);
-				if (desination) {
+				if (destination) {
 					await this.mappedImportRecord(
 						item,
-						desination,
+						destination,
 						source
 					);
 				}
@@ -753,7 +753,7 @@ export class ImportService implements OnModuleInit {
 	*/
 	async mappedImportRecord(
 		item: IRepositoryModel<any>,
-		desination: any,
+		destination: any,
 		row: any
 	): Promise<any> {
 		const { repository } = item;
@@ -761,12 +761,12 @@ export class ImportService implements OnModuleInit {
 
 		return await new Promise(async (resolve, reject) => {
 			try {
-				if (desination) {
+				if (destination) {
 					await this.commandBus.execute(
 						new ImportRecordUpdateOrCreateCommand({
 							tenantId: RequestContext.currentTenantId(),
 							sourceId: row.id,
-							destinationId: desination.id,
+							destinationId: destination.id,
 							entityType
 						})
 					);
