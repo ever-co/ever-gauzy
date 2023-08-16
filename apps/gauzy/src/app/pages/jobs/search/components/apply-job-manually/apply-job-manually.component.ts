@@ -20,6 +20,7 @@ import {
 	JobPostSourceEnum
 } from '@gauzy/contracts';
 import { distinctUntilChange, isNotEmpty, sleep } from '@gauzy/common-angular';
+import { environment } from '@env/environment';
 import { EmployeeSelectorComponent } from './../../../../../@theme/components/header/selectors/employee';
 import { JobService, Store, ToastrService } from './../../../../../@core/services';
 import { API_PREFIX } from './../../../../../@core/constants';
@@ -221,7 +222,7 @@ export class ApplyJobManuallyComponent extends TranslationBaseComponent implemen
 		headers.push({ name: 'Tenant-Id', value: tenantId });
 
 		const uploaderOptions: FileUploaderOptions = {
-			url: `${API_PREFIX}/image-assets/upload/proposal_attachments`,
+			url: environment.API_BASE_URL + `${API_PREFIX}/image-assets/upload/proposal_attachments`,
 			// XHR request method
 			method: 'POST',
 			// Upload files automatically upon addition to upload queue

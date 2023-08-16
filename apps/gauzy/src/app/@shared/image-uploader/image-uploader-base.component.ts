@@ -4,6 +4,7 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { FileUploader, FileUploaderOptions } from 'ng2-file-upload';
 import { Subject } from 'rxjs/internal/Subject';
 import { filter, tap } from 'rxjs/operators';
+import { environment } from '@env/environment';
 import { API_PREFIX } from '../../@core/constants';
 import { Store } from './../../@core/services';
 
@@ -61,7 +62,7 @@ export class ImageUploaderBaseComponent {
         headers.push({ name: 'Tenant-Id', value: tenantId });
 
         const uploaderOptions: FileUploaderOptions = {
-            url: `${API_PREFIX}/image-assets/upload/${this.folder}`,
+            url: environment.API_BASE_URL + `${API_PREFIX}/image-assets/upload/${this.folder}`,
             // XHR request method
             method: 'POST',
             // Upload files automatically upon addition to upload queue
