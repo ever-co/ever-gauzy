@@ -830,15 +830,15 @@ export class ExportService implements OnModuleInit {
 				if (joinColumn) {
 					const { entityMetadata, propertyName, referencedColumn } = joinColumn;
 
-					const referencColumn = referencedColumn.propertyName;
-					const referencTableName = entityMetadata.givenTableName;
+					const referenceColumn = referencedColumn.propertyName;
+					const referenceTableName = entityMetadata.givenTableName;
 					let sql = `
 						SELECT
-							${referencTableName}.*
+							${referenceTableName}.*
 						FROM
-							${referencTableName}
+							${referenceTableName}
 						INNER JOIN ${masterTable}
-							ON "${referencTableName}"."${propertyName}" = "${masterTable}"."${referencColumn}"
+							ON "${referenceTableName}"."${propertyName}" = "${masterTable}"."${referenceColumn}"
 					`;
 					if (entity.tenantBase !== false) {
 						sql += ` WHERE "${masterTable}"."tenantId" = '${where['tenantId']}'`;
@@ -846,7 +846,7 @@ export class ExportService implements OnModuleInit {
 
 					const items = await repository.manager.query(sql);
 					if (isNotEmpty(items)) {
-						await this.csvWriter(referencTableName, items);
+						await this.csvWriter(referenceTableName, items);
 					}
 				}
 			}
@@ -882,10 +882,10 @@ export class ExportService implements OnModuleInit {
 		for await (const item of repository.metadata.manyToManyRelations) {
 			const relation = relations.find((relation: IColumnRelationMetadata) => relation.joinTableName === item.joinTableName);
 			if (relation) {
-				const referencTableName = item.junctionEntityMetadata.givenTableName;
+				const referenceTableName = item.junctionEntityMetadata.givenTableName;
 				const columns = item.junctionEntityMetadata.columns.map((column: ColumnMetadata) => column.propertyName);
 
-				await this.csvTemplateWriter(referencTableName, columns);
+				await this.csvTemplateWriter(referenceTableName, columns);
 			}
 		}
 	}
