@@ -155,32 +155,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 	};
 	timerStatus: any;
 	expandIcon = 'arrow-right';
-	tableHeader = {
-		columns: {
-			title: {
-				title: this._translateService.instant('TIMER_TRACKER.TASK'),
-				type: 'custom',
-				renderComponent: CustomRenderComponent
-			},
-			dueDate: {
-				title: this._translateService.instant('TIMER_TRACKER.DUE'),
-				type: 'text',
-				valuePrepareFunction: (due) => {
-					return moment(due).format(
-						this.userData ? this.userData?.employee?.organization?.dateFormat : 'YYYY-MM-DD'
-					);
-				}
-			}
-		},
-		hideSubHeader: true,
-		actions: false,
-		noDataMessage: this._translateService.instant('SM_TABLE.NO_DATA.TASK'),
-		pager: {
-			display: true,
-			perPage: 10,
-			page: 1
-		}
-	};
+	smartTableSettings: object;
 	tableData = [];
 	private _sourceData$: BehaviorSubject<LocalDataSource>;
 	private get _sourceData(): LocalDataSource {
@@ -418,6 +393,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 				untilDestroyed(this)
 			)
 			.subscribe();
+		this._loadSmartTableSettings();
 	}
 
 	public xor(a: boolean, b: boolean): boolean {
@@ -934,6 +910,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 						language,
 						this._translateService
 					);
+					this._loadSmartTableSettings();
 				});
 			}
 		);
@@ -2172,5 +2149,34 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 				: 'navigate_to_login'
 		);
 		localStorage.clear();
+	}
+
+	private _loadSmartTableSettings(): void {
+		this.smartTableSettings = {
+			columns: {
+				title: {
+					title: this._translateService.instant('TIMER_TRACKER.TASK'),
+					type: 'custom',
+					renderComponent: CustomRenderComponent
+				},
+				dueDate: {
+					title: this._translateService.instant('TIMER_TRACKER.DUE'),
+					type: 'text',
+					valuePrepareFunction: (due) => {
+						return moment(due).format(
+							this.userData ? this.userData?.employee?.organization?.dateFormat : 'YYYY-MM-DD'
+						);
+					}
+				}
+			},
+			hideSubHeader: true,
+			actions: false,
+			noDataMessage: this._translateService.instant('SM_TABLE.NO_DATA.TASK'),
+			pager: {
+				display: true,
+				perPage: 10,
+				page: 1
+			}
+		}
 	}
 }
