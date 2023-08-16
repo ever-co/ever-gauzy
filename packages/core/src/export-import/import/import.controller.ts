@@ -10,15 +10,17 @@ import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { FileInterceptor } from '@nestjs/platform-express';
 import * as path from 'path';
 import { CommandBus } from '@nestjs/cqrs';
-import { ImportStatusEnum, ImportTypeEnum, UploadedFile } from '@gauzy/contracts';
+import { ImportStatusEnum, ImportTypeEnum, PermissionsEnum, UploadedFile } from '@gauzy/contracts';
 import { ImportService } from './import.service';
 import { RequestContext } from '../../core/context';
 import { FileStorage, UploadedFileStorage } from '../../core/file-storage';
-import { ImportHistoryCreateCommand } from '../import-history';
 import { PermissionGuard, TenantPermissionGuard } from '../../shared/guards';
+import { Permissions } from '../../shared/decorators';
+import { ImportHistoryCreateCommand } from '../import-history';
 
 @ApiTags('Import')
 @UseGuards(TenantPermissionGuard, PermissionGuard)
+@Permissions(PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.IMPORT_ADD)
 @Controller()
 export class ImportController {
 	constructor(
@@ -69,9 +71,7 @@ export class ImportController {
 				importType === ImportTypeEnum.CLEAN
 			);
 			this._importService.removeExtractedFiles();
-			/**
-			 *
-			 */
+			/** */
 			return await this._commandBus.execute(
 				new ImportHistoryCreateCommand({
 					...history,
@@ -79,9 +79,8 @@ export class ImportController {
 				})
 			);
 		} catch (error) {
-			/**
-			 *
-			 */
+			/** */
+			console.log('Error while creating import history', error);
 			return await this._commandBus.execute(
 				new ImportHistoryCreateCommand({
 					...history,

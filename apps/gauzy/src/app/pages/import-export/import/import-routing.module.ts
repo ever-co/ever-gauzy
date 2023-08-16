@@ -19,7 +19,7 @@ const routes: Routes = [
 					} else {
 						return [
 							PermissionsEnum.ALL_ORG_VIEW,
-							PermissionsEnum.IMPORT_VIEW
+							PermissionsEnum.IMPORT_ADD
 						]
 					}
 				},

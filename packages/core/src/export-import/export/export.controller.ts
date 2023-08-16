@@ -15,7 +15,7 @@ import { ExportService } from './export.service';
 
 @ApiTags('Download')
 @UseGuards(TenantPermissionGuard, PermissionGuard)
-@Permissions(PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.EXPORT_VIEW)
+@Permissions(PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.EXPORT_ADD)
 @Controller()
 export class ExportController {
 	constructor(

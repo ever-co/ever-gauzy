@@ -14,8 +14,8 @@ const routes: Routes = [
 			permissions: {
 				only: [
 					PermissionsEnum.ALL_ORG_VIEW,
-					PermissionsEnum.IMPORT_VIEW,
-					PermissionsEnum.EXPORT_VIEW
+					PermissionsEnum.IMPORT_ADD,
+					PermissionsEnum.EXPORT_ADD
 				],
 				redirectTo: '/pages/settings'
 			}
