@@ -19,9 +19,9 @@ export class ImportHistoryService extends TenantAwareCrudService<ImportHistory> 
 	 *
 	 * @returns
 	 */
-	public findAll(): Promise<IPagination<ImportHistory>> {
+	public async findAll(): Promise<IPagination<ImportHistory>> {
 		try {
-			return super.findAll({
+			return await super.findAll({
 				order: {
 					importDate: 'DESC'
 				}

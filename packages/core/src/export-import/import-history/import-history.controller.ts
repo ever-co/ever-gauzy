@@ -33,7 +33,6 @@ export class ImportHistoryController {
         status: HttpStatus.NOT_FOUND,
         description: 'Record not found'
     })
-    @Permissions(PermissionsEnum.IMPORT_VIEW)
     @Get()
     async findAll(): Promise<IPagination<IImportHistory>> {
         return await this._importHistoryService.findAll();
