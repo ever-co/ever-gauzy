@@ -5,7 +5,13 @@ import { GauzyAIAuthorizeComponent } from './gauzy-ai-authorize/gauzy-ai-authori
 const routes: Routes = [
 	{
 		path: '',
-		component: GauzyAIAuthorizeComponent
+		component: GauzyAIAuthorizeComponent,
+		data: { state: true }
+	},
+	{
+		path: ':id',
+		component: GauzyAIAuthorizeComponent,
+		data: { state: false }
 	}
 ];
 

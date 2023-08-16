@@ -16,9 +16,7 @@ import { ExportAllService } from '../../../@core/services';
 	templateUrl: './export.component.html',
 	styleUrls: ['./export.component.scss']
 })
-export class ExportComponent
-	extends TranslationBaseComponent
-	implements AfterViewInit, OnInit {
+export class ExportComponent extends TranslationBaseComponent implements AfterViewInit, OnInit {
 
 	entities: Array<IEntityModel> = [];
 	selectedEntities: string[] = [];
@@ -29,7 +27,7 @@ export class ExportComponent
 
 	constructor(
 		private readonly exportAll: ExportAllService,
-		readonly translateService: TranslateService
+		public readonly translateService: TranslateService
 	) {
 		super(translateService);
 	}
@@ -43,6 +41,7 @@ export class ExportComponent
 				untilDestroyed(this)
 			)
 			.subscribe();
+
 		this.subject$.next(true);
 	}
 
@@ -117,7 +116,7 @@ export class ExportComponent
 		this.loading = true;
 		const entities = this.selectedEntities.filter(isNotEmpty);
 		this.exportAll
-			.downloadSpecificData(entities)
+			.downloadSpecificTable(entities)
 			.pipe(
 				finalize(() => this.loading = false),
 				untilDestroyed(this)
@@ -784,7 +783,7 @@ export class ExportComponent
 				isGroup: false,
 				entities: []
 			},
-			{ 	
+			{
 				name: this.getTranslation(
 					'MENU.IMPORT_EXPORT.PRODUCT_CATEGORY_TRANSLATION'
 				),
@@ -842,12 +841,12 @@ export class ExportComponent
 				isGroup: false,
 				entities: []
 			},
-			{ 	
+			{
 				name: this.getTranslation('MENU.IMPORT_EXPORT.PRODUCT_TYPE_TRANSLATION'),
-				value: 'product_type_translation', 
-				checked: true, 
-				isGroup: false, 
-				entities: [] 
+				value: 'product_type_translation',
+				checked: true,
+				isGroup: false,
+				entities: []
 			},
 			{
 				name: this.getTranslation('MENU.IMPORT_EXPORT.PRODUCT_VARIANT'),
@@ -973,14 +972,14 @@ export class ExportComponent
 				isGroup: false,
 				entities: []
 			},
-			{ 
+			{
 				name: this.getTranslation(
 					'MENU.IMPORT_EXPORT.EQUIPMENT_SHARE_POLICY'
-				), 
-				value: 'equipment_sharing_policy', 
-				checked: true, 
-				isGroup: false, 
-				entities: [] 
+				),
+				value: 'equipment_sharing_policy',
+				checked: true,
+				isGroup: false,
+				entities: []
 			},
 		];
 	}
@@ -1015,12 +1014,12 @@ export class ExportComponent
 
 	getGoalEntities(): IEntityModel[] {
 		return [
-			{ 
-				name: this.getTranslation('MENU.IMPORT_EXPORT.GOAL_GENERAL_SETTING'), 
-				value: 'goal_general_setting', 
-				checked: true, 
-				isGroup: false, 
-				entities: [] 
+			{
+				name: this.getTranslation('MENU.IMPORT_EXPORT.GOAL_GENERAL_SETTING'),
+				value: 'goal_general_setting',
+				checked: true,
+				isGroup: false,
+				entities: []
 			},
 			{
 				name: this.getTranslation('MENU.IMPORT_EXPORT.GOAL_KPI'),

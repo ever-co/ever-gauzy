@@ -1,11 +1,11 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { FormGroup, FormBuilder, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
-import { tap, switchMap, filter, debounceTime } from 'rxjs/operators';
 import { EMPTY } from 'rxjs';
-import { IOrganization } from '@gauzy/contracts';
+import { tap, switchMap, filter, debounceTime } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { Store, UpworkService } from './../../../../@core/services';
+import { IAccessTokenSecretPair, IIntegrationTenant, IOrganization, IUpworkClientSecretPair, IntegrationEnum } from '@gauzy/contracts';
+import { IntegrationsService, Store, UpworkService } from './../../../../@core/services';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -14,14 +14,15 @@ import { Store, UpworkService } from './../../../../@core/services';
 	styleUrls: ['./upwork-authorize.component.scss'],
 })
 export class UpworkAuthorizeComponent implements OnInit, OnDestroy {
-	rememberState: boolean;
-	organization: IOrganization;
+
+	public rememberState: boolean;
+	public organization: IOrganization;
 
 	readonly form: FormGroup = UpworkAuthorizeComponent.buildForm(this._fb);
 	static buildForm(fb: FormBuilder): FormGroup {
 		return fb.group({
-			consumerKey: ['', Validators.required],
-			consumerSecret: ['', Validators.required],
+			consumerKey: [null, Validators.required],
+			consumerSecret: [null, Validators.required],
 		});
 	}
 
@@ -30,17 +31,15 @@ export class UpworkAuthorizeComponent implements OnInit, OnDestroy {
 		private readonly _upworkService: UpworkService,
 		private readonly _activatedRoute: ActivatedRoute,
 		private readonly _router: Router,
-		private readonly _store: Store
-	) {}
+		private readonly _store: Store,
+		private readonly _integrationsService: IntegrationsService
+	) { }
 
 	ngOnInit() {
 		this._store.selectedOrganization$
 			.pipe(
 				filter((organization: IOrganization) => !!organization),
-				tap(
-					(organization: IOrganization) =>
-						(this.organization = organization)
-				),
+				tap((organization: IOrganization) => (this.organization = organization)),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -62,13 +61,8 @@ export class UpworkAuthorizeComponent implements OnInit, OnDestroy {
 					if (params && params.oauth_verifier) {
 						if (this.organization) {
 							const { id: organizationId } = this.organization;
-							return this._upworkService.getAccessToken(
-								{
-									requestToken: params.oauth_token,
-									verifier: params.oauth_verifier,
-								},
-								organizationId
-							);
+							const { oauth_token, oauth_verifier } = params;
+							return this._upworkService.getAccessToken({ requestToken: oauth_token, verifier: oauth_verifier }, organizationId);
 						}
 					}
 					// if remember state is true
@@ -85,46 +79,56 @@ export class UpworkAuthorizeComponent implements OnInit, OnDestroy {
 			.subscribe();
 	}
 
+	/**
+	 * Upwork integration remember state API call
+	 */
 	private _checkRememberState() {
 		if (!this.organization) {
 			return;
 		}
-		const { id: organizationId } = this.organization;
-		this._upworkService
-			.checkRememberState(organizationId)
-			.pipe(
-				tap((res) => {
-					if (res.success) {
-						const { record } = res;
-						this._redirectToUpworkIntegration(record.id);
-					}
-				}),
-				untilDestroyed(this)
-			)
-			.subscribe();
+		const { id: organizationId, tenantId } = this.organization;
+		const state$ = this._integrationsService.checkRememberState({
+			name: IntegrationEnum.UPWORK,
+			organizationId,
+			tenantId
+		});
+		state$.pipe(
+			filter((integration: IIntegrationTenant) => !!integration.id),
+			tap((integration: IIntegrationTenant) => {
+				this._redirectToUpworkIntegration(integration.id);
+			}),
+			untilDestroyed(this)
+		).subscribe();
 	}
 
-	authorizeUpwork(config) {
-		if (!this.organization) {
+	/**
+	 *
+	 * @param config
+	 * @returns
+	 */
+	authorizeUpwork(config: IUpworkClientSecretPair) {
+		if (!this.organization || this.form.invalid) {
 			return;
 		}
 		const { id: organizationId } = this.organization;
-		this._upworkService
-			.getAccessTokenSecretPair(config, organizationId)
-			.pipe(
-				tap((res) => {
-					res.accessToken
-						? this._redirectToUpworkIntegration(res.integrationId)
-						: window.location.replace(res.url);
-				}),
-				untilDestroyed(this)
-			)
-			.subscribe();
+		const token$ = this._upworkService.getAccessTokenSecretPair(config, organizationId);
+		token$.pipe(
+			tap((token: IAccessTokenSecretPair) => {
+				token.accessToken
+					? this._redirectToUpworkIntegration(token.integrationId)
+					: window.location.replace(token.url);
+			}),
+			untilDestroyed(this)
+		).subscribe();
 	}
 
-	private _redirectToUpworkIntegration(integrationId) {
+	/**
+	 *
+	 * @param integrationId
+	 */
+	private _redirectToUpworkIntegration(integrationId: string) {
 		this._router.navigate(['pages/integrations/upwork', integrationId]);
 	}
 
-	ngOnDestroy(): void {}
+	ngOnDestroy(): void { }
 }

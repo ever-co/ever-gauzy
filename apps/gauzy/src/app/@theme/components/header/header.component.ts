@@ -11,7 +11,6 @@ import {
 	CrudActionEnum,
 	IDateRangePicker,
 	IOrganization,
-	ISelectedEmployee,
 	IUser,
 	PermissionsEnum,
 	TimeLogSourceEnum,
@@ -596,20 +595,6 @@ export class HeaderComponent extends TranslationBaseComponent implements OnInit,
 
 	onCollapse(event: boolean) {
 		this.isCollapse = event;
-	}
-
-	onEmployeeSelect(employee: ISelectedEmployee) {
-		const param = {
-			employeeId: employee.id
-		}
-		this.setAttributesToParams(param)
-	}
-	private setAttributesToParams(params: Object) {
-		this.router.navigate([], {
-			relativeTo: this.activatedRoute,
-			queryParams: { ...params },
-			queryParamsHandling: 'merge',
-		});
 	}
 
 	ngOnDestroy() { }

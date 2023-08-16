@@ -48,7 +48,7 @@ export interface IIntegrationViewModel {
 }
 
 export interface IIntegrationTenant extends IBasePerTenantAndOrganizationEntityModel {
-	name: string;
+	name: IntegrationEnum;
 	entitySettings?: IIntegrationEntitySetting[];
 	settings?: IIntegrationSetting[];
 }
@@ -138,9 +138,8 @@ export interface IIntegrationMapSyncEntityInput
 	entity: string;
 }
 
-export interface IIntegrationTenantCreateDto
-	extends IBasePerTenantAndOrganizationEntityModel {
-	name: string;
+export interface IIntegrationTenantCreateDto extends IBasePerTenantAndOrganizationEntityModel {
+	name: IntegrationEnum;
 	entitySettings?: IIntegrationEntitySetting[];
 	settings?: IIntegrationSetting[];
 }
@@ -227,13 +226,13 @@ export const DEFAULT_INTEGRATIONS = [
 	},
 	{
 		name: IntegrationEnum.GAUZY_AI,
-		imgSrc: 'ever-ai.svg',
+		imgSrc: 'gauzy-ai.svg',
 		isComingSoon: false,
 		integrationTypesMap: <string[]>[
 			IntegrationTypeNameEnum.ALL_INTEGRATIONS
 		],
 		order: 3,
-		navigationUrl: 'ever-ai'
+		navigationUrl: 'gauzy-ai'
 	},
 	{
 		name: 'Import/Export',
@@ -259,4 +258,9 @@ export interface IEntitySettingToSync {
 export interface IDateRangeActivityFilter {
 	start: Date;
 	end: Date;
+}
+
+export interface IIntegrationKeySecretPairInput extends IBasePerTenantAndOrganizationEntityModel {
+	client_id: string;
+	client_secret: string;
 }

@@ -17,11 +17,11 @@ export class ImportRecord extends TenantBaseEntity implements IImportRecord {
 
 	@ApiProperty({ type: () => String })
 	@Column({ nullable: false, type: 'uuid' })
-	destinationId : string;
+	destinationId: string;
 
 	@ApiProperty({ type: () => Date })
 	@IsDate()
-	@Column({ nullable: false, default: () => 'CURRENT_TIMESTAMP'})
+	@Column({ nullable: false, default: () => 'CURRENT_TIMESTAMP' })
 	importDate?: Date;
 
 	wasCreated?: boolean;
