@@ -61,7 +61,7 @@ const routes: Routes = [
 				}
 			},
 			{
-				path: 'ever-ai',
+				path: 'gauzy-ai',
 				loadChildren: () => import('./gauzy-ai/gauzy-ai.module').then(
 					(m) => m.GauzyAIModule
 				),

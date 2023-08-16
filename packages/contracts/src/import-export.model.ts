@@ -18,7 +18,7 @@ export interface IImportHistory extends IBasePerTenantEntityModel {
 	file: string;
 	path: string;
 	size: number;
-	status: string;
+	status: ImportStatusEnum;
 	importDate?: Date;
 	fullUrl?: string;
 }

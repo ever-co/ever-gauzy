@@ -72,8 +72,8 @@ import { TenantModule } from './tenant/tenant.module';
 import { EmailTemplateModule } from './email-template/email-template.module';
 import { EquipmentModule } from './equipment/equipment.module';
 import { EmployeeLevelModule } from './employee-level/employee-level.module';
-import { ExportAllModule } from './export-import/export/export-all.module';
-import { ImportAllModule } from './export-import/import/import-all.module';
+import { ExportModule } from './export-import/export/export.module';
+import { ImportModule } from './export-import/import/import.module';
 import { IssueTypeModule } from './tasks/issue-type/issue-type.module';
 import { TaskModule } from './tasks/task.module';
 import { TaskPriorityModule } from './tasks/priorities/priority.module';
@@ -85,6 +85,7 @@ import { TimeTrackingModule } from './time-tracking/time-tracking.module';
 import { ExpenseCategoriesModule } from './expense-categories/expense-categories.module';
 import { UpworkModule } from './upwork/upwork.module';
 import { HubstaffModule } from './hubstaff/hubstaff.module';
+import { GauzyAIIntegrationModule } from './integration/gauzy-ai/integration-ai.module';
 import { CandidateModule } from './candidate/candidate.module';
 import { ProductCategoryModule } from './product-category/product-category.module';
 import { ProductTypeModule } from './product-type/product-type.module';
@@ -234,29 +235,29 @@ if (environment.sentry && environment.sentry.dsn) {
 		}),
 		...(environment.sentry && environment.sentry.dsn
 			? [
-					SentryModule.forRoot({
-						dsn: environment.sentry.dsn,
-						debug: !environment.production,
-						environment: environment.production
-							? 'production'
-							: 'development',
-						// TODO: we should use some internal function which returns version of Gauzy
-						release: 'gauzy@' + process.env.npm_package_version,
-						logLevels: ['error'],
-						integrations: sentryIntegrations,
-						tracesSampleRate: process.env.SENTRY_TRACES_SAMPLE_RATE
-							? parseInt(process.env.SENTRY_TRACES_SAMPLE_RATE)
-							: 0.01,
-					}),
-			  ]
+				SentryModule.forRoot({
+					dsn: environment.sentry.dsn,
+					debug: !environment.production,
+					environment: environment.production
+						? 'production'
+						: 'development',
+					// TODO: we should use some internal function which returns version of Gauzy
+					release: 'gauzy@' + process.env.npm_package_version,
+					logLevels: ['error'],
+					integrations: sentryIntegrations,
+					tracesSampleRate: process.env.SENTRY_TRACES_SAMPLE_RATE
+						? parseInt(process.env.SENTRY_TRACES_SAMPLE_RATE)
+						: 0.01,
+				}),
+			]
 			: []),
 		ThrottlerModule.forRootAsync({
 			inject: [ConfigService],
 			useFactory: (config: ConfigService): ThrottlerModuleOptions =>
-				({
-					ttl: config.get('THROTTLE_TTL'),
-					limit: config.get('THROTTLE_LIMIT'),
-				} as ThrottlerModuleOptions),
+			({
+				ttl: config.get('THROTTLE_TTL'),
+				limit: config.get('THROTTLE_LIMIT'),
+			} as ThrottlerModuleOptions),
 		}),
 		CoreModule,
 		AuthModule,
@@ -278,8 +279,8 @@ if (environment.sentry && environment.sentry.dsn) {
 		CandidateTechnologiesModule,
 		CandidateCriterionsRatingModule,
 		CustomSmtpModule,
-		ExportAllModule,
-		ImportAllModule,
+		ExportModule,
+		ImportModule,
 		EmployeeSettingModule,
 		EmployeeJobPresetModule,
 		EmployeeJobPostModule,
@@ -354,6 +355,7 @@ if (environment.sentry && environment.sentry.dsn) {
 		ReportModule,
 		UpworkModule,
 		HubstaffModule,
+		GauzyAIIntegrationModule,
 		ExpenseCategoriesModule,
 		ProductCategoryModule,
 		ProductTypeModule,

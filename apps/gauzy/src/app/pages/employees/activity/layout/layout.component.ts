@@ -1,4 +1,5 @@
 import { Component, OnInit, OnDestroy, ChangeDetectorRef, AfterContentChecked } from '@angular/core';
+import { QueryParamsHandling } from '@angular/router';
 import { NbRouteTab } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
@@ -53,28 +54,32 @@ export class ActivityLayoutComponent extends TranslationBaseComponent
 				PermissionsEnum.TIME_TRACKING_DASHBOARD,
 				PermissionsEnum.TIME_TRACKER
 			) ?
-			[
-				{
-					title: this.getTranslation('ACTIVITY.TIME_AND_ACTIVITIES'),
-					responsive: true,
-					route: '/pages/employees/activity/time-activities'
-				},
-				{
-					title: this.getTranslation('ACTIVITY.SCREENSHOTS'),
-					responsive: true,
-					route: '/pages/employees/activity/screenshots'
-				},
-				{
-					title: this.getTranslation('ACTIVITY.APPS'),
-					responsive: true,
-					route: '/pages/employees/activity/apps'
-				},
-				{
-					title: this.getTranslation('ACTIVITY.VISITED_SITES'),
-					responsive: true,
-					route: '/pages/employees/activity/urls'
-				}
-			] : [])
+				[
+					{
+						title: this.getTranslation('ACTIVITY.TIME_AND_ACTIVITIES'),
+						responsive: true,
+						route: '/pages/employees/activity/time-activities',
+						queryParamsHandling: 'merge' as QueryParamsHandling
+					},
+					{
+						title: this.getTranslation('ACTIVITY.SCREENSHOTS'),
+						responsive: true,
+						route: '/pages/employees/activity/screenshots',
+						queryParamsHandling: 'merge' as QueryParamsHandling
+					},
+					{
+						title: this.getTranslation('ACTIVITY.APPS'),
+						responsive: true,
+						route: '/pages/employees/activity/apps',
+						queryParamsHandling: 'merge' as QueryParamsHandling
+					},
+					{
+						title: this.getTranslation('ACTIVITY.VISITED_SITES'),
+						responsive: true,
+						route: '/pages/employees/activity/urls',
+						queryParamsHandling: 'merge' as QueryParamsHandling
+					},
+				] : [])
 		];
 	}
 
@@ -87,5 +92,5 @@ export class ActivityLayoutComponent extends TranslationBaseComponent
 			.subscribe();
 	}
 
-	ngOnDestroy(): void {}
+	ngOnDestroy(): void { }
 }

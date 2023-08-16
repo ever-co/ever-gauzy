@@ -63,7 +63,15 @@ const routes: Routes = [
 				path: 'import-export',
 				loadChildren: () => import('../import-export/import-export.module').then(
 					(m) => m.ImportExportModule
-				)
+				),
+				data: {
+					selectors: {
+						project: false,
+						employee: false,
+						date: false,
+						organization: false
+					}
+				}
 			},
 			{
 				path: 'sms-gateway',
@@ -122,4 +130,4 @@ const routes: Routes = [
 	imports: [RouterModule.forChild(routes)],
 	exports: [RouterModule]
 })
-export class SettingsRoutingModule {}
+export class SettingsRoutingModule { }
