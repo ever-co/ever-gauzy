@@ -4,7 +4,7 @@ import { NbToastrService, NbGlobalPhysicalPosition } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { filter, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Params } from '@angular/router';
 import {
 	IImportHistory,
 	ImportTypeEnum,
@@ -13,6 +13,7 @@ import {
 import { Subject } from 'rxjs';
 import { Observable } from 'rxjs/internal/Observable';
 import { saveAs } from 'file-saver';
+import { environment } from '@env/environment';
 import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';
 import { API_PREFIX } from '../../../@core/constants';
 import { ImportService, Store } from '../../../@core/services';
@@ -25,7 +26,7 @@ import { ImportService, Store } from '../../../@core/services';
 })
 export class ImportComponent extends TranslationBaseComponent
 	implements AfterViewInit, OnInit {
-	
+
 	history$: Observable<IImportHistory[]> = this.importService.history$;
 
 	uploader: FileUploader;
@@ -68,13 +69,8 @@ export class ImportComponent extends TranslationBaseComponent
 	ngAfterViewInit() {
 		this.route.queryParamMap
 			.pipe(
-				filter((params) => !!params && !!params.get('importType')),
-				tap(
-					(params) =>
-						(this.importType = params.get(
-							'importType'
-						) as ImportTypeEnum)
-				),
+				filter((params: Params) => !!params && !!params.get('importType')),
+				tap((params: Params) => (this.importType = params.get('importType') as ImportTypeEnum)),
 				tap(() => this.initUploader()),
 				untilDestroyed(this)
 			)
@@ -85,7 +81,7 @@ export class ImportComponent extends TranslationBaseComponent
 
 	initUploader() {
 		this.uploader = new FileUploader({
-			url: `${API_PREFIX}/import`,
+			url: environment.API_BASE_URL + `${API_PREFIX}/import`,
 			itemAlias: 'file',
 			authTokenHeader: 'Authorization',
 			authToken: `Bearer ${this.store.token}`,
@@ -152,11 +148,11 @@ export class ImportComponent extends TranslationBaseComponent
 
 	/**
 	 * Download Import History Files
-	 * 
-	 * @param item 
+	 *
+	 * @param item
 	 */
 	public download(item: IImportHistory) {
-		if(item) {
+		if (item) {
 			saveAs(item.fullUrl, item.file);
 		}
 	}

@@ -135,7 +135,7 @@ export class CustomSmtpController extends CrudController<CustomSmtp>{
 		@Body() entity: UpdateCustomSmtpDTO
 	): Promise<ICustomSmtp> {
 		return await this.commandBus.execute(
-			new CustomSmtpUpdateCommand({ id, ...entity })
+			new CustomSmtpUpdateCommand(id, entity)
 		);
 	}
 }

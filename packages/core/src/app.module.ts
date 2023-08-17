@@ -72,8 +72,8 @@ import { TenantModule } from './tenant/tenant.module';
 import { EmailTemplateModule } from './email-template/email-template.module';
 import { EquipmentModule } from './equipment/equipment.module';
 import { EmployeeLevelModule } from './employee-level/employee-level.module';
-import { ExportAllModule } from './export-import/export/export-all.module';
-import { ImportAllModule } from './export-import/import/import-all.module';
+import { ExportModule } from './export-import/export/export.module';
+import { ImportModule } from './export-import/import/import.module';
 import { IssueTypeModule } from './tasks/issue-type/issue-type.module';
 import { TaskModule } from './tasks/task.module';
 import { TaskPriorityModule } from './tasks/priorities/priority.module';
@@ -279,8 +279,8 @@ if (environment.sentry && environment.sentry.dsn) {
 		CandidateTechnologiesModule,
 		CandidateCriterionsRatingModule,
 		CustomSmtpModule,
-		ExportAllModule,
-		ImportAllModule,
+		ExportModule,
+		ImportModule,
 		EmployeeSettingModule,
 		EmployeeJobPresetModule,
 		EmployeeJobPostModule,

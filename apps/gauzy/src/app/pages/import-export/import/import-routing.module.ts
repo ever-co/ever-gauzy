@@ -17,7 +17,10 @@ const routes: Routes = [
 					if (token && userId) {
 						return []
 					} else {
-						return [PermissionsEnum.IMPORT_EXPORT_VIEW]
+						return [
+							PermissionsEnum.ALL_ORG_VIEW,
+							PermissionsEnum.IMPORT_ADD
+						]
 					}
 				},
 				redirectTo: '/pages/settings'

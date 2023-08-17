@@ -19,8 +19,8 @@ import {
 	ImportTypeEnum,
 	IUserOrganization
 } from '@gauzy/contracts';
-import { environment } from './../../../environments/environment';
-import { Environment } from './../../../environments/model';
+import { environment } from '@env/environment';
+import { Environment } from '@env/model';
 import { ErrorHandlingService, ExportAllService, GauzyCloudService, Store, ToastrService, UsersOrganizationsService } from '../../@core/services';
 import { TranslationBaseComponent } from '../../@shared/language-base/translation-base.component';
 
@@ -75,7 +75,7 @@ export class ImportExportComponent extends TranslationBaseComponent implements O
 
 	onDownloadTemplates() {
 		this.exportAll
-			.downloadTemplates()
+			.downloadExportTemplates()
 			.pipe(untilDestroyed(this))
 			.subscribe((data) => saveAs(data, `archive.zip`));
 	}
