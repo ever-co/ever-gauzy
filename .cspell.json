@@ -278,7 +278,8 @@
 		"uuidv4",
 		"reference",
 		"workdiary",
-		"Workdiary"
+		"Workdiary",
+		"thmb"
 	],
 	"useGitignore": true,
 	"ignorePaths": [
