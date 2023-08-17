@@ -9,6 +9,11 @@ import { IBasePerTenantAndOrganizationEntityModel } from './base-entity.model';
 import { ITimeLog } from './timesheet.model';
 import { IRelationalImageAsset } from './image-asset.model';
 
+export interface IRelationalOrganizationContact {
+	organizationContact?: IOrganizationContact;
+	organizationContactId?: IOrganizationContact['id'];
+}
+
 export interface IOrganizationContact extends IBaseEntityWithMembers, IRelationalImageAsset {
 	name: string;
 	contactType: ContactType;

@@ -21,6 +21,7 @@ import {
 	IOrganizationContact,
 	IOrganizationProject,
 	IOrganizationSprint,
+	IOrganizationTeam,
 	IPayment,
 	ITag,
 	ITask,
@@ -43,6 +44,7 @@ import {
 	InvoiceItem,
 	OrganizationContact,
 	OrganizationSprint,
+	OrganizationTeam,
 	Payment,
 	Tag,
 	Task,
@@ -50,10 +52,10 @@ import {
 	TaskRelatedIssueTypes,
 	TaskSize,
 	TaskStatus,
+	TaskVersion,
 	TenantOrganizationBaseEntity,
-	TimeLog,
+	TimeLog
 } from '../core/entities/internal';
-import { TaskVersion } from 'tasks/versions/version.entity';
 
 @Entity('organization_project')
 export class OrganizationProject extends TenantOrganizationBaseEntity implements IOrganizationProject {
@@ -178,7 +180,6 @@ export class OrganizationProject extends TenantOrganizationBaseEntity implements
 	})
 	tasks?: ITask[];
 
-	// Organization TimeLogs
 	@OneToMany(() => TimeLog, (it) => it.project)
 	timeLogs?: ITimeLog[];
 
@@ -252,7 +253,10 @@ export class OrganizationProject extends TenantOrganizationBaseEntity implements
 	| @ManyToMany
 	|--------------------------------------------------------------------------
 	*/
-	// Organization Project Tags
+
+	/**
+	 * Tags
+	 */
 	@ManyToMany(() => Tag, (tag) => tag.organizationProjects, {
 		onUpdate: 'CASCADE',
 		onDelete: 'CASCADE',
@@ -262,10 +266,24 @@ export class OrganizationProject extends TenantOrganizationBaseEntity implements
 	})
 	tags: ITag[];
 
-	// Organization Project Employees
+	/**
+	 * Project Members
+	 */
 	@ManyToMany(() => Employee, (employee) => employee.projects, {
 		onUpdate: 'CASCADE',
 		onDelete: 'CASCADE',
 	})
 	members?: IEmployee[];
+
+	/**
+	 * Organization Teams
+	 */
+	@ManyToMany(() => OrganizationTeam, (it) => it.projects, {
+		onUpdate: 'CASCADE',
+		onDelete: 'CASCADE'
+	})
+	@JoinTable({
+		name: 'organization_project_team'
+	})
+	teams?: IOrganizationTeam[];
 }
