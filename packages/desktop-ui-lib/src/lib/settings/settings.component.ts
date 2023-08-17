@@ -11,7 +11,7 @@ import {
 import { TimeTrackerService } from '../time-tracker/time-tracker.service';
 import { NbDialogService, NbToastrService } from '@nebular/theme';
 import { ElectronService } from '../electron/services';
-import { BehaviorSubject, Observable, filter, tap, firstValueFrom } from 'rxjs';
+import { BehaviorSubject, Observable, filter, tap, firstValueFrom, from } from 'rxjs';
 import { AboutComponent } from '../dialogs/about/about.component';
 import { SetupService } from '../setup/setup.service';
 import * as moment from 'moment';
@@ -20,6 +20,7 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { AuthStrategy } from '../auth';
 import { LanguagesEnum } from 'packages/contracts/dist';
 import { TranslateService } from '@ngx-translate/core';
+import { LanguageSelectorService } from '../language/language-selector.service';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -436,6 +437,7 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 		private _setupService: SetupService,
 		private _notifier: ToastrNotificationService,
 		private _translateService: TranslateService,
+		private _languageSelectorService: LanguageSelectorService,
 		@Optional()
 		private _authStrategy: AuthStrategy
 	) {
@@ -695,6 +697,31 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 				await this.restartAndUpdate();
 			});
 		});
+
+		if (this.isDesktop) {
+			this.electronService.ipcRenderer.on(
+				'preferred_language_change',
+				(event, language: LanguagesEnum) => {
+					this._ngZone.run(() => {
+						this._languageSelectorService.setLanguage(
+							language,
+							this._translateService
+						);
+					});
+				}
+			);
+			from(this.electronService.ipcRenderer.invoke('PREFERRED_LANGUAGE'))
+				.pipe(
+					tap((language: LanguagesEnum) =>
+						this._languageSelectorService.setLanguage(
+							language,
+							this._translateService
+						)
+					),
+					untilDestroyed(this)
+				)
+				.subscribe();
+		}
 	}
 
 	mappingAdditionalSetting(values) {

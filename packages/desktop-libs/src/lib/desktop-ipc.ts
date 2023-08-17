@@ -865,8 +865,11 @@ export function ipcTimer(
 	});
 
 	ipcMain.on('preferred_language_change', (event, arg) => {
+		const windows = [timeTrackerWindow, settingWindow];
 		LocalStore.updateApplicationSetting({ preferredLanguage: arg });
-		timeTrackerWindow.webContents.send('preferred_language_change', arg);
+		for (const window of windows) {
+			window?.webContents?.send('preferred_language_change', arg);
+		}
 	})
 }
 

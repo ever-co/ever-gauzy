@@ -27,6 +27,7 @@ import { DesktopDirectiveModule } from '../directives/desktop-directive.module';
 import { LanguageModule } from '../language/language.module';
 import { TranslateModule } from '@ngx-translate/core';
 import { Store } from '../services';
+import { LanguageSelectorService } from '../language/language-selector.service';
 
 @NgModule({
 	declarations: [SettingsComponent],
@@ -57,7 +58,8 @@ import { Store } from '../services';
 		NbToastrService,
 		TimeTrackerService,
 		NbDialogService,
-		Store
+		Store,
+		LanguageSelectorService
 	],
 	exports: [SettingsComponent]
 })

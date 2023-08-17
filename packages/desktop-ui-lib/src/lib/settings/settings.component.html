@@ -20,6 +20,7 @@
 			</nb-list-item>
 		</nb-list>
 		<gauzy-language-selector
+			*ngIf="!isDesktop"
 			[preferredLanguage]="appSetting?.preferredLanguage"
 			class="language"
 		></gauzy-language-selector>
