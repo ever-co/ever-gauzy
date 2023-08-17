@@ -19,7 +19,7 @@ const DEFAULT_DATE_RANGE = {
 
 @Injectable()
 export class UpworkReportService {
-	constructor() {}
+	constructor() { }
 
 	/*
 	 * Get freelancer specific time reports
@@ -35,21 +35,21 @@ export class UpworkReportService {
 			const reports = new Time(api);
 			const { start, end } = dateRange;
 
-			const select = `SELECT 
+			const select = `SELECT
 							worked_on,
 							company_id,
 							company_name,
-							assignment_name, 
+							assignment_name,
 							assignment_team_id,
 							assignment_ref,
 							assignment_rate,
-							hours, 
+							hours,
 							memo,
 							contract_type
-						WHERE 
-							worked_on > '${start || DEFAULT_DATE_RANGE.start}' AND 
+						WHERE
+							worked_on > '${start || DEFAULT_DATE_RANGE.start}' AND
 							worked_on <= '${end || DEFAULT_DATE_RANGE.end}'
-						ORDER BY 
+						ORDER BY
 							worked_on,
 							assignment_ref`;
 
@@ -89,21 +89,21 @@ export class UpworkReportService {
 			const reports = new Time(api);
 			const { start, end } = dateRange;
 
-			const select = `SELECT 
+			const select = `SELECT
 							worked_on,
 							company_id,
-							company_name, 
-							assignment_name, 
+							company_name,
+							assignment_name,
 							assignment_team_id,
 							assignment_ref,
 							assignment_rate,
-							hours, 
+							hours,
 							memo,
 							contract_type
 						WHERE
-							worked_on > '${start || DEFAULT_DATE_RANGE.start}' AND 
+							worked_on > '${start || DEFAULT_DATE_RANGE.start}' AND
 							worked_on <= '${end || DEFAULT_DATE_RANGE.end}'
-						ORDER BY 
+						ORDER BY
 							worked_on,
 							assignment_ref`;
 
@@ -135,7 +135,7 @@ export class UpworkReportService {
 	 */
 	public async getBillingReportByFreelancer(
 		config: IUpworkApiConfig,
-		providerRefernceId,
+		providerReferenceId,
 		dateRange: IUpworkDateRange
 	) {
 		try {
@@ -143,13 +143,13 @@ export class UpworkReportService {
 			const billings = new Billings(api);
 			const { start, end } = dateRange;
 
-			const select = `SELECT 
+			const select = `SELECT
 								amount,
 								date,
 								type,
 								subtype
-							WHERE 
-								date > '${start || DEFAULT_DATE_RANGE.start}' AND 
+							WHERE
+								date > '${start || DEFAULT_DATE_RANGE.start}' AND
 								date <= '${end || DEFAULT_DATE_RANGE.end}'`;
 
 			return new Promise((resolve, reject) => {
@@ -158,7 +158,7 @@ export class UpworkReportService {
 					config.accessSecret,
 					() => {
 						billings.getByFreelancer(
-							providerRefernceId,
+							providerReferenceId,
 							{
 								tq: select
 							},
@@ -180,7 +180,7 @@ export class UpworkReportService {
 	 */
 	public async getEarningReportByFreelancer(
 		config: IUpworkApiConfig,
-		providerRefernceId,
+		providerReferenceId,
 		dateRange: IUpworkDateRange
 	): Promise<any> {
 		try {
@@ -188,7 +188,7 @@ export class UpworkReportService {
 			const earnings = new Earnings(api);
 			const { start, end } = dateRange;
 
-			const select = `SELECT 
+			const select = `SELECT
 								amount,
 								date,
 								type,
@@ -198,8 +198,8 @@ export class UpworkReportService {
 								assignment__reference,
 								provider__reference,
 								reference
-							WHERE 
-								date > '${start || DEFAULT_DATE_RANGE.start}' AND 
+							WHERE
+								date > '${start || DEFAULT_DATE_RANGE.start}' AND
 								date <= '${end || DEFAULT_DATE_RANGE.end}'`;
 
 			return new Promise((resolve, reject) => {
@@ -208,7 +208,7 @@ export class UpworkReportService {
 					config.accessSecret,
 					() => {
 						earnings.getByFreelancer(
-							providerRefernceId,
+							providerReferenceId,
 							{
 								tq: select
 							},

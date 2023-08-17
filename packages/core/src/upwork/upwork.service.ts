@@ -515,7 +515,7 @@ export class UpworkService {
 
 		for await (const timeSlot of timeSlots) {
 			const multiply = 10;
-			const durtion = 600;
+			const duration = 600;
 			const {
 				keyboard_events_count,
 				mouse_events_count,
@@ -534,7 +534,7 @@ export class UpworkService {
 						moment.unix(cell_time).format('YYYY-MM-DD HH:mm:ss')
 					),
 					overall: activity * multiply,
-					duration: durtion,
+					duration: duration,
 					organizationId,
 					tenantId
 				})
@@ -693,7 +693,7 @@ export class UpworkService {
 		employeeId,
 		config,
 		entitiesToSync,
-		providerRefernceId,
+		providerReferenceId,
 		providerId
 	}) {
 		const syncedContracts = await this.syncContracts({
@@ -704,7 +704,7 @@ export class UpworkService {
 
 		if (!employeeId) {
 			const employee = await this._getUpworkGauzyEmployee(
-				providerRefernceId,
+				providerReferenceId,
 				integrationId,
 				organizationId,
 				config
@@ -730,7 +730,7 @@ export class UpworkService {
 							integrationId,
 							config,
 							employeeId,
-							providerRefernceId,
+							providerReferenceId,
 							providerId,
 							entity.datePicker.selectedDate
 						);
@@ -957,7 +957,7 @@ export class UpworkService {
 	}
 
 	private async _getUpworkGauzyEmployee(
-		providerRefernceId: string,
+		providerReferenceId: string,
 		integrationId: string,
 		organizationId: string,
 		config: IUpworkApiConfig
@@ -965,7 +965,7 @@ export class UpworkService {
 		const tenantId = RequestContext.currentTenantId();
 		const { record } = await this._integrationMapService.findOneOrFailByOptions({
 			where: {
-				sourceId: providerRefernceId,
+				sourceId: providerReferenceId,
 				entity: IntegrationEntity.EMPLOYEE,
 				organizationId,
 				tenantId
@@ -1104,7 +1104,7 @@ export class UpworkService {
 		integrationId: string,
 		config: IUpworkApiConfig,
 		employeeId: string,
-		providerRefernceId: string,
+		providerReferenceId: string,
 		providerId: string,
 		dateRange: IUpworkDateRange
 	) {
@@ -1122,7 +1122,7 @@ export class UpworkService {
 				integrationId,
 				config,
 				employeeId,
-				providerRefernceId,
+				providerReferenceId,
 				dateRange
 			);
 			return {
@@ -1145,12 +1145,12 @@ export class UpworkService {
 		integrationId: string,
 		config: IUpworkApiConfig,
 		employeeId: string,
-		providerRefernceId: string,
+		providerReferenceId: string,
 		dateRange: IUpworkDateRange
 	) {
 		const reports = await this._upworkReportService.getEarningReportByFreelancer(
 			config,
-			providerRefernceId,
+			providerReferenceId,
 			dateRange
 		);
 		const { table: { cols = [] } } = reports;

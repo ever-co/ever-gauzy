@@ -276,7 +276,9 @@
 		"ilinked",
 		"swatchbook",
 		"uuidv4",
-		"reference"
+		"reference",
+		"workdiary",
+		"Workdiary"
 	],
 	"useGitignore": true,
 	"ignorePaths": [
