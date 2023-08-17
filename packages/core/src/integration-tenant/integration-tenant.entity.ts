@@ -27,7 +27,7 @@ export class IntegrationTenant extends TenantOrganizationBaseEntity implements I
 	/**
 	 * IntegrationSetting
 	 */
-	@OneToMany(() => IntegrationSetting, (setting) => setting.integration, {
+	@OneToMany(() => IntegrationSetting, (it) => it.integration, {
 		cascade: true
 	})
 	@JoinColumn()
@@ -36,7 +36,7 @@ export class IntegrationTenant extends TenantOrganizationBaseEntity implements I
 	/**
 	 * IntegrationEntitySetting
 	 */
-	@OneToMany(() => IntegrationEntitySetting, (setting) => setting.integration, {
+	@OneToMany(() => IntegrationEntitySetting, (it) => it.integration, {
 		cascade: true
 	})
 	@JoinColumn()
@@ -45,7 +45,7 @@ export class IntegrationTenant extends TenantOrganizationBaseEntity implements I
 	/**
 	 * IntegrationMap
 	 */
-	@OneToMany(() => IntegrationMap, (map) => map.integration, {
+	@OneToMany(() => IntegrationMap, (it) => it.integration, {
 		cascade: true
 	})
 	@JoinColumn()
