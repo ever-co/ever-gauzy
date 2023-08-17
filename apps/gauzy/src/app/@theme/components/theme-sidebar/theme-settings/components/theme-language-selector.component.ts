@@ -1,10 +1,12 @@
 import { Component, OnInit, OnDestroy, AfterViewInit, ChangeDetectorRef } from '@angular/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { ILanguage, IUser, IUserUpdateInput, LanguagesEnum } from '@gauzy/contracts';
-import { debounceTime, filter, tap } from 'rxjs/operators';
+import { debounceTime, filter, tap, from, concatMap } from 'rxjs';
 import { NbLayoutDirection, NbLayoutDirectionService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { LanguagesService, Store, UsersService } from './../../../../../@core/services';
+import { ElectronService } from './../../../../../@core/auth/electron.service';
+import { distinctUntilChange } from 'packages/common-angular/dist';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -24,7 +26,8 @@ export class ThemeLanguageSelectorComponent implements OnInit, OnDestroy, AfterV
 		private readonly _directionService: NbLayoutDirectionService,
 		private readonly _translate: TranslateService,
 		private readonly _languagesService: LanguagesService,
-		private readonly cdr: ChangeDetectorRef
+		private readonly cdr: ChangeDetectorRef,
+		private readonly _electronService: ElectronService
 	) { }
 
 	ngOnInit(): void {
@@ -51,9 +54,27 @@ export class ThemeLanguageSelectorComponent implements OnInit, OnDestroy, AfterV
 		this._store.preferredLanguage$
 			.pipe(
 				debounceTime(100),
-				filter((preferredLanguage: LanguagesEnum) => !!preferredLanguage),
-				tap((preferredLanguage: LanguagesEnum) => this.preferredLanguage = preferredLanguage),
+				filter(
+					(preferredLanguage: LanguagesEnum) => !!preferredLanguage
+				),
+				tap(
+					(preferredLanguage: LanguagesEnum) =>
+						(this.preferredLanguage = preferredLanguage)
+				),
 				tap(() => this.setLanguage()),
+				tap((preferredLanguage: LanguagesEnum) => {
+					if (this._electronService.isElectron) {
+						this._electronService.ipcRenderer.send(
+							'preferred_language_change',
+							preferredLanguage
+						);
+					}
+				}),
+				concatMap((preferredLanguage: LanguagesEnum) =>
+					this.changePreferredLanguage({
+						preferredLanguage,
+					})
+				),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -62,10 +83,19 @@ export class ThemeLanguageSelectorComponent implements OnInit, OnDestroy, AfterV
  	ngAfterViewInit() {
 		const systemLanguages = this._store.systemLanguages;
 		if (!systemLanguages) {
-			(async() => {
-				await this._loadLanguages();
-			})();
-		}
+			  from(this._loadLanguages()).subscribe();
+		  };
+		  if (this._electronService.isElectron) {
+			  from(this._electronService.ipcRenderer.invoke('PREFERRED_LANGUAGE'))
+				  .pipe(
+					  tap((language: LanguagesEnum) => {
+						  this.preferredLanguage = language;
+						  this.switchLanguage();
+					  }),
+					  untilDestroyed(this)
+				  )
+				  .subscribe();
+		  }
 	}
 
 	private async _loadLanguages() {
@@ -99,9 +129,6 @@ export class ThemeLanguageSelectorComponent implements OnInit, OnDestroy, AfterV
 
 	switchLanguage() {
 		this._store.preferredLanguage = this.preferredLanguage;
-		this.changePreferredLanguage({
-			preferredLanguage: this.preferredLanguage
-		});
 	}
 
 	setLanguage() {

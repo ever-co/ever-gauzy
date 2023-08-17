@@ -10,7 +10,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { IDateRangePicker, ILanguage, LanguagesEnum } from '@gauzy/contracts';
 import { isNotEmpty } from '@gauzy/common-angular';
-import { filter, map, mergeMap, tap } from 'rxjs/operators';
+import { filter, map, mergeMap, tap, from } from 'rxjs';
 import { AnalyticsService } from './@core/utils/analytics.service';
 import * as _ from 'underscore';
 import {
@@ -25,6 +25,7 @@ import {
 } from './@core/services';
 import { environment } from '../environments/environment';
 import moment from 'moment';
+import { ElectronService } from './@core/auth/electron.service';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -44,7 +45,8 @@ export class AppComponent implements OnInit, AfterViewInit {
 		private readonly router: Router,
 		private readonly activatedRoute: ActivatedRoute,
 		public readonly selectorBuilderService: SelectorBuilderService,
-		private readonly dateRangePickerBuilderService: DateRangePickerBuilderService
+		private readonly dateRangePickerBuilderService: DateRangePickerBuilderService,
+		private readonly _electronService: ElectronService
 	) {
 		this.getActivateRouterDataEvent();
 	}
@@ -82,6 +84,16 @@ export class AppComponent implements OnInit, AfterViewInit {
 					this.loading = false;
 				});
 			});
+		if (this._electronService.isElectron) {
+			from(this._electronService.ipcRenderer.invoke('PREFERRED_LANGUAGE'))
+				.pipe(
+					tap((language: LanguagesEnum) => {
+						this.store.preferredLanguage = language;
+					}),
+					untilDestroyed(this)
+				)
+				.subscribe();
+		}
 
 		if (Number(this.store.serverConnection) === 0) {
 			this.loading = false;
