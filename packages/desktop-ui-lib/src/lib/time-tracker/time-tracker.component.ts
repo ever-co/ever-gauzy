@@ -23,6 +23,7 @@ import { LocalDataSource, Ng2SmartTableComponent } from 'ng2-smart-table';
 import { DomSanitizer } from '@angular/platform-browser';
 import {
 	asapScheduler,
+	asyncScheduler,
 	BehaviorSubject,
 	filter,
 	firstValueFrom,
@@ -910,15 +911,29 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 						language,
 						this._translateService
 					);
-					this._loadSmartTableSettings();
+					asyncScheduler.schedule(
+						() => this._loadSmartTableSettings(),
+						150
+					);
 				});
 			}
 		);
 
-		this._languageSelectorService.setLanguage(
-			this._store?.preferredLanguage || LanguagesEnum.ENGLISH,
-			this._translateService
-		);
+		from(this.electronService.ipcRenderer.invoke('PREFERRED_LANGUAGE'))
+			.pipe(
+				tap((language: LanguagesEnum) => {
+					this._languageSelectorService.setLanguage(
+						language,
+						this._translateService
+					);
+					asyncScheduler.schedule(
+						() => this._loadSmartTableSettings(),
+						150
+					);
+				}),
+				untilDestroyed(this)
+			)
+			.subscribe();
 	}
 
 	async toggleStart(val, onClick = true) {
