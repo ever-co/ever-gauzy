@@ -18,7 +18,7 @@ export class IntegrationMap extends TenantOrganizationBaseEntity implements IInt
 	@ApiProperty({ type: () => String })
 	@IsNotEmpty()
 	@Column()
-	sourceId: number;
+	sourceId: string;
 
 	@ApiProperty({ type: () => String })
 	@IsNotEmpty()
