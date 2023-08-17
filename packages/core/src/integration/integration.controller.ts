@@ -2,16 +2,22 @@ import {
 	Controller,
 	HttpStatus,
 	Get,
-	Query
+	Query,
+	UseGuards
 } from '@nestjs/common';
-import { Integration } from './integration.entity';
-import { IntegrationType } from './integration-type.entity';
 import { ApiResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { CommandBus } from '@nestjs/cqrs';
+import { PermissionsEnum } from '@gauzy/contracts';
 import { IntegrationTypeGetCommand, IntegrationGetCommand } from './commands';
+import { Permissions } from './../shared/decorators';
+import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
 import { ParseJsonPipe } from './../shared/pipes';
+import { Integration } from './integration.entity';
+import { IntegrationType } from './integration-type.entity';
 
 @ApiTags('Integrations')
+@UseGuards(TenantPermissionGuard, PermissionGuard)
+@Permissions(PermissionsEnum.INTEGRATION_VIEW)
 @Controller()
 export class IntegrationController {
 	constructor(
@@ -35,9 +41,11 @@ export class IntegrationController {
 		status: HttpStatus.NOT_FOUND,
 		description: 'Record not found'
 	})
-	@Get('/types')
+	@Get('types')
 	async getIntegrationTypes(): Promise<IntegrationType[]> {
-		return await this._commandBus.execute(new IntegrationTypeGetCommand());
+		return await this._commandBus.execute(
+			new IntegrationTypeGetCommand()
+		);
 	}
 
 	/**
