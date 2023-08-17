@@ -1,4 +1,4 @@
-import { lastValueFrom } from 'rxjs';
+import { from } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
 import { LanguagesEnum } from '@gauzy/contracts';
 import { ElectronService } from '../electron/services';
@@ -8,10 +8,12 @@ export function LanguageInitializerFactory(
 	electronService: ElectronService
 ) {
 	return async () => {
+		const languages = Object.values(LanguagesEnum);
 		const language = await electronService.ipcRenderer.invoke(
 			'PREFERRED_LANGUAGE'
 		);
-		translate.setDefaultLang(LanguagesEnum.ENGLISH);
-		return lastValueFrom(translate.use(language || LanguagesEnum.ENGLISH));
+		translate.addLangs(languages);
+		translate.setDefaultLang(language || LanguagesEnum.ENGLISH);
+		return from(translate.use(language || LanguagesEnum.ENGLISH));
 	};
 }
