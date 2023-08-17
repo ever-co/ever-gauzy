@@ -266,6 +266,11 @@ app.on('ready', async () => {
 	const configs: any = store.get('configs');
 	const settings: any = store.get('appSetting');
 	const autoLaunch: boolean = settings && typeof settings.autoLaunch === 'boolean' ? settings.autoLaunch : true;
+	// default global
+	global.variableGlobal = {
+		API_BASE_URL: getApiBaseUrl(configs || {}),
+		IS_INTEGRATED_DESKTOP: configs?.isLocalServer
+	};
 	splashScreen = new SplashScreen(pathWindow.timeTrackerUi);
 	await splashScreen.loadURL();
 	splashScreen.show();
@@ -298,12 +303,6 @@ app.on('ready', async () => {
 		])
 	);
 
-	/* create window */
-	// default global
-	global.variableGlobal = {
-		API_BASE_URL: getApiBaseUrl({}),
-		IS_INTEGRATED_DESKTOP: false
-	};
 	timeTrackerWindow = await createTimeTrackerWindow(timeTrackerWindow, pathWindow.timeTrackerUi);
 	settingsWindow = await createSettingsWindow(settingsWindow, pathWindow.timeTrackerUi);
 	updaterWindow = await createUpdaterWindow(updaterWindow, pathWindow.timeTrackerUi);
