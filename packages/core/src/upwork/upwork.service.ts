@@ -804,7 +804,7 @@ export class UpworkService {
 	}
 
 	/*
-	 * Get snapshots/timeslot minutes activites
+	 * Get snapshots/timeslot minutes activities
 	 */
 	async getTimeSlotActivitiesByContractId({
 		contractId,
