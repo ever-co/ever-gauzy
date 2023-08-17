@@ -98,7 +98,7 @@ export class UpworkService {
 		private readonly _upworkJobService: UpworkJobService,
 		private readonly _upworkOfferService: UpworkOffersService,
 		private readonly commandBus: CommandBus
-	) {}
+	) { }
 
 	private async _consumerHasAccessToken(
 		config: IUpworkClientSecretPair,
@@ -569,8 +569,8 @@ export class UpworkService {
 					config,
 					forDate
 				})
-				.then((response) => response)
-				.catch((error) => error);
+					.then((response) => response)
+					.catch((error) => error);
 
 				if (wd.hasOwnProperty('statusCode') && wd.statusCode === 404) {
 					return wd;
@@ -650,7 +650,7 @@ export class UpworkService {
 		const dates: IDateRange[] = mergeOverlappingDateRanges(range);
 
 		if (isNotEmpty(dates)) {
-			dates.forEach(({ start, end}) => {
+			dates.forEach(({ start, end }) => {
 				let i = 0;
 				const timeSlots = new Array();
 				while (slots[i]) {
@@ -661,15 +661,15 @@ export class UpworkService {
 					i++;
 				}
 				const activity = timeSlots.reduce((prev, current) => {
-						return {
-							...prev,
-							keyboard: (prev.keyboard += +current.keyboard_events_count),
-							mouse: (prev.mouse += +current.mouse_events_count),
-							logType: slots.manual
-								? TimeLogType.MANUAL
-								: TimeLogType.TRACKED
-						};
-					},
+					return {
+						...prev,
+						keyboard: (prev.keyboard += +current.keyboard_events_count),
+						mouse: (prev.mouse += +current.mouse_events_count),
+						logType: slots.manual
+							? TimeLogType.MANUAL
+							: TimeLogType.TRACKED
+					};
+				},
 					{
 						keyboard: 0,
 						mouse: 0
@@ -957,7 +957,7 @@ export class UpworkService {
 	}
 
 	private async _getUpworkGauzyEmployee(
-		providerRefernceId: number,
+		providerRefernceId: string,
 		integrationId: string,
 		organizationId: string,
 		config: IUpworkApiConfig
@@ -975,10 +975,10 @@ export class UpworkService {
 		return record
 			? record
 			: await this._handleEmployee({
-					integrationId,
-					organizationId,
-					config
-			  });
+				integrationId,
+				organizationId,
+				config
+			});
 	}
 
 	async syncEmployee({ integrationId, user, organizationId }) {
@@ -1085,7 +1085,7 @@ export class UpworkService {
 				tenantId
 			})
 		);
-	 	return await this.commandBus.execute(
+		return await this.commandBus.execute(
 			new IntegrationMapSyncEntityCommand({
 				gauzyId: gauzyClient.id,
 				integrationId,

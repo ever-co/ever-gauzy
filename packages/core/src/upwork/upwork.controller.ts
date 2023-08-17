@@ -8,7 +8,8 @@ import {
 	Get,
 	Query,
 	Param,
-	Res
+	Res,
+	UseGuards
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
@@ -21,13 +22,16 @@ import {
 	IEngagement,
 	IUpworkApiConfig,
 	IUpworkClientSecretPair,
-	IPagination
+	IPagination,
+	PermissionsEnum
 } from '@gauzy/contracts';
 import { ConfigService } from '@gauzy/config';
 import { Public } from '@gauzy/common';
 import { UpworkTransactionService } from './upwork-transaction.service';
 import { UpworkService } from './upwork.service';
 import { Expense, Income } from './../core/entities/internal';
+import { Permissions } from './../shared/decorators';
+import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
 import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
 
 @ApiTags('Integrations')
@@ -37,7 +41,7 @@ export class UpworkController {
 		private readonly _upworkTransactionService: UpworkTransactionService,
 		private readonly _upworkService: UpworkService,
 		private readonly _config: ConfigService
-	) {}
+	) { }
 
 	/**
 	 * Upwork Integration Authorization Flow Callback
@@ -49,7 +53,7 @@ export class UpworkController {
 	 */
 	@Public()
 	@Get('callback')
-	async upworkIntegrationCallback(
+	async upworkCallback(
 		@Query('oauth_token') oauth_token: string,
 		@Query('oauth_verifier') oauth_verifier: string,
 		@Res() res: any
@@ -83,6 +87,8 @@ export class UpworkController {
 		status: HttpStatus.BAD_REQUEST,
 		description: 'Freelancer not found'
 	})
+	@UseGuards(TenantPermissionGuard, PermissionGuard)
+	@Permissions(PermissionsEnum.INTEGRATION_VIEW)
 	@Post('/transactions')
 	@UseInterceptors(FileInterceptor('file'))
 	async create(@UploadedFile() file, @Body() organizationDto): Promise<any> {
@@ -105,6 +111,8 @@ export class UpworkController {
 		status: HttpStatus.BAD_REQUEST,
 		description: 'Cannot Authorize'
 	})
+	@UseGuards(TenantPermissionGuard, PermissionGuard)
+	@Permissions(PermissionsEnum.INTEGRATION_VIEW)
 	@Post('/token-secret-pair/:organizationId')
 	async getAccessTokenSecretPair(
 		@Body() config: IUpworkClientSecretPair,
@@ -129,6 +137,8 @@ export class UpworkController {
 		status: HttpStatus.BAD_REQUEST,
 		description: 'Invalid request'
 	})
+	@UseGuards(TenantPermissionGuard, PermissionGuard)
+	@Permissions(PermissionsEnum.INTEGRATION_VIEW)
 	@Post('/access-token/:organizationId')
 	async getAccessToken(
 		@Body() accessTokenDto: IAccessTokenDto,
@@ -153,6 +163,8 @@ export class UpworkController {
 		status: HttpStatus.BAD_REQUEST,
 		description: 'Invalid request'
 	})
+	@UseGuards(TenantPermissionGuard, PermissionGuard)
+	@Permissions(PermissionsEnum.INTEGRATION_VIEW)
 	@Get('work-diary')
 	async getWorkDiary(
 		@Query('data', ParseJsonPipe) data: IGetWorkDiaryDto
@@ -173,6 +185,8 @@ export class UpworkController {
 		status: HttpStatus.BAD_REQUEST,
 		description: 'Invalid request'
 	})
+	@UseGuards(TenantPermissionGuard, PermissionGuard)
+	@Permissions(PermissionsEnum.INTEGRATION_VIEW)
 	@Get('freelancer-contracts')
 	async getContracts(
 		@Query('data', ParseJsonPipe) data: IGetContractsDto
@@ -193,6 +207,8 @@ export class UpworkController {
 		status: HttpStatus.BAD_REQUEST,
 		description: 'Invalid request'
 	})
+	@UseGuards(TenantPermissionGuard, PermissionGuard)
+	@Permissions(PermissionsEnum.INTEGRATION_VIEW)
 	@Get('config/:integrationId')
 	async getConfig(
 		@Param('integrationId', UUIDValidationPipe) integrationId: string,
@@ -215,6 +231,8 @@ export class UpworkController {
 		status: HttpStatus.BAD_REQUEST,
 		description: 'Invalid request'
 	})
+	@UseGuards(TenantPermissionGuard, PermissionGuard)
+	@Permissions(PermissionsEnum.INTEGRATION_VIEW)
 	@Post('sync-contracts')
 	async syncContracts(@Body() syncContractsDto: any): Promise<any> {
 		return await this._upworkService.syncContracts(syncContractsDto);
@@ -233,6 +251,8 @@ export class UpworkController {
 		status: HttpStatus.BAD_REQUEST,
 		description: 'Invalid request'
 	})
+	@UseGuards(TenantPermissionGuard, PermissionGuard)
+	@Permissions(PermissionsEnum.INTEGRATION_VIEW)
 	@Post('sync-contracts-related-data')
 	async syncContractsRelatedData(@Body() dto): Promise<any> {
 		return await this._upworkService.syncContractsRelatedData(dto);
@@ -254,6 +274,8 @@ export class UpworkController {
 		status: HttpStatus.BAD_REQUEST,
 		description: 'Invalid request'
 	})
+	@UseGuards(TenantPermissionGuard, PermissionGuard)
+	@Permissions(PermissionsEnum.INTEGRATION_VIEW)
 	@Get('report/:integrationId')
 	async getReports(
 		@Param('integrationId', UUIDValidationPipe) integrationId: string,

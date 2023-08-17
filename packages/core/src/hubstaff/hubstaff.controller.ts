@@ -1,14 +1,17 @@
-import { Controller, Post, Body, Get, Param, Query, Res } from '@nestjs/common';
+import { Controller, Post, Body, Get, Param, Query, Res, UseGuards } from '@nestjs/common';
 import {
 	IIntegrationTenant,
 	IHubstaffOrganization,
 	IHubstaffProject,
 	IIntegrationMap,
-	IIntegrationSetting
+	IIntegrationSetting,
+	PermissionsEnum
 } from '@gauzy/contracts';
 import { ApiTags } from '@nestjs/swagger';
 import { ConfigService } from '@gauzy/config';
 import { Public } from '@gauzy/common';
+import { Permissions } from './../shared/decorators';
+import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
 import { UUIDValidationPipe } from './../shared/pipes';
 import { HubstaffService } from './hubstaff.service';
 
@@ -18,7 +21,7 @@ export class HubstaffController {
 	constructor(
 		private readonly _hubstaffService: HubstaffService,
 		private readonly _config: ConfigService
-	) {}
+	) { }
 
 	/**
 	 * Hubstaff Integration Authorization Flow Callback
@@ -51,6 +54,8 @@ export class HubstaffController {
 		}
 	}
 
+	@UseGuards(TenantPermissionGuard, PermissionGuard)
+	@Permissions(PermissionsEnum.INTEGRATION_VIEW)
 	@Get('/token/:integrationId')
 	async getHubstaffTokenByIntegration(
 		@Param('integrationId', UUIDValidationPipe) integrationId: string
@@ -58,6 +63,8 @@ export class HubstaffController {
 		return await this._hubstaffService.getHubstaffToken(integrationId);
 	}
 
+	@UseGuards(TenantPermissionGuard, PermissionGuard)
+	@Permissions(PermissionsEnum.INTEGRATION_VIEW)
 	@Get('/refresh-token/:integrationId')
 	async refreshHubstaffTokenByIntegration(
 		@Param('integrationId', UUIDValidationPipe) integrationId: string
@@ -65,6 +72,8 @@ export class HubstaffController {
 		return await this._hubstaffService.refreshToken(integrationId);
 	}
 
+	@UseGuards(TenantPermissionGuard, PermissionGuard)
+	@Permissions(PermissionsEnum.INTEGRATION_VIEW)
 	@Post('/integration')
 	async addIntegration(
 		@Body() body
@@ -72,6 +81,8 @@ export class HubstaffController {
 		return await this._hubstaffService.addIntegration(body);
 	}
 
+	@UseGuards(TenantPermissionGuard, PermissionGuard)
+	@Permissions(PermissionsEnum.INTEGRATION_VIEW)
 	@Post('/organizations/:integrationId')
 	async getOrganizations(
 		@Param('integrationId', UUIDValidationPipe) integrationId: string,
@@ -82,6 +93,8 @@ export class HubstaffController {
 		});
 	}
 
+	@UseGuards(TenantPermissionGuard, PermissionGuard)
+	@Permissions(PermissionsEnum.INTEGRATION_VIEW)
 	@Post('/projects/:organizationId')
 	async getProjects(
 		@Param('organizationId') organizationId: string,
@@ -93,6 +106,8 @@ export class HubstaffController {
 		});
 	}
 
+	@UseGuards(TenantPermissionGuard, PermissionGuard)
+	@Permissions(PermissionsEnum.INTEGRATION_VIEW)
 	@Post('/sync-projects/:integrationId')
 	async syncProjects(
 		@Param('integrationId', UUIDValidationPipe) integrationId: string,
@@ -104,6 +119,8 @@ export class HubstaffController {
 		});
 	}
 
+	@UseGuards(TenantPermissionGuard, PermissionGuard)
+	@Permissions(PermissionsEnum.INTEGRATION_VIEW)
 	@Post('/sync-organizations/:integrationId')
 	async syncOrganizations(
 		@Param('integrationId', UUIDValidationPipe) integrationId: string,
@@ -115,6 +132,8 @@ export class HubstaffController {
 		});
 	}
 
+	@UseGuards(TenantPermissionGuard, PermissionGuard)
+	@Permissions(PermissionsEnum.INTEGRATION_VIEW)
 	@Post('/auto-sync/:integrationId')
 	async autoSync(
 		@Param('integrationId', UUIDValidationPipe) integrationId: string,

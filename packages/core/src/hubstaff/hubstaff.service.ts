@@ -522,7 +522,7 @@ export class HubstaffService {
 	}
 
 	private async _getEmployeeByHubstaffUserId(
-		user_id: number,
+		user_id: string,
 		token: string,
 		integrationId: string,
 		organizationId: string
