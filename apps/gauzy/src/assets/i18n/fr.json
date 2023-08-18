@@ -137,7 +137,9 @@
 		"DOWNLOAD_NOW": "Télécharger maintenant",
 		"UPDATE_NOW": "Mettre à jour maintenant",
 		"SAVE_RESTART": "Enregistrer et redémarrer",
-		"FILES": "Fichiers"
+		"FILES": "Fichiers",
+		"START": "Démarrer",
+		"STOP": "Arrêter"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {
@@ -3802,6 +3804,8 @@
 			"CLIENT_ADDED": "Client ajouté avec succès"
 		}
 	},
+	"SERVER": "Serveur",
+	"SERVER_LOG": "Journal du serveur",
 	"TIMESHEET": {
 		"TODAY": "Aujourd'hui",
 		"DAILY": "Quotidien",

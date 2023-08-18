@@ -137,7 +137,9 @@
 		"DOWNLOAD_NOW": "Изтегли сега",
 		"UPDATE_NOW": "Актуализирай сега",
 		"SAVE_RESTART": "Запази и рестартирай",
-		"FILES": "Файлове"
+		"FILES": "Файлове",
+		"START": "Старт",
+		"STOP": "Стоп"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {
@@ -3782,6 +3784,8 @@
 			"CLIENT_ADDED": "Клиентът беше успешно добавен"
 		}
 	},
+	"SERVER": "Сървър",
+	"SERVER_LOG": "Сървърни записи",
 	"TIMESHEET": {
 		"TODAY": "Днес",
 		"DAILY": "Daily",

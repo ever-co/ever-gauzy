@@ -137,7 +137,9 @@
 		"DOWNLOAD_NOW": "הורד עכשיו",
 		"UPDATE_NOW": "עדכן עכשיו",
 		"SAVE_RESTART": "שמור והפעל מחדש",
-		"FILES": "קבצים"
+		"FILES": "קבצים",
+		"START": "התחל",
+		"STOP": "עצור"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {
@@ -3781,6 +3783,8 @@
 			"CLIENT_ADDED": "הלקוח נוסף בהצלחה"
 		}
 	},
+	"SERVER": "שרת",
+	"SERVER_LOG": "יומן השרת",
 	"TIMESHEET": {
 		"TODAY": "היום",
 		"DAILY": "יומי",

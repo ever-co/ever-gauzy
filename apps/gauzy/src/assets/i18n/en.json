@@ -138,7 +138,9 @@
 		"DOWNLOAD_NOW": "Download Now",
 		"UPDATE_NOW": "Update Now",
 		"SAVE_RESTART": "Save & Restart",
-		"FILES": "Files"
+		"FILES": "Files",
+		"START": "Start",
+		"STOP": "Stop"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {
@@ -3837,6 +3839,8 @@
 			"CLIENT_ADDED": "Client added successfully"
 		}
 	},
+	"SERVER": "Server",
+	"SERVER_LOG": "Server Log",
 	"TIMESHEET": {
 		"TODAY": "Today",
 		"DAILY": "Daily",
