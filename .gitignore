@@ -83,3 +83,4 @@ megalinter-reports/
 # No need to duplicate translations
 /apps/desktop-timer/src/assets/i18n
 /apps/desktop/src/assets/i18n
+/apps/server/src/assets/i18n
