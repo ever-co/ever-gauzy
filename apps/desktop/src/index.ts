@@ -653,6 +653,7 @@ app.on('activate', async () => {
 		);
 	} else {
 		if (setupWindow) {
+			splashScreen.close();
 			setupWindow.show();
 		}
 	}
@@ -730,6 +731,7 @@ ipcMain.handle('PREFERRED_LANGUAGE', (event, arg) => {
 		LocalStore.updateApplicationSetting({
 			preferredLanguage: arg,
 		});
+		settingsWindow?.webContents?.send('preferred_language_change', arg);
 	}
 	return setting?.preferredLanguage;
 });

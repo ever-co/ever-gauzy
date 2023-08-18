@@ -698,30 +698,29 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 			});
 		});
 
-		if (this.isDesktop) {
-			this.electronService.ipcRenderer.on(
-				'preferred_language_change',
-				(event, language: LanguagesEnum) => {
-					this._ngZone.run(() => {
-						this._languageSelectorService.setLanguage(
-							language,
-							this._translateService
-						);
-					});
-				}
-			);
-			from(this.electronService.ipcRenderer.invoke('PREFERRED_LANGUAGE'))
-				.pipe(
-					tap((language: LanguagesEnum) =>
-						this._languageSelectorService.setLanguage(
-							language,
-							this._translateService
-						)
-					),
-					untilDestroyed(this)
-				)
-				.subscribe();
-		}
+		this.electronService.ipcRenderer.on(
+			'preferred_language_change',
+			(event, language: LanguagesEnum) => {
+				this._ngZone.run(() => {
+					this._languageSelectorService.setLanguage(
+						language,
+						this._translateService
+					);
+				});
+			}
+		);
+
+		from(this.electronService.ipcRenderer.invoke('PREFERRED_LANGUAGE'))
+			.pipe(
+				tap((language: LanguagesEnum) =>
+					this._languageSelectorService.setLanguage(
+						language,
+						this._translateService
+					)
+				),
+				untilDestroyed(this)
+			)
+			.subscribe();
 	}
 
 	mappingAdditionalSetting(values) {

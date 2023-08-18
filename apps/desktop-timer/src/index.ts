@@ -514,6 +514,7 @@ app.on('activate', () => {
 	} else {
 		if (setupWindow) {
 			setupWindow.show();
+			splashScreen.close();
 		}
 	}
 });
@@ -526,6 +527,7 @@ ipcMain.handle('PREFERRED_LANGUAGE', (event, arg) => {
 		LocalStore.updateApplicationSetting({
 			preferredLanguage: arg,
 		});
+		settingsWindow?.webContents?.send('preferred_language_change', arg);
 	}
 	return setting?.preferredLanguage;
 });

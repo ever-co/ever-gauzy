@@ -4,7 +4,7 @@
 			<nb-card-body class="main-card-body">
 				<nb-stepper orientation="horizontal">
 					<nb-step class="position-relative" [label]="labelOne">
-						<gauzy-language-selector [setup]="true" class="lang-selector"></gauzy-language-selector>
+						<gauzy-language-selector #selector [setup]="true" class="lang-selector"></gauzy-language-selector>
 						<ng-template #labelOne>{{"TIMER_TRACKER.SETUP.WELCOME" | translate | uppercase}}</ng-template>
 						<div class="row content-body">
 							<div class="col-12 text-center margin-content">

@@ -102,8 +102,8 @@ ipcMain.setMaxListeners(0);
 ipcMain.removeHandler('PREFERRED_LANGUAGE');
 
 const runSetup = async () => {
+	splashScreen.close();
 	if (setupWindow) {
-		splashScreen.close();
 		setupWindow.show();
 		return;
 	}
@@ -538,6 +538,7 @@ ipcMain.handle('PREFERRED_LANGUAGE', (event, arg) => {
 		LocalStore.updateApplicationSetting({
 			preferredLanguage: arg,
 		});
+		settingsWindow?.webContents?.send('preferred_language_change', arg);
 	}
 	return setting?.preferredLanguage;
 });

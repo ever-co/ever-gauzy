@@ -11,6 +11,7 @@ import { NbDialogService } from '@nebular/theme';
 import { AlertComponent } from '../../lib/dialogs/alert/alert.component';
 import { ElectronService, LoggerService } from '../electron/services';
 import { ErrorHandlerService, Store } from '../services';
+import { LanguageSelectorComponent } from '../language/language-selector.component';
 
 @Component({
 	selector: 'ngx-setup',
@@ -20,6 +21,7 @@ import { ErrorHandlerService, Store } from '../services';
 })
 export class SetupComponent implements OnInit {
 	@ViewChild('dialogOpenBtn') btnDialogOpen: ElementRef<HTMLElement>;
+	@ViewChild('selector') languageSelector: LanguageSelectorComponent;
 	public isSaving = false;
 	public isCheckConnection = false;
 	constructor(
@@ -299,8 +301,9 @@ export class SetupComponent implements OnInit {
 		};
 		await this.electronService.ipcRenderer.invoke(
 			'PREFERRED_LANGUAGE',
-			this._store.preferredLanguage
+			this.languageSelector.preferredLanguage
 		);
+
 		try {
 			let isStarted = false;
 			if (this._isServer) {
