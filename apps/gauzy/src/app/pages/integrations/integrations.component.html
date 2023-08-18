@@ -13,67 +13,43 @@
 							id="integrationSearch"
 							type="text"
 							nbInput
-							placeholder="{{
-								'INTEGRATIONS.SEARCH_INTEGRATIONS' | translate
-							}}"
-							(keyup)="doSearch($event)"
+							[placeholder]="'INTEGRATIONS.SEARCH_INTEGRATIONS' | translate"
+							(input)="doSearch($event)"
 						/>
 					</div>
 				</div>
 				<div class="row mt-4">
 					<div class="col-xl-4 col-6">
 						<div class="selectors">
-							<div>
+							<div *ngIf=" integrationGroups$ | async as integrationGroups">
 								<label>{{ 'INTEGRATIONS.INTEGRATION' | translate }}</label>
 								<nb-select
-									class="integration-selector"
-									placeholder="{{
-										'INTEGRATIONS.SELECT_GROUPS' | translate
-									}}"
-									*ngIf="
-										integrationGroups$
-											| async as integrationGroups
-									"
-									[selected]="
-										selectedIntegrationTypeId$ | async
-									"
 									fullWidth
-									(selectedChange)="
-										setSelectedIntegrationType($event)
-									"
+									class="integration-selector"
+									[placeholder]="'INTEGRATIONS.SELECT_GROUPS' | translate"
+									[selected]=" selectedIntegrationTypeId$ | async "
+									(selectedChange)=" setSelectedIntegrationType($event) "
 								>
 									<nb-option-group
-										*ngFor="
-											let integrationGroup of integrationGroups
-										"
-										title="{{ integrationGroup.groupName }}"
+										*ngFor=" let integrationGroup of integrationGroups"
+										[title]="integrationGroup.groupName"
 									>
 										<nb-option
-											*ngFor="
-												let integrationType of integrationGroup.integrationTypes
-											"
+											*ngFor=" let integrationType of integrationGroup.integrationTypes"
 											[value]="integrationType.id"
-											>{{
-												integrationType.name
-											}}</nb-option
 										>
+											{{ integrationType.name }}
+										</nb-option >
 									</nb-option-group>
 								</nb-select>
 							</div>
 							<div>
 								<label>{{ 'INTEGRATIONS.PAID' | translate }}</label>
 								<nb-select
-									placeholder="{{
-										'INTEGRATIONS.FILTER_INTEGRATIONS'
-											| translate
-									}}"
+									[placeholder]="'INTEGRATIONS.FILTER_INTEGRATIONS' | translate"
 									fullWidth
-									[selected]="
-										selectedIntegrationFilter$ | async
-									"
-									(selectedChange)="
-										setSelectedIntegrationFilter($event)
-									"
+									[selected]="selectedIntegrationFilter$ | async"
+									(selectedChange)="setSelectedIntegrationFilter($event)"
 								>
 									<nb-option
 										*ngFor="let filter of filters"
@@ -111,7 +87,7 @@
 					<a
 						class="list-item"
 						[ngClass]="integration.isComingSoon ? 'disabled': ''"
-						[routerLink]="['../', integration.navigationUrl]"
+						[routerLink]="[integration.navigationUrl]"
 					>
 						<img
 							[src]="integration.fullImgUrl"

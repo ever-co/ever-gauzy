@@ -1,7 +1,6 @@
 import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { IntegrationsRoutingModule } from './integrations-routing.module';
-import { IntegrationsComponent } from './components/integrations/integrations.component';
+
 import {
 	NbCardModule,
 	NbSelectModule,
@@ -9,12 +8,13 @@ import {
 	NbSpinnerModule,
 	NbButtonModule
 } from '@nebular/theme';
-import { IntegrationsListComponent } from './components/integrations-list/integrations-list.component';
+import { IntegrationsRoutingModule } from './integrations-routing.module';
+import { IntegrationsComponent } from './integrations.component';
 import { SharedModule } from '../../@shared/shared.module';
 import { TranslateModule } from '../../@shared/translate/translate.module';
 
 @NgModule({
-	declarations: [IntegrationsComponent, IntegrationsListComponent],
+	declarations: [IntegrationsComponent],
 	imports: [
 		CommonModule,
 		IntegrationsRoutingModule,
@@ -27,4 +27,4 @@ import { TranslateModule } from '../../@shared/translate/translate.module';
 		TranslateModule
 	]
 })
-export class IntegrationsModule {}
+export class IntegrationsModule { }

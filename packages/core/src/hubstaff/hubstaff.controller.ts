@@ -1,80 +1,75 @@
-import { Controller, Post, Body, Get, Param, Query, Res } from '@nestjs/common';
+import { Controller, Post, Body, Get, Param, UseGuards } from '@nestjs/common';
 import {
 	IIntegrationTenant,
 	IHubstaffOrganization,
 	IHubstaffProject,
 	IIntegrationMap,
-	IIntegrationSetting
+	IIntegrationSetting,
+	PermissionsEnum,
+	ICreateIntegrationDto,
+	IOrganization
 } from '@gauzy/contracts';
 import { ApiTags } from '@nestjs/swagger';
-import { ConfigService } from '@gauzy/config';
-import { Public } from '@gauzy/common';
+import { Permissions } from './../shared/decorators';
+import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
 import { UUIDValidationPipe } from './../shared/pipes';
 import { HubstaffService } from './hubstaff.service';
 
-@ApiTags('Integrations')
+@ApiTags('Hubstaff Integrations')
+@UseGuards(TenantPermissionGuard, PermissionGuard)
+@Permissions(PermissionsEnum.INTEGRATION_VIEW)
 @Controller()
 export class HubstaffController {
 	constructor(
 		private readonly _hubstaffService: HubstaffService,
-		private readonly _config: ConfigService
-	) {}
+	) { }
 
 	/**
-	 * Hubstaff Integration Authorization Flow Callback
 	 *
-	 * @param code
-	 * @param state
-	 * @param res
+	 *
+	 * @param integrationId
 	 * @returns
 	 */
-	@Public()
-	@Get('callback')
-	async hubstaffIntegrationCallback(
-		@Query('code') code: string,
-		@Query('state') state: string,
-		@Res() res
-	) {
-		try {
-			if (code) {
-				return res.redirect(
-					`${this._config.get('clientBaseUrl')}/#/pages/integrations/hubstaff?code=${code}&state=${state}`
-				);
-			}
-			return res.redirect(
-				`${this._config.get('clientBaseUrl')}/#/pages/integrations/hubstaff`
-			);
-		} catch (error) {
-			return res.redirect(
-				`${this._config.get('clientBaseUrl')}/#/pages/integrations/hubstaff`
-			);
-		}
-	}
-
 	@Get('/token/:integrationId')
 	async getHubstaffTokenByIntegration(
-		@Param('integrationId', UUIDValidationPipe) integrationId: string
+		@Param('integrationId', UUIDValidationPipe) integrationId: IIntegrationTenant['id']
 	): Promise<IIntegrationSetting> {
 		return await this._hubstaffService.getHubstaffToken(integrationId);
 	}
 
+	/**
+	 *
+	 * @param integrationId
+	 * @returns
+	 */
 	@Get('/refresh-token/:integrationId')
 	async refreshHubstaffTokenByIntegration(
-		@Param('integrationId', UUIDValidationPipe) integrationId: string
+		@Param('integrationId', UUIDValidationPipe) integrationId: IIntegrationTenant['id']
 	): Promise<string> {
 		return await this._hubstaffService.refreshToken(integrationId);
 	}
 
+	/**
+	 *
+	 * @param body
+	 * @returns
+	 */
 	@Post('/integration')
 	async addIntegration(
-		@Body() body
+		@Body() body: ICreateIntegrationDto
 	): Promise<IIntegrationTenant> {
 		return await this._hubstaffService.addIntegration(body);
 	}
 
+	/**
+	 *
+	 * @param integrationId
+	 * @param body
+	 * @returns
+	 */
 	@Post('/organizations/:integrationId')
 	async getOrganizations(
-		@Param('integrationId', UUIDValidationPipe) integrationId: string,
+		@Param('integrationId', UUIDValidationPipe) integrationId: IIntegrationTenant['id'],
 		@Body() body
 	): Promise<IHubstaffOrganization[]> {
 		return await this._hubstaffService.fetchOrganizations({
@@ -82,47 +77,71 @@ export class HubstaffController {
 		});
 	}
 
+	/**
+	 *
+	 * @param organizationId
+	 * @param body
+	 * @returns
+	 */
 	@Post('/projects/:organizationId')
 	async getProjects(
-		@Param('organizationId') organizationId: string,
+		@Param('organizationId') organizationId: IOrganization['id'],
 		@Body() body
 	): Promise<IHubstaffProject[]> {
 		return await this._hubstaffService.fetchOrganizationProjects({
-			organizationId,
-			...body
+			...body,
+			organizationId
 		});
 	}
 
+	/**
+	 *
+	 * @param integrationId
+	 * @param body
+	 * @returns
+	 */
 	@Post('/sync-projects/:integrationId')
 	async syncProjects(
-		@Param('integrationId', UUIDValidationPipe) integrationId: string,
+		@Param('integrationId', UUIDValidationPipe) integrationId: IIntegrationTenant['id'],
 		@Body() body
 	): Promise<IIntegrationMap[]> {
 		return await this._hubstaffService.syncProjects({
-			integrationId,
-			...body
+			...body,
+			integrationId
 		});
 	}
 
+	/**
+	 *
+	 * @param integrationId
+	 * @param body
+	 * @returns
+	 */
 	@Post('/sync-organizations/:integrationId')
 	async syncOrganizations(
 		@Param('integrationId', UUIDValidationPipe) integrationId: string,
 		@Body() body
 	): Promise<IIntegrationMap[]> {
 		return await this._hubstaffService.syncOrganizations({
-			integrationId,
-			...body
+			...body,
+			integrationId
 		});
 	}
 
+	/**
+	 *
+	 * @param integrationId
+	 * @param body
+	 * @returns
+	 */
 	@Post('/auto-sync/:integrationId')
 	async autoSync(
 		@Param('integrationId', UUIDValidationPipe) integrationId: string,
 		@Body() body
 	): Promise<any> {
 		return await this._hubstaffService.autoSync({
-			integrationId,
-			...body
+			...body,
+			integrationId
 		});
 	}
 }

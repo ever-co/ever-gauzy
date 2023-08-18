@@ -17,6 +17,7 @@ import { IntegrationTenantModule } from './../integration-tenant/integration-ten
 import { IntegrationSettingModule } from './../integration-setting/integration-setting.module';
 import { OrganizationProjectModule } from './../organization-project/organization-project.module';
 import { ScreenshotModule } from './../time-tracking/screenshot/screenshot.module';
+import { HubstaffAuthorizationController } from './hubstaff-authorization.controller';
 
 @Module({
 	imports: [
@@ -38,7 +39,10 @@ import { ScreenshotModule } from './../time-tracking/screenshot/screenshot.modul
 		ScreenshotModule,
 		CqrsModule
 	],
-	controllers: [HubstaffController],
+	controllers: [
+		HubstaffAuthorizationController,
+		HubstaffController
+	],
 	providers: [HubstaffService]
 })
-export class HubstaffModule {}
+export class HubstaffModule { }
