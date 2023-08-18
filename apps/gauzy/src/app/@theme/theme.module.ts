@@ -72,6 +72,7 @@ import { PopupComponent } from './components/popup/popup.component';
 import { SidebarMenuModule } from '../@shared/sidebar-menu/sidebar-menu.module';
 import { DirectivesModule } from "../@shared/directives/directives.module";
 import { TimeTrackerStatusModule } from '../@shared/time-tracker/components/time-tracker-status/time-tracker-status.module';
+import { ThemeLanguageSelectorService } from './components/theme-sidebar/theme-settings/components/theme-language-selector.service';
 
 const NB_MODULES = [
 	NbLayoutModule,
@@ -139,7 +140,8 @@ const EXPORT_IMPORT = [CommonModule, ThemeSidebarModule, MatRippleModule];
 		UsersOrganizationsService,
 		OrganizationsService,
 		NbLayoutDirectionService,
-		LanguagesService
+		LanguagesService,
+		ThemeLanguageSelectorService
 	]
 })
 export class ThemeModule {
