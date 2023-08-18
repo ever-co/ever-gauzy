@@ -1,6 +1,8 @@
 import { RouterModule, Routes } from '@angular/router';
 import { NgModule } from '@angular/core';
 
+import { PermissionsEnum } from '@gauzy/contracts';
+import { NgxPermissionsGuard } from 'ngx-permissions';
 import { PagesComponent } from './pages.component';
 import { NotFoundComponent } from './miscellaneous/not-found/not-found.component';
 import { DateRangePickerResolver } from '../@theme/components/header/selectors/date-range-picker';
@@ -648,7 +650,21 @@ const routes: Routes = [
 				path: 'integrations',
 				loadChildren: () => import('./integrations/integrations.module').then(
 					(m) => m.IntegrationsModule
-				)
+				),
+				/** */
+				canActivate: [NgxPermissionsGuard],
+				data: {
+					permissions: {
+						only: [PermissionsEnum.INTEGRATION_VIEW],
+						redirectTo: '/pages/dashboard'
+					},
+					selectors: {
+						project: false,
+						employee: false,
+						organization: false,
+						date: false
+					}
+				}
 			},
 			{
 				path: 'candidates',
@@ -705,4 +721,4 @@ const routes: Routes = [
 	imports: [RouterModule.forChild(routes)],
 	exports: [RouterModule]
 })
-export class PagesRoutingModule {}
+export class PagesRoutingModule { }

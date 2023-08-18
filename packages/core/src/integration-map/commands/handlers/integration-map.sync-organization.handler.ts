@@ -13,13 +13,13 @@ export class IntegrationMapSyncOrganizationHandler
 	constructor(
 		private readonly _commandBus: CommandBus,
 		private readonly _integrationMapService: IntegrationMapService
-	) {}
+	) { }
 
 	/**
 	 * Third party organization integrated and mapped
-	 * 
-	 * @param command 
-	 * @returns 
+	 *
+	 * @param command
+	 * @returns
 	 */
 	public async execute(
 		command: IntegrationMapSyncOrganizationCommand

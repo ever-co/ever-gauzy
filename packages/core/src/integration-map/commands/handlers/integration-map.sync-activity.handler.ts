@@ -1,10 +1,10 @@
 import { CommandHandler, ICommandHandler, CommandBus } from '@nestjs/cqrs';
+import { IntegrationEntity } from '@gauzy/contracts';
 import { ActivityCreateCommand, ActivityUpdateCommand } from './../../../time-tracking/activity/commands';
 import { IntegrationMapSyncActivityCommand } from './../integration-map.sync-activity.command';
 import { IntegrationMapSyncEntityCommand } from './../integration-map.sync-entity.command';
 import { IntegrationMapService } from '../../integration-map.service';
 import { RequestContext } from '../../../core/context';
-import { IntegrationEntity } from '@gauzy/contracts';
 
 @CommandHandler(IntegrationMapSyncActivityCommand)
 export class IntegrationMapSyncActivityHandler
@@ -13,13 +13,13 @@ export class IntegrationMapSyncActivityHandler
 	constructor(
 		private readonly _commandBus: CommandBus,
 		private readonly _integrationMapService: IntegrationMapService
-	) {}
+	) { }
 
 	/**
 	 * Third party activity integrated and mapped
-	 * 
-	 * @param command 
-	 * @returns 
+	 *
+	 * @param command
+	 * @returns
 	 */
 	public async execute(
 		command: IntegrationMapSyncActivityCommand
