@@ -3799,7 +3799,8 @@
 			"MOBILE": "Mobile Timer App",
 			"UPWORK": "Upwork",
 			"HUBSTAFF": "HubStaff",
-			"BROWSER_EXTENSION": "Browser Extension"
+			"BROWSER_EXTENSION": "Browser Extension",
+			"TEAMS": "Teams"
 		},
 		"LAST_WORKED": "Last worked:"
 	},
