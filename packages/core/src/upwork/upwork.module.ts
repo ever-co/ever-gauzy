@@ -28,7 +28,7 @@ import {
 } from './../core/entities/internal';
 import { UpworkController } from './upwork.controller';
 import { UpworkService } from './upwork.service';
-
+import { UpworkAuthorizationController } from './upwork-authorization.controller';
 
 @Module({
 	imports: [
@@ -54,7 +54,10 @@ import { UpworkService } from './upwork.service';
 		ExpenseCategoriesModule,
 		CqrsModule
 	],
-	controllers: [UpworkController],
+	controllers: [
+		UpworkAuthorizationController,
+		UpworkController
+	],
 	providers: [
 		UpworkJobService,
 		UpworkOffersService,
