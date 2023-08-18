@@ -32,7 +32,9 @@ export class IntegrationEntitySettingTied extends TenantOrganizationBaseEntity i
 	/**
 	 * IntegrationEntitySetting
 	 */
-	@ManyToOne(() => IntegrationEntitySetting, (it) => it.tiedEntities)
+	@ManyToOne(() => IntegrationEntitySetting, (it) => it.tiedEntities, {
+		onDelete: 'CASCADE'
+	})
 	@JoinColumn()
 	integrationEntitySetting?: IIntegrationEntitySetting;
 

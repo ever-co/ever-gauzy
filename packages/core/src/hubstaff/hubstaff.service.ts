@@ -64,6 +64,7 @@ import {
 	IntegrationMapSyncTimeLogCommand,
 	IntegrationMapSyncTimeSlotCommand
 } from './../integration-map/commands';
+import { IntegrationTenantCreateCommand } from './../integration-tenant/commands';
 import { RequestContext } from './../core/context';
 import { mergeOverlappingDateRanges } from './../core/utils';
 
@@ -181,6 +182,7 @@ export class HubstaffService {
 		}
 	}
 
+
 	async getHubstaffToken(integrationId): Promise<IIntegrationSetting> {
 		const {
 			record: integrationSetting
@@ -196,6 +198,7 @@ export class HubstaffService {
 	async addIntegration(
 		body: ICreateIntegrationDto
 	): Promise<IIntegrationTenant> {
+
 		const tenantId = RequestContext.currentTenantId();
 		const { client_id, client_secret, code, redirect_uri, organizationId } = body;
 
@@ -206,12 +209,10 @@ export class HubstaffService {
 		urlParams.append('redirect_uri', redirect_uri);
 		urlParams.append('client_secret', client_secret);
 
-		const tiedEntities = [];
-		for await (const entity of PROJECT_TIED_ENTITIES) {
-			tiedEntities.push(
-				Object.assign(entity, { organizationId, tenantId })
-			);
-		}
+		const tiedEntities = PROJECT_TIED_ENTITIES.map((entity) => Object.assign(entity, {
+			organizationId,
+			tenantId
+		}))
 
 		const entitySettings = DEFAULT_ENTITY_SETTINGS.map(
 			(settingEntity) => {
@@ -236,8 +237,8 @@ export class HubstaffService {
 				}
 			})
 			.pipe(
-				switchMap(({ data }) =>
-					this._integrationTenantService.create({
+				switchMap(({ data }) => this._commandBus.execute(
+					new IntegrationTenantCreateCommand({
 						organizationId,
 						tenantId,
 						name: IntegrationEnum.HUBSTAFF,
@@ -260,10 +261,14 @@ export class HubstaffService {
 								settingsValue: data.refresh_token
 							}
 						].map((setting) => {
-							return { organizationId, ...setting };
+							return {
+								...setting,
+								organizationId,
+								tenantId
+							};
 						})
 					})
-				),
+				)),
 				catchError((err) => {
 					throw new BadRequestException(err);
 				})
