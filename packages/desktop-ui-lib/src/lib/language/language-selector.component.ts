@@ -16,6 +16,7 @@ import {
 	BehaviorSubject,
 	Observable,
 	concatMap,
+	Subject,
 } from 'rxjs';
 import { Store } from '../services';
 import { LanguageSelectorService } from './language-selector.service';
@@ -32,6 +33,8 @@ export class LanguageSelectorComponent implements OnInit, AfterViewInit {
 	private _user: IUser;
 	private _languages$: BehaviorSubject<ILanguage[]>;
 	private _preferredLanguage: LanguagesEnum;
+	private _isSetup: boolean;
+	private _update$: Subject<LanguagesEnum>;
 
 	constructor(
 		private readonly _store: Store,
@@ -44,6 +47,8 @@ export class LanguageSelectorComponent implements OnInit, AfterViewInit {
 	) {
 		this._languages$ = new BehaviorSubject([]);
 		this._preferredLanguage = LanguagesEnum.ENGLISH;
+		this._update$ = new Subject();
+		this._isSetup = false;
 	}
 
 	ngOnInit(): void {
@@ -69,7 +74,7 @@ export class LanguageSelectorComponent implements OnInit, AfterViewInit {
 				untilDestroyed(this)
 			)
 			.subscribe();
-		this._store.preferredLanguage$
+		this._update$
 			.pipe(
 				filter(
 					(preferredLanguage: LanguagesEnum) => !!preferredLanguage
@@ -85,6 +90,11 @@ export class LanguageSelectorComponent implements OnInit, AfterViewInit {
 						'preferred_language_change',
 						preferredLanguage
 					)
+				),
+				filter(() => !this.isSetup || !this._store.isOffline),
+				tap(
+					(preferredLanguage: LanguagesEnum) =>
+						(this._store.preferredLanguage = preferredLanguage)
 				),
 				concatMap((preferredLanguage: LanguagesEnum) =>
 					this.changePreferredLanguage({
@@ -109,10 +119,21 @@ export class LanguageSelectorComponent implements OnInit, AfterViewInit {
 				});
 			}
 		);
+		from(this._electronService.ipcRenderer.invoke('PREFERRED_LANGUAGE'))
+			.pipe(
+				tap((language: LanguagesEnum) => {
+					this.updatePreferredLanguage = language;
+				}),
+				untilDestroyed(this)
+			)
+			.subscribe();
 	}
 
 	private async _loadLanguages() {
-		const { items = [] } = await this._languageService.system();
+		const { items = [] } =
+			this.isSetup || this._store.isOffline
+				? { items: [] }
+				: await this._languageService.system();
 		this._store.systemLanguages =
 			items.filter((item: ILanguage) => item.is_system) || [];
 	}
@@ -176,10 +197,18 @@ export class LanguageSelectorComponent implements OnInit, AfterViewInit {
 		this._preferredLanguage = value;
 	}
 
-	@Input('preferredLanguage')
 	public set updatePreferredLanguage(language: LanguagesEnum) {
 		if (language) {
-			this._store.preferredLanguage = language;
+			this._update$.next(language);
 		}
+	}
+
+	@Input('setup')
+	public set isSetup(value: boolean) {
+		this._isSetup = value;
+	}
+
+	public get isSetup(): boolean {
+		return this._isSetup;
 	}
 }
