@@ -21,7 +21,7 @@
 		</nb-list>
 		<gauzy-language-selector
 			*ngIf="!isDesktop"
-			[preferredLanguage]="appSetting?.preferredLanguage"
+			[setup]="isServer"
 			class="language"
 		></gauzy-language-selector>
 	</nb-sidebar>
