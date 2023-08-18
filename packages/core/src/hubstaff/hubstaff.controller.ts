@@ -5,7 +5,9 @@ import {
 	IHubstaffProject,
 	IIntegrationMap,
 	IIntegrationSetting,
-	PermissionsEnum
+	PermissionsEnum,
+	ICreateIntegrationDto,
+	IOrganization
 } from '@gauzy/contracts';
 import { ApiTags } from '@nestjs/swagger';
 import { Permissions } from './../shared/decorators';
@@ -24,12 +26,13 @@ export class HubstaffController {
 
 	/**
 	 *
+	 *
 	 * @param integrationId
 	 * @returns
 	 */
 	@Get('/token/:integrationId')
 	async getHubstaffTokenByIntegration(
-		@Param('integrationId', UUIDValidationPipe) integrationId: string
+		@Param('integrationId', UUIDValidationPipe) integrationId: IIntegrationTenant['id']
 	): Promise<IIntegrationSetting> {
 		return await this._hubstaffService.getHubstaffToken(integrationId);
 	}
@@ -41,7 +44,7 @@ export class HubstaffController {
 	 */
 	@Get('/refresh-token/:integrationId')
 	async refreshHubstaffTokenByIntegration(
-		@Param('integrationId', UUIDValidationPipe) integrationId: string
+		@Param('integrationId', UUIDValidationPipe) integrationId: IIntegrationTenant['id']
 	): Promise<string> {
 		return await this._hubstaffService.refreshToken(integrationId);
 	}
@@ -53,7 +56,7 @@ export class HubstaffController {
 	 */
 	@Post('/integration')
 	async addIntegration(
-		@Body() body
+		@Body() body: ICreateIntegrationDto
 	): Promise<IIntegrationTenant> {
 		return await this._hubstaffService.addIntegration(body);
 	}
@@ -66,7 +69,7 @@ export class HubstaffController {
 	 */
 	@Post('/organizations/:integrationId')
 	async getOrganizations(
-		@Param('integrationId', UUIDValidationPipe) integrationId: string,
+		@Param('integrationId', UUIDValidationPipe) integrationId: IIntegrationTenant['id'],
 		@Body() body
 	): Promise<IHubstaffOrganization[]> {
 		return await this._hubstaffService.fetchOrganizations({
@@ -82,12 +85,12 @@ export class HubstaffController {
 	 */
 	@Post('/projects/:organizationId')
 	async getProjects(
-		@Param('organizationId') organizationId: string,
+		@Param('organizationId') organizationId: IOrganization['id'],
 		@Body() body
 	): Promise<IHubstaffProject[]> {
 		return await this._hubstaffService.fetchOrganizationProjects({
-			organizationId,
-			...body
+			...body,
+			organizationId
 		});
 	}
 
@@ -99,12 +102,12 @@ export class HubstaffController {
 	 */
 	@Post('/sync-projects/:integrationId')
 	async syncProjects(
-		@Param('integrationId', UUIDValidationPipe) integrationId: string,
+		@Param('integrationId', UUIDValidationPipe) integrationId: IIntegrationTenant['id'],
 		@Body() body
 	): Promise<IIntegrationMap[]> {
 		return await this._hubstaffService.syncProjects({
-			integrationId,
-			...body
+			...body,
+			integrationId
 		});
 	}
 
@@ -120,8 +123,8 @@ export class HubstaffController {
 		@Body() body
 	): Promise<IIntegrationMap[]> {
 		return await this._hubstaffService.syncOrganizations({
-			integrationId,
-			...body
+			...body,
+			integrationId
 		});
 	}
 
@@ -137,8 +140,8 @@ export class HubstaffController {
 		@Body() body
 	): Promise<any> {
 		return await this._hubstaffService.autoSync({
-			integrationId,
-			...body
+			...body,
+			integrationId
 		});
 	}
 }
