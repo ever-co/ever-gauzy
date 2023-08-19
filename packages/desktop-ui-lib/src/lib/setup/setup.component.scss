@@ -134,7 +134,7 @@ $border-radius: calc(2 * var(--border-radius));
   top: 10px;
 }
 
-.integraion-label {
+.integration-label {
   font-size: 12px;
   font-weight: 600;
 }
@@ -218,4 +218,10 @@ $border-radius: calc(2 * var(--border-radius));
 
 h4 {
   font-weight: 600;
+}
+
+.lang-selector {
+	position: absolute;
+	left: 2rem;
+	top: 4rem;
 }

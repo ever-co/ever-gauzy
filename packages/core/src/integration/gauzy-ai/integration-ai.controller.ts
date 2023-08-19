@@ -1,9 +1,13 @@
-import { Body, Controller, Post } from '@nestjs/common';
+import { Body, Controller, Post, UseGuards } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
-import { IIntegrationKeySecretPairInput, IIntegrationTenant } from '@gauzy/contracts';
+import { IIntegrationKeySecretPairInput, IIntegrationTenant, PermissionsEnum } from '@gauzy/contracts';
+import { Permissions } from './../../shared/decorators';
+import { PermissionGuard, TenantPermissionGuard } from './../../shared/guards';
 import { GauzyAIIntegrationService } from './integration-ai.service';
 
 @ApiTags('Integrations')
+@UseGuards(TenantPermissionGuard, PermissionGuard)
+@Permissions(PermissionsEnum.INTEGRATION_VIEW)
 @Controller()
 export class GauzyAIIntegrationController {
 

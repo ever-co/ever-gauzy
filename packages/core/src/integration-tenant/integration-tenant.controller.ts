@@ -8,16 +8,18 @@ import {
 } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { ApiOperation, ApiResponse } from '@nestjs/swagger';
-import { IIntegrationTenant } from '@gauzy/contracts';
+import { IIntegrationTenant, PermissionsEnum } from '@gauzy/contracts';
 import { UUIDValidationPipe } from './../shared/pipes';
-import { TenantPermissionGuard } from './../shared/guards';
+import { Permissions } from './../shared/decorators';
+import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
+import { RelationsQueryDTO } from './../shared/dto';
 import { IntegrationTenant } from './integration-tenant.entity';
 import { IntegrationTenantService } from './integration-tenant.service';
 import { IntegrationRememberStateQueryDTO } from './dto';
-import { RelationsQueryDTO } from './../shared/dto';
 
 @ApiTags('IntegrationTenant')
-@UseGuards(TenantPermissionGuard)
+@UseGuards(TenantPermissionGuard, PermissionGuard)
+@Permissions(PermissionsEnum.INTEGRATION_VIEW)
 @Controller()
 export class IntegrationTenantController {
 	constructor(

@@ -24,6 +24,10 @@ import {
 import { FormsModule } from '@angular/forms';
 import { TimeTrackerService } from '../time-tracker/time-tracker.service';
 import { DesktopDirectiveModule } from '../directives/desktop-directive.module';
+import { LanguageModule } from '../language/language.module';
+import { TranslateModule } from '@ngx-translate/core';
+import { Store } from '../services';
+import { LanguageSelectorService } from '../language/language-selector.service';
 
 @NgModule({
 	declarations: [SettingsComponent],
@@ -46,12 +50,16 @@ import { DesktopDirectiveModule } from '../directives/desktop-directive.module';
 		NbAccordionModule,
 		NbTooltipModule,
 		NbSpinnerModule,
-		DesktopDirectiveModule
+		DesktopDirectiveModule,
+		LanguageModule,
+		TranslateModule
 	],
 	providers: [
 		NbToastrService,
 		TimeTrackerService,
-		NbDialogService
+		NbDialogService,
+		Store,
+		LanguageSelectorService
 	],
 	exports: [SettingsComponent]
 })

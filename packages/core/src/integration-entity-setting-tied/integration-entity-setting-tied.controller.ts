@@ -8,19 +8,21 @@ import {
 } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { CommandBus } from '@nestjs/cqrs';
-import { IIntegrationEntitySettingTied } from '@gauzy/contracts';
+import { IIntegrationEntitySettingTied, PermissionsEnum } from '@gauzy/contracts';
 import { IntegrationEntitySettingTied } from './integration-entity-setting-tied.entity';
-import { TenantPermissionGuard } from './../shared/guards';
+import { Permissions } from './../shared/decorators';
+import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
 import { UUIDValidationPipe } from './../shared/pipes';
 import { IntegrationEntitySettingTiedUpdateCommand } from './commands';
 
 @ApiTags('IntegrationEntitySettingTied')
-@UseGuards(TenantPermissionGuard)
+@UseGuards(TenantPermissionGuard, PermissionGuard)
+@Permissions(PermissionsEnum.INTEGRATION_VIEW)
 @Controller()
 export class IntegrationEntitySettingTiedController {
 	constructor(
 		private readonly _commandBus: CommandBus
-	) {}
+	) { }
 
 	@ApiOperation({ summary: 'Update settings.' })
 	@ApiResponse({

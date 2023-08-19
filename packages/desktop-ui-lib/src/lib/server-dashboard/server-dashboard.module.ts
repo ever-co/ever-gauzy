@@ -12,6 +12,8 @@ import {
 	NbAccordionModule
 } from '@nebular/theme';
 import { DesktopDirectiveModule } from '../directives/desktop-directive.module';
+import { NgxTranslateModule } from '../ngx-translate';
+import { LanguageSelectorService } from '../language/language-selector.service';
 
 @NgModule({
 	declarations: [ServerDashboardComponent],
@@ -24,9 +26,10 @@ import { DesktopDirectiveModule } from '../directives/desktop-directive.module';
 		NbButtonModule,
 		NbSpinnerModule,
 		NbAccordionModule,
-		DesktopDirectiveModule
+		DesktopDirectiveModule,
+		NgxTranslateModule
 	],
 	exports: [ServerDashboardComponent],
-	providers: [NbDialogService]
+	providers: [NbDialogService, LanguageSelectorService]
 })
 export class ServerDashboardModule {}

@@ -8,7 +8,7 @@ import {
 	OneToMany,
 	Index
 } from 'typeorm';
-import { IsString } from 'class-validator';
+import { IsBoolean, IsNotEmpty, IsUUID } from 'class-validator';
 import {
 	IIntegrationEntitySetting,
 	IIntegrationEntitySettingTied,
@@ -21,48 +21,51 @@ import {
 } from '../core/entities/internal';
 
 @Entity('integration_entity_setting')
-export class IntegrationEntitySetting
-	extends TenantOrganizationBaseEntity
-	implements IIntegrationEntitySetting {
+export class IntegrationEntitySetting extends TenantOrganizationBaseEntity implements IIntegrationEntitySetting {
 
 	@ApiProperty({ type: () => String })
+	@IsNotEmpty()
 	@Column()
 	entity: string;
 
 	@ApiProperty({ type: () => Boolean })
+	@IsNotEmpty()
+	@IsBoolean()
 	@Column()
 	sync: boolean;
 
 	/*
-    |--------------------------------------------------------------------------
-    | @ManyToOne 
-    |--------------------------------------------------------------------------
-    */
+	|--------------------------------------------------------------------------
+	| @ManyToOne
+	|--------------------------------------------------------------------------
+	*/
 
 	/**
 	 * IntegrationTenant
 	 */
 	@ApiPropertyOptional({ type: () => IntegrationTenant })
-	@ManyToOne(() => IntegrationTenant, (integration) => integration.entitySettings)
+	@ManyToOne(() => IntegrationTenant, (integration) => integration.entitySettings, {
+		onDelete: 'CASCADE'
+	})
 	@JoinColumn()
 	integration?: IIntegrationTenant;
 
-	@ApiProperty({ type: () => String, readOnly: true })
+	@ApiProperty({ type: () => String })
+	@IsUUID()
 	@RelationId((it: IntegrationEntitySetting) => it.integration)
-	@IsString()
 	@Index()
 	@Column()
-	readonly integrationId?: string;
+	integrationId?: IIntegrationTenant['id'];
 
 	/*
-    |--------------------------------------------------------------------------
-    | @OneToMany 
-    |--------------------------------------------------------------------------
-    */
+	|--------------------------------------------------------------------------
+	| @OneToMany
+	|--------------------------------------------------------------------------
+	*/
 
 	@ApiPropertyOptional({ type: IntegrationEntitySettingTied, isArray: true })
 	@OneToMany(() => IntegrationEntitySettingTied, (tiedEntity) => tiedEntity.integrationEntitySetting, {
-		cascade: true 
+		cascade: true
 	})
 	@JoinColumn()
 	tiedEntities?: IIntegrationEntitySettingTied[];

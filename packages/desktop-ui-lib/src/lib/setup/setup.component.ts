@@ -10,7 +10,8 @@ import { SetupService } from './setup.service';
 import { NbDialogService } from '@nebular/theme';
 import { AlertComponent } from '../../lib/dialogs/alert/alert.component';
 import { ElectronService, LoggerService } from '../electron/services';
-import { ErrorHandlerService } from '../services';
+import { ErrorHandlerService, Store } from '../services';
+import { LanguageSelectorComponent } from '../language/language-selector.component';
 
 @Component({
 	selector: 'ngx-setup',
@@ -20,6 +21,7 @@ import { ErrorHandlerService } from '../services';
 })
 export class SetupComponent implements OnInit {
 	@ViewChild('dialogOpenBtn') btnDialogOpen: ElementRef<HTMLElement>;
+	@ViewChild('selector') languageSelector: LanguageSelectorComponent;
 	public isSaving = false;
 	public isCheckConnection = false;
 	constructor(
@@ -28,7 +30,8 @@ export class SetupComponent implements OnInit {
 		private dialogService: NbDialogService,
 		private electronService: ElectronService,
 		private _errorHandlerService: ErrorHandlerService,
-		private _loggerServer: LoggerService
+		private _loggerServer: LoggerService,
+		private _store: Store
 	) {
 		electronService.ipcRenderer.on('setup-data', (event, arg) => {
 			this.desktopFeatures.gauzyPlatform = arg.gauzyWindow;
@@ -186,33 +189,14 @@ export class SetupComponent implements OnInit {
 	};
 
 	runApp = false;
-	welcomeTitle =
-		'Welcome to Ever® Gauzy™ - Open-Source Business Management Platform (ERP/CRM/HRM)';
-	welcomeLabel = `
-		Gauzy Desktop App provides the full
-		functionality of the Gauzy Platform
-		available directly on your desktop
-		computer or a laptop. In addition,
-		it allows tracking work time,
-		activity recording, and the ability
-		to receive tracking
-		reminders/notifications.
-	`;
+	welcomeTitle = "TIMER_TRACKER.SETUP.TITLE";
+	welcomeLabel = "TIMER_TRACKER.SETUP.LABEL";
 
 	welcomeText() {
 		switch (this.appName) {
 			case 'gauzy-server':
-				this.welcomeTitle = 'GAUZY SERVER INSTALLATION WIZARD';
-				this.welcomeLabel = `
-					Gauzy Desktop App provides the full
-					functionality of the Gauzy Platform
-					available directly on your desktop
-					computer or a laptop. In addition,
-					it allows tracking work time,
-					activity recording, and the ability
-					to receive tracking
-					reminders/notifications.
-				`;
+				this.welcomeTitle = "TIMER_TRACKER.SETUP.TITLE_SERVER";
+				this.welcomeLabel = "TIMER_TRACKER.SETUP.LABEL_SERVER"
 				break;
 
 			default:
@@ -315,6 +299,11 @@ export class SetupComponent implements OnInit {
 			...this.getThirdPartyConfig(),
 			...this.getFeature(),
 		};
+		await this.electronService.ipcRenderer.invoke(
+			'PREFERRED_LANGUAGE',
+			this.languageSelector.preferredLanguage
+		);
+
 		try {
 			let isStarted = false;
 			if (this._isServer) {

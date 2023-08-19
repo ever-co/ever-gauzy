@@ -13,14 +13,15 @@ import {
 import {
 	InitialFilter,
 	IntegrationsStoreService
-} from '../../../../@core/services';
+} from '../../@core/services';
 
 @Component({
-	selector: 'ngx-integrations-list',
-	templateUrl: './integrations-list.component.html',
-	styleUrls: ['./integrations-list.component.scss']
+	selector: 'ngx-integrations',
+	templateUrl: './integrations.component.html',
+	styleUrls: ['./integrations.component.scss']
 })
-export class IntegrationsListComponent implements OnInit {
+export class IntegrationsComponent implements OnInit {
+
 	integrations$: Observable<IIntegrationViewModel[]> = this._integrationsStore.integrations$;
 	integrationGroups$: Observable<any[]> = this._integrationsStore.integrationGroups$;
 	selectedIntegrationTypeId$: Observable<string> = this._integrationsStore.selectedIntegrationTypeId$;
@@ -31,8 +32,8 @@ export class IntegrationsListComponent implements OnInit {
 	filters = DEFAULT_INTEGRATION_PAID_FILTERS;
 
 	constructor(
-		private _integrationsStore: IntegrationsStoreService,
-		private renderer: Renderer2
+		private readonly _integrationsStore: IntegrationsStoreService,
+		private readonly renderer: Renderer2
 	) { }
 
 	ngOnInit() { }

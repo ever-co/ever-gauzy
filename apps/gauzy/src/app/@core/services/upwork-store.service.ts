@@ -90,7 +90,7 @@ export class UpworkStoreService {
 	constructor(
 		private _upworkService: UpworkService,
 		private _storeService: Store
-	) {}
+	) { }
 
 	getContracts(): Observable<IEngagement[]> {
 		const contracts$ = this._contracts$.getValue();
@@ -160,7 +160,7 @@ export class UpworkStoreService {
 
 		//map contract provider to get authorize info
 		const {
-			provider__reference: providerRefernceId,
+			provider__reference: providerReferenceId,
 			provider__id: providerId
 		} = contracts.find((contract: IEngagement) => true);
 
@@ -172,7 +172,7 @@ export class UpworkStoreService {
 			config,
 			employeeId: this.employeeId,
 			providerId,
-			providerRefernceId
+			providerReferenceId
 		});
 	}
 

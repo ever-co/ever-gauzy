@@ -11,13 +11,16 @@ import {
 import { TimeTrackerService } from '../time-tracker/time-tracker.service';
 import { NbDialogService, NbToastrService } from '@nebular/theme';
 import { ElectronService } from '../electron/services';
-import { BehaviorSubject, Observable, filter, tap, firstValueFrom } from 'rxjs';
+import { BehaviorSubject, Observable, filter, tap, firstValueFrom, from } from 'rxjs';
 import { AboutComponent } from '../dialogs/about/about.component';
 import { SetupService } from '../setup/setup.service';
 import * as moment from 'moment';
 import { ToastrNotificationService } from '../services';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { AuthStrategy } from '../auth';
+import { LanguagesEnum } from 'packages/contracts/dist';
+import { TranslateService } from '@ngx-translate/core';
+import { LanguageSelectorService } from '../language/language-selector.service';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -65,15 +68,15 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 	private _monitorsOption$: BehaviorSubject<any> = new BehaviorSubject([
 		{
 			value: 'all',
-			title: 'Capture All Monitors',
-			subtitle: 'All connected monitors',
+			title: 'TIMER_TRACKER.SETTINGS.CAPTURE_ALL_MONITORS',
+			subtitle: 'TIMER_TRACKER.SETTINGS.ALL_CONNECTED_MONITORS',
 			accent: 'basic',
 			status: 'basic'
 		},
 		{
 			value: 'active-only',
-			title: 'Capture Active Monitor',
-			subtitle: 'Monitor current pointer position',
+			title: 'TIMER_TRACKER.SETTINGS.CAPTURE_ACTIVE_MONITOR',
+			subtitle: 'TIMER_TRACKER.SETTINGS.MONITOR_CURRENT_POSITION',
 			iconStyle: 'all-monitor_icon',
 			accent: 'basic',
 			status: 'basic'
@@ -343,7 +346,8 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 		trackOnPcSleep: false,
 		preventDisplaySleep: false,
 		visibleAwOption: true,
-		visibleWakatimeOption: false
+		visibleWakatimeOption: false,
+		preferredLanguage: LanguagesEnum.ENGLISH
 	};
 	periodOption = [1, 3, 5, 10];
 	selectedPeriod = 5;
@@ -375,7 +379,7 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 	};
 	version = '0.0.0';
 	message = {
-		text: 'Application Update',
+		text: 'TIMER_TRACKER.SETTINGS.MESSAGES.APP_UPDATE',
 		status: 'basic'
 	};
 	downloadFinish = false;
@@ -432,6 +436,8 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 		private _dialogService: NbDialogService,
 		private _setupService: SetupService,
 		private _notifier: ToastrNotificationService,
+		private _translateService: TranslateService,
+		private _languageSelectorService: LanguageSelectorService,
 		@Optional()
 		private _authStrategy: AuthStrategy
 	) {
@@ -537,13 +543,13 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 					await this.getUserDetails();
 				}
 				this.menus = this.isServer
-					? ['Update', 'Advanced Setting', 'About']
+					? ['TIMER_TRACKER.SETTINGS.UPDATE', 'TIMER_TRACKER.SETTINGS.ADVANCED_SETTINGS', 'MENU.ABOUT']
 					: [
-						...(auth && auth.allowScreenshotCapture ? ['Screen Capture'] : []),
-						'Timer',
-						'Update',
-						'Advanced Setting',
-						'About'
+						...(auth && auth.allowScreenshotCapture ? ['TIMER_TRACKER.SETTINGS.SCREEN_CAPTURE'] : []),
+						'TIMER_TRACKER.TIMER',
+						'TIMER_TRACKER.SETTINGS.UPDATE',
+						'TIMER_TRACKER.SETTINGS.ADVANCED_SETTINGS',
+						'MENU.ABOUT'
 					];
 				const lastMenu =
 					this._selectedMenu && this.menus.includes(this._selectedMenu) ? this._selectedMenu : this.menus[0];
@@ -562,7 +568,7 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 			this._ngZone.run(() => {
 				this._available$.next(false);
 				this.message = {
-					text: 'Update Not Available',
+					text: 'TIMER_TRACKER.SETTINGS.MESSAGES.UPDATE_NOT_AVAILABLE',
 					status: 'basic'
 				};
 				this.logContents = this.message.text;
@@ -575,7 +581,7 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 			this._ngZone.run(() => {
 				this._available$.next(false);
 				this.message = {
-					text: 'Update Error',
+					text: 'TIMER_TRACKER.SETTINGS.MESSAGES.UPDATE_ERROR',
 					status: 'danger'
 				};
 				this.logContents = this.message.text;
@@ -590,7 +596,7 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 				this._available$.next(true);
 				this._loading$.next(false);
 				this.message = {
-					text: 'Update Available',
+					text: 'TIMER_TRACKER.SETTINGS.MESSAGES.UPDATE_AVAILABLE',
 					status: 'primary'
 				};
 				this.logContents = this.message.text;
@@ -602,7 +608,7 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 			this._ngZone.run(() => {
 				this._available$.next(true);
 				this.message = {
-					text: 'Update Download Completed',
+					text: 'TIMER_TRACKER.SETTINGS.MESSAGES.UPDATE_DOWNLOAD_COMPLETED',
 					status: 'success'
 				};
 				this.logContents = this.message.text;
@@ -619,7 +625,7 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 				this._available$.next(true);
 				this.showProgressBar = true;
 				this.message = {
-					text: 'Update Downloading',
+					text: 'TIMER_TRACKER.SETTINGS.MESSAGES.UPDATE_DOWNLOADING',
 					status: 'warning'
 				};
 				this.progressDownload = Math.floor(Number(arg.percent));
@@ -632,7 +638,7 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 
 		this.electronService.ipcRenderer.on('goto_update', () =>
 			this._ngZone.run(() => {
-				this.selectMenu('Update');
+				this.selectMenu('TIMER_TRACKER.SETTINGS.UPDATE');
 			})
 		);
 
@@ -645,7 +651,7 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 		);
 
 		this.electronService.ipcRenderer.on('goto_advanced_setting', () => {
-			this.selectMenu('Advanced Setting');
+			this.selectMenu('TIMER_TRACKER.SETTINGS.ADVANCED_SETTINGS');
 		});
 
 		this.electronService.ipcRenderer.on('logout_success', () =>
@@ -691,6 +697,30 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 				await this.restartAndUpdate();
 			});
 		});
+
+		this.electronService.ipcRenderer.on(
+			'preferred_language_change',
+			(event, language: LanguagesEnum) => {
+				this._ngZone.run(() => {
+					this._languageSelectorService.setLanguage(
+						language,
+						this._translateService
+					);
+				});
+			}
+		);
+
+		from(this.electronService.ipcRenderer.invoke('PREFERRED_LANGUAGE'))
+			.pipe(
+				tap((language: LanguagesEnum) =>
+					this._languageSelectorService.setLanguage(
+						language,
+						this._translateService
+					)
+				),
+				untilDestroyed(this)
+			)
+			.subscribe();
 	}
 
 	mappingAdditionalSetting(values) {
@@ -760,9 +790,9 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 		}
 	}
 
-	toggleNotificationSoundChange(value) {
-		this.updateSetting(value, 'mutedNotification');
-		this.muted = value;
+	toggleNotificationSoundChange(value: boolean) {
+		this.updateSetting(!value, 'mutedNotification');
+		this.muted = !value;
 	}
 
 	toggleAutoLaunch(value) {
@@ -979,16 +1009,16 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 		let message = '';
 		switch (arg.type) {
 			case 'update_config':
-				message = 'Server configuration updated, please wait till server restarts';
+				message = 'TIMER_TRACKER.SETTINGS.SERVER_CONFIG_UPDATED';
 				break;
 			case 'start_server':
 				this._restartDisable$.next(false);
-				message = 'Server Restated Successfully';
+				message = 'TIMER_TRACKER.SETTINGS.SERVER_RESTARTED';
 				break;
 			default:
 				break;
 		}
-		this.toastrService.show(message, `Success`, { status: arg.status });
+		this.toastrService.show(this._translateService.instant(message), `Success`, { status: arg.status });
 		this._isRestart$.next(false);
 	}
 
@@ -1168,7 +1198,7 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 					status: true,
 					isHidden: false,
 					isLoading: false,
-					message: `Connection to Server ${this.config.serverUrl} Succeeds`
+					message: 'TIMER_TRACKER.SETTINGS.MESSAGES.CONNECTION_SUCCEEDS'
 				});
 			}
 		} catch (error) {
