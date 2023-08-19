@@ -129,8 +129,8 @@ export interface IIntegrationMapSyncEntityInput extends IBasePerTenantAndOrganiz
 }
 
 export interface IIntegrationTenantCreateInput extends IBasePerTenantAndOrganizationEntityModel {
-	integration?: IIntegration;
 	integrationId?: IIntegration['id'];
+	name: IntegrationEnum;
 	entitySettings?: IIntegrationEntitySetting[];
 	settings?: IIntegrationSetting[];
 }
