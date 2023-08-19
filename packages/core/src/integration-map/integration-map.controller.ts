@@ -1,11 +1,15 @@
 import { Controller, UseGuards } from '@nestjs/common';
+import { PermissionsEnum } from '@gauzy/contracts';
+import { Permissions } from './../shared/decorators';
+import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
 import { IntegrationMapService } from './integration-map.service';
-import { TenantPermissionGuard } from './../shared/guards';
 
 @UseGuards(TenantPermissionGuard)
+@UseGuards(TenantPermissionGuard, PermissionGuard)
+@Permissions(PermissionsEnum.INTEGRATION_VIEW)
 @Controller()
 export class IntegrationMapController {
 	constructor(
-		private readonly integrationMapService: IntegrationMapService
-	) {}
+		private readonly _integrationMapService: IntegrationMapService
+	) { }
 }

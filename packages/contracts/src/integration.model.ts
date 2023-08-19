@@ -8,35 +8,32 @@ import {
 import { IOrganizationProjectsUpdateInput } from './organization-projects.model';
 import { ITag } from './tag.model';
 
-export interface IIntegrationSetting
-	extends IBasePerTenantAndOrganizationEntityModel {
+export interface IIntegrationSetting extends IBasePerTenantAndOrganizationEntityModel {
 	settingsName: string;
 	settingsValue: string;
 	integration?: IIntegrationTenant;
-	integrationId?: string;
+	integrationId?: IIntegrationTenant['id'];
 }
 
-export interface IIntegrationEntitySetting
-	extends IBasePerTenantAndOrganizationEntityModel {
+export interface IIntegrationEntitySetting extends IBasePerTenantAndOrganizationEntityModel {
 	entity: string;
 	sync: boolean;
 	integration?: IIntegrationTenant;
-	readonly integrationId?: string;
+	integrationId?: IIntegrationTenant['id'];
 	tiedEntities?: IIntegrationEntitySettingTied[];
 }
 
-export interface IIntegrationEntitySettingTied
-	extends IBasePerTenantAndOrganizationEntityModel {
+export interface IIntegrationEntitySettingTied extends IBasePerTenantAndOrganizationEntityModel {
 	entity: string;
 	sync: boolean;
 	integrationEntitySetting?: IIntegrationEntitySetting;
-	readonly integrationEntitySettingId?: string;
+	integrationEntitySettingId?: IIntegrationEntitySetting['id'];
 }
 
-export interface IIntegrationMap
-	extends IBasePerTenantAndOrganizationEntityModel {
+export interface IIntegrationMap extends IBasePerTenantAndOrganizationEntityModel {
 	integration: IIntegrationTenant;
-	sourceId: number;
+	integrationId: IIntegrationTenant['id'];
+	sourceId: string;
 	gauzyId: string;
 }
 
@@ -81,59 +78,52 @@ export interface IIntegrationFilter {
 	filter: string;
 }
 
-export interface IIntegrationMapSyncActivity
-	extends IBasePerTenantAndOrganizationEntityModel {
+export interface IIntegrationMapSyncActivity extends IBasePerTenantAndOrganizationEntityModel {
 	activity: IActivity;
 	integrationId: string;
-	sourceId: number;
+	sourceId: string;
 }
 
 export interface IIntegrationMapSyncScreenshot
 	extends IBasePerTenantAndOrganizationEntityModel {
 	screenshot: IHubstaffScreenshotActivity;
 	integrationId: string;
-	sourceId: number;
+	sourceId: string;
 }
 
-export interface IIntegrationMapSyncTimeLog
-	extends IBasePerTenantAndOrganizationEntityModel {
+export interface IIntegrationMapSyncTimeLog extends IBasePerTenantAndOrganizationEntityModel {
 	timeLog: Partial<ITimeLog>;
 	integrationId: string;
-	sourceId: number;
+	sourceId: string;
 }
 
-export interface IIntegrationMapSyncTimeSlot
-	extends IBasePerTenantAndOrganizationEntityModel {
+export interface IIntegrationMapSyncTimeSlot extends IBasePerTenantAndOrganizationEntityModel {
 	timeSlot: IHubstaffTimeSlotActivity;
 	integrationId: string;
-	sourceId: number;
+	sourceId: string;
 }
 
-export interface IIntegrationMapSyncTask
-	extends IBasePerTenantAndOrganizationEntityModel {
+export interface IIntegrationMapSyncTask extends IBasePerTenantAndOrganizationEntityModel {
 	taskInput: ITaskUpdateInput;
 	integrationId: string;
-	sourceId: number;
+	sourceId: string;
 }
 
-export interface IIntegrationMapSyncProject
-	extends IBasePerTenantAndOrganizationEntityModel {
+export interface IIntegrationMapSyncProject extends IBasePerTenantAndOrganizationEntityModel {
 	organizationProjectInput: IOrganizationProjectsUpdateInput;
 	integrationId: string;
-	sourceId: number;
+	sourceId: string;
 }
 
-export interface IIntegrationMapSyncOrganization
-	extends IBasePerTenantAndOrganizationEntityModel {
+export interface IIntegrationMapSyncOrganization extends IBasePerTenantAndOrganizationEntityModel {
 	organizationInput: IOrganizationUpdateInput;
 	integrationId: string;
-	sourceId: number;
+	sourceId: string;
 }
 
-export interface IIntegrationMapSyncEntityInput
-	extends IBasePerTenantAndOrganizationEntityModel {
+export interface IIntegrationMapSyncEntityInput extends IBasePerTenantAndOrganizationEntityModel {
 	integrationId: string;
-	sourceId: number;
+	sourceId: string;
 	gauzyId: string;
 	entity: string;
 }

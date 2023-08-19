@@ -30,6 +30,8 @@ export * from './lib/time-tracker/organization-selector/user-organization.servic
 export * from './lib/auth';
 export * from './lib/server-down/server-down.module';
 export * from './lib/interceptors';
+export * from './lib/ngx-translate';
+
 
 
 /**

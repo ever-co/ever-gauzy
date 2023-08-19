@@ -168,6 +168,11 @@ export function ipcMainHandler(
 			return;
 		}
 		try {
+			const setting = LocalStore.getStore('appSetting');
+			timeTrackerWindow.webContents.send(
+				'preferred_language_change',
+				setting?.preferredLanguage
+			);
 			const lastTime = await TimerData.getLastCaptureTimeSlot(
 				knex,
 				LocalStore.beforeRequestParams()
@@ -858,6 +863,14 @@ export function ipcTimer(
 	ipcMain.handle('LOGOUT_STOP', async (event, arg) => {
 		return await handleLogoutDialog(timeTrackerWindow);
 	});
+
+	ipcMain.on('preferred_language_change', (event, arg) => {
+		const windows = [timeTrackerWindow, settingWindow];
+		LocalStore.updateApplicationSetting({ preferredLanguage: arg });
+		for (const window of windows) {
+			window?.webContents?.send('preferred_language_change', arg);
+		}
+	})
 }
 
 export function removeMainListener() {

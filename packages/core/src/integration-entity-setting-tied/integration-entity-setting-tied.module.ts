@@ -6,18 +6,29 @@ import { IntegrationEntitySettingTied } from './integration-entity-setting-tied.
 import { IntegrationEntitySettingTiedController } from './integration-entity-setting-tied.controller';
 import { IntegrationEntitySettingTiedService } from './integration-entity-setting-tied.service';
 import { TenantModule } from '../tenant/tenant.module';
+import { UserModule } from './../user/user.module';
 
 @Module({
 	imports: [
 		RouterModule.forRoutes([
-			{ path: '/integration-entity-setting-tied', module: IntegrationEntitySettingTiedModule}
+			{ path: '/integration-entity-setting-tied', module: IntegrationEntitySettingTiedModule }
 		]),
-		TypeOrmModule.forFeature([IntegrationEntitySettingTied]),
+		TypeOrmModule.forFeature([
+			IntegrationEntitySettingTied
+		]),
 		TenantModule,
+		UserModule,
 		CqrsModule
 	],
-	controllers: [IntegrationEntitySettingTiedController],
-	providers: [IntegrationEntitySettingTiedService],
-	exports: [IntegrationEntitySettingTiedService]
+	controllers: [
+		IntegrationEntitySettingTiedController
+	],
+	providers: [
+		IntegrationEntitySettingTiedService
+	],
+	exports: [
+		TypeOrmModule,
+		IntegrationEntitySettingTiedService
+	]
 })
-export class IntegrationEntitySettingTiedModule {}
+export class IntegrationEntitySettingTiedModule { }

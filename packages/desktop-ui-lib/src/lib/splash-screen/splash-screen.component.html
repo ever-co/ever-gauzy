@@ -10,16 +10,19 @@
                             </div>
                         </div>
                         <div class="col-12 name-text text-center mt-3 mb-3">
-                            <nb-card nbSpinner="true" nbSpinnerStatus="primary">
+                            <nb-card>
                                 <nb-card-body>
                                     <div class="col-12 version-text">
-                                        <span>Version v{{ application?.version }}</span>
+										<button nbButton status="basic">
+											<nb-icon *gauzySpinnerButton="true"></nb-icon>
+											{{'TIMER_TRACKER.VERSION' | translate: {version: application?.version} }}
+										</button>
                                     </div>
                                 </nb-card-body>
                             </nb-card>
                         </div>
                         <div class="col-12 copyright-text text-center mt-2">
-                            Waiting for {{ application?.name }} to start...
+                            {{'TIMER_TRACKER.WAIT_FOR' | translate: { name: application?.name } }}
                         </div>
                     </div>
                 </nb-card-body>

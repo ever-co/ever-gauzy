@@ -1,2 +1,4 @@
 node_modules
 sentry.properties
+# No need to duplicate translations
+assets/i18n

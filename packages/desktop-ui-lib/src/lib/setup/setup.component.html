@@ -3,8 +3,9 @@
 		<nb-card class="card-full-height">
 			<nb-card-body class="main-card-body">
 				<nb-stepper orientation="horizontal">
-					<nb-step [label]="labelOne">
-						<ng-template #labelOne>WELCOME</ng-template>
+					<nb-step class="position-relative" [label]="labelOne">
+						<gauzy-language-selector #selector [setup]="true" class="lang-selector"></gauzy-language-selector>
+						<ng-template #labelOne>{{"TIMER_TRACKER.SETUP.WELCOME" | translate | uppercase}}</ng-template>
 						<div class="row content-body">
 							<div class="col-12 text-center margin-content">
 								<img [src]="gauzyIcon" class="margin-icon" />
@@ -12,13 +13,13 @@
 							<div class="col-12 text-center margin-content">
 								<div class="row">
 									<div class="col-9 text-justify col-center">
-										<h4>{{welcomeTitle}}</h4>
+										<h4>{{welcomeTitle | translate | titlecase}}</h4>
 									</div>
 								</div>
 								<div class="row">
 									<div class="col-9 text-justify col-center">
 										<p>
-											{{welcomeLabel}}
+											{{welcomeLabel | translate}}
 										</p>
 									</div>
 								</div>
@@ -30,7 +31,7 @@
 									nbButton
 									nbStepperNext
 								>
-									Let's go
+									{{"BUTTONS.LET_S_GO" | translate}}
 								</button>
 							</div>
 						</div>
@@ -39,13 +40,12 @@
 						[label]="labelTwo"
 						*ngIf="appName !== 'gauzy-desktop-timer' && appName !== 'gauzy-server'"
 					>
-						<ng-template #labelTwo>FUNCTIONALITIES</ng-template>
+						<ng-template #labelTwo>{{"TIMER_TRACKER.SETUP.FUNCTIONALITIES" | translate | uppercase}}</ng-template>
 						<div class="row content-body">
 							<div class="col-12 text-center margin-content">
-								<h4>What would you like to use?</h4>
+								<h4>{{"TIMER_TRACKER.SETUP.WHAT_WOULD_LIKE_USE" | translate }}</h4>
 								<p>
-									You can select only one option or both
-									options.
+									{{"TIMER_TRACKER.SETUP.SELECT_MULTIPLE_OPTIONS" | translate }}
 								</p>
 							</div>
 							<div
@@ -67,9 +67,7 @@
 														>
 															<span
 																class="card-item-label"
-																>Time & Activity
-																Tracking
-																Features</span
+																>{{"TIMER_TRACKER.SETUP.TIME_ACTIVITY_FEATURES" | translate }}</span
 															>
 														</nb-checkbox>
 													</div>
@@ -100,8 +98,7 @@
 															"
 															><span
 																class="card-item-label"
-																>Gauzy Platform
-																Features</span
+																>{{"TIMER_TRACKER.SETUP.GP_FEATURES" | translate }}</span
 															></nb-checkbox
 														>
 													</div>
@@ -133,7 +130,7 @@
 										icon="arrow-back-outline"
 										class="icon-medium"
 									></nb-icon
-									>Back
+									>{{ "BUTTONS.BACK" | translate }}
 								</button>
 							</div>
 							<div class="col-2 btn-fixed pull-right">
@@ -147,7 +144,7 @@
 										!desktopFeatures.timeTracking
 									"
 								>
-									Continue<nb-icon
+									{{ "BUTTONS.CONTINUE"| translate }}<nb-icon
 										icon="arrow-forward-outline"
 										class="icon-medium"
 									></nb-icon>
@@ -159,11 +156,10 @@
 						<div class="row content-body">
 							<div class="col-12 text-center margin-content">
 								<h4>
-									How are you going to use Gauzy platform?
+									{{"TIMER_TRACKER.SETUP.HOW_GONNA_USE_GP" | translate }}
 								</h4>
 								<p>
-									You have to select only one of the options
-									below.
+									{{"TIMER_TRACKER.SETUP.SELECT_ONE_OPTION" | translate }}
 								</p>
 							</div>
 							<div
@@ -196,16 +192,13 @@
 															"
 															><span
 																class="card-item-label"
-																>Integrated</span
+																>{{"TIMER_TRACKER.SETUP.INTEGRATED" | translate }}</span
 															></nb-radio
 														>
 													</div>
 													<div class="col-12">
 														<span
-															>Install and run
-															Gauzy Platform on
-															your local
-															computer.</span
+															>{{"TIMER_TRACKER.SETUP.INSTALL_GP_LOCAL" | translate }}</span
 														>
 													</div>
 													<div
@@ -239,17 +232,13 @@
 															"
 															><span
 																class="card-item-label"
-																>Custom /
-																Network</span
+																>{{"TIMER_TRACKER.SETUP.CUSTOM_NETWORK" | translate }}</span
 															></nb-radio
 														>
 													</div>
 													<div class="col-12">
 														<span
-															>Connect to a
-															separate server in
-															your work
-															network.</span
+															>{{"TIMER_TRACKER.SETUP.SEPARATE_SERVER" | translate }}</span
 														>
 													</div>
 													<div
@@ -283,15 +272,13 @@
 															"
 															><span
 																class="card-item-label"
-																>Live</span
+																>{{"TIMER_TRACKER.SETUP.LIVE" | translate }}</span
 															></nb-radio
 														>
 													</div>
 													<div class="col-12">
 														<span
-															>Connected to our
-															live server and use
-															it as SAAS.</span
+															>{{"TIMER_TRACKER.SETUP.CONNECTED_LIVE_SERVER" | translate }}</span
 														>
 													</div>
 													<div
@@ -321,7 +308,7 @@
 										icon="arrow-back-outline"
 										class="icon-medium"
 									></nb-icon
-									>Back
+									>{{"BUTTONS.BACK"| translate }}
 								</button>
 							</div>
 							<div class="col-2 btn-fixed pull-right">
@@ -339,10 +326,10 @@
 									"
 								>
 									{{
-										connectivity.live &&
+										(connectivity.live &&
 										!desktopFeatures.timeTracking
-											? 'Save'
-											: 'Continue'
+											? "BUTTONS.BACK"
+											: "BUTTONS.CONTINUE") | translate
 									}}<nb-icon
 										icon="arrow-forward-outline"
 										class="icon-medium"
@@ -358,12 +345,10 @@
 						<div class="row content-body">
 							<div class="col-12 text-center margin-content">
 								<h4>
-									Are you going to need 3rd party
-									integrations?
+									{{"TIMER_TRACKER.SETUP.GONNA_USE_3RD_PARTY" | translate }}
 								</h4>
 								<p>
-									This is an option, you can select one or
-									both type of 3rd party integrations.
+									{{"TIMER_TRACKER.SETUP.SELECT_MULTIPLE_OPTIONS_3RD_PARTY" | translate }}
 								</p>
 							</div>
 							<div
@@ -490,23 +475,7 @@
 								class="col-9 margin-setting-content col-center"
 							>
 								<span class="note">
-									Legal: All product names, brand names,
-									logos, trademarks, and registered trademarks
-									are the property of their respective owners.
-									We have no affiliation with or endorsement,
-									sponsorship, or support from mentioned
-									third-party companies, brands, products,
-									sites, or services. The links to third-party
-									software are being provided as a convenience
-									and for informational purposes only; they do
-									not constitute an endorsement or approval of
-									any of the products, services, or opinions
-									of the corporation or organization or
-									individual. We use respective logos and
-									brand names only to advertise that our
-									product use corresponding products &
-									technologies or has built-in integration
-									with corresponding services.
+									{{"TIMER_TRACKER.SETUP.LEGAL_NOTE" | translate }}
 								</span>
 							</div>
 						</div>
@@ -522,7 +491,7 @@
 										icon="arrow-back-outline"
 										class="icon-medium"
 									></nb-icon
-									>Back
+									>{{"BUTTONS.BACK"| translate}}
 								</button>
 							</div>
 							<div class="col-2 btn-fixed pull-right">
@@ -537,7 +506,7 @@
 											: validation()
 									"
 								>
-									{{ connectivity.live ? 'Save' : 'Continue'
+									{{ (connectivity.live ? "BUTTONS.SAVE" : "BUTTONS.CONTINUE") | translate
 									}}<nb-icon
 										icon="arrow-forward-outline"
 										class="icon-medium"
@@ -553,15 +522,14 @@
 						</div>
 					</nb-step>
 					<nb-step [label]="labelFour" *ngIf="!connectivity.live">
-						<ng-template #labelFour>SETTING</ng-template>
+						<ng-template #labelFour>{{"TIMER_TRACKER.SETUP.SETTING" | translate | uppercase }}</ng-template>
 						<div class="row content-body">
 							<div class="col-12 text-center margin-content">
 								<h4>
-									Are you ready for some advanced settings?
+									{{"TIMER_TRACKER.SETUP.READY_FOR_ADVANCED_SETTINGS" | translate }}
 								</h4>
 								<p>
-									This is the final step where you can get to
-									the nitty-gritty of your Gauzy Platform.
+									{{"TIMER_TRACKER.SETUP.FINAL_STEP_GP" | translate }}
 								</p>
 							</div>
 							<div
@@ -571,8 +539,8 @@
 								<div class="col-5 col-center margin-form" *ngIf="appName !== 'gauzy-server'">
 									<div class="row">
 										<div class="col-3 col-center">
-											<span class="integraion-label"
-												>PORT</span
+											<span class="integration-label"
+												>{{"TIMER_TRACKER.SETUP.PORT" | translate }}</span
 											>
 										</div>
 										<div class="col-9">
@@ -593,8 +561,8 @@
 								<div class="col-7 col-center margin-form" *ngIf="appName === 'gauzy-server'">
 									<div class="row">
 										<div class="col-4 col-center">
-											<span class="integraion-label"
-												>PORT API</span
+											<span class="integration-label"
+												>{{"TIMER_TRACKER.SETUP.PORT_API" | translate }}</span
 											>
 										</div>
 										<div class="col-3">
@@ -610,9 +578,8 @@
 											/>
 										</div>
 										<div class="col-2 col-center">
-											<span class="integraion-label"
-												>UI</span
-											>
+											<span class="integration-label"
+												>{{"TIMER_TRACKER.SETUP.UI" | translate }}</span>
 										</div>
 										<div class="col-3">
 											<input
@@ -692,8 +659,8 @@
 									>
 										<div class="row">
 											<div class="col-3 col-center">
-												<span class="integraion-label"
-													>API HOST</span
+												<span class="integration-label"
+													>{{"TIMER_TRACKER.SETUP.API_HOST" | translate }}</span
 												>
 											</div>
 											<div class="col-9">
@@ -720,8 +687,8 @@
 									>
 										<div class="row">
 											<div class="col-3 col-center">
-												<span class="integraion-label"
-													>PORT</span
+												<span class="integration-label"
+													>{{"TIMER_TRACKER.SETUP.PORT" | translate }}</span
 												>
 											</div>
 											<div class="col-9">
@@ -750,8 +717,8 @@
 									>
 										<div class="row">
 											<div class="col-3 col-center">
-												<span class="integraion-label"
-													>HOST</span
+												<span class="integration-label"
+													>{{"TIMER_TRACKER.SETUP.HOST" | translate }}</span
 												>
 											</div>
 											<div class="col-9">
@@ -780,8 +747,8 @@
 									>
 										<div class="row">
 											<div class="col-3 col-center">
-												<span class="integraion-label"
-													>DB NAME</span
+												<span class="integration-label"
+													>{{"TIMER_TRACKER.SETUP.DB_NAME" | translate }}</span
 												>
 											</div>
 											<div class="col-9">
@@ -810,8 +777,8 @@
 									>
 										<div class="row">
 											<div class="col-3 col-center">
-												<span class="integraion-label"
-													>DB PORT</span
+												<span class="integration-label"
+													>{{"TIMER_TRACKER.SETUP.DB_PORT" | translate }}</span
 												>
 											</div>
 											<div class="col-9">
@@ -840,8 +807,8 @@
 									>
 										<div class="row">
 											<div class="col-3 col-center">
-												<span class="integraion-label"
-													>USER</span
+												<span class="integration-label"
+													>{{"TIMER_TRACKER.SETUP.USER" | translate }}</span
 												>
 											</div>
 											<div class="col-9">
@@ -870,7 +837,7 @@
 									>
 										<!-- <div class="row">
 								<div class="col-3">
-									<span class="integraion-label">PASSWORD</span>
+									<span class="integration-label">PASSWORD</span>
 								</div>
 								<div class="col-9">
 									<input type="text" nbInput fullWidth status="basic" placeholder="Default">
@@ -886,8 +853,8 @@
 									>
 										<div class="row">
 											<div class="col-3 col-center">
-												<span class="integraion-label"
-													>PASSWORD</span
+												<span class="integration-label"
+													>{{"TIMER_TRACKER.SETUP.PASSWORD" | translate }}</span
 												>
 											</div>
 											<div class="col-9">
@@ -947,7 +914,7 @@
 										icon="arrow-back-outline"
 										class="icon-medium"
 									></nb-icon
-									>Back
+									>{{"BUTTONS.BACK"|translate}}
 								</button>
 							</div>
 							<div class="col-2 btn-fixed"></div>
@@ -963,7 +930,7 @@
 											[disabled]="!buttonSave"
 											(click)="checkConnection(false)"
 										>
-											Check<nb-icon
+										{{"BUTTONS.CHECK"|translate}}<nb-icon
 												icon="checkmark-circle-outline"
 												class="icon-medium"
 												*gauzySpinnerButton="isCheckConnection"
@@ -984,7 +951,7 @@
 											[disabled]="!buttonSave"
 											(click)="saveChange()"
 										>
-											Save<nb-icon
+										{{"BUTTONS.SAVE"|translate}}<nb-icon
 												icon="save"
 												class="icon-medium"
 												*gauzySpinnerButton="isSaving"
