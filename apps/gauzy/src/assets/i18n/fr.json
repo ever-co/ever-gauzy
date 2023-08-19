@@ -3934,7 +3934,8 @@
 			"MOBILE": "Application Minuteur Mobile",
 			"UPWORK": "Upwork",
 			"HUBSTAFF": "HubStaff",
-			"BROWSER_EXTENSION": "Extension de Navigateur"
+			"BROWSER_EXTENSION": "Browser Extension",
+			"TEAMS": "Équipes"
 		},
 		"LAST_WORKED": "Dernier travaillé:"
 	},

@@ -3934,7 +3934,8 @@
 			"MOBILE": "Aplicación de temporizador móvil",
 			"UPWORK": "Upwork",
 			"HUBSTAFF": "HubStaff",
-			"BROWSER_EXTENSION": "Extensión del navegador"
+			"BROWSER_EXTENSION": "Browser Extension",
+			"TEAMS": "Equipos"
 		},
 		"LAST_WORKED": "Último trabajo realizado:"
 	},
