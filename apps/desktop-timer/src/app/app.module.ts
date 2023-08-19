@@ -45,10 +45,11 @@ import {
 	APIInterceptor,
 	ServerDownModule,
 	TimeoutInterceptor,
-	DEFAULT_TIMEOUT
+	DEFAULT_TIMEOUT,
+	HttpLoaderFactory,
+	LanguageInterceptor
 } from '@gauzy/desktop-ui-lib';
 import { NbCardModule, NbButtonModule } from '@nebular/theme';
-import { HttpLoaderFactory } from '../../../gauzy/src/app/@shared/translate/translate.module';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { AppModuleGuard } from './app.module.guards';
 import { Router } from '@angular/router';
@@ -81,6 +82,7 @@ import * as Sentry from '@sentry/angular';
 		SplashScreenModule,
 		ServerDownModule,
 		TranslateModule.forRoot({
+			extend: true,
 			loader: {
 				provide: TranslateLoader,
 				useFactory: HttpLoaderFactory,
@@ -115,6 +117,11 @@ import * as Sentry from '@sentry/angular';
 		{
 			provide: HTTP_INTERCEPTORS,
 			useClass: APIInterceptor,
+			multi: true
+		},
+		{
+			provide: HTTP_INTERCEPTORS,
+			useClass: LanguageInterceptor,
 			multi: true
 		},
 		{

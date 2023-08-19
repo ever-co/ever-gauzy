@@ -8,8 +8,14 @@ import { NbTooltipModule } from '@nebular/theme';
 
 @NgModule({
 	declarations: [TimeTrackerStatusComponent],
-	imports: [CommonModule, FontAwesomeModule, TranslateModule, NbTooltipModule],
+	imports: [
+		CommonModule,
+		FontAwesomeModule,
+		TranslateModule,
+		NbTooltipModule,
+		TranslateModule,
+	],
 	exports: [TimeTrackerStatusComponent],
-	providers: [TimeTrackerStatusService]
+	providers: [TimeTrackerStatusService],
 })
 export class TimeTrackerStatusModule {}

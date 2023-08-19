@@ -23,6 +23,8 @@ import {
 import { FormsModule } from '@angular/forms';
 import { NbEvaIconsModule } from '@nebular/eva-icons';
 import { DesktopDirectiveModule } from '../directives/desktop-directive.module';
+import { LanguageModule } from '../language/language.module';
+import { TranslateModule } from '@ngx-translate/core';
 
 @NgModule({
 	declarations: [SetupComponent],
@@ -45,7 +47,9 @@ import { DesktopDirectiveModule } from '../directives/desktop-directive.module';
 		NbProgressBarModule,
 		NbFormFieldModule,
 		NbDialogModule,
-		DesktopDirectiveModule
+		DesktopDirectiveModule,
+		LanguageModule,
+		TranslateModule
 	],
 	exports: [SetupComponent],
 	providers: [SetupService, NbDialogService],

@@ -98,9 +98,12 @@ LocalStore.setFilePath({
 // Set unlimited listeners
 ipcMain.setMaxListeners(0);
 
+/* Remove handler if exist */
+ipcMain.removeHandler('PREFERRED_LANGUAGE');
+
 const runSetup = async () => {
+	splashScreen.close();
 	if (setupWindow) {
-		splashScreen.close();
 		setupWindow.show();
 		return;
 	}
@@ -526,4 +529,21 @@ ipcMain.on('update_app_setting', (event, arg) => {
 
 app.on('browser-window-created', (_, window) => {
 	require("@electron/remote/main").enable(window.webContents)
+})
+
+ipcMain.handle('PREFERRED_LANGUAGE', (event, arg) => {
+	const setting = LocalStore.getStore('appSetting');
+	if (arg) {
+		if (!setting) LocalStore.setDefaultApplicationSetting();
+		LocalStore.updateApplicationSetting({
+			preferredLanguage: arg,
+		});
+		settingsWindow?.webContents?.send('preferred_language_change', arg);
+	}
+	return setting?.preferredLanguage;
+});
+
+ipcMain.on('preferred_language_change', (event, arg) => {
+	LocalStore.updateApplicationSetting({ preferredLanguage: arg });
+	serverWindow?.webContents?.send('preferred_language_change', arg);
 })

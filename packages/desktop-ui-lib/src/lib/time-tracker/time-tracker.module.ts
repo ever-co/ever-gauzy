@@ -37,6 +37,8 @@ import { ElectronService, LoggerService } from '../electron/services';
 import { TimeTrackerStatusModule } from './time-tracker-status/time-tracker-status.module';
 import { TimeSlotQueueService } from '../offline-sync';
 import { ImageViewerModule } from '../image-viewer/image-viewer.module';
+import { NgxTranslateModule } from '../ngx-translate';
+import { LanguageSelectorService } from '../language/language-selector.service';
 
 @NgModule({
 	declarations: [
@@ -72,7 +74,8 @@ import { ImageViewerModule } from '../image-viewer/image-viewer.module';
 		PaginationModule,
 		NbTooltipModule,
 		TimeTrackerStatusModule,
-		ImageViewerModule
+		ImageViewerModule,
+		NgxTranslateModule
 	],
 	providers: [
 		NbSidebarService,
@@ -86,7 +89,8 @@ import { ImageViewerModule } from '../image-viewer/image-viewer.module';
 		ElectronService,
 		LoggerService,
 		Store,
-		TimeSlotQueueService
+		TimeSlotQueueService,
+		LanguageSelectorService
 	],
 	exports: [TimeTrackerComponent]
 })

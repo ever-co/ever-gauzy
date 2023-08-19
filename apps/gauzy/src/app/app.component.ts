@@ -10,7 +10,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { IDateRangePicker, ILanguage, LanguagesEnum } from '@gauzy/contracts';
 import { isNotEmpty } from '@gauzy/common-angular';
-import { filter, map, mergeMap, tap } from 'rxjs/operators';
+import { filter, map, mergeMap, tap } from 'rxjs';
 import { AnalyticsService } from './@core/utils/analytics.service';
 import * as _ from 'underscore';
 import {

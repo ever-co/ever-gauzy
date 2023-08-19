@@ -79,3 +79,8 @@ megalinter-reports/
 /.deploy/redis/data/*.rdb
 /.deploy/redis/jitsu_users_recognition/data/*.rdb
 /.deploy/jitsu/server/data/logs/events
+
+# No need to duplicate translations
+/apps/desktop-timer/src/assets/i18n
+/apps/desktop/src/assets/i18n
+/apps/server/src/assets/i18n

@@ -34,7 +34,9 @@ import {
 	AuthGuard,
 	NoAuthGuard,
 	AuthStrategy,
-	AuthService
+	AuthService,
+	LanguageInterceptor,
+	Store
 } from '@gauzy/desktop-ui-lib';
 import { NbCardModule, NbButtonModule } from '@nebular/theme';
 import { RouterModule } from '@angular/router';
@@ -75,6 +77,7 @@ import { Router } from '@angular/router';
 		NoAuthGuard,
 		AuthStrategy,
 		AuthService,
+		Store,
 		{
 			provide: HTTP_INTERCEPTORS,
 			useClass: TokenInterceptor,
@@ -113,6 +116,11 @@ import { Router } from '@angular/router';
 		{
 			provide: HTTP_INTERCEPTORS,
 			useClass: APIInterceptor,
+			multi: true
+		},
+		{
+			provide: HTTP_INTERCEPTORS,
+			useClass: LanguageInterceptor,
 			multi: true
 		},
 		{

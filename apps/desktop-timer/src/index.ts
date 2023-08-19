@@ -165,6 +165,8 @@ if (process.platform === 'win32') {
 
 /* Set unlimited listeners */
 ipcMain.setMaxListeners(0);
+/* Remove handler if exist */
+ipcMain.removeHandler('PREFERRED_LANGUAGE');
 
 async function startServer(value, restart = false) {
 	const dataModel = new DataModel();
@@ -264,6 +266,11 @@ app.on('ready', async () => {
 	const configs: any = store.get('configs');
 	const settings: any = store.get('appSetting');
 	const autoLaunch: boolean = settings && typeof settings.autoLaunch === 'boolean' ? settings.autoLaunch : true;
+	// default global
+	global.variableGlobal = {
+		API_BASE_URL: getApiBaseUrl(configs || {}),
+		IS_INTEGRATED_DESKTOP: configs?.isLocalServer
+	};
 	splashScreen = new SplashScreen(pathWindow.timeTrackerUi);
 	await splashScreen.loadURL();
 	splashScreen.show();
@@ -296,12 +303,6 @@ app.on('ready', async () => {
 		])
 	);
 
-	/* create window */
-	// default global
-	global.variableGlobal = {
-		API_BASE_URL: getApiBaseUrl({}),
-		IS_INTEGRATED_DESKTOP: false
-	};
 	timeTrackerWindow = await createTimeTrackerWindow(timeTrackerWindow, pathWindow.timeTrackerUi);
 	settingsWindow = await createSettingsWindow(settingsWindow, pathWindow.timeTrackerUi);
 	updaterWindow = await createUpdaterWindow(updaterWindow, pathWindow.timeTrackerUi);
@@ -513,8 +514,22 @@ app.on('activate', () => {
 	} else {
 		if (setupWindow) {
 			setupWindow.show();
+			splashScreen.close();
 		}
 	}
+});
+
+
+ipcMain.handle('PREFERRED_LANGUAGE', (event, arg) => {
+	const setting = store.get('appSetting');
+	if (arg) {
+		if (!setting) LocalStore.setDefaultApplicationSetting();
+		LocalStore.updateApplicationSetting({
+			preferredLanguage: arg,
+		});
+		settingsWindow?.webContents?.send('preferred_language_change', arg);
+	}
+	return setting?.preferredLanguage;
 });
 
 app.on('before-quit', async (e) => {

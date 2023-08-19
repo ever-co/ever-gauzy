@@ -165,6 +165,9 @@ if (process.platform === 'win32') {
 // Set unlimited listeners
 ipcMain.setMaxListeners(0);
 
+/* Remove handler if exist */
+ipcMain.removeHandler('PREFERRED_LANGUAGE');
+
 async function startServer(value, restart = false) {
 	process.env.IS_ELECTRON = 'true';
 	if (value.db === 'sqlite') {
@@ -223,6 +226,11 @@ async function startServer(value, restart = false) {
 			console.log('log error--', msgData);
 		});
 	}
+
+	global.variableGlobal = {
+		API_BASE_URL: getApiBaseUrl(value),
+		IS_INTEGRATED_DESKTOP: value.isLocalServer
+	};
 
 	try {
 		const config: any = {
@@ -349,6 +357,11 @@ app.on('ready', async () => {
 		settings && typeof settings.autoLaunch === 'boolean'
 			? settings.autoLaunch
 			: true;
+	// default global
+	global.variableGlobal = {
+		API_BASE_URL: getApiBaseUrl(configs || {}),
+		IS_INTEGRATED_DESKTOP: configs?.isLocalServer
+	};
 	splashScreen = new SplashScreen(pathWindow.timeTrackerUi);
 	await splashScreen.loadURL();
 	splashScreen.show();
@@ -640,6 +653,7 @@ app.on('activate', async () => {
 		);
 	} else {
 		if (setupWindow) {
+			splashScreen.close();
 			setupWindow.show();
 		}
 	}
@@ -709,6 +723,18 @@ function launchAtStartup(autoLaunch, hidden) {
 			break;
 	}
 }
+
+ipcMain.handle('PREFERRED_LANGUAGE', (event, arg) => {
+	const setting = store.get('appSetting');
+	if (arg) {
+		if (!setting) LocalStore.setDefaultApplicationSetting();
+		LocalStore.updateApplicationSetting({
+			preferredLanguage: arg,
+		});
+		settingsWindow?.webContents?.send('preferred_language_change', arg);
+	}
+	return setting?.preferredLanguage;
+});
 
 app.on('browser-window-created', (_, window) => {
 	require("@electron/remote/main").enable(window.webContents)
