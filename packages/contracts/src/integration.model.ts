@@ -128,11 +128,14 @@ export interface IIntegrationMapSyncEntityInput extends IBasePerTenantAndOrganiz
 	entity: string;
 }
 
-export interface IIntegrationTenantCreateDto extends IBasePerTenantAndOrganizationEntityModel {
-	name: IntegrationEnum;
+export interface IIntegrationTenantCreateInput extends IBasePerTenantAndOrganizationEntityModel {
+	integration?: IIntegration;
+	integrationId?: IIntegration['id'];
 	entitySettings?: IIntegrationEntitySetting[];
 	settings?: IIntegrationSetting[];
 }
+
+export interface IIntegrationTenantUpdateInput extends Pick<IIntegrationTenantCreateInput, 'entitySettings' | 'settings'> { }
 
 export enum IntegrationEnum {
 	UPWORK = 'Upwork',
