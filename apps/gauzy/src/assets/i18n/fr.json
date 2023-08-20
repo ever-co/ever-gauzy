@@ -3824,7 +3824,7 @@
 		},
 		"NATIVE_NOTIFICATION": {
 			"STOPPED_DU_INACTIVITY": "Le suivi a été arrêté en raison de l'inactivité !",
-			"SCREENSHOT_TAKEN": "Capture d'écran prise",
+			"SCREENSHOT_TAKEN": "Prise de la capture d'écran",
 			"SCREENSHOT_REMOVED": "Capture d'écran et activités précédentes supprimées avec succès",
 			"NEW_VERSION_AVAILABLE": "Nouvelle mise à jour pour {{ name }} (version {{ version }}) disponible"
 		}
