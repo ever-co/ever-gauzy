@@ -1,5 +1,6 @@
 import { BaseDesktopDialogDecorator } from '../abstracts/base-desktop-dialog-decorator';
 import { IDesktopDialog } from '../../interfaces';
+import { TranslateService } from '../../translation';
 
 export class DialogConfirmInstallDownload
 	extends BaseDesktopDialogDecorator
@@ -9,7 +10,7 @@ export class DialogConfirmInstallDownload
 		super(dialog);
 		this.options = {
 			...this.options,
-			buttons: ['Restart', 'Later'],
+			buttons: [TranslateService.instant('BUTTONS.RESTART'), TranslateService.instant('BUTTONS.LATER')],
 			detail: 'A new version has been downloaded. Restart the application to apply the updates.'
 		};
 	}

@@ -1,16 +1,21 @@
+import { TranslateService } from '../../translation';
 import { IDesktopDialog } from '../../interfaces';
 import { BaseDesktopDialogDecorator } from '../abstracts/base-desktop-dialog-decorator';
 
 export class DialogStopTimerLogoutConfirmation
 	extends BaseDesktopDialogDecorator
 	implements IDesktopDialog {
-
 	constructor(dialog: IDesktopDialog) {
 		super(dialog);
 		this.options = {
 			...this.options,
-			buttons: ['Logout', 'Cancel'],
-			detail: 'Click Logout to Stop the Timer and Logout from the application.',
+			buttons: [
+				TranslateService.instant('BUTTONS.LOGOUT'),
+				TranslateService.instant('BUTTONS.CANCEL'),
+			],
+			detail: TranslateService.instant(
+				'TIMER_TRACKER.DIALOG.LOGOUT_CONFRIM'
+			),
 		};
 	}
 }
