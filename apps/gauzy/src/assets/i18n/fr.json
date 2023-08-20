@@ -139,7 +139,12 @@
 		"SAVE_RESTART": "Enregistrer et redémarrer",
 		"FILES": "Fichiers",
 		"START": "Démarrer",
-		"STOP": "Arrêter"
+		"STOP": "Arrêter",
+		"ACKNOWLEDGE": "Reconnaître",
+		"RESTART": "Redémarrer",
+		"LATER": "Plus Tard",
+		"UPGRADE": "Mettre à Niveau",
+		"SKIP_NOW": "Ignorer Maintenant"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {
@@ -3787,7 +3792,19 @@
 			"WARNING": "Avertissement",
 			"REMOVE_SCREENSHOT": "Voulez-vous vraiment supprimer cette capture d'écran et le journal des activités ?",
 			"CHANGE_CLIENT": "Êtes-vous sûr de vouloir changer de client ?",
-			"RESUME_TIMER": "Votre chronomètre était en cours d'exécution lorsque votre PC a été verrouillé. Voulez-vous reprendre le chronomètre ?"
+			"RESUME_TIMER": "Votre chronomètre était en cours d'exécution lorsque votre PC a été verrouillé. Voulez-vous reprendre le chronomètre ?",
+			"EXIT": "Êtes-vous sûr de vouloir quitter ?",
+			"STOPPED_DU_INACTIVITY": "Le minuteur a été arrêté en raison d'une période d'inactivité dépassant {{ inactivity }}. Assurez-vous de redémarrer le minuteur lorsque vous continuez à travailler.",
+			"EXIT_CONFIRM": "Cliquez sur Quitter pour arrêter le minuteur et quitter l'application.",
+			"LOGOUT_CONFRIM": "Cliquez sur Déconnexion pour arrêter le minuteur et vous déconnecter de l'application.",
+			"SELECT_UPDATE_FILES": "Veuillez sélectionner le dossier contenant les fichiers de mise à jour.",
+			"UPDATE_READY": "Mise à jour prête à être téléchargée",
+			"NEW_VERSION_AVAILABLE": "Une nouvelle version v{{ next }} est disponible. Mettez à niveau l'application en téléchargeant les mises à jour pour v{{ current }}",
+			"READY_INSTALL": "Mise à jour prête à être installée",
+			"HAS_BEEN_DOWNLOADED": "Une nouvelle version v{{ version }} a été téléchargée. Redémarrez l'application pour appliquer les mises à jour.",
+			"CONNECTION_DRIVER": "Connexion à la base de données {{ driver }} réussie",
+			"STILL_WORKING": "Êtes-vous toujours en train de travailler ?",
+			"INACTIVITY_HANDLER": "Gestionnaire d'inactivité"
 		},
 		"NO_LIMIT": "∞ Pas de limite",
 		"TASK": "Tâche",
@@ -3802,6 +3819,12 @@
 			"PROJECT_ADDED": "Projet ajouté avec succès",
 			"TASK_ADDED": "Tâche ajoutée avec succès",
 			"CLIENT_ADDED": "Client ajouté avec succès"
+		},
+		"NATIVE_NOTIFICATION": {
+			"STOPPED_DU_INACTIVITY": "Le suivi a été arrêté en raison de l'inactivité !",
+			"SCREENSHOT_TAKEN": "Capture d'écran prise",
+			"SCREENSHOT_REMOVED": "Capture d'écran et activités précédentes supprimées avec succès",
+			"NEW_VERSION_AVAILABLE": "Nouvelle mise à jour pour {{ name }} (version {{ version }}) disponible"
 		}
 	},
 	"SERVER": "Serveur",
