@@ -14,7 +14,7 @@ export class DialogStopTimerLogoutConfirmation
 				TranslateService.instant('BUTTONS.CANCEL'),
 			],
 			detail: TranslateService.instant(
-				'TIMER_TRACKER.DIALOG.LOGOUT_CONFRIM'
+				'TIMER_TRACKER.DIALOG.LOGOUT_CONFIRM'
 			),
 		};
 	}

@@ -3798,7 +3798,7 @@
 			"EXIT": "Êtes-vous sûr de vouloir quitter ?",
 			"STOPPED_DU_INACTIVITY": "Le minuteur a été arrêté en raison d'une période d'inactivité dépassant {{ inactivity }}. Assurez-vous de redémarrer le minuteur lorsque vous continuez à travailler.",
 			"EXIT_CONFIRM": "Cliquez sur Quitter pour arrêter le minuteur et quitter l'application.",
-			"LOGOUT_CONFRIM": "Cliquez sur Déconnexion pour arrêter le minuteur et vous déconnecter de l'application.",
+			"LOGOUT_CONFIRM": "Cliquez sur Déconnexion pour arrêter le minuteur et vous déconnecter de l'application.",
 			"SELECT_UPDATE_FILES": "Veuillez sélectionner le dossier contenant les fichiers de mise à jour.",
 			"UPDATE_READY": "Mise à jour prête à être téléchargée",
 			"NEW_VERSION_AVAILABLE": "Une nouvelle version v{{ next }} est disponible. Mettez à niveau l'application en téléchargeant les mises à jour pour v{{ current }}",

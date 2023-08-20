@@ -3798,7 +3798,7 @@
 			"EXIT": "¿Estás seguro de que quieres salir?",
 			"STOPPED_DU_INACTIVITY": "El temporizador se detuvo debido a que el período de inactividad superó los {{ inactivity }}. Asegúrate de reiniciar el temporizador cuando continúes trabajando.",
 			"EXIT_CONFIRM": "Haz clic en Salir para detener el temporizador y cerrar la aplicación.",
-			"LOGOUT_CONFRIM": "Haz clic en Cerrar sesión para detener el temporizador y cerrar la aplicación.",
+			"LOGOUT_CONFIRM": "Haz clic en Cerrar sesión para detener el temporizador y cerrar la aplicación.",
 			"SELECT_UPDATE_FILES": "Selecciona la carpeta con los archivos de actualización.",
 			"UPDATE_READY": "Actualización lista para descargar",
 			"NEW_VERSION_AVAILABLE": "Hay disponible una nueva versión v{{ next }}. Actualiza la aplicación descargando las actualizaciones para v{{ current }}",
