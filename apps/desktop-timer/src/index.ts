@@ -72,7 +72,9 @@ import {
 	removeTimerListener,
 	ProviderFactory,
 	DesktopDialog,
-	DialogStopTimerExitConfirmation
+	DialogStopTimerExitConfirmation,
+	TranslateService,
+	TranslateLoader
 } from '@gauzy/desktop-libs';
 import {
 	createSetupWindow,
@@ -158,6 +160,8 @@ if (!gotTheLock) {
 	});
 }
 
+/* Load translations */
+TranslateLoader.load(__dirname + '/assets/i18n/');
 /* Setting the app user model id for the app. */
 if (process.platform === 'win32') {
 	app.setAppUserModelId('com.ever.gauzydesktoptimer');
@@ -475,10 +479,10 @@ ipcMain.on('check_database_connection', async (event, arg) => {
 			status: true,
 			message:
 				provider === 'postgres'
-					? 'Connection to PostgresSQL DB Succeeds'
+					? TranslateService.instant('TIMER_TRACKER.DIALOG.CONNECTION_DRIVER', { driver: 'PostgresSQL' })
 					: provider === 'mysql'
-					? 'Connection to MySQL DB Succeeds'
-					: 'Connection to SQLITE DB Succeeds'
+						? TranslateService.instant('TIMER_TRACKER.DIALOG.CONNECTION_DRIVER', { driver: 'MySQL' })
+						: TranslateService.instant('TIMER_TRACKER.DIALOG.CONNECTION_DRIVER', { driver: 'SQLite' })
 		});
 	} catch (error) {
 		event.sender.send('database_status', {
@@ -540,7 +544,7 @@ app.on('before-quit', async (e) => {
 		const exitConfirmationDialog = new DialogStopTimerExitConfirmation(
 			new DesktopDialog(
 				'Gauzy Desktop Timer',
-				'Are you sure you want to exit?',
+				TranslateService.instant('TIMER_TRACKER.DIALOG.EXIT'),
 				timeTrackerWindow
 			)
 		);
