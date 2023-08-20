@@ -160,7 +160,7 @@ if (!gotTheLock) {
 }
 
 /* Load translations */
-TranslateLoader.load(__dirname + '/assets/i18n/');
+TranslateLoader.load(path.join(__dirname, 'ui', 'assets', 'i18n'));
 
 /* Setting the app user model id for the app. */
 if (process.platform === 'win32') {
