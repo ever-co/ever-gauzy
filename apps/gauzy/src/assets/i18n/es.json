@@ -144,7 +144,9 @@
 		"RESTART": "Reiniciar",
 		"LATER": "Más Tarde",
 		"UPGRADE": "Actualizar",
-		"SKIP_NOW": "Saltar Ahora"
+		"SKIP_NOW": "Saltar Ahora",
+		"EXIT": "Salir",
+		"LOGOUT": "Cerrar Sesión"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {

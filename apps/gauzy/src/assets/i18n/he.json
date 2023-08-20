@@ -144,7 +144,9 @@
 		"RESTART": "אתחל מחדש",
 		"LATER": "מאוחר יותר",
 		"UPGRADE": "שדרג",
-		"SKIP_NOW": "דלג כעת"
+		"SKIP_NOW": "דלג כעת",
+		"EXIT": "יציאה",
+		"LOGOUT": "התנתקות"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {

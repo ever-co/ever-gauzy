@@ -144,7 +144,9 @@
 		"RESTART": "Redémarrer",
 		"LATER": "Plus Tard",
 		"UPGRADE": "Mettre à Niveau",
-		"SKIP_NOW": "Ignorer Maintenant"
+		"SKIP_NOW": "Ignorer Maintenant",
+		"EXIT": "Quitter",
+		"LOGOUT": "Déconnexion"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {
