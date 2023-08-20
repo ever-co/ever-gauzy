@@ -45,7 +45,7 @@ export class TranslateLoader {
 						};
 					} catch (error) {
 						console.error(
-							'Error occured translation file parsing',
+							'Error occurred translation file parsing',
 							error
 						);
 					}
