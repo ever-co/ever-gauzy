@@ -67,6 +67,8 @@ import {
 	removeMainListener,
 	removeTimerListener,
 	ProviderFactory,
+	TranslateLoader,
+	TranslateService,
 } from '@gauzy/desktop-libs';
 import {
 	createGauzyWindow,
@@ -156,6 +158,9 @@ if (!gotTheLock) {
 		}
 	});
 }
+
+/* Load translations */
+TranslateLoader.load(__dirname + '/assets/i18n/');
 
 /* Setting the app user model id for the app. */
 if (process.platform === 'win32') {
@@ -620,10 +625,10 @@ ipcMain.on('check_database_connection', async (event, arg) => {
 		await dbConn.raw('select 1+1 as result');
 		event.sender.send('database_status', {
 			status: true,
-			message:
-				provider === 'postgres'
-					? 'Connection to PostgresSQL DB Succeeds'
-					: 'Connection to SQLITE DB Succeeds',
+			message: TranslateService.instant(
+				'TIMER_TRACKER.DIALOG.CONNECTION_DRIVER',
+				{ driver: provider === 'postgres' ? 'PostgresSQL' : 'SQLite' }
+			)
 		});
 	} catch (error) {
 		event.sender.send('database_status', {
