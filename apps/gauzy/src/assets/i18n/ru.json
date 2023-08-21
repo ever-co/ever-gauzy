@@ -3783,7 +3783,8 @@
 			"HAS_BEEN_DOWNLOADED": "Была загружена новая версия v{{ version }}. Перезапустите приложение, чтобы применить обновления.",
 			"CONNECTION_DRIVER": "Подключение к {{ driver }} DB успешно",
 			"STILL_WORKING": "Вы всё ещё работаете?",
-			"INACTIVITY_HANDLER": "Управление бездействием"
+			"INACTIVITY_HANDLER": "Управление бездействием",
+			"DOWNLOADING_UPDATE": "Загрузка обновления {{ current }} МБ из {{ total }} МБ ->> {{ bandwidth }} КБ/с"
 		},
 		"NO_LIMIT": "∞ Без лимита",
 		"TASK": "Задача",

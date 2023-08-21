@@ -3743,7 +3743,8 @@
 				"UPDATE_DOWNLOADING": "הורדת עדכון בתהליך",
 				"SERVER_CONFIG_UPDATED": "קונפיגורצית השרת עודכנה, אנא המתן לאיחוד השרת",
 				"SERVER_RESTARTED": "השרת הופעל מחדש בהצלחה",
-				"CONNECTION_SUCCEEDS": "התחברות לשרת {{ url }} הצליחה"
+				"CONNECTION_SUCCEEDS": "התחברות לשרת {{ url }} הצליחה",
+				"DOWNLOADING_UPDATE": "מוריד עדכון {{ current }} מ״ב מתוך {{ total }} מ״ב ->> {{ bandwidth }} ק״ב/ש "
 			}
 		},
 		"WEEKLY_LIMIT_EXCEEDED": "הגעת למגבלת השבוע",

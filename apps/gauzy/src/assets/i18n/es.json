@@ -3764,7 +3764,8 @@
 				"UPDATE_DOWNLOADING": "Descargando actualización",
 				"SERVER_CONFIG_UPDATED": "Configuración del servidor actualizada, espera hasta que se reinicie el servidor",
 				"SERVER_RESTARTED": "Servidor reiniciado correctamente",
-				"CONNECTION_SUCCEEDS": "Conexión al servidor {{ url }} exitosa"
+				"CONNECTION_SUCCEEDS": "Conexión al servidor {{ url }} exitosa",
+				"DOWNLOADING_UPDATE": "Descargando actualización {{ current }} MB de {{ total }} MB ->> {{ bandwidth }} KB/s"
 			}
 		},
 		"WEEKLY_LIMIT_EXCEEDED": "Límite semanal excedido",

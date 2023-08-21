@@ -3799,7 +3799,8 @@
 				"UPDATE_DOWNLOADING": "Update Downloading",
 				"SERVER_CONFIG_UPDATED": "Server configuration updated, please wait till server restarts",
 				"SERVER_RESTARTED": "Server Restarted Successfully",
-				"CONNECTION_SUCCEEDS": "Connection to Server {{ url }} Succeeds"
+				"CONNECTION_SUCCEEDS": "Connection to Server {{ url }} Succeeds",
+				"DOWNLOADING_UPDATE": "Downloading update {{ current }} MB of {{ total }} MB ->> {{ bandwidth }} KB/s"
 			}
 		},
 		"WEEKLY_LIMIT_EXCEEDED": "Weekly limit exceeded",

@@ -3744,7 +3744,8 @@
 				"UPDATE_DOWNLOADING": "Изтегля се актуализацията",
 				"SERVER_CONFIG_UPDATED": "Настройките на сървъра бяха актуализирани, моля изчакайте до рестартиране на сървъра",
 				"SERVER_RESTARTED": "Сървърът бе рестартиран успешно",
-				"CONNECTION_SUCCEEDS": "Установена успешна връзка със сървъра {{ url }}"
+				"CONNECTION_SUCCEEDS": "Установена успешна връзка със сървъра {{ url }}",
+				"DOWNLOADING_UPDATE": "Изтегляне на обновление {{ current }} MB от {{ total }} MB ->> {{ bandwidth }} KB/с"
 			}
 		},
 		"WEEKLY_LIMIT_EXCEEDED": "Седмичната лимита е превишена",

@@ -571,7 +571,7 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 					text: 'TIMER_TRACKER.SETTINGS.MESSAGES.UPDATE_NOT_AVAILABLE',
 					status: 'basic'
 				};
-				this.logContents = this.message.text;
+				this.logContents = this._translateService.instant(this.message.text);
 				this.scrollToBottom();
 				this._loading$.next(false);
 			})
@@ -584,7 +584,7 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 					text: 'TIMER_TRACKER.SETTINGS.MESSAGES.UPDATE_ERROR',
 					status: 'danger'
 				};
-				this.logContents = this.message.text;
+				this.logContents = this._translateService.instant(this.message.text);
 				this.logContents = `error message: ${arg}`;
 				this.scrollToBottom();
 				this._loading$.next(false);
@@ -599,7 +599,7 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 					text: 'TIMER_TRACKER.SETTINGS.MESSAGES.UPDATE_AVAILABLE',
 					status: 'primary'
 				};
-				this.logContents = this.message.text;
+				this.logContents = this._translateService.instant(this.message.text);
 				this.scrollToBottom();
 			})
 		);
@@ -611,7 +611,7 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 					text: 'TIMER_TRACKER.SETTINGS.MESSAGES.UPDATE_DOWNLOAD_COMPLETED',
 					status: 'success'
 				};
-				this.logContents = this.message.text;
+				this.logContents = this._translateService.instant(this.message.text);
 				this.scrollToBottom();
 				this.showProgressBar = false;
 				this.downloadFinish = true;
@@ -629,9 +629,14 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 					status: 'warning'
 				};
 				this.progressDownload = Math.floor(Number(arg.percent));
-				this.logContents = `Downloading update ${Math.floor(arg.transferred / 1000000)} MB of ${Math.floor(
-					arg.total / 1000000
-				)} MB  ->> ${Math.floor(arg.bytesPerSecond / 1000)} KB/s`;
+				this.logContents = this._translateService.instant(
+					'TIMER_TRACKER.SETTINGS.MESSAGES.DOWNLOADING_UPDATE',
+					{
+						current: Math.floor(arg.transferred / 1000000),
+						total: Math.floor(arg.total / 1000000),
+						bandwidth: Math.floor(arg.bytesPerSecond / 1000),
+					}
+				);
 				this.scrollToBottom();
 			})
 		);
