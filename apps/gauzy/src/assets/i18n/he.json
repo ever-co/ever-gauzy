@@ -3746,8 +3746,7 @@
 				"UPDATE_DOWNLOADING": "הורדת עדכון בתהליך",
 				"SERVER_CONFIG_UPDATED": "קונפיגורצית השרת עודכנה, אנא המתן לאיחוד השרת",
 				"SERVER_RESTARTED": "השרת הופעל מחדש בהצלחה",
-				"CONNECTION_SUCCEEDS": "התחברות לשרת {{ url }} הצליחה",
-				"DOWNLOADING_UPDATE": "מוריד עדכון {{ current }} מ״ב מתוך {{ total }} מ״ב ->> {{ bandwidth }} ק״ב/ש "
+				"CONNECTION_SUCCEEDS": "התחברות לשרת {{ url }} הצליחה"
 			}
 		},
 		"WEEKLY_LIMIT_EXCEEDED": "הגעת למגבלת השבוע",
@@ -3788,8 +3787,10 @@
 			"READY_INSTALL": "העדכון מוכן להתקנה",
 			"HAS_BEEN_DOWNLOADED": "גרסה חדשה v{{ version }} כבר הורדה. אנא הפעל מחדש את היישום כדי להחיל את העדכונים.",
 			"CONNECTION_DRIVER": "התחברות למסד הנתונים {{ driver }} הצליחה",
-			"SCREENSHOT_TAKEN": "תפסתי צילום מסך",
-			"SCREENSHOT_REMOVED": "הצלחתי להסיר את הצילום האחרון והפעילות"
+			"WANT_LOGOUT": "האם אתה בטוח שברצונך להתנתק?",
+			"DOWNLOADING_UPDATE": "הורדת העדכון {{ current }} מ״ב מתוך {{ total }} מ״ב ->> {{ bandwidth }} ק״ב/ש",
+			"STILL_WORKING": "האם אתה עדיין עובד?",
+			"INACTIVITY_HANDLER": "מטפל בחוסר פעילות"
 		},
 		"NO_LIMIT": "∞ אין הגבלה",
 		"TASK": "משימה",

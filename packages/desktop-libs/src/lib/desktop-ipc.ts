@@ -1022,7 +1022,7 @@ export async function handleLogoutDialog(window: BrowserWindow): Promise<boolean
 	const dialog = new DialogStopTimerLogoutConfirmation(
 		new DesktopDialog(
 			'Gauzy Desktop Timer',
-			'Are you sure you want to logout?',
+			TranslateService.instant('TIMER_TRACKER.DIALOG.WANT_LOGOUT'),
 			window
 		)
 	);

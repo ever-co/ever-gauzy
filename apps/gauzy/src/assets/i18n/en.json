@@ -3845,7 +3845,8 @@
 			"HAS_BEEN_DOWNLOADED": "A new version v{{ version }} has been downloaded. Restart the application to apply the updates.",
 			"CONNECTION_DRIVER": "Connection to {{ driver }} DB Succeeds",
 			"STILL_WORKING": "Are you still working?",
-			"INACTIVITY_HANDLER": "Inactivity Handler"
+			"INACTIVITY_HANDLER": "Inactivity Handler",
+			"WANT_LOGOUT": "Are you sure you want to logout?"
 		},
 		"NO_LIMIT": "∞ No Limit",
 		"TASK": "Task",

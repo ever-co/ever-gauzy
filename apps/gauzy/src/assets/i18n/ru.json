@@ -3744,7 +3744,8 @@
 				"UPDATE_DOWNLOADING": "Загрузка обновления",
 				"SERVER_CONFIG_UPDATED": "Настройки сервера обновлены, пожалуйста, дождитесь перезапуска сервера",
 				"SERVER_RESTARTED": "Сервер успешно перезапущен",
-				"CONNECTION_SUCCEEDS": "Подключение к серверу {{ url }} успешно"
+				"CONNECTION_SUCCEEDS": "Подключение к серверу {{ url }} успешно",
+				"DOWNLOADING_UPDATE": "Загрузка обновления {{ current }} МБ из {{ total }} МБ ->> {{ bandwidth }} КБ/с"
 			}
 		},
 		"WEEKLY_LIMIT_EXCEEDED": "Еженедельный лимит превышен",
@@ -3787,7 +3788,7 @@
 			"CONNECTION_DRIVER": "Подключение к {{ driver }} DB успешно",
 			"STILL_WORKING": "Вы всё ещё работаете?",
 			"INACTIVITY_HANDLER": "Управление бездействием",
-			"DOWNLOADING_UPDATE": "Загрузка обновления {{ current }} МБ из {{ total }} МБ ->> {{ bandwidth }} КБ/с"
+			"WANT_LOGOUT": "Вы уверены, что хотите выйти из системы?"
 		},
 		"NO_LIMIT": "∞ Без лимита",
 		"TASK": "Задача",

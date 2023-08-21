@@ -3810,7 +3810,8 @@
 			"HAS_BEEN_DOWNLOADED": "Une nouvelle version v{{ version }} a été téléchargée. Redémarrez l'application pour appliquer les mises à jour.",
 			"CONNECTION_DRIVER": "Connexion à la base de données {{ driver }} réussie",
 			"STILL_WORKING": "Êtes-vous toujours en train de travailler ?",
-			"INACTIVITY_HANDLER": "Gestionnaire d'inactivité"
+			"INACTIVITY_HANDLER": "Gestionnaire d'inactivité",
+			"WANT_LOGOUT": "Êtes-vous sûr(e) de vouloir vous déconnecter ?"
 		},
 		"NO_LIMIT": "∞ Pas de limite",
 		"TASK": "Tâche",
