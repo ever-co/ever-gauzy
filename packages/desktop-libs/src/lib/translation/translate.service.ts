@@ -1,10 +1,13 @@
 import { TranslateLoader } from './translate.loader';
 import { LocalStore } from '../desktop-store';
+import { TranslateEventManager } from './translate-event-manager';
+import { LanguagesEnum } from '@gauzy/contracts';
 
 export class TranslateService {
 	private constructor() { }
 	public static instant(key: string, interpolateParams?: Object): string {
-		const translations = TranslateLoader.translations[this.preferredLanguage];
+		const translations =
+			TranslateLoader.translations[this.preferredLanguage];
 		if (key in translations) {
 			return this._interpolate(
 				translations[key],
@@ -23,12 +26,17 @@ export class TranslateService {
 		});
 	}
 
+	public static onLanguageChange<T>(listerner: (language?: string) => T) {
+		TranslateEventManager.listern(listerner);
+	}
+
 	public static get preferredLanguage(): string {
 		const setting = LocalStore.getStore('appSetting');
-		return setting?.preferredLanguage;
+		return setting?.preferredLanguage || LanguagesEnum.ENGLISH;
 	}
 
 	public static set preferredLanguage(value: string) {
 		LocalStore.updateApplicationSetting({ preferredLanguage: value });
+		TranslateEventManager.trigger(value);
 	}
 }
