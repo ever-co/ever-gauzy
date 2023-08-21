@@ -146,7 +146,10 @@
 		"UPGRADE": "Actualizar",
 		"SKIP_NOW": "Saltar Ahora",
 		"EXIT": "Salir",
-		"LOGOUT": "Cerrar Sesión"
+		"LOGOUT": "Cerrar Sesión",
+		"COPY": "Copiar",
+		"CUT": "Cortar",
+		"PASTE": "Pegar"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {
@@ -3828,6 +3831,20 @@
 			"SCREENSHOT_TAKEN": "Captura de pantalla tomada",
 			"SCREENSHOT_REMOVED": "Se eliminó correctamente la última captura de pantalla y actividades",
 			"NEW_VERSION_AVAILABLE": "Nueva actualización para {{ name }} (versión {{ version }}) disponible"
+		},
+		"MENU": {
+			"ZOOM_IN": "Acercar",
+			"ZOOM_OUT": "Alejar",
+			"SETTING_DEV_MODE": "Configurando el Modo Desarrollador",
+			"SERVER_DEV_MODE": "Modo Desarrollador del Panel de Servidor",
+			"TIMER_DEV_MODE": "Modo Desarrollador del Seguimiento de Tiempo",
+			"NOW_TRACKING": "Trackeando tiempo actual - {{ time }}",
+			"START_TRACKING": "Comenzar a Rastrear Tiempo",
+			"STOP_TRACKING": "Detener Rastreo de Tiempo",
+			"OPEN_TIMER": "Abrir Seguimiento de Tiempo",
+			"WINDOW": "Ventana",
+			"HELP": "Ayuda",
+			"LEARN_MORE": "Más Información"
 		}
 	},
 	"SERVER": "Servidor",

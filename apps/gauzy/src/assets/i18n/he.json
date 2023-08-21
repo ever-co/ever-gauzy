@@ -146,7 +146,10 @@
 		"UPGRADE": "שדרג",
 		"SKIP_NOW": "דלג כעת",
 		"EXIT": "יציאה",
-		"LOGOUT": "התנתקות"
+		"LOGOUT": "התנתקות",
+		"COPY": "העתקה",
+		"CUT": "גזירה",
+		"PASTE": "הדבקה"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {
@@ -3807,6 +3810,20 @@
 			"SCREENSHOT_TAKEN": "תפסתי צילום מסך",
 			"SCREENSHOT_REMOVED": "הצלחתי להסיר את הצילום האחרון והפעילות",
 			"NEW_VERSION_AVAILABLE": "עדכון חדש זמין עבור {{ name }} (גרסה {{ version }})"
+		},
+		"MENU": {
+			"ZOOM_IN": "התקרבות",
+			"ZOOM_OUT": "התרחקות",
+			"SETTING_DEV_MODE": "הגדרת מצב מפתח",
+			"SERVER_DEV_MODE": "מצב מפתח לוח המחוונים של השרת",
+			"TIMER_DEV_MODE": "מצב מפתח פוקוס זמן",
+			"NOW_TRACKING": "מעקב אחר זמן נוכחי - {{ time }}",
+			"START_TRACKING": "התחל מעקב אחר הזמן",
+			"STOP_TRACKING": "הפסק מעקב אחר הזמן",
+			"OPEN_TIMER": "פתח פוקוס זמן",
+			"WINDOW": "חלון",
+			"HELP": "עזרה",
+			"LEARN_MORE": "למד עוד"
 		}
 	},
 	"SERVER": "שרת",

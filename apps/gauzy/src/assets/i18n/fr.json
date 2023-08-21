@@ -146,7 +146,10 @@
 		"UPGRADE": "Mettre à Niveau",
 		"SKIP_NOW": "Ignorer Maintenant",
 		"EXIT": "Quitter",
-		"LOGOUT": "Déconnexion"
+		"LOGOUT": "Déconnexion",
+		"COPY": "Copier",
+		"CUT": "Couper",
+		"PASTE": "Coller"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {
@@ -3828,6 +3831,20 @@
 			"SCREENSHOT_TAKEN": "Prise de la capture d'écran",
 			"SCREENSHOT_REMOVED": "Capture d'écran et activités précédentes supprimées avec succès",
 			"NEW_VERSION_AVAILABLE": "Nouvelle mise à jour pour {{ name }} (version {{ version }}) disponible"
+		},
+		"MENU": {
+			"ZOOM_IN": "Zoom avant",
+			"ZOOM_OUT": "Zoom arrière",
+			"SETTING_DEV_MODE": "Mode développeur pour les paramètres",
+			"SERVER_DEV_MODE": "Mode développeur du tableau de bord du serveur",
+			"TIMER_DEV_MODE": "Mode développeur du tracker de temps",
+			"NOW_TRACKING": "Suivi actuel du temps - {{ time }}",
+			"START_TRACKING": "Commencer à suivre le temps",
+			"STOP_TRACKING": "Arrêter de suivre le temps",
+			"OPEN_TIMER": "Ouvrir le tracker de temps",
+			"WINDOW": "Fenêtre",
+			"HELP": "Aide",
+			"LEARN_MORE": "En savoir plus"
 		}
 	},
 	"SERVER": "Serveur",

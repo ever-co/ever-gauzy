@@ -147,7 +147,10 @@
 		"UPGRADE": "Upgrade",
 		"SKIP_NOW": "Skip Now",
 		"EXIT": "Exit",
-		"LOGOUT": "Logout"
+		"LOGOUT": "Logout",
+		"COPY": "Copy",
+		"CUT": "Cut",
+		"PASTE": "Paste"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {
@@ -3863,6 +3866,20 @@
 			"SCREENSHOT_TAKEN": "Screenshot taken",
 			"SCREENSHOT_REMOVED": "Successfully remove last screenshot and activities",
 			"NEW_VERSION_AVAILABLE": "New update for {{ name }} (version {{ version }}) is available"
+		},
+		"MENU" : {
+			"ZOOM_IN": "Zoom In",
+			"ZOOM_OUT": "Zoom Out",
+			"SETTING_DEV_MODE": "Setting Developer Mode",
+			"SERVER_DEV_MODE": "Server Dashboard Developer Mode",
+			"TIMER_DEV_MODE": "Time Tracker Developer Mode",
+			"NOW_TRACKING": "Now tracking time - {{ time }}",
+			"START_TRACKING": "Start Tracking Time",
+			"STOP_TRACKING": "Stop Tracking Time",
+			"OPEN_TIMER": "Open Time Tracker",
+			"WINDOW": "Window",
+			"HELP": "Help",
+			"LEARN_MORE": "Learn More"
 		}
 	},
 	"SERVER": "Server",
