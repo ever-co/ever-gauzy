@@ -255,7 +255,7 @@ const contextMenu = () => {
 	const serverMenu: MenuItemConstructorOptions[] = [
 		{
 			id: 'server_browser',
-			label: 'Open Gauzy In Browser',
+			label: TranslateService.instant('MENU.OPEN_GA_BROWSER'),
 			click() {
 				const config = LocalStore.getStore('configs');
 				shell.openExternal(`http://localhost:${config.portUi}`);
@@ -263,7 +263,7 @@ const contextMenu = () => {
 		},
 		{
 			id: 'check_for_update',
-			label: 'Check For Update',
+			label: TranslateService.instant('BUTTONS.CHECK_UPDATE'),
 			click() {
 				settingsWindow.show();
 				settingsWindow.webContents.send('goto_update');
@@ -278,14 +278,14 @@ const contextMenu = () => {
 		},
 		{
 			id: 'start_server',
-			label: 'Start Server',
+			label: TranslateService.instant('MENU.START_SERVER'),
 			click() {
 				runServer(false);
 			},
 		},
 		{
 			id: 'stop_server',
-			label: 'Stop Server',
+			label: TranslateService.instant('MENU.STOP_SERVER'),
 			click() {
 				stopServer(false);
 			},
@@ -295,19 +295,19 @@ const contextMenu = () => {
 		},
 		{
 			id: 'server_help',
-			label: 'Help',
+			label: TranslateService.instant('TIMER_TRACKER.MENU.HELP'),
 			click() {
 				shell.openExternal('https://gauzy.co');
 			},
 		},
 		{
 			id: 'server_about',
-			label: 'About',
+			label: TranslateService.instant('MENU.ABOUT'),
 			role: 'about',
 		},
 		{
 			id: 'server_exit',
-			label: 'Exit',
+			label: TranslateService.instant('BUTTONS.EXIT'),
 			click() {
 				app.quit();
 			},
@@ -374,6 +374,21 @@ app.on('ready', async () => {
 	updater.settingWindow = settingsWindow;
 	updater.gauzyWindow = serverWindow;
 	await updater.checkUpdate();
+	TranslateService.onLanguageChange(() => {
+		const menuWindowSetting =
+			Menu.getApplicationMenu().getMenuItemById('window-setting');
+		new AppMenu(
+			null,
+			settingsWindow,
+			null,
+			null,
+			pathWindow,
+			serverWindow,
+			false
+		);
+		createTray();
+		if (menuWindowSetting) menuWindowSetting.enabled = true;
+	})
 });
 
 ipcMain.on('restart_app', (event, arg) => {
@@ -539,15 +554,13 @@ ipcMain.handle('PREFERRED_LANGUAGE', (event, arg) => {
 	const setting = LocalStore.getStore('appSetting');
 	if (arg) {
 		if (!setting) LocalStore.setDefaultApplicationSetting();
-		LocalStore.updateApplicationSetting({
-			preferredLanguage: arg,
-		});
+		TranslateService.preferredLanguage = arg;
 		settingsWindow?.webContents?.send('preferred_language_change', arg);
 	}
-	return setting?.preferredLanguage;
+	return TranslateService.preferredLanguage;
 });
 
 ipcMain.on('preferred_language_change', (event, arg) => {
-	LocalStore.updateApplicationSetting({ preferredLanguage: arg });
+	TranslateService.preferredLanguage = arg;
 	serverWindow?.webContents?.send('preferred_language_change', arg);
 })
