@@ -872,12 +872,15 @@ export function ipcTimer(
 	});
 
 	ipcMain.on('preferred_language_change', (event, arg) => {
-		const windows = [timeTrackerWindow, settingWindow];
 		TranslateService.preferredLanguage = arg;
-		for (const window of windows) {
-			window?.webContents?.send('preferred_language_change', arg);
-		}
 	})
+
+	TranslateService.onLanguageChange((language: string) => {
+		const windows = [timeTrackerWindow, settingWindow];
+		for (const window of windows) {
+			window?.webContents?.send('preferred_language_change', language);
+		}
+	});
 }
 
 export function removeMainListener() {
