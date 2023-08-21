@@ -5,7 +5,7 @@ import log from 'electron-log';
 console.log = log.log;
 Object.assign(console, log.functions);
 
-import { app, dialog, BrowserWindow, ipcMain, shell, Menu } from 'electron';
+import { app, dialog, BrowserWindow, ipcMain, shell, Menu, MenuItemConstructorOptions } from 'electron';
 import { environment } from './environments/environment';
 
 // setup logger to catch all unhandled errors and submit as bug reports to our repo
@@ -287,6 +287,33 @@ async function startServer(value, restart = false) {
 		gauzyWindow
 	);
 
+	TranslateService.onLanguageChange(() => {
+		new AppMenu(
+			timeTrackerWindow,
+			settingsWindow,
+			updaterWindow,
+			knex,
+			pathWindow,
+			null,
+			false
+		);
+
+		if (tray) {
+			tray.destroy();
+		}
+		tray = new TrayIcon(
+			setupWindow,
+			knex,
+			timeTrackerWindow,
+			auth,
+			settingsWindow,
+			{ ...environment },
+			pathWindow,
+			path.join(__dirname, 'assets', 'icons', 'icon.png'),
+			gauzyWindow
+		);
+	})
+
 	/* ping server before launch the ui */
 	ipcMain.on('app_is_init', () => {
 		if (!isAlreadyRun && value && !restart) {
@@ -386,19 +413,18 @@ app.on('ready', async () => {
 		console.log('ERROR', error);
 	}
 	launchAtStartup(autoLaunch, false);
-	Menu.setApplicationMenu(
-		Menu.buildFromTemplate([
-			{
-				label: app.getName(),
-				submenu: [
-					{ role: 'about', label: 'About' },
-					{ type: 'separator' },
-					{ type: 'separator' },
-					{ role: 'quit', label: 'Exit' },
-				],
-			},
-		])
-	);
+	const menu: MenuItemConstructorOptions[] = [
+		{
+			label: app.getName(),
+			submenu: [
+				{ role: 'about', label: TranslateService.instant('MENU.ABOUT') },
+				{ type: 'separator' },
+				{ type: 'separator' },
+				{ role: 'quit', label: TranslateService.instant('BUTTONS.EXIT') }
+			]
+		}
+	];
+	Menu.setApplicationMenu(Menu.buildFromTemplate(menu));
 
 	/* create window */
 	timeTrackerWindow = await createTimeTrackerWindow(
@@ -733,12 +759,10 @@ ipcMain.handle('PREFERRED_LANGUAGE', (event, arg) => {
 	const setting = store.get('appSetting');
 	if (arg) {
 		if (!setting) LocalStore.setDefaultApplicationSetting();
-		LocalStore.updateApplicationSetting({
-			preferredLanguage: arg,
-		});
+		TranslateService.preferredLanguage = arg;
 		settingsWindow?.webContents?.send('preferred_language_change', arg);
 	}
-	return setting?.preferredLanguage;
+	return TranslateService.preferredLanguage;
 });
 
 app.on('browser-window-created', (_, window) => {
