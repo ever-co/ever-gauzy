@@ -1038,7 +1038,10 @@
 		"FEATURES": "Features",
 		"ACCOUNTING_TEMPLATES": "Accounting Templates",
 		"FOCUS": "Focus",
-		"APPLICATIONS": "Applications"
+		"APPLICATIONS": "Applications",
+		"OPEN_GA_BROWSER": "Отвори Gauzy в браузъра",
+		"START_SERVER": "Стартирай сървъра",
+		"STOP_SERVER": "Спри сървъра"
 	},
 	"SETTINGS_MENU": {
 		"THEMES": "Теми",

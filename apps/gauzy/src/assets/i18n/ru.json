@@ -1036,7 +1036,10 @@
 		"FEATURES": "Возможности",
 		"ACCOUNTING_TEMPLATES": "Шаблоны счетов",
 		"FOCUS": "Фокус",
-		"APPLICATIONS": "Заявления"
+		"APPLICATIONS": "Заявления",
+		"OPEN_GA_BROWSER": "Открыть Gauzy в браузере",
+		"START_SERVER": "Запустить сервер",
+		"STOP_SERVER": "Остановить сервер"
 	},
 	"SETTINGS_MENU": {
 		"THEMES": "Темы",
