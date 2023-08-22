@@ -139,7 +139,17 @@
 		"SAVE_RESTART": "שמור והפעל מחדש",
 		"FILES": "קבצים",
 		"START": "התחל",
-		"STOP": "עצור"
+		"STOP": "עצור",
+		"ACKNOWLEDGE": "אשר",
+		"RESTART": "אתחל מחדש",
+		"LATER": "מאוחר יותר",
+		"UPGRADE": "שדרג",
+		"SKIP_NOW": "דלג כעת",
+		"EXIT": "יציאה",
+		"LOGOUT": "התנתקות",
+		"COPY": "העתקה",
+		"CUT": "גזירה",
+		"PASTE": "הדבקה"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {
@@ -1028,7 +1038,10 @@
 		"FEATURES": "Features",
 		"ACCOUNTING_TEMPLATES": "Accounting Templates",
 		"FOCUS": "Focus",
-		"APPLICATIONS": "Applications"
+		"APPLICATIONS": "Applications",
+		"OPEN_GA_BROWSER": "פתח את Gauzy בדפדפן",
+		"START_SERVER": "התחל את השרת",
+		"STOP_SERVER": "עצור את השרת"
 	},
 	"SETTINGS_MENU": {
 		"THEMES": "Themes",
@@ -3766,7 +3779,21 @@
 			"WARNING": "אזהרה",
 			"REMOVE_SCREENSHOT": "האם אתה בטוח שברצונך למחוק את התמונה האחרונה ויומן הפעילות?",
 			"CHANGE_CLIENT": "האם אתה בטוח שברצונך לשנות את הלקוח?",
-			"RESUME_TIMER": "הטיימר שלך התמשך בזמן לנעימת המחשב. האם להמשיך את הטיימר?"
+			"RESUME_TIMER": "הטיימר שלך התמשך בזמן לנעימת המחשב. האם להמשיך את הטיימר?",
+			"EXIT": "האם אתה בטוח שתרצה לצאת?",
+			"STOPPED_DU_INACTIVITY": "הטיימר נעצר עקב פרק החוסר פעילות שעבר את {{ inactivity }}. אנא וודא שתפעיל את הטיימר שוב לאחר שתמשיך לעבוד.",
+			"EXIT_CONFIRM": "לחץ על יציאה כדי לעצור את הטיימר ולצאת מהיישום.",
+			"LOGOUT_CONFIRM": "לחץ על התנתקות כדי לעצור את הטיימר ולהתנתק מהיישום.",
+			"SELECT_UPDATE_FILES": "אנא בחר תיקייה עם קבצי עדכון.",
+			"UPDATE_READY": "העדכון מוכן להורדה",
+			"NEW_VERSION_AVAILABLE": "גרסה חדשה v{{ next }} זמינה. עדכן את היישום על ידי הורדת העדכונים עבור v{{ current }}",
+			"READY_INSTALL": "העדכון מוכן להתקנה",
+			"HAS_BEEN_DOWNLOADED": "גרסה חדשה v{{ version }} כבר הורדה. אנא הפעל מחדש את היישום כדי להחיל את העדכונים.",
+			"CONNECTION_DRIVER": "התחברות למסד הנתונים {{ driver }} הצליחה",
+			"WANT_LOGOUT": "האם אתה בטוח שברצונך להתנתק?",
+			"DOWNLOADING_UPDATE": "הורדת העדכון {{ current }} מ״ב מתוך {{ total }} מ״ב ->> {{ bandwidth }} ק״ב/ש",
+			"STILL_WORKING": "האם אתה עדיין עובד?",
+			"INACTIVITY_HANDLER": "מטפל בחוסר פעילות"
 		},
 		"NO_LIMIT": "∞ אין הגבלה",
 		"TASK": "משימה",
@@ -3781,6 +3808,26 @@
 			"PROJECT_ADDED": "הפרויקט נוסף בהצלחה",
 			"TASK_ADDED": "המשימה נוספה בהצלחה",
 			"CLIENT_ADDED": "הלקוח נוסף בהצלחה"
+		},
+		"NATIVE_NOTIFICATION": {
+			"STOPPED_DU_INACTIVITY": "המעקב נעצר בשל ביטול הפעילות!",
+			"SCREENSHOT_TAKEN": "תפסתי צילום מסך",
+			"SCREENSHOT_REMOVED": "הצלחתי להסיר את הצילום האחרון והפעילות",
+			"NEW_VERSION_AVAILABLE": "עדכון חדש זמין עבור {{ name }} (גרסה {{ version }})"
+		},
+		"MENU": {
+			"ZOOM_IN": "התקרבות",
+			"ZOOM_OUT": "התרחקות",
+			"SETTING_DEV_MODE": "הגדרת מצב מפתח",
+			"SERVER_DEV_MODE": "מצב מפתח לוח המחוונים של השרת",
+			"TIMER_DEV_MODE": "מצב מפתח פוקוס זמן",
+			"NOW_TRACKING": "מעקב אחר זמן נוכחי - {{ time }}",
+			"START_TRACKING": "התחל מעקב אחר הזמן",
+			"STOP_TRACKING": "הפסק מעקב אחר הזמן",
+			"OPEN_TIMER": "פתח פוקוס זמן",
+			"WINDOW": "חלון",
+			"HELP": "עזרה",
+			"LEARN_MORE": "למד עוד"
 		}
 	},
 	"SERVER": "שרת",

@@ -140,7 +140,17 @@
 		"SAVE_RESTART": "Save & Restart",
 		"FILES": "Files",
 		"START": "Start",
-		"STOP": "Stop"
+		"STOP": "Stop",
+		"ACKNOWLEDGE": "Acknowledge",
+		"RESTART": "Restart",
+		"LATER": "Later",
+		"UPGRADE": "Upgrade",
+		"SKIP_NOW": "Skip Now",
+		"EXIT": "Exit",
+		"LOGOUT": "Logout",
+		"COPY": "Copy",
+		"CUT": "Cut",
+		"PASTE": "Paste"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {
@@ -1040,7 +1050,10 @@
 		"FEATURES": "Features",
 		"ACCOUNTING_TEMPLATES": "Accounting Templates",
 		"FOCUS": "Focus",
-		"APPLICATIONS": "Applications"
+		"APPLICATIONS": "Applications",
+		"OPEN_GA_BROWSER": "Open Gauzy In Browser",
+		"START_SERVER": "Start Server",
+		"STOP_SERVER": "Stop Server"
 	},
 	"SETTINGS_MENU": {
 		"THEMES": "Themes",
@@ -3792,7 +3805,8 @@
 				"UPDATE_DOWNLOADING": "Update Downloading",
 				"SERVER_CONFIG_UPDATED": "Server configuration updated, please wait till server restarts",
 				"SERVER_RESTARTED": "Server Restarted Successfully",
-				"CONNECTION_SUCCEEDS": "Connection to Server {{ url }} Succeeds"
+				"CONNECTION_SUCCEEDS": "Connection to Server {{ url }} Succeeds",
+				"DOWNLOADING_UPDATE": "Downloading update {{ current }} MB of {{ total }} MB ->> {{ bandwidth }} KB/s"
 			}
 		},
 		"WEEKLY_LIMIT_EXCEEDED": "Weekly limit exceeded",
@@ -3822,7 +3836,20 @@
 			"WARNING": "Warning",
 			"REMOVE_SCREENSHOT": "Do you really want to remove this screenshot and activities log?",
 			"CHANGE_CLIENT": "Are you sure you want to change Client?",
-			"RESUME_TIMER": "Your timer was running when PC was locked. Resume timer?"
+			"RESUME_TIMER": "Your timer was running when PC was locked. Resume timer?",
+			"EXIT": "Are you sure you want to exit?",
+			"STOPPED_DU_INACTIVITY": "Timer was stopped due to inactivity period exceeding {{ inactivity }}. Please make sure you start timer again when continue working.",
+			"EXIT_CONFIRM": "Click Exit to Stop the Timer and Exit from the application.",
+			"LOGOUT_CONFIRM": "Click Logout to Stop the Timer and Logout from the application.",
+			"SELECT_UPDATE_FILES": "Please select folder with update files.",
+			"UPDATE_READY": "Update Ready to Download",
+			"NEW_VERSION_AVAILABLE": "A new version v{{ next }} is available. Upgrade the application by downloading the updates for v{{ current }}",
+			"READY_INSTALL": "Update Ready to Install",
+			"HAS_BEEN_DOWNLOADED": "A new version v{{ version }} has been downloaded. Restart the application to apply the updates.",
+			"CONNECTION_DRIVER": "Connection to {{ driver }} DB Succeeds",
+			"STILL_WORKING": "Are you still working?",
+			"INACTIVITY_HANDLER": "Inactivity Handler",
+			"WANT_LOGOUT": "Are you sure you want to logout?"
 		},
 		"NO_LIMIT": "∞ No Limit",
 		"TASK": "Task",
@@ -3837,6 +3864,26 @@
 			"PROJECT_ADDED": "Project added successfully",
 			"TASK_ADDED": "Task added successfully",
 			"CLIENT_ADDED": "Client added successfully"
+		},
+		"NATIVE_NOTIFICATION": {
+			"STOPPED_DU_INACTIVITY": "Tracker was stopped due to inactivity!",
+			"SCREENSHOT_TAKEN": "Screenshot taken",
+			"SCREENSHOT_REMOVED": "Successfully remove last screenshot and activities",
+			"NEW_VERSION_AVAILABLE": "New update for {{ name }} (version {{ version }}) is available"
+		},
+		"MENU" : {
+			"ZOOM_IN": "Zoom In",
+			"ZOOM_OUT": "Zoom Out",
+			"SETTING_DEV_MODE": "Setting Developer Mode",
+			"SERVER_DEV_MODE": "Server Dashboard Developer Mode",
+			"TIMER_DEV_MODE": "Time Tracker Developer Mode",
+			"NOW_TRACKING": "Now tracking time - {{ time }}",
+			"START_TRACKING": "Start Tracking Time",
+			"STOP_TRACKING": "Stop Tracking Time",
+			"OPEN_TIMER": "Open Time Tracker",
+			"WINDOW": "Window",
+			"HELP": "Help",
+			"LEARN_MORE": "Learn More"
 		}
 	},
 	"SERVER": "Server",

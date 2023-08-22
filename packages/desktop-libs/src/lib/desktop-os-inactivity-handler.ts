@@ -13,6 +13,7 @@ import {
 	NeverSleepTracking,
 } from './strategies';
 import { SleepInactivityTracking, SleepTracking } from './contexts';
+import { TranslateService } from './translation';
 
 export class DesktopOsInactivityHandler {
 	private _inactivityResultAccepted: boolean;
@@ -41,7 +42,7 @@ export class DesktopOsInactivityHandler {
 				this._startedAt = new Date();
 				this._dialog = new DesktopDialog(
 					'Gauzy',
-					'Are you still working?',
+					TranslateService.instant('TIMER_TRACKER.DIALOG.STILL_WORKING'),
 					powerManager.window
 				);
 				const button = await this._dialog.show();
@@ -79,7 +80,7 @@ export class DesktopOsInactivityHandler {
 						const dialog = new DialogAcknowledgeInactivity(
 							new DesktopDialog(
 								'Gauzy',
-								'Inactivity Handler',
+								TranslateService.instant('TIMER_TRACKER.DIALOG.INACTIVITY_HANDLER'),
 								powerManager.window
 							)
 						);
@@ -107,7 +108,7 @@ export class DesktopOsInactivityHandler {
 				}
 				if (!res)
 					this._notify.customNotification(
-						'Tracker was stopped due to inactivity!',
+						TranslateService.instant('TIMER_TRACKER.NATIVE_NOTIFICATION.STOPPED_DU_INACTIVITY'),
 						'Gauzy'
 					);
 				this._inactivityResultAccepted = true;

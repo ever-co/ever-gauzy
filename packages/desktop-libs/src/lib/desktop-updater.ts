@@ -14,6 +14,7 @@ import { LocalStore } from './desktop-store';
 import { IDesktopGithubUpdate } from './interfaces';
 import IUpdaterConfig from './interfaces/i-updater-config';
 import { CdnUpdate, LocalUpdate } from './strategies';
+import { TranslateService } from './translation';
 import { DesktopLocalUpdateServer } from './update-server/desktop-local-update-server';
 
 export class DesktopUpdater {
@@ -43,7 +44,7 @@ export class DesktopUpdater {
 			const dialog = new DialogLocalUpdate(
 				new DesktopDialog(
 					'Gauzy',
-					'Please select folder with update files',
+					TranslateService.instant('TIMER_TRACKER.DIALOG.SELECT_UPDATE_FILES'),
 					this._settingWindow
 				)
 			);
@@ -121,17 +122,16 @@ export class DesktopUpdater {
 			const dialog = new DialogConfirmUpgradeDownload(
 				new DesktopDialog(
 					'Gauzy',
-					'Update Ready to Download',
+					TranslateService.instant('TIMER_TRACKER.DIALOG.UPDATE_READY'),
 					this._gauzyWindow
 				)
 			);
 			dialog.options = {
 				...dialog.options,
-				detail:
-					'A new version v' +
-					info.version +
-					' is available. Upgrade the application by downloading the updates for v' +
-					app.getVersion()
+				detail: TranslateService.instant(
+					'TIMER_TRACKER.DIALOG.NEW_VERSION_AVAILABLE',
+					{ next: info.version, current: app.getVersion() }
+				),
 			};
 			const button = await dialog.show();
 			if (button?.response === 0) {
@@ -146,14 +146,16 @@ export class DesktopUpdater {
 			const dialog = new DialogConfirmInstallDownload(
 				new DesktopDialog(
 					'Gauzy',
-					'Update Ready to Install',
+					TranslateService.instant(
+						'TIMER_TRACKER.DIALOG.READY_INSTALL'
+					),
 					this._gauzyWindow
 				)
 			);
-			dialog.options.detail =
-				'A new version v' +
-				event.version +
-				' has been downloaded. Restart the application to apply the updates.';
+			dialog.options.detail = TranslateService.instant(
+				'TIMER_TRACKER.DIALOG.HAS_BEEN_DOWNLOADED',
+				{ version: event.version }
+			);
 			const button = await dialog.show();
 			if (button?.response === 0) {
 				this._settingWindow.webContents.send('_logout_quit_install_');
