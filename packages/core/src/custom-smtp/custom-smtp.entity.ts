@@ -11,22 +11,22 @@ import { IsSecret } from './../core/decorators';
 export class CustomSmtp extends TenantOrganizationBaseEntity
 	implements ICustomSmtp {
 
-	@ApiProperty({ type: () => String, examples: ['noreply@domain.com'], required: true })
+	@ApiProperty({ type: () => String, examples: ['noreply@domain.com'] })
 	@IsEmail()
 	@Column({ nullable: true })
 	fromAddress?: string
 
-	@ApiProperty({ type: () => String, examples: ['smtp.postmarkapp.com', 'smtp.gmail.com'], required: true })
+	@ApiProperty({ type: () => String, examples: ['smtp.postmarkapp.com', 'smtp.gmail.com'] })
 	@IsString()
 	@Column()
 	host: string;
 
-	@ApiProperty({ type: () => Number, examples: [587, 465], required: true })
+	@ApiProperty({ type: () => Number, examples: [587, 465] })
 	@IsNumber()
 	@Column()
 	port: number;
 
-	@ApiProperty({ type: () => Boolean, examples: [true, false], required: true })
+	@ApiProperty({ type: () => Boolean, examples: [true, false] })
 	@IsBoolean()
 	@Column()
 	secure: boolean;
