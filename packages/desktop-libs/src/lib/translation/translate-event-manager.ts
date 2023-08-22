@@ -23,7 +23,7 @@ export class TranslateEventManager extends EventEmitter {
 		this.instance.emit(TranslateEvent.LANGUAGE_CHANGE, language);
 	}
 
-	public static listern<T>(listerner: (language?: string) => T) {
-		this.instance.on(TranslateEvent.LANGUAGE_CHANGE, listerner.bind(this));
+	public static listen<T>(listener: (language?: string) => T) {
+		this.instance.on(TranslateEvent.LANGUAGE_CHANGE, listener.bind(this));
 	}
 }

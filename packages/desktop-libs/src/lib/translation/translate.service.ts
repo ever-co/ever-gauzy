@@ -26,8 +26,8 @@ export class TranslateService {
 		});
 	}
 
-	public static onLanguageChange<T>(listerner: (language?: string) => T) {
-		TranslateEventManager.listern(listerner);
+	public static onLanguageChange<T>(listener: (language?: string) => T) {
+		TranslateEventManager.listen(listener);
 	}
 
 	public static get preferredLanguage(): string {
