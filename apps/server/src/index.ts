@@ -41,6 +41,7 @@ import {
 	createServerWindow,
 	createSettingsWindow,
 	SplashScreen,
+	createAboutWindow,
 } from '@gauzy/desktop-window';
 import { initSentry } from './sentry';
 import { readFileSync, writeFileSync, accessSync, constants } from 'fs';
@@ -301,9 +302,16 @@ const contextMenu = () => {
 			},
 		},
 		{
-			id: 'server_about',
+			id: 'gauzy-about',
 			label: TranslateService.instant('MENU.ABOUT'),
-			role: 'about',
+			enabled: true,
+			async click() {
+				const window: BrowserWindow =
+					await createAboutWindow(
+						pathWindow.ui
+					);
+				window.show();
+			},
 		},
 		{
 			id: 'server_exit',
@@ -386,6 +394,7 @@ app.on('ready', async () => {
 			serverWindow,
 			false
 		);
+		if (tray) tray.destroy();
 		createTray();
 		if (menuWindowSetting) menuWindowSetting.enabled = true;
 	})
