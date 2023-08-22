@@ -7042,11 +7042,6 @@
   resolved "https://registry.yarnpkg.com/@types/html-to-text/-/html-to-text-9.0.0.tgz#28a676984c281a67478773519da6b5c2bdfb22ed"
   integrity sha512-FnF3p2FJZ1kJT/0C/lmBzw7HSlH3RhtACVYyrwUsJoCmFNuiLpusWT2FWWB7P9A48CaYpvD6Q2fprn7sZeffpw==
 
-"@types/html-to-text@5.1.0":
-  version "5.1.0"
-  resolved "https://registry.yarnpkg.com/@types/html-to-text/-/html-to-text-5.1.0.tgz#6fc1446da15eb23d0472657598317daf0cc060b8"
-  integrity sha512-x2pKk3G6DN7g3sA8jrAYhlsQu7EdYnj5rFj6l4QMkHV8z0Hx7FwDKhPyC4ehIakeSu01YPYpkJNVLJHBzuYpKQ==
-
 "@types/html-to-text@^9.0.1":
   version "9.0.1"
   resolved "https://registry.yarnpkg.com/@types/html-to-text/-/html-to-text-9.0.1.tgz#d4f8b1844464df3a13ca14134f5970c847de6751"
