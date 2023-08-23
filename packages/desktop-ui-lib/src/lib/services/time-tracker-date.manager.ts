@@ -34,6 +34,7 @@ export class TimeTrackerDateManager {
 	public static get endWeek(): string {
 		return moment(this.startWeek)
 			.add('7', 'days')
+			.subtract('1', 'millisecond')
 			.format('YYYY-MM-DD HH:mm:ss');
 	}
 
