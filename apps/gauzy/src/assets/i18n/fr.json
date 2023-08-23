@@ -139,7 +139,17 @@
 		"SAVE_RESTART": "Enregistrer et redémarrer",
 		"FILES": "Fichiers",
 		"START": "Démarrer",
-		"STOP": "Arrêter"
+		"STOP": "Arrêter",
+		"ACKNOWLEDGE": "Reconnaître",
+		"RESTART": "Redémarrer",
+		"LATER": "Plus Tard",
+		"UPGRADE": "Mettre à Niveau",
+		"SKIP_NOW": "Ignorer Maintenant",
+		"EXIT": "Quitter",
+		"LOGOUT": "Déconnexion",
+		"COPY": "Copier",
+		"CUT": "Couper",
+		"PASTE": "Coller"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {
@@ -1036,7 +1046,10 @@
 		"FEATURES": "Features",
 		"ACCOUNTING_TEMPLATES": "Accounting Templates",
 		"FOCUS": "Focus",
-		"APPLICATIONS": "Applications"
+		"APPLICATIONS": "Applications",
+		"OPEN_GA_BROWSER": "Ouvrir Gauzy dans le navigateur",
+		"START_SERVER": "Démarrer le serveur",
+		"STOP_SERVER": "Arrêter le serveur"
 	},
 	"SETTINGS_MENU": {
 		"THEMES": "Themes",
@@ -3757,7 +3770,8 @@
 				"UPDATE_DOWNLOADING": "Téléchargement de la mise à jour",
 				"SERVER_CONFIG_UPDATED": "Configuration du serveur mise à jour, veuillez attendre le redémarrage du serveur",
 				"SERVER_RESTARTED": "Redémarrage du serveur effectué avec succès",
-				"CONNECTION_SUCCEEDS": "Connexion au serveur {{ url }} réussie"
+				"CONNECTION_SUCCEEDS": "Connexion au serveur {{ url }} réussie",
+				"DOWNLOADING_UPDATE": "Téléchargement de la mise à jour {{ current }} Mo sur {{ total }} Mo ->> {{ bandwidth }} Ko/s"
 			}
 		},
 		"WEEKLY_LIMIT_EXCEEDED": "Limite hebdomadaire dépassée",
@@ -3787,7 +3801,20 @@
 			"WARNING": "Avertissement",
 			"REMOVE_SCREENSHOT": "Voulez-vous vraiment supprimer cette capture d'écran et le journal des activités ?",
 			"CHANGE_CLIENT": "Êtes-vous sûr de vouloir changer de client ?",
-			"RESUME_TIMER": "Votre chronomètre était en cours d'exécution lorsque votre PC a été verrouillé. Voulez-vous reprendre le chronomètre ?"
+			"RESUME_TIMER": "Votre chronomètre était en cours d'exécution lorsque votre PC a été verrouillé. Voulez-vous reprendre le chronomètre ?",
+			"EXIT": "Êtes-vous sûr de vouloir quitter ?",
+			"STOPPED_DU_INACTIVITY": "Le minuteur a été arrêté en raison d'une période d'inactivité dépassant {{ inactivity }}. Assurez-vous de redémarrer le minuteur lorsque vous continuez à travailler.",
+			"EXIT_CONFIRM": "Cliquez sur Quitter pour arrêter le minuteur et quitter l'application.",
+			"LOGOUT_CONFIRM": "Cliquez sur Déconnexion pour arrêter le minuteur et vous déconnecter de l'application.",
+			"SELECT_UPDATE_FILES": "Veuillez sélectionner le dossier contenant les fichiers de mise à jour.",
+			"UPDATE_READY": "Mise à jour prête à être téléchargée",
+			"NEW_VERSION_AVAILABLE": "Une nouvelle version v{{ next }} est disponible. Mettez à niveau l'application en téléchargeant les mises à jour pour v{{ current }}",
+			"READY_INSTALL": "Mise à jour prête à être installée",
+			"HAS_BEEN_DOWNLOADED": "Une nouvelle version v{{ version }} a été téléchargée. Redémarrez l'application pour appliquer les mises à jour.",
+			"CONNECTION_DRIVER": "Connexion à la base de données {{ driver }} réussie",
+			"STILL_WORKING": "Êtes-vous toujours en train de travailler ?",
+			"INACTIVITY_HANDLER": "Gestionnaire d'inactivité",
+			"WANT_LOGOUT": "Êtes-vous sûr(e) de vouloir vous déconnecter ?"
 		},
 		"NO_LIMIT": "∞ Pas de limite",
 		"TASK": "Tâche",
@@ -3802,6 +3829,26 @@
 			"PROJECT_ADDED": "Projet ajouté avec succès",
 			"TASK_ADDED": "Tâche ajoutée avec succès",
 			"CLIENT_ADDED": "Client ajouté avec succès"
+		},
+		"NATIVE_NOTIFICATION": {
+			"STOPPED_DU_INACTIVITY": "Le suivi a été arrêté en raison de l'inactivité !",
+			"SCREENSHOT_TAKEN": "Prise de la capture d'écran",
+			"SCREENSHOT_REMOVED": "Capture d'écran et activités précédentes supprimées avec succès",
+			"NEW_VERSION_AVAILABLE": "Nouvelle mise à jour pour {{ name }} (version {{ version }}) disponible"
+		},
+		"MENU": {
+			"ZOOM_IN": "Zoom avant",
+			"ZOOM_OUT": "Zoom arrière",
+			"SETTING_DEV_MODE": "Mode développeur pour les paramètres",
+			"SERVER_DEV_MODE": "Mode développeur du tableau de bord du serveur",
+			"TIMER_DEV_MODE": "Mode développeur du tracker de temps",
+			"NOW_TRACKING": "Suivi actuel du temps - {{ time }}",
+			"START_TRACKING": "Commencer à suivre le temps",
+			"STOP_TRACKING": "Arrêter de suivre le temps",
+			"OPEN_TIMER": "Ouvrir le tracker de temps",
+			"WINDOW": "Fenêtre",
+			"HELP": "Aide",
+			"LEARN_MORE": "En savoir plus"
 		}
 	},
 	"SERVER": "Serveur",
