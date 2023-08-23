@@ -1,15 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { IsNull, Repository } from 'typeorm';
-import * as nodemailer from 'nodemailer';
-import {
-	ICustomSmtp,
-	ICustomSmtpFindInput,
-	ICustomSmtpValidateInput
-} from '@gauzy/contracts';
+import { ICustomSmtp, ICustomSmtpFindInput, IVerifySMTPTransport } from '@gauzy/contracts';
 import { isEmpty, ISMTPConfig } from '@gauzy/common';
-import { environment as env } from '@gauzy/config';
 import { TenantAwareCrudService } from './../core/crud';
+import { SMTPUtils } from './../email-send/utils';
 import { CustomSmtp } from './custom-smtp.entity';
 
 @Injectable()
@@ -30,9 +25,6 @@ export class CustomSmtpService extends TenantAwareCrudService<CustomSmtp> {
 	public async getSmtpSetting(
 		query: ICustomSmtpFindInput
 	): Promise<ICustomSmtp | ISMTPConfig> {
-		const globalSmtp = this.defaultSMTPTransporter();
-		delete globalSmtp['auth'];
-
 		try {
 			const { organizationId } = query;
 			return await this.findOneByOptions({
@@ -44,7 +36,7 @@ export class CustomSmtpService extends TenantAwareCrudService<CustomSmtp> {
 				}
 			});
 		} catch (error) {
-			return globalSmtp;
+			return SMTPUtils.defaultSMTPTransporter();
 		}
 	}
 
@@ -54,47 +46,14 @@ export class CustomSmtpService extends TenantAwareCrudService<CustomSmtp> {
 	 * @param configuration
 	 * @returns
 	 */
-	public async verifyTransporter(configuration: ICustomSmtpValidateInput): Promise<Boolean | any> {
-		return new Promise((resolve, reject) => {
-			try {
-				const transporter = nodemailer.createTransport({
-					host: configuration.host,
-					port: configuration.port || 587,
-					secure: configuration.secure || false, // use TLS
-					auth: {
-						user: configuration.username,
-						pass: configuration.password
-					},
-					from: configuration.fromAddress
-				});
-				transporter.verify((error, success) => {
-					if (error) {
-						console.log('Error while verifying nodemailer transport!', error);
-						reject(false);
-					} else {
-						resolve(true);
-					}
-				});
-			} catch (error) {
-				reject(false);
+	public async verifyTransporter(transport: IVerifySMTPTransport): Promise<Boolean | any> {
+		try {
+			if (!!await SMTPUtils.verifyTransporter(transport)) {
+				return true;
 			}
-		});
-	}
-
-	/*
-	 * This example would connect to a SMTP server separately for every single message
-	 */
-	public defaultSMTPTransporter(): ISMTPConfig {
-		const smtp: ISMTPConfig = env.smtpConfig;
-		return {
-			fromAddress: smtp.fromAddress,
-			host: smtp.host,
-			port: smtp.port,
-			secure: smtp.secure, // true for 465, false for other ports
-			auth: {
-				user: smtp.auth.user,
-				pass: smtp.auth.pass
-			}
-		};
+		} catch (error) {
+			console.log('Error while verifying nodemailer transport: %s', error);
+			return false;
+		}
 	}
 }

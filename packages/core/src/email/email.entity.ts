@@ -1,5 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Column, Entity, Index, ManyToOne, RelationId } from 'typeorm';
+import { IsBoolean, IsOptional, IsUUID } from 'class-validator';
 import { IEmail, IEmailTemplate, IUser } from '@gauzy/contracts';
 import {
 	EmailTemplate,
@@ -9,12 +10,15 @@ import {
 
 @Entity('email_sent')
 export class Email extends TenantOrganizationBaseEntity implements IEmail {
-	@ApiProperty({ type: () => String })
+
+	@ApiPropertyOptional({ type: () => String })
+	@IsOptional()
 	@Index()
 	@Column({ nullable: true })
 	name: string;
 
-	@ApiProperty({ type: () => String })
+	@ApiPropertyOptional({ type: () => String })
+	@IsOptional()
 	@Column({ nullable: true })
 	content: string;
 
@@ -24,14 +28,16 @@ export class Email extends TenantOrganizationBaseEntity implements IEmail {
 	email: string;
 
 	@ApiPropertyOptional({ type: () => Boolean, default: false })
+	@IsOptional()
+	@IsBoolean()
 	@Column({ type: Boolean, nullable: true, default: false })
 	isArchived?: boolean;
 
 	/*
-    |--------------------------------------------------------------------------
-    | @ManyToOne
-    |--------------------------------------------------------------------------
-    */
+	|--------------------------------------------------------------------------
+	| @ManyToOne
+	|--------------------------------------------------------------------------
+	*/
 
 	/**
 	 * User
@@ -42,7 +48,9 @@ export class Email extends TenantOrganizationBaseEntity implements IEmail {
 	})
 	user?: IUser;
 
-	@ApiProperty({ type: () => String })
+	@ApiPropertyOptional({ type: () => String })
+	@IsOptional()
+	@IsUUID()
 	@RelationId((it: Email) => it.user)
 	@Index()
 	@Column({ nullable: true })
@@ -52,11 +60,13 @@ export class Email extends TenantOrganizationBaseEntity implements IEmail {
 	 * Email Template
 	 */
 	@ApiProperty({ type: () => EmailTemplate })
-	@ManyToOne(() => EmailTemplate, (template) => template.emails)
+	@ManyToOne(() => EmailTemplate)
 	emailTemplate: IEmailTemplate;
 
-	@ApiPropertyOptional({ type: () => String })
+	@ApiProperty({ type: () => String })
+	@IsUUID()
 	@RelationId((it: Email) => it.emailTemplate)
+	@Index()
 	@Column()
 	emailTemplateId: IEmailTemplate['id'];
 }

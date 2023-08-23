@@ -1,3 +1,9 @@
+import { BadRequestException, forwardRef, Inject, Injectable, NotFoundException } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import * as Email from 'email-templates';
+import * as Handlebars from 'handlebars';
+import * as nodemailer from 'nodemailer';
+import { Repository, IsNull, FindManyOptions } from 'typeorm';
 import {
 	IEmailTemplate,
 	IInviteEmployeeModel,
@@ -13,21 +19,18 @@ import {
 	IPagination,
 	IInviteTeamMemberModel,
 	IOrganizationTeam,
-	IOrganizationTeamJoinRequest
+	IOrganizationTeamJoinRequest,
+	EmailTemplateNameEnum
 } from '@gauzy/contracts';
-import { BadRequestException, forwardRef, Inject, Injectable, NotFoundException } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import * as Email from 'email-templates';
-import * as Handlebars from 'handlebars';
-import * as nodemailer from 'nodemailer';
-import { Repository, IsNull, FindManyOptions } from 'typeorm';
 import { environment as env } from '@gauzy/config';
 import { deepMerge, IAppIntegrationConfig, isEmpty, ISMTPConfig } from '@gauzy/common';
 import { TenantAwareCrudService } from './../core/crud';
 import { RequestContext } from '../core/context';
+import { CustomSmtpService } from './../custom-smtp/custom-smtp.service';
 import { EmailTemplate, Organization } from './../core/entities/internal';
 import { Email as EmailEntity } from './email.entity';
-import { CustomSmtpService } from './../custom-smtp/custom-smtp.service';
+import { EmailSendService } from './../email-send/email-send.service';
+import { SMTPUtils } from './../email-send/utils';
 
 const DISALLOW_EMAIL_SERVER_DOMAIN: string[] = ['@example.com'];
 
@@ -45,7 +48,9 @@ export class EmailService extends TenantAwareCrudService<EmailEntity> {
 		private readonly organizationRepository: Repository<Organization>,
 
 		@Inject(forwardRef(() => CustomSmtpService))
-		private readonly customSmtpService: CustomSmtpService
+		private readonly customSmtpService: CustomSmtpService,
+
+		private readonly _emailSendService: EmailSendService
 	) {
 		super(emailRepository);
 	}
@@ -139,7 +144,7 @@ export class EmailService extends TenantAwareCrudService<EmailEntity> {
 					}
 				}
 			} catch (error) {
-				smtpConfig = this.customSmtpService.defaultSMTPTransporter() as ISMTPConfig;
+				smtpConfig = SMTPUtils.defaultSMTPTransporter() as ISMTPConfig;
 				console.log({ smtpConfig }, 'Global default SMTP configuration verifies');
 			}
 		}
@@ -891,7 +896,7 @@ export class EmailService extends TenantAwareCrudService<EmailEntity> {
 		deepMerge(integration, env.appIntegrationConfig);
 
 		const sendOptions = {
-			template: 'password-less-authentication',
+			template: EmailTemplateNameEnum.PASSWORD_LESS_AUTHENTICATION,
 			message: {
 				to: `${user.email}`
 			},
@@ -912,12 +917,12 @@ export class EmailService extends TenantAwareCrudService<EmailEntity> {
 		const match = !!DISALLOW_EMAIL_SERVER_DOMAIN.find((server) => body.email.includes(server));
 		if (!match) {
 			try {
-				const instance = await this.getEmailInstance();
+				const instance = await this._emailSendService.getInstance();
 				const send = await instance.send(sendOptions);
 
 				body['message'] = send.originalMessage;
 			} catch (error) {
-				console.log('Error while sending password less authentication code', error);
+				console.log('Error while sending password less authentication code: %s', error);
 			}
 		}
 	}

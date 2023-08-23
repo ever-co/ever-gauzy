@@ -9,6 +9,7 @@ import { Organization } from '../organization/organization.entity';
 import { TenantModule } from '../tenant/tenant.module';
 import { UserModule } from './../user/user.module';
 import { CustomSmtpModule } from './../custom-smtp/custom-smtp.module';
+import { EmailSendModule } from './../email-send/email-send.module';
 
 @Module({
 	imports: [
@@ -22,7 +23,8 @@ import { CustomSmtpModule } from './../custom-smtp/custom-smtp.module';
 		forwardRef(() => TenantModule),
 		forwardRef(() => UserModule),
 		forwardRef(() => EmailTemplateModule),
-		forwardRef(() => CustomSmtpModule)
+		forwardRef(() => CustomSmtpModule),
+		EmailSendModule
 	],
 	controllers: [EmailController],
 	providers: [EmailService],
@@ -31,4 +33,4 @@ import { CustomSmtpModule } from './../custom-smtp/custom-smtp.module';
 		EmailService
 	]
 })
-export class EmailModule {}
+export class EmailModule { }
