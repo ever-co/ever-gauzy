@@ -34,7 +34,9 @@ export class GauzyAIIntegrationService {
 
 		return await this._commandBus.execute(
 			new IntegrationTenantCreateCommand({
+				name: IntegrationEnum.GAUZY_AI,
 				organizationId,
+				tenantId,
 				integration,
 				entitySettings: [],
 				settings: [

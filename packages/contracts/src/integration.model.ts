@@ -8,18 +8,19 @@ import {
 import { IOrganizationProjectsUpdateInput } from './organization-projects.model';
 import { ITag } from './tag.model';
 
-export interface IIntegrationSetting extends IBasePerTenantAndOrganizationEntityModel {
-	settingsName: string;
-	settingsValue: string;
+export interface IRelationalIntegrationTenant {
 	integration?: IIntegrationTenant;
 	integrationId?: IIntegrationTenant['id'];
 }
 
-export interface IIntegrationEntitySetting extends IBasePerTenantAndOrganizationEntityModel {
+export interface IIntegrationSetting extends IBasePerTenantAndOrganizationEntityModel, IRelationalIntegrationTenant {
+	settingsName: string;
+	settingsValue: string;
+}
+
+export interface IIntegrationEntitySetting extends IBasePerTenantAndOrganizationEntityModel, IRelationalIntegrationTenant {
 	entity: string;
 	sync: boolean;
-	integration?: IIntegrationTenant;
-	integrationId?: IIntegrationTenant['id'];
 	tiedEntities?: IIntegrationEntitySettingTied[];
 }
 
@@ -30,9 +31,7 @@ export interface IIntegrationEntitySettingTied extends IBasePerTenantAndOrganiza
 	integrationEntitySettingId?: IIntegrationEntitySetting['id'];
 }
 
-export interface IIntegrationMap extends IBasePerTenantAndOrganizationEntityModel {
-	integration: IIntegrationTenant;
-	integrationId: IIntegrationTenant['id'];
+export interface IIntegrationMap extends IBasePerTenantAndOrganizationEntityModel, IRelationalIntegrationTenant {
 	sourceId: string;
 	gauzyId: string;
 }
@@ -84,8 +83,7 @@ export interface IIntegrationMapSyncActivity extends IBasePerTenantAndOrganizati
 	sourceId: string;
 }
 
-export interface IIntegrationMapSyncScreenshot
-	extends IBasePerTenantAndOrganizationEntityModel {
+export interface IIntegrationMapSyncScreenshot extends IBasePerTenantAndOrganizationEntityModel {
 	screenshot: IHubstaffScreenshotActivity;
 	integrationId: string;
 	sourceId: string;
@@ -129,6 +127,7 @@ export interface IIntegrationMapSyncEntityInput extends IBasePerTenantAndOrganiz
 }
 
 export interface IIntegrationTenantCreateInput extends IBasePerTenantAndOrganizationEntityModel {
+	integration?: IIntegration;
 	integrationId?: IIntegration['id'];
 	name: IntegrationEnum;
 	entitySettings?: IIntegrationEntitySetting[];
