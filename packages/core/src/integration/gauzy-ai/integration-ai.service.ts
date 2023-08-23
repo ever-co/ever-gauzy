@@ -35,24 +35,21 @@ export class GauzyAIIntegrationService {
 		return await this._commandBus.execute(
 			new IntegrationTenantCreateCommand({
 				name: IntegrationEnum.GAUZY_AI,
-				organizationId,
-				tenantId,
 				integration,
 				entitySettings: [],
 				settings: [
 					{
 						settingsName: 'apiKey',
-						settingsValue: client_id
+						settingsValue: client_id,
+
 					},
 					{
 						settingsName: 'apiSecret',
 						settingsValue: client_secret
 					}
-				].map((setting) => ({
-					...setting,
-					organizationId,
-					tenantId
-				}))
+				],
+				organizationId,
+				tenantId,
 			})
 		);
 	}

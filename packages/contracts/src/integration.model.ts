@@ -45,6 +45,8 @@ export interface IIntegrationViewModel {
 
 export interface IIntegrationTenant extends IBasePerTenantAndOrganizationEntityModel {
 	name: IntegrationEnum;
+	integration?: IIntegration;
+	integrationId?: IIntegration['id'];
 	entitySettings?: IIntegrationEntitySetting[];
 	settings?: IIntegrationSetting[];
 }

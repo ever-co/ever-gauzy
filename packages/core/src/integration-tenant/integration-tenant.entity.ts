@@ -26,7 +26,7 @@ export class IntegrationTenant extends TenantOrganizationBaseEntity implements I
 	*/
 
 	/**
-	 *
+	 * Integration
 	 */
 	@ManyToOne(() => Integration, {
 		nullable: true,

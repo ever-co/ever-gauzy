@@ -14,7 +14,6 @@ export class IntegrationTenantCreateHandler implements ICommandHandler<Integrati
 	public async execute(
 		command: IntegrationTenantCreateCommand
 	): Promise<IntegrationTenant> {
-
 		try {
 			const { input } = command;
 			return await this._integrationTenantService.create(input);
