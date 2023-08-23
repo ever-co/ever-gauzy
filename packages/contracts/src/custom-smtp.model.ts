@@ -16,7 +16,7 @@ export interface ICustomSmtpFindInput extends IBasePerTenantAndOrganizationEntit
 
 export interface ICustomSmtpCreateInput extends ICustomSmtp { }
 
-export interface ICustomSmtpValidateInput extends Omit<ICustomSmtpCreateInput, 'isValidate'> { }
+export interface IVerifySMTPTransport extends Omit<ICustomSmtpCreateInput, 'isValidate'> { }
 
 export interface ICustomSmtpUpdateInput extends ICustomSmtpCreateInput { }
 
