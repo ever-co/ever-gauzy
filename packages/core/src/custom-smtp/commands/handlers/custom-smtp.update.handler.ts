@@ -16,7 +16,7 @@ export class CustomSmtpUpdateHandler implements ICommandHandler<CustomSmtpUpdate
 			const { id, input } = command;
 			await this._customSmtpService.update(id, input);
 
-			return this._customSmtpService.findOneByIdString(id);
+			return await this._customSmtpService.findOneByIdString(id);
 		} catch (error) {
 			throw new BadRequestException(error);
 		}
