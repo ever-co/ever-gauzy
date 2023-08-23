@@ -154,6 +154,7 @@ import { EmailResetModule } from './email-reset/email-reset.module';
 import { TaskLinkedIssueModule } from './tasks/linked-issue/task-linked-issue.module';
 import { OrganizationTaskSettingModule } from './organization-task-setting/organization-task-setting.module';
 import { TaskEstimationModule } from './tasks/estimation/task-estimation.module';
+import { OctokitModule } from 'octokit/octokit.module';
 const { unleashConfig } = environment;
 
 if (unleashConfig.url) {
@@ -235,29 +236,29 @@ if (environment.sentry && environment.sentry.dsn) {
 		}),
 		...(environment.sentry && environment.sentry.dsn
 			? [
-				SentryModule.forRoot({
-					dsn: environment.sentry.dsn,
-					debug: !environment.production,
-					environment: environment.production
-						? 'production'
-						: 'development',
-					// TODO: we should use some internal function which returns version of Gauzy
-					release: 'gauzy@' + process.env.npm_package_version,
-					logLevels: ['error'],
-					integrations: sentryIntegrations,
-					tracesSampleRate: process.env.SENTRY_TRACES_SAMPLE_RATE
-						? parseInt(process.env.SENTRY_TRACES_SAMPLE_RATE)
-						: 0.01,
-				}),
-			]
+					SentryModule.forRoot({
+						dsn: environment.sentry.dsn,
+						debug: !environment.production,
+						environment: environment.production
+							? 'production'
+							: 'development',
+						// TODO: we should use some internal function which returns version of Gauzy
+						release: 'gauzy@' + process.env.npm_package_version,
+						logLevels: ['error'],
+						integrations: sentryIntegrations,
+						tracesSampleRate: process.env.SENTRY_TRACES_SAMPLE_RATE
+							? parseInt(process.env.SENTRY_TRACES_SAMPLE_RATE)
+							: 0.01,
+					}),
+			  ]
 			: []),
 		ThrottlerModule.forRootAsync({
 			inject: [ConfigService],
 			useFactory: (config: ConfigService): ThrottlerModuleOptions =>
-			({
-				ttl: config.get('THROTTLE_TTL'),
-				limit: config.get('THROTTLE_LIMIT'),
-			} as ThrottlerModuleOptions),
+				({
+					ttl: config.get('THROTTLE_TTL'),
+					limit: config.get('THROTTLE_LIMIT'),
+				} as ThrottlerModuleOptions),
 		}),
 		CoreModule,
 		AuthModule,
@@ -386,6 +387,7 @@ if (environment.sentry && environment.sentry.dsn) {
 		TaskLinkedIssueModule,
 		OrganizationTaskSettingModule,
 		TaskEstimationModule,
+		OctokitModule,
 	],
 	controllers: [AppController],
 	providers: [
