@@ -36,6 +36,7 @@ import {
 } from './offline';
 import { DialogStopTimerLogoutConfirmation } from './decorators/concretes/dialog-stop-timer-logout-confirmation';
 import { DesktopDialog } from './desktop-dialog';
+import { TranslateService } from './translation';
 
 const timerHandler = new TimerHandler();
 
@@ -168,10 +169,9 @@ export function ipcMainHandler(
 			return;
 		}
 		try {
-			const setting = LocalStore.getStore('appSetting');
 			timeTrackerWindow.webContents.send(
 				'preferred_language_change',
-				setting?.preferredLanguage
+				TranslateService.preferredLanguage
 			);
 			const lastTime = await TimerData.getLastCaptureTimeSlot(
 				knex,
@@ -288,6 +288,7 @@ export function ipcMainHandler(
 	ipcMain.handle('UPDATE_SYNCED', async (event, arg: IntervalTO) => {
 		try {
 			const interval = new Interval(arg);
+			interval.screenshots = [];
 			await intervalService.synced(interval);
 			await countIntervalQueue(timeTrackerWindow, true);
 		} catch (error) {
@@ -406,7 +407,9 @@ export function ipcTimer(
 				offlineMode.enabled
 			) {
 				const notification = {
-					message: 'Successfully remove last screenshot and activities',
+					message: TranslateService.instant(
+						'TIMER_TRACKER.NATIVE_NOTIFICATION.SCREENSHOT_REMOVED'
+					),
 					title: 'Gauzy',
 				};
 				const notify = new NotificationDesktop();
@@ -583,7 +586,12 @@ export function ipcTimer(
 		const notify = new NotificationDesktop();
 		if (appSetting) {
 			if (appSetting.simpleScreenshotNotification) {
-				notify.customNotification('Screenshot taken', 'Gauzy');
+				notify.customNotification(
+					TranslateService.instant(
+						'TIMER_TRACKER.NATIVE_NOTIFICATION.SCREENSHOT_TAKEN'
+					),
+					'Gauzy'
+				);
 			} else if (appSetting.screenshotNotification) {
 				await notifyScreenshot(
 					notificationWindow,
@@ -865,12 +873,15 @@ export function ipcTimer(
 	});
 
 	ipcMain.on('preferred_language_change', (event, arg) => {
-		const windows = [timeTrackerWindow, settingWindow];
-		LocalStore.updateApplicationSetting({ preferredLanguage: arg });
-		for (const window of windows) {
-			window?.webContents?.send('preferred_language_change', arg);
-		}
+		TranslateService.preferredLanguage = arg;
 	})
+
+	TranslateService.onLanguageChange((language: string) => {
+		const windows = [timeTrackerWindow, settingWindow];
+		for (const window of windows) {
+			window?.webContents?.send('preferred_language_change', language);
+		}
+	});
 }
 
 export function removeMainListener() {
@@ -1012,7 +1023,7 @@ export async function handleLogoutDialog(window: BrowserWindow): Promise<boolean
 	const dialog = new DialogStopTimerLogoutConfirmation(
 		new DesktopDialog(
 			'Gauzy Desktop Timer',
-			'Are you sure you want to logout?',
+			TranslateService.instant('TIMER_TRACKER.DIALOG.WANT_LOGOUT'),
 			window
 		)
 	);

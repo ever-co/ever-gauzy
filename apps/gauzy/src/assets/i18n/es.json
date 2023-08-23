@@ -139,7 +139,17 @@
 		"SAVE_RESTART": "Guardar y reiniciar",
 		"FILES": "Archivos",
 		"START": "Iniciar",
-		"STOP": "Detener"
+		"STOP": "Detener",
+		"ACKNOWLEDGE": "Aceptar",
+		"RESTART": "Reiniciar",
+		"LATER": "Más Tarde",
+		"UPGRADE": "Actualizar",
+		"SKIP_NOW": "Saltar Ahora",
+		"EXIT": "Salir",
+		"LOGOUT": "Cerrar Sesión",
+		"COPY": "Copiar",
+		"CUT": "Cortar",
+		"PASTE": "Pegar"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {
@@ -1036,7 +1046,10 @@
 		"FEATURES": "Features",
 		"ACCOUNTING_TEMPLATES": "Accounting Templates",
 		"FOCUS": "Focus",
-		"APPLICATIONS": "Applications"
+		"APPLICATIONS": "Applications",
+		"OPEN_GA_BROWSER": "Abrir Gauzy en el navegador",
+		"START_SERVER": "Iniciar servidor",
+		"STOP_SERVER": "Detener servidor"
 	},
 	"SETTINGS_MENU": {
 		"THEMES": "Themes",
@@ -3757,7 +3770,8 @@
 				"UPDATE_DOWNLOADING": "Descargando actualización",
 				"SERVER_CONFIG_UPDATED": "Configuración del servidor actualizada, espera hasta que se reinicie el servidor",
 				"SERVER_RESTARTED": "Servidor reiniciado correctamente",
-				"CONNECTION_SUCCEEDS": "Conexión al servidor {{ url }} exitosa"
+				"CONNECTION_SUCCEEDS": "Conexión al servidor {{ url }} exitosa",
+				"DOWNLOADING_UPDATE": "Descargando actualización {{ current }} MB de {{ total }} MB ->> {{ bandwidth }} KB/s"
 			}
 		},
 		"WEEKLY_LIMIT_EXCEEDED": "Límite semanal excedido",
@@ -3787,7 +3801,20 @@
 			"WARNING": "Advertencia",
 			"REMOVE_SCREENSHOT": "¿Realmente deseas eliminar esta captura de pantalla y el registro de actividades?",
 			"CHANGE_CLIENT": "¿Estás seguro de que quieres cambiar de Cliente?",
-			"RESUME_TIMER": "Tu temporizador estaba en marcha cuando el PC se bloqueó. ¿Resumir el temporizador?"
+			"RESUME_TIMER": "Tu temporizador estaba en marcha cuando el PC se bloqueó. ¿Resumir el temporizador?",
+			"EXIT": "¿Estás seguro de que quieres salir?",
+			"STOPPED_DU_INACTIVITY": "El temporizador se detuvo debido a que el período de inactividad superó los {{ inactivity }}. Asegúrate de reiniciar el temporizador cuando continúes trabajando.",
+			"EXIT_CONFIRM": "Haz clic en Salir para detener el temporizador y cerrar la aplicación.",
+			"LOGOUT_CONFIRM": "Haz clic en Cerrar sesión para detener el temporizador y cerrar la aplicación.",
+			"SELECT_UPDATE_FILES": "Selecciona la carpeta con los archivos de actualización.",
+			"UPDATE_READY": "Actualización lista para descargar",
+			"NEW_VERSION_AVAILABLE": "Hay disponible una nueva versión v{{ next }}. Actualiza la aplicación descargando las actualizaciones para v{{ current }}",
+			"READY_INSTALL": "Actualización lista para instalar",
+			"HAS_BEEN_DOWNLOADED": "Se ha descargado una nueva versión v{{ version }}. Reinicia la aplicación para aplicar las actualizaciones.",
+			"CONNECTION_DRIVER": "La conexión a la base de datos {{ driver }} se ha realizado correctamente",
+			"STILL_WORKING": "¿Sigues trabajando?",
+			"INACTIVITY_HANDLER": "Manejador de inactividad",
+			"WANT_LOGOUT": "¿Estás seguro/a de que quieres cerrar sesión?"
 		},
 		"NO_LIMIT": "∞ Sin límite",
 		"TASK": "Tarea",
@@ -3802,6 +3829,26 @@
 			"PROJECT_ADDED": "Proyecto agregado exitosamente",
 			"TASK_ADDED": "Tarea agregada exitosamente",
 			"CLIENT_ADDED": "Cliente agregado exitosamente"
+		},
+		"NATIVE_NOTIFICATION": {
+			"STOPPED_DU_INACTIVITY": "¡El rastreador se detuvo debido a la inactividad!",
+			"SCREENSHOT_TAKEN": "Captura de pantalla tomada",
+			"SCREENSHOT_REMOVED": "Se eliminó correctamente la última captura de pantalla y actividades",
+			"NEW_VERSION_AVAILABLE": "Nueva actualización para {{ name }} (versión {{ version }}) disponible"
+		},
+		"MENU": {
+			"ZOOM_IN": "Acercar",
+			"ZOOM_OUT": "Alejar",
+			"SETTING_DEV_MODE": "Configurando el Modo Desarrollador",
+			"SERVER_DEV_MODE": "Modo Desarrollador del Panel de Servidor",
+			"TIMER_DEV_MODE": "Modo Desarrollador del Seguimiento de Tiempo",
+			"NOW_TRACKING": "Trackeando tiempo actual - {{ time }}",
+			"START_TRACKING": "Comenzar a Rastrear Tiempo",
+			"STOP_TRACKING": "Detener Rastreo de Tiempo",
+			"OPEN_TIMER": "Abrir Seguimiento de Tiempo",
+			"WINDOW": "Ventana",
+			"HELP": "Ayuda",
+			"LEARN_MORE": "Más Información"
 		}
 	},
 	"SERVER": "Servidor",

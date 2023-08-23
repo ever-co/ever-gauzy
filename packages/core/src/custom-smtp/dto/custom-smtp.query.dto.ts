@@ -1,6 +1,6 @@
-import { ICustomSmtpFindInput, IOrganization } from "@gauzy/contracts";
 import { ApiPropertyOptional } from "@nestjs/swagger";
 import { IsOptional, IsUUID } from "class-validator";
+import { ICustomSmtpFindInput, IOrganization } from "@gauzy/contracts";
 import { IsOrganizationBelongsToUser } from "./../../shared/validators";
 
 /**
