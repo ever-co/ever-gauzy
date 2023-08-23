@@ -1,3 +1,4 @@
+import { BadRequestException } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { IntegrationTenantCreateCommand } from '../../commands/integration-tenant.create.command';
 import { IntegrationTenantService } from '../../integration-tenant.service';
@@ -13,7 +14,12 @@ export class IntegrationTenantCreateHandler implements ICommandHandler<Integrati
 	public async execute(
 		command: IntegrationTenantCreateCommand
 	): Promise<IntegrationTenant> {
-		const { input } = command;
-		return await this._integrationTenantService.create(input);
+
+		try {
+			const { input } = command;
+			return await this._integrationTenantService.create(input);
+		} catch (error) {
+			throw new BadRequestException(error);
+		}
 	}
 }
