@@ -1,5 +1,5 @@
 import { IEmployee } from './employee.model';
-import { IOrganizationContact } from './organization-contact.model';
+import { IOrganizationContact, IRelationalOrganizationContact } from './organization-contact.model';
 import {
 	CrudActionEnum,
 	ProjectBillingEnum,
@@ -14,16 +14,15 @@ import { IBasePerTenantAndOrganizationEntityModel } from './base-entity.model';
 import { CurrenciesEnum } from './currency.model';
 import { ITimeLog } from './timesheet.model';
 import { IRelationalImageAsset } from './image-asset.model';
+import { IOrganizationTeam } from './organization-team.model';
 
 export interface IRelationalOrganizationProject {
 	project?: IOrganizationProject;
 	projectId?: IOrganizationProject['id'];
 }
 
-export interface IOrganizationProject extends IBaseEntityWithMembers, IRelationalImageAsset {
+export interface IOrganizationProject extends IBaseEntityWithMembers, IRelationalImageAsset, IRelationalOrganizationContact {
 	name: string;
-	organizationContact?: IOrganizationContact;
-	organizationContactId?: IOrganizationContact['id'];
 	startDate?: Date;
 	endDate?: Date;
 	billing: ProjectBillingEnum;
@@ -33,6 +32,7 @@ export interface IOrganizationProject extends IBaseEntityWithMembers, IRelationa
 	tags: ITag[];
 	owner: ProjectOwnerEnum;
 	tasks?: ITask[];
+	teams?: IOrganizationTeam[];
 	timeLogs?: ITimeLog[];
 	organizationSprints?: IOrganizationSprint[];
 	taskListType: TaskListTypeEnum;

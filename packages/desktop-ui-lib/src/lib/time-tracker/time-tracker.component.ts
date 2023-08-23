@@ -23,6 +23,7 @@ import { LocalDataSource, Ng2SmartTableComponent } from 'ng2-smart-table';
 import { DomSanitizer } from '@angular/platform-browser';
 import {
 	asapScheduler,
+	asyncScheduler,
 	BehaviorSubject,
 	filter,
 	firstValueFrom,
@@ -39,6 +40,7 @@ import {
 	IOrganization,
 	IOrganizationContact,
 	ITask,
+	LanguagesEnum,
 	PermissionsEnum,
 	ProjectOwnerEnum,
 	TaskStatusEnum
@@ -55,6 +57,8 @@ import { IRemoteTimer } from './time-tracker-status/interfaces';
 import { InterruptedSequenceQueue, ISequence, SequenceQueue, TimeSlotQueueService, ViewQueueStateUpdater } from '../offline-sync';
 import { ImageViewerService } from '../image-viewer/image-viewer.service';
 import { AuthStrategy } from '../auth';
+import { LanguageSelectorService } from '../language/language-selector.service';
+import { TranslateService } from '@ngx-translate/core';
 
 enum TimerStartMode {
 	MANUAL = 'manual',
@@ -139,45 +143,20 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 	dialogType = {
 		deleteLog: {
 			name: 'deleteLog',
-			message: 'Do you really want to remove this screenshot and activities log ?'
+			message: 'TIMER_TRACKER.DIALOG.REMOVE_SCREENSHOT'
 		},
 		changeClient: {
 			name: 'changeClient',
-			message: 'Are you sure you want to change Client ?'
+			message: 'TIMER_TRACKER.DIALOG.CHANGE_CLIENT'
 		},
 		timeTrackingOption: {
 			name: 'timeTrackingOption',
-			message: 'Your timer was running when PC was locked. Resume timer?'
+			message: 'TIMER_TRACKER.DIALOG.RESUME_TIMER'
 		}
 	};
 	timerStatus: any;
 	expandIcon = 'arrow-right';
-	tableHeader = {
-		columns: {
-			title: {
-				title: 'Task',
-				type: 'custom',
-				renderComponent: CustomRenderComponent
-			},
-			dueDate: {
-				title: 'Due',
-				type: 'text',
-				valuePrepareFunction: (due) => {
-					return moment(due).format(
-						this.userData ? this.userData?.employee?.organization?.dateFormat : 'YYYY-MM-DD'
-					);
-				}
-			}
-		},
-		hideSubHeader: true,
-		actions: false,
-		noDataMessage: 'No Tasks Found',
-		pager: {
-			display: true,
-			perPage: 10,
-			page: 1
-		}
-	};
+	smartTableSettings: object;
 	tableData = [];
 	private _sourceData$: BehaviorSubject<LocalDataSource>;
 	private get _sourceData(): LocalDataSource {
@@ -241,7 +220,9 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 		private _timeTrackerStatus: TimeTrackerStatusService,
 		private _timeSlotQueueService: TimeSlotQueueService,
 		private _imageViewerService: ImageViewerService,
-		private _authStrategy: AuthStrategy
+		private _authStrategy: AuthStrategy,
+		private _languageSelectorService: LanguageSelectorService,
+		private _translateService: TranslateService
 	) {
 		this.iconLibraries.registerFontPack('font-awesome', {
 			packClass: 'fas',
@@ -413,6 +394,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 				untilDestroyed(this)
 			)
 			.subscribe();
+		this._loadSmartTableSettings();
 	}
 
 	public xor(a: boolean, b: boolean): boolean {
@@ -920,6 +902,38 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 				});
 			})
 		);
+
+		this.electronService.ipcRenderer.on(
+			'preferred_language_change',
+			(event, language: LanguagesEnum) => {
+				this._ngZone.run(() => {
+					this._languageSelectorService.setLanguage(
+						language,
+						this._translateService
+					);
+					asyncScheduler.schedule(
+						() => this._loadSmartTableSettings(),
+						150
+					);
+				});
+			}
+		);
+
+		from(this.electronService.ipcRenderer.invoke('PREFERRED_LANGUAGE'))
+			.pipe(
+				tap((language: LanguagesEnum) => {
+					this._languageSelectorService.setLanguage(
+						language,
+						this._translateService
+					);
+					asyncScheduler.schedule(
+						() => this._loadSmartTableSettings(),
+						150
+					);
+				}),
+				untilDestroyed(this)
+			)
+			.subscribe();
 	}
 
 	async toggleStart(val, onClick = true) {
@@ -1172,12 +1186,12 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 			this.iconAw$.next('checkmark-square-outline');
 			this.statusIcon$.next('success');
 			this.electronService.ipcRenderer.send('aw_status', true);
-			this._activityWatchLog$.next("Activity Watch's connected");
+			this._activityWatchLog$.next("TIMER_TRACKER.AW_CONNECTED");
 		} catch (e) {
 			this.iconAw$.next('close-square-outline');
 			this.statusIcon$.next('danger');
 			this.electronService.ipcRenderer.send('aw_status', false);
-			this._activityWatchLog$.next("Activity Watch's Disconnected");
+			this._activityWatchLog$.next("TIMER_TRACKER.AW_DISCONNECTED");
 		}
 	}
 
@@ -1398,7 +1412,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 				await this.getLastTimeSlotImage(this.argFromMain);
 				this.electronService.ipcRenderer.send('delete_time_slot');
 				asapScheduler.schedule(() => {
-					this._toastrNotifier.success(`Successfully remove last screenshot and activities`);
+					this._toastrNotifier.success(this._translateService.instant("TIMER_TRACKER.TOASTR.REMOVE_SCREENSHOT"));
 				});
 			}
 		} catch (e) {
@@ -1658,27 +1672,14 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 			this.electronService.ipcRenderer.send('create-synced-interval', {
 				...paramActivity,
 				remoteId: timeSlotId,
-				b64Imgs: await Promise.all(
-					screenshotImg.map(async (img) => {
-						await this.localImage(this.buffToB64(img));
-						return {
-							b64img: this.buffToB64(img),
-							fileName: this.fileNameFormat(img)
-						};
-					})
-				)
+				b64Imgs: []
 			});
 		} catch (error) {
 			console.log('error send to api timeslot', error);
 			this.electronService.ipcRenderer.send('failed_save_time_slot', {
 				params: JSON.stringify({
 					...paramActivity,
-					b64Imgs: screenshotImg.map((img) => {
-						return {
-							b64img: this.buffToB64(img),
-							fileName: this.fileNameFormat(img)
-						};
-					})
+					b64Imgs: []
 				}),
 				message: error.message
 			});
@@ -1809,7 +1810,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 		let isPassed = false;
 		// Verify if tracking is enabled
 		if (!this.userData?.employee?.isTrackingEnabled) {
-			this.toastrService.show("Your can't run timer for the moment", `Warning`, {
+			this.toastrService.show(this._translateService.instant('TIMER_TRACKER.TOASTR.CANT_RUN_TIMER'), `Warning`, {
 				status: 'danger'
 			});
 			isPassed = false;
@@ -1822,13 +1823,13 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 		) {
 			// Verify if user are already started to work for organization, if yes you can run time tracker else no
 			if (!this.userData?.employee?.startedWorkOn) {
-				this.toastrService.show('Your are not authorized to work', `Warning`, {
+				this.toastrService.show(this._translateService.instant('TIMER_TRACKER.TOASTR.NOT_AUTHORIZED'), `Warning`, {
 					status: 'danger'
 				});
 			}
 			// Verify if user are deleted for organization, if yes can't run time tracker
 			if (this.userData?.employee?.startedWorkOn && !this.userData?.employee?.isActive) {
-				this.toastrService.show('Your account it already deleted', `Warning`, {
+				this.toastrService.show(this._translateService.instant('TIMER_TRACKER.TOASTR.ACCOUNT_DELETED'), `Warning`, {
 					status: 'danger'
 				});
 			}
@@ -1899,7 +1900,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 				})
 			);
 			if (screenshots.length > 0) {
-				screenshots = _.sortBy(screenshots, 'recordedAt').reverse();
+				screenshots = _.sortBy(screenshots, 'recordedAt');
 				const [lastCaptureScreen] = screenshots;
 				console.log('Last Capture Screen:', lastCaptureScreen);
 				this.lastScreenCapture$.next(lastCaptureScreen);
@@ -1955,7 +1956,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 			const projects = this._projects$.getValue();
 			this._projects$.next(projects.concat([project]));
 			this.projectSelect = project.id;
-			this._toastrNotifier.success('Project added successfully');
+			this._toastrNotifier.success(this._translateService.instant('TIMER_TRACKER.TOASTR.PROJECT_ADDED'));
 		} catch (error) {
 			console.log(error);
 		}
@@ -1992,7 +1993,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 			const tasks = this._tasks$.getValue();
 			this._tasks$.next(tasks.concat(task));
 			this.taskSelect = task.id;
-			this._toastrNotifier.success('Task added successfully');
+			this._toastrNotifier.success(this._translateService.instant('TIMER_TRACKER.TOASTR.TASK_ADDED'));
 		} catch (error) {
 			console.log('ERROR', error);
 		}
@@ -2018,7 +2019,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 			const contacts = this._organizationContacts$.getValue();
 			this._organizationContacts$.next(contacts.concat([contact]));
 			this.organizationContactId = contact.id;
-			this._toastrNotifier.success('Client added successfully');
+			this._toastrNotifier.success(this._translateService.instant('TIMER_TRACKER.TOASTR.CLIENT_ADDED'));
 		} catch (error) {
 			console.log('ERROR', error);
 		}
@@ -2150,5 +2151,34 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 				: 'navigate_to_login'
 		);
 		localStorage.clear();
+	}
+
+	private _loadSmartTableSettings(): void {
+		this.smartTableSettings = {
+			columns: {
+				title: {
+					title: this._translateService.instant('TIMER_TRACKER.TASK'),
+					type: 'custom',
+					renderComponent: CustomRenderComponent
+				},
+				dueDate: {
+					title: this._translateService.instant('TIMER_TRACKER.DUE'),
+					type: 'text',
+					valuePrepareFunction: (due) => {
+						return moment(due).format(
+							this.userData ? this.userData?.employee?.organization?.dateFormat : 'YYYY-MM-DD'
+						);
+					}
+				}
+			},
+			hideSubHeader: true,
+			actions: false,
+			noDataMessage: this._translateService.instant('SM_TABLE.NO_DATA.TASK'),
+			pager: {
+				display: true,
+				perPage: 10,
+				page: 1
+			}
+		}
 	}
 }

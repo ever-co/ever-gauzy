@@ -13,17 +13,17 @@
                             <span>{{ application?.name }}</span>
                         </div>
                         <div class="col-12 version-text mb-3">
-                            <span>Version v{{ application?.version }}</span>
+                            <span>{{'TIMER_TRACKER.VERSION' | translate: {version: application?.version} }}</span>
                         </div>
                         <div class="col-12 copyright-text text-center mt-0">
                             <span>
-                                Copyright © 2020-present
+                                Copyright © 2020-{{'FOOTER.PRESENT' | translate}}
                                 <span class="link" (click)="openLink('EVER')">Ever Co. LTD.</span>
                                 <br/>
-                                All Rights Reserved.
+                                {{'FOOTER.RIGHTS_RESERVED' | translate}}
                                 <br/>
-                                <span class="link" (click)="openLink('TOS')"> Terms of Service</span> |
-                                <span (click)="openLink('PRIVACY')" class="link">Privacy Policy</span>
+                                <span class="link" (click)="openLink('TOS')">{{'FOOTER.TERMS_OF_SERVICE' | translate}}</span> |
+                                <span (click)="openLink('PRIVACY')" class="link">{{'FOOTER.PRIVACY_POLICY' | translate}}</span>
                             </span>
                         </div>
                     </div>

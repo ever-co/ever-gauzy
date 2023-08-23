@@ -1,8 +1,10 @@
-import { BrowserWindow, Menu, shell } from 'electron';
+import { BrowserWindow, Menu, MenuItemConstructorOptions, shell } from 'electron';
 import { LocalStore } from './desktop-store';
 import { TimerData } from './desktop-timer-activity';
 import { createSettingsWindow, createAboutWindow } from '@gauzy/desktop-window';
+import { TranslateService } from './translation';
 export class AppMenu {
+	public menu: MenuItemConstructorOptions[] = [];
 	constructor(
 		timeTrackerWindow,
 		settingsWindow,
@@ -13,24 +15,25 @@ export class AppMenu {
 		isZoomVisible?
 	) {
 		const isZoomEnabled = isZoomVisible;
-		const menu = Menu.buildFromTemplate([
+		this.menu = [
 			{
 				label: 'Gauzy',
 				submenu: [
 					{
 						id: 'gauzy-about',
-						label: 'About',
+						label: TranslateService.instant('MENU.ABOUT'),
 						enabled: true,
 						async click() {
-							const window: BrowserWindow = await createAboutWindow(
-								windowPath.timeTrackerUi
-							);
+							const window: BrowserWindow =
+								await createAboutWindow(
+									windowPath.timeTrackerUi
+								);
 							window.show();
 						},
 					},
 					{ type: 'separator' },
 					{
-						label: 'Check For Update',
+						label: TranslateService.instant('BUTTONS.CHECK_UPDATE'),
 						async click() {
 							if (!settingsWindow) {
 								settingsWindow = await createSettingsWindow(
@@ -47,44 +50,49 @@ export class AppMenu {
 						},
 					},
 					{ type: 'separator' },
-					{ role: 'quit', label: 'Exit' },
+					{
+						role: 'quit',
+						label: TranslateService.instant('BUTTONS.EXIT'),
+					},
 				],
 			},
 			{
-				label: 'Window',
+				label: TranslateService.instant('TIMER_TRACKER.MENU.WINDOW'),
 				submenu: [
 					{
 						id: 'window-time-track',
-						label: 'Time Tracker',
+						label: TranslateService.instant('TIMER_TRACKER.TIMER'),
 						enabled: false,
 						visible:
 							LocalStore.getStore('configs') &&
 							LocalStore.getStore('configs').timeTrackerWindow,
 						async click() {
 							timeTrackerWindow.show();
-								const lastTime =
-									await TimerData.getLastCaptureTimeSlot(
-										knex,
-										LocalStore.beforeRequestParams()
-									);
-								console.log(
-									'Last Capture Time (Desktop Menu):',
-									lastTime
+							const lastTime =
+								await TimerData.getLastCaptureTimeSlot(
+									knex,
+									LocalStore.beforeRequestParams()
 								);
-								timeTrackerWindow.webContents.send(
-									'timer_tracker_show',
-									{
-										...LocalStore.beforeRequestParams(),
-										timeSlotId: lastTime
-											? lastTime.timeslotId
-											: null,
-									}
-								);
+							console.log(
+								'Last Capture Time (Desktop Menu):',
+								lastTime
+							);
+							timeTrackerWindow.webContents.send(
+								'timer_tracker_show',
+								{
+									...LocalStore.beforeRequestParams(),
+									timeSlotId: lastTime
+										? lastTime.timeslotId
+										: null,
+								}
+							);
 						},
 					},
 					{
 						id: 'window-setting',
-						label: 'Setting',
+						label: TranslateService.instant(
+							'TIMER_TRACKER.SETUP.SETTING'
+						),
 						enabled: true,
 						async click() {
 							if (!settingsWindow) {
@@ -109,14 +117,18 @@ export class AppMenu {
 						type: 'separator',
 					},
 					{
-						label: 'Zoom In',
+						label: TranslateService.instant(
+							'TIMER_TRACKER.MENU.ZOOM_IN'
+						),
 						role: 'zoomIn',
 						accelerator: 'CmdOrCtrl+Plus',
 						visible: isZoomVisible,
 						enabled: isZoomEnabled,
 					},
 					{
-						label: 'Zoom Out',
+						label: TranslateService.instant(
+							'TIMER_TRACKER.MENU.ZOOM_OUT'
+						),
 						role: 'zoomOut',
 						accelerator: 'CmdOrCtrl+-',
 						visible: isZoomVisible,
@@ -125,26 +137,42 @@ export class AppMenu {
 				],
 			},
 			{
-				label: 'Edit',
+				label: TranslateService.instant('BUTTONS.EDIT'),
 				submenu: [
-					{ role: 'cut' },
-					{ role: 'copy' },
-					{ role: 'paste' },
-					{ role: 'selectAll' },
+					{
+						label: TranslateService.instant('BUTTONS.CUT'),
+						role: 'cut',
+					},
+					{
+						label: TranslateService.instant('BUTTONS.COPY'),
+						role: 'copy',
+					},
+					{
+						label: TranslateService.instant('BUTTONS.PASTE'),
+						role: 'paste',
+					},
+					{
+						label: TranslateService.instant('BUTTONS.SELECT_ALL'),
+						role: 'selectAll',
+					},
 				],
 			},
 			{
-				label: 'Help',
+				label: TranslateService.instant('TIMER_TRACKER.MENU.HELP'),
 				submenu: [
 					{
-						label: 'Learn More',
+						label: TranslateService.instant(
+							'TIMER_TRACKER.MENU.LEARN_MORE'
+						),
 						click() {
 							shell.openExternal('https://gauzy.co/');
 						},
 					},
 					{
 						id: 'devtools-setting',
-						label: 'Setting Developer Mode',
+						label: TranslateService.instant(
+							'TIMER_TRACKER.MENU.SETTING_DEV_MODE'
+						),
 						enabled: true,
 						async click() {
 							if (!settingsWindow) {
@@ -158,7 +186,9 @@ export class AppMenu {
 					},
 					{
 						id: 'devtools-time-tracker',
-						label: 'Time Tracker Developer Mode',
+						label: TranslateService.instant(
+							'TIMER_TRACKER.MENU.TIMER_DEV_MODE'
+						),
 						enabled: true,
 						visible: timeTrackerWindow ? true : false,
 						click() {
@@ -168,7 +198,9 @@ export class AppMenu {
 					},
 					{
 						id: 'devtools-server',
-						label: 'Server Dashboard Developer Mode',
+						label: TranslateService.instant(
+							'TIMER_TRACKER.MENU.SERVER_DEV_MODE'
+						),
 						enabled: true,
 						visible: serverWindow ? true : false,
 						click() {
@@ -178,7 +210,11 @@ export class AppMenu {
 					},
 				],
 			},
-		]);
-		Menu.setApplicationMenu(menu);
+		];
+		this.build();
+	}
+
+	public build(): void {
+		Menu.setApplicationMenu(Menu.buildFromTemplate([...this.menu]));
 	}
 }

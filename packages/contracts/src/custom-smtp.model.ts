@@ -10,26 +10,15 @@ export interface ICustomSmtp extends IBasePerTenantAndOrganizationEntityModel {
 	fromAddress?: string;
 }
 
-export interface ICustomSmtpFindInput
-	extends IBasePerTenantAndOrganizationEntityModel {
+export interface ICustomSmtpFindInput extends IBasePerTenantAndOrganizationEntityModel {
 	id?: string;
 }
 
-export interface ICustomSmtpCreateInput
-	extends IBasePerTenantAndOrganizationEntityModel {
-	host: string;
-	port: number;
-	secure: boolean;
-	username: string;
-	password: string;
-	fromAddress?: string;
-}
+export interface ICustomSmtpCreateInput extends ICustomSmtp { }
 
-export interface ICustomSmtpValidateInput extends ICustomSmtpCreateInput { }
+export interface ICustomSmtpValidateInput extends Omit<ICustomSmtpCreateInput, 'isValidate'> { }
 
-export interface ICustomSmtpUpdateInput extends ICustomSmtpCreateInput {
-	id: string;
-}
+export interface ICustomSmtpUpdateInput extends ICustomSmtpCreateInput { }
 
 export enum SMTPSecureEnum {
 	TRUE = 'True',

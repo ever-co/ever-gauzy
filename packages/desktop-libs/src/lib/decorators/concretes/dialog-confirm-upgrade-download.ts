@@ -1,5 +1,6 @@
 import { BaseDesktopDialogDecorator } from '../abstracts/base-desktop-dialog-decorator';
 import { IDesktopDialog } from '../../interfaces';
+import { TranslateService } from '../../translation';
 
 export class DialogConfirmUpgradeDownload
 	extends BaseDesktopDialogDecorator
@@ -9,7 +10,7 @@ export class DialogConfirmUpgradeDownload
 		super(dialog);
 		this.options = {
 			...this.options,
-			buttons: ['Upgrade', 'Skip Now'],
+			buttons: [TranslateService.instant('BUTTONS.UPGRADE'), TranslateService.instant('BUTTONS.SKIP_NOW')],
 			detail: 'A new version is  available. Upgrade the application by downloading the updates.'
 		};
 	}

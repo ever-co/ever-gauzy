@@ -3,7 +3,7 @@
         bindLabel="name" nbTooltip="Please stop the timer before changing the organization" nbTooltipStatus="warning"
         [nbTooltipDisabled]="!disabled"
         (change)="selectOrganization($event); select.blur();" (clear)="select.blur();"
-        [(ngModel)]="selectedOrganization" placeholder="Select Organization" appendTo="body">
+        [(ngModel)]="selectedOrganization" [placeholder]="'FORM.PLACEHOLDERS.ORGANIZATION' | translate" appendTo="body">
         <ng-template ng-option-tmp let-item="item" let-index="index">
             <img *ngIf="item.imageUrl" [src]="item.imageUrl" width="40" height="40" />
             {{ item.name }}

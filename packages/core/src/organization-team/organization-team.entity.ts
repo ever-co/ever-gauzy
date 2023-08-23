@@ -39,6 +39,7 @@ import {
 	Goal,
 	ImageAsset,
 	IssueType,
+	OrganizationProject,
 	OrganizationTeamEmployee,
 	RequestApprovalTeam,
 	Tag,
@@ -51,13 +52,12 @@ import {
 	TenantOrganizationBaseEntity,
 	User,
 } from '../core/entities/internal';
+import { IOrganizationProject } from '@gauzy/contracts';
 
 @Entity('organization_team')
-export class OrganizationTeam
-	extends TenantOrganizationBaseEntity
-	implements IOrganizationTeam
-{
-	@ApiProperty({ type: () => String, required: true })
+export class OrganizationTeam extends TenantOrganizationBaseEntity implements IOrganizationTeam {
+
+	@ApiProperty({ type: () => String })
 	@IsNotEmpty()
 	@IsString()
 	@Index()
@@ -263,4 +263,13 @@ export class OrganizationTeam
 		onDelete: 'CASCADE',
 	})
 	equipmentSharings?: IEquipmentSharing[];
+
+	/**
+	 * Organization Project
+	 */
+	@ManyToMany(() => OrganizationProject, (it) => it.teams, {
+		onUpdate: 'CASCADE',
+		onDelete: 'CASCADE'
+	})
+	projects?: IOrganizationProject[];
 }

@@ -1,6 +1,12 @@
 import { Component, OnInit } from '@angular/core';
+import { TranslateService } from '@ngx-translate/core';
+import { from, tap } from 'rxjs';
+import { LanguagesEnum } from 'packages/contracts/dist';
 import { ElectronService } from '../../electron/services';
+import { LanguageSelectorService } from '../../language/language-selector.service';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 
+@UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'gauzy-about',
 	templateUrl: './about.component.html',
@@ -12,9 +18,25 @@ export class AboutComponent implements OnInit {
 		version: 'dev',
 		iconPath: ''
 	};
-	constructor(private readonly _electronService: ElectronService) {}
+	constructor(
+		private readonly _electronService: ElectronService,
+		private readonly _languageSelectorService: LanguageSelectorService,
+		private readonly _translateService: TranslateService
+	) { }
 
-	ngOnInit(): void {}
+	ngOnInit(): void {
+		from(this._electronService.ipcRenderer.invoke('PREFERRED_LANGUAGE'))
+			.pipe(
+				tap((language: LanguagesEnum) => {
+					this._languageSelectorService.setLanguage(
+						language,
+						this._translateService
+					);
+				}),
+				untilDestroyed(this)
+			)
+			.subscribe();
+	}
 
 	public openLink(link: string) {
 		switch (link) {

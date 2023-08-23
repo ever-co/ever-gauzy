@@ -33,12 +33,15 @@ import {
 	apiServer,
 	AppMenu,
 	DesktopUpdater,
+	TranslateLoader,
+	TranslateService,
 } from '@gauzy/desktop-libs';
 import {
 	createSetupWindow,
 	createServerWindow,
 	createSettingsWindow,
 	SplashScreen,
+	createAboutWindow,
 } from '@gauzy/desktop-window';
 import { initSentry } from './sentry';
 import { readFileSync, writeFileSync, accessSync, constants } from 'fs';
@@ -86,6 +89,8 @@ const pathWindow: {
 	timeTrackerUi: path.join(__dirname, 'index.html'),
 };
 
+/* Load translations */
+TranslateLoader.load(__dirname + '/assets/i18n/');
 /* Setting the app user model id for the app. */
 if (process.platform === 'win32') {
 	app.setAppUserModelId('com.ever.gauzyserver');
@@ -98,9 +103,12 @@ LocalStore.setFilePath({
 // Set unlimited listeners
 ipcMain.setMaxListeners(0);
 
+/* Remove handler if exist */
+ipcMain.removeHandler('PREFERRED_LANGUAGE');
+
 const runSetup = async () => {
+	splashScreen.close();
 	if (setupWindow) {
-		splashScreen.close();
 		setupWindow.show();
 		return;
 	}
@@ -248,7 +256,7 @@ const contextMenu = () => {
 	const serverMenu: MenuItemConstructorOptions[] = [
 		{
 			id: 'server_browser',
-			label: 'Open Gauzy In Browser',
+			label: TranslateService.instant('MENU.OPEN_GA_BROWSER'),
 			click() {
 				const config = LocalStore.getStore('configs');
 				shell.openExternal(`http://localhost:${config.portUi}`);
@@ -256,7 +264,7 @@ const contextMenu = () => {
 		},
 		{
 			id: 'check_for_update',
-			label: 'Check For Update',
+			label: TranslateService.instant('BUTTONS.CHECK_UPDATE'),
 			click() {
 				settingsWindow.show();
 				settingsWindow.webContents.send('goto_update');
@@ -271,14 +279,14 @@ const contextMenu = () => {
 		},
 		{
 			id: 'start_server',
-			label: 'Start Server',
+			label: TranslateService.instant('MENU.START_SERVER'),
 			click() {
 				runServer(false);
 			},
 		},
 		{
 			id: 'stop_server',
-			label: 'Stop Server',
+			label: TranslateService.instant('MENU.STOP_SERVER'),
 			click() {
 				stopServer(false);
 			},
@@ -288,19 +296,26 @@ const contextMenu = () => {
 		},
 		{
 			id: 'server_help',
-			label: 'Help',
+			label: TranslateService.instant('TIMER_TRACKER.MENU.HELP'),
 			click() {
 				shell.openExternal('https://gauzy.co');
 			},
 		},
 		{
-			id: 'server_about',
-			label: 'About',
-			role: 'about',
+			id: 'gauzy-about',
+			label: TranslateService.instant('MENU.ABOUT'),
+			enabled: true,
+			async click() {
+				const window: BrowserWindow =
+					await createAboutWindow(
+						pathWindow.ui
+					);
+				window.show();
+			},
 		},
 		{
 			id: 'server_exit',
-			label: 'Exit',
+			label: TranslateService.instant('BUTTONS.EXIT'),
 			click() {
 				app.quit();
 			},
@@ -367,6 +382,22 @@ app.on('ready', async () => {
 	updater.settingWindow = settingsWindow;
 	updater.gauzyWindow = serverWindow;
 	await updater.checkUpdate();
+	TranslateService.onLanguageChange(() => {
+		const menuWindowSetting =
+			Menu.getApplicationMenu().getMenuItemById('window-setting');
+		new AppMenu(
+			null,
+			settingsWindow,
+			null,
+			null,
+			pathWindow,
+			serverWindow,
+			false
+		);
+		if (tray) tray.destroy();
+		createTray();
+		if (menuWindowSetting) menuWindowSetting.enabled = true;
+	})
 });
 
 ipcMain.on('restart_app', (event, arg) => {
@@ -415,10 +446,10 @@ ipcMain.on('check_database_connection', async (event, arg) => {
 		await dbConn.raw('select 1+1 as result');
 		event.sender.send('database_status', {
 			status: true,
-			message:
-				provider === 'postgres'
-					? 'Connection to PostgresSQL DB Succeeds'
-					: 'Connection to SQLITE DB Succeeds',
+			message: TranslateService.instant(
+				'TIMER_TRACKER.DIALOG.CONNECTION_DRIVER',
+				{ driver: provider === 'postgres' ? 'PostgresSQL' : 'SQLite' }
+			)
 		});
 	} catch (error) {
 		event.sender.send('database_status', {
@@ -526,4 +557,19 @@ ipcMain.on('update_app_setting', (event, arg) => {
 
 app.on('browser-window-created', (_, window) => {
 	require("@electron/remote/main").enable(window.webContents)
+})
+
+ipcMain.handle('PREFERRED_LANGUAGE', (event, arg) => {
+	const setting = LocalStore.getStore('appSetting');
+	if (arg) {
+		if (!setting) LocalStore.setDefaultApplicationSetting();
+		TranslateService.preferredLanguage = arg;
+		settingsWindow?.webContents?.send('preferred_language_change', arg);
+	}
+	return TranslateService.preferredLanguage;
+});
+
+ipcMain.on('preferred_language_change', (event, arg) => {
+	TranslateService.preferredLanguage = arg;
+	serverWindow?.webContents?.send('preferred_language_change', arg);
 })

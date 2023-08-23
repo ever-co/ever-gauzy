@@ -5,7 +5,7 @@ import log from 'electron-log';
 console.log = log.log;
 Object.assign(console, log.functions);
 
-import { app, dialog, BrowserWindow, ipcMain, shell, Menu } from 'electron';
+import { app, dialog, BrowserWindow, ipcMain, shell, Menu, MenuItemConstructorOptions } from 'electron';
 import { environment } from './environments/environment';
 
 // setup logger to catch all unhandled errors and submit as bug reports to our repo
@@ -67,6 +67,8 @@ import {
 	removeMainListener,
 	removeTimerListener,
 	ProviderFactory,
+	TranslateLoader,
+	TranslateService,
 } from '@gauzy/desktop-libs';
 import {
 	createGauzyWindow,
@@ -157,6 +159,9 @@ if (!gotTheLock) {
 	});
 }
 
+/* Load translations */
+TranslateLoader.load(path.join(__dirname, 'ui', 'assets', 'i18n'));
+
 /* Setting the app user model id for the app. */
 if (process.platform === 'win32') {
 	app.setAppUserModelId('com.ever.gauzydesktop');
@@ -164,6 +169,9 @@ if (process.platform === 'win32') {
 
 // Set unlimited listeners
 ipcMain.setMaxListeners(0);
+
+/* Remove handler if exist */
+ipcMain.removeHandler('PREFERRED_LANGUAGE');
 
 async function startServer(value, restart = false) {
 	process.env.IS_ELECTRON = 'true';
@@ -224,6 +232,11 @@ async function startServer(value, restart = false) {
 		});
 	}
 
+	global.variableGlobal = {
+		API_BASE_URL: getApiBaseUrl(value),
+		IS_INTEGRATED_DESKTOP: value.isLocalServer
+	};
+
 	try {
 		const config: any = {
 			...value,
@@ -273,6 +286,33 @@ async function startServer(value, restart = false) {
 		path.join(__dirname, 'assets', 'icons', 'icon_16x16.png'),
 		gauzyWindow
 	);
+
+	TranslateService.onLanguageChange(() => {
+		new AppMenu(
+			timeTrackerWindow,
+			settingsWindow,
+			updaterWindow,
+			knex,
+			pathWindow,
+			null,
+			false
+		);
+
+		if (tray) {
+			tray.destroy();
+		}
+		tray = new TrayIcon(
+			setupWindow,
+			knex,
+			timeTrackerWindow,
+			auth,
+			settingsWindow,
+			{ ...environment },
+			pathWindow,
+			path.join(__dirname, 'assets', 'icons', 'icon.png'),
+			gauzyWindow
+		);
+	})
 
 	/* ping server before launch the ui */
 	ipcMain.on('app_is_init', () => {
@@ -349,6 +389,11 @@ app.on('ready', async () => {
 		settings && typeof settings.autoLaunch === 'boolean'
 			? settings.autoLaunch
 			: true;
+	// default global
+	global.variableGlobal = {
+		API_BASE_URL: getApiBaseUrl(configs || {}),
+		IS_INTEGRATED_DESKTOP: configs?.isLocalServer
+	};
 	splashScreen = new SplashScreen(pathWindow.timeTrackerUi);
 	await splashScreen.loadURL();
 	splashScreen.show();
@@ -368,19 +413,18 @@ app.on('ready', async () => {
 		console.log('ERROR', error);
 	}
 	launchAtStartup(autoLaunch, false);
-	Menu.setApplicationMenu(
-		Menu.buildFromTemplate([
-			{
-				label: app.getName(),
-				submenu: [
-					{ role: 'about', label: 'About' },
-					{ type: 'separator' },
-					{ type: 'separator' },
-					{ role: 'quit', label: 'Exit' },
-				],
-			},
-		])
-	);
+	const menu: MenuItemConstructorOptions[] = [
+		{
+			label: app.getName(),
+			submenu: [
+				{ role: 'about', label: TranslateService.instant('MENU.ABOUT') },
+				{ type: 'separator' },
+				{ type: 'separator' },
+				{ role: 'quit', label: TranslateService.instant('BUTTONS.EXIT') }
+			]
+		}
+	];
+	Menu.setApplicationMenu(Menu.buildFromTemplate(menu));
 
 	/* create window */
 	timeTrackerWindow = await createTimeTrackerWindow(
@@ -607,10 +651,10 @@ ipcMain.on('check_database_connection', async (event, arg) => {
 		await dbConn.raw('select 1+1 as result');
 		event.sender.send('database_status', {
 			status: true,
-			message:
-				provider === 'postgres'
-					? 'Connection to PostgresSQL DB Succeeds'
-					: 'Connection to SQLITE DB Succeeds',
+			message: TranslateService.instant(
+				'TIMER_TRACKER.DIALOG.CONNECTION_DRIVER',
+				{ driver: provider === 'postgres' ? 'PostgresSQL' : 'SQLite' }
+			)
 		});
 	} catch (error) {
 		event.sender.send('database_status', {
@@ -640,6 +684,7 @@ app.on('activate', async () => {
 		);
 	} else {
 		if (setupWindow) {
+			splashScreen.close();
 			setupWindow.show();
 		}
 	}
@@ -709,6 +754,16 @@ function launchAtStartup(autoLaunch, hidden) {
 			break;
 	}
 }
+
+ipcMain.handle('PREFERRED_LANGUAGE', (event, arg) => {
+	const setting = store.get('appSetting');
+	if (arg) {
+		if (!setting) LocalStore.setDefaultApplicationSetting();
+		TranslateService.preferredLanguage = arg;
+		settingsWindow?.webContents?.send('preferred_language_change', arg);
+	}
+	return TranslateService.preferredLanguage;
+});
 
 app.on('browser-window-created', (_, window) => {
 	require("@electron/remote/main").enable(window.webContents)

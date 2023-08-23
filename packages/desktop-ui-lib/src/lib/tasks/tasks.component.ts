@@ -11,6 +11,7 @@ import {
 import { NbToastrService } from '@nebular/theme';
 import { Color, rgbString } from '@kurkle/color';
 import * as moment from 'moment';
+import { TranslateService } from '@ngx-translate/core';
 
 @Component({
 	selector: 'ngx-tasks',
@@ -62,7 +63,8 @@ export class TasksComponent implements OnInit {
 
 	constructor(
 		private timeTrackerService: TimeTrackerService,
-		private toastrService: NbToastrService
+		private toastrService: NbToastrService,
+		private translate: TranslateService
 	) {
 		this.isSaving = false;
 	}
@@ -159,7 +161,7 @@ export class TasksComponent implements OnInit {
 			this.isAddTask.emit(false);
 			this.newTaskCallback.emit({
 				isSuccess: true,
-				message: 'Added successfully',
+				message: this.translate.instant('TOASTR.MESSAGE.CREATED')
 			});
 		} catch (error) {
 			console.log(error);
@@ -195,7 +197,10 @@ export class TasksComponent implements OnInit {
 			);
 
 			this.projects = this.projects.concat([project]);
-			this.toastrService.success('Project added successfully', 'Gauzy');
+			this.toastrService.success(
+				this.translate.instant('TIMER_TRACKER.TOASTR.PROJECT_ADDED'),
+				'Gauzy'
+			);
 		} catch (error) {
 			this.toastrService.danger(error);
 		}
