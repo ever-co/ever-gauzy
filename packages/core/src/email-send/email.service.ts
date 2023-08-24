@@ -16,7 +16,7 @@ import {
 	IInviteTeamMemberModel,
 	IOrganizationTeam,
 	IOrganizationTeamJoinRequest,
-	EmailTemplateEnum
+	EmailTemplateNameEnum
 } from '@gauzy/contracts';
 import { environment as env } from '@gauzy/config';
 import { deepMerge, IAppIntegrationConfig } from '@gauzy/common';
@@ -67,7 +67,7 @@ export class EmailService {
 		const { id: organizationId, name: organizationName } = organization;
 
 		const sendOptions = {
-			template: EmailTemplateEnum.PAYMENT_RECEIPT,
+			template: EmailTemplateNameEnum.PAYMENT_RECEIPT,
 			message: {
 				to: `${email}`
 			},
@@ -132,7 +132,7 @@ export class EmailService {
 		const { id: organizationId } = organization;
 		const baseUrl = originUrl || env.clientBaseUrl;
 		const sendOptions = {
-			template: isEstimate ? EmailTemplateEnum.EMAIL_ESTIMATE : EmailTemplateEnum.EMAIL_INVOICE,
+			template: isEstimate ? EmailTemplateNameEnum.EMAIL_ESTIMATE : EmailTemplateNameEnum.EMAIL_INVOICE,
 			message: {
 				to: `${email}`,
 				attachments: [
@@ -195,7 +195,7 @@ export class EmailService {
 		const { id: organizationId } = organization;
 		const baseUrl = originUrl || env.clientBaseUrl;
 		const sendOptions = {
-			template: EmailTemplateEnum.INVITE_ORGANIZATION_CLIENT,
+			template: EmailTemplateNameEnum.INVITE_ORGANIZATION_CLIENT,
 			message: {
 				to: `${organizationContact.primaryEmail}`
 			},
@@ -250,7 +250,7 @@ export class EmailService {
 		const tenantId = RequestContext.currentTenantId();
 		const { id: organizationId } = organization;
 		const sendOptions = {
-			template: EmailTemplateEnum.INVITE_USER,
+			template: EmailTemplateNameEnum.INVITE_USER,
 			message: {
 				to: `${email}`
 			},
@@ -298,7 +298,7 @@ export class EmailService {
 		const tenantId = RequestContext.currentTenantId();
 
 		const sendOptions = {
-			template: EmailTemplateEnum.INVITE_GAUZY_TEAMS,
+			template: EmailTemplateNameEnum.INVITE_GAUZY_TEAMS,
 			message: {
 				to: `${email}`
 			},
@@ -346,7 +346,7 @@ export class EmailService {
 		const { id: organizationId } = organization;
 
 		const sendOptions = {
-			template: EmailTemplateEnum.INVITE_EMPLOYEE,
+			template: EmailTemplateNameEnum.INVITE_EMPLOYEE,
 			message: {
 				to: `${email}`
 			},
@@ -395,7 +395,7 @@ export class EmailService {
 
 		const { id: organizationId, tenantId } = organization;
 		const sendOptions = {
-			template: EmailTemplateEnum.EMPLOYEE_JOIN,
+			template: EmailTemplateNameEnum.EMPLOYEE_JOIN,
 			message: {
 				to: `${email}`
 			},
@@ -459,7 +459,7 @@ export class EmailService {
 		deepMerge(integration, env.appIntegrationConfig);
 
 		const sendOptions = {
-			template: EmailTemplateEnum.WELCOME_USER,
+			template: EmailTemplateNameEnum.WELCOME_USER,
 			message: {
 				to: `${user.email}`
 			},
@@ -523,7 +523,7 @@ export class EmailService {
 		 * Email template email options
 		 */
 		const sendOptions = {
-			template: EmailTemplateEnum.EMAIL_VERIFICATION,
+			template: EmailTemplateNameEnum.EMAIL_VERIFICATION,
 			message: {
 				to: `${email}`
 			},
@@ -579,7 +579,7 @@ export class EmailService {
 		}
 		const tenantId = (organization) ? organization.tenantId : RequestContext.currentTenantId();
 		const sendOptions = {
-			template: EmailTemplateEnum.PASSWORD_RESET,
+			template: EmailTemplateNameEnum.PASSWORD_RESET,
 			message: {
 				to: `${user.email}`,
 				subject: 'Forgotten Password'
@@ -682,7 +682,7 @@ export class EmailService {
 		});
 		const tenantId = (organization) ? organization.tenantId : RequestContext.currentTenantId();
 		const sendOptions = {
-			template: EmailTemplateEnum.TIME_SHEET_ACTION,
+			template: EmailTemplateNameEnum.TIME_SHEET_ACTION,
 			message: {
 				to: email
 			},
@@ -732,7 +732,7 @@ export class EmailService {
 		});
 		const tenantId = (organization) ? organization.tenantId : RequestContext.currentTenantId();
 		const sendOptions = {
-			template: EmailTemplateEnum.TIME_SHEET_SUBMIT,
+			template: EmailTemplateNameEnum.TIME_SHEET_SUBMIT,
 			message: {
 				to: email
 			},
@@ -788,7 +788,7 @@ export class EmailService {
 		deepMerge(integration, env.appIntegrationConfig);
 
 		const sendOptions = {
-			template: EmailTemplateEnum.PASSWORD_LESS_AUTHENTICATION,
+			template: EmailTemplateNameEnum.PASSWORD_LESS_AUTHENTICATION,
 			message: {
 				to: `${user.email}`
 			},
@@ -834,7 +834,7 @@ export class EmailService {
 		const integration = Object.assign({}, env.appIntegrationConfig);
 
 		const sendOptions = {
-			template: EmailTemplateEnum.EMAIL_RESET,
+			template: EmailTemplateNameEnum.EMAIL_RESET,
 			message: {
 				to: `${user.email}`
 			},
@@ -895,7 +895,7 @@ export class EmailService {
 		deepMerge(integration, env.appIntegrationConfig);
 
 		const sendOptions = {
-			template: EmailTemplateEnum.ORGANIZATION_TEAM_JOIN_REQUEST,
+			template: EmailTemplateNameEnum.ORGANIZATION_TEAM_JOIN_REQUEST,
 			message: {
 				to: `${organizationTeamJoinRequest.email}`
 			},

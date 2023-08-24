@@ -3,7 +3,7 @@ import { IsNull } from 'typeorm';
 import {
 	ICustomizableEmailTemplate,
 	LanguagesEnum,
-	EmailTemplateEnum,
+	EmailTemplateNameEnum,
 	IEmailTemplate
 } from '@gauzy/contracts';
 import { RequestContext } from './../../../core/context';
@@ -54,7 +54,7 @@ export class FindEmailTemplateHandler implements IQueryHandler<FindEmailTemplate
 
 	private async _fetchTemplate(
 		languageCode: LanguagesEnum,
-		name: EmailTemplateEnum,
+		name: EmailTemplateNameEnum,
 		organizationId: string,
 		tenantId: string,
 		type: 'html' | 'subject'

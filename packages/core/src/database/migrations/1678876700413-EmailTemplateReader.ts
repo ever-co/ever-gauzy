@@ -1,6 +1,6 @@
 
 import { MigrationInterface, QueryRunner } from "typeorm";
-import { EmailTemplateEnum } from '@gauzy/contracts';
+import { EmailTemplateNameEnum } from '@gauzy/contracts';
 import { EmailTemplateUtils } from './../../email-template/utils';
 
 export class EmailTemplateReader1678876700413 implements MigrationInterface {
@@ -16,18 +16,18 @@ export class EmailTemplateReader1678876700413 implements MigrationInterface {
         try {
             await EmailTemplateUtils.migrateEmailTemplates(
                 queryRunner,
-                EmailTemplateEnum.EMAIL_RESET
+                EmailTemplateNameEnum.EMAIL_RESET
             );
         } catch (error) {
-            console.log(`Error while migrating missing email templates for ${EmailTemplateEnum.EMAIL_RESET}`, error);
+            console.log(`Error while migrating missing email templates for ${EmailTemplateNameEnum.EMAIL_RESET}`, error);
         }
         try {
             await EmailTemplateUtils.migrateEmailTemplates(
                 queryRunner,
-                EmailTemplateEnum.ORGANIZATION_TEAM_JOIN_REQUEST
+                EmailTemplateNameEnum.ORGANIZATION_TEAM_JOIN_REQUEST
             );
         } catch (error) {
-            console.log(`Error while migrating missing email templates for ${EmailTemplateEnum.ORGANIZATION_TEAM_JOIN_REQUEST}`, error);
+            console.log(`Error while migrating missing email templates for ${EmailTemplateNameEnum.ORGANIZATION_TEAM_JOIN_REQUEST}`, error);
         }
     }
 
