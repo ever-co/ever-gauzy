@@ -7,7 +7,7 @@ import { PaymentService } from './payment.service';
 import { TenantModule } from '../tenant/tenant.module';
 import { UserModule } from './../user/user.module';
 import { PaymentMapService } from './payment.map.service';
-import { EmailModule } from './../email/email.module';
+import { EmailSendModule } from './../email-send/email-send.module';
 
 @Module({
 	imports: [
@@ -19,10 +19,10 @@ import { EmailModule } from './../email/email.module';
 		]),
 		TenantModule,
 		UserModule,
-		EmailModule
+		EmailSendModule
 	],
 	controllers: [PaymentController],
 	providers: [PaymentService, PaymentMapService],
-	exports: [PaymentService, PaymentMapService]
+	exports: [TypeOrmModule, PaymentService, PaymentMapService]
 })
-export class PaymentModule {}
+export class PaymentModule { }

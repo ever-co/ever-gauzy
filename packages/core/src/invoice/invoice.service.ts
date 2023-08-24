@@ -3,7 +3,7 @@ import { Invoice } from './invoice.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Between, In, Repository } from 'typeorm';
 import { BadRequestException, Injectable } from '@nestjs/common';
-import { EmailService } from '../email';
+import { EmailService } from './../email-send/email.service';
 import { IInvoice, IOrganization, LanguagesEnum } from '@gauzy/contracts';
 import { sign } from 'jsonwebtoken';
 import { environment } from '@gauzy/config';

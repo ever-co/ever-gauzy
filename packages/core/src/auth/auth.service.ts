@@ -21,7 +21,7 @@ import {
 import { environment } from '@gauzy/config';
 import { SocialAuthService } from '@gauzy/auth';
 import { IAppIntegrationConfig, isNotEmpty } from '@gauzy/common';
-import { EmailService } from '../email/email.service';
+import { EmailService } from './../email-send/email.service';
 import { User } from '../user/user.entity';
 import { UserService } from '../user/user.service';
 import { RoleService } from './../role/role.service';

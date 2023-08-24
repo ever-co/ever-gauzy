@@ -25,7 +25,7 @@ import { generateRandomInteger } from './../core/utils';
 import { EmailResetCreateCommand } from './commands';
 import { EmailResetGetQuery } from './queries';
 import { VerifyEmailResetRequestDTO } from './dto/verify-email-reset-request.dto';
-import { EmailService } from '../email/email.service';
+import { EmailService } from './../email-send/email.service';
 import { EmployeeService } from './../employee/employee.service';
 import { AuthService } from './../auth/auth.service';
 

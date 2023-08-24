@@ -20,16 +20,14 @@ import {
 } from '@gauzy/contracts';
 import { environment as env } from '@gauzy/config';
 import { deepMerge, IAppIntegrationConfig } from '@gauzy/common';
-import { TenantAwareCrudService } from './../core/crud';
 import { RequestContext } from '../core/context';
 import { EmailSendService } from './../email-send/email-send.service';
-import { EmailTemplate, Organization } from './../core/entities/internal';
-import { Email as EmailEntity } from './email.entity';
+import { EmailTemplate, Organization, Email as EmailEntity } from './../core/entities/internal';
 
 const DISALLOW_EMAIL_SERVER_DOMAIN: string[] = ['@example.com'];
 
 @Injectable()
-export class EmailService extends TenantAwareCrudService<EmailEntity> {
+export class EmailService {
 
 	constructor(
 		@InjectRepository(EmailEntity)
@@ -42,9 +40,7 @@ export class EmailService extends TenantAwareCrudService<EmailEntity> {
 		private readonly organizationRepository: Repository<Organization>,
 
 		private readonly _emailSendService: EmailSendService
-	) {
-		super(emailRepository);
-	}
+	) { }
 
 	/**
 	 *

@@ -16,7 +16,9 @@ import { UserModule } from './../user/user.module';
 		RouterModule.forRoutes([
 			{ path: '/email-template', module: EmailTemplateModule }
 		]),
-		forwardRef(() => TypeOrmModule.forFeature([EmailTemplate])),
+		forwardRef(() => TypeOrmModule.forFeature([
+			EmailTemplate
+		])),
 		forwardRef(() => TenantModule),
 		forwardRef(() => UserModule),
 		CqrsModule
@@ -33,4 +35,4 @@ import { UserModule } from './../user/user.module';
 		EmailTemplateService
 	]
 })
-export class EmailTemplateModule {}
+export class EmailTemplateModule { }
