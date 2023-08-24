@@ -2940,7 +2940,8 @@
 		"SELECT_EMPLOYEE": "Выбрать сотрудника",
 		"SELECT_A_DATE": "Выберите дату",
 		"SELECT_AN_ORGANIZATION": "Выберите организацию",
-		"SELECT_PROJECT": "Выбрать проект"
+		"SELECT_PROJECT": "Выбрать проект",
+		"SELECT_TEAM": "Выберите команду"
 	},
 	"HEADER_TITLE": {
 		"FOR": "для",
