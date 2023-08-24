@@ -46,11 +46,9 @@ export class CustomSmtpService extends TenantAwareCrudService<CustomSmtp> {
 	 * @param configuration
 	 * @returns
 	 */
-	public async verifyTransporter(transport: IVerifySMTPTransport): Promise<Boolean | any> {
+	public async verifyTransporter(transport: IVerifySMTPTransport): Promise<boolean> {
 		try {
-			if (!!await SMTPUtils.verifyTransporter(transport)) {
-				return true;
-			}
+			return !!await SMTPUtils.verifyTransporter(transport);
 		} catch (error) {
 			console.log('Error while verifying nodemailer transport: %s', error);
 			return false;

@@ -2,9 +2,10 @@ import { Injectable, InternalServerErrorException } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { IsNull, Repository } from "typeorm";
 import * as Handlebars from 'handlebars';
-import { ICustomSmtp, IEmailTemplate, LanguagesEnum } from "@gauzy/contracts";
-import { isEmpty } from "@gauzy/common";
+import { IEmailTemplate, IVerifySMTPTransport, LanguagesEnum } from "@gauzy/contracts";
+import { ISMTPConfig, isEmpty } from "@gauzy/common";
 import { CustomSmtp, EmailTemplate } from "../core/entities/internal";
+import { SMTPUtils } from "./utils";
 
 @Injectable()
 export class EmailTemplateRenderService {
@@ -24,9 +25,11 @@ export class EmailTemplateRenderService {
      * @returns The rendered HTML content of the email template.
      */
     public render = async (view: string, locals: any) => {
-        let smtpConfig: ICustomSmtp;
+        let smtpTransporter: CustomSmtp;
+        let isValidSmtp: boolean = false;
+
         try {
-            smtpConfig = await this.customSmtpRepository.findOneOrFail({
+            smtpTransporter = await this.customSmtpRepository.findOneOrFail({
                 where: {
                     organizationId: isEmpty(locals.organizationId) ? IsNull() : locals.organizationId,
                     tenantId: isEmpty(locals.tenantId) ? IsNull() : locals.tenantId
@@ -36,8 +39,7 @@ export class EmailTemplateRenderService {
                 }
             });
         } catch (error) {
-            console.log('Error while getting custom smtp: %s', error);
-            smtpConfig = await this.customSmtpRepository.findOne({
+            smtpTransporter = await this.customSmtpRepository.findOne({
                 where: {
                     organizationId: IsNull(),
                     tenantId: isEmpty(locals.tenantId) ? IsNull() : locals.tenantId
@@ -47,7 +49,19 @@ export class EmailTemplateRenderService {
                 }
             });
         }
-        console.log(smtpConfig);
+
+        if (smtpTransporter) {
+            /** */
+            try {
+                const smtpConfig: ISMTPConfig = smtpTransporter.getSmtpTransporter();
+                const transport: IVerifySMTPTransport = SMTPUtils.convertSmtpToTransporter(smtpConfig);
+
+                isValidSmtp = !!await SMTPUtils.verifyTransporter(transport)
+            } catch (error) {
+                isValidSmtp = false;
+            }
+        }
+
         try {
             console.log('Email template locals: %s', locals);
             view = view.replace('\\', '/');
@@ -60,7 +74,7 @@ export class EmailTemplateRenderService {
                 languageCode: locals.locale || LanguagesEnum.ENGLISH
             });
 
-            if (smtpConfig) {
+            if (!!isValidSmtp) {
                 query['organizationId'] = locals.organizationId;
                 query['tenantId'] = locals.tenantId;
 

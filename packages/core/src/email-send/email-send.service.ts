@@ -4,7 +4,7 @@ import { IsNull, Repository } from "typeorm";
 import * as Email from 'email-templates';
 import { ISMTPConfig, isEmpty } from "@gauzy/common";
 import { IBasePerTenantAndOrganizationEntityModel, IVerifySMTPTransport } from "@gauzy/contracts";
-import { EmailTemplate } from "./../core/entities/internal";
+import { CustomSmtp, EmailTemplate } from "./../core/entities/internal";
 import { RequestContext } from "./../core/context";
 import { CustomSmtpService } from "./../custom-smtp/custom-smtp.service";
 import { SMTPUtils } from "./utils";
@@ -51,8 +51,9 @@ export class EmailSendService {
         organizationId,
         tenantId = RequestContext.currentTenantId()
     }: IBasePerTenantAndOrganizationEntityModel) {
+        let smtpTransporter: CustomSmtp;
         try {
-            const smtpTransporter = await this.customSmtpService.findOneByOptions({
+            smtpTransporter = await this.customSmtpService.findOneByOptions({
                 where: {
                     organizationId: isEmpty(organizationId) ? IsNull() : organizationId,
                     tenantId: isEmpty(tenantId) ? IsNull() : tenantId
@@ -61,7 +62,7 @@ export class EmailSendService {
                     createdAt: 'DESC'
                 }
             });
-
+            // console.log('Custom SMTP configuration for organization: %s', smtpTransporter);
             const smtpConfig: ISMTPConfig = smtpTransporter.getSmtpTransporter();
             const transport: IVerifySMTPTransport = SMTPUtils.convertSmtpToTransporter(smtpConfig);
 
@@ -75,7 +76,7 @@ export class EmailSendService {
         } catch (error) {
             try {
                 if (error instanceof NotFoundException) {
-                    const smtpTransporter = await this.customSmtpService.findOneByOptions({
+                    smtpTransporter = await this.customSmtpService.findOneByOptions({
                         where: {
                             organizationId: IsNull(),
                             tenantId: isEmpty(tenantId) ? IsNull() : tenantId
@@ -84,11 +85,12 @@ export class EmailSendService {
                             createdAt: 'DESC'
                         }
                     });
+                    // console.log('Custom SMTP configuration for tenant: %s', smtpTransporter);
 
                     const smtpConfig: ISMTPConfig = smtpTransporter.getSmtpTransporter();
                     const transport: IVerifySMTPTransport = SMTPUtils.convertSmtpToTransporter(smtpConfig);
 
-                    /** Verifies SMTP configuration */
+                    // /** Verifies SMTP configuration */
                     if (!!await SMTPUtils.verifyTransporter(transport)) {
                         return this.getEmailConfig(smtpConfig);
                     } else {
@@ -97,8 +99,18 @@ export class EmailSendService {
                     }
                 }
             } catch (error) {
-                console.log('Error while retrieving tenant/organization smtp configuration: %s', error);
-                throw new InternalServerErrorException(error);
+                const smtpConfig: ISMTPConfig = SMTPUtils.defaultSMTPTransporter();
+                const transport: IVerifySMTPTransport = SMTPUtils.convertSmtpToTransporter(smtpConfig);
+
+                // console.log('Default SMTP configuration: %s', transport);
+
+                /** Verifies SMTP configuration */
+                if (!!await SMTPUtils.verifyTransporter(transport)) {
+                    return this.getEmailConfig(smtpConfig);
+                } else {
+                    console.log('Error while retrieving tenant/organization smtp configuration: %s', error);
+                    throw new InternalServerErrorException(error);
+                }
             }
         }
     }

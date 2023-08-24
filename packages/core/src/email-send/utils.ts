@@ -1,4 +1,3 @@
-import { InternalServerErrorException } from "@nestjs/common";
 import * as nodemailer from 'nodemailer';
 import { environment } from "@gauzy/config";
 import { ISMTPConfig } from "@gauzy/common";
@@ -41,20 +40,20 @@ export class SMTPUtils {
     public static async verifyTransporter(config: IVerifySMTPTransport): Promise<boolean> {
         try {
             const transporter = nodemailer.createTransport({
+                from: config.fromAddress,
                 host: config.host,
                 port: config.port || 587,
                 secure: config.secure || false, // use TLS
                 auth: {
                     user: config.username,
                     pass: config.password
-                },
-                from: config.fromAddress
+                }
             });
             // Verify the transporter
             return await transporter.verify() // Configuration is valid / invalid;
         } catch (error) {
             console.log('Error while verifying nodemailer transport: %s', error);
-            throw new InternalServerErrorException(error);
+            return false;
         }
     }
 
@@ -72,7 +71,7 @@ export class SMTPUtils {
             password: config?.auth.pass,
             fromAddress: config?.fromAddress
         };
-        console.log('SMTP config to transporter configuration: %s', transport);
+        // console.log('SMTP config to transporter configuration: %s', transport);
         return transport;
     }
 }
