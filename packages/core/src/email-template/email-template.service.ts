@@ -79,7 +79,7 @@ export class EmailTemplateService extends CrudService<EmailTemplate> {
 
 	/**
 	 * Insert or update global missing email templates in database.
-	 * Production environment not runing any seeder to save templates.
+	 * Production environment not running any seeder to save templates.
 	 * If someone looking for templates, we are fetch it from code folders.
 	 *
 	 * @param languageCode

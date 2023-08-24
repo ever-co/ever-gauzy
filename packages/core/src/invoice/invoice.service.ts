@@ -25,7 +25,7 @@ export class InvoiceService extends TenantAwareCrudService<Invoice> {
 		private readonly invoiceRepository: Repository<Invoice>,
 		private readonly emailService: EmailService,
 		private readonly estimateEmailService: EstimateEmailService,
-		private readonly pdfmakerServier: PdfmakerService,
+		private readonly pdfmakerService: PdfmakerService,
 		private readonly i18n: I18nService,
 		private readonly organizationService: OrganizationService
 	) {
@@ -228,7 +228,7 @@ export class InvoiceService extends TenantAwareCrudService<Invoice> {
 			translatedText,
 			language
 		);
-		return await this.pdfmakerServier.generatePdf(docDefinition);
+		return await this.pdfmakerService.generatePdf(docDefinition);
 	}
 
 	async generateInvoicePaymentPdf(invoiceId: string, language: string) {
@@ -307,7 +307,7 @@ export class InvoiceService extends TenantAwareCrudService<Invoice> {
 			translatedText
 		);
 
-		return await this.pdfmakerServier.generatePdf(docDefinition);
+		return await this.pdfmakerService.generatePdf(docDefinition);
 	}
 
 	getReadableStream(buffer: Buffer): Readable {
