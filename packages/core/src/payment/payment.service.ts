@@ -10,6 +10,9 @@ import { getDateRangeFormat, getDaysBetweenDates, } from '../core/utils';
 import { TenantAwareCrudService } from './../core/crud';
 import { RequestContext } from '../core/context';
 import { EmailService } from './../email-send/email.service';
+import { LanguagesEnum } from '@gauzy/contracts';
+import { IPayment } from '@gauzy/contracts';
+import { IInvoice } from '@gauzy/contracts';
 
 @Injectable()
 export class PaymentService extends TenantAwareCrudService<Payment> {
@@ -175,19 +178,39 @@ export class PaymentService extends TenantAwareCrudService<Payment> {
 		return query;
 	}
 
-	async sendReceipt(languageCode, params, origin) {
-		const payment = params.payment;
-		const invoice = params.invoice;
-		await this.emailService.sendPaymentReceipt(
-			languageCode,
-			invoice.toContact.primaryEmail,
-			invoice.toContact.name,
-			invoice.invoiceNumber,
-			payment.amount,
-			payment.currency,
-			invoice.fromOrganization,
-			origin
-		);
+	/**
+	 *
+	 * @param languageCode
+	 * @param params
+	 * @param origin
+	 */
+	async sendReceipt(
+		languageCode: LanguagesEnum,
+		invoice: IInvoice,
+		payment: IPayment,
+		origin: string
+	): Promise<boolean> {
+		try {
+			const {
+				primaryEmail: recipientEmail,
+				name: recipientName
+			} = invoice.toContact;
+
+			await this.emailService.sendPaymentReceipt(
+				languageCode,
+				recipientEmail,
+				recipientName,
+				invoice.invoiceNumber,
+				payment.amount,
+				payment.currency,
+				invoice.fromOrganization,
+				origin
+			);
+
+			return true;
+		} catch (error) {
+			return false;
+		}
 	}
 
 	public pagination(filter: any) {

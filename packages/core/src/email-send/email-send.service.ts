@@ -38,7 +38,7 @@ export class EmailSendService {
                 return this.getEmailConfig(smtpConfig);
             }
         } catch (error) {
-            console.log('Error while retrieving default global smtp configuration: %s', error);
+            console.log('Error while retrieving default global smtp configuration: %s', error?.message);
             throw new InternalServerErrorException(error);
         }
     }
@@ -108,8 +108,8 @@ export class EmailSendService {
                 if (!!await SMTPUtils.verifyTransporter(transport)) {
                     return this.getEmailConfig(smtpConfig);
                 } else {
-                    console.log('Error while retrieving tenant/organization smtp configuration: %s', error);
-                    throw new InternalServerErrorException(error);
+                    console.log('Error while retrieving tenant/organization smtp configuration: %s', error?.message);
+                    throw new InternalServerErrorException('Error while retrieving tenant/organization smtp configuration');
                 }
             }
         }

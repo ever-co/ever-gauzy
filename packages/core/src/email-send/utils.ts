@@ -52,7 +52,7 @@ export class SMTPUtils {
             // Verify the transporter
             return await transporter.verify() // Configuration is valid / invalid;
         } catch (error) {
-            console.log('Error while verifying nodemailer transport: %s', error);
+            console.log('Error while verifying nodemailer transport: %s', error?.message);
             return false;
         }
     }

@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import * as nodemailer from 'nodemailer';
 import { Repository, IsNull } from 'typeorm';
@@ -65,15 +65,16 @@ export class EmailService {
 	) {
 		const tenantId = RequestContext.currentTenantId();
 		const { id: organizationId, name: organizationName } = organization;
+		const clientBaseUrl = originUrl || env.clientBaseUrl;
 
 		const sendOptions = {
 			template: EmailTemplateNameEnum.PAYMENT_RECEIPT,
 			message: {
-				to: `${email}`
+				to: email
 			},
 			locals: {
 				locale: languageCode,
-				host: originUrl || env.clientBaseUrl,
+				host: clientBaseUrl,
 				contactName,
 				invoiceNumber,
 				amount,
@@ -82,23 +83,26 @@ export class EmailService {
 				tenantId,
 				organizationName
 			}
-		}
+		};
+
 		const body = {
 			templateName: sendOptions.template,
 			email: sendOptions.message.to,
 			languageCode,
 			organization,
 			message: ''
-		}
-		const match = !!DISALLOW_EMAIL_SERVER_DOMAIN.find((server) => body.email.includes(server));
-		if (!match) {
+		};
+
+		const isEmailBlocked = !!DISALLOW_EMAIL_SERVER_DOMAIN.find(server => body.email.includes(server));
+		if (!isEmailBlocked) {
 			try {
 				const instance = await this._emailSendService.getEmailInstance({ organizationId, tenantId });
-				const send = await instance.send(sendOptions);
+				const sendResult = await instance.send(sendOptions);
 
-				body['message'] = send.originalMessage;
+				body.message = sendResult.originalMessage;
 			} catch (error) {
-				console.log(`Error while sending payment receipt ${invoiceNumber}: %s`, error);
+				console.log(`Error while sending payment receipt ${invoiceNumber}: %s`, error?.message);
+				throw new BadRequestException(`Error while sending payment receipt ${invoiceNumber}: ${error?.message}`)
 			} finally {
 				await this.createEmailRecord(body);
 			}
