@@ -7,21 +7,20 @@ import { IBasePerTenantAndOrganizationEntityModel, IVerifySMTPTransport } from "
 import { EmailTemplate } from "./../core/entities/internal";
 import { RequestContext } from "./../core/context";
 import { CustomSmtpService } from "./../custom-smtp/custom-smtp.service";
-import { EmailTemplateRender } from "./email-template.render";
 import { SMTPUtils } from "./utils";
+import { EmailTemplateRenderService } from "./email-template-render.service";
 // import { environment } from '@gauzy/config';
 
 @Injectable()
-export class EmailSendService extends EmailTemplateRender {
+export class EmailSendService {
 
     constructor(
         @InjectRepository(EmailTemplate)
-        protected readonly repository: Repository<EmailTemplate>,
+        protected readonly emailTemplateRepository: Repository<EmailTemplate>,
 
         private readonly customSmtpService: CustomSmtpService,
-    ) {
-        super(repository);
-    }
+        private readonly emailTemplateRenderService: EmailTemplateRenderService,
+    ) { }
 
     /**
      *
@@ -123,7 +122,7 @@ export class EmailSendService extends EmailTemplateRender {
                     extension: 'hbs'
                 }
             },
-            render: this.render
+            render: this.emailTemplateRenderService.render
         };
         /**
          * TODO: uncomment this after we figure out issues with dev / prod in the environment.*.ts

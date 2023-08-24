@@ -36,7 +36,7 @@ export class CustomSmtpService extends TenantAwareCrudService<CustomSmtp> {
 				}
 			});
 		} catch (error) {
-			return SMTPUtils.defaultSMTPTransporter();
+			return SMTPUtils.defaultSMTPTransporter(false);
 		}
 	}
 

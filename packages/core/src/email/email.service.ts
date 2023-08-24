@@ -46,6 +46,17 @@ export class EmailService extends TenantAwareCrudService<EmailEntity> {
 		super(emailRepository);
 	}
 
+	/**
+	 *
+	 * @param languageCode
+	 * @param email
+	 * @param contactName
+	 * @param invoiceNumber
+	 * @param amount
+	 * @param currency
+	 * @param organization
+	 * @param originUrl
+	 */
 	async sendPaymentReceipt(
 		languageCode: LanguagesEnum,
 		email: string,
@@ -98,6 +109,18 @@ export class EmailService extends TenantAwareCrudService<EmailEntity> {
 		}
 	}
 
+	/**
+	 *
+	 * @param languageCode
+	 * @param email
+	 * @param base64
+	 * @param invoiceNumber
+	 * @param invoiceId
+	 * @param isEstimate
+	 * @param token
+	 * @param originUrl
+	 * @param organization
+	 */
 	async emailInvoice(
 		languageCode: LanguagesEnum,
 		email: string,
@@ -155,6 +178,15 @@ export class EmailService extends TenantAwareCrudService<EmailEntity> {
 		}
 	}
 
+	/**
+	 *
+	 * @param organizationContact
+	 * @param inviterUser
+	 * @param organization
+	 * @param invite
+	 * @param languageCode
+	 * @param originUrl
+	 */
 	async inviteOrganizationContact(
 		organizationContact: IOrganizationContact,
 		inviterUser: IUser,
@@ -205,6 +237,10 @@ export class EmailService extends TenantAwareCrudService<EmailEntity> {
 		}
 	}
 
+	/**
+	 *
+	 * @param inviteUserModel
+	 */
 	async inviteUser(inviteUserModel: IInviteUserModel) {
 		const {
 			email,
@@ -304,6 +340,10 @@ export class EmailService extends TenantAwareCrudService<EmailEntity> {
 		}
 	}
 
+	/**
+	 *
+	 * @param inviteEmployeeModel
+	 */
 	async inviteEmployee(inviteEmployeeModel: IInviteEmployeeModel) {
 		const { email, registerUrl, organization, originUrl, languageCode, invitedBy } = inviteEmployeeModel;
 		const tenantId = RequestContext.currentTenantId();
@@ -346,6 +386,9 @@ export class EmailService extends TenantAwareCrudService<EmailEntity> {
 		}
 	}
 
+	/***
+	 *
+	 */
 	async sendAcceptInvitationEmail(joinEmployeeModel: IJoinEmployeeModel, originUrl?: string) {
 		const {
 			email,
@@ -390,6 +433,14 @@ export class EmailService extends TenantAwareCrudService<EmailEntity> {
 		}
 	}
 
+	/**
+	 *
+	 * @param user
+	 * @param languageCode
+	 * @param organizationId
+	 * @param originUrl
+	 * @param integration
+	 */
 	async welcomeUser(
 		user: IUser,
 		languageCode: LanguagesEnum,
@@ -490,30 +541,33 @@ export class EmailService extends TenantAwareCrudService<EmailEntity> {
 				host: env.clientBaseUrl
 			}
 		};
+		const body = {
+			templateName: sendOptions.template,
+			email: sendOptions.message.to,
+			languageCode: sendOptions.locals.locale,
+			message: ''
+		}
+		const match = !!DISALLOW_EMAIL_SERVER_DOMAIN.find((server) => body.email.includes(server));
+		if (!match) {
+			try {
+				const instance = await this._emailSendService.getInstance();
+				const send = await instance.send(sendOptions);
 
-		try {
-			const body = {
-				templateName: sendOptions.template,
-				email: sendOptions.message.to,
-				languageCode: sendOptions.locals.locale,
-				message: ''
+				body['message'] = send.originalMessage;
+			} catch (error) {
+				console.error(error);
 			}
-			const match = !!DISALLOW_EMAIL_SERVER_DOMAIN.find((server) => body.email.includes(server));
-			if (!match) {
-				try {
-					const instance = await this._emailSendService.getInstance();
-					const send = await instance.send(sendOptions);
-
-					body['message'] = send.originalMessage;
-				} catch (error) {
-					console.error(error);
-				}
-			}
-		} catch (error) {
-			console.error(error);
 		}
 	}
 
+	/**
+	 *
+	 * @param user
+	 * @param url
+	 * @param languageCode
+	 * @param organizationId
+	 * @param originUrl
+	 */
 	async requestPassword(
 		user: IUser,
 		url: string,
@@ -564,6 +618,13 @@ export class EmailService extends TenantAwareCrudService<EmailEntity> {
 		}
 	}
 
+	/**
+	 *
+	 * @param email
+	 * @param languageCode
+	 * @param organizationId
+	 * @param originUrl
+	 */
 	async sendAppointmentMail(
 		email: string,
 		languageCode: LanguagesEnum,
@@ -612,6 +673,11 @@ export class EmailService extends TenantAwareCrudService<EmailEntity> {
 		}
 	}
 
+	/**
+	 *
+	 * @param email
+	 * @param timesheet
+	 */
 	async setTimesheetAction(email: string, timesheet: ITimesheet) {
 		const languageCode = RequestContext.getLanguageCode();
 		const organizationId = timesheet.employee.organizationId;
@@ -657,6 +723,11 @@ export class EmailService extends TenantAwareCrudService<EmailEntity> {
 		}
 	}
 
+	/**
+	 *
+	 * @param email
+	 * @param timesheet
+	 */
 	async timesheetSubmit(email: string, timesheet: ITimesheet) {
 		const languageCode = RequestContext.getLanguageCode();
 		const organizationId = timesheet.employee.organizationId;
