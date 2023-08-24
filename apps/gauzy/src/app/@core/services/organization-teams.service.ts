@@ -65,6 +65,16 @@ export class OrganizationTeamsService {
 		);
 	}
 
+	getCount(
+		request: IOrganizationTeamFindInput
+	): Promise<number> {
+		return firstValueFrom(
+			this.http.get<number>(`${API_PREFIX}/organization-team/count`, {
+				params: toParams({ ...request })
+			})
+		);
+	}
+
 	getMyTeams(
 		where?: IOrganizationTeamFindInput,
 		relations: string[] = [],
