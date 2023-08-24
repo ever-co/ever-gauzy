@@ -4148,7 +4148,8 @@
 			"interviewer-interview-schedule": "Interviewer Schedule",
 			"employee-join": "Employee Join",
 			"email-reset": "Email Reset",
-			"organization-team-join-request": "Organization team join request"
+			"organization-team-join-request": "Organization team join request",
+			"payment-receipt": "Payment Receipt"
 		},
 		"HTML_EDITOR": "HTML Editor"
 	},
