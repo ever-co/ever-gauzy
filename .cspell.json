@@ -280,7 +280,10 @@
 		"workdiary",
 		"Workdiary",
 		"thmb",
-		"gitmodules"
+		"gitmodules",
+		"sqlserver",
+		"pdfmaker",
+		"Pdfmaker"
 	],
 	"useGitignore": true,
 	"ignorePaths": [
