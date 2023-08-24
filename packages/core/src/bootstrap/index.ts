@@ -20,6 +20,8 @@ import { AppService } from '../app.service';
 import { AppModule } from '../app.module';
 import { AuthGuard } from './../shared/guards';
 import { SharedModule } from './../shared/shared.module';
+import { createNodeMiddleware, createProbot } from 'probot';
+import type { Probot, Context } from 'probot';
 
 export async function bootstrap(
 	pluginConfig?: Partial<IPluginConfig>
@@ -27,9 +29,12 @@ export async function bootstrap(
 	const config = await registerPluginConfig(pluginConfig);
 
 	const { BootstrapModule } = await import('./bootstrap.module');
-	const app = await NestFactory.create<NestExpressApplication>(BootstrapModule, {
-		logger: ['log', 'error', 'warn', 'debug', 'verbose']
-	});
+	const app = await NestFactory.create<NestExpressApplication>(
+		BootstrapModule,
+		{
+			logger: ['log', 'error', 'warn', 'debug', 'verbose'],
+		}
+	);
 
 	// This will lock all routes and make them accessible by authenticated users only.
 	const reflector = app.get(Reflector);
@@ -52,7 +57,7 @@ export async function bootstrap(
 		methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
 		credentials: true,
 		allowedHeaders:
-			'Authorization, Language, Tenant-Id, X-Requested-With, X-Auth-Token, X-HTTP-Method-Override, Content-Type, Content-Language, Accept, Accept-Language, Observe'
+			'Authorization, Language, Tenant-Id, X-Requested-With, X-Auth-Token, X-HTTP-Method-Override, Content-Type, Content-Language, Accept, Accept-Language, Observe',
 	});
 
 	// TODO: enable csurf
@@ -64,7 +69,7 @@ export async function bootstrap(
 		expressSession({
 			secret: env.EXPRESS_SESSION_SECRET,
 			resave: true,
-			saveUninitialized: true
+			saveUninitialized: true,
 		})
 	);
 
@@ -95,15 +100,56 @@ export async function bootstrap(
 	console.log(chalk.green(`Configured Host: ${host}`));
 	console.log(chalk.green(`Configured Port: ${port}`));
 
-	console.log(chalk.green(`Swagger UI available at http://${host}:${port}/swg`));
+	console.log(
+		chalk.green(`Swagger UI available at http://${host}:${port}/swg`)
+	);
 
 	/**
 	 * Dependency injection with class-validator
 	 */
 	useContainer(app.select(SharedModule), { fallbackOnErrors: true });
 
+	const GITHUB_INTEGRATION_APP_ID = 123456;
+	const GITHUB_INTEGRATION_PRIVATE_KEY = '<WIP>';
+	const GITHUB_INTEGRATION_APP_INSTALLATION_ID = 123456;
+	const GITHUB_INTEGRATION_CLIENT_ID = '<WIP>';
+	const GITHUB_INTEGRATION_CLIENT_SECRET = '<WIP>';
+	const GITHUB_INTEGRATION_WEBHOOK_SECRET = '<WIP>';
+
+	const probot = createProbot({
+		defaults: {
+			appId: GITHUB_INTEGRATION_APP_ID,
+			privateKey: GITHUB_INTEGRATION_PRIVATE_KEY,
+			secret: GITHUB_INTEGRATION_WEBHOOK_SECRET,
+		},
+		overrides: {
+			appId: GITHUB_INTEGRATION_APP_ID,
+			privateKey: GITHUB_INTEGRATION_PRIVATE_KEY,
+			secret: GITHUB_INTEGRATION_WEBHOOK_SECRET,
+		},
+	});
+
+	// Import from config and pass here
+	app.use(
+		createNodeMiddleware(
+			(app: Probot) => {
+				app.on('issues.edited', async (context) => {
+					// Here we can have logic to sync with Gauzy API
+
+					console.log('payload', context.payload);
+				});
+			},
+			{
+				probot,
+				webhooksPath: '/api/github/webhooks',
+			}
+		)
+	);
+
 	await app.listen(port, host, () => {
-		console.log(chalk.magenta(`Listening at http://${host}:${port}/${globalPrefix}`));
+		console.log(
+			chalk.magenta(`Listening at http://${host}:${port}/${globalPrefix}`)
+		);
 		// Execute Seed For Demo Server
 		if (env.demo) {
 			service.executeDemoSeed();
@@ -128,8 +174,8 @@ export async function registerPluginConfig(
 	 */
 	setConfig({
 		dbConnectionOptions: {
-			...getMigrationsSetting()
-		}
+			...getMigrationsSetting(),
+		},
 	});
 
 	console.log(
@@ -145,8 +191,10 @@ export async function registerPluginConfig(
 	setConfig({
 		dbConnectionOptions: {
 			entities,
-			subscribers: coreSubscribers as Array<Type<EntitySubscriberInterface>>,
-		}
+			subscribers: coreSubscribers as Array<
+				Type<EntitySubscriberInterface>
+			>,
+		},
 	});
 
 	let registeredConfig = getConfig();
@@ -165,7 +213,7 @@ export async function registerAllEntities(
 	for (const pluginEntity of pluginEntities) {
 		if (allEntities.find((e) => e.name === pluginEntity.name)) {
 			throw new ConflictException({
-				message: `error.${pluginEntity.name} conflict by default entities`
+				message: `error.${pluginEntity.name} conflict by default entities`,
 			});
 		} else {
 			allEntities.push(pluginEntity);
@@ -180,17 +228,16 @@ export async function registerAllEntities(
  * @returns
  */
 export function getMigrationsSetting() {
-
 	console.log(`Reporting __dirname: ${__dirname}`);
 
 	//TODO: We need to define some dynamic path here
 	return {
 		migrations: [
 			// join(__dirname, '../../src/database/migrations/*{.ts,.js}'),
-			join(__dirname, '../database/migrations/*{.ts,.js}')
+			join(__dirname, '../database/migrations/*{.ts,.js}'),
 		],
 		cli: {
-			migrationsDir: join(__dirname, '../../src/database/migrations')
+			migrationsDir: join(__dirname, '../../src/database/migrations'),
 		},
-	}
+	};
 }
