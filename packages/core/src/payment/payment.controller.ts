@@ -10,7 +10,6 @@ import {
 	Param,
 	Body,
 	Post,
-	Req,
 	ValidationPipe,
 	UsePipes,
 	BadRequestException,
