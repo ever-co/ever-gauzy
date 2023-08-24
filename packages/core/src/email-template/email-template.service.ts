@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Brackets, Repository, SelectQueryBuilder, WhereExpressionBuilder } from 'typeorm';
 import * as mjml2html from 'mjml';
-import { EmailTemplateNameEnum, IEmailTemplate, IPagination, LanguagesEnum } from '@gauzy/contracts';
+import { EmailTemplateEnum, IEmailTemplate, IPagination, LanguagesEnum } from '@gauzy/contracts';
 import { isNotEmpty } from '@gauzy/common';
 import { EmailTemplate } from './email-template.entity';
 import { CrudService, PaginationParams } from './../core/crud';
@@ -92,7 +92,7 @@ export class EmailTemplateService extends CrudService<EmailTemplate> {
 	 */
 	async saveTemplate(
 		languageCode: LanguagesEnum,
-		name: EmailTemplateNameEnum,
+		name: EmailTemplateEnum,
 		type: 'html' | 'subject',
 		organizationId: string,
 		tenantId: string,

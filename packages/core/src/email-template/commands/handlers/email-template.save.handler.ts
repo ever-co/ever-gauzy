@@ -2,7 +2,7 @@ import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { EmailTemplateSaveCommand } from '../email-template.save.command';
 import { EmailTemplateService } from '../../email-template.service';
 import { EmailTemplate } from '../../email-template.entity';
-import { LanguagesEnum, EmailTemplateNameEnum, IEmailTemplate } from '@gauzy/contracts';
+import { LanguagesEnum, EmailTemplateEnum, IEmailTemplate } from '@gauzy/contracts';
 import * as mjml2html from 'mjml';
 import { BadRequestException } from '@nestjs/common';
 import { RequestContext } from './../../../core/context';
@@ -51,7 +51,7 @@ export class EmailTemplateSaveHandler
 
 	private async _saveTemplate(
 		languageCode: LanguagesEnum,
-		name: EmailTemplateNameEnum,
+		name: EmailTemplateEnum,
 		organizationId: string,
 		tenantId: string,
 		content: string,
