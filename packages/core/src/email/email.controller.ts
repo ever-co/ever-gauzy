@@ -23,7 +23,7 @@ import {
 import { UpdateResult } from 'typeorm';
 import { IEmail, IPagination, PermissionsEnum } from '@gauzy/contracts';
 import { Email } from './email.entity';
-import { EmailService } from './email.service';
+import { EmailHistoryService } from './email-history.service';
 import { Permissions } from './../shared/decorators';
 import { UUIDValidationPipe } from './../shared/pipes';
 import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
@@ -36,7 +36,7 @@ import { PaginationParams } from './../core/crud';
 @Controller()
 export class EmailController {
 	constructor(
-		private readonly emailService: EmailService
+		private readonly _emailHistoryService: EmailHistoryService
 	) { }
 
 	@ApiOperation({ summary: 'Find all emails under specific tenant.' })
@@ -59,7 +59,7 @@ export class EmailController {
 		@Query() params: PaginationParams<Email>
 	): Promise<IPagination<IEmail>> {
 		try {
-			return await this.emailService.findAll(params);
+			return await this._emailHistoryService.findAll(params);
 		} catch (error) {
 			throw new BadRequestException(error);
 		}
@@ -87,7 +87,7 @@ export class EmailController {
 		@Body() entity: UpdateEmailDTO
 	): Promise<IEmail | UpdateResult> {
 		try {
-			return await this.emailService.update(id, entity);
+			return await this._emailHistoryService.update(id, entity);
 		} catch (error) {
 			throw new BadRequestException(error);
 		}

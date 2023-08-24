@@ -1,5 +1,4 @@
 import { Injectable, InternalServerErrorException } from "@nestjs/common";
-import { InjectRepository } from "@nestjs/typeorm";
 import { IsNull, Repository } from "typeorm";
 import * as Handlebars from 'handlebars';
 import { IEmailTemplate, LanguagesEnum } from "@gauzy/contracts";
@@ -9,8 +8,7 @@ import { EmailTemplate } from "../core/entities/internal";
 export class EmailTemplateRender {
 
     constructor(
-        @InjectRepository(EmailTemplate)
-        private readonly repository: Repository<EmailTemplate>,
+        protected readonly repository: Repository<EmailTemplate>,
     ) { }
 
     /**

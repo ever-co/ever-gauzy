@@ -57,4 +57,22 @@ export class SMTPUtils {
             throw new InternalServerErrorException(error);
         }
     }
+
+    /**
+     *
+     * @param config
+     */
+    public static convertSmtpToTransporter(config: ISMTPConfig): IVerifySMTPTransport {
+        /** */
+        const transport: IVerifySMTPTransport = {
+            host: config?.host,
+            port: config?.port,
+            secure: config?.secure,
+            username: config?.auth.user,
+            password: config?.auth.pass,
+            fromAddress: config?.fromAddress
+        };
+        console.log('SMTP config to transporter configuration: %s', transport);
+        return transport;
+    }
 }

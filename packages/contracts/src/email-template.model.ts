@@ -19,7 +19,7 @@ export interface IEmailTemplateFindInput extends IBasePerTenantAndOrganizationEn
 	languageCode?: string;
 }
 
-export enum EmailTemplateNameEnum {
+export enum EmailTemplateEnum {
 	PASSWORD_RESET = 'password',
 	PASSWORD_LESS_AUTHENTICATION = 'password-less-authentication',
 	APPOINTMENT_CONFIRMATION = 'appointment-confirmation',
@@ -44,11 +44,12 @@ export enum EmailTemplateNameEnum {
 	EMAIL_ESTIMATE = 'email-estimate',
 	EMPLOYEE_JOIN = "employee-join",
 	EMAIL_RESET = "email-reset",
-	ORGANIZATION_TEAM_JOIN_REQUEST = 'organization-team-join-request'
+	ORGANIZATION_TEAM_JOIN_REQUEST = 'organization-team-join-request',
+	PAYMENT_RECEIPT = 'payment-receipt'
 }
 
 export interface ICustomizeEmailTemplateFindInput extends IBasePerTenantAndOrganizationEntityModel {
-	name: EmailTemplateNameEnum;
+	name: EmailTemplateEnum;
 	languageCode: LanguagesEnum;
 }
 

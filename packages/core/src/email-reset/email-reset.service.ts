@@ -1,6 +1,5 @@
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import {
-	BadRequestException,
 	HttpStatus,
 	Injectable,
 	NotFoundException
@@ -86,12 +85,11 @@ export class EmailResetService extends TenantAwareCrudService<EmailReset> {
 				})
 			);
 
-			const employee = await this.employeeService.findOneByIdString(
-				user.employeeId,
-				{
-					relations: ['organization']
+			const employee = await this.employeeService.findOneByIdString(user.employeeId, {
+				relations: {
+					organization: true
 				}
-			);
+			});
 
 			const { organization } = employee;
 
@@ -106,7 +104,7 @@ export class EmailResetService extends TenantAwareCrudService<EmailReset> {
 			);
 		}
 		finally {
-		    // we reply "OK" in any case for security reasons
+			// we reply "OK" in any case for security reasons
 			return new Object({
 				status: HttpStatus.OK,
 				message: `OK`
@@ -128,17 +126,17 @@ export class EmailResetService extends TenantAwareCrudService<EmailReset> {
 			);
 
 			if (
-				!record || 
+				!record ||
 				/**
-			 	* Check if other user has already registered with same email
-			 	*/
+				  * Check if other user has already registered with same email
+				  */
 				(await this.userService.checkIfExistsEmail(record.email))
-				) {
+			) {
 				// we reply with OK, but just do not update email for the user if something is wrong
 				return new Object({
-                	status: HttpStatus.OK,
-                	message: `OK`
-            	});
+					status: HttpStatus.OK,
+					message: `OK`
+				});
 			}
 
 			// we only do update if all checks completed above
@@ -150,13 +148,13 @@ export class EmailResetService extends TenantAwareCrudService<EmailReset> {
 					email: record.email
 				}
 			);
-			
+
 		} finally {
-		    // we reply "OK" in any case for security reasons
+			// we reply "OK" in any case for security reasons
 			return new Object({
-                status: HttpStatus.OK,
-                message: `OK`
-            });
+				status: HttpStatus.OK,
+				message: `OK`
+			});
 		}
 	}
 
