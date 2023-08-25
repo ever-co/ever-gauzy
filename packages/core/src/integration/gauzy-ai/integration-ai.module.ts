@@ -5,6 +5,8 @@ import { TenantModule } from './../../tenant/tenant.module';
 import { UserModule } from './../../user/user.module';
 import { GauzyAIIntegrationController } from './integration-ai.controller';
 import { GauzyAIIntegrationService } from './integration-ai.service';
+import { IntegrationModule } from './../integration.module';
+import { IntegrationTenantModule } from './../../integration-tenant/integration-tenant.module';
 
 @Module({
 	imports: [
@@ -13,6 +15,8 @@ import { GauzyAIIntegrationService } from './integration-ai.service';
 		]),
 		TenantModule,
 		UserModule,
+		IntegrationModule,
+		IntegrationTenantModule,
 		CqrsModule
 	],
 	controllers: [GauzyAIIntegrationController],

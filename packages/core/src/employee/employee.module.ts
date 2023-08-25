@@ -31,7 +31,7 @@ import { RoleModule } from './../role/role.module';
 		forwardRef(() => AuthModule),
 		RoleModule,
 		CqrsModule,
-		GauzyAIModule
+		GauzyAIModule.forRoot()
 	],
 	controllers: [EmployeeController],
 	providers: [EmployeeService, ...CommandHandlers],
