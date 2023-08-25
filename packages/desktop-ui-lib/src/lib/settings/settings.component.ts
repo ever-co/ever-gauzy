@@ -375,7 +375,9 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 		serverUrl: null,
 		awPort: null,
 		awHost: null,
-		port: 3000
+		port: 3000,
+		portUi: 4200,
+		host: '0.0.0.0'
 	};
 	version = '0.0.0';
 	message = {
