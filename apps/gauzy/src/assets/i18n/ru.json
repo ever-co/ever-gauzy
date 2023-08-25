@@ -596,6 +596,7 @@
 			"SELECT_EXPENSE": "Выберите расход",
 			"ADD_TITLE": "Добавить заголовок",
 			"ALL_PROJECTS": "Все проекты",
+			"ALL_TEAMS": "Все команды",
 			"UPWORK_API_KEY": "API ключ обновления",
 			"UPWORK_SECRET": "Секрет обхода",
 			"SELECT_COMPANY": "Выберите компанию",
@@ -615,6 +616,7 @@
 			"RECEIPT_TEMPLATE": "Шаблон чека",
 			"INVITATION_EXPIRATION": "Срок приглашения истекает",
 			"ADD_PROJECT": "Добавить проект",
+			"ADD_TEAM": "Добавить команду",
 			"ADD_EMPLOYEE": "Добавить сотрудника",
 			"ADD_ORGANIZATION": "Добавить организацию",
 			"DRAG_DROP_FILE": "Drag and Drop the file here",
@@ -2938,7 +2940,8 @@
 		"SELECT_EMPLOYEE": "Выбрать сотрудника",
 		"SELECT_A_DATE": "Выберите дату",
 		"SELECT_AN_ORGANIZATION": "Выберите организацию",
-		"SELECT_PROJECT": "Выбрать проект"
+		"SELECT_PROJECT": "Выбрать проект",
+		"SELECT_TEAM": "Выберите команду"
 	},
 	"HEADER_TITLE": {
 		"FOR": "для",

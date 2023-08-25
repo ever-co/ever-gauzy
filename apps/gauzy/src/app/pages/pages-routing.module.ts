@@ -38,7 +38,8 @@ const routes: Routes = [
 						),
 						data: {
 							selectors: {
-								project: false
+								project: false,
+								team: false,
 							},
 							datePicker: {
 								unitOfTime: 'month'
@@ -76,6 +77,7 @@ const routes: Routes = [
 						data: {
 							selectors: {
 								project: false,
+								team: false,
 								employee: false
 							},
 							datePicker: {
@@ -105,6 +107,7 @@ const routes: Routes = [
 				data: {
 					selectors: {
 						project: false,
+						team: false,
 						employee: false,
 						date: false,
 						organization: false
@@ -140,6 +143,7 @@ const routes: Routes = [
 						data: {
 							selectors: {
 								project: false,
+								team: false,
 								employee: false,
 								date: false,
 								organization: false
@@ -154,6 +158,7 @@ const routes: Routes = [
 						data: {
 							selectors: {
 								project: false,
+								team: false,
 								employee: false
 							},
 							datePicker: {
@@ -189,6 +194,7 @@ const routes: Routes = [
 						data: {
 							selectors: {
 								project: false,
+								team: false,
 								employee: false,
 								date: false
 							}
@@ -212,7 +218,8 @@ const routes: Routes = [
 						),
 						data: {
 							selectors: {
-								project: false
+								project: false,
+								team: false,
 							}
 						}
 					},
@@ -223,7 +230,8 @@ const routes: Routes = [
 						),
 						data: {
 							selectors: {
-								project: false
+								project: false,
+								team: false,
 							}
 						}
 					},
@@ -234,7 +242,8 @@ const routes: Routes = [
 						),
 						data: {
 							selectors: {
-								project: false
+								project: false,
+								team: false,
 							}
 						}
 					},
@@ -251,7 +260,8 @@ const routes: Routes = [
 						),
 						data: {
 							selectors: {
-								project: false
+								project: false,
+								team: false,
 							}
 						}
 					},
@@ -263,6 +273,7 @@ const routes: Routes = [
 						data: {
 							selectors: {
 								project: false,
+								team: false,
 								employee: false,
 								date: false
 							}
@@ -276,6 +287,7 @@ const routes: Routes = [
 						data: {
 							selectors: {
 								project: false,
+								team: false,
 								employee: false,
 								date: false
 							}
@@ -306,6 +318,7 @@ const routes: Routes = [
 						data: {
 							selectors: {
 								project: false,
+								team: false,
 								employee: false,
 								date: false
 							}
@@ -319,6 +332,7 @@ const routes: Routes = [
 						data: {
 							selectors: {
 								project: false,
+								team: false,
 								employee: true,
 								date: false
 							}
@@ -332,6 +346,7 @@ const routes: Routes = [
 						data: {
 							selectors: {
 								project: false,
+								team: false,
 								employee: false,
 								date: false
 							}
@@ -351,6 +366,7 @@ const routes: Routes = [
 						data: {
 							selectors: {
 								project: false,
+								team: false,
 								employee: false,
 								date: false
 							}
@@ -370,6 +386,7 @@ const routes: Routes = [
 						data: {
 							selectors: {
 								project: false,
+								team: false,
 								employee: false,
 								date: false
 							}
@@ -383,6 +400,7 @@ const routes: Routes = [
 						data: {
 							selectors: {
 								project: false,
+								team: false,
 								employee: false,
 								date: false
 							}
@@ -397,6 +415,7 @@ const routes: Routes = [
 						data: {
 							selectors: {
 								project: false,
+								team: false,
 								employee: false,
 								date: false
 							}
@@ -416,6 +435,7 @@ const routes: Routes = [
 						data: {
 							selectors: {
 								project: false,
+								team: false,
 								employee: false,
 								date: false
 							}
@@ -429,6 +449,7 @@ const routes: Routes = [
 						data: {
 							selectors: {
 								project: false,
+								team: false,
 								employee: false,
 								date: false
 							}
@@ -442,6 +463,7 @@ const routes: Routes = [
 						data: {
 							selectors: {
 								project: false,
+								team: false,
 								employee: true,
 								date: true
 							}
@@ -455,6 +477,7 @@ const routes: Routes = [
 						data: {
 							selectors: {
 								project: false,
+								team: false,
 								employee: true,
 								date: true
 							}
@@ -472,7 +495,8 @@ const routes: Routes = [
 						),
 						data: {
 							selectors: {
-								project: false
+								project: false,
+								team: false,
 							}
 						}
 					},
@@ -484,6 +508,7 @@ const routes: Routes = [
 						data: {
 							selectors: {
 								project: false,
+								team: false,
 								employee: false,
 								date: false,
 								organization: false
@@ -498,6 +523,7 @@ const routes: Routes = [
 						data: {
 							selectors: {
 								project: false,
+								team: false,
 								employee: false,
 								date: false
 							}
@@ -521,6 +547,7 @@ const routes: Routes = [
 						data: {
 							selectors: {
 								project: false,
+								team: false,
 								employee: false,
 								date: false,
 								organization: true
@@ -559,6 +586,7 @@ const routes: Routes = [
 						data: {
 							selectors: {
 								project: false,
+								team: false,
 								employee: false,
 								date: false,
 								organization: false
@@ -660,6 +688,7 @@ const routes: Routes = [
 					},
 					selectors: {
 						project: false,
+						team: false,
 						employee: false,
 						organization: false,
 						date: false
@@ -680,6 +709,7 @@ const routes: Routes = [
 				data: {
 					selectors: {
 						project: false,
+						team: false,
 						employee: false,
 						date: false
 					}

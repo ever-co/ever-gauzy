@@ -29,6 +29,7 @@ import {
 	OrganizationProjectsService,
 	OrganizationProjectStore,
 	OrganizationsService,
+	OrganizationTeamsService,
 	Store,
 	UsersOrganizationsService
 } from '../../../@core/services';
@@ -36,6 +37,7 @@ import { DEFAULT_SELECTOR_VISIBILITY, ISelectorVisibility, SelectorBuilderServic
 import { LayoutService } from '../../../@core/utils';
 import { TranslationBaseComponent } from '../../../@shared/language-base';
 import { ChangeDetectorRef } from '@angular/core';
+import { OrganizationTeamStore } from '../../../@core/services/organization-team-store.service';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -54,6 +56,7 @@ export class HeaderComponent extends TranslationBaseComponent implements OnInit,
 	showEmployeesSelector: boolean;
 	showOrganizationsSelector: boolean;
 	showProjectsSelector: boolean;
+	showTeamsSelector: boolean;
 
 	showDateSelector = true;
 	theme: string;
@@ -86,10 +89,12 @@ export class HeaderComponent extends TranslationBaseComponent implements OnInit,
 		private readonly organizationsService: OrganizationsService,
 		private readonly employeesService: EmployeesService,
 		private readonly organizationProjectsService: OrganizationProjectsService,
+		private readonly organizationTeamsService: OrganizationTeamsService,
 		public readonly navigationBuilderService: NavigationBuilderService,
 		private readonly dateRangeService: DateRangePickerBuilderService,
 		private readonly organizationEditStore: OrganizationEditStore,
 		private readonly organizationProjectStore: OrganizationProjectStore,
+		private readonly organizationTeamStore: OrganizationTeamStore,
 		private readonly employeeStore: EmployeeStore,
 		private readonly selectorBuilderService: SelectorBuilderService,
 		private readonly cd: ChangeDetectorRef,
@@ -104,6 +109,7 @@ export class HeaderComponent extends TranslationBaseComponent implements OnInit,
 				debounceTime(1300),
 				tap(() => this.checkEmployeeSelectorVisibility()),
 				tap(() => this.checkProjectSelectorVisibility()),
+				tap(() => this.checkTeamSelectorVisibility()),
 				tap(() => this._loadContextMenus()),
 				untilDestroyed(this)
 			)
@@ -222,6 +228,33 @@ export class HeaderComponent extends TranslationBaseComponent implements OnInit,
 	}
 
 	/**
+	 * Check Team selector visibility
+	 *
+	 * @returns
+	 */
+	checkTeamSelectorVisibility() {
+		// hidden team selector if not activate for current page
+		if (
+			!this.organization ||
+			!this.selectorsVisibility.team ||
+			!this.store.hasAnyPermission(PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.ORG_TEAM_VIEW)
+		) {
+			return;
+		}
+		const { id: organizationId } = this.organization;
+		const { tenantId } = this.store.user;
+
+		this.organizationTeamsService
+			.getCount({
+				organizationId,
+				tenantId
+			})
+			.then((count) => {
+				this.showTeamsSelector = count > 0;
+			});
+	}
+
+	/**
 	 * Check employee selector visibility
 	 *
 	 * @returns
@@ -305,6 +338,23 @@ export class HeaderComponent extends TranslationBaseComponent implements OnInit,
 						break;
 				}
 			});
+
+		this.organizationTeamStore.organizationTeamAction$
+			.pipe(
+				filter(({ action, team }) => !!action && !!team),
+				tap(() => this.organizationTeamStore.destroy()),
+				untilDestroyed(this)
+			)
+			.subscribe(({ action }) => {
+				switch (action) {
+					case CrudActionEnum.CREATED:
+					case CrudActionEnum.UPDATED:
+					case CrudActionEnum.DELETED:
+						this.checkTeamSelectorVisibility();
+						break;
+				}
+			});
+
 		this.organizationProjectStore.organizationProjectAction$
 			.pipe(
 				filter(({ action, project }) => !!action && !!project),
