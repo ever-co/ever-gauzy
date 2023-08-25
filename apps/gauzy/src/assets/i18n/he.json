@@ -149,7 +149,8 @@
 		"LOGOUT": "התנתקות",
 		"COPY": "העתקה",
 		"CUT": "גזירה",
-		"PASTE": "הדבקה"
+		"PASTE": "הדבקה",
+		"FORWARD_PORTS": "העברת פורטים"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {

@@ -149,7 +149,8 @@
 		"LOGOUT": "Déconnexion",
 		"COPY": "Copier",
 		"CUT": "Couper",
-		"PASTE": "Coller"
+		"PASTE": "Coller",
+		"FORWARD_PORTS": "Transférer les ports"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {

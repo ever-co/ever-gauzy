@@ -150,7 +150,8 @@
 		"LOGOUT": "Logout",
 		"COPY": "Copy",
 		"CUT": "Cut",
-		"PASTE": "Paste"
+		"PASTE": "Paste",
+		"FORWARD_PORTS": "Forward Ports"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {

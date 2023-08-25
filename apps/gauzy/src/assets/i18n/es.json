@@ -149,7 +149,8 @@
 		"LOGOUT": "Cerrar Sesión",
 		"COPY": "Copiar",
 		"CUT": "Cortar",
-		"PASTE": "Pegar"
+		"PASTE": "Pegar",
+		"FORWARD_PORTS": "Reenviar puertos"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {
