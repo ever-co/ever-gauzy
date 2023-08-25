@@ -8,7 +8,7 @@ import {
 	User,
 } from '../core/entities/internal';
 
-@Entity('email_history')
+@Entity('email_sent')
 export class EmailHistory extends TenantOrganizationBaseEntity implements IEmailHistory {
 
 	@ApiPropertyOptional({ type: () => String })
