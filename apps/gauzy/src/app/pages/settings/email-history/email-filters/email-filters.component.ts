@@ -1,6 +1,6 @@
 import { Component, OnInit, OnDestroy, Input } from '@angular/core';
 import { NbDialogRef } from '@nebular/theme';
-import { IEmailTemplate, IEmail, IOrganization, LanguagesEnum } from '@gauzy/contracts';
+import { IEmailTemplate, IEmailHistory, IOrganization, LanguagesEnum } from '@gauzy/contracts';
 import { filter, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { distinctUntilChange } from '@gauzy/common-angular';
@@ -23,12 +23,12 @@ export class EmailFiltersComponent implements OnInit, OnDestroy {
 		private readonly emailTemplateService: EmailTemplateService,
 		private readonly dialogRef: NbDialogRef<EmailFiltersComponent>,
 		private readonly emailService: EmailService
-	) {}
+	) { }
 
 	public organization: IOrganization;
 	selectedTemplateId: string;
 	emailTo: string;
-	emails?: IEmail;
+	emails?: IEmailHistory;
 	to: Object[] = [];
 	emailTemplates: IEmailTemplate[] = [];
 
@@ -83,7 +83,7 @@ export class EmailFiltersComponent implements OnInit, OnDestroy {
 		});
 	}
 
-	cancel(emails: IEmail[] = []) {
+	cancel(emails: IEmailHistory[] = []) {
 		this.dialogRef.close(emails);
 	}
 
@@ -124,5 +124,5 @@ export class EmailFiltersComponent implements OnInit, OnDestroy {
 		});
 	}
 
-	ngOnDestroy() {}
+	ngOnDestroy() { }
 }

@@ -1,7 +1,7 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Column, Entity, Index, ManyToOne, RelationId } from 'typeorm';
 import { IsBoolean, IsOptional, IsUUID } from 'class-validator';
-import { IEmail, IEmailTemplate, IUser } from '@gauzy/contracts';
+import { IEmailHistory, IEmailTemplate, IUser } from '@gauzy/contracts';
 import {
 	EmailTemplate,
 	TenantOrganizationBaseEntity,
@@ -9,7 +9,7 @@ import {
 } from '../core/entities/internal';
 
 @Entity('email_sent')
-export class Email extends TenantOrganizationBaseEntity implements IEmail {
+export class EmailHistory extends TenantOrganizationBaseEntity implements IEmailHistory {
 
 	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()
@@ -43,7 +43,7 @@ export class Email extends TenantOrganizationBaseEntity implements IEmail {
 	 * User
 	 */
 	@ApiProperty({ type: () => User })
-	@ManyToOne(() => User, (user) => user.emails, {
+	@ManyToOne(() => User, {
 		onDelete: 'CASCADE',
 	})
 	user?: IUser;
@@ -51,7 +51,7 @@ export class Email extends TenantOrganizationBaseEntity implements IEmail {
 	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()
 	@IsUUID()
-	@RelationId((it: Email) => it.user)
+	@RelationId((it: EmailHistory) => it.user)
 	@Index()
 	@Column({ nullable: true })
 	userId?: IUser['id'];
@@ -65,7 +65,7 @@ export class Email extends TenantOrganizationBaseEntity implements IEmail {
 
 	@ApiProperty({ type: () => String })
 	@IsUUID()
-	@RelationId((it: Email) => it.emailTemplate)
+	@RelationId((it: EmailHistory) => it.emailTemplate)
 	@Index()
 	@Column()
 	emailTemplateId: IEmailTemplate['id'];

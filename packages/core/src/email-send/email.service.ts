@@ -10,7 +10,7 @@ import {
 	LanguagesEnum,
 	IJoinEmployeeModel,
 	ITimesheet,
-	IEmail,
+	IEmailHistory,
 	IUser,
 	IInvite,
 	IInviteTeamMemberModel,
@@ -22,7 +22,7 @@ import { environment as env } from '@gauzy/config';
 import { deepMerge, IAppIntegrationConfig } from '@gauzy/common';
 import { RequestContext } from '../core/context';
 import { EmailSendService } from './../email-send/email-send.service';
-import { EmailTemplate, Organization, Email as EmailEntity } from './../core/entities/internal';
+import { EmailTemplate, Organization, EmailHistory } from './../core/entities/internal';
 
 const DISALLOW_EMAIL_SERVER_DOMAIN: string[] = ['@example.com'];
 
@@ -30,8 +30,8 @@ const DISALLOW_EMAIL_SERVER_DOMAIN: string[] = ['@example.com'];
 export class EmailService {
 
 	constructor(
-		@InjectRepository(EmailEntity)
-		private readonly emailRepository: Repository<EmailEntity>,
+		@InjectRepository(EmailHistory)
+		private readonly emailHistoryRepository: Repository<EmailHistory>,
 
 		@InjectRepository(EmailTemplate)
 		private readonly emailTemplateRepository: Repository<EmailTemplate>,
@@ -942,8 +942,8 @@ export class EmailService {
 		message: any;
 		organization?: IOrganization;
 		user?: IUser;
-	}): Promise<IEmail> {
-		const emailEntity = new EmailEntity();
+	}): Promise<IEmailHistory> {
+		const emailEntity = new EmailHistory();
 		const {
 			templateName: template,
 			email,
@@ -966,7 +966,7 @@ export class EmailService {
 		if (user) {
 			emailEntity.user = user;
 		}
-		return await this.emailRepository.save(emailEntity);
+		return await this.emailHistoryRepository.save(emailEntity);
 	}
 
 	// tested e-mail send functionality

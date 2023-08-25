@@ -21,29 +21,29 @@ import {
 	ApiNotFoundResponse
 } from '@nestjs/swagger';
 import { UpdateResult } from 'typeorm';
-import { IEmail, IPagination, PermissionsEnum } from '@gauzy/contracts';
-import { Email } from './email.entity';
+import { IEmailHistory, IPagination, PermissionsEnum } from '@gauzy/contracts';
+import { EmailHistory } from './email-history.entity';
 import { EmailHistoryService } from './email-history.service';
 import { Permissions } from './../shared/decorators';
 import { UUIDValidationPipe } from './../shared/pipes';
 import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
-import { UpdateEmailDTO } from './dto';
+import { UpdateEmailHistoryDTO } from './dto';
 import { PaginationParams } from './../core/crud';
 
 @ApiTags('Email')
 @UseGuards(TenantPermissionGuard, PermissionGuard)
 @Permissions(PermissionsEnum.VIEW_ALL_EMAILS)
 @Controller()
-export class EmailController {
+export class EmailHistoryController {
 	constructor(
 		private readonly _emailHistoryService: EmailHistoryService
 	) { }
 
-	@ApiOperation({ summary: 'Find all emails under specific tenant.' })
+	@ApiOperation({ summary: 'Find all sent emails under specific tenant.' })
 	@ApiOkResponse({
 		status: HttpStatus.OK,
 		description: 'Found emails',
-		type: Email
+		type: EmailHistory
 	})
 	@ApiNotFoundResponse({
 		status: HttpStatus.NOT_FOUND,
@@ -56,8 +56,8 @@ export class EmailController {
 	@Get()
 	@UsePipes(new ValidationPipe())
 	async findAll(
-		@Query() params: PaginationParams<Email>
-	): Promise<IPagination<IEmail>> {
+		@Query() params: PaginationParams<EmailHistory>
+	): Promise<IPagination<IEmailHistory>> {
 		try {
 			return await this._emailHistoryService.findAll(params);
 		} catch (error) {
@@ -83,9 +83,9 @@ export class EmailController {
 	@Put(':id')
 	@UsePipes(new ValidationPipe({ whitelist: true }))
 	async update(
-		@Param('id', UUIDValidationPipe) id: IEmail['id'],
-		@Body() entity: UpdateEmailDTO
-	): Promise<IEmail | UpdateResult> {
+		@Param('id', UUIDValidationPipe) id: IEmailHistory['id'],
+		@Body() entity: UpdateEmailHistoryDTO
+	): Promise<IEmailHistory | UpdateResult> {
 		try {
 			return await this._emailHistoryService.update(id, entity);
 		} catch (error) {

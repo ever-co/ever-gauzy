@@ -3,7 +3,7 @@ import { ApiPropertyOptional } from '@nestjs/swagger';
 import { IsBoolean, IsOptional } from 'class-validator';
 import { TenantOrganizationBaseDTO } from './../../core/dto';
 
-export class UpdateEmailDTO extends TenantOrganizationBaseDTO implements IEmailUpdateInput {
+export class UpdateEmailHistoryDTO extends TenantOrganizationBaseDTO implements IEmailUpdateInput {
 
     @ApiPropertyOptional({ type: () => Boolean })
     @IsOptional()

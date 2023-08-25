@@ -5,7 +5,7 @@ import {
 } from './email-template.model';
 import { IRelationalUser } from './user.model';
 
-export interface IEmail extends IBasePerTenantAndOrganizationEntityModel, IRelationalUser, IRelationalEmailTemplate {
+export interface IEmailHistory extends IBasePerTenantAndOrganizationEntityModel, IRelationalUser, IRelationalEmailTemplate {
 	name: string;
 	content: string;
 	email: string;

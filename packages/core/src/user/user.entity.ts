@@ -12,7 +12,6 @@ import {
 	IInvite,
 	IOrganizationTeam,
 	ICandidate,
-	IEmail,
 	IImageAsset,
 } from '@gauzy/contracts';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
@@ -32,7 +31,6 @@ import {
 } from 'typeorm';
 import {
 	Candidate,
-	Email,
 	Employee,
 	ImageAsset,
 	Invite,
@@ -235,12 +233,6 @@ export class User extends TenantBaseEntity implements IUser {
 	 */
 	@OneToMany(() => Invite, (it) => it.user)
 	invites?: IInvite[];
-
-	/**
-	 * User belongs to emails
-	 */
-	@OneToMany(() => Email, (it) => it.user)
-	emails?: IEmail[];
 
 	/**
 	 * User belongs to teams

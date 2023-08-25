@@ -1,16 +1,16 @@
 import { Injectable } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { FindManyOptions, Repository } from "typeorm";
-import { IEmail, IPagination } from "@gauzy/contracts";
+import { IEmailHistory, IPagination } from "@gauzy/contracts";
 import { TenantAwareCrudService } from "./../core/crud";
-import { Email } from "./email.entity";
+import { EmailHistory } from "./email-history.entity";
 
 @Injectable()
-export class EmailHistoryService extends TenantAwareCrudService<Email> {
+export class EmailHistoryService extends TenantAwareCrudService<EmailHistory> {
 
     constructor(
-        @InjectRepository(Email)
-        protected readonly emailRepository: Repository<Email>,
+        @InjectRepository(EmailHistory)
+        protected readonly emailRepository: Repository<EmailHistory>,
     ) {
         super(emailRepository);
     }
@@ -20,7 +20,7 @@ export class EmailHistoryService extends TenantAwareCrudService<Email> {
      * @param filter
      * @returns
      */
-    public async findAll(filter?: FindManyOptions<Email>): Promise<IPagination<IEmail>> {
+    public async findAll(filter?: FindManyOptions<EmailHistory>): Promise<IPagination<IEmailHistory>> {
         return await super.findAll({
             select: {
                 user: {

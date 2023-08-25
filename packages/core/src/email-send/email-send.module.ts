@@ -4,7 +4,7 @@ import { CustomSmtpModule } from './../custom-smtp/custom-smtp.module';
 import { EmailTemplateModule } from './../email-template/email-template.module';
 import { EmailTemplateRenderService } from './email-template-render.service';
 import { EmailService } from './email.service';
-import { EmailModule } from './../email/email.module';
+import { EmailHistoryModule } from './../email-history/email-history.module';
 import { OrganizationModule } from './../organization/organization.module';
 
 @Module({
@@ -12,7 +12,7 @@ import { OrganizationModule } from './../organization/organization.module';
         forwardRef(() => CustomSmtpModule),
         forwardRef(() => EmailTemplateModule),
         forwardRef(() => OrganizationModule),
-        forwardRef(() => EmailModule),
+        forwardRef(() => EmailHistoryModule),
     ],
     providers: [EmailService, EmailSendService, EmailTemplateRenderService],
     exports: [EmailService], // Export the service to be accessible by other modules
