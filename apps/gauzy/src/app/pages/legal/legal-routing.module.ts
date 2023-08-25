@@ -10,7 +10,8 @@ const selectors: ISelectorVisibility = {
 	organization: false,
 	date: false,
 	employee: false,
-	project: false
+	project: false,
+	team: false
 };
 
 export const routes: Routes = [
@@ -39,4 +40,4 @@ export const routes: Routes = [
 	imports: [RouterModule.forChild(routes)],
 	exports: [RouterModule]
 })
-export class PageLegalRoutingModule {}
+export class PageLegalRoutingModule { }

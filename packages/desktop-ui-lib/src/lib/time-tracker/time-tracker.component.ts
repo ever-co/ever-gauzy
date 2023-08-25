@@ -50,7 +50,8 @@ import {
 	Store,
 	ErrorHandlerService,
 	NativeNotificationService,
-	ToastrNotificationService
+	ToastrNotificationService,
+	TimeTrackerDateManager
 } from '../services';
 import { TimeTrackerStatusService } from './time-tracker-status/time-tracker-status.service';
 import { IRemoteTimer } from './time-tracker-status/interfaces';
@@ -390,6 +391,15 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 						...this.inQueue,
 						inProgress
 					})
+				),
+				untilDestroyed(this)
+			)
+			.subscribe();
+		this.userOrganization$
+			.pipe(
+				tap(
+					(organization: IOrganization) =>
+						(TimeTrackerDateManager.organization = organization)
 				),
 				untilDestroyed(this)
 			)

@@ -21,45 +21,45 @@ import {
 	ApiNotFoundResponse
 } from '@nestjs/swagger';
 import { UpdateResult } from 'typeorm';
-import { IEmail, IPagination, PermissionsEnum } from '@gauzy/contracts';
-import { Email } from './email.entity';
-import { EmailService } from './email.service';
+import { IEmailHistory, IPagination, PermissionsEnum } from '@gauzy/contracts';
+import { EmailHistory } from './email-history.entity';
+import { EmailHistoryService } from './email-history.service';
 import { Permissions } from './../shared/decorators';
 import { UUIDValidationPipe } from './../shared/pipes';
 import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
-import { UpdateEmailDTO } from './dto';
+import { UpdateEmailHistoryDTO } from './dto';
 import { PaginationParams } from './../core/crud';
 
 @ApiTags('Email')
 @UseGuards(TenantPermissionGuard, PermissionGuard)
 @Permissions(PermissionsEnum.VIEW_ALL_EMAILS)
 @Controller()
-export class EmailController {
+export class EmailHistoryController {
 	constructor(
-		private readonly emailService: EmailService
-	) {}
+		private readonly _emailHistoryService: EmailHistoryService
+	) { }
 
-	@ApiOperation({ summary: 'Find all emails under specific tenant.' })
+	@ApiOperation({ summary: 'Find all sent emails under specific tenant.' })
 	@ApiOkResponse({
 		status: HttpStatus.OK,
 		description: 'Found emails',
-		type: Email
+		type: EmailHistory
 	})
 	@ApiNotFoundResponse({
 		status: HttpStatus.NOT_FOUND,
 		description: 'No records found'
 	})
 	@ApiInternalServerErrorResponse({
-		status : HttpStatus.INTERNAL_SERVER_ERROR,
+		status: HttpStatus.INTERNAL_SERVER_ERROR,
 		description: "Invalid input, The response body may contain clues as to what went wrong"
 	})
 	@Get()
 	@UsePipes(new ValidationPipe())
 	async findAll(
-		@Query() params: PaginationParams<Email>
-	): Promise<IPagination<IEmail>> {
+		@Query() params: PaginationParams<EmailHistory>
+	): Promise<IPagination<IEmailHistory>> {
 		try {
-			return await this.emailService.findAll(params);
+			return await this._emailHistoryService.findAll(params);
 		} catch (error) {
 			throw new BadRequestException(error);
 		}
@@ -81,11 +81,15 @@ export class EmailController {
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
 	@Put(':id')
-	@UsePipes(new ValidationPipe({ transform: true, whitelist: true }))
+	@UsePipes(new ValidationPipe({ whitelist: true }))
 	async update(
-		@Param('id', UUIDValidationPipe) id: string,
-		@Body() entity: UpdateEmailDTO
-	): Promise<IEmail | UpdateResult> {
-		return await this.emailService.update(id, entity);
+		@Param('id', UUIDValidationPipe) id: IEmailHistory['id'],
+		@Body() entity: UpdateEmailHistoryDTO
+	): Promise<IEmailHistory | UpdateResult> {
+		try {
+			return await this._emailHistoryService.update(id, entity);
+		} catch (error) {
+			throw new BadRequestException(error);
+		}
 	}
 }

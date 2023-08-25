@@ -2,7 +2,7 @@ import { Module } from '@nestjs/common';
 import { CqrsModule } from '@nestjs/cqrs';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { RouterModule } from 'nest-router';
-import { EmailModule } from './../email/email.module';
+import { EmailSendModule } from './../email-send/email-send.module';
 import { TenantModule } from '../tenant/tenant.module';
 import { UserModule } from './../user/user.module';
 import { OrganizationTeamModule } from './../organization-team/organization-team.module';
@@ -30,7 +30,7 @@ import { RoleModule } from 'role/role.module';
 		TenantModule,
 		UserModule,
 		OrganizationTeamModule,
-		EmailModule,
+		EmailSendModule,
 		InviteModule,
 		RoleModule,
 	],
@@ -38,4 +38,4 @@ import { RoleModule } from 'role/role.module';
 	providers: [OrganizationTeamJoinRequestService, ...CommandHandlers],
 	exports: [TypeOrmModule, OrganizationTeamJoinRequestService],
 })
-export class OrganizationTeamJoinRequestModule {}
+export class OrganizationTeamJoinRequestModule { }

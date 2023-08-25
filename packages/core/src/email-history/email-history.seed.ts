@@ -1,7 +1,7 @@
 import { DataSource, ILike, Not } from 'typeorm';
-import { Email } from './email.entity';
 import { faker } from '@faker-js/faker';
-import { IEmail, IEmailTemplate, IOrganization, ITenant, IUser } from '@gauzy/contracts';
+import { EmailHistory } from './email-history.entity';
+import { IEmailHistory, IEmailTemplate, IOrganization, ITenant, IUser } from '@gauzy/contracts';
 import { EmailTemplate, User } from './../core/entities/internal';
 
 export const createDefaultEmailSent = async (
@@ -15,7 +15,7 @@ export const createDefaultEmailSent = async (
 	});
 	const users: IUser[] = await dataSource.getRepository(User).find();
 
-	let sentEmails: IEmail[] = [];
+	let sentEmails: IEmailHistory[] = [];
 	sentEmails = await dataOperation(
 		dataSource,
 		sentEmails,
@@ -38,7 +38,7 @@ export const createRandomEmailSent = async (
 		name: Not(ILike(`%subject%`))
 	});
 
-	let sentEmails: IEmail[] = [];
+	let sentEmails: IEmailHistory[] = [];
 	for (const tenant of tenants) {
 		const { id: tenantId } = tenant;
 		const users = await dataSource.manager.findBy(User, {
@@ -62,7 +62,7 @@ export const createRandomEmailSent = async (
 
 const dataOperation = async (
 	dataSource: DataSource,
-	sentEmails: IEmail[],
+	sentEmails: IEmailHistory[],
 	noOfEmailsPerOrganization,
 	organization: IOrganization,
 	emailTemplates,
@@ -70,7 +70,7 @@ const dataOperation = async (
 	users: IUser[]
 ) => {
 	for (let i = 0; i < noOfEmailsPerOrganization; i++) {
-		const sentEmail = new Email();
+		const sentEmail = new EmailHistory();
 		sentEmail.organization = organization;
 		sentEmail.email = faker.internet.exampleEmail();
 		sentEmail.emailTemplate = faker.helpers.arrayElement(emailTemplates);

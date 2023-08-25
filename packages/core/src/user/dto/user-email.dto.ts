@@ -8,7 +8,7 @@ import { IUserEmailInput } from "@gauzy/contracts";
  */
 export class UserEmailDTO implements IUserEmailInput {
 
-    @ApiProperty({ type: () => String, required: true })
+    @ApiProperty({ type: () => String })
     @IsNotEmpty()
     @IsEmail()
     @Transform((params: TransformFnParams) => params.value ? params.value.trim() : null)

@@ -26,7 +26,7 @@ import {
     CandidateTechnologies,
     Contact,
     Deal,
-    Email,
+    EmailHistory,
     Employee,
     EmployeeAppointment,
     EmployeeAward,
@@ -158,8 +158,8 @@ export class FactoryResetService {
         @InjectRepository(Deal)
         private readonly dealRepository: Repository<Deal>,
 
-        @InjectRepository(Email)
-        private readonly emailRepository: Repository<Email>,
+        @InjectRepository(EmailHistory)
+        private readonly emailHistoryRepository: Repository<EmailHistory>,
 
         @InjectRepository(Employee)
         private readonly employeeRepository: Repository<Employee>,
@@ -518,7 +518,7 @@ export class FactoryResetService {
             this.goalRepository,
             this.goalTemplateRepository,
             this.goalTimeFrameRepository,
-            this.emailRepository,
+            this.emailHistoryRepository,
             this.timeLogRepository,
             this.timeOffPolicyRepository,
             this.timeOffRequestRepository,

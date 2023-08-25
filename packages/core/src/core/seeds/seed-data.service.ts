@@ -149,7 +149,7 @@ import {
 import {
 	createDefaultEmailSent,
 	createRandomEmailSent,
-} from '../../email/email.seed';
+} from '../../email-history/email-history.seed';
 import {
 	createDefaultEmployeeInviteSent,
 	createRandomEmployeeInviteSent,

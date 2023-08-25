@@ -6,13 +6,15 @@ export interface ISelectorVisibility {
 	readonly date: boolean;
 	readonly project: boolean;
 	readonly employee: boolean;
+	readonly team: boolean;
 }
 
 export const DEFAULT_SELECTOR_VISIBILITY: ISelectorVisibility = {
 	organization: true,
 	date: true,
 	employee: true,
-	project: true
+	project: true,
+	team: true
 };
 
 @Injectable({
@@ -25,7 +27,7 @@ export class SelectorBuilderService {
 	);
 	public selectors$: Observable<ISelectorVisibility> = this._selectors$.asObservable();
 
-	constructor() {}
+	constructor() { }
 
 	setSelectorsVisibility(id: string, value: boolean): void {
 		this.selectorsMapper.set(id, value);

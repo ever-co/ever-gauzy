@@ -1,6 +1,7 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Column, Entity, Index, ManyToOne, RelationId } from 'typeorm';
-import { IEmail, IEmailTemplate, IUser } from '@gauzy/contracts';
+import { IsBoolean, IsOptional, IsUUID } from 'class-validator';
+import { IEmailHistory, IEmailTemplate, IUser } from '@gauzy/contracts';
 import {
 	EmailTemplate,
 	TenantOrganizationBaseEntity,
@@ -8,13 +9,16 @@ import {
 } from '../core/entities/internal';
 
 @Entity('email_sent')
-export class Email extends TenantOrganizationBaseEntity implements IEmail {
-	@ApiProperty({ type: () => String })
+export class EmailHistory extends TenantOrganizationBaseEntity implements IEmailHistory {
+
+	@ApiPropertyOptional({ type: () => String })
+	@IsOptional()
 	@Index()
 	@Column({ nullable: true })
 	name: string;
 
-	@ApiProperty({ type: () => String })
+	@ApiPropertyOptional({ type: () => String })
+	@IsOptional()
 	@Column({ nullable: true })
 	content: string;
 
@@ -24,26 +28,30 @@ export class Email extends TenantOrganizationBaseEntity implements IEmail {
 	email: string;
 
 	@ApiPropertyOptional({ type: () => Boolean, default: false })
+	@IsOptional()
+	@IsBoolean()
 	@Column({ type: Boolean, nullable: true, default: false })
 	isArchived?: boolean;
 
 	/*
-    |--------------------------------------------------------------------------
-    | @ManyToOne
-    |--------------------------------------------------------------------------
-    */
+	|--------------------------------------------------------------------------
+	| @ManyToOne
+	|--------------------------------------------------------------------------
+	*/
 
 	/**
 	 * User
 	 */
 	@ApiProperty({ type: () => User })
-	@ManyToOne(() => User, (user) => user.emails, {
+	@ManyToOne(() => User, {
 		onDelete: 'CASCADE',
 	})
 	user?: IUser;
 
-	@ApiProperty({ type: () => String })
-	@RelationId((it: Email) => it.user)
+	@ApiPropertyOptional({ type: () => String })
+	@IsOptional()
+	@IsUUID()
+	@RelationId((it: EmailHistory) => it.user)
 	@Index()
 	@Column({ nullable: true })
 	userId?: IUser['id'];
@@ -52,11 +60,13 @@ export class Email extends TenantOrganizationBaseEntity implements IEmail {
 	 * Email Template
 	 */
 	@ApiProperty({ type: () => EmailTemplate })
-	@ManyToOne(() => EmailTemplate, (template) => template.emails)
+	@ManyToOne(() => EmailTemplate)
 	emailTemplate: IEmailTemplate;
 
-	@ApiPropertyOptional({ type: () => String })
-	@RelationId((it: Email) => it.emailTemplate)
+	@ApiProperty({ type: () => String })
+	@IsUUID()
+	@RelationId((it: EmailHistory) => it.emailTemplate)
+	@Index()
 	@Column()
 	emailTemplateId: IEmailTemplate['id'];
 }
