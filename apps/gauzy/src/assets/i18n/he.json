@@ -3674,7 +3674,8 @@
 			"DB_NAME": "שם מסד נתונים",
 			"DB_PORT": "פורט מסד נתונים",
 			"USER": "משתמש",
-			"PASSWORD": "סיסמה"
+			"PASSWORD": "סיסמה",
+			"UI_HOSTNAME": "שם מארח יישום ממשק משתמש / כתובת IP"
 		},
 		"SETTINGS": {
 			"SCREEN_CAPTURE": "לכידת מסך",
