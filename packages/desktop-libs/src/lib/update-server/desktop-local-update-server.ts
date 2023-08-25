@@ -1,14 +1,14 @@
 import { LOCAL_SERVER_UPDATE_CONFIG } from '../config';
 import { ILocalUpdateServer } from '../interfaces';
-import { StaticServer } from './static-server';
+import { UpdateStaticServer } from '../server';
 
 export class DesktopLocalUpdateServer implements ILocalUpdateServer {
 	private _port: number;
-	private _server: StaticServer;
+	private _server: UpdateStaticServer;
 
 	constructor() {
 		this._port = LOCAL_SERVER_UPDATE_CONFIG.PORT;
-		this._server = StaticServer.instance;
+		this._server = UpdateStaticServer.instance;
 	}
 
 	public start(): void {
@@ -38,8 +38,8 @@ export class DesktopLocalUpdateServer implements ILocalUpdateServer {
 	}
 
 	public restart() {
-		StaticServer.instance.kill();
-		this._server = StaticServer.instance;
+		UpdateStaticServer.instance.kill();
+		this._server = UpdateStaticServer.instance;
 		this.start();
 	}
 }
