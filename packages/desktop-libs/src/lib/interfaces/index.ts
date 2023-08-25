@@ -32,3 +32,8 @@ export * from './i-timer-service';
 export * from './i-client-server-provider';
 export * from './i-server-less-provider';
 export * from './i-sequence';
+export * from './i-local-server';
+export * from './i-proxy-server';
+export * from './i-read-write-file';
+export * from './i-proxy-config';
+export * from './i-path-window';
