@@ -23,7 +23,7 @@ import {
 import { UpdateResult } from 'typeorm';
 import { IEmail, IPagination, PermissionsEnum } from '@gauzy/contracts';
 import { Email } from './email.entity';
-import { EmailService } from './email.service';
+import { EmailHistoryService } from './email-history.service';
 import { Permissions } from './../shared/decorators';
 import { UUIDValidationPipe } from './../shared/pipes';
 import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
@@ -36,8 +36,8 @@ import { PaginationParams } from './../core/crud';
 @Controller()
 export class EmailController {
 	constructor(
-		private readonly emailService: EmailService
-	) {}
+		private readonly _emailHistoryService: EmailHistoryService
+	) { }
 
 	@ApiOperation({ summary: 'Find all emails under specific tenant.' })
 	@ApiOkResponse({
@@ -50,7 +50,7 @@ export class EmailController {
 		description: 'No records found'
 	})
 	@ApiInternalServerErrorResponse({
-		status : HttpStatus.INTERNAL_SERVER_ERROR,
+		status: HttpStatus.INTERNAL_SERVER_ERROR,
 		description: "Invalid input, The response body may contain clues as to what went wrong"
 	})
 	@Get()
@@ -59,7 +59,7 @@ export class EmailController {
 		@Query() params: PaginationParams<Email>
 	): Promise<IPagination<IEmail>> {
 		try {
-			return await this.emailService.findAll(params);
+			return await this._emailHistoryService.findAll(params);
 		} catch (error) {
 			throw new BadRequestException(error);
 		}
@@ -81,11 +81,15 @@ export class EmailController {
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
 	@Put(':id')
-	@UsePipes(new ValidationPipe({ transform: true, whitelist: true }))
+	@UsePipes(new ValidationPipe({ whitelist: true }))
 	async update(
-		@Param('id', UUIDValidationPipe) id: string,
+		@Param('id', UUIDValidationPipe) id: IEmail['id'],
 		@Body() entity: UpdateEmailDTO
 	): Promise<IEmail | UpdateResult> {
-		return await this.emailService.update(id, entity);
+		try {
+			return await this._emailHistoryService.update(id, entity);
+		} catch (error) {
+			throw new BadRequestException(error);
+		}
 	}
 }

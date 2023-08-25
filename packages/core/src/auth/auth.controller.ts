@@ -146,7 +146,7 @@ export class AuthController {
 	@Post('/send-code')
 	@Public()
 	@UsePipes(new ValidationPipe({ transform: true }))
-	async sendInviteCode(
+	async sendAuthCode(
 		@Body() entity: SendAuthCodeDTO
 	): Promise<any> {
 		return await this.commandBus.execute(

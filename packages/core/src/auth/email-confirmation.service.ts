@@ -6,7 +6,7 @@ import { FeatureEnum, IBasePerTenantEntityModel, IUser, IUserCodeInput, IUserEma
 import { JwtPayload, sign, verify } from 'jsonwebtoken';
 import * as bcrypt from 'bcrypt';
 import * as moment from 'moment';
-import { EmailService } from './../email/email.service';
+import { EmailService } from './../email-send/email.service';
 import { UserService } from './../user/user.service';
 import { FeatureService } from './../feature/feature.service';
 import { RequestContext } from './../core/context';

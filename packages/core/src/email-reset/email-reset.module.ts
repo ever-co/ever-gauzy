@@ -8,7 +8,7 @@ import { EmailResetService } from './email-reset.service';
 import { EmailResetController } from './email-reset.controller';
 import { UserModule } from '../user/user.module';
 import { TenantModule } from '../tenant/tenant.module';
-import { EmailModule } from './../email/email.module';
+import { EmailSendModule } from './../email-send/email-send.module';
 import { EmployeeModule } from './../employee/employee.module';
 import { AuthModule } from './../auth/auth.module';
 
@@ -18,7 +18,7 @@ import { AuthModule } from './../auth/auth.module';
 		forwardRef(() => TenantModule),
 		CqrsModule,
 		UserModule,
-		EmailModule,
+		EmailSendModule,
 		EmployeeModule,
 		AuthModule
 	],
@@ -26,4 +26,4 @@ import { AuthModule } from './../auth/auth.module';
 	exports: [TypeOrmModule, EmailResetService],
 	controllers: [EmailResetController]
 })
-export class EmailResetModule {}
+export class EmailResetModule { }

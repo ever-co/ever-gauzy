@@ -4090,7 +4090,8 @@
 			"interviewer-interview-schedule": "Расписание интервьюера",
 			"employee-join": "Прием сотрудников",
 			"email-reset": "Сброс электронной почты",
-			"organization-team-join-request": "Запрос на вступление в команду организации"
+			"organization-team-join-request": "Запрос на вступление в команду организации",
+			"payment-receipt": "Квитанция об оплате"
 		},
 		"HTML_EDITOR": "HTML-редактор"
 	},
