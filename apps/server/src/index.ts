@@ -35,6 +35,12 @@ import {
 	DesktopUpdater,
 	TranslateLoader,
 	TranslateService,
+	ApiProxyServer,
+	UiProxyServer,
+	IProxyServer,
+	IPathWindow,
+	ProxyConfig,
+	ReadWriteFile
 } from '@gauzy/desktop-libs';
 import {
 	createSetupWindow,
@@ -73,12 +79,7 @@ const updater = new DesktopUpdater({
 	typeRelease: 'releases',
 });
 
-const pathWindow: {
-	gauzyUi: string;
-	ui: string;
-	dir: string;
-	timeTrackerUi: string;
-} = {
+const pathWindow: IPathWindow = {
 	gauzyUi: app.isPackaged
 		? path.join(__dirname, '../data/ui/index.html')
 		: path.join(__dirname, './data/ui/index.html'),
@@ -88,6 +89,12 @@ const pathWindow: {
 		: path.join(__dirname, './data/ui'),
 	timeTrackerUi: path.join(__dirname, 'index.html'),
 };
+
+const uiProxy: IProxyServer = new UiProxyServer(new ProxyConfig());
+const apiProxy: IProxyServer = new ApiProxyServer(
+	new ProxyConfig(new ReadWriteFile(pathWindow))
+);
+
 
 /* Load translations */
 TranslateLoader.load(__dirname + '/assets/i18n/');
@@ -573,3 +580,28 @@ ipcMain.on('preferred_language_change', (event, arg) => {
 	TranslateService.preferredLanguage = arg;
 	serverWindow?.webContents?.send('preferred_language_change', arg);
 })
+
+
+ipcMain.on('start_proxies', (_, arg) => {
+	const notify = (message: string) => {
+		serverWindow.webContents.send('log_state', { msg: message });
+	};
+
+	apiProxy.start();
+	uiProxy.start();
+
+	notify(uiProxy.message);
+	notify(apiProxy.message);
+
+	uiProxy.onError((error: string) => notify('[UIPROXYERR]' + error));
+	apiProxy.onError((error: string) => notify('[APIPROXYERR]' + error));
+
+	uiProxy.onStop(() => notify(uiProxy.message));
+	apiProxy.onStop(() => notify(apiProxy.message));
+});
+
+
+ipcMain.on('stop_proxies', (_, arg) => {
+	apiProxy.stop();
+	uiProxy.stop();
+});
