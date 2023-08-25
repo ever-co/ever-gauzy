@@ -1,5 +1,4 @@
-// import * as _ from 'underscore';
-import { Inject, Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { HttpService } from '@nestjs/axios';
 import { AxiosResponse } from 'axios';
@@ -27,8 +26,8 @@ import {
 	NetworkStatus,
 	gql,
 	createHttpLink,
+	ApolloLink,
 } from '@apollo/client/core';
-import { setContext } from '@apollo/client/link/context';
 import {
 	IEmployeeUpworkJobsSearchCriterion,
 	IEmployee,
@@ -45,7 +44,7 @@ import {
 	JobPostTypeEnum,
 	IEmployeeJobsStatistics,
 } from '@gauzy/contracts';
-import { RequestScopedConfigProvider } from './request-scoped-config.provider';
+import { RequestConfigProvider } from './request-config.provider';
 
 @Injectable()
 export class GauzyAIService {
@@ -71,7 +70,7 @@ export class GauzyAIService {
 	private gauzyAIGraphQLEndpoint: string;
 
 	constructor(
-		private readonly _config: RequestScopedConfigProvider,
+		private readonly _config: RequestConfigProvider,
 		private readonly _configService: ConfigService,
 		private readonly _http: HttpService,
 	) {
@@ -717,283 +716,255 @@ export class GauzyAIService {
 	public async getEmployeesJobPosts(
 		data: IGetEmployeeJobPostInput
 	): Promise<IPagination<IEmployeeJobPost>> {
-		console.log(data);
-
 		if (this._client == null) {
 			return null;
 		}
-		const { apiKey, apiSecret } = this._config.getConfig();
-		console.log({ apiKey, apiSecret });
 
-		// if (apiKey && apiSecret) {
-		// 	const X_APP_ID = apiKey;
-		// 	const X_API_KEY = apiSecret;
-		// 	console.log(X_APP_ID, X_API_KEY);
+		const filters: IGetEmployeeJobPostFilters = data.filters ? <any>data.filters : undefined;
+		console.log(`getEmployeesJobPosts. Filters ${JSON.stringify(filters)}`);
 
-		// 	// Create an Apollo Link using setContext to modify headers
-		// 	const authLink = setContext((_, { headers }) => {
-		// 		console.log('headers', headers);
-		// 		return {
-		// 			headers: {
-		// 				...headers,
-		// 				...{
-		// 					'X-APP-ID': X_APP_ID,
-		// 					'X-API-KEY': X_API_KEY
-		// 				},
-		// 			},
-		// 		};
-		// 	});
-		// 	this._client.setLink(authLink);
-		// }
-		// console.log(this._client);
+		const employeeIdFilter =
+			filters && filters.employeeIds && filters.employeeIds.length > 0
+				? filters.employeeIds[0]
+				: undefined;
 
-		// const filters: IGetEmployeeJobPostFilters = data.filters ? <any>data.filters : undefined;
-		// console.log(`getEmployeesJobPosts. Filters ${JSON.stringify(filters)}`);
+		try {
+			// TODO: use Query saved in SDK, not hard-code it here. Note: we may add much more fields to that query as we need more info!
+			const employeesQuery: DocumentNode<EmployeeJobPostsQuery> = gql`
+				query employeeJobPosts(
+					$after: ConnectionCursor!
+					$first: Int!
+					$filter: EmployeeJobPostFilter!
+					$sorting: [EmployeeJobPostSort!]
+				) {
+					employeeJobPosts(
+						paging: { after: $after, first: $first }
+						filter: $filter
+						sorting: $sorting
+					) {
+						totalCount
+						pageInfo {
+							hasNextPage
+							hasPreviousPage
+							startCursor
+							endCursor
+						}
+						edges {
+							node {
+								id
+								isApplied
+								appliedDate
+								createdAt
+								updatedAt
+								isActive
+								isArchived
+								employee {
+									id
+									externalEmployeeId
+								}
+								providerCode
+								providerJobId
+								jobDateCreated
+								jobStatus
+								jobType
+								jobPost {
+									id
+									providerCode
+									providerJobId
+									title
+									description
+									jobDateCreated
+									jobStatus
+									jobType
+									url
+									budget
+									duration
+									workload
+									skills
+									category
+									subcategory
+									country
+									clientFeedback
+									clientReviewsCount
+									clientJobsPosted
+									clientPastHires
+									clientPaymentVerificationStatus
+									searchCategory
+									searchOccupation
+									searchKeyword
+								}
+							}
+						}
+					}
+				}
+			`;
 
-		// const employeeIdFilter =
-		// 	filters && filters.employeeIds && filters.employeeIds.length > 0
-		// 		? filters.employeeIds[0]
-		// 		: undefined;
+			const jobResponses: IEmployeeJobPost[] = [];
 
-		// try {
-		// 	// TODO: use Query saved in SDK, not hard-code it here. Note: we may add much more fields to that query as we need more info!
-		// 	const employeesQuery: DocumentNode<EmployeeJobPostsQuery> = gql`
-		// 		query employeeJobPosts(
-		// 			$after: ConnectionCursor!
-		// 			$first: Int!
-		// 			$filter: EmployeeJobPostFilter!
-		// 			$sorting: [EmployeeJobPostSort!]
-		// 		) {
-		// 			employeeJobPosts(
-		// 				paging: { after: $after, first: $first }
-		// 				filter: $filter
-		// 				sorting: $sorting
-		// 			) {
-		// 				totalCount
-		// 				pageInfo {
-		// 					hasNextPage
-		// 					hasPreviousPage
-		// 					startCursor
-		// 					endCursor
-		// 				}
-		// 				edges {
-		// 					node {
-		// 						id
-		// 						isApplied
-		// 						appliedDate
-		// 						createdAt
-		// 						updatedAt
-		// 						isActive
-		// 						isArchived
-		// 						employee {
-		// 							id
-		// 							externalEmployeeId
-		// 						}
-		// 						providerCode
-		// 						providerJobId
-		// 						jobDateCreated
-		// 						jobStatus
-		// 						jobType
-		// 						jobPost {
-		// 							id
-		// 							providerCode
-		// 							providerJobId
-		// 							title
-		// 							description
-		// 							jobDateCreated
-		// 							jobStatus
-		// 							jobType
-		// 							url
-		// 							budget
-		// 							duration
-		// 							workload
-		// 							skills
-		// 							category
-		// 							subcategory
-		// 							country
-		// 							clientFeedback
-		// 							clientReviewsCount
-		// 							clientJobsPosted
-		// 							clientPastHires
-		// 							clientPaymentVerificationStatus
-		// 							searchCategory
-		// 							searchOccupation
-		// 							searchKeyword
-		// 						}
-		// 					}
-		// 				}
-		// 			}
-		// 		}
-		// 	`;
+			let isContinue: boolean;
+			let after = '';
 
-		// 	const jobResponses: IEmployeeJobPost[] = [];
+			const filter = {
+				isActive: {
+					is: true,
+				},
+				isArchived: {
+					is: false,
+				},
+				employeeId: undefined,
+				...(filters && filters.isApplied
+					? {
+						isApplied: {
+							is: JSON.parse(filters.isApplied)
+						}
+					}
+					: {}),
+				...(filters && filters.jobDateCreated
+					? {
+						jobDateCreated: filters.jobDateCreated,
+					}
+					: {}),
+				...(filters && filters.title
+					? {
+						jobPost: {
+							title: {
+								iLike: `%${filters.title}%`,
+							},
+						},
+					}
+					: {}),
+				...(filters && filters.jobType
+					? {
+						jobType: {
+							in: filters.jobType,
+						},
+					}
+					: {}),
+				...(filters && filters.jobStatus
+					? {
+						jobStatus: {
+							in: filters.jobStatus,
+						},
+					}
+					: {}),
+				...(filters && filters.jobSource
+					? {
+						providerCode: {
+							in: filters.jobSource,
+						},
+					}
+					: {}),
+			};
 
-		// 	let isContinue: boolean;
-		// 	let after = '';
+			if (employeeIdFilter) {
+				const employeeId = await this.getEmployeeGauzyAIId(
+					employeeIdFilter
+				);
 
-		// 	const filter = {
-		// 		isActive: {
-		// 			is: true,
-		// 		},
-		// 		isArchived: {
-		// 			is: false,
-		// 		},
-		// 		employeeId: undefined,
-		// 		...(filters && filters.isApplied
-		// 			? {
-		// 				isApplied: {
-		// 					is: JSON.parse(filters.isApplied)
-		// 				}
-		// 			}
-		// 			: {}),
-		// 		...(filters && filters.jobDateCreated
-		// 			? {
-		// 				jobDateCreated: filters.jobDateCreated,
-		// 			}
-		// 			: {}),
-		// 		...(filters && filters.title
-		// 			? {
-		// 				jobPost: {
-		// 					title: {
-		// 						iLike: `%${filters.title}%`,
-		// 					},
-		// 				},
-		// 			}
-		// 			: {}),
-		// 		...(filters && filters.jobType
-		// 			? {
-		// 				jobType: {
-		// 					in: filters.jobType,
-		// 				},
-		// 			}
-		// 			: {}),
-		// 		...(filters && filters.jobStatus
-		// 			? {
-		// 				jobStatus: {
-		// 					in: filters.jobStatus,
-		// 				},
-		// 			}
-		// 			: {}),
-		// 		...(filters && filters.jobSource
-		// 			? {
-		// 				providerCode: {
-		// 					in: filters.jobSource,
-		// 				},
-		// 			}
-		// 			: {}),
-		// 	};
+				filter.employeeId = {
+					eq: employeeId,
+				};
+			}
 
-		// 	if (employeeIdFilter) {
-		// 		const employeeId = await this.getEmployeeGauzyAIId(
-		// 			employeeIdFilter
-		// 		);
+			console.log(`Applying filter: ${JSON.stringify(filter)}`);
 
-		// 		filter.employeeId = {
-		// 			eq: employeeId,
-		// 		};
-		// 	}
+			const graphQLPageSize = 50;
 
-		// 	console.log(`Applying filter: ${JSON.stringify(filter)}`);
+			// e.g. if it's page 7 and limit is 10, it mean we need to load first 70 records, i.e. do 2 trips to server because each trip get 50 records
+			const loadCounts = Math.ceil(
+				(data.page * data.limit) / graphQLPageSize
+			);
 
-		// 	const graphQLPageSize = 50;
+			console.log(`Round trips to Gauzy API: ${loadCounts}`);
 
-		// 	// e.g. if it's page 7 and limit is 10, it mean we need to load first 70 records, i.e. do 2 trips to server because each trip get 50 records
-		// 	const loadCounts = Math.ceil(
-		// 		(data.page * data.limit) / graphQLPageSize
-		// 	);
+			let currentCount = 1;
 
-		// 	console.log(`Round trips to Gauzy API: ${loadCounts}`);
+			let totalCount;
 
-		// 	let currentCount = 1;
+			do {
+				const result: ApolloQueryResult<EmployeeJobPostsQuery> =
+					await this._client.query<EmployeeJobPostsQuery>({
+						query: employeesQuery,
+						variables: {
+							after: after,
+							first: graphQLPageSize,
+							sorting: [
+								{
+									field: 'jobDateCreated',
+									direction: 'DESC',
+								},
+							],
+							filter: filter,
+						},
+					});
 
-		// 	let totalCount;
+				const jobsResponse = result.data.employeeJobPosts.edges.map(
+					(it) => {
+						const rec = it.node;
 
-		// 	do {
-		// 		const result: ApolloQueryResult<EmployeeJobPostsQuery> =
-		// 			await this._client.query<EmployeeJobPostsQuery>({
-		// 				query: employeesQuery,
-		// 				variables: {
-		// 					after: after,
-		// 					first: graphQLPageSize,
-		// 					sorting: [
-		// 						{
-		// 							field: 'jobDateCreated',
-		// 							direction: 'DESC',
-		// 						},
-		// 					],
-		// 					filter: filter,
-		// 				},
-		// 			});
+						const res: IEmployeeJobPost = {
+							/** Employee Job Post Matching ID */
+							id: rec.id,
 
-		// 		const jobsResponse = result.data.employeeJobPosts.edges.map(
-		// 			(it) => {
-		// 				const rec = it.node;
+							employeeId: rec.employee.externalEmployeeId,
+							employee: undefined,
+							jobPostId: rec.jobPost.id,
+							jobPost: <IJobPost>rec.jobPost,
 
-		// 				const res: IEmployeeJobPost = {
-		// 					/** Employee Job Post Matching ID */
-		// 					id: rec.id,
+							jobDateCreated: rec.jobDateCreated,
+							providerCode: rec.providerCode,
+							providerJobId: rec.providerJobId,
+							jobStatus: rec.jobStatus
+								? JobPostStatusEnum[rec.jobStatus]
+								: undefined,
+							jobType: rec.jobType
+								? JobPostTypeEnum[rec.jobType]
+								: undefined,
 
-		// 					employeeId: rec.employee.externalEmployeeId,
-		// 					employee: undefined,
-		// 					jobPostId: rec.jobPost.id,
-		// 					jobPost: <IJobPost>rec.jobPost,
+							isApplied: rec.isApplied,
+							appliedDate: rec.appliedDate,
+							isActive: rec.isActive,
+							isArchived: rec.isArchived,
+							createdAt: rec.createdAt,
+							updatedAt: rec.updatedAt,
+						};
 
-		// 					jobDateCreated: rec.jobDateCreated,
-		// 					providerCode: rec.providerCode,
-		// 					providerJobId: rec.providerJobId,
-		// 					jobStatus: rec.jobStatus
-		// 						? JobPostStatusEnum[rec.jobStatus]
-		// 						: undefined,
-		// 					jobType: rec.jobType
-		// 						? JobPostTypeEnum[rec.jobType]
-		// 						: undefined,
+						return res;
+					}
+				);
 
-		// 					isApplied: rec.isApplied,
-		// 					appliedDate: rec.appliedDate,
-		// 					isActive: rec.isActive,
-		// 					isArchived: rec.isArchived,
-		// 					createdAt: rec.createdAt,
-		// 					updatedAt: rec.updatedAt,
-		// 				};
+				isContinue =
+					result.data.employeeJobPosts.pageInfo.hasNextPage &&
+					currentCount < loadCounts;
+				after = result.data.employeeJobPosts.pageInfo.endCursor;
+				totalCount = result.data.employeeJobPosts.totalCount;
 
-		// 				return res;
-		// 			}
-		// 		);
+				jobResponses.push(...jobsResponse);
 
-		// 		isContinue =
-		// 			result.data.employeeJobPosts.pageInfo.hasNextPage &&
-		// 			currentCount < loadCounts;
-		// 		after = result.data.employeeJobPosts.pageInfo.endCursor;
-		// 		totalCount = result.data.employeeJobPosts.totalCount;
+				console.log(
+					`Found ${jobsResponse.length} job records. IsContinue: ${isContinue}. After: ${after}`
+				);
 
-		// 		jobResponses.push(...jobsResponse);
+				currentCount++;
+			} while (isContinue);
 
-		// 		console.log(
-		// 			`Found ${jobsResponse.length} job records. IsContinue: ${isContinue}. After: ${after}`
-		// 		);
+			// Note: possible to do additional client side filtering like below:
+			// jobResponses = _.filter(jobResponses, (it) => it.isActive === true && it.isArchived === false);
 
-		// 		currentCount++;
-		// 	} while (isContinue);
+			console.log(
+				`getEmployeesJobPosts. Total Count: ${totalCount}. Page ${data.page}`
+			);
 
-		// 	// Note: possible to do additional client side filtering like below:
-		// 	// jobResponses = _.filter(jobResponses, (it) => it.isActive === true && it.isArchived === false);
+			const response: IPagination<IEmployeeJobPost> = {
+				items: this.paginate(jobResponses, data.limit, data.page),
+				total: totalCount,
+			};
 
-		// 	console.log(
-		// 		`getEmployeesJobPosts. Total Count: ${totalCount}. Page ${data.page}`
-		// 	);
-
-		// 	const response: IPagination<IEmployeeJobPost> = {
-		// 		items: this.paginate(jobResponses, data.limit, data.page),
-		// 		total: totalCount,
-		// 	};
-
-		// 	// console.log(`Found Records: ${JSON.stringify(response)}`);
-
-		// 	return response;
-		// } catch (err) {
-		// 	this._logger.error(err);
-		// 	return null;
-		// }
+			return response;
+		} catch (err) {
+			this._logger.error(err);
+			return null;
+		}
 	}
 
 	private paginate(array, page_size, page_number) {
@@ -1132,89 +1103,95 @@ export class GauzyAIService {
 	}
 
 	private initClient() {
+		// Create a custom ApolloLink to modify headers
+		const authLink = new ApolloLink((operation, forward) => {
+			const { apiKey, apiSecret } = this._config.getConfig();
+			console.log(this._config.getConfig(), 'Runtime Gauzy AI Integration Config');
+
+			// Add your custom headers here
+			const customHeaders = {
+				'Content-Type': 'application/json',
+				// Set your initial headers here
+				'X-APP-ID': this._configService.get<string>('guazyAI.gauzyAiApiKey', ''),
+				'X-API-KEY': this._configService.get<string>('guazyAI.gauzyAiApiSecret', ''),
+
+				...(apiKey ? { 'X-APP-ID': apiKey } : {}),
+				...(apiSecret ? { 'X-API-KEY': apiSecret } : {}),
+			};
+
+			// Modify the operation context to include the headers
+			operation.setContext(({ headers }) => ({
+				headers: {
+					...headers,
+					...customHeaders,
+				},
+			}));
+			// Call the next link in the chain
+			return forward(operation);
+		});
+
 		/** */
 		const httpLink = createHttpLink({
 			uri: this.gauzyAIGraphQLEndpoint,
 			fetch
 		});
 
-		/** */
-		const initialHeaders = {
-			'Content-Type': 'application/json',
-			// Set your initial headers here
-			'X-APP-ID': this._configService.get<string>('guazyAI.gauzyAiApiKey', ''),
-			'X-API-KEY': this._configService.get<string>('guazyAI.gauzyAiApiSecret', '')
-		};
-
 		this._client = new ApolloClient({
 			typeDefs: EmployeeJobPostsDocument,
-			link: httpLink,
+			link: authLink.concat(httpLink),
 			cache: new InMemoryCache(),
 			defaultOptions: this.defaultOptions,
-			headers: initialHeaders,
 		});
 	}
 
 	private init() {
 		try {
-			const gauzyAIRESTEndpoint = this._configService.get<string>(
-				'guazyAI.gauzyAIRESTEndpoint'
-			);
+			const gauzyAIRESTEndpoint = this._configService.get<string>('guazyAI.gauzyAIRESTEndpoint');
 
-			console.log(
-				chalk.magenta(`GauzyAI REST Endpoint: ${gauzyAIRESTEndpoint}`)
-			);
+			console.log(chalk.magenta(`GauzyAI REST Endpoint: ${gauzyAIRESTEndpoint}`));
 
-			this.gauzyAIGraphQLEndpoint = this._configService.get<string>(
-				'guazyAI.gauzyAIGraphQLEndpoint'
-			);
+			this.gauzyAIGraphQLEndpoint = this._configService.get<string>('guazyAI.gauzyAIGraphQLEndpoint');
 
-			console.log(
-				chalk.magenta(
-					`GauzyAI GraphQL Endpoint: ${this.gauzyAIGraphQLEndpoint}`
-				)
-			);
+			console.log(chalk.magenta(`GauzyAI GraphQL Endpoint: ${this.gauzyAIGraphQLEndpoint}`));
 
 			if (this.gauzyAIGraphQLEndpoint && gauzyAIRESTEndpoint) {
-				this._logger.log(
-					'Gauzy AI Endpoints (GraphQL & REST) are configured in the environment'
-				);
+				this._logger.log('Gauzy AI Endpoints (GraphQL & REST) are configured in the environment');
 
 				this.initClient();
 
-				const testConnectionQuery = async () => {
-					try {
-						const employeesQuery: DocumentNode<EmployeeQuery> = gql`
-							query employee {
-								employees {
-									edges {
-										node {
-											id
-										}
-									}
-									totalCount
-								}
-							}
-						`;
+				// const testConnectionQuery = async () => {
+				// 	try {
+				// 		const employeesQuery: DocumentNode<EmployeeQuery> = gql`
+				// 			query employee {
+				// 				employees {
+				// 					edges {
+				// 						node {
+				// 							id
+				// 						}
+				// 					}
+				// 					totalCount
+				// 				}
+				// 			}
+				// 		`;
 
-						const employeesQueryResult: ApolloQueryResult<EmployeeQuery> =
-							await this._client.query<EmployeeQuery>({
-								query: employeesQuery,
-							});
+				// 		const employeesQueryResult: ApolloQueryResult<EmployeeQuery> =
+				// 			await this._client.query<EmployeeQuery>({
+				// 				query: employeesQuery,
+				// 			});
 
-						if (
-							employeesQueryResult.networkStatus ===
-							NetworkStatus.error
-						) {
-							this._client = null;
-						}
-					} catch (err) {
-						this._logger.error(err);
-						this._client = null;
-					}
-				};
+				// 		if (
+				// 			employeesQueryResult.networkStatus ===
+				// 			NetworkStatus.error
+				// 		) {
+				// 			this._client = null;
+				// 		}
+				// 	} catch (err) {
+				// 		this._logger.error(err);
+				// 		this._client = null;
+				// 	}
+				// };
 
-				testConnectionQuery();
+				// testConnectionQuery();
 			} else {
 				this._logger.warn(
 					'Gauzy AI Endpoints are not configured in the environment'

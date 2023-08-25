@@ -2,7 +2,7 @@ import { ForbiddenException, Injectable } from '@nestjs/common';
 import { faker } from '@faker-js/faker';
 import { htmlToText } from 'html-to-text';
 import { environment as env } from '@gauzy/config';
-import { GauzyAIService, RequestScopedConfigProvider } from '@gauzy/integration-ai';
+import { GauzyAIService, RequestConfigProvider } from '@gauzy/integration-ai';
 import {
 	IEmployeeJobApplication,
 	ICountry,
@@ -34,7 +34,7 @@ export class EmployeeJobPostService {
 	constructor(
 		private readonly employeeService: EmployeeService,
 		private readonly gauzyAIService: GauzyAIService,
-		private readonly config: RequestScopedConfigProvider,
+		private readonly requestConfigProvider: RequestConfigProvider,
 		private readonly countryService: CountryService,
 		private readonly integrationTenantService: IntegrationTenantService
 	) { }
@@ -99,11 +99,15 @@ export class EmployeeJobPostService {
 			if (!apiKey || !apiSecret) {
 				throw new ForbiddenException('API key and secret key are required.');
 			}
-			this.config.setConfig({ apiKey, apiSecret });
 
+			this.requestConfigProvider.setConfig({ apiKey, apiSecret });
+		} catch (error) {
+			throw new ForbiddenException('API key and secret key are required.');
+		}
+
+		try {
 			if (env.gauzyAIGraphQLEndpoint) {
 				const result = await this.gauzyAIService.getEmployeesJobPosts(data);
-
 				if (result === null) {
 					if (env.production) {
 						// OK, so for some reason connection go Gauzy AI failed, we can't get jobs ...

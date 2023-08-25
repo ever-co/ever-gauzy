@@ -74,6 +74,7 @@ export class IntegrationTenantService extends TenantAwareCrudService<Integration
 				}
 			});
 		} catch (error) {
+			console.log('Error while getting integration tenant: %s', error?.message);
 			return false;
 		}
 	}

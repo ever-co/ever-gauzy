@@ -4,7 +4,7 @@ import { DynamicModule, Module } from '@nestjs/common';
 import { GauzyAIService } from './gauzy-ai.service';
 import gauzyAI from './config/gauzy-ai';
 import { ConfigurationOptions } from './configuration.interface';
-import { RequestScopedConfigProvider } from './request-scoped-config.provider';
+import { RequestConfigProvider } from './request-config.provider';
 
 @Module({
 	imports: [
@@ -21,13 +21,12 @@ import { RequestScopedConfigProvider } from './request-scoped-config.provider';
 	],
 	controllers: [],
 	providers: [
-		ConfigService,
 		GauzyAIService,
-		RequestScopedConfigProvider
+		RequestConfigProvider
 	],
 	exports: [
 		GauzyAIService,
-		RequestScopedConfigProvider
+		RequestConfigProvider
 	],
 })
 export class GauzyAIModule {

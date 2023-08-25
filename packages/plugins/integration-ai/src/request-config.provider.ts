@@ -1,17 +1,16 @@
-import { REQUEST } from '@nestjs/core';
 import { Inject, Injectable, Scope } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
 import { ConfigurationOptions } from './configuration.interface';
 
 @Injectable({ scope: Scope.REQUEST })
-export class RequestScopedConfigProvider extends ConfigService {
+export class RequestConfigProvider {
 
     private config: ConfigurationOptions = {};
 
     constructor(
-        @Inject(REQUEST) protected readonly request: Request
+        @Inject('CONFIG_OPTIONS')
+        protected readonly options: ConfigurationOptions
     ) {
-        super();
+        this.setConfig(options);
     }
 
     setConfig(config: ConfigurationOptions) {
