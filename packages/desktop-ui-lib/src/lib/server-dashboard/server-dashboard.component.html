@@ -27,11 +27,21 @@
                             </nb-accordion-item>
                         </nb-accordion>
                     </div>
-                    <div [class]="'col-12 text-'+(logIsOpen ? 'left': 'center')+' button margin-content'">
+                    <div [class]="'col-12 text-'+(logIsOpen ? 'left d-flex justify-content-between': 'center')+' button margin-content'">
                         <button nbButton status="primary" [class]="styles.btnStart"
                             (click)="running ? stopServer() : runServer()" [disabled]="loading">
                             <nb-icon *gauzySpinnerButton="loading" [icon]="btn.icon" class="icon-medium"></nb-icon> {{btn.name | translate}}
                         </button>
+						<nb-toggle
+							*ngIf="logIsOpen"
+							[checked]="isForward"
+							[disabled]="loading || !running"
+							(checkedChange)="
+							forwardPort($event)"
+							status="basic"
+						>
+							{{ 'BUTTONS.FORWARD_PORTS' | translate }}
+						</nb-toggle>
                     </div>
                 </div>
 

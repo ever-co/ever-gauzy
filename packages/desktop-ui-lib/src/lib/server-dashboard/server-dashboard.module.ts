@@ -9,7 +9,8 @@ import {
 	NbDialogService,
 	NbButtonModule,
 	NbSpinnerModule,
-	NbAccordionModule
+	NbAccordionModule,
+	NbToggleModule
 } from '@nebular/theme';
 import { DesktopDirectiveModule } from '../directives/desktop-directive.module';
 import { NgxTranslateModule } from '../ngx-translate';
@@ -27,7 +28,8 @@ import { LanguageSelectorService } from '../language/language-selector.service';
 		NbSpinnerModule,
 		NbAccordionModule,
 		DesktopDirectiveModule,
-		NgxTranslateModule
+		NgxTranslateModule,
+		NbToggleModule
 	],
 	exports: [ServerDashboardComponent],
 	providers: [NbDialogService, LanguageSelectorService]
