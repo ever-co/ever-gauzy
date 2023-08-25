@@ -52,7 +52,7 @@ export class InvoiceService extends TenantAwareCrudService<Invoice> {
 		invoiceNumber: number,
 		invoiceId: string,
 		isEstimate: boolean,
-		originUrl: string,
+		origin: string,
 		organizationId: string
 	) {
 		try {
@@ -61,15 +61,15 @@ export class InvoiceService extends TenantAwareCrudService<Invoice> {
 				invoiceId,
 				email
 			);
-			const organization: IOrganization = await this.organizationService.findOneByIdString(organizationId);
+			const organization: IOrganization = await this.organizationService.findOneByIdString(
+				organizationId
+			);
 			try {
 				//generate estimate/invoice pdf and attached in email
-				const buffer: Buffer = await this.generateInvoicePdf(
-					invoiceId,
-					languageCode
-				);
+				const buffer: Buffer = await this.generateInvoicePdf(invoiceId, languageCode);
 				const base64 = buffer.toString('base64');
-				this.emailService.emailInvoice(
+
+				await this.emailService.emailInvoice(
 					languageCode,
 					email,
 					base64,
@@ -77,14 +77,14 @@ export class InvoiceService extends TenantAwareCrudService<Invoice> {
 					invoiceId,
 					isEstimate,
 					estimateEmail.token,
-					originUrl,
+					origin,
 					organization
 				);
 			} catch (error) {
-				console.error('Error while sending estimate email');
+				console.log(`Error while sending estimate email ${invoiceNumber}: %s`, error?.message);
 			}
 		} catch (error) {
-			console.error('Error while creating estimate email');
+			console.log(`Error while creating estimate email for invoice ${invoiceId}: %s`, error?.message);
 		}
 	}
 

@@ -102,7 +102,7 @@ export class EmailService {
 				body.message = sendResult.originalMessage;
 			} catch (error) {
 				console.log(`Error while sending payment receipt ${invoiceNumber}: %s`, error?.message);
-				throw new BadRequestException(`Error while sending payment receipt ${invoiceNumber}: ${error?.message}`)
+				throw new BadRequestException(`Error while sending payment receipt ${invoiceNumber}: ${error?.message}`);
 			} finally {
 				await this.createEmailRecord(body);
 			}
@@ -129,12 +129,12 @@ export class EmailService {
 		invoiceId: string,
 		isEstimate: boolean,
 		token: any,
-		originUrl: string,
+		origin: string,
 		organization: IOrganization
 	) {
 		const tenantId = RequestContext.currentTenantId();
 		const { id: organizationId } = organization;
-		const baseUrl = originUrl || env.clientBaseUrl;
+		const baseUrl = origin || env.clientBaseUrl;
 		const sendOptions = {
 			template: isEstimate ? EmailTemplateEnum.EMAIL_ESTIMATE : EmailTemplateEnum.EMAIL_INVOICE,
 			message: {
@@ -163,15 +163,16 @@ export class EmailService {
 			organization,
 			message: ''
 		}
-		const match = !!DISALLOW_EMAIL_SERVER_DOMAIN.find((server) => body.email.includes(server));
-		if (!match) {
+		const isEmailBlocked = !!DISALLOW_EMAIL_SERVER_DOMAIN.find(server => body.email.includes(server));
+		if (!isEmailBlocked) {
 			try {
 				const instance = await this._emailSendService.getEmailInstance({ organizationId, tenantId });
 				const send = await instance.send(sendOptions);
 
 				body['message'] = send.originalMessage;
 			} catch (error) {
-				console.log(`Error while sending email invoice ${invoiceNumber}: %s`, error);
+				console.log(`Error while sending email invoice ${invoiceNumber}: %s`, error?.message);
+				throw new BadRequestException(`Error while sending email invoice ${invoiceNumber}: ${error?.message}`);
 			} finally {
 				await this.createEmailRecord(body);
 			}
@@ -222,15 +223,16 @@ export class EmailService {
 			message: '',
 			organization
 		}
-		const match = !!DISALLOW_EMAIL_SERVER_DOMAIN.find((server) => body.email.includes(server));
-		if (!match) {
+		const isEmailBlocked = !!DISALLOW_EMAIL_SERVER_DOMAIN.find(server => body.email.includes(server));
+		if (!isEmailBlocked) {
 			try {
 				const instance = await this._emailSendService.getEmailInstance({ organizationId, tenantId });
 				const send = await instance.send(sendOptions);
 
 				body['message'] = send.originalMessage;
 			} catch (error) {
-				console.log(`Error while sending invite organization contact: %s`, error);
+				console.log(`Error while sending invite organization contact: %s`, error?.message);
+				throw new BadRequestException(`Error while sending invite organization contact: ${error?.message}`);
 			} finally {
 				await this.createEmailRecord(body);
 			}
