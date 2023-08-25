@@ -20,8 +20,6 @@ import { AppService } from '../app.service';
 import { AppModule } from '../app.module';
 import { AuthGuard } from './../shared/guards';
 import { SharedModule } from './../shared/shared.module';
-import { createNodeMiddleware, createProbot } from 'probot';
-import type { Probot, Context } from 'probot';
 
 export async function bootstrap(
 	pluginConfig?: Partial<IPluginConfig>
@@ -108,43 +106,6 @@ export async function bootstrap(
 	 * Dependency injection with class-validator
 	 */
 	useContainer(app.select(SharedModule), { fallbackOnErrors: true });
-
-	const GITHUB_INTEGRATION_APP_ID = 123456;
-	const GITHUB_INTEGRATION_PRIVATE_KEY = '<WIP>';
-	const GITHUB_INTEGRATION_APP_INSTALLATION_ID = 123456;
-	const GITHUB_INTEGRATION_CLIENT_ID = '<WIP>';
-	const GITHUB_INTEGRATION_CLIENT_SECRET = '<WIP>';
-	const GITHUB_INTEGRATION_WEBHOOK_SECRET = '<WIP>';
-
-	const probot = createProbot({
-		defaults: {
-			appId: GITHUB_INTEGRATION_APP_ID,
-			privateKey: GITHUB_INTEGRATION_PRIVATE_KEY,
-			secret: GITHUB_INTEGRATION_WEBHOOK_SECRET,
-		},
-		overrides: {
-			appId: GITHUB_INTEGRATION_APP_ID,
-			privateKey: GITHUB_INTEGRATION_PRIVATE_KEY,
-			secret: GITHUB_INTEGRATION_WEBHOOK_SECRET,
-		},
-	});
-
-	// Import from config and pass here
-	app.use(
-		createNodeMiddleware(
-			(app: Probot) => {
-				app.on('issues.edited', async (context) => {
-					// Here we can have logic to sync with Gauzy API
-
-					console.log('payload', context.payload);
-				});
-			},
-			{
-				probot,
-				webhooksPath: '/api/github/webhooks',
-			}
-		)
-	);
 
 	await app.listen(port, host, () => {
 		console.log(

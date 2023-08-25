@@ -23,6 +23,7 @@ import { LanguagesEnum } from '@gauzy/contracts';
 import { ConfigService, environment } from '@gauzy/config';
 import * as path from 'path';
 import * as moment from 'moment';
+import { ProbotModule } from '@gauzy/integration-github';
 import { CandidateInterviewersModule } from './candidate-interviewers/candidate-interviewers.module';
 import { CandidateSkillModule } from './candidate-skill/candidate-skill.module';
 import { InvoiceModule } from './invoice/invoice.module';
@@ -154,7 +155,7 @@ import { EmailResetModule } from './email-reset/email-reset.module';
 import { TaskLinkedIssueModule } from './tasks/linked-issue/task-linked-issue.module';
 import { OrganizationTaskSettingModule } from './organization-task-setting/organization-task-setting.module';
 import { TaskEstimationModule } from './tasks/estimation/task-estimation.module';
-import { OctokitModule } from 'octokit/octokit.module';
+import { GitHubModule } from './github/github.module';
 const { unleashConfig } = environment;
 
 if (unleashConfig.url) {
@@ -252,6 +253,31 @@ if (environment.sentry && environment.sentry.dsn) {
 					}),
 			  ]
 			: []),
+
+		// Probot
+		...(environment.gitHubIntegrationConfig &&
+		environment.gitHubIntegrationConfig.appId
+			? [
+					ProbotModule.forRoot({
+						path: 'github', // Webhook URL in GitHub will be: https://example.com/api/github
+						config: {
+							appId: environment.gitHubIntegrationConfig.appId,
+							clientId:
+								environment.gitHubIntegrationConfig.clientId,
+							clientSecret:
+								environment.gitHubIntegrationConfig
+									.clientSecret,
+
+							privateKey:
+								environment.gitHubIntegrationConfig.privateKey,
+							webhookSecret:
+								environment.gitHubIntegrationConfig
+									.webhookSecret,
+						},
+					}),
+			  ]
+			: []),
+
 		ThrottlerModule.forRootAsync({
 			inject: [ConfigService],
 			useFactory: (config: ConfigService): ThrottlerModuleOptions =>
@@ -387,7 +413,7 @@ if (environment.sentry && environment.sentry.dsn) {
 		TaskLinkedIssueModule,
 		OrganizationTaskSettingModule,
 		TaskEstimationModule,
-		OctokitModule,
+		GitHubModule,
 	],
 	controllers: [AppController],
 	providers: [
