@@ -55,9 +55,9 @@ export class EmailFiltersComponent implements OnInit, OnDestroy {
 	}
 
 	formatTemplateName(name: string, languageCode: string) {
-		const formatedName = name.split('/')[0].split('-').join(' ');
+		const formattedName = name.split('/')[0].split('-').join(' ');
 		return (
-			this._toTitleCase(formatedName) +
+			this._toTitleCase(formattedName) +
 			' - ' +
 			this.getEmailLanguageFullName(languageCode)
 		);
