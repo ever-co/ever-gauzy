@@ -1,8 +1,8 @@
 import { forwardRef, Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { RouterModule } from 'nest-router';
-import { Email } from './email.entity';
-import { EmailController } from './email.controller';
+import { EmailHistory } from './email-history.entity';
+import { EmailHistoryController } from './email-history.controller';
 import { TenantModule } from '../tenant/tenant.module';
 import { UserModule } from './../user/user.module';
 import { EmailHistoryService } from './email-history.service';
@@ -10,15 +10,15 @@ import { EmailHistoryService } from './email-history.service';
 @Module({
 	imports: [
 		RouterModule.forRoutes([
-			{ path: '/email', module: EmailModule }
+			{ path: '/email', module: EmailHistoryModule }
 		]),
 		TypeOrmModule.forFeature([
-			Email
+			EmailHistory
 		]),
 		forwardRef(() => TenantModule),
 		forwardRef(() => UserModule),
 	],
-	controllers: [EmailController],
+	controllers: [EmailHistoryController],
 	providers: [
 		EmailHistoryService
 	],
@@ -27,4 +27,4 @@ import { EmailHistoryService } from './email-history.service';
 		EmailHistoryService
 	]
 })
-export class EmailModule { }
+export class EmailHistoryModule { }
