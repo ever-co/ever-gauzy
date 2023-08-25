@@ -23,7 +23,7 @@ import {
 	NormalizedCacheObject,
 	InMemoryCache,
 	DefaultOptions,
-	NetworkStatus,
+	// NetworkStatus,
 	gql,
 	createHttpLink,
 	ApolloLink,

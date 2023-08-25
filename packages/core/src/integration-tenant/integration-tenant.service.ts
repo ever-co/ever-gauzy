@@ -1,7 +1,7 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { IIntegrationEntitySetting, IIntegrationSetting, IIntegrationTenant } from '@gauzy/contracts';
+import { IIntegrationEntitySetting, IIntegrationSetting, IIntegrationTenant, IIntegrationTenantFindInput } from '@gauzy/contracts';
 import { TenantAwareCrudService } from './../core/crud';
 import { RequestContext } from './../core/context';
 import { IntegrationTenant } from './integration-tenant.entity';
@@ -58,10 +58,10 @@ export class IntegrationTenantService extends TenantAwareCrudService<Integration
 	 * @param options - The options for checking integration remember state.
 	 * @returns The integration tenant if found, or `false` if not found or an error occurred.
 	 */
-	public async checkIntegrationRememberState(options: IIntegrationTenant): Promise<IIntegrationTenant | boolean> {
+	public async checkIntegrationRememberState(input: IIntegrationTenantFindInput): Promise<IIntegrationTenant | boolean> {
 		try {
-			const tenantId = RequestContext.currentTenantId();
-			const { organizationId, name } = options;
+			const tenantId = RequestContext.currentTenantId() || input.tenantId;
+			const { organizationId, name } = input;
 
 			return await this.findOneByOptions({
 				where: {

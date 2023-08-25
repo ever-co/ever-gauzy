@@ -51,6 +51,11 @@ export interface IIntegrationTenant extends IBasePerTenantAndOrganizationEntityM
 	settings?: IIntegrationSetting[];
 }
 
+export interface IIntegrationTenantFindInput extends IBasePerTenantAndOrganizationEntityModel {
+	name?: IntegrationEnum;
+	integrationId?: IIntegration['id'];
+}
+
 export interface IIntegration extends IBaseEntityModel {
 	name: string;
 	imgSrc: string;
