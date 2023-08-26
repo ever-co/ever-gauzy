@@ -72,7 +72,14 @@ export class ServerConfig implements IServerConfig {
 	}
 
 	public get uiHostName(): string {
-		return this.setting?.host || 'http://0.0.0.0';
+		let host = 'http://0.0.0.0';
+		if (!!this.setting?.host) {
+			host =
+				this.setting.host.indexOf('http') === 0
+					? `http://${this.setting.host}`
+					: this.setting.host;
+		}
+		return host;
 	}
 
 	public get apiUrl(): string {
