@@ -3775,7 +3775,12 @@
 				"SERVER_RESTARTED": "Servidor reiniciado correctamente",
 				"CONNECTION_SUCCEEDS": "Conexión al servidor {{ url }} exitosa",
 				"DOWNLOADING_UPDATE": "Descargando actualización {{ current }} MB de {{ total }} MB ->> {{ bandwidth }} KB/s"
-			}
+			},
+			"TIMEZONE": "Zona Horaria",
+			"TIMEZONE_LABEL": "Seleccionar 'Local' muestra la hora en tu zona horaria local, mientras que seleccionar 'UTC' muestra la hora en la zona horaria universal UTC utilizada por sistemas de facturación y otros sistemas.",
+			"TIMEZONE_PLACEHOLDER": "Selecciona 'Local' o 'UTC'.",
+			"TIMEZONE_LOCAL": "Local",
+			"TIMEZONE_UTC": "UTC"
 		},
 		"WEEKLY_LIMIT_EXCEEDED": "Límite semanal excedido",
 		"OF_HRS": "De {{ limit }} horas",
