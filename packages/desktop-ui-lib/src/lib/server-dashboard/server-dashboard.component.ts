@@ -45,7 +45,6 @@ export class ServerDashboardComponent implements OnInit, AfterViewInit {
 		btnStart: 'button-small',
 		icon: 'margin-icon-small',
 	};
-	isForward = false;
 
 	constructor(
 		private electronService: ElectronService,
@@ -151,10 +150,6 @@ export class ServerDashboardComponent implements OnInit, AfterViewInit {
 			icon: '',
 		};
 		this.logIsOpen = true;
-		if (this.isForward) {
-			this.electronService.ipcRenderer.send('stop_proxies');
-			this.isForward = false;
-		}
 		this.electronService.ipcRenderer.send('stop_gauzy_server');
 		this._cdr.detectChanges();
 	}
@@ -165,12 +160,5 @@ export class ServerDashboardComponent implements OnInit, AfterViewInit {
 		} else {
 			this.logIsOpen = true;
 		}
-	}
-
-	public forwardPort(isForward: boolean) {
-		this.electronService.ipcRenderer.send(
-			isForward ? 'start_proxies' : 'stop_proxies'
-		);
-		this.isForward = isForward;
 	}
 }

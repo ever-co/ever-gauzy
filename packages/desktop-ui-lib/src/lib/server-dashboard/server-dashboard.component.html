@@ -32,16 +32,6 @@
                             (click)="running ? stopServer() : runServer()" [disabled]="loading">
                             <nb-icon *gauzySpinnerButton="loading" [icon]="btn.icon" class="icon-medium"></nb-icon> {{btn.name | translate}}
                         </button>
-						<nb-toggle
-							*ngIf="logIsOpen"
-							[checked]="isForward"
-							[disabled]="loading || !running"
-							(checkedChange)="
-							forwardPort($event)"
-							status="basic"
-						>
-							{{ 'BUTTONS.FORWARD_PORTS' | translate }}
-						</nb-toggle>
                     </div>
                 </div>
 
