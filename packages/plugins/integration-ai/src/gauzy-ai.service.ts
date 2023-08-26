@@ -70,9 +70,9 @@ export class GauzyAIService {
 	private gauzyAIGraphQLEndpoint: string;
 
 	constructor(
-		private readonly _config: RequestConfigProvider,
 		private readonly _configService: ConfigService,
 		private readonly _http: HttpService,
+		private readonly _requestConfigProvider: RequestConfigProvider,
 	) {
 		this.init();
 	}
@@ -1105,8 +1105,8 @@ export class GauzyAIService {
 	private initClient() {
 		// Create a custom ApolloLink to modify headers
 		const authLink = new ApolloLink((operation, forward) => {
-			const { apiKey, apiSecret } = this._config.getConfig();
-			console.log(this._config.getConfig(), 'Runtime Gauzy AI Integration Config');
+			const { apiKey, apiSecret } = this._requestConfigProvider.getConfig();
+			console.log(this._requestConfigProvider.getConfig(), 'Runtime Gauzy AI Integration Config');
 
 			// Add your custom headers here
 			const customHeaders = {
@@ -1118,6 +1118,7 @@ export class GauzyAIService {
 				...(apiKey ? { 'X-APP-ID': apiKey } : {}),
 				...(apiSecret ? { 'X-API-KEY': apiSecret } : {}),
 			};
+			console.log('Custom Run Time Headers: %s', customHeaders);
 
 			// Modify the operation context to include the headers
 			operation.setContext(({ headers }) => ({

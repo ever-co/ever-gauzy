@@ -19,7 +19,6 @@ import {
 	InMemStorageProvider,
 	UnleashConfig,
 } from 'unleash-client';
-import { GauzyAIModule } from '@gauzy/integration-ai';
 import { LanguagesEnum } from '@gauzy/contracts';
 import { ConfigService, environment } from '@gauzy/config';
 import * as path from 'path';
@@ -386,8 +385,7 @@ if (environment.sentry && environment.sentry.dsn) {
 		IssueTypeModule,
 		TaskLinkedIssueModule,
 		OrganizationTaskSettingModule,
-		TaskEstimationModule,
-		GauzyAIModule.forRoot()
+		TaskEstimationModule
 	],
 	controllers: [AppController],
 	providers: [

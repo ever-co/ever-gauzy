@@ -5,6 +5,7 @@ import { GauzyAIService } from './gauzy-ai.service';
 import gauzyAI from './config/gauzy-ai';
 import { ConfigurationOptions } from './configuration.interface';
 import { RequestConfigProvider } from './request-config.provider';
+import { GAUZY_AI_CONFIG_OPTIONS } from './constants';
 
 @Module({
 	imports: [
@@ -14,19 +15,22 @@ import { RequestConfigProvider } from './request-config.provider';
 				baseURL: config.get<string>('guazyAI.gauzyAIRESTEndpoint'),
 				timeout: config.get<number>('guazyAI.gauzyAIRequestTimeout'),
 				maxRedirects: 5,
+				headers: {
+					'Content-Type': 'application/json',
+				},
 			}),
 			inject: [ConfigService],
 		}),
-		ConfigModule.forFeature(gauzyAI),
+		ConfigModule.forFeature(gauzyAI), // Make sure to import ConfigModule here
 	],
 	controllers: [],
 	providers: [
 		GauzyAIService,
-		RequestConfigProvider
+		RequestConfigProvider,
 	],
 	exports: [
 		GauzyAIService,
-		RequestConfigProvider
+		RequestConfigProvider,
 	],
 })
 export class GauzyAIModule {
@@ -43,16 +47,18 @@ export class GauzyAIModule {
 			],
 			providers: [
 				{
-					provide: 'CONFIG_OPTIONS',
+					provide: GAUZY_AI_CONFIG_OPTIONS,
 					useFactory: (config: ConfigService): ConfigurationOptions => ({
-						apiKey: config.get('guazyAI.gauzyAiApiKey', ''),
-						apiSecret: config.get('guazyAI.gauzyAiApiSecret', ''),
+						apiKey: config.get('guazyAI.gauzyAiApiKey'),
+						apiSecret: config.get('guazyAI.gauzyAiApiSecret'),
 						...options,
 					}),
 					inject: [ConfigService],
 				},
 			],
-			exports: ['CONFIG_OPTIONS'],
+			exports: [
+				GAUZY_AI_CONFIG_OPTIONS
+			],
 		};
 	}
 }
