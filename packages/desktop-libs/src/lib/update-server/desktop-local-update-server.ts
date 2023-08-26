@@ -15,7 +15,7 @@ export class DesktopLocalUpdateServer implements ILocalUpdateServer {
 		if (this.running) return;
 		try {
 			this._server.start();
-			console.log('👂 Listern to localhost:', this._port);
+			console.log('👂 Listen to localhost:', this._port);
 		} catch (error) {
 			console.log('Error on start update server', error);
 		}
