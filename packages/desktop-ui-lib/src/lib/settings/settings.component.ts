@@ -15,7 +15,7 @@ import { BehaviorSubject, Observable, filter, tap, firstValueFrom, from } from '
 import { AboutComponent } from '../dialogs/about/about.component';
 import { SetupService } from '../setup/setup.service';
 import * as moment from 'moment';
-import { ToastrNotificationService } from '../services';
+import { TimeZoneManager, ToastrNotificationService, ZoneEnum } from '../services';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { AuthStrategy } from '../auth';
 import { LanguagesEnum } from 'packages/contracts/dist';
@@ -405,6 +405,8 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 	muted: boolean;
 
 	delayOptions: number[] = [0.5, 1, 3, 24];
+	zones = TimeZoneManager.zones;
+	selectedZone: ZoneEnum = ZoneEnum.LOCAL;
 
 	private _loading$: BehaviorSubject<boolean>;
 	private _automaticUpdate$: BehaviorSubject<boolean>;
@@ -427,6 +429,7 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 	private _restartDisable$: BehaviorSubject<boolean>;
 	private _isHidden$: BehaviorSubject<boolean>;
 	private _simpleScreenshotNotification$: BehaviorSubject<boolean>;
+	private _timeZoneManager = TimeZoneManager;
 
 	constructor(
 		private electronService: ElectronService,
@@ -514,6 +517,8 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 				this.checkDatabaseConnectivity();
 				this.authSetting = auth;
 				this.mappingAdditionalSetting(additionalSetting || null);
+				this.selectedZone = setting?.zone || ZoneEnum.LOCAL;
+				this._timeZoneManager.changeZone(this.selectedZone);
 				if (!this.isServer && !this.config?.isLocalServer) {
 					await this.checkHostConnectivity();
 				} else {
@@ -775,6 +780,12 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 	selectPeriod(value) {
 		this.selectedPeriod = value;
 		this.updateSetting({ updatePeriod: value }, 'timer');
+	}
+
+	selectZone(value: ZoneEnum) {
+		this._timeZoneManager.changeZone(value);
+		this.updateSetting(value, 'zone');
+		this.electronService.ipcRenderer.send('refresh-timer');
 	}
 
 	toggleNotificationChange(value) {

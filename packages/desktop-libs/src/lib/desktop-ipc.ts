@@ -797,12 +797,12 @@ export function ipcTimer(
 			}
 			await latestScreenshots(timeTrackerWindow);
 			await countIntervalQueue(timeTrackerWindow, false);
-			event.sender.send('timer_tracker_show', {
+			timeTrackerWindow.webContents.send('timer_tracker_show', {
 				...LocalStore.beforeRequestParams(),
 				timeSlotId: lastTime ? lastTime.timeslotId : null
 			});
 		} catch (error) {
-			event.sender.send('timer_tracker_show', {
+			timeTrackerWindow.webContents.send('timer_tracker_show', {
 				...LocalStore.beforeRequestParams(),
 				timeSlotId: null
 			});
