@@ -37,7 +37,9 @@ import {
 	IPathWindow,
 	ReadWriteFile,
 	ServerConfig,
-	IServerConfig
+	IServerConfig,
+	ILocalServer,
+	ReverseProxy
 } from '@gauzy/desktop-libs';
 import {
 	createSetupWindow,
@@ -89,6 +91,7 @@ const pathWindow: IPathWindow = {
 const serverConfig: IServerConfig = new ServerConfig(
 	new ReadWriteFile(pathWindow)
 );
+const reverseProxy: ILocalServer = new ReverseProxy(serverConfig);
 
 /* Load translations */
 TranslateLoader.load(__dirname + '/assets/i18n/');
@@ -423,9 +426,11 @@ ipcMain.on('running_state', (event, arg) => {
 	if (arg) {
 		const start = trayContextMenu[3];
 		start.enabled = false;
+		reverseProxy.start();
 	} else {
 		const stop = trayContextMenu[4];
 		stop.enabled = false;
+		reverseProxy.stop();
 	}
 	tray.setContextMenu(Menu.buildFromTemplate(trayContextMenu));
 	isServerRun = arg;
