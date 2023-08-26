@@ -17,7 +17,6 @@ import {
 	MenuItemConstructorOptions,
 	screen,
 } from 'electron';
-import { environment } from './environments/environment';
 
 // setup logger to catch all unhandled errors and submit as bug reports to our repo
 
@@ -35,12 +34,10 @@ import {
 	DesktopUpdater,
 	TranslateLoader,
 	TranslateService,
-	ApiProxyServer,
-	UiProxyServer,
-	IProxyServer,
 	IPathWindow,
-	ProxyConfig,
-	ReadWriteFile
+	ReadWriteFile,
+	ServerConfig,
+	IServerConfig
 } from '@gauzy/desktop-libs';
 import {
 	createSetupWindow,
@@ -50,7 +47,6 @@ import {
 	createAboutWindow,
 } from '@gauzy/desktop-window';
 import { initSentry } from './sentry';
-import { readFileSync, writeFileSync, accessSync, constants } from 'fs';
 import * as remoteMain from '@electron/remote/main';
 import { autoUpdater } from 'electron-updater';
 remoteMain.initialize();
@@ -90,11 +86,9 @@ const pathWindow: IPathWindow = {
 	timeTrackerUi: path.join(__dirname, 'index.html'),
 };
 
-const uiProxy: IProxyServer = new UiProxyServer(new ProxyConfig());
-const apiProxy: IProxyServer = new ApiProxyServer(
-	new ProxyConfig(new ReadWriteFile(pathWindow))
+const serverConfig: IServerConfig = new ServerConfig(
+	new ReadWriteFile(pathWindow)
 );
-
 
 /* Load translations */
 TranslateLoader.load(__dirname + '/assets/i18n/');
@@ -124,7 +118,7 @@ const runSetup = async () => {
 };
 
 const appState = async () => {
-	const config = LocalStore.getStore('configs');
+	const config = serverConfig.setting;
 	if (!config) {
 		await runSetup();
 		return;
@@ -159,49 +153,11 @@ const runMainWindow = async () => {
 
 const initializeConfig = async (val) => {
 	try {
-		LocalStore.updateConfigSetting(val);
-		updateConfigUi(val);
+		serverConfig.setting = val;
+		serverConfig.update();
 		await runMainWindow();
 	} catch (error) {
 		console.log(error)
-	}
-};
-
-const getApiBaseUrl = (config) => {
-	if (config.serverUrl) return config.serverUrl;
-	else {
-		return config.port
-			? `http://localhost:${config.port}`
-			: `http://localhost:${environment.API_DEFAULT_PORT}`;
-	}
-};
-
-const updateConfigUi = (config) => {
-	const apiBaseUrl = getApiBaseUrl(config);
-	let fileStr = readFileSync(pathWindow.gauzyUi, 'utf8');
-
-	const configStr = `
-		<script> window._env = { api: '${apiBaseUrl}' };
-		if (typeof global === "undefined") {
-			var global = window;
-		}; </script>`;
-
-	const elementToReplace = '</body>';
-
-	fileStr = fileStr.replace(elementToReplace, configStr.concat('\n').concat(elementToReplace));
-
-	// write file new html
-
-	try {
-		accessSync(pathWindow.dir, constants.W_OK);
-	} catch (e) {
-		console.error('Cannot access directory');
-	}
-
-	try {
-		writeFileSync(pathWindow.gauzyUi, fileStr);
-	} catch (error) {
-		console.log('Cannot change html file', error);
 	}
 };
 
@@ -209,7 +165,8 @@ const controller = new AbortController()
 const { signal } = controller;
 const runServer = (isRestart) => {
 	const envVal = getEnvApi();
-	const uiPort = getUiPort();
+	const uiPort = serverConfig.uiPort;
+
 	apiServer(
 		{
 			ui: path.join(__dirname, 'preload', 'ui-server.js'),
@@ -224,8 +181,8 @@ const runServer = (isRestart) => {
 };
 
 const getEnvApi = () => {
-	const config = LocalStore.getStore('configs');
-	updateConfigUi(config);
+	const config = serverConfig.setting;
+	serverConfig.update();
 	const addsConfig = LocalStore.getAdditionalConfig();
 	const provider = config.db;
 	return {
@@ -244,11 +201,6 @@ const getEnvApi = () => {
 	};
 };
 
-const getUiPort = () => {
-	const config = LocalStore.getStore('configs');
-	return config.portUi;
-};
-
 const createTray = () => {
 	const iconNativePath = nativeImage.createFromPath(
 		path.join(__dirname, 'assets', 'icons', 'icon.png')
@@ -265,8 +217,7 @@ const contextMenu = () => {
 			id: 'server_browser',
 			label: TranslateService.instant('MENU.OPEN_GA_BROWSER'),
 			click() {
-				const config = LocalStore.getStore('configs');
-				shell.openExternal(`http://localhost:${config.portUi}`);
+				shell.openExternal(serverConfig.uiUrl);
 			},
 		},
 		{
@@ -342,15 +293,13 @@ ipcMain.on('run_gauzy_server', (event, arg) => {
 });
 
 const stopServer = (isRestart) => {
-	const config = LocalStore.getStore('configs');
+	const config = serverConfig.setting;
 	console.log('api pid', config.apiPid);
 	console.log('api pid', config.uiPid);
 	if (config.apiPid) {
 		try {
 			process.kill(config.apiPid);
-			LocalStore.updateConfigSetting({
-				apiPid: null,
-			});
+			serverConfig.setting = { apiPid: null };
 			serverWindow.webContents.send('log_state', { msg: 'Api stopped' });
 		} catch (error) {
 			console.log('error api', error);
@@ -359,9 +308,7 @@ const stopServer = (isRestart) => {
 	if (config.uiPid) {
 		try {
 			process.kill(config.uiPid);
-			LocalStore.updateConfigSetting({
-				uiPid: null,
-			});
+			serverConfig.setting = { uiPid: null };
 			serverWindow.webContents.send('log_state', { msg: 'UI stopped' });
 			if (isRestart) {
 				runServer(true);
@@ -411,8 +358,8 @@ ipcMain.on('restart_app', (event, arg) => {
 	console.log('Restarting Server', arg);
 	if (arg.apiPid) delete arg.apiPid;
 	if (arg.uiPid) delete arg.uiPid;
-	LocalStore.updateConfigSetting(arg);
-	updateConfigUi(arg);
+	serverConfig.setting = arg;
+	serverConfig.update();
 	event.sender.send('resp_msg', { type: 'update_config', status: 'success' });
 	if (isServerRun) {
 		stopServer(true);
@@ -580,28 +527,3 @@ ipcMain.on('preferred_language_change', (event, arg) => {
 	TranslateService.preferredLanguage = arg;
 	serverWindow?.webContents?.send('preferred_language_change', arg);
 })
-
-
-ipcMain.on('start_proxies', (_, arg) => {
-	const notify = (message: string) => {
-		serverWindow.webContents.send('log_state', { msg: message });
-	};
-
-	apiProxy.start();
-	uiProxy.start();
-
-	notify(uiProxy.message);
-	notify(apiProxy.message);
-
-	uiProxy.onError((error: string) => notify('[UIPROXYERR]' + error));
-	apiProxy.onError((error: string) => notify('[APIPROXYERR]' + error));
-
-	uiProxy.onStop(() => notify(uiProxy.message));
-	apiProxy.onStop(() => notify(apiProxy.message));
-});
-
-
-ipcMain.on('stop_proxies', (_, arg) => {
-	apiProxy.stop();
-	uiProxy.stop();
-});
