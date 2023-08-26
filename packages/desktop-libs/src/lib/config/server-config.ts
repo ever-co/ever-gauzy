@@ -76,8 +76,8 @@ export class ServerConfig implements IServerConfig {
 		if (!!this.setting?.host) {
 			host =
 				this.setting.host.indexOf('http') === 0
-					? `http://${this.setting.host}`
-					: this.setting.host;
+					? this.setting.host
+					: `http://${this.setting.host}`;
 		}
 		return host;
 	}
