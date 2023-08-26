@@ -1016,11 +1016,11 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 		let message = '';
 		switch (arg.type) {
 			case 'update_config':
-				message = 'TIMER_TRACKER.SETTINGS.SERVER_CONFIG_UPDATED';
+				message = 'TIMER_TRACKER.SETTINGS.MESSAGES.SERVER_CONFIG_UPDATED';
 				break;
 			case 'start_server':
 				this._restartDisable$.next(false);
-				message = 'TIMER_TRACKER.SETTINGS.SERVER_RESTARTED';
+				message = 'TIMER_TRACKER.SETTINGS.MESSAGES.SERVER_RESTARTED';
 				break;
 			default:
 				break;
