@@ -183,6 +183,7 @@ $orange: #f56d58;
   .organization-selector,
   .employee-selector,
   .date-selector,
+  .team-selector,
   .project-selector {
     min-width: 300px;
     width: 100%;
@@ -236,6 +237,7 @@ $orange: #f56d58;
 
 .organization-selector,
 .employee-selector,
+.team-selector,
 .project-selector {
   ::ng-deep {
     .ng-select.ng-select-opened.ng-select-bottom > .ng-select-container {
@@ -256,6 +258,7 @@ $orange: #f56d58;
 }
 
 .project-selector,
+.team-selector,
 .employee-selector {
   min-width: 12.5rem;
 }

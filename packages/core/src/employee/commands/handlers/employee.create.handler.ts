@@ -12,7 +12,7 @@ import { AuthService } from '../../../auth/auth.service';
 import { UserOrganizationService } from '../../../user-organization/user-organization.services';
 import { EmployeeService } from '../../employee.service';
 import { EmployeeCreateCommand } from '../employee.create.command';
-import { EmailService } from '../../../email/email.service';
+import { EmailService } from './../../../email-send/email.service';
 import { UserCreateCommand } from './../../../user/commands';
 import { RoleService } from './../../../role/role.service';
 import { UserService } from './../../../user/user.service';
@@ -29,7 +29,7 @@ export class EmployeeCreateHandler
 		private readonly _emailService: EmailService,
 		private readonly _roleService: RoleService,
 		private readonly _userService: UserService
-	) {}
+	) { }
 
 	public async execute(command: EmployeeCreateCommand): Promise<IEmployee> {
 		const { input, originUrl = environment.clientBaseUrl } = command;

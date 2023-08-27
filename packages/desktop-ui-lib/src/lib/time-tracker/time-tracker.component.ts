@@ -51,7 +51,9 @@ import {
 	ErrorHandlerService,
 	NativeNotificationService,
 	ToastrNotificationService,
-	TimeTrackerDateManager
+	TimeTrackerDateManager,
+	ZoneEnum,
+	TimeZoneManager
 } from '../services';
 import { TimeTrackerStatusService } from './time-tracker-status/time-tracker-status.service';
 import { IRemoteTimer } from './time-tracker-status/interfaces';
@@ -184,6 +186,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 	private _isRestartAndUpdate = false;
 	private _isOpenDialog = false;
 	private _dialog: NbDialogRef<any> = null;
+	private _timeZoneManager = TimeZoneManager
 
 	public hasTaskPermission$: BehaviorSubject<boolean> = new BehaviorSubject(false);
 	private get _hasTaskPermission(): boolean {
@@ -430,6 +433,9 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 				this.note = arg.note;
 				this._aw$.next(arg.aw && arg.aw.isAw ? arg.aw.isAw : false);
 				this.appSetting$.next(arg.settings);
+				this._timeZoneManager.changeZone(
+					this.appSetting?.zone || ZoneEnum.LOCAL
+				);
 				const parallelizedTasks = [
 					this.getClient(arg),
 					this.getProjects(arg),

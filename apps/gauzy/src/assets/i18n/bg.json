@@ -149,7 +149,8 @@
 		"LOGOUT": "Изход",
 		"COPY": "Копиране",
 		"CUT": "Изрязване",
-		"PASTE": "Поставяне"
+		"PASTE": "Поставяне",
+		"FORWARD_PORTS": "Препращане на портове"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {
@@ -268,7 +269,8 @@
 			"RU": "Русский (Россия)",
 			"HE": "עברית ישראל",
 			"FR": "Français (France)",
-			"ES": "Español (España)"
+			"ES": "Español (España)",
+			"ZH": "中文 (中国)"
 		},
 		"CURRENT_VALUE": "Current value",
 		"TARGET_VALUE": "Target value",
@@ -598,6 +600,7 @@
 			"SELECT_EXPENSE": "Select Expense",
 			"ADD_TITLE": "Add title",
 			"ALL_PROJECTS": "All Projects",
+			"ALL_TEAMS": "All Teams",
 			"UPWORK_API_KEY": "Upwork API key",
 			"UPWORK_SECRET": "Upwork Secret",
 			"SELECT_COMPANY": "Select Company",
@@ -617,6 +620,7 @@
 			"RECEIPT_TEMPLATE": "Receipt Template",
 			"INVITATION_EXPIRATION": "Invitation Expiration",
 			"ADD_PROJECT": "Add project",
+			"ADD_TEAM": "Add team",
 			"ADD_EMPLOYEE": "Add employee",
 			"ADD_ORGANIZATION": "Add organization",
 			"DRAG_DROP_FILE": "Drag and Drop the file here",
@@ -1060,6 +1064,7 @@
 		"BULGARIAN": "Български",
 		"HEBREW": "Иврит",
 		"RUSSIAN": "Руски",
+		"CHINESE": "китайски",
 		"PREFERRED_LAYOUT": "Layout",
 		"PREFERRED_LAYOUT_TOOLTIP": "This will only set the default layout and not change the layout on each page if you have already changed it once.",
 		"RESET_LAYOUT": "Reset Layout",
@@ -2940,7 +2945,8 @@
 		"SELECT_EMPLOYEE": "Select Employee",
 		"SELECT_A_DATE": "Select A date",
 		"SELECT_AN_ORGANIZATION": "Select An Organization",
-		"SELECT_PROJECT": "Select Project"
+		"SELECT_PROJECT": "Select Project",
+		"SELECT_TEAM": "Select Team"
 	},
 	"HEADER_TITLE": {
 		"FOR": "for",
@@ -3672,7 +3678,8 @@
 			"DB_NAME": "Име на базата данни",
 			"DB_PORT": "Порт на базата данни",
 			"USER": "Потребител",
-			"PASSWORD": "Парола"
+			"PASSWORD": "Парола",
+			"UI_HOSTNAME": "Име на хост на потребителския интерфейс / IP адрес"
 		},
 		"SETTINGS": {
 			"SCREEN_CAPTURE": "Захващане на екран",
@@ -3752,7 +3759,12 @@
 				"SERVER_RESTARTED": "Сървърът бе рестартиран успешно",
 				"CONNECTION_SUCCEEDS": "Установена успешна връзка със сървъра {{ url }}",
 				"DOWNLOADING_UPDATE": "Изтегляне на обновление {{ current }} MB от {{ total }} MB ->> {{ bandwidth }} KB/с"
-			}
+			},
+			"TIMEZONE": "Часова зона",
+			"TIMEZONE_LABEL": "Изборът на 'Local' показва времето във вашата местна часова зона, докато изборът на 'UTC' показва времето в универсалната UTC часова зона, използвана от системите за фактуриране и други.",
+			"TIMEZONE_PLACEHOLDER": "Изберете 'Local' или 'UTC'.",
+			"TIMEZONE_LOCAL": "Местно време",
+			"TIMEZONE_UTC": "UTC"
 		},
 		"WEEKLY_LIMIT_EXCEEDED": "Седмичната лимита е превишена",
 		"OF_HRS": "От {{ limit }} часа",
@@ -4090,7 +4102,8 @@
 			"interviewer-interview-schedule": "Interviewer Schedule",
 			"employee-join": "Employee Join",
 			"email-reset": "Email Reset",
-			"organization-team-join-request": "Organization team join request"
+			"organization-team-join-request": "Organization team join request",
+			"payment-receipt": "Касова бележка"
 		},
 		"HTML_EDITOR": "HTML Editor"
 	},

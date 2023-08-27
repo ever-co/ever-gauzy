@@ -65,6 +65,16 @@ export class OrganizationTeamsService {
 		);
 	}
 
+	getCount(
+		request: IOrganizationTeamFindInput
+	): Promise<number> {
+		return firstValueFrom(
+			this.http.get<number>(`${API_PREFIX}/organization-team/count`, {
+				params: toParams({ ...request })
+			})
+		);
+	}
+
 	getMyTeams(
 		where?: IOrganizationTeamFindInput,
 		relations: string[] = [],
@@ -72,6 +82,17 @@ export class OrganizationTeamsService {
 		return firstValueFrom(
 			this.http.get<IPagination<IOrganizationTeam>>(`${API_PREFIX}/organization-team/me`, {
 				params: toParams({ where, relations })
+			})
+		);
+	}
+
+	getAllByEmployee(
+		id: IOrganizationTeam['id'],
+		where?: IOrganizationTeamFindInput
+	): Promise<IOrganizationTeam[]> {
+		return firstValueFrom(
+			this.http.get<IOrganizationTeam[]>(`${API_PREFIX}/organization-team/employee/${id}`, {
+				params: toParams({ ...where })
 			})
 		);
 	}

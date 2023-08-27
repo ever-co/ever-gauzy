@@ -32,7 +32,8 @@ export class ErrorHandlerService implements ErrorHandler {
 
 		/** Override the AW error message */
 		if (message.includes('localhost:5600/api')) {
-			message = 'ActivityWatch service is not available'
+			console.error('ActivityWatch service is not available');
+			return;
 		}
 
 		this._toastrNotifierService.error(message);

@@ -1,4 +1,4 @@
-import { EmailTemplateNameEnum, IEmailTemplateSaveInput, LanguagesEnum } from "@gauzy/contracts";
+import { EmailTemplateEnum, IEmailTemplateSaveInput, LanguagesEnum } from "@gauzy/contracts";
 import { ApiProperty } from "@nestjs/swagger";
 import { IsEnum, IsNotEmpty, IsString } from "class-validator";
 import { TenantOrganizationBaseDTO } from "../../core/dto";
@@ -11,17 +11,17 @@ export class SaveEmailTemplateDTO extends TenantOrganizationBaseDTO
 
     @ApiProperty({ type: () => String, enum: LanguagesEnum })
     @IsString()
-	readonly languageCode: LanguagesEnum;
+    readonly languageCode: LanguagesEnum;
 
-    @ApiProperty({ type: () => String, enum: EmailTemplateNameEnum })
-    @IsEnum(EmailTemplateNameEnum)
-	readonly name: EmailTemplateNameEnum;
-
-    @ApiProperty({ type: () => String })
-    @IsNotEmpty()
-	readonly mjml: string;
+    @ApiProperty({ type: () => String, enum: EmailTemplateEnum })
+    @IsEnum(EmailTemplateEnum)
+    readonly name: EmailTemplateEnum;
 
     @ApiProperty({ type: () => String })
     @IsNotEmpty()
-	readonly subject: string;
+    readonly mjml: string;
+
+    @ApiProperty({ type: () => String })
+    @IsNotEmpty()
+    readonly subject: string;
 }

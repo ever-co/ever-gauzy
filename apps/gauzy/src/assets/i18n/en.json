@@ -150,7 +150,8 @@
 		"LOGOUT": "Logout",
 		"COPY": "Copy",
 		"CUT": "Cut",
-		"PASTE": "Paste"
+		"PASTE": "Paste",
+		"FORWARD_PORTS": "Forward Ports"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {
@@ -268,7 +269,8 @@
 			"RU": "Русский (Россия)",
 			"HE": "עברית ישראל",
 			"FR": "Français (France)",
-			"ES": "Español (España)"
+			"ES": "Español (España)",
+			"ZH": "中文 (中国)"
 		},
 		"CURRENT_VALUE": "Current value",
 		"TARGET_VALUE": "Target value",
@@ -601,6 +603,7 @@
 			"SELECT_EXPENSE": "Select Expense",
 			"ADD_TITLE": "Add title",
 			"ALL_PROJECTS": "All Projects",
+			"ALL_TEAMS": "All Teams",
 			"UPWORK_API_KEY": "Upwork API key",
 			"UPWORK_SECRET": "Upwork Secret",
 			"GAUZY_API_KEY": "Gauzy AI Key",
@@ -622,6 +625,7 @@
 			"RECEIPT_TEMPLATE": "Receipt Template",
 			"INVITATION_EXPIRATION": "Invitation Expiration",
 			"ADD_PROJECT": "Add project",
+			"ADD_TEAM": "Add team",
 			"ADD_EMPLOYEE": "Add employee",
 			"ADD_ORGANIZATION": "Add organization",
 			"DRAG_DROP_FILE": "Drag and Drop the file here",
@@ -1072,6 +1076,7 @@
 		"BULGARIAN": "Bulgarian",
 		"HEBREW": "Hebrew",
 		"RUSSIAN": "Russian",
+		"CHINESE": "Chinese",
 		"PREFERRED_LAYOUT": "Layout",
 		"PREFERRED_LAYOUT_TOOLTIP": "This will only set the default layout and not change the layout on each page if you have already changed it once.",
 		"RESET_LAYOUT": "Reset Layout",
@@ -2985,7 +2990,8 @@
 		"SELECT_EMPLOYEE": "Select Employee",
 		"SELECT_A_DATE": "Select A date",
 		"SELECT_AN_ORGANIZATION": "Select An Organization",
-		"SELECT_PROJECT": "Select Project"
+		"SELECT_PROJECT": "Select Project",
+		"SELECT_TEAM": "Select Team"
 	},
 	"HEADER_TITLE": {
 		"FOR": "for",
@@ -3727,7 +3733,8 @@
 			"DB_NAME": "Database Name",
 			"DB_PORT": "Database Port",
 			"USER": "User",
-			"PASSWORD": "Password"
+			"PASSWORD": "Password",
+			"UI_HOSTNAME": "UI Hostname / IP Address"
 		},
 		"SETTINGS": {
 			"SCREEN_CAPTURE": "Screen Capture",
@@ -3807,7 +3814,12 @@
 				"SERVER_RESTARTED": "Server Restarted Successfully",
 				"CONNECTION_SUCCEEDS": "Connection to Server {{ url }} Succeeds",
 				"DOWNLOADING_UPDATE": "Downloading update {{ current }} MB of {{ total }} MB ->> {{ bandwidth }} KB/s"
-			}
+			},
+			"TIMEZONE": "Time Zone",
+			"TIMEZONE_LABEL": "Choosing 'Local' displays time in your local time zone, while selecting 'UTC' shows time in the universal UTC timezone used by billing and other systems.",
+			"TIMEZONE_PLACEHOLDER": "Select either 'Local' or 'UTC'.",
+			"TIMEZONE_LOCAL": "Local",
+			"TIMEZONE_UTC": "UTC"
 		},
 		"WEEKLY_LIMIT_EXCEEDED": "Weekly limit exceeded",
 		"OF_HRS": "Of {{ limit }} hrs",
@@ -4148,7 +4160,8 @@
 			"interviewer-interview-schedule": "Interviewer Schedule",
 			"employee-join": "Employee Join",
 			"email-reset": "Email Reset",
-			"organization-team-join-request": "Organization team join request"
+			"organization-team-join-request": "Organization team join request",
+			"payment-receipt": "Payment Receipt"
 		},
 		"HTML_EDITOR": "HTML Editor"
 	},

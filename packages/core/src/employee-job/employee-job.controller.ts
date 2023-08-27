@@ -26,7 +26,7 @@ import { EmployeeJobPost } from './employee-job.entity';
 export class EmployeeJobPostController {
 	constructor(
 		private readonly employeeJobPostService: EmployeeJobPostService
-	) {}
+	) { }
 
 	@ApiOperation({ summary: 'Find all employee job posts' })
 	@ApiResponse({

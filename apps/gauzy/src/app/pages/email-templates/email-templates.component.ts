@@ -9,7 +9,7 @@ import {
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import {
-	EmailTemplateNameEnum,
+	EmailTemplateEnum,
 	IOrganization,
 	LanguagesEnum
 } from '@gauzy/contracts';
@@ -36,7 +36,7 @@ import { TranslationBaseComponent } from '../../@shared/language-base/translatio
 export class EmailTemplatesComponent extends TranslationBaseComponent
 	implements OnInit, AfterViewInit, OnDestroy {
 
-	templates: string[] = Object.values(EmailTemplateNameEnum);
+	templates: string[] = Object.values(EmailTemplateEnum);
 	subject$: Subject<any> = new Subject();
 
 	public previewEmail: SafeHtml;
@@ -49,7 +49,7 @@ export class EmailTemplatesComponent extends TranslationBaseComponent
 	readonly form: FormGroup = EmailTemplatesComponent.buildForm(this.fb);
 	static buildForm(fb: FormBuilder): FormGroup {
 		return fb.group({
-			name: [EmailTemplateNameEnum.WELCOME_USER],
+			name: [EmailTemplateEnum.WELCOME_USER],
 			languageCode: [LanguagesEnum.ENGLISH],
 			subject: [null, [Validators.required, Validators.maxLength(60)]],
 			mjml: [null, Validators.required]
@@ -143,7 +143,7 @@ export class EmailTemplatesComponent extends TranslationBaseComponent
 			const { id: organizationId } = this.organization;
 			const {
 				languageCode = LanguagesEnum.ENGLISH,
-				name = EmailTemplateNameEnum.WELCOME_USER
+				name = EmailTemplateEnum.WELCOME_USER
 			} = this.form.getRawValue();
 			const result = await this.emailTemplateService.getTemplate({
 				languageCode,
@@ -221,5 +221,5 @@ export class EmailTemplatesComponent extends TranslationBaseComponent
 		}
 	}
 
-	ngOnDestroy(): void {}
+	ngOnDestroy(): void { }
 }

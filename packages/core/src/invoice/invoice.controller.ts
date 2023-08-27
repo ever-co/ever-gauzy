@@ -157,7 +157,7 @@ export class InvoiceController extends CrudController<Invoice> {
 	})
 	@HttpCode(HttpStatus.CREATED)
 	@Post()
-	@UsePipes(new ValidationPipe({ transform : true }))
+	@UsePipes(new ValidationPipe({ transform: true }))
 	async create(
 		@Body() entity: CreateInvoiceDTO
 	): Promise<Invoice> {
@@ -189,7 +189,7 @@ export class InvoiceController extends CrudController<Invoice> {
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
 	@Put(':id')
-	@UsePipes(new ValidationPipe({ transform : true }))
+	@UsePipes(new ValidationPipe({ transform: true }))
 	async update(
 		@Param('id', UUIDValidationPipe) id: IInvoice['id'],
 		@Body() entity: UpdateInvoiceDTO
@@ -226,7 +226,7 @@ export class InvoiceController extends CrudController<Invoice> {
 	async updateEstimate(
 		@Param('id', UUIDValidationPipe) id: IInvoice['id'],
 		@Body() entity: UpdateEstimateInvoiceDTO
-	){
+	) {
 		return await this.commandBus.execute(
 			new InvoiceUpdateCommand({ id, ...entity })
 		);
@@ -259,7 +259,7 @@ export class InvoiceController extends CrudController<Invoice> {
 	async updateAction(
 		@Param('id', UUIDValidationPipe) id: IInvoice['id'],
 		@Body() entity: UpdateInvoiceActionDTO
-	){
+	) {
 		return await this.commandBus.execute(
 			new InvoiceUpdateCommand({ id, ...entity })
 		);
@@ -280,14 +280,14 @@ export class InvoiceController extends CrudController<Invoice> {
 		@Param('email') email: string,
 		@Body() body: any,
 		@I18nLang() languageCode: LanguagesEnum,
-		@Headers('origin') originalUrl: string
+		@Headers('origin') origin: string
 	): Promise<any> {
 		return this.commandBus.execute(
 			new InvoiceSendEmailCommand(
 				languageCode,
 				email,
 				body.params,
-				originalUrl
+				origin
 			)
 		);
 	}

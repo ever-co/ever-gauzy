@@ -1,3 +1,4 @@
+import { IBasePerTenantAndOrganizationEntityModel } from './base-entity.model';
 import { IEmployee } from './employee.model';
 
 export interface IGetEmployeeJobPostInput {
@@ -41,7 +42,7 @@ export interface IEmployeeJobsStatistics {
 	appliedJobs: number;
 }
 
-export interface IGetEmployeeJobPostFilters {
+export interface IGetEmployeeJobPostFilters extends IBasePerTenantAndOrganizationEntityModel {
 	title?: string;
 	employeeIds?: string[];
 	budget?: string[];

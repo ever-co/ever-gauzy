@@ -27,12 +27,13 @@ import {
 import * as moment from 'moment';
 import { TenantAwareCrudService } from './../core/crud';
 import { generateRandomInteger } from './../core/utils';
-import { EmailService } from './../email/email.service';
+import { RequestContext } from './../core/context';
+import { OrganizationTeamEmployee, User } from './../core/entities/internal';
+import { EmailService } from './../email-send/email.service';
 import { OrganizationTeamJoinRequest } from './organization-team-join-request.entity';
 import { OrganizationTeamService } from './../organization-team/organization-team.service';
-import { OrganizationTeamEmployee, RequestContext, User } from 'core';
-import { InviteService } from '../invite/invite.service';
-import { RoleService } from 'role/role.service';
+import { InviteService } from './../invite/invite.service';
+import { RoleService } from './../role/role.service';
 
 @Injectable()
 export class OrganizationTeamJoinRequestService extends TenantAwareCrudService<OrganizationTeamJoinRequest> {
@@ -323,7 +324,7 @@ export class OrganizationTeamJoinRequestService extends TenantAwareCrudService<O
 								id: request.organizationTeamId,
 							}
 						);
-				} catch (error) {}
+				} catch (error) { }
 
 				/**
 				 * Add employee to team

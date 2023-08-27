@@ -1,4 +1,3 @@
-// import * as _ from 'underscore';
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { HttpService } from '@nestjs/axios';
@@ -22,11 +21,12 @@ import {
 	ApolloClient,
 	ApolloQueryResult,
 	NormalizedCacheObject,
-	HttpLink,
 	InMemoryCache,
 	DefaultOptions,
-	NetworkStatus,
+	// NetworkStatus,
 	gql,
+	createHttpLink,
+	ApolloLink,
 } from '@apollo/client/core';
 import {
 	IEmployeeUpworkJobsSearchCriterion,
@@ -44,6 +44,7 @@ import {
 	JobPostTypeEnum,
 	IEmployeeJobsStatistics,
 } from '@gauzy/contracts';
+import { RequestConfigProvider } from './request-config.provider';
 
 @Injectable()
 export class GauzyAIService {
@@ -69,8 +70,9 @@ export class GauzyAIService {
 	private gauzyAIGraphQLEndpoint: string;
 
 	constructor(
+		private readonly _config: RequestConfigProvider,
 		private readonly _configService: ConfigService,
-		private readonly _http: HttpService
+		private readonly _http: HttpService,
 	) {
 		this.init();
 	}
@@ -718,12 +720,7 @@ export class GauzyAIService {
 			return null;
 		}
 
-		console.log(`getEmployeesJobPosts. Data ${JSON.stringify(data)}`);
-
-		const filters: IGetEmployeeJobPostFilters = data.filters
-			? <any>data.filters
-			: undefined;
-
+		const filters: IGetEmployeeJobPostFilters = data.filters ? <any>data.filters : undefined;
 		console.log(`getEmployeesJobPosts. Filters ${JSON.stringify(filters)}`);
 
 		const employeeIdFilter =
@@ -963,8 +960,6 @@ export class GauzyAIService {
 				total: totalCount,
 			};
 
-			// console.log(`Found Records: ${JSON.stringify(response)}`);
-
 			return response;
 		} catch (err) {
 			this._logger.error(err);
@@ -1108,16 +1103,42 @@ export class GauzyAIService {
 	}
 
 	private initClient() {
+		// Create a custom ApolloLink to modify headers
+		const authLink = new ApolloLink((operation, forward) => {
+			const { apiKey, apiSecret } = this._config.getConfig();
+			console.log(this._config.getConfig(), 'Runtime Gauzy AI Integration Config');
+
+			// Add your custom headers here
+			const customHeaders = {
+				'Content-Type': 'application/json',
+				// Set your initial headers here
+				'X-APP-ID': this._configService.get<string>('guazyAI.gauzyAiApiKey', ''),
+				'X-API-KEY': this._configService.get<string>('guazyAI.gauzyAiApiSecret', ''),
+
+				...(apiKey ? { 'X-APP-ID': apiKey } : {}),
+				...(apiSecret ? { 'X-API-KEY': apiSecret } : {}),
+			};
+
+			// Modify the operation context to include the headers
+			operation.setContext(({ headers }) => ({
+				headers: {
+					...headers,
+					...customHeaders,
+				},
+			}));
+			// Call the next link in the chain
+			return forward(operation);
+		});
+
+		/** */
+		const httpLink = createHttpLink({
+			uri: this.gauzyAIGraphQLEndpoint,
+			fetch
+		});
+
 		this._client = new ApolloClient({
 			typeDefs: EmployeeJobPostsDocument,
-			link: new HttpLink({
-				uri: this.gauzyAIGraphQLEndpoint,
-				fetch,
-				headers: {
-					'X-APP-ID': this._configService.get<string>('guazyAI.gauzyAiApiKey', ''),
-					'X-API-KEY': this._configService.get<string>('guazyAI.gauzyAiApiSecret', '')
-				},
-			}),
+			link: authLink.concat(httpLink),
 			cache: new InMemoryCache(),
 			defaultOptions: this.defaultOptions,
 		});
@@ -1125,64 +1146,52 @@ export class GauzyAIService {
 
 	private init() {
 		try {
-			const gauzyAIRESTEndpoint = this._configService.get<string>(
-				'guazyAI.gauzyAIRESTEndpoint'
-			);
+			const gauzyAIRESTEndpoint = this._configService.get<string>('guazyAI.gauzyAIRESTEndpoint');
 
-			console.log(
-				chalk.magenta(`GauzyAI REST Endpoint: ${gauzyAIRESTEndpoint}`)
-			);
+			console.log(chalk.magenta(`GauzyAI REST Endpoint: ${gauzyAIRESTEndpoint}`));
 
-			this.gauzyAIGraphQLEndpoint = this._configService.get<string>(
-				'guazyAI.gauzyAIGraphQLEndpoint'
-			);
+			this.gauzyAIGraphQLEndpoint = this._configService.get<string>('guazyAI.gauzyAIGraphQLEndpoint');
 
-			console.log(
-				chalk.magenta(
-					`GauzyAI GraphQL Endpoint: ${this.gauzyAIGraphQLEndpoint}`
-				)
-			);
+			console.log(chalk.magenta(`GauzyAI GraphQL Endpoint: ${this.gauzyAIGraphQLEndpoint}`));
 
 			if (this.gauzyAIGraphQLEndpoint && gauzyAIRESTEndpoint) {
-				this._logger.log(
-					'Gauzy AI Endpoints (GraphQL & REST) are configured in the environment'
-				);
+				this._logger.log('Gauzy AI Endpoints (GraphQL & REST) are configured in the environment');
 
 				this.initClient();
 
-				const testConnectionQuery = async () => {
-					try {
-						const employeesQuery: DocumentNode<EmployeeQuery> = gql`
-							query employee {
-								employees {
-									edges {
-										node {
-											id
-										}
-									}
-									totalCount
-								}
-							}
-						`;
+				// const testConnectionQuery = async () => {
+				// 	try {
+				// 		const employeesQuery: DocumentNode<EmployeeQuery> = gql`
+				// 			query employee {
+				// 				employees {
+				// 					edges {
+				// 						node {
+				// 							id
+				// 						}
+				// 					}
+				// 					totalCount
+				// 				}
+				// 			}
+				// 		`;
 
-						const employeesQueryResult: ApolloQueryResult<EmployeeQuery> =
-							await this._client.query<EmployeeQuery>({
-								query: employeesQuery,
-							});
+				// 		const employeesQueryResult: ApolloQueryResult<EmployeeQuery> =
+				// 			await this._client.query<EmployeeQuery>({
+				// 				query: employeesQuery,
+				// 			});
 
-						if (
-							employeesQueryResult.networkStatus ===
-							NetworkStatus.error
-						) {
-							this._client = null;
-						}
-					} catch (err) {
-						this._logger.error(err);
-						this._client = null;
-					}
-				};
+				// 		if (
+				// 			employeesQueryResult.networkStatus ===
+				// 			NetworkStatus.error
+				// 		) {
+				// 			this._client = null;
+				// 		}
+				// 	} catch (err) {
+				// 		this._logger.error(err);
+				// 		this._client = null;
+				// 	}
+				// };
 
-				testConnectionQuery();
+				// testConnectionQuery();
 			} else {
 				this._logger.warn(
 					'Gauzy AI Endpoints are not configured in the environment'

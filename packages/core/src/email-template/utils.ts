@@ -5,7 +5,7 @@ import * as mjml2html from 'mjml';
 import { v4 as uuidV4 } from 'uuid';
 import * as chalk from 'chalk';
 import * as moment from 'moment';
-import { EmailTemplateNameEnum } from '@gauzy/contracts';
+import { EmailTemplateEnum } from '@gauzy/contracts';
 import { isNotEmpty } from "@gauzy/common";
 
 /**
@@ -28,7 +28,7 @@ export class EmailTemplateUtils {
      */
     public static async migrateEmailTemplates(
         queryRunner: QueryRunner,
-        folder: EmailTemplateNameEnum
+        folder: EmailTemplateEnum
     ): Promise<void> {
         const templatePath = path.join(path.join(__dirname), '../', ...EmailTemplateUtils.globalPath);
 

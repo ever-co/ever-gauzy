@@ -5,6 +5,7 @@ import { EmployeeJobPostService } from './employee-job.service';
 import { EmployeeJobPostController } from './employee-job.controller';
 import { EmployeeModule } from './../employee/employee.module';
 import { CountryModule } from './../country/country.module';
+import { IntegrationTenantModule } from './../integration-tenant/integration-tenant.module';
 
 @Module({
 	imports: [
@@ -13,7 +14,8 @@ import { CountryModule } from './../country/country.module';
 		]),
 		CountryModule,
 		EmployeeModule,
-		GauzyAIModule
+		IntegrationTenantModule,
+		GauzyAIModule.forRoot()
 	],
 	controllers: [EmployeeJobPostController],
 	providers: [EmployeeJobPostService],

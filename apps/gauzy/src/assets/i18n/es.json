@@ -149,7 +149,8 @@
 		"LOGOUT": "Cerrar Sesión",
 		"COPY": "Copiar",
 		"CUT": "Cortar",
-		"PASTE": "Pegar"
+		"PASTE": "Pegar",
+		"FORWARD_PORTS": "Reenviar puertos"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {
@@ -267,7 +268,8 @@
 			"RU": "Русский (Россия)",
 			"HE": "עברית ישראל",
 			"FR": "Français (France)",
-			"ES": "Español (España)"
+			"ES": "Español (España)",
+			"ZH": "中文 (中国)"
 		},
 		"CURRENT_VALUE": "Current value",
 		"TARGET_VALUE": "Target value",
@@ -600,6 +602,7 @@
 			"SELECT_EXPENSE": "Select Expense",
 			"ADD_TITLE": "Add title",
 			"ALL_PROJECTS": "All Projects",
+			"ALL_TEAMS": "All Teams",
 			"UPWORK_API_KEY": "Upwork API key",
 			"UPWORK_SECRET": "Upwork Secret",
 			"SELECT_COMPANY": "Select Company",
@@ -619,6 +622,7 @@
 			"RECEIPT_TEMPLATE": "Receipt Template",
 			"INVITATION_EXPIRATION": "Invitation Expiration",
 			"ADD_PROJECT": "Agregar proyecto",
+			"ADD_TEAM": "Agregar equipo",
 			"ADD_EMPLOYEE": "Add employee",
 			"ADD_ORGANIZATION": "Add organization",
 			"DRAG_DROP_FILE": "Drag and Drop the file here",
@@ -2951,7 +2955,8 @@
 		"SELECT_EMPLOYEE": "Select Employee",
 		"SELECT_A_DATE": "Select A date",
 		"SELECT_AN_ORGANIZATION": "Select An Organization",
-		"SELECT_PROJECT": "Select Project"
+		"SELECT_PROJECT": "Select Project",
+		"SELECT_TEAM": "Select Team"
 	},
 	"HEADER_TITLE": {
 		"FOR": "for",
@@ -3692,7 +3697,8 @@
 			"DB_NAME": "Nombre de la Base de Datos",
 			"DB_PORT": "Puerto de la Base de Datos",
 			"USER": "Usuario",
-			"PASSWORD": "Contraseña"
+			"PASSWORD": "Contraseña",
+			"UI_HOSTNAME": "Nombre de host de IU / Dirección IP"
 		},
 		"SETTINGS": {
 			"SCREEN_CAPTURE": "Captura de pantalla",
@@ -3772,7 +3778,12 @@
 				"SERVER_RESTARTED": "Servidor reiniciado correctamente",
 				"CONNECTION_SUCCEEDS": "Conexión al servidor {{ url }} exitosa",
 				"DOWNLOADING_UPDATE": "Descargando actualización {{ current }} MB de {{ total }} MB ->> {{ bandwidth }} KB/s"
-			}
+			},
+			"TIMEZONE": "Zona Horaria",
+			"TIMEZONE_LABEL": "Seleccionar 'Local' muestra la hora en tu zona horaria local, mientras que seleccionar 'UTC' muestra la hora en la zona horaria universal UTC utilizada por sistemas de facturación y otros sistemas.",
+			"TIMEZONE_PLACEHOLDER": "Selecciona 'Local' o 'UTC'.",
+			"TIMEZONE_LOCAL": "Local",
+			"TIMEZONE_UTC": "UTC"
 		},
 		"WEEKLY_LIMIT_EXCEEDED": "Límite semanal excedido",
 		"OF_HRS": "De {{ limit }} horas",
@@ -4113,7 +4124,8 @@
 			"interviewer-interview-schedule": "Interviewer Schedule",
 			"employee-join": "Employee Join",
 			"email-reset": "Email Reset",
-			"organization-team-join-request": "Organization team join request"
+			"organization-team-join-request": "Organization team join request",
+			"payment-receipt": "Payment Receipt"
 		},
 		"HTML_EDITOR": "HTML Editor"
 	},

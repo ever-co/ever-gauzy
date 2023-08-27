@@ -578,12 +578,21 @@ export class SearchComponent extends PaginationFilterBaseComponent implements On
 			const { activePage, itemsPerPage } = this.getPagination();
 			const { title, jobSource, jobType, jobStatus, budget } = this.form.value;
 			const { startDate, endDate } = getAdjustDateRangeFutureAllowed(this.selectedDateRange);
+			const { id: organizationId } = this.organization;
 
 			/**
 			 * Set header selectors filters configuration
 			 */
 			this.smartTableSource.setFilter(
 				[
+					...(isNotEmpty(organizationId)
+						? [
+							{
+								field: 'organizationId',
+								search: organizationId
+							}
+						]
+						: []),
 					...(isNotEmpty(this.selectedEmployee)
 						? [
 							{
@@ -592,6 +601,7 @@ export class SearchComponent extends PaginationFilterBaseComponent implements On
 							}
 						]
 						: []),
+
 					...(startDate && endDate
 						? [
 							{

@@ -36,7 +36,7 @@ import {
 	Currency,
 	CustomSmtp,
 	Deal,
-	Email,
+	EmailHistory,
 	EmailTemplate,
 	Employee,
 	EmployeeAppointment,
@@ -230,8 +230,8 @@ export class ExportService implements OnModuleInit {
 		@InjectRepository(Deal)
 		private readonly dealRepository: Repository<Deal>,
 
-		@InjectRepository(Email)
-		private readonly emailRepository: Repository<Email>,
+		@InjectRepository(EmailHistory)
+		private readonly emailHistoryRepository: Repository<EmailHistory>,
 
 		@InjectRepository(EmailTemplate)
 		private readonly emailTemplateRepository: Repository<EmailTemplate>,
@@ -988,7 +988,7 @@ export class ExportService implements OnModuleInit {
 				repository: this.dealRepository
 			},
 			{
-				repository: this.emailRepository
+				repository: this.emailHistoryRepository
 			},
 			{
 				repository: this.emailTemplateRepository

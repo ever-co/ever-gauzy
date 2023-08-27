@@ -46,7 +46,7 @@ import { PaginationParams, TenantAwareCrudService } from './../core/crud';
 import { RequestContext } from './../core/context';
 import { freshTimestamp, generateRandomInteger } from './../core/utils';
 import { Invite } from './invite.entity';
-import { EmailService } from '../email/email.service';
+import { EmailService } from './../email-send/email.service';
 import { UserService } from '../user/user.service';
 import { RoleService } from './../role/role.service';
 import { OrganizationService } from './../organization/organization.service';
@@ -201,22 +201,22 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 		const { items: existedInvites } = await this.findAll({
 			...(isNotEmpty(teamIds)
 				? {
-						relations: {
-							teams: true,
-						},
-				  }
+					relations: {
+						teams: true,
+					},
+				}
 				: {}),
 			where: {
 				tenantId: RequestContext.currentTenantId(),
 				...(isNotEmpty(organizationId)
 					? {
-							organizationId,
-					  }
+						organizationId,
+					}
 					: {}),
 				...(isNotEmpty(emailIds)
 					? {
-							email: In(emailIds),
-					  }
+						email: In(emailIds),
+					}
 					: {}),
 			},
 		});
@@ -563,8 +563,8 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 							status: InviteStatusEnum.INVITED,
 							...(payload['code']
 								? {
-										code: payload['code'],
-								  }
+									code: payload['code'],
+								}
 								: {}),
 						});
 						qb.andWhere([
@@ -645,18 +645,18 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 			return await super.findAll({
 				...(options && options.skip
 					? {
-							skip: options.take * (options.skip - 1),
-					  }
+						skip: options.take * (options.skip - 1),
+					}
 					: {}),
 				...(options && options.take
 					? {
-							take: options.take,
-					  }
+						take: options.take,
+					}
 					: {}),
 				...(options && options.relations
 					? {
-							relations: options.relations,
-					  }
+						relations: options.relations,
+					}
 					: {}),
 				where: {
 					tenantId: RequestContext.currentTenantId(),
@@ -666,15 +666,15 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 					...(isNotEmpty(options) && isNotEmpty(options.where)
 						? isNotEmpty(options.where.role)
 							? {
-									role: {
-										...options.where.role,
-									},
-							  }
+								role: {
+									...options.where.role,
+								},
+							}
 							: {
-									role: {
-										name: Not(RolesEnum.EMPLOYEE),
-									},
-							  }
+								role: {
+									name: Not(RolesEnum.EMPLOYEE),
+								},
+							}
 						: {}),
 					/**
 					 * Organization invites filter by specific projects
@@ -682,10 +682,10 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 					...(isNotEmpty(options) && isNotEmpty(options.where)
 						? isNotEmpty(options.where.projects)
 							? {
-									projects: {
-										id: In(options.where.projects.id),
-									},
-							  }
+								projects: {
+									id: In(options.where.projects.id),
+								},
+							}
 							: {}
 						: {}),
 					/**
@@ -694,10 +694,10 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 					...(isNotEmpty(options) && isNotEmpty(options.where)
 						? isNotEmpty(options.where.teams)
 							? {
-									teams: {
-										id: In(options.where.teams.id),
-									},
-							  }
+								teams: {
+									id: In(options.where.teams.id),
+								},
+							}
 							: {}
 						: {}),
 				},
@@ -952,10 +952,10 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 			tenant,
 			...(input.password
 				? {
-						hash: await this.authService.getPasswordHash(
-							input.password
-						),
-				  }
+					hash: await this.authService.getPasswordHash(
+						input.password
+					),
+				}
 				: {}),
 		});
 		const entity = await this.userRepository.save(create);
@@ -966,8 +966,8 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 		await this.userRepository.update(entity.id, {
 			...(input.inviteId
 				? {
-						emailVerifiedAt: freshTimestamp(),
-				  }
+					emailVerifiedAt: freshTimestamp(),
+				}
 				: {}),
 		});
 
