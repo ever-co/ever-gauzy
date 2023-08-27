@@ -887,6 +887,34 @@
 													>
 														<p>
 															{{
+																'TIMER_TRACKER.SETUP.UI_HOSTNAME'
+																	| translate
+															}}
+														</p>
+													</div>
+													<div
+														class="col-7 form-group"
+														*ngIf="isServer"
+													>
+														<input
+															[(ngModel)]="
+																config.host
+															"
+															type="text"
+															nbInput
+															fullWidth
+															[disabled]="
+																appSetting?.timerStarted
+															"
+															status="basic"
+														/>
+													</div>
+													<div
+														class="col-5 centered-text"
+														*ngIf="isServer"
+													>
+														<p>
+															{{
 																'TIMER_TRACKER.SETTINGS.UI_PORT'
 																	| translate
 															}}

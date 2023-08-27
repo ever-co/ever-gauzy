@@ -1,8 +1,8 @@
   .button-big {
     font-size: 14px;
     font-weight: 600;
-    height: 28px;
-    width: 94px;
+    height: 32px;
+    width: auto;
   }
 
   .button-small {
@@ -52,6 +52,7 @@
     color: white;
     font-size: 11px;
     text-align: left;
+	border-radius: 0 0 var(--border-radius) var(--border-radius) !important;
   }
 
   .log-content {

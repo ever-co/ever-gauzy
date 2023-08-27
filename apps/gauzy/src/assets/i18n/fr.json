@@ -149,7 +149,8 @@
 		"LOGOUT": "Déconnexion",
 		"COPY": "Copier",
 		"CUT": "Couper",
-		"PASTE": "Coller"
+		"PASTE": "Coller",
+		"FORWARD_PORTS": "Transférer les ports"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {
@@ -3695,7 +3696,8 @@
 			"DB_NAME": "Nom de la base de données",
 			"DB_PORT": "Port de la base de données",
 			"USER": "Utilisateur",
-			"PASSWORD": "Mot de passe"
+			"PASSWORD": "Mot de passe",
+			"UI_HOSTNAME": "Nom d'hôte/Adresse IP"
 		},
 		"SETTINGS": {
 			"SCREEN_CAPTURE": "Capture d'écran",

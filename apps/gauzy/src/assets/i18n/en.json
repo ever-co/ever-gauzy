@@ -150,7 +150,8 @@
 		"LOGOUT": "Logout",
 		"COPY": "Copy",
 		"CUT": "Cut",
-		"PASTE": "Paste"
+		"PASTE": "Paste",
+		"FORWARD_PORTS": "Forward Ports"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {
@@ -3730,7 +3731,8 @@
 			"DB_NAME": "Database Name",
 			"DB_PORT": "Database Port",
 			"USER": "User",
-			"PASSWORD": "Password"
+			"PASSWORD": "Password",
+			"UI_HOSTNAME": "UI Hostname / IP Address"
 		},
 		"SETTINGS": {
 			"SCREEN_CAPTURE": "Screen Capture",

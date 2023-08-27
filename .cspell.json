@@ -283,7 +283,8 @@
 		"gitmodules",
 		"sqlserver",
 		"pdfmaker",
-		"Pdfmaker"
+		"Pdfmaker",
+		"prestart"
 	],
 	"useGitignore": true,
 	"ignorePaths": [

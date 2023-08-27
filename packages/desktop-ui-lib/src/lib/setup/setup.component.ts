@@ -12,6 +12,7 @@ import { AlertComponent } from '../../lib/dialogs/alert/alert.component';
 import { ElectronService, LoggerService } from '../electron/services';
 import { ErrorHandlerService, Store } from '../services';
 import { LanguageSelectorComponent } from '../language/language-selector.component';
+import { TranslateService } from '@ngx-translate/core';
 
 @Component({
 	selector: 'ngx-setup',
@@ -31,6 +32,7 @@ export class SetupComponent implements OnInit {
 		private electronService: ElectronService,
 		private _errorHandlerService: ErrorHandlerService,
 		private _loggerServer: LoggerService,
+		private _translateService: TranslateService,
 		private _store: Store
 	) {
 		electronService.ipcRenderer.on('setup-data', (event, arg) => {
@@ -125,6 +127,7 @@ export class SetupComponent implements OnInit {
 		integrated: {
 			port: '3000',
 			portUi: '4200',
+			host: '0.0.0.0'
 		},
 		custom: {
 			apiHost: '127.0.0.1',
@@ -183,7 +186,7 @@ export class SetupComponent implements OnInit {
 	];
 
 	dialogData: any = {
-		title: 'Success',
+		title: 'TOASTR.TITLE.SUCCESS',
 		message: '',
 		status: 'success',
 	};
@@ -420,8 +423,11 @@ export class SetupComponent implements OnInit {
 					await this.saveAndRun();
 				} else {
 					this.dialogData = {
-						title: 'Success',
-						message: `Connection to Server ${serverHostOptions.serverUrl} Succeeds`,
+						title: 'TOASTR.TITLE.SUCCESS',
+						message: this._translateService.instant(
+							'TIMER_TRACKER.SETTINGS.MESSAGES.CONNECTION_SUCCEEDS',
+							{ url: serverHostOptions.serverUrl }
+						),
 						status: 'success',
 					};
 					const elBtn: HTMLElement = this.btnDialogOpen.nativeElement;
@@ -431,7 +437,7 @@ export class SetupComponent implements OnInit {
 			})
 			.catch((e) => {
 				this.dialogData = {
-					title: 'Error',
+					title: 'TOASTR.TITLE.ERROR',
 					message: e.message,
 					status: 'danger',
 				};
@@ -470,16 +476,15 @@ export class SetupComponent implements OnInit {
 		this.welcomeText();
 		this.electronService.ipcRenderer.on('database_status', (event, arg) => {
 			// this.open(true);
-			// this._cdr.detectChanges();
 			if (arg.status) {
 				this.dialogData = {
-					title: 'Success',
+					title: 'TOASTR.TITLE.SUCCESS',
 					message: arg.message,
 					status: 'success',
 				};
 			} else {
 				this.dialogData = {
-					title: 'Warning',
+					title: 'TOASTR.TITLE.WARNING',
 					message: arg.message,
 					status: 'danger',
 				};
@@ -493,6 +498,7 @@ export class SetupComponent implements OnInit {
 			}
 			this.isSaving = false;
 			this.isCheckConnection = false;
+			this._cdr.detectChanges();
 		});
 		this.validation();
 	}

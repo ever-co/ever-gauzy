@@ -149,7 +149,8 @@
 		"LOGOUT": "התנתקות",
 		"COPY": "העתקה",
 		"CUT": "גזירה",
-		"PASTE": "הדבקה"
+		"PASTE": "הדבקה",
+		"FORWARD_PORTS": "העברת פורטים"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {
@@ -3674,7 +3675,8 @@
 			"DB_NAME": "שם מסד נתונים",
 			"DB_PORT": "פורט מסד נתונים",
 			"USER": "משתמש",
-			"PASSWORD": "סיסמה"
+			"PASSWORD": "סיסמה",
+			"UI_HOSTNAME": "שם מארח יישום ממשק משתמש / כתובת IP"
 		},
 		"SETTINGS": {
 			"SCREEN_CAPTURE": "לכידת מסך",
