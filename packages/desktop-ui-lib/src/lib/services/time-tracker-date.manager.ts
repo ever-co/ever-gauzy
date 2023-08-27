@@ -20,21 +20,20 @@ export class TimeTrackerDateManager {
 	private static get _startWeekDayNumber(): number {
 		return moment()
 			.day(this.organization?.startWeekOn || 'Monday')
-			.weekday();
+			.isoWeekday();
 	}
 
 	public static get startWeek(): string {
 		return moment()
 			.startOf('week')
-			.add(this._startWeekDayNumber, 'day')
 			.subtract(this.utcOffset, 'minutes')
 			.format('YYYY-MM-DD HH:mm:ss');
 	}
 
 	public static get endWeek(): string {
-		return moment(this.startWeek)
-			.add('7', 'days')
-			.subtract('1', 'millisecond')
+		return moment()
+			.endOf('week')
+			.subtract(this.utcOffset, 'minutes')
 			.format('YYYY-MM-DD HH:mm:ss');
 	}
 
@@ -62,9 +61,20 @@ export class TimeTrackerDateManager {
 
 	public static set organization(value: IOrganization) {
 		this.instance._organization = value;
+		// Set the start of the week when organization's change
+		this._instance.startWeekDay();
 	}
 
 	public static set utcOffset(value: number) {
 		this.instance._utcOffset = value;
+	}
+
+	// Set the start of the week
+	private startWeekDay() {
+		moment.locale('en', {
+			week: {
+				dow: TimeTrackerDateManager._startWeekDayNumber,
+			},
+		});
 	}
 }
