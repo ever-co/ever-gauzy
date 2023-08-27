@@ -3757,7 +3757,12 @@
 				"SERVER_RESTARTED": "Сървърът бе рестартиран успешно",
 				"CONNECTION_SUCCEEDS": "Установена успешна връзка със сървъра {{ url }}",
 				"DOWNLOADING_UPDATE": "Изтегляне на обновление {{ current }} MB от {{ total }} MB ->> {{ bandwidth }} KB/с"
-			}
+			},
+			"TIMEZONE": "Часова зона",
+			"TIMEZONE_LABEL": "Изборът на 'Local' показва времето във вашата местна часова зона, докато изборът на 'UTC' показва времето в универсалната UTC часова зона, използвана от системите за фактуриране и други.",
+			"TIMEZONE_PLACEHOLDER": "Изберете 'Local' или 'UTC'.",
+			"TIMEZONE_LOCAL": "Местно време",
+			"TIMEZONE_UTC": "UTC"
 		},
 		"WEEKLY_LIMIT_EXCEEDED": "Седмичната лимита е превишена",
 		"OF_HRS": "От {{ limit }} часа",

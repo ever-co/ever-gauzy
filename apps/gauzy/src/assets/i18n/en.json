@@ -3812,7 +3812,12 @@
 				"SERVER_RESTARTED": "Server Restarted Successfully",
 				"CONNECTION_SUCCEEDS": "Connection to Server {{ url }} Succeeds",
 				"DOWNLOADING_UPDATE": "Downloading update {{ current }} MB of {{ total }} MB ->> {{ bandwidth }} KB/s"
-			}
+			},
+			"TIMEZONE": "Time Zone",
+			"TIMEZONE_LABEL": "Choosing 'Local' displays time in your local time zone, while selecting 'UTC' shows time in the universal UTC timezone used by billing and other systems.",
+			"TIMEZONE_PLACEHOLDER": "Select either 'Local' or 'UTC'.",
+			"TIMEZONE_LOCAL": "Local",
+			"TIMEZONE_UTC": "UTC"
 		},
 		"WEEKLY_LIMIT_EXCEEDED": "Weekly limit exceeded",
 		"OF_HRS": "Of {{ limit }} hrs",
