@@ -1209,7 +1209,7 @@
 		"ACCOUNTING": "Comptabilité",
 		"HUMAN_RESOURCES": "Ressources humaines",
 		"TIME_TRACKING": "Suivi du temps",
-		"PROJECT_MANAGEMENT": "La gestion de projet",
+		"PROJECT_MANAGEMENT": "Gestion de projet",
 		"EMPLOYEE_STATISTICS": "Statistiques des employés",
 		"SELECT_A_MONTH_AND_EMPLOYEE": "Veuillez sélectionner un mois et un employé dans le menu ci-dessus.",
 		"INSERT_TEXT_FOR_NOT_AUTHENTICATED_USERS": "Insérer un texte pour les utilisateurs non authentifiés.",
@@ -1226,8 +1226,8 @@
 			"CASH_FLOW": "Flux de trésorerie",
 			"WORKING": "Travailler",
 			"WORKING_NOW": "Travail en cours",
-			"NOT_WORKING": "Ne fonctionne pas",
-			"WORKING_TODAY": "Travailler aujourd'hui"
+			"NOT_WORKING": "N’ont pas travaillé",
+			"WORKING_TODAY": "Ont travaillé"
 		},
 		"PROFIT_HISTORY": {
 			"PROFIT_REPORT": "Rapport des profits",
@@ -4044,7 +4044,7 @@
 		"TIME_AND_ACTIVITIES": "Temps et activités",
 		"VIEW_SCREEN": "Afficher l'écran",
 		"VIEW_INFO": "Voir les informations",
-		"MINUTES": "Minutes: Procès-verbal / Compte-rendu",
+		"MINUTES": "Minutes",
 		"NO_EMPLOYEES_SELECTED": "Veuillez sélectionner un employé",
 		"DELETE_CONFIRM": "Êtes-vous sûr(e) de vouloir supprimer ces captures d'écran et activités ?",
 		"VISITED_DATES": "Dates de visite",
