@@ -271,7 +271,8 @@
 			"FR": "Français (France)",
 			"ES": "Español (España)",
 			"ZH": "中文 (中国)",
-			"DE": "Deutsch (Deutschland)"
+			"DE": "Deutsch (Deutschland)",
+			"PT": "Português (Portugal)"
 		},
 		"CURRENT_VALUE": "Valor actual",
 		"TARGET_VALUE": "Valor objetivo",
@@ -1079,6 +1080,7 @@
 		"RUSSIAN": "Ruso",
 		"CHINESE": "Chino",
 		"GERMAN": "Alemán",
+		"PORTUGUESE": "Portugués",
 		"PREFERRED_LAYOUT": "Diseño de la página",
 		"PREFERRED_LAYOUT_TOOLTIP": "Esto solo establecerá la disposición predeterminada y no cambiará la disposición en cada página si ya la has cambiado una vez.",
 		"RESET_LAYOUT": "Restablecer diseño",
