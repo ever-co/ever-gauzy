@@ -3710,7 +3710,7 @@
 		"TODAY": "Hoy",
 		"ALERT_DESKTOP_DOWNLOAD": "Para un seguimiento más flexible del tiempo y las actividades, por favor <a href={{downloadURL}} rel=\"noopener\" target=\"_blank\">descargue</a> y utilice la <a href={{downloadURL}} rel=\"noopener\" target=\"_blank\">Aplicación de temporizador de escritorio Gauzy</a>.",
 		"STATUS": "El rastreador de tiempo ya está en funcionamiento en {{ source }}.",
-		"VERSION": "Versión v{{ versión }}",
+		"VERSION": "Versión v{{ version }}",
 		"WAIT_FOR": "Esperando a {{name}} para empezar...",
 		"SETUP": {
 			"WELCOME": "Bienvenido",
@@ -3834,7 +3834,7 @@
 			"TIMEZONE_UTC": "UTC"
 		},
 		"WEEKLY_LIMIT_EXCEEDED": "Límite semanal excedido",
-		"OF_HRS": "De {{ limite }} horas.",
+		"OF_HRS": "De {{ limit }} horas.",
 		"TIME_TRACKER_DISABLED": "El rastreador de tiempo ha sido desactivado.",
 		"STOP_TIMER_CHANGE_CLIENT": "Por favor, detenga el cronómetro antes de cambiar al cliente.",
 		"ADD_CONTACT": "Agregar contacto",
