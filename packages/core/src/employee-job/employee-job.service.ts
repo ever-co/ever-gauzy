@@ -1,8 +1,8 @@
-import { ForbiddenException, Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { faker } from '@faker-js/faker';
 import { htmlToText } from 'html-to-text';
 import { environment as env } from '@gauzy/config';
-import { GauzyAIService, RequestConfigProvider } from '@gauzy/integration-ai';
+import { GauzyAIService } from '@gauzy/integration-ai';
 import {
 	IEmployeeJobApplication,
 	ICountry,
@@ -17,9 +17,6 @@ import {
 	JobPostStatusEnum,
 	JobPostTypeEnum,
 } from '@gauzy/contracts';
-import { RequestContext } from './../core/context';
-import { arrayToObject } from './../core/utils';
-import { IntegrationTenantService } from './../integration-tenant/integration-tenant.service';
 import { EmployeeService } from '../employee/employee.service';
 import { CountryService } from './../country/country.service';
 import { EmployeeJobPost } from './employee-job.entity';
@@ -30,9 +27,7 @@ export class EmployeeJobPostService {
 	constructor(
 		private readonly employeeService: EmployeeService,
 		private readonly gauzyAIService: GauzyAIService,
-		private readonly requestConfigProvider: RequestConfigProvider,
-		private readonly countryService: CountryService,
-		private readonly integrationTenantService: IntegrationTenantService
+		private readonly countryService: CountryService
 	) { }
 
 	/**
@@ -81,25 +76,7 @@ export class EmployeeJobPostService {
 	 */
 	public async findAll(data: IGetEmployeeJobPostInput): Promise<IPagination<IEmployeeJobPost>> {
 		const employees = await this.employeeService.findAllActive();
-		const { filters } = data;
-
-		const { organizationId } = filters;
-		const tenantId = RequestContext.currentTenantId();
-
 		let jobs: IPagination<IEmployeeJobPost>;
-
-		try {
-			const { settings } = await this.integrationTenantService.getIntegrationSettings({ organizationId, tenantId });
-			const { apiKey, apiSecret } = arrayToObject(settings, 'settingsName', 'settingsValue');
-
-			if (!apiKey || !apiSecret) {
-				throw new ForbiddenException('API key and secret key are required.');
-			}
-
-			this.requestConfigProvider.setConfig({ apiKey, apiSecret });
-		} catch (error) {
-			throw new ForbiddenException('API key and secret key are required.');
-		}
 
 		try {
 			if (env.gauzyAIGraphQLEndpoint) {

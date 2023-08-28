@@ -3,16 +3,16 @@ import { ApiTags } from '@nestjs/swagger';
 import { IIntegrationKeySecretPairInput, IIntegrationTenant, PermissionsEnum } from '@gauzy/contracts';
 import { Permissions } from './../../shared/decorators';
 import { PermissionGuard, TenantPermissionGuard } from './../../shared/guards';
-import { GauzyAIIntegrationService } from './integration-ai.service';
+import { IntegrationAIService } from './integration-ai.service';
 
 @ApiTags('Integrations')
 @UseGuards(TenantPermissionGuard, PermissionGuard)
 @Permissions(PermissionsEnum.INTEGRATION_VIEW)
 @Controller()
-export class GauzyAIIntegrationController {
+export class IntegrationAIController {
 
 	constructor(
-		private readonly _gauzyAIIntegrationService: GauzyAIIntegrationService
+		private readonly _integrationAIService: IntegrationAIService
 	) { }
 
 	/**
@@ -24,6 +24,6 @@ export class GauzyAIIntegrationController {
 	async create(
 		@Body() input: IIntegrationKeySecretPairInput
 	): Promise<IIntegrationTenant> {
-		return await this._gauzyAIIntegrationService.create(input);
+		return await this._integrationAIService.create(input);
 	}
 }

@@ -81,7 +81,6 @@ export class IntegrationTenantService extends TenantAwareCrudService<Integration
 				}
 			});
 		} catch (error) {
-			console.log('Error while getting integration tenant: %s', error?.message);
 			return false;
 		}
 	}
@@ -107,7 +106,8 @@ export class IntegrationTenantService extends TenantAwareCrudService<Integration
 				}
 			});
 		} catch (error) {
-			console.log('Error while getting AI integration settings: %s', error?.message);
+			console.log('Error while getting integration settings: %s', error?.message);
+			throw new BadRequestException(error?.message);
 		}
 	}
 }
