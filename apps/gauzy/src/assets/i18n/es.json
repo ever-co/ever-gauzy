@@ -972,8 +972,8 @@
 			"TAG_PROPOSAL": "Propuesta de etiqueta",
 			"TAG_TASK": "Etiqueta de tarea",
 			"TAG_USER": "Mencionar Usuario",
-			"TASK_EMPLOYEE": "Etiqueta de empleado",
-			"TASK_TEAM": "Tag Team podría traducirse como \"Equipo de etiqueta\" o \"Equipo de parejas\".",
+			"TASK_EMPLOYEE": "Tarea de empleado",
+			"TASK_TEAM": "Tarea de equipo",
 			"EQUIPMENT_SHARING": "Compartir de Equipamiento",
 			"EQUIPMENT_SHARE_POLICY": "Política de Compartir Equipamiento",
 			"EXPENSE_CATEGORY": "Categoría de gastos",
@@ -1067,8 +1067,8 @@
 		"CORPORATE": "Corporativo",
 		"MATERIAL_LIGHT_THEME": "Material Ligero",
 		"MATERIAL_DARK_THEME": "Material Dark",
-		"GAUZY_LIGHT": "Luz Velada",
-		"GAUZY_DARK": "Gauzy Dark - Oscuro y vaporoso.",
+		"GAUZY_LIGHT": "Gauzy Light - Luz",
+		"GAUZY_DARK": "Gauzy Dark - Oscuro",
 		"LANGUAGE": "Idioma",
 		"ENGLISH": "Inglés",
 		"FRENCH": "Francés",
@@ -2518,7 +2518,7 @@
 		"ESTIMATE": "Estimación",
 		"ESTIMATE_DAYS": "Días",
 		"ESTIMATE_HOURS": "Horas",
-		"ESTIMATE_MINUTES": "No puedo traducir \"Mins\" en español porque es un acrónimo o sigla que no tengo información concreta sobre su significado. Si puedes proporcionar más contexto o aclarar a qué se refiere \"Mins\", estaré encantado de ayudarte con la traducción.",
+		"ESTIMATE_MINUTES": "Mins",
 		"TASKS_STATUS": "Estado",
 		"TASK_PRIORITY": "Prioridad",
 		"TASK_SIZE": "Tamaño",
@@ -2995,7 +2995,7 @@
 	},
 	"HEADER_TITLE": {
 		"FOR": "para",
-		"FROM": "\"The sun is shining and the birds are singing. It is a beautiful day.\""
+		"FROM": "de"
 	},
 	"PAGE_NOT_FOUND": {
 		"404_PAGE_NOT_FOUND": "404 Página no encontrada",
@@ -3187,7 +3187,7 @@
 			"INVOICE_RECEIVED": "Factura recibida"
 		},
 		"INCOME": {
-			"": "\"Can you please help me find the nearest pharmacy?\""
+			"": ""
 		},
 		"EXPENSE": {
 			"EMPLOYEE_RECURRING_EXPENSE": "Gasto recurrente de empleado",
@@ -3207,7 +3207,7 @@
 			"MY_TASK_DASHBOARD": "Mi Tablero de Tareas"
 		},
 		"JOBS": {
-			"": "Este es el texto que necesita ser traducido al español."
+			"": ""
 		},
 		"EMPLOYEES": {
 			"EMPLOYEE_LEVEL": "Nivel del empleado",
@@ -3238,7 +3238,7 @@
 			"ORGANIZATION_EMPLOYMENT_TYPE": "Tipo de empleo de la organización."
 		},
 		"PRODUCT_INVENTORY": {
-			"": "\"Hello, how are you? I hope you're doing well.\""
+			"": ""
 		},
 		"PROJECT": {
 			"": ""
@@ -3247,7 +3247,7 @@
 			"": ""
 		},
 		"ORGANIZATION_DOCUMENT": {
-			"": "\"Can you help me find my way?\"\n\n\"¿Puedes ayudarme a encontrar el camino?\""
+			"": ""
 		},
 		"LEAD_CUSTOMER_CLIENT": {
 			"": ""
@@ -3265,7 +3265,7 @@
 			"": ""
 		},
 		"APPS_INTEGRATIONS": {
-			"": "\"Hello, how are you doing today? I hope you are having a great day.\""
+			"": ""
 		},
 		"EMAIL_HISTORY": {
 			"CUSTOM_EMAIL_TEMPLATE": "Plantilla de correo electrónico personalizada"
@@ -3275,7 +3275,7 @@
 			"SMS_GATEWAY": "SMS Gateway se refiere a una plataforma o sistema que permite el envío y recepción de mensajes de texto a través de una red de telecomunicaciones. Un SMS Gateway actúa como intermediario entre diferentes redes y permite la integración de servicios de mensajería SMS en diferentes aplicaciones y sistemas. Esto incluye servicios como el envío masivo de mensajes SMS, notificaciones automáticas, confirmaciones de transacciones, entre otros. Un SMS Gateway es esencial para garantizar la entrega de mensajes SMS de manera confiable y efectiva."
 		},
 		"ENTITY_IMPORT_EXPORT": {
-			"": "\"Hello, how are you? I hope you're doing well. I just wanted to say thank you for everything. Your support means a lot to me. Have a great day!\""
+			"": ""
 		},
 		"CUSTOM_SMTP": {
 			"": ""
@@ -3721,7 +3721,7 @@
 			"CONNECTED_LIVE_SERVER": "Conectado a nuestro servidor en vivo y úsalo como SAAS.",
 			"GONNA_USE_3RD_PARTY": "¿Vas a necesitar integraciones de terceros?",
 			"SELECT_MULTIPLE_OPTIONS_3RD_PARTY": "Esta es una opción, puedes seleccionar uno o ambos tipos de integraciones de terceros.",
-			"LEGAL_NOTE": "Legal: Todos los nombres de productos, nombres de marcas, logotipos, marcas comerciales y marcas registradas son propiedad de sus respectivos dueños. No tenemos ninguna afiliación, respaldo, patrocinio o apoyo de las empresas, marcas, productos, sitios web o servicios mencionados de terceros. Los enlaces a software de terceros se proporcionan solo por conveniencia y con fines informativos; no constituyen un respaldo o aprobación de ninguno de los productos, servicios u opiniones de la corporación, organización o individuo. Usamos los logotipos y nombres de marcas respectivos únicamente para publicitar que nuestro producto utiliza productos y tecnologías correspondientes o tiene integración incorporada con servicios correspondientes.",
+			"LEGAL_NOTE": "Legal",
 			"SETTING": "Ajuste.",
 			"READY_FOR_ADVANCED_SETTINGS": "¿Estás listo para algunas configuraciones avanzadas?",
 			"FINAL_STEP_GP": "Este es el paso final donde puedes adentrarte en los detalles de tu Plataforma Gauzy.",
@@ -3782,7 +3782,7 @@
 			"API_CONFIG": "Configuración de la API",
 			"SERVER_TYPE": "Tipo de servidor",
 			"LOCAL_API_PORT": "Puerto de API local",
-			"UI_PORT": "UI Port puede traducirse como \"Puerto de interfaz de usuario\" en español.",
+			"UI_PORT": "Puerto de interfaz",
 			"SERVER_URL": "URL del servidor",
 			"DB_CONFIG": "Configuración de la base de datos",
 			"DB_DRIVER": "Controlador de base de datos",
