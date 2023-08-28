@@ -1,7 +1,8 @@
+import { ForbiddenException } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
+import { UpdateResult } from 'typeorm';
 import { IEmployee } from '@gauzy/contracts';
 import { GauzyAIService } from '@gauzy/integration-ai';
-import { UpdateResult } from 'typeorm';
 import { RequestContext } from './../../../core/context';
 import { EmployeeService } from '../../employee.service';
 import { UpdateEmployeeJobSearchStatusCommand } from '../update-employee-job-search-status.command';
@@ -49,7 +50,8 @@ export class UpdateEmployeeJobSearchStatusHandler implements ICommandHandler<Upd
 				console.log('Error while updating employee job search status with Gauzy AI: %s', error);
 			}
 		} catch (error) {
-			console.log('Error while sync employee with Gauzy AI: %s', error);
+			console.log('API key and secret key are required: %s', error?.message);
+			throw new ForbiddenException('API key and secret key are required.');
 		}
 
 		return await this.employeeService.update(employeeId, {

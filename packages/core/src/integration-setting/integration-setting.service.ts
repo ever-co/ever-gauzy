@@ -12,6 +12,4 @@ export class IntegrationSettingService extends TenantAwareCrudService<Integratio
 	) {
 		super(repository);
 	}
-
-	async updateIntegrationSettings(updateIntegrationSettingsDto) {}
 }

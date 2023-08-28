@@ -16,10 +16,6 @@ import {
 	JobPostSourceEnum,
 	JobPostStatusEnum,
 	JobPostTypeEnum,
-	IBasePerTenantAndOrganizationEntityModel,
-	IIntegrationTenant,
-	IIntegrationSetting,
-	IntegrationEnum
 } from '@gauzy/contracts';
 import { RequestContext } from './../core/context';
 import { arrayToObject } from './../core/utils';
@@ -93,8 +89,8 @@ export class EmployeeJobPostService {
 		let jobs: IPagination<IEmployeeJobPost>;
 
 		try {
-			const integration = await this.getGauzyAIIntegrationSettings({ organizationId, tenantId });
-			const { apiKey, apiSecret } = this.mapGauzyAIIntegrationSettings(integration.settings);
+			const { settings } = await this.integrationTenantService.getIntegrationSettings({ organizationId, tenantId });
+			const { apiKey, apiSecret } = arrayToObject(settings, 'settingsName', 'settingsValue');
 
 			if (!apiKey || !apiSecret) {
 				throw new ForbiddenException('API key and secret key are required.');
@@ -217,34 +213,5 @@ export class EmployeeJobPostService {
 			items: employeesJobs,
 			total: 100
 		};
-	}
-
-	/**
-	 *
-	 * @param settings
-	 * @returns
-	 */
-	mapGauzyAIIntegrationSettings(settings: IIntegrationSetting[]) {
-		const { apiKey, apiSecret } = arrayToObject(settings, 'settingsName', 'settingsValue');
-		return { apiKey, apiSecret };
-	}
-
-	/**
-	 *
-	 */
-	async getGauzyAIIntegrationSettings(
-		options: IBasePerTenantAndOrganizationEntityModel
-	): Promise<IIntegrationTenant> {
-		const { organizationId, tenantId } = options;
-		return await this.integrationTenantService.findOneByOptions({
-			where: {
-				organizationId,
-				tenantId,
-				name: IntegrationEnum.GAUZY_AI
-			},
-			relations: {
-				settings: true
-			}
-		});
 	}
 }
