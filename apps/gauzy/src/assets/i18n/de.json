@@ -271,7 +271,8 @@
 			"FR": "Français (France)",
 			"ES": "Español (España)",
 			"ZH": "中文 (中国)",
-			"DE": "Deutsch (Deutschland)"
+			"DE": "Deutsch (Deutschland)",
+			"PT": "Português (Portugal)"
 		},
 		"CURRENT_VALUE": "Aktueller Wert",
 		"TARGET_VALUE": "Zielwert",
@@ -1079,6 +1080,7 @@
 		"RUSSIAN": "Russisch",
 		"CHINESE": "Chinesisch",
 		"GERMAN": "Deutsch",
+		"PORTUGUESE": "Portugiesisch",
 		"PREFERRED_LAYOUT": "Layout",
 		"PREFERRED_LAYOUT_TOOLTIP": "Dies wird nur das Standardlayout festlegen und nicht das Layout auf jeder Seite ändern, wenn Sie es bereits einmal geändert haben.",
 		"RESET_LAYOUT": "Layout zurücksetzen",
