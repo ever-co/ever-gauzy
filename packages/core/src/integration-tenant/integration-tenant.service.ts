@@ -1,9 +1,16 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { IIntegrationEntitySetting, IIntegrationSetting, IIntegrationTenant, IIntegrationTenantFindInput } from '@gauzy/contracts';
-import { TenantAwareCrudService } from './../core/crud';
+import {
+	IBasePerTenantAndOrganizationEntityModel,
+	IIntegrationEntitySetting,
+	IIntegrationSetting,
+	IIntegrationTenant,
+	IIntegrationTenantFindInput,
+	IntegrationEnum
+} from '@gauzy/contracts';
 import { RequestContext } from './../core/context';
+import { TenantAwareCrudService } from './../core/crud';
 import { IntegrationTenant } from './integration-tenant.entity';
 
 @Injectable()
@@ -74,8 +81,33 @@ export class IntegrationTenantService extends TenantAwareCrudService<Integration
 				}
 			});
 		} catch (error) {
-			console.log('Error while getting integration tenant: %s', error?.message);
 			return false;
+		}
+	}
+
+	/**
+	 *
+	 * @param options
+	 * @returns
+	 */
+	async getIntegrationSettings(
+		options: IBasePerTenantAndOrganizationEntityModel
+	): Promise<IIntegrationTenant> {
+		try {
+			const { organizationId, tenantId } = options;
+			return await this.findOneByOptions({
+				where: {
+					organizationId,
+					tenantId,
+					name: IntegrationEnum.GAUZY_AI
+				},
+				relations: {
+					settings: true
+				}
+			});
+		} catch (error) {
+			console.log('Error while getting integration settings: %s', error?.message);
+			throw new BadRequestException(error?.message);
 		}
 	}
 }

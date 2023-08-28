@@ -1,8 +1,8 @@
-import { ForbiddenException, Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { faker } from '@faker-js/faker';
 import { htmlToText } from 'html-to-text';
 import { environment as env } from '@gauzy/config';
-import { GauzyAIService, RequestConfigProvider } from '@gauzy/integration-ai';
+import { GauzyAIService } from '@gauzy/integration-ai';
 import {
 	IEmployeeJobApplication,
 	ICountry,
@@ -16,14 +16,7 @@ import {
 	JobPostSourceEnum,
 	JobPostStatusEnum,
 	JobPostTypeEnum,
-	IBasePerTenantAndOrganizationEntityModel,
-	IIntegrationTenant,
-	IIntegrationSetting,
-	IntegrationEnum
 } from '@gauzy/contracts';
-import { RequestContext } from './../core/context';
-import { arrayToObject } from './../core/utils';
-import { IntegrationTenantService } from './../integration-tenant/integration-tenant.service';
 import { EmployeeService } from '../employee/employee.service';
 import { CountryService } from './../country/country.service';
 import { EmployeeJobPost } from './employee-job.entity';
@@ -34,9 +27,7 @@ export class EmployeeJobPostService {
 	constructor(
 		private readonly employeeService: EmployeeService,
 		private readonly gauzyAIService: GauzyAIService,
-		private readonly requestConfigProvider: RequestConfigProvider,
-		private readonly countryService: CountryService,
-		private readonly integrationTenantService: IntegrationTenantService
+		private readonly countryService: CountryService
 	) { }
 
 	/**
@@ -85,25 +76,7 @@ export class EmployeeJobPostService {
 	 */
 	public async findAll(data: IGetEmployeeJobPostInput): Promise<IPagination<IEmployeeJobPost>> {
 		const employees = await this.employeeService.findAllActive();
-		const { filters } = data;
-
-		const { organizationId } = filters;
-		const tenantId = RequestContext.currentTenantId();
-
 		let jobs: IPagination<IEmployeeJobPost>;
-
-		try {
-			const integration = await this.getGauzyAIIntegrationSettings({ organizationId, tenantId });
-			const { apiKey, apiSecret } = this.mapGauzyAIIntegrationSettings(integration.settings);
-
-			if (!apiKey || !apiSecret) {
-				throw new ForbiddenException('API key and secret key are required.');
-			}
-
-			this.requestConfigProvider.setConfig({ apiKey, apiSecret });
-		} catch (error) {
-			throw new ForbiddenException('API key and secret key are required.');
-		}
 
 		try {
 			if (env.gauzyAIGraphQLEndpoint) {
@@ -217,34 +190,5 @@ export class EmployeeJobPostService {
 			items: employeesJobs,
 			total: 100
 		};
-	}
-
-	/**
-	 *
-	 * @param settings
-	 * @returns
-	 */
-	mapGauzyAIIntegrationSettings(settings: IIntegrationSetting[]) {
-		const { apiKey, apiSecret } = arrayToObject(settings, 'settingsName', 'settingsValue');
-		return { apiKey, apiSecret };
-	}
-
-	/**
-	 *
-	 */
-	async getGauzyAIIntegrationSettings(
-		options: IBasePerTenantAndOrganizationEntityModel
-	): Promise<IIntegrationTenant> {
-		const { organizationId, tenantId } = options;
-		return await this.integrationTenantService.findOneByOptions({
-			where: {
-				organizationId,
-				tenantId,
-				name: IntegrationEnum.GAUZY_AI
-			},
-			relations: {
-				settings: true
-			}
-		});
 	}
 }

@@ -19,7 +19,6 @@ import {
 	InMemStorageProvider,
 	UnleashConfig,
 } from 'unleash-client';
-import { GauzyAIModule } from '@gauzy/integration-ai';
 import { LanguagesEnum } from '@gauzy/contracts';
 import { ConfigService, environment } from '@gauzy/config';
 import * as path from 'path';
@@ -86,7 +85,7 @@ import { TimeTrackingModule } from './time-tracking/time-tracking.module';
 import { ExpenseCategoriesModule } from './expense-categories/expense-categories.module';
 import { UpworkModule } from './upwork/upwork.module';
 import { HubstaffModule } from './hubstaff/hubstaff.module';
-import { GauzyAIIntegrationModule } from './integration/gauzy-ai/integration-ai.module';
+import { IntegrationAIModule } from './integration/gauzy-ai/integration-ai.module';
 import { CandidateModule } from './candidate/candidate.module';
 import { ProductCategoryModule } from './product-category/product-category.module';
 import { ProductTypeModule } from './product-type/product-type.module';
@@ -356,7 +355,7 @@ if (environment.sentry && environment.sentry.dsn) {
 		ReportModule,
 		UpworkModule,
 		HubstaffModule,
-		GauzyAIIntegrationModule,
+		IntegrationAIModule,
 		ExpenseCategoriesModule,
 		ProductCategoryModule,
 		ProductTypeModule,
@@ -386,8 +385,7 @@ if (environment.sentry && environment.sentry.dsn) {
 		IssueTypeModule,
 		TaskLinkedIssueModule,
 		OrganizationTaskSettingModule,
-		TaskEstimationModule,
-		GauzyAIModule.forRoot()
+		TaskEstimationModule
 	],
 	controllers: [AppController],
 	providers: [

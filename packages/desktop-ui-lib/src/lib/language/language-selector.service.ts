@@ -24,7 +24,10 @@ export class LanguageSelectorService {
 		preferredLanguage: LanguagesEnum,
 		translateService: TranslateService
 	): void {
-		if (preferredLanguage === LanguagesEnum.HEBREW) {
+		if (
+			preferredLanguage === LanguagesEnum.HEBREW ||
+			preferredLanguage === LanguagesEnum.ARABIC
+		) {
 			this._directionService.setDirection(NbLayoutDirection.RTL);
 		} else {
 			this._directionService.setDirection(NbLayoutDirection.LTR);

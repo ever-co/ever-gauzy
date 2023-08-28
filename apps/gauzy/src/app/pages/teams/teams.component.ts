@@ -16,7 +16,6 @@ import {
 	RolesEnum,
 	ComponentLayoutStyleEnum,
 	ISelectedEmployee,
-	IUser
 } from '@gauzy/contracts';
 import { NbDialogRef, NbDialogService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
@@ -36,7 +35,7 @@ import {
 import { DeleteConfirmationComponent } from '../../@shared/user/forms';
 import {
 	EmployeeWithLinksComponent,
-	NotesWithTagsComponent
+	TagsOnlyComponent
 } from '../../@shared/table-components';
 import {
 	EmployeesService,
@@ -341,7 +340,6 @@ export class TeamsComponent extends PaginationFilterBaseComponent
 				'members.role',
 				'members.employee.user',
 				'tags',
-				'createdBy'
 			],
 			where: {
 				organizationId,
@@ -466,19 +464,11 @@ export class TeamsComponent extends PaginationFilterBaseComponent
 					renderComponent: EmployeeWithLinksComponent,
 					filter: false
 				},
-				createdBy: {
-					title: this.getTranslation('SM_TABLE.CREATED_BY'),
-					type: 'string',
-					filter: false,
-					valuePrepareFunction: (cell: IUser) => {
-						return (cell) ? cell.name : null;
-					}
-				},
 				notes: {
 					title: this.getTranslation('MENU.TAGS'),
 					type: 'custom',
 					class: 'align-row',
-					renderComponent: NotesWithTagsComponent,
+					renderComponent: TagsOnlyComponent,
 					filter: {
 						type: 'custom',
 						component: TagsColorFilterComponent

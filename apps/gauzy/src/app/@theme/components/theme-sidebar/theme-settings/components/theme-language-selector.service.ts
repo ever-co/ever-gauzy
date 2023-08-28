@@ -58,7 +58,10 @@ export class ThemeLanguageSelectorService {
 	}
 
 	public setLanguage(): void {
-		if (this.preferredLanguage === LanguagesEnum.HEBREW) {
+		if (
+			this.preferredLanguage === LanguagesEnum.HEBREW ||
+			this.preferredLanguage === LanguagesEnum.ARABIC
+		) {
 			this._directionService.setDirection(NbLayoutDirection.RTL);
 		} else {
 			this._directionService.setDirection(NbLayoutDirection.LTR);

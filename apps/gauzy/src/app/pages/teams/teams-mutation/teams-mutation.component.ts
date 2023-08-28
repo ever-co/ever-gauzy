@@ -1,10 +1,11 @@
 import { Component, OnInit, Output, EventEmitter, Input } from '@angular/core';
 import { FormBuilder, FormControl, FormGroup, Validators } from '@angular/forms';
 import { filter, tap } from 'rxjs/operators';
-import { IEmployee, IOrganization, IOrganizationTeam, ITag } from '@gauzy/contracts';
+import { IEmployee, IImageAsset, IOrganization, IOrganizationTeam, ITag } from '@gauzy/contracts';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { distinctUntilChange, isNotEmpty } from '@gauzy/common-angular';
 import { Store } from '../../../@core/services';
+import { DUMMY_PROFILE_IMAGE, ToastrService } from '../../../@core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -20,7 +21,8 @@ export class TeamsMutationComponent implements OnInit {
 	@Output() addOrEditTeam = new EventEmitter();
 
 	public organization: IOrganization;
-
+	public hoverState: boolean;
+	public imageUrl: string;
 	/*
 	* Team Mutation Form
 	*/
@@ -31,6 +33,10 @@ export class TeamsMutationComponent implements OnInit {
 			memberIds: [null, Validators.required],
 			managerIds: [],
 			tags: [],
+			imageUrl: [
+				{ value: null, disabled: true }
+			],
+			imageId: [],
 		});
 		form.get('memberIds').setValue([]);
 		form.get('managerIds').setValue([]);
@@ -40,8 +46,9 @@ export class TeamsMutationComponent implements OnInit {
 
 	constructor(
 		private readonly fb: FormBuilder,
-		private readonly store: Store
-	) {}
+		private readonly store: Store,
+		private readonly toastrService: ToastrService
+	) { }
 
 	ngOnInit() {
 		this.store.selectedOrganization$
@@ -81,7 +88,9 @@ export class TeamsMutationComponent implements OnInit {
 				name: this.team.name,
 				tags: this.team.tags,
 				memberIds: selectedEmployees,
-				managerIds: selectedManagers
+				managerIds: selectedManagers,
+				imageUrl: this.team.image?.fullUrl,
+				imageId: this.team.image?.id
 			});
 		}
 	}
@@ -132,5 +141,24 @@ export class TeamsMutationComponent implements OnInit {
 	selectedTagsEvent(tags: ITag[]) {
 		this.form.get('tags').setValue(tags);
 		this.form.get('tags').updateValueAndValidity();
+	}
+
+	updateImageAsset(image: IImageAsset) {
+		try {
+			if (image && image.id) {
+				this.form.get('imageId').setValue(image.id);
+				this.form.get('imageUrl').setValue(image.fullUrl);
+			} else {
+				this.form.get('imageUrl').setValue(DUMMY_PROFILE_IMAGE);
+			}
+			this.form.updateValueAndValidity();
+		} catch (error) {
+			console.log("Error while updating team's avatars");
+			this.handleImageUploadError(error);
+		}
+	}
+
+	handleImageUploadError(error: any) {
+		this.toastrService.danger(error);
 	}
 }
