@@ -7,9 +7,8 @@ import { EmployeeService } from '../../employee.service';
 import { UpdateEmployeeJobSearchStatusCommand } from '../update-employee-job-search-status.command';
 
 @CommandHandler(UpdateEmployeeJobSearchStatusCommand)
-export class UpdateEmployeeJobSearchStatusHandler
-	implements ICommandHandler<UpdateEmployeeJobSearchStatusCommand>
-{
+export class UpdateEmployeeJobSearchStatusHandler implements ICommandHandler<UpdateEmployeeJobSearchStatusCommand> {
+
 	constructor(
 		private readonly employeeService: EmployeeService,
 		private readonly gauzyAIService: GauzyAIService
@@ -18,32 +17,39 @@ export class UpdateEmployeeJobSearchStatusHandler
 	public async execute(
 		command: UpdateEmployeeJobSearchStatusCommand
 	): Promise<IEmployee | UpdateResult> {
+
 		const { employeeId, input } = command;
-		const { isJobSearchActive, organizationId, tenantId } = input;
+		const { isJobSearchActive, organizationId } = input;
+		const tenantId = RequestContext.currentTenantId() || input.tenantId;
+
+		const employee = await this.employeeService.findOneByIdString(employeeId, {
+			where: {
+				organizationId,
+				tenantId
+			},
+			relations: {
+				user: true,
+				organization: true
+			}
+		});
 
 		try {
-			const employee = await this.employeeService.findOneByIdString(employeeId, {
-				where: {
-					organizationId,
-					tenantId: RequestContext.currentTenantId()
-				},
-				relations: {
-					user: true,
-					organization: true
-				}
-			});
-
 			/** Sync before update employee job search status */
-			await this.gauzyAIService.syncEmployees([employee]);
-
-			this.gauzyAIService.updateEmployeeStatus(
-				employeeId,
-				tenantId,
-				organizationId,
-				isJobSearchActive
-			);
+			const synced = await this.gauzyAIService.syncEmployees([employee]);
+			try {
+				if (synced) {
+					this.gauzyAIService.updateEmployeeStatus(
+						employeeId,
+						tenantId,
+						organizationId,
+						isJobSearchActive
+					);
+				}
+			} catch (error) {
+				console.log('Error while updating employee job search status with Gauzy AI: %s', error);
+			}
 		} catch (error) {
-			console.log('Error while updating employee job search status', error);
+			console.log('Error while sync employee with Gauzy AI: %s', error);
 		}
 
 		return await this.employeeService.update(employeeId, {

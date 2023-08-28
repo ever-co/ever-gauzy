@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { HttpService } from '@nestjs/axios';
 import { AxiosResponse } from 'axios';
@@ -658,8 +658,9 @@ export class GauzyAIService {
 			}
 
 			return true;
-		} catch (err) {
-			this._logger.error(err);
+		} catch (error) {
+			console.log('Error while synced employee: %s', error?.message);
+			this._logger.error(error);
 			return false;
 		}
 	}
@@ -678,36 +679,37 @@ export class GauzyAIService {
 		if (this._client == null) {
 			return false;
 		}
-
-		await Promise.all(
-			employees.map(async (employee) => {
-				try {
-					const gauzyAIEmployee: Employee = await this.syncEmployee({
-						externalEmployeeId: employee.id,
-						externalTenantId: employee.tenantId,
-						externalOrgId: employee.organizationId,
-						upworkOrganizationId: employee.organization.upworkOrganizationId,
-						upworkOrganizationName: employee.organization.upworkOrganizationName,
-						upworkId: employee.upworkId,
-						linkedInId: employee.linkedInId,
-						isActive: employee.isActive,
-						isArchived: false,
-						upworkJobSearchCriteria: undefined,
-						upworkJobSearchCriteriaAggregate: undefined,
-						firstName: employee.user.firstName,
-						lastName: employee.user.lastName,
-					});
-
-					console.log(
-						`Synced Employee ${JSON.stringify(gauzyAIEmployee)}`
-					);
-				} catch (err) {
-					this._logger.error(err);
-				}
-			})
-		);
-
-		return true;
+		try {
+			await Promise.all(
+				employees.map(async (employee) => {
+					try {
+						const gauzyAIEmployee: Employee = await this.syncEmployee({
+							externalEmployeeId: employee.id,
+							externalTenantId: employee.tenantId,
+							externalOrgId: employee.organizationId,
+							upworkOrganizationId: employee.organization.upworkOrganizationId,
+							upworkOrganizationName: employee.organization.upworkOrganizationName,
+							upworkId: employee.upworkId,
+							linkedInId: employee.linkedInId,
+							isActive: employee.isActive,
+							isArchived: false,
+							upworkJobSearchCriteria: undefined,
+							upworkJobSearchCriteriaAggregate: undefined,
+							firstName: employee.user.firstName,
+							lastName: employee.user.lastName,
+						});
+						console.log(`Synced Employee ${JSON.stringify(gauzyAIEmployee)}`);
+					} catch (error) {
+						console.log('Error while syncing employee: %s', error?.message);
+						this._logger.error(error);
+					}
+				})
+			);
+			return true;
+		} catch (error) {
+			console.log('Error while synced employees: %s', error?.message);
+			return false;
+		}
 	}
 
 	/**
@@ -1112,8 +1114,8 @@ export class GauzyAIService {
 			const customHeaders = {
 				'Content-Type': 'application/json',
 				// Set your initial headers here
-				'X-APP-ID': this._configService.get<string>('guazyAI.gauzyAiApiKey', ''),
-				'X-API-KEY': this._configService.get<string>('guazyAI.gauzyAiApiSecret', ''),
+				'X-APP-ID': this._configService.get<string>('guazyAI.gauzyAiApiKey'),
+				'X-API-KEY': this._configService.get<string>('guazyAI.gauzyAiApiSecret'),
 
 				...(apiKey ? { 'X-APP-ID': apiKey } : {}),
 				...(apiSecret ? { 'X-API-KEY': apiSecret } : {}),
@@ -1213,62 +1215,20 @@ export class GauzyAIService {
 	 *  Update existed Gauzy AI Employee record with new data from Gauzy DB
 	 */
 	private async syncEmployee(employee: Employee): Promise<Employee> {
-		// First, let's search by employee.externalEmployeeId (which is Gauzy employeeId)
-		let employeesQuery: DocumentNode<EmployeeQuery> = gql`
-			query employeeByExternalEmployeeId(
-				$externalEmployeeIdFilter: String!
-			) {
-				employees(
-					filter: {
-						externalEmployeeId: { eq: $externalEmployeeIdFilter }
-					}
-				) {
-					edges {
-						node {
-							id
-							externalEmployeeId
-						}
-					}
-					totalCount
-				}
-			}
-		`;
-
-		let employeesQueryResult: ApolloQueryResult<EmployeeQuery> =
-			await this._client.query<EmployeeQuery>({
-				query: employeesQuery,
-				variables: {
-					externalEmployeeIdFilter: employee.externalEmployeeId,
-				},
-			});
-
-		let employeesResponse = employeesQueryResult.data.employees.edges;
-
-		let isAlreadyCreated = employeesResponse.length > 0;
-
-		console.log(
-			`Is Employee ${employee.externalEmployeeId} already exists in Gauzy AI: ${isAlreadyCreated} by externalEmployeeId field`
-		);
-
-		if (!isAlreadyCreated) {
-			// OK, so we can't find by employee.externalEmployeeId value, let's try to search by name
-
-			employeesQuery = gql`
-				query employeeByName(
-					$firstNameFilter: String!
-					$lastNameFilter: String!
+		try {
+			// First, let's search by employee.externalEmployeeId (which is Gauzy employeeId)
+			let employeesQuery: DocumentNode<EmployeeQuery> = gql`
+				query employeeByExternalEmployeeId(
+					$externalEmployeeIdFilter: String!
 				) {
 					employees(
 						filter: {
-							firstName: { eq: $firstNameFilter }
-							lastName: { eq: $lastNameFilter }
+							externalEmployeeId: { eq: $externalEmployeeIdFilter }
 						}
 					) {
 						edges {
 							node {
 								id
-								firstName
-								lastName
 								externalEmployeeId
 							}
 						}
@@ -1277,87 +1237,132 @@ export class GauzyAIService {
 				}
 			`;
 
-			employeesQueryResult = await this._client.query<EmployeeQuery>({
+			let employeesQueryResult: ApolloQueryResult<EmployeeQuery> = await this._client.query<EmployeeQuery>({
 				query: employeesQuery,
 				variables: {
-					firstNameFilter: employee.firstName,
-					lastNameFilter: employee.lastName,
+					externalEmployeeIdFilter: employee.externalEmployeeId,
 				},
 			});
 
-			employeesResponse = employeesQueryResult.data.employees.edges;
+			let employeesResponse = employeesQueryResult.data.employees.edges;
 
-			isAlreadyCreated = employeesResponse.length > 0;
+			let isAlreadyCreated = employeesResponse.length > 0;
 
 			console.log(
-				`Is Employee ${employee.externalEmployeeId} already exists in Gauzy AI: ${isAlreadyCreated} by name fields`
+				`Is Employee ${employee.externalEmployeeId} already exists in Gauzy AI: ${isAlreadyCreated} by externalEmployeeId field`
 			);
 
 			if (!isAlreadyCreated) {
-				const createEmployeeMutation: DocumentNode<any> = gql`
-					mutation createOneEmployee(
-						$input: CreateOneEmployeeInput!
+				// OK, so we can't find by employee.externalEmployeeId value, let's try to search by name
+
+				employeesQuery = gql`
+					query employeeByName(
+						$firstNameFilter: String!
+						$lastNameFilter: String!
 					) {
-						createOneEmployee(input: $input) {
-							id
-							externalEmployeeId
-							externalTenantId
-							externalOrgId
-							upworkOrganizationId
-							upworkOrganizationName
-							upworkId
-							linkedInId
-							firstName
-							lastName
+						employees(
+							filter: {
+								firstName: { eq: $firstNameFilter }
+								lastName: { eq: $lastNameFilter }
+							}
+						) {
+							edges {
+								node {
+									id
+									firstName
+									lastName
+									externalEmployeeId
+								}
+							}
+							totalCount
 						}
 					}
 				`;
 
-				const newEmployee = await this._client.mutate({
-					mutation: createEmployeeMutation,
+				employeesQueryResult = await this._client.query<EmployeeQuery>({
+					query: employeesQuery,
 					variables: {
-						input: {
-							employee,
-						},
+						firstNameFilter: employee.firstName,
+						lastNameFilter: employee.lastName,
 					},
 				});
 
-				return newEmployee.data.createOneEmployee;
-			}
-		}
+				employeesResponse = employeesQueryResult.data.employees.edges;
 
-		// update record of employee
+				isAlreadyCreated = employeesResponse.length > 0;
 
-		const id = employeesResponse[0].node.id;
+				console.log(
+					`Is Employee ${employee.externalEmployeeId} already exists in Gauzy AI: ${isAlreadyCreated} by name fields`
+				);
 
-		const updateEmployeeMutation: DocumentNode<any> = gql`
-			mutation updateOneEmployee($input: UpdateOneEmployeeInput!) {
-				updateOneEmployee(input: $input) {
-					externalEmployeeId
-					externalTenantId
-					externalOrgId
-					upworkOrganizationId
-					upworkOrganizationName
-					upworkId
-					linkedInId
-					isActive
-					isArchived
-					firstName
-					lastName
+				if (!isAlreadyCreated) {
+					const createEmployeeMutation: DocumentNode<any> = gql`
+						mutation createOneEmployee(
+							$input: CreateOneEmployeeInput!
+						) {
+							createOneEmployee(input: $input) {
+								id
+								externalEmployeeId
+								externalTenantId
+								externalOrgId
+								upworkOrganizationId
+								upworkOrganizationName
+								upworkId
+								linkedInId
+								firstName
+								lastName
+							}
+						}
+					`;
+
+					const newEmployee = await this._client.mutate({
+						mutation: createEmployeeMutation,
+						variables: {
+							input: {
+								employee,
+							},
+						},
+					});
+
+					return newEmployee.data.createOneEmployee;
 				}
 			}
-		`;
 
-		await this._client.mutate({
-			mutation: updateEmployeeMutation,
-			variables: {
-				input: {
-					id: id,
-					update: employee,
+			// update record of employee
+			const id = employeesResponse[0].node.id;
+
+			const updateEmployeeMutation: DocumentNode<any> = gql`
+				mutation updateOneEmployee($input: UpdateOneEmployeeInput!) {
+					updateOneEmployee(input: $input) {
+						externalEmployeeId
+						externalTenantId
+						externalOrgId
+						upworkOrganizationId
+						upworkOrganizationName
+						upworkId
+						linkedInId
+						isActive
+						isArchived
+						firstName
+						lastName
+					}
+				}
+			`;
+
+			await this._client.mutate({
+				mutation: updateEmployeeMutation,
+				variables: {
+					input: {
+						id: id,
+						update: employee,
+					},
 				},
-			},
-		});
+			});
 
-		return <Employee>employeesResponse[0].node;
+			return <Employee>employeesResponse[0].node;
+		} catch (error) {
+			console.log('Error while synced employee: %s', error?.message);
+			throw new BadRequestException(error?.message);
+		}
 	}
 }
