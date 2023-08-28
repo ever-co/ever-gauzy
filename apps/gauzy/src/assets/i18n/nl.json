@@ -274,7 +274,8 @@
 			"DE": "Deutsch (Deutschland)",
 			"PT": "Português (Portugal)",
 			"IT": "Italiano (Italia)",
-			"NL": "Nederlands (Nederland)"
+			"NL": "Nederlands (Nederland)",
+			"PL": "Polski (Polska)"
 		},
 		"CURRENT_VALUE": "Huidige waarde",
 		"TARGET_VALUE": "Doelwaarde",
@@ -510,7 +511,7 @@
 			"CHOOSE_FORMAT": "Kies het formaat",
 			"CHOOSE_TIME_ZONE": "Kies tijdzone",
 			"START_TIME": "HH:mm",
-			"END_TIME": "HH:mm translates to \"u:mm\" in Dutch",
+			"END_TIME": "HH:mm",
 			"ADD_COLOR": "Toevoegen van kleur",
 			"ALIGN_LOGO_TO": "Logo uitlijnen op",
 			"DEPARTMENTS": "Afdelingen",
@@ -1085,6 +1086,7 @@
 		"PORTUGUESE": "Portugees",
 		"ITALIAN": "Italiaans",
 		"DUTCH": "Nederlands",
+		"POLISH": "Pools",
 		"PREFERRED_LAYOUT": "Indeling",
 		"PREFERRED_LAYOUT_TOOLTIP": "Dit zal alleen de standaardlay-out instellen en de lay-out op elke pagina niet wijzigen als je deze al eens hebt gewijzigd.",
 		"RESET_LAYOUT": "Reset Lay-out",
@@ -1665,7 +1667,7 @@
 			"INTERVIEW": {
 				"INTERVIEW": "Interview",
 				"INTERVIEWS": "Interviews",
-				"INTERVIEWER": "Interviewer: (Dutch translation is the same)",
+				"INTERVIEWER": "Interviewer",
 				"ADD_INTERVIEW": "Voeg interview toe",
 				"HIDE_PAST": "Verberg eerdere interviews",
 				"ON": "aan",

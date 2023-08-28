@@ -274,7 +274,8 @@
 			"DE": "Deutsch (Deutschland)",
 			"PT": "Português (Portugal)",
 			"IT": "Italiano (Italia)",
-			"NL": "Nederlands (Nederland)"
+			"NL": "Nederlands (Nederland)",
+			"PL": "Polski (Polska)"
 		},
 		"CURRENT_VALUE": "Valor actual",
 		"TARGET_VALUE": "Valor objetivo",
@@ -1085,6 +1086,7 @@
 		"PORTUGUESE": "Portugués",
 		"ITALIAN": "Italiano",
 		"DUTCH": "Holandés",
+		"POLISH": "Polaco",
 		"PREFERRED_LAYOUT": "Diseño de la página",
 		"PREFERRED_LAYOUT_TOOLTIP": "Esto solo establecerá la disposición predeterminada y no cambiará la disposición en cada página si ya la has cambiado una vez.",
 		"RESET_LAYOUT": "Restablecer diseño",
