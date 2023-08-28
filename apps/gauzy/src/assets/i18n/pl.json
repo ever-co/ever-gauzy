@@ -275,7 +275,8 @@
 			"PT": "Português (Portugal)",
 			"IT": "Italiano (Italia)",
 			"NL": "Nederlands (Nederland)",
-			"PL": "Polski (Polska)"
+			"PL": "Polski (Polska)",
+			"AR": "العربية (العراق)"
 		},
 		"CURRENT_VALUE": "Obecna wartość",
 		"TARGET_VALUE": "Wartość docelowa",
@@ -1087,6 +1088,7 @@
 		"ITALIAN": "Włoski",
 		"DUTCH": "Holenderski",
 		"POLISH": "Polski",
+		"ARABIC": "Arabski",
 		"PREFERRED_LAYOUT": "Układ",
 		"PREFERRED_LAYOUT_TOOLTIP": "To spowoduje ustawienie domyślnego układu strony i nie zmieni układu na każdej stronie, jeśli już raz go zmieniłeś",
 		"RESET_LAYOUT": "Zresetuj układ",
