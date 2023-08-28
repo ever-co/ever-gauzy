@@ -275,7 +275,8 @@
 			"PT": "Português (Portugal)",
 			"IT": "Italiano (Italia)",
 			"NL": "Nederlands (Nederland)",
-			"PL": "Polski (Polska)"
+			"PL": "Polski (Polska)",
+			"AR": "العربية (العراق)"
 		},
 		"CURRENT_VALUE": "Huidige waarde",
 		"TARGET_VALUE": "Doelwaarde",
@@ -1087,6 +1088,7 @@
 		"ITALIAN": "Italiaans",
 		"DUTCH": "Nederlands",
 		"POLISH": "Pools",
+		"ARABIC": "Arabisch",
 		"PREFERRED_LAYOUT": "Indeling",
 		"PREFERRED_LAYOUT_TOOLTIP": "Dit zal alleen de standaardlay-out instellen en de lay-out op elke pagina niet wijzigen als je deze al eens hebt gewijzigd.",
 		"RESET_LAYOUT": "Reset Lay-out",
