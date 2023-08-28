@@ -1,9 +1,9 @@
 import { Entity, Column } from 'typeorm';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { ICustomSmtp } from '@gauzy/contracts';
-import { ISMTPConfig } from '@gauzy/common';
 import { IsBoolean, IsEmail, IsNumber, IsOptional, IsString } from 'class-validator';
 import { Exclude, Expose } from 'class-transformer';
+import { ICustomSmtp } from '@gauzy/contracts';
+import { ISMTPConfig } from '@gauzy/common';
 import { TenantOrganizationBaseEntity } from '../core/entities/internal';
 import { IsSecret } from './../core/decorators';
 
@@ -11,22 +11,22 @@ import { IsSecret } from './../core/decorators';
 export class CustomSmtp extends TenantOrganizationBaseEntity
 	implements ICustomSmtp {
 
-	@ApiProperty({ type: () => String, examples: ['noreply@domain.com'], required: true })
+	@ApiProperty({ type: () => String, examples: ['noreply@domain.com'] })
 	@IsEmail()
 	@Column({ nullable: true })
 	fromAddress?: string
 
-	@ApiProperty({ type: () => String, examples: ['smtp.postmarkapp.com', 'smtp.gmail.com'], required: true })
+	@ApiProperty({ type: () => String, examples: ['smtp.postmarkapp.com', 'smtp.gmail.com'] })
 	@IsString()
 	@Column()
 	host: string;
 
-	@ApiProperty({ type: () => Number, examples: [587, 465], required: true })
+	@ApiProperty({ type: () => Number, examples: [587, 465] })
 	@IsNumber()
 	@Column()
 	port: number;
 
-	@ApiProperty({ type: () => Boolean, examples: [true, false], required: true })
+	@ApiProperty({ type: () => Boolean, examples: [true, false] })
 	@IsBoolean()
 	@Column()
 	secure: boolean;
@@ -71,6 +71,6 @@ export class CustomSmtp extends TenantOrganizationBaseEntity
 				user: this.username,
 				pass: this.password
 			}
-		} as ISMTPConfig
+		} as ISMTPConfig;
 	}
 }

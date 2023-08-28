@@ -5,21 +5,29 @@ import {
 	ElementRef,
 	ChangeDetectorRef,
 	ChangeDetectionStrategy,
+	NgZone,
+	AfterViewInit,
 } from '@angular/core';
+import { from, tap } from 'rxjs';
+import { TranslateService } from '@ngx-translate/core';
+import { LanguagesEnum } from 'packages/contracts/dist';
 import { ElectronService } from '../electron/services';
+import { LanguageSelectorService } from '../language/language-selector.service';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 
 export enum ServerStatus {
-	START = 'Start',
-	STOP = 'Stop'
+	START = 'BUTTONS.START',
+	STOP = 'BUTTONS.STOP'
 }
 
+@UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ngx-server-dashboard',
 	templateUrl: './server-dashboard.component.html',
 	styleUrls: ['./server-dashboard.component.scss'],
 	changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class ServerDashboardComponent implements OnInit {
+export class ServerDashboardComponent implements OnInit, AfterViewInit {
 	@ViewChild('logBox') logBox: ElementRef;
 	@ViewChild('logServer') logAccordion;
 	active_index: any;
@@ -27,7 +35,7 @@ export class ServerDashboardComponent implements OnInit {
 	running = false;
 	loading = false;
 	btn: any = {
-		name: 'Start',
+		name: ServerStatus.START,
 		icon: 'arrow-right-outline',
 	};
 	logContents: any = [];
@@ -40,7 +48,10 @@ export class ServerDashboardComponent implements OnInit {
 
 	constructor(
 		private electronService: ElectronService,
-		private _cdr: ChangeDetectorRef
+		private _cdr: ChangeDetectorRef,
+		private _languageSelectorService: LanguageSelectorService,
+		private _translateService: TranslateService,
+		private _ngZone: NgZone
 	) {
 		this.electronService.ipcRenderer.on('running_state', (event, arg) => {
 			this.loading = false;
@@ -79,6 +90,32 @@ export class ServerDashboardComponent implements OnInit {
 			this.logIsOpen = true;
 			this._cdr.detectChanges();
 		});
+	}
+	ngAfterViewInit(): void {
+		this.electronService.ipcRenderer.on(
+			'preferred_language_change',
+			(event, language: LanguagesEnum) => {
+				this._ngZone.run(() => {
+					this._languageSelectorService.setLanguage(
+						language,
+						this._translateService
+					);
+					this._cdr.detectChanges();
+				});
+			}
+		);
+		from(this.electronService.ipcRenderer.invoke('PREFERRED_LANGUAGE'))
+			.pipe(
+				tap((language) => {
+					this._languageSelectorService.setLanguage(
+						language,
+						this._translateService
+					);
+					this._cdr.detectChanges();
+				}),
+				untilDestroyed(this)
+			)
+			.subscribe();;
 	}
 
 	ngOnInit(): void {

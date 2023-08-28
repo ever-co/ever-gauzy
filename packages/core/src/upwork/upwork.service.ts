@@ -98,7 +98,7 @@ export class UpworkService {
 		private readonly _upworkJobService: UpworkJobService,
 		private readonly _upworkOfferService: UpworkOffersService,
 		private readonly commandBus: CommandBus
-	) {}
+	) { }
 
 	private async _consumerHasAccessToken(
 		config: IUpworkClientSecretPair,
@@ -161,6 +161,7 @@ export class UpworkService {
 			console.log('consumerAccessToken already exits and will be reused');
 			return consumerAccessToken;
 		}
+		const tenantId = RequestContext.currentTenantId();
 
 		this._upworkApi = new UpworkApi(config);
 
@@ -179,6 +180,7 @@ export class UpworkService {
 
 					await this.commandBus.execute(
 						new IntegrationTenantCreateCommand({
+							tenantId,
 							organizationId,
 							name: IntegrationEnum.UPWORK,
 							entitySettings: [],
@@ -199,9 +201,7 @@ export class UpworkService {
 									settingsName: 'requestTokenSecret',
 									settingsValue: requestTokenSecret
 								}
-							].map((setting) => {
-								return { organizationId, ...setting };
-							})
+							]
 						})
 					);
 					return resolve({
@@ -515,7 +515,7 @@ export class UpworkService {
 
 		for await (const timeSlot of timeSlots) {
 			const multiply = 10;
-			const durtion = 600;
+			const duration = 600;
 			const {
 				keyboard_events_count,
 				mouse_events_count,
@@ -534,7 +534,7 @@ export class UpworkService {
 						moment.unix(cell_time).format('YYYY-MM-DD HH:mm:ss')
 					),
 					overall: activity * multiply,
-					duration: durtion,
+					duration: duration,
 					organizationId,
 					tenantId
 				})
@@ -569,8 +569,8 @@ export class UpworkService {
 					config,
 					forDate
 				})
-				.then((response) => response)
-				.catch((error) => error);
+					.then((response) => response)
+					.catch((error) => error);
 
 				if (wd.hasOwnProperty('statusCode') && wd.statusCode === 404) {
 					return wd;
@@ -650,7 +650,7 @@ export class UpworkService {
 		const dates: IDateRange[] = mergeOverlappingDateRanges(range);
 
 		if (isNotEmpty(dates)) {
-			dates.forEach(({ start, end}) => {
+			dates.forEach(({ start, end }) => {
 				let i = 0;
 				const timeSlots = new Array();
 				while (slots[i]) {
@@ -661,15 +661,15 @@ export class UpworkService {
 					i++;
 				}
 				const activity = timeSlots.reduce((prev, current) => {
-						return {
-							...prev,
-							keyboard: (prev.keyboard += +current.keyboard_events_count),
-							mouse: (prev.mouse += +current.mouse_events_count),
-							logType: slots.manual
-								? TimeLogType.MANUAL
-								: TimeLogType.TRACKED
-						};
-					},
+					return {
+						...prev,
+						keyboard: (prev.keyboard += +current.keyboard_events_count),
+						mouse: (prev.mouse += +current.mouse_events_count),
+						logType: slots.manual
+							? TimeLogType.MANUAL
+							: TimeLogType.TRACKED
+					};
+				},
 					{
 						keyboard: 0,
 						mouse: 0
@@ -693,7 +693,7 @@ export class UpworkService {
 		employeeId,
 		config,
 		entitiesToSync,
-		providerRefernceId,
+		providerReferenceId,
 		providerId
 	}) {
 		const syncedContracts = await this.syncContracts({
@@ -704,7 +704,7 @@ export class UpworkService {
 
 		if (!employeeId) {
 			const employee = await this._getUpworkGauzyEmployee(
-				providerRefernceId,
+				providerReferenceId,
 				integrationId,
 				organizationId,
 				config
@@ -730,7 +730,7 @@ export class UpworkService {
 							integrationId,
 							config,
 							employeeId,
-							providerRefernceId,
+							providerReferenceId,
 							providerId,
 							entity.datePicker.selectedDate
 						);
@@ -804,7 +804,7 @@ export class UpworkService {
 	}
 
 	/*
-	 * Get snapshots/timeslot minutes activites
+	 * Get snapshots/timeslot minutes activities
 	 */
 	async getTimeSlotActivitiesByContractId({
 		contractId,
@@ -957,7 +957,7 @@ export class UpworkService {
 	}
 
 	private async _getUpworkGauzyEmployee(
-		providerRefernceId: number,
+		providerReferenceId: string,
 		integrationId: string,
 		organizationId: string,
 		config: IUpworkApiConfig
@@ -965,7 +965,7 @@ export class UpworkService {
 		const tenantId = RequestContext.currentTenantId();
 		const { record } = await this._integrationMapService.findOneOrFailByOptions({
 			where: {
-				sourceId: providerRefernceId,
+				sourceId: providerReferenceId,
 				entity: IntegrationEntity.EMPLOYEE,
 				organizationId,
 				tenantId
@@ -975,10 +975,10 @@ export class UpworkService {
 		return record
 			? record
 			: await this._handleEmployee({
-					integrationId,
-					organizationId,
-					config
-			  });
+				integrationId,
+				organizationId,
+				config
+			});
 	}
 
 	async syncEmployee({ integrationId, user, organizationId }) {
@@ -1085,7 +1085,7 @@ export class UpworkService {
 				tenantId
 			})
 		);
-	 	return await this.commandBus.execute(
+		return await this.commandBus.execute(
 			new IntegrationMapSyncEntityCommand({
 				gauzyId: gauzyClient.id,
 				integrationId,
@@ -1104,7 +1104,7 @@ export class UpworkService {
 		integrationId: string,
 		config: IUpworkApiConfig,
 		employeeId: string,
-		providerRefernceId: string,
+		providerReferenceId: string,
 		providerId: string,
 		dateRange: IUpworkDateRange
 	) {
@@ -1122,7 +1122,7 @@ export class UpworkService {
 				integrationId,
 				config,
 				employeeId,
-				providerRefernceId,
+				providerReferenceId,
 				dateRange
 			);
 			return {
@@ -1145,12 +1145,12 @@ export class UpworkService {
 		integrationId: string,
 		config: IUpworkApiConfig,
 		employeeId: string,
-		providerRefernceId: string,
+		providerReferenceId: string,
 		dateRange: IUpworkDateRange
 	) {
 		const reports = await this._upworkReportService.getEarningReportByFreelancer(
 			config,
-			providerRefernceId,
+			providerReferenceId,
 			dateRange
 		);
 		const { table: { cols = [] } } = reports;

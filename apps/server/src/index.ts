@@ -17,7 +17,6 @@ import {
 	MenuItemConstructorOptions,
 	screen,
 } from 'electron';
-import { environment } from './environments/environment';
 
 // setup logger to catch all unhandled errors and submit as bug reports to our repo
 
@@ -33,15 +32,23 @@ import {
 	apiServer,
 	AppMenu,
 	DesktopUpdater,
+	TranslateLoader,
+	TranslateService,
+	IPathWindow,
+	ReadWriteFile,
+	ServerConfig,
+	IServerConfig,
+	ILocalServer,
+	ReverseProxy
 } from '@gauzy/desktop-libs';
 import {
 	createSetupWindow,
 	createServerWindow,
 	createSettingsWindow,
 	SplashScreen,
+	createAboutWindow,
 } from '@gauzy/desktop-window';
 import { initSentry } from './sentry';
-import { readFileSync, writeFileSync, accessSync, constants } from 'fs';
 import * as remoteMain from '@electron/remote/main';
 import { autoUpdater } from 'electron-updater';
 remoteMain.initialize();
@@ -70,12 +77,7 @@ const updater = new DesktopUpdater({
 	typeRelease: 'releases',
 });
 
-const pathWindow: {
-	gauzyUi: string;
-	ui: string;
-	dir: string;
-	timeTrackerUi: string;
-} = {
+const pathWindow: IPathWindow = {
 	gauzyUi: app.isPackaged
 		? path.join(__dirname, '../data/ui/index.html')
 		: path.join(__dirname, './data/ui/index.html'),
@@ -86,6 +88,13 @@ const pathWindow: {
 	timeTrackerUi: path.join(__dirname, 'index.html'),
 };
 
+const serverConfig: IServerConfig = new ServerConfig(
+	new ReadWriteFile(pathWindow)
+);
+const reverseProxy: ILocalServer = new ReverseProxy(serverConfig);
+
+/* Load translations */
+TranslateLoader.load(__dirname + '/assets/i18n/');
 /* Setting the app user model id for the app. */
 if (process.platform === 'win32') {
 	app.setAppUserModelId('com.ever.gauzyserver');
@@ -98,9 +107,12 @@ LocalStore.setFilePath({
 // Set unlimited listeners
 ipcMain.setMaxListeners(0);
 
+/* Remove handler if exist */
+ipcMain.removeHandler('PREFERRED_LANGUAGE');
+
 const runSetup = async () => {
+	splashScreen.close();
 	if (setupWindow) {
-		splashScreen.close();
 		setupWindow.show();
 		return;
 	}
@@ -109,7 +121,7 @@ const runSetup = async () => {
 };
 
 const appState = async () => {
-	const config = LocalStore.getStore('configs');
+	const config = serverConfig.setting;
 	if (!config) {
 		await runSetup();
 		return;
@@ -144,49 +156,11 @@ const runMainWindow = async () => {
 
 const initializeConfig = async (val) => {
 	try {
-		LocalStore.updateConfigSetting(val);
-		updateConfigUi(val);
+		serverConfig.setting = val;
+		serverConfig.update();
 		await runMainWindow();
 	} catch (error) {
 		console.log(error)
-	}
-};
-
-const getApiBaseUrl = (config) => {
-	if (config.serverUrl) return config.serverUrl;
-	else {
-		return config.port
-			? `http://localhost:${config.port}`
-			: `http://localhost:${environment.API_DEFAULT_PORT}`;
-	}
-};
-
-const updateConfigUi = (config) => {
-	const apiBaseUrl = getApiBaseUrl(config);
-	let fileStr = readFileSync(pathWindow.gauzyUi, 'utf8');
-
-	const configStr = `
-		<script> window._env = { api: '${apiBaseUrl}' };
-		if (typeof global === "undefined") {
-			var global = window;
-		}; </script>`;
-
-	const elementToReplace = '</body>';
-
-	fileStr = fileStr.replace(elementToReplace, configStr.concat('\n').concat(elementToReplace));
-
-	// write file new html
-
-	try {
-		accessSync(pathWindow.dir, constants.W_OK);
-	} catch (e) {
-		console.error('Cannot access directory');
-	}
-
-	try {
-		writeFileSync(pathWindow.gauzyUi, fileStr);
-	} catch (error) {
-		console.log('Cannot change html file', error);
 	}
 };
 
@@ -194,7 +168,8 @@ const controller = new AbortController()
 const { signal } = controller;
 const runServer = (isRestart) => {
 	const envVal = getEnvApi();
-	const uiPort = getUiPort();
+	const uiPort = serverConfig.uiPort;
+
 	apiServer(
 		{
 			ui: path.join(__dirname, 'preload', 'ui-server.js'),
@@ -209,8 +184,8 @@ const runServer = (isRestart) => {
 };
 
 const getEnvApi = () => {
-	const config = LocalStore.getStore('configs');
-	updateConfigUi(config);
+	const config = serverConfig.setting;
+	serverConfig.update();
 	const addsConfig = LocalStore.getAdditionalConfig();
 	const provider = config.db;
 	return {
@@ -229,11 +204,6 @@ const getEnvApi = () => {
 	};
 };
 
-const getUiPort = () => {
-	const config = LocalStore.getStore('configs');
-	return config.portUi;
-};
-
 const createTray = () => {
 	const iconNativePath = nativeImage.createFromPath(
 		path.join(__dirname, 'assets', 'icons', 'icon.png')
@@ -248,15 +218,14 @@ const contextMenu = () => {
 	const serverMenu: MenuItemConstructorOptions[] = [
 		{
 			id: 'server_browser',
-			label: 'Open Gauzy In Browser',
+			label: TranslateService.instant('MENU.OPEN_GA_BROWSER'),
 			click() {
-				const config = LocalStore.getStore('configs');
-				shell.openExternal(`http://localhost:${config.portUi}`);
+				shell.openExternal(serverConfig.uiUrl);
 			},
 		},
 		{
 			id: 'check_for_update',
-			label: 'Check For Update',
+			label: TranslateService.instant('BUTTONS.CHECK_UPDATE'),
 			click() {
 				settingsWindow.show();
 				settingsWindow.webContents.send('goto_update');
@@ -271,14 +240,14 @@ const contextMenu = () => {
 		},
 		{
 			id: 'start_server',
-			label: 'Start Server',
+			label: TranslateService.instant('MENU.START_SERVER'),
 			click() {
 				runServer(false);
 			},
 		},
 		{
 			id: 'stop_server',
-			label: 'Stop Server',
+			label: TranslateService.instant('MENU.STOP_SERVER'),
 			click() {
 				stopServer(false);
 			},
@@ -288,19 +257,26 @@ const contextMenu = () => {
 		},
 		{
 			id: 'server_help',
-			label: 'Help',
+			label: TranslateService.instant('TIMER_TRACKER.MENU.HELP'),
 			click() {
 				shell.openExternal('https://gauzy.co');
 			},
 		},
 		{
-			id: 'server_about',
-			label: 'About',
-			role: 'about',
+			id: 'gauzy-about',
+			label: TranslateService.instant('MENU.ABOUT'),
+			enabled: true,
+			async click() {
+				const window: BrowserWindow =
+					await createAboutWindow(
+						pathWindow.ui
+					);
+				window.show();
+			},
 		},
 		{
 			id: 'server_exit',
-			label: 'Exit',
+			label: TranslateService.instant('BUTTONS.EXIT'),
 			click() {
 				app.quit();
 			},
@@ -320,15 +296,13 @@ ipcMain.on('run_gauzy_server', (event, arg) => {
 });
 
 const stopServer = (isRestart) => {
-	const config = LocalStore.getStore('configs');
+	const config = serverConfig.setting;
 	console.log('api pid', config.apiPid);
 	console.log('api pid', config.uiPid);
 	if (config.apiPid) {
 		try {
 			process.kill(config.apiPid);
-			LocalStore.updateConfigSetting({
-				apiPid: null,
-			});
+			serverConfig.setting = { apiPid: null };
 			serverWindow.webContents.send('log_state', { msg: 'Api stopped' });
 		} catch (error) {
 			console.log('error api', error);
@@ -337,9 +311,7 @@ const stopServer = (isRestart) => {
 	if (config.uiPid) {
 		try {
 			process.kill(config.uiPid);
-			LocalStore.updateConfigSetting({
-				uiPid: null,
-			});
+			serverConfig.setting = { uiPid: null };
 			serverWindow.webContents.send('log_state', { msg: 'UI stopped' });
 			if (isRestart) {
 				runServer(true);
@@ -367,14 +339,30 @@ app.on('ready', async () => {
 	updater.settingWindow = settingsWindow;
 	updater.gauzyWindow = serverWindow;
 	await updater.checkUpdate();
+	TranslateService.onLanguageChange(() => {
+		const menuWindowSetting =
+			Menu.getApplicationMenu().getMenuItemById('window-setting');
+		new AppMenu(
+			null,
+			settingsWindow,
+			null,
+			null,
+			pathWindow,
+			serverWindow,
+			false
+		);
+		if (tray) tray.destroy();
+		createTray();
+		if (menuWindowSetting) menuWindowSetting.enabled = true;
+	})
 });
 
 ipcMain.on('restart_app', (event, arg) => {
 	console.log('Restarting Server', arg);
 	if (arg.apiPid) delete arg.apiPid;
 	if (arg.uiPid) delete arg.uiPid;
-	LocalStore.updateConfigSetting(arg);
-	updateConfigUi(arg);
+	serverConfig.setting = arg;
+	serverConfig.update();
 	event.sender.send('resp_msg', { type: 'update_config', status: 'success' });
 	if (isServerRun) {
 		stopServer(true);
@@ -415,10 +403,10 @@ ipcMain.on('check_database_connection', async (event, arg) => {
 		await dbConn.raw('select 1+1 as result');
 		event.sender.send('database_status', {
 			status: true,
-			message:
-				provider === 'postgres'
-					? 'Connection to PostgresSQL DB Succeeds'
-					: 'Connection to SQLITE DB Succeeds',
+			message: TranslateService.instant(
+				'TIMER_TRACKER.DIALOG.CONNECTION_DRIVER',
+				{ driver: provider === 'postgres' ? 'PostgresSQL' : 'SQLite' }
+			)
 		});
 	} catch (error) {
 		event.sender.send('database_status', {
@@ -438,9 +426,11 @@ ipcMain.on('running_state', (event, arg) => {
 	if (arg) {
 		const start = trayContextMenu[3];
 		start.enabled = false;
+		reverseProxy.start();
 	} else {
 		const stop = trayContextMenu[4];
 		stop.enabled = false;
+		reverseProxy.stop();
 	}
 	tray.setContextMenu(Menu.buildFromTemplate(trayContextMenu));
 	isServerRun = arg;
@@ -526,4 +516,19 @@ ipcMain.on('update_app_setting', (event, arg) => {
 
 app.on('browser-window-created', (_, window) => {
 	require("@electron/remote/main").enable(window.webContents)
+})
+
+ipcMain.handle('PREFERRED_LANGUAGE', (event, arg) => {
+	const setting = LocalStore.getStore('appSetting');
+	if (arg) {
+		if (!setting) LocalStore.setDefaultApplicationSetting();
+		TranslateService.preferredLanguage = arg;
+		settingsWindow?.webContents?.send('preferred_language_change', arg);
+	}
+	return TranslateService.preferredLanguage;
+});
+
+ipcMain.on('preferred_language_change', (event, arg) => {
+	TranslateService.preferredLanguage = arg;
+	serverWindow?.webContents?.send('preferred_language_change', arg);
 })

@@ -12,20 +12,26 @@ const routes: Routes = [
 		canActivate: [NgxPermissionsGuard],
 		data: {
 			permissions: {
-				only: [PermissionsEnum.IMPORT_EXPORT_VIEW],
+				only: [
+					PermissionsEnum.ALL_ORG_VIEW,
+					PermissionsEnum.IMPORT_ADD,
+					PermissionsEnum.EXPORT_ADD
+				],
 				redirectTo: '/pages/settings'
 			}
 		}
 	},
 	{
 		path: 'export',
-		loadChildren: () =>
-			import('./export/export.module').then((m) => m.ExportModule)
+		loadChildren: () => import('./export/export.module').then(
+			(m) => m.ExportModule
+		)
 	},
 	{
 		path: 'import',
-		loadChildren: () =>
-			import('./import/import.module').then((m) => m.ImportModule)
+		loadChildren: () => import('./import/import.module').then(
+			(m) => m.ImportModule
+		)
 	},
 	{
 		path: 'external-redirect',
@@ -40,15 +46,15 @@ const routes: Routes = [
 	imports: [RouterModule.forChild(routes)],
 	exports: [RouterModule],
 	providers: [
-        {
-            provide: externalUrlProvider,
-            useValue: (
+		{
+			provide: externalUrlProvider,
+			useValue: (
 				route: ActivatedRouteSnapshot
 			) => {
-                const externalUrl = route.paramMap.get('redirect');
+				const externalUrl = route.paramMap.get('redirect');
 				window.open(externalUrl, '_blank');
-            }
-        },
-    ],
+			}
+		},
+	],
 })
-export class ImportExportRoutingModule {}
+export class ImportExportRoutingModule { }

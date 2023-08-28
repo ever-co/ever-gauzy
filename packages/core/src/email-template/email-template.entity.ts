@@ -1,7 +1,7 @@
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { Column, Entity, Index, OneToMany } from 'typeorm';
+import { ApiProperty } from '@nestjs/swagger';
+import { Column, Entity, Index } from 'typeorm';
 import { IEmailTemplate } from '@gauzy/contracts';
-import { Email, TenantOrganizationBaseEntity } from '../core/entities/internal';
+import { TenantOrganizationBaseEntity } from '../core/entities/internal';
 
 @Entity('email_template')
 export class EmailTemplate extends TenantOrganizationBaseEntity
@@ -28,14 +28,8 @@ export class EmailTemplate extends TenantOrganizationBaseEntity
 	title?: string;
 
 	/*
-    |--------------------------------------------------------------------------
-    | @OneToMany
-    |--------------------------------------------------------------------------
-    */
-	// Emails
-	@ApiPropertyOptional({ type: () => Email })
-	@OneToMany(() => Email, (email) => email.emailTemplate, {
-		cascade: true
-	})
-	emails?: IEmailTemplate[];
+	|--------------------------------------------------------------------------
+	| @OneToMany
+	|--------------------------------------------------------------------------
+	*/
 }

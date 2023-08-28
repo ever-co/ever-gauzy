@@ -16,6 +16,7 @@ import { DEFAULT_SIDEBARS } from '../../components/theme-sidebar/default-sidebar
 import { UntilDestroy } from '@ngneat/until-destroy';
 import { LayoutService } from '../../../@core/utils/layout.service';
 import { Observable } from 'rxjs';
+import { ThemeLanguageSelectorService } from '../../components/theme-sidebar/theme-settings/components/theme-language-selector.service';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -46,7 +47,8 @@ export class OneColumnLayoutComponent
 		private readonly store: Store,
 		public readonly navigationBuilderService: NavigationBuilderService,
 		private readonly sidebarService: NbSidebarService,
-		private readonly layoutService: LayoutService
+		private readonly layoutService: LayoutService,
+		private readonly languageSelectorService: ThemeLanguageSelectorService
 	) {
 		Object.entries(DEFAULT_SIDEBARS).forEach(([id, config]) => {
 			navigationBuilderService.registerSidebar(id, config);
@@ -60,6 +62,7 @@ export class OneColumnLayoutComponent
 		this.loading = true;
 		this.user$ = this.store.user$;
 		this.loading = false;
+		this.languageSelectorService.initialize();
 	}
 
 	ngAfterViewInit() {

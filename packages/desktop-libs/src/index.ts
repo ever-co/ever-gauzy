@@ -20,3 +20,5 @@ export * from './lib/desktop-updater';
 export * from './lib/offline/desktop-offline-mode-handler';
 export * from './lib/states';
 export * from './lib/offline';
+export * from './lib/translation';
+export * from './lib/server';

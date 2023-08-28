@@ -8,8 +8,8 @@ import { TenantAwareCrudService } from './../core/crud';
 export class IntegrationMapService extends TenantAwareCrudService<IntegrationMap> {
 	constructor(
 		@InjectRepository(IntegrationMap)
-		readonly repository: Repository<IntegrationMap>
+		private readonly integrationMap: Repository<IntegrationMap>
 	) {
-		super(repository);
+		super(integrationMap);
 	}
 }

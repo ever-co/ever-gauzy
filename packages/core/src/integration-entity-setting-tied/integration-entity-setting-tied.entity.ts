@@ -1,6 +1,6 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Column, Entity, JoinColumn, RelationId, ManyToOne, Index } from 'typeorm';
-import { IsOptional, IsString } from 'class-validator';
+import { IsBoolean, IsNotEmpty, IsOptional, IsUUID } from 'class-validator';
 import {
 	IIntegrationEntitySetting,
 	IIntegrationEntitySettingTied
@@ -9,39 +9,40 @@ import {
 	IntegrationEntitySetting,
 	TenantOrganizationBaseEntity
 } from '../core/entities/internal';
-
 @Entity('integration_entity_setting_tied')
-export class IntegrationEntitySettingTied
-	extends TenantOrganizationBaseEntity
-	implements IIntegrationEntitySettingTied {
-	
+export class IntegrationEntitySettingTied extends TenantOrganizationBaseEntity implements IIntegrationEntitySettingTied {
+
 	@ApiProperty({ type: () => String })
-	@Column({ nullable: false })
+	@IsNotEmpty()
+	@Column()
 	entity: string;
 
 	@ApiProperty({ type: () => Boolean })
-	@Column({ nullable: false })
+	@IsNotEmpty()
+	@IsBoolean()
+	@Column()
 	sync: boolean;
 
 	/*
-    |--------------------------------------------------------------------------
-    | @ManyToOne 
-    |--------------------------------------------------------------------------
-    */
+	|--------------------------------------------------------------------------
+	| @ManyToOne
+	|--------------------------------------------------------------------------
+	*/
 
 	/**
 	 * IntegrationEntitySetting
 	 */
-	@ApiProperty({ type: () => IntegrationEntitySetting })
-	@ManyToOne(() => IntegrationEntitySetting, (integrationEntitySetting) => integrationEntitySetting.tiedEntities)
+	@ManyToOne(() => IntegrationEntitySetting, (it) => it.tiedEntities, {
+		onDelete: 'CASCADE'
+	})
 	@JoinColumn()
 	integrationEntitySetting?: IIntegrationEntitySetting;
 
-	@ApiProperty({ type: () => String, readOnly: true })
-	@RelationId((it: IntegrationEntitySettingTied) => it.integrationEntitySetting)
-	@IsString()
+	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()
+	@IsUUID()
+	@RelationId((it: IntegrationEntitySettingTied) => it.integrationEntitySetting)
 	@Index()
 	@Column({ nullable: true })
-	readonly integrationEntitySettingId?: string;
+	integrationEntitySettingId?: IIntegrationEntitySetting['id'];
 }

@@ -3,6 +3,7 @@ import { Injectable } from '@angular/core';
 import {
 	IUserOrganization,
 	IUserOrganizationFindInput,
+	IUserUpdateInput,
 } from '@gauzy/contracts';
 import { toParams } from '@gauzy/common-angular';
 import { firstValueFrom, map, shareReplay } from 'rxjs';
@@ -74,5 +75,11 @@ export class UserOrganizationService {
 			);
 		}
 		return firstValueFrom(userOrganizations$);
+	}
+
+	public async updatePreferredLanguage(input: IUserUpdateInput): Promise<void> {
+		await firstValueFrom(
+			this._http.put(`${API_PREFIX}/user/preferred-language`, input)
+		);
 	}
 }

@@ -8,18 +8,20 @@ export class InvoiceSendEmailHandler
 
 	constructor(
 		private readonly invoiceService: InvoiceService
-	) {}
+	) { }
 
 	public async execute(command: InvoiceSendEmailCommand): Promise<any> {
-		const { languageCode, email, params, originUrl } = command;
-		return this.invoiceService.sendEmail(
+		const { languageCode, email, params, origin } = command;
+		const { invoiceNumber, invoiceId, isEstimate, organizationId } = params;
+
+		return await this.invoiceService.sendEmail(
 			languageCode,
 			email,
-			params.invoiceNumber,
-			params.invoiceId,
-			params.isEstimate,
-			originUrl,
-			params.organizationId
+			invoiceNumber,
+			invoiceId,
+			isEstimate,
+			origin,
+			organizationId
 		);
 	}
 }

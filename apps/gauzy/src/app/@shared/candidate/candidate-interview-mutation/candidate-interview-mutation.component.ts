@@ -105,7 +105,7 @@ export class CandidateInterviewMutationComponent
 	selectedInterviewers: string[] = [];
 	criterionsId = null;
 	isTitleExist = false;
-	
+
 	personalQualities: ICandidatePersonalQualities[] = null;
 	technologies: ICandidateTechnologies[];
 	selectedCandidateId: string;
@@ -124,7 +124,7 @@ export class CandidateInterviewMutationComponent
 		private readonly candidatePersonalQualitiesService: CandidatePersonalQualitiesService,
 		private readonly router: Router,
 		private readonly candidateStore: CandidateStore
-	) {}
+	) { }
 
 	async ngOnInit() {
 		this.store.selectedOrganization$
@@ -146,7 +146,7 @@ export class CandidateInterviewMutationComponent
 				organizationId,
 				tenantId
 			})
-		)
+			)
 		).items;
 	}
 
@@ -222,7 +222,7 @@ export class CandidateInterviewMutationComponent
 	async createInterview(interview: ICandidateInterview) {
 		const { tenantId } = this.store.user;
 		const { id: organizationId } = this.organization;
-		
+
 		const emptyInterview = {
 			title: '',
 			interviewers: null,
@@ -247,7 +247,7 @@ export class CandidateInterviewMutationComponent
 			criterionsForm.selectedQualities
 		);
 		try {
-			const createdInterview = await this.candidateInterviewService.update(
+			await this.candidateInterviewService.update(
 				interview.id,
 				{
 					title: this.interview.title,
@@ -257,7 +257,7 @@ export class CandidateInterviewMutationComponent
 					note: this.interview.note
 				}
 			);
-			return createdInterview;
+			return { ...interview, ...this.interview };
 		} catch (error) {
 			this.errorHandler.handleError(error);
 		}
@@ -438,5 +438,5 @@ export class CandidateInterviewMutationComponent
 		]);
 	}
 
-	ngOnDestroy() {}
+	ngOnDestroy() { }
 }

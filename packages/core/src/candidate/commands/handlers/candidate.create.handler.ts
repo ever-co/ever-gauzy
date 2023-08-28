@@ -8,7 +8,7 @@ import { AuthService } from './../../../auth/auth.service';
 import { CandidateService } from '../../candidate.service';
 import { RoleService } from './../../../role/role.service';
 import { UserOrganizationService } from './../../../user-organization/user-organization.services';
-import { EmailService } from './../../../email/email.service';
+import { EmailService } from './../../../email-send/email.service';
 
 @CommandHandler(CandidateCreateCommand)
 export class CandidateCreateHandler
@@ -21,7 +21,7 @@ export class CandidateCreateHandler
 		private readonly _roleService: RoleService,
 		private readonly _userOrganizationService: UserOrganizationService,
 		private readonly _emailService: EmailService
-	) {}
+	) { }
 
 	public async execute(command: CandidateCreateCommand): Promise<ICandidate> {
 		try {

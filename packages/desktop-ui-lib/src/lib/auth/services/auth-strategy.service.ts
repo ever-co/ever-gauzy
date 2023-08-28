@@ -5,7 +5,7 @@ import { Injectable } from '@angular/core';
 import { IAuthResponse } from '@gauzy/contracts';
 import { NbAuthStrategyClass } from '@nebular/auth/auth.options';
 import { AuthService } from './auth.service';
-import { Store } from '../../services';
+import { Store, TimeTrackerDateManager } from '../../services';
 import { ElectronService } from '../../electron/services';
 
 @Injectable()
@@ -207,10 +207,12 @@ export class AuthStrategy extends NbAuthStrategy {
 
 				// Set stored values on login
 				const { id, employee, tenantId } = user;
+				TimeTrackerDateManager.organization = employee.organization;
 				this.store.organizationId = employee.organizationId;
 				this.store.tenantId = tenantId;
 				this.store.userId = id;
 				this.store.token = token;
+				this.store.user = user;
 
 				this.electronAuthentication({ user, token });
 

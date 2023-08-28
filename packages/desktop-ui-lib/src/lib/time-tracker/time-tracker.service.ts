@@ -4,7 +4,7 @@ import { HttpClient } from '@angular/common/http';
 import * as moment from 'moment';
 import { catchError, map, shareReplay, tap } from 'rxjs/operators';
 import { firstValueFrom, throwError } from 'rxjs';
-import { toUTC, toParams } from '@gauzy/common-angular';
+import { toParams } from '@gauzy/common-angular';
 import {
 	TimeLogSourceEnum,
 	TimeLogType,
@@ -23,7 +23,7 @@ import { TagCacheService } from '../services/tag-cache.service';
 import { TimeLogCacheService } from '../services/time-log-cache.service';
 import { LoggerService } from '../electron/services';
 import { API_PREFIX } from '../constants/app.constants';
-import { Store } from '../services';
+import { Store, TimeTrackerDateManager } from '../services';
 
 @Injectable({
 	providedIn: 'root',
@@ -186,6 +186,7 @@ export class TimeTrackerService {
 	}
 
 	async getTimeLogs(values) {
+		console.log('TimeLogs', values)
 		let timeLogs$ = this._timeLogService.getValue('counts');
 		if (!timeLogs$) {
 			timeLogs$ = this.http
@@ -194,12 +195,10 @@ export class TimeTrackerService {
 						tenantId: values.tenantId,
 						organizationId: values.organizationId,
 						employeeIds: [values.employeeId],
-						todayStart: toUTC(moment().startOf('day')).format(
-							'YYYY-MM-DD HH:mm:ss'
-						),
-						todayEnd: toUTC(moment().endOf('day')).format(
-							'YYYY-MM-DD HH:mm:ss'
-						),
+						todayStart: TimeTrackerDateManager.startToday,
+						todayEnd: TimeTrackerDateManager.endToday,
+						startDate: TimeTrackerDateManager.startWeek,
+						endDate: TimeTrackerDateManager.endWeek
 					}),
 				})
 				.pipe(

@@ -273,7 +273,18 @@
 		"itimer",
 		"iremote",
 		"iqueue",
-		"ilinked"
+		"ilinked",
+		"swatchbook",
+		"uuidv4",
+		"reference",
+		"workdiary",
+		"Workdiary",
+		"thmb",
+		"gitmodules",
+		"sqlserver",
+		"pdfmaker",
+		"Pdfmaker",
+		"prestart"
 	],
 	"useGitignore": true,
 	"ignorePaths": [

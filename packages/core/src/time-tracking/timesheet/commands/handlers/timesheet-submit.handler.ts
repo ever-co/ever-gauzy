@@ -4,10 +4,10 @@ import { NotAcceptableException } from '@nestjs/common';
 import { Repository, In, Not, IsNull } from 'typeorm';
 import { ITimesheet } from '@gauzy/contracts';
 import { isEmpty } from '@gauzy/common';
-import { EmailService } from './../../../../email/email.service';
+import { RequestContext } from './../../../../core/context';
+import { EmailService } from './../../../../email-send/email.service';
 import { Timesheet } from './../../timesheet.entity';
 import { TimesheetSubmitCommand } from '../timesheet-submit.command';
-import { RequestContext } from './../../../../core/context';
 
 @CommandHandler(TimesheetSubmitCommand)
 export class TimesheetSubmitHandler
@@ -16,7 +16,7 @@ export class TimesheetSubmitHandler
 		@InjectRepository(Timesheet)
 		private readonly timeSheetRepository: Repository<Timesheet>,
 		private readonly emailService: EmailService
-	) {}
+	) { }
 
 	public async execute(
 		command: TimesheetSubmitCommand

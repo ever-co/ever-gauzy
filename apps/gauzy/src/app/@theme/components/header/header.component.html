@@ -61,6 +61,20 @@
 			</ng-template>
 		</nb-action>
 
+		<nb-action *ngIf="
+														showTeamsSelector &&
+														!showExtraActions &&
+														selectorsVisibility?.team
+													" class="show-large-up">
+			<ng-template ngxPermissionsOnly="CHANGE_SELECTED_EMPLOYEE">
+				<ga-team-selector [shortened]="true" class="header-selector team-selector"></ga-team-selector>
+			</ng-template>
+			<ng-template ngxPermissionsExcept="CHANGE_SELECTED_EMPLOYEE">
+				<ga-team-selector [employeeId]="user?.employeeId" [shortened]="true"
+					class="header-selector team-selector"></ga-team-selector>
+			</ng-template>
+		</nb-action>
+
 		<nb-action
 			*ngIf="
 				showEmployeesSelector &&
@@ -70,7 +84,6 @@
 			class="show-large-up"
 		>
 			<ga-employee-selector
-			(selectionChanged)="onEmployeeSelect($event)"
 				class="header-selector employee-selector"
 			></ga-employee-selector>
 		</nb-action>
@@ -156,6 +169,19 @@
 			></ga-project-selector>
 		</ng-template>
 	</ng-container>
+<ng-container *ngIf="selectorsVisibility?.team">
+	<div>
+		<h6>{{ 'HEADER.SELECT_TEAM' | translate }}</h6>
+	</div>
+	<ng-template ngxPermissionsOnly="CHANGE_SELECTED_EMPLOYEE">
+		<ga-team-selector [shortened]="true" class="header-selector team-selector"></ga-team-selector>
+	</ng-template>
+	<ng-template ngxPermissionsExcept="CHANGE_SELECTED_EMPLOYEE">
+		<ga-team-selector [employeeId]="user?.employeeId" [shortened]="true"
+			class="header-selector team-selector"></ga-team-selector>
+	</ng-template>
+</ng-container>
+
 	<ng-container *ngIf="selectorsVisibility?.employee">
 		<div>
 			<h6>{{ 'HEADER.SELECT_EMPLOYEE' | translate }}</h6>

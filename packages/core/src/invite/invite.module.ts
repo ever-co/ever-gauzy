@@ -3,7 +3,6 @@ import { CqrsModule } from '@nestjs/cqrs';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { RouterModule } from 'nest-router';
 import { AuthModule } from '../auth/auth.module';
-import { EmailModule } from '../email/email.module';
 import { CommandHandlers } from './commands/handlers';
 import { QueryHandlers } from './queries/handlers';
 import { TenantModule } from '../tenant/tenant.module';
@@ -21,6 +20,7 @@ import { UserOrganizationModule } from './../user-organization/user-organization
 import { InviteController } from './invite.controller';
 import { Invite } from './invite.entity';
 import { InviteService } from './invite.service';
+import { EmailSendModule } from './../email-send/email-send.module';
 
 @Module({
 	imports: [
@@ -31,7 +31,7 @@ import { InviteService } from './invite.service';
 			Invite
 		]),
 		CqrsModule,
-		EmailModule,
+		EmailSendModule,
 		TenantModule,
 		UserModule,
 		RoleModule,

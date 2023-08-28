@@ -1,0 +1,23 @@
+<div class="theme-container">
+  	<div>
+		<ng-container *ngIf="(languages$ | async).length">
+			<nb-select
+				[(selected)]="preferredLanguage"
+				[(ngModel)]="preferredLanguage"
+				[placeholder]="'SETTINGS_MENU.ENGLISH' | translate"
+				(selectedChange)="switchLanguage()"
+				status="basic"
+				size="small"
+				optionsListClass="fit-content"
+				outline
+			>
+				<nb-option
+					*ngFor="let lang of languages$ | async"
+					[value]="lang.value"
+				>
+				    {{ lang.name | translate }}
+				</nb-option>
+			</nb-select>
+		</ng-container>
+	</div>
+</div>

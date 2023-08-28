@@ -681,3 +681,7 @@ ng2-smart-table table tr.ng2-smart-titles th a.sort {
 .ng-select.ng-select-single .ng-select-container .ng-value-container .ng-input{
   top: unset;
 }
+nb-option-list.fit-content {
+	width: fit-content !important;
+	min-width: var(--select-min-width);
+}

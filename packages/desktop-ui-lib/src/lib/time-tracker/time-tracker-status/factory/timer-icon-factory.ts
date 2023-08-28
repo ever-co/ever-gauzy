@@ -4,6 +4,7 @@ import {
 	DesktopTimerIcon,
 	HubstaffTimerIcon,
 	MobileTimerIcon,
+	TeamTimerIcon,
 	UpworkTimerIcon,
 	WebTimerIcon
 } from '../concretes';
@@ -22,6 +23,8 @@ export class TimerIconFactory {
 				return new HubstaffTimerIcon();
 			case TimeLogSourceEnum.UPWORK:
 				return new UpworkTimerIcon();
+			case TimeLogSourceEnum.TEAMS:
+				return new TeamTimerIcon();
 			default:
 				return new WebTimerIcon();
 		}

@@ -1,5 +1,6 @@
 import {BrowserWindow, dialog, MessageBoxOptions} from "electron";
 import { IDesktopDialog } from './interfaces';
+import { TranslateService } from './translation';
 
 export class DesktopDialog implements IDesktopDialog {
 	private _abortSignal: AbortController;
@@ -19,11 +20,14 @@ export class DesktopDialog implements IDesktopDialog {
 		this._abortSignal = new AbortController();
 		this._options = {
 			type: 'question',
-			buttons: ['Yes', 'No'],
+			buttons: [
+				TranslateService.instant('BUTTONS.YES'),
+				TranslateService.instant('BUTTONS.NO'),
+			],
 			defaultId: 2,
 			title: this._title,
 			message: this._message,
-			signal: this._abortSignal.signal
+			signal: this._abortSignal.signal,
 		};
 		this._window = window
 	}
