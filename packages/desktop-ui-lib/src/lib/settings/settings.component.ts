@@ -15,7 +15,7 @@ import { BehaviorSubject, Observable, filter, tap, firstValueFrom, from } from '
 import { AboutComponent } from '../dialogs/about/about.component';
 import { SetupService } from '../setup/setup.service';
 import * as moment from 'moment';
-import { TimeZoneManager, ToastrNotificationService, ZoneEnum } from '../services';
+import { TimeTrackerDateManager, TimeZoneManager, ToastrNotificationService, ZoneEnum } from '../services';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { AuthStrategy } from '../auth';
 import { LanguagesEnum } from 'packages/contracts/dist';
@@ -718,18 +718,20 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 						language,
 						this._translateService
 					);
+					TimeTrackerDateManager.locale(language);
 				});
 			}
 		);
 
 		from(this.electronService.ipcRenderer.invoke('PREFERRED_LANGUAGE'))
 			.pipe(
-				tap((language: LanguagesEnum) =>
+				tap((language: LanguagesEnum) => {
 					this._languageSelectorService.setLanguage(
 						language,
 						this._translateService
-					)
-				),
+					);
+					TimeTrackerDateManager.locale(language);
+				}),
 				untilDestroyed(this)
 			)
 			.subscribe();

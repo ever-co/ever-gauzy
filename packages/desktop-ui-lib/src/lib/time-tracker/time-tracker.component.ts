@@ -927,6 +927,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 						language,
 						this._translateService
 					);
+					TimeTrackerDateManager.locale(language);
 					asyncScheduler.schedule(
 						() => this._loadSmartTableSettings(),
 						150
@@ -942,6 +943,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 						language,
 						this._translateService
 					);
+					TimeTrackerDateManager.locale(language);
 					asyncScheduler.schedule(
 						() => this._loadSmartTableSettings(),
 						150
