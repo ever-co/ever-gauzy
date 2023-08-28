@@ -270,7 +270,8 @@
 			"HE": "עברית ישראל",
 			"FR": "Français (France)",
 			"ES": "Español (España)",
-			"ZH": "中文 (中国)"
+			"ZH": "中文 (中国)",
+			"DE": "Deutsch (Deutschland)"
 		},
 		"CURRENT_VALUE": "Valeur actuelle",
 		"TARGET_VALUE": "La valeur cible",
@@ -1077,6 +1078,7 @@
 		"HEBREW": "Hébreux",
 		"RUSSIAN": "Russe",
 		"CHINESE": "Chinois",
+		"GERMAN": "Allemand",
 		"PREFERRED_LAYOUT": "Disposition",
 		"PREFERRED_LAYOUT_TOOLTIP": "Ceci ne changera que la disposition par défaut et n'altérera pas la disposition sur chaque page si vous l'avez déjà modifiée une fois.",
 		"RESET_LAYOUT": "Réinitialiser la mise en page",

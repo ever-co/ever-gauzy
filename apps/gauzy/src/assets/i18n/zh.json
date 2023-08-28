@@ -270,7 +270,8 @@
 			"HE": "עברית ישראל",
 			"FR": "Français (France)",
 			"ES": "Español (España)",
-			"ZH": "中文 (中国)"
+			"ZH": "中文 (中国)",
+			"DE": "Deutsch (Deutschland)"
 		},
 		"CURRENT_VALUE": "当前值",
 		"TARGET_VALUE": "目标值",
@@ -1077,6 +1078,7 @@
 		"FRENCH": "法语",
 		"SPANISH": "西班牙语",
 		"CHINESE": "中文",
+		"GERMAN": "德语",
 		"PREFERRED_LAYOUT": "布局",
 		"PREFERRED_LAYOUT_TOOLTIP": "如果你已经改变过一次页面的布局，这将只设置默认布局而不会在每个页面上更改布局。",
 		"RESET_LAYOUT": "重置布局",
