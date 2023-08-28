@@ -284,7 +284,8 @@
 		"sqlserver",
 		"pdfmaker",
 		"Pdfmaker",
-		"prestart"
+		"prestart",
+		"resave"
 	],
 	"useGitignore": true,
 	"ignorePaths": [
