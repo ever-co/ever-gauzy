@@ -1,14 +1,15 @@
-import { Inject, Injectable, Scope } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import { ConfigurationOptions } from './configuration.interface';
+import { GAUZY_AI_CONFIG_OPTIONS } from './constants';
 
-@Injectable({ scope: Scope.REQUEST })
+@Injectable()
 export class RequestConfigProvider {
 
     private config: ConfigurationOptions = {};
 
     constructor(
-        @Inject('CONFIG_OPTIONS')
-        protected readonly options: ConfigurationOptions
+        @Inject(GAUZY_AI_CONFIG_OPTIONS)
+        private readonly options: ConfigurationOptions
     ) {
         this.setConfig(options);
     }

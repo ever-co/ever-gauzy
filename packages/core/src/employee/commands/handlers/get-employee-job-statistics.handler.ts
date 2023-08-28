@@ -11,7 +11,7 @@ export class GetEmployeeJobStatisticsHandler
 	constructor(
 		private readonly employeeService: EmployeeService,
 		private readonly gauzyAIService: GauzyAIService
-	) {}
+	) { }
 
 	public async execute(command: GetEmployeeJobStatisticsCommand): Promise<IPagination<IEmployee>> {
 		const { request } = command;
