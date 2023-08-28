@@ -6,7 +6,7 @@ import { IntegrationTenantCreateCommand } from '../../integration-tenant/command
 import { IntegrationService } from './../../integration/integration.service';
 
 @Injectable()
-export class GauzyAIIntegrationService {
+export class IntegrationAIService {
 
 	constructor(
 		private readonly _commandBus: CommandBus,

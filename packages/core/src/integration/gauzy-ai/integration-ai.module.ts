@@ -3,15 +3,15 @@ import { CqrsModule } from '@nestjs/cqrs';
 import { RouterModule } from 'nest-router';
 import { TenantModule } from './../../tenant/tenant.module';
 import { UserModule } from './../../user/user.module';
-import { GauzyAIIntegrationController } from './integration-ai.controller';
-import { GauzyAIIntegrationService } from './integration-ai.service';
+import { IntegrationAIController } from './integration-ai.controller';
+import { IntegrationAIService } from './integration-ai.service';
 import { IntegrationModule } from './../integration.module';
 import { IntegrationTenantModule } from './../../integration-tenant/integration-tenant.module';
 
 @Module({
 	imports: [
 		RouterModule.forRoutes([
-			{ path: '/integrations/gauzy-ai', module: GauzyAIIntegrationModule }
+			{ path: '/integrations/gauzy-ai', module: IntegrationAIModule }
 		]),
 		TenantModule,
 		UserModule,
@@ -19,9 +19,9 @@ import { IntegrationTenantModule } from './../../integration-tenant/integration-
 		IntegrationTenantModule,
 		CqrsModule
 	],
-	controllers: [GauzyAIIntegrationController],
+	controllers: [IntegrationAIController],
 	providers: [
-		GauzyAIIntegrationService
+		IntegrationAIService
 	]
 })
-export class GauzyAIIntegrationModule { }
+export class IntegrationAIModule { }
