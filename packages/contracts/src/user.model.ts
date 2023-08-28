@@ -141,7 +141,8 @@ export enum LanguagesEnum {
 	GERMAN = 'de',
 	PORTUGUESE = 'pt',
 	ITALIAN = 'it',
-	DUTCH = 'nl'
+	DUTCH = 'nl',
+	POLISH = 'pl'
 }
 
 export enum ComponentLayoutStyleEnum {

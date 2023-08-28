@@ -274,7 +274,8 @@
 			"DE": "Deutsch (Deutschland)",
 			"PT": "Português (Portugal)",
 			"IT": "Italiano (Italia)",
-			"NL": "Nederlands (Nederland)"
+			"NL": "Nederlands (Nederland)",
+			"PL": "Polski (Polska)"
 		},
 		"CURRENT_VALUE": "Current value",
 		"TARGET_VALUE": "Target value",
@@ -1085,6 +1086,7 @@
 		"PORTUGUESE": "Portuguese",
 		"ITALIAN": "Italian",
 		"DUTCH": "Dutch",
+		"POLISH": "Polish",
 		"PREFERRED_LAYOUT": "Layout",
 		"PREFERRED_LAYOUT_TOOLTIP": "This will only set the default layout and not change the layout on each page if you have already changed it once.",
 		"RESET_LAYOUT": "Reset Layout",
