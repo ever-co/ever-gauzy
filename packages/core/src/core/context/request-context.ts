@@ -4,6 +4,7 @@
 
 import { HttpException, HttpStatus } from '@nestjs/common';
 import * as cls from 'cls-hooked';
+import { Request, Response, NextFunction } from 'express';
 import {
 	IUser,
 	PermissionsEnum,
@@ -74,7 +75,7 @@ export class RequestContext {
 		try {
 			const user: IUser = RequestContext.currentUser();
 			if (isNotEmpty(user)) {
-				if(!RequestContext.hasPermission(
+				if (!RequestContext.hasPermission(
 					PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
 				)) {
 					return user.employeeId;
@@ -119,7 +120,7 @@ export class RequestContext {
 		if (req) {
 			for (const key of keys) {
 				if (req.headers && req.headers[key]) {
-					lang = req.headers[key];
+					lang = req.headers[key] as LanguagesEnum;
 					break;
 				}
 			}

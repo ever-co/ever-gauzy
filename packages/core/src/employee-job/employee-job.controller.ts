@@ -8,6 +8,7 @@ import {
 	UsePipes,
 	ValidationPipe,
 	Param,
+	Headers,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import {
@@ -40,7 +41,8 @@ export class EmployeeJobPostController {
 	})
 	@Get()
 	async findAll(
-		@Query() input: IGetEmployeeJobPostInput
+		@Query() input: IGetEmployeeJobPostInput,
+		@Headers() headers: Record<string, string>
 	): Promise<IPagination<IEmployeeJobPost>> {
 		return await this.employeeJobPostService.findAll(input);
 	}
@@ -57,7 +59,10 @@ export class EmployeeJobPostController {
 	})
 	@UsePipes(new ValidationPipe())
 	@Post('apply')
-	async apply(@Body() input: IEmployeeJobApplication) {
+	async apply(
+		@Body() input: IEmployeeJobApplication,
+		@Headers() headers: Record<string, string>
+	) {
 		return await this.employeeJobPostService.apply(input);
 	}
 
@@ -78,7 +83,10 @@ export class EmployeeJobPostController {
 	})
 	@UsePipes(new ValidationPipe())
 	@Post('updateApplied')
-	async updateApplied(@Body() input: IEmployeeJobApplication) {
+	async updateApplied(
+		@Body() input: IEmployeeJobApplication,
+		@Headers() headers: Record<string, string>
+	) {
 		return await this.employeeJobPostService.updateApplied(input);
 	}
 
@@ -93,7 +101,10 @@ export class EmployeeJobPostController {
 		description: 'Record not found',
 	})
 	@Post('hide')
-	async updateVisibility(@Body() data: IVisibilityJobPostInput) {
+	async updateVisibility(
+		@Body() data: IVisibilityJobPostInput,
+		@Headers() headers: Record<string, string>
+	) {
 		return this.employeeJobPostService.updateVisibility(data);
 	}
 
@@ -106,7 +117,8 @@ export class EmployeeJobPostController {
 	@ApiOperation({ summary: 'Create employee job application record' })
 	@Post('/pre-process')
 	async preProcessEmployeeJobApplication(
-		@Body() input: IEmployeeJobApplication
+		@Body() input: IEmployeeJobApplication,
+		@Headers() headers: Record<string, string>
 	): Promise<Partial<IEmployeeJobApplication>> {
 		return await this.employeeJobPostService.preProcessEmployeeJobApplication(
 			input
@@ -124,8 +136,8 @@ export class EmployeeJobPostController {
 	})
 	@Get('/application/:employeeJobApplicationId')
 	async getEmployeeJobApplication(
-		@Param('employeeJobApplicationId', UUIDValidationPipe)
-		employeeJobApplicationId: string
+		@Param('employeeJobApplicationId', UUIDValidationPipe) employeeJobApplicationId: string,
+		@Headers() headers: Record<string, string>
 	) {
 		return await this.employeeJobPostService.getEmployeeJobApplication(
 			employeeJobApplicationId
@@ -143,8 +155,8 @@ export class EmployeeJobPostController {
 	})
 	@Post('/generate-proposal/:employeeJobApplicationId')
 	async generateAIProposal(
-		@Param('employeeJobApplicationId', UUIDValidationPipe)
-		employeeJobApplicationId: string
+		@Param('employeeJobApplicationId', UUIDValidationPipe) employeeJobApplicationId: string,
+		@Headers() headers: Record<string, string>
 	) {
 		return await this.employeeJobPostService.generateAIProposal(
 			employeeJobApplicationId
