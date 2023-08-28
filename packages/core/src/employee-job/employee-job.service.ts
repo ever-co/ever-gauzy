@@ -1,8 +1,8 @@
-import { Injectable } from '@nestjs/common';
+import { ForbiddenException, Injectable } from '@nestjs/common';
 import { faker } from '@faker-js/faker';
 import { htmlToText } from 'html-to-text';
 import { environment as env } from '@gauzy/config';
-import { GauzyAIService } from '@gauzy/integration-ai';
+import { GauzyAIService, RequestConfigProvider } from '@gauzy/integration-ai';
 import {
 	IEmployeeJobApplication,
 	ICountry,
@@ -15,8 +15,11 @@ import {
 	IVisibilityJobPostInput,
 	JobPostSourceEnum,
 	JobPostStatusEnum,
-	JobPostTypeEnum
+	JobPostTypeEnum,
 } from '@gauzy/contracts';
+import { RequestContext } from './../core/context';
+import { arrayToObject } from './../core/utils';
+import { IntegrationTenantService } from './../integration-tenant/integration-tenant.service';
 import { EmployeeService } from '../employee/employee.service';
 import { CountryService } from './../country/country.service';
 import { EmployeeJobPost } from './employee-job.entity';
@@ -27,7 +30,9 @@ export class EmployeeJobPostService {
 	constructor(
 		private readonly employeeService: EmployeeService,
 		private readonly gauzyAIService: GauzyAIService,
-		private readonly countryService: CountryService
+		private readonly requestConfigProvider: RequestConfigProvider,
+		private readonly countryService: CountryService,
+		private readonly integrationTenantService: IntegrationTenantService
 	) { }
 
 	/**
@@ -76,51 +81,74 @@ export class EmployeeJobPostService {
 	 */
 	public async findAll(data: IGetEmployeeJobPostInput): Promise<IPagination<IEmployeeJobPost>> {
 		const employees = await this.employeeService.findAllActive();
+		const { filters } = data;
+
+		const { organizationId } = filters;
+		const tenantId = RequestContext.currentTenantId();
 
 		let jobs: IPagination<IEmployeeJobPost>;
 
-		if (env.gauzyAIGraphQLEndpoint) {
-			const result = await this.gauzyAIService.getEmployeesJobPosts(data);
+		try {
+			const { settings } = await this.integrationTenantService.getIntegrationSettings({ organizationId, tenantId });
+			const { apiKey, apiSecret } = arrayToObject(settings, 'settingsName', 'settingsValue');
 
-			if (result === null) {
-				if (env.production) {
-					// OK, so for some reason connection go Gauzy AI failed, we can't get jobs ...
+			if (!apiKey || !apiSecret) {
+				throw new ForbiddenException('API key and secret key are required.');
+			}
+
+			this.requestConfigProvider.setConfig({ apiKey, apiSecret });
+		} catch (error) {
+			throw new ForbiddenException('API key and secret key are required.');
+		}
+
+		try {
+			if (env.gauzyAIGraphQLEndpoint) {
+				const result = await this.gauzyAIService.getEmployeesJobPosts(data);
+				if (result === null) {
+					if (env.production) {
+						// OK, so for some reason connection go Gauzy AI failed, we can't get jobs ...
+						jobs = {
+							items: [],
+							total: 0
+						};
+					} else {
+						// In development, even if connection failed, we want to show fake jobs in UI
+						jobs = await this.getRandomEmployeeJobPosts(employees, data.page, data.limit);
+					}
+				} else {
+					const jobsConverted = result.items.map((jo) => {
+						if (jo.employeeId) {
+							const employee = employees.find((emp) => emp.id === jo.employeeId);
+							jo.employee = employee;
+						}
+
+						return jo;
+					});
+
+					jobs = {
+						items: jobsConverted,
+						total: result.total
+					};
+				}
+			} else {
+				// If it's production, we should return empty here because we don't want fake jobs in production
+				if (env.production === false) {
+					jobs = await this.getRandomEmployeeJobPosts(employees, data.page, data.limit);
+				} else {
 					jobs = {
 						items: [],
 						total: 0
 					};
-				} else {
-					// In development, even if connection failed, we want to show fake jobs in UI
-					jobs = await this.getRandomEmployeeJobPosts(employees, data.page, data.limit);
 				}
-			} else {
-				const jobsConverted = result.items.map((jo) => {
-					if (jo.employeeId) {
-						const employee = employees.find((emp) => emp.id === jo.employeeId);
-						jo.employee = employee;
-					}
-
-					return jo;
-				});
-
-				jobs = {
-					items: jobsConverted,
-					total: result.total
-				};
 			}
-		} else {
-			// If it's production, we should return empty here because we don't want fake jobs in production
-			if (env.production === false) {
-				jobs = await this.getRandomEmployeeJobPosts(employees, data.page, data.limit);
-			} else {
-				jobs = {
-					items: [],
-					total: 0
-				};
+
+			return jobs;
+		} catch (error) {
+			return {
+				items: [],
+				total: 0
 			}
 		}
-
-		return jobs;
 	}
 
 	/**

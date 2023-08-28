@@ -674,3 +674,8 @@ ng2-smart-table table tr.ng2-smart-titles th a.sort {
     }
   }
 }
+
+nb-option-list.fit-content {
+	width: fit-content !important;
+	min-width: var(--select-min-width);
+}

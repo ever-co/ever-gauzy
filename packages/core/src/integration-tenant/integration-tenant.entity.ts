@@ -1,7 +1,9 @@
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { Column, Entity, JoinColumn, OneToMany } from 'typeorm';
-import { IIntegrationEntitySetting, IIntegrationMap, IIntegrationSetting, IIntegrationTenant } from '@gauzy/contracts';
+import { ApiProperty } from '@nestjs/swagger';
+import { Column, Entity, Index, JoinColumn, ManyToOne, OneToMany, RelationId } from 'typeorm';
+import { IsEnum, IsNotEmpty, IsUUID } from 'class-validator';
+import { IIntegration, IIntegrationEntitySetting, IIntegrationMap, IIntegrationSetting, IIntegrationTenant, IntegrationEnum } from '@gauzy/contracts';
 import {
+	Integration,
 	IntegrationEntitySetting,
 	IntegrationMap,
 	IntegrationSetting,
@@ -9,25 +11,47 @@ import {
 } from '../core/entities/internal';
 
 @Entity('integration_tenant')
-export class IntegrationTenant
-	extends TenantOrganizationBaseEntity
-	implements IIntegrationTenant {
-	
-	@ApiProperty({ type: () => String })
+export class IntegrationTenant extends TenantOrganizationBaseEntity implements IIntegrationTenant {
+
+	@ApiProperty({ type: () => String, enum: IntegrationEnum })
+	@IsNotEmpty()
+	@IsEnum(IntegrationEnum)
 	@Column()
-	name: string;
+	name: IntegrationEnum;
 
 	/*
-    |--------------------------------------------------------------------------
-    | @OneToMany 
-    |--------------------------------------------------------------------------
-    */
+	|--------------------------------------------------------------------------
+	| @ManyToOne
+	|--------------------------------------------------------------------------
+	*/
+
+	/**
+	 * Integration
+	 */
+	@ManyToOne(() => Integration, {
+		nullable: true,
+		onDelete: 'CASCADE'
+	})
+	@JoinColumn()
+	integration?: IIntegration;
+
+	@ApiProperty({ type: () => String })
+	@IsUUID()
+	@RelationId((it: IntegrationTenant) => it.integration)
+	@Index()
+	@Column({ nullable: true })
+	integrationId?: IIntegration['id'];
+
+	/*
+	|--------------------------------------------------------------------------
+	| @OneToMany
+	|--------------------------------------------------------------------------
+	*/
 
 	/**
 	 * IntegrationSetting
 	 */
-	@ApiPropertyOptional({ type: () => IntegrationSetting, isArray: true })
-	@OneToMany(() => IntegrationSetting, (setting) => setting.integration, {
+	@OneToMany(() => IntegrationSetting, (it) => it.integration, {
 		cascade: true
 	})
 	@JoinColumn()
@@ -36,8 +60,7 @@ export class IntegrationTenant
 	/**
 	 * IntegrationEntitySetting
 	 */
-	@ApiPropertyOptional({ type: () => IntegrationEntitySetting, isArray: true })
-	@OneToMany(() => IntegrationEntitySetting, (setting) => setting.integration, {
+	@OneToMany(() => IntegrationEntitySetting, (it) => it.integration, {
 		cascade: true
 	})
 	@JoinColumn()
@@ -46,8 +69,7 @@ export class IntegrationTenant
 	/**
 	 * IntegrationMap
 	 */
-	@ApiPropertyOptional({ type: () => IntegrationMap, isArray: true })
-	@OneToMany(() => IntegrationMap, (map) => map.integration, {
+	@OneToMany(() => IntegrationMap, (it) => it.integration, {
 		cascade: true
 	})
 	@JoinColumn()

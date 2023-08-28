@@ -24,6 +24,7 @@ import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { TimeTrackerService } from '../time-tracker/time-tracker.service';
 import { DesktopDirectiveModule } from '../directives/desktop-directive.module';
+import { TranslateModule } from '@ngx-translate/core';
 
 @NgModule({
 	declarations: [TasksComponent],
@@ -48,7 +49,8 @@ import { DesktopDirectiveModule } from '../directives/desktop-directive.module';
         NgSelectModule,
         ReactiveFormsModule,
 		NbBadgeModule,
-		DesktopDirectiveModule
+		DesktopDirectiveModule,
+		TranslateModule
 	],
 	providers: [
 		NbToastrService,

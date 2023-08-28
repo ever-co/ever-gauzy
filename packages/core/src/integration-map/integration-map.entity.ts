@@ -1,45 +1,47 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Column, Entity, JoinColumn, RelationId, ManyToOne, Index } from 'typeorm';
 import { IIntegrationMap, IIntegrationTenant } from '@gauzy/contracts';
+import { IsNotEmpty, IsUUID } from 'class-validator';
 import {
 	IntegrationTenant,
 	TenantOrganizationBaseEntity
 } from '../core/entities/internal';
-import { IsString } from 'class-validator';
 
 @Entity('integration_map')
-export class IntegrationMap
-	extends TenantOrganizationBaseEntity
-	implements IIntegrationMap {
-	
+export class IntegrationMap extends TenantOrganizationBaseEntity implements IIntegrationMap {
+
 	@ApiProperty({ type: () => String })
-	@Column({ nullable: false })
+	@IsNotEmpty()
+	@Column()
 	entity: string;
 
 	@ApiProperty({ type: () => String })
-	@Column({ type: "bigint", nullable: false })
-	sourceId: number;
+	@IsNotEmpty()
+	@Column()
+	sourceId: string;
 
 	@ApiProperty({ type: () => String })
-	@Column({ nullable: false })
+	@IsNotEmpty()
+	@IsUUID()
+	@Column()
 	gauzyId: string;
 
 	/*
-    |--------------------------------------------------------------------------
-    | @ManyToOne 
-    |--------------------------------------------------------------------------
-    */
-
+	|--------------------------------------------------------------------------
+	| @ManyToOne
+	|--------------------------------------------------------------------------
+	*/
 	@ApiProperty({ type: () => IntegrationTenant })
-	@ManyToOne(() => IntegrationTenant, (integration) => integration.entityMaps)
+	@ManyToOne(() => IntegrationTenant, (it) => it.entityMaps, {
+		onDelete: 'CASCADE'
+	})
 	@JoinColumn()
 	integration: IIntegrationTenant;
 
-	@ApiProperty({ type: () => String, readOnly: true })
-	@Column()
+	@ApiProperty({ type: () => String })
+	@IsUUID()
 	@RelationId((it: IntegrationMap) => it.integration)
-	@IsString()
 	@Index()
 	@Column()
-	readonly integrationId: string;
+	integrationId: IIntegrationTenant['id'];
 }

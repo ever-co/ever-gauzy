@@ -1,6 +1,8 @@
 import { RouterModule, Routes } from '@angular/router';
 import { NgModule } from '@angular/core';
 
+import { PermissionsEnum } from '@gauzy/contracts';
+import { NgxPermissionsGuard } from 'ngx-permissions';
 import { PagesComponent } from './pages.component';
 import { NotFoundComponent } from './miscellaneous/not-found/not-found.component';
 import { DateRangePickerResolver } from '../@theme/components/header/selectors/date-range-picker';
@@ -36,7 +38,8 @@ const routes: Routes = [
 						),
 						data: {
 							selectors: {
-								project: false
+								project: false,
+								team: false,
 							},
 							datePicker: {
 								unitOfTime: 'month'
@@ -74,6 +77,7 @@ const routes: Routes = [
 						data: {
 							selectors: {
 								project: false,
+								team: false,
 								employee: false
 							},
 							datePicker: {
@@ -103,6 +107,7 @@ const routes: Routes = [
 				data: {
 					selectors: {
 						project: false,
+						team: false,
 						employee: false,
 						date: false,
 						organization: false
@@ -138,6 +143,7 @@ const routes: Routes = [
 						data: {
 							selectors: {
 								project: false,
+								team: false,
 								employee: false,
 								date: false,
 								organization: false
@@ -152,6 +158,7 @@ const routes: Routes = [
 						data: {
 							selectors: {
 								project: false,
+								team: false,
 								employee: false
 							},
 							datePicker: {
@@ -187,6 +194,7 @@ const routes: Routes = [
 						data: {
 							selectors: {
 								project: false,
+								team: false,
 								employee: false,
 								date: false
 							}
@@ -210,7 +218,8 @@ const routes: Routes = [
 						),
 						data: {
 							selectors: {
-								project: false
+								project: false,
+								team: false,
 							}
 						}
 					},
@@ -221,7 +230,8 @@ const routes: Routes = [
 						),
 						data: {
 							selectors: {
-								project: false
+								project: false,
+								team: false,
 							}
 						}
 					},
@@ -232,7 +242,8 @@ const routes: Routes = [
 						),
 						data: {
 							selectors: {
-								project: false
+								project: false,
+								team: false,
 							}
 						}
 					},
@@ -249,7 +260,8 @@ const routes: Routes = [
 						),
 						data: {
 							selectors: {
-								project: false
+								project: false,
+								team: false,
 							}
 						}
 					},
@@ -261,6 +273,7 @@ const routes: Routes = [
 						data: {
 							selectors: {
 								project: false,
+								team: false,
 								employee: false,
 								date: false
 							}
@@ -274,6 +287,7 @@ const routes: Routes = [
 						data: {
 							selectors: {
 								project: false,
+								team: false,
 								employee: false,
 								date: false
 							}
@@ -304,6 +318,7 @@ const routes: Routes = [
 						data: {
 							selectors: {
 								project: false,
+								team: false,
 								employee: false,
 								date: false
 							}
@@ -317,6 +332,7 @@ const routes: Routes = [
 						data: {
 							selectors: {
 								project: false,
+								team: false,
 								employee: true,
 								date: false
 							}
@@ -330,6 +346,7 @@ const routes: Routes = [
 						data: {
 							selectors: {
 								project: false,
+								team: false,
 								employee: false,
 								date: false
 							}
@@ -349,6 +366,7 @@ const routes: Routes = [
 						data: {
 							selectors: {
 								project: false,
+								team: false,
 								employee: false,
 								date: false
 							}
@@ -368,6 +386,7 @@ const routes: Routes = [
 						data: {
 							selectors: {
 								project: false,
+								team: false,
 								employee: false,
 								date: false
 							}
@@ -381,6 +400,7 @@ const routes: Routes = [
 						data: {
 							selectors: {
 								project: false,
+								team: false,
 								employee: false,
 								date: false
 							}
@@ -395,6 +415,7 @@ const routes: Routes = [
 						data: {
 							selectors: {
 								project: false,
+								team: false,
 								employee: false,
 								date: false
 							}
@@ -414,6 +435,7 @@ const routes: Routes = [
 						data: {
 							selectors: {
 								project: false,
+								team: false,
 								employee: false,
 								date: false
 							}
@@ -427,6 +449,7 @@ const routes: Routes = [
 						data: {
 							selectors: {
 								project: false,
+								team: false,
 								employee: false,
 								date: false
 							}
@@ -440,6 +463,7 @@ const routes: Routes = [
 						data: {
 							selectors: {
 								project: false,
+								team: false,
 								employee: true,
 								date: true
 							}
@@ -453,6 +477,7 @@ const routes: Routes = [
 						data: {
 							selectors: {
 								project: false,
+								team: false,
 								employee: true,
 								date: true
 							}
@@ -470,7 +495,8 @@ const routes: Routes = [
 						),
 						data: {
 							selectors: {
-								project: false
+								project: false,
+								team: false,
 							}
 						}
 					},
@@ -482,6 +508,7 @@ const routes: Routes = [
 						data: {
 							selectors: {
 								project: false,
+								team: false,
 								employee: false,
 								date: false,
 								organization: false
@@ -496,6 +523,7 @@ const routes: Routes = [
 						data: {
 							selectors: {
 								project: false,
+								team: false,
 								employee: false,
 								date: false
 							}
@@ -519,6 +547,7 @@ const routes: Routes = [
 						data: {
 							selectors: {
 								project: false,
+								team: false,
 								employee: false,
 								date: false,
 								organization: true
@@ -557,6 +586,7 @@ const routes: Routes = [
 						data: {
 							selectors: {
 								project: false,
+								team: false,
 								employee: false,
 								date: false,
 								organization: false
@@ -648,7 +678,22 @@ const routes: Routes = [
 				path: 'integrations',
 				loadChildren: () => import('./integrations/integrations.module').then(
 					(m) => m.IntegrationsModule
-				)
+				),
+				/** */
+				canActivate: [NgxPermissionsGuard],
+				data: {
+					permissions: {
+						only: [PermissionsEnum.INTEGRATION_VIEW],
+						redirectTo: '/pages/dashboard'
+					},
+					selectors: {
+						project: false,
+						team: false,
+						employee: false,
+						organization: false,
+						date: false
+					}
+				}
 			},
 			{
 				path: 'candidates',
@@ -664,6 +709,7 @@ const routes: Routes = [
 				data: {
 					selectors: {
 						project: false,
+						team: false,
 						employee: false,
 						date: false
 					}
@@ -705,4 +751,4 @@ const routes: Routes = [
 	imports: [RouterModule.forChild(routes)],
 	exports: [RouterModule]
 })
-export class PagesRoutingModule {}
+export class PagesRoutingModule { }

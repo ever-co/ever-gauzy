@@ -3,29 +3,31 @@ import {
 	HttpStatus,
 	Get,
 	Query,
-	Param
+	UseGuards
 } from '@nestjs/common';
-import { Integration } from './integration.entity';
-import { IntegrationService } from './integration.service';
-import { IntegrationType } from './integration-type.entity';
 import { ApiResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { CommandBus } from '@nestjs/cqrs';
+import { PermissionsEnum } from '@gauzy/contracts';
 import { IntegrationTypeGetCommand, IntegrationGetCommand } from './commands';
-import { IntegrationEnum } from '@gauzy/contracts';
-import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
+import { Permissions } from './../shared/decorators';
+import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
+import { ParseJsonPipe } from './../shared/pipes';
+import { Integration } from './integration.entity';
+import { IntegrationType } from './integration-type.entity';
 
 @ApiTags('Integrations')
+@UseGuards(TenantPermissionGuard, PermissionGuard)
+@Permissions(PermissionsEnum.INTEGRATION_VIEW)
 @Controller()
 export class IntegrationController {
 	constructor(
-		private readonly _integrationService: IntegrationService,
 		private readonly _commandBus: CommandBus
-	) {}
+	) { }
 
 	/**
 	 * GET all integration types
-	 * 
-	 * @returns 
+	 *
+	 * @returns
 	 */
 	@ApiOperation({
 		summary: 'Find all integration types.'
@@ -39,49 +41,18 @@ export class IntegrationController {
 		status: HttpStatus.NOT_FOUND,
 		description: 'Record not found'
 	})
-	@Get('/types')
+	@Get('types')
 	async getIntegrationTypes(): Promise<IntegrationType[]> {
-		return await this._commandBus.execute(new IntegrationTypeGetCommand());
-	}
-
-	/**
-	 * GET Check integration remember state for tenant user 
-	 * 
-	 * @param integration 
-	 * @param organizationId 
-	 * @returns 
-	 */
-	@ApiOperation({
-		summary: 'Check integration remember state for tenant user.'
-	})
-	@ApiResponse({
-		status: HttpStatus.OK,
-		description: 'Checked state'
-	})
-	@ApiResponse({
-		status: HttpStatus.NOT_FOUND,
-		description: 'Record not found'
-	})
-	@ApiResponse({
-		status: HttpStatus.BAD_REQUEST,
-		description: 'Invalid request'
-	})
-	@Get('check/state/:integration/:organizationId')
-	async checkRememberState(
-		@Param('integration') integration: IntegrationEnum,
-		@Param('organizationId', UUIDValidationPipe) organizationId: string
-	): Promise<any> {
-		return await this._integrationService.checkIntegrationRememberState(
-			integration,
-			organizationId
+		return await this._commandBus.execute(
+			new IntegrationTypeGetCommand()
 		);
 	}
 
 	/**
 	 * GET all system integrations
-	 * 
-	 * @param filters 
-	 * @returns 
+	 *
+	 * @param filters
+	 * @returns
 	 */
 	@ApiOperation({
 		summary: 'Find all integrations.'

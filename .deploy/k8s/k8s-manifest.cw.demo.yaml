@@ -48,6 +48,10 @@ spec:
                                 operator: In
                                 values:
                                   - ORD1
+                              - key: node.coreweave.cloud/cpu
+                                operator: In
+                                values:
+                                  - intel-xeon-v3
             imagePullSecrets:
               - name: ever-registry-docker-registry-credentials
             containers:
@@ -85,6 +89,13 @@ spec:
                   ports:
                       - containerPort: 3000
                         protocol: TCP
+                  resources:
+                    requests:
+                      cpu: "0.5"
+                      memory: 2Gi
+                    limits:
+                      cpu: "2"
+                      memory: 8Gi
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -109,6 +120,10 @@ spec:
                                 operator: In
                                 values:
                                   - ORD1
+                              - key: node.coreweave.cloud/cpu
+                                operator: In
+                                values:
+                                  - intel-xeon-v3
             imagePullSecrets:
               - name: ever-registry-docker-registry-credentials
             containers:
@@ -143,6 +158,13 @@ spec:
 
                       - containerPort: 4200
                         protocol: TCP
+                  resources:
+                    requests:
+                      cpu: "0.5"
+                      memory: 2Gi
+                    limits:
+                      cpu: "2"
+                      memory: 8Gi
 ---
 apiVersion: traefik.containo.us/v1alpha1
 kind: Middleware

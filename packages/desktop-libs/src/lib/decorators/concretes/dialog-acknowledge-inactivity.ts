@@ -1,6 +1,7 @@
 import { IDesktopDialog } from '../../interfaces';
 import { BaseDesktopDialogDecorator } from '../abstracts/base-desktop-dialog-decorator';
 import { LocalStore } from '../../desktop-store';
+import { TranslateService } from '../../translation';
 
 export class DialogAcknowledgeInactivity
 	extends BaseDesktopDialogDecorator
@@ -9,11 +10,11 @@ export class DialogAcknowledgeInactivity
 		super(dialog);
 		this.options = {
 			...this.options,
-			buttons: ['Acknowledge'],
-			detail:
-				'Timer was stopped due to inactivity period exceeding ' +
-				this._inactivityTimeLimit +
-				'. Please make sure you start timer again when continue working'
+			buttons: [TranslateService.instant('BUTTONS.ACKNOWLEDGE')],
+			detail: TranslateService.instant(
+				'TIMER_TRACKER.DIALOG.STOPPED_DU_INACTIVITY',
+				{ inactivity: this._inactivityTimeLimit }
+			)
 		};
 	}
 

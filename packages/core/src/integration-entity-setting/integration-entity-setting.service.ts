@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
-import { IIntegrationEntitySetting } from '@gauzy/contracts';
+import { IIntegrationEntitySetting, IIntegrationTenant } from '@gauzy/contracts';
 import { TenantAwareCrudService } from './../core/crud';
 import { IntegrationEntitySetting } from './integration-entity-setting.entity';
 
@@ -16,26 +16,26 @@ export class IntegrationEntitySettingService extends TenantAwareCrudService<Inte
 
 	/**
 	 * GET integration entity settings by integration
-	 * 
-	 * @param integrationId 
-	 * @returns 
+	 *
+	 * @param integrationId
+	 * @returns
 	 */
 	async getIntegrationEntitySettings(
-		integrationId: string
+		integrationId: IIntegrationTenant['id']
 	) {
 		return await this.findAll({
-			relations: ['integration', 'tiedEntities'],
 			where: {
-				integration: { id: integrationId }
-			}
+				integrationId
+			},
+			relations: ['integration', 'tiedEntities']
 		});
 	}
 
 	/**
 	 * CREATE | UPDATE bulk integration entity setting by integration
-	 * 
-	 * @param input 
-	 * @returns 
+	 *
+	 * @param input
+	 * @returns
 	 */
 	async bulkUpdateOrCreate(
 		input: IIntegrationEntitySetting | IIntegrationEntitySetting[]

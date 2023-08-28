@@ -30,6 +30,6 @@
         <nb-select size="small" (selectedChange)="onChangePerPage($event)" [(selected)]="currentPerPage">
             <nb-option *ngFor="let item of perPageSelect" [value]="item">{{ item }}</nb-option>
         </nb-select>
-        <span> {{ startCount }} - {{ endCount }} of {{ count }} Items </span>
+        <span> {{ startCount }} - {{ endCount }} of {{ count }} {{ "PAGINATION.ITEMS" | translate }} </span>
     </div>
 </nav>

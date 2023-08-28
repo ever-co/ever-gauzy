@@ -1,40 +1,27 @@
 import { IBasePerTenantAndOrganizationEntityModel } from './base-entity.model';
 import {
-	IEmailTemplate,
-	IEmailTemplateFindInput
+	IEmailTemplateFindInput,
+	IRelationalEmailTemplate
 } from './email-template.model';
-import { IUser } from './user.model';
+import { IRelationalUser } from './user.model';
 
-export interface IEmail 
-	extends IBasePerTenantAndOrganizationEntityModel {
+export interface IEmailHistory extends IBasePerTenantAndOrganizationEntityModel, IRelationalUser, IRelationalEmailTemplate {
 	name: string;
 	content: string;
 	email: string;
 	isArchived?: boolean;
-	user?: IUser;
-	userId?: string;
-	emailTemplate: IEmailTemplate;
-	emailTemplateId: string;
 }
 
-export interface IEmailUpdateInput 
-	extends IBasePerTenantAndOrganizationEntityModel {
+export interface IEmailUpdateInput extends IBasePerTenantAndOrganizationEntityModel, IRelationalUser, Partial<IRelationalEmailTemplate> {
 	name?: string;
 	content?: string;
 	email?: string;
-	emailTemplate?: IEmailTemplate;
-	emailTemplateId?: string;
-	user?: IUser;
-	userId?: string;
 	isArchived?: boolean;
 }
 
-export interface IEmailFindInput
-	extends IBasePerTenantAndOrganizationEntityModel {
+export interface IEmailFindInput extends IBasePerTenantAndOrganizationEntityModel, IRelationalUser {
 	emailTemplate?: IEmailTemplateFindInput;
 	emailTemplateId?: string;
-	user?: IUser;
-	userId?: string;
 	email?: string;
 	isArchived?: boolean;
 }

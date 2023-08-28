@@ -1,5 +1,5 @@
 import { Component, OnInit, OnDestroy, AfterViewInit, Input } from '@angular/core';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { IOrganization, CrudActionEnum, PermissionsEnum } from '@gauzy/contracts';
 import { filter, map, tap } from 'rxjs/operators';
 import { Observable } from 'rxjs/internal/Observable';
@@ -43,8 +43,9 @@ export class OrganizationSelectorComponent
 		private readonly toastrService: ToastrService,
 		private readonly store: Store,
 		private readonly userOrganizationService: UsersOrganizationsService,
-		private readonly _organizationEditStore: OrganizationEditStore
-	) {}
+		private readonly _organizationEditStore: OrganizationEditStore,
+		private readonly activatedRoute: ActivatedRoute
+	) { }
 
 	ngOnInit() {
 		this.hasEditOrganization$ = this.store.userRolePermissions$.pipe(
@@ -52,8 +53,19 @@ export class OrganizationSelectorComponent
 				this.store.hasPermission(PermissionsEnum.ALL_ORG_EDIT)
 			)
 		);
+
 		this.loadSelectedOrganization();
-		this.loadOrganizations();
+
+		this.loadOrganizations().then(() => {
+			this.activatedRoute.queryParams
+				.pipe(
+					filter((query) => !!query.organizationId),
+					tap(({ organizationId }) => this.selectOrganizationById(organizationId)),
+					untilDestroyed(this)
+				)
+				.subscribe();
+		});
+
 	}
 
 	selectOrganization(organization: IOrganization) {
@@ -61,7 +73,37 @@ export class OrganizationSelectorComponent
 			this.store.selectedOrganization = organization;
 			this.store.organizationId = organization.id;
 			this.store.selectedEmployee = null;
+
+			this.updateQueryParams({ organizationId: organization.id })
 		}
+	}
+
+	/**
+	 * Updates query parameters while preserving specified parameters.
+	 * @param newParams New query parameters to be added or updated.
+	 */
+	private updateQueryParams(newParams: { [key: string]: any }): void {
+		// Preserve existing query parameters for 'date' and 'date_end'
+		const preservedQueryParams = ['date', 'date_end'];
+
+		// Get the current query parameters from the activated route snapshot
+		const currentQueryParams = { ...this.activatedRoute.snapshot.queryParams };
+
+		// Create a new object to store the query parameters to be updated
+		const updatedQueryParams: { [key: string]: any } = {};
+
+		// Loop through the preserved parameters and add them to the updatedQueryParams
+		preservedQueryParams.forEach((key) => {
+			if (currentQueryParams.hasOwnProperty(key)) {
+				updatedQueryParams[key] = currentQueryParams[key];
+			}
+		});
+
+		// Navigate to the updated route with the new query parameters
+		this.router.navigate([], {
+			relativeTo: this.activatedRoute,
+			queryParams: { ...updatedQueryParams, ...newParams },
+		});
 	}
 
 	private async loadOrganizations(): Promise<void> {
@@ -216,9 +258,18 @@ export class OrganizationSelectorComponent
 		}
 	};
 
-	onClickOutside(event){
-		if(this.isOpen && !event) this.isOpen = false;
+	onClickOutside(event) {
+		if (this.isOpen && !event) this.isOpen = false;
 	}
 
-	ngOnDestroy() {}
+	selectOrganizationById(organizationId: string) {
+		const organization = this.organizations.find(
+			(organization: IOrganization) => organizationId === organization.id
+		);
+		if (organization) {
+			this.selectOrganization(organization);
+		}
+	}
+
+	ngOnDestroy() { }
 }

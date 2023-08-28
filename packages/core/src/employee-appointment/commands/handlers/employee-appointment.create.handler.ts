@@ -3,7 +3,7 @@ import { EmployeeAppointmentService } from '../../employee-appointment.service';
 import { EmployeeAppointmentCreateCommand } from '../employee-appointment.create.command';
 import { EmployeeAppointment } from '../../employee-appointment.entity';
 import { LanguagesEnum } from '@gauzy/contracts';
-import { EmailService } from '../../../email';
+import { EmailService } from './../../../email-send/email.service';
 import { EmployeeService } from '../../../employee/employee.service';
 import { OrganizationService } from '../../../organization/organization.service';
 import { RequestContext } from '../../../core/context';
@@ -12,11 +12,11 @@ import { RequestContext } from '../../../core/context';
 export class EmployeeAppointmentCreateHandler
 	implements ICommandHandler<EmployeeAppointmentCreateCommand> {
 	constructor(
-		private employeeAppointmentService: EmployeeAppointmentService,
-		private emailService: EmailService,
-		private employeeService: EmployeeService,
-		private organizationService: OrganizationService
-	) {}
+		private readonly employeeAppointmentService: EmployeeAppointmentService,
+		private readonly emailService: EmailService,
+		private readonly employeeService: EmployeeService,
+		private readonly organizationService: OrganizationService
+	) { }
 
 	public async execute(
 		command?: EmployeeAppointmentCreateCommand
@@ -26,8 +26,8 @@ export class EmployeeAppointmentCreateHandler
 		const appointment = new EmployeeAppointment();
 		const employee = employeeAppointmentInput.employeeId
 			? await this.employeeService.findOneByIdString(
-					employeeAppointmentInput.employeeId
-			  )
+				employeeAppointmentInput.employeeId
+			)
 			: null;
 		const organization = await this.organizationService.findOneByIdString(
 			employeeAppointmentInput.organizationId

@@ -231,8 +231,8 @@ export type EmployeeJobPost = {
   updatedAt?: Maybe<Scalars['DateTime']>;
   isActive: Scalars['Boolean'];
   isArchived: Scalars['Boolean'];
-  jobPost: JobPost;
-  employee: Employee;
+  jobPost?: Maybe<JobPost>;
+  employee?: Maybe<Employee>;
 };
 
 export type EmployeeJobApplication = {
@@ -261,9 +261,9 @@ export type EmployeeJobApplication = {
   updatedAt?: Maybe<Scalars['DateTime']>;
   isActive: Scalars['Boolean'];
   isArchived: Scalars['Boolean'];
-  employeeJobPost: EmployeeJobPost;
-  jobPost: JobPost;
-  employee: Employee;
+  employeeJobPost?: Maybe<EmployeeJobPost>;
+  jobPost?: Maybe<JobPost>;
+  employee?: Maybe<Employee>;
 };
 
 export type AutomationTask = {
@@ -271,6 +271,7 @@ export type AutomationTask = {
   id?: Maybe<Scalars['ID']>;
   employeeJobPostId?: Maybe<Scalars['String']>;
   employeeId?: Maybe<Scalars['String']>;
+  executedByEmployeeId?: Maybe<Scalars['String']>;
   jobPostId?: Maybe<Scalars['String']>;
   jobDateCreated?: Maybe<Scalars['DateTime']>;
   jobStatus?: Maybe<Scalars['String']>;
@@ -282,13 +283,15 @@ export type AutomationTask = {
   commandResult?: Maybe<Scalars['String']>;
   status: Scalars['String'];
   executionTime?: Maybe<Scalars['Float']>;
+  executedDate?: Maybe<Scalars['DateTime']>;
   createdAt?: Maybe<Scalars['DateTime']>;
   updatedAt?: Maybe<Scalars['DateTime']>;
   isActive: Scalars['Boolean'];
   isArchived: Scalars['Boolean'];
-  employeeJobPost: EmployeeJobPost;
-  jobPost: JobPost;
-  employee: Employee;
+  employeeJobPost?: Maybe<EmployeeJobPost>;
+  jobPost?: Maybe<JobPost>;
+  executedByEmployee?: Maybe<Employee>;
+  employee?: Maybe<Employee>;
 };
 
 export type DeleteManyResponse = {
@@ -872,6 +875,7 @@ export type AutomationTaskDeleteResponse = {
   id?: Maybe<Scalars['ID']>;
   employeeJobPostId?: Maybe<Scalars['String']>;
   employeeId?: Maybe<Scalars['String']>;
+  executedByEmployeeId?: Maybe<Scalars['String']>;
   jobPostId?: Maybe<Scalars['String']>;
   jobDateCreated?: Maybe<Scalars['DateTime']>;
   jobStatus?: Maybe<Scalars['String']>;
@@ -883,6 +887,7 @@ export type AutomationTaskDeleteResponse = {
   commandResult?: Maybe<Scalars['String']>;
   status?: Maybe<Scalars['String']>;
   executionTime?: Maybe<Scalars['Float']>;
+  executedDate?: Maybe<Scalars['DateTime']>;
   createdAt?: Maybe<Scalars['DateTime']>;
   updatedAt?: Maybe<Scalars['DateTime']>;
   isActive?: Maybe<Scalars['Boolean']>;
@@ -912,6 +917,7 @@ export type AutomationTaskCountAggregate = {
   id?: Maybe<Scalars['Int']>;
   employeeJobPostId?: Maybe<Scalars['Int']>;
   employeeId?: Maybe<Scalars['Int']>;
+  executedByEmployeeId?: Maybe<Scalars['Int']>;
   jobPostId?: Maybe<Scalars['Int']>;
   jobDateCreated?: Maybe<Scalars['Int']>;
   jobStatus?: Maybe<Scalars['Int']>;
@@ -920,6 +926,7 @@ export type AutomationTaskCountAggregate = {
   providerJobId?: Maybe<Scalars['Int']>;
   commandType?: Maybe<Scalars['Int']>;
   status?: Maybe<Scalars['Int']>;
+  executedDate?: Maybe<Scalars['Int']>;
   createdAt?: Maybe<Scalars['Int']>;
   updatedAt?: Maybe<Scalars['Int']>;
   isActive?: Maybe<Scalars['Int']>;
@@ -931,6 +938,7 @@ export type AutomationTaskMinAggregate = {
   id?: Maybe<Scalars['ID']>;
   employeeJobPostId?: Maybe<Scalars['String']>;
   employeeId?: Maybe<Scalars['String']>;
+  executedByEmployeeId?: Maybe<Scalars['String']>;
   jobPostId?: Maybe<Scalars['String']>;
   jobDateCreated?: Maybe<Scalars['DateTime']>;
   jobStatus?: Maybe<Scalars['String']>;
@@ -939,6 +947,7 @@ export type AutomationTaskMinAggregate = {
   providerJobId?: Maybe<Scalars['String']>;
   commandType?: Maybe<Scalars['String']>;
   status?: Maybe<Scalars['String']>;
+  executedDate?: Maybe<Scalars['DateTime']>;
   createdAt?: Maybe<Scalars['DateTime']>;
   updatedAt?: Maybe<Scalars['DateTime']>;
 };
@@ -948,6 +957,7 @@ export type AutomationTaskMaxAggregate = {
   id?: Maybe<Scalars['ID']>;
   employeeJobPostId?: Maybe<Scalars['String']>;
   employeeId?: Maybe<Scalars['String']>;
+  executedByEmployeeId?: Maybe<Scalars['String']>;
   jobPostId?: Maybe<Scalars['String']>;
   jobDateCreated?: Maybe<Scalars['DateTime']>;
   jobStatus?: Maybe<Scalars['String']>;
@@ -956,6 +966,7 @@ export type AutomationTaskMaxAggregate = {
   providerJobId?: Maybe<Scalars['String']>;
   commandType?: Maybe<Scalars['String']>;
   status?: Maybe<Scalars['String']>;
+  executedDate?: Maybe<Scalars['DateTime']>;
   createdAt?: Maybe<Scalars['DateTime']>;
   updatedAt?: Maybe<Scalars['DateTime']>;
 };
@@ -1515,6 +1526,7 @@ export type AutomationTaskFilter = {
   id?: Maybe<IdFilterComparison>;
   employeeJobPostId?: Maybe<StringFieldComparison>;
   employeeId?: Maybe<StringFieldComparison>;
+  executedByEmployeeId?: Maybe<StringFieldComparison>;
   jobPostId?: Maybe<StringFieldComparison>;
   jobDateCreated?: Maybe<DateFieldComparison>;
   jobStatus?: Maybe<StringFieldComparison>;
@@ -1523,12 +1535,14 @@ export type AutomationTaskFilter = {
   providerJobId?: Maybe<StringFieldComparison>;
   commandType?: Maybe<StringFieldComparison>;
   status?: Maybe<StringFieldComparison>;
+  executedDate?: Maybe<DateFieldComparison>;
   createdAt?: Maybe<DateFieldComparison>;
   updatedAt?: Maybe<DateFieldComparison>;
   isActive?: Maybe<BooleanFieldComparison>;
   isArchived?: Maybe<BooleanFieldComparison>;
   employeeJobPost?: Maybe<AutomationTaskFilterEmployeeJobPostFilter>;
   jobPost?: Maybe<AutomationTaskFilterJobPostFilter>;
+  executedByEmployee?: Maybe<AutomationTaskFilterEmployeeFilter>;
   employee?: Maybe<AutomationTaskFilterEmployeeFilter>;
 };
 
@@ -1606,6 +1620,7 @@ export enum AutomationTaskSortFields {
   Id = 'id',
   EmployeeJobPostId = 'employeeJobPostId',
   EmployeeId = 'employeeId',
+  ExecutedByEmployeeId = 'executedByEmployeeId',
   JobPostId = 'jobPostId',
   JobDateCreated = 'jobDateCreated',
   JobStatus = 'jobStatus',
@@ -1614,6 +1629,7 @@ export enum AutomationTaskSortFields {
   ProviderJobId = 'providerJobId',
   CommandType = 'commandType',
   Status = 'status',
+  ExecutedDate = 'executedDate',
   CreatedAt = 'createdAt',
   UpdatedAt = 'updatedAt',
   IsActive = 'isActive',
@@ -1626,6 +1642,7 @@ export type AutomationTaskAggregateFilter = {
   id?: Maybe<IdFilterComparison>;
   employeeJobPostId?: Maybe<StringFieldComparison>;
   employeeId?: Maybe<StringFieldComparison>;
+  executedByEmployeeId?: Maybe<StringFieldComparison>;
   jobPostId?: Maybe<StringFieldComparison>;
   jobDateCreated?: Maybe<DateFieldComparison>;
   jobStatus?: Maybe<StringFieldComparison>;
@@ -1634,6 +1651,7 @@ export type AutomationTaskAggregateFilter = {
   providerJobId?: Maybe<StringFieldComparison>;
   commandType?: Maybe<StringFieldComparison>;
   status?: Maybe<StringFieldComparison>;
+  executedDate?: Maybe<DateFieldComparison>;
   createdAt?: Maybe<DateFieldComparison>;
   updatedAt?: Maybe<DateFieldComparison>;
   isActive?: Maybe<BooleanFieldComparison>;
@@ -1694,9 +1712,11 @@ export type Mutation = {
   createManyAutomationTasks: Array<AutomationTask>;
   removeEmployeeJobPostFromAutomationTask: AutomationTask;
   removeJobPostFromAutomationTask: AutomationTask;
+  removeExecutedByEmployeeFromAutomationTask: AutomationTask;
   removeEmployeeFromAutomationTask: AutomationTask;
   setEmployeeJobPostOnAutomationTask: AutomationTask;
   setJobPostOnAutomationTask: AutomationTask;
+  setExecutedByEmployeeOnAutomationTask: AutomationTask;
   setEmployeeOnAutomationTask: AutomationTask;
 };
 
@@ -1961,6 +1981,11 @@ export type MutationRemoveJobPostFromAutomationTaskArgs = {
 };
 
 
+export type MutationRemoveExecutedByEmployeeFromAutomationTaskArgs = {
+  input: RelationInput;
+};
+
+
 export type MutationRemoveEmployeeFromAutomationTaskArgs = {
   input: RelationInput;
 };
@@ -1972,6 +1997,11 @@ export type MutationSetEmployeeJobPostOnAutomationTaskArgs = {
 
 
 export type MutationSetJobPostOnAutomationTaskArgs = {
+  input: RelationInput;
+};
+
+
+export type MutationSetExecutedByEmployeeOnAutomationTaskArgs = {
   input: RelationInput;
 };
 
@@ -2595,6 +2625,7 @@ export type AutomationTaskDeleteFilter = {
   id?: Maybe<IdFilterComparison>;
   employeeJobPostId?: Maybe<StringFieldComparison>;
   employeeId?: Maybe<StringFieldComparison>;
+  executedByEmployeeId?: Maybe<StringFieldComparison>;
   jobPostId?: Maybe<StringFieldComparison>;
   jobDateCreated?: Maybe<DateFieldComparison>;
   jobStatus?: Maybe<StringFieldComparison>;
@@ -2603,6 +2634,7 @@ export type AutomationTaskDeleteFilter = {
   providerJobId?: Maybe<StringFieldComparison>;
   commandType?: Maybe<StringFieldComparison>;
   status?: Maybe<StringFieldComparison>;
+  executedDate?: Maybe<DateFieldComparison>;
   createdAt?: Maybe<DateFieldComparison>;
   updatedAt?: Maybe<DateFieldComparison>;
   isActive?: Maybe<BooleanFieldComparison>;
@@ -2620,6 +2652,7 @@ export type UpdateAutomationTask = {
   id?: Maybe<Scalars['ID']>;
   employeeJobPostId?: Maybe<Scalars['String']>;
   employeeId?: Maybe<Scalars['String']>;
+  executedByEmployeeId?: Maybe<Scalars['String']>;
   jobPostId?: Maybe<Scalars['String']>;
   jobDateCreated?: Maybe<Scalars['DateTime']>;
   jobStatus?: Maybe<Scalars['String']>;
@@ -2631,6 +2664,7 @@ export type UpdateAutomationTask = {
   commandResult?: Maybe<Scalars['String']>;
   status?: Maybe<Scalars['String']>;
   executionTime?: Maybe<Scalars['Float']>;
+  executedDate?: Maybe<Scalars['DateTime']>;
   createdAt?: Maybe<Scalars['DateTime']>;
   updatedAt?: Maybe<Scalars['DateTime']>;
   isActive?: Maybe<Scalars['Boolean']>;
@@ -2650,6 +2684,7 @@ export type AutomationTaskUpdateFilter = {
   id?: Maybe<IdFilterComparison>;
   employeeJobPostId?: Maybe<StringFieldComparison>;
   employeeId?: Maybe<StringFieldComparison>;
+  executedByEmployeeId?: Maybe<StringFieldComparison>;
   jobPostId?: Maybe<StringFieldComparison>;
   jobDateCreated?: Maybe<DateFieldComparison>;
   jobStatus?: Maybe<StringFieldComparison>;
@@ -2658,6 +2693,7 @@ export type AutomationTaskUpdateFilter = {
   providerJobId?: Maybe<StringFieldComparison>;
   commandType?: Maybe<StringFieldComparison>;
   status?: Maybe<StringFieldComparison>;
+  executedDate?: Maybe<DateFieldComparison>;
   createdAt?: Maybe<DateFieldComparison>;
   updatedAt?: Maybe<DateFieldComparison>;
   isActive?: Maybe<BooleanFieldComparison>;
@@ -2673,6 +2709,7 @@ export type CreateAutomationTask = {
   id?: Maybe<Scalars['ID']>;
   employeeJobPostId?: Maybe<Scalars['String']>;
   employeeId?: Maybe<Scalars['String']>;
+  executedByEmployeeId?: Maybe<Scalars['String']>;
   jobPostId?: Maybe<Scalars['String']>;
   jobDateCreated?: Maybe<Scalars['DateTime']>;
   jobStatus?: Maybe<Scalars['String']>;
@@ -2684,6 +2721,7 @@ export type CreateAutomationTask = {
   commandResult?: Maybe<Scalars['String']>;
   status?: Maybe<Scalars['String']>;
   executionTime?: Maybe<Scalars['Float']>;
+  executedDate?: Maybe<Scalars['DateTime']>;
   createdAt?: Maybe<Scalars['DateTime']>;
   updatedAt?: Maybe<Scalars['DateTime']>;
   isActive?: Maybe<Scalars['Boolean']>;
@@ -3005,6 +3043,7 @@ export type AutomationTaskSubscriptionFilter = {
   id?: Maybe<IdFilterComparison>;
   employeeJobPostId?: Maybe<StringFieldComparison>;
   employeeId?: Maybe<StringFieldComparison>;
+  executedByEmployeeId?: Maybe<StringFieldComparison>;
   jobPostId?: Maybe<StringFieldComparison>;
   jobDateCreated?: Maybe<DateFieldComparison>;
   jobStatus?: Maybe<StringFieldComparison>;
@@ -3013,6 +3052,7 @@ export type AutomationTaskSubscriptionFilter = {
   providerJobId?: Maybe<StringFieldComparison>;
   commandType?: Maybe<StringFieldComparison>;
   status?: Maybe<StringFieldComparison>;
+  executedDate?: Maybe<DateFieldComparison>;
   createdAt?: Maybe<DateFieldComparison>;
   updatedAt?: Maybe<DateFieldComparison>;
   isActive?: Maybe<BooleanFieldComparison>;
@@ -3050,13 +3090,13 @@ export type EmployeeJobPostsQuery = (
       & { node: (
         { __typename?: 'EmployeeJobPost' }
         & Pick<EmployeeJobPost, 'id' | 'isApplied' | 'appliedDate' | 'createdAt' | 'updatedAt' | 'isActive' | 'isArchived' | 'providerCode' | 'providerJobId' | 'jobDateCreated' | 'jobStatus' | 'jobType'>
-        & { employee: (
+        & { employee?: Maybe<(
           { __typename?: 'Employee' }
           & Pick<Employee, 'id' | 'externalEmployeeId'>
-        ), jobPost: (
+        )>, jobPost?: Maybe<(
           { __typename?: 'JobPost' }
           & Pick<JobPost, 'id' | 'providerCode' | 'providerJobId' | 'title' | 'description' | 'jobDateCreated' | 'jobStatus' | 'jobType' | 'url' | 'budget' | 'duration' | 'workload' | 'skills' | 'category' | 'subcategory' | 'country' | 'clientFeedback' | 'clientReviewsCount' | 'clientJobsPosted' | 'clientPastHires' | 'clientPaymentVerificationStatus'>
-        ) }
+        )> }
       ) }
     )> }
   ) }

@@ -8,6 +8,7 @@ import {
 	Output,
 	EventEmitter
 } from '@angular/core';
+import { ActivatedRoute, Router } from '@angular/router';
 import {
 	IOrganization,
 	IOrganizationProject,
@@ -15,7 +16,7 @@ import {
 	PermissionsEnum
 } from '@gauzy/contracts';
 import { NG_VALUE_ACCESSOR } from '@angular/forms';
-import { map, Observable, Subject } from 'rxjs';
+import { map, Observable, Subject, switchMap } from 'rxjs';
 import { filter, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import {
@@ -46,16 +47,15 @@ import { TruncatePipe } from '../../pipes';
 	]
 })
 export class ProjectSelectorComponent
-	implements OnInit, OnDestroy, AfterViewInit
-{
+	implements OnInit, OnDestroy, AfterViewInit {
 	projects: IOrganizationProject[] = [];
 	selectedProject: IOrganizationProject;
 	hasAddProject$: Observable<boolean>;
 
 	public organization: IOrganization;
 	subject$: Subject<any> = new Subject();
-	onChange: any = () => {};
-	onTouched: any = () => {};
+	onChange: any = () => { };
+	onTouched: any = () => { };
 
 	@Input() shortened = false;
 	@Input() disabled = false;
@@ -135,8 +135,10 @@ export class ProjectSelectorComponent
 		private readonly store: Store,
 		private readonly toastrService: ToastrService,
 		private readonly _organizationProjectStore: OrganizationProjectStore,
-		private readonly _truncatePipe: TruncatePipe
-	) {}
+		private readonly _truncatePipe: TruncatePipe,
+		private readonly router: Router,
+		private readonly activatedRoute: ActivatedRoute
+	) { }
 
 	ngOnInit(): void {
 		this.hasAddProject$ = this.store.userRolePermissions$.pipe(
@@ -149,10 +151,24 @@ export class ProjectSelectorComponent
 		);
 		this.subject$
 			.pipe(
-				tap(() => this.getProjects()),
+				switchMap(() => this.getProjects()),
+				tap(() => {
+					if (this.activatedRoute.snapshot.queryParams.projectId) {
+						this.selectProjectById(this.activatedRoute.snapshot.queryParams.projectId);
+					}
+				}),
 				untilDestroyed(this)
 			)
 			.subscribe();
+
+		this.activatedRoute.queryParams
+			.pipe(
+				filter((query) => !!query.projectId),
+				tap(({ projectId }) => this.selectProjectById(projectId)),
+				untilDestroyed(this)
+			)
+			.subscribe();
+
 		this.store.selectedOrganization$
 			.pipe(
 				distinctUntilChange(),
@@ -206,9 +222,9 @@ export class ProjectSelectorComponent
 					tenantId,
 					...(this.organizationContactId
 						? {
-								organizationContactId:
-									this.organizationContactId
-						  }
+							organizationContactId:
+								this.organizationContactId
+						}
 						: {})
 				}
 			);
@@ -218,8 +234,8 @@ export class ProjectSelectorComponent
 				tenantId,
 				...(this.organizationContactId
 					? {
-							organizationContactId: this.organizationContactId
-					  }
+						organizationContactId: this.organizationContactId
+					}
 					: {})
 			});
 			this.projects = items;
@@ -266,8 +282,8 @@ export class ProjectSelectorComponent
 				tenantId,
 				...(this.organizationContactId
 					? {
-							organizationContactId: this.organizationContactId
-					  }
+						organizationContactId: this.organizationContactId
+					}
 					: {})
 			};
 			if (this.employeeId || this.store.user.employeeId) {
@@ -336,10 +352,28 @@ export class ProjectSelectorComponent
 	selectProject(project: IOrganizationProject): void {
 		if (!this.skipGlobalChange) {
 			this.store.selectedProject = project || ALL_PROJECT_SELECTED;
+			this.setAttributesToParams({ projectId: project?.id || null })
 		}
 		this.selectedProject = project || ALL_PROJECT_SELECTED;
 		this.projectId = this.selectedProject.id;
 		this.onChanged.emit(project);
+	}
+
+	private setAttributesToParams(params: Object) {
+		this.router.navigate([], {
+			relativeTo: this.activatedRoute,
+			queryParams: { ...params },
+			queryParamsHandling: 'merge',
+		});
+	}
+
+	selectProjectById(projectId: string) {
+		const project = this.projects.find(
+			(project: IOrganizationProject) => projectId === project.id
+		);
+		if (project) {
+			this.selectProject(project);
+		}
 	}
 
 	/**
@@ -392,5 +426,5 @@ export class ProjectSelectorComponent
 		}
 	}
 
-	ngOnDestroy(): void {}
+	ngOnDestroy(): void { }
 }

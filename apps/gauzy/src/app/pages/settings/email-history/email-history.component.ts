@@ -1,7 +1,7 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { NbDialogService } from '@nebular/theme';
 import {
-	IEmail,
+	IEmailHistory,
 	IEmployee,
 	IOrganization,
 	IOrganizationContact,
@@ -32,7 +32,7 @@ export class EmailHistoryComponent extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
 
 	loading: boolean = false;
-	selectedEmail: IEmail;
+	selectedEmail: IEmailHistory;
 	filteredCount: Number;
 	thresholdHitCount = 1;
 	pageSize = 10;
@@ -43,7 +43,7 @@ export class EmailHistoryComponent extends TranslationBaseComponent
 	nextDataLoading: boolean = false;
 
 	organizationContacts: IOrganizationContact[] = [];
-	emails: IEmail[] = [];
+	emails: IEmailHistory[] = [];
 	employees: IEmployee[] = [];
 	private organization: IOrganization;
 	emails$: Subject<any> = new Subject();
@@ -83,7 +83,7 @@ export class EmailHistoryComponent extends TranslationBaseComponent
 			.subscribe();
 	}
 
-	selectEmail(email: IEmail) {
+	selectEmail(email: IEmailHistory) {
 		this.selectedEmail = email;
 		this.selectedEmail.content =
 			email.content ?

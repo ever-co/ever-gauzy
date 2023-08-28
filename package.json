@@ -89,7 +89,7 @@
 		"doc:build-serve": "compodoc -p tsconfig.json -d docs -s",
 		"postinstall.electron": "yarn electron-builder install-app-deps && yarn node tools/electron/postinstall",
 		"postinstall.web": "yarn node ./decorate-angular-cli.js && yarn npx ngcc --properties es2016 browser module main --first-only --create-ivy-entry-points && yarn node tools/web/postinstall",
-		"build:desktop": "yarn run postinstall.electron && yarn build:package:all && yarn run config:prod && yarn run config:desktop:prod && yarn ng:prod build desktop --prod --base-href ./ && yarn run prepare:desktop && yarn ng:prod build desktop-api --prod && yarn ng:prod build api-desktop --prod && yarn ng:prod build desktop-ui --prod --base-href ./ && yarn run copy-files-desktop && yarn run copy-assets-gauzy",
+		"build:desktop": "cross-env NODE_ENV=production yarn run copy-files-i18n-desktop && yarn run postinstall.electron && yarn build:package:all && yarn run config:prod && yarn run config:desktop:prod && yarn ng:prod build desktop --prod --base-href ./ && yarn run prepare:desktop && yarn ng:prod build desktop-api --prod && yarn ng:prod build api-desktop --prod && yarn ng:prod build desktop-ui --prod --base-href ./ && yarn run copy-files-desktop && yarn run copy-assets-gauzy",
 		"build:desktop:local": "cross-env NODE_ENV=production NODE_OPTIONS=--max-old-space-size=7000 yarn run config:prod && yarn run build:desktop && electron dist/apps/desktop",
 		"build:desktop:linux": "cross-env NODE_ENV=production NODE_OPTIONS=--max-old-space-size=7000 yarn run config:prod && yarn run build:desktop && npm config set cache .cache && yarn electron-builder -c.electronVersion=20.2.0 build --linux --project dist/apps/desktop",
 		"build:desktop:windows": "cross-env NODE_ENV=production NODE_OPTIONS=--max-old-space-size=7000 yarn run config:prod && yarn run build:desktop && npm config set cache .cache && yarn electron-builder -c.electronVersion=20.2.0 -c.extraMetadata.author.name=Ever build --windows --project dist/apps/desktop",
@@ -134,7 +134,7 @@
 		"build:package:gauzy": "yarn run build:package:contracts && yarn run build:package:common && yarn run build:package:common-angular && yarn run build:package:config && yarn run build:package:plugin && yarn run build:package:plugins && yarn run build:package:auth && yarn run build:package:core && yarn run build:package:plugin:knowledge-base && yarn run build:package:plugin:changelog",
 		"build:package:desktop-ui-lib": "cross-env NODE_ENV=development NODE_OPTIONS=--max-old-space-size=7000 yarn --cwd ./packages/desktop-ui-lib build",
 		"copy-files-desktop": "copyfiles -f  packages/core/src/**/*.gql dist/apps/desktop/data/",
-		"build:desktop-timer": "cross-env NODE_ENV=production yarn run postinstall.electron && yarn build:package:all && yarn run config:prod && yarn run config:desktop-timer:prod && yarn ng build desktop-timer --prod --base-href ./ && yarn run prepare:desktop-timer && yarn ng build api-desktop --prod --output-path=dist/apps/desktop-timer/desktop-api && yarn run copy-assets-gauzy-timer",
+		"build:desktop-timer": "cross-env NODE_ENV=production yarn copy-files-i18n-desktop-timer && yarn run postinstall.electron && yarn build:package:all && yarn run config:prod && yarn run config:desktop-timer:prod && yarn ng build desktop-timer --prod --base-href ./ && yarn run prepare:desktop-timer && yarn ng build api-desktop --prod --output-path=dist/apps/desktop-timer/desktop-api && yarn run copy-assets-gauzy-timer",
 		"prepare:desktop-timer": "yarn run postinstall.electron && tsc -p apps/desktop-timer/tsconfig.json",
 		"build:desktop-timer:linux": "cross-env NODE_ENV=production NODE_OPTIONS=--max-old-space-size=7000 yarn run config:prod && yarn run build:desktop-timer && npm config set cache .cache && yarn electron-builder -c.electronVersion=20.2.0 build --linux --project dist/apps/desktop-timer",
 		"build:desktop-timer:windows": "cross-env NODE_ENV=production NODE_OPTIONS=--max-old-space-size=7000 yarn run config:prod && yarn run build:desktop-timer && npm config set cache .cache && yarn electron-builder -c.electronVersion=20.2.0 -c.extraMetadata.author.name=Ever build --windows --project dist/apps/desktop-timer",
@@ -149,7 +149,7 @@
 		"config:desktop:prod": "yarn run config:electron -- --environment=prod --desktop=desktop",
 		"config:desktop-timer:prod": "yarn run config:electron -- --environment=prod --desktop=desktop-timer",
 		"prepare:gauzy-server": "yarn run postinstall.electron && tsc -p apps/server/tsconfig.json",
-		"build:gauzy-server": "cross-env NODE_ENV=production yarn run postinstall.electron && yarn build:package:all && yarn run config:prod && yarn run config:server:prod && yarn ng:prod build gauzy-server --prod --base-href ./ && yarn run prepare:gauzy-server && yarn ng:prod build gauzy-server-ui --prod --base-href ./ && yarn ng:prod build gauzy-server-api --prod && yarn run copy-files-gauzy-server",
+		"build:gauzy-server": "cross-env NODE_ENV=production yarn run copy-files-i18n-server && yarn run postinstall.electron && yarn build:package:all && yarn run config:prod && yarn run config:server:prod && yarn ng:prod build gauzy-server --prod --base-href ./ && yarn run prepare:gauzy-server && yarn ng:prod build gauzy-server-ui --prod --base-href ./ && yarn ng:prod build gauzy-server-api --prod && yarn run copy-files-gauzy-server",
 		"copy-files-gauzy-server": "copyfiles -f  packages/core/src/**/*.gql dist/apps/gauzy-server/data/",
 		"build:gauzy-server:windows": "cross-env NODE_ENV=production NODE_OPTIONS=--max-old-space-size=7000 yarn run config:prod && yarn run build:gauzy-server && npm config set cache .cache && yarn electron-builder -c.electronVersion=20.2.0 -c.extraMetadata.author.name=Ever build --windows --project dist/apps/gauzy-server",
 		"build:gauzy-server:linux": "cross-env NODE_ENV=production NODE_OPTIONS=--max-old-space-size=7000 yarn run config:prod && yarn run build:gauzy-server && npm config set cache .cache && yarn electron-builder -c.electronVersion=20.2.0 build --linux --project dist/apps/gauzy-server",
@@ -157,7 +157,10 @@
 		"build:gauzy-server:windows:release": "cross-env NODE_ENV=production NODE_OPTIONS=--max-old-space-size=7000 yarn run config:prod && yarn run build:gauzy-server && npm config set cache .cache && yarn electron-builder -c.electronVersion=20.2.0 -c.extraMetadata.author.name=Ever build --windows --publish=always --project dist/apps/gauzy-server",
 		"build:gauzy-server:linux:release": "cross-env NODE_ENV=production NODE_OPTIONS=--max-old-space-size=7000 yarn run config:prod && yarn run build:gauzy-server && npm config set cache .cache && yarn electron-builder -c.electronVersion=20.2.0 build --linux --publish=always --project dist/apps/gauzy-server",
 		"build:gauzy-server:mac:release": "yarn run build:gauzy-server && npm config set cache .cache && yarn electron-builder -c.electronVersion=20.2.0 build --mac --publish=always --project dist/apps/gauzy-server",
-		"quick:build:gauzy-server": "yarn electron-builder -c.electronVersion=20.2.0 -c.extraMetadata.author.name=Ever build --mac --project dist/apps/gauzy-server"
+		"quick:build:gauzy-server": "yarn electron-builder -c.electronVersion=20.2.0 -c.extraMetadata.author.name=Ever build --mac --project dist/apps/gauzy-server",
+		"copy-files-i18n-desktop-timer": "copyfiles -f apps/gauzy/src/assets/i18n/*.json apps/desktop-timer/src/assets/i18n/",
+		"copy-files-i18n-desktop": "copyfiles -f apps/gauzy/src/assets/i18n/*.json apps/desktop/src/assets/i18n/",
+		"copy-files-i18n-server": "copyfiles -f apps/gauzy/src/assets/i18n/*.json apps/server/src/assets/i18n/"
 	},
 	"config": {
 		"commitizen": {

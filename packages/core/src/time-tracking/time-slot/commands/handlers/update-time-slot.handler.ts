@@ -17,7 +17,7 @@ export class UpdateTimeSlotHandler
 
 		@InjectRepository(Activity)
 		private readonly activityRepository: Repository<Activity>
-	) {}
+	) { }
 
 	public async execute(command: UpdateTimeSlotCommand): Promise<TimeSlot> {
 		const { input, id } = command;
@@ -47,17 +47,17 @@ export class UpdateTimeSlotHandler
 					.toDate();
 			}
 
-			let newActivites = [];
+			let newActivities = [];
 			if (input.activities) {
-				newActivites = input.activities.map((activity) => {
+				newActivities = input.activities.map((activity) => {
 					activity = new Activity(activity);
 					activity.employeeId = timeSlot.employeeId;
 					activity.tenantId = RequestContext.currentTenantId();
 					return activity;
 				});
-				await this.activityRepository.save(newActivites);
+				await this.activityRepository.save(newActivities);
 				input.activities = (timeSlot.activities || []).concat(
-					newActivites
+					newActivities
 				);
 			}
 			await this.timeSlotRepository.update(id, input);

@@ -1,17 +1,15 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Column, Entity, JoinColumn, RelationId, ManyToOne, Index } from 'typeorm';
+import { IsUUID } from 'class-validator';
 import { IIntegrationSetting } from '@gauzy/contracts';
 import {
 	IntegrationTenant,
 	TenantOrganizationBaseEntity
 } from '../core/entities/internal';
-import { IsString } from 'class-validator';
 
 @Entity('integration_setting')
-export class IntegrationSetting
-	extends TenantOrganizationBaseEntity
-	implements IIntegrationSetting {
-		
+export class IntegrationSetting extends TenantOrganizationBaseEntity implements IIntegrationSetting {
+
 	@ApiProperty({ type: () => String })
 	@Column()
 	settingsName: string;
@@ -21,10 +19,10 @@ export class IntegrationSetting
 	settingsValue: string;
 
 	/*
-    |--------------------------------------------------------------------------
-    | @ManyToOne 
-    |--------------------------------------------------------------------------
-    */
+	|--------------------------------------------------------------------------
+	| @ManyToOne
+	|--------------------------------------------------------------------------
+	*/
 
 	/**
 	 * IntegrationTenant
@@ -36,10 +34,10 @@ export class IntegrationSetting
 	@JoinColumn()
 	integration?: IntegrationTenant;
 
-	@ApiProperty({ type: () => String, readOnly: true })
+	@ApiProperty({ type: () => String })
+	@IsUUID()
 	@RelationId((it: IntegrationSetting) => it.integration)
-	@IsString()
 	@Index()
 	@Column()
-	readonly integrationId?: string;
+	integrationId?: IntegrationTenant['id'];
 }

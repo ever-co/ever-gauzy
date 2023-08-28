@@ -33,10 +33,10 @@ import { CreateCustomSmtpDTO, CustomSmtpQueryDTO, UpdateCustomSmtpDTO, ValidateC
 @Controller()
 export class CustomSmtpController extends CrudController<CustomSmtp>{
 	constructor(
-		private readonly customSmtpService: CustomSmtpService,
-		private readonly commandBus: CommandBus
+		private readonly _customSmtpService: CustomSmtpService,
+		private readonly _commandBus: CommandBus
 	) {
-		super(customSmtpService);
+		super(_customSmtpService);
 	}
 
 	/**
@@ -60,7 +60,7 @@ export class CustomSmtpController extends CrudController<CustomSmtp>{
 	async getSmtpSetting(
 		@Query() query: CustomSmtpQueryDTO
 	): Promise<ICustomSmtp | ISMTPConfig> {
-		return await this.customSmtpService.getSmtpSetting(query);
+		return await this._customSmtpService.getSmtpSetting(query);
 	}
 
 	/**
@@ -78,8 +78,8 @@ export class CustomSmtpController extends CrudController<CustomSmtp>{
 	@UsePipes(new ValidationPipe({ whitelist: true }))
 	async validateSmtpSetting(
 		@Body() entity: ValidateCustomSmtpDTO
-	): Promise<Boolean | any> {
-		return await this.customSmtpService.verifyTransporter(entity);
+	): Promise<boolean> {
+		return await this._customSmtpService.verifyTransporter(entity);
 	}
 
 	/**
@@ -102,7 +102,7 @@ export class CustomSmtpController extends CrudController<CustomSmtp>{
 	async create(
 		@Body() entity: CreateCustomSmtpDTO
 	): Promise<ICustomSmtp> {
-		return await this.commandBus.execute(
+		return await this._commandBus.execute(
 			new CustomSmtpCreateCommand(entity)
 		);
 	}
@@ -134,8 +134,8 @@ export class CustomSmtpController extends CrudController<CustomSmtp>{
 		@Param('id', UUIDValidationPipe) id: ICustomSmtp['id'],
 		@Body() entity: UpdateCustomSmtpDTO
 	): Promise<ICustomSmtp> {
-		return await this.commandBus.execute(
-			new CustomSmtpUpdateCommand({ id, ...entity })
+		return await this._commandBus.execute(
+			new CustomSmtpUpdateCommand(id, entity)
 		);
 	}
 }
