@@ -1,4 +1,4 @@
-import { app, Menu, nativeImage, Tray } from 'electron';
+import { app, Menu, MenuItemConstructorOptions, nativeImage, Tray } from 'electron';
 const Store = require('electron-store');
 import { LocalStore } from './desktop-store';
 import { ipcMain } from 'electron';
@@ -11,9 +11,11 @@ import {
 import TitleOptions = Electron.TitleOptions;
 import { User, UserService } from './offline';
 import { handleLogoutDialog } from './desktop-ipc';
+import { TranslateService } from './translation';
 
 export class TrayIcon {
 	tray: Tray;
+	contextMenu: MenuItemConstructorOptions[] = [];
 	constructor(
 		setupWindow,
 		knex,
@@ -37,10 +39,12 @@ export class TrayIcon {
 		this.tray = new Tray(iconNativePath);
 		this.tray.setTitle('--:--:--', options);
 		const userService = new UserService();
-		let contextMenu: any = [
+		this.contextMenu = [
 			{
 				id: '4',
-				label: 'Setting',
+				label: TranslateService.instant(
+					'TIMER_TRACKER.SETUP.SETTING'
+				),
 				async click() {
 					if (!settingsWindow) {
 						settingsWindow = await createSettingsWindow(
@@ -58,7 +62,9 @@ export class TrayIcon {
 			},
 			{
 				id: '6',
-				label: 'Check For Update',
+				label: TranslateService.instant(
+					'BUTTONS.CHECK_UPDATE'
+				),
 				async click() {
 					if (!settingsWindow) {
 						settingsWindow = await createSettingsWindow(
@@ -76,7 +82,9 @@ export class TrayIcon {
 			},
 			{
 				id: '0',
-				label: 'Exit',
+				label: TranslateService.instant(
+					'BUTTONS.EXIT'
+				),
 				click() {
 					app.quit();
 				},
@@ -85,7 +93,9 @@ export class TrayIcon {
 		const unAuthMenu = [
 			{
 				id: '4',
-				label: 'Setting',
+				label: TranslateService.instant(
+					'TIMER_TRACKER.SETUP.SETTING'
+				),
 				async click() {
 					if (!settingsWindow) {
 						settingsWindow = await createSettingsWindow(
@@ -103,7 +113,9 @@ export class TrayIcon {
 			},
 			{
 				id: '6',
-				label: 'Check For Update',
+				label: TranslateService.instant(
+					'BUTTONS.CHECK_UPDATE'
+				),
 				async click() {
 					if (!settingsWindow) {
 						settingsWindow = await createSettingsWindow(
@@ -121,7 +133,9 @@ export class TrayIcon {
 			},
 			{
 				id: '0',
-				label: 'Exit',
+				label: TranslateService.instant(
+					'BUTTONS.EXIT'
+				),
 				click() {
 					app.quit();
 				},
@@ -130,7 +144,10 @@ export class TrayIcon {
 		const menuAuth = [
 			{
 				id: '0',
-				label: 'Now tracking time - 0h 0m',
+				label: TranslateService.instant(
+					'TIMER_TRACKER.MENU.NOW_TRACKING',
+					{ timer: 'Oh 00m' }
+				),
 				visible: false,
 			},
 			{
@@ -141,7 +158,9 @@ export class TrayIcon {
 			},
 			{
 				id: '1',
-				label: 'Start Tracking Time',
+				label: TranslateService.instant(
+					'TIMER_TRACKER.MENU.START_TRACKING'
+				),
 				visible: appConfig.timeTrackerWindow,
 				async click(menuItem) {
 					const userLogin = store.get('auth');
@@ -158,7 +177,9 @@ export class TrayIcon {
 			},
 			{
 				id: '2',
-				label: 'Stop Tracking Time',
+				label: TranslateService.instant(
+					'TIMER_TRACKER.MENU.STOP_TRACKING'
+				),
 				enabled: false,
 				visible: appConfig.timeTrackerWindow,
 				click(menuItem) {
@@ -167,7 +188,9 @@ export class TrayIcon {
 			},
 			{
 				id: '3',
-				label: 'Open Time Tracker',
+				label: TranslateService.instant(
+					'TIMER_TRACKER.MENU.OPEN_TIMER'
+				),
 				enabled: true,
 				visible: appConfig.timeTrackerWindow,
 				async click(menuItem) {
@@ -177,7 +200,9 @@ export class TrayIcon {
 			},
 			{
 				id: '6',
-				label: 'Check For Update',
+				label: TranslateService.instant(
+					'BUTTONS.CHECK_UPDATE'
+				),
 				async click() {
 					if (!settingsWindow) {
 						settingsWindow = await createSettingsWindow(
@@ -195,7 +220,9 @@ export class TrayIcon {
 			},
 			{
 				id: '4',
-				label: 'Setting',
+				label: TranslateService.instant(
+					'TIMER_TRACKER.SETUP.SETTING'
+				),
 				async click() {
 					if (!settingsWindow) {
 						settingsWindow = await createSettingsWindow(
@@ -213,7 +240,9 @@ export class TrayIcon {
 			},
 			{
 				id: '7',
-				label: 'Logout',
+				label: TranslateService.instant(
+					'BUTTONS.LOGOUT'
+				),
 				visible: app.getName() === 'gauzy-desktop-timer',
 				async click() {
 					const appSetting = store.get('appSetting');
@@ -229,7 +258,9 @@ export class TrayIcon {
 			},
 			{
 				id: '5',
-				label: 'Exit',
+				label: TranslateService.instant(
+					'BUTTONS.EXIT'
+				),
 				click() {
 					app.quit();
 				},
@@ -251,7 +282,7 @@ export class TrayIcon {
 		};
 
 		if (auth && auth.employeeId) {
-			contextMenu = menuAuth;
+			this.contextMenu = menuAuth;
 			menuWindowSetting.enabled = true;
 			menuWindowTime.enabled = true;
 			timeTrackerWindow.webContents.send(
@@ -259,29 +290,32 @@ export class TrayIcon {
 				LocalStore.beforeRequestParams()
 			);
 		}
-		this.tray.setContextMenu(Menu.buildFromTemplate(contextMenu));
+		this.build();
 
 		this.tray.on('double-click', (e) => {
 			openWindow();
 		});
 
 		ipcMain.on('update_tray_start', (event, arg) => {
-			contextMenu[2].enabled = false;
-			contextMenu[0].visible = true;
-			contextMenu[3].enabled = true;
-			this.tray.setContextMenu(Menu.buildFromTemplate(contextMenu));
+			this.contextMenu[2].enabled = false;
+			this.contextMenu[0].visible = true;
+			this.contextMenu[3].enabled = true;
+			this.build();
 		});
 
 		ipcMain.on('update_tray_stop', (event, arg) => {
-			contextMenu[2].enabled = true;
-			contextMenu[0].visible = false;
-			contextMenu[3].enabled = false;
-			this.tray.setContextMenu(Menu.buildFromTemplate(contextMenu));
+			this.contextMenu[2].enabled = true;
+			this.contextMenu[0].visible = false;
+			this.contextMenu[3].enabled = false;
+			this.build();
 		});
 
 		ipcMain.on('update_tray_time_update', (event, arg) => {
-			contextMenu[0].label = `Now tracking time - ${arg}`;
-			this.tray.setContextMenu(Menu.buildFromTemplate(contextMenu));
+			this.contextMenu[0].label = TranslateService.instant(
+				'TIMER_TRACKER.MENU.NOW_TRACKING',
+				{ time: arg }
+			);
+			this.build();
 		});
 
 		ipcMain.on('update_tray_time_title', (event, arg) => {
@@ -313,11 +347,11 @@ export class TrayIcon {
 				auth: { ...arg, isLogout: false },
 			});
 			if (arg.employeeId) {
-				contextMenu = menuAuth;
+				this.contextMenu = menuAuth;
 				menuWindowTime.enabled = true;
 				menuWindowSetting.enabled = true;
 				menuWindowTime.visible = appConfig.timeTrackerWindow;
-				this.tray.setContextMenu(Menu.buildFromTemplate(contextMenu));
+				this.build();
 			}
 
 			if (!appConfig.gauzyWindow) {
@@ -388,17 +422,17 @@ export class TrayIcon {
 				arg.employee.organization &&
 				arg.employee.organization.name
 			) {
-				contextMenu[1].label = arg.employee.organization.name;
-				contextMenu[1].visible = true;
+				this.contextMenu[1].label = arg.employee.organization.name;
+				this.contextMenu[1].visible = true;
 			}
 		});
 	}
 
-	destroy() {
+	public destroy() {
 		this.tray.destroy();
 	}
 
-	removeTimerHandlers() {
+	public removeTimerHandlers() {
 		const channels = [
 			'FINAL_LOGOUT'
 		];
@@ -407,7 +441,7 @@ export class TrayIcon {
 		});
 	}
 
-	removeTrayListener() {
+	public removeTrayListener() {
 		const trayListener = [
 			'update_tray_start',
 			'update_tray_stop',
@@ -420,5 +454,9 @@ export class TrayIcon {
 		trayListener.forEach((listener) => {
 			ipcMain.removeAllListeners(listener);
 		});
+	}
+
+	public build(): void {
+		this.tray.setContextMenu(Menu.buildFromTemplate([...this.contextMenu]));
 	}
 }

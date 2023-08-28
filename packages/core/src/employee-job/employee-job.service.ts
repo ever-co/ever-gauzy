@@ -15,7 +15,7 @@ import {
 	IVisibilityJobPostInput,
 	JobPostSourceEnum,
 	JobPostStatusEnum,
-	JobPostTypeEnum
+	JobPostTypeEnum,
 } from '@gauzy/contracts';
 import { EmployeeService } from '../employee/employee.service';
 import { CountryService } from './../country/country.service';
@@ -76,51 +76,56 @@ export class EmployeeJobPostService {
 	 */
 	public async findAll(data: IGetEmployeeJobPostInput): Promise<IPagination<IEmployeeJobPost>> {
 		const employees = await this.employeeService.findAllActive();
-
 		let jobs: IPagination<IEmployeeJobPost>;
 
-		if (env.gauzyAIGraphQLEndpoint) {
-			const result = await this.gauzyAIService.getEmployeesJobPosts(data);
+		try {
+			if (env.gauzyAIGraphQLEndpoint) {
+				const result = await this.gauzyAIService.getEmployeesJobPosts(data);
+				if (result === null) {
+					if (env.production) {
+						// OK, so for some reason connection go Gauzy AI failed, we can't get jobs ...
+						jobs = {
+							items: [],
+							total: 0
+						};
+					} else {
+						// In development, even if connection failed, we want to show fake jobs in UI
+						jobs = await this.getRandomEmployeeJobPosts(employees, data.page, data.limit);
+					}
+				} else {
+					const jobsConverted = result.items.map((jo) => {
+						if (jo.employeeId) {
+							const employee = employees.find((emp) => emp.id === jo.employeeId);
+							jo.employee = employee;
+						}
 
-			if (result === null) {
-				if (env.production) {
-					// OK, so for some reason connection go Gauzy AI failed, we can't get jobs ...
+						return jo;
+					});
+
+					jobs = {
+						items: jobsConverted,
+						total: result.total
+					};
+				}
+			} else {
+				// If it's production, we should return empty here because we don't want fake jobs in production
+				if (env.production === false) {
+					jobs = await this.getRandomEmployeeJobPosts(employees, data.page, data.limit);
+				} else {
 					jobs = {
 						items: [],
 						total: 0
 					};
-				} else {
-					// In development, even if connection failed, we want to show fake jobs in UI
-					jobs = await this.getRandomEmployeeJobPosts(employees, data.page, data.limit);
 				}
-			} else {
-				const jobsConverted = result.items.map((jo) => {
-					if (jo.employeeId) {
-						const employee = employees.find((emp) => emp.id === jo.employeeId);
-						jo.employee = employee;
-					}
-
-					return jo;
-				});
-
-				jobs = {
-					items: jobsConverted,
-					total: result.total
-				};
 			}
-		} else {
-			// If it's production, we should return empty here because we don't want fake jobs in production
-			if (env.production === false) {
-				jobs = await this.getRandomEmployeeJobPosts(employees, data.page, data.limit);
-			} else {
-				jobs = {
-					items: [],
-					total: 0
-				};
+
+			return jobs;
+		} catch (error) {
+			return {
+				items: [],
+				total: 0
 			}
 		}
-
-		return jobs;
 	}
 
 	/**

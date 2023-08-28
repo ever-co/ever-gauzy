@@ -1,6 +1,6 @@
 
 import { MigrationInterface, QueryRunner } from "typeorm";
-import { EmailTemplateNameEnum } from '@gauzy/contracts';
+import { EmailTemplateEnum } from '@gauzy/contracts';
 import { EmailTemplateUtils } from './../../email-template/utils';
 
 export class UpdateEmailTemplates1680539459969 implements MigrationInterface {
@@ -13,10 +13,10 @@ export class UpdateEmailTemplates1680539459969 implements MigrationInterface {
     * @param queryRunner
     */
     public async up(queryRunner: QueryRunner): Promise<any> {
-        const templates = Object.values(EmailTemplateNameEnum);
+        const templates = Object.values(EmailTemplateEnum);
         await Promise.all(
             templates.map(
-                async (template: EmailTemplateNameEnum) => {
+                async (template: EmailTemplateEnum) => {
                     try {
                         await EmailTemplateUtils.migrateEmailTemplates(queryRunner, template);
                     } catch (error) {

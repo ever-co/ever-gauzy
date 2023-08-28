@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { CqrsModule } from '@nestjs/cqrs';
 import { RouterModule } from 'nest-router';
@@ -21,7 +21,7 @@ import { IntegrationEntitySettingService } from './integration-entity-setting.se
 		TypeOrmModule.forFeature([
 			IntegrationEntitySetting
 		]),
-		IntegrationTenantModule,
+		forwardRef(() => IntegrationTenantModule),
 		TenantModule,
 		UserModule,
 		CqrsModule

@@ -161,6 +161,7 @@ export class UpworkService {
 			console.log('consumerAccessToken already exits and will be reused');
 			return consumerAccessToken;
 		}
+		const tenantId = RequestContext.currentTenantId();
 
 		this._upworkApi = new UpworkApi(config);
 
@@ -179,6 +180,7 @@ export class UpworkService {
 
 					await this.commandBus.execute(
 						new IntegrationTenantCreateCommand({
+							tenantId,
 							organizationId,
 							name: IntegrationEnum.UPWORK,
 							entitySettings: [],
@@ -199,9 +201,7 @@ export class UpworkService {
 									settingsName: 'requestTokenSecret',
 									settingsValue: requestTokenSecret
 								}
-							].map((setting) => {
-								return { organizationId, ...setting };
-							})
+							]
 						})
 					);
 					return resolve({

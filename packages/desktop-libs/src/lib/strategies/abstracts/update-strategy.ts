@@ -3,6 +3,7 @@ import { CancellationToken } from 'builder-util-runtime';
 import DesktopNotification from '../../desktop-notifier';
 import { autoUpdater, UpdateInfo } from 'electron-updater';
 import { app } from 'electron';
+import { TranslateService } from '../../translation';
 
 export abstract class UpdateStrategy implements IDesktopUpdate {
 	protected _cancellationToken: CancellationToken;
@@ -57,7 +58,10 @@ export abstract class UpdateStrategy implements IDesktopUpdate {
 
 	public notify(info: UpdateInfo): void {
 		this._notifier.customNotification(
-			`New update for ${this._appName} (version ${info.version}) is available`,
+			TranslateService.instant(
+				'TIMER_TRACKER.NATIVE_NOTIFICATION.NEW_VERSION_AVAILABLE',
+				{ name: this._appName, version: info.version }
+			),
 			this._appName
 		);
 	}

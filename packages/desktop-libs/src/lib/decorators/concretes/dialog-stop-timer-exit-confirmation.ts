@@ -1,3 +1,4 @@
+import { TranslateService } from '../../translation';
 import { IDesktopDialog } from '../../interfaces';
 import { BaseDesktopDialogDecorator } from '../abstracts/base-desktop-dialog-decorator';
 
@@ -9,8 +10,13 @@ export class DialogStopTimerExitConfirmation
 		super(dialog);
 		this.options = {
 			...this.options,
-			buttons: ['Exit', 'Cancel'],
-			detail: 'Click Exit to Stop the Timer and Exit from the application.',
+			buttons: [
+				TranslateService.instant('BUTTONS.EXIT'),
+				TranslateService.instant('BUTTONS.CANCEL'),
+			],
+			detail: TranslateService.instant(
+				'TIMER_TRACKER.DIALOG.EXIT_CONFIRM'
+			),
 		};
 	}
 }

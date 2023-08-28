@@ -15,6 +15,7 @@ import
         FeatureEnum,
         ISelectedEmployee,
         ComponentLayoutStyleEnum,
+        IOrganizationTeam,
     } from '@gauzy/contracts';
 import { StoreConfig, Store as AkitaStore, Query } from '@datorama/akita';
 import { NgxPermissionsService, NgxRolesService } from 'ngx-permissions';
@@ -38,6 +39,7 @@ export interface AppState
     selectedEmployee: ISelectedEmployee;
     selectedProposal: IProposalViewModel;
     selectedProject: IOrganizationProject;
+    selectedTeam:IOrganizationTeam;
     systemLanguages: ILanguage[];
     featureToggles: IFeatureToggle[];
     featureOrganizations: IFeatureOrganization[];
@@ -150,6 +152,7 @@ export class Store
     );
     selectedEmployee$ = this.appQuery.select((state) => state.selectedEmployee);
     selectedProject$ = this.appQuery.select((state) => state.selectedProject);
+    selectedTeam$ = this.appQuery.select((state) => state.selectedTeam);
     userRolePermissions$ = this.appQuery.select(
         (state) => state.userRolePermissions
     );
@@ -243,6 +246,13 @@ export class Store
     {
         this.appStore.update({
             selectedProject: project
+        });
+    }
+
+    set selectedTeam(team: IOrganizationTeam)
+    {
+        this.appStore.update({
+            selectedTeam: team
         });
     }
 

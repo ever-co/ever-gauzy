@@ -4,7 +4,7 @@ import { RouterModule } from 'nest-router';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { CandidateController } from './candidate.controller';
 import { CandidateService } from './candidate.service';
-import { EmailModule } from './../email/email.module';
+import { EmailSendModule } from './../email-send/email-send.module';
 import { AuthModule } from './../auth/auth.module';
 import { Candidate } from './candidate.entity';
 import { UserOrganizationModule } from '../user-organization/user-organization.module';
@@ -20,7 +20,7 @@ import { RoleModule } from './../role/role.module';
 			{ path: '/candidate', module: CandidateModule }
 		]),
 		TypeOrmModule.forFeature([Candidate]),
-		EmailModule,
+		EmailSendModule,
 		CqrsModule,
 		UserOrganizationModule,
 		TenantModule,
@@ -36,4 +36,4 @@ import { RoleModule } from './../role/role.module';
 	],
 	exports: [TypeOrmModule, CandidateService]
 })
-export class CandidateModule {}
+export class CandidateModule { }

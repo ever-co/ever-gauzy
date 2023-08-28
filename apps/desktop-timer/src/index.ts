@@ -6,7 +6,7 @@ console.log = log.log;
 Object.assign(console, log.functions);
 
 import * as path from 'path';
-import { app, dialog, BrowserWindow, ipcMain, shell, Menu } from 'electron';
+import { app, dialog, BrowserWindow, ipcMain, shell, Menu, MenuItemConstructorOptions } from 'electron';
 import { environment } from './environments/environment';
 import * as Url from 'url';
 import * as Sentry from '@sentry/electron';
@@ -72,7 +72,9 @@ import {
 	removeTimerListener,
 	ProviderFactory,
 	DesktopDialog,
-	DialogStopTimerExitConfirmation
+	DialogStopTimerExitConfirmation,
+	TranslateService,
+	TranslateLoader
 } from '@gauzy/desktop-libs';
 import {
 	createSetupWindow,
@@ -158,6 +160,8 @@ if (!gotTheLock) {
 	});
 }
 
+/* Load translations */
+TranslateLoader.load(__dirname + '/assets/i18n/');
 /* Setting the app user model id for the app. */
 if (process.platform === 'win32') {
 	app.setAppUserModelId('com.ever.gauzydesktoptimer');
@@ -236,6 +240,33 @@ async function startServer(value, restart = false) {
 		gauzyWindow
 	);
 
+	TranslateService.onLanguageChange(() => {
+		new AppMenu(
+			timeTrackerWindow,
+			settingsWindow,
+			updaterWindow,
+			knex,
+			pathWindow,
+			null,
+			false
+		);
+
+		if (tray) {
+			tray.destroy();
+		}
+		tray = new TrayIcon(
+			setupWindow,
+			knex,
+			timeTrackerWindow,
+			auth,
+			settingsWindow,
+			{ ...environment },
+			pathWindow,
+			path.join(__dirname, 'assets', 'icons', 'icon.png'),
+			gauzyWindow
+		);
+	})
+
 	/* ping server before launch the ui */
 	ipcMain.on('app_is_init', () => {
 		if (!isAlreadyRun && value && !restart) {
@@ -289,20 +320,18 @@ app.on('ready', async () => {
 	} catch (error) {
 		console.log('ERROR', error);
 	}
-	Menu.setApplicationMenu(
-		Menu.buildFromTemplate([
-			{
-				label: app.getName(),
-				submenu: [
-					{ role: 'about', label: 'About' },
-					{ type: 'separator' },
-					{ type: 'separator' },
-					{ role: 'quit', label: 'Exit' }
-				]
-			}
-		])
-	);
-
+	const menu: MenuItemConstructorOptions[] = [
+		{
+			label: app.getName(),
+			submenu: [
+				{ role: 'about', label: TranslateService.instant('MENU.ABOUT') },
+				{ type: 'separator' },
+				{ type: 'separator' },
+				{ role: 'quit', label: TranslateService.instant('BUTTONS.EXIT') }
+			]
+		}
+	];
+	Menu.setApplicationMenu(Menu.buildFromTemplate(menu));
 	timeTrackerWindow = await createTimeTrackerWindow(timeTrackerWindow, pathWindow.timeTrackerUi);
 	settingsWindow = await createSettingsWindow(settingsWindow, pathWindow.timeTrackerUi);
 	updaterWindow = await createUpdaterWindow(updaterWindow, pathWindow.timeTrackerUi);
@@ -475,10 +504,10 @@ ipcMain.on('check_database_connection', async (event, arg) => {
 			status: true,
 			message:
 				provider === 'postgres'
-					? 'Connection to PostgresSQL DB Succeeds'
+					? TranslateService.instant('TIMER_TRACKER.DIALOG.CONNECTION_DRIVER', { driver: 'PostgresSQL' })
 					: provider === 'mysql'
-					? 'Connection to MySQL DB Succeeds'
-					: 'Connection to SQLITE DB Succeeds'
+						? TranslateService.instant('TIMER_TRACKER.DIALOG.CONNECTION_DRIVER', { driver: 'MySQL' })
+						: TranslateService.instant('TIMER_TRACKER.DIALOG.CONNECTION_DRIVER', { driver: 'SQLite' })
 		});
 	} catch (error) {
 		event.sender.send('database_status', {
@@ -524,12 +553,10 @@ ipcMain.handle('PREFERRED_LANGUAGE', (event, arg) => {
 	const setting = store.get('appSetting');
 	if (arg) {
 		if (!setting) LocalStore.setDefaultApplicationSetting();
-		LocalStore.updateApplicationSetting({
-			preferredLanguage: arg,
-		});
+		TranslateService.preferredLanguage = arg;
 		settingsWindow?.webContents?.send('preferred_language_change', arg);
 	}
-	return setting?.preferredLanguage;
+	return TranslateService.preferredLanguage;
 });
 
 app.on('before-quit', async (e) => {
@@ -540,7 +567,7 @@ app.on('before-quit', async (e) => {
 		const exitConfirmationDialog = new DialogStopTimerExitConfirmation(
 			new DesktopDialog(
 				'Gauzy Desktop Timer',
-				'Are you sure you want to exit?',
+				TranslateService.instant('TIMER_TRACKER.DIALOG.EXIT'),
 				timeTrackerWindow
 			)
 		);

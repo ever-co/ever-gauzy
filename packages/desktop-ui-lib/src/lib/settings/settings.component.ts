@@ -15,7 +15,7 @@ import { BehaviorSubject, Observable, filter, tap, firstValueFrom, from } from '
 import { AboutComponent } from '../dialogs/about/about.component';
 import { SetupService } from '../setup/setup.service';
 import * as moment from 'moment';
-import { ToastrNotificationService } from '../services';
+import { TimeZoneManager, ToastrNotificationService, ZoneEnum } from '../services';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { AuthStrategy } from '../auth';
 import { LanguagesEnum } from 'packages/contracts/dist';
@@ -375,7 +375,9 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 		serverUrl: null,
 		awPort: null,
 		awHost: null,
-		port: 3000
+		port: 3000,
+		portUi: 4200,
+		host: '0.0.0.0'
 	};
 	version = '0.0.0';
 	message = {
@@ -405,6 +407,8 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 	muted: boolean;
 
 	delayOptions: number[] = [0.5, 1, 3, 24];
+	zones = TimeZoneManager.zones;
+	selectedZone: ZoneEnum = ZoneEnum.LOCAL;
 
 	private _loading$: BehaviorSubject<boolean>;
 	private _automaticUpdate$: BehaviorSubject<boolean>;
@@ -427,6 +431,7 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 	private _restartDisable$: BehaviorSubject<boolean>;
 	private _isHidden$: BehaviorSubject<boolean>;
 	private _simpleScreenshotNotification$: BehaviorSubject<boolean>;
+	private _timeZoneManager = TimeZoneManager;
 
 	constructor(
 		private electronService: ElectronService,
@@ -514,6 +519,8 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 				this.checkDatabaseConnectivity();
 				this.authSetting = auth;
 				this.mappingAdditionalSetting(additionalSetting || null);
+				this.selectedZone = setting?.zone || ZoneEnum.LOCAL;
+				this._timeZoneManager.changeZone(this.selectedZone);
 				if (!this.isServer && !this.config?.isLocalServer) {
 					await this.checkHostConnectivity();
 				} else {
@@ -571,7 +578,7 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 					text: 'TIMER_TRACKER.SETTINGS.MESSAGES.UPDATE_NOT_AVAILABLE',
 					status: 'basic'
 				};
-				this.logContents = this.message.text;
+				this.logContents = this._translateService.instant(this.message.text);
 				this.scrollToBottom();
 				this._loading$.next(false);
 			})
@@ -584,7 +591,7 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 					text: 'TIMER_TRACKER.SETTINGS.MESSAGES.UPDATE_ERROR',
 					status: 'danger'
 				};
-				this.logContents = this.message.text;
+				this.logContents = this._translateService.instant(this.message.text);
 				this.logContents = `error message: ${arg}`;
 				this.scrollToBottom();
 				this._loading$.next(false);
@@ -599,7 +606,7 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 					text: 'TIMER_TRACKER.SETTINGS.MESSAGES.UPDATE_AVAILABLE',
 					status: 'primary'
 				};
-				this.logContents = this.message.text;
+				this.logContents = this._translateService.instant(this.message.text);
 				this.scrollToBottom();
 			})
 		);
@@ -611,7 +618,7 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 					text: 'TIMER_TRACKER.SETTINGS.MESSAGES.UPDATE_DOWNLOAD_COMPLETED',
 					status: 'success'
 				};
-				this.logContents = this.message.text;
+				this.logContents = this._translateService.instant(this.message.text);
 				this.scrollToBottom();
 				this.showProgressBar = false;
 				this.downloadFinish = true;
@@ -629,9 +636,14 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 					status: 'warning'
 				};
 				this.progressDownload = Math.floor(Number(arg.percent));
-				this.logContents = `Downloading update ${Math.floor(arg.transferred / 1000000)} MB of ${Math.floor(
-					arg.total / 1000000
-				)} MB  ->> ${Math.floor(arg.bytesPerSecond / 1000)} KB/s`;
+				this.logContents = this._translateService.instant(
+					'TIMER_TRACKER.SETTINGS.MESSAGES.DOWNLOADING_UPDATE',
+					{
+						current: Math.floor(arg.transferred / 1000000),
+						total: Math.floor(arg.total / 1000000),
+						bandwidth: Math.floor(arg.bytesPerSecond / 1000),
+					}
+				);
 				this.scrollToBottom();
 			})
 		);
@@ -770,6 +782,12 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 	selectPeriod(value) {
 		this.selectedPeriod = value;
 		this.updateSetting({ updatePeriod: value }, 'timer');
+	}
+
+	selectZone(value: ZoneEnum) {
+		this._timeZoneManager.changeZone(value);
+		this.updateSetting(value, 'zone');
+		this.electronService.ipcRenderer.send('refresh-timer');
 	}
 
 	toggleNotificationChange(value) {
@@ -1009,11 +1027,11 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 		let message = '';
 		switch (arg.type) {
 			case 'update_config':
-				message = 'TIMER_TRACKER.SETTINGS.SERVER_CONFIG_UPDATED';
+				message = 'TIMER_TRACKER.SETTINGS.MESSAGES.SERVER_CONFIG_UPDATED';
 				break;
 			case 'start_server':
 				this._restartDisable$.next(false);
-				message = 'TIMER_TRACKER.SETTINGS.SERVER_RESTARTED';
+				message = 'TIMER_TRACKER.SETTINGS.MESSAGES.SERVER_RESTARTED';
 				break;
 			default:
 				break;

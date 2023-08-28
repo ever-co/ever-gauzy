@@ -8,6 +8,6 @@ export class InvoiceSendEmailCommand implements ICommand {
 		public readonly languageCode: LanguagesEnum,
 		public readonly email: string,
 		public readonly params: any,
-		public readonly originUrl: string
-	) {}
+		public readonly origin: string
+	) { }
 }

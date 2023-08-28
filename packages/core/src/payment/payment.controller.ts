@@ -10,10 +10,10 @@ import {
 	Param,
 	Body,
 	Post,
-	Req,
 	ValidationPipe,
 	UsePipes,
-	BadRequestException
+	BadRequestException,
+	Headers
 } from '@nestjs/common';
 import { I18nLang } from 'nestjs-i18n';
 import {
@@ -115,13 +115,16 @@ export class PaymentController extends CrudController<Payment> {
 	@HttpCode(HttpStatus.ACCEPTED)
 	@Post('receipt')
 	async sendReceipt(
-		@Req() request,
-		@I18nLang() languageCode: LanguagesEnum
+		@Body() body,
+		@I18nLang() languageCode: LanguagesEnum,
+		@Headers('origin') origin: string
 	): Promise<any> {
-		return this.paymentService.sendReceipt(
+		const { invoice, payment } = body.params;
+		return await this.paymentService.sendReceipt(
 			languageCode,
-			request.body.params,
-			request.get('Origin')
+			invoice,
+			payment,
+			origin
 		);
 	}
 
@@ -164,7 +167,7 @@ export class PaymentController extends CrudController<Payment> {
 	 */
 	@HttpCode(HttpStatus.CREATED)
 	@Post()
-	@UsePipes(new ValidationPipe({ transform : true, whitelist: true }))
+	@UsePipes(new ValidationPipe({ transform: true, whitelist: true }))
 	async create(
 		@Body() entity: CreatePaymentDTO
 	): Promise<IPayment> {
@@ -180,7 +183,7 @@ export class PaymentController extends CrudController<Payment> {
 	 */
 	@HttpCode(HttpStatus.ACCEPTED)
 	@Put(':id')
-	@UsePipes(new ValidationPipe({ transform : true, whitelist: true }))
+	@UsePipes(new ValidationPipe({ transform: true, whitelist: true }))
 	async update(
 		@Param('id', UUIDValidationPipe) id: string,
 		@Body() entity: UpdatePaymentDTO

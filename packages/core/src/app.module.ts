@@ -65,7 +65,7 @@ import { ProposalModule } from './proposal/proposal.module';
 import { CountryModule } from './country/country.module';
 import { CurrencyModule } from './currency/currency.module';
 import { InviteModule } from './invite/invite.module';
-import { EmailModule } from './email/email.module';
+import { EmailHistoryModule } from './email-history/email-history.module';
 import { TimeOffPolicyModule } from './time-off-policy/time-off-policy.module';
 import { RolePermissionModule } from './role-permission/role-permission.module';
 import { TenantModule } from './tenant/tenant.module';
@@ -85,7 +85,7 @@ import { TimeTrackingModule } from './time-tracking/time-tracking.module';
 import { ExpenseCategoriesModule } from './expense-categories/expense-categories.module';
 import { UpworkModule } from './upwork/upwork.module';
 import { HubstaffModule } from './hubstaff/hubstaff.module';
-import { GauzyAIIntegrationModule } from './integration/gauzy-ai/integration-ai.module';
+import { IntegrationAIModule } from './integration/gauzy-ai/integration-ai.module';
 import { CandidateModule } from './candidate/candidate.module';
 import { ProductCategoryModule } from './product-category/product-category.module';
 import { ProductTypeModule } from './product-type/product-type.module';
@@ -309,7 +309,7 @@ if (environment.sentry && environment.sentry.dsn) {
 		RequestApprovalEmployeeModule,
 		RequestApprovalTeamModule,
 		ProposalModule,
-		EmailModule,
+		EmailHistoryModule,
 		EmailTemplateModule,
 		CountryModule,
 		CurrencyModule,
@@ -355,7 +355,7 @@ if (environment.sentry && environment.sentry.dsn) {
 		ReportModule,
 		UpworkModule,
 		HubstaffModule,
-		GauzyAIIntegrationModule,
+		IntegrationAIModule,
 		ExpenseCategoriesModule,
 		ProductCategoryModule,
 		ProductTypeModule,
@@ -385,7 +385,7 @@ if (environment.sentry && environment.sentry.dsn) {
 		IssueTypeModule,
 		TaskLinkedIssueModule,
 		OrganizationTaskSettingModule,
-		TaskEstimationModule,
+		TaskEstimationModule
 	],
 	controllers: [AppController],
 	providers: [

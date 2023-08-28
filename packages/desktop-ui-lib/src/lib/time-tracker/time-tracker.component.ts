@@ -50,7 +50,10 @@ import {
 	Store,
 	ErrorHandlerService,
 	NativeNotificationService,
-	ToastrNotificationService
+	ToastrNotificationService,
+	TimeTrackerDateManager,
+	ZoneEnum,
+	TimeZoneManager
 } from '../services';
 import { TimeTrackerStatusService } from './time-tracker-status/time-tracker-status.service';
 import { IRemoteTimer } from './time-tracker-status/interfaces';
@@ -183,6 +186,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 	private _isRestartAndUpdate = false;
 	private _isOpenDialog = false;
 	private _dialog: NbDialogRef<any> = null;
+	private _timeZoneManager = TimeZoneManager
 
 	public hasTaskPermission$: BehaviorSubject<boolean> = new BehaviorSubject(false);
 	private get _hasTaskPermission(): boolean {
@@ -394,6 +398,15 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 				untilDestroyed(this)
 			)
 			.subscribe();
+		this.userOrganization$
+			.pipe(
+				tap(
+					(organization: IOrganization) =>
+						(TimeTrackerDateManager.organization = organization)
+				),
+				untilDestroyed(this)
+			)
+			.subscribe();
 		this._loadSmartTableSettings();
 	}
 
@@ -420,6 +433,9 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 				this.note = arg.note;
 				this._aw$.next(arg.aw && arg.aw.isAw ? arg.aw.isAw : false);
 				this.appSetting$.next(arg.settings);
+				this._timeZoneManager.changeZone(
+					this.appSetting?.zone || ZoneEnum.LOCAL
+				);
 				const parallelizedTasks = [
 					this.getClient(arg),
 					this.getProjects(arg),
@@ -1672,27 +1688,14 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 			this.electronService.ipcRenderer.send('create-synced-interval', {
 				...paramActivity,
 				remoteId: timeSlotId,
-				b64Imgs: await Promise.all(
-					screenshotImg.map(async (img) => {
-						await this.localImage(this.buffToB64(img));
-						return {
-							b64img: this.buffToB64(img),
-							fileName: this.fileNameFormat(img)
-						};
-					})
-				)
+				b64Imgs: []
 			});
 		} catch (error) {
 			console.log('error send to api timeslot', error);
 			this.electronService.ipcRenderer.send('failed_save_time_slot', {
 				params: JSON.stringify({
 					...paramActivity,
-					b64Imgs: screenshotImg.map((img) => {
-						return {
-							b64img: this.buffToB64(img),
-							fileName: this.fileNameFormat(img)
-						};
-					})
+					b64Imgs: []
 				}),
 				message: error.message
 			});
@@ -1913,7 +1916,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 				})
 			);
 			if (screenshots.length > 0) {
-				screenshots = _.sortBy(screenshots, 'recordedAt').reverse();
+				screenshots = _.sortBy(screenshots, 'recordedAt');
 				const [lastCaptureScreen] = screenshots;
 				console.log('Last Capture Screen:', lastCaptureScreen);
 				this.lastScreenCapture$.next(lastCaptureScreen);

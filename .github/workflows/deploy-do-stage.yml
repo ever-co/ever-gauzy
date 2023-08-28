@@ -11,8 +11,7 @@ jobs:
     deploy-stage:
         runs-on: ubuntu-22.04
 
-        # Stage using same Secrets for now as Production in Github Secrets Environments
-        environment: prod
+        environment: stage
 
         steps:
             - name: Checkout

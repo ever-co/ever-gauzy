@@ -140,7 +140,18 @@
 		"SAVE_RESTART": "Save & Restart",
 		"FILES": "Files",
 		"START": "Start",
-		"STOP": "Stop"
+		"STOP": "Stop",
+		"ACKNOWLEDGE": "Acknowledge",
+		"RESTART": "Restart",
+		"LATER": "Later",
+		"UPGRADE": "Upgrade",
+		"SKIP_NOW": "Skip Now",
+		"EXIT": "Exit",
+		"LOGOUT": "Logout",
+		"COPY": "Copy",
+		"CUT": "Cut",
+		"PASTE": "Paste",
+		"FORWARD_PORTS": "Forward Ports"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {
@@ -258,7 +269,10 @@
 			"RU": "Русский (Россия)",
 			"HE": "עברית ישראל",
 			"FR": "Français (France)",
-			"ES": "Español (España)"
+			"ES": "Español (España)",
+			"ZH": "中文 (中国)",
+			"DE": "Deutsch (Deutschland)",
+			"PT": "Português (Portugal)"
 		},
 		"CURRENT_VALUE": "Current value",
 		"TARGET_VALUE": "Target value",
@@ -591,6 +605,7 @@
 			"SELECT_EXPENSE": "Select Expense",
 			"ADD_TITLE": "Add title",
 			"ALL_PROJECTS": "All Projects",
+			"ALL_TEAMS": "All Teams",
 			"UPWORK_API_KEY": "Upwork API key",
 			"UPWORK_SECRET": "Upwork Secret",
 			"GAUZY_API_KEY": "Gauzy AI Key",
@@ -612,6 +627,7 @@
 			"RECEIPT_TEMPLATE": "Receipt Template",
 			"INVITATION_EXPIRATION": "Invitation Expiration",
 			"ADD_PROJECT": "Add project",
+			"ADD_TEAM": "Add team",
 			"ADD_EMPLOYEE": "Add employee",
 			"ADD_ORGANIZATION": "Add organization",
 			"DRAG_DROP_FILE": "Drag and Drop the file here",
@@ -675,7 +691,7 @@
 		},
 		"ERROR": {
 			"PROJECT_NAME": "Project name is required.",
-			"PROJECT_URL":"Project url is invalid.",
+			"PROJECT_URL": "Project url is invalid.",
 			"OPEN_SOURCE_PROJECT_URL": "Open source project url is invalid."
 		}
 	},
@@ -1040,7 +1056,10 @@
 		"FEATURES": "Features",
 		"ACCOUNTING_TEMPLATES": "Accounting Templates",
 		"FOCUS": "Focus",
-		"APPLICATIONS": "Applications"
+		"APPLICATIONS": "Applications",
+		"OPEN_GA_BROWSER": "Open Gauzy In Browser",
+		"START_SERVER": "Start Server",
+		"STOP_SERVER": "Stop Server"
 	},
 	"SETTINGS_MENU": {
 		"THEMES": "Themes",
@@ -1059,6 +1078,9 @@
 		"BULGARIAN": "Bulgarian",
 		"HEBREW": "Hebrew",
 		"RUSSIAN": "Russian",
+		"CHINESE": "Chinese",
+		"GERMAN": "German",
+		"PORTUGUESE": "Portuguese",
 		"PREFERRED_LAYOUT": "Layout",
 		"PREFERRED_LAYOUT_TOOLTIP": "This will only set the default layout and not change the layout on each page if you have already changed it once.",
 		"RESET_LAYOUT": "Reset Layout",
@@ -1891,32 +1913,32 @@
 				"DELETE_IDLE_TIME_INFO": "Enable - the system will delete idle time. Disable - the system will not delete idle time",
 				"ALLOW_SCREEN_CAPTURE": "Allow Screen Capture",
 				"ALLOW_SCREEN_CAPTURE_INFO": "Enable - the timer will take screenshot. Disable - the timer will run without to take screenshot for all organization members",
-				"TASK_SETTING":"Task Settings",
-				"TASK_PRIVACY":"Task Privacy",
-				"MULTIPLE_ASSIGNEE":"Multiple Assignees",
-				"MANUAL_TIME":"Manual Time",
-				"GROUP_ESTIMATION":"Group Estimation",
-				"ESTIMATION_IN_HOUR":"Estimation in hour",
-				"ESTIMATION_IN_STORY_POINT":"Estimation in story point",
-				"PROOF_OF_COMPLETION":"Proof of Completion",
-                "PROOF_OF_COMPLETION_TYPE": "Proof of Completion Type",
-                "PROOF_OF_COMPLETION_TYPE_DROPDOWN": {
-                    "NONE": "None",
-                    "PRIVATE": "Private",
-                    "PUBLIC": "Public"
-                },
-				"LINKED_ISSUE":"Linked Issue",
-				"COMMENT":"Comment",
-				"HISTORY":"History",
-				"ACCEPTANCE_CRITERIA":"Acceptance Criteria",
-				"DRAFT_ISSUE":"Draft Issues",
-                "NOTIFY_TASK_LEFT": "Notify Task Left",
-                "NOTIFY_TASK_LEFT_PERIOD": "Notify Task Period (in Days)",
-				"AUTO_CLOSE_ISSUE":"Auto Close Issue",
-                "AUTO_CLOSE_ISSUE_PERIOD": "Auto Close Issue Period (in Days)",
-                "AUTO_ARCHIVE_ISSUE": "Auto Archive Issue",
-                "AUTO_ARCHIVE_ISSUE_PERIOD": "Auto Archive Issue Period (in Days)",
-                "AUTO_STATUS": "Auto Status"
+				"TASK_SETTING": "Task Settings",
+				"TASK_PRIVACY": "Task Privacy",
+				"MULTIPLE_ASSIGNEE": "Multiple Assignees",
+				"MANUAL_TIME": "Manual Time",
+				"GROUP_ESTIMATION": "Group Estimation",
+				"ESTIMATION_IN_HOUR": "Estimation in hour",
+				"ESTIMATION_IN_STORY_POINT": "Estimation in story point",
+				"PROOF_OF_COMPLETION": "Proof of Completion",
+				"PROOF_OF_COMPLETION_TYPE": "Proof of Completion Type",
+				"PROOF_OF_COMPLETION_TYPE_DROPDOWN": {
+					"NONE": "None",
+					"PRIVATE": "Private",
+					"PUBLIC": "Public"
+				},
+				"LINKED_ISSUE": "Linked Issue",
+				"COMMENT": "Comment",
+				"HISTORY": "History",
+				"ACCEPTANCE_CRITERIA": "Acceptance Criteria",
+				"DRAFT_ISSUE": "Draft Issues",
+				"NOTIFY_TASK_LEFT": "Notify Task Left",
+				"NOTIFY_TASK_LEFT_PERIOD": "Notify Task Period (in Days)",
+				"AUTO_CLOSE_ISSUE": "Auto Close Issue",
+				"AUTO_CLOSE_ISSUE_PERIOD": "Auto Close Issue Period (in Days)",
+				"AUTO_ARCHIVE_ISSUE": "Auto Archive Issue",
+				"AUTO_ARCHIVE_ISSUE_PERIOD": "Auto Archive Issue Period (in Days)",
+				"AUTO_STATUS": "Auto Status"
 			},
 			"TEAMS_PAGE": {
 				"MANAGERS": "Managers",
@@ -2050,7 +2072,7 @@
 			"ORG_TASK_VIEW": "View Tasks",
 			"ORG_TASK_EDIT": "Edit Tasks",
 			"ORG_TASK_DELETE": "Delete Tasks",
-			"ORG_TASK_SETTING":"Task Settings"
+			"ORG_TASK_SETTING": "Task Settings"
 		},
 		"BILLING": "Billing",
 		"BUDGET": "Budget",
@@ -2972,7 +2994,8 @@
 		"SELECT_EMPLOYEE": "Select Employee",
 		"SELECT_A_DATE": "Select A date",
 		"SELECT_AN_ORGANIZATION": "Select An Organization",
-		"SELECT_PROJECT": "Select Project"
+		"SELECT_PROJECT": "Select Project",
+		"SELECT_TEAM": "Select Team"
 	},
 	"HEADER_TITLE": {
 		"FOR": "for",
@@ -3413,7 +3436,7 @@
 			"ORGANIZATION_LOCATION_UPDATED": "'{{ name }}' organization location was changed",
 			"ORGANIZATION_INFO_UPDATED": "'{{ name }}' organization main info was changed",
 			"ORGANIZATION_SETTINGS_UPDATED": "'{{ name }}' organization settings was changed",
-            "ORGANIZATION_TASK_SETTINGS_UPDATE_ERROR": "Some error occurred while trying to updating organization task setting.",
+			"ORGANIZATION_TASK_SETTINGS_UPDATE_ERROR": "Some error occurred while trying to updating organization task setting.",
 			"SETTINGS_SAVED": "Settings saved successfully",
 			"KEY_RESULTS_CREATED": "Key Results Created",
 			"INVITE_EMAIL_DELETED": "{{ name }} has been deleted.",
@@ -3714,7 +3737,8 @@
 			"DB_NAME": "Database Name",
 			"DB_PORT": "Database Port",
 			"USER": "User",
-			"PASSWORD": "Password"
+			"PASSWORD": "Password",
+			"UI_HOSTNAME": "UI Hostname / IP Address"
 		},
 		"SETTINGS": {
 			"SCREEN_CAPTURE": "Screen Capture",
@@ -3792,8 +3816,14 @@
 				"UPDATE_DOWNLOADING": "Update Downloading",
 				"SERVER_CONFIG_UPDATED": "Server configuration updated, please wait till server restarts",
 				"SERVER_RESTARTED": "Server Restarted Successfully",
-				"CONNECTION_SUCCEEDS": "Connection to Server {{ url }} Succeeds"
-			}
+				"CONNECTION_SUCCEEDS": "Connection to Server {{ url }} Succeeds",
+				"DOWNLOADING_UPDATE": "Downloading update {{ current }} MB of {{ total }} MB ->> {{ bandwidth }} KB/s"
+			},
+			"TIMEZONE": "Time Zone",
+			"TIMEZONE_LABEL": "Choosing 'Local' displays time in your local time zone, while selecting 'UTC' shows time in the universal UTC timezone used by billing and other systems.",
+			"TIMEZONE_PLACEHOLDER": "Select either 'Local' or 'UTC'.",
+			"TIMEZONE_LOCAL": "Local",
+			"TIMEZONE_UTC": "UTC"
 		},
 		"WEEKLY_LIMIT_EXCEEDED": "Weekly limit exceeded",
 		"OF_HRS": "Of {{ limit }} hrs",
@@ -3822,7 +3852,20 @@
 			"WARNING": "Warning",
 			"REMOVE_SCREENSHOT": "Do you really want to remove this screenshot and activities log?",
 			"CHANGE_CLIENT": "Are you sure you want to change Client?",
-			"RESUME_TIMER": "Your timer was running when PC was locked. Resume timer?"
+			"RESUME_TIMER": "Your timer was running when PC was locked. Resume timer?",
+			"EXIT": "Are you sure you want to exit?",
+			"STOPPED_DU_INACTIVITY": "Timer was stopped due to inactivity period exceeding {{ inactivity }}. Please make sure you start timer again when continue working.",
+			"EXIT_CONFIRM": "Click Exit to Stop the Timer and Exit from the application.",
+			"LOGOUT_CONFIRM": "Click Logout to Stop the Timer and Logout from the application.",
+			"SELECT_UPDATE_FILES": "Please select folder with update files.",
+			"UPDATE_READY": "Update Ready to Download",
+			"NEW_VERSION_AVAILABLE": "A new version v{{ next }} is available. Upgrade the application by downloading the updates for v{{ current }}",
+			"READY_INSTALL": "Update Ready to Install",
+			"HAS_BEEN_DOWNLOADED": "A new version v{{ version }} has been downloaded. Restart the application to apply the updates.",
+			"CONNECTION_DRIVER": "Connection to {{ driver }} DB Succeeds",
+			"STILL_WORKING": "Are you still working?",
+			"INACTIVITY_HANDLER": "Inactivity Handler",
+			"WANT_LOGOUT": "Are you sure you want to logout?"
 		},
 		"NO_LIMIT": "∞ No Limit",
 		"TASK": "Task",
@@ -3837,6 +3880,26 @@
 			"PROJECT_ADDED": "Project added successfully",
 			"TASK_ADDED": "Task added successfully",
 			"CLIENT_ADDED": "Client added successfully"
+		},
+		"NATIVE_NOTIFICATION": {
+			"STOPPED_DU_INACTIVITY": "Tracker was stopped due to inactivity!",
+			"SCREENSHOT_TAKEN": "Screenshot taken",
+			"SCREENSHOT_REMOVED": "Successfully remove last screenshot and activities",
+			"NEW_VERSION_AVAILABLE": "New update for {{ name }} (version {{ version }}) is available"
+		},
+		"MENU": {
+			"ZOOM_IN": "Zoom In",
+			"ZOOM_OUT": "Zoom Out",
+			"SETTING_DEV_MODE": "Setting Developer Mode",
+			"SERVER_DEV_MODE": "Server Dashboard Developer Mode",
+			"TIMER_DEV_MODE": "Time Tracker Developer Mode",
+			"NOW_TRACKING": "Now tracking time - {{ time }}",
+			"START_TRACKING": "Start Tracking Time",
+			"STOP_TRACKING": "Stop Tracking Time",
+			"OPEN_TIMER": "Open Time Tracker",
+			"WINDOW": "Window",
+			"HELP": "Help",
+			"LEARN_MORE": "Learn More"
 		}
 	},
 	"SERVER": "Server",
@@ -4101,7 +4164,8 @@
 			"interviewer-interview-schedule": "Interviewer Schedule",
 			"employee-join": "Employee Join",
 			"email-reset": "Email Reset",
-			"organization-team-join-request": "Organization team join request"
+			"organization-team-join-request": "Organization team join request",
+			"payment-receipt": "Payment Receipt"
 		},
 		"HTML_EDITOR": "HTML Editor"
 	},
