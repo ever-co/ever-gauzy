@@ -4,7 +4,7 @@
 
 import { HttpException, HttpStatus } from '@nestjs/common';
 import * as cls from 'cls-hooked';
-import { Request, Response, NextFunction } from 'express';
+import { Request, Response } from 'express';
 import {
 	IUser,
 	PermissionsEnum,
