@@ -265,10 +265,13 @@
 		"REQUEST_DATE": "Дата запроса",
 		"REGION": {
 			"BG": "Български (България)",
-			"EN": "Русский (Соединенные Штаты)",
+			"EN": "English (United States)",
 			"RU": "Русский (Россия)",
 			"HE": "עברית ישראל",
-			"ZH": "中文 (中国)"
+			"FR": "Français (France)",
+			"ES": "Español (España)",
+			"ZH": "中文 (中国)",
+			"DE": "Deutsch (Deutschland)"
 		},
 		"CURRENT_VALUE": "Текущее значение",
 		"TARGET_VALUE": "Целевое значение",
@@ -676,7 +679,7 @@
 		},
 		"ERROR": {
 			"PROJECT_NAME": "Необходимо название проекта.",
-			"PROJECT_URL":"Недопустимый URL проекта.",
+			"PROJECT_URL": "Недопустимый URL проекта.",
 			"OPEN_SOURCE_PROJECT_URL": "Недопустимый URL-адрес проекта с открытым исходным кодом."
 		}
 	},
@@ -1063,6 +1066,7 @@
 		"HEBREW": "Иврит",
 		"RUSSIAN": "Русский",
 		"CHINESE": "китайский",
+		"GERMAN": "Немецкий",
 		"PREFERRED_LAYOUT": "Макет",
 		"PREFERRED_LAYOUT_TOOLTIP": "Это будет устанавливать макет по умолчанию и не изменять макет на каждой странице, если вы уже изменили его один раз.",
 		"RESET_LAYOUT": "Сбросить макет",
@@ -1881,26 +1885,26 @@
 				"INACTIVITY_TIME_LIMIT_INFO": "Таймаут отслеживания бездействия (то есть, сколько секунд бездействия разрешено)",
 				"ACTIVITY_PROOF_DURATION": "Длительность проверки активности",
 				"ACTIVITY_PROOF_DURATION_INFO": "Длительность диалогового окна для проверки активности, оно отображает количество секунд, заданных для доказательства активности",
-                "ALLOW_TRACK_INACTIVITY": "Разрешить отслеживать бездействие",
-                "PROOF_OF_COMPLETION": "Доказательство завершения",
-                "PROOF_OF_COMPLETION_TYPE": "Тип подтверждения завершения",
-                "PROOF_OF_COMPLETION_TYPE_DROPDOWN": {
-                    "NONE": "Никто",
-                    "PRIVATE": "Частный",
-                    "PUBLIC": "Общедоступный"
-                },
-                "LINKED_ISSUE": "Связанная проблема",
-                "COMMENT": "Комментарий",
-                "HISTORY": "«История»",
-                "ACCEPTANCE_CRITERIA": "Критерии приемлемости",
-                "DRAFT_ISSUE": "Черновики задач",
-                "NOTIFY_TASK_LEFT": "Уведомить об оставшейся задаче",
-                "NOTIFY_TASK_LEFT_PERIOD": "Период задачи уведомления (в днях)",
-                "AUTO_CLOSE_ISSUE": "Автоматическое закрытие задачи",
-                "AUTO_CLOSE_ISSUE_PERIOD": "Период автоматического закрытия задачи (в днях)",
-                "AUTO_ARCHIVE_ISSUE": "Проблема автоматического архивирования",
-                "AUTO_ARCHIVE_ISSUE_PERIOD": "Период выпуска автоархива (в днях)",
-                "AUTO_STATUS": "Автостатус"
+				"ALLOW_TRACK_INACTIVITY": "Разрешить отслеживать бездействие",
+				"PROOF_OF_COMPLETION": "Доказательство завершения",
+				"PROOF_OF_COMPLETION_TYPE": "Тип подтверждения завершения",
+				"PROOF_OF_COMPLETION_TYPE_DROPDOWN": {
+					"NONE": "Никто",
+					"PRIVATE": "Частный",
+					"PUBLIC": "Общедоступный"
+				},
+				"LINKED_ISSUE": "Связанная проблема",
+				"COMMENT": "Комментарий",
+				"HISTORY": "«История»",
+				"ACCEPTANCE_CRITERIA": "Критерии приемлемости",
+				"DRAFT_ISSUE": "Черновики задач",
+				"NOTIFY_TASK_LEFT": "Уведомить об оставшейся задаче",
+				"NOTIFY_TASK_LEFT_PERIOD": "Период задачи уведомления (в днях)",
+				"AUTO_CLOSE_ISSUE": "Автоматическое закрытие задачи",
+				"AUTO_CLOSE_ISSUE_PERIOD": "Период автоматического закрытия задачи (в днях)",
+				"AUTO_ARCHIVE_ISSUE": "Проблема автоматического архивирования",
+				"AUTO_ARCHIVE_ISSUE_PERIOD": "Период выпуска автоархива (в днях)",
+				"AUTO_STATUS": "Автостатус"
 			},
 			"TEAMS_PAGE": {
 				"MANAGERS": "Менеджеры",

@@ -270,7 +270,8 @@
 			"HE": "עברית ישראל",
 			"FR": "Français (France)",
 			"ES": "Español (España)",
-			"ZH": "中文 (中国)"
+			"ZH": "中文 (中国)",
+			"DE": "Deutsch (Deutschland)"
 		},
 		"CURRENT_VALUE": "Current value",
 		"TARGET_VALUE": "Target value",
@@ -689,7 +690,7 @@
 		},
 		"ERROR": {
 			"PROJECT_NAME": "Project name is required.",
-			"PROJECT_URL":"Project url is invalid.",
+			"PROJECT_URL": "Project url is invalid.",
 			"OPEN_SOURCE_PROJECT_URL": "Open source project url is invalid."
 		}
 	},
@@ -1077,6 +1078,7 @@
 		"HEBREW": "Hebrew",
 		"RUSSIAN": "Russian",
 		"CHINESE": "Chinese",
+		"GERMAN": "German",
 		"PREFERRED_LAYOUT": "Layout",
 		"PREFERRED_LAYOUT_TOOLTIP": "This will only set the default layout and not change the layout on each page if you have already changed it once.",
 		"RESET_LAYOUT": "Reset Layout",
@@ -1909,32 +1911,32 @@
 				"DELETE_IDLE_TIME_INFO": "Enable - the system will delete idle time. Disable - the system will not delete idle time",
 				"ALLOW_SCREEN_CAPTURE": "Allow Screen Capture",
 				"ALLOW_SCREEN_CAPTURE_INFO": "Enable - the timer will take screenshot. Disable - the timer will run without to take screenshot for all organization members",
-				"TASK_SETTING":"Task Settings",
-				"TASK_PRIVACY":"Task Privacy",
-				"MULTIPLE_ASSIGNEE":"Multiple Assignees",
-				"MANUAL_TIME":"Manual Time",
-				"GROUP_ESTIMATION":"Group Estimation",
-				"ESTIMATION_IN_HOUR":"Estimation in hour",
-				"ESTIMATION_IN_STORY_POINT":"Estimation in story point",
-				"PROOF_OF_COMPLETION":"Proof of Completion",
-                "PROOF_OF_COMPLETION_TYPE": "Proof of Completion Type",
-                "PROOF_OF_COMPLETION_TYPE_DROPDOWN": {
-                    "NONE": "None",
-                    "PRIVATE": "Private",
-                    "PUBLIC": "Public"
-                },
-				"LINKED_ISSUE":"Linked Issue",
-				"COMMENT":"Comment",
-				"HISTORY":"History",
-				"ACCEPTANCE_CRITERIA":"Acceptance Criteria",
-				"DRAFT_ISSUE":"Draft Issues",
-                "NOTIFY_TASK_LEFT": "Notify Task Left",
-                "NOTIFY_TASK_LEFT_PERIOD": "Notify Task Period (in Days)",
-				"AUTO_CLOSE_ISSUE":"Auto Close Issue",
-                "AUTO_CLOSE_ISSUE_PERIOD": "Auto Close Issue Period (in Days)",
-                "AUTO_ARCHIVE_ISSUE": "Auto Archive Issue",
-                "AUTO_ARCHIVE_ISSUE_PERIOD": "Auto Archive Issue Period (in Days)",
-                "AUTO_STATUS": "Auto Status"
+				"TASK_SETTING": "Task Settings",
+				"TASK_PRIVACY": "Task Privacy",
+				"MULTIPLE_ASSIGNEE": "Multiple Assignees",
+				"MANUAL_TIME": "Manual Time",
+				"GROUP_ESTIMATION": "Group Estimation",
+				"ESTIMATION_IN_HOUR": "Estimation in hour",
+				"ESTIMATION_IN_STORY_POINT": "Estimation in story point",
+				"PROOF_OF_COMPLETION": "Proof of Completion",
+				"PROOF_OF_COMPLETION_TYPE": "Proof of Completion Type",
+				"PROOF_OF_COMPLETION_TYPE_DROPDOWN": {
+					"NONE": "None",
+					"PRIVATE": "Private",
+					"PUBLIC": "Public"
+				},
+				"LINKED_ISSUE": "Linked Issue",
+				"COMMENT": "Comment",
+				"HISTORY": "History",
+				"ACCEPTANCE_CRITERIA": "Acceptance Criteria",
+				"DRAFT_ISSUE": "Draft Issues",
+				"NOTIFY_TASK_LEFT": "Notify Task Left",
+				"NOTIFY_TASK_LEFT_PERIOD": "Notify Task Period (in Days)",
+				"AUTO_CLOSE_ISSUE": "Auto Close Issue",
+				"AUTO_CLOSE_ISSUE_PERIOD": "Auto Close Issue Period (in Days)",
+				"AUTO_ARCHIVE_ISSUE": "Auto Archive Issue",
+				"AUTO_ARCHIVE_ISSUE_PERIOD": "Auto Archive Issue Period (in Days)",
+				"AUTO_STATUS": "Auto Status"
 			},
 			"TEAMS_PAGE": {
 				"MANAGERS": "Managers",
@@ -2068,7 +2070,7 @@
 			"ORG_TASK_VIEW": "View Tasks",
 			"ORG_TASK_EDIT": "Edit Tasks",
 			"ORG_TASK_DELETE": "Delete Tasks",
-			"ORG_TASK_SETTING":"Task Settings"
+			"ORG_TASK_SETTING": "Task Settings"
 		},
 		"BILLING": "Billing",
 		"BUDGET": "Budget",
@@ -3432,7 +3434,7 @@
 			"ORGANIZATION_LOCATION_UPDATED": "'{{ name }}' organization location was changed",
 			"ORGANIZATION_INFO_UPDATED": "'{{ name }}' organization main info was changed",
 			"ORGANIZATION_SETTINGS_UPDATED": "'{{ name }}' organization settings was changed",
-            "ORGANIZATION_TASK_SETTINGS_UPDATE_ERROR": "Some error occurred while trying to updating organization task setting.",
+			"ORGANIZATION_TASK_SETTINGS_UPDATE_ERROR": "Some error occurred while trying to updating organization task setting.",
 			"SETTINGS_SAVED": "Settings saved successfully",
 			"KEY_RESULTS_CREATED": "Key Results Created",
 			"INVITE_EMAIL_DELETED": "{{ name }} has been deleted.",
@@ -3883,7 +3885,7 @@
 			"SCREENSHOT_REMOVED": "Successfully remove last screenshot and activities",
 			"NEW_VERSION_AVAILABLE": "New update for {{ name }} (version {{ version }}) is available"
 		},
-		"MENU" : {
+		"MENU": {
 			"ZOOM_IN": "Zoom In",
 			"ZOOM_OUT": "Zoom Out",
 			"SETTING_DEV_MODE": "Setting Developer Mode",
