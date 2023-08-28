@@ -273,7 +273,8 @@
 			"ZH": "中文 (中国)",
 			"DE": "Deutsch (Deutschland)",
 			"PT": "Português (Portugal)",
-			"IT": "Italiano (Italia)"
+			"IT": "Italiano (Italia)",
+			"NL": "Nederlands (Nederland)"
 		},
 		"CURRENT_VALUE": "Текущее значение",
 		"TARGET_VALUE": "Целевое значение",
@@ -1071,6 +1072,7 @@
 		"GERMAN": "Немецкий",
 		"PORTUGUESE": "Португальский",
 		"ITALIAN": "Итальянский",
+		"DUTCH": "Голландский",
 		"PREFERRED_LAYOUT": "Макет",
 		"PREFERRED_LAYOUT_TOOLTIP": "Это будет устанавливать макет по умолчанию и не изменять макет на каждой странице, если вы уже изменили его один раз.",
 		"RESET_LAYOUT": "Сбросить макет",
