@@ -103,7 +103,11 @@ export interface IUserCodeInput {
 	code: number;
 }
 
-export interface IUserLoginInput extends IUserEmailInput, IUserPasswordInput { }
+export interface IUserMagicCodeInput {
+	magic_code?: string;
+}
+
+export interface IUserLoginInput extends IUserEmailInput, IUserPasswordInput, IUserMagicCodeInput { }
 
 export interface IAuthResponse {
 	user: IUser;

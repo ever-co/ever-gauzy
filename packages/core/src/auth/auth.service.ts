@@ -56,18 +56,25 @@ export class AuthService extends SocialAuthService {
 	 * @param password
 	 * @returns
 	 */
-	async login({ email, password }: IUserLoginInput): Promise<IAuthResponse | null> {
+	async login({ email, password, magic_code }: IUserLoginInput): Promise<IAuthResponse | null> {
 		try {
+			console.time('login');
+
+			let payload: JwtPayload | string;
+			if (magic_code) {
+				payload = verify(magic_code, environment.JWT_SECRET);
+			}
+
 			const user = await this.userService.findOneByOptions({
 				where: {
 					email,
-					isActive: true
+					isActive: true,
+					...(payload['id'] ? { id: payload['id'] } : {}),
+					...(payload['tenantId'] ? { tenantId: payload['tenantId'] } : {}),
 				},
 				relations: {
 					employee: true,
-					role: {
-						rolePermissions: true
-					}
+					role: true
 				},
 				order: {
 					createdAt: 'DESC'
@@ -86,12 +93,15 @@ export class AuthService extends SocialAuthService {
 			const refresh_token = await this.getJwtRefreshToken(user);
 
 			await this.userService.setCurrentRefreshToken(refresh_token, user.id);
+			console.timeEnd('login');
+
 			return {
 				user,
 				token: access_token,
 				refresh_token: refresh_token
 			};
 		} catch (error) {
+			console.log('Error while authenticating user: %s', error);
 			throw new UnauthorizedException();
 		}
 	}
@@ -115,38 +125,29 @@ export class AuthService extends SocialAuthService {
 
 		console.timeEnd("authentication_login");
 
+		users = users.map((user: IUser) => {
+			const payload: JwtPayload = {
+				id: user.id,
+				tenantId: user.tenantId,
+				employeeId: user.employee ? user.employee.id : null
+			};
+			const magic_code = sign(payload, environment.JWT_SECRET, {});
+			return {
+				name: user.name,
+				magic_code
+			}
+		});
+
 		if (users.length === 1) {
 			// Now users array contains users with matching passwords
 			return {
-				users: users.map((user: IUser) => {
-					const payload: JwtPayload = {
-						id: user.id,
-						tenantId: user.tenantId,
-						employeeId: user.employee ? user.employee.id : null
-					};
-					const magic_code = sign(payload, environment.JWT_SECRET, {});
-					return {
-						name: user.name,
-						magic_code
-					}
-				}),
+				users,
 				confirmed_email: email,
 				show_popup: false
 			}
 		} else if (users.length > 1) {
 			return {
-				users: users.map((user: IUser) => {
-					const payload: JwtPayload = {
-						id: user.id,
-						tenantId: user.tenantId,
-						employeeId: user.employee ? user.employee.id : null
-					};
-					const magic_code = sign(payload, environment.JWT_SECRET, {});
-					return {
-						name: user.name,
-						magic_code
-					}
-				}),
+				users,
 				confirmed_email: email,
 				show_popup: true
 			}
