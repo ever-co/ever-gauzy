@@ -37,6 +37,9 @@ import {
 import { DialogStopTimerLogoutConfirmation } from './decorators/concretes/dialog-stop-timer-logout-confirmation';
 import { DesktopDialog } from './desktop-dialog';
 import { TranslateService } from './translation';
+import { IPowerManager } from './interfaces';
+import { SleepInactivityTracking } from './contexts';
+import { RemoteSleepTracking } from './strategies';
 
 const timerHandler = new TimerHandler();
 
@@ -323,9 +326,9 @@ export function ipcTimer(
 	windowPath,
 	soundPath
 ) {
-	let powerManager;
-	let powerManagerPreventSleep;
-	let powerManagerDetectInactivity;
+	let powerManager: IPowerManager;
+	let powerManagerPreventSleep: PowerManagerPreventDisplaySleep;
+	let powerManagerDetectInactivity: PowerManagerDetectInactivity;
 
 	ipcMain.on('create-synced-interval', async (_event, arg) => {
 		try {
@@ -389,7 +392,14 @@ export function ipcTimer(
 			if (setting && setting.preventDisplaySleep) {
 				powerManagerPreventSleep.start();
 			}
-			powerManagerDetectInactivity.startInactivityDetection();
+
+			if (arg.isRemoteTimer) {
+				powerManager.sleepTracking = new SleepInactivityTracking(
+					new RemoteSleepTracking(timeTrackerWindow)
+				);
+			} else {
+				powerManagerDetectInactivity.startInactivityDetection();
+			}
 			return timerResponse;
 		} catch (error) {
 			timeTrackerWindow.webContents.send('emergency_stop');
