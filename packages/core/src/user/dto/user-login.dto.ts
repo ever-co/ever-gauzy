@@ -9,4 +9,4 @@ import { UserPasswordDTO } from "./user-password.dto";
 export class UserLoginDTO extends IntersectionType(
     UserEmailDTO,
     UserPasswordDTO
-) implements IUserLoginInput {}
+) implements IUserLoginInput { }

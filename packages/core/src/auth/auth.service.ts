@@ -16,7 +16,8 @@ import {
 	IResetPasswordRequest,
 	IUserInviteCodeConfirmationInput,
 	PermissionsEnum,
-	IUserEmailInput
+	IUserEmailInput,
+	IUserLoginInput
 } from '@gauzy/contracts';
 import { environment } from '@gauzy/config';
 import { SocialAuthService } from '@gauzy/auth';
@@ -55,7 +56,7 @@ export class AuthService extends SocialAuthService {
 	 * @param password
 	 * @returns
 	 */
-	async login(email: string, password: string): Promise<IAuthResponse | null> {
+	async login({ email, password }: IUserLoginInput): Promise<IAuthResponse | null> {
 		try {
 			const user = await this.userService.findOneByOptions({
 				where: {
@@ -91,6 +92,65 @@ export class AuthService extends SocialAuthService {
 				refresh_token: refresh_token
 			};
 		} catch (error) {
+			throw new UnauthorizedException();
+		}
+	}
+
+	/**
+	 *
+	 * @param param0
+	 * @returns
+	 */
+	async signinWorkspaces({ email, password }: IUserLoginInput) {
+		console.time("authentication_login");
+
+		const query = this.userRepository.createQueryBuilder('user')
+		query.leftJoinAndSelect('user.employee', 'employee');
+		query.where('user.email = :email AND user.isActive = true', { email });
+		query.andWhere('employee IS NULL OR employee.isActive = true');
+
+		let users = await query.getMany();
+		// Now users array contains users with matching passwords
+		users = users.filter((user: IUser) => !!bcrypt.compareSync(password, user.hash));
+
+		console.timeEnd("authentication_login");
+
+		if (users.length === 1) {
+			// Now users array contains users with matching passwords
+			return {
+				users: users.map((user: IUser) => {
+					const payload: JwtPayload = {
+						id: user.id,
+						tenantId: user.tenantId,
+						employeeId: user.employee ? user.employee.id : null
+					};
+					const magic_code = sign(payload, environment.JWT_SECRET, {});
+					return {
+						name: user.name,
+						magic_code
+					}
+				}),
+				confirmed_email: email,
+				show_popup: false
+			}
+		} else if (users.length > 1) {
+			return {
+				users: users.map((user: IUser) => {
+					const payload: JwtPayload = {
+						id: user.id,
+						tenantId: user.tenantId,
+						employeeId: user.employee ? user.employee.id : null
+					};
+					const magic_code = sign(payload, environment.JWT_SECRET, {});
+					return {
+						name: user.name,
+						magic_code
+					}
+				}),
+				confirmed_email: email,
+				show_popup: true
+			}
+		} else {
 			throw new UnauthorizedException();
 		}
 	}

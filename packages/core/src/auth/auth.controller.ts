@@ -130,10 +130,25 @@ export class AuthController {
 	@UsePipes(new ValidationPipe({ transform: true }))
 	async login(
 		@Body() entity: UserLoginDTO
-	): Promise<IAuthResponse | null> {
+	): Promise<IAuthResponse | void> {
 		return await this.commandBus.execute(
 			new AuthLoginCommand(entity)
 		);
+	}
+
+	/**
+	 *
+	 * @param entity
+	 * @returns
+	 */
+	@HttpCode(HttpStatus.OK)
+	@Post('signin.workspaces')
+	@Public()
+	@UsePipes(new ValidationPipe({ transform: true }))
+	async signinWorkspaces(
+		@Body() input: UserLoginDTO
+	) {
+		return await this.authService.signinWorkspaces(input);
 	}
 
 	/**
