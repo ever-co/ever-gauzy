@@ -30,7 +30,9 @@ import {
 	from,
 	Observable,
 	Subject,
-	tap
+	tap,
+	of,
+	concatMap
 } from 'rxjs';
 import { ElectronService, LoggerService } from '../electron/services';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
@@ -187,6 +189,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 	private _isOpenDialog = false;
 	private _dialog: NbDialogRef<any> = null;
 	private _timeZoneManager = TimeZoneManager
+	private _remoteSleepLock = false;
 
 	public hasTaskPermission$: BehaviorSubject<boolean> = new BehaviorSubject(false);
 	private get _hasTaskPermission(): boolean {
@@ -952,6 +955,23 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 				untilDestroyed(this)
 			)
 			.subscribe();
+
+		this.electronService.ipcRenderer.on('sleep_remote_lock', (event, state: boolean) => {
+			this._ngZone.run(async () => {
+				of(state)
+					.pipe(
+						distinctUntilChange(),
+						tap(
+							(isPaused: boolean) =>
+								(this._remoteSleepLock = isPaused)
+						),
+						filter((isPaused: boolean) => !!isPaused && this.start),
+						concatMap(() => this.toggleStart(false, false)),
+						untilDestroyed(this)
+					)
+					.subscribe();
+			});
+		});
 	}
 
 	async toggleStart(val, onClick = true) {
@@ -1040,7 +1060,8 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 					host: this.defaultAwAPI,
 					isAw: this.aw
 				},
-				timeLog: null
+				timeLog: null,
+				isRemoteTimer: this.isRemoteTimer
 			});
 			// update counter
 			if (this.isRemoteTimer) {
@@ -2091,9 +2112,8 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 			let timelog = null;
 			console.log('[TIMER_STATE]', lastTimer);
 			if (isStarted) {
-				if (!this._isOffline) {
-					timelog =
-						isRemote && this._timeTrackerStatus.remoteTimer.isExternalSource
+				if (!this._isOffline && !this._remoteSleepLock) {
+					timelog = isRemote
 							? this._timeTrackerStatus.remoteTimer.lastLog
 							: await this.timeTrackerService.toggleApiStart({
 									...lastTimer,
@@ -2103,7 +2123,8 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 				this.loading = false;
 			} else {
 				if (!this._isOffline) {
-					timelog = isRemote
+					timelog =
+						isRemote || this._remoteSleepLock
 						? this._timeTrackerStatus.remoteTimer.lastLog
 						: await this.timeTrackerService.toggleApiStop({
 								...lastTimer,
@@ -2122,10 +2143,9 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 						}),
 						this.getTimerStatus(params)
 					];
-					if (
-						!this._timeTrackerStatus.remoteTimer?.isExternalSource ||
-						this._startMode === TimerStartMode.MANUAL) {
-						const takeScreenCapturePromise = this.electronService.ipcRenderer.invoke(
+					if (this._startMode === TimerStartMode.MANUAL) {
+						const takeScreenCapturePromise =
+							this.electronService.ipcRenderer.invoke(
 							'TAKE_SCREEN_CAPTURE',
 							{
 								quitApp: this.quitApp
