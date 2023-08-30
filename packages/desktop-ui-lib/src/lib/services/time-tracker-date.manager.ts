@@ -1,13 +1,15 @@
 import * as moment from 'moment';
-import { IOrganization } from '@gauzy/contracts';
+import { IOrganization, LanguagesEnum } from '@gauzy/contracts';
 
 export class TimeTrackerDateManager {
 	private static _instance: TimeTrackerDateManager;
 	private _organization: IOrganization;
 	private _utcOffset: number;
+	private _language: LanguagesEnum;
 
 	private constructor() {
 		this._utcOffset = moment().utcOffset();
+		this._language = LanguagesEnum.ENGLISH;
 	}
 
 	private static get instance(): TimeTrackerDateManager {
@@ -20,21 +22,20 @@ export class TimeTrackerDateManager {
 	private static get _startWeekDayNumber(): number {
 		return moment()
 			.day(this.organization?.startWeekOn || 'Monday')
-			.weekday();
+			.isoWeekday();
 	}
 
 	public static get startWeek(): string {
 		return moment()
 			.startOf('week')
-			.add(this._startWeekDayNumber, 'day')
 			.subtract(this.utcOffset, 'minutes')
 			.format('YYYY-MM-DD HH:mm:ss');
 	}
 
 	public static get endWeek(): string {
-		return moment(this.startWeek)
-			.add('7', 'days')
-			.subtract('1', 'millisecond')
+		return moment()
+			.endOf('week')
+			.subtract(this.utcOffset, 'minutes')
 			.format('YYYY-MM-DD HH:mm:ss');
 	}
 
@@ -62,9 +63,25 @@ export class TimeTrackerDateManager {
 
 	public static set organization(value: IOrganization) {
 		this.instance._organization = value;
+		// Set the start of the week when organization's change
+		this._instance.startWeekDay();
 	}
 
 	public static set utcOffset(value: number) {
 		this.instance._utcOffset = value;
+	}
+
+	// Set the start of the week
+	private startWeekDay() {
+		moment.locale(this._language, {
+			week: {
+				dow: TimeTrackerDateManager._startWeekDayNumber,
+			},
+		});
+	}
+
+	public static locale(language = LanguagesEnum.ENGLISH) {
+		moment.locale(language);
+		this.instance._language = language;
 	}
 }

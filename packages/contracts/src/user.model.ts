@@ -136,7 +136,14 @@ export enum LanguagesEnum {
 	HEBREW = 'he',
 	RUSSIAN = 'ru',
 	FRENCH = 'fr',
-	SPANISH = 'es'
+	SPANISH = 'es',
+	CHINESE = 'zh',
+	GERMAN = 'de',
+	PORTUGUESE = 'pt',
+	ITALIAN = 'it',
+	DUTCH = 'nl',
+	POLISH = 'pl',
+	ARABIC = 'ar'
 }
 
 export enum ComponentLayoutStyleEnum {

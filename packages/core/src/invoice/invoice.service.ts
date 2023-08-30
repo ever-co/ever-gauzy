@@ -3,7 +3,7 @@ import { Invoice } from './invoice.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Between, In, Repository } from 'typeorm';
 import { BadRequestException, Injectable } from '@nestjs/common';
-import { EmailService } from '../email';
+import { EmailService } from './../email-send/email.service';
 import { IInvoice, IOrganization, LanguagesEnum } from '@gauzy/contracts';
 import { sign } from 'jsonwebtoken';
 import { environment } from '@gauzy/config';
@@ -25,7 +25,7 @@ export class InvoiceService extends TenantAwareCrudService<Invoice> {
 		private readonly invoiceRepository: Repository<Invoice>,
 		private readonly emailService: EmailService,
 		private readonly estimateEmailService: EstimateEmailService,
-		private readonly pdfmakerServier: PdfmakerService,
+		private readonly pdfmakerService: PdfmakerService,
 		private readonly i18n: I18nService,
 		private readonly organizationService: OrganizationService
 	) {
@@ -52,7 +52,7 @@ export class InvoiceService extends TenantAwareCrudService<Invoice> {
 		invoiceNumber: number,
 		invoiceId: string,
 		isEstimate: boolean,
-		originUrl: string,
+		origin: string,
 		organizationId: string
 	) {
 		try {
@@ -61,15 +61,15 @@ export class InvoiceService extends TenantAwareCrudService<Invoice> {
 				invoiceId,
 				email
 			);
-			const organization: IOrganization = await this.organizationService.findOneByIdString(organizationId);
+			const organization: IOrganization = await this.organizationService.findOneByIdString(
+				organizationId
+			);
 			try {
 				//generate estimate/invoice pdf and attached in email
-				const buffer: Buffer = await this.generateInvoicePdf(
-					invoiceId,
-					languageCode
-				);
+				const buffer: Buffer = await this.generateInvoicePdf(invoiceId, languageCode);
 				const base64 = buffer.toString('base64');
-				this.emailService.emailInvoice(
+
+				await this.emailService.emailInvoice(
 					languageCode,
 					email,
 					base64,
@@ -77,14 +77,14 @@ export class InvoiceService extends TenantAwareCrudService<Invoice> {
 					invoiceId,
 					isEstimate,
 					estimateEmail.token,
-					originUrl,
+					origin,
 					organization
 				);
 			} catch (error) {
-				console.error('Error while sending estimate email');
+				console.log(`Error while sending estimate email ${invoiceNumber}: %s`, error?.message);
 			}
 		} catch (error) {
-			console.error('Error while creating estimate email');
+			console.log(`Error while creating estimate email for invoice ${invoiceId}: %s`, error?.message);
 		}
 	}
 
@@ -111,7 +111,7 @@ export class InvoiceService extends TenantAwareCrudService<Invoice> {
 		}
 	}
 
-	async generateInvoicePdf(invoiceId: string, langulage: string) {
+	async generateInvoicePdf(invoiceId: string, language: string) {
 		const invoice: IInvoice = await this.findOneByIdString(invoiceId, {
 			relations: [
 				'fromOrganization',
@@ -129,96 +129,96 @@ export class InvoiceService extends TenantAwareCrudService<Invoice> {
 		const translatedText = {
 			item: await this.i18n.translate(
 				'USER_ORGANIZATION.INVOICES_PAGE.INVOICE_ITEM.ITEM',
-				{ lang: langulage }
+				{ lang: language }
 			),
 			description: await this.i18n.translate(
 				'USER_ORGANIZATION.INVOICES_PAGE.INVOICE_ITEM.DESCRIPTION',
-				{ lang: langulage }
+				{ lang: language }
 			),
 			quantity: await this.i18n.translate(
 				'USER_ORGANIZATION.INVOICES_PAGE.INVOICE_ITEM.QUANTITY',
-				{ lang: langulage }
+				{ lang: language }
 			),
 			price: await this.i18n.translate(
 				'USER_ORGANIZATION.INVOICES_PAGE.INVOICE_ITEM.PRICE',
-				{ lang: langulage }
+				{ lang: language }
 			),
 			totalValue: await this.i18n.translate(
 				'USER_ORGANIZATION.INVOICES_PAGE.INVOICE_ITEM.TOTAL_VALUE',
-				{ lang: langulage }
+				{ lang: language }
 			),
 
 			invoice: await this.i18n.translate(
 				'USER_ORGANIZATION.INVOICES_PAGE.INVOICE',
-				{ lang: langulage }
+				{ lang: language }
 			),
 			estimate: await this.i18n.translate(
 				'USER_ORGANIZATION.INVOICES_PAGE.ESTIMATE',
-				{ lang: langulage }
+				{ lang: language }
 			),
 			number: await this.i18n.translate(
 				'USER_ORGANIZATION.INVOICES_PAGE.NUMBER',
-				{ lang: langulage }
+				{ lang: language }
 			),
 			from: await this.i18n.translate(
 				'USER_ORGANIZATION.INVOICES_PAGE.FROM',
-				{ lang: langulage }
+				{ lang: language }
 			),
 			to: await this.i18n.translate(
 				'USER_ORGANIZATION.INVOICES_PAGE.TO',
-				{ lang: langulage }
+				{ lang: language }
 			),
 			date: await this.i18n.translate(
 				'USER_ORGANIZATION.INVOICES_PAGE.DATE',
-				{ lang: langulage }
+				{ lang: language }
 			),
 			dueDate: await this.i18n.translate(
 				'USER_ORGANIZATION.INVOICES_PAGE.DUE_DATE',
-				{ lang: langulage }
+				{ lang: language }
 			),
 			discountValue: await this.i18n.translate(
 				'USER_ORGANIZATION.INVOICES_PAGE.INVOICES_SELECT_DISCOUNT_VALUE',
-				{ lang: langulage }
+				{ lang: language }
 			),
 			discountType: await this.i18n.translate(
 				'USER_ORGANIZATION.INVOICES_PAGE.DISCOUNT_TYPE',
-				{ lang: langulage }
+				{ lang: language }
 			),
 			taxValue: await this.i18n.translate(
 				'USER_ORGANIZATION.INVOICES_PAGE.TAX_VALUE',
-				{ lang: langulage }
+				{ lang: language }
 			),
 			taxType: await this.i18n.translate(
 				'USER_ORGANIZATION.INVOICES_PAGE.TAX_TYPE',
-				{ lang: langulage }
+				{ lang: language }
 			),
 			currency: await this.i18n.translate(
 				'USER_ORGANIZATION.INVOICES_PAGE.CURRENCY',
-				{ lang: langulage }
+				{ lang: language }
 			),
 			terms: await this.i18n.translate(
 				'USER_ORGANIZATION.INVOICES_PAGE.INVOICES_SELECT_TERMS',
-				{ lang: langulage }
+				{ lang: language }
 			),
 			paid: await this.i18n.translate(
 				'USER_ORGANIZATION.INVOICES_PAGE.PAID',
-				{ lang: langulage }
+				{ lang: language }
 			),
 			yes: await this.i18n.translate(
 				'USER_ORGANIZATION.INVOICES_PAGE.YES',
-				{ lang: langulage }
+				{ lang: language }
 			),
 			no: await this.i18n.translate(
 				'USER_ORGANIZATION.INVOICES_PAGE.NO',
-				{ lang: langulage }
+				{ lang: language }
 			),
 			alreadyPaid: await this.i18n.translate(
 				'USER_ORGANIZATION.INVOICES_PAGE.ALREADY_PAID',
-				{ lang: langulage }
+				{ lang: language }
 			),
 			amountDue: await this.i18n.translate(
 				'USER_ORGANIZATION.INVOICES_PAGE.AMOUNT_DUE',
-				{ lang: langulage }
+				{ lang: language }
 			)
 		};
 		const docDefinition = await generateInvoicePdfDefinition(
@@ -226,12 +226,12 @@ export class InvoiceService extends TenantAwareCrudService<Invoice> {
 			invoice.fromOrganization,
 			invoice.toContact,
 			translatedText,
-			langulage
+			language
 		);
-		return await this.pdfmakerServier.generatePdf(docDefinition);
+		return await this.pdfmakerService.generatePdf(docDefinition);
 	}
 
-	async generateInvoicePaymentPdf(invoiceId: string, langulage: string) {
+	async generateInvoicePaymentPdf(invoiceId: string, language: string) {
 		const invoice: IInvoice = await this.findOneByIdString(invoiceId, {
 			relations: [
 				'invoiceItems',
@@ -246,55 +246,55 @@ export class InvoiceService extends TenantAwareCrudService<Invoice> {
 		const translatedText = {
 			overdue: await this.i18n.translate(
 				'USER_ORGANIZATION.INVOICES_PAGE.PAYMENTS.OVERDUE',
-				{ lang: langulage }
+				{ lang: language }
 			),
 			onTime: await this.i18n.translate(
 				'USER_ORGANIZATION.INVOICES_PAGE.PAYMENTS.ON_TIME',
-				{ lang: langulage }
+				{ lang: language }
 			),
 			paymentDate: await this.i18n.translate(
 				'USER_ORGANIZATION.INVOICES_PAGE.PAYMENTS.PAYMENT_DATE',
-				{ lang: langulage }
+				{ lang: language }
 			),
 			amount: await this.i18n.translate(
 				'USER_ORGANIZATION.INVOICES_PAGE.PAYMENTS.AMOUNT',
-				{ lang: langulage }
+				{ lang: language }
 			),
 			recordedBy: await this.i18n.translate(
 				'USER_ORGANIZATION.INVOICES_PAGE.PAYMENTS.RECORDED_BY',
-				{ lang: langulage }
+				{ lang: language }
 			),
 			note: await this.i18n.translate(
 				'USER_ORGANIZATION.INVOICES_PAGE.PAYMENTS.NOTE',
-				{ lang: langulage }
+				{ lang: language }
 			),
 			status: await this.i18n.translate(
 				'USER_ORGANIZATION.INVOICES_PAGE.PAYMENTS.STATUS',
-				{ lang: langulage }
+				{ lang: language }
 			),
 			paymentsForInvoice: await this.i18n.translate(
 				'USER_ORGANIZATION.INVOICES_PAGE.PAYMENTS.PAYMENTS_FOR_INVOICE',
-				{ lang: langulage }
+				{ lang: language }
 			),
 			dueDate: await this.i18n.translate(
 				'USER_ORGANIZATION.INVOICES_PAGE.DUE_DATE',
-				{ lang: langulage }
+				{ lang: language }
 			),
 			totalValue: await this.i18n.translate(
 				'USER_ORGANIZATION.INVOICES_PAGE.INVOICE_ITEM.TOTAL_VALUE',
-				{ lang: langulage }
+				{ lang: language }
 			),
 			totalPaid: await this.i18n.translate(
 				'USER_ORGANIZATION.INVOICES_PAGE.PAYMENTS.TOTAL_PAID',
-				{ lang: langulage }
+				{ lang: language }
 			),
 			receivedFrom: await this.i18n.translate(
 				'USER_ORGANIZATION.INVOICES_PAGE.PAYMENTS.RECEIVED_FROM',
-				{ lang: langulage }
+				{ lang: language }
 			),
 			receiver: await this.i18n.translate(
 				'USER_ORGANIZATION.INVOICES_PAGE.PAYMENTS.RECEIVER',
-				{ lang: langulage }
+				{ lang: language }
 			)
 		};
 
@@ -307,7 +307,7 @@ export class InvoiceService extends TenantAwareCrudService<Invoice> {
 			translatedText
 		);
 
-		return await this.pdfmakerServier.generatePdf(docDefinition);
+		return await this.pdfmakerService.generatePdf(docDefinition);
 	}
 
 	getReadableStream(buffer: Buffer): Readable {

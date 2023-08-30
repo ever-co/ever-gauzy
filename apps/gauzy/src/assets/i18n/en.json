@@ -150,7 +150,8 @@
 		"LOGOUT": "Logout",
 		"COPY": "Copy",
 		"CUT": "Cut",
-		"PASTE": "Paste"
+		"PASTE": "Paste",
+		"FORWARD_PORTS": "Forward Ports"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {
@@ -268,7 +269,14 @@
 			"RU": "Русский (Россия)",
 			"HE": "עברית ישראל",
 			"FR": "Français (France)",
-			"ES": "Español (España)"
+			"ES": "Español (España)",
+			"ZH": "中文 (中国)",
+			"DE": "Deutsch (Deutschland)",
+			"PT": "Português (Portugal)",
+			"IT": "Italiano (Italia)",
+			"NL": "Nederlands (Nederland)",
+			"PL": "Polski (Polska)",
+			"AR": "العربية (العراق)"
 		},
 		"CURRENT_VALUE": "Current value",
 		"TARGET_VALUE": "Target value",
@@ -601,6 +609,7 @@
 			"SELECT_EXPENSE": "Select Expense",
 			"ADD_TITLE": "Add title",
 			"ALL_PROJECTS": "All Projects",
+			"ALL_TEAMS": "All Teams",
 			"UPWORK_API_KEY": "Upwork API key",
 			"UPWORK_SECRET": "Upwork Secret",
 			"GAUZY_API_KEY": "Gauzy AI Key",
@@ -622,6 +631,7 @@
 			"RECEIPT_TEMPLATE": "Receipt Template",
 			"INVITATION_EXPIRATION": "Invitation Expiration",
 			"ADD_PROJECT": "Add project",
+			"ADD_TEAM": "Add team",
 			"ADD_EMPLOYEE": "Add employee",
 			"ADD_ORGANIZATION": "Add organization",
 			"DRAG_DROP_FILE": "Drag and Drop the file here",
@@ -685,7 +695,7 @@
 		},
 		"ERROR": {
 			"PROJECT_NAME": "Project name is required.",
-			"PROJECT_URL":"Project url is invalid.",
+			"PROJECT_URL": "Project url is invalid.",
 			"OPEN_SOURCE_PROJECT_URL": "Open source project url is invalid."
 		}
 	},
@@ -1072,6 +1082,13 @@
 		"BULGARIAN": "Bulgarian",
 		"HEBREW": "Hebrew",
 		"RUSSIAN": "Russian",
+		"CHINESE": "Chinese",
+		"GERMAN": "German",
+		"PORTUGUESE": "Portuguese",
+		"ITALIAN": "Italian",
+		"DUTCH": "Dutch",
+		"POLISH": "Polish",
+		"ARABIC": "Arabic",
 		"PREFERRED_LAYOUT": "Layout",
 		"PREFERRED_LAYOUT_TOOLTIP": "This will only set the default layout and not change the layout on each page if you have already changed it once.",
 		"RESET_LAYOUT": "Reset Layout",
@@ -1904,32 +1921,32 @@
 				"DELETE_IDLE_TIME_INFO": "Enable - the system will delete idle time. Disable - the system will not delete idle time",
 				"ALLOW_SCREEN_CAPTURE": "Allow Screen Capture",
 				"ALLOW_SCREEN_CAPTURE_INFO": "Enable - the timer will take screenshot. Disable - the timer will run without to take screenshot for all organization members",
-				"TASK_SETTING":"Task Settings",
-				"TASK_PRIVACY":"Task Privacy",
-				"MULTIPLE_ASSIGNEE":"Multiple Assignees",
-				"MANUAL_TIME":"Manual Time",
-				"GROUP_ESTIMATION":"Group Estimation",
-				"ESTIMATION_IN_HOUR":"Estimation in hour",
-				"ESTIMATION_IN_STORY_POINT":"Estimation in story point",
-				"PROOF_OF_COMPLETION":"Proof of Completion",
-                "PROOF_OF_COMPLETION_TYPE": "Proof of Completion Type",
-                "PROOF_OF_COMPLETION_TYPE_DROPDOWN": {
-                    "NONE": "None",
-                    "PRIVATE": "Private",
-                    "PUBLIC": "Public"
-                },
-				"LINKED_ISSUE":"Linked Issue",
-				"COMMENT":"Comment",
-				"HISTORY":"History",
-				"ACCEPTANCE_CRITERIA":"Acceptance Criteria",
-				"DRAFT_ISSUE":"Draft Issues",
-                "NOTIFY_TASK_LEFT": "Notify Task Left",
-                "NOTIFY_TASK_LEFT_PERIOD": "Notify Task Period (in Days)",
-				"AUTO_CLOSE_ISSUE":"Auto Close Issue",
-                "AUTO_CLOSE_ISSUE_PERIOD": "Auto Close Issue Period (in Days)",
-                "AUTO_ARCHIVE_ISSUE": "Auto Archive Issue",
-                "AUTO_ARCHIVE_ISSUE_PERIOD": "Auto Archive Issue Period (in Days)",
-                "AUTO_STATUS": "Auto Status"
+				"TASK_SETTING": "Task Settings",
+				"TASK_PRIVACY": "Task Privacy",
+				"MULTIPLE_ASSIGNEE": "Multiple Assignees",
+				"MANUAL_TIME": "Manual Time",
+				"GROUP_ESTIMATION": "Group Estimation",
+				"ESTIMATION_IN_HOUR": "Estimation in hour",
+				"ESTIMATION_IN_STORY_POINT": "Estimation in story point",
+				"PROOF_OF_COMPLETION": "Proof of Completion",
+				"PROOF_OF_COMPLETION_TYPE": "Proof of Completion Type",
+				"PROOF_OF_COMPLETION_TYPE_DROPDOWN": {
+					"NONE": "None",
+					"PRIVATE": "Private",
+					"PUBLIC": "Public"
+				},
+				"LINKED_ISSUE": "Linked Issue",
+				"COMMENT": "Comment",
+				"HISTORY": "History",
+				"ACCEPTANCE_CRITERIA": "Acceptance Criteria",
+				"DRAFT_ISSUE": "Draft Issues",
+				"NOTIFY_TASK_LEFT": "Notify Task Left",
+				"NOTIFY_TASK_LEFT_PERIOD": "Notify Task Period (in Days)",
+				"AUTO_CLOSE_ISSUE": "Auto Close Issue",
+				"AUTO_CLOSE_ISSUE_PERIOD": "Auto Close Issue Period (in Days)",
+				"AUTO_ARCHIVE_ISSUE": "Auto Archive Issue",
+				"AUTO_ARCHIVE_ISSUE_PERIOD": "Auto Archive Issue Period (in Days)",
+				"AUTO_STATUS": "Auto Status"
 			},
 			"TEAMS_PAGE": {
 				"MANAGERS": "Managers",
@@ -2063,7 +2080,7 @@
 			"ORG_TASK_VIEW": "View Tasks",
 			"ORG_TASK_EDIT": "Edit Tasks",
 			"ORG_TASK_DELETE": "Delete Tasks",
-			"ORG_TASK_SETTING":"Task Settings"
+			"ORG_TASK_SETTING": "Task Settings"
 		},
 		"BILLING": "Billing",
 		"BUDGET": "Budget",
@@ -2985,7 +3002,8 @@
 		"SELECT_EMPLOYEE": "Select Employee",
 		"SELECT_A_DATE": "Select A date",
 		"SELECT_AN_ORGANIZATION": "Select An Organization",
-		"SELECT_PROJECT": "Select Project"
+		"SELECT_PROJECT": "Select Project",
+		"SELECT_TEAM": "Select Team"
 	},
 	"HEADER_TITLE": {
 		"FOR": "for",
@@ -3426,7 +3444,7 @@
 			"ORGANIZATION_LOCATION_UPDATED": "'{{ name }}' organization location was changed",
 			"ORGANIZATION_INFO_UPDATED": "'{{ name }}' organization main info was changed",
 			"ORGANIZATION_SETTINGS_UPDATED": "'{{ name }}' organization settings was changed",
-            "ORGANIZATION_TASK_SETTINGS_UPDATE_ERROR": "Some error occurred while trying to updating organization task setting.",
+			"ORGANIZATION_TASK_SETTINGS_UPDATE_ERROR": "Some error occurred while trying to updating organization task setting.",
 			"SETTINGS_SAVED": "Settings saved successfully",
 			"KEY_RESULTS_CREATED": "Key Results Created",
 			"INVITE_EMAIL_DELETED": "{{ name }} has been deleted.",
@@ -3727,7 +3745,8 @@
 			"DB_NAME": "Database Name",
 			"DB_PORT": "Database Port",
 			"USER": "User",
-			"PASSWORD": "Password"
+			"PASSWORD": "Password",
+			"UI_HOSTNAME": "UI Hostname / IP Address"
 		},
 		"SETTINGS": {
 			"SCREEN_CAPTURE": "Screen Capture",
@@ -3807,7 +3826,12 @@
 				"SERVER_RESTARTED": "Server Restarted Successfully",
 				"CONNECTION_SUCCEEDS": "Connection to Server {{ url }} Succeeds",
 				"DOWNLOADING_UPDATE": "Downloading update {{ current }} MB of {{ total }} MB ->> {{ bandwidth }} KB/s"
-			}
+			},
+			"TIMEZONE": "Time Zone",
+			"TIMEZONE_LABEL": "Choosing 'Local' displays time in your local time zone, while selecting 'UTC' shows time in the universal UTC timezone used by billing and other systems.",
+			"TIMEZONE_PLACEHOLDER": "Select either 'Local' or 'UTC'.",
+			"TIMEZONE_LOCAL": "Local",
+			"TIMEZONE_UTC": "UTC"
 		},
 		"WEEKLY_LIMIT_EXCEEDED": "Weekly limit exceeded",
 		"OF_HRS": "Of {{ limit }} hrs",
@@ -3871,7 +3895,7 @@
 			"SCREENSHOT_REMOVED": "Successfully remove last screenshot and activities",
 			"NEW_VERSION_AVAILABLE": "New update for {{ name }} (version {{ version }}) is available"
 		},
-		"MENU" : {
+		"MENU": {
 			"ZOOM_IN": "Zoom In",
 			"ZOOM_OUT": "Zoom Out",
 			"SETTING_DEV_MODE": "Setting Developer Mode",
@@ -4148,7 +4172,8 @@
 			"interviewer-interview-schedule": "Interviewer Schedule",
 			"employee-join": "Employee Join",
 			"email-reset": "Email Reset",
-			"organization-team-join-request": "Organization team join request"
+			"organization-team-join-request": "Organization team join request",
+			"payment-receipt": "Payment Receipt"
 		},
 		"HTML_EDITOR": "HTML Editor"
 	},

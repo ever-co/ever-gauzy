@@ -8,6 +8,7 @@ import {
 	NbButtonModule,
 	NbAlertModule
 } from '@nebular/theme';
+import { TranslateModule } from '@ngx-translate/core';
 
 @NgModule({
 	declarations: [AlertComponent],
@@ -17,7 +18,8 @@ import {
 		NbCardModule,
 		NbIconModule,
 		NbButtonModule,
-		NbAlertModule
+		NbAlertModule,
+		TranslateModule
 	],
     exports: [AlertComponent]
 })

@@ -5,6 +5,7 @@ import { ITag } from './tag.model';
 import { ITask } from './task.model';
 import { ITimerStatusInput } from './timesheet.model';
 import { IRelationalImageAsset } from './image-asset.model';
+import { CrudActionEnum } from 'organization.model';
 
 export interface IOrganizationTeam extends IBasePerTenantAndOrganizationEntityModel, IRelationalImageAsset {
 	name: string;
@@ -54,4 +55,8 @@ export interface IOrganizationTeamStatisticInput extends ITimerStatusInput {
 export interface IRelationalOrganizationTeam {
 	organizationTeam?: IOrganizationTeam;
 	organizationTeamId?: IOrganizationTeam['id'];
+}
+export interface IOrganizationTeamStoreState {
+	team: IOrganizationTeam;
+	action: CrudActionEnum;
 }

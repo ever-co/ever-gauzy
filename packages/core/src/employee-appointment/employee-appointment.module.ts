@@ -6,7 +6,7 @@ import { EmployeeAppointment } from './employee-appointment.entity';
 import { EmployeeAppointmentController } from './employee-appointment.controller';
 import { EmployeeAppointmentService } from './employee-appointment.service';
 import { CommandHandlers } from './commands/handlers';
-import { EmailModule } from '../email/email.module';
+import { EmailSendModule } from 'email-send/email-send.module';
 import { EmployeeModule } from '../employee/employee.module';
 import { OrganizationModule } from '../organization/organization.module';
 import { TenantModule } from '../tenant/tenant.module';
@@ -16,8 +16,10 @@ import { TenantModule } from '../tenant/tenant.module';
 		RouterModule.forRoutes([
 			{ path: '/employee-appointment', module: EmployeeAppointmentModule }
 		]),
-		TypeOrmModule.forFeature([EmployeeAppointment]),
-		EmailModule,
+		TypeOrmModule.forFeature([
+			EmployeeAppointment
+		]),
+		EmailSendModule,
 		EmployeeModule,
 		OrganizationModule,
 		CqrsModule,
@@ -30,4 +32,4 @@ import { TenantModule } from '../tenant/tenant.module';
 	],
 	exports: [EmployeeAppointmentService]
 })
-export class EmployeeAppointmentModule {}
+export class EmployeeAppointmentModule { }

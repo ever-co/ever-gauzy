@@ -31,18 +31,18 @@ import { DatabaseModule } from '../database/database.module';
 				credentials: true,
 				origin: '*',
 				allowedHeaders:
-					'Authorization, Language, Tenant-Id, X-Requested-With, X-Auth-Token, X-HTTP-Method-Override, Content-Type, Content-Language, Accept, Accept-Language, Observe'
+					'Authorization, Language, Tenant-Id, Organization-Id, X-Requested-With, X-Auth-Token, X-HTTP-Method-Override, Content-Type, Content-Language, Accept, Accept-Language, Observe'
 			},
 			typePaths: [
 				environment.isElectron
 					? path.join(
-							path.resolve(__dirname, '../../../../../../data/'),
-							'*.gql'
-					  )
+						path.resolve(__dirname, '../../../../../../data/'),
+						'*.gql'
+					)
 					: path.join(
-							path.resolve(__dirname, '../**/', 'schema'),
-							'*.gql'
-					  )
+						path.resolve(__dirname, '../**/', 'schema'),
+						'*.gql'
+					)
 			],
 			resolverModule: GraphqlApiModule
 		})) as DynamicModule,

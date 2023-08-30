@@ -2,6 +2,9 @@ import { CommandBus } from '@nestjs/cqrs';
 import { BadRequestException, Injectable, InternalServerErrorException, UnauthorizedException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { In, MoreThanOrEqual, Repository } from 'typeorm';
+import * as bcrypt from 'bcrypt';
+import * as moment from 'moment';
+import { JsonWebTokenError, JwtPayload, sign, verify } from 'jsonwebtoken';
 import {
 	IUserRegistrationInput,
 	LanguagesEnum,
@@ -18,10 +21,7 @@ import {
 import { environment } from '@gauzy/config';
 import { SocialAuthService } from '@gauzy/auth';
 import { IAppIntegrationConfig, isNotEmpty } from '@gauzy/common';
-import * as bcrypt from 'bcrypt';
-import * as moment from 'moment';
-import { JsonWebTokenError, JwtPayload, sign, verify } from 'jsonwebtoken';
-import { EmailService } from '../email/email.service';
+import { EmailService } from './../email-send/email.service';
 import { User } from '../user/user.entity';
 import { UserService } from '../user/user.service';
 import { RoleService } from './../role/role.service';

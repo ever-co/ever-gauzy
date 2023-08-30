@@ -84,7 +84,7 @@ export class EmployeeController extends CrudController<Employee> {
 		description: 'Record not found',
 	})
 	@Permissions(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE)
-	@Get('/working')
+	@Get('working')
 	async findAllWorkingEmployees(
 		@Query('data', ParseJsonPipe) data: any
 	): Promise<IPagination<IEmployee>> {
@@ -111,7 +111,7 @@ export class EmployeeController extends CrudController<Employee> {
 		description: 'Count not found',
 	})
 	@Permissions(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE)
-	@Get('/working/count')
+	@Get('working/count')
 	async findAllWorkingEmployeesCount(
 		@Query('data', ParseJsonPipe) data: any
 	): Promise<{ total: number }> {
@@ -141,7 +141,7 @@ export class EmployeeController extends CrudController<Employee> {
 			'Invalid input, The response body may contain clues as to what went wrong',
 	})
 	@Permissions(PermissionsEnum.ORG_JOB_EMPLOYEE_VIEW)
-	@Get('/job-statistics')
+	@Get('job-statistics')
 	@UsePipes(new ValidationPipe({ transform: true }))
 	async getEmployeeJobsStatistics(
 		@Query() options: PaginationParams<Employee>
@@ -168,7 +168,7 @@ export class EmployeeController extends CrudController<Employee> {
 		description:
 			'Invalid input, The response body may contain clues as to what went wrong',
 	})
-	@Post('/bulk')
+	@Post('bulk')
 	async createBulk(
 		@Body(
 			BulkBodyLoadTransformPipe,
@@ -177,13 +177,13 @@ export class EmployeeController extends CrudController<Employee> {
 		entity: EmployeeBulkInputDTO,
 		@LanguageDecorator() themeLanguage: LanguagesEnum,
 		@I18nLang() languageCode: LanguagesEnum,
-		@Headers('origin') originalUrl: string
+		@Headers('origin') origin: string
 	): Promise<IEmployee[]> {
 		return await this.commandBus.execute(
 			new EmployeeBulkCreateCommand(
 				entity.list,
 				themeLanguage || languageCode,
-				originalUrl
+				origin
 			)
 		);
 	}
@@ -295,7 +295,7 @@ export class EmployeeController extends CrudController<Employee> {
 	 * CREATE employee in the same tenant
 	 *
 	 * @param entity
-	 * @param originUrl
+	 * @param origin
 	 * @param languageCode
 	 * @returns
 	 */
@@ -314,11 +314,11 @@ export class EmployeeController extends CrudController<Employee> {
 	@UsePipes(new ValidationPipe({ transform: true }))
 	async create(
 		@Body() entity: CreateEmployeeDTO,
-		@Headers('origin') originUrl: string,
+		@Headers('origin') origin: string,
 		@I18nLang() languageCode: LanguagesEnum
 	): Promise<IEmployee> {
 		return await this.commandBus.execute(
-			new EmployeeCreateCommand(entity, languageCode, originUrl)
+			new EmployeeCreateCommand(entity, languageCode, origin)
 		);
 	}
 
@@ -380,7 +380,7 @@ export class EmployeeController extends CrudController<Employee> {
 			'Invalid input, The response body may contain clues as to what went wrong',
 	})
 	@Permissions(PermissionsEnum.PROFILE_EDIT)
-	@Put('/:id/profile')
+	@Put(':id/profile')
 	@UsePipes(new ValidationPipe({ whitelist: true }))
 	async updateProfile(
 		@Param('id', UUIDValidationPipe) id: string,
@@ -415,11 +415,12 @@ export class EmployeeController extends CrudController<Employee> {
 		description:
 			'Invalid input, The response body may contain clues as to what went wrong',
 	})
-	@Put('/:id/job-search-status')
+	@Put(':id/job-search-status')
 	@UsePipes(new ValidationPipe({ whitelist: true }))
 	async updateJobSearchStatus(
 		@Param('id', UUIDValidationPipe) employeeId: IEmployee['id'],
-		@Body() entity: EmployeeJobStatisticDTO
+		@Body() entity: EmployeeJobStatisticDTO,
+		@Headers() headers: Record<string, string>
 	): Promise<IEmployee | UpdateResult> {
 		return await this.commandBus.execute(
 			new UpdateEmployeeJobSearchStatusCommand(

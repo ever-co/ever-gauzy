@@ -10,7 +10,7 @@ import { CommandHandlers } from './commands/handlers';
 import { EmployeeController } from './employee.controller';
 import { EmployeeService } from './employee.service';
 import { AuthModule } from './../auth/auth.module';
-import { EmailModule } from '../email/email.module';
+import { EmailSendModule } from './../email-send/email-send.module';
 import { UserOrganizationModule } from '../user-organization/user-organization.module';
 import { TenantModule } from '../tenant/tenant.module';
 import { RoleModule } from './../role/role.module';
@@ -24,14 +24,14 @@ import { RoleModule } from './../role/role.module';
 			Employee,
 			TimeLog
 		]),
-		forwardRef(() => EmailModule),
+		forwardRef(() => EmailSendModule),
 		forwardRef(() => UserOrganizationModule),
 		forwardRef(() => TenantModule),
 		forwardRef(() => UserModule),
 		forwardRef(() => AuthModule),
 		RoleModule,
 		CqrsModule,
-		GauzyAIModule
+		GauzyAIModule.forRoot()
 	],
 	controllers: [EmployeeController],
 	providers: [EmployeeService, ...CommandHandlers],

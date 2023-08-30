@@ -109,7 +109,8 @@ export const LocalStore = {
 						digitalOcean: true
 					},
 					prerelease: false,
-					preferredLanguage: 'en'
+					preferredLanguage: 'en',
+					zone: 'local'
 				};
 				store.set({
 					appSetting: defaultAppSetting

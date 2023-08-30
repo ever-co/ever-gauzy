@@ -1,8 +1,9 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { Column, Entity, JoinColumn, OneToMany } from 'typeorm';
-import { IsEnum, IsNotEmpty } from 'class-validator';
-import { IIntegrationEntitySetting, IIntegrationMap, IIntegrationSetting, IIntegrationTenant, IntegrationEnum } from '@gauzy/contracts';
+import { Column, Entity, Index, JoinColumn, ManyToOne, OneToMany, RelationId } from 'typeorm';
+import { IsEnum, IsNotEmpty, IsUUID } from 'class-validator';
+import { IIntegration, IIntegrationEntitySetting, IIntegrationMap, IIntegrationSetting, IIntegrationTenant, IntegrationEnum } from '@gauzy/contracts';
 import {
+	Integration,
 	IntegrationEntitySetting,
 	IntegrationMap,
 	IntegrationSetting,
@@ -17,6 +18,29 @@ export class IntegrationTenant extends TenantOrganizationBaseEntity implements I
 	@IsEnum(IntegrationEnum)
 	@Column()
 	name: IntegrationEnum;
+
+	/*
+	|--------------------------------------------------------------------------
+	| @ManyToOne
+	|--------------------------------------------------------------------------
+	*/
+
+	/**
+	 * Integration
+	 */
+	@ManyToOne(() => Integration, {
+		nullable: true,
+		onDelete: 'CASCADE'
+	})
+	@JoinColumn()
+	integration?: IIntegration;
+
+	@ApiProperty({ type: () => String })
+	@IsUUID()
+	@RelationId((it: IntegrationTenant) => it.integration)
+	@Index()
+	@Column({ nullable: true })
+	integrationId?: IIntegration['id'];
 
 	/*
 	|--------------------------------------------------------------------------

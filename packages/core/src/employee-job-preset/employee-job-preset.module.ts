@@ -32,7 +32,7 @@ import { JobSearchPresetController } from './job-search-preset.controller';
 		]),
 		EmployeeModule,
 		CqrsModule,
-		GauzyAIModule
+		GauzyAIModule.forRoot()
 	],
 	controllers: [
 		JobSearchOccupationController,

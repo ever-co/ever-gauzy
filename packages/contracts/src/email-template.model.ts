@@ -1,8 +1,12 @@
 import { IBasePerTenantAndOrganizationEntityModel } from './base-entity.model';
 import { LanguagesEnum } from './user.model';
 
-export interface IEmailTemplate
-	extends IBasePerTenantAndOrganizationEntityModel {
+export interface IRelationalEmailTemplate {
+	emailTemplate: IEmailTemplate;
+	emailTemplateId: IEmailTemplate['id'];
+}
+
+export interface IEmailTemplate extends IBasePerTenantAndOrganizationEntityModel {
 	name: string;
 	mjml: string;
 	hbs: string;
@@ -10,13 +14,12 @@ export interface IEmailTemplate
 	title?: string;
 }
 
-export interface IEmailTemplateFindInput
-	extends IBasePerTenantAndOrganizationEntityModel {
+export interface IEmailTemplateFindInput extends IBasePerTenantAndOrganizationEntityModel {
 	name?: string;
 	languageCode?: string;
 }
 
-export enum EmailTemplateNameEnum {
+export enum EmailTemplateEnum {
 	PASSWORD_RESET = 'password',
 	PASSWORD_LESS_AUTHENTICATION = 'password-less-authentication',
 	APPOINTMENT_CONFIRMATION = 'appointment-confirmation',
@@ -41,12 +44,12 @@ export enum EmailTemplateNameEnum {
 	EMAIL_ESTIMATE = 'email-estimate',
 	EMPLOYEE_JOIN = "employee-join",
 	EMAIL_RESET = "email-reset",
-	ORGANIZATION_TEAM_JOIN_REQUEST = 'organization-team-join-request'
+	ORGANIZATION_TEAM_JOIN_REQUEST = 'organization-team-join-request',
+	PAYMENT_RECEIPT = 'payment-receipt'
 }
 
-export interface ICustomizeEmailTemplateFindInput
-	extends IBasePerTenantAndOrganizationEntityModel {
-	name: EmailTemplateNameEnum;
+export interface ICustomizeEmailTemplateFindInput extends IBasePerTenantAndOrganizationEntityModel {
+	name: EmailTemplateEnum;
 	languageCode: LanguagesEnum;
 }
 
@@ -55,8 +58,7 @@ export interface ICustomizableEmailTemplate {
 	subject: string;
 }
 
-export interface IEmailTemplateSaveInput
-	extends ICustomizeEmailTemplateFindInput {
+export interface IEmailTemplateSaveInput extends ICustomizeEmailTemplateFindInput {
 	mjml: string;
 	subject: string;
 }
