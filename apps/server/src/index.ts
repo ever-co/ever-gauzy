@@ -115,6 +115,7 @@ ipcMain.removeHandler('PREFERRED_LANGUAGE');
 const runSetup = async () => {
 	if (setupWindow) {
 		setupWindow.show();
+		splashScreen.close();
 		return;
 	}
 	setupWindow = await createSetupWindow(setupWindow, false, pathWindow.ui);

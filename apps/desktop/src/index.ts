@@ -213,8 +213,8 @@ async function startServer(value, restart = false) {
 						{ ...environment, gauzyWindow: value.gauzyWindow },
 						pathWindow.gauzyWindow
 					);
-					splashScreen.close();
 					gauzyWindow.show();
+					splashScreen.close();
 				}
 			}
 			if (
@@ -267,8 +267,8 @@ async function startServer(value, restart = false) {
 			{ ...environment, gauzyWindow: value.gauzyWindow },
 			pathWindow.gauzyWindow
 		);
-		splashScreen.close();
 		gauzyWindow.show();
+		splashScreen.close();
 	}
 	const auth = store.get('auth');
 
@@ -385,10 +385,6 @@ const getApiBaseUrl = (configs) => {
 app.on('ready', async () => {
 	const configs: any = store.get('configs');
 	const settings: any = store.get('appSetting');
-	const autoLaunch: boolean =
-		settings && typeof settings.autoLaunch === 'boolean'
-			? settings.autoLaunch
-			: true;
 	// default global
 	global.variableGlobal = {
 		API_BASE_URL: getApiBaseUrl(configs || {}),
@@ -412,7 +408,9 @@ app.on('ready', async () => {
 	} catch (error) {
 		console.log('ERROR', error);
 	}
-	launchAtStartup(autoLaunch, false);
+	if (!settings) {
+		launchAtStartup(true, false);
+	}
 	const menu: MenuItemConstructorOptions[] = [
 		{
 			label: app.getName(),
@@ -459,8 +457,8 @@ app.on('ready', async () => {
 				false,
 				pathWindow.timeTrackerUi
 			);
-			splashScreen.close();
 			setupWindow.show();
+			splashScreen.close();
 			setupWindow.webContents.send('setup-data', {
 				...configs,
 			});
@@ -482,8 +480,8 @@ app.on('ready', async () => {
 			false,
 			pathWindow.timeTrackerUi
 		);
-		splashScreen.close();
 		setupWindow.show();
+		splashScreen.close();
 	}
 	updater.settingWindow = settingsWindow;
 	updater.gauzyWindow = gauzyWindow;
@@ -684,8 +682,8 @@ app.on('activate', async () => {
 		);
 	} else {
 		if (setupWindow) {
-			splashScreen.close();
 			setupWindow.show();
+			splashScreen.close();
 		}
 	}
 });
