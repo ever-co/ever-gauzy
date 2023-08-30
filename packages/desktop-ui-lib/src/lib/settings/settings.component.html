@@ -839,7 +839,7 @@
 															class="subtitle-tile"
 														>
 															{{
-																'TIMER_TRACKER.SETTINGS.API_CONFIG'
+																'TIMER_TRACKER.SETTINGS.SERVER_ACCESS_CONFIG'
 																	| translate
 															}}
 														</p>
@@ -885,13 +885,41 @@
 													</div>
 													<div
 														class="col-5 centered-text"
+														*ngIf="isServer"
+													>
+														<p>
+															{{
+																'TIMER_TRACKER.SETTINGS.SERVER_HOSTNAME'
+																	| translate
+															}}
+														</p>
+													</div>
+													<div
+														class="col-7 form-group"
+														*ngIf="isServer"
+													>
+														<input
+															[(ngModel)]="
+																config.host
+															"
+															type="text"
+															nbInput
+															fullWidth
+															[disabled]="
+																appSetting?.timerStarted
+															"
+															status="basic"
+														/>
+													</div>
+													<div
+														class="col-5 centered-text"
 														*ngIf="
 															config?.isLocalServer
 														"
 													>
 														<p>
 															{{
-																'TIMER_TRACKER.SETTINGS.LOCAL_API_PORT'
+																'TIMER_TRACKER.SETTINGS.API_SERVER_PORT'
 																	| translate
 															}}
 														</p>
@@ -927,35 +955,7 @@
 													>
 														<p>
 															{{
-																'TIMER_TRACKER.SETUP.UI_HOSTNAME'
-																	| translate
-															}}
-														</p>
-													</div>
-													<div
-														class="col-7 form-group"
-														*ngIf="isServer"
-													>
-														<input
-															[(ngModel)]="
-																config.host
-															"
-															type="text"
-															nbInput
-															fullWidth
-															[disabled]="
-																appSetting?.timerStarted
-															"
-															status="basic"
-														/>
-													</div>
-													<div
-														class="col-5 centered-text"
-														*ngIf="isServer"
-													>
-														<p>
-															{{
-																'TIMER_TRACKER.SETTINGS.UI_PORT'
+																'TIMER_TRACKER.SETTINGS.UI_SERVER_PORT'
 																	| translate
 															}}
 														</p>
@@ -1242,7 +1242,6 @@
 									</div>
 									<div
 										class="col-12"
-										*ngIf="config?.timeTrackerWindow"
 									>
 										<nb-card>
 											<nb-card-body>
@@ -1257,13 +1256,10 @@
 															}}
 														</p>
 													</div>
-													<div class="col-12">
+													<div [class]="isServer ? 'col-6' : 'col-12'">
 														<nb-toggle
 															[(ngModel)]="
 																autoLaunch
-															"
-															[disabled]="
-																appSetting?.timerStarted
 															"
 															(ngModelChange)="
 																toggleAutoLaunch(
@@ -1273,6 +1269,21 @@
 															status="basic"
 															>{{
 																'TIMER_TRACKER.SETTINGS.AUTOMATIC_LAUNCH'
+																	| translate
+															}}
+														</nb-toggle>
+													</div>
+													<div *ngIf="isServer" class="col-6">
+														<nb-toggle
+															[(ngModel)]="autoStart"
+															(ngModelChange)="
+																toggleAutoStartOnStartup(
+																	$event
+																)
+															"
+															status="basic"
+															>{{
+																'TIMER_TRACKER.SETTINGS.AUTO_START_STARTUP'
 																	| translate
 															}}
 														</nb-toggle>
