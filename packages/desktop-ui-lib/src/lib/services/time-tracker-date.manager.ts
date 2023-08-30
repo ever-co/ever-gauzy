@@ -1,13 +1,15 @@
 import * as moment from 'moment';
-import { IOrganization } from '@gauzy/contracts';
+import { IOrganization, LanguagesEnum } from '@gauzy/contracts';
 
 export class TimeTrackerDateManager {
 	private static _instance: TimeTrackerDateManager;
 	private _organization: IOrganization;
 	private _utcOffset: number;
+	private _language: LanguagesEnum;
 
 	private constructor() {
 		this._utcOffset = moment().utcOffset();
+		this._language = LanguagesEnum.ENGLISH;
 	}
 
 	private static get instance(): TimeTrackerDateManager {
@@ -71,10 +73,15 @@ export class TimeTrackerDateManager {
 
 	// Set the start of the week
 	private startWeekDay() {
-		moment.locale('en', {
+		moment.locale(this._language, {
 			week: {
 				dow: TimeTrackerDateManager._startWeekDayNumber,
 			},
 		});
+	}
+
+	public static locale(language = LanguagesEnum.ENGLISH) {
+		moment.locale(language);
+		this.instance._language = language;
 	}
 }
