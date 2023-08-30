@@ -110,7 +110,8 @@ export const LocalStore = {
 					},
 					prerelease: false,
 					preferredLanguage: 'en',
-					zone: 'local'
+					zone: 'local',
+					autoStart: true
 				};
 				store.set({
 					appSetting: defaultAppSetting
