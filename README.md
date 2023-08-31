@@ -99,6 +99,10 @@ Read more [about Gauzy](https://github.com/ever-co/ever-gauzy/wiki/About-Gauzy) 
 - **<https://gauzy.co>** - check more information about the platform at the official website.
 - **<https://ever.co>** - get more information about our company products.
 
+## 📊 Activity
+
+![Alt](https://repobeats.axiom.co/api/embed/7c6f6c3bf56fd91647549cf4ae70af49ed5ee106.svg "Repobeats analytics image")
+
 ## 💻 Demo, Downloads, Testing and Production
 
 ### Demo

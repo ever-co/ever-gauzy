@@ -10,3 +10,4 @@ export * from './concretes/dialog-local-update';
 export * from './concretes/dialog-acknowledge-inactivity';
 export * from './concretes/dialog-stop-timer-exit-confirmation';
 export * from './concretes/dialog-stop-timer-logout-confirmation';
+export * from './concretes/dialog-stop-server-exit-confirmation';
