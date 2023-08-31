@@ -325,5 +325,5 @@ export function validateDateRange(startedAt: Date, stoppedAt: Date): void {
 export function findIntersection(arr1: any[], arr2: any[]) {
 	const set1 = new Set(arr1);
 	const intersection = arr2.filter((element) => set1.has(element));
-	return intersection || [];
+	return intersection;
 }
