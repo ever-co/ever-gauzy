@@ -149,11 +149,7 @@ export class AuthController {
 	async signinWorkspaces(
 		@Body() input: UserSignInWorkspaceDTO
 	): Promise<IUserSignInWorkspaceResponse> {
-		try {
-			return await this.authService.signinWorkspaces(input);
-		} catch (error) {
-			console.log('Error while signin workspace: %s', error?.message);
-		}
+		return await this.authService.signinWorkspaces(input);
 	}
 
 	/**

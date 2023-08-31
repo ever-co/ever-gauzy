@@ -114,17 +114,23 @@ export class AuthService extends SocialAuthService {
 	 * @returns IUserSignInWorkspaceResponse containing user details and confirmation status.
 	 */
 	async signinWorkspaces({ email, password }: IUserSignInWorkspaceInput): Promise<IUserSignInWorkspaceResponse> {
-		// Creating the initial query
-		const query = this.userRepository.createQueryBuilder('user')
-		query.leftJoinAndSelect('user.employee', 'employee');
-		query.where('user.email = :email AND user.isActive = true', { email });
-		query.andWhere('employee IS NULL OR employee.isActive = true');
-
+		console.time('signin workspaces');
 		// Fetching users matching the query
-		let users = await query.getMany();
+		let users = await this.userService.find({
+			where: {
+				email,
+				isActive: true,
+			},
+			relations: {
+				employee: true
+			},
+			order: {
+				createdAt: 'DESC'
+			}
+		});
 
 		// Filtering users based on password match
-		users = users.filter((user: IUser) => !!bcrypt.compareSync(password, user.hash));
+		users = users.filter((user: IUser) => !!bcrypt.compareSync(password, user.hash) && (!user.employee || user.employee?.isActive));
 
 		// Creating an array of user objects with relevant data
 		const mappedUsers = users.map((user: IUser) => {
@@ -147,9 +153,12 @@ export class AuthService extends SocialAuthService {
 			show_popup: mappedUsers.length > 1
 		};
 
+		console.timeEnd('signin workspaces');
+
 		if (mappedUsers.length > 0) {
 			return response;
 		} else {
+			console.log('Error while signin workspace: %s');
 			throw new UnauthorizedException();
 		}
 	}
