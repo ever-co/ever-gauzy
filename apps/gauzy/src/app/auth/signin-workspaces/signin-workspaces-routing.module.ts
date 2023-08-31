@@ -1,12 +1,12 @@
 import { RouterModule, Routes } from '@angular/router';
 import { NgModule } from '@angular/core';
-import { SigninWorksapcesLayoutComponent } from './signin-workspaces.component';
+import { SignInWorkspacesLayoutComponent } from './signin-workspaces.component';
 import { MultiWorkspaceOnboardingComponent } from './components/multi-workspace/multi-workspace.component';
 
 const routes: Routes = [
 	{
 		path: 'workspaces',
-		component: SigninWorksapcesLayoutComponent,
+		component: SignInWorkspacesLayoutComponent,
 		children: [
 			{
 				path: '',
@@ -20,4 +20,4 @@ const routes: Routes = [
 	imports: [RouterModule.forChild(routes)],
 	exports: [RouterModule]
 })
-export class SigninWorkspacesLayoutRoutingModule { }
+export class SignInWorkspacesLayoutRoutingModule { }

@@ -1,9 +1,9 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { UntilDestroy } from '@ngneat/until-destroy';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ngx-multitenant-login',
+	selector: 'ngx-sign-in-workspaces-layout',
 	template: `
 		<nb-layout windowMode>
 			<nb-layout-column>
@@ -12,11 +12,9 @@ import { UntilDestroy } from '@ngneat/until-destroy';
 		</nb-layout>
 	`
 })
-export class SigninWorksapcesLayoutComponent implements OnInit, OnDestroy {
+export class SignInWorkspacesLayoutComponent implements OnInit {
 
 	constructor() { }
 
 	ngOnInit() { }
-
-	ngOnDestroy() { }
 }

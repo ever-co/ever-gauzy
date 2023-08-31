@@ -26,7 +26,7 @@ export const routes: Routes = [
 			{
 				path: 'signin',
 				loadChildren: () => import('./signin-workspaces/signin-workspaces.module').then(
-					(m) => m.SigninWorkspacesLayoutModule
+					(m) => m.SignInWorkspacesLayoutModule
 				)
 			},
 			{

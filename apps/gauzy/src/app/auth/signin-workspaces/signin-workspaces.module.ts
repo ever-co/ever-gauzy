@@ -2,8 +2,8 @@ import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { NbCardModule, NbLayoutModule, NbListModule, NbSpinnerModule } from '@nebular/theme';
 import { ThemeModule } from '../../@theme/theme.module';
-import { SigninWorksapcesLayoutComponent } from './signin-workspaces.component';
-import { SigninWorkspacesLayoutRoutingModule } from './signin-workspaces-routing.module';
+import { SignInWorkspacesLayoutComponent } from './signin-workspaces.component';
+import { SignInWorkspacesLayoutRoutingModule } from './signin-workspaces-routing.module';
 import { MultiWorkspaceOnboardingComponent } from './components/multi-workspace/multi-workspace.component';
 
 @NgModule({
@@ -14,12 +14,12 @@ import { MultiWorkspaceOnboardingComponent } from './components/multi-workspace/
 		NbListModule,
 		NbSpinnerModule,
 		ThemeModule,
-		SigninWorkspacesLayoutRoutingModule,
+		SignInWorkspacesLayoutRoutingModule,
 	],
 	declarations: [
-		SigninWorksapcesLayoutComponent,
+		SignInWorkspacesLayoutComponent,
 		MultiWorkspaceOnboardingComponent
 	],
 	providers: []
 })
-export class SigninWorkspacesLayoutModule { }
+export class SignInWorkspacesLayoutModule { }
