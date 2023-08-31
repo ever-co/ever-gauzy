@@ -131,7 +131,7 @@ export class AuthController {
 	@UsePipes(new ValidationPipe({ transform: true }))
 	async login(
 		@Body() entity: UserLoginDTO
-	): Promise<IAuthResponse | void> {
+	): Promise<IAuthResponse | null> {
 		return await this.commandBus.execute(
 			new AuthLoginCommand(entity)
 		);

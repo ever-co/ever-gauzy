@@ -10,7 +10,7 @@ export class AuthLoginHandler implements ICommandHandler<AuthLoginCommand> {
 		private readonly authService: AuthService
 	) { }
 
-	public async execute(command: AuthLoginCommand): Promise<IAuthResponse | void> {
+	public async execute(command: AuthLoginCommand): Promise<IAuthResponse | null> {
 		const { input } = command;
 		const { email, password, magic_code }: IUserLoginInput = input;
 
