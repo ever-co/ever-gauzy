@@ -442,10 +442,26 @@
 					<div class="col-10">
 						<nb-card>
 							<nb-card-body>
-								<div class="row flex-column-reverse">
+								<div class="row">
+									<div class="col-6">
+										<nb-toggle
+											[checked]="automaticUpdate$ | async"
+											(checkedChange)="
+												toggleAutomaticUpdate($event)
+											"
+											status="basic"
+											[disabled]="
+												appSetting?.timerStarted
+											"
+											>{{
+												'TIMER_TRACKER.SETTINGS.ENABLE_AUTOMATIC_UPDATE'
+													| translate
+											}}
+										</nb-toggle>
+									</div>
 									<div
 										*ngIf="automaticUpdate$ | async"
-										class="col-12"
+										class="col-6"
 									>
 										<div class="label">
 											{{
@@ -484,22 +500,6 @@
 											</nb-option>
 										</nb-select>
 									</div>
-									<div class="col-12">
-										<nb-toggle
-											[checked]="automaticUpdate$ | async"
-											(checkedChange)="
-												toggleAutomaticUpdate($event)
-											"
-											status="basic"
-											[disabled]="
-												appSetting?.timerStarted
-											"
-											>{{
-												'TIMER_TRACKER.SETTINGS.ENABLE_AUTOMATIC_UPDATE'
-													| translate
-											}}
-										</nb-toggle>
-									</div>
 								</div>
 							</nb-card-body>
 						</nb-card>
@@ -529,109 +529,95 @@
 					<div class="col-10">
 						<nb-card>
 							<nb-card-body>
-								<nb-toggle
-									[checked]="(updaterServer$ | async)?.github"
-									(checkedChange)="
-										toggleGithubDefaultServer($event)
-									"
-									status="basic"
-									[disabled]="
-										appSetting?.timerStarted ||
-										showProgressBar
-									"
-									><i class="fa-brands fa-github-alt"></i>
-									Github
-								</nb-toggle>
-								<nb-toggle
-									[checked]="
-										(updaterServer$ | async)?.digitalOcean
-									"
-									(checkedChange)="
-										toggleDigitalOceanDefaultServer($event)
-									"
-									status="basic"
-									[disabled]="
-										appSetting?.timerStarted ||
-										showProgressBar
-									"
-									><i class="fa-brands fa-digital-ocean"></i>
-									Digital Ocean
-								</nb-toggle>
-							</nb-card-body>
-						</nb-card>
-					</div>
-				</div>
-				<div class="row">
-					<div class="col-10">
-						<p>
-							{{
-								'TIMER_TRACKER.SETTINGS.TOGGLE_UPDATE_LOCALLY'
-									| translate
-							}}
-						</p>
-					</div>
-				</div>
-				<div class="row notification">
-					<div
-						[class]="
-							(updaterServer$ | async)?.local ? 'col-5' : 'col-10'
-						"
-					>
-						<nb-card>
-							<nb-card-body>
-								<nb-toggle
-									[checked]="(updaterServer$ | async)?.local"
-									(checkedChange)="toggleLocalServer($event)"
-									status="basic"
-									[disabled]="
-										appSetting?.timerStarted ||
-										showProgressBar
-									"
-									><i class="fas fa-server"></i
-									>{{
-										'TIMER_TRACKER.SETTINGS.LOCAL_SERVER'
-											| translate
-									}}
-								</nb-toggle>
-							</nb-card-body>
-						</nb-card>
-					</div>
-					<div
-						*ngIf="(updaterServer$ | async)?.local"
-						class="col-5 d-flex align-items-center justify-content-center"
-					>
-						<div class="row">
-							<div class="col-12">
-								<p
-									[innerHTML]="
-										'TIMER_TRACKER.SETTINGS.LOCAL_SERVER_NOTE'
-											| translate
-									"
-								></p>
-							</div>
-							<div
-								class="col-12 w-100 file d-flex align-items-center"
-							>
-								<button
-									nbButton
-									[disabled]="
-										appSetting?.timerStarted ||
-										showProgressBar
-									"
-									size="small"
-									(click)="selectDirectory()"
-								>
-									<nb-icon icon="folder-outline"></nb-icon>
-									{{ 'BUTTONS.FILES' | translate }}
-								</button>
-								<div
-									class="file-uri"
-									[nbTooltip]="(file$ | async)?.uri"
-								>
-									{{ (file$ | async)?.uri }}
+								<div class="row">
+									<div class="col-6">
+										<nb-toggle
+										[checked]="(updaterServer$ | async)?.github"
+										(checkedChange)="
+											toggleGithubDefaultServer($event)
+										"
+										status="basic"
+										[disabled]="
+											appSetting?.timerStarted ||
+											showProgressBar
+										"
+										><i class="fa-brands fa-github-alt"></i>
+										Github
+									</nb-toggle>
+									</div>
+									<div class="col-6">
+										<nb-toggle
+										[checked]="
+											(updaterServer$ | async)?.digitalOcean
+										"
+										(checkedChange)="
+											toggleDigitalOceanDefaultServer($event)
+										"
+										status="basic"
+										[disabled]="
+											appSetting?.timerStarted ||
+											showProgressBar
+										"
+										><i class="fa-brands fa-digital-ocean"></i>
+										Digital Ocean
+									</nb-toggle>
+									</div>
+									<div class="col-12">
+										<nb-toggle
+											[checked]="(updaterServer$ | async)?.local"
+											(checkedChange)="toggleLocalServer($event)"
+											status="basic"
+											[disabled]="
+												appSetting?.timerStarted ||
+												showProgressBar
+											"
+											><i class="fas fa-server"></i>
+											{{
+												'TIMER_TRACKER.SETTINGS.LOCAL_SERVER'
+													| translate
+											}}
+										</nb-toggle>
+									</div>
+									<div
+										*ngIf="(updaterServer$ | async)?.local"
+										class="col-12 d-flex align-items-center justify-content-center"
+									>
+										<div class="row">
+											<div class="col-12">
+												<p
+													[innerHTML]="
+														'TIMER_TRACKER.SETTINGS.LOCAL_SERVER_NOTE'
+															| translate
+													"
+												></p>
+											</div>
+											<div
+												class="col-12 w-100 file d-flex align-items-center"
+											>
+												<button
+													nbButton
+													[disabled]="
+														appSetting?.timerStarted ||
+														showProgressBar
+													"
+													size="small"
+													(click)="selectDirectory()"
+												>
+													<nb-icon icon="folder-outline"></nb-icon>
+													{{ 'BUTTONS.FILES' | translate }}
+												</button>
+												<div
+													class="file-uri"
+													[nbTooltip]="(file$ | async)?.uri"
+												>
+													{{ (file$ | async)?.uri }}
+												</div>
+											</div>
+										</div>
+									</div>
 								</div>
-							</div>
-						</div>
+							</nb-card-body>
+						</nb-card>
 					</div>
 				</div>
 				<!-- Start prerelease -->
@@ -961,7 +947,7 @@
 														</p>
 													</div>
 													<div
-														class="col-7 form-group"
+														class="col-7"
 														*ngIf="isServer"
 													>
 														<input
