@@ -19,7 +19,7 @@ import {
 	IUserEmailInput,
 	IUserLoginInput,
 	IUserSigninWorkspaceResponse,
-	IUserSigninWorkspaceInput
+	IUserSignInWorkspaceInput
 } from '@gauzy/contracts';
 import { environment } from '@gauzy/config';
 import { SocialAuthService } from '@gauzy/auth';
@@ -110,10 +110,10 @@ export class AuthService extends SocialAuthService {
 
 	/**
 	 * Signs in users to workspaces.
-	 * @param param0 - IUserSigninWorkspaceInput containing email and password.
+	 * @param param0 - IUserSignInWorkspaceInput containing email and password.
 	 * @returns IUserSigninWorkspaceResponse containing user details and confirmation status.
 	 */
-	async signinWorkspaces({ email, password }: IUserSigninWorkspaceInput): Promise<IUserSigninWorkspaceResponse> {
+	async signinWorkspaces({ email, password }: IUserSignInWorkspaceInput): Promise<IUserSigninWorkspaceResponse> {
 		// Creating the initial query
 		const query = this.userRepository.createQueryBuilder('user')
 		query.leftJoinAndSelect('user.employee', 'employee');

@@ -1,5 +1,5 @@
 import { ApiPropertyOptional, IntersectionType } from "@nestjs/swagger";
-import { IUserLoginInput, IUserSigninWorkspaceInput } from "@gauzy/contracts";
+import { IUserLoginInput, IUserSignInWorkspaceInput } from "@gauzy/contracts";
 import { IsNotEmpty, IsOptional } from "class-validator";
 import { UserEmailDTO } from "./user-email.dto";
 import { UserPasswordDTO } from "./user-password.dto";
@@ -8,7 +8,7 @@ import { UserPasswordDTO } from "./user-password.dto";
 export class UserSignInWorkspaceDTO extends IntersectionType(
     UserEmailDTO,
     UserPasswordDTO
-) implements IUserSigninWorkspaceInput { }
+) implements IUserSignInWorkspaceInput { }
 
 /**
  * User login DTO validation

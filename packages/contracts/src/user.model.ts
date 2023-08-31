@@ -109,7 +109,7 @@ export interface IUserMagicCodeInput {
 
 export interface IUserLoginInput extends IUserEmailInput, IUserPasswordInput, IUserMagicCodeInput { }
 
-export interface IUserSigninWorkspaceInput extends IUserEmailInput, IUserPasswordInput { }
+export interface IUserSignInWorkspaceInput extends IUserEmailInput, IUserPasswordInput { }
 
 export interface IUserSigninWorkspaceResponse {
 	users: IUser[];
