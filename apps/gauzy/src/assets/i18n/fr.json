@@ -3869,6 +3869,7 @@
 			"EXIT": "Es-tu sûr(e) de vouloir quitter ?",
 			"STOPPED_DU_INACTIVITY": "Le minuteur a été arrêté en raison d'une période d'inactivité dépassant {{ inactivity }}. Assurez-vous de relancer le minuteur lorsque vous reprenez le travail.",
 			"EXIT_CONFIRM": "Cliquez sur \"Fermer\" pour arrêter le chronomètre et quitter l'application.",
+			"EXIT_SERVER_CONFIRM": "Cliquez sur Sortir pour arrêter le serveur et quitter l'application.",
 			"LOGOUT_CONFIRM": "Cliquez sur Déconnexion pour arrêter le minuteur et vous déconnecter de l'application.",
 			"SELECT_UPDATE_FILES": "Veuillez sélectionner le dossier contenant les fichiers de mise à jour.",
 			"UPDATE_READY": "Mise à jour prête à être téléchargée.",

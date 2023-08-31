@@ -3869,6 +3869,7 @@
 			"EXIT": "你确定你想退出吗？",
 			"STOPPED_DU_INACTIVITY": "由于不活动期超过{{inactivity}}，计时器已停止。请确保在继续工作时重新启动计时器。",
 			"EXIT_CONFIRM": "点击“退出”按钮停止计时器并退出应用程序。",
+			"EXIT_SERVER_CONFIRM": "点击“退出”以停止服务器并退出应用程序。",
 			"LOGOUT_CONFIRM": "点击登出以停止计时器并从应用程序中注销。",
 			"SELECT_UPDATE_FILES": "请选择带有更新文件的文件夹。",
 			"UPDATE_READY": "更新准备下载",

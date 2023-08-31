@@ -3869,6 +3869,7 @@
 			"EXIT": "Tem certeza de que deseja sair?",
 			"STOPPED_DU_INACTIVITY": "O cronômetro foi parado devido ao período de inatividade ter excedido {{ inatividade }}. Por favor, certifique-se de reiniciar o cronômetro ao continuar trabalhando.",
 			"EXIT_CONFIRM": "Clique em Sair para parar o cronômetro e sair do aplicativo.",
+			"EXIT_SERVER_CONFIRM": "Clique em Sair para Parar o Servidor e Sair do aplicativo.",
 			"LOGOUT_CONFIRM": "Clique em Sair para parar o temporizador e fazer logout do aplicativo.",
 			"SELECT_UPDATE_FILES": "Por favor, selecione a pasta com os arquivos de atualização.",
 			"UPDATE_READY": "Atualização Pronta para Download",

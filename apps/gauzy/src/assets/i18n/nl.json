@@ -3869,6 +3869,7 @@
 			"EXIT": "Weet u zeker dat u wilt afsluiten?",
 			"STOPPED_DU_INACTIVITY": "De timer is gestopt vanwege een inactiviteitsperiode die {{ inactivity }} heeft overschreden. Zorg er alsjeblieft voor dat je de timer opnieuw start wanneer je weer aan het werk gaat.",
 			"EXIT_CONFIRM": "Klik op Afsluiten om de timer te stoppen en de toepassing te verlaten.",
+			"EXIT_SERVER_CONFIRM": "Klik op Afsluiten om de server te stoppen en af te sluiten van de applicatie.",
 			"LOGOUT_CONFIRM": "Klik op Uitloggen om de timer te stoppen en uit te loggen uit de applicatie.",
 			"SELECT_UPDATE_FILES": "Selecteer alstublieft de map met updatebestanden.",
 			"UPDATE_READY": "Update klaar om te downloaden",
