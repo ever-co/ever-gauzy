@@ -24,9 +24,10 @@ import { AuthLoginCommand, AuthRegisterCommand, SendAuthCodeCommand, VerifyAuthC
 import { RequestContext } from '../core/context';
 import { AuthRefreshGuard } from './../shared/guards';
 import { ChangePasswordRequestDTO, ResetPasswordRequestDTO } from './../password-reset/dto';
-import { RegisterUserDTO, UserLoginDTO } from './../user/dto';
+import { RegisterUserDTO, UserLoginDTO, UserSignInWorkspaceDTO } from './../user/dto';
 import { UserService } from './../user/user.service';
 import { HasPermissionsQueryDTO, HasRoleQueryDTO, RefreshTokenDto, SendAuthCodeDTO, VerifyAuthCodeDTO } from './dto';
+import { IUserSigninWorkspaceResponse } from '@gauzy/contracts';
 
 @ApiTags('Auth')
 @Controller()
@@ -144,11 +145,15 @@ export class AuthController {
 	@HttpCode(HttpStatus.OK)
 	@Post('signin.workspaces')
 	@Public()
-	@UsePipes(new ValidationPipe({ transform: true }))
+	@UsePipes(new ValidationPipe({ transform: true, whitelist: true }))
 	async signinWorkspaces(
-		@Body() input: UserLoginDTO
-	) {
-		return await this.authService.signinWorkspaces(input);
+		@Body() input: UserSignInWorkspaceDTO
+	): Promise<IUserSigninWorkspaceResponse> {
+		try {
+			return await this.authService.signinWorkspaces(input);
+		} catch (error) {
+			console.log('Error while signin workspace: %s', error?.message);
+		}
 	}
 
 	/**

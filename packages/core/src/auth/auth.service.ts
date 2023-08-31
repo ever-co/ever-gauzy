@@ -17,7 +17,9 @@ import {
 	IUserInviteCodeConfirmationInput,
 	PermissionsEnum,
 	IUserEmailInput,
-	IUserLoginInput
+	IUserLoginInput,
+	IUserSigninWorkspaceResponse,
+	IUserSigninWorkspaceInput
 } from '@gauzy/contracts';
 import { environment } from '@gauzy/config';
 import { SocialAuthService } from '@gauzy/auth';
@@ -60,7 +62,7 @@ export class AuthService extends SocialAuthService {
 		try {
 			console.time('login');
 
-			let payload: JwtPayload | string;
+			let payload: JwtPayload | string = new Object();
 			if (magic_code) {
 				payload = verify(magic_code, environment.JWT_SECRET);
 			}
@@ -107,25 +109,25 @@ export class AuthService extends SocialAuthService {
 	}
 
 	/**
-	 *
-	 * @param param0
-	 * @returns
+	 * Signs in users to workspaces.
+	 * @param param0 - IUserSigninWorkspaceInput containing email and password.
+	 * @returns IUserSigninWorkspaceResponse containing user details and confirmation status.
 	 */
-	async signinWorkspaces({ email, password }: IUserLoginInput) {
-		console.time("authentication_login");
-
+	async signinWorkspaces({ email, password }: IUserSigninWorkspaceInput): Promise<IUserSigninWorkspaceResponse> {
+		// Creating the initial query
 		const query = this.userRepository.createQueryBuilder('user')
 		query.leftJoinAndSelect('user.employee', 'employee');
 		query.where('user.email = :email AND user.isActive = true', { email });
 		query.andWhere('employee IS NULL OR employee.isActive = true');
 
+		// Fetching users matching the query
 		let users = await query.getMany();
-		// Now users array contains users with matching passwords
+
+		// Filtering users based on password match
 		users = users.filter((user: IUser) => !!bcrypt.compareSync(password, user.hash));
 
-		console.timeEnd("authentication_login");
-
-		users = users.map((user: IUser) => {
+		// Creating an array of user objects with relevant data
+		const mappedUsers = users.map((user: IUser) => {
 			const payload: JwtPayload = {
 				id: user.id,
 				tenantId: user.tenantId,
@@ -138,19 +140,15 @@ export class AuthService extends SocialAuthService {
 			}
 		});
 
-		if (users.length === 1) {
-			// Now users array contains users with matching passwords
-			return {
-				users,
-				confirmed_email: email,
-				show_popup: false
-			}
-		} else if (users.length > 1) {
-			return {
-				users,
-				confirmed_email: email,
-				show_popup: true
-			}
+		// Determining the response based on the number of matching users
+		const response: IUserSigninWorkspaceResponse = {
+			users: mappedUsers,
+			confirmed_email: email,
+			show_popup: mappedUsers.length > 1
+		};
+
+		if (mappedUsers.length > 0) {
+			return response;
 		} else {
 			throw new UnauthorizedException();
 		}
