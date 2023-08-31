@@ -111,7 +111,7 @@ export interface IUserLoginInput extends IUserEmailInput, IUserPasswordInput, IU
 
 export interface IUserSignInWorkspaceInput extends IUserEmailInput, IUserPasswordInput { }
 
-export interface IUserSigninWorkspaceResponse {
+export interface IUserSignInWorkspaceResponse {
 	users: IUser[];
 	confirmed_email: string;
 	show_popup: boolean;

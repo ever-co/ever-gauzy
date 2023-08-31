@@ -27,7 +27,7 @@ import { ChangePasswordRequestDTO, ResetPasswordRequestDTO } from './../password
 import { RegisterUserDTO, UserLoginDTO, UserSignInWorkspaceDTO } from './../user/dto';
 import { UserService } from './../user/user.service';
 import { HasPermissionsQueryDTO, HasRoleQueryDTO, RefreshTokenDto, SendAuthCodeDTO, VerifyAuthCodeDTO } from './dto';
-import { IUserSigninWorkspaceResponse } from '@gauzy/contracts';
+import { IUserSignInWorkspaceResponse } from '@gauzy/contracts';
 
 @ApiTags('Auth')
 @Controller()
@@ -148,7 +148,7 @@ export class AuthController {
 	@UsePipes(new ValidationPipe({ transform: true, whitelist: true }))
 	async signinWorkspaces(
 		@Body() input: UserSignInWorkspaceDTO
-	): Promise<IUserSigninWorkspaceResponse> {
+	): Promise<IUserSignInWorkspaceResponse> {
 		try {
 			return await this.authService.signinWorkspaces(input);
 		} catch (error) {

@@ -18,7 +18,7 @@ import {
 	PermissionsEnum,
 	IUserEmailInput,
 	IUserLoginInput,
-	IUserSigninWorkspaceResponse,
+	IUserSignInWorkspaceResponse,
 	IUserSignInWorkspaceInput
 } from '@gauzy/contracts';
 import { environment } from '@gauzy/config';
@@ -111,9 +111,9 @@ export class AuthService extends SocialAuthService {
 	/**
 	 * Signs in users to workspaces.
 	 * @param param0 - IUserSignInWorkspaceInput containing email and password.
-	 * @returns IUserSigninWorkspaceResponse containing user details and confirmation status.
+	 * @returns IUserSignInWorkspaceResponse containing user details and confirmation status.
 	 */
-	async signinWorkspaces({ email, password }: IUserSignInWorkspaceInput): Promise<IUserSigninWorkspaceResponse> {
+	async signinWorkspaces({ email, password }: IUserSignInWorkspaceInput): Promise<IUserSignInWorkspaceResponse> {
 		// Creating the initial query
 		const query = this.userRepository.createQueryBuilder('user')
 		query.leftJoinAndSelect('user.employee', 'employee');
@@ -141,7 +141,7 @@ export class AuthService extends SocialAuthService {
 		});
 
 		// Determining the response based on the number of matching users
-		const response: IUserSigninWorkspaceResponse = {
+		const response: IUserSignInWorkspaceResponse = {
 			users: mappedUsers,
 			confirmed_email: email,
 			show_popup: mappedUsers.length > 1
