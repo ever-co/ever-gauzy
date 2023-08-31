@@ -388,6 +388,7 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 	progressDownload = 0;
 	showProgressBar = false;
 	autoLaunch = null;
+	autoStart = null;
 	minimizeOnStartup = null;
 	authSetting = null;
 	currentUser$: BehaviorSubject<any> = new BehaviorSubject(null);
@@ -535,6 +536,7 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 				this.screenshotNotification = setting?.screenshotNotification;
 				this.muted = setting?.mutedNotification;
 				this.autoLaunch = setting?.autoLaunch;
+				this.autoStart = setting?.autoStart;
 				this.minimizeOnStartup = setting?.minimizeOnStartup;
 				this._automaticUpdate$.next(setting?.automaticUpdate);
 				this._automaticUpdateDelay$.next(setting?.automaticUpdateDelay);
@@ -828,6 +830,13 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 		this.electronService.ipcRenderer.send('minimize_on_startup', {
 			autoLaunch: this.autoLaunch,
 			hidden: value
+		});
+	}
+
+	toggleAutoStartOnStartup(value: boolean) {
+		this.updateSetting(value, 'autoStart');
+		this.electronService.ipcRenderer.send('auto_start_on_startup', {
+			autoStart: value,
 		});
 	}
 

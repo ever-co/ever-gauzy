@@ -93,6 +93,16 @@ export class ServerDashboardComponent implements OnInit, AfterViewInit {
 	}
 	ngAfterViewInit(): void {
 		this.electronService.ipcRenderer.on(
+			'dashboard_ready',
+			(event, arg) => {
+				this._ngZone.run(() => {
+					if (!!arg.setting?.autoStart) {
+						this.runServer();
+					}
+				});
+			}
+		);
+		this.electronService.ipcRenderer.on(
 			'preferred_language_change',
 			(event, language: LanguagesEnum) => {
 				this._ngZone.run(() => {
@@ -115,7 +125,7 @@ export class ServerDashboardComponent implements OnInit, AfterViewInit {
 				}),
 				untilDestroyed(this)
 			)
-			.subscribe();;
+			.subscribe();
 	}
 
 	ngOnInit(): void {
