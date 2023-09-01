@@ -5,12 +5,15 @@ import { AuthService } from '../../auth.service';
 
 @CommandHandler(AuthLoginCommand)
 export class AuthLoginHandler implements ICommandHandler<AuthLoginCommand> {
-	constructor(private readonly authService: AuthService) {}
 
-	public async execute(command: AuthLoginCommand): Promise<IAuthResponse> {
+	constructor(
+		private readonly authService: AuthService
+	) { }
+
+	public async execute(command: AuthLoginCommand): Promise<IAuthResponse | null> {
 		const { input } = command;
-		const { email, password }: IUserLoginInput = input;
+		const { email, password, magic_code }: IUserLoginInput = input;
 
-		return await this.authService.login(email, password);
+		return await this.authService.login({ email, password, magic_code });
 	}
 }

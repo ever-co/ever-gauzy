@@ -285,7 +285,8 @@
 		"pdfmaker",
 		"Pdfmaker",
 		"prestart",
-		"resave"
+		"resave",
+		"signin"
 	],
 	"useGitignore": true,
 	"ignorePaths": [

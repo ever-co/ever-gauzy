@@ -14,9 +14,9 @@ import {
 	ICandidate,
 	IImageAsset,
 } from '@gauzy/contracts';
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { ApiPropertyOptional } from '@nestjs/swagger';
 import { Exclude } from 'class-transformer';
-import { IsOptional, IsUUID } from 'class-validator';
+import { IsBoolean, IsEmail, IsEnum, IsNumber, IsOptional, IsString, IsUUID } from 'class-validator';
 import {
 	Column,
 	Entity,
@@ -45,57 +45,82 @@ import {
 export class User extends TenantBaseEntity implements IUser {
 
 	@ApiPropertyOptional({ type: () => String })
+	@IsOptional()
+	@IsString()
 	@Index()
 	@Column({ nullable: true })
 	thirdPartyId?: string;
 
 	@ApiPropertyOptional({ type: () => String })
+	@IsOptional()
+	@IsString()
 	@Index()
 	@Column({ nullable: true })
 	firstName?: string;
 
 	@ApiPropertyOptional({ type: () => String })
+	@IsOptional()
+	@IsString()
 	@Index()
 	@Column({ nullable: true })
 	lastName?: string;
 
-	@ApiProperty({ type: () => String, minLength: 3, maxLength: 100 })
+	@ApiPropertyOptional({ type: () => String, minLength: 3, maxLength: 100 })
+	@IsOptional()
+	@IsEmail()
 	@Index({ unique: false })
 	@Column({ nullable: true })
 	email?: string;
 
-	@ApiProperty({ type: () => String, minLength: 4, maxLength: 12 })
+	@ApiPropertyOptional({ type: () => String, minLength: 4, maxLength: 12 })
+	@IsOptional()
+	@IsString()
 	@Index()
 	@Column({ nullable: true })
 	phoneNumber?: string;
 
 	@ApiPropertyOptional({ type: () => String, minLength: 3, maxLength: 20 })
+	@IsOptional()
+	@IsString()
 	@Index({ unique: false })
 	@Column({ nullable: true })
 	username?: string;
 
+	@ApiPropertyOptional({ type: () => String })
+	@IsOptional()
+	@IsString()
 	@Column({ nullable: true })
 	timeZone?: string;
 
-	@ApiProperty({ type: () => String })
+	@ApiPropertyOptional({ type: () => String })
+	@IsOptional()
+	@IsString()
 	@Exclude({ toPlainOnly: true })
 	@Column({ nullable: true })
 	hash?: string;
 
-	@ApiProperty({ type: () => String })
+	@ApiPropertyOptional({ type: () => String })
+	@IsOptional()
+	@IsString()
 	@Exclude({ toPlainOnly: true })
 	@Column({ insert: false, nullable: true })
 	public refreshToken?: string;
 
 	@ApiPropertyOptional({ type: () => String, maxLength: 500 })
+	@IsOptional()
+	@IsString()
 	@Column({ length: 500, nullable: true })
 	imageUrl?: string;
 
-	@ApiProperty({ type: () => String, enum: LanguagesEnum })
+	@ApiPropertyOptional({ type: () => String, enum: LanguagesEnum })
+	@IsOptional()
+	@IsEnum(LanguagesEnum)
 	@Column({ nullable: true, default: LanguagesEnum.ENGLISH })
 	preferredLanguage?: string;
 
-	@ApiProperty({ type: () => String, enum: ComponentLayoutStyleEnum })
+	@ApiPropertyOptional({ type: () => String, enum: ComponentLayoutStyleEnum })
+	@IsOptional()
+	@IsEnum(ComponentLayoutStyleEnum)
 	@Column({
 		type: 'simple-enum',
 		nullable: true,
@@ -105,25 +130,32 @@ export class User extends TenantBaseEntity implements IUser {
 	preferredComponentLayout?: ComponentLayoutStyleEnum;
 
 	@ApiPropertyOptional({ type: () => Boolean, default: true })
+	@IsOptional()
+	@IsBoolean()
 	@Column({ nullable: true, default: true })
 	isActive?: boolean;
 
 	@ApiPropertyOptional({ type: () => Number })
+	@IsOptional()
+	@IsNumber()
 	@Exclude({ toPlainOnly: true })
 	@Column({ insert: false, nullable: true })
 	public code?: number;
 
 	@ApiPropertyOptional({ type: () => Date })
+	@IsOptional()
 	@Exclude({ toPlainOnly: true })
 	@Column({ insert: false, nullable: true })
 	public codeExpireAt?: Date;
 
 	@ApiPropertyOptional({ type: () => Date })
+	@IsOptional()
 	@Exclude({ toPlainOnly: true })
 	@Column({ insert: false, nullable: true })
 	public emailVerifiedAt?: Date;
 
 	@ApiPropertyOptional({ type: () => String })
+	@IsOptional()
 	@Exclude({ toPlainOnly: true })
 	@Column({ insert: false, nullable: true })
 	public emailToken?: string;
@@ -137,16 +169,23 @@ export class User extends TenantBaseEntity implements IUser {
 	| @ManyToOne
 	|--------------------------------------------------------------------------
 	*/
-	// Role
-	@ApiPropertyOptional({ type: () => Role })
-	@ManyToOne(() => Role, (role) => role.users, {
+
+	/**
+	 * Role
+	 */
+	@ManyToOne(() => Role, {
+		/** Indicates if relation column value can be nullable or not. */
 		nullable: true,
-		onDelete: 'CASCADE'
+
+		/** Database cascade action on delete. */
+		onDelete: 'SET NULL',
 	})
 	@JoinColumn()
 	role?: IRole;
 
-	@ApiProperty({ type: () => String, readOnly: true })
+	@ApiPropertyOptional({ type: () => String })
+	@IsOptional()
+	@IsUUID()
 	@RelationId((it: User) => it.role)
 	@Index()
 	@Column({ nullable: true })
@@ -182,14 +221,12 @@ export class User extends TenantBaseEntity implements IUser {
 	/**
 	 * Employee
 	 */
-	@ApiPropertyOptional({ type: () => Employee })
 	@OneToOne(() => Employee, (employee: Employee) => employee.user)
 	employee?: IEmployee;
 
 	/**
 	 * Candidate
 	 */
-	@ApiPropertyOptional({ type: () => Candidate })
 	@OneToOne(() => Candidate, (candidate: Candidate) => candidate.user)
 	candidate?: ICandidate;
 
@@ -217,14 +254,9 @@ export class User extends TenantBaseEntity implements IUser {
 	/**
 	 * UserOrganization
 	 */
-	@ApiProperty({ type: () => UserOrganization, isArray: true })
-	@OneToMany(
-		() => UserOrganization,
-		(userOrganization) => userOrganization.user,
-		{
-			cascade: true
-		}
-	)
+	@OneToMany(() => UserOrganization, (userOrganization) => userOrganization.user, {
+		cascade: true
+	})
 	@JoinColumn()
 	organizations?: IOrganization[];
 
