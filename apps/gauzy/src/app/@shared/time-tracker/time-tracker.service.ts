@@ -202,10 +202,19 @@ export class TimeTrackerService implements OnDestroy {
 	}
 
 	getTimerStatus(params: ITimerStatusInput): Promise<ITimerStatus> {
+		const todayStart = toUTC(moment().startOf('day')).format('YYYY-MM-DD HH:mm:ss');
+		const todayEnd = toUTC(moment().endOf('day')).format('YYYY-MM-DD HH:mm:ss');
 		return firstValueFrom(
-			this.http.get<ITimerStatus>(`${API_PREFIX}/timesheet/timer/status`, {
-				params: toParams({ ...params })
-			})
+			this.http.get<ITimerStatus>(
+				`${API_PREFIX}/timesheet/timer/status`,
+				{
+					params: toParams({
+						...params,
+						todayStart,
+						todayEnd
+					}),
+				}
+			)
 		);
 	}
 
