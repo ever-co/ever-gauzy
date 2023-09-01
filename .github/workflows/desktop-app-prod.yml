@@ -22,7 +22,7 @@ jobs:
             - name: Install Node.js, NPM and Yarn
               uses: actions/setup-node@v3
               with:
-                  node-version: 16
+                  node-version: 18
                   cache: 'yarn'
 
             - name: Change permissions
@@ -77,7 +77,7 @@ jobs:
             - name: Install Node.js, NPM and Yarn
               uses: actions/setup-node@v3
               with:
-                  node-version: 16
+                  node-version: 18
                   cache: 'yarn'
 
             - name: Install latest version of NPM
@@ -126,7 +126,7 @@ jobs:
             - name: Install Node.js, NPM and Yarn
               uses: actions/setup-node@v3
               with:
-                  node-version: 16
+                  node-version: 18
                   cache: 'yarn'
 
             - name: Install latest version of NPM
