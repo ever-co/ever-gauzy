@@ -8,7 +8,9 @@ import {
 	PermissionsEnum,
 	IAuthResponse,
 	IUserEmailInput,
-	IUserTokenInput
+	IUserTokenInput,
+	IUserSignInWorkspaceInput,
+	IUserSignInWorkspaceResponse
 } from '@gauzy/contracts';
 import { Observable } from 'rxjs';
 import { toParams } from '@gauzy/common-angular';
@@ -36,6 +38,20 @@ export class AuthService {
 			`${API_PREFIX}/auth/login`,
 			loginInput
 		);
+	}
+
+	/**
+	 * Sign in to a different workspace.
+	 * @param input - IUserSignInWorkspaceInput containing email and password.
+	 * @returns Promise<IUserSignInWorkspaceResponse> representing the response from the server.
+	 */
+	signinWorkspaces(input: IUserSignInWorkspaceInput): Observable<IUserSignInWorkspaceResponse> {
+		try {
+			return this.http.post<IUserSignInWorkspaceResponse>(`${API_PREFIX}/auth/signin.workspaces`, input);
+		} catch (error) {
+			// Handle errors appropriately (e.g., log, throw, etc.)
+			throw error;
+		}
 	}
 
 	/**

@@ -514,7 +514,7 @@ export class EmailService {
 	async emailVerification(
 		user: IUser,
 		verificationLink: string,
-		verificationCode: number,
+		verificationCode: string,
 		thirdPartyIntegration: IAppIntegrationConfig
 	) {
 		const { email, firstName, lastName, preferredLanguage } = user;
@@ -834,7 +834,7 @@ export class EmailService {
 	async emailReset(
 		user: IUser,
 		languageCode: LanguagesEnum,
-		verificationCode: number,
+		verificationCode: string,
 		organization: IOrganization
 	) {
 		const integration = Object.assign({}, env.appIntegrationConfig);

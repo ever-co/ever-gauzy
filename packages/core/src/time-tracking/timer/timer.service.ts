@@ -43,7 +43,7 @@ export class TimerService {
 	 */
 	async getTimerStatus(request: ITimerStatusInput): Promise<ITimerStatus> {
 		const tenantId = RequestContext.currentTenantId() || request.tenantId;
-		const { organizationId, source } = request;
+		const { organizationId, source, todayStart, todayEnd } = request;
 
 		let employee: IEmployee;
 
@@ -71,7 +71,10 @@ export class TimerService {
 		}
 
 		const { id: employeeId } = employee;
-		const { start, end } = getDateRange();
+		const { start, end } =
+			todayStart && todayEnd
+				? { start: todayStart, end: todayEnd }
+				: getDateRange();
 
 		// Get today's completed timelogs
 		const logs = await this.timeLogRepository.find({

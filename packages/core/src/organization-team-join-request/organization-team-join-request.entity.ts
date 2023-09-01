@@ -46,7 +46,7 @@ export class OrganizationTeamJoinRequest extends TenantOrganizationBaseEntity
 
 	@Exclude({ toPlainOnly: true })
 	@Column({ nullable: true })
-	code: number;
+	code: string;
 
 	@Exclude({ toPlainOnly: true })
 	@Column({ nullable: true })

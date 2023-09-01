@@ -53,10 +53,10 @@ export class Invite extends TenantOrganizationBaseEntity implements IInvite {
 	@Column({ nullable: true })
 	actionDate?: Date;
 
-	@ApiPropertyOptional({ type: () => Number })
+	@ApiPropertyOptional({ type: () => String })
 	@Exclude({ toPlainOnly: true })
 	@Column({ nullable: true })
-	public code?: number;
+	public code?: string;
 
 	@ApiPropertyOptional({ type: () => String })
 	@Column({ nullable: true })
@@ -64,10 +64,10 @@ export class Invite extends TenantOrganizationBaseEntity implements IInvite {
 
 	public isExpired?: boolean;
 	/*
-    |--------------------------------------------------------------------------
-    | @ManyToOne
-    |--------------------------------------------------------------------------
-    */
+	|--------------------------------------------------------------------------
+	| @ManyToOne
+	|--------------------------------------------------------------------------
+	*/
 
 	/**
 	 * Invited By User
@@ -114,13 +114,13 @@ export class Invite extends TenantOrganizationBaseEntity implements IInvite {
 	userId?: IUser['id'];
 
 	/*
-    |--------------------------------------------------------------------------
-    | @ManyToMany
-    |--------------------------------------------------------------------------
-    */
-   /**
-	* Organization Projects
-    */
+	|--------------------------------------------------------------------------
+	| @ManyToMany
+	|--------------------------------------------------------------------------
+	*/
+	/**
+	 * Organization Projects
+	 */
 	@ApiPropertyOptional({ type: () => OrganizationProject })
 	@ManyToMany(() => OrganizationProject)
 	@JoinTable({
@@ -150,7 +150,7 @@ export class Invite extends TenantOrganizationBaseEntity implements IInvite {
 
 	/**
 	* Organization Teams
-    */
+	*/
 	@ApiPropertyOptional({ type: () => OrganizationTeam })
 	@ManyToMany(() => OrganizationTeam)
 	@JoinTable({
