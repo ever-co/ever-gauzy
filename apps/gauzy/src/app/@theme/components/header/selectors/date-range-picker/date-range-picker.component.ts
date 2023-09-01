@@ -1,4 +1,5 @@
 import { Component, OnInit, OnDestroy, AfterViewInit, Input, ViewChild } from '@angular/core';
+// import { ActivatedRoute, Router } from '@angular/router';
 import { BehaviorSubject, combineLatest, of as observableOf, Subject, switchMap, take } from 'rxjs';
 import { filter, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
@@ -22,7 +23,6 @@ import { Next, Previous } from './arrow/strategies';
 import { TranslationBaseComponent } from './../../../../../@shared/language-base';
 import { DateRangeKeyEnum, dayOfWeekAsString } from './date-range-picker.setting';
 import { TimesheetFilterService } from './../../../../../@shared/timesheet/timesheet-filter.service';
-import { ActivatedRoute, Router } from '@angular/router';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -96,6 +96,7 @@ export class DateRangePickerComponent extends TranslationBaseComponent implement
 			this.selectedDateRange = this.rangePicker = this.getSelectorDates();
 		}
 	}
+
 
 	/*
 	 * Getter & Setter for dynamic selected date range
@@ -180,13 +181,13 @@ export class DateRangePickerComponent extends TranslationBaseComponent implement
 	@ViewChild(DateRangePickerDirective, { static: true }) dateRangePickerDirective: DateRangePickerDirective;
 
 	constructor(
+		// private readonly router: Router,
+		// private readonly activatedRoute: ActivatedRoute,
 		private readonly store: Store,
 		public readonly translateService: TranslateService,
 		private readonly organizationService: OrganizationsService,
 		private readonly dateRangePickerBuilderService: DateRangePickerBuilderService,
-		private readonly timesheetFilterService: TimesheetFilterService,
-		private router: Router,
-		private activatedRoute: ActivatedRoute
+		private readonly timesheetFilterService: TimesheetFilterService
 	) {
 		super(translateService);
 	}
@@ -260,15 +261,6 @@ export class DateRangePickerComponent extends TranslationBaseComponent implement
 				distinctUntilChange(),
 				tap((range: IDateRangePicker) => {
 					this.dateRangePickerBuilderService.selectedDateRange = range;
-
-					this.router.navigate([], {
-						relativeTo: this.activatedRoute,
-						queryParams: {
-							date: moment(range.startDate).format('MM-DD-YYYY'),
-							date_end: moment(range.endDate).format('MM-DD-YYYY'),
-						},
-						queryParamsHandling: 'merge',
-					});
 				}),
 				untilDestroyed(this)
 			)
