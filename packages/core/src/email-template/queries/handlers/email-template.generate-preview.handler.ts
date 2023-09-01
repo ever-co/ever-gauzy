@@ -4,7 +4,7 @@ import * as mjml2html from 'mjml';
 import { ConfigService, environment } from '@gauzy/config';
 import { EmailTemplateGeneratePreviewQuery } from '../email-template.generate-preview.query';
 import { moment } from '../../../core/moment-extend';
-import { generateRandomInteger } from './../../../core/utils';
+import { generateRandomAlphaNumericCode } from './../../../core/utils';
 
 @QueryHandler(EmailTemplateGeneratePreviewQuery)
 export class EmailTemplateGeneratePreviewHandler
@@ -12,7 +12,7 @@ export class EmailTemplateGeneratePreviewHandler
 
 	constructor(
 		private readonly configService: ConfigService
-	) {}
+	) { }
 
 	public async execute(
 		command: EmailTemplateGeneratePreviewQuery
@@ -79,9 +79,9 @@ export class EmailTemplateGeneratePreviewHandler
 			task_update_project: 'Gauzy Project',
 			task_update_assign_by: 'Ruslan Konviser',
 			task_update_url: 'https://github.com/ever-co/ever-gauzy/issues/1688',
-			inviteCode: generateRandomInteger(6),
+			inviteCode: generateRandomAlphaNumericCode(6),
 			teams: 'Gauzy Team',
-			verificationCode: generateRandomInteger(6),
+			verificationCode: generateRandomAlphaNumericCode(6),
 			appName: appName,
 			appLogo: appLogo,
 			appSignature: appSignature,

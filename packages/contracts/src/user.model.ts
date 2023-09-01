@@ -43,7 +43,7 @@ export interface IUser extends IBasePerTenantEntityModel, IRelationalImageAsset 
 	isImporting?: boolean;
 	sourceId?: string;
 	isActive?: boolean;
-	code?: number;
+	code?: string;
 	codeExpireAt?: Date;
 	emailVerifiedAt?: Date;
 	isEmailVerified?: boolean;
@@ -100,7 +100,7 @@ export interface IUserTokenInput {
 }
 
 export interface IUserCodeInput {
-	code: number;
+	code: string;
 }
 
 export interface IUserMagicCodeInput {

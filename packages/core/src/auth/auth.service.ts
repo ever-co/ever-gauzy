@@ -32,7 +32,7 @@ import { UserOrganizationService } from '../user-organization/user-organization.
 import { ImportRecordUpdateOrCreateCommand } from './../export-import/import-record';
 import { PasswordResetCreateCommand, PasswordResetGetCommand } from './../password-reset/commands';
 import { RequestContext } from './../core/context';
-import { freshTimestamp, generateRandomInteger } from './../core/utils';
+import { freshTimestamp, generateRandomAlphaNumericCode } from './../core/utils';
 import { EmailConfirmationService } from './email-confirmation.service';
 
 @Injectable()
@@ -568,7 +568,7 @@ export class AuthService extends SocialAuthService {
 					}
 				});
 				if (!!existed) {
-					const code = generateRandomInteger(6);
+					const code = generateRandomAlphaNumericCode(6);
 					const codeExpireAt = moment().add(environment.AUTHENTICATION_CODE_EXPIRATION_TIME, 'seconds').toDate();
 
 					await this.userRepository.update(existed.id, {

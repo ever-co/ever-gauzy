@@ -140,7 +140,7 @@ export class User extends TenantBaseEntity implements IUser {
 	@IsNumber()
 	@Exclude({ toPlainOnly: true })
 	@Column({ insert: false, nullable: true })
-	public code?: number;
+	public code?: string;
 
 	@ApiPropertyOptional({ type: () => Date })
 	@IsOptional()

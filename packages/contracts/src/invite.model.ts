@@ -15,10 +15,7 @@ import { IOrganizationDepartment } from './organization-department.model';
 import { IEmployee } from './employee.model';
 import { IOrganizationTeam } from './organization-team.model';
 
-export interface IInvite extends IBasePerTenantAndOrganizationEntityModel {
-	token: string;
-	code?: number;
-	email: string;
+export interface IInvite extends IBasePerTenantAndOrganizationEntityModel, IUserEmailInput, IUserTokenInput, Partial<IUserCodeInput> {
 	status: InviteStatusEnum;
 	expireDate: Date;
 	actionDate?: Date;
@@ -155,7 +152,7 @@ export interface IInviteTeamMemberModel extends IBasePerTenantAndOrganizationEnt
 	languageCode: LanguagesEnum;
 	invitedBy: IUser;
 	teams: string;
-	inviteCode: number;
+	inviteCode: string;
 	[x: string]: any;
 }
 
