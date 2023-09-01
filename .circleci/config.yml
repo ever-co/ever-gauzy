@@ -284,7 +284,7 @@ jobs:
 
             - run:
                   name: Kill API Background Process
-                  command: killall -w node &> /dev/null
+                  command: pgrep node &> /dev/null && killall -w node || true
 
             - persist_to_workspace:
                   root: /tmp/workspace/test-e2e

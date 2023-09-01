@@ -181,6 +181,7 @@
 		"Parens",
 		"payperiod",
 		"pdfmake",
+		"pgrep",
 		"pgcrypto",
 		"pgsql",
 		"pgweb",
