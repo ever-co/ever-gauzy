@@ -32,7 +32,7 @@ LABEL org.opencontainers.image.source https://github.com/ever-co/ever-gauzy
 ENV CI=true
 
 RUN apk --update add bash && \
-	apk add --no-cache --virtual build-dependencies curl jq python3=3.10.13 python3-dev=3.10.13 py3-configobj py3-pip py3-setuptools dos2unix gcc g++ git make vips-dev && \
+	apk add --no-cache --virtual build-dependencies curl jq python3 python3-dev py3-configobj py3-pip py3-setuptools dos2unix gcc g++ git make vips-dev && \
 	mkdir /srv/gauzy && chown -R node:node /srv/gauzy
 
 COPY wait .deploy/webapp/entrypoint.compose.sh .deploy/webapp/entrypoint.prod.sh /
