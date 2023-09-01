@@ -15,6 +15,7 @@ aliases:
           echo 'export NODE_OPTIONS=--max-old-space-size=7000' >> $BASH_ENV
           echo 'export NG_CLI_ANALYTICS=false' >> $BASH_ENV
           source $BASH_ENV
+          nvm use v18
           node --version
 
     - &install-chrome
@@ -69,6 +70,9 @@ jobs:
                   keys:
                       - yarn-packages-sonarqube-root-{{ checksum "yarn.lock" }}
             - run:
+                  name: verify Node version
+                  command: node --version
+            - run:
                   name: Install Dependencies
                   command: yarn install
                   no_output_timeout: 60m
@@ -110,6 +114,9 @@ jobs:
                   keys:
                       - yarn-packages-monorepo-root-{{ checksum "yarn.lock" }}
             - run:
+                  name: verify Node version
+                  command: node --version
+            - run:
                   name: Run Bootstrap
                   command: yarn bootstrap
                   no_output_timeout: 60m
@@ -136,6 +143,9 @@ jobs:
                   name: Restore Yarn Package Cache
                   keys:
                       - yarn-packages-desktop-{{ checksum "yarn.lock" }}
+            - run:
+                  name: verify Node version
+                  command: node --version
             - run:
                   name: Run Bootstrap
                   command: yarn bootstrap
@@ -167,6 +177,9 @@ jobs:
                   name: Restore Yarn Package Cache
                   keys:
                       - yarn-packages-api-{{ checksum "yarn.lock" }}
+            - run:
+                  name: verify Node version
+                  command: node --version
             - run:
                   name: Run Bootstrap
                   command: yarn bootstrap
@@ -202,6 +215,9 @@ jobs:
                   name: Restore Yarn Package Cache
                   keys:
                       - yarn-packages-web-{{ checksum "yarn.lock" }}
+            - run:
+                  name: verify Node version
+                  command: node --version
             - run:
                   name: Run Bootstrap
                   command: yarn bootstrap
@@ -239,7 +255,9 @@ jobs:
                   name: Restore Yarn Package Cache
                   keys:
                       - yarn-packages-test-e2e-{{ checksum "yarn.lock" }}
-
+            - run:
+                  name: verify Node version
+                  command: node --version
             - run:
                   name: Run Bootstrap
                   command: yarn bootstrap
@@ -286,6 +304,10 @@ jobs:
                   name: Restore Yarn Package Cache
                   keys:
                       - yarn-packages-pulumi-{{ checksum "yarn.lock" }}
+
+            - run:
+                  name: verify Node version
+                  command: node --version
 
             - pulumi/login
 
