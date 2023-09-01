@@ -74,8 +74,11 @@ ENV CI=true
 ENV PYTHON /usr/bin/python
 
 RUN apk --update add bash && npm i -g npm \
-	&& apk add --no-cache --virtual build-dependencies curl jq py3-configobj py3-pip py3-setuptools python3 python3-dev build-base \
+	&& apk add --no-cache --virtual build-dependencies curl jq python3=3.10.13 python3-dev=3.10.13 py3-configobj py3-pip py3-setuptools build-base \
 	snappy libheif dos2unix gcc g++ snappy-dev git libgcc libstdc++ linux-headers autoconf automake make nasm vips-dev vips
+
+# Output Python3 version
+RUN python3 --version
 
 RUN npm install --quiet node-gyp@9.3.1 -g
 RUN npm install yarn -g --force
@@ -119,8 +122,11 @@ FROM node:18-alpine3.18 AS prodDependencies
 ENV PYTHON /usr/bin/python
 
 RUN apk --update add bash && npm i -g npm \
-	&& apk add --no-cache --virtual build-dependencies curl jq py3-configobj py3-pip py3-setuptools python3 python3-dev build-base \
+	&& apk add --no-cache --virtual build-dependencies curl jq python3=3.10.13 python3-dev=3.10.13 py3-configobj py3-pip py3-setuptools build-base \
 	snappy libheif dos2unix gcc g++ snappy-dev git libgcc libstdc++ linux-headers autoconf automake make nasm vips-dev vips
+
+# Output Python3 version
+RUN python3 --version
 
 RUN npm install --quiet node-gyp@9.3.1 -g
 RUN npm install yarn -g --force
