@@ -10,7 +10,7 @@ import { EmailService } from './../email-send/email.service';
 import { UserService } from './../user/user.service';
 import { FeatureService } from './../feature/feature.service';
 import { RequestContext } from './../core/context';
-import { generateRandomInteger } from './../core/utils';
+import { generateRandomAlphaNumericCode } from './../core/utils';
 
 @Injectable()
 export class EmailConfirmationService {
@@ -48,7 +48,7 @@ export class EmailConfirmationService {
             deepMerge(integration, environment.appIntegrationConfig);
 
             const url = `${integration.appEmailConfirmationUrl}?email=${email}&token=${token}`;
-            const verificationCode = generateRandomInteger(6);
+            const verificationCode = generateRandomAlphaNumericCode(6);
 
             // update email token field for user
             await this.userService.update(id, {

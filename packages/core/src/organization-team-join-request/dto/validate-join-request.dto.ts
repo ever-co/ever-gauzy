@@ -1,6 +1,6 @@
 import { ApiProperty, IntersectionType, PickType } from "@nestjs/swagger";
 import { IOrganizationTeamJoinRequestValidateInput } from "@gauzy/contracts";
-import { IsNumber, IsString, ValidateIf } from "class-validator";
+import { IsString, ValidateIf } from "class-validator";
 import { Transform, TransformFnParams } from "class-transformer";
 import { CustomLength } from "../../shared/validators";
 import { UserEmailDTO } from "../../user/dto";
@@ -14,13 +14,13 @@ export class ValidateJoinRequestDTO extends IntersectionType(
     PickType(OrganizationTeamJoinRequest, ['organizationTeamId'])
 ) implements IOrganizationTeamJoinRequestValidateInput {
 
-    @ApiProperty({ type: () => Number, required: true })
+    @ApiProperty({ type: () => String })
     @ValidateIf((it) => !it.token)
-    @IsNumber()
+    @IsString()
     @CustomLength(6)
-    readonly code: number;
+    readonly code: string;
 
-    @ApiProperty({ type: () => String, required: true })
+    @ApiProperty({ type: () => String })
     @ValidateIf((it) => !it.code)
     @IsString()
     @Transform((params: TransformFnParams) => params.value ? params.value.trim() : null)

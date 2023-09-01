@@ -6,8 +6,8 @@ import {
 	JoinColumn,
 	RelationId
 } from 'typeorm';
-import { ApiProperty } from '@nestjs/swagger';
-import { IsEmail } from 'class-validator';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { IsEmail, IsOptional, IsUUID } from 'class-validator';
 import { Exclude } from 'class-transformer';
 import { IEmailReset, IUser } from '@gauzy/contracts';
 import { TenantBaseEntity, User } from '../core/entities/internal';
@@ -15,13 +15,13 @@ import { TenantBaseEntity, User } from '../core/entities/internal';
 @Entity('email_reset')
 export class EmailReset extends TenantBaseEntity implements IEmailReset {
 
-	@ApiProperty({ type: () => String, required: true })
+	@ApiProperty({ type: () => String })
 	@IsEmail()
 	@Index()
 	@Column()
 	email: string;
 
-	@ApiProperty({ type: () => String, required: true })
+	@ApiProperty({ type: () => String })
 	@IsEmail()
 	@Index()
 	@Column()
@@ -30,10 +30,10 @@ export class EmailReset extends TenantBaseEntity implements IEmailReset {
 	@Exclude({ toPlainOnly: true })
 	@Index()
 	@Column()
-	code: number;
+	code: string;
 
-	@Index()
 	@Exclude({ toPlainOnly: true })
+	@Index()
 	@Column({ nullable: true })
 	token: string;
 
@@ -58,6 +58,9 @@ export class EmailReset extends TenantBaseEntity implements IEmailReset {
 	@JoinColumn()
 	user?: IUser;
 
+	@ApiPropertyOptional({ type: () => String })
+	@IsOptional()
+	@IsUUID()
 	@RelationId((it: EmailReset) => it.user)
 	@Index()
 	@Column({ nullable: true })

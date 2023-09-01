@@ -276,6 +276,23 @@ export function generateRandomInteger(length = 6) {
 }
 
 /**
+ * Generate a random alphanumeric code.
+ * @param length The length of the code. Default is 6.
+ * @returns The generated code.
+ */
+export function generateRandomAlphaNumericCode(length: number = 6): string {
+	const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+	let code = '';
+
+	for (let i = 0; i < length; i++) {
+		const index = Math.floor(Math.random() * characters.length);
+		code += characters[index];
+	}
+
+	return code;
+}
+
+/**
  * Get a fresh timestamp for the entity.
  *
  * @returns {Date}
