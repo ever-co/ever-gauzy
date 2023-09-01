@@ -1,8 +1,8 @@
 version: 2.1
 
 orbs:
-    node: circleci/node@4.9.0
-    pulumi: pulumi/pulumi@2.0.0
+    node: circleci/node@5.1.0
+    pulumi: pulumi/pulumi@2.1.0
 
 aliases:
     - &install-node
@@ -10,8 +10,8 @@ aliases:
       command: |
           echo 'export NVM_DIR="/opt/circleci/.nvm"' >> $BASH_ENV
           echo ' [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"' >> $BASH_ENV
-          nvm install v16
-          nvm alias default v16
+          nvm install v18
+          nvm alias default v18
           echo 'export NODE_OPTIONS=--max-old-space-size=7000' >> $BASH_ENV
           echo 'export NG_CLI_ANALYTICS=false' >> $BASH_ENV
           source $BASH_ENV
