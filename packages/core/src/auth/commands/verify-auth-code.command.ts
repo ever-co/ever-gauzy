@@ -7,5 +7,5 @@ export class VerifyAuthCodeCommand implements ICommand {
 
 	constructor(
 		public readonly input: IUserInviteCodeConfirmationInput
-	) {}
+	) { }
 }

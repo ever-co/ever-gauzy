@@ -555,48 +555,40 @@ export class AuthService extends SocialAuthService {
 	 *
 	 * @param email
 	 */
-	async sendAuthCode(input: IUserEmailInput & Partial<IAppIntegrationConfig>) {
+	async sendAuthCode(
+		input: IUserEmailInput & Partial<IAppIntegrationConfig>,
+		locale: LanguagesEnum
+	) {
+		const { email } = input;
+		if (!email) {
+			return;
+		}
 		try {
-			const { email } = input;
-			if (email) {
-				const existed = await this.userRepository.findOneOrFail({
-					where: {
-						email
-					},
-					order: {
-						createdAt: 'DESC'
-					}
-				});
-				if (!!existed) {
-					const code = generateRandomAlphaNumericCode(6);
-					const codeExpireAt = moment().add(environment.AUTHENTICATION_CODE_EXPIRATION_TIME, 'seconds').toDate();
-
-					await this.userRepository.update(existed.id, {
-						code: code,
-						codeExpireAt: codeExpireAt
-					});
-					const user = await this.userRepository.findOneOrFail({
-						where: {
-							id: existed.id
-						}
-					});
-
-					/**
-					 * Send password less authentication email
-					 */
-					let { appName, appLogo, appSignature, appLink, callbackUrl } = input;
-					if (callbackUrl) {
-						callbackUrl = `${callbackUrl}?email=${user.email}&code=${user.code}`;
-					}
-					this.emailService.passwordLessAuthentication(user, user.preferredLanguage as LanguagesEnum, {
-						appName,
-						appLogo,
-						appSignature,
-						appLink,
-						callbackUrl
-					});
-				}
+			const count = await this.userRepository.countBy({
+				email
+			});
+			if (count === 0) {
+				return;
 			}
+
+			const code = generateRandomAlphaNumericCode(6);
+			const codeExpireAt = moment().add(environment.AUTHENTICATION_CODE_EXPIRATION_TIME, 'seconds').toDate();
+
+			await this.userRepository.update({ email }, { code, codeExpireAt });
+			/**
+			 * Send password less authentication email
+			 */
+			let { appName, appLogo, appSignature, appLink, callbackUrl } = input;
+			if (callbackUrl) {
+				callbackUrl = `${callbackUrl}?email=${email}&code=${code}`;
+			}
+			this.emailService.passwordLessAuthentication(email, code, locale, {
+				appName,
+				appLogo,
+				appSignature,
+				appLink,
+				callbackUrl
+			});
 		} catch (error) {
 			console.log('Error while sending authentication code', error?.message);
 		}

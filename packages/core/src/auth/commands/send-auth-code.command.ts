@@ -1,5 +1,5 @@
 import { ICommand } from '@nestjs/cqrs';
-import { IUserEmailInput } from '@gauzy/contracts';
+import { IUserEmailInput, LanguagesEnum } from '@gauzy/contracts';
 import { IAppIntegrationConfig } from '@gauzy/common';
 
 export class SendAuthCodeCommand implements ICommand {
@@ -8,5 +8,6 @@ export class SendAuthCodeCommand implements ICommand {
 
 	constructor(
 		public readonly input: IUserEmailInput & Partial<IAppIntegrationConfig>,
+		public readonly locale: LanguagesEnum
 	) { }
 }

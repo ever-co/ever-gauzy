@@ -159,14 +159,15 @@ export class AuthController {
 	 * @returns
 	 */
 	@HttpCode(HttpStatus.OK)
-	@Post('/send-code')
+	@Post('send-code')
 	@Public()
 	@UsePipes(new ValidationPipe({ transform: true }))
 	async sendAuthCode(
-		@Body() entity: SendAuthCodeDTO
+		@Body() entity: SendAuthCodeDTO,
+		@I18nLang() locale: LanguagesEnum
 	): Promise<any> {
 		return await this.commandBus.execute(
-			new SendAuthCodeCommand(entity)
+			new SendAuthCodeCommand(entity, locale)
 		);
 	}
 
