@@ -9,7 +9,7 @@ on:
 
 jobs:
     deploy-prod:
-        runs-on: ubuntu-22.04
+        runs-on: ubuntu-latest
 
         environment: prod
 

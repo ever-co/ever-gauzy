@@ -63,7 +63,7 @@ ARG PM2_PUBLIC_KEY
 ARG PM2_SECRET_KEY
 ARG PM2_MACHINE_NAME
 
-FROM node:18-alpine3.16 AS dependencies
+FROM node:18-alpine3.17 AS dependencies
 
 LABEL maintainer="ever@ever.co"
 LABEL org.opencontainers.image.source https://github.com/ever-co/ever-gauzy
@@ -73,9 +73,12 @@ ENV CI=true
 # Set Python interpreter for `node-gyp` to use
 ENV PYTHON /usr/bin/python
 
-RUN apk --update add bash && apk add libexecinfo libexecinfo-dev && npm i -g npm \
-	&& apk add --no-cache --virtual build-dependencies curl jq py3-configobj py3-pip py3-setuptools python3 python3-dev build-base \
+RUN apk --update add bash && npm i -g npm \
+	&& apk add --no-cache --virtual build-dependencies curl jq python3 python3-dev py3-configobj py3-pip py3-setuptools build-base \
 	snappy libheif dos2unix gcc g++ snappy-dev git libgcc libstdc++ linux-headers autoconf automake make nasm vips-dev vips
+
+# Output Python3 version
+RUN python3 --version
 
 RUN npm install --quiet node-gyp@9.3.1 -g
 RUN npm install yarn -g --force
@@ -113,14 +116,17 @@ COPY --chown=node:node decorate-angular-cli.js lerna.json package.json yarn.lock
 RUN yarn install --network-timeout 1000000 --frozen-lockfile && yarn cache clean
 # RUN apk del build-dependencies make gcc g++ python2 py2-setuptools vips-dev
 
-FROM node:18-alpine3.16 AS prodDependencies
+FROM node:18-alpine3.17 AS prodDependencies
 
 # Set Python interpreter for `node-gyp` to use
 ENV PYTHON /usr/bin/python
 
-RUN apk --update add bash && apk add libexecinfo libexecinfo-dev && npm i -g npm \
-	&& apk add --no-cache --virtual build-dependencies curl jq py3-configobj py3-pip py3-setuptools python3 python3-dev build-base \
+RUN apk --update add bash && npm i -g npm \
+	&& apk add --no-cache --virtual build-dependencies curl jq python3 python3-dev py3-configobj py3-pip py3-setuptools build-base \
 	snappy libheif dos2unix gcc g++ snappy-dev git libgcc libstdc++ linux-headers autoconf automake make nasm vips-dev vips
+
+# Output Python3 version
+RUN python3 --version
 
 RUN npm install --quiet node-gyp@9.3.1 -g
 RUN npm install yarn -g --force
@@ -155,7 +161,7 @@ RUN yarn install --network-timeout 1000000 --frozen-lockfile --production && yar
 
 RUN rm -r node_modules/@angular
 
-FROM node:18-alpine3.16 AS development
+FROM node:18-alpine3.17 AS development
 
 USER node:node
 
@@ -165,7 +171,7 @@ COPY --chown=node:node --from=dependencies /wait /entrypoint.prod.sh /entrypoint
 COPY --chown=node:node --from=dependencies /srv/gauzy .
 COPY . .
 
-FROM node:18-alpine3.16 AS build
+FROM node:18-alpine3.17 AS build
 
 WORKDIR /srv/gauzy
 
@@ -182,7 +188,7 @@ ENV IS_DOCKER=true
 RUN yarn build:package:api
 RUN yarn build:api:prod
 
-FROM node:18-alpine3.16 AS production
+FROM node:18-alpine3.17 AS production
 
 WORKDIR /srv/gauzy
 

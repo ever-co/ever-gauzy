@@ -1,8 +1,8 @@
 version: 2.1
 
 orbs:
-    node: circleci/node@4.9.0
-    pulumi: pulumi/pulumi@2.0.0
+    node: circleci/node@5.1.0
+    pulumi: pulumi/pulumi@2.1.0
 
 aliases:
     - &install-node
@@ -10,16 +10,18 @@ aliases:
       command: |
           echo 'export NVM_DIR="/opt/circleci/.nvm"' >> $BASH_ENV
           echo ' [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"' >> $BASH_ENV
-          nvm install v16
-          nvm alias default v16
+          nvm install v18
+          nvm alias default v18
           echo 'export NODE_OPTIONS=--max-old-space-size=7000' >> $BASH_ENV
           echo 'export NG_CLI_ANALYTICS=false' >> $BASH_ENV
           source $BASH_ENV
+          nvm use v18
           node --version
 
     - &install-chrome
       name: Install Chrome
       command: |
+          nvm use v18
           sudo apt install -y libappindicator3-1
           curl -L -o google-chrome.deb https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
           sudo dpkg -i google-chrome.deb
@@ -29,6 +31,7 @@ aliases:
     - &install-deps
       name: Install Global Dependencies
       command: |
+          nvm use v18
           sudo rm -rf /etc/apt/sources.list.d/heroku.list
           sudo apt-get update
           sudo apt install npm
@@ -39,6 +42,7 @@ aliases:
     - &install-yarn
       name: Install Latest Yarn
       command: |
+          nvm use v18
           # remove default yarn
           sudo rm -rf $(dirname $(which yarn))/yarn*
           # download latest
@@ -69,8 +73,11 @@ jobs:
                   keys:
                       - yarn-packages-sonarqube-root-{{ checksum "yarn.lock" }}
             - run:
+                  name: verify Node version
+                  command: nvm use v18 && node --version
+            - run:
                   name: Install Dependencies
-                  command: yarn install
+                  command: nvm use v18 && yarn install
                   no_output_timeout: 60m
             - run:
                   name: Install Sonarqube scanner
@@ -110,8 +117,11 @@ jobs:
                   keys:
                       - yarn-packages-monorepo-root-{{ checksum "yarn.lock" }}
             - run:
+                  name: verify Node version
+                  command: nvm use v18 && node --version
+            - run:
                   name: Run Bootstrap
-                  command: yarn bootstrap
+                  command: nvm use v18 && yarn bootstrap
                   no_output_timeout: 60m
             - save_cache:
                   name: Save Yarn Package Cache
@@ -137,12 +147,15 @@ jobs:
                   keys:
                       - yarn-packages-desktop-{{ checksum "yarn.lock" }}
             - run:
+                  name: verify Node version
+                  command: nvm use v18 && node --version
+            - run:
                   name: Run Bootstrap
-                  command: yarn bootstrap
+                  command: nvm use v18 && yarn bootstrap
                   no_output_timeout: 60m
             - run:
                   name: Run Build
-                  command: yarn build:desktop
+                  command: nvm use v18 && yarn build:desktop
                   no_output_timeout: 60m
             - save_cache:
                   name: Save Yarn Package Cache
@@ -168,16 +181,19 @@ jobs:
                   keys:
                       - yarn-packages-api-{{ checksum "yarn.lock" }}
             - run:
+                  name: verify Node version
+                  command: nvm use v18 && node --version
+            - run:
                   name: Run Bootstrap
-                  command: yarn bootstrap
+                  command: nvm use v18 && yarn bootstrap
                   no_output_timeout: 60m
             - run:
                   name: Run Packages Build
-                  command: yarn build:package:all
+                  command: nvm use v18 && yarn build:package:all
                   no_output_timeout: 60m
             - run:
                   name: Run Build
-                  command: yarn build:api:prod:ci
+                  command: nvm use v18 && yarn build:api:prod:ci
                   no_output_timeout: 60m
             - save_cache:
                   name: Save Yarn Package Cache
@@ -203,16 +219,19 @@ jobs:
                   keys:
                       - yarn-packages-web-{{ checksum "yarn.lock" }}
             - run:
+                  name: verify Node version
+                  command: nvm use v18 && node --version
+            - run:
                   name: Run Bootstrap
-                  command: yarn bootstrap
+                  command: nvm use v18 && yarn bootstrap
                   no_output_timeout: 60m
             - run:
                   name: Run Packages Build
-                  command: yarn build:package:all
+                  command: nvm use v18 && yarn build:package:all
                   no_output_timeout: 60m
             - run:
                   name: Run Build
-                  command: yarn build:gauzy:prod:ci
+                  command: nvm use v18 && yarn build:gauzy:prod:ci
                   no_output_timeout: 60m
             - save_cache:
                   name: Save Yarn Package Cache
@@ -239,15 +258,17 @@ jobs:
                   name: Restore Yarn Package Cache
                   keys:
                       - yarn-packages-test-e2e-{{ checksum "yarn.lock" }}
-
+            - run:
+                  name: verify Node version
+                  command: nvm use v18 && node --version
             - run:
                   name: Run Bootstrap
-                  command: yarn bootstrap
+                  command: nvm use v18 && yarn bootstrap
                   no_output_timeout: 60m
 
             - run:
                   name: Run API in background
-                  command: yarn start:api:ci
+                  command: nvm use v18 && yarn start:api:ci
                   background: true
 
             # - run:
@@ -263,7 +284,7 @@ jobs:
 
             - run:
                   name: Kill API Background Process
-                  command: killall -w node
+                  command: pgrep node &> /dev/null && killall -w node || true
 
             - persist_to_workspace:
                   root: /tmp/workspace/test-e2e
@@ -287,11 +308,16 @@ jobs:
                   keys:
                       - yarn-packages-pulumi-{{ checksum "yarn.lock" }}
 
+            - run:
+                  name: verify Node version
+                  command: nvm use v18 && node --version
+
             - pulumi/login
 
             - run:
                   name: 'Installing NPM Packages'
                   command: |
+                      nvm use v18
                       yarn bootstrap
                   no_output_timeout: 60m
 
