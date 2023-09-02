@@ -32,7 +32,7 @@ jobs:
               run: 'sudo apt-get update && sudo apt install -y curl gnupg git libappindicator3-1 ca-certificates binutils icnsutils graphicsmagick'
 
             - name: Install latest version of NPM
-              run: 'sudo npm install -g npm'
+              run: 'sudo npm install -g npm@9'
 
             - name: Install latest node-gyp package
               run: 'sudo npm install --quiet -g node-gyp@9.3.1'
@@ -81,7 +81,7 @@ jobs:
                   cache: 'yarn'
 
             - name: Install latest version of NPM
-              run: 'sudo npm install -g npm'
+              run: 'sudo npm install -g npm@9'
 
             - name: Install latest node-gyp package
               run: 'sudo npm install --quiet -g node-gyp@9.3.1'
@@ -130,7 +130,7 @@ jobs:
                   cache: 'yarn'
 
             - name: Install latest version of NPM
-              run: 'npm install -g npm'
+              run: 'npm install -g npm@9'
 
             - name: Install latest node-gyp package
               run: 'npm install --quiet -g node-gyp@9.3.1'
