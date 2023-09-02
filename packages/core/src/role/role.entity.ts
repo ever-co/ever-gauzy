@@ -1,31 +1,35 @@
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Column, Entity, Index, OneToMany } from 'typeorm';
-import { ApiProperty } from '@nestjs/swagger';
-import { Exclude } from 'class-transformer';
-import { RolesEnum, IRolePermission, IRole, IUser } from '@gauzy/contracts';
-import { RolePermission, TenantBaseEntity, User } from '../core/entities/internal';
+import { IsBoolean, IsNotEmpty, IsOptional } from 'class-validator';
+import { RolesEnum, IRolePermission, IRole } from '@gauzy/contracts';
+import { RolePermission, TenantBaseEntity } from '../core/entities/internal';
 
 @Entity('role')
 export class Role extends TenantBaseEntity implements IRole {
+
 	@ApiProperty({ type: () => String, enum: RolesEnum })
+	@IsNotEmpty()
 	@Index()
 	@Column()
 	name: string;
 
-	@ApiProperty({ type: () => Boolean, default: false })
+	@ApiPropertyOptional({ type: () => Boolean, default: false })
+	@IsOptional()
+	@IsBoolean()
 	@Column({ default: false })
 	isSystem?: boolean;
 
-	@ApiProperty({ type: () => RolePermission, isArray: true })
+	/*
+	|--------------------------------------------------------------------------
+	| @OneToMany
+	|--------------------------------------------------------------------------
+	*/
+
+	/**
+	 * Role Permissions
+	 */
 	@OneToMany(() => RolePermission, (rolePermission) => rolePermission.role, {
 		cascade: true
 	})
 	rolePermissions?: IRolePermission[];
-
-	/**
-	 * Role Users
-	 */
-	@ApiProperty({ type: () => User, isArray: true })
-	@Exclude({ toPlainOnly: true })
-	@OneToMany(() => User, (user) => user.role)
-	users?: IUser[];
 }

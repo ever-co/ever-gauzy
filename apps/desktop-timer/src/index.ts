@@ -219,8 +219,8 @@ async function startServer(value, restart = false) {
 			}
 		}
 		gauzyWindow = timeTrackerWindow;
-		splashScreen.close();
 		gauzyWindow.show();
+		splashScreen.close();
 	}
 	const auth = store.get('auth');
 	new AppMenu(timeTrackerWindow, settingsWindow, updaterWindow, knex, pathWindow, null, false);
@@ -296,7 +296,6 @@ const getApiBaseUrl = (configs) => {
 app.on('ready', async () => {
 	const configs: any = store.get('configs');
 	const settings: any = store.get('appSetting');
-	const autoLaunch: boolean = settings && typeof settings.autoLaunch === 'boolean' ? settings.autoLaunch : true;
 	// default global
 	global.variableGlobal = {
 		API_BASE_URL: getApiBaseUrl(configs || {}),
@@ -305,7 +304,9 @@ app.on('ready', async () => {
 	splashScreen = new SplashScreen(pathWindow.timeTrackerUi);
 	await splashScreen.loadURL();
 	splashScreen.show();
-	launchAtStartup(autoLaunch, false);
+	if (!settings) {
+		launchAtStartup(true, false);
+	}
 	if (provider.dialect === 'sqlite') {
 		try {
 			const res = await knex.raw(`pragma journal_mode = WAL;`);
@@ -348,8 +349,8 @@ app.on('ready', async () => {
 		await startServer(configs);
 	} else {
 		setupWindow = await createSetupWindow(setupWindow, false, pathWindow.timeTrackerUi);
-		splashScreen.close();
 		setupWindow.show();
+		splashScreen.close();
 	}
 
 	updater.settingWindow = settingsWindow;

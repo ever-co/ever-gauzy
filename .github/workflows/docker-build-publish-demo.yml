@@ -6,7 +6,7 @@ on:
 
 jobs:
     gauzy-api:
-        runs-on: ubuntu-22.04
+        runs-on: ubuntu-latest
         steps:
             - name: Checkout
               uses: actions/checkout@v3
@@ -93,7 +93,7 @@ jobs:
                   docker push ${{ secrets.CW_DOCKER_REGISTRY }}/ever-co/gauzy-api-demo:latest
 
     gauzy-webapp:
-        runs-on: ubuntu-22.04
+        runs-on: ubuntu-latest
         steps:
             - name: Checkout
               uses: actions/checkout@v3

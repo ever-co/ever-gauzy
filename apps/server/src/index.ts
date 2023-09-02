@@ -39,7 +39,9 @@ import {
 	ServerConfig,
 	IServerConfig,
 	ILocalServer,
-	ReverseProxy
+	ReverseProxy,
+	DesktopDialog,
+	DialogStopServerExitConfirmation
 } from '@gauzy/desktop-libs';
 import {
 	createSetupWindow,
@@ -70,6 +72,7 @@ let settingsWindow: BrowserWindow;
 let splashScreen: SplashScreen;
 let tray: Tray;
 let isServerRun: boolean;
+let willQuit = false;
 
 const updater = new DesktopUpdater({
 	repository: 'ever-gauzy-server',
@@ -93,6 +96,8 @@ const serverConfig: IServerConfig = new ServerConfig(
 );
 const reverseProxy: ILocalServer = new ReverseProxy(serverConfig);
 
+const executableName = path.basename(process.execPath);
+
 /* Load translations */
 TranslateLoader.load(__dirname + '/assets/i18n/');
 /* Setting the app user model id for the app. */
@@ -111,13 +116,14 @@ ipcMain.setMaxListeners(0);
 ipcMain.removeHandler('PREFERRED_LANGUAGE');
 
 const runSetup = async () => {
-	splashScreen.close();
 	if (setupWindow) {
 		setupWindow.show();
+		splashScreen.close();
 		return;
 	}
 	setupWindow = await createSetupWindow(setupWindow, false, pathWindow.ui);
 	setupWindow.show();
+	splashScreen.close();
 };
 
 const appState = async () => {
@@ -133,8 +139,8 @@ const appState = async () => {
 
 const runMainWindow = async () => {
 	serverWindow = await createServerWindow(serverWindow, null, pathWindow.ui);
-	splashScreen.close();
 	serverWindow.show();
+	splashScreen.close();
 	if (!tray) {
 		createTray();
 	}
@@ -152,6 +158,9 @@ const runMainWindow = async () => {
 		Menu.getApplicationMenu().getMenuItemById('window-setting');
 	if (menuWindowSetting) menuWindowSetting.enabled = true;
 	if (setupWindow) setupWindow.hide();
+	serverWindow.webContents.send('dashboard_ready', {
+		setting: serverConfig.setting
+	});
 };
 
 const initializeConfig = async (val) => {
@@ -169,18 +178,25 @@ const { signal } = controller;
 const runServer = (isRestart) => {
 	const envVal = getEnvApi();
 	const uiPort = serverConfig.uiPort;
-
-	apiServer(
-		{
-			ui: path.join(__dirname, 'preload', 'ui-server.js'),
-			api: path.join(__dirname, 'api/main.js'),
-		},
-		envVal,
-		serverWindow,
-		uiPort,
-		isRestart,
-		signal
-	);
+	try {
+		apiServer(
+			{
+				ui: path.join(__dirname, 'preload', 'ui-server.js'),
+				api: path.join(__dirname, 'api/main.js'),
+			},
+			envVal,
+			serverWindow,
+			uiPort,
+			isRestart,
+			signal
+		);
+	} catch (error) {
+		if (error.name === 'AbortError') {
+			console.log('You exit without to stop the server');
+			return;
+		}
+		console.log('Error ', error);
+	}
 };
 
 const getEnvApi = () => {
@@ -331,7 +347,10 @@ app.on('ready', async () => {
 	splashScreen = new SplashScreen(pathWindow.ui);
 	await splashScreen.loadURL();
 	splashScreen.show();
-	LocalStore.setDefaultApplicationSetting();
+	if (!serverConfig.setting) {
+		LocalStore.setDefaultApplicationSetting();
+		launchAtStartup(true, false);
+	}
 	if (!settingsWindow) {
 		settingsWindow = await createSettingsWindow(settingsWindow, pathWindow.ui);
 	}
@@ -434,6 +453,10 @@ ipcMain.on('running_state', (event, arg) => {
 	}
 	tray.setContextMenu(Menu.buildFromTemplate(trayContextMenu));
 	isServerRun = arg;
+	// Closed the server if marked.
+	if (willQuit) {
+		app.quit();
+	}
 });
 
 ipcMain.on('loading_state', (event, arg) => {
@@ -494,15 +517,30 @@ ipcMain.on('restart_and_update', () => {
 	});
 });
 
-app.on('before-quit', (e) => {
+app.on('before-quit', async (e) => {
 	e.preventDefault();
-	// Kill child processes
-	controller.abort();
-	// soft download cancellation
-	try {
-		updater.cancel();
-	} catch (e) {}
-	app.exit(0);
+	if (isServerRun) {
+		const exitConfirmationDialog = new DialogStopServerExitConfirmation(
+			new DesktopDialog(
+				'Gauzy Server',
+				TranslateService.instant('TIMER_TRACKER.DIALOG.EXIT'),
+				serverWindow
+			)
+		);
+		const button = await exitConfirmationDialog.show();
+		if (button.response === 0) {
+			// Stop the server from main
+			stopServer(false);
+			// Mark as will quit
+			willQuit = true;
+		};
+	} else {
+		// soft download cancellation
+		try {
+			updater.cancel();
+		} catch (e) { }
+		app.exit(0);
+	}
 });
 
 app.on('window-all-closed', quit);
@@ -531,4 +569,45 @@ ipcMain.handle('PREFERRED_LANGUAGE', (event, arg) => {
 ipcMain.on('preferred_language_change', (event, arg) => {
 	TranslateService.preferredLanguage = arg;
 	serverWindow?.webContents?.send('preferred_language_change', arg);
-})
+});
+
+ipcMain.on('launch_on_startup', (event, arg) => {
+	launchAtStartup(arg.autoLaunch, arg.hidden);
+});
+
+ipcMain.on('minimize_on_startup', (event, arg) => {
+	launchAtStartup(arg.autoLaunch, arg.hidden);
+});
+
+ipcMain.on('auto_start_on_startup', (event, arg) => {
+	serverConfig.setting = arg;
+});
+
+function launchAtStartup(autoLaunch: boolean, hidden: boolean): void {
+	switch (process.platform) {
+		case 'darwin':
+			app.setLoginItemSettings({
+				openAtLogin: autoLaunch,
+				openAsHidden: hidden
+			});
+			break;
+		case 'win32':
+			app.setLoginItemSettings({
+				openAtLogin: autoLaunch,
+				openAsHidden: hidden,
+				path: app.getPath('exe'),
+				args: hidden
+					? ['--processStart', `"${executableName}"`, '--process-start-args', `"--hidden"`]
+					: ['--processStart', `"${executableName}"`, '--process-start-args']
+			});
+			break;
+		case 'linux':
+			app.setLoginItemSettings({
+				openAtLogin: autoLaunch,
+				openAsHidden: hidden
+			});
+			break;
+		default:
+			break;
+	}
+}

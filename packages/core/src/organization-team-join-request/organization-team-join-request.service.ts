@@ -26,7 +26,7 @@ import {
 } from '@gauzy/contracts';
 import * as moment from 'moment';
 import { TenantAwareCrudService } from './../core/crud';
-import { generateRandomInteger } from './../core/utils';
+import { generateRandomAlphaNumericCode } from './../core/utils';
 import { RequestContext } from './../core/context';
 import { OrganizationTeamEmployee, User } from './../core/entities/internal';
 import { EmailService } from './../email-send/email.service';
@@ -96,7 +96,7 @@ export class OrganizationTeamJoinRequestService extends TenantAwareCrudService<O
 					}
 				);
 			const { organization, organizationId, tenantId } = organizationTeam;
-			const code = generateRandomInteger(6);
+			const code = generateRandomAlphaNumericCode(6);
 
 			const payload: JwtPayload = {
 				email,
@@ -216,7 +216,7 @@ export class OrganizationTeamJoinRequestService extends TenantAwareCrudService<O
 				},
 			});
 
-			const code = generateRandomInteger(6);
+			const code = generateRandomAlphaNumericCode(6);
 
 			const payload: JwtPayload = {
 				email,

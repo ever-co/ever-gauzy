@@ -24,6 +24,12 @@ export const routes: Routes = [
 				pathMatch: 'full'
 			},
 			{
+				path: 'signin',
+				loadChildren: () => import('./signin-workspaces/signin-workspaces.module').then(
+					(m) => m.SignInWorkspacesLayoutModule
+				)
+			},
+			{
 				path: 'login',
 				component: NgxLoginComponent,
 				canActivate: [NoAuthGuard]
@@ -81,4 +87,4 @@ export const routes: Routes = [
 	imports: [RouterModule.forChild(routes)],
 	exports: [RouterModule],
 })
-export class NgxAuthRoutingModule {}
+export class NgxAuthRoutingModule { }

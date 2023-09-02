@@ -21,7 +21,7 @@ import { UserService } from '../user/user.service';
 import { TenantAwareCrudService } from '../core/crud';
 import { EmailReset } from './email-reset.entity';
 import { UserEmailDTO } from '../user/dto';
-import { generateRandomInteger } from './../core/utils';
+import { generateRandomAlphaNumericCode } from './../core/utils';
 import { EmailResetCreateCommand } from './commands';
 import { EmailResetGetQuery } from './queries';
 import { VerifyEmailResetRequestDTO } from './dto/verify-email-reset-request.dto';
@@ -73,7 +73,7 @@ export class EmailResetService extends TenantAwareCrudService<EmailReset> {
 				});
 			}
 
-			const verificationCode = generateRandomInteger(6);
+			const verificationCode = generateRandomAlphaNumericCode(6);
 
 			await this.commandBus.execute(
 				new EmailResetCreateCommand({

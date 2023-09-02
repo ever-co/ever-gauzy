@@ -9,7 +9,7 @@ import { UserCodeDTO, UserEmailDTO, UserTokenDTO } from './../../user/dto';
 export class ConfirmEmailByTokenDTO extends IntersectionType(
     UserEmailDTO,
     UserTokenDTO,
-) implements IUserEmailInput, IUserTokenInput {}
+) implements IUserEmailInput, IUserTokenInput { }
 
 /**
  * Email confirmation (By CODE) DTO request validation
@@ -19,8 +19,8 @@ export class ConfirmEmailByCodeDTO extends IntersectionType(
     UserCodeDTO
 ) implements IUserEmailInput, IUserCodeInput, IBasePerTenantEntityModel {
 
-    @ApiProperty({ type: () => String, required: true })
+    @ApiProperty({ type: () => String })
     @IsNotEmpty()
-	@IsUUID()
-	readonly tenantId: ITenant['id'];
+    @IsUUID()
+    readonly tenantId: ITenant['id'];
 }

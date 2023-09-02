@@ -44,7 +44,11 @@ import { addDays } from 'date-fns';
 import { IAppIntegrationConfig, isNotEmpty } from '@gauzy/common';
 import { PaginationParams, TenantAwareCrudService } from './../core/crud';
 import { RequestContext } from './../core/context';
-import { freshTimestamp, generateRandomInteger } from './../core/utils';
+import {
+	findIntersection,
+	freshTimestamp,
+	generateRandomAlphaNumericCode
+} from './../core/utils';
 import { Invite } from './invite.entity';
 import { EmailService } from './../email-send/email.service';
 import { UserService } from '../user/user.service';
@@ -240,7 +244,7 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 					organizationTeamEmployee.organizationTeamId
 			);
 
-			const code = generateRandomInteger(6);
+			const code = generateRandomAlphaNumericCode(6);
 			const token: string = sign(
 				{ email, code },
 				environment.JWT_SECRET,
@@ -248,7 +252,13 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 			);
 
 			const matchedInvites = existedInvites.filter(
-				(invite: IInvite) => invite.email === email
+				(invite: IInvite) =>
+					invite.email === email &&
+					// Check is invitation is already having for team id from teamIds
+					findIntersection(
+						invite.teams.map((team) => team.id),
+						teamIds
+					).length > 0
 			);
 			if (isNotEmpty(matchedInvites)) {
 				const needsToInviteTeams = organizationTeams.filter(
@@ -384,7 +394,7 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 			RequestContext.currentUserId()
 		);
 		try {
-			const code = generateRandomInteger(6);
+			const code = generateRandomAlphaNumericCode(6);
 			const token: string = sign(
 				{ email, code },
 				environment.JWT_SECRET,

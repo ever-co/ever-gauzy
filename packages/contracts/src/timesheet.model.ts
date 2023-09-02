@@ -345,7 +345,7 @@ export interface IScreenshotMap {
 }
 
 export interface ITimerStatusInput
-	extends IBasePerTenantAndOrganizationEntityModel,
+	extends ITimeLogTodayFilters,
 		IBaseRelationsEntityModel,
 		IRelationalEmployee,
 		IRelationalOrganizationTeam {

@@ -11,8 +11,8 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { IDateRangePicker, ILanguage, LanguagesEnum } from '@gauzy/contracts';
 import { isNotEmpty } from '@gauzy/common-angular';
 import { filter, map, mergeMap, tap } from 'rxjs';
-import { AnalyticsService } from './@core/utils/analytics.service';
 import * as _ from 'underscore';
+import { AnalyticsService } from './@core/utils/analytics.service';
 import {
 	DateRangePickerBuilderService,
 	DEFAULT_DATE_PICKER_CONFIG,
@@ -24,7 +24,6 @@ import {
 	Store
 } from './@core/services';
 import { environment } from '../environments/environment';
-import moment from 'moment';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -138,22 +137,7 @@ export class AppComponent implements OnInit, AfterViewInit {
 						DEFAULT_DATE_PICKER_CONFIG,
 						datePicker
 					);
-
-					const queryParams = this.activatedRoute.snapshot.queryParams;
-					const hasCustomDates = 'date' in queryParams && 'date_end' in queryParams;
-
-					if (hasCustomDates) {
-						// Use queryParams values
-						const startDate = moment(queryParams.date, 'MM-DD-YYYY');
-						const endDate = moment(queryParams.date_end, 'MM-DD-YYYY');
-						const customDates: IDateRangePicker = {
-							startDate: startDate.toDate(),
-							endDate: endDate.toDate(),
-							isCustomDate: true
-						};
-						this.dateRangePickerBuilderService.setDateRangePicker(customDates);
-
-					} else if (isNotEmpty(dates)) {
+					if (isNotEmpty(dates)) {
 						this.dateRangePickerBuilderService.setDateRangePicker(dates);
 					}
 					this.dateRangePickerBuilderService.setDatePickerConfig(datePickerConfig);

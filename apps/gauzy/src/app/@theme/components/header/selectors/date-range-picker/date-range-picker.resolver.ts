@@ -11,7 +11,7 @@ import { IDatePickerConfig } from "./../../../../../@core/services/selector-buil
 })
 export class DateRangePickerResolver implements Resolve<Observable<IDateRangePicker>> {
 
-    resolve(route: ActivatedRouteSnapshot): Observable<IDateRangePicker>  {
+    resolve(route: ActivatedRouteSnapshot): Observable<IDateRangePicker> {
         const { unitOfTime } = route.data.datePicker as IDatePickerConfig;
 
         const date_start = route.queryParams.date || new Date();

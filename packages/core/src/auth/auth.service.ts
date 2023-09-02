@@ -16,7 +16,10 @@ import {
 	IResetPasswordRequest,
 	IUserInviteCodeConfirmationInput,
 	PermissionsEnum,
-	IUserEmailInput
+	IUserEmailInput,
+	IUserLoginInput,
+	IUserSignInWorkspaceResponse,
+	IUserSignInWorkspaceInput
 } from '@gauzy/contracts';
 import { environment } from '@gauzy/config';
 import { SocialAuthService } from '@gauzy/auth';
@@ -29,7 +32,7 @@ import { UserOrganizationService } from '../user-organization/user-organization.
 import { ImportRecordUpdateOrCreateCommand } from './../export-import/import-record';
 import { PasswordResetCreateCommand, PasswordResetGetCommand } from './../password-reset/commands';
 import { RequestContext } from './../core/context';
-import { freshTimestamp, generateRandomInteger } from './../core/utils';
+import { freshTimestamp, generateRandomAlphaNumericCode } from './../core/utils';
 import { EmailConfirmationService } from './email-confirmation.service';
 
 @Injectable()
@@ -55,18 +58,25 @@ export class AuthService extends SocialAuthService {
 	 * @param password
 	 * @returns
 	 */
-	async login(email: string, password: string): Promise<IAuthResponse | null> {
+	async login({ email, password, magic_code }: IUserLoginInput): Promise<IAuthResponse | null> {
 		try {
+			console.time('login');
+
+			let payload: JwtPayload | string = new Object();
+			if (magic_code) {
+				payload = verify(magic_code, environment.JWT_SECRET);
+			}
+
 			const user = await this.userService.findOneByOptions({
 				where: {
 					email,
-					isActive: true
+					isActive: true,
+					...(payload['id'] ? { id: payload['id'] } : {}),
+					...(payload['tenantId'] ? { tenantId: payload['tenantId'] } : {}),
 				},
 				relations: {
 					employee: true,
-					role: {
-						rolePermissions: true
-					}
+					role: true
 				},
 				order: {
 					createdAt: 'DESC'
@@ -85,12 +95,70 @@ export class AuthService extends SocialAuthService {
 			const refresh_token = await this.getJwtRefreshToken(user);
 
 			await this.userService.setCurrentRefreshToken(refresh_token, user.id);
+			console.timeEnd('login');
+
 			return {
 				user,
 				token: access_token,
 				refresh_token: refresh_token
 			};
 		} catch (error) {
+			console.log('Error while authenticating user: %s', error);
+			throw new UnauthorizedException();
+		}
+	}
+
+	/**
+	 * Signs in users to workspaces.
+	 * @param param0 - IUserSignInWorkspaceInput containing email and password.
+	 * @returns IUserSignInWorkspaceResponse containing user details and confirmation status.
+	 */
+	async signinWorkspaces({ email, password }: IUserSignInWorkspaceInput): Promise<IUserSignInWorkspaceResponse> {
+		console.time('signin workspaces');
+		// Fetching users matching the query
+		let users = await this.userService.find({
+			where: {
+				email,
+				isActive: true,
+			},
+			relations: {
+				employee: true
+			},
+			order: {
+				createdAt: 'DESC'
+			}
+		});
+
+		// Filtering users based on password match
+		users = users.filter((user: IUser) => !!bcrypt.compareSync(password, user.hash) && (!user.employee || user.employee?.isActive));
+
+		// Creating an array of user objects with relevant data
+		const mappedUsers = users.map((user: IUser) => {
+			const payload: JwtPayload = {
+				id: user.id,
+				tenantId: user.tenantId,
+				employeeId: user.employee ? user.employee.id : null
+			};
+			const magic_code = sign(payload, environment.JWT_SECRET, {});
+			return {
+				name: user.name,
+				magic_code
+			}
+		});
+
+		// Determining the response based on the number of matching users
+		const response: IUserSignInWorkspaceResponse = {
+			users: mappedUsers,
+			confirmed_email: email,
+			show_popup: mappedUsers.length > 1
+		};
+
+		console.timeEnd('signin workspaces');
+
+		if (mappedUsers.length > 0) {
+			return response;
+		} else {
+			console.log('Error while signin workspace: %s');
 			throw new UnauthorizedException();
 		}
 	}
@@ -500,7 +568,7 @@ export class AuthService extends SocialAuthService {
 					}
 				});
 				if (!!existed) {
-					const code = generateRandomInteger(6);
+					const code = generateRandomAlphaNumericCode(6);
 					const codeExpireAt = moment().add(environment.AUTHENTICATION_CODE_EXPIRATION_TIME, 'seconds').toDate();
 
 					await this.userRepository.update(existed.id, {
