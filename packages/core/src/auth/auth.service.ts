@@ -128,7 +128,8 @@ export class AuthService extends SocialAuthService {
 		const workspaces = users.map((user: IUser) => {
 			const payload: JwtPayload = {
 				userId: user.id,
-				tenantId: user.tenant ? user.tenantId : null,
+				email: user.email,
+				tenantId: user.tenant ? user.tenantId : null
 			};
 			const token = sign(payload, environment.JWT_SECRET, {
 				expiresIn: `${environment.JWT_TOKEN_EXPIRATION_TIME}s`
@@ -627,6 +628,7 @@ export class AuthService extends SocialAuthService {
 			const workspaces = users.map((user: IUser) => {
 				const payload: JwtPayload = {
 					userId: user.id,
+					email: user.email,
 					tenantId: user.tenant ? user.tenantId : null,
 					code
 				};
@@ -690,6 +692,7 @@ export class AuthService extends SocialAuthService {
 				const { userId, tenantId, code } = payload;
 				const user = await this.userRepository.findOneOrFail({
 					where: {
+						email,
 						id: userId,
 						tenantId,
 						code,
