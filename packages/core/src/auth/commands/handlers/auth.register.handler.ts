@@ -33,6 +33,6 @@ export class AuthRegisterHandler
 				throw new UnauthorizedException();
 			}
 		}
-		return await this.authService.register(input, languageCode);
+		return await this.authService.register(input, languageCode, origin);
 	}
 }
