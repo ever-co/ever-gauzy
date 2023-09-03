@@ -660,11 +660,10 @@ export class AuthService extends SocialAuthService {
 			if (workspaces.length > 0) {
 				return response;
 			} else {
-				console.log('Error while verifying email & code for multi-tenant workspace signin confirm: %s');
 				throw new UnauthorizedException();
 			}
 		} catch (error) {
-			console.log('Error while verifying email & code for multi-tenant workspace signin confirm: %s', error?.message);
+			console.log('Error while verifying email & code for multi-tenant workspace signin: %s', error?.message);
 			throw new UnauthorizedException();
 		}
 	}
