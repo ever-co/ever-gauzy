@@ -16,7 +16,7 @@ import { ApiTags, ApiOperation, ApiResponse, ApiOkResponse, ApiBadRequestRespons
 import { CommandBus } from '@nestjs/cqrs';
 import { Request } from 'express';
 import { I18nLang } from 'nestjs-i18n';
-import { IAuthResponse, LanguagesEnum } from '@gauzy/contracts';
+import { IAuthResponse, IUserSigninWorkspaceResponse, LanguagesEnum } from '@gauzy/contracts';
 import { Public } from '@gauzy/common';
 import { AuthService } from './auth.service';
 import { User as IUser } from '../user/user.entity';
@@ -24,10 +24,9 @@ import { AuthLoginCommand, AuthRegisterCommand, SendAuthCodeCommand, VerifyAuthC
 import { RequestContext } from '../core/context';
 import { AuthRefreshGuard } from './../shared/guards';
 import { ChangePasswordRequestDTO, ResetPasswordRequestDTO } from './../password-reset/dto';
-import { RegisterUserDTO, UserLoginDTO, UserSignInWorkspaceDTO } from './../user/dto';
+import { RegisterUserDTO, UserEmailDTO as SendWorkspaceSigninCodeDTO, UserLoginDTO, UserSigninWorkspaceDTO } from './../user/dto';
 import { UserService } from './../user/user.service';
-import { HasPermissionsQueryDTO, HasRoleQueryDTO, RefreshTokenDto, SendAuthCodeDTO, VerifyAuthCodeDTO } from './dto';
-import { IUserSignInWorkspaceResponse } from '@gauzy/contracts';
+import { HasPermissionsQueryDTO, HasRoleQueryDTO, RefreshTokenDto, WorkspaceSigninEmailVerifyDTO, WorkspaceSinginDTO } from './dto';
 
 @ApiTags('Auth')
 @Controller()
@@ -143,27 +142,21 @@ export class AuthController {
 	 * @returns
 	 */
 	@HttpCode(HttpStatus.OK)
-	@Post('signin.workspaces')
+	@Post('/signin.workspaces')
 	@Public()
 	@UsePipes(new ValidationPipe({ transform: true, whitelist: true }))
-	async signinWorkspaces(
-		@Body() input: UserSignInWorkspaceDTO
-	): Promise<IUserSignInWorkspaceResponse> {
+	async signinWorkspacesByPassword(
+		@Body() input: UserSigninWorkspaceDTO
+	): Promise<IUserSigninWorkspaceResponse> {
 		return await this.authService.signinWorkspaces(input);
 	}
 
-	/**
-	 * Send invite code on email
-	 *
-	 * @param entity
-	 * @returns
-	 */
 	@HttpCode(HttpStatus.OK)
-	@Post('send-code')
+	@Post('/signin.email')
 	@Public()
 	@UsePipes(new ValidationPipe({ transform: true }))
-	async sendAuthCode(
-		@Body() entity: SendAuthCodeDTO,
+	async sendWorkspaceSigninCode(
+		@Body() entity: SendWorkspaceSigninCodeDTO,
 		@I18nLang() locale: LanguagesEnum
 	): Promise<any> {
 		return await this.commandBus.execute(
@@ -171,19 +164,23 @@ export class AuthController {
 		);
 	}
 
-	/**
-	 * Verify invite code along with email
-	 *
-	 * @param entity
-	 */
-	@Post('/verify-code')
+	@Post('/signin.email/confirm')
 	@Public()
 	@UsePipes(new ValidationPipe({ whitelist: true }))
-	async confirmInviteCode(
-		@Body() entity: VerifyAuthCodeDTO
+	async signinConfirmEmailByCode(
+		@Body() input: WorkspaceSigninEmailVerifyDTO
+	): Promise<any> {
+		return await this.authService.signinConfirmByCode(input);
+	}
+
+	@Post('/signin.workspace')
+	@Public()
+	@UsePipes(new ValidationPipe({ whitelist: true }))
+	async signinWorkspaceByToken(
+		@Body() input: WorkspaceSinginDTO
 	): Promise<any> {
 		return await this.commandBus.execute(
-			new VerifyAuthCodeCommand(entity)
+			new VerifyAuthCodeCommand(input)
 		);
 	}
 
@@ -247,7 +244,9 @@ export class AuthController {
 	@UseGuards(AuthRefreshGuard)
 	@Post('/refresh-token')
 	@UsePipes(new ValidationPipe())
-	async refreshToken(@Body() body: RefreshTokenDto) {
+	async refreshToken(
+		@Body() body: RefreshTokenDto
+	) {
 		return await this.authService.getAccessTokenFromRefreshToken();
 	}
 }

@@ -1,22 +1,18 @@
-import { ApiPropertyOptional, IntersectionType } from "@nestjs/swagger";
-import { IUserLoginInput, IUserSignInWorkspaceInput } from "@gauzy/contracts";
-import { IsNotEmpty, IsOptional } from "class-validator";
+import { IntersectionType, PartialType } from "@nestjs/swagger";
+import { IUserEmailInput, IUserPasswordInput } from "@gauzy/contracts";
 import { UserEmailDTO } from "./user-email.dto";
 import { UserPasswordDTO } from "./user-password.dto";
+import { UserTokenDTO } from "./user-token.dto";
 
-
-export class UserSignInWorkspaceDTO extends IntersectionType(
+export class UserSigninWorkspaceDTO extends IntersectionType(
     UserEmailDTO,
     UserPasswordDTO
-) implements IUserSignInWorkspaceInput { }
+) implements IUserEmailInput, IUserPasswordInput { }
 
 /**
  * User login DTO validation
  */
-export class UserLoginDTO extends UserSignInWorkspaceDTO implements IUserLoginInput {
-
-    @ApiPropertyOptional({ type: () => String })
-    @IsOptional()
-    @IsNotEmpty()
-    readonly magic_code: string;
-}
+export class UserLoginDTO extends IntersectionType(
+    UserSigninWorkspaceDTO,
+    PartialType(UserTokenDTO)
+) implements IUserEmailInput, IUserPasswordInput { }

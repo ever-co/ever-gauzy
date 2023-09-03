@@ -1,17 +1,14 @@
 import { IntersectionType } from "@nestjs/swagger";
-import { IUserCodeInput, IUserEmailInput } from "@gauzy/contracts";
-import { UserCodeDTO, UserEmailDTO } from "../../user/dto";
+import { IUserCodeInput, IUserEmailInput, IUserTokenInput } from "@gauzy/contracts";
+import { UserCodeDTO, UserEmailDTO, UserTokenDTO } from "../../user/dto";
 
-/**
- * Send auth code DTO validation
- */
-export class SendAuthCodeDTO extends UserEmailDTO implements IUserEmailInput { }
-
-
-/**
- * Verify auth code DTO validation
- */
-export class VerifyAuthCodeDTO extends IntersectionType(
+export class WorkspaceSigninEmailVerifyDTO extends IntersectionType(
     UserEmailDTO,
     UserCodeDTO,
 ) implements IUserEmailInput, IUserCodeInput { }
+
+
+export class WorkspaceSinginDTO extends IntersectionType(
+    UserEmailDTO,
+    UserTokenDTO,
+) implements IUserEmailInput, IUserTokenInput { }

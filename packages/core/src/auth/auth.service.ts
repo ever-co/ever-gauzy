@@ -14,12 +14,13 @@ import {
 	IChangePasswordRequest,
 	IPasswordReset,
 	IResetPasswordRequest,
-	IUserInviteCodeConfirmationInput,
 	PermissionsEnum,
 	IUserEmailInput,
+	IUserSigninWorkspaceResponse,
+	IUserCodeInput,
 	IUserLoginInput,
-	IUserSignInWorkspaceResponse,
-	IUserSignInWorkspaceInput
+	IUserLoginInput as IUserWorkspaceSigninInput,
+	IUserTokenInput,
 } from '@gauzy/contracts';
 import { environment } from '@gauzy/config';
 import { SocialAuthService } from '@gauzy/auth';
@@ -33,6 +34,7 @@ import { ImportRecordUpdateOrCreateCommand } from './../export-import/import-rec
 import { PasswordResetCreateCommand, PasswordResetGetCommand } from './../password-reset/commands';
 import { RequestContext } from './../core/context';
 import { freshTimestamp, generateRandomAlphaNumericCode } from './../core/utils';
+import { Tenant } from './../core/entities/internal';
 import { EmailConfirmationService } from './email-confirmation.service';
 
 @Injectable()
@@ -58,20 +60,20 @@ export class AuthService extends SocialAuthService {
 	 * @param password
 	 * @returns
 	 */
-	async login({ email, password, magic_code }: IUserLoginInput): Promise<IAuthResponse | null> {
+	async login({ email, password, token }: IUserLoginInput & IUserTokenInput): Promise<IAuthResponse | null> {
 		try {
-			console.time('login');
+			console.time('workspace login');
 
 			let payload: JwtPayload | string = new Object();
-			if (magic_code) {
-				payload = verify(magic_code, environment.JWT_SECRET);
+			if (token) {
+				payload = verify(token, environment.JWT_SECRET);
 			}
 
 			const user = await this.userService.findOneByOptions({
 				where: {
 					email,
 					isActive: true,
-					...(payload['id'] ? { id: payload['id'] } : {}),
+					...(payload['userId'] ? { id: payload['userId'] } : {}),
 					...(payload['tenantId'] ? { tenantId: payload['tenantId'] } : {}),
 				},
 				relations: {
@@ -95,7 +97,7 @@ export class AuthService extends SocialAuthService {
 			const refresh_token = await this.getJwtRefreshToken(user);
 
 			await this.userService.setCurrentRefreshToken(refresh_token, user.id);
-			console.timeEnd('login');
+			console.timeEnd('workspace login');
 
 			return {
 				user,
@@ -110,10 +112,10 @@ export class AuthService extends SocialAuthService {
 
 	/**
 	 * Signs in users to workspaces.
-	 * @param param0 - IUserSignInWorkspaceInput containing email and password.
-	 * @returns IUserSignInWorkspaceResponse containing user details and confirmation status.
+	 * @param param0 - IUserSigninWorkspaceInput containing email and password.
+	 * @returns IUserSigninWorkspaceResponse containing user details and confirmation status.
 	 */
-	async signinWorkspaces({ email, password }: IUserSignInWorkspaceInput): Promise<IUserSignInWorkspaceResponse> {
+	async signinWorkspaces({ email, password }: IUserWorkspaceSigninInput): Promise<IUserSigninWorkspaceResponse> {
 		console.time('signin workspaces');
 		// Fetching users matching the query
 		let users = await this.userService.find({
@@ -133,29 +135,37 @@ export class AuthService extends SocialAuthService {
 		users = users.filter((user: IUser) => !!bcrypt.compareSync(password, user.hash) && (!user.employee || user.employee?.isActive));
 
 		// Creating an array of user objects with relevant data
-		const mappedUsers = users.map((user: IUser) => {
+		const workspaces = users.map((user: IUser) => {
 			const payload: JwtPayload = {
-				id: user.id,
-				tenantId: user.tenantId,
-				employeeId: user.employee ? user.employee.id : null
+				userId: user.id,
+				tenantId: user.tenant ? user.tenantId : null,
 			};
-			const magic_code = sign(payload, environment.JWT_SECRET, {});
-			return {
-				name: user.name,
-				magic_code
-			}
+			const token = sign(payload, environment.JWT_SECRET, {
+				expiresIn: `${environment.JWT_TOKEN_EXPIRATION_TIME}s`
+			});
+			return new Object({
+				user: new User({
+					name: user.name,
+					imageUrl: user.imageUrl,
+					tenant: new Tenant({
+						name: user.tenant?.name || '',
+						logo: user.tenant?.logo || ''
+					})
+				}),
+				token
+			});
 		});
 
 		// Determining the response based on the number of matching users
-		const response: IUserSignInWorkspaceResponse = {
-			users: mappedUsers,
+		const response: IUserSigninWorkspaceResponse = {
+			workspaces,
 			confirmed_email: email,
-			show_popup: mappedUsers.length > 1
+			show_popup: workspaces.length > 1
 		};
 
 		console.timeEnd('signin workspaces');
 
-		if (mappedUsers.length > 0) {
+		if (workspaces.length > 0) {
 			return response;
 		} else {
 			console.log('Error while signin workspace: %s');
@@ -595,38 +605,111 @@ export class AuthService extends SocialAuthService {
 	}
 
 	/**
-	 * Verify authentication code and email
-	 *
-	 * @param body
+	 * Sign in and confirm by code for multi-tenant workspaces.
+	 * @param payload - The user invitation code confirmation input.
+	 * @returns The user sign-in workspace response.
 	 */
-	async verifyAuthCode(payload: IUserInviteCodeConfirmationInput) {
+	async signinConfirmByCode(payload: IUserEmailInput & IUserCodeInput): Promise<IUserSigninWorkspaceResponse> {
 		try {
+			console.time('confirm signin for multi-tenant workspaces');
 			const { email, code } = payload;
-			if (email && code) {
+
+			// Check for missing email or code
+			if (!email || !code) {
+				throw new UnauthorizedException();
+			}
+
+			// Find users matching the criteria
+			let users = await this.userRepository.find({
+				where: {
+					email,
+					code,
+					codeExpireAt: MoreThanOrEqual(new Date()),
+					isActive: true
+				},
+				relations: {
+					tenant: true
+				}
+			});
+
+			// Create an array of user objects with relevant data
+			const workspaces = users.map((user: IUser) => {
+				const payload: JwtPayload = {
+					userId: user.id,
+					tenantId: user.tenant ? user.tenantId : null,
+					code
+				};
+				const token = sign(payload, environment.JWT_SECRET, {
+					expiresIn: `${environment.JWT_TOKEN_EXPIRATION_TIME}s`
+				});
+				return new Object({
+					user: new User({
+						email: user.email || '',
+						name: user.name || '',
+						imageUrl: user.imageUrl || '',
+						tenant: new Tenant({
+							name: user.tenant?.name || '',
+							logo: user.tenant?.logo || ''
+						}),
+					}),
+					token
+				});
+			});
+
+			// Determining the response based on the number of matching users
+			const response: IUserSigninWorkspaceResponse = {
+				workspaces,
+				confirmed_email: email,
+				show_popup: workspaces.length > 1
+			};
+
+			console.timeEnd('confirm signin for multi-tenant workspaces');
+
+			// Return the response if there are matching users
+			if (workspaces.length > 0) {
+				return response;
+			} else {
+				console.log('Error while verifying email & code for multi-tenant workspace signin confirm: %s');
+				throw new UnauthorizedException();
+			}
+		} catch (error) {
+			console.log('Error while verifying email & code for multi-tenant workspace signin confirm: %s', error?.message);
+			throw new UnauthorizedException();
+		}
+	}
+
+	/**
+	 * Verify authentication code and email.
+	 * @param input - The user email and token input.
+	 * @returns An object containing user information and tokens.
+	 */
+	async verifyAuthCode(input: IUserEmailInput & IUserTokenInput) {
+		try {
+			const { email, token } = input;
+
+			// Check for missing email or token
+			if (!email || !token) {
+				throw new UnauthorizedException();
+			}
+
+			let payload: JwtPayload | string = this.verifyToken(token);
+			console.log({ payload });
+
+			if (typeof payload === 'object') {
+				const { userId, tenantId, code } = payload;
 				const user = await this.userRepository.findOneOrFail({
 					where: {
-						email: email,
-						code: code,
-						codeExpireAt: MoreThanOrEqual(new Date())
+						id: userId,
+						tenantId,
+						code,
+						codeExpireAt: MoreThanOrEqual(new Date()),
+						isActive: true
 					},
 					relations: {
 						employee: true,
-						role: {
-							rolePermissions: true
-						}
+						role: true
 					},
-					order: {
-						createdAt: 'DESC'
-					}
 				});
-				await this.userRepository.update(user.id, {
-					code: null,
-					codeExpireAt: null
-				});
-				// If users are inactive
-				if (user.isActive === false) {
-					throw new UnauthorizedException();
-				}
 				// If employees are inactive
 				if (isNotEmpty(user.employee) && user.employee.isActive === false) {
 					throw new UnauthorizedException();
@@ -644,7 +727,28 @@ export class AuthService extends SocialAuthService {
 			}
 			throw new UnauthorizedException();
 		} catch (error) {
-			throw new UnauthorizedException();
+			if (error?.name === 'TokenExpiredError') {
+				throw new BadRequestException('JWT token has been expired.');
+			}
+			console.log('Error while signin workspace for specific tenant: %s', error?.message);
+			throw new UnauthorizedException(error?.message);
+		}
+	}
+
+	/**
+	 * Verify the JWT token and return the payload.
+	 * @param token - The JWT token to verify.
+	 * @returns The token payload or throws an error.
+	 */
+	private verifyToken(token: string): JwtPayload | string {
+		try {
+			return verify(token, environment.JWT_SECRET);
+		} catch (error) {
+			if (error?.name === 'TokenExpiredError') {
+				throw new BadRequestException('JWT token has expired.');
+			}
+			console.log('Error while verifying JWT token: %s', error?.message);
+			throw new UnauthorizedException(error?.message);
 		}
 	}
 }
