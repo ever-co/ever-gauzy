@@ -14,7 +14,7 @@ export class AuthRegisterHandler
 	) { }
 
 	public async execute(command: AuthRegisterCommand): Promise<IUser> {
-		const { input, languageCode } = command;
+		const { input, languageCode, origin } = command;
 		if (
 			input.user &&
 			input.user.role &&

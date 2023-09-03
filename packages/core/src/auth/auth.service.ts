@@ -60,21 +60,12 @@ export class AuthService extends SocialAuthService {
 	 * @param password
 	 * @returns
 	 */
-	async login({ email, password, token }: IUserLoginInput & IUserTokenInput): Promise<IAuthResponse | null> {
+	async login({ email, password }: IUserLoginInput): Promise<IAuthResponse | null> {
 		try {
-			console.time('workspace login');
-
-			let payload: JwtPayload | string = new Object();
-			if (token) {
-				payload = verify(token, environment.JWT_SECRET);
-			}
-
 			const user = await this.userService.findOneByOptions({
 				where: {
 					email,
-					isActive: true,
-					...(payload['userId'] ? { id: payload['userId'] } : {}),
-					...(payload['tenantId'] ? { tenantId: payload['tenantId'] } : {}),
+					isActive: true
 				},
 				relations: {
 					employee: true,
@@ -97,7 +88,6 @@ export class AuthService extends SocialAuthService {
 			const refresh_token = await this.getJwtRefreshToken(user);
 
 			await this.userService.setCurrentRefreshToken(refresh_token, user.id);
-			console.timeEnd('workspace login');
 
 			return {
 				user,
@@ -115,7 +105,7 @@ export class AuthService extends SocialAuthService {
 	 * @param param0 - IUserSigninWorkspaceInput containing email and password.
 	 * @returns IUserSigninWorkspaceResponse containing user details and confirmation status.
 	 */
-	async signinWorkspaces({ email, password }: IUserWorkspaceSigninInput): Promise<IUserSigninWorkspaceResponse> {
+	async signinWorkspacesByEmailPassword({ email, password }: IUserWorkspaceSigninInput): Promise<IUserSigninWorkspaceResponse> {
 		console.time('signin workspaces');
 		// Fetching users matching the query
 		let users = await this.userService.find({
@@ -287,7 +277,8 @@ export class AuthService extends SocialAuthService {
 	 */
 	async register(
 		input: IUserRegistrationInput & Partial<IAppIntegrationConfig>,
-		languageCode: LanguagesEnum
+		languageCode: LanguagesEnum,
+		origin: string
 	): Promise<User> {
 		let tenant = input.user.tenant;
 		if (input.createdById) {
@@ -364,7 +355,7 @@ export class AuthService extends SocialAuthService {
 				appEmailConfirmationUrl
 			});
 		}
-		this.emailService.welcomeUser(input.user, languageCode, input.organizationId, input.originalUrl, {
+		this.emailService.welcomeUser(input.user, languageCode, input.organizationId, origin, {
 			appName,
 			appLogo,
 			appSignature,
