@@ -669,11 +669,12 @@ export class AuthService extends SocialAuthService {
 	}
 
 	/**
-	 * Verify authentication code and email.
+	 * Verify workspace singin token
+	 *
 	 * @param input - The user email and token input.
 	 * @returns An object containing user information and tokens.
 	 */
-	async verifyAuthCode(input: IUserEmailInput & IUserTokenInput) {
+	async workspaceSigninVerifyToken(input: IUserEmailInput & IUserTokenInput) {
 		try {
 			const { email, token } = input;
 

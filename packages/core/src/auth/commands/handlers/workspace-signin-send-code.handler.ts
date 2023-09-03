@@ -1,17 +1,17 @@
 import { HttpStatus } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { LanguagesEnum } from '@gauzy/contracts';
-import { SendWorkspaceSigninCodeCommand } from '../send-workspace-signin-code.command';
+import { WorkspaceSigninSendCodeCommand } from '../workspace-signin-send-code.command';
 import { AuthService } from '../../auth.service';
 
-@CommandHandler(SendWorkspaceSigninCodeCommand)
-export class SendWorkspaceSigninCodeHandler implements ICommandHandler<SendWorkspaceSigninCodeCommand> {
+@CommandHandler(WorkspaceSigninSendCodeCommand)
+export class WorkspaceSigninSendCodeCommandHandler implements ICommandHandler<WorkspaceSigninSendCodeCommand> {
 
 	constructor(
 		private readonly authService: AuthService
 	) { }
 
-	public async execute(command: SendWorkspaceSigninCodeCommand): Promise<any> {
+	public async execute(command: WorkspaceSigninSendCodeCommand): Promise<any> {
 		try {
 			const { input, locale = LanguagesEnum.ENGLISH } = command;
 			await this.authService.sendWorkspaceSigninCode(input, locale);

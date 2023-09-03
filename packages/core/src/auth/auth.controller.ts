@@ -19,7 +19,7 @@ import { IAuthResponse, IUserSigninWorkspaceResponse, LanguagesEnum } from '@gau
 import { Public } from '@gauzy/common';
 import { AuthService } from './auth.service';
 import { User as IUser } from '../user/user.entity';
-import { AuthLoginCommand, AuthRegisterCommand, SendWorkspaceSigninCodeCommand, VerifyAuthCodeCommand } from './commands';
+import { AuthLoginCommand, AuthRegisterCommand, WorkspaceSigninSendCodeCommand, WorkspeceSigninVerifyTokenCommand } from './commands';
 import { RequestContext } from '../core/context';
 import { AuthRefreshGuard } from './../shared/guards';
 import { ChangePasswordRequestDTO, ResetPasswordRequestDTO } from './../password-reset/dto';
@@ -181,7 +181,7 @@ export class AuthController {
 		@I18nLang() locale: LanguagesEnum
 	): Promise<any> {
 		return await this.commandBus.execute(
-			new SendWorkspaceSigninCodeCommand(entity, locale)
+			new WorkspaceSigninSendCodeCommand(entity, locale)
 		);
 	}
 
@@ -213,7 +213,7 @@ export class AuthController {
 		@Body() input: WorkspaceSinginDTO
 	): Promise<any> {
 		return await this.commandBus.execute(
-			new VerifyAuthCodeCommand(input)
+			new WorkspeceSigninVerifyTokenCommand(input)
 		);
 	}
 

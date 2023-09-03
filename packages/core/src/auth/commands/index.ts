@@ -1,4 +1,4 @@
 export * from './auth.register.command';
 export * from './auth.login.command';
-export * from './send-workspace-signin-code.command';
-export * from './verify-auth-code.command';
+export * from './workspace-signin-send-code.command';
+export * from './workspace-signin-verify-token.command';

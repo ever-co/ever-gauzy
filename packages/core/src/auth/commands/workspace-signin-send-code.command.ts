@@ -2,7 +2,7 @@ import { ICommand } from '@nestjs/cqrs';
 import { IUserEmailInput, LanguagesEnum } from '@gauzy/contracts';
 import { IAppIntegrationConfig } from '@gauzy/common';
 
-export class SendWorkspaceSigninCodeCommand implements ICommand {
+export class WorkspaceSigninSendCodeCommand implements ICommand {
 
 	static readonly type = '[Password Less] Send Workspace Signin Authentication Code';
 
