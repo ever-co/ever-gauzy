@@ -403,6 +403,46 @@
 					</nb-card>
 				</div>
 			</div>
+			<div class="row">
+				<div class="col-12">
+					<h6>
+						{{
+							'TIMER_TRACKER.SETTINGS.ALWAYS_ON'
+								| translate
+						}}
+					</h6>
+				</div>
+			</div>
+			<div class="row">
+				<div class="col-10">
+					<p>
+						{{
+							'TIMER_TRACKER.SETTINGS.ALWAYS_ON_LABEL'
+								| translate
+						}}
+					</p>
+				</div>
+			</div>
+			<div class="row notification">
+				<div class="col-10">
+					<nb-card>
+						<nb-card-body>
+							<nb-toggle
+								[(ngModel)]="appSetting.alwaysOn"
+								(ngModelChange)="
+									toggleAlwaysOn($event)
+								"
+								status="basic"
+								[disabled]="appSetting?.timerStarted"
+								>{{
+									'TIMER_TRACKER.SETTINGS.ALWAYS_ON'
+										| translate
+								}}
+							</nb-toggle>
+						</nb-card-body>
+					</nb-card>
+				</div>
+			</div>
 		</ng-container>
 		<div
 			class="row"

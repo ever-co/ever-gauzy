@@ -863,6 +863,11 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 		this.updateSetting(value, 'prerelease');
 	}
 
+	toggleAlwaysOn(value: boolean) {
+		this.updateSetting(value, 'alwaysOn');
+		this.electronService.ipcRenderer.send(value ? 'show_ao' : 'hide_ao');
+	}
+
 	public async restartApp(): Promise<void> {
 		this._isRestart$.next(true);
 		if (!this.isServer && !this.authSetting.isLogout) {
