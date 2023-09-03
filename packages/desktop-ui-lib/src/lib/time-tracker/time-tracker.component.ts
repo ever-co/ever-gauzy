@@ -64,6 +64,7 @@ import { ImageViewerService } from '../image-viewer/image-viewer.service';
 import { AuthStrategy } from '../auth';
 import { LanguageSelectorService } from '../language/language-selector.service';
 import { TranslateService } from '@ngx-translate/core';
+import { AlwaysOnService, AlwaysOnStateEnum } from '../always-on/always-on.service';
 
 enum TimerStartMode {
 	MANUAL = 'manual',
@@ -229,7 +230,8 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 		private _imageViewerService: ImageViewerService,
 		private _authStrategy: AuthStrategy,
 		private _languageSelectorService: LanguageSelectorService,
-		private _translateService: TranslateService
+		private _translateService: TranslateService,
+		private _alwaysOnService: AlwaysOnService
 	) {
 		this.iconLibraries.registerFontPack('font-awesome', {
 			packClass: 'fas',
@@ -336,6 +338,15 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 						moment.duration(todayDuration, 'seconds').format('hh[h] mm[m]', { trim: false, trunc: true })
 					);
 					this.electronService.ipcRenderer.send('update_tray_time_update', this.todayDuration);
+					this.electronService.ipcRenderer.send(
+						'ao_time_update',
+						moment
+							.duration(todayDuration, 'seconds')
+							.format('HH:mm', {
+								trim: false,
+								trunc: true
+							})
+					);
 					this.electronService.ipcRenderer.send('update_tray_time_title', {
 						timeRun: moment.duration(todayDuration, 'seconds').format('hh:mm:ss', { trim: false })
 					});
@@ -356,6 +367,13 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 			.subscribe();
 		this.start$
 			.pipe(
+				tap((isStart: boolean) =>
+					this._alwaysOnService.run(
+						isStart
+							? AlwaysOnStateEnum.STARTED
+							: AlwaysOnStateEnum.STOPPED
+					)
+				),
 				filter((isStart: boolean) => !isStart),
 				tap(() => {
 					this._timeRun$.next('00:00:00');
@@ -410,6 +428,16 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 				untilDestroyed(this)
 			)
 			.subscribe();
+		this._alwaysOnService.state$
+			.pipe(
+				tap((state: AlwaysOnStateEnum) => {
+					if (state === AlwaysOnStateEnum.LOADING) {
+						this.toggleStart(!this.start, true);
+					}
+				}),
+				untilDestroyed(this)
+			)
+			.subscribe();
 		this._loadSmartTableSettings();
 	}
 
@@ -439,6 +467,9 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 				this._timeZoneManager.changeZone(
 					this.appSetting?.zone || ZoneEnum.LOCAL
 				);
+				if (!this._isReady && this.appSetting?.alwaysOn) {
+					this.electronService.ipcRenderer.send('show_ao');
+				}
 				const parallelizedTasks = [
 					this.getClient(arg),
 					this.getProjects(arg),
