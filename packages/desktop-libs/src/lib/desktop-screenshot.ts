@@ -335,7 +335,7 @@ const showCapturedToRenderer = (
 	notificationWindow.hide();
 	notificationWindow.setVisibleOnAllWorkspaces(true, {
 		visibleOnFullScreen: true,
-		skipTransformProcessType: true,
+		skipTransformProcessType: false,
 	});
 
 	notificationWindow.show();
@@ -571,7 +571,7 @@ export async function notifyScreenshot(
 	notificationWindow.hide();
 	notificationWindow.setVisibleOnAllWorkspaces(true, {
 		visibleOnFullScreen: true,
-		skipTransformProcessType: true,
+		skipTransformProcessType: false,
 	});
 	notificationWindow.on('show', () => {
 		notificationWindow.focus();
