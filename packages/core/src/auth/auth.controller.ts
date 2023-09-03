@@ -123,10 +123,10 @@ export class AuthController {
 		@Headers('origin') origin: string
 	): Promise<IUser> {
 		return await this.commandBus.execute(
-			new AuthRegisterCommand(
-				input,
-				languageCode,
-				origin
+			new AuthRegisterCommand({
+				originalUrl: origin, ...input
+			},
+				languageCode
 			)
 		);
 	}

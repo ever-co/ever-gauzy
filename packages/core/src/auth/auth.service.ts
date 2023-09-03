@@ -278,7 +278,6 @@ export class AuthService extends SocialAuthService {
 	async register(
 		input: IUserRegistrationInput & Partial<IAppIntegrationConfig>,
 		languageCode: LanguagesEnum,
-		origin: string
 	): Promise<User> {
 		let tenant = input.user.tenant;
 		if (input.createdById) {
@@ -355,7 +354,7 @@ export class AuthService extends SocialAuthService {
 				appEmailConfirmationUrl
 			});
 		}
-		this.emailService.welcomeUser(input.user, languageCode, input.organizationId, origin, {
+		this.emailService.welcomeUser(input.user, languageCode, input.organizationId, input.originalUrl, {
 			appName,
 			appLogo,
 			appSignature,
@@ -552,11 +551,12 @@ export class AuthService extends SocialAuthService {
 	}
 
 	/**
-	 * Send authentication code to the register email address
 	 *
-	 * @param email
+	 * @param input
+	 * @param locale
+	 * @returns
 	 */
-	async sendAuthCode(
+	async sendWorkspaceSigninCode(
 		input: IUserEmailInput & Partial<IAppIntegrationConfig>,
 		locale: LanguagesEnum
 	) {

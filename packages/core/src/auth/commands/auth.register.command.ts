@@ -8,6 +8,5 @@ export class AuthRegisterCommand implements ICommand {
 	constructor(
 		public readonly input: IUserRegistrationInput & Partial<IAppIntegrationConfig>,
 		public readonly languageCode: LanguagesEnum,
-		public readonly origin: string,
 	) { }
 }

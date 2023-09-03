@@ -14,7 +14,7 @@ export class SendWorkspaceSigninCodeHandler implements ICommandHandler<SendWorks
 	public async execute(command: SendWorkspaceSigninCodeCommand): Promise<any> {
 		try {
 			const { input, locale = LanguagesEnum.ENGLISH } = command;
-			await this.authService.sendAuthCode(input, locale);
+			await this.authService.sendWorkspaceSigninCode(input, locale);
 		} finally {
 			return new Object({
 				status: HttpStatus.OK,

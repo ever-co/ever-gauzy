@@ -14,7 +14,7 @@ export class AuthRegisterHandler
 	) { }
 
 	public async execute(command: AuthRegisterCommand): Promise<IUser> {
-		const { input, languageCode, origin } = command;
+		const { input, languageCode } = command;
 		if (
 			input.user &&
 			input.user.role &&
@@ -33,6 +33,6 @@ export class AuthRegisterHandler
 				throw new UnauthorizedException();
 			}
 		}
-		return await this.authService.register(input, languageCode, origin);
+		return await this.authService.register(input, languageCode);
 	}
 }
