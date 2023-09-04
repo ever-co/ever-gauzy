@@ -55,7 +55,12 @@ export class OrganizationTeamService extends TenantAwareCrudService<Organization
 	async create(
 		entity: IOrganizationTeamCreateInput
 	): Promise<IOrganizationTeam> {
-		const { tags = [], memberIds = [], managerIds = [] } = entity;
+		const {
+			tags = [],
+			memberIds = [],
+			managerIds = [],
+			projects = [],
+		} = entity;
 		const { name, organizationId, prefix, profile_link, logo, imageId } =
 			entity;
 
@@ -121,6 +126,7 @@ export class OrganizationTeamService extends TenantAwareCrudService<Organization
 				public: entity.public,
 				logo,
 				imageId,
+				projects,
 			});
 		} catch (error) {
 			throw new BadRequestException(`Failed to create a team: ${error}`);

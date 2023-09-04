@@ -113,10 +113,12 @@ export class ProductFormComponent extends TranslationBaseComponent
 			],
 			productTypeId: [
 				this.inventoryItem ? this.inventoryItem.productTypeId : null,
+				Validators.required
 			],
 			productType: [],
 			productCategoryId: [
 				this.inventoryItem ? this.inventoryItem.productCategoryId : null,
+				Validators.required
 			],
 			productCategory: [],
 			enabled: [this.inventoryItem ? this.inventoryItem.enabled : true],
