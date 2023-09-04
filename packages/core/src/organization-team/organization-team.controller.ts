@@ -237,8 +237,8 @@ export class OrganizationTeamController extends CrudController<OrganizationTeam>
 	 * @param userId
 	 * @returns
 	 */
-	@UseGuards(TenantPermissionGuard, PermissionGuard)
-	@Permissions(PermissionsEnum.ACCESS_DELETE_ACCOUNT)
+	@HttpCode(HttpStatus.ACCEPTED)
+	@Permissions(PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ORG_TEAM_REMOVE_ACCOUNT_AS_MEMBER)
 	@Delete('teams/:userId')
 	async existTeamsAsMember(
 		@Param('userId', UUIDValidationPipe) userId: IUser['id']
