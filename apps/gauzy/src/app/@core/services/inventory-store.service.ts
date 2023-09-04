@@ -27,7 +27,7 @@ export class InventoryStore {
 
 	private _deleteOptions: IProductOptionTranslatable[] = [];
 
-	private _deletedOptionGrous: IProductOptionGroupTranslatable[] = [];
+	private _deletedOptionGroups: IProductOptionGroupTranslatable[] = [];
 
 	private _optionGroups: IProductOptionGroupTranslatable[] = [];
 
@@ -96,7 +96,7 @@ export class InventoryStore {
 	}
 
 	get deletedOptionGroups() {
-		return this._deletedOptionGrous;
+		return this._deletedOptionGroups;
 	}
 
 	get optionGroups() {
@@ -247,7 +247,7 @@ export class InventoryStore {
 	}
 
 	addDeletedOptionGroup(optionGroup: IProductOptionGroupTranslatable) {
-		this._deletedOptionGrous.push(optionGroup);
+		this._deletedOptionGroups.push(optionGroup);
 	}
 
 	resetDeletedOptions() {
