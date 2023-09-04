@@ -422,34 +422,30 @@ ipcMain.on('restore', () => {
 });
 
 ipcMain.on('restart_app', async (event, arg) => {
-	dialogErr = false;
 	LocalStore.updateConfigSetting(arg);
-	if (timeTrackerWindow) {
-		timeTrackerWindow.destroy();
-		timeTrackerWindow = await createTimeTrackerWindow(timeTrackerWindow, pathWindow.timeTrackerUi);
-	}
-	if (serverGauzy) serverGauzy.kill();
-	if (gauzyWindow) {
-		gauzyWindow.destroy();
-		gauzyWindow = null;
-	}
-
-	isAlreadyRun = false;
 	const configs = LocalStore.getStore('configs');
 	global.variableGlobal = {
 		API_BASE_URL: getApiBaseUrl(configs),
-		IS_INTEGRATED_DESKTOP: configs.isLocalServer
+		IS_INTEGRATED_DESKTOP: configs.isLocalServer,
 	};
-	await startServer(configs, !!tray);
-	removeMainListener();
-	ipcMainHandler(store, startServer, knex, { ...environment }, timeTrackerWindow);
-	setupWindow.webContents.send('server_ping_restart', {
-		host: getApiBaseUrl(configs)
-	});
 	/* Killing the provider. */
 	await provider.kill();
 	/* Creating a database if not exit. */
 	await ProviderFactory.instance.createDatabase();
+	/* Kill all windows */
+	if (alwaysOn) alwaysOn.close();
+	if (settingsWindow && !settingsWindow.isDestroyed()) {
+		settingsWindow.hide();
+		settingsWindow.destroy();
+	}
+	if (timeTrackerWindow && !timeTrackerWindow.isDestroyed()) {
+		timeTrackerWindow.destroy();
+	}
+	if (serverGauzy) serverGauzy.kill();
+	if (gauzyWindow && !gauzyWindow.isDestroyed()) {
+		gauzyWindow.destroy();
+		gauzyWindow = null;
+	}
 	app.relaunch({ args: process.argv.slice(1).concat(['--relaunch']) });
 	app.exit(0);
 });

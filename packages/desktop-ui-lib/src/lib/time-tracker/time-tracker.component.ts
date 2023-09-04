@@ -1417,6 +1417,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 				});
 				this.isTrackingEnabled =
 					typeof res.employee.isTrackingEnabled !== 'undefined' ? res.employee.isTrackingEnabled : true;
+				this.electronService.ipcRenderer.send(this.isTrackingEnabled ? 'show_ao' : 'hide_ao');
 			}
 		} catch (error) {
 			console.log('[User Error]: ', error);
