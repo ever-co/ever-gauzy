@@ -19,8 +19,7 @@ import {
 	WhereExpressionBuilder,
 	In,
 	UpdateResult,
-	DeleteResult,
-	FindOneOptions,
+	DeleteResult
 } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 import { JwtPayload } from 'jsonwebtoken';
