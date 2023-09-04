@@ -671,7 +671,7 @@ export class AuthService extends SocialAuthService {
 	}
 
 	/**
-	 * Verify workspace singin token
+	 * Verify workspace signin token
 	 *
 	 * @param input - The user email and token input.
 	 * @returns An object containing user information and tokens.

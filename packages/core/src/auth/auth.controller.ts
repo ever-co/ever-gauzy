@@ -19,7 +19,7 @@ import { IAuthResponse, IUserSigninWorkspaceResponse, LanguagesEnum } from '@gau
 import { Public } from '@gauzy/common';
 import { AuthService } from './auth.service';
 import { User as IUser } from '../user/user.entity';
-import { AuthLoginCommand, AuthRegisterCommand, WorkspaceSigninSendCodeCommand, WorkspeceSigninVerifyTokenCommand } from './commands';
+import { AuthLoginCommand, AuthRegisterCommand, WorkspaceSigninSendCodeCommand, WorkspaceSigninVerifyTokenCommand } from './commands';
 import { RequestContext } from '../core/context';
 import { AuthRefreshGuard } from './../shared/guards';
 import { ChangePasswordRequestDTO, ResetPasswordRequestDTO } from './../password-reset/dto';
@@ -35,7 +35,7 @@ import {
 	HasRoleQueryDTO,
 	RefreshTokenDto,
 	WorkspaceSigninEmailVerifyDTO,
-	WorkspaceSinginDTO
+	WorkspaceSigninDTO
 } from './dto';
 
 @ApiTags('Auth')
@@ -210,10 +210,10 @@ export class AuthController {
 	@Public()
 	@UsePipes(new ValidationPipe({ whitelist: true }))
 	async signinWorkspaceByToken(
-		@Body() input: WorkspaceSinginDTO
+		@Body() input: WorkspaceSigninDTO
 	): Promise<any> {
 		return await this.commandBus.execute(
-			new WorkspeceSigninVerifyTokenCommand(input)
+			new WorkspaceSigninVerifyTokenCommand(input)
 		);
 	}
 

@@ -8,7 +8,7 @@ export class WorkspaceSigninEmailVerifyDTO extends IntersectionType(
 ) implements IUserEmailInput, IUserCodeInput { }
 
 
-export class WorkspaceSinginDTO extends IntersectionType(
+export class WorkspaceSigninDTO extends IntersectionType(
     UserEmailDTO,
     UserTokenDTO,
 ) implements IUserEmailInput, IUserTokenInput { }

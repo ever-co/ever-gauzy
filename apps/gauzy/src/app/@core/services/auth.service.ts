@@ -49,7 +49,7 @@ export class AuthService {
 		try {
 			return this.http.post<IUserSigninWorkspaceResponse>(`${API_PREFIX}/auth/signin.workspaces`, input);
 		} catch (error) {
-			console.log('Error while singin workspaces: %s', error?.message);
+			console.log('Error while signin workspaces: %s', error?.message);
 			// Handle errors appropriately (e.g., log, throw, etc.)
 			throw error;
 		}
