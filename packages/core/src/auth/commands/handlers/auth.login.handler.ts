@@ -12,8 +12,8 @@ export class AuthLoginHandler implements ICommandHandler<AuthLoginCommand> {
 
 	public async execute(command: AuthLoginCommand): Promise<IAuthResponse | null> {
 		const { input } = command;
-		const { email, password, magic_code }: IUserLoginInput = input;
+		const { email, password }: IUserLoginInput = input;
 
-		return await this.authService.login({ email, password, magic_code });
+		return await this.authService.login({ email, password });
 	}
 }

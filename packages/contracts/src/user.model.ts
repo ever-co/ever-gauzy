@@ -85,8 +85,6 @@ export interface IVerificationTokenPayload extends IUserEmailInput {
 	id: string;
 }
 
-export interface IUserInviteCodeConfirmationInput extends IUserEmailInput, IUserCodeInput { }
-
 export interface IUserEmailInput {
 	email: string;
 }
@@ -103,16 +101,10 @@ export interface IUserCodeInput {
 	code: string;
 }
 
-export interface IUserMagicCodeInput {
-	magic_code?: string;
-}
+export interface IUserLoginInput extends IUserEmailInput, IUserPasswordInput { }
 
-export interface IUserLoginInput extends IUserEmailInput, IUserPasswordInput, IUserMagicCodeInput { }
-
-export interface IUserSignInWorkspaceInput extends IUserEmailInput, IUserPasswordInput { }
-
-export interface IUserSignInWorkspaceResponse {
-	users: IUser[];
+export interface IUserSigninWorkspaceResponse {
+	workspaces: IUser[];
 	confirmed_email: string;
 	show_popup: boolean;
 }
