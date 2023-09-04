@@ -193,7 +193,7 @@ export class UserService extends TenantAwareCrudService<User> {
 					id: id as string,
 					tenantId: RequestContext.currentTenantId(),
 				});
-			} catch {}
+			} catch { }
 		} catch (error) {
 			throw new ForbiddenException();
 		}
@@ -376,44 +376,46 @@ export class UserService extends TenantAwareCrudService<User> {
 	 * @param options
 	 * @returns
 	 */
-	public async delete(
-		criteria: IUser['id'],
-		options?: FindOneOptions<User>
-	): Promise<DeleteResult> {
+	public async delete(userId: IUser['id']): Promise<DeleteResult> {
+		// Do not allow user to delete account in Demo server.
+		if (!!this._configService.get('demo')) {
+			throw new ForbiddenException('Do not allow user to delete account in Demo server');
+		}
+
+		const currentUserId = RequestContext.currentUserId();
+
+		// If user don't have enough permission (CHANGE_SELECTED_EMPLOYEE).
+		if (
+			!RequestContext.hasPermission(
+				PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
+			)
+		) {
+			// If user try to delete someone other user account, just denied the request.
+			if (currentUserId != userId) {
+				throw new ForbiddenException('You can not delete account for other users!');
+			}
+		}
+
+		const user = await this.findOneByIdString(userId, {
+			relations: {
+				employee: true,
+			},
+		});
+		if (!user) {
+			throw new ForbiddenException("User not found for this ID!");
+		}
+
 		try {
-			const userId = RequestContext.currentUserId();
-
-			// Do not allow user to delete account in Demo server.
-			if (!!this._configService.get('demo')) {
-				throw new ForbiddenException();
+			// Unassign all the task assigned to this user
+			if (user.employeeId) {
+				await this._taskService.unassignEmployeeFromTeamTasks(
+					user.employeeId,
+					undefined
+				);
 			}
-
-			// If user don't have enough permission (CHANGE_SELECTED_EMPLOYEE).
-			if (
-				!RequestContext.hasPermission(
-					PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
-				)
-			) {
-				// If user try to delete someone other user account, just denied the request.
-				if (userId != criteria) {
-					throw new ForbiddenException();
-				}
-			}
-
-			const user = await this.findOneByIdString(criteria, options);
-			if (!!user) {
-				// Unassign all the task assigned to this user
-				if (user.employeeId) {
-					await this._taskService.unassignEmployeeFromTeamTasks(
-						user.employeeId,
-						undefined
-					);
-				}
-
-				return await super.delete(criteria, options);
-			}
+			return await super.delete(userId);
 		} catch (error) {
-			throw new ForbiddenException();
+			throw new ForbiddenException(error?.message);
 		}
 	}
 }
