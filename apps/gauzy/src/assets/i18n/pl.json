@@ -3836,7 +3836,9 @@
 			"TIMEZONE_LABEL": "Wybór opcji „Lokalny” wyświetla czas w twojej strefie czasowej, podczas gdy wybranie opcji „UTC” pokazuje czas w uniwersalnej strefie czasowej UTC używanej przez systemy rozliczeniowe i inne",
 			"TIMEZONE_PLACEHOLDER": "Wybierz jeden z dwóch: 'Lokalny' lub 'UTC'",
 			"TIMEZONE_LOCAL": "Lokalny",
-			"TIMEZONE_UTC": "UTC"
+			"TIMEZONE_UTC": "UTC",
+			"ALWAYS_ON": "Zawsze włączone",
+			"ALWAYS_ON_LABEL": "To okno odzwierciedla stan timera, wskazując, czy jest uruchomiony czy zatrzymany, i działa jako przycisk."
 		},
 		"WEEKLY_LIMIT_EXCEEDED": "Przekroczono limit tygodniowy",
 		"OF_HRS": "Z {{ limit }} godz",

@@ -3836,7 +3836,9 @@
 			"TIMEZONE_LABEL": "La scelta di 'Locale' visualizza l'ora nel fuso orario locale, mentre selezionando 'UTC' mostra l'ora nel fuso orario UTC universale utilizzato da sistemi di fatturazione e altri",
 			"TIMEZONE_PLACEHOLDER": "Seleziona tra 'Locale' o 'UTC'",
 			"TIMEZONE_LOCAL": "Locale",
-			"TIMEZONE_UTC": "UTC (Coordinated Universal Time)"
+			"TIMEZONE_UTC": "UTC (Coordinated Universal Time)",
+			"ALWAYS_ON": "Sempre attivo",
+			"ALWAYS_ON_LABEL": "Questa finestra riflette lo stato del timer, indicando se è in esecuzione o fermo e funziona come un pulsante."
 		},
 		"WEEKLY_LIMIT_EXCEEDED": "Limite settimanale superato",
 		"OF_HRS": "Di {{ limit }} ore",

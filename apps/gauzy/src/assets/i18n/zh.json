@@ -3836,7 +3836,9 @@
 			"TIMEZONE_LABEL": "选择“本地”会显示您所在地的时区，而选择“UTC”则会显示由计费和其他系统使用的通用协调世界时时区的时间。",
 			"TIMEZONE_PLACEHOLDER": "请选择“本地”或“UTC”。",
 			"TIMEZONE_LOCAL": "本地",
-			"TIMEZONE_UTC": "世界协调时间 (UTC)"
+			"TIMEZONE_UTC": "世界协调时间 (UTC)",
+			"ALWAYS_ON": "始终开启",
+			"ALWAYS_ON_LABEL": "此窗口反映计时器的状态，指示计时器是运行还是停止，并兼做按钮。"
 		},
 		"WEEKLY_LIMIT_EXCEEDED": "每周限制已超过。",
 		"OF_HRS": "的{{ limit }}小时",

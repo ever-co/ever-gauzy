@@ -3836,7 +3836,9 @@
 			"TIMEZONE_LABEL": "En choisissant 'Local', cela affiche l'heure dans votre fuseau horaire local, tandis que la sélection de 'UTC' affiche l'heure dans le fuseau horaire universel UTC utilisé par la facturation et d'autres systèmes.",
 			"TIMEZONE_PLACEHOLDER": "Sélectionnez soit 'Local' ou 'UTC'.",
 			"TIMEZONE_LOCAL": "Local",
-			"TIMEZONE_UTC": "Temps universel coordonné"
+			"TIMEZONE_UTC": "Temps universel coordonné",
+			"ALWAYS_ON": "Toujours allumé",
+			"ALWAYS_ON_LABEL": "Cette fenêtre reflète l'état du minuteur, indiquant s'il est en marche ou arrêté, et fonctionne comme un bouton."
 		},
 		"WEEKLY_LIMIT_EXCEEDED": "La limite hebdomadaire est dépassée.",
 		"OF_HRS": "De {{ limit }} heures",

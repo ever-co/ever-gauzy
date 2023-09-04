@@ -3836,7 +3836,9 @@
 			"TIMEZONE_LABEL": "Escolher 'Local' exibe o horário na sua zona de tempo local, enquanto selecionar 'UTC' mostra o horário na zona de tempo universal UTC utilizada por faturamento e outros sistemas.",
 			"TIMEZONE_PLACEHOLDER": "Selecione 'Local' ou 'UTC'.",
 			"TIMEZONE_LOCAL": "Local",
-			"TIMEZONE_UTC": "UTC stands for Coordinated Universal Time, which is a standard time reference used worldwide. It is based on the time at the Prime Meridian, located in Greenwich, London. UTC is commonly used in aviation, telecommunications, and other fields that require precision timing."
+			"TIMEZONE_UTC": "UTC",
+			"ALWAYS_ON": "Sempre ligado",
+			"ALWAYS_ON_LABEL": "Esta janela reflete o estado do temporizador, indicando se está em execução ou parado, e funciona como um botão."
 		},
 		"WEEKLY_LIMIT_EXCEEDED": "Limite semanal excedido",
 		"OF_HRS": "De {{ limit }} horas.",
