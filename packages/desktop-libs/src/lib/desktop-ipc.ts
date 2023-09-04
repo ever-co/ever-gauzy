@@ -901,7 +901,10 @@ export function ipcTimer(
 	});
 
 	ipcMain.on('show_ao', async (event, arg) => {
-		alwaysOn.show();
+		const setting = LocalStore.getStore('appSetting');
+		if (setting?.alwaysOn) {
+			alwaysOn.show();
+		}
 	})
 
 	ipcMain.on('hide_ao', (event, arg) => {
