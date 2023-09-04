@@ -7,7 +7,7 @@ import { IBasePerTenantEntityModel } from './base-entity.model';
 import { ITag } from './tag.model';
 import { IEmployee } from './employee.model';
 import { IPayment } from './payment.model';
-import { IOrganization } from './organization.model';
+import { IUserOrganization } from './user-organization.model';
 import { IInvite } from './invite.model';
 import { ICandidate } from 'candidate.model';
 import { IRelationalImageAsset } from './image-asset.model';
@@ -39,7 +39,7 @@ export interface IUser extends IBasePerTenantEntityModel, IRelationalImageAsset 
 	payments?: IPayment[];
 	preferredComponentLayout?: ComponentLayoutStyleEnum;
 	fullName?: string;
-	organizations?: IOrganization[];
+	organizations?: IUserOrganization[];
 	isImporting?: boolean;
 	sourceId?: string;
 	isActive?: boolean;

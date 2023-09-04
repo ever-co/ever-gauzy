@@ -14,6 +14,7 @@ import {
 	IGoal,
 	IImageAsset,
 	IIssueType,
+	IOrganizationProject,
 	IOrganizationTeam,
 	IOrganizationTeamEmployee,
 	IRequestApprovalTeam,
@@ -52,7 +53,6 @@ import {
 	TenantOrganizationBaseEntity,
 	User,
 } from '../core/entities/internal';
-import { IOrganizationProject } from '@gauzy/contracts';
 
 @Entity('organization_team')
 export class OrganizationTeam extends TenantOrganizationBaseEntity implements IOrganizationTeam {
