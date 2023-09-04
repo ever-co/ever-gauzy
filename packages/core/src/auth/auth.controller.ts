@@ -16,7 +16,7 @@ import { ApiTags, ApiOperation, ApiResponse, ApiOkResponse, ApiBadRequestRespons
 import { CommandBus } from '@nestjs/cqrs';
 import { I18nLang } from 'nestjs-i18n';
 import { IAuthResponse, IUserSigninWorkspaceResponse, LanguagesEnum } from '@gauzy/contracts';
-import { Public } from '@gauzy/common';
+import { Public, parseToBoolean } from '@gauzy/common';
 import { AuthService } from './auth.service';
 import { User as IUser } from '../user/user.entity';
 import { AuthLoginCommand, AuthRegisterCommand, WorkspaceSigninSendCodeCommand, WorkspaceSigninVerifyTokenCommand } from './commands';
@@ -37,6 +37,7 @@ import {
 	WorkspaceSigninEmailVerifyDTO,
 	WorkspaceSigninDTO
 } from './dto';
+import { RelationsQueryDTO } from 'shared/dto';
 
 @ApiTags('Auth')
 @Controller()
@@ -195,9 +196,13 @@ export class AuthController {
 	@Public()
 	@UsePipes(new ValidationPipe({ whitelist: true }))
 	async signinConfirmEmailByCode(
-		@Body() input: WorkspaceSigninEmailVerifyDTO
+		@Query() query: Record<string, boolean>,
+		@Body() input: WorkspaceSigninEmailVerifyDTO,
 	): Promise<any> {
-		return await this.authService.signinConfirmByCode(input);
+		return await this.authService.signinConfirmByCode(
+			input,
+			parseToBoolean(query.includeTeams)
+		);
 	}
 
 	/**

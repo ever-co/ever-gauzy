@@ -1,7 +1,7 @@
 import { CommandBus } from '@nestjs/cqrs';
 import { BadRequestException, Injectable, InternalServerErrorException, UnauthorizedException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { In, MoreThanOrEqual, Repository } from 'typeorm';
+import { In, MoreThanOrEqual, Repository, SelectQueryBuilder } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 import * as moment from 'moment';
 import { JsonWebTokenError, JwtPayload, sign, verify } from 'jsonwebtoken';
@@ -34,7 +34,7 @@ import { ImportRecordUpdateOrCreateCommand } from './../export-import/import-rec
 import { PasswordResetCreateCommand, PasswordResetGetCommand } from './../password-reset/commands';
 import { RequestContext } from './../core/context';
 import { freshTimestamp, generateRandomAlphaNumericCode } from './../core/utils';
-import { Tenant } from './../core/entities/internal';
+import { OrganizationTeam, Tenant } from './../core/entities/internal';
 import { EmailConfirmationService } from './email-confirmation.service';
 
 @Injectable()
@@ -42,6 +42,9 @@ export class AuthService extends SocialAuthService {
 	constructor(
 		@InjectRepository(User)
 		private readonly userRepository: Repository<User>,
+
+		@InjectRepository(OrganizationTeam)
+		protected readonly organizationTeamRepository: Repository<OrganizationTeam>,
 
 		private readonly emailConfirmationService: EmailConfirmationService,
 		private readonly userService: UserService,
@@ -601,7 +604,10 @@ export class AuthService extends SocialAuthService {
 	 * @param payload - The user invitation code confirmation input.
 	 * @returns The user sign-in workspace response.
 	 */
-	async signinConfirmByCode(payload: IUserEmailInput & IUserCodeInput): Promise<IUserSigninWorkspaceResponse> {
+	async signinConfirmByCode(
+		payload: IUserEmailInput & IUserCodeInput,
+		includeTeams: boolean
+	): Promise<IUserSigninWorkspaceResponse> {
 		try {
 			console.time('confirm signin for multi-tenant workspaces');
 			const { email, code } = payload;
@@ -624,8 +630,33 @@ export class AuthService extends SocialAuthService {
 				}
 			});
 
+			const workspaces: IUser[] = [];
 			// Create an array of user objects with relevant data
-			const workspaces = users.map((user: IUser) => {
+			for await (const user of users) {
+				try {
+					const userId = user.id;
+					const tenantId = user.tenant ? user.tenantId : null;
+
+					const query = this.organizationTeamRepository.createQueryBuilder('organization_team');
+					query.andWhere(`"${query.alias}"."tenantId" = :tenantId`, { tenantId });
+
+					// Sub query to get only assigned teams
+					query.andWhere((cb: SelectQueryBuilder<OrganizationTeam>) => {
+						const subQuery = cb.subQuery().select('"user_organization"."organizationId"').from('user_organization', 'user_organization');
+						subQuery.andWhere('"user_organization"."isActive" = true');
+						subQuery.andWhere('"user_organization"."userId" = :userId', { userId });
+						subQuery.andWhere('"user_organization"."tenantId" = :tenantId', { tenantId });
+						console.log(subQuery.distinct(true).getQueryAndParameters());
+
+						return (`"${query.alias}"."organizationId" IN ` + subQuery.distinct(true).getQuery());
+					});
+
+					console.log(query.getQueryAndParameters());
+					console.log(await query.getManyAndCount());
+				} catch (error) {
+					console.log('Error while getting specific teams for specific tenant: %s', error?.message);
+				}
+
 				const payload: JwtPayload = {
 					userId: user.id,
 					email: user.email,
@@ -635,7 +666,8 @@ export class AuthService extends SocialAuthService {
 				const token = sign(payload, environment.JWT_SECRET, {
 					expiresIn: `${environment.JWT_TOKEN_EXPIRATION_TIME}s`
 				});
-				return new Object({
+
+				const workspace = new Object({
 					user: new User({
 						email: user.email || '',
 						name: user.name || '',
@@ -647,7 +679,8 @@ export class AuthService extends SocialAuthService {
 					}),
 					token
 				});
-			});
+				workspaces.push(workspace);
+			}
 
 			// Determining the response based on the number of matching users
 			const response: IUserSigninWorkspaceResponse = {
