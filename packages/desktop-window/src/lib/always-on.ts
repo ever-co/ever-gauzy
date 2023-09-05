@@ -5,7 +5,7 @@ import { BaseWindow } from './interfaces/base-window';
 
 export class AlwaysOn extends BaseWindow implements IBaseWindow {
 	private static readonly WIDTH: number = 60;
-	private static readonly HEIGHT: number = 100;
+	private static readonly HEIGHT: number = 110;
 
 	constructor(private readonly path: string) {
 		super(
