@@ -19,7 +19,7 @@ export class AlwaysOn extends BaseWindow implements IBaseWindow {
 					opacity: 0.8,
 					alwaysOnTop: true,
 					center: false,
-					x: 0,
+					x: 16,
 					y: Math.floor(
 						(screen.getPrimaryDisplay().workAreaSize.height -
 							AlwaysOn.HEIGHT) /
