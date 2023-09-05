@@ -315,7 +315,9 @@
 		"Pdfmaker",
 		"prestart",
 		"resave",
-		"signin"
+		"signin",
+		"ibase",
+		"iwindow"
 	],
 	"useGitignore": true,
 	"ignorePaths": [

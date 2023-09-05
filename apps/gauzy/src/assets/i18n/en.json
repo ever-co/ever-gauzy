@@ -3839,7 +3839,9 @@
 			"TIMEZONE_LABEL": "Choosing 'Local' displays time in your local time zone, while selecting 'UTC' shows time in the universal UTC timezone used by billing and other systems.",
 			"TIMEZONE_PLACEHOLDER": "Select either 'Local' or 'UTC'.",
 			"TIMEZONE_LOCAL": "Local",
-			"TIMEZONE_UTC": "UTC"
+			"TIMEZONE_UTC": "UTC",
+			"WIDGET": "Widget",
+			"WIDGET_LABEL": "This window reflect the status of the timer, indicating whether it is running or stopped, and function as a button."
 		},
 		"WEEKLY_LIMIT_EXCEEDED": "Weekly limit exceeded",
 		"OF_HRS": "Of {{ limit }} hrs",
