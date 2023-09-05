@@ -737,6 +737,18 @@ export class AuthService extends SocialAuthService {
 						role: true
 					},
 				});
+
+				await this.userRepository.update({
+					email,
+					id: userId,
+					tenantId,
+					code,
+					isActive: true
+				}, {
+					code: null,
+					codeExpireAt: null
+				});
+
 				// If employees are inactive
 				if (isNotEmpty(user.employee) && user.employee.isActive === false) {
 					throw new UnauthorizedException();
