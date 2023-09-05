@@ -8,7 +8,8 @@ import {
 	SetupComponent,
 	UpdaterComponent,
 	AboutComponent,
-	SplashScreenComponent
+	SplashScreenComponent,
+	AlwaysOnComponent
 } from '@gauzy/desktop-ui-lib';
 
 const routes: Routes = [
@@ -47,7 +48,11 @@ const routes: Routes = [
 	{
 		path: 'splash-screen',
 		component: SplashScreenComponent
-	}
+	},
+	{
+		path: 'always-on',
+		component: AlwaysOnComponent
+	},
 ];
 
 const config: ExtraOptions = {

@@ -77,7 +77,8 @@ import {
 	createSettingsWindow,
 	createUpdaterWindow,
 	createImageViewerWindow,
-	SplashScreen
+	SplashScreen,
+	AlwaysOn
 } from '@gauzy/desktop-window';
 import { fork } from 'child_process';
 import { autoUpdater } from 'electron-updater';
@@ -113,6 +114,7 @@ let settingsWindow: BrowserWindow = null;
 let updaterWindow: BrowserWindow = null;
 let imageView: BrowserWindow = null;
 let splashScreen: SplashScreen = null;
+let alwaysOn: AlwaysOn = null;
 
 console.log('App UI Render Path:', path.join(__dirname, './index.html'));
 
@@ -284,7 +286,8 @@ async function startServer(value, restart = false) {
 		{ ...environment },
 		pathWindow,
 		path.join(__dirname, 'assets', 'icons', 'icon_16x16.png'),
-		gauzyWindow
+		gauzyWindow,
+		alwaysOn
 	);
 
 	TranslateService.onLanguageChange(() => {
@@ -310,7 +313,8 @@ async function startServer(value, restart = false) {
 			{ ...environment },
 			pathWindow,
 			path.join(__dirname, 'assets', 'icons', 'icon.png'),
-			gauzyWindow
+			gauzyWindow,
+			alwaysOn
 		);
 	})
 
@@ -439,6 +443,9 @@ app.on('ready', async () => {
 	);
 	imageView = await createImageViewerWindow(imageView, pathWindow.timeTrackerUi);
 
+	alwaysOn = new AlwaysOn(pathWindow.timeTrackerUi);
+	await alwaysOn.loadURL();
+
 	/* Set Menu */
 	new AppMenu(
 		timeTrackerWindow,
@@ -547,7 +554,8 @@ ipcMain.on('server_is_ready', async () => {
 			{ ...environment },
 			createSettingsWindow,
 			pathWindow,
-			path.join(__dirname, '..', 'data', 'sound', 'snapshot-sound.wav')
+			path.join(__dirname, '..', 'data', 'sound', 'snapshot-sound.wav'),
+			alwaysOn
 		);
 		isAlreadyRun = true;
 	}
