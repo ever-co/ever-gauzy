@@ -195,11 +195,11 @@ export class AuthController {
 	@Post('/signin.email/confirm')
 	@Public()
 	@UsePipes(new ValidationPipe({ whitelist: true }))
-	async signinConfirmEmailByCode(
+	async confirmWorkspaceSigninByCode(
 		@Query() query: Record<string, boolean>,
 		@Body() input: WorkspaceSigninEmailVerifyDTO,
 	): Promise<any> {
-		return await this.authService.signinConfirmByCode(
+		return await this.authService.confirmWorkspaceSigninByCode(
 			input,
 			parseToBoolean(query.includeTeams)
 		);

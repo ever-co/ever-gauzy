@@ -21,6 +21,7 @@ import {
 	IUserLoginInput,
 	IUserLoginInput as IUserWorkspaceSigninInput,
 	IUserTokenInput,
+	IOrganizationTeam,
 } from '@gauzy/contracts';
 import { environment } from '@gauzy/config';
 import { SocialAuthService } from '@gauzy/auth';
@@ -604,7 +605,7 @@ export class AuthService extends SocialAuthService {
 	 * @param payload - The user invitation code confirmation input.
 	 * @returns The user sign-in workspace response.
 	 */
-	async signinConfirmByCode(
+	async confirmWorkspaceSigninByCode(
 		payload: IUserEmailInput & IUserCodeInput,
 		includeTeams: boolean
 	): Promise<IUserSigninWorkspaceResponse> {
@@ -664,38 +665,8 @@ export class AuthService extends SocialAuthService {
 
 				try {
 					if (includeTeams) {
-						const query = this.organizationTeamRepository.createQueryBuilder('organization_team');
-						query.andWhere(`"${query.alias}"."tenantId" = :tenantId`, { tenantId });
-
-						// Sub query to get only assigned teams for specific organizations
-						query.andWhere((cb: SelectQueryBuilder<OrganizationTeam>) => {
-							const subQuery = cb.subQuery().select('"user_organization"."organizationId"').from('user_organization', 'user_organization');
-							subQuery.andWhere(`"${subQuery.alias}"."isActive" = true`);
-							subQuery.andWhere(`"${subQuery.alias}"."userId" = :userId`, { userId });
-							subQuery.andWhere(`"${subQuery.alias}"."tenantId" = :tenantId`, { tenantId });
-							return (`"${query.alias}"."organizationId" IN ` + subQuery.distinct(true).getQuery());
-						});
-
-						// Sub query to get only assigned teams for specific employee
-						query.andWhere((cb: SelectQueryBuilder<OrganizationTeam>) => {
-							const subQuery = cb.subQuery().select('"organization_team_employee"."organizationTeamId"').from('organization_team_employee', 'organization_team_employee');
-							subQuery.andWhere(`"${subQuery.alias}"."tenantId" = :tenantId`, { tenantId });
-
-							if (isNotEmpty(employeeId)) {
-								subQuery.andWhere(`"${subQuery.alias}"."employeeId" = :employeeId`, { employeeId });
-							}
-
-							return (`"${query.alias}"."id" IN ` + subQuery.distinct(true).getQuery());
-						});
-
-						query.select(`"${query.alias}"."id"`, `team_id`);
-						query.addSelect(`"${query.alias}"."name"`, `team_name`);
-						query.addSelect(`"${query.alias}"."logo"`, `team_logo`);
-						query.addSelect(`"${query.alias}"."profile_link"`, `profile_link`);
-						query.addSelect(`"${query.alias}"."prefix"`, `prefix`);
-
-						query.orderBy(`"${query.alias}"."createdAt"`, 'DESC');
-						workspace['current_teams'] = await query.getRawMany();
+						const teams = await this.getTeamsForUser(tenantId, userId, employeeId);
+						workspace['current_teams'] = teams;
 					}
 				} catch (error) {
 					console.log('Error while getting specific teams for specific tenant: %s', error?.message);
@@ -811,5 +782,52 @@ export class AuthService extends SocialAuthService {
 			console.log('Error while verifying JWT token: %s', error?.message);
 			throw new UnauthorizedException(error?.message);
 		}
+	}
+
+	/**
+	 * Get teams for a user within a specific tenant.
+	 * @param tenantId The ID of the tenant.
+	 * @param userId The ID of the user.
+	 * @param employeeId The ID of the employee (optional).
+	 * @returns A Promise that resolves to an array of IOrganizationTeam objects.
+	 */
+	private async getTeamsForUser(
+		tenantId: string,
+		userId: string,
+		employeeId: string | null
+	): Promise<IOrganizationTeam[]> {
+		const query = this.organizationTeamRepository.createQueryBuilder('organization_team');
+		query.andWhere(`"${query.alias}"."tenantId" = :tenantId`, { tenantId });
+
+		// Subquery to get only assigned teams for specific organizations
+		query.andWhere((cb: SelectQueryBuilder<OrganizationTeam>) => {
+			const subQuery = cb.subQuery().select('"user_organization"."organizationId"').from('user_organization', 'user_organization');
+			subQuery.andWhere(`"${subQuery.alias}"."isActive" = true`);
+			subQuery.andWhere(`"${subQuery.alias}"."userId" = :userId`, { userId });
+			subQuery.andWhere(`"${subQuery.alias}"."tenantId" = :tenantId`, { tenantId });
+			return (`"${query.alias}"."organizationId" IN ` + subQuery.distinct(true).getQuery());
+		});
+
+		// Subquery to get only assigned teams for a specific employee
+		query.andWhere((cb: SelectQueryBuilder<OrganizationTeam>) => {
+			const subQuery = cb.subQuery().select('"organization_team_employee"."organizationTeamId"').from('organization_team_employee', 'organization_team_employee');
+			subQuery.andWhere(`"${subQuery.alias}"."tenantId" = :tenantId`, { tenantId });
+
+			if (isNotEmpty(employeeId)) {
+				subQuery.andWhere(`"${subQuery.alias}"."employeeId" = :employeeId`, { employeeId });
+			}
+
+			return (`"${query.alias}"."id" IN ` + subQuery.distinct(true).getQuery());
+		});
+
+		query.select(`"${query.alias}"."id"`, `team_id`);
+		query.addSelect(`"${query.alias}"."name"`, `team_name`);
+		query.addSelect(`"${query.alias}"."logo"`, `team_logo`);
+		query.addSelect(`"${query.alias}"."profile_link"`, `profile_link`);
+		query.addSelect(`"${query.alias}"."prefix"`, `prefix`);
+
+		query.orderBy(`"${query.alias}"."createdAt"`, 'DESC');
+
+		return await query.getRawMany();
 	}
 }
