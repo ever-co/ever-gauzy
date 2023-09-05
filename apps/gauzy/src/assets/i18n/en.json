@@ -3840,8 +3840,8 @@
 			"TIMEZONE_PLACEHOLDER": "Select either 'Local' or 'UTC'.",
 			"TIMEZONE_LOCAL": "Local",
 			"TIMEZONE_UTC": "UTC",
-			"ALWAYS_ON": "Always On",
-			"ALWAYS_ON_LABEL": "This window reflect the status of the timer, indicating whether it is running or stopped, and function as a button."
+			"WIDGET": "Widget",
+			"WIDGET_LABEL": "This window reflect the status of the timer, indicating whether it is running or stopped, and function as a button."
 		},
 		"WEEKLY_LIMIT_EXCEEDED": "Weekly limit exceeded",
 		"OF_HRS": "Of {{ limit }} hrs",

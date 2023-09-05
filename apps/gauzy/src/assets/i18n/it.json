@@ -3837,8 +3837,8 @@
 			"TIMEZONE_PLACEHOLDER": "Seleziona tra 'Locale' o 'UTC'",
 			"TIMEZONE_LOCAL": "Locale",
 			"TIMEZONE_UTC": "UTC (Coordinated Universal Time)",
-			"ALWAYS_ON": "Sempre attivo",
-			"ALWAYS_ON_LABEL": "Questa finestra riflette lo stato del timer, indicando se è in esecuzione o fermo e funziona come un pulsante."
+			"WIDGET": "Widget",
+			"WIDGET_LABEL": "Questa finestra riflette lo stato del timer, indicando se è in esecuzione o fermo e funziona come un pulsante."
 		},
 		"WEEKLY_LIMIT_EXCEEDED": "Limite settimanale superato",
 		"OF_HRS": "Di {{ limit }} ore",

@@ -3837,8 +3837,8 @@
 			"TIMEZONE_PLACEHOLDER": "Wybierz jeden z dwóch: 'Lokalny' lub 'UTC'",
 			"TIMEZONE_LOCAL": "Lokalny",
 			"TIMEZONE_UTC": "UTC",
-			"ALWAYS_ON": "Zawsze włączone",
-			"ALWAYS_ON_LABEL": "To okno odzwierciedla stan timera, wskazując, czy jest uruchomiony czy zatrzymany, i działa jako przycisk."
+			"WIDGET": "Widget",
+			"WIDGET_LABEL": "To okno odzwierciedla stan timera, wskazując, czy jest uruchomiony czy zatrzymany, i działa jako przycisk."
 		},
 		"WEEKLY_LIMIT_EXCEEDED": "Przekroczono limit tygodniowy",
 		"OF_HRS": "Z {{ limit }} godz",

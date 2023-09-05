@@ -3837,8 +3837,8 @@
 			"TIMEZONE_PLACEHOLDER": "Selecciona 'Local' o 'UTC'.",
 			"TIMEZONE_LOCAL": "Local",
 			"TIMEZONE_UTC": "UTC",
-			"ALWAYS_ON": "Siempre encendido",
-			"ALWAYS_ON_LABEL": "Esta ventana refleja el estado del temporizador, indicando si está en funcionamiento o detenido, y funciona como un botón."
+			"WIDGET": "Widget",
+			"WIDGET_LABEL": "Esta ventana refleja el estado del temporizador, indicando si está en funcionamiento o detenido, y funciona como un botón."
 		},
 		"WEEKLY_LIMIT_EXCEEDED": "Límite semanal excedido",
 		"OF_HRS": "De {{ limit }} horas.",

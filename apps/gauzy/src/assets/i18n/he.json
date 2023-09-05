@@ -3780,8 +3780,8 @@
 			"TIMEZONE_PLACEHOLDER": "בחר בין 'מקומי' או 'UTC'.",
 			"TIMEZONE_LOCAL": "מקומי",
 			"TIMEZONE_UTC": "UTC",
-			"ALWAYS_ON": "תמיד פעיל",
-			"ALWAYS_ON_LABEL": "החלון משקף את מצב הטיימר, מציין האם הוא פועל או עצור, ופועל ככפתור."
+			"WIDGET": "ווידג'ט",
+			"WIDGET_LABEL": "החלון משקף את מצב הטיימר, מציין האם הוא פועל או עצור, ופועל ככפתור."
 		},
 		"WEEKLY_LIMIT_EXCEEDED": "הגעת למגבלת השבוע",
 		"OF_HRS": "מתוך {{ limit }} שעות",

@@ -3837,8 +3837,8 @@
 			"TIMEZONE_PLACEHOLDER": "Sélectionnez soit 'Local' ou 'UTC'.",
 			"TIMEZONE_LOCAL": "Local",
 			"TIMEZONE_UTC": "Temps universel coordonné",
-			"ALWAYS_ON": "Toujours allumé",
-			"ALWAYS_ON_LABEL": "Cette fenêtre reflète l'état du minuteur, indiquant s'il est en marche ou arrêté, et fonctionne comme un bouton."
+			"WIDGET": "Widget",
+			"WIDGET_LABEL": "Cette fenêtre reflète l'état du minuteur, indiquant s'il est en marche ou arrêté, et fonctionne comme un bouton."
 		},
 		"WEEKLY_LIMIT_EXCEEDED": "La limite hebdomadaire est dépassée.",
 		"OF_HRS": "De {{ limit }} heures",

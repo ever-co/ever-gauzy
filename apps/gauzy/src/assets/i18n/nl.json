@@ -3837,8 +3837,8 @@
 			"TIMEZONE_PLACEHOLDER": "Selecteer 'Lokaal' of 'UTC'.",
 			"TIMEZONE_LOCAL": "Lokaal",
 			"TIMEZONE_UTC": "UTC",
-			"ALWAYS_ON": "Altijd aan",
-			"ALWAYS_ON_LABEL": "Dit venster weerspiegelt de status van de timer en geeft aan of deze actief is of gestopt en functioneert als een knop."
+			"WIDGET": "Widget",
+			"WIDGET_LABEL": "Dit venster weerspiegelt de status van de timer en geeft aan of deze actief is of gestopt en functioneert als een knop."
 		},
 		"WEEKLY_LIMIT_EXCEEDED": "Weeklimiet overschreden",
 		"OF_HRS": "Van {{ limit }} uur",
