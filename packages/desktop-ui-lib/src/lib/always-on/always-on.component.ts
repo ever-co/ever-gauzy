@@ -6,7 +6,7 @@ import { ElectronService } from '../electron/services';
 import { LanguageSelectorService } from '../language/language-selector.service';
 import { TimeTrackerDateManager } from '../services';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { AlwaysOnService, AlwaysOnStateEnum } from './always-on.service';
+import { AlwaysOnService, AlwaysOnStateEnum, ITimeCounter } from './always-on.service';
 import { NbIconLibraries } from '@nebular/theme';
 
 @UntilDestroy({ checkProperties: true })
@@ -21,7 +21,10 @@ export class AlwaysOnComponent implements OnInit, AfterViewInit {
 	public loading: boolean = false;
 	public isTrackingEnabled: boolean = true;
 
-	private _counter$: BehaviorSubject<string> = new BehaviorSubject('--:--');
+	private _counter$: BehaviorSubject<ITimeCounter> = new BehaviorSubject({
+		current: '--:--:--',
+		today: '--:--'
+	});
 
 	constructor(
 		private _languageSelectorService: LanguageSelectorService,
@@ -80,7 +83,7 @@ export class AlwaysOnComponent implements OnInit, AfterViewInit {
 			.subscribe();
 		this._alwaysOnService.counter$
 			.pipe(
-				tap((time: string) => {
+				tap((time: ITimeCounter) => {
 					this._ngZone.run(() => {
 						this._counter$.next(time);
 					});
@@ -111,7 +114,7 @@ export class AlwaysOnComponent implements OnInit, AfterViewInit {
 		this._alwaysOnService.run(AlwaysOnStateEnum.LOADING);
 	}
 
-	public get counter$(): Observable<string> {
+	public get counter$(): Observable<ITimeCounter> {
 		return this._counter$.asObservable();
 	}
 }

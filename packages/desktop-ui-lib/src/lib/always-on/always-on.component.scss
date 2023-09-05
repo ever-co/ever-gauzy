@@ -18,7 +18,7 @@ button {
 	-webkit-app-region: no-drag;
 
 	nb-icon {
-		font-size: var(--icon-font-size)
+		font-size: var(--icon-font-size);
 	}
 }
 
@@ -31,7 +31,24 @@ button {
 
 .counter {
 	font-weight: 600;
-	font-size: 13px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	flex-direction: column;
+
+	.current {
+		font-size: 12px;
+	}
+
+	.today {
+		font-size: 10px;
+		line-height: normal;
+
+		nb-icon {
+			width: auto;
+			height: auto;
+		}
+	}
 }
 
 .status {

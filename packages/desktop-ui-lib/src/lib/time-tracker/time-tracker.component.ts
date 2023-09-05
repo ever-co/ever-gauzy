@@ -338,19 +338,26 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 						moment.duration(todayDuration, 'seconds').format('hh[h] mm[m]', { trim: false, trunc: true })
 					);
 					this.electronService.ipcRenderer.send('update_tray_time_update', this.todayDuration);
-					this.electronService.ipcRenderer.send(
-						'ao_time_update',
-						moment
-							.duration(todayDuration, 'seconds')
-							.format('HH:mm', {
-								trim: false,
-								trunc: true
-							})
-					);
 					this.electronService.ipcRenderer.send('update_tray_time_title', {
 						timeRun: moment.duration(todayDuration, 'seconds').format('hh:mm:ss', { trim: false })
 					});
 				}),
+				untilDestroyed(this)
+			)
+			.subscribe();
+		this._timeRun$
+			.pipe(
+				tap((current: string) =>
+					this.electronService.ipcRenderer.send('ao_time_update', {
+						today: moment
+							.duration(this._lastTotalWorkedToday, 'seconds')
+							.format('HH:mm', {
+								trim: false,
+								trunc: true,
+							}),
+						current
+					})
+				),
 				untilDestroyed(this)
 			)
 			.subscribe();

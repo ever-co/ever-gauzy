@@ -41,8 +41,24 @@
 				<nb-icon class="start-button" icon="pause" pack="font-awesome">
 				</nb-icon>
 			</button>
-			<div class="counter">{{ counter$ | async }}</div>
-			<div class="status" [ngClass]="{offline: isOffline$ | async}"></div>
+			<div class="counter">
+				<div class="current">
+					{{ (counter$ | async)?.current }}
+				</div>
+				<div class="today">
+					<nb-icon
+						class="today"
+						icon="stopwatch"
+						pack="font-awesome"
+					>
+					</nb-icon>
+					{{ (counter$ | async)?.today }}
+				</div>
+			</div>
+			<div
+				class="status"
+				[ngClass]="{ offline: isOffline$ | async }"
+			></div>
 		</div>
 	</nb-layout-column>
 </nb-layout>

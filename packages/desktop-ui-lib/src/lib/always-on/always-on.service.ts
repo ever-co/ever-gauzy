@@ -8,6 +8,11 @@ export enum AlwaysOnStateEnum {
 	LOADING = 'loading',
 }
 
+export interface ITimeCounter {
+	current: string;
+	today: string;
+}
+
 @Injectable({
 	providedIn: 'root',
 })
@@ -29,11 +34,11 @@ export class AlwaysOnService {
 		});
 	}
 
-	public get counter$(): Observable<string> {
+	public get counter$(): Observable<ITimeCounter> {
 		return new Observable((observer) => {
 			this._electronService.ipcRenderer.on(
 				'ao_time_update',
-				(_, count: string) => {
+				(_, count: ITimeCounter) => {
 					observer.next(count);
 				}
 			);
