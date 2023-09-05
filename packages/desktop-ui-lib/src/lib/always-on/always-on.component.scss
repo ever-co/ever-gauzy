@@ -15,6 +15,7 @@ nb-card-footer {
 button {
 	width: 48px;
 	height: 48px;
+	-webkit-app-region: no-drag;
 
 	nb-icon {
 		font-size: var(--icon-font-size)
