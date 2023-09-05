@@ -27,7 +27,7 @@ export class InventoryStore {
 
 	private _deleteOptions: IProductOptionTranslatable[] = [];
 
-	private _deletedOptionGrous: IProductOptionGroupTranslatable[] = [];
+	private _deletedOptionGroups: IProductOptionGroupTranslatable[] = [];
 
 	private _optionGroups: IProductOptionGroupTranslatable[] = [];
 
@@ -63,7 +63,7 @@ export class InventoryStore {
 
 	warehouseProductsCountUpdate$: Subject<void> = new Subject();
 
-	constructor(private translateService: TranslateService) {}
+	constructor(private translateService: TranslateService) { }
 
 	get activeProduct() {
 		return this._activeProduct;
@@ -85,7 +85,7 @@ export class InventoryStore {
 		return this._variantCreateInputs;
 	}
 
-	get createoOptionCombinations() {
+	get createOptionCombinations() {
 		return this._variantCreateInputs
 			.filter((variant) => !variant.isStored)
 			.map((variant) => ({ options: variant.options }));
@@ -96,7 +96,7 @@ export class InventoryStore {
 	}
 
 	get deletedOptionGroups() {
-		return this._deletedOptionGrous;
+		return this._deletedOptionGroups;
 	}
 
 	get optionGroups() {
@@ -247,7 +247,7 @@ export class InventoryStore {
 	}
 
 	addDeletedOptionGroup(optionGroup: IProductOptionGroupTranslatable) {
-		this._deletedOptionGrous.push(optionGroup);
+		this._deletedOptionGroups.push(optionGroup);
 	}
 
 	resetDeletedOptions() {

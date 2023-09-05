@@ -783,8 +783,9 @@ export class EmailService {
 	 * @param languageCode
 	 */
 	async passwordLessAuthentication(
-		user: IUser,
-		languageCode: LanguagesEnum,
+		email: IUser['email'],
+		code: IUser['code'],
+		locale: LanguagesEnum,
 		integration?: IAppIntegrationConfig
 	) {
 		/**
@@ -796,20 +797,20 @@ export class EmailService {
 		const sendOptions = {
 			template: EmailTemplateEnum.PASSWORD_LESS_AUTHENTICATION,
 			message: {
-				to: `${user.email}`
+				to: `${email}`
 			},
 			locals: {
-				locale: languageCode,
-				email: user.email,
+				locale,
+				email,
 				host: env.clientBaseUrl,
-				inviteCode: user.code,
+				inviteCode: code,
 				...integration
 			}
 		};
 		const body = {
 			templateName: sendOptions.template,
 			email: sendOptions.message.to,
-			languageCode,
+			languageCode: locale,
 			message: ''
 		}
 		const match = !!DISALLOW_EMAIL_SERVER_DOMAIN.find((server) => body.email.includes(server));

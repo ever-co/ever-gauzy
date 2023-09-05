@@ -55,7 +55,12 @@ export class OrganizationTeamService extends TenantAwareCrudService<Organization
 	async create(
 		entity: IOrganizationTeamCreateInput
 	): Promise<IOrganizationTeam> {
-		const { tags = [], memberIds = [], managerIds = [] } = entity;
+		const {
+			tags = [],
+			memberIds = [],
+			managerIds = [],
+			projects = [],
+		} = entity;
 		const { name, organizationId, prefix, profile_link, logo, imageId } =
 			entity;
 
@@ -78,7 +83,7 @@ export class OrganizationTeamService extends TenantAwareCrudService<Organization
 				if (!managerIds.includes(employeeId)) {
 					managerIds.push(employeeId);
 				}
-			} catch (error) {}
+			} catch (error) { }
 
 			const employees = await this.employeeRepository.find({
 				where: {
@@ -121,6 +126,7 @@ export class OrganizationTeamService extends TenantAwareCrudService<Organization
 				public: entity.public,
 				logo,
 				imageId,
+				projects,
 			});
 		} catch (error) {
 			throw new BadRequestException(`Failed to create a team: ${error}`);
@@ -373,14 +379,14 @@ export class OrganizationTeamService extends TenantAwareCrudService<Organization
 						PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
 					)
 						? {
-								members: {
-									employeeId:
-										RequestContext.currentEmployeeId(),
-									role: {
-										name: RolesEnum.MANAGER,
-									},
+							members: {
+								employeeId:
+									RequestContext.currentEmployeeId(),
+								role: {
+									name: RolesEnum.MANAGER,
 								},
-						  }
+							},
+						}
 						: {}),
 				},
 			});
@@ -397,9 +403,9 @@ export class OrganizationTeamService extends TenantAwareCrudService<Organization
 	 * @param options
 	 */
 	public async existTeamsAsMember(
-		criteria: IUser['id']
+		userId: IUser['id']
 	): Promise<DeleteResult> {
-		const userId = RequestContext.currentUserId();
+		const currentUserId = RequestContext.currentUserId();
 
 		// If user don't have enough permission (CHANGE_SELECTED_EMPLOYEE).
 		if (
@@ -408,45 +414,49 @@ export class OrganizationTeamService extends TenantAwareCrudService<Organization
 			)
 		) {
 			// If user try to delete someone other user account, just denied the request.
-			if (userId != criteria) {
+			if (currentUserId != userId) {
 				throw new ForbiddenException(
 					'You can not removed account for other members!'
 				);
 			}
 		}
 
-		const user = await this.userService.findOneByIdString(criteria, {
+		const user = await this.userService.findOneByIdString(userId, {
 			relations: {
 				employee: true,
 			},
 		});
-		if (!!user) {
-			const { employeeId } = user;
-			try {
-				if (isNotEmpty(employeeId)) {
-					await this.organizationTeamEmployeeService.findOneByWhereOptions(
-						{
-							employeeId,
-							roleId: IsNull(),
-						}
-					);
-
-					// Unassign this user from all the Task
-					await this.taskService.unassignEmployeeFromTeamTasks(
-						employeeId,
-						undefined
-					);
-					return await this.organizationTeamEmployeeService.delete({
-						roleId: IsNull(),
-						employeeId,
-					});
-				}
-			} catch (error) {
-				throw new ForbiddenException(
-					'You are not able to removed account where you are only the manager!'
-				);
-			}
+		if (!user) {
+			throw new ForbiddenException("User not found!");
 		}
-		throw new ForbiddenException();
+
+		const { employeeId } = user;
+		if (!employeeId) {
+			throw new ForbiddenException("User is not associated with an employee!");
+		}
+
+		try {
+			if (isNotEmpty(employeeId)) {
+				// Check if the user is only a manager (has no specific role)
+				await this.organizationTeamEmployeeService.findOneByWhereOptions({
+					employeeId,
+					roleId: IsNull(),
+				});
+
+				// Unassign this user from all tasks in a team
+				await this.taskService.unassignEmployeeFromTeamTasks(
+					employeeId,
+					undefined
+				);
+
+				// Delete the team employee record
+				return await this.organizationTeamEmployeeService.delete({
+					employeeId,
+					roleId: IsNull(),
+				});
+			}
+		} catch (error) {
+			throw new ForbiddenException('You are not able to removed account where you are only the manager!');
+		}
 	}
 }

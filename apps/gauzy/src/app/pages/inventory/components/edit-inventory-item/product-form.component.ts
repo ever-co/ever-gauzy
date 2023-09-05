@@ -113,10 +113,12 @@ export class ProductFormComponent extends TranslationBaseComponent
 			],
 			productTypeId: [
 				this.inventoryItem ? this.inventoryItem.productTypeId : null,
+				Validators.required
 			],
 			productType: [],
 			productCategoryId: [
 				this.inventoryItem ? this.inventoryItem.productCategoryId : null,
+				Validators.required
 			],
 			productCategory: [],
 			enabled: [this.inventoryItem ? this.inventoryItem.enabled : true],
@@ -178,7 +180,7 @@ export class ProductFormComponent extends TranslationBaseComponent
 	 * @param productTypes
 	 */
 	onLoadProductTypes(productTypes: IProductTypeTranslated[]) {
-		if(!this.inventoryStore.productTypesLoaded) {
+		if (!this.inventoryStore.productTypesLoaded) {
 			this.inventoryStore.productTypes = productTypes;
 		}
 	}
@@ -199,7 +201,7 @@ export class ProductFormComponent extends TranslationBaseComponent
 	 * @param productCategories
 	 */
 	onLoadProductCategories(productCategories: IProductCategoryTranslated[]) {
-		if(!this.inventoryStore.productCategoriesLoaded) {
+		if (!this.inventoryStore.productCategoriesLoaded) {
 			this.inventoryStore.productCategories = productCategories;
 		}
 	}
@@ -260,7 +262,7 @@ export class ProductFormComponent extends TranslationBaseComponent
 			await this.productVariantService.createProductVariants({
 				product: productResult,
 				optionCombinations: this.inventoryStore
-					.createoOptionCombinations
+					.createOptionCombinations
 			});
 
 			this.inventoryStore.resetDeletedOptions();
