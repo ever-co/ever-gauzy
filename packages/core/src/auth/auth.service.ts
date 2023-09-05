@@ -805,7 +805,7 @@ export class AuthService extends SocialAuthService {
 		const query = this.organizationTeamRepository.createQueryBuilder("organization_team");
 		query.andWhere(`"${query.alias}"."tenantId" = :tenantId`, { tenantId });
 
-		// Subquery to get only assigned teams for specific organizations
+		// Sub Query to get only assigned teams for specific organizations
 		const orgSubQuery = (cb: SelectQueryBuilder<OrganizationTeam>): string => {
 			const subQuery = cb.subQuery().select('"user_organization"."organizationId"').from("user_organization", "user_organization");
 			subQuery.andWhere(`"${subQuery.alias}"."isActive" = true`);
@@ -814,19 +814,19 @@ export class AuthService extends SocialAuthService {
 			return subQuery.distinct(true).getQuery();
 		};
 
-		// Subquery to get only assigned teams for specific organizations
+		// Sub Query to get only assigned teams for specific organizations
 		query.andWhere((cb: SelectQueryBuilder<OrganizationTeam>) => {
 			return (`"${query.alias}"."organizationId" IN ` + orgSubQuery(cb));
 		});
 
-		// Subquery to get only assigned teams for a specific employee for specific tenant
+		// Sub Query to get only assigned teams for a specific employee for specific tenant
 		query.andWhere((cb: SelectQueryBuilder<OrganizationTeam>) => {
 			const subQuery = cb.subQuery().select('"organization_team_employee"."organizationTeamId"').from("organization_team_employee", "organization_team_employee");
 			subQuery.andWhere(`"${subQuery.alias}"."tenantId" = :tenantId`, { tenantId });
 
 			if (isNotEmpty(employeeId)) { subQuery.andWhere(`"${subQuery.alias}"."employeeId" = :employeeId`, { employeeId }); }
 
-			// Subquery to get only assigned teams for specific organizations
+			// Sub Query to get only assigned teams for specific organizations
 			subQuery.andWhere((cb: SelectQueryBuilder<OrganizationTeam>) => {
 				return (`"${subQuery.alias}"."organizationId" IN ` + orgSubQuery(cb));
 			});
