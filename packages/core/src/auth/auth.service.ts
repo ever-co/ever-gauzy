@@ -1,7 +1,7 @@
 import { CommandBus } from '@nestjs/cqrs';
 import { BadRequestException, Injectable, InternalServerErrorException, UnauthorizedException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { In, MoreThanOrEqual, Repository, SelectQueryBuilder } from 'typeorm';
+import { Brackets, In, MoreThanOrEqual, Repository, SelectQueryBuilder, WhereExpressionBuilder } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 import * as moment from 'moment';
 import { JsonWebTokenError, JwtPayload, sign, verify } from 'jsonwebtoken';
@@ -664,10 +664,14 @@ export class AuthService extends SocialAuthService {
 				});
 
 				try {
+					console.time('Get teams for a user within a specific tenant');
+
 					if (includeTeams) {
 						const teams = await this.getTeamsForUser(tenantId, userId, employeeId);
 						workspace['current_teams'] = teams;
 					}
+
+					console.timeEnd('Get teams for a user within a specific tenant');
 				} catch (error) {
 					console.log('Error while getting specific teams for specific tenant: %s', error?.message);
 				}
@@ -786,9 +790,11 @@ export class AuthService extends SocialAuthService {
 
 	/**
 	 * Get teams for a user within a specific tenant.
+	 *
 	 * @param tenantId The ID of the tenant.
 	 * @param userId The ID of the user.
 	 * @param employeeId The ID of the employee (optional).
+	 *
 	 * @returns A Promise that resolves to an array of IOrganizationTeam objects.
 	 */
 	private async getTeamsForUser(
@@ -796,38 +802,46 @@ export class AuthService extends SocialAuthService {
 		userId: string,
 		employeeId: string | null
 	): Promise<IOrganizationTeam[]> {
-		const query = this.organizationTeamRepository.createQueryBuilder('organization_team');
+		const query = this.organizationTeamRepository.createQueryBuilder("organization_team");
 		query.andWhere(`"${query.alias}"."tenantId" = :tenantId`, { tenantId });
 
 		// Subquery to get only assigned teams for specific organizations
-		query.andWhere((cb: SelectQueryBuilder<OrganizationTeam>) => {
-			const subQuery = cb.subQuery().select('"user_organization"."organizationId"').from('user_organization', 'user_organization');
+		const orgSubQuery = (cb: SelectQueryBuilder<OrganizationTeam>): string => {
+			const subQuery = cb.subQuery().select('"user_organization"."organizationId"').from("user_organization", "user_organization");
 			subQuery.andWhere(`"${subQuery.alias}"."isActive" = true`);
 			subQuery.andWhere(`"${subQuery.alias}"."userId" = :userId`, { userId });
 			subQuery.andWhere(`"${subQuery.alias}"."tenantId" = :tenantId`, { tenantId });
-			return (`"${query.alias}"."organizationId" IN ` + subQuery.distinct(true).getQuery());
+			return subQuery.distinct(true).getQuery();
+		};
+
+		// Subquery to get only assigned teams for specific organizations
+		query.andWhere((cb: SelectQueryBuilder<OrganizationTeam>) => {
+			return (`"${query.alias}"."organizationId" IN ` + orgSubQuery(cb));
 		});
 
-		// Subquery to get only assigned teams for a specific employee
+		// Subquery to get only assigned teams for a specific employee for specific tenant
 		query.andWhere((cb: SelectQueryBuilder<OrganizationTeam>) => {
-			const subQuery = cb.subQuery().select('"organization_team_employee"."organizationTeamId"').from('organization_team_employee', 'organization_team_employee');
+			const subQuery = cb.subQuery().select('"organization_team_employee"."organizationTeamId"').from("organization_team_employee", "organization_team_employee");
 			subQuery.andWhere(`"${subQuery.alias}"."tenantId" = :tenantId`, { tenantId });
 
-			if (isNotEmpty(employeeId)) {
-				subQuery.andWhere(`"${subQuery.alias}"."employeeId" = :employeeId`, { employeeId });
-			}
+			if (isNotEmpty(employeeId)) { subQuery.andWhere(`"${subQuery.alias}"."employeeId" = :employeeId`, { employeeId }); }
 
+			// Subquery to get only assigned teams for specific organizations
+			subQuery.andWhere((cb: SelectQueryBuilder<OrganizationTeam>) => {
+				return (`"${subQuery.alias}"."organizationId" IN ` + orgSubQuery(cb));
+			});
 			return (`"${query.alias}"."id" IN ` + subQuery.distinct(true).getQuery());
 		});
 
-		query.select(`"${query.alias}"."id"`, `team_id`);
-		query.addSelect(`"${query.alias}"."name"`, `team_name`);
-		query.addSelect(`"${query.alias}"."logo"`, `team_logo`);
-		query.addSelect(`"${query.alias}"."profile_link"`, `profile_link`);
-		query.addSelect(`"${query.alias}"."prefix"`, `prefix`);
+		query.select([
+			`"${query.alias}"."id" AS "team_id"`,
+			`"${query.alias}"."name" AS "team_name"`,
+			`"${query.alias}"."logo" AS "team_logo"`,
+			`"${query.alias}"."profile_link" AS "profile_link"`,
+			`"${query.alias}"."prefix" AS "prefix"`,
+		]);
 
 		query.orderBy(`"${query.alias}"."createdAt"`, 'DESC');
-
 		return await query.getRawMany();
 	}
 }
