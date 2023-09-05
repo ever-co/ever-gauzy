@@ -626,36 +626,17 @@ export class AuthService extends SocialAuthService {
 					isActive: true
 				},
 				relations: {
-					tenant: true
+					tenant: true,
+					employee: true
 				}
 			});
 
 			const workspaces: IUser[] = [];
 			// Create an array of user objects with relevant data
 			for await (const user of users) {
-				try {
-					const userId = user.id;
-					const tenantId = user.tenant ? user.tenantId : null;
-
-					const query = this.organizationTeamRepository.createQueryBuilder('organization_team');
-					query.andWhere(`"${query.alias}"."tenantId" = :tenantId`, { tenantId });
-
-					// Sub query to get only assigned teams
-					query.andWhere((cb: SelectQueryBuilder<OrganizationTeam>) => {
-						const subQuery = cb.subQuery().select('"user_organization"."organizationId"').from('user_organization', 'user_organization');
-						subQuery.andWhere('"user_organization"."isActive" = true');
-						subQuery.andWhere('"user_organization"."userId" = :userId', { userId });
-						subQuery.andWhere('"user_organization"."tenantId" = :tenantId', { tenantId });
-						console.log(subQuery.distinct(true).getQueryAndParameters());
-
-						return (`"${query.alias}"."organizationId" IN ` + subQuery.distinct(true).getQuery());
-					});
-
-					console.log(query.getQueryAndParameters());
-					console.log(await query.getManyAndCount());
-				} catch (error) {
-					console.log('Error while getting specific teams for specific tenant: %s', error?.message);
-				}
+				const userId = user.id;
+				const tenantId = user.tenant ? user.tenantId : null;
+				const employeeId = user.employee ? user.employeeId : null;
 
 				const payload: JwtPayload = {
 					userId: user.id,
@@ -663,6 +644,7 @@ export class AuthService extends SocialAuthService {
 					tenantId: user.tenant ? user.tenantId : null,
 					code
 				};
+
 				const token = sign(payload, environment.JWT_SECRET, {
 					expiresIn: `${environment.JWT_TOKEN_EXPIRATION_TIME}s`
 				});
@@ -679,6 +661,46 @@ export class AuthService extends SocialAuthService {
 					}),
 					token
 				});
+
+				try {
+					if (includeTeams) {
+						const query = this.organizationTeamRepository.createQueryBuilder('organization_team');
+						query.andWhere(`"${query.alias}"."tenantId" = :tenantId`, { tenantId });
+
+						// Sub query to get only assigned teams for specific organizations
+						query.andWhere((cb: SelectQueryBuilder<OrganizationTeam>) => {
+							const subQuery = cb.subQuery().select('"user_organization"."organizationId"').from('user_organization', 'user_organization');
+							subQuery.andWhere(`"${subQuery.alias}"."isActive" = true`);
+							subQuery.andWhere(`"${subQuery.alias}"."userId" = :userId`, { userId });
+							subQuery.andWhere(`"${subQuery.alias}"."tenantId" = :tenantId`, { tenantId });
+							return (`"${query.alias}"."organizationId" IN ` + subQuery.distinct(true).getQuery());
+						});
+
+						// Sub query to get only assigned teams for specific employee
+						query.andWhere((cb: SelectQueryBuilder<OrganizationTeam>) => {
+							const subQuery = cb.subQuery().select('"organization_team_employee"."organizationTeamId"').from('organization_team_employee', 'organization_team_employee');
+							subQuery.andWhere(`"${subQuery.alias}"."tenantId" = :tenantId`, { tenantId });
+
+							if (isNotEmpty(employeeId)) {
+								subQuery.andWhere(`"${subQuery.alias}"."employeeId" = :employeeId`, { employeeId });
+							}
+
+							return (`"${query.alias}"."id" IN ` + subQuery.distinct(true).getQuery());
+						});
+
+						query.select(`"${query.alias}"."id"`, `team_id`);
+						query.addSelect(`"${query.alias}"."name"`, `team_name`);
+						query.addSelect(`"${query.alias}"."logo"`, `team_logo`);
+						query.addSelect(`"${query.alias}"."profile_link"`, `profile_link`);
+						query.addSelect(`"${query.alias}"."prefix"`, `prefix`);
+
+						query.orderBy(`"${query.alias}"."createdAt"`, 'DESC');
+						workspace['current_teams'] = await query.getRawMany();
+					}
+				} catch (error) {
+					console.log('Error while getting specific teams for specific tenant: %s', error?.message);
+				}
+
 				workspaces.push(workspace);
 			}
 
