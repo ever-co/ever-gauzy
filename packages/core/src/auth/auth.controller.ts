@@ -37,7 +37,6 @@ import {
 	WorkspaceSigninEmailVerifyDTO,
 	WorkspaceSigninDTO
 } from './dto';
-import { RelationsQueryDTO } from 'shared/dto';
 
 @ApiTags('Auth')
 @Controller()
