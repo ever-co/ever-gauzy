@@ -1,7 +1,7 @@
 import { CommandBus } from '@nestjs/cqrs';
 import { BadRequestException, Injectable, InternalServerErrorException, UnauthorizedException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { In, MoreThanOrEqual, Repository } from 'typeorm';
+import { In, MoreThanOrEqual, Repository, SelectQueryBuilder } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 import * as moment from 'moment';
 import { JsonWebTokenError, JwtPayload, sign, verify } from 'jsonwebtoken';
@@ -21,6 +21,7 @@ import {
 	IUserLoginInput,
 	IUserLoginInput as IUserWorkspaceSigninInput,
 	IUserTokenInput,
+	IOrganizationTeam,
 } from '@gauzy/contracts';
 import { environment } from '@gauzy/config';
 import { SocialAuthService } from '@gauzy/auth';
@@ -34,7 +35,7 @@ import { ImportRecordUpdateOrCreateCommand } from './../export-import/import-rec
 import { PasswordResetCreateCommand, PasswordResetGetCommand } from './../password-reset/commands';
 import { RequestContext } from './../core/context';
 import { freshTimestamp, generateRandomAlphaNumericCode } from './../core/utils';
-import { Tenant } from './../core/entities/internal';
+import { OrganizationTeam, Tenant } from './../core/entities/internal';
 import { EmailConfirmationService } from './email-confirmation.service';
 
 @Injectable()
@@ -42,6 +43,9 @@ export class AuthService extends SocialAuthService {
 	constructor(
 		@InjectRepository(User)
 		private readonly userRepository: Repository<User>,
+
+		@InjectRepository(OrganizationTeam)
+		protected readonly organizationTeamRepository: Repository<OrganizationTeam>,
 
 		private readonly emailConfirmationService: EmailConfirmationService,
 		private readonly userService: UserService,
@@ -601,7 +605,10 @@ export class AuthService extends SocialAuthService {
 	 * @param payload - The user invitation code confirmation input.
 	 * @returns The user sign-in workspace response.
 	 */
-	async signinConfirmByCode(payload: IUserEmailInput & IUserCodeInput): Promise<IUserSigninWorkspaceResponse> {
+	async confirmWorkspaceSigninByCode(
+		payload: IUserEmailInput & IUserCodeInput,
+		includeTeams: boolean
+	): Promise<IUserSigninWorkspaceResponse> {
 		try {
 			console.time('confirm signin for multi-tenant workspaces');
 			const { email, code } = payload;
@@ -620,22 +627,30 @@ export class AuthService extends SocialAuthService {
 					isActive: true
 				},
 				relations: {
-					tenant: true
+					tenant: true,
+					employee: true
 				}
 			});
 
+			const workspaces: IUser[] = [];
 			// Create an array of user objects with relevant data
-			const workspaces = users.map((user: IUser) => {
+			for await (const user of users) {
+				const userId = user.id;
+				const tenantId = user.tenant ? user.tenantId : null;
+				const employeeId = user.employee ? user.employeeId : null;
+
 				const payload: JwtPayload = {
 					userId: user.id,
 					email: user.email,
 					tenantId: user.tenant ? user.tenantId : null,
 					code
 				};
+
 				const token = sign(payload, environment.JWT_SECRET, {
 					expiresIn: `${environment.JWT_TOKEN_EXPIRATION_TIME}s`
 				});
-				return new Object({
+
+				const workspace = new Object({
 					user: new User({
 						email: user.email || '',
 						name: user.name || '',
@@ -647,7 +662,22 @@ export class AuthService extends SocialAuthService {
 					}),
 					token
 				});
-			});
+
+				try {
+					if (includeTeams) {
+						console.time('Get teams for a user within a specific tenant');
+
+						const teams = await this.getTeamsForUser(tenantId, userId, employeeId);
+						workspace['current_teams'] = teams;
+
+						console.timeEnd('Get teams for a user within a specific tenant');
+					}
+				} catch (error) {
+					console.log('Error while getting specific teams for specific tenant: %s', error?.message);
+				}
+
+				workspaces.push(workspace);
+			}
 
 			// Determining the response based on the number of matching users
 			const response: IUserSigninWorkspaceResponse = {
@@ -704,6 +734,18 @@ export class AuthService extends SocialAuthService {
 						role: true
 					},
 				});
+
+				await this.userRepository.update({
+					email,
+					id: userId,
+					tenantId,
+					code,
+					isActive: true
+				}, {
+					code: null,
+					codeExpireAt: null
+				});
+
 				// If employees are inactive
 				if (isNotEmpty(user.employee) && user.employee.isActive === false) {
 					throw new UnauthorizedException();
@@ -744,5 +786,67 @@ export class AuthService extends SocialAuthService {
 			console.log('Error while verifying JWT token: %s', error?.message);
 			throw new UnauthorizedException(error?.message);
 		}
+	}
+
+	/**
+	 * Get teams for a user within a specific tenant.
+	 *
+	 * @param tenantId The ID of the tenant.
+	 * @param userId The ID of the user.
+	 * @param employeeId The ID of the employee (optional).
+	 *
+	 * @returns A Promise that resolves to an array of IOrganizationTeam objects.
+	 */
+	private async getTeamsForUser(
+		tenantId: string,
+		userId: string,
+		employeeId: string | null
+	): Promise<IOrganizationTeam[]> {
+		const query = this.organizationTeamRepository.createQueryBuilder("organization_team");
+		query.innerJoin('organization_team_employee', "team_member", '"team_member"."organizationTeamId" = "organization_team"."id"');
+
+		query.select([
+			`"${query.alias}"."id" AS "team_id"`,
+			`"${query.alias}"."name" AS "team_name"`,
+			`"${query.alias}"."logo" AS "team_logo"`,
+			`COALESCE(COUNT("team_member"."id"), 0) AS "team_member_count"`,
+			`"${query.alias}"."profile_link" AS "profile_link"`,
+			`"${query.alias}"."prefix" AS "prefix"`
+		]);
+
+		query.andWhere(`"${query.alias}"."tenantId" = :tenantId`, { tenantId });
+
+		// Sub Query to get only assigned teams for specific organizations
+		const orgSubQuery = (cb: SelectQueryBuilder<OrganizationTeam>): string => {
+			const subQuery = cb.subQuery().select('"user_organization"."organizationId"').from("user_organization", "user_organization");
+			subQuery.andWhere(`"${subQuery.alias}"."isActive" = true`);
+			subQuery.andWhere(`"${subQuery.alias}"."userId" = :userId`, { userId });
+			subQuery.andWhere(`"${subQuery.alias}"."tenantId" = :tenantId`, { tenantId });
+			return subQuery.distinct(true).getQuery();
+		};
+
+		// Sub Query to get only assigned teams for specific organizations
+		query.andWhere((cb: SelectQueryBuilder<OrganizationTeam>) => {
+			return (`"${query.alias}"."organizationId" IN ` + orgSubQuery(cb));
+		});
+
+		// Sub Query to get only assigned teams for a specific employee for specific tenant
+		query.andWhere((cb: SelectQueryBuilder<OrganizationTeam>) => {
+			const subQuery = cb.subQuery().select('"organization_team_employee"."organizationTeamId"').from("organization_team_employee", "organization_team_employee");
+			subQuery.andWhere(`"${subQuery.alias}"."tenantId" = :tenantId`, { tenantId });
+
+			if (isNotEmpty(employeeId)) { subQuery.andWhere(`"${subQuery.alias}"."employeeId" = :employeeId`, { employeeId }); }
+
+			// Sub Query to get only assigned teams for specific organizations
+			subQuery.andWhere((cb: SelectQueryBuilder<OrganizationTeam>) => {
+				return (`"${subQuery.alias}"."organizationId" IN ` + orgSubQuery(cb));
+			});
+			return (`"${query.alias}"."id" IN ` + subQuery.distinct(true).getQuery());
+		});
+
+		query.addGroupBy(`"${query.alias}"."id"`);
+		query.orderBy(`"${query.alias}"."createdAt"`, 'DESC');
+
+		return await query.getRawMany();
 	}
 }
