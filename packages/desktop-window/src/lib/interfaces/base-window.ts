@@ -1,4 +1,5 @@
 import { BrowserWindow } from 'electron';
+import { IWindowConfig } from './iwindow-config';
 import { IBaseWindow } from './ibase-window';
 
 export abstract class BaseWindow {
@@ -26,5 +27,9 @@ export abstract class BaseWindow {
 
 	public get browserWindow(): BrowserWindow {
 		return this._baseWindow.browserWindow;
+	}
+
+	public get config(): IWindowConfig {
+		return this._baseWindow.config;
 	}
 }

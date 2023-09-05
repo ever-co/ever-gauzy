@@ -1,4 +1,5 @@
 import { BrowserWindow } from 'electron';
+import { IWindowConfig } from './iwindow-config';
 
 export interface IBaseWindow {
 	loadURL(): Promise<void>;
@@ -6,4 +7,5 @@ export interface IBaseWindow {
 	close(): void;
 	hide(): void;
 	get browserWindow(): BrowserWindow;
+	config: IWindowConfig;
 }
