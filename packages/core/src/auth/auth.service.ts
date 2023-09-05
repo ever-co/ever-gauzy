@@ -664,14 +664,14 @@ export class AuthService extends SocialAuthService {
 				});
 
 				try {
-					console.time('Get teams for a user within a specific tenant');
-
 					if (includeTeams) {
+						console.time('Get teams for a user within a specific tenant');
+
 						const teams = await this.getTeamsForUser(tenantId, userId, employeeId);
 						workspace['current_teams'] = teams;
-					}
 
-					console.timeEnd('Get teams for a user within a specific tenant');
+						console.timeEnd('Get teams for a user within a specific tenant');
+					}
 				} catch (error) {
 					console.log('Error while getting specific teams for specific tenant: %s', error?.message);
 				}
@@ -803,6 +803,17 @@ export class AuthService extends SocialAuthService {
 		employeeId: string | null
 	): Promise<IOrganizationTeam[]> {
 		const query = this.organizationTeamRepository.createQueryBuilder("organization_team");
+		query.innerJoin('organization_team_employee', "team_member", '"team_member"."organizationTeamId" = "organization_team"."id"');
+
+		query.select([
+			`"${query.alias}"."id" AS "team_id"`,
+			`"${query.alias}"."name" AS "team_name"`,
+			`"${query.alias}"."logo" AS "team_logo"`,
+			`COALESCE(COUNT("team_member"."id"), 0) AS "team_member_count"`,
+			`"${query.alias}"."profile_link" AS "profile_link"`,
+			`"${query.alias}"."prefix" AS "prefix"`
+		]);
+
 		query.andWhere(`"${query.alias}"."tenantId" = :tenantId`, { tenantId });
 
 		// Sub Query to get only assigned teams for specific organizations
@@ -833,15 +844,9 @@ export class AuthService extends SocialAuthService {
 			return (`"${query.alias}"."id" IN ` + subQuery.distinct(true).getQuery());
 		});
 
-		query.select([
-			`"${query.alias}"."id" AS "team_id"`,
-			`"${query.alias}"."name" AS "team_name"`,
-			`"${query.alias}"."logo" AS "team_logo"`,
-			`"${query.alias}"."profile_link" AS "profile_link"`,
-			`"${query.alias}"."prefix" AS "prefix"`,
-		]);
-
+		query.addGroupBy(`"${query.alias}"."id"`);
 		query.orderBy(`"${query.alias}"."createdAt"`, 'DESC');
+
 		return await query.getRawMany();
 	}
 }
