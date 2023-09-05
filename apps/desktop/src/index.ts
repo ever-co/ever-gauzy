@@ -578,6 +578,7 @@ ipcMain.on('restore', () => {
 ipcMain.on('restart_app', async (event, arg) => {
 	dialogErr = false;
 	LocalStore.updateConfigSetting(arg);
+	if (alwaysOn) alwaysOn.close();
 	if (serverGauzy) serverGauzy.kill();
 	if (gauzyWindow) gauzyWindow.destroy();
 	gauzyWindow = null;
@@ -587,10 +588,6 @@ ipcMain.on('restart_app', async (event, arg) => {
 		API_BASE_URL: getApiBaseUrl(configs),
 		IS_INTEGRATED_DESKTOP: configs.isLocalServer,
 	};
-	await startServer(configs, !!tray);
-	setupWindow.webContents.send('server_ping_restart', {
-		host: getApiBaseUrl(configs),
-	});
 	app.relaunch({ args: process.argv.slice(1).concat(['--relaunch']) });
 	app.exit(0);
 });
