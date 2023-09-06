@@ -11,7 +11,7 @@
 				</div>
 			</nb-card-header>
 			<nb-card-body class="notification-body">
-				<img class="screen-capture-img" [src]="screenCaptureUrl" />
+				<img class="screen-capture-img" [src]="screenCaptureUrl$ | async" />
 			</nb-card-body>
 		</nb-card>
 	</nb-layout-column>

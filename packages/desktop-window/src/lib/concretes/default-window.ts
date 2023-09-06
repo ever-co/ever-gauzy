@@ -6,10 +6,8 @@ import { IWindowConfig } from '../interfaces/iwindow-config';
 
 export class DefaultWindow implements IBaseWindow {
 	private _browserWindow: BrowserWindow;
-	private _filePath: string;
 
-	constructor(private readonly config: IWindowConfig) {
-		this._filePath = config.path;
+	constructor(public readonly config: IWindowConfig) {
 		this._browserWindow = new BrowserWindow(this.config.options);
 		remoteMain.enable(this._browserWindow.webContents);
 		this._browserWindow.hide();
@@ -20,10 +18,10 @@ export class DefaultWindow implements IBaseWindow {
 	}
 
 	public async loadURL(): Promise<void> {
-		if (!this._filePath) return;
+		if (!this.config.path) return;
 		try {
 			const launchPath = url.format({
-				pathname: this._filePath,
+				pathname: this.config.path,
 				protocol: 'file:',
 				slashes: true,
 				hash: this.config.hash,
