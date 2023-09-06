@@ -1,8 +1,8 @@
 import { screen } from 'electron';
-import { AlwaysOn } from './always-on';
 import { IBaseWindow } from './interfaces';
 import { BaseWindow } from './interfaces/base-window';
 import { LocalStore } from '@gauzy/desktop-libs';
+import { DefaultWindow, WindowConfig } from './concretes';
 
 export class ScreenCaptureNotification
 	extends BaseWindow
@@ -10,27 +10,38 @@ export class ScreenCaptureNotification
 	private static readonly WIDTH: number = 310;
 	private static readonly HEIGHT: number = 170;
 
-	constructor() {
-		super(new AlwaysOn());
-		this.config.hash = '/screen-capture';
-		this.config.path = null;
-		this.browserWindow.setOpacity(1);
-		this.browserWindow.setSize(
-			ScreenCaptureNotification.WIDTH,
-			ScreenCaptureNotification.HEIGHT
+	constructor(path?: string) {
+		super(
+			new DefaultWindow(
+				new WindowConfig('/screen-capture', path, {
+					frame: false,
+					resizable: false,
+					roundedCorners: true,
+					width: ScreenCaptureNotification.WIDTH,
+					height: ScreenCaptureNotification.HEIGHT,
+					alwaysOnTop: true,
+					center: false,
+					focusable: false,
+					skipTaskbar: true,
+					x:
+						screen.getPrimaryDisplay().size.width -
+						(ScreenCaptureNotification.WIDTH + 16),
+					y: 16,
+				})
+			)
 		);
-		this.browserWindow.setPosition(
-			screen.getPrimaryDisplay().size.width -
-			(ScreenCaptureNotification.WIDTH + 16),
-			16
-		);
-		this.browserWindow.on('show', () => {
-			this.browserWindow.focus();
+
+		this.browserWindow.setVisibleOnAllWorkspaces(true, {
+			visibleOnFullScreen: true,
+			skipTransformProcessType: false,
 		});
+		this.browserWindow.setAlwaysOnTop(true);
+		this.browserWindow.setFullScreenable(false);
 	}
 
 	public show(thumbUrl?: string): void {
-		super.show();
+		if (!this.browserWindow) return;
+		this.browserWindow.showInactive();
 		this.browserWindow.webContents.send('show_popup_screen_capture', {
 			note: LocalStore.beforeRequestParams().note,
 			...(thumbUrl && { imgUrl: thumbUrl }),
