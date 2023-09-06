@@ -71,6 +71,6 @@ export class CustomSmtp extends TenantOrganizationBaseEntity
 				user: this.username,
 				pass: this.password
 			}
-		} as ISMTPConfig
+		} as ISMTPConfig;
 	}
 }

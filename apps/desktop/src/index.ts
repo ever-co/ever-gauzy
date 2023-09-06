@@ -77,7 +77,8 @@ import {
 	createSettingsWindow,
 	createUpdaterWindow,
 	createImageViewerWindow,
-	SplashScreen
+	SplashScreen,
+	AlwaysOn
 } from '@gauzy/desktop-window';
 import { fork } from 'child_process';
 import { autoUpdater } from 'electron-updater';
@@ -113,6 +114,7 @@ let settingsWindow: BrowserWindow = null;
 let updaterWindow: BrowserWindow = null;
 let imageView: BrowserWindow = null;
 let splashScreen: SplashScreen = null;
+let alwaysOn: AlwaysOn = null;
 
 console.log('App UI Render Path:', path.join(__dirname, './index.html'));
 
@@ -213,8 +215,8 @@ async function startServer(value, restart = false) {
 						{ ...environment, gauzyWindow: value.gauzyWindow },
 						pathWindow.gauzyWindow
 					);
-					splashScreen.close();
 					gauzyWindow.show();
+					splashScreen.close();
 				}
 			}
 			if (
@@ -267,8 +269,8 @@ async function startServer(value, restart = false) {
 			{ ...environment, gauzyWindow: value.gauzyWindow },
 			pathWindow.gauzyWindow
 		);
-		splashScreen.close();
 		gauzyWindow.show();
+		splashScreen.close();
 	}
 	const auth = store.get('auth');
 
@@ -284,7 +286,8 @@ async function startServer(value, restart = false) {
 		{ ...environment },
 		pathWindow,
 		path.join(__dirname, 'assets', 'icons', 'icon_16x16.png'),
-		gauzyWindow
+		gauzyWindow,
+		alwaysOn
 	);
 
 	TranslateService.onLanguageChange(() => {
@@ -310,7 +313,8 @@ async function startServer(value, restart = false) {
 			{ ...environment },
 			pathWindow,
 			path.join(__dirname, 'assets', 'icons', 'icon.png'),
-			gauzyWindow
+			gauzyWindow,
+			alwaysOn
 		);
 	})
 
@@ -385,10 +389,6 @@ const getApiBaseUrl = (configs) => {
 app.on('ready', async () => {
 	const configs: any = store.get('configs');
 	const settings: any = store.get('appSetting');
-	const autoLaunch: boolean =
-		settings && typeof settings.autoLaunch === 'boolean'
-			? settings.autoLaunch
-			: true;
 	// default global
 	global.variableGlobal = {
 		API_BASE_URL: getApiBaseUrl(configs || {}),
@@ -412,7 +412,9 @@ app.on('ready', async () => {
 	} catch (error) {
 		console.log('ERROR', error);
 	}
-	launchAtStartup(autoLaunch, false);
+	if (!settings) {
+		launchAtStartup(true, false);
+	}
 	const menu: MenuItemConstructorOptions[] = [
 		{
 			label: app.getName(),
@@ -441,6 +443,9 @@ app.on('ready', async () => {
 	);
 	imageView = await createImageViewerWindow(imageView, pathWindow.timeTrackerUi);
 
+	alwaysOn = new AlwaysOn(pathWindow.timeTrackerUi);
+	await alwaysOn.loadURL();
+
 	/* Set Menu */
 	new AppMenu(
 		timeTrackerWindow,
@@ -459,8 +464,8 @@ app.on('ready', async () => {
 				false,
 				pathWindow.timeTrackerUi
 			);
-			splashScreen.close();
 			setupWindow.show();
+			splashScreen.close();
 			setupWindow.webContents.send('setup-data', {
 				...configs,
 			});
@@ -482,8 +487,8 @@ app.on('ready', async () => {
 			false,
 			pathWindow.timeTrackerUi
 		);
-		splashScreen.close();
 		setupWindow.show();
+		splashScreen.close();
 	}
 	updater.settingWindow = settingsWindow;
 	updater.gauzyWindow = gauzyWindow;
@@ -549,7 +554,8 @@ ipcMain.on('server_is_ready', async () => {
 			{ ...environment },
 			createSettingsWindow,
 			pathWindow,
-			path.join(__dirname, '..', 'data', 'sound', 'snapshot-sound.wav')
+			path.join(__dirname, '..', 'data', 'sound', 'snapshot-sound.wav'),
+			alwaysOn
 		);
 		isAlreadyRun = true;
 	}
@@ -572,6 +578,7 @@ ipcMain.on('restore', () => {
 ipcMain.on('restart_app', async (event, arg) => {
 	dialogErr = false;
 	LocalStore.updateConfigSetting(arg);
+	if (alwaysOn) alwaysOn.close();
 	if (serverGauzy) serverGauzy.kill();
 	if (gauzyWindow) gauzyWindow.destroy();
 	gauzyWindow = null;
@@ -581,10 +588,6 @@ ipcMain.on('restart_app', async (event, arg) => {
 		API_BASE_URL: getApiBaseUrl(configs),
 		IS_INTEGRATED_DESKTOP: configs.isLocalServer,
 	};
-	await startServer(configs, !!tray);
-	setupWindow.webContents.send('server_ping_restart', {
-		host: getApiBaseUrl(configs),
-	});
 	app.relaunch({ args: process.argv.slice(1).concat(['--relaunch']) });
 	app.exit(0);
 });
@@ -684,8 +687,8 @@ app.on('activate', async () => {
 		);
 	} else {
 		if (setupWindow) {
-			splashScreen.close();
 			setupWindow.show();
+			splashScreen.close();
 		}
 	}
 });

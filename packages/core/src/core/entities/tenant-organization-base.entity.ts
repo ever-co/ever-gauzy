@@ -7,9 +7,8 @@ import {
 } from '@gauzy/contracts';
 import { Organization, TenantBaseEntity } from '../entities/internal';
 
-export abstract class TenantOrganizationBaseEntity
-	extends TenantBaseEntity
-	implements IBasePerTenantAndOrganizationEntityModel {
+export abstract class TenantOrganizationBaseEntity extends TenantBaseEntity implements IBasePerTenantAndOrganizationEntityModel {
+
 	@ApiProperty({ type: () => Organization, readOnly: true })
 	@ManyToOne(() => Organization, {
 		nullable: true,
@@ -26,5 +25,5 @@ export abstract class TenantOrganizationBaseEntity
 	@IsOptional()
 	@Index()
 	@Column({ nullable: true })
-	organizationId?: string;
+	organizationId?: IOrganization['id'];
 }

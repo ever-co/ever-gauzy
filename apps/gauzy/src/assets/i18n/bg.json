@@ -149,7 +149,8 @@
 		"LOGOUT": "Изход",
 		"COPY": "Копиране",
 		"CUT": "Изрязване",
-		"PASTE": "Поставяне"
+		"PASTE": "Поставяне",
+		"FORWARD_PORTS": "Препращане на портове"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {
@@ -268,7 +269,14 @@
 			"RU": "Русский (Россия)",
 			"HE": "עברית ישראל",
 			"FR": "Français (France)",
-			"ES": "Español (España)"
+			"ES": "Español (España)",
+			"ZH": "中文 (中国)",
+			"DE": "Deutsch (Deutschland)",
+			"PT": "Português (Portugal)",
+			"IT": "Italiano (Italia)",
+			"NL": "Nederlands (Nederland)",
+			"PL": "Polski (Polska)",
+			"AR": "العربية (العراق)"
 		},
 		"CURRENT_VALUE": "Current value",
 		"TARGET_VALUE": "Target value",
@@ -598,6 +606,7 @@
 			"SELECT_EXPENSE": "Select Expense",
 			"ADD_TITLE": "Add title",
 			"ALL_PROJECTS": "All Projects",
+			"ALL_TEAMS": "All Teams",
 			"UPWORK_API_KEY": "Upwork API key",
 			"UPWORK_SECRET": "Upwork Secret",
 			"SELECT_COMPANY": "Select Company",
@@ -617,6 +626,7 @@
 			"RECEIPT_TEMPLATE": "Receipt Template",
 			"INVITATION_EXPIRATION": "Invitation Expiration",
 			"ADD_PROJECT": "Add project",
+			"ADD_TEAM": "Add team",
 			"ADD_EMPLOYEE": "Add employee",
 			"ADD_ORGANIZATION": "Add organization",
 			"DRAG_DROP_FILE": "Drag and Drop the file here",
@@ -674,7 +684,7 @@
 		},
 		"ERROR": {
 			"PROJECT_NAME": "Името на проекта е задължително.",
-			"PROJECT_URL":"URL адресът на проекта е невалиден.",
+			"PROJECT_URL": "URL адресът на проекта е невалиден.",
 			"OPEN_SOURCE_PROJECT_URL": "URL адресът на проекта с отворен код е невалиден."
 		}
 	},
@@ -1060,6 +1070,13 @@
 		"BULGARIAN": "Български",
 		"HEBREW": "Иврит",
 		"RUSSIAN": "Руски",
+		"CHINESE": "китайски",
+		"GERMAN": "Немски",
+		"PORTUGUESE": "Португалски",
+		"ITALIAN": "Италиански",
+		"DUTCH": "Нидерландски",
+		"POLISH": "Полски",
+		"ARABIC": "Арабски",
 		"PREFERRED_LAYOUT": "Layout",
 		"PREFERRED_LAYOUT_TOOLTIP": "This will only set the default layout and not change the layout on each page if you have already changed it once.",
 		"RESET_LAYOUT": "Reset Layout",
@@ -1878,26 +1895,26 @@
 				"INACTIVITY_TIME_LIMIT_INFO": "Inactivity tracking timeout (i.e., how many seconds of inactivity is allowed)",
 				"ACTIVITY_PROOF_DURATION": "Activity proof duration",
 				"ACTIVITY_PROOF_DURATION_INFO": "Duration of activity proof countdown dialog, it represent an amount of seconds given to prove activity",
-                "ALLOW_TRACK_INACTIVITY": "Allow to track inactivity",
-                "PROOF_OF_COMPLETION": "Доказателство за завършване",
-                "PROOF_OF_COMPLETION_TYPE": "Тип доказателство за завършване",
-                "LINKED_ISSUE": "Свързан проблем",
-                "COMMENT": "Коментар",
-                "HISTORY": "История",
-                "ACCEPTANCE_CRITERIA": "Критерии за приемане",
-                "DRAFT_ISSUE": "Проблеми с чернови",
-                "PROOF_OF_COMPLETION_TYPE_DROPDOWN": {
-                    "NONE": "Няма",
-                    "PRIVATE": "Частен",
-                    "PUBLIC": "Обществено"
-                },
-                "NOTIFY_TASK_LEFT": "Известие за оставена задача",
-                "NOTIFY_TASK_LEFT_PERIOD": "Период на задачата за известяване (в дни)",
-                "AUTO_CLOSE_ISSUE": "Автоматично затваряне на проблем",
-                "AUTO_CLOSE_ISSUE_PERIOD": "Период на издаване на автоматично затваряне (в дни)",
-                "AUTO_ARCHIVE_ISSUE": "Проблем с автоматичното архивиране",
-                "AUTO_ARCHIVE_ISSUE_PERIOD": "Период на издаване на автоматично архивиране (в дни)",
-                "AUTO_STATUS": "Автоматично състояние"
+				"ALLOW_TRACK_INACTIVITY": "Allow to track inactivity",
+				"PROOF_OF_COMPLETION": "Доказателство за завършване",
+				"PROOF_OF_COMPLETION_TYPE": "Тип доказателство за завършване",
+				"LINKED_ISSUE": "Свързан проблем",
+				"COMMENT": "Коментар",
+				"HISTORY": "История",
+				"ACCEPTANCE_CRITERIA": "Критерии за приемане",
+				"DRAFT_ISSUE": "Проблеми с чернови",
+				"PROOF_OF_COMPLETION_TYPE_DROPDOWN": {
+					"NONE": "Няма",
+					"PRIVATE": "Частен",
+					"PUBLIC": "Обществено"
+				},
+				"NOTIFY_TASK_LEFT": "Известие за оставена задача",
+				"NOTIFY_TASK_LEFT_PERIOD": "Период на задачата за известяване (в дни)",
+				"AUTO_CLOSE_ISSUE": "Автоматично затваряне на проблем",
+				"AUTO_CLOSE_ISSUE_PERIOD": "Период на издаване на автоматично затваряне (в дни)",
+				"AUTO_ARCHIVE_ISSUE": "Проблем с автоматичното архивиране",
+				"AUTO_ARCHIVE_ISSUE_PERIOD": "Период на издаване на автоматично архивиране (в дни)",
+				"AUTO_STATUS": "Автоматично състояние"
 			},
 			"TEAMS_PAGE": {
 				"MANAGERS": "Managers",
@@ -2020,7 +2037,7 @@
 			"ALLOW_MODIFY_TIME": "Allow Modify Time",
 			"ALLOW_MANUAL_TIME": "Allow Manual Time",
 			"DELETE_SCREENSHOTS": "Allow Delete Screenshot",
-			"ORG_TASK_SETTING":"Настройки на задачите"
+			"ORG_TASK_SETTING": "Настройки на задачите"
 		},
 		"BILLING": "Billing",
 		"BUDGET": "Budget",
@@ -2940,7 +2957,8 @@
 		"SELECT_EMPLOYEE": "Select Employee",
 		"SELECT_A_DATE": "Select A date",
 		"SELECT_AN_ORGANIZATION": "Select An Organization",
-		"SELECT_PROJECT": "Select Project"
+		"SELECT_PROJECT": "Select Project",
+		"SELECT_TEAM": "Select Team"
 	},
 	"HEADER_TITLE": {
 		"FOR": "for",
@@ -3375,7 +3393,7 @@
 			"ORGANIZATION_LOCATION_UPDATED": "'{{ name }}' organization location was changed",
 			"ORGANIZATION_INFO_UPDATED": "'{{ name }}' organization main info was changed",
 			"ORGANIZATION_SETTINGS_UPDATED": "'{{ name }}' organization settings was changed",
-            "ORGANIZATION_TASK_SETTINGS_UPDATE_ERROR": "Възникна грешка при опит за актуализиране на настройката на задачата на организацията.",
+			"ORGANIZATION_TASK_SETTINGS_UPDATE_ERROR": "Възникна грешка при опит за актуализиране на настройката на задачата на организацията.",
 			"SETTINGS_SAVED": "Settings saved successfully",
 			"KEY_RESULTS_CREATED": "Key Results Created",
 			"INVITE_EMAIL_DELETED": "{{ name }} has been deleted.",
@@ -3672,7 +3690,8 @@
 			"DB_NAME": "Име на базата данни",
 			"DB_PORT": "Порт на базата данни",
 			"USER": "Потребител",
-			"PASSWORD": "Парола"
+			"PASSWORD": "Парола",
+			"UI_HOSTNAME": "Име на хост на потребителския интерфейс / IP адрес"
 		},
 		"SETTINGS": {
 			"SCREEN_CAPTURE": "Захващане на екран",
@@ -3718,6 +3737,11 @@
 			"WARNING_STOP_TIMER": "Моля, спрете таймера, ако искате да промените конфигурацията",
 			"GENERAL": "Общи",
 			"API_CONFIG": "Настройки на API",
+			"SERVER_ACCESS_CONFIG": "Конфигурация за достъп до сървъра",
+			"API_SERVER_PORT": "Порт на сървъра на API",
+			"UI_SERVER_PORT": "Порт на сървъра на потребителски интерфейс",
+			"SERVER_HOSTNAME": "Име на сървъра / IP адрес",
+			"AUTO_START_STARTUP": "Автоматично стартиране при стартиране на системата",
 			"SERVER_TYPE": "Вид на сървъра",
 			"LOCAL_API_PORT": "Локален порт за API",
 			"UI_PORT": "UI порт",
@@ -3752,7 +3776,14 @@
 				"SERVER_RESTARTED": "Сървърът бе рестартиран успешно",
 				"CONNECTION_SUCCEEDS": "Установена успешна връзка със сървъра {{ url }}",
 				"DOWNLOADING_UPDATE": "Изтегляне на обновление {{ current }} MB от {{ total }} MB ->> {{ bandwidth }} KB/с"
-			}
+			},
+			"TIMEZONE": "Часова зона",
+			"TIMEZONE_LABEL": "Изборът на 'Local' показва времето във вашата местна часова зона, докато изборът на 'UTC' показва времето в универсалната UTC часова зона, използвана от системите за фактуриране и други.",
+			"TIMEZONE_PLACEHOLDER": "Изберете 'Local' или 'UTC'.",
+			"TIMEZONE_LOCAL": "Местно време",
+			"TIMEZONE_UTC": "UTC",
+			"WIDGET": "Подредба",
+			"WIDGET_LABEL": "Този прозорец отразява състоянието на таймера, показвайки дали той работи или е спрян, и функционира като бутон"
 		},
 		"WEEKLY_LIMIT_EXCEEDED": "Седмичната лимита е превишена",
 		"OF_HRS": "От {{ limit }} часа",
@@ -3784,6 +3815,7 @@
 			"RESUME_TIMER": "Вашият таймер продължи да работи, когато компютърът е бил заключен. Да се продължи ли таймера?",
 			"EXIT": "Сигурни ли сте, че искате да излезете?",
 			"STOPPED_DU_INACTIVITY": "Таймерът беше спрян поради надминаване на периода на бездействие от {{ бездействие }}. Моля, уверете се, че стартирате отново таймера, когато продължавате работата.",
+			"EXIT_SERVER_CONFIRM": "Щракнете върху Изход, за да спрете сървъра и излезете от приложението.",
 			"EXIT_CONFIRM": "Щракнете върху Изход, за да спрете таймера и да излезете от приложението.",
 			"LOGOUT_CONFIRM": "Щракнете върху Изход, за да спрете таймера и да излезете от приложението.",
 			"SELECT_UPDATE_FILES": "Моля, изберете папка с файлове за обновяване.",
@@ -4090,7 +4122,8 @@
 			"interviewer-interview-schedule": "Interviewer Schedule",
 			"employee-join": "Employee Join",
 			"email-reset": "Email Reset",
-			"organization-team-join-request": "Organization team join request"
+			"organization-team-join-request": "Organization team join request",
+			"payment-receipt": "Касова бележка"
 		},
 		"HTML_EDITOR": "HTML Editor"
 	},

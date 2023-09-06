@@ -149,7 +149,8 @@
 		"LOGOUT": "התנתקות",
 		"COPY": "העתקה",
 		"CUT": "גזירה",
-		"PASTE": "הדבקה"
+		"PASTE": "הדבקה",
+		"FORWARD_PORTS": "העברת פורטים"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {
@@ -268,7 +269,14 @@
 			"RU": "Русский (Россия)",
 			"HE": "עברית ישראל",
 			"FR": "Français (France)",
-			"ES": "Español (España)"
+			"ES": "Español (España)",
+			"ZH": "中文 (中国)",
+			"DE": "Deutsch (Deutschland)",
+			"PT": "Português (Portugal)",
+			"IT": "Italiano (Italia)",
+			"NL": "Nederlands (Nederland)",
+			"PL": "Polski (Polska)",
+			"AR": "العربية (العراق)"
 		},
 		"CURRENT_VALUE": "Current value",
 		"TARGET_VALUE": "Target value",
@@ -598,6 +606,7 @@
 			"SELECT_EXPENSE": "Select Expense",
 			"ADD_TITLE": "Add title",
 			"ALL_PROJECTS": "All Projects",
+			"ALL_TEAMS": "All Teams",
 			"UPWORK_API_KEY": "Upwork API key",
 			"UPWORK_SECRET": "Upwork Secret",
 			"SELECT_COMPANY": "Select Company",
@@ -617,6 +626,7 @@
 			"RECEIPT_TEMPLATE": "Receipt Template",
 			"INVITATION_EXPIRATION": "Invitation Expiration",
 			"ADD_PROJECT": "Add project",
+			"ADD_TEAM": "Add team",
 			"ADD_EMPLOYEE": "Add employee",
 			"ADD_ORGANIZATION": "Add organization",
 			"DRAG_DROP_FILE": "Drag and Drop the file here",
@@ -674,7 +684,7 @@
 		},
 		"ERROR": {
 			"PROJECT_NAME": "נדרש שם הפרויקט.",
-			"PROJECT_URL":"כתובת האתר של הפרויקט אינה חוקית.",
+			"PROJECT_URL": "כתובת האתר של הפרויקט אינה חוקית.",
 			"OPEN_SOURCE_PROJECT_URL": "כתובת האתר של פרוייקט קוד פתוח אינה חוקית."
 		}
 	},
@@ -1060,6 +1070,13 @@
 		"HEBREW": "עִברִית",
 		"RUSSIAN": "רוּסִי",
 		"SPANISH": "ספרדית",
+		"CHINESE": "סינית",
+		"GERMAN": "גרמנית",
+		"PORTUGUESE": "פורטוגזית",
+		"ITALIAN": "איטלקית",
+		"DUTCH": "הולנדית",
+		"POLISH": "פולני",
+		"ARABIC": "עֲרָבִית",
 		"PREFERRED_LAYOUT": "Layout",
 		"PREFERRED_LAYOUT_TOOLTIP": "This will only set the default layout and not change the layout on each page if you have already changed it once.",
 		"RESET_LAYOUT": "Reset Layout",
@@ -1878,26 +1895,26 @@
 				"INACTIVITY_TIME_LIMIT_INFO": "Inactivity tracking timeout (i.e., how many seconds of inactivity is allowed)",
 				"ACTIVITY_PROOF_DURATION": "Activity proof duration",
 				"ACTIVITY_PROOF_DURATION_INFO": "Duration of activity proof countdown dialog, it represent an amount of seconds given to prove activity",
-                "ALLOW_TRACK_INACTIVITY": "Allow to track inactivity",
-                "PROOF_OF_COMPLETION": "הוכחת השלמה",
-                "PROOF_OF_COMPLETION_TYPE": "סוג הוכחת השלמה",
-                "LINKED_ISSUE": "בעיה מקושרת",
-                "COMMENT": "תגובה",
-                "HISTORY": "הִיסטוֹרִיָה",
-                "ACCEPTANCE_CRITERIA": "קריטריונים לקבלה",
-                "DRAFT_ISSUE": "טיוטת סוגיות",
-                "PROOF_OF_COMPLETION_TYPE_DROPDOWN": {
-                    "NONE": "אף אחד",
-                    "PRIVATE": "פְּרָטִי",
-                    "PUBLIC": "פּוּמְבֵּי"
-                },
-                "NOTIFY_TASK_LEFT": "הודע על משימה שנשארה",
-                "NOTIFY_TASK_LEFT_PERIOD": "הודע על תקופת המשימה (בימים)",
-                "AUTO_CLOSE_ISSUE": "בעיה אוטומטית בסגירה",
-                "AUTO_CLOSE_ISSUE_PERIOD": "תקופת סגירה אוטומטית (בימים)",
-                "AUTO_ARCHIVE_ISSUE": "בעיה בארכיון אוטומטי",
-                "AUTO_ARCHIVE_ISSUE_PERIOD": "תקופת הנפקת ארכיון אוטומטי (בימים)",
-                "AUTO_STATUS": "מצב אוטומטי"
+				"ALLOW_TRACK_INACTIVITY": "Allow to track inactivity",
+				"PROOF_OF_COMPLETION": "הוכחת השלמה",
+				"PROOF_OF_COMPLETION_TYPE": "סוג הוכחת השלמה",
+				"LINKED_ISSUE": "בעיה מקושרת",
+				"COMMENT": "תגובה",
+				"HISTORY": "הִיסטוֹרִיָה",
+				"ACCEPTANCE_CRITERIA": "קריטריונים לקבלה",
+				"DRAFT_ISSUE": "טיוטת סוגיות",
+				"PROOF_OF_COMPLETION_TYPE_DROPDOWN": {
+					"NONE": "אף אחד",
+					"PRIVATE": "פְּרָטִי",
+					"PUBLIC": "פּוּמְבֵּי"
+				},
+				"NOTIFY_TASK_LEFT": "הודע על משימה שנשארה",
+				"NOTIFY_TASK_LEFT_PERIOD": "הודע על תקופת המשימה (בימים)",
+				"AUTO_CLOSE_ISSUE": "בעיה אוטומטית בסגירה",
+				"AUTO_CLOSE_ISSUE_PERIOD": "תקופת סגירה אוטומטית (בימים)",
+				"AUTO_ARCHIVE_ISSUE": "בעיה בארכיון אוטומטי",
+				"AUTO_ARCHIVE_ISSUE_PERIOD": "תקופת הנפקת ארכיון אוטומטי (בימים)",
+				"AUTO_STATUS": "מצב אוטומטי"
 			},
 			"TEAMS_PAGE": {
 				"MANAGERS": "Managers",
@@ -2020,7 +2037,7 @@
 			"ALLOW_MODIFY_TIME": "Allow Modify Time",
 			"ALLOW_MANUAL_TIME": "Allow Manual Time",
 			"DELETE_SCREENSHOTS": "Allow Delete Screenshot",
-			"ORG_TASK_SETTING":"Task Settings"
+			"ORG_TASK_SETTING": "Task Settings"
 		},
 		"BILLING": "Billing",
 		"BUDGET": "Budget",
@@ -2940,7 +2957,8 @@
 		"SELECT_EMPLOYEE": "Select Employee",
 		"SELECT_A_DATE": "Select A date",
 		"SELECT_AN_ORGANIZATION": "Select An Organization",
-		"SELECT_PROJECT": "Select Project"
+		"SELECT_PROJECT": "Select Project",
+		"SELECT_TEAM": "תבחר קבוצה"
 	},
 	"HEADER_TITLE": {
 		"FOR": "for",
@@ -3671,7 +3689,8 @@
 			"DB_NAME": "שם מסד נתונים",
 			"DB_PORT": "פורט מסד נתונים",
 			"USER": "משתמש",
-			"PASSWORD": "סיסמה"
+			"PASSWORD": "סיסמה",
+			"UI_HOSTNAME": "שם מארח יישום ממשק משתמש / כתובת IP"
 		},
 		"SETTINGS": {
 			"SCREEN_CAPTURE": "לכידת מסך",
@@ -3717,6 +3736,11 @@
 			"WARNING_STOP_TIMER": "אנא עצור את השעון אם ברצונך לשנות הגדרות",
 			"GENERAL": "כללי",
 			"API_CONFIG": "תצורת API",
+			"SERVER_ACCESS_CONFIG": "תצורת גישה לשרת",
+			"API_SERVER_PORT": "יציאת שרת API",
+			"UI_SERVER_PORT": "יציאת שרת ממשק משתמש",
+			"SERVER_HOSTNAME": "שם מארח/כתובת IP של השרת",
+			"AUTO_START_STARTUP": "הפעלה אוטומטית בהתחלה",
 			"SERVER_TYPE": "סוג שרת",
 			"LOCAL_API_PORT": "יציאת API מקומית",
 			"UI_PORT": "יציאת ממשק משתמש",
@@ -3750,7 +3774,14 @@
 				"SERVER_CONFIG_UPDATED": "קונפיגורצית השרת עודכנה, אנא המתן לאיחוד השרת",
 				"SERVER_RESTARTED": "השרת הופעל מחדש בהצלחה",
 				"CONNECTION_SUCCEEDS": "התחברות לשרת {{ url }} הצליחה"
-			}
+			},
+			"TIMEZONE": "אזור זמן",
+			"TIMEZONE_LABEL": "בחירת 'מקומי' מציגה את השעה באזור הזמן המקומי שלך, בעוד בחירת 'UTC' מציגה את השעה ב-UTC האוניברסלי, שמשמש את מערכות החיוב והמערכות האחרות.",
+			"TIMEZONE_PLACEHOLDER": "בחר בין 'מקומי' או 'UTC'.",
+			"TIMEZONE_LOCAL": "מקומי",
+			"TIMEZONE_UTC": "UTC",
+			"WIDGET": "ווידג'ט",
+			"WIDGET_LABEL": "החלון משקף את מצב הטיימר, מציין האם הוא פועל או עצור, ופועל ככפתור."
 		},
 		"WEEKLY_LIMIT_EXCEEDED": "הגעת למגבלת השבוע",
 		"OF_HRS": "מתוך {{ limit }} שעות",
@@ -3783,6 +3814,7 @@
 			"EXIT": "האם אתה בטוח שתרצה לצאת?",
 			"STOPPED_DU_INACTIVITY": "הטיימר נעצר עקב פרק החוסר פעילות שעבר את {{ inactivity }}. אנא וודא שתפעיל את הטיימר שוב לאחר שתמשיך לעבוד.",
 			"EXIT_CONFIRM": "לחץ על יציאה כדי לעצור את הטיימר ולצאת מהיישום.",
+			"EXIT_SERVER_CONFIRM": "לחץ על יציאה כדי לעצור את השרת ולצאת מהיישום.",
 			"LOGOUT_CONFIRM": "לחץ על התנתקות כדי לעצור את הטיימר ולהתנתק מהיישום.",
 			"SELECT_UPDATE_FILES": "אנא בחר תיקייה עם קבצי עדכון.",
 			"UPDATE_READY": "העדכון מוכן להורדה",
@@ -4088,7 +4120,8 @@
 			"interviewer-interview-schedule": "Interviewer Schedule",
 			"employee-join": "Employee Join",
 			"email-reset": "Email Reset",
-			"organization-team-join-request": "Organization team join request"
+			"organization-team-join-request": "Organization team join request",
+			"payment-receipt": "קבלת תשלום"
 		},
 		"HTML_EDITOR": "HTML Editor"
 	},

@@ -1,1 +1,52 @@
 @import 'apps/gauzy/src/app/pages/expenses/expense-categories/expense-categories.component.scss';
+
+.team-photo {
+	width: fit-content;
+	height: fit-content;
+	position: relative;
+
+	.image-overlay {
+		pointer-events: none;
+		background: black;
+		position: absolute;
+		height: 100%;
+		width: 100%;
+		border-radius: 13px;
+	}
+
+
+	::ng-deep ngx-image-uploader input {
+		height: 100% !important;
+	  }
+
+	img,
+	.no-image {
+		width: 60px;
+		height: 60px;
+		border-radius: 13px;
+		position: relative;
+
+		i {
+			position: absolute;
+			top: calc(50% - 16px / 2);
+			left: calc(50% - 16px / 2);
+		}
+	}
+
+	img {
+		object-fit: cover;
+	}
+
+	svg {
+		z-index: 2;
+		transition: opacity 0.2s ease-in;
+		opacity: 0.3;
+		position: absolute;
+		top: calc(50% - 48px / 2);
+		left: calc(50% - 48px / 2);
+
+		g circle {
+			fill: nb-theme(text-primary-color);
+		}
+	}
+}

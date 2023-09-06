@@ -260,13 +260,7 @@ export class HubstaffService {
 								settingsName: 'refresh_token',
 								settingsValue: data.refresh_token
 							}
-						].map((setting) => {
-							return {
-								...setting,
-								organizationId,
-								tenantId
-							};
-						})
+						]
 					})
 				)),
 				catchError((err) => {

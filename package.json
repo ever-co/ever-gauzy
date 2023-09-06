@@ -342,9 +342,14 @@
 		"webpack-merge": "^5.8.0",
 		"webpack-node-externals": "^3.0.0"
 	},
+	"overrides": {
+		"prebuild": {
+			"node-gyp": "$node-gyp"
+		}
+	},
 	"engines": {
-		"node": ">=14.0.0",
-		"yarn": ">=1.13.0"
+		"node": ">=16.20.2",
+		"yarn": ">=1.22.19"
 	},
 	"prettier": {
 		"singleQuote": true

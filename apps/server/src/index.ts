@@ -17,7 +17,6 @@ import {
 	MenuItemConstructorOptions,
 	screen,
 } from 'electron';
-import { environment } from './environments/environment';
 
 // setup logger to catch all unhandled errors and submit as bug reports to our repo
 
@@ -35,6 +34,14 @@ import {
 	DesktopUpdater,
 	TranslateLoader,
 	TranslateService,
+	IPathWindow,
+	ReadWriteFile,
+	ServerConfig,
+	IServerConfig,
+	ILocalServer,
+	ReverseProxy,
+	DesktopDialog,
+	DialogStopServerExitConfirmation
 } from '@gauzy/desktop-libs';
 import {
 	createSetupWindow,
@@ -44,7 +51,6 @@ import {
 	createAboutWindow,
 } from '@gauzy/desktop-window';
 import { initSentry } from './sentry';
-import { readFileSync, writeFileSync, accessSync, constants } from 'fs';
 import * as remoteMain from '@electron/remote/main';
 import { autoUpdater } from 'electron-updater';
 remoteMain.initialize();
@@ -66,6 +72,7 @@ let settingsWindow: BrowserWindow;
 let splashScreen: SplashScreen;
 let tray: Tray;
 let isServerRun: boolean;
+let willQuit = false;
 
 const updater = new DesktopUpdater({
 	repository: 'ever-gauzy-server',
@@ -73,12 +80,7 @@ const updater = new DesktopUpdater({
 	typeRelease: 'releases',
 });
 
-const pathWindow: {
-	gauzyUi: string;
-	ui: string;
-	dir: string;
-	timeTrackerUi: string;
-} = {
+const pathWindow: IPathWindow = {
 	gauzyUi: app.isPackaged
 		? path.join(__dirname, '../data/ui/index.html')
 		: path.join(__dirname, './data/ui/index.html'),
@@ -88,6 +90,13 @@ const pathWindow: {
 		: path.join(__dirname, './data/ui'),
 	timeTrackerUi: path.join(__dirname, 'index.html'),
 };
+
+const serverConfig: IServerConfig = new ServerConfig(
+	new ReadWriteFile(pathWindow)
+);
+const reverseProxy: ILocalServer = new ReverseProxy(serverConfig);
+
+const executableName = path.basename(process.execPath);
 
 /* Load translations */
 TranslateLoader.load(__dirname + '/assets/i18n/');
@@ -107,17 +116,18 @@ ipcMain.setMaxListeners(0);
 ipcMain.removeHandler('PREFERRED_LANGUAGE');
 
 const runSetup = async () => {
-	splashScreen.close();
 	if (setupWindow) {
 		setupWindow.show();
+		splashScreen.close();
 		return;
 	}
 	setupWindow = await createSetupWindow(setupWindow, false, pathWindow.ui);
 	setupWindow.show();
+	splashScreen.close();
 };
 
 const appState = async () => {
-	const config = LocalStore.getStore('configs');
+	const config = serverConfig.setting;
 	if (!config) {
 		await runSetup();
 		return;
@@ -129,8 +139,8 @@ const appState = async () => {
 
 const runMainWindow = async () => {
 	serverWindow = await createServerWindow(serverWindow, null, pathWindow.ui);
-	splashScreen.close();
 	serverWindow.show();
+	splashScreen.close();
 	if (!tray) {
 		createTray();
 	}
@@ -148,53 +158,18 @@ const runMainWindow = async () => {
 		Menu.getApplicationMenu().getMenuItemById('window-setting');
 	if (menuWindowSetting) menuWindowSetting.enabled = true;
 	if (setupWindow) setupWindow.hide();
+	serverWindow.webContents.send('dashboard_ready', {
+		setting: serverConfig.setting
+	});
 };
 
 const initializeConfig = async (val) => {
 	try {
-		LocalStore.updateConfigSetting(val);
-		updateConfigUi(val);
+		serverConfig.setting = val;
+		serverConfig.update();
 		await runMainWindow();
 	} catch (error) {
 		console.log(error)
-	}
-};
-
-const getApiBaseUrl = (config) => {
-	if (config.serverUrl) return config.serverUrl;
-	else {
-		return config.port
-			? `http://localhost:${config.port}`
-			: `http://localhost:${environment.API_DEFAULT_PORT}`;
-	}
-};
-
-const updateConfigUi = (config) => {
-	const apiBaseUrl = getApiBaseUrl(config);
-	let fileStr = readFileSync(pathWindow.gauzyUi, 'utf8');
-
-	const configStr = `
-		<script> window._env = { api: '${apiBaseUrl}' };
-		if (typeof global === "undefined") {
-			var global = window;
-		}; </script>`;
-
-	const elementToReplace = '</body>';
-
-	fileStr = fileStr.replace(elementToReplace, configStr.concat('\n').concat(elementToReplace));
-
-	// write file new html
-
-	try {
-		accessSync(pathWindow.dir, constants.W_OK);
-	} catch (e) {
-		console.error('Cannot access directory');
-	}
-
-	try {
-		writeFileSync(pathWindow.gauzyUi, fileStr);
-	} catch (error) {
-		console.log('Cannot change html file', error);
 	}
 };
 
@@ -202,23 +177,31 @@ const controller = new AbortController()
 const { signal } = controller;
 const runServer = (isRestart) => {
 	const envVal = getEnvApi();
-	const uiPort = getUiPort();
-	apiServer(
-		{
-			ui: path.join(__dirname, 'preload', 'ui-server.js'),
-			api: path.join(__dirname, 'api/main.js'),
-		},
-		envVal,
-		serverWindow,
-		uiPort,
-		isRestart,
-		signal
-	);
+	const uiPort = serverConfig.uiPort;
+	try {
+		apiServer(
+			{
+				ui: path.join(__dirname, 'preload', 'ui-server.js'),
+				api: path.join(__dirname, 'api/main.js'),
+			},
+			envVal,
+			serverWindow,
+			uiPort,
+			isRestart,
+			signal
+		);
+	} catch (error) {
+		if (error.name === 'AbortError') {
+			console.log('You exit without to stop the server');
+			return;
+		}
+		console.log('Error ', error);
+	}
 };
 
 const getEnvApi = () => {
-	const config = LocalStore.getStore('configs');
-	updateConfigUi(config);
+	const config = serverConfig.setting;
+	serverConfig.update();
 	const addsConfig = LocalStore.getAdditionalConfig();
 	const provider = config.db;
 	return {
@@ -237,11 +220,6 @@ const getEnvApi = () => {
 	};
 };
 
-const getUiPort = () => {
-	const config = LocalStore.getStore('configs');
-	return config.portUi;
-};
-
 const createTray = () => {
 	const iconNativePath = nativeImage.createFromPath(
 		path.join(__dirname, 'assets', 'icons', 'icon.png')
@@ -258,8 +236,7 @@ const contextMenu = () => {
 			id: 'server_browser',
 			label: TranslateService.instant('MENU.OPEN_GA_BROWSER'),
 			click() {
-				const config = LocalStore.getStore('configs');
-				shell.openExternal(`http://localhost:${config.portUi}`);
+				shell.openExternal(serverConfig.uiUrl);
 			},
 		},
 		{
@@ -335,15 +312,13 @@ ipcMain.on('run_gauzy_server', (event, arg) => {
 });
 
 const stopServer = (isRestart) => {
-	const config = LocalStore.getStore('configs');
+	const config = serverConfig.setting;
 	console.log('api pid', config.apiPid);
 	console.log('api pid', config.uiPid);
 	if (config.apiPid) {
 		try {
 			process.kill(config.apiPid);
-			LocalStore.updateConfigSetting({
-				apiPid: null,
-			});
+			serverConfig.setting = { apiPid: null };
 			serverWindow.webContents.send('log_state', { msg: 'Api stopped' });
 		} catch (error) {
 			console.log('error api', error);
@@ -352,9 +327,7 @@ const stopServer = (isRestart) => {
 	if (config.uiPid) {
 		try {
 			process.kill(config.uiPid);
-			LocalStore.updateConfigSetting({
-				uiPid: null,
-			});
+			serverConfig.setting = { uiPid: null };
 			serverWindow.webContents.send('log_state', { msg: 'UI stopped' });
 			if (isRestart) {
 				runServer(true);
@@ -374,7 +347,10 @@ app.on('ready', async () => {
 	splashScreen = new SplashScreen(pathWindow.ui);
 	await splashScreen.loadURL();
 	splashScreen.show();
-	LocalStore.setDefaultApplicationSetting();
+	if (!serverConfig.setting) {
+		LocalStore.setDefaultApplicationSetting();
+		launchAtStartup(true, false);
+	}
 	if (!settingsWindow) {
 		settingsWindow = await createSettingsWindow(settingsWindow, pathWindow.ui);
 	}
@@ -404,8 +380,8 @@ ipcMain.on('restart_app', (event, arg) => {
 	console.log('Restarting Server', arg);
 	if (arg.apiPid) delete arg.apiPid;
 	if (arg.uiPid) delete arg.uiPid;
-	LocalStore.updateConfigSetting(arg);
-	updateConfigUi(arg);
+	serverConfig.setting = arg;
+	serverConfig.update();
 	event.sender.send('resp_msg', { type: 'update_config', status: 'success' });
 	if (isServerRun) {
 		stopServer(true);
@@ -469,12 +445,18 @@ ipcMain.on('running_state', (event, arg) => {
 	if (arg) {
 		const start = trayContextMenu[3];
 		start.enabled = false;
+		reverseProxy.start();
 	} else {
 		const stop = trayContextMenu[4];
 		stop.enabled = false;
+		reverseProxy.stop();
 	}
 	tray.setContextMenu(Menu.buildFromTemplate(trayContextMenu));
 	isServerRun = arg;
+	// Closed the server if marked.
+	if (willQuit) {
+		app.quit();
+	}
 });
 
 ipcMain.on('loading_state', (event, arg) => {
@@ -535,15 +517,30 @@ ipcMain.on('restart_and_update', () => {
 	});
 });
 
-app.on('before-quit', (e) => {
+app.on('before-quit', async (e) => {
 	e.preventDefault();
-	// Kill child processes
-	controller.abort();
-	// soft download cancellation
-	try {
-		updater.cancel();
-	} catch (e) {}
-	app.exit(0);
+	if (isServerRun) {
+		const exitConfirmationDialog = new DialogStopServerExitConfirmation(
+			new DesktopDialog(
+				'Gauzy Server',
+				TranslateService.instant('TIMER_TRACKER.DIALOG.EXIT'),
+				serverWindow
+			)
+		);
+		const button = await exitConfirmationDialog.show();
+		if (button.response === 0) {
+			// Stop the server from main
+			stopServer(false);
+			// Mark as will quit
+			willQuit = true;
+		};
+	} else {
+		// soft download cancellation
+		try {
+			updater.cancel();
+		} catch (e) { }
+		app.exit(0);
+	}
 });
 
 app.on('window-all-closed', quit);
@@ -572,4 +569,45 @@ ipcMain.handle('PREFERRED_LANGUAGE', (event, arg) => {
 ipcMain.on('preferred_language_change', (event, arg) => {
 	TranslateService.preferredLanguage = arg;
 	serverWindow?.webContents?.send('preferred_language_change', arg);
-})
+});
+
+ipcMain.on('launch_on_startup', (event, arg) => {
+	launchAtStartup(arg.autoLaunch, arg.hidden);
+});
+
+ipcMain.on('minimize_on_startup', (event, arg) => {
+	launchAtStartup(arg.autoLaunch, arg.hidden);
+});
+
+ipcMain.on('auto_start_on_startup', (event, arg) => {
+	serverConfig.setting = arg;
+});
+
+function launchAtStartup(autoLaunch: boolean, hidden: boolean): void {
+	switch (process.platform) {
+		case 'darwin':
+			app.setLoginItemSettings({
+				openAtLogin: autoLaunch,
+				openAsHidden: hidden
+			});
+			break;
+		case 'win32':
+			app.setLoginItemSettings({
+				openAtLogin: autoLaunch,
+				openAsHidden: hidden,
+				path: app.getPath('exe'),
+				args: hidden
+					? ['--processStart', `"${executableName}"`, '--process-start-args', `"--hidden"`]
+					: ['--processStart', `"${executableName}"`, '--process-start-args']
+			});
+			break;
+		case 'linux':
+			app.setLoginItemSettings({
+				openAtLogin: autoLaunch,
+				openAsHidden: hidden
+			});
+			break;
+		default:
+			break;
+	}
+}

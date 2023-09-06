@@ -82,7 +82,8 @@ import {
 	createSettingsWindow,
 	createUpdaterWindow,
 	createImageViewerWindow,
-	SplashScreen
+	SplashScreen,
+	AlwaysOn
 } from '@gauzy/desktop-window';
 import { fork } from 'child_process';
 import { autoUpdater } from 'electron-updater';
@@ -131,6 +132,7 @@ let willQuit = true;
 let serverDesktop = null;
 let popupWin: BrowserWindow | null = null;
 let splashScreen: SplashScreen = null;
+let alwaysOn: AlwaysOn = null;
 
 console.log('Time Tracker UI Render Path:', path.join(__dirname, './index.html'));
 
@@ -219,8 +221,8 @@ async function startServer(value, restart = false) {
 			}
 		}
 		gauzyWindow = timeTrackerWindow;
-		splashScreen.close();
 		gauzyWindow.show();
+		splashScreen.close();
 	}
 	const auth = store.get('auth');
 	new AppMenu(timeTrackerWindow, settingsWindow, updaterWindow, knex, pathWindow, null, false);
@@ -237,7 +239,8 @@ async function startServer(value, restart = false) {
 		{ ...environment },
 		pathWindow,
 		path.join(__dirname, 'assets', 'icons', 'icon.png'),
-		gauzyWindow
+		gauzyWindow,
+		alwaysOn
 	);
 
 	TranslateService.onLanguageChange(() => {
@@ -263,7 +266,8 @@ async function startServer(value, restart = false) {
 			{ ...environment },
 			pathWindow,
 			path.join(__dirname, 'assets', 'icons', 'icon.png'),
-			gauzyWindow
+			gauzyWindow,
+			alwaysOn
 		);
 	})
 
@@ -296,7 +300,6 @@ const getApiBaseUrl = (configs) => {
 app.on('ready', async () => {
 	const configs: any = store.get('configs');
 	const settings: any = store.get('appSetting');
-	const autoLaunch: boolean = settings && typeof settings.autoLaunch === 'boolean' ? settings.autoLaunch : true;
 	// default global
 	global.variableGlobal = {
 		API_BASE_URL: getApiBaseUrl(configs || {}),
@@ -305,7 +308,9 @@ app.on('ready', async () => {
 	splashScreen = new SplashScreen(pathWindow.timeTrackerUi);
 	await splashScreen.loadURL();
 	splashScreen.show();
-	launchAtStartup(autoLaunch, false);
+	if (!settings) {
+		launchAtStartup(true, false);
+	}
 	if (provider.dialect === 'sqlite') {
 		try {
 			const res = await knex.raw(`pragma journal_mode = WAL;`);
@@ -336,6 +341,8 @@ app.on('ready', async () => {
 	settingsWindow = await createSettingsWindow(settingsWindow, pathWindow.timeTrackerUi);
 	updaterWindow = await createUpdaterWindow(updaterWindow, pathWindow.timeTrackerUi);
 	imageView = await createImageViewerWindow(imageView, pathWindow.timeTrackerUi);
+	// Initialize window and hide it
+	alwaysOn = new AlwaysOn(pathWindow.timeTrackerUi);
 
 	/* Set Menu */
 
@@ -348,8 +355,8 @@ app.on('ready', async () => {
 		await startServer(configs);
 	} else {
 		setupWindow = await createSetupWindow(setupWindow, false, pathWindow.timeTrackerUi);
-		splashScreen.close();
 		setupWindow.show();
+		splashScreen.close();
 	}
 
 	updater.settingWindow = settingsWindow;
@@ -370,7 +377,7 @@ app.on('window-all-closed', () => {
 
 app.commandLine.appendSwitch('disable-http2');
 
-ipcMain.on('server_is_ready', () => {
+ipcMain.on('server_is_ready', async () => {
 	LocalStore.setDefaultApplicationSetting();
 	const appConfig = LocalStore.getStore('configs');
 	appConfig.serverConfigConnected = true;
@@ -380,6 +387,7 @@ ipcMain.on('server_is_ready', () => {
 	onWaitingServer = false;
 	if (!isAlreadyRun) {
 		serverDesktop = fork(path.join(__dirname, './desktop-api/main.js'));
+		await alwaysOn.loadURL();
 		removeTimerListener();
 		ipcTimer(
 			store,
@@ -392,7 +400,8 @@ ipcMain.on('server_is_ready', () => {
 			{ ...environment },
 			createSettingsWindow,
 			pathWindow,
-			path.join(__dirname, '..', 'data', 'sound', 'snapshot-sound.wav')
+			path.join(__dirname, '..', 'data', 'sound', 'snapshot-sound.wav'),
+			alwaysOn
 		);
 		isAlreadyRun = true;
 	}
@@ -413,34 +422,30 @@ ipcMain.on('restore', () => {
 });
 
 ipcMain.on('restart_app', async (event, arg) => {
-	dialogErr = false;
 	LocalStore.updateConfigSetting(arg);
-	if (timeTrackerWindow) {
-		timeTrackerWindow.destroy();
-		timeTrackerWindow = await createTimeTrackerWindow(timeTrackerWindow, pathWindow.timeTrackerUi);
-	}
-	if (serverGauzy) serverGauzy.kill();
-	if (gauzyWindow) {
-		gauzyWindow.destroy();
-		gauzyWindow = null;
-	}
-
-	isAlreadyRun = false;
 	const configs = LocalStore.getStore('configs');
 	global.variableGlobal = {
 		API_BASE_URL: getApiBaseUrl(configs),
-		IS_INTEGRATED_DESKTOP: configs.isLocalServer
+		IS_INTEGRATED_DESKTOP: configs.isLocalServer,
 	};
-	await startServer(configs, !!tray);
-	removeMainListener();
-	ipcMainHandler(store, startServer, knex, { ...environment }, timeTrackerWindow);
-	setupWindow.webContents.send('server_ping_restart', {
-		host: getApiBaseUrl(configs)
-	});
 	/* Killing the provider. */
 	await provider.kill();
 	/* Creating a database if not exit. */
 	await ProviderFactory.instance.createDatabase();
+	/* Kill all windows */
+	if (alwaysOn) alwaysOn.close();
+	if (settingsWindow && !settingsWindow.isDestroyed()) {
+		settingsWindow.hide();
+		settingsWindow.destroy();
+	}
+	if (timeTrackerWindow && !timeTrackerWindow.isDestroyed()) {
+		timeTrackerWindow.destroy();
+	}
+	if (serverGauzy) serverGauzy.kill();
+	if (gauzyWindow && !gauzyWindow.isDestroyed()) {
+		gauzyWindow.destroy();
+		gauzyWindow = null;
+	}
 	app.relaunch({ args: process.argv.slice(1).concat(['--relaunch']) });
 	app.exit(0);
 });

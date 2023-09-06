@@ -21,8 +21,7 @@ export async function createGraphqlModuleOptions(
 			methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
 			credentials: true,
 			origin: '*',
-			allowedHeaders:
-				'Authorization, Language, Tenant-Id, X-Requested-With, X-Auth-Token, X-HTTP-Method-Override, Content-Type, Content-Language, Accept, Accept-Language, Observe'
+			allowedHeaders: 'Authorization, Language, Tenant-Id, Organization-Id, X-Requested-With, X-Auth-Token, X-HTTP-Method-Override, Content-Type, Content-Language, Accept, Accept-Language, Observe'
 		},
 		include: [options.resolverModule]
 	} as GqlModuleOptions;

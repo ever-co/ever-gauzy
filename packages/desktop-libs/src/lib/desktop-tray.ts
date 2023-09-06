@@ -25,7 +25,8 @@ export class TrayIcon {
 		config,
 		windowPath,
 		iconPath,
-		mainWindow
+		mainWindow,
+		alwaysOn
 	) {
 		this.removeTrayListener();
 		this.removeTimerHandlers();
@@ -405,7 +406,7 @@ export class TrayIcon {
 					loginPageAlreadyShow = true;
 				}
 			}
-
+			alwaysOn.hide();
 			await userService.remove();
 			LocalStore.updateAuthSetting({ isLogout: true });
 		});

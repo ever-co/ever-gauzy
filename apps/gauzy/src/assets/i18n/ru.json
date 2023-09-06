@@ -149,7 +149,8 @@
 		"LOGOUT": "Выход",
 		"COPY": "Копировать",
 		"CUT": "Вырезать",
-		"PASTE": "Вставить"
+		"PASTE": "Вставить",
+		"FORWARD_PORTS": "Переадресация портов"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {
@@ -264,9 +265,18 @@
 		"REQUEST_DATE": "Дата запроса",
 		"REGION": {
 			"BG": "Български (България)",
-			"EN": "Русский (Соединенные Штаты)",
+			"EN": "English (United States)",
 			"RU": "Русский (Россия)",
-			"HE": "עברית ישראל"
+			"HE": "עברית ישראל",
+			"FR": "Français (France)",
+			"ES": "Español (España)",
+			"ZH": "中文 (中国)",
+			"DE": "Deutsch (Deutschland)",
+			"PT": "Português (Portugal)",
+			"IT": "Italiano (Italia)",
+			"NL": "Nederlands (Nederland)",
+			"PL": "Polski (Polska)",
+			"AR": "العربية (العراق)"
 		},
 		"CURRENT_VALUE": "Текущее значение",
 		"TARGET_VALUE": "Целевое значение",
@@ -596,6 +606,7 @@
 			"SELECT_EXPENSE": "Выберите расход",
 			"ADD_TITLE": "Добавить заголовок",
 			"ALL_PROJECTS": "Все проекты",
+			"ALL_TEAMS": "Все команды",
 			"UPWORK_API_KEY": "API ключ обновления",
 			"UPWORK_SECRET": "Секрет обхода",
 			"SELECT_COMPANY": "Выберите компанию",
@@ -615,6 +626,7 @@
 			"RECEIPT_TEMPLATE": "Шаблон чека",
 			"INVITATION_EXPIRATION": "Срок приглашения истекает",
 			"ADD_PROJECT": "Добавить проект",
+			"ADD_TEAM": "Добавить команду",
 			"ADD_EMPLOYEE": "Добавить сотрудника",
 			"ADD_ORGANIZATION": "Добавить организацию",
 			"DRAG_DROP_FILE": "Drag and Drop the file here",
@@ -672,7 +684,7 @@
 		},
 		"ERROR": {
 			"PROJECT_NAME": "Необходимо название проекта.",
-			"PROJECT_URL":"Недопустимый URL проекта.",
+			"PROJECT_URL": "Недопустимый URL проекта.",
 			"OPEN_SOURCE_PROJECT_URL": "Недопустимый URL-адрес проекта с открытым исходным кодом."
 		}
 	},
@@ -1058,6 +1070,13 @@
 		"SPANISH": "Испанский",
 		"HEBREW": "Иврит",
 		"RUSSIAN": "Русский",
+		"CHINESE": "китайский",
+		"GERMAN": "Немецкий",
+		"PORTUGUESE": "Португальский",
+		"ITALIAN": "Итальянский",
+		"DUTCH": "Голландский",
+		"POLISH": "Польский",
+		"ARABIC": "Арабский",
 		"PREFERRED_LAYOUT": "Макет",
 		"PREFERRED_LAYOUT_TOOLTIP": "Это будет устанавливать макет по умолчанию и не изменять макет на каждой странице, если вы уже изменили его один раз.",
 		"RESET_LAYOUT": "Сбросить макет",
@@ -1876,26 +1895,26 @@
 				"INACTIVITY_TIME_LIMIT_INFO": "Таймаут отслеживания бездействия (то есть, сколько секунд бездействия разрешено)",
 				"ACTIVITY_PROOF_DURATION": "Длительность проверки активности",
 				"ACTIVITY_PROOF_DURATION_INFO": "Длительность диалогового окна для проверки активности, оно отображает количество секунд, заданных для доказательства активности",
-                "ALLOW_TRACK_INACTIVITY": "Разрешить отслеживать бездействие",
-                "PROOF_OF_COMPLETION": "Доказательство завершения",
-                "PROOF_OF_COMPLETION_TYPE": "Тип подтверждения завершения",
-                "PROOF_OF_COMPLETION_TYPE_DROPDOWN": {
-                    "NONE": "Никто",
-                    "PRIVATE": "Частный",
-                    "PUBLIC": "Общедоступный"
-                },
-                "LINKED_ISSUE": "Связанная проблема",
-                "COMMENT": "Комментарий",
-                "HISTORY": "«История»",
-                "ACCEPTANCE_CRITERIA": "Критерии приемлемости",
-                "DRAFT_ISSUE": "Черновики задач",
-                "NOTIFY_TASK_LEFT": "Уведомить об оставшейся задаче",
-                "NOTIFY_TASK_LEFT_PERIOD": "Период задачи уведомления (в днях)",
-                "AUTO_CLOSE_ISSUE": "Автоматическое закрытие задачи",
-                "AUTO_CLOSE_ISSUE_PERIOD": "Период автоматического закрытия задачи (в днях)",
-                "AUTO_ARCHIVE_ISSUE": "Проблема автоматического архивирования",
-                "AUTO_ARCHIVE_ISSUE_PERIOD": "Период выпуска автоархива (в днях)",
-                "AUTO_STATUS": "Автостатус"
+				"ALLOW_TRACK_INACTIVITY": "Разрешить отслеживать бездействие",
+				"PROOF_OF_COMPLETION": "Доказательство завершения",
+				"PROOF_OF_COMPLETION_TYPE": "Тип подтверждения завершения",
+				"PROOF_OF_COMPLETION_TYPE_DROPDOWN": {
+					"NONE": "Никто",
+					"PRIVATE": "Частный",
+					"PUBLIC": "Общедоступный"
+				},
+				"LINKED_ISSUE": "Связанная проблема",
+				"COMMENT": "Комментарий",
+				"HISTORY": "«История»",
+				"ACCEPTANCE_CRITERIA": "Критерии приемлемости",
+				"DRAFT_ISSUE": "Черновики задач",
+				"NOTIFY_TASK_LEFT": "Уведомить об оставшейся задаче",
+				"NOTIFY_TASK_LEFT_PERIOD": "Период задачи уведомления (в днях)",
+				"AUTO_CLOSE_ISSUE": "Автоматическое закрытие задачи",
+				"AUTO_CLOSE_ISSUE_PERIOD": "Период автоматического закрытия задачи (в днях)",
+				"AUTO_ARCHIVE_ISSUE": "Проблема автоматического архивирования",
+				"AUTO_ARCHIVE_ISSUE_PERIOD": "Период выпуска автоархива (в днях)",
+				"AUTO_STATUS": "Автостатус"
 			},
 			"TEAMS_PAGE": {
 				"MANAGERS": "Менеджеры",
@@ -2938,7 +2957,8 @@
 		"SELECT_EMPLOYEE": "Выбрать сотрудника",
 		"SELECT_A_DATE": "Выберите дату",
 		"SELECT_AN_ORGANIZATION": "Выберите организацию",
-		"SELECT_PROJECT": "Выбрать проект"
+		"SELECT_PROJECT": "Выбрать проект",
+		"SELECT_TEAM": "Выберите команду"
 	},
 	"HEADER_TITLE": {
 		"FOR": "для",
@@ -3669,7 +3689,8 @@
 			"DB_NAME": "Имя базы данных",
 			"DB_PORT": "Порт базы данных",
 			"USER": "Пользователь",
-			"PASSWORD": "Пароль"
+			"PASSWORD": "Пароль",
+			"UI_HOSTNAME": "Имя хоста интерфейса пользователя / IP-адрес"
 		},
 		"SETTINGS": {
 			"SCREEN_CAPTURE": "Захват экрана",
@@ -3715,6 +3736,11 @@
 			"WARNING_STOP_TIMER": "Пожалуйста, остановите таймер, если хотите изменить конфигурацию",
 			"GENERAL": "Общие настройки",
 			"API_CONFIG": "Настройки API",
+			"SERVER_ACCESS_CONFIG": "Конфигурация доступа к серверу",
+			"API_SERVER_PORT": "Порт сервера API",
+			"UI_SERVER_PORT": "Порт сервера пользовательского интерфейса",
+			"SERVER_HOSTNAME": "Имя хоста/IP-адрес сервера",
+			"AUTO_START_STARTUP": "Автозапуск при запуске",
 			"SERVER_TYPE": "Тип сервера",
 			"LOCAL_API_PORT": "Локальный порт API",
 			"UI_PORT": "Порт пользовательского интерфейса",
@@ -3749,7 +3775,14 @@
 				"SERVER_RESTARTED": "Сервер успешно перезапущен",
 				"CONNECTION_SUCCEEDS": "Подключение к серверу {{ url }} успешно",
 				"DOWNLOADING_UPDATE": "Загрузка обновления {{ current }} МБ из {{ total }} МБ ->> {{ bandwidth }} КБ/с"
-			}
+			},
+			"TIMEZONE": "Часовой пояс",
+			"TIMEZONE_LABEL": "Выбор 'Местное' отображает время в вашем местном часовом поясе, в то время как выбор 'UTC' отображает время в универсальном часовом поясе UTC, используемом биллинговыми и другими системами.",
+			"TIMEZONE_PLACEHOLDER": "Выберите 'Местное' или 'UTC'.",
+			"TIMEZONE_LOCAL": "Местное",
+			"TIMEZONE_UTC": "UTC",
+			"WIDGET": "Виджет",
+			"WIDGET_LABEL": "Это окно отражает состояние таймера, указывает, работает он или остановлен, и функционирует как кнопка."
 		},
 		"WEEKLY_LIMIT_EXCEEDED": "Еженедельный лимит превышен",
 		"OF_HRS": "Из {{ limit }} часов",
@@ -3781,6 +3814,7 @@
 			"RESUME_TIMER": "Ваш таймер работал, когда ПК был заблокирован. Возобновить таймер?",
 			"EXIT": "Вы действительно хотите выйти?",
 			"STOPPED_DU_INACTIVITY": "Таймер был остановлен из-за превышения периода бездействия - {{ inactivity }}. Пожалуйста, убедитесь, что вы снова запускаете таймер, когда продолжаете работать.",
+			"EXIT_SERVER_CONFIRM": "Щелкните по кнопке Выход, чтобы остановить сервер и выйти из приложения.",
 			"EXIT_CONFIRM": "Нажмите выход, чтобы остановить таймер и выйти из приложения.",
 			"LOGOUT_CONFIRM": "Нажмите выход, чтобы остановить таймер и выйти из системы.",
 			"SELECT_UPDATE_FILES": "Пожалуйста, выберите папку с файлами обновления.",
@@ -4087,7 +4121,8 @@
 			"interviewer-interview-schedule": "Расписание интервьюера",
 			"employee-join": "Прием сотрудников",
 			"email-reset": "Сброс электронной почты",
-			"organization-team-join-request": "Запрос на вступление в команду организации"
+			"organization-team-join-request": "Запрос на вступление в команду организации",
+			"payment-receipt": "Квитанция об оплате"
 		},
 		"HTML_EDITOR": "HTML-редактор"
 	},

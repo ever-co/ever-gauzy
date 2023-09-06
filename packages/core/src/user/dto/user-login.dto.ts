@@ -1,5 +1,5 @@
 import { IntersectionType } from "@nestjs/swagger";
-import { IUserLoginInput } from "@gauzy/contracts";
+import { IUserEmailInput, IUserPasswordInput } from "@gauzy/contracts";
 import { UserEmailDTO } from "./user-email.dto";
 import { UserPasswordDTO } from "./user-password.dto";
 
@@ -9,4 +9,9 @@ import { UserPasswordDTO } from "./user-password.dto";
 export class UserLoginDTO extends IntersectionType(
     UserEmailDTO,
     UserPasswordDTO
-) implements IUserLoginInput {}
+) implements IUserEmailInput, IUserPasswordInput { }
+
+/**
+ * User SignIn Workspace DTO validation
+ */
+export class UserSigninWorkspaceDTO extends UserLoginDTO { }

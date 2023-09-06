@@ -22,8 +22,16 @@ $border-radius: calc(2 * var(--border-radius));
   right: -500px;
 }
 
+$height : calc(100vh - 10.5rem);
+
 .content-body {
-  margin-top: 40px;
+	margin-top: 40px;
+    max-height: $height;
+    overflow: overlay;
+    margin-bottom: 10px;
+	&.final-step{
+		height: $height;
+	}
 }
 
 .margin-content {
@@ -43,7 +51,7 @@ $border-radius: calc(2 * var(--border-radius));
 }
 
 .top-bottom-space {
-  padding: 1px !important;
+  padding: 0px !important;
 }
 
 ::ng-deep
@@ -61,6 +69,11 @@ $border-radius: calc(2 * var(--border-radius));
 
 ::ng-deep  nb-stepper .step-content {
   padding: 0px !important;
+  height: calc(100vh - 3.5rem);
+  display: flex;
+  align-items: center;
+  flex-direction: column;
+  justify-content: space-between;
 }
 
 .card-full-height {
@@ -79,7 +92,7 @@ $border-radius: calc(2 * var(--border-radius));
 
 .icon-item {
   font-size: 40px;
-  color: #3366ff;
+  color: var(--text-primary-color);
 }
 
 .card-item-content {
@@ -87,7 +100,7 @@ $border-radius: calc(2 * var(--border-radius));
 }
 
 .card-item-icon {
-  background: #f2f6ff 0 0 no-repeat padding-box;
+  background: var(--gauzy-background-transparent-1) 0 0 no-repeat padding-box;
   text-align: center;
   padding-top: 40px;
   border-radius: 0 $border-radius $border-radius 0;
@@ -114,8 +127,9 @@ $border-radius: calc(2 * var(--border-radius));
 }
 
 .button-next-prev {
-  position: fixed;
-  bottom: 24px;
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
 }
 
 .icon-medium {
@@ -126,16 +140,26 @@ $border-radius: calc(2 * var(--border-radius));
   border-radius: $border-radius;
   text-align: left;
   box-shadow: var(--gauzy-shadow);
+  min-height: 6rem;
+  nb-card-body {
+	display: flex;
+    justify-content: center;
+    align-items: center;
+  }
 }
 
 .icon-connectivity {
   height: 55px;
   position: relative;
   top: 10px;
+  img {
+	filter : hue-rotate(20deg);
+  }
 }
 
 .integration-label {
-  font-size: 12px;
+  font-size: 11px;
+  color: var(--gauzy-text-color-2);
   font-weight: 600;
 }
 
@@ -147,11 +171,11 @@ $border-radius: calc(2 * var(--border-radius));
   font-size: 16px;
   font-weight: 600;
   height: 56px;
-  width: 180px;
+  width: 100%;
 }
 
 .margin-setting-content {
-  margin-top: 10px !important;
+  margin-top: 1rem !important;
 }
 
 .note {
@@ -209,11 +233,12 @@ $border-radius: calc(2 * var(--border-radius));
   font-size: 16px;
   font-weight: 600;
   height: 56px;
-  width: 120px;
+  width: 100%;
 }
 
 .main-card-body{
   background-color: var(--gauzy-card-2);
+  padding: 1rem;
 }
 
 h4 {
@@ -224,4 +249,8 @@ h4 {
 	position: absolute;
 	left: 2rem;
 	top: 4rem;
+}
+
+input {
+	height: 42px !important;
 }

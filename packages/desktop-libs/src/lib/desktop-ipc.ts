@@ -37,6 +37,9 @@ import {
 import { DialogStopTimerLogoutConfirmation } from './decorators/concretes/dialog-stop-timer-logout-confirmation';
 import { DesktopDialog } from './desktop-dialog';
 import { TranslateService } from './translation';
+import { IPowerManager } from './interfaces';
+import { SleepInactivityTracking } from './contexts';
+import { RemoteSleepTracking } from './strategies';
 
 const timerHandler = new TimerHandler();
 
@@ -321,11 +324,12 @@ export function ipcTimer(
 	config,
 	createSettingsWindow,
 	windowPath,
-	soundPath
+	soundPath,
+	alwaysOn
 ) {
-	let powerManager;
-	let powerManagerPreventSleep;
-	let powerManagerDetectInactivity;
+	let powerManager: IPowerManager;
+	let powerManagerPreventSleep: PowerManagerPreventDisplaySleep;
+	let powerManagerDetectInactivity: PowerManagerDetectInactivity;
 
 	ipcMain.on('create-synced-interval', async (_event, arg) => {
 		try {
@@ -343,13 +347,19 @@ export function ipcTimer(
 
 	offlineMode.on('offline', async () => {
 		console.log('Offline mode triggered...');
-		timeTrackerWindow.webContents.send('offline-handler', true);
+		const windows = [alwaysOn.browserWindow, timeTrackerWindow];
+		for (const window of windows) {
+			window.webContents.send('offline-handler', true);
+		}
 	});
 
 	offlineMode.on('connection-restored', async () => {
 		console.log('Api connected...');
 		try {
-			timeTrackerWindow.webContents.send('offline-handler', false);
+			const windows = [alwaysOn.browserWindow, timeTrackerWindow];
+			for (const window of windows) {
+				window.webContents.send('offline-handler', false);
+			}
 			await sequentialSyncQueue(timeTrackerWindow);
 		} catch (error) {
 			console.log('Error', error);
@@ -389,7 +399,14 @@ export function ipcTimer(
 			if (setting && setting.preventDisplaySleep) {
 				powerManagerPreventSleep.start();
 			}
-			powerManagerDetectInactivity.startInactivityDetection();
+
+			if (arg.isRemoteTimer) {
+				powerManager.sleepTracking = new SleepInactivityTracking(
+					new RemoteSleepTracking(timeTrackerWindow)
+				);
+			} else {
+				powerManagerDetectInactivity.startInactivityDetection();
+			}
 			return timerResponse;
 		} catch (error) {
 			timeTrackerWindow.webContents.send('emergency_stop');
@@ -797,12 +814,12 @@ export function ipcTimer(
 			}
 			await latestScreenshots(timeTrackerWindow);
 			await countIntervalQueue(timeTrackerWindow, false);
-			event.sender.send('timer_tracker_show', {
+			timeTrackerWindow.webContents.send('timer_tracker_show', {
 				...LocalStore.beforeRequestParams(),
 				timeSlotId: lastTime ? lastTime.timeslotId : null
 			});
 		} catch (error) {
-			event.sender.send('timer_tracker_show', {
+			timeTrackerWindow.webContents.send('timer_tracker_show', {
 				...LocalStore.beforeRequestParams(),
 				timeSlotId: null
 			});
@@ -881,6 +898,28 @@ export function ipcTimer(
 		for (const window of windows) {
 			window?.webContents?.send('preferred_language_change', language);
 		}
+	});
+
+	ipcMain.on('show_ao', async (event, arg) => {
+		const setting = LocalStore.getStore('appSetting');
+		if (setting?.alwaysOn) {
+			alwaysOn.show();
+		}
+	})
+
+	ipcMain.on('hide_ao', (event, arg) => {
+		alwaysOn.hide();
+	})
+
+	ipcMain.on('change_state_from_ao', async (event, arg) => {
+		const windows = [alwaysOn.browserWindow, timeTrackerWindow];
+		for (const window of windows) {
+			window.webContents.send('change_state_from_ao', arg);
+		}
+	})
+
+	ipcMain.on('ao_time_update', (event, arg) => {
+		alwaysOn.browserWindow.webContents.send('ao_time_update', arg);
 	});
 }
 

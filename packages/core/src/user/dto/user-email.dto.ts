@@ -1,6 +1,5 @@
 import { ApiProperty } from "@nestjs/swagger";
 import { IsEmail, IsNotEmpty } from "class-validator";
-import { Transform, TransformFnParams } from "class-transformer";
 import { IUserEmailInput } from "@gauzy/contracts";
 
 /**
@@ -8,9 +7,8 @@ import { IUserEmailInput } from "@gauzy/contracts";
  */
 export class UserEmailDTO implements IUserEmailInput {
 
-    @ApiProperty({ type: () => String, required: true })
+    @ApiProperty({ type: () => String })
     @IsNotEmpty()
     @IsEmail()
-    @Transform((params: TransformFnParams) => params.value ? params.value.trim() : null)
     readonly email: string;
 }

@@ -363,6 +363,86 @@
 					</nb-card>
 				</div>
 			</div>
+			<div class="row">
+				<div class="col-12">
+					<h6>
+						{{
+							'TIMER_TRACKER.SETTINGS.TIMEZONE'
+								| translate
+						}}
+					</h6>
+				</div>
+			</div>
+			<div class="row">
+				<div class="col-10">
+					<p>
+						{{
+							'TIMER_TRACKER.SETTINGS.TIMEZONE_LABEL'
+								| translate
+						}}
+					</p>
+				</div>
+			</div>
+			<div class="row notification">
+				<div class="col-10">
+					<nb-card>
+						<nb-card-body>
+							<nb-select
+								[placeholder]="'TIMER_TRACKER.SETTINGS.TIMEZONE_PLACEHOLDER'| translate"
+								[(ngModel)]="selectedZone"
+								(ngModelChange)="selectZone($event)"
+								[disabled]="appSetting?.timerStarted"
+							>
+								<nb-option
+									*ngFor="let zone of zones"
+									[value]="zone.name"
+									> {{ zone.translation | translate }}
+								</nb-option>
+							</nb-select>
+						</nb-card-body>
+					</nb-card>
+				</div>
+			</div>
+			<div class="row">
+				<div class="col-12">
+					<h6>
+						{{
+							'TIMER_TRACKER.SETTINGS.WIDGET'
+								| translate
+						}}
+					</h6>
+				</div>
+			</div>
+			<div class="row">
+				<div class="col-10">
+					<p>
+						{{
+							'TIMER_TRACKER.SETTINGS.WIDGET_LABEL'
+								| translate
+						}}
+					</p>
+				</div>
+			</div>
+			<div class="row notification">
+				<div class="col-10">
+					<nb-card>
+						<nb-card-body>
+							<nb-toggle
+								[(ngModel)]="appSetting.alwaysOn"
+								(ngModelChange)="
+									toggleAlwaysOn($event)
+								"
+								status="basic"
+								[disabled]="appSetting?.timerStarted"
+								>{{
+									'TIMER_TRACKER.SETTINGS.WIDGET'
+										| translate
+								}}
+							</nb-toggle>
+						</nb-card-body>
+					</nb-card>
+				</div>
+			</div>
 		</ng-container>
 		<div
 			class="row"
@@ -402,10 +482,26 @@
 					<div class="col-10">
 						<nb-card>
 							<nb-card-body>
-								<div class="row flex-column-reverse">
+								<div class="row">
+									<div class="col-6">
+										<nb-toggle
+											[checked]="automaticUpdate$ | async"
+											(checkedChange)="
+												toggleAutomaticUpdate($event)
+											"
+											status="basic"
+											[disabled]="
+												appSetting?.timerStarted
+											"
+											>{{
+												'TIMER_TRACKER.SETTINGS.ENABLE_AUTOMATIC_UPDATE'
+													| translate
+											}}
+										</nb-toggle>
+									</div>
 									<div
 										*ngIf="automaticUpdate$ | async"
-										class="col-12"
+										class="col-6"
 									>
 										<div class="label">
 											{{
@@ -444,22 +540,6 @@
 											</nb-option>
 										</nb-select>
 									</div>
-									<div class="col-12">
-										<nb-toggle
-											[checked]="automaticUpdate$ | async"
-											(checkedChange)="
-												toggleAutomaticUpdate($event)
-											"
-											status="basic"
-											[disabled]="
-												appSetting?.timerStarted
-											"
-											>{{
-												'TIMER_TRACKER.SETTINGS.ENABLE_AUTOMATIC_UPDATE'
-													| translate
-											}}
-										</nb-toggle>
-									</div>
 								</div>
 							</nb-card-body>
 						</nb-card>
@@ -489,109 +569,95 @@
 					<div class="col-10">
 						<nb-card>
 							<nb-card-body>
-								<nb-toggle
-									[checked]="(updaterServer$ | async)?.github"
-									(checkedChange)="
-										toggleGithubDefaultServer($event)
-									"
-									status="basic"
-									[disabled]="
-										appSetting?.timerStarted ||
-										showProgressBar
-									"
-									><i class="fa-brands fa-github-alt"></i>
-									Github
-								</nb-toggle>
-								<nb-toggle
-									[checked]="
-										(updaterServer$ | async)?.digitalOcean
-									"
-									(checkedChange)="
-										toggleDigitalOceanDefaultServer($event)
-									"
-									status="basic"
-									[disabled]="
-										appSetting?.timerStarted ||
-										showProgressBar
-									"
-									><i class="fa-brands fa-digital-ocean"></i>
-									Digital Ocean
-								</nb-toggle>
-							</nb-card-body>
-						</nb-card>
-					</div>
-				</div>
-				<div class="row">
-					<div class="col-10">
-						<p>
-							{{
-								'TIMER_TRACKER.SETTINGS.TOGGLE_UPDATE_LOCALLY'
-									| translate
-							}}
-						</p>
-					</div>
-				</div>
-				<div class="row notification">
-					<div
-						[class]="
-							(updaterServer$ | async)?.local ? 'col-5' : 'col-10'
-						"
-					>
-						<nb-card>
-							<nb-card-body>
-								<nb-toggle
-									[checked]="(updaterServer$ | async)?.local"
-									(checkedChange)="toggleLocalServer($event)"
-									status="basic"
-									[disabled]="
-										appSetting?.timerStarted ||
-										showProgressBar
-									"
-									><i class="fas fa-server"></i
-									>{{
-										'TIMER_TRACKER.SETTINGS.LOCAL_SERVER'
-											| translate
-									}}
-								</nb-toggle>
-							</nb-card-body>
-						</nb-card>
-					</div>
-					<div
-						*ngIf="(updaterServer$ | async)?.local"
-						class="col-5 d-flex align-items-center justify-content-center"
-					>
-						<div class="row">
-							<div class="col-12">
-								<p
-									[innerHTML]="
-										'TIMER_TRACKER.SETTINGS.LOCAL_SERVER_NOTE'
-											| translate
-									"
-								></p>
-							</div>
-							<div
-								class="col-12 w-100 file d-flex align-items-center"
-							>
-								<button
-									nbButton
-									[disabled]="
-										appSetting?.timerStarted ||
-										showProgressBar
-									"
-									size="small"
-									(click)="selectDirectory()"
-								>
-									<nb-icon icon="folder-outline"></nb-icon>
-									{{ 'BUTTONS.FILES' | translate }}
-								</button>
-								<div
-									class="file-uri"
-									[nbTooltip]="(file$ | async)?.uri"
-								>
-									{{ (file$ | async)?.uri }}
+								<div class="row">
+									<div class="col-6">
+										<nb-toggle
+										[checked]="(updaterServer$ | async)?.github"
+										(checkedChange)="
+											toggleGithubDefaultServer($event)
+										"
+										status="basic"
+										[disabled]="
+											appSetting?.timerStarted ||
+											showProgressBar
+										"
+										><i class="fa-brands fa-github-alt"></i>
+										Github
+									</nb-toggle>
+									</div>
+									<div class="col-6">
+										<nb-toggle
+										[checked]="
+											(updaterServer$ | async)?.digitalOcean
+										"
+										(checkedChange)="
+											toggleDigitalOceanDefaultServer($event)
+										"
+										status="basic"
+										[disabled]="
+											appSetting?.timerStarted ||
+											showProgressBar
+										"
+										><i class="fa-brands fa-digital-ocean"></i>
+										Digital Ocean
+									</nb-toggle>
+									</div>
+									<div class="col-12">
+										<nb-toggle
+											[checked]="(updaterServer$ | async)?.local"
+											(checkedChange)="toggleLocalServer($event)"
+											status="basic"
+											[disabled]="
+												appSetting?.timerStarted ||
+												showProgressBar
+											"
+											><i class="fas fa-server"></i>
+											{{
+												'TIMER_TRACKER.SETTINGS.LOCAL_SERVER'
+													| translate
+											}}
+										</nb-toggle>
+									</div>
+									<div
+										*ngIf="(updaterServer$ | async)?.local"
+										class="col-12 d-flex align-items-center justify-content-center"
+									>
+										<div class="row">
+											<div class="col-12">
+												<p
+													[innerHTML]="
+														'TIMER_TRACKER.SETTINGS.LOCAL_SERVER_NOTE'
+															| translate
+													"
+												></p>
+											</div>
+											<div
+												class="col-12 w-100 file d-flex align-items-center"
+											>
+												<button
+													nbButton
+													[disabled]="
+														appSetting?.timerStarted ||
+														showProgressBar
+													"
+													size="small"
+													(click)="selectDirectory()"
+												>
+													<nb-icon icon="folder-outline"></nb-icon>
+													{{ 'BUTTONS.FILES' | translate }}
+												</button>
+												<div
+													class="file-uri"
+													[nbTooltip]="(file$ | async)?.uri"
+												>
+													{{ (file$ | async)?.uri }}
+												</div>
+											</div>
+										</div>
+									</div>
 								</div>
-							</div>
-						</div>
+							</nb-card-body>
+						</nb-card>
 					</div>
 				</div>
 				<!-- Start prerelease -->
@@ -799,7 +865,7 @@
 															class="subtitle-tile"
 														>
 															{{
-																'TIMER_TRACKER.SETTINGS.API_CONFIG'
+																'TIMER_TRACKER.SETTINGS.SERVER_ACCESS_CONFIG'
 																	| translate
 															}}
 														</p>
@@ -845,13 +911,41 @@
 													</div>
 													<div
 														class="col-5 centered-text"
+														*ngIf="isServer"
+													>
+														<p>
+															{{
+																'TIMER_TRACKER.SETTINGS.SERVER_HOSTNAME'
+																	| translate
+															}}
+														</p>
+													</div>
+													<div
+														class="col-7 form-group"
+														*ngIf="isServer"
+													>
+														<input
+															[(ngModel)]="
+																config.host
+															"
+															type="text"
+															nbInput
+															fullWidth
+															[disabled]="
+																appSetting?.timerStarted
+															"
+															status="basic"
+														/>
+													</div>
+													<div
+														class="col-5 centered-text"
 														*ngIf="
 															config?.isLocalServer
 														"
 													>
 														<p>
 															{{
-																'TIMER_TRACKER.SETTINGS.LOCAL_API_PORT'
+																'TIMER_TRACKER.SETTINGS.API_SERVER_PORT'
 																	| translate
 															}}
 														</p>
@@ -887,13 +981,13 @@
 													>
 														<p>
 															{{
-																'TIMER_TRACKER.SETTINGS.UI_PORT'
+																'TIMER_TRACKER.SETTINGS.UI_SERVER_PORT'
 																	| translate
 															}}
 														</p>
 													</div>
 													<div
-														class="col-7 form-group"
+														class="col-7"
 														*ngIf="isServer"
 													>
 														<input
@@ -1174,7 +1268,6 @@
 									</div>
 									<div
 										class="col-12"
-										*ngIf="config?.timeTrackerWindow"
 									>
 										<nb-card>
 											<nb-card-body>
@@ -1189,13 +1282,10 @@
 															}}
 														</p>
 													</div>
-													<div class="col-12">
+													<div [class]="isServer ? 'col-6' : 'col-12'">
 														<nb-toggle
 															[(ngModel)]="
 																autoLaunch
-															"
-															[disabled]="
-																appSetting?.timerStarted
 															"
 															(ngModelChange)="
 																toggleAutoLaunch(
@@ -1205,6 +1295,21 @@
 															status="basic"
 															>{{
 																'TIMER_TRACKER.SETTINGS.AUTOMATIC_LAUNCH'
+																	| translate
+															}}
+														</nb-toggle>
+													</div>
+													<div *ngIf="isServer" class="col-6">
+														<nb-toggle
+															[(ngModel)]="autoStart"
+															(ngModelChange)="
+																toggleAutoStartOnStartup(
+																	$event
+																)
+															"
+															status="basic"
+															>{{
+																'TIMER_TRACKER.SETTINGS.AUTO_START_STARTUP'
 																	| translate
 															}}
 														</nb-toggle>

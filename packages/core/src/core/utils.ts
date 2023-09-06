@@ -55,7 +55,7 @@ export function arrayToObject(array, key, value) {
 	return array.reduce((prev, current) => {
 		return {
 			...prev,
-			[current[key]]: current[value]
+			[current[key]]: current[value],
 		};
 	}, {});
 }
@@ -146,7 +146,7 @@ export function getDateRange(
 
 	return {
 		start,
-		end
+		end,
 	};
 }
 
@@ -166,12 +166,10 @@ export const getTenantLogo = (name: string) => {
  * @param ranges
  * @returns
  */
-export function mergeOverlappingDateRanges(
-	ranges: IDateRange[],
-): IDateRange[] {
+export function mergeOverlappingDateRanges(ranges: IDateRange[]): IDateRange[] {
 	const sorted = ranges.sort(
 		// By start, ascending
-		(a, b) => a.start.getTime() - b.start.getTime(),
+		(a, b) => a.start.getTime() - b.start.getTime()
 	);
 
 	const dates = sorted.reduce((acc, curr) => {
@@ -195,7 +193,6 @@ export function mergeOverlappingDateRanges(
 
 		// Ranges do not overlap
 		return [...acc, prev, curr];
-
 	}, [] as IDateRange[]);
 
 	return dates;
@@ -212,8 +209,8 @@ export function getDateRangeFormat(
 	startDate: moment.Moment,
 	endDate: moment.Moment
 ): {
-	start: string | Date,
-	end: string | Date
+	start: string | Date;
+	end: string | Date;
 } {
 	let start = moment(startDate);
 	let end = moment(endDate);
@@ -229,13 +226,13 @@ export function getDateRangeFormat(
 	if (dbType === 'sqlite') {
 		return {
 			start: start.format('YYYY-MM-DD HH:mm:ss'),
-			end: end.format('YYYY-MM-DD HH:mm:ss')
-		}
+			end: end.format('YYYY-MM-DD HH:mm:ss'),
+		};
 	} else {
 		return {
 			start: start.toDate(),
-			end: end.toDate()
-		}
+			end: end.toDate(),
+		};
 	}
 }
 
@@ -272,8 +269,27 @@ export function getDaysBetweenDates(
  */
 export function generateRandomInteger(length = 6) {
 	return Math.floor(
-		Math.pow(10, length - 1) + Math.random() * (Math.pow(10, length) - Math.pow(10, length - 1) - 1)
+		Math.pow(10, length - 1) +
+			Math.random() *
+				(Math.pow(10, length) - Math.pow(10, length - 1) - 1)
 	);
+}
+
+/**
+ * Generate a random alphanumeric code.
+ * @param length The length of the code. Default is 6.
+ * @returns The generated code.
+ */
+export function generateRandomAlphaNumericCode(length: number = 6): string {
+	const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+	let code = '';
+
+	for (let i = 0; i < length; i++) {
+		const index = Math.floor(Math.random() * characters.length);
+		code += characters[index];
+	}
+
+	return code;
 }
 
 /**
@@ -297,7 +313,11 @@ export function validateDateRange(startedAt: Date, stoppedAt: Date): void {
 		const start = moment(startedAt);
 		const end = moment(stoppedAt);
 
-		console.log('------ Stopped Timer ------', start.toDate(), end.toDate());
+		console.log(
+			'------ Stopped Timer ------',
+			start.toDate(),
+			end.toDate()
+		);
 
 		if (!start.isValid() || !end.isValid()) {
 			throw 'Started and Stopped date must be valid date.';
@@ -311,4 +331,16 @@ export function validateDateRange(startedAt: Date, stoppedAt: Date): void {
 		// If any error occurs during date validation, throw a BadRequestException
 		throw new BadRequestException(error);
 	}
+}
+
+/**
+ * Function that returns intersection of 2 array
+ * @param arr1
+ * @param arr2
+ * @returns
+ */
+export function findIntersection(arr1: any[], arr2: any[]) {
+	const set1 = new Set(arr1);
+	const intersection = arr2.filter((element) => set1.has(element));
+	return intersection;
 }

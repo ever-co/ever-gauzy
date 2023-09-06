@@ -7,7 +7,7 @@ import { IBasePerTenantEntityModel } from './base-entity.model';
 import { ITag } from './tag.model';
 import { IEmployee } from './employee.model';
 import { IPayment } from './payment.model';
-import { IOrganization } from './organization.model';
+import { IUserOrganization } from './user-organization.model';
 import { IInvite } from './invite.model';
 import { ICandidate } from 'candidate.model';
 import { IRelationalImageAsset } from './image-asset.model';
@@ -39,11 +39,11 @@ export interface IUser extends IBasePerTenantEntityModel, IRelationalImageAsset 
 	payments?: IPayment[];
 	preferredComponentLayout?: ComponentLayoutStyleEnum;
 	fullName?: string;
-	organizations?: IOrganization[];
+	organizations?: IUserOrganization[];
 	isImporting?: boolean;
 	sourceId?: string;
 	isActive?: boolean;
-	code?: number;
+	code?: string;
 	codeExpireAt?: Date;
 	emailVerifiedAt?: Date;
 	isEmailVerified?: boolean;
@@ -85,8 +85,6 @@ export interface IVerificationTokenPayload extends IUserEmailInput {
 	id: string;
 }
 
-export interface IUserInviteCodeConfirmationInput extends IUserEmailInput, IUserCodeInput { }
-
 export interface IUserEmailInput {
 	email: string;
 }
@@ -100,10 +98,16 @@ export interface IUserTokenInput {
 }
 
 export interface IUserCodeInput {
-	code: number;
+	code: string;
 }
 
 export interface IUserLoginInput extends IUserEmailInput, IUserPasswordInput { }
+
+export interface IUserSigninWorkspaceResponse {
+	workspaces: IUser[];
+	confirmed_email: string;
+	show_popup: boolean;
+}
 
 export interface IAuthResponse {
 	user: IUser;
@@ -136,7 +140,14 @@ export enum LanguagesEnum {
 	HEBREW = 'he',
 	RUSSIAN = 'ru',
 	FRENCH = 'fr',
-	SPANISH = 'es'
+	SPANISH = 'es',
+	CHINESE = 'zh',
+	GERMAN = 'de',
+	PORTUGUESE = 'pt',
+	ITALIAN = 'it',
+	DUTCH = 'nl',
+	POLISH = 'pl',
+	ARABIC = 'ar'
 }
 
 export enum ComponentLayoutStyleEnum {

@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { CqrsModule } from '@nestjs/cqrs';
-import { EmailModule } from './../../email/email.module';
+import { EmailSendModule } from './../../email-send/email-send.module';
 import { TenantModule } from './../../tenant/tenant.module';
 import { UserModule } from './../../user/user.module';
 import { EmployeeModule } from './../../employee/employee.module';
@@ -16,9 +16,9 @@ import { Timesheet } from './timesheet.entity';
 		TimeSheetController
 	],
 	imports: [
-		TypeOrmModule.forFeature([ Timesheet ]),
+		TypeOrmModule.forFeature([Timesheet]),
 		CqrsModule,
-		EmailModule,
+		EmailSendModule,
 		TenantModule,
 		TimeSlotModule,
 		EmployeeModule,
@@ -33,4 +33,4 @@ import { Timesheet } from './timesheet.entity';
 		TypeOrmModule
 	]
 })
-export class TimesheetModule {}
+export class TimesheetModule { }

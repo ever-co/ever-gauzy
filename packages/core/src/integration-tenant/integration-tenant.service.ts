@@ -1,9 +1,16 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { IIntegrationSetting, IIntegrationTenant } from '@gauzy/contracts';
-import { TenantAwareCrudService } from './../core/crud';
+import {
+	IBasePerTenantAndOrganizationEntityModel,
+	IIntegrationEntitySetting,
+	IIntegrationSetting,
+	IIntegrationTenant,
+	IIntegrationTenantFindInput,
+	IntegrationEnum
+} from '@gauzy/contracts';
 import { RequestContext } from './../core/context';
+import { TenantAwareCrudService } from './../core/crud';
 import { IntegrationTenant } from './integration-tenant.entity';
 
 @Injectable()
@@ -23,22 +30,33 @@ export class IntegrationTenantService extends TenantAwareCrudService<Integration
 	async create(
 		input: IIntegrationTenant
 	): Promise<IIntegrationTenant> {
-
 		const tenantId = RequestContext.currentTenantId();
-		const { organizationId, name, entitySettings = [], settings = [] } = input;
+		try {
+			const { organizationId } = input;
+			let { entitySettings = [], settings = [] } = input;
 
-		settings.map((setting: IIntegrationSetting) => ({
-			...setting,
-			tenantId
-		}));
+			settings = settings.map((item: IIntegrationSetting) => ({
+				...item,
+				tenantId,
+				organizationId
+			}));
 
-		return await super.create({
-			tenantId,
-			organizationId,
-			name,
-			settings,
-			entitySettings
-		});
+			entitySettings = entitySettings.map((item: IIntegrationEntitySetting) => ({
+				...item,
+				tenantId,
+				organizationId
+			}));
+
+			return await super.create({
+				...input,
+				tenantId,
+				settings,
+				entitySettings
+			});
+		} catch (error) {
+			console.log('Error while creating integration tenant:', tenantId, error);
+			throw new BadRequestException(error);
+		}
 	}
 
 	/**
@@ -47,10 +65,10 @@ export class IntegrationTenantService extends TenantAwareCrudService<Integration
 	 * @param options - The options for checking integration remember state.
 	 * @returns The integration tenant if found, or `false` if not found or an error occurred.
 	 */
-	public async checkIntegrationRememberState(options: IIntegrationTenant): Promise<IIntegrationTenant | boolean> {
+	public async checkIntegrationRememberState(input: IIntegrationTenantFindInput): Promise<IIntegrationTenant | boolean> {
 		try {
-			const tenantId = RequestContext.currentTenantId();
-			const { organizationId, name } = options;
+			const tenantId = RequestContext.currentTenantId() || input.tenantId;
+			const { organizationId, name } = input;
 
 			return await this.findOneByOptions({
 				where: {
@@ -64,6 +82,32 @@ export class IntegrationTenantService extends TenantAwareCrudService<Integration
 			});
 		} catch (error) {
 			return false;
+		}
+	}
+
+	/**
+	 *
+	 * @param options
+	 * @returns
+	 */
+	async getIntegrationSettings(
+		options: IBasePerTenantAndOrganizationEntityModel
+	): Promise<IIntegrationTenant> {
+		try {
+			const { organizationId, tenantId } = options;
+			return await this.findOneByOptions({
+				where: {
+					organizationId,
+					tenantId,
+					name: IntegrationEnum.GAUZY_AI
+				},
+				relations: {
+					settings: true
+				}
+			});
+		} catch (error) {
+			console.log('Error while getting integration settings: %s', error?.message);
+			throw new BadRequestException(error?.message);
 		}
 	}
 }

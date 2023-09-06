@@ -78,10 +78,8 @@ import {
 import { IsOptional, IsString } from 'class-validator';
 
 @Entity('employee')
-export class Employee
-	extends TenantOrganizationBaseEntity
-	implements IEmployee
-{
+export class Employee extends TenantOrganizationBaseEntity implements IEmployee {
+
 	@ApiPropertyOptional({ type: () => Date })
 	@Column({ nullable: true })
 	valueDate?: Date;

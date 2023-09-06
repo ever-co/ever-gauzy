@@ -8,7 +8,6 @@ import {
 	Post,
 	Put,
 	Query,
-	Req,
 	UseGuards,
 	UsePipes,
 	ValidationPipe,
@@ -40,7 +39,7 @@ export class OrganizationTeamJoinRequestController {
 	constructor(
 		private readonly _commandBus: CommandBus,
 		private readonly _organizationTeamJoinRequestService: OrganizationTeamJoinRequestService
-	) {}
+	) { }
 
 	/**
 	 * Validate organization team join request

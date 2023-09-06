@@ -5,7 +5,7 @@ import { Repository, In } from 'typeorm';
 import { ITimesheet, TimesheetStatus } from '@gauzy/contracts';
 import { isEmpty } from '@gauzy/common';
 import { RequestContext } from './../../../../core/context';
-import { EmailService } from './../../../../email/email.service';
+import { EmailService } from './../../../../email-send/email.service';
 import { TimesheetUpdateStatusCommand } from '../timesheet-update-status.command';
 import { Timesheet } from './../../timesheet.entity';
 
@@ -16,7 +16,7 @@ export class TimesheetUpdateStatusHandler
 		@InjectRepository(Timesheet)
 		private readonly timeSheetRepository: Repository<Timesheet>,
 		private readonly emailService: EmailService
-	) {}
+	) { }
 
 	public async execute(
 		command: TimesheetUpdateStatusCommand

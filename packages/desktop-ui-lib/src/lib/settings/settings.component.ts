@@ -15,7 +15,7 @@ import { BehaviorSubject, Observable, filter, tap, firstValueFrom, from } from '
 import { AboutComponent } from '../dialogs/about/about.component';
 import { SetupService } from '../setup/setup.service';
 import * as moment from 'moment';
-import { ToastrNotificationService } from '../services';
+import { TimeTrackerDateManager, TimeZoneManager, ToastrNotificationService, ZoneEnum } from '../services';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { AuthStrategy } from '../auth';
 import { LanguagesEnum } from 'packages/contracts/dist';
@@ -375,7 +375,9 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 		serverUrl: null,
 		awPort: null,
 		awHost: null,
-		port: 3000
+		port: 3000,
+		portUi: 4200,
+		host: '0.0.0.0'
 	};
 	version = '0.0.0';
 	message = {
@@ -386,6 +388,7 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 	progressDownload = 0;
 	showProgressBar = false;
 	autoLaunch = null;
+	autoStart = null;
 	minimizeOnStartup = null;
 	authSetting = null;
 	currentUser$: BehaviorSubject<any> = new BehaviorSubject(null);
@@ -405,6 +408,8 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 	muted: boolean;
 
 	delayOptions: number[] = [0.5, 1, 3, 24];
+	zones = TimeZoneManager.zones;
+	selectedZone: ZoneEnum = ZoneEnum.LOCAL;
 
 	private _loading$: BehaviorSubject<boolean>;
 	private _automaticUpdate$: BehaviorSubject<boolean>;
@@ -427,6 +432,7 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 	private _restartDisable$: BehaviorSubject<boolean>;
 	private _isHidden$: BehaviorSubject<boolean>;
 	private _simpleScreenshotNotification$: BehaviorSubject<boolean>;
+	private _timeZoneManager = TimeZoneManager;
 
 	constructor(
 		private electronService: ElectronService,
@@ -514,6 +520,8 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 				this.checkDatabaseConnectivity();
 				this.authSetting = auth;
 				this.mappingAdditionalSetting(additionalSetting || null);
+				this.selectedZone = setting?.zone || ZoneEnum.LOCAL;
+				this._timeZoneManager.changeZone(this.selectedZone);
 				if (!this.isServer && !this.config?.isLocalServer) {
 					await this.checkHostConnectivity();
 				} else {
@@ -528,6 +536,7 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 				this.screenshotNotification = setting?.screenshotNotification;
 				this.muted = setting?.mutedNotification;
 				this.autoLaunch = setting?.autoLaunch;
+				this.autoStart = setting?.autoStart;
 				this.minimizeOnStartup = setting?.minimizeOnStartup;
 				this._automaticUpdate$.next(setting?.automaticUpdate);
 				this._automaticUpdateDelay$.next(setting?.automaticUpdateDelay);
@@ -711,18 +720,20 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 						language,
 						this._translateService
 					);
+					TimeTrackerDateManager.locale(language);
 				});
 			}
 		);
 
 		from(this.electronService.ipcRenderer.invoke('PREFERRED_LANGUAGE'))
 			.pipe(
-				tap((language: LanguagesEnum) =>
+				tap((language: LanguagesEnum) => {
 					this._languageSelectorService.setLanguage(
 						language,
 						this._translateService
-					)
-				),
+					);
+					TimeTrackerDateManager.locale(language);
+				}),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -777,6 +788,12 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 		this.updateSetting({ updatePeriod: value }, 'timer');
 	}
 
+	selectZone(value: ZoneEnum) {
+		this._timeZoneManager.changeZone(value);
+		this.updateSetting(value, 'zone');
+		this.electronService.ipcRenderer.send('refresh-timer');
+	}
+
 	toggleNotificationChange(value) {
 		this.updateSetting(value, 'screenshotNotification');
 		this.screenshotNotification = value;
@@ -816,6 +833,13 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 		});
 	}
 
+	toggleAutoStartOnStartup(value: boolean) {
+		this.updateSetting(value, 'autoStart');
+		this.electronService.ipcRenderer.send('auto_start_on_startup', {
+			autoStart: value,
+		});
+	}
+
 	toggleAutomaticUpdate(value) {
 		this._automaticUpdate$.next(value);
 		this.updateSetting(value, 'automaticUpdate');
@@ -837,6 +861,11 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 	togglePrerelease(value) {
 		this._prerelease$.next(value);
 		this.updateSetting(value, 'prerelease');
+	}
+
+	toggleAlwaysOn(value: boolean) {
+		this.updateSetting(value, 'alwaysOn');
+		this.electronService.ipcRenderer.send(value ? 'show_ao' : 'hide_ao');
 	}
 
 	public async restartApp(): Promise<void> {
@@ -1014,11 +1043,11 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 		let message = '';
 		switch (arg.type) {
 			case 'update_config':
-				message = 'TIMER_TRACKER.SETTINGS.SERVER_CONFIG_UPDATED';
+				message = 'TIMER_TRACKER.SETTINGS.MESSAGES.SERVER_CONFIG_UPDATED';
 				break;
 			case 'start_server':
 				this._restartDisable$.next(false);
-				message = 'TIMER_TRACKER.SETTINGS.SERVER_RESTARTED';
+				message = 'TIMER_TRACKER.SETTINGS.MESSAGES.SERVER_RESTARTED';
 				break;
 			default:
 				break;

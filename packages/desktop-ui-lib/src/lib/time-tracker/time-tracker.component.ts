@@ -30,7 +30,9 @@ import {
 	from,
 	Observable,
 	Subject,
-	tap
+	tap,
+	of,
+	concatMap
 } from 'rxjs';
 import { ElectronService, LoggerService } from '../electron/services';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
@@ -51,7 +53,9 @@ import {
 	ErrorHandlerService,
 	NativeNotificationService,
 	ToastrNotificationService,
-	TimeTrackerDateManager
+	TimeTrackerDateManager,
+	ZoneEnum,
+	TimeZoneManager
 } from '../services';
 import { TimeTrackerStatusService } from './time-tracker-status/time-tracker-status.service';
 import { IRemoteTimer } from './time-tracker-status/interfaces';
@@ -60,6 +64,7 @@ import { ImageViewerService } from '../image-viewer/image-viewer.service';
 import { AuthStrategy } from '../auth';
 import { LanguageSelectorService } from '../language/language-selector.service';
 import { TranslateService } from '@ngx-translate/core';
+import { AlwaysOnService, AlwaysOnStateEnum } from '../always-on/always-on.service';
 
 enum TimerStartMode {
 	MANUAL = 'manual',
@@ -184,6 +189,8 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 	private _isRestartAndUpdate = false;
 	private _isOpenDialog = false;
 	private _dialog: NbDialogRef<any> = null;
+	private _timeZoneManager = TimeZoneManager
+	private _remoteSleepLock = false;
 
 	public hasTaskPermission$: BehaviorSubject<boolean> = new BehaviorSubject(false);
 	private get _hasTaskPermission(): boolean {
@@ -223,7 +230,8 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 		private _imageViewerService: ImageViewerService,
 		private _authStrategy: AuthStrategy,
 		private _languageSelectorService: LanguageSelectorService,
-		private _translateService: TranslateService
+		private _translateService: TranslateService,
+		private _alwaysOnService: AlwaysOnService
 	) {
 		this.iconLibraries.registerFontPack('font-awesome', {
 			packClass: 'fas',
@@ -337,6 +345,22 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 				untilDestroyed(this)
 			)
 			.subscribe();
+		this._timeRun$
+			.pipe(
+				tap((current: string) =>
+					this.electronService.ipcRenderer.send('ao_time_update', {
+						today: moment
+							.duration(this._lastTotalWorkedToday, 'seconds')
+							.format('HH:mm', {
+								trim: false,
+								trunc: true,
+							}),
+						current
+					})
+				),
+				untilDestroyed(this)
+			)
+			.subscribe();
 		this._lastTotalWorkedWeek$
 			.pipe(
 				tap((weekDuration: number) => {
@@ -350,6 +374,13 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 			.subscribe();
 		this.start$
 			.pipe(
+				tap((isStart: boolean) =>
+					this._alwaysOnService.run(
+						isStart
+							? AlwaysOnStateEnum.STARTED
+							: AlwaysOnStateEnum.STOPPED
+					)
+				),
 				filter((isStart: boolean) => !isStart),
 				tap(() => {
 					this._timeRun$.next('00:00:00');
@@ -404,6 +435,16 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 				untilDestroyed(this)
 			)
 			.subscribe();
+		this._alwaysOnService.state$
+			.pipe(
+				tap((state: AlwaysOnStateEnum) => {
+					if (state === AlwaysOnStateEnum.LOADING) {
+						this.toggleStart(!this.start, true);
+					}
+				}),
+				untilDestroyed(this)
+			)
+			.subscribe();
 		this._loadSmartTableSettings();
 	}
 
@@ -430,6 +471,12 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 				this.note = arg.note;
 				this._aw$.next(arg.aw && arg.aw.isAw ? arg.aw.isAw : false);
 				this.appSetting$.next(arg.settings);
+				this._timeZoneManager.changeZone(
+					this.appSetting?.zone || ZoneEnum.LOCAL
+				);
+				if (!this._isReady && this.appSetting?.alwaysOn) {
+					this.electronService.ipcRenderer.send('show_ao');
+				}
 				const parallelizedTasks = [
 					this.getClient(arg),
 					this.getProjects(arg),
@@ -921,6 +968,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 						language,
 						this._translateService
 					);
+					TimeTrackerDateManager.locale(language);
 					asyncScheduler.schedule(
 						() => this._loadSmartTableSettings(),
 						150
@@ -936,6 +984,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 						language,
 						this._translateService
 					);
+					TimeTrackerDateManager.locale(language);
 					asyncScheduler.schedule(
 						() => this._loadSmartTableSettings(),
 						150
@@ -944,6 +993,23 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 				untilDestroyed(this)
 			)
 			.subscribe();
+
+		this.electronService.ipcRenderer.on('sleep_remote_lock', (event, state: boolean) => {
+			this._ngZone.run(async () => {
+				of(state)
+					.pipe(
+						distinctUntilChange(),
+						tap(
+							(isPaused: boolean) =>
+								(this._remoteSleepLock = isPaused)
+						),
+						filter((isPaused: boolean) => !!isPaused && this.start),
+						concatMap(() => this.toggleStart(false, false)),
+						untilDestroyed(this)
+					)
+					.subscribe();
+			});
+		});
 	}
 
 	async toggleStart(val, onClick = true) {
@@ -1032,7 +1098,8 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 					host: this.defaultAwAPI,
 					isAw: this.aw
 				},
-				timeLog: null
+				timeLog: null,
+				isRemoteTimer: this.isRemoteTimer
 			});
 			// update counter
 			if (this.isRemoteTimer) {
@@ -1357,6 +1424,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 				});
 				this.isTrackingEnabled =
 					typeof res.employee.isTrackingEnabled !== 'undefined' ? res.employee.isTrackingEnabled : true;
+				this.electronService.ipcRenderer.send(this.isTrackingEnabled ? 'show_ao' : 'hide_ao');
 			}
 		} catch (error) {
 			console.log('[User Error]: ', error);
@@ -2083,9 +2151,8 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 			let timelog = null;
 			console.log('[TIMER_STATE]', lastTimer);
 			if (isStarted) {
-				if (!this._isOffline) {
-					timelog =
-						isRemote && this._timeTrackerStatus.remoteTimer.isExternalSource
+				if (!this._isOffline && !this._remoteSleepLock) {
+					timelog = isRemote
 							? this._timeTrackerStatus.remoteTimer.lastLog
 							: await this.timeTrackerService.toggleApiStart({
 									...lastTimer,
@@ -2095,7 +2162,8 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 				this.loading = false;
 			} else {
 				if (!this._isOffline) {
-					timelog = isRemote
+					timelog =
+						isRemote || this._remoteSleepLock
 						? this._timeTrackerStatus.remoteTimer.lastLog
 						: await this.timeTrackerService.toggleApiStop({
 								...lastTimer,
@@ -2114,10 +2182,9 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 						}),
 						this.getTimerStatus(params)
 					];
-					if (
-						!this._timeTrackerStatus.remoteTimer?.isExternalSource ||
-						this._startMode === TimerStartMode.MANUAL) {
-						const takeScreenCapturePromise = this.electronService.ipcRenderer.invoke(
+					if (this._startMode === TimerStartMode.MANUAL) {
+						const takeScreenCapturePromise =
+							this.electronService.ipcRenderer.invoke(
 							'TAKE_SCREEN_CAPTURE',
 							{
 								quitApp: this.quitApp

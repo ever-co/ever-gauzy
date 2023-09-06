@@ -1,0 +1,26 @@
+:host {
+	.logo {
+		display: flex;
+		align-items: center;
+		flex-direction: column;
+		justify-content: center;
+		margin-bottom: 32px;
+		h4 {
+			font-size: 20px;
+			margin-top: 20px;
+		}
+		h4, h6 {
+			font-weight: 600;
+		}
+		h6 {
+			font-size: 16px;
+		}
+	}
+}
+::ng-deep {
+	ngx-gauzy-logo {
+		object {
+			width: 216px;
+		}
+	}
+}

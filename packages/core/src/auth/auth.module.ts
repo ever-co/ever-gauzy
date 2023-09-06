@@ -3,8 +3,8 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { CqrsModule } from '@nestjs/cqrs';
 import { RouterModule } from 'nest-router';
 import { SocialAuthModule } from '@gauzy/auth';
-import { Organization, UserOrganization } from './../core/entities/internal';
-import { EmailModule } from './../email/email.module';
+import { Organization, OrganizationTeam, UserOrganization } from './../core/entities/internal';
+import { EmailSendModule } from './../email-send/email-send.module';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 import { CommandHandlers } from './commands/handlers';
@@ -41,8 +41,11 @@ const strategies = [
 		]),
 		SocialAuthModule.registerAsync({
 			imports: [
+				TypeOrmModule.forFeature([
+					OrganizationTeam
+				]),
 				AuthModule,
-				EmailModule,
+				EmailSendModule,
 				UserModule,
 				RoleModule,
 				PasswordResetModule,
@@ -52,9 +55,10 @@ const strategies = [
 		}),
 		TypeOrmModule.forFeature([
 			UserOrganization,
-			Organization
+			Organization,
+			OrganizationTeam
 		]),
-		EmailModule,
+		EmailSendModule,
 		UserModule,
 		RoleModule,
 		PasswordResetModule,
