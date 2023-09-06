@@ -6,18 +6,11 @@ import { LocalStore } from './desktop-store';
 import Form from 'form-data';
 import { screen } from 'electron';
 import screenshot from 'screenshot-desktop';
-import { ScreenCaptureNotification } from '@gauzy/desktop-window'
 
 // Import logging for electron and override default console logging
 import log from 'electron-log';
 console.log = log.log;
 Object.assign(console, log.functions);
-
-let screenCaptureNotification: ScreenCaptureNotification;
-
-app.whenReady().then(() => {
-	screenCaptureNotification = new ScreenCaptureNotification();
-})
 
 const captureOnlyActiveWindow = async (
 	displays,
@@ -304,18 +297,9 @@ const showCapturedToRenderer = async (
 	if (!allowScreenshotCapture()) {
 		return;
 	}
+	console.log(windowPath);
 	const soundCamera = soundPath;
-	notificationWindow = screenCaptureNotification;
-	if (!notificationWindow.config.path) {
-		notificationWindow.config.path = app.getName() !== 'gauzy-desktop-timer'
-			? windowPath.screenshotWindow
-			: windowPath.timeTrackerUi
-		console.log('App Name:', app.getName());
-		await notificationWindow.loadURL();
-	}
-
 	notificationWindow.show(thumbUrl);
-
 	try {
 		if (existsSync(soundCamera)) {
 			timeTrackerWindow.webContents.send('play_sound', {
@@ -508,18 +492,8 @@ export async function notifyScreenshot(
 	const soundCamera = soundPath;
 	const appSetting = LocalStore.getStore('appSetting');
 	const thumbImg = `data:image/png;base64, ${thumb.img}`
-	notificationWindow = screenCaptureNotification
 	global.variableGlobal.screenshotSrc = thumbImg;
-	if (!notificationWindow.config.path) {
-		notificationWindow.config.path = app.getName() !== 'gauzy-desktop-timer'
-			? windowPath.screenshotWindow
-			: windowPath.timeTrackerUi
-		console.log('App Name:', app.getName());
-		await notificationWindow.loadURL();
-	}
-
 	notificationWindow.show(thumbImg);
-
 	timeTrackerWindow.webContents.send('last_capture_local', {
 		fullUrl: thumbImg
 	});

@@ -1663,15 +1663,13 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 		if (this.isRemoteTimer) return;
 		// screenshot process
 		let screenshotImg = [];
-		let thumbScreenshotImg = [];
 		if (!arg.displays) {
 			screenshotImg = await this.getScreenshot(arg, false);
-			thumbScreenshotImg = await this.getScreenshot(arg, true);
 		} else {
 			screenshotImg = arg.displays;
 		}
 		// notify
-		this.screenshotNotify(arg, thumbScreenshotImg);
+		this.screenshotNotify(arg, screenshotImg);
 
 		// updateActivities to api
 		const afkTime: number = await this.getAfk(arg);
