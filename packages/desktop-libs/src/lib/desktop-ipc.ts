@@ -288,6 +288,7 @@ export function ipcMainHandler(
 	ipcMain.handle('UPDATE_SYNCED', async (event, arg: IntervalTO) => {
 		try {
 			const interval = new Interval(arg);
+			interval.screenshots = [];
 			await intervalService.synced(interval);
 			await countIntervalQueue(timeTrackerWindow, true);
 		} catch (error) {

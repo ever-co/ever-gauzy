@@ -6,6 +6,7 @@ import { IntervalTransaction } from '../transactions';
 export class IntervalDAO implements DAO<IntervalTO> {
 	private _provider: IDatabaseProvider;
 	private _trx: IntervalTransaction;
+	private _providerFactory = ProviderFactory.instance;
 
 	constructor() {
 		this._provider = ProviderFactory.instance;
@@ -112,10 +113,25 @@ export class IntervalDAO implements DAO<IntervalTO> {
 
 	public async screenshots(user: UserTO): Promise<any[]> {
 		try {
+			const query = (provider: string) => {
+				switch (provider) {
+					case 'mysql':
+						return 'JSON_LENGTH(screenshots) != 0';
+					case 'postgres':
+						return 'jsonb_array_length(screenshots) != 0';
+					default:
+						return 'json_array_length(screenshots) != 0';
+				}
+			};
 			const latests = await this._provider
 				.connection<IntervalTO>(TABLE_NAME_INTERVALS)
 				.select('id', 'screenshots', 'startedAt as recordedAt')
 				.where('employeeId', user.employeeId)
+				.andWhere((qb) =>
+					qb
+						.whereNot('screenshots', '[]')
+						.orWhereRaw(query(this._providerFactory.dialect))
+				)
 				.orderBy('id', 'desc')
 				.limit(10);
 			return latests.map((latest) => {

@@ -903,24 +903,22 @@ export class EmailService extends TenantAwareCrudService<EmailEntity> {
 				...integration
 			}
 		};
-		try {
-			const body = {
-				templateName: sendOptions.template,
-				email: sendOptions.message.to,
-				languageCode,
-				message: ''
+		const body = {
+			templateName: sendOptions.template,
+			email: sendOptions.message.to,
+			languageCode,
+			message: ''
+		}
+		const match = !!DISALLOW_EMAIL_SERVER_DOMAIN.find((server) => body.email.includes(server));
+		if (!match) {
+			try {
+				const instance = await this.getEmailInstance();
+				const send = await instance.send(sendOptions);
+
+				body['message'] = send.originalMessage;
+			} catch (error) {
+				console.log('Error while sending password less authentication code', error);
 			}
-			const match = !!DISALLOW_EMAIL_SERVER_DOMAIN.find((server) => body.email.includes(server));
-			if (!match) {
-				try {
-					const send = await (await this.getEmailInstance()).send(sendOptions);
-					body['message'] = send.originalMessage;
-				} catch (error) {
-					console.error(error);
-				}
-			}
-		} catch (error) {
-			console.error(error);
 		}
 	}
 

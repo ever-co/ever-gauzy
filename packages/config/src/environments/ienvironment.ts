@@ -11,6 +11,7 @@ import {
 	IFacebookConfig,
 	IFiverrConfig,
 	IGithubConfig,
+	IGitHubIntegrationConfig,
 	IGoogleConfig,
 	IKeycloakConfig,
 	ILinkedinConfig,
@@ -102,6 +103,7 @@ export interface IEnvironment {
 	facebookConfig: IFacebookConfig;
 	googleConfig: IGoogleConfig;
 	githubConfig: IGithubConfig;
+	gitHubIntegrationConfig: IGitHubIntegrationConfig;
 	microsoftConfig: IMicrosoftConfig;
 	linkedinConfig: ILinkedinConfig;
 	twitterConfig: ITwitterConfig;

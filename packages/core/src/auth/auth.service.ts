@@ -500,11 +500,12 @@ export class AuthService extends SocialAuthService {
 					}
 				});
 				if (!!existed) {
+					const code = generateRandomInteger(6);
+					const codeExpireAt = moment().add(environment.AUTHENTICATION_CODE_EXPIRATION_TIME, 'seconds').toDate();
+
 					await this.userRepository.update(existed.id, {
-						code: generateRandomInteger(6),
-						codeExpireAt: moment(new Date())
-							.add(environment.AUTHENTICATION_CODE_EXPIRATION_TIME, 'seconds')
-							.toDate()
+						code: code,
+						codeExpireAt: codeExpireAt
 					});
 					const user = await this.userRepository.findOneOrFail({
 						where: {

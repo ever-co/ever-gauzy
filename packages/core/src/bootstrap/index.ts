@@ -27,9 +27,12 @@ export async function bootstrap(
 	const config = await registerPluginConfig(pluginConfig);
 
 	const { BootstrapModule } = await import('./bootstrap.module');
-	const app = await NestFactory.create<NestExpressApplication>(BootstrapModule, {
-		logger: ['log', 'error', 'warn', 'debug', 'verbose']
-	});
+	const app = await NestFactory.create<NestExpressApplication>(
+		BootstrapModule,
+		{
+			logger: ['log', 'error', 'warn', 'debug', 'verbose'],
+		}
+	);
 
 	// This will lock all routes and make them accessible by authenticated users only.
 	const reflector = app.get(Reflector);
@@ -52,7 +55,7 @@ export async function bootstrap(
 		methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
 		credentials: true,
 		allowedHeaders:
-			'Authorization, Language, Tenant-Id, X-Requested-With, X-Auth-Token, X-HTTP-Method-Override, Content-Type, Content-Language, Accept, Accept-Language, Observe'
+			'Authorization, Language, Tenant-Id, X-Requested-With, X-Auth-Token, X-HTTP-Method-Override, Content-Type, Content-Language, Accept, Accept-Language, Observe',
 	});
 
 	// TODO: enable csurf
@@ -64,7 +67,7 @@ export async function bootstrap(
 		expressSession({
 			secret: env.EXPRESS_SESSION_SECRET,
 			resave: true,
-			saveUninitialized: true
+			saveUninitialized: true,
 		})
 	);
 
@@ -95,7 +98,9 @@ export async function bootstrap(
 	console.log(chalk.green(`Configured Host: ${host}`));
 	console.log(chalk.green(`Configured Port: ${port}`));
 
-	console.log(chalk.green(`Swagger UI available at http://${host}:${port}/swg`));
+	console.log(
+		chalk.green(`Swagger UI available at http://${host}:${port}/swg`)
+	);
 
 	/**
 	 * Dependency injection with class-validator
@@ -103,7 +108,9 @@ export async function bootstrap(
 	useContainer(app.select(SharedModule), { fallbackOnErrors: true });
 
 	await app.listen(port, host, () => {
-		console.log(chalk.magenta(`Listening at http://${host}:${port}/${globalPrefix}`));
+		console.log(
+			chalk.magenta(`Listening at http://${host}:${port}/${globalPrefix}`)
+		);
 		// Execute Seed For Demo Server
 		if (env.demo) {
 			service.executeDemoSeed();
@@ -128,8 +135,8 @@ export async function registerPluginConfig(
 	 */
 	setConfig({
 		dbConnectionOptions: {
-			...getMigrationsSetting()
-		}
+			...getMigrationsSetting(),
+		},
 	});
 
 	console.log(
@@ -145,8 +152,10 @@ export async function registerPluginConfig(
 	setConfig({
 		dbConnectionOptions: {
 			entities,
-			subscribers: coreSubscribers as Array<Type<EntitySubscriberInterface>>,
-		}
+			subscribers: coreSubscribers as Array<
+				Type<EntitySubscriberInterface>
+			>,
+		},
 	});
 
 	let registeredConfig = getConfig();
@@ -165,7 +174,7 @@ export async function registerAllEntities(
 	for (const pluginEntity of pluginEntities) {
 		if (allEntities.find((e) => e.name === pluginEntity.name)) {
 			throw new ConflictException({
-				message: `error.${pluginEntity.name} conflict by default entities`
+				message: `error.${pluginEntity.name} conflict by default entities`,
 			});
 		} else {
 			allEntities.push(pluginEntity);
@@ -180,17 +189,16 @@ export async function registerAllEntities(
  * @returns
  */
 export function getMigrationsSetting() {
-
 	console.log(`Reporting __dirname: ${__dirname}`);
 
 	//TODO: We need to define some dynamic path here
 	return {
 		migrations: [
 			// join(__dirname, '../../src/database/migrations/*{.ts,.js}'),
-			join(__dirname, '../database/migrations/*{.ts,.js}')
+			join(__dirname, '../database/migrations/*{.ts,.js}'),
 		],
 		cli: {
-			migrationsDir: join(__dirname, '../../src/database/migrations')
+			migrationsDir: join(__dirname, '../../src/database/migrations'),
 		},
-	}
+	};
 }

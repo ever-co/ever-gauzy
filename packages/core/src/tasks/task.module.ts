@@ -12,6 +12,7 @@ import { UserModule } from './../user/user.module';
 import { RoleModule } from './../role/role.module';
 import { EmployeeModule } from './../employee/employee.module';
 import { OctokitModule } from 'octokit/octokit.module';
+import { GitHubModule } from './../github/github.module';
 
 @Module({
 	imports: [
@@ -24,9 +25,10 @@ import { OctokitModule } from 'octokit/octokit.module';
 		OrganizationProjectModule,
 		CqrsModule,
 		OctokitModule,
+		GitHubModule
 	],
 	controllers: [TaskController],
 	providers: [TaskService, ...CommandHandlers],
 	exports: [TypeOrmModule, TaskService],
 })
-export class TaskModule {}
+export class TaskModule { }

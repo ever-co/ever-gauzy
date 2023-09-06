@@ -4,13 +4,17 @@ import { ITask, ITaskUpdateInput } from '@gauzy/contracts';
 import { TaskService } from '../../task.service';
 import { TaskUpdateCommand } from '../task-update.command';
 import { OctokitService } from 'octokit/octokit.service';
+import { GitHubService } from 'github/github.service';
 
 @CommandHandler(TaskUpdateCommand)
 export class TaskUpdateHandler implements ICommandHandler<TaskUpdateCommand> {
 	constructor(
 		private readonly _taskService: TaskService,
-		private readonly _octokitService: OctokitService
-	) {}
+		private readonly _octokitService: OctokitService,
+		// TODO:
+		// Uncomment below line for GitHub app integration
+		private readonly _gitHubService: GitHubService
+	) { }
 
 	public async execute(command: TaskUpdateCommand): Promise<ITask> {
 		const { id, input } = command;
@@ -55,6 +59,15 @@ export class TaskUpdateHandler implements ICommandHandler<TaskUpdateCommand> {
 				request.title,
 				request.description
 			);
+			// Make the Issue number, Repo, Owner and installtion id field dynamic
+			// this._gitHubService.editIssue(
+			// 	48,
+			// 	task.title,
+			// 	task.description,
+			// 	'<OWNER>',
+			// 	'<REPO>',
+			// 	12345678 // installtion id
+			// );
 
 			return await this._taskService.create({
 				...request,

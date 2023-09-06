@@ -127,6 +127,13 @@ export const environment: IEnvironment = {
 			process.env.GITHUB_CALLBACK_URL ||
 			`http://${process.env.API_HOST}:${process.env.API_PORT}/api/auth/google/callback`,
 	},
+	gitHubIntegrationConfig: {
+		appId: process.env.GITHUB_INTEGRATION_APP_ID,
+		clientId: process.env.GITHUB_INTEGRATION_CLIENT_ID,
+		clientSecret: process.env.GITHUB_INTEGRATION_CLIENT_SECRET,
+		privateKey: process.env.GITHUB_INTEGRATION_PRIVATE_KEY,
+		webhookSecret: process.env.GITHUB_INTEGRATION_WEBHOOK_SECRET,
+	},
 
 	microsoftConfig: {
 		clientId: process.env.MICROSOFT_CLIENT_ID,
