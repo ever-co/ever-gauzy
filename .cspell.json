@@ -318,7 +318,9 @@
 		"signin",
 		"ibase",
 		"iwindow",
-		"Probot"
+		"Probot",
+		"Smee",
+		"badal"
 	],
 	"useGitignore": true,
 	"ignorePaths": [
