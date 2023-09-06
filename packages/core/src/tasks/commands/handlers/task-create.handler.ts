@@ -47,13 +47,13 @@ export class TaskCreateHandler implements ICommandHandler<TaskCreateCommand> {
 
 			this._octokitService.createIssue(input.title, input.description);
 			// TODO:
-			// Make the Repo, Owner and installtion id field dynamic
+			// Make the Repo, Owner and installation id field dynamic
 			// this._gitHubService.openIssue(
 			// 	input.title,
 			// 	input.description,
 			// 	'<OWNER>',
 			// 	'<REPO>',
-			// 	12345678 // installtion id
+			// 	12345678 // installation id
 			// );
 
 			return await this._taskService.create({

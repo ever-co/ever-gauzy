@@ -59,14 +59,14 @@ export class TaskUpdateHandler implements ICommandHandler<TaskUpdateCommand> {
 				request.title,
 				request.description
 			);
-			// Make the Issue number, Repo, Owner and installtion id field dynamic
+			// Make the Issue number, Repo, Owner and installation id field dynamic
 			// this._gitHubService.editIssue(
 			// 	48,
 			// 	task.title,
 			// 	task.description,
 			// 	'<OWNER>',
 			// 	'<REPO>',
-			// 	12345678 // installtion id
+			// 	12345678 // installation id
 			// );
 
 			return await this._taskService.create({

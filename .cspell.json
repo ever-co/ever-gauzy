@@ -317,7 +317,8 @@
 		"resave",
 		"signin",
 		"ibase",
-		"iwindow"
+		"iwindow",
+		"Probot"
 	],
 	"useGitignore": true,
 	"ignorePaths": [
