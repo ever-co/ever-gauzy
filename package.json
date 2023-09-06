@@ -241,10 +241,7 @@
 		"ffi-napi": "^4.0.3",
 		"iconv": "^3.0.1",
 		"ng2-smart-table": "^1.7.2",
-		"octokit": "^3.1.0",
-		"probot": "^12.3.1",
 		"rxjs": "^7.4.0",
-		"smee-client": "^1.2.3",
 		"unleash": "^2.0.2",
 		"yargs": "^17.5.0"
 	},
