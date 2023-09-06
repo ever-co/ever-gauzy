@@ -30,7 +30,7 @@
 		"@electron/remote": "^2.0.8",
 		"@gauzy/desktop-window": "^0.1.0",
 		"active-win": "^8.1.0",
-		"electron": "20.2.0",
+		"electron": "22.3.21",
 		"electron-store": "^8.1.0",
 		"electron-util": "^0.17.2",
 		"embedded-queue": "^0.0.11",
