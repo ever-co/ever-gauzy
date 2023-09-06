@@ -1,0 +1,70 @@
+nb-card-body,
+nb-card-footer {
+	padding: 1rem;
+	background-color: var(--gauzy-card-2);
+}
+
+::ng-deep nb-layout .layout .layout-container .content nb-layout-footer nav {
+	padding: 0px;
+}
+
+:host ::ng-deep .layout {
+	min-width: unset !important;
+}
+
+button {
+	width: 48px;
+	height: 48px;
+	-webkit-app-region: no-drag;
+
+	nb-icon {
+		font-size: var(--icon-font-size);
+	}
+}
+
+#drag-handle {
+	-webkit-border-radius: 50px;
+	-moz-border-radius: 50px;
+	border-radius: 50px;
+	padding: 4px;
+}
+
+.counter {
+	font-weight: 600;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	flex-direction: column;
+
+	.current {
+		font-size: 12px;
+	}
+
+	.today {
+		font-size: 10px;
+		line-height: normal;
+
+		nb-icon {
+			width: auto;
+			height: auto;
+		}
+	}
+}
+
+.status {
+	width: 12px;
+	height: 12px;
+	background: var(--color-success-default);
+	border-radius: var(--border-radius);
+
+	&.offline {
+		background: var(--color-danger-default);
+	}
+}
+
+.main {
+	-webkit-app-region: drag;
+	-webkit-border-radius: 50px;
+	-moz-border-radius: 50px;
+	border-radius: 50px;
+}

@@ -109,10 +109,14 @@ export enum PermissionsEnum {
 	ORG_PROJECT_VIEW = 'ORG_PROJECT_VIEW',
 	ORG_PROJECT_EDIT = 'ORG_PROJECT_EDIT',
 	ORG_PROJECT_DELETE = 'ORG_PROJECT_DELETE',
+
+	/** Organization Team */
 	ORG_TEAM_ADD = 'ORG_TEAM_ADD',
 	ORG_TEAM_VIEW = 'ORG_TEAM_VIEW',
 	ORG_TEAM_EDIT = 'ORG_TEAM_EDIT',
 	ORG_TEAM_DELETE = 'ORG_TEAM_DELETE',
+	ORG_TEAM_REMOVE_ACCOUNT_AS_MEMBER = 'ORG_TEAM_REMOVE_ACCOUNT_AS_MEMBER',
+
 	/** Organization Task Setting */
 	ORG_TASK_SETTING = 'ORG_TASK_SETTING',
 	/** Organization Team Join Request Permissions */
@@ -232,10 +236,12 @@ export const PermissionGroups = {
 		PermissionsEnum.ORG_PROJECT_DELETE,
 		PermissionsEnum.ORG_CONTACT_EDIT,
 		PermissionsEnum.ORG_CONTACT_VIEW,
+		/** Organization Team */
 		PermissionsEnum.ORG_TEAM_ADD,
 		PermissionsEnum.ORG_TEAM_VIEW,
 		PermissionsEnum.ORG_TEAM_EDIT,
 		PermissionsEnum.ORG_TEAM_DELETE,
+		PermissionsEnum.ORG_TEAM_REMOVE_ACCOUNT_AS_MEMBER,
 		PermissionsEnum.ORG_TASK_SETTING,
 		PermissionsEnum.ORG_TEAM_JOIN_REQUEST_VIEW,
 		PermissionsEnum.ORG_TEAM_JOIN_REQUEST_EDIT,

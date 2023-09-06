@@ -67,6 +67,7 @@ export interface IEnvironment {
 	USER_PASSWORD_BCRYPT_SALT_ROUNDS?: number;
 
 	JWT_SECRET?: string;
+	JWT_TOKEN_EXPIRATION_TIME?: number;
 
 	/**
 	 * JWT refresh token Options

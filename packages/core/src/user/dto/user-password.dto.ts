@@ -7,7 +7,7 @@ import { IUserPasswordInput } from "@gauzy/contracts";
  */
 export class UserPasswordDTO implements IUserPasswordInput {
 
-    @ApiProperty({ type: () => String, required: true })
+    @ApiProperty({ type: () => String })
     @IsNotEmpty()
     readonly password: string;
 }

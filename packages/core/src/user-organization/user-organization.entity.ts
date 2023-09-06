@@ -8,14 +8,12 @@ import {
 } from 'typeorm';
 import { IUser, IUserOrganization } from '@gauzy/contracts';
 import { ApiProperty } from '@nestjs/swagger';
-import { IsString, IsNotEmpty } from 'class-validator';
+import { IsUUID } from 'class-validator';
 import { TenantOrganizationBaseEntity, User } from '../core/entities/internal';
 
 @Entity('user_organization')
-export class UserOrganization
-	extends TenantOrganizationBaseEntity
-	implements IUserOrganization {
-	
+export class UserOrganization extends TenantOrganizationBaseEntity implements IUserOrganization {
+
 	@ApiProperty({ type: () => Boolean, default: true })
 	@Index()
 	@Column({ default: true })
@@ -27,17 +25,16 @@ export class UserOrganization
 	isActive: boolean;
 
 	/*
-    |--------------------------------------------------------------------------
-    | @ManyToOne 
-    |--------------------------------------------------------------------------
-    */
+	|--------------------------------------------------------------------------
+	| @ManyToOne
+	|--------------------------------------------------------------------------
+	*/
 
 	/**
 	 * User
 	 */
 	@ApiProperty({ type: () => User })
 	@ManyToOne(() => User, (user) => user.organizations, {
-		nullable: true,
 		onDelete: 'CASCADE'
 	})
 	@JoinColumn()
@@ -45,9 +42,8 @@ export class UserOrganization
 
 	@ApiProperty({ type: () => String })
 	@RelationId((it: UserOrganization) => it.user)
-	@IsString()
-	@IsNotEmpty()
+	@IsUUID()
 	@Index()
 	@Column()
-	userId: string;
+	userId: IUser['id'];
 }

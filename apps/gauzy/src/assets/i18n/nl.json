@@ -3836,7 +3836,9 @@
 			"TIMEZONE_LABEL": "Het selecteren van 'Lokaal' toont de tijd in uw lokale tijdzone, terwijl het selecteren van 'UTC' de tijd toont in de universele UTC tijdzone die wordt gebruikt door facturatie- en andere systemen.",
 			"TIMEZONE_PLACEHOLDER": "Selecteer 'Lokaal' of 'UTC'.",
 			"TIMEZONE_LOCAL": "Lokaal",
-			"TIMEZONE_UTC": "UTC"
+			"TIMEZONE_UTC": "UTC",
+			"WIDGET": "Widget",
+			"WIDGET_LABEL": "Dit venster weerspiegelt de status van de timer en geeft aan of deze actief is of gestopt en functioneert als een knop."
 		},
 		"WEEKLY_LIMIT_EXCEEDED": "Weeklimiet overschreden",
 		"OF_HRS": "Van {{ limit }} uur",
