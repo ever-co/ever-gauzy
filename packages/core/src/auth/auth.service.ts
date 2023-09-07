@@ -143,6 +143,7 @@ export class AuthService extends SocialAuthService {
 					name: user.name,
 					imageUrl: user.imageUrl,
 					tenant: new Tenant({
+						id: user.tenant ? user.tenantId : null,
 						name: user.tenant?.name || '',
 						logo: user.tenant?.logo || ''
 					})
@@ -155,7 +156,8 @@ export class AuthService extends SocialAuthService {
 		const response: IUserSigninWorkspaceResponse = {
 			workspaces,
 			confirmed_email: email,
-			show_popup: workspaces.length > 1
+			show_popup: workspaces.length > 1,
+			total_workspaces: workspaces.length
 		};
 
 		console.timeEnd('signin workspaces');
@@ -656,6 +658,7 @@ export class AuthService extends SocialAuthService {
 						name: user.name || '',
 						imageUrl: user.imageUrl || '',
 						tenant: new Tenant({
+							id: user.tenant ? user.tenantId : null,
 							name: user.tenant?.name || '',
 							logo: user.tenant?.logo || ''
 						}),
@@ -683,7 +686,8 @@ export class AuthService extends SocialAuthService {
 			const response: IUserSigninWorkspaceResponse = {
 				workspaces,
 				confirmed_email: email,
-				show_popup: workspaces.length > 1
+				show_popup: workspaces.length > 1,
+				total_workspaces: workspaces.length
 			};
 
 			console.timeEnd('confirm signin for multi-tenant workspaces');
