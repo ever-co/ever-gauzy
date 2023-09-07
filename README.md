@@ -305,6 +305,14 @@ You can also view a full list of our [contributors tracked by Github](https://gi
 
 <img src="https://contributors-img.web.app/image?repo=ever-co/ever-gauzy" />
 
+## ❤️ Powered By
+
+<p>
+  <a href="https://www.digitalocean.com/?utm_medium=opensource&utm_source=ever-co">
+    <img src="https://opensource.nyc3.cdn.digitaloceanspaces.com/attribution/assets/PoweredByDO/DO_Powered_by_Badge_blue.svg" width="201px">
+  </a>
+</p>
+
 ## ©️ Copyright
 
 #### Copyright © 2019-present, Ever Co. LTD. All rights reserved
@@ -322,5 +330,5 @@ You can also view a full list of our [contributors tracked by Github](https://gi
 
 ## 🔥 P.S
 
-- If you are interested to run an on-demand (delivery) or digital marketplace business, check open-source [Ever Demand Platform](https://github.com/ever-co/ever-demand)
+- If you are interested in running an on-demand (delivery) or digital marketplace business, check open-source [Ever Demand Platform](https://github.com/ever-co/ever-demand)
 - [We are Hiring: remote TypeScript / NestJS / Angular developers](https://github.com/ever-co/jobs#available-positions)

@@ -13,7 +13,7 @@ import { LocalStore } from './desktop-store';
 import { notifyScreenshot, takeshot } from './desktop-screenshot';
 import { resetPermissions } from 'mac-screen-capture-permissions';
 import * as _ from 'underscore';
-import { timeTrackerPage } from '@gauzy/desktop-window';
+import { ScreenCaptureNotification, timeTrackerPage } from '@gauzy/desktop-window';
 // Import logging for electron and override default console logging
 import log from 'electron-log';
 import NotificationDesktop from './desktop-notifier';
@@ -330,6 +330,16 @@ export function ipcTimer(
 	let powerManager: IPowerManager;
 	let powerManagerPreventSleep: PowerManagerPreventDisplaySleep;
 	let powerManagerDetectInactivity: PowerManagerDetectInactivity;
+	app.whenReady().then(async () => {
+		if (!notificationWindow) {
+			notificationWindow = new ScreenCaptureNotification(
+				app.getName() !== 'gauzy-desktop-timer'
+					? windowPath.screenshotWindow
+					: windowPath.timeTrackerUi);
+			console.log('App Name:', app.getName());
+			await notificationWindow.loadURL();
+		}
+	})
 
 	ipcMain.on('create-synced-interval', async (_event, arg) => {
 		try {
