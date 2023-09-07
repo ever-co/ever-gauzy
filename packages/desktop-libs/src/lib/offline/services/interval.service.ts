@@ -1,3 +1,4 @@
+import { AppError } from '../../error-handler';
 import { IIntervalService, IOfflineMode } from '../../interfaces';
 import { IntervalDAO } from '../dao';
 import { DesktopOfflineModeHandler } from '../desktop-offline-mode-handler';
@@ -15,67 +16,104 @@ export class IntervalService implements IIntervalService<IntervalTO> {
 		this._offlineMode = DesktopOfflineModeHandler.instance;
 	}
 	public async create(interval: IntervalTO): Promise<void> {
-		interval.activities = JSON.stringify(interval.activities);
-		interval.screenshots = JSON.stringify(interval.screenshots) as any;
-		await this._intervalDAO.save(interval);
+		try {
+			interval.activities = JSON.stringify(interval.activities);
+			interval.screenshots = JSON.stringify(interval.screenshots) as any;
+			await this._intervalDAO.save(interval);
+		} catch (error) {
+			throw new AppError('INTERVALSRVCE', error);
+		}
 	}
 	public async backedUpNoSynced(): Promise<IntervalTO[]> {
-		const user = await this._userService.retrieve();
-		return await this._intervalDAO.backedUpNoSynced(
-			this._offlineMode.startedAt,
-			this._offlineMode.stoppedAt,
-			user
-		);
+		try {
+			const user = await this._userService.retrieve();
+			return await this._intervalDAO.backedUpNoSynced(
+				this._offlineMode.startedAt,
+				this._offlineMode.stoppedAt,
+				user
+			);
+		} catch (error) {
+			console.error(error);
+			return [];
+		}
 	}
 	public async destroy(interval: Partial<IntervalTO>): Promise<void> {
-		await this._intervalDAO.delete(interval);
+		try {
+			await this._intervalDAO.delete(interval);
+		} catch (error) {
+			throw new AppError('INTERVALSRVCE', error);
+		}
 	}
 	public async synced(interval: IntervalTO): Promise<void> {
-		const intervalToUpdate = new Interval(interval);
-		intervalToUpdate.synced = true;
-		intervalToUpdate.activities = JSON.stringify(
-			intervalToUpdate.activities
-		);
-		intervalToUpdate.screenshots = JSON.stringify(
-			intervalToUpdate.screenshots
-		) as any;
-		await this._intervalDAO.update(
-			intervalToUpdate.id,
-			intervalToUpdate.toObject()
-		);
+		try {
+			const intervalToUpdate = new Interval(interval);
+			intervalToUpdate.synced = true;
+			intervalToUpdate.activities = JSON.stringify(
+				intervalToUpdate.activities
+			);
+			intervalToUpdate.screenshots = JSON.stringify(
+				intervalToUpdate.screenshots
+			) as any;
+			await this._intervalDAO.update(
+				intervalToUpdate.id,
+				intervalToUpdate.toObject()
+			);
+		} catch (error) {
+			throw new AppError('INTERVALSRVCE', error);
+		}
 	}
 	public async backedUpAllNoSynced(): Promise<IntervalTO[]> {
-		const user = await this._userService.retrieve();
-		return await this._intervalDAO.findAllSynced(false, user);
+		try {
+			const user = await this._userService.retrieve();
+			return await this._intervalDAO.findAllSynced(false, user);
+		} catch (error) {
+			console.error(error);
+			return [];
+		}
 	}
 	public async countNoSynced(): Promise<number> {
-		const user = await this._userService.retrieve();
-		const [res] = await this._intervalDAO.count(false, user);
-		return res.total;
+		try {
+			const user = await this._userService.retrieve();
+			const [res] = await this._intervalDAO.count(false, user);
+			return res.total;
+		} catch (error) {
+			console.error(error);
+			return 0;
+		}
 	}
 	public async screenshots(): Promise<any[]> {
-		const user = await this._userService.retrieve();
-		return await this._intervalDAO.screenshots(user);
+		try {
+			const user = await this._userService.retrieve();
+			return await this._intervalDAO.screenshots(user);
+		} catch (error) {
+			console.error(error);
+			return [];
+		}
 	}
 
 	public async removeIdlesTime(
 		startedAt: Date,
 		stoppedAt: Date
 	): Promise<string[]> {
-		const user = await this._userService.retrieve();
-		let remoteIds = [];
-		this._offlineMode.enabled
-			? await this._intervalDAO.deleteLocallyIdlesTime(
-				startedAt,
-				stoppedAt,
-				user
-			)
-			: (remoteIds = await this._intervalDAO.deleteIdlesTime(
-				startedAt,
-				stoppedAt,
-				user
-			));
-		return remoteIds.map(({ remoteId }) => remoteId);
+		try {
+			const user = await this._userService.retrieve();
+			let remoteIds = [];
+			this._offlineMode.enabled
+				? await this._intervalDAO.deleteLocallyIdlesTime(
+					startedAt,
+					stoppedAt,
+					user
+				)
+				: (remoteIds = await this._intervalDAO.deleteIdlesTime(
+					startedAt,
+					stoppedAt,
+					user
+				));
+			return remoteIds.map(({ remoteId }) => remoteId);
+		} catch (error) {
+			console.error(error);
+			return [];
+		}
 	}
 
 	/**
@@ -83,6 +121,10 @@ export class IntervalService implements IIntervalService<IntervalTO> {
 	 * @param {number} id - number - The id of the interval to remove
 	 */
 	public async remove(id: number): Promise<void> {
-		await this._intervalDAO.delete({ id });
+		try {
+			await this._intervalDAO.delete({ id });
+		} catch (error) {
+			throw new AppError('INTERVALSRVCE', error);
+		}
 	}
 }
