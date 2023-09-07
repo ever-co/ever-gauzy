@@ -46,14 +46,15 @@ import {
 	PROJECT_TIED_ENTITIES
 } from '@gauzy/integration-hubstaff';
 import { firstValueFrom, lastValueFrom } from 'rxjs';
-import { IntegrationTenantService } from '../integration-tenant/integration-tenant.service';
-import { IntegrationSettingService } from '../integration-setting/integration-setting.service';
-import { IntegrationMapService } from '../integration-map/integration-map.service';
-import { OrganizationContactCreateCommand } from '../organization-contact/commands';
-import { EmployeeCreateCommand, EmployeeGetCommand } from '../employee/commands';
-import { RoleService } from '../role/role.service';
-import { OrganizationService } from '../organization/organization.service';
-import { UserService } from '../user/user.service';
+import { RequestContext } from 'core/context';
+import { mergeOverlappingDateRanges } from 'core/utils';
+import { IntegrationSettingService } from 'integration-setting/integration-setting.service';
+import { OrganizationContactCreateCommand } from 'organization-contact/commands';
+import { EmployeeCreateCommand, EmployeeGetCommand } from 'employee/commands';
+import { RoleService } from 'role/role.service';
+import { OrganizationService } from 'organization/organization.service';
+import { UserService } from 'user/user.service';
+import { IntegrationMapService } from 'integration-map/integration-map.service';
 import {
 	IntegrationMapSyncActivityCommand,
 	IntegrationMapSyncEntityCommand,
@@ -63,10 +64,10 @@ import {
 	IntegrationMapSyncTaskCommand,
 	IntegrationMapSyncTimeLogCommand,
 	IntegrationMapSyncTimeSlotCommand
-} from './../integration-map/commands';
-import { IntegrationTenantCreateCommand } from './../integration-tenant/commands';
-import { RequestContext } from './../core/context';
-import { mergeOverlappingDateRanges } from './../core/utils';
+} from 'integration-map/commands';
+import { IntegrationTenantService } from 'integration-tenant/integration-tenant.service';
+import { IntegrationTenantCreateCommand } from 'integration-tenant/commands';
+
 
 @Injectable()
 export class HubstaffService {

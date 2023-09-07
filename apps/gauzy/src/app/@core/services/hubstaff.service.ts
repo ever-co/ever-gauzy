@@ -17,7 +17,8 @@ import { v4 as uuid } from 'uuid';
 import { switchMap, tap } from 'rxjs/operators';
 import { clone } from 'underscore';
 import * as moment from 'moment';
-import { environment } from './../../../environments/environment';
+import { HUBSTAFF_AUTHORIZATION_URL } from '@gauzy/integration-hubstaff';
+import { environment } from '@env/environment';
 import { API_PREFIX } from '../constants/app.constants';
 
 const TODAY = new Date();
@@ -48,7 +49,9 @@ export class HubstaffService {
 
 	integrationId: string;
 
-	constructor(private readonly _http: HttpClient) { }
+	constructor(
+		private readonly _http: HttpClient
+	) { }
 
 	getIntegration(integrationId): Observable<IIntegrationEntitySetting[]> {
 		const data = JSON.stringify({
@@ -95,7 +98,7 @@ export class HubstaffService {
 		this.integrationId = integrationId;
 		return this._http
 			.get<IIntegrationSetting>(
-				`${API_PREFIX}/integrations/hubstaff/token/${integrationId}`
+				`${API_PREFIX}/integration/hubstaff/token/${integrationId}`
 			)
 			.pipe(
 				tap(({ settingsValue }) => (this.ACCESS_TOKEN = settingsValue))
@@ -105,7 +108,7 @@ export class HubstaffService {
 	refreshToken() {
 		return this._http
 			.get<any>(
-				`${API_PREFIX}/integrations/hubstaff/refresh-token/${this.integrationId}`
+				`${API_PREFIX}/integration/hubstaff/refresh-token/${this.integrationId}`
 			)
 			.pipe(
 				tap(({ access_token }) => (this.ACCESS_TOKEN = access_token))
@@ -113,9 +116,12 @@ export class HubstaffService {
 	}
 
 	authorizeClient(client_id: string): void {
-		const url = `https://account.hubstaff.com/authorizations/new?response_type=code&redirect_uri=${environment.HUBSTAFF_REDIRECT_URI
-			}&realm=hubstaff&client_id=${client_id}&scope=hubstaff:read&state=${client_id}&nonce=${uuid()}`;
+		const redirect_uri = environment.HUBSTAFF_REDIRECT_URI || environment.API_BASE_URL + API_PREFIX + '/integration/hubstaff/callback';
+		console.log({ redirect_uri });
 
+		const url = `${HUBSTAFF_AUTHORIZATION_URL}/authorizations/new?response_type=code&redirect_uri=${redirect_uri}&realm=hubstaff&client_id=${client_id}&scope=hubstaff:read&state=${client_id}&nonce=${uuid()}`;
+
+		console.log({ url });
 		window.location.replace(url);
 	}
 
@@ -134,14 +140,14 @@ export class HubstaffService {
 		};
 
 		return this._http.post<IIntegrationTenant>(
-			`${API_PREFIX}/integrations/hubstaff/integration`,
+			`${API_PREFIX}/integration/hubstaff/integration`,
 			{ ...getAccessTokensDto }
 		);
 	}
 
 	getOrganizations(integrationId): Observable<IHubstaffOrganization[]> {
 		return this._http.post<IHubstaffOrganization[]>(
-			`${API_PREFIX}/integrations/hubstaff/organizations/${integrationId}`,
+			`${API_PREFIX}/integration/hubstaff/organizations/${integrationId}`,
 			{
 				token: this.ACCESS_TOKEN,
 			}
@@ -150,14 +156,14 @@ export class HubstaffService {
 
 	getProjects(organizationId, integrationId): Observable<IHubstaffProject[]> {
 		return this._http.post<IHubstaffProject[]>(
-			`${API_PREFIX}/integrations/hubstaff/projects/${organizationId}`,
+			`${API_PREFIX}/integration/hubstaff/projects/${organizationId}`,
 			{ token: this.ACCESS_TOKEN, integrationId }
 		);
 	}
 
 	syncProjects(projects, integrationId, organizationId) {
 		return this._http.post(
-			`${API_PREFIX}/integrations/hubstaff/sync-projects/${integrationId}`,
+			`${API_PREFIX}/integration/hubstaff/sync-projects/${integrationId}`,
 			{
 				projects: this._mapProjectPayload(projects),
 				organizationId,
@@ -192,7 +198,7 @@ export class HubstaffService {
 		// if organization is set to true, map all entities to this organizations, else use hubstaff organizations id and map all entities to current selected gauzy organization
 		if (organizationEntityToSync && organizationEntityToSync.sync) {
 			const organizationsMap$ = this._http.post<IIntegrationMap[]>(
-				`${API_PREFIX}/integrations/hubstaff/sync-organizations/${integrationId}`,
+				`${API_PREFIX}/integration/hubstaff/sync-organizations/${integrationId}`,
 				{
 					organizations: hubstaffOrganizations.map(
 						({ name, id }) => ({
@@ -232,7 +238,7 @@ export class HubstaffService {
 		return forkJoin(
 			organizations.map((organization) =>
 				this._http.post(
-					`${API_PREFIX}/integrations/hubstaff/auto-sync/${integrationId}`,
+					`${API_PREFIX}/integration/hubstaff/auto-sync/${integrationId}`,
 					{
 						dateRange,
 						gauzyId: organizationId
