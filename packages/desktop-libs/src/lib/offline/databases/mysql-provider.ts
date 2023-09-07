@@ -1,4 +1,5 @@
 import { Knex } from 'knex';
+import { AppError } from 'lib/error-handler';
 import { LocalStore } from '../../desktop-store';
 import { IClientServerProvider } from '../../interfaces';
 
@@ -69,7 +70,7 @@ export class MysqlProvider implements IClientServerProvider {
 					await connection.destroy();
 				});
 		} catch (error) {
-			console.error('[provider-error]', error);
+			throw new AppError('MYSQL', error);
 		}
 	}
 
