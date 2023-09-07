@@ -1,5 +1,5 @@
 import { Knex } from 'knex';
-import { AppError } from 'lib/error-handler';
+import { AppError } from '../../error-handler';
 import { LocalStore } from '../../desktop-store';
 import { IClientServerProvider } from '../../interfaces';
 

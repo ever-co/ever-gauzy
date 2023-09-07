@@ -5,7 +5,7 @@ import { Knex } from 'knex';
 import { PostgresProvider } from './postgres-provider';
 import { MysqlProvider } from './mysql-provider';
 import { LocalStore } from '../../desktop-store';
-import { AppError } from 'lib/error-handler';
+import { AppError } from '../../error-handler';
 
 export class ProviderFactory implements IDatabaseProvider {
 	private _dbContext: DatabaseProviderContext;
