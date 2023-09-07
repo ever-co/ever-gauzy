@@ -17,9 +17,11 @@ import { v4 as uuid } from 'uuid';
 import { switchMap, tap } from 'rxjs/operators';
 import { clone } from 'underscore';
 import * as moment from 'moment';
+import { toParams } from '@gauzy/common-angular';
 import { HUBSTAFF_AUTHORIZATION_URL } from '@gauzy/integration-hubstaff';
 import { environment } from '@env/environment';
 import { API_PREFIX } from '../constants/app.constants';
+import { Router } from '@angular/router';
 
 const TODAY = new Date();
 
@@ -50,7 +52,8 @@ export class HubstaffService {
 	integrationId: string;
 
 	constructor(
-		private readonly _http: HttpClient
+		private readonly _http: HttpClient,
+		private readonly _router: Router
 	) { }
 
 	getIntegration(integrationId): Observable<IIntegrationEntitySetting[]> {
@@ -115,14 +118,30 @@ export class HubstaffService {
 			);
 	}
 
+	/**
+	 * Authorize a client for Hubstaff integration.
+	 *
+	 * @param client_id The client ID for the Hubstaff integration.
+	 */
 	authorizeClient(client_id: string): void {
-		const redirect_uri = environment.HUBSTAFF_REDIRECT_URI || environment.API_BASE_URL + API_PREFIX + '/integration/hubstaff/callback';
-		console.log({ redirect_uri });
+		const redirect_uri = environment.HUBSTAFF_REDIRECT_URI || `${environment.API_BASE_URL}${API_PREFIX}/integration/hubstaff/callback`;
 
-		const url = `${HUBSTAFF_AUTHORIZATION_URL}/authorizations/new?response_type=code&redirect_uri=${redirect_uri}&realm=hubstaff&client_id=${client_id}&scope=hubstaff:read&state=${client_id}&nonce=${uuid()}`;
+		// Define your query parameters
+		const queryParams = toParams({
+			'response_type': 'code',
+			'redirect_uri': `${redirect_uri}`,
+			'realm': 'hubstaff',
+			'client_id': `${client_id}`,
+			'scope': 'hubstaff:read',
+			'state': `${client_id}`,
+			'nonce': `${uuid()}`
+		});
 
-		console.log({ url });
-		window.location.replace(url);
+		// Construct the external URL with the query parameters
+		const externalUrl = `${HUBSTAFF_AUTHORIZATION_URL}/authorizations/new?${queryParams.toString()}`;
+
+		// Navigate to the external URL with query parameters
+		window.location.replace(externalUrl);
 	}
 
 	addIntegration({
@@ -131,18 +150,16 @@ export class HubstaffService {
 		client_id,
 		organizationId,
 	}): Observable<IIntegrationTenant> {
-		const getAccessTokensDto = {
+
+		const redirect_uri = environment.HUBSTAFF_REDIRECT_URI || `${environment.API_BASE_URL}${API_PREFIX}/integration/hubstaff/callback`;
+
+		return this._http.post<IIntegrationTenant>(`${API_PREFIX}/integration/hubstaff/integration`, {
 			client_id,
 			code,
-			redirect_uri: environment.HUBSTAFF_REDIRECT_URI,
+			redirect_uri,
 			client_secret,
-			organizationId,
-		};
-
-		return this._http.post<IIntegrationTenant>(
-			`${API_PREFIX}/integration/hubstaff/integration`,
-			{ ...getAccessTokensDto }
-		);
+			organizationId
+		});
 	}
 
 	getOrganizations(integrationId): Observable<IHubstaffOrganization[]> {
