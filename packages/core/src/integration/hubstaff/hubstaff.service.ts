@@ -12,7 +12,6 @@ import * as moment from 'moment';
 import { environment as env } from '@gauzy/config';
 import { isEmpty, isNotEmpty, isObject } from '@gauzy/common';
 import {
-	ICreateIntegrationDto,
 	IIntegrationTenant,
 	IntegrationEnum,
 	IntegrationEntity,
@@ -38,7 +37,8 @@ import {
 	IHubstaffProjectResponse,
 	IHubstaffTimeSlotActivity,
 	IActivity,
-	IHubstaffLogFromTimeSlots
+	IHubstaffLogFromTimeSlots,
+	ICreateHubstaffIntegrationInput
 } from '@gauzy/contracts';
 import {
 	DEFAULT_ENTITY_SETTINGS,
@@ -157,12 +157,11 @@ export class HubstaffService {
 		try {
 			const tokens$ = this._httpService.post(`${HUBSTAFF_AUTHORIZATION_URL}/access_tokens`, urlParams, {
 				headers
-			})
-				.pipe(
-					map(
-						(response: AxiosResponse<any>) => response.data
-					)
-				);
+			}).pipe(
+				map(
+					(response: AxiosResponse<any>) => response.data
+				)
+			);
 			const tokens = await lastValueFrom(tokens$);
 			const settingsDto = settings.map((setting) => {
 				if (setting.settingsName === 'access_token') {
@@ -197,7 +196,7 @@ export class HubstaffService {
 	}
 
 	async addIntegration(
-		body: ICreateIntegrationDto
+		body: ICreateHubstaffIntegrationInput
 	): Promise<IIntegrationTenant> {
 
 		const tenantId = RequestContext.currentTenantId();
@@ -231,43 +230,41 @@ export class HubstaffService {
 				: settingEntity
 		) as IIntegrationEntitySetting[];
 
-		const tokens$ = this._httpService
-			.post(`${HUBSTAFF_AUTHORIZATION_URL}/access_tokens`, urlParams, {
-				headers: {
-					'Content-Type': 'application/x-www-form-urlencoded'
-				}
-			})
-			.pipe(
-				switchMap(({ data }) => this._commandBus.execute(
-					new IntegrationTenantCreateCommand({
-						organizationId,
-						tenantId,
-						name: IntegrationEnum.HUBSTAFF,
-						entitySettings: entitySettings,
-						settings: [
-							{
-								settingsName: 'client_id',
-								settingsValue: client_id
-							},
-							{
-								settingsName: 'client_secret',
-								settingsValue: client_secret
-							},
-							{
-								settingsName: 'access_token',
-								settingsValue: data.access_token
-							},
-							{
-								settingsName: 'refresh_token',
-								settingsValue: data.refresh_token
-							}
-						]
-					})
-				)),
-				catchError((err) => {
-					throw new BadRequestException(err);
+		const tokens$ = this._httpService.post(`${HUBSTAFF_AUTHORIZATION_URL}/access_tokens`, urlParams, {
+			headers: {
+				'Content-Type': 'application/x-www-form-urlencoded'
+			}
+		}).pipe(
+			switchMap(({ data }) => this._commandBus.execute(
+				new IntegrationTenantCreateCommand({
+					organizationId,
+					tenantId,
+					name: IntegrationEnum.HUBSTAFF,
+					entitySettings: entitySettings,
+					settings: [
+						{
+							settingsName: 'client_id',
+							settingsValue: client_id
+						},
+						{
+							settingsName: 'client_secret',
+							settingsValue: client_secret
+						},
+						{
+							settingsName: 'access_token',
+							settingsValue: data.access_token
+						},
+						{
+							settingsName: 'refresh_token',
+							settingsValue: data.refresh_token
+						}
+					]
 				})
-			);
+			)),
+			catchError((err) => {
+				throw new BadRequestException(err);
+			})
+		);
 
 		return await lastValueFrom(tokens$);
 	}

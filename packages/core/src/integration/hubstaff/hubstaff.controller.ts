@@ -6,7 +6,7 @@ import {
 	IIntegrationMap,
 	IIntegrationSetting,
 	PermissionsEnum,
-	ICreateIntegrationDto,
+	ICreateHubstaffIntegrationInput,
 	IOrganization
 } from '@gauzy/contracts';
 import { ApiTags } from '@nestjs/swagger';
@@ -55,8 +55,8 @@ export class HubstaffController {
 	 * @returns
 	 */
 	@Post('/integration')
-	async addIntegration(
-		@Body() body: ICreateIntegrationDto
+	async create(
+		@Body() body: ICreateHubstaffIntegrationInput
 	): Promise<IIntegrationTenant> {
 		return await this._hubstaffService.addIntegration(body);
 	}
