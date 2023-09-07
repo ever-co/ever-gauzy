@@ -1,0 +1,64 @@
+<nb-layout class="main">
+	<nb-layout-column class="p-0">
+		<div
+			id="drag-handle"
+			class="d-flex flex-column h-100 align-items-center justify-content-around"
+			draggable="true"
+		>
+			<button
+				nbButton
+				status="success"
+				*ngIf="!(start$ | async)"
+				class="button-ghost"
+				(click)="run()"
+				[disabled]="loading || !isTrackingEnabled"
+			>
+				<nb-icon
+					class="start-button"
+					icon="play"
+					pack="font-awesome"
+					[nbTooltip]="
+						'TIMER_TRACKER.TIME_TRACKER_DISABLED' | translate
+					"
+					[nbTooltipIcon]="{
+						icon: 'alert-triangle-outline',
+						pack: 'eva'
+					}"
+					nbTooltipStatus="warning"
+					[nbTooltipDisabled]="isTrackingEnabled"
+					nbTooltipPlacement="bottom"
+				>
+				</nb-icon>
+			</button>
+			<button
+				nbButton
+				status="danger"
+				*ngIf="start$ | async"
+				(click)="run()"
+				[disabled]="loading"
+				class="button-ghost"
+			>
+				<nb-icon class="start-button" icon="pause" pack="font-awesome">
+				</nb-icon>
+			</button>
+			<div class="counter">
+				<div class="current">
+					{{ (counter$ | async)?.current }}
+				</div>
+				<div class="today">
+					<nb-icon
+						class="today"
+						icon="stopwatch"
+						pack="font-awesome"
+					>
+					</nb-icon>
+					{{ (counter$ | async)?.today }}
+				</div>
+			</div>
+			<div
+				class="status"
+				[ngClass]="{ offline: isOffline$ | async }"
+			></div>
+		</div>
+	</nb-layout-column>
+</nb-layout>

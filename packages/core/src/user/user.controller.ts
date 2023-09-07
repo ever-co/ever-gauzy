@@ -291,7 +291,7 @@ export class UserController extends CrudController<User> {
 		description: 'Record not found'
 	})
 	@UseGuards(TenantPermissionGuard, PermissionGuard)
-	@Permissions(PermissionsEnum.ACCESS_DELETE_ACCOUNT)
+	@Permissions(PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ACCESS_DELETE_ACCOUNT)
 	@Delete(':id')
 	async delete(
 		@Param('id', UUIDValidationPipe) id: IUser['id'],

@@ -13,7 +13,7 @@ import { LocalStore } from './desktop-store';
 import { notifyScreenshot, takeshot } from './desktop-screenshot';
 import { resetPermissions } from 'mac-screen-capture-permissions';
 import * as _ from 'underscore';
-import { timeTrackerPage } from '@gauzy/desktop-window';
+import { ScreenCaptureNotification, timeTrackerPage } from '@gauzy/desktop-window';
 // Import logging for electron and override default console logging
 import log from 'electron-log';
 import NotificationDesktop from './desktop-notifier';
@@ -324,11 +324,22 @@ export function ipcTimer(
 	config,
 	createSettingsWindow,
 	windowPath,
-	soundPath
+	soundPath,
+	alwaysOn
 ) {
 	let powerManager: IPowerManager;
 	let powerManagerPreventSleep: PowerManagerPreventDisplaySleep;
 	let powerManagerDetectInactivity: PowerManagerDetectInactivity;
+	app.whenReady().then(async () => {
+		if (!notificationWindow) {
+			notificationWindow = new ScreenCaptureNotification(
+				app.getName() !== 'gauzy-desktop-timer'
+					? windowPath.screenshotWindow
+					: windowPath.timeTrackerUi);
+			console.log('App Name:', app.getName());
+			await notificationWindow.loadURL();
+		}
+	})
 
 	ipcMain.on('create-synced-interval', async (_event, arg) => {
 		try {
@@ -346,13 +357,19 @@ export function ipcTimer(
 
 	offlineMode.on('offline', async () => {
 		console.log('Offline mode triggered...');
-		timeTrackerWindow.webContents.send('offline-handler', true);
+		const windows = [alwaysOn.browserWindow, timeTrackerWindow];
+		for (const window of windows) {
+			window.webContents.send('offline-handler', true);
+		}
 	});
 
 	offlineMode.on('connection-restored', async () => {
 		console.log('Api connected...');
 		try {
-			timeTrackerWindow.webContents.send('offline-handler', false);
+			const windows = [alwaysOn.browserWindow, timeTrackerWindow];
+			for (const window of windows) {
+				window.webContents.send('offline-handler', false);
+			}
 			await sequentialSyncQueue(timeTrackerWindow);
 		} catch (error) {
 			console.log('Error', error);
@@ -891,6 +908,28 @@ export function ipcTimer(
 		for (const window of windows) {
 			window?.webContents?.send('preferred_language_change', language);
 		}
+	});
+
+	ipcMain.on('show_ao', async (event, arg) => {
+		const setting = LocalStore.getStore('appSetting');
+		if (setting?.alwaysOn) {
+			alwaysOn.show();
+		}
+	})
+
+	ipcMain.on('hide_ao', (event, arg) => {
+		alwaysOn.hide();
+	})
+
+	ipcMain.on('change_state_from_ao', async (event, arg) => {
+		const windows = [alwaysOn.browserWindow, timeTrackerWindow];
+		for (const window of windows) {
+			window.webContents.send('change_state_from_ao', arg);
+		}
+	})
+
+	ipcMain.on('ao_time_update', (event, arg) => {
+		alwaysOn.browserWindow.webContents.send('ao_time_update', arg);
 	});
 }
 

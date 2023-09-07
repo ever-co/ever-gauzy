@@ -31,6 +31,8 @@ export * from './lib/auth';
 export * from './lib/server-down/server-down.module';
 export * from './lib/interceptors';
 export * from './lib/ngx-translate';
+export * from './lib/always-on/always-on.component';
+export * from './lib/always-on/always-on.module';
 
 
 

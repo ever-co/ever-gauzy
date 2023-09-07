@@ -36,7 +36,8 @@ import {
 	AuthStrategy,
 	AuthService,
 	LanguageInterceptor,
-	Store
+	Store,
+	AlwaysOnModule
 } from '@gauzy/desktop-ui-lib';
 import { NbCardModule, NbButtonModule } from '@nebular/theme';
 import { RouterModule } from '@angular/router';
@@ -67,6 +68,7 @@ import { Router } from '@angular/router';
 		ImageViewerModule,
 		NbDatepickerModule.forRoot(),
 		AboutModule,
+		AlwaysOnModule
 	],
 	providers: [
 		AppService,

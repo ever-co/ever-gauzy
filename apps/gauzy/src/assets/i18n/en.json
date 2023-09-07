@@ -2056,6 +2056,7 @@
 			"ORG_TEAM_VIEW": "View Teams",
 			"ORG_TEAM_EDIT": "Edit Teams",
 			"ORG_TEAM_DELETE": "Delete Teams",
+			"ORG_TEAM_REMOVE_ACCOUNT_AS_MEMBER": "Remove Account As Team Member",
 			"ORG_TEAM_JOIN_REQUEST_VIEW": "View Teams Join Requests",
 			"ORG_TEAM_JOIN_REQUEST_EDIT": "Delete Teams Join Requests",
 			"ORG_CONTRACT_EDIT": "Create/Edit Contracts",
@@ -2080,7 +2081,9 @@
 			"ORG_TASK_VIEW": "View Tasks",
 			"ORG_TASK_EDIT": "Edit Tasks",
 			"ORG_TASK_DELETE": "Delete Tasks",
-			"ORG_TASK_SETTING": "Task Settings"
+			"ORG_TASK_SETTING": "Task Settings",
+			"IMPORT_ADD": "Ability to import your data",
+			"EXPORT_ADD": "Ability to export your data"
 		},
 		"BILLING": "Billing",
 		"BUDGET": "Budget",
@@ -3836,7 +3839,9 @@
 			"TIMEZONE_LABEL": "Choosing 'Local' displays time in your local time zone, while selecting 'UTC' shows time in the universal UTC timezone used by billing and other systems.",
 			"TIMEZONE_PLACEHOLDER": "Select either 'Local' or 'UTC'.",
 			"TIMEZONE_LOCAL": "Local",
-			"TIMEZONE_UTC": "UTC"
+			"TIMEZONE_UTC": "UTC",
+			"WIDGET": "Widget",
+			"WIDGET_LABEL": "This window reflect the status of the timer, indicating whether it is running or stopped, and function as a button."
 		},
 		"WEEKLY_LIMIT_EXCEEDED": "Weekly limit exceeded",
 		"OF_HRS": "Of {{ limit }} hrs",

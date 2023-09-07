@@ -7,7 +7,7 @@ import { IBasePerTenantEntityModel } from './base-entity.model';
 import { ITag } from './tag.model';
 import { IEmployee } from './employee.model';
 import { IPayment } from './payment.model';
-import { IOrganization } from './organization.model';
+import { IUserOrganization } from './user-organization.model';
 import { IInvite } from './invite.model';
 import { ICandidate } from 'candidate.model';
 import { IRelationalImageAsset } from './image-asset.model';
@@ -39,7 +39,7 @@ export interface IUser extends IBasePerTenantEntityModel, IRelationalImageAsset 
 	payments?: IPayment[];
 	preferredComponentLayout?: ComponentLayoutStyleEnum;
 	fullName?: string;
-	organizations?: IOrganization[];
+	organizations?: IUserOrganization[];
 	isImporting?: boolean;
 	sourceId?: string;
 	isActive?: boolean;
@@ -85,8 +85,6 @@ export interface IVerificationTokenPayload extends IUserEmailInput {
 	id: string;
 }
 
-export interface IUserInviteCodeConfirmationInput extends IUserEmailInput, IUserCodeInput { }
-
 export interface IUserEmailInput {
 	email: string;
 }
@@ -103,18 +101,13 @@ export interface IUserCodeInput {
 	code: string;
 }
 
-export interface IUserMagicCodeInput {
-	magic_code?: string;
-}
+export interface IUserLoginInput extends IUserEmailInput, IUserPasswordInput { }
 
-export interface IUserLoginInput extends IUserEmailInput, IUserPasswordInput, IUserMagicCodeInput { }
-
-export interface IUserSignInWorkspaceInput extends IUserEmailInput, IUserPasswordInput { }
-
-export interface IUserSignInWorkspaceResponse {
-	users: IUser[];
+export interface IUserSigninWorkspaceResponse {
+	workspaces: IUser[];
 	confirmed_email: string;
 	show_popup: boolean;
+	total_workspaces: number;
 }
 
 export interface IAuthResponse {

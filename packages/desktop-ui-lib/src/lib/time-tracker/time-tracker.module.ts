@@ -39,6 +39,7 @@ import { TimeSlotQueueService } from '../offline-sync';
 import { ImageViewerModule } from '../image-viewer/image-viewer.module';
 import { NgxTranslateModule } from '../ngx-translate';
 import { LanguageSelectorService } from '../language/language-selector.service';
+import { AlwaysOnService } from '../always-on/always-on.service';
 
 @NgModule({
 	declarations: [
@@ -46,7 +47,7 @@ import { LanguageSelectorService } from '../language/language-selector.service';
 		CustomRenderComponent,
 		NoDataMessageComponent,
 		HumanizePipe,
-		OrganizationSelectorComponent
+		OrganizationSelectorComponent,
 	],
 	imports: [
 		CommonModule,
@@ -75,7 +76,7 @@ import { LanguageSelectorService } from '../language/language-selector.service';
 		NbTooltipModule,
 		TimeTrackerStatusModule,
 		ImageViewerModule,
-		NgxTranslateModule
+		NgxTranslateModule,
 	],
 	providers: [
 		NbSidebarService,
@@ -90,8 +91,9 @@ import { LanguageSelectorService } from '../language/language-selector.service';
 		LoggerService,
 		Store,
 		TimeSlotQueueService,
-		LanguageSelectorService
+		LanguageSelectorService,
+		AlwaysOnService,
 	],
-	exports: [TimeTrackerComponent]
+	exports: [TimeTrackerComponent],
 })
 export class TimeTrackerModule {}

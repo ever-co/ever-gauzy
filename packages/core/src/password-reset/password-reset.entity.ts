@@ -5,9 +5,9 @@ import { IPasswordReset } from '@gauzy/contracts';
 import { BaseEntity } from './../core/entities/base.entity';
 
 @Entity('password_reset')
-export class PasswordReset extends BaseEntity 
+export class PasswordReset extends BaseEntity
 	implements IPasswordReset {
-	
+
 	@ApiProperty({ type: () => String })
 	@Index()
 	@Column()
@@ -21,8 +21,8 @@ export class PasswordReset extends BaseEntity
 	expired?: boolean;
 
 	/**
-    * Called after entity is loaded.
-    */
+	* Called after entity is loaded.
+	*/
 	@AfterLoad()
 	afterLoadEntity?() {
 		const createdAt = moment(this.createdAt, 'YYYY-MM-DD HH:mm:ss');

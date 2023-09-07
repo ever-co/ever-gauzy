@@ -12,7 +12,8 @@ import {
 	AboutComponent,
 	AuthGuard,
 	NoAuthGuard,
-	ServerDownPage
+	ServerDownPage,
+	AlwaysOnComponent
 } from '@gauzy/desktop-ui-lib';
 import {
 	NbAuthComponent,
@@ -60,6 +61,10 @@ const routes: Routes = [
 	{
 		path: 'screen-capture',
 		component: ScreenCaptureComponent
+	},
+	{
+		path: 'always-on',
+		component: AlwaysOnComponent
 	},
 	{
 		path: 'settings',
