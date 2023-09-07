@@ -44,6 +44,7 @@ export class DefaultWindow implements IBaseWindow {
 	}
 
 	public close(): void {
+		if (!this._browserWindow) return;
 		this.hide();
 		this._browserWindow.destroy();
 		this._browserWindow = null;

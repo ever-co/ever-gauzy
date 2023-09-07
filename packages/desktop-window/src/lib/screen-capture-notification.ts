@@ -1,8 +1,9 @@
 import { screen } from 'electron';
 import { IBaseWindow } from './interfaces';
 import { BaseWindow } from './interfaces/base-window';
-import { LocalStore } from '@gauzy/desktop-libs';
 import { DefaultWindow, WindowConfig } from './concretes';
+const Store = require('electron-store');
+const store = new Store();
 
 export class ScreenCaptureNotification
 	extends BaseWindow
@@ -43,7 +44,7 @@ export class ScreenCaptureNotification
 		if (!this.browserWindow) return;
 		this.browserWindow.showInactive();
 		this.browserWindow.webContents.send('show_popup_screen_capture', {
-			note: LocalStore.beforeRequestParams().note,
+			note: store.get('project').note,
 			...(thumbUrl && { imgUrl: thumbUrl }),
 		});
 	}
