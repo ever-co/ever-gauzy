@@ -107,6 +107,7 @@ export interface IUserSigninWorkspaceResponse {
 	workspaces: IUser[];
 	confirmed_email: string;
 	show_popup: boolean;
+	total_workspaces: number;
 }
 
 export interface IAuthResponse {
