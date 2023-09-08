@@ -91,7 +91,7 @@ export class HubstaffService {
 			this._httpService.get(url, { headers }).pipe(
 				catchError((error: AxiosError<any>) => {
 					const response: AxiosResponse<any> = error.response;
-					console.log('Error while hunstaff API: %s', response);
+					console.log('Error while hubstaff API: %s', response);
 
 					/** Handle hubstaff http exception */
 					throw new HttpException({ message: error.message, error }, response.status);

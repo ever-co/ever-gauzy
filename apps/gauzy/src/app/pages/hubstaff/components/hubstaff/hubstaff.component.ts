@@ -56,7 +56,7 @@ export class HubstaffComponent extends TranslationBaseComponent implements OnIni
 		this._loadSettingsSmartTable();
 		this._loadActions();
 		this._applyTranslationOnSmartTable();
-		this._setTokenAndloadOrganizations();
+		this._setTokenAndLoadOrganizations();
 
 		this._store.selectedOrganization$
 			.pipe(
@@ -80,7 +80,7 @@ export class HubstaffComponent extends TranslationBaseComponent implements OnIni
 
 	ngOnDestroy(): void { }
 
-	private _setTokenAndloadOrganizations() {
+	private _setTokenAndLoadOrganizations() {
 		this.integrationId = this._activatedRoute.snapshot.params.id;
 		this._hubstaffService
 			.getIntegration(this.integrationId)
