@@ -39,7 +39,8 @@ import {
 	IHubstaffTimeSlotActivity,
 	IActivity,
 	IHubstaffLogFromTimeSlots,
-	ICreateHubstaffIntegrationInput
+	ICreateHubstaffIntegrationInput,
+	DefaultValueDateTypeEnum
 } from '@gauzy/contracts';
 import {
 	DEFAULT_ENTITY_SETTINGS,
@@ -356,7 +357,7 @@ export class HubstaffService {
 						/** Third Party Organization Map */
 						const organizationMap = {
 							name: organization.name,
-							status: organization.status,
+							isActive: organization.status == 'active',
 							currency: env.defaultCurrency as CurrenciesEnum
 						}
 						return await this._commandBus.execute(
