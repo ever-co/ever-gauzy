@@ -1,13 +1,13 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import {
-	IOrganizationProjectsCreateInput,
+	IOrganizationProjectCreateInput,
 	IOrganizationProject,
 	IOrganizationProjectsFindInput,
 	IEditEntityByMemberInput,
 	IPagination,
 	IEmployee,
-	IOrganizationProjectsUpdateInput
+	IOrganizationProjectUpdateInput
 } from '@gauzy/contracts';
 import { firstValueFrom, take } from 'rxjs';
 import { toParams } from '@gauzy/common-angular';
@@ -24,7 +24,7 @@ export class OrganizationProjectsService {
 	) { }
 
 	create(
-		body: IOrganizationProjectsCreateInput
+		body: IOrganizationProjectCreateInput
 	): Promise<IOrganizationProject> {
 		return firstValueFrom(
 			this.http.post<IOrganizationProject>(this.API_URL, body)
@@ -32,7 +32,7 @@ export class OrganizationProjectsService {
 	}
 
 	edit(
-		body: Partial<IOrganizationProjectsUpdateInput>
+		body: Partial<IOrganizationProjectUpdateInput>
 	): Promise<IOrganizationProject> {
 		return firstValueFrom(
 			this.http.put<IOrganizationProject>(`${this.API_URL}/${body.id}`, body)
@@ -86,7 +86,7 @@ export class OrganizationProjectsService {
 
 	updateTaskViewMode(
 		id: IOrganizationProject['id'],
-		body: IOrganizationProjectsUpdateInput
+		body: IOrganizationProjectUpdateInput
 	): Promise<IOrganizationProject> {
 		return firstValueFrom(
 			this.http.put<IOrganizationProject>(`${this.API_URL}/task-view/${id}`, body).pipe(take(1))
