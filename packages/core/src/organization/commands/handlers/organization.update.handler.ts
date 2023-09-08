@@ -1,5 +1,5 @@
-import { IOrganization, IOrganizationUpdateInput } from '@gauzy/contracts';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
+import { IOrganization, IOrganizationUpdateInput } from '@gauzy/contracts';
 import { OrganizationService } from '../../organization.service';
 import { OrganizationUpdateCommand } from '../organization.update.command';
 
@@ -14,26 +14,28 @@ export class OrganizationUpdateHandler
 	public async execute(
 		command: OrganizationUpdateCommand
 	): Promise<IOrganization> {
-		const { input } = command;
-		const { id } = input;
-		return this.updateOrganization(id, input);
+		const { input, id } = command;
+		return await this.update(id, input);
 	}
 
-	private async updateOrganization(
-		id: string,
-		input: IOrganizationUpdateInput
-	): Promise<IOrganization> {
-		const organization: IOrganization = await this.organizationService.findOneByIdString(
-			id
-		);
+	/**
+	 *
+	 * @param id
+	 * @param input
+	 * @returns
+	 */
+	private async update(id: IOrganization['id'], input: IOrganizationUpdateInput): Promise<IOrganization> {
+		const organization: IOrganization = await this.organizationService.findOneByIdString(id);
 		if (organization) {
-			//if any organization set as default
 			const { tenantId } = organization;
+
+			//if any organization set as default
 			if (input.isDefault === true) {
 				await this.organizationService.update({ tenantId }, {
 					isDefault: false
 				});
 			}
+
 			const request = {
 				...input,
 				upworkOrganizationId: input.upworkOrganizationId || null,
@@ -48,9 +50,10 @@ export class OrganizationUpdateHandler
 				show_clients: input.show_clients === false ? false : true,
 				show_employees_count: input.show_employees_count === false ? false : true
 			};
+
 			await this.organizationService.create({
-				id,
-				...request
+				...request,
+				id
 			});
 		}
 

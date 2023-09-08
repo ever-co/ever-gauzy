@@ -6,5 +6,5 @@ export class IntegrationMapSyncProjectCommand implements ICommand {
 
 	constructor(
 		public readonly input: IIntegrationMapSyncProject
-	) {}
+	) { }
 }

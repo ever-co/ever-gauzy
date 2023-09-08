@@ -1,4 +1,4 @@
-import { BadRequestException } from '@nestjs/common';
+import { HttpException, HttpStatus } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { ITask, ITaskUpdateInput } from '@gauzy/contracts';
 import { TaskService } from '../../task.service';
@@ -52,8 +52,8 @@ export class TaskUpdateHandler implements ICommandHandler<TaskUpdateCommand> {
 				id
 			});
 		} catch (error) {
-			console.log('Error while updating task', error?.message);
-			throw new BadRequestException(error);
+			console.log('Error while updating task %s', error?.message);
+			throw new HttpException({ message: error?.message, error }, HttpStatus.BAD_REQUEST);
 		}
 	}
 }
