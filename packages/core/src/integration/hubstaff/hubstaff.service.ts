@@ -1,7 +1,8 @@
 import {
 	Injectable,
 	BadRequestException,
-	HttpException
+	HttpException,
+	HttpStatus
 } from '@nestjs/common';
 import { HttpService } from '@nestjs/axios';
 import { AxiosError, AxiosResponse } from 'axios';
@@ -68,7 +69,6 @@ import {
 import { IntegrationTenantService } from 'integration-tenant/integration-tenant.service';
 import { IntegrationTenantCreateCommand } from 'integration-tenant/commands';
 
-
 @Injectable()
 export class HubstaffService {
 	constructor(
@@ -90,19 +90,10 @@ export class HubstaffService {
 			this._httpService.get(url, { headers }).pipe(
 				catchError((error: AxiosError<any>) => {
 					const response: AxiosResponse<any> = error.response;
+					console.log('Error while hunstaff API: %s', response);
 
-					const status = response.status;
-					const statusText = response.statusText;
-					const data = response.data;
-
-					/**
-					 * Handle hubstaff http exception
-					 */
-					throw new HttpException({
-						statusCode: status,
-						error: statusText,
-						message: data.error
-					}, response.status);
+					/** Handle hubstaff http exception */
+					throw new HttpException({ message: error.message, error }, response.status);
 				}),
 				map(
 					(response: AxiosResponse<T>) => response.data
@@ -269,16 +260,11 @@ export class HubstaffService {
 		return await lastValueFrom(tokens$);
 	}
 
-	/*
-	 * Fetch all organizations
+	/***
+	 * Get all organizations
 	 */
-	async fetchOrganizations({
-		token
-	}): Promise<IHubstaffOrganization[]> {
-		const { organizations } = await this.fetchIntegration<IHubstaffOrganizationsResponse[]>(
-			'organizations',
-			token
-		);
+	async getOrganizations(token: string): Promise<IHubstaffOrganization[]> {
+		const { organizations } = await this.fetchIntegration<IHubstaffOrganizationsResponse[]>('organizations', token);
 		return organizations;
 	}
 
@@ -289,13 +275,15 @@ export class HubstaffService {
 		organizationId,
 		token
 	}): Promise<IHubstaffProject[]> {
-		const { projects } = await this.fetchIntegration<IHubstaffProjectsResponse[]>(
-			`organizations/${organizationId}/projects?status=all`,
-			token
-		);
+		const { projects } = await this.fetchIntegration<IHubstaffProjectsResponse[]>(`organizations/${organizationId}/projects?status=all&include=clients`, token);
 		return projects;
 	}
 
+	/**
+	 *
+	 * @param param0
+	 * @returns
+	 */
 	async syncProjects({
 		integrationId,
 		organizationId,
@@ -306,38 +294,36 @@ export class HubstaffService {
 			const tenantId = RequestContext.currentTenantId();
 			return await Promise.all(
 				await projects.map(
-					async ({ name, sourceId, billable, description }) => {
-						const { project } = await this.fetchIntegration<IHubstaffProjectResponse>(
-							`projects/${sourceId}`,
-							token
-						);
-						/**
-						 * Set Project Budget Here
-						 */
-						let budget = {};
-						if (project.budget) {
-							budget['budgetType'] = project.budget.type || OrganizationProjectBudgetTypeEnum.COST;
-							budget['startDate'] = project.budget.start_date || null;
-							budget['budget'] = project.budget[budget['budgetType']];
-						}
-						const payload = {
-							name,
-							organizationId,
+					async ({ sourceId }) => {
+						const { project } = await this.fetchIntegration<IHubstaffProjectResponse>(`projects/${sourceId}`, token);
+
+						/** Third Party Organization Project Map */
+						const organizationProjectMap = {
+							name: project.name,
+							description: project.description,
+							billable: project.billable,
 							public: true,
 							billing: ProjectBillingEnum.RATE,
 							currency: env.defaultCurrency as CurrenciesEnum,
-							billable,
-							description,
+							organizationId,
 							tenantId,
-							...budget
-						};
+							/** Set Project Budget Here */
+							...(project.budget
+								? {
+									budgetType: project.budget.type || OrganizationProjectBudgetTypeEnum.COST,
+									startDate: project.budget.start_date || null,
+									budget: project.budget[project.budget.type || OrganizationProjectBudgetTypeEnum.COST]
+								}
+								: {}),
+						}
 						return await this._commandBus.execute(
 							new IntegrationMapSyncProjectCommand(
 								Object.assign({
-									organizationProjectInput: payload,
+									organizationProject: organizationProjectMap,
 									sourceId,
 									integrationId,
-									organizationId
+									organizationId,
+									tenantId
 								})
 							)
 						);
@@ -345,35 +331,49 @@ export class HubstaffService {
 				)
 			)
 		} catch (error) {
-			throw new BadRequestException(error, `Can\'t sync ${IntegrationEntity.PROJECT}`);
+			console.log(`Error while syncing ${IntegrationEntity.PROJECT} entity for organization (${organizationId}): %s`, error?.message);
+			throw new HttpException({ message: error?.message, error }, HttpStatus.BAD_REQUEST);
 		}
 	}
 
+	/**
+	 *
+	 * @param param0
+	 * @returns
+	 */
 	async syncOrganizations({
 		integrationId,
 		organizationId,
-		organizations
+		organizations,
+		token
 	}): Promise<IIntegrationMap[]> {
 		try {
+			const tenantId = RequestContext.currentTenantId();
 			return await Promise.all(
 				await organizations.map(
-					async (organization) => {
-						const { sourceId } = organization;
+					async ({ sourceId }) => {
+						const { organization } = await this.fetchIntegration<IHubstaffProjectResponse>(`organizations/${sourceId}`, token);
+						/** Third Party Organization Map */
+						const organizationMap = {
+							name: organization.name,
+							status: organization.status,
+							currency: env.defaultCurrency as CurrenciesEnum
+						}
 						return await this._commandBus.execute(
-							new IntegrationMapSyncOrganizationCommand(
-								Object.assign({
-									organizationInput: organization,
-									sourceId,
-									integrationId,
-									organizationId
-								})
-							)
+							new IntegrationMapSyncOrganizationCommand({
+								organizationInput: organizationMap,
+								sourceId,
+								integrationId,
+								organizationId,
+								tenantId
+							})
 						);
 					}
 				)
 			);
 		} catch (error) {
-			throw new BadRequestException(error, `Can\'t sync ${IntegrationEntity.ORGANIZATION}`);
+			console.log(`Error while syncing ${IntegrationEntity.ORGANIZATION} entity (${organizationId}): %s`, error?.message);
+			throw new HttpException({ message: error?.message, error }, HttpStatus.BAD_REQUEST);
 		}
 	}
 

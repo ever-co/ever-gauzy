@@ -1,4 +1,4 @@
-import { Controller, Post, Body, Get, Param, UseGuards } from '@nestjs/common';
+import { Controller, Post, Body, Get, Param, UseGuards, Query } from '@nestjs/common';
 import {
 	IIntegrationTenant,
 	IHubstaffOrganization,
@@ -67,14 +67,11 @@ export class HubstaffController {
 	 * @param body
 	 * @returns
 	 */
-	@Post('/organizations/:integrationId')
+	@Get('/organizations')
 	async getOrganizations(
-		@Param('integrationId', UUIDValidationPipe) integrationId: IIntegrationTenant['id'],
-		@Body() body
+		@Query('token') token: string,
 	): Promise<IHubstaffOrganization[]> {
-		return await this._hubstaffService.fetchOrganizations({
-			...body
-		});
+		return await this._hubstaffService.getOrganizations(token);
 	}
 
 	/**
@@ -83,13 +80,13 @@ export class HubstaffController {
 	 * @param body
 	 * @returns
 	 */
-	@Post('/projects/:organizationId')
+	@Get('/projects/:organizationId')
 	async getProjects(
 		@Param('organizationId') organizationId: IOrganization['id'],
-		@Body() body
+		@Query('token') token: string
 	): Promise<IHubstaffProject[]> {
 		return await this._hubstaffService.fetchOrganizationProjects({
-			...body,
+			token,
 			organizationId
 		});
 	}
@@ -100,15 +97,11 @@ export class HubstaffController {
 	 * @param body
 	 * @returns
 	 */
-	@Post('/sync-projects/:integrationId')
+	@Post('/sync-projects')
 	async syncProjects(
-		@Param('integrationId', UUIDValidationPipe) integrationId: IIntegrationTenant['id'],
-		@Body() body
+		@Body() input: any
 	): Promise<IIntegrationMap[]> {
-		return await this._hubstaffService.syncProjects({
-			...body,
-			integrationId
-		});
+		return await this._hubstaffService.syncProjects(input);
 	}
 
 	/**
@@ -117,15 +110,11 @@ export class HubstaffController {
 	 * @param body
 	 * @returns
 	 */
-	@Post('/sync-organizations/:integrationId')
+	@Post('/sync-organizations')
 	async syncOrganizations(
-		@Param('integrationId', UUIDValidationPipe) integrationId: string,
-		@Body() body
+		@Body() input: any
 	): Promise<IIntegrationMap[]> {
-		return await this._hubstaffService.syncOrganizations({
-			...body,
-			integrationId
-		});
+		return await this._hubstaffService.syncOrganizations(input);
 	}
 
 	/**

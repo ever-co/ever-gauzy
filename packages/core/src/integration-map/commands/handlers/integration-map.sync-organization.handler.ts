@@ -34,25 +34,17 @@ export class IntegrationMapSyncOrganizationHandler
 					sourceId,
 					entity: IntegrationEntity.ORGANIZATION,
 					tenantId,
-					organizationId
+					organizationId,
+					integrationId
 				}
 			});
 			await this._commandBus.execute(
-				new OrganizationUpdateCommand(
-					Object.assign({}, organizationInput, {
-						id: organizationMap.gauzyId,
-						imageUrl: organizationInput.imageUrl
-					})
-				)
+				new OrganizationUpdateCommand(organizationMap.gauzyId, organizationInput)
 			);
 			return organizationMap;
 		} catch (error) {
 			const organization = await this._commandBus.execute(
-				new OrganizationCreateCommand(
-					Object.assign({}, organizationInput, {
-						imageUrl: organizationInput.imageUrl
-					})
-				)
+				new OrganizationCreateCommand(organizationInput)
 			);
 			return await this._commandBus.execute(
 				new IntegrationMapSyncEntityCommand({

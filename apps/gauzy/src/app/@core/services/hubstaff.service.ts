@@ -7,7 +7,6 @@ import {
 	IHubstaffOrganization,
 	IHubstaffProject,
 	IIntegrationEntitySetting,
-	DefaultValueDateTypeEnum,
 	IIntegrationMap,
 	IntegrationEntity,
 	IDateRangeActivityFilter,
@@ -21,7 +20,6 @@ import { toParams } from '@gauzy/common-angular';
 import { HUBSTAFF_AUTHORIZATION_URL } from '@gauzy/integration-hubstaff';
 import { environment } from '@env/environment';
 import { API_PREFIX } from '../constants/app.constants';
-import { Router } from '@angular/router';
 
 const TODAY = new Date();
 
@@ -52,8 +50,7 @@ export class HubstaffService {
 	integrationId: string;
 
 	constructor(
-		private readonly _http: HttpClient,
-		private readonly _router: Router
+		private readonly _http: HttpClient
 	) { }
 
 	getIntegration(integrationId): Observable<IIntegrationEntitySetting[]> {
@@ -162,31 +159,53 @@ export class HubstaffService {
 		});
 	}
 
-	getOrganizations(integrationId): Observable<IHubstaffOrganization[]> {
-		return this._http.post<IHubstaffOrganization[]>(
-			`${API_PREFIX}/integration/hubstaff/organizations/${integrationId}`,
-			{
+	/**
+	 *
+	 * @param integrationId
+	 * @returns
+	 */
+	getOrganizations(integrationId: string): Observable<IHubstaffOrganization[]> {
+		return this._http.get<IHubstaffOrganization[]>(`${API_PREFIX}/integration/hubstaff/organizations`, {
+			params: toParams({
 				token: this.ACCESS_TOKEN,
-			}
-		);
+				integrationId
+			})
+		});
 	}
 
-	getProjects(organizationId, integrationId): Observable<IHubstaffProject[]> {
-		return this._http.post<IHubstaffProject[]>(
-			`${API_PREFIX}/integration/hubstaff/projects/${organizationId}`,
-			{ token: this.ACCESS_TOKEN, integrationId }
-		);
+	/**
+	 *
+	 * @param organizationId
+	 * @param integrationId
+	 * @returns
+	 */
+	getProjects(hubstaffOrganizationId: string, integrationId: string): Observable<IHubstaffProject[]> {
+		return this._http.get<IHubstaffProject[]>(`${API_PREFIX}/integration/hubstaff/projects/${hubstaffOrganizationId}`, {
+			params: toParams({
+				integrationId,
+				token: this.ACCESS_TOKEN
+			})
+		});
 	}
 
-	syncProjects(projects, integrationId, organizationId) {
-		return this._http.post(
-			`${API_PREFIX}/integration/hubstaff/sync-projects/${integrationId}`,
-			{
-				projects: this._mapProjectPayload(projects),
-				organizationId,
-				token: this.ACCESS_TOKEN,
-			}
-		);
+	/**
+	 *
+	 * @param projects
+	 * @param integrationId
+	 * @param organizationId
+	 * @returns
+	 */
+	syncProjects(
+		projects: any,
+		integrationId: string,
+		organizationId: string
+	) {
+		return this._http.post(`${API_PREFIX}/integration/hubstaff/sync-projects`, {
+			projects: this._mapProjectPayload(projects),
+			organizationId,
+			integrationId,
+			token: this.ACCESS_TOKEN
+		});
 	}
 
 	setActivityDateRange({ start, end }) {
@@ -214,22 +233,12 @@ export class HubstaffService {
 
 		// if organization is set to true, map all entities to this organizations, else use hubstaff organizations id and map all entities to current selected gauzy organization
 		if (organizationEntityToSync && organizationEntityToSync.sync) {
-			const organizationsMap$ = this._http.post<IIntegrationMap[]>(
-				`${API_PREFIX}/integration/hubstaff/sync-organizations/${integrationId}`,
-				{
-					organizations: hubstaffOrganizations.map(
-						({ name, id }) => ({
-							name,
-							sourceId: id,
-							currency: environment.DEFAULT_CURRENCY,
-							defaultValueDateType:
-								DefaultValueDateTypeEnum.TODAY,
-						})
-					),
-					organizationId,
-				}
-			);
-
+			const organizationsMap$ = this._http.post<IIntegrationMap[]>(`${API_PREFIX}/integration/hubstaff/sync-organizations`, {
+				organizations: this._mapOrganizationPayload(hubstaffOrganizations),
+				organizationId,
+				integrationId,
+				token: this.ACCESS_TOKEN
+			});
 			return organizationsMap$.pipe(
 				debounceTime(1000),
 				switchMap((organizations) =>
@@ -271,15 +280,25 @@ export class HubstaffService {
 		).pipe(debounceTime(2000));
 	}
 
+	/**
+	 *
+	 * @param data
+	 * @returns
+	 */
 	private _mapProjectPayload(data: any[]) {
-		return data.map(
-			({ name, id, billable, description, client_id = null }) => ({
-				name,
-				sourceId: id,
-				billable,
-				description,
-				client_id,
-			})
-		);
+		return data.map(({ id }) => ({
+			sourceId: id,
+		}));
+	}
+
+	/**
+	 *
+	 * @param data
+	 * @returns
+	 */
+	private _mapOrganizationPayload(data: any[]) {
+		return data.map(({ id }) => ({
+			sourceId: id,
+		}));
 	}
 }

@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { TitleCasePipe } from '@angular/common';
 import { TranslateService } from '@ngx-translate/core';
 import { ActivatedRoute } from '@angular/router';
@@ -25,11 +25,7 @@ import { SettingsDialogComponent } from '../settings-dialog/settings-dialog.comp
 	styleUrls: ['./hubstaff.component.scss'],
 	providers: [TitleCasePipe]
 })
-export class HubstaffComponent
-	extends TranslationBaseComponent
-	implements OnInit, OnDestroy {
-		
-	@ViewChild('projectsTable') projectsTable;
+export class HubstaffComponent extends TranslationBaseComponent implements OnInit, OnDestroy {
 
 	settingsSmartTable: object;
 	organizations$: Observable<IHubstaffOrganization[]>;
@@ -82,7 +78,7 @@ export class HubstaffComponent
 			});
 	}
 
-	ngOnDestroy(): void {}
+	ngOnDestroy(): void { }
 
 	private _setTokenAndloadOrganizations() {
 		this.integrationId = this._activatedRoute.snapshot.params.id;
@@ -99,7 +95,6 @@ export class HubstaffComponent
 					this._hubstaffService.getOrganizations(this.integrationId)
 				),
 				tap((organizations) => (this.organizations = organizations)),
-				tap(() => (this.loading = false)),
 				catchError((error) => {
 					this._errorHandlingService.handleError(error);
 					return of([]);
@@ -119,6 +114,7 @@ export class HubstaffComponent
 
 	private _loadSettingsSmartTable() {
 		this.settingsSmartTable = {
+			selectedRowIndex: -1,
 			selectMode: 'multi',
 			actions: {
 				add: false,
@@ -167,7 +163,6 @@ export class HubstaffComponent
 	}
 
 	selectProject({ selected }) {
-		this.projectsTable.grid.dataSet.willSelect = false;
 		this.selectedProjects = selected;
 	}
 

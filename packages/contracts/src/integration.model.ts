@@ -1,11 +1,13 @@
 import { IHubstaffScreenshotActivity, IHubstaffTimeSlotActivity } from './hubstaff.model';
-import { IOrganizationUpdateInput, ITaskUpdateInput } from './index';
 import { IActivity, ITimeLog } from './timesheet.model';
 import {
 	IBaseEntityModel,
-	IBasePerTenantAndOrganizationEntityModel
+	IBasePerTenantAndOrganizationEntityModel,
+	IBasePerTenantEntityModel
 } from './base-entity.model';
-import { IOrganizationProjectsUpdateInput } from './organization-projects.model';
+import { IOrganizationProject } from './organization-projects.model';
+import { IOrganizationCreateInput, IOrganizationUpdateInput } from './organization.model';
+import { ITaskUpdateInput } from './task.model';
 import { ITag } from './tag.model';
 
 export interface IRelationalIntegrationTenant {
@@ -115,13 +117,13 @@ export interface IIntegrationMapSyncTask extends IBasePerTenantAndOrganizationEn
 }
 
 export interface IIntegrationMapSyncProject extends IBasePerTenantAndOrganizationEntityModel {
-	organizationProjectInput: IOrganizationProjectsUpdateInput;
+	organizationProject: IOrganizationProject;
 	integrationId: string;
 	sourceId: string;
 }
 
 export interface IIntegrationMapSyncOrganization extends IBasePerTenantAndOrganizationEntityModel {
-	organizationInput: IOrganizationUpdateInput;
+	organizationInput: IOrganizationCreateInput | IOrganizationUpdateInput,
 	integrationId: string;
 	sourceId: string;
 }
