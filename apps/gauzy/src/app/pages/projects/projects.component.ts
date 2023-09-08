@@ -11,7 +11,7 @@ import {
 	IOrganization,
 	IOrganizationContact,
 	IOrganizationProject,
-	IOrganizationProjectsCreateInput,
+	IOrganizationProjectCreateInput,
 	PermissionsEnum,
 	ComponentLayoutStyleEnum,
 	CrudActionEnum,
@@ -152,7 +152,7 @@ export class ProjectsComponent extends PaginationFilterBaseComponent implements 
 		this._applyTranslationOnSmartTable();
 	}
 
-	ngOnDestroy() {}
+	ngOnDestroy() { }
 
 	setView() {
 		this.viewComponentName = ComponentEnum.PROJECTS;
@@ -217,7 +217,7 @@ export class ProjectsComponent extends PaginationFilterBaseComponent implements 
 		project
 	}: {
 		action: 'add' | 'edit';
-		project: IOrganizationProjectsCreateInput;
+		project: IOrganizationProjectCreateInput;
 	}) {
 		switch (action) {
 			case 'add':
@@ -279,10 +279,10 @@ export class ProjectsComponent extends PaginationFilterBaseComponent implements 
 				tenantId,
 				...(this.selectedEmployeeId
 					? {
-							members: {
-								id: this.selectedEmployeeId
-							}
-					  }
+						members: {
+							id: this.selectedEmployeeId
+						}
+					}
 					: {}),
 				...(this.filters.where ? this.filters.where : {})
 			},
@@ -333,8 +333,8 @@ export class ProjectsComponent extends PaginationFilterBaseComponent implements 
 		return this.viewPrivateProjects
 			? project
 			: project.public
-			? project
-			: project.members.map((member: IEmployee) => member.id === this.store.userId);
+				? project
+				: project.members.map((member: IEmployee) => member.id === this.store.userId);
 	}
 
 	private _loadSmartTableSettings() {

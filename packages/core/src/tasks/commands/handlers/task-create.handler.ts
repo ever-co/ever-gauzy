@@ -1,6 +1,6 @@
-import { ITask } from '@gauzy/contracts';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-import { BadRequestException } from '@nestjs/common';
+import { HttpException, HttpStatus } from '@nestjs/common';
+import { ITask } from '@gauzy/contracts';
 import { RequestContext } from './../../../core/context';
 import { TaskCreateCommand } from './../task-create.command';
 import { OrganizationProjectService } from './../../../organization-project/organization-project.service';
@@ -64,8 +64,8 @@ export class TaskCreateHandler implements ICommandHandler<TaskCreateCommand> {
 				organizationId,
 			});
 		} catch (error) {
-			console.log('Error while creating task', error?.message);
-			throw new BadRequestException(error);
+			console.log('Error while creating task %s', error?.message);
+			throw new HttpException({ message: error?.message, error }, HttpStatus.BAD_REQUEST);
 		}
 	}
 }

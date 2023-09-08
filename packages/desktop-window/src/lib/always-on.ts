@@ -7,7 +7,7 @@ export class AlwaysOn extends BaseWindow implements IBaseWindow {
 	private static readonly WIDTH: number = 60;
 	private static readonly HEIGHT: number = 110;
 
-	constructor(private readonly path: string) {
+	constructor(private readonly path?: string) {
 		super(
 			new DefaultWindow(
 				new WindowConfig('/always-on', path, {
