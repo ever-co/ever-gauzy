@@ -8,7 +8,7 @@ import { toParams } from '@gauzy/common-angular';
 import {
 	TimeLogSourceEnum,
 	TimeLogType,
-	IOrganizationProjectsCreateInput,
+	IOrganizationProjectCreateInput,
 	IOrganizationProject,
 	IOrganizationContactCreateInput,
 	IOrganizationContact,
@@ -41,7 +41,7 @@ export class TimeTrackerService {
 		private readonly _timeLogService: TimeLogCacheService,
 		private readonly _loggerService: LoggerService,
 		private readonly _store: Store
-	) {}
+	) { }
 
 	AW_HOST = 'http://localhost:5600';
 	token = '';
@@ -60,8 +60,8 @@ export class TimeTrackerService {
 				tenantId: values.tenantId,
 				...(values.projectId
 					? {
-							projectId: values.projectId,
-					  }
+						projectId: values.projectId,
+					}
 					: {}),
 			},
 		};
@@ -111,9 +111,9 @@ export class TimeTrackerService {
 	async getTags(values) {
 		const params = values.organizationId
 			? {
-					organizationId: values.organizationId,
-					tenantId: values.tenantId,
-			  }
+				organizationId: values.organizationId,
+				tenantId: values.tenantId,
+			}
 			: {};
 		let tags$ = this._tagCacheService.getValue(params);
 		if (!tags$) {
@@ -137,8 +137,8 @@ export class TimeTrackerService {
 			tenantId: values.tenantId,
 			...(values.organizationContactId
 				? {
-						organizationContactId: values.organizationContactId,
-				  }
+					organizationContactId: values.organizationContactId,
+				}
 				: {}),
 		};
 		let projects$ = this._projectCacheService.getValue(params);
@@ -554,7 +554,7 @@ export class TimeTrackerService {
 	}
 
 	createNewProject(
-		createInput: IOrganizationProjectsCreateInput,
+		createInput: IOrganizationProjectCreateInput,
 		data
 	): Promise<IOrganizationProject> {
 		return firstValueFrom(
