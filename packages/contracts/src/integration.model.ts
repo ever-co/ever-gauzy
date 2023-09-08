@@ -2,8 +2,7 @@ import { IHubstaffScreenshotActivity, IHubstaffTimeSlotActivity } from './hubsta
 import { IActivity, ITimeLog } from './timesheet.model';
 import {
 	IBaseEntityModel,
-	IBasePerTenantAndOrganizationEntityModel,
-	IBasePerTenantEntityModel
+	IBasePerTenantAndOrganizationEntityModel
 } from './base-entity.model';
 import { IOrganizationProject } from './organization-projects.model';
 import { IOrganizationCreateInput, IOrganizationUpdateInput } from './organization.model';

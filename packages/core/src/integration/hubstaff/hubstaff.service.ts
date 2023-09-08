@@ -39,8 +39,7 @@ import {
 	IHubstaffTimeSlotActivity,
 	IActivity,
 	IHubstaffLogFromTimeSlots,
-	ICreateHubstaffIntegrationInput,
-	DefaultValueDateTypeEnum
+	ICreateHubstaffIntegrationInput
 } from '@gauzy/contracts';
 import {
 	DEFAULT_ENTITY_SETTINGS,
