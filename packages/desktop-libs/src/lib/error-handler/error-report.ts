@@ -28,8 +28,8 @@ export class ErrorReport implements IErrorReport {
 	}
 	private bodyTemplate(): string {
 		return encodeURIComponent(
-			`### Description 🐊\n \`\`\`${this.description
-			}\`\`\`\n\n### To Reproduce 🧵\nResponse... \n\n### Screenshots 📸\nResponse... \n\n### Additional Information ⚓️\nResponse...  \n\n### Configuration 🛠 \nApp Version ⛓: **${app.getVersion()}**\nPlatform 🖥: **${os.platform()} ${os.arch()}**\nRelease 📦: **${os.release()}**`
+			`### Description 🐊\n \`\`\`\n${this.description
+			}\n\`\`\`\n\n### To Reproduce 🧵\nResponse... \n\n### Screenshots 📸\nResponse... \n\n### Additional Information ⚓️\nResponse...  \n\n### Configuration 🛠 \nApp Version ⛓: **${app.getVersion()}**\nPlatform 🖥: **${os.platform()} ${os.arch()}**\nRelease 📦: **${os.release()}**`
 		);
 	}
 

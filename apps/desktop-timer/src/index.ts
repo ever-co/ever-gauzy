@@ -202,6 +202,7 @@ eventErrorManager.onSendReport(async (message) => {
 		case 0:
 			report.description = message;
 			await report.submit();
+			app.exit(0);
 			break;
 		default:
 			app.exit(0);

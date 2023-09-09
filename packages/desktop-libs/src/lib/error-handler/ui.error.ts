@@ -8,8 +8,8 @@ Object.assign(console, log.functions);
 export class UIError extends BaseError {
 	private errorEventManager = ErrorEventManager.instance;
 
-	constructor(code: string, message: string, errorId: string) {
-		super(message);
+	constructor(code: string, error: any, errorId: string) {
+		super(String(error?.message || error));
 
 		Error.captureStackTrace(this, this.constructor);
 
@@ -17,17 +17,17 @@ export class UIError extends BaseError {
 		this.code = code;
 		this.id = errorId;
 
-		console.error(errorId, message);
+		console.error(errorId, error);
 
 		switch (code) {
 			case '500':
-				this.errorEventManager.sendReport(this.message);
+				this.errorEventManager.sendReport(error?.stack || this.message);
 				break;
 			case '400':
 				this.errorEventManager.showError(this.message);
 				break;
 			default:
-				this.errorEventManager.sendReport(this.message);
+				this.errorEventManager.sendReport(error?.stack || this.message);
 				break;
 		}
 	}

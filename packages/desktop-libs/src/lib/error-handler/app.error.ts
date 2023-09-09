@@ -9,18 +9,19 @@ Object.assign(console, log.functions);
 export class AppError extends BaseError {
 	private errorEventManager = ErrorEventManager.instance;
 
-	constructor(errorId: string, message: string) {
-		super(message);
+	constructor(errorId: string, error: any) {
+		super(String(error?.message || error));
 
 		Error.captureStackTrace(this, this.constructor);
 
 		this.name = this.constructor.name;
 		this.code = errorId;
 
-		console.error(errorId, message);
+		console.error(errorId, error);
 
 		Sentry.captureException(this);
+		Sentry.captureMessage(this.message);
 
-		this.errorEventManager.sendReport(this.message);
+		this.errorEventManager.sendReport(error?.stack || this.message);
 	}
 }
