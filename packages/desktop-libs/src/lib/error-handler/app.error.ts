@@ -7,7 +7,7 @@ console.error = log.error;
 Object.assign(console, log.functions);
 
 export class AppError extends BaseError {
-	private erroEventManager = ErrorEventManager.instance;
+	private errorEventManager = ErrorEventManager.instance;
 
 	constructor(errorId: string, message: string) {
 		super(message);
@@ -21,6 +21,6 @@ export class AppError extends BaseError {
 
 		Sentry.captureException(this);
 
-		this.erroEventManager.sendReport(this.message);
+		this.errorEventManager.sendReport(this.message);
 	}
 }
