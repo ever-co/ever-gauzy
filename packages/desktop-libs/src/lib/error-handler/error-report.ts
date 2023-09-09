@@ -15,7 +15,7 @@ export class ErrorReport implements IErrorReport {
 	) {
 		this.title =
 			title ||
-			`Automatic error report for ${this.appName
+		`Automatic error report for ${this.appName
 			} App ${app.getVersion()}`;
 		this.description = description;
 		this.repository = repository;
@@ -28,8 +28,8 @@ export class ErrorReport implements IErrorReport {
 	}
 	private bodyTemplate(): string {
 		return encodeURIComponent(
-			`# Error 🐊\n \`\`\`${this.description
-			}\`\`\`\n\nApp Version ⛓: **${app.getVersion()}**\nPlatform 🖥: **${os.platform()} ${os.arch()}**\nRelease 📦: **${os.release()}**`
+			`### Description 🐊\n \`\`\`${this.description
+			}\`\`\`\n\n### To Reproduce 🧵\nResponse... \n\n### Screenshots 📸\nResponse... \n\n### Additional Information ⚓️\nResponse...  \n\n### Configuration 🛠 \nApp Version ⛓: **${app.getVersion()}**\nPlatform 🖥: **${os.platform()} ${os.arch()}**\nRelease 📦: **${os.release()}**`
 		);
 	}
 
