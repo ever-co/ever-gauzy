@@ -179,7 +179,7 @@ export class OrganizationController extends CrudController<Organization> {
 		@Body() entity: UpdateOrganizationDTO
 	): Promise<IOrganization> {
 		return await this.commandBus.execute(
-			new OrganizationUpdateCommand({ id, ...entity })
+			new OrganizationUpdateCommand(id, entity)
 		);
 	}
 }

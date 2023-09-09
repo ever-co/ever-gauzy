@@ -26,7 +26,7 @@ export class HubstaffAuthorizationController {
         @Res() res: any
     ) {
         try {
-            if (code) {
+            if (code && state) {
                 return res.redirect(`${this._config.get('clientBaseUrl')}/#/pages/integrations/hubstaff?code=${code}&state=${state}`);
             }
             return res.redirect(`${this._config.get('clientBaseUrl')}/#/pages/integrations/hubstaff`);
