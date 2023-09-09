@@ -283,6 +283,7 @@ async function startServer(value, restart = false) {
 			throw new AppError('MAINLOADURL', error);
 		}
 		gauzyWindow = timeTrackerWindow;
+		gauzyWindow.setVisibleOnAllWorkspaces(false);
 		gauzyWindow.show();
 		splashScreen.close();
 	}
