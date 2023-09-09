@@ -151,7 +151,9 @@
 		"COPY": "Copiar",
 		"CUT": "Corte",
 		"PASTE": "Colar",
-		"FORWARD_PORTS": "Encaminhar Portas"
+		"FORWARD_PORTS": "Encaminhar Portas",
+		"REPORT": "Relatório",
+		"IGNORE": "Ignorar"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {
@@ -3881,7 +3883,9 @@
 			"CONNECTION_DRIVER": "A conexão com o banco de dados {{ driver }} é bem-sucedida.",
 			"STILL_WORKING": "Você ainda está trabalhando?",
 			"INACTIVITY_HANDLER": "Manipulador de Inatividade",
-			"WANT_LOGOUT": "Você tem certeza de que deseja sair?"
+			"WANT_LOGOUT": "Você tem certeza de que deseja sair?",
+			"ERROR_HANDLER": "Manipulador de Erros",
+			"ERROR_OCCURRED": "Erro Ocorrido"
 		},
 		"NO_LIMIT": "∞ Sem Limite",
 		"TASK": "Tarefa",
