@@ -364,7 +364,8 @@
 		"INTERVTRX",
 		"PROJECTRX",
 		"TASKTRX",
-		"USERTRX"
+		"USERTRX",
+		"MAINUNEXCEPTION"
 	],
 	"useGitignore": true,
 	"ignorePaths": [
