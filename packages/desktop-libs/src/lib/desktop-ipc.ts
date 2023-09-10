@@ -171,7 +171,9 @@ export function ipcMainHandler(
 					const user = new User({ ...auth });
 					user.remoteId = auth.userId;
 					user.organizationId = auth.organizationId;
-					await userService.save(user.toObject());
+					if (user.employee) {
+						await userService.save(user.toObject());
+					}
 					LocalStore.updateAuthSetting({ isLogout: false });
 				}
 			} catch (error) {
@@ -774,7 +776,7 @@ export function ipcTimer(
 
 	ipcMain.on('navigate_to_login', async () => {
 		try {
-			if (timeTrackerWindow) {
+			if (timeTrackerWindow && app.getName() === 'gauzy-desktop-timer') {
 				await timeTrackerWindow.loadURL(
 					timeTrackerPage(windowPath.timeTrackerUi)
 				);
