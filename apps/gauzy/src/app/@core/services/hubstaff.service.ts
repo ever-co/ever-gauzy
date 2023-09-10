@@ -121,7 +121,7 @@ export class HubstaffService {
 	 * @param client_id The client ID for the Hubstaff integration.
 	 */
 	authorizeClient(client_id: string): void {
-		const redirect_uri = environment.HUBSTAFF_REDIRECT_URI || `${environment.API_BASE_URL}${API_PREFIX}/integration/hubstaff/callback`;
+		const redirect_uri = environment.HUBSTAFF_REDIRECT_URL || `${environment.API_BASE_URL}${API_PREFIX}/integration/hubstaff/callback`;
 
 		// Define your query parameters
 		const queryParams = toParams({
@@ -148,7 +148,7 @@ export class HubstaffService {
 		organizationId,
 	}): Observable<IIntegrationTenant> {
 
-		const redirect_uri = environment.HUBSTAFF_REDIRECT_URI || `${environment.API_BASE_URL}${API_PREFIX}/integration/hubstaff/callback`;
+		const redirect_uri = environment.HUBSTAFF_REDIRECT_URL || `${environment.API_BASE_URL}${API_PREFIX}/integration/hubstaff/callback`;
 
 		return this._http.post<IIntegrationTenant>(`${API_PREFIX}/integration/hubstaff/integration`, {
 			client_id,
