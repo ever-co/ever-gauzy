@@ -22,3 +22,4 @@ export * from './lib/states';
 export * from './lib/offline';
 export * from './lib/translation';
 export * from './lib/server';
+export * from './lib/error-handler';

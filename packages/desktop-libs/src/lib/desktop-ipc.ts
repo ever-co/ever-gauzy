@@ -40,6 +40,7 @@ import { TranslateService } from './translation';
 import { IPowerManager } from './interfaces';
 import { SleepInactivityTracking } from './contexts';
 import { RemoteSleepTracking } from './strategies';
+import { UIError } from './error-handler';
 
 const timerHandler = new TimerHandler();
 
@@ -64,15 +65,21 @@ export function ipcMainHandler(
 	ipcMain.removeAllListeners('set_project_task');
 	removeAllHandlers();
 	ipcMain.handle('START_SERVER', async (event, arg) => {
-		global.variableGlobal = {
-			API_BASE_URL: arg.serverUrl
-				? arg.serverUrl
-				: arg.port
-					? `http://localhost:${arg.port}`
-					: `http://localhost:${config.API_DEFAULT_PORT}`,
-			IS_INTEGRATED_DESKTOP: arg.isLocalServer
-		};
-		return await startServer(arg);
+		try {
+			global.variableGlobal = {
+				API_BASE_URL: arg.serverUrl
+					? arg.serverUrl
+					: arg.port
+						? `http://localhost:${arg.port}`
+						: `http://localhost:${config.API_DEFAULT_PORT}`,
+				IS_INTEGRATED_DESKTOP: arg.isLocalServer
+			};
+			return await startServer(arg);
+		} catch (error) {
+			console.error(error);
+			return null;
+		}
+
 	});
 
 	ipcMain.on('remove_afk_local_Data', async (event, arg) => {
@@ -81,7 +88,7 @@ export function ipcMainHandler(
 				idAfk: arg.idAfk
 			});
 		} catch (error) {
-			console.log('ERROR', error);
+			throw new UIError('500', error, 'IPCRMAFK');
 		}
 	});
 
@@ -100,7 +107,7 @@ export function ipcMainHandler(
 				knex
 			);
 		} catch (error) {
-			console.log('ERROR', error);
+			throw new UIError('400', error, 'IPCQSHEET');
 		}
 	});
 
@@ -118,7 +125,7 @@ export function ipcMainHandler(
 				knex
 			);
 		} catch (error) {
-			console.log('ERROR', error);
+			throw new UIError('400', error, 'IPCQSLOT');
 		}
 	});
 
@@ -133,7 +140,7 @@ export function ipcMainHandler(
 			await countIntervalQueue(timeTrackerWindow, false);
 			await latestScreenshots(timeTrackerWindow);
 		} catch (error) {
-			console.error('Error to save timeslot', error);
+			throw new UIError('400', error, 'IPCSAVESLOT');
 		}
 	});
 
@@ -144,9 +151,13 @@ export function ipcMainHandler(
 	ipcMain.on('time_tracker_ready', async (event, arg) => {
 		const auth = LocalStore.getStore('auth');
 		const logout = async () => {
-			await userService.remove();
-			timeTrackerWindow.webContents.send('__logout__');
-			LocalStore.updateAuthSetting({ isLogout: true });
+			try {
+				await userService.remove();
+				timeTrackerWindow.webContents.send('__logout__');
+				LocalStore.updateAuthSetting({ isLogout: true });
+			} catch (error) {
+				throw new UIError('500', error, 'IPCRMUSER');
+			}
 		}
 		if (auth && auth.userId) {
 			try {
@@ -160,12 +171,14 @@ export function ipcMainHandler(
 					const user = new User({ ...auth });
 					user.remoteId = auth.userId;
 					user.organizationId = auth.organizationId;
-					await userService.save(user.toObject());
+					if (user.employee) {
+						await userService.save(user.toObject());
+					}
 					LocalStore.updateAuthSetting({ isLogout: false });
 				}
 			} catch (error) {
 				await logout();
-				console.log('[ERROR_ON_INIT]', error);
+				throw new UIError('500', error, 'IPCINIT');
 			}
 		} else {
 			await logout();
@@ -181,21 +194,32 @@ export function ipcMainHandler(
 				LocalStore.beforeRequestParams()
 			);
 			console.log('Last Capture Time (Desktop IPC):', lastTime);
-			await offlineMode.connectivity()
-				.then(() => {
-					console.log('Network state', offlineMode.enabled ? 'Offline' : 'Online')
+
+			event.sender.send('timer_tracker_show', {
+				...LocalStore.beforeRequestParams(),
+				timeSlotId: lastTime ? lastTime.timeslotId : null,
+				isOffline: offlineMode.enabled
+			})
+
+			await Promise.allSettled([
+				offlineMode.connectivity().then(() => {
+					console.log(
+						'Network state',
+						offlineMode.enabled ? 'Offline' : 'Online'
+					);
 					event.sender.send('timer_tracker_show', {
 						...LocalStore.beforeRequestParams(),
 						timeSlotId: lastTime ? lastTime.timeslotId : null,
-						isOffline: offlineMode.enabled
-					})
-				});
-				await countIntervalQueue(timeTrackerWindow, false);
-				await sequentialSyncQueue(timeTrackerWindow);
-				await latestScreenshots(timeTrackerWindow);
-			} catch (error) {
-				console.log('[ERROR_OFFLINE_CHECK]', error);
-			}
+						isOffline: offlineMode.enabled,
+					});
+				}),
+				countIntervalQueue(timeTrackerWindow, false),
+				sequentialSyncQueue(timeTrackerWindow),
+				latestScreenshots(timeTrackerWindow),
+			]);
+		} catch (error) {
+			throw new UIError('500', error, 'IPCINIT');
+		}
 	})
 
 	ipcMain.on('screen_shoot', async (event, arg) => {
@@ -234,7 +258,7 @@ export function ipcMainHandler(
 				}
 			}
 		} catch (error) {
-			console.log('error opening permission', error.message);
+			throw new UIError('500', error, 'IPCPERM');
 		}
 	});
 
@@ -276,7 +300,7 @@ export function ipcMainHandler(
 				);
 			}
 		} catch (error) {
-			console.log('[UPDATE_SYNCED_TIME_ERROR]', error);
+			throw new UIError('400', error, 'IPCUPDATESYNCTMR');
 		}
 	});
 
@@ -284,7 +308,7 @@ export function ipcMainHandler(
 		try {
 			await timerHandler.makeScreenshot(null, knex, timeTrackerWindow, quitApp);
 		} catch (error) {
-			console.log('[TAKE_SCREEN_CAPTURE_ERROR]', error);
+			throw new UIError('500', error, 'IPCTKSCAPTURE');
 		}
 	})
 
@@ -295,7 +319,7 @@ export function ipcMainHandler(
 			await intervalService.synced(interval);
 			await countIntervalQueue(timeTrackerWindow, true);
 		} catch (error) {
-			console.log('Error', error);
+			throw new UIError('400', error, 'IPCUPDATESYNCINTERVAL');
 		}
 	});
 
@@ -332,12 +356,16 @@ export function ipcTimer(
 	let powerManagerDetectInactivity: PowerManagerDetectInactivity;
 	app.whenReady().then(async () => {
 		if (!notificationWindow) {
-			notificationWindow = new ScreenCaptureNotification(
-				app.getName() !== 'gauzy-desktop-timer'
-					? windowPath.screenshotWindow
-					: windowPath.timeTrackerUi);
-			console.log('App Name:', app.getName());
-			await notificationWindow.loadURL();
+			try {
+				notificationWindow = new ScreenCaptureNotification(
+					app.getName() !== 'gauzy-desktop-timer'
+						? windowPath.screenshotWindow
+						: windowPath.timeTrackerUi);
+				console.log('App Name:', app.getName());
+				await notificationWindow.loadURL();
+			} catch (error) {
+				throw new UIError('500', error, 'IPCNOTIF');
+			}
 		}
 	})
 
@@ -351,7 +379,7 @@ export function ipcTimer(
 			await intervalService.create(interval.toObject());
 			await latestScreenshots(timeTrackerWindow);
 		} catch (error) {
-			console.log('Error', error);
+			throw new UIError('400', error, 'IPCSAVEINTER');
 		}
 	});
 
@@ -372,7 +400,7 @@ export function ipcTimer(
 			}
 			await sequentialSyncQueue(timeTrackerWindow);
 		} catch (error) {
-			console.log('Error', error);
+			throw new UIError('500', error, 'IPCRESTORE');
 		}
 	});
 
@@ -420,7 +448,7 @@ export function ipcTimer(
 			return timerResponse;
 		} catch (error) {
 			timeTrackerWindow.webContents.send('emergency_stop');
-			console.log('ERROR', error)
+			throw new UIError('400', error, 'IPCSTARTMR');
 		}
 	});
 
@@ -450,7 +478,7 @@ export function ipcTimer(
 				await timerService.remove(new Timer(lastTimer));
 			}
 		} catch (error) {
-			console.log('ERROR_ON_DELETE', error);
+			throw new UIError('400', error, 'IPCRMSLOT');
 		}
 	})
 
@@ -478,7 +506,7 @@ export function ipcTimer(
 					knex
 				);
 			} catch (error) {
-				console.log('ERROR', error);
+				throw new UIError('500', error, 'IPCQWIN');
 			}
 		}
 	});
@@ -496,7 +524,7 @@ export function ipcTimer(
 				);
 			}
 		} catch (error) {
-			console.log('ERROR', error);
+			throw new UIError('500', error, 'IPCRMAW');
 		}
 	});
 
@@ -513,7 +541,7 @@ export function ipcTimer(
 				);
 			}
 		} catch (error) {
-			console.log('ERROR', error);
+			throw new UIError('500', error, 'IPCRMWK');
 		}
 	});
 
@@ -538,7 +566,7 @@ export function ipcTimer(
 			return timerResponse;
 		} catch (error) {
 			timeTrackerWindow.webContents.send('emergency_stop');
-			console.log('ERROR', error);
+			throw new UIError('500', error, 'IPCSTOPTMR');
 		}
 	});
 
@@ -578,7 +606,7 @@ export function ipcTimer(
 				await timerHandler.createTimer(knex, timeLog);
 			}
 		} catch (error) {
-			console.log('ERROR', error);
+			throw new UIError('500', error, 'IPCRTNSLOT');
 		}
 		/* TODO: was removed, why? moved to func takeScreenshotActivities on desktop-timer
 				this fix notify popup screenshot on time
@@ -620,13 +648,17 @@ export function ipcTimer(
 					'Gauzy'
 				);
 			} else if (appSetting.screenshotNotification) {
-				await notifyScreenshot(
-					notificationWindow,
-					arg,
-					windowPath,
-					soundPath,
-					timeTrackerWindow
-				);
+				try {
+					await notifyScreenshot(
+						notificationWindow,
+						arg,
+						windowPath,
+						soundPath,
+						timeTrackerWindow
+					);
+				} catch (error) {
+					throw new UIError('500', error, 'IPCNTFSHOT');
+				}
 			}
 		}
 	});
@@ -642,7 +674,7 @@ export function ipcTimer(
 				soundPath
 			);
 		} catch (error) {
-			console.log('ERROR_TAKE_SHOT', error);
+			throw new UIError('400', error, 'IPCTKSHOT');
 		}
 	});
 
@@ -671,7 +703,7 @@ export function ipcTimer(
 				knex
 			);
 		} catch (error) {
-			console.error('ERROR_ON_CREATE_QUEUE', error);
+			throw new UIError('400', error, 'IPCSAVESLOT');
 		}
 	});
 
@@ -686,7 +718,7 @@ export function ipcTimer(
 				soundPath
 			);
 		} catch (error) {
-			console.log('ERROR_ON_TAKE_SHOT', error);
+			throw new UIError('400', error, 'IPCSAVESHOT');
 		}
 	});
 
@@ -701,7 +733,7 @@ export function ipcTimer(
 				knex
 			);
 		} catch (error) {
-			console.log('ERROR_ON_CREATE_QUEUE', error);
+			throw new UIError('400', error, 'IPCQSAVEIMG');
 		}
 	});
 
@@ -744,7 +776,7 @@ export function ipcTimer(
 
 	ipcMain.on('navigate_to_login', async () => {
 		try {
-			if (timeTrackerWindow) {
+			if (timeTrackerWindow && app.getName() === 'gauzy-desktop-timer') {
 				await timeTrackerWindow.loadURL(
 					timeTrackerPage(windowPath.timeTrackerUi)
 				);
@@ -754,7 +786,7 @@ export function ipcTimer(
 				settingWindow.webContents.send('logout_success');
 			}
 		} catch (error) {
-			console.log('ERROR', error);
+			throw new UIError('500', error, 'IPCQNVGLOGIN');
 		}
 	});
 
@@ -833,7 +865,7 @@ export function ipcTimer(
 				...LocalStore.beforeRequestParams(),
 				timeSlotId: null
 			});
-			console.log('ERROR_ON_REFRESH', error);
+			throw new UIError('500', error, 'IPCREFRESH');
 		}
 	});
 
@@ -870,7 +902,7 @@ export function ipcTimer(
 		try {
 			await userService.remove();
 		} catch (error) {
-			console.log('ERROR', error);
+			throw new UIError('500', error, 'IPCRMUSER');
 		}
 	})
 
@@ -883,7 +915,7 @@ export function ipcTimer(
 		try {
 			await sequentialSyncInterruptionsQueue(timeTrackerWindow);
 		} catch (error) {
-			console.log(error)
+			throw new UIError('500', error, 'IPCCIS');
 		}
 	})
 
@@ -891,12 +923,17 @@ export function ipcTimer(
 		try {
 			await sequentialSyncQueue(timeTrackerWindow);
 		} catch (error) {
-			console.log(error)
+			throw new UIError('500', error, 'IPCWS');
 		}
 	})
 
 	ipcMain.handle('LOGOUT_STOP', async (event, arg) => {
-		return await handleLogoutDialog(timeTrackerWindow);
+		try {
+			return await handleLogoutDialog(timeTrackerWindow);
+		} catch (error) {
+			throw new UIError('500', error, 'IPCWS');
+		}
+
 	});
 
 	ipcMain.on('preferred_language_change', (event, arg) => {
@@ -1021,7 +1058,7 @@ async function sequentialSyncQueue(window: BrowserWindow) {
 			isQueueThreadTimerLocked = false;
 		}
 	} catch (error) {
-		console.log('Error', error);
+		throw new UIError('500', error, 'IPCWS');
 	}
 }
 
@@ -1034,7 +1071,7 @@ async function countIntervalQueue(window: BrowserWindow, inProgress: boolean) {
 		if (size < 1) isQueueThreadTimerLocked = false;
 		window.webContents.send('count-synced', { size, inProgress });
 	} catch (error) {
-		console.log('ERROR_COUNT', error);
+		throw new UIError('500', error, 'IPCQCI');
 	}
 }
 
@@ -1046,7 +1083,7 @@ async function latestScreenshots(window: BrowserWindow): Promise<void> {
 			await intervalService.screenshots()
 		);
 	} catch (error) {
-		console.log('ERROR_SCREENSHOTS', error);
+		throw new UIError('500', error, 'IPCLS');
 	}
 }
 
@@ -1064,7 +1101,7 @@ async function sequentialSyncInterruptionsQueue(window: BrowserWindow) {
 			isQueueThreadTimerLocked = false;
 		}
 	} catch (error) {
-		console.log('Error', error);
+		throw new UIError('500', error, 'IPCCIS');
 	}
 }
 

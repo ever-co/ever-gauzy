@@ -150,7 +150,9 @@
 		"COPY": "העתקה",
 		"CUT": "גזירה",
 		"PASTE": "הדבקה",
-		"FORWARD_PORTS": "העברת פורטים"
+		"FORWARD_PORTS": "העברת פורטים",
+		"REPORT": "דוח",
+		"IGNORE": "התעלם"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {
@@ -3825,7 +3827,9 @@
 			"WANT_LOGOUT": "האם אתה בטוח שברצונך להתנתק?",
 			"DOWNLOADING_UPDATE": "הורדת העדכון {{ current }} מ״ב מתוך {{ total }} מ״ב ->> {{ bandwidth }} ק״ב/ש",
 			"STILL_WORKING": "האם אתה עדיין עובד?",
-			"INACTIVITY_HANDLER": "מטפל בחוסר פעילות"
+			"INACTIVITY_HANDLER": "מטפל בחוסר פעילות",
+			"ERROR_HANDLER": "מטפל בשגיאות",
+			"ERROR_OCCURRED": "אירעה שגיאה"
 		},
 		"NO_LIMIT": "∞ אין הגבלה",
 		"TASK": "משימה",
