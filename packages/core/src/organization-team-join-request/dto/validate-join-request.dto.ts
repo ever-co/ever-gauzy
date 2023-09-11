@@ -1,7 +1,7 @@
 import { ApiProperty, IntersectionType, PickType } from "@nestjs/swagger";
 import { IOrganizationTeamJoinRequestValidateInput } from "@gauzy/contracts";
 import { IsString, ValidateIf } from "class-validator";
-import { Transform, TransformFnParams } from "class-transformer";
+import { ALPHA_NUMERIC_CODE_LENGTH } from "./../../constants";
 import { CustomLength } from "../../shared/validators";
 import { UserEmailDTO } from "../../user/dto";
 import { OrganizationTeamJoinRequest } from "../organization-team-join-request.entity";
@@ -17,12 +17,11 @@ export class ValidateJoinRequestDTO extends IntersectionType(
     @ApiProperty({ type: () => String })
     @ValidateIf((it) => !it.token)
     @IsString()
-    @CustomLength(6)
+    @CustomLength(ALPHA_NUMERIC_CODE_LENGTH)
     readonly code: string;
 
     @ApiProperty({ type: () => String })
     @ValidateIf((it) => !it.code)
     @IsString()
-    @Transform((params: TransformFnParams) => params.value ? params.value.trim() : null)
     readonly token: string;
 }

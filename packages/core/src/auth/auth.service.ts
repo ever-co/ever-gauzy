@@ -26,6 +26,7 @@ import {
 import { environment } from '@gauzy/config';
 import { SocialAuthService } from '@gauzy/auth';
 import { IAppIntegrationConfig, isNotEmpty } from '@gauzy/common';
+import { ALPHA_NUMERIC_CODE_LENGTH } from './../constants';
 import { EmailService } from './../email-send/email.service';
 import { User } from '../user/user.entity';
 import { UserService } from '../user/user.service';
@@ -579,7 +580,7 @@ export class AuthService extends SocialAuthService {
 				return;
 			}
 
-			const code = generateRandomAlphaNumericCode(6);
+			const code = generateRandomAlphaNumericCode(ALPHA_NUMERIC_CODE_LENGTH);
 			const codeExpireAt = moment().add(environment.AUTHENTICATION_CODE_EXPIRATION_TIME, 'seconds').toDate();
 
 			await this.userRepository.update({ email }, { code, codeExpireAt });

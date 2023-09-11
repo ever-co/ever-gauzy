@@ -334,6 +334,7 @@ export const DEFAULT_ROLE_PERMISSIONS = [
 			PermissionsEnum.ORG_TEAM_EDIT,
 			PermissionsEnum.ORG_TEAM_DELETE,
 			PermissionsEnum.ORG_TEAM_REMOVE_ACCOUNT_AS_MEMBER,
+			PermissionsEnum.ORG_TEAM_JOIN_REQUEST_VIEW,
 			PermissionsEnum.ORG_TAGS_ADD,
 			PermissionsEnum.ORG_TAGS_VIEW,
 			PermissionsEnum.ORG_TAGS_EDIT,
