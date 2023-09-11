@@ -47,7 +47,7 @@ import { RequestContext } from './../core/context';
 import {
 	findIntersection,
 	freshTimestamp,
-	generateRandomAlphaNumericCode
+	generateRandomAlphaNumericCode,
 } from './../core/utils';
 import { Invite } from './invite.entity';
 import { EmailService } from './../email-send/email.service';
@@ -205,22 +205,22 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 		const { items: existedInvites } = await this.findAll({
 			...(isNotEmpty(teamIds)
 				? {
-					relations: {
-						teams: true,
-					},
-				}
+						relations: {
+							teams: true,
+						},
+				  }
 				: {}),
 			where: {
 				tenantId: RequestContext.currentTenantId(),
 				...(isNotEmpty(organizationId)
 					? {
-						organizationId,
-					}
+							organizationId,
+					  }
 					: {}),
 				...(isNotEmpty(emailIds)
 					? {
-						email: In(emailIds),
-					}
+							email: In(emailIds),
+					  }
 					: {}),
 			},
 		});
@@ -343,7 +343,9 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 			} else if (emailInvites.inviteType === InvitationTypeEnum.TEAM) {
 				let inviteLink: string;
 				if (callbackUrl) {
-					inviteLink = `${callbackUrl}?email=${item.email}&code=${item.code}`;
+					inviteLink = `${callbackUrl}?email=${encodeURIComponent(
+						item.email
+					)}&code=${item.code}`;
 				} else {
 					inviteLink = `${registerUrl}`;
 				}
@@ -401,7 +403,9 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 				{}
 			);
 
-			const registerUrl = `${originUrl}/#/auth/accept-invite?email=${email}&token=${token}`;
+			const registerUrl = `${originUrl}/#/auth/accept-invite?email=${encodeURIComponent(
+				email
+			)}&token=${token}`;
 			if (inviteType === InvitationTypeEnum.USER) {
 				this.emailService.inviteUser({
 					email,
@@ -427,7 +431,9 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 			} else if (inviteType === InvitationTypeEnum.TEAM) {
 				let inviteLink: string;
 				if (callbackUrl) {
-					inviteLink = `${callbackUrl}?email=${email}&code=${code}`;
+					inviteLink = `${callbackUrl}?email=${encodeURIComponent(
+						email
+					)}&code=${code}`;
 				} else {
 					inviteLink = `${registerUrl}`;
 				}
@@ -573,8 +579,8 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 							status: InviteStatusEnum.INVITED,
 							...(payload['code']
 								? {
-									code: payload['code'],
-								}
+										code: payload['code'],
+								  }
 								: {}),
 						});
 						qb.andWhere([
@@ -655,18 +661,18 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 			return await super.findAll({
 				...(options && options.skip
 					? {
-						skip: options.take * (options.skip - 1),
-					}
+							skip: options.take * (options.skip - 1),
+					  }
 					: {}),
 				...(options && options.take
 					? {
-						take: options.take,
-					}
+							take: options.take,
+					  }
 					: {}),
 				...(options && options.relations
 					? {
-						relations: options.relations,
-					}
+							relations: options.relations,
+					  }
 					: {}),
 				where: {
 					tenantId: RequestContext.currentTenantId(),
@@ -676,15 +682,15 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 					...(isNotEmpty(options) && isNotEmpty(options.where)
 						? isNotEmpty(options.where.role)
 							? {
-								role: {
-									...options.where.role,
-								},
-							}
+									role: {
+										...options.where.role,
+									},
+							  }
 							: {
-								role: {
-									name: Not(RolesEnum.EMPLOYEE),
-								},
-							}
+									role: {
+										name: Not(RolesEnum.EMPLOYEE),
+									},
+							  }
 						: {}),
 					/**
 					 * Organization invites filter by specific projects
@@ -692,10 +698,10 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 					...(isNotEmpty(options) && isNotEmpty(options.where)
 						? isNotEmpty(options.where.projects)
 							? {
-								projects: {
-									id: In(options.where.projects.id),
-								},
-							}
+									projects: {
+										id: In(options.where.projects.id),
+									},
+							  }
 							: {}
 						: {}),
 					/**
@@ -704,10 +710,10 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 					...(isNotEmpty(options) && isNotEmpty(options.where)
 						? isNotEmpty(options.where.teams)
 							? {
-								teams: {
-									id: In(options.where.teams.id),
-								},
-							}
+									teams: {
+										id: In(options.where.teams.id),
+									},
+							  }
 							: {}
 						: {}),
 				},
@@ -962,10 +968,10 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 			tenant,
 			...(input.password
 				? {
-					hash: await this.authService.getPasswordHash(
-						input.password
-					),
-				}
+						hash: await this.authService.getPasswordHash(
+							input.password
+						),
+				  }
 				: {}),
 		});
 		const entity = await this.userRepository.save(create);
@@ -976,8 +982,8 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 		await this.userRepository.update(entity.id, {
 			...(input.inviteId
 				? {
-					emailVerifiedAt: freshTimestamp(),
-				}
+						emailVerifiedAt: freshTimestamp(),
+				  }
 				: {}),
 		});
 
