@@ -151,7 +151,9 @@
 		"COPY": "复制",
 		"CUT": "剪",
 		"PASTE": "粘贴",
-		"FORWARD_PORTS": "转发端口"
+		"FORWARD_PORTS": "转发端口",
+		"REPORT": "报告",
+		"IGNORE": "忽略"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {
@@ -3881,7 +3883,9 @@
 			"CONNECTION_DRIVER": "连接到{{ driver }}数据库成功",
 			"STILL_WORKING": "你还在工作吗？",
 			"INACTIVITY_HANDLER": "不活动处理程序",
-			"WANT_LOGOUT": "您确定要注销吗？"
+			"WANT_LOGOUT": "您确定要注销吗？",
+			"ERROR_HANDLER": "错误处理器",
+			"ERROR_OCCURRED": "发生错误"
 		},
 		"NO_LIMIT": "∞ 无限制 (wúxiànzhì)",
 		"TASK": "任务",

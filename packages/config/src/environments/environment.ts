@@ -183,9 +183,7 @@ export const environment: IEnvironment = {
 		process.env.INTEGRATED_USER_DEFAULT_PASS || '123456',
 
 	upworkConfig: {
-		callbackUrl:
-			process.env.UPWORK_CALLBACK_URL ||
-			`http://${process.env.API_HOST}:${process.env.API_PORT}/api/integrations/upwork/callback`,
+		callbackUrl: process.env.UPWORK_REDIRECT_URL || `${process.env.API_BASE_URL}/api/integrations/upwork/callback`,
 	},
 
 	isElectron: process.env.IS_ELECTRON === 'true' ? true : false,

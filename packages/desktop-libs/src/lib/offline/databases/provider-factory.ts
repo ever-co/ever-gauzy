@@ -5,6 +5,7 @@ import { Knex } from 'knex';
 import { PostgresProvider } from './postgres-provider';
 import { MysqlProvider } from './mysql-provider';
 import { LocalStore } from '../../desktop-store';
+import { AppError } from '../../error-handler';
 
 export class ProviderFactory implements IDatabaseProvider {
 	private _dbContext: DatabaseProviderContext;
@@ -56,7 +57,7 @@ export class ProviderFactory implements IDatabaseProvider {
 					console.log('Migration completed... 💯');
 				}
 			})
-			.catch((error) => console.log('Migration failed... 😞', error))
+			.catch((error) => { throw new AppError('PRMIG', error) })
 			.finally(async () => {
 				await connection.destroy();
 			});
@@ -76,7 +77,11 @@ export class ProviderFactory implements IDatabaseProvider {
 	}
 
 	public async kill(): Promise<void> {
-		await this.connection.destroy();
-		ProviderFactory._instance = null;
+		try {
+			await this.connection.destroy();
+			ProviderFactory._instance = null;
+		} catch (error) {
+			throw new AppError('PRKILL', error);
+		}
 	}
 }

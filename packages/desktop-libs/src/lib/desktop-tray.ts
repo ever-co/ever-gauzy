@@ -329,7 +329,9 @@ export class TrayIcon {
 				const user = new User({ ...arg, ...arg.user });
 				user.remoteId = arg.userId;
 				user.organizationId = arg.organizationId;
-				await userService.save(user.toObject());
+				if (user.employee) {
+					await userService.save(user.toObject());
+				}
 			} catch (error) {
 				console.log('Error on save user', error);
 			}

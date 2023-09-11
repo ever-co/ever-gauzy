@@ -38,7 +38,7 @@ export interface Environment {
 	SENTRY_DSN?: string;
 	SENTRY_TRACES_SAMPLE_RATE?: string;
 
-	HUBSTAFF_REDIRECT_URI?: string;
+	HUBSTAFF_REDIRECT_URL?: string;
 
 	IS_ELECTRON: boolean;
 

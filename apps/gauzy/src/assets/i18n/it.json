@@ -151,7 +151,9 @@
 		"COPY": "Copia",
 		"CUT": "Taglia",
 		"PASTE": "Incolla",
-		"FORWARD_PORTS": "Inoltrare le porte"
+		"FORWARD_PORTS": "Inoltrare le porte",
+		"REPORT": "Report",
+		"IGNORE": "Ignora"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {
@@ -3881,7 +3883,9 @@
 			"CONNECTION_DRIVER": "Connessione al database {{ driver }} riuscita",
 			"STILL_WORKING": "Stai ancora lavorando?",
 			"INACTIVITY_HANDLER": "Gestore di inattività",
-			"WANT_LOGOUT": "Sei sicuro/a di voler effettuare il logout?"
+			"WANT_LOGOUT": "Sei sicuro/a di voler effettuare il logout?",
+			"ERROR_HANDLER": "Gestore degli errori",
+			"ERROR_OCCURRED": "Errore verificatosi"
 		},
 		"NO_LIMIT": "∞ Senza Limiti",
 		"TASK": "Compito",
