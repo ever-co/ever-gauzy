@@ -1,6 +1,6 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Column, Entity, ManyToMany } from 'typeorm';
-import { IsNotEmpty, IsNumber } from 'class-validator';
+import { IsNotEmpty, IsNumber, IsOptional } from 'class-validator';
 import { IIntegration, IIntegrationType } from '@gauzy/contracts';
 import { BaseEntity, Integration } from '../core/entities/internal';
 
@@ -11,6 +11,16 @@ export class IntegrationType extends BaseEntity implements IIntegrationType {
 	@IsNotEmpty()
 	@Column()
 	name: string;
+
+	@ApiPropertyOptional({ type: () => String })
+	@IsOptional()
+	@Column({ nullable: true })
+	description: string;
+
+	@ApiPropertyOptional({ type: () => String })
+	@IsOptional()
+	@Column({ nullable: true })
+	icon: string;
 
 	@ApiProperty({ type: () => String })
 	@IsNotEmpty()
@@ -32,5 +42,5 @@ export class IntegrationType extends BaseEntity implements IIntegrationType {
 		onUpdate: 'CASCADE',
 		onDelete: 'CASCADE'
 	})
-	integrations?: IIntegration[];
+	integrations: IIntegration[];
 }

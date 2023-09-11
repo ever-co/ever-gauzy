@@ -33,7 +33,7 @@ export class SeedIntegrationTable1691494801748 implements MigrationInterface {
     public async upsertIntegrationsAndIntegrationTypes(queryRunner: QueryRunner): Promise<any> {
         const destDir = 'integrations';
 
-        for await (const { name, imgSrc, isComingSoon, order, navigationUrl, integrationTypesMap } of DEFAULT_INTEGRATIONS) {
+        for await (const { name, imgSrc, isComingSoon, order, navigationUrl, slug, integrationTypesMap } of DEFAULT_INTEGRATIONS) {
             try {
                 const filepath = `integrations/${imgSrc}`;
 
@@ -56,23 +56,25 @@ export class SeedIntegrationTable1691494801748 implements MigrationInterface {
                             "imgSrc" = $2,
                             "isComingSoon" = $3,
                             "order" = $4,
-                            "navigationUrl" = $5
+                            "navigationUrl" = $5,
+                            "slug" = $6
                         RETURNING id;
                     `;
                 } else {
                     upsertQuery = `
                         INSERT INTO "integration" (
-                            "name", "imgSrc", "isComingSoon", "order", "navigationUrl"
+                            "name", "imgSrc", "isComingSoon", "order", "navigationUrl", "slug"
                         )
                         VALUES (
-                            $1, $2, $3, $4, $5
+                            $1, $2, $3, $4, $5, $6
                         )
                         ON CONFLICT(name) DO UPDATE
                         SET
                             "imgSrc" = $2,
                             "isComingSoon" = $3,
                             "order" = $4,
-                            "navigationUrl" = $5
+                            "navigationUrl" = $5,
+                            "slug" = $6
                         RETURNING id;
                     `;
                 }

@@ -2,42 +2,42 @@ import { DataSource } from 'typeorm';
 import { IntegrationType } from './integration-type.entity';
 import {
 	IntegrationTypeGroupEnum,
-	IntegrationTypeNameEnum
+	IntegrationTypeEnum
 } from '@gauzy/contracts';
 
 const DEFAULT_INTEGRATION_TYPES = [
 	{
-		name: IntegrationTypeNameEnum.ALL_INTEGRATIONS,
+		name: IntegrationTypeEnum.ALL_INTEGRATIONS,
 		groupName: IntegrationTypeGroupEnum.FEATURED,
 		order: 1
 	},
 	{
-		name: IntegrationTypeNameEnum.FOR_SALES_TEAMS,
+		name: IntegrationTypeEnum.FOR_SALES_TEAMS,
 		groupName: IntegrationTypeGroupEnum.FEATURED,
 		order: 1
 	},
 	{
-		name: IntegrationTypeNameEnum.FOR_ACCOUNTANTS,
+		name: IntegrationTypeEnum.FOR_ACCOUNTANTS,
 		groupName: IntegrationTypeGroupEnum.FEATURED,
 		order: 1
 	},
 	{
-		name: IntegrationTypeNameEnum.FOR_SUPPORT_TEAMS,
+		name: IntegrationTypeEnum.FOR_SUPPORT_TEAMS,
 		groupName: IntegrationTypeGroupEnum.FEATURED,
 		order: 1
 	},
 	{
-		name: IntegrationTypeNameEnum.CRM,
+		name: IntegrationTypeEnum.CRM,
 		groupName: IntegrationTypeGroupEnum.CATEGORIES,
 		order: 2
 	},
 	{
-		name: IntegrationTypeNameEnum.SCHEDULING,
+		name: IntegrationTypeEnum.SCHEDULING,
 		groupName: IntegrationTypeGroupEnum.CATEGORIES,
 		order: 2
 	},
 	{
-		name: IntegrationTypeNameEnum.TOOLS,
+		name: IntegrationTypeEnum.TOOLS,
 		groupName: IntegrationTypeGroupEnum.CATEGORIES,
 		order: 2
 	}
