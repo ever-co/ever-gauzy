@@ -20,14 +20,13 @@
   flex-direction: row;
   align-items: flex-start;
   justify-content: flex-start;
-  gap: 1rem;
 
   .task-table {
     flex-grow: 10;
 
     nb-card-body {
       overflow: unset;
-      padding-right: 2.1rem;
+      padding: 1rem 2rem 1rem 1rem;
     }
   }
 }
@@ -48,7 +47,7 @@
 }
 
 .search {
-  padding: 8px;
+  padding: 0 8px 8px 8px;
 }
 
 .timer-box {
@@ -193,6 +192,7 @@
 
 .error-border {
   border: solid 1px red;
+  border-radius: var(--border-radius);
 }
 
 .overlay-img {
@@ -597,6 +597,7 @@ img {
   padding: 8px 4px 0px;
   border-radius: var(--border-radius);
   height: calc(100vh - 11.4rem);
+  width: auto;
 
   .table-scroll-container {
     flex-grow: 10;
@@ -642,4 +643,9 @@ img {
 .icon-task {
 	width: auto !important;
 	height: auto !important;
+}
+
+:host ::ng-deep .running-task svg {
+	width: 20px;
+	height: 20px;
 }
