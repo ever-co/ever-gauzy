@@ -6,6 +6,7 @@ import { firstValueFrom } from 'rxjs';
 import { map, tap } from 'rxjs/operators';
 import {
 	CreateEmployeeJobApplication,
+	User,
 	Employee,
 	EmployeeJobPostsDocument,
 	EmployeeJobPostsQuery,
@@ -683,6 +684,15 @@ export class GauzyAIService {
 			await Promise.all(
 				employees.map(async (employee) => {
 					try {
+						const user: User = {
+							email: employee.user.email,
+							username: employee.user.username,
+							hash: employee.user.hash,
+							externalTenantId: employee.user.tenantId,
+							externalUserId: employee.user.id,
+							isActive: employee.isActive,
+							isArchived: false
+						};
 						const gauzyAIEmployee: Employee = await this.syncEmployee({
 							externalEmployeeId: employee.id,
 							externalTenantId: employee.tenantId,
@@ -697,6 +707,7 @@ export class GauzyAIService {
 							upworkJobSearchCriteriaAggregate: undefined,
 							firstName: employee.user.firstName,
 							lastName: employee.user.lastName,
+							user
 						});
 						console.log(`Synced Employee ${JSON.stringify(gauzyAIEmployee)}`);
 					} catch (error) {
@@ -1107,7 +1118,7 @@ export class GauzyAIService {
 	private initClient() {
 		// Create a custom ApolloLink to modify headers
 		const authLink = new ApolloLink((operation, forward) => {
-			const { apiKey, apiSecret } = this._requestConfigProvider.getConfig();
+			const { ApiKey, ApiSecret, ApiBearerToken, ApiTenantId } = this._requestConfigProvider.getConfig();
 			console.log(this._requestConfigProvider.getConfig(), 'Runtime Gauzy AI Integration Config');
 
 			// Add your custom headers here
@@ -1117,8 +1128,11 @@ export class GauzyAIService {
 				'X-APP-ID': this._configService.get<string>('guazyAI.gauzyAiApiKey'),
 				'X-API-KEY': this._configService.get<string>('guazyAI.gauzyAiApiSecret'),
 
-				...(apiKey ? { 'X-APP-ID': apiKey } : {}),
-				...(apiSecret ? { 'X-API-KEY': apiSecret } : {}),
+				...(ApiKey ? { 'X-APP-ID': ApiSecret } : {}),
+				...(ApiSecret ? { 'X-API-KEY': ApiSecret } : {}),
+
+				...(ApiTenantId ? { 'X-TENANT-ID': ApiTenantId } : {}),
+				...(ApiBearerToken ? { 'X-BEARER-TOKEN': ApiBearerToken } : {}),
 			};
 			console.log('Custom Run Time Headers: %s', customHeaders);
 
@@ -1215,6 +1229,7 @@ export class GauzyAIService {
 	 *  Update existed Gauzy AI Employee record with new data from Gauzy DB
 	 */
 	private async syncEmployee(employee: Employee): Promise<Employee> {
+		console.log('-------------------------- Sync Employee --------------------------', employee);
 		try {
 			// First, let's search by employee.externalEmployeeId (which is Gauzy employeeId)
 			let employeesQuery: DocumentNode<EmployeeQuery> = gql`

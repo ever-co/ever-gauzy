@@ -2,8 +2,8 @@ import { Injectable, NestMiddleware } from '@nestjs/common';
 import { Request, Response, NextFunction } from 'express';
 import { isNotEmpty } from '@gauzy/common';
 import { RequestConfigProvider } from '@gauzy/integration-ai';
-import { IntegrationTenantService } from './../../integration-tenant/integration-tenant.service';
-import { arrayToObject } from './../../core/utils';
+import { arrayToObject } from 'core/utils';
+import { IntegrationTenantService } from 'integration-tenant/integration-tenant.service';
 
 @Injectable()
 export class IntegrationAIMiddleware implements NestMiddleware {
@@ -21,10 +21,13 @@ export class IntegrationAIMiddleware implements NestMiddleware {
         // Extract tenant and organization IDs from request headers
         const tenantId = request.header('tenant-id');
         const organizationId = request.header('organization-id');
+        const authorization = request.header('authorization');
+        const token = authorization.replace('Bearer ', '');
 
         // Log tenant and organization IDs
         console.log('Auth Tenant-ID Header: %s', tenantId);
         console.log('Auth Organization-ID Header: %s', organizationId);
+        console.log('Auth Bearer Token Header: %s', token);
 
         // Initialize custom headers
         request.headers['X-APP-ID'] = null;
@@ -36,13 +39,14 @@ export class IntegrationAIMiddleware implements NestMiddleware {
                 // Fetch integration settings from the service
                 const { settings = [] } = await this.integrationTenantService.getIntegrationSettings({ tenantId, organizationId });
                 // Convert settings array to an object
-                const { apiKey, apiSecret } = arrayToObject(settings, 'settingsName', 'settingsValue');
+                const { apiKey: ApiKey, apiSecret: ApiSecret } = arrayToObject(settings, 'settingsName', 'settingsValue');
 
-                if (apiKey && apiSecret) {
+                if (ApiKey && ApiSecret) {
                     // Update custom headers and request configuration with API key and secret
-                    request.headers['X-APP-ID'] = apiKey;
-                    request.headers['X-API-KEY'] = apiSecret;
-                    this.requestConfigProvider.setConfig({ apiKey, apiSecret });
+                    request.headers['X-APP-ID'] = ApiKey;
+                    request.headers['X-API-KEY'] = ApiSecret;
+
+                    this.requestConfigProvider.setConfig({ ApiKey, ApiSecret });
                 }
             }
         } catch (error) {
