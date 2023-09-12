@@ -19,6 +19,6 @@ export class TaskProgressComponent extends TaskRenderComponent {
 		if (this.task?.duration > this.task?.estimate) {
 			return 100
 		}
-		return this.task?.duration / this.task?.estimate * 100;
+		return Math.floor(this.task?.duration / this.task?.estimate * 100);
 	}
 }
