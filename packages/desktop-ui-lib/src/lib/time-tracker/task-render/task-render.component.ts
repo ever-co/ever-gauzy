@@ -11,8 +11,8 @@ export abstract class TaskRenderComponent implements OnInit {
 
 	ngOnInit(): void { }
 
-	@Input('rowData')
-	public set task(value: ITasksStatistics) {
+	@Input()
+	public set rowData(value: ITasksStatistics) {
 		if (value) {
 			this._task = value;
 		}

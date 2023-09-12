@@ -13,12 +13,12 @@ export class TaskProgressComponent extends TaskRenderComponent {
 	}
 
 	public get progress(): number {
-		if (this.task.estimate === 0) {
+		if (this.task?.estimate === 0) {
 			return 0;
 		}
-		if (this.task.duration > this.task.estimate) {
+		if (this.task?.duration > this.task?.estimate) {
 			return 100
 		}
-		return this.task.duration / this.task.estimate * 100;
+		return this.task?.duration / this.task?.estimate * 100;
 	}
 }

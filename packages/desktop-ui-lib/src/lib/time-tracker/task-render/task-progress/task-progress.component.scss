@@ -7,10 +7,10 @@
 
 nb-progress-bar.custom-progress ::ng-deep {
     .progress-container {
-	  height: 10px;
-	  background: var(--progress-bar-basic-filled-background-color);
+	  height: 20px;
+	  border-radius: calc(var(--border-radius) /2);
 	  span {
-		font-size: 9px;
+		font-size: 11.5px;
 	  }
     }
   }
