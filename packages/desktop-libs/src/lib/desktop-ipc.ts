@@ -949,7 +949,8 @@ export function ipcTimer(
 
 	ipcMain.on('show_ao', async (event, arg) => {
 		const setting = LocalStore.getStore('appSetting');
-		if (setting?.alwaysOn) {
+		const auth = LocalStore.getStore('auth');
+		if (setting?.alwaysOn && auth?.employeeId) {
 			alwaysOn.show();
 		}
 	})

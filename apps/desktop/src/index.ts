@@ -365,7 +365,7 @@ async function startServer(value, restart = false) {
 			knex,
 			pathWindow,
 			null,
-			false
+			true
 		);
 
 		if (tray) {
@@ -379,7 +379,7 @@ async function startServer(value, restart = false) {
 			settingsWindow,
 			{ ...environment },
 			pathWindow,
-			path.join(__dirname, 'assets', 'icons', 'icon.png'),
+			path.join(__dirname, 'assets', 'icons', 'icon_16x16.png'),
 			gauzyWindow,
 			alwaysOn
 		);
