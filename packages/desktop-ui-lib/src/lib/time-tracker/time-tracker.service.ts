@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
 // import { environment } from '../../../environments/environment';
 import * as moment from 'moment';
 import { catchError, map, shareReplay, tap } from 'rxjs/operators';
@@ -270,6 +270,9 @@ export class TimeTrackerService {
 	}
 
 	toggleApiStart(values) {
+		const options = {
+			headers: new HttpHeaders({ timeout: `${15 * 1000}` })
+		}
 		const body = {
 			description: values.note,
 			isBillable: true,
@@ -290,11 +293,14 @@ export class TimeTrackerService {
 			body
 		);
 		return firstValueFrom(
-			this.http.post(`${API_PREFIX}/timesheet/timer/start`, { ...body })
+			this.http.post(`${API_PREFIX}/timesheet/timer/start`, { ...body }, options)
 		);
 	}
 
 	toggleApiStop(values) {
+		const options = {
+			headers: new HttpHeaders({ timeout: `${15 * 1000}` })
+		}
 		const body = {
 			description: values.note,
 			isBillable: true,
@@ -315,7 +321,7 @@ export class TimeTrackerService {
 			body
 		);
 		return firstValueFrom(
-			this.http.post(`${API_PREFIX}/timesheet/timer/stop`, { ...body })
+			this.http.post(`${API_PREFIX}/timesheet/timer/stop`, { ...body }, options)
 		);
 	}
 
