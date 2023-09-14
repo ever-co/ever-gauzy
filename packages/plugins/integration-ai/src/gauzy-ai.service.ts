@@ -14,6 +14,8 @@ import {
 	UpdateEmployee,
 	UpdateEmployeeJobPost,
 	UpworkJobsSearchCriterion,
+	UserConnection,
+	Query
 } from './sdk/gauzy-ai-sdk';
 import { TypedDocumentNode as DocumentNode } from '@graphql-typed-document-node/core';
 import fetch from 'cross-fetch';
@@ -556,6 +558,19 @@ export class GauzyAIService {
 		);
 
 		try {
+			/** */
+			const gauzyAIUser: User = await this.syncUser({
+				email: employee.user.email,
+				username: employee.user.username,
+				hash: employee.user.hash,
+				externalTenantId: employee.user.tenantId,
+				externalUserId: employee.user.id,
+				isActive: employee.isActive,
+				isArchived: false
+			});
+			console.log(`Synced User ${JSON.stringify(gauzyAIUser)}`);
+
+			/** */
 			const gauzyAIEmployee: Employee = await this.syncEmployee({
 				externalEmployeeId: employee.id,
 				externalTenantId: employee.tenantId,
@@ -566,12 +581,10 @@ export class GauzyAIService {
 				linkedInId: employee.linkedInId,
 				isActive: employee.isActive,
 				isArchived: false,
-				upworkJobSearchCriteria: undefined,
-				upworkJobSearchCriteriaAggregate: undefined,
 				firstName: employee.user.firstName,
 				lastName: employee.user.lastName,
+				userId: gauzyAIUser.id
 			});
-
 			console.log(`Synced Employee ${JSON.stringify(gauzyAIEmployee)}`);
 
 			// let's delete all criteria for Employee
@@ -617,7 +630,6 @@ export class GauzyAIService {
 				criteria.forEach(
 					(criterion: IEmployeeUpworkJobsSearchCriterion) => {
 						gauzyAICriteria.push({
-							employee: undefined,
 							employeeId: gauzyAIEmployee.id,
 							isActive: true,
 							isArchived: false,
@@ -684,7 +696,8 @@ export class GauzyAIService {
 			await Promise.all(
 				employees.map(async (employee) => {
 					try {
-						const user: User = {
+						/** */
+						const gauzyAIUser: User = await this.syncUser({
 							email: employee.user.email,
 							username: employee.user.username,
 							hash: employee.user.hash,
@@ -692,7 +705,10 @@ export class GauzyAIService {
 							externalUserId: employee.user.id,
 							isActive: employee.isActive,
 							isArchived: false
-						};
+						});
+						console.log(`Synced User ${JSON.stringify(gauzyAIUser)}`);
+
+						/**  */
 						const gauzyAIEmployee: Employee = await this.syncEmployee({
 							externalEmployeeId: employee.id,
 							externalTenantId: employee.tenantId,
@@ -703,11 +719,9 @@ export class GauzyAIService {
 							linkedInId: employee.linkedInId,
 							isActive: employee.isActive,
 							isArchived: false,
-							upworkJobSearchCriteria: undefined,
-							upworkJobSearchCriteriaAggregate: undefined,
 							firstName: employee.user.firstName,
 							lastName: employee.user.lastName,
-							user
+							userId: gauzyAIUser.id
 						});
 						console.log(`Synced Employee ${JSON.stringify(gauzyAIEmployee)}`);
 					} catch (error) {
@@ -974,8 +988,10 @@ export class GauzyAIService {
 			};
 
 			return response;
-		} catch (err) {
-			this._logger.error(err);
+		} catch (error) {
+			console.log('Error while getting employee job posts: %s', error?.message)
+
+			this._logger.error(error);
 			return null;
 		}
 	}
@@ -1325,21 +1341,24 @@ export class GauzyAIService {
 								upworkId
 								linkedInId
 								firstName
-								lastName
+								lastName,
+								userId
 							}
 						}
 					`;
-
-					const newEmployee = await this._client.mutate({
-						mutation: createEmployeeMutation,
-						variables: {
-							input: {
-								employee,
+					try {
+						const newEmployee = await this._client.mutate({
+							mutation: createEmployeeMutation,
+							variables: {
+								input: {
+									employee
+								},
 							},
-						},
-					});
-
-					return newEmployee.data.createOneEmployee;
+						});
+						return <Employee>newEmployee.data.createOneEmployee;
+					} catch (error) {
+						console.log('Error while creating employee: %s', error?.message);
+					}
 				}
 			}
 
@@ -1360,6 +1379,7 @@ export class GauzyAIService {
 						isArchived
 						firstName
 						lastName
+						userId
 					}
 				}
 			`;
@@ -1376,7 +1396,120 @@ export class GauzyAIService {
 
 			return <Employee>employeesResponse[0].node;
 		} catch (error) {
-			console.log('Error while synced employee: %s', error?.message);
+			console.log('Error while synced employee / user: %s', error?.message);
+			throw new BadRequestException(error?.message);
+		}
+	}
+
+	/**
+	 * Sync User between Gauzy and Gauzy AI
+	 * Creates new User in Gauzy AI if it's not yet exists there yet (it try to find by externalUserId field value or by email)
+	 * Update existed Gauzy AI User record with new data from Gauzy DB
+	 */
+	private async syncUser(user: User) {
+		console.log('-------------------------- Sync User --------------------------', user);
+		try {
+			// First, let's search by user.externalUserId & user.externalTenantId (which is Gauzy userId)
+			let userFilterByExternalFieldsQuery: DocumentNode<UserConnection> = gql`
+				query UserFilterByExternalFields(
+					$externalUserIdFilter: String!
+					$externalTenantIdFilter: String!
+				) {
+					users(
+						filter: {
+							externalUserId: { eq: $externalUserIdFilter }
+							externalTenantId: { eq: $externalTenantIdFilter }
+						}
+					) {
+						edges {
+							node {
+								id,
+								email
+								username
+								externalUserId
+								externalTenantId
+							}
+						}
+						totalCount
+					}
+				}
+			`;
+
+			let usersQueryResult: ApolloQueryResult<Query> = await this._client.query<Query>({
+				query: userFilterByExternalFieldsQuery,
+				variables: {
+					externalUserIdFilter: user.externalUserId,
+					externalTenantIdFilter: user.externalTenantId,
+				},
+			});
+
+			let usersResponse = usersQueryResult.data.users.edges;
+			let isAlreadyCreated = usersQueryResult.data.users.totalCount > 0;
+
+			console.log(`Is User already exists in Gauzy AI: ${isAlreadyCreated} by externalUserId: %s and externalTenantId: %s fields`, user.externalUserId, user.externalTenantId);
+
+			if (!isAlreadyCreated) {
+				/** Create record of user */
+				try {
+					const createOneUserMutation: DocumentNode<any> = gql`
+						mutation createOneUser(
+							$input: CreateOneUserInput!
+						) {
+							createOneUser(input: $input) {
+								id
+								username
+								email
+								hash
+								externalTenantId
+								externalUserId
+								isActive
+								isArchived
+							}
+						}
+					`;
+					const newUser = await this._client.mutate({
+						mutation: createOneUserMutation,
+						variables: {
+							input: {
+								user
+							},
+						},
+					});
+					return <User>newUser.data.createOneUser;
+				} catch (error) {
+					console.log('Error while creating user: %s', error?.message);
+				}
+			}
+
+			/** Update record of user */
+			try {
+				const id = usersResponse[0].node.id;
+				const updateUserMutation: DocumentNode<any> = gql`
+					mutation updateOneUser($input: UpdateOneUserInput!) {
+						updateOneUser(input: $input) {
+							email
+							username
+							hash
+							isActive
+							isArchived
+						}
+					}
+				`;
+				await this._client.mutate({
+					mutation: updateUserMutation,
+					variables: {
+						input: {
+							id: id,
+							update: user,
+						},
+					},
+				});
+				return <User>usersResponse[0].node;
+			} catch (error) {
+				console.log('Error while updating user: %s', error?.message);
+			}
+		} catch (error) {
+			console.log('Error while synced user: %s', error?.message);
 			throw new BadRequestException(error?.message);
 		}
 	}
