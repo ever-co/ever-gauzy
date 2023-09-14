@@ -993,8 +993,7 @@ export class GauzyAIService {
 
 			return response;
 		} catch (error) {
-			console.log('Error while getting employee job posts: %s', error?.message)
-
+			console.log('Error while getting employee job posts: %s', error?.message);
 			this._logger.error(error);
 			return null;
 		}
