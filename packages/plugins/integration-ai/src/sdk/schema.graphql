@@ -4,6 +4,9 @@
 
 type User {
 	id: ID
+	firstName: String
+	lastName: String
+	name: String
 	username: String
 	email: String
 	hash: String
@@ -512,6 +515,8 @@ type UserConnection {
 
 type UserAggregateGroupBy {
 	id: ID
+	firstName: String
+	lastName: String
 	username: String
 	email: String
 	hash: String
@@ -525,6 +530,8 @@ type UserAggregateGroupBy {
 
 type UserCountAggregate {
 	id: Int
+	firstName: Int
+	lastName: Int
 	username: Int
 	email: Int
 	hash: Int
@@ -538,6 +545,8 @@ type UserCountAggregate {
 
 type UserMinAggregate {
 	id: ID
+	firstName: String
+	lastName: String
 	username: String
 	email: String
 	hash: String
@@ -549,6 +558,8 @@ type UserMinAggregate {
 
 type UserMaxAggregate {
 	id: ID
+	firstName: String
+	lastName: String
 	username: String
 	email: String
 	hash: String
@@ -567,6 +578,9 @@ type UserAggregateResponse {
 
 type UserDeleteResponse {
 	id: ID
+	firstName: String
+	lastName: String
+	name: String
 	username: String
 	email: String
 	hash: String
@@ -1103,6 +1117,9 @@ type AutomationTaskDeleteResponse {
 
 input UserInput {
 	id: ID
+	firstName: String
+	lastName: String
+	name: String
 	username: String
 	email: String
 	hash: String
@@ -2088,6 +2105,8 @@ input UserAggregateFilter {
 	and: [UserAggregateFilter!]
 	or: [UserAggregateFilter!]
 	id: IDFilterComparison
+	firstName: StringFieldComparison
+	lastName: StringFieldComparison
 	username: StringFieldComparison
 	email: StringFieldComparison
 	hash: StringFieldComparison
@@ -2103,6 +2122,8 @@ input UserFilter {
 	and: [UserFilter!]
 	or: [UserFilter!]
 	id: IDFilterComparison
+	firstName: StringFieldComparison
+	lastName: StringFieldComparison
 	username: StringFieldComparison
 	email: StringFieldComparison
 	hash: StringFieldComparison
@@ -2122,6 +2143,8 @@ input UserSort {
 
 enum UserSortFields {
 	id
+	firstName
+	lastName
 	username
 	email
 	hash
@@ -3085,6 +3108,9 @@ input CreateOneUserInput {
 
 input CreateUser {
 	id: ID
+	firstName: String
+	lastName: String
+	name: String
 	username: String
 	email: String
 	hash: String
@@ -3117,6 +3143,9 @@ input UpdateOneUserInput {
 
 input UpdateUser {
 	id: ID
+	firstName: String
+	lastName: String
+	name: String
 	username: String
 	email: String
 	hash: String
@@ -3144,6 +3173,8 @@ input UserUpdateFilter {
 	and: [UserUpdateFilter!]
 	or: [UserUpdateFilter!]
 	id: IDFilterComparison
+	firstName: StringFieldComparison
+	lastName: StringFieldComparison
 	username: StringFieldComparison
 	email: StringFieldComparison
 	hash: StringFieldComparison
@@ -3173,6 +3204,8 @@ input UserDeleteFilter {
 	and: [UserDeleteFilter!]
 	or: [UserDeleteFilter!]
 	id: IDFilterComparison
+	firstName: StringFieldComparison
+	lastName: StringFieldComparison
 	username: StringFieldComparison
 	email: StringFieldComparison
 	hash: StringFieldComparison
@@ -3515,6 +3548,8 @@ input UserSubscriptionFilter {
 	and: [UserSubscriptionFilter!]
 	or: [UserSubscriptionFilter!]
 	id: IDFilterComparison
+	firstName: StringFieldComparison
+	lastName: StringFieldComparison
 	username: StringFieldComparison
 	email: StringFieldComparison
 	hash: StringFieldComparison

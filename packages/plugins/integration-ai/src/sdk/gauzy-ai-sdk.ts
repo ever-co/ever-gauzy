@@ -667,10 +667,13 @@ export type CreateUser = {
 	email?: InputMaybe<Scalars['String']['input']>;
 	externalTenantId?: InputMaybe<Scalars['String']['input']>;
 	externalUserId?: InputMaybe<Scalars['String']['input']>;
+	firstName?: InputMaybe<Scalars['String']['input']>;
 	hash?: InputMaybe<Scalars['String']['input']>;
 	id?: InputMaybe<Scalars['ID']['input']>;
 	isActive: Scalars['Boolean']['input'];
 	isArchived: Scalars['Boolean']['input'];
+	lastName?: InputMaybe<Scalars['String']['input']>;
+	name?: InputMaybe<Scalars['String']['input']>;
 	updatedAt?: InputMaybe<Scalars['DateTime']['input']>;
 	username?: InputMaybe<Scalars['String']['input']>;
 };
@@ -3158,10 +3161,13 @@ export type UpdateUser = {
 	email?: InputMaybe<Scalars['String']['input']>;
 	externalTenantId?: InputMaybe<Scalars['String']['input']>;
 	externalUserId?: InputMaybe<Scalars['String']['input']>;
+	firstName?: InputMaybe<Scalars['String']['input']>;
 	hash?: InputMaybe<Scalars['String']['input']>;
 	id?: InputMaybe<Scalars['ID']['input']>;
 	isActive?: InputMaybe<Scalars['Boolean']['input']>;
 	isArchived?: InputMaybe<Scalars['Boolean']['input']>;
+	lastName?: InputMaybe<Scalars['String']['input']>;
+	name?: InputMaybe<Scalars['String']['input']>;
 	updatedAt?: InputMaybe<Scalars['DateTime']['input']>;
 	username?: InputMaybe<Scalars['String']['input']>;
 };
@@ -3382,10 +3388,13 @@ export type User = {
 	employee?: Maybe<Employee>;
 	externalTenantId?: Maybe<Scalars['String']['output']>;
 	externalUserId?: Maybe<Scalars['String']['output']>;
+	firstName?: Maybe<Scalars['String']['output']>;
 	hash?: Maybe<Scalars['String']['output']>;
 	id?: Maybe<Scalars['ID']['output']>;
 	isActive: Scalars['Boolean']['output'];
 	isArchived: Scalars['Boolean']['output'];
+	lastName?: Maybe<Scalars['String']['output']>;
+	name?: Maybe<Scalars['String']['output']>;
 	updatedAt?: Maybe<Scalars['DateTime']['output']>;
 	username?: Maybe<Scalars['String']['output']>;
 };
@@ -3396,10 +3405,12 @@ export type UserAggregateFilter = {
 	email?: InputMaybe<StringFieldComparison>;
 	externalTenantId?: InputMaybe<StringFieldComparison>;
 	externalUserId?: InputMaybe<StringFieldComparison>;
+	firstName?: InputMaybe<StringFieldComparison>;
 	hash?: InputMaybe<StringFieldComparison>;
 	id?: InputMaybe<IdFilterComparison>;
 	isActive?: InputMaybe<BooleanFieldComparison>;
 	isArchived?: InputMaybe<BooleanFieldComparison>;
+	lastName?: InputMaybe<StringFieldComparison>;
 	or?: InputMaybe<Array<UserAggregateFilter>>;
 	updatedAt?: InputMaybe<DateFieldComparison>;
 	username?: InputMaybe<StringFieldComparison>;
@@ -3411,10 +3422,12 @@ export type UserAggregateGroupBy = {
 	email?: Maybe<Scalars['String']['output']>;
 	externalTenantId?: Maybe<Scalars['String']['output']>;
 	externalUserId?: Maybe<Scalars['String']['output']>;
+	firstName?: Maybe<Scalars['String']['output']>;
 	hash?: Maybe<Scalars['String']['output']>;
 	id?: Maybe<Scalars['ID']['output']>;
 	isActive?: Maybe<Scalars['Boolean']['output']>;
 	isArchived?: Maybe<Scalars['Boolean']['output']>;
+	lastName?: Maybe<Scalars['String']['output']>;
 	updatedAt?: Maybe<Scalars['DateTime']['output']>;
 	username?: Maybe<Scalars['String']['output']>;
 };
@@ -3453,10 +3466,12 @@ export type UserCountAggregate = {
 	email?: Maybe<Scalars['Int']['output']>;
 	externalTenantId?: Maybe<Scalars['Int']['output']>;
 	externalUserId?: Maybe<Scalars['Int']['output']>;
+	firstName?: Maybe<Scalars['Int']['output']>;
 	hash?: Maybe<Scalars['Int']['output']>;
 	id?: Maybe<Scalars['Int']['output']>;
 	isActive?: Maybe<Scalars['Int']['output']>;
 	isArchived?: Maybe<Scalars['Int']['output']>;
+	lastName?: Maybe<Scalars['Int']['output']>;
 	updatedAt?: Maybe<Scalars['Int']['output']>;
 	username?: Maybe<Scalars['Int']['output']>;
 };
@@ -3467,10 +3482,12 @@ export type UserDeleteFilter = {
 	email?: InputMaybe<StringFieldComparison>;
 	externalTenantId?: InputMaybe<StringFieldComparison>;
 	externalUserId?: InputMaybe<StringFieldComparison>;
+	firstName?: InputMaybe<StringFieldComparison>;
 	hash?: InputMaybe<StringFieldComparison>;
 	id?: InputMaybe<IdFilterComparison>;
 	isActive?: InputMaybe<BooleanFieldComparison>;
 	isArchived?: InputMaybe<BooleanFieldComparison>;
+	lastName?: InputMaybe<StringFieldComparison>;
 	or?: InputMaybe<Array<UserDeleteFilter>>;
 	updatedAt?: InputMaybe<DateFieldComparison>;
 	username?: InputMaybe<StringFieldComparison>;
@@ -3482,10 +3499,13 @@ export type UserDeleteResponse = {
 	email?: Maybe<Scalars['String']['output']>;
 	externalTenantId?: Maybe<Scalars['String']['output']>;
 	externalUserId?: Maybe<Scalars['String']['output']>;
+	firstName?: Maybe<Scalars['String']['output']>;
 	hash?: Maybe<Scalars['String']['output']>;
 	id?: Maybe<Scalars['ID']['output']>;
 	isActive?: Maybe<Scalars['Boolean']['output']>;
 	isArchived?: Maybe<Scalars['Boolean']['output']>;
+	lastName?: Maybe<Scalars['String']['output']>;
+	name?: Maybe<Scalars['String']['output']>;
 	updatedAt?: Maybe<Scalars['DateTime']['output']>;
 	username?: Maybe<Scalars['String']['output']>;
 };
@@ -3504,10 +3524,12 @@ export type UserFilter = {
 	email?: InputMaybe<StringFieldComparison>;
 	externalTenantId?: InputMaybe<StringFieldComparison>;
 	externalUserId?: InputMaybe<StringFieldComparison>;
+	firstName?: InputMaybe<StringFieldComparison>;
 	hash?: InputMaybe<StringFieldComparison>;
 	id?: InputMaybe<IdFilterComparison>;
 	isActive?: InputMaybe<BooleanFieldComparison>;
 	isArchived?: InputMaybe<BooleanFieldComparison>;
+	lastName?: InputMaybe<StringFieldComparison>;
 	or?: InputMaybe<Array<UserFilter>>;
 	updatedAt?: InputMaybe<DateFieldComparison>;
 	username?: InputMaybe<StringFieldComparison>;
@@ -3518,10 +3540,13 @@ export type UserInput = {
 	email?: InputMaybe<Scalars['String']['input']>;
 	externalTenantId?: InputMaybe<Scalars['String']['input']>;
 	externalUserId?: InputMaybe<Scalars['String']['input']>;
+	firstName?: InputMaybe<Scalars['String']['input']>;
 	hash?: InputMaybe<Scalars['String']['input']>;
 	id?: InputMaybe<Scalars['ID']['input']>;
 	isActive: Scalars['Boolean']['input'];
 	isArchived: Scalars['Boolean']['input'];
+	lastName?: InputMaybe<Scalars['String']['input']>;
+	name?: InputMaybe<Scalars['String']['input']>;
 	updatedAt?: InputMaybe<Scalars['DateTime']['input']>;
 	username?: InputMaybe<Scalars['String']['input']>;
 };
@@ -3532,8 +3557,10 @@ export type UserMaxAggregate = {
 	email?: Maybe<Scalars['String']['output']>;
 	externalTenantId?: Maybe<Scalars['String']['output']>;
 	externalUserId?: Maybe<Scalars['String']['output']>;
+	firstName?: Maybe<Scalars['String']['output']>;
 	hash?: Maybe<Scalars['String']['output']>;
 	id?: Maybe<Scalars['ID']['output']>;
+	lastName?: Maybe<Scalars['String']['output']>;
 	updatedAt?: Maybe<Scalars['DateTime']['output']>;
 	username?: Maybe<Scalars['String']['output']>;
 };
@@ -3544,8 +3571,10 @@ export type UserMinAggregate = {
 	email?: Maybe<Scalars['String']['output']>;
 	externalTenantId?: Maybe<Scalars['String']['output']>;
 	externalUserId?: Maybe<Scalars['String']['output']>;
+	firstName?: Maybe<Scalars['String']['output']>;
 	hash?: Maybe<Scalars['String']['output']>;
 	id?: Maybe<Scalars['ID']['output']>;
+	lastName?: Maybe<Scalars['String']['output']>;
 	updatedAt?: Maybe<Scalars['DateTime']['output']>;
 	username?: Maybe<Scalars['String']['output']>;
 };
@@ -3561,10 +3590,12 @@ export enum UserSortFields {
 	Email = 'email',
 	ExternalTenantId = 'externalTenantId',
 	ExternalUserId = 'externalUserId',
+	FirstName = 'firstName',
 	Hash = 'hash',
 	Id = 'id',
 	IsActive = 'isActive',
 	IsArchived = 'isArchived',
+	LastName = 'lastName',
 	UpdatedAt = 'updatedAt',
 	Username = 'username'
 }
@@ -3575,10 +3606,12 @@ export type UserSubscriptionFilter = {
 	email?: InputMaybe<StringFieldComparison>;
 	externalTenantId?: InputMaybe<StringFieldComparison>;
 	externalUserId?: InputMaybe<StringFieldComparison>;
+	firstName?: InputMaybe<StringFieldComparison>;
 	hash?: InputMaybe<StringFieldComparison>;
 	id?: InputMaybe<IdFilterComparison>;
 	isActive?: InputMaybe<BooleanFieldComparison>;
 	isArchived?: InputMaybe<BooleanFieldComparison>;
+	lastName?: InputMaybe<StringFieldComparison>;
 	or?: InputMaybe<Array<UserSubscriptionFilter>>;
 	updatedAt?: InputMaybe<DateFieldComparison>;
 	username?: InputMaybe<StringFieldComparison>;
@@ -3590,10 +3623,12 @@ export type UserUpdateFilter = {
 	email?: InputMaybe<StringFieldComparison>;
 	externalTenantId?: InputMaybe<StringFieldComparison>;
 	externalUserId?: InputMaybe<StringFieldComparison>;
+	firstName?: InputMaybe<StringFieldComparison>;
 	hash?: InputMaybe<StringFieldComparison>;
 	id?: InputMaybe<IdFilterComparison>;
 	isActive?: InputMaybe<BooleanFieldComparison>;
 	isArchived?: InputMaybe<BooleanFieldComparison>;
+	lastName?: InputMaybe<StringFieldComparison>;
 	or?: InputMaybe<Array<UserUpdateFilter>>;
 	updatedAt?: InputMaybe<DateFieldComparison>;
 	username?: InputMaybe<StringFieldComparison>;

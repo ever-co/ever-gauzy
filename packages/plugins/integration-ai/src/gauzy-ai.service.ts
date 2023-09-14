@@ -560,6 +560,8 @@ export class GauzyAIService {
 		try {
 			/** */
 			const gauzyAIUser: User = await this.syncUser({
+				firstName: employee.user.firstName,
+				lastName: employee.user.lastName,
 				email: employee.user.email,
 				username: employee.user.username,
 				hash: employee.user.hash,
@@ -698,6 +700,8 @@ export class GauzyAIService {
 					try {
 						/** */
 						const gauzyAIUser: User = await this.syncUser({
+							firstName: employee.user.firstName,
+							lastName: employee.user.lastName,
 							email: employee.user.email,
 							username: employee.user.username,
 							hash: employee.user.hash,
@@ -1457,8 +1461,10 @@ export class GauzyAIService {
 						) {
 							createOneUser(input: $input) {
 								id
-								username
+								firstName
+								lastName
 								email
+								username
 								hash
 								externalTenantId
 								externalUserId
@@ -1487,6 +1493,8 @@ export class GauzyAIService {
 				const updateUserMutation: DocumentNode<any> = gql`
 					mutation updateOneUser($input: UpdateOneUserInput!) {
 						updateOneUser(input: $input) {
+							firstName
+							lastName
 							email
 							username
 							hash
