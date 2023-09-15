@@ -39,12 +39,14 @@ export class UpdateEmployeeJobSearchStatusHandler implements ICommandHandler<Upd
 			const synced = await this.gauzyAIService.syncEmployees([employee]);
 			try {
 				if (synced) {
-					this.gauzyAIService.updateEmployeeStatus(
+					const { userId } = employee;
+					this.gauzyAIService.updateEmployeeStatus({
 						employeeId,
+						userId,
 						tenantId,
 						organizationId,
 						isJobSearchActive
-					);
+					});
 				}
 			} catch (error) {
 				console.log('Error while updating employee job search status with Gauzy AI: %s', error);
