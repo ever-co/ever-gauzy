@@ -56,11 +56,11 @@ export class IntegrationAIMiddleware implements NestMiddleware {
             } catch (error) {
                 console.log('Error while getting AI integration settings: %s', error?.message);
             }
-        }
-
-        if (isNotEmpty(tenantId) && isNotEmpty(token)) {
-            const { ApiKey, ApiSecret } = this.requestConfigProvider.getConfig();
-            this.requestConfigProvider.setConfig({ ApiKey, ApiSecret, ApiTenantId: tenantId, ApiBearerToken: token });
+        } else {
+            if (isNotEmpty(tenantId) && isNotEmpty(token)) {
+                const { ApiKey, ApiSecret } = this.requestConfigProvider.getConfig();
+                this.requestConfigProvider.setConfig({ ApiKey, ApiSecret, ApiTenantId: tenantId, ApiBearerToken: token });
+            }
         }
         // Continue to the next middleware or route handler
         next();

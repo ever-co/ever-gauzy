@@ -1147,7 +1147,7 @@ export class GauzyAIService {
 				'X-APP-ID': this._configService.get<string>('guazyAI.gauzyAiApiKey'),
 				'X-API-KEY': this._configService.get<string>('guazyAI.gauzyAiApiSecret'),
 
-				...(ApiKey ? { 'X-APP-ID': ApiSecret } : {}),
+				...(ApiKey ? { 'X-APP-ID': ApiKey } : {}),
 				...(ApiSecret ? { 'X-API-KEY': ApiSecret } : {}),
 
 				...(ApiTenantId ? { 'X-TENANT-ID': ApiTenantId } : {}),
