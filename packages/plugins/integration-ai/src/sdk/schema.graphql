@@ -10,6 +10,7 @@ type User {
 	username: String
 	email: String
 	hash: String
+	tenantId: String
 	externalTenantId: String
 	externalUserId: String
 	isActive: Boolean!
@@ -26,6 +27,7 @@ scalar DateTime
 
 type Employee {
 	id: ID
+	tenantId: String
 	externalTenantId: String
 	externalOrgId: String
 	externalEmployeeId: String
@@ -54,6 +56,7 @@ type UpworkJobsSearchCriterion {
 	occupationId: String
 	jobType: String!
 	keyword: String!
+	tenantId: String
 	createdAt: DateTime
 	updatedAt: DateTime
 	isActive: Boolean!
@@ -256,6 +259,7 @@ type UserAggregateGroupBy {
 	username: String
 	email: String
 	hash: String
+	tenantId: String
 	externalTenantId: String
 	externalUserId: String
 	isActive: Boolean
@@ -281,6 +285,7 @@ type UserCountAggregate {
 	username: Int
 	email: Int
 	hash: Int
+	tenantId: Int
 	externalTenantId: Int
 	externalUserId: Int
 	isActive: Int
@@ -296,6 +301,7 @@ type UserMinAggregate {
 	username: String
 	email: String
 	hash: String
+	tenantId: String
 	externalTenantId: String
 	externalUserId: String
 	createdAt: DateTime
@@ -309,6 +315,7 @@ type UserMaxAggregate {
 	username: String
 	email: String
 	hash: String
+	tenantId: String
 	externalTenantId: String
 	externalUserId: String
 	createdAt: DateTime
@@ -330,6 +337,7 @@ type UserDeleteResponse {
 	username: String
 	email: String
 	hash: String
+	tenantId: String
 	externalTenantId: String
 	externalUserId: String
 	isActive: Boolean
@@ -534,6 +542,7 @@ type UpworkJobsSearchCriterionAggregateGroupBy {
 	occupation: String
 	occupationId: String
 	jobType: String
+	tenantId: String
 	isActive: Boolean
 	isArchived: Boolean
 }
@@ -546,6 +555,7 @@ type UpworkJobsSearchCriterionCountAggregate {
 	occupation: Int
 	occupationId: Int
 	jobType: Int
+	tenantId: Int
 	isActive: Int
 	isArchived: Int
 }
@@ -558,6 +568,7 @@ type UpworkJobsSearchCriterionMinAggregate {
 	occupation: String
 	occupationId: String
 	jobType: String
+	tenantId: String
 }
 
 type UpworkJobsSearchCriterionMaxAggregate {
@@ -568,6 +579,7 @@ type UpworkJobsSearchCriterionMaxAggregate {
 	occupation: String
 	occupationId: String
 	jobType: String
+	tenantId: String
 }
 
 type UpworkJobsSearchCriterionAggregateResponse {
@@ -586,6 +598,7 @@ type UpworkJobsSearchCriterionDeleteResponse {
 	occupationId: String
 	jobType: String
 	keyword: String
+	tenantId: String
 	createdAt: DateTime
 	updatedAt: DateTime
 	isActive: Boolean
@@ -623,6 +636,7 @@ type EmployeeConnection {
 
 type EmployeeAggregateGroupBy {
 	id: ID
+	tenantId: String
 	externalTenantId: String
 	externalOrgId: String
 	externalEmployeeId: String
@@ -642,6 +656,7 @@ type EmployeeAggregateGroupBy {
 
 type EmployeeCountAggregate {
 	id: Int
+	tenantId: Int
 	externalTenantId: Int
 	externalOrgId: Int
 	externalEmployeeId: Int
@@ -661,6 +676,7 @@ type EmployeeCountAggregate {
 
 type EmployeeMinAggregate {
 	id: ID
+	tenantId: String
 	externalTenantId: String
 	externalOrgId: String
 	externalEmployeeId: String
@@ -678,6 +694,7 @@ type EmployeeMinAggregate {
 
 type EmployeeMaxAggregate {
 	id: ID
+	tenantId: String
 	externalTenantId: String
 	externalOrgId: String
 	externalEmployeeId: String
@@ -702,6 +719,7 @@ type EmployeeAggregateResponse {
 
 type EmployeeDeleteResponse {
 	id: ID
+	tenantId: String
 	externalTenantId: String
 	externalOrgId: String
 	externalEmployeeId: String
@@ -1210,6 +1228,7 @@ input UserInput {
 	username: String
 	email: String
 	hash: String
+	tenantId: String
 	externalTenantId: String
 	externalUserId: String
 	isActive: Boolean!
@@ -1220,6 +1239,7 @@ input UserInput {
 
 input EmployeeInput {
 	id: ID
+	tenantId: String
 	externalTenantId: String
 	externalOrgId: String
 	externalEmployeeId: String
@@ -1247,6 +1267,7 @@ input UpworkJobsSearchCriterionInput {
 	occupationId: String
 	jobType: String!
 	keyword: String!
+	tenantId: String
 	createdAt: DateTime
 	updatedAt: DateTime
 	isActive: Boolean!
@@ -1560,6 +1581,7 @@ input UpworkJobsSearchCriterionAggregateFilter {
 	occupation: StringFieldComparison
 	occupationId: StringFieldComparison
 	jobType: StringFieldComparison
+	tenantId: StringFieldComparison
 	isActive: BooleanFieldComparison
 	isArchived: BooleanFieldComparison
 }
@@ -1635,6 +1657,7 @@ input UpworkJobsSearchCriterionFilter {
 	occupation: StringFieldComparison
 	occupationId: StringFieldComparison
 	jobType: StringFieldComparison
+	tenantId: StringFieldComparison
 	isActive: BooleanFieldComparison
 	isArchived: BooleanFieldComparison
 }
@@ -1653,6 +1676,7 @@ enum UpworkJobsSearchCriterionSortFields {
 	occupation
 	occupationId
 	jobType
+	tenantId
 	isActive
 	isArchived
 }
@@ -1791,6 +1815,7 @@ input AutomationTaskFilterEmployeeFilter {
 	and: [AutomationTaskFilterEmployeeFilter!]
 	or: [AutomationTaskFilterEmployeeFilter!]
 	id: IDFilterComparison
+	tenantId: StringFieldComparison
 	externalTenantId: StringFieldComparison
 	externalOrgId: StringFieldComparison
 	externalEmployeeId: StringFieldComparison
@@ -1930,6 +1955,7 @@ input EmployeeJobApplicationFilterEmployeeFilter {
 	and: [EmployeeJobApplicationFilterEmployeeFilter!]
 	or: [EmployeeJobApplicationFilterEmployeeFilter!]
 	id: IDFilterComparison
+	tenantId: StringFieldComparison
 	externalTenantId: StringFieldComparison
 	externalOrgId: StringFieldComparison
 	externalEmployeeId: StringFieldComparison
@@ -2119,6 +2145,7 @@ input EmployeeJobPostFilterEmployeeFilter {
 	and: [EmployeeJobPostFilterEmployeeFilter!]
 	or: [EmployeeJobPostFilterEmployeeFilter!]
 	id: IDFilterComparison
+	tenantId: StringFieldComparison
 	externalTenantId: StringFieldComparison
 	externalOrgId: StringFieldComparison
 	externalEmployeeId: StringFieldComparison
@@ -2164,6 +2191,7 @@ input EmployeeAggregateFilter {
 	and: [EmployeeAggregateFilter!]
 	or: [EmployeeAggregateFilter!]
 	id: IDFilterComparison
+	tenantId: StringFieldComparison
 	externalTenantId: StringFieldComparison
 	externalOrgId: StringFieldComparison
 	externalEmployeeId: StringFieldComparison
@@ -2185,6 +2213,7 @@ input EmployeeFilter {
 	and: [EmployeeFilter!]
 	or: [EmployeeFilter!]
 	id: IDFilterComparison
+	tenantId: StringFieldComparison
 	externalTenantId: StringFieldComparison
 	externalOrgId: StringFieldComparison
 	externalEmployeeId: StringFieldComparison
@@ -2210,6 +2239,7 @@ input EmployeeSort {
 
 enum EmployeeSortFields {
 	id
+	tenantId
 	externalTenantId
 	externalOrgId
 	externalEmployeeId
@@ -2279,6 +2309,7 @@ input UserAggregateFilter {
 	username: StringFieldComparison
 	email: StringFieldComparison
 	hash: StringFieldComparison
+	tenantId: StringFieldComparison
 	externalTenantId: StringFieldComparison
 	externalUserId: StringFieldComparison
 	isActive: BooleanFieldComparison
@@ -2296,6 +2327,7 @@ input UserFilter {
 	username: StringFieldComparison
 	email: StringFieldComparison
 	hash: StringFieldComparison
+	tenantId: StringFieldComparison
 	externalTenantId: StringFieldComparison
 	externalUserId: StringFieldComparison
 	isActive: BooleanFieldComparison
@@ -2317,6 +2349,7 @@ enum UserSortFields {
 	username
 	email
 	hash
+	tenantId
 	externalTenantId
 	externalUserId
 	isActive
@@ -2434,6 +2467,7 @@ input CreateUpworkJobsSearchCriterion {
 	occupationId: String
 	jobType: String!
 	keyword: String!
+	tenantId: String
 	createdAt: DateTime
 	updatedAt: DateTime
 	isActive: Boolean!
@@ -2468,6 +2502,7 @@ input UpdateUpworkJobsSearchCriterion {
 	occupationId: String
 	jobType: String
 	keyword: String
+	tenantId: String
 	createdAt: DateTime
 	updatedAt: DateTime
 	isActive: Boolean
@@ -2496,6 +2531,7 @@ input UpworkJobsSearchCriterionUpdateFilter {
 	occupation: StringFieldComparison
 	occupationId: StringFieldComparison
 	jobType: StringFieldComparison
+	tenantId: StringFieldComparison
 	isActive: BooleanFieldComparison
 	isArchived: BooleanFieldComparison
 }
@@ -2524,6 +2560,7 @@ input UpworkJobsSearchCriterionDeleteFilter {
 	occupation: StringFieldComparison
 	occupationId: StringFieldComparison
 	jobType: StringFieldComparison
+	tenantId: StringFieldComparison
 	isActive: BooleanFieldComparison
 	isArchived: BooleanFieldComparison
 }
@@ -3143,6 +3180,7 @@ input CreateOneEmployeeInput {
 
 input CreateEmployee {
 	id: ID
+	tenantId: String
 	externalTenantId: String
 	externalOrgId: String
 	externalEmployeeId: String
@@ -3182,6 +3220,7 @@ input UpdateOneEmployeeInput {
 
 input UpdateEmployee {
 	id: ID
+	tenantId: String
 	externalTenantId: String
 	externalOrgId: String
 	externalEmployeeId: String
@@ -3216,6 +3255,7 @@ input EmployeeUpdateFilter {
 	and: [EmployeeUpdateFilter!]
 	or: [EmployeeUpdateFilter!]
 	id: IDFilterComparison
+	tenantId: StringFieldComparison
 	externalTenantId: StringFieldComparison
 	externalOrgId: StringFieldComparison
 	externalEmployeeId: StringFieldComparison
@@ -3251,6 +3291,7 @@ input EmployeeDeleteFilter {
 	and: [EmployeeDeleteFilter!]
 	or: [EmployeeDeleteFilter!]
 	id: IDFilterComparison
+	tenantId: StringFieldComparison
 	externalTenantId: StringFieldComparison
 	externalOrgId: StringFieldComparison
 	externalEmployeeId: StringFieldComparison
@@ -3283,6 +3324,7 @@ input CreateUser {
 	username: String
 	email: String
 	hash: String
+	tenantId: String
 	externalTenantId: String
 	externalUserId: String
 	isActive: Boolean!
@@ -3318,6 +3360,7 @@ input UpdateUser {
 	username: String
 	email: String
 	hash: String
+	tenantId: String
 	externalTenantId: String
 	externalUserId: String
 	isActive: Boolean
@@ -3347,6 +3390,7 @@ input UserUpdateFilter {
 	username: StringFieldComparison
 	email: StringFieldComparison
 	hash: StringFieldComparison
+	tenantId: StringFieldComparison
 	externalTenantId: StringFieldComparison
 	externalUserId: StringFieldComparison
 	isActive: BooleanFieldComparison
@@ -3378,6 +3422,7 @@ input UserDeleteFilter {
 	username: StringFieldComparison
 	email: StringFieldComparison
 	hash: StringFieldComparison
+	tenantId: StringFieldComparison
 	externalTenantId: StringFieldComparison
 	externalUserId: StringFieldComparison
 	isActive: BooleanFieldComparison
@@ -3473,6 +3518,7 @@ input UpworkJobsSearchCriterionSubscriptionFilter {
 	occupation: StringFieldComparison
 	occupationId: StringFieldComparison
 	jobType: StringFieldComparison
+	tenantId: StringFieldComparison
 	isActive: BooleanFieldComparison
 	isArchived: BooleanFieldComparison
 }
@@ -3675,6 +3721,7 @@ input EmployeeSubscriptionFilter {
 	and: [EmployeeSubscriptionFilter!]
 	or: [EmployeeSubscriptionFilter!]
 	id: IDFilterComparison
+	tenantId: StringFieldComparison
 	externalTenantId: StringFieldComparison
 	externalOrgId: StringFieldComparison
 	externalEmployeeId: StringFieldComparison
@@ -3722,6 +3769,7 @@ input UserSubscriptionFilter {
 	username: StringFieldComparison
 	email: StringFieldComparison
 	hash: StringFieldComparison
+	tenantId: StringFieldComparison
 	externalTenantId: StringFieldComparison
 	externalUserId: StringFieldComparison
 	isActive: BooleanFieldComparison

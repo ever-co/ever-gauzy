@@ -15,7 +15,8 @@ import {
 	UpdateEmployeeJobPost,
 	UpworkJobsSearchCriterion,
 	UserConnection,
-	Query
+	Query,
+	TenantConnection
 } from './sdk/gauzy-ai-sdk';
 import { TypedDocumentNode as DocumentNode } from '@graphql-typed-document-node/core';
 import fetch from 'cross-fetch';
@@ -558,13 +559,16 @@ export class GauzyAIService {
 		);
 
 		try {
-			/** */
+			// First we need to get tenant id because we have only externalId
+			const tenantId = await this.getTenantGauzyAIId(employee.user.tenantId);
+
 			const gauzyAIUser: User = await this.syncUser({
 				firstName: employee.user.firstName,
 				lastName: employee.user.lastName,
 				email: employee.user.email,
 				username: employee.user.username,
 				hash: employee.user.hash,
+				tenantId: tenantId,
 				externalTenantId: employee.user.tenantId,
 				externalUserId: employee.user.id,
 				isActive: employee.isActive,
@@ -575,6 +579,7 @@ export class GauzyAIService {
 			/** */
 			const gauzyAIEmployee: Employee = await this.syncEmployee({
 				externalEmployeeId: employee.id,
+				tenantId: tenantId,
 				externalTenantId: employee.tenantId,
 				externalOrgId: employee.organizationId,
 				upworkOrganizationId: employee.organization.upworkOrganizationId,
@@ -585,7 +590,11 @@ export class GauzyAIService {
 				isArchived: false,
 				firstName: employee.user.firstName,
 				lastName: employee.user.lastName,
-				userId: gauzyAIUser.id
+				...(gauzyAIUser
+					? {
+						userId: gauzyAIUser.id
+					}
+					: {}),
 			});
 			console.log(`Synced Employee ${JSON.stringify(gauzyAIEmployee)}`);
 
@@ -612,6 +621,9 @@ export class GauzyAIService {
 							employeeId: {
 								eq: gauzyAIEmployee.id,
 							},
+							tenantId: {
+								eq: tenantId
+							}
 						},
 					},
 				},
@@ -619,8 +631,7 @@ export class GauzyAIService {
 
 			console.log(
 				`Delete Existed Criterions count: ${JSON.stringify(
-					deleteMutationResult.data.deleteManyUpworkJobsSearchCriteria
-						.deletedCount
+					deleteMutationResult.data.deleteManyUpworkJobsSearchCriteria.deletedCount
 				)}`
 			);
 
@@ -629,24 +640,23 @@ export class GauzyAIService {
 			if (criteria && criteria.length > 0) {
 				const gauzyAICriteria: UpworkJobsSearchCriterion[] = [];
 
-				criteria.forEach(
-					(criterion: IEmployeeUpworkJobsSearchCriterion) => {
-						gauzyAICriteria.push({
-							employeeId: gauzyAIEmployee.id,
-							isActive: true,
-							isArchived: false,
-							jobType: criterion.jobType,
-							keyword: criterion.keyword,
-							category: criterion.category?.name,
-							categoryId: criterion.categoryId,
-							occupation: criterion.occupation?.name,
-							occupationId: criterion.occupationId,
-						});
-					}
-				);
+				criteria.forEach((criterion: IEmployeeUpworkJobsSearchCriterion) => {
+					gauzyAICriteria.push({
+						employeeId: gauzyAIEmployee.id,
+						tenantId,
+						isActive: true,
+						isArchived: false,
+						jobType: criterion.jobType,
+						keyword: criterion.keyword,
+						...(criterion.category?.name ? { category: criterion.category?.name } : {}),
+						...(criterion.categoryId ? { categoryId: criterion.categoryId } : {}),
+						...(criterion.occupation?.name ? { occupation: criterion.occupation?.name } : {}),
+						...(criterion.occupationId ? { occupationId: criterion.occupationId } : {}),
+					});
+				});
 
-				const createCriteriaMutation: DocumentNode<any> = gql`
-					mutation createManyUpworkJobsSearchCriteria(
+				const createManyUpworkJobsSearchCriteriaMutation: DocumentNode<any> = gql`
+					mutation CreateManyUpworkJobsSearchCriteria(
 						$input: CreateManyUpworkJobsSearchCriteriaInput!
 					) {
 						createManyUpworkJobsSearchCriteria(input: $input) {
@@ -656,7 +666,7 @@ export class GauzyAIService {
 				`;
 
 				const createNewCriteriaResult = await this._client.mutate({
-					mutation: createCriteriaMutation,
+					mutation: createManyUpworkJobsSearchCriteriaMutation,
 					variables: {
 						input: {
 							upworkJobsSearchCriteria: gauzyAICriteria,
@@ -665,10 +675,7 @@ export class GauzyAIService {
 				});
 
 				console.log(
-					`Create New Criteria result: ${JSON.stringify(
-						createNewCriteriaResult.data
-							.createManyUpworkJobsSearchCriteria
-					)}`
+					`Create New Criteria result: ${JSON.stringify(createNewCriteriaResult.data.createManyUpworkJobsSearchCriteria)}`
 				);
 			}
 
@@ -698,6 +705,9 @@ export class GauzyAIService {
 			await Promise.all(
 				employees.map(async (employee) => {
 					try {
+						// First we need to get tenant id because we have only externalId
+						const tenantId = await this.getTenantGauzyAIId(employee.user.tenantId);
+
 						/** */
 						const gauzyAIUser: User = await this.syncUser({
 							firstName: employee.user.firstName,
@@ -705,6 +715,7 @@ export class GauzyAIService {
 							email: employee.user.email,
 							username: employee.user.username,
 							hash: employee.user.hash,
+							tenantId: tenantId,
 							externalTenantId: employee.user.tenantId,
 							externalUserId: employee.user.id,
 							isActive: employee.isActive,
@@ -715,6 +726,7 @@ export class GauzyAIService {
 						/**  */
 						const gauzyAIEmployee: Employee = await this.syncEmployee({
 							externalEmployeeId: employee.id,
+							tenantId: tenantId,
 							externalTenantId: employee.tenantId,
 							externalOrgId: employee.organizationId,
 							upworkOrganizationId: employee.organization.upworkOrganizationId,
@@ -725,7 +737,11 @@ export class GauzyAIService {
 							isArchived: false,
 							firstName: employee.user.firstName,
 							lastName: employee.user.lastName,
-							userId: gauzyAIUser.id
+							...(gauzyAIUser
+								? {
+									userId: gauzyAIUser.id
+								}
+								: {}),
 						});
 						console.log(`Synced Employee ${JSON.stringify(gauzyAIEmployee)}`);
 					} catch (error) {
@@ -1414,7 +1430,7 @@ export class GauzyAIService {
 		try {
 			// First, let's search by user.externalUserId & user.externalTenantId (which is Gauzy userId)
 			let userFilterByExternalFieldsQuery: DocumentNode<UserConnection> = gql`
-				query UserFilterByExternalFields(
+				query userFilterByExternalFieldsQuery(
 					$externalUserIdFilter: String!
 					$externalTenantIdFilter: String!
 				) {
@@ -1497,6 +1513,8 @@ export class GauzyAIService {
 							email
 							username
 							hash
+							externalTenantId
+							externalUserId
 							isActive
 							isArchived
 						}
@@ -1518,6 +1536,55 @@ export class GauzyAIService {
 		} catch (error) {
 			console.log('Error while synced user: %s', error?.message);
 			throw new BadRequestException(error?.message);
+		}
+	}
+
+	/**
+	 *
+	 * @param externalTenantId
+	 * @returns
+	 */
+	private async getTenantGauzyAIId(
+		externalTenantId: string
+	): Promise<string> {
+		try {
+			let tenantByExternalTenantIdQuery: DocumentNode<TenantConnection> = gql`
+				query tenantByExternalEmployeeId(
+					$externalTenantIdFilter: String!
+				) {
+					tenants(
+						filter: {
+							externalTenantId: {
+								eq: $externalTenantIdFilter
+							}
+						}
+					) {
+						edges {
+							node {
+								id,
+								externalTenantId
+							}
+						}
+						totalCount
+					}
+				}
+			`;
+
+			let tenantsQueryResult: ApolloQueryResult<Query> = await this._client.query<Query>({
+				query: tenantByExternalTenantIdQuery,
+				variables: {
+					externalTenantIdFilter: externalTenantId,
+				},
+			});
+
+			const tenantsResponse = tenantsQueryResult.data.tenants;
+			if (tenantsResponse.totalCount > 0) {
+				return tenantsResponse.edges[0].node.id;
+			}
+			return null;
+		} catch (error) {
+			console.log('Error while getting tenant: %s', error?.message);
+			return null;
 		}
 	}
 }
