@@ -1172,8 +1172,8 @@ export class GauzyAIService {
 				...(ApiKey ? { 'X-APP-ID': ApiKey } : {}),
 				...(ApiSecret ? { 'X-API-KEY': ApiSecret } : {}),
 
-				...(ApiTenantId ? { 'X-TENANT-ID': ApiTenantId } : {}),
-				...(ApiBearerToken ? { 'X-BEARER-TOKEN': ApiBearerToken } : {}),
+				...(ApiTenantId ? { 'TENANT-ID': ApiTenantId } : {}),
+				...(ApiBearerToken ? { 'BEARER-TOKEN': ApiBearerToken } : {}),
 			};
 			console.log('Custom Run Time Headers: %s', customHeaders);
 
