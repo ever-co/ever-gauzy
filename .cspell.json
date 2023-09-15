@@ -365,7 +365,9 @@
 		"PROJECTRX",
 		"TASKTRX",
 		"USERTRX",
-		"MAINUNEXCEPTION"
+		"MAINUNEXCEPTION",
+		"Harbir",
+		"Chahal"
 	],
 	"useGitignore": true,
 	"ignorePaths": [
