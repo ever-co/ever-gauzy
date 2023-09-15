@@ -87,4 +87,15 @@ export class TimerService implements ITimerService<TimerTO> {
 			return [];
 		}
 	}
+
+	public async countNoSynced(): Promise<number> {
+		try {
+			const user = await this._userService.retrieve();
+			const [res] = await this._timerDAO.count(false, user);
+			return res.total;
+		} catch (error) {
+			console.error(error);
+			return 0;
+		}
+	}
 }

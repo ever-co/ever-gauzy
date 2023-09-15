@@ -397,7 +397,8 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 					(remoteTimer: IRemoteTimer) =>
 						this.xor(this.start, remoteTimer.running) &&
 						!this._isLockSyncProcess &&
-						this._isReady
+						this._isReady &&
+						this.inQueue.size === 0
 				),
 				tap(async (remoteTimer: IRemoteTimer) => {
 					this.projectSelect = remoteTimer.lastLog.projectId;
@@ -1984,6 +1985,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 		try {
 			let screenshots = await Promise.all(
 				args.map(async (arg) => {
+					if (!arg.screenshots.length) return null;
 					const fullUrl = 'data:image/png;base64,' + arg.screenshots[0].b64img;
 					const thumbUrl = await compressImage(fullUrl, 320, 200);
 					return {
@@ -1996,6 +1998,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 					};
 				})
 			);
+			screenshots = screenshots.filter((screenshot) => !!screenshot);
 			if (screenshots.length > 0) {
 				screenshots = _.sortBy(screenshots, 'recordedAt');
 				const [lastCaptureScreen] = screenshots;
@@ -2171,23 +2174,33 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 			console.log('[TIMER_STATE]', lastTimer);
 			if (isStarted) {
 				if (!this._isOffline && !this._remoteSleepLock) {
-					timelog = isRemote
+					try {
+						timelog = isRemote
 							? this._timeTrackerStatus.remoteTimer.lastLog
 							: await this.timeTrackerService.toggleApiStart({
 									...lastTimer,
 									...params
 							  });
+					} catch (error) {
+						lastTimer.isStartedOffline = true;
+						this._loggerService.log.error(error);
+					}
 				}
 				this.loading = false;
 			} else {
 				if (!this._isOffline) {
-					timelog =
+					try {
+						timelog =
 						isRemote || this._remoteSleepLock
 						? this._timeTrackerStatus.remoteTimer.lastLog
 						: await this.timeTrackerService.toggleApiStop({
 								...lastTimer,
 								...params
 						  });
+					} catch (error) {
+						lastTimer.isStoppedOffline = true;
+						this._loggerService.log.error(error);
+					}
 				}
 				this.start$.next(false);
 				this.loading = false;

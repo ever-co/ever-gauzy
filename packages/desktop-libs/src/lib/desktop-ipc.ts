@@ -292,12 +292,21 @@ export function ipcMainHandler(
 				await timerService.update(
 					new Timer({
 						id: arg.id,
-						timelogId: arg.lastTimer.id,
-						timesheetId: arg.lastTimer.timesheetId,
+						timelogId: arg.lastTimer?.id,
+						timesheetId: arg.lastTimer?.timesheetId,
 						synced: true,
-						...(arg.lastTimer.startedAt && { startedAt: new Date(arg.lastTimer.startedAt) })
+						...(arg.lastTimer?.startedAt && { startedAt: new Date(arg.lastTimer?.startedAt) }),
+						...(!arg.lastTimer && {
+							synced: false,
+							isStartedOffline: arg.isStartedOffline,
+							isStoppedOffline: arg.isStoppedOffline
+						})
 					})
 				);
+			}
+			await countIntervalQueue(timeTrackerWindow, true);
+			if (!isQueueThreadTimerLocked) {
+				await sequentialSyncQueue(timeTrackerWindow);
 			}
 		} catch (error) {
 			throw new UIError('400', error, 'IPCUPDATESYNCTMR');

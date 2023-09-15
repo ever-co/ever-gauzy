@@ -21,11 +21,12 @@ export class TimeoutInterceptor implements HttpInterceptor {
 	) { }
 
 	intercept(request: HttpRequest<unknown>, next: HttpHandler): Observable<HttpEvent<unknown>> {
+		const timeoutValue = Number(request.headers.get('timeout')) || this.defaultTimeout;
 		const cloned = request.clone({
-			setHeaders: { 'X-Request-Timeout': `${this.defaultTimeout}` }
+			setHeaders: { 'X-Request-Timeout': `${timeoutValue}` }
 		});
 		return next.handle(cloned).pipe(
-			timeout(this.defaultTimeout)
+			timeout(timeoutValue)
 		);
 	}
 }
