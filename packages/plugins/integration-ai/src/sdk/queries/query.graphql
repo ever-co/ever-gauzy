@@ -189,3 +189,16 @@ query jobPosts($providerCodeFilter: String!, $providerJobIdFilter: String!) {
 		}
 	}
 }
+
+query tenantByExternalTenantId($externalTenantFilter: String!) {
+	tenants(filter: { externalTenantId: { eq: $externalTenantFilter } }) {
+		edges {
+			node {
+				id
+				name
+				externalTenantId
+			}
+		}
+		totalCount
+	}
+}

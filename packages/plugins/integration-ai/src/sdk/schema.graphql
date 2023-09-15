@@ -193,11 +193,11 @@ type UpdateManyResponse {
 	updatedCount: Int!
 }
 
-type JobPostEdge {
+type UserEdge {
 	"""
-	The node containing the JobPost
+	The node containing the User
 	"""
-	node: JobPost!
+	node: User!
 
 	"""
 	Cursor for this node.
@@ -230,6 +230,124 @@ type PageInfo {
 	The cursor of the last returned record.
 	"""
 	endCursor: ConnectionCursor
+}
+
+type UserConnection {
+	"""
+	Paging information
+	"""
+	pageInfo: PageInfo!
+
+	"""
+	Array of edges.
+	"""
+	edges: [UserEdge!]!
+
+	"""
+	Fetch total count of records
+	"""
+	totalCount: Int!
+}
+
+type UserAggregateGroupBy {
+	id: ID
+	firstName: String
+	lastName: String
+	username: String
+	email: String
+	hash: String
+	externalTenantId: String
+	externalUserId: String
+	isActive: Boolean
+	isArchived: Boolean
+	createdAt(by: GroupBy! = DAY): DateTime
+	updatedAt(by: GroupBy! = DAY): DateTime
+}
+
+"""
+Group by
+"""
+enum GroupBy {
+	DAY
+	WEEK
+	MONTH
+	YEAR
+}
+
+type UserCountAggregate {
+	id: Int
+	firstName: Int
+	lastName: Int
+	username: Int
+	email: Int
+	hash: Int
+	externalTenantId: Int
+	externalUserId: Int
+	isActive: Int
+	isArchived: Int
+	createdAt: Int
+	updatedAt: Int
+}
+
+type UserMinAggregate {
+	id: ID
+	firstName: String
+	lastName: String
+	username: String
+	email: String
+	hash: String
+	externalTenantId: String
+	externalUserId: String
+	createdAt: DateTime
+	updatedAt: DateTime
+}
+
+type UserMaxAggregate {
+	id: ID
+	firstName: String
+	lastName: String
+	username: String
+	email: String
+	hash: String
+	externalTenantId: String
+	externalUserId: String
+	createdAt: DateTime
+	updatedAt: DateTime
+}
+
+type UserAggregateResponse {
+	groupBy: UserAggregateGroupBy
+	count: UserCountAggregate
+	min: UserMinAggregate
+	max: UserMaxAggregate
+}
+
+type UserDeleteResponse {
+	id: ID
+	firstName: String
+	lastName: String
+	name: String
+	username: String
+	email: String
+	hash: String
+	externalTenantId: String
+	externalUserId: String
+	isActive: Boolean
+	isArchived: Boolean
+	createdAt: DateTime
+	updatedAt: DateTime
+}
+
+type JobPostEdge {
+	"""
+	The node containing the JobPost
+	"""
+	node: JobPost!
+
+	"""
+	Cursor for this node.
+	"""
+	cursor: ConnectionCursor!
 }
 
 type JobPostConnection {
@@ -269,16 +387,6 @@ type JobPostAggregateGroupBy {
 	updatedAt(by: GroupBy! = DAY): DateTime
 	isActive: Boolean
 	isArchived: Boolean
-}
-
-"""
-Group by
-"""
-enum GroupBy {
-	DAY
-	WEEK
-	MONTH
-	YEAR
 }
 
 type JobPostCountAggregate {
@@ -482,114 +590,6 @@ type UpworkJobsSearchCriterionDeleteResponse {
 	updatedAt: DateTime
 	isActive: Boolean
 	isArchived: Boolean
-}
-
-type UserEdge {
-	"""
-	The node containing the User
-	"""
-	node: User!
-
-	"""
-	Cursor for this node.
-	"""
-	cursor: ConnectionCursor!
-}
-
-type UserConnection {
-	"""
-	Paging information
-	"""
-	pageInfo: PageInfo!
-
-	"""
-	Array of edges.
-	"""
-	edges: [UserEdge!]!
-
-	"""
-	Fetch total count of records
-	"""
-	totalCount: Int!
-}
-
-type UserAggregateGroupBy {
-	id: ID
-	firstName: String
-	lastName: String
-	username: String
-	email: String
-	hash: String
-	externalTenantId: String
-	externalUserId: String
-	isActive: Boolean
-	isArchived: Boolean
-	createdAt(by: GroupBy! = DAY): DateTime
-	updatedAt(by: GroupBy! = DAY): DateTime
-}
-
-type UserCountAggregate {
-	id: Int
-	firstName: Int
-	lastName: Int
-	username: Int
-	email: Int
-	hash: Int
-	externalTenantId: Int
-	externalUserId: Int
-	isActive: Int
-	isArchived: Int
-	createdAt: Int
-	updatedAt: Int
-}
-
-type UserMinAggregate {
-	id: ID
-	firstName: String
-	lastName: String
-	username: String
-	email: String
-	hash: String
-	externalTenantId: String
-	externalUserId: String
-	createdAt: DateTime
-	updatedAt: DateTime
-}
-
-type UserMaxAggregate {
-	id: ID
-	firstName: String
-	lastName: String
-	username: String
-	email: String
-	hash: String
-	externalTenantId: String
-	externalUserId: String
-	createdAt: DateTime
-	updatedAt: DateTime
-}
-
-type UserAggregateResponse {
-	groupBy: UserAggregateGroupBy
-	count: UserCountAggregate
-	min: UserMinAggregate
-	max: UserMaxAggregate
-}
-
-type UserDeleteResponse {
-	id: ID
-	firstName: String
-	lastName: String
-	name: String
-	username: String
-	email: String
-	hash: String
-	externalTenantId: String
-	externalUserId: String
-	isActive: Boolean
-	isArchived: Boolean
-	createdAt: DateTime
-	updatedAt: DateTime
 }
 
 type EmployeeEdge {
@@ -1115,6 +1115,93 @@ type AutomationTaskDeleteResponse {
 	isArchived: Boolean
 }
 
+type Tenant {
+	id: ID
+	name: String!
+	logo: String
+	externalTenantId: String
+	isActive: Boolean!
+	isArchived: Boolean!
+	createdAt: DateTime
+	updatedAt: DateTime
+}
+
+type TenantEdge {
+	"""
+	The node containing the Tenant
+	"""
+	node: Tenant!
+
+	"""
+	Cursor for this node.
+	"""
+	cursor: ConnectionCursor!
+}
+
+type TenantConnection {
+	"""
+	Paging information
+	"""
+	pageInfo: PageInfo!
+
+	"""
+	Array of edges.
+	"""
+	edges: [TenantEdge!]!
+
+	"""
+	Fetch total count of records
+	"""
+	totalCount: Int!
+}
+
+type TenantAggregateGroupBy {
+	id: ID
+	name: String
+	logo: String
+	externalTenantId: String
+	isActive: Boolean
+	isArchived: Boolean
+	createdAt(by: GroupBy! = DAY): DateTime
+	updatedAt(by: GroupBy! = DAY): DateTime
+}
+
+type TenantCountAggregate {
+	id: Int
+	name: Int
+	logo: Int
+	externalTenantId: Int
+	isActive: Int
+	isArchived: Int
+	createdAt: Int
+	updatedAt: Int
+}
+
+type TenantMinAggregate {
+	id: ID
+	name: String
+	logo: String
+	externalTenantId: String
+	createdAt: DateTime
+	updatedAt: DateTime
+}
+
+type TenantMaxAggregate {
+	id: ID
+	name: String
+	logo: String
+	externalTenantId: String
+	createdAt: DateTime
+	updatedAt: DateTime
+}
+
+type TenantAggregateResponse {
+	groupBy: TenantAggregateGroupBy
+	count: TenantCountAggregate
+	min: TenantMinAggregate
+	max: TenantMaxAggregate
+}
+
 input UserInput {
 	id: ID
 	firstName: String
@@ -1223,6 +1310,17 @@ input EmployeeJobPostInput {
 	updatedAt: DateTime
 	isActive: Boolean!
 	isArchived: Boolean!
+}
+
+input TenantInput {
+	id: ID
+	name: String!
+	logo: String
+	externalTenantId: String
+	isActive: Boolean!
+	isArchived: Boolean!
+	createdAt: DateTime
+	updatedAt: DateTime
 }
 
 type Query {
@@ -1394,6 +1492,34 @@ type Query {
 		"""
 		sorting: [EmployeeSort!]! = []
 	): EmployeeConnection!
+	tenantAggregate(
+		"""
+		Filter to find records to aggregate on
+		"""
+		filter: TenantAggregateFilter
+	): [TenantAggregateResponse!]!
+	tenant(
+		"""
+		The id of the record to find.
+		"""
+		id: ID!
+	): Tenant!
+	tenants(
+		"""
+		Limit or page results.
+		"""
+		paging: CursorPaging! = { first: 10 }
+
+		"""
+		Specify to filter the records returned.
+		"""
+		filter: TenantFilter! = {}
+
+		"""
+		Specify to sort results.
+		"""
+		sorting: [TenantSort!]! = []
+	): TenantConnection!
 	userAggregate(
 		"""
 		Filter to find records to aggregate on
@@ -2099,6 +2225,49 @@ enum EmployeeSortFields {
 	updatedAt
 	isActive
 	isArchived
+}
+
+input TenantAggregateFilter {
+	and: [TenantAggregateFilter!]
+	or: [TenantAggregateFilter!]
+	id: IDFilterComparison
+	name: StringFieldComparison
+	logo: StringFieldComparison
+	externalTenantId: StringFieldComparison
+	isActive: BooleanFieldComparison
+	isArchived: BooleanFieldComparison
+	createdAt: DateFieldComparison
+	updatedAt: DateFieldComparison
+}
+
+input TenantFilter {
+	and: [TenantFilter!]
+	or: [TenantFilter!]
+	id: IDFilterComparison
+	name: StringFieldComparison
+	logo: StringFieldComparison
+	externalTenantId: StringFieldComparison
+	isActive: BooleanFieldComparison
+	isArchived: BooleanFieldComparison
+	createdAt: DateFieldComparison
+	updatedAt: DateFieldComparison
+}
+
+input TenantSort {
+	field: TenantSortFields!
+	direction: SortDirection!
+	nulls: SortNulls
+}
+
+enum TenantSortFields {
+	id
+	name
+	logo
+	externalTenantId
+	isActive
+	isArchived
+	createdAt
+	updatedAt
 }
 
 input UserAggregateFilter {

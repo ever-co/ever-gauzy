@@ -2572,6 +2572,9 @@ export type Query = {
 	jobPost: JobPost;
 	jobPostAggregate: Array<JobPostAggregateResponse>;
 	jobPosts: JobPostConnection;
+	tenant: Tenant;
+	tenantAggregate: Array<TenantAggregateResponse>;
+	tenants: TenantConnection;
 	upworkJobsSearchCriteria: UpworkJobsSearchCriterionConnection;
 	upworkJobsSearchCriterion: UpworkJobsSearchCriterion;
 	upworkJobsSearchCriterionAggregate: Array<UpworkJobsSearchCriterionAggregateResponse>;
@@ -2663,6 +2666,23 @@ export type QueryJobPostsArgs = {
 	filter?: JobPostFilter;
 	paging?: CursorPaging;
 	sorting?: Array<JobPostSort>;
+};
+
+
+export type QueryTenantArgs = {
+	id: Scalars['ID']['input'];
+};
+
+
+export type QueryTenantAggregateArgs = {
+	filter?: InputMaybe<TenantAggregateFilter>;
+};
+
+
+export type QueryTenantsArgs = {
+	filter?: TenantFilter;
+	paging?: CursorPaging;
+	sorting?: Array<TenantSort>;
 };
 
 
@@ -2871,6 +2891,152 @@ export type SubscriptionUpdatedOneUpworkJobsSearchCriterionArgs = {
 export type SubscriptionUpdatedOneUserArgs = {
 	input?: InputMaybe<UpdateOneUserSubscriptionFilterInput>;
 };
+
+export type Tenant = {
+	__typename?: 'Tenant';
+	createdAt?: Maybe<Scalars['DateTime']['output']>;
+	externalTenantId?: Maybe<Scalars['String']['output']>;
+	id?: Maybe<Scalars['ID']['output']>;
+	isActive: Scalars['Boolean']['output'];
+	isArchived: Scalars['Boolean']['output'];
+	logo?: Maybe<Scalars['String']['output']>;
+	name: Scalars['String']['output'];
+	updatedAt?: Maybe<Scalars['DateTime']['output']>;
+};
+
+export type TenantAggregateFilter = {
+	and?: InputMaybe<Array<TenantAggregateFilter>>;
+	createdAt?: InputMaybe<DateFieldComparison>;
+	externalTenantId?: InputMaybe<StringFieldComparison>;
+	id?: InputMaybe<IdFilterComparison>;
+	isActive?: InputMaybe<BooleanFieldComparison>;
+	isArchived?: InputMaybe<BooleanFieldComparison>;
+	logo?: InputMaybe<StringFieldComparison>;
+	name?: InputMaybe<StringFieldComparison>;
+	or?: InputMaybe<Array<TenantAggregateFilter>>;
+	updatedAt?: InputMaybe<DateFieldComparison>;
+};
+
+export type TenantAggregateGroupBy = {
+	__typename?: 'TenantAggregateGroupBy';
+	createdAt?: Maybe<Scalars['DateTime']['output']>;
+	externalTenantId?: Maybe<Scalars['String']['output']>;
+	id?: Maybe<Scalars['ID']['output']>;
+	isActive?: Maybe<Scalars['Boolean']['output']>;
+	isArchived?: Maybe<Scalars['Boolean']['output']>;
+	logo?: Maybe<Scalars['String']['output']>;
+	name?: Maybe<Scalars['String']['output']>;
+	updatedAt?: Maybe<Scalars['DateTime']['output']>;
+};
+
+
+export type TenantAggregateGroupByCreatedAtArgs = {
+	by?: GroupBy;
+};
+
+
+export type TenantAggregateGroupByUpdatedAtArgs = {
+	by?: GroupBy;
+};
+
+export type TenantAggregateResponse = {
+	__typename?: 'TenantAggregateResponse';
+	count?: Maybe<TenantCountAggregate>;
+	groupBy?: Maybe<TenantAggregateGroupBy>;
+	max?: Maybe<TenantMaxAggregate>;
+	min?: Maybe<TenantMinAggregate>;
+};
+
+export type TenantConnection = {
+	__typename?: 'TenantConnection';
+	/** Array of edges. */
+	edges: Array<TenantEdge>;
+	/** Paging information */
+	pageInfo: PageInfo;
+	/** Fetch total count of records */
+	totalCount: Scalars['Int']['output'];
+};
+
+export type TenantCountAggregate = {
+	__typename?: 'TenantCountAggregate';
+	createdAt?: Maybe<Scalars['Int']['output']>;
+	externalTenantId?: Maybe<Scalars['Int']['output']>;
+	id?: Maybe<Scalars['Int']['output']>;
+	isActive?: Maybe<Scalars['Int']['output']>;
+	isArchived?: Maybe<Scalars['Int']['output']>;
+	logo?: Maybe<Scalars['Int']['output']>;
+	name?: Maybe<Scalars['Int']['output']>;
+	updatedAt?: Maybe<Scalars['Int']['output']>;
+};
+
+export type TenantEdge = {
+	__typename?: 'TenantEdge';
+	/** Cursor for this node. */
+	cursor: Scalars['ConnectionCursor']['output'];
+	/** The node containing the Tenant */
+	node: Tenant;
+};
+
+export type TenantFilter = {
+	and?: InputMaybe<Array<TenantFilter>>;
+	createdAt?: InputMaybe<DateFieldComparison>;
+	externalTenantId?: InputMaybe<StringFieldComparison>;
+	id?: InputMaybe<IdFilterComparison>;
+	isActive?: InputMaybe<BooleanFieldComparison>;
+	isArchived?: InputMaybe<BooleanFieldComparison>;
+	logo?: InputMaybe<StringFieldComparison>;
+	name?: InputMaybe<StringFieldComparison>;
+	or?: InputMaybe<Array<TenantFilter>>;
+	updatedAt?: InputMaybe<DateFieldComparison>;
+};
+
+export type TenantInput = {
+	createdAt?: InputMaybe<Scalars['DateTime']['input']>;
+	externalTenantId?: InputMaybe<Scalars['String']['input']>;
+	id?: InputMaybe<Scalars['ID']['input']>;
+	isActive: Scalars['Boolean']['input'];
+	isArchived: Scalars['Boolean']['input'];
+	logo?: InputMaybe<Scalars['String']['input']>;
+	name: Scalars['String']['input'];
+	updatedAt?: InputMaybe<Scalars['DateTime']['input']>;
+};
+
+export type TenantMaxAggregate = {
+	__typename?: 'TenantMaxAggregate';
+	createdAt?: Maybe<Scalars['DateTime']['output']>;
+	externalTenantId?: Maybe<Scalars['String']['output']>;
+	id?: Maybe<Scalars['ID']['output']>;
+	logo?: Maybe<Scalars['String']['output']>;
+	name?: Maybe<Scalars['String']['output']>;
+	updatedAt?: Maybe<Scalars['DateTime']['output']>;
+};
+
+export type TenantMinAggregate = {
+	__typename?: 'TenantMinAggregate';
+	createdAt?: Maybe<Scalars['DateTime']['output']>;
+	externalTenantId?: Maybe<Scalars['String']['output']>;
+	id?: Maybe<Scalars['ID']['output']>;
+	logo?: Maybe<Scalars['String']['output']>;
+	name?: Maybe<Scalars['String']['output']>;
+	updatedAt?: Maybe<Scalars['DateTime']['output']>;
+};
+
+export type TenantSort = {
+	direction: SortDirection;
+	field: TenantSortFields;
+	nulls?: InputMaybe<SortNulls>;
+};
+
+export enum TenantSortFields {
+	CreatedAt = 'createdAt',
+	ExternalTenantId = 'externalTenantId',
+	Id = 'id',
+	IsActive = 'isActive',
+	IsArchived = 'isArchived',
+	Logo = 'logo',
+	Name = 'name',
+	UpdatedAt = 'updatedAt'
+}
 
 export type UpdateAutomationTask = {
 	command?: InputMaybe<Scalars['String']['input']>;
@@ -3708,6 +3874,13 @@ export type JobPostsQueryVariables = Exact<{
 
 export type JobPostsQuery = { __typename?: 'Query', jobPosts: { __typename?: 'JobPostConnection', edges: Array<{ __typename?: 'JobPostEdge', node: { __typename?: 'JobPost', id?: string | null, isActive: boolean, isArchived: boolean } }> } };
 
+export type TenantByExternalTenantIdQueryVariables = Exact<{
+	externalTenantFilter: Scalars['String']['input'];
+}>;
+
+
+export type TenantByExternalTenantIdQuery = { __typename?: 'Query', tenants: { __typename?: 'TenantConnection', totalCount: number, edges: Array<{ __typename?: 'TenantEdge', node: { __typename?: 'Tenant', id?: string | null, name: string, externalTenantId?: string | null } }> } };
+
 
 export const EmployeeJobPostsDocument = { "kind": "Document", "definitions": [{ "kind": "OperationDefinition", "operation": "query", "name": { "kind": "Name", "value": "employeeJobPosts" }, "variableDefinitions": [{ "kind": "VariableDefinition", "variable": { "kind": "Variable", "name": { "kind": "Name", "value": "after" } }, "type": { "kind": "NonNullType", "type": { "kind": "NamedType", "name": { "kind": "Name", "value": "ConnectionCursor" } } } }, { "kind": "VariableDefinition", "variable": { "kind": "Variable", "name": { "kind": "Name", "value": "first" } }, "type": { "kind": "NonNullType", "type": { "kind": "NamedType", "name": { "kind": "Name", "value": "Int" } } } }, { "kind": "VariableDefinition", "variable": { "kind": "Variable", "name": { "kind": "Name", "value": "filter" } }, "type": { "kind": "NonNullType", "type": { "kind": "NamedType", "name": { "kind": "Name", "value": "EmployeeJobPostFilter" } } } }, { "kind": "VariableDefinition", "variable": { "kind": "Variable", "name": { "kind": "Name", "value": "sorting" } }, "type": { "kind": "ListType", "type": { "kind": "NonNullType", "type": { "kind": "NamedType", "name": { "kind": "Name", "value": "EmployeeJobPostSort" } } } } }], "selectionSet": { "kind": "SelectionSet", "selections": [{ "kind": "Field", "name": { "kind": "Name", "value": "employeeJobPosts" }, "arguments": [{ "kind": "Argument", "name": { "kind": "Name", "value": "paging" }, "value": { "kind": "ObjectValue", "fields": [{ "kind": "ObjectField", "name": { "kind": "Name", "value": "after" }, "value": { "kind": "Variable", "name": { "kind": "Name", "value": "after" } } }, { "kind": "ObjectField", "name": { "kind": "Name", "value": "first" }, "value": { "kind": "Variable", "name": { "kind": "Name", "value": "first" } } }] } }, { "kind": "Argument", "name": { "kind": "Name", "value": "filter" }, "value": { "kind": "Variable", "name": { "kind": "Name", "value": "filter" } } }, { "kind": "Argument", "name": { "kind": "Name", "value": "sorting" }, "value": { "kind": "Variable", "name": { "kind": "Name", "value": "sorting" } } }], "selectionSet": { "kind": "SelectionSet", "selections": [{ "kind": "Field", "name": { "kind": "Name", "value": "totalCount" } }, { "kind": "Field", "name": { "kind": "Name", "value": "pageInfo" }, "selectionSet": { "kind": "SelectionSet", "selections": [{ "kind": "Field", "name": { "kind": "Name", "value": "hasNextPage" } }, { "kind": "Field", "name": { "kind": "Name", "value": "hasPreviousPage" } }, { "kind": "Field", "name": { "kind": "Name", "value": "startCursor" } }, { "kind": "Field", "name": { "kind": "Name", "value": "endCursor" } }] } }, { "kind": "Field", "name": { "kind": "Name", "value": "edges" }, "selectionSet": { "kind": "SelectionSet", "selections": [{ "kind": "Field", "name": { "kind": "Name", "value": "node" }, "selectionSet": { "kind": "SelectionSet", "selections": [{ "kind": "Field", "name": { "kind": "Name", "value": "id" } }, { "kind": "Field", "name": { "kind": "Name", "value": "isApplied" } }, { "kind": "Field", "name": { "kind": "Name", "value": "appliedDate" } }, { "kind": "Field", "name": { "kind": "Name", "value": "createdAt" } }, { "kind": "Field", "name": { "kind": "Name", "value": "updatedAt" } }, { "kind": "Field", "name": { "kind": "Name", "value": "isActive" } }, { "kind": "Field", "name": { "kind": "Name", "value": "isArchived" } }, { "kind": "Field", "name": { "kind": "Name", "value": "employeeId" } }, { "kind": "Field", "name": { "kind": "Name", "value": "employee" }, "selectionSet": { "kind": "SelectionSet", "selections": [{ "kind": "Field", "name": { "kind": "Name", "value": "id" } }, { "kind": "Field", "name": { "kind": "Name", "value": "externalEmployeeId" } }] } }, { "kind": "Field", "name": { "kind": "Name", "value": "providerCode" } }, { "kind": "Field", "name": { "kind": "Name", "value": "providerJobId" } }, { "kind": "Field", "name": { "kind": "Name", "value": "jobDateCreated" } }, { "kind": "Field", "name": { "kind": "Name", "value": "jobStatus" } }, { "kind": "Field", "name": { "kind": "Name", "value": "jobType" } }, { "kind": "Field", "name": { "kind": "Name", "value": "jobPostId" } }, { "kind": "Field", "name": { "kind": "Name", "value": "jobPost" }, "selectionSet": { "kind": "SelectionSet", "selections": [{ "kind": "Field", "name": { "kind": "Name", "value": "id" } }, { "kind": "Field", "name": { "kind": "Name", "value": "providerCode" } }, { "kind": "Field", "name": { "kind": "Name", "value": "providerJobId" } }, { "kind": "Field", "name": { "kind": "Name", "value": "title" } }, { "kind": "Field", "name": { "kind": "Name", "value": "description" } }, { "kind": "Field", "name": { "kind": "Name", "value": "jobDateCreated" } }, { "kind": "Field", "name": { "kind": "Name", "value": "jobStatus" } }, { "kind": "Field", "name": { "kind": "Name", "value": "jobType" } }, { "kind": "Field", "name": { "kind": "Name", "value": "url" } }, { "kind": "Field", "name": { "kind": "Name", "value": "budget" } }, { "kind": "Field", "name": { "kind": "Name", "value": "duration" } }, { "kind": "Field", "name": { "kind": "Name", "value": "workload" } }, { "kind": "Field", "name": { "kind": "Name", "value": "skills" } }, { "kind": "Field", "name": { "kind": "Name", "value": "category" } }, { "kind": "Field", "name": { "kind": "Name", "value": "subcategory" } }, { "kind": "Field", "name": { "kind": "Name", "value": "country" } }, { "kind": "Field", "name": { "kind": "Name", "value": "clientFeedback" } }, { "kind": "Field", "name": { "kind": "Name", "value": "clientReviewsCount" } }, { "kind": "Field", "name": { "kind": "Name", "value": "clientJobsPosted" } }, { "kind": "Field", "name": { "kind": "Name", "value": "clientPastHires" } }, { "kind": "Field", "name": { "kind": "Name", "value": "clientPaymentVerificationStatus" } }] } }] } }] } }] } }] } }] } as unknown as DocumentNode<EmployeeJobPostsQuery, EmployeeJobPostsQueryVariables>;
 export const EmployeeJobPostsByEmployeeIdJobPostIdDocument = { "kind": "Document", "definitions": [{ "kind": "OperationDefinition", "operation": "query", "name": { "kind": "Name", "value": "employeeJobPostsByEmployeeIdJobPostId" }, "variableDefinitions": [{ "kind": "VariableDefinition", "variable": { "kind": "Variable", "name": { "kind": "Name", "value": "employeeIdFilter" } }, "type": { "kind": "NonNullType", "type": { "kind": "NamedType", "name": { "kind": "Name", "value": "String" } } } }, { "kind": "VariableDefinition", "variable": { "kind": "Variable", "name": { "kind": "Name", "value": "jobPostIdFilter" } }, "type": { "kind": "NonNullType", "type": { "kind": "NamedType", "name": { "kind": "Name", "value": "String" } } } }], "selectionSet": { "kind": "SelectionSet", "selections": [{ "kind": "Field", "name": { "kind": "Name", "value": "employeeJobPosts" }, "arguments": [{ "kind": "Argument", "name": { "kind": "Name", "value": "filter" }, "value": { "kind": "ObjectValue", "fields": [{ "kind": "ObjectField", "name": { "kind": "Name", "value": "employeeId" }, "value": { "kind": "ObjectValue", "fields": [{ "kind": "ObjectField", "name": { "kind": "Name", "value": "eq" }, "value": { "kind": "Variable", "name": { "kind": "Name", "value": "employeeIdFilter" } } }] } }, { "kind": "ObjectField", "name": { "kind": "Name", "value": "jobPostId" }, "value": { "kind": "ObjectValue", "fields": [{ "kind": "ObjectField", "name": { "kind": "Name", "value": "eq" }, "value": { "kind": "Variable", "name": { "kind": "Name", "value": "jobPostIdFilter" } } }] } }] } }], "selectionSet": { "kind": "SelectionSet", "selections": [{ "kind": "Field", "name": { "kind": "Name", "value": "edges" }, "selectionSet": { "kind": "SelectionSet", "selections": [{ "kind": "Field", "name": { "kind": "Name", "value": "node" }, "selectionSet": { "kind": "SelectionSet", "selections": [{ "kind": "Field", "name": { "kind": "Name", "value": "id" } }, { "kind": "Field", "name": { "kind": "Name", "value": "isActive" } }, { "kind": "Field", "name": { "kind": "Name", "value": "isArchived" } }] } }] } }] } }] } }] } as unknown as DocumentNode<EmployeeJobPostsByEmployeeIdJobPostIdQuery, EmployeeJobPostsByEmployeeIdJobPostIdQueryVariables>;
@@ -3719,3 +3892,4 @@ export const UpdateOneEmployeeJobPostDocument = { "kind": "Document", "definitio
 export const DeleteManyUpworkJobsSearchCriteriaDocument = { "kind": "Document", "definitions": [{ "kind": "OperationDefinition", "operation": "mutation", "name": { "kind": "Name", "value": "deleteManyUpworkJobsSearchCriteria" }, "variableDefinitions": [{ "kind": "VariableDefinition", "variable": { "kind": "Variable", "name": { "kind": "Name", "value": "input" } }, "type": { "kind": "NonNullType", "type": { "kind": "NamedType", "name": { "kind": "Name", "value": "DeleteManyUpworkJobsSearchCriteriaInput" } } } }], "selectionSet": { "kind": "SelectionSet", "selections": [{ "kind": "Field", "name": { "kind": "Name", "value": "deleteManyUpworkJobsSearchCriteria" }, "arguments": [{ "kind": "Argument", "name": { "kind": "Name", "value": "input" }, "value": { "kind": "Variable", "name": { "kind": "Name", "value": "input" } } }], "selectionSet": { "kind": "SelectionSet", "selections": [{ "kind": "Field", "name": { "kind": "Name", "value": "deletedCount" } }] } }] } }] } as unknown as DocumentNode<DeleteManyUpworkJobsSearchCriteriaMutation, DeleteManyUpworkJobsSearchCriteriaMutationVariables>;
 export const CreateManyUpworkJobsSearchCriteriaDocument = { "kind": "Document", "definitions": [{ "kind": "OperationDefinition", "operation": "mutation", "name": { "kind": "Name", "value": "createManyUpworkJobsSearchCriteria" }, "variableDefinitions": [{ "kind": "VariableDefinition", "variable": { "kind": "Variable", "name": { "kind": "Name", "value": "input" } }, "type": { "kind": "NonNullType", "type": { "kind": "NamedType", "name": { "kind": "Name", "value": "CreateManyUpworkJobsSearchCriteriaInput" } } } }], "selectionSet": { "kind": "SelectionSet", "selections": [{ "kind": "Field", "name": { "kind": "Name", "value": "createManyUpworkJobsSearchCriteria" }, "arguments": [{ "kind": "Argument", "name": { "kind": "Name", "value": "input" }, "value": { "kind": "Variable", "name": { "kind": "Name", "value": "input" } } }], "selectionSet": { "kind": "SelectionSet", "selections": [{ "kind": "Field", "name": { "kind": "Name", "value": "id" } }] } }] } }] } as unknown as DocumentNode<CreateManyUpworkJobsSearchCriteriaMutation, CreateManyUpworkJobsSearchCriteriaMutationVariables>;
 export const JobPostsDocument = { "kind": "Document", "definitions": [{ "kind": "OperationDefinition", "operation": "query", "name": { "kind": "Name", "value": "jobPosts" }, "variableDefinitions": [{ "kind": "VariableDefinition", "variable": { "kind": "Variable", "name": { "kind": "Name", "value": "providerCodeFilter" } }, "type": { "kind": "NonNullType", "type": { "kind": "NamedType", "name": { "kind": "Name", "value": "String" } } } }, { "kind": "VariableDefinition", "variable": { "kind": "Variable", "name": { "kind": "Name", "value": "providerJobIdFilter" } }, "type": { "kind": "NonNullType", "type": { "kind": "NamedType", "name": { "kind": "Name", "value": "String" } } } }], "selectionSet": { "kind": "SelectionSet", "selections": [{ "kind": "Field", "name": { "kind": "Name", "value": "jobPosts" }, "arguments": [{ "kind": "Argument", "name": { "kind": "Name", "value": "filter" }, "value": { "kind": "ObjectValue", "fields": [{ "kind": "ObjectField", "name": { "kind": "Name", "value": "providerCode" }, "value": { "kind": "ObjectValue", "fields": [{ "kind": "ObjectField", "name": { "kind": "Name", "value": "eq" }, "value": { "kind": "Variable", "name": { "kind": "Name", "value": "providerCodeFilter" } } }] } }, { "kind": "ObjectField", "name": { "kind": "Name", "value": "providerJobId" }, "value": { "kind": "ObjectValue", "fields": [{ "kind": "ObjectField", "name": { "kind": "Name", "value": "eq" }, "value": { "kind": "Variable", "name": { "kind": "Name", "value": "providerJobIdFilter" } } }] } }] } }], "selectionSet": { "kind": "SelectionSet", "selections": [{ "kind": "Field", "name": { "kind": "Name", "value": "edges" }, "selectionSet": { "kind": "SelectionSet", "selections": [{ "kind": "Field", "name": { "kind": "Name", "value": "node" }, "selectionSet": { "kind": "SelectionSet", "selections": [{ "kind": "Field", "name": { "kind": "Name", "value": "id" } }, { "kind": "Field", "name": { "kind": "Name", "value": "isActive" } }, { "kind": "Field", "name": { "kind": "Name", "value": "isArchived" } }] } }] } }] } }] } }] } as unknown as DocumentNode<JobPostsQuery, JobPostsQueryVariables>;
+export const TenantByExternalTenantIdDocument = { "kind": "Document", "definitions": [{ "kind": "OperationDefinition", "operation": "query", "name": { "kind": "Name", "value": "tenantByExternalTenantId" }, "variableDefinitions": [{ "kind": "VariableDefinition", "variable": { "kind": "Variable", "name": { "kind": "Name", "value": "externalTenantFilter" } }, "type": { "kind": "NonNullType", "type": { "kind": "NamedType", "name": { "kind": "Name", "value": "String" } } } }], "selectionSet": { "kind": "SelectionSet", "selections": [{ "kind": "Field", "name": { "kind": "Name", "value": "tenants" }, "arguments": [{ "kind": "Argument", "name": { "kind": "Name", "value": "filter" }, "value": { "kind": "ObjectValue", "fields": [{ "kind": "ObjectField", "name": { "kind": "Name", "value": "externalTenantId" }, "value": { "kind": "ObjectValue", "fields": [{ "kind": "ObjectField", "name": { "kind": "Name", "value": "eq" }, "value": { "kind": "Variable", "name": { "kind": "Name", "value": "externalTenantFilter" } } }] } }] } }], "selectionSet": { "kind": "SelectionSet", "selections": [{ "kind": "Field", "name": { "kind": "Name", "value": "edges" }, "selectionSet": { "kind": "SelectionSet", "selections": [{ "kind": "Field", "name": { "kind": "Name", "value": "node" }, "selectionSet": { "kind": "SelectionSet", "selections": [{ "kind": "Field", "name": { "kind": "Name", "value": "id" } }, { "kind": "Field", "name": { "kind": "Name", "value": "name" } }, { "kind": "Field", "name": { "kind": "Name", "value": "externalTenantId" } }] } }] } }, { "kind": "Field", "name": { "kind": "Name", "value": "totalCount" } }] } }] } }] } as unknown as DocumentNode<TenantByExternalTenantIdQuery, TenantByExternalTenantIdQueryVariables>;
