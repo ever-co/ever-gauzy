@@ -151,12 +151,18 @@ export class GauzyAIService {
 	 * @param employeeId
 	 * @param isJobSearchActive
 	 */
-	public async updateEmployeeStatus(
+	public async updateEmployeeStatus({
+		employeeId,
+		tenantId,
+		organizationId,
+		isJobSearchActive
+	}: {
 		employeeId: string,
+		userId: string,
 		tenantId: string,
-		orgId: string,
+		organizationId: string,
 		isJobSearchActive: boolean
-	): Promise<boolean> {
+	}): Promise<boolean> {
 		if (this._client == null) {
 			return false;
 		}
@@ -171,7 +177,7 @@ export class GauzyAIService {
 		const update: UpdateEmployee = {
 			externalEmployeeId: employeeId,
 			externalTenantId: tenantId,
-			externalOrgId: orgId,
+			externalOrgId: organizationId,
 			isActive: isJobSearchActive,
 			isArchived: !isJobSearchActive,
 		};
