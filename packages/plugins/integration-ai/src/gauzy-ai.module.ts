@@ -1,7 +1,7 @@
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { HttpModule } from '@nestjs/axios';
 import { DynamicModule, Module } from '@nestjs/common';
-import { GauzyAIService } from './gauzy-ai.service';
+import { GauzyAIService } from 'GauzyAIService';
 import gauzyAI from './config/gauzy-ai';
 import { IConfigurationOptions } from './configuration.interface';
 import { RequestConfigProvider } from './request-config.provider';

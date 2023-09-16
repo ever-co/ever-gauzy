@@ -1,8 +1,8 @@
 import { BadRequestException, HttpException, HttpStatus, Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { HttpService } from '@nestjs/axios';
-import { AxiosRequestConfig, AxiosResponse } from 'axios';
-import { Observable, firstValueFrom } from 'rxjs';
+import { AxiosRequestConfig, AxiosResponse, RawAxiosRequestHeaders } from 'axios';
+import { firstValueFrom } from 'rxjs';
 import { map, tap } from 'rxjs/operators';
 import {
     CreateEmployeeJobApplication,
@@ -19,7 +19,6 @@ import {
     TenantConnection
 } from './sdk/gauzy-ai-sdk';
 import { TypedDocumentNode as DocumentNode } from '@graphql-typed-document-node/core';
-import fetch from 'cross-fetch';
 import * as chalk from 'chalk';
 import {
     ApolloClient,
@@ -30,7 +29,7 @@ import {
     // NetworkStatus,
     gql,
     createHttpLink,
-    ApolloLink,
+    ApolloLink
 } from '@apollo/client/core';
 import {
     IEmployeeUpworkJobsSearchCriterion,
@@ -46,10 +45,11 @@ import {
     IGetEmployeeJobPostFilters,
     JobPostStatusEnum,
     JobPostTypeEnum,
-    IEmployeeJobsStatistics,
+    IEmployeeJobsStatistics
 } from '@gauzy/contracts';
 import { RequestConfigProvider } from './request-config.provider';
-import { AxiosRequestHeaders, HttpMethod } from './configuration.interface';
+
+
 @Injectable()
 export class GauzyAIService {
     private readonly _logger = new Logger(GauzyAIService.name);
@@ -76,65 +76,51 @@ export class GauzyAIService {
     constructor(
         private readonly _configService: ConfigService,
         private readonly _http: HttpService,
-        private readonly _requestConfigProvider: RequestConfigProvider,
+        private readonly _requestConfigProvider: RequestConfigProvider
     ) {
         this.init();
     }
 
     /**
-   * Send an HTTP request with dynamic configuration.
-   *
-   * @param path The URL path for the request.
-   * @param options Custom Axios request configuration.
-   * @param method The HTTP method (e.g., GET, POST).
-   * @returns An Observable that emits the response data or throws an error.
-   */
-    private sendRequest<T>(
-        path: string,
-        options: AxiosRequestConfig,
-        method: string = HttpMethod.GET,
-    ): Observable<AxiosResponse<T>> {
-        const {
-            ApiKey,
-            ApiSecret,
-            ApiBearerToken,
-            ApiTenantId,
-        } = this._requestConfigProvider.getConfig();
+     *
+     * @param path
+     * @param options
+     * @param method
+     * @returns
+     */
+    private async sendRequest(path: string, options: AxiosRequestConfig = {}, method: string = 'GET'): Promise<AxiosResponse<any, any>> {
+        const { ApiKey, ApiSecret, ApiBearerToken, ApiTenantId } = this._requestConfigProvider.getConfig();
+        // Define default options
+        const customHeaders: (RawAxiosRequestHeaders & MethodsHeaders) | AxiosHeaders = {
+            headers: {
+                'Content-Type': 'application/json',
+                // Add your custom headers here
+                // Set your initial headers here
+                'X-APP-ID': this._configService.get<string>('guazyAI.gauzyAiApiKey'),
+                'X-API-KEY': this._configService.get<string>('guazyAI.gauzyAiApiSecret'),
 
-        // Define default headers
-        const defaultHeaders: AxiosRequestHeaders = {
-            'Content-Type': 'application/json',
-        };
+                ...(ApiKey ? { 'X-APP-ID': ApiKey } : {}),
+                ...(ApiSecret ? { 'X-API-KEY': ApiSecret } : {}),
 
-        // Add your custom headers here
-        const customHeaders: AxiosRequestHeaders = {
-            // Define default headers
-            ...defaultHeaders,
-            // Add your custom headers here
-            'X-APP-ID': this._configService.get<string>('guazyAI.gauzyAiApiKey'),
-            'X-API-KEY': this._configService.get<string>('guazyAI.gauzyAiApiSecret'),
-
-            ...(ApiKey ? { 'X-APP-ID': ApiKey } : {}),
-            ...(ApiSecret ? { 'X-API-KEY': ApiSecret } : {}),
-
-            ...(ApiTenantId ? { 'Tenant-Id': ApiTenantId } : {}),
-            ...(ApiBearerToken ? { 'Authorization': ApiBearerToken } : {}),
+                ...(ApiTenantId ? { 'Tenant-Id': ApiTenantId } : {}),
+                ...(ApiBearerToken ? { 'Authorization': ApiBearerToken } : {})
+            },
         };
 
         // Merge the provided options with the default options
         const mergedOptions: AxiosRequestConfig = {
+            ...defaultOptions,
             ...options,
-            method,
-            headers: customHeaders,
-            url: path,
         };
-        console.log('Default AxiosRequestConfig Options: %s', mergedOptions);
+
         try {
-            return this._http.request({
+            const request = this._http.request({
                 url: path,
                 method: method,
-                headers: customHeaders
+                ...mergedOptions as AxiosRequestConfig,
+                // Define paramsSerializer explicitly
             });
+            return firstValueFrom(request);
         } catch (error) {
             if (error.response) {
                 // Handle HTTP error responses
@@ -157,21 +143,6 @@ export class GauzyAIService {
     ): Promise<any> {
         // First we need to get employee id because we have only externalId
         params.employeeId = await this.getEmployeeGauzyAIId(params.employeeId);
-
-        try {
-            // Call the sendRequest function with the appropriate parameters
-            const response = await firstValueFrom(
-                this.sendRequest<any>('employee/job/application/pre-process', {
-                    method: HttpMethod, // Set the HTTP method to POST
-                    data: params, // Set the request payload
-                })
-            );
-            // Process the response
-            console.log('Response from API:', response);
-        } catch (error) {
-            // Handle errors
-            console.error('Error calling API:', error);
-        }
 
         return firstValueFrom(
             this._http
@@ -232,16 +203,13 @@ export class GauzyAIService {
      * @param isJobSearchActive
      */
     public async updateEmployeeStatus({
-        employeeId,
-        tenantId,
-        organizationId,
-        isJobSearchActive
+        employeeId, tenantId, organizationId, isJobSearchActive
     }: {
-        employeeId: string,
-        userId: string,
-        tenantId: string,
-        organizationId: string,
-        isJobSearchActive: boolean
+        employeeId: string;
+        userId: string;
+        tenantId: string;
+        organizationId: string;
+        isJobSearchActive: boolean;
     }): Promise<boolean> {
         if (this._client == null) {
             return false;
@@ -319,7 +287,6 @@ export class GauzyAIService {
 
         // Next, we need to find `public employee job post` table record in Gauzy AI to get id of record.
         // We can find by employeeId and jobPostId
-
         const employeeJobPostId = await this.getEmployeeJobPostId(
             employeeId,
             jobPostId
@@ -335,9 +302,7 @@ export class GauzyAIService {
 
             // ------------------ Create Employee Job Application ------------------
             // This will Apply to the job using Automation system
-
-            const createOneEmployeeJobApplication: CreateEmployeeJobApplication =
-            {
+            const createOneEmployeeJobApplication: CreateEmployeeJobApplication = {
                 employeeId: employeeId,
                 jobPostId: jobPostId,
                 proposal: input.proposal,
@@ -410,7 +375,6 @@ export class GauzyAIService {
 
             // Next, we need to find `public employee job post` table record in Gauzy AI to get id of record.
             // We can find by employeeId and jobPostId
-
             const employeeJobPostId = await this.getEmployeeJobPostId(
                 employeeId,
                 jobPostId
@@ -501,7 +465,6 @@ export class GauzyAIService {
 
         // Next, we need to find `public employee job post` table record in Gauzy AI to get id of record.
         // We can find by employeeId and jobPostId
-
         const employeeJobPostId = await this.getEmployeeJobPostId(
             employeeId,
             jobPostId
@@ -517,9 +480,7 @@ export class GauzyAIService {
 
             // ------------------ Create Employee Job Application ------------------
             // This will Apply to the job using Automation system
-
-            const createOneEmployeeJobApplication: CreateEmployeeJobApplication =
-            {
+            const createOneEmployeeJobApplication: CreateEmployeeJobApplication = {
                 employeeId: employeeId,
                 jobPostId: jobPostId,
                 proposal: input.proposal,
@@ -575,7 +536,6 @@ export class GauzyAIService {
 
             // ------------------ Update Employee Job Post Record ------------------
             // Note: it's just set isApplied and appliedDate fields in Gauzy AI
-
             const update: UpdateEmployeeJobPost = {
                 employeeId: employeeId,
                 jobPostId: jobPostId,
@@ -687,7 +647,6 @@ export class GauzyAIService {
             console.log(`Synced Employee ${JSON.stringify(gauzyAIEmployee)}`);
 
             // let's delete all criteria for Employee
-
             const deleteAllCriteriaMutation: DocumentNode<any> = gql`
 				mutation deleteManyUpworkJobsSearchCriteria(
 					$input: DeleteManyUpworkJobsSearchCriteriaInput!
@@ -724,7 +683,6 @@ export class GauzyAIService {
             );
 
             // now let's create new criteria in Gauzy AI based on Gauzy criterions data
-
             if (criteria && criteria.length > 0) {
                 const gauzyAICriteria: UpworkJobsSearchCriterion[] = [];
 
@@ -882,10 +840,9 @@ export class GauzyAIService {
         const filters: IGetEmployeeJobPostFilters = data.filters ? <any>data.filters : undefined;
         console.log(`getEmployeesJobPosts. Filters ${JSON.stringify(filters)}`);
 
-        const employeeIdFilter =
-            filters && filters.employeeIds && filters.employeeIds.length > 0
-                ? filters.employeeIds[0]
-                : undefined;
+        const employeeIdFilter = filters && filters.employeeIds && filters.employeeIds.length > 0
+            ? filters.employeeIds[0]
+            : undefined;
 
         try {
             // TODO: use Query saved in SDK, not hard-code it here. Note: we may add much more fields to that query as we need more info!
@@ -1109,7 +1066,6 @@ export class GauzyAIService {
 
             // Note: possible to do additional client side filtering like below:
             // jobResponses = _.filter(jobResponses, (it) => it.isActive === true && it.isArchived === false);
-
             console.log(
                 `getEmployeesJobPosts. Total Count: ${totalCount}. Page ${data.page}`
             );
@@ -1169,8 +1125,7 @@ export class GauzyAIService {
             },
         });
 
-        const employeeJobPostsResponse =
-            employeeJobPostsQueryResult.data.employeeJobPosts.edges;
+        const employeeJobPostsResponse = employeeJobPostsQueryResult.data.employeeJobPosts.edges;
 
         if (employeeJobPostsResponse && employeeJobPostsResponse.length > 0) {
             return employeeJobPostsResponse[0].node.id;
@@ -1245,13 +1200,12 @@ export class GauzyAIService {
 			}
 		`;
 
-        const employeesQueryResult: ApolloQueryResult<EmployeeQuery> =
-            await this._client.query<EmployeeQuery>({
-                query: employeesQuery,
-                variables: {
-                    externalEmployeeIdFilter: externalEmployeeId,
-                },
-            });
+        const employeesQueryResult: ApolloQueryResult<EmployeeQuery> = await this._client.query<EmployeeQuery>({
+            query: employeesQuery,
+            variables: {
+                externalEmployeeIdFilter: externalEmployeeId,
+            },
+        });
 
         const employeesResponse = employeesQueryResult.data.employees.edges;
 
@@ -1337,12 +1291,10 @@ export class GauzyAIService {
                 // 				}
                 // 			}
                 // 		`;
-
                 // 		const employeesQueryResult: ApolloQueryResult<EmployeeQuery> =
                 // 			await this._client.query<EmployeeQuery>({
                 // 				query: employeesQuery,
                 // 			});
-
                 // 		if (
                 // 			employeesQueryResult.networkStatus ===
                 // 			NetworkStatus.error
@@ -1354,7 +1306,6 @@ export class GauzyAIService {
                 // 		this._client = null;
                 // 	}
                 // };
-
                 // testConnectionQuery();
             } else {
                 this._logger.warn(
@@ -1416,7 +1367,6 @@ export class GauzyAIService {
 
             if (!isAlreadyCreated) {
                 // OK, so we can't find by employee.externalEmployeeId value, let's try to search by name
-
                 employeesQuery = gql`
 					query employeeByName(
 						$firstNameFilter: String!
@@ -1579,7 +1529,6 @@ export class GauzyAIService {
                 // Handle GraphQL errors
                 const [error] = usersQueryResult.errors;
                 // You can also access error.extensions for additional error details
-
                 // Use this (using the "options" parameter):
                 throw new HttpException(error?.message, HttpStatus.BAD_REQUEST);
             }
@@ -1713,7 +1662,6 @@ export class GauzyAIService {
                 // Handle GraphQL errors
                 const [error] = tenantsQueryResult.errors;
                 // You can also access error.extensions for additional error details
-
                 // Use this (using the "options" parameter):
                 throw new HttpException(error?.message, HttpStatus.BAD_REQUEST);
             }

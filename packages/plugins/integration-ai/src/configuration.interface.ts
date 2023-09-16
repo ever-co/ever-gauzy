@@ -11,3 +11,17 @@ export interface IBearerTokenMethod {
 }
 
 export type IConfigurationOptions = IApiKeyMethod & IBearerTokenMethod;
+
+export enum HttpMethod {
+    GET = 'GET',
+    POST = 'POST',
+    PUT = 'PUT',
+    DELETE = 'DELETE',
+    PATCH = 'PATCH',
+    HEAD = 'HEAD',
+    OPTIONS = 'OPTIONS',
+}
+
+export interface AxiosRequestHeaders {
+    [key: string]: string;
+}
