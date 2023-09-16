@@ -13418,6 +13418,11 @@ dayjs@^1.10.4, dayjs@^1.10.6:
   resolved "https://registry.yarnpkg.com/dayjs/-/dayjs-1.11.7.tgz#4b296922642f70999544d1144a2c25730fce63e2"
   integrity sha512-+Yw9U6YO5TQohxLcIkrXBeY73WP3ejHWVvx8XCk3gxvQDCTEmS48ZrSZCKciI7Bhl/uCMyxYtE9UqRILmFphkQ==
 
+dayjs@^1.11.5:
+  version "1.11.9"
+  resolved "https://registry.yarnpkg.com/dayjs/-/dayjs-1.11.9.tgz#9ca491933fadd0a60a2c19f6c237c03517d71d1a"
+  integrity sha512-QvzAURSbQ0pKdIye2txOzNaHmxtUBXerpY0FJsFXUMKbIZeFm5ht1LS/jFsrncjnmtv8HsG0W2g6c0zUjZWmpA==
+
 dayjs@~1.8.24, dayjs@~1.8.25:
   version "1.8.36"
   resolved "https://registry.yarnpkg.com/dayjs/-/dayjs-1.8.36.tgz#be36e248467afabf8f5a86bae0de0cdceecced50"
@@ -24893,12 +24898,12 @@ ngx-countdown@^13.0.0:
   dependencies:
     tslib "^2.3.0"
 
-ngx-daterangepicker-material@^5.0.2:
-  version "5.0.2"
-  resolved "https://registry.yarnpkg.com/ngx-daterangepicker-material/-/ngx-daterangepicker-material-5.0.2.tgz#e3869dfc0aa1387616a35b1b67fa56ecae23b319"
-  integrity sha512-1NV47l5kzvSxwZpMv91hAbTXuvysgCocQeRhsdkk67szeCTgzdXMof3s+jW5uhRiN1+a7NI8X0mHFv8trBjceg==
+ngx-daterangepicker-material@^6.0.4:
+  version "6.0.4"
+  resolved "https://registry.yarnpkg.com/ngx-daterangepicker-material/-/ngx-daterangepicker-material-6.0.4.tgz#4e2432698ded28021a5fc0b0025dd1e0a3a13412"
+  integrity sha512-IrAQqiwKJEaKY7xTeRP4rMO+NIjTSYWjulIG4B8XT8cD12G9YH8bOXUtmEdbSr3FU9zHGEpIFdL2dlFlKGoWTQ==
   dependencies:
-    dayjs "^1.10.4"
+    dayjs "^1.11.5"
     tslib "^2.0.0"
 
 ngx-draggable-dom@2.4.6:
