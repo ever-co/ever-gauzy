@@ -26,6 +26,7 @@
 				"build": {
 					"builder": "./apps/gauzy/node_modules/@angular-builders/custom-webpack:browser",
 					"options": {
+						"verbose": true,
 						"aot": true,
 						"customWebpackConfig": {
 							"path": "apps/gauzy/config/custom-webpack.config.js"
@@ -87,6 +88,7 @@
 							"ngswConfigPath": "apps/gauzy/ngsw-config.prod.json",
 							"showCircularDependencies": false,
 							"aot": true,
+							"verbose": true,
 							"extractLicenses": true,
 							"vendorChunk": true,
 							"buildOptimizer": true,
