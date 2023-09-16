@@ -1597,7 +1597,7 @@ export class GauzyAIService {
 		externalTenantId: string
 	): Promise<string | null> {
 		/** */
-		let findTenantByExternalTenantIdQuery: DocumentNode<TenantConnection> = gql`
+		let tenantByExternalTenantIdQuery: DocumentNode<TenantConnection> = gql`
 			query tenantByExternalEmployeeId(
 				$externalTenantIdFilter: String!
 			) {
@@ -1622,7 +1622,7 @@ export class GauzyAIService {
 		try {
 			/** */
 			let tenantsQueryResult: ApolloQueryResult<Query> = await this._client.query<Query>({
-				query: findTenantByExternalTenantIdQuery,
+				query: tenantByExternalTenantIdQuery,
 				variables: {
 					externalTenantIdFilter: externalTenantId
 				},
