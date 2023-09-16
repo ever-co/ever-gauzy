@@ -718,7 +718,7 @@ export class GauzyAIService {
 							// First we need to get tenant id because we have only externalId
 							tenantId = await this.getTenantGauzyAIId(employee.user.tenantId);
 						} catch (error) {
-							console.error('Error while retriving tenantId: %s', error?.message);
+							console.error('Error while retrieving tenantId: %s', error?.message);
 							this._logger.error(error);
 
 							// Use this (using the "options" parameter):
