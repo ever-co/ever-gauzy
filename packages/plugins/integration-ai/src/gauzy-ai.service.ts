@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable, Logger } from '@nestjs/common';
+import { BadRequestException, HttpException, HttpStatus, Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { HttpService } from '@nestjs/axios';
 import { AxiosResponse } from 'axios';
@@ -564,10 +564,17 @@ export class GauzyAIService {
 			)}. Employee: ${JSON.stringify(employee)}`
 		);
 
+		let tenantId: string;
 		try {
 			// First we need to get tenant id because we have only externalId
-			const tenantId = await this.getTenantGauzyAIId(employee.user.tenantId);
+			tenantId = await this.getTenantGauzyAIId(employee.user.tenantId);
+		} catch (error) {
+			this._logger.error(error);
+			// Use this (using the "options" parameter):
+			throw new HttpException(error?.message, HttpStatus.BAD_REQUEST);
+		}
 
+		try {
 			const gauzyAIUser: User = await this.syncUser({
 				firstName: employee.user.firstName,
 				lastName: employee.user.lastName,
@@ -581,7 +588,6 @@ export class GauzyAIService {
 				isArchived: false
 			});
 			console.log(`Synced User ${JSON.stringify(gauzyAIUser)}`);
-
 			/** */
 			const gauzyAIEmployee: Employee = await this.syncEmployee({
 				externalEmployeeId: employee.id,
@@ -596,11 +602,7 @@ export class GauzyAIService {
 				isArchived: false,
 				firstName: employee.user.firstName,
 				lastName: employee.user.lastName,
-				...(gauzyAIUser
-					? {
-						userId: gauzyAIUser.id
-					}
-					: {}),
+				userId: gauzyAIUser.id
 			});
 			console.log(`Synced Employee ${JSON.stringify(gauzyAIEmployee)}`);
 
@@ -711,54 +713,78 @@ export class GauzyAIService {
 			await Promise.all(
 				employees.map(async (employee) => {
 					try {
-						// First we need to get tenant id because we have only externalId
-						const tenantId = await this.getTenantGauzyAIId(employee.user.tenantId);
+						let tenantId: string;
+						try {
+							// First we need to get tenant id because we have only externalId
+							tenantId = await this.getTenantGauzyAIId(employee.user.tenantId);
+						} catch (error) {
+							console.error('Error while retrieving tenantId: %s', error?.message);
+							this._logger.error(error);
 
-						/** */
-						const gauzyAIUser: User = await this.syncUser({
-							firstName: employee.user.firstName,
-							lastName: employee.user.lastName,
-							email: employee.user.email,
-							username: employee.user.username,
-							hash: employee.user.hash,
-							tenantId: tenantId,
-							externalTenantId: employee.user.tenantId,
-							externalUserId: employee.user.id,
-							isActive: employee.isActive,
-							isArchived: false
-						});
-						console.log(`Synced User ${JSON.stringify(gauzyAIUser)}`);
+							// Use this (using the "options" parameter):
+							throw new HttpException(error?.message, HttpStatus.BAD_REQUEST);
+						}
 
-						/**  */
-						const gauzyAIEmployee: Employee = await this.syncEmployee({
-							externalEmployeeId: employee.id,
-							tenantId: tenantId,
-							externalTenantId: employee.tenantId,
-							externalOrgId: employee.organizationId,
-							upworkOrganizationId: employee.organization.upworkOrganizationId,
-							upworkOrganizationName: employee.organization.upworkOrganizationName,
-							upworkId: employee.upworkId,
-							linkedInId: employee.linkedInId,
-							isActive: employee.isActive,
-							isArchived: false,
-							firstName: employee.user.firstName,
-							lastName: employee.user.lastName,
-							...(gauzyAIUser
-								? {
+						try {
+							/** */
+							const gauzyAIUser: User = await this.syncUser({
+								tenantId: tenantId,
+								firstName: employee.user.firstName,
+								lastName: employee.user.lastName,
+								email: employee.user.email,
+								username: employee.user.username,
+								hash: employee.user.hash,
+								externalTenantId: employee.user.tenantId,
+								externalUserId: employee.user.id,
+								isActive: employee.isActive,
+								isArchived: !employee.isActive
+							});
+							console.log(`Synced User ${JSON.stringify(gauzyAIUser)}`);
+							try {
+								/**  */
+								const gauzyAIEmployee: Employee = await this.syncEmployee({
+									externalEmployeeId: employee.id,
+									tenantId: tenantId,
+									externalTenantId: employee.tenantId,
+									externalOrgId: employee.organizationId,
+									upworkOrganizationId: employee.organization.upworkOrganizationId,
+									upworkOrganizationName: employee.organization.upworkOrganizationName,
+									upworkId: employee.upworkId,
+									linkedInId: employee.linkedInId,
+									isActive: employee.isActive,
+									isArchived: !employee.isActive,
+									firstName: employee.user.firstName,
+									lastName: employee.user.lastName,
 									userId: gauzyAIUser.id
-								}
-								: {}),
-						});
-						console.log(`Synced Employee ${JSON.stringify(gauzyAIEmployee)}`);
+								});
+								console.log(`Synced Employee ${JSON.stringify(gauzyAIEmployee)}`);
+							} catch (error) {
+								console.log('Error while syncing employee: %s', error?.message);
+								this._logger.error(error);
+
+								// Use this (using the "options" parameter):
+								throw new HttpException(error?.message, HttpStatus.BAD_REQUEST);
+							}
+						} catch (error) {
+							console.log('Error while syncing user: %s', error?.message);
+							this._logger.error(error);
+
+							// Use this (using the "options" parameter):
+							throw new HttpException(error?.message, HttpStatus.BAD_REQUEST);
+						}
 					} catch (error) {
-						console.log('Error while syncing employee: %s', error?.message);
+						// Handle errors for each employee if necessary
+						console.error(`Error processing sync employee: ${employee.id}`, error?.message);
 						this._logger.error(error);
+
+						// Use this (using the "options" parameter):
+						throw new HttpException(error?.message, HttpStatus.BAD_REQUEST);
 					}
 				})
 			);
 			return true;
 		} catch (error) {
-			console.log('Error while synced employees: %s', error?.message);
+			console.log('Error while syncing employees: %s', error?.message);
 			return false;
 		}
 	}
@@ -935,21 +961,23 @@ export class GauzyAIService {
 			let totalCount;
 
 			do {
-				const result: ApolloQueryResult<EmployeeJobPostsQuery> =
-					await this._client.query<EmployeeJobPostsQuery>({
-						query: employeesQuery,
-						variables: {
-							after: after,
-							first: graphQLPageSize,
-							sorting: [
-								{
-									field: 'jobDateCreated',
-									direction: 'DESC',
-								},
-							],
-							filter: filter,
-						},
-					});
+				const result: ApolloQueryResult<EmployeeJobPostsQuery> = await this._client.query<EmployeeJobPostsQuery>({
+					query: employeesQuery,
+					variables: {
+						after: after,
+						first: graphQLPageSize,
+						sorting: [
+							{
+								field: 'jobDateCreated',
+								direction: 'DESC',
+							},
+						],
+						filter: filter,
+					},
+				});
+
+				console.log(result.errors);
+				console.log(result.data);
 
 				const jobsResponse = result.data.employeeJobPosts.edges.map(
 					(it) => {
@@ -986,9 +1014,7 @@ export class GauzyAIService {
 					}
 				);
 
-				isContinue =
-					result.data.employeeJobPosts.pageInfo.hasNextPage &&
-					currentCount < loadCounts;
+				isContinue = result.data.employeeJobPosts.pageInfo.hasNextPage && currentCount < loadCounts;
 				after = result.data.employeeJobPosts.pageInfo.endCursor;
 				totalCount = result.data.employeeJobPosts.totalCount;
 
@@ -1016,7 +1042,7 @@ export class GauzyAIService {
 			return response;
 		} catch (error) {
 			console.log('Error while getting employee job posts: %s', error?.message);
-			this._logger.error(error);
+			// this._logger.error(error);
 			return null;
 		}
 	}
@@ -1433,41 +1459,52 @@ export class GauzyAIService {
 	 */
 	private async syncUser(user: User) {
 		console.log('-------------------------- Sync User --------------------------', user);
-		try {
-			// First, let's search by user.externalUserId & user.externalTenantId (which is Gauzy userId)
-			let userFilterByExternalFieldsQuery: DocumentNode<UserConnection> = gql`
-				query userFilterByExternalFieldsQuery(
-					$externalUserIdFilter: String!
-					$externalTenantIdFilter: String!
-				) {
-					users(
-						filter: {
-							externalUserId: { eq: $externalUserIdFilter }
-							externalTenantId: { eq: $externalTenantIdFilter }
-						}
-					) {
-						edges {
-							node {
-								id,
-								email
-								username
-								externalUserId
-								externalTenantId
-							}
-						}
-						totalCount
+		// First, let's search by user.externalUserId & user.externalTenantId (which is Gauzy userId)
+		let userFilterByExternalFieldsQuery: DocumentNode<UserConnection> = gql`
+			query userFilterByExternalFieldsQuery(
+				$externalUserIdFilter: String!
+				$externalTenantIdFilter: String!
+			) {
+				users(
+					filter: {
+						externalUserId: { eq: $externalUserIdFilter }
+						externalTenantId: { eq: $externalTenantIdFilter }
 					}
+				) {
+					edges {
+						node {
+							id,
+							email
+							username
+							externalUserId
+							externalTenantId
+						}
+					}
+					totalCount
 				}
-			`;
+			}
+		`;
 
-			let usersQueryResult: ApolloQueryResult<Query> = await this._client.query<Query>({
-				query: userFilterByExternalFieldsQuery,
-				variables: {
-					externalUserIdFilter: user.externalUserId,
-					externalTenantIdFilter: user.externalTenantId,
-				},
-			});
+		let usersQueryResult: ApolloQueryResult<Query> = await this._client.query<Query>({
+			query: userFilterByExternalFieldsQuery,
+			variables: {
+				externalUserIdFilter: user.externalUserId,
+				externalTenantIdFilter: user.externalTenantId,
+			},
+		});
 
+		try {
+			// Check if there are any GraphQL errors
+			if (usersQueryResult.errors && usersQueryResult.errors.length > 0) {
+				// Handle GraphQL errors
+				const [error] = usersQueryResult.errors;
+				// You can also access error.extensions for additional error details
+
+				// Use this (using the "options" parameter):
+				throw new HttpException(error?.message, HttpStatus.BAD_REQUEST);
+			}
+			// Process the query result if successful
+			// You can access the data via usersQueryResult.data
 			let usersResponse = usersQueryResult.data.users.edges;
 			let isAlreadyCreated = usersQueryResult.data.users.totalCount > 0;
 
@@ -1504,16 +1541,18 @@ export class GauzyAIService {
 					});
 					return <User>newUser.data.createOneUser;
 				} catch (error) {
-					console.log('Error while creating user: %s', error?.message);
+					console.error('Error while creating user: %s', error?.message);
 				}
 			}
 
+			console.log(usersResponse[0].node);
 			/** Update record of user */
 			try {
 				const id = usersResponse[0].node.id;
 				const updateUserMutation: DocumentNode<any> = gql`
 					mutation updateOneUser($input: UpdateOneUserInput!) {
 						updateOneUser(input: $input) {
+							id
 							firstName
 							lastName
 							email
@@ -1526,7 +1565,7 @@ export class GauzyAIService {
 						}
 					}
 				`;
-				await this._client.mutate({
+				const updateUserResponse = await this._client.mutate({
 					mutation: updateUserMutation,
 					variables: {
 						input: {
@@ -1535,13 +1574,17 @@ export class GauzyAIService {
 						},
 					},
 				});
-				return <User>usersResponse[0].node;
+				console.log(<User>updateUserResponse.data);
+				return <User>updateUserResponse.data.updateOneUser;
 			} catch (error) {
-				console.log('Error while updating user: %s', error?.message);
+				console.error('Error while updating user: %s', error?.message);
+				this._logger.error(`Error while updating user: ${error?.message}`);
 			}
 		} catch (error) {
-			console.log('Error while synced user: %s', error?.message);
-			throw new BadRequestException(error?.message);
+			// Handle other types of errors (e.g., network errors)
+			console.error('Non-Apollo Client Error while while synced user: %s', error?.message);
+			// Use this (using the "options" parameter):
+			throw new HttpException(error?.message, HttpStatus.BAD_REQUEST);
 		}
 	}
 
@@ -1552,45 +1595,61 @@ export class GauzyAIService {
 	 */
 	private async getTenantGauzyAIId(
 		externalTenantId: string
-	): Promise<string> {
-		try {
-			let tenantByExternalTenantIdQuery: DocumentNode<TenantConnection> = gql`
-				query tenantByExternalEmployeeId(
-					$externalTenantIdFilter: String!
-				) {
-					tenants(
-						filter: {
-							externalTenantId: {
-								eq: $externalTenantIdFilter
-							}
+	): Promise<string | null> {
+		/** */
+		let tenantByExternalTenantIdQuery: DocumentNode<TenantConnection> = gql`
+			query tenantByExternalEmployeeId(
+				$externalTenantIdFilter: String!
+			) {
+				tenants(
+					filter: {
+						externalTenantId: {
+							eq: $externalTenantIdFilter
 						}
-					) {
-						edges {
-							node {
-								id,
-								externalTenantId
-							}
-						}
-						totalCount
 					}
+				) {
+					edges {
+						node {
+							id,
+							externalTenantId
+						}
+					}
+					totalCount
 				}
-			`;
-
+			}
+		`;
+		/** */
+		try {
+			/** */
 			let tenantsQueryResult: ApolloQueryResult<Query> = await this._client.query<Query>({
 				query: tenantByExternalTenantIdQuery,
 				variables: {
-					externalTenantIdFilter: externalTenantId,
+					externalTenantIdFilter: externalTenantId
 				},
 			});
 
+			// Check if there are any GraphQL errors
+			if (tenantsQueryResult.errors && tenantsQueryResult.errors.length > 0) {
+				// Handle GraphQL errors
+				const [error] = tenantsQueryResult.errors;
+				// You can also access error.extensions for additional error details
+
+				// Use this (using the "options" parameter):
+				throw new HttpException(error?.message, HttpStatus.BAD_REQUEST);
+			}
+
+			// Process the query result if successful
+			// You can access the data via tenantsQueryResult.data
 			const tenantsResponse = tenantsQueryResult.data.tenants;
 			if (tenantsResponse.totalCount > 0) {
 				return tenantsResponse.edges[0].node.id;
 			}
 			return null;
 		} catch (error) {
-			console.log('Error while getting tenant: %s', error?.message);
-			return null;
+			// Handle other types of errors (e.g., network errors)
+			console.error('Non-Apollo Client Error while getting tenant: %s', error?.message);
+			// Use this (using the "options" parameter):
+			throw new HttpException(error?.message, HttpStatus.BAD_REQUEST);
 		}
 	}
 }
