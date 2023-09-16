@@ -151,7 +151,9 @@
 		"COPY": "Kopiuj",
 		"CUT": "kroić",
 		"PASTE": "Wklej",
-		"FORWARD_PORTS": "Przekieruj porty"
+		"FORWARD_PORTS": "Przekieruj porty",
+		"REPORT": "Raport",
+		"IGNORE": "Ignoruj"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {
@@ -3881,7 +3883,9 @@
 			"CONNECTION_DRIVER": "Połączenie z bazą danych {{ driver }} udane",
 			"STILL_WORKING": "Czy nadal pracujesz?",
 			"INACTIVITY_HANDLER": "Obsługa braku aktywności",
-			"WANT_LOGOUT": "Czy na pewno chcesz się wylogować?"
+			"WANT_LOGOUT": "Czy na pewno chcesz się wylogować?",
+			"ERROR_HANDLER": "Obsługa błędów",
+			"ERROR_OCCURRED": "Wystąpił błąd"
 		},
 		"NO_LIMIT": "∞ Bez ograniczeń",
 		"TASK": "Zadanie",

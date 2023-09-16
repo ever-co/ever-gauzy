@@ -161,8 +161,8 @@ spec:
                         value: '$FACEBOOK_CALLBACK_URL'
                       - name: INTEGRATED_USER_DEFAULT_PASS
                         value: '$INTEGRATED_USER_DEFAULT_PASS'
-                      - name: UPWORK_CALLBACK_URL
-                        value: '$UPWORK_CALLBACK_URL'
+                      - name: UPWORK_REDIRECT_URL
+                        value: '$UPWORK_REDIRECT_URL'
                       - name: FILE_PROVIDER
                         value: '$FILE_PROVIDER'
                       - name: GAUZY_AI_GRAPHQL_ENDPOINT

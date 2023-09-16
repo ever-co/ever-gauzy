@@ -151,7 +151,9 @@
 		"COPY": "نسخة",
 		"CUT": "قص",
 		"PASTE": "لصق",
-		"FORWARD_PORTS": "إعادة توجيه المنافذ"
+		"FORWARD_PORTS": "إعادة توجيه المنافذ",
+		"REPORT": "التقرير",
+		"IGNORE": "تجاهل"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {
@@ -3881,7 +3883,9 @@
 			"CONNECTION_DRIVER": "تم الاتصال بقاعدة بيانات {{ driver }} بنجاح",
 			"STILL_WORKING": "هل ما زلت تعمل؟",
 			"INACTIVITY_HANDLER": "معالج عدم النشاط",
-			"WANT_LOGOUT": "هل أنت متأكد من رغبتك في تسجيل الخروج؟"
+			"WANT_LOGOUT": "هل أنت متأكد من رغبتك في تسجيل الخروج؟",
+			"ERROR_HANDLER": "معالج الأخطاء",
+			"ERROR_OCCURRED": "حدث خطأ"
 		},
 		"NO_LIMIT": "∞ لا حدود",
 		"TASK": "مهمة",

@@ -86,7 +86,7 @@ jobs:
                   FACEBOOK_GRAPH_VERSION: '${{ secrets.FACEBOOK_GRAPH_VERSION }}'
                   FACEBOOK_CALLBACK_URL: '${{ secrets.FACEBOOK_CALLBACK_URL }}'
                   INTEGRATED_USER_DEFAULT_PASS: '${{ secrets.INTEGRATED_USER_DEFAULT_PASS }}'
-                  UPWORK_CALLBACK_URL: '${{ secrets.UPWORK_CALLBACK_URL }}'
+                  UPWORK_REDIRECT_URL: '${{ secrets.UPWORK_REDIRECT_URL }}'
                   FILE_PROVIDER: '${{ secrets.FILE_PROVIDER }}'
                   GAUZY_AI_GRAPHQL_ENDPOINT: '${{ secrets.GAUZY_AI_GRAPHQL_ENDPOINT }}'
                   GAUZY_AI_REST_ENDPOINT: '${{ secrets.GAUZY_AI_REST_ENDPOINT }}'

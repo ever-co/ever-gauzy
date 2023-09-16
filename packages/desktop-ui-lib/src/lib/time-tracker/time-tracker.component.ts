@@ -42,6 +42,7 @@ import {
 	IOrganization,
 	IOrganizationContact,
 	ITask,
+	ITasksStatistics,
 	LanguagesEnum,
 	PermissionsEnum,
 	ProjectOwnerEnum,
@@ -65,6 +66,7 @@ import { AuthStrategy } from '../auth';
 import { LanguageSelectorService } from '../language/language-selector.service';
 import { TranslateService } from '@ngx-translate/core';
 import { AlwaysOnService, AlwaysOnStateEnum } from '../always-on/always-on.service';
+import { TaskDurationComponent, TaskEstimateComponent, TaskProgressComponent } from './task-render';
 
 enum TimerStartMode {
 	MANUAL = 'manual',
@@ -395,7 +397,8 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 					(remoteTimer: IRemoteTimer) =>
 						this.xor(this.start, remoteTimer.running) &&
 						!this._isLockSyncProcess &&
-						this._isReady
+						this._isReady &&
+						this.inQueue.size === 0
 				),
 				tap(async (remoteTimer: IRemoteTimer) => {
 					this.projectSelect = remoteTimer.lastLog.projectId;
@@ -1131,12 +1134,29 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 
 	async getTask(arg) {
 		try {
-			const res = await this.timeTrackerService.getTasks(arg);
-			this._tasks$.next(res || []);
+			const tasks = await this.timeTrackerService.getTasks(arg);
+			const statistics = await this.timeTrackerService.getTasksStatistics(
+				{ ...arg, taskIds: tasks.map((res) => res.id) }
+			);
+			this._tasks$.next(this.merge(tasks, statistics));
 		} catch (error) {
 			this._tasks$.next([]);
 			console.log('ERROR', error);
 		}
+	}
+
+	private merge(tasks: ITask[], statistics: ITasksStatistics[]): (ITask & ITasksStatistics)[] {
+		let arr: (ITask & ITasksStatistics)[] = [];
+		arr = arr.concat(tasks, statistics);
+		return arr.reduce((result, current) => {
+			const existing = result.find((item: any) => item.id === current.id);
+			if (existing) {
+				Object.assign(existing, current);
+			} else {
+				result.push(current);
+			}
+			return result;
+		}, []);
 	}
 
 	async getProjects(arg) {
@@ -1965,6 +1985,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 		try {
 			let screenshots = await Promise.all(
 				args.map(async (arg) => {
+					if (!arg.screenshots.length) return null;
 					const fullUrl = 'data:image/png;base64,' + arg.screenshots[0].b64img;
 					const thumbUrl = await compressImage(fullUrl, 320, 200);
 					return {
@@ -1977,6 +1998,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 					};
 				})
 			);
+			screenshots = screenshots.filter((screenshot) => !!screenshot);
 			if (screenshots.length > 0) {
 				screenshots = _.sortBy(screenshots, 'recordedAt');
 				const [lastCaptureScreen] = screenshots;
@@ -2152,23 +2174,33 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 			console.log('[TIMER_STATE]', lastTimer);
 			if (isStarted) {
 				if (!this._isOffline && !this._remoteSleepLock) {
-					timelog = isRemote
+					try {
+						timelog = isRemote
 							? this._timeTrackerStatus.remoteTimer.lastLog
 							: await this.timeTrackerService.toggleApiStart({
 									...lastTimer,
 									...params
 							  });
+					} catch (error) {
+						lastTimer.isStartedOffline = true;
+						this._loggerService.log.error(error);
+					}
 				}
 				this.loading = false;
 			} else {
 				if (!this._isOffline) {
-					timelog =
+					try {
+						timelog =
 						isRemote || this._remoteSleepLock
 						? this._timeTrackerStatus.remoteTimer.lastLog
 						: await this.timeTrackerService.toggleApiStop({
 								...lastTimer,
 								...params
 						  });
+					} catch (error) {
+						lastTimer.isStoppedOffline = true;
+						this._loggerService.log.error(error);
+					}
 				}
 				this.start$.next(false);
 				this.loading = false;
@@ -2237,6 +2269,21 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 					title: this._translateService.instant('TIMER_TRACKER.TASK'),
 					type: 'custom',
 					renderComponent: CustomRenderComponent
+				},
+				duration: {
+					title: this._translateService.instant('TIMESHEET.DURATION'),
+					type: 'custom',
+					renderComponent: TaskDurationComponent
+				},
+				taskProgress: {
+					title: this._translateService.instant('MENU.IMPORT_EXPORT.PROGRESS'),
+					type: 'custom',
+					renderComponent: TaskProgressComponent
+				},
+				estimate: {
+					title: this._translateService.instant('TASKS_PAGE.ESTIMATE'),
+					type: 'custom',
+					renderComponent: TaskEstimateComponent
 				},
 				dueDate: {
 					title: this._translateService.instant('TIMER_TRACKER.DUE'),

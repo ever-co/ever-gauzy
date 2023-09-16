@@ -40,6 +40,7 @@ import { ImageViewerModule } from '../image-viewer/image-viewer.module';
 import { NgxTranslateModule } from '../ngx-translate';
 import { LanguageSelectorService } from '../language/language-selector.service';
 import { AlwaysOnService } from '../always-on/always-on.service';
+import { TaskRenderModule } from './task-render/task-render.module';
 
 @NgModule({
 	declarations: [
@@ -47,7 +48,7 @@ import { AlwaysOnService } from '../always-on/always-on.service';
 		CustomRenderComponent,
 		NoDataMessageComponent,
 		HumanizePipe,
-		OrganizationSelectorComponent,
+		OrganizationSelectorComponent
 	],
 	imports: [
 		CommonModule,
@@ -77,6 +78,7 @@ import { AlwaysOnService } from '../always-on/always-on.service';
 		TimeTrackerStatusModule,
 		ImageViewerModule,
 		NgxTranslateModule,
+		TaskRenderModule
 	],
 	providers: [
 		NbSidebarService,

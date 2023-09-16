@@ -1,4 +1,5 @@
 import fs from 'fs';
+import { AppError } from '../error-handler';
 import path from 'path';
 import { ITranslation } from './i-translation';
 
@@ -44,10 +45,7 @@ export class TranslateLoader {
 							...this._flattenObject(fileContent),
 						};
 					} catch (error) {
-						console.error(
-							'Error occurred translation file parsing',
-							error
-						);
+						throw new AppError('TRANSLATION', error);
 					}
 				});
 

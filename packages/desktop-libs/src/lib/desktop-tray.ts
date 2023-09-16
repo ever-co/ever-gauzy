@@ -282,15 +282,22 @@ export class TrayIcon {
 			}
 		};
 
-		if (auth && auth.employeeId) {
+		menuWindowSetting.enabled = true;
+		auth = store.get('auth');
+
+		if (auth && auth.employeeId && !auth.isLogout) {
 			this.contextMenu = menuAuth;
-			menuWindowSetting.enabled = true;
 			menuWindowTime.enabled = true;
 			timeTrackerWindow.webContents.send(
 				'get_user_detail',
 				LocalStore.beforeRequestParams()
 			);
+		} else {
+			this.tray.setTitle('--:--:--', options);
+			this.contextMenu = unAuthMenu;
+			menuWindowTime.enabled = false;
 		}
+
 		this.build();
 
 		this.tray.on('double-click', (e) => {
@@ -312,15 +319,21 @@ export class TrayIcon {
 		});
 
 		ipcMain.on('update_tray_time_update', (event, arg) => {
-			this.contextMenu[0].label = TranslateService.instant(
-				'TIMER_TRACKER.MENU.NOW_TRACKING',
-				{ time: arg }
-			);
-			this.build();
+			const auth = store.get('auth');
+			if (auth && auth.employeeId && !auth.isLogout) {
+				this.contextMenu[0].label = TranslateService.instant(
+					'TIMER_TRACKER.MENU.NOW_TRACKING',
+					{ time: arg }
+				);
+				this.build();
+			}
 		});
 
 		ipcMain.on('update_tray_time_title', (event, arg) => {
-			this.tray.setTitle(arg ? arg.timeRun : '--:--:--', options);
+			const auth = store.get('auth');
+			if (auth && auth.employeeId && !auth.isLogout) {
+				this.tray.setTitle(arg ? arg.timeRun : '--:--:--', options);
+			}
 		});
 
 		ipcMain.on('auth_success', async (event, arg) => {
@@ -329,7 +342,9 @@ export class TrayIcon {
 				const user = new User({ ...arg, ...arg.user });
 				user.remoteId = arg.userId;
 				user.organizationId = arg.organizationId;
-				await userService.save(user.toObject());
+				if (user.employee) {
+					await userService.save(user.toObject());
+				}
 			} catch (error) {
 				console.log('Error on save user', error);
 			}
@@ -347,29 +362,38 @@ export class TrayIcon {
 			store.set({
 				auth: { ...arg, isLogout: false },
 			});
+
+			menuWindowTime.visible = appConfig.timeTrackerWindow;
+
 			if (arg.employeeId) {
 				this.contextMenu = menuAuth;
 				menuWindowTime.enabled = true;
 				menuWindowSetting.enabled = true;
-				menuWindowTime.visible = appConfig.timeTrackerWindow;
-				this.build();
+			} else {
+				this.tray.setTitle('--:--:--', options);
+				this.contextMenu = unAuthMenu;
+				menuWindowTime.enabled = false;
+				menuWindowSetting.enabled = false;
 			}
 
-			if (!appConfig.gauzyWindow) {
+			this.build();
+
+			if (timeTrackerWindow) {
 				await timeTrackerWindow.loadURL(
 					timeTrackerPage(windowPath.timeTrackerUi)
 				);
-				timeTrackerWindow.show();
-			}
-			if (timeTrackerWindow) {
 				timeTrackerWindow.webContents.send(
 					'auth_success_tray_init',
 					arg
 				);
+				if (!appConfig.gauzyWindow) {
+					timeTrackerWindow.show();
+				}
 			}
 		});
 
 		ipcMain.handle('FINAL_LOGOUT', async (event, arg) => {
+			this.tray.setTitle('--:--:--', options);
 			this.tray.setContextMenu(Menu.buildFromTemplate(unAuthMenu));
 			menuWindowTime.enabled = false;
 
