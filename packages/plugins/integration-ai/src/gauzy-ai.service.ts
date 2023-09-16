@@ -1545,13 +1545,14 @@ export class GauzyAIService {
 				}
 			}
 
-			console.log(usersResponse[0].node.id);
+			console.log(usersResponse[0].node);
 			/** Update record of user */
 			try {
 				const id = usersResponse[0].node.id;
 				const updateUserMutation: DocumentNode<any> = gql`
 					mutation updateOneUser($input: UpdateOneUserInput!) {
 						updateOneUser(input: $input) {
+							id
 							firstName
 							lastName
 							email
@@ -1573,9 +1574,8 @@ export class GauzyAIService {
 						},
 					},
 				});
-				console.log(usersResponse[0].node);
-				console.log(updateUserResponse.data);
-				return <User>usersResponse[0].node;
+				console.log(<User>updateUserResponse.data);
+				return <User>updateUserResponse.data.updateOneUser;
 			} catch (error) {
 				console.error('Error while updating user: %s', error?.message);
 				this._logger.error(`Error while updating user: ${error?.message}`);
