@@ -4,9 +4,13 @@ on:
     push:
         branches: stage
 
+concurrency:
+    group: ${{ github.ref }}-${{ github.workflow }}
+    cancel-in-progress: true
+
 jobs:
     gauzy-api:
-        runs-on: ubuntu-latest
+        runs-on: ubuntu-latest-m
         steps:
             - name: Checkout
               uses: actions/checkout@v3
@@ -93,7 +97,7 @@ jobs:
                   docker push ${{ secrets.CW_DOCKER_REGISTRY }}/ever-co/gauzy-api-stage:latest
 
     gauzy-webapp:
-        runs-on: ubuntu-latest
+        runs-on: ubuntu-latest-m
         steps:
             - name: Checkout
               uses: actions/checkout@v3
