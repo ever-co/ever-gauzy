@@ -17,14 +17,14 @@ jobs:
 
         strategy:
             matrix:
-                os: [ubuntu-latest]
+                os: [buildjet-8vcpu-ubuntu-2204]
 
         steps:
             - name: Check out Git repository
               uses: actions/checkout@v3
 
             - name: Install Node.js, NPM and Yarn
-              uses: actions/setup-node@v3
+              uses: buildjet/setup-node@v3
               with:
                   node-version: 16
                   cache: 'yarn'
@@ -55,7 +55,7 @@ jobs:
                       console.log(script.desktopTimer(false))
 
             - name: Build Desktop Timer App
-              run: 'yarn build:desktop-timer:linux:release'
+              run: 'yarn build:desktop-timer:linux:release:gh'
               env:
                   USE_HARD_LINKS: false
                   GH_TOKEN: ${{ secrets.GH_TOKEN }}
@@ -121,7 +121,7 @@ jobs:
 
         strategy:
             matrix:
-                os: [windows-2022]
+                os: [windows-latest-l]
 
         steps:
             - name: Check out Git repository
@@ -153,7 +153,7 @@ jobs:
                       console.log(script.desktopTimer(false))
 
             - name: Build Desktop Timer App
-              run: 'yarn build:desktop-timer:windows:release'
+              run: 'yarn build:desktop-timer:windows:release:gh'
               env:
                   USE_HARD_LINKS: false
                   GH_TOKEN: ${{ secrets.GH_TOKEN }}
