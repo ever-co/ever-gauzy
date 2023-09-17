@@ -1060,24 +1060,11 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 	}
 
 	private async resetAtMidnight() {
-		if (this._isMidnight) {
+		if (TimeTrackerDateManager.isMidnight) {
 			try {
-				const { tenantId, organizationId } = this._store;
-				const { employeeId } = this.userData;
-				const payload = {
-					token: this.token,
-					apiHost: this.apiHost,
-					tenantId,
-					organizationId
-				};
-				await this.getTodayTime({ ...payload, employeeId }, true);
-				asapScheduler.schedule(async () => {
-					this.electronService.ipcRenderer.send('update_session', {
-						startedAt: moment(Date.now()).toISOString()
-					});
-				});
+				await this.silentRestart();
 			} catch (error) {
-				console.log('ERROR', error);
+				this._errorHandlerService.handleError(error);
 			}
 		}
 	}
@@ -2145,14 +2132,6 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 		return value === Infinity;
 	}
 
-	/**
-	 * > If it midnight, then return true
-	 * @returns A boolean value.
-	 */
-	private get _isMidnight(): boolean {
-		return moment(Date.now()).isSame(moment(new Date()).startOf('day'));
-	}
-
 	private async _toggle(timer: any, onClick: boolean) {
 		try {
 			const { lastTimer, isStarted } = timer;
@@ -2303,6 +2282,46 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 				perPage: 10,
 				page: 1
 			}
+		}
+	}
+
+	public async silentRestart() : Promise<void> {
+		try {
+			const params = {
+				token: this.token,
+				note: this.note,
+				projectId: this.projectSelect,
+				taskId: this.taskSelect,
+				organizationId: this._store.organizationId,
+				tenantId: this._store.tenantId,
+				organizationContactId: this.organizationContactId,
+				apiHost: this.apiHost
+			};
+			const status = await this._timeTrackerStatus.status();
+			await this.timeTrackerService.toggleApiStop({
+				...status.lastLog,
+				stoppedAt: new Date()
+			});
+			await this.getTodayTime({...status.lastLog}, true);
+			const timeLog = await this.timeTrackerService.toggleApiStart({
+				...params,
+				startedAt: new Date()
+			});
+			asapScheduler.schedule(async () => {
+				try {
+					this.electronService.ipcRenderer.send('update_session', {
+						...timeLog
+					});
+					await this.electronService.ipcRenderer.invoke('UPDATE_SYNCED_TIMER', {
+						lastTimer: timeLog
+					});
+				} catch (error) {
+					this._errorHandlerService.handleError(error);
+				}
+			});
+		} catch (error) {
+			// force stop timer
+			if (this.start) await this.toggleStart(false);
 		}
 	}
 }
