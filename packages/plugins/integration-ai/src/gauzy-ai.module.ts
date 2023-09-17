@@ -1,7 +1,7 @@
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { HttpModule } from '@nestjs/axios';
 import { DynamicModule, Module } from '@nestjs/common';
-import { GauzyAIService } from 'GauzyAIService';
+import { GauzyAIService } from './gauzy-ai.service';
 import gauzyAI from './config/gauzy-ai';
 import { IConfigurationOptions } from './configuration.interface';
 import { RequestConfigProvider } from './request-config.provider';
@@ -17,6 +17,8 @@ import { GAUZY_AI_CONFIG_OPTIONS } from './constants';
 				maxRedirects: 5,
 				headers: {
 					'Content-Type': 'application/json',
+					ApiKey: config.get<string>('guazyAI.gauzyAiApiKey'),
+					ApiSecret: config.get<string>('guazyAI.gauzyAiApiSecret'),
 				},
 			}),
 			inject: [ConfigService],
@@ -49,8 +51,8 @@ export class GauzyAIModule {
 				{
 					provide: GAUZY_AI_CONFIG_OPTIONS,
 					useFactory: (config: ConfigService): IConfigurationOptions => ({
-						ApiKey: config.get('guazyAI.gauzyAiApiKey'),
-						ApiSecret: config.get('guazyAI.gauzyAiApiSecret'),
+						ApiKey: config.get<string>('guazyAI.gauzyAiApiKey'),
+						ApiSecret: config.get<string>('guazyAI.gauzyAiApiSecret'),
 						...options,
 					}),
 					inject: [ConfigService],

@@ -3,7 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import { HttpService } from '@nestjs/axios';
 import { AxiosRequestConfig, AxiosResponse } from 'axios';
 import { Observable, firstValueFrom } from 'rxjs';
-import { map, tap } from 'rxjs/operators';
+import { map } from 'rxjs/operators';
 import {
     CreateEmployeeJobApplication,
     User,
@@ -50,6 +50,7 @@ import {
 } from '@gauzy/contracts';
 import { RequestConfigProvider } from './request-config.provider';
 import { AxiosRequestHeaders, HttpMethod } from './configuration.interface';
+
 @Injectable()
 export class GauzyAIService {
     private readonly _logger = new Logger(GauzyAIService.name);
@@ -91,7 +92,7 @@ export class GauzyAIService {
    */
     private sendRequest<T>(
         path: string,
-        options: AxiosRequestConfig,
+        options: AxiosRequestConfig = {},
         method: string = HttpMethod.GET,
     ): Observable<AxiosResponse<T>> {
         const {
@@ -107,7 +108,7 @@ export class GauzyAIService {
         };
 
         // Add your custom headers here
-        const customHeaders: AxiosRequestHeaders = {
+        const headers: AxiosRequestHeaders = {
             // Define default headers
             ...defaultHeaders,
             // Add your custom headers here
@@ -120,22 +121,23 @@ export class GauzyAIService {
             ...(ApiTenantId ? { 'Tenant-Id': ApiTenantId } : {}),
             ...(ApiBearerToken ? { 'Authorization': ApiBearerToken } : {}),
         };
+        console.log('Default AxiosRequestConfig Headers: %s', `${JSON.stringify(headers)}`);
 
         // Merge the provided options with the default options
-        const mergedOptions: AxiosRequestConfig = {
+        const mergedOptions: AxiosRequestConfig<T> = {
             ...options,
-            method,
-            headers: customHeaders,
-            url: path,
         };
-        console.log('Default AxiosRequestConfig Options: %s', mergedOptions);
+        console.log('Default AxiosRequestConfig Options: %s', `${JSON.stringify(mergedOptions)}`);
+
         try {
-            return this._http.request({
+            return this._http.request<T>({
+                ...mergedOptions,
                 url: path,
                 method: method,
-                headers: customHeaders
+                headers,
             });
         } catch (error) {
+            console.log('Error while sending an HTTP request with dynamic configuration.: %s', error);
             if (error.response) {
                 // Handle HTTP error responses
                 throw new HttpException(error.response.data, error.response.status);
@@ -158,25 +160,14 @@ export class GauzyAIService {
         // First we need to get employee id because we have only externalId
         params.employeeId = await this.getEmployeeGauzyAIId(params.employeeId);
 
-        try {
-            // Call the sendRequest function with the appropriate parameters
-            const response = await firstValueFrom(
-                this.sendRequest<any>('employee/job/application/pre-process', {
-                    method: HttpMethod, // Set the HTTP method to POST
-                    data: params, // Set the request payload
-                })
-            );
-            // Process the response
-            console.log('Response from API:', response);
-        } catch (error) {
-            // Handle errors
-            console.error('Error calling API:', error);
-        }
-
-        return firstValueFrom(
-            this._http
-                .post('employee/job/application/pre-process', params)
-                .pipe(map((resp: AxiosResponse<any, any>) => resp.data))
+        // Call the sendRequest function with the appropriate parameters
+        return await firstValueFrom(
+            this.sendRequest<any>('employee/job/application/pre-process', {
+                method: HttpMethod.POST, // Set the HTTP method to POST
+                data: params, // Set the request payload
+            }).pipe(
+                map((resp: AxiosResponse<any, any>) => resp.data)
+            )
         );
     }
 
@@ -189,15 +180,13 @@ export class GauzyAIService {
     public async generateAIProposalForEmployeeJobApplication(
         employeeJobApplicationId: string
     ): Promise<void> {
-        return firstValueFrom(
-            this._http
-                .post(
-                    `employee/job/application/generate-proposal/${employeeJobApplicationId}`
-                )
-                .pipe(
-                    tap((resp: AxiosResponse<any, any>) => console.log(resp)),
-                    map((resp: AxiosResponse<any, any>) => resp.data)
-                )
+        // Call the sendRequest function with the appropriate parameters
+        return await firstValueFrom(
+            this.sendRequest<any>(`employee/job/application/generate-proposal/${employeeJobApplicationId}`, {
+                method: HttpMethod.POST, // Set the HTTP method to POST
+            }).pipe(
+                map((resp: AxiosResponse<any, any>) => resp.data)
+            )
         );
     }
 
@@ -210,10 +199,13 @@ export class GauzyAIService {
     public async getEmployeeJobApplication(
         employeeJobApplicationId: string
     ): Promise<void> {
-        return firstValueFrom(
-            this._http
-                .get(`employee/job/application/${employeeJobApplicationId}`)
-                .pipe(map((resp: AxiosResponse<any, any>) => resp.data))
+        // Call the sendRequest function with the appropriate parameters
+        return await firstValueFrom(
+            this.sendRequest<any>(`employee/job/application/${employeeJobApplicationId}`, {
+                method: HttpMethod.GET, // Set the HTTP method to GET
+            }).pipe(
+                map((resp: AxiosResponse<any, any>) => resp.data)
+            )
         );
     }
 
@@ -358,13 +350,14 @@ export class GauzyAIService {
                 // Note: providerJobApplicationId will be set by Automation system when it's applied to the job
             };
 
+            // Call the sendRequest function with the appropriate parameters
             const response = await firstValueFrom(
-                this._http
-                    .post(
-                        'employee/job/application/process',
-                        createOneEmployeeJobApplication
-                    )
-                    .pipe(map((resp: AxiosResponse<any, any>) => resp.data))
+                this.sendRequest<any>(`employee/job/application/process`, {
+                    method: HttpMethod.POST, // Set the HTTP method to GET
+                    data: createOneEmployeeJobApplication
+                }).pipe(
+                    map((resp: AxiosResponse<any, any>) => resp.data)
+                )
             );
 
             return {
