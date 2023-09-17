@@ -2,8 +2,9 @@ import { BadRequestException, HttpException, HttpStatus, Injectable, Logger } fr
 import { ConfigService } from '@nestjs/config';
 import { HttpService } from '@nestjs/axios';
 import { AxiosRequestConfig, AxiosResponse } from 'axios';
+import qs from 'qs';
 import { Observable, firstValueFrom } from 'rxjs';
-import { map } from 'rxjs/operators';
+import { map, tap } from 'rxjs/operators';
 import {
     CreateEmployeeJobApplication,
     User,
@@ -126,6 +127,12 @@ export class GauzyAIService {
         // Merge the provided options with the default options
         const mergedOptions: AxiosRequestConfig<T> = {
             ...options,
+            // Inside your sendRequest method, use qs.stringify for custom parameter serialization
+            paramsSerializer: (params) => {
+                console.log('Customize the serialization of URL parameters', params);
+                // Customize the serialization of URL parameters as needed
+                return qs.stringify(params, { arrayFormat: 'repeat' });
+            }
         };
         console.log('Default AxiosRequestConfig Options: %s', `${JSON.stringify(mergedOptions)}`);
 
@@ -166,6 +173,7 @@ export class GauzyAIService {
                 method: HttpMethodEnum.POST, // Set the HTTP method to POST
                 data: params, // Set the request payload
             }).pipe(
+                tap((resp: AxiosResponse<any, any>) => console.log(resp)),
                 map((resp: AxiosResponse<any, any>) => resp.data)
             )
         );
@@ -185,6 +193,7 @@ export class GauzyAIService {
             this.sendRequest<any>(`employee/job/application/generate-proposal/${employeeJobApplicationId}`, {
                 method: HttpMethodEnum.POST, // Set the HTTP method to POST
             }).pipe(
+                tap((resp: AxiosResponse<any, any>) => console.log(resp)),
                 map((resp: AxiosResponse<any, any>) => resp.data)
             )
         );
@@ -204,6 +213,7 @@ export class GauzyAIService {
             this.sendRequest<any>(`employee/job/application/${employeeJobApplicationId}`, {
                 method: HttpMethodEnum.GET, // Set the HTTP method to GET
             }).pipe(
+                tap((resp: AxiosResponse<any, any>) => console.log(resp)),
                 map((resp: AxiosResponse<any, any>) => resp.data)
             )
         );
@@ -356,6 +366,7 @@ export class GauzyAIService {
                     method: HttpMethodEnum.POST, // Set the HTTP method to GET
                     data: createOneEmployeeJobApplication
                 }).pipe(
+                    tap((resp: AxiosResponse<any, any>) => console.log(resp)),
                     map((resp: AxiosResponse<any, any>) => resp.data)
                 )
             );
