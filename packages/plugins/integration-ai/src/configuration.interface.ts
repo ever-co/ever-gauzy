@@ -12,7 +12,10 @@ export interface IBearerTokenMethod {
 
 export type IConfigurationOptions = IApiKeyMethod & IBearerTokenMethod;
 
-export enum HttpMethod {
+/**
+ * Represents common HTTP methods as string values.
+ */
+export enum HttpMethodEnum {
     GET = 'GET',
     POST = 'POST',
     PUT = 'PUT',
@@ -22,6 +25,9 @@ export enum HttpMethod {
     OPTIONS = 'OPTIONS',
 }
 
+/**
+ * Represents HTTP request headers as an object where keys are header names and values are header values.
+ */
 export interface AxiosRequestHeaders {
     [key: string]: string;
 }

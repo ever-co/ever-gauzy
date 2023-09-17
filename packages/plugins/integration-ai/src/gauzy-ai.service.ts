@@ -49,7 +49,7 @@ import {
     IEmployeeJobsStatistics,
 } from '@gauzy/contracts';
 import { RequestConfigProvider } from './request-config.provider';
-import { AxiosRequestHeaders, HttpMethod } from './configuration.interface';
+import { AxiosRequestHeaders, HttpMethodEnum } from './configuration.interface';
 
 @Injectable()
 export class GauzyAIService {
@@ -93,7 +93,7 @@ export class GauzyAIService {
     private sendRequest<T>(
         path: string,
         options: AxiosRequestConfig = {},
-        method: string = HttpMethod.GET,
+        method: string = HttpMethodEnum.GET,
     ): Observable<AxiosResponse<T>> {
         const {
             ApiKey,
@@ -163,7 +163,7 @@ export class GauzyAIService {
         // Call the sendRequest function with the appropriate parameters
         return await firstValueFrom(
             this.sendRequest<any>('employee/job/application/pre-process', {
-                method: HttpMethod.POST, // Set the HTTP method to POST
+                method: HttpMethodEnum.POST, // Set the HTTP method to POST
                 data: params, // Set the request payload
             }).pipe(
                 map((resp: AxiosResponse<any, any>) => resp.data)
@@ -183,7 +183,7 @@ export class GauzyAIService {
         // Call the sendRequest function with the appropriate parameters
         return await firstValueFrom(
             this.sendRequest<any>(`employee/job/application/generate-proposal/${employeeJobApplicationId}`, {
-                method: HttpMethod.POST, // Set the HTTP method to POST
+                method: HttpMethodEnum.POST, // Set the HTTP method to POST
             }).pipe(
                 map((resp: AxiosResponse<any, any>) => resp.data)
             )
@@ -202,7 +202,7 @@ export class GauzyAIService {
         // Call the sendRequest function with the appropriate parameters
         return await firstValueFrom(
             this.sendRequest<any>(`employee/job/application/${employeeJobApplicationId}`, {
-                method: HttpMethod.GET, // Set the HTTP method to GET
+                method: HttpMethodEnum.GET, // Set the HTTP method to GET
             }).pipe(
                 map((resp: AxiosResponse<any, any>) => resp.data)
             )
@@ -353,7 +353,7 @@ export class GauzyAIService {
             // Call the sendRequest function with the appropriate parameters
             const response = await firstValueFrom(
                 this.sendRequest<any>(`employee/job/application/process`, {
-                    method: HttpMethod.POST, // Set the HTTP method to GET
+                    method: HttpMethodEnum.POST, // Set the HTTP method to GET
                     data: createOneEmployeeJobApplication
                 }).pipe(
                     map((resp: AxiosResponse<any, any>) => resp.data)
