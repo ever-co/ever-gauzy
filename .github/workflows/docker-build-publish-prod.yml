@@ -15,18 +15,6 @@ jobs:
             - name: Checkout
               uses: actions/checkout@v3
 
-            - name: Free disk space
-              run: |
-                  df -h /
-                  sudo swapoff -a
-                  sudo apt clean
-                  docker image ls -aq
-                  docker rmi $(docker image ls -aq)
-                  find ~/work/_temp -name "cache.tgz" -exec rm -f {} \;
-                  sudo rm -rf "/usr/local/share/boost"
-                  sudo rm -rf "$AGENT_TOOLSDIRECTORY"
-                  df -h /
-
             - name: Set up QEMU
               uses: docker/setup-qemu-action@v2
 
@@ -34,7 +22,7 @@ jobs:
               uses: docker/setup-buildx-action@v2
 
             - name: Build
-              uses: docker/build-push-action@v3
+              uses: docker/build-push-action@v4
               with:
                   context: .
                   file: ./.deploy/api/Dockerfile
@@ -102,18 +90,6 @@ jobs:
             - name: Checkout
               uses: actions/checkout@v3
 
-            - name: Free disk space
-              run: |
-                  df -h /
-                  sudo swapoff -a
-                  sudo apt clean
-                  docker image ls -aq
-                  docker rmi $(docker image ls -aq)
-                  find ~/work/_temp -name "cache.tgz" -exec rm -f {} \;
-                  sudo rm -rf "/usr/local/share/boost"
-                  sudo rm -rf "$AGENT_TOOLSDIRECTORY"
-                  df -h /
-
             - name: Set up QEMU
               uses: docker/setup-qemu-action@v2
 
@@ -121,7 +97,7 @@ jobs:
               uses: docker/setup-buildx-action@v2
 
             - name: Build and push
-              uses: docker/build-push-action@v3
+              uses: docker/build-push-action@v4
               with:
                   context: .
                   file: ./.deploy/webapp/Dockerfile
