@@ -151,7 +151,9 @@
 		"COPY": "Kopiëren",
 		"CUT": "Snijden",
 		"PASTE": "Plakken",
-		"FORWARD_PORTS": "Poorten doorsturen"
+		"FORWARD_PORTS": "Poorten doorsturen",
+		"REPORT": "Rapport",
+		"IGNORE": "Negeren"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {
@@ -3881,7 +3883,9 @@
 			"CONNECTION_DRIVER": "Verbinding met {{ driver }}-database is geslaagd",
 			"STILL_WORKING": "Werk je nog steeds?",
 			"INACTIVITY_HANDLER": "Inactiviteitshandler",
-			"WANT_LOGOUT": "Weet je zeker dat je wilt uitloggen?"
+			"WANT_LOGOUT": "Weet je zeker dat je wilt uitloggen?",
+			"ERROR_HANDLER": "Foutafhandeling",
+			"ERROR_OCCURRED": "Er is een fout opgetreden"
 		},
 		"NO_LIMIT": "∞ Geen Limiet",
 		"TASK": "Taak",

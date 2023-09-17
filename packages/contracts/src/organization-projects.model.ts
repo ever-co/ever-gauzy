@@ -74,7 +74,7 @@ export interface IOrganizationProjectsFindInput extends IBasePerTenantAndOrganiz
 	billingFlat?: boolean;
 }
 
-export interface IOrganizationProjectsCreateInput extends IBasePerTenantAndOrganizationEntityModel, IRelationalImageAsset {
+export interface IOrganizationProjectCreateInput extends IBasePerTenantAndOrganizationEntityModel, IRelationalImageAsset {
 	name?: string;
 	organizationContact?: IOrganizationContact;
 	organizationContactId?: IOrganizationContact['id'];
@@ -98,7 +98,7 @@ export interface IOrganizationProjectsCreateInput extends IBasePerTenantAndOrgan
 	taskListType?: TaskListTypeEnum;
 }
 
-export interface IOrganizationProjectsUpdateInput extends IOrganizationProjectsCreateInput {
+export interface IOrganizationProjectUpdateInput extends IOrganizationProjectCreateInput {
 	id?: IOrganizationContact['id'];
 }
 

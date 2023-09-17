@@ -33,7 +33,7 @@ export enum ListsInputTypeEnum {
 
 export interface IOrganization
 	extends IBasePerTenantEntityModel,
-		IRelationalImageAsset {
+	IRelationalImageAsset {
 	name: string;
 	isDefault: boolean;
 	profile_link: string;
@@ -130,9 +130,8 @@ export interface IOrganizationFindInput extends IBasePerTenantEntityModel {
 	tags?: ITag[];
 }
 
-export interface IOrganizationCreateInput
-	extends IContact,
-		IRegisterAsEmployee {
+export interface IOrganizationCreateInput extends IContact, IRegisterAsEmployee {
+
 	name: string;
 	isDefault?: boolean;
 	profile_link?: string;
@@ -148,14 +147,14 @@ export interface IOrganizationCreateInput
 	show_projects_count?: boolean;
 	show_clients_count?: boolean;
 	show_employees_count?: boolean;
-	defaultValueDateType: DefaultValueDateTypeEnum;
+	defaultValueDateType?: DefaultValueDateTypeEnum;
 	dateFormat?: string;
 	timeZone?: string;
 	officialName?: string;
 	startWeekOn?: WeekDaysEnum;
 	taxId?: string;
 	numberFormat?: string;
-	bonusType: BonusTypeEnum;
+	bonusType?: BonusTypeEnum;
 	bonusPercentage?: number;
 	invitesAllowed?: boolean;
 	inviteExpiryPeriod?: number;

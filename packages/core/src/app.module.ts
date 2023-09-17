@@ -84,7 +84,6 @@ import { OrganizationEmploymentTypeModule } from './organization-employment-type
 import { TimeTrackingModule } from './time-tracking/time-tracking.module';
 import { ExpenseCategoriesModule } from './expense-categories/expense-categories.module';
 import { UpworkModule } from './upwork/upwork.module';
-import { HubstaffModule } from './hubstaff/hubstaff.module';
 import { IntegrationAIModule } from './integration/gauzy-ai/integration-ai.module';
 import { CandidateModule } from './candidate/candidate.module';
 import { ProductCategoryModule } from './product-category/product-category.module';
@@ -354,7 +353,6 @@ if (environment.sentry && environment.sentry.dsn) {
 		FeatureModule,
 		ReportModule,
 		UpworkModule,
-		HubstaffModule,
 		IntegrationAIModule,
 		ExpenseCategoriesModule,
 		ProductCategoryModule,

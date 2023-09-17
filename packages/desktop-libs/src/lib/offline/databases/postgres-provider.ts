@@ -1,4 +1,5 @@
 import { Knex } from 'knex';
+import { AppError } from '../../error-handler';
 import { LocalStore } from '../../desktop-store';
 import { IClientServerProvider } from '../../interfaces';
 
@@ -65,7 +66,7 @@ export class PostgresProvider implements IClientServerProvider {
 			}
 			await connection.destroy();
 		} catch (error) {
-			console.error('[provider-error]', error);
+			throw new AppError('POSTGRES', error);
 		}
 	}
 

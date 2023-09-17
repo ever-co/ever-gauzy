@@ -36,7 +36,7 @@ export type Env = Readonly<{
 	GOOGLE_MAPS_API_KEY: string;
 	GOOGLE_PLACE_AUTOCOMPLETE: boolean;
 
-	HUBSTAFF_REDIRECT_URI: string;
+	HUBSTAFF_REDIRECT_URL: string;
 
 	DEFAULT_LATITUDE: number;
 	DEFAULT_LONGITUDE: number;
@@ -95,9 +95,7 @@ export const env: Env = cleanEnv(
 		GOOGLE_MAPS_API_KEY: str({ default: '' }),
 		GOOGLE_PLACE_AUTOCOMPLETE: bool({ default: false }),
 
-		HUBSTAFF_REDIRECT_URI: str({
-			default: 'http://localhost:3000/api/integrations/hubstaff/callback',
-		}),
+		HUBSTAFF_REDIRECT_URL: str({ default: '' }),
 
 		DEFAULT_LATITUDE: num({ default: 42.6459136 }),
 		DEFAULT_LONGITUDE: num({ default: 23.3332736 }),

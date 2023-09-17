@@ -1,24 +1,33 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { ConfigurationOptions } from './configuration.interface';
+import { IConfigurationOptions } from './configuration.interface';
 import { GAUZY_AI_CONFIG_OPTIONS } from './constants';
 
 @Injectable()
 export class RequestConfigProvider {
 
-    private config: ConfigurationOptions = {};
+    private config: IConfigurationOptions = new Object();
 
     constructor(
         @Inject(GAUZY_AI_CONFIG_OPTIONS)
-        private readonly options: ConfigurationOptions
+        protected readonly options: IConfigurationOptions
     ) {
         this.setConfig(options);
     }
 
-    setConfig(config: ConfigurationOptions) {
+    /**
+     * Set the configuration options.
+     * @param config - The configuration options to set.
+     */
+    setConfig(config: IConfigurationOptions) {
         this.config = config;
     }
 
-    getConfig(): ConfigurationOptions {
+
+    /**
+     * Get the current configuration options.
+     * @returns The current configuration options.
+     */
+    getConfig(): IConfigurationOptions {
         return this.config;
     }
 }

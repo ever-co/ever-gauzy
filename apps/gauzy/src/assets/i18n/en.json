@@ -151,7 +151,9 @@
 		"COPY": "Copy",
 		"CUT": "Cut",
 		"PASTE": "Paste",
-		"FORWARD_PORTS": "Forward Ports"
+		"FORWARD_PORTS": "Forward Ports",
+		"REPORT": "Report",
+		"IGNORE": "Ignore"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {
@@ -3884,7 +3886,9 @@
 			"CONNECTION_DRIVER": "Connection to {{ driver }} DB Succeeds",
 			"STILL_WORKING": "Are you still working?",
 			"INACTIVITY_HANDLER": "Inactivity Handler",
-			"WANT_LOGOUT": "Are you sure you want to logout?"
+			"WANT_LOGOUT": "Are you sure you want to logout?",
+			"ERROR_HANDLER": "Error Handler",
+			"ERROR_OCCURRED": "Error Occurred"
 		},
 		"NO_LIMIT": "∞ No Limit",
 		"TASK": "Task",
