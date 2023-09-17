@@ -17,7 +17,7 @@ jobs:
 
         strategy:
             matrix:
-                os: [ubuntu-latest]
+                os: [ubuntu-latest-l]
 
         steps:
             - name: Check out Git repository
@@ -55,7 +55,7 @@ jobs:
                       console.log(script.server(false))
 
             - name: Build Server
-              run: 'yarn build:gauzy-server:linux:release'
+              run: 'yarn build:gauzy-server:linux:release:gh'
               env:
                   USE_HARD_LINKS: false
                   GH_TOKEN: ${{ secrets.GH_TOKEN }}
@@ -121,7 +121,7 @@ jobs:
 
         strategy:
             matrix:
-                os: [windows-2022]
+                os: [windows-latest-l]
 
         steps:
             - name: Check out Git repository
@@ -153,7 +153,7 @@ jobs:
                       console.log(script.server(false))
 
             - name: Build Server
-              run: 'yarn build:gauzy-server:windows:release'
+              run: 'yarn build:gauzy-server:windows:release:gh'
               env:
                   USE_HARD_LINKS: false
                   GH_TOKEN: ${{ secrets.GH_TOKEN }}
