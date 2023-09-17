@@ -17,14 +17,14 @@ jobs:
 
         strategy:
             matrix:
-                os: [ubuntu-latest-l]
+                os: [buildjet-8vcpu-ubuntu-2204]
 
         steps:
             - name: Check out Git repository
               uses: actions/checkout@v3
 
             - name: Install Node.js, NPM and Yarn
-              uses: actions/setup-node@v3
+              uses: buildjet/setup-node@v3
               with:
                   node-version: 16
                   cache: 'yarn'
