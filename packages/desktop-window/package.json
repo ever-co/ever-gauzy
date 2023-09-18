@@ -27,7 +27,7 @@
 	"keywords": [],
 	"dependencies": {
 		"@electron/remote": "^2.0.8",
-		"electron": "20.2.0",
+		"electron": "22.3.24",
 		"electron-log": "^4.4.8",
 		"electron-store": "^8.1.0"
 	},
