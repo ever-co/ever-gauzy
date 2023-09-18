@@ -4,24 +4,16 @@ on:
     push:
         branches: [develop, temp]
 
+concurrency:
+    group: ${{ github.ref }}-${{ github.workflow }}
+    cancel-in-progress: true
+
 jobs:
     gauzy-api:
-        runs-on: ubuntu-latest
+        runs-on: buildjet-8vcpu-ubuntu-2204
         steps:
             - name: Checkout
               uses: actions/checkout@v3
-
-            - name: Free disk space
-              run: |
-                  df -h /
-                  sudo swapoff -a
-                  sudo apt clean
-                  docker image ls -aq
-                  docker rmi $(docker image ls -aq)
-                  find ~/work/_temp -name "cache.tgz" -exec rm -f {} \;
-                  sudo rm -rf "/usr/local/share/boost"
-                  sudo rm -rf "$AGENT_TOOLSDIRECTORY"
-                  df -h /
 
             - name: Set up QEMU
               uses: docker/setup-qemu-action@v2
@@ -30,7 +22,7 @@ jobs:
               uses: docker/setup-buildx-action@v2
 
             - name: Build
-              uses: docker/build-push-action@v3
+              uses: docker/build-push-action@v4
               with:
                   context: .
                   file: ./.deploy/api/Dockerfile
@@ -93,22 +85,10 @@ jobs:
                   docker push ${{ secrets.CW_DOCKER_REGISTRY }}/ever-co/gauzy-api-demo:latest
 
     gauzy-webapp:
-        runs-on: ubuntu-latest
+        runs-on: buildjet-8vcpu-ubuntu-2204
         steps:
             - name: Checkout
               uses: actions/checkout@v3
-
-            - name: Free disk space
-              run: |
-                  df -h /
-                  sudo swapoff -a
-                  sudo apt clean
-                  docker image ls -aq
-                  docker rmi $(docker image ls -aq)
-                  find ~/work/_temp -name "cache.tgz" -exec rm -f {} \;
-                  sudo rm -rf "/usr/local/share/boost"
-                  sudo rm -rf "$AGENT_TOOLSDIRECTORY"
-                  df -h /
 
             - name: Set up QEMU
               uses: docker/setup-qemu-action@v2
@@ -117,7 +97,7 @@ jobs:
               uses: docker/setup-buildx-action@v2
 
             - name: Build and push
-              uses: docker/build-push-action@v3
+              uses: docker/build-push-action@v4
               with:
                   context: .
                   file: ./.deploy/webapp/Dockerfile

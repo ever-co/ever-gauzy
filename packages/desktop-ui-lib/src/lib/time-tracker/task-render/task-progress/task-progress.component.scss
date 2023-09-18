@@ -1,0 +1,16 @@
+.custom-progress-container {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: 4px;
+}
+
+nb-progress-bar.custom-progress ::ng-deep {
+    .progress-container {
+	  height: 20px;
+	  border-radius: calc(var(--border-radius) /2);
+	  span {
+		font-size: 11.5px;
+	  }
+    }
+  }

@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
 // import { environment } from '../../../environments/environment';
 import * as moment from 'moment';
 import { catchError, map, shareReplay, tap } from 'rxjs/operators';
@@ -12,6 +12,7 @@ import {
 	IOrganizationProject,
 	IOrganizationContactCreateInput,
 	IOrganizationContact,
+	IGetTasksStatistics,
 } from '@gauzy/contracts';
 import { ClientCacheService } from '../services/client-cache.service';
 import { TaskCacheService } from '../services/task-cache.service';
@@ -80,6 +81,36 @@ export class TimeTrackerService {
 			this._taskCacheService.setValue(tasks$, request);
 		}
 		return firstValueFrom(tasks$);
+	}
+
+	public async getTasksStatistics(values: IGetTasksStatistics) {
+		const request: IGetTasksStatistics = {
+			organizationId: values.organizationId,
+			tenantId: values.tenantId,
+			taskIds: values.taskIds,
+			startDate: moment(0).utc().toISOString(),
+			endDate: moment().utc().toISOString(),
+			...(values.projectId
+				? {
+					projectId: values.projectId,
+				}
+				: {}),
+		};
+		let tasksStatistics$ = this._taskCacheService.getValue(request);
+		if (!tasksStatistics$) {
+			tasksStatistics$ = this.http
+				.get(`${API_PREFIX}/timesheet/statistics/tasks`, {
+					params: toParams({
+						...request,
+					}),
+				})
+				.pipe(
+					map((response: any) => response),
+					shareReplay(1)
+				);
+			this._taskCacheService.setValue(tasksStatistics$, request);
+		}
+		return firstValueFrom(tasksStatistics$);
 	}
 
 	async getEmployees(values) {
@@ -239,6 +270,9 @@ export class TimeTrackerService {
 	}
 
 	toggleApiStart(values) {
+		const options = {
+			headers: new HttpHeaders({ timeout: `${15 * 1000}` })
+		}
 		const body = {
 			description: values.note,
 			isBillable: true,
@@ -259,11 +293,14 @@ export class TimeTrackerService {
 			body
 		);
 		return firstValueFrom(
-			this.http.post(`${API_PREFIX}/timesheet/timer/start`, { ...body })
+			this.http.post(`${API_PREFIX}/timesheet/timer/start`, { ...body }, options)
 		);
 	}
 
 	toggleApiStop(values) {
+		const options = {
+			headers: new HttpHeaders({ timeout: `${15 * 1000}` })
+		}
 		const body = {
 			description: values.note,
 			isBillable: true,
@@ -284,7 +321,7 @@ export class TimeTrackerService {
 			body
 		);
 		return firstValueFrom(
-			this.http.post(`${API_PREFIX}/timesheet/timer/stop`, { ...body })
+			this.http.post(`${API_PREFIX}/timesheet/timer/stop`, { ...body }, options)
 		);
 	}
 
