@@ -64,7 +64,8 @@ export interface IIntegration extends IBaseEntityModel {
 	isPaid?: boolean;
 	version?: string;
 	docUrl?: string;
-	navigationUrl?: string;
+	provider?: string;
+	redirectUrl?: string;
 	isFreeTrial?: boolean;
 	freeTrialPeriod?: number;
 	order?: number;
@@ -148,7 +149,7 @@ export interface IIntegrationTenantCreateInput extends IBasePerTenantAndOrganiza
 export interface IIntegrationTenantUpdateInput extends Pick<IIntegrationTenantCreateInput, 'entitySettings' | 'settings'> { }
 
 export enum IntegrationEnum {
-	IMPORT_EXPORT = 'Import-Export',
+	IMPORT_EXPORT = 'Import_Export',
 	UPWORK = 'Upwork',
 	HUBSTAFF = 'Hubstaff',
 	GAUZY_AI = 'Gauzy_AI',

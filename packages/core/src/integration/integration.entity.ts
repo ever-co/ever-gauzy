@@ -23,7 +23,7 @@ export class Integration extends BaseEntity implements IIntegration {
 	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()
 	@Column({ nullable: true })
-	redirect_url: string;
+	redirectUrl: string;
 
 	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()

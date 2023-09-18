@@ -23,14 +23,14 @@ export const createDefaultIntegrations = async (
 
 	const integrations: IIntegration[] = [];
 	for await (const integration of DEFAULT_INTEGRATIONS) {
-		const { name, imgSrc, isComingSoon, integrationTypesMap, order, provider, redirect_url } = integration;
+		const { name, imgSrc, isComingSoon, integrationTypesMap, order, provider, redirectUrl } = integration;
 
 		const entity = new Integration();
 		entity.name = name;
 		entity.imgSrc = copyAssets(imgSrc, config, destDir);
 		entity.isComingSoon = isComingSoon;
 		entity.order = order;
-		entity.redirect_url = redirect_url;
+		entity.redirectUrl = redirectUrl;
 		entity.provider = provider;
 		entity.integrationTypes = integrationTypes.filter((it) =>
 			integrationTypesMap.includes(it.name)
