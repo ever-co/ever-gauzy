@@ -1,5 +1,5 @@
 import { MigrationInterface, QueryRunner } from "typeorm";
-
+import * as chalk from 'chalk';
 export class AddColumnsToTheIntegrationTable1695023907817 implements MigrationInterface {
 
     name = 'AddColumnsToTheIntegrationTable1695023907817';
@@ -10,6 +10,7 @@ export class AddColumnsToTheIntegrationTable1695023907817 implements MigrationIn
     * @param queryRunner
     */
     public async up(queryRunner: QueryRunner): Promise<any> {
+        console.log(chalk.magenta(`AddColumnsToTheIntegrationTable1695023907817 start running!`));
         if (queryRunner.connection.options.type === 'sqlite') {
             await this.sqliteUpQueryRunner(queryRunner);
         } else {
