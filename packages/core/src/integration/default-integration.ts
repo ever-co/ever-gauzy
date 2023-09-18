@@ -35,7 +35,7 @@ export const DEFAULT_SYSTEM_INTEGRATIONS = [
             IntegrationTypeEnum.ALL_INTEGRATIONS,
             IntegrationTypeEnum.CRM
         ],
-        order: 4,
+        order: 6,
         redirectUrl: sluggable(IntegrationEnum.IMPORT_EXPORT),
         provider: IntegrationEnum.IMPORT_EXPORT
     },
@@ -46,7 +46,7 @@ export const DEFAULT_SYSTEM_INTEGRATIONS = [
  */
 export const DEFAULT_AI_INTEGRATIONS = [
     {
-        name: IntegrationEnum.GAUZY_AI,
+        name: 'Gauzy AI',
         imgSrc: 'gauzy-ai.svg',
         isComingSoon: false,
         integrationTypesMap: <string[]>[
@@ -70,19 +70,19 @@ export const PROJECT_MANAGE_DEFAULT_INTEGRATIONS = [
             IntegrationTypeEnum.ALL_INTEGRATIONS,
             IntegrationTypeEnum.PROJECT_MANAGEMENT
         ],
-        order: 1,
+        order: 4,
         redirectUrl: sluggable(IntegrationEnum.GITHUB),
         provider: IntegrationEnum.GITHUB
     },
     {
         name: IntegrationEnum.JIRA,
         imgSrc: 'jira.svg',
-        isComingSoon: false,
+        isComingSoon: true,
         integrationTypesMap: <string[]>[
             IntegrationTypeEnum.ALL_INTEGRATIONS,
             IntegrationTypeEnum.PROJECT_MANAGEMENT
         ],
-        order: 2,
+        order: 5,
         redirectUrl: sluggable(IntegrationEnum.JIRA),
         provider: IntegrationEnum.JIRA
     },

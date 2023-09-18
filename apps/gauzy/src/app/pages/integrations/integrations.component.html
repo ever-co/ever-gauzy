@@ -88,14 +88,14 @@
 						<a
 							class="list-item"
 							[ngClass]="integration.isComingSoon ? 'disabled': ''"
-							[routerLink]="[integration.navigationUrl]"
+							[routerLink]="[integration.redirectUrl]"
 						>
 							<img
 								[src]="integration.fullImgUrl"
 								width="100%"
 								height="100%"
 								alt="image not found"
-								[title]="integration.name"
+								[title]="integration.name | replace: '_':' ' | titlecase"
 							/>
 							<ng-container *ngIf="integration.isComingSoon">
 								<div class="coming-soon-wrapper">
