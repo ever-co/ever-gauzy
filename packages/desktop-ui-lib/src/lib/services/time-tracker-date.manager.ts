@@ -71,6 +71,17 @@ export class TimeTrackerDateManager {
 		this.instance._utcOffset = value;
 	}
 
+	/**
+	 * @returns True If it's currently midnight, otherwise False.
+	 */
+	public static get isMidnight(): boolean {
+		const now = moment();
+		const endOfDay = now.clone().endOf('day');
+		return moment(now.format('YYYY-MM-DD HH:mm:ss')).isSame(
+			endOfDay.format('YYYY-MM-DD HH:mm:ss')
+		);
+	}
+
 	// Set the start of the week
 	private startWeekDay() {
 		moment.locale(this._language, {
