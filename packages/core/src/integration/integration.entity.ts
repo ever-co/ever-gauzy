@@ -7,7 +7,7 @@ import { BaseEntity, Tag } from '../core/entities/internal';
 import { IntegrationType } from './integration-type.entity';
 
 @Entity('integration')
-@Unique(['name', 'provider'])
+@Unique(['name'])
 export class Integration extends BaseEntity implements IIntegration {
 
 	@ApiProperty({ type: () => String })
