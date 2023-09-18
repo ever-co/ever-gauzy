@@ -358,7 +358,9 @@ export class MatchingComponent implements AfterViewInit, OnInit {
 	 *
 	 * @param criterion
 	 */
-	addNewCriterion(criterion: IMatchingCriterions = {}) {
+	addNewCriterion(criterion: IMatchingCriterions = {
+		jobType: JobPostTypeEnum.HOURLY
+	}) {
 		this.criterions.push(criterion);
 	}
 

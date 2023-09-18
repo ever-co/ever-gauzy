@@ -2,6 +2,11 @@ name: Cypress Tests
 on:
     push:
         branches: [nope]
+
+concurrency:
+    group: ${{ github.ref }}-${{ github.workflow }}
+    cancel-in-progress: true
+
 jobs:
     e2e-tests-setup:
         runs-on: ubuntu-latest

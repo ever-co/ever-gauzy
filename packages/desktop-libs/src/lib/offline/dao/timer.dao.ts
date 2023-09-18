@@ -120,7 +120,9 @@ export class TimerDAO implements DAO<TimerTO> {
 				),
 		}));
 
-		return timersWithIntervals;
+		return timersWithIntervals.length > 0
+			? timersWithIntervals
+			: await this.findFailedRuns(user);
 	}
 
 	private _removeColumn(column: string, arr: any[]): any[] {
@@ -152,5 +154,30 @@ export class TimerDAO implements DAO<TimerTO> {
 		}));
 
 		return timersWithIntervals
+	}
+
+	public async findFailedRuns(user: UserTO): Promise<ISequence[]> {
+		const timers = await this._provider
+			.connection<TimerTO>(TABLE_NAME_TIMERS)
+			.select('*')
+			.where(`${TABLE_NAME_TIMERS}.synced`, false)
+			.andWhere(`${TABLE_NAME_TIMERS}.employeeId`, user.employeeId)
+			.orderBy(`${TABLE_NAME_TIMERS}.id`, 'asc');
+		return timers.map((timer) => ({
+			timer,
+			intervals: [],
+		}));
+	}
+
+	public async count(isSynced: boolean, user: UserTO): Promise<any> {
+		try {
+			return await this._provider
+				.connection<IntervalTO>(TABLE_NAME_TIMERS)
+				.count('* as total')
+				.where('employeeId', user.employeeId)
+				.andWhere('synced', isSynced);
+		} catch (error) {
+			console.log('[dao]: ', 'timers count : ', error);
+		}
 	}
 }

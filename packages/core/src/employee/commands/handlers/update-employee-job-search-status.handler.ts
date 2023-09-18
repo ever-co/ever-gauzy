@@ -1,4 +1,3 @@
-import { ForbiddenException } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { UpdateResult } from 'typeorm';
 import { IEmployee } from '@gauzy/contracts';
@@ -34,28 +33,35 @@ export class UpdateEmployeeJobSearchStatusHandler implements ICommandHandler<Upd
 			}
 		});
 
+
 		try {
-			/** Sync before update employee job search status */
-			const synced = await this.gauzyAIService.syncEmployees([employee]);
+			// Attempt to sync the employee with Gauzy AI
+			const syncResult = await this.gauzyAIService.syncEmployees([employee]);
 			try {
-				if (synced) {
-					this.gauzyAIService.updateEmployeeStatus(
+				if (syncResult) {
+					const { userId } = employee;
+					await this.gauzyAIService.updateEmployeeStatus({
 						employeeId,
+						userId,
 						tenantId,
 						organizationId,
 						isJobSearchActive
-					);
+					});
+					// Employee sync and status update were successful
+					console.log('Employee synced and job search status updated successfully.');
+				} else {
+					// Sync was not successful
+					console.log('Employee sync with Gauzy AI failed.');
 				}
-			} catch (error) {
-				console.log('Error while updating employee job search status with Gauzy AI: %s', error);
+			} catch (updateError) {
+				// Handle errors during the status update operation
+				console.error('Error while updating employee job search status with Gauzy AI:', updateError.message);
 			}
-		} catch (error) {
-			console.log('API key and secret key are required: %s', error?.message);
-			throw new ForbiddenException('API key and secret key are required.');
+		} catch (syncError) {
+			// Handle errors during the sync operation
+			console.error('Error while syncing employee with Gauzy AI:', syncError.message);
 		}
 
-		return await this.employeeService.update(employeeId, {
-			isJobSearchActive
-		});
+		return await this.employeeService.update(employeeId, { isJobSearchActive });
 	}
 }
