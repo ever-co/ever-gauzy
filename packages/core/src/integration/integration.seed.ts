@@ -1,8 +1,9 @@
 import { DataSource } from 'typeorm';
 import { getConfig } from '@gauzy/config';
-import { IIntegration, DEFAULT_INTEGRATIONS, IIntegrationType } from '@gauzy/contracts';
+import { IIntegration, IIntegrationType } from '@gauzy/contracts';
 import { cleanAssets, copyAssets } from './../core/seeds/utils';
 import { Integration } from './integration.entity';
+import { DEFAULT_INTEGRATIONS } from './default-integration';
 
 const config = getConfig();
 
@@ -22,14 +23,15 @@ export const createDefaultIntegrations = async (
 
 	const integrations: IIntegration[] = [];
 	for await (const integration of DEFAULT_INTEGRATIONS) {
-		const { name, imgSrc, isComingSoon, integrationTypesMap, order, slug } = integration;
+		const { name, imgSrc, isComingSoon, integrationTypesMap, order, provider, redirect_url } = integration;
 
 		const entity = new Integration();
 		entity.name = name;
 		entity.imgSrc = copyAssets(imgSrc, config, destDir);
 		entity.isComingSoon = isComingSoon;
 		entity.order = order;
-		entity.slug = slug;
+		entity.redirect_url = redirect_url;
+		entity.provider = provider;
 		entity.integrationTypes = integrationTypes.filter((it) =>
 			integrationTypesMap.includes(it.name)
 		);

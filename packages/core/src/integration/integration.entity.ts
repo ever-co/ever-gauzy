@@ -17,13 +17,13 @@ export class Integration extends BaseEntity implements IIntegration {
 
 	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()
-	@Column({ nullable: true }) // Define a unique constraint on the "provider" column (E.g Github, Jira, Hubstaff)
+	@Column({ nullable: true }) // Define a unique constraint on the "provider" column (E.g github, jira, hubstaff)
 	provider: string;
 
 	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()
 	@Column({ nullable: true })
-	slug: string;
+	redirect_url: string;
 
 	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()

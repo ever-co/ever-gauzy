@@ -1,9 +1,10 @@
 
 import { MigrationInterface, QueryRunner } from "typeorm";
 import { v4 as uuidv4 } from 'uuid';
-import { DEFAULT_INTEGRATIONS, IIntegration, IIntegrationType } from "@gauzy/contracts";
+import { IIntegration, IIntegrationType } from "@gauzy/contracts";
 import { getConfig } from "@gauzy/config";
 import { copyAssets } from "./../../core/seeds/utils";
+import { DEFAULT_INTEGRATIONS } from "./../../integration/default-integration";
 
 export class SeedIntegrationTable1691494801748 implements MigrationInterface {
 
@@ -33,12 +34,12 @@ export class SeedIntegrationTable1691494801748 implements MigrationInterface {
     public async upsertIntegrationsAndIntegrationTypes(queryRunner: QueryRunner): Promise<any> {
         const destDir = 'integrations';
 
-        for await (const { name, imgSrc, isComingSoon, order, navigationUrl, slug, integrationTypesMap } of DEFAULT_INTEGRATIONS) {
+        for await (const { name, imgSrc, isComingSoon, order, provider, redirect_url, integrationTypesMap } of DEFAULT_INTEGRATIONS) {
             try {
                 const filepath = `integrations/${imgSrc}`;
 
                 let upsertQuery = ``;
-                const payload = [name, filepath, isComingSoon, order, navigationUrl];
+                const payload = [name, filepath, isComingSoon, order, provider, redirect_url];
 
                 if (queryRunner.connection.options.type === 'sqlite') {
                     // For SQLite, manually generate a UUID using uuidv4()
@@ -46,24 +47,24 @@ export class SeedIntegrationTable1691494801748 implements MigrationInterface {
 
                     upsertQuery = `
                         INSERT INTO integration (
-                            "name", "imgSrc", "isComingSoon", "order", "navigationUrl", "id"
+                            "name", "imgSrc", "isComingSoon", "order", "provider", "redirect_url", "id"
                         )
                         VALUES (
-                            $1, $2, $3, $4, $5, $6
+                            $1, $2, $3, $4, $5, $6, $7
                         )
                         ON CONFLICT(name) DO UPDATE
                         SET
                             "imgSrc" = $2,
                             "isComingSoon" = $3,
                             "order" = $4,
-                            "navigationUrl" = $5,
-                            "slug" = $6
+                            "provider" = $5,
+                            "redirect_url" = $6
                         RETURNING id;
                     `;
                 } else {
                     upsertQuery = `
                         INSERT INTO "integration" (
-                            "name", "imgSrc", "isComingSoon", "order", "navigationUrl", "slug"
+                            "name", "imgSrc", "isComingSoon", "order", "provider", "redirect_url"
                         )
                         VALUES (
                             $1, $2, $3, $4, $5, $6
@@ -73,8 +74,8 @@ export class SeedIntegrationTable1691494801748 implements MigrationInterface {
                             "imgSrc" = $2,
                             "isComingSoon" = $3,
                             "order" = $4,
-                            "navigationUrl" = $5,
-                            "slug" = $6
+                            "provider" = $5,
+                            "redirect_url" = $6
                         RETURNING id;
                     `;
                 }
