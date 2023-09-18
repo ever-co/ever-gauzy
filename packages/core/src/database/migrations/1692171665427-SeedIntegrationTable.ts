@@ -3,11 +3,11 @@ import { MigrationInterface, QueryRunner } from "typeorm";
 import { v4 as uuidv4 } from 'uuid';
 import { getConfig } from "@gauzy/config";
 import { copyAssets } from "./../../core/seeds/utils";
-import { DEFAULT_INTEGRATIONS } from "./../../integration/default-integration";
+import { DEFAULT_AI_INTEGRATIONS } from "./../../integration/default-integration";
+import { IntegrationsUtils } from "./../../integration/utils";
 
 export class SeedIntegrationTable1692171665427 implements MigrationInterface {
 
-    config = getConfig();
     name = 'SeedIntegrationTable1692171665427';
 
     /**
@@ -16,7 +16,7 @@ export class SeedIntegrationTable1692171665427 implements MigrationInterface {
     * @param queryRunner
     */
     public async up(queryRunner: QueryRunner): Promise<any> {
-        await this.upsertIntegrations(queryRunner);
+        await this.upsertIntegrationsAndIntegrationTypes(queryRunner);
     }
 
     /**
@@ -30,14 +30,15 @@ export class SeedIntegrationTable1692171665427 implements MigrationInterface {
     *
     * @param queryRunner
     */
-    public async upsertIntegrations(queryRunner: QueryRunner): Promise<any> {
+    public async upsertIntegrationsAndIntegrationTypes(queryRunner: QueryRunner): Promise<any> {
         const destDir = 'integrations';
-        for await (const { name, imgSrc, provider, redirect_url } of DEFAULT_INTEGRATIONS) {
+
+        for await (const { name, imgSrc, isComingSoon, order, redirectUrl, integrationTypesMap } of DEFAULT_AI_INTEGRATIONS) {
             try {
                 const filepath = `integrations/${imgSrc}`;
-                const payload = [name, filepath, provider, redirect_url];
 
                 let upsertQuery = ``;
+                const payload = [name, filepath, isComingSoon, order, redirectUrl];
 
                 if (queryRunner.connection.options.type === 'sqlite') {
                     // For SQLite, manually generate a UUID using uuidv4()
@@ -45,7 +46,23 @@ export class SeedIntegrationTable1692171665427 implements MigrationInterface {
 
                     upsertQuery = `
                         INSERT INTO integration (
-                            "name", "imgSrc", "provider", "redirect_url", "id"
+                            "name", "imgSrc", "isComingSoon", "order", "navigationUrl", "id"
+                        )
+                        VALUES (
+                            $1, $2, $3, $4, $5, $6
+                        )
+                        ON CONFLICT(name) DO UPDATE
+                        SET
+                            "imgSrc" = $2,
+                            "isComingSoon" = $3,
+                            "order" = $4,
+                            "navigationUrl" = $5
+                        RETURNING id;
+                    `;
+                } else {
+                    upsertQuery = `
+                        INSERT INTO "integration" (
+                            "name", "imgSrc", "isComingSoon", "order", "navigationUrl"
                         )
                         VALUES (
                             $1, $2, $3, $4, $5
@@ -53,28 +70,23 @@ export class SeedIntegrationTable1692171665427 implements MigrationInterface {
                         ON CONFLICT(name) DO UPDATE
                         SET
                             "imgSrc" = $2,
-                            "provider" = $3,
-                            "redirect_url" = $4;
-                    `;
-
-                } else {
-                    upsertQuery = `
-                        INSERT INTO integration (
-                            "name", "imgSrc", "provider", "redirect_url"
-                        )
-                        VALUES (
-                            $1, $2, $3, $4
-                        )
-                        ON CONFLICT(name) DO UPDATE
-                        SET
-                            "imgSrc" = $2,
-                            "provider" = $3,
-                            "redirect_url" = $4;
+                            "isComingSoon" = $3,
+                            "order" = $4,
+                            "navigationUrl" = $5
+                        RETURNING id;
                     `;
                 }
+
                 const [integration] = await queryRunner.query(upsertQuery, payload);
-                console.log(integration);
-                copyAssets(imgSrc, this.config, destDir);
+
+                // Step 3: Insert entry in join table to associate Integration with IntegrationType
+                await IntegrationsUtils.syncIntegrationType(
+                    queryRunner,
+                    integration,
+                    await IntegrationsUtils.getIntegrationTypeByName(queryRunner, integrationTypesMap)
+                );
+
+                copyAssets(imgSrc, getConfig(), destDir);
             } catch (error) {
                 // since we have errors let's rollback changes we made
                 console.log(`Error while updating integration: (${name}) in production server`, error);

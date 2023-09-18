@@ -1,7 +1,10 @@
 import { sluggable } from "@gauzy/common";
 import { IntegrationEnum, IntegrationTypeEnum } from "@gauzy/contracts";
 
-export const DEFAULT_INTEGRATIONS = [
+/**
+ *
+ */
+export const DEFAULT_SYSTEM_INTEGRATIONS = [
     {
         name: IntegrationEnum.HUBSTAFF,
         imgSrc: 'hubstaff.svg',
@@ -10,8 +13,7 @@ export const DEFAULT_INTEGRATIONS = [
             IntegrationTypeEnum.ALL_INTEGRATIONS
         ],
         order: 1,
-        navigationUrl: 'hubstaff',
-        redirect_url: sluggable(IntegrationEnum.HUBSTAFF),
+        redirectUrl: sluggable(IntegrationEnum.HUBSTAFF),
         provider: IntegrationEnum.HUBSTAFF
     },
     {
@@ -22,21 +24,8 @@ export const DEFAULT_INTEGRATIONS = [
             IntegrationTypeEnum.ALL_INTEGRATIONS
         ],
         order: 2,
-        navigationUrl: 'upwork',
-        redirect_url: sluggable(IntegrationEnum.UPWORK),
+        redirectUrl: sluggable(IntegrationEnum.UPWORK),
         provider: IntegrationEnum.UPWORK
-    },
-    {
-        name: IntegrationEnum.GAUZY_AI,
-        imgSrc: 'gauzy-ai.svg',
-        isComingSoon: false,
-        integrationTypesMap: <string[]>[
-            IntegrationTypeEnum.ALL_INTEGRATIONS
-        ],
-        order: 3,
-        navigationUrl: 'gauzy-ai',
-        redirect_url: sluggable(IntegrationEnum.GAUZY_AI),
-        provider: IntegrationEnum.GAUZY_AI
     },
     {
         name: 'Import/Export',
@@ -47,8 +36,60 @@ export const DEFAULT_INTEGRATIONS = [
             IntegrationTypeEnum.CRM
         ],
         order: 4,
-        navigationUrl: 'import-export',
-        redirect_url: sluggable('import-export'),
-        provider: 'import_export'
-    }
+        redirectUrl: sluggable(IntegrationEnum.IMPORT_EXPORT),
+        provider: IntegrationEnum.IMPORT_EXPORT
+    },
+];
+
+/**
+ *
+ */
+export const DEFAULT_AI_INTEGRATIONS = [
+    {
+        name: IntegrationEnum.GAUZY_AI,
+        imgSrc: 'gauzy-ai.svg',
+        isComingSoon: false,
+        integrationTypesMap: <string[]>[
+            IntegrationTypeEnum.ALL_INTEGRATIONS
+        ],
+        order: 3,
+        redirectUrl: sluggable(IntegrationEnum.GAUZY_AI),
+        provider: IntegrationEnum.GAUZY_AI
+    },
+];
+
+/**
+ *
+ */
+export const PROJECT_MANAGE_DEFAULT_INTEGRATIONS = [
+    {
+        name: IntegrationEnum.GITHUB,
+        imgSrc: 'github.svg',
+        isComingSoon: false,
+        integrationTypesMap: <string[]>[
+            IntegrationTypeEnum.ALL_INTEGRATIONS,
+            IntegrationTypeEnum.PROJECT_MANAGEMENT
+        ],
+        order: 1,
+        redirectUrl: sluggable(IntegrationEnum.GITHUB),
+        provider: IntegrationEnum.GITHUB
+    },
+    {
+        name: IntegrationEnum.JIRA,
+        imgSrc: 'jira.svg',
+        isComingSoon: false,
+        integrationTypesMap: <string[]>[
+            IntegrationTypeEnum.ALL_INTEGRATIONS,
+            IntegrationTypeEnum.PROJECT_MANAGEMENT
+        ],
+        order: 2,
+        redirectUrl: sluggable(IntegrationEnum.JIRA),
+        provider: IntegrationEnum.JIRA
+    },
+];
+
+export const DEFAULT_INTEGRATIONS = [
+    ...DEFAULT_SYSTEM_INTEGRATIONS,
+    ...DEFAULT_AI_INTEGRATIONS,
+    ...PROJECT_MANAGE_DEFAULT_INTEGRATIONS
 ];
