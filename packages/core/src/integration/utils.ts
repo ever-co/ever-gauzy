@@ -13,8 +13,7 @@ export class IntegrationsUtils {
     */
     public static async upsertIntegrationsAndIntegrationTypes(queryRunner: QueryRunner, integrations: any[]): Promise<any> {
         const destDir = 'integrations';
-
-        for await (const { name, imgSrc, isComingSoon, order, provider, redirectUrl, integrationTypesMap } of integrations) {
+        for await (const { name, imgSrc, isComingSoon, order, redirectUrl, provider, integrationTypesMap } of integrations) {
             try {
                 const filepath = `integrations/${imgSrc}`;
 
@@ -24,7 +23,6 @@ export class IntegrationsUtils {
                 if (queryRunner.connection.options.type === 'sqlite') {
                     // For SQLite, manually generate a UUID using uuidv4()
                     const generatedId = uuidv4(); payload.push(generatedId);
-
                     upsertQuery = `
                         INSERT INTO integration (
                             "name", "imgSrc", "isComingSoon", "order", "redirectUrl", "provider", "id"
@@ -59,7 +57,6 @@ export class IntegrationsUtils {
                         RETURNING id;
                     `;
                 }
-
                 const [integration] = await queryRunner.query(upsertQuery, payload);
 
                 // Step 3: Insert entry in join table to associate Integration with IntegrationType
