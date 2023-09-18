@@ -76,8 +76,10 @@ export class TimeTrackerDateManager {
 	 */
 	public static get isMidnight(): boolean {
 		const now = moment();
-		const startOfDay = now.clone().startOf('day');
-		return now.isSame(startOfDay);
+		const endOfDay = now.clone().endOf('day');
+		return moment(now.format('YYYY-MM-DD HH:mm:ss')).isSame(
+			endOfDay.format('YYYY-MM-DD HH:mm:ss')
+		);
 	}
 
 	// Set the start of the week
