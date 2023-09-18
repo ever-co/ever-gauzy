@@ -32,7 +32,9 @@ import {
 	Subject,
 	tap,
 	of,
-	concatMap
+	concatMap,
+	debounceTime,
+	lastValueFrom
 } from 'rxjs';
 import { ElectronService, LoggerService } from '../electron/services';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
@@ -1042,6 +1044,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 		}
 	}
 	async setTime({ second }) {
+		if (second < this._lastTime) this._lastTime = 0;
 		const dt = second - this._lastTime;
 		this._lastTotalWorkedToday$.next(this._lastTotalWorkedToday + dt);
 		this._lastTotalWorkedWeek$.next(this._lastTotalWorkedWeek + dt);
@@ -1062,7 +1065,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 	private async resetAtMidnight() {
 		if (TimeTrackerDateManager.isMidnight) {
 			try {
-				await this.silentRestart();
+				await this.restart();
 			} catch (error) {
 				this._errorHandlerService.handleError(error);
 			}
@@ -2285,43 +2288,28 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 		}
 	}
 
-	public async silentRestart() : Promise<void> {
+	public async restart(): Promise<void> {
+		// if timer's running as viewer we no need to restart
+		if (this.isRemoteTimer) {
+			return;
+		}
 		try {
-			const params = {
-				token: this.token,
-				note: this.note,
-				projectId: this.projectSelect,
-				taskId: this.taskSelect,
-				organizationId: this._store.organizationId,
-				tenantId: this._store.tenantId,
-				organizationContactId: this.organizationContactId,
-				apiHost: this.apiHost
-			};
-			const status = await this._timeTrackerStatus.status();
-			await this.timeTrackerService.toggleApiStop({
-				...status.lastLog,
-				stoppedAt: new Date()
-			});
-			await this.getTodayTime({...status.lastLog}, true);
-			const timeLog = await this.timeTrackerService.toggleApiStart({
-				...params,
-				startedAt: new Date()
-			});
-			asapScheduler.schedule(async () => {
-				try {
-					this.electronService.ipcRenderer.send('update_session', {
-						...timeLog
-					});
-					await this.electronService.ipcRenderer.invoke('UPDATE_SYNCED_TIMER', {
-						lastTimer: timeLog
-					});
-				} catch (error) {
-					this._errorHandlerService.handleError(error);
-				}
-			});
+			// lock restart process
+			this._isLockSyncProcess = true;
+			// resolve promise and add debounce time to avoid riding
+			await lastValueFrom(
+				from(this.toggleStart(false)).pipe(
+					debounceTime(200),
+					concatMap(() => this.toggleStart(true)),
+					untilDestroyed(this)
+				)
+			);
 		} catch (error) {
 			// force stop timer
-			if (this.start) await this.toggleStart(false);
+			await this.stopTimer(false, true);
+		} finally {
+			// unlock restart process
+			this._isLockSyncProcess = false;
 		}
 	}
 }
