@@ -1,14 +1,11 @@
 
 import { MigrationInterface, QueryRunner } from "typeorm";
-import { IntegrationsUtils } from "./../../integration/utils";
 import { DEFAULT_INTEGRATIONS, PROJECT_MANAGE_DEFAULT_INTEGRATIONS } from "./../../integration/default-integration";
+import { IntegrationsUtils } from "./../../integration/utils";
 
-/**
- *
- */
-export class SeedProjectManagementIntegrations1695043020330 implements MigrationInterface {
+export class SeedIntegrationsAndIntegrationTypes1695112275840 implements MigrationInterface {
 
-    name = 'SeedProjectManagementIntegrations1695043020330';
+    name = 'SeedIntegrationsAndIntegrationTypes1695112275840';
 
     /**
     * Up Migration
@@ -19,7 +16,6 @@ export class SeedProjectManagementIntegrations1695043020330 implements Migration
         await IntegrationsUtils.upsertIntegrationsAndIntegrationTypes(queryRunner, PROJECT_MANAGE_DEFAULT_INTEGRATIONS);
         await IntegrationsUtils.upsertIntegrationsAndIntegrationTypes(queryRunner, DEFAULT_INTEGRATIONS);
     }
-
     /**
     * Down Migration
     *

@@ -187,7 +187,7 @@ export enum IntegrationTypeEnum {
 	CRM = 'CRM',
 	SCHEDULING = 'Scheduling',
 	TOOLS = 'Tools',
-	PROJECT_MANAGEMENT = ' Project Management',
+	PROJECT_MANAGEMENT = 'Project Management',
 	COMMUNICATION = 'Communication'
 }
 
