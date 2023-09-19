@@ -29,11 +29,13 @@
 			"../../../packages/plugins/knowledge-base",
 			"../../../packages/plugins/changelog",
 			"../../../packages/common",
-			"../../../packages/plugins/integration-ai",
 			"../../../packages/config",
 			"../../../packages/contracts",
+			"../../../packages/plugins/integration-ai",
 			"../../../packages/plugins/integration-hubstaff",
 			"../../../packages/plugins/integration-upwork",
+			"../../../packages/plugins/integration-github",
+			"../../../packages/plugins/integration-jira",
 			"../../../packages/plugin"
 		]
 	},

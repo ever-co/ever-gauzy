@@ -32,7 +32,9 @@ import {
 	Subject,
 	tap,
 	of,
-	concatMap
+	concatMap,
+	debounceTime,
+	lastValueFrom
 } from 'rxjs';
 import { ElectronService, LoggerService } from '../electron/services';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
@@ -1042,6 +1044,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 		}
 	}
 	async setTime({ second }) {
+		if (second < this._lastTime) this._lastTime = 0;
 		const dt = second - this._lastTime;
 		this._lastTotalWorkedToday$.next(this._lastTotalWorkedToday + dt);
 		this._lastTotalWorkedWeek$.next(this._lastTotalWorkedWeek + dt);
@@ -1060,24 +1063,11 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 	}
 
 	private async resetAtMidnight() {
-		if (this._isMidnight) {
+		if (TimeTrackerDateManager.isMidnight) {
 			try {
-				const { tenantId, organizationId } = this._store;
-				const { employeeId } = this.userData;
-				const payload = {
-					token: this.token,
-					apiHost: this.apiHost,
-					tenantId,
-					organizationId
-				};
-				await this.getTodayTime({ ...payload, employeeId }, true);
-				asapScheduler.schedule(async () => {
-					this.electronService.ipcRenderer.send('update_session', {
-						startedAt: moment(Date.now()).toISOString()
-					});
-				});
+				await this.restart();
 			} catch (error) {
-				console.log('ERROR', error);
+				this._errorHandlerService.handleError(error);
 			}
 		}
 	}
@@ -2145,14 +2135,6 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 		return value === Infinity;
 	}
 
-	/**
-	 * > If it midnight, then return true
-	 * @returns A boolean value.
-	 */
-	private get _isMidnight(): boolean {
-		return moment(Date.now()).isSame(moment(new Date()).startOf('day'));
-	}
-
 	private async _toggle(timer: any, onClick: boolean) {
 		try {
 			const { lastTimer, isStarted } = timer;
@@ -2303,6 +2285,31 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 				perPage: 10,
 				page: 1
 			}
+		}
+	}
+
+	public async restart(): Promise<void> {
+		// if timer's running as viewer we no need to restart
+		if (this.isRemoteTimer) {
+			return;
+		}
+		try {
+			// lock restart process
+			this._isLockSyncProcess = true;
+			// resolve promise and add debounce time to avoid riding
+			await lastValueFrom(
+				from(this.toggleStart(false)).pipe(
+					debounceTime(200),
+					concatMap(() => this.toggleStart(true)),
+					untilDestroyed(this)
+				)
+			);
+		} catch (error) {
+			// force stop timer
+			await this.stopTimer(false, true);
+		} finally {
+			// unlock restart process
+			this._isLockSyncProcess = false;
 		}
 	}
 }
