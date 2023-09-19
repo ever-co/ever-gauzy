@@ -28,7 +28,7 @@
 	},
 	"keywords": [],
 	"dependencies": {
-		"@octokit/rest": "^20.0.1",
+		"@octokit/rest": "^18.0.0",
 		"octokit": "2.1.0",
 		"pino-std-serializers": "^6.2.2",
 		"probot": "^12.3.1",
