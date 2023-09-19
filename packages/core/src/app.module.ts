@@ -154,7 +154,6 @@ import { EmailResetModule } from './email-reset/email-reset.module';
 import { TaskLinkedIssueModule } from './tasks/linked-issue/task-linked-issue.module';
 import { OrganizationTaskSettingModule } from './organization-task-setting/organization-task-setting.module';
 import { TaskEstimationModule } from './tasks/estimation/task-estimation.module';
-import { OctokitModule } from 'octokit/octokit.module';
 import { GitHubModule } from './github/github.module';
 const { unleashConfig } = environment;
 
