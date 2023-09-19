@@ -411,7 +411,6 @@ if (environment.sentry && environment.sentry.dsn) {
 		TaskLinkedIssueModule,
 		OrganizationTaskSettingModule,
 		TaskEstimationModule,
-		OctokitModule,
 		GitHubModule
 	],
 	controllers: [AppController],
