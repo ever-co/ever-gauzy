@@ -64,7 +64,8 @@ export interface IIntegration extends IBaseEntityModel {
 	isPaid?: boolean;
 	version?: string;
 	docUrl?: string;
-	navigationUrl?: string;
+	provider?: string;
+	redirectUrl?: string;
 	isFreeTrial?: boolean;
 	freeTrialPeriod?: number;
 	order?: number;
@@ -75,8 +76,11 @@ export interface IIntegration extends IBaseEntityModel {
 
 export interface IIntegrationType extends IBaseEntityModel {
 	name: string;
+	description: string;
+	icon: string;
 	groupName: string;
 	order: number;
+	integrations: IIntegration[];
 }
 
 export interface IIntegrationFilter {
@@ -145,9 +149,12 @@ export interface IIntegrationTenantCreateInput extends IBasePerTenantAndOrganiza
 export interface IIntegrationTenantUpdateInput extends Pick<IIntegrationTenantCreateInput, 'entitySettings' | 'settings'> { }
 
 export enum IntegrationEnum {
+	IMPORT_EXPORT = 'Import_Export',
 	UPWORK = 'Upwork',
 	HUBSTAFF = 'Hubstaff',
-	GAUZY_AI = 'Gauzy AI'
+	GAUZY_AI = 'Gauzy_AI',
+	GITHUB = 'Github',
+	JIRA = 'Jira'
 }
 
 export enum IntegrationEntity {
@@ -172,14 +179,16 @@ export enum IntegrationTypeGroupEnum {
 	CATEGORIES = 'Categories'
 }
 
-export enum IntegrationTypeNameEnum {
+export enum IntegrationTypeEnum {
 	ALL_INTEGRATIONS = 'All Integrations',
 	FOR_SALES_TEAMS = 'For Sales Teams',
 	FOR_ACCOUNTANTS = 'For Accountants',
 	FOR_SUPPORT_TEAMS = 'For Support Teams',
 	CRM = 'CRM',
 	SCHEDULING = 'Scheduling',
-	TOOLS = 'Tools'
+	TOOLS = 'Tools',
+	PROJECT_MANAGEMENT = 'Project Management',
+	COMMUNICATION = 'Communication'
 }
 
 export enum IntegrationFilterEnum {
@@ -187,65 +196,6 @@ export enum IntegrationFilterEnum {
 	FREE = 'Free',
 	PAID = 'Paid'
 }
-
-export const DEFAULT_INTEGRATION_PAID_FILTERS = [
-	{
-		label: IntegrationFilterEnum.ALL,
-		value: 'all'
-	},
-	{
-		label: IntegrationFilterEnum.FREE,
-		value: 'false'
-	},
-	{
-		label: IntegrationFilterEnum.PAID,
-		value: 'true'
-	}
-];
-
-export const DEFAULT_INTEGRATIONS = [
-	{
-		name: IntegrationEnum.HUBSTAFF,
-		imgSrc: 'hubstaff.svg',
-		isComingSoon: false,
-		integrationTypesMap: <string[]>[
-			IntegrationTypeNameEnum.ALL_INTEGRATIONS
-		],
-		order: 1,
-		navigationUrl: 'hubstaff'
-	},
-	{
-		name: IntegrationEnum.UPWORK,
-		imgSrc: 'upwork.svg',
-		isComingSoon: false,
-		integrationTypesMap: <string[]>[
-			IntegrationTypeNameEnum.ALL_INTEGRATIONS
-		],
-		order: 2,
-		navigationUrl: 'upwork'
-	},
-	{
-		name: IntegrationEnum.GAUZY_AI,
-		imgSrc: 'gauzy-ai.svg',
-		isComingSoon: false,
-		integrationTypesMap: <string[]>[
-			IntegrationTypeNameEnum.ALL_INTEGRATIONS
-		],
-		order: 3,
-		navigationUrl: 'gauzy-ai'
-	},
-	{
-		name: 'Import/Export',
-		imgSrc: 'import-export.svg',
-		isComingSoon: true,
-		integrationTypesMap: <string[]>[
-			IntegrationTypeNameEnum.ALL_INTEGRATIONS,
-			IntegrationTypeNameEnum.CRM
-		],
-		order: 4,
-		navigationUrl: 'import-export'
-	}
-];
 
 /**
 * Hubstaff Integration
