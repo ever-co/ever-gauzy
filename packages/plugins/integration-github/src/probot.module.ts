@@ -15,8 +15,7 @@ import { GitHubService } from './github.service';
 })
 export class ProbotModule {
 	static forRoot(options: ProbotModuleOptions): DynamicModule {
-		const { path: hookPath } = options;
-		const HookController = getControllerClass({ path: hookPath });
+		const HookController = getControllerClass({ path: options.path });
 		return {
 			global: options.isGlobal || true,
 			module: ProbotModule,
@@ -35,8 +34,7 @@ export class ProbotModule {
 	}
 
 	static forRootAsync(options: ProbotModuleAsyncOptions): DynamicModule {
-		const { path: hookPath } = options;
-		const HookController = getControllerClass({ path: hookPath });
+		const HookController = getControllerClass({ path: options.path });
 		return {
 			module: ProbotModule,
 			global: options.isGlobal || true,
@@ -51,7 +49,9 @@ export class ProbotModule {
 				ProbotDiscovery,
 				GitHubService,
 			],
-			exports: [GitHubService],
+			exports: [
+				GitHubService
+			],
 		};
 	}
 }

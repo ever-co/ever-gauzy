@@ -1,12 +1,14 @@
 import { Module } from '@nestjs/common';
-import { GitHubController } from './github.controller';
-import { GitHubService } from './github.service';
 import { RouterModule } from 'nest-router';
 import { ProbotModule } from '@gauzy/integration-github';
+import { GitHubController } from './github.controller';
+import { GitHubService } from './github.service';
 
 @Module({
 	imports: [
-		RouterModule.forRoutes([{ path: '/github', module: GitHubModule }]),
+		RouterModule.forRoutes([
+			{ path: '/github', module: GitHubModule }
+		]),
 		ProbotModule,
 	],
 
@@ -14,4 +16,4 @@ import { ProbotModule } from '@gauzy/integration-github';
 	providers: [GitHubService],
 	exports: [GitHubService],
 })
-export class GitHubModule {}
+export class GitHubModule { }

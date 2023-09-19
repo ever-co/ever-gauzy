@@ -1,12 +1,12 @@
 import { Injectable } from '@nestjs/common';
 import { Context } from 'probot';
-import { GitHubService as GitHubIntegrationService } from '@gauzy/integration-github';
+// import { GitHubService as GitHubIntegrationService } from '@gauzy/integration-github';
 
 @Injectable()
 export class GitHubService {
 	constructor(
-		private readonly gitHubIntegrationService: GitHubIntegrationService
-	) {}
+		// private readonly gitHubIntegrationService: GitHubIntegrationService
+	) { }
 
 	/**
 	 * ----- From GitHub to APIs -----
@@ -38,13 +38,13 @@ export class GitHubService {
 		repo: string,
 		installationId: number
 	) {
-		await this.gitHubIntegrationService.openIssue(
-			title,
-			body,
-			owner,
-			repo,
-			installationId
-		);
+		// await this.gitHubIntegrationService.openIssue(
+		// 	title,
+		// 	body,
+		// 	owner,
+		// 	repo,
+		// 	installationId
+		// );
 	}
 	async editIssue(
 		issueNumber: number,
@@ -54,14 +54,14 @@ export class GitHubService {
 		repo: string,
 		installationId: number
 	) {
-		await this.gitHubIntegrationService.editIssue(
-			issueNumber,
-			title,
-			body,
-			repo,
-			owner,
-			installationId
-		);
+		// await this.gitHubIntegrationService.editIssue(
+		// 	issueNumber,
+		// 	title,
+		// 	body,
+		// 	repo,
+		// 	owner,
+		// 	installationId
+		// );
 	}
 	// TODO
 	// Handle all other required events
