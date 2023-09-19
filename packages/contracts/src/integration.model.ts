@@ -188,7 +188,7 @@ export enum IntegrationTypeEnum {
 	SCHEDULING = 'Scheduling',
 	TOOLS = 'Tools',
 	PROJECT_MANAGEMENT = ' Project Management',
-	// COMMUNICATION = 'Communication'
+	COMMUNICATION = 'Communication'
 }
 
 export enum IntegrationFilterEnum {

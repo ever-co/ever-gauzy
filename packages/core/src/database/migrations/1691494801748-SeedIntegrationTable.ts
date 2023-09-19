@@ -33,12 +33,12 @@ export class SeedIntegrationTable1691494801748 implements MigrationInterface {
     public async upsertIntegrationsAndIntegrationTypes(queryRunner: QueryRunner): Promise<any> {
         const destDir = 'integrations';
 
-        for await (const { name, imgSrc, isComingSoon, order, redirectUrl, integrationTypesMap } of DEFAULT_SYSTEM_INTEGRATIONS) {
+        for await (const { name, imgSrc, isComingSoon, order, integrationTypesMap } of DEFAULT_SYSTEM_INTEGRATIONS) {
             try {
                 const filepath = `integrations/${imgSrc}`;
 
                 let upsertQuery = ``;
-                const payload = [name, filepath, isComingSoon, order, redirectUrl];
+                const payload = [name, filepath, isComingSoon, order];
 
                 if (queryRunner.connection.options.type === 'sqlite') {
                     // For SQLite, manually generate a UUID using uuidv4()
@@ -46,23 +46,7 @@ export class SeedIntegrationTable1691494801748 implements MigrationInterface {
 
                     upsertQuery = `
                         INSERT INTO integration (
-                            "name", "imgSrc", "isComingSoon", "order", "navigationUrl", "id"
-                        )
-                        VALUES (
-                            $1, $2, $3, $4, $5, $6
-                        )
-                        ON CONFLICT(name) DO UPDATE
-                        SET
-                            "imgSrc" = $2,
-                            "isComingSoon" = $3,
-                            "order" = $4,
-                            "navigationUrl" = $5
-                        RETURNING id;
-                    `;
-                } else {
-                    upsertQuery = `
-                        INSERT INTO "integration" (
-                            "name", "imgSrc", "isComingSoon", "order", "navigationUrl"
+                            "name", "imgSrc", "isComingSoon", "order", "id"
                         )
                         VALUES (
                             $1, $2, $3, $4, $5
@@ -71,8 +55,22 @@ export class SeedIntegrationTable1691494801748 implements MigrationInterface {
                         SET
                             "imgSrc" = $2,
                             "isComingSoon" = $3,
-                            "order" = $4,
-                            "navigationUrl" = $5
+                            "order" = $4
+                        RETURNING id;
+                    `;
+                } else {
+                    upsertQuery = `
+                        INSERT INTO "integration" (
+                            "name", "imgSrc", "isComingSoon", "order"
+                        )
+                        VALUES (
+                            $1, $2, $3, $4, $5
+                        )
+                        ON CONFLICT(name) DO UPDATE
+                        SET
+                            "imgSrc" = $2,
+                            "isComingSoon" = $3,
+                            "order" = $4
                         RETURNING id;
                     `;
                 }

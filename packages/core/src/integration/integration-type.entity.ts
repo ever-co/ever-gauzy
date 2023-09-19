@@ -1,10 +1,11 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { Column, Entity, ManyToMany } from 'typeorm';
+import { Column, Entity, ManyToMany, Unique } from 'typeorm';
 import { IsNotEmpty, IsNumber, IsOptional } from 'class-validator';
 import { IIntegration, IIntegrationType } from '@gauzy/contracts';
 import { BaseEntity, Integration } from '../core/entities/internal';
 
 @Entity('integration_type')
+@Unique(['name'])
 export class IntegrationType extends BaseEntity implements IIntegrationType {
 
 	@ApiProperty({ type: () => String })

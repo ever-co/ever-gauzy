@@ -2,11 +2,11 @@
 import { QueryRunner } from "typeorm";
 import { v4 as uuidv4 } from 'uuid';
 import { getConfig } from "@gauzy/config";
-import { IIntegration, IIntegrationType } from "@gauzy/contracts";
+import { IIntegration, IIntegrationType, IntegrationTypeEnum } from "@gauzy/contracts";
 import { copyAssets } from "./../core/seeds/utils";
+import { DEFAULT_INTEGRATION_TYPES } from "./default-integration-type";
 
 export class IntegrationsUtils {
-
     /**
     *
     * @param queryRunner
@@ -85,10 +85,65 @@ export class IntegrationsUtils {
         integrationTypeNames: any[]
     ): Promise<IIntegrationType[]> {
         try {
+            await this.upsertIntegrationTypes(queryRunner, integrationTypeNames);
             return await queryRunner.query(`SELECT * FROM "integration_type" WHERE "integration_type"."name" IN ('${integrationTypeNames.join("','")}')`);
         } catch (error) {
             console.log('Error while querying integration types:', error);
             return [];
+        }
+    }
+
+    /**
+     *
+     * @param queryRunner
+     * @param integrationTypeName
+     */
+    public static async upsertIntegrationTypes(
+        queryRunner: QueryRunner,
+        integrationTypeNames: IntegrationTypeEnum[]
+    ) {
+        for await (const integrationTypeName of integrationTypeNames) {
+            const { name, description, icon, groupName, order } = DEFAULT_INTEGRATION_TYPES.find(
+                (type) => type.name === integrationTypeName
+            );
+            const payload = [name, description, icon, groupName, order];
+
+            let upsertQuery = ``;
+            if (queryRunner.connection.options.type === 'sqlite') {
+                // For SQLite, manually generate a UUID using uuidv4()
+                upsertQuery = `
+                    INSERT INTO "integration_type" (
+                        "name", "description", "icon", "groupName", "order", "id"
+                    )
+                    VALUES (
+                        $1, $2, $3, $4, $5, $6
+                    )
+                    ON CONFLICT(name) DO UPDATE
+                    SET
+                        "description" = $2,
+                        "icon" = $3,
+                        "groupName" = $4,
+                        "order" = $5
+                    RETURNING id;
+                `;
+            } else {
+                upsertQuery = `
+                    INSERT INTO "integration_type" (
+                        "name", "description", "icon", "groupName", "order"
+                    )
+                    VALUES (
+                        $1, $2, $3, $4, $5
+                    )
+                    ON CONFLICT(name) DO UPDATE
+                    SET
+                        "description" = $2,
+                        "icon" = $3,
+                        "groupName" = $4,
+                        "order" = $5
+                    RETURNING id;
+                `;
+            }
+            await queryRunner.query(upsertQuery, payload);
         }
     }
 

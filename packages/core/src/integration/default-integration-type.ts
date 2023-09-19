@@ -49,5 +49,12 @@ export const DEFAULT_INTEGRATION_TYPES = [
         order: 2,
         description: null,
         icon: null
+    },
+    {
+        name: IntegrationTypeEnum.COMMUNICATION,
+        groupName: IntegrationTypeGroupEnum.CATEGORIES,
+        order: 2,
+        description: null,
+        icon: null
     }
 ];
