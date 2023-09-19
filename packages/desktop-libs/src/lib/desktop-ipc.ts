@@ -182,7 +182,6 @@ export function ipcMainHandler(
 			}
 		} else {
 			await logout();
-			return;
 		}
 		try {
 			timeTrackerWindow.webContents.send(
@@ -194,29 +193,16 @@ export function ipcMainHandler(
 				LocalStore.beforeRequestParams()
 			);
 			console.log('Last Capture Time (Desktop IPC):', lastTime);
-
+			await offlineMode.connectivity();
+			console.log('Network state',offlineMode.enabled ? 'Offline' : 'Online')
 			event.sender.send('timer_tracker_show', {
 				...LocalStore.beforeRequestParams(),
 				timeSlotId: lastTime ? lastTime.timeslotId : null,
-				isOffline: offlineMode.enabled
-			})
-
-			await Promise.allSettled([
-				offlineMode.connectivity().then(() => {
-					console.log(
-						'Network state',
-						offlineMode.enabled ? 'Offline' : 'Online'
-					);
-					event.sender.send('timer_tracker_show', {
-						...LocalStore.beforeRequestParams(),
-						timeSlotId: lastTime ? lastTime.timeslotId : null,
-						isOffline: offlineMode.enabled,
-					});
-				}),
-				countIntervalQueue(timeTrackerWindow, false),
-				sequentialSyncQueue(timeTrackerWindow),
-				latestScreenshots(timeTrackerWindow),
-			]);
+				isOffline: offlineMode.enabled,
+			});
+			await  countIntervalQueue(timeTrackerWindow, false);
+			await sequentialSyncQueue(timeTrackerWindow);
+			await latestScreenshots(timeTrackerWindow);
 		} catch (error) {
 			throw new UIError('500', error, 'IPCINIT');
 		}
