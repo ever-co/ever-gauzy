@@ -29,6 +29,7 @@
 	"keywords": [],
 	"dependencies": {
 		"octokit": "^3.1.0",
+		"pino-std-serializers": "^6.2.2",
 		"probot": "^12.3.1",
 		"smee-client": "^1.2.3"
 	},
