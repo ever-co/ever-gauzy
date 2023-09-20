@@ -66,6 +66,7 @@ jobs:
                   SENTRY_POSTGRES_TRACKING_ENABLED: '${{ secrets.SENTRY_POSTGRES_TRACKING_ENABLED }}'
                   DO_KEY_ID: ${{ secrets.DO_KEY_ID }}
                   DO_SECRET_KEY: ${{ secrets.DO_SECRET_KEY }}
+                  NX_NO_CLOUD: true
 
     release-mac:
         runs-on: ${{ matrix.os }}
@@ -115,6 +116,7 @@ jobs:
                   SENTRY_POSTGRES_TRACKING_ENABLED: '${{ secrets.SENTRY_POSTGRES_TRACKING_ENABLED }}'
                   DO_KEY_ID: ${{ secrets.DO_KEY_ID }}
                   DO_SECRET_KEY: ${{ secrets.DO_SECRET_KEY }}
+                  NX_NO_CLOUD: true
 
     release-windows:
         runs-on: ${{ matrix.os }}
@@ -164,3 +166,4 @@ jobs:
                   SENTRY_POSTGRES_TRACKING_ENABLED: '${{ secrets.SENTRY_POSTGRES_TRACKING_ENABLED }}'
                   DO_KEY_ID: ${{ secrets.DO_KEY_ID }}
                   DO_SECRET_KEY: ${{ secrets.DO_SECRET_KEY }}
+                  NX_NO_CLOUD: true
