@@ -11,6 +11,7 @@ import { IntegrationService } from './integration.service';
 import { IntegrationController } from './integration.controller';
 import { CommandHandlers } from './commands/handlers';
 import { IntegrationTenantModule } from '../integration-tenant/integration-tenant.module';
+import { GithubModule } from './github/github.module';
 
 @Module({
 	imports: [
@@ -19,6 +20,7 @@ import { IntegrationTenantModule } from '../integration-tenant/integration-tenan
 				path: '/integration', module: IntegrationModule,
 				children: [
 					{ path: '/hubstaff', module: HubstaffModule },
+					{ path: '/github', module: GithubModule },
 					{ path: '/', module: IntegrationModule }
 				]
 			},
@@ -32,6 +34,7 @@ import { IntegrationTenantModule } from '../integration-tenant/integration-tenan
 		TenantModule,
 		UserModule,
 		HubstaffModule,
+		GithubModule,
 		CqrsModule
 	],
 	controllers: [
