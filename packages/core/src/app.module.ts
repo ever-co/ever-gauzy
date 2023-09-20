@@ -154,7 +154,6 @@ import { EmailResetModule } from './email-reset/email-reset.module';
 import { TaskLinkedIssueModule } from './tasks/linked-issue/task-linked-issue.module';
 import { OrganizationTaskSettingModule } from './organization-task-setting/organization-task-setting.module';
 import { TaskEstimationModule } from './tasks/estimation/task-estimation.module';
-import { GitHubModule } from './github/github.module';
 const { unleashConfig } = environment;
 
 if (unleashConfig.url) {
@@ -258,20 +257,13 @@ if (environment.sentry && environment.sentry.dsn) {
 			environment.gitHubIntegrationConfig.appId
 			? [
 				ProbotModule.forRoot({
-					path: 'github', // Webhook URL in GitHub will be: https://example.com/api/github
+					path: 'api/integration/github/events', // Webhook URL in GitHub will be: https://example.com/api/integration/github
 					config: {
 						appId: environment.gitHubIntegrationConfig.appId,
-						clientId:
-							environment.gitHubIntegrationConfig.clientId,
-						clientSecret:
-							environment.gitHubIntegrationConfig
-								.clientSecret,
-
-						privateKey:
-							environment.gitHubIntegrationConfig.privateKey,
-						webhookSecret:
-							environment.gitHubIntegrationConfig
-								.webhookSecret,
+						clientId: environment.gitHubIntegrationConfig.clientId,
+						clientSecret: environment.gitHubIntegrationConfig.clientSecret,
+						privateKey: environment.gitHubIntegrationConfig.privateKey,
+						webhookSecret: environment.gitHubIntegrationConfig.webhookSecret,
 					},
 				}),
 			]
@@ -410,8 +402,7 @@ if (environment.sentry && environment.sentry.dsn) {
 		IssueTypeModule,
 		TaskLinkedIssueModule,
 		OrganizationTaskSettingModule,
-		TaskEstimationModule,
-		GitHubModule
+		TaskEstimationModule
 	],
 	controllers: [AppController],
 	providers: [

@@ -42,7 +42,7 @@ const routes: Routes = [
 ];
 
 const config: ExtraOptions = {
-	useHash: true
+	useHash: false
 };
 
 @NgModule({
@@ -54,4 +54,4 @@ const config: ExtraOptions = {
 	],
 	exports: [RouterModule]
 })
-export class AppRoutingModule {}
+export class AppRoutingModule { }

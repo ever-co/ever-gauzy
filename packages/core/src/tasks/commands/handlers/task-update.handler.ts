@@ -3,15 +3,11 @@ import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { ITask, ITaskUpdateInput } from '@gauzy/contracts';
 import { TaskService } from '../../task.service';
 import { TaskUpdateCommand } from '../task-update.command';
-import { GitHubService } from './../../../github/github.service';
 
 @CommandHandler(TaskUpdateCommand)
 export class TaskUpdateHandler implements ICommandHandler<TaskUpdateCommand> {
 	constructor(
-		private readonly _taskService: TaskService,
-		// TODO:
-		// Uncomment below line for GitHub app integration
-		private readonly _gitHubService: GitHubService
+		private readonly _taskService: TaskService
 	) { }
 
 	public async execute(command: TaskUpdateCommand): Promise<ITask> {
@@ -37,11 +33,10 @@ export class TaskUpdateHandler implements ICommandHandler<TaskUpdateCommand> {
 				 */
 				if (projectId !== task.projectId) {
 					const { organizationId } = task;
-					const maxNumber =
-						await this._taskService.getMaxTaskNumberByProject({
-							organizationId,
-							projectId,
-						});
+					const maxNumber = await this._taskService.getMaxTaskNumberByProject({
+						organizationId,
+						projectId,
+					});
 					await this._taskService.update(id, {
 						projectId,
 						number: maxNumber + 1,
@@ -49,22 +44,9 @@ export class TaskUpdateHandler implements ICommandHandler<TaskUpdateCommand> {
 				}
 			}
 
-			// TODO:
-			// We have to store issue_number of github in our task, so that we can use it while sync
-			// Right now we we have put static 38 value.
-			// Make the Issue number, Repo, Owner and installation id field dynamic
-			// this._gitHubService.editIssue(
-			// 	48,
-			// 	task.title,
-			// 	task.description,
-			// 	'<OWNER>',
-			// 	'<REPO>',
-			// 	12345678 // installation id
-			// );
-
 			return await this._taskService.create({
 				...request,
-				id,
+				id
 			});
 		} catch (error) {
 			console.log('Error while updating task %s', error?.message);
