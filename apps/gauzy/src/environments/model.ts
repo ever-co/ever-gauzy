@@ -69,4 +69,10 @@ export interface Environment {
 	GAUZY_CLOUD_APP: string;
 
 	FILE_PROVIDER: string;
+
+	/** Github Integration */
+	GITHUB_APP_NAME: string;
+	GITHUB_APP_ID: string;
+	GITHUB_CLIENT_ID: string;
+	GITHUB_REDIRECT_URL: string;
 }

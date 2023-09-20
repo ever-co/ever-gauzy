@@ -142,6 +142,11 @@ if (!env.IS_DOCKER) {
 		GAUZY_CLOUD_APP: '${env.GAUZY_CLOUD_APP}',
 
 		FILE_PROVIDER: '${env.FILE_PROVIDER}',
+
+		GITHUB_APP_NAME: '${env.GITHUB_APP_NAME}',
+		GITHUB_APP_ID: '${env.GITHUB_APP_ID}',
+		GITHUB_CLIENT_ID: '${env.GITHUB_CLIENT_ID}',
+		GITHUB_REDIRECT_URL: '${env.GITHUB_REDIRECT_URL}',
 	};
 	`;
 } else {
@@ -240,6 +245,11 @@ if (!env.IS_DOCKER) {
 		GAUZY_CLOUD_APP: 'DOCKER_GAUZY_CLOUD_APP',
 
 		FILE_PROVIDER: '${env.FILE_PROVIDER}',
+
+		GITHUB_APP_NAME: '${env.GITHUB_APP_NAME}',
+		GITHUB_APP_ID: '${env.GITHUB_APP_ID}',
+		GITHUB_CLIENT_ID: '${env.GITHUB_CLIENT_ID}',
+		GITHUB_REDIRECT_URL: '${env.GITHUB_REDIRECT_URL}',
 	};
 `;
 }
@@ -266,10 +276,10 @@ if (!isProd) {
 // we always want first to remove old generated files (one of them is not needed for current build)
 try {
 	unlinkSync(`./apps/gauzy/src/environments/environment.ts`);
-} catch {}
+} catch { }
 try {
 	unlinkSync(`./apps/gauzy/src/environments/environment.prod.ts`);
-} catch {}
+} catch { }
 
 const envFileDest: string = isProd ? 'environment.prod.ts' : 'environment.ts';
 const envFileDestOther: string = !isProd
