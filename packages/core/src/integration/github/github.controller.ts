@@ -17,8 +17,18 @@ export class GitHubController {
 	 * @param body
 	 * @returns
 	 */
+	@Post('install')
+	async addInstallationApp(@Body() input: IGithubAppInstallInput) {
+		return await this._githubService.addInstallationApp(input);
+	}
+
+	/**
+	 *
+	 * @param body
+	 * @returns
+	 */
 	@Post('oauth/access_token')
-	async create(@Body() input: IGithubAppInstallInput) {
+	async oAuthEndpointAuthorization(@Body() input: IGithubAppInstallInput) {
 		return await this._githubService.oAuthEndpointAuthorization(input);
 	}
 }

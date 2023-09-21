@@ -69,7 +69,7 @@ export type Env = Readonly<{
 	GITHUB_APP_NAME: string;
 	GITHUB_APP_ID: string;
 	GITHUB_CLIENT_ID: string;
-	GITHUB_REDIRECT_URL: string;
+	GITHUB_POST_INSTALLATION_URL: string;
 }>;
 
 export const env: Env = cleanEnv(
@@ -127,7 +127,7 @@ export const env: Env = cleanEnv(
 		GITHUB_APP_NAME: str({ default: '' }),
 		GITHUB_APP_ID: str({ default: '' }),
 		GITHUB_CLIENT_ID: str({ default: '' }),
-		GITHUB_REDIRECT_URL: str({ default: '' }),
+		GITHUB_POST_INSTALLATION_URL: str({ default: '' }),
 	},
 	{ strict: true, dotEnvPath: __dirname + '/../.env' }
 );

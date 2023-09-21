@@ -1,60 +1,57 @@
-import { AfterViewInit, Component, OnInit } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { debounceTime, filter, tap } from 'rxjs/operators';
+import { tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { IGithubAppInstallInput, IOrganization } from '@gauzy/contracts';
-import { distinctUntilChange } from '@gauzy/common-angular';
-import { GithubService, Store } from './../../../../../../@core/services';
+import { GithubService } from './../../../../../../@core/services';
 
-interface IGithuIntegrationAuthorizationResponse {
-	state?: string;
-	provider?: string;
-	code?: string;
-}
-
-@UntilDestroy()
+@UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'github-integration-installations',
 	templateUrl: './installations.component.html'
 })
-export class GithubInstallationsComponent implements AfterViewInit, OnInit {
+export class GithubInstallationsComponent implements OnInit {
 
 	public organization: IOrganization;
 
 	constructor(
 		private readonly _route: ActivatedRoute,
-		private readonly _store: Store,
 		private readonly _githubService: GithubService,
 	) { }
 
-	ngAfterViewInit() { }
-
 	ngOnInit() {
-		this._store.selectedOrganization$
+		this._route.queryParams
 			.pipe(
-				debounceTime(100),
-				distinctUntilChange(),
-				filter((organization: IOrganization) => !!organization),
-				tap((organization: IOrganization) => this.organization = organization),
-				tap(() => this.verifyGitHubAppAuthorization()),
+				tap(({ installation_id, setup_action, state }: IGithubAppInstallInput) => {
+					this.verifyGitHubAppAuthorization({
+						installation_id,
+						setup_action,
+						state
+					})
+				}),
 				untilDestroyed(this)
 			)
-			.subscribe();
+			.subscribe()
 	}
 
 	/**
 	 *
-	 * @returns
+	 *
+	 * @param input
 	 */
-	verifyGitHubAppAuthorization() {
-		if (!this.organization) {
-			return;
-		}
-		const { id: organizationId, tenantId } = this.organization;
-		// const client_id = environment.GITHUB_CLIENT_ID;
+	async verifyGitHubAppAuthorization(input: IGithubAppInstallInput) {
+		const { installation_id, setup_action, state } = input;
+		const [organizationId, tenantId] = state.split('|');
 
-		const { installation_id, setup_action } = this._route.snapshot.queryParams as IGithubAppInstallInput;
-		console.log(installation_id, setup_action, organizationId, tenantId);
-		console.log(this._githubService);
+		try {
+			await this._githubService.addInstallationApp({
+				installation_id,
+				setup_action,
+				organizationId,
+				tenantId
+			});
+		} catch (error) {
+			console.log('Error while install github app: %s', installation_id);
+		}
 	}
 }

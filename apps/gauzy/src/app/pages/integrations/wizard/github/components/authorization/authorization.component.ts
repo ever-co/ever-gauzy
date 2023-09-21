@@ -2,7 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { debounceTime, filter, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { environment } from '@env/environment';
-import { IOrganization, IntegrationEntity, IntegrationEnum } from '@gauzy/contracts';
+import { IOrganization, IntegrationEnum } from '@gauzy/contracts';
 import { distinctUntilChange, toParams } from '@gauzy/common-angular';
 import { Store } from '../../../../../../@core/services';
 import { GITHUB_AUTHORIZATION_URL } from '../../github.config';
@@ -28,8 +28,7 @@ export class GithubAuthorizationComponent implements OnInit {
 				distinctUntilChange(),
 				filter((organization: IOrganization) => !!organization),
 				tap((organization: IOrganization) => this.organization = organization),
-				tap(() => this.gitHubAppAuthorization()),
-				// tap(() => this.oAuthAppAuthorization()),
+				tap(() => this.githubAppInstallation()),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -40,7 +39,7 @@ export class GithubAuthorizationComponent implements OnInit {
 	 * Redirect the user to GitHub for authorization
 	 */
 	private oAuthAppAuthorization() {
-		const redirect_uri = environment.GITHUB_REDIRECT_URL;
+		const redirect_uri = environment.GITHUB_POST_INSTALLATION_URL;
 		const client_id = environment.GITHUB_CLIENT_ID;
 
 		// Define your query parameters
@@ -60,8 +59,12 @@ export class GithubAuthorizationComponent implements OnInit {
 	/**
 	 *
 	 */
-	private gitHubAppAuthorization() {
-		const state = environment.GITHUB_CLIENT_ID;
+	private githubAppInstallation() {
+		if (!this.organization) {
+			return;
+		}
+		const { id: organizationId, tenantId } = this.organization;
+		const state = organizationId + '|' + tenantId;
 
 		const width = 600, height = 600;
 		const left = window.innerWidth / 2 - width / 2;
@@ -70,6 +73,9 @@ export class GithubAuthorizationComponent implements OnInit {
 		/** Navigate to the external URL with query parameters */
 		window.open(`https://github.com/apps/${environment.GITHUB_APP_NAME}/installations/new?state=${state.toString()}`, "", `width=${width}, height=${height}, top=${top}, left=${left}`);
 
+		/**
+		 *
+		 */
 		this.router.navigate(['/pages/integrations/new'], {
 			queryParams: {
 				provider: IntegrationEnum.GITHUB

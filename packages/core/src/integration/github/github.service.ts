@@ -4,7 +4,7 @@ import { BadRequestException, Injectable, UnauthorizedException } from '@nestjs/
 import { CommandBus } from '@nestjs/cqrs';
 import { Context } from 'probot';
 import { catchError, lastValueFrom, switchMap } from 'rxjs';
-import { filter, tap } from 'rxjs/operators';
+import { filter } from 'rxjs/operators';
 import { IntegrationTenantCreateCommand } from 'integration-tenant/commands';
 import { RequestContext } from './../../core/context';
 import { GITHUB_ACCESS_TOKEN_URL } from './github.config';
@@ -33,8 +33,6 @@ export class GithubService {
 		// Find all the Projects connected to current repo and edit task
 		// To edit task we need to save issue_number of GitHub in task table
 	}
-	// TODO
-	// Handle all other required events
 
 	/**
 	 * ----- From APIs to GitHub -----
@@ -71,9 +69,39 @@ export class GithubService {
 		// 	installationId
 		// );
 	}
-	// TODO
-	// Handle all other required events
 
+	/**
+	 *
+	 * @param input
+	 * @returns
+	 */
+	async addInstallationApp(input: IGithubAppInstallInput): Promise<IIntegrationTenant> {
+		const tenantId = RequestContext.currentTenantId() || input.tenantId;
+		const { installation_id, setup_action, organizationId } = input;
+
+		return await this._commandBus.execute(
+			new IntegrationTenantCreateCommand({
+				name: IntegrationEnum.GITHUB,
+				tenantId,
+				organizationId,
+				entitySettings: [],
+				settings: [
+					{
+						settingsName: 'installation_id',
+						settingsValue: installation_id,
+						tenantId,
+						organizationId
+					},
+					{
+						settingsName: 'setup_action',
+						settingsValue: setup_action,
+						tenantId,
+						organizationId
+					}
+				]
+			})
+		);
+	}
 
 	/**
 	 *
