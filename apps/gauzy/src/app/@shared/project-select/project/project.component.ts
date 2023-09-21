@@ -60,7 +60,7 @@ export class ProjectSelectorComponent
 	@Input() shortened = false;
 	@Input() disabled = false;
 	@Input() multiple = false;
-	@Input() label = 'FORM.PLACEHOLDERS.ADD_REMOVE_PROJECTS';
+	@Input() label = null;
 
 	private _projectId: string | string[];
 	get projectId(): string | string[] {
