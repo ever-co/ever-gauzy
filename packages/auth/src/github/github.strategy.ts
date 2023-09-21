@@ -30,17 +30,19 @@ export class GithubStrategy extends PassportStrategy(Strategy, 'github') {
 	}
 }
 
+/**
+ *
+ * @param configService
+ * @returns
+ */
 export const config = (configService: ConfigService) => {
-	const GITHUB_CONFIG = configService.get(
-		'githubConfig'
-	) as IEnvironment['githubConfig'];
+	const github = configService.get('github') as IEnvironment['github'];
 	const { baseUrl } = configService.apiConfigOptions as IApiServerOptions;
 
 	return {
-		clientID: GITHUB_CONFIG.clientId || 'disabled',
-		clientSecret: GITHUB_CONFIG.clientSecret || 'disabled',
-		callbackURL:
-			GITHUB_CONFIG.callbackUrl || `${baseUrl}/api/auth/github/callback`,
+		clientID: github.CLIENT_ID || 'disabled',
+		clientSecret: github.CLIENT_SECRET || 'disabled',
+		callbackURL: github.CALLBACK_URL || `${baseUrl}/api/auth/github/callback`,
 		passReqToCallback: true,
 		scope: ['user:email']
 	};

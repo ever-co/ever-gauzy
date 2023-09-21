@@ -111,20 +111,19 @@ export const environment: IEnvironment = {
 			`${process.env.API_HOST}:${process.env.API_PORT}/api/auth/google/callback`,
 	},
 
-	githubConfig: {
-		clientId: process.env.GITHUB_CLIENT_ID,
-		clientSecret: process.env.GITHUB_CLIENT_SECRET,
-		callbackUrl:
-			process.env.GITHUB_CALLBACK_URL ||
-			`http://${process.env.API_HOST}:${process.env.API_PORT}/api/auth/google/callback`,
+	github: {
+		CLIENT_ID: process.env.GITHUB_CLIENT_ID,
+		CLIENT_SECRET: process.env.GITHUB_CLIENT_SECRET,
+		CALLBACK_URL: process.env.GITHUB_CALLBACK_URL || `${process.env.API_BASE_URL}/api/auth/github/callback`
 	},
-	gitHubIntegrationConfig: {
-		appId: process.env.GITHUB_INTEGRATION_APP_ID,
-		clientId: process.env.GITHUB_INTEGRATION_CLIENT_ID,
-		clientSecret: process.env.GITHUB_INTEGRATION_CLIENT_SECRET,
-		privateKey: process.env.GITHUB_INTEGRATION_PRIVATE_KEY,
-		webhookSecret: process.env.GITHUB_INTEGRATION_WEBHOOK_SECRET,
-	},
+
+	// gitHubIntegrationConfig: {
+	// 	appId: process.env.GITHUB_INTEGRATION_APP_ID,
+	// 	clientId: process.env.GITHUB_INTEGRATION_CLIENT_ID,
+	// 	clientSecret: process.env.GITHUB_INTEGRATION_CLIENT_SECRET,
+	// 	privateKey: process.env.GITHUB_INTEGRATION_PRIVATE_KEY,
+	// 	webhookSecret: process.env.GITHUB_INTEGRATION_WEBHOOK_SECRET,
+	// },
 
 	microsoftConfig: {
 		clientId: process.env.MICROSOFT_CLIENT_ID,
