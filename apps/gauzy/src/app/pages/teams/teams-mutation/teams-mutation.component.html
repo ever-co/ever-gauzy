@@ -61,6 +61,11 @@
 			</div>
 			<div class="row mb-3">
 				<div class="form-group col-12">
+					<ga-project-selector formControlName="projects" [skipGlobalChange]="true" [multiple]="true" [showAllOption]="false"
+						[placeholder]="'FORM.PLACEHOLDERS.ADD_REMOVE_PROJECTS' | translate" [defaultSelected]="false"
+						(onChanged)="onProjectsSelected($event)"></ga-project-selector>
+					</div>
+					<div class="form-group col-12">
 					<ga-employee-multi-select
 						[label]="'FORM.LABELS.ADD_REMOVE_MANAGERS' | translate"
 						[placeholder]="
