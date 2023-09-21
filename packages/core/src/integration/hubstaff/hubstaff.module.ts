@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { HttpModule } from '@nestjs/axios';
 import { CqrsModule } from '@nestjs/cqrs';
 import { HUBSTAFF_API_URL } from '@gauzy/integration-hubstaff';
@@ -9,6 +9,7 @@ import { TenantModule } from 'tenant/tenant.module';
 import { OrganizationModule } from 'organization/organization.module';
 import { IntegrationEntitySettingModule } from 'integration-entity-setting/integration-entity-setting.module';
 import { IntegrationEntitySettingTiedModule } from 'integration-entity-setting-tied/integration-entity-setting-tied.module';
+import { IntegrationModule } from 'integration/integration.module';
 import { IntegrationMapModule } from 'integration-map/integration-map.module';
 import { IntegrationTenantModule } from 'integration-tenant/integration-tenant.module';
 import { IntegrationSettingModule } from 'integration-setting/integration-setting.module';
@@ -27,6 +28,7 @@ import { HubstaffAuthorizationController } from './hubstaff-authorization.contro
 		UserModule,
 		OrganizationModule,
 		OrganizationProjectModule,
+		forwardRef(() => IntegrationModule),
 		IntegrationTenantModule,
 		IntegrationSettingModule,
 		IntegrationEntitySettingModule,

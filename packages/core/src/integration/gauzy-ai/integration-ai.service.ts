@@ -28,7 +28,7 @@ export class IntegrationAIService {
 
 		const integration = await this._integrationService.findOneByOptions({
 			where: {
-				name: IntegrationEnum.GAUZY_AI
+				provider: IntegrationEnum.GAUZY_AI
 			}
 		});
 
