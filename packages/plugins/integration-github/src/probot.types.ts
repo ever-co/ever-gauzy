@@ -26,8 +26,7 @@ export interface ProbotModuleOptions {
 	config: ProbotConfig;
 }
 
-export interface ProbotModuleAsyncOptions
-	extends Pick<ModuleMetadata, 'imports'> {
+export interface ProbotModuleAsyncOptions extends Pick<ModuleMetadata, 'imports'> {
 	isGlobal?: boolean;
 	path: string;
 	useFactory: (...args: any[]) => Promise<ProbotConfig> | ProbotConfig;

@@ -6,7 +6,7 @@ import {
 	OnApplicationShutdown,
 	OnModuleInit,
 } from '@nestjs/common';
-import * as _ from 'lodash';
+import * as _ from 'underscore';
 import { v4 } from 'uuid';
 import { ModuleProviders, ProbotConfig } from './probot.types';
 import { createProbot, createSmee } from './probot.helpers';
@@ -17,8 +17,7 @@ import { InstanceWrapper } from '@nestjs/core/injector/instance-wrapper';
 
 @Injectable()
 export class ProbotDiscovery
-	implements OnModuleInit, OnApplicationBootstrap, OnApplicationShutdown
-{
+	implements OnModuleInit, OnApplicationBootstrap, OnApplicationShutdown {
 	private readonly logger = new Logger('ProbotDiscovery');
 
 	private readonly hooks: Map<string, any>;
@@ -140,12 +139,11 @@ export class ProbotDiscovery
 	}
 
 	receiveHook(request) {
+		console.log({ request });
 		const id = request.headers['x-github-delivery'] as string;
 		const event = request.headers['x-github-event'];
 		const body = request.body;
 
-		// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-		// @ts-ignore
 		return this.probot.receive({ id, name: event, payload: body });
 	}
 }
