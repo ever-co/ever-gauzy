@@ -1,3 +1,4 @@
+<label class="label" *ngIf="label">{{ label | translate }}</label>
 <ng-template
 	[ngIf]="!multiple"
 	[ngIfElse]="multipleSelect"
