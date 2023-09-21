@@ -29,6 +29,7 @@ import { EmployeeMultiSelectModule } from '../../@shared/employee/employee-multi
 import { GauzyButtonActionModule } from '../../@shared/gauzy-button-action/gauzy-button-action.module';
 import { PaginationModule } from '../../@shared/pagination/pagination.module';
 import { ImageUploaderModule } from '../../@shared/image-uploader/image-uploader.module';
+import { ProjectSelectModule } from '../../@shared/project-select/project-select.module';
 
 @NgModule({
 	imports: [
@@ -54,6 +55,7 @@ import { ImageUploaderModule } from '../../@shared/image-uploader/image-uploader
 		TranslateModule,
 		HeaderTitleModule,
 		EmployeeMultiSelectModule,
+		ProjectSelectModule,
 		PaginationModule,
 		GauzyButtonActionModule,
 		CommonModule,

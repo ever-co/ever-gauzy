@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { RouterModule } from 'nest-router';
 import { CqrsModule } from '@nestjs/cqrs';
@@ -11,6 +11,7 @@ import { IntegrationService } from './integration.service';
 import { IntegrationController } from './integration.controller';
 import { CommandHandlers } from './commands/handlers';
 import { IntegrationTenantModule } from '../integration-tenant/integration-tenant.module';
+import { IntegrationAIModule } from './gauzy-ai/integration-ai.module';
 
 @Module({
 	imports: [
@@ -19,6 +20,7 @@ import { IntegrationTenantModule } from '../integration-tenant/integration-tenan
 				path: '/integration', module: IntegrationModule,
 				children: [
 					{ path: '/hubstaff', module: HubstaffModule },
+					{ path: '/gauzy-ai', module: IntegrationAIModule },
 					{ path: '/', module: IntegrationModule }
 				]
 			},
@@ -31,7 +33,8 @@ import { IntegrationTenantModule } from '../integration-tenant/integration-tenan
 		IntegrationTenantModule,
 		TenantModule,
 		UserModule,
-		HubstaffModule,
+		forwardRef(() => HubstaffModule),
+		forwardRef(() => IntegrationAIModule),
 		CqrsModule
 	],
 	controllers: [
