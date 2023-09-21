@@ -5,7 +5,7 @@ import { Hook } from '@gauzy/integration-github';
 import { GithubService } from './github.service';
 
 @Public()
-@Controller('events')
+@Controller('webhook')
 export class GitHubEventsController {
     constructor(
         private readonly _githubService: GithubService

@@ -74,5 +74,5 @@ export interface Environment {
 	GITHUB_APP_NAME: string;
 	GITHUB_APP_ID: string;
 	GITHUB_CLIENT_ID: string;
-	GITHUB_POST_INSTALLATION_URL: string;
+	GITHUB_REDIRECT_URL: string;
 }

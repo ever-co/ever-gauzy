@@ -39,7 +39,7 @@ export class GithubAuthorizationComponent implements OnInit {
 	 * Redirect the user to GitHub for authorization
 	 */
 	private oAuthAppAuthorization() {
-		const redirect_uri = environment.GITHUB_POST_INSTALLATION_URL;
+		const redirect_uri = environment.GITHUB_REDIRECT_URL;
 		const client_id = environment.GITHUB_CLIENT_ID;
 
 		// Define your query parameters
