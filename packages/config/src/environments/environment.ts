@@ -116,9 +116,17 @@ export const environment: IEnvironment = {
 	},
 
 	github: {
+		/**Github OAuth Configuration */
 		CLIENT_ID: process.env.GITHUB_CLIENT_ID,
 		CLIENT_SECRET: process.env.GITHUB_CLIENT_SECRET,
-		CALLBACK_URL: process.env.GITHUB_CALLBACK_URL || `${process.env.API_BASE_URL}/api/auth/github/callback`
+		CALLBACK_URL: process.env.GITHUB_CALLBACK_URL || `${process.env.API_BASE_URL}/api/auth/github/callback`,
+
+		/** Github App Install Configuration  */
+		APP_ID: process.env.GITHUB_APP_ID,
+		APP_NAME: process.env.GITHUB_APP_NAME,
+		APP_PRIVATE_KEY: process.env.GITHUB_APP_PRIVATE_KEY,
+		WEBHOOK_SECRET: process.env.GITHUB_WEBHOOK_SECRET,
+		WEBHOOK_URL: process.env.GITHUB_WEBHOOK_URL
 	},
 
 	microsoftConfig: {
