@@ -13,9 +13,6 @@ import { EmployeeJobPostController } from './../../employee-job/employee-job.con
 
 @Module({
 	imports: [
-		RouterModule.forRoutes([
-			{ path: '/integrations/gauzy-ai', module: IntegrationAIModule }
-		]),
 		TenantModule,
 		UserModule,
 		IntegrationModule,
