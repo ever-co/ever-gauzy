@@ -1,10 +1,9 @@
 import { getPrivateKey } from '@probot/get-private-key';
 import { Probot } from 'probot';
 import SmeeClient from 'smee-client';
-import { OctokitConfig, ProbotConfig } from './probot.types';
 import { Octokit } from '@octokit/rest';
 import { createAppAuth } from '@octokit/auth-app';
-
+import { OctokitConfig, ProbotConfig } from './probot.types';
 
 /**
  * Parse and restructure Probot configuration into a more organized format.
@@ -19,7 +18,7 @@ export const parseConfig = (config: ProbotConfig): Record<string, any> => ({
 	webhookProxy: config.webhookProxy,
 	webhookPath: config.webhookPath,
 	clientId: config.clientId,
-	clientSecret: config.clientSecret,
+	clientSecret: config.clientSecret
 });
 
 /**
@@ -29,7 +28,6 @@ export const parseConfig = (config: ProbotConfig): Record<string, any> => ({
  */
 export const createProbot = (config: ProbotConfig): Probot => {
 	const parsedConfig = parseConfig(config);
-
 	return new Probot({
 		...parsedConfig, // Spread the parsed configuration properties
 	});
@@ -42,7 +40,6 @@ export const createProbot = (config: ProbotConfig): Probot => {
  */
 export const createSmee = (config: ProbotConfig): SmeeClient => {
 	const parsedConfig = parseConfig(config);
-
 	return new SmeeClient({
 		source: parsedConfig.webhookProxy as string,
 		target: parsedConfig.webhookPath as string,

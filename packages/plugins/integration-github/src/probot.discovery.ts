@@ -1,3 +1,5 @@
+import { DiscoveryService, MetadataScanner } from '@nestjs/core';
+import { InstanceWrapper } from '@nestjs/core/injector/instance-wrapper';
 import {
 	Inject,
 	Injectable,
@@ -6,24 +8,20 @@ import {
 	OnApplicationShutdown,
 	OnModuleInit,
 } from '@nestjs/common';
+import { Probot } from 'probot';
+import SmeeClient from 'smee-client';
 import * as _ from 'underscore';
 import { v4 } from 'uuid';
 import { ModuleProviders, ProbotConfig } from './probot.types';
 import { createProbot, createSmee } from './probot.helpers';
-import { Probot } from 'probot';
 import { HookMetadataAccessor } from './hook-metadata.accessor';
-import { DiscoveryService, MetadataScanner } from '@nestjs/core';
-import { InstanceWrapper } from '@nestjs/core/injector/instance-wrapper';
 
 @Injectable()
-export class ProbotDiscovery
-	implements OnModuleInit, OnApplicationBootstrap, OnApplicationShutdown {
+export class ProbotDiscovery implements OnModuleInit, OnApplicationBootstrap, OnApplicationShutdown {
+
 	private readonly logger = new Logger('ProbotDiscovery');
-
 	private readonly hooks: Map<string, any>;
-
-	private smee: any;
-
+	private smee: SmeeClient;
 	private readonly probot: Probot;
 
 	constructor(
@@ -50,7 +48,6 @@ export class ProbotDiscovery
 		this.mountHooks();
 	}
 
-	// eslint-disable-next-line @typescript-eslint/no-unused-vars
 	onApplicationShutdown(signal?: string): any {
 		// TODO clear probot event handlers on shutdown
 	}
@@ -91,19 +88,17 @@ export class ProbotDiscovery
 		];
 
 		instanceWrappers
-			.filter((wrapper) => wrapper.isDependencyTreeStatic())
+			.filter((wrapper: InstanceWrapper) => wrapper.isDependencyTreeStatic())
 			.forEach((wrapper: InstanceWrapper) => {
 				const { instance } = wrapper;
-
 				if (!instance || !Object.getPrototypeOf(instance)) {
 					return;
 				}
 
-				this.metadataScanner.scanFromPrototype(
-					instance,
-					Object.getPrototypeOf(instance),
-					(key: string) => this.lookupHooks(instance, key)
-				);
+				const prototype = Object.getPrototypeOf(instance);
+				const methodNames = this.metadataScanner.getAllMethodNames(prototype);
+
+				methodNames.forEach((key: string) => this.lookupHooks(instance, key));
 			});
 	}
 
@@ -138,12 +133,12 @@ export class ProbotDiscovery
 		};
 	}
 
-	receiveHook(request) {
-		console.log({ request });
+	receiveHook(request: any) {
 		const id = request.headers['x-github-delivery'] as string;
 		const event = request.headers['x-github-event'];
 		const body = request.body;
 
+		console.log({ id, event, body });
 		return this.probot.receive({ id, name: event, payload: body });
 	}
 }

@@ -7,10 +7,9 @@ export function getControllerClass({ path }): Type<any> {
 	@Public()
 	@Controller()
 	class HookController {
-		constructor(private readonly probotDiscovery: ProbotDiscovery) {}
+		constructor(private readonly probotDiscovery: ProbotDiscovery) { }
 
 		@Post([path])
-		// eslint-disable-next-line @typescript-eslint/no-empty-function,@typescript-eslint/explicit-module-boundary-types
 		async hooks(@Req() req: Request) {
 			return await this.probotDiscovery.receiveHook(req);
 		}

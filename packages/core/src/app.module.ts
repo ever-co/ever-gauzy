@@ -154,7 +154,7 @@ import { EmailResetModule } from './email-reset/email-reset.module';
 import { TaskLinkedIssueModule } from './tasks/linked-issue/task-linked-issue.module';
 import { OrganizationTaskSettingModule } from './organization-task-setting/organization-task-setting.module';
 import { TaskEstimationModule } from './tasks/estimation/task-estimation.module';
-const { unleashConfig } = environment;
+const { unleashConfig, github } = environment;
 
 if (unleashConfig.url) {
 	const unleashInstanceConfig: UnleashConfig = {
@@ -253,17 +253,17 @@ if (environment.sentry && environment.sentry.dsn) {
 			: []),
 
 		// Probot
-		...(environment.gitHubIntegrationConfig &&
-			environment.gitHubIntegrationConfig.appId
+		...(github && environment.github.APP_ID
 			? [
 				ProbotModule.forRoot({
-					path: 'api/integration/github/events', // Webhook URL in GitHub will be: https://example.com/api/integration/github
+					path: 'integration/github/events', // Webhook URL in GitHub will be: https://api.gauzy.co/api/integration/github/events
 					config: {
-						appId: environment.gitHubIntegrationConfig.appId,
-						clientId: environment.gitHubIntegrationConfig.clientId,
-						clientSecret: environment.gitHubIntegrationConfig.clientSecret,
-						privateKey: environment.gitHubIntegrationConfig.privateKey,
-						webhookSecret: environment.gitHubIntegrationConfig.webhookSecret,
+						/** Client Configuration */
+						clientId: environment.github.CLIENT_ID,
+						clientSecret: environment.github.CLIENT_SECRET,
+						appId: environment.github.APP_ID,
+						privateKey: environment.github.APP_PRIVATE_KEY,
+						webhookSecret: environment.github.WEBHOOK_SECRET
 					},
 				}),
 			]

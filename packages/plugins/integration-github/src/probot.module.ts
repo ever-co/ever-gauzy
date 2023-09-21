@@ -1,3 +1,4 @@
+import { DiscoveryModule } from '@nestjs/core';
 import { DynamicModule, Module } from '@nestjs/common';
 import {
 	ProbotModuleOptions,
@@ -6,7 +7,6 @@ import {
 } from './probot.types';
 import { ProbotDiscovery } from './probot.discovery';
 import { getControllerClass } from './hook.controller';
-import { DiscoveryModule } from '@nestjs/core';
 import { HookMetadataAccessor } from './hook-metadata.accessor';
 import { GitHubService } from './github.service';
 
@@ -14,6 +14,11 @@ import { GitHubService } from './github.service';
 	imports: [DiscoveryModule],
 })
 export class ProbotModule {
+	/**
+	 * Register the Probot module.
+	 * @param options - Configuration options for the Probot module.
+	 * @returns A dynamic module configuration.
+	 */
 	static forRoot(options: ProbotModuleOptions): DynamicModule {
 		const HookController = getControllerClass({ path: options.path });
 		return {
@@ -33,6 +38,11 @@ export class ProbotModule {
 		};
 	}
 
+	/**
+	 * Register the Probot module asynchronously.
+	 * @param options - Configuration options for the Probot module.
+	 * @returns A dynamic module configuration.
+	 */
 	static forRootAsync(options: ProbotModuleAsyncOptions): DynamicModule {
 		const HookController = getControllerClass({ path: options.path });
 		return {
@@ -49,9 +59,7 @@ export class ProbotModule {
 				ProbotDiscovery,
 				GitHubService,
 			],
-			exports: [
-				GitHubService
-			],
+			exports: [GitHubService],
 		};
 	}
 }
