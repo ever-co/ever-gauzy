@@ -6,6 +6,7 @@ import { Context } from 'probot';
 import { catchError, lastValueFrom, switchMap } from 'rxjs';
 import { filter } from 'rxjs/operators';
 import { IntegrationTenantCreateCommand } from 'integration-tenant/commands';
+import { IntegrationService } from 'integration/integration.service';
 import { RequestContext } from './../../core/context';
 import { GITHUB_ACCESS_TOKEN_URL } from './github.config';
 
@@ -13,7 +14,8 @@ import { GITHUB_ACCESS_TOKEN_URL } from './github.config';
 export class GithubService {
 	constructor(
 		private readonly _httpService: HttpService,
-		private readonly _commandBus: CommandBus
+		private readonly _commandBus: CommandBus,
+		private readonly _integrationService: IntegrationService
 	) { }
 
 	/**
@@ -79,9 +81,16 @@ export class GithubService {
 		const tenantId = RequestContext.currentTenantId() || input.tenantId;
 		const { installation_id, setup_action, organizationId } = input;
 
+		const integration = await this._integrationService.findOneByOptions({
+			where: {
+				name: IntegrationEnum.GITHUB
+			}
+		});
+
 		return await this._commandBus.execute(
 			new IntegrationTenantCreateCommand({
 				name: IntegrationEnum.GITHUB,
+				integration,
 				tenantId,
 				organizationId,
 				entitySettings: [],
@@ -116,6 +125,12 @@ export class GithubService {
 			throw new UnauthorizedException();
 		}
 
+		const integration = await this._integrationService.findOneByOptions({
+			where: {
+				name: IntegrationEnum.GITHUB
+			}
+		});
+
 		const urlParams = new URLSearchParams();
 		urlParams.append('client_id', process.env.GITHUB_CLIENT_ID);
 		urlParams.append('client_secret', process.env.GITHUB_CLIENT_SECRET);
@@ -129,9 +144,10 @@ export class GithubService {
 			filter(({ data }) => !!data.error),
 			switchMap(({ data }) => this._commandBus.execute(
 				new IntegrationTenantCreateCommand({
+					name: IntegrationEnum.GITHUB,
+					integration,
 					tenantId,
 					organizationId,
-					name: IntegrationEnum.GITHUB,
 					entitySettings: [],
 					settings: [
 						{

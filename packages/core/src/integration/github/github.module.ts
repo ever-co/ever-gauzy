@@ -1,9 +1,10 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { HttpModule } from '@nestjs/axios';
 import { CqrsModule } from '@nestjs/cqrs';
 import { ProbotModule } from '@gauzy/integration-github';
 import { TenantModule } from './../../tenant/tenant.module';
 import { UserModule } from './../../user/user.module';
+import { IntegrationModule } from './../../integration/integration.module';
 import { GithubService } from './github.service';
 import { GitHubController } from './github.controller';
 import { GitHubEventsController } from './github.events.controller';
@@ -14,7 +15,8 @@ import { GitHubEventsController } from './github.events.controller';
 		TenantModule,
 		UserModule,
 		ProbotModule,
-		CqrsModule
+		CqrsModule,
+		forwardRef(() => IntegrationModule)
 	],
 	controllers: [
 		GitHubController,

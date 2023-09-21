@@ -27,7 +27,7 @@ export class GitHubController {
 	 * @param body
 	 * @returns
 	 */
-	@Post('oauth/access_token')
+	@Post('oauth')
 	async oAuthEndpointAuthorization(@Body() input: IGithubAppInstallInput) {
 		return await this._githubService.oAuthEndpointAuthorization(input);
 	}
