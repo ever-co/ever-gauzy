@@ -19,6 +19,6 @@ export class GauzyAIService {
 	 * @returns
 	 */
 	addIntegration(input: IIntegrationKeySecretPairInput): Observable<IIntegrationTenant> {
-		return this._http.post<IIntegrationTenant>(`${API_PREFIX}/integrations/gauzy-ai`, input);
+		return this._http.post<IIntegrationTenant>(`${API_PREFIX}/integration/gauzy-ai`, input);
 	}
 }
