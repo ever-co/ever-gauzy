@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { RouterModule } from 'nest-router';
 import { CqrsModule } from '@nestjs/cqrs';
@@ -33,8 +33,8 @@ import { IntegrationAIModule } from './gauzy-ai/integration-ai.module';
 		IntegrationTenantModule,
 		TenantModule,
 		UserModule,
-		HubstaffModule,
-		IntegrationAIModule,
+		forwardRef(() => HubstaffModule),
+		forwardRef(() => IntegrationAIModule),
 		CqrsModule
 	],
 	controllers: [
