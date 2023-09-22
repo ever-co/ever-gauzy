@@ -20,7 +20,7 @@ export class GithubService {
      */
     async addInstallationApp(input: IGithubAppInstallInput): Promise<IIntegrationTenant> {
         return firstValueFrom(
-            this._http.post<IIntegrationTenant>(`${API_PREFIX}/integration/github/install`, input)
+            this._http.post<IIntegrationTenant>(`${API_PREFIX}/integration/github/app-install`, input)
         );
     }
 }

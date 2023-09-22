@@ -17,8 +17,8 @@ export class GitHubController {
 	 * @param body
 	 * @returns
 	 */
-	@Post('install')
-	async addInstallationApp(@Body() input: IGithubAppInstallInput) {
+	@Post('app-install')
+	async addInstallApp(@Body() input: IGithubAppInstallInput) {
 		return await this._githubService.addInstallationApp(input);
 	}
 

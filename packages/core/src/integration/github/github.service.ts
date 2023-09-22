@@ -87,6 +87,7 @@ export class GithubService {
 			}
 		});
 
+		/** */
 		return await this._commandBus.execute(
 			new IntegrationTenantCreateCommand({
 				name: IntegrationEnum.GITHUB,
@@ -106,7 +107,7 @@ export class GithubService {
 						settingsValue: setup_action,
 						tenantId,
 						organizationId
-					}
+					},
 				]
 			})
 		);

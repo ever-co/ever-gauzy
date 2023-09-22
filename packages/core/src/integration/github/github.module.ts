@@ -8,6 +8,7 @@ import { IntegrationModule } from './../../integration/integration.module';
 import { GithubService } from './github.service';
 import { GitHubController } from './github.controller';
 import { GitHubEventsController } from './github.events.controller';
+import { GitHubPostInstallController } from './github-install.controller';
 
 @Module({
 	imports: [
@@ -20,6 +21,7 @@ import { GitHubEventsController } from './github.events.controller';
 	],
 	controllers: [
 		GitHubController,
+		GitHubPostInstallController,
 		GitHubEventsController
 	],
 	providers: [GithubService],

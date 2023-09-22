@@ -12,6 +12,9 @@ export interface IGithubIntegrationConfig {
 	readonly APP_PRIVATE_KEY: string;
 
 	/** */
+	readonly POST_INSTALL_URL: string;
+
+	/** */
 	readonly WEBHOOK_URL: string;
 	readonly WEBHOOK_SECRET: string;
 }

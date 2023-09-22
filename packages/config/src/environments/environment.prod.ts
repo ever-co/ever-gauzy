@@ -121,6 +121,10 @@ export const environment: IEnvironment = {
 		APP_ID: process.env.GITHUB_APP_ID,
 		APP_NAME: process.env.GITHUB_APP_NAME,
 		APP_PRIVATE_KEY: process.env.GITHUB_APP_PRIVATE_KEY,
+
+		/** Github App Post Install Configuration */
+		POST_INSTALL_URL: process.env.GITHUB_POST_INSTALL_URL,
+
 		WEBHOOK_SECRET: process.env.GITHUB_WEBHOOK_SECRET,
 		WEBHOOK_URL: process.env.GITHUB_WEBHOOK_URL
 	},
