@@ -92,6 +92,9 @@ ENV NODE_ENV=${NODE_ENV:-production}
 
 ENV IS_DOCKER=true
 
+# Temporary disable caching in NX Cloud for builds
+ENV NX_NO_CLOUD=true
+
 RUN yarn build:package:gauzy
 RUN yarn build:gauzy:prod:docker
 
