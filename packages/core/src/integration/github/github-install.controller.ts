@@ -22,8 +22,10 @@ export class GitHubPostInstallController {
         @Query() query: IGithubAppInstallInput,
         @Res() response: Response
     ) {
+        /** Github Config Options */
         const github = this._config.get<IGithubConfig>('github') as IGithubConfig;
         try {
+            /**  */
             const urlParams = new URLSearchParams();
             urlParams.append('installation_id', query.installation_id);
             urlParams.append('setup_action', query.setup_action);
