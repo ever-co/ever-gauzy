@@ -51,15 +51,27 @@ export class GithubInstallationsComponent implements OnInit {
 					organizationId,
 					tenantId
 				});
-				this.isLoading = false;
-
-				/** Close current window */
-				window.opener = null;
-				window.open("", "_self");
-				window.close();
+				this.handleClosedPopupWindow();
 			} catch (error) {
 				console.log('Error while install github app: %s', installation_id);
 			}
 		}
+	}
+
+	/**
+	 * Handle the case when the popup window is closed.
+	 */
+	private handleClosedPopupWindow() {
+		this.isLoading = false;
+		console.log('Popup window closed after github app installed!');
+
+		// Delay navigation by 2 seconds before close window
+		setTimeout(() => {
+			/** Close current window */
+			window.opener = null;
+			window.open("", "_self");
+			window.close();
+
+		}, 2000); // 2000 milliseconds = 5 seconds
 	}
 }
