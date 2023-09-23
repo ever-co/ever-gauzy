@@ -35,110 +35,172 @@ export class ProbotDiscovery implements OnModuleInit, OnApplicationBootstrap, On
 		this.probot = createProbot(this.config);
 	}
 
+	/**
+	 *
+	 */
 	public async onModuleInit() {
-		this.explore();
+		this.discoverInstanceWrappers();
 	}
 
+	/**
+	 * Implementation for onApplicationBootstrap
+	 * This method is called when the application is fully initialized.
+	 * You can perform setup tasks here.
+	 */
 	onApplicationBootstrap(): any {
+		// Check if webhookProxy is configured
 		if (!_.isEmpty(this.config.webhookProxy)) {
+			// Create and start a SmeeClient if webhookProxy is configured
 			this.smee = createSmee(this.config);
 			this.smee.start();
 		}
 
+		// Mount the webhook event listeners
 		this.mountHooks();
 	}
 
+	/**
+	 * Implementation for onApplicationShutdown
+	 * This method is called when the application is about to shut down.
+	 * You can perform cleanup tasks here.
+	 * @param signal
+	 */
 	onApplicationShutdown(signal?: string): any {
 		// TODO clear probot event handlers on shutdown
 	}
 
+	/**
+	 * Initialize and mount event listeners for Probot hooks.
+	 */
 	mountHooks() {
 		this.probot
-			.load(
-				(app: {
-					on: (
-						arg0: any,
-						arg1: (context: any) => Promise<void>
-					) => any;
-				}) => {
-					this.hooks.forEach((hook) => {
-						app.on(
-							hook.eventOrEvents,
-							this.initContext(hook.target)
-						);
-					});
-				}
-			)
+			.load((app: {
+				on: (eventName: any, callback: (context: any) => Promise<void>) => any;
+			}) => {
+				// Iterate through registered hooks and add event listeners
+				this.hooks.forEach((hook) => {
+					app.on(
+						hook.eventOrEvents,        // The event name or names to listen for
+						this.initContext(hook.target) // The callback function for the event
+					);
+				});
+			})
 			.then(() => {
+				// Log a message when hook event listeners are initialized
 				this.logger.log('Hook event listeners initialized');
 			})
-			.catch(this.logger.error);
+			.catch(this.logger.error); // Handle any errors that occur during initialization
 	}
 
+	/**
+	 * Create an asynchronous context wrapper for a function.
+	 * @param fn The original function to be wrapped.
+	 * @returns An asynchronous function that calls the original function.
+	 */
 	initContext(fn: (context: any) => any) {
 		return async (context: any) => {
-			await fn(context);
+			await fn(context); // Call the original function with the provided context.
 		};
 	}
 
-	explore() {
+
+	/**
+	 * Explore and analyze methods of instance wrappers (controllers and providers).
+	 */
+	discoverInstanceWrappers() {
+		// Get all instance wrappers for controllers and providers
 		const instanceWrappers: InstanceWrapper[] = [
 			...this.discoveryService.getControllers(),
 			...this.discoveryService.getProviders(),
 		];
 
-		instanceWrappers
-			.filter((wrapper: InstanceWrapper) => wrapper.isDependencyTreeStatic())
-			.forEach((wrapper: InstanceWrapper) => {
-				const { instance } = wrapper;
-				if (!instance || !Object.getPrototypeOf(instance)) {
-					return;
-				}
+		// Filter instance wrappers with static dependency trees
+		const staticInstanceWrappers = instanceWrappers.filter(
+			(wrapper: InstanceWrapper) => wrapper.isDependencyTreeStatic()
+		);
 
-				const prototype = Object.getPrototypeOf(instance);
-				const methodNames = this.metadataScanner.getAllMethodNames(prototype);
+		// Iterate through static instance wrappers and explore methods
+		staticInstanceWrappers.forEach((wrapper: InstanceWrapper) => {
+			const { instance } = wrapper;
 
-				methodNames.forEach((key: string) => this.lookupHooks(instance, key));
+			// Skip if instance or its prototype is missing
+			if (!instance || !Object.getPrototypeOf(instance)) {
+				return;
+			}
+
+			// Get the prototype of the instance
+			const instancePrototype = Object.getPrototypeOf(instance);
+
+			// Get all method names from the prototype
+			const methodNames = this.metadataScanner.getAllMethodNames(instancePrototype);
+
+			// Iterate through method names and lookup hooks
+			methodNames.forEach((methodName: string) => {
+				this.lookupHooks(instance, methodName);
 			});
+		});
 	}
 
+	/**
+	 * Look up and process webhook hooks associated with a method of an instance.
+	 * @param instance The instance to examine.
+	 * @param key The method name to inspect.
+	 * @returns The stored hook information or null if no webhook event definition.
+	 */
 	lookupHooks(instance: Record<string, () => any>, key: string) {
+		// Get the method reference from the instance
 		const methodRef = instance[key];
+		// Get webhook event metadata for the method
 		const hookMetadata = this.metadataAccessor.getWebhookEvents(methodRef);
+		// Wrap the method in try-catch blocks if needed
 		const hookFn = this.wrapFunctionInTryCatchBlocks(methodRef, instance);
 
-		// filter functions that do not have a webhook event definition
+		// If no webhook event definition, skip
 		if (_.isEmpty(hookMetadata)) {
 			return null;
 		}
 
+		// Generate a unique key and store the hook information
 		return this.hooks.set(v4(), {
 			target: hookFn,
 			eventOrEvents: hookMetadata,
 		});
 	}
 
+	/**
+	 * Wrap a method reference in try-catch blocks to handle errors and log them.
+	 * @param methodRef The method reference to wrap.
+	 * @param instance The instance to which the method belongs.
+	 * @returns An asynchronous function that handles errors and logs them.
+	 */
 	private wrapFunctionInTryCatchBlocks(
 		methodRef: () => any,
 		instance: Record<string, any>
 	) {
+		// Return an asynchronous function that wraps the method reference
 		return async (...args: unknown[]) => {
 			try {
-				// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-				// @ts-ignore
+				// Call the method reference with the provided instance and arguments
 				await methodRef.call(instance, ...args);
 			} catch (error) {
+				// Handle and log any errors using the logger
 				this.logger.error(error);
 			}
 		};
 	}
 
-	receiveHook(request: any) {
+	/**
+	 * Receive and process a GitHub webhook request.
+	 * @param request The incoming webhook request.
+	 * @returns A promise that resolves when the webhook is processed.
+	 */
+	public receiveHook(request: any) {
+		// Extract relevant information from the request
 		const id = request.headers['x-github-delivery'] as string;
 		const event = request.headers['x-github-event'];
 		const body = request.body;
 
-		console.log({ id, event, body });
+		// Call the probot's receive method with extracted information
 		return this.probot.receive({ id, name: event, payload: body });
 	}
 }

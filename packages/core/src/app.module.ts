@@ -255,6 +255,7 @@ if (environment.sentry && environment.sentry.dsn) {
 		...(github && environment.github.APP_ID
 			? [
 				ProbotModule.forRoot({
+					isGlobal: true,
 					path: 'integration/github/webhook', // Webhook URL in GitHub will be: https://api.gauzy.co/api/integration/github/webhook
 					config: {
 						/** Client Configuration */

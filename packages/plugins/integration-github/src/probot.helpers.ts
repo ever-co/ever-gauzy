@@ -53,14 +53,17 @@ export const createSmee = (config: ProbotConfig): SmeeClient => {
  * @returns An Octokit instance.
  */
 export const createOctokit = (config: OctokitConfig): Octokit => {
+	/** Parsed Probot Config */
+	const probot = parseConfig(config.probot);
+	/** return an Octokit instance. */
 	return new Octokit({
 		authStrategy: createAppAuth,
-		baseUrl: config.probot.ghUrl,
+		baseUrl: probot.ghUrl,
 		auth: {
-			appId: config.probot.appId,
-			privateKey: config.probot.privateKey,
-			clientId: config.probot.clientId,
-			clientSecret: config.probot.clientSecret,
+			appId: probot.appId,
+			privateKey: probot.privateKey,
+			clientId: probot.clientId,
+			clientSecret: probot.clientSecret,
 			...config.auth, // Include other auth options if needed
 		},
 	});

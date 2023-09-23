@@ -4,4 +4,4 @@ export * from './hook.decorator';
 export * from './probot.helpers';
 export * from './probot.discovery';
 
-export * from './github.service';
+export * from './octokit.service';

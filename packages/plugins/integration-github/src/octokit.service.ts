@@ -1,21 +1,29 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { ModuleProviders, ProbotConfig } from './probot.types';
 import { App } from 'octokit';
+import { ModuleProviders, ProbotConfig } from './probot.types';
 
 @Injectable()
-export class GitHubService {
+export class OctokitService {
+	/** */
 	private readonly app: App;
 
 	constructor(
 		@Inject(ModuleProviders.ProbotConfig)
 		private readonly config: ProbotConfig
 	) {
-		// TODO: BUG
-		// ENV variable is not working here, hence getting error (" secretOrPrivateKey must be an asymmetric key when using RS256")
 		this.app = new App({
 			appId: this.config.appId,
 			privateKey: this.config.privateKey,
 		});
+	}
+
+	/**
+	 *
+	 * @param installationId
+	 */
+	async getGithubMetadata(installationId: number) {
+		const octokit = await this.app.getInstallationOctokit(installationId);
+		console.log(octokit);
 	}
 
 	async openIssue(
@@ -26,20 +34,12 @@ export class GitHubService {
 		installationId: number
 	) {
 		const octokit = await this.app.getInstallationOctokit(installationId);
-
 		octokit
 			.request('POST /repos/{owner}/{repo}/issues', {
 				owner,
 				repo,
 				title,
 				body,
-
-				// TODO:
-				// pass dynamic values as required
-				// Add all the fields that we have
-				// Ex.
-				// labels: ['bug', 'GauzyAPI'],
-
 				headers: {
 					'X-GitHub-Api-Version': '2022-11-28',
 				},
@@ -51,6 +51,7 @@ export class GitHubService {
 				console.log('error', error);
 			});
 	}
+
 	async editIssue(
 		issueNumber: number,
 		title: string,
@@ -60,7 +61,6 @@ export class GitHubService {
 		installationId: number
 	) {
 		const octokit = await this.app.getInstallationOctokit(installationId);
-
 		octokit
 			.request('PATCH /repos/{owner}/{repo}/issues/{issue_number}', {
 				owner,

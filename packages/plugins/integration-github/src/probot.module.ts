@@ -8,10 +8,10 @@ import {
 import { ProbotDiscovery } from './probot.discovery';
 import { getControllerClass } from './hook.controller';
 import { HookMetadataAccessor } from './hook-metadata.accessor';
-import { GitHubService } from './github.service';
+import { OctokitService } from './octokit.service';
 
 @Module({
-	imports: [DiscoveryModule],
+	imports: [DiscoveryModule]
 })
 export class ProbotModule {
 	/**
@@ -32,9 +32,9 @@ export class ProbotModule {
 				},
 				HookMetadataAccessor,
 				ProbotDiscovery,
-				GitHubService,
+				OctokitService,
 			],
-			exports: [GitHubService],
+			exports: [OctokitService],
 		};
 	}
 
@@ -57,9 +57,9 @@ export class ProbotModule {
 				},
 				HookMetadataAccessor,
 				ProbotDiscovery,
-				GitHubService,
+				OctokitService,
 			],
-			exports: [GitHubService],
+			exports: [OctokitService],
 		};
 	}
 }
