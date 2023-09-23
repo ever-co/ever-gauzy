@@ -3,12 +3,12 @@ import { Router } from '@angular/router';
 import { debounceTime, filter, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { environment } from '@env/environment';
-import { IOrganization } from '@gauzy/contracts';
+import { IOrganization, IntegrationEnum } from '@gauzy/contracts';
 import { distinctUntilChange, toParams } from '@gauzy/common-angular';
 import { Store } from '../../../../../../@core/services';
 import { GITHUB_AUTHORIZATION_URL } from '../../github.config';
 
-@UntilDestroy()
+@UntilDestroy({ checkProperties: true })
 @Component({
 	templateUrl: './authorization.component.html'
 })
@@ -87,7 +87,7 @@ export class GithubAuthorizationComponent implements OnInit {
 		const { id: organizationId, tenantId } = this.organization;
 		const state = `${organizationId}|${tenantId}`;
 
-		const width = 800, height = 800;
+		const width = 600, height = 600;
 		const left = window.innerWidth - width; // Adjust the left position to place it on the right side
 		const top = window.innerHeight / 2 - height / 2;
 
@@ -99,8 +99,24 @@ export class GithubAuthorizationComponent implements OnInit {
 			// A window with the same name is already open, so focus on it
 			window.frames[windowName].focus();
 		} else {
+			/** Navigate to the target external URL */
+			const url = `https://github.com/apps/${environment.GITHUB_APP_NAME}/installations/new?state=${state.toString()}`;
+
 			/** Navigate to the external URL with query parameters */
-			this.window = window.open(`https://github.com/apps/${environment.GITHUB_APP_NAME}/installations/new?state=${state.toString()}`, windowName, `width=${width}, height=${height}, top=${top}, left=${left}`);
+			this.window = window.open(
+				url,
+				windowName,
+				`width=${width},
+				height=${height},
+				top=${top},
+				left=${left},
+				toolbar=no,
+				location=no,
+				status=no,
+				menubar=no,
+				scrollbars=yes,
+				resizable=yes,
+			`);
 		}
 	}
 
@@ -109,27 +125,32 @@ export class GithubAuthorizationComponent implements OnInit {
 	 */
 	private async checkPopupWindowStatus() {
 		const timer = setInterval(() => {
-			console.log(this.window);
 			if (this.window == null || this.window.closed) {
 				clearInterval(timer); // Stop checking when the window is closed
 				/** */
 				this.handleClosedPopupWindow();
 			} else {
-				console.log('Popup window still open');
+				console.log('popup window still open');
 			}
 		}, 1000); // Check every second (adjust the interval as needed)
 	}
 
 	/**
 	 * Handle the case when the popup window is closed.
+	 *
+	 * @param ms
 	 */
-	private handleClosedPopupWindow() {
+	private handleClosedPopupWindow(ms: number = 1000) {
 		this.isLoading = false;
-		console.log('Popup window closed');
+		console.log('popup window closed');
 
 		// Delay navigation by 5 seconds before redirecting
 		setTimeout(() => {
-			this.router.navigate(['/pages/integrations/new']);
-		}, 5000); // 5000 milliseconds = 5 seconds
+			this.router.navigate(['/pages/integrations/new'], {
+				queryParams: {
+					provider: IntegrationEnum.GITHUB
+				}
+			});
+		}, ms); // 5000 milliseconds = 5 seconds
 	}
 }
