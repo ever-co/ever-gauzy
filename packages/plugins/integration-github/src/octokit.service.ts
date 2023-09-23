@@ -1,4 +1,4 @@
-import { Inject, Injectable } from '@nestjs/common';
+import { Inject, Injectable, Logger } from '@nestjs/common';
 import { App } from 'octokit';
 import { ModuleProviders, ProbotConfig } from './probot.types';
 import { ResponseHeaders as OctokitResponseHeaders } from "@octokit/types";
@@ -14,6 +14,8 @@ export interface OctokitResponse<T> {
 
 @Injectable()
 export class OctokitService {
+	private readonly logger = new Logger('OctokitService');
+
 	/** */
 	private readonly app: App;
 
@@ -29,15 +31,17 @@ export class OctokitService {
 
 	/**
 	 * Get GitHub metadata for a specific installation.
+	 *
 	 * @param installation_id The installation ID for the GitHub App.
-	 * @returns GitHub metadata.
+	 * @returns {Promise<OctokitResponse<any>>} A promise that resolves with the GitHub metadata.
+	 * @throws {Error} If the request to fetch metadata fails.
 	 */
-	public async getInstallationMetadata(installation_id: number): Promise<OctokitResponse<any>> {
+	public async getGithubInstallationMetadata(installation_id: number): Promise<OctokitResponse<any>> {
 		try {
 			// Get an Octokit instance for the installation
 			const octokit = await this.app.getInstallationOctokit(installation_id);
 
-			// Send a request to the GitHub API to get metadata
+			// Send a request to the GitHub API to get installation metadata
 			return await octokit.request('GET /app/installations/{installation_id}', {
 				installation_id,
 				headers: {
@@ -45,7 +49,33 @@ export class OctokitService {
 				}
 			});
 		} catch (error) {
-			throw new Error('Failed to fetch GitHub metadata');
+			this.logger.error('Failed to fetch GitHub installation metadata', error.message);
+			throw new Error('Failed to fetch GitHub installation metadata');
+		}
+	}
+
+	/**
+	 * Get GitHub repositories for a specific installation.
+	 *
+	 * @param installation_id The installation ID for the GitHub App.
+	 * @returns {Promise<OctokitResponse<any>>} A promise that resolves with the GitHub repositories.
+	 * @throws {Error} If the request to fetch repositories fails.
+	 */
+	public async getGithubRepositories(installation_id: number): Promise<OctokitResponse<any>> {
+		try {
+			// Get an Octokit instance for the installation
+			const octokit = await this.app.getInstallationOctokit(installation_id);
+
+			// Send a request to the GitHub API to get repositories
+			return await octokit.request('GET /installation/repositories', {
+				installation_id,
+				headers: {
+					'X-GitHub-Api-Version': GITHUB_API_VERSION
+				}
+			});
+		} catch (error) {
+			this.logger.error('Failed to fetch GitHub installation repositories', error.message);
+			throw new Error('Failed to fetch GitHub installation repositories');
 		}
 	}
 
