@@ -1,6 +1,16 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { App } from 'octokit';
 import { ModuleProviders, ProbotConfig } from './probot.types';
+import { ResponseHeaders as OctokitResponseHeaders } from "@octokit/types";
+
+const GITHUB_API_VERSION = process.env.GITHUB_API_VERSION;
+
+export interface OctokitResponse<T> {
+	data: T; // The response data received from the GitHub API.
+	status: number; // The HTTP status code of the response (e.g., 200, 404, etc.).
+	headers: OctokitResponseHeaders; // The headers included in the response.
+	[key: string]: any; // Additional properties may be present depending on the specific response.
+}
 
 @Injectable()
 export class OctokitService {
@@ -18,12 +28,25 @@ export class OctokitService {
 	}
 
 	/**
-	 *
-	 * @param installationId
+	 * Get GitHub metadata for a specific installation.
+	 * @param installation_id The installation ID for the GitHub App.
+	 * @returns GitHub metadata.
 	 */
-	async getGithubMetadata(installationId: number) {
-		const octokit = await this.app.getInstallationOctokit(installationId);
-		console.log(octokit);
+	public async getInstallationMetadata(installation_id: number): Promise<OctokitResponse<any>> {
+		try {
+			// Get an Octokit instance for the installation
+			const octokit = await this.app.getInstallationOctokit(installation_id);
+
+			// Send a request to the GitHub API to get metadata
+			return await octokit.request('GET /app/installations/{installation_id}', {
+				installation_id,
+				headers: {
+					'X-GitHub-Api-Version': GITHUB_API_VERSION
+				}
+			});
+		} catch (error) {
+			throw new Error('Failed to fetch GitHub metadata');
+		}
 	}
 
 	async openIssue(

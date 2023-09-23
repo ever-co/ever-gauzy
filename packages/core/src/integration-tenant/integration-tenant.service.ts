@@ -9,8 +9,8 @@ import {
 	IIntegrationTenantFindInput,
 	IntegrationEnum
 } from '@gauzy/contracts';
-import { RequestContext } from './../core/context';
-import { TenantAwareCrudService } from './../core/crud';
+import { RequestContext } from 'core/context';
+import { TenantAwareCrudService } from 'core/crud';
 import { IntegrationTenant } from './integration-tenant.entity';
 
 @Injectable()

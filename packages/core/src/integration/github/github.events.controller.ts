@@ -2,13 +2,13 @@ import { Controller } from '@nestjs/common';
 import { Context } from 'probot';
 import { Public } from '@gauzy/common';
 import { Hook } from '@gauzy/integration-github';
-import { GithubService } from './github.service';
+import { GithubHooksService } from './github.events.service';
 
 @Public()
 @Controller('webhook')
-export class GitHubEventsController {
+export class GitHubHooksController {
     constructor(
-        private readonly _githubService: GithubService
+        private readonly _githubHooksService: GithubHooksService
     ) { }
 
     /**
@@ -17,7 +17,7 @@ export class GitHubEventsController {
      */
     @Hook(['issues.opened'])
     async issuesOpened(context: Context) {
-        await this._githubService.issuesOpened(context);
+        await this._githubHooksService.issuesOpened(context);
     }
 
     /**
@@ -26,6 +26,6 @@ export class GitHubEventsController {
      */
     @Hook(['issues.edited'])
     async issuesEdited(context: Context) {
-        await this._githubService.issuesEdited(context);
+        await this._githubHooksService.issuesEdited(context);
     }
 }

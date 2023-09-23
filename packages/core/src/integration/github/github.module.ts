@@ -1,30 +1,37 @@
 import { Module, forwardRef } from '@nestjs/common';
 import { HttpModule } from '@nestjs/axios';
 import { CqrsModule } from '@nestjs/cqrs';
-import { ProbotModule } from '@gauzy/integration-github';
-import { TenantModule } from './../../tenant/tenant.module';
-import { UserModule } from './../../user/user.module';
-import { IntegrationModule } from './../../integration/integration.module';
-import { GithubService } from './github.service';
+import { TenantModule } from 'tenant/tenant.module';
+import { UserModule } from 'user/user.module';
+import { IntegrationModule } from 'integration/integration.module';
+import { GitHubAuthorizationController } from './github-authorization.controller';
 import { GitHubController } from './github.controller';
-import { GitHubEventsController } from './github.events.controller';
-import { GitHubPostInstallController } from './github-install.controller';
+import { GitHubIntegrationController } from './github-integration.controller';
+import { GitHubHooksController } from './github.events.controller';
+import { GithubService } from './github.service';
+import { GithubHooksService } from './github.events.service';
 
 @Module({
 	imports: [
 		HttpModule,
 		TenantModule,
 		UserModule,
-		ProbotModule,
 		CqrsModule,
 		forwardRef(() => IntegrationModule)
 	],
 	controllers: [
+		GitHubAuthorizationController,
 		GitHubController,
-		GitHubPostInstallController,
-		GitHubEventsController
+		GitHubIntegrationController,
+		GitHubHooksController
 	],
-	providers: [GithubService],
-	exports: [GithubService],
+	providers: [
+		GithubService,
+		GithubHooksService
+	],
+	exports: [
+		GithubService,
+		GithubHooksService
+	],
 })
 export class GithubModule { }

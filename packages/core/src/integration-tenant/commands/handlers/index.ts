@@ -1,3 +1,4 @@
+import { IntegrationTenantUpdateOrCreateHandler } from './integration-tenant-update-or-create.handler';
 import { IntegrationTenantCreateHandler } from './integration-tenant.create.handler';
 import { IntegrationTenantGetHandler } from './integration-tenant.get.handler';
 import { IntegrationTenantUpdateHandler } from './integration-tenant.update.handler';
@@ -5,5 +6,6 @@ import { IntegrationTenantUpdateHandler } from './integration-tenant.update.hand
 export const CommandHandlers = [
 	IntegrationTenantCreateHandler,
 	IntegrationTenantGetHandler,
-	IntegrationTenantUpdateHandler
+	IntegrationTenantUpdateHandler,
+	IntegrationTenantUpdateOrCreateHandler
 ];
