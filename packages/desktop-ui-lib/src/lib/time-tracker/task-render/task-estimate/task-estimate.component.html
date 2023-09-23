@@ -1,5 +1,18 @@
-<div class="row">
-	<div class="col-12">
-		{{ task?.estimate || 0 | durationFormat }}
+<div class="row estimate-container">
+	<div class="col-12 estimate">
+		<div class="__label">{{ isEdit ? 'Edit:' : 'Estimate:' }}</div>
+		<ng-container *ngIf="!isEdit; else edit">
+			<div class="__value">
+				{{ (estimate$ | async) || 0 | durationFormat : 'HH:mm' }}
+			</div>
+			<nb-icon (click)="isEdit = true" icon="edit-2-outline"></nb-icon>
+		</ng-container>
 	</div>
 </div>
+
+<ng-template #edit>
+	<gauzy-task-estimate-input
+		(submit)="update($event)"
+		[estimate$]="estimate$"
+	></gauzy-task-estimate-input>
+</ng-template>
