@@ -17,4 +17,7 @@ export interface IGithubIntegrationConfig {
 	/** */
 	readonly WEBHOOK_URL: string;
 	readonly WEBHOOK_SECRET: string;
+
+	/** */
+	readonly API_VERSION: string;
 }
