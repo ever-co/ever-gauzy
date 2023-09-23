@@ -305,6 +305,10 @@ You can also view a full list of our [contributors tracked by Github](https://gi
 
 <img src="https://contributors-img.web.app/image?repo=ever-co/ever-gauzy" />
 
+## ⭐ Star History
+
+[![Star History Chart](https://api.star-history.com/svg?repos=ever-co/ever-gauzy&type=Date)](https://star-history.com/#ever-co/ever-gauzy&Date)
+
 ## ❤️ Powered By
 
 <p>
