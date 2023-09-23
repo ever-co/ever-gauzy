@@ -16,7 +16,7 @@ export class TaskRenderCellComponent extends TaskRenderComponent {
 	}
 
 	public get number(): string {
-		return `#${this.task.taskNumber}`;
+		return `#${this.task.taskNumber || this.buildTaskNumber()}`;
 	}
 
 	public get status(): string {
@@ -36,5 +36,13 @@ export class TaskRenderCellComponent extends TaskRenderComponent {
 			map((task) => task?.isSelected),
 			untilDestroyed(this)
 		);
+	}
+
+	private buildTaskNumber() {
+		if (!this.task.prefix || !this.task.number) return;
+		return this.task.prefix
+			.concat('-')
+			.concat(String(this.task.number))
+			.toUpperCase();
 	}
 }
