@@ -1,0 +1,21 @@
+<div class="task-render">
+	<div [nbTooltip]="title" class="detail">
+		<nb-icon
+			*ngIf="isSelected$ | async"
+			class="running-task"
+			icon="arrow-right-outline"
+			status="primary"
+		></nb-icon>
+		<div *ngIf="number" class="task-number">
+			{{ number }}
+		</div>
+		<div class="task-title-container">
+			<div class="task-title">{{ title }}</div>
+			<div *ngIf="size" class="bge size">{{ size }}</div>
+		</div>
+	</div>
+	<div class="badges">
+		<div *ngIf="status" class="bge stats">{{ status }}</div>
+		<div *ngIf="priority" class="bge priority">{{ priority }}</div>
+	</div>
+</div>
