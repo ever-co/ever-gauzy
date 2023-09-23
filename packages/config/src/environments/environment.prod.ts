@@ -97,18 +97,14 @@ export const environment: IEnvironment = {
 		clientId: process.env.FACEBOOK_CLIENT_ID,
 		clientSecret: process.env.FACEBOOK_CLIENT_SECRET,
 		fbGraphVersion: process.env.FACEBOOK_GRAPH_VERSION,
-		oauthRedirectUri:
-			process.env.FACEBOOK_CALLBACK_URL ||
-			`${process.env.API_HOST}:${process.env.API_PORT}/api/auth/facebook/callback`,
+		oauthRedirectUri: process.env.FACEBOOK_CALLBACK_URL || `${process.env.API_BASE_URL}/api/auth/facebook/callback`,
 		state: '{fbstate}',
 	},
 
 	googleConfig: {
 		clientId: process.env.GOOGLE_CLIENT_ID,
 		clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-		callbackUrl:
-			process.env.GOOGLE_CALLBACK_URL ||
-			`${process.env.API_HOST}:${process.env.API_PORT}/api/auth/google/callback`,
+		callbackUrl: process.env.GOOGLE_CALLBACK_URL || `${process.env.API_BASE_URL}/api/auth/google/callback`,
 	},
 
 	github: {
@@ -136,25 +132,19 @@ export const environment: IEnvironment = {
 		clientSecret: process.env.MICROSOFT_CLIENT_SECRET,
 		resource: process.env.MICROSOFT_RESOURCE,
 		tenant: process.env.MICROSOFT_TENANT,
-		callbackUrl:
-			process.env.MICROSOFT_CALLBACK_URL ||
-			`http://${process.env.API_HOST}:${process.env.API_PORT}/api/auth/microsoft/callback`,
+		callbackUrl: process.env.MICROSOFT_CALLBACK_URL || `${process.env.API_BASE_URL}/api/auth/microsoft/callback`,
 	},
 
 	linkedinConfig: {
 		clientId: process.env.LINKEDIN_CLIENT_ID,
 		clientSecret: process.env.LINKEDIN_CLIENT_SECRET,
-		callbackUrl:
-			process.env.LINKEDIN_CALLBACK_URL ||
-			`http://${process.env.API_HOST}:${process.env.API_PORT}/api/auth/linked/callback`,
+		callbackUrl: process.env.LINKEDIN_CALLBACK_URL || `${process.env.API_BASE_URL}/api/auth/linked/callback`,
 	},
 
 	twitterConfig: {
 		clientId: process.env.TWITTER_CLIENT_ID,
 		clientSecret: process.env.TWITTER_CLIENT_SECRET,
-		callbackUrl:
-			process.env.TWITTER_CALLBACK_URL ||
-			`http://${process.env.API_HOST}:${process.env.API_PORT}/api/auth/twitter/callback`,
+		callbackUrl: process.env.TWITTER_CALLBACK_URL || `${process.env.API_BASE_URL}/api/auth/twitter/callback`,
 	},
 
 	fiverrConfig: {
@@ -180,17 +170,23 @@ export const environment: IEnvironment = {
 		dsn: process.env.SENTRY_DSN,
 	},
 
-	defaultIntegratedUserPass:
-		process.env.INTEGRATED_USER_DEFAULT_PASS || '123456',
+	defaultIntegratedUserPass: process.env.INTEGRATED_USER_DEFAULT_PASS || '123456',
 
 	upworkConfig: {
 		callbackUrl: process.env.UPWORK_REDIRECT_URL || `${process.env.API_BASE_URL}/api/integrations/upwork/callback`,
 	},
 
+	hubstaff: {
+		/** Hubstaff Integration Configuration */
+		CLIENT_ID: process.env.HUBSTAFF_CLIENT_ID,
+		CLIENT_SECRET: process.env.HUBSTAFF_CLIENT_SECRET,
+		/** Hubstaff Integration Post Install URL */
+		POST_INSTALL_URL: process.env.HUBSTAFF_POST_INSTALL_URL || `${process.env.CLIENT_BASE_URL}/#/pages/integrations/wizard/hubstaff`,
+	},
+
 	isElectron: process.env.IS_ELECTRON === 'true' ? true : false,
 	gauzyUserPath: process.env.GAUZY_USER_PATH,
-	allowSuperAdminRole:
-		process.env.ALLOW_SUPER_ADMIN_ROLE === 'false' ? false : true,
+	allowSuperAdminRole: process.env.ALLOW_SUPER_ADMIN_ROLE === 'false' ? false : true,
 
 	/**
 	 * Endpoint for Gauzy AI API (optional), e.g.: http://localhost:3005/graphql

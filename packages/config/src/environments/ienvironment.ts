@@ -12,6 +12,7 @@ import {
 	IFiverrConfig,
 	IGithubConfig,
 	IGoogleConfig,
+	IHubstaffConfig,
 	IKeycloakConfig,
 	ILinkedinConfig,
 	IMicrosoftConfig,
@@ -119,6 +120,7 @@ export interface IEnvironment {
 	defaultIntegratedUserPass?: string;
 
 	upworkConfig?: IUpworkConfig;
+	hubstaff?: IHubstaffConfig;
 	isElectron?: boolean;
 	gauzyUserPath?: string;
 	allowSuperAdminRole?: boolean;
