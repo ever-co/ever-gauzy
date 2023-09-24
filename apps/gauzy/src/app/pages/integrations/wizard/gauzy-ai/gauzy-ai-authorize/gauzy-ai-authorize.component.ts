@@ -117,7 +117,7 @@ export class GauzyAIAuthorizeComponent implements AfterViewInit, OnInit, OnDestr
 	 * Gauzy AI integration remember state API call
 	 */
 	private _redirectToGauzyAIIntegration(integrationId: string) {
-		this._router.navigate([this._router.url, integrationId]);
+		this._router.navigate(['pages/integrations/wizard/gauzy-ai', integrationId]);
 	}
 
 	/**

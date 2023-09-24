@@ -114,7 +114,7 @@ export class HubstaffAuthorizeComponent implements OnInit, OnDestroy {
 	 * Hubstaff integration remember state API call
 	 */
 	private _redirectToHubstaffIntegration(integrationId: IIntegration['id']) {
-		this._router.navigate([this._router.url, integrationId]);
+		this._router.navigate(['pages/integrations/wizard/hubstaff', integrationId]);
 	}
 
 	authorizeHubstaff() {

@@ -119,8 +119,10 @@ export interface IEnvironment {
 	 */
 	defaultIntegratedUserPass?: string;
 
-	upworkConfig?: IUpworkConfig;
+	/** Third Party Integrations */
+	upwork?: IUpworkConfig;
 	hubstaff?: IHubstaffConfig;
+
 	isElectron?: boolean;
 	gauzyUserPath?: string;
 	allowSuperAdminRole?: boolean;

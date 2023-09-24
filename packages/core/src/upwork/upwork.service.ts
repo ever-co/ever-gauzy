@@ -165,7 +165,7 @@ export class UpworkService {
 
 		this._upworkApi = new UpworkApi(config);
 
-		const authUrl = environment.upworkConfig.callbackUrl;
+		const authUrl = environment.upwork.CALLBACK_URL;
 
 		console.log(`Upwork callback URL: ${authUrl}`);
 

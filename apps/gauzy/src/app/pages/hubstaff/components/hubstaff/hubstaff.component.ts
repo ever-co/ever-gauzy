@@ -258,7 +258,7 @@ export class HubstaffComponent extends TranslationBaseComponent implements OnIni
 			{
 				title: this.getTranslation('INTEGRATIONS.RE_INTEGRATE'),
 				icon: 'text-outline',
-				link: `pages/integrations/hubstaff/regenerate`
+				link: `pages/integrations/wizard/hubstaff/regenerate`
 			},
 			{
 				title: this.getTranslation('INTEGRATIONS.SETTINGS'),

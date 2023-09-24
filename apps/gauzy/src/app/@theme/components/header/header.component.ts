@@ -529,7 +529,7 @@ export class HeaderComponent extends TranslationBaseComponent implements OnInit,
 					{
 						title: this.getTranslation('CONTEXT_MENU.CONTRACT'),
 						icon: 'file-text-outline',
-						link: 'pages/integrations/upwork'
+						link: 'pages/integrations/wizard/upwork'
 					}
 				]
 				: []),

@@ -172,8 +172,11 @@ export const environment: IEnvironment = {
 
 	defaultIntegratedUserPass: process.env.INTEGRATED_USER_DEFAULT_PASS || '123456',
 
-	upworkConfig: {
-		callbackUrl: process.env.UPWORK_REDIRECT_URL || `${process.env.API_BASE_URL}/api/integrations/upwork/callback`,
+	upwork: {
+		API_KEY: process.env.UPWORK_API_KEY,
+		API_SECRET: process.env.UPWORK_API_SECRET,
+		CALLBACK_URL: process.env.UPWORK_REDIRECT_URL || `${process.env.API_BASE_URL}/api/integrations/upwork/callback`,
+		POST_INSTALL_URL: process.env.UPWORK_POST_INSTALL_URL || `${process.env.CLIENT_BASE_URL}/#/pages/integrations/wizard/upwork`,
 	},
 
 	hubstaff: {
