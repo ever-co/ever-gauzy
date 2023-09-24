@@ -16,10 +16,8 @@ export class IntegrationTenantGetHandler implements ICommandHandler<IntegrationT
 	): Promise<IntegrationTenant> {
 		try {
 			const { input } = command;
-			console.log({ input });
 			return await this._integrationTenantService.findOneByOptions(input);
 		} catch (error) {
-			console.log('Error while getting integration tenant: %s', error.message);
 			// Handle errors and return an appropriate error response
 			throw new HttpException(`Failed to get integration tenant: ${error.message}`, HttpStatus.INTERNAL_SERVER_ERROR);
 		}

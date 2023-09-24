@@ -1,12 +1,13 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 import { IIntegrationKeySecretPairInput, IIntegrationTenant, IntegrationEnum } from '@gauzy/contracts';
 import { RequestContext } from '../../core/context';
-import { IntegrationTenantCreateCommand } from '../../integration-tenant/commands';
+import { IntegrationTenantFirstOrCreateCommand } from '../../integration-tenant/commands';
 import { IntegrationService } from './../../integration/integration.service';
 
 @Injectable()
 export class IntegrationAIService {
+	private readonly logger = new Logger('IntegrationAIService');
 
 	constructor(
 		private readonly _commandBus: CommandBus,
@@ -23,34 +24,53 @@ export class IntegrationAIService {
 		input: IIntegrationKeySecretPairInput
 	): Promise<IIntegrationTenant> {
 
-		const tenantId = RequestContext.currentTenantId();
-		const { client_id, client_secret, organizationId } = input;
+		try {
+			const tenantId = RequestContext.currentTenantId();
+			const { client_id, client_secret, organizationId } = input;
 
-		const integration = await this._integrationService.findOneByOptions({
-			where: {
-				provider: IntegrationEnum.GAUZY_AI
-			}
-		});
+			const integration = await this._integrationService.findOneByOptions({
+				where: {
+					provider: IntegrationEnum.GAUZY_AI
+				}
+			});
 
-		return await this._commandBus.execute(
-			new IntegrationTenantCreateCommand({
-				name: IntegrationEnum.GAUZY_AI,
-				integration,
-				entitySettings: [],
-				settings: [
+			/** Execute the command to create the integration tenant settings */
+			return await this._commandBus.execute(
+				new IntegrationTenantFirstOrCreateCommand(
 					{
-						settingsName: 'apiKey',
-						settingsValue: client_id,
-
+						name: IntegrationEnum.GAUZY_AI,
+						integration: {
+							provider: IntegrationEnum.GAUZY_AI
+						},
+						tenantId,
+						organizationId,
 					},
 					{
-						settingsName: 'apiSecret',
-						settingsValue: client_secret
+						name: IntegrationEnum.GAUZY_AI,
+						integration,
+						organizationId,
+						tenantId,
+						entitySettings: [],
+						settings: [
+							{
+								settingsName: 'apiKey',
+								settingsValue: client_id
+							},
+							{
+								settingsName: 'apiSecret',
+								settingsValue: client_secret
+							}
+						].map((setting) => ({
+							...setting,
+							tenantId,
+							organizationId,
+						}))
 					}
-				],
-				organizationId,
-				tenantId,
-			})
-		);
+				)
+			);
+		} catch (error) {
+			this.logger.error(`Error while creating ${IntegrationEnum.GAUZY_AI} integration settings`, error?.message);
+			throw new Error(`Failed to add ${IntegrationEnum.GAUZY_AI} integration`);
+		}
 	}
 }

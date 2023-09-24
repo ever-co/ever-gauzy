@@ -5,7 +5,7 @@ import { catchError, lastValueFrom, switchMap } from 'rxjs';
 import { filter } from 'rxjs/operators';
 import { environment } from '@gauzy/config';
 import { IGithubAppInstallInput, IIntegrationTenant, IntegrationEnum } from '@gauzy/contracts';
-import { IntegrationTenantCreateCommand, IntegrationTenantFirstOrCreateCommand } from 'integration-tenant/commands';
+import { IntegrationTenantFirstOrCreateCommand } from 'integration-tenant/commands';
 import { IntegrationService } from 'integration/integration.service';
 import { RequestContext } from '../../core/context';
 import { GITHUB_ACCESS_TOKEN_URL } from './github.config';
@@ -36,7 +36,6 @@ export class GithubService {
 	 * @returns
 	 */
 	async addGithubAppInstallation(input: IGithubAppInstallInput) {
-		console.log(input);
 		try {
 			// Validate the input data (You can use class-validator for validation)
 			if (!input || !input.installation_id || !input.setup_action) {
@@ -71,22 +70,22 @@ export class GithubService {
 					settings: [
 						{
 							settingsName: 'installation_id',
-							settingsValue: installation_id,
-							tenantId,
-							organizationId
+							settingsValue: installation_id
 						},
 						{
 							settingsName: 'setup_action',
-							settingsValue: setup_action,
-							tenantId,
-							organizationId
+							settingsValue: setup_action
 						},
-					]
+					].map((setting) => ({
+						...setting,
+						tenantId,
+						organizationId,
+					}))
 				})
 			);
 		} catch (error) {
-			this.logger.error('Error while creating GitHub integration settings', error?.message);
-			throw new Error('Failed to add GitHub App Installation');
+			this.logger.error(`Error while creating ${IntegrationEnum.GAUZY_AI} integration settings`, error?.message);
+			throw new Error(`Failed to add ${IntegrationEnum.GAUZY_AI} App Installation`);
 		}
 	}
 
@@ -123,27 +122,41 @@ export class GithubService {
 			}).pipe(
 				filter(({ data }) => !!data.error),
 				switchMap(({ data }) => this._commandBus.execute(
-					new IntegrationTenantCreateCommand({
-						name: IntegrationEnum.GITHUB,
-						integration,
-						tenantId,
-						organizationId,
-						entitySettings: [],
-						settings: [
-							{
-								settingsName: 'token_type',
-								settingsValue: data.token_type
+					new IntegrationTenantFirstOrCreateCommand(
+						{
+							name: IntegrationEnum.GITHUB,
+							integration: {
+								provider: IntegrationEnum.GITHUB
 							},
-							{
-								settingsName: 'access_token',
-								settingsValue: data.access_token
-							},
-							{
-								settingsName: 'scope',
-								settingsValue: data.scope
-							}
-						]
-					})
+							tenantId,
+							organizationId,
+						},
+						{
+							name: IntegrationEnum.GITHUB,
+							integration,
+							tenantId,
+							organizationId,
+							entitySettings: [],
+							settings: [
+								{
+									settingsName: 'token_type',
+									settingsValue: data.token_type
+								},
+								{
+									settingsName: 'access_token',
+									settingsValue: data.access_token
+								},
+								{
+									settingsName: 'scope',
+									settingsValue: data.scope
+								}
+							].map((setting) => ({
+								...setting,
+								tenantId,
+								organizationId,
+							}))
+						}
+					)
 				)),
 				catchError((error) => {
 					throw new BadRequestException(error);
