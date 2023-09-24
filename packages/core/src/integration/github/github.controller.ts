@@ -1,8 +1,9 @@
-import { Controller, Post, Body, UseGuards, HttpException, HttpStatus, HttpCode } from '@nestjs/common';
+import { Controller, Post, Body, UseGuards, HttpException, HttpStatus, HttpCode, UsePipes, ValidationPipe } from '@nestjs/common';
 import { IGithubAppInstallInput, PermissionsEnum } from '@gauzy/contracts';
 import { PermissionGuard, TenantPermissionGuard } from 'shared/guards';
 import { Permissions } from 'shared/decorators';
 import { GithubService } from './github.service';
+import { GithubAppInstallDTO } from './dto';
 
 @UseGuards(TenantPermissionGuard, PermissionGuard)
 @Permissions(PermissionsEnum.INTEGRATION_VIEW)
@@ -19,8 +20,10 @@ export class GitHubController {
 	 */
 	@Post('install')
 	@HttpCode(HttpStatus.CREATED)
-	// ToDo - Create Class Validation DTO to validate request
-	async addGithubAppInstallation(@Body() input: IGithubAppInstallInput) {
+	@UsePipes(new ValidationPipe())
+	async addGithubAppInstallation(
+		@Body() input: GithubAppInstallDTO
+	) {
 		try {
 			// Validate the input data (You can use class-validator for validation)
 			if (!input || !input.installation_id || !input.setup_action) {

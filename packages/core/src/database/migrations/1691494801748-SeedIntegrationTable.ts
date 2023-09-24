@@ -64,7 +64,7 @@ export class SeedIntegrationTable1691494801748 implements MigrationInterface {
                             "name", "imgSrc", "isComingSoon", "order"
                         )
                         VALUES (
-                            $1, $2, $3, $4, $5
+                            $1, $2, $3, $4
                         )
                         ON CONFLICT(name) DO UPDATE
                         SET
