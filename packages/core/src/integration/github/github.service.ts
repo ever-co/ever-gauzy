@@ -5,7 +5,7 @@ import { catchError, lastValueFrom, switchMap } from 'rxjs';
 import { filter } from 'rxjs/operators';
 import { environment } from '@gauzy/config';
 import { IGithubAppInstallInput, IIntegrationTenant, IntegrationEnum } from '@gauzy/contracts';
-import { IntegrationTenantCreateCommand, IntegrationTenantUpdateOrCreateCommand } from 'integration-tenant/commands';
+import { IntegrationTenantCreateCommand, IntegrationTenantFirstOrCreateCommand } from 'integration-tenant/commands';
 import { IntegrationService } from 'integration/integration.service';
 import { RequestContext } from '../../core/context';
 import { GITHUB_ACCESS_TOKEN_URL } from './github.config';
@@ -55,9 +55,13 @@ export class GithubService {
 
 			/** Execute the command to create the integration tenant settings */
 			return await this._commandBus.execute(
-				new IntegrationTenantUpdateOrCreateCommand({
+				new IntegrationTenantFirstOrCreateCommand({
 					name: IntegrationEnum.GITHUB,
-					integrationId: integration.id,
+					integration: {
+						provider: IntegrationEnum.GITHUB
+					},
+					tenantId,
+					organizationId,
 				}, {
 					name: IntegrationEnum.GITHUB,
 					integration,
