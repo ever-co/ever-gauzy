@@ -127,7 +127,7 @@ export class UpworkAuthorizeComponent implements OnInit, OnDestroy {
 	 * @param integrationId
 	 */
 	private _redirectToUpworkIntegration(integrationId: string) {
-		this._router.navigate(['pages/integrations/wizard/upwork', integrationId]);
+		this._router.navigate(['pages/integrations/upwork', integrationId]);
 	}
 
 	ngOnDestroy(): void { }

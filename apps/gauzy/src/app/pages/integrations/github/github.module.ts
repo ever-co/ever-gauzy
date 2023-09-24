@@ -1,15 +1,15 @@
 import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { NbCardModule } from '@nebular/theme';
-import { TranslateModule } from './../../../../@shared/translate/translate.module';
+import { TranslateModule } from './../../../@shared/translate/translate.module';
 import { GithubRoutingModule } from './github-routing.module';
-import { GithubAuthorizationComponent } from './components/authorization/authorization.component';
-import { GithubInstallationsComponent } from './components/installations/installations.component';
+import { GithubWizardComponent } from './components/wizard/wizard.component';
+import { GithubInstallationComponent } from './components/installation/installation.component';
 
 @NgModule({
 	declarations: [
-		GithubAuthorizationComponent,
-		GithubInstallationsComponent
+		GithubWizardComponent,
+		GithubInstallationComponent
 	],
 	imports: [
 		CommonModule,

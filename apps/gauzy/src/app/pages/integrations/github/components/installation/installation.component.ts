@@ -3,14 +3,13 @@ import { ActivatedRoute } from '@angular/router';
 import { filter, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { IGithubAppInstallInput, IOrganization } from '@gauzy/contracts';
-import { GithubService } from './../../../../../../@core/services';
+import { GithubService } from '../../../../../@core/services';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'github-integration-installations',
-	templateUrl: './installations.component.html'
+	templateUrl: './installation.component.html'
 })
-export class GithubInstallationsComponent implements OnInit {
+export class GithubInstallationComponent implements OnInit {
 
 	public isLoading: boolean = true;
 	public organization: IOrganization;
@@ -71,7 +70,6 @@ export class GithubInstallationsComponent implements OnInit {
 			window.opener = null;
 			window.open("", "_self");
 			window.close();
-
-		}, 2000); // 2000 milliseconds = 5 seconds
+		}, 2000); // 2000 milliseconds = 2 seconds
 	}
 }

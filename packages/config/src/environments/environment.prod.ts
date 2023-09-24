@@ -176,7 +176,7 @@ export const environment: IEnvironment = {
 		API_KEY: process.env.UPWORK_API_KEY,
 		API_SECRET: process.env.UPWORK_API_SECRET,
 		CALLBACK_URL: process.env.UPWORK_REDIRECT_URL || `${process.env.API_BASE_URL}/api/integrations/upwork/callback`,
-		POST_INSTALL_URL: process.env.UPWORK_POST_INSTALL_URL || `${process.env.CLIENT_BASE_URL}/#/pages/integrations/wizard/upwork`,
+		POST_INSTALL_URL: process.env.UPWORK_POST_INSTALL_URL || `${process.env.CLIENT_BASE_URL}/#/pages/integrations/upwork`,
 	},
 
 	hubstaff: {
@@ -184,7 +184,7 @@ export const environment: IEnvironment = {
 		CLIENT_ID: process.env.HUBSTAFF_CLIENT_ID,
 		CLIENT_SECRET: process.env.HUBSTAFF_CLIENT_SECRET,
 		/** Hubstaff Integration Post Install URL */
-		POST_INSTALL_URL: process.env.HUBSTAFF_POST_INSTALL_URL || `${process.env.CLIENT_BASE_URL}/#/pages/integrations/wizard/hubstaff`,
+		POST_INSTALL_URL: process.env.HUBSTAFF_POST_INSTALL_URL || `${process.env.CLIENT_BASE_URL}/#/pages/integrations/hubstaff`,
 	},
 
 	isElectron: process.env.IS_ELECTRON === 'true' ? true : false,

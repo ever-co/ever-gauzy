@@ -108,12 +108,12 @@ export class UpworkComponent
 			{
 				title: this.getTranslation('INTEGRATIONS.RE_INTEGRATE'),
 				icon: 'text-outline',
-				link: `pages/integrations/wizard/upwork/regenerate`
+				link: `pages/integrations/upwork/regenerate`
 			},
 			{
 				title: this.getTranslation('INTEGRATIONS.SETTINGS'),
 				icon: 'settings-2-outline',
-				link: `pages/integrations/wizard/upwork/${this.integrationId}/settings`
+				link: `pages/integrations/upwork/${this.integrationId}/settings`
 			}
 		];
 	}

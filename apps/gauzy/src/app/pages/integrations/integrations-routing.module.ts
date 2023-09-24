@@ -7,35 +7,30 @@ const routes: Routes = [
 		path: 'new',
 		component: IntegrationsComponent
 	},
-	/** Integrations Wizard List */
+	/** Integrations List */
 	{
-		path: 'wizard',
-		children: [
-			{
-				path: 'upwork',
-				loadChildren: () => import('../upwork/upwork.module').then(
-					(m) => m.UpworkModule
-				)
-			},
-			{
-				path: 'hubstaff',
-				loadChildren: () => import('../hubstaff/hubstaff.module').then(
-					(m) => m.HubstaffModule
-				)
-			},
-			{
-				path: 'gauzy-ai',
-				loadChildren: () => import('./wizard/gauzy-ai/gauzy-ai.module').then(
-					(m) => m.GauzyAIModule
-				)
-			},
-			{
-				path: 'github',
-				loadChildren: () => import('./wizard/github/github.module').then(
-					(m) => m.GithubModule
-				)
-			}
-		]
+		path: 'upwork',
+		loadChildren: () => import('../upwork/upwork.module').then(
+			(m) => m.UpworkModule
+		)
+	},
+	{
+		path: 'hubstaff',
+		loadChildren: () => import('../hubstaff/hubstaff.module').then(
+			(m) => m.HubstaffModule
+		)
+	},
+	{
+		path: 'gauzy-ai',
+		loadChildren: () => import('./gauzy-ai/gauzy-ai.module').then(
+			(m) => m.GauzyAIModule
+		)
+	},
+	{
+		path: 'github',
+		loadChildren: () => import('./github/github.module').then(
+			(m) => m.GithubModule
+		)
 	}
 ];
 

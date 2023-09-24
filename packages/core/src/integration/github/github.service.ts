@@ -5,7 +5,7 @@ import { catchError, lastValueFrom, switchMap } from 'rxjs';
 import { filter } from 'rxjs/operators';
 import { environment } from '@gauzy/config';
 import { IGithubAppInstallInput, IIntegrationTenant, IntegrationEnum } from '@gauzy/contracts';
-import { IntegrationTenantCreateCommand } from 'integration-tenant/commands';
+import { IntegrationTenantCreateCommand, IntegrationTenantUpdateOrCreateCommand } from 'integration-tenant/commands';
 import { IntegrationService } from 'integration/integration.service';
 import { RequestContext } from '../../core/context';
 import { GITHUB_ACCESS_TOKEN_URL } from './github.config';
@@ -36,6 +36,7 @@ export class GithubService {
 	 * @returns
 	 */
 	async addGithubAppInstallation(input: IGithubAppInstallInput) {
+		console.log(input);
 		try {
 			// Validate the input data (You can use class-validator for validation)
 			if (!input || !input.installation_id || !input.setup_action) {
@@ -51,9 +52,13 @@ export class GithubService {
 					provider: IntegrationEnum.GITHUB
 				}
 			});
+
 			/** Execute the command to create the integration tenant settings */
 			return await this._commandBus.execute(
-				new IntegrationTenantCreateCommand({
+				new IntegrationTenantUpdateOrCreateCommand({
+					name: IntegrationEnum.GITHUB,
+					integrationId: integration.id,
+				}, {
 					name: IntegrationEnum.GITHUB,
 					integration,
 					tenantId,

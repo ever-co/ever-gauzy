@@ -1,18 +1,18 @@
 import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
-import { debounceTime, filter, tap } from 'rxjs/operators';
+import { filter, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { environment } from '@env/environment';
 import { IOrganization, IntegrationEnum } from '@gauzy/contracts';
 import { distinctUntilChange, toParams } from '@gauzy/common-angular';
-import { Store } from '../../../../../../@core/services';
+import { Store } from '../../../../../@core/services';
 import { GITHUB_AUTHORIZATION_URL } from '../../github.config';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	templateUrl: './authorization.component.html'
+	templateUrl: './wizard.component.html'
 })
-export class GithubAuthorizationComponent implements OnInit {
+export class GithubWizardComponent implements OnInit {
 
 	public organization: IOrganization;
 	public isLoading: boolean = true;
@@ -27,7 +27,6 @@ export class GithubAuthorizationComponent implements OnInit {
 	ngOnInit() {
 		this.store.selectedOrganization$
 			.pipe(
-				debounceTime(100),
 				distinctUntilChange(),
 				filter((organization: IOrganization) => !!organization),
 				tap((organization: IOrganization) => this.organization = organization),

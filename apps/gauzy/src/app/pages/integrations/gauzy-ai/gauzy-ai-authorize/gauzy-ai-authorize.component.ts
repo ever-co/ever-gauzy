@@ -4,7 +4,7 @@ import { FormGroup, FormBuilder, Validators, FormGroupDirective } from '@angular
 import { filter, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { IIntegrationSetting, IIntegrationTenant, IOrganization, IntegrationEnum } from '@gauzy/contracts';
-import { GauzyAIService, IntegrationsService, Store } from './../../../../../@core/services';
+import { GauzyAIService, IntegrationsService, Store } from './../../../../@core/services';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -117,7 +117,7 @@ export class GauzyAIAuthorizeComponent implements AfterViewInit, OnInit, OnDestr
 	 * Gauzy AI integration remember state API call
 	 */
 	private _redirectToGauzyAIIntegration(integrationId: string) {
-		this._router.navigate(['pages/integrations/wizard/gauzy-ai', integrationId]);
+		this._router.navigate(['pages/integrations/gauzy-ai', integrationId]);
 	}
 
 	/**

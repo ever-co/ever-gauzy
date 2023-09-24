@@ -1,19 +1,19 @@
 import { waitForAsync, ComponentFixture, TestBed } from '@angular/core/testing';
-import { GithubAuthorizationComponent } from './authorization.component';
+import { GithubWizardComponent } from './wizard.component';
 
-describe('GithubAuthorizationComponent', () => {
-	let component: GithubAuthorizationComponent;
-	let fixture: ComponentFixture<GithubAuthorizationComponent>;
+describe('GithubWizardComponent', () => {
+	let component: GithubWizardComponent;
+	let fixture: ComponentFixture<GithubWizardComponent>;
 
 	beforeEach(waitForAsync(() => {
 		TestBed.configureTestingModule({
-			declarations: [GithubAuthorizationComponent],
+			declarations: [GithubWizardComponent],
 			teardown: { destroyAfterEach: false }
 		}).compileComponents();
 	}));
 
 	beforeEach(() => {
-		fixture = TestBed.createComponent(GithubAuthorizationComponent);
+		fixture = TestBed.createComponent(GithubWizardComponent);
 		component = fixture.componentInstance;
 		fixture.detectChanges();
 	});
