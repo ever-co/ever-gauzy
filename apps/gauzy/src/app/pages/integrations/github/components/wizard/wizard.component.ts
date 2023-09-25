@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
-import { filter, tap } from 'rxjs/operators';
+import { debounceTime, filter, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { environment } from '@env/environment';
 import { IOrganization, IntegrationEnum } from '@gauzy/contracts';
@@ -27,6 +27,7 @@ export class GithubWizardComponent implements OnInit {
 	ngOnInit() {
 		this.store.selectedOrganization$
 			.pipe(
+				debounceTime(200),
 				distinctUntilChange(),
 				filter((organization: IOrganization) => !!organization),
 				tap((organization: IOrganization) => this.organization = organization),

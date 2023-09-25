@@ -10,3 +10,19 @@ export interface IOAuthAppInstallInput extends IBasePerTenantAndOrganizationEnti
     provider?: string;
     code?: string;
 }
+
+/** */
+export interface IGithubRepository {
+    id: string;
+    node_id: string;
+    name: string;
+    full_name: string;
+    private: boolean;
+    [x: string]: any;
+}
+
+export interface IGithubRepositoryResponse {
+    total_count: number;
+    repository_selection: string;
+    repositories: IGithubRepository[]
+}

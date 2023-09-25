@@ -1,6 +1,6 @@
 import { Controller, Get, HttpException, HttpStatus, Logger, Param, Query, UseGuards, UsePipes, ValidationPipe } from '@nestjs/common';
 import { OctokitResponse, OctokitService } from '@gauzy/integration-github';
-import { PermissionsEnum } from '@gauzy/contracts';
+import { IGithubRepositoryResponse, PermissionsEnum } from '@gauzy/contracts';
 import { PermissionGuard, TenantPermissionGuard } from 'shared/guards';
 import { Permissions } from 'shared/decorators';
 import { TenantOrganizationBaseDTO } from 'core/dto';
@@ -57,7 +57,7 @@ export class GitHubIntegrationController {
     async getGithubRepositories(
         @Param('installation_id') installation_id: number,
         @Query() query: TenantOrganizationBaseDTO,
-    ): Promise<OctokitResponse<any>> {
+    ): Promise<OctokitResponse<IGithubRepositoryResponse>> {
         try {
             // Validate the input data (You can use class-validator for validation)
             if (!query || !query.organizationId) {
