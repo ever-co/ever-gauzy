@@ -1211,6 +1211,9 @@
 			"API_KEY": "Gauzy AI key",
 			"API_SECRET": "Gauzy AI Secret"
 		},
+		"GITHUB_PAGE": {
+			"NAME": "GitHub"
+		},
 		"COMING_SOON": "Coming soon",
 		"RE_INTEGRATE": "Re-integrate",
 		"SETTINGS": "Settings",
