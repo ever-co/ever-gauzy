@@ -1,4 +1,5 @@
-import { Controller, Get, HttpException, HttpStatus, Logger, Param, Query, UseGuards, UsePipes, ValidationPipe } from '@nestjs/common';
+import { Controller, Get, HttpException, HttpStatus, Logger, Query, Req, UseGuards, UsePipes, ValidationPipe } from '@nestjs/common';
+import { Request } from 'express';
 import { OctokitResponse, OctokitService } from '@gauzy/integration-github';
 import { IGithubRepositoryResponse, PermissionsEnum } from '@gauzy/contracts';
 import { PermissionGuard, TenantPermissionGuard } from 'shared/guards';
@@ -7,7 +8,7 @@ import { TenantOrganizationBaseDTO } from 'core/dto';
 
 @UseGuards(TenantPermissionGuard, PermissionGuard)
 @Permissions(PermissionsEnum.INTEGRATION_VIEW)
-@Controller(':installation_id')
+@Controller(':integrationId')
 export class GitHubIntegrationController {
     private readonly logger = new Logger('GitHubIntegrationController');
 
@@ -26,17 +27,20 @@ export class GitHubIntegrationController {
     @Get('/metadata')
     @UsePipes(new ValidationPipe({ transform: true }))
     async getGithubInstallationMetadata(
-        @Param('installation_id') installation_id: number,
+        @Req() request: Request,
         @Query() query: TenantOrganizationBaseDTO,
-    ): Promise<OctokitResponse<any>> {
+    ): Promise<OctokitResponse<any> | void> {
         try {
             // Validate the input data (You can use class-validator for validation)
             if (!query || !query.organizationId) {
                 throw new HttpException('Invalid query parameter', HttpStatus.BAD_REQUEST);
             }
             // Get installation metadata
-            const metadata = await this._octokitService.getGithubInstallationMetadata(installation_id);
-            return metadata.data;
+            const installation_id = request['integration']['settings']['installation_id'];
+            if (installation_id) {
+                const metadata = await this._octokitService.getGithubInstallationMetadata(installation_id);
+                return metadata.data;
+            }
         } catch (error) {
             // Handle errors and return an appropriate error respons
             this.logger.error('Error while retrieve github installation metadata', error.message);
@@ -55,17 +59,20 @@ export class GitHubIntegrationController {
     @Get('/repositories')
     @UsePipes(new ValidationPipe({ transform: true }))
     async getGithubRepositories(
-        @Param('installation_id') installation_id: number,
+        @Req() request: Request,
         @Query() query: TenantOrganizationBaseDTO,
-    ): Promise<OctokitResponse<IGithubRepositoryResponse>> {
+    ): Promise<OctokitResponse<IGithubRepositoryResponse> | void> {
         try {
             // Validate the input data (You can use class-validator for validation)
             if (!query || !query.organizationId) {
                 throw new HttpException('Invalid query parameter', HttpStatus.BAD_REQUEST);
             }
-            // Get installation repositories
-            const repositories = await this._octokitService.getGithubRepositories(installation_id);
-            return repositories.data;
+            const installation_id = request['integration']['settings']['installation_id'];
+            if (installation_id) {
+                // Get installation repositories
+                const repositories = await this._octokitService.getGithubRepositories(installation_id);
+                return repositories.data;
+            }
         } catch (error) {
             // Handle errors and return an appropriate error respons
             this.logger.error('Error while retrieving GitHub installation repositories', error.message);

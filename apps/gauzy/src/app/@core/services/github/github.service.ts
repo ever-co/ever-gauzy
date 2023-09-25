@@ -15,25 +15,27 @@ export class GithubService {
     ) { }
 
     /**
-     *
-     * @param input
-     * @returns
+     * Add a GitHub app installation.
+     * @param input The input data for the GitHub app installation.
+     * @returns A promise that resolves to the integration tenant object.
      */
     async addInstallationApp(input: IGithubAppInstallInput): Promise<IIntegrationTenant> {
-        return firstValueFrom(
-            this._http.post<IIntegrationTenant>(`${API_PREFIX}/integration/github/install`, input)
-        );
+        const url = `${API_PREFIX}/integration/github/install`;
+        return firstValueFrom(this._http.post<IIntegrationTenant>(url, input));
     }
 
     /**
-     *
+     * Fetches repositories for a given integration and organization.
+     * @param integrationId The ID of the integration.
+     * @param query Query parameters for the request.
      */
     getRepositories(
-        installation_id: string,
+        integrationId: IIntegrationTenant['id'],
         query: IBasePerTenantAndOrganizationEntityModel
     ): Observable<IGithubRepositoryResponse> {
-        return this._http.get<IGithubRepositoryResponse>(`${API_PREFIX}/integration/github/${installation_id}/repositories`, {
-            params: toParams(query)
-        });
+        const url = `${API_PREFIX}/integration/github/${integrationId}/repositories`;
+        const params = toParams(query);
+
+        return this._http.get<IGithubRepositoryResponse>(url, { params });
     }
 }
