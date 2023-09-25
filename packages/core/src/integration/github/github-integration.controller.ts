@@ -53,7 +53,7 @@ export class GitHubIntegrationController {
 
             throw new HttpException('Invalid query parameter', HttpStatus.BAD_REQUEST);
         } catch (error) {
-            // Handle errors and return an appropriate error respons
+            // Handle errors and return an appropriate error response
             this.logger.error('Error while retrieve github installation metadata', error.message);
             throw new HttpException(`Error while retrieve github installation metadata: ${error.message}`, HttpStatus.INTERNAL_SERVER_ERROR);
         }
@@ -96,7 +96,7 @@ export class GitHubIntegrationController {
 
             throw new HttpException('Invalid request parameter', HttpStatus.UNAUTHORIZED);
         } catch (error) {
-            // Handle errors and return an appropriate error respons
+            // Handle errors and return an appropriate error response
             this.logger.error('Error while retrieving GitHub installation repositories', error.message);
             throw new HttpException(`Error while retrieving GitHub installation repositories: ${error.message}`, HttpStatus.INTERNAL_SERVER_ERROR);
         }
@@ -143,7 +143,7 @@ export class GitHubIntegrationController {
 
             throw new HttpException('Invalid request parameter', HttpStatus.UNAUTHORIZED);
         } catch (error) {
-            // Handle errors and return an appropriate error respons
+            // Handle errors and return an appropriate error response
             this.logger.error('Error while retrieving GitHub installation repository issues', error.message);
             throw new HttpException(`Error while retrieving GitHub installation repository issues: ${error.message}`, HttpStatus.INTERNAL_SERVER_ERROR);
         }
