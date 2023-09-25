@@ -7,7 +7,7 @@ import { IntegrationsService, Store } from './../../@core/services';
 @Injectable({
     providedIn: 'root'
 })
-export class IntergrationResolver implements Resolve<Observable<IIntegrationTenant>> {
+export class IntegrationResolver implements Resolve<Observable<IIntegrationTenant>> {
     constructor(
         private readonly _integrationsService: IntegrationsService,
         private readonly _store: Store,

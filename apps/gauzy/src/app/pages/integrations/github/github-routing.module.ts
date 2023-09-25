@@ -1,7 +1,7 @@
 import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
 import { IntegrationEnum } from '@gauzy/contracts';
-import { IntergrationResolver } from './../integration.resolver';
+import { IntegrationResolver } from './../integration.resolver';
 import { GithubWizardComponent } from './components/wizard/wizard.component';
 import { GithubInstallationComponent } from './components/installation/installation.component';
 import { GithubComponent } from './github.component';
@@ -15,7 +15,7 @@ const routes: Routes = [
 			integration: IntegrationEnum.GITHUB
 		},
 		resolve: {
-			integration: IntergrationResolver
+			integration: IntegrationResolver
 		},
 		runGuardsAndResolvers: 'always',
 		children: [
