@@ -252,18 +252,18 @@ if (environment.sentry && environment.sentry.dsn) {
 			: []),
 
 		// Probot
-		...(github && environment.github.APP_ID
+		...(github && environment.github.appId
 			? [
 				ProbotModule.forRoot({
 					isGlobal: true,
 					path: 'integration/github/webhook', // Webhook URL in GitHub will be: https://api.gauzy.co/api/integration/github/webhook
 					config: {
 						/** Client Configuration */
-						clientId: environment.github.CLIENT_ID,
-						clientSecret: environment.github.CLIENT_SECRET,
-						appId: environment.github.APP_ID,
-						privateKey: environment.github.APP_PRIVATE_KEY,
-						webhookSecret: environment.github.WEBHOOK_SECRET
+						clientId: environment.github.clientId,
+						clientSecret: environment.github.clientSecret,
+						appId: environment.github.appId,
+						privateKey: environment.github.appPrivateKey,
+						webhookSecret: environment.github.webhookSecret
 					},
 				}),
 			]

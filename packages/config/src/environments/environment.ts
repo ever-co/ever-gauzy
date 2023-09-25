@@ -112,22 +112,22 @@ export const environment: IEnvironment = {
 
 	github: {
 		/**Github OAuth Configuration */
-		CLIENT_ID: process.env.GITHUB_CLIENT_ID,
-		CLIENT_SECRET: process.env.GITHUB_CLIENT_SECRET,
-		CALLBACK_URL: process.env.GITHUB_CALLBACK_URL || `${process.env.API_BASE_URL}/api/auth/github/callback`,
+		clientId: process.env.GAUZY_GITHUB_CLIENT_ID,
+		clientSecret: process.env.GAUZY_GITHUB_CLIENT_SECRET,
+		callbackUrl: process.env.GAUZY_GITHUB_CALLBACK_URL || `${process.env.API_BASE_URL}/api/auth/github/callback`,
 
 		/** Github App Install Configuration  */
-		APP_ID: process.env.GITHUB_APP_ID,
-		APP_NAME: process.env.GITHUB_APP_NAME,
-		APP_PRIVATE_KEY: process.env.GITHUB_APP_PRIVATE_KEY.replace(/\\n/g, '\n'),
+		appId: process.env.GAUZY_GITHUB_APP_ID,
+		appName: process.env.GAUZY_GITHUB_APP_NAME,
+		appPrivateKey: process.env.GAUZY_GITHUB_APP_PRIVATE_KEY.replace(/\\n/g, '\n'),
 
 		/** Github App Post Install Configuration */
-		POST_INSTALL_URL: process.env.GITHUB_POST_INSTALL_URL,
+		postInstallUrl: process.env.GAUZY_GITHUB_POST_INSTALL_URL,
 
-		WEBHOOK_SECRET: process.env.GITHUB_WEBHOOK_SECRET,
-		WEBHOOK_URL: process.env.GITHUB_WEBHOOK_URL,
+		webhookSecret: process.env.GAUZY_GITHUB_WEBHOOK_SECRET,
+		webhookUrl: process.env.GAUZY_GITHUB_WEBHOOK_URL,
 
-		API_VERSION: process.env.GITHUB_API_VERSION
+		apiVersion: process.env.GAUZY_GITHUB_API_VERSION
 	},
 
 	microsoftConfig: {
@@ -176,18 +176,18 @@ export const environment: IEnvironment = {
 	defaultIntegratedUserPass: process.env.INTEGRATED_USER_DEFAULT_PASS || '123456',
 
 	upwork: {
-		API_KEY: process.env.UPWORK_API_KEY,
-		API_SECRET: process.env.UPWORK_API_SECRET,
-		CALLBACK_URL: process.env.UPWORK_REDIRECT_URL || `${process.env.API_BASE_URL}/api/integrations/upwork/callback`,
-		POST_INSTALL_URL: process.env.UPWORK_POST_INSTALL_URL || `${process.env.CLIENT_BASE_URL}/#/pages/integrations/upwork`,
+		apiKey: process.env.UPWORK_API_KEY,
+		apiSecret: process.env.UPWORK_API_SECRET,
+		callbackUrl: process.env.UPWORK_REDIRECT_URL || `${process.env.API_BASE_URL}/api/integrations/upwork/callback`,
+		postInstallUrl: process.env.UPWORK_POST_INSTALL_URL || `${process.env.CLIENT_BASE_URL}/#/pages/integrations/upwork`,
 	},
 
 	hubstaff: {
 		/** Hubstaff Integration Configuration */
-		CLIENT_ID: process.env.HUBSTAFF_CLIENT_ID,
-		CLIENT_SECRET: process.env.HUBSTAFF_CLIENT_SECRET,
+		clientId: process.env.HUBSTAFF_CLIENT_ID,
+		clientSecret: process.env.HUBSTAFF_CLIENT_SECRET,
 		/** Hubstaff Integration Post Install URL */
-		POST_INSTALL_URL: process.env.HUBSTAFF_POST_INSTALL_URL || `${process.env.CLIENT_BASE_URL}/#/pages/integrations/hubstaff`,
+		postInstallUrl: process.env.HUBSTAFF_POST_INSTALL_URL || `${process.env.CLIENT_BASE_URL}/#/pages/integrations/hubstaff`,
 	},
 
 	isElectron: process.env.IS_ELECTRON === 'true' ? true : false,

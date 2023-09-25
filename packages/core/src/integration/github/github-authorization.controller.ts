@@ -37,7 +37,7 @@ export class GitHubAuthorizationController {
             urlParams.append('state', query.state);
 
             /** Redirect to the URL */
-            return response.redirect(`${github.POST_INSTALL_URL}?${urlParams.toString()}`);
+            return response.redirect(`${github.postInstallUrl}?${urlParams.toString()}`);
         } catch (error) {
             // Handle errors and return an appropriate error response
             throw new HttpException(`Failed to add GitHub installation: ${error.message}`, HttpStatus.INTERNAL_SERVER_ERROR);
