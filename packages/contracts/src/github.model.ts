@@ -21,6 +21,15 @@ export interface IGithubRepository {
     [x: string]: any;
 }
 
+export interface IGithubIssue {
+    id: string;
+    node_id: string;
+    number: string;
+    title: string;
+    state: string;
+    [x: string]: any;
+}
+
 export interface IGithubRepositoryResponse {
     total_count: number;
     repository_selection: string;

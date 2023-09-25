@@ -4,3 +4,18 @@
 		background-color: var(--gauzy-card-2);
 	}
 }
+::ng-deep {
+	.issues-container {
+		.ng2-smart-actions {
+			text-align: center;
+			width: 5%;
+			.form-control {
+				width: 15px;
+				display: inline-block;
+			}
+		}
+		input {
+			box-shadow: none !important;
+		}
+	}
+}

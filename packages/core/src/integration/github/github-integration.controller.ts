@@ -1,7 +1,7 @@
-import { Controller, Get, HttpException, HttpStatus, Logger, Query, Req, UseGuards, UsePipes, ValidationPipe } from '@nestjs/common';
+import { Controller, Get, HttpException, HttpStatus, Logger, Param, Query, Req, UseGuards, UsePipes, ValidationPipe } from '@nestjs/common';
 import { Request } from 'express';
 import { OctokitResponse, OctokitService } from '@gauzy/integration-github';
-import { IGithubRepositoryResponse, PermissionsEnum } from '@gauzy/contracts';
+import { IGithubIssue, IGithubRepositoryResponse, PermissionsEnum } from '@gauzy/contracts';
 import { PermissionGuard, TenantPermissionGuard } from 'shared/guards';
 import { Permissions } from 'shared/decorators';
 import { TenantOrganizationBaseDTO } from 'core/dto';
@@ -17,10 +17,12 @@ export class GitHubIntegrationController {
     ) { }
 
     /**
-     * Retrieve installation metadata for a GitHub App installation.
+     * Retrieve installation metadata for a GitHub App installation associated with a specific organization.
      *
-     * @param installation_id The installation ID for the GitHub App.
-     * @param organizationId The organization ID to query for metadata.
+     * This endpoint allows you to fetch metadata related to a GitHub App installation within a specific organization.
+     *
+     * @param {number} installation_id - The installation ID for the GitHub App.
+     * @param {TenantOrganizationBaseDTO} query - Query parameters containing organization information.
      * @returns {Promise<OctokitResponse<any>>} A promise that resolves with the installation metadata.
      * @throws {HttpException} If the query parameters are invalid or an error occurs during retrieval.
      */
@@ -35,12 +37,21 @@ export class GitHubIntegrationController {
             if (!query || !query.organizationId) {
                 throw new HttpException('Invalid query parameter', HttpStatus.BAD_REQUEST);
             }
-            // Get installation metadata
+
+            // Check if the request contains integration settings
+            const settings = request['integration']?.settings;
+            if (!settings || !settings.installation_id) {
+                throw new HttpException('Invalid request parameter: Missing or unauthorized integration', HttpStatus.UNAUTHORIZED);
+            }
+
             const installation_id = request['integration']['settings']['installation_id'];
             if (installation_id) {
+                // Get installation metadata
                 const metadata = await this._octokitService.getGithubInstallationMetadata(installation_id);
                 return metadata.data;
             }
+
+            throw new HttpException('Invalid query parameter', HttpStatus.BAD_REQUEST);
         } catch (error) {
             // Handle errors and return an appropriate error respons
             this.logger.error('Error while retrieve github installation metadata', error.message);
@@ -49,11 +60,13 @@ export class GitHubIntegrationController {
     }
 
     /**
-     * Get GitHub repositories for a specific installation.
+     * Get GitHub repositories associated with a specific GitHub App installation within a given organization.
+     *
+     * This endpoint allows you to retrieve a list of GitHub repositories associated with a GitHub App installation within a specific organization.
      *
      * @param {number} installation_id - The installation ID for the GitHub App.
-     * @param {TenantOrganizationBaseDTO} query - Query parameters, including organizationId.
-     * @returns {Promise<OctokitResponse<any>>} A promise that resolves with the GitHub repositories.
+     * @param {TenantOrganizationBaseDTO} query - Query parameters containing organization information.
+     * @returns {Promise<OctokitResponse<IGithubRepositoryResponse>>} A promise that resolves with the GitHub repositories.
      * @throws {HttpException} If the query parameters are invalid or if there's an error retrieving the repositories.
      */
     @Get('/repositories')
@@ -67,16 +80,72 @@ export class GitHubIntegrationController {
             if (!query || !query.organizationId) {
                 throw new HttpException('Invalid query parameter', HttpStatus.BAD_REQUEST);
             }
+
+            // Check if the request contains integration settings
+            const settings = request['integration']?.settings;
+            if (!settings || !settings.installation_id) {
+                throw new HttpException('Invalid request parameter: Missing or unauthorized integration', HttpStatus.UNAUTHORIZED);
+            }
+
             const installation_id = request['integration']['settings']['installation_id'];
             if (installation_id) {
                 // Get installation repositories
                 const repositories = await this._octokitService.getGithubRepositories(installation_id);
                 return repositories.data;
             }
+
+            throw new HttpException('Invalid request parameter', HttpStatus.UNAUTHORIZED);
         } catch (error) {
             // Handle errors and return an appropriate error respons
             this.logger.error('Error while retrieving GitHub installation repositories', error.message);
             throw new HttpException(`Error while retrieving GitHub installation repositories: ${error.message}`, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    /**
+     * Get GitHub repository issues for a specific GitHub App installation within a given organization, owner, and repository.
+     *
+     * This endpoint allows you to retrieve issues associated with a GitHub repository for a GitHub App installation within a specific organization.
+     *
+     * @param {number} installation_id - The installation ID for the GitHub App.
+     * @param {TenantOrganizationBaseDTO} query - Query parameters containing organization information.
+     * @param {string} owner - The owner (username or organization) of the repository.
+     * @param {string} repo - The name of the repository.
+     * @returns {Promise<OctokitResponse<IGithubIssue>>} A promise that resolves with the GitHub repository issues.
+     * @throws {HttpException} If the query parameters are invalid or if there's an error retrieving the issues.
+     */
+    @Get('/:owner/:repo/issues')
+    @UsePipes(new ValidationPipe({ transform: true }))
+    async getGithubRepositoryIssues(
+        @Req() request: Request,
+        @Query() query: TenantOrganizationBaseDTO,
+        @Param('owner') owner: string,
+        @Param('repo') repo: string,
+    ): Promise<OctokitResponse<IGithubIssue[]> | void> {
+        try {
+            // Validate the input data (You can use class-validator for validation)
+            if (!query || !query.organizationId) {
+                throw new HttpException('Invalid query parameter', HttpStatus.BAD_REQUEST);
+            }
+
+            // Check if the request contains integration settings
+            const settings = request['integration']?.settings;
+            if (!settings || !settings.installation_id) {
+                throw new HttpException('Invalid request parameter: Missing or unauthorized integration', HttpStatus.UNAUTHORIZED);
+            }
+
+            const installation_id = request['integration']['settings']['installation_id'];
+            if (installation_id) {
+                // Get installation repositories
+                const issues = await this._octokitService.getGithubRepositoryIssues(installation_id, { owner, repo });
+                return issues.data;
+            }
+
+            throw new HttpException('Invalid request parameter', HttpStatus.UNAUTHORIZED);
+        } catch (error) {
+            // Handle errors and return an appropriate error respons
+            this.logger.error('Error while retrieving GitHub installation repository issues', error.message);
+            throw new HttpException(`Error while retrieving GitHub installation repository issues: ${error.message}`, HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 }

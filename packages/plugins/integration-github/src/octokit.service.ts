@@ -79,6 +79,41 @@ export class OctokitService {
 		}
 	}
 
+	/**
+	 * Fetch GitHub repository issues for a given installation, owner, and repository.
+	 *
+	 * @param {number} installation_id - The installation ID for the GitHub app.
+	 * @param {Object} options - Options object with 'owner' and 'repo' properties.
+	 * @param {string} options.owner - The owner (username or organization) of the repository.
+	 * @param {string} options.repo - The name of the repository.
+	 * @returns {Promise<OctokitResponse<any>>} A promise that resolves to the response from the GitHub API.
+	 * @throws {Error} If the request to the GitHub API fails.
+	 */
+	public async getGithubRepositoryIssues(installation_id: number, {
+		owner,
+		repo
+	}: {
+		owner: string;
+		repo: string;
+	}): Promise<OctokitResponse<any>> {
+		try {
+			// Get an Octokit instance for the installation
+			const octokit = await this.app.getInstallationOctokit(installation_id);
+
+			// Send a request to the GitHub API to get repository issues
+			return await octokit.request('GET /repos/{owner}/{repo}/issues', {
+				owner: owner,
+				repo: repo,
+				headers: {
+					'X-GitHub-Api-Version': GITHUB_API_VERSION
+				}
+			});
+		} catch (error) {
+			this.logger.error('Failed to fetch GitHub installation repository issues', error.message);
+			throw new Error('Failed to fetch GitHub installation repository issues');
+		}
+	}
+
 	async openIssue(
 		title: string,
 		body: string,

@@ -9,13 +9,14 @@
 	</nb-card-header>
 	<nb-card-body>
 		<div class="mb-3"></div>
-		<div class="github-container">
+		<div class="issues-container">
 			<ng-select
 				class="mb-2"
 				bindLabel="name"
 				[items]="repositories$ | async"
 				[searchable]="true"
-				[placeholder]="'Select Repository'"
+				(change)="selectRepository($event)"
+				[placeholder]="'INTEGRATIONS.GITHUB_PAGE.SELECT_REPOSITORY' | translate"
 				appendTo="body"
 			></ng-select>
 			<ng2-smart-table

@@ -23,7 +23,7 @@ export class GithubComponent implements OnInit {
                     if (integration) {
                         this._router.navigate(['/pages/integrations/github', integration.id]);
                     } else {
-                        this._router.navigate(['/pages/integrations/github/wizard']);
+                        this._router.navigate(['/pages/integrations/github/setup/wizard']);
                     }
                 })
             )

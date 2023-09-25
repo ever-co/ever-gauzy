@@ -125,6 +125,7 @@ export class GithubWizardComponent implements OnInit {
 	 */
 	private async checkPopupWindowStatus() {
 		const timer = setInterval(() => {
+			console.log(this.window);
 			if (this.window == null || this.window.closed) {
 				clearInterval(timer); // Stop checking when the window is closed
 				/** */
@@ -146,11 +147,7 @@ export class GithubWizardComponent implements OnInit {
 
 		// Delay navigation by 5 seconds before redirecting
 		setTimeout(() => {
-			this.router.navigate(['/pages/integrations/new'], {
-				queryParams: {
-					provider: IntegrationEnum.GITHUB
-				}
-			});
+			this.router.navigate(['/pages/integrations/new']);
 		}, ms); // 5000 milliseconds = 5 seconds
 	}
 }

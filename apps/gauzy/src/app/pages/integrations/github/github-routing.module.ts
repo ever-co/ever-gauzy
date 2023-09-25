@@ -23,13 +23,19 @@ const routes: Routes = [
 				component: GithubViewComponent,
 			},
 			{
-				path: 'wizard',
-				component: GithubWizardComponent,
+				path: 'setup',
+				component: GithubViewComponent,
+				children: [
+					{
+						path: 'wizard',
+						component: GithubWizardComponent,
+					},
+					{
+						path: 'installation',
+						component: GithubInstallationComponent
+					}
+				]
 			},
-			{
-				path: 'installation',
-				component: GithubInstallationComponent
-			}
 		]
 	},
 ];

@@ -292,7 +292,8 @@
 		"REJECTED_DATE": "Rejected Date",
 		"TIME_TRACKING": "Time Tracking",
 		"CREATED_AT": "Created At",
-		"SCREEN_CAPTURE": "Screen Capture"
+		"SCREEN_CAPTURE": "Screen Capture",
+		"NUMBER": "Number"
 	},
 	"FORM": {
 		"USERNAME": "Username",
@@ -1212,7 +1213,8 @@
 			"API_SECRET": "Gauzy AI Secret"
 		},
 		"GITHUB_PAGE": {
-			"NAME": "GitHub"
+			"NAME": "GitHub",
+			"SELECT_REPOSITORY": "Select Repository"
 		},
 		"COMING_SOON": "Coming soon",
 		"RE_INTEGRATE": "Re-integrate",
