@@ -2,7 +2,7 @@ import { Controller } from '@nestjs/common';
 import { Context } from 'probot';
 import { Public } from '@gauzy/common';
 import { Hook } from '@gauzy/integration-github';
-import { GithubHooksService } from './github.events.service';
+import { GithubHooksService } from './github.hooks.service';
 
 @Public()
 @Controller('webhook')

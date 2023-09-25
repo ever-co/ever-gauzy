@@ -17,26 +17,21 @@ const routes: Routes = [
 		resolve: {
 			integration: IntergrationResolver
 		},
+		runGuardsAndResolvers: 'always',
 		children: [
 			{
 				path: ':integrationId',
 				component: GithubViewComponent,
 			},
 			{
-				path: 'setup',
-				component: GithubViewComponent,
-				children: [
-					{
-						path: 'wizard',
-						component: GithubWizardComponent,
-					},
-					{
-						path: 'installation',
-						component: GithubInstallationComponent
-					}
-				]
-			},
+				path: 'setup/wizard',
+				component: GithubWizardComponent,
+			}
 		]
+	},
+	{
+		path: 'setup/installation',
+		component: GithubInstallationComponent
 	},
 ];
 

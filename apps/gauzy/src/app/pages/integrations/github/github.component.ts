@@ -1,9 +1,13 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Data, Router } from '@angular/router';
-import { debounceTime, tap } from 'rxjs/operators';
+import { tap } from 'rxjs/operators';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 
+@UntilDestroy({ checkProperties: true })
 @Component({
-    template: `<router-outlet></router-outlet>`
+    template: `
+        <router-outlet></router-outlet>
+    `
 })
 export class GithubComponent implements OnInit {
 
@@ -18,14 +22,14 @@ export class GithubComponent implements OnInit {
     ngOnInit() {
         this._activatedRoute.data
             .pipe(
-                debounceTime(100),
                 tap(({ integration }: Data) => {
                     if (integration) {
                         this._router.navigate(['/pages/integrations/github', integration.id]);
                     } else {
                         this._router.navigate(['/pages/integrations/github/setup/wizard']);
                     }
-                })
+                }),
+                untilDestroyed(this)
             )
             .subscribe();
     }

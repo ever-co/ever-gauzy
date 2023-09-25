@@ -1,18 +1,17 @@
-import { MiddlewareConsumer, Module, NestModule, forwardRef } from '@nestjs/common';
+import { MiddlewareConsumer, Module, NestModule, RequestMethod, forwardRef } from '@nestjs/common';
 import { HttpModule } from '@nestjs/axios';
 import { CqrsModule } from '@nestjs/cqrs';
-import { RouterModule } from 'nest-router';
 import { TenantModule } from 'tenant/tenant.module';
 import { UserModule } from 'user/user.module';
 import { IntegrationModule } from 'integration/integration.module';
 import { IntegrationTenantModule } from 'integration-tenant/integration-tenant.module';
 import { GitHubAuthorizationController } from './github-authorization.controller';
-import { GitHubController } from './github.controller';
 import { GitHubIntegrationController } from './github-integration.controller';
-import { GitHubHooksController } from './github.events.controller';
+import { GitHubController } from './github.controller';
 import { GithubService } from './github.service';
-import { GithubHooksService } from './github.events.service';
 import { GithubMiddleware } from './github.middleware';
+import { GitHubHooksController } from './github.hooks.controller';
+import { GithubHooksService } from './github.hooks.service';
 
 @Module({
 	imports: [
@@ -26,8 +25,8 @@ import { GithubMiddleware } from './github.middleware';
 	controllers: [
 		GitHubAuthorizationController,
 		GitHubController,
+		GitHubHooksController,
 		GitHubIntegrationController,
-		GitHubHooksController
 	],
 	providers: [
 		GithubService,
@@ -44,8 +43,21 @@ export class GithubModule implements NestModule {
 	 */
 	configure(consumer: MiddlewareConsumer) {
 		// Apply middlewares to specific controllers
-		consumer.apply(GithubMiddleware).forRoutes(
-			RouterModule.resolvePath(GitHubIntegrationController) // Apply to GitHubIntegrationController
-		)
+		consumer
+			.apply(GithubMiddleware)
+			.forRoutes(
+				{
+					path: '/integration/github/:integrationId/metadata',
+					method: RequestMethod.GET
+				},
+				{
+					path: '/integration/github/:integrationId/repositories',
+					method: RequestMethod.GET
+				},
+				{
+					path: '/integration/github/:integrationId/:owner/:repo/issues',
+					method: RequestMethod.GET
+				}
+			); // Apply to specific routes and methods
 	}
 }

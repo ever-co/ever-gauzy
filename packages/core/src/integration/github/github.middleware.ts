@@ -44,7 +44,8 @@ export class GithubMiddleware implements NestMiddleware {
                 });
             }
         } catch (error) {
-            console.log(`Error while getting integration (${IntegrationEnum.GITHUB}) tenant: %s`, error?.message);
+            console.log(`Error while getting integration (${IntegrationEnum.GITHUB}) tenant inside middleware: %s`, error?.message);
+            console.log(request.path, request.url);
         }
 
         // Continue to the next middleware or route handler

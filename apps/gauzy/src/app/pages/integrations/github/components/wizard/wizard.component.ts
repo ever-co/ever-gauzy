@@ -1,9 +1,9 @@
-import { Component, OnInit } from '@angular/core';
-import { Router } from '@angular/router';
+import { AfterViewInit, Component, OnInit } from '@angular/core';
+import { ActivatedRoute, Data, Router } from '@angular/router';
 import { debounceTime, filter, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { environment } from '@env/environment';
-import { IOrganization, IntegrationEnum } from '@gauzy/contracts';
+import { IOrganization } from '@gauzy/contracts';
 import { distinctUntilChange, toParams } from '@gauzy/common-angular';
 import { Store } from '../../../../../@core/services';
 import { GITHUB_AUTHORIZATION_URL } from '../../github.config';
@@ -12,7 +12,7 @@ import { GITHUB_AUTHORIZATION_URL } from '../../github.config';
 @Component({
 	templateUrl: './wizard.component.html'
 })
-export class GithubWizardComponent implements OnInit {
+export class GithubWizardComponent implements AfterViewInit, OnInit {
 
 	public organization: IOrganization;
 	public isLoading: boolean = true;
@@ -20,11 +20,25 @@ export class GithubWizardComponent implements OnInit {
 	private window = null;
 
 	constructor(
-		private readonly router: Router,
+		private readonly _activatedRoute: ActivatedRoute,
+		private readonly _router: Router,
 		private readonly store: Store,
 	) { }
 
-	ngOnInit() {
+	ngOnInit(): void {
+		this._activatedRoute.data
+			.pipe(
+				tap(({ integration }: Data) => {
+					if (integration) {
+						this._router.navigate(['/pages/integrations/github', integration.id]);
+					}
+				}),
+				untilDestroyed(this)
+			)
+			.subscribe();
+	}
+
+	ngAfterViewInit(): void {
 		this.store.selectedOrganization$
 			.pipe(
 				debounceTime(200),
@@ -147,7 +161,7 @@ export class GithubWizardComponent implements OnInit {
 
 		// Delay navigation by 5 seconds before redirecting
 		setTimeout(() => {
-			this.router.navigate(['/pages/integrations/new']);
+			this._router.navigate(['/pages/integrations/github']);
 		}, ms); // 5000 milliseconds = 5 seconds
 	}
 }

@@ -1,10 +1,9 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { IBasePerTenantAndOrganizationEntityModel, IGithubAppInstallInput, IGithubRepositoryResponse, IIntegrationTenant } from '@gauzy/contracts';
+import { IBasePerTenantAndOrganizationEntityModel, IGithubAppInstallInput, IGithubIssue, IGithubRepositoryResponse, IIntegrationTenant } from '@gauzy/contracts';
 import { Observable, firstValueFrom } from 'rxjs';
 import { toParams } from '@gauzy/common-angular';
 import { API_PREFIX } from '../../constants';
-import { IGithubIssue } from 'packages/contracts/dist';
 
 @Injectable({
     providedIn: 'root',

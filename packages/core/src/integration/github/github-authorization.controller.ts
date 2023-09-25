@@ -4,7 +4,6 @@ import { ConfigService } from '@gauzy/config';
 import { IGithubAppInstallInput } from '@gauzy/contracts';
 import { IGithubConfig, Public } from '@gauzy/common';
 
-@Public()
 @Controller()
 export class GitHubAuthorizationController {
     constructor(
@@ -16,7 +15,8 @@ export class GitHubAuthorizationController {
      * @param query
      * @param response
      */
-    @Get('callback')
+    @Public()
+    @Get('/callback')
     async githubIntegrationPostInstallCallback(
         @Query() query: IGithubAppInstallInput,
         @Res() response: Response

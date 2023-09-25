@@ -17,14 +17,14 @@ export class GitHubIntegrationController {
     ) { }
 
     /**
-     * Retrieve installation metadata for a GitHub App installation associated with a specific organization.
+     * Get GitHub installation metadata for a specific integration.
      *
-     * This endpoint allows you to fetch metadata related to a GitHub App installation within a specific organization.
+     * This endpoint allows you to retrieve metadata associated with a GitHub installation for a given integration.
      *
-     * @param {number} installation_id - The installation ID for the GitHub App.
-     * @param {TenantOrganizationBaseDTO} query - Query parameters containing organization information.
-     * @returns {Promise<OctokitResponse<any>>} A promise that resolves with the installation metadata.
-     * @throws {HttpException} If the query parameters are invalid or an error occurs during retrieval.
+     * @param {Request} request - The HTTP request object.
+     * @param {TenantOrganizationBaseDTO} query - Query parameters, including organizationId.
+     * @returns {Promise<OctokitResponse<any> | void>} A promise that resolves with the GitHub installation metadata.
+     * @throws {HttpException} If the query parameters are invalid or if there's an error retrieving the metadata.
      */
     @Get('/metadata')
     @UsePipes(new ValidationPipe({ transform: true }))
@@ -64,7 +64,7 @@ export class GitHubIntegrationController {
      *
      * This endpoint allows you to retrieve a list of GitHub repositories associated with a GitHub App installation within a specific organization.
      *
-     * @param {number} installation_id - The installation ID for the GitHub App.
+     * @param {Request} request - The HTTP request object.
      * @param {TenantOrganizationBaseDTO} query - Query parameters containing organization information.
      * @returns {Promise<OctokitResponse<IGithubRepositoryResponse>>} A promise that resolves with the GitHub repositories.
      * @throws {HttpException} If the query parameters are invalid or if there's an error retrieving the repositories.
@@ -107,7 +107,7 @@ export class GitHubIntegrationController {
      *
      * This endpoint allows you to retrieve issues associated with a GitHub repository for a GitHub App installation within a specific organization.
      *
-     * @param {number} installation_id - The installation ID for the GitHub App.
+     * @param {Request} request - The HTTP request object.
      * @param {TenantOrganizationBaseDTO} query - Query parameters containing organization information.
      * @param {string} owner - The owner (username or organization) of the repository.
      * @param {string} repo - The name of the repository.

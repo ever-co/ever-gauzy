@@ -18,7 +18,7 @@ export class GitHubController {
 	 * @param body
 	 * @returns
 	 */
-	@Post('install')
+	@Post('/install')
 	@HttpCode(HttpStatus.CREATED)
 	@UsePipes(new ValidationPipe())
 	async addGithubAppInstallation(
@@ -43,7 +43,7 @@ export class GitHubController {
 	 * @param body
 	 * @returns
 	 */
-	@Post('oauth')
+	@Post('/oauth')
 	@HttpCode(HttpStatus.CREATED)
 	// ToDo - Create Class Validation DTO to validate request
 	async oAuthEndpointAuthorization(@Body() input: IGithubAppInstallInput) {
