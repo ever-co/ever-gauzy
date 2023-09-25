@@ -44,8 +44,9 @@ export class IntegrationEntitySetting extends TenantOrganizationBaseEntity imple
 	 * IntegrationTenant
 	 */
 	@ApiPropertyOptional({ type: () => IntegrationTenant })
-	@ManyToOne(() => IntegrationTenant, (integration) => integration.entitySettings, {
-		onDelete: 'CASCADE'
+	@ManyToOne(() => IntegrationTenant, (it) => it.entitySettings, {
+		/** Database cascade action on delete. */
+		onDelete: 'CASCADE',
 	})
 	@JoinColumn()
 	integration?: IIntegrationTenant;

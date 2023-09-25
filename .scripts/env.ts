@@ -65,6 +65,11 @@ export type Env = Readonly<{
 	GAUZY_CLOUD_APP: string;
 
 	FILE_PROVIDER: string;
+
+	GITHUB_APP_NAME: string;
+	GITHUB_APP_ID: string;
+	GITHUB_CLIENT_ID: string;
+	GITHUB_REDIRECT_URL: string;
 }>;
 
 export const env: Env = cleanEnv(
@@ -118,6 +123,11 @@ export const env: Env = cleanEnv(
 		GAUZY_CLOUD_APP: str({ default: 'https://app.gauzy.co/#' }),
 
 		FILE_PROVIDER: str({ default: 'LOCAL' }),
+
+		GITHUB_APP_NAME: str({ default: '' }),
+		GITHUB_APP_ID: str({ default: '' }),
+		GITHUB_CLIENT_ID: str({ default: '' }),
+		GITHUB_REDIRECT_URL: str({ default: '' }),
 	},
 	{ strict: true, dotEnvPath: __dirname + '/../.env' }
 );
