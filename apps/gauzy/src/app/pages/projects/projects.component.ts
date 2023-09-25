@@ -10,19 +10,21 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import {
 	IOrganization,
 	IOrganizationContact,
-	IOrganizationProject,
 	IOrganizationProjectCreateInput,
 	PermissionsEnum,
 	ComponentLayoutStyleEnum,
 	CrudActionEnum,
 	IEmployee,
-	ITag
+	ITag,
+	IOrganizationTeam,
+	IOrganizationProject
 } from '@gauzy/contracts';
 import { distinctUntilChange } from '@gauzy/common-angular';
 import {
 	OrganizationContactService,
 	OrganizationProjectsService,
 	OrganizationProjectStore,
+	OrganizationTeamsService,
 	Store,
 	ToastrService
 } from '../../@core/services';
@@ -61,12 +63,16 @@ export class ProjectsComponent extends PaginationFilterBaseComponent implements 
 	showAddCard: boolean = false;
 	projects: IOrganizationProject[] = [];
 	organizationContacts: IOrganizationContact[] = [];
+	teams: IOrganizationTeam[] = [];
 	projectToEdit: IOrganizationProject;
 	viewPrivateProjects: boolean;
 	disableButton = true;
 	selectedProject: IOrganizationProject;
 	smartTableSource: ServerDataSource;
+
 	project$: Subject<boolean> = this.subject$;
+	teams$: Subject<any> = new Subject();
+
 	private _refresh$: Subject<boolean> = new Subject();
 
 	projectsTable: Ng2SmartTableComponent;
@@ -87,6 +93,7 @@ export class ProjectsComponent extends PaginationFilterBaseComponent implements 
 	constructor(
 		private readonly organizationContactService: OrganizationContactService,
 		private readonly organizationProjectsService: OrganizationProjectsService,
+		private readonly organizationTeamService: OrganizationTeamsService,
 		private readonly toastrService: ToastrService,
 		private readonly store: Store,
 		public readonly translateService: TranslateService,
@@ -109,6 +116,14 @@ export class ProjectsComponent extends PaginationFilterBaseComponent implements 
 				untilDestroyed(this)
 			)
 			.subscribe();
+
+		this.teams$.pipe(
+			debounceTime(300),
+			tap(() => this._refresh$.next(true)),
+			tap(() => this.loadOrganizationTeams()),
+			untilDestroyed(this)
+		).subscribe();
+
 		const storeOrganization$ = this.store.selectedOrganization$;
 		const storeEmployee$ = this.store.selectedEmployee$;
 		combineLatest([storeOrganization$, storeEmployee$])
@@ -121,6 +136,7 @@ export class ProjectsComponent extends PaginationFilterBaseComponent implements 
 				}),
 				tap(() => this._refresh$.next(true)),
 				tap(() => this.project$.next(true)),
+				tap(() => this.teams$.next(true)),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -267,7 +283,7 @@ export class ProjectsComponent extends PaginationFilterBaseComponent implements 
 
 		this.smartTableSource = new ServerDataSource(this.httpClient, {
 			endPoint: `${API_PREFIX}/organization-projects/pagination`,
-			relations: ['organizationContact', 'organization', 'members', 'members.user', 'tags'],
+			relations: ['organizationContact', 'organization', 'members', 'members.user', 'tags', 'teams'],
 			join: {
 				alias: 'organization_project',
 				leftJoin: {
@@ -321,6 +337,31 @@ export class ProjectsComponent extends PaginationFilterBaseComponent implements 
 			console.log(error);
 			this.loading = false;
 		}
+	}
+
+	/**
+	 * load organization projects
+	 *
+	 * @returns
+	 */
+	private async loadOrganizationTeams(): Promise<IOrganizationTeam[]> {
+		if (!this.organization || !this.store.hasAnyPermission(
+			PermissionsEnum.ALL_ORG_VIEW,
+			PermissionsEnum.ORG_TEAM_VIEW
+		)) {
+			return;
+		}
+
+		const { tenantId } = this.store.user;
+		const { id: organizationId } = this.organization;
+
+		this.teams = (await this.organizationTeamService.getAll(
+			[],
+			{
+				organizationId,
+				tenantId
+			}
+		)).items;
 	}
 
 	private async loadGridLayoutData() {
