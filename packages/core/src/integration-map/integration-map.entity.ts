@@ -33,7 +33,8 @@ export class IntegrationMap extends TenantOrganizationBaseEntity implements IInt
 	*/
 	@ApiProperty({ type: () => IntegrationTenant })
 	@ManyToOne(() => IntegrationTenant, (it) => it.entityMaps, {
-		onDelete: 'CASCADE'
+		/** Database cascade action on delete. */
+		onDelete: 'CASCADE',
 	})
 	@JoinColumn()
 	integration: IIntegrationTenant;

@@ -1,5 +1,6 @@
 export interface IUpworkConfig {
-	apiKey?: string;
-	apiSecret?: string;
-	callbackUrl: string;
+	readonly API_KEY: string;
+	readonly API_SECRET: string;
+	readonly CALLBACK_URL: string;
+	readonly POST_INSTALL_URL: string;
 }

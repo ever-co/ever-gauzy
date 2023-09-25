@@ -8,7 +8,7 @@ import {
 import { Observable } from 'rxjs';
 import {
 	IIntegrationViewModel,
-	DEFAULT_INTEGRATION_PAID_FILTERS
+	IntegrationFilterEnum
 } from '@gauzy/contracts';
 import {
 	InitialFilter,
@@ -29,7 +29,20 @@ export class IntegrationsComponent implements OnInit {
 	isLoading$: Observable<boolean> = this._integrationsStore.isLoading$;
 
 	@ViewChild('searchElement', { static: true }) searchElement: ElementRef;
-	filters = DEFAULT_INTEGRATION_PAID_FILTERS;
+	public filters = [
+		{
+			label: IntegrationFilterEnum.ALL,
+			value: 'all'
+		},
+		{
+			label: IntegrationFilterEnum.FREE,
+			value: 'false'
+		},
+		{
+			label: IntegrationFilterEnum.PAID,
+			value: 'true'
+		}
+	];
 
 	constructor(
 		private readonly _integrationsStore: IntegrationsStoreService,

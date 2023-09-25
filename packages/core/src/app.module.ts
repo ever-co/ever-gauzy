@@ -23,6 +23,7 @@ import { LanguagesEnum } from '@gauzy/contracts';
 import { ConfigService, environment } from '@gauzy/config';
 import * as path from 'path';
 import * as moment from 'moment';
+import { ProbotModule } from '@gauzy/integration-github';
 import { CandidateInterviewersModule } from './candidate-interviewers/candidate-interviewers.module';
 import { CandidateSkillModule } from './candidate-skill/candidate-skill.module';
 import { InvoiceModule } from './invoice/invoice.module';
@@ -84,7 +85,6 @@ import { OrganizationEmploymentTypeModule } from './organization-employment-type
 import { TimeTrackingModule } from './time-tracking/time-tracking.module';
 import { ExpenseCategoriesModule } from './expense-categories/expense-categories.module';
 import { UpworkModule } from './upwork/upwork.module';
-import { IntegrationAIModule } from './integration/gauzy-ai/integration-ai.module';
 import { CandidateModule } from './candidate/candidate.module';
 import { ProductCategoryModule } from './product-category/product-category.module';
 import { ProductTypeModule } from './product-type/product-type.module';
@@ -153,7 +153,7 @@ import { EmailResetModule } from './email-reset/email-reset.module';
 import { TaskLinkedIssueModule } from './tasks/linked-issue/task-linked-issue.module';
 import { OrganizationTaskSettingModule } from './organization-task-setting/organization-task-setting.module';
 import { TaskEstimationModule } from './tasks/estimation/task-estimation.module';
-const { unleashConfig } = environment;
+const { unleashConfig, github } = environment;
 
 if (unleashConfig.url) {
 	const unleashInstanceConfig: UnleashConfig = {
@@ -250,6 +250,25 @@ if (environment.sentry && environment.sentry.dsn) {
 				}),
 			]
 			: []),
+
+		// Probot
+		...(github && environment.github.APP_ID
+			? [
+				ProbotModule.forRoot({
+					isGlobal: true,
+					path: 'integration/github/webhook', // Webhook URL in GitHub will be: https://api.gauzy.co/api/integration/github/webhook
+					config: {
+						/** Client Configuration */
+						clientId: environment.github.CLIENT_ID,
+						clientSecret: environment.github.CLIENT_SECRET,
+						appId: environment.github.APP_ID,
+						privateKey: environment.github.APP_PRIVATE_KEY,
+						webhookSecret: environment.github.WEBHOOK_SECRET
+					},
+				}),
+			]
+			: []),
+
 		ThrottlerModule.forRootAsync({
 			inject: [ConfigService],
 			useFactory: (config: ConfigService): ThrottlerModuleOptions =>
@@ -353,7 +372,6 @@ if (environment.sentry && environment.sentry.dsn) {
 		FeatureModule,
 		ReportModule,
 		UpworkModule,
-		IntegrationAIModule,
 		ExpenseCategoriesModule,
 		ProductCategoryModule,
 		ProductTypeModule,

@@ -1,9 +1,12 @@
-import { Controller, Get, Query, Res } from '@nestjs/common';
+import { Controller, Get, HttpException, HttpStatus, Query, Res } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
+import { Response } from 'express';
 import { ConfigService } from '@gauzy/config';
-import { Public } from '@gauzy/common';
+import { IUpworkConfig, Public } from '@gauzy/common';
+import { IntegrationEnum } from '@gauzy/contracts';
 
 @ApiTags('Upwork Integrations')
+@Public()
 @Controller()
 export class UpworkAuthorizationController {
 
@@ -12,27 +15,35 @@ export class UpworkAuthorizationController {
     ) { }
 
     /**
-     * Upwork Integration Authorization Flow Callback
-     *
-     * @param oauth_token
-     * @param oauth_verifier
-     * @param res
-     * @returns
-     */
-    @Public()
+    * Handle the callback from the Upwork integration.
+    *
+    * @param {any} query - The query parameters from the callback.
+    * @param {Response} response - Express Response object.
+    */
     @Get('callback')
-    async upworkCallback(
-        @Query('oauth_token') oauth_token: string,
-        @Query('oauth_verifier') oauth_verifier: string,
-        @Res() res: any
+    async upworkIntegrationCallback(
+        @Query() query: any,
+        @Res() response: Response
     ) {
         try {
-            if (oauth_token && oauth_verifier) {
-                return res.redirect(`${this._config.get('clientBaseUrl')}/#/pages/integrations/upwork?oauth_token=${oauth_token}&oauth_verifier=${oauth_verifier}`);
+            // Validate the input data (You can use class-validator for validation)
+            if (!query || !query.oauth_token || !query.oauth_verifier) {
+                throw new HttpException('Invalid query parameters', HttpStatus.BAD_REQUEST);
             }
-            return res.redirect(`${this._config.get('clientBaseUrl')}/#/pages/integrations/upwork`);
+
+            /** Upwork Config Options */
+            const upwork = this._config.get<IUpworkConfig>('upwork') as IUpworkConfig;
+
+            /** Construct the redirect URL with query parameters */
+            const urlParams = new URLSearchParams();
+            urlParams.append('oauth_token', query.oauth_token);
+            urlParams.append('oauth_verifier', query.oauth_verifier);
+
+            /** Redirect to the URL */
+            return response.redirect(`${upwork.POST_INSTALL_URL}?${urlParams.toString()}`);
         } catch (error) {
-            return res.redirect(`${this._config.get('clientBaseUrl')}/#/pages/integrations/upwork`);
+            // Handle errors and return an appropriate error response
+            throw new HttpException(`Failed to add ${IntegrationEnum.UPWORK} integration: ${error.message}`, HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 }

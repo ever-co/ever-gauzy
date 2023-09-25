@@ -16,7 +16,7 @@ It's built with React / ReactNative (Expo) stack and connects to headless Ever G
 
 ## 🌟 What is it
 
-[Ever® Gauzy™][uri_gauzy] - **Open-Source Business Management Platform** for On-Demand and Sharing Economies.
+[Ever® Gauzy™][uri_gauzy] - **Open Business Management Platform** for Collaborative, On-Demand and Sharing Economies.
 
 - **Enterprise Resource Planning** (ERP) software.
 - **Customer Relationship Management** (CRM) software.
@@ -25,7 +25,7 @@ It's built with React / ReactNative (Expo) stack and connects to headless Ever G
 
 ![overview](https://docs.gauzy.co/docs/assets/overview.png)
 
-Ever® Gauzy™ Platform is a part of our larger Open Platform for **On-Demand and Sharing Economies** - [Ever® Platform™](https://ever.co).
+Ever® Gauzy™ Platform is a part of our larger Open Platform for **Collaborative, On-Demand and Sharing Economies** - [Ever® Platform™](https://ever.co).
 
 ## ✨ Features
 
@@ -304,6 +304,10 @@ See our contributors list in [CONTRIBUTORS.md](https://github.com/ever-co/ever-g
 You can also view a full list of our [contributors tracked by Github](https://github.com/ever-co/ever-gauzy/graphs/contributors).
 
 <img src="https://contributors-img.web.app/image?repo=ever-co/ever-gauzy" />
+
+## ⭐ Star History
+
+[![Star History Chart](https://api.star-history.com/svg?repos=ever-co/ever-gauzy&type=Date)](https://star-history.com/#ever-co/ever-gauzy&Date)
 
 ## ❤️ Powered By
 
