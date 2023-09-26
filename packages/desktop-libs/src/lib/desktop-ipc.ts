@@ -183,25 +183,34 @@ export function ipcMainHandler(
 		} else {
 			await logout();
 		}
+
 		try {
 			timeTrackerWindow.webContents.send(
 				'preferred_language_change',
 				TranslateService.preferredLanguage
 			);
+
 			const lastTime = await TimerData.getLastCaptureTimeSlot(
 				knex,
 				LocalStore.beforeRequestParams()
 			);
+
 			console.log('Last Capture Time (Desktop IPC):', lastTime);
+
 			await offlineMode.connectivity();
-			console.log('Network state',offlineMode.enabled ? 'Offline' : 'Online')
+
+			console.log('Network state:', offlineMode.enabled ? 'Offline' : 'Online');
+
 			event.sender.send('timer_tracker_show', {
 				...LocalStore.beforeRequestParams(),
 				timeSlotId: lastTime ? lastTime.timeslotId : null,
 				isOffline: offlineMode.enabled,
 			});
-			await  countIntervalQueue(timeTrackerWindow, false);
+
+			await countIntervalQueue(timeTrackerWindow, false);
+
 			await sequentialSyncQueue(timeTrackerWindow);
+
 			await latestScreenshots(timeTrackerWindow);
 		} catch (error) {
 			throw new UIError('500', error, 'IPCINIT');
@@ -404,15 +413,21 @@ export function ipcTimer(
 	ipcMain.handle('START_TIMER', async (event, arg) => {
 		try {
 			powerManager = new DesktopPowerManager(timeTrackerWindow);
+
 			powerManagerPreventSleep = new PowerManagerPreventDisplaySleep(
 				powerManager
 			);
+
 			powerManagerDetectInactivity = new PowerManagerDetectInactivity(
 				powerManager
 			);
+
 			new DesktopOsInactivityHandler(powerManagerDetectInactivity);
+
 			const setting = LocalStore.getStore('appSetting');
+
 			log.info(`Timer Start: ${moment().format()}`);
+
 			store.set({
 				project: {
 					projectId: arg.projectId,
@@ -422,13 +437,17 @@ export function ipcTimer(
 					organizationContactId: arg.organizationContactId
 				}
 			});
-			// Check api connection before to start
+
+			// Check API connection before starting
 			await offlineMode.connectivity();
+
 			// Start Timer
 			const timerResponse = await timerHandler.startTimer(setupWindow, knex, timeTrackerWindow, arg.timeLog);
+
 			settingWindow.webContents.send('app_setting_update', {
 				setting: LocalStore.getStore('appSetting')
 			});
+
 			if (setting && setting.preventDisplaySleep) {
 				powerManagerPreventSleep.start();
 			}

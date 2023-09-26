@@ -60,6 +60,7 @@ export class ProjectSelectorComponent
 	@Input() shortened = false;
 	@Input() disabled = false;
 	@Input() multiple = false;
+	@Input() label = null;
 
 	private _projectId: string | string[];
 	get projectId(): string | string[] {

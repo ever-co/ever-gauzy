@@ -2,7 +2,7 @@ import { Component, OnInit, OnDestroy } from '@angular/core';
 import { Validators, FormGroup, FormBuilder } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { filter, tap } from 'rxjs/operators';
-import { IIntegrationTenant, IOrganization, IntegrationEnum } from '@gauzy/contracts';
+import { IIntegration, IIntegrationTenant, IOrganization, IntegrationEnum } from '@gauzy/contracts';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { HubstaffService, IntegrationsService, Store } from './../../../../@core/services';
 
@@ -113,7 +113,7 @@ export class HubstaffAuthorizeComponent implements OnInit, OnDestroy {
 	/**
 	 * Hubstaff integration remember state API call
 	 */
-	private _redirectToHubstaffIntegration(integrationId) {
+	private _redirectToHubstaffIntegration(integrationId: IIntegration['id']) {
 		this._router.navigate(['pages/integrations/hubstaff', integrationId]);
 	}
 

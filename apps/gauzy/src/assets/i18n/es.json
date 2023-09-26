@@ -525,6 +525,8 @@
 			"UPLOADER_PLACEHOLDER": "Imagen",
 			"UPLOADER_DOCUMENT_PLACEHOLDER": "URL (Uniform Resource Locator)",
 			"ADD_REMOVE_EMPLOYEES": "Agregar o eliminar empleados.",
+			"ADD_REMOVE_PROJECTS": "Agregar o quitar proyecto",
+			"ADD_REMOVE_TEAMS": "Agregar o eliminar equipos",
 			"ADD_REMOVE_CANDIDATE": "Agregar candidato",
 			"ADD_REMOVE_EMPLOYEE": "Añadir entrevistador",
 			"ADD_REMOVE_INTERVIEWER": "Seleccionar entrevistador",
