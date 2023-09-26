@@ -116,15 +116,14 @@ export const environment: IEnvironment = {
 		/** Github App Install Configuration  */
 		appId: process.env.GAUZY_GITHUB_APP_ID,
 		appName: process.env.GAUZY_GITHUB_APP_NAME,
-		appPrivateKey: process.env.GAUZY_GITHUB_APP_PRIVATE_KEY.replace(/\\n/g, '\n'),
+		appPrivateKey: process.env.GAUZY_GITHUB_APP_PRIVATE_KEY,
 
 		/** Github App Post Install Configuration */
-		postInstallUrl: process.env.GAUZY_GITHUB_POST_INSTALL_URL,
+		postInstallUrl: process.env.GAUZY_GITHUB_POST_INSTALL_URL || `${process.env.CLIENT_BASE_URL}/#/pages/integrations/github/setup/installation`,
 
+		/** Github Webhook Configuration */
 		webhookSecret: process.env.GAUZY_GITHUB_WEBHOOK_SECRET,
-		webhookUrl: process.env.GAUZY_GITHUB_WEBHOOK_URL,
-
-		apiVersion: process.env.GAUZY_GITHUB_API_VERSION
+		webhookUrl: process.env.GAUZY_GITHUB_WEBHOOK_URL || `${process.env.API_BASE_URL}/api/integration/github/webhook`
 	},
 
 	microsoftConfig: {

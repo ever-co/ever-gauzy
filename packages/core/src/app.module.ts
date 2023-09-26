@@ -252,22 +252,18 @@ if (environment.sentry && environment.sentry.dsn) {
 			: []),
 
 		// Probot Configuration
-		...(github && github.appId
-			? [
-				ProbotModule.forRoot({
-					isGlobal: true,
-					path: 'integration/github/webhook', // Webhook URL in GitHub will be: https://api.gauzy.co/api/integration/github/webhook
-					config: {
-						/** Client Configuration */
-						clientId: environment.github.clientId,
-						clientSecret: environment.github.clientSecret,
-						appId: environment.github.appId,
-						privateKey: environment.github.appPrivateKey,
-						webhookSecret: environment.github.webhookSecret
-					},
-				}),
-			]
-			: []),
+		ProbotModule.forRoot({
+			isGlobal: true,
+			path: 'integration/github/webhook', // Webhook URL in GitHub will be: https://api.gauzy.co/api/integration/github/webhook
+			config: {
+				/** Client Configuration */
+				clientId: github.clientId,
+				clientSecret: github.clientSecret,
+				appId: github.appId,
+				privateKey: github.appPrivateKey,
+				webhookSecret: github.webhookSecret
+			},
+		}),
 
 		ThrottlerModule.forRootAsync({
 			inject: [ConfigService],

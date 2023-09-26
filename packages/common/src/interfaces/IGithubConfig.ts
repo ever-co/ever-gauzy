@@ -33,7 +33,4 @@ export interface IGithubIntegrationConfig {
 
 	/** The secret used to secure GitHub webhooks. */
 	readonly webhookSecret: string;
-
-	/** The GitHub API version to use. */
-	readonly apiVersion: string;
 }
