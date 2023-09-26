@@ -1,5 +1,6 @@
 import { MigrationInterface, QueryRunner } from "typeorm";
 import * as chalk from 'chalk';
+
 export class AddColumnsToTheIntegrationTable1695023907817 implements MigrationInterface {
 
     name = 'AddColumnsToTheIntegrationTable1695023907817';
