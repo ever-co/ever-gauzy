@@ -1,0 +1,16 @@
+.badge {
+	display: flex;
+	flex-direction: row;
+	justify-content: center;
+	align-items: center;
+	position: relative;
+	width: fit-content;
+	height: 1.5rem;
+	font-size: 12px;
+	font-weight: 600;
+	letter-spacing: 0;
+	text-align: left;
+	padding: 2px 4px;
+	line-height: 1;
+	border-radius: calc(var(--border-radius) / 3);
+}

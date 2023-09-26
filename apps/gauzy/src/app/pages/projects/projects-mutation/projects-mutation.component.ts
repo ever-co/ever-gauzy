@@ -4,7 +4,6 @@ import {
 	IEmployee,
 	IOrganization,
 	IOrganizationContact,
-	IOrganizationProject,
 	ProjectBillingEnum,
 	ITag,
 	ProjectOwnerEnum,
@@ -12,7 +11,9 @@ import {
 	ContactType,
 	ICurrency,
 	OrganizationProjectBudgetTypeEnum,
-	IImageAsset
+	IImageAsset,
+	IOrganizationTeam,
+	IOrganizationProject,
 } from '@gauzy/contracts';
 import { TranslateService } from '@ngx-translate/core';
 import { Router } from '@angular/router';
@@ -39,11 +40,14 @@ import { ckEditorConfig } from "../../../@shared/ckeditor.config";
 export class ProjectsMutationComponent extends TranslationBaseComponent
 	implements OnInit {
 
+	@Input() teams: IOrganizationTeam[] = [];
+
 	FormHelpers: typeof FormHelpers = FormHelpers;
 	OrganizationProjectBudgetTypeEnum = OrganizationProjectBudgetTypeEnum;
 	TaskListTypeEnum = TaskListTypeEnum;
 	members: string[] = [];
 	selectedEmployeeIds: string[] = [];
+	selectedTeamIds: string[] = [];
 	billings: string[] = Object.values(ProjectBillingEnum);
 	owners: ProjectOwnerEnum[] = Object.values(ProjectOwnerEnum);
 	taskViewModeTypes: TaskListTypeEnum[] = Object.values(TaskListTypeEnum);
@@ -58,10 +62,11 @@ export class ProjectsMutationComponent extends TranslationBaseComponent
 	*/
 	public form: FormGroup = ProjectsMutationComponent.buildForm(this.fb);
 	static buildForm(fb: FormBuilder): FormGroup {
-		return fb.group({
+		const form = fb.group({
 			imageUrl: [],
 			imageId: [],
 			tags: [],
+			teams: [],
 			public: [],
 			billable: [],
 			name: ['', Validators.required],
@@ -91,6 +96,8 @@ export class ProjectsMutationComponent extends TranslationBaseComponent
 				CompareDateValidator.validateDate('startDate', 'endDate')
 			]
 		});
+		form.get('teams').setValue([]);
+		return form;
 	}
 
 	/*
@@ -187,6 +194,7 @@ export class ProjectsMutationComponent extends TranslationBaseComponent
 		this.selectedEmployeeIds = project.members.map(
 			(member: IEmployee) => member.id
 		);
+
 		this.members = this.selectedEmployeeIds;
 		this.form.patchValue({
 			imageUrl: project.imageUrl || null,
@@ -210,6 +218,8 @@ export class ProjectsMutationComponent extends TranslationBaseComponent
 			openSource: project.openSource || null,
 			projectUrl: project.projectUrl || null,
 			openSourceProjectUrl: project.openSourceProjectUrl || null,
+			teams: this.project.teams.map((team: IOrganizationTeam) => team.id),
+
 		});
 		this.form.updateValueAndValidity();
 	}
@@ -243,6 +253,11 @@ export class ProjectsMutationComponent extends TranslationBaseComponent
 
 	onMembersSelected(members: string[]) {
 		this.members = members;
+	}
+
+	onTeamsSelected(teams: IOrganizationTeam[]) {
+		this.form.get('teams').setValue(teams);
+		this.form.get('teams').updateValueAndValidity();
 	}
 
 	cancel() {
@@ -283,7 +298,7 @@ export class ProjectsMutationComponent extends TranslationBaseComponent
 				startDate: startDate,
 				endDate: endDate,
 				members: this.members.map((id) => this.employees.find((e) => e.id === id)).filter((e) => !!e),
-
+				teams: this.form.get('teams').value.map((id) => this.teams.find((e) => e.id === id)).filter((e) => !!e),
 				// Description Step
 				description: description,
 				tags: tags || [],

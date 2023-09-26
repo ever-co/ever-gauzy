@@ -17,6 +17,16 @@ export class Integration extends BaseEntity implements IIntegration {
 
 	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()
+	@Column({ nullable: true }) // Define a unique constraint on the "provider" column (E.g github, jira, hubstaff)
+	provider: string;
+
+	@ApiPropertyOptional({ type: () => String })
+	@IsOptional()
+	@Column({ nullable: true })
+	redirectUrl: string;
+
+	@ApiPropertyOptional({ type: () => String })
+	@IsOptional()
 	@Column({ nullable: true })
 	imgSrc: string;
 
@@ -24,34 +34,29 @@ export class Integration extends BaseEntity implements IIntegration {
 	@IsOptional()
 	@IsBoolean()
 	@Column({ default: false })
-	isComingSoon?: boolean;
+	isComingSoon: boolean;
 
 	@ApiPropertyOptional({ type: () => Boolean, default: false })
 	@IsOptional()
 	@IsBoolean()
 	@Column({ default: false })
-	isPaid?: boolean;
+	isPaid: boolean;
 
 	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()
 	@Column({ nullable: true })
-	version?: string;
+	version: string;
 
 	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()
 	@Column({ nullable: true })
-	docUrl?: string;
-
-	@ApiPropertyOptional({ type: () => String })
-	@IsOptional()
-	@Column({ nullable: true })
-	navigationUrl?: string;
+	docUrl: string;
 
 	@ApiPropertyOptional({ type: () => Boolean, default: false })
 	@IsOptional()
 	@IsBoolean()
 	@Column({ default: false })
-	isFreeTrial?: boolean;
+	isFreeTrial: boolean;
 
 	@ApiPropertyOptional({ type: () => Number })
 	@IsOptional()
@@ -62,16 +67,15 @@ export class Integration extends BaseEntity implements IIntegration {
 		type: 'numeric',
 		transformer: new ColumnNumericTransformerPipe()
 	})
-	freeTrialPeriod?: number;
+	freeTrialPeriod: number;
 
 	@ApiPropertyOptional({ type: () => Number })
 	@IsOptional()
 	@IsNumber()
 	@Column({ nullable: true })
-	order?: number;
+	order: number;
 
 	fullImgUrl?: string;
-
 	/*
 	|--------------------------------------------------------------------------
 	| @ManyToMany

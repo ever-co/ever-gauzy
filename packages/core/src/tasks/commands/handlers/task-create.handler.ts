@@ -8,7 +8,6 @@ import { TaskService } from '../../task.service';
 
 @CommandHandler(TaskCreateCommand)
 export class TaskCreateHandler implements ICommandHandler<TaskCreateCommand> {
-
 	constructor(
 		private readonly _taskService: TaskService,
 		private readonly _organizationProjectService: OrganizationProjectService
@@ -24,15 +23,17 @@ export class TaskCreateHandler implements ICommandHandler<TaskCreateCommand> {
 			/** If project found then use project name as a task prefix */
 			if (input.projectId) {
 				const { projectId } = input;
-				project = await this._organizationProjectService.findOneByIdString(projectId);
+				project = await this._organizationProjectService.findOneByIdString(
+					projectId
+				);
 			}
 
-			const projectId = (project) ? project.id : null;
-			const taskPrefix = (project) ? project.name.substring(0, 3) : null;
+			const projectId = project ? project.id : null;
+			const taskPrefix = project ? project.name.substring(0, 3) : null;
 
 			const maxNumber = await this._taskService.getMaxTaskNumberByProject({
 				organizationId,
-				projectId
+				projectId,
 			});
 
 			return await this._taskService.create({

@@ -16,6 +16,8 @@ import {
 	RolesEnum,
 	ComponentLayoutStyleEnum,
 	ISelectedEmployee,
+	IOrganizationProject,
+	PermissionsEnum,
 } from '@gauzy/contracts';
 import { NbDialogRef, NbDialogService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
@@ -39,6 +41,7 @@ import {
 } from '../../@shared/table-components';
 import {
 	EmployeesService,
+	OrganizationProjectsService,
 	OrganizationTeamsService,
 	Store,
 	ToastrService
@@ -65,6 +68,7 @@ export class TeamsComponent extends PaginationFilterBaseComponent
 	teams: IOrganizationTeam[] = [];
 	employees: IEmployee[] = [];
 	tags: ITag[] = [];
+	projects: IOrganizationProject[] = [];
 
 	viewComponentName: ComponentEnum;
 	dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
@@ -77,6 +81,8 @@ export class TeamsComponent extends PaginationFilterBaseComponent
 	public organization: IOrganization;
 	teams$: Subject<any> = this.subject$;
 	employees$: Subject<any> = new Subject();
+	projects$: Subject<any> = new Subject();
+
 	selected = {
 		team: null,
 		state: false
@@ -94,6 +100,7 @@ export class TeamsComponent extends PaginationFilterBaseComponent
 	constructor(
 		private readonly organizationTeamsService: OrganizationTeamsService,
 		private readonly employeesService: EmployeesService,
+		private readonly projectService: OrganizationProjectsService,
 		private readonly toastrService: ToastrService,
 		private readonly dialogService: NbDialogService,
 		private readonly store: Store,
@@ -134,6 +141,15 @@ export class TeamsComponent extends PaginationFilterBaseComponent
 			)
 			.subscribe();
 
+		this.projects$
+			.pipe(
+				debounceTime(300),
+				tap(() => this._refresh$.next(true)),
+				tap(() => this.loadOrganizationProjects()),
+				untilDestroyed(this)
+			)
+			.subscribe();
+
 		const storeOrganization$ = this.store.selectedOrganization$;
 		const storeEmployee$ = this.store.selectedEmployee$;
 		combineLatest([storeOrganization$, storeEmployee$])
@@ -147,6 +163,7 @@ export class TeamsComponent extends PaginationFilterBaseComponent
 				tap(() => this._refresh$.next(true)),
 				tap(() => this.teams$.next(true)),
 				tap(() => this.employees$.next(true)),
+				tap(() => this.projects$.next(true)),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -158,6 +175,7 @@ export class TeamsComponent extends PaginationFilterBaseComponent
 				),
 				tap(() => this.teams$.next(true)),
 				tap(() => this.employees$.next(true)),
+				tap(() => this.projects$.next(true)),
 				debounceTime(1000),
 				tap(() => this.openDialog(this.addEditTemplate, false)),
 				untilDestroyed(this)
@@ -315,6 +333,31 @@ export class TeamsComponent extends PaginationFilterBaseComponent
 		this.employees = items;
 	}
 
+	/**
+	 * load organization projects
+	 *
+	 * @returns
+	 */
+	private async loadOrganizationProjects(): Promise<IOrganizationProject[]> {
+		if (!this.organization || !this.store.hasAnyPermission(
+			PermissionsEnum.ALL_ORG_VIEW,
+			PermissionsEnum.ORG_PROJECT_VIEW
+		)) {
+			return;
+		}
+
+		const { tenantId } = this.store.user;
+		const { id: organizationId } = this.organization;
+
+		this.projects = (await this.projectService.getAll(
+			[],
+			{
+				organizationId,
+				tenantId
+			}
+		)).items;
+	}
+
 	public getTagsByEmployeeId(id: string) {
 		const employee = this.employees.find((empl) => empl.id === id);
 		return employee ? employee.tags : [];
@@ -340,6 +383,7 @@ export class TeamsComponent extends PaginationFilterBaseComponent
 				'members.role',
 				'members.employee.user',
 				'tags',
+				'projects'
 			],
 			where: {
 				organizationId,

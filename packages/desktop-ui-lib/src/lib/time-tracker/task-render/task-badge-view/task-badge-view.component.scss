@@ -1,0 +1,18 @@
+.badge-color {
+	display: flex;
+	padding: 4px;
+	width: fit-content;
+	line-height: 1;
+	border-radius: var(--border-radius);
+	white-space: nowrap;
+	text-overflow: ellipsis;
+	overflow: hidden;
+	gap: 4px;
+	align-items: center;
+	font-weight: 600;
+
+	.badge-img {
+		width: 18px;
+		height: 100%;
+	}
+}

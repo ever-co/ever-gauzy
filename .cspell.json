@@ -320,6 +320,9 @@
 		"signin",
 		"ibase",
 		"iwindow",
+		"Probot",
+		"Smee",
+		"badal",
 		"MAINSTRSERVER",
 		"MAINLOADURL",
 		"MAINDB",
@@ -369,7 +372,8 @@
 		"USERTRX",
 		"MAINUNEXCEPTION",
 		"Harbir",
-		"Chahal"
+		"Chahal",
+		"pino"
 	],
 	"useGitignore": true,
 	"ignorePaths": [
