@@ -5,7 +5,8 @@ import {
 	Router,
 	RouterStateSnapshot,
 } from '@angular/router';
-import { AuthService, AuthStrategy } from './services';
+import { AuthService } from './services/auth.service';
+import { AuthStrategy } from './services/auth-strategy.service';
 import { Store } from '../services';
 import { ElectronService } from '../electron/services';
 
@@ -23,45 +24,37 @@ export class AuthGuard implements CanActivate {
 		route: ActivatedRouteSnapshot,
 		state: RouterStateSnapshot
 	) {
-		let isAuthenticated = false;
 		try {
-			isAuthenticated = await this.authService.isAuthenticated();
-		} catch (error) {
-			console.error(error);
-		}
-		console.log(
-			'Token Authenticated:',
-			`${isAuthenticated ? 'true' : 'false'}`
-		);
+			const isAuthenticated = await this.authService.isAuthenticated();
+			console.log(
+				'Token Authenticated:',
+				`${isAuthenticated ? 'true' : 'false'}`
+			);
+			if (isAuthenticated) {
+				// logged in so return true
+				return true;
+			}
 
-		if (isAuthenticated) {
-			return true; // logged in so return true
-		} else {
-			if (!!this.store.userId) return true;
-			await this.logoutAndRedirect(state.url);
+			// not logged in so logout from desktop timer
+			if (this.electronService.isElectron) {
+				try {
+					this.electronService.ipcRenderer.send('logout_desktop');
+				} catch (error) { }
+			}
+
+			// logout and clear local store
+			this.authStrategy.logout();
+
+			// not logged in so redirect to login page with the return url
+			this.router.navigate(['/auth/login'], {
+				queryParams: { returnUrl: state.url },
+			});
+			return false;
+		} catch (error) {
+			if (this.store.userId) {
+				return true;
+			}
 			return false;
 		}
-	}
-
-	private async logoutAndRedirect(returnUrl: string): Promise<void> {
-		this.logoutDesktop();
-		this.logoutAndClearStore();
-		await this.redirectToLogin(returnUrl);
-	}
-
-	private logoutDesktop() {
-		if (this.electronService.isElectron) {
-			this.electronService.ipcRenderer.send('logout_desktop');
-		}
-	}
-
-	private logoutAndClearStore() {
-		this.authStrategy.logout();
-	}
-
-	private async redirectToLogin(returnUrl: string) {
-		await this.router.navigate(['/auth/login'], {
-			queryParams: { returnUrl },
-		});
 	}
 }
