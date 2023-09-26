@@ -3,7 +3,7 @@ import { App } from 'octokit';
 import { ModuleProviders, ProbotConfig } from './probot.types';
 import { ResponseHeaders as OctokitResponseHeaders } from "@octokit/types";
 
-const GAUZY_GITHUB_API_VERSION = process.env.GAUZY_GITHUB_API_VERSION;
+const GITHUB_API_VERSION = process.env.GAUZY_GITHUB_API_VERSION;
 
 export interface OctokitResponse<T> {
 	data: T; // The response data received from the GitHub API.
@@ -23,10 +23,12 @@ export class OctokitService {
 		@Inject(ModuleProviders.ProbotConfig)
 		private readonly config: ProbotConfig
 	) {
-		this.app = new App({
-			appId: this.config.appId,
-			privateKey: this.config.privateKey,
-		});
+		if (this.config) {
+			this.app = new App({
+				appId: this.config.appId,
+				privateKey: this.config.privateKey,
+			});
+		}
 	}
 
 	/**
@@ -45,7 +47,7 @@ export class OctokitService {
 			return await octokit.request('GET /app/installations/{installation_id}', {
 				installation_id,
 				headers: {
-					'X-GitHub-Api-Version': GAUZY_GITHUB_API_VERSION
+					'X-GitHub-Api-Version': GITHUB_API_VERSION
 				}
 			});
 		} catch (error) {
@@ -70,7 +72,7 @@ export class OctokitService {
 			return await octokit.request('GET /installation/repositories', {
 				installation_id,
 				headers: {
-					'X-GitHub-Api-Version': GAUZY_GITHUB_API_VERSION
+					'X-GitHub-Api-Version': GITHUB_API_VERSION
 				}
 			});
 		} catch (error) {
@@ -105,7 +107,7 @@ export class OctokitService {
 				owner: owner,
 				repo: repo,
 				headers: {
-					'X-GitHub-Api-Version': GAUZY_GITHUB_API_VERSION
+					'X-GitHub-Api-Version': GITHUB_API_VERSION
 				}
 			});
 		} catch (error) {

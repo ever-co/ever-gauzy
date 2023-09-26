@@ -251,8 +251,8 @@ if (environment.sentry && environment.sentry.dsn) {
 			]
 			: []),
 
-		// Probot
-		...(github && environment.github.appId
+		// Probot Configuration
+		...(github && github.appId
 			? [
 				ProbotModule.forRoot({
 					isGlobal: true,
