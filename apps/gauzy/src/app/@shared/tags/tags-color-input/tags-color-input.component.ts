@@ -110,7 +110,8 @@ export class TagsColorInputComponent extends PictureNameTagsComponent
 
 	@HostListener('window:resize')
 	onResize(): void {
-		this.checkTagsFit(this.selectedTags);
+		if (this.selectedTags)
+			this.checkTagsFit(this.selectedTags);
 	}
 
 	constructor(
