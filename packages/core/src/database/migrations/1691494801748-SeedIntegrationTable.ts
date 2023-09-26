@@ -1,6 +1,7 @@
 
 import { MigrationInterface, QueryRunner } from "typeorm";
 import { v4 as uuidv4 } from 'uuid';
+import * as chalk from 'chalk';
 import { getConfig } from "@gauzy/config";
 import { copyAssets } from "./../../core/seeds/utils";
 import { DEFAULT_SYSTEM_INTEGRATIONS } from "./../../integration/default-integration";
@@ -16,6 +17,8 @@ export class SeedIntegrationTable1691494801748 implements MigrationInterface {
     * @param queryRunner
     */
     public async up(queryRunner: QueryRunner): Promise<any> {
+        console.log(chalk.yellow(`SeedIntegrationTable1691494801748 start running!`));
+
         await this.upsertIntegrationsAndIntegrationTypes(queryRunner);
     }
 
@@ -64,7 +67,7 @@ export class SeedIntegrationTable1691494801748 implements MigrationInterface {
                             "name", "imgSrc", "isComingSoon", "order"
                         )
                         VALUES (
-                            $1, $2, $3, $4, $5
+                            $1, $2, $3, $4
                         )
                         ON CONFLICT(name) DO UPDATE
                         SET

@@ -4,9 +4,10 @@ import { IntegrationsComponent } from './integrations.component';
 
 const routes: Routes = [
 	{
-		path: '',
+		path: 'new',
 		component: IntegrationsComponent
 	},
+	/** Integrations List */
 	{
 		path: 'upwork',
 		loadChildren: () => import('../upwork/upwork.module').then(
@@ -23,6 +24,12 @@ const routes: Routes = [
 		path: 'gauzy-ai',
 		loadChildren: () => import('./gauzy-ai/gauzy-ai.module').then(
 			(m) => m.GauzyAIModule
+		)
+	},
+	{
+		path: 'github',
+		loadChildren: () => import('./github/github.module').then(
+			(m) => m.GithubModule
 		)
 	}
 ];

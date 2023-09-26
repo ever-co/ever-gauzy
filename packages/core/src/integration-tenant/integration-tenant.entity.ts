@@ -29,8 +29,12 @@ export class IntegrationTenant extends TenantOrganizationBaseEntity implements I
 	 * Integration
 	 */
 	@ManyToOne(() => Integration, {
+
+		/** Indicates if relation column value can be nullable or not. */
 		nullable: true,
-		onDelete: 'CASCADE'
+
+		/** Database cascade action on delete. */
+		onDelete: 'CASCADE',
 	})
 	@JoinColumn()
 	integration?: IIntegration;

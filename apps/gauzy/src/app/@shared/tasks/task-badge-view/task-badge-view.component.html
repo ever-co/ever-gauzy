@@ -1,0 +1,14 @@
+<div class="row">
+	<div class="col-12">
+		<div
+			[style.background]="backgroundColor"
+			[style.color]="textColor"
+			class="badge-color"
+		>
+			<div [style.filter]="imageFilter">
+				<img [src]="icon" alt="badge" class="badge-img" />
+			</div>
+			<div>{{ name | replace : '-' : ' ' | titlecase }}</div>
+		</div>
+	</div>
+</div>

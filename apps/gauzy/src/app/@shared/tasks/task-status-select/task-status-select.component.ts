@@ -1,22 +1,33 @@
 import {
-	Component,
-	OnInit,
-	OnDestroy,
-	Input,
-	forwardRef,
-	EventEmitter,
-	Output,
 	AfterViewInit,
+	Component,
+	EventEmitter,
+	forwardRef,
+	Input,
+	OnDestroy,
+	OnInit,
+	Output,
 } from '@angular/core';
 import { NG_VALUE_ACCESSOR } from '@angular/forms';
 import { BehaviorSubject } from 'rxjs/internal/BehaviorSubject';
 import { combineLatest, debounceTime, firstValueFrom, Subject } from 'rxjs';
 import { filter, map, tap } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
-import { IOrganization, IOrganizationProject, IPagination, ITaskStatus, ITaskStatusFindInput, TaskStatusEnum } from '@gauzy/contracts';
+import {
+	IOrganization,
+	IOrganizationProject,
+	IPagination,
+	ITaskStatus,
+	ITaskStatusFindInput,
+	TaskStatusEnum,
+} from '@gauzy/contracts';
 import { distinctUntilChange, sluggable } from '@gauzy/common-angular';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { TaskStatusesService, Store, ToastrService } from '../../../@core/services';
+import {
+	Store,
+	TaskStatusesService,
+	ToastrService,
+} from '../../../@core/services';
 import { TranslationBaseComponent } from '../../language-base/translation-base.component';
 
 @UntilDestroy({ checkProperties: true })
@@ -31,13 +42,11 @@ import { TranslationBaseComponent } from '../../language-base/translation-base.c
 		},
 	],
 })
-export class TaskStatusSelectComponent extends TranslationBaseComponent
-	implements AfterViewInit, OnInit, OnDestroy {
-
+export class TaskStatusSelectComponent
+	extends TranslationBaseComponent
+	implements AfterViewInit, OnInit, OnDestroy
+{
 	private subject$: Subject<boolean> = new Subject();
-	public organization: IOrganization;
-	public statuses$: BehaviorSubject<ITaskStatus[]> = new BehaviorSubject([]);
-
 	/**
 	 * Default global task statuses
 	 */
@@ -67,58 +76,9 @@ export class TaskStatusSelectComponent extends TranslationBaseComponent
 			value: sluggable(TaskStatusEnum.COMPLETED),
 		},
 	];
-
-	/*
-	* Getter & Setter for selected organization project
-	*/
-	private _projectId: IOrganizationProject['id'];
-	get projectId(): IOrganizationProject['id'] {
-		return this._projectId;
-	}
-	@Input() set projectId(value: IOrganizationProject['id']) {
-		this._projectId = value;
-		this.subject$.next(true);
-	}
-
-	/*
-	* Getter & Setter for dynamic add tag option
-	*/
-	private _addTag: boolean = true;
-	get addTag(): boolean {
-		return this._addTag;
-	}
-	@Input() set addTag(value: boolean) {
-		this._addTag = value;
-	}
-
-	/*
-	 * Getter & Setter for dynamic placeholder
-	 */
-	private _placeholder: string;
-	get placeholder(): string {
-		return this._placeholder;
-	}
-	@Input() set placeholder(value: string) {
-		this._placeholder = value;
-	}
-
-	/*
-	 * Getter & Setter for status
-	 */
-	private _status: TaskStatusEnum;
-	set status(val: TaskStatusEnum) {
-		this._status = val;
-		this.onChange(val);
-		this.onTouched(val);
-	}
-	get status(): TaskStatusEnum {
-		return this._status;
-	}
-
-	onChange: any = () => {};
-	onTouched: any = () => {};
-
-	@Output() onChanged = new EventEmitter<string>();
+	public organization: IOrganization;
+	public statuses$: BehaviorSubject<ITaskStatus[]> = new BehaviorSubject([]);
+	@Output() onChanged = new EventEmitter<ITaskStatus>();
 
 	constructor(
 		public readonly translateService: TranslateService,
@@ -128,6 +88,65 @@ export class TaskStatusSelectComponent extends TranslationBaseComponent
 	) {
 		super(translateService);
 	}
+
+	/*
+	 * Getter & Setter for selected organization project
+	 */
+	private _projectId: IOrganizationProject['id'];
+
+	get projectId(): IOrganizationProject['id'] {
+		return this._projectId;
+	}
+
+	@Input() set projectId(value: IOrganizationProject['id']) {
+		this._projectId = value;
+		this.subject$.next(true);
+	}
+
+	/*
+	 * Getter & Setter for dynamic add tag option
+	 */
+	private _addTag: boolean = true;
+
+	get addTag(): boolean {
+		return this._addTag;
+	}
+
+	@Input() set addTag(value: boolean) {
+		this._addTag = value;
+	}
+
+	/*
+	 * Getter & Setter for dynamic placeholder
+	 */
+	private _placeholder: string;
+
+	get placeholder(): string {
+		return this._placeholder;
+	}
+
+	@Input() set placeholder(value: string) {
+		this._placeholder = value;
+	}
+
+	/*
+	 * Getter & Setter for status
+	 */
+	private _status: ITaskStatus;
+
+	get status(): ITaskStatus {
+		return this._status;
+	}
+
+	set status(val: ITaskStatus) {
+		this._status = val;
+		this.onChange(val);
+		this.onTouched(val);
+	}
+
+	onChange: any = () => {};
+
+	onTouched: any = () => {};
 
 	ngOnInit(): void {
 		this.subject$
@@ -156,8 +175,8 @@ export class TaskStatusSelectComponent extends TranslationBaseComponent
 			.subscribe();
 	}
 
-	writeValue(value: TaskStatusEnum) {
-		this._status = value;
+	writeValue(value: ITaskStatus) {
+		this.status = value;
 	}
 
 	registerOnChange(fn: (rating: number) => void): void {
@@ -168,8 +187,8 @@ export class TaskStatusSelectComponent extends TranslationBaseComponent
 		this.onTouched = fn;
 	}
 
-	selectStatus(event: { label: string; value: TaskStatusEnum }) {
-		this.onChanged.emit(event ? event.value : null);
+	selectStatus(status: ITaskStatus) {
+		this.onChanged.emit(status);
 	}
 
 	/**
@@ -183,20 +202,24 @@ export class TaskStatusSelectComponent extends TranslationBaseComponent
 		const { tenantId } = this.store.user;
 		const { id: organizationId } = this.organization;
 
-		this.taskStatusesService.get<ITaskStatusFindInput>({
-			tenantId,
-			organizationId,
-			...(this.projectId
-				? {
-					projectId: this.projectId
-				  }
-				: {}),
-		}).pipe(
-			map(({ items, total }: IPagination<ITaskStatus>) => total > 0 ? items : this._statuses),
-			tap((statuses: ITaskStatus[]) => this.statuses$.next(statuses)),
-			untilDestroyed(this)
-		)
-		.subscribe();
+		this.taskStatusesService
+			.get<ITaskStatusFindInput>({
+				tenantId,
+				organizationId,
+				...(this.projectId
+					? {
+							projectId: this.projectId,
+					  }
+					: {}),
+			})
+			.pipe(
+				map(({ items, total }: IPagination<ITaskStatus>) =>
+					total > 0 ? items : this._statuses
+				),
+				tap((statuses: ITaskStatus[]) => this.statuses$.next(statuses)),
+				untilDestroyed(this)
+			)
+			.subscribe();
 	}
 
 	/**
@@ -219,7 +242,7 @@ export class TaskStatusSelectComponent extends TranslationBaseComponent
 				name,
 				...(this.projectId
 					? {
-						projectId: this.projectId
+							projectId: this.projectId,
 					  }
 					: {}),
 			});
@@ -227,7 +250,7 @@ export class TaskStatusSelectComponent extends TranslationBaseComponent
 		} catch (error) {
 			this.toastrService.error(error);
 		} finally {
-			this.subject$.next(true)
+			this.subject$.next(true);
 		}
 	};
 

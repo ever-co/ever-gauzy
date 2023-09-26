@@ -153,8 +153,7 @@ import { EmailResetModule } from './email-reset/email-reset.module';
 import { TaskLinkedIssueModule } from './tasks/linked-issue/task-linked-issue.module';
 import { OrganizationTaskSettingModule } from './organization-task-setting/organization-task-setting.module';
 import { TaskEstimationModule } from './tasks/estimation/task-estimation.module';
-import { GitHubModule } from './github/github.module';
-const { unleashConfig } = environment;
+const { unleashConfig, github } = environment;
 
 if (unleashConfig.url) {
 	const unleashInstanceConfig: UnleashConfig = {
@@ -252,29 +251,19 @@ if (environment.sentry && environment.sentry.dsn) {
 			]
 			: []),
 
-		// Probot
-		...(environment.gitHubIntegrationConfig &&
-			environment.gitHubIntegrationConfig.appId
-			? [
-				ProbotModule.forRoot({
-					path: 'github', // Webhook URL in GitHub will be: https://example.com/api/github
-					config: {
-						appId: environment.gitHubIntegrationConfig.appId,
-						clientId:
-							environment.gitHubIntegrationConfig.clientId,
-						clientSecret:
-							environment.gitHubIntegrationConfig
-								.clientSecret,
-
-						privateKey:
-							environment.gitHubIntegrationConfig.privateKey,
-						webhookSecret:
-							environment.gitHubIntegrationConfig
-								.webhookSecret,
-					},
-				}),
-			]
-			: []),
+		// Probot Configuration
+		ProbotModule.forRoot({
+			isGlobal: true,
+			path: 'integration/github/webhook', // Webhook URL in GitHub will be: https://api.gauzy.co/api/integration/github/webhook
+			config: {
+				/** Client Configuration */
+				clientId: github.clientId,
+				clientSecret: github.clientSecret,
+				appId: github.appId,
+				privateKey: github.appPrivateKey,
+				webhookSecret: github.webhookSecret
+			},
+		}),
 
 		ThrottlerModule.forRootAsync({
 			inject: [ConfigService],
@@ -408,8 +397,7 @@ if (environment.sentry && environment.sentry.dsn) {
 		IssueTypeModule,
 		TaskLinkedIssueModule,
 		OrganizationTaskSettingModule,
-		TaskEstimationModule,
-		GitHubModule
+		TaskEstimationModule
 	],
 	controllers: [AppController],
 	providers: [

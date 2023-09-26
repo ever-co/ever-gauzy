@@ -1,5 +1,6 @@
 
 import { MigrationInterface, QueryRunner } from "typeorm";
+import * as chalk from 'chalk';
 
 export class AddOrganizationProjectTeamRelation1692256031607 implements MigrationInterface {
 
@@ -11,6 +12,8 @@ export class AddOrganizationProjectTeamRelation1692256031607 implements Migratio
     * @param queryRunner
     */
     public async up(queryRunner: QueryRunner): Promise<any> {
+        console.log(chalk.yellow(`AddOrganizationProjectTeamRelation1692256031607 start running!`));
+
         if (queryRunner.connection.options.type === 'sqlite') {
             await this.sqliteUpQueryRunner(queryRunner);
         } else {

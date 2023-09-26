@@ -67,7 +67,7 @@ import {
 	IntegrationMapSyncTimeSlotCommand
 } from 'integration-map/commands';
 import { IntegrationTenantService } from 'integration-tenant/integration-tenant.service';
-import { IntegrationTenantCreateCommand } from 'integration-tenant/commands';
+import { IntegrationTenantFirstOrCreateCommand } from 'integration-tenant/commands';
 import { IntegrationService } from 'integration/integration.service';
 
 @Injectable()
@@ -235,7 +235,14 @@ export class HubstaffService {
 			}
 		}).pipe(
 			switchMap(({ data }) => this._commandBus.execute(
-				new IntegrationTenantCreateCommand({
+				new IntegrationTenantFirstOrCreateCommand({
+					name: IntegrationEnum.HUBSTAFF,
+					integration: {
+						provider: IntegrationEnum.HUBSTAFF
+					},
+					tenantId,
+					organizationId,
+				}, {
 					name: IntegrationEnum.HUBSTAFF,
 					integration,
 					organizationId,
@@ -258,7 +265,11 @@ export class HubstaffService {
 							settingsName: 'refresh_token',
 							settingsValue: data.refresh_token
 						}
-					]
+					].map((setting) => ({
+						...setting,
+						tenantId,
+						organizationId,
+					}))
 				})
 			)),
 			catchError((err) => {

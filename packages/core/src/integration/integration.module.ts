@@ -11,6 +11,7 @@ import { IntegrationService } from './integration.service';
 import { IntegrationController } from './integration.controller';
 import { CommandHandlers } from './commands/handlers';
 import { IntegrationTenantModule } from '../integration-tenant/integration-tenant.module';
+import { GithubModule } from './github/github.module';
 import { IntegrationAIModule } from './gauzy-ai/integration-ai.module';
 
 @Module({
@@ -20,6 +21,7 @@ import { IntegrationAIModule } from './gauzy-ai/integration-ai.module';
 				path: '/integration', module: IntegrationModule,
 				children: [
 					{ path: '/hubstaff', module: HubstaffModule },
+					{ path: '/github', module: GithubModule },
 					{ path: '/gauzy-ai', module: IntegrationAIModule },
 					{ path: '/', module: IntegrationModule }
 				]
@@ -33,6 +35,7 @@ import { IntegrationAIModule } from './gauzy-ai/integration-ai.module';
 		IntegrationTenantModule,
 		TenantModule,
 		UserModule,
+		forwardRef(() => GithubModule),
 		forwardRef(() => HubstaffModule),
 		forwardRef(() => IntegrationAIModule),
 		CqrsModule
