@@ -1,7 +1,9 @@
+<label class="label" *ngIf="label">{{ label | translate }}</label>
 <ng-template [ngIf]="!multiple" [ngIfElse]="multipleSelect">
 	<ng-select #select [addTag]="(hasAddTeam$ | async) ? createNew : null" [multiple]="multiple"
-		[clearable]="isClearable()" [disabled]="disabled" [items]="teams" (change)="selectTeam($event); select.blur();"
-		(clear)="select.blur(); clearSelection();" [(ngModel)]="teamId" [placeholder]="
+		[clearable]="isClearable()" [disabled]="disabled" [items]="teams"
+		(change)="selectTeam($event); select.blur();" (clear)="select.blur(); clearSelection();"
+		[(ngModel)]="teamId" [placeholder]="
 			placeholder || 'FORM.PLACEHOLDERS.ALL_TEAMS' | translate
 		" [addTagText]="'FORM.PLACEHOLDERS.ADD_TEAM' | translate" bindValue="id" bindLabel="name" appendTo="body">
 		<ng-container *ngIf="shortened">

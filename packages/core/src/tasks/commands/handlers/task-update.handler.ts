@@ -6,7 +6,6 @@ import { TaskUpdateCommand } from '../task-update.command';
 
 @CommandHandler(TaskUpdateCommand)
 export class TaskUpdateHandler implements ICommandHandler<TaskUpdateCommand> {
-
 	constructor(
 		private readonly _taskService: TaskService
 	) { }
@@ -23,10 +22,7 @@ export class TaskUpdateHandler implements ICommandHandler<TaskUpdateCommand> {
 	 * @param request
 	 * @returns
 	 */
-	public async update(
-		id: string,
-		request: ITaskUpdateInput
-	): Promise<ITask> {
+	public async update(id: string, request: ITaskUpdateInput): Promise<ITask> {
 		try {
 			const task = await this._taskService.findOneByIdString(id);
 
@@ -39,14 +35,15 @@ export class TaskUpdateHandler implements ICommandHandler<TaskUpdateCommand> {
 					const { organizationId } = task;
 					const maxNumber = await this._taskService.getMaxTaskNumberByProject({
 						organizationId,
-						projectId
+						projectId,
 					});
 					await this._taskService.update(id, {
 						projectId,
-						number: maxNumber + 1
+						number: maxNumber + 1,
 					});
 				}
 			}
+
 			return await this._taskService.create({
 				...request,
 				id

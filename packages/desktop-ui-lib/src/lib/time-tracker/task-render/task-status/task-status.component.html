@@ -1,0 +1,27 @@
+<ng-container *ngIf="taskStatus$ | async; else defaultView">
+	<gauzy-task-badge-view
+		[nbPopover]="contextMenu"
+		[taskBadge]="taskStatus$ | async"
+		nbPopoverTrigger="hover"
+	></gauzy-task-badge-view>
+</ng-container>
+
+<ng-template #contextMenu>
+	<div class="view">
+		<ng-container *ngFor="let taskStatus of statuses$ | async">
+			<gauzy-task-badge-view
+				(click)="updateStatus(taskStatus)"
+				[taskBadge]="taskStatus"
+				class="status-view"
+			></gauzy-task-badge-view>
+		</ng-container>
+	</div>
+</ng-template>
+
+<ng-template #defaultView>
+	<gauzy-task-badge-default
+		[nbPopover]="contextMenu"
+		[taskBadge]="status$ | async"
+		nbPopoverTrigger="hover"
+	></gauzy-task-badge-default>
+</ng-template>

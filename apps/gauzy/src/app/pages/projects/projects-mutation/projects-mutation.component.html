@@ -222,6 +222,13 @@
 										"
 									></ga-employee-multi-select>
 								</div>
+								<div class="form-group col-6">
+									<ga-team-selector formControlName="teams" [skipGlobalChange]="true" [multiple]="true" [showAllOption]="false"
+										[placeholder]="'FORM.PLACEHOLDERS.ADD_REMOVE_TEAMS' | translate" [defaultSelected]="false"
+										[label]="'FORM.PLACEHOLDERS.ADD_REMOVE_TEAMS' | translate"
+										(onChanged)="onTeamsSelected($event)"></ga-team-selector>
+
+								</div>
 							</div>
 							<div class="row">
 								<div class="form-group col-6">

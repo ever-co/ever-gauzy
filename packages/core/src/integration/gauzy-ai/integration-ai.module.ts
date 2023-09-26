@@ -1,4 +1,4 @@
-import { MiddlewareConsumer, Module, NestModule, RequestMethod } from '@nestjs/common';
+import { MiddlewareConsumer, Module, NestModule, RequestMethod, forwardRef } from '@nestjs/common';
 import { CqrsModule } from '@nestjs/cqrs';
 import { RouterModule } from 'nest-router';
 import { GauzyAIModule } from '@gauzy/integration-ai';
@@ -13,12 +13,9 @@ import { EmployeeJobPostController } from './../../employee-job/employee-job.con
 
 @Module({
 	imports: [
-		RouterModule.forRoutes([
-			{ path: '/integrations/gauzy-ai', module: IntegrationAIModule }
-		]),
 		TenantModule,
 		UserModule,
-		IntegrationModule,
+		forwardRef(() => IntegrationModule),
 		IntegrationTenantModule,
 		CqrsModule,
 		GauzyAIModule.forRoot()

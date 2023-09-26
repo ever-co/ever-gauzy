@@ -1,13 +1,13 @@
 import {
-	Entity,
 	Column,
-	ManyToOne,
-	JoinColumn,
-	RelationId,
-	OneToMany,
-	ManyToMany,
-	JoinTable,
+	Entity,
 	Index,
+	JoinColumn,
+	JoinTable,
+	ManyToMany,
+	ManyToOne,
+	OneToMany,
+	RelationId,
 } from 'typeorm';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
@@ -29,6 +29,9 @@ import {
 	IOrganizationTeam,
 	ITag,
 	ITask,
+	ITaskPriority,
+	ITaskSize,
+	ITaskStatus,
 	ITimeLog,
 	IUser,
 	TaskPriorityEnum,
@@ -42,13 +45,16 @@ import {
 	OrganizationProject,
 	OrganizationSprint,
 	OrganizationTeam,
+	OrganizationTeamEmployee,
 	Tag,
+	TaskEstimation,
+	TaskLinkedIssue,
+	TaskPriority,
+	TaskSize,
+	TaskStatus,
 	TenantOrganizationBaseEntity,
 	TimeLog,
 	User,
-	TaskEstimation,
-	TaskLinkedIssue,
-	OrganizationTeamEmployee,
 } from '../core/entities/internal';
 
 @Entity('task')
@@ -143,10 +149,10 @@ export class Task extends TenantOrganizationBaseEntity implements ITask {
 	taskNumber?: string;
 
 	/*
-	|--------------------------------------------------------------------------
-	| @ManyToOne
-	|--------------------------------------------------------------------------
-	*/
+    |--------------------------------------------------------------------------
+    | @ManyToOne
+    |--------------------------------------------------------------------------
+    */
 
 	// Define the parent-child relationship
 	@ApiPropertyOptional({ type: () => Task })
@@ -217,11 +223,71 @@ export class Task extends TenantOrganizationBaseEntity implements ITask {
 	@Column({ nullable: true })
 	organizationSprintId?: IOrganizationSprint['id'];
 
+	/**
+	 * Task Status
+	 */
+	@ApiPropertyOptional({ type: () => Object })
+	@IsOptional()
+	@IsObject()
+	@ManyToOne(() => TaskStatus, {
+		onDelete: 'SET NULL',
+	})
+	@JoinColumn()
+	taskStatus?: ITaskStatus;
+
+	@ApiPropertyOptional({ type: () => String })
+	@IsOptional()
+	@IsUUID()
+	@RelationId((it: Task) => it.taskStatus)
+	@Index()
+	@Column({ nullable: true, type: 'varchar' })
+	taskStatusId?: ITaskStatus['id'];
+
+	/**
+	 * Task Size
+	 */
+	@ApiPropertyOptional({ type: () => Object })
+	@IsOptional()
+	@IsObject()
+	@ManyToOne(() => TaskSize, {
+		onDelete: 'SET NULL',
+	})
+	@JoinColumn()
+	taskSize?: ITaskSize;
+
+	@ApiPropertyOptional({ type: () => String })
+	@IsOptional()
+	@IsUUID()
+	@RelationId((it: Task) => it.taskSize)
+	@Index()
+	@Column({ nullable: true, type: 'varchar' })
+	taskSizeId?: ITaskSize['id'];
+
+	/**
+	 * Task Priority
+	 */
+	@ApiPropertyOptional({ type: () => Object })
+	@IsOptional()
+	@IsObject()
+	@ManyToOne(() => TaskPriority, {
+		onDelete: 'SET NULL',
+	})
+	@JoinColumn()
+	taskPriority?: ITaskPriority;
+
+	@ApiPropertyOptional({ type: () => String })
+	@IsOptional()
+	@IsUUID()
+	@RelationId((it: Task) => it.taskPriority)
+	@Index()
+	@Column({ nullable: true, type: 'varchar' })
+	taskPriorityId?: ITaskPriority['id'];
+
 	/*
-	|--------------------------------------------------------------------------
-	| @OneToMany
-	|--------------------------------------------------------------------------
-	*/
+    |--------------------------------------------------------------------------
+    | @OneToMany
+    |--------------------------------------------------------------------------
+    */
 
 	/**
 	 * Organization Team Employees
@@ -270,10 +336,10 @@ export class Task extends TenantOrganizationBaseEntity implements ITask {
 	linkedIssues?: TaskLinkedIssue[];
 
 	/*
-	|--------------------------------------------------------------------------
-	| @ManyToMany
-	|--------------------------------------------------------------------------
-	*/
+    |--------------------------------------------------------------------------
+    | @ManyToMany
+    |--------------------------------------------------------------------------
+    */
 
 	/**
 	 * Tags

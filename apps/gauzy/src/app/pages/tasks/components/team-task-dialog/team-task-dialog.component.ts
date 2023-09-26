@@ -1,13 +1,13 @@
 import { Component, Input, OnInit } from '@angular/core';
 import {
-	ITask,
-	IOrganizationProject,
 	IEmployee,
+	IOrganizationProject,
 	IOrganizationTeam,
 	ITag,
+	ITask,
 	TaskStatusEnum,
 } from '@gauzy/contracts';
-import { FormGroup, FormBuilder, Validators } from '@angular/forms';
+import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { NbDialogRef } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import * as moment from 'moment';
@@ -20,7 +20,7 @@ import {
 	ToastrService,
 } from '../../../../@core/services';
 import { CKEditor4 } from 'ckeditor4-angular/ckeditor';
-import { richTextCKEditorConfig } from "../../../../@shared/ckeditor.config";
+import { richTextCKEditorConfig } from '../../../../@shared/ckeditor.config';
 
 const initialTaskValue = {
 	title: '',
@@ -32,6 +32,9 @@ const initialTaskValue = {
 	dueDate: null,
 	description: '',
 	tags: null,
+	taskStatus: null,
+	taskSize: null,
+	taskPriority: null,
 };
 
 @Component({
@@ -39,10 +42,10 @@ const initialTaskValue = {
 	templateUrl: './team-task-dialog.component.html',
 	styleUrls: ['./team-task-dialog.component.scss'],
 })
-export class TeamTaskDialogComponent extends TranslationBaseComponent
-	implements OnInit {
-
-	form: FormGroup;
+export class TeamTaskDialogComponent
+	extends TranslationBaseComponent
+	implements OnInit
+{
 	selectedTaskId: string;
 	projects: IOrganizationProject[];
 	employees: IEmployee[] = [];
@@ -55,6 +58,8 @@ export class TeamTaskDialogComponent extends TranslationBaseComponent
 	tags: ITag[] = [];
 	public ckConfig: CKEditor4.Config = richTextCKEditorConfig;
 	@Input() task: Partial<ITask> = {};
+
+	public form: FormGroup = TeamTaskDialogComponent.buildForm(this.fb);
 
 	constructor(
 		public readonly dialogRef: NbDialogRef<TeamTaskDialogComponent>,
@@ -70,16 +75,27 @@ export class TeamTaskDialogComponent extends TranslationBaseComponent
 		super(translateService);
 	}
 
-	ngOnInit() {
-		this.ckConfig.editorplaceholder = this.translateService.instant('FORM.PLACEHOLDERS.DESCRIPTION');
-		this.tenantId = this.store.user.tenantId;
-		this.organizationId = this._organizationsStore.selectedOrganization.id;
-
-		this.loadProjects();
-		this.loadTeams();
-		this.initializeForm(
-			Object.assign({}, initialTaskValue, this.selectedTask || this.task)
-		);
+	static buildForm(fb: FormBuilder): FormGroup {
+		return fb.group({
+			number: [{ value: '', disabled: true }],
+			title: [null, Validators.required],
+			project: [],
+			projectId: [],
+			status: [TaskStatusEnum.OPEN],
+			priority: [],
+			size: [],
+			members: [],
+			estimateDays: [],
+			estimateHours: [null, [Validators.min(0), Validators.max(23)]],
+			estimateMinutes: [null, [Validators.min(0), Validators.max(59)]],
+			dueDate: [],
+			description: [],
+			tags: [],
+			teams: [],
+			taskStatus: [],
+			taskSize: [],
+			taskPriority: [],
+		});
 	}
 
 	private async loadProjects() {
@@ -90,6 +106,20 @@ export class TeamTaskDialogComponent extends TranslationBaseComponent
 		});
 
 		if (items) this.projects = items;
+	}
+
+	async ngOnInit() {
+		this.ckConfig.editorplaceholder = this.translateService.instant(
+			'FORM.PLACEHOLDERS.DESCRIPTION'
+		);
+		this.tenantId = this.store.user.tenantId;
+		this.organizationId = this._organizationsStore.selectedOrganization.id;
+
+		await this.loadProjects();
+		await this.loadTeams();
+		this.initializeForm(
+			Object.assign({}, initialTaskValue, this.selectedTask || this.task)
+		);
 	}
 
 	initializeForm({
@@ -103,7 +133,10 @@ export class TeamTaskDialogComponent extends TranslationBaseComponent
 		dueDate,
 		tags,
 		priority,
-		size
+		size,
+		taskStatus,
+		taskSize,
+		taskPriority,
 	}: ITask) {
 		const duration = moment.duration(estimate, 'seconds');
 		this.selectedTeams = (teams || []).map((team) => team.id);
@@ -116,30 +149,25 @@ export class TeamTaskDialogComponent extends TranslationBaseComponent
 		// if (teams === null) {
 		// 	this.selectedTeams = [this.employeeId];
 		// }
-		this.form = this.fb.group({
-			number: [{ value: '', disabled: true }],
-			title: [title, Validators.required],
-			project: [project],
+		this.form.patchValue({
+			title,
+			project,
 			projectId: project ? project.id : null,
-			status: [status ? status : TaskStatusEnum.OPEN],
-			priority: [priority ? priority : null],
-			size: [size ? size : null],
-			members: [members],
-			estimateDays: [duration.days() || ''],
-			estimateHours: [
-				duration.hours() || '',
-				[Validators.min(0), Validators.max(23)],
-			],
-			estimateMinutes: [
-				duration.minutes() || '',
-				[Validators.min(0), Validators.max(59)],
-			],
-			dueDate: [dueDate],
-			description: [description],
-			tags: [tags],
-			teams: [this.selectedTeams],
+			status,
+			priority,
+			size,
+			estimateDays: duration.days(),
+			estimateHours: duration.hours(),
+			estimateMinutes: duration.minutes(),
+			dueDate: dueDate ? new Date(dueDate) : null,
+			members,
+			description,
+			tags,
+			teams: this.selectedTeams,
+			taskStatus,
+			taskSize,
+			taskPriority,
 		});
-
 		this.tags = this.form.get('tags').value || [];
 	}
 
@@ -169,6 +197,15 @@ export class TeamTaskDialogComponent extends TranslationBaseComponent
 						.map((id) => this.teams.find((e) => e.id === id))
 						.filter((e) => !!e)
 				);
+			this.form
+				.get('status')
+				.setValue(this.form.get('taskStatus').value?.name);
+			this.form
+				.get('priority')
+				.setValue(this.form.get('taskPriority').value?.name);
+			this.form
+				.get('size')
+				.setValue(this.form.get('taskSize').value?.name);
 			this.dialogRef.close(this.form.value);
 		}
 	}
