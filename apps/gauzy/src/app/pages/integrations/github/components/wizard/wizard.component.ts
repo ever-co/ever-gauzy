@@ -56,8 +56,8 @@ export class GithubWizardComponent implements AfterViewInit, OnInit {
 	 * Redirect the user to GitHub for authorization.
 	 */
 	private async oAuthAppAuthorization() {
-		const redirect_uri = environment.GITHUB_REDIRECT_URL;
-		const client_id = environment.GITHUB_CLIENT_ID;
+		const redirect_uri = environment.GAUZY_GITHUB_REDIRECT_URL;
+		const client_id = environment.GAUZY_GITHUB_CLIENT_ID;
 
 		// Define your query parameters
 		const queryParams = toParams({
@@ -114,7 +114,7 @@ export class GithubWizardComponent implements AfterViewInit, OnInit {
 			window.frames[windowName].focus();
 		} else {
 			/** Navigate to the target external URL */
-			const url = `https://github.com/apps/${environment.GITHUB_APP_NAME}/installations/new?state=${state.toString()}`;
+			const url = `https://github.com/apps/${environment.GAUZY_GITHUB_APP_NAME}/installations/new?state=${state.toString()}`;
 
 			/** Navigate to the external URL with query parameters */
 			this.window = window.open(

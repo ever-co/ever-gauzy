@@ -40,9 +40,9 @@ export const config = (configService: ConfigService) => {
 	const { baseUrl } = configService.apiConfigOptions as IApiServerOptions;
 
 	return {
-		clientID: github.CLIENT_ID || 'disabled',
-		clientSecret: github.CLIENT_SECRET || 'disabled',
-		callbackURL: github.CALLBACK_URL || `${baseUrl}/api/auth/github/callback`,
+		clientID: github.clientId || 'disabled',
+		clientSecret: github.clientSecret || 'disabled',
+		callbackURL: github.callbackUrl || `${baseUrl}/api/auth/github/callback`,
 		passReqToCallback: true,
 		scope: ['user:email']
 	};
