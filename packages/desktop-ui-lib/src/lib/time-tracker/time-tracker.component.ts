@@ -44,6 +44,7 @@ import {
 	IOrganizationContact,
 	ITask,
 	ITasksStatistics,
+	ITaskStatus,
 	ITaskUpdateInput,
 	LanguagesEnum,
 	PermissionsEnum,
@@ -79,6 +80,7 @@ import {
 } from '../always-on/always-on.service';
 import { TaskDurationComponent, TaskProgressComponent } from './task-render';
 import { TaskRenderCellComponent } from './task-render/task-render-cell/task-render-cell.component';
+import { TaskStatusComponent } from './task-render/task-status/task-status.component';
 
 enum TimerStartMode {
 	MANUAL = 'manual',
@@ -432,11 +434,20 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 		statistics: ITasksStatistics[]
 	): (ITask & ITasksStatistics)[] {
 		let arr: (ITask & ITasksStatistics)[] = [];
-		arr = arr.concat(tasks, statistics);
+		arr = arr.concat(statistics, tasks);
 		return arr.reduce((result, current) => {
 			const existing = result.find((item: any) => item.id === current.id);
 			if (existing) {
-				Object.assign(existing, current);
+				const updatedAtMoment = moment(existing?.updatedAt).utc(true);
+				Object.assign(
+					existing,
+					current,
+					updatedAtMoment.isAfter(current?.updatedAt)
+						? {
+								updatedAt: updatedAtMoment.toISOString(),
+						  }
+						: {}
+				);
 			} else {
 				result.push(current);
 			}
@@ -752,6 +763,45 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 						});
 					},
 				},
+				taskStatus: {
+					title: this._translateService.instant('SM_TABLE.STATUS'),
+					type: 'custom',
+					renderComponent: TaskStatusComponent,
+					onComponentInitFunction: (
+						instance: TaskStatusComponent
+					) => {
+						instance.updated.subscribe({
+							next: async (taskStatus: ITaskStatus) => {
+								const { tenantId, organizationId } =
+									this._store;
+								const id = instance.task.id;
+								const title = instance.task.title;
+								const status =
+									taskStatus.name as TaskStatusEnum;
+								const taskUpdateInput: ITaskUpdateInput = {
+									organizationId,
+									tenantId,
+									status,
+									title,
+									taskStatus,
+								};
+								await this.timeTrackerService.updateTask(
+									id,
+									taskUpdateInput
+								);
+								this.toastrService.success(
+									this._translateService.instant(
+										'TOASTR.MESSAGE.UPDATED'
+									)
+								);
+								this.refreshTimer();
+							},
+							error: (err: any) => {
+								console.warn(err);
+							},
+						});
+					},
+				},
 			},
 			hideSubHeader: true,
 			actions: false,
@@ -764,6 +814,22 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 				page: 1,
 			},
 		};
+	}
+
+	private async loadStatuses(): Promise<void> {
+		if (!this._store.organizationId && !this._store.tenantId) {
+			return;
+		}
+		const { organizationId, tenantId } = this._store;
+		this._store.statuses = await this.timeTrackerService.statuses({
+			tenantId,
+			organizationId,
+			...(this.projectSelect
+				? {
+						projectId: this.projectSelect,
+				  }
+				: {}),
+		});
 	}
 
 	ngOnInit(): void {
@@ -955,6 +1021,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 						this.electronService.ipcRenderer.send('show_ao');
 					}
 					const parallelizedTasks: Promise<void>[] = [
+						this.loadStatuses(),
 						this.getClient(arg),
 						this.getProjects(arg),
 						this.getTask(arg),
@@ -1609,6 +1676,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 				console.log('stop tracking');
 				await this.stopTimer(onClick);
 			}
+			this.refreshTimer();
 		} else {
 			this.loading = false;
 			console.log('Error', 'validation failed');
@@ -1672,6 +1740,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 				});
 			}
 			await this._toggle(timer, onClick);
+			await this.updateOrganizationTeamEmployee();
 			this.electronService.ipcRenderer.send('request_permission');
 		} catch (error) {
 			this._startMode = TimerStartMode.STOP;
@@ -2683,6 +2752,37 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 		} finally {
 			// unlock restart process
 			this._isLockSyncProcess = false;
+		}
+	}
+
+	public async updateOrganizationTeamEmployee(): Promise<void> {
+		try {
+			if (!this.taskSelect) {
+				return;
+			}
+			const [task] = this._tasks$
+				.getValue()
+				.filter(({ id }) => id === this.taskSelect);
+			// TODO: Add task teams selector
+			const organizationTeamId = task?.teams[0]?.id || null;
+			if (!organizationTeamId) {
+				return;
+			}
+			const { tenantId, organizationId } = this._store;
+			const { employeeId } = this._store.user;
+			const activeTaskId = this.taskSelect;
+			const payload = {
+				activeTaskId,
+				tenantId,
+				organizationId,
+				organizationTeamId,
+			};
+			await this.timeTrackerService.updateOrganizationTeamEmployee(
+				employeeId,
+				payload
+			);
+		} catch (error) {
+			console.error(error);
 		}
 	}
 }

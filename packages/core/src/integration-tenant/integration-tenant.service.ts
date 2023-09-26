@@ -9,8 +9,8 @@ import {
 	IIntegrationTenantFindInput,
 	IntegrationEnum
 } from '@gauzy/contracts';
-import { RequestContext } from './../core/context';
-import { TenantAwareCrudService } from './../core/crud';
+import { RequestContext } from 'core/context';
+import { TenantAwareCrudService } from 'core/crud';
 import { IntegrationTenant } from './integration-tenant.entity';
 
 @Injectable()
@@ -30,10 +30,9 @@ export class IntegrationTenantService extends TenantAwareCrudService<Integration
 	async create(
 		input: IIntegrationTenant
 	): Promise<IIntegrationTenant> {
-		const tenantId = RequestContext.currentTenantId();
 		try {
-			const { organizationId } = input;
-			let { entitySettings = [], settings = [] } = input;
+			const tenantId = RequestContext.currentTenantId() || input.tenantId;
+			let { organizationId, entitySettings = [], settings = [] } = input;
 
 			settings = settings.map((item: IIntegrationSetting) => ({
 				...item,
@@ -50,11 +49,12 @@ export class IntegrationTenantService extends TenantAwareCrudService<Integration
 			return await super.create({
 				...input,
 				tenantId,
+				organizationId,
 				settings,
 				entitySettings
 			});
 		} catch (error) {
-			console.log('Error while creating integration tenant:', tenantId, error);
+			console.log('Error while creating integration tenant:', error);
 			throw new BadRequestException(error);
 		}
 	}

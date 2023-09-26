@@ -11,11 +11,16 @@
 		</div>
 		<div class="task-title-container">
 			<div class="task-title">{{ title }}</div>
-			<div *ngIf="size" class="bge size">{{ size }}</div>
 		</div>
 	</div>
 	<div class="badges">
-		<div *ngIf="status" class="bge stats">{{ status }}</div>
-		<div *ngIf="priority" class="bge priority">{{ priority }}</div>
+		<div *ngIf="priority">
+			<gauzy-task-badge-view
+				[taskBadge]="priority"
+			></gauzy-task-badge-view>
+		</div>
+		<div *ngIf="size">
+			<gauzy-task-badge-view [taskBadge]="size"></gauzy-task-badge-view>
+		</div>
 	</div>
 </div>

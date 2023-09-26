@@ -4,7 +4,6 @@ import {
 	OnDestroy,
 	Input,
 	forwardRef,
-	AfterViewInit,
 	Output,
 	EventEmitter
 } from '@angular/core';
@@ -26,7 +25,6 @@ import {
 } from '@gauzy/common-angular';
 import { ALL_TEAM_SELECTED } from './default-team';
 import {
-
 	OrganizationTeamsService,
 	Store,
 	ToastrService
@@ -48,7 +46,7 @@ import { OrganizationTeamStore } from '../../../@core/services/organization-team
 	]
 })
 export class TeamSelectorComponent
-	implements OnInit, OnDestroy, AfterViewInit {
+	implements OnInit, OnDestroy {
 	teams: IOrganizationTeam[] = [];
 	selectedTeam: IOrganizationTeam;
 	hasAddTeam$: Observable<boolean>;
@@ -61,6 +59,7 @@ export class TeamSelectorComponent
 	@Input() shortened = false;
 	@Input() disabled = false;
 	@Input() multiple = false;
+	@Input() label = null;
 
 	private _teamId: string | string[];
 	get teamId(): string | string[] {
@@ -71,7 +70,7 @@ export class TeamSelectorComponent
 		this.onChange(val);
 		this.onTouched(val);
 	}
-	//-----------------------------------------------
+
 	private _employeeId: string;
 	public get employeeId() {
 		return this._employeeId;

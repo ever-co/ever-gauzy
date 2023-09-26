@@ -1,16 +1,16 @@
-import { Component, OnInit, Input } from '@angular/core';
+import { Component, Input, OnInit } from '@angular/core';
 import {
-	ITask,
-	IOrganizationProject,
 	IEmployee,
-	IOrganizationTeam,
-	ITag,
-	TaskParticipantEnum,
 	IOrganization,
+	IOrganizationProject,
+	IOrganizationTeam,
+	ISelectedEmployee,
+	ITag,
+	ITask,
+	TaskParticipantEnum,
 	TaskStatusEnum,
-	ISelectedEmployee
 } from '@gauzy/contracts';
-import { FormGroup, FormBuilder, Validators } from '@angular/forms';
+import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { NbDialogRef } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import * as moment from 'moment';
@@ -34,9 +34,10 @@ import { richTextCKEditorConfig } from '../../ckeditor.config';
 	templateUrl: './add-task-dialog.component.html',
 	styleUrls: ['./add-task-dialog.component.scss'],
 })
-export class AddTaskDialogComponent extends TranslationBaseComponent
-	implements OnInit {
-
+export class AddTaskDialogComponent
+	extends TranslationBaseComponent
+	implements OnInit
+{
 	employees: IEmployee[] = [];
 	teams: IOrganizationTeam[] = [];
 	selectedMembers: string[] = [];
@@ -46,25 +47,24 @@ export class AddTaskDialogComponent extends TranslationBaseComponent
 	taskParticipantEnum = TaskParticipantEnum;
 	participants = TaskParticipantEnum.EMPLOYEES;
 	public ckConfig: CKEditor4.Config = richTextCKEditorConfig;
-
 	@Input() createTask = false;
-
-	/*
-	 * Getter & Setter for task
-	 */
-	_task: ITask;
-	get task(): ITask {
-		return this._task;
-	}
-	@Input() set task(value: ITask) {
-		this.selectedTask = value;
-		this._task = value;
-	}
-
 	/*
 	 * Payment Mutation Form
 	 */
 	public form: FormGroup = AddTaskDialogComponent.buildForm(this.fb);
+
+	constructor(
+		public readonly dialogRef: NbDialogRef<AddTaskDialogComponent>,
+		private readonly fb: FormBuilder,
+		private readonly store: Store,
+		public readonly translateService: TranslateService,
+		private readonly employeesService: EmployeesService,
+		private readonly tasksService: TasksService,
+		private readonly organizationTeamsService: OrganizationTeamsService
+	) {
+		super(translateService);
+	}
+
 	static buildForm(fb: FormBuilder): FormGroup {
 		return fb.group({
 			number: [{ value: '', disabled: true }],
@@ -82,23 +82,30 @@ export class AddTaskDialogComponent extends TranslationBaseComponent
 			description: [],
 			tags: [],
 			teams: [],
+			taskStatus: [],
+			taskSize: [],
+			taskPriority: [],
 		});
 	}
 
-	constructor(
-		public readonly dialogRef: NbDialogRef<AddTaskDialogComponent>,
-		private readonly fb: FormBuilder,
-		private readonly store: Store,
-		public readonly translateService: TranslateService,
-		private readonly employeesService: EmployeesService,
-		private readonly tasksService: TasksService,
-		private readonly organizationTeamsService: OrganizationTeamsService
-	) {
-		super(translateService);
+	/*
+	 * Getter & Setter for task
+	 */
+	_task: ITask;
+
+	get task(): ITask {
+		return this._task;
+	}
+
+	@Input() set task(value: ITask) {
+		this.selectedTask = value;
+		this._task = value;
 	}
 
 	ngOnInit() {
-		this.ckConfig.editorplaceholder = this.translateService.instant('FORM.PLACEHOLDERS.DESCRIPTION');
+		this.ckConfig.editorplaceholder = this.translateService.instant(
+			'FORM.PLACEHOLDERS.DESCRIPTION'
+		);
 		const storeOrganization$ = this.store.selectedOrganization$;
 		const storeEmployee$ = this.store.selectedEmployee$;
 		const storeProject$ = this.store.selectedProject$;
@@ -161,7 +168,10 @@ export class AddTaskDialogComponent extends TranslationBaseComponent
 				teams,
 				title,
 				priority,
-				size
+				size,
+				taskStatus,
+				taskSize,
+				taskPriority,
 			} = this.selectedTask;
 			const duration = moment.duration(estimate, 'seconds');
 
@@ -186,6 +196,9 @@ export class AddTaskDialogComponent extends TranslationBaseComponent
 				description,
 				tags,
 				teams: this.selectedTeams,
+				taskStatus,
+				taskSize,
+				taskPriority,
 			});
 		}
 	}
@@ -206,7 +219,15 @@ export class AddTaskDialogComponent extends TranslationBaseComponent
 						.map((id) => this.teams.find((e) => e.id === id))
 						.filter((e) => !!e)
 				);
-
+			this.form
+				.get('status')
+				.setValue(this.form.get('taskStatus').value?.name);
+			this.form
+				.get('priority')
+				.setValue(this.form.get('taskPriority').value?.name);
+			this.form
+				.get('size')
+				.setValue(this.form.get('taskSize').value?.name);
 			const { estimateDays, estimateHours, estimateMinutes } =
 				this.form.value;
 

@@ -1,4 +1,4 @@
-<div class="task" cdkDrag [cdkDragData]="task" [cdkDragLockAxis]="'y'">
+<div [cdkDragData]="task" [cdkDragLockAxis]="'y'" cdkDrag class="task">
 	<nb-card>
 		<nb-card-body [ngClass]="{ selected: isSelected }">
 			<div class="row">
@@ -16,7 +16,7 @@
 				</span>
 				<span class="col">
 					<ngx-employee-with-links
-						[value]="task?.employees"
+						[value]="task?.employees || []"
 					></ngx-employee-with-links>
 				</span>
 				<span class="col">
@@ -24,13 +24,26 @@
 				</span>
 				<span class="col">
 					<ngx-status-view
-						class="mr-2"
-						[value]="task.status"
-						[nbContextMenu]="taskStatusList"
-						[nbContextMenuTag]="'changeStatus:' + task.id"
+						[nbPopover]="contextMenu"
+						nbPopoverTrigger="hover"
+						[rowData]="task"
+						[value]="task?.status"
+						class="mr-2 status-view"
 					></ngx-status-view>
 				</span>
 			</div>
 		</nb-card-body>
 	</nb-card>
 </div>
+<ng-template #contextMenu>
+	<div class="view">
+		<ng-container *ngFor="let taskStatus of statuses$ | async">
+			<ngx-status-view
+				(click)="updateStatus(taskStatus)"
+				[rowData]="{taskStatus}"
+				[value]="taskStatus.name"
+				class="status-view"
+			></ngx-status-view>
+		</ng-container>
+	</div>
+</ng-template>

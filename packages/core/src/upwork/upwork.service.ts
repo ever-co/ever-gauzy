@@ -34,7 +34,7 @@ import {
 	ITimeLog
 } from '@gauzy/contracts';
 import {
-	IntegrationTenantCreateCommand,
+	IntegrationTenantFirstOrCreateCommand,
 	IntegrationTenantGetCommand
 } from '../integration-tenant/commands';
 import {
@@ -165,7 +165,7 @@ export class UpworkService {
 
 		this._upworkApi = new UpworkApi(config);
 
-		const authUrl = environment.upworkConfig.callbackUrl;
+		const authUrl = environment.upwork.callbackUrl;
 
 		console.log(`Upwork callback URL: ${authUrl}`);
 
@@ -179,7 +179,14 @@ export class UpworkService {
 					}
 
 					await this.commandBus.execute(
-						new IntegrationTenantCreateCommand({
+						new IntegrationTenantFirstOrCreateCommand({
+							name: IntegrationEnum.UPWORK,
+							integration: {
+								provider: IntegrationEnum.UPWORK
+							},
+							tenantId,
+							organizationId,
+						}, {
 							tenantId,
 							organizationId,
 							name: IntegrationEnum.UPWORK,
@@ -201,7 +208,11 @@ export class UpworkService {
 									settingsName: 'requestTokenSecret',
 									settingsValue: requestTokenSecret
 								}
-							]
+							].map((setting) => ({
+								...setting,
+								tenantId,
+								organizationId,
+							}))
 						})
 					);
 					return resolve({
