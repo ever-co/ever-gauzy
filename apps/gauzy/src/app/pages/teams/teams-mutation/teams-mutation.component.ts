@@ -1,7 +1,7 @@
 import { Component, OnInit, Output, EventEmitter, Input } from '@angular/core';
 import { FormBuilder, FormControl, FormGroup, Validators } from '@angular/forms';
 import { filter, tap } from 'rxjs/operators';
-import { IEmployee, IImageAsset, IOrganization, IOrganizationTeam, ITag } from '@gauzy/contracts';
+import { IEmployee, IOrganization, IImageAsset, IOrganizationProject, IOrganizationTeam, ITag } from '@gauzy/contracts';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { distinctUntilChange, isNotEmpty } from '@gauzy/common-angular';
 import { Store } from '../../../@core/services';
@@ -16,6 +16,7 @@ import { DUMMY_PROFILE_IMAGE, ToastrService } from '../../../@core';
 export class TeamsMutationComponent implements OnInit {
 
 	@Input() employees: IEmployee[] = [];
+	@Input() projects: IOrganizationProject[] = [];
 	@Input() team?: IOrganizationTeam;
 	@Output() canceled = new EventEmitter();
 	@Output() addOrEditTeam = new EventEmitter();
@@ -32,6 +33,7 @@ export class TeamsMutationComponent implements OnInit {
 			name: [null, Validators.required],
 			memberIds: [null, Validators.required],
 			managerIds: [],
+			projects: [],
 			tags: [],
 			imageUrl: [
 				{ value: null, disabled: true }
@@ -40,6 +42,7 @@ export class TeamsMutationComponent implements OnInit {
 		});
 		form.get('memberIds').setValue([]);
 		form.get('managerIds').setValue([]);
+		form.get('projects').setValue([]);
 		form.get('tags').setValue([]);
 		return form;
 	}
@@ -84,13 +87,15 @@ export class TeamsMutationComponent implements OnInit {
 		if (this.team) {
 			const selectedEmployees = this.team.members.map((member) => member.id);
 			const selectedManagers = this.team.managers.map((manager) => manager.id);
+
 			this.form.patchValue({
 				name: this.team.name,
 				tags: this.team.tags,
 				memberIds: selectedEmployees,
 				managerIds: selectedManagers,
 				imageUrl: this.team.image?.fullUrl,
-				imageId: this.team.image?.id
+				imageId: this.team.image?.id,
+				projects: this.team.projects.map((project: IOrganizationProject) => project.id),
 			});
 		}
 	}
@@ -101,9 +106,9 @@ export class TeamsMutationComponent implements OnInit {
 		}
 		const { id: organizationId } = this.organization;
 		const { tenantId } = this.store.user;
-
 		this.addOrEditTeam.emit({
 			...this.form.getRawValue(),
+			projects: this.form.get('projects').value.map((id) => this.projects.find((p) => p.id === id)).filter((p) => !!p),
 			organizationId,
 			tenantId,
 		});
@@ -127,6 +132,16 @@ export class TeamsMutationComponent implements OnInit {
 	onManagersSelected(managers: string[]) {
 		this.form.get('managerIds').setValue(managers);
 		this.form.get('managerIds').updateValueAndValidity();
+	}
+
+	/**
+	 * On Selected Projects Handler
+	 *
+	 * @param projects
+	 */
+	onProjectsSelected(projects: IOrganizationProject[]) {
+		this.form.get('projects').setValue(projects);
+		this.form.get('projects').updateValueAndValidity();
 	}
 
 	cancel() {

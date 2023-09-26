@@ -5,20 +5,20 @@ import {
 	Output,
 	EventEmitter,
 	SimpleChanges,
-	OnChanges
+	OnChanges,
 } from '@angular/core';
 import {
 	ITask,
 	IOrganizationSprint,
 	IOrganizationProject,
-	IOrganization
+	IOrganization,
 } from '@gauzy/contracts';
 import { Observable } from 'rxjs';
 import { map, tap, filter, take } from 'rxjs/operators';
 import {
 	CdkDragDrop,
 	moveItemInArray,
-	transferArrayItem
+	transferArrayItem,
 } from '@angular/cdk/drag-drop';
 import { NbDialogService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
@@ -27,14 +27,14 @@ import { GauzyEditableGridComponent } from '../../../../../../@shared/components
 import {
 	SprintStoreService,
 	Store,
-	TasksStoreService
+	TasksStoreService,
 } from './../../../../../../@core/services';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ga-tasks-sprint-view',
 	templateUrl: './tasks-sprint-view.component.html',
-	styleUrls: ['./tasks-sprint-view.component.scss']
+	styleUrls: ['./tasks-sprint-view.component.scss'],
 })
 export class TasksSprintViewComponent
 	extends GauzyEditableGridComponent<ITask>
@@ -61,7 +61,7 @@ export class TasksSprintViewComponent
 		tap((sprints: IOrganizationSprint[]) => {
 			this.sprintIds = [
 				...sprints.map((sprint: IOrganizationSprint) => sprint.id),
-				'backlog'
+				'backlog',
 			];
 		})
 	);
@@ -87,7 +87,7 @@ export class TasksSprintViewComponent
 		this.backlogTasks = this.tasks;
 		this.sprintActions = [
 			{ title: this.getTranslation('TASKS_PAGE.EDIT_SPRINT') },
-			{ title: this.getTranslation('TASKS_PAGE.DELETE_SPRINT') }
+			{ title: this.getTranslation('TASKS_PAGE.DELETE_SPRINT') },
 		];
 	}
 
@@ -102,7 +102,7 @@ export class TasksSprintViewComponent
 					this.store$.fetchSprints({
 						organizationId,
 						projectId: project.id,
-						tenantId
+						tenantId,
 					});
 				}),
 				untilDestroyed(this)
@@ -121,7 +121,7 @@ export class TasksSprintViewComponent
 					) => {
 						acc[sprint.id] = {
 							...sprint,
-							tasks: sprint.tasks || []
+							tasks: sprint.tasks || [],
 						};
 						return acc;
 					},
@@ -169,7 +169,7 @@ export class TasksSprintViewComponent
 		this.selectedTask = task === this.selectedTask ? null : task;
 		this.selectedTaskEvent.emit({
 			data: task,
-			isSelected: this.isSelected
+			isSelected: this.isSelected,
 		});
 	}
 
@@ -188,7 +188,7 @@ export class TasksSprintViewComponent
 					organizationSprint:
 						this.sprints.find(
 							(sprint) => sprint.id === event.container.id
-						) || null
+						) || null,
 				})
 				.pipe(untilDestroyed(this))
 				.subscribe();
@@ -213,13 +213,14 @@ export class TasksSprintViewComponent
 		}
 	}
 
-	changeTaskStatus({ id, status, title }: Partial<ITask>): void {
+	changeTaskStatus({ id, taskStatus, status, title }: Partial<ITask>): void {
 		this.taskStore
 			.editTask({
 				id,
 				status,
 				title,
-				organizationId: this.organizationId
+				organizationId: this.organizationId,
+				taskStatus,
 			})
 			.pipe(untilDestroyed(this))
 			.subscribe();
@@ -230,7 +231,7 @@ export class TasksSprintViewComponent
 		this.store$
 			.updateSprint({
 				...sprint,
-				isActive: false
+				isActive: false,
 			})
 			.pipe(take(1), untilDestroyed(this))
 			.subscribe();

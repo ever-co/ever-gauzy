@@ -43,6 +43,7 @@ import { HeaderTitleModule } from '../../@shared/components/header-title/header-
 import { GauzyButtonActionModule } from '../../@shared/gauzy-button-action/gauzy-button-action.module';
 import { PaginationModule } from '../../@shared/pagination/pagination.module';
 import { CardGridModule } from '../../@shared/card-grid/card-grid.module';
+import { TeamSelectModule } from '../../@shared/team-select/team-select.module';
 
 @NgModule({
 	imports: [
@@ -85,9 +86,10 @@ import { CardGridModule } from '../../@shared/card-grid/card-grid.module';
 		GauzyButtonActionModule,
 		NbTooltipModule,
 		PaginationModule,
+		TeamSelectModule,
 		CardGridModule
 	],
 	declarations: [ProjectsComponent, ProjectsMutationComponent],
 	providers: [OrganizationProjectsService, OrganizationContactService]
 })
-export class ProjectsModule {}
+export class ProjectsModule { }

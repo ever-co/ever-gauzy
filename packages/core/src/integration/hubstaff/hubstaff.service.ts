@@ -67,7 +67,8 @@ import {
 	IntegrationMapSyncTimeSlotCommand
 } from 'integration-map/commands';
 import { IntegrationTenantService } from 'integration-tenant/integration-tenant.service';
-import { IntegrationTenantCreateCommand } from 'integration-tenant/commands';
+import { IntegrationTenantFirstOrCreateCommand } from 'integration-tenant/commands';
+import { IntegrationService } from 'integration/integration.service';
 
 @Injectable()
 export class HubstaffService {
@@ -79,7 +80,8 @@ export class HubstaffService {
 		private readonly _roleService: RoleService,
 		private readonly _organizationService: OrganizationService,
 		private readonly _userService: UserService,
-		private readonly _commandBus: CommandBus
+		private readonly _commandBus: CommandBus,
+		private readonly _integrationService: IntegrationService
 	) { }
 
 	async fetchIntegration<T = any>(url: string, token: string): Promise<any> {
@@ -189,7 +191,6 @@ export class HubstaffService {
 	async addIntegration(
 		body: ICreateHubstaffIntegrationInput
 	): Promise<IIntegrationTenant> {
-
 		const tenantId = RequestContext.currentTenantId();
 		const { client_id, client_secret, code, redirect_uri, organizationId } = body;
 
@@ -221,16 +222,31 @@ export class HubstaffService {
 				: settingEntity
 		) as IIntegrationEntitySetting[];
 
+		/** */
+		const integration = await this._integrationService.findOneByOptions({
+			where: {
+				provider: IntegrationEnum.HUBSTAFF
+			}
+		});
+
 		const tokens$ = this._httpService.post(`${HUBSTAFF_AUTHORIZATION_URL}/access_tokens`, urlParams, {
 			headers: {
 				'Content-Type': 'application/x-www-form-urlencoded'
 			}
 		}).pipe(
 			switchMap(({ data }) => this._commandBus.execute(
-				new IntegrationTenantCreateCommand({
+				new IntegrationTenantFirstOrCreateCommand({
+					name: IntegrationEnum.HUBSTAFF,
+					integration: {
+						provider: IntegrationEnum.HUBSTAFF
+					},
+					tenantId,
+					organizationId,
+				}, {
+					name: IntegrationEnum.HUBSTAFF,
+					integration,
 					organizationId,
 					tenantId,
-					name: IntegrationEnum.HUBSTAFF,
 					entitySettings: entitySettings,
 					settings: [
 						{
@@ -249,7 +265,11 @@ export class HubstaffService {
 							settingsName: 'refresh_token',
 							settingsValue: data.refresh_token
 						}
-					]
+					].map((setting) => ({
+						...setting,
+						tenantId,
+						organizationId,
+					}))
 				})
 			)),
 			catchError((err) => {
