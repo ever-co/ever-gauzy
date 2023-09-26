@@ -52,7 +52,7 @@ export class GithubViewComponent extends TranslationBaseComponent implements Aft
 	ngAfterViewInit(): void {
 		this._store.selectedOrganization$
 			.pipe(
-				debounceTime(200),
+				debounceTime(500),
 				distinctUntilChange(),
 				filter((organization: IOrganization) => !!organization),
 				tap((organization: IOrganization) => this.organization = organization),
