@@ -522,6 +522,8 @@
 			"UPLOADER_PLACEHOLDER": "Изображение",
 			"UPLOADER_DOCUMENT_PLACEHOLDER": "URL",
 			"ADD_REMOVE_EMPLOYEES": "Добавление или удаление сотрудников",
+			"ADD_REMOVE_PROJECTS": "Добавить или удалить проект",
+			"ADD_REMOVE_TEAMS": "Добавить или удалить команды",
 			"ADD_REMOVE_CANDIDATE": "Добавить Кандидата",
 			"ADD_REMOVE_EMPLOYEE": "Добавить интервьюера",
 			"ADD_REMOVE_INTERVIEWER": "Выбрать интервьюера",

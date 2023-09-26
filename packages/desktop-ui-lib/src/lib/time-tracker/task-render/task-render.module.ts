@@ -1,8 +1,10 @@
 import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import {
+	NbBadgeModule,
 	NbButtonModule,
 	NbIconModule,
+	NbPopoverModule,
 	NbProgressBarModule,
 	NbTooltipModule,
 } from '@nebular/theme';
@@ -16,6 +18,10 @@ import { TaskEstimateInputComponent } from './task-estimate/task-estimate-input/
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { TaskDueDateComponent } from './task-due-date/task-due-date.component';
 import { TranslateModule } from '@ngx-translate/core';
+import { TaskBadgeViewComponent } from './task-badge-view/task-badge-view.component';
+import { TaskStatusComponent } from './task-status/task-status.component';
+import { TaskBadgeDefaultComponent } from './task-badge-default/task-badge-default.component';
+import { ReplacePipe } from '../pipes/replace.pipe';
 
 @NgModule({
 	declarations: [
@@ -26,6 +32,10 @@ import { TranslateModule } from '@ngx-translate/core';
 		TaskRenderCellComponent,
 		TaskEstimateInputComponent,
 		TaskDueDateComponent,
+		TaskBadgeViewComponent,
+		ReplacePipe,
+		TaskStatusComponent,
+		TaskBadgeDefaultComponent,
 	],
 	imports: [
 		CommonModule,
@@ -37,6 +47,8 @@ import { TranslateModule } from '@ngx-translate/core';
 		DesktopDirectiveModule,
 		NbButtonModule,
 		TranslateModule,
+		NbPopoverModule,
+		NbBadgeModule,
 	],
 })
 export class TaskRenderModule {}

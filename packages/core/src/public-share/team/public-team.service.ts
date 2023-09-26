@@ -2,7 +2,7 @@ import {
 	IDateRangePicker,
 	IOrganizationTeam,
 	IOrganizationTeamEmployee,
-	IOrganizationTeamStatisticInput
+	IOrganizationTeamStatisticInput,
 } from '@gauzy/contracts';
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { parseToBoolean } from '@gauzy/common';
@@ -14,14 +14,13 @@ import { TimerService } from './../../time-tracking/timer/timer.service';
 
 @Injectable()
 export class PublicTeamService {
-
 	constructor(
 		@InjectRepository(OrganizationTeam)
 		private readonly repository: Repository<OrganizationTeam>,
 
 		private readonly _statisticService: StatisticService,
 		private readonly _timerService: TimerService
-	) { }
+	) {}
 
 	/**
 	 * GET organization team by profile link
@@ -40,7 +39,7 @@ export class PublicTeamService {
 					organization: {
 						id: true,
 						name: true,
-						brandColor: true
+						brandColor: true,
 					},
 					members: {
 						id: true,
@@ -53,24 +52,29 @@ export class PublicTeamService {
 								id: true,
 								firstName: true,
 								lastName: true,
-								imageUrl: true
-							}
-						}
-					}
+								imageUrl: true,
+							},
+							isActive: true,
+							isOnline: true,
+						},
+					},
 				},
 				where: {
 					public: true,
-					...params
+					...params,
 				},
-				...(
-					(options.relations) ? {
-						relations: options.relations
-					} : {}
-				),
+				...(options.relations
+					? {
+							relations: options.relations,
+					  }
+					: {}),
 			});
 			if ('members' in team) {
 				const { members, organizationId, tenantId } = team;
-				team['members'] = await this.syncMembers({ organizationId, tenantId, members }, options);
+				team['members'] = await this.syncMembers(
+					{ organizationId, tenantId, members },
+					options
+				);
 			}
 			return team;
 		} catch (error) {
@@ -85,55 +89,57 @@ export class PublicTeamService {
 	 * @returns
 	 */
 	async syncMembers(
-		{
-			organizationId,
-			tenantId,
-			members
-		},
+		{ organizationId, tenantId, members },
 		options: IDateRangePicker & IOrganizationTeamStatisticInput
 	): Promise<IOrganizationTeamEmployee[]> {
 		try {
 			const { startDate, endDate, withLaskWorkedTask, source } = options;
 			return await Promise.all(
-				await members.map(
-					async (member: IOrganizationTeamEmployee) => {
-						const { employeeId, organizationTeamId } = member;
-						const timerWorkedStatus = await this._timerService.getTimerWorkedStatus({
+				await members.map(async (member: IOrganizationTeamEmployee) => {
+					const { employeeId, organizationTeamId } = member;
+					const timerWorkedStatus =
+						await this._timerService.getTimerWorkedStatus({
 							source,
 							employeeId,
 							organizationTeamId,
 							organizationId,
 							tenantId,
-							...(
-								(parseToBoolean(withLaskWorkedTask)) ? {
-									relations: ['task']
-								} : {}
-							),
+							...(parseToBoolean(withLaskWorkedTask)
+								? {
+										relations: ['task'],
+								  }
+								: {}),
 						});
-						return {
-							...member,
-							lastWorkedTask: parseToBoolean(withLaskWorkedTask) ? timerWorkedStatus.lastLog?.task : null,
-							timerStatus: timerWorkedStatus?.timerStatus,
-							totalWorkedTasks: await this._statisticService.getTasks({
-								organizationId,
-								tenantId,
-								organizationTeamId,
-								employeeIds: [employeeId]
-							}),
-							totalTodayTasks: await this._statisticService.getTasks({
+					return {
+						...member,
+						lastWorkedTask: parseToBoolean(withLaskWorkedTask)
+							? timerWorkedStatus.lastLog?.task
+							: null,
+						timerStatus: timerWorkedStatus?.timerStatus,
+						totalWorkedTasks: await this._statisticService.getTasks(
+							{
 								organizationId,
 								tenantId,
 								organizationTeamId,
 								employeeIds: [employeeId],
-								startDate,
-								endDate
-							}),
-						}
-					}
-				)
+							}
+						),
+						totalTodayTasks: await this._statisticService.getTasks({
+							organizationId,
+							tenantId,
+							organizationTeamId,
+							employeeIds: [employeeId],
+							startDate,
+							endDate,
+						}),
+					};
+				})
 			);
 		} catch (error) {
-			console.log('Error while retrieving team members worked tasks', error);
+			console.log(
+				'Error while retrieving team members worked tasks',
+				error
+			);
 		}
 	}
 }

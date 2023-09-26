@@ -3,6 +3,7 @@ import { ITaskRender } from '../task-render.component';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { TaskStatusEnum } from '@gauzy/contracts';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -23,6 +24,15 @@ export class TaskEstimateComponent {
 	public get estimate$(): Observable<number> {
 		return this.task$.pipe(
 			map((task: ITaskRender) => task?.estimate),
+			untilDestroyed(this)
+		);
+	}
+
+	public get isEditDisabled$(): Observable<boolean> {
+		return this.task$.pipe(
+			map(
+				(task: ITaskRender) => task?.status === TaskStatusEnum.COMPLETED
+			),
 			untilDestroyed(this)
 		);
 	}

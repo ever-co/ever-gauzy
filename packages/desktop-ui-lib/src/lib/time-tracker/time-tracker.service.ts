@@ -6,14 +6,18 @@ import { catchError, map, shareReplay, tap } from 'rxjs/operators';
 import { firstValueFrom, throwError } from 'rxjs';
 import { toParams } from '@gauzy/common-angular';
 import {
+	IGetTasksStatistics,
+	IOrganizationContact,
+	IOrganizationContactCreateInput,
+	IOrganizationProject,
+	IOrganizationProjectCreateInput,
+	IOrganizationTeamEmployee,
+	IPagination,
+	ITaskStatus,
+	ITaskStatusFindInput,
+	ITaskUpdateInput,
 	TimeLogSourceEnum,
 	TimeLogType,
-	IOrganizationProjectCreateInput,
-	IOrganizationProject,
-	IOrganizationContactCreateInput,
-	IOrganizationContact,
-	IGetTasksStatistics,
-	ITaskUpdateInput,
 } from '@gauzy/contracts';
 import { ClientCacheService } from '../services/client-cache.service';
 import { TaskCacheService } from '../services/task-cache.service';
@@ -25,12 +29,22 @@ import { TagCacheService } from '../services/tag-cache.service';
 import { TimeLogCacheService } from '../services/time-log-cache.service';
 import { LoggerService } from '../electron/services';
 import { API_PREFIX } from '../constants/app.constants';
-import { Store, TimeTrackerDateManager } from '../services';
+import {
+	Store,
+	TaskStatusCacheService,
+	TimeTrackerDateManager,
+} from '../services';
 
 @Injectable({
 	providedIn: 'root',
 })
 export class TimeTrackerService {
+	AW_HOST = 'http://localhost:5600';
+	token = '';
+	userId = '';
+	employeeId = '';
+	buckets: any = {};
+
 	constructor(
 		private readonly http: HttpClient,
 		private readonly _clientCacheService: ClientCacheService,
@@ -42,14 +56,9 @@ export class TimeTrackerService {
 		private readonly _userOrganizationService: UserOrganizationService,
 		private readonly _timeLogService: TimeLogCacheService,
 		private readonly _loggerService: LoggerService,
-		private readonly _store: Store
+		private readonly _store: Store,
+		private readonly _taskStatusCacheService: TaskStatusCacheService
 	) {}
-
-	AW_HOST = 'http://localhost:5600';
-	token = '';
-	userId = '';
-	employeeId = '';
-	buckets: any = {};
 
 	createAuthorizationHeader(headers: Headers) {
 		headers.append('Authorization', 'Basic ' + btoa('username:password'));
@@ -66,14 +75,32 @@ export class TimeTrackerService {
 					  }
 					: {}),
 			},
+			relations: [
+				'project',
+				'tags',
+				'teams',
+				'teams.members',
+				'teams.members.employee',
+				'teams.members.employee.user',
+				'creator',
+				'organizationSprint',
+				'taskStatus',
+				'taskSize',
+				'taskPriority',
+			],
+			join: {
+				alias: 'task',
+				leftJoinAndSelect: {
+					members: 'task.members',
+					user: 'members.user',
+				},
+			},
 		};
 		let tasks$ = this._taskCacheService.getValue(request);
 		if (!tasks$) {
 			tasks$ = this.http
 				.get(`${API_PREFIX}/tasks/employee/${values.employeeId}`, {
-					params: toParams({
-						...request,
-					}),
+					params: toParams(request),
 				})
 				.pipe(
 					map((response: any) => response),
@@ -649,6 +676,7 @@ export class TimeTrackerService {
 				)
 				.pipe(
 					tap(() => this._taskCacheService.clear()),
+					tap(() => this._taskStatusCacheService.clear()),
 					catchError((error) => {
 						error.error = {
 							...error.error,
@@ -656,6 +684,42 @@ export class TimeTrackerService {
 						return throwError(() => new Error(error));
 					})
 				)
+		);
+	}
+
+	public async statuses(
+		params: ITaskStatusFindInput
+	): Promise<ITaskStatus[]> {
+		let taskStatuses$ = this._taskStatusCacheService.getValue(params);
+		if (!taskStatuses$) {
+			taskStatuses$ = this.http
+				.get<IPagination<ITaskStatus>>(`${API_PREFIX}/task-statuses`, {
+					params: toParams({ ...params }),
+				})
+				.pipe(
+					map((res) => res.items),
+					shareReplay(1)
+				);
+			this._taskStatusCacheService.setValue(taskStatuses$, params);
+		}
+		return firstValueFrom(taskStatuses$);
+	}
+
+	public async updateOrganizationTeamEmployee(
+		employeeId: string,
+		values: Partial<IOrganizationTeamEmployee>
+	): Promise<any> {
+		const params = {
+			organizationId: values.organizationId,
+			activeTaskId: values.activeTaskId,
+			organizationTeamId: values.organizationTeamId,
+			tenantId: values.tenantId,
+		};
+		return firstValueFrom(
+			this.http.put(
+				`${API_PREFIX}/organization-team-employee/${employeeId}`,
+				params
+			)
 		);
 	}
 }

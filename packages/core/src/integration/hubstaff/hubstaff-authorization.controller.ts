@@ -1,9 +1,12 @@
-import { Controller, Get, Query, Res } from '@nestjs/common';
+import { Controller, Get, HttpException, HttpStatus, Query, Res } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
+import { Response } from 'express';
 import { ConfigService } from '@gauzy/config';
-import { Public } from '@gauzy/common';
+import { IHubstaffConfig, Public } from '@gauzy/common';
+import { IntegrationEnum } from '@gauzy/contracts';
 
 @ApiTags('Hubstaff Integrations')
+@Public()
 @Controller()
 export class HubstaffAuthorizationController {
     constructor(
@@ -11,27 +14,35 @@ export class HubstaffAuthorizationController {
     ) { }
 
     /**
-     * Hubstaff Integration Authorization Flow Callback
-     *
-     * @param code
-     * @param state
-     * @param res
-     * @returns
-     */
-    @Public()
+    * Handle the callback from the Hubstaff integration.
+    *
+    * @param {any} query - The query parameters from the callback.
+    * @param {Response} response - Express Response object.
+    */
     @Get('callback')
-    async hubstaffCallback(
-        @Query('code') code: string,
-        @Query('state') state: string,
-        @Res() res: any
+    async hubstaffIntegrationCallback(
+        @Query() query: any,
+        @Res() response: Response
     ) {
         try {
-            if (code && state) {
-                return res.redirect(`${this._config.get('clientBaseUrl')}/#/pages/integrations/hubstaff?code=${code}&state=${state}`);
+            // Validate the input data (You can use class-validator for validation)
+            if (!query || !query.code || !query.state) {
+                throw new HttpException('Invalid query parameters', HttpStatus.BAD_REQUEST);
             }
-            return res.redirect(`${this._config.get('clientBaseUrl')}/#/pages/integrations/hubstaff`);
+
+            /** Hubstaff Config Options */
+            const hubstaff = this._config.get<IHubstaffConfig>('hubstaff') as IHubstaffConfig;
+
+            /** Construct the redirect URL with query parameters */
+            const urlParams = new URLSearchParams();
+            urlParams.append('code', query.code);
+            urlParams.append('state', query.state);
+
+            /** Redirect to the URL */
+            return response.redirect(`${hubstaff.postInstallUrl}?${urlParams.toString()}`);
         } catch (error) {
-            return res.redirect(`${this._config.get('clientBaseUrl')}/#/pages/integrations/hubstaff`);
+            // Handle errors and return an appropriate error response
+            throw new HttpException(`Failed to add ${IntegrationEnum.HUBSTAFF} integration: ${error.message}`, HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 }

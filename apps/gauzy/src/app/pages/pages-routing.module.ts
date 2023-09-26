@@ -690,8 +690,8 @@ const routes: Routes = [
 						project: false,
 						team: false,
 						employee: false,
-						organization: false,
-						date: false
+						date: false,
+						organization: true,
 					}
 				}
 			},
