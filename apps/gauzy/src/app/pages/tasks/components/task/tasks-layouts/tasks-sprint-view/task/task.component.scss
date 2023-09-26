@@ -12,3 +12,17 @@ nb-card {
 	background-color: var(--gauzy-sidebar-background-3);
 	box-shadow: -6px 0 0 0 rgba(0 0 0 / 10%);
 }
+
+.view {
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+	padding: 4px;
+}
+.status-view {
+	cursor: pointer;
+}
+
+::ng-deep nb-popover > span.arrow {
+	display: none;
+}

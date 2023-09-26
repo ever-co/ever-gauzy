@@ -1,29 +1,47 @@
 import {
+	AfterViewInit,
 	Component,
-	Input,
 	EventEmitter,
-	Output,
+	Input,
+	OnDestroy,
 	OnInit,
-	OnDestroy
+	Output,
 } from '@angular/core';
-import { ITask, TaskStatusEnum } from '@gauzy/contracts';
+import {
+	IOrganization,
+	IOrganizationProject,
+	IPagination,
+	ITask,
+	ITaskStatus,
+	ITaskStatusFindInput,
+	TaskStatusEnum,
+} from '@gauzy/contracts';
 import { NbMenuService } from '@nebular/theme';
-import { tap, filter, map, takeUntil } from 'rxjs/operators';
-import { Subject } from 'rxjs';
+import { filter, map, takeUntil, tap } from 'rxjs/operators';
+import { combineLatest, debounceTime, Subject } from 'rxjs';
 import { TranslationBaseComponent } from 'apps/gauzy/src/app/@shared/language-base/translation-base.component';
 import { TranslateService } from '@ngx-translate/core';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { Store, TaskStatusesService } from '../../../../../../../@core';
+import { BehaviorSubject } from 'rxjs/internal/BehaviorSubject';
+import { distinctUntilChange } from '@gauzy/common-angular';
 
+@UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ga-sprint-task',
 	templateUrl: './task.component.html',
-	styleUrls: ['./task.component.scss']
+	styleUrls: ['./task.component.scss'],
 })
 export class SprintTaskComponent
 	extends TranslationBaseComponent
-	implements OnInit, OnDestroy
+	implements OnInit, AfterViewInit, OnDestroy
 {
+	private onDestroy$ = new Subject<void>();
+	private subject$: Subject<boolean> = new Subject();
+	private organization: IOrganization;
+	private projectId: IOrganizationProject['id'];
 	@Input() task: any;
-	@Input() isSelected: boolean = false;
+	@Input() isSelected = false;
 	@Output() taskActionEvent: EventEmitter<{
 		action: string;
 		task: ITask;
@@ -32,25 +50,34 @@ export class SprintTaskComponent
 		new EventEmitter();
 	taskStatusList: any;
 	taskActions: any;
-	private onDestroy$ = new Subject<void>();
+	public statuses$: BehaviorSubject<ITaskStatus[]> = new BehaviorSubject([]);
 
 	constructor(
 		private nbMenuService: NbMenuService,
-		readonly translate: TranslateService
+		readonly translate: TranslateService,
+		private readonly store: Store,
+		private readonly taskStatusesService: TaskStatusesService
 	) {
 		super(translate);
 	}
 
 	ngOnInit(): void {
+		this.subject$
+			.pipe(
+				debounceTime(200),
+				tap(() => this.getStatuses()),
+				untilDestroyed(this)
+			)
+			.subscribe();
 		this.taskActions = [
 			{
 				title: this.getTranslation('TASKS_PAGE.EDIT_TASK'),
-				action: 'EDIT_TASK'
+				action: 'EDIT_TASK',
 			},
 			{
 				title: this.getTranslation('TASKS_PAGE.DELETE_TASK'),
-				action: 'DELETE_TASK'
-			}
+				action: 'DELETE_TASK',
+			},
 		];
 
 		this.taskStatusList = this.getStatusList(this.task.status);
@@ -68,17 +95,34 @@ export class SprintTaskComponent
 							this.changeStatusEvent.emit({
 								status: item.title,
 								id: this.task.id,
-								title: this.task.title
+								title: this.task.title,
 							});
 							break;
 						case 'updateTask':
 							this.taskActionEvent.emit({
 								action: item.action,
-								task: this.task
+								task: this.task,
 							});
 					}
 				}),
 				takeUntil(this.onDestroy$)
+			)
+			.subscribe();
+	}
+
+	ngAfterViewInit(): void {
+		const storeOrganization$ = this.store.selectedOrganization$;
+		const storeProject$ = this.store.selectedProject$;
+		combineLatest([storeOrganization$, storeProject$])
+			.pipe(
+				distinctUntilChange(),
+				filter(([organization]) => !!organization),
+				tap(([organization, project]) => {
+					this.organization = organization;
+					this.projectId = project ? project.id : null;
+				}),
+				tap(() => this.subject$.next(true)),
+				untilDestroyed(this)
 			)
 			.subscribe();
 	}
@@ -95,6 +139,48 @@ export class SprintTaskComponent
 
 	changeStatus(evt: Partial<ITask>): void {
 		this.changeStatusEvent.emit(evt);
+	}
+
+	getStatuses() {
+		if (!this.organization) {
+			return;
+		}
+
+		const { tenantId } = this.store.user;
+		const { id: organizationId } = this.organization;
+
+		this.taskStatusesService
+			.get<ITaskStatusFindInput>({
+				tenantId,
+				organizationId,
+				...(this.projectId
+					? {
+							projectId: this.projectId,
+					  }
+					: {}),
+			})
+			.pipe(
+				map(({ items, total }: IPagination<ITaskStatus>) =>
+					total > 0 ? items : this.taskStatusList
+				),
+				tap((statuses: ITaskStatus[]) => this.statuses$.next(statuses)),
+				untilDestroyed(this)
+			)
+			.subscribe();
+	}
+
+	public updateStatus(taskStatus: ITaskStatus) {
+		this.changeStatusEvent.emit({
+			status: taskStatus.name as TaskStatusEnum,
+			id: this.task.id,
+			title: this.task.title,
+			taskStatus,
+		});
+		this.task = {
+			...this.task,
+			taskStatus,
+			status: taskStatus.name as TaskStatusEnum,
+		};
 	}
 
 	ngOnDestroy() {

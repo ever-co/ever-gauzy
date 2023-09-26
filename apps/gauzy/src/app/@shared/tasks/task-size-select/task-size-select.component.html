@@ -1,17 +1,18 @@
 <ng-select
 	#select
+	(change)="selectSize($event); select.blur()"
+	(clear)="select.blur()"
+	[(ngModel)]="size"
 	[addTag]="addTag ? createNew : null"
 	[clearable]="true"
-	(change)="selectSize($event); select.blur();"
-	(clear)="select.blur();"
-	[(ngModel)]="size"
+	[items]="sizes$ | async"
 	[placeholder]="placeholder || 'TASKS_PAGE.TASK_SIZE' | translate"
-	appendTo="body"
+	bindLabel="name"
 >
-	<ng-option
-		*ngFor="let item of sizes$ | async"
-		[value]="item.value"
-	>
-		{{ item.name | replace: '_':' ' | replace: '-':' ' | titlecase }}
-	</ng-option>
+	<ng-template let-index="index" let-item="item" ng-option-tmp>
+		<gauzy-task-badge-view [taskBadge]="item"></gauzy-task-badge-view>
+	</ng-template>
+	<ng-template let-item="item" ng-label-tmp>
+		<gauzy-task-badge-view [taskBadge]="item"></gauzy-task-badge-view>
+	</ng-template>
 </ng-select>
