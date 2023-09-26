@@ -12,7 +12,8 @@ export class AddColumnsToTheIntegrationTypeTable1695111838783 implements Migrati
     * @param queryRunner
     */
     public async up(queryRunner: QueryRunner): Promise<any> {
-        console.log(chalk.magenta(`AddColumnsToTheIntegrationTypeTable1695111838783 start running!`));
+        console.log(chalk.yellow(`AddColumnsToTheIntegrationTypeTable1695111838783 start running!`));
+
         if (queryRunner.connection.options.type === 'sqlite') {
             await this.sqliteUpQueryRunner(queryRunner);
         } else {

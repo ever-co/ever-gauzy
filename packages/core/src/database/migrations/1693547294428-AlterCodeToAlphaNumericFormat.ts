@@ -1,5 +1,6 @@
 
 import { MigrationInterface, QueryRunner } from "typeorm";
+import * as chalk from 'chalk';
 
 export class AlterCodeToAlphaNumericFormat1693547294428 implements MigrationInterface {
 
@@ -11,6 +12,8 @@ export class AlterCodeToAlphaNumericFormat1693547294428 implements MigrationInte
     * @param queryRunner
     */
     public async up(queryRunner: QueryRunner): Promise<any> {
+        console.log(chalk.yellow(`AlterCodeToAlphaNumericFormat1693547294428 start running!`));
+
         if (queryRunner.connection.options.type === 'sqlite') {
             await this.sqliteUpQueryRunner(queryRunner);
         } else {
