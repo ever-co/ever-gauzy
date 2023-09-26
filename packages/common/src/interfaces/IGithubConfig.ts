@@ -1,23 +1,36 @@
+/**
+ * Configuration options for GitHub integration.
+ */
 export interface IGithubConfig extends Partial<IGithubIntegrationConfig> {
-	/** */
-	readonly CLIENT_ID: string;
-	readonly CLIENT_SECRET: string;
-	readonly CALLBACK_URL: string;
+	/** The GitHub OAuth App Client ID. */
+	readonly clientId: string;
+
+	/** The GitHub OAuth App Client Secret. */
+	readonly clientSecret: string;
+
+	/** The callback URL for GitHub OAuth authentication. */
+	readonly callbackUrl: string;
 }
 
+/**
+ * Configuration options for a GitHub Integration.
+ */
 export interface IGithubIntegrationConfig {
-	/** */
-	readonly APP_ID: string;
-	readonly APP_NAME: string;
-	readonly APP_PRIVATE_KEY: string;
+	/** The GitHub App ID. */
+	readonly appId: string;
 
-	/** */
-	readonly POST_INSTALL_URL: string;
+	/** The name of the GitHub App. */
+	readonly appName: string;
 
-	/** */
-	readonly WEBHOOK_URL: string;
-	readonly WEBHOOK_SECRET: string;
+	/** The private key associated with the GitHub App. */
+	readonly appPrivateKey: string;
 
-	/** */
-	readonly API_VERSION: string;
+	/** The URL to redirect to after GitHub App installation. */
+	readonly postInstallUrl: string;
+
+	/** The URL for receiving GitHub webhooks. */
+	readonly webhookUrl: string;
+
+	/** The secret used to secure GitHub webhooks. */
+	readonly webhookSecret: string;
 }

@@ -40,7 +40,7 @@ export class UpworkAuthorizationController {
             urlParams.append('oauth_verifier', query.oauth_verifier);
 
             /** Redirect to the URL */
-            return response.redirect(`${upwork.POST_INSTALL_URL}?${urlParams.toString()}`);
+            return response.redirect(`${upwork.postInstallUrl}?${urlParams.toString()}`);
         } catch (error) {
             // Handle errors and return an appropriate error response
             throw new HttpException(`Failed to add ${IntegrationEnum.UPWORK} integration: ${error.message}`, HttpStatus.INTERNAL_SERVER_ERROR);

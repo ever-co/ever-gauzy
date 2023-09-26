@@ -66,10 +66,10 @@ export type Env = Readonly<{
 
 	FILE_PROVIDER: string;
 
-	GITHUB_APP_NAME: string;
-	GITHUB_APP_ID: string;
-	GITHUB_CLIENT_ID: string;
-	GITHUB_REDIRECT_URL: string;
+	GAUZY_GITHUB_APP_NAME: string;
+	GAUZY_GITHUB_APP_ID: string;
+	GAUZY_GITHUB_CLIENT_ID: string;
+	GAUZY_GITHUB_REDIRECT_URL: string;
 }>;
 
 export const env: Env = cleanEnv(
@@ -124,10 +124,10 @@ export const env: Env = cleanEnv(
 
 		FILE_PROVIDER: str({ default: 'LOCAL' }),
 
-		GITHUB_APP_NAME: str({ default: '' }),
-		GITHUB_APP_ID: str({ default: '' }),
-		GITHUB_CLIENT_ID: str({ default: '' }),
-		GITHUB_REDIRECT_URL: str({ default: '' }),
+		GAUZY_GITHUB_APP_NAME: str({ default: '' }),
+		GAUZY_GITHUB_APP_ID: str({ default: '' }),
+		GAUZY_GITHUB_CLIENT_ID: str({ default: '' }),
+		GAUZY_GITHUB_REDIRECT_URL: str({ default: '' }),
 	},
 	{ strict: true, dotEnvPath: __dirname + '/../.env' }
 );

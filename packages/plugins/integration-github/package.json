@@ -31,12 +31,13 @@
 		"@nestjs/common": "^9.2.1",
 		"@nestjs/core": "^9.2.1",
 		"@octokit/rest": "^18.0.0",
+		"chalk": "4.1.2",
+		"express": "^4.17.2",
 		"octokit": "2.1.0",
 		"pino-std-serializers": "^6.2.2",
 		"probot": "^12.3.1",
 		"smee-client": "^1.2.3",
-		"underscore": "^1.13.3",
-		"express": "^4.17.2"
+		"underscore": "^1.13.3"
 	},
 	"devDependencies": {
 		"@types/node": "^17.0.33",

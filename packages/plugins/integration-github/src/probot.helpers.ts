@@ -5,6 +5,8 @@ import { Octokit } from '@octokit/rest';
 import { createAppAuth } from '@octokit/auth-app';
 import { OctokitConfig, ProbotConfig } from './probot.types';
 
+const GITHUB_API_URL = 'https://api.github.com';
+
 /**
  * Parse and restructure Probot configuration into a more organized format.
  * @param config - Probot configuration.
@@ -12,9 +14,9 @@ import { OctokitConfig, ProbotConfig } from './probot.types';
  */
 export const parseConfig = (config: ProbotConfig): Record<string, any> => ({
 	appId: config.appId,
-	privateKey: getPrivateKey({ env: { PRIVATE_KEY: config.privateKey } }) as string,
+	privateKey: getPrivateKey({ env: { PRIVATE_KEY: config.privateKey ? config.privateKey.replace(/\\n/g, '\n') : '' } }) as string,
 	webhookSecret: config.webhookSecret,
-	ghUrl: config.ghUrl || 'https://api.github.com',
+	ghUrl: config.ghUrl || GITHUB_API_URL,
 	webhookProxy: config.webhookProxy,
 	webhookPath: config.webhookPath,
 	clientId: config.clientId,

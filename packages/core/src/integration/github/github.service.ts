@@ -9,7 +9,6 @@ import { IntegrationTenantFirstOrCreateCommand } from 'integration-tenant/comman
 import { IntegrationService } from 'integration/integration.service';
 import { RequestContext } from '../../core/context';
 import { GITHUB_ACCESS_TOKEN_URL } from './github.config';
-
 const { github } = environment;
 
 @Injectable()
@@ -111,8 +110,8 @@ export class GithubService {
 			});
 
 			const urlParams = new URLSearchParams();
-			urlParams.append('client_id', github.CLIENT_ID);
-			urlParams.append('client_secret', github.CLIENT_SECRET);
+			urlParams.append('client_id', github.clientId);
+			urlParams.append('client_secret', github.clientSecret);
 			urlParams.append('code', code);
 
 			const tokens$ = this._httpService.post(GITHUB_ACCESS_TOKEN_URL, urlParams, {

@@ -11,6 +11,7 @@ import {
 import { Probot } from 'probot';
 import SmeeClient from 'smee-client';
 import * as _ from 'underscore';
+import * as chalk from 'chalk';
 import { v4 } from 'uuid';
 import { ModuleProviders, ProbotConfig } from './probot.types';
 import { createProbot, createSmee } from './probot.helpers';
@@ -32,7 +33,17 @@ export class ProbotDiscovery implements OnModuleInit, OnApplicationBootstrap, On
 		private readonly config: ProbotConfig
 	) {
 		this.hooks = new Map<string, any>();
-		this.probot = createProbot(this.config);
+		/** */
+		try {
+			if (this.config.appId && this.config.privateKey) {
+				this.probot = createProbot(this.config);
+				console.log(chalk.green(`Probot App successfully initialized.`));
+			} else {
+				console.error(chalk.red(`Probot App initialization failed: Missing appId or privateKey.`));
+			}
+		} catch (error) {
+			console.error(chalk.red(`Probot App initialization failed: ${error.message}`));
+		}
 	}
 
 	/**
@@ -73,6 +84,9 @@ export class ProbotDiscovery implements OnModuleInit, OnApplicationBootstrap, On
 	 * Initialize and mount event listeners for Probot hooks.
 	 */
 	mountHooks() {
+		if (!this.probot) {
+			return;
+		}
 		this.probot
 			.load((app: {
 				on: (eventName: any, callback: (context: any) => Promise<void>) => any;
@@ -102,7 +116,6 @@ export class ProbotDiscovery implements OnModuleInit, OnApplicationBootstrap, On
 			await fn(context); // Call the original function with the provided context.
 		};
 	}
-
 
 	/**
 	 * Explore and analyze methods of instance wrappers (controllers and providers).
@@ -195,6 +208,9 @@ export class ProbotDiscovery implements OnModuleInit, OnApplicationBootstrap, On
 	 * @returns A promise that resolves when the webhook is processed.
 	 */
 	public receiveHook(request: any) {
+		if (!this.probot) {
+			return;
+		}
 		// Extract relevant information from the request
 		const id = request.headers['x-github-delivery'] as string;
 		const event = request.headers['x-github-event'];

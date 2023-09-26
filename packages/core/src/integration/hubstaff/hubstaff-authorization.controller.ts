@@ -39,7 +39,7 @@ export class HubstaffAuthorizationController {
             urlParams.append('state', query.state);
 
             /** Redirect to the URL */
-            return response.redirect(`${hubstaff.POST_INSTALL_URL}?${urlParams.toString()}`);
+            return response.redirect(`${hubstaff.postInstallUrl}?${urlParams.toString()}`);
         } catch (error) {
             // Handle errors and return an appropriate error response
             throw new HttpException(`Failed to add ${IntegrationEnum.HUBSTAFF} integration: ${error.message}`, HttpStatus.INTERNAL_SERVER_ERROR);

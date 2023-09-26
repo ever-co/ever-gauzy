@@ -71,8 +71,8 @@ export interface Environment {
 	FILE_PROVIDER: string;
 
 	/** Github Integration */
-	GITHUB_APP_NAME: string;
-	GITHUB_APP_ID: string;
-	GITHUB_CLIENT_ID: string;
-	GITHUB_REDIRECT_URL: string;
+	GAUZY_GITHUB_APP_NAME: string;
+	GAUZY_GITHUB_APP_ID: string;
+	GAUZY_GITHUB_CLIENT_ID: string;
+	GAUZY_GITHUB_REDIRECT_URL: string;
 }
