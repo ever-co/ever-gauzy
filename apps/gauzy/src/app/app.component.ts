@@ -21,20 +21,21 @@ import {
 	ISelectorVisibility,
 	LanguagesService,
 	SelectorBuilderService,
-	Store
+	Store,
 } from './@core/services';
 import { environment } from '../environments/environment';
+import { JitsuService } from './@core/services/analytics/jitsu-config.service';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ga-app',
-	template: '<router-outlet *ngIf="!loading"></router-outlet>'
+	template: '<router-outlet *ngIf="!loading"></router-outlet>',
 })
 export class AppComponent implements OnInit, AfterViewInit {
-
 	loading: boolean = true;
 
 	constructor(
+		private readonly jitsuService: JitsuService,
 		private readonly analytics: AnalyticsService,
 		private readonly seoService: SeoService,
 		private readonly store: Store,
@@ -54,6 +55,7 @@ export class AppComponent implements OnInit, AfterViewInit {
 		}
 
 		this.analytics.trackPageViews();
+		this.jitsuService.trackPageViews();
 		this.seoService.trackCanonicalChanges();
 
 		this.store.systemLanguages$
@@ -74,7 +76,9 @@ export class AppComponent implements OnInit, AfterViewInit {
 
 				//Use browser language as a primary language, if not found then use system default language, e.g. "en"
 				this.translate.use(
-					systemLanguages.includes(browserLang) ? browserLang : LanguagesEnum.ENGLISH
+					systemLanguages.includes(browserLang)
+						? browserLang
+						: LanguagesEnum.ENGLISH
 				);
 
 				this.translate.onLangChange.subscribe(() => {
@@ -93,7 +97,9 @@ export class AppComponent implements OnInit, AfterViewInit {
 
 	private async loadLanguages() {
 		const { items = [] } = await this.languagesService.getSystemLanguages();
-		this.store.systemLanguages = items.filter((item: ILanguage) => item.is_system);
+		this.store.systemLanguages = items.filter(
+			(item: ILanguage) => item.is_system
+		);
 	}
 
 	private loadChatwoot(d, t) {
@@ -105,7 +111,7 @@ export class AppComponent implements OnInit, AfterViewInit {
 		g.onload = function () {
 			window['chatwootSDK'].run({
 				websiteToken: environment.CHATWOOT_SDK_TOKEN,
-				baseUrl: chatwootBaseUrl
+				baseUrl: chatwootBaseUrl,
 			});
 		};
 	}
@@ -127,26 +133,42 @@ export class AppComponent implements OnInit, AfterViewInit {
 				/**
 				 * Set Date Range Picker Default Unit
 				 */
-				tap(({ datePicker, dates }: {
-					datePicker: IDatePickerConfig,
-					dates: IDateRangePicker,
-					selectors: ISelectorVisibility
-				}) => {
-					const datePickerConfig = Object.assign(
-						{},
-						DEFAULT_DATE_PICKER_CONFIG,
-						datePicker
-					);
-					if (isNotEmpty(dates)) {
-						this.dateRangePickerBuilderService.setDateRangePicker(dates);
+				tap(
+					({
+						datePicker,
+						dates,
+					}: {
+						datePicker: IDatePickerConfig;
+						dates: IDateRangePicker;
+						selectors: ISelectorVisibility;
+					}) => {
+						const datePickerConfig = Object.assign(
+							{},
+							DEFAULT_DATE_PICKER_CONFIG,
+							datePicker
+						);
+						if (isNotEmpty(dates)) {
+							this.dateRangePickerBuilderService.setDateRangePicker(
+								dates
+							);
+						}
+						this.dateRangePickerBuilderService.setDatePickerConfig(
+							datePickerConfig
+						);
 					}
-					this.dateRangePickerBuilderService.setDatePickerConfig(datePickerConfig);
-				}),
-				tap(({ selectors }: {
-					selectors: ISelectorVisibility
-				}) => {
-					Object.entries(Object.assign({}, DEFAULT_SELECTOR_VISIBILITY, selectors)).forEach(([id, value]) => {
-						this.selectorBuilderService.setSelectorsVisibility(id, value as boolean);
+				),
+				tap(({ selectors }: { selectors: ISelectorVisibility }) => {
+					Object.entries(
+						Object.assign(
+							{},
+							DEFAULT_SELECTOR_VISIBILITY,
+							selectors
+						)
+					).forEach(([id, value]) => {
+						this.selectorBuilderService.setSelectorsVisibility(
+							id,
+							value as boolean
+						);
 					});
 					this.selectorBuilderService.getSelectorsVisibility();
 				}),

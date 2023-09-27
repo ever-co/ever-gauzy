@@ -142,6 +142,11 @@ if (!env.IS_DOCKER) {
 		GAUZY_CLOUD_APP: '${env.GAUZY_CLOUD_APP}',
 
 		FILE_PROVIDER: '${env.FILE_PROVIDER}',
+
+		JITSU_CONFIG_HOST: '${env.JITSU_CONFIG_HOST}',
+		JITSU_WRITE_KEY: '${env.JITSU_WRITE_KEY}',
+
+
 	};
 	`;
 } else {

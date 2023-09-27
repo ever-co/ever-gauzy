@@ -69,4 +69,7 @@ export interface Environment {
 	GAUZY_CLOUD_APP: string;
 
 	FILE_PROVIDER: string;
+
+	JITSU_CONFIG_HOST: string;
+	JITSU_WRITE_KEY: string;
 }

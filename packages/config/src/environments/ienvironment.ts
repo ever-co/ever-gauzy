@@ -155,4 +155,10 @@ export interface IEnvironment {
 	 * Email Reset
 	 */
 	EMAIL_RESET_EXPIRATION_TIME?: number;
+
+	/**
+	 * Jitsu Config
+	 */
+	JITSU_CONFIG_HOST?: string;
+	JITSU_CONFIG_WRITE_KEY?: string;
 }
