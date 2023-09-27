@@ -1,7 +1,7 @@
 import { AfterViewInit, Component, OnInit } from '@angular/core';
 import { TitleCasePipe } from '@angular/common';
-import { ActivatedRoute } from '@angular/router';
-import { debounceTime, of } from 'rxjs';
+import { ActivatedRoute, Data } from '@angular/router';
+import { debounceTime, mergeMap, of } from 'rxjs';
 import { Observable } from 'rxjs/internal/Observable';
 import { catchError, filter, map, switchMap, tap } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
@@ -52,7 +52,7 @@ export class GithubViewComponent extends TranslationBaseComponent implements Aft
 	ngAfterViewInit(): void {
 		this._store.selectedOrganization$
 			.pipe(
-				debounceTime(500),
+				debounceTime(200),
 				distinctUntilChange(),
 				filter((organization: IOrganization) => !!organization),
 				tap((organization: IOrganization) => this.organization = organization),
@@ -72,16 +72,19 @@ export class GithubViewComponent extends TranslationBaseComponent implements Aft
 		}
 
 		this.loading = true;
+
 		// Extract organization properties
 		const { id: organizationId, tenantId } = this.organization;
-		this.repositories$ = this._activatedRoute.params.pipe(
+		this.repositories$ = this._activatedRoute.parent.data.pipe(
+			filter(({ integration }: Data) => !!integration),
+			switchMap(() => this._activatedRoute.params.pipe(
+				filter(({ integrationId }) => integrationId)
+			)),
 			// Get the 'integrationId' route parameter
-			switchMap(({ integrationId }) => {
-				return this._githubService.getRepositories(integrationId, {
-					organizationId,
-					tenantId
-				});
-			}),
+			switchMap(({ integrationId }) => this._githubService.getRepositories(integrationId, {
+				organizationId,
+				tenantId
+			})),
 			// Update component state with fetched repositories
 			tap(({ repositories }: IGithubRepositoryResponse) => {
 				this.repositories = repositories;
@@ -108,6 +111,11 @@ export class GithubViewComponent extends TranslationBaseComponent implements Aft
 		this.issues$ = repository ? this.getRepositoryIssue(repository) : of([]);
 	}
 
+	/**
+	 *
+	 * @param repository
+	 * @returns
+	 */
 	private getRepositoryIssue(repository: IGithubRepository) {
 		// Ensure there is a valid organization
 		if (!this.organization) {
