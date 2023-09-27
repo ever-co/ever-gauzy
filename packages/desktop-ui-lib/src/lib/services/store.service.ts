@@ -11,16 +11,17 @@ import {
 	IFeatureToggle,
 	IFeatureOrganization,
 	FeatureEnum,
-	ComponentLayoutStyleEnum
+	ComponentLayoutStyleEnum,
+	ITaskStatus,
 } from '@gauzy/contracts';
 import { Injectable } from '@angular/core';
 import { StoreConfig, Store as AkitaStore, Query } from '@datorama/akita';
 import {
 	ComponentEnum,
-	SYSTEM_DEFAULT_LAYOUT
+	SYSTEM_DEFAULT_LAYOUT,
 } from '../constants/layout.constants';
 import { map } from 'rxjs/operators';
-import { merge, Subject } from 'rxjs';
+import { merge, Observable, Subject } from 'rxjs';
 import * as _ from 'underscore';
 
 export interface AppState {
@@ -35,6 +36,7 @@ export interface AppState {
 	featureOrganizations: IFeatureOrganization[];
 	featureTenant: IFeatureOrganization[];
 	isOffline: boolean;
+	statuses: ITaskStatus[];
 }
 
 export interface PersistState {
@@ -58,6 +60,7 @@ export function createInitialAppState(): AppState {
 		featureOrganizations: [],
 		featureTenant: [],
 		isOffline: false,
+		statuses: [],
 	} as AppState;
 }
 
@@ -80,7 +83,7 @@ export function createInitialPersistState(): PersistState {
 		preferredLanguage,
 		componentLayout,
 		tenantId,
-		host
+		host,
 	} as PersistState;
 }
 
@@ -121,7 +124,7 @@ export class Store {
 		protected appQuery: AppQuery,
 		protected persistStore: PersistStore,
 		protected persistQuery: PersistQuery
-	) { }
+	) {}
 
 	user$ = this.appQuery.select((state) => state.user);
 	selectedOrganization$ = this.appQuery.select(
@@ -133,9 +136,15 @@ export class Store {
 		(state) => state.userRolePermissions
 	);
 	featureToggles$ = this.appQuery.select((state) => state.featureToggles);
+
 	featureOrganizations$ = this.appQuery.select(
 		(state) => state.featureOrganizations
 	);
+
+	statuses$: Observable<ITaskStatus[]> = this.appQuery.select(
+		(state) => state.statuses
+	);
+
 	featureTenant$ = this.appQuery.select((state) => state.featureTenant);
 	preferredLanguage$ = this.persistQuery.select(
 		(state) => state.preferredLanguage
@@ -315,6 +324,17 @@ export class Store {
 		});
 	}
 
+	get statuses(): ITaskStatus[] {
+		const { statuses } = this.appQuery.getValue();
+		return statuses;
+	}
+
+	set statuses(statuses: ITaskStatus[]) {
+		this.appStore.update({
+			statuses,
+		});
+	}
+
 	get featureOrganizations(): IFeatureOrganization[] {
 		const { featureOrganizations } = this.appQuery.getValue();
 		return featureOrganizations;
@@ -385,8 +405,8 @@ export class Store {
 	getDateFromOrganizationSettings() {
 		const dateObj = this.selectedDate;
 		switch (
-		this.selectedOrganization &&
-		this.selectedOrganization.defaultValueDateType
+			this.selectedOrganization &&
+			this.selectedOrganization.defaultValueDateType
 		) {
 			case DefaultValueDateTypeEnum.TODAY: {
 				return new Date(Date.now());
@@ -483,7 +503,7 @@ export class Store {
 
 	set tenantId(value: string) {
 		this.persistStore.update({
-			tenantId: value
+			tenantId: value,
 		});
 	}
 
@@ -494,7 +514,7 @@ export class Store {
 
 	set host(value: string) {
 		this.persistStore.update({
-			host: value
-		})
+			host: value,
+		});
 	}
 }

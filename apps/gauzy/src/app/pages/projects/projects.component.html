@@ -129,6 +129,7 @@
 	<ga-projects-mutation
 		*ngIf="showAddCard && organization"
 		[project]="projectToEdit"
+		[teams]="teams"
 		[organizationContacts]="organizationContacts"
 		(canceled)="cancel()"
 		(addOrEditProject)="addOrEditProject($event)"

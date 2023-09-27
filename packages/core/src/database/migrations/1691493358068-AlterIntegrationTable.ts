@@ -1,5 +1,6 @@
 
 import { MigrationInterface, QueryRunner } from "typeorm";
+import * as chalk from 'chalk';
 
 export class AlterIntegrationTable1691493358068 implements MigrationInterface {
 
@@ -11,6 +12,8 @@ export class AlterIntegrationTable1691493358068 implements MigrationInterface {
     * @param queryRunner
     */
     public async up(queryRunner: QueryRunner): Promise<any> {
+        console.log(chalk.yellow(`AlterIntegrationTable1691493358068 start running!`));
+
         if (queryRunner.connection.options.type === 'sqlite') {
             await this.sqliteUpQueryRunner(queryRunner);
         } else {

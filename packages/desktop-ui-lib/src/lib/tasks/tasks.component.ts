@@ -9,9 +9,9 @@ import {
 	TaskStatusEnum,
 } from '@gauzy/contracts';
 import { NbToastrService } from '@nebular/theme';
-import { Color, rgbString } from '@kurkle/color';
 import * as moment from 'moment';
 import { TranslateService } from '@ngx-translate/core';
+import { ColorAdapter } from '../utils';
 
 @Component({
 	selector: 'ngx-tasks',
@@ -77,9 +77,7 @@ export class TasksComponent implements OnInit {
 		})();
 		this.form = new FormGroup({
 			description: new FormControl(null),
-			dueDate: new FormControl(
-				moment().add(1, 'day').utc().toDate()
-			),
+			dueDate: new FormControl(moment().add(1, 'day').utc().toDate()),
 			estimate: new FormControl(null),
 			estimateDays: new FormControl(null, [Validators.min(0)]),
 			estimateHours: new FormControl(null, [
@@ -106,7 +104,7 @@ export class TasksComponent implements OnInit {
 		try {
 			this.projects = await this.timeTrackerService.getProjects({
 				organizationContactId: null,
-				...user
+				...user,
 			});
 		} catch (error) {
 			console.error(
@@ -161,7 +159,7 @@ export class TasksComponent implements OnInit {
 			this.isAddTask.emit(false);
 			this.newTaskCallback.emit({
 				isSuccess: true,
-				message: this.translate.instant('TOASTR.MESSAGE.CREATED')
+				message: this.translate.instant('TOASTR.MESSAGE.CREATED'),
 			});
 		} catch (error) {
 			console.log(error);
@@ -207,43 +205,11 @@ export class TasksComponent implements OnInit {
 	};
 
 	public background(bgColor: string) {
-		const color = new Color(bgColor);
-		return color.valid ? bgColor : this._test(bgColor);
+		return ColorAdapter.background(bgColor);
 	}
 
-	public backgroundContrast(bgColor) {
-		let color = new Color(bgColor);
-		color = color.valid ? color : new Color(this._hex2rgb(bgColor));
-		const MIN_THRESHOLD = 128;
-		const MAX_THRESHOLD = 186;
-		const contrast = color.rgb
-			? color.rgb.r * 0.299 + color.rgb.g * 0.587 + color.rgb.b * 0.114
-			: null;
-		if (contrast < MIN_THRESHOLD) {
-			return '#ffffff';
-		} else if (contrast > MAX_THRESHOLD) {
-			return '#000000';
-		}
-	}
-
-	private _hex2rgb(hex: string) {
-		hex = this._test(hex);
-		return rgbString({
-			r: parseInt(hex.slice(1, 3), 16),
-			g: parseInt(hex.slice(3, 5), 16),
-			b: parseInt(hex.slice(5, 7), 16),
-			a: 1,
-		});
-	}
-
-	private _test(hex: string): string {
-		const regex = /^#[0-9A-F]{6}$/i;
-		if (regex.test(hex)) {
-			return hex;
-		} else {
-			hex = '#' + hex;
-			return regex.test(hex) ? hex : '#000000';
-		}
+	public backgroundContrast(bgColor: string) {
+		return ColorAdapter.contrast(bgColor);
 	}
 
 	private _formatStatus(name: string): string {

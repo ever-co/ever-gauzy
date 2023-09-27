@@ -143,10 +143,15 @@ if (!env.IS_DOCKER) {
 
 		FILE_PROVIDER: '${env.FILE_PROVIDER}',
 
+
 		JITSU_CONFIG_HOST: '${env.JITSU_CONFIG_HOST}',
 		JITSU_WRITE_KEY: '${env.JITSU_WRITE_KEY}',
 
 
+		GAUZY_GITHUB_APP_NAME: '${env.GAUZY_GITHUB_APP_NAME}',
+		GAUZY_GITHUB_APP_ID: '${env.GAUZY_GITHUB_APP_ID}',
+		GAUZY_GITHUB_CLIENT_ID: '${env.GAUZY_GITHUB_CLIENT_ID}',
+		GAUZY_GITHUB_REDIRECT_URL: '${env.GAUZY_GITHUB_REDIRECT_URL}',
 	};
 	`;
 } else {
@@ -245,6 +250,11 @@ if (!env.IS_DOCKER) {
 		GAUZY_CLOUD_APP: 'DOCKER_GAUZY_CLOUD_APP',
 
 		FILE_PROVIDER: '${env.FILE_PROVIDER}',
+
+		GAUZY_GITHUB_APP_NAME: '${env.GAUZY_GITHUB_APP_NAME}',
+		GAUZY_GITHUB_APP_ID: '${env.GAUZY_GITHUB_APP_ID}',
+		GAUZY_GITHUB_CLIENT_ID: '${env.GAUZY_GITHUB_CLIENT_ID}',
+		GAUZY_GITHUB_REDIRECT_URL: '${env.GAUZY_GITHUB_REDIRECT_URL}',
 	};
 `;
 }
@@ -271,10 +281,10 @@ if (!isProd) {
 // we always want first to remove old generated files (one of them is not needed for current build)
 try {
 	unlinkSync(`./apps/gauzy/src/environments/environment.ts`);
-} catch {}
+} catch { }
 try {
 	unlinkSync(`./apps/gauzy/src/environments/environment.prod.ts`);
-} catch {}
+} catch { }
 
 const envFileDest: string = isProd ? 'environment.prod.ts' : 'environment.ts';
 const envFileDestOther: string = !isProd

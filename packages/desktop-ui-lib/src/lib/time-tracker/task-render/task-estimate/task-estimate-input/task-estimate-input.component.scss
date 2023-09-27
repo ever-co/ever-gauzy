@@ -1,0 +1,34 @@
+:host {
+	.inputs {
+		gap: 4px;
+
+		input:focus {
+			outline: none;
+			border-color: inherit;
+			-webkit-box-shadow: none;
+			box-shadow: none;
+		}
+
+		.time {
+			width: 14px;
+			border: none;
+			border-bottom: 1px solid;
+			height: auto !important;
+			border-radius: unset;
+			box-shadow: unset;
+			background-color: unset !important;
+		}
+
+		input[type='number']::-webkit-outer-spin-button,
+		input[type='number']::-webkit-inner-spin-button {
+			-webkit-appearance: none;
+			margin: 0; /* Remove the default margin */
+		}
+	}
+
+	form {
+		display: flex;
+		gap: 4px;
+		align-items: center;
+	}
+}

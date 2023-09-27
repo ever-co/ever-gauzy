@@ -1,0 +1,79 @@
+@import '../../time-tracker.component';
+
+.task-render {
+	display: flex;
+	align-items: center;
+	justify-content: flex-start;
+	flex-direction: column;
+	gap: 8px;
+}
+
+.badges {
+	display: flex;
+	align-items: center;
+	justify-content: flex-start;
+	flex-direction: row;
+	width: 100%;
+}
+
+.detail {
+	font-weight: 600;
+	gap: 2px;
+	align-items: baseline;
+	justify-content: flex-start;
+	display: flex;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	overflow: hidden;
+	cursor: pointer;
+	width: 100%;
+}
+
+.badges {
+	gap: 4px;
+}
+
+.task-title-container {
+	display: flex;
+	align-items: center;
+	gap: 2px;
+	overflow: hidden;
+}
+
+.task-title {
+	color: var(--gauzy-text-color-1);
+	text-overflow: ellipsis;
+	white-space: initial;
+	overflow: hidden;
+	cursor: pointer;
+	width: 100%;
+	display: -webkit-box;
+	-webkit-line-clamp: 2;
+	-webkit-box-orient: vertical;
+}
+
+.task-number {
+	color: var(--gauzy-text-color-2);
+	white-space: nowrap;
+}
+
+.bge {
+	padding: 2px 4px;
+	line-height: 1;
+	border-radius: calc(var(--border-radius) / 3);
+
+	&.stats {
+		color: rgb(0, 208, 96);
+		background: rgba(0, 208, 96, 0.1);
+	}
+
+	&.size {
+		color: rgb(10, 102, 194);
+		background: rgba(10, 102, 194, 0.1);
+	}
+
+	&.priority {
+		color: rgb(194, 10, 38);
+		background: rgba(194, 10, 38, 0.1);
+	}
+}

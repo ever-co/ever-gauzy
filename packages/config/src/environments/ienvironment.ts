@@ -11,8 +11,8 @@ import {
 	IFacebookConfig,
 	IFiverrConfig,
 	IGithubConfig,
-	IGitHubIntegrationConfig,
 	IGoogleConfig,
+	IHubstaffConfig,
 	IKeycloakConfig,
 	ILinkedinConfig,
 	IMicrosoftConfig,
@@ -100,11 +100,9 @@ export interface IEnvironment {
 	awsConfig?: IAwsConfig;
 	wasabiConfig?: IWasabiConfig;
 	cloudinaryConfig?: ICloudinaryConfig;
-
 	facebookConfig: IFacebookConfig;
 	googleConfig: IGoogleConfig;
-	githubConfig: IGithubConfig;
-	gitHubIntegrationConfig: IGitHubIntegrationConfig;
+	github: IGithubConfig; /** Github Configuration */
 	microsoftConfig: IMicrosoftConfig;
 	linkedinConfig: ILinkedinConfig;
 	twitterConfig: ITwitterConfig;
@@ -121,7 +119,10 @@ export interface IEnvironment {
 	 */
 	defaultIntegratedUserPass?: string;
 
-	upworkConfig?: IUpworkConfig;
+	/** Third Party Integrations */
+	upwork?: IUpworkConfig;
+	hubstaff?: IHubstaffConfig;
+
 	isElectron?: boolean;
 	gauzyUserPath?: string;
 	allowSuperAdminRole?: boolean;

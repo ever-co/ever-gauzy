@@ -146,7 +146,9 @@ export interface IIntegrationTenantCreateInput extends IBasePerTenantAndOrganiza
 	settings?: IIntegrationSetting[];
 }
 
-export interface IIntegrationTenantUpdateInput extends Pick<IIntegrationTenantCreateInput, 'entitySettings' | 'settings'> { }
+export interface IIntegrationTenantUpdateInput extends Pick<IIntegrationTenantCreateInput, 'entitySettings' | 'settings'> {
+	id?: IIntegrationTenant['id'];
+}
 
 export enum IntegrationEnum {
 	IMPORT_EXPORT = 'Import_Export',
