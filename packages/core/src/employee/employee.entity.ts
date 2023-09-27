@@ -88,6 +88,10 @@ export class Employee extends TenantOrganizationBaseEntity implements IEmployee 
 	@Column({ nullable: true, default: false })
 	isActive: boolean;
 
+	@ApiPropertyOptional({ type: () => Boolean, default: false })
+	@Column({ nullable: true, default: false })
+	isArchived: boolean;
+
 	@ApiPropertyOptional({ type: () => String, maxLength: 200 })
 	@Column({ length: 200, nullable: true })
 	short_description?: string;
