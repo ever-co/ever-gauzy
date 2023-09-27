@@ -6,7 +6,14 @@ console.log = log.log;
 Object.assign(console, log.functions);
 
 import * as path from 'path';
-import { app, BrowserWindow, ipcMain, shell, Menu, MenuItemConstructorOptions } from 'electron';
+import {
+	app,
+	BrowserWindow,
+	ipcMain,
+	shell,
+	Menu,
+	MenuItemConstructorOptions,
+} from 'electron';
 import { environment } from './environments/environment';
 import * as Url from 'url';
 import * as Sentry from '@sentry/electron';
@@ -42,7 +49,7 @@ import {
 	ErrorEventManager,
 	DialogErrorHandler,
 	AppError,
-	UIError
+	UIError,
 } from '@gauzy/desktop-libs';
 import {
 	createSetupWindow,
@@ -52,7 +59,7 @@ import {
 	createImageViewerWindow,
 	SplashScreen,
 	AlwaysOn,
-	ScreenCaptureNotification
+	ScreenCaptureNotification,
 } from '@gauzy/desktop-window';
 import { fork } from 'child_process';
 import { autoUpdater } from 'electron-updater';
@@ -83,7 +90,7 @@ const serverGauzy = null;
 const updater = new DesktopUpdater({
 	repository: 'ever-gauzy-desktop-timer',
 	owner: 'ever-co',
-	typeRelease: 'releases'
+	typeRelease: 'releases',
 });
 const report = new ErrorReport(
 	new ErrorReportRepository('ever-co', 'ever-gauzy-desktop-timer')
@@ -108,14 +115,17 @@ let popupWin: BrowserWindow | null = null;
 let splashScreen: SplashScreen = null;
 let alwaysOn: AlwaysOn = null;
 
-console.log('Time Tracker UI Render Path:', path.join(__dirname, './index.html'));
+console.log(
+	'Time Tracker UI Render Path:',
+	path.join(__dirname, './index.html')
+);
 
 const pathWindow = {
-	timeTrackerUi: path.join(__dirname, './index.html')
+	timeTrackerUi: path.join(__dirname, './index.html'),
 };
 
 LocalStore.setFilePath({
-	iconPath: path.join(__dirname, 'icons', 'icon.png')
+	iconPath: path.join(__dirname, 'icons', 'icon.png'),
 });
 // Instance detection
 const gotTheLock = app.requestSingleInstanceLock();
@@ -184,7 +194,7 @@ log.catchErrors({
 			}
 			return;
 		});
-	}
+	},
 });
 
 process.on('uncaughtException', (error) => {
@@ -208,7 +218,6 @@ eventErrorManager.onSendReport(async (message) => {
 			app.exit(0);
 			break;
 	}
-
 });
 
 eventErrorManager.onShowError(async (message) => {
@@ -226,7 +235,7 @@ eventErrorManager.onShowError(async (message) => {
 			// 👀
 			break;
 	}
-})
+});
 
 async function startServer(value, restart = false) {
 	const dataModel = new DataModel();
@@ -234,11 +243,11 @@ async function startServer(value, restart = false) {
 	try {
 		const config: any = {
 			...value,
-			isSetup: true
+			isSetup: true,
 		};
 		const aw = {
 			host: value.awHost,
-			isAw: value.aw
+			isAw: value.aw,
 		};
 		const projectConfig = store.get('project');
 		store.set({
@@ -250,8 +259,8 @@ async function startServer(value, restart = false) {
 						taskId: null,
 						note: null,
 						aw,
-						organizationContactId: null
-				  }
+						organizationContactId: null,
+				  },
 		});
 	} catch (error) {
 		throw new AppError('MAINSTRSERVER', error);
@@ -272,7 +281,7 @@ async function startServer(value, restart = false) {
 						pathname: pathWindow.timeTrackerUi,
 						protocol: 'file:',
 						slashes: true,
-						hash: '/time-tracker'
+						hash: '/time-tracker',
 					})
 				);
 			}
@@ -289,7 +298,15 @@ async function startServer(value, restart = false) {
 		splashScreen.close();
 	}
 	const auth = store.get('auth');
-	new AppMenu(timeTrackerWindow, settingsWindow, updaterWindow, knex, pathWindow, null, false);
+	new AppMenu(
+		timeTrackerWindow,
+		settingsWindow,
+		updaterWindow,
+		knex,
+		pathWindow,
+		null,
+		false
+	);
 
 	if (tray) {
 		tray.destroy();
@@ -333,14 +350,14 @@ async function startServer(value, restart = false) {
 			gauzyWindow,
 			alwaysOn
 		);
-	})
+	});
 
 	/* ping server before launch the ui */
 	ipcMain.on('app_is_init', () => {
 		if (!isAlreadyRun && value && !restart) {
 			onWaitingServer = true;
-			setupWindow.webContents.send('server_ping', {
-				host: getApiBaseUrl(value)
+			timeTrackerWindow.webContents.send('server_ping', {
+				host: getApiBaseUrl(value),
 			});
 		}
 	});
@@ -351,7 +368,9 @@ async function startServer(value, restart = false) {
 const getApiBaseUrl = (configs) => {
 	if (configs.serverUrl) return configs.serverUrl;
 	else {
-		return configs.port ? `http://localhost:${configs.port}` : `http://localhost:${environment.API_DEFAULT_PORT}`;
+		return configs.port
+			? `http://localhost:${configs.port}`
+			: `http://localhost:${environment.API_DEFAULT_PORT}`;
 	}
 };
 
@@ -367,7 +386,7 @@ app.on('ready', async () => {
 	// default global
 	global.variableGlobal = {
 		API_BASE_URL: getApiBaseUrl(configs || {}),
-		IS_INTEGRATED_DESKTOP: configs?.isLocalServer
+		IS_INTEGRATED_DESKTOP: configs?.isLocalServer,
 	};
 	splashScreen = new SplashScreen(pathWindow.timeTrackerUi);
 	await splashScreen.loadURL();
@@ -393,31 +412,57 @@ app.on('ready', async () => {
 		{
 			label: app.getName(),
 			submenu: [
-				{ role: 'about', label: TranslateService.instant('MENU.ABOUT') },
+				{
+					role: 'about',
+					label: TranslateService.instant('MENU.ABOUT'),
+				},
 				{ type: 'separator' },
 				{ type: 'separator' },
-				{ role: 'quit', label: TranslateService.instant('BUTTONS.EXIT') }
-			]
-		}
+				{
+					role: 'quit',
+					label: TranslateService.instant('BUTTONS.EXIT'),
+				},
+			],
+		},
 	];
 	Menu.setApplicationMenu(Menu.buildFromTemplate(menu));
 	try {
-		timeTrackerWindow = await createTimeTrackerWindow(timeTrackerWindow, pathWindow.timeTrackerUi);
-		settingsWindow = await createSettingsWindow(settingsWindow, pathWindow.timeTrackerUi);
-		updaterWindow = await createUpdaterWindow(updaterWindow, pathWindow.timeTrackerUi);
-		imageView = await createImageViewerWindow(imageView, pathWindow.timeTrackerUi);
+		timeTrackerWindow = await createTimeTrackerWindow(
+			timeTrackerWindow,
+			pathWindow.timeTrackerUi
+		);
+		settingsWindow = await createSettingsWindow(
+			settingsWindow,
+			pathWindow.timeTrackerUi
+		);
+		updaterWindow = await createUpdaterWindow(
+			updaterWindow,
+			pathWindow.timeTrackerUi
+		);
+		imageView = await createImageViewerWindow(
+			imageView,
+			pathWindow.timeTrackerUi
+		);
 		alwaysOn = new AlwaysOn(pathWindow.timeTrackerUi);
 		await alwaysOn.loadURL();
 
 		if (configs && configs.isSetup) {
 			global.variableGlobal = {
 				API_BASE_URL: getApiBaseUrl(configs),
-				IS_INTEGRATED_DESKTOP: configs.isLocalServer
+				IS_INTEGRATED_DESKTOP: configs.isLocalServer,
 			};
-			setupWindow = await createSetupWindow(setupWindow, true, pathWindow.timeTrackerUi);
+			setupWindow = await createSetupWindow(
+				setupWindow,
+				true,
+				pathWindow.timeTrackerUi
+			);
 			await startServer(configs);
 		} else {
-			setupWindow = await createSetupWindow(setupWindow, false, pathWindow.timeTrackerUi);
+			setupWindow = await createSetupWindow(
+				setupWindow,
+				false,
+				pathWindow.timeTrackerUi
+			);
 			setupWindow.show();
 			splashScreen.close();
 		}
@@ -433,7 +478,13 @@ app.on('ready', async () => {
 		throw new UIError('400', error, 'MAINWININIT');
 	}
 	removeMainListener();
-	ipcMainHandler(store, startServer, knex, { ...environment }, timeTrackerWindow);
+	ipcMainHandler(
+		store,
+		startServer,
+		knex,
+		{ ...environment },
+		timeTrackerWindow
+	);
 });
 
 app.on('window-all-closed', () => {
@@ -451,7 +502,7 @@ ipcMain.on('server_is_ready', async () => {
 	const appConfig = LocalStore.getStore('configs');
 	appConfig.serverConfigConnected = true;
 	store.set({
-		configs: appConfig
+		configs: appConfig,
 	});
 	onWaitingServer = false;
 	if (!isAlreadyRun) {
@@ -472,6 +523,7 @@ ipcMain.on('server_is_ready', async () => {
 			alwaysOn
 		);
 		isAlreadyRun = true;
+		timeTrackerWindow.webContents.send('ready_to_show_renderer');
 	}
 });
 
@@ -560,15 +612,15 @@ ipcMain.on('check_database_connection', async (event, arg) => {
 					user: arg[provider].dbUsername,
 					password: arg[provider].dbPassword,
 					database: arg[provider].dbName,
-					port: arg[provider].dbPort
-				}
+					port: arg[provider].dbPort,
+				},
 			};
 		} else {
 			databaseOptions = {
 				client: 'sqlite3',
 				connection: {
-					filename: sqlite3filename
-				}
+					filename: sqlite3filename,
+				},
 			};
 		}
 		const dbConn = require('knex')(databaseOptions);
@@ -577,15 +629,24 @@ ipcMain.on('check_database_connection', async (event, arg) => {
 			status: true,
 			message:
 				provider === 'postgres'
-					? TranslateService.instant('TIMER_TRACKER.DIALOG.CONNECTION_DRIVER', { driver: 'PostgresSQL' })
+					? TranslateService.instant(
+							'TIMER_TRACKER.DIALOG.CONNECTION_DRIVER',
+							{ driver: 'PostgresSQL' }
+					  )
 					: provider === 'mysql'
-						? TranslateService.instant('TIMER_TRACKER.DIALOG.CONNECTION_DRIVER', { driver: 'MySQL' })
-						: TranslateService.instant('TIMER_TRACKER.DIALOG.CONNECTION_DRIVER', { driver: 'SQLite' })
+					? TranslateService.instant(
+							'TIMER_TRACKER.DIALOG.CONNECTION_DRIVER',
+							{ driver: 'MySQL' }
+					  )
+					: TranslateService.instant(
+							'TIMER_TRACKER.DIALOG.CONNECTION_DRIVER',
+							{ driver: 'SQLite' }
+					  ),
 		});
 	} catch (error) {
 		event.sender.send('database_status', {
 			status: false,
-			message: error.message
+			message: error.message,
 		});
 	}
 });
@@ -620,7 +681,6 @@ app.on('activate', () => {
 		}
 	}
 });
-
 
 ipcMain.handle('PREFERRED_LANGUAGE', (event, arg) => {
 	const setting = store.get('appSetting');
@@ -677,7 +737,7 @@ function launchAtStartup(autoLaunch, hidden) {
 		case 'darwin':
 			app.setLoginItemSettings({
 				openAtLogin: autoLaunch,
-				openAsHidden: hidden
+				openAsHidden: hidden,
 			});
 			break;
 		case 'win32':
@@ -686,14 +746,23 @@ function launchAtStartup(autoLaunch, hidden) {
 				openAsHidden: hidden,
 				path: app.getPath('exe'),
 				args: hidden
-					? ['--processStart', `"${exeName}"`, '--process-start-args', `"--hidden"`]
-					: ['--processStart', `"${exeName}"`, '--process-start-args']
+					? [
+							'--processStart',
+							`"${exeName}"`,
+							'--process-start-args',
+							`"--hidden"`,
+					  ]
+					: [
+							'--processStart',
+							`"${exeName}"`,
+							'--process-start-args',
+					  ],
 			});
 			break;
 		case 'linux':
 			app.setLoginItemSettings({
 				openAtLogin: autoLaunch,
-				openAsHidden: hidden
+				openAsHidden: hidden,
 			});
 			break;
 		default:
@@ -713,13 +782,14 @@ app.on('web-contents-created', (e, contents) => {
 				enableRemoteModule: true,
 				javascript: true,
 				webSecurity: false,
-				webviewTag: false
-			}
+				webviewTag: false,
+			},
 		};
 		if (
-			['https://www.linkedin.com/oauth', 'https://accounts.google.com'].findIndex(
-				(str) => url.indexOf(str) > -1
-			) > -1
+			[
+				'https://www.linkedin.com/oauth',
+				'https://accounts.google.com',
+			].findIndex((str) => url.indexOf(str) > -1) > -1
 		) {
 			try {
 				e.preventDefault();
@@ -733,13 +803,16 @@ app.on('web-contents-created', (e, contents) => {
 		if (url.indexOf('sign-in/success?jwt') > -1) {
 			if (popupWin) popupWin.destroy();
 			const urlParse = Url.parse(url, true);
-			const urlParsed = Url.parse(urlFormat(urlParse.hash, urlParse.host), true);
+			const urlParsed = Url.parse(
+				urlFormat(urlParse.hash, urlParse.host),
+				true
+			);
 			const query = urlParsed.query;
 			const params = LocalStore.beforeRequestParams();
 			timeTrackerWindow.webContents.send('social_auth_success', {
 				...params,
 				token: query.jwt,
-				userId: query.userId
+				userId: query.userId,
 			});
 		}
 

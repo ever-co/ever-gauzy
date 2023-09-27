@@ -225,7 +225,24 @@ export class AuthStrategy extends NbAuthStrategy {
 				);
 			}),
 			catchError((err) => {
-				console.log(err);
+				const isLoginOffline =
+					!!this.store?.user && !!this.store?.token;
+				if (isLoginOffline) {
+					const res: IAuthResponse = {
+						user: this.store.user,
+						token: this.store.token,
+					};
+					this.electronAuthentication(res);
+					return of(
+						new NbAuthResult(
+							true,
+							res,
+							AuthStrategy.config.login.redirect.success,
+							[],
+							AuthStrategy.config.login.defaultMessages
+						)
+					);
+				}
 				return of(
 					new NbAuthResult(
 						false,

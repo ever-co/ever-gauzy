@@ -91,8 +91,7 @@ export const environment: IEnvironment = {
 		api_key: process.env.CLOUDINARY_API_KEY,
 		api_secret: process.env.CLOUDINARY_API_SECRET,
 		secure: process.env.CLOUDINARY_API_SECURE === 'false' ? false : true,
-		delivery_url:
-			process.env.CLOUDINARY_CDN_URL || `https://res.cloudinary.com`,
+		delivery_url: process.env.CLOUDINARY_CDN_URL || `https://res.cloudinary.com`,
 	},
 
 	facebookConfig: {
@@ -101,33 +100,33 @@ export const environment: IEnvironment = {
 		clientId: process.env.FACEBOOK_CLIENT_ID,
 		clientSecret: process.env.FACEBOOK_CLIENT_SECRET,
 		fbGraphVersion: process.env.FACEBOOK_GRAPH_VERSION,
-		oauthRedirectUri:
-			process.env.FACEBOOK_CALLBACK_URL ||
-			`${process.env.API_HOST}:${process.env.API_PORT}/api/auth/facebook/callback`,
+		oauthRedirectUri: process.env.FACEBOOK_CALLBACK_URL || `${process.env.API_BASE_URL}/api/auth/facebook/callback`,
 		state: '{fbstate}',
 	},
 
 	googleConfig: {
 		clientId: process.env.GOOGLE_CLIENT_ID,
 		clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-		callbackUrl:
-			process.env.GOOGLE_CALLBACK_URL ||
-			`http://${process.env.API_HOST}:${process.env.API_PORT}/api/auth/google/callback`,
+		callbackUrl: process.env.GOOGLE_CALLBACK_URL || `${process.env.API_BASE_URL}/api/auth/google/callback`,
 	},
 
-	githubConfig: {
-		clientId: process.env.GITHUB_CLIENT_ID,
-		clientSecret: process.env.GITHUB_CLIENT_SECRET,
-		callbackUrl:
-			process.env.GITHUB_CALLBACK_URL ||
-			`http://${process.env.API_HOST}:${process.env.API_PORT}/api/auth/google/callback`,
-	},
-	gitHubIntegrationConfig: {
-		appId: process.env.GITHUB_INTEGRATION_APP_ID,
-		clientId: process.env.GITHUB_INTEGRATION_CLIENT_ID,
-		clientSecret: process.env.GITHUB_INTEGRATION_CLIENT_SECRET,
-		privateKey: process.env.GITHUB_INTEGRATION_PRIVATE_KEY,
-		webhookSecret: process.env.GITHUB_INTEGRATION_WEBHOOK_SECRET,
+	github: {
+		/**Github OAuth Configuration */
+		clientId: process.env.GAUZY_GITHUB_CLIENT_ID,
+		clientSecret: process.env.GAUZY_GITHUB_CLIENT_SECRET,
+		callbackUrl: process.env.GAUZY_GITHUB_CALLBACK_URL || `${process.env.API_BASE_URL}/api/auth/github/callback`,
+
+		/** Github App Install Configuration  */
+		appId: process.env.GAUZY_GITHUB_APP_ID,
+		appName: process.env.GAUZY_GITHUB_APP_NAME,
+		appPrivateKey: process.env.GAUZY_GITHUB_APP_PRIVATE_KEY,
+
+		/** Github App Post Install Configuration */
+		postInstallUrl: process.env.GAUZY_GITHUB_POST_INSTALL_URL || `${process.env.CLIENT_BASE_URL}/#/pages/integrations/github/setup/installation`,
+
+		/** Github Webhook Configuration */
+		webhookSecret: process.env.GAUZY_GITHUB_WEBHOOK_SECRET,
+		webhookUrl: process.env.GAUZY_GITHUB_WEBHOOK_URL || `${process.env.API_BASE_URL}/api/integration/github/webhook`
 	},
 
 	microsoftConfig: {
@@ -135,25 +134,19 @@ export const environment: IEnvironment = {
 		clientSecret: process.env.MICROSOFT_CLIENT_SECRET,
 		resource: process.env.MICROSOFT_RESOURCE,
 		tenant: process.env.MICROSOFT_TENANT,
-		callbackUrl:
-			process.env.MICROSOFT_CALLBACK_URL ||
-			`http://${process.env.API_HOST}:${process.env.API_PORT}/api/auth/microsoft/callback`,
+		callbackUrl: process.env.MICROSOFT_CALLBACK_URL || `${process.env.API_BASE_URL}/api/auth/microsoft/callback`,
 	},
 
 	linkedinConfig: {
 		clientId: process.env.LINKEDIN_CLIENT_ID,
 		clientSecret: process.env.LINKEDIN_CLIENT_SECRET,
-		callbackUrl:
-			process.env.LINKEDIN_CALLBACK_URL ||
-			`http://${process.env.API_HOST}:${process.env.API_PORT}/api/auth/linked/callback`,
+		callbackUrl: process.env.LINKEDIN_CALLBACK_URL || `${process.env.API_BASE_URL}/api/auth/linked/callback`,
 	},
 
 	twitterConfig: {
 		clientId: process.env.TWITTER_CLIENT_ID,
 		clientSecret: process.env.TWITTER_CLIENT_SECRET,
-		callbackUrl:
-			process.env.TWITTER_CALLBACK_URL ||
-			`http://${process.env.API_HOST}:${process.env.API_PORT}/api/auth/twitter/callback`,
+		callbackUrl: process.env.TWITTER_CALLBACK_URL || `${process.env.API_BASE_URL}/api/auth/twitter/callback`,
 	},
 
 	fiverrConfig: {
@@ -179,17 +172,26 @@ export const environment: IEnvironment = {
 		dsn: process.env.SENTRY_DSN,
 	},
 
-	defaultIntegratedUserPass:
-		process.env.INTEGRATED_USER_DEFAULT_PASS || '123456',
+	defaultIntegratedUserPass: process.env.INTEGRATED_USER_DEFAULT_PASS || '123456',
 
-	upworkConfig: {
+	upwork: {
+		apiKey: process.env.UPWORK_API_KEY,
+		apiSecret: process.env.UPWORK_API_SECRET,
 		callbackUrl: process.env.UPWORK_REDIRECT_URL || `${process.env.API_BASE_URL}/api/integrations/upwork/callback`,
+		postInstallUrl: process.env.UPWORK_POST_INSTALL_URL || `${process.env.CLIENT_BASE_URL}/#/pages/integrations/upwork`,
+	},
+
+	hubstaff: {
+		/** Hubstaff Integration Configuration */
+		clientId: process.env.HUBSTAFF_CLIENT_ID,
+		clientSecret: process.env.HUBSTAFF_CLIENT_SECRET,
+		/** Hubstaff Integration Post Install URL */
+		postInstallUrl: process.env.HUBSTAFF_POST_INSTALL_URL || `${process.env.CLIENT_BASE_URL}/#/pages/integrations/hubstaff`,
 	},
 
 	isElectron: process.env.IS_ELECTRON === 'true' ? true : false,
 	gauzyUserPath: process.env.GAUZY_USER_PATH,
-	allowSuperAdminRole:
-		process.env.ALLOW_SUPER_ADMIN_ROLE === 'false' ? false : true,
+	allowSuperAdminRole: process.env.ALLOW_SUPER_ADMIN_ROLE === 'false' ? false : true,
 
 	/**
 	 * Endpoint for Gauzy AI API (optional), e.g.: http://localhost:3005/graphql

@@ -49,8 +49,10 @@
 						</label>
 						<ga-task-status-select
 							[projectId]="form.get('projectId').value"
-							formControlName="status"
-							[placeholder]="'TASKS_PAGE.TASKS_STATUS' | translate"
+							formControlName="taskStatus"
+							[placeholder]="
+								'TASKS_PAGE.TASKS_STATUS' | translate
+							"
 						></ga-task-status-select>
 					</div>
 				</div>
@@ -99,7 +101,9 @@
 								[selected]="selectedTeams"
 								(selectedChange)="onTeamsSelected($event)"
 								fullWidth
-								[placeholder]="'FORM.PLACEHOLDERS.CHOOSE_TEAMS' | translate"
+								[placeholder]="
+									'FORM.PLACEHOLDERS.CHOOSE_TEAMS' | translate
+								"
 							>
 								<nb-option
 									*ngFor="let team of teams"
@@ -136,8 +140,10 @@
 						</label>
 						<ga-task-priority-select
 							[projectId]="form.get('projectId').value"
-							formControlName="priority"
-							[placeholder]="'TASKS_PAGE.TASK_PRIORITY' | translate"
+							formControlName="taskPriority"
+							[placeholder]="
+								'TASKS_PAGE.TASK_PRIORITY' | translate
+							"
 						></ga-task-priority-select>
 					</div>
 				</div>
@@ -148,7 +154,7 @@
 						</label>
 						<ga-task-size-select
 							[projectId]="form.get('projectId').value"
-							formControlName="size"
+							formControlName="taskSize"
 							[placeholder]="'TASKS_PAGE.TASK_SIZE' | translate"
 						></ga-task-size-select>
 					</div>
@@ -238,7 +244,11 @@
 						<label class="label">{{
 							'TASKS_PAGE.TASKS_DESCRIPTION' | translate
 						}}</label>
-						<ckeditor class="description" formControlName="description" [config]="ckConfig"></ckeditor>
+						<ckeditor
+							class="description"
+							formControlName="description"
+							[config]="ckConfig"
+						></ckeditor>
 					</div>
 				</div>
 			</div>

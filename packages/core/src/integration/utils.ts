@@ -85,7 +85,6 @@ export class IntegrationsUtils {
         integrationTypeNames: any[]
     ): Promise<IIntegrationType[]> {
         try {
-            await this.upsertIntegrationTypes(queryRunner, integrationTypeNames);
             return await queryRunner.query(`SELECT * FROM "integration_type" WHERE "integration_type"."name" IN ('${integrationTypeNames.join("','")}')`);
         } catch (error) {
             console.log('Error while querying integration types:', error);
@@ -111,6 +110,7 @@ export class IntegrationsUtils {
             let upsertQuery = ``;
             if (queryRunner.connection.options.type === 'sqlite') {
                 // For SQLite, manually generate a UUID using uuidv4()
+                const generatedId = uuidv4(); payload.push(generatedId);
                 upsertQuery = `
                     INSERT INTO "integration_type" (
                         "name", "description", "icon", "groupName", "order", "id"

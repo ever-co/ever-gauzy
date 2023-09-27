@@ -6,27 +6,34 @@ import { Components } from './components';
 import { RouterModule } from '@angular/router';
 import { AlertModalModule } from './alert-modal';
 import { NgxPermissionsModule } from 'ngx-permissions';
-import { DirectivesModule } from "./directives/directives.module";
-import {EmployeeStartWorkModule} from "./employee/employee-start-work/employee-start-work.module";
+import { DirectivesModule } from './directives/directives.module';
+import { EmployeeStartWorkModule } from './employee/employee-start-work/employee-start-work.module';
+import { TaskBadgeViewComponent } from './tasks/task-badge-view/task-badge-view.component';
 
-const Modules = [NgxPermissionsModule, BackNavigationModule, DirectivesModule, EmployeeStartWorkModule];
+const Modules = [
+	NgxPermissionsModule,
+	BackNavigationModule,
+	DirectivesModule,
+	EmployeeStartWorkModule,
+];
 
 @NgModule({
-	declarations: [...Pipes, ...Components],
+	declarations: [...Pipes, ...Components, TaskBadgeViewComponent],
 	imports: [CommonModule, RouterModule, ...Modules],
 	exports: [
 		AlertModalModule,
 		...Pipes,
 		...Components,
-		...Modules
+		...Modules,
+		TaskBadgeViewComponent,
 	],
-	providers: [...Pipes]
+	providers: [...Pipes],
 })
 export class SharedModule {
 	static forRoot(): ModuleWithProviders<SharedModule> {
 		return {
 			ngModule: SharedModule,
-			providers: []
+			providers: [],
 		};
 	}
 }
