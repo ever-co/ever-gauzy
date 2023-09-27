@@ -1256,14 +1256,6 @@ export class StatisticService {
 				}`,
 				`duration`
 			)
-			.addSelect(
-				`${
-					this.configService.dbConnectionOptions.type === 'sqlite'
-						? `COALESCE(ROUND(SUM((julianday(COALESCE("${query.alias}"."stoppedAt", datetime('now'))) - julianday("${query.alias}"."startedAt")) * 86400) / COUNT("time_slot"."id")), 0)`
-						: `COALESCE(ROUND(SUM(extract(epoch from (COALESCE("${query.alias}"."stoppedAt", NOW()) - "${query.alias}"."startedAt"))) / COUNT("time_slot"."id")), 0)`
-				}`,
-				`todayDuration`
-			)
 			.innerJoin(`${query.alias}.task`, 'task')
 			.innerJoin(`${query.alias}.timeSlots`, 'time_slot')
 			.andWhere(
@@ -1281,26 +1273,6 @@ export class StatisticService {
 							{
 								start,
 								end,
-							}
-						);
-					}
-				})
-			)
-			.andWhere(
-				new Brackets((qb: WhereExpressionBuilder) => {
-					if (dayStart && dayEnd) {
-						qb.andWhere(
-							`"${query.alias}"."startedAt" BETWEEN :todayStart AND :todayEnd`,
-							{
-								todayStart: dayStart,
-								todayEnd: dayEnd,
-							}
-						);
-						qb.andWhere(
-							`"time_slot"."startedAt" BETWEEN :todayStart AND :todayEnd`,
-							{
-								todayStart: dayStart,
-								todayEnd: dayEnd,
 							}
 						);
 					}
@@ -1386,7 +1358,14 @@ export class StatisticService {
 					id: taskId,
 					duration: reduce(pluck(tasks, 'duration'), ArraySum, 0),
 					todayDuration: reduce(
-						pluck(tasks, 'todayDuration'),
+						pluck(
+							tasks.filter(
+								(todayTask) =>
+									todayTask.updatedAt >= dayStart &&
+									todayTask.updatedAt <= dayEnd
+							),
+							'duration'
+						),
 						ArraySum,
 						0
 					),
