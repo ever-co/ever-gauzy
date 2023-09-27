@@ -3,6 +3,7 @@ import { NavigationEnd, Router } from '@angular/router';
 import { jitsuAnalytics } from '@jitsu/js';
 import { filter } from 'rxjs/operators';
 import { Location } from '@angular/common';
+
 export const JITSU_CONFIG = new InjectionToken<any>('jitsuConfig');
 @Injectable({
 	providedIn: 'root',

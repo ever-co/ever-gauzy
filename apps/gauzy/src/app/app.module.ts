@@ -62,10 +62,7 @@ import { AppInitService } from './@core/services/app-init-service';
 import { NbEvaIconsModule } from '@nebular/eva-icons';
 import { CookieService } from 'ngx-cookie-service';
 import { NgxDaterangepickerMd } from 'ngx-daterangepicker-material';
-import {
-	JitsuService,
-	JITSU_CONFIG,
-} from './@core/services/analytics/jitsu-config.service';
+import { JitsuLoaderService } from './@core/services/analytics/jitsu-loader.service';
 // TODO: we should use some internal function which returns version of Gauzy;
 const version = '0.1.0';
 
@@ -154,11 +151,6 @@ if (environment.SENTRY_DSN && environment.SENTRY_DSN === 'DOCKER_SENTRY_DSN') {
 	],
 	bootstrap: [AppComponent],
 	providers: [
-		JitsuService,
-		{
-			provide: JITSU_CONFIG,
-			useFactory: jitsuConfigFactory,
-		},
 		{
 			provide: Sentry.TraceService,
 			deps: [Router],
@@ -212,6 +204,12 @@ if (environment.SENTRY_DSN && environment.SENTRY_DSN === 'DOCKER_SENTRY_DSN') {
 			provide: APP_INITIALIZER,
 			useFactory: featureToggleLoaderFactory,
 			deps: [FeatureService, Store],
+			multi: true,
+		},
+		{
+			provide: APP_INITIALIZER,
+			useFactory: featureToggleLoaderFactory,
+			deps: [jitsuConfigFactory, Store],
 			multi: true,
 		},
 		{
@@ -281,9 +279,9 @@ export function featureToggleLoaderFactory(
 			.catch(() => {});
 }
 
-export function jitsuConfigFactory() {
-	return {
-		host: environment.JITSU_CONFIG_HOST,
-		writeKey: environment.JITSU_WRITE_KEY,
-	};
+export function jitsuConfigFactory(provide: JitsuLoaderService) {
+	return provide.load(
+		environment.JITSU_BROWSER_HOST,
+		environment.JITSU_BROWSER_WRITE_KEY
+	);
 }

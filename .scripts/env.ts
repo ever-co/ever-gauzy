@@ -66,14 +66,14 @@ export type Env = Readonly<{
 
 	FILE_PROVIDER: string;
 
-	JITSU_CONFIG_HOST: string;
-	JITSU_WRITE_KEY: string;
+	// Jitsu Analytics
+	JITSU_BROWSER_HOST: string;
+	JITSU_BROWSER_WRITE_KEY: string;
 
 	GAUZY_GITHUB_APP_NAME: string;
 	GAUZY_GITHUB_APP_ID: string;
 	GAUZY_GITHUB_CLIENT_ID: string;
 	GAUZY_GITHUB_REDIRECT_URL: string;
-
 }>;
 
 export const env: Env = cleanEnv(
@@ -140,15 +140,13 @@ export const env: Env = cleanEnv(
 
 		FILE_PROVIDER: str({ default: 'LOCAL' }),
 
-
-		JITSU_CONFIG_HOST: str({ default: '' }),
-		JITSU_WRITE_KEY: str({ default: '' }),
+		JITSU_BROWSER_HOST: str({ default: '' }),
+		JITSU_BROWSER_WRITE_KEY: str({ default: '' }),
 
 		GAUZY_GITHUB_APP_NAME: str({ default: '' }),
 		GAUZY_GITHUB_APP_ID: str({ default: '' }),
 		GAUZY_GITHUB_CLIENT_ID: str({ default: '' }),
 		GAUZY_GITHUB_REDIRECT_URL: str({ default: '' }),
-
 	},
 	{ strict: true, dotEnvPath: __dirname + '/../.env' }
 );
