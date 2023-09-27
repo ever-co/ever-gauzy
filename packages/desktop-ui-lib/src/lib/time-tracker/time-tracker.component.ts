@@ -750,7 +750,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 									id,
 									taskUpdateInput
 								);
-								this.toastrService.success(
+								this._toastrNotifier.success(
 									this._translateService.instant(
 										'TOASTR.MESSAGE.UPDATED'
 									)
@@ -789,7 +789,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 									id,
 									taskUpdateInput
 								);
-								this.toastrService.success(
+								this._toastrNotifier.success(
 									this._translateService.instant(
 										'TOASTR.MESSAGE.UPDATED'
 									)
