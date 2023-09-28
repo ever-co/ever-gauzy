@@ -160,7 +160,6 @@ export interface IEnvironment {
 	/**
 	 * Jitsu Config
 	 */
-	//TODO: nelson check on this
-	/* JITSU_BROWSER_HOST?: string;
-	JITSU_CONFIG_WRITE_KEY?: string; */
+	JITSU_BROWSER_HOST?: string;
+	JITSU_CONFIG_WRITE_KEY?: string;
 }

@@ -3,8 +3,8 @@ import { NavigationEnd, Router } from '@angular/router';
 import { jitsuAnalytics, emptyAnalytics, AnalyticsInterface } from '@jitsu/js';
 import { filter } from 'rxjs/operators';
 import { Location } from '@angular/common';
-import { Store } from '@datorama/akita';
 import { environment } from '@env/environment';
+import { JitsuAnalyticsEventsEnum } from './event.type';
 
 @Injectable({
 	providedIn: 'root',
@@ -13,8 +13,7 @@ export class JitsuService {
 	private jitsuClient: AnalyticsInterface;
 	constructor(
 		private location: Location,
-		private router: Router,
-		private store: Store
+		private router: Router //private store: Store
 	) {
 		this.jitsuClient =
 			environment.JITSU_BROWSER_HOST &&
@@ -24,6 +23,8 @@ export class JitsuService {
 						writeKey: environment.JITSU_BROWSER_WRITE_KEY,
 				  })
 				: emptyAnalytics;
+		//log if no analytics defined
+		console.log('Jitsu  analytics not present ', this.jitsuClient);
 	}
 	async identify(
 		id?: string | object,
@@ -36,7 +37,10 @@ export class JitsuService {
 		this.router.events
 			.pipe(filter((event) => event instanceof NavigationEnd))
 			.subscribe(() => {
-				this.page('pageview', this.location.path());
+				this.page(
+					JitsuAnalyticsEventsEnum.PAGE_VIEW,
+					this.location.path()
+				);
 			});
 	}
 
