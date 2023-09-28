@@ -1,43 +1,55 @@
-interface UserCreatedEvent {
+interface IUserCreatedEvent {
 	eventType: 'UserCreated';
 	userId: string;
 	email: string;
 }
 
-interface ButtonClickedEvent {
+interface IButtonClickedEvent {
 	eventType: 'ButtonClicked';
 	url: string;
-	periodicity: string;
+	userId: string;
+	userEmail: string;
 }
 
-interface PageViewEvent {
+interface IMenuItemClickedEvent extends IButtonClickedEvent {
+	menuItemName: string;
+}
+
+interface IPageViewEvent {
 	eventType: 'PageView';
 	url: string;
 	periodicity: string;
 }
 
-interface PageCreatedEvent {
+interface IPageCreatedEvent {
 	eventType: 'PageCreated';
 	slug: string;
 }
 
-interface UserUpgradedEvent {
+interface IUserUpgradedEvent {
 	eventType: 'UserUpgraded';
 	email: string;
 }
 
-interface UserSignedInEvent {
+interface IUserClickDownloadAppEvent {
+	eventType: 'UserClickDownloadApp';
+	email: string;
+}
+
+interface IUserSignedInEvent {
 	eventType: 'UserSignedIn';
 	email: string;
 }
 
 type JitsuAnalyticsEvents =
-	| UserCreatedEvent
-	| ButtonClickedEvent
-	| PageViewEvent
-	| PageCreatedEvent
-	| UserUpgradedEvent
-	| UserSignedInEvent;
+	| IUserCreatedEvent
+	| IButtonClickedEvent
+	| IPageViewEvent
+	| IPageCreatedEvent
+	| IUserUpgradedEvent
+	| IUserSignedInEvent
+	| IUserClickDownloadAppEvent
+	| IMenuItemClickedEvent;
 
 export default JitsuAnalyticsEvents;
 

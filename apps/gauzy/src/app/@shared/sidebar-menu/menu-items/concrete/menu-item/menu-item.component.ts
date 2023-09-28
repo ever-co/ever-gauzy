@@ -10,7 +10,10 @@ import {
 } from '@angular/core';
 import { Router } from '@angular/router';
 import { NbSidebarService } from '@nebular/theme';
+import JitsuAnalyticsEvents from 'apps/gauzy/src/app/@core/services/analytics/event.type';
 import { JitsuService } from 'apps/gauzy/src/app/@core/services/analytics/jitsu.service';
+import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
+import { IUser } from 'packages/contracts/dist';
 import { tap } from 'rxjs/operators';
 import { IMenuItem } from '../../interface/menu-item.interface';
 
@@ -25,6 +28,7 @@ export class MenuItemComponent implements OnInit, AfterViewChecked {
 	private _collapse = true;
 	private _selectedChildren: IMenuItem;
 	private _selected: boolean;
+	private user: IUser;
 
 	@Output()
 	public collapsedChange: EventEmitter<any> = new EventEmitter();
@@ -36,10 +40,12 @@ export class MenuItemComponent implements OnInit, AfterViewChecked {
 		private sidebarService: NbSidebarService,
 		private cdr: ChangeDetectorRef,
 		private location: Location,
-		private jitsuService: JitsuService
+		private jitsuService: JitsuService,
+		private readonly store: Store
 	) {}
 
 	ngOnInit(): void {
+		this.user = this.store.user;
 		if (this.item.home) this.selectedChange.emit(this.item);
 	}
 
@@ -53,18 +59,16 @@ export class MenuItemComponent implements OnInit, AfterViewChecked {
 		this.selectedChange.emit(event.parent);
 		this.cdr.detectChanges();
 	}
-	//Used for demo purposes
-	public trackClick() {
-		const userId = '1234567890'; // Get the user ID from somewhere
-		//can be set as a directive on the button and reused elsewhere
 
-		this.jitsuService.trackEvents('our_event', {
-			buttonName: this.item.title,
-			event_type: 'menuButtonClick',
-			page: this.item.selected,
+	public jitsuTrackClick() {
+		const clickEvent: JitsuAnalyticsEvents = {
+			eventType: 'ButtonClicked',
 			url: this.item.url ?? window.location.pathname,
-			userId: userId,
-		});
+			userId: this.user.id,
+			userEmail: this.user.email,
+			menuItemName: this.item.title,
+		};
+		this.jitsuService.trackEvents('our_event', clickEvent);
 	}
 
 	public redirectTo() {
@@ -72,7 +76,7 @@ export class MenuItemComponent implements OnInit, AfterViewChecked {
 		if (this.item.home) this.router.navigateByUrl(this.item.url);
 		this.selectedChange.emit(this.item);
 		this.cdr.detectChanges();
-		this.trackClick();
+		this.jitsuTrackClick();
 	}
 
 	public toggleSidebar() {
