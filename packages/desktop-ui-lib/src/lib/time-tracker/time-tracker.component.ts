@@ -1768,9 +1768,12 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 	async getTask(arg) {
 		try {
 			const tasks = await this.timeTrackerService.getTasks(arg);
-			const statistics = await this.timeTrackerService.getTasksStatistics(
-				{ ...arg, taskIds: tasks.map((res) => res.id) }
-			);
+			const statistics = !tasks.length
+				? []
+				: await this.timeTrackerService.getTasksStatistics({
+						...arg,
+						taskIds: tasks.map((res) => res.id),
+				  });
 			this._tasks$.next(this.merge(tasks, statistics));
 		} catch (error) {
 			this._tasks$.next([]);

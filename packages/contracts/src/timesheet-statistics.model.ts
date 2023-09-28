@@ -1,16 +1,12 @@
 import { IUser } from './user.model';
 import { IEmployee, IRelationalEmployee } from './employee.model';
 import { ITask } from './task.model';
-import {
-	ITimeSlot,
-	ITimeLog,
-	ITimeLogFilters,
-	ITimeLogTodayFilters,
-} from './timesheet.model';
+import { ITimeSlot, ITimeLog, ITimeLogFilters, ITimeLogTodayFilters } from './timesheet.model';
 import { IOrganizationProject } from './organization-projects.model';
 import { IRelationalOrganizationTeam } from './organization-team.model';
 
-export interface IGetTimeSlotStatistics extends ITimeLogFilters {
+export interface IGetTimeSlotStatistics
+	extends ITimeLogFilters {
 	employeeId?: string;
 	projectId?: string | string[];
 	onlyMe?: boolean;
@@ -24,7 +20,8 @@ export interface ITimeSlotStatistics extends IEmployee {
 	user: Pick<IUser, 'name' | 'imageUrl'>;
 }
 
-export interface IGetActivitiesStatistics extends ITimeLogFilters {
+export interface IGetActivitiesStatistics
+	extends ITimeLogFilters {
 	employeeId?: string;
 	projectId?: string | string[];
 	onlyMe?: boolean;
@@ -37,7 +34,8 @@ export interface IActivitiesStatistics {
 	sessions?: number;
 }
 
-export interface IGetProjectsStatistics extends ITimeLogFilters {
+export interface IGetProjectsStatistics
+	extends ITimeLogFilters {
 	employeeId?: string;
 	projectId?: string | string[];
 	onlyMe?: boolean;
@@ -48,15 +46,10 @@ export interface IProjectsStatistics extends IOrganizationProject {
 	durationPercentage?: number;
 }
 
-export interface IGetTasksStatistics
-	extends ITimeLogFilters,
-		Pick<IRelationalOrganizationTeam, 'organizationTeamId'>,
-		Pick<IRelationalEmployee, 'employeeId'> {
+export interface IGetTasksStatistics extends ITimeLogFilters, ITimeLogTodayFilters, Pick<IRelationalOrganizationTeam, 'organizationTeamId'>, Pick<IRelationalEmployee, 'employeeId'> {
 	projectId?: string | string[];
 	onlyMe?: boolean;
 	take?: number;
-	todayStart?: string | Date;
-	todayEnd?: string | Date;
 }
 
 export interface ITasksStatistics extends ITask {
@@ -64,7 +57,8 @@ export interface ITasksStatistics extends ITask {
 	durationPercentage?: number;
 }
 
-export interface IGetManualTimesStatistics extends ITimeLogFilters {
+export interface IGetManualTimesStatistics
+	extends ITimeLogFilters {
 	employeeId?: string;
 	projectId?: string | string[];
 	onlyMe?: boolean;
@@ -76,9 +70,7 @@ export interface IManualTimesStatistics
 	project?: Pick<IOrganizationProject, 'name'>;
 }
 
-export interface IGetMembersStatistics
-	extends ITimeLogFilters,
-		ITimeLogTodayFilters {
+export interface IGetMembersStatistics extends ITimeLogFilters, ITimeLogTodayFilters {
 	employeeId?: string;
 	projectId?: string | string[];
 }
@@ -101,9 +93,7 @@ export interface IMembersStatistics {
 	user?: Pick<IUser, 'name' | 'imageUrl'>;
 }
 
-export interface IGetCountsStatistics
-	extends ITimeLogFilters,
-		ITimeLogTodayFilters {
+export interface IGetCountsStatistics extends ITimeLogFilters, ITimeLogTodayFilters {
 	onlyMe?: boolean;
 	employeeId?: string;
 	projectId?: string | string[];
