@@ -76,7 +76,6 @@ export class UserMenuComponent implements OnInit {
 	}
 
 	public onClick() {
-		//TODO user clicked event
 		this.close.emit();
 	}
 

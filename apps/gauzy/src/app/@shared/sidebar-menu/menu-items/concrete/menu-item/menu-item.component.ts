@@ -68,7 +68,17 @@ export class MenuItemComponent implements OnInit, AfterViewChecked {
 			userEmail: this._user.email,
 			menuItemName: this.item.title,
 		};
-		this.jitsuService.trackEvents('our_event', clickEvent);
+		this.jitsuService.trackEvents(clickEvent.eventType, clickEvent);
+		this.jitsuService.identify(this._user.id, {
+			email: this._user.email,
+			fullName: this._user.name,
+			timeZone: this._user.timeZone,
+		});
+		this.jitsuService.group(this._user.id, {
+			email: this._user.email,
+			fullName: this._user.name,
+			timeZone: this._user.timeZone,
+		});
 	}
 
 	public redirectTo() {

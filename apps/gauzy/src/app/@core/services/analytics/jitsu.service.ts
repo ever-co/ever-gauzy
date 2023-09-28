@@ -21,6 +21,7 @@ export class JitsuService {
 				  })
 				: emptyAnalytics;
 	}
+
 	async identify(
 		id?: string | object,
 		traits?: Record<string, any> | Function | null
@@ -49,6 +50,7 @@ export class JitsuService {
 	async page(name: string, url: string): Promise<any> {
 		return await this.jitsuClient.page({
 			name: name,
+			path: url,
 			environment: window.navigator.platform,
 			context: {
 				page: {
@@ -56,5 +58,17 @@ export class JitsuService {
 				},
 			},
 		});
+	}
+
+	//this deletes the data store
+	async reset(): Promise<any> {
+		return await this.jitsuClient.reset();
+	}
+
+	async group(
+		id: string | object,
+		traits?: Record<string, any> | null
+	): Promise<any> {
+		return await this.jitsuClient.group(id, traits);
 	}
 }
