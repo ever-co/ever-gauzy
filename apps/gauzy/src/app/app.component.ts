@@ -24,7 +24,7 @@ import {
 	Store,
 } from './@core/services';
 import { environment } from '../environments/environment';
-import { JitsuService } from './@core/services/analytics/jitsu-config.service';
+import { JitsuService } from './@core/services/analytics/jitsu.service';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

@@ -1,24 +1,29 @@
-import { Inject, Injectable, InjectionToken } from '@angular/core';
+import { Injectable } from '@angular/core';
 import { NavigationEnd, Router } from '@angular/router';
-import { jitsuAnalytics } from '@jitsu/js';
+import { jitsuAnalytics, emptyAnalytics, AnalyticsInterface } from '@jitsu/js';
 import { filter } from 'rxjs/operators';
 import { Location } from '@angular/common';
+import { Store } from '@datorama/akita';
+import { environment } from '@env/environment';
 
-export const JITSU_CONFIG = new InjectionToken<any>('jitsuConfig');
 @Injectable({
 	providedIn: 'root',
 })
 export class JitsuService {
-	private jitsuClient;
+	private jitsuClient: AnalyticsInterface;
 	constructor(
 		private location: Location,
 		private router: Router,
-		@Inject(JITSU_CONFIG) private config: any
+		private store: Store
 	) {
-		this.jitsuClient = jitsuAnalytics({
-			host: config.host,
-			writeKey: config.writeKey,
-		});
+		this.jitsuClient =
+			environment.JITSU_BROWSER_HOST &&
+			environment.JITSU_BROWSER_WRITE_KEY
+				? jitsuAnalytics({
+						host: environment.JITSU_BROWSER_HOST,
+						writeKey: environment.JITSU_BROWSER_WRITE_KEY,
+				  })
+				: emptyAnalytics;
 	}
 	async identify(
 		id?: string | object,

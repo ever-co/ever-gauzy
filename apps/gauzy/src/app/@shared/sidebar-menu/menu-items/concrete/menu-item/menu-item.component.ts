@@ -10,7 +10,7 @@ import {
 } from '@angular/core';
 import { Router } from '@angular/router';
 import { NbSidebarService } from '@nebular/theme';
-import { JitsuService } from 'apps/gauzy/src/app/@core/services/analytics/jitsu-config.service';
+import { JitsuService } from 'apps/gauzy/src/app/@core/services/analytics/jitsu.service';
 import { tap } from 'rxjs/operators';
 import { IMenuItem } from '../../interface/menu-item.interface';
 
