@@ -4,17 +4,14 @@ import { jitsuAnalytics, emptyAnalytics, AnalyticsInterface } from '@jitsu/js';
 import { filter } from 'rxjs/operators';
 import { Location } from '@angular/common';
 import { environment } from '@env/environment';
-import { JitsuAnalyticsEventsEnum } from './event.type';
+import JitsuAnalyticsEvents, { JitsuAnalyticsEventsEnum } from './event.type';
 
 @Injectable({
 	providedIn: 'root',
 })
 export class JitsuService {
 	private jitsuClient: AnalyticsInterface;
-	constructor(
-		private location: Location,
-		private router: Router //private store: Store
-	) {
+	constructor(private location: Location, private router: Router) {
 		this.jitsuClient =
 			environment.JITSU_BROWSER_HOST &&
 			environment.JITSU_BROWSER_WRITE_KEY
@@ -23,8 +20,6 @@ export class JitsuService {
 						writeKey: environment.JITSU_BROWSER_WRITE_KEY,
 				  })
 				: emptyAnalytics;
-		//log if no analytics defined
-		console.log('Jitsu  analytics not present ', this.jitsuClient);
 	}
 	async identify(
 		id?: string | object,
@@ -46,7 +41,7 @@ export class JitsuService {
 
 	async trackEvents(
 		event: string,
-		properties?: Record<string, any> | null
+		properties?: Record<string, any> | null | JitsuAnalyticsEvents
 	): Promise<any> {
 		return await this.jitsuClient.track(event, properties);
 	}

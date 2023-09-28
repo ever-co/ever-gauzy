@@ -1,37 +1,34 @@
 interface UserCreatedEvent {
-	eventType: 'User Created';
+	eventType: 'UserCreated';
 	userId: string;
 	email: string;
 }
 
 interface ButtonClickedEvent {
-	eventType: 'Button_Clicked';
+	eventType: 'ButtonClicked';
 	url: string;
 	periodicity: string;
 }
 
 interface PageViewEvent {
-	eventType: 'Page_View';
+	eventType: 'PageView';
 	url: string;
 	periodicity: string;
 }
 
 interface PageCreatedEvent {
-	eventType: 'Page Created';
+	eventType: 'PageCreated';
 	slug: string;
 }
 
 interface UserUpgradedEvent {
-	eventType: 'User Upgraded';
+	eventType: 'UserUpgraded';
 	email: string;
 }
 
 interface UserSignedInEvent {
-	eventType: 'User Signed In';
-}
-
-interface UserVercelBetaEvent {
-	eventType: 'User Vercel Beta';
+	eventType: 'UserSignedIn';
+	email: string;
 }
 
 type JitsuAnalyticsEvents =
@@ -40,8 +37,7 @@ type JitsuAnalyticsEvents =
 	| PageViewEvent
 	| PageCreatedEvent
 	| UserUpgradedEvent
-	| UserSignedInEvent
-	| UserVercelBetaEvent;
+	| UserSignedInEvent;
 
 export default JitsuAnalyticsEvents;
 
