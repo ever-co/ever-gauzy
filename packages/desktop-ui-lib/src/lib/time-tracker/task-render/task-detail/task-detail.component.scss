@@ -1,3 +1,5 @@
+@import 'themes';
+
 .badges {
 	display: flex;
 	padding: 4px;
@@ -27,10 +29,23 @@
 	font-weight: 600;
 }
 
-nb-card {
+:host nb-card {
 	max-width: 540px;
+	background-color: var(--gauzy-card-1);
+
 	nb-card-body {
-		padding-right: 8px;
+		@include nb-ltr(padding, 0.5rem 4px 1rem 1rem);
+		@include nb-rtl(padding, 0.5rem 1rem 1rem 4px);
+		background-color: var(--gauzy-card-2);
+	}
+
+	nb-card-header {
+		padding: 1rem 1rem 0.5rem 1rem;;
+	}
+
+	nb-card-footer {
+		padding: 0 1rem 1rem 1rem;
+		background-color: var(--gauzy-card-2);
 	}
 }
 
@@ -38,12 +53,21 @@ nb-card {
 	font-size: 11px;
 }
 
-.description {
+:host .description {
 	max-height: 300px;
-	overflow: auto;
+	overflow-x: hidden;
+	overflow-y: auto;
 	font-weight: 500;
 	text-align: start;
-	padding: 0 8px 0 0;
+	@include nb-ltr(padding, 0 8px 0 0);
+	@include nb-rtl(padding, 0 0 0 8px);
+
+	::ng-deep img {
+		width: auto !important;
+		border-radius: var(--border-radius) !important;
+		object-fit: cover !important;
+		max-width: 511px;
+	}
 }
 
 .title {
@@ -56,4 +80,22 @@ nb-card {
 	display: -webkit-box;
 	-webkit-line-clamp: 3;
 	-webkit-box-orient: vertical;
+}
+
+:host {
+	i {
+		cursor: pointer;
+	}
+
+	.cancel {
+		width: 100%;
+		display: flex;
+		justify-content: flex-start;
+		margin-bottom: 1rem;
+
+		i {
+			font-size: 1rem;
+			color: var(--gauzy-text-color-2);
+		}
+	}
 }
