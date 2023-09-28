@@ -47,7 +47,7 @@ export class JitsuService {
 	}
 
 	async page(name: string, url: string): Promise<any> {
-		const data = await this.jitsuClient.page({
+		return await this.jitsuClient.page({
 			name: name,
 			environment: window.navigator.platform,
 			context: {
@@ -56,7 +56,5 @@ export class JitsuService {
 				},
 			},
 		});
-		console.log(data);
-		return data;
 	}
 }

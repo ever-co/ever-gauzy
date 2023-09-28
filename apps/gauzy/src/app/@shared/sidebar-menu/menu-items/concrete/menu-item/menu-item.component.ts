@@ -28,7 +28,7 @@ export class MenuItemComponent implements OnInit, AfterViewChecked {
 	private _collapse = true;
 	private _selectedChildren: IMenuItem;
 	private _selected: boolean;
-	private user: IUser;
+	private _user: IUser;
 
 	@Output()
 	public collapsedChange: EventEmitter<any> = new EventEmitter();
@@ -45,7 +45,7 @@ export class MenuItemComponent implements OnInit, AfterViewChecked {
 	) {}
 
 	ngOnInit(): void {
-		this.user = this.store.user;
+		this._user = this.store.user;
 		if (this.item.home) this.selectedChange.emit(this.item);
 	}
 
@@ -63,20 +63,20 @@ export class MenuItemComponent implements OnInit, AfterViewChecked {
 	public jitsuTrackClick() {
 		const clickEvent: JitsuAnalyticsEvents = {
 			eventType: 'ButtonClicked',
-			url: this.item.url ?? window.location.pathname,
-			userId: this.user.id,
-			userEmail: this.user.email,
+			url: this.item.url ?? this.item.link,
+			userId: this._user.id,
+			userEmail: this._user.email,
 			menuItemName: this.item.title,
 		};
 		this.jitsuService.trackEvents('our_event', clickEvent);
 	}
 
 	public redirectTo() {
+		this.jitsuTrackClick();
 		if (!this.item.children) this.router.navigateByUrl(this.item.link);
 		if (this.item.home) this.router.navigateByUrl(this.item.url);
 		this.selectedChange.emit(this.item);
 		this.cdr.detectChanges();
-		this.jitsuTrackClick();
 	}
 
 	public toggleSidebar() {
