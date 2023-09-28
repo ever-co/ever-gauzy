@@ -1,0 +1,59 @@
+.badges {
+	display: flex;
+	padding: 4px;
+	width: fit-content;
+	line-height: 1;
+	border-radius: var(--border-radius);
+	white-space: nowrap;
+	text-overflow: ellipsis;
+	overflow: hidden;
+	gap: 4px;
+	align-items: center;
+	font-weight: 600;
+}
+
+.task.number {
+	color: var(--gauzy-text-color-1);
+	padding: 1px 10px;
+	border-radius: 3px;
+	background: rgba(214, 214, 214, 1);
+	gap: 10px;
+	font-weight: 600;
+}
+
+.title-description,
+.title {
+	color: var(--gauzy-text-color-1);
+	font-weight: 600;
+}
+
+nb-card {
+	max-width: 540px;
+	nb-card-body {
+		padding-right: 8px;
+	}
+}
+
+:host ::ng-deep gauzy-task-badge-view.task-badge {
+	font-size: 11px;
+}
+
+.description {
+	max-height: 300px;
+	overflow: auto;
+	font-weight: 500;
+	text-align: start;
+	padding: 0 8px 0 0;
+}
+
+.title {
+	font-size: 24px;
+	text-overflow: ellipsis;
+	white-space: initial;
+	overflow: hidden;
+	cursor: pointer;
+	width: 100%;
+	display: -webkit-box;
+	-webkit-line-clamp: 3;
+	-webkit-box-orient: vertical;
+}
