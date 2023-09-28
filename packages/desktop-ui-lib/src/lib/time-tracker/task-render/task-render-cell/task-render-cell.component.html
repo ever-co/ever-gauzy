@@ -26,5 +26,5 @@
 </div>
 
 <ng-template #detail>
-	<gauzy-task-detail [task]="task$ | async"></gauzy-task-detail>
+	<gauzy-task-detail [task]="task$ | async" (hidden)="hideDetails()"></gauzy-task-detail>
 </ng-template>

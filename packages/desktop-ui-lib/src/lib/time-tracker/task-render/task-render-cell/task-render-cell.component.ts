@@ -1,9 +1,10 @@
-import { Component } from '@angular/core';
+import { Component, ViewChild } from '@angular/core';
 import { TaskRenderComponent } from '../task-render.component';
 import { map } from 'rxjs/operators';
 import { Observable } from 'rxjs';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { ITaskPriority, ITaskSize } from '@gauzy/contracts';
+import { NbPopoverDirective } from '@nebular/theme';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -12,6 +13,17 @@ import { ITaskPriority, ITaskSize } from '@gauzy/contracts';
 	styleUrls: ['./task-render-cell.component.scss'],
 })
 export class TaskRenderCellComponent extends TaskRenderComponent {
+	private _popover: NbPopoverDirective;
+
+	public get popover(): NbPopoverDirective {
+		return this._popover;
+	}
+
+	@ViewChild(NbPopoverDirective)
+	public set popover(value: NbPopoverDirective) {
+		this._popover = value;
+	}
+
 	public get title(): string {
 		return this.task.title;
 	}
@@ -41,5 +53,9 @@ export class TaskRenderCellComponent extends TaskRenderComponent {
 			.concat('-')
 			.concat(String(this.task.number))
 			.toUpperCase();
+	}
+
+	public hideDetails() {
+		this.popover.hide();
 	}
 }
