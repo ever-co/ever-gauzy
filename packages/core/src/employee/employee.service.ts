@@ -92,6 +92,7 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 					web.andWhere(`"${qb.alias}"."tenantId" = :tenantId`, { tenantId });
 					web.andWhere(`"${qb.alias}"."organizationId" = :organizationId`, { organizationId });
 					web.andWhere(`"${qb.alias}"."isActive" = :isActive`, { isActive: true });
+					web.andWhere(`"${qb.alias}"."isArchived" = :isArchived`, { isArchived: false });
 				})
 			);
 			if (isNotEmpty(forRange)) {
@@ -199,16 +200,16 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 				 */
 				...(options && options.relations
 					? {
-							relations: options.relations
-					  }
+						relations: options.relations
+					}
 					: {}),
 				/**
 				 * Indicates if soft-deleted rows should be included in entity result.
 				 */
 				...(options && 'withDeleted' in options
 					? {
-							withDeleted: options.withDeleted
-					  }
+						withDeleted: options.withDeleted
+					}
 					: {})
 			});
 			query.where((qb: SelectQueryBuilder<Employee>) => {
@@ -235,6 +236,15 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 							new Brackets((web: WhereExpressionBuilder) => {
 								web.andWhere(`"${qb.alias}"."isActive" = :isActive`, {
 									isActive: Boolean(JSON.parse(where.isActive))
+								});
+							})
+						);
+					}
+					if ('isArchived' in where) {
+						qb.andWhere(
+							new Brackets((web: WhereExpressionBuilder) => {
+								web.andWhere(`"${qb.alias}"."isArchived" = :isArchived`, {
+									isArchived: Boolean(JSON.parse(where.isArchived))
 								});
 							})
 						);
