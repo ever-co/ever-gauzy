@@ -5,6 +5,7 @@ import { distinctUntilChange } from '@gauzy/common-angular';
 import { BehaviorSubject, tap, Observable, filter, firstValueFrom } from 'rxjs';
 import { EmployeesService, ErrorHandlingService } from '../../../@core';
 import { environment } from '@env/environment';
+import { JitsuService } from '../../../@core/services/analytics/jitsu.service';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -47,7 +48,8 @@ export class UserMenuComponent implements OnInit {
 
 	constructor(
 		private readonly _employeeService: EmployeesService,
-		private readonly _errorHandler: ErrorHandlingService
+		private readonly _errorHandler: ErrorHandlingService,
+		private readonly jitsuService: JitsuService
 	) {
 		this._user$ = new Observable();
 		this._employee$ = new BehaviorSubject(null);
@@ -66,7 +68,6 @@ export class UserMenuComponent implements OnInit {
 					);
 					this._employee$.next(employee);
 					this._isSubmit$.next(false);
-
 				}),
 
 				untilDestroyed(this)
@@ -114,7 +115,7 @@ export class UserMenuComponent implements OnInit {
 	@Input()
 	public set user$(value: Observable<IUser>) {
 		if (value) {
-			this._user$ = value
+			this._user$ = value;
 		}
 	}
 

@@ -102,7 +102,7 @@ export interface IEnvironment {
 	cloudinaryConfig?: ICloudinaryConfig;
 	facebookConfig: IFacebookConfig;
 	googleConfig: IGoogleConfig;
-	github: IGithubConfig; /** Github Configuration */
+	github: IGithubConfig /** Github Configuration */;
 	microsoftConfig: IMicrosoftConfig;
 	linkedinConfig: ILinkedinConfig;
 	twitterConfig: ITwitterConfig;
@@ -156,4 +156,10 @@ export interface IEnvironment {
 	 * Email Reset
 	 */
 	EMAIL_RESET_EXPIRATION_TIME?: number;
+
+	/**
+	 * Jitsu Config
+	 */
+	JITSU_BROWSER_HOST?: string;
+	JITSU_CONFIG_WRITE_KEY?: string;
 }
