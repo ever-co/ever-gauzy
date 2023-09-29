@@ -3851,6 +3851,7 @@
 		"STOP_TIMER_CHANGE_PROJECT": "请在更改项目之前停止计时器。",
 		"STOP_TIMER_CHANGE_TASK": "请在更换任务前停止计时器。",
 		"STOP_TIMER_CHANGE_DESCRIPTION": "请在更改描述之前停止计时器",
+		"STOP_TIMER_CHANGE_TEAM": "请在更改团队之前停止计时器",
 		"ACTIVITY_WATCH_INTEGRATION": "活动观察集成",
 		"LAST_CAPTURE_TAKEN": "上一次截图",
 		"REQUEST_TASK_PERMISSION": "请向组织管理员申请权限。",
