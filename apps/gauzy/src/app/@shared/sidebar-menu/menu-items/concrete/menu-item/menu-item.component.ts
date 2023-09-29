@@ -95,7 +95,7 @@ export class MenuItemComponent implements OnInit, AfterViewChecked {
 		this.redirectTo();
 	}
 
-	public adpatExternalUrl(url: string): string {
+	public getExternalUrl(url: string): string {
 		return url ? this.location.prepareExternalUrl(url) : url;
 	}
 
