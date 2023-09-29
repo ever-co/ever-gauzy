@@ -32,6 +32,9 @@ export const LocalStore = {
 				organizationContactId: projectInfo
 					? projectInfo.organizationContactId
 					: null,
+				organizationTeamId: projectInfo
+					? projectInfo.organizationTeamId
+					: null,
 				settings
 			};
 		} catch (error) {
