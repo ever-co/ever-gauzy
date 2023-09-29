@@ -41,10 +41,11 @@ export class OrganizationProjectService extends TenantAwareCrudService<Organizat
 			}
 		});
 		query.innerJoin(`${query.alias}.members`, 'member');
+		query.leftJoin(`${query.alias}.teams`, 'project_team');
 		query.andWhere(
 			new Brackets((qb: WhereExpressionBuilder) => {
 				const tenantId = RequestContext.currentTenantId();
-				const { organizationId, organizationContactId } = options;
+				const { organizationId, organizationContactId, organizationTeamId } = options;
 
 				qb.andWhere('member.id = :employeeId', { employeeId });
 				qb.andWhere(`"${query.alias}"."tenantId" = :tenantId`, { tenantId });
@@ -53,6 +54,12 @@ export class OrganizationProjectService extends TenantAwareCrudService<Organizat
 				if (isNotEmpty(organizationContactId)) {
 					query.andWhere(`${query.alias}.organizationContactId = :organizationContactId`, {
 						organizationContactId
+					});
+				}
+
+				if (isNotEmpty(organizationTeamId)) {
+					query.andWhere(`project_team.id = :organizationTeamId`, {
+						organizationTeamId
 					});
 				}
 			})
