@@ -357,6 +357,7 @@ export class TrayIcon {
 					taskId: null,
 					note: null,
 					organizationContactId: null,
+					organizationTeamId: null,
 				});
 			}
 			store.set({
