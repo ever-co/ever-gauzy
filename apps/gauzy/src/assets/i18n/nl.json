@@ -3851,6 +3851,7 @@
 		"STOP_TIMER_CHANGE_PROJECT": "Stop de timer alstublieft voordat u het project wijzigt.",
 		"STOP_TIMER_CHANGE_TASK": "Stop de timer alstublieft voordat u de taak verandert",
 		"STOP_TIMER_CHANGE_DESCRIPTION": "Stop alsjeblieft de timer voordat je de beschrijving wijzigt.",
+		"STOP_TIMER_CHANGE_TEAM": "Stop de timer voordat je het team verandert",
 		"ACTIVITY_WATCH_INTEGRATION": "ActivityWatch Integratie",
 		"LAST_CAPTURE_TAKEN": "Laatste schermopname gemaakt",
 		"REQUEST_TASK_PERMISSION": "Vraag toestemming aan de organisatiebeheerder",
