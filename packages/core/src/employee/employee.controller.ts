@@ -242,8 +242,10 @@ export class EmployeeController extends CrudController<Employee> {
 			return await this.employeeService.findAll({
 				...options,
 				where: {
-					isArchived: false,
 					...options.where,
+					user: {
+						isArchived: false,
+					}
 				}
 			});
 		} catch (error) {
