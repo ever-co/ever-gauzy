@@ -445,6 +445,7 @@ export function ipcTimer(
 					note: arg.note,
 					aw: arg.aw,
 					organizationContactId: arg.organizationContactId,
+					organizationTeamId: arg.organizationTeamId
 				},
 			});
 

@@ -42,6 +42,7 @@ import {
 	ContactType,
 	IOrganization,
 	IOrganizationContact,
+	IOrganizationTeam,
 	ITask,
 	ITasksStatistics,
 	ITaskStatus,
@@ -123,6 +124,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 	organization: any = {};
 	projectSelect = null;
 	taskSelect = null;
+	teamSelect = null;
 	errors: any = {};
 	note: String = null;
 	iconAw$: BehaviorSubject<string> = new BehaviorSubject(
@@ -264,6 +266,25 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 
 	private get _lastTotalWorkedWeek(): number {
 		return this._lastTotalWorkedWeek$.getValue();
+	}
+
+	private _teams$: BehaviorSubject<IOrganizationTeam[]> = new BehaviorSubject(
+		[]
+	);
+
+	public get teams$(): Observable<IOrganizationTeam[]> {
+		return this._teams$.asObservable();
+	}
+
+	public get teams(): IOrganizationTeam[] {
+		return this._teams$.getValue();
+	}
+
+	public get selectedTeam(): IOrganizationTeam {
+		const [selected] = this.teams.filter(
+			(team: IOrganizationTeam) => team.id === this.teamSelect
+		);
+		return selected;
 	}
 
 	private _taskTable: Ng2SmartTableComponent;
@@ -750,7 +771,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 									id,
 									taskUpdateInput
 								);
-								this.toastrService.success(
+								this._toastrNotifier.success(
 									this._translateService.instant(
 										'TOASTR.MESSAGE.UPDATED'
 									)
@@ -789,7 +810,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 									id,
 									taskUpdateInput
 								);
-								this.toastrService.success(
+								this._toastrNotifier.success(
 									this._translateService.instant(
 										'TOASTR.MESSAGE.UPDATED'
 									)
@@ -939,6 +960,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 					this.projectSelect = remoteTimer.lastLog.projectId;
 					this.taskSelect = remoteTimer.lastLog.taskId;
 					this.note = remoteTimer.lastLog.description;
+					this.teamSelect = remoteTimer.lastLog.organizationTeamId;
 					this.organizationContactId =
 						remoteTimer.lastLog.organizationContactId;
 					await this.toggleStart(remoteTimer.running, false);
@@ -1010,6 +1032,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 					this.taskSelect = arg.taskId;
 					this.projectSelect = arg.projectId;
 					this.organizationContactId = arg.organizationContactId;
+					this.teamSelect = arg.organizationTeamId;
 					this.token = arg.token;
 					this.note = arg.note;
 					this._aw$.next(arg.aw && arg.aw.isAw ? arg.aw.isAw : false);
@@ -1022,6 +1045,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 					}
 					const parallelizedTasks: Promise<void>[] = [
 						this.loadStatuses(),
+						this.getTeams(),
 						this.getClient(arg),
 						this.getProjects(arg),
 						this.getTask(arg),
@@ -1048,6 +1072,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 				this._ngZone.run(async () => {
 					this.taskSelect = arg.taskId;
 					this.projectSelect = arg.projectId;
+					this.teamSelect = arg.organizationTeamId;
 					this.note = arg.note;
 					this._aw$.next(arg.aw && arg.aw.isAw ? arg.aw.isAw : false);
 					await this.setTimerDetails();
@@ -1731,6 +1756,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 					},
 					timeLog: null,
 					isRemoteTimer: this.isRemoteTimer,
+					organizationTeamId: this.teamSelect,
 				}
 			);
 			// update counter
@@ -2760,17 +2786,10 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 
 	public async updateOrganizationTeamEmployee(): Promise<void> {
 		try {
-			if (!this.taskSelect) {
+			if (!this.taskSelect && !this.teamSelect) {
 				return;
 			}
-			const [task] = this._tasks$
-				.getValue()
-				.filter(({ id }) => id === this.taskSelect);
-			// TODO: Add task teams selector
-			const organizationTeamId = task?.teams[0]?.id || null;
-			if (!organizationTeamId) {
-				return;
-			}
+			const organizationTeamId = this.teamSelect;
 			const { tenantId, organizationId } = this._store;
 			const { employeeId } = this._store.user;
 			const activeTaskId = this.taskSelect;
@@ -2786,6 +2805,40 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 			);
 		} catch (error) {
 			console.error(error);
+		}
+	}
+
+	public async getTeams(): Promise<void> {
+		try {
+			const teams = await this.timeTrackerService.getTeams();
+			this._teams$.next(teams);
+		} catch (error) {
+			this._teams$.next([]);
+			this._errorHandlerService.handleError(error);
+		}
+	}
+
+	public async setTeams(organizationTeamId: string): Promise<void> {
+		try {
+			this.teamSelect = organizationTeamId;
+			this.electronService.ipcRenderer.send('update_project_on', {
+				organizationTeamId,
+			});
+			this.argFromMain.organizationTeamId = organizationTeamId;
+			if (organizationTeamId) {
+				await this.getProjects({
+					...this.argFromMain,
+					organizationTeamId,
+				});
+				this._tasks$.next([]);
+				this.projectSelect = null;
+				this.taskSelect = null;
+				this.errors.teams = false;
+			} else {
+				await this.getProjects(this.argFromMain);
+			}
+		} catch (error) {
+			console.log('ERROR', error);
 		}
 	}
 }

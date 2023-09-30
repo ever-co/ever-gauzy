@@ -6,7 +6,7 @@ import { IMenuItem } from '../../interface/menu-item.interface';
 @Component({
 	selector: 'ga-children-menu-item',
 	templateUrl: './children-menu-item.component.html',
-	styleUrls: ['./children-menu-item.component.scss']
+	styleUrls: ['./children-menu-item.component.scss'],
 })
 export class ChildrenMenuItemComponent implements OnInit {
 	private _item: IMenuItem;
@@ -38,7 +38,7 @@ export class ChildrenMenuItemComponent implements OnInit {
 	public select(): void {
 		this.focusItemChange.emit({
 			children: this.item,
-			parent: this.parent
+			parent: this.parent,
 		});
 		this.redirectTo();
 	}
@@ -47,19 +47,19 @@ export class ChildrenMenuItemComponent implements OnInit {
 		if (url === this.item.link) {
 			this.focusItemChange.emit({
 				children: this.item,
-				parent: this.parent
+				parent: this.parent,
 			});
 		}
 	}
 
-	public adpatExternalUrl(url: string): string {
+	public getExternalUrl(url: string): string {
 		return url ? this.location.prepareExternalUrl(url) : url;
 	}
 
 	public add() {
 		this.focusItemChange.emit({
 			children: this.item,
-			parent: this.parent
+			parent: this.parent,
 		});
 		this.router.navigateByUrl(this.item.data.add);
 	}

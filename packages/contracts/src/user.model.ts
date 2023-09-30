@@ -43,6 +43,7 @@ export interface IUser extends IBasePerTenantEntityModel, IRelationalImageAsset 
 	isImporting?: boolean;
 	sourceId?: string;
 	isActive?: boolean;
+	isArchived?: boolean;
 	code?: string;
 	codeExpireAt?: Date;
 	emailVerifiedAt?: Date;

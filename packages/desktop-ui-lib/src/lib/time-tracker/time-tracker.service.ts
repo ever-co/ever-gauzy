@@ -11,6 +11,7 @@ import {
 	IOrganizationContactCreateInput,
 	IOrganizationProject,
 	IOrganizationProjectCreateInput,
+	IOrganizationTeam,
 	IOrganizationTeamEmployee,
 	IPagination,
 	ITaskStatus,
@@ -32,6 +33,7 @@ import { API_PREFIX } from '../constants/app.constants';
 import {
 	Store,
 	TaskStatusCacheService,
+	TeamsCacheService,
 	TimeTrackerDateManager,
 } from '../services';
 
@@ -57,7 +59,8 @@ export class TimeTrackerService {
 		private readonly _timeLogService: TimeLogCacheService,
 		private readonly _loggerService: LoggerService,
 		private readonly _store: Store,
-		private readonly _taskStatusCacheService: TaskStatusCacheService
+		private readonly _taskStatusCacheService: TaskStatusCacheService,
+		private readonly _teamsCacheService: TeamsCacheService
 	) {}
 
 	createAuthorizationHeader(headers: Headers) {
@@ -74,6 +77,11 @@ export class TimeTrackerService {
 							projectId: values.projectId,
 					  }
 					: {}),
+				...(values.organizationTeamId && {
+					teams: {
+						id: values.organizationTeamId,
+					},
+				}),
 			},
 			relations: [
 				'project',
@@ -205,6 +213,9 @@ export class TimeTrackerService {
 						organizationContactId: values.organizationContactId,
 				  }
 				: {}),
+			...(values.organizationTeamId && {
+				organizationTeamId:values.organizationTeamId,
+				})
 		};
 		let projects$ = this._projectCacheService.getValue(params);
 		if (!projects$) {
@@ -721,5 +732,30 @@ export class TimeTrackerService {
 				params
 			)
 		);
+	}
+
+	public async getTeams(): Promise<IOrganizationTeam[]> {
+		const params = {
+			where: {
+				organizationId: this._store.organizationId,
+				tenantId: this._store.tenantId,
+			},
+		};
+		let teams$ = this._teamsCacheService.getValue(params);
+		if (!teams$) {
+			teams$ = this.http
+				.get<IPagination<IOrganizationTeam>>(
+					`${API_PREFIX}/organization-team/me`,
+					{
+						params: toParams({ ...params }),
+					}
+				)
+				.pipe(
+					map((res) => res.items),
+					shareReplay(1)
+				);
+			this._teamsCacheService.setValue(teams$, params);
+		}
+		return firstValueFrom(teams$);
 	}
 }

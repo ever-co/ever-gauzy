@@ -14,6 +14,7 @@ import { throwIfAlreadyLoaded } from './module-import-guard';
 import { AnalyticsService, LayoutService, SeoService } from './utils';
 import { AuthModule } from './auth/auth.module';
 import { RippleService } from './utils/ripple.service';
+import { JitsuService } from './services/analytics/jitsu.service';
 
 const DATA_SERVICES = [];
 
@@ -45,13 +46,14 @@ export const NB_CORE_PROVIDERS = [
 		provide: NbRoleProvider,
 		useClass: NbSimpleRoleProvider
 	},
-  {
-    provide: MAT_RIPPLE_GLOBAL_OPTIONS,
-    useExisting: RippleService
-  },
+	{
+		provide: MAT_RIPPLE_GLOBAL_OPTIONS,
+		useExisting: RippleService
+	},
 	AnalyticsService,
 	LayoutService,
-	SeoService
+	SeoService,
+	JitsuService
 ];
 
 @NgModule({

@@ -1,4 +1,4 @@
-@import 'gauzy/_gauzy-overrides';
+@import 'themes';
 
 .border-vertical {
 	border-right: solid 0.1px rgba($color: #000000, $alpha: 0.1);
@@ -8,7 +8,8 @@
 }
 
 .timer-container {
-	margin-left: -4px;
+	@include nb-rtl(margin-right, -4px);
+	@include nb-ltr(margin-left, -4px);
 	color: var(--gauzy-text-color-1);
 	font-size: 55px;
 	font-weight: 600;
@@ -53,6 +54,8 @@
 .timer-box {
 	margin-top: auto;
 	margin-bottom: auto;
+	@include nb-rtl(padding-left, 0);
+	@include nb-ltr(padding-right, 0);
 }
 
 .status {
@@ -147,7 +150,13 @@
 }
 
 .icon-img-size {
-	font-size: 8.25rem;
+	font-size: 6rem;
+}
+
+.last-capture-container {
+	display: flex;
+	justify-content: center;
+	align-items: center;
 }
 
 .org-name {
@@ -175,10 +184,11 @@
 
 		small {
 			position: absolute;
-			right: 0;
 			top: 1px;
 			@include nb-rtl(translate, -145%);
 			@include nb-ltr(translate, 105%);
+			@include nb-rtl(left, 0);
+			@include nb-ltr(right, 0);
 		}
 	}
 }
@@ -273,15 +283,21 @@ nb-card-body {
 	width: 100%;
 }
 
-.expand-icon {
+:host .expand-icon {
 	position: absolute !important;
 	z-index: 999;
-	right: -14px;
 	top: 50%;
 	background-color: var(--gauzy-sidebar-background-3) !important;
 	border-radius: var(--border-radius);
-	padding-left: 0px !important;
 	cursor: pointer;
+	@include nb-rtl(left, -14px);
+	@include nb-ltr(right, -14px);
+	@include nb-rtl(padding-right, 0px !important);
+	@include nb-ltr(padding-left, 0px !important);
+
+	nb-icon {
+		@include nb-rtl(rotate, 180deg);
+	}
 }
 
 .top-space-1 {
@@ -391,7 +407,7 @@ nb-card-body {
 }
 
 ::ng-deep textarea {
-	height: 90px;
+	height: 72px;
 }
 
 ::ng-deep nb-dialog-container {

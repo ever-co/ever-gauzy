@@ -45,6 +45,59 @@
     "@jridgewell/gen-mapping" "^0.1.0"
     "@jridgewell/trace-mapping" "^0.3.9"
 
+"@analytics/cookie-utils@^0.2.12":
+  version "0.2.12"
+  resolved "https://registry.yarnpkg.com/@analytics/cookie-utils/-/cookie-utils-0.2.12.tgz#acc38dd76ead968050776fb8e57e571e6d37cbc7"
+  integrity sha512-2h/yuIu3kmu+ZJlKmlT6GoRvUEY2k1BbQBezEv5kGhnn9KpmzPz715Y3GmM2i+m7Y0QmBdVUoA260dQZkofs2A==
+  dependencies:
+    "@analytics/global-storage-utils" "^0.1.7"
+
+"@analytics/core@^0.12.7":
+  version "0.12.7"
+  resolved "https://registry.yarnpkg.com/@analytics/core/-/core-0.12.7.tgz#118b25f1753796a7c73ffabd4b789219d511e050"
+  integrity sha512-etmIPCoxWLoUZ/o1o2zvIk4cdVHa8I1xUQtTuLA+YXQ4SsFbm75ZoMXJBqWrNSENpqCJgoL6hizl5uTbkNN+1Q==
+  dependencies:
+    "@analytics/global-storage-utils" "^0.1.7"
+    "@analytics/type-utils" "^0.6.2"
+    analytics-utils "^1.0.12"
+
+"@analytics/global-storage-utils@^0.1.7":
+  version "0.1.7"
+  resolved "https://registry.yarnpkg.com/@analytics/global-storage-utils/-/global-storage-utils-0.1.7.tgz#c6a12eb133a6e44101b7c3529c82e3e89ac9ce46"
+  integrity sha512-V+spzGLZYm4biZT4uefaylm80SrLXf8WOTv9hCgA46cLcyxx3LD4GCpssp1lj+RcWLl/uXJQBRO4Mnn/o1x6Gw==
+  dependencies:
+    "@analytics/type-utils" "^0.6.2"
+
+"@analytics/localstorage-utils@^0.1.10":
+  version "0.1.10"
+  resolved "https://registry.yarnpkg.com/@analytics/localstorage-utils/-/localstorage-utils-0.1.10.tgz#8e9b03604e79a530e9a5ab6748c8ceb96153b95c"
+  integrity sha512-uJS+Jp1yLG5VFCgA5T82ZODYBS0xuDQx0NtAZrgbqt9j51BX3TcgmOez5LVkrUNu/lpbxjCLq35I4TKj78VmOQ==
+  dependencies:
+    "@analytics/global-storage-utils" "^0.1.7"
+
+"@analytics/session-storage-utils@^0.0.7":
+  version "0.0.7"
+  resolved "https://registry.yarnpkg.com/@analytics/session-storage-utils/-/session-storage-utils-0.0.7.tgz#e355c60b14d4fbcf20983e5cfcb7cb838b4c57ab"
+  integrity sha512-PSv40UxG96HVcjY15e3zOqU2n8IqXnH8XvTkg1X43uXNTKVSebiI2kUjA3Q7ESFbw5DPwcLbJhV7GforpuBLDw==
+  dependencies:
+    "@analytics/global-storage-utils" "^0.1.7"
+
+"@analytics/storage-utils@^0.4.2":
+  version "0.4.2"
+  resolved "https://registry.yarnpkg.com/@analytics/storage-utils/-/storage-utils-0.4.2.tgz#222717832a533a1a2516aa3a22d5db80d14a881b"
+  integrity sha512-AXObwyVQw9h2uJh1t2hUgabtVxzYpW+7uKVbdHQK80vr3Td5rrmCxrCxarh7HUuAgSDZ0bZWqmYxVgmwKceaLg==
+  dependencies:
+    "@analytics/cookie-utils" "^0.2.12"
+    "@analytics/global-storage-utils" "^0.1.7"
+    "@analytics/localstorage-utils" "^0.1.10"
+    "@analytics/session-storage-utils" "^0.0.7"
+    "@analytics/type-utils" "^0.6.2"
+
+"@analytics/type-utils@^0.6.2":
+  version "0.6.2"
+  resolved "https://registry.yarnpkg.com/@analytics/type-utils/-/type-utils-0.6.2.tgz#60d706603a98a95681d4b1e9726c703fdd541a9e"
+  integrity sha512-TD+xbmsBLyYy/IxFimW/YL/9L2IEnM7/EoV9Aeh56U64Ify8o27HJcKjo38XY9Tcn0uOq1AX3thkKgvtWvwFQg==
+
 "@angular-builders/custom-webpack@^13.0.0":
   version "13.1.0"
   resolved "https://registry.yarnpkg.com/@angular-builders/custom-webpack/-/custom-webpack-13.1.0.tgz#854f1276204a6d3d52ad9bdab45c6ac362a158c8"
@@ -3785,6 +3838,13 @@
   integrity sha512-4ax4IOWLIERx4yz9y3fNXKvQaPOY23yJF5h4sizxVkQUObkZHWE0kL0TVHodBt3rS8ksdbCL8Jkz4GeNP/Katg==
   dependencies:
     regenerator-runtime "^0.13.3"
+
+"@jitsu/js@^1.3.0":
+  version "1.3.0"
+  resolved "https://registry.yarnpkg.com/@jitsu/js/-/js-1.3.0.tgz#54c1396fe8852def7181b89e3e57ee5ac43f31ef"
+  integrity sha512-7k3dM84xqf6Ivaama8VWwGYOcmGI/WWQTUHmHNXao+M/tneU6L72SCNlUE587vgtaxvoN2oROo4sBGO+sTh4ZQ==
+  dependencies:
+    analytics "^0.8.1"
 
 "@josephg/resolvable@^1.0.0":
   version "1.0.1"
@@ -8540,6 +8600,22 @@ amp@0.3.1, amp@~0.3.1:
   version "0.3.1"
   resolved "https://registry.yarnpkg.com/amp/-/amp-0.3.1.tgz#6adf8d58a74f361e82c1fa8d389c079e139fc47d"
   integrity sha512-OwIuC4yZaRogHKiuU5WlMR5Xk/jAcpPtawWL05Gj8Lvm2F6mwoJt4O/bHI+DHwG79vWd+8OFYM4/BzYqyRd3qw==
+
+analytics-utils@^1.0.12:
+  version "1.0.12"
+  resolved "https://registry.yarnpkg.com/analytics-utils/-/analytics-utils-1.0.12.tgz#07bd63471d238e80f42d557fba039365f09c50db"
+  integrity sha512-WvV2YWgsnXLxaY0QYux0crpBAg/0JA763NmbMVz22jKhMPo7dpTBet8G2IlF7ixTjLDzGlkHk1ZaKqqQmjJ+4w==
+  dependencies:
+    "@analytics/type-utils" "^0.6.2"
+    dlv "^1.1.3"
+
+analytics@^0.8.1:
+  version "0.8.9"
+  resolved "https://registry.yarnpkg.com/analytics/-/analytics-0.8.9.tgz#71648ec804fbf01f05abbd0e27bc11049d959786"
+  integrity sha512-oTbUzQpncMTslakqfK70GgB6bopk5hY+uuekwnadMkDyqNLgcD02KRzteTnO7q5Ko6wDECVtT8xi/6OuAMZykA==
+  dependencies:
+    "@analytics/core" "^0.12.7"
+    "@analytics/storage-utils" "^0.4.2"
 
 angular2-chartjs@^0.5.1:
   version "0.5.1"
@@ -14458,6 +14534,11 @@ display-notification@2.0.0:
     escape-string-applescript "^1.0.0"
     run-applescript "^3.0.0"
 
+dlv@^1.1.3:
+  version "1.1.3"
+  resolved "https://registry.yarnpkg.com/dlv/-/dlv-1.1.3.tgz#5c198a8a11453596e751494d49874bc7732f2e79"
+  integrity sha512-+HlytyjlPKnIG8XuRG8WvmBP8xs8P71y+SKKS6ZXWoEgLuePxtDoUEiH7WkdePWrQ5JBpE6aoVqfZfJUQkjXwA==
+
 dmg-builder@23.6.0:
   version "23.6.0"
   resolved "https://registry.yarnpkg.com/dmg-builder/-/dmg-builder-23.6.0.tgz#d39d3871bce996f16c07d2cafe922d6ecbb2a948"
@@ -17739,9 +17820,9 @@ get-caller-file@^2.0.1, get-caller-file@^2.0.5:
   integrity sha512-DyFP3BM/3YHTQOCUL/w0OZHR0lpKeGrxotcHWcqNEdnltqFwXVfhEBQ94eIo34AfQpo0rGki4cyIiftY06h2Fg==
 
 get-func-name@^2.0.0:
-  version "2.0.0"
-  resolved "https://registry.yarnpkg.com/get-func-name/-/get-func-name-2.0.0.tgz#ead774abee72e20409433a066366023dd6887a41"
-  integrity sha512-Hm0ixYtaSZ/V7C8FJrtZIuBBI+iSgL+1Aq82zSu8VQNB4S3Gk8e7Qs3VwBDJAhmRZcFqkl3tQu36g/Foh5I5ig==
+  version "2.0.2"
+  resolved "https://registry.yarnpkg.com/get-func-name/-/get-func-name-2.0.2.tgz#0d7cf20cd13fda808669ffa88f4ffc7a3943fc41"
+  integrity sha512-8vXOvuE167CtIc3OyItco7N/dpRtBbYOsPsXCz7X/PMnlGjYjSGuZJgM1Y7mmew7BKf9BqvLX2tnOVy1BBUsxQ==
 
 get-intrinsic@^1.0.2, get-intrinsic@^1.1.1, get-intrinsic@^1.1.3, get-intrinsic@^1.2.0:
   version "1.2.0"
