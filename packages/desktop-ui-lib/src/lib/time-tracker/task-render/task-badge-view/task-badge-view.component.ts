@@ -1,6 +1,9 @@
 import { Component, Input } from '@angular/core';
 import { ITaskPriority, ITaskSize, ITaskStatus } from '@gauzy/contracts';
 import { ColorAdapter } from '../../../utils';
+import { StatusIconService } from '@gauzy/desktop-ui-lib';
+import { Observable } from 'rxjs';
+import { SafeUrl } from '@angular/platform-browser';
 
 export type ITaskBadge = ITaskStatus | ITaskSize | ITaskPriority;
 
@@ -10,7 +13,7 @@ export type ITaskBadge = ITaskStatus | ITaskSize | ITaskPriority;
 	styleUrls: ['./task-badge-view.component.scss'],
 })
 export class TaskBadgeViewComponent {
-	constructor() {
+	constructor(private _statusIconService: StatusIconService) {
 		this._taskBadge = null;
 	}
 
@@ -33,8 +36,8 @@ export class TaskBadgeViewComponent {
 		return ColorAdapter.background(this.taskBadge.color);
 	}
 
-	public get icon() {
-		return this.taskBadge.fullIconUrl;
+	public get icon$(): Observable<SafeUrl> {
+		return this._statusIconService.load(this.taskBadge?.fullIconUrl);
 	}
 
 	public get name() {
