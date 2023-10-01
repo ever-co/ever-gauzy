@@ -160,7 +160,7 @@ metadata:
     name: gauzy-demo-api
     namespace: default
     annotations:
-        kubernetes.io/ingress.class: traefik-everco
+        kubernetes.io/ingress.class: traefik
 spec:
     rules:
         - host: apidemocivo.gauzy.co
