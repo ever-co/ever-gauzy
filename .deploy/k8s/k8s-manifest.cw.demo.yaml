@@ -43,17 +43,17 @@ spec:
                 nodeAffinity:
                     requiredDuringSchedulingIgnoredDuringExecution:
                         nodeSelectorTerms:
-                          - matchExpressions:
-                              - key: topology.kubernetes.io/region
-                                operator: In
-                                values:
-                                  - ORD1
-                              - key: node.coreweave.cloud/cpu
-                                operator: In
-                                values:
-                                  - intel-xeon-v3
+                            - matchExpressions:
+                                  - key: topology.kubernetes.io/region
+                                    operator: In
+                                    values:
+                                        - ORD1
+                                  - key: node.coreweave.cloud/cpu
+                                    operator: In
+                                    values:
+                                        - intel-xeon-v3
             imagePullSecrets:
-              - name: ever-registry-docker-registry-credentials
+                - name: ever-registry-docker-registry-credentials
             containers:
                 - name: gauzy-demo-api
                   image: ever-registry.tenant-acb888-ever.ord1.ingress.coreweave.cloud/ever-co/gauzy-api-demo:latest
@@ -90,12 +90,12 @@ spec:
                       - containerPort: 3000
                         protocol: TCP
                   resources:
-                    requests:
-                      cpu: "0.5"
-                      memory: 2Gi
-                    limits:
-                      cpu: "2"
-                      memory: 8Gi
+                      requests:
+                          cpu: '0.5'
+                          memory: 2Gi
+                      limits:
+                          cpu: '2'
+                          memory: 8Gi
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -115,17 +115,17 @@ spec:
                 nodeAffinity:
                     requiredDuringSchedulingIgnoredDuringExecution:
                         nodeSelectorTerms:
-                          - matchExpressions:
-                              - key: topology.kubernetes.io/region
-                                operator: In
-                                values:
-                                  - ORD1
-                              - key: node.coreweave.cloud/cpu
-                                operator: In
-                                values:
-                                  - intel-xeon-v3
+                            - matchExpressions:
+                                  - key: topology.kubernetes.io/region
+                                    operator: In
+                                    values:
+                                        - ORD1
+                                  - key: node.coreweave.cloud/cpu
+                                    operator: In
+                                    values:
+                                        - intel-xeon-v3
             imagePullSecrets:
-              - name: ever-registry-docker-registry-credentials
+                - name: ever-registry-docker-registry-credentials
             containers:
                 - name: gauzy-demo-webapp
                   image: ever-registry.tenant-acb888-ever.ord1.ingress.coreweave.cloud/ever-co/gauzy-webapp-demo:latest
@@ -155,49 +155,48 @@ spec:
                       - name: DEFAULT_CURRENCY
                         value: 'USD'
                   ports:
-
                       - containerPort: 4200
                         protocol: TCP
                   resources:
-                    requests:
-                      cpu: "0.5"
-                      memory: 2Gi
-                    limits:
-                      cpu: "2"
-                      memory: 8Gi
+                      requests:
+                          cpu: '0.5'
+                          memory: 2Gi
+                      limits:
+                          cpu: '2'
+                          memory: 8Gi
 ---
 apiVersion: traefik.containo.us/v1alpha1
 kind: Middleware
 metadata:
-  name: https-redirect
+    name: https-redirect
 spec:
-  redirectScheme:
-    permanent: true
-    scheme: https
+    redirectScheme:
+        permanent: true
+        scheme: https
 ---
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: gauzy-demo
-  annotations:
-    kubernetes.io/ingress.class: traefik-everco
-    traefik.ingress.kubernetes.io/router.middlewares: tenant-acb888-ever-https-redirect@kubernetescrd
+    name: gauzy-demo
+    annotations:
+        kubernetes.io/ingress.class: traefik-everco
+        traefik.ingress.kubernetes.io/router.middlewares: tenant-acb888-ever-https-redirect@kubernetescrd
 spec:
     rules:
-      - host: democw.gauzy.co
-        http:
-            paths:
-              - backend:
-                    service:
-                        name: gauzy-demo
-                        port:
-                            number: 4200
-                path: /
-                pathType: Prefix
+        - host: democw.gauzy.co
+          http:
+              paths:
+                  - backend:
+                        service:
+                            name: gauzy-demo
+                            port:
+                                number: 4200
+                    path: /
+                    pathType: Prefix
     tls:
-      - hosts:
-          - democw.gauzy.co
-        secretName: democw.gauzy.co-tls
+        - hosts:
+              - democw.gauzy.co
+          secretName: democw.gauzy.co-tls
 ---
 apiVersion: networking.k8s.io/v1
 kind: Ingress
@@ -208,17 +207,17 @@ metadata:
         traefik.ingress.kubernetes.io/router.middlewares: tenant-acb888-ever-https-redirect@kubernetescrd
 spec:
     rules:
-      - host: apidemocw.gauzy.co
-        http:
-            paths:
-              - backend:
-                    service:
-                        name: gauzy-demo-api
-                        port:
-                            number: 3000
-                path: /
-                pathType: Prefix
+        - host: apidemocw.gauzy.co
+          http:
+              paths:
+                  - backend:
+                        service:
+                            name: gauzy-demo-api
+                            port:
+                                number: 3000
+                    path: /
+                    pathType: Prefix
     tls:
-      - hosts:
-          - apidemocw.gauzy.co
-        secretName: apidemocw.gauzy.co-tls
+        - hosts:
+              - apidemocw.gauzy.co
+          secretName: apidemocw.gauzy.co-tls
