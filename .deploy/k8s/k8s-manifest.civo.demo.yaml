@@ -60,9 +60,9 @@ spec:
                       - name: SENTRY_POSTGRES_TRACKING_ENABLED
                         value: 'false'
                       - name: API_BASE_URL
-                        value: 'https://apidemocw.gauzy.co'
+                        value: 'https://apidemocivo.gauzy.co'
                       - name: CLIENT_BASE_URL
-                        value: 'https://democw.gauzy.co'
+                        value: 'https://democivo.gauzy.co'
                       - name: EXPRESS_SESSION_SECRET
                         value: 'gauzy'
                       - name: JWT_SECRET
@@ -96,9 +96,9 @@ spec:
                       - name: DEMO
                         value: 'true'
                       - name: API_BASE_URL
-                        value: 'https://apidemocw.gauzy.co'
+                        value: 'https://apidemocivo.gauzy.co'
                       - name: CLIENT_BASE_URL
-                        value: 'https://democw.gauzy.co'
+                        value: 'https://democivo.gauzy.co'
                       - name: SENTRY_DSN
                         value: 'https://7cd381188b6f446ca0e69185227b9031@o51327.ingest.sentry.io/4397292'
                       - name: CHATWOOT_SDK_TOKEN
