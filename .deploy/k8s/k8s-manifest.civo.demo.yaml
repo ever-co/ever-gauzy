@@ -149,6 +149,10 @@ spec:
                                 number: 4200
                     path: /
                     pathType: Prefix
+    tls:
+        - hosts:
+              - democivo.gauzy.co
+          secretName: democivo.gauzy.co-tls
 ---
 apiVersion: networking.k8s.io/v1
 kind: Ingress
@@ -169,3 +173,7 @@ spec:
                                 number: 3000
                     path: /
                     pathType: Prefix
+    tls:
+        - hosts:
+              - apidemocivo.gauzy.co
+          secretName: apidemocivo.gauzy.co-tls
