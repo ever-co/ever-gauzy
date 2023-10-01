@@ -164,10 +164,9 @@ process.on('uncaughtException', (error) => {
 });
 
 eventErrorManager.onSendReport(async (message) => {
-	if (serverWindow) {
-		serverWindow.focus();
-	}
-	const dialog = new DialogErrorHandler(message);
+	if (!serverWindow) return;
+	serverWindow.focus();
+	const dialog = new DialogErrorHandler(message, serverWindow);
 	dialog.options.buttons.shift();
 	const button = await dialog.show();
 	switch (button.response) {
@@ -184,10 +183,9 @@ eventErrorManager.onSendReport(async (message) => {
 });
 
 eventErrorManager.onShowError(async (message) => {
-	if (serverWindow) {
-		serverWindow.focus();
-	}
-	const dialog = new DialogErrorHandler(message);
+	if (!serverWindow) return;
+	serverWindow.focus();
+	const dialog = new DialogErrorHandler(message, serverWindow);
 	dialog.options.buttons.splice(1, 1);
 	const button = await dialog.show();
 	switch (button.response) {
