@@ -134,7 +134,7 @@ apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
     name: gauzy-demo
-	namespace: default
+    namespace: default
     annotations:
         kubernetes.io/ingress.class: traefik
 spec:
@@ -154,6 +154,7 @@ apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
     name: gauzy-demo-api
+    namespace: default
     annotations:
         kubernetes.io/ingress.class: traefik-everco
 spec:
