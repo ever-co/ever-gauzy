@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import {
 	NbBadgeModule,
 	NbButtonModule,
+	NbCardModule,
 	NbIconModule,
 	NbPopoverModule,
 	NbProgressBarModule,
@@ -22,6 +23,7 @@ import { TaskBadgeViewComponent } from './task-badge-view/task-badge-view.compon
 import { TaskStatusComponent } from './task-status/task-status.component';
 import { TaskBadgeDefaultComponent } from './task-badge-default/task-badge-default.component';
 import { ReplacePipe } from '../pipes/replace.pipe';
+import { TaskDetailComponent } from './task-detail/task-detail.component';
 
 @NgModule({
 	declarations: [
@@ -36,6 +38,7 @@ import { ReplacePipe } from '../pipes/replace.pipe';
 		ReplacePipe,
 		TaskStatusComponent,
 		TaskBadgeDefaultComponent,
+		TaskDetailComponent,
 	],
 	imports: [
 		CommonModule,
@@ -49,6 +52,7 @@ import { ReplacePipe } from '../pipes/replace.pipe';
 		TranslateModule,
 		NbPopoverModule,
 		NbBadgeModule,
+		NbCardModule
 	],
 })
 export class TaskRenderModule {}

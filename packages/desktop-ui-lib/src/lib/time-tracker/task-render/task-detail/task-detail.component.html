@@ -1,0 +1,44 @@
+<nb-card>
+	<nb-card-header>
+		<span class="cancel"
+			><i (click)="hide()" class="fas fa-times"></i
+		></span>
+		<h4 class="title">
+			{{ title }}
+		</h4>
+		<div class="badges">
+			<div class="task number">#{{ number }}</div>
+			<div *ngFor="let tag of tags">
+				<gauzy-task-badge-view
+					[taskBadge]="tag"
+					class="task-badge"
+				></gauzy-task-badge-view>
+			</div>
+		</div>
+	</nb-card-header>
+	<nb-card-body>
+		<h6 class="title-description">
+			{{ 'SM_TABLE.DESCRIPTION' | translate }}
+		</h6>
+		<div [innerHTML]="description" class="description"></div>
+	</nb-card-body>
+	<nb-card-footer *ngIf="status || priority || size">
+		<div class="badges">
+			<div *ngIf="status">
+				<gauzy-task-badge-view
+					[taskBadge]="status"
+				></gauzy-task-badge-view>
+			</div>
+			<div *ngIf="priority">
+				<gauzy-task-badge-view
+					[taskBadge]="priority"
+				></gauzy-task-badge-view>
+			</div>
+			<div *ngIf="size">
+				<gauzy-task-badge-view
+					[taskBadge]="size"
+				></gauzy-task-badge-view>
+			</div>
+		</div>
+	</nb-card-footer>
+</nb-card>

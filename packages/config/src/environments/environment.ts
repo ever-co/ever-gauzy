@@ -28,29 +28,38 @@ export const environment: IEnvironment = {
 	USER_PASSWORD_BCRYPT_SALT_ROUNDS: 12,
 
 	JWT_SECRET: process.env.JWT_SECRET || 'secretKey',
-	JWT_TOKEN_EXPIRATION_TIME: parseInt(process.env.JWT_TOKEN_EXPIRATION_TIME) || 86400 * 1, // default JWT token expire time (1 day)
+	JWT_TOKEN_EXPIRATION_TIME:
+		parseInt(process.env.JWT_TOKEN_EXPIRATION_TIME) || 86400 * 1, // default JWT token expire time (1 day)
 
-	JWT_REFRESH_TOKEN_SECRET: process.env.JWT_REFRESH_TOKEN_SECRET || 'refreshSecretKey',
-	JWT_REFRESH_TOKEN_EXPIRATION_TIME: parseInt(process.env.JWT_REFRESH_TOKEN_EXPIRATION_TIME) || 86400 * 7, // default JWT refresh token expire time (7 days)
+	JWT_REFRESH_TOKEN_SECRET:
+		process.env.JWT_REFRESH_TOKEN_SECRET || 'refreshSecretKey',
+	JWT_REFRESH_TOKEN_EXPIRATION_TIME:
+		parseInt(process.env.JWT_REFRESH_TOKEN_EXPIRATION_TIME) || 86400 * 7, // default JWT refresh token expire time (7 days)
 
 	/**
 	 * Email verification options
 	 */
-	JWT_VERIFICATION_TOKEN_SECRET: process.env.JWT_VERIFICATION_TOKEN_SECRET || 'verificationSecretKey',
-	JWT_VERIFICATION_TOKEN_EXPIRATION_TIME: parseInt(process.env.JWT_VERIFICATION_TOKEN_EXPIRATION_TIME) || 86400 * 7, // default verification expire token time (7 days)
+	JWT_VERIFICATION_TOKEN_SECRET:
+		process.env.JWT_VERIFICATION_TOKEN_SECRET || 'verificationSecretKey',
+	JWT_VERIFICATION_TOKEN_EXPIRATION_TIME:
+		parseInt(process.env.JWT_VERIFICATION_TOKEN_EXPIRATION_TIME) ||
+		86400 * 7, // default verification expire token time (7 days)
 
 	/**
 	 * Email Reset
 	 */
-	EMAIL_RESET_EXPIRATION_TIME: parseInt(process.env.EMAIL_RESET_EXPIRATION_TIME) || 1800, // default email reset expiration time (30 minutes)
+	EMAIL_RESET_EXPIRATION_TIME:
+		parseInt(process.env.EMAIL_RESET_EXPIRATION_TIME) || 1800, // default email reset expiration time (30 minutes)
 
 	/**
 	 * Password Less Authentication Configuration
 	 */
-	AUTHENTICATION_CODE_EXPIRATION_TIME: parseInt(process.env.AUTHENTICATION_CODE_EXPIRATION_TIME) || 86400 * 1, // default password less authentication code expire time (1 day)
+	AUTHENTICATION_CODE_EXPIRATION_TIME:
+		parseInt(process.env.AUTHENTICATION_CODE_EXPIRATION_TIME) || 86400 * 1, // default password less authentication code expire time (1 day)
 
 	/** Organization Team Join Request Configuration **/
-	TEAM_JOIN_REQUEST_EXPIRATION_TIME: parseInt(process.env.TEAM_JOIN_REQUEST_EXPIRATION_TIME) || 60 * 60 * 24, // default code expire time (1 day)
+	TEAM_JOIN_REQUEST_EXPIRATION_TIME:
+		parseInt(process.env.TEAM_JOIN_REQUEST_EXPIRATION_TIME) || 60 * 60 * 24, // default code expire time (1 day)
 
 	/**
 	 * Throttler (Rate Limiting) Options
@@ -174,6 +183,7 @@ export const environment: IEnvironment = {
 
 	defaultIntegratedUserPass: process.env.INTEGRATED_USER_DEFAULT_PASS || '123456',
 
+
 	upwork: {
 		apiKey: process.env.UPWORK_API_KEY,
 		apiSecret: process.env.UPWORK_API_SECRET,
@@ -187,6 +197,7 @@ export const environment: IEnvironment = {
 		clientSecret: process.env.HUBSTAFF_CLIENT_SECRET,
 		/** Hubstaff Integration Post Install URL */
 		postInstallUrl: process.env.HUBSTAFF_POST_INSTALL_URL || `${process.env.CLIENT_BASE_URL}/#/pages/integrations/hubstaff`,
+
 	},
 
 	isElectron: process.env.IS_ELECTRON === 'true' ? true : false,

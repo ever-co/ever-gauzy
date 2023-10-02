@@ -69,7 +69,8 @@ export class AuthService extends SocialAuthService {
 			const user = await this.userService.findOneByOptions({
 				where: {
 					email,
-					isActive: true
+					isActive: true,
+					isArchived: false,
 				},
 				relations: {
 					employee: true,

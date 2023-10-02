@@ -202,10 +202,9 @@ process.on('uncaughtException', (error) => {
 });
 
 eventErrorManager.onSendReport(async (message) => {
-	if (timeTrackerWindow) {
-		timeTrackerWindow.focus();
-	}
-	const dialog = new DialogErrorHandler(message);
+	if (!timeTrackerWindow) return;
+	timeTrackerWindow.focus();
+	const dialog = new DialogErrorHandler(message, timeTrackerWindow);
 	dialog.options.buttons.shift();
 	const button = await dialog.show();
 	switch (button.response) {
@@ -221,10 +220,9 @@ eventErrorManager.onSendReport(async (message) => {
 });
 
 eventErrorManager.onShowError(async (message) => {
-	if (timeTrackerWindow) {
-		timeTrackerWindow.focus();
-	}
-	const dialog = new DialogErrorHandler(message);
+	if (!timeTrackerWindow) return;
+	timeTrackerWindow.focus();
+	const dialog = new DialogErrorHandler(message, timeTrackerWindow);
 	dialog.options.buttons.splice(1, 1);
 	const button = await dialog.show();
 	switch (button.response) {

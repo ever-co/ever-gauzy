@@ -3853,6 +3853,7 @@
 		"STOP_TIMER_CHANGE_PROJECT": "Por favor, detén el temporizador antes de cambiar el proyecto.",
 		"STOP_TIMER_CHANGE_TASK": "Por favor, detén el temporizador antes de cambiar la tarea.",
 		"STOP_TIMER_CHANGE_DESCRIPTION": "Por favor, detenga el cronómetro antes de cambiar la descripción.",
+		"STOP_TIMER_CHANGE_TEAM": "Por favor, detenga el temporizador antes de cambiar el equipo",
 		"ACTIVITY_WATCH_INTEGRATION": "Integración con ActivityWatch",
 		"LAST_CAPTURE_TAKEN": "Última captura de pantalla tomada",
 		"REQUEST_TASK_PERMISSION": "Solicitar permiso al administrador de la organización.",

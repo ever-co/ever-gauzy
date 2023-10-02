@@ -7,12 +7,12 @@ import { BaseDesktopDialogDecorator } from '../abstracts/base-desktop-dialog-dec
 export class DialogErrorHandler
 	extends BaseDesktopDialogDecorator
 	implements IDesktopDialog {
-	constructor(message: string) {
+	constructor(message: string, window?: BrowserWindow) {
 		super(
 			new DesktopDialog(
 				TranslateService.instant('TIMER_TRACKER.DIALOG.ERROR_HANDLER'),
 				TranslateService.instant('TIMER_TRACKER.DIALOG.ERROR_OCCURRED'),
-				BrowserWindow.getFocusedWindow()
+				window || BrowserWindow.getFocusedWindow()
 			)
 		);
 		this.options = {

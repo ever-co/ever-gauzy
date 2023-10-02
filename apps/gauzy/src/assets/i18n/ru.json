@@ -3797,6 +3797,7 @@
 		"STOP_TIMER_CHANGE_PROJECT": "Пожалуйста, остановите таймер перед изменением проекта",
 		"STOP_TIMER_CHANGE_TASK": "Пожалуйста, остановите таймер перед изменением задачи",
 		"STOP_TIMER_CHANGE_DESCRIPTION": "Пожалуйста, остановите таймер перед изменением описания",
+		"STOP_TIMER_CHANGE_TEAM": "Пожалуйста, остановите таймер перед изменением команды",
 		"ACTIVITY_WATCH_INTEGRATION": "Интеграция с ActivityWatch",
 		"LAST_CAPTURE_TAKEN": "Последний снимок экрана был сделан",
 		"REQUEST_TASK_PERMISSION": "Запросить разрешение у администратора организации",

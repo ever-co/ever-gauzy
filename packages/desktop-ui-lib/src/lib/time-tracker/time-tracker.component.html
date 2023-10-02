@@ -31,7 +31,7 @@
 							</div>
 						</div>
 						<div class="row d-flex justify-content-between">
-							<div class="col-9 timer-box mt-2 pr-0 mb-2">
+							<div class="col-9 timer-box mt-2 mb-2">
 								<div
 									[ngStyle]="{
 										opacity: isRemoteTimer ? '50%' : '100%'
@@ -149,6 +149,68 @@
 										</nb-icon>
 									</button>
 								</div>
+							</div>
+						</div>
+						<div *ngIf="(teams$ | async)?.length > 0" class="row">
+							<div class="col-12 form-group tp-padding">
+								<label>{{
+									'CONTEXT_MENU.TEAM' | translate
+								}}</label>
+								<ng-select
+									(clear)="refreshTimer()"
+									(ngModelChange)="setTeams($event)"
+									[(ngModel)]="teamSelect"
+									[class]="
+										errors?.teams ? 'error-border' : ''
+									"
+									[clearable]="true"
+									[disabled]="start$ | async"
+									[items]="teams$ | async"
+									[nbTooltipDisabled]="!(start$ | async)"
+									[nbTooltip]="
+										'TIMER_TRACKER.STOP_TIMER_CHANGE_TEAM'
+											| translate
+									"
+									[placeholder]="
+										'FORM.LABELS.SELECT_TEAM'
+											| translate
+											| titlecase
+									"
+									bindLabel="name"
+									bindValue="id"
+									nbTooltipStatus="warning"
+								>
+									<ng-template
+										let-index="index"
+										let-item="item"
+										ng-option-tmp
+									>
+										<img
+											*ngIf="item?.logo"
+											[src]="item?.logo"
+											height="20px"
+											width="20px"
+										/>
+										<span class="text-container">
+											{{ item?.name }}
+										</span>
+									</ng-template>
+									<ng-template let-item="item" ng-label-tmp>
+										<div class="selector-template">
+											<img
+												*ngIf="item?.logo"
+												[src]="item?.logo"
+												height="20px"
+												width="20px"
+											/>
+											<span
+												class="black-bold-text text-container"
+											>
+												{{ item?.name }}
+											</span>
+										</div>
+									</ng-template>
+								</ng-select>
 							</div>
 						</div>
 						<div class="row">
@@ -485,7 +547,9 @@
 											}}</span>
 										</div>
 									</nb-card-header>
-									<nb-card-body class="p-0">
+									<nb-card-body
+										class="p-0 last-capture-container"
+									>
 										<img
 											(error)="updateImageUrl($event)"
 											*ngIf="

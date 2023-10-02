@@ -6,8 +6,8 @@
 			[style.color]="textColor"
 			class="badge-color"
 		>
-			<div *ngIf="icon" [style.filter]="imageFilter">
-				<img [src]="icon" alt="badge" class="badge-img" />
+			<div *ngIf="icon$ | async" [style.filter]="imageFilter">
+				<img [src]="icon$ | async" alt="badge" class="badge-img" />
 			</div>
 			<div>{{ name | replace : '-' : ' ' | titlecase }}</div>
 		</div>

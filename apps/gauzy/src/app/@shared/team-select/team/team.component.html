@@ -1,11 +1,10 @@
 <label class="label" *ngIf="label">{{ label | translate }}</label>
 <ng-template [ngIf]="!multiple" [ngIfElse]="multipleSelect">
-	<ng-select #select [addTag]="(hasAddTeam$ | async) ? createNew : null" [multiple]="multiple"
-		[clearable]="isClearable()" [disabled]="disabled" [items]="teams"
-		(change)="selectTeam($event); select.blur();" (clear)="select.blur(); clearSelection();"
-		[(ngModel)]="teamId" [placeholder]="
-			placeholder || 'FORM.PLACEHOLDERS.ALL_TEAMS' | translate
-		" [addTagText]="'FORM.PLACEHOLDERS.ADD_TEAM' | translate" bindValue="id" bindLabel="name" appendTo="body">
+	<ng-select #select [addTag]="(hasAddTeam$ | async) ? createNew : null" [multiple]="multiple" [clearable]="isClearable()"
+		[disabled]="disabled" [items]="teams" (change)="selectTeam($event); select.blur()"
+		(clear)="select.blur(); clearSelection()" [(ngModel)]="teamId"
+		[placeholder]="placeholder || 'FORM.PLACEHOLDERS.ALL_TEAMS' | translate"
+		[addTagText]="'FORM.PLACEHOLDERS.ADD_TEAM' | translate" bindValue="id" bindLabel="name" appendTo="body" fullWidth>
 		<ng-container *ngIf="shortened">
 			<ng-template ng-option-tmp let-item="item" let-index="index">
 				<img *ngIf="item.imageUrl" [src]="item.imageUrl" width="20px" height="20px" />
@@ -25,9 +24,8 @@
 	</ng-select>
 </ng-template>
 <ng-template #multipleSelect>
-	<nb-select class="multiple-select" [disabled]="disabled" [multiple]="multiple" [placeholder]="
-			placeholder || 'FORM.PLACEHOLDERS.ALL_TEAMS' | translate
-		" [(selected)]="teamId">
+	<nb-select class="multiple-select" [disabled]="disabled" [multiple]="multiple"
+		[placeholder]="placeholder || 'FORM.PLACEHOLDERS.ALL_TEAMS' | translate" [(selected)]="teamId" fullWidth>
 		<nb-option *ngFor="let team of teams" [value]="team.id">
 			{{ team.name }}
 		</nb-option>

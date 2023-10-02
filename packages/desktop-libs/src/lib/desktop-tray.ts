@@ -357,6 +357,7 @@ export class TrayIcon {
 					taskId: null,
 					note: null,
 					organizationContactId: null,
+					organizationTeamId: null,
 				});
 			}
 			store.set({
@@ -482,6 +483,9 @@ export class TrayIcon {
 	}
 
 	public build(): void {
+		if (!this.tray) {
+			return;
+		}
 		this.tray.setContextMenu(Menu.buildFromTemplate([...this.contextMenu]));
 	}
 }

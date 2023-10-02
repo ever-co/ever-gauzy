@@ -193,11 +193,10 @@ process.on('uncaughtException', (error) => {
 	throw new AppError('MAINUNEXCEPTION', error.message);
 });
 
-eventErrorManager.onSendReport(async (message) => {
-	if (timeTrackerWindow) {
-		timeTrackerWindow.focus();
-	}
-	const dialog = new DialogErrorHandler(message);
+eventErrorManager.onSendReport(async (message: string) => {
+	if (!gauzyWindow) return;
+	gauzyWindow.focus();
+	const dialog = new DialogErrorHandler(message, gauzyWindow);
 	dialog.options.buttons.shift();
 	const button = await dialog.show();
 	switch (button.response) {
@@ -213,11 +212,10 @@ eventErrorManager.onSendReport(async (message) => {
 
 });
 
-eventErrorManager.onShowError(async (message) => {
-	if (timeTrackerWindow) {
-		timeTrackerWindow.focus();
-	}
-	const dialog = new DialogErrorHandler(message);
+eventErrorManager.onShowError(async (message: string) => {
+	if (!gauzyWindow) return;
+	gauzyWindow.focus();
+	const dialog = new DialogErrorHandler(message, gauzyWindow);
 	dialog.options.buttons.splice(1, 1);
 	const button = await dialog.show();
 	switch (button.response) {
@@ -271,9 +269,6 @@ async function startServer(value, restart = false) {
 							{ ...environment, gauzyWindow: value.gauzyWindow },
 							pathWindow.gauzyWindow
 						);
-						gauzyWindow.setVisibleOnAllWorkspaces(false);
-						gauzyWindow.show();
-						splashScreen.close();
 					} catch (error) {
 						throw new AppError('MAINWININIT', error);
 					}
@@ -332,9 +327,6 @@ async function startServer(value, restart = false) {
 				{ ...environment, gauzyWindow: value.gauzyWindow },
 				pathWindow.gauzyWindow
 			);
-			gauzyWindow.setVisibleOnAllWorkspaces(false);
-			gauzyWindow.show();
-			splashScreen.close();
 		} catch (error) {
 			throw new AppError('MAINWININIT', error);
 		}
@@ -356,6 +348,12 @@ async function startServer(value, restart = false) {
 		gauzyWindow,
 		alwaysOn
 	);
+
+	notificationWindow = new ScreenCaptureNotification(pathWindow.screenshotWindow);
+	await notificationWindow.loadURL();
+	gauzyWindow.setVisibleOnAllWorkspaces(false);
+	gauzyWindow.show()
+	splashScreen.close();
 
 	TranslateService.onLanguageChange(() => {
 		new AppMenu(
@@ -383,7 +381,7 @@ async function startServer(value, restart = false) {
 			gauzyWindow,
 			alwaysOn
 		);
-	})
+	});
 
 	/* ping server before launch the ui */
 	ipcMain.on('app_is_init', () => {
@@ -608,22 +606,6 @@ ipcMain.on('server_is_ready', async () => {
 	onWaitingServer = false;
 	if (!isAlreadyRun) {
 		serverDesktop = fork(path.join(__dirname, './desktop-api/main.js'));
-		try {
-			if (!gauzyWindow) {
-				gauzyWindow = await createGauzyWindow(
-					gauzyWindow,
-					serve,
-					{ ...environment, gauzyWindow: appConfig.gauzyWindow },
-					pathWindow.gauzyWindow
-				);
-			}
-			notificationWindow = new ScreenCaptureNotification(pathWindow.screenshotWindow);
-			await notificationWindow.loadURL();
-			gauzyWindow.setVisibleOnAllWorkspaces(false);
-			gauzyWindow.show();
-		} catch (error) {
-			throw new AppError('MAINWININIT', error);
-		}
 		removeTimerListener();
 		ipcTimer(
 			store,
@@ -639,6 +621,7 @@ ipcMain.on('server_is_ready', async () => {
 			path.join(__dirname, '..', 'data', 'sound', 'snapshot-sound.wav'),
 			alwaysOn
 		);
+		timeTrackerWindow.webContents.send('ready_to_show_renderer');
 		isAlreadyRun = true;
 	}
 });
@@ -688,7 +671,6 @@ ipcMain.on('server_already_start', async () => {
 				{ ...environment, gauzyWindow: configs.gauzyWindow },
 				pathWindow.gauzyWindow
 			);
-			gauzyWindow.setVisibleOnAllWorkspaces(false);
 			isAlreadyRun = true;
 		} catch (error) {
 			throw new AppError('MAINWININIT', error);
@@ -757,7 +739,6 @@ ipcMain.on('check_database_connection', async (event, arg) => {
 app.on('activate', async () => {
 	if (gauzyWindow) {
 		if (LocalStore.getStore('configs').gauzyWindow) {
-			gauzyWindow.setVisibleOnAllWorkspaces(false);
 			gauzyWindow.show();
 		}
 	} else if (

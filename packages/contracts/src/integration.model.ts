@@ -20,13 +20,13 @@ export interface IIntegrationSetting extends IBasePerTenantAndOrganizationEntity
 }
 
 export interface IIntegrationEntitySetting extends IBasePerTenantAndOrganizationEntityModel, IRelationalIntegrationTenant {
-	entity: string;
+	entity: IntegrationEntity;
 	sync: boolean;
 	tiedEntities?: IIntegrationEntitySettingTied[];
 }
 
 export interface IIntegrationEntitySettingTied extends IBasePerTenantAndOrganizationEntityModel {
-	entity: string;
+	entity: IntegrationEntity;
 	sync: boolean;
 	integrationEntitySetting?: IIntegrationEntitySetting;
 	integrationEntitySettingId?: IIntegrationEntitySetting['id'];
@@ -165,6 +165,8 @@ export enum IntegrationEntity {
 	NOTE = 'Note',
 	CLIENT = 'Client',
 	TASK = 'Task',
+	ISSUE = 'ISSUE',
+	LABEL = 'LABEL',
 	ACTIVITY = 'Activity',
 	USER = 'User',
 	EMPLOYEE = 'Employee',

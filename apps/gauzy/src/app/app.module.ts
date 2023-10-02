@@ -62,7 +62,6 @@ import { AppInitService } from './@core/services/app-init-service';
 import { NbEvaIconsModule } from '@nebular/eva-icons';
 import { CookieService } from 'ngx-cookie-service';
 import { NgxDaterangepickerMd } from 'ngx-daterangepicker-material';
-
 // TODO: we should use some internal function which returns version of Gauzy;
 const version = '0.1.0';
 

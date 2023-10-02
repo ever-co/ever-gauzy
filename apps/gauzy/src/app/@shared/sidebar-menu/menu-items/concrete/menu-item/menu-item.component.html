@@ -16,9 +16,11 @@
 		>
 			<i [class]="item?.icon"></i
 			><span *ngIf="state"
-				><a [href]="adpatExternalUrl(item?.link)" onclick="return false;">{{
-					item?.title
-				}}</a></span
+				><a
+					[href]="getExternalUrl(item?.link)"
+					onclick="return false;"
+					>{{ item?.title }}</a
+				></span
 			>
 		</nb-accordion-item-header>
 		<nb-accordion-item-header
@@ -30,9 +32,11 @@
 		>
 			<i [class]="item?.icon"></i
 			><span *ngIf="state"
-				><a [href]="adpatExternalUrl(item?.link)" onclick="return false;">{{
-					item?.title
-				}}</a></span
+				><a
+					[href]="getExternalUrl(item?.link)"
+					onclick="return false;"
+					>{{ item?.title }}</a
+				></span
 			>
 		</nb-accordion-item-header>
 		<nb-accordion-item-body

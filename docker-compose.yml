@@ -50,7 +50,7 @@ services:
 
     jitsu:
         container_name: jitsu
-        image: jitsucom/jitsu
+        image: jitsucom/jitsu:latest
         extra_hosts:
             - 'host.docker.internal:host-gateway'
         environment:

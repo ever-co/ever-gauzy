@@ -22,3 +22,5 @@ export * from './language-cache.service';
 export * from './time-tracker-date.manager';
 export * from './time-zone-manager';
 export * from './task-status-cache.service';
+export * from './teams-cache.service';
+export * from './status-icon-service';

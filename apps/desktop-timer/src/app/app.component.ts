@@ -74,90 +74,88 @@ export class AppComponent implements OnInit, AfterViewInit {
 
 	ngAfterViewInit(): void {
 		this.electronService.ipcRenderer.on('collect_data', (event, arg) =>
-			this._ngZone.run(() => {
-				this.appService
-					.collectEvents(arg.tpURL, arg.tp, arg.start, arg.end)
-					.then((res) => {
-						event.sender.send('data_push_activity', {
-							timerId: arg.timerId,
-							windowEvent: res,
-							type: 'APP',
-						});
-					});
+			this._ngZone.run(async () => {
+				const res = await this.appService.collectEvents(
+					arg.tpURL,
+					arg.tp,
+					arg.start,
+					arg.end
+				);
+				event.sender.send('data_push_activity', {
+					timerId: arg.timerId,
+					windowEvent: res,
+					type: 'APP',
+				});
 			})
 		);
 
 		this.electronService.ipcRenderer.on('collect_afk', (event, arg) =>
-			this._ngZone.run(() => {
-				this.appService
-					.collectAfk(arg.tpURL, arg.tp, arg.start, arg.end)
-					.then((res) => {
-						event.sender.send('data_push_activity', {
-							timerId: arg.timerId,
-							windowEvent: res,
-							type: 'AFK',
-						});
-					});
+			this._ngZone.run(async () => {
+				const res = await this.appService.collectAfk(
+					arg.tpURL,
+					arg.tp,
+					arg.start,
+					arg.end
+				);
+				event.sender.send('data_push_activity', {
+					timerId: arg.timerId,
+					windowEvent: res,
+					type: 'AFK',
+				});
 			})
 		);
 
 		this.electronService.ipcRenderer.on(
 			'collect_chrome_activities',
 			(event, arg) =>
-				this._ngZone.run(() => {
-					this.appService
-						.collectChromeActivityFromAW(
+				this._ngZone.run(async () => {
+					const res =
+						await this.appService.collectChromeActivityFromAW(
 							arg.tpURL,
 							arg.start,
 							arg.end
-						)
-						.then((res) => {
-							event.sender.send('data_push_activity', {
-								timerId: arg.timerId,
-								windowEvent: res,
-								type: 'URL',
-							});
-						});
+						);
+					event.sender.send('data_push_activity', {
+						timerId: arg.timerId,
+						windowEvent: res,
+						type: 'URL',
+					});
 				})
 		);
 
 		this.electronService.ipcRenderer.on(
 			'collect_firefox_activities',
 			(event, arg) =>
-				this._ngZone.run(() => {
-					this.appService
-						.collectFirefoxActivityFromAw(
+				this._ngZone.run(async () => {
+					const res =
+						await this.appService.collectFirefoxActivityFromAw(
 							arg.tpURL,
 							arg.start,
 							arg.end
-						)
-						.then((res) => {
-							event.sender.send('data_push_activity', {
-								timerId: arg.timerId,
-								windowEvent: res,
-								type: 'URL',
-							});
-						});
+						);
+					event.sender.send('data_push_activity', {
+						timerId: arg.timerId,
+						windowEvent: res,
+						type: 'URL',
+					});
 				})
 		);
 
 		this.electronService.ipcRenderer.on('server_ping', (event, arg) =>
 			this._ngZone.run(() => {
-				const pingHost = setInterval(() => {
-					this.appService
-						.pingServer(arg)
-						.then((res) => {
-							console.log('Server Found');
+				const pingHost = setInterval(async () => {
+					try {
+						await this.appService.pingServer(arg);
+						console.log('Server Found');
+						event.sender.send('server_is_ready');
+						clearInterval(pingHost);
+					} catch (error) {
+						console.log('ping status result', error.status);
+						if (this.store.userId) {
 							event.sender.send('server_is_ready');
 							clearInterval(pingHost);
-						})
-						.catch((e) => {
-							console.log('ping status result', e.status);
-							if (this.store.userId) {
-								event.sender.send('server_is_ready');
-								clearInterval(pingHost);
-							}
-						});
+						}
+					}
 				}, 1000);
 			})
 		);
@@ -166,21 +164,19 @@ export class AppComponent implements OnInit, AfterViewInit {
 			'server_ping_restart',
 			(event, arg) =>
 				this._ngZone.run(() => {
-					const pingHost = setInterval(() => {
-						this.appService
-							.pingServer(arg)
-							.then((res) => {
-								console.log('server found');
+					const pingHost = setInterval(async() => {
+						try {
+							await this.appService.pingServer(arg);
+							console.log('Server Found');
+							event.sender.send('server_already_start');
+							clearInterval(pingHost);
+						} catch (error) {
+							console.log('ping status result', error.status);
+							if (this.store.userId) {
 								event.sender.send('server_already_start');
 								clearInterval(pingHost);
-							})
-							.catch((e) => {
-								console.log('ping status result', e.status);
-								if (this.store.userId) {
-									event.sender.send('server_already_start');
-									clearInterval(pingHost);
-								}
-							});
+							}
+						}
 					}, 3000);
 				})
 		);

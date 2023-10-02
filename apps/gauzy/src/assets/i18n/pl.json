@@ -3851,6 +3851,7 @@
 		"STOP_TIMER_CHANGE_PROJECT": "Przed zmianą projektu proszę zatrzymać timer",
 		"STOP_TIMER_CHANGE_TASK": "Przed zmianą zadania proszę zatrzymać stoper",
 		"STOP_TIMER_CHANGE_DESCRIPTION": "Proszę zatrzymać licznik czasu przed zmianą opisu",
+		"STOP_TIMER_CHANGE_TEAM": "Przed zmianą drużyny proszę zatrzymać timer",
 		"ACTIVITY_WATCH_INTEGRATION": "Integracja z ActivityWatch",
 		"LAST_CAPTURE_TAKEN": "Ostatni zrzut ekranu wykonany",
 		"REQUEST_TASK_PERMISSION": "Poproś o zgodę administratora organizacji",
