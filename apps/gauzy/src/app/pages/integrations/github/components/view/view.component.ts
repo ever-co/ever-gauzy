@@ -1,10 +1,11 @@
 import { AfterViewInit, Component, OnInit } from '@angular/core';
 import { TitleCasePipe } from '@angular/common';
 import { ActivatedRoute, Data } from '@angular/router';
-import { debounceTime, mergeMap, of } from 'rxjs';
+import { debounceTime, of } from 'rxjs';
 import { Observable } from 'rxjs/internal/Observable';
 import { catchError, filter, map, switchMap, tap } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
+import { NbMenuItem } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { IGithubIssue, IGithubRepository, IGithubRepositoryResponse, IOrganization } from '@gauzy/contracts';
 import { distinctUntilChange } from '@gauzy/common-angular';
@@ -14,7 +15,6 @@ import {
 	GithubService,
 	Store
 } from './../../../../../@core/services';
-import { NbMenuItem } from '@nebular/theme';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
