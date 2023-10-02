@@ -88,7 +88,7 @@ export class AllReportComponent implements OnInit {
 				}))
 				.value();
 		} catch (error) {
-			console.log('Error while retriving report with category', error);
+			console.log('Error while retrieving report with category', error);
 		} finally {
 			this.loading = false;
 		}

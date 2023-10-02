@@ -1,7 +1,7 @@
 <nb-card class="main">
 	<nb-card-header class="d-flex flex-column">
 		<div class="cancel">
-			<i class="fas fa-times" (click)="dialogRef.close()"></i>
+			<i (click)="dialogRef.close()" class="fas fa-times"></i>
 		</div>
 		<h5 class="title">
 			{{
@@ -18,10 +18,10 @@
 				<div class="row">
 					<div class="col-sm-12">
 						<ngx-task-number-field
-							formControlName="number"
 							[formControl]="form.get('number')"
-							[projectId]="form.get('projectId').value"
 							[placeholder]="'TASKS_PAGE.TASK_NUMBER' | translate"
+							[projectId]="form.get('projectId').value"
+							formControlName="number"
 						></ngx-task-number-field>
 					</div>
 				</div>
@@ -33,12 +33,12 @@
 							'CONTEXT_MENU.PROJECT' | translate
 						}}</label>
 						<ga-project-selector
-							formControlName="projectId"
-							[placeholder]="'CONTEXT_MENU.PROJECT' | translate"
-							[skipGlobalChange]="true"
-							[defaultSelected]="false"
-							[showAllOption]="false"
 							(onChanged)="selectedProject($event)"
+							[defaultSelected]="false"
+							[placeholder]="'CONTEXT_MENU.PROJECT' | translate"
+							[showAllOption]="false"
+							[skipGlobalChange]="true"
+							formControlName="projectId"
 						></ga-project-selector>
 					</div>
 				</div>
@@ -48,9 +48,11 @@
 							'TASKS_PAGE.TASKS_STATUS' | translate
 						}}</label>
 						<ga-task-status-select
+							[placeholder]="
+								'TASKS_PAGE.TASKS_STATUS' | translate
+							"
 							[projectId]="form.get('projectId').value"
-							formControlName="status"
-							[placeholder]="'TASKS_PAGE.TASKS_STATUS' | translate"
+							formControlName="taskStatus"
 						></ga-task-status-select>
 					</div>
 				</div>
@@ -62,11 +64,11 @@
 							'TASKS_PAGE.TASK_TEAMS' | translate
 						}}</label>
 						<nb-select
-							formControlName="teams"
-							multiple
-							[selected]="selectedTeams"
 							(selectedChange)="onTeamsSelected($event)"
+							[selected]="selectedTeams"
+							formControlName="teams"
 							fullWidth
+							multiple
 							placeholder="{{
 								'FORM.PLACEHOLDERS.CHOOSE_TEAMS' | translate
 							}}"
@@ -90,11 +92,11 @@
 						<input
 							class="name-input"
 							formControlName="title"
-							type="text"
 							nbInput
 							placeholder="{{
 								'FORM.PLACEHOLDERS.ADD_TITLE' | translate
 							}}"
+							type="text"
 						/>
 					</div>
 				</div>
@@ -104,9 +106,11 @@
 							{{ 'TASKS_PAGE.TASK_PRIORITY' | translate }}
 						</label>
 						<ga-task-priority-select
+							[placeholder]="
+								'TASKS_PAGE.TASK_PRIORITY' | translate
+							"
 							[projectId]="form.get('projectId').value"
-							formControlName="priority"
-							[placeholder]="'TASKS_PAGE.TASK_PRIORITY' | translate"
+							formControlName="taskPriority"
 						></ga-task-priority-select>
 					</div>
 				</div>
@@ -116,18 +120,18 @@
 							{{ 'TASKS_PAGE.TASK_SIZE' | translate }}
 						</label>
 						<ga-task-size-select
-							[projectId]="form.get('projectId').value"
-							formControlName="size"
 							[placeholder]="'TASKS_PAGE.TASK_SIZE' | translate"
+							[projectId]="form.get('projectId').value"
+							formControlName="taskSize"
 						></ga-task-size-select>
 					</div>
 				</div>
 				<div class="col-sm-12">
 					<div class="form-group">
 						<ga-tags-color-input
-							[selectedTags]="tags"
 							(selectedTagsEvent)="selectedTagsHandler($event)"
 							[isOrgLevel]="true"
+							[selectedTags]="tags"
 						>
 						</ga-tags-color-input>
 					</div>
@@ -136,19 +140,19 @@
 			<div class="row">
 				<div class="col-sm-6">
 					<div class="form-group">
-						<label for="dueDate" class="label">{{
+						<label class="label" for="dueDate">{{
 							'TASKS_PAGE.DUE_DATE' | translate
 						}}</label>
 						<input
+							[nbDatepicker]="taskDueDatePicker"
 							formControlName="dueDate"
-							type="text"
+							fullWidth
+							id="dueDate"
 							nbInput
 							placeholder="{{
 								'TASKS_PAGE.DUE_DATE' | translate
 							}}"
-							[nbDatepicker]="taskDueDatePicker"
-							id="dueDate"
-							fullWidth
+							type="text"
 						/>
 						<nb-datepicker #taskDueDatePicker></nb-datepicker>
 					</div>
@@ -160,47 +164,47 @@
 						}}</label>
 						<div class="estimate-inputs">
 							<input
-								formControlName="estimateDays"
-								type="number"
 								[min]="0"
+								formControlName="estimateDays"
 								nbInput
 								placeholder="{{
 									'TASKS_PAGE.ESTIMATE_DAYS' | translate
 								}}"
+								type="number"
 							/>
 
 							<input
-								formControlName="estimateHours"
-								type="number"
 								[min]="0"
 								[status]="
 									form.get('estimateHours').errors
 										? 'danger'
 										: 'basic'
 								"
-								min="0"
+								formControlName="estimateHours"
 								max="23"
+								min="0"
 								nbInput
 								placeholder="{{
 									'TASKS_PAGE.ESTIMATE_HOURS' | translate
 								}}"
+								type="number"
 							/>
 
 							<input
-								formControlName="estimateMinutes"
-								type="number"
 								[min]="0"
 								[status]="
 									form.get('estimateMinutes').errors
 										? 'danger'
 										: 'basic'
 								"
-								min="0"
+								formControlName="estimateMinutes"
 								max="59"
+								min="0"
 								nbInput
 								placeholder="{{
 									'TASKS_PAGE.ESTIMATE_MINUTES' | translate
 								}}"
+								type="number"
 							/>
 						</div>
 					</div>
@@ -211,7 +215,11 @@
 					<label class="label">{{
 						'TASKS_PAGE.TASKS_DESCRIPTION' | translate
 					}}</label>
-					<ckeditor class="description" formControlName="description" [config]="ckConfig"></ckeditor>
+					<ckeditor
+						[config]="ckConfig"
+						class="description"
+						formControlName="description"
+					></ckeditor>
 				</div>
 			</div>
 		</form>
@@ -219,18 +227,18 @@
 	<nb-card-footer class="text-left">
 		<button
 			(click)="dialogRef.close()"
-			status="basic"
 			class="mr-3"
-			outline
 			nbButton
+			outline
+			status="basic"
 		>
 			{{ 'BUTTONS.CANCEL' | translate }}
 		</button>
 		<button
 			(click)="onSave()"
 			[disabled]="form.invalid || (teams && teams.length === 0)"
-			status="success"
 			nbButton
+			status="success"
 		>
 			{{ 'BUTTONS.SAVE' | translate }}
 		</button>

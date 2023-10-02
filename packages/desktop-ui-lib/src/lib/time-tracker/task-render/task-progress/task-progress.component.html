@@ -1,0 +1,23 @@
+<div class="row">
+	<div class="col-12 mb-1">
+		<gauzy-task-estimate
+			#taskEstimate
+			[task$]="task$"
+		></gauzy-task-estimate>
+	</div>
+	<div *ngIf="!!(task$ | async)?.dueDate" class="col-12 mb-1">
+		<gauzy-task-due-date
+			[dueDate]="(task$ | async)?.dueDate"
+		></gauzy-task-due-date>
+	</div>
+	<div class="col-12 custom-progress-container">
+		<nb-progress-bar
+			[displayValue]="true"
+			[status]="progressStatus((progress$ | async) || 0)"
+			[value]="(progress$ | async) || 0"
+			class="custom-progress w-100"
+			size="tiny"
+		>
+		</nb-progress-bar>
+	</div>
+</div>

@@ -7,20 +7,24 @@ on:
         types:
             - completed
 
+concurrency:
+    group: ${{ github.ref }}-${{ github.workflow }}
+    cancel-in-progress: true
+
 jobs:
     release-linux:
         runs-on: ${{ matrix.os }}
 
         strategy:
             matrix:
-                os: [ubuntu-latest]
+                os: [buildjet-8vcpu-ubuntu-2204]
 
         steps:
             - name: Check out Git repository
               uses: actions/checkout@v3
 
             - name: Install Node.js, NPM and Yarn
-              uses: actions/setup-node@v3
+              uses: buildjet/setup-node@v3
               with:
                   node-version: 16
                   cache: 'yarn'
@@ -51,7 +55,7 @@ jobs:
                       console.log(script.desktop(false))
 
             - name: Build Desktop App
-              run: 'yarn build:desktop:linux:release'
+              run: 'yarn build:desktop:linux:release:gh'
               env:
                   USE_HARD_LINKS: false
                   GH_TOKEN: ${{ secrets.GH_TOKEN }}
@@ -62,6 +66,7 @@ jobs:
                   SENTRY_POSTGRES_TRACKING_ENABLED: '${{ secrets.SENTRY_POSTGRES_TRACKING_ENABLED }}'
                   DO_KEY_ID: ${{ secrets.DO_KEY_ID }}
                   DO_SECRET_KEY: ${{ secrets.DO_SECRET_KEY }}
+                  NX_NO_CLOUD: true
 
     release-mac:
         runs-on: ${{ matrix.os }}
@@ -111,13 +116,14 @@ jobs:
                   SENTRY_POSTGRES_TRACKING_ENABLED: '${{ secrets.SENTRY_POSTGRES_TRACKING_ENABLED }}'
                   DO_KEY_ID: ${{ secrets.DO_KEY_ID }}
                   DO_SECRET_KEY: ${{ secrets.DO_SECRET_KEY }}
+                  NX_NO_CLOUD: true
 
     release-windows:
         runs-on: ${{ matrix.os }}
 
         strategy:
             matrix:
-                os: [windows-2022]
+                os: [windows-latest-l]
 
         steps:
             - name: Check out Git repository
@@ -149,7 +155,7 @@ jobs:
                       console.log(script.desktop(false))
 
             - name: Build Desktop App
-              run: 'yarn build:desktop:windows:release'
+              run: 'yarn build:desktop:windows:release:gh'
               env:
                   USE_HARD_LINKS: false
                   GH_TOKEN: ${{ secrets.GH_TOKEN }}
@@ -160,3 +166,4 @@ jobs:
                   SENTRY_POSTGRES_TRACKING_ENABLED: '${{ secrets.SENTRY_POSTGRES_TRACKING_ENABLED }}'
                   DO_KEY_ID: ${{ secrets.DO_KEY_ID }}
                   DO_SECRET_KEY: ${{ secrets.DO_SECRET_KEY }}
+                  NX_NO_CLOUD: true

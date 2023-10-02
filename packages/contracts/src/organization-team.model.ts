@@ -10,7 +10,7 @@ import { IOrganizationProject } from './organization-projects.model';
 
 export interface IOrganizationTeam
 	extends IBasePerTenantAndOrganizationEntityModel,
-		IRelationalImageAsset {
+	IRelationalImageAsset {
 	name: string;
 	color?: string;
 	emoji?: string;
@@ -21,13 +21,14 @@ export interface IOrganizationTeam
 	profile_link?: string;
 	members?: IOrganizationTeamEmployee[];
 	managers?: IOrganizationTeamEmployee[];
+	projects?: IOrganizationProject[];
 	tags?: ITag[];
 	tasks?: ITask[];
 }
 
 export interface IOrganizationTeamFindInput
 	extends IBasePerTenantAndOrganizationEntityModel,
-		IRelationalEmployee {
+	IRelationalEmployee {
 	name?: string;
 	prefix?: string;
 	public?: boolean;
@@ -36,7 +37,7 @@ export interface IOrganizationTeamFindInput
 
 export interface IOrganizationTeamCreateInput
 	extends IBasePerTenantAndOrganizationEntityModel,
-		IRelationalImageAsset {
+	IRelationalImageAsset {
 	name: string;
 	emoji?: string;
 	teamSize?: string;

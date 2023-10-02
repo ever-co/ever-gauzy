@@ -1,0 +1,16 @@
+<div class="row">
+	<div class="col-12">
+		<div class="duration">
+			<div class="__label today">Today:</div>
+			<div class="__value today">
+				{{ today || 0 | durationFormat : 'HH:mm' }}
+			</div>
+		</div>
+		<div class="duration">
+			<div class="__label">Total:</div>
+			<div class="__value">
+				{{ total || 0 | durationFormat : 'HH:mm' }}
+			</div>
+		</div>
+	</div>
+</div>

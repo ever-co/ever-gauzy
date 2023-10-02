@@ -1,0 +1,14 @@
+.view {
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+	padding: 4px;
+}
+
+.status-view {
+	cursor: pointer;
+}
+
+::ng-deep nb-popover > span.arrow {
+	display: none;
+}

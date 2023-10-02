@@ -135,6 +135,12 @@ export class User extends TenantBaseEntity implements IUser {
 	@Column({ nullable: true, default: true })
 	isActive?: boolean;
 
+	@ApiPropertyOptional({ type: () => Boolean, default: false })
+	@IsOptional()
+	@IsBoolean()
+	@Column({ nullable: true, default: false })
+	isArchived?: boolean;
+
 	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()
 	@IsString()

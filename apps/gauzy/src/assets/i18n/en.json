@@ -292,7 +292,8 @@
 		"REJECTED_DATE": "Rejected Date",
 		"TIME_TRACKING": "Time Tracking",
 		"CREATED_AT": "Created At",
-		"SCREEN_CAPTURE": "Screen Capture"
+		"SCREEN_CAPTURE": "Screen Capture",
+		"NUMBER": "Number"
 	},
 	"FORM": {
 		"USERNAME": "Username",
@@ -525,6 +526,8 @@
 			"UPLOADER_PLACEHOLDER": "Image",
 			"UPLOADER_DOCUMENT_PLACEHOLDER": "URL",
 			"ADD_REMOVE_EMPLOYEES": "Add or Remove Employees",
+			"ADD_REMOVE_PROJECTS": "Add or Remove Projects",
+			"ADD_REMOVE_TEAMS": "Add or Remove Teams",
 			"ADD_REMOVE_CANDIDATE": "Add Candidate",
 			"ADD_REMOVE_EMPLOYEE": "Add Interviewer",
 			"ADD_REMOVE_INTERVIEWER": "Select interviewer",
@@ -1209,6 +1212,10 @@
 		"GAUZY_AI_PAGE": {
 			"API_KEY": "Gauzy AI key",
 			"API_SECRET": "Gauzy AI Secret"
+		},
+		"GITHUB_PAGE": {
+			"NAME": "GitHub",
+			"SELECT_REPOSITORY": "Select Repository"
 		},
 		"COMING_SOON": "Coming soon",
 		"RE_INTEGRATE": "Re-integrate",
@@ -3854,6 +3861,7 @@
 		"STOP_TIMER_CHANGE_PROJECT": "Please stop the timer before changing the project",
 		"STOP_TIMER_CHANGE_TASK": "Please stop the timer before changing the task",
 		"STOP_TIMER_CHANGE_DESCRIPTION": "Please stop the timer before changing the description",
+		"STOP_TIMER_CHANGE_TEAM": "Please stop the timer before changing the team",
 		"ACTIVITY_WATCH_INTEGRATION": "ActivityWatch Integration",
 		"LAST_CAPTURE_TAKEN": "Last screen capture taken",
 		"REQUEST_TASK_PERMISSION": "Request permission from the organization administrator",

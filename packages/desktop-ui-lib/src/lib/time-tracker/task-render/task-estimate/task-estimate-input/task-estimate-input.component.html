@@ -1,0 +1,40 @@
+<form (ngSubmit)="onSubmit()" [formGroup]="timeForm">
+	<div class="d-flex inputs">
+		<input
+			class="time"
+			formControlName="hourTen"
+			max="9"
+			min="0"
+			type="number"
+		/>
+		<input
+			class="time"
+			formControlName="hourUnit"
+			max="9"
+			min="0"
+			type="number"
+		/>
+		h
+		<span>:</span>
+		<input
+			class="time"
+			formControlName="minuteTen"
+			max="5"
+			min="0"
+			type="number"
+		/>
+		<input
+			class="time"
+			formControlName="minuteUnit"
+			max="9"
+			min="0"
+			type="number"
+		/>
+		m
+	</div>
+	<nb-icon
+		(click)="onSubmit()"
+		icon="checkmark-circle-2-outline"
+		status="success"
+	></nb-icon>
+</form>

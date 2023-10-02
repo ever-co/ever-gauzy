@@ -218,7 +218,7 @@ export class TagsColorInputComponent extends PictureNameTagsComponent
 	  * Check if selected tags fits on the screen
 	  */
 	private checkTagsFit(selectedTags: ITag[]) {
-
+		if (!selectedTags) { this.selectedTagsOverflow = false; return; }
 		const selectedContainer = this.el.nativeElement.querySelector('.ng-value-container')
 		const containerWidth = selectedContainer.offsetWidth;
 		this.noOfTagsFits = 0;

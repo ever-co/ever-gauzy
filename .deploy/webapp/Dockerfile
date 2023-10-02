@@ -55,6 +55,8 @@ COPY --chown=node:node packages/plugin/package.json ./packages/plugin/
 COPY --chown=node:node packages/plugins/integration-ai/package.json ./packages/plugins/integration-ai/
 COPY --chown=node:node packages/plugins/integration-hubstaff/package.json ./packages/plugins/integration-hubstaff/
 COPY --chown=node:node packages/plugins/integration-upwork/package.json ./packages/plugins/integration-upwork/
+COPY --chown=node:node packages/plugins/integration-github/package.json ./packages/plugins/integration-github/
+COPY --chown=node:node packages/plugins/integration-jira/package.json ./packages/plugins/integration-jira/
 COPY --chown=node:node packages/plugins/product-reviews/package.json ./packages/plugins/product-reviews/
 COPY --chown=node:node packages/plugins/knowledge-base/package.json ./packages/plugins/knowledge-base/
 COPY --chown=node:node packages/plugins/changelog/package.json ./packages/plugins/changelog/
@@ -85,13 +87,16 @@ RUN mkdir dist
 
 COPY --chown=node:node --from=development /srv/gauzy .
 
-ENV NODE_OPTIONS=${NODE_OPTIONS:-"--max-old-space-size=7000"}
+ENV NODE_OPTIONS=${NODE_OPTIONS:-"--max-old-space-size=30000"}
 ENV NODE_ENV=${NODE_ENV:-production}
 
 ENV IS_DOCKER=true
 
+# Temporary disable caching in NX Cloud for builds
+ENV NX_NO_CLOUD=true
+
 RUN yarn build:package:gauzy
-RUN yarn build:gauzy:prod
+RUN yarn build:gauzy:prod:docker
 
 FROM nginx:alpine AS production
 

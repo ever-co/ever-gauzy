@@ -1,17 +1,24 @@
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
 // import { environment } from '../../../environments/environment';
 import * as moment from 'moment';
 import { catchError, map, shareReplay, tap } from 'rxjs/operators';
 import { firstValueFrom, throwError } from 'rxjs';
 import { toParams } from '@gauzy/common-angular';
 import {
+	IGetTasksStatistics,
+	IOrganizationContact,
+	IOrganizationContactCreateInput,
+	IOrganizationProject,
+	IOrganizationProjectCreateInput,
+	IOrganizationTeam,
+	IOrganizationTeamEmployee,
+	IPagination,
+	ITaskStatus,
+	ITaskStatusFindInput,
+	ITaskUpdateInput,
 	TimeLogSourceEnum,
 	TimeLogType,
-	IOrganizationProjectCreateInput,
-	IOrganizationProject,
-	IOrganizationContactCreateInput,
-	IOrganizationContact,
 } from '@gauzy/contracts';
 import { ClientCacheService } from '../services/client-cache.service';
 import { TaskCacheService } from '../services/task-cache.service';
@@ -23,12 +30,23 @@ import { TagCacheService } from '../services/tag-cache.service';
 import { TimeLogCacheService } from '../services/time-log-cache.service';
 import { LoggerService } from '../electron/services';
 import { API_PREFIX } from '../constants/app.constants';
-import { Store, TimeTrackerDateManager } from '../services';
+import {
+	Store,
+	TaskStatusCacheService,
+	TeamsCacheService,
+	TimeTrackerDateManager,
+} from '../services';
 
 @Injectable({
 	providedIn: 'root',
 })
 export class TimeTrackerService {
+	AW_HOST = 'http://localhost:5600';
+	token = '';
+	userId = '';
+	employeeId = '';
+	buckets: any = {};
+
 	constructor(
 		private readonly http: HttpClient,
 		private readonly _clientCacheService: ClientCacheService,
@@ -40,14 +58,10 @@ export class TimeTrackerService {
 		private readonly _userOrganizationService: UserOrganizationService,
 		private readonly _timeLogService: TimeLogCacheService,
 		private readonly _loggerService: LoggerService,
-		private readonly _store: Store
-	) { }
-
-	AW_HOST = 'http://localhost:5600';
-	token = '';
-	userId = '';
-	employeeId = '';
-	buckets: any = {};
+		private readonly _store: Store,
+		private readonly _taskStatusCacheService: TaskStatusCacheService,
+		private readonly _teamsCacheService: TeamsCacheService
+	) {}
 
 	createAuthorizationHeader(headers: Headers) {
 		headers.append('Authorization', 'Basic ' + btoa('username:password'));
@@ -60,18 +74,41 @@ export class TimeTrackerService {
 				tenantId: values.tenantId,
 				...(values.projectId
 					? {
-						projectId: values.projectId,
-					}
+							projectId: values.projectId,
+					  }
 					: {}),
+				...(values.organizationTeamId && {
+					teams: {
+						id: values.organizationTeamId,
+					},
+				}),
+			},
+			relations: [
+				'project',
+				'tags',
+				'teams',
+				'teams.members',
+				'teams.members.employee',
+				'teams.members.employee.user',
+				'creator',
+				'organizationSprint',
+				'taskStatus',
+				'taskSize',
+				'taskPriority',
+			],
+			join: {
+				alias: 'task',
+				leftJoinAndSelect: {
+					members: 'task.members',
+					user: 'members.user',
+				},
 			},
 		};
 		let tasks$ = this._taskCacheService.getValue(request);
 		if (!tasks$) {
 			tasks$ = this.http
 				.get(`${API_PREFIX}/tasks/employee/${values.employeeId}`, {
-					params: toParams({
-						...request,
-					}),
+					params: toParams(request),
 				})
 				.pipe(
 					map((response: any) => response),
@@ -80,6 +117,42 @@ export class TimeTrackerService {
 			this._taskCacheService.setValue(tasks$, request);
 		}
 		return firstValueFrom(tasks$);
+	}
+
+	public async getTasksStatistics(values: IGetTasksStatistics) {
+		const request: IGetTasksStatistics = {
+			organizationId: values.organizationId,
+			tenantId: values.tenantId,
+			taskIds: values.taskIds,
+			startDate: moment(0).utc().toISOString(),
+			endDate: TimeTrackerDateManager.endToday,
+			todayStart: TimeTrackerDateManager.startToday,
+			todayEnd: TimeTrackerDateManager.endToday,
+			...(values.projectId
+				? {
+						projectId: values.projectId,
+				  }
+				: {}),
+		};
+		const cacheReference = {
+			taskIds: values.taskIds,
+			projectId: values.projectId,
+		};
+		let tasksStatistics$ = this._taskCacheService.getValue(cacheReference);
+		if (!tasksStatistics$) {
+			tasksStatistics$ = this.http
+				.get(`${API_PREFIX}/timesheet/statistics/tasks`, {
+					params: toParams({
+						...request,
+					}),
+				})
+				.pipe(
+					map((response: any) => response),
+					shareReplay(1)
+				);
+			this._taskCacheService.setValue(tasksStatistics$, cacheReference);
+		}
+		return firstValueFrom(tasksStatistics$);
 	}
 
 	async getEmployees(values) {
@@ -111,9 +184,9 @@ export class TimeTrackerService {
 	async getTags(values) {
 		const params = values.organizationId
 			? {
-				organizationId: values.organizationId,
-				tenantId: values.tenantId,
-			}
+					organizationId: values.organizationId,
+					tenantId: values.tenantId,
+			  }
 			: {};
 		let tags$ = this._tagCacheService.getValue(params);
 		if (!tags$) {
@@ -137,9 +210,12 @@ export class TimeTrackerService {
 			tenantId: values.tenantId,
 			...(values.organizationContactId
 				? {
-					organizationContactId: values.organizationContactId,
-				}
+						organizationContactId: values.organizationContactId,
+				  }
 				: {}),
+			...(values.organizationTeamId && {
+				organizationTeamId:values.organizationTeamId,
+				})
 		};
 		let projects$ = this._projectCacheService.getValue(params);
 		if (!projects$) {
@@ -186,7 +262,7 @@ export class TimeTrackerService {
 	}
 
 	async getTimeLogs(values) {
-		console.log('TimeLogs', values)
+		console.log('TimeLogs', values);
 		let timeLogs$ = this._timeLogService.getValue('counts');
 		if (!timeLogs$) {
 			timeLogs$ = this.http
@@ -198,7 +274,7 @@ export class TimeTrackerService {
 						todayStart: TimeTrackerDateManager.startToday,
 						todayEnd: TimeTrackerDateManager.endToday,
 						startDate: TimeTrackerDateManager.startWeek,
-						endDate: TimeTrackerDateManager.endWeek
+						endDate: TimeTrackerDateManager.endWeek,
 					}),
 				})
 				.pipe(
@@ -216,15 +292,14 @@ export class TimeTrackerService {
 		const params = toParams({
 			tenantId,
 			organizationId,
-			relations: ['screenshots']
+			relations: ['screenshots'],
 		});
 		let timeSlots$ = this._timeSlotCacheService.getValue(values.timeSlotId);
 		if (!timeSlots$) {
 			timeSlots$ = this.http
-				.get(
-					`${API_PREFIX}/timesheet/time-slot/${values.timeSlotId}`,
-					{ params }
-				)
+				.get(`${API_PREFIX}/timesheet/time-slot/${values.timeSlotId}`, {
+					params,
+				})
 				.pipe(
 					map((response: any) => response),
 					shareReplay(1)
@@ -239,6 +314,9 @@ export class TimeTrackerService {
 	}
 
 	toggleApiStart(values) {
+		const options = {
+			headers: new HttpHeaders({ timeout: `${15 * 1000}` }),
+		};
 		const body = {
 			description: values.note,
 			isBillable: true,
@@ -259,11 +337,18 @@ export class TimeTrackerService {
 			body
 		);
 		return firstValueFrom(
-			this.http.post(`${API_PREFIX}/timesheet/timer/start`, { ...body })
+			this.http.post(
+				`${API_PREFIX}/timesheet/timer/start`,
+				{ ...body },
+				options
+			)
 		);
 	}
 
 	toggleApiStop(values) {
+		const options = {
+			headers: new HttpHeaders({ timeout: `${15 * 1000}` }),
+		};
 		const body = {
 			description: values.note,
 			isBillable: true,
@@ -284,7 +369,11 @@ export class TimeTrackerService {
 			body
 		);
 		return firstValueFrom(
-			this.http.post(`${API_PREFIX}/timesheet/timer/stop`, { ...body })
+			this.http.post(
+				`${API_PREFIX}/timesheet/timer/stop`,
+				{ ...body },
+				options
+			)
 		);
 	}
 
@@ -439,7 +528,7 @@ export class TimeTrackerService {
 			tenantId: values.tenantId,
 			organizationContactId: values.organizationContactId,
 			recordedAt: moment(values.recordedAt).utc().toISOString(),
-			...(values.timesheetId && { timesheetId: values.timesheetId })
+			...(values.timesheetId && { timesheetId: values.timesheetId }),
 		};
 
 		console.log('Params', params);
@@ -587,5 +676,86 @@ export class TimeTrackerService {
 					})
 				)
 		);
+	}
+
+	public async updateTask(id: string, taskUpdateInput: ITaskUpdateInput) {
+		return firstValueFrom(
+			this.http
+				.put<IOrganizationContact>(
+					`${API_PREFIX}/tasks/${id}`,
+					taskUpdateInput
+				)
+				.pipe(
+					tap(() => this._taskCacheService.clear()),
+					tap(() => this._taskStatusCacheService.clear()),
+					catchError((error) => {
+						error.error = {
+							...error.error,
+						};
+						return throwError(() => new Error(error));
+					})
+				)
+		);
+	}
+
+	public async statuses(
+		params: ITaskStatusFindInput
+	): Promise<ITaskStatus[]> {
+		let taskStatuses$ = this._taskStatusCacheService.getValue(params);
+		if (!taskStatuses$) {
+			taskStatuses$ = this.http
+				.get<IPagination<ITaskStatus>>(`${API_PREFIX}/task-statuses`, {
+					params: toParams({ ...params }),
+				})
+				.pipe(
+					map((res) => res.items),
+					shareReplay(1)
+				);
+			this._taskStatusCacheService.setValue(taskStatuses$, params);
+		}
+		return firstValueFrom(taskStatuses$);
+	}
+
+	public async updateOrganizationTeamEmployee(
+		employeeId: string,
+		values: Partial<IOrganizationTeamEmployee>
+	): Promise<any> {
+		const params = {
+			organizationId: values.organizationId,
+			activeTaskId: values.activeTaskId,
+			organizationTeamId: values.organizationTeamId,
+			tenantId: values.tenantId,
+		};
+		return firstValueFrom(
+			this.http.put(
+				`${API_PREFIX}/organization-team-employee/${employeeId}`,
+				params
+			)
+		);
+	}
+
+	public async getTeams(): Promise<IOrganizationTeam[]> {
+		const params = {
+			where: {
+				organizationId: this._store.organizationId,
+				tenantId: this._store.tenantId,
+			},
+		};
+		let teams$ = this._teamsCacheService.getValue(params);
+		if (!teams$) {
+			teams$ = this.http
+				.get<IPagination<IOrganizationTeam>>(
+					`${API_PREFIX}/organization-team/me`,
+					{
+						params: toParams({ ...params }),
+					}
+				)
+				.pipe(
+					map((res) => res.items),
+					shareReplay(1)
+				);
+			this._teamsCacheService.setValue(teams$, params);
+		}
+		return firstValueFrom(teams$);
 	}
 }

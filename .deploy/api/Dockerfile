@@ -47,6 +47,9 @@ ARG FACEBOOK_GRAPH_VERSION
 ARG FACEBOOK_CALLBACK_URL
 ARG INTEGRATED_USER_DEFAULT_PASS
 ARG UPWORK_REDIRECT_URL
+ARG HUBSTAFF_CLIENT_ID
+ARG HUBSTAFF_CLIENT_SECRET
+ARG HUBSTAFF_PERSONAL_ACCESS_TOKEN
 ARG FILE_PROVIDER
 ARG GAUZY_AI_GRAPHQL_ENDPOINT
 ARG GAUZY_AI_REST_ENDPOINT
@@ -104,6 +107,8 @@ COPY --chown=node:node packages/plugin/package.json ./packages/plugin/
 COPY --chown=node:node packages/plugins/integration-ai/package.json ./packages/plugins/integration-ai/
 COPY --chown=node:node packages/plugins/integration-hubstaff/package.json ./packages/plugins/integration-hubstaff/
 COPY --chown=node:node packages/plugins/integration-upwork/package.json ./packages/plugins/integration-upwork/
+COPY --chown=node:node packages/plugins/integration-github/package.json ./packages/plugins/integration-github/
+COPY --chown=node:node packages/plugins/integration-jira/package.json ./packages/plugins/integration-jira/
 COPY --chown=node:node packages/plugins/product-reviews/package.json ./packages/plugins/product-reviews/
 COPY --chown=node:node packages/plugins/knowledge-base/package.json ./packages/plugins/knowledge-base/
 COPY --chown=node:node packages/plugins/changelog/package.json ./packages/plugins/changelog/
@@ -147,6 +152,8 @@ COPY --chown=node:node packages/plugin/package.json ./packages/plugin/
 COPY --chown=node:node packages/plugins/integration-ai/package.json ./packages/plugins/integration-ai/
 COPY --chown=node:node packages/plugins/integration-hubstaff/package.json ./packages/plugins/integration-hubstaff/
 COPY --chown=node:node packages/plugins/integration-upwork/package.json ./packages/plugins/integration-upwork/
+COPY --chown=node:node packages/plugins/integration-github/package.json ./packages/plugins/integration-github/
+COPY --chown=node:node packages/plugins/integration-jira/package.json ./packages/plugins/integration-jira/
 COPY --chown=node:node packages/plugins/product-reviews/package.json ./packages/plugins/product-reviews/
 COPY --chown=node:node packages/plugins/knowledge-base/package.json ./packages/plugins/knowledge-base/
 COPY --chown=node:node packages/plugins/changelog/package.json ./packages/plugins/changelog/
@@ -179,14 +186,17 @@ RUN mkdir dist
 
 COPY --chown=node:node --from=development /srv/gauzy .
 
-ENV NODE_OPTIONS=${NODE_OPTIONS:-"--max-old-space-size=7000"}
+ENV NODE_OPTIONS=${NODE_OPTIONS:-"--max-old-space-size=30000"}
 ENV NODE_ENV=${NODE_ENV:-production}
 ENV DEMO=${DEMO:-false}
 
 ENV IS_DOCKER=true
 
+# Temporary disable caching in NX Cloud for builds
+ENV NX_NO_CLOUD=true
+
 RUN yarn build:package:api
-RUN yarn build:api:prod
+RUN yarn build:api:prod:docker
 
 FROM node:18-alpine3.17 AS production
 
@@ -263,6 +273,9 @@ ENV FACEBOOK_GRAPH_VERSION=${FACEBOOK_GRAPH_VERSION}
 ENV FACEBOOK_CALLBACK_URL=${FACEBOOK_CALLBACK_URL}
 ENV INTEGRATED_USER_DEFAULT_PASS=${INTEGRATED_USER_DEFAULT_PASS}
 ENV UPWORK_REDIRECT_URL=${UPWORK_REDIRECT_URL}
+ENV HUBSTAFF_CLIENT_ID=${HUBSTAFF_CLIENT_ID}
+ENV HUBSTAFF_CLIENT_SECRET=${HUBSTAFF_CLIENT_SECRET}
+ENV HUBSTAFF_PERSONAL_ACCESS_TOKEN=${HUBSTAFF_PERSONAL_ACCESS_TOKEN}
 ENV FILE_PROVIDER=${FILE_PROVIDER}
 ENV GAUZY_AI_GRAPHQL_ENDPOINT=${GAUZY_AI_GRAPHQL_ENDPOINT}
 ENV GAUZY_AI_REST_ENDPOINT=${GAUZY_AI_REST_ENDPOINT}

@@ -1,17 +1,19 @@
 <ng-select
 	#select
+	(change)="selectPriority($event); select.blur()"
+	(clear)="select.blur()"
+	[(ngModel)]="priority"
 	[addTag]="addTag ? createNew : null"
 	[clearable]="true"
-	(change)="selectPriority($event); select.blur();"
-	(clear)="select.blur();"
-	[(ngModel)]="priority"
+	[items]="priorities$ | async"
 	[placeholder]="placeholder || 'TASKS_PAGE.TASK_PRIORITY' | translate"
 	appendTo="body"
+	bindLabel="name"
 >
-	<ng-option
-		*ngFor="let item of priorities$ | async"
-		[value]="item.value"
-	>
-		{{ item.name | replace: '_':' ' | replace: '-':' ' | titlecase }}
-	</ng-option>
+	<ng-template let-index="index" let-item="item" ng-option-tmp>
+		<gauzy-task-badge-view [taskBadge]="item"></gauzy-task-badge-view>
+	</ng-template>
+	<ng-template let-item="item" ng-label-tmp>
+		<gauzy-task-badge-view [taskBadge]="item"></gauzy-task-badge-view>
+	</ng-template>
 </ng-select>

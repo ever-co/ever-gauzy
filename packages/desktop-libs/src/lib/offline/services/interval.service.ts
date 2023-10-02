@@ -1,3 +1,4 @@
+import { TimerService } from './timer.service';
 import { AppError } from '../../error-handler';
 import { IIntervalService, IOfflineMode } from '../../interfaces';
 import { IntervalDAO } from '../dao';
@@ -10,9 +11,12 @@ export class IntervalService implements IIntervalService<IntervalTO> {
 	private _intervalDAO: IntervalDAO;
 	private _userService: UserService;
 	private _offlineMode: IOfflineMode;
+	private _timerService: TimerService;
+
 	constructor() {
 		this._intervalDAO = new IntervalDAO();
 		this._userService = new UserService();
+		this._timerService = new TimerService();
 		this._offlineMode = DesktopOfflineModeHandler.instance;
 	}
 	public async create(interval: IntervalTO): Promise<void> {
@@ -75,7 +79,8 @@ export class IntervalService implements IIntervalService<IntervalTO> {
 		try {
 			const user = await this._userService.retrieve();
 			const [res] = await this._intervalDAO.count(false, user);
-			return res.total;
+			const total = await this._timerService.countNoSynced();
+			return res.total > 0 ? res.total : total;
 		} catch (error) {
 			console.error(error);
 			return 0;

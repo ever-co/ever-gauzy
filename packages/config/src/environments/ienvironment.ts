@@ -12,6 +12,7 @@ import {
 	IFiverrConfig,
 	IGithubConfig,
 	IGoogleConfig,
+	IHubstaffConfig,
 	IKeycloakConfig,
 	ILinkedinConfig,
 	IMicrosoftConfig,
@@ -99,10 +100,9 @@ export interface IEnvironment {
 	awsConfig?: IAwsConfig;
 	wasabiConfig?: IWasabiConfig;
 	cloudinaryConfig?: ICloudinaryConfig;
-
 	facebookConfig: IFacebookConfig;
 	googleConfig: IGoogleConfig;
-	githubConfig: IGithubConfig;
+	github: IGithubConfig /** Github Configuration */;
 	microsoftConfig: IMicrosoftConfig;
 	linkedinConfig: ILinkedinConfig;
 	twitterConfig: ITwitterConfig;
@@ -119,7 +119,10 @@ export interface IEnvironment {
 	 */
 	defaultIntegratedUserPass?: string;
 
-	upworkConfig?: IUpworkConfig;
+	/** Third Party Integrations */
+	upwork?: IUpworkConfig;
+	hubstaff?: IHubstaffConfig;
+
 	isElectron?: boolean;
 	gauzyUserPath?: string;
 	allowSuperAdminRole?: boolean;
@@ -153,4 +156,10 @@ export interface IEnvironment {
 	 * Email Reset
 	 */
 	EMAIL_RESET_EXPIRATION_TIME?: number;
+
+	/**
+	 * Jitsu Config
+	 */
+	JITSU_BROWSER_HOST?: string;
+	JITSU_CONFIG_WRITE_KEY?: string;
 }

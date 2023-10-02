@@ -3851,6 +3851,7 @@
 		"STOP_TIMER_CHANGE_PROJECT": "يرجى إيقاف المؤقت قبل تغيير المشروع",
 		"STOP_TIMER_CHANGE_TASK": "يرجى إيقاف المؤقت قبل تغيير المهمة.",
 		"STOP_TIMER_CHANGE_DESCRIPTION": "يرجى إيقاف المؤقت قبل تغيير الوصف.",
+		"STOP_TIMER_CHANGE_TEAM": "يرجى إيقاف المؤقت قبل تغيير الفريق",
 		"ACTIVITY_WATCH_INTEGRATION": "تكامل ActivityWatch",
 		"LAST_CAPTURE_TAKEN": "آخر لقطة شاشة تم التقاطها",
 		"REQUEST_TASK_PERMISSION": "اطلب إذنًا من مسؤول المنظمة",

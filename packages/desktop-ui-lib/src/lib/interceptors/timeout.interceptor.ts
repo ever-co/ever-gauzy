@@ -7,9 +7,10 @@ import {
 	HttpRequest,
 	HttpHandler,
 	HttpEvent,
-	HttpInterceptor
+	HttpInterceptor,
 } from '@angular/common/http';
-import { Observable, timeout } from 'rxjs';
+import { Observable, throwError, timeout } from 'rxjs';
+import { catchError } from "rxjs/operators";
 
 export const DEFAULT_TIMEOUT = new InjectionToken<number>('defaultTimeout');
 
@@ -21,11 +22,15 @@ export class TimeoutInterceptor implements HttpInterceptor {
 	) { }
 
 	intercept(request: HttpRequest<unknown>, next: HttpHandler): Observable<HttpEvent<unknown>> {
+		const timeoutValue = Number(request.headers.get('timeout')) || this.defaultTimeout;
 		const cloned = request.clone({
-			setHeaders: { 'X-Request-Timeout': `${this.defaultTimeout}` }
+			setHeaders: { 'X-Request-Timeout': `${timeoutValue}` }
 		});
 		return next.handle(cloned).pipe(
-			timeout(this.defaultTimeout)
+			timeout(timeoutValue),
+			catchError((error) => {
+				return throwError(() => error);
+			})
 		);
 	}
 }

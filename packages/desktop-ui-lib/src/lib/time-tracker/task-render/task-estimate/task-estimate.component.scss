@@ -1,0 +1,20 @@
+.estimate-container {
+	width: 192px;
+
+	.estimate {
+		display: flex;
+		align-items: center;
+		justify-content: flex-start;
+		gap: 4px;
+
+		.__label {
+			font-weight: 500;
+			color: var(--gauzy-text-color-2);
+		}
+
+		.__value {
+			font-weight: 600;
+			color: var(--gauzy-text-color-1);
+		}
+	}
+}

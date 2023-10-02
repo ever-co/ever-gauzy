@@ -3,6 +3,8 @@
 	"language": "en",
 	"$schema": "https://raw.githubusercontent.com/streetsidesoftware/cspell/main/cspell.schema.json",
 	"words": [
+		"buildjet",
+		"vcpu",
 		"zfgk",
 		"Zrdm",
 		"superfly",
@@ -12,6 +14,8 @@
 		"slnt",
 		"wght",
 		"Crismon",
+		"Civo",
+		"CIVO",
 		"knowledeg",
 		"timeframe",
 		"keyrings",
@@ -32,6 +36,8 @@
 		"apidemo",
 		"apidemocw",
 		"apistagecw",
+		"apidemocivo",
+		"democivo",
 		"stagecw",
 		"AGPL",
 		"Akveo",
@@ -318,6 +324,9 @@
 		"signin",
 		"ibase",
 		"iwindow",
+		"Probot",
+		"Smee",
+		"badal",
 		"MAINSTRSERVER",
 		"MAINLOADURL",
 		"MAINDB",
@@ -365,7 +374,10 @@
 		"PROJECTRX",
 		"TASKTRX",
 		"USERTRX",
-		"MAINUNEXCEPTION"
+		"MAINUNEXCEPTION",
+		"Harbir",
+		"Chahal",
+		"pino"
 	],
 	"useGitignore": true,
 	"ignorePaths": [

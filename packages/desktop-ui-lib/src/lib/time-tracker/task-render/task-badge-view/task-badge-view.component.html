@@ -1,0 +1,15 @@
+<div class="row">
+	<div class="col-12">
+		<div
+			*ngIf="name"
+			[style.background]="backgroundColor"
+			[style.color]="textColor"
+			class="badge-color"
+		>
+			<div *ngIf="icon$ | async" [style.filter]="imageFilter">
+				<img [src]="icon$ | async" alt="badge" class="badge-img" />
+			</div>
+			<div>{{ name | replace : '-' : ' ' | titlecase }}</div>
+		</div>
+	</div>
+</div>

@@ -21,7 +21,8 @@ import {
 	NbTabsetModule,
 	NbActionsModule,
 	NbContextMenuModule,
-	NbTooltipModule
+	NbTooltipModule,
+	NbPopoverModule,
 } from '@nebular/theme';
 import { NgxPermissionsModule } from 'ngx-permissions';
 import { ThemeModule } from '../../@theme/theme.module';
@@ -62,7 +63,7 @@ import { CKEditorModule } from 'ckeditor4-angular';
 		TaskSettingsComponent,
 		ProjectViewComponent,
 		TasksSprintViewComponent,
-		SprintTaskComponent
+		SprintTaskComponent,
 	],
 	imports: [
 		NbTooltipModule,
@@ -110,7 +111,8 @@ import { CKEditorModule } from 'ckeditor4-angular';
 		TaskNumberFieldModule,
 		NgxPermissionsModule.forChild(),
 		DirectivesModule,
-		CKEditorModule
-	]
+		CKEditorModule,
+		NbPopoverModule,
+	],
 })
-export class TasksModule { }
+export class TasksModule {}
