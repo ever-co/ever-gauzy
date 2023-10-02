@@ -1,9 +1,21 @@
 import { IGithubAppInstallInput } from "@gauzy/contracts";
 import { ApiProperty } from "@nestjs/swagger";
-import { IsNotEmpty, IsString } from "class-validator";
+import { IsEnum, IsNotEmpty, IsString } from "class-validator";
 import { TenantOrganizationBaseDTO } from "core/dto";
 
-export class GithubAppInstallDTO extends TenantOrganizationBaseDTO implements IGithubAppInstallInput {
+export enum GithubSetupActionEnum {
+    INSTALL = 'install',
+    UPDATE = 'update'
+}
+
+export class GithubOAuthDTO extends TenantOrganizationBaseDTO implements IGithubAppInstallInput {
+    @ApiProperty({ type: () => String })
+    @IsNotEmpty()
+    @IsString()
+    readonly code: string;
+}
+
+export class GithubAppInstallDTO extends GithubOAuthDTO implements IGithubAppInstallInput {
 
     @ApiProperty({ type: () => String })
     @IsNotEmpty()
@@ -12,6 +24,6 @@ export class GithubAppInstallDTO extends TenantOrganizationBaseDTO implements IG
 
     @ApiProperty({ type: () => String })
     @IsNotEmpty()
-    @IsString()
-    readonly setup_action: string;
+    @IsEnum(GithubSetupActionEnum)
+    readonly setup_action: GithubSetupActionEnum;
 }

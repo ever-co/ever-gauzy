@@ -23,7 +23,7 @@ export class GitHubAuthorizationController {
     ) {
         try {
             // Validate the input data (You can use class-validator for validation)
-            if (!query || !query.installation_id || !query.setup_action || !query.state) {
+            if (!query || !query.installation_id || !query.setup_action || !query.state || !query.code) {
                 throw new HttpException('Invalid installation query data', HttpStatus.BAD_REQUEST);
             }
 
@@ -32,6 +32,7 @@ export class GitHubAuthorizationController {
 
             /** Construct the redirect URL with query parameters */
             const urlParams = new URLSearchParams();
+            urlParams.append('code', query.code);
             urlParams.append('installation_id', query.installation_id);
             urlParams.append('setup_action', query.setup_action);
             urlParams.append('state', query.state);

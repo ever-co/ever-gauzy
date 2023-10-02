@@ -27,10 +27,11 @@ export class GithubInstallationComponent implements OnInit {
 		this._route.queryParams
 			.pipe(
 				// Filter and keep only valid queryParams with 'installation_id' and 'setup_action'
-				filter(({ installation_id, setup_action }) => !!installation_id && !!setup_action),
+				filter(({ code, installation_id, setup_action }) => !!code && !!installation_id && !!setup_action),
 				// Use 'tap' operator to perform an asynchronous action
-				tap(async ({ installation_id, setup_action, state }: IGithubAppInstallInput) =>
+				tap(async ({ code, installation_id, setup_action, state }: IGithubAppInstallInput) =>
 					await this.verifyGitHubAppAuthorization({
+						code,
 						installation_id,
 						setup_action,
 						state
@@ -49,16 +50,17 @@ export class GithubInstallationComponent implements OnInit {
 	 * @param input - An object containing input parameters, including 'installation_id', 'setup_action', and 'state'.
 	 */
 	private async verifyGitHubAppAuthorization(input: IGithubAppInstallInput) {
-		const { installation_id, setup_action, state } = input;
+		const { code, installation_id, setup_action, state } = input;
 
 		// Check if all required parameters are provided
-		if (installation_id && setup_action && state) {
-			// Split the 'state' parameter to extract 'organizationId' and 'tenantId'
-			const [organizationId, tenantId] = state.split('|');
-
+		if (code && installation_id && setup_action && state) {
 			try {
+				// Split the 'state' parameter to extract 'organizationId' and 'tenantId'
+				const [organizationId, tenantId] = state.split('|');
+
 				// Call a service method (likely from _githubService) to add the installation app
 				const integration = await this._githubService.addInstallationApp({
+					code,
 					installation_id,
 					setup_action,
 					organizationId,

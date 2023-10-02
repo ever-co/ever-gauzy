@@ -164,12 +164,6 @@ export class GithubWizardComponent implements AfterViewInit, OnInit, OnDestroy {
 	 * Open a new popup window for GitHub application installation.
 	 */
 	private async openGitHubAppPopup() {
-		// Extract the organization ID and tenant ID from the selected organization
-		const { id: organizationId, tenantId } = this.organization;
-
-		// Create a state parameter that combines organizationId and tenantId
-		const state = `${organizationId}|${tenantId}`;
-
 		// Specify the width and height for the popup window
 		const width = 600, height = 600;
 
@@ -185,8 +179,23 @@ export class GithubWizardComponent implements AfterViewInit, OnInit, OnDestroy {
 			// A window with the same name is already open, so focus on it
 			window.frames[windowName].focus();
 		} else {
+			// Extract the organization ID and tenant ID from the selected organization
+			const { id: organizationId, tenantId } = this.organization;
+
+			// Create a state parameter that combines organizationId and tenantId
+			const state = `${organizationId}|${tenantId}`;
+
+			// Get the redirect URI from the environment
+			const redirect_uri = environment.GAUZY_GITHUB_REDIRECT_URL;
+
+			// Define the query parameters for the authorization request
+			const queryParams = toParams({
+				'redirect_uri': `${redirect_uri}`,
+				'state': `${state}`,
+			});
+
 			/** Navigate to the target external URL */
-			const url = `https://github.com/apps/${environment.GAUZY_GITHUB_APP_NAME}/installations/new?state=${state.toString()}`;
+			const url = `https://github.com/apps/${environment.GAUZY_GITHUB_APP_NAME}/installations/new?${queryParams.toString()}`;
 
 			/** Navigate to the external URL with query parameters */
 			this.window = window.open(
