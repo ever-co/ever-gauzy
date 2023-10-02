@@ -30,7 +30,7 @@ kind: Deployment
 metadata:
     name: gauzy-stage-api
 spec:
-    replicas: 2
+    replicas: 1
     selector:
         matchLabels:
             app: gauzy-stage-api
@@ -43,28 +43,28 @@ spec:
                 nodeAffinity:
                     requiredDuringSchedulingIgnoredDuringExecution:
                         nodeSelectorTerms:
-                          - matchExpressions:
-                              - key: topology.kubernetes.io/region
-                                operator: In
-                                values:
-                                  - ORD1
-                              - key: node.coreweave.cloud/cpu
-                                operator: In
-                                values:
-                                  - intel-xeon-v3
-                podAntiAffinity:
-                    preferredDuringSchedulingIgnoredDuringExecution:
-                      - podAffinityTerm:
-                            labelSelector:
-                                matchExpressions:
-                                  - key: app
+                            - matchExpressions:
+                                  - key: topology.kubernetes.io/region
                                     operator: In
                                     values:
-                                      - gauzy-stage-api
-                            topologyKey: kubernetes.io/hostname
-                        weight: 1
+                                        - ORD1
+                                  - key: node.coreweave.cloud/cpu
+                                    operator: In
+                                    values:
+                                        - intel-xeon-v3
+                podAntiAffinity:
+                    preferredDuringSchedulingIgnoredDuringExecution:
+                        - podAffinityTerm:
+                              labelSelector:
+                                  matchExpressions:
+                                      - key: app
+                                        operator: In
+                                        values:
+                                            - gauzy-stage-api
+                              topologyKey: kubernetes.io/hostname
+                          weight: 1
             imagePullSecrets:
-              - name: ever-registry-docker-registry-credentials
+                - name: ever-registry-docker-registry-credentials
             containers:
                 - name: gauzy-stage-api
                   image: ever-registry.tenant-acb888-ever.ord1.ingress.coreweave.cloud/ever-co/gauzy-api-stage:latest
@@ -194,19 +194,19 @@ spec:
                       - containerPort: 3000
                         protocol: TCP
                   resources:
-                    requests:
-                      cpu: "0.5"
-                      memory: 2Gi
-                    limits:
-                      cpu: "2"
-                      memory: 8Gi
+                      requests:
+                          cpu: '0.5'
+                          memory: 2Gi
+                      limits:
+                          cpu: '2'
+                          memory: 8Gi
 ---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
     name: gauzy-stage-webapp
 spec:
-    replicas: 2
+    replicas: 1
     selector:
         matchLabels:
             app: gauzy-stage-webapp
@@ -219,28 +219,28 @@ spec:
                 nodeAffinity:
                     requiredDuringSchedulingIgnoredDuringExecution:
                         nodeSelectorTerms:
-                          - matchExpressions:
-                              - key: topology.kubernetes.io/region
-                                operator: In
-                                values:
-                                  - ORD1
-                              - key: node.coreweave.cloud/cpu
-                                operator: In
-                                values:
-                                  - intel-xeon-v3
-                podAntiAffinity:
-                    preferredDuringSchedulingIgnoredDuringExecution:
-                      - podAffinityTerm:
-                            labelSelector:
-                                matchExpressions:
-                                  - key: app
+                            - matchExpressions:
+                                  - key: topology.kubernetes.io/region
                                     operator: In
                                     values:
-                                      - gauzy-stage-webapp
-                            topologyKey: kubernetes.io/hostname
-                        weight: 1
+                                        - ORD1
+                                  - key: node.coreweave.cloud/cpu
+                                    operator: In
+                                    values:
+                                        - intel-xeon-v3
+                podAntiAffinity:
+                    preferredDuringSchedulingIgnoredDuringExecution:
+                        - podAffinityTerm:
+                              labelSelector:
+                                  matchExpressions:
+                                      - key: app
+                                        operator: In
+                                        values:
+                                            - gauzy-stage-webapp
+                              topologyKey: kubernetes.io/hostname
+                          weight: 1
             imagePullSecrets:
-              - name: ever-registry-docker-registry-credentials
+                - name: ever-registry-docker-registry-credentials
             containers:
                 - name: gauzy-stage-webapp
                   image: ever-registry.tenant-acb888-ever.ord1.ingress.coreweave.cloud/ever-co/gauzy-webapp-stage:latest
@@ -273,12 +273,12 @@ spec:
                       - containerPort: 4200
                         protocol: TCP
                   resources:
-                    requests:
-                      cpu: "0.5"
-                      memory: 2Gi
-                    limits:
-                      cpu: "2"
-                      memory: 8Gi
+                      requests:
+                          cpu: '0.5'
+                          memory: 2Gi
+                      limits:
+                          cpu: '2'
+                          memory: 8Gi
 ---
 apiVersion: traefik.containo.us/v1alpha1
 kind: Middleware

@@ -483,6 +483,9 @@ export class TrayIcon {
 	}
 
 	public build(): void {
+		if (!this.tray) {
+			return;
+		}
 		this.tray.setContextMenu(Menu.buildFromTemplate([...this.contextMenu]));
 	}
 }

@@ -4,3 +4,4 @@ export * from './token.interceptor';
 export * from './api.interceptor';
 export * from './timeout.interceptor';
 export * from './language.interceptor';
+export * from './unauthorized.interceptor';

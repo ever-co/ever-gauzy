@@ -682,7 +682,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 			}
 			asapScheduler.schedule(async () => {
 				try {
-					const promises = [
+					const promises: Promise<void>[] = [
 						this.electronService.ipcRenderer.invoke(
 							'UPDATE_SYNCED_TIMER',
 							{
@@ -997,11 +997,11 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 			.subscribe();
 		this._alwaysOnService.state$
 			.pipe(
-				tap((state: AlwaysOnStateEnum) => {
-					if (state === AlwaysOnStateEnum.LOADING) {
-						this.toggleStart(!this.start, true);
-					}
-				}),
+				filter(
+					(state: AlwaysOnStateEnum) =>
+						state === AlwaysOnStateEnum.LOADING
+				),
+				concatMap(() => this.toggleStart(!this.start, true)),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -1253,10 +1253,8 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 		);
 
 		this.electronService.ipcRenderer.on('timer_status', (event, arg) =>
-			this._ngZone.run(() => {
-				(async () => {
+			this._ngZone.run(async() => {
 					await this.getTimerStatus(arg);
-				})();
 			})
 		);
 

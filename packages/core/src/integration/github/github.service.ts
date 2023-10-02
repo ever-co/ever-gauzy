@@ -4,11 +4,12 @@ import { HttpService } from '@nestjs/axios';
 import { catchError, lastValueFrom, switchMap } from 'rxjs';
 import { filter } from 'rxjs/operators';
 import { environment } from '@gauzy/config';
-import { IGithubAppInstallInput, IIntegrationTenant, IntegrationEnum } from '@gauzy/contracts';
+import { IGithubAppInstallInput, IIntegrationTenant, IntegrationEntity, IntegrationEnum } from '@gauzy/contracts';
 import { IntegrationTenantFirstOrCreateCommand } from 'integration-tenant/commands';
 import { IntegrationService } from 'integration/integration.service';
 import { RequestContext } from '../../core/context';
 import { GITHUB_ACCESS_TOKEN_URL } from './github.config';
+import { DEFAULT_ENTITY_SETTINGS, PROJECT_TIED_ENTITIES } from './github-entity-settings';
 const { github } = environment;
 
 @Injectable()
@@ -51,6 +52,26 @@ export class GithubService {
 				}
 			});
 
+			const tiedEntities = PROJECT_TIED_ENTITIES.map(entity => ({
+				...entity,
+				organizationId,
+				tenantId
+			}));
+
+			const entitySettings = DEFAULT_ENTITY_SETTINGS.map((settingEntity) => {
+				if (settingEntity.entity === IntegrationEntity.PROJECT) {
+					return {
+						...settingEntity,
+						tiedEntities
+					};
+				}
+				return {
+					...settingEntity,
+					organizationId,
+					tenantId
+				};
+			});
+
 			/** Execute the command to create the integration tenant settings */
 			return await this._commandBus.execute(
 				new IntegrationTenantFirstOrCreateCommand({
@@ -65,7 +86,7 @@ export class GithubService {
 					integration,
 					tenantId,
 					organizationId,
-					entitySettings: [],
+					entitySettings: entitySettings,
 					settings: [
 						{
 							settingsName: 'installation_id',
