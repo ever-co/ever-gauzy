@@ -22,8 +22,8 @@ export class SqliteProvider implements IServerLessProvider {
 				timezone: 'utc'
 			},
 			pool: {
-				min: 2,
-				max: 5,
+				min: 0,
+				max: 1,
 				createTimeoutMillis: 3000,
 				acquireTimeoutMillis: 60 * 1000 * 2,
 				idleTimeoutMillis: 30000,
