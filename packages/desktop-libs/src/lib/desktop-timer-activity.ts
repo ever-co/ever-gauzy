@@ -13,7 +13,6 @@ export const TimerData = {
 		await timerService.update(timer);
 	},
 	insertWindowEvent: async (knex: Knex, query, retry = 0) => {
-		console.log(query)
 		await knex.transaction(async (trx: Knex.Transaction) => {
 			try {
 				await trx('window-events')
