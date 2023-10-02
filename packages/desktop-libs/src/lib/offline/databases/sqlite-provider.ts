@@ -23,7 +23,7 @@ export class SqliteProvider implements IServerLessProvider {
 			},
 			pool: {
 				min: 0,
-				max: 10,
+				max: 1,
 				createTimeoutMillis: 3000,
 				acquireTimeoutMillis: 60 * 1000 * 2,
 				idleTimeoutMillis: 30000,
