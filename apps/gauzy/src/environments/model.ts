@@ -38,7 +38,7 @@ export interface Environment {
 	SENTRY_DSN?: string;
 	SENTRY_TRACES_SAMPLE_RATE?: string;
 
-	HUBSTAFF_REDIRECT_URI?: string;
+	HUBSTAFF_REDIRECT_URL?: string;
 
 	IS_ELECTRON: boolean;
 
@@ -69,4 +69,13 @@ export interface Environment {
 	GAUZY_CLOUD_APP: string;
 
 	FILE_PROVIDER: string;
+
+	JITSU_BROWSER_HOST?: string;
+	JITSU_BROWSER_WRITE_KEY?: string;
+
+	/** Github Integration */
+	GAUZY_GITHUB_APP_NAME: string;
+	GAUZY_GITHUB_APP_ID: string;
+	GAUZY_GITHUB_CLIENT_ID: string;
+	GAUZY_GITHUB_REDIRECT_URL: string;
 }

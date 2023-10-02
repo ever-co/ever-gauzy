@@ -8,8 +8,7 @@ export interface IHubstaffAccessTokens {
 	expires_in: number;
 }
 
-export interface ICreateIntegrationDto 
-	extends IBasePerTenantAndOrganizationEntityModel {
+export interface ICreateHubstaffIntegrationInput extends IBasePerTenantAndOrganizationEntityModel {
 	client_id: string;
 	code: string;
 	grant_type: string;

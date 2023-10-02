@@ -151,7 +151,9 @@
 		"COPY": "Kopieren",
 		"CUT": "Schnitt",
 		"PASTE": "Einfügen",
-		"FORWARD_PORTS": "Weiterleitung von Ports"
+		"FORWARD_PORTS": "Weiterleitung von Ports",
+		"REPORT": "Bericht",
+		"IGNORE": "Ignorieren"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {
@@ -3836,7 +3838,9 @@
 			"TIMEZONE_LABEL": "Wenn Sie 'Local' wählen, wird die Zeit in Ihrer lokalen Zeitzone angezeigt, während die Auswahl von 'UTC' die Zeit in der universellen UTC-Zeitzone zeigt, die in Abrechnungs- und anderen Systemen verwendet wird.",
 			"TIMEZONE_PLACEHOLDER": "Wählen Sie entweder \"Lokal\" oder \"UTC\".",
 			"TIMEZONE_LOCAL": "Lokal",
-			"TIMEZONE_UTC": "UTC (Coordinated Universal Time) ist die weltweit verwendete Standardzeit, die als Grundlage für die Zeitmessung auf der ganzen Welt dient. Es wird verwendet, um zu verdeutlichen, dass eine bestimmte Zeitangabe unabhängig von der geografischen Lage standardisiert ist. UTC berücksichtigt keine Sommer- oder Winterzeitänderungen und wird häufig von technischen Systemen und in der Luftfahrt verwendet."
+			"TIMEZONE_UTC": "UTC",
+			"WIDGET": "Widget",
+			"WIDGET_LABEL": "Dieses Fenster spiegelt den Status des Timers wider, indem es anzeigt, ob er läuft oder angehalten ist, und dient als Schaltfläche."
 		},
 		"WEEKLY_LIMIT_EXCEEDED": "Wöchentliches Limit überschritten",
 		"OF_HRS": "Von {{ limit }} Stunden",
@@ -3847,6 +3851,7 @@
 		"STOP_TIMER_CHANGE_PROJECT": "Bitte stoppen Sie den Timer, bevor Sie das Projekt ändern.",
 		"STOP_TIMER_CHANGE_TASK": "Bitte stoppen Sie den Timer, bevor Sie die Aufgabe ändern.",
 		"STOP_TIMER_CHANGE_DESCRIPTION": "Bitte stoppen Sie den Timer, bevor Sie die Beschreibung ändern.",
+		"STOP_TIMER_CHANGE_TEAM": "Bitte stoppen Sie den Timer, bevor Sie das Team wechseln",
 		"ACTIVITY_WATCH_INTEGRATION": "ActivityWatch Integration",
 		"LAST_CAPTURE_TAKEN": "Letzter Bildschirmfoto aufgenommen",
 		"REQUEST_TASK_PERMISSION": "Bitte um Erlaubnis vom Administrator der Organisation.",
@@ -3879,7 +3884,9 @@
 			"CONNECTION_DRIVER": "Die Verbindung zur {{ driver }} Datenbank ist erfolgreich.",
 			"STILL_WORKING": "Arbeitest du noch?",
 			"INACTIVITY_HANDLER": "Inaktivitätsverwalter",
-			"WANT_LOGOUT": "Bist du sicher, dass du dich abmelden möchtest?"
+			"WANT_LOGOUT": "Bist du sicher, dass du dich abmelden möchtest?",
+			"ERROR_HANDLER": "Fehlerbehandlung",
+			"ERROR_OCCURRED": "Fehler aufgetreten"
 		},
 		"NO_LIMIT": "∞ Keine Grenze",
 		"TASK": "Aufgabe",

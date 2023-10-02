@@ -1,0 +1,31 @@
+<div class="row estimate-container">
+	<div class="col-12 estimate">
+		<div class="__label">
+			{{
+				((isEditDisabled$ | async)
+					? 'TASKS_PAGE.COMPLETED'
+					: isEdit
+					? 'TIMESHEET.EDIT'
+					: 'TASKS_PAGE.ESTIMATE'
+				) | translate
+			}}:
+		</div>
+		<ng-container *ngIf="!isEdit; else edit">
+			<div class="__value">
+				{{ (estimate$ | async) || 0 | durationFormat : 'HH:mm' }}
+			</div>
+			<nb-icon
+				(click)="isEdit = true"
+				*ngIf="!(isEditDisabled$ | async)"
+				icon="edit-2-outline"
+			></nb-icon>
+		</ng-container>
+	</div>
+</div>
+
+<ng-template #edit>
+	<gauzy-task-estimate-input
+		(submit)="update($event)"
+		[estimate$]="estimate$"
+	></gauzy-task-estimate-input>
+</ng-template>

@@ -150,7 +150,9 @@
 		"COPY": "Копиране",
 		"CUT": "Изрязване",
 		"PASTE": "Поставяне",
-		"FORWARD_PORTS": "Препращане на портове"
+		"FORWARD_PORTS": "Препращане на портове",
+		"REPORT": "Доклад",
+		"IGNORE": "Игнориране"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {
@@ -519,6 +521,8 @@
 			"REMOVE_IMAGE": "Премахни снимка",
 			"UPLOADER_PLACEHOLDER": "Снимка",
 			"UPLOADER_DOCUMENT_PLACEHOLDER": "URL",
+			"ADD_REMOVE_PROJECTS": "Добавяне или премахване на проекти",
+			"ADD_REMOVE_TEAMS": "Добавяне или премахване на екипи",
 			"ADD_REMOVE_EMPLOYEES": "Добави или премахни служители",
 			"ADD_REMOVE_CANDIDATE": "Add Candidate",
 			"ADD_REMOVE_EMPLOYEE": "Add Interviewer",
@@ -3781,7 +3785,9 @@
 			"TIMEZONE_LABEL": "Изборът на 'Local' показва времето във вашата местна часова зона, докато изборът на 'UTC' показва времето в универсалната UTC часова зона, използвана от системите за фактуриране и други.",
 			"TIMEZONE_PLACEHOLDER": "Изберете 'Local' или 'UTC'.",
 			"TIMEZONE_LOCAL": "Местно време",
-			"TIMEZONE_UTC": "UTC"
+			"TIMEZONE_UTC": "UTC",
+			"WIDGET": "Подредба",
+			"WIDGET_LABEL": "Този прозорец отразява състоянието на таймера, показвайки дали той работи или е спрян, и функционира като бутон"
 		},
 		"WEEKLY_LIMIT_EXCEEDED": "Седмичната лимита е превишена",
 		"OF_HRS": "От {{ limit }} часа",
@@ -3792,6 +3798,7 @@
 		"STOP_TIMER_CHANGE_PROJECT": "Моля, спрете таймера преди да промените проекта",
 		"STOP_TIMER_CHANGE_TASK": "Моля, спрете таймера преди да промените задачата",
 		"STOP_TIMER_CHANGE_DESCRIPTION": "Моля, спрете таймера преди да промените описанието",
+		"STOP_TIMER_CHANGE_TEAM": "Моля, спрете таймера, преди да промените отбора",
 		"ACTIVITY_WATCH_INTEGRATION": "Интеграция с ActivityWatch",
 		"LAST_CAPTURE_TAKEN": "Последната заснета екранна снимка",
 		"REQUEST_TASK_PERMISSION": "Изисква се разрешение от администратора на организацията",
@@ -3824,7 +3831,9 @@
 			"CONNECTION_DRIVER": "Връзката с {{ driver }} DB е успешна",
 			"STILL_WORKING": "Все още работите ли?",
 			"INACTIVITY_HANDLER": "Обработчик на неактивност",
-			"WANT_LOGOUT": "Сигурни ли сте, че искате да излезете?"
+			"WANT_LOGOUT": "Сигурни ли сте, че искате да излезете?",
+			"ERROR_HANDLER": "Управление на грешки",
+			"ERROR_OCCURRED": "Възникна грешка"
 		},
 		"NO_LIMIT": "∞ Без лимит",
 		"TASK": "Задача",

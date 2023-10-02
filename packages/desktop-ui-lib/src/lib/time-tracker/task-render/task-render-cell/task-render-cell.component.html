@@ -1,0 +1,30 @@
+<div class="task-render">
+	<div [nbPopover]="detail" class="detail">
+		<nb-icon
+			*ngIf="isSelected$ | async"
+			class="running-task"
+			icon="arrow-right-outline"
+			status="primary"
+		></nb-icon>
+		<div *ngIf="number" class="task-number">
+			{{ number }}
+		</div>
+		<div class="task-title-container">
+			<div class="task-title">{{ title }}</div>
+		</div>
+	</div>
+	<div class="badges">
+		<div *ngIf="priority">
+			<gauzy-task-badge-view
+				[taskBadge]="priority"
+			></gauzy-task-badge-view>
+		</div>
+		<div *ngIf="size">
+			<gauzy-task-badge-view [taskBadge]="size"></gauzy-task-badge-view>
+		</div>
+	</div>
+</div>
+
+<ng-template #detail>
+	<gauzy-task-detail [task]="task$ | async" (hidden)="hideDetails()"></gauzy-task-detail>
+</ng-template>

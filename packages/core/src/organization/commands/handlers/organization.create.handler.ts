@@ -20,18 +20,15 @@ import { OrganizationIssueTypeBulkCreateCommand } from './../../../tasks/issue-t
 import { OrganizationTaskSettingCreateCommand } from 'organization-task-setting/commands';
 
 @CommandHandler(OrganizationCreateCommand)
-export class OrganizationCreateHandler
-	implements ICommandHandler<OrganizationCreateCommand>
-{
+export class OrganizationCreateHandler implements ICommandHandler<OrganizationCreateCommand> {
+
 	constructor(
 		private readonly commandBus: CommandBus,
 		private readonly organizationService: OrganizationService,
 		private readonly userOrganizationService: UserOrganizationService,
 		private readonly userService: UserService,
-		@InjectRepository(Organization)
-		private readonly organizationRepository: Repository<Organization>,
-		@InjectRepository(UserOrganization)
-		private readonly userOrganizationRepository: Repository<UserOrganization>
+		@InjectRepository(Organization) private readonly organizationRepository: Repository<Organization>,
+		@InjectRepository(UserOrganization) private readonly userOrganizationRepository: Repository<UserOrganization>
 	) { }
 
 	public async execute(

@@ -9,25 +9,7 @@ import { argv } from 'yargs';
 const environment = argv.environment;
 const isProd = environment === 'prod';
 
-let envFileContent;
-
-if (!env.GOOGLE_MAPS_API_KEY) {
-	console.warn(
-		'WARNING: No Google Maps API Key defined in the .env file. Google Maps may not be working!'
-	);
-}
-
-if (!env.SENTRY_DSN) {
-	console.warn(
-		'WARNING: No Sentry DSN defined in the .env file. Sentry logging may not be working!'
-	);
-}
-
-if (!env.CLOUDINARY_CLOUD_NAME || !env.CLOUDINARY_API_KEY) {
-	console.warn('WARNING: No Cloudinary API keys defined in the .env file.');
-}
-
-envFileContent = `// NOTE: Auto-generated file
+let envFileContent = `// NOTE: Auto-generated file
 // The file contents for the current environment will overwrite these during build.
 // The build system defaults to the dev environment which uses 'environment.ts', but if you do
 // 'ng build --env=prod' then 'environment.prod.ts' will be used instead.
@@ -40,6 +22,30 @@ import { CloudinaryConfiguration } from '@cloudinary/angular-5.x';
 `;
 
 if (!env.IS_DOCKER) {
+	if (!env.GOOGLE_MAPS_API_KEY) {
+		console.warn(
+			'WARNING: No Google Maps API Key defined in the .env file. Google Maps may not be working!'
+		);
+	}
+
+	if (!env.SENTRY_DSN) {
+		console.warn(
+			'WARNING: No Sentry DSN defined in the .env file. Sentry logging may not be working!'
+		);
+	}
+
+	if (!env.CLOUDINARY_CLOUD_NAME || !env.CLOUDINARY_API_KEY) {
+		console.warn(
+			'WARNING: No Cloudinary API keys defined in the .env file.'
+		);
+	}
+
+	if (!env.JITSU_BROWSER_HOST || !env.JITSU_BROWSER_WRITE_KEY) {
+		console.warn(
+			'WARNING: No Jitsu keys defined in the .env file. Jitsu analytics may not be working!'
+		);
+	}
+
 	envFileContent += `
 
 	let API_BASE_URL = '${env.API_BASE_URL}';
@@ -113,7 +119,7 @@ if (!env.IS_DOCKER) {
 		SENTRY_DSN: '${env.SENTRY_DSN}',
 		SENTRY_TRACES_SAMPLE_RATE: '${env.SENTRY_TRACES_SAMPLE_RATE}',
 
-		HUBSTAFF_REDIRECT_URI: '${env.HUBSTAFF_REDIRECT_URI}',
+		HUBSTAFF_REDIRECT_URL: '${env.HUBSTAFF_REDIRECT_URL}',
 
 		IS_ELECTRON: IS_ELECTRON,
 		IS_INTEGRATED_DESKTOP: IS_INTEGRATED_DESKTOP,
@@ -142,6 +148,14 @@ if (!env.IS_DOCKER) {
 		GAUZY_CLOUD_APP: '${env.GAUZY_CLOUD_APP}',
 
 		FILE_PROVIDER: '${env.FILE_PROVIDER}',
+
+		JITSU_BROWSER_HOST: '${env.JITSU_BROWSER_HOST}',
+		JITSU_BROWSER_WRITE_KEY: '${env.JITSU_BROWSER_WRITE_KEY}',
+
+		GAUZY_GITHUB_APP_NAME: '${env.GAUZY_GITHUB_APP_NAME}',
+		GAUZY_GITHUB_APP_ID: '${env.GAUZY_GITHUB_APP_ID}',
+		GAUZY_GITHUB_CLIENT_ID: '${env.GAUZY_GITHUB_CLIENT_ID}',
+		GAUZY_GITHUB_REDIRECT_URL: '${env.GAUZY_GITHUB_REDIRECT_URL}',
 	};
 	`;
 } else {
@@ -208,7 +222,7 @@ if (!env.IS_DOCKER) {
 		SENTRY_DSN: 'DOCKER_SENTRY_DSN',
 		SENTRY_TRACES_SAMPLE_RATE: 'DOCKER_SENTRY_TRACES_SAMPLE_RATE',
 
-		HUBSTAFF_REDIRECT_URI: 'DOCKER_HUBSTAFF_REDIRECT_URI',
+		HUBSTAFF_REDIRECT_URL: 'DOCKER_HUBSTAFF_REDIRECT_URL',
 
 		IS_ELECTRON: IS_ELECTRON,
 		IS_INTEGRATED_DESKTOP: IS_INTEGRATED_DESKTOP,
@@ -240,6 +254,14 @@ if (!env.IS_DOCKER) {
 		GAUZY_CLOUD_APP: 'DOCKER_GAUZY_CLOUD_APP',
 
 		FILE_PROVIDER: '${env.FILE_PROVIDER}',
+
+		JITSU_BROWSER_HOST: '${env.JITSU_BROWSER_HOST}',
+		JITSU_BROWSER_WRITE_KEY: '${env.JITSU_BROWSER_WRITE_KEY}',
+
+		GAUZY_GITHUB_APP_NAME: '${env.GAUZY_GITHUB_APP_NAME}',
+		GAUZY_GITHUB_APP_ID: '${env.GAUZY_GITHUB_APP_ID}',
+		GAUZY_GITHUB_CLIENT_ID: '${env.GAUZY_GITHUB_CLIENT_ID}',
+		GAUZY_GITHUB_REDIRECT_URL: '${env.GAUZY_GITHUB_REDIRECT_URL}',
 	};
 `;
 }
@@ -266,10 +288,10 @@ if (!isProd) {
 // we always want first to remove old generated files (one of them is not needed for current build)
 try {
 	unlinkSync(`./apps/gauzy/src/environments/environment.ts`);
-} catch { }
+} catch {}
 try {
 	unlinkSync(`./apps/gauzy/src/environments/environment.prod.ts`);
-} catch { }
+} catch {}
 
 const envFileDest: string = isProd ? 'environment.prod.ts' : 'environment.ts';
 const envFileDestOther: string = !isProd

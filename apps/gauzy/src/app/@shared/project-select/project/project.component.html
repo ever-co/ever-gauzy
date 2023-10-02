@@ -1,3 +1,4 @@
+<label class="label" *ngIf="label">{{ label | translate }}</label>
 <ng-template
 	[ngIf]="!multiple"
 	[ngIfElse]="multipleSelect"
@@ -19,6 +20,7 @@
 		bindValue="id"
 		bindLabel="name"
 		appendTo="body"
+		fullWidth
 	>
 		<ng-container *ngIf="shortened">
 			<ng-template ng-option-tmp let-item="item" let-index="index">
@@ -57,6 +59,7 @@
 			placeholder || 'FORM.PLACEHOLDERS.ALL_PROJECTS' | translate
 		"
 		[(selected)]="projectId"
+		fullWidth
 	>
 		<nb-option *ngFor="let project of projects" [value]="project.id">
 			{{ project.name }}

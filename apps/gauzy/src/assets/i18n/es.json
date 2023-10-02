@@ -151,7 +151,9 @@
 		"COPY": "Copiar",
 		"CUT": "Cortar",
 		"PASTE": "Pegar",
-		"FORWARD_PORTS": "Reenviar puertos"
+		"FORWARD_PORTS": "Reenviar puertos",
+		"REPORT": "Informe",
+		"IGNORE": "Ignorar"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {
@@ -523,6 +525,8 @@
 			"UPLOADER_PLACEHOLDER": "Imagen",
 			"UPLOADER_DOCUMENT_PLACEHOLDER": "URL (Uniform Resource Locator)",
 			"ADD_REMOVE_EMPLOYEES": "Agregar o eliminar empleados.",
+			"ADD_REMOVE_PROJECTS": "Agregar o quitar proyecto",
+			"ADD_REMOVE_TEAMS": "Agregar o eliminar equipos",
 			"ADD_REMOVE_CANDIDATE": "Agregar candidato",
 			"ADD_REMOVE_EMPLOYEE": "Añadir entrevistador",
 			"ADD_REMOVE_INTERVIEWER": "Seleccionar entrevistador",
@@ -3836,7 +3840,9 @@
 			"TIMEZONE_LABEL": "Seleccionar 'Local' muestra la hora en tu zona horaria local, mientras que seleccionar 'UTC' muestra la hora en la zona horaria universal UTC utilizada por sistemas de facturación y otros sistemas.",
 			"TIMEZONE_PLACEHOLDER": "Selecciona 'Local' o 'UTC'.",
 			"TIMEZONE_LOCAL": "Local",
-			"TIMEZONE_UTC": "UTC"
+			"TIMEZONE_UTC": "UTC",
+			"WIDGET": "Widget",
+			"WIDGET_LABEL": "Esta ventana refleja el estado del temporizador, indicando si está en funcionamiento o detenido, y funciona como un botón."
 		},
 		"WEEKLY_LIMIT_EXCEEDED": "Límite semanal excedido",
 		"OF_HRS": "De {{ limit }} horas.",
@@ -3847,6 +3853,7 @@
 		"STOP_TIMER_CHANGE_PROJECT": "Por favor, detén el temporizador antes de cambiar el proyecto.",
 		"STOP_TIMER_CHANGE_TASK": "Por favor, detén el temporizador antes de cambiar la tarea.",
 		"STOP_TIMER_CHANGE_DESCRIPTION": "Por favor, detenga el cronómetro antes de cambiar la descripción.",
+		"STOP_TIMER_CHANGE_TEAM": "Por favor, detenga el temporizador antes de cambiar el equipo",
 		"ACTIVITY_WATCH_INTEGRATION": "Integración con ActivityWatch",
 		"LAST_CAPTURE_TAKEN": "Última captura de pantalla tomada",
 		"REQUEST_TASK_PERMISSION": "Solicitar permiso al administrador de la organización.",
@@ -3879,7 +3886,9 @@
 			"CONNECTION_DRIVER": "La conexión a la base de datos del conductor {{ driver }} se ha realizado con éxito.",
 			"STILL_WORKING": "¿Todavía estás trabajando?",
 			"INACTIVITY_HANDLER": "Manejador de inactividad",
-			"WANT_LOGOUT": "¿Estás seguro/a de que quieres cerrar la sesión?"
+			"WANT_LOGOUT": "¿Estás seguro/a de que quieres cerrar la sesión?",
+			"ERROR_HANDLER": "Manejador de errores",
+			"ERROR_OCCURRED": "Error ocurrido"
 		},
 		"NO_LIMIT": "∞ Sin límite",
 		"TASK": "Tarea",

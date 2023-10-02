@@ -151,7 +151,9 @@
 		"COPY": "Copier",
 		"CUT": "Couper",
 		"PASTE": "Coller",
-		"FORWARD_PORTS": "Transférez les ports"
+		"FORWARD_PORTS": "Transférez les ports",
+		"REPORT": "Rapport",
+		"IGNORE": "Ignorer"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {
@@ -523,6 +525,7 @@
 			"UPLOADER_PLACEHOLDER": "Image",
 			"UPLOADER_DOCUMENT_PLACEHOLDER": "URL (Uniform Resource Locator)",
 			"ADD_REMOVE_EMPLOYEES": "Ajouter ou Supprimer des Employés",
+			"ADD_REMOVE_PROJECTS": "Ajouter ou supprimer un projet",
 			"ADD_REMOVE_CANDIDATE": "Ajouter un candidat",
 			"ADD_REMOVE_EMPLOYEE": "Ajouter un intervieweur",
 			"ADD_REMOVE_INTERVIEWER": "Sélectionnez l'intervieweur",
@@ -3836,7 +3839,9 @@
 			"TIMEZONE_LABEL": "En choisissant 'Local', cela affiche l'heure dans votre fuseau horaire local, tandis que la sélection de 'UTC' affiche l'heure dans le fuseau horaire universel UTC utilisé par la facturation et d'autres systèmes.",
 			"TIMEZONE_PLACEHOLDER": "Sélectionnez soit 'Local' ou 'UTC'.",
 			"TIMEZONE_LOCAL": "Local",
-			"TIMEZONE_UTC": "Temps universel coordonné"
+			"TIMEZONE_UTC": "Temps universel coordonné",
+			"WIDGET": "Widget",
+			"WIDGET_LABEL": "Cette fenêtre reflète l'état du minuteur, indiquant s'il est en marche ou arrêté, et fonctionne comme un bouton."
 		},
 		"WEEKLY_LIMIT_EXCEEDED": "La limite hebdomadaire est dépassée.",
 		"OF_HRS": "De {{ limit }} heures",
@@ -3847,6 +3852,7 @@
 		"STOP_TIMER_CHANGE_PROJECT": "Veuillez arrêter le chronomètre avant de changer de projet.",
 		"STOP_TIMER_CHANGE_TASK": "Veuillez arrêter le chronomètre avant de changer de tâche.",
 		"STOP_TIMER_CHANGE_DESCRIPTION": "S'il vous plaît arrêtez le minuteur avant de modifier la description.",
+		"STOP_TIMER_CHANGE_TEAM": "Veuillez arrêter le minuteur avant de changer d'équipe",
 		"ACTIVITY_WATCH_INTEGRATION": "Intégration d'ActivityWatch",
 		"LAST_CAPTURE_TAKEN": "Dernière capture d'écran prise",
 		"REQUEST_TASK_PERMISSION": "Demander la permission à l'administrateur de l'organisation.",
@@ -3879,7 +3885,9 @@
 			"CONNECTION_DRIVER": "La connexion à la base de données de {{driver}} a réussi.",
 			"STILL_WORKING": "Travaillez-vous toujours?",
 			"INACTIVITY_HANDLER": "Gestionnaire d'inactivité",
-			"WANT_LOGOUT": "Êtes-vous sûr(e) de vouloir vous déconnecter ?"
+			"WANT_LOGOUT": "Êtes-vous sûr(e) de vouloir vous déconnecter ?",
+			"ERROR_HANDLER": "Gestionnaire d'erreurs",
+			"ERROR_OCCURRED": "Erreur survenue"
 		},
 		"NO_LIMIT": "∞ Sans limite",
 		"TASK": "Tâche",

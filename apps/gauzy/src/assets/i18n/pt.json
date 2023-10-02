@@ -151,7 +151,9 @@
 		"COPY": "Copiar",
 		"CUT": "Corte",
 		"PASTE": "Colar",
-		"FORWARD_PORTS": "Encaminhar Portas"
+		"FORWARD_PORTS": "Encaminhar Portas",
+		"REPORT": "Relatório",
+		"IGNORE": "Ignorar"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {
@@ -3836,7 +3838,9 @@
 			"TIMEZONE_LABEL": "Escolher 'Local' exibe o horário na sua zona de tempo local, enquanto selecionar 'UTC' mostra o horário na zona de tempo universal UTC utilizada por faturamento e outros sistemas.",
 			"TIMEZONE_PLACEHOLDER": "Selecione 'Local' ou 'UTC'.",
 			"TIMEZONE_LOCAL": "Local",
-			"TIMEZONE_UTC": "UTC stands for Coordinated Universal Time, which is a standard time reference used worldwide. It is based on the time at the Prime Meridian, located in Greenwich, London. UTC is commonly used in aviation, telecommunications, and other fields that require precision timing."
+			"TIMEZONE_UTC": "UTC",
+			"WIDGET": "Widget",
+			"WIDGET_LABEL": "Esta janela reflete o estado do temporizador, indicando se está em execução ou parado, e funciona como um botão."
 		},
 		"WEEKLY_LIMIT_EXCEEDED": "Limite semanal excedido",
 		"OF_HRS": "De {{ limit }} horas.",
@@ -3847,6 +3851,7 @@
 		"STOP_TIMER_CHANGE_PROJECT": "Por favor, pare o cronômetro antes de mudar o projeto.",
 		"STOP_TIMER_CHANGE_TASK": "Por favor, pare o cronômetro antes de alterar a tarefa.",
 		"STOP_TIMER_CHANGE_DESCRIPTION": "Por favor, pare o cronômetro antes de alterar a descrição.",
+		"STOP_TIMER_CHANGE_TEAM": "Por favor, pare o cronômetro antes de mudar de equipe",
 		"ACTIVITY_WATCH_INTEGRATION": "Integração do ActivityWatch",
 		"LAST_CAPTURE_TAKEN": "Última captura de tela tirada.",
 		"REQUEST_TASK_PERMISSION": "Solicitar permissão ao administrador da organização",
@@ -3879,7 +3884,9 @@
 			"CONNECTION_DRIVER": "A conexão com o banco de dados {{ driver }} é bem-sucedida.",
 			"STILL_WORKING": "Você ainda está trabalhando?",
 			"INACTIVITY_HANDLER": "Manipulador de Inatividade",
-			"WANT_LOGOUT": "Você tem certeza de que deseja sair?"
+			"WANT_LOGOUT": "Você tem certeza de que deseja sair?",
+			"ERROR_HANDLER": "Manipulador de Erros",
+			"ERROR_OCCURRED": "Erro Ocorrido"
 		},
 		"NO_LIMIT": "∞ Sem Limite",
 		"TASK": "Tarefa",

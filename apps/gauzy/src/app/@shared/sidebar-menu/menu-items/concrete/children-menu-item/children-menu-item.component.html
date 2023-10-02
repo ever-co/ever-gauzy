@@ -20,7 +20,7 @@
 				<i [class]="item?.icon"></i
 				><span *ngIf="collapse || mouseHover"
 					><a
-						[href]="adpatExternalUrl(item?.link)"
+						[href]="getExternalUrl(item?.link)"
 						onclick="return false;"
 						>{{ item?.title }}</a
 					></span
@@ -48,7 +48,7 @@
 				<i [class]="item?.icon"></i
 				><span *ngIf="collapse || mouseHover"
 					><a
-						[href]="adpatExternalUrl(item?.link)"
+						[href]="getExternalUrl(item?.link)"
 						onclick="return false;"
 						>{{ item?.title }}</a
 					></span

@@ -3,7 +3,7 @@ import { HttpModule } from '@nestjs/axios';
 import { DynamicModule, Module } from '@nestjs/common';
 import { GauzyAIService } from './gauzy-ai.service';
 import gauzyAI from './config/gauzy-ai';
-import { ConfigurationOptions } from './configuration.interface';
+import { IConfigurationOptions } from './configuration.interface';
 import { RequestConfigProvider } from './request-config.provider';
 import { GAUZY_AI_CONFIG_OPTIONS } from './constants';
 
@@ -17,6 +17,8 @@ import { GAUZY_AI_CONFIG_OPTIONS } from './constants';
 				maxRedirects: 5,
 				headers: {
 					'Content-Type': 'application/json',
+					ApiKey: config.get<string>('guazyAI.gauzyAiApiKey'),
+					ApiSecret: config.get<string>('guazyAI.gauzyAiApiSecret'),
 				},
 			}),
 			inject: [ConfigService],
@@ -39,7 +41,7 @@ export class GauzyAIModule {
 	 * @param options
 	 * @returns
 	 */
-	static forRoot(options?: ConfigurationOptions): DynamicModule {
+	static forRoot(options?: IConfigurationOptions): DynamicModule {
 		return {
 			module: GauzyAIModule,
 			imports: [
@@ -48,9 +50,9 @@ export class GauzyAIModule {
 			providers: [
 				{
 					provide: GAUZY_AI_CONFIG_OPTIONS,
-					useFactory: (config: ConfigService): ConfigurationOptions => ({
-						apiKey: config.get('guazyAI.gauzyAiApiKey'),
-						apiSecret: config.get('guazyAI.gauzyAiApiSecret'),
+					useFactory: (config: ConfigService): IConfigurationOptions => ({
+						ApiKey: config.get<string>('guazyAI.gauzyAiApiKey'),
+						ApiSecret: config.get<string>('guazyAI.gauzyAiApiSecret'),
 						...options,
 					}),
 					inject: [ConfigService],

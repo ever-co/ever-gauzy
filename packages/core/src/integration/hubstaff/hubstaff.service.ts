@@ -1,7 +1,8 @@
 import {
 	Injectable,
 	BadRequestException,
-	HttpException
+	HttpException,
+	HttpStatus
 } from '@nestjs/common';
 import { HttpService } from '@nestjs/axios';
 import { AxiosError, AxiosResponse } from 'axios';
@@ -12,7 +13,6 @@ import * as moment from 'moment';
 import { environment as env } from '@gauzy/config';
 import { isEmpty, isNotEmpty, isObject } from '@gauzy/common';
 import {
-	ICreateIntegrationDto,
 	IIntegrationTenant,
 	IntegrationEnum,
 	IntegrationEntity,
@@ -38,7 +38,8 @@ import {
 	IHubstaffProjectResponse,
 	IHubstaffTimeSlotActivity,
 	IActivity,
-	IHubstaffLogFromTimeSlots
+	IHubstaffLogFromTimeSlots,
+	ICreateHubstaffIntegrationInput
 } from '@gauzy/contracts';
 import {
 	DEFAULT_ENTITY_SETTINGS,
@@ -46,14 +47,15 @@ import {
 	PROJECT_TIED_ENTITIES
 } from '@gauzy/integration-hubstaff';
 import { firstValueFrom, lastValueFrom } from 'rxjs';
-import { IntegrationTenantService } from '../integration-tenant/integration-tenant.service';
-import { IntegrationSettingService } from '../integration-setting/integration-setting.service';
-import { IntegrationMapService } from '../integration-map/integration-map.service';
-import { OrganizationContactCreateCommand } from '../organization-contact/commands';
-import { EmployeeCreateCommand, EmployeeGetCommand } from '../employee/commands';
-import { RoleService } from '../role/role.service';
-import { OrganizationService } from '../organization/organization.service';
-import { UserService } from '../user/user.service';
+import { RequestContext } from 'core/context';
+import { mergeOverlappingDateRanges } from 'core/utils';
+import { IntegrationSettingService } from 'integration-setting/integration-setting.service';
+import { OrganizationContactCreateCommand } from 'organization-contact/commands';
+import { EmployeeCreateCommand, EmployeeGetCommand } from 'employee/commands';
+import { RoleService } from 'role/role.service';
+import { OrganizationService } from 'organization/organization.service';
+import { UserService } from 'user/user.service';
+import { IntegrationMapService } from 'integration-map/integration-map.service';
 import {
 	IntegrationMapSyncActivityCommand,
 	IntegrationMapSyncEntityCommand,
@@ -63,10 +65,10 @@ import {
 	IntegrationMapSyncTaskCommand,
 	IntegrationMapSyncTimeLogCommand,
 	IntegrationMapSyncTimeSlotCommand
-} from './../integration-map/commands';
-import { IntegrationTenantCreateCommand } from './../integration-tenant/commands';
-import { RequestContext } from './../core/context';
-import { mergeOverlappingDateRanges } from './../core/utils';
+} from 'integration-map/commands';
+import { IntegrationTenantService } from 'integration-tenant/integration-tenant.service';
+import { IntegrationTenantFirstOrCreateCommand } from 'integration-tenant/commands';
+import { IntegrationService } from 'integration/integration.service';
 
 @Injectable()
 export class HubstaffService {
@@ -78,7 +80,8 @@ export class HubstaffService {
 		private readonly _roleService: RoleService,
 		private readonly _organizationService: OrganizationService,
 		private readonly _userService: UserService,
-		private readonly _commandBus: CommandBus
+		private readonly _commandBus: CommandBus,
+		private readonly _integrationService: IntegrationService
 	) { }
 
 	async fetchIntegration<T = any>(url: string, token: string): Promise<any> {
@@ -89,19 +92,10 @@ export class HubstaffService {
 			this._httpService.get(url, { headers }).pipe(
 				catchError((error: AxiosError<any>) => {
 					const response: AxiosResponse<any> = error.response;
+					console.log('Error while hubstaff API: %s', response);
 
-					const status = response.status;
-					const statusText = response.statusText;
-					const data = response.data;
-
-					/**
-					 * Handle hubstaff http exception
-					 */
-					throw new HttpException({
-						statusCode: status,
-						error: statusText,
-						message: data.error
-					}, response.status);
+					/** Handle hubstaff http exception */
+					throw new HttpException({ message: error.message, error }, response.status);
 				}),
 				map(
 					(response: AxiosResponse<T>) => response.data
@@ -156,12 +150,11 @@ export class HubstaffService {
 		try {
 			const tokens$ = this._httpService.post(`${HUBSTAFF_AUTHORIZATION_URL}/access_tokens`, urlParams, {
 				headers
-			})
-				.pipe(
-					map(
-						(response: AxiosResponse<any>) => response.data
-					)
-				);
+			}).pipe(
+				map(
+					(response: AxiosResponse<any>) => response.data
+				)
+			);
 			const tokens = await lastValueFrom(tokens$);
 			const settingsDto = settings.map((setting) => {
 				if (setting.settingsName === 'access_token') {
@@ -196,9 +189,8 @@ export class HubstaffService {
 	}
 
 	async addIntegration(
-		body: ICreateIntegrationDto
+		body: ICreateHubstaffIntegrationInput
 	): Promise<IIntegrationTenant> {
-
 		const tenantId = RequestContext.currentTenantId();
 		const { client_id, client_secret, code, redirect_uri, organizationId } = body;
 
@@ -230,57 +222,69 @@ export class HubstaffService {
 				: settingEntity
 		) as IIntegrationEntitySetting[];
 
-		const tokens$ = this._httpService
-			.post(`${HUBSTAFF_AUTHORIZATION_URL}/access_tokens`, urlParams, {
-				headers: {
-					'Content-Type': 'application/x-www-form-urlencoded'
-				}
-			})
-			.pipe(
-				switchMap(({ data }) => this._commandBus.execute(
-					new IntegrationTenantCreateCommand({
-						organizationId,
+		/** */
+		const integration = await this._integrationService.findOneByOptions({
+			where: {
+				provider: IntegrationEnum.HUBSTAFF
+			}
+		});
+
+		const tokens$ = this._httpService.post(`${HUBSTAFF_AUTHORIZATION_URL}/access_tokens`, urlParams, {
+			headers: {
+				'Content-Type': 'application/x-www-form-urlencoded'
+			}
+		}).pipe(
+			switchMap(({ data }) => this._commandBus.execute(
+				new IntegrationTenantFirstOrCreateCommand({
+					name: IntegrationEnum.HUBSTAFF,
+					integration: {
+						provider: IntegrationEnum.HUBSTAFF
+					},
+					tenantId,
+					organizationId,
+				}, {
+					name: IntegrationEnum.HUBSTAFF,
+					integration,
+					organizationId,
+					tenantId,
+					entitySettings: entitySettings,
+					settings: [
+						{
+							settingsName: 'client_id',
+							settingsValue: client_id
+						},
+						{
+							settingsName: 'client_secret',
+							settingsValue: client_secret
+						},
+						{
+							settingsName: 'access_token',
+							settingsValue: data.access_token
+						},
+						{
+							settingsName: 'refresh_token',
+							settingsValue: data.refresh_token
+						}
+					].map((setting) => ({
+						...setting,
 						tenantId,
-						name: IntegrationEnum.HUBSTAFF,
-						entitySettings: entitySettings,
-						settings: [
-							{
-								settingsName: 'client_id',
-								settingsValue: client_id
-							},
-							{
-								settingsName: 'client_secret',
-								settingsValue: client_secret
-							},
-							{
-								settingsName: 'access_token',
-								settingsValue: data.access_token
-							},
-							{
-								settingsName: 'refresh_token',
-								settingsValue: data.refresh_token
-							}
-						]
-					})
-				)),
-				catchError((err) => {
-					throw new BadRequestException(err);
+						organizationId,
+					}))
 				})
-			);
+			)),
+			catchError((err) => {
+				throw new BadRequestException(err);
+			})
+		);
 
 		return await lastValueFrom(tokens$);
 	}
 
-	/*
-	 * Fetch all organizations
+	/***
+	 * Get all organizations
 	 */
-	async fetchOrganizations({
-		token
-	}): Promise<IHubstaffOrganization[]> {
-		const { organizations } = await this.fetchIntegration<IHubstaffOrganizationsResponse[]>(
-			'organizations',
-			token
-		);
+	async getOrganizations(token: string): Promise<IHubstaffOrganization[]> {
+		const { organizations } = await this.fetchIntegration<IHubstaffOrganizationsResponse[]>('organizations', token);
 		return organizations;
 	}
 
@@ -291,13 +295,15 @@ export class HubstaffService {
 		organizationId,
 		token
 	}): Promise<IHubstaffProject[]> {
-		const { projects } = await this.fetchIntegration<IHubstaffProjectsResponse[]>(
-			`organizations/${organizationId}/projects?status=all`,
-			token
-		);
+		const { projects } = await this.fetchIntegration<IHubstaffProjectsResponse[]>(`organizations/${organizationId}/projects?status=all&include=clients`, token);
 		return projects;
 	}
 
+	/**
+	 *
+	 * @param param0
+	 * @returns
+	 */
 	async syncProjects({
 		integrationId,
 		organizationId,
@@ -308,38 +314,36 @@ export class HubstaffService {
 			const tenantId = RequestContext.currentTenantId();
 			return await Promise.all(
 				await projects.map(
-					async ({ name, sourceId, billable, description }) => {
-						const { project } = await this.fetchIntegration<IHubstaffProjectResponse>(
-							`projects/${sourceId}`,
-							token
-						);
-						/**
-						 * Set Project Budget Here
-						 */
-						let budget = {};
-						if (project.budget) {
-							budget['budgetType'] = project.budget.type || OrganizationProjectBudgetTypeEnum.COST;
-							budget['startDate'] = project.budget.start_date || null;
-							budget['budget'] = project.budget[budget['budgetType']];
-						}
-						const payload = {
-							name,
-							organizationId,
+					async ({ sourceId }) => {
+						const { project } = await this.fetchIntegration<IHubstaffProjectResponse>(`projects/${sourceId}`, token);
+
+						/** Third Party Organization Project Map */
+						const organizationProjectMap = {
+							name: project.name,
+							description: project.description,
+							billable: project.billable,
 							public: true,
 							billing: ProjectBillingEnum.RATE,
 							currency: env.defaultCurrency as CurrenciesEnum,
-							billable,
-							description,
+							organizationId,
 							tenantId,
-							...budget
-						};
+							/** Set Project Budget Here */
+							...(project.budget
+								? {
+									budgetType: project.budget.type || OrganizationProjectBudgetTypeEnum.COST,
+									startDate: project.budget.start_date || null,
+									budget: project.budget[project.budget.type || OrganizationProjectBudgetTypeEnum.COST]
+								}
+								: {}),
+						}
 						return await this._commandBus.execute(
 							new IntegrationMapSyncProjectCommand(
 								Object.assign({
-									organizationProjectInput: payload,
+									organizationProject: organizationProjectMap,
 									sourceId,
 									integrationId,
-									organizationId
+									organizationId,
+									tenantId
 								})
 							)
 						);
@@ -347,35 +351,49 @@ export class HubstaffService {
 				)
 			)
 		} catch (error) {
-			throw new BadRequestException(error, `Can\'t sync ${IntegrationEntity.PROJECT}`);
+			console.log(`Error while syncing ${IntegrationEntity.PROJECT} entity for organization (${organizationId}): %s`, error?.message);
+			throw new HttpException({ message: error?.message, error }, HttpStatus.BAD_REQUEST);
 		}
 	}
 
+	/**
+	 *
+	 * @param param0
+	 * @returns
+	 */
 	async syncOrganizations({
 		integrationId,
 		organizationId,
-		organizations
+		organizations,
+		token
 	}): Promise<IIntegrationMap[]> {
 		try {
+			const tenantId = RequestContext.currentTenantId();
 			return await Promise.all(
 				await organizations.map(
-					async (organization) => {
-						const { sourceId } = organization;
+					async ({ sourceId }) => {
+						const { organization } = await this.fetchIntegration<IHubstaffProjectResponse>(`organizations/${sourceId}`, token);
+						/** Third Party Organization Map */
+						const organizationMap = {
+							name: organization.name,
+							isActive: organization.status == 'active',
+							currency: env.defaultCurrency as CurrenciesEnum
+						}
 						return await this._commandBus.execute(
-							new IntegrationMapSyncOrganizationCommand(
-								Object.assign({
-									organizationInput: organization,
-									sourceId,
-									integrationId,
-									organizationId
-								})
-							)
+							new IntegrationMapSyncOrganizationCommand({
+								organizationInput: organizationMap,
+								sourceId,
+								integrationId,
+								organizationId,
+								tenantId
+							})
 						);
 					}
 				)
 			);
 		} catch (error) {
-			throw new BadRequestException(error, `Can\'t sync ${IntegrationEntity.ORGANIZATION}`);
+			console.log(`Error while syncing ${IntegrationEntity.ORGANIZATION} entity (${organizationId}): %s`, error?.message);
+			throw new HttpException({ message: error?.message, error }, HttpStatus.BAD_REQUEST);
 		}
 	}
 

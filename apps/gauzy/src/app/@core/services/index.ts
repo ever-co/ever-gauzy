@@ -128,3 +128,4 @@ export * from './users.service';
 export * from './warehouse.service';
 export * from './organization-task-setting.service';
 export * from './gauzy-ai/gauzy-ai.service';
+export * from './github/github.service';

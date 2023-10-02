@@ -46,7 +46,7 @@ export interface IProjectsStatistics extends IOrganizationProject {
 	durationPercentage?: number;
 }
 
-export interface IGetTasksStatistics extends ITimeLogFilters, Pick<IRelationalOrganizationTeam, 'organizationTeamId'>, Pick<IRelationalEmployee, 'employeeId'> {
+export interface IGetTasksStatistics extends ITimeLogFilters, ITimeLogTodayFilters, Pick<IRelationalOrganizationTeam, 'organizationTeamId'>, Pick<IRelationalEmployee, 'employeeId'> {
 	projectId?: string | string[];
 	onlyMe?: boolean;
 	take?: number;

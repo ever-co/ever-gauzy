@@ -150,7 +150,9 @@
 		"COPY": "העתקה",
 		"CUT": "גזירה",
 		"PASTE": "הדבקה",
-		"FORWARD_PORTS": "העברת פורטים"
+		"FORWARD_PORTS": "העברת פורטים",
+		"REPORT": "דוח",
+		"IGNORE": "התעלם"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {
@@ -520,6 +522,8 @@
 			"UPLOADER_PLACEHOLDER": "תמונה",
 			"UPLOADER_DOCUMENT_PLACEHOLDER": "URL",
 			"ADD_REMOVE_EMPLOYEES": "Add or Remove Employees",
+			"ADD_REMOVE_PROJECTS": "הוסף או הסר פרויקט",
+			"ADD_REMOVE_TEAMS": "הוסף או הסר צוותים",
 			"ADD_REMOVE_CANDIDATE": "Add Candidate",
 			"ADD_REMOVE_EMPLOYEE": "Add Interviewer",
 			"ADD_REMOVE_INTERVIEWER": "Select interviewer",
@@ -3779,7 +3783,9 @@
 			"TIMEZONE_LABEL": "בחירת 'מקומי' מציגה את השעה באזור הזמן המקומי שלך, בעוד בחירת 'UTC' מציגה את השעה ב-UTC האוניברסלי, שמשמש את מערכות החיוב והמערכות האחרות.",
 			"TIMEZONE_PLACEHOLDER": "בחר בין 'מקומי' או 'UTC'.",
 			"TIMEZONE_LOCAL": "מקומי",
-			"TIMEZONE_UTC": "UTC"
+			"TIMEZONE_UTC": "UTC",
+			"WIDGET": "ווידג'ט",
+			"WIDGET_LABEL": "החלון משקף את מצב הטיימר, מציין האם הוא פועל או עצור, ופועל ככפתור."
 		},
 		"WEEKLY_LIMIT_EXCEEDED": "הגעת למגבלת השבוע",
 		"OF_HRS": "מתוך {{ limit }} שעות",
@@ -3790,6 +3796,7 @@
 		"STOP_TIMER_CHANGE_PROJECT": "אנא עצור את הטיימר לפני שתשנה את הפרויקט",
 		"STOP_TIMER_CHANGE_TASK": "אנא עצור את הטיימר לפני שתשנה את המשימה",
 		"STOP_TIMER_CHANGE_DESCRIPTION": "אנא עצור את הטיימר לפני שתשנה את התיאור",
+		"STOP_TIMER_CHANGE_TEAM": "אנא עצור את הטיימר לפני שאתה משנה את הצוות",
 		"ACTIVITY_WATCH_INTEGRATION": "שליחת פעילות ל־ActivityWatch",
 		"LAST_CAPTURE_TAKEN": "נתפסה לכם צילום מסך אחרון",
 		"REQUEST_TASK_PERMISSION": "בקש הרשאה ממנהל הארגון",
@@ -3823,7 +3830,9 @@
 			"WANT_LOGOUT": "האם אתה בטוח שברצונך להתנתק?",
 			"DOWNLOADING_UPDATE": "הורדת העדכון {{ current }} מ״ב מתוך {{ total }} מ״ב ->> {{ bandwidth }} ק״ב/ש",
 			"STILL_WORKING": "האם אתה עדיין עובד?",
-			"INACTIVITY_HANDLER": "מטפל בחוסר פעילות"
+			"INACTIVITY_HANDLER": "מטפל בחוסר פעילות",
+			"ERROR_HANDLER": "מטפל בשגיאות",
+			"ERROR_OCCURRED": "אירעה שגיאה"
 		},
 		"NO_LIMIT": "∞ אין הגבלה",
 		"TASK": "משימה",

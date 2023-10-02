@@ -151,7 +151,9 @@
 		"COPY": "复制",
 		"CUT": "剪",
 		"PASTE": "粘贴",
-		"FORWARD_PORTS": "转发端口"
+		"FORWARD_PORTS": "转发端口",
+		"REPORT": "报告",
+		"IGNORE": "忽略"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {
@@ -3836,7 +3838,9 @@
 			"TIMEZONE_LABEL": "选择“本地”会显示您所在地的时区，而选择“UTC”则会显示由计费和其他系统使用的通用协调世界时时区的时间。",
 			"TIMEZONE_PLACEHOLDER": "请选择“本地”或“UTC”。",
 			"TIMEZONE_LOCAL": "本地",
-			"TIMEZONE_UTC": "世界协调时间 (UTC)"
+			"TIMEZONE_UTC": "世界协调时间 (UTC)",
+			"WIDGET": "小部件",
+			"WIDGET_LABEL": "此窗口反映计时器的状态，指示计时器是运行还是停止，并兼做按钮。"
 		},
 		"WEEKLY_LIMIT_EXCEEDED": "每周限制已超过。",
 		"OF_HRS": "的{{ limit }}小时",
@@ -3847,6 +3851,7 @@
 		"STOP_TIMER_CHANGE_PROJECT": "请在更改项目之前停止计时器。",
 		"STOP_TIMER_CHANGE_TASK": "请在更换任务前停止计时器。",
 		"STOP_TIMER_CHANGE_DESCRIPTION": "请在更改描述之前停止计时器",
+		"STOP_TIMER_CHANGE_TEAM": "请在更改团队之前停止计时器",
 		"ACTIVITY_WATCH_INTEGRATION": "活动观察集成",
 		"LAST_CAPTURE_TAKEN": "上一次截图",
 		"REQUEST_TASK_PERMISSION": "请向组织管理员申请权限。",
@@ -3879,7 +3884,9 @@
 			"CONNECTION_DRIVER": "连接到{{ driver }}数据库成功",
 			"STILL_WORKING": "你还在工作吗？",
 			"INACTIVITY_HANDLER": "不活动处理程序",
-			"WANT_LOGOUT": "您确定要注销吗？"
+			"WANT_LOGOUT": "您确定要注销吗？",
+			"ERROR_HANDLER": "错误处理器",
+			"ERROR_OCCURRED": "发生错误"
 		},
 		"NO_LIMIT": "∞ 无限制 (wúxiànzhì)",
 		"TASK": "任务",

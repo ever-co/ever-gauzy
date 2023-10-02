@@ -90,7 +90,7 @@ export class GauzyLogoComponent implements AfterViewInit, OnInit, OnDestroy {
 		{
 			title: 'Integrations',
 			icon: 'fas fa-swatchbook',
-			link: '/pages/integrations',
+			link: '/pages/integrations/new',
 			pathMatch: 'prefix',
 			data: {
 				translationKey: 'MENU.INTEGRATIONS',
@@ -99,7 +99,6 @@ export class GauzyLogoComponent implements AfterViewInit, OnInit, OnDestroy {
 			}
 		}
 	];
-
 	settings = {
 		title: 'Settings',
 		icon: 'fas fa-cog',

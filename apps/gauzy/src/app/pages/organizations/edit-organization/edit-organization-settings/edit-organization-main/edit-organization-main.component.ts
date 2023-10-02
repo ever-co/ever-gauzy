@@ -179,16 +179,17 @@ export class EditOrganizationMainComponent extends TranslationBaseComponent
 		if (!this.organization) {
 			return;
 		}
+
 		this.form.setValue({
-			imageId: this.organization.imageId,
-			imageUrl: this.organization.imageUrl,
-			tags: this.organization.tags,
-			currency: this.organization.currency,
-			name: this.organization.name,
-			officialName: this.organization.officialName,
-			profile_link: this.organization.profile_link,
-			taxId: this.organization.taxId,
-			website: this.organization.website,
+			imageId: this.organization.imageId || null,
+			imageUrl: this.organization.imageUrl || null,
+			tags: this.organization.tags || [],
+			currency: this.organization.currency || null,
+			name: this.organization.name || null,
+			officialName: this.organization.officialName || null,
+			profile_link: this.organization.profile_link || null,
+			taxId: this.organization.taxId || null,
+			website: this.organization.website || null,
 			registrationDate: this.organization.registrationDate
 				? new Date(this.organization.registrationDate)
 				: null

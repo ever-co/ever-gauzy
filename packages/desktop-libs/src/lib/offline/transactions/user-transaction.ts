@@ -1,4 +1,5 @@
 import { Knex } from 'knex';
+import { AppError } from '../../error-handler';
 import { IUserTransaction, IDatabaseProvider } from '../../interfaces';
 import { UserTO, TABLE_NAME_USERS } from '../dto';
 
@@ -10,48 +11,36 @@ export class UserTransaction implements IUserTransaction {
 	}
 
 	public async create(value: UserTO): Promise<void> {
-		try {
-			await this._databaseProvider.connection.transaction(
-				async (trx: Knex.Transaction) => {
-					trx.insert(value)
+		await this._databaseProvider.connection.transaction(
+			async (trx: Knex.Transaction) => {
+				try {
+					await trx
+						.insert(value)
 						.into(TABLE_NAME_USERS)
 						.onConflict('remoteId')
-						.merge()
-						.then(() => {
-							trx.commit();
-							console.log(
-								'[trx]: ',
-								'insertion transaction committed...'
-							);
-						})
-						.catch((error) => {
-							trx.rollback();
-							console.log(
-								'[trx]: ',
-								'insertion transaction rollback...'
-							);
-							console.warn('[trx]: ', error);
-						});
+						.merge();
+					await trx.commit();
+				} catch (error) {
+					await trx.rollback();
+					throw new AppError('USERTRX', error);
 				}
-			);
-		} catch (error) {
-			console.log('[trx]: ', error);
-		}
+			}
+		);
 	}
 
 	public async update(id: number, value: Partial<UserTO>): Promise<void> {
-		try {
-			await this._databaseProvider.connection.transaction(
-				async (trx: Knex.Transaction) => {
+		await this._databaseProvider.connection.transaction(
+			async (trx: Knex.Transaction) => {
+				try {
 					await trx(TABLE_NAME_USERS)
 						.where('id', '=', id)
-						.update(value)
-						.then(trx.commit)
-						.catch(trx.rollback);
+						.update(value);
+					await trx.commit();
+				} catch (error) {
+					await trx.rollback();
+					throw new AppError('USERTRX', error);
 				}
-			);
-		} catch (error) {
-			console.log('[trx]: ', error);
-		}
+			}
+		);
 	}
 }

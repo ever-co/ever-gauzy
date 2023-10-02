@@ -151,7 +151,9 @@
 		"COPY": "Kopiuj",
 		"CUT": "kroić",
 		"PASTE": "Wklej",
-		"FORWARD_PORTS": "Przekieruj porty"
+		"FORWARD_PORTS": "Przekieruj porty",
+		"REPORT": "Raport",
+		"IGNORE": "Ignoruj"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {
@@ -3836,7 +3838,9 @@
 			"TIMEZONE_LABEL": "Wybór opcji „Lokalny” wyświetla czas w twojej strefie czasowej, podczas gdy wybranie opcji „UTC” pokazuje czas w uniwersalnej strefie czasowej UTC używanej przez systemy rozliczeniowe i inne",
 			"TIMEZONE_PLACEHOLDER": "Wybierz jeden z dwóch: 'Lokalny' lub 'UTC'",
 			"TIMEZONE_LOCAL": "Lokalny",
-			"TIMEZONE_UTC": "UTC"
+			"TIMEZONE_UTC": "UTC",
+			"WIDGET": "Widget",
+			"WIDGET_LABEL": "To okno odzwierciedla stan timera, wskazując, czy jest uruchomiony czy zatrzymany, i działa jako przycisk."
 		},
 		"WEEKLY_LIMIT_EXCEEDED": "Przekroczono limit tygodniowy",
 		"OF_HRS": "Z {{ limit }} godz",
@@ -3847,6 +3851,7 @@
 		"STOP_TIMER_CHANGE_PROJECT": "Przed zmianą projektu proszę zatrzymać timer",
 		"STOP_TIMER_CHANGE_TASK": "Przed zmianą zadania proszę zatrzymać stoper",
 		"STOP_TIMER_CHANGE_DESCRIPTION": "Proszę zatrzymać licznik czasu przed zmianą opisu",
+		"STOP_TIMER_CHANGE_TEAM": "Przed zmianą drużyny proszę zatrzymać timer",
 		"ACTIVITY_WATCH_INTEGRATION": "Integracja z ActivityWatch",
 		"LAST_CAPTURE_TAKEN": "Ostatni zrzut ekranu wykonany",
 		"REQUEST_TASK_PERMISSION": "Poproś o zgodę administratora organizacji",
@@ -3879,7 +3884,9 @@
 			"CONNECTION_DRIVER": "Połączenie z bazą danych {{ driver }} udane",
 			"STILL_WORKING": "Czy nadal pracujesz?",
 			"INACTIVITY_HANDLER": "Obsługa braku aktywności",
-			"WANT_LOGOUT": "Czy na pewno chcesz się wylogować?"
+			"WANT_LOGOUT": "Czy na pewno chcesz się wylogować?",
+			"ERROR_HANDLER": "Obsługa błędów",
+			"ERROR_OCCURRED": "Wystąpił błąd"
 		},
 		"NO_LIMIT": "∞ Bez ograniczeń",
 		"TASK": "Zadanie",

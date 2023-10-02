@@ -150,7 +150,9 @@
 		"COPY": "Копировать",
 		"CUT": "Вырезать",
 		"PASTE": "Вставить",
-		"FORWARD_PORTS": "Переадресация портов"
+		"FORWARD_PORTS": "Переадресация портов",
+		"REPORT": "Отчет",
+		"IGNORE": "Игнорировать"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {
@@ -520,6 +522,8 @@
 			"UPLOADER_PLACEHOLDER": "Изображение",
 			"UPLOADER_DOCUMENT_PLACEHOLDER": "URL",
 			"ADD_REMOVE_EMPLOYEES": "Добавление или удаление сотрудников",
+			"ADD_REMOVE_PROJECTS": "Добавить или удалить проект",
+			"ADD_REMOVE_TEAMS": "Добавить или удалить команды",
 			"ADD_REMOVE_CANDIDATE": "Добавить Кандидата",
 			"ADD_REMOVE_EMPLOYEE": "Добавить интервьюера",
 			"ADD_REMOVE_INTERVIEWER": "Выбрать интервьюера",
@@ -3780,7 +3784,9 @@
 			"TIMEZONE_LABEL": "Выбор 'Местное' отображает время в вашем местном часовом поясе, в то время как выбор 'UTC' отображает время в универсальном часовом поясе UTC, используемом биллинговыми и другими системами.",
 			"TIMEZONE_PLACEHOLDER": "Выберите 'Местное' или 'UTC'.",
 			"TIMEZONE_LOCAL": "Местное",
-			"TIMEZONE_UTC": "UTC"
+			"TIMEZONE_UTC": "UTC",
+			"WIDGET": "Виджет",
+			"WIDGET_LABEL": "Это окно отражает состояние таймера, указывает, работает он или остановлен, и функционирует как кнопка."
 		},
 		"WEEKLY_LIMIT_EXCEEDED": "Еженедельный лимит превышен",
 		"OF_HRS": "Из {{ limit }} часов",
@@ -3791,6 +3797,7 @@
 		"STOP_TIMER_CHANGE_PROJECT": "Пожалуйста, остановите таймер перед изменением проекта",
 		"STOP_TIMER_CHANGE_TASK": "Пожалуйста, остановите таймер перед изменением задачи",
 		"STOP_TIMER_CHANGE_DESCRIPTION": "Пожалуйста, остановите таймер перед изменением описания",
+		"STOP_TIMER_CHANGE_TEAM": "Пожалуйста, остановите таймер перед изменением команды",
 		"ACTIVITY_WATCH_INTEGRATION": "Интеграция с ActivityWatch",
 		"LAST_CAPTURE_TAKEN": "Последний снимок экрана был сделан",
 		"REQUEST_TASK_PERMISSION": "Запросить разрешение у администратора организации",
@@ -3823,7 +3830,9 @@
 			"CONNECTION_DRIVER": "Подключение к {{ driver }} DB успешно",
 			"STILL_WORKING": "Вы всё ещё работаете?",
 			"INACTIVITY_HANDLER": "Управление бездействием",
-			"WANT_LOGOUT": "Вы уверены, что хотите выйти из системы?"
+			"WANT_LOGOUT": "Вы уверены, что хотите выйти из системы?",
+			"ERROR_HANDLER": "Обработчик ошибок",
+			"ERROR_OCCURRED": "Произошла ошибка"
 		},
 		"NO_LIMIT": "∞ Без лимита",
 		"TASK": "Задача",

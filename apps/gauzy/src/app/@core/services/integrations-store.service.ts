@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import {
 	IIntegrationViewModel,
 	IIntegrationFilter,
-	IntegrationTypeNameEnum,
+	IntegrationTypeEnum,
 	IntegrationTypeGroupEnum
 } from '@gauzy/contracts';
 import { BehaviorSubject, Observable, of } from 'rxjs';
@@ -132,7 +132,7 @@ export class IntegrationsStoreService {
 			({ groupName }) => groupName === IntegrationTypeGroupEnum.FEATURED
 		);
 		return featuredGroup.integrationTypes.find(
-			(item) => item.name === IntegrationTypeNameEnum.ALL_INTEGRATIONS
+			(item) => item.name === IntegrationTypeEnum.ALL_INTEGRATIONS
 		);
 	}
 

@@ -43,6 +43,7 @@ export interface IUser extends IBasePerTenantEntityModel, IRelationalImageAsset 
 	isImporting?: boolean;
 	sourceId?: string;
 	isActive?: boolean;
+	isArchived?: boolean;
 	code?: string;
 	codeExpireAt?: Date;
 	emailVerifiedAt?: Date;
@@ -107,6 +108,7 @@ export interface IUserSigninWorkspaceResponse {
 	workspaces: IUser[];
 	confirmed_email: string;
 	show_popup: boolean;
+	total_workspaces: number;
 }
 
 export interface IAuthResponse {

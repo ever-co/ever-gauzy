@@ -43,7 +43,7 @@ export default class NotificationDesktop {
 					: 'TIMER_TRACKER.STOP_TIMER'
 			),
 			icon: this._iconNativePath,
-			closeButtonText: 'Close',
+			closeButtonText: TranslateService.instant('BUTTONS.CLOSE'),
 			silent: this._isSilent
 		});
 

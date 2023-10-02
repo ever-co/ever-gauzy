@@ -36,7 +36,7 @@ export type Env = Readonly<{
 	GOOGLE_MAPS_API_KEY: string;
 	GOOGLE_PLACE_AUTOCOMPLETE: boolean;
 
-	HUBSTAFF_REDIRECT_URI: string;
+	HUBSTAFF_REDIRECT_URL: string;
 
 	DEFAULT_LATITUDE: number;
 	DEFAULT_LONGITUDE: number;
@@ -65,6 +65,15 @@ export type Env = Readonly<{
 	GAUZY_CLOUD_APP: string;
 
 	FILE_PROVIDER: string;
+
+	// Jitsu Analytics
+	JITSU_BROWSER_HOST: string;
+	JITSU_BROWSER_WRITE_KEY: string;
+
+	GAUZY_GITHUB_APP_NAME: string;
+	GAUZY_GITHUB_APP_ID: string;
+	GAUZY_GITHUB_CLIENT_ID: string;
+	GAUZY_GITHUB_REDIRECT_URL: string;
 }>;
 
 export const env: Env = cleanEnv(
@@ -79,12 +88,24 @@ export const env: Env = cleanEnv(
 		API_BASE_URL: str({ default: 'http://localhost:3000' }),
 
 		PLATFORM_WEBSITE_URL: str({ default: 'https://gauzy.co' }),
-		PLATFORM_WEBSITE_DOWNLOAD_URL: str({ default: 'https://gauzy.co/downloads' }),
-		DESKTOP_APP_DOWNLOAD_LINK_APPLE: str({ default: 'https://gauzy.co/downloads#desktop/apple' }),
-		DESKTOP_APP_DOWNLOAD_LINK_WINDOWS: str({ default: 'https://gauzy.co/downloads#desktop/windows' }),
-		DESKTOP_APP_DOWNLOAD_LINK_LINUX: str({ default: 'https://gauzy.co/downloads#desktop/linux' }),
-		MOBILE_APP_DOWNLOAD_LINK: str({ default: 'https://gauzy.co/downloads#mobile' }),
-		EXTENSION_DOWNLOAD_LINK: str({ default: 'https://gauzy.co/downloads#extensions' }),
+		PLATFORM_WEBSITE_DOWNLOAD_URL: str({
+			default: 'https://gauzy.co/downloads',
+		}),
+		DESKTOP_APP_DOWNLOAD_LINK_APPLE: str({
+			default: 'https://gauzy.co/downloads#desktop/apple',
+		}),
+		DESKTOP_APP_DOWNLOAD_LINK_WINDOWS: str({
+			default: 'https://gauzy.co/downloads#desktop/windows',
+		}),
+		DESKTOP_APP_DOWNLOAD_LINK_LINUX: str({
+			default: 'https://gauzy.co/downloads#desktop/linux',
+		}),
+		MOBILE_APP_DOWNLOAD_LINK: str({
+			default: 'https://gauzy.co/downloads#mobile',
+		}),
+		EXTENSION_DOWNLOAD_LINK: str({
+			default: 'https://gauzy.co/downloads#extensions',
+		}),
 
 		SENTRY_DSN: str({ default: '' }),
 		SENTRY_TRACES_SAMPLE_RATE: str({ default: '' }),
@@ -95,9 +116,7 @@ export const env: Env = cleanEnv(
 		GOOGLE_MAPS_API_KEY: str({ default: '' }),
 		GOOGLE_PLACE_AUTOCOMPLETE: bool({ default: false }),
 
-		HUBSTAFF_REDIRECT_URI: str({
-			default: 'http://localhost:3000/api/integrations/hubstaff/callback',
-		}),
+		HUBSTAFF_REDIRECT_URL: str({ default: '' }),
 
 		DEFAULT_LATITUDE: num({ default: 42.6459136 }),
 		DEFAULT_LONGITUDE: num({ default: 23.3332736 }),
@@ -120,6 +139,14 @@ export const env: Env = cleanEnv(
 		GAUZY_CLOUD_APP: str({ default: 'https://app.gauzy.co/#' }),
 
 		FILE_PROVIDER: str({ default: 'LOCAL' }),
+
+		JITSU_BROWSER_HOST: str({ default: '' }),
+		JITSU_BROWSER_WRITE_KEY: str({ default: '' }),
+
+		GAUZY_GITHUB_APP_NAME: str({ default: '' }),
+		GAUZY_GITHUB_APP_ID: str({ default: '' }),
+		GAUZY_GITHUB_CLIENT_ID: str({ default: '' }),
+		GAUZY_GITHUB_REDIRECT_URL: str({ default: '' }),
 	},
 	{ strict: true, dotEnvPath: __dirname + '/../.env' }
 );

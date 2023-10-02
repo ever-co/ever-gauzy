@@ -151,7 +151,9 @@
 		"COPY": "Kopiëren",
 		"CUT": "Snijden",
 		"PASTE": "Plakken",
-		"FORWARD_PORTS": "Poorten doorsturen"
+		"FORWARD_PORTS": "Poorten doorsturen",
+		"REPORT": "Rapport",
+		"IGNORE": "Negeren"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {
@@ -3836,7 +3838,9 @@
 			"TIMEZONE_LABEL": "Het selecteren van 'Lokaal' toont de tijd in uw lokale tijdzone, terwijl het selecteren van 'UTC' de tijd toont in de universele UTC tijdzone die wordt gebruikt door facturatie- en andere systemen.",
 			"TIMEZONE_PLACEHOLDER": "Selecteer 'Lokaal' of 'UTC'.",
 			"TIMEZONE_LOCAL": "Lokaal",
-			"TIMEZONE_UTC": "UTC"
+			"TIMEZONE_UTC": "UTC",
+			"WIDGET": "Widget",
+			"WIDGET_LABEL": "Dit venster weerspiegelt de status van de timer en geeft aan of deze actief is of gestopt en functioneert als een knop."
 		},
 		"WEEKLY_LIMIT_EXCEEDED": "Weeklimiet overschreden",
 		"OF_HRS": "Van {{ limit }} uur",
@@ -3847,6 +3851,7 @@
 		"STOP_TIMER_CHANGE_PROJECT": "Stop de timer alstublieft voordat u het project wijzigt.",
 		"STOP_TIMER_CHANGE_TASK": "Stop de timer alstublieft voordat u de taak verandert",
 		"STOP_TIMER_CHANGE_DESCRIPTION": "Stop alsjeblieft de timer voordat je de beschrijving wijzigt.",
+		"STOP_TIMER_CHANGE_TEAM": "Stop de timer voordat je het team verandert",
 		"ACTIVITY_WATCH_INTEGRATION": "ActivityWatch Integratie",
 		"LAST_CAPTURE_TAKEN": "Laatste schermopname gemaakt",
 		"REQUEST_TASK_PERMISSION": "Vraag toestemming aan de organisatiebeheerder",
@@ -3879,7 +3884,9 @@
 			"CONNECTION_DRIVER": "Verbinding met {{ driver }}-database is geslaagd",
 			"STILL_WORKING": "Werk je nog steeds?",
 			"INACTIVITY_HANDLER": "Inactiviteitshandler",
-			"WANT_LOGOUT": "Weet je zeker dat je wilt uitloggen?"
+			"WANT_LOGOUT": "Weet je zeker dat je wilt uitloggen?",
+			"ERROR_HANDLER": "Foutafhandeling",
+			"ERROR_OCCURRED": "Er is een fout opgetreden"
 		},
 		"NO_LIMIT": "∞ Geen Limiet",
 		"TASK": "Taak",

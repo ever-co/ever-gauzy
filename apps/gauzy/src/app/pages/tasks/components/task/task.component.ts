@@ -1,19 +1,19 @@
-import { Component, OnInit, ViewChild, OnDestroy } from '@angular/core';
-import { Router, ActivatedRoute } from '@angular/router';
+import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { ActivatedRoute, Router } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { combineLatest, firstValueFrom, Observable, Subject } from 'rxjs';
-import { first, tap, filter, debounceTime } from 'rxjs/operators';
+import { debounceTime, filter, first, tap } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
 import { Ng2SmartTableComponent } from 'ng2-smart-table';
 import { NbDialogService } from '@nebular/theme';
 import {
-	ITask,
-	IOrganizationProject,
 	ComponentLayoutStyleEnum,
-	TaskListTypeEnum,
 	IOrganization,
+	IOrganizationProject,
 	ISelectedEmployee,
+	ITask,
 	PermissionsEnum,
+	TaskListTypeEnum,
 } from '@gauzy/contracts';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { distinctUntilChange } from '@gauzy/common-angular';
@@ -61,6 +61,8 @@ export class TaskComponent
 	extends PaginationFilterBaseComponent
 	implements OnInit, OnDestroy
 {
+	private _refresh$: Subject<boolean> = new Subject();
+	private _tasks: ITask[] = [];
 	settingsSmartTable: object;
 	loading: boolean = false;
 	disableButton: boolean = true;
@@ -81,16 +83,7 @@ export class TaskComponent
 	selectedEmployee: ISelectedEmployee;
 	selectedEmployeeId: ISelectedEmployee['id'];
 	selectedProject: IOrganizationProject;
-	private _refresh$: Subject<boolean> = new Subject();
-	private _tasks: ITask[] = [];
-
 	tasksTable: Ng2SmartTableComponent;
-	@ViewChild('tasksTable') set content(content: Ng2SmartTableComponent) {
-		if (content) {
-			this.tasksTable = content;
-			this.onChangedSource();
-		}
-	}
 
 	constructor(
 		private readonly dialogService: NbDialogService,
@@ -110,68 +103,36 @@ export class TaskComponent
 		this.setView();
 	}
 
-	ngOnInit() {
-		this._loadSmartTableSettings();
-		this._applyTranslationOnSmartTable();
-		this.taskSubject$
-			.pipe(
-				debounceTime(400),
-				tap(() => this.clearItem()),
-				tap(() => this.getTasks()),
-				untilDestroyed(this)
-			)
-			.subscribe();
-		this.pagination$
-			.pipe(
-				debounceTime(100),
-				distinctUntilChange(),
-				tap(() => this.taskSubject$.next(true)),
-				untilDestroyed(this)
-			)
-			.subscribe();
-		const storeOrganization$ = this._store.selectedOrganization$;
-		const storeEmployee$ = this._store.selectedEmployee$;
-		const storeProject$ = this._store.selectedProject$;
-		combineLatest([storeOrganization$, storeEmployee$, storeProject$])
-			.pipe(
-				distinctUntilChange(),
-				filter(([organization]) => !!organization),
-				tap(([organization, employee, project]) => {
-					this.organization = organization;
-					this.selectedEmployeeId = employee ? employee.id : null;
-					this.selectedProject = project;
-					this.viewMode = !!project
-						? project.taskListType
-						: TaskListTypeEnum.GRID;
-				}),
-				tap(() => this._refresh$.next(true)),
-				tap(() => this.taskSubject$.next(true)),
-				untilDestroyed(this)
-			)
-			.subscribe();
-		this.route.queryParamMap
-			.pipe(
-				filter(
-					(params) =>
-						!!params && params.get('openAddDialog') === 'true'
-				),
-				debounceTime(1000),
-				tap(() => this.createTaskDialog()),
-				untilDestroyed(this)
-			)
-			.subscribe();
-		this._refresh$
-			.pipe(
-				filter(
-					() =>
-						this.dataLayoutStyle ===
-						ComponentLayoutStyleEnum.CARDS_GRID
-				),
-				tap(() => this.refreshPagination()),
-				tap(() => (this._tasks = [])),
-				untilDestroyed(this)
-			)
-			.subscribe();
+	@ViewChild('tasksTable') set content(content: Ng2SmartTableComponent) {
+		if (content) {
+			this.tasksTable = content;
+			this.onChangedSource();
+		}
+	}
+
+	/**
+	 * If, default project is selected from header
+	 *
+	 * @returns
+	 */
+	get isDefaultProject() {
+		if (this.selectedProject) {
+			return this.selectedProject.id === this.defaultProject.id;
+		}
+		return true;
+	}
+
+	/**
+	 * return store instance as per page
+	 */
+	get storeInstance() {
+		if (this.isTasksPage()) {
+			return this._taskStore;
+		} else if (this.isMyTasksPage()) {
+			return this._myTaskStore;
+		} else if (this.isTeamTaskPage()) {
+			return this._teamTaskStore;
+		}
 	}
 
 	private initTasks(): void {
@@ -191,39 +152,6 @@ export class TaskComponent
 		return;
 	}
 
-	setView() {
-		this._store
-			.componentLayout$(this.viewComponentName)
-			.pipe(
-				distinctUntilChange(),
-				tap(
-					(componentLayout) =>
-						(this.dataLayoutStyle = componentLayout)
-				),
-				tap(() => this.refreshPagination()),
-				filter(
-					(componentLayout) =>
-						componentLayout === ComponentLayoutStyleEnum.CARDS_GRID
-				),
-				tap(() => (this._tasks = [])),
-				tap(() => this.taskSubject$.next(true)),
-				untilDestroyed(this)
-			)
-			.subscribe();
-	}
-
-	/*
-	 * Table on changed source event
-	 */
-	onChangedSource() {
-		this.tasksTable.source.onChangedSource
-			.pipe(
-				untilDestroyed(this),
-				tap(() => this.clearItem())
-			)
-			.subscribe();
-	}
-
 	private _applyTranslationOnSmartTable() {
 		this.translateService.onLangChange
 			.pipe(
@@ -231,114 +159,6 @@ export class TaskComponent
 				untilDestroyed(this)
 			)
 			.subscribe();
-	}
-
-	/*
-	 * Register Smart Table Source Config
-	 */
-	setSmartTableSource() {
-		if (!this.organization) {
-			return;
-		}
-
-		this.loading = true;
-
-		const { tenantId } = this._store.user;
-		const { id: organizationId } = this.organization;
-
-		this.smartTableSource = new ServerDataSource(this.httpClient, {
-			...(this.viewComponentName == ComponentEnum.ALL_TASKS
-				? { endPoint: `${API_PREFIX}/tasks/pagination` }
-				: {}),
-			...(this.viewComponentName == ComponentEnum.TEAM_TASKS
-				? { endPoint: `${API_PREFIX}/tasks/team` }
-				: {}),
-			...(this.viewComponentName == ComponentEnum.MY_TASKS
-				? { endPoint: `${API_PREFIX}/tasks/me` }
-				: {}),
-			relations: [
-				'project',
-				'tags',
-				'teams',
-				'teams.members',
-				'teams.members.employee',
-				'teams.members.employee.user',
-				'creator',
-				'organizationSprint',
-			],
-			join: {
-				alias: 'task',
-				leftJoinAndSelect: {
-					members: 'task.members',
-					user: 'members.user',
-				},
-			},
-			where: {
-				organizationId,
-				tenantId,
-				...(this.selectedProject && this.selectedProject.id
-					? {
-							...(this.viewMode === TaskListTypeEnum.SPRINT
-								? {
-										organizationSprintId: null,
-								  }
-								: {}),
-							projectId: this.selectedProject.id,
-					  }
-					: {}),
-				...(this.selectedEmployeeId
-					? {
-							members: {
-								id: this.selectedEmployeeId,
-							},
-					  }
-					: {}),
-				...(this.filters.where ? this.filters.where : {}),
-			},
-			resultMap: (task: ITask) => {
-				return Object.assign({}, task, {
-					employees: task.members ? task.members : undefined,
-					assignTo: this._teamTaskStore._getTeamNames(task),
-					employeesMergedTeams: [task.members, task.teams],
-				});
-			},
-			finalize: () => {
-				this.dataLayoutStyle ===
-				this.componentLayoutStyleEnum.CARDS_GRID
-					? this._tasks.push(...this.smartTableSource.getData())
-					: (this._tasks = this.smartTableSource.getData());
-				this.storeInstance.loadAllTasks(this._tasks);
-				this.setPagination({
-					...this.getPagination(),
-					totalItems: this.smartTableSource.count(),
-				});
-				this.loading = false;
-			},
-		});
-	}
-
-	async getTasks() {
-		if (!this.organization) {
-			return;
-		}
-		try {
-			this.setSmartTableSource();
-
-			const { activePage, itemsPerPage } = this.pagination;
-			this.smartTableSource.setPaging(activePage, itemsPerPage, false);
-			if (
-				this.dataLayoutStyle === ComponentLayoutStyleEnum.CARDS_GRID ||
-				this.viewMode === TaskListTypeEnum.SPRINT
-			) {
-				await this.smartTableSource.getElements();
-				this.setPagination({
-					...this.getPagination(),
-					totalItems: this.smartTableSource.count(),
-				});
-			}
-		} catch (error) {
-			this._errorHandlingService.handleError(error);
-		}
 	}
 
 	private _loadSmartTableSettings() {
@@ -426,7 +246,10 @@ export class TaskComponent
 						component: TaskStatusFilterComponent,
 					},
 					filterFunction: (value) => {
-						this.setFilter({ field: 'status', search: value });
+						this.setFilter({
+							field: 'status',
+							search: value?.name,
+						});
 					},
 				},
 			},
@@ -476,6 +299,214 @@ export class TaskComponent
 			};
 		} else {
 			return {};
+		}
+	}
+
+	ngOnInit() {
+		this._loadSmartTableSettings();
+		this._applyTranslationOnSmartTable();
+		this.taskSubject$
+			.pipe(
+				debounceTime(400),
+				tap(() => this.clearItem()),
+				tap(() => this.getTasks()),
+				untilDestroyed(this)
+			)
+			.subscribe();
+		this.pagination$
+			.pipe(
+				debounceTime(100),
+				distinctUntilChange(),
+				tap(() => this.taskSubject$.next(true)),
+				untilDestroyed(this)
+			)
+			.subscribe();
+		const storeOrganization$ = this._store.selectedOrganization$;
+		const storeEmployee$ = this._store.selectedEmployee$;
+		const storeProject$ = this._store.selectedProject$;
+		combineLatest([storeOrganization$, storeEmployee$, storeProject$])
+			.pipe(
+				distinctUntilChange(),
+				filter(([organization]) => !!organization),
+				tap(([organization, employee, project]) => {
+					this.organization = organization;
+					this.selectedEmployeeId = employee ? employee.id : null;
+					this.selectedProject = project;
+					this.viewMode = !!project
+						? project.taskListType
+						: TaskListTypeEnum.GRID;
+				}),
+				tap(() => this._refresh$.next(true)),
+				tap(() => this.taskSubject$.next(true)),
+				untilDestroyed(this)
+			)
+			.subscribe();
+		this.route.queryParamMap
+			.pipe(
+				filter(
+					(params) =>
+						!!params && params.get('openAddDialog') === 'true'
+				),
+				debounceTime(1000),
+				tap(() => this.createTaskDialog()),
+				untilDestroyed(this)
+			)
+			.subscribe();
+		this._refresh$
+			.pipe(
+				filter(
+					() =>
+						this.dataLayoutStyle ===
+						ComponentLayoutStyleEnum.CARDS_GRID
+				),
+				tap(() => this.refreshPagination()),
+				tap(() => (this._tasks = [])),
+				untilDestroyed(this)
+			)
+			.subscribe();
+	}
+
+	setView() {
+		this._store
+			.componentLayout$(this.viewComponentName)
+			.pipe(
+				distinctUntilChange(),
+				tap(
+					(componentLayout) =>
+						(this.dataLayoutStyle = componentLayout)
+				),
+				tap(() => this.refreshPagination()),
+				filter(
+					(componentLayout) =>
+						componentLayout === ComponentLayoutStyleEnum.CARDS_GRID
+				),
+				tap(() => (this._tasks = [])),
+				tap(() => this.taskSubject$.next(true)),
+				untilDestroyed(this)
+			)
+			.subscribe();
+	}
+
+	/*
+	 * Table on changed source event
+	 */
+	onChangedSource() {
+		this.tasksTable.source.onChangedSource
+			.pipe(
+				untilDestroyed(this),
+				tap(() => this.clearItem())
+			)
+			.subscribe();
+	}
+
+	/*
+	 * Register Smart Table Source Config
+	 */
+	setSmartTableSource() {
+		if (!this.organization) {
+			return;
+		}
+
+		this.loading = true;
+
+		const { tenantId } = this._store.user;
+		const { id: organizationId } = this.organization;
+
+		this.smartTableSource = new ServerDataSource(this.httpClient, {
+			...(this.viewComponentName === ComponentEnum.ALL_TASKS
+				? { endPoint: `${API_PREFIX}/tasks/pagination` }
+				: {}),
+			...(this.viewComponentName === ComponentEnum.TEAM_TASKS
+				? { endPoint: `${API_PREFIX}/tasks/team` }
+				: {}),
+			...(this.viewComponentName === ComponentEnum.MY_TASKS
+				? { endPoint: `${API_PREFIX}/tasks/me` }
+				: {}),
+			relations: [
+				'project',
+				'tags',
+				'teams',
+				'teams.members',
+				'teams.members.employee',
+				'teams.members.employee.user',
+				'creator',
+				'organizationSprint',
+				'taskStatus',
+				'taskSize',
+				'taskPriority',
+			],
+			join: {
+				alias: 'task',
+				leftJoinAndSelect: {
+					members: 'task.members',
+					user: 'members.user',
+				},
+			},
+			where: {
+				organizationId,
+				tenantId,
+				...(this.selectedProject && this.selectedProject.id
+					? {
+							...(this.viewMode === TaskListTypeEnum.SPRINT
+								? {
+										organizationSprintId: null,
+								  }
+								: {}),
+							projectId: this.selectedProject.id,
+					  }
+					: {}),
+				...(this.selectedEmployeeId
+					? {
+							members: {
+								id: this.selectedEmployeeId,
+							},
+					  }
+					: {}),
+				...(this.filters.where ? this.filters.where : {}),
+			},
+			resultMap: (task: ITask) => {
+				return Object.assign({}, task, {
+					employees: task.members ? task.members : undefined,
+					assignTo: this._teamTaskStore._getTeamNames(task),
+					employeesMergedTeams: [task.members, task.teams],
+				});
+			},
+			finalize: () => {
+				this.dataLayoutStyle ===
+				this.componentLayoutStyleEnum.CARDS_GRID
+					? this._tasks.push(...this.smartTableSource.getData())
+					: (this._tasks = this.smartTableSource.getData());
+				this.storeInstance.loadAllTasks(this._tasks);
+				this.setPagination({
+					...this.getPagination(),
+					totalItems: this.smartTableSource.count(),
+				});
+				this.loading = false;
+			},
+		});
+	}
+
+	async getTasks() {
+		if (!this.organization) {
+			return;
+		}
+		try {
+			this.setSmartTableSource();
+
+			const { activePage, itemsPerPage } = this.pagination;
+			this.smartTableSource.setPaging(activePage, itemsPerPage, false);
+			if (
+				this.dataLayoutStyle === ComponentLayoutStyleEnum.CARDS_GRID ||
+				this.viewMode === TaskListTypeEnum.SPRINT
+			) {
+				await this.smartTableSource.getElements();
+				this.setPagination({
+					...this.getPagination(),
+					totalItems: this.smartTableSource.count(),
+				});
+			}
+		} catch (error) {
+			this._errorHandlingService.handleError(error);
 		}
 	}
 
@@ -706,31 +737,6 @@ export class TaskComponent
 		this._router.navigate(['/pages/tasks/settings', selectedProject.id], {
 			state: selectedProject,
 		});
-	}
-
-	/**
-	 * If, default project is selected from header
-	 *
-	 * @returns
-	 */
-	get isDefaultProject() {
-		if (this.selectedProject) {
-			return this.selectedProject.id === this.defaultProject.id;
-		}
-		return true;
-	}
-
-	/**
-	 * return store instance as per page
-	 */
-	get storeInstance() {
-		if (this.isTasksPage()) {
-			return this._taskStore;
-		} else if (this.isMyTasksPage()) {
-			return this._myTaskStore;
-		} else if (this.isTeamTaskPage()) {
-			return this._teamTaskStore;
-		}
 	}
 
 	/*

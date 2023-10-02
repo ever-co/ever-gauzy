@@ -264,6 +264,7 @@ export class AppComponent implements OnInit, AfterViewInit {
 						.catch((e) => {
 							console.log('error', e.status);
 							if (this._store.userId) {
+								event.sender.send('server_is_ready');
 								clearInterval(pingHost);
 							}
 						});
@@ -297,6 +298,7 @@ export class AppComponent implements OnInit, AfterViewInit {
 							.catch((e) => {
 								console.log('error', e.status);
 								if (this._store.userId) {
+									event.sender.send('server_already_start');
 									clearInterval(pingHost);
 								}
 							});

@@ -47,7 +47,9 @@ import {
 	TimeoutInterceptor,
 	DEFAULT_TIMEOUT,
 	HttpLoaderFactory,
-	LanguageInterceptor
+	LanguageInterceptor,
+	AlwaysOnModule,
+	UnauthorizedInterceptor
 } from '@gauzy/desktop-ui-lib';
 import { NbCardModule, NbButtonModule } from '@nebular/theme';
 import { NgSelectModule } from '@ng-select/ng-select';
@@ -81,6 +83,7 @@ import * as Sentry from '@sentry/angular';
 		NgSelectModule,
 		SplashScreenModule,
 		ServerDownModule,
+		AlwaysOnModule,
 		TranslateModule.forRoot({
 			extend: true,
 			loader: {
@@ -127,6 +130,11 @@ import * as Sentry from '@sentry/angular';
 		{
 			provide: HTTP_INTERCEPTORS,
 			useClass: TimeoutInterceptor,
+			multi: true
+		},
+		{
+			provide: HTTP_INTERCEPTORS,
+			useClass: UnauthorizedInterceptor,
 			multi: true
 		},
 		{

@@ -32,6 +32,9 @@ export const LocalStore = {
 				organizationContactId: projectInfo
 					? projectInfo.organizationContactId
 					: null,
+				organizationTeamId: projectInfo
+					? projectInfo.organizationTeamId
+					: null,
 				settings
 			};
 		} catch (error) {
@@ -111,7 +114,8 @@ export const LocalStore = {
 					prerelease: false,
 					preferredLanguage: 'en',
 					zone: 'local',
-					autoStart: true
+					autoStart: true,
+					alwaysOn: true
 				};
 				store.set({
 					appSetting: defaultAppSetting

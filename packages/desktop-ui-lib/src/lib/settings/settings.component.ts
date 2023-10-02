@@ -187,18 +187,18 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 			title: 'Github',
 			fields: [
 				{
-					name: 'GITHUB_CLIENT_ID',
-					field: 'GITHUB_CLIENT_ID',
+					name: 'GAUZY_GITHUB_CLIENT_ID',
+					field: 'GAUZY_GITHUB_CLIENT_ID',
 					value: ''
 				},
 				{
-					name: 'GITHUB_CLIENT_SECRET',
-					field: 'GITHUB_CLIENT_SECRET',
+					name: 'GAUZY_GITHUB_CLIENT_SECRET',
+					field: 'GAUZY_GITHUB_CLIENT_SECRET',
 					value: ''
 				},
 				{
-					name: 'GITHUB_CALLBACK_URL',
-					field: 'GITHUB_CALLBACK_URL',
+					name: 'GAUZY_GITHUB_CALLBACK_URL',
+					field: 'GAUZY_GITHUB_CALLBACK_URL',
 					value: ''
 				}
 			]
@@ -861,6 +861,11 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 	togglePrerelease(value) {
 		this._prerelease$.next(value);
 		this.updateSetting(value, 'prerelease');
+	}
+
+	toggleAlwaysOn(value: boolean) {
+		this.updateSetting(value, 'alwaysOn');
+		this.electronService.ipcRenderer.send(value ? 'show_ao' : 'hide_ao');
 	}
 
 	public async restartApp(): Promise<void> {

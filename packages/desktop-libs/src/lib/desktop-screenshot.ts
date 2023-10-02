@@ -1,13 +1,11 @@
 import { app } from 'electron';
 import { writeFileSync, existsSync, mkdirSync, unlinkSync } from 'fs';
 import moment from 'moment';
-import * as url from 'url';
 import * as path from 'path';
 import { LocalStore } from './desktop-store';
 import Form from 'form-data';
-import { BrowserWindow, screen } from 'electron';
+import { screen } from 'electron';
 import screenshot from 'screenshot-desktop';
-import * as remoteMain from '@electron/remote/main';
 
 // Import logging for electron and override default console logging
 import log from 'electron-log';
@@ -287,7 +285,7 @@ const showCapture = (timeTrackerWindow, url) => {
 	timeTrackerWindow.webContents.send('last_capture_local', { fullUrl: url });
 };
 
-const showCapturedToRenderer = (
+const showCapturedToRenderer = async (
 	notificationWindow,
 	thumbUrl,
 	quitApp,
@@ -299,50 +297,9 @@ const showCapturedToRenderer = (
 	if (!allowScreenshotCapture()) {
 		return;
 	}
+	console.log(windowPath);
 	const soundCamera = soundPath;
-	const sizes = screen.getPrimaryDisplay().size;
-	// preparing window screenshot
-	const screenCaptureWindow = {
-		width: 310,
-		height: 170,
-		frame: false,
-		webPreferences: {
-			nodeIntegration: true,
-			webSecurity: false,
-			contextIsolation: false,
-		},
-	};
-
-	notificationWindow = new BrowserWindow({
-		...screenCaptureWindow,
-		x: sizes.width - (screenCaptureWindow.width + 15),
-		y: 0 + 15,
-	});
-
-	console.log('App Name:', app.getName());
-
-	const urlpath = url.format({
-		pathname:
-			app.getName() !== 'gauzy-desktop-timer'
-				? windowPath.screenshotWindow
-				: windowPath.timeTrackerUi,
-		protocol: 'file:',
-		slashes: true,
-		hash: '/screen-capture',
-	});
-	notificationWindow.loadURL(urlpath);
-	notificationWindow.setMenu(null);
-	notificationWindow.hide();
-	notificationWindow.setVisibleOnAllWorkspaces(true, {
-		visibleOnFullScreen: true,
-		skipTransformProcessType: true,
-	});
-
-	notificationWindow.show();
-	notificationWindow.webContents.send('show_popup_screen_capture', {
-		imgUrl: thumbUrl,
-		note: LocalStore.beforeRequestParams().note,
-	});
+	notificationWindow.show(thumbUrl);
 	try {
 		if (existsSync(soundCamera)) {
 			timeTrackerWindow.webContents.send('play_sound', {
@@ -353,10 +310,11 @@ const showCapturedToRenderer = (
 		console.error('sound camera not found');
 	}
 
-	setTimeout(() => {
+	notificationWindow.hide();
+	if (quitApp) {
 		notificationWindow.close();
-		if (quitApp) app.quit();
-	}, 4000);
+		app.quit();
+	}
 };
 
 export async function takeshot(
@@ -525,64 +483,19 @@ export async function getScreenshot() {
 }
 
 export async function notifyScreenshot(
-	notificationWindow: BrowserWindow,
+	notificationWindow,
 	thumb,
 	windowPath,
 	soundPath,
 	timeTrackerWindow
 ) {
 	const soundCamera = soundPath;
-	const sizes = screen.getPrimaryDisplay().size;
 	const appSetting = LocalStore.getStore('appSetting');
-	// preparing show screenshot
-	const screenCaptureWindow = {
-		width: 310,
-		height: 170,
-		frame: false,
-		webPreferences: {
-			nodeIntegration: true,
-			webSecurity: false,
-			contextIsolation: false,
-			//nativeWindowOpen: false,
-		},
-	};
-
-	notificationWindow = new BrowserWindow({
-		...screenCaptureWindow,
-		x: sizes.width - (screenCaptureWindow.width + 15),
-		y: 0 + 15,
-	});
-
-	console.log('App Name:', app.getName());
-	global.variableGlobal.screenshotSrc = `data:image/png;base64, ${thumb.img}`;
-	const urlpath = url.format({
-		pathname:
-			app.getName() !== 'gauzy-desktop-timer'
-				? windowPath.screenshotWindow
-				: windowPath.timeTrackerUi,
-		protocol: 'file:',
-		slashes: true,
-		hash: '/screen-capture',
-	});
-	await notificationWindow.loadURL(urlpath);
-	remoteMain.enable(notificationWindow.webContents);
-	// notificationWindow.webContents.toggleDevTools();
-	notificationWindow.setMenu(null);
-	notificationWindow.hide();
-	notificationWindow.setVisibleOnAllWorkspaces(true, {
-		visibleOnFullScreen: true,
-		skipTransformProcessType: true,
-	});
-	notificationWindow.on('show', () => {
-		notificationWindow.focus();
-	});
-	notificationWindow.show();
-	notificationWindow.webContents.send('show_popup_screen_capture', {
-		note: LocalStore.beforeRequestParams().note,
-	});
-
+	const thumbImg = `data:image/png;base64, ${thumb.img}`
+	global.variableGlobal.screenshotSrc = thumbImg;
+	notificationWindow.show(thumbImg);
 	timeTrackerWindow.webContents.send('last_capture_local', {
-		fullUrl: `data:image/png;base64, ${thumb.img}`,
+		fullUrl: thumbImg
 	});
 	try {
 		if (
@@ -598,9 +511,7 @@ export async function notifyScreenshot(
 		console.error('sound camera not found');
 	}
 
-	setTimeout(() => {
-		notificationWindow.close();
-	}, 4000);
+	notificationWindow.hide();
 }
 
 function allowScreenshotCapture(): boolean {

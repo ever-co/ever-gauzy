@@ -18,12 +18,12 @@ export class HubstaffTokenInterceptor implements HttpInterceptor {
 		null
 	);
 
-	constructor(private injector: Injector) {}
+	constructor(private injector: Injector) { }
 	intercept(
 		req: HttpRequest<any>,
 		next: HttpHandler
 	): Observable<HttpEvent<any>> {
-		if (!req.url.includes('/integrations/hubstaff/')) {
+		if (!req.url.includes('/integration/hubstaff/')) {
 			return next.handle(req);
 		}
 

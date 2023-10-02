@@ -41,7 +41,13 @@ import {
 	ILocalServer,
 	ReverseProxy,
 	DesktopDialog,
-	DialogStopServerExitConfirmation
+	DialogStopServerExitConfirmation,
+	ErrorEventManager,
+	ErrorReport,
+	ErrorReportRepository,
+	DialogErrorHandler,
+	AppError,
+	UIError
 } from '@gauzy/desktop-libs';
 import {
 	createSetupWindow,
@@ -53,6 +59,8 @@ import {
 import { initSentry } from './sentry';
 import * as remoteMain from '@electron/remote/main';
 import { autoUpdater } from 'electron-updater';
+import * as Sentry from '@sentry/electron';
+
 remoteMain.initialize();
 
 // the folder where all app data will be stored (e.g. sqlite DB, settings, cache, etc)
@@ -98,6 +106,11 @@ const reverseProxy: ILocalServer = new ReverseProxy(serverConfig);
 
 const executableName = path.basename(process.execPath);
 
+const eventErrorManager = ErrorEventManager.instance;
+const report = new ErrorReport(
+	new ErrorReportRepository('ever-co', 'ever-gauzy-server')
+);
+
 /* Load translations */
 TranslateLoader.load(__dirname + '/assets/i18n/');
 /* Setting the app user model id for the app. */
@@ -114,6 +127,76 @@ ipcMain.setMaxListeners(0);
 
 /* Remove handler if exist */
 ipcMain.removeHandler('PREFERRED_LANGUAGE');
+
+// setup logger to catch all unhandled errors and submit as bug reports to our repo
+log.catchErrors({
+	showDialog: false,
+	onError(error, versions, submitIssue) {
+		// Set user information, as well as tags and further extras
+		Sentry.configureScope((scope) => {
+			scope.setExtra('Version', versions.app);
+			scope.setTag('OS', versions.os);
+		});
+		// Capture exceptions, messages
+		Sentry.captureMessage(error.message);
+		Sentry.captureException(new Error(error.stack));
+		const dialog = new DialogErrorHandler(error.message);
+		dialog.options.detail = error.stack;
+		dialog.show().then(async (result) => {
+			if (result.response === 1) {
+				report.description = error.stack;
+				await report.submit();
+				app.exit(0);
+				return;
+			}
+
+			if (result.response === 2) {
+				app.exit(0);
+				return;
+			}
+			return;
+		});
+	}
+});
+
+process.on('uncaughtException', (error) => {
+	throw new AppError('MAINUNEXCEPTION', error.message);
+});
+
+eventErrorManager.onSendReport(async (message) => {
+	if (!serverWindow) return;
+	serverWindow.focus();
+	const dialog = new DialogErrorHandler(message, serverWindow);
+	dialog.options.buttons.shift();
+	const button = await dialog.show();
+	switch (button.response) {
+		case 0:
+			report.description = message;
+			await report.submit();
+			app.exit(0);
+			break;
+		default:
+			app.exit(0);
+			break;
+	}
+
+});
+
+eventErrorManager.onShowError(async (message) => {
+	if (!serverWindow) return;
+	serverWindow.focus();
+	const dialog = new DialogErrorHandler(message, serverWindow);
+	dialog.options.buttons.splice(1, 1);
+	const button = await dialog.show();
+	switch (button.response) {
+		case 1:
+			app.exit(0);
+			break;
+		default:
+			// 👀
+			break;
+	}
+})
 
 const runSetup = async () => {
 	if (setupWindow) {
@@ -169,7 +252,7 @@ const initializeConfig = async (val) => {
 		serverConfig.update();
 		await runMainWindow();
 	} catch (error) {
-		console.log(error)
+		throw new AppError('MAINWININIT', error);
 	}
 };
 
@@ -195,7 +278,7 @@ const runServer = (isRestart) => {
 			console.log('You exit without to stop the server');
 			return;
 		}
-		console.log('Error ', error);
+		throw new AppError('MAINSTRSERVER', error);
 	}
 };
 
@@ -321,7 +404,7 @@ const stopServer = (isRestart) => {
 			serverConfig.setting = { apiPid: null };
 			serverWindow.webContents.send('log_state', { msg: 'Api stopped' });
 		} catch (error) {
-			console.log('error api', error);
+			throw new UIError('400', error, 'KILL-API-SERVER');
 		}
 	}
 	if (config.uiPid) {
@@ -333,7 +416,7 @@ const stopServer = (isRestart) => {
 				runServer(true);
 			}
 		} catch (error) {
-			console.log('error ui', error);
+			throw new UIError('400', error, 'KILL-UI-SERVER');
 		}
 	}
 	serverWindow.webContents.send('running_state', false);
@@ -344,20 +427,24 @@ ipcMain.on('stop_gauzy_server', (event, arg) => {
 });
 
 app.on('ready', async () => {
-	splashScreen = new SplashScreen(pathWindow.ui);
-	await splashScreen.loadURL();
-	splashScreen.show();
-	if (!serverConfig.setting) {
-		LocalStore.setDefaultApplicationSetting();
-		launchAtStartup(true, false);
+	try {
+		splashScreen = new SplashScreen(pathWindow.ui);
+		await splashScreen.loadURL();
+		splashScreen.show();
+		if (!serverConfig.setting) {
+			LocalStore.setDefaultApplicationSetting();
+			launchAtStartup(true, false);
+		}
+		if (!settingsWindow) {
+			settingsWindow = await createSettingsWindow(settingsWindow, pathWindow.ui);
+		}
+		await appState();
+		updater.settingWindow = settingsWindow;
+		updater.gauzyWindow = serverWindow;
+		await updater.checkUpdate();
+	} catch (error) {
+		throw new AppError('MAINWININIT', error);
 	}
-	if (!settingsWindow) {
-		settingsWindow = await createSettingsWindow(settingsWindow, pathWindow.ui);
-	}
-	await appState();
-	updater.settingWindow = settingsWindow;
-	updater.gauzyWindow = serverWindow;
-	await updater.checkUpdate();
 	TranslateService.onLanguageChange(() => {
 		const menuWindowSetting =
 			Menu.getApplicationMenu().getMenuItemById('window-setting');

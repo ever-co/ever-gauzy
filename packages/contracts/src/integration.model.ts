@@ -1,11 +1,12 @@
 import { IHubstaffScreenshotActivity, IHubstaffTimeSlotActivity } from './hubstaff.model';
-import { IOrganizationUpdateInput, ITaskUpdateInput } from './index';
 import { IActivity, ITimeLog } from './timesheet.model';
 import {
 	IBaseEntityModel,
 	IBasePerTenantAndOrganizationEntityModel
 } from './base-entity.model';
-import { IOrganizationProjectsUpdateInput } from './organization-projects.model';
+import { IOrganizationProject } from './organization-projects.model';
+import { IOrganizationCreateInput, IOrganizationUpdateInput } from './organization.model';
+import { ITaskUpdateInput } from './task.model';
 import { ITag } from './tag.model';
 
 export interface IRelationalIntegrationTenant {
@@ -63,7 +64,8 @@ export interface IIntegration extends IBaseEntityModel {
 	isPaid?: boolean;
 	version?: string;
 	docUrl?: string;
-	navigationUrl?: string;
+	provider?: string;
+	redirectUrl?: string;
 	isFreeTrial?: boolean;
 	freeTrialPeriod?: number;
 	order?: number;
@@ -74,8 +76,11 @@ export interface IIntegration extends IBaseEntityModel {
 
 export interface IIntegrationType extends IBaseEntityModel {
 	name: string;
+	description: string;
+	icon: string;
 	groupName: string;
 	order: number;
+	integrations: IIntegration[];
 }
 
 export interface IIntegrationFilter {
@@ -115,13 +120,13 @@ export interface IIntegrationMapSyncTask extends IBasePerTenantAndOrganizationEn
 }
 
 export interface IIntegrationMapSyncProject extends IBasePerTenantAndOrganizationEntityModel {
-	organizationProjectInput: IOrganizationProjectsUpdateInput;
+	organizationProject: IOrganizationProject;
 	integrationId: string;
 	sourceId: string;
 }
 
 export interface IIntegrationMapSyncOrganization extends IBasePerTenantAndOrganizationEntityModel {
-	organizationInput: IOrganizationUpdateInput;
+	organizationInput: IOrganizationCreateInput | IOrganizationUpdateInput,
 	integrationId: string;
 	sourceId: string;
 }
@@ -141,12 +146,17 @@ export interface IIntegrationTenantCreateInput extends IBasePerTenantAndOrganiza
 	settings?: IIntegrationSetting[];
 }
 
-export interface IIntegrationTenantUpdateInput extends Pick<IIntegrationTenantCreateInput, 'entitySettings' | 'settings'> { }
+export interface IIntegrationTenantUpdateInput extends Pick<IIntegrationTenantCreateInput, 'entitySettings' | 'settings'> {
+	id?: IIntegrationTenant['id'];
+}
 
 export enum IntegrationEnum {
+	IMPORT_EXPORT = 'Import_Export',
 	UPWORK = 'Upwork',
 	HUBSTAFF = 'Hubstaff',
-	GAUZY_AI = 'Gauzy AI'
+	GAUZY_AI = 'Gauzy_AI',
+	GITHUB = 'Github',
+	JIRA = 'Jira'
 }
 
 export enum IntegrationEntity {
@@ -171,14 +181,16 @@ export enum IntegrationTypeGroupEnum {
 	CATEGORIES = 'Categories'
 }
 
-export enum IntegrationTypeNameEnum {
+export enum IntegrationTypeEnum {
 	ALL_INTEGRATIONS = 'All Integrations',
 	FOR_SALES_TEAMS = 'For Sales Teams',
 	FOR_ACCOUNTANTS = 'For Accountants',
 	FOR_SUPPORT_TEAMS = 'For Support Teams',
 	CRM = 'CRM',
 	SCHEDULING = 'Scheduling',
-	TOOLS = 'Tools'
+	TOOLS = 'Tools',
+	PROJECT_MANAGEMENT = 'Project Management',
+	COMMUNICATION = 'Communication'
 }
 
 export enum IntegrationFilterEnum {
@@ -186,65 +198,6 @@ export enum IntegrationFilterEnum {
 	FREE = 'Free',
 	PAID = 'Paid'
 }
-
-export const DEFAULT_INTEGRATION_PAID_FILTERS = [
-	{
-		label: IntegrationFilterEnum.ALL,
-		value: 'all'
-	},
-	{
-		label: IntegrationFilterEnum.FREE,
-		value: 'false'
-	},
-	{
-		label: IntegrationFilterEnum.PAID,
-		value: 'true'
-	}
-];
-
-export const DEFAULT_INTEGRATIONS = [
-	{
-		name: IntegrationEnum.HUBSTAFF,
-		imgSrc: 'hubstaff.svg',
-		isComingSoon: false,
-		integrationTypesMap: <string[]>[
-			IntegrationTypeNameEnum.ALL_INTEGRATIONS
-		],
-		order: 1,
-		navigationUrl: 'hubstaff'
-	},
-	{
-		name: IntegrationEnum.UPWORK,
-		imgSrc: 'upwork.svg',
-		isComingSoon: false,
-		integrationTypesMap: <string[]>[
-			IntegrationTypeNameEnum.ALL_INTEGRATIONS
-		],
-		order: 2,
-		navigationUrl: 'upwork'
-	},
-	{
-		name: IntegrationEnum.GAUZY_AI,
-		imgSrc: 'gauzy-ai.svg',
-		isComingSoon: false,
-		integrationTypesMap: <string[]>[
-			IntegrationTypeNameEnum.ALL_INTEGRATIONS
-		],
-		order: 3,
-		navigationUrl: 'gauzy-ai'
-	},
-	{
-		name: 'Import/Export',
-		imgSrc: 'import-export.svg',
-		isComingSoon: true,
-		integrationTypesMap: <string[]>[
-			IntegrationTypeNameEnum.ALL_INTEGRATIONS,
-			IntegrationTypeNameEnum.CRM
-		],
-		order: 4,
-		navigationUrl: 'import-export'
-	}
-];
 
 /**
 * Hubstaff Integration
