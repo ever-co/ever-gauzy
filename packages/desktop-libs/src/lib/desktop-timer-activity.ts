@@ -13,31 +13,20 @@ export const TimerData = {
 		await timerService.update(timer);
 	},
 	insertWindowEvent: async (knex: Knex, query, retry = 0) => {
-		try {
-			await knex('window-events')
-				.insert(query)
-				.onConflict('eventId')
-				.merge(['duration', 'data', 'updated_at', 'type']);
-		} catch (error) {
-			if (
-				error.message
-					.toLowerCase()
-					.indexOf(
-						'Knex: Timeout acquiring a connection'.toLowerCase()
-					) > -1
-			) {
-				if (retry < 3) {
-					await TimerData.wait(3000);
-					return await TimerData.insertWindowEvent(
-						knex,
-						query,
-						retry + 1
-					);
-				}
+		console.log(query)
+		await knex.transaction(async (trx: Knex.Transaction) => {
+			try {
+				await trx('window-events')
+					.insert(query)
+					.onConflict('eventId')
+					.merge(['duration', 'data', 'updated_at', 'type']);
+				await trx.commit();
+			} catch (error) {
+				await trx.rollback();
+				console.log('error on insert window-events', error);
+				throw error;
 			}
-			console.log('error on insert window-events', error);
-			throw error;
-		}
+		});
 	},
 	updateWindowEventUpload: async (knex, data) => {
 		return await knex('window-events')
@@ -81,38 +70,26 @@ export const TimerData = {
 			});
 	},
 	insertAfkEvent: async (knex: Knex, query, retry = 0) => {
-		try {
-			await knex('afk-events')
-				.insert(query)
-				.onConflict('eventId')
-				.merge([
-					'duration',
-					'timerId',
-					'data',
-					'updated_at',
-					'timeSlotId',
-					'timeSheetId'
-				]);
-		} catch (error) {
-			if (
-				error.message
-					.toLowerCase()
-					.indexOf(
-						'Knex: Timeout acquiring a connection'.toLowerCase()
-					) > -1
-			) {
-				if (retry < 3) {
-					await TimerData.wait(3000);
-					return await TimerData.insertAfkEvent(
-						knex,
-						query,
-						retry + 1
-					);
-				}
+		await knex.transaction(async (trx: Knex.Transaction) => {
+			try {
+				await knex('afk-events')
+					.insert(query)
+					.onConflict('eventId')
+					.merge([
+						'duration',
+						'timerId',
+						'data',
+						'updated_at',
+						'timeSlotId',
+						'timeSheetId',
+					]);
+				await trx.commit();
+			} catch (error) {
+				await trx.rollback();
+				console.log('error on insert afk-events', error);
+				throw error;
 			}
-			console.log('error on insert afk-events', error);
-			throw error;
-		}
+		});
 	},
 	getLastTimer: async (knex, appInfo) => {
 		return await timerService.findLastOne();
