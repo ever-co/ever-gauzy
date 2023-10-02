@@ -67,6 +67,7 @@ export enum OrganizationProjectBudgetTypeEnum {
 
 export interface IOrganizationProjectsFindInput extends IBasePerTenantAndOrganizationEntityModel {
 	name?: string;
+	organizationTeamId?: IOrganizationTeam['id'];
 	organizationContactId?: IOrganizationContact['id'];
 	organizationContact?: IOrganizationContact;
 	public?: boolean;

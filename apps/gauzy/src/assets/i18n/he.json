@@ -3796,6 +3796,7 @@
 		"STOP_TIMER_CHANGE_PROJECT": "אנא עצור את הטיימר לפני שתשנה את הפרויקט",
 		"STOP_TIMER_CHANGE_TASK": "אנא עצור את הטיימר לפני שתשנה את המשימה",
 		"STOP_TIMER_CHANGE_DESCRIPTION": "אנא עצור את הטיימר לפני שתשנה את התיאור",
+		"STOP_TIMER_CHANGE_TEAM": "אנא עצור את הטיימר לפני שאתה משנה את הצוות",
 		"ACTIVITY_WATCH_INTEGRATION": "שליחת פעילות ל־ActivityWatch",
 		"LAST_CAPTURE_TAKEN": "נתפסה לכם צילום מסך אחרון",
 		"REQUEST_TASK_PERMISSION": "בקש הרשאה ממנהל הארגון",

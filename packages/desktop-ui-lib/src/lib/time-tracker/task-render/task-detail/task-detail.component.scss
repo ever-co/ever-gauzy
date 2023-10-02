@@ -1,0 +1,101 @@
+@import 'themes';
+
+.badges {
+	display: flex;
+	padding: 4px;
+	width: fit-content;
+	line-height: 1;
+	border-radius: var(--border-radius);
+	white-space: nowrap;
+	text-overflow: ellipsis;
+	overflow: hidden;
+	gap: 4px;
+	align-items: center;
+	font-weight: 600;
+}
+
+.task.number {
+	color: var(--gauzy-text-color-1);
+	padding: 1px 10px;
+	border-radius: 3px;
+	background: rgba(214, 214, 214, 1);
+	gap: 10px;
+	font-weight: 600;
+}
+
+.title-description,
+.title {
+	color: var(--gauzy-text-color-1);
+	font-weight: 600;
+}
+
+:host nb-card {
+	max-width: 540px;
+	background-color: var(--gauzy-card-1);
+
+	nb-card-body {
+		@include nb-ltr(padding, 0.5rem 4px 1rem 1rem);
+		@include nb-rtl(padding, 0.5rem 1rem 1rem 4px);
+		background-color: var(--gauzy-card-2);
+	}
+
+	nb-card-header {
+		padding: 1rem 1rem 0.5rem 1rem;;
+	}
+
+	nb-card-footer {
+		padding: 0 1rem 1rem 1rem;
+		background-color: var(--gauzy-card-2);
+	}
+}
+
+:host ::ng-deep gauzy-task-badge-view.task-badge {
+	font-size: 11px;
+}
+
+:host .description {
+	max-height: 300px;
+	overflow-x: hidden;
+	overflow-y: auto;
+	font-weight: 500;
+	text-align: start;
+	@include nb-ltr(padding, 0 8px 0 0);
+	@include nb-rtl(padding, 0 0 0 8px);
+
+	::ng-deep img {
+		width: auto !important;
+		border-radius: var(--border-radius) !important;
+		object-fit: cover !important;
+		max-width: 511px;
+	}
+}
+
+.title {
+	font-size: 24px;
+	text-overflow: ellipsis;
+	white-space: initial;
+	overflow: hidden;
+	cursor: pointer;
+	width: 100%;
+	display: -webkit-box;
+	-webkit-line-clamp: 3;
+	-webkit-box-orient: vertical;
+}
+
+:host {
+	i {
+		cursor: pointer;
+	}
+
+	.cancel {
+		width: 100%;
+		display: flex;
+		justify-content: flex-end;
+		margin-bottom: 1rem;
+
+		i {
+			font-size: 1rem;
+			color: var(--gauzy-text-color-2);
+		}
+	}
+}

@@ -15,7 +15,7 @@ import { resetPermissions } from 'mac-screen-capture-permissions';
 import * as _ from 'underscore';
 import {
 	ScreenCaptureNotification,
-	timeTrackerPage,
+	loginPage,
 } from '@gauzy/desktop-window';
 // Import logging for electron and override default console logging
 import log from 'electron-log';
@@ -445,6 +445,7 @@ export function ipcTimer(
 					note: arg.note,
 					aw: arg.aw,
 					organizationContactId: arg.organizationContactId,
+					organizationTeamId: arg.organizationTeamId
 				},
 			});
 
@@ -814,7 +815,7 @@ export function ipcTimer(
 		try {
 			if (timeTrackerWindow && app.getName() === 'gauzy-desktop-timer') {
 				await timeTrackerWindow.loadURL(
-					timeTrackerPage(windowPath.timeTrackerUi)
+					loginPage(windowPath.timeTrackerUi)
 				);
 			}
 			LocalStore.updateAuthSetting({ isLogout: true });
@@ -822,7 +823,7 @@ export function ipcTimer(
 				settingWindow.webContents.send('logout_success');
 			}
 		} catch (error) {
-			throw new UIError('500', error, 'IPCQNVGLOGIN');
+			console.log('IPCQNVGLOGIN', error);
 		}
 	});
 

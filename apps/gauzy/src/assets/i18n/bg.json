@@ -3798,6 +3798,7 @@
 		"STOP_TIMER_CHANGE_PROJECT": "Моля, спрете таймера преди да промените проекта",
 		"STOP_TIMER_CHANGE_TASK": "Моля, спрете таймера преди да промените задачата",
 		"STOP_TIMER_CHANGE_DESCRIPTION": "Моля, спрете таймера преди да промените описанието",
+		"STOP_TIMER_CHANGE_TEAM": "Моля, спрете таймера, преди да промените отбора",
 		"ACTIVITY_WATCH_INTEGRATION": "Интеграция с ActivityWatch",
 		"LAST_CAPTURE_TAKEN": "Последната заснета екранна снимка",
 		"REQUEST_TASK_PERMISSION": "Изисква се разрешение от администратора на организацията",

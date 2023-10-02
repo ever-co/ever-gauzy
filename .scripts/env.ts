@@ -66,6 +66,10 @@ export type Env = Readonly<{
 
 	FILE_PROVIDER: string;
 
+	// Jitsu Analytics
+	JITSU_BROWSER_HOST: string;
+	JITSU_BROWSER_WRITE_KEY: string;
+
 	GAUZY_GITHUB_APP_NAME: string;
 	GAUZY_GITHUB_APP_ID: string;
 	GAUZY_GITHUB_CLIENT_ID: string;
@@ -84,12 +88,24 @@ export const env: Env = cleanEnv(
 		API_BASE_URL: str({ default: 'http://localhost:3000' }),
 
 		PLATFORM_WEBSITE_URL: str({ default: 'https://gauzy.co' }),
-		PLATFORM_WEBSITE_DOWNLOAD_URL: str({ default: 'https://gauzy.co/downloads' }),
-		DESKTOP_APP_DOWNLOAD_LINK_APPLE: str({ default: 'https://gauzy.co/downloads#desktop/apple' }),
-		DESKTOP_APP_DOWNLOAD_LINK_WINDOWS: str({ default: 'https://gauzy.co/downloads#desktop/windows' }),
-		DESKTOP_APP_DOWNLOAD_LINK_LINUX: str({ default: 'https://gauzy.co/downloads#desktop/linux' }),
-		MOBILE_APP_DOWNLOAD_LINK: str({ default: 'https://gauzy.co/downloads#mobile' }),
-		EXTENSION_DOWNLOAD_LINK: str({ default: 'https://gauzy.co/downloads#extensions' }),
+		PLATFORM_WEBSITE_DOWNLOAD_URL: str({
+			default: 'https://gauzy.co/downloads',
+		}),
+		DESKTOP_APP_DOWNLOAD_LINK_APPLE: str({
+			default: 'https://gauzy.co/downloads#desktop/apple',
+		}),
+		DESKTOP_APP_DOWNLOAD_LINK_WINDOWS: str({
+			default: 'https://gauzy.co/downloads#desktop/windows',
+		}),
+		DESKTOP_APP_DOWNLOAD_LINK_LINUX: str({
+			default: 'https://gauzy.co/downloads#desktop/linux',
+		}),
+		MOBILE_APP_DOWNLOAD_LINK: str({
+			default: 'https://gauzy.co/downloads#mobile',
+		}),
+		EXTENSION_DOWNLOAD_LINK: str({
+			default: 'https://gauzy.co/downloads#extensions',
+		}),
 
 		SENTRY_DSN: str({ default: '' }),
 		SENTRY_TRACES_SAMPLE_RATE: str({ default: '' }),
@@ -123,6 +139,9 @@ export const env: Env = cleanEnv(
 		GAUZY_CLOUD_APP: str({ default: 'https://app.gauzy.co/#' }),
 
 		FILE_PROVIDER: str({ default: 'LOCAL' }),
+
+		JITSU_BROWSER_HOST: str({ default: '' }),
+		JITSU_BROWSER_WRITE_KEY: str({ default: '' }),
 
 		GAUZY_GITHUB_APP_NAME: str({ default: '' }),
 		GAUZY_GITHUB_APP_ID: str({ default: '' }),
