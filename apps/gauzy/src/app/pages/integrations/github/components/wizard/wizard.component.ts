@@ -45,7 +45,7 @@ export class GithubWizardComponent implements AfterViewInit, OnInit, OnDestroy {
 	constructor(
 		private readonly _activatedRoute: ActivatedRoute,
 		private readonly _router: Router,
-		private readonly store: Store,
+		private readonly _store: Store
 	) { }
 
 	/**
@@ -83,7 +83,7 @@ export class GithubWizardComponent implements AfterViewInit, OnInit, OnDestroy {
 	 * 5. Uses the 'untilDestroyed' operator to automatically unsubscribe when the component is destroyed.
 	 */
 	ngAfterViewInit(): void {
-		this.store.selectedOrganization$
+		this._store.selectedOrganization$
 			.pipe(
 				distinctUntilChange(),
 				// Debounce changes to avoid excessive updates (waits for 200 milliseconds of inactivity)
@@ -106,15 +106,17 @@ export class GithubWizardComponent implements AfterViewInit, OnInit, OnDestroy {
 	 * Redirect the user to GitHub's authorization endpoint.
 	 */
 	private async oAuthAppAuthorization() {
-		// Get the redirect URI and client ID from the environment
+		// Get the redirect URI, Post Install URL and client ID from the environment
 		const redirect_uri = environment.GAUZY_GITHUB_REDIRECT_URL;
 		const client_id = environment.GAUZY_GITHUB_CLIENT_ID;
+		const postInstallURL = environment.GAUZY_GITHUB_POST_INSTALL_URL;
 
 		// Define the query parameters for the authorization request
 		const queryParams = toParams({
 			'redirect_uri': `${redirect_uri}`,
 			'client_id': `${client_id}`,
-			'scope': 'user'
+			'scope': 'user',
+			'state': `${postInstallURL}`
 		});
 
 		// Construct the external URL for GitHub authorization with the query parameters
@@ -164,6 +166,10 @@ export class GithubWizardComponent implements AfterViewInit, OnInit, OnDestroy {
 	 * Open a new popup window for GitHub application installation.
 	 */
 	private async openGitHubAppPopup() {
+		if (!this.organization) {
+			return;
+		}
+
 		// Specify the width and height for the popup window
 		const width = 600, height = 600;
 
@@ -179,28 +185,20 @@ export class GithubWizardComponent implements AfterViewInit, OnInit, OnDestroy {
 			// A window with the same name is already open, so focus on it
 			window.frames[windowName].focus();
 		} else {
-			// Extract the organization ID and tenant ID from the selected organization
-			const { id: organizationId, tenantId } = this.organization;
-
-			// Create a state parameter that combines organizationId and tenantId
-			const state = `${organizationId}|${tenantId}`;
-
-			// Get the redirect URI and client ID from the environment
+			// Get the redirect URI, Post Install URL and client ID from the environment
 			const redirect_uri = environment.GAUZY_GITHUB_REDIRECT_URL;
-			const client_id = environment.GAUZY_GITHUB_CLIENT_ID;
+			// const client_id = environment.GAUZY_GITHUB_CLIENT_ID;
+			const postInstallURL = environment.GAUZY_GITHUB_POST_INSTALL_URL;
 
 			// Define the query parameters for the authorization request
 			const queryParams = toParams({
-				'client_id': `${client_id}`,
 				'redirect_uri': `${redirect_uri}`,
-				'state': `${state}`,
+				'state': `${postInstallURL}`,
 			});
 
 			// Construct the external URL for GitHub authorization with the query parameters
-			const url = `${GITHUB_AUTHORIZATION_URL}?${queryParams.toString()}`;
-
 			/** Navigate to the target external URL */
-			// const url = `https://github.com/apps/${environment.GAUZY_GITHUB_APP_NAME}/installations/new?${queryParams.toString()}`;
+			const url = `https://github.com/apps/${environment.GAUZY_GITHUB_APP_NAME}/installations/new?${queryParams.toString()}`;
 
 			/** Navigate to the external URL with query parameters */
 			this.window = window.open(

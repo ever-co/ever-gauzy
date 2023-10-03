@@ -21,25 +21,26 @@ export class GitHubAuthorizationController {
         @Query() query: IGithubAppInstallInput,
         @Res() response: Response
     ) {
-        console.log({ query }, 'Github callback query data');
         try {
             // Validate the input data (You can use class-validator for validation)
-            if (!query || !query.state || !query.code) {
+            if (!query || !query.installation_id || !query.setup_action || !query.state) {
                 throw new HttpException('Invalid github callback query data', HttpStatus.BAD_REQUEST);
             }
 
             /** Github Config Options */
-            const github = this._config.get<IGithubConfig>('github') as IGithubConfig;
+            const { postInstallUrl } = this._config.get<IGithubConfig>('github') as IGithubConfig;
 
             /** Construct the redirect URL with query parameters */
             const urlParams = new URLSearchParams();
-            urlParams.append('code', query.code);
-            // urlParams.append('installation_id', query.installation_id);
-            // urlParams.append('setup_action', query.setup_action);
-            urlParams.append('state', query.state);
+            urlParams.append('installation_id', query.installation_id);
+            urlParams.append('setup_action', query.setup_action);
 
             /** Redirect to the URL */
-            return response.redirect(`${github.postInstallUrl}?${urlParams.toString()}`);
+            if (query.state.startsWith('http')) {
+                return response.redirect(`${query.state}?${urlParams.toString()}`);
+            } else {
+                return response.redirect(`${postInstallUrl}?${urlParams.toString()}`);
+            }
         } catch (error) {
             // Handle errors and return an appropriate error response
             throw new HttpException(`Failed to add GitHub installation: ${error.message}`, HttpStatus.INTERNAL_SERVER_ERROR);

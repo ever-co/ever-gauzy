@@ -78,4 +78,5 @@ export interface Environment {
 	GAUZY_GITHUB_APP_ID: string;
 	GAUZY_GITHUB_CLIENT_ID: string;
 	GAUZY_GITHUB_REDIRECT_URL: string;
+	GAUZY_GITHUB_POST_INSTALL_URL: string;
 }

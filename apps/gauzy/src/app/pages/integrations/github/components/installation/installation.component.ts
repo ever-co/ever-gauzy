@@ -1,15 +1,15 @@
-import { Component, OnInit } from '@angular/core';
+import { AfterViewInit, Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { filter, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { IGithubAppInstallInput, IIntegrationTenant, IOrganization } from '@gauzy/contracts';
-import { GithubService } from '../../../../../@core/services';
+import { GithubService, Store } from '../../../../../@core/services';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
 	templateUrl: './installation.component.html'
 })
-export class GithubInstallationComponent implements OnInit {
+export class GithubInstallationComponent implements AfterViewInit, OnInit {
 
 	public isLoading: boolean = true;
 	public organization: IOrganization;
@@ -17,6 +17,7 @@ export class GithubInstallationComponent implements OnInit {
 	constructor(
 		private readonly _route: ActivatedRoute,
 		private readonly _githubService: GithubService,
+		private readonly _store: Store
 	) { }
 
 	/**
@@ -26,12 +27,14 @@ export class GithubInstallationComponent implements OnInit {
 	ngOnInit(): void {
 		this._route.queryParams
 			.pipe(
-				// Filter and keep only valid queryParams with 'code'
-				filter(({ code }) => !!code),
+				// Filter and keep only valid queryParams with 'installation_id' and 'setup_action'
+				filter(({ installation_id, setup_action }) => !!installation_id && !!setup_action),
+				tap(() => this.organization = this._store.selectedOrganization),
 				// Use 'tap' operator to perform an asynchronous action
-				tap(async ({ code, state }: IGithubAppInstallInput) =>
+				tap(async ({ installation_id, setup_action, state }: IGithubAppInstallInput) =>
 					await this.verifyGitHubAppAuthorization({
-						code,
+						installation_id,
+						setup_action,
 						state
 					})
 				),
@@ -43,22 +46,30 @@ export class GithubInstallationComponent implements OnInit {
 	}
 
 	/**
+	 *
+	 */
+	ngAfterViewInit(): void { }
+
+	/**
 	 * Verify GitHub application authorization and perform actions based on input parameters.
 	 *
 	 * @param input - An object containing input parameters, including 'installation_id', 'setup_action', and 'state'.
 	 */
 	private async verifyGitHubAppAuthorization(input: IGithubAppInstallInput) {
-		const { code, state } = input;
+		if (!this.organization) {
+			return;
+		}
+		// Split the 'state' parameter to extract 'organizationId' and 'tenantId'
+		const { id: organizationId, tenantId } = this.organization;
+		const { installation_id, setup_action } = input;
 
 		// Check if all required parameters are provided
-		if (code && state) {
+		if (installation_id && setup_action) {
 			try {
-				// Split the 'state' parameter to extract 'organizationId' and 'tenantId'
-				const [organizationId, tenantId] = state.split('|');
-
 				// Call a service method (likely from _githubService) to add the installation app
 				const integration = await this._githubService.addInstallationApp({
-					code,
+					installation_id,
+					setup_action,
 					organizationId,
 					tenantId
 				});
@@ -67,7 +78,7 @@ export class GithubInstallationComponent implements OnInit {
 				this.simulateSuccess(integration);
 			} catch (error) {
 				// Handle errors, such as failed GitHub app installation
-				console.log('Error while failed to install GitHub app: %s', code);
+				console.log('Error while failed to install GitHub app: %s', installation_id);
 
 				// Simulate an error scenario, possibly displaying an error message or taking corrective actions
 				this.simulateError();
