@@ -1,10 +1,11 @@
 import { AfterViewInit, Component, OnInit } from '@angular/core';
 import { TitleCasePipe } from '@angular/common';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Data } from '@angular/router';
 import { debounceTime, of } from 'rxjs';
 import { Observable } from 'rxjs/internal/Observable';
 import { catchError, filter, map, switchMap, tap } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
+import { NbMenuItem } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { IGithubIssue, IGithubRepository, IGithubRepositoryResponse, IOrganization } from '@gauzy/contracts';
 import { distinctUntilChange } from '@gauzy/common-angular';
@@ -25,13 +26,14 @@ import {
 })
 export class GithubViewComponent extends TranslationBaseComponent implements AfterViewInit, OnInit {
 
+	public contextMenuItems: NbMenuItem[] = [];
 	public settingsSmartTable: object;
 	public organization: IOrganization;
 	public loading: boolean;
 	public repositories: IGithubRepository[] = [];
 	public repositories$: Observable<IGithubRepository[]>;
 	public issues$: Observable<any[]>;
-	public issues: any[] = [];
+	public issues: IGithubIssue[] = [];
 
 	constructor(
 		public readonly _translateService: TranslateService,
@@ -47,12 +49,13 @@ export class GithubViewComponent extends TranslationBaseComponent implements Aft
 	ngOnInit(): void {
 		this._loadSmartTableSettings();
 		this._applyTranslationOnSmartTable();
+		this._getContextMenuItems();
 	}
 
 	ngAfterViewInit(): void {
 		this._store.selectedOrganization$
 			.pipe(
-				debounceTime(500),
+				debounceTime(200),
 				distinctUntilChange(),
 				filter((organization: IOrganization) => !!organization),
 				tap((organization: IOrganization) => this.organization = organization),
@@ -60,6 +63,18 @@ export class GithubViewComponent extends TranslationBaseComponent implements Aft
 				untilDestroyed(this)
 			)
 			.subscribe();
+	}
+
+	/**
+	 *
+	 */
+	private _getContextMenuItems() {
+		this.contextMenuItems = [
+			{
+				title: this.getTranslation('INTEGRATIONS.SETTINGS'),
+				icon: 'settings-2-outline'
+			}
+		];
 	}
 
 	/**
@@ -72,16 +87,19 @@ export class GithubViewComponent extends TranslationBaseComponent implements Aft
 		}
 
 		this.loading = true;
+
 		// Extract organization properties
 		const { id: organizationId, tenantId } = this.organization;
-		this.repositories$ = this._activatedRoute.params.pipe(
+		this.repositories$ = this._activatedRoute.parent.data.pipe(
+			filter(({ integration }: Data) => !!integration),
+			switchMap(() => this._activatedRoute.params.pipe(
+				filter(({ integrationId }) => integrationId)
+			)),
 			// Get the 'integrationId' route parameter
-			switchMap(({ integrationId }) => {
-				return this._githubService.getRepositories(integrationId, {
-					organizationId,
-					tenantId
-				});
-			}),
+			switchMap(({ integrationId }) => this._githubService.getRepositories(integrationId, {
+				organizationId,
+				tenantId
+			})),
 			// Update component state with fetched repositories
 			tap(({ repositories }: IGithubRepositoryResponse) => {
 				this.repositories = repositories;
@@ -108,7 +126,12 @@ export class GithubViewComponent extends TranslationBaseComponent implements Aft
 		this.issues$ = repository ? this.getRepositoryIssue(repository) : of([]);
 	}
 
-	private getRepositoryIssue(repository: IGithubRepository) {
+	/**
+	 *
+	 * @param repository
+	 * @returns
+	 */
+	private getRepositoryIssue(repository: IGithubRepository): Observable<IGithubIssue[]> {
 		// Ensure there is a valid organization
 		if (!this.organization) {
 			return;
@@ -119,7 +142,12 @@ export class GithubViewComponent extends TranslationBaseComponent implements Aft
 		this.loading = true;
 		// Extract organization properties
 		const { id: organizationId, tenantId } = this.organization;
-		return this._activatedRoute.params.pipe(
+
+		return this._activatedRoute.parent.data.pipe(
+			filter(({ integration }: Data) => !!integration),
+			switchMap(() => this._activatedRoute.params.pipe(
+				filter(({ integrationId }) => integrationId)
+			)),
 			// Get the 'integrationId' route parameter
 			switchMap(({ integrationId }) => {
 				return this._githubService.getRepositoryIssues(integrationId, owner, repo, {

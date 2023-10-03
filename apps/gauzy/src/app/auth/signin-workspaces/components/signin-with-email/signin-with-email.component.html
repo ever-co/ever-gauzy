@@ -1,0 +1,48 @@
+<section class="section-wrapper">
+	<div class="-wrapper">
+		<div class="svg-wrapper">
+			<ngx-gauzy-logo [isAccordion]="false" class="ever-logo-svg"></ngx-gauzy-logo>
+		</div>
+
+		<h1 class="title">Sign in to Workspace</h1>
+		<!-- <p class="sub-title">We suggest using the email address you use at work.</p> -->
+
+		<div class="hr-div-strong"></div>
+
+		<form class="form" autocomplete-off>
+			<div class="row">
+				<div class="col">
+					<div class="form-group">
+						<label class="label" for="input-email">
+							Enter your email address:
+						</label>
+						<input nbInput
+							id="input-email"
+							name="email"
+							type="email"
+							placeholder="name@workspace-email.com"
+							fullWidth
+							fieldSize="large"
+						>
+					</div>
+				</div>
+			</div>
+			<div class="submit-btn-wrapper">
+				<button nbButton size="small" class="submit-btn">
+					Sign In With Email
+				</button>
+			</div>
+		</form>
+
+		<div class="hr-div-soft"></div>
+
+		<section class="sign-in-or-up" aria-label="Sign in or sign up">
+            <p class="redirect-link-p">
+				<span>Back to </span><a class="text-link" [routerLink]="['/auth/login']"><span>Log In</span></a>
+			</p>
+            <p class="redirect-link-p">
+				<a [routerLink]="['/auth/register']" class="text-link">Register</a>
+			</p>
+        </section>
+	</div>
+</section>

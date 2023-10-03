@@ -8,11 +8,12 @@ import {
 	OneToMany,
 	Index
 } from 'typeorm';
-import { IsBoolean, IsNotEmpty, IsUUID } from 'class-validator';
+import { IsBoolean, IsEnum, IsNotEmpty, IsUUID } from 'class-validator';
 import {
 	IIntegrationEntitySetting,
 	IIntegrationEntitySettingTied,
-	IIntegrationTenant
+	IIntegrationTenant,
+	IntegrationEntity
 } from '@gauzy/contracts';
 import {
 	IntegrationEntitySettingTied,
@@ -23,10 +24,11 @@ import {
 @Entity('integration_entity_setting')
 export class IntegrationEntitySetting extends TenantOrganizationBaseEntity implements IIntegrationEntitySetting {
 
-	@ApiProperty({ type: () => String })
+	@ApiProperty({ type: () => String, enum: IntegrationEntity })
 	@IsNotEmpty()
+	@IsEnum(IntegrationEntity)
 	@Column()
-	entity: string;
+	entity: IntegrationEntity;
 
 	@ApiProperty({ type: () => Boolean })
 	@IsNotEmpty()
@@ -64,8 +66,10 @@ export class IntegrationEntitySetting extends TenantOrganizationBaseEntity imple
 	|--------------------------------------------------------------------------
 	*/
 
-	@ApiPropertyOptional({ type: IntegrationEntitySettingTied, isArray: true })
-	@OneToMany(() => IntegrationEntitySettingTied, (tiedEntity) => tiedEntity.integrationEntitySetting, {
+	/**
+	 * IntegrationEntitySettingTied
+	 */
+	@OneToMany(() => IntegrationEntitySettingTied, (it) => it.integrationEntitySetting, {
 		cascade: true
 	})
 	@JoinColumn()

@@ -1,17 +1,22 @@
 export const metaData = {
-	getActivity: (knex, date) => {
-		return knex
-			.select('*')
-			.from('heartbeats')
-			.whereBetween('time', [date.end, date.start])
-			.then((res) => res)
-			.catch((error) => console.log(error));
+	getActivity: async (knex, date) => {
+		try {
+			return await knex
+				.select('*')
+				.from('heartbeats')
+				.whereBetween('time', [date.end, date.start]);
+		} catch (error) {
+			console.error(error);
+		}
 	},
-	removeActivity: (knex, data) => {
-		return knex('heartbeats')
-			.whereIn('id', data.idsWakatime)
-			.del()
-			.then((res) => res)
-			.catch((error) => console.log(error));
+
+	removeActivity: async (knex, data) => {
+		try {
+			return await knex('heartbeats')
+				.whereIn('id', data.idsWakatime)
+				.del();
+		} catch (error) {
+			console.error(error);
+		}
 	},
 };
