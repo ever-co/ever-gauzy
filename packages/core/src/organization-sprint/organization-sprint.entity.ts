@@ -71,10 +71,6 @@ export class OrganizationSprint
 	@JoinColumn()
 	project?: OrganizationProject;
 
-	@ApiProperty({ type: () => Boolean })
-	@IsBoolean()
-	@Column({ nullable: true })
-	isActive?: boolean;
 
 	@ApiProperty({ type: () => Task })
 	@OneToMany(() => Task, (task) => task.organizationSprint)

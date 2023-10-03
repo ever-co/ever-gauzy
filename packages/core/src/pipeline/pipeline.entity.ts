@@ -19,7 +19,7 @@ import {
 export class Pipeline
 	extends TenantOrganizationBaseEntity
 	implements IPipeline {
-	
+
 	@ApiProperty({ type: () => PipelineStage })
 	@OneToMany(() => PipelineStage, ({ pipeline }) => pipeline, {
 		cascade: ['insert']
@@ -37,10 +37,6 @@ export class Pipeline
 	@Column()
 	public name: string;
 
-	@ApiProperty({ type: () => Boolean })
-	@IsBoolean()
-	@Column()
-	public isActive: boolean;
 
 	@BeforeInsert()
 	public __before_persist?(): void {

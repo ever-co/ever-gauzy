@@ -27,11 +27,6 @@ export class EmailHistory extends TenantOrganizationBaseEntity implements IEmail
 	@Column()
 	email: string;
 
-	@ApiPropertyOptional({ type: () => Boolean, default: false })
-	@IsOptional()
-	@IsBoolean()
-	@Column({ type: Boolean, nullable: true, default: false })
-	isArchived?: boolean;
 
 	/*
 	|--------------------------------------------------------------------------

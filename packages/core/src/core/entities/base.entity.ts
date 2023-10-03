@@ -6,10 +6,12 @@ import {
 	PrimaryGeneratedColumn,
 	UpdateDateColumn,
 	CreateDateColumn,
-	Column
+	Column,
+	Index
 } from 'typeorm';
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { BaseEntityModel as IBaseEntityModel } from '@gauzy/contracts';
+import { IsBoolean, IsOptional } from 'class-validator';
 
 export abstract class Model {
 	constructor(input?: any) {
@@ -44,9 +46,15 @@ export abstract class BaseEntity extends Model implements IBaseEntityModel {
 
 	@ApiPropertyOptional({ type: Boolean, default: true })
 	@Column({ nullable: false, default: true })
+	@Index()
+	@IsOptional()
+	@IsBoolean()
 	isActive?: boolean;
 
 	@ApiPropertyOptional({ type: Boolean, default: false })
 	@Column({ nullable: false, default: false })
+	@Index()
+	@IsOptional()
+	@IsBoolean()
 	isArchived?: boolean;
 }

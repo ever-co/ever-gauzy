@@ -16,7 +16,7 @@ import {
 } from '@gauzy/contracts';
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { Exclude } from 'class-transformer';
-import { IsBoolean, IsEmail, IsEnum, IsOptional, IsString, IsUUID } from 'class-validator';
+import { IsEmail, IsEnum, IsOptional, IsString, IsUUID } from 'class-validator';
 import {
 	Column,
 	Entity,
@@ -129,17 +129,6 @@ export class User extends TenantBaseEntity implements IUser {
 	})
 	preferredComponentLayout?: ComponentLayoutStyleEnum;
 
-	@ApiPropertyOptional({ type: () => Boolean, default: true })
-	@IsOptional()
-	@IsBoolean()
-	@Column({ nullable: true, default: true })
-	isActive?: boolean;
-
-	@ApiPropertyOptional({ type: () => Boolean, default: false })
-	@IsOptional()
-	@IsBoolean()
-	@Column({ nullable: true, default: false })
-	isArchived?: boolean;
 
 	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()

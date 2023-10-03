@@ -7,7 +7,6 @@ export interface IEventType extends IBasePerTenantAndOrganizationEntityModel {
 	description?: string;
 	duration: number;
 	durationUnit: string;
-	isActive: boolean;
 	employeeId?: string;
 	employee?: IEmployee;
 	tags?: ITag[];

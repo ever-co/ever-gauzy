@@ -56,7 +56,6 @@ export interface IOrganization
 	overview: string;
 	skills: ISkill[];
 	currency: string;
-	isActive: boolean;
 	defaultValueDateType: DefaultValueDateTypeEnum;
 	defaultAlignmentType?: string;
 	dateFormat?: string;

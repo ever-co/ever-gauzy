@@ -7,8 +7,8 @@ import { ICandidateTechnologies } from './candidate-technologies.model';
 import { IEmployee } from './employee.model';
 
 export interface IRelationalCandidateInterview {
-    readonly interview?: ICandidateInterview;
-    readonly interviewId?: ICandidateInterview['id'];
+	readonly interview?: ICandidateInterview;
+	readonly interviewId?: ICandidateInterview['id'];
 }
 
 export interface ICandidateInterview
@@ -26,7 +26,6 @@ export interface ICandidateInterview
 	technologies?: ICandidateTechnologies[];
 	personalQualities?: ICandidatePersonalQualities[];
 	rating?: number;
-	isArchived?: boolean;
 }
 
 export interface ICandidateInterviewFindInput
