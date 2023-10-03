@@ -14,6 +14,7 @@ import {
 } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { CommandBus } from '@nestjs/cqrs';
+import { I18nLang } from 'nestjs-i18n';
 import {
 	IOrganizationTeamJoinRequest,
 	IPagination,
@@ -22,16 +23,15 @@ import {
 	PermissionsEnum,
 } from '@gauzy/contracts';
 import { Public } from '@gauzy/common';
-import { PaginationParams } from './../core/crud';
-import { LanguageDecorator } from './../shared/decorators';
-import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
-import { Permissions } from './../shared/decorators';
+import { PaginationParams } from 'core/crud';
+import { UUIDValidationPipe } from 'shared/pipes';
+import { LanguageDecorator } from 'shared/decorators';
+import { PermissionGuard, TenantPermissionGuard } from 'shared/guards';
+import { Permissions } from 'shared/decorators';
 import { OrganizationTeamJoinRequestCreateCommand } from './commands';
 import { OrganizationTeamJoinRequest } from './organization-team-join-request.entity';
 import { OrganizationTeamJoinRequestService } from './organization-team-join-request.service';
 import { ValidateJoinRequestDTO } from './dto';
-import { I18nLang } from 'nestjs-i18n';
-import { UUIDValidationPipe } from 'shared';
 
 @ApiTags('OrganizationTeamJoinRequest')
 @Controller()
@@ -54,9 +54,7 @@ export class OrganizationTeamJoinRequestController {
 	async validateJoinRequest(
 		@Body() entity: ValidateJoinRequestDTO
 	): Promise<IOrganizationTeamJoinRequest> {
-		return await this._organizationTeamJoinRequestService.validateJoinRequest(
-			entity
-		);
+		return await this._organizationTeamJoinRequestService.validateJoinRequest(entity);
 	}
 
 	/**

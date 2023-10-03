@@ -1,6 +1,7 @@
-import { IUserCodeInput } from "@gauzy/contracts";
 import { ApiProperty } from "@nestjs/swagger";
 import { IsString } from "class-validator";
+import { IUserCodeInput } from "@gauzy/contracts";
+import { ALPHA_NUMERIC_CODE_LENGTH } from "./../../constants";
 import { CustomLength } from "./../../shared/validators";
 
 /**
@@ -10,6 +11,6 @@ export class UserCodeDTO implements IUserCodeInput {
 
     @ApiProperty({ type: () => Number })
     @IsString()
-    @CustomLength(6)
+    @CustomLength(ALPHA_NUMERIC_CODE_LENGTH)
     readonly code: string;
 }

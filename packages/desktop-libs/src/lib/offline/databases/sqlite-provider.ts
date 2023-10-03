@@ -16,7 +16,7 @@ export class SqliteProvider implements IServerLessProvider {
 			client: 'sqlite3',
 			connection: {
 				filename: path.resolve(
-					app.getPath('userData'),
+					app?.getPath('userData') || __dirname,
 					'gauzy.sqlite3'
 				),
 				timezone: 'utc'
