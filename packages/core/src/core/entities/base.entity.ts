@@ -5,7 +5,8 @@
 import {
 	PrimaryGeneratedColumn,
 	UpdateDateColumn,
-	CreateDateColumn
+	CreateDateColumn,
+	Column
 } from 'typeorm';
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { BaseEntityModel as IBaseEntityModel } from '@gauzy/contracts';
@@ -40,4 +41,12 @@ export abstract class BaseEntity extends Model implements IBaseEntityModel {
 	})
 	@UpdateDateColumn()
 	updatedAt?: Date;
+
+	@ApiPropertyOptional({ type: Boolean, default: true })
+	@Column({ nullable: false, default: true })
+	isActive?: boolean;
+
+	@ApiPropertyOptional({ type: Boolean, default: false })
+	@Column({ nullable: false, default: false })
+	isArchived?: boolean;
 }
