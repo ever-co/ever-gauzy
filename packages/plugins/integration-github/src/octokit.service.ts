@@ -3,8 +3,6 @@ import * as chalk from 'chalk';
 import { App } from 'octokit';
 import { ResponseHeaders as OctokitResponseHeaders } from "@octokit/types";
 import { ModuleProviders, ProbotConfig } from './probot.types';
-import { Octokit } from '@octokit/core';
-import { createAppAuth } from '@octokit/auth-app';
 
 const GITHUB_API_VERSION = process.env.GAUZY_GITHUB_API_VERSION || '2022-11-28'; // Define a default version
 
