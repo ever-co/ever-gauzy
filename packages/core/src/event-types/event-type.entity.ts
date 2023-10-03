@@ -14,7 +14,6 @@ import {
 	IsString,
 	IsNumber,
 	IsOptional,
-	IsBoolean
 } from 'class-validator';
 import { IEmployee, IEventType, ITag } from '@gauzy/contracts';
 import {
