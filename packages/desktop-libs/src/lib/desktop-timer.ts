@@ -521,7 +521,10 @@ export default class TimerHandler {
 				projectId: project.projectId,
 				employeeId: info.employeeId,
 				timesheetId: timeLog ? timeLog.timesheetId : null,
-				timelogId: timeLog ? timeLog.id : null
+				timelogId: timeLog ? timeLog.id : null,
+				organizationTeamId: project?.organizationTeamId,
+				taskId: project?.taskId,
+				description: project?.note,
 			};
 			this.isPaused
 				? await TimerData.createTimer(knex, {
