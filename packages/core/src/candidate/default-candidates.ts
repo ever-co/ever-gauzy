@@ -2,60 +2,60 @@ import { ComponentLayoutStyleEnum, LanguagesEnum } from '@gauzy/contracts';
 
 export const DEFAULT_CANDIDATES = [
 	{
-		email: 'john@ever.co',
+		email: 'john@example_ever.co',
 		password: '123456',
 		firstName: 'John',
-		lastName: 'Smith',
+		lastName: 'S.',
 		imageUrl: 'assets/images/avatars/alish.jpg',
 		candidateLevel: 'D',
 		preferredLanguage: LanguagesEnum.ENGLISH,
 		preferredComponentLayout: ComponentLayoutStyleEnum.TABLE
 	},
 	{
-		email: 'jaye@ever.co',
+		email: 'jaye@example_ever.co',
 		password: '123456',
 		firstName: 'Jaye',
-		lastName: 'Jeffreys',
+		lastName: 'J.',
 		imageUrl: 'assets/images/avatars/avatar-default.svg',
 		candidateLevel: 'B',
 		preferredLanguage: LanguagesEnum.ENGLISH,
 		preferredComponentLayout: ComponentLayoutStyleEnum.TABLE
 	},
 	{
-		email: 'kasey@ever.co',
+		email: 'kasey@example_ever.co',
 		password: '123456',
 		firstName: 'Kasey',
-		lastName: 'Kraker',
+		lastName: 'K.',
 		imageUrl: 'assets/images/avatars/avatar-default.svg',
 		candidateLevel: null,
 		preferredLanguage: LanguagesEnum.ENGLISH,
 		preferredComponentLayout: ComponentLayoutStyleEnum.TABLE
 	},
 	{
-		email: 'norris@ever.co',
+		email: 'norris@example_ever.co',
 		password: '123456',
 		firstName: 'Norris ',
-		lastName: 'Nesbit',
+		lastName: 'N.',
 		imageUrl: 'assets/images/avatars/avatar-default.svg',
 		candidateLevel: 'A',
 		preferredLanguage: LanguagesEnum.ENGLISH,
 		preferredComponentLayout: ComponentLayoutStyleEnum.TABLE
 	},
 	{
-		email: 'estella@ever.co',
+		email: 'estella@example_ever.co',
 		password: '123456',
 		firstName: 'Estella',
-		lastName: 'Ennis',
+		lastName: 'E.',
 		imageUrl: 'assets/images/avatars/avatar-default.svg',
 		candidateLevel: null,
 		preferredLanguage: LanguagesEnum.ENGLISH,
 		preferredComponentLayout: ComponentLayoutStyleEnum.TABLE
 	},
 	{
-		email: 'greg@ever.co',
+		email: 'greg@example_ever.co',
 		password: '123456',
 		firstName: 'Greg ',
-		lastName: 'Grise',
+		lastName: 'G.',
 		imageUrl: 'assets/images/avatars/avatar-default.svg',
 		candidateLevel: 'A',
 		preferredLanguage: LanguagesEnum.ENGLISH,
