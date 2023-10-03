@@ -28,6 +28,7 @@ export abstract class BaseEntity extends Model implements IBaseEntityModel {
 	@PrimaryGeneratedColumn('uuid')
 	id?: string;
 
+	// Date when the record was created
 	@ApiPropertyOptional({
 		type: 'string',
 		format: 'date-time',
@@ -36,6 +37,7 @@ export abstract class BaseEntity extends Model implements IBaseEntityModel {
 	@CreateDateColumn()
 	createdAt?: Date;
 
+	// Date when the record was last updated
 	@ApiPropertyOptional({
 		type: 'string',
 		format: 'date-time',
@@ -44,17 +46,19 @@ export abstract class BaseEntity extends Model implements IBaseEntityModel {
 	@UpdateDateColumn()
 	updatedAt?: Date;
 
+	// Indicates if record is active now
 	@ApiPropertyOptional({ type: Boolean, default: true })
-	@Column({ nullable: false, default: true })
-	@Index()
 	@IsOptional()
 	@IsBoolean()
+	@Index()
+	@Column({ nullable: false, default: true })
 	isActive?: boolean;
 
+	// Indicate if record is archived
 	@ApiPropertyOptional({ type: Boolean, default: false })
-	@Column({ nullable: false, default: false })
-	@Index()
 	@IsOptional()
 	@IsBoolean()
+	@Index()
+	@Column({ nullable: false, default: false })
 	isArchived?: boolean;
 }

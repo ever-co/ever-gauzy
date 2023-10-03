@@ -1,5 +1,5 @@
 import { IBasePerTenantAndOrganizationEntityModel } from './base-entity.model';
-import { ICandidate } from './candidate.model';
+import { IRelationalCandidate } from './candidate.model';
 import { ICandidateFeedback } from './candidate-feedback.model';
 import { ICandidateInterviewers } from './candidate-interviewers.model';
 import { ICandidatePersonalQualities } from './candidate-personal-qualities.model';
@@ -11,11 +11,8 @@ export interface IRelationalCandidateInterview {
 	readonly interviewId?: ICandidateInterview['id'];
 }
 
-export interface ICandidateInterview
-	extends IBasePerTenantAndOrganizationEntityModel {
+export interface ICandidateInterview extends IBasePerTenantAndOrganizationEntityModel, IRelationalCandidate {
 	title: string;
-	candidateId?: string;
-	candidate?: ICandidate;
 	interviewers?: ICandidateInterviewers[];
 	location?: string;
 	startTime: Date;
@@ -28,10 +25,8 @@ export interface ICandidateInterview
 	rating?: number;
 }
 
-export interface ICandidateInterviewFindInput
-	extends IBasePerTenantAndOrganizationEntityModel {
+export interface ICandidateInterviewFindInput extends IBasePerTenantAndOrganizationEntityModel, IRelationalCandidate {
 	title?: string;
-	candidateId?: string;
 	interviewers?: ICandidateInterviewers[];
 	location?: string;
 	startTime?: Date;
@@ -42,10 +37,8 @@ export interface ICandidateInterviewFindInput
 	personalQualities?: ICandidatePersonalQualities[];
 }
 
-export interface ICandidateInterviewCreateInput
-	extends IBasePerTenantAndOrganizationEntityModel {
+export interface ICandidateInterviewCreateInput extends IBasePerTenantAndOrganizationEntityModel, IRelationalCandidate {
 	title: string;
-	candidateId?: string;
 	interviewers?: ICandidateInterviewers[];
 	location?: string;
 	note?: string;
