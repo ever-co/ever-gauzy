@@ -518,7 +518,7 @@ export default class TimerHandler {
 			const project = LocalStore.getStore('project');
 			const info = LocalStore.beforeRequestParams();
 			const payload = {
-				projectId: project.projectId,
+				projectId: project?.projectId,
 				employeeId: info.employeeId,
 				timesheetId: timeLog ? timeLog.timesheetId : null,
 				timelogId: timeLog ? timeLog.id : null,
