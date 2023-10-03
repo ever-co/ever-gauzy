@@ -37,6 +37,7 @@ export class TaskBadgeViewComponent {
 	}
 
 	public get icon$(): Observable<SafeUrl> {
+		if (!this.taskBadge?.fullIconUrl) return null;
 		return this._statusIconService.load(this.taskBadge?.fullIconUrl);
 	}
 
