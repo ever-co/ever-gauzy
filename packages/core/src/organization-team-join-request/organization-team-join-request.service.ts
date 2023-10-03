@@ -64,32 +64,6 @@ export class OrganizationTeamJoinRequestService extends TenantAwareCrudService<O
 	 * @returns
 	 */
 	public async findAll(options?: FindManyOptions<OrganizationTeamJoinRequest>): Promise<IPagination<OrganizationTeamJoinRequest>> {
-		console.log(options);
-
-		const tenantId = RequestContext.currentTenantId();
-		const employeeId = RequestContext.currentEmployeeId();
-
-
-
-
-		console.log(tenantId, employeeId);
-		// where: {
-		// 	tenantId: RequestContext.currentTenantId(),
-		// 	organizationId,
-		// 	...(!RequestContext.hasPermission(
-		// 		PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
-		// 	)
-		// 		? {
-		// 			members: {
-		// 				employeeId:
-		// 					RequestContext.currentEmployeeId(),
-		// 				role: {
-		// 					name: RolesEnum.MANAGER,
-		// 				},
-		// 			},
-		// 		}
-		// 		: {}),
-		// },
 		return await super.findAll(options);
 	}
 
