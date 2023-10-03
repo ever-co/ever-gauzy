@@ -39,12 +39,13 @@ export class GithubService {
 	public async addGithubAppInstallation(input: IGithubAppInstallInput): Promise<IIntegrationTenant> {
 		try {
 			// Validate the input data (You can use class-validator for validation)
-			if (!input || !input.code || !input.installation_id || !input.setup_action) {
+			if (!input || !input.code) {
 				throw new HttpException('Invalid input data', HttpStatus.BAD_REQUEST);
 			}
 
 			const tenantId = RequestContext.currentTenantId() || input.tenantId;
-			const { code, installation_id, setup_action, organizationId } = input;
+			// const { code, installation_id, setup_action, organizationId } = input;
+			const { code, organizationId } = input;
 
 			/** Find the GitHub integration */
 			const integration = await this._integrationService.findOneByOptions({
@@ -123,14 +124,14 @@ export class GithubService {
 										settingsName: GithubPropertyMapEnum.TOKEN_TYPE,
 										settingsValue: data.token_type
 									},
-									{
-										settingsName: GithubPropertyMapEnum.INSTALLATION_ID,
-										settingsValue: installation_id
-									},
-									{
-										settingsName: GithubPropertyMapEnum.SETUP_ACTION,
-										settingsValue: setup_action
-									}
+									// {
+									// 	settingsName: GithubPropertyMapEnum.INSTALLATION_ID,
+									// 	settingsValue: installation_id
+									// },
+									// {
+									// 	settingsName: GithubPropertyMapEnum.SETUP_ACTION,
+									// 	settingsValue: setup_action
+									// }
 								].map((setting) => ({
 									...setting,
 									tenantId,

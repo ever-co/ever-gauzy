@@ -24,7 +24,7 @@ export class GitHubController {
 	async addGithubAppInstallation(@Body() input: GithubAppInstallDTO) {
 		try {
 			// Validate the input data (You can use class-validator for validation)
-			if (!input || !input.installation_id || !input.setup_action) {
+			if (!input || !input.code) {
 				throw new HttpException('Invalid input data', HttpStatus.BAD_REQUEST);
 			}
 			// Add the GitHub installation using the service

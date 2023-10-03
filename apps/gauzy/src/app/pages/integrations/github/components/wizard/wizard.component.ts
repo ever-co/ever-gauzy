@@ -185,17 +185,22 @@ export class GithubWizardComponent implements AfterViewInit, OnInit, OnDestroy {
 			// Create a state parameter that combines organizationId and tenantId
 			const state = `${organizationId}|${tenantId}`;
 
-			// Get the redirect URI from the environment
+			// Get the redirect URI and client ID from the environment
 			const redirect_uri = environment.GAUZY_GITHUB_REDIRECT_URL;
+			const client_id = environment.GAUZY_GITHUB_CLIENT_ID;
 
 			// Define the query parameters for the authorization request
 			const queryParams = toParams({
+				'client_id': `${client_id}`,
 				'redirect_uri': `${redirect_uri}`,
 				'state': `${state}`,
 			});
 
+			// Construct the external URL for GitHub authorization with the query parameters
+			const url = `${GITHUB_AUTHORIZATION_URL}?${queryParams.toString()}`;
+
 			/** Navigate to the target external URL */
-			const url = `https://github.com/apps/${environment.GAUZY_GITHUB_APP_NAME}/installations/new?${queryParams.toString()}`;
+			// const url = `https://github.com/apps/${environment.GAUZY_GITHUB_APP_NAME}/installations/new?${queryParams.toString()}`;
 
 			/** Navigate to the external URL with query parameters */
 			this.window = window.open(

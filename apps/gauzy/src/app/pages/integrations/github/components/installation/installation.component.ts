@@ -26,14 +26,12 @@ export class GithubInstallationComponent implements OnInit {
 	ngOnInit(): void {
 		this._route.queryParams
 			.pipe(
-				// Filter and keep only valid queryParams with 'installation_id' and 'setup_action'
-				filter(({ code, installation_id, setup_action }) => !!code && !!installation_id && !!setup_action),
+				// Filter and keep only valid queryParams with 'code'
+				filter(({ code }) => !!code),
 				// Use 'tap' operator to perform an asynchronous action
-				tap(async ({ code, installation_id, setup_action, state }: IGithubAppInstallInput) =>
+				tap(async ({ code, state }: IGithubAppInstallInput) =>
 					await this.verifyGitHubAppAuthorization({
 						code,
-						installation_id,
-						setup_action,
 						state
 					})
 				),
@@ -50,10 +48,10 @@ export class GithubInstallationComponent implements OnInit {
 	 * @param input - An object containing input parameters, including 'installation_id', 'setup_action', and 'state'.
 	 */
 	private async verifyGitHubAppAuthorization(input: IGithubAppInstallInput) {
-		const { code, installation_id, setup_action, state } = input;
+		const { code, state } = input;
 
 		// Check if all required parameters are provided
-		if (code && installation_id && setup_action && state) {
+		if (code && state) {
 			try {
 				// Split the 'state' parameter to extract 'organizationId' and 'tenantId'
 				const [organizationId, tenantId] = state.split('|');
@@ -61,8 +59,6 @@ export class GithubInstallationComponent implements OnInit {
 				// Call a service method (likely from _githubService) to add the installation app
 				const integration = await this._githubService.addInstallationApp({
 					code,
-					installation_id,
-					setup_action,
 					organizationId,
 					tenantId
 				});
@@ -71,7 +67,7 @@ export class GithubInstallationComponent implements OnInit {
 				this.simulateSuccess(integration);
 			} catch (error) {
 				// Handle errors, such as failed GitHub app installation
-				console.log('Error while failed to install GitHub app: %s', installation_id);
+				console.log('Error while failed to install GitHub app: %s', code);
 
 				// Simulate an error scenario, possibly displaying an error message or taking corrective actions
 				this.simulateError();
