@@ -35,3 +35,13 @@ export interface IGithubRepositoryResponse {
     repository_selection: string;
     repositories: IGithubRepository[]
 }
+
+export enum GithubPropertyMapEnum {
+    INSTALLATION_ID = 'installation_id',
+    SETUP_ACTION = 'setup_action',
+    ACCESS_TOKEN = 'access_token',
+    EXPIRES_IN = 'expires_in',
+    REFRESH_TOKEN = 'refresh_token',
+    REFRESH_TOKEN_EXPIRES_IN = 'refresh_token_expires_in',
+    TOKEN_TYPE = 'token_type'
+}
