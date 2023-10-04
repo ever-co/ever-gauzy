@@ -107,9 +107,6 @@ export class Candidate extends TenantOrganizationBaseEntity implements ICandidat
 	@Column({ nullable: true })
 	cvUrl?: string;
 
-	@ApiPropertyOptional({ type: () => Boolean, default: false })
-	@Column({ nullable: true, default: false })
-	isArchived?: boolean;
 
 	ratings?: number;
 	alreadyHired?: boolean;

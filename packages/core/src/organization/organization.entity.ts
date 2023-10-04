@@ -105,8 +105,6 @@ export class Organization extends TenantBaseEntity implements IOrganization {
 	})
 	defaultValueDateType: DefaultValueDateTypeEnum;
 
-	@Column({ default: true })
-	isActive: boolean;
 
 	@Column({ nullable: true })
 	defaultAlignmentType?: string;
