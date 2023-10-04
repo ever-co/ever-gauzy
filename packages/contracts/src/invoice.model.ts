@@ -38,7 +38,6 @@ export interface IInvoice extends IBasePerTenantAndOrganizationEntityModel {
 	amountDue?: number;
 	hasRemainingAmountInvoiced?: boolean;
 	token?: string;
-	isArchived?: boolean;
 }
 
 export interface IInvoiceCreateInput

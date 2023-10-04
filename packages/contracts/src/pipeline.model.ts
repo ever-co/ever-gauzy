@@ -8,7 +8,6 @@ export interface IPipeline extends IBasePerTenantAndOrganizationEntityModel {
 	stages: IPipelineStage[];
 	description: string;
 	name: string;
-	isActive: boolean;
 }
 
 export type IPipelineFindInput = Partial<

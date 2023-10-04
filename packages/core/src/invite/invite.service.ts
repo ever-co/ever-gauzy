@@ -43,6 +43,7 @@ import {
 import { addDays } from 'date-fns';
 import { IAppIntegrationConfig, isNotEmpty } from '@gauzy/common';
 import { PaginationParams, TenantAwareCrudService } from './../core/crud';
+import { ALPHA_NUMERIC_CODE_LENGTH } from './../constants';
 import { RequestContext } from './../core/context';
 import {
 	findIntersection,
@@ -396,12 +397,8 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 			RequestContext.currentUserId()
 		);
 		try {
-			const code = generateRandomAlphaNumericCode(6);
-			const token: string = sign(
-				{ email, code },
-				environment.JWT_SECRET,
-				{}
-			);
+			const code = generateRandomAlphaNumericCode(ALPHA_NUMERIC_CODE_LENGTH);
+			const token: string = sign({ email, code }, environment.JWT_SECRET, {});
 
 			const registerUrl = `${originUrl}/#/auth/accept-invite?email=${encodeURIComponent(
 				email

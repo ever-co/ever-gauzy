@@ -1,15 +1,15 @@
-import { Component, OnInit } from '@angular/core';
+import { AfterViewInit, Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { filter, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { IGithubAppInstallInput, IIntegrationTenant, IOrganization } from '@gauzy/contracts';
-import { GithubService } from '../../../../../@core/services';
+import { GithubService, Store } from '../../../../../@core/services';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
 	templateUrl: './installation.component.html'
 })
-export class GithubInstallationComponent implements OnInit {
+export class GithubInstallationComponent implements AfterViewInit, OnInit {
 
 	public isLoading: boolean = true;
 	public organization: IOrganization;
@@ -17,6 +17,7 @@ export class GithubInstallationComponent implements OnInit {
 	constructor(
 		private readonly _route: ActivatedRoute,
 		private readonly _githubService: GithubService,
+		private readonly _store: Store
 	) { }
 
 	/**
@@ -28,6 +29,7 @@ export class GithubInstallationComponent implements OnInit {
 			.pipe(
 				// Filter and keep only valid queryParams with 'installation_id' and 'setup_action'
 				filter(({ installation_id, setup_action }) => !!installation_id && !!setup_action),
+				tap(() => this.organization = this._store.selectedOrganization),
 				// Use 'tap' operator to perform an asynchronous action
 				tap(async ({ installation_id, setup_action, state }: IGithubAppInstallInput) =>
 					await this.verifyGitHubAppAuthorization({
@@ -44,18 +46,25 @@ export class GithubInstallationComponent implements OnInit {
 	}
 
 	/**
+	 *
+	 */
+	ngAfterViewInit(): void { }
+
+	/**
 	 * Verify GitHub application authorization and perform actions based on input parameters.
 	 *
 	 * @param input - An object containing input parameters, including 'installation_id', 'setup_action', and 'state'.
 	 */
 	private async verifyGitHubAppAuthorization(input: IGithubAppInstallInput) {
-		const { installation_id, setup_action, state } = input;
+		if (!this.organization) {
+			return;
+		}
+		// Split the 'state' parameter to extract 'organizationId' and 'tenantId'
+		const { id: organizationId, tenantId } = this.organization;
+		const { installation_id, setup_action } = input;
 
 		// Check if all required parameters are provided
-		if (installation_id && setup_action && state) {
-			// Split the 'state' parameter to extract 'organizationId' and 'tenantId'
-			const [organizationId, tenantId] = state.split('|');
-
+		if (installation_id && setup_action) {
 			try {
 				// Call a service method (likely from _githubService) to add the installation app
 				const integration = await this._githubService.addInstallationApp({

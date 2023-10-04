@@ -6,6 +6,7 @@ import { FeatureEnum, IBasePerTenantEntityModel, IUser, IUserCodeInput, IUserEma
 import { JwtPayload, sign, verify } from 'jsonwebtoken';
 import * as bcrypt from 'bcrypt';
 import * as moment from 'moment';
+import { ALPHA_NUMERIC_CODE_LENGTH } from './../constants';
 import { EmailService } from './../email-send/email.service';
 import { UserService } from './../user/user.service';
 import { FeatureService } from './../feature/feature.service';
@@ -48,7 +49,7 @@ export class EmailConfirmationService {
             deepMerge(integration, environment.appIntegrationConfig);
 
             const url = `${integration.appEmailConfirmationUrl}?email=${email}&token=${token}`;
-            const verificationCode = generateRandomAlphaNumericCode(6);
+            const verificationCode = generateRandomAlphaNumericCode(ALPHA_NUMERIC_CODE_LENGTH);
 
             // update email token field for user
             await this.userService.update(id, {

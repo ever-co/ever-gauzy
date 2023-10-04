@@ -1,6 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Column, Entity, Index, ManyToOne, RelationId } from 'typeorm';
-import { IsBoolean, IsOptional, IsUUID } from 'class-validator';
+import { IsOptional, IsUUID } from 'class-validator';
 import { IEmailHistory, IEmailTemplate, IUser } from '@gauzy/contracts';
 import {
 	EmailTemplate,
@@ -27,11 +27,6 @@ export class EmailHistory extends TenantOrganizationBaseEntity implements IEmail
 	@Column()
 	email: string;
 
-	@ApiPropertyOptional({ type: () => Boolean, default: false })
-	@IsOptional()
-	@IsBoolean()
-	@Column({ type: Boolean, nullable: true, default: false })
-	isArchived?: boolean;
 
 	/*
 	|--------------------------------------------------------------------------

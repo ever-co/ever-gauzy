@@ -16,8 +16,8 @@ import { ITag } from './tag.model';
 import { IEmployee, PayPeriodEnum } from './employee.model';
 
 export interface IRelationalCandidate {
-	readonly candidate?: ICandidate;
-	readonly candidateId?: ICandidate['id'];
+	candidate?: ICandidate;
+	candidateId?: ICandidate['id'];
 }
 
 export interface ICandidate extends IBasePerTenantAndOrganizationEntityModel {
@@ -47,7 +47,6 @@ export interface ICandidate extends IBasePerTenantAndOrganizationEntityModel {
 	cvUrl?: string;
 	feedbacks?: ICandidateFeedback[];
 	rating?: number;
-	isArchived?: boolean;
 	interview?: ICandidateInterview[];
 	contact?: IContact;
 	contactId?: IContact['id'];

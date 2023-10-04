@@ -2,6 +2,7 @@ import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
 import * as Handlebars from 'handlebars';
 import * as mjml2html from 'mjml';
 import { ConfigService, environment } from '@gauzy/config';
+import { ALPHA_NUMERIC_CODE_LENGTH } from './../../../constants';
 import { EmailTemplateGeneratePreviewQuery } from '../email-template.generate-preview.query';
 import { moment } from '../../../core/moment-extend';
 import { generateRandomAlphaNumericCode } from './../../../core/utils';
@@ -79,9 +80,9 @@ export class EmailTemplateGeneratePreviewHandler
 			task_update_project: 'Gauzy Project',
 			task_update_assign_by: 'Ruslan Konviser',
 			task_update_url: 'https://github.com/ever-co/ever-gauzy/issues/1688',
-			inviteCode: generateRandomAlphaNumericCode(6),
+			inviteCode: generateRandomAlphaNumericCode(ALPHA_NUMERIC_CODE_LENGTH),
 			teams: 'Gauzy Team',
-			verificationCode: generateRandomAlphaNumericCode(6),
+			verificationCode: generateRandomAlphaNumericCode(ALPHA_NUMERIC_CODE_LENGTH),
 			appName: appName,
 			appLogo: appLogo,
 			appSignature: appSignature,

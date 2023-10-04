@@ -17,6 +17,8 @@ export class Timer implements TimerTO, Serializable<TimerTO> {
 	private _isStartedOffline: boolean;
 	private _isStoppedOffline: boolean;
 	private _version: string;
+	private _organizationTeamId: string;
+	private _description: string;
 
 	constructor(timer: TimerTO) {
 		this._id = timer.id;
@@ -34,6 +36,8 @@ export class Timer implements TimerTO, Serializable<TimerTO> {
 		this._isStartedOffline = timer.isStartedOffline;
 		this._isStoppedOffline = timer.isStoppedOffline;
 		this._version = timer.version;
+		this._organizationTeamId = timer.organizationTeamId;
+		this._description  = timer.description;
 	}
 
 	public get isStoppedOffline(): boolean {
@@ -134,6 +138,22 @@ export class Timer implements TimerTO, Serializable<TimerTO> {
 		this._version = value;
 	}
 
+	public get organizationTeamId(): string {
+		return this._organizationTeamId;
+	}
+
+	public set organizationTeamId(value: string) {
+		this._organizationTeamId = value;
+	}
+
+	public get description(): string {
+		return this._description;
+	}
+
+	public set description(value: string) {
+		this._description = value;
+	}
+
 	public toObject(): TimerTO {
 		return {
 			day: this._day,
@@ -149,7 +169,9 @@ export class Timer implements TimerTO, Serializable<TimerTO> {
 			timeslotId: this._timeslotId,
 			isStartedOffline: this._isStartedOffline,
 			isStoppedOffline: this._isStoppedOffline,
-			version: this._version
+			version: this._version,
+			organizationTeamId: this._organizationTeamId,
+			description: this._description
 		};
 	}
 }

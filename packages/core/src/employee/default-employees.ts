@@ -17,20 +17,20 @@ export const DEFAULT_EMPLOYEES: any = [
 
 export const DEFAULT_EVER_EMPLOYEES: any = [
 	{
-		email: 'ruslan@ever.co',
+		email: 'ruslan@example_ever.co',
 		password: '123456',
 		firstName: 'Ruslan',
-		lastName: 'Konviser',
+		lastName: 'K.',
 		imageUrl: 'assets/images/avatars/ruslan.jpg',
 		employeeLevel: 'A',
 		preferredLanguage: LanguagesEnum.ENGLISH,
 		preferredComponentLayout: ComponentLayoutStyleEnum.TABLE
 	},
 	{
-		email: 'alish@ever.co',
+		email: 'alish@example_ever.co',
 		password: '123456',
 		firstName: 'Alish',
-		lastName: 'Meklyov',
+		lastName: 'M.',
 		imageUrl: 'assets/images/avatars/alish.jpg',
 		startedWorkOn: '2018-03-20',
 		endWork: null,
@@ -39,10 +39,10 @@ export const DEFAULT_EVER_EMPLOYEES: any = [
 		preferredComponentLayout: ComponentLayoutStyleEnum.TABLE
 	},
 	{
-		email: 'booster@ever.co',
+		email: 'booster@example_ever.co',
 		password: '123456',
 		firstName: 'Booster',
-		lastName: 'Poster',
+		lastName: 'P.',
 		imageUrl: 'assets/images/avatars/avatar-default.svg',
 		startedWorkOn: '2018-03-19',
 		endWork: null,
@@ -51,10 +51,10 @@ export const DEFAULT_EVER_EMPLOYEES: any = [
 		preferredComponentLayout: ComponentLayoutStyleEnum.TABLE
 	},
 	{
-		email: 'yoster@ever.co',
+		email: 'yoster@example_ever.co',
 		password: '123456',
 		firstName: 'Yoster',
-		lastName: 'Foster',
+		lastName: 'F.',
 		imageUrl: 'assets/images/avatars/avatar-default.svg',
 		startedWorkOn: '2018-05-25',
 		endWork: null,
@@ -63,10 +63,10 @@ export const DEFAULT_EVER_EMPLOYEES: any = [
 		preferredComponentLayout: ComponentLayoutStyleEnum.TABLE
 	},
 	{
-		email: 'hoster@ever.co',
+		email: 'hoster@example_ever.co',
 		password: '123456',
 		firstName: 'Hoster',
-		lastName: 'Hosterov',
+		lastName: 'H.',
 		imageUrl: 'assets/images/avatars/avatar-default.svg',
 		startedWorkOn: '2019-06-17',
 		endWork: null,
@@ -75,10 +75,10 @@ export const DEFAULT_EVER_EMPLOYEES: any = [
 		preferredComponentLayout: ComponentLayoutStyleEnum.TABLE
 	},
 	{
-		email: 'aster@ever.co',
+		email: 'aster@example_ever.co',
 		password: '123456',
 		firstName: 'Aster',
-		lastName: 'Astov',
+		lastName: 'A.',
 		imageUrl: 'assets/images/avatars/avatar-default.svg',
 		startedWorkOn: '2019-08-01',
 		endWork: null,
@@ -87,10 +87,10 @@ export const DEFAULT_EVER_EMPLOYEES: any = [
 		preferredComponentLayout: ComponentLayoutStyleEnum.TABLE
 	},
 	{
-		email: 'roster@ever.co',
+		email: 'roster@example_ever.co',
 		password: '123456',
 		firstName: 'Roster',
-		lastName: 'Raston',
+		lastName: 'R.',
 		imageUrl: 'assets/images/avatars/avatar-default.svg',
 		startedWorkOn: '2019-11-27',
 		endWork: null,
@@ -99,10 +99,10 @@ export const DEFAULT_EVER_EMPLOYEES: any = [
 		preferredComponentLayout: ComponentLayoutStyleEnum.TABLE
 	},
 	{
-		email: 'dister@ever.co',
+		email: 'dister@example_ever.co',
 		password: '123456',
 		firstName: 'Dister',
-		lastName: 'Distorova',
+		lastName: 'D.',
 		imageUrl: 'assets/images/avatars/avatar-default.svg',
 		startedWorkOn: '2019-11-26',
 		endWork: null,
@@ -111,10 +111,10 @@ export const DEFAULT_EVER_EMPLOYEES: any = [
 		preferredComponentLayout: ComponentLayoutStyleEnum.TABLE
 	},
 	{
-		email: 'postern@ever.co',
+		email: 'postern@example_ever.co',
 		password: '123456',
 		firstName: 'Postern',
-		lastName: 'Porstach',
+		lastName: 'P.',
 		imageUrl: 'assets/images/avatars/avatar-default.svg',
 		startedWorkOn: '2020-03-16',
 		endWork: null,
@@ -123,10 +123,10 @@ export const DEFAULT_EVER_EMPLOYEES: any = [
 		preferredComponentLayout: ComponentLayoutStyleEnum.TABLE
 	},
 	{
-		email: 'kyoster@ever.co',
+		email: 'kyoster@example_ever.co',
 		password: '123456',
 		firstName: 'Kyoster',
-		lastName: 'Kyosterov',
+		lastName: 'K.',
 		imageUrl: 'assets/images/avatars/avatar-default.svg',
 		startedWorkOn: '2020-02-05',
 		endWork: null,
@@ -135,10 +135,10 @@ export const DEFAULT_EVER_EMPLOYEES: any = [
 		preferredComponentLayout: ComponentLayoutStyleEnum.TABLE
 	},
 	{
-		email: 'taster@ever.co',
+		email: 'taster@example_ever.co',
 		password: '123456',
 		firstName: 'Taster',
-		lastName: 'Tasterova',
+		lastName: 'T.',
 		imageUrl: 'assets/images/avatars/avatar-default.svg',
 		startedWorkOn: '2020-03-02',
 		endWork: null,
@@ -150,7 +150,7 @@ export const DEFAULT_EVER_EMPLOYEES: any = [
 		email: 'mustero@smooper.xyz',
 		password: '123456',
 		firstName: 'Mustero',
-		lastName: 'Mostako',
+		lastName: 'M.',
 		imageUrl: 'assets/images/avatars/avatar-default.svg',
 		startedWorkOn: '2019-11-27',
 		endWork: null,
@@ -162,7 +162,7 @@ export const DEFAULT_EVER_EMPLOYEES: any = [
 		email: 'desterrro@hotmail.com',
 		password: '123456',
 		firstName: 'Desterrro',
-		lastName: 'Dostonovo',
+		lastName: 'D.',
 		imageUrl: 'assets/images/avatars/avatar-default.svg',
 		startedWorkOn: '2020-03-07',
 		endWork: null,
@@ -174,7 +174,7 @@ export const DEFAULT_EVER_EMPLOYEES: any = [
 		email: 'ckhandla94@gmail.com',
 		password: '123456',
 		firstName: 'Chetan',
-		lastName: 'Khandla',
+		lastName: 'K.',
 		imageUrl: 'assets/images/avatars/chetan.png',
 		startedWorkOn: '2020-03-07',
 		endWork: null,
@@ -183,10 +183,10 @@ export const DEFAULT_EVER_EMPLOYEES: any = [
 		preferredComponentLayout: ComponentLayoutStyleEnum.TABLE
 	},
 	{
-		email: 'julia@ever.co',
+		email: 'julia@example_ever.co',
 		password: '123456',
 		firstName: 'Julia',
-		lastName: 'Konviser',
+		lastName: 'K.',
 		imageUrl: 'assets/images/avatars/julia.png',
 		startedWorkOn: '2018-08-01',
 		endWork: null,
@@ -195,10 +195,10 @@ export const DEFAULT_EVER_EMPLOYEES: any = [
 		preferredComponentLayout: ComponentLayoutStyleEnum.TABLE
 	},
 	{
-		email: 'yostorono@ever.co',
+		email: 'yostorono@example_ever.co',
 		password: '123456',
 		firstName: 'Yostorono',
-		lastName: 'Yastarek',
+		lastName: 'Y.',
 		imageUrl: 'assets/images/avatars/avatar-default.svg',
 		startedWorkOn: '2018-08-01',
 		endWork: null,

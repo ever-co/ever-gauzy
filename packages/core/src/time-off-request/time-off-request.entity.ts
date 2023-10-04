@@ -71,11 +71,6 @@ export class TimeOffRequest extends TenantOrganizationBaseEntity implements ITim
 	@Column({ nullable: true, default: false })
 	isHoliday?: boolean;
 
-	@ApiPropertyOptional({ type: () => Boolean, default: false })
-	@IsBoolean()
-	@IsOptional()
-	@Column({ nullable: true, default: false })
-	isArchived?: boolean;
 
 	/*
 	|--------------------------------------------------------------------------
