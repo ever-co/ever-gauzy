@@ -19,10 +19,6 @@ export class UserOrganization extends TenantOrganizationBaseEntity implements IU
 	@Column({ default: true })
 	isDefault: boolean;
 
-	@ApiProperty({ type: () => Boolean, default: true })
-	@Index()
-	@Column({ default: true })
-	isActive: boolean;
 
 	/*
 	|--------------------------------------------------------------------------

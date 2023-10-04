@@ -9,7 +9,6 @@ export interface IEmailHistory extends IBasePerTenantAndOrganizationEntityModel,
 	name: string;
 	content: string;
 	email: string;
-	isArchived?: boolean;
 }
 
 export interface IEmailUpdateInput extends IBasePerTenantAndOrganizationEntityModel, IRelationalUser, Partial<IRelationalEmailTemplate> {

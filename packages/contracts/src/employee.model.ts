@@ -31,7 +31,6 @@ export interface IEmployee extends IBasePerTenantAndOrganizationEntityModel {
 	user: IUser;
 	userId: string;
 	valueDate?: Date;
-	isActive: boolean;
 	short_description?: string;
 	description?: string;
 	teams?: IOrganizationTeam[];

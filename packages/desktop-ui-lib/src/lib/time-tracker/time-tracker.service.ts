@@ -318,7 +318,7 @@ export class TimeTrackerService {
 			headers: new HttpHeaders({ timeout: `${15 * 1000}` }),
 		};
 		const body = {
-			description: values.note,
+			description: values.description,
 			isBillable: true,
 			logType: TimeLogType.TRACKED,
 			projectId: values.projectId,
@@ -331,6 +331,7 @@ export class TimeTrackerService {
 			isRunning: true,
 			version: values.version,
 			startedAt: moment(values.startedAt).utc().toISOString(),
+			organizationTeamId: values.organizationTeamId,
 		};
 		this._loggerService.log.info(
 			`Toggle Start Timer Request: ${moment().format()}`,
@@ -350,7 +351,7 @@ export class TimeTrackerService {
 			headers: new HttpHeaders({ timeout: `${15 * 1000}` }),
 		};
 		const body = {
-			description: values.note,
+			description: values.description,
 			isBillable: true,
 			logType: TimeLogType.TRACKED,
 			projectId: values.projectId,
@@ -363,6 +364,7 @@ export class TimeTrackerService {
 			version: values.version,
 			startedAt: moment(values.startedAt).utc().toISOString(),
 			stoppedAt: moment(values.stoppedAt).utc().toISOString(),
+			organizationTeamId: values.organizationTeamId,
 		};
 		this._loggerService.log.info(
 			`Toggle Stop Timer Request: ${moment().format()}`,

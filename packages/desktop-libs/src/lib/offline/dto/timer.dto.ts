@@ -14,6 +14,8 @@ export interface TimerTO {
 	isStartedOffline?: boolean;
 	isStoppedOffline?: boolean;
 	version?: string;
+	organizationTeamId?: string;
+	description?: string;
 }
 
 export const TABLE_NAME_TIMERS: string = 'timers';
