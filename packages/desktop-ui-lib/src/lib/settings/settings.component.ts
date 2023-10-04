@@ -354,7 +354,7 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 	screenshotNotification = null;
 	config = {
 		/* Default Selected dialect	*/
-		db: 'sqlite',
+		db: 'better-sqlite',
 		/* Default Mysql config */
 		mysql: {
 			dbHost: '127.0.0.1',
@@ -404,7 +404,7 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 		? [this.serverTypes.custom, this.serverTypes.live]
 		: [this.serverTypes.integrated, this.serverTypes.custom, this.serverTypes.live];
 
-	driverOptions = ['sqlite', 'postgres', ...(this.isDesktopTimer ? ['mysql'] : [])];
+	driverOptions = ['better-sqlite', 'sqlite', 'postgres', ...(this.isDesktopTimer ? ['mysql'] : [])];
 	muted: boolean;
 
 	delayOptions: number[] = [0.5, 1, 3, 24];
@@ -1033,6 +1033,9 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 				break;
 			case 'mysql':
 				this.config.db = 'mysql';
+				break;
+			case 'better-sqlite':
+				this.config.db = 'better-sqlite';
 				break;
 			default:
 				break;
