@@ -42,7 +42,6 @@ import {
 	RelationId,
 	OneToMany,
 	Index,
-	DeleteDateColumn,
 } from 'typeorm';
 import {
 	Candidate,
@@ -329,12 +328,6 @@ export class Employee extends TenantOrganizationBaseEntity implements IEmployee 
 	@Column({ nullable: true })
 	linkedInId?: string;
 
-	/**
-	 * Soft Delete
-	 */
-	@ApiPropertyOptional({ type: () => 'timestamptz' })
-	@DeleteDateColumn({ nullable: true })
-	deletedAt?: Date;
 
 	/**
 	 * Additional Property

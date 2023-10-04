@@ -1,7 +1,7 @@
 import { FileStorageProviderEnum, IEquipment, IImageAsset, IWarehouse } from '@gauzy/contracts';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Exclude } from 'class-transformer';
-import { IsBoolean, IsDateString, IsNotEmpty, IsNumber, IsOptional, IsString } from 'class-validator';
+import { IsBoolean, IsNotEmpty, IsNumber, IsOptional, IsString } from 'class-validator';
 import { Column, Entity, ManyToMany, OneToMany } from 'typeorm';
 import { ColumnNumericTransformerPipe } from './../shared/pipes';
 import {
@@ -75,11 +75,6 @@ export class ImageAsset extends TenantOrganizationBaseEntity
 	})
 	storageProvider?: FileStorageProviderEnum;
 
-	@ApiPropertyOptional({ type: () => 'timestamptz', required: false })
-	@IsOptional()
-	@IsDateString()
-	@Column({ nullable: true })
-	deletedAt?: Date;
 
 	/** Additional fields */
 	fullUrl?: string;

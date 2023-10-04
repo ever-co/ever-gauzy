@@ -109,12 +109,6 @@ export class Activity extends TenantOrganizationBaseEntity implements IActivity 
 	@Column({ nullable: true })
 	recordedAt?: Date;
 
-	@ApiPropertyOptional({ type: () => 'timestamptz' })
-	@IsOptional()
-	@IsDateString()
-	@Column({ nullable: true })
-	deletedAt?: Date;
-
 	/*
 	|--------------------------------------------------------------------------
 	| @ManyToOne
