@@ -42,9 +42,6 @@ export class CandidateInterview extends TenantOrganizationBaseEntity
 	@Column({ nullable: true })
 	note?: string;
 
-	@ApiPropertyOptional({ type: () => Boolean, default: false })
-	@Column({ nullable: true, default: false })
-	isArchived?: boolean;
 
 	@ApiPropertyOptional({ type: () => Number })
 	@Column({
@@ -55,10 +52,10 @@ export class CandidateInterview extends TenantOrganizationBaseEntity
 	rating?: number;
 
 	/*
-    |--------------------------------------------------------------------------
-    | @OneToMany
-    |--------------------------------------------------------------------------
-    */
+	|--------------------------------------------------------------------------
+	| @OneToMany
+	|--------------------------------------------------------------------------
+	*/
 	@ApiProperty({ type: () => CandidateFeedback })
 	@OneToMany(() => CandidateFeedback, (feedback) => feedback.interview, {
 		onDelete: 'SET NULL'
@@ -88,10 +85,10 @@ export class CandidateInterview extends TenantOrganizationBaseEntity
 	interviewers?: ICandidateInterviewers[];
 
 	/*
-    |--------------------------------------------------------------------------
-    | @ManyToOne
-    |--------------------------------------------------------------------------
-    */
+	|--------------------------------------------------------------------------
+	| @ManyToOne
+	|--------------------------------------------------------------------------
+	*/
 
 	/**
 	 * Candidate

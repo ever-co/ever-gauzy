@@ -29,6 +29,8 @@ export class OctokitService {
 				this.app = new App({
 					appId: this.config.appId,
 					privateKey: this.config.privateKey,
+					clientId: this.config.clientId,
+					clientSecret: this.config.clientSecret,
 				});
 				console.log(chalk.green(`Octokit App successfully initialized.`));
 			} else {

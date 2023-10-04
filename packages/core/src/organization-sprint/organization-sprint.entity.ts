@@ -2,7 +2,6 @@ import { Entity, Column, OneToMany, JoinColumn, ManyToOne } from 'typeorm';
 import { IOrganizationSprint, SprintStartDayEnum } from '@gauzy/contracts';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
-	IsBoolean,
 	IsDate,
 	IsNotEmpty,
 	IsNumber,
@@ -71,10 +70,6 @@ export class OrganizationSprint
 	@JoinColumn()
 	project?: OrganizationProject;
 
-	@ApiProperty({ type: () => Boolean })
-	@IsBoolean()
-	@Column({ nullable: true })
-	isActive?: boolean;
 
 	@ApiProperty({ type: () => Task })
 	@OneToMany(() => Task, (task) => task.organizationSprint)

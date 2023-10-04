@@ -12,7 +12,6 @@ export interface IOrganizationSprint
 	endDate?: Date;
 	dayStart?: number; // Enum ((Sunday-Saturday) => (0-7))
 	project?: IOrganizationProject;
-	isActive?: boolean;
 	tasks?: ITask[];
 }
 

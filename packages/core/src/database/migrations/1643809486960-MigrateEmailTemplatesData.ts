@@ -1,28 +1,32 @@
-import { MigrationInterface, QueryRunner, SelectQueryBuilder } from "typeorm";
-import { createDefaultEmailTemplates } from "./../../email-template/email-template.seed";
-import { EmailTemplate } from "./../../core/entities/internal";
+import { MigrationInterface, QueryRunner } from "typeorm";
+import * as chalk from 'chalk';
+import { EmailTemplateEnum } from "@gauzy/contracts";
+import { EmailTemplateUtils } from "email-template/utils";
 
 export class MigrateEmailTemplatesData1643809486960 implements MigrationInterface {
 
     name = 'MigrateEmailTemplatesData1643809486960';
 
+    /**
+    * Up Migration
+    *
+    * @param queryRunner
+    */
     public async up(queryRunner: QueryRunner): Promise<any> {
-        /**
-         * Removed default gauzy email templates, again seed them with new one
-         */
-        const query = queryRunner.connection.createQueryBuilder(EmailTemplate, 'email_template');
-        query.where((qb: SelectQueryBuilder<EmailTemplate>) => {
-            qb.andWhere(`"${qb.alias}"."organizationId" IS NULL`);
-            qb.andWhere(`"${qb.alias}"."tenantId" IS NULL`);
-        });
-        const emailTemplates = await query.getMany();
-        await queryRunner.connection.getRepository(EmailTemplate).remove(emailTemplates);
-
-        /**
-         * Reseed all new default email templates
-         */
-        await createDefaultEmailTemplates(queryRunner.connection);
+        console.log(chalk.yellow(`MigrateEmailTemplatesData1643809486960 start running!`));
+        const templates = Object.values(EmailTemplateEnum);
+        await Promise.all(
+            templates.map(
+                async (template: EmailTemplateEnum) => {
+                    try {
+                        await EmailTemplateUtils.migrateEmailTemplates(queryRunner, template);
+                    } catch (error) {
+                        console.log(`Error while migrating missing email templates for ${template}`, error);
+                    }
+                }
+            )
+        );
     }
 
-    public async down(queryRunner: QueryRunner): Promise<any> {}
+    public async down(queryRunner: QueryRunner): Promise<any> { }
 }
