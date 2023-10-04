@@ -44,6 +44,8 @@ export interface ITask extends IBasePerTenantAndOrganizationEntityModel {
 	taskStatusId?: ITaskStatus['id'];
 	taskSizeId?: ITaskSize['id'];
 	taskPriorityId?: ITaskPriority['id'];
+
+	rootEpic?: ITask;
 }
 
 export interface IGetTaskOptions
@@ -66,4 +68,8 @@ export type ITaskCreateInput = ITask;
 
 export interface ITaskUpdateInput extends ITaskCreateInput {
 	id?: string;
+}
+
+export interface IGetTaskById {
+	rootEpic?: boolean;
 }

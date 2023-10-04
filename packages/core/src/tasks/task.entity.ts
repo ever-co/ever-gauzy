@@ -385,4 +385,6 @@ export class Task extends TenantOrganizationBaseEntity implements ITask {
 		name: 'task_team',
 	})
 	teams?: IOrganizationTeam[];
+
+	rootEpic?: ITask;
 }

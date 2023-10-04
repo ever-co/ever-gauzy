@@ -20,6 +20,7 @@ import { isUUID } from 'class-validator';
 import { PaginationParams, TenantAwareCrudService } from './../core/crud';
 import { RequestContext } from '../core/context';
 import { Task } from './task.entity';
+import { GetTaskByIdDTO } from './dto';
 
 @Injectable()
 export class TaskService extends TenantAwareCrudService<Task> {
@@ -28,6 +29,53 @@ export class TaskService extends TenantAwareCrudService<Task> {
 		private readonly taskRepository: Repository<Task>
 	) {
 		super(taskRepository);
+	}
+
+	/**
+	 *
+	 * @param id
+	 * @param relations
+	 * @returns
+	 */
+	async findById(id: ITask['id'], params: GetTaskByIdDTO): Promise<ITask> {
+		const task = await this.findOneByIdString(id, params);
+
+		if (params.rootEpic) {
+			task.rootEpic = await this.findParentUntilEpic(task.id);
+		}
+
+		return task;
+	}
+
+	async findParentUntilEpic(issueId: string): Promise<Task> {
+		// Define the recursive SQL query
+		const query = `
+			WITH RECURSIVE IssueHierarchy AS (SELECT *
+				FROM task
+				WHERE id = $1
+			UNION ALL
+				SELECT i.*
+				FROM task i
+						INNER JOIN IssueHierarchy ih ON i.id = ih."parentId")
+			SELECT *
+				FROM IssueHierarchy
+				WHERE "issueType" = 'Epic'
+			LIMIT 1;
+		`;
+
+		try {
+			// Execute the raw SQL query with the issueId parameter
+			const result = await this.taskRepository.query(query, [issueId]);
+
+			// Check if any epic was found and return it, or return null
+			if (result.length > 0) {
+				return result[0];
+			} else {
+				return null;
+			}
+		} catch (error) {
+			return null;
+		}
 	}
 
 	/**

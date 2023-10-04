@@ -31,7 +31,12 @@ import { CrudController, PaginationParams } from './../core/crud';
 import { Task } from './task.entity';
 import { TaskService } from './task.service';
 import { TaskCreateCommand, TaskUpdateCommand } from './commands';
-import { CreateTaskDTO, TaskMaxNumberQueryDTO, UpdateTaskDTO } from './dto';
+import {
+	CreateTaskDTO,
+	GetTaskByIdDTO,
+	TaskMaxNumberQueryDTO,
+	UpdateTaskDTO,
+} from './dto';
 
 @ApiTags('Tasks')
 @UseGuards(TenantPermissionGuard, PermissionGuard)
@@ -43,6 +48,23 @@ export class TaskController extends CrudController<Task> {
 		private readonly commandBus: CommandBus
 	) {
 		super(taskService);
+	}
+
+	@ApiOperation({ summary: 'Find by id' })
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'Found one record' /*, type: T*/,
+	})
+	@ApiResponse({
+		status: HttpStatus.NOT_FOUND,
+		description: 'Record not found',
+	})
+	@Get(':id')
+	async findById(
+		@Param('id', UUIDValidationPipe) id: Task['id'],
+		@Query() params: GetTaskByIdDTO
+	): Promise<Task> {
+		return this.taskService.findById(id, params);
 	}
 
 	/**
