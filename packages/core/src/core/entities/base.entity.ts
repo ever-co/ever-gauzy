@@ -51,7 +51,7 @@ export abstract class BaseEntity extends Model implements IBaseEntityModel {
 	@IsOptional()
 	@IsBoolean()
 	@Index()
-	@Column({ nullable: false, default: true })
+	@Column({ nullable: true, default: true })
 	isActive?: boolean;
 
 	// Indicate if record is archived
@@ -59,6 +59,6 @@ export abstract class BaseEntity extends Model implements IBaseEntityModel {
 	@IsOptional()
 	@IsBoolean()
 	@Index()
-	@Column({ nullable: false, default: false })
+	@Column({ nullable: true, default: false })
 	isArchived?: boolean;
 }
