@@ -271,34 +271,32 @@ export class DateRangePickerComponent extends TranslationBaseComponent implement
 	 * Create Date Range Translated Menus
 	 */
 	createDateRangeMenus() {
-		this.ranges = new Object();
-		this.ranges[DateRangeKeyEnum.TODAY] = [moment(), moment()];
-		this.ranges[DateRangeKeyEnum.YESTERDAY] = [moment().subtract(1, 'days'), moment().subtract(1, 'days')];
-		this.ranges[DateRangeKeyEnum.CURRENT_WEEK] = [moment().startOf('week'), moment().endOf('week')];
-		this.ranges[DateRangeKeyEnum.LAST_WEEK] = [
-			moment().subtract(1, 'week').startOf('week'),
-			moment().subtract(1, 'week').endOf('week')
-		];
-		this.ranges[DateRangeKeyEnum.CURRENT_MONTH] = [moment().startOf('month'), moment().endOf('month')];
-		this.ranges[DateRangeKeyEnum.LAST_MONTH] = [
-			moment().subtract(1, 'month').startOf('month'),
-			moment().subtract(1, 'month').endOf('month')
-		];
+		this.ranges = new Object({
+			[DateRangeKeyEnum.TODAY]: [moment(), moment()],
+			[DateRangeKeyEnum.YESTERDAY]: [moment().subtract(1, 'days'), moment().subtract(1, 'days')],
+			[DateRangeKeyEnum.CURRENT_WEEK]: [moment().startOf('week'), moment().endOf('week')],
+			[DateRangeKeyEnum.LAST_WEEK]: [moment().subtract(1, 'week').startOf('week'), moment().subtract(1, 'week').endOf('week')],
+			[DateRangeKeyEnum.CURRENT_MONTH]: [moment().startOf('month'), moment().endOf('month')],
+			[DateRangeKeyEnum.LAST_MONTH]: [moment().subtract(1, 'month').startOf('month'), moment().subtract(1, 'month').endOf('month')]
+		});
+
+		// Define the units of time to remove based on conditions
+		const unitsToRemove = [];
 
 		if (this.isLockDatePicker && this.unitOfTime !== 'day') {
-			delete this.ranges[DateRangeKeyEnum.TODAY];
-			delete this.ranges[DateRangeKeyEnum.YESTERDAY];
+			unitsToRemove.push(DateRangeKeyEnum.TODAY, DateRangeKeyEnum.YESTERDAY);
 		}
-
 		if (this.isLockDatePicker && this.unitOfTime !== 'week') {
-			delete this.ranges[DateRangeKeyEnum.CURRENT_WEEK];
-			delete this.ranges[DateRangeKeyEnum.LAST_WEEK];
+			unitsToRemove.push(DateRangeKeyEnum.CURRENT_WEEK, DateRangeKeyEnum.LAST_WEEK);
+		}
+		if (this.isLockDatePicker && this.unitOfTime !== 'month') {
+			unitsToRemove.push(DateRangeKeyEnum.CURRENT_MONTH, DateRangeKeyEnum.LAST_MONTH);
 		}
 
-		if (this.isLockDatePicker && this.unitOfTime !== 'month') {
-			delete this.ranges[DateRangeKeyEnum.CURRENT_MONTH];
-			delete this.ranges[DateRangeKeyEnum.LAST_MONTH];
-		}
+		// Remove date ranges based on unitsToRemove
+		unitsToRemove.forEach(unit => {
+			delete this.ranges[unit];
+		});
 	}
 
 	/**
