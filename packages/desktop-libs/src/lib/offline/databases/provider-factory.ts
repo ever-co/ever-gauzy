@@ -6,6 +6,7 @@ import { PostgresProvider } from './postgres-provider';
 import { MysqlProvider } from './mysql-provider';
 import { LocalStore } from '../../desktop-store';
 import { AppError } from '../../error-handler';
+import { BetterSqliteProvider } from './better-sqlite-provider';
 
 export class ProviderFactory implements IDatabaseProvider {
 	private _dbContext: DatabaseProviderContext;
@@ -34,15 +35,23 @@ export class ProviderFactory implements IDatabaseProvider {
 			case 'mysql':
 				this._dbContext.provider = MysqlProvider.instance;
 				break;
-			default:
+			case 'sqlite':
 				this._dbContext.provider = SqliteProvider.instance;
+				break;
+			default:
+				this._dbContext.provider = BetterSqliteProvider.instance;
 				break;
 		}
 	}
 
 	public get dialect(): string {
-		const cfg = LocalStore.getApplicationConfig().config;
-		return cfg && cfg.db ? cfg.db : 'sqlite';
+		let cfg = LocalStore.getApplicationConfig().config;
+		if (!cfg?.db) {
+			// Set default database
+			LocalStore.updateAdditionalSetting({ db: 'better-sqlite' });
+			cfg = LocalStore.getApplicationConfig().config;
+		}
+		return cfg?.db;
 	}
 
 	public async migrate(): Promise<void> {
