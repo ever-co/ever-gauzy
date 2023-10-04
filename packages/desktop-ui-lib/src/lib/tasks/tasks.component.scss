@@ -1,17 +1,15 @@
 @import 'gauzy/_gauzy-dialogs';
 
 .body {
-  width: 550px;
-  width: 550px;
+  width: 100%;
   background-color: var(--gauzy-card-4);
   border-radius: var(--border-radius);
   padding: 0.75rem 1rem;
-  margin-top: 8px;
 }
 
 .description {
   margin-top: 10px;
-  height: 150px;
+  height: 100%;
 }
 
 .name-input {
@@ -140,6 +138,9 @@ input {
     flex-wrap: initial;
     gap: 4px;
   }
+	.cke_contents {
+		height: 425px !important;
+	}
 }
 
 .text {

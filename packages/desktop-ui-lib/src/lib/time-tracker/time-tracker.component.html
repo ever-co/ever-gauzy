@@ -720,7 +720,11 @@
 					*ngIf="isAddTask"
 					[employee]="userData"
 					[hasProjectPermission]="hasProjectPermission$ | async"
-					[selectedProject]="selectedProject"
+					[selected]="{
+						teamId: teamSelect,
+						projectId: projectSelect,
+						contactId: organizationContactId
+					}"
 					[userData]="argFromMain"
 				></ngx-tasks>
 			</div>
