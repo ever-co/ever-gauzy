@@ -10,5 +10,5 @@ export class GetTaskByIdDTO extends OptionParams<Task> implements IGetTaskById {
 	@ApiPropertyOptional({ type: () => Boolean })
 	@IsOptional()
 	@IsBoolean()
-	rootEpic?: boolean;
+	includeRootEpic?: boolean;
 }

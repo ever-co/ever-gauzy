@@ -147,6 +147,7 @@ export class Task extends TenantOrganizationBaseEntity implements ITask {
 	 * Additional exposed fields
 	 */
 	taskNumber?: string;
+	rootEpic?: ITask;
 
 	/*
     |--------------------------------------------------------------------------
@@ -385,6 +386,4 @@ export class Task extends TenantOrganizationBaseEntity implements ITask {
 		name: 'task_team',
 	})
 	teams?: IOrganizationTeam[];
-
-	rootEpic?: ITask;
 }

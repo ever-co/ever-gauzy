@@ -71,5 +71,5 @@ export interface ITaskUpdateInput extends ITaskCreateInput {
 }
 
 export interface IGetTaskById {
-	rootEpic?: boolean;
+	includeRootEpic?: boolean;
 }

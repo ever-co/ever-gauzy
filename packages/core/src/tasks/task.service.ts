@@ -40,7 +40,7 @@ export class TaskService extends TenantAwareCrudService<Task> {
 	async findById(id: ITask['id'], params: GetTaskByIdDTO): Promise<ITask> {
 		const task = await this.findOneByIdString(id, params);
 
-		if (params.rootEpic) {
+		if (params.includeRootEpic) {
 			task.rootEpic = await this.findParentUntilEpic(task.id);
 		}
 
@@ -74,7 +74,7 @@ export class TaskService extends TenantAwareCrudService<Task> {
 				return null;
 			}
 		} catch (error) {
-			return null;
+			throw error;
 		}
 	}
 
