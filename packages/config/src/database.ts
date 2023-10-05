@@ -82,6 +82,33 @@ switch (dbType) {
 		connectionConfig = sqliteConfig;
 
 		break;
+
+	case 'better-sqlite3':
+		const betterSqlitePath =
+			process.env.DB_PATH ||
+			path.join(
+				process.cwd(),
+				...['apps', 'api', 'data'],
+				'gauzy.better-sqlite3'
+			);
+
+		console.log('Better Sqlite DB Path: ' + betterSqlitePath);
+
+		const betterSqliteConfig: DataSourceOptions = {
+			type: dbType,
+			database: betterSqlitePath,
+			logging: 'all',
+			logger: 'file', // Removes console logging, instead logs all queries in a file ormlogs.log
+			synchronize: process.env.DB_SYNCHRONIZE === 'true', // We are using migrations, synchronize should be set to false.
+			prepareDatabase: (db) => {
+				// Enhance performance
+				db.pragma('journal_mode = WAL');
+			}
+		};
+
+		connectionConfig = betterSqliteConfig;
+
+		break;
 }
 
 export const dbConnectionConfig = connectionConfig;
