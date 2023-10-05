@@ -55,7 +55,7 @@ export abstract class BaseEntity extends Model implements IBaseEntityModel {
 		example: '2018-11-21T06:20:32.232Z'
 	})
 	@IsDateString()
-	@DeleteDateColumn({ nullable: true })
+	@DeleteDateColumn()
 	deletedAt?: Date;
 
 	// Indicates if record is active now

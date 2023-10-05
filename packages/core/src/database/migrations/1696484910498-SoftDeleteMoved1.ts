@@ -1,9 +1,9 @@
 
 import { MigrationInterface, QueryRunner } from "typeorm";
 
-export class SoftDeleteMoved1696426233842 implements MigrationInterface {
+export class SoftDeleteMoved11696484910498 implements MigrationInterface {
 
-    name = 'SoftDeleteMoved1696426233842';
+    name = 'SoftDeleteMoved11696484910498';
 
     /**
     * Up Migration
@@ -330,10 +330,10 @@ export class SoftDeleteMoved1696426233842 implements MigrationInterface {
     }
 
     /**
-* SqliteDB Up Migration
-*
-* @param queryRunner
-*/
+ * SqliteDB Up Migration
+ *
+ * @param queryRunner
+ */
     public async sqliteUpQueryRunner(queryRunner: QueryRunner): Promise<any> {
         await queryRunner.query(`DROP INDEX "IDX_785958f324b568a307c9496909"`);
         await queryRunner.query(`DROP INDEX "IDX_c52aae9bd99b254f62a6a71a54"`);
