@@ -37,6 +37,25 @@ export class OrganizationTeamEmployeeController {
 		return await this.organizationTeamEmployeeService.update(memberId, entity);
 	}
 
+
+	/**
+	 * Update organization team member active task entity
+	 *
+	 * @param id
+	 * @param entity
+	 * @returns
+	 */
+	@HttpCode(HttpStatus.ACCEPTED)
+	@Permissions(PermissionsEnum.ORG_TEAM_EDIT_ACTIVE_TASK)
+	@UsePipes(new ValidationPipe({ whitelist: true }))
+	@Put(':id/active-task')
+	async updateActiveTask(
+		@Param('id', UUIDValidationPipe) memberId: IOrganizationTeamEmployee['id'],
+		@Body() entity: UpdateTeamMemberDTO
+	): Promise<UpdateResult | IOrganizationTeamEmployee> {
+		return await this.organizationTeamEmployeeService.updateActiveTask(memberId, entity);
+	}
+
 	/**
 	 * Delete team member by memberId
 	 *

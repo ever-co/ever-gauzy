@@ -5,6 +5,7 @@ import {
 	IEmployee,
 	IOrganizationTeam,
 	IOrganizationTeamEmployee,
+	IOrganizationTeamEmployeeActiveTaskUpdateInput,
 	IOrganizationTeamEmployeeFindInput,
 	IOrganizationTeamEmployeeUpdateInput,
 	PermissionsEnum,
@@ -67,8 +68,8 @@ export class OrganizationTeamEmployeeService extends TenantAwareCrudService<Orga
 					role: managerIds.includes(employeeId)
 						? role
 						: member.roleId !== role.id // Check if current member's role is not same as role(params)
-						? member.role // Keep old role as it is, to avoid setting null while updating team.(PUT /organization-team API)
-						: null, // When the employeeId is not present in managerIds and the employee does not already have a MANAGER role.
+							? member.role // Keep old role as it is, to avoid setting null while updating team.(PUT /organization-team API)
+							: null, // When the employeeId is not present in managerIds and the employee does not already have a MANAGER role.
 				});
 			});
 
@@ -143,6 +144,39 @@ export class OrganizationTeamEmployeeService extends TenantAwareCrudService<Orga
 				{ id: memberId, organizationId, organizationTeamId },
 				entity
 			);
+		} catch (error) {
+			throw new ForbiddenException();
+		}
+	}
+
+	/**
+	 * Update organization team member active task entity
+	 *
+	 * @param id
+	 * @param entity
+	 * @returns
+	 */
+	public async updateActiveTask(
+		memberId: IOrganizationTeamEmployee['id'],
+		entity: IOrganizationTeamEmployeeActiveTaskUpdateInput
+	): Promise<OrganizationTeamEmployee | UpdateResult> {
+		try {
+			const { organizationId, organizationTeamId } = entity;
+
+			try {
+				await this.findOneByWhereOptions({
+					employeeId: RequestContext.currentEmployeeId(),
+					organizationId,
+					organizationTeamId,
+				});
+				return await super.update(
+					{ id: memberId, organizationId, organizationTeamId },
+					{ activeTaskId: entity.activeTaskId }
+				);
+			} catch (error) {
+				throw new ForbiddenException();
+			}
+
 		} catch (error) {
 			throw new ForbiddenException();
 		}
