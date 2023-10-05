@@ -95,7 +95,7 @@
 		"d3-selection-multi": "^1.0.1",
 		"date-fns": "^2.28.0",
 		"date-holidays": "^1.6.1",
-		"dayjs": "^1.11.5",
+		"dayjs": "^1.11.4",
 		"detect-passive-events": "^1.0.4",
 		"echarts": "^5.0.1",
 		"eva-icons": "^1.1.3",

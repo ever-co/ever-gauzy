@@ -52,16 +52,25 @@ import { NgxPermissionsModule } from 'ngx-permissions';
 import { ColorPickerService } from 'ngx-color-picker';
 import { EstimateEmailModule } from './auth/estimate-email/estimate-email.module';
 import * as moment from 'moment';
+import dayjs from 'dayjs/esm';
+import localeData from 'dayjs/esm/plugin/localeData';
+import weekday from 'dayjs/esm/plugin/weekday';
 import { LegalModule } from './legal/legal.module';
 import { Router } from '@angular/router';
 import { FeatureToggleModule } from 'ngx-feature-toggle';
-import { IFeatureToggle, LanguagesEnum } from '@gauzy/contracts';
+import { IFeatureToggle, LanguagesEnum, WeekDaysEnum } from '@gauzy/contracts';
 import { HttpLoaderFactory } from './@shared/translate/translate.module';
 import { FeatureService, GoogleMapsLoaderService } from './@core/services';
 import { AppInitService } from './@core/services/app-init-service';
 import { NbEvaIconsModule } from '@nebular/eva-icons';
 import { CookieService } from 'ngx-cookie-service';
 import { NgxDaterangepickerMd } from 'ngx-daterangepicker-material';
+import { dayOfWeekAsString } from './@theme/components/header/selectors/date-range-picker';
+
+/**  */
+dayjs.extend(localeData);
+dayjs.extend(weekday);
+
 // TODO: we should use some internal function which returns version of Gauzy;
 const version = '0.1.0';
 
@@ -146,7 +155,9 @@ if (environment.SENTRY_DSN && environment.SENTRY_DSN === 'DOCKER_SENTRY_DSN') {
 		NgxElectronModule,
 		FeatureToggleModule,
 		NgxPermissionsModule.forRoot(),
-		NgxDaterangepickerMd.forRoot(),
+		NgxDaterangepickerMd.forRoot({
+			firstDay: dayOfWeekAsString(WeekDaysEnum.MONDAY)
+		}),
 	],
 	bootstrap: [AppComponent],
 	providers: [
@@ -231,10 +242,15 @@ export class AppModule {
 		// Set Monday as start of the week
 		moment.locale(LanguagesEnum.ENGLISH, {
 			week: {
-				dow: 1,
+				dow: dayOfWeekAsString(WeekDaysEnum.MONDAY),
 			},
+			fallbackLocale: LanguagesEnum.ENGLISH
 		});
-		moment.locale(LanguagesEnum.ENGLISH);
+
+		// Set Monday as start of the week
+		dayjs().locale(LanguagesEnum.ENGLISH, {
+			weekStart: dayOfWeekAsString(WeekDaysEnum.MONDAY) // 0 = Sunday, 1 = Monday, ..., 6 = Saturday
+		});
 	}
 }
 
@@ -251,7 +267,7 @@ export function serverConnectionFactory(
 					router.navigate(['server-down']);
 				}
 			})
-			.catch(() => {});
+			.catch(() => { });
 }
 
 export function googleMapsLoaderFactory(provider: GoogleMapsLoaderService) {
@@ -269,5 +285,5 @@ export function featureToggleLoaderFactory(
 				store.featureToggles = features || [];
 				return features;
 			})
-			.catch(() => {});
+			.catch(() => { });
 }
