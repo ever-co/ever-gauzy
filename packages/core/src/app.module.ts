@@ -153,6 +153,7 @@ import { EmailResetModule } from './email-reset/email-reset.module';
 import { TaskLinkedIssueModule } from './tasks/linked-issue/task-linked-issue.module';
 import { OrganizationTaskSettingModule } from './organization-task-setting/organization-task-setting.module';
 import { TaskEstimationModule } from './tasks/estimation/task-estimation.module';
+import { JitsuAnalyticsModule } from 'jitsu-analytics/jitsu-analytics.module';
 const { unleashConfig, github } = environment;
 
 if (unleashConfig.url) {
@@ -273,6 +274,8 @@ if (environment.sentry && environment.sentry.dsn) {
 				limit: config.get('THROTTLE_LIMIT'),
 			} as ThrottlerModuleOptions),
 		}),
+
+		JitsuAnalyticsModule,
 		CoreModule,
 		AuthModule,
 		UserModule,
@@ -397,7 +400,7 @@ if (environment.sentry && environment.sentry.dsn) {
 		IssueTypeModule,
 		TaskLinkedIssueModule,
 		OrganizationTaskSettingModule,
-		TaskEstimationModule
+		TaskEstimationModule,
 	],
 	controllers: [AppController],
 	providers: [

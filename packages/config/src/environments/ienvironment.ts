@@ -161,5 +161,8 @@ export interface IEnvironment {
 	 * Jitsu Config
 	 */
 	JITSU_BROWSER_HOST?: string;
-	JITSU_CONFIG_WRITE_KEY?: string;
+	JITSU_BROWSER_WRITE_KEY?: string;
+
+	JITSU_SERVER_HOST?: string;
+	JITSU_SERVER_WRITE_KEY?: string;
 }

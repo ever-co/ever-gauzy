@@ -73,6 +73,9 @@ export interface Environment {
 	JITSU_BROWSER_HOST?: string;
 	JITSU_BROWSER_WRITE_KEY?: string;
 
+	JITSU_SERVER_HOST?: string;
+	JITSU_SERVER_WRITE_KEY?: string;
+
 	/** Github Integration */
 	GAUZY_GITHUB_APP_NAME: string;
 	GAUZY_GITHUB_APP_ID: string;
