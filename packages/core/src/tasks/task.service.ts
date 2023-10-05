@@ -63,18 +63,14 @@ export class TaskService extends TenantAwareCrudService<Task> {
 			LIMIT 1;
 		`;
 
-		try {
-			// Execute the raw SQL query with the issueId parameter
-			const result = await this.taskRepository.query(query, [issueId]);
+		// Execute the raw SQL query with the issueId parameter
+		const result = await this.taskRepository.query(query, [issueId]);
 
-			// Check if any epic was found and return it, or return null
-			if (result.length > 0) {
-				return result[0];
-			} else {
-				return null;
-			}
-		} catch (error) {
-			throw error;
+		// Check if any epic was found and return it, or return null
+		if (result.length > 0) {
+			return result[0];
+		} else {
+			return null;
 		}
 	}
 
