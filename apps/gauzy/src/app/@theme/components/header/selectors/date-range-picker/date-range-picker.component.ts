@@ -355,7 +355,7 @@ export class DateRangePickerComponent extends TranslationBaseComponent implement
 	 */
 	onDatesUpdated(event: TimePeriod) {
 		if (this.dateRangePickerDirective) {
-			const { startDate, endDate } = event;
+			const { startDate, endDate } = this.shiftUTCtoLocal(event);
 			if (startDate && endDate) {
 				const range = {} as IDateRangePicker;
 				if (!this.isLockDatePicker) {
@@ -499,12 +499,29 @@ export class DateRangePickerComponent extends TranslationBaseComponent implement
 		const { startDate, endDate, isCustomDate } = this.dates$.getValue();
 		const start = moment(startDate);
 		const end = moment(endDate);
-
 		return {
 			startDate: start.toDate(),
 			endDate: end.toDate(),
 			isCustomDate: isCustomDate
 		};
+	}
+
+	private shiftUTCtoLocal(range: TimePeriod) {
+		if (range && range.endDate && range.startDate) {
+			const offset = moment().utcOffset();
+			return {
+				startDate: moment(range.startDate.toDate()).subtract(
+					offset,
+					'minute'
+				),
+				endDate: moment(range.endDate.toDate()).subtract(
+					offset,
+					'minute'
+				),
+			};
+		} else {
+			return range;
+		}
 	}
 
 	ngOnDestroy(): void { }
