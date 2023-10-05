@@ -15,10 +15,10 @@ export class EntityEventsSubscriber implements EntitySubscriberInterface {
 	private logger = new Logger(EntityEventsSubscriber.name);
 
 	constructor(
-		datasource: DataSource,
+		dataSource: DataSource,
 		private jitsuAnalyticsService: JitsuAnalyticsService
 	) {
-		datasource.subscribers.push(this);
+		dataSource.subscribers.push(this);
 	}
 
 	/**
