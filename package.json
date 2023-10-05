@@ -308,7 +308,7 @@
 		"cypress-cucumber-preprocessor": "^4.3.1",
 		"cypress-file-upload": "^5.0.8",
 		"cz-conventional-changelog": "^3.3.0",
-		"electron": "20.2.0",
+		"electron": "22.3.25",
 		"electron-builder": "^23.6.0",
 		"envalid": "^6.0.2",
 		"esbuild": "^0.15.13",
