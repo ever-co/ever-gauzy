@@ -34,6 +34,7 @@ import {
 	TimeSlotSubscriber,
 	UserSubscriber,
 	IntegrationSubscriber,
+	JitsuEventsSubscriber,
 } from './internal';
 
 /**
@@ -74,5 +75,6 @@ export const coreSubscribers = [
 	TenantSubscriber,
 	TimeOffRequestSubscriber,
 	TimeSlotSubscriber,
-	UserSubscriber
+	UserSubscriber,
+	JitsuEventsSubscriber,
 ];

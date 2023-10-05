@@ -1,8 +1,8 @@
 import { Module } from '@nestjs/common';
 import { JitsuAnalyticsService } from './jitsu-analytics.service';
-import { EntityEventsSubscriber } from './entity-event-subscriber/entity-event-subscriber';
+import { JitsuEventsSubscriber } from './jitsu-events-subscriber';
 
 @Module({
-	providers: [JitsuAnalyticsService, EntityEventsSubscriber],
+	providers: [JitsuAnalyticsService, JitsuEventsSubscriber],
 })
 export class JitsuAnalyticsModule {}

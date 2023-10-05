@@ -46,10 +46,6 @@ if (!env.IS_DOCKER) {
 		);
 	}
 
-	if (!env.JITSU_SERVER_HOST || !env.JITSU_SERVER_WRITE_KEY) {
-		console.warn(
-			'WARNING: No Jitsu keys defined for server in the .env file. Jitsu analytics may not be working!'
-		);
 	}
 
 	envFileContent += `
@@ -158,9 +154,6 @@ if (!env.IS_DOCKER) {
 		JITSU_BROWSER_HOST: '${env.JITSU_BROWSER_HOST}',
 		JITSU_BROWSER_WRITE_KEY: '${env.JITSU_BROWSER_WRITE_KEY}',
 
-		JITSU_SERVER_HOST: '${env.JITSU_SERVER_HOST}',
-		JITSU_SERVER_WRITE_KEY: '${env.JITSU_SERVER_WRITE_KEY}',
-
 		GAUZY_GITHUB_APP_NAME: '${env.GAUZY_GITHUB_APP_NAME}',
 		GAUZY_GITHUB_APP_ID: '${env.GAUZY_GITHUB_APP_ID}',
 		GAUZY_GITHUB_CLIENT_ID: '${env.GAUZY_GITHUB_CLIENT_ID}',
@@ -266,9 +259,6 @@ if (!env.IS_DOCKER) {
 
 		JITSU_BROWSER_HOST: '${env.JITSU_BROWSER_HOST}',
 		JITSU_BROWSER_WRITE_KEY: '${env.JITSU_BROWSER_WRITE_KEY}',
-
-		JITSU_SERVER_HOST: '${env.JITSU_SERVER_HOST}',
-		JITSU_SERVER_WRITE_KEY: '${env.JITSU_SERVER_WRITE_KEY}',
 
 		GAUZY_GITHUB_APP_NAME: '${env.GAUZY_GITHUB_APP_NAME}',
 		GAUZY_GITHUB_APP_ID: '${env.GAUZY_GITHUB_APP_ID}',
