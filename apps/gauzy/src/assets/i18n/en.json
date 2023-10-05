@@ -1224,7 +1224,10 @@
 		"FILTER_INTEGRATIONS": "Filter integrations",
 		"SEARCH_INTEGRATIONS": "Search integrations",
 		"PAID": "Paid",
-		"INTEGRATION": "Integration"
+		"INTEGRATION": "Integration",
+		"MESSAGE": {
+			"SETTINGS_UPDATED": "Updated settings for {{provider}} integration"
+		}
 	},
 	"DASHBOARD_PAGE": {
 		"ACCOUNTING": "Accounting",
