@@ -1,6 +1,6 @@
 import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { NbActionsModule, NbButtonModule, NbCardModule, NbContextMenuModule, NbIconModule, NbSpinnerModule } from '@nebular/theme';
+import { NbActionsModule, NbButtonModule, NbCardModule, NbContextMenuModule, NbIconModule, NbSpinnerModule, NbToggleModule } from '@nebular/theme';
 import { Ng2SmartTableModule } from 'ng2-smart-table';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { TranslateModule } from './../../../@shared/translate/translate.module';
@@ -10,13 +10,15 @@ import { GithubComponent } from './github.component';
 import { GithubWizardComponent } from './components/wizard/wizard.component';
 import { GithubInstallationComponent } from './components/installation/installation.component';
 import { GithubViewComponent } from './components/view/view.component';
+import { GithubSettingsDialogComponent } from './components/settings-dialog/settings-dialog.component';
 
 @NgModule({
 	declarations: [
 		GithubComponent,
 		GithubWizardComponent,
 		GithubInstallationComponent,
-		GithubViewComponent
+		GithubViewComponent,
+		GithubSettingsDialogComponent
 	],
 	imports: [
 		CommonModule,
@@ -26,6 +28,7 @@ import { GithubViewComponent } from './components/view/view.component';
 		NbContextMenuModule,
 		NbIconModule,
 		NbSpinnerModule,
+		NbToggleModule,
 		Ng2SmartTableModule,
 		NgSelectModule,
 		GithubRoutingModule,

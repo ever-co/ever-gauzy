@@ -22,6 +22,15 @@ const routes: Routes = [
 			{
 				path: ':integrationId',
 				component: GithubViewComponent,
+				data: {
+					selectors: {
+						project: false,
+						team: false,
+						employee: false,
+						date: false,
+						organization: false,
+					}
+				}
 			},
 			{
 				path: 'setup/wizard',
