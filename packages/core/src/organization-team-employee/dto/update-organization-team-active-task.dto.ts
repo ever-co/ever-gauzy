@@ -8,5 +8,5 @@ import { TenantOrganizationBaseDTO } from '../../core/dto';
  */
 export class UpdateOrganizationTeamActiveTaskDTO extends IntersectionType(
 	TenantOrganizationBaseDTO,
-	PickType(OrganizationTeamEmployee, ['activeTaskId'])
+	PickType(OrganizationTeamEmployee, ['activeTaskId', 'organizationTeamId']),
 ) implements IOrganizationTeamEmployeeUpdateInput { }

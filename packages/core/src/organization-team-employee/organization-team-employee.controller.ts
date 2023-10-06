@@ -46,7 +46,6 @@ export class OrganizationTeamEmployeeController {
 	 * @returns
 	 */
 	@HttpCode(HttpStatus.ACCEPTED)
-	@Permissions(PermissionsEnum.ALL_ORG_EDIT)
 	@UsePipes(new ValidationPipe({ whitelist: true }))
 	@Put(':id/active-task')
 	async updateActiveTask(
