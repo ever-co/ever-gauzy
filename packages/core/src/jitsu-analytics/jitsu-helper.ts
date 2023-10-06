@@ -24,7 +24,6 @@ export const createJitsu = (opts: JitsuOptions): AnalyticsInterface => {
     if (!config.host || !config.writeKey) {
         return;
     }
-    console.log(config);
     // Create and return a Jitsu Analytics instance with the parsed configuration properties
     return jitsuAnalytics({
         ...config, // Spread the parsed configuration properties
