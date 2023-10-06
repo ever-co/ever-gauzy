@@ -52,9 +52,6 @@ import { NgxPermissionsModule } from 'ngx-permissions';
 import { ColorPickerService } from 'ngx-color-picker';
 import { EstimateEmailModule } from './auth/estimate-email/estimate-email.module';
 import * as moment from 'moment';
-import dayjs from 'dayjs/esm';
-import localeData from 'dayjs/esm/plugin/localeData';
-import weekday from 'dayjs/esm/plugin/weekday';
 import { LegalModule } from './legal/legal.module';
 import { Router } from '@angular/router';
 import { FeatureToggleModule } from 'ngx-feature-toggle';
@@ -66,11 +63,6 @@ import { NbEvaIconsModule } from '@nebular/eva-icons';
 import { CookieService } from 'ngx-cookie-service';
 import { NgxDaterangepickerMd } from 'ngx-daterangepicker-material';
 import { dayOfWeekAsString } from './@theme/components/header/selectors/date-range-picker';
-
-/**  */
-dayjs.extend(localeData);
-dayjs.extend(weekday);
-
 // TODO: we should use some internal function which returns version of Gauzy;
 const version = '0.1.0';
 
@@ -245,11 +237,6 @@ export class AppModule {
 				dow: dayOfWeekAsString(WeekDaysEnum.MONDAY),
 			},
 			fallbackLocale: LanguagesEnum.ENGLISH
-		});
-
-		// Set Monday as start of the week
-		dayjs().locale(LanguagesEnum.ENGLISH, {
-			weekStart: dayOfWeekAsString(WeekDaysEnum.MONDAY) // 0 = Sunday, 1 = Monday, ..., 6 = Saturday
 		});
 	}
 }

@@ -20,9 +20,9 @@ import {
 import { Arrow } from './arrow/context/arrow.class';
 import { Next, Previous } from './arrow/strategies';
 import { TranslationBaseComponent } from './../../../../../@shared/language-base';
-import { DateRangeKeyEnum, dayOfWeekAsString } from './date-range-picker.setting';
+import { dayOfWeekAsString, shiftUTCtoLocal } from './date-picker.utils';
+import { DateRangeKeyEnum, DateRanges, TimePeriod } from './date-picker.interface';
 import { TimesheetFilterService } from './../../../../../@shared/timesheet/timesheet-filter.service';
-import { DateRanges, TimePeriod } from 'ngx-daterangepicker-material/daterangepicker.component';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -71,7 +71,7 @@ export class DateRangePickerComponent extends TranslationBaseComponent implement
 	/**
 	 * Define ngx-daterangepicker-material range configuration
 	 */
-	public ranges: DateRanges | any;
+	public ranges: DateRanges;
 
 	/**
 	 * show or hide arrows button, show by default
@@ -355,7 +355,7 @@ export class DateRangePickerComponent extends TranslationBaseComponent implement
 	 */
 	onDatesUpdated(event: TimePeriod) {
 		if (this.dateRangePickerDirective) {
-			const { startDate, endDate } = this.shiftUTCtoLocal(event);
+			const { startDate, endDate } = shiftUTCtoLocal(event);
 			if (startDate && endDate) {
 				const range = {} as IDateRangePicker;
 				if (!this.isLockDatePicker) {
@@ -504,24 +504,6 @@ export class DateRangePickerComponent extends TranslationBaseComponent implement
 			endDate: end.toDate(),
 			isCustomDate: isCustomDate
 		};
-	}
-
-	private shiftUTCtoLocal(range: TimePeriod) {
-		if (range && range.endDate && range.startDate) {
-			const offset = moment().utcOffset();
-			return {
-				startDate: moment(range.startDate.toDate()).subtract(
-					offset,
-					'minute'
-				),
-				endDate: moment(range.endDate.toDate()).subtract(
-					offset,
-					'minute'
-				),
-			};
-		} else {
-			return range;
-		}
 	}
 
 	ngOnDestroy(): void { }
