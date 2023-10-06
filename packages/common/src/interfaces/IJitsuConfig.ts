@@ -11,4 +11,14 @@ export interface IJitsuConfig {
      * The write key for authenticating with the Jitsu server.
      */
     readonly serverWriteKey: string;
+
+    /**
+     * Whether to enable debug mode.
+     */
+    readonly debug: boolean;
+
+    /**
+     * Whether to echo events.
+     */
+    readonly echoEvents: boolean;
 }

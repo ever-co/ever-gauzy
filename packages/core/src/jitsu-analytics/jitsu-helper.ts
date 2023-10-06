@@ -9,8 +9,8 @@ import { AnalyticsInterface, JitsuOptions, jitsuAnalytics } from "@jitsu/js";
 export const parseConfig = (config: JitsuOptions): Record<string, any> => ({
     host: config.host || environment.jitsu.serverHost || '', // Use serverHost from environment or empty string as default
     writeKey: config.writeKey || environment.jitsu.serverWriteKey || '', // Use serverWriteKey from environment or empty string as default
-    debug: config.debug || false, // Use debug from input config or false as default
-    echoEvents: config.echoEvents || false, // Use echoEvents from input config or false as default
+    debug: config.debug || true, // Use debug from input config or true as default
+    echoEvents: config.echoEvents || true, // Use echoEvents from input config or true as default
 });
 
 /**
@@ -24,6 +24,7 @@ export const createJitsu = (opts: JitsuOptions): AnalyticsInterface => {
     if (!config.host || !config.writeKey) {
         return;
     }
+    console.log(config);
     // Create and return a Jitsu Analytics instance with the parsed configuration properties
     return jitsuAnalytics({
         ...config, // Spread the parsed configuration properties

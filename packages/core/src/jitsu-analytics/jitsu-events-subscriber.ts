@@ -1,5 +1,6 @@
 import { AnalyticsInterface } from '@jitsu/js';
 import { Logger } from '@nestjs/common';
+import * as chalk from 'chalk';
 import {
 	InsertEvent,
 	RemoveEvent,
@@ -23,8 +24,8 @@ export class JitsuEventsSubscriber implements EntitySubscriberInterface {
 	private readonly jitsuAnalytics: AnalyticsInterface = createJitsu({
 		host: jitsu.serverHost,
 		writeKey: jitsu.serverWriteKey,
-		debug: false,
-		echoEvents: false
+		debug: jitsu.debug,
+		echoEvents: jitsu.echoEvents
 	});
 
 	/**
@@ -76,9 +77,11 @@ export class JitsuEventsSubscriber implements EntitySubscriberInterface {
 		// Check if this.jitsu is defined and both host and writeKey are defined
 		if (this.jitsuAnalytics) {
 			try {
+				console.log('------------------Jitsu Tracking Start------------------');
 				this.logger.log(`Jitsu Tracking Entity Events`, JSON.stringify(properties));
 				const tracked = await this.jitsuAnalytics.track(event, properties);
-				this.logger.log(`Jitsu Tracked Entity Events`, JSON.stringify(tracked));
+				this.logger.log(`Jitsu Tracked Entity Events`, chalk.blue(JSON.stringify(tracked)));
+				console.log('------------------Jitsu Tracking Finished------------------');
 			} catch (error) {
 				this.logger.error(`Error while Jitsu tracking event. Unable to track event: ${error.message}`);
 			}

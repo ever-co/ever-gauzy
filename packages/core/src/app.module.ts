@@ -269,8 +269,8 @@ if (environment.sentry && environment.sentry.dsn) {
 			config: {
 				host: jitsu.serverHost,
 				writeKey: jitsu.serverWriteKey,
-				debug: false,
-				echoEvents: false
+				debug: jitsu.debug,
+				echoEvents: jitsu.echoEvents
 			}
 		}),
 		ThrottlerModule.forRootAsync({
