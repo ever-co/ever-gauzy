@@ -4,13 +4,9 @@ import { OrganizationTeamEmployee } from '../../core/entities/internal';
 import { TenantOrganizationBaseDTO } from '../../core/dto';
 
 /**
- * Update team member entity DTO
+ * Update team member active task entity DTO
  */
-export class UpdateOrganizationTeamActiveTaskDTO
-	extends IntersectionType(
-		TenantOrganizationBaseDTO,
-		PickType(OrganizationTeamEmployee, [
-			'activeTaskId',
-		])
-	)
-	implements IOrganizationTeamEmployeeUpdateInput { }
+export class UpdateOrganizationTeamActiveTaskDTO extends IntersectionType(
+	TenantOrganizationBaseDTO,
+	PickType(OrganizationTeamEmployee, ['activeTaskId'])
+) implements IOrganizationTeamEmployeeUpdateInput { }

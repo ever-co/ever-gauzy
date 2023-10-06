@@ -6,7 +6,7 @@ import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
 import { Permissions } from './../shared/decorators';
 import { UUIDValidationPipe } from './../shared/pipes';
 import { OrganizationTeamEmployeeService } from './organization-team-employee.service';
-import { DeleteTeamMemberQueryDTO, UpdateTeamMemberDTO } from './dto';
+import { DeleteTeamMemberQueryDTO, UpdateOrganizationTeamActiveTaskDTO, UpdateTeamMemberDTO } from './dto';
 import { OrganizationTeamEmployee } from './organization-team-employee.entity';
 
 @ApiTags('OrganizationTeamEmployee')
@@ -46,12 +46,12 @@ export class OrganizationTeamEmployeeController {
 	 * @returns
 	 */
 	@HttpCode(HttpStatus.ACCEPTED)
-	@Permissions(PermissionsEnum.ORG_TEAM_EDIT_ACTIVE_TASK)
+	@Permissions(PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ORG_TEAM_EDIT_ACTIVE_TASK)
 	@UsePipes(new ValidationPipe({ whitelist: true }))
 	@Put(':id/active-task')
 	async updateActiveTask(
 		@Param('id', UUIDValidationPipe) memberId: IOrganizationTeamEmployee['id'],
-		@Body() entity: UpdateTeamMemberDTO
+		@Body() entity: UpdateOrganizationTeamActiveTaskDTO
 	): Promise<UpdateResult | IOrganizationTeamEmployee> {
 		return await this.organizationTeamEmployeeService.updateActiveTask(memberId, entity);
 	}

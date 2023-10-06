@@ -160,23 +160,14 @@ export class OrganizationTeamEmployeeService extends TenantAwareCrudService<Orga
 		memberId: IOrganizationTeamEmployee['id'],
 		entity: IOrganizationTeamEmployeeActiveTaskUpdateInput
 	): Promise<OrganizationTeamEmployee | UpdateResult> {
+		const { organizationId, organizationTeamId } = entity;
 		try {
-			const { organizationId, organizationTeamId } = entity;
-
-			try {
-				await this.findOneByWhereOptions({
-					employeeId: RequestContext.currentEmployeeId(),
-					organizationId,
-					organizationTeamId,
-				});
-				return await super.update(
-					{ id: memberId, organizationId, organizationTeamId },
-					{ activeTaskId: entity.activeTaskId }
-				);
-			} catch (error) {
-				throw new ForbiddenException();
-			}
-
+			await this.findOneByWhereOptions({
+				employeeId: RequestContext.currentEmployeeId(),
+				organizationId,
+				organizationTeamId,
+			});
+			return await super.update({ id: memberId, organizationId, organizationTeamId }, { activeTaskId: entity.activeTaskId });
 		} catch (error) {
 			throw new ForbiddenException();
 		}
