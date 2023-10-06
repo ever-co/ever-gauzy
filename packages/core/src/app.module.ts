@@ -153,7 +153,7 @@ import { EmailResetModule } from './email-reset/email-reset.module';
 import { TaskLinkedIssueModule } from './tasks/linked-issue/task-linked-issue.module';
 import { OrganizationTaskSettingModule } from './organization-task-setting/organization-task-setting.module';
 import { TaskEstimationModule } from './tasks/estimation/task-estimation.module';
-import { JitsuAnalyticsModule } from 'jitsu-analytics/jitsu-analytics.module';
+import { JitsuAnalyticsModule } from './jitsu-analytics/jitsu-analytics.module';
 const { unleashConfig, github, jitsu } = environment;
 
 if (unleashConfig.url) {
