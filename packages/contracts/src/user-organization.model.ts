@@ -5,7 +5,6 @@ export interface IUserOrganization
 	extends IBasePerTenantAndOrganizationEntityModel {
 	userId: string;
 	isDefault: boolean;
-	isActive: boolean;
 	user?: IUser;
 }
 

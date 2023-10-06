@@ -52,7 +52,6 @@ export interface ITimeOff extends IBasePerTenantAndOrganizationEntityModel {
 	documentUrl?: string;
 	fullName?: string;
 	imageUrl?: string;
-	isArchived?: boolean;
 }
 
 export interface ITimeOffFindInput

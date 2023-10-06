@@ -203,16 +203,12 @@ export class Invoice extends TenantOrganizationBaseEntity implements IInvoice {
 	@Column({ nullable: true })
 	token?: string;
 
-	@ApiPropertyOptional({ type: () => Boolean })
-	@IsBoolean()
-	@Column({ type: Boolean, nullable: true, default: false })
-	isArchived?: boolean;
 
 	/*
-    |--------------------------------------------------------------------------
-    | @ManyToOne
-    |--------------------------------------------------------------------------
-    */
+	|--------------------------------------------------------------------------
+	| @ManyToOne
+	|--------------------------------------------------------------------------
+	*/
 	// From Organization
 	@ApiPropertyOptional({ type: () => () => Organization })
 	@ManyToOne(() => Organization)
@@ -242,10 +238,10 @@ export class Invoice extends TenantOrganizationBaseEntity implements IInvoice {
 	toContactId?: string;
 
 	/*
-    |--------------------------------------------------------------------------
-    | @OneToMany
-    |--------------------------------------------------------------------------
-    */
+	|--------------------------------------------------------------------------
+	| @OneToMany
+	|--------------------------------------------------------------------------
+	*/
 	// Invoice Estimate Items
 	@ApiPropertyOptional({ type: () => InvoiceItem, isArray: true })
 	@OneToMany(() => InvoiceItem, (invoiceItem) => invoiceItem.invoice, {
@@ -254,7 +250,7 @@ export class Invoice extends TenantOrganizationBaseEntity implements IInvoice {
 	@JoinColumn()
 	invoiceItems?: IInvoiceItem[];
 
-   	// Invoice Estimate Payments
+	// Invoice Estimate Payments
 	@ApiPropertyOptional({ type: () => Payment, isArray: true })
 	@OneToMany(() => Payment, (payment) => payment.invoice)
 	@JoinColumn()
@@ -269,10 +265,10 @@ export class Invoice extends TenantOrganizationBaseEntity implements IInvoice {
 	historyRecords?: IInvoiceEstimateHistory[];
 
 	/*
-    |--------------------------------------------------------------------------
-    | @ManyToMany
-    |--------------------------------------------------------------------------
-    */
+	|--------------------------------------------------------------------------
+	| @ManyToMany
+	|--------------------------------------------------------------------------
+	*/
 	@ApiProperty({ type: () => Tag })
 	@ManyToMany(() => Tag, (tag) => tag.invoices, {
 		onUpdate: 'CASCADE',

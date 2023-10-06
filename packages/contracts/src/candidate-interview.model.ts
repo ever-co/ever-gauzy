@@ -1,5 +1,5 @@
 import { IBasePerTenantAndOrganizationEntityModel } from './base-entity.model';
-import { ICandidate } from './candidate.model';
+import { IRelationalCandidate } from './candidate.model';
 import { ICandidateFeedback } from './candidate-feedback.model';
 import { ICandidateInterviewers } from './candidate-interviewers.model';
 import { ICandidatePersonalQualities } from './candidate-personal-qualities.model';
@@ -7,15 +7,12 @@ import { ICandidateTechnologies } from './candidate-technologies.model';
 import { IEmployee } from './employee.model';
 
 export interface IRelationalCandidateInterview {
-    readonly interview?: ICandidateInterview;
-    readonly interviewId?: ICandidateInterview['id'];
+	readonly interview?: ICandidateInterview;
+	readonly interviewId?: ICandidateInterview['id'];
 }
 
-export interface ICandidateInterview
-	extends IBasePerTenantAndOrganizationEntityModel {
+export interface ICandidateInterview extends IBasePerTenantAndOrganizationEntityModel, IRelationalCandidate {
 	title: string;
-	candidateId?: string;
-	candidate?: ICandidate;
 	interviewers?: ICandidateInterviewers[];
 	location?: string;
 	startTime: Date;
@@ -26,13 +23,10 @@ export interface ICandidateInterview
 	technologies?: ICandidateTechnologies[];
 	personalQualities?: ICandidatePersonalQualities[];
 	rating?: number;
-	isArchived?: boolean;
 }
 
-export interface ICandidateInterviewFindInput
-	extends IBasePerTenantAndOrganizationEntityModel {
+export interface ICandidateInterviewFindInput extends IBasePerTenantAndOrganizationEntityModel, IRelationalCandidate {
 	title?: string;
-	candidateId?: string;
 	interviewers?: ICandidateInterviewers[];
 	location?: string;
 	startTime?: Date;
@@ -43,10 +37,8 @@ export interface ICandidateInterviewFindInput
 	personalQualities?: ICandidatePersonalQualities[];
 }
 
-export interface ICandidateInterviewCreateInput
-	extends IBasePerTenantAndOrganizationEntityModel {
+export interface ICandidateInterviewCreateInput extends IBasePerTenantAndOrganizationEntityModel, IRelationalCandidate {
 	title: string;
-	candidateId?: string;
 	interviewers?: ICandidateInterviewers[];
 	location?: string;
 	note?: string;

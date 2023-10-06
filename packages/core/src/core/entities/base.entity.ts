@@ -5,10 +5,13 @@
 import {
 	PrimaryGeneratedColumn,
 	UpdateDateColumn,
-	CreateDateColumn
+	CreateDateColumn,
+	Column,
+	Index
 } from 'typeorm';
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { BaseEntityModel as IBaseEntityModel } from '@gauzy/contracts';
+import { IsBoolean, IsOptional } from 'class-validator';
 
 export abstract class Model {
 	constructor(input?: any) {
@@ -25,6 +28,7 @@ export abstract class BaseEntity extends Model implements IBaseEntityModel {
 	@PrimaryGeneratedColumn('uuid')
 	id?: string;
 
+	// Date when the record was created
 	@ApiPropertyOptional({
 		type: 'string',
 		format: 'date-time',
@@ -33,6 +37,7 @@ export abstract class BaseEntity extends Model implements IBaseEntityModel {
 	@CreateDateColumn()
 	createdAt?: Date;
 
+	// Date when the record was last updated
 	@ApiPropertyOptional({
 		type: 'string',
 		format: 'date-time',
@@ -40,4 +45,20 @@ export abstract class BaseEntity extends Model implements IBaseEntityModel {
 	})
 	@UpdateDateColumn()
 	updatedAt?: Date;
+
+	// Indicates if record is active now
+	@ApiPropertyOptional({ type: Boolean, default: true })
+	@IsOptional()
+	@IsBoolean()
+	@Index()
+	@Column({ nullable: true, default: true })
+	isActive?: boolean;
+
+	// Indicate if record is archived
+	@ApiPropertyOptional({ type: Boolean, default: false })
+	@IsOptional()
+	@IsBoolean()
+	@Index()
+	@Column({ nullable: true, default: false })
+	isArchived?: boolean;
 }
