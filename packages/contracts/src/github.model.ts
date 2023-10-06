@@ -1,41 +1,62 @@
-import { IBasePerTenantAndOrganizationEntityModel } from "./base-entity.model";
+import { IBasePerTenantAndOrganizationEntityModel } from './base-entity.model';
 
-export interface IGithubAppInstallInput extends IOAuthAppInstallInput {
+// Common input properties for GitHub app installation and OAuth app installation
+interface IGithubAppInstallInputCommon extends IBasePerTenantAndOrganizationEntityModel {
+    provider?: string;
+}
+
+// Input properties for GitHub app installation
+export interface IGithubAppInstallInput extends IGithubAppInstallInputCommon {
     installation_id?: string;
     setup_action?: string;
     state?: string;
 }
 
-export interface IOAuthAppInstallInput extends IBasePerTenantAndOrganizationEntityModel {
-    provider?: string;
+// Input properties for OAuth app installation
+export interface IOAuthAppInstallInput extends IGithubAppInstallInputCommon {
     code?: string;
 }
 
-/** */
+// Represents a GitHub repository
 export interface IGithubRepository {
     id: string;
     node_id: string;
     name: string;
     full_name: string;
     private: boolean;
-    [x: string]: any;
+    [x: string]: any; // Additional properties
 }
 
+// Represents a GitHub issue
 export interface IGithubIssue {
     id: string;
     node_id: string;
     number: string;
     title: string;
     state: string;
-    [x: string]: any;
+    [x: string]: any; // Additional properties
 }
 
+// Represents a GitHub issue label
+export interface IGithubIssueLabel {
+    id: string;
+    node_id: string;
+    url: string;
+    name: string;
+    color: string;
+    default: boolean;
+    description: string;
+    [x: string]: any; // Additional properties
+}
+
+// Response containing GitHub repositories
 export interface IGithubRepositoryResponse {
     total_count: number;
     repository_selection: string;
-    repositories: IGithubRepository[]
+    repositories: IGithubRepository[];
 }
 
+// Enum for GitHub property mapping
 export enum GithubPropertyMapEnum {
     INSTALLATION_ID = 'installation_id',
     SETUP_ACTION = 'setup_action',

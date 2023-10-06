@@ -7,7 +7,16 @@ import { catchError, filter, map, switchMap, tap } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
 import { NbDialogService, NbMenuItem, NbMenuService } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { IEntitySettingToSync, IGithubIssue, IGithubRepository, IGithubRepositoryResponse, IOrganization, IntegrationEnum } from '@gauzy/contracts';
+import {
+	IEntitySettingToSync,
+	IGithubIssue,
+	IGithubRepository,
+	IGithubRepositoryResponse,
+	IIntegrationTenant,
+	IOrganization,
+	IUser,
+	IntegrationEnum
+} from '@gauzy/contracts';
 import { distinctUntilChange } from '@gauzy/common-angular';
 import { TranslationBaseComponent } from './../../../../../@shared/language-base';
 import {
@@ -15,12 +24,12 @@ import {
 	GithubService,
 	IntegrationEntitySettingService,
 	IntegrationEntitySettingServiceStoreService,
-	IntegrationsService,
 	Store,
 	ToastrService
 } from './../../../../../@core/services';
+import { HashNumberPipe } from './../../../../../@shared/pipes';
+import { TagsOnlyComponent } from './../../../../../@shared/table-components';
 import { GithubSettingsDialogComponent } from '../settings-dialog/settings-dialog.component';
-import { IIntegrationTenant } from 'packages/contracts/dist';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -32,6 +41,7 @@ import { IIntegrationTenant } from 'packages/contracts/dist';
 })
 export class GithubViewComponent extends TranslationBaseComponent implements AfterViewInit, OnInit {
 
+	public user: IUser;
 	public contextMenuItems: NbMenuItem[] = [];
 	public settingsSmartTable: object;
 	public organization: IOrganization;
@@ -46,6 +56,7 @@ export class GithubViewComponent extends TranslationBaseComponent implements Aft
 		public readonly _translateService: TranslateService,
 		private readonly _activatedRoute: ActivatedRoute,
 		private readonly _titlecasePipe: TitleCasePipe,
+		private readonly _hashNumberPipe: HashNumberPipe,
 		private readonly _nbMenuService: NbMenuService,
 		private readonly _dialogService: NbDialogService,
 		private readonly _toastrService: ToastrService,
@@ -62,6 +73,13 @@ export class GithubViewComponent extends TranslationBaseComponent implements Aft
 		this._loadSmartTableSettings();
 		this._applyTranslationOnSmartTable();
 		this._getContextMenuItems();
+		this._store.user$
+			.pipe(
+				filter((user: IUser) => !!user),
+				tap((user: IUser) => (this.user = user)),
+				untilDestroyed(this)
+			)
+			.subscribe();
 	}
 
 	ngAfterViewInit(): void {
@@ -234,9 +252,8 @@ export class GithubViewComponent extends TranslationBaseComponent implements Aft
 				number: {
 					title: this.getTranslation('SM_TABLE.NUMBER'), // Set column title based on translation
 					type: 'number', // Set column type to 'number'
-					valuePrepareFunction: (data: string) => {
-						console.log(data); // Log column data (you can modify this function)
-						return data; // Return the data as-is (modify this function as needed)
+					valuePrepareFunction: (data: number) => {
+						return this._hashNumberPipe.transform(data);
 					}
 				},
 				title: {
@@ -250,6 +267,12 @@ export class GithubViewComponent extends TranslationBaseComponent implements Aft
 						// Transform the column data using '_titlecasePipe.transform' (modify this function)
 						return this._titlecasePipe.transform(data);
 					}
+				},
+				labels: {
+					title: this.getTranslation('SM_TABLE.LABELS'),
+					type: 'custom',
+					renderComponent: TagsOnlyComponent,
+					width: '10%'
 				}
 			}
 		};
