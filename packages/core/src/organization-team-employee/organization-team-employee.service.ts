@@ -160,17 +160,69 @@ export class OrganizationTeamEmployeeService extends TenantAwareCrudService<Orga
 		memberId: IOrganizationTeamEmployee['id'],
 		entity: IOrganizationTeamEmployeeActiveTaskUpdateInput
 	): Promise<OrganizationTeamEmployee | UpdateResult> {
-		const { organizationId, organizationTeamId } = entity;
+
 		try {
-			await this.findOneByWhereOptions({
-				employeeId: RequestContext.currentEmployeeId(),
-				organizationId,
-				organizationTeamId,
-			});
-			return await super.update({ id: memberId, organizationId, organizationTeamId }, { activeTaskId: entity.activeTaskId });
+			const { organizationId, organizationTeamId } = entity;
+			const tenantId = RequestContext.currentTenantId();
+
+			// Admin, Super Admin can update activeTaskId of any Employee
+			if (
+				RequestContext.hasPermission(
+					PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
+				)
+			) {
+				const member = await this.repository.findOneOrFail({
+					where: {
+						id: memberId,
+						tenantId,
+						organizationId,
+						organizationTeamId,
+					},
+				});
+
+				return await this.repository.update(member.id, { activeTaskId: entity.activeTaskId });
+			} else {
+				const employeeId = RequestContext.currentEmployeeId();
+				if (employeeId) {
+					let member: OrganizationTeamEmployee;
+					try {
+						/** If employee has manager of the team, he/she should be able to update activeTaskId for team */
+						await this.findOneByWhereOptions({
+							organizationId,
+							organizationTeamId,
+							role: {
+								name: RolesEnum.MANAGER,
+							},
+						});
+						member = await this.repository.findOneOrFail({
+							where: {
+								id: memberId,
+								organizationId,
+								tenantId,
+								organizationTeamId,
+							},
+						});
+					} catch (error) {
+						/** If employee has member of the team, he/she should be able to remove own self from team */
+						member = await this.repository.findOneOrFail({
+							where: {
+								employeeId,
+								organizationId,
+								tenantId,
+								organizationTeamId,
+							},
+						});
+					}
+					return await super.update({ id: member.id, organizationId, organizationTeamId }, { activeTaskId: entity.activeTaskId });
+
+				}
+				throw new ForbiddenException();
+			}
 		} catch (error) {
 			throw new ForbiddenException();
 		}
+
+
 	}
 
 	/**
