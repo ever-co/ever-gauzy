@@ -19,14 +19,29 @@ inserts updates and removal then sends to Jitsu */
 @EventSubscriber()
 export class JitsuEventsSubscriber implements EntitySubscriberInterface {
 	private readonly logger = new Logger(JitsuEventsSubscriber.name);
+	private jitsuAnalytics: AnalyticsInterface;
 
-	// Create an instance of Jitsu Analytics with configuration
-	private readonly jitsuAnalytics: AnalyticsInterface = createJitsu({
-		host: jitsu.serverHost,
-		writeKey: jitsu.serverWriteKey,
-		debug: jitsu.debug,
-		echoEvents: jitsu.echoEvents
-	});
+	constructor() {
+		try {
+			// Check if the required host and writeKey configuration properties are present
+			if (jitsu.serverHost && jitsu.serverWriteKey) {
+				const jitsuConfig = {
+					host: jitsu.serverHost,
+					writeKey: jitsu.serverWriteKey,
+					debug: jitsu.debug,
+					echoEvents: jitsu.echoEvents
+				};
+				this.logger.log(`JITSU Configuration`, chalk.magenta(JSON.stringify(jitsuConfig)));
+				// Create an instance of Jitsu Analytics with configuration
+				this.jitsuAnalytics = createJitsu(jitsuConfig);
+			} else {
+				console.error(chalk.yellow(`Jitsu Analytics initialization failed: Missing host or writeKey.`));
+			}
+		} catch (error) {
+			console.error(chalk.red(`Jitsu Analytics initialization failed: ${error.message}`));
+		}
+	}
+
 
 	/**
 	 * Called after entity insertion.
@@ -78,9 +93,9 @@ export class JitsuEventsSubscriber implements EntitySubscriberInterface {
 		if (this.jitsuAnalytics) {
 			try {
 				console.log('------------------Jitsu Tracking Start------------------');
-				this.logger.log(`Jitsu Tracking Entity Events`, JSON.stringify(properties));
+				this.logger.log(`Before Jitsu Tracking Entity Events`, chalk.magenta(JSON.stringify(properties)));
 				const tracked = await this.jitsuAnalytics.track(event, properties);
-				this.logger.log(`Jitsu Tracked Entity Events`, chalk.blue(JSON.stringify(tracked)));
+				this.logger.log(`After Jitsu Tracked Entity Events`, chalk.blue(JSON.stringify(tracked)));
 				console.log('------------------Jitsu Tracking Finished------------------');
 			} catch (error) {
 				this.logger.error(`Error while Jitsu tracking event. Unable to track event: ${error.message}`);
