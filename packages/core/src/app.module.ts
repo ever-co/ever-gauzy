@@ -154,7 +154,7 @@ import { TaskLinkedIssueModule } from './tasks/linked-issue/task-linked-issue.mo
 import { OrganizationTaskSettingModule } from './organization-task-setting/organization-task-setting.module';
 import { TaskEstimationModule } from './tasks/estimation/task-estimation.module';
 import { JitsuAnalyticsModule } from 'jitsu-analytics/jitsu-analytics.module';
-const { unleashConfig, github } = environment;
+const { unleashConfig, github, jitsu } = environment;
 
 if (unleashConfig.url) {
 	const unleashInstanceConfig: UnleashConfig = {
@@ -251,7 +251,6 @@ if (environment.sentry && environment.sentry.dsn) {
 				}),
 			]
 			: []),
-
 		// Probot Configuration
 		ProbotModule.forRoot({
 			isGlobal: true,
@@ -265,7 +264,15 @@ if (environment.sentry && environment.sentry.dsn) {
 				webhookSecret: github.webhookSecret
 			},
 		}),
-
+		/** Jitsu Configuration */
+		JitsuAnalyticsModule.forRoot({
+			config: {
+				host: jitsu.serverHost,
+				writeKey: jitsu.serverWriteKey,
+				debug: false,
+				echoEvents: false
+			}
+		}),
 		ThrottlerModule.forRootAsync({
 			inject: [ConfigService],
 			useFactory: (config: ConfigService): ThrottlerModuleOptions =>
@@ -274,8 +281,6 @@ if (environment.sentry && environment.sentry.dsn) {
 				limit: config.get('THROTTLE_LIMIT'),
 			} as ThrottlerModuleOptions),
 		}),
-
-		JitsuAnalyticsModule,
 		CoreModule,
 		AuthModule,
 		UserModule,

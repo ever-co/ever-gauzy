@@ -70,8 +70,10 @@ export const environment: IEnvironment = {
 	/**
 	 * Jitsu Server Configuration
 	 */
-	JITSU_SERVER_HOST: process.env.JITSU_SERVER_HOST,
-	JITSU_SERVER_WRITE_KEY: process.env.JITSU_SERVER_WRITE_KEY,
+	jitsu: {
+		serverHost: process.env.JITSU_SERVER_HOST,
+		serverWriteKey: process.env.JITSU_SERVER_WRITE_KEY,
+	},
 
 	fileSystem: {
 		name:

@@ -54,6 +54,14 @@ export const environment: IEnvironment = {
 	THROTTLE_TTL: parseInt(process.env.THROTTLE_TTL) || 60,
 	THROTTLE_LIMIT: parseInt(process.env.THROTTLE_LIMIT) || 300,
 
+	/**
+	 * Jitsu Server Configuration
+	 */
+	jitsu: {
+		serverHost: process.env.JITSU_SERVER_HOST,
+		serverWriteKey: process.env.JITSU_SERVER_WRITE_KEY,
+	},
+
 	fileSystem: {
 		name:
 			(process.env.FILE_PROVIDER as FileStorageProviderEnum) ||
