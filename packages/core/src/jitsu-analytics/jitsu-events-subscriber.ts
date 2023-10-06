@@ -34,7 +34,7 @@ export class JitsuEventsSubscriber implements EntitySubscriberInterface {
 		this.logger.log(`AFTER ENTITY INSERTED: `, JSON.stringify(event.entity));
 
 		// Track an event with Jitsu Analytics
-		await this.jitsuAnalytics.track('afterInsert', {
+		await this.analyticsTrack('afterInsert', {
 			data: { ...event.entity },
 		});
 	}
@@ -46,7 +46,7 @@ export class JitsuEventsSubscriber implements EntitySubscriberInterface {
 		this.logger.log(`AFTER ENTITY UPDATED: `, JSON.stringify(event.entity));
 
 		// Track an event with Jitsu Analytics
-		await this.jitsuAnalytics.track('afterUpdate', {
+		await this.analyticsTrack('afterUpdate', {
 			data: { ...event.entity },
 		});
 	}
@@ -58,8 +58,29 @@ export class JitsuEventsSubscriber implements EntitySubscriberInterface {
 		this.logger.log(`AFTER ENTITY REMOVED: `, JSON.stringify(event.entity));
 
 		// Track an event with Jitsu Analytics
-		await this.jitsuAnalytics.track('afterRemove', {
+		await this.analyticsTrack('afterRemove', {
 			data: { ...event.entity },
 		});
+	}
+
+	/**
+	 * Track an analytics event using Jitsu Analytics.
+	 * @param event The name of the event to track.
+	 * @param properties Additional event properties (optional).
+	 * @returns A promise that resolves when the event is tracked.
+	 */
+	async analyticsTrack(
+		event: string,
+		properties?: Record<string, any> | null
+	): Promise<any> {
+		// Check if this.jitsu is defined and both host and writeKey are defined
+		if (this.jitsuAnalytics) {
+			this.logger.log(`Jitsu Tracking Entity Events`, JSON.stringify(properties));
+			await this.jitsuAnalytics.track(event, properties);
+		} else {
+			// Handle it as needed (e.g., log or return a default result)
+			this.logger.warn(`Jitsu tracking is not available. Unable to track event: ${event}`);
+			return null; // or handle it differently based on your requirements
+		}
 	}
 }

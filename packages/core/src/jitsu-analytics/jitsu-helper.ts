@@ -20,10 +20,12 @@ export const parseConfig = (config: JitsuOptions): Record<string, any> => ({
  */
 export const createJitsu = (opts: JitsuOptions): AnalyticsInterface => {
     // Parse the configuration options
-    const parsedConfig = parseConfig(opts);
-
+    const config = parseConfig(opts);
+    if (!config.host || !config.writeKey) {
+        return;
+    }
     // Create and return a Jitsu Analytics instance with the parsed configuration properties
     return jitsuAnalytics({
-        ...parsedConfig, // Spread the parsed configuration properties
+        ...config, // Spread the parsed configuration properties
     });
 };
