@@ -75,8 +75,13 @@ export class JitsuEventsSubscriber implements EntitySubscriberInterface {
 	): Promise<any> {
 		// Check if this.jitsu is defined and both host and writeKey are defined
 		if (this.jitsuAnalytics) {
-			this.logger.log(`Jitsu Tracking Entity Events`, JSON.stringify(properties));
-			await this.jitsuAnalytics.track(event, properties);
+			try {
+				this.logger.log(`Jitsu Tracking Entity Events`, JSON.stringify(properties));
+				const tracked = await this.jitsuAnalytics.track(event, properties);
+				this.logger.log(`Jitsu Tracked Entity Events`, JSON.stringify(tracked));
+			} catch (error) {
+				this.logger.error(`Error while Jitsu tracking event. Unable to track event: ${error.message}`);
+			}
 		} else {
 			// Handle it as needed (e.g., log or return a default result)
 			this.logger.warn(`Jitsu tracking is not available. Unable to track event: ${event}`);
