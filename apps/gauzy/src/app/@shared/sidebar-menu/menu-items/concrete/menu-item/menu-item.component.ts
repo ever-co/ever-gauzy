@@ -12,7 +12,9 @@ import { Router } from '@angular/router';
 import { tap } from 'rxjs/operators';
 import { NbSidebarService } from '@nebular/theme';
 import { IUser } from '@gauzy/contracts';
-import JitsuAnalyticsEvents, { JitsuAnalyticsEventsEnum } from './../../../../../@core/services/analytics/event.type';
+import JitsuAnalyticsEvents, {
+	JitsuAnalyticsEventsEnum,
+} from './../../../../../@core/services/analytics/event.type';
 import { JitsuService } from './../../../../../@core/services/analytics/jitsu.service';
 import { Store } from './../../../../../@core/services/store.service';
 import { IMenuItem } from '../../interface/menu-item.interface';
@@ -40,7 +42,7 @@ export class MenuItemComponent implements OnInit, AfterViewChecked {
 		private readonly location: Location,
 		private readonly jitsuService: JitsuService,
 		private readonly store: Store
-	) { }
+	) {}
 
 	ngOnInit(): void {
 		this._user = this.store.user;
@@ -63,7 +65,7 @@ export class MenuItemComponent implements OnInit, AfterViewChecked {
 	 * @param item The item that was clicked.
 	 * @param user The user who clicked the item.
 	 */
-	public jitsuTrackClick() {
+	public async jitsuTrackClick() {
 		const clickEvent: JitsuAnalyticsEvents = {
 			eventType: JitsuAnalyticsEventsEnum.BUTTON_CLICKED,
 			url: this.item.url ?? this.item.link,
@@ -72,25 +74,26 @@ export class MenuItemComponent implements OnInit, AfterViewChecked {
 			menuItemName: this.item.title,
 		};
 
-		// Track the click event
-		this.jitsuService.trackEvents(clickEvent.eventType, clickEvent);
-
 		// Identify the user
-		this.jitsuService.identify(this._user.id, {
+		await this.jitsuService.identify(this._user.id, {
 			email: this._user.email,
 			fullName: this._user.name,
 			timeZone: this._user.timeZone,
 		});
 
 		// Group the user
-		this.jitsuService.group(this._user.id, {
+		await this.jitsuService.group(this._user.id, {
 			email: this._user.email,
 			fullName: this._user.name,
 			timeZone: this._user.timeZone,
 		});
+
+		// Track the click event
+		await this.jitsuService.trackEvents(clickEvent.eventType, clickEvent);
 	}
 
 	public redirectTo() {
+		// We don't await here because we don't want to wait for the analytics to complete before redirecting
 		this.jitsuTrackClick();
 		if (!this.item.children) this.router.navigateByUrl(this.item.link);
 		if (this.item.home) this.router.navigateByUrl(this.item.url);
