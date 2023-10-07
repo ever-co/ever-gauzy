@@ -153,7 +153,8 @@ import { EmailResetModule } from './email-reset/email-reset.module';
 import { TaskLinkedIssueModule } from './tasks/linked-issue/task-linked-issue.module';
 import { OrganizationTaskSettingModule } from './organization-task-setting/organization-task-setting.module';
 import { TaskEstimationModule } from './tasks/estimation/task-estimation.module';
-const { unleashConfig, github } = environment;
+import { JitsuAnalyticsModule } from './jitsu-analytics/jitsu-analytics.module';
+const { unleashConfig, github, jitsu } = environment;
 
 if (unleashConfig.url) {
 	const unleashInstanceConfig: UnleashConfig = {
@@ -250,7 +251,6 @@ if (environment.sentry && environment.sentry.dsn) {
 				}),
 			]
 			: []),
-
 		// Probot Configuration
 		ProbotModule.forRoot({
 			isGlobal: true,
@@ -264,7 +264,15 @@ if (environment.sentry && environment.sentry.dsn) {
 				webhookSecret: github.webhookSecret
 			},
 		}),
-
+		/** Jitsu Configuration */
+		JitsuAnalyticsModule.forRoot({
+			config: {
+				host: jitsu.serverHost,
+				writeKey: jitsu.serverWriteKey,
+				debug: jitsu.debug,
+				echoEvents: jitsu.echoEvents
+			}
+		}),
 		ThrottlerModule.forRootAsync({
 			inject: [ConfigService],
 			useFactory: (config: ConfigService): ThrottlerModuleOptions =>
@@ -397,7 +405,7 @@ if (environment.sentry && environment.sentry.dsn) {
 		IssueTypeModule,
 		TaskLinkedIssueModule,
 		OrganizationTaskSettingModule,
-		TaskEstimationModule
+		TaskEstimationModule,
 	],
 	controllers: [AppController],
 	providers: [

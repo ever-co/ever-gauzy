@@ -22,3 +22,4 @@ export * from './IUnleashConfig';
 export * from './IUpworkConfig';
 export * from './IWasabiConfig';
 export * from './IHubstaffConfig';
+export * from './IJitsuConfig';
