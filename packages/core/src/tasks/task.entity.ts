@@ -147,6 +147,7 @@ export class Task extends TenantOrganizationBaseEntity implements ITask {
 	 * Additional exposed fields
 	 */
 	taskNumber?: string;
+	rootEpic?: ITask;
 
 	/*
     |--------------------------------------------------------------------------
