@@ -9,12 +9,12 @@ import {
 	Output,
 } from '@angular/core';
 import { Router } from '@angular/router';
-import { NbSidebarService } from '@nebular/theme';
-import JitsuAnalyticsEvents from 'apps/gauzy/src/app/@core/services/analytics/event.type';
-import { JitsuService } from 'apps/gauzy/src/app/@core/services/analytics/jitsu.service';
-import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
-import { IUser } from 'packages/contracts/dist';
 import { tap } from 'rxjs/operators';
+import { NbSidebarService } from '@nebular/theme';
+import { IUser } from '@gauzy/contracts';
+import JitsuAnalyticsEvents, { JitsuAnalyticsEventsEnum } from './../../../../../@core/services/analytics/event.type';
+import { JitsuService } from './../../../../../@core/services/analytics/jitsu.service';
+import { Store } from './../../../../../@core/services/store.service';
 import { IMenuItem } from '../../interface/menu-item.interface';
 
 @Component({
@@ -30,19 +30,17 @@ export class MenuItemComponent implements OnInit, AfterViewChecked {
 	private _selected: boolean;
 	private _user: IUser;
 
-	@Output()
-	public collapsedChange: EventEmitter<any> = new EventEmitter();
-	@Output()
-	public selectedChange: EventEmitter<any> = new EventEmitter();
+	@Output() public collapsedChange: EventEmitter<any> = new EventEmitter();
+	@Output() public selectedChange: EventEmitter<any> = new EventEmitter();
 
 	constructor(
-		private router: Router,
-		private sidebarService: NbSidebarService,
-		private cdr: ChangeDetectorRef,
-		private location: Location,
-		private jitsuService: JitsuService,
+		private readonly router: Router,
+		private readonly sidebarService: NbSidebarService,
+		private readonly cdr: ChangeDetectorRef,
+		private readonly location: Location,
+		private readonly jitsuService: JitsuService,
 		private readonly store: Store
-	) {}
+	) { }
 
 	ngOnInit(): void {
 		this._user = this.store.user;
@@ -60,20 +58,31 @@ export class MenuItemComponent implements OnInit, AfterViewChecked {
 		this.cdr.detectChanges();
 	}
 
+	/**
+	 * Track a click event.
+	 * @param item The item that was clicked.
+	 * @param user The user who clicked the item.
+	 */
 	public jitsuTrackClick() {
 		const clickEvent: JitsuAnalyticsEvents = {
-			eventType: 'ButtonClicked',
+			eventType: JitsuAnalyticsEventsEnum.BUTTON_CLICKED,
 			url: this.item.url ?? this.item.link,
 			userId: this._user.id,
 			userEmail: this._user.email,
 			menuItemName: this.item.title,
 		};
+
+		// Track the click event
 		this.jitsuService.trackEvents(clickEvent.eventType, clickEvent);
+
+		// Identify the user
 		this.jitsuService.identify(this._user.id, {
 			email: this._user.email,
 			fullName: this._user.name,
 			timeZone: this._user.timeZone,
 		});
+
+		// Group the user
 		this.jitsuService.group(this._user.id, {
 			email: this._user.email,
 			fullName: this._user.name,

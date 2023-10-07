@@ -34,7 +34,7 @@ if (!env.IS_DOCKER) {
 		console.warn('WARNING: No Cloudinary API keys defined in the .env file.');
 	}
 
-	if (!env.JITSU_BROWSER_HOST || !env.JITSU_BROWSER_WRITE_KEY) {
+	if (!env.JITSU_BROWSER_URL || !env.JITSU_BROWSER_WRITE_KEY) {
 		console.warn('WARNING: No Jitsu keys defined for browser in the .env file. Jitsu analytics may not be working!');
 	}
 
@@ -141,7 +141,7 @@ if (!env.IS_DOCKER) {
 
 		FILE_PROVIDER: '${env.FILE_PROVIDER}',
 
-		JITSU_BROWSER_HOST: '${env.JITSU_BROWSER_HOST}',
+		JITSU_BROWSER_URL: '${env.JITSU_BROWSER_URL}',
 		JITSU_BROWSER_WRITE_KEY: '${env.JITSU_BROWSER_WRITE_KEY}',
 
 		GAUZY_GITHUB_APP_NAME: '${env.GAUZY_GITHUB_APP_NAME}',
@@ -248,7 +248,7 @@ if (!env.IS_DOCKER) {
 
 		FILE_PROVIDER: '${env.FILE_PROVIDER}',
 
-		JITSU_BROWSER_HOST: '${env.JITSU_BROWSER_HOST}',
+		JITSU_BROWSER_URL: '${env.JITSU_BROWSER_URL}',
 		JITSU_BROWSER_WRITE_KEY: '${env.JITSU_BROWSER_WRITE_KEY}',
 
 		GAUZY_GITHUB_APP_NAME: '${env.GAUZY_GITHUB_APP_NAME}',

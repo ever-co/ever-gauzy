@@ -3,7 +3,7 @@
  */
 export interface IJitsuConfig {
     /**
-     * The host address of the Jitsu server.
+     * API Host. Default value: same host as script origin
      */
     readonly serverHost: string;
 

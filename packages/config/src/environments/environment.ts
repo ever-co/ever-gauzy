@@ -71,7 +71,7 @@ export const environment: IEnvironment = {
 	 * Jitsu Server Configuration
 	 */
 	jitsu: {
-		serverHost: process.env.JITSU_SERVER_HOST,
+		serverHost: process.env.JITSU_SERVER_URL,
 		serverWriteKey: process.env.JITSU_SERVER_WRITE_KEY,
 		debug: process.env.JITSU_SERVER_DEBUG === 'true' ? true : false,
 		echoEvents: process.env.JITSU_SERVER_ECHO_EVENTS === 'true' ? true : false,

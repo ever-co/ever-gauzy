@@ -70,7 +70,7 @@ export interface Environment {
 
 	FILE_PROVIDER: string;
 
-	JITSU_BROWSER_HOST?: string;
+	JITSU_BROWSER_URL?: string;
 	JITSU_BROWSER_WRITE_KEY?: string;
 
 	/** Github Integration */

@@ -67,7 +67,7 @@ export type Env = Readonly<{
 	FILE_PROVIDER: string;
 
 	// Jitsu Browser Configurations
-	JITSU_BROWSER_HOST: string;
+	JITSU_BROWSER_URL: string;
 	JITSU_BROWSER_WRITE_KEY: string;
 
 	GAUZY_GITHUB_APP_NAME: string;
@@ -141,7 +141,7 @@ export const env: Env = cleanEnv(
 
 		FILE_PROVIDER: str({ default: 'LOCAL' }),
 
-		JITSU_BROWSER_HOST: str({ default: '' }),
+		JITSU_BROWSER_URL: str({ default: '' }),
 		JITSU_BROWSER_WRITE_KEY: str({ default: '' }),
 
 		GAUZY_GITHUB_APP_NAME: str({ default: '' }),
