@@ -4356,7 +4356,8 @@
 			"EMAIL_REQUIRED": "E-Mail ist erforderlich!",
 			"EMAIL_REAL_REQUIRED": "Die E-Mail sollte die echte sein!",
 			"PASSWORD_REQUIRED": "Passwort wird benötigt!",
-			"PASSWORD_SHOULD_CONTAIN": "Das Passwort sollte aus {{ minLength }} bis {{ maxLength }} Zeichen bestehen!"
+			"PASSWORD_SHOULD_CONTAIN": "Das Passwort sollte aus {{ minLength }} bis {{ maxLength }} Zeichen bestehen!",
+			"PASSWORD_NO_SPACE_EDGES": "Passwörter dürfen nicht mit Leerzeichen beginnen oder enden."
 		},
 		"DEMO": {
 			"TITLE": "Automatisch in Demo-Konten einloggen",

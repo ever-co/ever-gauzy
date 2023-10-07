@@ -71,6 +71,7 @@
           [(ngModel)]="user.email"
           #email="ngModel"
           name="email"
+          noSpaceEdges
           id="input-email"
           pattern=".+@.+\..+"
           [placeholder]="'LOGIN_PAGE.PLACEHOLDERS.EMAIL' | translate"
@@ -112,6 +113,7 @@
             fullWidth
             [(ngModel)]="user.password"
             #password="ngModel"
+            [pattern]="passwordNoSpaceEdges"
             name="password"
             [type]="showPassword ? 'text' : 'password'"
             id="input-password"
@@ -154,6 +156,9 @@
           </a>
         </nb-form-field>
         <ng-container *ngIf="password.invalid && password.touched">
+          <p class="caption status-danger" *ngIf="password.errors?.pattern">
+            {{ 'LOGIN_PAGE.VALIDATION.PASSWORD_NO_SPACE_EDGES' | translate }}
+          </p>
           <p
             class="caption status-danger"
             *ngIf="password.errors?.required"

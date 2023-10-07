@@ -4356,7 +4356,8 @@
 			"EMAIL_REQUIRED": "L'email è richiesta!",
 			"EMAIL_REAL_REQUIRED": "L'email deve essere quella reale!",
 			"PASSWORD_REQUIRED": "Password è richiesta!",
-			"PASSWORD_SHOULD_CONTAIN": "La password deve contenere da {{ minLength }} a {{ maxLength }} caratteri!"
+			"PASSWORD_SHOULD_CONTAIN": "La password deve contenere da {{ minLength }} a {{ maxLength }} caratteri!",
+			"PASSWORD_NO_SPACE_EDGES": "Le password non devono iniziare o terminare con spazi."
 		},
 		"DEMO": {
 			"TITLE": "Accedi automaticamente agli account di prova",

@@ -16,6 +16,7 @@ import { RolesEnum } from '@gauzy/contracts';
 import { environment } from './../../../environments/environment';
 import { CookieService } from 'ngx-cookie-service';
 import { ElectronService } from '../../@core/auth/electron.service';
+import { patterns } from '../../@shared/regex/regex-patterns.const';
 
 @Component({
 	selector: 'ngx-login',
@@ -29,6 +30,7 @@ export class NgxLoginComponent extends NbLoginComponent implements OnInit {
 	RolesEnum = RolesEnum;
 	isDemo: boolean = environment.DEMO;
 	showPassword = false;
+	passwordNoSpaceEdges = patterns.passwordNoSpaceEdges;
 
 	constructor(
 		private readonly cookieService: CookieService,

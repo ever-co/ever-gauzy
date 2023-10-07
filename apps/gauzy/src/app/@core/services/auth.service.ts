@@ -18,10 +18,7 @@ import { API_PREFIX } from '../constants/app.constants';
 
 @Injectable()
 export class AuthService {
-
-	constructor(
-		private readonly http: HttpClient
-	) { }
+	constructor(private readonly http: HttpClient) {}
 
 	isAuthenticated(): Promise<boolean> {
 		return firstValueFrom(
@@ -33,7 +30,7 @@ export class AuthService {
 		return this.http.post<Object>(`${API_PREFIX}/auth/email/verify`, body);
 	}
 
-	login(loginInput): Observable<IAuthResponse> {
+	login(loginInput: IUserLoginInput): Observable<IAuthResponse> {
 		return this.http.post<IAuthResponse>(
 			`${API_PREFIX}/auth/login`,
 			loginInput
@@ -45,9 +42,14 @@ export class AuthService {
 	 * @param input - IUserLoginInput containing email and password.
 	 * @returns Promise<IUserSigninWorkspaceResponse> representing the response from the server.
 	 */
-	signinWorkspaces(input: IUserLoginInput): Observable<IUserSigninWorkspaceResponse> {
+	signinWorkspaces(
+		input: IUserLoginInput
+	): Observable<IUserSigninWorkspaceResponse> {
 		try {
-			return this.http.post<IUserSigninWorkspaceResponse>(`${API_PREFIX}/auth/signin.workspaces`, input);
+			return this.http.post<IUserSigninWorkspaceResponse>(
+				`${API_PREFIX}/auth/signin.workspaces`,
+				input
+			);
 		} catch (error) {
 			console.log('Error while signin workspaces: %s', error?.message);
 			// Handle errors appropriately (e.g., log, throw, etc.)
@@ -89,13 +91,13 @@ export class AuthService {
 
 	hasRole(roles: RolesEnum[]): Observable<boolean> {
 		return this.http.get<boolean>(`${API_PREFIX}/auth/role`, {
-			params: toParams({ roles })
+			params: toParams({ roles }),
 		});
 	}
 
 	hasPermissions(...permissions: PermissionsEnum[]): Observable<boolean> {
 		return this.http.get<boolean>(`${API_PREFIX}/auth/permissions`, {
-			params: toParams({ permissions })
+			params: toParams({ permissions }),
 		});
 	}
 
@@ -108,7 +110,7 @@ export class AuthService {
 	refreshToken(refresh_token: string): Promise<any> {
 		return firstValueFrom(
 			this.http.post<any>(`${API_PREFIX}/auth/refresh-token`, {
-				refresh_token: refresh_token
+				refresh_token: refresh_token,
 			})
 		);
 	}

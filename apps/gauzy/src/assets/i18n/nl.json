@@ -4356,7 +4356,8 @@
 			"EMAIL_REQUIRED": "E-mail is verplicht!",
 			"EMAIL_REAL_REQUIRED": "De e-mail moet echt zijn!",
 			"PASSWORD_REQUIRED": "Wachtwoord is verplicht!",
-			"PASSWORD_SHOULD_CONTAIN": "Het wachtwoord moet bestaan uit {{ minLength }} tot {{ maxLength }} tekens!"
+			"PASSWORD_SHOULD_CONTAIN": "Het wachtwoord moet bestaan uit {{ minLength }} tot {{ maxLength }} tekens!",
+			"PASSWORD_NO_SPACE_EDGES": "Wachtwoorden mogen niet beginnen of eindigen met spaties."
 		},
 		"DEMO": {
 			"TITLE": "Automatisch inloggen op demorekeningen",
