@@ -1,8 +1,8 @@
 import { Injectable } from '@angular/core';
 import { NavigationEnd, Router } from '@angular/router';
-import { jitsuAnalytics, emptyAnalytics, AnalyticsInterface } from '@jitsu/js';
-import { filter } from 'rxjs/operators';
 import { Location } from '@angular/common';
+import { filter } from 'rxjs/operators';
+import { jitsuAnalytics, emptyAnalytics, AnalyticsInterface } from '@jitsu/js';
 import { environment } from '@env/environment';
 import JitsuAnalyticsEvents, { JitsuAnalyticsEventsEnum } from './event.type';
 
@@ -11,15 +11,17 @@ import JitsuAnalyticsEvents, { JitsuAnalyticsEventsEnum } from './event.type';
 })
 export class JitsuService {
 	private jitsuClient: AnalyticsInterface;
-	constructor(private location: Location, private router: Router) {
-		this.jitsuClient =
-			environment.JITSU_BROWSER_HOST &&
-			environment.JITSU_BROWSER_WRITE_KEY
-				? jitsuAnalytics({
-						host: environment.JITSU_BROWSER_HOST,
-						writeKey: environment.JITSU_BROWSER_WRITE_KEY,
-				  })
-				: emptyAnalytics;
+
+	constructor(
+		private readonly location: Location,
+		private readonly router: Router
+	) {
+		this.jitsuClient = environment.JITSU_BROWSER_URL && environment.JITSU_BROWSER_WRITE_KEY ? jitsuAnalytics({
+			host: environment.JITSU_BROWSER_URL,
+			writeKey: environment.JITSU_BROWSER_WRITE_KEY,
+			debug: false,
+			echoEvents: false
+		}) : emptyAnalytics;
 	}
 
 	async identify(

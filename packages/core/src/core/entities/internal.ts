@@ -184,3 +184,4 @@ export * from './../../time-tracking/screenshot/screenshot.subscriber';
 export * from './../../time-tracking/time-slot/time-slot.subscriber';
 export * from './../../user/user.subscriber';
 export * from './../../integration/integration.subscriber';
+export * from '././../../jitsu-analytics/jitsu-events-subscriber';
