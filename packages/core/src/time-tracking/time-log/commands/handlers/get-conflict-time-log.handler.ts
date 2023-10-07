@@ -36,7 +36,7 @@ export class GetConflictTimeLogHandler
 			.andWhere(`"${conflictQuery.alias}"."organizationId" = :organizationId`, { organizationId })
 			.andWhere(`"${conflictQuery.alias}"."deletedAt" IS null`)
 			.andWhere(
-				this.configService.dbConnectionOptions.type === 'sqlite'
+				['sqlite', 'better-sqlite3'].includes(this.configService.dbConnectionOptions.type)
 					? `'${startedAt}' >= "${conflictQuery.alias}"."startedAt" and '${startedAt}' <= "${conflictQuery.alias}"."stoppedAt"`
 					: `("${conflictQuery.alias}"."startedAt", "${conflictQuery.alias}"."stoppedAt") OVERLAPS (timestamptz '${startedAt}', timestamptz '${stoppedAt}')`
 			);
