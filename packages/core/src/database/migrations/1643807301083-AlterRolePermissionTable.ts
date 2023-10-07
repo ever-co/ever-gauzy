@@ -1,11 +1,11 @@
 import { MigrationInterface, QueryRunner } from "typeorm";
-    
+
 export class AlterRolePermissionTable1643807301083 implements MigrationInterface {
 
     name = 'AlterRolePermissionTable1643807301083';
 
     public async up(queryRunner: QueryRunner): Promise<void> {
-        if (queryRunner.connection.options.type === 'sqlite') {
+        if (['sqlite', 'better-sqlite3'].includes(queryRunner.connection.options.type)) {
             await this.sqliteUpQueryRunner(queryRunner);
         } else {
             await this.postgresUpQueryRunner(queryRunner);
@@ -13,7 +13,7 @@ export class AlterRolePermissionTable1643807301083 implements MigrationInterface
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
-        if (queryRunner.connection.options.type === 'sqlite') {
+        if (['sqlite', 'better-sqlite3'].includes(queryRunner.connection.options.type)) {
             await this.sqliteDownQueryRunner(queryRunner);
         } else {
             await this.postgresDownQueryRunner(queryRunner);
@@ -22,8 +22,8 @@ export class AlterRolePermissionTable1643807301083 implements MigrationInterface
 
     /**
      * PostgresDB Up Migration
-     * 
-     * @param queryRunner 
+     *
+     * @param queryRunner
      */
     public async postgresUpQueryRunner(queryRunner: QueryRunner): Promise<any> {
         await queryRunner.query(`ALTER TABLE "role_permission" ADD "description" character varying`);
@@ -31,8 +31,8 @@ export class AlterRolePermissionTable1643807301083 implements MigrationInterface
 
     /**
      * PostgresDB Down Migration
-     * 
-     * @param queryRunner 
+     *
+     * @param queryRunner
      */
     public async postgresDownQueryRunner(queryRunner: QueryRunner): Promise<any> {
         await queryRunner.query(`ALTER TABLE "role_permission" DROP COLUMN "description"`);
@@ -40,8 +40,8 @@ export class AlterRolePermissionTable1643807301083 implements MigrationInterface
 
     /**
      * SqliteDB Up Migration
-     * 
-     * @param queryRunner 
+     *
+     * @param queryRunner
      */
     public async sqliteUpQueryRunner(queryRunner: QueryRunner): Promise<any> {
         await queryRunner.query(`DROP INDEX "IDX_e3130a39c1e4a740d044e68573"`);
@@ -58,8 +58,8 @@ export class AlterRolePermissionTable1643807301083 implements MigrationInterface
 
     /**
      * SqliteDB Down Migration
-     * 
-     * @param queryRunner 
+     *
+     * @param queryRunner
      */
     public async sqliteDownQueryRunner(queryRunner: QueryRunner): Promise<any> {
         await queryRunner.query(`DROP INDEX "IDX_cbd053921056e77c0a8e03122a"`);

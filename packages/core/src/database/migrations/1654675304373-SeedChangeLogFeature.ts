@@ -38,7 +38,7 @@ export class SeedChangeLogFeature1654675304373 implements MigrationInterface {
         try {
             for await (const feature of features) {
                 const payload = Object.values(feature);
-                if (queryRunner.connection.options.type === 'sqlite') {
+                if (['sqlite', 'better-sqlite3'].includes(queryRunner.connection.options.type)) {
                     payload.push(uuidV4());
                     await queryRunner.connection.manager.query(`
                         INSERT INTO "changelog" ("icon", "title", "date", "isFeature", "content", "learnMoreUrl", "imageUrl", "id") VALUES($1, $2, $3, $4, $5, $6, $7, $8)`,
@@ -58,6 +58,6 @@ export class SeedChangeLogFeature1654675304373 implements MigrationInterface {
     }
 
     public async down(queryRunner: QueryRunner): Promise<any> {
-        
+
     }
 }

@@ -1,10 +1,10 @@
 import { MigrationInterface, QueryRunner } from "typeorm";
-    
+
 export class AlterTimeOffRequestTable1652270907163 implements MigrationInterface {
     name = 'AlterTimeOffRequestTable1652270907163';
 
     public async up(queryRunner: QueryRunner): Promise<void> {
-        if (queryRunner.connection.options.type === 'sqlite') {
+        if (['sqlite', 'better-sqlite3'].includes(queryRunner.connection.options.type)) {
             await this.sqliteUpQueryRunner(queryRunner);
         } else {
             await this.postgresUpQueryRunner(queryRunner);
@@ -12,7 +12,7 @@ export class AlterTimeOffRequestTable1652270907163 implements MigrationInterface
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
-        if (queryRunner.connection.options.type === 'sqlite') {
+        if (['sqlite', 'better-sqlite3'].includes(queryRunner.connection.options.type)) {
             await this.sqliteDownQueryRunner(queryRunner);
         } else {
             await this.postgresDownQueryRunner(queryRunner);
@@ -21,19 +21,19 @@ export class AlterTimeOffRequestTable1652270907163 implements MigrationInterface
 
     /**
      * PostgresDB Up Migration
-     * 
-     * @param queryRunner 
+     *
+     * @param queryRunner
      */
     public async postgresUpQueryRunner(queryRunner: QueryRunner): Promise<any> {
         await queryRunner.query(`ALTER TABLE "time_off_request" ALTER COLUMN "isHoliday" DROP NOT NULL`);
         await queryRunner.query(`ALTER TABLE "time_off_request" ALTER COLUMN "isHoliday" SET DEFAULT false`);
         await queryRunner.query(`ALTER TABLE "time_off_request" ALTER COLUMN "isArchived" SET DEFAULT false`);
     }
-    
+
     /**
      * PostgresDB Down Migration
-     * 
-     * @param queryRunner 
+     *
+     * @param queryRunner
      */
     public async postgresDownQueryRunner(queryRunner: QueryRunner): Promise<any> {
         await queryRunner.query(`ALTER TABLE "time_off_request" ALTER COLUMN "isArchived" DROP DEFAULT`);
@@ -43,8 +43,8 @@ export class AlterTimeOffRequestTable1652270907163 implements MigrationInterface
 
     /**
      * SqliteDB Up Migration
-     * 
-     * @param queryRunner 
+     *
+     * @param queryRunner
      */
     public async sqliteUpQueryRunner(queryRunner: QueryRunner): Promise<any> {
         await queryRunner.query(`DROP INDEX "IDX_c1f8ae47dc2f1882afc5045c73"`);
@@ -71,8 +71,8 @@ export class AlterTimeOffRequestTable1652270907163 implements MigrationInterface
 
     /**
      * SqliteDB Down Migration
-     * 
-     * @param queryRunner 
+     *
+     * @param queryRunner
      */
     public async sqliteDownQueryRunner(queryRunner: QueryRunner): Promise<any> {
         await queryRunner.query(`DROP INDEX "IDX_4989834dd1c9c8ea3576ed99ce"`);

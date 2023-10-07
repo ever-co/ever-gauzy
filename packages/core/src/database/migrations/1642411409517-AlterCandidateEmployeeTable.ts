@@ -1,11 +1,11 @@
 import { MigrationInterface, QueryRunner } from "typeorm";
-    
+
 export class AlterCandidateEmployeeTable1642411409517 implements MigrationInterface {
 
     name = 'AlterCandidateEmployeeTable1642411409517';
 
     public async up(queryRunner: QueryRunner): Promise<void> {
-        if (queryRunner.connection.options.type === 'sqlite') {
+        if (['sqlite', 'better-sqlite3'].includes(queryRunner.connection.options.type)) {
             await this.sqliteUpQueryRunner(queryRunner);
         } else {
             await this.postgresUpQueryRunner(queryRunner);
@@ -13,17 +13,17 @@ export class AlterCandidateEmployeeTable1642411409517 implements MigrationInterf
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
-        if (queryRunner.connection.options.type === 'sqlite') {
+        if (['sqlite', 'better-sqlite3'].includes(queryRunner.connection.options.type)) {
             await this.sqliteDownQueryRunner(queryRunner);
         } else {
             await this.postgresDownQueryRunner(queryRunner);
         }
     }
-    
+
     /**
      * PostgresDB Up Migration
-     * 
-     * @param queryRunner 
+     *
+     * @param queryRunner
      */
     public async postgresUpQueryRunner(queryRunner: QueryRunner): Promise<any> {
         await queryRunner.query(`ALTER TABLE "candidate" ADD "employeeId" uuid`);
@@ -33,11 +33,11 @@ export class AlterCandidateEmployeeTable1642411409517 implements MigrationInterf
         await queryRunner.query(`CREATE INDEX "IDX_8b900e8a39f76125e610ab30c0" ON "candidate" ("employeeId") `);
         await queryRunner.query(`ALTER TABLE "candidate" ADD CONSTRAINT "FK_8b900e8a39f76125e610ab30c0e" FOREIGN KEY ("employeeId") REFERENCES "employee"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`);
     }
-    
+
     /**
      * PostgresDB Down Migration
-     * 
-     * @param queryRunner 
+     *
+     * @param queryRunner
      */
     public async postgresDownQueryRunner(queryRunner: QueryRunner): Promise<any> {
         await queryRunner.query(`ALTER TABLE "candidate" DROP CONSTRAINT "FK_8b900e8a39f76125e610ab30c0e"`);
@@ -50,8 +50,8 @@ export class AlterCandidateEmployeeTable1642411409517 implements MigrationInterf
 
     /**
      * SqliteDB Up Migration
-     * 
-     * @param queryRunner 
+     *
+     * @param queryRunner
      */
     public async sqliteUpQueryRunner(queryRunner: QueryRunner): Promise<any> {
         await queryRunner.query(`DROP INDEX "IDX_3930aa71e0fa24f09201811b1b"`);
@@ -101,8 +101,8 @@ export class AlterCandidateEmployeeTable1642411409517 implements MigrationInterf
 
     /**
      * SqliteDB Down Migration
-     * 
-     * @param queryRunner 
+     *
+     * @param queryRunner
      */
     public async sqliteDownQueryRunner(queryRunner: QueryRunner): Promise<any> {
         await queryRunner.query(`DROP INDEX "IDX_8b900e8a39f76125e610ab30c0"`);

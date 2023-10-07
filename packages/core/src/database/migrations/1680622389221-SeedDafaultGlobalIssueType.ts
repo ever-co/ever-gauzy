@@ -65,7 +65,7 @@ export class SeedDafaultGlobalIssueType1680622389221 implements MigrationInterfa
 					isSystem
 				];
 
-				if (queryRunner.connection.options.type === 'sqlite') {
+				if (['sqlite', 'better-sqlite3'].includes(queryRunner.connection.options.type)) {
 					const imageAssetId = uuidv4();
 					imageAsset.push(imageAssetId);
 

@@ -14,7 +14,7 @@ export class AddOrganizationProjectTeamRelation1692256031607 implements Migratio
     public async up(queryRunner: QueryRunner): Promise<any> {
         console.log(chalk.yellow(`AddOrganizationProjectTeamRelation1692256031607 start running!`));
 
-        if (queryRunner.connection.options.type === 'sqlite') {
+        if (['sqlite', 'better-sqlite3'].includes(queryRunner.connection.options.type)) {
             await this.sqliteUpQueryRunner(queryRunner);
         } else {
             await this.postgresUpQueryRunner(queryRunner);
@@ -27,7 +27,7 @@ export class AddOrganizationProjectTeamRelation1692256031607 implements Migratio
     * @param queryRunner
     */
     public async down(queryRunner: QueryRunner): Promise<any> {
-        if (queryRunner.connection.options.type === 'sqlite') {
+        if (['sqlite', 'better-sqlite3'].includes(queryRunner.connection.options.type)) {
             await this.sqliteDownQueryRunner(queryRunner);
         } else {
             await this.postgresDownQueryRunner(queryRunner);

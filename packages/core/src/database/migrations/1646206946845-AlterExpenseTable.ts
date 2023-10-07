@@ -1,11 +1,11 @@
 import { MigrationInterface, QueryRunner } from "typeorm";
-    
+
 export class AlterExpenseTable1646206946845 implements MigrationInterface {
 
     name = 'AlterExpenseTable1646206946845';
 
     public async up(queryRunner: QueryRunner): Promise<void> {
-        if (queryRunner.connection.options.type === 'sqlite') {
+        if (['sqlite', 'better-sqlite3'].includes(queryRunner.connection.options.type)) {
             await this.sqliteUpQueryRunner(queryRunner);
         } else {
             await this.postgresUpQueryRunner(queryRunner);
@@ -13,7 +13,7 @@ export class AlterExpenseTable1646206946845 implements MigrationInterface {
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
-        if (queryRunner.connection.options.type === 'sqlite') {
+        if (['sqlite', 'better-sqlite3'].includes(queryRunner.connection.options.type)) {
             await this.sqliteDownQueryRunner(queryRunner);
         } else {
             await this.postgresDownQueryRunner(queryRunner);
@@ -22,8 +22,8 @@ export class AlterExpenseTable1646206946845 implements MigrationInterface {
 
     /**
     * PostgresDB Up Migration
-    * 
-    * @param queryRunner 
+    *
+    * @param queryRunner
     */
     public async postgresUpQueryRunner(queryRunner: QueryRunner): Promise<any> {
         await queryRunner.query(`ALTER TABLE "expense" DROP CONSTRAINT "FK_eacb116ab0521ad9b96f2bb53ba"`);
@@ -34,8 +34,8 @@ export class AlterExpenseTable1646206946845 implements MigrationInterface {
 
     /**
     * PostgresDB Down Migration
-    * 
-    * @param queryRunner 
+    *
+    * @param queryRunner
     */
     public async postgresDownQueryRunner(queryRunner: QueryRunner): Promise<any> {
         await queryRunner.query(`ALTER TABLE "expense" DROP CONSTRAINT "FK_42eea5debc63f4d1bf89881c10a"`);
@@ -47,8 +47,8 @@ export class AlterExpenseTable1646206946845 implements MigrationInterface {
 
     /**
    * SqliteDB Up Migration
-   * 
-   * @param queryRunner 
+   *
+   * @param queryRunner
    */
     public async sqliteUpQueryRunner(queryRunner: QueryRunner): Promise<any> {
         await queryRunner.query(`DROP INDEX "IDX_047b8b5c0782d5a6d4c8bfc1a4"`);
@@ -163,8 +163,8 @@ export class AlterExpenseTable1646206946845 implements MigrationInterface {
 
     /**
      * SqliteDB Down Migration
-     * 
-     * @param queryRunner 
+     *
+     * @param queryRunner
      */
     public async sqliteDownQueryRunner(queryRunner: QueryRunner): Promise<any> {
         await queryRunner.query(`DROP INDEX "IDX_6d171c9d5f81095436b99da5e6"`);

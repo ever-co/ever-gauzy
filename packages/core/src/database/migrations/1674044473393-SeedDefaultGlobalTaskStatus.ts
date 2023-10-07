@@ -16,7 +16,7 @@ export class SeedDefaultGlobalTaskStatus1674044473393 implements MigrationInterf
         try {
             for await (const status of DEFAULT_GLOBAL_STATUSES) {
                 const payload = Object.values(status);
-                if (queryRunner.connection.options.type === 'sqlite') {
+                if (['sqlite', 'better-sqlite3'].includes(queryRunner.connection.options.type)) {
                     payload.push(uuidV4());
                     const query = `INSERT INTO "status" ("name", "value", "description", "icon", "color", "isSystem", "id") VALUES($1, $2, $3, $4, $5, $6, $7)`;
                     await queryRunner.connection.manager.query(query, payload);

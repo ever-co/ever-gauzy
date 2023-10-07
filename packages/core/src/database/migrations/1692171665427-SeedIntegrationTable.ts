@@ -43,7 +43,7 @@ export class SeedIntegrationTable1692171665427 implements MigrationInterface {
                 let upsertQuery = ``;
                 const payload = [name, filepath, isComingSoon, order];
 
-                if (queryRunner.connection.options.type === 'sqlite') {
+                if (['sqlite', 'better-sqlite3'].includes(queryRunner.connection.options.type)) {
                     // For SQLite, manually generate a UUID using uuidv4()
                     const generatedId = uuidv4(); payload.push(generatedId);
 

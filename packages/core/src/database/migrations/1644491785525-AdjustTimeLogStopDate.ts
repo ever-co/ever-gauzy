@@ -2,17 +2,17 @@ import { MigrationInterface, QueryRunner } from "typeorm";
 import { chain } from 'underscore';
 import * as moment from 'moment';
 import { isEmpty, isNotEmpty } from "@gauzy/common";
-    
+
 export class AdjustTimeLogStopDate1644491785525 implements MigrationInterface {
 
     name = 'AdjustTimeLogStopDate1644491785525';
-    
+
     public async up(queryRunner: QueryRunner): Promise<any> {
         const timeSlots = await queryRunner.connection.manager.query(`
-            SELECT * FROM 
-                "time_slot" 
-            WHERE 
-                "time_slot"."overall" < $1 OR 
+            SELECT * FROM
+                "time_slot"
+            WHERE
+                "time_slot"."overall" < $1 OR
                 "time_slot"."keyboard" < $2 OR
                 "time_slot"."mouse" < $3 OR
                 "time_slot"."duration" > $4
@@ -28,7 +28,7 @@ export class AdjustTimeLogStopDate1644491785525 implements MigrationInterface {
                     "overall" = $2,
                     "keyboard" = $3,
                     "mouse" = $4
-                WHERE 
+                WHERE
                     "id" IN($5)`,
                 [
                     duration,
@@ -41,15 +41,15 @@ export class AdjustTimeLogStopDate1644491785525 implements MigrationInterface {
         }
 
         const timelogs = await queryRunner.connection.manager.query(`
-            SELECT 
+            SELECT
                 "time_log"."id" AS "time_log_id",
                 "time_slot"."id" AS "time_slot_id"
             FROM "time_log"
-            LEFT JOIN "time_slot_time_logs" 
-                ON "time_slot_time_logs"."timeLogId" = "time_log"."id" 
+            LEFT JOIN "time_slot_time_logs"
+                ON "time_slot_time_logs"."timeLogId" = "time_log"."id"
             LEFT JOIN "time_slot"
                 ON "time_slot"."id" = "time_slot_time_logs"."timeSlotId"
-            WHERE 
+            WHERE
                 "time_log"."stoppedAt" IS NULL
         `);
         const timeLogs = chain(timelogs).groupBy((log: any) => log.time_log_id).value();
@@ -60,7 +60,7 @@ export class AdjustTimeLogStopDate1644491785525 implements MigrationInterface {
                 )
                 .filter(Boolean);
             const [timeLog] = await queryRunner.connection.manager.query(`
-                SELECT * FROM "time_log" WHERE "time_log"."id" = $1 LIMIT 1`, 
+                SELECT * FROM "time_log" WHERE "time_log"."id" = $1 LIMIT 1`,
                 [
                     timeLogId
                 ]
@@ -72,10 +72,10 @@ export class AdjustTimeLogStopDate1644491785525 implements MigrationInterface {
                 logDifference > 10
             ) {
                 await queryRunner.connection.manager.query(`
-                    UPDATE "time_log" SET 
+                    UPDATE "time_log" SET
                         "stoppedAt" = $1
-                    WHERE 
-                        "id" IN($2)`, 
+                    WHERE
+                        "id" IN($2)`,
                     [
                         timeLog.startedAt,
                         timeLog.id
@@ -83,11 +83,11 @@ export class AdjustTimeLogStopDate1644491785525 implements MigrationInterface {
                 );
             } else if (isNotEmpty(timeSlotsIds)) {
                 const timeSlots = await queryRunner.connection.manager.query(`
-                    SELECT * FROM 
-                        "time_slot" 
-                    WHERE 
-                        "time_slot"."id" IN ('${timeSlotsIds.join("','")}') 
-                    ORDER BY 
+                    SELECT * FROM
+                        "time_slot"
+                    WHERE
+                        "time_slot"."id" IN ('${timeSlotsIds.join("','")}')
+                    ORDER BY
                         "time_slot"."startedAt" DESC
                 `);
                 let stoppedAt: any;
@@ -98,7 +98,7 @@ export class AdjustTimeLogStopDate1644491785525 implements MigrationInterface {
                 /**
                  * Adjust stopped date as per database selection
                  */
-                if (queryRunner.connection.options.type === 'sqlite') {
+                if (['sqlite', 'better-sqlite3'].includes(queryRunner.connection.options.type)) {
                     stoppedAt = moment.utc(lastTimeSlot.startedAt)
                         .add(duration, 'seconds')
                         .format('YYYY-MM-DD HH:mm:ss.SSS');
@@ -113,7 +113,7 @@ export class AdjustTimeLogStopDate1644491785525 implements MigrationInterface {
                     await queryRunner.connection.manager.query(`
                         UPDATE "time_log" SET
                             "stoppedAt" = $1
-                        WHERE 
+                        WHERE
                             "id" IN($2)`,
                         [
                             stoppedAt,
@@ -124,6 +124,6 @@ export class AdjustTimeLogStopDate1644491785525 implements MigrationInterface {
             }
         }
     }
-    
+
     public async down(queryRunner: QueryRunner): Promise<any> {}
 }
