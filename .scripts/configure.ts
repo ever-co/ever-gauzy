@@ -23,27 +23,19 @@ import { CloudinaryConfiguration } from '@cloudinary/angular-5.x';
 
 if (!env.IS_DOCKER) {
 	if (!env.GOOGLE_MAPS_API_KEY) {
-		console.warn(
-			'WARNING: No Google Maps API Key defined in the .env file. Google Maps may not be working!'
-		);
+		console.warn('WARNING: No Google Maps API Key defined in the .env file. Google Maps may not be working!');
 	}
 
 	if (!env.SENTRY_DSN) {
-		console.warn(
-			'WARNING: No Sentry DSN defined in the .env file. Sentry logging may not be working!'
-		);
+		console.warn('WARNING: No Sentry DSN defined in the .env file. Sentry logging may not be working!');
 	}
 
 	if (!env.CLOUDINARY_CLOUD_NAME || !env.CLOUDINARY_API_KEY) {
-		console.warn(
-			'WARNING: No Cloudinary API keys defined in the .env file.'
-		);
+		console.warn('WARNING: No Cloudinary API keys defined in the .env file.');
 	}
 
-	if (!env.JITSU_BROWSER_HOST || !env.JITSU_BROWSER_WRITE_KEY) {
-		console.warn(
-			'WARNING: No Jitsu keys defined in the .env file. Jitsu analytics may not be working!'
-		);
+	if (!env.JITSU_BROWSER_URL || !env.JITSU_BROWSER_WRITE_KEY) {
+		console.warn('WARNING: No Jitsu keys defined for browser in the .env file. Jitsu analytics may not be working!');
 	}
 
 	envFileContent += `
@@ -149,7 +141,7 @@ if (!env.IS_DOCKER) {
 
 		FILE_PROVIDER: '${env.FILE_PROVIDER}',
 
-		JITSU_BROWSER_HOST: '${env.JITSU_BROWSER_HOST}',
+		JITSU_BROWSER_URL: '${env.JITSU_BROWSER_URL}',
 		JITSU_BROWSER_WRITE_KEY: '${env.JITSU_BROWSER_WRITE_KEY}',
 
 		GAUZY_GITHUB_APP_NAME: '${env.GAUZY_GITHUB_APP_NAME}',
@@ -256,7 +248,7 @@ if (!env.IS_DOCKER) {
 
 		FILE_PROVIDER: '${env.FILE_PROVIDER}',
 
-		JITSU_BROWSER_HOST: '${env.JITSU_BROWSER_HOST}',
+		JITSU_BROWSER_URL: '${env.JITSU_BROWSER_URL}',
 		JITSU_BROWSER_WRITE_KEY: '${env.JITSU_BROWSER_WRITE_KEY}',
 
 		GAUZY_GITHUB_APP_NAME: '${env.GAUZY_GITHUB_APP_NAME}',

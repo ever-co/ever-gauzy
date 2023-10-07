@@ -85,6 +85,7 @@ export const DEFAULT_ROLE_PERMISSIONS = [
 			PermissionsEnum.ORG_PROJECT_DELETE,
 			PermissionsEnum.ORG_CONTACT_EDIT,
 			PermissionsEnum.ORG_CONTACT_VIEW,
+			/** Organization Team */
 			PermissionsEnum.ORG_TEAM_ADD,
 			PermissionsEnum.ORG_TEAM_VIEW,
 			PermissionsEnum.ORG_TEAM_EDIT,
@@ -218,6 +219,7 @@ export const DEFAULT_ROLE_PERMISSIONS = [
 			PermissionsEnum.ORG_PROJECT_DELETE,
 			PermissionsEnum.ORG_CONTACT_EDIT,
 			PermissionsEnum.ORG_CONTACT_VIEW,
+			/** Organization Team */
 			PermissionsEnum.ORG_TEAM_ADD,
 			PermissionsEnum.ORG_TEAM_VIEW,
 			PermissionsEnum.ORG_TEAM_EDIT,
@@ -329,6 +331,7 @@ export const DEFAULT_ROLE_PERMISSIONS = [
 			PermissionsEnum.ORG_CONTACT_VIEW,
 			PermissionsEnum.ORG_PROJECT_ADD,
 			PermissionsEnum.ORG_PROJECT_VIEW,
+			/** Organization Team */
 			PermissionsEnum.ORG_TEAM_ADD,
 			PermissionsEnum.ORG_TEAM_VIEW,
 			PermissionsEnum.ORG_TEAM_EDIT,
