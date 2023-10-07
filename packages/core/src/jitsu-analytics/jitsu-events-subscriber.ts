@@ -19,7 +19,7 @@ inserts updates and removal then sends to Jitsu */
 @EventSubscriber()
 export class JitsuEventsSubscriber implements EntitySubscriberInterface {
 	private readonly logger = new Logger(JitsuEventsSubscriber.name);
-	private jitsuAnalytics: AnalyticsInterface;
+	private readonly jitsuAnalytics: AnalyticsInterface;
 
 	constructor() {
 		try {
@@ -93,8 +93,10 @@ export class JitsuEventsSubscriber implements EntitySubscriberInterface {
 		if (this.jitsuAnalytics) {
 			try {
 				console.log('------------------Jitsu Tracking Start------------------');
-				this.logger.log(`Before Jitsu Tracking Entity Events`, chalk.magenta(JSON.stringify(properties)));
-				const tracked = await this.jitsuAnalytics.track(event, properties);
+				this.logger.log(`Before Jitsu Tracking Entity Events: ${event}`, chalk.magenta(JSON.stringify(properties)));
+
+				const tracked = await this.trackEvent(event, properties);
+
 				this.logger.log(`After Jitsu Tracked Entity Events`, chalk.blue(JSON.stringify(tracked)));
 				console.log('------------------Jitsu Tracking Finished------------------');
 			} catch (error) {
@@ -105,5 +107,44 @@ export class JitsuEventsSubscriber implements EntitySubscriberInterface {
 			this.logger.warn(`Jitsu tracking is not available. Unable to track event: ${event}`);
 			return null; // or handle it differently based on your requirements
 		}
+	}
+
+	/**
+	 * Track an event with optional properties.
+	 * @param event The name of the event to track.
+	 * @param properties Additional data or properties associated with the event.
+	 * @returns A Promise that resolves when the event is tracked.
+	 */
+	async trackEvent(
+		event: string,
+		properties?: Record<string, any> | null
+	): Promise<any> {
+		return await this.jitsuAnalytics.track(event, properties);
+	}
+
+	/**
+	 * Identify a user with optional user traits.
+	 * @param id The user identifier, such as a user ID or an object representing user information.
+	 * @param traits User traits or properties to associate with the user.
+	 * @returns A Promise that resolves when the user is identified.
+	 */
+	async identify(
+		id: string | object,
+		traits?: Record<string, any> | null
+	): Promise<any> {
+		return await this.jitsuAnalytics.identify(id, traits);
+	}
+
+	/**
+	 * Group users into a specific segment or organization.
+	 * @param id The identifier for the group, such as a group ID or an object representing group information.
+	 * @param traits Additional data or traits associated with the group.
+	 * @returns A Promise that resolves when the users are grouped.
+	 */
+	async group(
+		id: string | object,
+		traits?: Record<string, any> | null
+	): Promise<any> {
+		return await this.jitsuAnalytics.group(id, traits);
 	}
 }

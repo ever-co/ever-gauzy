@@ -12,7 +12,6 @@ export const parseConfig = (config: JitsuOptions): Record<string, any> => ({
     writeKey: config.writeKey || environment.jitsu.serverWriteKey || '', // Use serverWriteKey from environment or empty string as default
     debug: config.debug || false, // Use debug from input config or false as default
     echoEvents: config.echoEvents || false, // Use echoEvents from input config or false as default
-    fetch: fetch, // Provide the fetch implementation from node-fetch
 });
 
 /**
@@ -24,9 +23,12 @@ export const createJitsu = (opts: JitsuOptions): AnalyticsInterface => {
     // Parse the configuration options
     const config = parseConfig(opts);
     if (!config.host || !config.writeKey) {
+        // Handle the case where 'host' or 'writeKey' is missing
+        console.error('Jitsu Analytics initialization failed: Missing host or writeKey.');
         return;
     }
 
+    config.fetch = fetch; // Assign the 'fetch' function to 'fetch'
     console.log(`JITSU Configuration`, config);
     // Create and return a Jitsu Analytics instance with the parsed configuration properties
     return jitsuAnalytics({
