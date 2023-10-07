@@ -66,9 +66,6 @@ log.info(`GAUZY_USER_PATH: ${process.env.GAUZY_USER_PATH}`);
 const sqlite3filename = `${process.env.GAUZY_USER_PATH}/gauzy.sqlite3`;
 log.info(`Sqlite DB path: ${sqlite3filename}`);
 
-const betterSqlite3filename = `${process.env.GAUZY_USER_PATH}/gauzy.better-sqlite3`;
-log.info(`Better Sqlite DB path: ${betterSqlite3filename}`);
-
 const provider = ProviderFactory.instance;
 const knex = provider.connection;
 
@@ -237,7 +234,7 @@ async function startServer(value, restart = false) {
 		process.env.DB_PATH = sqlite3filename;
 		process.env.DB_TYPE = 'sqlite';
 	}else if(value.db === 'better-sqlite') {
-		process.env.DB_PATH = betterSqlite3filename;
+		process.env.DB_PATH = sqlite3filename;
 		process.env.DB_TYPE = 'better-sqlite3';
 	}else {
 		process.env.DB_TYPE = 'postgres';
@@ -468,7 +465,7 @@ app.on('ready', async () => {
 	splashScreen = new SplashScreen(pathWindow.timeTrackerUi);
 	await splashScreen.loadURL();
 	splashScreen.show();
-	if (provider.dialect === 'sqlite' || provider.dialect === 'better-sqlite') {
+	if (['sqlite', 'better-sqlite'].includes(provider.dialect)) {
 		try {
 			const res = await knex.raw(`pragma journal_mode = WAL;`)
 			console.log(res);

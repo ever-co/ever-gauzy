@@ -29,7 +29,7 @@ export class BetterSqliteProvider implements IServerLessProvider {
 			connection: {
 				filename: path.resolve(
 					app?.getPath('userData') || __dirname,
-					'gauzy.better-sqlite3'
+					'gauzy.sqlite3'
 				),
 				timezone: 'utc',
 			},

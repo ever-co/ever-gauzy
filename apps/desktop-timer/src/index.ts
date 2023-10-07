@@ -392,7 +392,7 @@ app.on('ready', async () => {
 	if (!settings) {
 		launchAtStartup(true, false);
 	}
-	if (provider.dialect === 'sqlite' || provider.dialect === 'better-sqlite') {
+	if (['sqlite', 'better-sqlite'].includes(provider.dialect)) {
 		try {
 			const res = await knex.raw(`pragma journal_mode = WAL;`);
 			console.log(res);

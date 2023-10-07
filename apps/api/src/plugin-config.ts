@@ -134,7 +134,7 @@ function getDbConfig(): DataSourceOptions {
 				process.env.DB_PATH ||
 				path.join(
 					path.resolve('.', ...['apps', 'api', 'data']),
-					'gauzy.better-sqlite3'
+					'gauzy.sqlite3'
 				);
 
 			return {
@@ -144,8 +144,10 @@ function getDbConfig(): DataSourceOptions {
 				logger: 'file', // Removes console logging, instead logs all queries in a file ormlogs.log
 				synchronize: process.env.DB_SYNCHRONIZE === 'true', // We are using migrations, synchronize should be set to false.
 				prepareDatabase: (db) => {
-					// Enhance performance
-					db.pragma('journal_mode = WAL');
+					if (!process.env.IS_ELECTRON) {
+						// Enhance performance
+						db.pragma('journal_mode = WAL');
+					}
 				}
 			};
 	}
