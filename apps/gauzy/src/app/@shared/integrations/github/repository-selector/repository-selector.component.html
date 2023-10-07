@@ -1,0 +1,10 @@
+<ng-select
+    class="mb-2"
+    bindLabel="name"
+    [items]="repositories$ | async"
+    [searchable]="true"
+    [loading]="loading"
+    (change)="selectRepository($event)"
+    [placeholder]="'INTEGRATIONS.GITHUB_PAGE.SELECT_REPOSITORY' | translate"
+    appendTo="body"
+></ng-select>

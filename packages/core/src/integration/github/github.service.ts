@@ -3,7 +3,7 @@ import { CommandBus } from '@nestjs/cqrs';
 import { HttpService } from '@nestjs/axios';
 import { firstValueFrom, switchMap } from 'rxjs';
 import { environment } from '@gauzy/config';
-import { GithubPropertyMapEnum, IGithubAppInstallInput, IIntegrationTenant, IntegrationEntity, IntegrationEnum } from '@gauzy/contracts';
+import { GithubPropertyMapEnum, IGithubAppInstallInput, IIntegrationTenant, IOAuthAppInstallInput, IntegrationEntity, IntegrationEnum } from '@gauzy/contracts';
 import { RequestContext } from 'core/context';
 import { IntegrationTenantFirstOrCreateCommand } from 'integration-tenant/commands';
 import { IntegrationService } from 'integration/integration.service';
@@ -116,7 +116,7 @@ export class GithubService {
 	 * @returns A promise that resolves with the integration tenant data.
 	 * @throws {HttpException} If input data is invalid or if any step of the process fails.
 	 */
-	async oAuthEndpointAuthorization(input: IGithubAppInstallInput): Promise<IIntegrationTenant> {
+	async oAuthEndpointAuthorization(input: IOAuthAppInstallInput): Promise<IIntegrationTenant> {
 		try {
 			// Validate the input data (You can use class-validator for validation)
 			if (!input || !input.code) {

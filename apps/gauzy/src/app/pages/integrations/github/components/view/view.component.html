@@ -17,27 +17,24 @@
 		</nb-actions>
 	</nb-card-header>
 	<nb-card-body>
-		<div class="mb-3">
-			<button nbButton status="primary" class="mr-2">
-				<nb-icon class="mr-1" icon="edit-outline"></nb-icon>
-				{{ 'BUTTONS.SYNC' | translate }}
-			</button>
-		</div>
-		<div class="issues-container">
-			<ng-select
-				class="mb-2"
-				bindLabel="name"
-				[items]="repositories$ | async"
-				[searchable]="true"
-				(change)="selectRepository($event)"
-				[placeholder]="'INTEGRATIONS.GITHUB_PAGE.SELECT_REPOSITORY' | translate"
-				appendTo="body"
-			></ng-select>
-			<ng2-smart-table
-				[settings]="settingsSmartTable"
-				[source]="issues$ | async"
-				style="cursor: pointer;"
-			></ng2-smart-table>
-		</div>
+		<ng-template [ngIf]="integration">
+			<div class="mb-3">
+				<button nbButton status="primary" class="mr-2">
+					<nb-icon class="mr-1" icon="edit-outline"></nb-icon>
+					{{ 'BUTTONS.SYNC' | translate }}
+				</button>
+			</div>
+			<div class="issues-container">
+				<ngx-github-repository-selector
+					[integration]="integration"
+					(onChanged)="selectRepository($event)"
+				></ngx-github-repository-selector>
+				<ng2-smart-table
+					[settings]="settingsSmartTable"
+					[source]="issues$ | async"
+					style="cursor: pointer;"
+				></ng2-smart-table>
+			</div>
+		</ng-template>
 	</nb-card-body>
 </nb-card>

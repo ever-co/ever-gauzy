@@ -1,7 +1,7 @@
 import { AfterViewInit, Component, OnInit } from '@angular/core';
 import { TitleCasePipe } from '@angular/common';
 import { ActivatedRoute, Data } from '@angular/router';
-import { debounceTime, firstValueFrom, of } from 'rxjs';
+import { firstValueFrom, of } from 'rxjs';
 import { Observable } from 'rxjs/internal/Observable';
 import { catchError, filter, map, switchMap, tap } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
@@ -11,13 +11,11 @@ import {
 	IEntitySettingToSync,
 	IGithubIssue,
 	IGithubRepository,
-	IGithubRepositoryResponse,
 	IIntegrationTenant,
 	IOrganization,
 	IUser,
 	IntegrationEnum
 } from '@gauzy/contracts';
-import { distinctUntilChange } from '@gauzy/common-angular';
 import { TranslationBaseComponent } from './../../../../../@shared/language-base';
 import {
 	ErrorHandlingService,
@@ -41,16 +39,14 @@ import { GithubSettingsDialogComponent } from '../settings-dialog/settings-dialo
 })
 export class GithubViewComponent extends TranslationBaseComponent implements AfterViewInit, OnInit {
 
-	public user: IUser;
+	public user: IUser = this._store.user;
+	public organization: IOrganization = this._store.selectedOrganization;
+	public integration: IIntegrationTenant;
 	public contextMenuItems: NbMenuItem[] = [];
 	public settingsSmartTable: object;
-	public organization: IOrganization;
 	public loading: boolean;
-	public repositories: IGithubRepository[] = [];
-	public repositories$: Observable<IGithubRepository[]>;
-	public issues$: Observable<any[]>;
+	public issues$: Observable<IGithubIssue[]>;
 	public issues: IGithubIssue[] = [];
-	private integration: IIntegrationTenant;
 
 	constructor(
 		public readonly _translateService: TranslateService,
@@ -73,26 +69,17 @@ export class GithubViewComponent extends TranslationBaseComponent implements Aft
 		this._loadSmartTableSettings();
 		this._applyTranslationOnSmartTable();
 		this._getContextMenuItems();
-		this._store.user$
+
+		this._activatedRoute.parent.data
 			.pipe(
-				filter((user: IUser) => !!user),
-				tap((user: IUser) => (this.user = user)),
+				filter(({ integration }: Data) => !!integration),
+				tap(({ integration }: Data) => this.integration = integration),
 				untilDestroyed(this)
 			)
 			.subscribe();
 	}
 
 	ngAfterViewInit(): void {
-		this._store.selectedOrganization$
-			.pipe(
-				debounceTime(200),
-				distinctUntilChange(),
-				filter((organization: IOrganization) => !!organization),
-				tap((organization: IOrganization) => this.organization = organization),
-				tap(() => this.getRepositories()),
-				untilDestroyed(this)
-			)
-			.subscribe();
 		/** */
 		const onItemClick$ = this._nbMenuService.onItemClick();
 		onItemClick$
@@ -109,57 +96,16 @@ export class GithubViewComponent extends TranslationBaseComponent implements Aft
 	}
 
 	/**
-	 *
+	 * Sets up context menu items.
 	 */
 	private _getContextMenuItems() {
 		this.contextMenuItems = [
 			{
 				title: this.getTranslation('INTEGRATIONS.SETTINGS'),
 				icon: 'settings-2-outline'
-			}
+			},
+			// Add more menu items as needed
 		];
-	}
-
-	/**
-	 * Fetches repositories for a given integration and organization.
-	 */
-	private getRepositories() {
-		// Ensure there is a valid organization
-		if (!this.organization) {
-			return;
-		}
-
-		this.loading = true;
-
-		// Extract organization properties
-		const { id: organizationId, tenantId } = this.organization;
-		this.repositories$ = this._activatedRoute.parent.data.pipe(
-			filter(({ integration }: Data) => !!integration),
-			tap(({ integration }: Data) => this.integration = integration),
-			switchMap(() => this._activatedRoute.params.pipe(
-				filter(({ integrationId }) => integrationId)
-			)),
-			// Get the 'integrationId' route parameter
-			switchMap(({ integrationId }) => this._githubService.getRepositories(integrationId, {
-				organizationId,
-				tenantId
-			})),
-			// Update component state with fetched repositories
-			tap(({ repositories }: IGithubRepositoryResponse) => {
-				this.repositories = repositories;
-			}),
-			map(({ repositories }) => repositories),
-			catchError((error) => {
-				// Handle and log errors
-				this._errorHandlingService.handleError(error);
-				return of([]);
-			}),
-			tap(() => {
-				this.loading = false;
-			}),
-			// Handle component lifecycle to avoid memory leaks
-			untilDestroyed(this),
-		);
 	}
 
 	/**
@@ -173,6 +119,7 @@ export class GithubViewComponent extends TranslationBaseComponent implements Aft
 	}
 
 	/**
+	 * Fetches issues for a given repository.
 	 *
 	 * @param repository
 	 * @returns
@@ -180,12 +127,14 @@ export class GithubViewComponent extends TranslationBaseComponent implements Aft
 	private getRepositoryIssue(repository: IGithubRepository): Observable<IGithubIssue[]> {
 		// Ensure there is a valid organization
 		if (!this.organization) {
-			return;
+			return of([]); // Return an empty observable if there is no organization
 		}
+
+		this.loading = true;
+
 		const owner = repository.owner['login'];
 		const repo = repository.name;
 
-		this.loading = true;
 		// Extract organization properties
 		const { id: organizationId, tenantId } = this.organization;
 
