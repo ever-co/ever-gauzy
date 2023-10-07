@@ -23,9 +23,9 @@ export class LanguageUtils {
 				insertOrUpdateQuery = `
 					INSERT INTO language (name, code, is_system, description, color, id)
 					VALUES ($1, $2, $3, $4, $5, $6)
-					ON CONFLICT (name)
+					ON CONFLICT (code)
 					DO UPDATE SET
-						code = EXCLUDED.code,
+						name = EXCLUDED.name,
 						is_system = EXCLUDED.is_system,
 						description = EXCLUDED.description,
 						color = EXCLUDED.color;
@@ -34,9 +34,9 @@ export class LanguageUtils {
 				insertOrUpdateQuery = `
 					INSERT INTO language (name, code, is_system, description, color)
 					VALUES ($1, $2, $3, $4, $5)
-					ON CONFLICT (name)
+					ON CONFLICT (code)
 					DO UPDATE SET
-						code = EXCLUDED.code,
+						name = EXCLUDED.name,
 						is_system = EXCLUDED.is_system,
 						description = EXCLUDED.description,
 						color = EXCLUDED.color;
