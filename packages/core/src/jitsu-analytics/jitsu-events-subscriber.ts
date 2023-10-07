@@ -21,6 +21,9 @@ export class JitsuEventsSubscriber implements EntitySubscriberInterface {
 	private readonly logger = new Logger(JitsuEventsSubscriber.name);
 	private readonly jitsuAnalytics: AnalyticsInterface;
 
+	// We disable by default additional logging for each event to avoid cluttering the logs
+	private logEnabled = false;
+
 	constructor() {
 		try {
 			// Check if the required host and writeKey configuration properties are present
@@ -29,25 +32,39 @@ export class JitsuEventsSubscriber implements EntitySubscriberInterface {
 					host: jitsu.serverHost,
 					writeKey: jitsu.serverWriteKey,
 					debug: jitsu.debug,
-					echoEvents: jitsu.echoEvents
+					echoEvents: jitsu.echoEvents,
 				};
-				this.logger.log(`JITSU Configuration`, chalk.magenta(JSON.stringify(jitsuConfig)));
+				this.logger.log(
+					`JITSU Configuration`,
+					chalk.magenta(JSON.stringify(jitsuConfig))
+				);
 				// Create an instance of Jitsu Analytics with configuration
 				this.jitsuAnalytics = createJitsu(jitsuConfig);
 			} else {
-				console.error(chalk.yellow(`Jitsu Analytics initialization failed: Missing host or writeKey.`));
+				console.error(
+					chalk.yellow(
+						`Jitsu Analytics initialization failed: Missing host or writeKey.`
+					)
+				);
 			}
 		} catch (error) {
-			console.error(chalk.red(`Jitsu Analytics initialization failed: ${error.message}`));
+			console.error(
+				chalk.red(
+					`Jitsu Analytics initialization failed: ${error.message}`
+				)
+			);
 		}
 	}
-
 
 	/**
 	 * Called after entity insertion.
 	 */
 	async afterInsert(event: InsertEvent<any>) {
-		this.logger.log(`AFTER ENTITY INSERTED: `, JSON.stringify(event.entity));
+		if (this.logEnabled)
+			this.logger.log(
+				`AFTER ENTITY INSERTED: `,
+				JSON.stringify(event.entity)
+			);
 
 		// Track an event with Jitsu Analytics
 		await this.analyticsTrack('afterInsert', {
@@ -59,7 +76,11 @@ export class JitsuEventsSubscriber implements EntitySubscriberInterface {
 	 * Called after entity update.
 	 */
 	async afterUpdate(event: UpdateEvent<any>) {
-		this.logger.log(`AFTER ENTITY UPDATED: `, JSON.stringify(event.entity));
+		if (this.logEnabled)
+			this.logger.log(
+				`AFTER ENTITY UPDATED: `,
+				JSON.stringify(event.entity)
+			);
 
 		// Track an event with Jitsu Analytics
 		await this.analyticsTrack('afterUpdate', {
@@ -71,7 +92,11 @@ export class JitsuEventsSubscriber implements EntitySubscriberInterface {
 	 * Called after entity removal.
 	 */
 	async afterRemove(event: RemoveEvent<any>) {
-		this.logger.log(`AFTER ENTITY REMOVED: `, JSON.stringify(event.entity));
+		if (this.logEnabled)
+			this.logger.log(
+				`AFTER ENTITY REMOVED: `,
+				JSON.stringify(event.entity)
+			);
 
 		// Track an event with Jitsu Analytics
 		await this.analyticsTrack('afterRemove', {
@@ -88,24 +113,28 @@ export class JitsuEventsSubscriber implements EntitySubscriberInterface {
 	async analyticsTrack(
 		event: string,
 		properties?: Record<string, any> | null
-	): Promise<any> {
+	): Promise<void> {
 		// Check if this.jitsu is defined and both host and writeKey are defined
 		if (this.jitsuAnalytics) {
 			try {
-				console.log('------------------Jitsu Tracking Start------------------');
-				this.logger.log(`Before Jitsu Tracking Entity Events: ${event}`, chalk.magenta(JSON.stringify(properties)));
+				if (this.logEnabled)
+					this.logger.log(
+						`Before Jitsu Tracking Entity Events: ${event}`,
+						chalk.magenta(JSON.stringify(properties))
+					);
 
 				const tracked = await this.trackEvent(event, properties);
 
-				this.logger.log(`After Jitsu Tracked Entity Events`, chalk.blue(JSON.stringify(tracked)));
-				console.log('------------------Jitsu Tracking Finished------------------');
+				if (this.logEnabled)
+					this.logger.log(
+						`After Jitsu Tracked Entity Events`,
+						chalk.blue(JSON.stringify(tracked))
+					);
 			} catch (error) {
-				this.logger.error(`Error while Jitsu tracking event. Unable to track event: ${error.message}`);
+				this.logger.error(
+					`Error while Jitsu tracking event. Unable to track event: ${error.message}`
+				);
 			}
-		} else {
-			// Handle it as needed (e.g., log or return a default result)
-			this.logger.warn(`Jitsu tracking is not available. Unable to track event: ${event}`);
-			return null; // or handle it differently based on your requirements
 		}
 	}
 

@@ -16,12 +16,15 @@ export class JitsuService {
 		private readonly location: Location,
 		private readonly router: Router
 	) {
-		this.jitsuClient = environment.JITSU_BROWSER_URL && environment.JITSU_BROWSER_WRITE_KEY ? jitsuAnalytics({
-			host: environment.JITSU_BROWSER_URL,
-			writeKey: environment.JITSU_BROWSER_WRITE_KEY,
-			debug: false,
-			echoEvents: false
-		}) : emptyAnalytics;
+		this.jitsuClient =
+			environment.JITSU_BROWSER_URL && environment.JITSU_BROWSER_WRITE_KEY
+				? jitsuAnalytics({
+						host: environment.JITSU_BROWSER_URL,
+						writeKey: environment.JITSU_BROWSER_WRITE_KEY,
+						debug: false,
+						echoEvents: false,
+				  })
+				: emptyAnalytics;
 	}
 
 	async identify(
@@ -62,7 +65,7 @@ export class JitsuService {
 		});
 	}
 
-	//this deletes the data store
+	// this deletes the data store
 	async reset(): Promise<any> {
 		return await this.jitsuClient.reset();
 	}
