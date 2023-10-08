@@ -241,6 +241,7 @@ export const PermissionGroups = {
 		PermissionsEnum.ORG_TEAM_VIEW,
 		PermissionsEnum.ORG_TEAM_EDIT,
 		PermissionsEnum.ORG_TEAM_DELETE,
+		PermissionsEnum.ORG_TEAM_EDIT_ACTIVE_TASK,
 		PermissionsEnum.ORG_TEAM_REMOVE_ACCOUNT_AS_MEMBER,
 		PermissionsEnum.ORG_TASK_SETTING,
 		PermissionsEnum.ORG_TEAM_JOIN_REQUEST_VIEW,
