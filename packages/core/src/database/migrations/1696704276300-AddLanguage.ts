@@ -12,11 +12,7 @@ export class AddLanguage1696704276300 implements MigrationInterface {
 	 */
 	public async up(queryRunner: QueryRunner): Promise<any> {
 		console.log(chalk.yellow(`AddLanguage1696704276300 start running!`));
-		try {
-			await LanguageUtils.migrateLanguages(queryRunner);
-		} catch (error) {
-			throw error;
-		}
+		await LanguageUtils.migrateLanguages(queryRunner);
 	}
 
 	/**
