@@ -6,11 +6,12 @@ export class SeedChangeLogFeature1654675304373 implements MigrationInterface {
     name = 'SeedChangeLogFeature1654675304373';
 
     public async up(queryRunner: QueryRunner): Promise<any> {
+		const date = ['sqlite', 'better-sqlite3'].includes(queryRunner.connection.options.type) ? Date.now() : new Date();
         const features = [
             {
                 icon: 'cube-outline',
                 title: 'New CRM',
-                date: new Date(),
+                date,
                 isFeature: true,
                 content: 'Now you can read latest features changelog directly in Gauzy',
                 learnMoreUrl: '',
@@ -19,7 +20,7 @@ export class SeedChangeLogFeature1654675304373 implements MigrationInterface {
             {
                 icon: 'globe-outline',
                 title: 'Most popular in 20 countries',
-                date: new Date(),
+                date,
                 isFeature: true,
                 content: 'Europe, Americas and Asia get choise',
                 learnMoreUrl: '',
@@ -28,7 +29,7 @@ export class SeedChangeLogFeature1654675304373 implements MigrationInterface {
             {
                 icon: 'flash-outline',
                 title: 'Visit our website',
-                date: new Date(),
+                date,
                 isFeature: true,
                 content: 'You are welcome to check more information about the platform at our official website.',
                 learnMoreUrl: '',
@@ -41,7 +42,7 @@ export class SeedChangeLogFeature1654675304373 implements MigrationInterface {
                 if (['sqlite', 'better-sqlite3'].includes(queryRunner.connection.options.type)) {
                     payload.push(uuidV4());
                     await queryRunner.connection.manager.query(`
-                        INSERT INTO "changelog" ("icon", "title", "date", "isFeature", "content", "learnMoreUrl", "imageUrl", "id") VALUES($1, $2, $3, $4, $5, $6, $7, $8)`,
+                        INSERT INTO "changelog" ("icon", "title", "date", "isFeature", "content", "learnMoreUrl", "imageUrl", "id") VALUES(?, ?, ?, ?, ?, ?, ?, ?)`,
                         payload
                     );
                 } else {

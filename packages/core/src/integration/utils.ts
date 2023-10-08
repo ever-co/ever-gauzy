@@ -17,30 +17,41 @@ export class IntegrationsUtils {
             try {
                 const filepath = `integrations/${imgSrc}`;
 
-                let upsertQuery = ``;
-                const payload = [name, filepath, isComingSoon, order, redirectUrl, provider];
+				let upsertQuery = ``;
+				const payload = [
+					name,
+					filepath,
+					isComingSoon,
+					order,
+					redirectUrl,
+					provider,
+				];
 
-                if (queryRunner.connection.options.type === 'sqlite') {
-                    // For SQLite, manually generate a UUID using uuidv4()
-                    const generatedId = uuidv4(); payload.push(generatedId);
-                    upsertQuery = `
+				if (
+					['sqlite', 'better-sqlite3'].includes(
+						queryRunner.connection.options.type
+					)
+				) {
+					// For SQLite, manually generate a UUID using uuidv4()
+					const generatedId = uuidv4();
+					payload.push(generatedId);
+					upsertQuery = `
                         INSERT INTO integration (
                             "name", "imgSrc", "isComingSoon", "order", "redirectUrl", "provider", "id"
                         )
                         VALUES (
-                            $1, $2, $3, $4, $5, $6, $7
+                            ?, ?, ?, ?, ?, ?, ?
                         )
-                        ON CONFLICT(name) DO UPDATE
-                        SET
-                            "imgSrc" = $2,
-                            "isComingSoon" = $3,
-                            "order" = $4,
-                            "redirectUrl" = $5,
-                            "provider" = $6
+                        ON CONFLICT("name")
+                        DO UPDATE SET "imgSrc" = EXCLUDED."imgSrc",
+                         			  "isComingSoon" = EXCLUDED."isComingSoon",
+                            		  "order" = EXCLUDED."order",
+                            		  "redirectUrl" = EXCLUDED."redirectUrl",
+                            		  "provider" = EXCLUDED."provider"
                         RETURNING id;
                     `;
-                } else {
-                    upsertQuery = `
+				} else {
+					upsertQuery = `
                         INSERT INTO "integration" (
                             "name", "imgSrc", "isComingSoon", "order", "redirectUrl", "provider"
                         )
@@ -107,27 +118,31 @@ export class IntegrationsUtils {
             );
             const payload = [name, description, icon, groupName, order];
 
-            let upsertQuery = ``;
-            if (queryRunner.connection.options.type === 'sqlite') {
-                // For SQLite, manually generate a UUID using uuidv4()
-                const generatedId = uuidv4(); payload.push(generatedId);
-                upsertQuery = `
+			let upsertQuery = ``;
+			if (
+				['sqlite', 'better-sqlite3'].includes(
+					queryRunner.connection.options.type
+				)
+			) {
+				// For SQLite, manually generate a UUID using uuidv4()
+				const generatedId = uuidv4();
+				payload.push(generatedId);
+				upsertQuery = `
                     INSERT INTO "integration_type" (
                         "name", "description", "icon", "groupName", "order", "id"
                     )
                     VALUES (
-                        $1, $2, $3, $4, $5, $6
+                        ?, ?, ?, ?, ?, ?
                     )
-                    ON CONFLICT(name) DO UPDATE
-                    SET
-                        "description" = $2,
-                        "icon" = $3,
-                        "groupName" = $4,
-                        "order" = $5
+                    ON CONFLICT("name")
+                    DO UPDATE SET "description" = EXCLUDED."description",
+                       			  "icon" = EXCLUDED."icon",
+                        		  "groupName" = EXCLUDED."groupName",
+                       			  "order" = EXCLUDED."order"
                     RETURNING id;
                 `;
-            } else {
-                upsertQuery = `
+			} else {
+				upsertQuery = `
                     INSERT INTO "integration_type" (
                         "name", "description", "icon", "groupName", "order"
                     )
@@ -142,10 +157,10 @@ export class IntegrationsUtils {
                         "order" = $5
                     RETURNING id;
                 `;
-            }
-            await queryRunner.query(upsertQuery, payload);
-        }
-    }
+			}
+			await queryRunner.query(upsertQuery, payload);
+		}
+	}
 
     /**
      *
@@ -162,7 +177,7 @@ export class IntegrationsUtils {
         if (integration) {
             const integrationId = integration.id;
             for await (const integrationType of integrationTypes) {
-                const insertPivotQuery = `
+                let insertPivotQuery = `
                     INSERT INTO "integration_integration_type" (
                         "integrationId",
                         "integrationTypeId"
@@ -177,8 +192,18 @@ export class IntegrationsUtils {
                             "integrationTypeId" = $2
                     )
                 `;
-                await queryRunner.query(insertPivotQuery, [integrationId, integrationType.id]);
-            }
-        }
-    }
+				if (queryRunner.connection.options.type === 'better-sqlite3') {
+					insertPivotQuery = `
+						INSERT OR IGNORE INTO integration_integration_type (integrationId, integrationTypeId)
+						VALUES (?, ?);
+                `;
+				}
+
+				await queryRunner.query(insertPivotQuery, [
+					integrationId,
+					integrationType.id,
+				]);
+			}
+		}
+	}
 }

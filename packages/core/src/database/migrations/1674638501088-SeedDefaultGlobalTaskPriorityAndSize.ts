@@ -36,7 +36,7 @@ export class SeedDefaultGlobalTaskPriorityAndSize1674638501088 implements Migrat
                 const payload = Object.values(priority);
                 if (['sqlite', 'better-sqlite3'].includes(queryRunner.connection.options.type)) {
                     payload.push(uuidV4());
-                    const query = `INSERT INTO "task_priority" ("name", "value", "description", "icon", "color", "isSystem", "id") VALUES($1, $2, $3, $4, $5, $6, $7)`;
+                    const query = `INSERT INTO "task_priority" ("name", "value", "description", "icon", "color", "isSystem", "id") VALUES(?, ?, ?, ?, ?, ?, ?)`;
                     await queryRunner.connection.manager.query(query, payload);
                 } else {
                     const query = `INSERT INTO "task_priority" ("name", "value", "description", "icon", "color", "isSystem") VALUES($1, $2, $3, $4, $5, $6)`;
@@ -60,7 +60,7 @@ export class SeedDefaultGlobalTaskPriorityAndSize1674638501088 implements Migrat
                 const payload = Object.values(size);
                 if (['sqlite', 'better-sqlite3'].includes(queryRunner.connection.options.type)) {
                     payload.push(uuidV4());
-                    const query = `INSERT INTO "task_size" ("name", "value", "description", "icon", "color", "isSystem", "id") VALUES($1, $2, $3, $4, $5, $6, $7)`;
+                    const query = `INSERT INTO "task_size" ("name", "value", "description", "icon", "color", "isSystem", "id") VALUES(?, ?, ?, ?, ?, ?, ?)`;
                     await queryRunner.connection.manager.query(query, payload);
                 } else {
                     const query = `INSERT INTO "task_size" ("name", "value", "description", "icon", "color", "isSystem") VALUES($1, $2, $3, $4, $5, $6)`;

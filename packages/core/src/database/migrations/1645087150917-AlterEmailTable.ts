@@ -65,7 +65,7 @@ export class AlterEmailTable1645087150917 implements MigrationInterface {
         /**
          * SET isArchived = 0, if database has already NULL rows
          */
-        await queryRunner.query(`UPDATE "email_sent" SET "isArchived" = $1 WHERE "isArchived" IS NULL`, [0]);
+        await queryRunner.query(`UPDATE "email_sent" SET "isArchived" = ? WHERE "isArchived" IS NULL`, [0]);
     }
 
     /**

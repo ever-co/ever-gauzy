@@ -48,18 +48,13 @@ export class SeedIntegrationTable1691494801748 implements MigrationInterface {
                     const generatedId = uuidv4(); payload.push(generatedId);
 
                     upsertQuery = `
-                        INSERT INTO integration (
-                            "name", "imgSrc", "isComingSoon", "order", "id"
-                        )
-                        VALUES (
-                            $1, $2, $3, $4, $5
-                        )
-                        ON CONFLICT(name) DO UPDATE
-                        SET
-                            "imgSrc" = $2,
-                            "isComingSoon" = $3,
-                            "order" = $4
-                        RETURNING id;
+                        INSERT INTO "integration" ("name", "imgSrc", "isComingSoon", "order", "id")
+						VALUES (?, ?, ?, ?, ?)
+						ON CONFLICT ("name")
+						DO UPDATE SET "imgSrc" = EXCLUDED."imgSrc",
+									  "isComingSoon" = EXCLUDED."isComingSoon",
+									  "order" = EXCLUDED."order"
+						RETURNING "id";
                     `;
                 } else {
                     upsertQuery = `
