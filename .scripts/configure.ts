@@ -40,9 +40,9 @@ if (!env.IS_DOCKER) {
 		);
 	}
 
-	if (!env.JITSU_BROWSER_HOST || !env.JITSU_BROWSER_WRITE_KEY) {
+	if (!env.JITSU_BROWSER_URL || !env.JITSU_BROWSER_WRITE_KEY) {
 		console.warn(
-			'WARNING: No Jitsu keys defined in the .env file. Jitsu analytics may not be working!'
+			'WARNING: No Jitsu keys defined for browser in the .env file. Jitsu analytics may not be working!'
 		);
 	}
 
@@ -149,7 +149,7 @@ if (!env.IS_DOCKER) {
 
 		FILE_PROVIDER: '${env.FILE_PROVIDER}',
 
-		JITSU_BROWSER_HOST: '${env.JITSU_BROWSER_HOST}',
+		JITSU_BROWSER_URL: '${env.JITSU_BROWSER_URL}',
 		JITSU_BROWSER_WRITE_KEY: '${env.JITSU_BROWSER_WRITE_KEY}',
 
 		GAUZY_GITHUB_APP_NAME: '${env.GAUZY_GITHUB_APP_NAME}',
@@ -256,14 +256,14 @@ if (!env.IS_DOCKER) {
 
 		FILE_PROVIDER: '${env.FILE_PROVIDER}',
 
-		JITSU_BROWSER_HOST: '${env.JITSU_BROWSER_HOST}',
-		JITSU_BROWSER_WRITE_KEY: '${env.JITSU_BROWSER_WRITE_KEY}',
+		JITSU_BROWSER_URL: 'DOCKER_JITSU_BROWSER_URL',
+		JITSU_BROWSER_WRITE_KEY: 'DOCKER_JITSU_BROWSER_WRITE_KEY',
 
-		GAUZY_GITHUB_APP_NAME: '${env.GAUZY_GITHUB_APP_NAME}',
-		GAUZY_GITHUB_APP_ID: '${env.GAUZY_GITHUB_APP_ID}',
-		GAUZY_GITHUB_CLIENT_ID: '${env.GAUZY_GITHUB_CLIENT_ID}',
-		GAUZY_GITHUB_REDIRECT_URL: '${env.GAUZY_GITHUB_REDIRECT_URL}',
-		GAUZY_GITHUB_POST_INSTALL_URL: '${env.GAUZY_GITHUB_POST_INSTALL_URL}',
+		GAUZY_GITHUB_APP_NAME: 'DOCKER_GAUZY_GITHUB_APP_NAME',
+		GAUZY_GITHUB_APP_ID: 'DOCKER_GAUZY_GITHUB_APP_ID',
+		GAUZY_GITHUB_CLIENT_ID: 'DOCKER_GAUZY_GITHUB_CLIENT_ID',
+		GAUZY_GITHUB_REDIRECT_URL: 'DOCKER_GAUZY_GITHUB_REDIRECT_URL',
+		GAUZY_GITHUB_POST_INSTALL_URL: 'DOCKER_GAUZY_GITHUB_POST_INSTALL_URL',
 	};
 `;
 }
@@ -290,10 +290,10 @@ if (!isProd) {
 // we always want first to remove old generated files (one of them is not needed for current build)
 try {
 	unlinkSync(`./apps/gauzy/src/environments/environment.ts`);
-} catch { }
+} catch {}
 try {
 	unlinkSync(`./apps/gauzy/src/environments/environment.prod.ts`);
-} catch { }
+} catch {}
 
 const envFileDest: string = isProd ? 'environment.prod.ts' : 'environment.ts';
 const envFileDestOther: string = !isProd

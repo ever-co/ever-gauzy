@@ -7,10 +7,10 @@ import { ITask } from './task.model';
 
 export interface IOrganizationTeamEmployee
 	extends IBasePerTenantAndOrganizationEntityModel,
-		IRelationalOrganizationTeam,
-		IRelationalEmployee,
-		IRelationalRole,
-		ITimerStatus {
+	IRelationalOrganizationTeam,
+	IRelationalEmployee,
+	IRelationalRole,
+	ITimerStatus {
 	isTrackingEnabled?: boolean;
 	activeTaskId?: ITask['id'];
 	activeTask?: ITask;
@@ -18,10 +18,16 @@ export interface IOrganizationTeamEmployee
 
 export interface IOrganizationTeamEmployeeFindInput
 	extends IBasePerTenantAndOrganizationEntityModel,
-		IRelationalOrganizationTeam {}
+	IRelationalOrganizationTeam { }
 
 export interface IOrganizationTeamEmployeeUpdateInput
 	extends IBasePerTenantAndOrganizationEntityModel,
-		IRelationalOrganizationTeam {
+	IRelationalOrganizationTeam {
 	isTrackingEnabled?: boolean;
+}
+
+export interface IOrganizationTeamEmployeeActiveTaskUpdateInput
+	extends IBasePerTenantAndOrganizationEntityModel,
+	IRelationalOrganizationTeam {
+	activeTaskId?: ITask['id'];
 }
