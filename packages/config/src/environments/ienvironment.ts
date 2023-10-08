@@ -13,6 +13,7 @@ import {
 	IGithubConfig,
 	IGoogleConfig,
 	IHubstaffConfig,
+	IJitsuConfig,
 	IKeycloakConfig,
 	ILinkedinConfig,
 	IMicrosoftConfig,
@@ -158,8 +159,7 @@ export interface IEnvironment {
 	EMAIL_RESET_EXPIRATION_TIME?: number;
 
 	/**
-	 * Jitsu Config
+	 * Jitsu Configuration
 	 */
-	JITSU_BROWSER_HOST?: string;
-	JITSU_CONFIG_WRITE_KEY?: string;
+	jitsu: IJitsuConfig;
 }
