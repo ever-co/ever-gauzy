@@ -20,7 +20,7 @@ jobs:
             - name: Create kubeconfig
               run: |
                   mkdir ${HOME}/.kube
-                  echo ${{ secrets.CW_KUBECONFIG }} | base64 --decode > ${HOME}/.kube/config
+                  echo ${{ secrets.CIVO_KUBECONFIG }} | base64 --decode > ${HOME}/.kube/config
 
             - name: Generate TLS Secrets for DemoCW and APIDemoCW
               run: |
