@@ -39,6 +39,11 @@ body {
 }
 
 @mixin nb-overrides() {
+  p.caption.status-danger {
+    margin-bottom: 0;
+    margin-top: 0.3rem;
+  }
+
   nb-route-tabset .route-tab.active .tab-link {
     background: var(--gauzy-card-2);
     margin-bottom: 1px;
