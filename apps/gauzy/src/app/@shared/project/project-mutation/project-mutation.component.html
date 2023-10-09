@@ -100,10 +100,7 @@
 												: 'basic'
 										"
 									/>
-									<p
-										class="caption status-danger"
-										*ngIf="projectName.hasError('required') && projectName.touched"
-									>
+									<p class="caption status-danger" *ngIf="FormHelpers.isInvalidControl(form, 'name')">
 										{{ 'FORM.ERROR.PROJECT_NAME' | translate }}
 									</p>
 								</div>
