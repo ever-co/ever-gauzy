@@ -1,11 +1,11 @@
 interface IUserCreatedEvent {
-	eventType: 'UserCreated';
+	eventType: JitsuAnalyticsEventsEnum.USER_CREATED;
 	userId: string;
 	email: string;
 }
 
 interface IButtonClickedEvent {
-	eventType: 'ButtonClicked';
+	eventType: JitsuAnalyticsEventsEnum.BUTTON_CLICKED;
 	url: string;
 	userId: string;
 	userEmail: string;
@@ -16,28 +16,28 @@ interface IMenuItemClickedEvent extends IButtonClickedEvent {
 }
 
 interface IPageViewEvent {
-	eventType: 'PageView';
+	eventType: JitsuAnalyticsEventsEnum.PAGE_VIEW;
 	url: string;
 	periodicity: string;
 }
 
 interface IPageCreatedEvent {
-	eventType: 'PageCreated';
+	eventType: JitsuAnalyticsEventsEnum.PAGE_CREATED;
 	slug: string;
 }
 
 interface IUserUpgradedEvent {
-	eventType: 'UserUpgraded';
+	eventType: JitsuAnalyticsEventsEnum.USER_UPGRADED;
 	email: string;
 }
 
 interface IUserClickDownloadAppEvent {
-	eventType: 'UserClickDownloadApp';
+	eventType: JitsuAnalyticsEventsEnum.USER_CLICK_DOWNLOAD_APP;
 	email: string;
 }
 
 interface IUserSignedInEvent {
-	eventType: 'UserSignedIn';
+	eventType: JitsuAnalyticsEventsEnum.USER_SIGNED_IN;
 	email: string;
 }
 
@@ -54,8 +54,11 @@ type JitsuAnalyticsEvents =
 export default JitsuAnalyticsEvents;
 
 export enum JitsuAnalyticsEventsEnum {
-	USER_CREATED = 'User Created',
-	BUTTON_CLICKED = 'Button_Clicked',
-	PAGE_VIEW = 'Page_View',
-	PAGE_CREATED = 'Page Created',
+	USER_CREATED = 'UserCreated',
+	USER_SIGNED_IN = 'UserSignedIn',
+	USER_CLICK_DOWNLOAD_APP = 'UserClickDownloadApp',
+	USER_UPGRADED = 'UserUpgraded',
+	BUTTON_CLICKED = 'ButtonClicked',
+	PAGE_VIEW = 'PageView',
+	PAGE_CREATED = 'PageCreated'
 }

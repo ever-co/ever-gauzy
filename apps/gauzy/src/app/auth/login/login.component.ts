@@ -1,6 +1,7 @@
 import {
 	ChangeDetectorRef,
 	Component,
+	ElementRef,
 	Inject,
 	OnInit,
 	ViewChild,
@@ -36,12 +37,16 @@ export class NgxLoginComponent extends NbLoginComponent implements OnInit {
 		public readonly cdr: ChangeDetectorRef,
 		public readonly router: Router,
 		public readonly electronService: ElectronService,
+		private readonly el: ElementRef,
 		@Inject(NB_AUTH_OPTIONS) options
 	) {
 		super(nbAuthService, options, cdr, router);
 	}
 
 	ngOnInit() {
+		// -- to not block the scroll after logout
+		const body = this.el.nativeElement.closest('body');
+		body.removeAttribute('style');
 		this.checkRememberdMe();
 		this.autoFillCredential();
 	}

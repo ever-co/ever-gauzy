@@ -8,9 +8,11 @@ import {
 	FeatureSubscriber,
 	ImageAssetSubscriber,
 	ImportHistorySubscriber,
+	IntegrationSubscriber,
 	InviteSubscriber,
 	InvoiceSubscriber,
 	IssueTypeSubscriber,
+	JitsuEventsSubscriber,
 	OrganizationContactSubscriber,
 	OrganizationDocumentSubscriber,
 	OrganizationProjectSubscriber,
@@ -24,16 +26,15 @@ import {
 	ScreenshotSubscriber,
 	TagSubscriber,
 	TaskPrioritySubscriber,
-	TaskSizeSubscriber,
 	TaskRelatedIssueTypesSubscriber,
+	TaskSizeSubscriber,
 	TaskStatusSubscriber,
-	TaskVersionSubscriber,
 	TaskSubscriber,
+	TaskVersionSubscriber,
 	TenantSubscriber,
 	TimeOffRequestSubscriber,
 	TimeSlotSubscriber,
 	UserSubscriber,
-	IntegrationSubscriber,
 } from './internal';
 
 /**
@@ -53,6 +54,7 @@ export const coreSubscribers = [
 	InviteSubscriber,
 	InvoiceSubscriber,
 	IssueTypeSubscriber,
+	JitsuEventsSubscriber,
 	OrganizationContactSubscriber,
 	OrganizationDocumentSubscriber,
 	OrganizationProjectSubscriber,
@@ -74,5 +76,5 @@ export const coreSubscribers = [
 	TenantSubscriber,
 	TimeOffRequestSubscriber,
 	TimeSlotSubscriber,
-	UserSubscriber
+	UserSubscriber,
 ];

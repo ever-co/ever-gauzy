@@ -3,7 +3,7 @@ name: Desktop App Build Stage
 on:
     workflow_run:
         workflows: ['Release Stage']
-        branches: [stage, temp]
+        branches: [stage-apps, temp]
         types:
             - completed
 

@@ -195,6 +195,16 @@ spec:
                         value: '$PM2_SECRET_KEY'
                       - name: PM2_MACHINE_NAME
                         value: '$PM2_MACHINE_NAME'
+                      - name: JITSU_SERVER_URL
+                        value: '$JITSU_SERVER_URL'
+                      - name: JITSU_SERVER_WRITE_KEY
+                        value: '$JITSU_SERVER_WRITE_KEY'
+                      - name: GAUZY_GITHUB_CLIENT_ID
+                        value: '$GAUZY_GITHUB_CLIENT_ID'
+                      - name: GAUZY_GITHUB_WEBHOOK_URL
+                        value: '$GAUZY_GITHUB_WEBHOOK_URL'
+                      - name: GAUZY_GITHUB_WEBHOOK_SECRET
+                        value: '$GAUZY_GITHUB_WEBHOOK_SECRET'
 
                   ports:
                       - containerPort: 3000
@@ -275,6 +285,21 @@ spec:
                         value: '23.3332736'
                       - name: DEFAULT_CURRENCY
                         value: 'USD'
+                      - name: GAUZY_GITHUB_CLIENT_ID
+                        value: '$GAUZY_GITHUB_CLIENT_ID'
+                      - name: GAUZY_GITHUB_APP_NAME
+                        value: '$GAUZY_GITHUB_APP_NAME'
+                      - name: GAUZY_GITHUB_REDIRECT_URL
+                        value: '$GAUZY_GITHUB_REDIRECT_URL'
+                      - name: GAUZY_GITHUB_POST_INSTALL_URL
+                        value: '$GAUZY_GITHUB_POST_INSTALL_URL'
+                      - name: GAUZY_GITHUB_APP_ID
+                        value: '$GAUZY_GITHUB_APP_ID'
+                      - name: JITSU_BROWSER_URL
+                        value: '$JITSU_BROWSER_URL'
+                      - name: JITSU_BROWSER_WRITE_KEY
+                        value: '$JITSU_BROWSER_WRITE_KEY'
+
                   ports:
                       - containerPort: 4200
                         protocol: TCP
