@@ -59,7 +59,7 @@ export class DateRangePickerComponent extends TranslationBaseComponent implement
 		displayFormat: 'DD.MM.YYYY', // could be 'YYYY-MM-DDTHH:mm:ss.SSSSZ'
 		format: 'DD.MM.YYYY', // default is format value
 		direction: 'ltr',
-		firstDay: dayOfWeekAsString(this.store.selectedOrganization.startWeekOn) || moment.localeData().firstDayOfWeek()
+		firstDay: dayOfWeekAsString(this.store.selectedOrganization?.startWeekOn) || moment.localeData().firstDayOfWeek()
 	};
 	get locale(): LocaleConfig {
 		return this._locale;
