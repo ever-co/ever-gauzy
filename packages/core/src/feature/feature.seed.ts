@@ -104,7 +104,8 @@ async function createFeature(
 }
 
 async function cleanFeature(dataSource, config) {
-	if (config.dbConnectionOptions.type === 'sqlite') {
+	const allowedDbTypes = ['sqlite', 'better-sqlite3'];
+	if (allowedDbTypes.includes(config.dbConnectionOptions.type)) {
 		await dataSource.query('DELETE FROM feature');
 		await dataSource.query('DELETE FROM feature_organization');
 	} else {

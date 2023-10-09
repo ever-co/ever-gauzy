@@ -30,7 +30,7 @@ export class UpdateEmployeeTotalWorkedHoursHandler
 				.createQueryBuilder()
 				.select(
 					`${
-						config.dbConnectionOptions.type === 'sqlite'
+						['sqlite', 'better-sqlite3'].includes(config.dbConnectionOptions.type)
 							? 'SUM((julianday("stoppedAt") - julianday("startedAt")) * 86400)'
 							: 'SUM(extract(epoch from ("stoppedAt" - "startedAt")))'
 					}`,

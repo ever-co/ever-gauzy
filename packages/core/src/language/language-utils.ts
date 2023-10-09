@@ -22,7 +22,7 @@ export class LanguageUtils {
 				payload.push(uuidV4());
 				insertOrUpdateQuery = `
 					INSERT INTO language (name, code, is_system, description, color, id)
-					VALUES ($1, $2, $3, $4, $5, $6)
+					VALUES (?, ?, ?, ?, ?, ?)
 					ON CONFLICT (code)
 					DO UPDATE SET
 						name = EXCLUDED.name,

@@ -45,7 +45,7 @@ export class ActivityService extends TenantAwareCrudService<Activity> {
 		query.addSelect(`"${query.alias}"."employeeId"`, `employeeId`);
 		query.addSelect(`"${query.alias}"."date"`, `date`);
 
-		if (config.dbConnectionOptions.type === 'sqlite') {
+		if (['sqlite', 'better-sqlite3'].includes(config.dbConnectionOptions.type)) {
 			query.addSelect(`time("${query.alias}"."time")`, `time`);
 		} else {
 			query.addSelect(
@@ -56,7 +56,7 @@ export class ActivityService extends TenantAwareCrudService<Activity> {
 		query.addSelect(`"${query.alias}"."title"`, `title`);
 		query.groupBy(`"${query.alias}"."date"`);
 
-		if (config.dbConnectionOptions.type === 'sqlite') {
+		if (['sqlite', 'better-sqlite3'].includes(config.dbConnectionOptions.type)) {
 			query.addGroupBy(`time("${query.alias}"."time")`);
 		} else {
 			query.addGroupBy(
@@ -206,7 +206,7 @@ export class ActivityService extends TenantAwareCrudService<Activity> {
 		);
 		query.andWhere(
 			new Brackets((qb: WhereExpressionBuilder) => {
-				if (config.dbConnectionOptions.type === 'sqlite') {
+				if (['sqlite', 'better-sqlite3'].includes(config.dbConnectionOptions.type)) {
 					qb.andWhere(`datetime("${query.alias}"."date" || ' ' || "${query.alias}"."time") Between :startDate AND :endDate`, {
 						startDate,
 						endDate

@@ -278,7 +278,7 @@ export class SetupComponent implements OnInit {
 
 		if (this.databaseDriver.sqlite) {
 			return {
-				db: 'sqlite',
+				db: 'better-sqlite',
 			};
 		}
 
