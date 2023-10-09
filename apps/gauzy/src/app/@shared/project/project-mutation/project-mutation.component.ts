@@ -106,23 +106,25 @@ export class ProjectMutationComponent extends TranslationBaseComponent
 		return form;
 	}
 
-	/** */
+	/**
+	 * Represents an integration tenant or a boolean value.
+	 */
 	private _integration: IIntegrationTenant | boolean;
-	get integration(): IIntegrationTenant | boolean {
+	get integration(): IIntegrationTenant | boolean { // Get the integration tenant or boolean value.
 		return this._integration;
 	}
-	@Input() set integration(value: IIntegrationTenant | boolean) {
+	@Input() set integration(value: IIntegrationTenant | boolean) { // Set the integration tenant or boolean value.
 		this._integration = value;
 	}
 
-	/*
-	* Getter & Setter for dynamic project element
-	*/
+	/**
+	 * Represents an organization project.
+	 */
 	private _project: IOrganizationProject;
-	get project(): IOrganizationProject {
+	get project(): IOrganizationProject { // Get the organization project.
 		return this._project;
 	}
-	@Input() set project(project: IOrganizationProject) {
+	@Input() set project(project: IOrganizationProject) { // Set the organization project.
 		this._project = project;
 	}
 

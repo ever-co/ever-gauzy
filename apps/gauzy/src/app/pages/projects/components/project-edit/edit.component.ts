@@ -1,10 +1,15 @@
 import { Component, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute, Data, Router } from '@angular/router';
-import { debounceTime, filter, map } from 'rxjs/operators';
+import { filter, map } from 'rxjs/operators';
 import { Observable } from 'rxjs/internal/Observable';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
-import { IOrganization, IOrganizationProject, IOrganizationProjectUpdateInput } from '@gauzy/contracts';
+import {
+	IIntegrationTenant,
+	IOrganization,
+	IOrganizationProject,
+	IOrganizationProjectUpdateInput
+} from '@gauzy/contracts';
 import { ProjectMutationComponent } from './../../../../@shared/project';
 import { TranslationBaseComponent } from './../../../../@shared/language-base';
 import {
@@ -26,6 +31,7 @@ export class ProjectEditMutationComponent extends TranslationBaseComponent imple
 	@ViewChild(ProjectMutationComponent, { static: false }) public _component: ProjectMutationComponent;
 
 	public loading: boolean;
+	public integration$: Observable<IIntegrationTenant>;
 	public project$: Observable<IOrganizationProject>;
 	public project: IOrganizationProject;
 	public organization: IOrganization = this._store.selectedOrganization;
@@ -44,12 +50,15 @@ export class ProjectEditMutationComponent extends TranslationBaseComponent imple
 
 	ngOnInit(): void {
 		this.project$ = this._activatedRoute.data.pipe(
-			debounceTime(100),
 			filter((data: Data) => !!data && !!data.project),
 			map(({ project }) => {
 				this.project = project;
 				return project;
 			}),
+			untilDestroyed(this)
+		);
+		this.integration$ = this._activatedRoute.data.pipe(
+			map(({ integration }) => integration),
 			untilDestroyed(this)
 		);
 	}

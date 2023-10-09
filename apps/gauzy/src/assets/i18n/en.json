@@ -1216,7 +1216,7 @@
 		},
 		"GITHUB_PAGE": {
 			"NAME": "GitHub",
-			"SELECT_REPOSITORY": "Select Repository"
+			"SELECT_REPOSITORY": "Type to search repository"
 		},
 		"COMING_SOON": "Coming soon",
 		"RE_INTEGRATE": "Re-integrate",

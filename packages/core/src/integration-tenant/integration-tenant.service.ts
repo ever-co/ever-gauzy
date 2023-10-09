@@ -3,6 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import {
 	IBasePerTenantAndOrganizationEntityModel,
+	IBaseRelationsEntityModel,
 	IIntegrationEntitySetting,
 	IIntegrationSetting,
 	IIntegrationTenant,
@@ -60,27 +61,33 @@ export class IntegrationTenantService extends TenantAwareCrudService<Integration
 	}
 
 	/**
-	 * Check integration remember state.
-	 *
-	 * @param options - The options for checking integration remember state.
-	 * @returns The integration tenant if found, or `false` if not found or an error occurred.
+	 * Retrieve an integration tenant by specified options.
+	 * @param input - The input options for finding the integration tenant.
+	 * @returns The integration tenant if found, or `false` if not found or an error occurs.
 	 */
-	public async checkIntegrationRememberState(input: IIntegrationTenantFindInput): Promise<IIntegrationTenant | boolean> {
+	public async getIntegrationByOptions(input: IIntegrationTenantFindInput): Promise<IIntegrationTenant | boolean> {
 		try {
 			const tenantId = RequestContext.currentTenantId() || input.tenantId;
 			const { organizationId, name } = input;
 
-			return await this.findOneByOptions({
+			const integrationTenant = await this.findOneByOptions({
 				where: {
 					tenantId,
 					organizationId,
-					name
+					name,
+					isActive: true,
+					isArchived: false
 				},
 				order: {
 					updatedAt: 'DESC'
+				},
+				relations: {
+					integration: true
 				}
 			});
+			return integrationTenant || false;
 		} catch (error) {
+			console.error('Error in getIntegrationByOptions:', error);
 			return false;
 		}
 	}

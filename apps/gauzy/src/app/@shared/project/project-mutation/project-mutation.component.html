@@ -574,9 +574,33 @@
 						</div>
 					</div>
 				</nb-tab>
-				<ng-template [ngIf]="integration">
-					<nb-tab [tabTitle]="'ORGANIZATIONS_PAGE.INTEGRATIONS' | translate"></nb-tab>
-				</ng-template>
+				<nb-tab *ngIf="integration" [tabTitle]="'ORGANIZATIONS_PAGE.INTEGRATIONS' | translate">
+					<div class="setting-block block">
+						<div class="setting-row p-2">
+							<div class="row">
+								<div class="col-8">
+									<div class="h-12 w-12 flex-shrink-0">
+										<img
+											width="70px"
+											height="70px"
+											[src]="integration.integration.fullImgUrl"
+											[alt]="[integration.integration.title]"
+											[title]="integration.integration.name | replace: '_':' '"
+										/>
+									</div>
+								</div>
+								<div class="col-4">
+									<div class="h-12 w-12 flex-shrink-0">
+										<ngx-github-repository-selector
+											[integration]="integration"
+											(onChanged)="selectRepository($event)"
+										></ngx-github-repository-selector>
+									</div>
+								</div>
+							</div>
+						</div>
+					</div>
+				</nb-tab>
 			</nb-tabset>
 			<div class="form-group action-buttons">
 				<button

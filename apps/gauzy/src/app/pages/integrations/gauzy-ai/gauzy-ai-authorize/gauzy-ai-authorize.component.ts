@@ -99,7 +99,7 @@ export class GauzyAIAuthorizeComponent implements AfterViewInit, OnInit, OnDestr
 			return;
 		}
 		const { id: organizationId, tenantId } = this.organization;
-		const state$ = this._integrationsService.checkRememberState({
+		const state$ = this._integrationsService.getIntegrationByOptions({
 			name: IntegrationEnum.GAUZY_AI,
 			organizationId,
 			tenantId

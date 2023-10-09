@@ -4,7 +4,6 @@ import { Permissions } from './../shared/decorators';
 import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
 import { IntegrationMapService } from './integration-map.service';
 
-@UseGuards(TenantPermissionGuard)
 @UseGuards(TenantPermissionGuard, PermissionGuard)
 @Permissions(PermissionsEnum.INTEGRATION_VIEW)
 @Controller()

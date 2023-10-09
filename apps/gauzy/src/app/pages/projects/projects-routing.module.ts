@@ -1,12 +1,13 @@
 import { NgModule } from '@angular/core';
 import { Routes, RouterModule } from '@angular/router';
-import { PermissionsEnum } from '@gauzy/contracts';
+import { IntegrationEnum, PermissionsEnum } from '@gauzy/contracts';
 import { NgxPermissionsGuard } from 'ngx-permissions';
 import { ProjectLayoutComponent } from './layout/layout.component';
 import { ProjectResolver } from './project.resolver';
 import { ProjectCreateMutationComponent } from './components/project-create/create.component';
 import { ProjectEditMutationComponent } from './components/project-edit/edit.component';
 import { ProjectListComponent } from './components/project-list/list.component';
+import { IntegrationResolver } from '../integrations/integration.resolver';
 
 const routes: Routes = [
 	{
@@ -50,6 +51,7 @@ const routes: Routes = [
 			{
 				path: ':id',
 				data: {
+					integration: IntegrationEnum.GITHUB,
 					selectors: {
 						project: false,
 						team: false,
@@ -59,6 +61,7 @@ const routes: Routes = [
 				},
 				resolve: {
 					project: ProjectResolver,
+					integration: IntegrationResolver
 				},
 				children: [
 					{

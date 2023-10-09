@@ -10,7 +10,7 @@
 	<nb-card-body class="custom-body-content">
         <ng-template [ngxPermissionsOnly]="['ALL_ORG_EDIT', 'ORG_PROJECT_EDIT']">
             <ga-project-mutation
-                [integration]="true"
+                [integration]="integration$ | async"
                 [project]="project$ | async"
                 (onSubmitted)="onSubmit($event)"
             ></ga-project-mutation>
