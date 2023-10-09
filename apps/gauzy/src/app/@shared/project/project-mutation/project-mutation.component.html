@@ -100,12 +100,12 @@
 												: 'basic'
 										"
 									/>
-									<div
-										class="caption status-danger position-absolute"
-										*ngIf="projectName.hasError('required')"
+									<p
+										class="caption status-danger"
+										*ngIf="projectName.hasError('required') && projectName.touched"
 									>
 										{{ 'FORM.ERROR.PROJECT_NAME' | translate }}
-									</div>
+									</p>
 								</div>
 								<div class="form-group col-6">
 									<label for="code" class="label">{{
