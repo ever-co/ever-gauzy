@@ -37,8 +37,7 @@ import { TranslateService } from '@ngx-translate/core';
 })
 export class KeyResultDetailsComponent
 	extends TranslationBaseComponent
-	implements OnInit, OnDestroy
-{
+	implements OnInit, OnDestroy {
 	src: string;
 	keyResult: IKeyResult;
 	updates: IKeyResultUpdate[];
@@ -119,9 +118,9 @@ export class KeyResultDetailsComponent
 					.subscribe((user) => {
 						if (
 							user.role.name !== RolesEnum.SUPER_ADMIN &&
-							user.role.name !== RolesEnum.ADMIN &&
-							user.employee.id !== this.keyResult.owner.id &&
-							!!this.keyResult.lead.id
+								user.role.name !== RolesEnum.ADMIN &&
+								user.employee.id !== this.keyResult.owner.id &&
+								!!this.keyResult.lead.id
 								? user.employee.id !== this.keyResult.lead.id
 								: false
 						) {
@@ -132,14 +131,11 @@ export class KeyResultDetailsComponent
 		if (this.keyResult.type === KeyResultTypeEnum.TASK) {
 			await this.taskService
 				.getById(this.keyResult.taskId)
-				.then((task) => {
+				.then(async (task) => {
 					this.task = task;
-					this.organizationProject
-						.getById(task.projectId)
-						.then((project) => {
-							this.task.project = project;
-							this.loading = false;
-						});
+					const project = await firstValueFrom(this.organizationProject.getById(task.projectId));
+					this.task.project = project;
+					this.loading = false;
 				});
 		} else if (this.keyResult.type === KeyResultTypeEnum.KPI) {
 			await this.goalSettingsService

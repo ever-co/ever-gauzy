@@ -1,20 +1,56 @@
+// Import Gauzy dialogs styles
 @import 'gauzy/_gauzy-dialogs';
 
+// Define styles for the .project-toggle class
 .project-toggle {
 	margin-top: 20px;
 }
 
+// Define styles for the .action-buttons class
 .action-buttons {
 	display: flex;
 	justify-content: flex-start;
 }
 
 :host ::ng-deep {
+	nb-card {
+		// Apply margins based on language direction
+		@include nb-rtl(margin, -16px -18px -16px -8px);
+		@include nb-ltr(margin, -16px -8px -16px -18px);
+
+		nb-card-body {
+			padding: 0;
+			nb-tab.content-active, .action-buttons {
+				background-color: var(--gauzy-card-2);
+				margin: 0;
+			}
+
+			nb-tab.content-active {
+				height: calc(100vh - 22.5rem);
+			}
+
+			.action-buttons {
+				padding: 1rem 2rem;
+				border-radius: 0 0 var(--border-radius) var(--border-radius);
+			}
+
+			// Override background color for specific elements
+			input, nb-select.appearance-outline.status-basic .select-button, .ng-select .ng-select-container {
+				background-color: var(--background-basic-color-1) !important;
+			}
+
+			.ng-select .ng-select-container {
+				input {
+					background-color: unset !important;
+				}
+			}
+		}
+	}
+
 	nb-toggle {
 		div.checked+span.text {
 			color: var(--text-primary-color);
 		}
-
 		div+span.text {
 			color: var(--gauzy-text-color-2);
 		}
@@ -30,6 +66,7 @@
 	}
 }
 
+// Define styles for the .project-tab-container class
 .project-tab-container {
 	display: flex;
 	gap: 1rem;
@@ -39,6 +76,7 @@
 	}
 }
 
+// Define styles for the .project-image-container class
 .project-image-container {
 	transition: transform 150ms ease-in-out;
 	display: flex;
@@ -58,7 +96,6 @@
 			height: 100%;
 			width: 100%;
 			border-radius: nb-theme(border-radius);
-			;
 		}
 
 		img,
@@ -67,7 +104,6 @@
 			height: 294px;
 			object-fit: cover;
 			border-radius: nb-theme(border-radius);
-			;
 		}
 
 		.image {
@@ -105,6 +141,8 @@
 :host {
 	::ng-deep ngx-image-uploader input {
 		height: 100% !important;
-	  }
+	}
+
+	// Apply dialog styles
 	@include dialog(transparent, var(--gauzy-card-1));
 }

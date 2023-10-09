@@ -1,0 +1,8 @@
+@import 'themes';
+:host {
+	nb-card {
+		nb-card-body {
+			overflow: unset;
+		}
+	}
+}

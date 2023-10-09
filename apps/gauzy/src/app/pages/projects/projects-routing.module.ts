@@ -2,22 +2,83 @@ import { NgModule } from '@angular/core';
 import { Routes, RouterModule } from '@angular/router';
 import { PermissionsEnum } from '@gauzy/contracts';
 import { NgxPermissionsGuard } from 'ngx-permissions';
-import { ProjectsComponent } from './projects.component';
+import { ProjectLayoutComponent } from './layout/layout.component';
+import { ProjectResolver } from './project.resolver';
+import { ProjectCreateMutationComponent } from './components/project-create/create.component';
+import { ProjectEditMutationComponent } from './components/project-edit/edit.component';
+import { ProjectListComponent } from './components/project-list/list.component';
 
 const routes: Routes = [
 	{
 		path: '',
-		component: ProjectsComponent,
-		canActivate: [NgxPermissionsGuard],
-		data: {
-			permissions: {
-				only: [
-					PermissionsEnum.ALL_ORG_VIEW,
-					PermissionsEnum.ORG_PROJECT_VIEW
-				],
-				redirectTo: '/pages/dashboard'
-			}
-		}
+		component: ProjectLayoutComponent,
+		children: [
+			{
+				path: '',
+				component: ProjectListComponent,
+				canActivate: [NgxPermissionsGuard],
+				data: {
+					permissions: {
+						only: [
+							PermissionsEnum.ALL_ORG_VIEW,
+							PermissionsEnum.ORG_PROJECT_VIEW
+						],
+						redirectTo: '/pages/dashboard'
+					}
+				}
+			},
+			{
+				path: 'create',
+				component: ProjectCreateMutationComponent,
+				canActivate: [NgxPermissionsGuard],
+				data: {
+					permissions: {
+						only: [
+							PermissionsEnum.ALL_ORG_EDIT,
+							PermissionsEnum.ORG_PROJECT_ADD
+						],
+						redirectTo: '/pages/dashboard'
+					},
+					selectors: {
+						project: false,
+						team: false,
+						employee: false,
+						organization: false
+					}
+				}
+			},
+			{
+				path: ':id',
+				data: {
+					selectors: {
+						project: false,
+						team: false,
+						employee: false,
+						organization: false
+					}
+				},
+				resolve: {
+					project: ProjectResolver,
+				},
+				children: [
+					{
+						path: 'edit',
+						component: ProjectEditMutationComponent,
+						canActivate: [NgxPermissionsGuard],
+						data: {
+							permissions: {
+								only: [
+									PermissionsEnum.ALL_ORG_EDIT,
+									PermissionsEnum.ORG_PROJECT_EDIT
+								],
+								redirectTo: '/pages/dashboard'
+							},
+							relations: ['organizationContact', 'organization', 'members.user', 'tags', 'teams'],
+						}
+					},
+				]
+			},
+		]
 	}
 ];
 
@@ -25,4 +86,4 @@ const routes: Routes = [
 	imports: [RouterModule.forChild(routes)],
 	exports: [RouterModule]
 })
-export class ProjectsRoutingModule {}
+export class ProjectsRoutingModule { }

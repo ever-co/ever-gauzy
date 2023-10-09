@@ -16,11 +16,9 @@ import {
 } from '@nebular/theme';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { ProjectsRoutingModule } from './projects-routing.module';
-import { ProjectsComponent } from './projects.component';
 import { TagsColorInputModule } from '../../@shared/tags/tags-color-input/tags-color-input.module';
 import { TableComponentsModule } from '../../@shared/table-components/table-components.module';
 import { OrganizationProjectsService } from '../../@core/services/organization-projects.service';
-import { ProjectsMutationComponent } from './projects-mutation/projects-mutation.component';
 import { RemoveLodashModule } from '../../@shared/remove-lodash/remove-lodash.module';
 import { EntityWithMembersModule } from '../../@shared/entity-with-members-card/entity-with-members-card.module';
 import { OrganizationContactService } from '../../@core/services/organization-contact.service';
@@ -44,6 +42,11 @@ import { GauzyButtonActionModule } from '../../@shared/gauzy-button-action/gauzy
 import { PaginationModule } from '../../@shared/pagination/pagination.module';
 import { CardGridModule } from '../../@shared/card-grid/card-grid.module';
 import { TeamSelectModule } from '../../@shared/team-select/team-select.module';
+import { ProjectLayoutComponent } from './layout/layout.component';
+import { ProjectCreateMutationComponent } from './components/project-create/create.component';
+import { ProjectEditMutationComponent } from './components/project-edit/edit.component';
+import { ProjectMutationModule } from '../../@shared/project/project-mutation/project-mutation.module';
+import { ProjectListComponent } from './components/project-list/list.component';
 
 @NgModule({
 	imports: [
@@ -87,9 +90,15 @@ import { TeamSelectModule } from '../../@shared/team-select/team-select.module';
 		NbTooltipModule,
 		PaginationModule,
 		TeamSelectModule,
-		CardGridModule
+		CardGridModule,
+		ProjectMutationModule
 	],
-	declarations: [ProjectsComponent, ProjectsMutationComponent],
+	declarations: [
+		ProjectLayoutComponent,
+		ProjectListComponent,
+		ProjectCreateMutationComponent,
+		ProjectEditMutationComponent
+	],
 	providers: [OrganizationProjectsService, OrganizationContactService]
 })
 export class ProjectsModule { }
