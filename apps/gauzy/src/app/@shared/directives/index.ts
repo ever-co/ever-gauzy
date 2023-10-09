@@ -5,6 +5,7 @@ import { OutsideDirective } from './outside.directive';
 import { UnderConstructionDirective } from './under-construction.directive';
 import { ReadMoreDirective } from './read-more';
 import { TimeTrackingAuthorizedDirective } from './time-tracking-authorized-directive';
+import { NoSpaceEdgesDirective } from './no-space-edges.directive';
 
 export const DIRECTIVES = [
 	AutocompleteOffDirective,
@@ -13,5 +14,6 @@ export const DIRECTIVES = [
 	ReadMoreDirective,
 	TimeTrackingAuthorizedDirective,
 	OutsideDirective,
-	UnderConstructionDirective
+	UnderConstructionDirective,
+	NoSpaceEdgesDirective,
 ];

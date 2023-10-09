@@ -4282,7 +4282,8 @@
 			"EMAIL_REQUIRED": "Требуется адрес электронной почты!",
 			"EMAIL_REAL_REQUIRED": "Email должен быть реальным!",
 			"PASSWORD_REQUIRED": "Требуется пароль!",
-			"PASSWORD_SHOULD_CONTAIN": "Пароль должен содержать от {{ minLength }} до {{ maxLength }} символов!"
+			"PASSWORD_SHOULD_CONTAIN": "Пароль должен содержать от {{ minLength }} до {{ maxLength }} символов!",
+			"PASSWORD_NO_SPACE_EDGES": "Пароли не должны начинаться или заканчиваться пробелами."
 		},
 		"DEMO": {
 			"TITLE": "Автоматически входить в демо-аккаунты",
