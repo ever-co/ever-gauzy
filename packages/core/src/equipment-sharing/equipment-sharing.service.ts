@@ -150,7 +150,7 @@ export class EquipmentSharingService extends TenantAwareCrudService<EquipmentSha
 			});
 
 			if (!equipmentSharing) {
-				throw new NotFoundException('Equiment Sharing not found');
+				throw new NotFoundException('Equipment Sharing not found');
 			}
 			equipmentSharing.status = status;
 
