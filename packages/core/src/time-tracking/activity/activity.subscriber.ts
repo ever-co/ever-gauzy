@@ -27,7 +27,7 @@ export class ActivitySubscriber implements EntitySubscriberInterface<Activity> {
         try {
             if (event) {
                 const options: Partial<DataSourceOptions> = event.connection.options || getConfig().dbConnectionOptions;
-                if (options.type === 'sqlite') {
+                if (['sqlite', 'better-sqlite3'].includes(options.type)) {
                     const { entity } = event;
                     try {
                         if (isJsObject(entity.metaData)) {

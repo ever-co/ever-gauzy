@@ -2063,6 +2063,7 @@
 			"ORG_CONTACT_VIEW": "View Contacts",
 			"ORG_TEAM_ADD": "Add Teams",
 			"ORG_TEAM_VIEW": "View Teams",
+			"ORG_TEAM_EDIT_ACTIVE_TASK": "Edit Active Tasks",
 			"ORG_TEAM_EDIT": "Edit Teams",
 			"ORG_TEAM_DELETE": "Delete Teams",
 			"ORG_TEAM_REMOVE_ACCOUNT_AS_MEMBER": "Remove Account As Team Member",
@@ -4366,7 +4367,8 @@
 			"EMAIL_REQUIRED": "Email is required!",
 			"EMAIL_REAL_REQUIRED": "Email should be the real one!",
 			"PASSWORD_REQUIRED": "Password is required!",
-			"PASSWORD_SHOULD_CONTAIN": "Password should contain from {{ minLength }} to {{ maxLength }} characters!"
+			"PASSWORD_SHOULD_CONTAIN": "Password should contain from {{ minLength }} to {{ maxLength }} characters!",
+			"PASSWORD_NO_SPACE_EDGES": "Passwords must not begin or end with spaces."
 		},
 		"DEMO": {
 			"TITLE": "Login Automatically into Demo accounts",

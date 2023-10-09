@@ -43,23 +43,18 @@ export class SeedIntegrationTable1691494801748 implements MigrationInterface {
                 let upsertQuery = ``;
                 const payload = [name, filepath, isComingSoon, order];
 
-                if (queryRunner.connection.options.type === 'sqlite') {
+                if (['sqlite', 'better-sqlite3'].includes(queryRunner.connection.options.type)) {
                     // For SQLite, manually generate a UUID using uuidv4()
                     const generatedId = uuidv4(); payload.push(generatedId);
 
                     upsertQuery = `
-                        INSERT INTO integration (
-                            "name", "imgSrc", "isComingSoon", "order", "id"
-                        )
-                        VALUES (
-                            $1, $2, $3, $4, $5
-                        )
-                        ON CONFLICT(name) DO UPDATE
-                        SET
-                            "imgSrc" = $2,
-                            "isComingSoon" = $3,
-                            "order" = $4
-                        RETURNING id;
+                        INSERT INTO "integration" ("name", "imgSrc", "isComingSoon", "order", "id")
+						VALUES (?, ?, ?, ?, ?)
+						ON CONFLICT ("name")
+						DO UPDATE SET "imgSrc" = EXCLUDED."imgSrc",
+									  "isComingSoon" = EXCLUDED."isComingSoon",
+									  "order" = EXCLUDED."order"
+						RETURNING "id";
                     `;
                 } else {
                     upsertQuery = `

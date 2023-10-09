@@ -213,8 +213,7 @@ export class OrganizationTeamEmployeeService extends TenantAwareCrudService<Orga
 							},
 						});
 					}
-					return await super.update({ id: member.id, organizationId, organizationTeamId }, { activeTaskId: entity.activeTaskId });
-
+					return await this.repository.update({ id: member.id, organizationId, organizationTeamId }, { activeTaskId: entity.activeTaskId });
 				}
 				throw new ForbiddenException();
 			}

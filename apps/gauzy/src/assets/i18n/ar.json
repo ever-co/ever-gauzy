@@ -2056,6 +2056,7 @@
 			"ORG_CONTACT_VIEW": "عرض جهات الاتصال",
 			"ORG_TEAM_ADD": "إضافة فِرَق",
 			"ORG_TEAM_VIEW": "عرض الفرق",
+			"ORG_TEAM_EDIT_ACTIVE_TASK": "تحرير المهام النشطة",
 			"ORG_TEAM_EDIT": "تحرير الفرق",
 			"ORG_TEAM_DELETE": "حذف الفِرَق",
 			"ORG_TEAM_JOIN_REQUEST_VIEW": "عرض طلبات الانضمام للفِرَق",
@@ -4356,7 +4357,8 @@
 			"EMAIL_REQUIRED": "البريد الإلكتروني مطلوب!",
 			"EMAIL_REAL_REQUIRED": "يجب أن يكون البريد الإلكتروني الحقيقي!",
 			"PASSWORD_REQUIRED": "كلمة المرور مطلوبة!",
-			"PASSWORD_SHOULD_CONTAIN": "يجب أن تحتوي كلمة المرور على عدد الأحرف المسموح به من {{ minLength }} إلى {{ maxLength }}!"
+			"PASSWORD_SHOULD_CONTAIN": "يجب أن تحتوي كلمة المرور على عدد الأحرف المسموح به من {{ minLength }} إلى {{ maxLength }}!",
+			"PASSWORD_NO_SPACE_EDGES": "يجب ألا تبدأ كلمات المرور أو تنتهي بمسافات."
 		},
 		"DEMO": {
 			"TITLE": "تسجيل الدخول تلقائيًا إلى حسابات التجريبية",

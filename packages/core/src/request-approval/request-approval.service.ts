@@ -52,7 +52,7 @@ export class RequestApprovalService extends TenantAwareCrudService<RequestApprov
 		const query = this.requestApprovalRepository.createQueryBuilder('request_approval');
 		query.leftJoinAndSelect(`${query.alias}.approvalPolicy`, 'approvalPolicy');
 
-		if (config.dbConnectionOptions.type === 'sqlite') {
+		if (['sqlite', 'better-sqlite3'].includes(config.dbConnectionOptions.type)) {
 			query.leftJoinAndSelect(
 				'time_off_request',
 				'time_off_request',

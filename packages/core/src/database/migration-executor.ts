@@ -275,7 +275,7 @@ export class ${camelCase(name, true)}${timestamp} implements MigrationInterface 
     * @param queryRunner
     */
     public async up(queryRunner: QueryRunner): Promise<any> {
-        if (queryRunner.connection.options.type === 'sqlite') {
+        if (['sqlite', 'better-sqlite3'].includes(queryRunner.connection.options.type)) {
             await this.sqliteUpQueryRunner(queryRunner);
         } else {
             await this.postgresUpQueryRunner(queryRunner);
@@ -288,7 +288,7 @@ export class ${camelCase(name, true)}${timestamp} implements MigrationInterface 
     * @param queryRunner
     */
     public async down(queryRunner: QueryRunner): Promise<any> {
-        if (queryRunner.connection.options.type === 'sqlite') {
+        if (['sqlite', 'better-sqlite3'].includes(queryRunner.connection.options.type)) {
             await this.sqliteDownQueryRunner(queryRunner);
         } else {
             await this.postgresDownQueryRunner(queryRunner);
@@ -318,23 +318,23 @@ export class ${camelCase(name, true)}${timestamp} implements MigrationInterface 
     }
 
     /**
-    * SqliteDB Up Migration
+    * SqliteDB and BetterSQlite3DB Up Migration
     *
     * @param queryRunner
     */
     public async sqliteUpQueryRunner(queryRunner: QueryRunner): Promise<any> {
-        ${(connection.options.type === 'sqlite') ? upSqls.join(`
+        ${(['sqlite', 'better-sqlite3'].includes(connection.options.type)) ? upSqls.join(`
         `) : [].join(`
         `)}
     }
 
     /**
-    * SqliteDB Down Migration
+    * SqliteDB and BetterSQlite3DB Down Migration
     *
     * @param queryRunner
     */
     public async sqliteDownQueryRunner(queryRunner: QueryRunner): Promise<any> {
-        ${(connection.options.type === 'sqlite') ? downSqls.join(`
+        ${(['sqlite', 'better-sqlite3'].includes(connection.options.type)) ? downSqls.join(`
         `) : [].join(`
         `)}
     }

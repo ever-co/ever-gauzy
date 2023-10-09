@@ -38,7 +38,7 @@ export class EquipmentSharingService extends TenantAwareCrudService<EquipmentSha
 				.innerJoinAndSelect(`${query.alias}.equipment`, 'equipment')
 				.leftJoinAndSelect( `${query.alias}.equipmentSharingPolicy`, 'equipmentSharingPolicy');
 
-			if (this.configService.dbConnectionOptions.type === 'sqlite') {
+			if (['sqlite', 'better-sqlite3'].includes(this.configService.dbConnectionOptions.type)) {
 				query.leftJoinAndSelect(
 					'request_approval',
 					'requestApproval',
@@ -150,7 +150,7 @@ export class EquipmentSharingService extends TenantAwareCrudService<EquipmentSha
 			});
 
 			if (!equipmentSharing) {
-				throw new NotFoundException('Equiment Sharing not found');
+				throw new NotFoundException('Equipment Sharing not found');
 			}
 			equipmentSharing.status = status;
 
@@ -178,7 +178,7 @@ export class EquipmentSharingService extends TenantAwareCrudService<EquipmentSha
 			query.leftJoinAndSelect(`${query.alias}.employees`, 'employees')
 			query.leftJoinAndSelect(`${query.alias}.teams`, 'teams');
 
-			if (this.configService.dbConnectionOptions.type === 'sqlite') {
+			if (['sqlite', 'better-sqlite3'].includes(this.configService.dbConnectionOptions.type)) {
 				query.leftJoinAndSelect(
 					'request_approval',
 					'requestApproval',
