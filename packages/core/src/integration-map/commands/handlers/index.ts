@@ -2,6 +2,7 @@ import { IntegrationMapSyncActivityHandler } from './integration-map.sync-activi
 import { IntegrationMapSyncEntityHandler } from './integration-map.sync-entity.handler';
 import { IntegrationMapSyncOrganizationHandler } from './integration-map.sync-organization.handler';
 import { IntegrationMapSyncProjectHandler } from './integration-map.sync-project.handler';
+import { IntegrationMapSyncRepositoryHandler } from './integration-map.sync-reposiotry.handler';
 import { IntegrationMapSyncScreenshotHandler } from './integration-map.sync-screenshot.handler';
 import { IntegrationMapSyncTaskHandler } from './integration-map.sync-task.handler';
 import { IntegrationMapSyncTimeLogHandler } from './integration-map.sync-time-log.handler';
@@ -15,5 +16,6 @@ export const CommandHandlers = [
 	IntegrationMapSyncScreenshotHandler,
 	IntegrationMapSyncTaskHandler,
 	IntegrationMapSyncTimeLogHandler,
-	IntegrationMapSyncTimeSlotHandler
+	IntegrationMapSyncTimeSlotHandler,
+	IntegrationMapSyncRepositoryHandler
 ];

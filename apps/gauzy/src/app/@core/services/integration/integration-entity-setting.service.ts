@@ -14,21 +14,21 @@ export class IntegrationEntitySettingService {
     ) { }
 
     /**
-   * Retrieve entity settings for a given integration.
-   * @param integrationId - The ID of the integration.
-   * @returns An observable of entity settings.
-   */
+     * Retrieve entity settings for a given integration.
+     * @param integrationId - The ID of the integration.
+     * @returns An observable of entity settings.
+     */
     getEntitySettings(integrationId: IIntegrationTenant['id']): Observable<IPagination<IIntegrationEntitySetting>> {
         const url = `${API_PREFIX}/integration-entity-setting/integration/${integrationId}`;
         return this._http.get<IPagination<IIntegrationEntitySetting>>(url);
     }
 
     /**
-   * Update entity settings for a given integration.
-   * @param integrationId - The ID of the integration.
-   * @param settings - The entity settings to update.
-   * @returns An observable of updated entity settings.
-   */
+     * Update entity settings for a given integration.
+     * @param integrationId - The ID of the integration.
+     * @param settings - The entity settings to update.
+     * @returns An observable of updated entity settings.
+     */
     updateEntitySettings(integrationId: IIntegrationTenant['id'], settings: IIntegrationEntitySetting[]): Observable<IIntegrationEntitySetting[]> {
         const url = `${API_PREFIX}/integration-entity-setting/integration/${integrationId}`;
         return this._http.put<IIntegrationEntitySetting[]>(url, settings);

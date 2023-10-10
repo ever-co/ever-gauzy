@@ -8,6 +8,7 @@ import { IOrganizationProject } from './organization-projects.model';
 import { IOrganizationCreateInput, IOrganizationUpdateInput } from './organization.model';
 import { ITaskUpdateInput } from './task.model';
 import { ITag } from './tag.model';
+import { IGithubRepository } from 'github.model';
 
 export interface IRelationalIntegrationTenant {
 	integration?: IIntegrationTenant;
@@ -89,6 +90,13 @@ export interface IIntegrationFilter {
 	filter: string;
 }
 
+export interface IIntegrationMapSyncRepository extends IBasePerTenantAndOrganizationEntityModel {
+	repository: IGithubRepository;
+	integrationId: IIntegrationTenant['id'];
+	gauzyId: string;
+	entity: IntegrationEntity;
+}
+
 export interface IIntegrationMapSyncActivity extends IBasePerTenantAndOrganizationEntityModel {
 	activity: IActivity;
 	integrationId: string;
@@ -135,7 +143,7 @@ export interface IIntegrationMapSyncEntityInput extends IBasePerTenantAndOrganiz
 	integrationId: string;
 	sourceId: string;
 	gauzyId: string;
-	entity: string;
+	entity: IntegrationEntity;
 }
 
 export interface IIntegrationTenantCreateInput extends IBasePerTenantAndOrganizationEntityModel {

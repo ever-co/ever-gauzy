@@ -76,7 +76,13 @@ const routes: Routes = [
 								],
 								redirectTo: '/pages/dashboard'
 							},
-							relations: ['organizationContact', 'organization', 'members.user', 'tags', 'teams'],
+							relations: [
+								'organizationContact',
+								'organization',
+								'members.user',
+								'tags',
+								'teams'
+							],
 						}
 					},
 				]

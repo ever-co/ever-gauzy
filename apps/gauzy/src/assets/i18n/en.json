@@ -3596,7 +3596,8 @@
 				"ADD_PROJECT": "Project '{{ name }}' was saved",
 				"REMOVE_PROJECT": "Project '{{ name }}' was removed",
 				"INVALID_PROJECT_NAME": "Please fill in the name of your project",
-				"VISIBILITY": "Now project is {{ name }} "
+				"VISIBILITY": "Now project is {{ name }} ",
+				"SYNC_REPOSITORY": "Repository '{{ repository }}' sync with '{{ project }}'"
 			},
 			"EDIT_ORGANIZATIONS_TEAM": {
 				"ADD_NEW_TEAM": "Team '{{ name }}' was added",
