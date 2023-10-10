@@ -90,8 +90,11 @@ export interface IIntegrationFilter {
 	filter: string;
 }
 
-export interface IIntegrationMapSyncRepository extends IBasePerTenantAndOrganizationEntityModel {
+export interface IIntegrationMapSyncRepository extends IIntegrationSyncedRepositoryFindInput {
 	repository: IGithubRepository;
+}
+
+export interface IIntegrationSyncedRepositoryFindInput extends IBasePerTenantAndOrganizationEntityModel {
 	integrationId: IIntegrationTenant['id'];
 	gauzyId: string;
 	entity: IntegrationEntity;

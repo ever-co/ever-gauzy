@@ -1,5 +1,5 @@
-import { Body, Controller, Post, UseGuards } from '@nestjs/common';
-import { IIntegrationMap, IIntegrationMapSyncRepository, PermissionsEnum } from '@gauzy/contracts';
+import { Body, Controller, Get, Post, Query, UseGuards } from '@nestjs/common';
+import { IIntegrationMap, IIntegrationMapSyncRepository, IIntegrationSyncedRepositoryFindInput, PermissionsEnum } from '@gauzy/contracts';
 import { Permissions } from './../shared/decorators';
 import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
 import { IntegrationMapService } from './integration-map.service';
@@ -27,6 +27,24 @@ export class IntegrationMapController {
 		} catch (error) {
 			// Handle errors, e.g., return an error response.
 			throw new Error('Failed to sync GitHub repository');
+		}
+	}
+
+	/**
+	 * GET endpoint to sync a GitHub repository based on query parameters.
+	 *
+	 * @param options - Query parameters for the sync operation
+	 * @returns A Promise of type IIntegrationMap or false if not found
+	 */
+	@Get('github/repository-sync')
+	async getSyncedGithubRepository(
+		@Query() options: IIntegrationSyncedRepositoryFindInput,
+	): Promise<IIntegrationMap | boolean> {
+		try {
+			return await this._integrationMapService.getSyncedGithubRepository(options);
+		} catch (error) {
+			// Handle errors, e.g., return an error response.
+			throw new Error('Failed to get synced GitHub repository');
 		}
 	}
 }

@@ -19,6 +19,7 @@ import {
 	IGithubRepository,
 	IIntegrationMapSyncRepository,
 	IntegrationEntity,
+	IIntegrationMap
 } from '@gauzy/contracts';
 import { TranslateService } from '@ngx-translate/core';
 import { Router } from '@angular/router';
@@ -110,6 +111,17 @@ export class ProjectMutationComponent extends TranslationBaseComponent
 		});
 		form.get('teams').setValue([]);
 		return form;
+	}
+
+	/**
+	 * Represents an integration map or a boolean value.
+	 */
+	private _integrationMap: IIntegrationMap | boolean;
+	get integrationMap(): IIntegrationMap | boolean {
+		return this._integrationMap;
+	}
+	@Input() set integrationMap(value: IIntegrationMap | boolean) {
+		this._integrationMap = value;
 	}
 
 	/**
@@ -515,5 +527,14 @@ export class ProjectMutationComponent extends TranslationBaseComponent
 		} catch (error) {
 			this._errorHandler.handleError(error);
 		}
+	}
+
+	/**
+	 *
+	 * @param value
+	 * @returns
+	 */
+	parseInt = (value: string) => {
+		return parseInt(value);
 	}
 }

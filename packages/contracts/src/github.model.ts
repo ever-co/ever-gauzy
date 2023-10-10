@@ -19,7 +19,7 @@ export interface IOAuthAppInstallInput extends IGithubAppInstallInputCommon {
 
 // Represents a GitHub repository
 export interface IGithubRepository {
-    id: string;
+    id: number;
     node_id: string;
     name: string;
     full_name: string;
@@ -29,7 +29,7 @@ export interface IGithubRepository {
 
 // Represents a GitHub issue
 export interface IGithubIssue {
-    id: string;
+    id: number;
     node_id: string;
     number: string;
     title: string;
@@ -39,7 +39,7 @@ export interface IGithubIssue {
 
 // Represents a GitHub issue label
 export interface IGithubIssueLabel {
-    id: string;
+    id: number;
     node_id: string;
     url: string;
     name: string;

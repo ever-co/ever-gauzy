@@ -1,7 +1,8 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { IIntegrationMap, IIntegrationMapSyncRepository } from '@gauzy/contracts';
 import { Observable } from 'rxjs/internal/Observable';
+import { IIntegrationMap, IIntegrationMapSyncRepository, IIntegrationSyncedRepositoryFindInput } from '@gauzy/contracts';
+import { toParams } from '@gauzy/common-angular';
 import { API_PREFIX } from '../../constants';
 
 @Injectable({
@@ -21,5 +22,18 @@ export class IntegrationMapService {
     syncGithubRepository(input: IIntegrationMapSyncRepository): Observable<IIntegrationMap> {
         const url = `${API_PREFIX}/integration-map/github/repository-sync`;
         return this._http.post<IIntegrationMap>(url, input);
+    }
+
+    /**
+     * Get synced GitHub repositories based on input parameters
+     *
+     * @param input - Input parameters for the query
+     * @returns An Observable of type IIntegrationMap
+     */
+    getSyncedGithubRepository(input: IIntegrationSyncedRepositoryFindInput): Observable<IIntegrationMap> {
+        const url = `${API_PREFIX}/integration-map/github/repository-sync`;
+        return this._http.get<IIntegrationMap>(url, {
+            params: toParams(input)
+        });
     }
 }

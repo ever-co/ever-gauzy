@@ -15,11 +15,11 @@ export class IntegrationResolver implements Resolve<Observable<IIntegrationTenan
      */
     constructor(
         private readonly _router: Router,
-        private readonly _integrationsService: IntegrationsService,
         private readonly _store: Store,
+        private readonly _integrationsService: IntegrationsService,
     ) { }
 
-    /**
+    /**s
     * Resolves project details before activating a specific route.
     * @param route The activated route snapshot.
     * @returns An observable containing integration details or an empty observable.

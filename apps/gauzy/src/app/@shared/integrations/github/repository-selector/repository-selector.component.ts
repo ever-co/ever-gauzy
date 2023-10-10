@@ -23,10 +23,8 @@ import { ErrorHandlingService, GithubService, Store } from './../../../../@core/
 export class RepositorySelectorComponent implements AfterViewInit, OnInit, OnDestroy {
 
 	private subject$: Subject<IIntegrationTenant> = new Subject<IIntegrationTenant>();
-
 	public organization: IOrganization = this._store.selectedOrganization;
 	public loading: boolean;
-	/** */
 	public repositories: IGithubRepository[] = [];
 	public repositories$: Observable<IGithubRepository[]>;
 
@@ -41,6 +39,23 @@ export class RepositorySelectorComponent implements AfterViewInit, OnInit, OnDes
 		if (value) {
 			this._integration = value;
 			this.subject$.next(value); // Emit the updated value to observers
+		}
+	}
+
+	// Implement your onChange and onTouched methods
+	onChange: (value: IGithubRepository['id']) => void = () => { };
+	onTouched: (value: IGithubRepository['id']) => void = () => { };
+
+	// Define the getter and setter for the repository
+	private _sourceId: IGithubRepository['id'];
+	get sourceId(): IGithubRepository['id'] {
+		return this._sourceId;
+	}
+	@Input() set sourceId(val: IGithubRepository['id']) {
+		if (val) {
+			this._sourceId = val;
+			this.onChange(val);
+			this.onTouched(val);
 		}
 	}
 
@@ -107,7 +122,24 @@ export class RepositorySelectorComponent implements AfterViewInit, OnInit, OnDes
 	 * @param repository - The GitHub repository to select.
 	 */
 	public selectRepository(repository: IGithubRepository) {
-		this.onChanged.emit(repository);
+		if (repository) {
+			this.onChanged.emit(repository);
+		}
+	}
+
+	// Define the writeValue method required for ControlValueAccessor
+	public writeValue(value: IGithubRepository['id']) {
+		this._sourceId = value;
+	}
+
+	// Define the registerOnChange method required for ControlValueAccessor
+	public registerOnChange(fn: (value: IGithubRepository['id']) => void) {
+		this.onChange = fn;
+	}
+
+	// Define the registerOnTouched method required for ControlValueAccessor
+	public registerOnTouched(fn: () => void) {
+		this.onTouched = fn;
 	}
 
 	ngOnDestroy(): void { }
