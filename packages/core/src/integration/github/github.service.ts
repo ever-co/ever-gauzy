@@ -2,14 +2,17 @@ import { BadRequestException, HttpException, HttpStatus, Injectable, Logger } fr
 import { CommandBus } from '@nestjs/cqrs';
 import { HttpService } from '@nestjs/axios';
 import { firstValueFrom, switchMap } from 'rxjs';
+import { OctokitService } from '@gauzy/integration-github';
 import { environment } from '@gauzy/config';
 import {
 	GithubPropertyMapEnum,
 	IGithubAppInstallInput,
+	IGithubIssue,
+	IGithubIssueLabel,
+	IGithubRepository,
 	IGithubSyncIssuePayload,
 	IIntegrationEntitySetting,
 	IIntegrationEntitySettingTied,
-	IIntegrationMap,
 	IIntegrationTenant,
 	IOAuthAppInstallInput,
 	IntegrationEntity,
@@ -17,12 +20,14 @@ import {
 	TaskStatusEnum
 } from '@gauzy/contracts';
 import { RequestContext } from 'core/context';
+import { arrayToObject } from 'core/utils';
+import { IntegrationEntitySetting } from 'core/entities/internal';
 import { IntegrationTenantFirstOrCreateCommand } from 'integration-tenant/commands';
+import { IntegrationTenantService } from 'integration-tenant/integration-tenant.service';
+import { IntegrationMapSyncIssueCommand } from 'integration-map/commands';
 import { IntegrationService } from 'integration/integration.service';
 import { GITHUB_ACCESS_TOKEN_URL } from './github.config';
-import { DEFAULT_ENTITY_SETTINGS, PROJECT_TIED_ENTITIES } from './github-entity-settings';
-import { IntegrationMapSyncIssueCommand } from 'integration-map/commands';
-import { IntegrationTenantService } from 'integration-tenant/integration-tenant.service';
+import { DEFAULT_ENTITY_SETTINGS, ISSUE_TIED_ENTITIES } from './github-entity-settings';
 const { github } = environment;
 
 @Injectable()
@@ -32,6 +37,7 @@ export class GithubService {
 	constructor(
 		private readonly _http: HttpService,
 		private readonly _commandBus: CommandBus,
+		private readonly _octokitService: OctokitService,
 		private readonly _integrationService: IntegrationService,
 		private readonly _integrationTenantService: IntegrationTenantService
 	) { }
@@ -68,14 +74,14 @@ export class GithubService {
 				}
 			});
 
-			const tiedEntities = PROJECT_TIED_ENTITIES.map(entity => ({
+			const tiedEntities = ISSUE_TIED_ENTITIES.map(entity => ({
 				...entity,
 				organizationId,
 				tenantId
 			}));
 
 			const entitySettings = DEFAULT_ENTITY_SETTINGS.map((settingEntity) => {
-				if (settingEntity.entity === IntegrationEntity.PROJECT) {
+				if (settingEntity.entity === IntegrationEntity.ISSUE) {
 					return {
 						...settingEntity,
 						tiedEntities
@@ -218,24 +224,27 @@ export class GithubService {
 	}
 
 	/**
-	 * Synchronize GitHub issues and labels.
+	 * Synchronize GitHub issues and labels based on entity settings.
 	 *
+	 * @param integrationId - The ID of the integration tenant.
 	 * @param input - The payload containing information required for synchronization.
-	 * @throws {Error} Throws an error if synchronization fails.
+	 * @throws {HttpException} Throws an HTTP exception if synchronization fails.
 	 */
 	public async syncGithubIssuesAndLabels(
 		integrationId: IIntegrationTenant['id'],
 		input: IGithubSyncIssuePayload
 	): Promise<any> {
 		try {
-			const { organizationId, issues = [], visibility } = input;
+			const { organizationId, issues = [], repository } = input;
 			const tenantId = RequestContext.currentTenantId() || input.tenantId;
 
 			// Retrieve integration settings tied to the specified organization
 			const { entitySettings } = await this._integrationTenantService.findOneByIdString(integrationId, {
 				where: {
 					tenantId,
-					organizationId
+					organizationId,
+					isActive: true,
+					isArchived: false
 				},
 				relations: {
 					entitySettings: {
@@ -244,47 +253,118 @@ export class GithubService {
 				}
 			});
 
-			// Synchronize data based on entity settings
-			return await Promise.all(
-				entitySettings.map(async (setting) => {
-					switch (setting.entity) {
-						case IntegrationEntity.PROJECT:
-							/**
-							 * Issues Sync
-							 */
-							const issueSetting: IIntegrationEntitySetting = setting.tiedEntities.find(
-								({ entity }: IIntegrationEntitySettingTied) => entity === IntegrationEntity.ISSUE
-							);
-							if (!!issueSetting && issueSetting.sync) {
-								return issues.map(
-									async ({ sourceId, number, title, state, body }) => {
-										return await this._commandBus.execute(
-											new IntegrationMapSyncIssueCommand({
-												input: {
-													title,
-													number,
-													description: body,
-													status: state as TaskStatusEnum,
-													public: visibility === 'private' ? false : true,
+			try {
+				// Synchronize data based on entity settings
+				await Promise.all(
+					entitySettings.map(async (entitySetting: IntegrationEntitySetting) => {
+						switch (entitySetting.entity) {
+							case IntegrationEntity.ISSUE:
+								/** Issues Sync */
+								const issueSetting: IIntegrationEntitySetting = entitySetting;
+								if (!!issueSetting.sync) {
+									return issues.map(
+										async ({ sourceId, number, title, state, body }) => {
+											/** */
+											try {
+												// Check for label synchronization settings
+												const labelSetting: IIntegrationEntitySetting = entitySetting.tiedEntities.find(
+													({ entity }: IIntegrationEntitySettingTied) => entity === IntegrationEntity.LABEL
+												);
+												if (!!labelSetting && labelSetting.sync) {
+													const issue_number = number;
+													/** Sync Github Issue Labels */
+													await this.syncGithubLabelsByIssueNumber({ integrationId, repository, issue_number });
+												}
+											} catch (error) {
+												console.error('Failed to fetch GitHub labels for the repository issue:', error.message);
+											}
+
+											/** */
+											return await this._commandBus.execute(
+												new IntegrationMapSyncIssueCommand({
+													input: {
+														title,
+														number,
+														description: body,
+														status: state as TaskStatusEnum,
+														public: repository.visibility === 'private' ? false : true,
+														organizationId,
+														tenantId,
+													},
+													sourceId,
+													integrationId,
 													organizationId,
-													tenantId,
-												},
-												sourceId,
-												integrationId,
-												organizationId,
-												tenantId
-											})
-										);
-									}
-								)
-							}
-					}
-				})
-			);
+													tenantId
+												})
+											);
+										}
+									)
+								}
+						}
+					})
+				);
+				return true;
+			} catch (error) {
+				console.log('Error while syncing github issues: ', error.message);
+				return false;
+			}
 		} catch (error) {
 			// Handle errors gracefully, for example, log them
 			console.error('Error in syncGithubIssuesAndLabels:', error);
 			throw new HttpException({ message: 'GitHub synchronization failed', error }, HttpStatus.BAD_REQUEST);
+		}
+	}
+
+	/**
+	 * Synchronize GitHub labels for a specific repository issue based on integration settings.
+	 *
+	 * @param integrationId - The ID of the GitHub integration.
+	 * @param repository - Information about the GitHub repository for which labels are synchronized.
+	 * @param issue_number - The issue number for which labels are to be synchronized.
+	 * @returns A promise that resolves to the result of the label synchronization process.
+	 */
+	private async syncGithubLabelsByIssueNumber({
+		integrationId,
+		repository,
+		issue_number
+	}: {
+		integrationId: IIntegrationTenant['id'],
+		repository: IGithubRepository,
+		issue_number: IGithubIssue['number']
+	}): Promise<any> {
+		try {
+			const integration = await this._integrationTenantService.findOneByIdString(integrationId, {
+				where: {
+					isActive: true,
+					isArchived: false
+				},
+				relations: {
+					settings: true
+				}
+			});
+			const settings = arrayToObject(integration.settings, 'settingsName', 'settingsValue');
+			const { name: repo, owner } = repository;
+
+			// Check for integration settings and installation ID
+			if (settings && settings.installation_id) {
+				const installation_id = settings.installation_id;
+				/** Get Github Labels */
+				const response = await this._octokitService.getLabelsByIssueNumber(installation_id, {
+					owner: owner.login,
+					repo,
+					issue_number
+				});
+				const labels = response.data;
+				/** Sync Labels From Here */
+				return labels.map(
+					async (label: IGithubIssueLabel) => {
+						const { id, name, color, description } = label;
+						console.log({ id, name, color, description }, label.default);
+					}
+				);
+			}
+		} catch (error) {
+			console.error('Failed to fetch GitHub labels for the repository issue:', error.message);
 		}
 	}
 }

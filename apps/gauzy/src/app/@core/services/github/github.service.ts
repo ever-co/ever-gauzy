@@ -79,19 +79,37 @@ export class GithubService {
      */
     public syncIssuesAndLabels(
         integrationId: IIntegrationTenant['id'],
+        repository: IGithubRepository,
         options: {
             organizationId: IOrganization['id'];
             tenantId: IOrganization['tenantId'];
             issues: IGithubIssue[];
-            visibility: IGithubRepository['visibility'];
-        }
+        },
     ): Observable<any> {
         return this._http.post(`${API_PREFIX}/integration/github/${integrationId}/sync-issues`, {
+            repository: this._mapRepositoryPayload(repository),
             issues: this._mapIssuePayload(options.issues),
             organizationId: options.organizationId,
-            tenantId: options.tenantId,
-            visibility: options.visibility
+            tenantId: options.tenantId
         });
+    }
+
+    /**
+     * Maps a GitHub repository's data to a custom payload object.
+     *
+     * @param data - The GitHub repository data to map.
+     * @returns A custom payload object with selected properties.
+     */
+    private _mapRepositoryPayload(data: IGithubRepository): any {
+        const { id, name, owner, visibility } = data;
+        return {
+            id,
+            name,
+            owner: {
+                login: owner.login
+            },
+            visibility
+        };
     }
 
     /**

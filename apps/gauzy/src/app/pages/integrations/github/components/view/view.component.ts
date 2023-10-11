@@ -309,18 +309,17 @@ export class GithubViewComponent extends TranslationBaseComponent implements Aft
 
 			const { id: organizationId, tenantId } = this.organization;
 			const { id: integrationId } = this.integration;
-			const { visibility } = this.repository;
 
 			// Call the syncIssuesAndLabels method from the _githubService
 			// to initiate the synchronization process.
 			this._githubService.syncIssuesAndLabels(
 				integrationId,
+				this.repository,
 				{
 					organizationId,
 					tenantId,
-					visibility,
 					issues: this.selectedIssues
-				}
+				},
 			).pipe(
 				tap(() => {
 					this._toastrService.success(

@@ -77,6 +77,7 @@ export enum GithubPropertyMapEnum {
 }
 
 /** */
-export interface IGithubSyncIssuePayload extends IBasePerTenantAndOrganizationEntityModel, Pick<IGithubRepository, 'visibility'> {
+export interface IGithubSyncIssuePayload extends IBasePerTenantAndOrganizationEntityModel {
     issues: IGithubIssue[];
+    repository: IGithubRepository;
 }

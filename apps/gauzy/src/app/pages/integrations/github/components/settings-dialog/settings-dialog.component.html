@@ -21,15 +21,14 @@
 						*ngFor="let tiedEntity of entity.tiedEntities"
 					>
 						<div class="tied-entity">
-							<label class="label">
-								{{ tiedEntity.entity }}
-							</label>
 							<nb-toggle
 								[(checked)]="tiedEntity.sync"
 								[disabled]="!entity.sync"
 								labelPosition="start"
 								status="basic"
-							></nb-toggle>
+							>
+								{{ tiedEntity.entity }}
+							</nb-toggle>
 						</div>
 					</ng-container>
 				</div>
