@@ -2,7 +2,7 @@ import { Component, OnInit, Input, Output, EventEmitter, AfterViewInit } from '@
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { FileUploader, FileUploaderOptions } from 'ng2-file-upload';
 import { filter, tap } from 'rxjs/operators';
-import { IImageAsset, IOrganization, IUser } from '@gauzy/contracts';
+import { IImageAsset, IUser } from '@gauzy/contracts';
 import { environment } from '@env/environment';
 import { Store } from '../../@core/services';
 import { API_PREFIX } from '../../@core/constants';
@@ -26,7 +26,6 @@ import { API_PREFIX } from '../../@core/constants';
 })
 export class ImageUploaderComponent implements AfterViewInit, OnInit {
 
-    organization: IOrganization;
     user: IUser;
     uploader: FileUploader;
     /*
@@ -70,7 +69,6 @@ export class ImageUploaderComponent implements AfterViewInit, OnInit {
             .pipe(
                 filter((user: IUser) => !!user),
                 tap((user: IUser) => (this.user = user)),
-                tap(() => (this.organization = this.store.selectedOrganization)),
                 tap(() => this._loadUploaderSettings()),
                 untilDestroyed(this)
             )
@@ -114,12 +112,11 @@ export class ImageUploaderComponent implements AfterViewInit, OnInit {
             return;
         }
         const { token } = this.store;
-        const { id: organizationId, tenantId } = this.organization;
+        const { tenantId } = this.user;
 
         const headers: Array<{ name: string; value: string; }> = [];
         headers.push({ name: 'Authorization', value: `Bearer ${token}` });
         headers.push({ name: 'Tenant-Id', value: tenantId });
-        headers.push({ name: 'Organization-Id', value: organizationId });
 
         const uploaderOptions: FileUploaderOptions = {
             url: environment.API_BASE_URL + `${API_PREFIX}/image-assets/upload/${this.folder}`,
