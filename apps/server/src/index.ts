@@ -286,7 +286,8 @@ const getEnvApi = () => {
 	const config = serverConfig.setting;
 	serverConfig.update();
 	const addsConfig = LocalStore.getAdditionalConfig();
-	const provider = config.db;
+	const provider =
+		config.db === 'better-sqlite' ? 'better-sqlite3' : config.db;
 	return {
 		IS_ELECTRON: 'true',
 		DB_PATH: sqlite3filename,

@@ -6,6 +6,7 @@ import { PostgresProvider } from './postgres-provider';
 import { MysqlProvider } from './mysql-provider';
 import { LocalStore } from '../../desktop-store';
 import { AppError } from '../../error-handler';
+import { BetterSqliteProvider } from './better-sqlite-provider';
 
 export class ProviderFactory implements IDatabaseProvider {
 	private _dbContext: DatabaseProviderContext;
@@ -34,15 +35,23 @@ export class ProviderFactory implements IDatabaseProvider {
 			case 'mysql':
 				this._dbContext.provider = MysqlProvider.instance;
 				break;
-			default:
+			case 'sqlite':
 				this._dbContext.provider = SqliteProvider.instance;
+				break;
+			default:
+				this._dbContext.provider = BetterSqliteProvider.instance;
 				break;
 		}
 	}
 
 	public get dialect(): string {
-		const cfg = LocalStore.getApplicationConfig().config;
-		return cfg && cfg.db ? cfg.db : 'sqlite';
+		let cfg = LocalStore.getApplicationConfig().config;
+		if (!cfg?.db) {
+			// Set default database
+			LocalStore.updateAdditionalSetting({ db: 'better-sqlite' });
+			cfg = LocalStore.getApplicationConfig().config;
+		}
+		return cfg?.db;
 	}
 
 	public async migrate(): Promise<void> {
@@ -83,5 +92,46 @@ export class ProviderFactory implements IDatabaseProvider {
 		} catch (error) {
 			throw new AppError('PRKILL', error);
 		}
+	}
+
+	public async check(arg: any): Promise<string> {
+		const dialect = arg.db;
+		const connection = {
+			host: arg[dialect]?.dbHost,
+			user: arg[dialect]?.dbUsername,
+			password: arg[dialect]?.dbPassword,
+			database: arg[dialect]?.dbName,
+			port: arg[dialect]?.dbPort,
+		};
+		let databaseOptions: Knex.Config = {};
+		let driver = '';
+		switch (dialect) {
+			case 'postgres':
+				driver = 'PostgresSQL';
+				databaseOptions = {
+					client: 'pg',
+					connection,
+				};
+				break;
+			case 'mysql':
+				driver = 'MySQL';
+				databaseOptions = {
+					client: 'mysql',
+					connection,
+				};
+				break;
+			case 'sqlite':
+				driver = 'SQLite';
+				databaseOptions = SqliteProvider.instance.config;
+				break;
+			default:
+				driver = 'Better SQLite 3';
+				databaseOptions = BetterSqliteProvider.instance.config;
+				break;
+		}
+		const instance = require('knex')(databaseOptions);
+		await instance.raw('SELECT 1');
+		await instance.destroy();
+		return driver;
 	}
 }

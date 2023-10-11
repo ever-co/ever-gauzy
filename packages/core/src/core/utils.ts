@@ -78,7 +78,8 @@ export function unixTimestampToDate(
 export function convertToDatetime(datetime) {
 	if (moment(new Date(datetime)).isValid()) {
 		const dbType = getConfig().dbConnectionOptions.type || 'sqlite';
-		if (dbType === 'sqlite') {
+		const allowedDbTypes = ['sqlite', 'better-sqlite3'];
+		if (allowedDbTypes.includes(dbType)) {
 			return moment(new Date(datetime)).format('YYYY-MM-DD HH:mm:ss');
 		} else {
 			return moment(new Date(datetime)).toDate();
@@ -132,7 +133,7 @@ export function getDateRange(
 	}
 
 	const dbType = getConfig().dbConnectionOptions.type || 'sqlite';
-	if (dbType === 'sqlite') {
+	if (['sqlite', 'better-sqlite3'].includes(dbType)) {
 		start = start.format('YYYY-MM-DD HH:mm:ss');
 		end = end.format('YYYY-MM-DD HH:mm:ss');
 	} else {
@@ -224,7 +225,8 @@ export function getDateRangeFormat(
 	}
 
 	const dbType = getConfig().dbConnectionOptions.type || 'sqlite';
-	if (dbType === 'sqlite') {
+	const allowedDbTypes = ['sqlite', 'better-sqlite3'];
+	if (allowedDbTypes.includes(dbType)) {
 		return {
 			start: start.format('YYYY-MM-DD HH:mm:ss'),
 			end: end.format('YYYY-MM-DD HH:mm:ss'),

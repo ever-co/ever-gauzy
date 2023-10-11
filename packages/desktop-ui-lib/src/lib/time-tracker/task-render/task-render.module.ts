@@ -52,7 +52,8 @@ import { TaskDetailComponent } from './task-detail/task-detail.component';
 		TranslateModule,
 		NbPopoverModule,
 		NbBadgeModule,
-		NbCardModule
+		NbCardModule,
 	],
+	exports: [ReplacePipe],
 })
 export class TaskRenderModule {}

@@ -4357,7 +4357,8 @@
 			"EMAIL_REQUIRED": "Wymagany jest adres e-mail!",
 			"EMAIL_REAL_REQUIRED": "Email powinien być prawdziwy!",
 			"PASSWORD_REQUIRED": "Hasło jest wymagane!",
-			"PASSWORD_SHOULD_CONTAIN": "Hasło powinno zawierać od {{ minLength }} do {{ maxLength }} znaków!"
+			"PASSWORD_SHOULD_CONTAIN": "Hasło powinno zawierać od {{ minLength }} do {{ maxLength }} znaków!",
+			"PASSWORD_NO_SPACE_EDGES": "Hasła nie mogą zaczynać się ani kończyć spacjami."
 		},
 		"DEMO": {
 			"TITLE": "Logowanie automatyczne do kont demo",

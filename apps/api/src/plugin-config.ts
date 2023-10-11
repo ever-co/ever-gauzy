@@ -129,5 +129,26 @@ function getDbConfig(): DataSourceOptions {
 				logger: 'file', // Removes console logging, instead logs all queries in a file ormlogs.log
 				synchronize: process.env.DB_SYNCHRONIZE === 'true' ? true : false, // We are using migrations, synchronize should be set to false.
 			};
+		case 'better-sqlite3':
+			const betterSqlitePath =
+				process.env.DB_PATH ||
+				path.join(
+					path.resolve('.', ...['apps', 'api', 'data']),
+					'gauzy.sqlite3'
+				);
+
+			return {
+				type: dbType,
+				database: betterSqlitePath,
+				logging: 'all',
+				logger: 'file', // Removes console logging, instead logs all queries in a file ormlogs.log
+				synchronize: process.env.DB_SYNCHRONIZE === 'true', // We are using migrations, synchronize should be set to false.
+				prepareDatabase: (db) => {
+					if (!process.env.IS_ELECTRON) {
+						// Enhance performance
+						db.pragma('journal_mode = WAL');
+					}
+				}
+			};
 	}
 }

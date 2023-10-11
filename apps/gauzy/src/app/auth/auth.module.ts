@@ -29,6 +29,7 @@ import { NgxResetPasswordComponent } from "./reset-password/reset-password.compo
 import { NgxFaqModule } from '../@shared/faq';
 import { ConfirmEmailModule } from './confirm-email';
 import { ElectronService } from '../@core/auth/electron.service';
+import { SharedModule } from '../@shared/shared.module';
 
 @NgModule({
 	imports: [
@@ -48,10 +49,11 @@ import { ElectronService } from '../@core/auth/electron.service';
 		NbFormFieldModule,
 		NbSelectModule,
 		NbLayoutModule,
-        ThemeModule,
-        ThemeSelectorModule,
+		ThemeModule,
+		ThemeSelectorModule,
 		NgxFaqModule,
-		ConfirmEmailModule
+		ConfirmEmailModule,
+		SharedModule,
 	],
 	declarations: [
 		NgxLoginComponent,
@@ -61,8 +63,8 @@ import { ElectronService } from '../@core/auth/electron.service';
 		NgxRegisterSideSingleFeatureComponent,
 		NgxAuthComponent,
 		NgxRegisterComponent,
-		NgxResetPasswordComponent
+		NgxResetPasswordComponent,
 	],
-	providers: [ElectronService]
+	providers: [ElectronService],
 })
 export class NgxAuthModule {}

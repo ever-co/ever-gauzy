@@ -393,7 +393,9 @@
 		"Desterrro",
 		"Chetan",
 		"chetan",
-		"Yostorono"
+		"Yostorono",
+		"sarif",
+		"SARIF"
 	],
 	"useGitignore": true,
 	"ignorePaths": [

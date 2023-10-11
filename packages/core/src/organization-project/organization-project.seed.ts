@@ -179,6 +179,7 @@ export async function seedProjectMembersCount(
 	dataSource: DataSource,
 	tenants: ITenant[]
 ) {
+	const isSqlite = ['sqlite', 'better-sqlite3'].includes(dataSource.options.type);
 	/**
 	 * GET all tenants in the system
 	 */
@@ -188,9 +189,12 @@ export async function seedProjectMembersCount(
 		/**
 		 * GET all tenant projects for specific tenant
 		 */
-		const projects = await dataSource.manager.query(`SELECT * FROM "organization_project" WHERE "organization_project"."tenantId" = $1`, [
-			tenantId
-		]);
+		const projects = await dataSource.manager.query(
+			`SELECT * FROM "organization_project" WHERE "organization_project"."tenantId" = ${
+				isSqlite ? '?' : '$1'
+			}`,
+			[tenantId]
+		);
 
 		for await (const project of projects) {
 
@@ -208,12 +212,17 @@ export async function seedProjectMembersCount(
 				INNER JOIN
 					"organization_project" ON "organization_project"."id"="organization_project_employee"."organizationProjectId"
 				WHERE
-					"organization_project_employee"."organizationProjectId" = $1
+					"organization_project_employee"."organizationProjectId" = ${isSqlite ? '?' : '$1'}
 			`, [projectId]);
 
 			const count = members['count'];
 
-			await dataSource.manager.query(`UPDATE "organization_project" SET "membersCount" = $1 WHERE "id" = $2`, [count, projectId]);
+			await dataSource.manager.query(
+				`UPDATE "organization_project" SET "membersCount" = ${
+					isSqlite ? '?' : '$1'
+				} WHERE "id" = ${isSqlite ? '?' : '$2'}`,
+				[count, projectId]
+			);
 		}
 	}
 }

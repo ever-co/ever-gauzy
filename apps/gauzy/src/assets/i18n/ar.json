@@ -4357,7 +4357,8 @@
 			"EMAIL_REQUIRED": "البريد الإلكتروني مطلوب!",
 			"EMAIL_REAL_REQUIRED": "يجب أن يكون البريد الإلكتروني الحقيقي!",
 			"PASSWORD_REQUIRED": "كلمة المرور مطلوبة!",
-			"PASSWORD_SHOULD_CONTAIN": "يجب أن تحتوي كلمة المرور على عدد الأحرف المسموح به من {{ minLength }} إلى {{ maxLength }}!"
+			"PASSWORD_SHOULD_CONTAIN": "يجب أن تحتوي كلمة المرور على عدد الأحرف المسموح به من {{ minLength }} إلى {{ maxLength }}!",
+			"PASSWORD_NO_SPACE_EDGES": "يجب ألا تبدأ كلمات المرور أو تنتهي بمسافات."
 		},
 		"DEMO": {
 			"TITLE": "تسجيل الدخول تلقائيًا إلى حسابات التجريبية",

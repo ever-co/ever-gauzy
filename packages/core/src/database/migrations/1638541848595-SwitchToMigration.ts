@@ -4,7 +4,7 @@ export class SwitchToMigration1638541848595 implements MigrationInterface {
     name = 'SwitchToMigration1638541848595'
 
     public async up(queryRunner: QueryRunner): Promise<void> {
-        if (queryRunner.connection.options.type === 'sqlite') {
+        if (['sqlite', 'better-sqlite3'].includes(queryRunner.connection.options.type)) {
             await this.sqliteUpQueryRunner(queryRunner);
         } else {
             await this.postgresUpQueryRunner(queryRunner);
@@ -12,7 +12,7 @@ export class SwitchToMigration1638541848595 implements MigrationInterface {
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
-        if (queryRunner.connection.options.type === 'sqlite') {
+        if (['sqlite', 'better-sqlite3'].includes(queryRunner.connection.options.type)) {
             await this.sqliteDownQueryRunner(queryRunner);
         } else {
             await this.postgresDownQueryRunner(queryRunner);
@@ -21,8 +21,8 @@ export class SwitchToMigration1638541848595 implements MigrationInterface {
 
     /**
      * PostgresDB Up Migration
-     * 
-     * @param queryRunner 
+     *
+     * @param queryRunner
      */
     private async postgresUpQueryRunner(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(`CREATE EXTENSION IF NOT EXISTS "uuid-ossp"`);
@@ -942,11 +942,11 @@ export class SwitchToMigration1638541848595 implements MigrationInterface {
         await queryRunner.query(`ALTER TABLE IF EXISTS "employee" DROP CONSTRAINT IF EXISTS "FK_1c0c1370ecd98040259625e17e2"`);
         await queryRunner.query(`ALTER TABLE "employee" ADD CONSTRAINT "FK_1c0c1370ecd98040259625e17e2" FOREIGN KEY ("contactId") REFERENCES "contact"("id") ON DELETE SET NULL ON UPDATE NO ACTION`);
         await queryRunner.query(`ALTER TABLE IF EXISTS "employee" DROP CONSTRAINT IF EXISTS "FK_5e719204dcafa8d6b2ecdeda130"`);
-        await queryRunner.query(`ALTER TABLE "employee" ADD CONSTRAINT "FK_5e719204dcafa8d6b2ecdeda130" FOREIGN KEY ("organizationPositionId") REFERENCES "organization_position"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`);        
+        await queryRunner.query(`ALTER TABLE "employee" ADD CONSTRAINT "FK_5e719204dcafa8d6b2ecdeda130" FOREIGN KEY ("organizationPositionId") REFERENCES "organization_position"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`);
         await queryRunner.query(`ALTER TABLE IF EXISTS "equipment_sharing_policy" DROP CONSTRAINT IF EXISTS "FK_5443ca8ed830626656d8cfecef7"`);
         await queryRunner.query(`ALTER TABLE "equipment_sharing_policy" ADD CONSTRAINT "FK_5443ca8ed830626656d8cfecef7" FOREIGN KEY ("tenantId") REFERENCES "tenant"("id") ON DELETE CASCADE ON UPDATE NO ACTION`);
         await queryRunner.query(`ALTER TABLE IF EXISTS "equipment_sharing_policy" DROP CONSTRAINT IF EXISTS "FK_5311a833ff255881454bd5b3b58"`);
-        await queryRunner.query(`ALTER TABLE "equipment_sharing_policy" ADD CONSTRAINT "FK_5311a833ff255881454bd5b3b58" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE`);        
+        await queryRunner.query(`ALTER TABLE "equipment_sharing_policy" ADD CONSTRAINT "FK_5311a833ff255881454bd5b3b58" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE`);
         await queryRunner.query(`ALTER TABLE IF EXISTS "equipment_sharing" DROP CONSTRAINT IF EXISTS "FK_fa525e61fb3d8d9efec0f364a4b"`);
         await queryRunner.query(`ALTER TABLE "equipment_sharing" ADD CONSTRAINT "FK_fa525e61fb3d8d9efec0f364a4b" FOREIGN KEY ("tenantId") REFERENCES "tenant"("id") ON DELETE CASCADE ON UPDATE NO ACTION`);
         await queryRunner.query(`ALTER TABLE IF EXISTS "equipment_sharing" DROP CONSTRAINT IF EXISTS "FK_ea9254be07ae4a8604f0aaab196"`);
@@ -1482,7 +1482,7 @@ export class SwitchToMigration1638541848595 implements MigrationInterface {
         await queryRunner.query(`ALTER TABLE IF EXISTS "warehouse" DROP CONSTRAINT IF EXISTS "FK_f502dc6d9802306f9d1584932b8"`);
         await queryRunner.query(`ALTER TABLE IF EXISTS "warehouse" ADD CONSTRAINT "FK_f502dc6d9802306f9d1584932b8" FOREIGN KEY ("logoId") REFERENCES "image_asset"("id") ON DELETE SET NULL ON UPDATE NO ACTION`);
         await queryRunner.query(`ALTER TABLE IF EXISTS "warehouse" DROP CONSTRAINT IF EXISTS "FK_84594016a98da8b87e0f51cd931"`);
-        await queryRunner.query(`ALTER TABLE IF EXISTS "warehouse" ADD CONSTRAINT "FK_84594016a98da8b87e0f51cd931" FOREIGN KEY ("contactId") REFERENCES "contact"("id") ON DELETE CASCADE ON UPDATE NO ACTION`);        
+        await queryRunner.query(`ALTER TABLE IF EXISTS "warehouse" ADD CONSTRAINT "FK_84594016a98da8b87e0f51cd931" FOREIGN KEY ("contactId") REFERENCES "contact"("id") ON DELETE CASCADE ON UPDATE NO ACTION`);
         await queryRunner.query(`ALTER TABLE IF EXISTS "warehouse_product_variant" DROP CONSTRAINT IF EXISTS "FK_a1c4a97b928b547c3041d3ac1f6"`);
         await queryRunner.query(`ALTER TABLE IF EXISTS "warehouse_product_variant" ADD CONSTRAINT "FK_a1c4a97b928b547c3041d3ac1f6" FOREIGN KEY ("tenantId") REFERENCES "tenant"("id") ON DELETE CASCADE ON UPDATE NO ACTION`);
         await queryRunner.query(`ALTER TABLE IF EXISTS "warehouse_product_variant" DROP CONSTRAINT IF EXISTS "FK_a2f863689d1316810c41c1ea38e"`);
@@ -1705,8 +1705,8 @@ export class SwitchToMigration1638541848595 implements MigrationInterface {
 
     /**
      * PostgresDB Down Migration
-     * 
-     * @param queryRunner 
+     *
+     * @param queryRunner
      */
     private async postgresDownQueryRunner(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(`ALTER TABLE "tag_warehouse" DROP CONSTRAINT "FK_3557d514afd3794d40128e05423"`);
@@ -2905,8 +2905,8 @@ export class SwitchToMigration1638541848595 implements MigrationInterface {
 
     /**
      * SqliteDB Up Migration
-     * 
-     * @param queryRunner 
+     *
+     * @param queryRunner
      */
     private async sqliteUpQueryRunner(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(`CREATE TABLE IF NOT EXISTS "appointment_employee" ("id" varchar PRIMARY KEY NOT NULL, "createdAt" datetime NOT NULL DEFAULT (datetime('now')), "updatedAt" datetime NOT NULL DEFAULT (datetime('now')), "tenantId" varchar, "organizationId" varchar, "appointmentId" varchar NOT NULL, "employeeId" varchar NOT NULL, "employeeAppointmentId" varchar)`);
@@ -5360,8 +5360,8 @@ export class SwitchToMigration1638541848595 implements MigrationInterface {
 
      /**
      * SqliteDB Down Migration
-     * 
-     * @param queryRunner 
+     *
+     * @param queryRunner
      */
     private async sqliteDownQueryRunner(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(`DROP INDEX "IDX_3557d514afd3794d40128e0542"`);

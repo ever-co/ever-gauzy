@@ -4358,7 +4358,8 @@
 			"EMAIL_REQUIRED": "L'e-mail est requis !",
 			"EMAIL_REAL_REQUIRED": "L'email devrait être le vrai !",
 			"PASSWORD_REQUIRED": "Le mot de passe est requis !",
-			"PASSWORD_SHOULD_CONTAIN": "Le mot de passe doit contenir de {{ minLength }} à {{ maxLength }} caractères!"
+			"PASSWORD_SHOULD_CONTAIN": "Le mot de passe doit contenir de {{ minLength }} à {{ maxLength }} caractères!",
+			"PASSWORD_NO_SPACE_EDGES": "Les mots de passe ne doivent ni commencer ni se terminer par des espaces."
 		},
 		"DEMO": {
 			"TITLE": "Connectez-vous automatiquement aux comptes de démonstration",

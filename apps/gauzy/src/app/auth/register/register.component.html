@@ -84,6 +84,7 @@
           id="input-email"
           name="email"
           pattern=".+@.+..+"
+          noSpaceEdges
           placeholder="Email address"
           fullWidth
           fieldSize="large"
@@ -112,6 +113,7 @@
             [(ngModel)]="user.password"
             [type]="showPassword ? 'text' : 'password'"
             #password="ngModel"
+            [pattern]="passwordNoSpaceEdges"
             type="password"
             id="input-password"
             name="password"
@@ -148,6 +150,9 @@
           </a>
         </nb-form-field>
         <ng-container *ngIf="password.invalid && password.touched">
+          <p class="caption status-danger" *ngIf="password.errors?.pattern">
+            Passwords must not begin or end with spaces.
+          </p>
           <p class="caption status-danger" *ngIf="password.errors?.required">
             Password is required!
           </p>
@@ -293,4 +298,3 @@
     <ngx-register-side-features></ngx-register-side-features>
   </div>
 </section>
-

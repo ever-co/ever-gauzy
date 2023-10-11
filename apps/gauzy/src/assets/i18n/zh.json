@@ -4357,7 +4357,8 @@
 			"EMAIL_REQUIRED": "电子邮件是必需的！",
 			"EMAIL_REAL_REQUIRED": "电子邮件应该是真实的！",
 			"PASSWORD_REQUIRED": "密码是必需的！",
-			"PASSWORD_SHOULD_CONTAIN": "密码应包含{{ minLength }}到{{ maxLength }}个字符！"
+			"PASSWORD_SHOULD_CONTAIN": "密码应包含{{ minLength }}到{{ maxLength }}个字符！",
+			"PASSWORD_NO_SPACE_EDGES": "密码不得以空格开头或结尾。"
 		},
 		"DEMO": {
 			"TITLE": "自动登录到演示账户。",
