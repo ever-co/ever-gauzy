@@ -2083,7 +2083,8 @@
 			"ORG_TASK_VIEW": "Ansicht von Aufgaben",
 			"ORG_TASK_EDIT": "Aufgaben bearbeiten",
 			"ORG_TASK_DELETE": "Aufgaben löschen",
-			"ORG_TASK_SETTING": "Aufgabeeinstellungen"
+			"ORG_TASK_SETTING": "Aufgabeeinstellungen",
+			"SEE_LAST_LOG_OTHER_MEMBER": "Siehe Letztes Protokoll anderer Mitglieder"
 		},
 		"BILLING": "Rechnungsstellung",
 		"BUDGET": "Budget",

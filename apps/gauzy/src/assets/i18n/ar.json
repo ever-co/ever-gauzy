@@ -2083,7 +2083,8 @@
 			"ORG_TASK_VIEW": "عرض المهام",
 			"ORG_TASK_EDIT": "تحرير المهام",
 			"ORG_TASK_DELETE": "حذف المهام",
-			"ORG_TASK_SETTING": "إعدادات المهام"
+			"ORG_TASK_SETTING": "إعدادات المهام",
+			"SEE_LAST_LOG_OTHER_MEMBER": "انظر آخر سجل عضو آخر"
 		},
 		"BILLING": "الفوترة",
 		"BUDGET": "ميزانية",

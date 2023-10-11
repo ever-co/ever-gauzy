@@ -2042,7 +2042,8 @@
 			"ALLOW_MODIFY_TIME": "Allow Modify Time",
 			"ALLOW_MANUAL_TIME": "Allow Manual Time",
 			"DELETE_SCREENSHOTS": "Allow Delete Screenshot",
-			"ORG_TASK_SETTING": "Настройки на задачите"
+			"ORG_TASK_SETTING": "Настройки на задачите",
+			"SEE_LAST_LOG_OTHER_MEMBER": "Вижте последния член на регистъра"
 		},
 		"BILLING": "Billing",
 		"BUDGET": "Budget",

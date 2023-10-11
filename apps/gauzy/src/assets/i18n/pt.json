@@ -2083,7 +2083,8 @@
 			"ORG_TASK_VIEW": "Ver tarefas",
 			"ORG_TASK_EDIT": "Editar Tarefas",
 			"ORG_TASK_DELETE": "Excluir tarefas",
-			"ORG_TASK_SETTING": "Configurações da tarefa"
+			"ORG_TASK_SETTING": "Configurações da tarefa",
+			"SEE_LAST_LOG_OTHER_MEMBER": "Gade Dènye Log Lòt Manm"
 		},
 		"BILLING": "Faturamento",
 		"BUDGET": "Orçamento",

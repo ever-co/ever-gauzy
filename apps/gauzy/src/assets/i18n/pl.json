@@ -2083,7 +2083,8 @@
 			"ORG_TASK_VIEW": "Pokaż zadania",
 			"ORG_TASK_EDIT": "Edytuj zadania",
 			"ORG_TASK_DELETE": "Usuń zadania",
-			"ORG_TASK_SETTING": "Ustawienia zadania"
+			"ORG_TASK_SETTING": "Ustawienia zadania",
+			"SEE_LAST_LOG_OTHER_MEMBER": "Zobacz ostatni dziennik Inny członek"
 		},
 		"BILLING": "Rozliczenie / Faktury",
 		"BUDGET": "Budżet",

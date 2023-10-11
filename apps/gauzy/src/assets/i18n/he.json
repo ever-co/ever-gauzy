@@ -2042,7 +2042,8 @@
 			"ALLOW_MODIFY_TIME": "Allow Modify Time",
 			"ALLOW_MANUAL_TIME": "Allow Manual Time",
 			"DELETE_SCREENSHOTS": "Allow Delete Screenshot",
-			"ORG_TASK_SETTING": "Task Settings"
+			"ORG_TASK_SETTING": "Task Settings",
+			"SEE_LAST_LOG_OTHER_MEMBER": "ראה יומן אחרון חבר אחר"
 		},
 		"BILLING": "Billing",
 		"BUDGET": "Budget",
