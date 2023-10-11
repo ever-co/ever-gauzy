@@ -88,7 +88,6 @@ export class GithubSyncService {
                                                         repository,
                                                         issue_number
                                                     });
-                                                    console.log(labels);
                                                 }
                                             } catch (error) {
                                                 console.error('Failed to fetch GitHub labels for the repository issue:', error.message);
@@ -175,25 +174,27 @@ export class GithubSyncService {
                 });
                 const labels = response.data;
                 /** Sync Labels From Here */
-                return labels.map(
-                    async (label: IGithubIssueLabel) => {
-                        const { id: sourceId, name, color, description } = label;
-                        /** */
-                        return await this._commandBus.execute(
-                            new IntegrationMapSyncLabelCommand({
-                                entity: {
-                                    name,
-                                    color,
-                                    description,
-                                    isSystem: label.default,
-                                },
-                                sourceId: sourceId.toString(),
-                                integrationId,
-                                organizationId,
-                                tenantId
-                            })
-                        );
-                    }
+                return await Promise.all(
+                    await labels.map(
+                        async (label: IGithubIssueLabel) => {
+                            const { id: sourceId, name, color, description } = label;
+                            /** */
+                            return await this._commandBus.execute(
+                                new IntegrationMapSyncLabelCommand({
+                                    entity: {
+                                        name,
+                                        color,
+                                        description,
+                                        isSystem: label.default,
+                                    },
+                                    sourceId: sourceId.toString(),
+                                    integrationId,
+                                    organizationId,
+                                    tenantId
+                                })
+                            );
+                        }
+                    )
                 );
             }
             return [];
