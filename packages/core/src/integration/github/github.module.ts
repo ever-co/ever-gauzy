@@ -13,6 +13,7 @@ import { GithubMiddleware } from './github.middleware';
 import { GitHubHooksController } from './github.hooks.controller';
 import { GithubHooksService } from './github.hooks.service';
 import { GitHubSyncController } from './github-sync.controller';
+import { GithubSyncService } from './github-sync.service';
 
 @Module({
 	imports: [
@@ -32,6 +33,7 @@ import { GitHubSyncController } from './github-sync.controller';
 	],
 	providers: [
 		GithubService,
+		GithubSyncService,
 		GithubHooksService,
 		// Define middleware heres
 		GithubMiddleware

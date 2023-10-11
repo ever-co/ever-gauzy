@@ -374,14 +374,13 @@ export class HubstaffService {
 					async ({ sourceId }) => {
 						const { organization } = await this.fetchIntegration<IHubstaffProjectResponse>(`organizations/${sourceId}`, token);
 						/** Third Party Organization Map */
-						const organizationMap = {
-							name: organization.name,
-							isActive: organization.status == 'active',
-							currency: env.defaultCurrency as CurrenciesEnum
-						}
 						return await this._commandBus.execute(
 							new IntegrationMapSyncOrganizationCommand({
-								organizationInput: organizationMap,
+								entity: {
+									name: organization.name,
+									isActive: organization.status == 'active',
+									currency: env.defaultCurrency as CurrenciesEnum
+								},
 								sourceId,
 								integrationId,
 								organizationId,
@@ -644,7 +643,7 @@ export class HubstaffService {
 					await this._commandBus.execute(
 						new IntegrationMapSyncTimeLogCommand(
 							Object.assign({}, {
-								timeLog: {
+								entity: {
 									projectId,
 									employeeId: employee.gauzyId,
 									taskId: record ? record.gauzyId : null,
@@ -862,7 +861,7 @@ export class HubstaffService {
 								tenantId
 							}
 						});
-						const activity: IActivity = {
+						const entity: IActivity = {
 							title: site,
 							duration: tracked,
 							type: ActivityType.URL,
@@ -877,7 +876,7 @@ export class HubstaffService {
 						return await this._commandBus.execute(
 							new IntegrationMapSyncActivityCommand(
 								Object.assign({}, {
-									activity,
+									entity,
 									sourceId: id,
 									integrationId,
 									organizationId
@@ -993,7 +992,7 @@ export class HubstaffService {
 								tenantId
 							}
 						});
-						const activity: IActivity = {
+						const entity: IActivity = {
 							title: name,
 							duration: tracked,
 							type: ActivityType.APP,
@@ -1008,7 +1007,7 @@ export class HubstaffService {
 						return await this._commandBus.execute(
 							new IntegrationMapSyncActivityCommand(
 								Object.assign({}, {
-									activity,
+									entity,
 									sourceId: id,
 									integrationId,
 									organizationId

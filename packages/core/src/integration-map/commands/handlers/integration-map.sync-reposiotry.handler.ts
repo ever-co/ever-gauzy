@@ -25,19 +25,17 @@ export class IntegrationMapSyncRepositoryHandler implements ICommandHandler<Inte
 		try {
 			// Check if an integration map for the given repository and integration exists
 			const integrationMap = await this._integrationMapService.findOneByWhereOptions({
-				organizationId,
-				tenantId,
-				integrationId,
 				entity: IntegrationEntity.PROJECT,
 				gauzyId,
-				isActive: true,
-				isArchived: false
+				integrationId,
+				organizationId,
+				tenantId
 			});
 
 			if (integrationMap) {
 				// Update the existing integration map
 				await this._integrationMapService.update(integrationMap.id, {
-					sourceId: repository.id,
+					sourceId: (repository.id).toString(),
 					isActive: true,
 					isArchived: false
 				});
@@ -52,7 +50,7 @@ export class IntegrationMapSyncRepositoryHandler implements ICommandHandler<Inte
 			// Create a new integration map if it doesn't exist
 			return await this._integrationMapService.create({
 				entity: IntegrationEntity.PROJECT,
-				sourceId: repository.id,
+				sourceId: (repository.id).toString(),
 				gauzyId,
 				integrationId,
 				tenantId,

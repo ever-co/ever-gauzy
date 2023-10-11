@@ -13,7 +13,7 @@ export class IntegrationMapSyncTaskHandler
 	constructor(
 		private readonly _commandBus: CommandBus,
 		private readonly _integrationMapService: IntegrationMapService
-	) {}
+	) { }
 
 	/**
 	 * Third party project task integrated and mapped
@@ -25,30 +25,27 @@ export class IntegrationMapSyncTaskHandler
 		command: IntegrationMapSyncTaskCommand
 	) {
 		const { input } = command;
-		const { sourceId, organizationId, integrationId, taskInput } = input;
+		const { sourceId, organizationId, integrationId, entity } = input;
 		const tenantId = RequestContext.currentTenantId();
 
 		try {
-			const taskMap = await this._integrationMapService.findOneByOptions({
-				where: {
-					sourceId,
-					entity: IntegrationEntity.TASK,
-					organizationId,
-					tenantId
-				}
+			const taskMap = await this._integrationMapService.findOneByWhereOptions({
+				entity: IntegrationEntity.TASK,
+				sourceId,
+				integrationId,
+				organizationId,
+				tenantId
 			});
 			await this._commandBus.execute(
 				new TaskUpdateCommand(
 					taskMap.gauzyId,
-					Object.assign({}, taskInput)
+					entity
 				)
 			);
 			return taskMap;
 		} catch (error) {
 			const task = await this._commandBus.execute(
-				new TaskCreateCommand(
-					Object.assign({}, taskInput)
-				)
+				new TaskCreateCommand(entity)
 			);
 			return await this._commandBus.execute(
 				new IntegrationMapSyncEntityCommand({

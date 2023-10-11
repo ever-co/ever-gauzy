@@ -1,5 +1,3 @@
-import { IHubstaffScreenshotActivity, IHubstaffTimeSlotActivity } from './hubstaff.model';
-import { IActivity, ITimeLog } from './timesheet.model';
 import {
 	IBaseEntityModel,
 	IBasePerTenantAndOrganizationEntityModel
@@ -7,8 +5,10 @@ import {
 import { IOrganizationProject } from './organization-projects.model';
 import { IOrganizationCreateInput, IOrganizationUpdateInput } from './organization.model';
 import { ITaskCreateInput, ITaskUpdateInput } from './task.model';
-import { ITag } from './tag.model';
-import { IGithubRepository } from 'github.model';
+import { ITag, ITagCreateInput, ITagUpdateInput } from './tag.model';
+import { IGithubRepository } from './github.model';
+import { IActivity, ITimeLog } from './timesheet.model';
+import { IHubstaffScreenshotActivity, IHubstaffTimeSlotActivity } from './hubstaff.model';
 
 export interface IRelationalIntegrationTenant {
 	integration?: IIntegrationTenant;
@@ -96,62 +96,22 @@ export interface IIntegrationMapSyncRepository extends IIntegrationSyncedReposit
 
 export interface IIntegrationSyncedRepositoryFindInput extends IBasePerTenantAndOrganizationEntityModel {
 	integrationId: IIntegrationTenant['id'];
-	gauzyId: string;
+	gauzyId: IIntegrationMap['gauzyId'];
 	entity: IntegrationEntity;
 }
 
-export interface IIntegrationMapSyncActivity extends IBasePerTenantAndOrganizationEntityModel {
-	activity: IActivity;
-	integrationId: string;
-	sourceId: string;
-}
-
-export interface IIntegrationMapSyncScreenshot extends IBasePerTenantAndOrganizationEntityModel {
-	screenshot: IHubstaffScreenshotActivity;
-	integrationId: string;
-	sourceId: string;
-}
-
-export interface IIntegrationMapSyncTimeLog extends IBasePerTenantAndOrganizationEntityModel {
-	timeLog: Partial<ITimeLog>;
-	integrationId: string;
-	sourceId: string;
-}
-
-export interface IIntegrationMapSyncTimeSlot extends IBasePerTenantAndOrganizationEntityModel {
-	timeSlot: IHubstaffTimeSlotActivity;
-	integrationId: string;
-	sourceId: string;
-}
-
-export interface IIntegrationMapSyncIssue extends IBasePerTenantAndOrganizationEntityModel {
-	input: ITaskCreateInput | ITaskUpdateInput;
+/** */
+export interface IIntegrationMapSyncBase extends IBasePerTenantAndOrganizationEntityModel {
 	integrationId: IIntegrationTenant['id'];
 	sourceId: IIntegrationMap['sourceId'];
 }
 
-export interface IIntegrationMapSyncTask extends IBasePerTenantAndOrganizationEntityModel {
-	taskInput: ITaskUpdateInput;
-	integrationId: string;
-	sourceId: string;
+export interface IIntegrationMapSyncEntity<T> extends IBasePerTenantAndOrganizationEntityModel, IIntegrationMapSyncBase {
+	entity: T;
 }
 
-export interface IIntegrationMapSyncProject extends IBasePerTenantAndOrganizationEntityModel {
-	organizationProject: IOrganizationProject;
-	integrationId: string;
-	sourceId: string;
-}
-
-export interface IIntegrationMapSyncOrganization extends IBasePerTenantAndOrganizationEntityModel {
-	organizationInput: IOrganizationCreateInput | IOrganizationUpdateInput,
-	integrationId: string;
-	sourceId: string;
-}
-
-export interface IIntegrationMapSyncEntityInput extends IBasePerTenantAndOrganizationEntityModel {
-	integrationId: string;
-	sourceId: string;
-	gauzyId: string;
+export interface IIntegrationMapSyncEntityInput extends IBasePerTenantAndOrganizationEntityModel, IIntegrationMapSyncBase {
+	gauzyId: IIntegrationMap['gauzyId'];
 	entity: IntegrationEntity;
 }
 

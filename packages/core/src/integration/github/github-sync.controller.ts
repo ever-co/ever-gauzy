@@ -2,7 +2,7 @@ import { Controller, Post, Body, UseGuards, HttpException, HttpStatus, HttpCode,
 import { IIntegrationTenant, PermissionsEnum } from '@gauzy/contracts';
 import { PermissionGuard, TenantPermissionGuard } from 'shared/guards';
 import { Permissions } from 'shared/decorators';
-import { GithubService } from './github.service';
+import { GithubSyncService } from './github-sync.service';
 import { ProcessGithubIssueSyncDTO } from './dto';
 
 @UseGuards(TenantPermissionGuard, PermissionGuard)
@@ -12,7 +12,7 @@ export class GitHubSyncController {
     private readonly logger = new Logger('GitHubSyncController');
 
     constructor(
-        private readonly _githubService: GithubService
+        private readonly _githubSyncService: GithubSyncService,
     ) { }
 
     /**
@@ -32,7 +32,7 @@ export class GitHubSyncController {
             if (!input || !input.organizationId) {
                 throw new HttpException('Invalid sync issues & labels request parameters', HttpStatus.BAD_REQUEST);
             }
-            return await this._githubService.syncGithubIssuesAndLabels(integrationId, input);
+            return await this._githubSyncService.syncGithubIssuesAndLabels(integrationId, input);
         } catch (error) {
             // Handle errors and return an appropriate error response
             this.logger.error('Error while github sync issues and labels', error.message);

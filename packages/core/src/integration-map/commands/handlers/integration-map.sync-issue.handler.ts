@@ -1,6 +1,6 @@
 import { CommandHandler, ICommandHandler, CommandBus } from '@nestjs/cqrs';
 import { IIntegrationMap, IntegrationEntity } from '@gauzy/contracts';
-import { RequestContext } from './../../../core/context';
+import { RequestContext } from 'core/context';
 import { TaskCreateCommand, TaskUpdateCommand } from 'tasks/commands';
 import { IntegrationMapSyncEntityCommand } from './../integration-map.sync-entity.command';
 import { IntegrationMapSyncIssueCommand } from './../integration-map.sync-issue.command';
@@ -22,7 +22,7 @@ export class IntegrationMapSyncIssueHandler implements ICommandHandler<Integrati
 	 */
 	public async execute(command: IntegrationMapSyncIssueCommand): Promise<IIntegrationMap> {
 		const { request } = command;
-		const { sourceId, organizationId, integrationId, input } = request;
+		const { sourceId, organizationId, integrationId, entity } = request;
 		const tenantId = RequestContext.currentTenantId() || request.tenantId;
 
 		try {
@@ -36,14 +36,14 @@ export class IntegrationMapSyncIssueHandler implements ICommandHandler<Integrati
 			});
 			// Update the corresponding task with the new input data
 			await this._commandBus.execute(
-				new TaskUpdateCommand(integrationMap.gauzyId, Object.assign({}, input))
+				new TaskUpdateCommand(integrationMap.gauzyId, entity)
 			);
 			// Return the integration map
 			return integrationMap;
 		} catch (error) {
 			// Create a new task and update the integration map for the issue
 			const task = await this._commandBus.execute(
-				new TaskCreateCommand(input)
+				new TaskCreateCommand(entity)
 			);
 			return await this._commandBus.execute(new IntegrationMapSyncEntityCommand({
 				gauzyId: task.id,
