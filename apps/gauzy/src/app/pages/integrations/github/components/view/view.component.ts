@@ -86,6 +86,7 @@ export class GithubViewComponent extends TranslationBaseComponent implements Aft
 		this.integrationMap$ = this._store.selectedProject$.pipe(
 			debounceTime(100),
 			distinctUntilChange(),
+			filter((project: IOrganizationProject) => !!project),
 			switchMap((project: IOrganizationProject) => {
 				// Ensure there is a valid organization
 				if (!project.id) {

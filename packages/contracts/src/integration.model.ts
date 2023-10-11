@@ -2,13 +2,8 @@ import {
 	IBaseEntityModel,
 	IBasePerTenantAndOrganizationEntityModel
 } from './base-entity.model';
-import { IOrganizationProject } from './organization-projects.model';
-import { IOrganizationCreateInput, IOrganizationUpdateInput } from './organization.model';
-import { ITaskCreateInput, ITaskUpdateInput } from './task.model';
-import { ITag, ITagCreateInput, ITagUpdateInput } from './tag.model';
+import { ITag } from './tag.model';
 import { IGithubRepository } from './github.model';
-import { IActivity, ITimeLog } from './timesheet.model';
-import { IHubstaffScreenshotActivity, IHubstaffTimeSlotActivity } from './hubstaff.model';
 
 export interface IRelationalIntegrationTenant {
 	integration?: IIntegrationTenant;
