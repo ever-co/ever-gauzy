@@ -19,6 +19,7 @@ import { arrayToObject } from 'core/utils';
 import { IntegrationEntitySetting } from 'core/entities/internal';
 import { IntegrationTenantService } from 'integration-tenant/integration-tenant.service';
 import { IntegrationMapSyncIssueCommand, IntegrationMapSyncLabelCommand } from 'integration-map/commands';
+import { IntegrationMapService } from 'integration-map/integration-map.service';
 
 @Injectable()
 export class GithubSyncService {
@@ -27,7 +28,8 @@ export class GithubSyncService {
     constructor(
         private readonly _commandBus: CommandBus,
         private readonly _octokitService: OctokitService,
-        private readonly _integrationTenantService: IntegrationTenantService
+        private readonly _integrationTenantService: IntegrationTenantService,
+        private readonly _integrationMapService: IntegrationMapService
     ) { }
 
     /**
@@ -44,6 +46,19 @@ export class GithubSyncService {
         try {
             const { organizationId, issues = [], repository } = input;
             const tenantId = RequestContext.currentTenantId() || input.tenantId;
+
+            /**  */
+            if (!input['projectId']) {
+                /** */
+                const repositoryIntegrationMap = await this._integrationMapService.getSyncedProjectByRepository({
+                    entity: IntegrationEntity.PROJECT,
+                    integrationId,
+                    organizationId,
+                    tenantId,
+                    sourceId: (repository.id).toString()
+                });
+                input['projectId'] = repositoryIntegrationMap['gauzyId'];
+            }
 
             // Retrieve integration settings tied to the specified organization
             const { entitySettings } = await this._integrationTenantService.findOneByIdString(integrationId, {
@@ -101,6 +116,7 @@ export class GithubSyncService {
                                                         description: body,
                                                         status: state as TaskStatusEnum,
                                                         public: repository.visibility === 'private' ? false : true,
+                                                        projectId: input['projectId'] || null,
                                                         organizationId,
                                                         tenantId,
                                                         tags: labels
@@ -185,7 +201,8 @@ export class GithubSyncService {
                                         name,
                                         color,
                                         description,
-                                        isSystem: label.default,
+                                        // To-Do need add system default labels
+                                        // isSystem: label.default
                                     },
                                     sourceId: sourceId.toString(),
                                     integrationId,

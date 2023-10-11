@@ -22,11 +22,21 @@ import { ErrorHandlingService, GithubService, Store } from './../../../../@core/
 })
 export class RepositorySelectorComponent implements AfterViewInit, OnInit, OnDestroy {
 
+	public preSelected: boolean = false;
+	public loading: boolean = false;
 	private subject$: Subject<IIntegrationTenant> = new Subject<IIntegrationTenant>();
 	public organization: IOrganization = this._store.selectedOrganization;
-	public loading: boolean;
 	public repositories: IGithubRepository[] = [];
 	public repositories$: Observable<IGithubRepository[]>;
+
+	/** Getter & Setter */
+	private _selected: boolean = false;
+	get selected(): boolean {
+		return this._selected;
+	}
+	@Input() set selected(value: boolean) {
+		this._selected = value;
+	}
 
 	/** Getter & Setter */
 	private _integration: IIntegrationTenant;
@@ -56,6 +66,11 @@ export class RepositorySelectorComponent implements AfterViewInit, OnInit, OnDes
 			this._sourceId = val;
 			this.onChange(val);
 			this.onTouched(val);
+
+			/** Pre Selected Repository */
+			if (this.selected) {
+				this._preSelectedRepository(this._sourceId);
+			}
 		}
 	}
 
@@ -70,7 +85,7 @@ export class RepositorySelectorComponent implements AfterViewInit, OnInit, OnDes
 	) {
 		this.subject$
 			.pipe(
-				tap(() => this.getRepositories()),
+				tap(() => this._getRepositories()),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -81,9 +96,20 @@ export class RepositorySelectorComponent implements AfterViewInit, OnInit, OnDes
 	ngAfterViewInit(): void { }
 
 	/**
+	 *
+	 * @param sourceId
+	 */
+	private _preSelectedRepository(sourceId: IGithubRepository['id']) {
+		const repository = this.repositories.find(
+			(repository: IGithubRepository) => repository.id === sourceId
+		);
+		this.selectRepository(repository);
+	}
+
+	/**
 	 * Fetches repositories for a given integration and organization.
 	 */
-	private getRepositories() {
+	private _getRepositories() {
 		// Ensure there is a valid organization
 		if (!this.organization) {
 			return;

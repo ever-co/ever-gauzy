@@ -116,7 +116,7 @@ export class ProjectEditMutationComponent extends TranslationBaseComponent imple
 					})),
 					catchError((error) => {
 						// Handle and log errors
-						this._errorHandlingService.handleError(error); // Handle and log errors
+						this._errorHandlingService.handleError(error);
 						return of(false);
 					}),
 					// Handle component lifecycle to avoid memory leaks

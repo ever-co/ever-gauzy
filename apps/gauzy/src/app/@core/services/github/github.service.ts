@@ -7,7 +7,8 @@ import {
     IGithubRepository,
     IGithubRepositoryResponse,
     IIntegrationTenant,
-    IOrganization
+    IOrganization,
+    IOrganizationProject
 } from '@gauzy/contracts';
 import { Observable, firstValueFrom } from 'rxjs';
 import { toParams } from '@gauzy/common-angular';
@@ -84,11 +85,13 @@ export class GithubService {
             organizationId: IOrganization['id'];
             tenantId: IOrganization['tenantId'];
             issues: IGithubIssue[];
+            projectId?: IOrganizationProject['id'];
         },
     ): Observable<any> {
         return this._http.post(`${API_PREFIX}/integration/github/${integrationId}/sync-issues`, {
             repository: this._mapRepositoryPayload(repository),
             issues: this._mapIssuePayload(options.issues),
+            projectId: options.projectId,
             organizationId: options.organizationId,
             tenantId: options.tenantId
         });

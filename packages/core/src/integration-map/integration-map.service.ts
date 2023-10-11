@@ -2,7 +2,12 @@ import { HttpException, HttpStatus, Injectable, Logger } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { IIntegrationMap, IIntegrationMapSyncRepository, IIntegrationSyncedRepositoryFindInput, IntegrationEntity } from '@gauzy/contracts';
+import {
+	IIntegrationMap,
+	IIntegrationMapSyncRepository,
+	IIntegrationSyncedRepositoryFindInput,
+	IntegrationEntity
+} from '@gauzy/contracts';
 import { TenantAwareCrudService } from 'core/crud';
 import { RequestContext } from 'core/context';
 import { IntegrationMap } from './integration-map.entity';
@@ -66,7 +71,34 @@ export class IntegrationMapService extends TenantAwareCrudService<IntegrationMap
 			return integrationMap || false;
 		} catch (error) {
 			// Handle errors and return an appropriate error response
-			this.logger.error('Error while getting synced GitHub repository', error.message);
+			return false;
+		}
+	}
+
+	/**
+	 * Retrieves a synchronized project from the integration map based on the provided options.
+	 *
+	 * @param options - An object containing organizationId, sourceId, integrationId, and tenantId.
+	 * @returns The integration map for the synchronized project, or `false` if not found.
+	 */
+	async getSyncedProjectByRepository(options: IIntegrationSyncedRepositoryFindInput): Promise<IIntegrationMap | false> {
+		try {
+			const { organizationId, sourceId, integrationId, tenantId } = options;
+
+			// Attempt to find the integration map based on the provided criteria
+			const integrationMap = await this.findOneByOptions({
+				where: {
+					entity: IntegrationEntity.PROJECT,
+					sourceId,
+					integrationId,
+					organizationId,
+					tenantId,
+				},
+			});
+
+			return integrationMap || false;
+		} catch (error) {
+			// Handle errors and return `false` as a default response
 			return false;
 		}
 	}

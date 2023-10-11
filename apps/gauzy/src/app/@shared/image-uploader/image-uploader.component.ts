@@ -114,8 +114,7 @@ export class ImageUploaderComponent implements AfterViewInit, OnInit {
             return;
         }
         const { token } = this.store;
-        const { tenantId } = this.user;
-        const { id: organizationId } = this.organization;
+        const { id: organizationId, tenantId } = this.organization;
 
         const headers: Array<{ name: string; value: string; }> = [];
         headers.push({ name: 'Authorization', value: `Bearer ${token}` });

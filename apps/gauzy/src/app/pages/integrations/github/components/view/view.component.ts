@@ -1,7 +1,7 @@
 import { AfterViewInit, Component, OnInit } from '@angular/core';
 import { TitleCasePipe } from '@angular/common';
 import { ActivatedRoute, Data } from '@angular/router';
-import { firstValueFrom, of } from 'rxjs';
+import { debounceTime, firstValueFrom, of } from 'rxjs';
 import { Observable } from 'rxjs/internal/Observable';
 import { catchError, filter, map, switchMap, tap } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
@@ -11,17 +11,22 @@ import {
 	IEntitySettingToSync,
 	IGithubIssue,
 	IGithubRepository,
+	IIntegrationMap,
 	IIntegrationTenant,
 	IOrganization,
+	IOrganizationProject,
 	IUser,
+	IntegrationEntity,
 	IntegrationEnum
 } from '@gauzy/contracts';
+import { distinctUntilChange, parsedInt } from '@gauzy/common-angular';
 import { TranslationBaseComponent } from './../../../../../@shared/language-base';
 import {
 	ErrorHandlingService,
 	GithubService,
 	IntegrationEntitySettingService,
 	IntegrationEntitySettingServiceStoreService,
+	IntegrationMapService,
 	Store,
 	ToastrService
 } from './../../../../../@core/services';
@@ -38,15 +43,18 @@ import { GithubSettingsDialogComponent } from '../settings-dialog/settings-dialo
 	]
 })
 export class GithubViewComponent extends TranslationBaseComponent implements AfterViewInit, OnInit {
+	public parsedInt = parsedInt;
 
+	public loading: boolean = false;
 	public user: IUser = this._store.user;
 	public organization: IOrganization = this._store.selectedOrganization;
+	public project: IOrganizationProject;
 	public repository: IGithubRepository;
+	public integrationMap$: Observable<IIntegrationMap | boolean>;
 	public integration$: Observable<IIntegrationTenant>;
 	public integration: IIntegrationTenant;
 	public contextMenuItems: NbMenuItem[] = [];
 	public settingsSmartTable: object;
-	public loading: boolean;
 	public issues$: Observable<IGithubIssue[]>;
 	public issues: IGithubIssue[] = [];
 	public selectedIssues: IGithubIssue[] = [];
@@ -62,6 +70,7 @@ export class GithubViewComponent extends TranslationBaseComponent implements Aft
 		private readonly _errorHandlingService: ErrorHandlingService,
 		private readonly _store: Store,
 		private readonly _githubService: GithubService,
+		private readonly _integrationMapService: IntegrationMapService,
 		private readonly _integrationEntitySettingService: IntegrationEntitySettingService,
 		private readonly _integrationEntitySettingServiceStoreService: IntegrationEntitySettingServiceStoreService,
 	) {
@@ -73,6 +82,39 @@ export class GithubViewComponent extends TranslationBaseComponent implements Aft
 		this._applyTranslationOnSmartTable();
 		this._getContextMenuItems();
 		this._getGithubIntegrationTenant();
+
+		this.integrationMap$ = this._store.selectedProject$.pipe(
+			debounceTime(100),
+			distinctUntilChange(),
+			switchMap((project: IOrganizationProject) => {
+				// Ensure there is a valid organization
+				if (!project.id) {
+					return of(false); // No valid organization, return false
+				}
+				// Extract organization properties
+				const { id: organizationId, tenantId } = this.organization;
+				// Extract integration properties
+				const { id: integrationId } = this.integration;
+				// Extract project properties
+				const { id: projectId } = this.project = project;
+
+				return this._integrationMapService.getSyncedGithubRepository({
+					organizationId,
+					tenantId,
+					integrationId,
+					gauzyId: projectId,
+					entity: IntegrationEntity.PROJECT
+				}).pipe(
+					catchError((error) => {
+						// Handle and log errors
+						this._errorHandlingService.handleError(error);
+						return of(false);
+					}),
+					// Handle component lifecycle to avoid memory leaks
+					untilDestroyed(this),
+				);
+			})
+		);
 	}
 
 	/**
@@ -316,6 +358,11 @@ export class GithubViewComponent extends TranslationBaseComponent implements Aft
 				integrationId,
 				this.repository,
 				{
+					...(this.project
+						? {
+							projectId: this.project.id
+						}
+						: {}),
 					organizationId,
 					tenantId,
 					issues: this.selectedIssues

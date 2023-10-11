@@ -94,10 +94,9 @@ export interface IIntegrationMapSyncRepository extends IIntegrationSyncedReposit
 	repository: IGithubRepository;
 }
 
-export interface IIntegrationSyncedRepositoryFindInput extends IBasePerTenantAndOrganizationEntityModel {
-	integrationId: IIntegrationTenant['id'];
-	gauzyId: IIntegrationMap['gauzyId'];
-	entity: IntegrationEntity;
+export interface IIntegrationSyncedRepositoryFindInput extends Partial<IIntegrationMapSyncBase> {
+	gauzyId?: IIntegrationMap['gauzyId'];
+	entity?: IntegrationEntity;
 }
 
 /** */

@@ -1,5 +1,5 @@
-import { IRelationalIntegrationTenant } from './integration.model';
 import { IBasePerTenantAndOrganizationEntityModel } from './base-entity.model';
+import { IRelationalOrganizationProject } from './organization-projects.model';
 
 // Common input properties for GitHub app installation and OAuth app installation
 interface IGithubAppInstallInputCommon extends IBasePerTenantAndOrganizationEntityModel {
@@ -77,7 +77,7 @@ export enum GithubPropertyMapEnum {
 }
 
 /** */
-export interface IGithubSyncIssuePayload extends IBasePerTenantAndOrganizationEntityModel {
+export interface IGithubSyncIssuePayload extends IBasePerTenantAndOrganizationEntityModel, IRelationalOrganizationProject {
     issues: IGithubIssue[];
     repository: IGithubRepository;
 }

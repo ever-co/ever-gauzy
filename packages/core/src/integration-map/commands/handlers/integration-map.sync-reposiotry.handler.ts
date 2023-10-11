@@ -45,8 +45,6 @@ export class IntegrationMapSyncRepositoryHandler implements ICommandHandler<Inte
 			}
 		} catch (error) {
 			// Handle errors gracefully
-			console.error('Error while syncing GitHub integration repository:', error.message);
-
 			// Create a new integration map if it doesn't exist
 			return await this._integrationMapService.create({
 				entity: IntegrationEntity.PROJECT,
