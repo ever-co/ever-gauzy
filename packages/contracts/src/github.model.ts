@@ -1,3 +1,4 @@
+import { IRelationalIntegrationTenant } from './integration.model';
 import { IBasePerTenantAndOrganizationEntityModel } from './base-entity.model';
 
 // Common input properties for GitHub app installation and OAuth app installation
@@ -17,6 +18,7 @@ export interface IOAuthAppInstallInput extends IGithubAppInstallInputCommon {
     code?: string;
 }
 
+
 // Represents a GitHub repository
 export interface IGithubRepository {
     id: number;
@@ -24,6 +26,12 @@ export interface IGithubRepository {
     name: string;
     full_name: string;
     private: boolean;
+    visibility: string;
+    owner?: {
+        id: number;
+        login: string;
+        node_id: string;
+    }
     [x: string]: any; // Additional properties
 }
 
@@ -31,9 +39,10 @@ export interface IGithubRepository {
 export interface IGithubIssue {
     id: number;
     node_id: string;
-    number: string;
+    number: number;
     title: string;
     state: string;
+    body: string;
     [x: string]: any; // Additional properties
 }
 
@@ -65,4 +74,9 @@ export enum GithubPropertyMapEnum {
     REFRESH_TOKEN = 'refresh_token',
     REFRESH_TOKEN_EXPIRES_IN = 'refresh_token_expires_in',
     TOKEN_TYPE = 'token_type'
+}
+
+/** */
+export interface IGithubSyncIssuePayload extends IBasePerTenantAndOrganizationEntityModel, Pick<IGithubRepository, 'visibility'> {
+    issues: IGithubIssue[];
 }

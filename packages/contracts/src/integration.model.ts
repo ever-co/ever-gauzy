@@ -6,7 +6,7 @@ import {
 } from './base-entity.model';
 import { IOrganizationProject } from './organization-projects.model';
 import { IOrganizationCreateInput, IOrganizationUpdateInput } from './organization.model';
-import { ITaskUpdateInput } from './task.model';
+import { ITaskCreateInput, ITaskUpdateInput } from './task.model';
 import { ITag } from './tag.model';
 import { IGithubRepository } from 'github.model';
 
@@ -122,6 +122,12 @@ export interface IIntegrationMapSyncTimeSlot extends IBasePerTenantAndOrganizati
 	timeSlot: IHubstaffTimeSlotActivity;
 	integrationId: string;
 	sourceId: string;
+}
+
+export interface IIntegrationMapSyncIssue extends IBasePerTenantAndOrganizationEntityModel {
+	input: ITaskCreateInput | ITaskUpdateInput;
+	integrationId: IIntegrationTenant['id'];
+	sourceId: IIntegrationMap['sourceId'];
 }
 
 export interface IIntegrationMapSyncTask extends IBasePerTenantAndOrganizationEntityModel {
