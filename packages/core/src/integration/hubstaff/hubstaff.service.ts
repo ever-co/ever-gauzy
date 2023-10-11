@@ -500,7 +500,7 @@ export class HubstaffService {
 
 			return await Promise.all(
 				await tasks.map(
-					async ({ summary: title, id, status, due_at }) => {
+					async ({ summary: title, details = null, id, status, due_at }) => {
 						if (!due_at) {
 							due_at = new Date(moment().add(2, 'week').format('YYYY-MM-DD HH:mm:ss'));
 						}
@@ -509,7 +509,7 @@ export class HubstaffService {
 								entity: {
 									title,
 									projectId,
-									description: 'Hubstaff Task',
+									description: details,
 									status: status.charAt(0).toUpperCase() + status.slice(1),
 									creatorId,
 									dueDate: due_at,
@@ -572,17 +572,15 @@ export class HubstaffService {
 			return timeSlots
 				.filter(async (timeslot: IHubstaffTimeSlotActivity) => {
 					return !!await this._commandBus.execute(
-						new IntegrationMapSyncTimeSlotCommand(
-							Object.assign({
-								timeSlot: {
-									...timeslot,
-									employeeId: employee.gauzyId
-								},
-								sourceId: timeslot.id,
-								integrationId,
-								organizationId
-							})
-						)
+						new IntegrationMapSyncTimeSlotCommand({
+							entity: {
+								...timeslot,
+								employeeId: employee.gauzyId
+							},
+							sourceId: (timeslot.id).toString(),
+							integrationId,
+							organizationId
+						})
 					);
 				})
 				.map(
@@ -802,10 +800,7 @@ export class HubstaffService {
 		try {
 			const tasksMap = await Promise.all(
 				projectsMap.map(async (project) => {
-					const { tasks } = await this.fetchIntegration(
-						`projects/${project.sourceId}/tasks`,
-						token
-					);
+					const { tasks } = await this.fetchIntegration(`projects/${project.sourceId}/tasks`, token);
 					return await this.syncTasks({
 						integrationId,
 						tasks,

@@ -26,7 +26,7 @@ export class IntegrationMapSyncTaskHandler
 	) {
 		const { input } = command;
 		const { sourceId, organizationId, integrationId, entity } = input;
-		const tenantId = RequestContext.currentTenantId();
+		const tenantId = RequestContext.currentTenantId() || input.tenantId;
 
 		try {
 			const taskMap = await this._integrationMapService.findOneByWhereOptions({
@@ -37,10 +37,7 @@ export class IntegrationMapSyncTaskHandler
 				tenantId
 			});
 			await this._commandBus.execute(
-				new TaskUpdateCommand(
-					taskMap.gauzyId,
-					entity
-				)
+				new TaskUpdateCommand(taskMap.gauzyId, entity)
 			);
 			return taskMap;
 		} catch (error) {
