@@ -9,7 +9,7 @@ import {
 	IEmployee,
 	IOrganizationProjectUpdateInput
 } from '@gauzy/contracts';
-import { firstValueFrom, take } from 'rxjs';
+import { Observable, firstValueFrom, take } from 'rxjs';
 import { toParams } from '@gauzy/common-angular';
 import { API_PREFIX } from '../constants/app.constants';
 
@@ -61,10 +61,10 @@ export class OrganizationProjectsService {
 		);
 	}
 
-	getById(id: IOrganizationProject['id']) {
-		return firstValueFrom(
-			this.http.get<IOrganizationProject>(`${this.API_URL}/${id}`)
-		);
+	getById(id: IOrganizationProject['id'], relations: string[] = [],): Observable<IOrganizationProject> {
+		return this.http.get<IOrganizationProject>(`${this.API_URL}/${id}`, {
+			params: toParams({ relations })
+		});
 	}
 
 	getCount(

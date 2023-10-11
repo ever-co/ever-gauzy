@@ -1,12 +1,11 @@
 import { Brackets, FindOptionsRelations, IsNull, Repository, SelectQueryBuilder, WhereExpressionBuilder } from 'typeorm';
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { IPagination, ITag, ITagFindInput } from '@gauzy/contracts';
+import { isNotEmpty } from '@gauzy/common';
+import { FileStorageProviderEnum, IPagination, ITag, ITagFindInput } from '@gauzy/contracts';
 import { RequestContext } from '../core/context';
 import { TenantAwareCrudService } from '../core/crud';
 import { Tag } from './tag.entity';
-import { isNotEmpty } from '@gauzy/common';
-import { FileStorageProviderEnum } from '@gauzy/contracts';
 import { FileStorage } from './../core/file-storage';
 
 @Injectable()

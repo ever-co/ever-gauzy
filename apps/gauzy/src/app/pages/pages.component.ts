@@ -639,9 +639,8 @@ export class PagesComponent extends TranslationBaseComponent
 								PermissionsEnum.ALL_ORG_EDIT,
 								PermissionsEnum.ORG_PROJECT_VIEW
 							],
-							featureKey:
-								FeatureEnum.FEATURE_ORGANIZATION_PROJECT,
-							add: '/pages/organization/projects?openAddDialog=true'
+							featureKey: FeatureEnum.FEATURE_ORGANIZATION_PROJECT,
+							add: '/pages/organization/projects/create'
 						}
 					},
 					{

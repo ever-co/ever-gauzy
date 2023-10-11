@@ -87,7 +87,7 @@ export class UpworkAuthorizeComponent implements OnInit, OnDestroy {
 			return;
 		}
 		const { id: organizationId, tenantId } = this.organization;
-		const state$ = this._integrationsService.checkRememberState({
+		const state$ = this._integrationsService.getIntegrationByOptions({
 			name: IntegrationEnum.UPWORK,
 			organizationId,
 			tenantId

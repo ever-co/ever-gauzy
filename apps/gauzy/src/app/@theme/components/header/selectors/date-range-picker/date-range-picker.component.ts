@@ -8,7 +8,7 @@ import {
 	LocaleConfig
 } from 'ngx-daterangepicker-material';
 import * as moment from 'moment';
-import { IDateRangePicker, IOrganization, ITimeLogFilters } from '@gauzy/contracts';
+import { IDateRangePicker, IOrganization, ITimeLogFilters, WeekDaysEnum } from '@gauzy/contracts';
 import { distinctUntilChange, isNotEmpty } from '@gauzy/common-angular';
 import { TranslateService } from '@ngx-translate/core';
 import {
@@ -59,7 +59,7 @@ export class DateRangePickerComponent extends TranslationBaseComponent implement
 		displayFormat: 'DD.MM.YYYY', // could be 'YYYY-MM-DDTHH:mm:ss.SSSSZ'
 		format: 'DD.MM.YYYY', // default is format value
 		direction: 'ltr',
-		firstDay: dayOfWeekAsString(this.store.selectedOrganization?.startWeekOn) || moment.localeData().firstDayOfWeek()
+		firstDay: dayOfWeekAsString(this.store?.selectedOrganization?.startWeekOn || WeekDaysEnum.MONDAY) || moment.localeData().firstDayOfWeek()
 	};
 	get locale(): LocaleConfig {
 		return this._locale;

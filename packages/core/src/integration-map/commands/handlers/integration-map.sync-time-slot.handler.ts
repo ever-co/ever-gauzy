@@ -13,13 +13,13 @@ export class IntegrationMapSyncTimeSlotHandler
 	constructor(
 		private readonly _commandBus: CommandBus,
 		private readonly _integrationMapService: IntegrationMapService
-	) {}
+	) { }
 
 	/**
 	 * Third party timeslot integrated and mapped
-	 * 
-	 * @param command 
-	 * @returns 
+	 *
+	 * @param command
+	 * @returns
 	 */
 	public async execute(
 		command: IntegrationMapSyncTimeSlotCommand
@@ -27,24 +27,23 @@ export class IntegrationMapSyncTimeSlotHandler
 		const { input } = command;
 		const tenantId = RequestContext.currentTenantId();
 
-		const { sourceId, organizationId, integrationId, timeSlot } = input;
-		const { employeeId } = timeSlot;		
+		const { sourceId, organizationId, integrationId, entity } = input;
+		const { employeeId } = entity;
 
 		try {
-			return await this._integrationMapService.findOneByOptions({
-				where: {
-					sourceId,
-					entity: IntegrationEntity.TIME_SLOT,
-					organizationId,
-					tenantId
-				}
+			return await this._integrationMapService.findOneByWhereOptions({
+				entity: IntegrationEntity.TIME_SLOT,
+				sourceId,
+				integrationId,
+				organizationId,
+				tenantId
 			});
 		} catch (error) {
-			const { time_slot } = timeSlot;
+			const { time_slot, starts_at } = entity;
 			const gauzyTimeSlot = await this._commandBus.execute(
 				new TimeSlotCreateCommand({
 					employeeId,
-					startedAt: timeSlot.starts_at,
+					startedAt: starts_at,
 					overall: 0,
 					keyboard: 0,
 					mouse: 0,

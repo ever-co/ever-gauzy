@@ -25,21 +25,20 @@ export class IntegrationMapSyncActivityHandler
 		command: IntegrationMapSyncActivityCommand
 	) {
 		const { input } = command;
-		const { sourceId, organizationId, integrationId, activity } = input;
+		const { sourceId, organizationId, integrationId, entity } = input;
 		const tenantId = RequestContext.currentTenantId();
 
 		try {
-			const activityMap = await this._integrationMapService.findOneByOptions({
-				where: {
-					sourceId,
-					entity: IntegrationEntity.ACTIVITY,
-					organizationId,
-					tenantId
-				}
+			const activityMap = await this._integrationMapService.findOneByWhereOptions({
+				entity: IntegrationEntity.ACTIVITY,
+				sourceId,
+				integrationId,
+				organizationId,
+				tenantId
 			});
 			await this._commandBus.execute(
 				new ActivityUpdateCommand(
-					Object.assign(activity, {
+					Object.assign(entity, {
 						id: activityMap.gauzyId,
 					})
 				)
@@ -47,9 +46,7 @@ export class IntegrationMapSyncActivityHandler
 			return activityMap;
 		} catch (error) {
 			const gauzyActivity = await this._commandBus.execute(
-				new ActivityCreateCommand(
-					Object.assign({}, activity)
-				)
+				new ActivityCreateCommand(entity)
 			);
 			return await this._commandBus.execute(
 				new IntegrationMapSyncEntityCommand({

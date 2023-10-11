@@ -15,7 +15,7 @@ import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
 import { RelationsQueryDTO } from './../shared/dto';
 import { IntegrationTenant } from './integration-tenant.entity';
 import { IntegrationTenantService } from './integration-tenant.service';
-import { IntegrationRememberStateQueryDTO } from './dto';
+import { IntegrationTenantQueryDTO } from './dto';
 
 @ApiTags('IntegrationTenant')
 @UseGuards(TenantPermissionGuard, PermissionGuard)
@@ -25,6 +25,30 @@ export class IntegrationTenantController {
 	constructor(
 		private readonly _integrationTenantService: IntegrationTenantService
 	) { }
+
+	/**
+	 * Retrieve an integration tenant by specified options.
+	 *
+	 * @param options - The input options for finding the integration tenant.
+	 * @returns The integration tenant if found, or `false` if not found or an error occurs.
+	 */
+	@ApiOperation({
+		summary: 'Retrieve an integration tenant by specified options.'
+	})
+	@ApiResponse({
+		status: HttpStatus.NOT_FOUND,
+		description: 'Record not found'
+	})
+	@ApiResponse({
+		status: HttpStatus.BAD_REQUEST,
+		description: 'Invalid request'
+	})
+	@Get()
+	async getIntegrationByOptions(
+		@Query() options: IntegrationTenantQueryDTO
+	): Promise<IIntegrationTenant | boolean> {
+		return await this._integrationTenantService.getIntegrationByOptions(options);
+	}
 
 	/**
 	 * Find integration tenant by primary ID
@@ -44,41 +68,11 @@ export class IntegrationTenantController {
 	})
 	@Get(':id')
 	async findById(
-		@Param('id', UUIDValidationPipe) id: IIntegrationTenant['id'],
+		@Param('id', UUIDValidationPipe) integrationId: IIntegrationTenant['id'],
 		@Query() query: RelationsQueryDTO
 	): Promise<IIntegrationTenant> {
-		return await this._integrationTenantService.findOneByIdString(id, {
+		return await this._integrationTenantService.findOneByIdString(integrationId, {
 			relations: query.relations
 		});
-	}
-
-
-	/**
-	 * GET Check integration remember state for tenant user
-	 *
-	 * @param integration
-	 * @param organizationId
-	 * @returns
-	 */
-	@ApiOperation({
-		summary: 'Check integration remember state for tenant user.'
-	})
-	@ApiResponse({
-		status: HttpStatus.OK,
-		description: 'Checked state'
-	})
-	@ApiResponse({
-		status: HttpStatus.NOT_FOUND,
-		description: 'Record not found'
-	})
-	@ApiResponse({
-		status: HttpStatus.BAD_REQUEST,
-		description: 'Invalid request'
-	})
-	@Get('remember/state')
-	async checkRememberState(
-		@Query() query: IntegrationRememberStateQueryDTO
-	): Promise<IIntegrationTenant | boolean> {
-		return await this._integrationTenantService.checkIntegrationRememberState(query);
 	}
 }

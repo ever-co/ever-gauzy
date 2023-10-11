@@ -25,26 +25,27 @@ export class IntegrationMapSyncProjectHandler
 		command: IntegrationMapSyncProjectCommand
 	) {
 		const { input } = command;
-		const { organizationProject, integrationId, sourceId, organizationId } = input;
+		const { integrationId, sourceId, organizationId, entity } = input;
 		const tenantId = RequestContext.currentTenantId();
 
 		try {
 			const projectMap = await this._integrationMapService.findOneByWhereOptions({
 				entity: IntegrationEntity.PROJECT,
 				sourceId,
+				integrationId,
 				organizationId,
 				tenantId
 			});
 			await this._commandBus.execute(
 				new OrganizationProjectUpdateCommand({
-					...organizationProject,
+					...entity,
 					id: projectMap.gauzyId
 				})
 			);
 			return projectMap;
 		} catch (error) {
 			const project = await this._commandBus.execute(
-				new OrganizationProjectCreateCommand(organizationProject)
+				new OrganizationProjectCreateCommand(entity)
 			);
 			return await this._commandBus.execute(
 				new IntegrationMapSyncEntityCommand({

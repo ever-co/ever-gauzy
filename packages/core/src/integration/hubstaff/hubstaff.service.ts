@@ -318,34 +318,31 @@ export class HubstaffService {
 						const { project } = await this.fetchIntegration<IHubstaffProjectResponse>(`projects/${sourceId}`, token);
 
 						/** Third Party Organization Project Map */
-						const organizationProjectMap = {
-							name: project.name,
-							description: project.description,
-							billable: project.billable,
-							public: true,
-							billing: ProjectBillingEnum.RATE,
-							currency: env.defaultCurrency as CurrenciesEnum,
-							organizationId,
-							tenantId,
-							/** Set Project Budget Here */
-							...(project.budget
-								? {
-									budgetType: project.budget.type || OrganizationProjectBudgetTypeEnum.COST,
-									startDate: project.budget.start_date || null,
-									budget: project.budget[project.budget.type || OrganizationProjectBudgetTypeEnum.COST]
-								}
-								: {}),
-						}
 						return await this._commandBus.execute(
-							new IntegrationMapSyncProjectCommand(
-								Object.assign({
-									organizationProject: organizationProjectMap,
-									sourceId,
-									integrationId,
+							new IntegrationMapSyncProjectCommand({
+								entity: {
+									name: project.name,
+									description: project.description,
+									billable: project.billable,
+									public: true,
+									billing: ProjectBillingEnum.RATE,
+									currency: env.defaultCurrency as CurrenciesEnum,
 									organizationId,
-									tenantId
-								})
-							)
+									tenantId,
+									/** Set Project Budget Here */
+									...(project.budget
+										? {
+											budgetType: project.budget.type || OrganizationProjectBudgetTypeEnum.COST,
+											startDate: project.budget.start_date || null,
+											budget: project.budget[project.budget.type || OrganizationProjectBudgetTypeEnum.COST]
+										}
+										: {}),
+								},
+								sourceId,
+								integrationId,
+								organizationId,
+								tenantId
+							})
 						);
 					}
 				)
@@ -374,14 +371,13 @@ export class HubstaffService {
 					async ({ sourceId }) => {
 						const { organization } = await this.fetchIntegration<IHubstaffProjectResponse>(`organizations/${sourceId}`, token);
 						/** Third Party Organization Map */
-						const organizationMap = {
-							name: organization.name,
-							isActive: organization.status == 'active',
-							currency: env.defaultCurrency as CurrenciesEnum
-						}
 						return await this._commandBus.execute(
 							new IntegrationMapSyncOrganizationCommand({
-								organizationInput: organizationMap,
+								entity: {
+									name: organization.name,
+									isActive: organization.status == 'active',
+									currency: env.defaultCurrency as CurrenciesEnum
+								},
 								sourceId,
 								integrationId,
 								organizationId,
@@ -474,17 +470,15 @@ export class HubstaffService {
 				);
 				integratedScreenshots.push(
 					await this._commandBus.execute(
-						new IntegrationMapSyncScreenshotCommand(
-							Object.assign({
-								screenshot: {
-									employeeId: employee ? employee.gauzyId : null,
-									...screenshot
-								},
-								sourceId: id,
-								integrationId,
-								organizationId
-							})
-						)
+						new IntegrationMapSyncScreenshotCommand({
+							entity: {
+								employeeId: employee ? employee.gauzyId : null,
+								...screenshot
+							},
+							sourceId: id,
+							integrationId,
+							organizationId
+						})
 					)
 				);
 			}
@@ -506,29 +500,27 @@ export class HubstaffService {
 
 			return await Promise.all(
 				await tasks.map(
-					async ({ summary: title, id, status, due_at }) => {
+					async ({ summary: title, details = null, id, status, due_at }) => {
 						if (!due_at) {
 							due_at = new Date(moment().add(2, 'week').format('YYYY-MM-DD HH:mm:ss'));
 						}
-						const task = {
-							title,
-							projectId,
-							description: 'Hubstaff Task',
-							status: status.charAt(0).toUpperCase() + status.slice(1),
-							creatorId,
-							dueDate: due_at,
-							organizationId,
-							tenantId
-						};
 						return await this._commandBus.execute(
-							new IntegrationMapSyncTaskCommand(
-								Object.assign({
-									taskInput: task,
-									sourceId: id,
-									integrationId,
-									organizationId
-								})
-							)
+							new IntegrationMapSyncTaskCommand({
+								entity: {
+									title,
+									projectId,
+									description: details,
+									status: status.charAt(0).toUpperCase() + status.slice(1),
+									creatorId,
+									dueDate: due_at,
+									organizationId,
+									tenantId
+								},
+								sourceId: id,
+								integrationId,
+								organizationId,
+								tenantId
+							})
 						);
 					}
 				)
@@ -580,17 +572,15 @@ export class HubstaffService {
 			return timeSlots
 				.filter(async (timeslot: IHubstaffTimeSlotActivity) => {
 					return !!await this._commandBus.execute(
-						new IntegrationMapSyncTimeSlotCommand(
-							Object.assign({
-								timeSlot: {
-									...timeslot,
-									employeeId: employee.gauzyId
-								},
-								sourceId: timeslot.id,
-								integrationId,
-								organizationId
-							})
-						)
+						new IntegrationMapSyncTimeSlotCommand({
+							entity: {
+								...timeslot,
+								employeeId: employee.gauzyId
+							},
+							sourceId: (timeslot.id).toString(),
+							integrationId,
+							organizationId
+						})
 					);
 				})
 				.map(
@@ -642,25 +632,23 @@ export class HubstaffService {
 				);
 				integratedTimeLogs.push(
 					await this._commandBus.execute(
-						new IntegrationMapSyncTimeLogCommand(
-							Object.assign({}, {
-								timeLog: {
-									projectId,
-									employeeId: employee.gauzyId,
-									taskId: record ? record.gauzyId : null,
-									logType,
-									startedAt,
-									stoppedAt,
-									source: TimeLogSourceEnum.HUBSTAFF,
-									organizationId,
-									tenantId,
-									timeSlots: syncTimeSlots
-								},
-								sourceId: id,
-								integrationId,
-								organizationId
-							})
-						)
+						new IntegrationMapSyncTimeLogCommand({
+							entity: {
+								projectId,
+								employeeId: employee.gauzyId,
+								taskId: record ? record.gauzyId : null,
+								logType,
+								startedAt,
+								stoppedAt,
+								source: TimeLogSourceEnum.HUBSTAFF,
+								organizationId,
+								tenantId,
+								timeSlots: syncTimeSlots
+							},
+							sourceId: id,
+							integrationId,
+							organizationId
+						})
 					)
 				);
 			}
@@ -812,10 +800,7 @@ export class HubstaffService {
 		try {
 			const tasksMap = await Promise.all(
 				projectsMap.map(async (project) => {
-					const { tasks } = await this.fetchIntegration(
-						`projects/${project.sourceId}/tasks`,
-						token
-					);
+					const { tasks } = await this.fetchIntegration(`projects/${project.sourceId}/tasks`, token);
 					return await this.syncTasks({
 						integrationId,
 						tasks,
@@ -862,7 +847,7 @@ export class HubstaffService {
 								tenantId
 							}
 						});
-						const activity: IActivity = {
+						const entity: IActivity = {
 							title: site,
 							duration: tracked,
 							type: ActivityType.URL,
@@ -875,14 +860,12 @@ export class HubstaffService {
 							activityTimestamp: time_slot
 						};
 						return await this._commandBus.execute(
-							new IntegrationMapSyncActivityCommand(
-								Object.assign({}, {
-									activity,
-									sourceId: id,
-									integrationId,
-									organizationId
-								})
-							)
+							new IntegrationMapSyncActivityCommand({
+								entity,
+								sourceId: id,
+								integrationId,
+								organizationId
+							})
 						);
 					}
 				)
@@ -993,7 +976,7 @@ export class HubstaffService {
 								tenantId
 							}
 						});
-						const activity: IActivity = {
+						const entity: IActivity = {
 							title: name,
 							duration: tracked,
 							type: ActivityType.APP,
@@ -1006,14 +989,12 @@ export class HubstaffService {
 							activityTimestamp: time_slot
 						};
 						return await this._commandBus.execute(
-							new IntegrationMapSyncActivityCommand(
-								Object.assign({}, {
-									activity,
-									sourceId: id,
-									integrationId,
-									organizationId
-								})
-							)
+							new IntegrationMapSyncActivityCommand({
+								entity,
+								sourceId: id,
+								integrationId,
+								organizationId
+							})
 						);
 					}
 				)
@@ -1214,14 +1195,13 @@ export class HubstaffService {
 		/**
 		 * GET organization tenant integration entities settings
 		 */
-		const tenantId = RequestContext.currentTenantId();
 		const { entitySettings } = await this._integrationTenantService.findOneByIdString(integrationId, {
-			where: {
-				tenantId
-			},
-			relations: ['entitySettings', 'entitySettings.tiedEntities']
+			relations: {
+				entitySettings: {
+					tiedEntities: true
+				}
+			}
 		});
-
 
 		//entities have depended entity. eg to fetch Task we need Project id or Org id, because our Task entity is related to Project, the relation here is same, we need project id to fetch Tasks
 		const integratedMaps = await Promise.all(

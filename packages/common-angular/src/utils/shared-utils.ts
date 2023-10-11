@@ -356,3 +356,13 @@ export function compressImage(base64Image: string, width: number, height: number
 export function sleep(ms: number) {
 	return new Promise((r) => setTimeout(r, ms));
 }
+
+/**
+ * Parses a string into an integer.
+ *
+ * @param {string} value - The string to parse into an integer.
+ * @returns {number} - The parsed integer value.
+ */
+export function parsedInt(value: string) {
+	return parseInt(value, 10); // Using base 10 for decimal numbers, as a best practice.
+}
