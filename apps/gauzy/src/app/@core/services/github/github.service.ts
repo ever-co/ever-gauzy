@@ -4,8 +4,10 @@ import {
     IBasePerTenantAndOrganizationEntityModel,
     IGithubAppInstallInput,
     IGithubIssue,
+    IGithubRepository,
     IGithubRepositoryResponse,
-    IIntegrationTenant
+    IIntegrationTenant,
+    IOrganization
 } from '@gauzy/contracts';
 import { Observable, firstValueFrom } from 'rxjs';
 import { toParams } from '@gauzy/common-angular';
@@ -66,5 +68,45 @@ export class GithubService {
         const params = toParams(query);
 
         return this._http.get<IGithubIssue[]>(url, { params });
+    }
+
+    /**
+     * Sync GitHub issues and labels for a given organization and integration.
+     *
+     * @param integrationId - The ID of the integration.
+     * @param options - An object containing organizationId, tenantId, and issues.
+     * @returns An observable that represents the HTTP POST request to sync issues and labels.
+     */
+    public syncIssuesAndLabels(
+        integrationId: IIntegrationTenant['id'],
+        options: {
+            organizationId: IOrganization['id'];
+            tenantId: IOrganization['tenantId'];
+            issues: IGithubIssue[];
+            visibility: IGithubRepository['visibility'];
+        }
+    ): Observable<any> {
+        return this._http.post(`${API_PREFIX}/integration/github/${integrationId}/sync-issues`, {
+            issues: this._mapIssuePayload(options.issues),
+            organizationId: options.organizationId,
+            tenantId: options.tenantId,
+            visibility: options.visibility
+        });
+    }
+
+    /**
+     * Map GitHub issue payload data to the required format.
+     *
+     * @param data - An array of GitHub issues.
+     * @returns An array of mapped issue payload data.
+     */
+    private _mapIssuePayload(data: IGithubIssue[]): any[] {
+        return data.map(({ id, number, title, state, body }) => ({
+            sourceId: id,
+            number,
+            title,
+            state,
+            body
+        }));
     }
 }

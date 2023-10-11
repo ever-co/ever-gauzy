@@ -12,6 +12,7 @@ import { GithubService } from './github.service';
 import { GithubMiddleware } from './github.middleware';
 import { GitHubHooksController } from './github.hooks.controller';
 import { GithubHooksService } from './github.hooks.service';
+import { GitHubSyncController } from './github-sync.controller';
 
 @Module({
 	imports: [
@@ -27,6 +28,7 @@ import { GithubHooksService } from './github.hooks.service';
 		GitHubController,
 		GitHubHooksController,
 		GitHubIntegrationController,
+		GitHubSyncController
 	],
 	providers: [
 		GithubService,

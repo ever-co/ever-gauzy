@@ -57,15 +57,15 @@ export class ProjectEditMutationComponent extends TranslationBaseComponent imple
 
 	ngOnInit(): void {
 		// Call the following methods to initialize component properties
-		this.getEditProject();
-		this.getGithubIntegrationTenant();
-		this.getSyncedGithubRepository();
+		this._getEditProject();
+		this._getGithubIntegrationTenant();
+		this._getSyncedGithubRepository();
 	}
 
 	/**
 	 * Fetches and sets the project data from the route's data property.
 	 */
-	getEditProject() {
+	private _getEditProject() {
 		this.project$ = this._activatedRoute.data.pipe(
 			filter((data: Data) => !!data && !!data.project),
 			map(({ project }) => {
@@ -79,7 +79,7 @@ export class ProjectEditMutationComponent extends TranslationBaseComponent imple
 	/**
 	 * Fetches and sets the GitHub integration data from the route's data property.
 	 */
-	getGithubIntegrationTenant() {
+	private _getGithubIntegrationTenant() {
 		this.integration$ = this._activatedRoute.data.pipe(
 			map(({ integration }) => integration),
 			untilDestroyed(this) // Automatically unsubscribes when the component is destroyed
@@ -90,7 +90,7 @@ export class ProjectEditMutationComponent extends TranslationBaseComponent imple
 	 * Fetches and handles synchronized GitHub repository data.
 	 * This method is not provided in your code but is expected to be present.
 	 */
-	getSyncedGithubRepository() {
+	private _getSyncedGithubRepository() {
 		this.integrationMap$ = this._store.selectedOrganization$.pipe(
 			debounceTime(100),
 			distinctUntilChange(),

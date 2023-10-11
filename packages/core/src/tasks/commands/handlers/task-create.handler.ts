@@ -18,7 +18,7 @@ export class TaskCreateHandler implements ICommandHandler<TaskCreateCommand> {
 			const { input } = command;
 			const tenantId = RequestContext.currentTenantId() || input.tenantId;
 
-			let { organizationId, project } = input;
+			let { organizationId, project, number } = input;
 
 			/** If project found then use project name as a task prefix */
 			if (input.projectId) {
@@ -38,7 +38,7 @@ export class TaskCreateHandler implements ICommandHandler<TaskCreateCommand> {
 
 			return await this._taskService.create({
 				...input,
-				number: maxNumber + 1,
+				number: number || maxNumber + 1,
 				prefix: taskPrefix,
 				tenantId,
 				organizationId,

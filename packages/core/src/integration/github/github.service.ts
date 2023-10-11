@@ -3,12 +3,26 @@ import { CommandBus } from '@nestjs/cqrs';
 import { HttpService } from '@nestjs/axios';
 import { firstValueFrom, switchMap } from 'rxjs';
 import { environment } from '@gauzy/config';
-import { GithubPropertyMapEnum, IGithubAppInstallInput, IIntegrationTenant, IOAuthAppInstallInput, IntegrationEntity, IntegrationEnum } from '@gauzy/contracts';
+import {
+	GithubPropertyMapEnum,
+	IGithubAppInstallInput,
+	IGithubSyncIssuePayload,
+	IIntegrationEntitySetting,
+	IIntegrationEntitySettingTied,
+	IIntegrationMap,
+	IIntegrationTenant,
+	IOAuthAppInstallInput,
+	IntegrationEntity,
+	IntegrationEnum,
+	TaskStatusEnum
+} from '@gauzy/contracts';
 import { RequestContext } from 'core/context';
 import { IntegrationTenantFirstOrCreateCommand } from 'integration-tenant/commands';
 import { IntegrationService } from 'integration/integration.service';
 import { GITHUB_ACCESS_TOKEN_URL } from './github.config';
 import { DEFAULT_ENTITY_SETTINGS, PROJECT_TIED_ENTITIES } from './github-entity-settings';
+import { IntegrationMapSyncIssueCommand } from 'integration-map/commands';
+import { IntegrationTenantService } from 'integration-tenant/integration-tenant.service';
 const { github } = environment;
 
 @Injectable()
@@ -18,7 +32,8 @@ export class GithubService {
 	constructor(
 		private readonly _http: HttpService,
 		private readonly _commandBus: CommandBus,
-		private readonly _integrationService: IntegrationService
+		private readonly _integrationService: IntegrationService,
+		private readonly _integrationTenantService: IntegrationTenantService
 	) { }
 
 	async openIssue({ title, body, owner, repo, installationI }) {
@@ -199,6 +214,77 @@ export class GithubService {
 			// Handle errors and return an appropriate error response
 			this.logger.error('Error while creating GitHub integration settings', error.message);
 			throw new HttpException(`Failed to add GitHub App Installation: ${error.message}`, HttpStatus.BAD_REQUEST);
+		}
+	}
+
+	/**
+	 * Synchronize GitHub issues and labels.
+	 *
+	 * @param input - The payload containing information required for synchronization.
+	 * @throws {Error} Throws an error if synchronization fails.
+	 */
+	public async syncGithubIssuesAndLabels(
+		integrationId: IIntegrationTenant['id'],
+		input: IGithubSyncIssuePayload
+	): Promise<any> {
+		try {
+			const { organizationId, issues = [], visibility } = input;
+			const tenantId = RequestContext.currentTenantId() || input.tenantId;
+
+			// Retrieve integration settings tied to the specified organization
+			const { entitySettings } = await this._integrationTenantService.findOneByIdString(integrationId, {
+				where: {
+					tenantId,
+					organizationId
+				},
+				relations: {
+					entitySettings: {
+						tiedEntities: true
+					}
+				}
+			});
+
+			// Synchronize data based on entity settings
+			return await Promise.all(
+				entitySettings.map(async (setting) => {
+					switch (setting.entity) {
+						case IntegrationEntity.PROJECT:
+							/**
+							 * Issues Sync
+							 */
+							const issueSetting: IIntegrationEntitySetting = setting.tiedEntities.find(
+								({ entity }: IIntegrationEntitySettingTied) => entity === IntegrationEntity.ISSUE
+							);
+							if (!!issueSetting && issueSetting.sync) {
+								return issues.map(
+									async ({ sourceId, number, title, state, body }) => {
+										return await this._commandBus.execute(
+											new IntegrationMapSyncIssueCommand({
+												input: {
+													title,
+													number,
+													description: body,
+													status: state as TaskStatusEnum,
+													public: visibility === 'private' ? false : true,
+													organizationId,
+													tenantId,
+												},
+												sourceId,
+												integrationId,
+												organizationId,
+												tenantId
+											})
+										);
+									}
+								)
+							}
+					}
+				})
+			);
+		} catch (error) {
+			// Handle errors gracefully, for example, log them
+			console.error('Error in syncGithubIssuesAndLabels:', error);
+			throw new HttpException({ message: 'GitHub synchronization failed', error }, HttpStatus.BAD_REQUEST);
 		}
 	}
 }

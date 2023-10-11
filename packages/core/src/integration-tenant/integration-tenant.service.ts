@@ -3,7 +3,6 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import {
 	IBasePerTenantAndOrganizationEntityModel,
-	IBaseRelationsEntityModel,
 	IIntegrationEntitySetting,
 	IIntegrationSetting,
 	IIntegrationTenant,
@@ -87,7 +86,6 @@ export class IntegrationTenantService extends TenantAwareCrudService<Integration
 			});
 			return integrationTenant || false;
 		} catch (error) {
-			console.error('Error in getIntegrationByOptions:', error);
 			return false;
 		}
 	}
