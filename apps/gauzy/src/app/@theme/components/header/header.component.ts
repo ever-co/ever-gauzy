@@ -566,7 +566,7 @@ export class HeaderComponent extends TranslationBaseComponent implements OnInit,
 					{
 						title: this.getTranslation('CONTEXT_MENU.PROJECT'),
 						icon: 'color-palette-outline',
-						link: `pages/organization/projects`
+						link: `pages/organization/projects/create`
 					}
 				]
 				: []),
