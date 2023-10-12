@@ -4110,6 +4110,7 @@
 		},
 		"TEMPLATE_NAMES": {
 			"password": "Password Reset",
+			"multi-tenant-password": "Повторно задаване на парола за много клиенти",
 			"welcome-user": "Welcome User",
 			"invite-organization-client": "Invite Organization Client",
 			"email-estimate": "Email Estimate",

@@ -4165,6 +4165,7 @@
 		},
 		"TEMPLATE_NAMES": {
 			"password": "Restablecimiento de contraseña",
+			"multi-tenant-password": "Restablecimiento de contraseña de múltiples inquilinos",
 			"password-less-authentication": "Autenticación sin contraseña.",
 			"welcome-user": "Bienvenido Usuario.",
 			"email-verification": "Confirmación de correo electrónico",

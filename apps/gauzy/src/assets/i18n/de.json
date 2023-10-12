@@ -4163,6 +4163,7 @@
 		},
 		"TEMPLATE_NAMES": {
 			"password": "Kennwort zurücksetzen",
+			"multi-tenant-password": "Multi-Tenant-Passwort-Reset",
 			"password-less-authentication": "Passwortlose Authentifizierung",
 			"welcome-user": "Willkommen Benutzer",
 			"email-verification": "E-Mail-Bestätigung",
