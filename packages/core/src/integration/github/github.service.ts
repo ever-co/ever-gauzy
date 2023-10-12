@@ -3,12 +3,19 @@ import { CommandBus } from '@nestjs/cqrs';
 import { HttpService } from '@nestjs/axios';
 import { firstValueFrom, switchMap } from 'rxjs';
 import { environment } from '@gauzy/config';
-import { GithubPropertyMapEnum, IGithubAppInstallInput, IIntegrationTenant, IntegrationEntity, IntegrationEnum } from '@gauzy/contracts';
+import {
+	GithubPropertyMapEnum,
+	IGithubAppInstallInput,
+	IIntegrationTenant,
+	IOAuthAppInstallInput,
+	IntegrationEntity,
+	IntegrationEnum
+} from '@gauzy/contracts';
 import { RequestContext } from 'core/context';
 import { IntegrationTenantFirstOrCreateCommand } from 'integration-tenant/commands';
 import { IntegrationService } from 'integration/integration.service';
 import { GITHUB_ACCESS_TOKEN_URL } from './github.config';
-import { DEFAULT_ENTITY_SETTINGS, PROJECT_TIED_ENTITIES } from './github-entity-settings';
+import { DEFAULT_ENTITY_SETTINGS, ISSUE_TIED_ENTITIES } from './github-entity-settings';
 const { github } = environment;
 
 @Injectable()
@@ -53,14 +60,14 @@ export class GithubService {
 				}
 			});
 
-			const tiedEntities = PROJECT_TIED_ENTITIES.map(entity => ({
+			const tiedEntities = ISSUE_TIED_ENTITIES.map(entity => ({
 				...entity,
 				organizationId,
 				tenantId
 			}));
 
 			const entitySettings = DEFAULT_ENTITY_SETTINGS.map((settingEntity) => {
-				if (settingEntity.entity === IntegrationEntity.PROJECT) {
+				if (settingEntity.entity === IntegrationEntity.ISSUE) {
 					return {
 						...settingEntity,
 						tiedEntities
@@ -116,7 +123,7 @@ export class GithubService {
 	 * @returns A promise that resolves with the integration tenant data.
 	 * @throws {HttpException} If input data is invalid or if any step of the process fails.
 	 */
-	async oAuthEndpointAuthorization(input: IGithubAppInstallInput): Promise<IIntegrationTenant> {
+	async oAuthEndpointAuthorization(input: IOAuthAppInstallInput): Promise<IIntegrationTenant> {
 		try {
 			// Validate the input data (You can use class-validator for validation)
 			if (!input || !input.code) {

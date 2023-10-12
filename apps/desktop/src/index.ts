@@ -233,7 +233,10 @@ async function startServer(value, restart = false) {
 	if (value.db === 'sqlite') {
 		process.env.DB_PATH = sqlite3filename;
 		process.env.DB_TYPE = 'sqlite';
-	} else {
+	}else if(value.db === 'better-sqlite') {
+		process.env.DB_PATH = sqlite3filename;
+		process.env.DB_TYPE = 'better-sqlite3';
+	}else {
 		process.env.DB_TYPE = 'postgres';
 		process.env.DB_HOST = value['postgres']?.dbHost;
 		process.env.DB_PORT = value['postgres']?.dbPort;
@@ -462,7 +465,7 @@ app.on('ready', async () => {
 	splashScreen = new SplashScreen(pathWindow.timeTrackerUi);
 	await splashScreen.loadURL();
 	splashScreen.show();
-	if (provider.dialect === 'sqlite') {
+	if (['sqlite', 'better-sqlite'].includes(provider.dialect)) {
 		try {
 			const res = await knex.raw(`pragma journal_mode = WAL;`)
 			console.log(res);
@@ -698,34 +701,12 @@ ipcMain.on('restart_and_update', () => {
 
 ipcMain.on('check_database_connection', async (event, arg) => {
 	try {
-		const provider = arg.db;
-		let databaseOptions;
-		if (provider === 'postgres') {
-			databaseOptions = {
-				client: 'pg',
-				connection: {
-					host: arg[provider].dbHost,
-					user: arg[provider].dbUsername,
-					password: arg[provider].dbPassword,
-					database: arg[provider].dbName,
-					port: arg[provider].dbPort
-				}
-			};
-		} else {
-			databaseOptions = {
-				client: 'sqlite',
-				connection: {
-					filename: sqlite3filename,
-				},
-			};
-		}
-		const dbConn = require('knex')(databaseOptions);
-		await dbConn.raw('select 1+1 as result');
+		const driver = await provider.check(arg);
 		event.sender.send('database_status', {
 			status: true,
 			message: TranslateService.instant(
 				'TIMER_TRACKER.DIALOG.CONNECTION_DRIVER',
-				{ driver: provider === 'postgres' ? 'PostgresSQL' : 'SQLite' }
+				{ driver }
 			)
 		});
 	} catch (error) {

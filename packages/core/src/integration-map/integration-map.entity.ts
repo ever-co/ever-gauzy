@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Column, Entity, JoinColumn, RelationId, ManyToOne, Index } from 'typeorm';
-import { IIntegrationMap, IIntegrationTenant } from '@gauzy/contracts';
+import { IIntegrationMap, IIntegrationTenant, IntegrationEntity } from '@gauzy/contracts';
 import { IsNotEmpty, IsUUID } from 'class-validator';
 import {
 	IntegrationTenant,
@@ -10,10 +10,10 @@ import {
 @Entity('integration_map')
 export class IntegrationMap extends TenantOrganizationBaseEntity implements IIntegrationMap {
 
-	@ApiProperty({ type: () => String })
+	@ApiProperty({ type: () => String, enum: IntegrationEntity })
 	@IsNotEmpty()
 	@Column()
-	entity: string;
+	entity: IntegrationEntity;
 
 	@ApiProperty({ type: () => String })
 	@IsNotEmpty()

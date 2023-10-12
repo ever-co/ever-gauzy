@@ -2056,6 +2056,7 @@
 			"ORG_CONTACT_VIEW": "Bekijk contacten",
 			"ORG_TEAM_ADD": "Voeg Teams toe",
 			"ORG_TEAM_VIEW": "Bekijk Teams",
+			"ORG_TEAM_EDIT_ACTIVE_TASK": "Bewerk actieve taken",
 			"ORG_TEAM_EDIT": "Teams bewerken.",
 			"ORG_TEAM_DELETE": "Verwijder Teams",
 			"ORG_TEAM_JOIN_REQUEST_VIEW": "Bekijk de verzoeken om lid te worden van teams",
@@ -4356,7 +4357,8 @@
 			"EMAIL_REQUIRED": "E-mail is verplicht!",
 			"EMAIL_REAL_REQUIRED": "De e-mail moet echt zijn!",
 			"PASSWORD_REQUIRED": "Wachtwoord is verplicht!",
-			"PASSWORD_SHOULD_CONTAIN": "Het wachtwoord moet bestaan uit {{ minLength }} tot {{ maxLength }} tekens!"
+			"PASSWORD_SHOULD_CONTAIN": "Het wachtwoord moet bestaan uit {{ minLength }} tot {{ maxLength }} tekens!",
+			"PASSWORD_NO_SPACE_EDGES": "Wachtwoorden mogen niet beginnen of eindigen met spaties."
 		},
 		"DEMO": {
 			"TITLE": "Automatisch inloggen op demorekeningen",

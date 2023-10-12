@@ -348,7 +348,7 @@ export class TimeTrackingComponent extends TranslationBaseComponent
 					memo + parseInt(activity.duration + '', 10),
 				0
 			);
-			this.activities = activities.map((activity) => {
+			this.activities = (activities || []).map((activity) => {
 				activity.durationPercentage = (activity.duration * 100) / sum;
 				return activity;
 			});
@@ -413,7 +413,7 @@ export class TimeTrackingComponent extends TranslationBaseComponent
 			this.memberLoading = true;
 			const members = await this.timesheetStatisticsService.getMembers(request);
 
-			this.members = members.map((member) => {
+			this.members = (members || []).map((member) => {
 				const week: any = indexBy(member.weekHours, 'day');
 				const sum = reduce(
 					member.weekHours,

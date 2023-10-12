@@ -22,6 +22,52 @@ const approvalTypes = [
 	'Health Meal'
 ];
 
+
+export const createDefaultRequestApprovalEmployee = async (
+	dataSource: DataSource,
+	defaultData: {
+		employees: IEmployee[];
+		orgs: IOrganization[];
+		approvalPolicies: ApprovalPolicy[] | void;
+	}
+): Promise<void> => {
+	const requestApprovals: RequestApproval[] = [];
+	if (!defaultData.approvalPolicies) {
+		console.warn(
+			'Warning: Approval Policies not found, Request Approval Employee  will not be created'
+		);
+		return;
+	}
+
+	for await (const org of defaultData.orgs) {
+
+		const requestApproval = new RequestApproval();
+		requestApproval.name = faker.helpers.arrayElement(approvalTypes);
+		requestApproval.status = faker.number.int({ min: 1, max: 3 });
+		requestApproval.approvalPolicy = faker.helpers.arrayElement(defaultData.approvalPolicies);
+		requestApproval.min_count = faker.number.int({ min: 1, max: 56 });
+		requestApproval.createdBy = faker.helpers.arrayElement(defaultData.employees).id;
+
+
+		const requestApprovalEmployees: RequestApprovalEmployee[] = [];
+		for await (const employee of faker.helpers.arrayElements(defaultData.employees, 5)) {
+			const defaultRequestApprovalEmployee = new RequestApprovalEmployee();
+			defaultRequestApprovalEmployee.requestApprovalId = faker.helpers.arrayElement(defaultData.approvalPolicies).id;
+			defaultRequestApprovalEmployee.employee = employee;
+			defaultRequestApprovalEmployee.status = faker.number.int(99);
+			defaultRequestApprovalEmployee.tenant = org.tenant;
+			defaultRequestApprovalEmployee.organization = org;
+			requestApprovalEmployees.push(defaultRequestApprovalEmployee);
+		}
+		requestApproval.employeeApprovals = requestApprovalEmployees;
+		requestApproval.tenant = org.tenant;
+		requestApproval.organization = org;
+		requestApprovals.push(requestApproval);
+	}
+	await dataSource.manager.save(requestApprovals);
+}
+
+
 export const createRandomRequestApproval = async (
 	dataSource: DataSource,
 	tenants: ITenant[],

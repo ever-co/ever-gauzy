@@ -159,7 +159,7 @@ async function cleanReport(
 	const report = dataSource.getRepository(Report).metadata.tableName;
 	const reportCategory = dataSource.getRepository(ReportCategory).metadata.tableName;
 
-	if (config.dbConnectionOptions.type === 'sqlite') {
+	if (['sqlite', 'better-sqlite3'].includes(config.dbConnectionOptions.type)) {
 		await dataSource.query(`DELETE FROM ${reportCategory}`);
 		await dataSource.query(`DELETE FROM ${report}`);
 	} else {

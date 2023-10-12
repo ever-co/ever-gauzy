@@ -286,6 +286,7 @@
 		"CREATED_BY": "Created By",
 		"NO_DATA_MESSAGE": "No Data",
 		"TAGS": "Tags",
+		"LABELS": "Labels",
 		"CREATED": "Created",
 		"APPLIED_DATE": "Applied Date",
 		"HIRED_DATE": "Hired Date",
@@ -1215,7 +1216,9 @@
 		},
 		"GITHUB_PAGE": {
 			"NAME": "GitHub",
-			"SELECT_REPOSITORY": "Select Repository"
+			"SELECT_REPOSITORY": "Select repository",
+			"SEARCH_REPOSITORY": "Type to search repository",
+			"SYNCED_ISSUES": "{{repository}} issues & labels synced successfully"
 		},
 		"COMING_SOON": "Coming soon",
 		"RE_INTEGRATE": "Re-integrate",
@@ -1224,7 +1227,10 @@
 		"FILTER_INTEGRATIONS": "Filter integrations",
 		"SEARCH_INTEGRATIONS": "Search integrations",
 		"PAID": "Paid",
-		"INTEGRATION": "Integration"
+		"INTEGRATION": "Integration",
+		"MESSAGE": {
+			"SETTINGS_UPDATED": "Updated settings for {{provider}} integration"
+		}
 	},
 	"DASHBOARD_PAGE": {
 		"ACCOUNTING": "Accounting",
@@ -2063,6 +2069,7 @@
 			"ORG_CONTACT_VIEW": "View Contacts",
 			"ORG_TEAM_ADD": "Add Teams",
 			"ORG_TEAM_VIEW": "View Teams",
+			"ORG_TEAM_EDIT_ACTIVE_TASK": "Edit Active Tasks",
 			"ORG_TEAM_EDIT": "Edit Teams",
 			"ORG_TEAM_DELETE": "Delete Teams",
 			"ORG_TEAM_REMOVE_ACCOUNT_AS_MEMBER": "Remove Account As Team Member",
@@ -2100,6 +2107,7 @@
 		"ORGANIZATION_ADD": "Add Organization",
 		"IMAGE": "Image",
 		"SPRINTS": "Sprints",
+		"INTEGRATIONS": "Integrations",
 		"NO_IMAGE": "Image no available"
 	},
 	"CONTACTS_PAGE": {
@@ -3590,7 +3598,8 @@
 				"ADD_PROJECT": "Project '{{ name }}' was saved",
 				"REMOVE_PROJECT": "Project '{{ name }}' was removed",
 				"INVALID_PROJECT_NAME": "Please fill in the name of your project",
-				"VISIBILITY": "Now project is {{ name }} "
+				"VISIBILITY": "Now project is {{ name }} ",
+				"SYNC_REPOSITORY": "Repository '{{ repository }}' sync with '{{ project }}'"
 			},
 			"EDIT_ORGANIZATIONS_TEAM": {
 				"ADD_NEW_TEAM": "Team '{{ name }}' was added",
@@ -4366,7 +4375,8 @@
 			"EMAIL_REQUIRED": "Email is required!",
 			"EMAIL_REAL_REQUIRED": "Email should be the real one!",
 			"PASSWORD_REQUIRED": "Password is required!",
-			"PASSWORD_SHOULD_CONTAIN": "Password should contain from {{ minLength }} to {{ maxLength }} characters!"
+			"PASSWORD_SHOULD_CONTAIN": "Password should contain from {{ minLength }} to {{ maxLength }} characters!",
+			"PASSWORD_NO_SPACE_EDGES": "Passwords must not begin or end with spaces."
 		},
 		"DEMO": {
 			"TITLE": "Login Automatically into Demo accounts",
