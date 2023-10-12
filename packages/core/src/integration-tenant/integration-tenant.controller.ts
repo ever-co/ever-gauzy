@@ -4,11 +4,15 @@ import {
 	Get,
 	Query,
 	Param,
-	UseGuards
+	UseGuards,
+	UsePipes,
+	ValidationPipe,
+	InternalServerErrorException
 } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { ApiOperation, ApiResponse } from '@nestjs/swagger';
-import { IIntegrationTenant, PermissionsEnum } from '@gauzy/contracts';
+import { IIntegrationTenant, IPagination, PermissionsEnum } from '@gauzy/contracts';
+import { PaginationParams } from 'core/crud';
 import { UUIDValidationPipe } from './../shared/pipes';
 import { Permissions } from './../shared/decorators';
 import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
@@ -43,7 +47,7 @@ export class IntegrationTenantController {
 		status: HttpStatus.BAD_REQUEST,
 		description: 'Invalid request'
 	})
-	@Get()
+	@Get('integration')
 	async getIntegrationByOptions(
 		@Query() options: IntegrationTenantQueryDTO
 	): Promise<IIntegrationTenant | boolean> {
@@ -51,28 +55,42 @@ export class IntegrationTenantController {
 	}
 
 	/**
-	 * Find integration tenant by primary ID
+	 * Fetch a paginated list of IntegrationTenant entities.
+	 * @param params - Query parameters for pagination and filtering.
+	 * @returns A paginated list of IntegrationTenant entities.
+	 */
+	@Get()
+	@UsePipes(new ValidationPipe())
+	async findAll(
+		@Query() params: PaginationParams<IntegrationTenant>
+	): Promise<IPagination<IntegrationTenant>> {
+		// Delegate the logic to your service
+		return await this._integrationTenantService.findAll(params);
+	}
+
+	/**
+	 * Fetch an IntegrationTenant entity in the database
 	 *
-	 * @param id
+	 * @param integrationId
+	 * @param query
 	 * @returns
 	 */
-	@ApiOperation({ summary: 'Find integration tenant.' })
-	@ApiResponse({
-		status: HttpStatus.OK,
-		description: 'Found integration tenant',
-		type: IntegrationTenant
-	})
-	@ApiResponse({
-		status: HttpStatus.NOT_FOUND,
-		description: 'Record not found'
-	})
 	@Get(':id')
 	async findById(
 		@Param('id', UUIDValidationPipe) integrationId: IIntegrationTenant['id'],
 		@Query() query: RelationsQueryDTO
 	): Promise<IIntegrationTenant> {
-		return await this._integrationTenantService.findOneByIdString(integrationId, {
-			relations: query.relations
-		});
+		try {
+			// Attempt to find the IntegrationTenant entity in the database
+			return await this._integrationTenantService.findOneByIdString(integrationId, {
+				relations: query.relations,
+			});
+		} catch (error) {
+			// Handle and log any errors that occur
+			console.error(`Error while finding IntegrationTenant: ${error.message}`);
+
+			// Throw an InternalServerErrorException with a generic error message
+			throw new InternalServerErrorException('An error occurred while fetching the IntegrationTenant entity');
+		}
 	}
 }

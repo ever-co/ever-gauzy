@@ -12,19 +12,30 @@ import { IntegrationsRoutingModule } from './integrations-routing.module';
 import { IntegrationsComponent } from './integrations.component';
 import { SharedModule } from '../../@shared/shared.module';
 import { TranslateModule } from '../../@shared/translate/translate.module';
+import { IntegrationLayoutComponent } from './layout/layout.component';
+import { IntegrationListComponent } from './components/integration-list/list.component';
+import { HeaderTitleModule } from '../../@shared/components/header-title/header-title.module';
+import { Ng2SmartTableModule } from 'ng2-smart-table';
 
 @NgModule({
-	declarations: [IntegrationsComponent],
+
 	imports: [
 		CommonModule,
-		IntegrationsRoutingModule,
-		NbCardModule,
-		SharedModule,
-		NbSelectModule,
-		NbInputModule,
-		NbSpinnerModule,
 		NbButtonModule,
-		TranslateModule
-	]
+		NbCardModule,
+		NbInputModule,
+		NbSelectModule,
+		NbSpinnerModule,
+		Ng2SmartTableModule,
+		IntegrationsRoutingModule,
+		SharedModule,
+		TranslateModule,
+		HeaderTitleModule,
+	],
+	declarations: [
+		IntegrationLayoutComponent,
+		IntegrationListComponent,
+		IntegrationsComponent,
+	],
 })
 export class IntegrationsModule { }

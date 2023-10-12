@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { IBaseRelationsEntityModel, IIntegration, IIntegrationTenant } from '@gauzy/contracts';
+import { IBaseRelationsEntityModel, IIntegration, IIntegrationTenant, IIntegrationTenantFindInput } from '@gauzy/contracts';
 import { HttpClient } from '@angular/common/http';
 import { map } from 'rxjs/operators';
 import { Observable } from 'rxjs';
@@ -64,8 +64,8 @@ export class IntegrationsService {
 	 * @param input - The input options for finding the integration tenant.
 	 * @returns The integration tenant if found, or `false` if not found or an error occurs.
 	 */
-	getIntegrationByOptions(input: IIntegrationTenant) {
-		return this._http.get<any>(`${API_PREFIX}/integration-tenant`, {
+	getIntegrationByOptions(input: IIntegrationTenantFindInput) {
+		return this._http.get<any>(`${API_PREFIX}/integration-tenant/integration`, {
 			params: toParams({ ...input })
 		});
 	}

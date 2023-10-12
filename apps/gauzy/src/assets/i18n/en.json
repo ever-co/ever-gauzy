@@ -283,6 +283,7 @@
 		"CURRENT_VALUE": "Current value",
 		"TARGET_VALUE": "Target value",
 		"LAST_UPDATED": "Last Updated",
+		"LAST_SYNC": "Last Sync",
 		"CREATED_BY": "Created By",
 		"NO_DATA_MESSAGE": "No Data",
 		"TAGS": "Tags",
@@ -1178,6 +1179,7 @@
 		}
 	},
 	"INTEGRATIONS": {
+		"TITLE": "Integrations",
 		"AVAILABLE_INTEGRATIONS": "Available Apps & Integrations",
 		"ADDED_UPWORK_TRANSACTION": "Added Upwork Transaction",
 		"TOTAL_UPWORK_TRANSACTIONS_SUCCEED": "Total expense transactions succeed: {{ totalExpenses }}. Total income transactions succeed: {{ totalIncomes }}",
