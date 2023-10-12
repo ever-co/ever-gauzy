@@ -40,6 +40,7 @@
 		"REQUEST": "Request",
 		"HISTORY": "History",
 		"SYNC": "Sync",
+		"SYNCING": "Syncing...",
 		"UPDATE": "Update",
 		"AUTO_SYNC": "Auto sync",
 		"VIEW": "View",
@@ -1218,7 +1219,7 @@
 			"NAME": "GitHub",
 			"SELECT_REPOSITORY": "Select repository",
 			"SEARCH_REPOSITORY": "Type to search repository",
-			"SYNCED_ISSUES": "{{repository}} issues & labels synced successfully"
+			"SYNCED_ISSUES": "'{{repository}}' issues & labels synced successfully"
 		},
 		"COMING_SOON": "Coming soon",
 		"RE_INTEGRATE": "Re-integrate",

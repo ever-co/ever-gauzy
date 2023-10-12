@@ -1,7 +1,7 @@
 import { AfterViewInit, Component, OnInit } from '@angular/core';
 import { TitleCasePipe } from '@angular/common';
 import { ActivatedRoute, Data } from '@angular/router';
-import { debounceTime, firstValueFrom, of } from 'rxjs';
+import { Subject, debounceTime, finalize, firstValueFrom, of } from 'rxjs';
 import { Observable } from 'rxjs/internal/Observable';
 import { catchError, filter, map, switchMap, tap } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
@@ -45,6 +45,7 @@ import { GithubSettingsDialogComponent } from '../settings-dialog/settings-dialo
 export class GithubViewComponent extends TranslationBaseComponent implements AfterViewInit, OnInit {
 	public parsedInt = parsedInt;
 
+	public syncing: boolean = false;
 	public loading: boolean = false;
 	public user: IUser = this._store.user;
 	public organization: IOrganization = this._store.selectedOrganization;
@@ -58,6 +59,7 @@ export class GithubViewComponent extends TranslationBaseComponent implements Aft
 	public issues$: Observable<IGithubIssue[]>;
 	public issues: IGithubIssue[] = [];
 	public selectedIssues: IGithubIssue[] = [];
+	private destroy$ = new Subject<void>();
 
 	constructor(
 		public readonly _translateService: TranslateService,
@@ -349,6 +351,12 @@ export class GithubViewComponent extends TranslationBaseComponent implements Aft
 			if (!this.organization || !this.repository) {
 				return;
 			}
+			// Check if another synchronization is already in progress
+			if (this.syncing) {
+				return;
+			}
+
+			this.syncing = true;
 
 			const { id: organizationId, tenantId } = this.organization;
 			const { id: integrationId } = this.integration;
@@ -372,7 +380,7 @@ export class GithubViewComponent extends TranslationBaseComponent implements Aft
 				tap(() => {
 					this._toastrService.success(
 						this.getTranslation('INTEGRATIONS.GITHUB_PAGE.SYNCED_ISSUES', {
-							repository: this.repository.name
+							repository: this.repository.full_name
 						}),
 						this.getTranslation('TOASTR.TITLE.SUCCESS')
 					);
@@ -383,6 +391,7 @@ export class GithubViewComponent extends TranslationBaseComponent implements Aft
 					this._errorHandlingService.handleError(error);
 					return of(null);
 				}),
+				finalize(() => this.syncing = false),
 				untilDestroyed(this) // Ensure subscription is cleaned up on component destroy
 			).subscribe();
 		} catch (error) {

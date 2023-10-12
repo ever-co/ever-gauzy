@@ -14,9 +14,18 @@
 	<nb-card-body>
 		<ng-template [ngIf]="integration$ | async">
 			<div class="mb-3">
-				<button [disabled]="selectedIssues.length == 0" nbButton status="primary" class="mr-2" (click)="syncIssues()">
-					<nb-icon class="mr-1" icon="edit-outline"></nb-icon>
-					{{ 'BUTTONS.SYNC' | translate }}
+				<button
+					[disabled]="selectedIssues.length == 0"
+					nbButton
+					status="primary"
+					class="mr-2"
+					debounceClick
+					(throttledClick)="syncIssues()"
+				>
+					<div class="sync-container">
+						<nb-icon class="sync" icon="sync-outline" [ngClass]="{ 'spin' : syncing }"></nb-icon>
+						{{ (syncing ? 'BUTTONS.SYNCING' : 'BUTTONS.SYNC') | translate }}
+					</div>
 				</button>
 			</div>
 			<div class="issues-container">
