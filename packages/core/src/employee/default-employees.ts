@@ -17,7 +17,7 @@ export const DEFAULT_EMPLOYEES: any = [
 
 export const DEFAULT_EVER_EMPLOYEES: any = [
 	{
-		email: 'ruslan@example_ever.co',
+		email: 'ruslan@example-ever.co',
 		password: '123456',
 		firstName: 'Ruslan',
 		lastName: 'K.',
@@ -27,7 +27,7 @@ export const DEFAULT_EVER_EMPLOYEES: any = [
 		preferredComponentLayout: ComponentLayoutStyleEnum.TABLE
 	},
 	{
-		email: 'alish@example_ever.co',
+		email: 'alish@example-ever.co',
 		password: '123456',
 		firstName: 'Alish',
 		lastName: 'M.',
@@ -39,7 +39,7 @@ export const DEFAULT_EVER_EMPLOYEES: any = [
 		preferredComponentLayout: ComponentLayoutStyleEnum.TABLE
 	},
 	{
-		email: 'booster@example_ever.co',
+		email: 'booster@example-ever.co',
 		password: '123456',
 		firstName: 'Booster',
 		lastName: 'P.',
@@ -51,7 +51,7 @@ export const DEFAULT_EVER_EMPLOYEES: any = [
 		preferredComponentLayout: ComponentLayoutStyleEnum.TABLE
 	},
 	{
-		email: 'yoster@example_ever.co',
+		email: 'yoster@example-ever.co',
 		password: '123456',
 		firstName: 'Yoster',
 		lastName: 'F.',
@@ -63,7 +63,7 @@ export const DEFAULT_EVER_EMPLOYEES: any = [
 		preferredComponentLayout: ComponentLayoutStyleEnum.TABLE
 	},
 	{
-		email: 'hoster@example_ever.co',
+		email: 'hoster@example-ever.co',
 		password: '123456',
 		firstName: 'Hoster',
 		lastName: 'H.',
@@ -75,7 +75,7 @@ export const DEFAULT_EVER_EMPLOYEES: any = [
 		preferredComponentLayout: ComponentLayoutStyleEnum.TABLE
 	},
 	{
-		email: 'aster@example_ever.co',
+		email: 'aster@example-ever.co',
 		password: '123456',
 		firstName: 'Aster',
 		lastName: 'A.',
@@ -87,7 +87,7 @@ export const DEFAULT_EVER_EMPLOYEES: any = [
 		preferredComponentLayout: ComponentLayoutStyleEnum.TABLE
 	},
 	{
-		email: 'roster@example_ever.co',
+		email: 'roster@example-ever.co',
 		password: '123456',
 		firstName: 'Roster',
 		lastName: 'R.',
@@ -99,7 +99,7 @@ export const DEFAULT_EVER_EMPLOYEES: any = [
 		preferredComponentLayout: ComponentLayoutStyleEnum.TABLE
 	},
 	{
-		email: 'dister@example_ever.co',
+		email: 'dister@example-ever.co',
 		password: '123456',
 		firstName: 'Dister',
 		lastName: 'D.',
@@ -111,7 +111,7 @@ export const DEFAULT_EVER_EMPLOYEES: any = [
 		preferredComponentLayout: ComponentLayoutStyleEnum.TABLE
 	},
 	{
-		email: 'postern@example_ever.co',
+		email: 'postern@example-ever.co',
 		password: '123456',
 		firstName: 'Postern',
 		lastName: 'P.',
@@ -123,7 +123,7 @@ export const DEFAULT_EVER_EMPLOYEES: any = [
 		preferredComponentLayout: ComponentLayoutStyleEnum.TABLE
 	},
 	{
-		email: 'kyoster@example_ever.co',
+		email: 'kyoster@example-ever.co',
 		password: '123456',
 		firstName: 'Kyoster',
 		lastName: 'K.',
@@ -135,7 +135,7 @@ export const DEFAULT_EVER_EMPLOYEES: any = [
 		preferredComponentLayout: ComponentLayoutStyleEnum.TABLE
 	},
 	{
-		email: 'taster@example_ever.co',
+		email: 'taster@example-ever.co',
 		password: '123456',
 		firstName: 'Taster',
 		lastName: 'T.',
@@ -183,7 +183,7 @@ export const DEFAULT_EVER_EMPLOYEES: any = [
 		preferredComponentLayout: ComponentLayoutStyleEnum.TABLE
 	},
 	{
-		email: 'julia@example_ever.co',
+		email: 'julia@example-ever.co',
 		password: '123456',
 		firstName: 'Julia',
 		lastName: 'K.',
@@ -195,7 +195,7 @@ export const DEFAULT_EVER_EMPLOYEES: any = [
 		preferredComponentLayout: ComponentLayoutStyleEnum.TABLE
 	},
 	{
-		email: 'yostorono@example_ever.co',
+		email: 'yostorono@example-ever.co',
 		password: '123456',
 		firstName: 'Yostorono',
 		lastName: 'Y.',

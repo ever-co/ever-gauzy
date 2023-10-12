@@ -13,13 +13,13 @@ export class IntegrationMapSyncScreenshotHandler
 	constructor(
 		private readonly _commandBus: CommandBus,
 		private readonly _integrationMapService: IntegrationMapService
-	) {}
+	) { }
 
 	/**
 	 * Third party screenshot integrated and mapped
-	 * 
-	 * @param command 
-	 * @returns 
+	 *
+	 * @param command
+	 * @returns
 	 */
 	public async execute(
 		command: IntegrationMapSyncScreenshotCommand
@@ -27,17 +27,16 @@ export class IntegrationMapSyncScreenshotHandler
 		const { input } = command;
 		const tenantId = RequestContext.currentTenantId();
 
-		const { screenshot, integrationId, sourceId, organizationId } = input;
-		const { time_slot, full_url, thumb_url, recorded_at, employeeId } = screenshot;
+		const { integrationId, sourceId, organizationId, entity } = input;
+		const { time_slot, full_url, thumb_url, recorded_at, employeeId } = entity;
 
 		try {
-			const screenshotMap = await this._integrationMapService.findOneByOptions({
-				where: {
-					sourceId,
-					entity: IntegrationEntity.SCREENSHOT,
-					organizationId,
-					tenantId
-				}
+			const screenshotMap = await this._integrationMapService.findOneByWhereOptions({
+				entity: IntegrationEntity.SCREENSHOT,
+				sourceId,
+				integrationId,
+				organizationId,
+				tenantId
 			});
 			await this._commandBus.execute(
 				new ScreenshotUpdateCommand(

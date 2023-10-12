@@ -13,13 +13,13 @@ export class IntegrationMapSyncTimeLogHandler
 	constructor(
 		private readonly _commandBus: CommandBus,
 		private readonly _integrationMapService: IntegrationMapService
-	) {}
+	) { }
 
 	/**
 	 * Third party timeslot integrated and mapped
-	 * 
-	 * @param command 
-	 * @returns 
+	 *
+	 * @param command
+	 * @returns
 	 */
 	public async execute(
 		command: IntegrationMapSyncTimeLogCommand
@@ -27,28 +27,25 @@ export class IntegrationMapSyncTimeLogHandler
 		const { input } = command;
 		const tenantId = RequestContext.currentTenantId();
 
-		const { sourceId, organizationId, integrationId, timeLog } = input;
+		const { sourceId, organizationId, integrationId, entity } = input;
 		try {
-			return await this._integrationMapService.findOneByOptions({
-				where: {
-					sourceId,
-					entity: IntegrationEntity.TIME_LOG,
-					organizationId,
-					tenantId
-				}
+			return await this._integrationMapService.findOneByWhereOptions({
+				entity: IntegrationEntity.TIME_LOG,
+				sourceId,
+				integrationId,
+				organizationId,
+				tenantId
 			});
 		} catch (error) {
 			const gauzyTimeLog = await this._commandBus.execute(
-				new TimeLogCreateCommand(
-					Object.assign({}, timeLog)
-				)
+				new TimeLogCreateCommand(entity)
 			);
 			return await this._commandBus.execute(
 				new IntegrationMapSyncEntityCommand({
-					gauzyId: gauzyTimeLog.id,
-					integrationId,
-					sourceId,
 					entity: IntegrationEntity.TIME_LOG,
+					gauzyId: gauzyTimeLog.id,
+					sourceId,
+					integrationId,
 					organizationId,
 					tenantId
 				})

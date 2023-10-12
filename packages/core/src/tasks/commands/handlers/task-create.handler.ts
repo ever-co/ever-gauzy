@@ -16,16 +16,13 @@ export class TaskCreateHandler implements ICommandHandler<TaskCreateCommand> {
 	public async execute(command: TaskCreateCommand): Promise<ITask> {
 		try {
 			const { input } = command;
-			const tenantId = RequestContext.currentTenantId() || input.tenantId;
-
 			let { organizationId, project } = input;
+			const tenantId = RequestContext.currentTenantId() || input.tenantId;
 
 			/** If project found then use project name as a task prefix */
 			if (input.projectId) {
 				const { projectId } = input;
-				project = await this._organizationProjectService.findOneByIdString(
-					projectId
-				);
+				project = await this._organizationProjectService.findOneByIdString(projectId);
 			}
 
 			const projectId = project ? project.id : null;

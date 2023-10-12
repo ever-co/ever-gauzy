@@ -42,7 +42,7 @@ import { NbIconModule } from '@nebular/theme';
 		SharedModule,
 		PasswordFormFieldModule,
 		RoleFormFieldModule,
-    NbIconModule
+		NbIconModule
 	],
 	exports: [
 		...COMPONENTS
@@ -52,4 +52,4 @@ import { NbIconModule } from '@nebular/theme';
 	],
 	providers: [AuthService, RoleService, IncomeService, TagsService, CandidatesService]
 })
-export class UserFormsModule {}
+export class UserFormsModule { }
