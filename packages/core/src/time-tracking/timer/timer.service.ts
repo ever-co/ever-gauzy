@@ -461,7 +461,7 @@ export class TimerService {
 				PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
 			) ||
 				RequestContext.hasPermission(
-					PermissionsEnum.SEE_LAST_LOG_OTHER_MEMBER
+					PermissionsEnum.ORG_LAST_LOG_MEMBER_VIEW
 				) ||
 				isNotEmpty(organizationTeamId)) &&
 			isNotEmpty(request.employeeId)

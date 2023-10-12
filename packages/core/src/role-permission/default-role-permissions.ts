@@ -135,7 +135,7 @@ export const DEFAULT_ROLE_PERMISSIONS = [
 			PermissionsEnum.ALLOW_MODIFY_TIME,
 			PermissionsEnum.ALLOW_MANUAL_TIME,
 			PermissionsEnum.DELETE_SCREENSHOTS,
-			PermissionsEnum.SEE_LAST_LOG_OTHER_MEMBER,
+			PermissionsEnum.ORG_LAST_LOG_MEMBER_VIEW,
 		],
 	},
 	{
@@ -271,7 +271,7 @@ export const DEFAULT_ROLE_PERMISSIONS = [
 			PermissionsEnum.ALLOW_MODIFY_TIME,
 			PermissionsEnum.ALLOW_MANUAL_TIME,
 			PermissionsEnum.DELETE_SCREENSHOTS,
-			PermissionsEnum.SEE_LAST_LOG_OTHER_MEMBER,
+			PermissionsEnum.ORG_LAST_LOG_MEMBER_VIEW,
 		],
 	},
 	{
@@ -369,7 +369,7 @@ export const DEFAULT_ROLE_PERMISSIONS = [
 			PermissionsEnum.ALLOW_MODIFY_TIME,
 			PermissionsEnum.ALLOW_MANUAL_TIME,
 			PermissionsEnum.DELETE_SCREENSHOTS,
-			PermissionsEnum.SEE_LAST_LOG_OTHER_MEMBER,
+			PermissionsEnum.ORG_LAST_LOG_MEMBER_VIEW,
 		],
 	},
 	{
