@@ -620,6 +620,67 @@ export class EmailService {
 		}
 	}
 
+	// Create a Multi-tenant request Password Email Service
+	async multiTenantRequestPassword(
+		email: string,
+		organizationUserMap: { url: string, organizationId: string }[],
+		languageCode: LanguagesEnum,
+		originUrl?: string
+	) {
+		const multiTenantRequestPassword: { generatedUrl: string, organizationId: string, tenantId: string, name: string }[] = []
+
+		for await (const iterator of organizationUserMap) {
+			let organization: Organization;
+			if (iterator.organizationId) {
+				organization = await this.organizationRepository.findOneBy({
+					id: iterator.organizationId
+				});
+			}
+			const tenantId = (organization) ? organization.tenantId : RequestContext.currentTenantId();
+
+			multiTenantRequestPassword.push({
+				generatedUrl: iterator.url,
+				organizationId: iterator.organizationId,
+				tenantId,
+				name: (organization) ? organization.name : ''
+			});
+		}
+		const sendOptions = {
+			template: EmailTemplateEnum.MULTI_TENANT_PASSWORD_RESET,
+			message: {
+				to: `${email}`,
+				subject: 'Forgotten Password test'
+			},
+			locals: {
+				locale: languageCode,
+				multiTenantRequestPassword,
+				host: originUrl || env.clientBaseUrl,
+			}
+		};
+		const body = {
+			templateName: sendOptions.template,
+			email: sendOptions.message.to,
+			languageCode,
+			message: '',
+		}
+
+		const match = !!DISALLOW_EMAIL_SERVER_DOMAIN.find((server) => body.email.includes(server));
+
+		if (!match) {
+			try {
+				// TODO : Which Organization to prefer while sending email
+				const instance = await this._emailSendService.getEmailInstance({ organizationId: null, tenantId: null });
+				const send = await instance.send(sendOptions);
+
+				body['message'] = send.originalMessage;
+			} catch (error) {
+				console.error(error);
+			} finally {
+				await this.createEmailRecord(body);
+			}
+		}
+	}
+
 	/**
 	 *
 	 * @param email

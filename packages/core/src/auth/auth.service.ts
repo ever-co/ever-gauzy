@@ -190,47 +190,73 @@ export class AuthService extends SocialAuthService {
 		try {
 			await this.userRepository.findOneByOrFail({
 				email,
-				isActive: true
+				isActive: true,
 			});
 		} catch (error) {
 			throw new BadRequestException('Forgot password request failed!');
 		}
 
 		try {
-			const user = await this.userService.findOneByOptions({
+			const users = await this.userService.find({
 				where: {
 					email,
-					isActive: true
+					isActive: true,
 				},
 				relations: {
 					role: true,
-					employee: true
-				}
+					employee: true,
+				},
 			});
+
+			//Create a collection to store organizationId ,user and url
+			const organizationMap: { url: string; organizationId: string }[] =
+				[];
+
 			/**
 			 * Create password reset request
 			 */
-			const token = await this.getJwtAccessToken(user);
-			if (token) {
-				await this.commandBus.execute(
-					new PasswordResetCreateCommand({
-						email: user.email,
-						token
-					})
-				);
+			for await (const user of users) {
+				const token = await this.getJwtAccessToken(user);
+				if (token) {
+					await this.commandBus.execute(
+						new PasswordResetCreateCommand({
+							email: user.email,
+							token,
+						})
+					);
 
-				const { id: userId, tenantId } = user;
+					const { id: userId, tenantId } = user;
 
-				const url = `${environment.clientBaseUrl}/#/auth/reset-password?token=${token}`;
-				const { organizationId } = await this.userOrganizationService.findOneByOptions({
-					where: {
-						userId,
-						tenantId
-					}
-				});
-				this.emailService.requestPassword(user, url, languageCode, organizationId, originUrl);
-				return true;
+					const url = `${environment.clientBaseUrl}/#/auth/reset-password?token=${token}`;
+					const { organizationId } =
+						await this.userOrganizationService.findOneByOptions({
+							where: {
+								userId,
+								tenantId,
+							},
+						});
+					organizationMap.push({ url, organizationId });
+				}
 			}
+
+			// If Only one user
+			if (users.length === 1) {
+				this.emailService.requestPassword(
+					users[0],
+					organizationMap[0].url,
+					languageCode,
+					organizationMap[0].organizationId,
+					originUrl
+				);
+			} else {
+				this.emailService.multiTenantRequestPassword(
+					email,
+					organizationMap,
+					languageCode,
+					originUrl
+				);
+			}
+			return true;
 		} catch (error) {
 			throw new BadRequestException('Forgot password request failed!');
 		}
@@ -341,7 +367,7 @@ export class AuthService extends SocialAuthService {
 		const { isImporting = false, sourceId = null } = input;
 		if (isImporting && sourceId) {
 			const { sourceId } = input;
-			await this.commandBus.execute(
+			this.commandBus.execute(
 				new ImportRecordUpdateOrCreateCommand({
 					entityType: this.userRepository.metadata.tableName,
 					sourceId,
@@ -355,7 +381,7 @@ export class AuthService extends SocialAuthService {
 		 */
 		const { appName, appLogo, appSignature, appLink, appEmailConfirmationUrl } = input;
 		if (!user.emailVerifiedAt) {
-			await this.emailConfirmationService.sendEmailVerification(user, {
+			this.emailConfirmationService.sendEmailVerification(user, {
 				appName,
 				appLogo,
 				appSignature,
