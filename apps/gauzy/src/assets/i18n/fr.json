@@ -2085,7 +2085,7 @@
 			"ORG_TASK_EDIT": "Modifier les tâches",
 			"ORG_TASK_DELETE": "Supprimer les tâches",
 			"ORG_TASK_SETTING": "Paramètres de tâche",
-			"SEE_LAST_LOG_OTHER_MEMBER": "Voir le dernier journal Autre membre"
+			"ORG_LAST_LOG_MEMBER_VIEW": "Voir le dernier journal"
 		},
 		"BILLING": "Facturation",
 		"BUDGET": "Budget",

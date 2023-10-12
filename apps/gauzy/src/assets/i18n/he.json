@@ -2043,7 +2043,7 @@
 			"ALLOW_MANUAL_TIME": "Allow Manual Time",
 			"DELETE_SCREENSHOTS": "Allow Delete Screenshot",
 			"ORG_TASK_SETTING": "Task Settings",
-			"SEE_LAST_LOG_OTHER_MEMBER": "ראה יומן אחרון חבר אחר"
+			"ORG_LAST_LOG_MEMBER_VIEW": "צפה ביומן האחרון"
 		},
 		"BILLING": "Billing",
 		"BUDGET": "Budget",

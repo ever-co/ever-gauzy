@@ -2084,7 +2084,7 @@
 			"ORG_TASK_EDIT": "Aufgaben bearbeiten",
 			"ORG_TASK_DELETE": "Aufgaben löschen",
 			"ORG_TASK_SETTING": "Aufgabeeinstellungen",
-			"SEE_LAST_LOG_OTHER_MEMBER": "Siehe Letztes Protokoll anderer Mitglieder"
+			"ORG_LAST_LOG_MEMBER_VIEW": "Letztes Protokoll anzeigen"
 		},
 		"BILLING": "Rechnungsstellung",
 		"BUDGET": "Budget",

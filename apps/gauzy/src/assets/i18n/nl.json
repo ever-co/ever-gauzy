@@ -2084,7 +2084,7 @@
 			"ORG_TASK_EDIT": "Taken bewerken",
 			"ORG_TASK_DELETE": "Taken verwijderen",
 			"ORG_TASK_SETTING": "Taakinstellingen",
-			"SEE_LAST_LOG_OTHER_MEMBER": "Zie laatste log ander lid"
+			"ORG_LAST_LOG_MEMBER_VIEW": "Bekijk laatste logboek"
 		},
 		"BILLING": "Facturatie",
 		"BUDGET": "Budget",
