@@ -1,6 +1,6 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Column, Entity, Index, JoinColumn, ManyToOne, OneToMany, RelationId } from 'typeorm';
-import { IsEnum, IsNotEmpty, IsUUID } from 'class-validator';
+import { IsDateString, IsEnum, IsNotEmpty, IsUUID } from 'class-validator';
 import { IIntegration, IIntegrationEntitySetting, IIntegrationMap, IIntegrationSetting, IIntegrationTenant, IntegrationEnum } from '@gauzy/contracts';
 import {
 	Integration,
@@ -18,6 +18,17 @@ export class IntegrationTenant extends TenantOrganizationBaseEntity implements I
 	@IsEnum(IntegrationEnum)
 	@Column()
 	name: IntegrationEnum;
+
+	// Date when the integration was synced
+	@ApiPropertyOptional({
+		type: 'string',
+		format: 'date-time',
+		example: '2018-11-21T06:20:32.232Z'
+	})
+	@IsDateString()
+	@Index()
+	@Column({ nullable: true })
+	lastSyncedAt?: Date;
 
 	/*
 	|--------------------------------------------------------------------------
