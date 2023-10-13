@@ -2100,7 +2100,8 @@
 			"ORG_TASK_DELETE": "Delete Tasks",
 			"ORG_TASK_SETTING": "Task Settings",
 			"IMPORT_ADD": "Ability to import your data",
-			"EXPORT_ADD": "Ability to export your data"
+			"EXPORT_ADD": "Ability to export your data",
+			"ORG_MEMBER_LAST_LOG_VIEW": "View Last Log"
 		},
 		"BILLING": "Billing",
 		"BUDGET": "Budget",
