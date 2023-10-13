@@ -3,10 +3,7 @@ import { IsOptional } from 'class-validator';
 import { Transform, TransformFnParams } from 'class-transformer';
 import {
 	IDateRangePicker,
-	IEmployee,
-	IOrganizationTeam,
 	IOrganizationTeamStatisticInput,
-	TimeLogSourceEnum,
 } from '@gauzy/contracts';
 import { parseToBoolean } from '@gauzy/common';
 import { DateRangeQueryDTO, RelationsQueryDTO } from './../../shared/dto';
