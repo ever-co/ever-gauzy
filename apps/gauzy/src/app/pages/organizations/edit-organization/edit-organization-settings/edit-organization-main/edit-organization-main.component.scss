@@ -116,10 +116,6 @@
 .registration-form-group {
   display: inline-flex;
   flex-direction: column;
-
-  & #registrationDate {
-    width: 175px;
-  }
 }
 
 ::ng-deep nb-select.shape-rectangle .select-button {
