@@ -1179,9 +1179,6 @@ export class StatisticService {
 				)
 			);
 		});
-		console.log('All',statistics);
-		console.log('Today',todayStatistics);
-		console.log('Merged',mergedStatistics);
 		let tasks: ITask[] = chain(mergedStatistics)
 			.groupBy('taskId')
 			.map((tasks: ITask[], taskId) => {
