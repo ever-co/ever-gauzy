@@ -36,8 +36,6 @@ export class IntegrationMapSyncIssueHandler implements ICommandHandler<Integrati
 				organizationId,
 				tenantId
 			});
-			console.log({ integrationMap });
-
 			// Try to find the corresponding task
 			try {
 				await this._taskService.findOneByIdString(integrationMap.gauzyId);
@@ -46,7 +44,7 @@ export class IntegrationMapSyncIssueHandler implements ICommandHandler<Integrati
 					new TaskUpdateCommand(integrationMap.gauzyId, entity)
 				);
 			} catch (error) {
-				console.log('Task Not Found for %s: ', integrationMap.gauzyId);
+				console.log(`${IntegrationEntity.TASK} Not Found for integtration GauzyID %s: `, integrationMap.gauzyId);
 				// Create a corresponding task with the new input data
 				await this._commandBus.execute(
 					new TaskCreateCommand({
@@ -60,21 +58,21 @@ export class IntegrationMapSyncIssueHandler implements ICommandHandler<Integrati
 		} catch (error) {
 			// Handle errors and create a new task
 			// Create a new task with the provided entity data
-			// const task = await this._commandBus.execute(
-			// 	new TaskCreateCommand(entity)
-			// );
+			const task = await this._commandBus.execute(
+				new TaskCreateCommand(entity)
+			);
 
-			// // Create a new integration map for the issue
-			// return await this._commandBus.execute(
-			// 	new IntegrationMapSyncEntityCommand({
-			// 		gauzyId: task.id,
-			// 		entity: IntegrationEntity.ISSUE,
-			// 		integrationId,
-			// 		sourceId,
-			// 		organizationId,
-			// 		tenantId
-			// 	})
-			// );
+			// Create a new integration map for the issue
+			return await this._commandBus.execute(
+				new IntegrationMapSyncEntityCommand({
+					gauzyId: task.id,
+					entity: IntegrationEntity.ISSUE,
+					integrationId,
+					sourceId,
+					organizationId,
+					tenantId
+				})
+			);
 		}
 	}
 }
