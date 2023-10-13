@@ -978,7 +978,7 @@ export class StatisticService {
 		todayQuery
 			.select(`"task"."title"`, 'title')
 			.addSelect(`"task"."id"`, 'taskId')
-			.addSelect(`${todayQuery.alias}."updatedAt"`, 'updatedAt')
+			.addSelect(`"${todayQuery.alias}"."updatedAt"`, 'updatedAt')
 			.addSelect(
 				`${
 					['sqlite', 'better-sqlite3'].includes(
@@ -1080,7 +1080,7 @@ export class StatisticService {
 			.groupBy(`"${todayQuery.alias}"."id"`)
 			.addGroupBy(`"task"."id"`)
 			.orderBy(
-				'updatedAt',
+				`"${todayQuery.alias}"."updatedAt"`,
 				'DESC'
 			);
 		const todayStatistics = await todayQuery.getRawMany();
@@ -1088,7 +1088,7 @@ export class StatisticService {
 		query
 			.select(`"task"."title"`, "title")
 			.addSelect(`"task"."id"`, "taskId")
-			.addSelect(`${query.alias}."updatedAt"`, 'updatedAt')
+			.addSelect(`"${query.alias}"."updatedAt"`, 'updatedAt')
 			.addSelect(
 				`${['sqlite', 'better-sqlite3'].includes(this.configService.dbConnectionOptions.type)
 					? `COALESCE(ROUND(SUM((julianday(COALESCE("${query.alias}"."stoppedAt", datetime('now'))) - julianday("${query.alias}"."startedAt")) * 86400) / COUNT("time_slot"."id")), 0)`
@@ -1155,22 +1155,33 @@ export class StatisticService {
 			.groupBy(`"${query.alias}"."id"`)
 			.addGroupBy(`"task"."id"`)
 			.orderBy(
-				'updatedAt',
+				`"${todayQuery.alias}"."updatedAt"`,
 				'DESC'
 			);
 		const statistics = await query.getRawMany();
 		const mergedStatistics = _.map(statistics, (statistic) => {
+			const updatedAt = String(statistic.updatedAt);
 			return _.extend(
 				{
 					today_duration: 0,
 					...statistic,
+					updatedAt,
 				},
-				_.findWhere(todayStatistics, {
-					taskId: statistic.taskId,
-					updatedAt: statistic.updatedAt,
-				})
+				_.findWhere(
+					todayStatistics.map((today) => ({
+						...today,
+						updatedAt: String(today.updatedAt),
+					})),
+					{
+						taskId: statistic.taskId,
+						updatedAt,
+					}
+				)
 			);
 		});
+		console.log('All',statistics);
+		console.log('Today',todayStatistics);
+		console.log('Merged',mergedStatistics);
 		let tasks: ITask[] = chain(mergedStatistics)
 			.groupBy('taskId')
 			.map((tasks: ITask[], taskId) => {
