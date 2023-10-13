@@ -40,7 +40,7 @@ export class TimerService {
 		@InjectRepository(Employee)
 		private readonly employeeRepository: Repository<Employee>,
 		private readonly commandBus: CommandBus
-	) {}
+	) { }
 
 	/**
 	 * Get timer status
@@ -131,8 +131,8 @@ export class TimerService {
 			},
 			...(request['relations']
 				? {
-						relations: request['relations'],
-				  }
+					relations: request['relations'],
+				}
 				: {}),
 		});
 
@@ -461,7 +461,7 @@ export class TimerService {
 				PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
 			) ||
 				RequestContext.hasPermission(
-					PermissionsEnum.ORG_LAST_LOG_MEMBER_VIEW
+					PermissionsEnum.ORG_MEMBER_LAST_LOG_VIEW
 				) ||
 				isNotEmpty(organizationTeamId)) &&
 			isNotEmpty(request.employeeId)
@@ -509,8 +509,8 @@ export class TimerService {
 				...(source ? { source } : {}),
 				...(isNotEmpty(organizationTeamId)
 					? {
-							organizationTeamId,
-					  }
+						organizationTeamId,
+					}
 					: {}),
 			},
 			order: {
@@ -519,8 +519,8 @@ export class TimerService {
 			},
 			...(request['relations']
 				? {
-						relations: request['relations'],
-				  }
+					relations: request['relations'],
+				}
 				: {}),
 		});
 		/**
@@ -534,8 +534,8 @@ export class TimerService {
 			status.timerStatus = lastLog.isRunning
 				? 'running'
 				: moment(lastLog.stoppedAt).diff(new Date(), 'day') > 0
-				? 'idle'
-				: 'pause';
+					? 'idle'
+					: 'pause';
 		}
 		return status;
 	}

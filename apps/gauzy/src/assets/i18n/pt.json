@@ -2084,7 +2084,7 @@
 			"ORG_TASK_EDIT": "Editar Tarefas",
 			"ORG_TASK_DELETE": "Excluir tarefas",
 			"ORG_TASK_SETTING": "Configurações da tarefa",
-			"ORG_LAST_LOG_MEMBER_VIEW": "Ver último registro"
+			"ORG_MEMBER_LAST_LOG_VIEW": "Ver último registro"
 		},
 		"BILLING": "Faturamento",
 		"BUDGET": "Orçamento",

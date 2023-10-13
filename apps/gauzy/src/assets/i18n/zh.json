@@ -2084,7 +2084,7 @@
 			"ORG_TASK_EDIT": "编辑任务",
 			"ORG_TASK_DELETE": "删除任务",
 			"ORG_TASK_SETTING": "任务设置",
-			"ORG_LAST_LOG_MEMBER_VIEW": "查看最后日志"
+			"ORG_MEMBER_LAST_LOG_VIEW": "查看最后日志"
 		},
 		"BILLING": "计费",
 		"BUDGET": "预算",

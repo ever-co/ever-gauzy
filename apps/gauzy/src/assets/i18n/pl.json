@@ -2084,7 +2084,7 @@
 			"ORG_TASK_EDIT": "Edytuj zadania",
 			"ORG_TASK_DELETE": "Usuń zadania",
 			"ORG_TASK_SETTING": "Ustawienia zadania",
-			"ORG_LAST_LOG_MEMBER_VIEW": "Zobacz ostatni dziennik"
+			"ORG_MEMBER_LAST_LOG_VIEW": "Zobacz ostatni dziennik"
 		},
 		"BILLING": "Rozliczenie / Faktury",
 		"BUDGET": "Budżet",
