@@ -1,12 +1,13 @@
-import { AfterViewInit, Component, OnInit } from '@angular/core';
+import { AfterViewInit, Component, OnInit, ViewChild } from '@angular/core';
 import { TitleCasePipe } from '@angular/common';
 import { ActivatedRoute, Data } from '@angular/router';
-import { Subject, debounceTime, finalize, firstValueFrom, of } from 'rxjs';
+import { debounceTime, finalize, firstValueFrom, of } from 'rxjs';
 import { Observable } from 'rxjs/internal/Observable';
 import { catchError, filter, map, switchMap, tap } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
 import { NbDialogService, NbMenuItem, NbMenuService } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { Ng2SmartTableComponent } from 'ng2-smart-table';
 import {
 	IEntitySettingToSync,
 	IGithubIssue,
@@ -59,7 +60,18 @@ export class GithubViewComponent extends TranslationBaseComponent implements Aft
 	public issues$: Observable<IGithubIssue[]>;
 	public issues: IGithubIssue[] = [];
 	public selectedIssues: IGithubIssue[] = [];
-	private destroy$ = new Subject<void>();
+
+	/**
+	 * Sets up a property 'issuesTable' to reference an instance of 'Ng2SmartTableComponent'
+	 * when the child component with the template reference variable 'issuesTable' is rendered.
+	 * This allows interaction with the child component from the parent component.
+	 */
+	private _issuesTable: Ng2SmartTableComponent;
+	@ViewChild('issuesTable') set content(content: Ng2SmartTableComponent) {
+		if (content) {
+			this._issuesTable = content;
+		}
+	}
 
 	constructor(
 		public readonly _translateService: TranslateService,
@@ -384,6 +396,7 @@ export class GithubViewComponent extends TranslationBaseComponent implements Aft
 						}),
 						this.getTranslation('TOASTR.TITLE.SUCCESS')
 					);
+					this.resetTableSelectedItems();
 				}),
 				catchError((error) => {
 					// Handle and log errors
@@ -400,6 +413,19 @@ export class GithubViewComponent extends TranslationBaseComponent implements Aft
 
 			// Optionally, you can provide error feedback to the user
 			this._errorHandlingService.handleError(error);
+		}
+	}
+
+	/**
+	 * Clears selected items in the table component and resets the 'selectedIssues' array.
+	 */
+	resetTableSelectedItems() {
+		if (this._issuesTable && this._issuesTable.grid) {
+			// Deselect all items in the table
+			this._issuesTable.grid.dataSet.deselectAll();
+
+			// Clear the 'selectedIssues' array
+			this.selectedIssues = [];
 		}
 	}
 }

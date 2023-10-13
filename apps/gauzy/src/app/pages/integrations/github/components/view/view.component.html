@@ -40,6 +40,7 @@
 					[source]="issues$ | async"
 					(userRowSelect)="selectIssues($event)"
 					style="cursor: pointer;"
+					#issuesTable
 				></ng2-smart-table>
 			</div>
 		</ng-template>
