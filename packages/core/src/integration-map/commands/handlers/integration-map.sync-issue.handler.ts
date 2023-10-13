@@ -44,7 +44,7 @@ export class IntegrationMapSyncIssueHandler implements ICommandHandler<Integrati
 					new TaskUpdateCommand(integrationMap.gauzyId, entity)
 				);
 			} catch (error) {
-				console.log(`${IntegrationEntity.TASK} Not Found for integtration GauzyID %s: `, integrationMap.gauzyId);
+				console.log(`${IntegrationEntity.TASK} Not Found for integration GauzyID %s: `, integrationMap.gauzyId);
 				// Create a corresponding task with the new input data
 				await this._commandBus.execute(
 					new TaskCreateCommand({

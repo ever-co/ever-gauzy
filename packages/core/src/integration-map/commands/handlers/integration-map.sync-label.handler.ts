@@ -45,7 +45,7 @@ export class IntegrationMapSyncLabelHandler implements ICommandHandler<Integrati
 					new TagUpdateCommand(integrationMap.gauzyId, entity)
 				);
 			} catch (error) {
-				console.log(`${IntegrationEntity.LABEL} Not Found for integtration GauzyID %s: `, integrationMap.gauzyId);
+				console.log(`${IntegrationEntity.LABEL} Not Found for integration GauzyID %s: `, integrationMap.gauzyId);
 				// Create a corresponding tag with the new input data
 				await this._commandBus.execute(
 					new TagCreateCommand({
