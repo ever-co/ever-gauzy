@@ -1,6 +1,11 @@
 import { BadRequestException } from '@nestjs/common';
 import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
-import { IDateRangePicker, IOrganizationTeam, IOrganizationTeamEmployee, IOrganizationTeamStatisticInput } from '@gauzy/contracts';
+import {
+	IDateRangePicker,
+	IOrganizationTeam,
+	IOrganizationTeamEmployee,
+	IOrganizationTeamStatisticInput,
+} from '@gauzy/contracts';
 import { parseToBoolean } from '@gauzy/common';
 import { GetOrganizationTeamStatisticQuery } from '../get-organization-team-statistic.query';
 import { OrganizationTeamService } from '../../organization-team.service';
@@ -9,13 +14,13 @@ import { StatisticService } from './../../../time-tracking/statistic';
 
 @QueryHandler(GetOrganizationTeamStatisticQuery)
 export class GetOrganizationTeamStatisticHandler
-	implements IQueryHandler<GetOrganizationTeamStatisticQuery> {
-
+	implements IQueryHandler<GetOrganizationTeamStatisticQuery>
+{
 	constructor(
 		private readonly timerService: TimerService,
 		private readonly organizationTeamService: OrganizationTeamService,
 		private readonly _statisticService: StatisticService
-	) { }
+	) {}
 
 	public async execute(
 		query: GetOrganizationTeamStatisticQuery
@@ -24,17 +29,24 @@ export class GetOrganizationTeamStatisticHandler
 			const { organizationTeamId, options } = query;
 			const { withLaskWorkedTask } = options;
 
-			const organizationTeam = await this.organizationTeamService.findOneByIdString(organizationTeamId, {
-				...(options['relations']
-					? {
-						relations: options['relations'],
+			const organizationTeam =
+				await this.organizationTeamService.findOneByIdString(
+					organizationTeamId,
+					{
+						...(options['relations']
+							? {
+									relations: options['relations'],
+							  }
+							: {}),
 					}
-					: {}),
-			});
+				);
 			if ('members' in organizationTeam) {
 				const { members, organizationId, tenantId } = organizationTeam;
 				if (Boolean(withLaskWorkedTask)) {
-					organizationTeam['members'] = await this.syncLastWorkedTask({ members, organizationId, tenantId }, options);
+					organizationTeam['members'] = await this.syncLastWorkedTask(
+						{ members, organizationId, tenantId },
+						options
+					);
 				}
 			}
 			return organizationTeam;
@@ -50,15 +62,17 @@ export class GetOrganizationTeamStatisticHandler
 	 * @returns
 	 */
 	async syncLastWorkedTask(
-		{
-			organizationId,
-			tenantId,
-			members
-		},
+		{ organizationId, tenantId, members },
 		options: IDateRangePicker & IOrganizationTeamStatisticInput
 	): Promise<IOrganizationTeamEmployee[]> {
 		try {
-			const { startDate, endDate, withLaskWorkedTask, source } = options;
+			const {
+				startDate,
+				endDate,
+				withLaskWorkedTask,
+				source,
+				includeOrganizationTeamId,
+			} = options;
 			return await Promise.all(
 				await members.map(async (member: IOrganizationTeamEmployee) => {
 					const { employeeId, organizationTeamId } = member;
@@ -66,32 +80,42 @@ export class GetOrganizationTeamStatisticHandler
 						await this.timerService.getTimerWorkedStatus({
 							source,
 							employeeId,
-							organizationTeamId,
+							...(includeOrganizationTeamId === false
+								? {}
+								: { organizationTeamId }),
 							organizationId,
 							tenantId,
 							...(parseToBoolean(withLaskWorkedTask)
 								? {
-									relations: ['task'],
-								}
+										relations: ['task'],
+								  }
 								: {}),
 						});
 
 					return {
 						...member,
-						lastWorkedTask: parseToBoolean(withLaskWorkedTask) ? timerWorkedStatus.lastLog?.task : null,
+						lastWorkedTask: parseToBoolean(withLaskWorkedTask)
+							? timerWorkedStatus.lastLog?.task
+							: null,
 						running: timerWorkedStatus?.running,
 						duration: timerWorkedStatus?.duration,
 						timerStatus: timerWorkedStatus?.timerStatus,
-						totalWorkedTasks: await this._statisticService.getTasks({
-							organizationId,
-							tenantId,
-							organizationTeamId,
-							employeeIds: [employeeId],
-						}),
+						totalWorkedTasks: await this._statisticService.getTasks(
+							{
+								organizationId,
+								tenantId,
+								...(includeOrganizationTeamId === false
+									? {}
+									: { organizationTeamId }),
+								employeeIds: [employeeId],
+							}
+						),
 						totalTodayTasks: await this._statisticService.getTasks({
 							organizationId,
 							tenantId,
-							organizationTeamId,
+							...(includeOrganizationTeamId === false
+								? {}
+								: { organizationTeamId }),
 							employeeIds: [employeeId],
 							startDate,
 							endDate,

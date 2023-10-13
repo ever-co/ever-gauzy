@@ -2083,7 +2083,8 @@
 			"ORG_TASK_VIEW": "Visualizza le attività",
 			"ORG_TASK_EDIT": "Modifica Compiti",
 			"ORG_TASK_DELETE": "Elimina compiti",
-			"ORG_TASK_SETTING": "Impostazioni attività"
+			"ORG_TASK_SETTING": "Impostazioni attività",
+			"ORG_MEMBER_LAST_LOG_VIEW": "Visualizza l'ultimo registro"
 		},
 		"BILLING": "Fatturazione",
 		"BUDGET": "Bilancio",

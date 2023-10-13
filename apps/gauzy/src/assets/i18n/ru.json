@@ -2042,7 +2042,8 @@
 			"ALLOW_MODIFY_TIME": "Разрешить изменять время",
 			"ALLOW_MANUAL_TIME": "Разрешить ручное время",
 			"DELETE_SCREENSHOTS": "Разрешить удаление скриншота",
-			"ORG_TASK_SETTING": "Параметры задачи"
+			"ORG_TASK_SETTING": "Параметры задачи",
+			"ORG_MEMBER_LAST_LOG_VIEW": "Посмотреть последний журнал"
 		},
 		"BILLING": "Биллинг",
 		"BUDGET": "Бюджет",
