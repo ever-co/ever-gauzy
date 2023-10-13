@@ -17,19 +17,6 @@ export class OrganizationTeamStatisticDTO
 	extends IntersectionType(DateRangeQueryDTO, RelationsQueryDTO)
 	implements IOrganizationTeamStatisticInput, IDateRangePicker
 {
-	source?: TimeLogSourceEnum;
-	todayStart?: string | Date;
-	todayEnd?: string | Date;
-	id?: string;
-	createdAt?: Date;
-	updatedAt?: Date;
-	isActive?: boolean;
-	isArchived?: boolean;
-	deletedAt?: Date;
-	employee?: IEmployee;
-	employeeId?: string;
-	organizationTeam?: IOrganizationTeam;
-	organizationTeamId?: string;
 	/**
 	 * Indicates if last worked task row should be included in entity result.
 	 */
