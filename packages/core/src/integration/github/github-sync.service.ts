@@ -42,7 +42,7 @@ export class GithubSyncService {
     public async syncGithubIssuesAndLabels(
         integrationId: IIntegrationTenant['id'],
         input: IGithubSyncIssuePayload
-    ): Promise<any> {
+    ): Promise<any[] | boolean> {
         try {
             const { organizationId, issues = [], repository } = input;
             const tenantId = RequestContext.currentTenantId() || input.tenantId;
@@ -57,7 +57,7 @@ export class GithubSyncService {
                     tenantId,
                     sourceId: (repository.id).toString()
                 });
-                input['projectId'] = repositoryIntegrationMap['gauzyId'];
+                input['projectId'] = repositoryIntegrationMap['gauzyId'] || null;
             }
 
             // Retrieve integration settings tied to the specified organization
@@ -77,63 +77,64 @@ export class GithubSyncService {
 
             try {
                 // Synchronize data based on entity settings
-                await Promise.all(
+                return await Promise.all(
                     entitySettings.map(async (entitySetting: IntegrationEntitySetting) => {
                         switch (entitySetting.entity) {
                             case IntegrationEntity.ISSUE:
                                 /** Issues Sync */
                                 const issueSetting: IIntegrationEntitySetting = entitySetting;
                                 if (!!issueSetting.sync) {
-                                    return issues.map(
-                                        async ({ sourceId, number, title, state, body }) => {
-                                            let labels: ITag[] = [];
-                                            /** */
-                                            try {
-                                                // Check for label synchronization settings
-                                                const labelSetting: IIntegrationEntitySetting = entitySetting.tiedEntities.find(
-                                                    ({ entity }: IIntegrationEntitySettingTied) => entity === IntegrationEntity.LABEL
-                                                );
-                                                if (!!labelSetting && labelSetting.sync) {
-                                                    const issue_number = number;
-                                                    /** Sync Github Issue Labels */
-                                                    labels = await this.syncGithubLabelsByIssueNumber({
-                                                        organizationId,
-                                                        tenantId,
-                                                        integrationId,
-                                                        repository,
-                                                        issue_number
-                                                    });
+                                    return await Promise.all(
+                                        issues.map(
+                                            async ({ sourceId, number, title, state, body }) => {
+                                                let labels: ITag[] = [];
+                                                /** */
+                                                try {
+                                                    // Check for label synchronization settings
+                                                    const labelSetting: IIntegrationEntitySetting = entitySetting.tiedEntities.find(
+                                                        ({ entity }: IIntegrationEntitySettingTied) => entity === IntegrationEntity.LABEL
+                                                    );
+                                                    if (!!labelSetting && labelSetting.sync) {
+                                                        const issue_number = number;
+                                                        /** Sync Github Issue Labels */
+                                                        labels = await this.syncGithubLabelsByIssueNumber({
+                                                            organizationId,
+                                                            tenantId,
+                                                            integrationId,
+                                                            repository,
+                                                            issue_number
+                                                        });
+                                                    }
+                                                } catch (error) {
+                                                    console.error('Failed to fetch GitHub labels for the repository issue:', error.message);
                                                 }
-                                            } catch (error) {
-                                                console.error('Failed to fetch GitHub labels for the repository issue:', error.message);
-                                            }
-                                            /** */
-                                            return await this._commandBus.execute(
-                                                new IntegrationMapSyncIssueCommand({
-                                                    entity: {
-                                                        title,
-                                                        number,
-                                                        description: body,
-                                                        status: state as TaskStatusEnum,
-                                                        public: repository.visibility === 'private' ? false : true,
-                                                        projectId: input['projectId'] || null,
+                                                /** */
+                                                return await this._commandBus.execute(
+                                                    new IntegrationMapSyncIssueCommand({
+                                                        entity: {
+                                                            title,
+                                                            number,
+                                                            description: body,
+                                                            status: state as TaskStatusEnum,
+                                                            public: repository.visibility === 'private' ? false : true,
+                                                            projectId: input['projectId'] || null,
+                                                            organizationId,
+                                                            tenantId,
+                                                            tags: labels
+                                                        },
+                                                        sourceId,
+                                                        integrationId,
                                                         organizationId,
-                                                        tenantId,
-                                                        tags: labels
-                                                    },
-                                                    sourceId,
-                                                    integrationId,
-                                                    organizationId,
-                                                    tenantId
-                                                })
-                                            );
-                                        }
-                                    )
+                                                        tenantId
+                                                    })
+                                                );
+                                            }
+                                        )
+                                    );
                                 }
                         }
                     })
                 );
-                return true;
             } catch (error) {
                 console.log('Error while syncing github issues: ', error.message);
                 return false;
@@ -201,8 +202,7 @@ export class GithubSyncService {
                                         name,
                                         color,
                                         description,
-                                        // To-Do need add system default labels
-                                        // isSystem: label.default
+                                        isSystem: label.default
                                     },
                                     sourceId: sourceId.toString(),
                                     integrationId,
