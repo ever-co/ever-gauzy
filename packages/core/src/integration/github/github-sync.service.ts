@@ -57,7 +57,7 @@ export class GithubSyncService {
                     tenantId,
                     sourceId: (repository.id).toString()
                 });
-                input['projectId'] = repositoryIntegrationMap['gauzyId'];
+                input['projectId'] = repositoryIntegrationMap['gauzyId'] || null;
             }
 
             // Retrieve integration settings tied to the specified organization
