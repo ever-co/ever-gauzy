@@ -202,8 +202,7 @@ export class GithubSyncService {
                                         name,
                                         color,
                                         description,
-                                        // To-Do need add system default labels
-                                        // isSystem: label.default
+                                        isSystem: label.default
                                     },
                                     sourceId: sourceId.toString(),
                                     integrationId,
