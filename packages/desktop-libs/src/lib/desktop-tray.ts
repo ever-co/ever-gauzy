@@ -6,7 +6,7 @@ import {
 	createSettingsWindow,
 	loginPage,
 	timeTrackerPage,
-	getApiBaseUrl,
+	getApiBaseUrl, createGauzyWindow, gauzyPage,
 } from '@gauzy/desktop-window';
 import TitleOptions = Electron.TitleOptions;
 import { User, UserService } from './offline';
@@ -277,8 +277,6 @@ export class TrayIcon {
 			if (app.getName() === 'gauzy-desktop-timer') {
 				timeTrackerWindow.show();
 				timeTrackerWindow.webContents.send('auth_success_tray_init');
-			} else {
-				mainWindow.show();
 			}
 		};
 
@@ -338,6 +336,11 @@ export class TrayIcon {
 
 		ipcMain.on('auth_success', async (event, arg) => {
 			console.log('Auth Success:', arg);
+			const serverConfig = LocalStore.getStore('configs');
+			global.variableGlobal = {
+				API_BASE_URL: getApiBaseUrl(serverConfig, config),
+				IS_INTEGRATED_DESKTOP: serverConfig.isLocalServer,
+			};
 			try {
 				const user = new User({ ...arg, ...arg.user });
 				user.remoteId = arg.userId;
@@ -365,21 +368,20 @@ export class TrayIcon {
 			});
 
 			menuWindowTime.visible = appConfig.timeTrackerWindow;
+			menuWindowSetting.enabled = true;
 
 			if (arg.employeeId) {
 				this.contextMenu = menuAuth;
 				menuWindowTime.enabled = true;
-				menuWindowSetting.enabled = true;
 			} else {
 				this.tray.setTitle('--:--:--', options);
 				this.contextMenu = unAuthMenu;
 				menuWindowTime.enabled = false;
-				menuWindowSetting.enabled = false;
 			}
 
 			this.build();
 
-			if (timeTrackerWindow) {
+			if (timeTrackerWindow && arg.employeeId) {
 				await timeTrackerWindow.loadURL(
 					timeTrackerPage(windowPath.timeTrackerUi)
 				);
