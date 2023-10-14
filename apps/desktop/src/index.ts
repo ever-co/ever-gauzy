@@ -265,7 +265,10 @@ async function startServer(value, restart = false) {
 			setupWindow.webContents.send('setup-progress', {
 				msg: msgData,
 			});
-			if (!value.isSetup && !value.serverConfigConnected) {
+			if (
+				!value.isSetup &&
+				(!value.serverConfigConnected || value.isLocalServer)
+			) {
 				if (msgData.indexOf('Listening at http') > -1) {
 					try {
 						setupWindow.hide();
