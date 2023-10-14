@@ -39,6 +39,7 @@ export class IntegrationMapSyncIssueHandler implements ICommandHandler<Integrati
 			// Try to find the corresponding task
 			try {
 				await this._taskService.findOneByIdString(integrationMap.gauzyId);
+
 				// Update the corresponding task with the new input data
 				await this._commandBus.execute(
 					new TaskUpdateCommand(integrationMap.gauzyId, entity)
@@ -48,8 +49,8 @@ export class IntegrationMapSyncIssueHandler implements ICommandHandler<Integrati
 				// Create a corresponding task with the new input data
 				await this._commandBus.execute(
 					new TaskCreateCommand({
-						id: integrationMap.gauzyId,
-						...entity
+						...entity,
+						id: integrationMap.gauzyId
 					})
 				);
 			}

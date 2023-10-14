@@ -1,4 +1,4 @@
-import { Injectable, BadRequestException } from '@nestjs/common';
+import { Injectable, BadRequestException, HttpStatus, HttpException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import {
 	IsNull,
@@ -497,7 +497,7 @@ export class TaskService extends TenantAwareCrudService<Task> {
 			const { maxTaskNumber } = await query.getRawOne();
 			return maxTaskNumber;
 		} catch (error) {
-			throw new BadRequestException(error);
+			throw new HttpException({ message: error?.message, error }, HttpStatus.BAD_REQUEST);
 		}
 	}
 
