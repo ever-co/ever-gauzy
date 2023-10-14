@@ -15,7 +15,7 @@ import {
 	ITask,
 	PermissionsEnum,
 } from '@gauzy/contracts';
-import { isNotEmpty } from '@gauzy/common';
+import { isEmpty, isNotEmpty } from '@gauzy/common';
 import { isUUID } from 'class-validator';
 import { PaginationParams, TenantAwareCrudService } from './../core/crud';
 import { RequestContext } from '../core/context';
@@ -226,12 +226,12 @@ export class TaskService extends TenantAwareCrudService<Task> {
 			query.setFindOptions({
 				...(isNotEmpty(options) &&
 					isNotEmpty(options.where) && {
-					where: options.where,
-				}),
+						where: options.where,
+					}),
 				...(isNotEmpty(options) &&
 					isNotEmpty(options.relations) && {
-					relations: options.relations,
-				}),
+						relations: options.relations,
+					}),
 			});
 			query.andWhere(
 				new Brackets((qb: WhereExpressionBuilder) => {
@@ -305,7 +305,7 @@ export class TaskService extends TenantAwareCrudService<Task> {
 			const { organizationId, projectId, members } = where;
 
 			const query = this.taskRepository.createQueryBuilder(this.alias);
-			query.innerJoin(`${query.alias}.teams`, 'teams');
+			query.leftJoin(`${query.alias}.teams`, 'teams');
 
 			/**
 			 * If find options
@@ -325,52 +325,70 @@ export class TaskService extends TenantAwareCrudService<Task> {
 					...(options.order ? { order: options.order } : {}),
 				});
 			}
-			query.andWhere((qb: SelectQueryBuilder<Task>) => {
-				const subQuery = qb.subQuery();
-				subQuery
-					.select('"task_team"."taskId"')
-					.from('task_team', 'task_team');
-				subQuery.leftJoin(
-					'organization_team_employee',
-					'organization_team_employee',
-					'"organization_team_employee"."organizationTeamId" = "task_team"."organizationTeamId"'
-				);
-				// If user have permission to change employee
-				if (
-					RequestContext.hasPermission(
-						PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
-					)
-				) {
-					if (isNotEmpty(members) && isNotEmpty(members['id'])) {
-						const employeeId = members['id'];
-						subQuery.andWhere(
-							'"organization_team_employee"."employeeId" = :employeeId',
-							{ employeeId }
+
+			query.andWhere(
+				new Brackets((qb: WhereExpressionBuilder) => {
+					if (isNotEmpty(projectId) && isNotEmpty(teams)) {
+						qb.andWhere(
+							`"${query.alias}"."projectId" = :projectId`,
+							{ projectId }
 						);
 					}
-				} else {
-					// If employee has login and don't have permission to change employee
-					const employeeId = RequestContext.currentEmployeeId();
-					if (isNotEmpty(employeeId)) {
-						subQuery.andWhere(
-							'"organization_team_employee"."employeeId" = :employeeId',
-							{ employeeId }
+
+					qb.orWhere((qb: SelectQueryBuilder<Task>) => {
+						const subQuery = qb.subQuery();
+						subQuery
+							.select('"task_team"."taskId"')
+							.from('task_team', 'task_team');
+						subQuery.leftJoin(
+							'organization_team_employee',
+							'organization_team_employee',
+							'"organization_team_employee"."organizationTeamId" = "task_team"."organizationTeamId"'
 						);
-					}
-				}
-				if (isNotEmpty(teams)) {
-					subQuery.andWhere(
-						`"${subQuery.alias}"."organizationTeamId" IN (:...teams)`,
-						{
-							teams,
+						// If user have permission to change employee
+						if (
+							RequestContext.hasPermission(
+								PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
+							)
+						) {
+							if (
+								isNotEmpty(members) &&
+								isNotEmpty(members['id'])
+							) {
+								const employeeId = members['id'];
+								subQuery.andWhere(
+									'"organization_team_employee"."employeeId" = :employeeId',
+									{ employeeId }
+								);
+							}
+						} else {
+							// If employee has login and don't have permission to change employee
+							const employeeId =
+								RequestContext.currentEmployeeId();
+							if (isNotEmpty(employeeId)) {
+								subQuery.andWhere(
+									'"organization_team_employee"."employeeId" = :employeeId',
+									{ employeeId }
+								);
+							}
 						}
-					);
-				}
-				return (
-					`"task_teams"."taskId" IN ` +
-					subQuery.distinct(true).getQuery()
-				);
-			});
+						if (isNotEmpty(teams)) {
+							subQuery.andWhere(
+								`"${subQuery.alias}"."organizationTeamId" IN (:...teams)`,
+								{
+									teams,
+								}
+							);
+						}
+
+						return (
+							`"task_teams"."taskId" IN ` +
+							subQuery.distinct(true).getQuery()
+						);
+					});
+				})
+			);
+
 			query.andWhere(
 				new Brackets((qb: WhereExpressionBuilder) => {
 					const tenantId = RequestContext.currentTenantId();
@@ -385,7 +403,7 @@ export class TaskService extends TenantAwareCrudService<Task> {
 			);
 			query.andWhere(
 				new Brackets((qb: WhereExpressionBuilder) => {
-					if (isNotEmpty(projectId)) {
+					if (isNotEmpty(projectId) && isEmpty(teams)) {
 						qb.andWhere(
 							`"${query.alias}"."projectId" = :projectId`,
 							{ projectId }
@@ -464,20 +482,27 @@ export class TaskService extends TenantAwareCrudService<Task> {
 	public async getMaxTaskNumberByProject(options: IGetTaskOptions) {
 		try {
 			// Extract necessary options
-			const tenantId = RequestContext.currentTenantId() || options.tenantId;
+			const tenantId =
+				RequestContext.currentTenantId() || options.tenantId;
 			const { organizationId, projectId } = options;
 
 			const query = this.taskRepository.createQueryBuilder(this.alias);
 
 			// Build the query to get the maximum task number
-			query.select(`COALESCE(MAX("${query.alias}"."number"), 0)`, 'maxTaskNumber');
+			query.select(
+				`COALESCE(MAX("${query.alias}"."number"), 0)`,
+				'maxTaskNumber'
+			);
 
 			// Filter by organization and tenant
 			query.andWhere(
 				new Brackets((qb: WhereExpressionBuilder) => {
-					qb.andWhere(`"${query.alias}"."organizationId" = :organizationId`, {
-						organizationId,
-					});
+					qb.andWhere(
+						`"${query.alias}"."organizationId" = :organizationId`,
+						{
+							organizationId,
+						}
+					);
 					qb.andWhere(`"${query.alias}"."tenantId" = :tenantId`, {
 						tenantId,
 					});
