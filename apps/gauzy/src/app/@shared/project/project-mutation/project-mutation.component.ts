@@ -25,7 +25,7 @@ import { Router } from '@angular/router';
 import { uniq } from 'underscore';
 import { EMPTY } from 'rxjs';
 import { catchError, debounceTime, filter, finalize, tap } from 'rxjs/operators';
-import { distinctUntilChange, parsedInt } from '@gauzy/common-angular';
+import { distinctUntilChange } from '@gauzy/common-angular';
 import { CKEditor4 } from 'ckeditor4-angular/ckeditor';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslationBaseComponent } from '../../language-base/translation-base.component';
