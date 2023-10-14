@@ -37,7 +37,7 @@ export class ProbotDiscovery implements OnModuleInit, OnApplicationBootstrap, On
 		try {
 			if (this.config.appId && this.config.privateKey) {
 				this.probot = createProbot(this.config);
-				console.log(chalk.magenta(`Probot App Configuration ${JSON.stringify(this.config)}`));
+				console.log(chalk.green(`Probot App successfully initialized.`));
 			} else {
 				console.error(chalk.red(`Probot App initialization failed: Missing appId or privateKey.`));
 			}
