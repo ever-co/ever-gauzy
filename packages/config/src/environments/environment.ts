@@ -74,7 +74,8 @@ export const environment: IEnvironment = {
 		serverHost: process.env.JITSU_SERVER_URL,
 		serverWriteKey: process.env.JITSU_SERVER_WRITE_KEY,
 		debug: process.env.JITSU_SERVER_DEBUG === 'true' ? true : false,
-		echoEvents: process.env.JITSU_SERVER_ECHO_EVENTS === 'true' ? true : false,
+		echoEvents:
+			process.env.JITSU_SERVER_ECHO_EVENTS === 'true' ? true : false,
 	},
 
 	fileSystem: {
@@ -145,7 +146,12 @@ export const environment: IEnvironment = {
 		/** Github App Install Configuration  */
 		appId: process.env.GAUZY_GITHUB_APP_ID,
 		appName: process.env.GAUZY_GITHUB_APP_NAME,
-		appPrivateKey: process.env.GAUZY_GITHUB_APP_PRIVATE_KEY,
+		appPrivateKey: process.env.GAUZY_GITHUB_APP_PRIVATE_KEY
+			? Buffer.from(
+					process.env.GAUZY_GITHUB_APP_PRIVATE_KEY,
+					'base64'
+			  ).toString('ascii')
+			: '',
 
 		/** Github App Post Install Configuration */
 		postInstallUrl:
