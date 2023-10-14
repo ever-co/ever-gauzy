@@ -21,7 +21,13 @@ export interface IRelationalOrganizationProject {
 	projectId?: IOrganizationProject['id'];
 }
 
-export interface IOrganizationProject extends IBaseEntityWithMembers, IRelationalImageAsset, IRelationalOrganizationContact {
+export interface IOrganizationProjectSettings extends IBasePerTenantAndOrganizationEntityModel {
+	externalRepositoryId?: number;
+	isTasksAutoSync?: boolean;
+	isTasksAutoSyncOnLabel?: boolean;
+}
+
+export interface IOrganizationProject extends IBaseEntityWithMembers, IRelationalImageAsset, IRelationalOrganizationContact, IOrganizationProjectSettings {
 	name: string;
 	startDate?: Date;
 	endDate?: Date;
