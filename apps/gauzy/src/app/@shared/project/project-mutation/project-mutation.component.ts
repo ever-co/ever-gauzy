@@ -17,9 +17,8 @@ import {
 	PermissionsEnum,
 	IIntegrationTenant,
 	IGithubRepository,
-	IIntegrationMapSyncRepository,
-	IntegrationEntity,
-	IIntegrationMap
+	IOrganizationProjectSetting,
+	HttpStatus
 } from '@gauzy/contracts';
 import { TranslateService } from '@ngx-translate/core';
 import { Router } from '@angular/router';
@@ -34,8 +33,8 @@ import { patterns } from '../../regex/regex-patterns.const';
 import { environment as ENV } from '../../../../environments/environment';
 import {
 	ErrorHandlingService,
-	IntegrationMapService,
 	OrganizationContactService,
+	OrganizationProjectsService,
 	OrganizationTeamsService,
 	Store,
 	ToastrService
@@ -53,8 +52,6 @@ import { ckEditorConfig } from "../../ckeditor.config";
 })
 export class ProjectMutationComponent extends TranslationBaseComponent
 	implements OnInit {
-
-	public parsedInt = parsedInt;
 
 	public FormHelpers: typeof FormHelpers = FormHelpers;
 	public OrganizationProjectBudgetTypeEnum = OrganizationProjectBudgetTypeEnum;
@@ -116,17 +113,6 @@ export class ProjectMutationComponent extends TranslationBaseComponent
 	}
 
 	/**
-	 * Represents an integration map or a boolean value.
-	 */
-	private _integrationMap: IIntegrationMap | boolean;
-	get integrationMap(): IIntegrationMap | boolean {
-		return this._integrationMap;
-	}
-	@Input() set integrationMap(value: IIntegrationMap | boolean) {
-		this._integrationMap = value;
-	}
-
-	/**
 	 * Represents an integration tenant or a boolean value.
 	 */
 	private _integration: IIntegrationTenant | boolean;
@@ -163,7 +149,7 @@ export class ProjectMutationComponent extends TranslationBaseComponent
 		private readonly _errorHandler: ErrorHandlingService,
 		private readonly _organizationTeamService: OrganizationTeamsService,
 		private readonly _organizationContactService: OrganizationContactService,
-		private readonly _integrationMapService: IntegrationMapService
+		private readonly _organizationProjectsService: OrganizationProjectsService,
 	) {
 		super(translateService);
 	}
@@ -496,30 +482,33 @@ export class ProjectMutationComponent extends TranslationBaseComponent
 
 			const { id: organizationId, tenantId } = this.organization;
 			const { id: projectId } = this.project;
-			const integrationId = this.integration['id'];
+			const externalRepositoryId = repository.id;
 
 			/** */
-			const request: IIntegrationMapSyncRepository = {
+			const request: IOrganizationProjectSetting = {
 				organizationId,
 				tenantId,
-				gauzyId: projectId,
-				integrationId,
-				repository,
-				entity: IntegrationEntity.PROJECT
+				externalRepositoryId
 			}
 
-			// Fetch entity settings by integration ID and handle the result as an observable
-			this._integrationMapService.syncGithubRepository(request).pipe(
+			this._organizationProjectsService.updateProjectSettting(projectId, request).pipe(
+				tap((response: any) => {
+					if (response['status'] == HttpStatus.BAD_REQUEST) {
+						throw new Error(`${response['message']}`);
+					}
+				}),
+				tap(() => {
+					this._toastrService.success('NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_PROJECTS.SYNC_REPOSITORY', {
+						repository: repository.full_name,
+						project: this.project.name
+					});
+				}),
 				catchError((error) => {
 					this._errorHandler.handleError(error);
 					return EMPTY;
 				}),
 				// Execute the following code block when the observable completes or errors
 				finalize(() => {
-					this._toastrService.success('NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_PROJECTS.SYNC_REPOSITORY', {
-						repository: repository.full_name,
-						project: this.project.name
-					});
 					// Set the 'loading' flag to false to indicate that data loading is complete
 					this.loading = false;
 				}),

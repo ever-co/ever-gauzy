@@ -1,7 +1,7 @@
 import { AfterViewInit, Component, OnInit, ViewChild } from '@angular/core';
 import { TitleCasePipe } from '@angular/common';
 import { ActivatedRoute, Data } from '@angular/router';
-import { debounceTime, finalize, firstValueFrom, of } from 'rxjs';
+import { EMPTY, debounceTime, finalize, firstValueFrom, of } from 'rxjs';
 import { Observable } from 'rxjs/internal/Observable';
 import { catchError, filter, map, switchMap, tap } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
@@ -12,12 +12,10 @@ import {
 	IEntitySettingToSync,
 	IGithubIssue,
 	IGithubRepository,
-	IIntegrationMap,
 	IIntegrationTenant,
 	IOrganization,
 	IOrganizationProject,
 	IUser,
-	IntegrationEntity,
 	IntegrationEnum
 } from '@gauzy/contracts';
 import { distinctUntilChange, parsedInt } from '@gauzy/common-angular';
@@ -27,7 +25,7 @@ import {
 	GithubService,
 	IntegrationEntitySettingService,
 	IntegrationEntitySettingServiceStoreService,
-	IntegrationMapService,
+	OrganizationProjectsService,
 	Store,
 	ToastrService
 } from './../../../../../@core/services';
@@ -50,9 +48,9 @@ export class GithubViewComponent extends TranslationBaseComponent implements Aft
 	public loading: boolean = false;
 	public user: IUser = this._store.user;
 	public organization: IOrganization = this._store.selectedOrganization;
-	public project: IOrganizationProject;
 	public repository: IGithubRepository;
-	public integrationMap$: Observable<IIntegrationMap | boolean>;
+	public project: IOrganizationProject;
+	public project$: Observable<IOrganizationProject>;
 	public integration$: Observable<IIntegrationTenant>;
 	public integration: IIntegrationTenant;
 	public contextMenuItems: NbMenuItem[] = [];
@@ -84,9 +82,9 @@ export class GithubViewComponent extends TranslationBaseComponent implements Aft
 		private readonly _errorHandlingService: ErrorHandlingService,
 		private readonly _store: Store,
 		private readonly _githubService: GithubService,
-		private readonly _integrationMapService: IntegrationMapService,
 		private readonly _integrationEntitySettingService: IntegrationEntitySettingService,
 		private readonly _integrationEntitySettingServiceStoreService: IntegrationEntitySettingServiceStoreService,
+		private readonly _organizationProjectsService: OrganizationProjectsService
 	) {
 		super(_translateService);
 	}
@@ -97,33 +95,23 @@ export class GithubViewComponent extends TranslationBaseComponent implements Aft
 		this._getContextMenuItems();
 		this._getGithubIntegrationTenant();
 
-		this.integrationMap$ = this._store.selectedProject$.pipe(
+		this.project$ = this._store.selectedProject$.pipe(
 			debounceTime(100),
 			distinctUntilChange(),
 			filter((project: IOrganizationProject) => !!project),
 			switchMap((project: IOrganizationProject) => {
 				// Ensure there is a valid organization
 				if (!project.id) {
-					return of(false); // No valid organization, return false
+					return EMPTY; // No valid organization, return false
 				}
-				// Extract organization properties
-				const { id: organizationId, tenantId } = this.organization;
-				// Extract integration properties
-				const { id: integrationId } = this.integration;
 				// Extract project properties
 				const { id: projectId } = this.project = project;
 
-				return this._integrationMapService.getSyncedGithubRepository({
-					organizationId,
-					tenantId,
-					integrationId,
-					gauzyId: projectId,
-					entity: IntegrationEntity.PROJECT
-				}).pipe(
+				return this._organizationProjectsService.getById(projectId).pipe(
 					catchError((error) => {
 						// Handle and log errors
 						this._errorHandlingService.handleError(error);
-						return of(false);
+						return EMPTY;
 					}),
 					// Handle component lifecycle to avoid memory leaks
 					untilDestroyed(this),

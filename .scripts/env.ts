@@ -71,7 +71,6 @@ export type Env = Readonly<{
 	JITSU_BROWSER_WRITE_KEY: string;
 
 	GAUZY_GITHUB_APP_NAME: string;
-	GAUZY_GITHUB_APP_ID: string;
 	GAUZY_GITHUB_CLIENT_ID: string;
 	GAUZY_GITHUB_REDIRECT_URL: string;
 	GAUZY_GITHUB_POST_INSTALL_URL: string;
@@ -145,7 +144,6 @@ export const env: Env = cleanEnv(
 		JITSU_BROWSER_WRITE_KEY: str({ default: '' }),
 
 		GAUZY_GITHUB_APP_NAME: str({ default: '' }),
-		GAUZY_GITHUB_APP_ID: str({ default: '' }),
 		GAUZY_GITHUB_CLIENT_ID: str({ default: '' }),
 		GAUZY_GITHUB_REDIRECT_URL: str({ default: '' }),
 		GAUZY_GITHUB_POST_INSTALL_URL: str({ default: '' }),
