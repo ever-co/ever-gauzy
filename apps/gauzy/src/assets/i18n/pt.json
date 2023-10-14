@@ -2056,6 +2056,7 @@
 			"ORG_CONTACT_VIEW": "Visualizar contatos",
 			"ORG_TEAM_ADD": "Adicionar equipes",
 			"ORG_TEAM_VIEW": "Ver Equipes",
+			"ORG_TEAM_EDIT_ACTIVE_TASK": "Editar tarefas ativas",
 			"ORG_TEAM_EDIT": "Editar Equipes",
 			"ORG_TEAM_DELETE": "Eliminar Equipes",
 			"ORG_TEAM_JOIN_REQUEST_VIEW": "Ver solicitações de participação das equipes.",
@@ -2082,7 +2083,8 @@
 			"ORG_TASK_VIEW": "Ver tarefas",
 			"ORG_TASK_EDIT": "Editar Tarefas",
 			"ORG_TASK_DELETE": "Excluir tarefas",
-			"ORG_TASK_SETTING": "Configurações da tarefa"
+			"ORG_TASK_SETTING": "Configurações da tarefa",
+			"ORG_MEMBER_LAST_LOG_VIEW": "Ver último registro"
 		},
 		"BILLING": "Faturamento",
 		"BUDGET": "Orçamento",
@@ -4356,7 +4358,8 @@
 			"EMAIL_REQUIRED": "O email é obrigatório!",
 			"EMAIL_REAL_REQUIRED": "O email deve ser o verdadeiro!",
 			"PASSWORD_REQUIRED": "Senha é obrigatória!",
-			"PASSWORD_SHOULD_CONTAIN": "A senha deve conter de {{ minLength }} a {{ maxLength }} caracteres!"
+			"PASSWORD_SHOULD_CONTAIN": "A senha deve conter de {{ minLength }} a {{ maxLength }} caracteres!",
+			"PASSWORD_NO_SPACE_EDGES": "As senhas não devem começar ou terminar com espaços."
 		},
 		"DEMO": {
 			"TITLE": "Faça login automaticamente nas contas de demonstração.",

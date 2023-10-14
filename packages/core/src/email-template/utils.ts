@@ -161,16 +161,23 @@ export class EmailTemplateUtils {
                 hbs,
                 mjml
             ];
-            const query = `SELECT COUNT(*) FROM "email_template" WHERE ("name" = $1 AND "languageCode" = $2) AND ("tenantId" IS NULL AND "organizationId" IS NULL)`;
-            const [template] = await queryRunner.connection.manager.query(query, [name, languageCode]);
+			const isSqlite = ['sqlite', 'better-sqlite3'].includes(queryRunner.connection.options.type);
+			let query = `SELECT COUNT(*) FROM "email_template" WHERE ("name" = $1 AND "languageCode" = $2) AND ("tenantId" IS NULL AND "organizationId" IS NULL)`;
+			if (isSqlite) {
+				query = `SELECT COUNT(*) FROM "email_template" WHERE ("name" = ? AND "languageCode" = ?) AND ("tenantId" IS NULL AND "organizationId" IS NULL)`;
+			}
+			const [template] = await queryRunner.connection.manager.query(query, [name, languageCode]);
 
-            if (parseInt(template.count) > 0) {
-                const update = `UPDATE "email_template" SET "hbs" = $1, "mjml" = $2 WHERE ("name" = $3 AND "languageCode" = $4) AND ("tenantId" IS NULL AND "organizationId" IS NULL)`;
+            if (parseInt(template.count, 10) > 0) {
+				let update = `UPDATE "email_template" SET "hbs" = $1, "mjml" = $2 WHERE ("name" = $3 AND "languageCode" = $4) AND ("tenantId" IS NULL AND "organizationId" IS NULL)`;
+				if (isSqlite) {
+					update = `UPDATE "email_template" SET "hbs" = ?, "mjml" = ? WHERE ("name" = ? AND "languageCode" = ?) AND ("tenantId" IS NULL AND "organizationId" IS NULL)`;
+				}
                 await queryRunner.connection.manager.query(update, [hbs, mjml, name, languageCode]);
             } else {
-                if (queryRunner.connection.options.type === 'sqlite') {
+                if (isSqlite) {
                     payload.push(uuidV4());
-                    const insert = `INSERT INTO "email_template" ("name", "languageCode", "hbs", mjml, "id") VALUES($1, $2, $3, $4, $5)`;
+                    const insert = `INSERT INTO "email_template" ("name", "languageCode", "hbs", "mjml", "id") VALUES(?, ?, ?, ?, ?)`;
                     await queryRunner.connection.manager.query(insert, payload);
                 } else {
                     const insert = `INSERT INTO "email_template" ("name", "languageCode", "hbs", mjml) VALUES($1, $2, $3, $4)`;

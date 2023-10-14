@@ -14,53 +14,68 @@ import {
 	IImageAsset,
 	IOrganizationTeam,
 	IOrganizationProject,
+	PermissionsEnum,
+	IIntegrationTenant,
+	IGithubRepository,
+	IIntegrationMapSyncRepository,
+	IntegrationEntity,
+	IIntegrationMap
 } from '@gauzy/contracts';
 import { TranslateService } from '@ngx-translate/core';
 import { Router } from '@angular/router';
 import { uniq } from 'underscore';
-import { debounceTime, filter, tap } from 'rxjs/operators';
-import { distinctUntilChange } from '@gauzy/common-angular';
+import { EMPTY } from 'rxjs';
+import { catchError, debounceTime, filter, finalize, tap } from 'rxjs/operators';
+import { distinctUntilChange, parsedInt } from '@gauzy/common-angular';
 import { CKEditor4 } from 'ckeditor4-angular/ckeditor';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';
-import { patterns } from '../../../@shared/regex/regex-patterns.const';
-import { environment as ENV } from './../../../../environments/environment';
-import { ErrorHandlingService, OrganizationContactService, Store, ToastrService } from '../../../@core/services';
+import { TranslationBaseComponent } from '../../language-base/translation-base.component';
+import { patterns } from '../../regex/regex-patterns.const';
+import { environment as ENV } from '../../../../environments/environment';
+import {
+	ErrorHandlingService,
+	IntegrationMapService,
+	OrganizationContactService,
+	OrganizationTeamsService,
+	Store,
+	ToastrService
+} from '../../../@core/services';
 import { DUMMY_PROFILE_IMAGE } from '../../../@core/constants';
 import { CompareDateValidator } from '../../../@core/validators';
-import { FormHelpers } from '../../../@shared/forms/helpers';
-import { ckEditorConfig } from "../../../@shared/ckeditor.config";
+import { FormHelpers } from '../../forms/helpers';
+import { ckEditorConfig } from "../../ckeditor.config";
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ga-projects-mutation',
-	templateUrl: './projects-mutation.component.html',
-	styleUrls: ['./projects-mutation.component.scss']
+	selector: 'ga-project-mutation',
+	templateUrl: './project-mutation.component.html',
+	styleUrls: ['./project-mutation.component.scss']
 })
-export class ProjectsMutationComponent extends TranslationBaseComponent
+export class ProjectMutationComponent extends TranslationBaseComponent
 	implements OnInit {
 
-	@Input() teams: IOrganizationTeam[] = [];
+	public parsedInt = parsedInt;
 
-	FormHelpers: typeof FormHelpers = FormHelpers;
-	OrganizationProjectBudgetTypeEnum = OrganizationProjectBudgetTypeEnum;
-	TaskListTypeEnum = TaskListTypeEnum;
-	members: string[] = [];
-	selectedEmployeeIds: string[] = [];
-	selectedTeamIds: string[] = [];
-	billings: string[] = Object.values(ProjectBillingEnum);
-	owners: ProjectOwnerEnum[] = Object.values(ProjectOwnerEnum);
-	taskViewModeTypes: TaskListTypeEnum[] = Object.values(TaskListTypeEnum);
-	showSprintManage = false;
-	ckConfig: CKEditor4.Config = ckEditorConfig;
+	public FormHelpers: typeof FormHelpers = FormHelpers;
+	public OrganizationProjectBudgetTypeEnum = OrganizationProjectBudgetTypeEnum;
+	public TaskListTypeEnum = TaskListTypeEnum;
+	public members: string[] = [];
+	public selectedEmployeeIds: string[] = [];
+	public selectedTeamIds: string[] = [];
+	public billings: string[] = Object.values(ProjectBillingEnum);
+	public owners: ProjectOwnerEnum[] = Object.values(ProjectOwnerEnum);
+	public taskViewModeTypes: TaskListTypeEnum[] = Object.values(TaskListTypeEnum);
+	public showSprintManage = false;
+	public ckConfig: CKEditor4.Config = ckEditorConfig;
 	public organization: IOrganization;
-	employees: IEmployee[] = [];
-	hoverState: boolean;
+	public employees: IEmployee[] = [];
+	public hoverState: boolean;
+	public loading: boolean;
 
 	/*
 	* Project Mutation Form
 	*/
-	public form: FormGroup = ProjectsMutationComponent.buildForm(this.fb);
+	public form: FormGroup = ProjectMutationComponent.buildForm(this._fb);
 	static buildForm(fb: FormBuilder): FormGroup {
 		const form = fb.group({
 			imageUrl: [],
@@ -69,7 +84,7 @@ export class ProjectsMutationComponent extends TranslationBaseComponent
 			teams: [],
 			public: [],
 			billable: [],
-			name: ['', Validators.required],
+			name: [null, Validators.required],
 			organizationContact: [],
 			billing: [ProjectBillingEnum.RATE],
 			currency: [ENV.DEFAULT_CURRENCY],
@@ -100,36 +115,61 @@ export class ProjectsMutationComponent extends TranslationBaseComponent
 		return form;
 	}
 
-	/*
-	* Getter & Setter for dynamic project element
-	*/
+	/**
+	 * Represents an integration map or a boolean value.
+	 */
+	private _integrationMap: IIntegrationMap | boolean;
+	get integrationMap(): IIntegrationMap | boolean {
+		return this._integrationMap;
+	}
+	@Input() set integrationMap(value: IIntegrationMap | boolean) {
+		this._integrationMap = value;
+	}
+
+	/**
+	 * Represents an integration tenant or a boolean value.
+	 */
+	private _integration: IIntegrationTenant | boolean;
+	get integration(): IIntegrationTenant | boolean { // Get the integration tenant or boolean value.
+		return this._integration;
+	}
+	@Input() set integration(value: IIntegrationTenant | boolean) { // Set the integration tenant or boolean value.
+		this._integration = value;
+	}
+
+	/**
+	 * Represents an organization project.
+	 */
 	private _project: IOrganizationProject;
-	get project(): IOrganizationProject {
+	get project(): IOrganizationProject { // Get the organization project.
 		return this._project;
 	}
-	@Input() set project(project: IOrganizationProject) {
+	@Input() set project(project: IOrganizationProject) { // Set the organization project.
 		this._project = project;
 	}
 
+	@Input() teams: IOrganizationTeam[] = [];
 	@Input() organizationContacts: any[] = [];
 
 	@Output() canceled = new EventEmitter();
-	@Output() addOrEditProject = new EventEmitter();
+	@Output() onSubmitted = new EventEmitter();
 
 	constructor(
-		private readonly fb: FormBuilder,
-		private readonly organizationContactService: OrganizationContactService,
-		private readonly toastrService: ToastrService,
+		private readonly _router: Router,
+		private readonly _fb: FormBuilder,
+		private readonly _store: Store,
+		private readonly _toastrService: ToastrService,
 		public readonly translateService: TranslateService,
-		private readonly errorHandler: ErrorHandlingService,
-		private readonly router: Router,
-		private readonly store: Store
+		private readonly _errorHandler: ErrorHandlingService,
+		private readonly _organizationTeamService: OrganizationTeamsService,
+		private readonly _organizationContactService: OrganizationContactService,
+		private readonly _integrationMapService: IntegrationMapService
 	) {
 		super(translateService);
 	}
 
 	ngOnInit() {
-		this.store.selectedOrganization$
+		this._store.selectedOrganization$
 			.pipe(
 				distinctUntilChange(),
 				debounceTime(100),
@@ -138,6 +178,7 @@ export class ProjectsMutationComponent extends TranslationBaseComponent
 				tap(() => this._loadDefaultCurrency()),
 				tap(() => this._syncProject()),
 				tap(() => this._getOrganizationContacts()),
+				tap(() => this._getOrganizationTeams()),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -158,10 +199,12 @@ export class ProjectsMutationComponent extends TranslationBaseComponent
 	}
 
 	private async _getOrganizationContacts() {
-		const { tenantId } = this.store.user;
-		const { id: organizationId } = this.organization;
+		if (!this.organization) {
+			return;
+		}
+		const { id: organizationId, tenantId } = this.organization;
 
-		const { items } = await this.organizationContactService.getAll([], {
+		const { items } = await this._organizationContactService.getAll([], {
 			organizationId,
 			tenantId
 		});
@@ -171,6 +214,31 @@ export class ProjectsMutationComponent extends TranslationBaseComponent
 				{ name: i.name, organizationContactId: i.id, id: i.id }
 			], 'id');
 		});
+	}
+
+	/**
+	 * Get organization teams
+	 *
+	 * @returns
+	 */
+	private async _getOrganizationTeams(): Promise<IOrganizationTeam[]> {
+		if (!this.organization || !this._store.hasAnyPermission(
+			PermissionsEnum.ALL_ORG_VIEW,
+			PermissionsEnum.ORG_TEAM_VIEW
+		)) {
+			return;
+		}
+
+		const { tenantId } = this._store.user;
+		const { id: organizationId } = this.organization;
+
+		this.teams = (await this._organizationTeamService.getAll(
+			[],
+			{
+				organizationId,
+				tenantId
+			}
+		)).items;
 	}
 
 	changeProjectOwner(owner: ProjectOwnerEnum) {
@@ -260,8 +328,11 @@ export class ProjectsMutationComponent extends TranslationBaseComponent
 		this.form.get('teams').updateValueAndValidity();
 	}
 
-	cancel() {
-		this.canceled.emit();
+	/**
+	 *
+	 */
+	navigateToCancelProject() {
+		this._router.navigate([`/pages/organization/projects`]);
 	}
 
 	/**
@@ -273,8 +344,6 @@ export class ProjectsMutationComponent extends TranslationBaseComponent
 		if (this.form.invalid) {
 			return;
 		}
-		const { tenantId } = this.store.user;
-		const { id: organizationId } = this.organization;
 
 		const { name, code, projectUrl, owner, organizationContact, startDate, endDate } = this.form.value;
 		const { description, tags } = this.form.value;
@@ -284,48 +353,41 @@ export class ProjectsMutationComponent extends TranslationBaseComponent
 		const { color, taskListType, public: isPublic, billable } = this.form.value;
 		const { imageId } = this.form.value;
 
-		this.addOrEditProject.emit({
-			action: !this.project ? 'add' : 'edit',
-			project: {
-				id: this.project ? this.project.id : undefined,
+		this.onSubmitted.emit({
+			// Main Step
+			name: name,
+			code: code,
+			projectUrl: projectUrl,
+			owner: owner,
+			organizationContactId: organizationContact ? organizationContact.id : null,
+			startDate: startDate,
+			endDate: endDate,
+			members: this.members.map((id) => this.employees.find((e) => e.id === id)).filter((e) => !!e),
+			teams: this.form.get('teams').value.map((id) => this.teams.find((e) => e.id === id)).filter((e) => !!e),
+			// Description Step
+			description: description,
+			tags: tags || [],
 
-				// Main Step
-				name: name,
-				code: code,
-				projectUrl: projectUrl,
-				owner: owner,
-				organizationContactId: organizationContact ? organizationContact.id : null,
-				startDate: startDate,
-				endDate: endDate,
-				members: this.members.map((id) => this.employees.find((e) => e.id === id)).filter((e) => !!e),
-				teams: this.form.get('teams').value.map((id) => this.teams.find((e) => e.id === id)).filter((e) => !!e),
-				// Description Step
-				description: description,
-				tags: tags || [],
+			// Billing Step
+			billing: billing,
+			billingFlat: (billing === ProjectBillingEnum.RATE) || (billing === ProjectBillingEnum.FLAT_FEE) ? true : false,
+			currency: currency,
 
-				// Billing Step
-				billing: billing,
-				billingFlat: (billing === ProjectBillingEnum.RATE) || (billing === ProjectBillingEnum.FLAT_FEE) ? true : false,
-				currency: currency,
+			// Budget Step
+			budget: budget,
+			budgetType: budgetType,
 
-				// Budget Step
-				budget: budget,
-				budgetType: budgetType,
+			// Open Source Step
+			openSource: openSource,
+			openSourceProjectUrl: openSourceProjectUrl,
 
-				// Open Source Step
-				openSource: openSource,
-				openSourceProjectUrl: openSourceProjectUrl,
+			// Setting Step
+			color: color,
+			taskListType: taskListType,
+			public: isPublic,
+			billable: billable,
 
-				// Setting Step
-				color: color,
-				taskListType: taskListType,
-				public: isPublic,
-				billable: billable,
-
-				organizationId,
-				tenantId,
-				imageId
-			}
+			imageId
 		});
 	}
 
@@ -344,10 +406,9 @@ export class ProjectsMutationComponent extends TranslationBaseComponent
 		name: string
 	): Promise<IOrganizationContact> => {
 		try {
-			const { id: organizationId } = this.organization;
-			const { tenantId } = this.store.user;
+			const { id: organizationId, tenantId } = this.organization;
 
-			const contact: IOrganizationContact = await this.organizationContactService.create({
+			const contact: IOrganizationContact = await this._organizationContactService.create({
 				name,
 				organizationId,
 				tenantId,
@@ -355,18 +416,18 @@ export class ProjectsMutationComponent extends TranslationBaseComponent
 			});
 			if (contact) {
 				const { name } = contact;
-				this.toastrService.success('NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_CONTACTS.ADD_CONTACT', {
+				this._toastrService.success('NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_CONTACTS.ADD_CONTACT', {
 					name
 				});
 			}
 			return contact;
 		} catch (error) {
-			this.errorHandler.handleError(error);
+			this._errorHandler.handleError(error);
 		}
 	};
 
 	openTasksSettings(): void {
-		this.router.navigate(['/pages/tasks/settings', this.project.id], {
+		this._router.navigate(['/pages/tasks/settings', this.project.id], {
 			state: this.project
 		});
 	}
@@ -418,6 +479,55 @@ export class ProjectsMutationComponent extends TranslationBaseComponent
 	}
 
 	handleImageUploadError(error: any) {
-		this.toastrService.danger(error);
+		this._toastrService.danger(error);
+	}
+
+	/**
+	 * Selects a GitHub repository and retrieves its associated issues.
+	 * @param repository - The GitHub repository to select.
+	 */
+	public selectRepository(repository: IGithubRepository) {
+		if (!this.organization || !this.integration) {
+			return;
+		}
+		/**  */
+		try {
+			this.loading = false;
+
+			const { id: organizationId, tenantId } = this.organization;
+			const { id: projectId } = this.project;
+			const integrationId = this.integration['id'];
+
+			/** */
+			const request: IIntegrationMapSyncRepository = {
+				organizationId,
+				tenantId,
+				gauzyId: projectId,
+				integrationId,
+				repository,
+				entity: IntegrationEntity.PROJECT
+			}
+
+			// Fetch entity settings by integration ID and handle the result as an observable
+			this._integrationMapService.syncGithubRepository(request).pipe(
+				catchError((error) => {
+					this._errorHandler.handleError(error);
+					return EMPTY;
+				}),
+				// Execute the following code block when the observable completes or errors
+				finalize(() => {
+					this._toastrService.success('NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_PROJECTS.SYNC_REPOSITORY', {
+						repository: repository.full_name,
+						project: this.project.name
+					});
+					// Set the 'loading' flag to false to indicate that data loading is complete
+					this.loading = false;
+				}),
+				// Automatically unsubscribe when the component is destroyed
+				untilDestroyed(this)
+			).subscribe();
+		} catch (error) {
+			this._errorHandler.handleError(error);
+		}
 	}
 }

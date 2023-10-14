@@ -59,13 +59,13 @@ export class IntegrationsService {
 	}
 
 	/**
+	 * Retrieve an integration tenant by specified options.
 	 *
-	 * @param organizationId
-	 * @param integrationEnum
-	 * @returns
+	 * @param input - The input options for finding the integration tenant.
+	 * @returns The integration tenant if found, or `false` if not found or an error occurs.
 	 */
-	checkRememberState(input: IIntegrationTenant) {
-		return this._http.get<any>(`${API_PREFIX}/integration-tenant/remember/state`, {
+	getIntegrationByOptions(input: IIntegrationTenant) {
+		return this._http.get<any>(`${API_PREFIX}/integration-tenant`, {
 			params: toParams({ ...input })
 		});
 	}

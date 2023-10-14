@@ -5,7 +5,16 @@ import { IntegrationsComponent } from './integrations.component';
 const routes: Routes = [
 	{
 		path: 'new',
-		component: IntegrationsComponent
+		component: IntegrationsComponent,
+		data: {
+			selectors: {
+				project: false,
+				team: false,
+				employee: false,
+				date: false,
+				organization: false
+			}
+		}
 	},
 	/** Integrations List */
 	{
@@ -30,7 +39,16 @@ const routes: Routes = [
 		path: 'github',
 		loadChildren: () => import('./github/github.module').then(
 			(m) => m.GithubModule
-		)
+		),
+		data: {
+			selectors: {
+				project: true,
+				team: true,
+				employee: false,
+				date: false,
+				organization: false,
+			}
+		}
 	}
 ];
 

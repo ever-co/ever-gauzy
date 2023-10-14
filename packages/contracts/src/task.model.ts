@@ -16,6 +16,7 @@ import { ITaskSize, TaskSizeEnum } from './task-size.model';
 export interface ITask extends IBasePerTenantAndOrganizationEntityModel {
 	title: string;
 	number?: number;
+	public?: boolean;
 	prefix?: string;
 	description?: string;
 	status?: TaskStatusEnum;

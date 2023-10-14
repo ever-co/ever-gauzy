@@ -21,7 +21,7 @@ export class GetConflictAvailabilitySlotsHandler
 	public async execute(
 		command: GetConflictAvailabilitySlotsCommand
 	): Promise<IAvailabilitySlot[]> {
-		
+
 		const { input } = command;
 		const { startTime, endTime, employeeId, organizationId } = input;
 		const tenantId = RequestContext.currentTenantId() || input.tenantId;
@@ -38,7 +38,7 @@ export class GetConflictAvailabilitySlotsHandler
 		});
 
 		query.andWhere(
-			this.configService.dbConnectionOptions.type === 'sqlite'
+			['sqlite', 'better-sqlite3'].includes(this.configService.dbConnectionOptions.type)
 				? `'${startedAt}' >= "${query.alias}"."startTime" AND '${startedAt}' <= "${query.alias}"."endTime"`
 				: `("${query.alias}"."startTime", "${query.alias}"."endTime") OVERLAPS (timestamptz '${startedAt}', timestamptz '${stoppedAt}')`
 		);
@@ -52,7 +52,7 @@ export class GetConflictAvailabilitySlotsHandler
 
 		if (input.type) {
 			query.andWhere(`${query.alias}.type = :type`, {
-				type: input.type 
+				type: input.type
 			});
 		}
 

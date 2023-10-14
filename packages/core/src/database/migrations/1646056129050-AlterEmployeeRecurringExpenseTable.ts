@@ -1,11 +1,11 @@
 import { MigrationInterface, QueryRunner } from "typeorm";
-    
+
 export class AlterEmployeeRecurringExpenseTable1646056129050 implements MigrationInterface {
 
     name = 'AlterEmployeeRecurringExpenseTable1646056129050';
 
     public async up(queryRunner: QueryRunner): Promise<void> {
-        if (queryRunner.connection.options.type === 'sqlite') {
+        if (['sqlite', 'better-sqlite3'].includes(queryRunner.connection.options.type)) {
             await this.sqliteUpQueryRunner(queryRunner);
         } else {
             await this.postgresUpQueryRunner(queryRunner);
@@ -13,7 +13,7 @@ export class AlterEmployeeRecurringExpenseTable1646056129050 implements Migratio
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
-        if (queryRunner.connection.options.type === 'sqlite') {
+        if (['sqlite', 'better-sqlite3'].includes(queryRunner.connection.options.type)) {
             await this.sqliteDownQueryRunner(queryRunner);
         } else {
             await this.postgresDownQueryRunner(queryRunner);
@@ -22,8 +22,8 @@ export class AlterEmployeeRecurringExpenseTable1646056129050 implements Migratio
 
     /**
     * PostgresDB Up Migration
-    * 
-    * @param queryRunner 
+    *
+    * @param queryRunner
     */
     public async postgresUpQueryRunner(queryRunner: QueryRunner): Promise<any> {
         await queryRunner.query(`ALTER TABLE "employee_recurring_expense" DROP CONSTRAINT "FK_0ac8526c48a3daa267c86225fb5"`);
@@ -33,8 +33,8 @@ export class AlterEmployeeRecurringExpenseTable1646056129050 implements Migratio
 
     /**
     * PostgresDB Down Migration
-    * 
-    * @param queryRunner 
+    *
+    * @param queryRunner
     */
     public async postgresDownQueryRunner(queryRunner: QueryRunner): Promise<any> {
         await queryRunner.query(`ALTER TABLE "employee_recurring_expense" DROP CONSTRAINT "FK_0ac8526c48a3daa267c86225fb5"`);
@@ -45,8 +45,8 @@ export class AlterEmployeeRecurringExpenseTable1646056129050 implements Migratio
 
     /**
    * SqliteDB Up Migration
-   * 
-   * @param queryRunner 
+   *
+   * @param queryRunner
    */
     public async sqliteUpQueryRunner(queryRunner: QueryRunner): Promise<any> {
         await queryRunner.query(`DROP INDEX "IDX_0ac8526c48a3daa267c86225fb"`);
@@ -117,8 +117,8 @@ export class AlterEmployeeRecurringExpenseTable1646056129050 implements Migratio
 
     /**
      * SqliteDB Down Migration
-     * 
-     * @param queryRunner 
+     *
+     * @param queryRunner
      */
     public async sqliteDownQueryRunner(queryRunner: QueryRunner): Promise<any> {
         await queryRunner.query(`DROP INDEX "IDX_5fde7be40b3c03bc0fdac0c2f6"`);

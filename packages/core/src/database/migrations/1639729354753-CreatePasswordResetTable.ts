@@ -1,29 +1,29 @@
 import { MigrationInterface, QueryRunner } from "typeorm";
-    
+
     export class CreatePasswordResetTable1639729354753 implements MigrationInterface {
 
         name = 'CreatePasswordResetTable1639729354753';
 
         public async up(queryRunner: QueryRunner): Promise<void> {
-            if (queryRunner.connection.options.type === 'sqlite') {
+            if (['sqlite', 'better-sqlite3'].includes(queryRunner.connection.options.type)) {
                 await this.sqliteUpQueryRunner(queryRunner);
             } else {
                 await this.postgresUpQueryRunner(queryRunner);
             }
         }
-    
+
         public async down(queryRunner: QueryRunner): Promise<void> {
-            if (queryRunner.connection.options.type === 'sqlite') {
+            if (['sqlite', 'better-sqlite3'].includes(queryRunner.connection.options.type)) {
                 await this.sqliteDownQueryRunner(queryRunner);
             } else {
                 await this.postgresDownQueryRunner(queryRunner);
             }
         }
-        
+
         /**
          * PostgresDB Up Migration
-         * 
-         * @param queryRunner 
+         *
+         * @param queryRunner
          */
         public async postgresUpQueryRunner(queryRunner: QueryRunner): Promise<any> {
             await queryRunner.query(`CREATE TABLE "password_reset" ("id" uuid NOT NULL DEFAULT gen_random_uuid(), "createdAt" TIMESTAMP NOT NULL DEFAULT now(), "updatedAt" TIMESTAMP NOT NULL DEFAULT now(), "email" character varying NOT NULL, "token" character varying NOT NULL, CONSTRAINT "PK_8515e60a2cc41584fa4784f52ce" PRIMARY KEY ("id"))`);
@@ -32,11 +32,11 @@ import { MigrationInterface, QueryRunner } from "typeorm";
             await queryRunner.query(`ALTER TABLE "contact" ALTER COLUMN "latitude" TYPE double precision`);
             await queryRunner.query(`ALTER TABLE "contact" ALTER COLUMN "longitude" TYPE double precision`);
         }
-        
+
         /**
          * PostgresDB Down Migration
-         * 
-         * @param queryRunner 
+         *
+         * @param queryRunner
          */
         public async postgresDownQueryRunner(queryRunner: QueryRunner): Promise<any> {
             await queryRunner.query(`ALTER TABLE "contact" ALTER COLUMN "longitude" TYPE double precision`);
@@ -48,8 +48,8 @@ import { MigrationInterface, QueryRunner } from "typeorm";
 
         /**
          * SqliteDB Up Migration
-         * 
-         * @param queryRunner 
+         *
+         * @param queryRunner
          */
         public async sqliteUpQueryRunner(queryRunner: QueryRunner): Promise<any> {
             await queryRunner.query(`CREATE TABLE "password_reset" ("id" varchar PRIMARY KEY NOT NULL, "createdAt" datetime NOT NULL DEFAULT (datetime('now')), "updatedAt" datetime NOT NULL DEFAULT (datetime('now')), "email" varchar NOT NULL, "token" varchar NOT NULL)`);
@@ -67,8 +67,8 @@ import { MigrationInterface, QueryRunner } from "typeorm";
 
         /**
          * SqliteDB Down Migration
-         * 
-         * @param queryRunner 
+         *
+         * @param queryRunner
          */
         public async sqliteDownQueryRunner(queryRunner: QueryRunner): Promise<any> {
             await queryRunner.query(`DROP INDEX "IDX_60468af1ce34043a900809c84f"`);

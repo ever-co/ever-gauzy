@@ -1,11 +1,11 @@
 import { MigrationInterface, QueryRunner } from "typeorm";
-    
+
 export class AlterInvoiceTable1645179275947 implements MigrationInterface {
 
     name = 'AlterInvoiceTable1645179275947';
 
     public async up(queryRunner: QueryRunner): Promise<void> {
-        if (queryRunner.connection.options.type === 'sqlite') {
+        if (['sqlite', 'better-sqlite3'].includes(queryRunner.connection.options.type)) {
             await this.sqliteUpQueryRunner(queryRunner);
         } else {
             await this.postgresUpQueryRunner(queryRunner);
@@ -13,7 +13,7 @@ export class AlterInvoiceTable1645179275947 implements MigrationInterface {
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
-        if (queryRunner.connection.options.type === 'sqlite') {
+        if (['sqlite', 'better-sqlite3'].includes(queryRunner.connection.options.type)) {
             await this.sqliteDownQueryRunner(queryRunner);
         } else {
             await this.postgresDownQueryRunner(queryRunner);
@@ -22,8 +22,8 @@ export class AlterInvoiceTable1645179275947 implements MigrationInterface {
 
     /**
     * PostgresDB Up Migration
-    * 
-    * @param queryRunner 
+    *
+    * @param queryRunner
     */
     public async postgresUpQueryRunner(queryRunner: QueryRunner): Promise<any> {
         await queryRunner.query(`ALTER TABLE "invoice" ALTER COLUMN "isArchived" SET DEFAULT false`);
@@ -31,8 +31,8 @@ export class AlterInvoiceTable1645179275947 implements MigrationInterface {
 
     /**
     * PostgresDB Down Migration
-    * 
-    * @param queryRunner 
+    *
+    * @param queryRunner
     */
     public async postgresDownQueryRunner(queryRunner: QueryRunner): Promise<any> {
         await queryRunner.query(`ALTER TABLE "invoice" ALTER COLUMN "isArchived" DROP DEFAULT`);
@@ -41,8 +41,8 @@ export class AlterInvoiceTable1645179275947 implements MigrationInterface {
 
     /**
    * SqliteDB Up Migration
-   * 
-   * @param queryRunner 
+   *
+   * @param queryRunner
    */
     public async sqliteUpQueryRunner(queryRunner: QueryRunner): Promise<any> {
         await queryRunner.query(`DROP INDEX "IDX_d9e965da0f63c94983d3a1006a"`);
@@ -61,8 +61,8 @@ export class AlterInvoiceTable1645179275947 implements MigrationInterface {
 
     /**
      * SqliteDB Down Migration
-     * 
-     * @param queryRunner 
+     *
+     * @param queryRunner
      */
     public async sqliteDownQueryRunner(queryRunner: QueryRunner): Promise<any> {
         await queryRunner.query(`DROP INDEX "IDX_7fb52a5f267f53b7d93af3d8c3"`);

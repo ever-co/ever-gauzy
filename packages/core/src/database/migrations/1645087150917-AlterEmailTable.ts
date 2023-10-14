@@ -1,11 +1,11 @@
 import { MigrationInterface, QueryRunner } from "typeorm";
-    
+
 export class AlterEmailTable1645087150917 implements MigrationInterface {
 
     name = 'AlterEmailTable1645087150917';
 
     public async up(queryRunner: QueryRunner): Promise<void> {
-        if (queryRunner.connection.options.type === 'sqlite') {
+        if (['sqlite', 'better-sqlite3'].includes(queryRunner.connection.options.type)) {
             await this.sqliteUpQueryRunner(queryRunner);
         } else {
             await this.postgresUpQueryRunner(queryRunner);
@@ -13,7 +13,7 @@ export class AlterEmailTable1645087150917 implements MigrationInterface {
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
-        if (queryRunner.connection.options.type === 'sqlite') {
+        if (['sqlite', 'better-sqlite3'].includes(queryRunner.connection.options.type)) {
             await this.sqliteDownQueryRunner(queryRunner);
         } else {
             await this.postgresDownQueryRunner(queryRunner);
@@ -22,8 +22,8 @@ export class AlterEmailTable1645087150917 implements MigrationInterface {
 
     /**
     * PostgresDB Up Migration
-    * 
-    * @param queryRunner 
+    *
+    * @param queryRunner
     */
     public async postgresUpQueryRunner(queryRunner: QueryRunner): Promise<any> {
         await queryRunner.query(`ALTER TABLE "email_sent" ALTER COLUMN "isArchived" SET DEFAULT false`);
@@ -35,8 +35,8 @@ export class AlterEmailTable1645087150917 implements MigrationInterface {
 
     /**
     * PostgresDB Down Migration
-    * 
-    * @param queryRunner 
+    *
+    * @param queryRunner
     */
     public async postgresDownQueryRunner(queryRunner: QueryRunner): Promise<any> {
         await queryRunner.query(`ALTER TABLE "email_sent" ALTER COLUMN "isArchived" DROP DEFAULT`);
@@ -44,8 +44,8 @@ export class AlterEmailTable1645087150917 implements MigrationInterface {
 
     /**
     * SqliteDB Up Migration
-    * 
-    * @param queryRunner 
+    *
+    * @param queryRunner
     */
     public async sqliteUpQueryRunner(queryRunner: QueryRunner): Promise<any> {
         await queryRunner.query(`DROP INDEX "IDX_a954fda57cca81dc48446e73b8"`);
@@ -65,13 +65,13 @@ export class AlterEmailTable1645087150917 implements MigrationInterface {
         /**
          * SET isArchived = 0, if database has already NULL rows
          */
-        await queryRunner.query(`UPDATE "email_sent" SET "isArchived" = $1 WHERE "isArchived" IS NULL`, [0]);
+        await queryRunner.query(`UPDATE "email_sent" SET "isArchived" = ? WHERE "isArchived" IS NULL`, [0]);
     }
 
     /**
      * SqliteDB Down Migration
-     * 
-     * @param queryRunner 
+     *
+     * @param queryRunner
      */
     public async sqliteDownQueryRunner(queryRunner: QueryRunner): Promise<any> {
         await queryRunner.query(`DROP INDEX "IDX_1261c457b3035b77719556995b"`);

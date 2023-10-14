@@ -82,7 +82,7 @@ export class EmployeeSelectComponent implements OnInit, OnDestroy {
 		private readonly employeesService: EmployeesService,
 		private readonly store: Store,
 		private readonly dateRangePickerBuilderService: DateRangePickerBuilderService
-	) {}
+	) { }
 
 	set employeeId(value: string[] | string) {
 		this.changeValue$.next(value);
@@ -103,10 +103,10 @@ export class EmployeeSelectComponent implements OnInit, OnDestroy {
 	private _allEmployees: IEmployee[];
 	val: string[] | string = null;
 	changeValue$ = new Subject<string | string[]>();
-	onChange: any = () => {};
-	onTouched: any = () => {};
+	onChange: any = () => { };
+	onTouched: any = () => { };
 
-	public organization: IOrganization;
+	public organization: IOrganization = this.store.selectedOrganization;
 	public selectedDateRange: IDateRangePicker;
 
 	ngOnInit(): void {
@@ -131,13 +131,11 @@ export class EmployeeSelectComponent implements OnInit, OnDestroy {
 				untilDestroyed(this)
 			)
 			.subscribe();
-		const storeOrganization$ = this.store.selectedOrganization$;
 		const selectedDateRange$ = this.dateRangePickerBuilderService.selectedDateRange$;
-		combineLatest([storeOrganization$, selectedDateRange$])
+		combineLatest([selectedDateRange$])
 			.pipe(
-				filter(([organization, dateRange]) => !!organization && !!dateRange),
-				tap(([organization, dateRange]) => {
-					this.organization = organization;
+				filter(([dateRange]) => !!dateRange),
+				tap(([dateRange]) => {
 					this.selectedDateRange = dateRange;
 				}),
 				tap(() => {
@@ -199,5 +197,5 @@ export class EmployeeSelectComponent implements OnInit, OnDestroy {
 		this.employees = items;
 	}
 
-	ngOnDestroy(): void {}
+	ngOnDestroy(): void { }
 }

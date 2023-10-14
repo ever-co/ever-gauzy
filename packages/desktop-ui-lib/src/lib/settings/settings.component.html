@@ -1178,7 +1178,7 @@
 																"
 																[value]="item"
 															>
-																{{ item }}
+																{{ item | replace: '-' : ' ' | titlecase }}
 															</nb-option>
 														</nb-select>
 													</div>
@@ -1571,7 +1571,7 @@
 </nb-layout>
 
 <ng-template #databaseConfig let-provider="providerConfig">
-	<ng-container *ngIf="provider?.db && provider?.db !== 'sqlite'">
+	<ng-container *ngIf="provider?.db && provider?.db !== 'sqlite' && provider?.db !== 'better-sqlite'">
 		<div class="col-5 centered-text">
 			<p>{{ 'TIMER_TRACKER.SETTINGS.DB_HOST' | translate }}</p>
 		</div>

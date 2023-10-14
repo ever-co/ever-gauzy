@@ -1,10 +1,10 @@
 import { MigrationInterface, QueryRunner } from "typeorm";
-    
+
 export class KnowledgeBasePlugin1638793919144 implements MigrationInterface {
     name = 'KnowledgeBasePlugin1638793919144';
 
     public async up(queryRunner: QueryRunner): Promise<void> {
-        if (queryRunner.connection.options.type === 'sqlite') {
+        if (['sqlite', 'better-sqlite3'].includes(queryRunner.connection.options.type)) {
             await this.sqliteUpQueryRunner(queryRunner);
         } else {
             await this.postgresUpQueryRunner(queryRunner);
@@ -12,7 +12,7 @@ export class KnowledgeBasePlugin1638793919144 implements MigrationInterface {
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
-        if (queryRunner.connection.options.type === 'sqlite') {
+        if (['sqlite', 'better-sqlite3'].includes(queryRunner.connection.options.type)) {
             await this.sqliteDownQueryRunner(queryRunner);
         } else {
             await this.postgresDownQueryRunner(queryRunner);
@@ -21,8 +21,8 @@ export class KnowledgeBasePlugin1638793919144 implements MigrationInterface {
 
     /**
      * PostgresDB Up Migration
-     * 
-     * @param queryRunner 
+     *
+     * @param queryRunner
      */
     public async postgresUpQueryRunner(queryRunner: QueryRunner): Promise<any> {
         await queryRunner.query(`CREATE TABLE "knowledge_base" ("id" uuid NOT NULL DEFAULT gen_random_uuid(), "createdAt" TIMESTAMP NOT NULL DEFAULT now(), "updatedAt" TIMESTAMP NOT NULL DEFAULT now(), "tenantId" uuid, "organizationId" uuid, "name" character varying NOT NULL, "flag" character varying NOT NULL, "icon" character varying NOT NULL, "privacy" character varying NOT NULL, "language" character varying NOT NULL, "color" character varying NOT NULL, "description" character varying, "data" character varying, "index" integer, "parentId" uuid, CONSTRAINT "PK_19d3f52f6da1501b7e235f1da5c" PRIMARY KEY ("id"))`);
@@ -51,11 +51,11 @@ export class KnowledgeBasePlugin1638793919144 implements MigrationInterface {
         await queryRunner.query(`ALTER TABLE "knowledge_base_author" ADD CONSTRAINT "FK_8eb7e413257d7a26104f4e326fd" FOREIGN KEY ("employeeId") REFERENCES "employee"("id") ON DELETE CASCADE ON UPDATE NO ACTION`);
         await queryRunner.query(`ALTER TABLE "knowledge_base_author" ADD CONSTRAINT "FK_2d5ecab1f06b327bad545536143" FOREIGN KEY ("articleId") REFERENCES "knowledge_base_article"("id") ON DELETE CASCADE ON UPDATE NO ACTION`);
     }
-    
+
     /**
      * PostgresDB Down Migration
-     * 
-     * @param queryRunner 
+     *
+     * @param queryRunner
      */
     public async postgresDownQueryRunner(queryRunner: QueryRunner): Promise<any> {
         await queryRunner.query(`ALTER TABLE "knowledge_base_author" DROP CONSTRAINT "FK_2d5ecab1f06b327bad545536143"`);
@@ -87,8 +87,8 @@ export class KnowledgeBasePlugin1638793919144 implements MigrationInterface {
 
     /**
      * SqliteDB Up Migration
-     * 
-     * @param queryRunner 
+     *
+     * @param queryRunner
      */
     public async sqliteUpQueryRunner(queryRunner: QueryRunner): Promise<any> {
         await queryRunner.query(`CREATE TABLE "knowledge_base" ("id" varchar PRIMARY KEY NOT NULL, "createdAt" datetime NOT NULL DEFAULT (datetime('now')), "updatedAt" datetime NOT NULL DEFAULT (datetime('now')), "tenantId" varchar, "organizationId" varchar, "name" varchar NOT NULL, "flag" varchar NOT NULL, "icon" varchar NOT NULL, "privacy" varchar NOT NULL, "language" varchar NOT NULL, "color" varchar NOT NULL, "description" varchar, "data" varchar, "index" integer, "parentId" varchar)`);
@@ -145,11 +145,11 @@ export class KnowledgeBasePlugin1638793919144 implements MigrationInterface {
         await queryRunner.query(`CREATE INDEX "IDX_8eb7e413257d7a26104f4e326f" ON "knowledge_base_author" ("employeeId") `);
         await queryRunner.query(`CREATE INDEX "IDX_2d5ecab1f06b327bad54553614" ON "knowledge_base_author" ("articleId") `);
     }
-    
+
     /**
      * SqliteDB Down Migration
-     * 
-     * @param queryRunner 
+     *
+     * @param queryRunner
      */
     public async sqliteDownQueryRunner(queryRunner: QueryRunner): Promise<any> {
         await queryRunner.query(`DROP INDEX "IDX_2d5ecab1f06b327bad54553614"`);

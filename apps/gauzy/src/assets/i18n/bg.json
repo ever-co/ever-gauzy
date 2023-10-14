@@ -2019,6 +2019,7 @@
 			"ORG_CONTACT_VIEW": "View Contacts",
 			"ORG_TEAM_ADD": "Add Teams",
 			"ORG_TEAM_VIEW": "View Teams",
+			"ORG_TEAM_EDIT_ACTIVE_TASK": "Редактиране на активни задачи",
 			"ORG_TEAM_EDIT": "Edit Teams",
 			"ORG_TEAM_DELETE": "Delete Teams",
 			"ORG_TEAM_JOIN_REQUEST_VIEW": "Преглед на заявките за присъединяване към екипи",
@@ -2041,7 +2042,8 @@
 			"ALLOW_MODIFY_TIME": "Allow Modify Time",
 			"ALLOW_MANUAL_TIME": "Allow Manual Time",
 			"DELETE_SCREENSHOTS": "Allow Delete Screenshot",
-			"ORG_TASK_SETTING": "Настройки на задачите"
+			"ORG_TASK_SETTING": "Настройки на задачите",
+			"ORG_MEMBER_LAST_LOG_VIEW": "Преглед на последния запис"
 		},
 		"BILLING": "Billing",
 		"BUDGET": "Budget",
@@ -4282,7 +4284,8 @@
 			"EMAIL_REQUIRED": "Email is required!",
 			"EMAIL_REAL_REQUIRED": "Email should be the real one!",
 			"PASSWORD_REQUIRED": "Password is required!",
-			"PASSWORD_SHOULD_CONTAIN": "Password should contain from {{ minLength }} to {{ maxLength }} characters!"
+			"PASSWORD_SHOULD_CONTAIN": "Password should contain from {{ minLength }} to {{ maxLength }} characters!",
+			"PASSWORD_NO_SPACE_EDGES": "Passwords must not begin or end with spaces."
 		},
 		"DEMO": {
 			"TITLE": "Login Automatically into Demo accounts",

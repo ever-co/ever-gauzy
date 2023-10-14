@@ -96,7 +96,7 @@ export class HubstaffAuthorizeComponent implements OnInit, OnDestroy {
 			return;
 		}
 		const { id: organizationId, tenantId } = this.organization;
-		const state$ = this._integrationsService.checkRememberState({
+		const state$ = this._integrationsService.getIntegrationByOptions({
 			name: IntegrationEnum.HUBSTAFF,
 			organizationId,
 			tenantId

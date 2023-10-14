@@ -39,6 +39,11 @@ body {
 }
 
 @mixin nb-overrides() {
+  p.caption.status-danger {
+    margin-bottom: 0;
+    margin-top: 0.3rem;
+  }
+
   nb-route-tabset .route-tab.active .tab-link {
     background: var(--gauzy-card-2);
     margin-bottom: 1px;
@@ -684,4 +689,22 @@ ng2-smart-table table tr.ng2-smart-titles th a.sort {
 nb-option-list.fit-content {
 	width: fit-content !important;
 	min-width: var(--select-min-width);
+}
+
+/* Apply style on spinner */
+.sync-container {
+	.sync {
+		cursor: pointer;
+		&.spin {
+			animation: rotate 1s linear infinite;
+		}
+	}
+	@keyframes rotate {
+		from {
+			transform: rotate(0deg);
+		}
+		to {
+			transform: rotate(360deg);
+		}
+	}
 }

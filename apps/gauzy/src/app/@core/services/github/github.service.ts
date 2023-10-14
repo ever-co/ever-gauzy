@@ -1,6 +1,15 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { IBasePerTenantAndOrganizationEntityModel, IGithubAppInstallInput, IGithubIssue, IGithubRepositoryResponse, IIntegrationTenant } from '@gauzy/contracts';
+import {
+    IBasePerTenantAndOrganizationEntityModel,
+    IGithubAppInstallInput,
+    IGithubIssue,
+    IGithubRepository,
+    IGithubRepositoryResponse,
+    IIntegrationTenant,
+    IOrganization,
+    IOrganizationProject
+} from '@gauzy/contracts';
 import { Observable, firstValueFrom } from 'rxjs';
 import { toParams } from '@gauzy/common-angular';
 import { API_PREFIX } from '../../constants';
@@ -60,5 +69,65 @@ export class GithubService {
         const params = toParams(query);
 
         return this._http.get<IGithubIssue[]>(url, { params });
+    }
+
+    /**
+     * Sync GitHub issues and labels for a given organization and integration.
+     *
+     * @param integrationId - The ID of the integration.
+     * @param options - An object containing organizationId, tenantId, and issues.
+     * @returns An observable that represents the HTTP POST request to sync issues and labels.
+     */
+    public syncIssuesAndLabels(
+        integrationId: IIntegrationTenant['id'],
+        repository: IGithubRepository,
+        options: {
+            organizationId: IOrganization['id'];
+            tenantId: IOrganization['tenantId'];
+            issues: IGithubIssue[];
+            projectId?: IOrganizationProject['id'];
+        },
+    ): Observable<any> {
+        return this._http.post(`${API_PREFIX}/integration/github/${integrationId}/sync-issues`, {
+            repository: this._mapRepositoryPayload(repository),
+            issues: this._mapIssuePayload(options.issues),
+            projectId: options.projectId,
+            organizationId: options.organizationId,
+            tenantId: options.tenantId
+        });
+    }
+
+    /**
+     * Maps a GitHub repository's data to a custom payload object.
+     *
+     * @param data - The GitHub repository data to map.
+     * @returns A custom payload object with selected properties.
+     */
+    private _mapRepositoryPayload(data: IGithubRepository): any {
+        const { id, name, owner, visibility } = data;
+        return {
+            id,
+            name,
+            owner: {
+                login: owner.login
+            },
+            visibility
+        };
+    }
+
+    /**
+     * Map GitHub issue payload data to the required format.
+     *
+     * @param data - An array of GitHub issues.
+     * @returns An array of mapped issue payload data.
+     */
+    private _mapIssuePayload(data: IGithubIssue[]): any[] {
+        return data.map(({ id, number, title, state, body }) => ({
+            sourceId: id,
+            number,
+            title,
+            state,
+            body
+        }));
     }
 }

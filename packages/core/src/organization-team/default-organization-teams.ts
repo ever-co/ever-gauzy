@@ -5,27 +5,27 @@ export const DEFAULT_ORGANIZATION_TEAMS = [
 		name: 'Employees',
 		defaultMembers: [
 			`${environment.demoCredentialConfig.superAdminEmail}`,
-			'ruslan@example_ever.co',
-			'alish@example_ever.co',
-			'julia@example_ever.co'
+			'ruslan@example-ever.co',
+			'alish@example-ever.co',
+			'julia@example-ever.co'
 		],
-		manager: ['ruslan@example_ever.co']
+		manager: ['ruslan@example-ever.co']
 	},
 	{
 		name: 'Contractors',
 		defaultMembers: [
 			'ckhandla94@gmail.com'
 		],
-		manager: ['ruslan@example_ever.co']
+		manager: ['ruslan@example-ever.co']
 	},
 	{
 		name: 'Designers',
-		defaultMembers: ['julia@example_ever.co'],
+		defaultMembers: ['julia@example-ever.co'],
 		manager: []
 	},
 	{
 		name: 'QA',
-		defaultMembers: ['julia@example_ever.co'],
+		defaultMembers: ['julia@example-ever.co'],
 		manager: []
 	}
 ];

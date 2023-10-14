@@ -2056,6 +2056,7 @@
 			"ORG_CONTACT_VIEW": "Kontakte anzeigen",
 			"ORG_TEAM_ADD": "Teams hinzufügen",
 			"ORG_TEAM_VIEW": "Teams anzeigen",
+			"ORG_TEAM_EDIT_ACTIVE_TASK": "Aktive Aufgaben bearbeiten",
 			"ORG_TEAM_EDIT": "Teams bearbeiten",
 			"ORG_TEAM_DELETE": "Lösche Teams",
 			"ORG_TEAM_JOIN_REQUEST_VIEW": "Ansicht Teams Beitrittsanfragen",
@@ -2082,7 +2083,8 @@
 			"ORG_TASK_VIEW": "Ansicht von Aufgaben",
 			"ORG_TASK_EDIT": "Aufgaben bearbeiten",
 			"ORG_TASK_DELETE": "Aufgaben löschen",
-			"ORG_TASK_SETTING": "Aufgabeeinstellungen"
+			"ORG_TASK_SETTING": "Aufgabeeinstellungen",
+			"ORG_MEMBER_LAST_LOG_VIEW": "Letztes Protokoll anzeigen"
 		},
 		"BILLING": "Rechnungsstellung",
 		"BUDGET": "Budget",
@@ -4356,7 +4358,8 @@
 			"EMAIL_REQUIRED": "E-Mail ist erforderlich!",
 			"EMAIL_REAL_REQUIRED": "Die E-Mail sollte die echte sein!",
 			"PASSWORD_REQUIRED": "Passwort wird benötigt!",
-			"PASSWORD_SHOULD_CONTAIN": "Das Passwort sollte aus {{ minLength }} bis {{ maxLength }} Zeichen bestehen!"
+			"PASSWORD_SHOULD_CONTAIN": "Das Passwort sollte aus {{ minLength }} bis {{ maxLength }} Zeichen bestehen!",
+			"PASSWORD_NO_SPACE_EDGES": "Passwörter dürfen nicht mit Leerzeichen beginnen oder enden."
 		},
 		"DEMO": {
 			"TITLE": "Automatisch in Demo-Konten einloggen",

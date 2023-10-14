@@ -103,7 +103,7 @@ export class ScheduleTimeLogEntriesHandler
 				/**
 				 * Adjust stopped date as per database selection
 				 */
-				if (getConfig().dbConnectionOptions.type === 'sqlite') {
+				if (['sqlite', 'better-sqlite3'].includes(getConfig().dbConnectionOptions.type)) {
 					stoppedAt = moment.utc(timeLog.startedAt).add(duration, 'seconds').format('YYYY-MM-DD HH:mm:ss.SSS');
 					slotDifference = moment.utc(moment()).diff(stoppedAt, 'minutes');
 				} else {

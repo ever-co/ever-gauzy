@@ -28,6 +28,7 @@ import { LanguageModule } from '../language/language.module';
 import { TranslateModule } from '@ngx-translate/core';
 import { Store } from '../services';
 import { LanguageSelectorService } from '../language/language-selector.service';
+import {TaskRenderModule} from "../time-tracker/task-render";
 
 @NgModule({
 	declarations: [SettingsComponent],
@@ -52,7 +53,8 @@ import { LanguageSelectorService } from '../language/language-selector.service';
 		NbSpinnerModule,
 		DesktopDirectiveModule,
 		LanguageModule,
-		TranslateModule
+		TranslateModule,
+		TaskRenderModule
 	],
 	providers: [
 		NbToastrService,
