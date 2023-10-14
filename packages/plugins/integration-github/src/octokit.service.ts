@@ -65,7 +65,6 @@ export class OctokitService {
 		try {
 			// Get an Octokit instance for the installation
 			const octokit = await this.app.getInstallationOctokit(installation_id);
-			console.log(octokit, installation_id);
 
 			// Send a request to the GitHub API to get installation metadata
 			return await octokit.request('GET /app/installations/{installation_id}', {
