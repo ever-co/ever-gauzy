@@ -42,6 +42,9 @@ export class AddedIntegrationSettingColumnsToTheOrganizationProjectTable16972632
         await queryRunner.query(`ALTER TABLE "organization_project" ADD "externalRepositoryId" integer`);
         await queryRunner.query(`ALTER TABLE "organization_project" ADD "isTasksAutoSync" boolean DEFAULT true`);
         await queryRunner.query(`ALTER TABLE "organization_project" ADD "isTasksAutoSyncOnLabel" boolean DEFAULT true`);
+        await queryRunner.query(`CREATE INDEX "IDX_60f6ebb4ab539087ce5f4266ca" ON "organization_project" ("externalRepositoryId") `);
+        await queryRunner.query(`CREATE INDEX "IDX_75855b44250686f84b7c4bc1f1" ON "organization_project" ("isTasksAutoSync") `);
+        await queryRunner.query(`CREATE INDEX "IDX_c5c4366237dc2bb176c1503426" ON "organization_project" ("isTasksAutoSyncOnLabel") `);
     }
 
     /**
@@ -50,6 +53,9 @@ export class AddedIntegrationSettingColumnsToTheOrganizationProjectTable16972632
     * @param queryRunner
     */
     public async postgresDownQueryRunner(queryRunner: QueryRunner): Promise<any> {
+        await queryRunner.query(`DROP INDEX "public"."IDX_c5c4366237dc2bb176c1503426"`);
+        await queryRunner.query(`DROP INDEX "public"."IDX_75855b44250686f84b7c4bc1f1"`);
+        await queryRunner.query(`DROP INDEX "public"."IDX_60f6ebb4ab539087ce5f4266ca"`);
         await queryRunner.query(`ALTER TABLE "organization_project" DROP COLUMN "isTasksAutoSyncOnLabel"`);
         await queryRunner.query(`ALTER TABLE "organization_project" DROP COLUMN "isTasksAutoSync"`);
         await queryRunner.query(`ALTER TABLE "organization_project" DROP COLUMN "externalRepositoryId"`);
@@ -81,6 +87,9 @@ export class AddedIntegrationSettingColumnsToTheOrganizationProjectTable16972632
         await queryRunner.query(`CREATE INDEX "IDX_9d8afc1e1e64d4b7d48dd2229d" ON "organization_project" ("organizationId") `);
         await queryRunner.query(`CREATE INDEX "IDX_7cf84e8b5775f349f81a1f3cc4" ON "organization_project" ("tenantId") `);
         await queryRunner.query(`CREATE INDEX "IDX_063324fdceb51f7086e401ed2c" ON "organization_project" ("imageId") `);
+        await queryRunner.query(`CREATE INDEX "IDX_60f6ebb4ab539087ce5f4266ca" ON "organization_project" ("externalRepositoryId") `);
+        await queryRunner.query(`CREATE INDEX "IDX_75855b44250686f84b7c4bc1f1" ON "organization_project" ("isTasksAutoSync") `);
+        await queryRunner.query(`CREATE INDEX "IDX_c5c4366237dc2bb176c1503426" ON "organization_project" ("isTasksAutoSyncOnLabel") `);
     }
 
     /**
@@ -89,6 +98,9 @@ export class AddedIntegrationSettingColumnsToTheOrganizationProjectTable16972632
     * @param queryRunner
     */
     public async sqliteDownQueryRunner(queryRunner: QueryRunner): Promise<any> {
+        await queryRunner.query(`DROP INDEX "IDX_c5c4366237dc2bb176c1503426"`);
+        await queryRunner.query(`DROP INDEX "IDX_75855b44250686f84b7c4bc1f1"`);
+        await queryRunner.query(`DROP INDEX "IDX_60f6ebb4ab539087ce5f4266ca"`);
         await queryRunner.query(`DROP INDEX "IDX_063324fdceb51f7086e401ed2c"`);
         await queryRunner.query(`DROP INDEX "IDX_7cf84e8b5775f349f81a1f3cc4"`);
         await queryRunner.query(`DROP INDEX "IDX_9d8afc1e1e64d4b7d48dd2229d"`);

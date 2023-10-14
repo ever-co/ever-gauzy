@@ -132,18 +132,21 @@ export class OrganizationProject extends TenantOrganizationBaseEntity implements
 	@ApiPropertyOptional({ type: () => Number })
 	@IsOptional()
 	@IsBoolean()
+	@Index()
 	@Column({ nullable: true })
 	externalRepositoryId?: number;
 
 	@ApiPropertyOptional({ type: () => Boolean })
 	@IsOptional()
 	@IsBoolean()
+	@Index()
 	@Column({ default: true, nullable: true })
 	isTasksAutoSync?: boolean;
 
 	@ApiPropertyOptional({ type: () => Boolean })
 	@IsOptional()
 	@IsBoolean()
+	@Index()
 	@Column({ default: true, nullable: true })
 	isTasksAutoSyncOnLabel?: boolean;
 
