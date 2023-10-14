@@ -128,7 +128,7 @@ export abstract class CrudService<T extends BaseEntity>
 					} : {}
 				),
 			});
-			console.log(options, moment().format('DD.MM.YYYY HH:mm:ss'));
+			// console.log(options, moment().format('DD.MM.YYYY HH:mm:ss'));
 			const [items, total] = await query.getManyAndCount();
 			return { items, total };
 		} catch (error) {

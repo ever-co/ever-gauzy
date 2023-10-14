@@ -38,7 +38,7 @@ export class ReportService extends CrudService<Report> {
 
 		const { items, total } = await super.findAll(filter);
 		const menuItems = await this.getMenuItems(filter);
-		    
+
 		const orgMenuItems = indexBy(menuItems, 'id');
 
 		const mapItems = items.map((item) => {
@@ -68,13 +68,10 @@ export class ReportService extends CrudService<Report> {
 	public async getMenuItems(
 		options: GetReportMenuItemsInput
 	): Promise<IReport[]> {
-
-    const start = new Date();
-
 		const { organizationId } = options;
 		const tenantId = RequestContext.currentTenantId() || options.tenantId;
 
-		const res = await this.repository.find({
+		return await this.repository.find({
 			join: {
 				alias: this.alias,
 				innerJoin: {
@@ -89,14 +86,6 @@ export class ReportService extends CrudService<Report> {
 				}
 			}
 		});
-      
-    const end = new Date();
-		const time = (end.getTime() - start.getTime()) / 1000;
-
-		this.logger.log(`getMenuItems took ${time} seconds`);
-		console.log(`getMenuItems took ${time} seconds`);
-      
-    return res;
 	}
 
 	async updateReportMenu(

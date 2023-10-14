@@ -10,6 +10,7 @@ import {
     IIntegrationEntitySettingTied,
     IIntegrationTenant,
     IOrganization,
+    IOrganizationProject,
     ITag,
     IntegrationEntity,
     TaskStatusEnum
@@ -18,8 +19,8 @@ import { RequestContext } from 'core/context';
 import { arrayToObject } from 'core/utils';
 import { IntegrationEntitySetting } from 'core/entities/internal';
 import { IntegrationTenantService } from 'integration-tenant/integration-tenant.service';
+import { OrganizationProjectService } from 'organization-project/organization-project.service';
 import { IntegrationMapSyncIssueCommand, IntegrationMapSyncLabelCommand } from 'integration-map/commands';
-import { IntegrationMapService } from 'integration-map/integration-map.service';
 
 @Injectable()
 export class GithubSyncService {
@@ -29,7 +30,7 @@ export class GithubSyncService {
         private readonly _commandBus: CommandBus,
         private readonly _octokitService: OctokitService,
         private readonly _integrationTenantService: IntegrationTenantService,
-        private readonly _integrationMapService: IntegrationMapService
+        private readonly _organizationProjectService: OrganizationProjectService,
     ) { }
 
     /**
@@ -48,16 +49,17 @@ export class GithubSyncService {
             const tenantId = RequestContext.currentTenantId() || input.tenantId;
 
             /**  */
-            if (!input['projectId']) {
-                /** */
-                const repositoryIntegrationMap = await this._integrationMapService.getSyncedProjectByRepository({
-                    entity: IntegrationEntity.PROJECT,
-                    integrationId,
-                    organizationId,
-                    tenantId,
-                    sourceId: (repository.id).toString()
-                });
-                input['projectId'] = repositoryIntegrationMap['gauzyId'] || null;
+            if (!input['projectId'] && repository) {
+                try {
+                    const project: IOrganizationProject = await this._organizationProjectService.findOneByWhereOptions({
+                        organizationId,
+                        tenantId,
+                        externalRepositoryId: repository.id
+                    });
+                    input['projectId'] = project['id'] || null;
+                } catch (error) {
+                    input['projectId'] = null;
+                }
             }
 
             // Retrieve integration settings tied to the specified organization
@@ -113,7 +115,6 @@ export class GithubSyncService {
                                                     new IntegrationMapSyncIssueCommand({
                                                         entity: {
                                                             title,
-                                                            number,
                                                             description: body,
                                                             status: state as TaskStatusEnum,
                                                             public: repository.visibility === 'private' ? false : true,
