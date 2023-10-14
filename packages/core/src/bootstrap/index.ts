@@ -107,9 +107,12 @@ export async function bootstrap(
 	useContainer(app.select(SharedModule), { fallbackOnErrors: true });
 
 	await app.listen(port, host, () => {
+		const message = `Listening at http://${host}:${port}/${globalPrefix}`
 		console.log(
-			chalk.magenta(`Listening at http://${host}:${port}/${globalPrefix}`)
+			chalk.magenta(message)
 		);
+		// Send message to parent process (desktop app)
+		process.send(message);
 		// Execute Seed For Demo Server
 		if (env.demo) {
 			service.executeDemoSeed();
