@@ -32,7 +32,7 @@ export class OctokitService {
 					clientId: this.config.clientId,
 					clientSecret: this.config.clientSecret,
 				});
-				console.log(chalk.green(`Octokit App successfully initialized.`));
+				console.log(chalk.magenta(`Octokit App Configuration ${JSON.stringify(this.config)}`));
 			} else {
 				console.error(chalk.red(`Octokit App initialization failed: Missing appId or privateKey.`));
 			}
@@ -63,6 +63,7 @@ export class OctokitService {
 		try {
 			// Get an Octokit instance for the installation
 			const octokit = await this.app.getInstallationOctokit(installation_id);
+			console.log(octokit, installation_id);
 
 			// Send a request to the GitHub API to get installation metadata
 			return await octokit.request('GET /app/installations/{installation_id}', {
