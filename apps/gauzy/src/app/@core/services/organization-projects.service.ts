@@ -108,7 +108,7 @@ export class OrganizationProjectsService {
 	 *
 	 * @returns An Observable of type `IOrganizationProject` representing the updated organization project.
 	 */
-	updateProjectSettting(
+	updateProjectSetting(
 		id: IOrganizationProject['id'],
 		input: IOrganizationProjectSetting
 	): Observable<IOrganizationProjectSetting> {

@@ -491,7 +491,7 @@ export class ProjectMutationComponent extends TranslationBaseComponent
 				externalRepositoryId
 			}
 
-			this._organizationProjectsService.updateProjectSettting(projectId, request).pipe(
+			this._organizationProjectsService.updateProjectSetting(projectId, request).pipe(
 				tap((response: any) => {
 					if (response['status'] == HttpStatus.BAD_REQUEST) {
 						throw new Error(`${response['message']}`);
