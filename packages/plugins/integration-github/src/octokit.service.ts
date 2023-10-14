@@ -2,6 +2,7 @@ import { Inject, Injectable, Logger } from '@nestjs/common';
 import * as chalk from 'chalk';
 import { App } from 'octokit';
 import { ResponseHeaders as OctokitResponseHeaders } from "@octokit/types";
+import { parseConfig } from './probot.helpers';
 import { ModuleProviders, ProbotConfig } from './probot.types';
 
 const GITHUB_API_VERSION = process.env.GAUZY_GITHUB_API_VERSION || '2022-11-28'; // Define a default version
@@ -26,13 +27,14 @@ export class OctokitService {
 		/** */
 		try {
 			if (this.config.appId && this.config.privateKey) {
+				const config = parseConfig(this.config);
 				this.app = new App({
-					appId: this.config.appId,
-					privateKey: this.config.privateKey,
-					clientId: this.config.clientId,
-					clientSecret: this.config.clientSecret,
+					appId: config.appId,
+					privateKey: config.privateKey,
+					clientId: config.clientId,
+					clientSecret: config.clientSecret,
 				});
-				console.log(chalk.green(`Octokit App successfully initialized.`));
+				console.log(chalk.magenta(`Octokit App Configuration ${JSON.stringify(config)}`));
 			} else {
 				console.error(chalk.red(`Octokit App initialization failed: Missing appId or privateKey.`));
 			}
