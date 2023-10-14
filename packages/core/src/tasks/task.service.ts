@@ -226,12 +226,12 @@ export class TaskService extends TenantAwareCrudService<Task> {
 			query.setFindOptions({
 				...(isNotEmpty(options) &&
 					isNotEmpty(options.where) && {
-						where: options.where,
-					}),
+					where: options.where,
+				}),
 				...(isNotEmpty(options) &&
 					isNotEmpty(options.relations) && {
-						relations: options.relations,
-					}),
+					relations: options.relations,
+				}),
 			});
 			query.andWhere(
 				new Brackets((qb: WhereExpressionBuilder) => {
@@ -311,17 +311,13 @@ export class TaskService extends TenantAwareCrudService<Task> {
 			 * If find options
 			 */
 			if (isNotEmpty(options)) {
+				// Handle find options
 				if ('skip' in options) {
-					query.setFindOptions({
-						skip: (options.take || 10) * (options.skip - 1),
-						take: options.take || 10,
-					});
+					query.offset((options.take || 10) * (options.skip - 1));
 				}
 				query.setFindOptions({
 					...(options.select ? { select: options.select } : {}),
-					...(options.relations
-						? { relations: options.relations }
-						: {}),
+					...(options.relations ? { relations: options.relations } : {}),
 					...(options.order ? { order: options.order } : {}),
 				});
 			}
@@ -336,13 +332,12 @@ export class TaskService extends TenantAwareCrudService<Task> {
 					}
 
 					qb.orWhere((qb: SelectQueryBuilder<Task>) => {
-						const subQuery = qb.subQuery();
-						subQuery
-							.select('"task_team"."taskId"')
-							.from('task_team', 'task_team');
+						const subQuery = qb.subQuery().select('"task_team"."taskId"');
+						subQuery.from("task_team", "task_team");
+
 						subQuery.leftJoin(
-							'organization_team_employee',
-							'organization_team_employee',
+							"organization_team_employee",
+							"organization_team_employee",
 							'"organization_team_employee"."organizationTeamId" = "task_team"."organizationTeamId"'
 						);
 						// If user have permission to change employee
@@ -351,10 +346,7 @@ export class TaskService extends TenantAwareCrudService<Task> {
 								PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
 							)
 						) {
-							if (
-								isNotEmpty(members) &&
-								isNotEmpty(members['id'])
-							) {
+							if (isNotEmpty(members) && isNotEmpty(members['id'])) {
 								const employeeId = members['id'];
 								subQuery.andWhere(
 									'"organization_team_employee"."employeeId" = :employeeId',
