@@ -13,7 +13,7 @@ import {
 	UpdateResult
 } from 'typeorm';
 import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
-import * as moment from 'moment';
+// import * as moment from 'moment';
 import { of as observableOf, throwError } from 'rxjs';
 import { mergeMap } from 'rxjs/operators';
 import { IPagination } from '@gauzy/contracts';
@@ -128,7 +128,7 @@ export abstract class CrudService<T extends BaseEntity>
 					} : {}
 				),
 			});
-			console.log(options, moment().format('DD.MM.YYYY HH:mm:ss'));
+			// console.log(options, moment().format('DD.MM.YYYY HH:mm:ss'));
 			const [items, total] = await query.getManyAndCount();
 			return { items, total };
 		} catch (error) {

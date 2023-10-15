@@ -1,5 +1,5 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-import { HttpException, HttpStatus } from '@nestjs/common';
+import { HttpException, HttpStatus, Logger } from '@nestjs/common';
 import { ITask } from '@gauzy/contracts';
 import { RequestContext } from './../../../core/context';
 import { TaskCreateCommand } from './../task-create.command';
@@ -8,6 +8,8 @@ import { TaskService } from '../../task.service';
 
 @CommandHandler(TaskCreateCommand)
 export class TaskCreateHandler implements ICommandHandler<TaskCreateCommand> {
+	private readonly logger = new Logger('TaskCreateHandler');
+
 	constructor(
 		private readonly _taskService: TaskService,
 		private readonly _organizationProjectService: OrganizationProjectService
@@ -29,6 +31,7 @@ export class TaskCreateHandler implements ICommandHandler<TaskCreateCommand> {
 			const taskPrefix = project ? project.name.substring(0, 3) : null;
 
 			const maxNumber = await this._taskService.getMaxTaskNumberByProject({
+				tenantId,
 				organizationId,
 				projectId,
 			});
@@ -41,7 +44,7 @@ export class TaskCreateHandler implements ICommandHandler<TaskCreateCommand> {
 				organizationId,
 			});
 		} catch (error) {
-			console.log('Error while creating task %s', error?.message);
+			this.logger.error(`Error while creating task: ${error.message}`, error.message);
 			throw new HttpException({ message: error?.message, error }, HttpStatus.BAD_REQUEST);
 		}
 	}

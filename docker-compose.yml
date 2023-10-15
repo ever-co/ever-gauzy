@@ -70,7 +70,7 @@ services:
             - ./.deploy/jitsu/server/data/logs:/home/eventnative/data/logs
             - ./.deploy/jitsu/server/data/logs/events:/home/eventnative/data/logs/events
             - /var/run/docker.sock:/var/run/docker.sock
-            - jitsu_data:/home/eventnative/data/airbyte
+            - jitsu_workspace:/home/eventnative/data/airbyte
         restart: always
         ports:
             - '8000:8000'
@@ -366,7 +366,7 @@ volumes:
     minio_data: {}
     cube_data: {}
     certificates: {}
-    jitsu_data: {}
+    jitsu_workspace: {}
 
 networks:
     overlay:
