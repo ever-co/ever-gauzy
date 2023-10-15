@@ -1,7 +1,7 @@
 @import '../@theme/styles/themes';
 @import '~@nebular/theme/styles/globals';
 @import 'themes';
-@import 'gauzy/_gauzy-button-action';
+@import '../@theme/styles/gauzy/_gauzy-button-action';
 
 @include nb-install-component() {
 	::ng-deep router-outlet + * {
