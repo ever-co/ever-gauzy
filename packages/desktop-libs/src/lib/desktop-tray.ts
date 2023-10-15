@@ -6,7 +6,7 @@ import {
 	createSettingsWindow,
 	loginPage,
 	timeTrackerPage,
-	getApiBaseUrl, createGauzyWindow, gauzyPage,
+	getApiBaseUrl,
 } from '@gauzy/desktop-window';
 import TitleOptions = Electron.TitleOptions;
 import { User, UserService } from './offline';
