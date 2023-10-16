@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
+import { Component, EventEmitter, Input, OnInit, Output, TemplateRef, ViewChild } from '@angular/core';
 import { AbstractControl, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import {
 	IEmployee,
@@ -95,14 +95,22 @@ export class ProjectMutationComponent extends TranslationBaseComponent
 			budget: [],
 			budgetType: [OrganizationProjectBudgetTypeEnum.HOURS],
 			openSource: [],
-			projectUrl: [null, Validators.compose([
-				Validators.pattern(new RegExp(patterns.websiteUrl))
-			])
+			projectUrl: [
+				null,
+				Validators.compose([
+					Validators.pattern(new RegExp(patterns.websiteUrl))
+				]
+				)
 			],
-			openSourceProjectUrl: [null, Validators.compose([
-				Validators.pattern(new RegExp(patterns.websiteUrl))
-			])
-			]
+			openSourceProjectUrl: [
+				null,
+				Validators.compose([
+					Validators.pattern(new RegExp(patterns.websiteUrl))
+				]
+				)
+			],
+			isTasksAutoSync: [],
+			isTasksAutoSyncOnLabel: [],
 		}, {
 			validators: [
 				CompareDateValidator.validateDate('startDate', 'endDate')
@@ -111,6 +119,14 @@ export class ProjectMutationComponent extends TranslationBaseComponent
 		form.get('teams').setValue([]);
 		return form;
 	}
+
+	/*
+	* Project Setting Mutation Form
+	*/
+	public projectSettingForm: FormGroup = this._fb.group({
+		isTasksAutoSync: [],
+		isTasksAutoSyncOnLabel: [],
+	});
 
 	/**
 	 * Represents an integration tenant or a boolean value.
@@ -139,6 +155,11 @@ export class ProjectMutationComponent extends TranslationBaseComponent
 
 	@Output() canceled = new EventEmitter();
 	@Output() onSubmitted = new EventEmitter();
+
+	/*
+	 * Actions Buttons directive
+	 */
+	@ViewChild('actionButtons', { static: true }) actionButtons: TemplateRef<any>;
 
 	constructor(
 		private readonly _router: Router,
@@ -276,6 +297,13 @@ export class ProjectMutationComponent extends TranslationBaseComponent
 
 		});
 		this.form.updateValueAndValidity();
+
+		/** */
+		this.projectSettingForm.patchValue({
+			isTasksAutoSync: project.isTasksAutoSync || false,
+			isTasksAutoSyncOnLabel: project.isTasksAutoSyncOnLabel || false,
+		});
+		this.projectSettingForm.updateValueAndValidity();
 	}
 
 	/**
@@ -500,6 +528,65 @@ export class ProjectMutationComponent extends TranslationBaseComponent
 				tap(() => {
 					this._toastrService.success('NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_PROJECTS.SYNC_REPOSITORY', {
 						repository: repository.full_name,
+						project: this.project.name
+					});
+				}),
+				catchError((error) => {
+					this._errorHandler.handleError(error);
+					return EMPTY;
+				}),
+				// Execute the following code block when the observable completes or errors
+				finalize(() => {
+					// Set the 'loading' flag to false to indicate that data loading is complete
+					this.loading = false;
+				}),
+				// Automatically unsubscribe when the component is destroyed
+				untilDestroyed(this)
+			).subscribe();
+		} catch (error) {
+			this._errorHandler.handleError(error);
+		}
+	}
+
+	/**
+	 * Updates project auto-sync settings.
+	 * This method is typically invoked in response to user actions.
+	 */
+	public updateProjectAutoSyncSetting() {
+		// Check if the 'organization' or 'integration' properties are not available.
+		if (!this.organization || !this.integration) {
+			return; // Abort the method execution.
+		}
+
+		/**  */
+		try {
+			// Set the 'loading' property to 'false' to indicate that data loading is not in progress.
+			this.loading = false;
+
+			// Extract the 'organizationId' and 'tenantId' from the 'organization' property.
+			const { id: organizationId, tenantId } = this.organization;
+
+			// Extract the 'projectId' from the 'project' property.
+			const { id: projectId } = this.project;
+
+			// Create a 'request' object of type 'IOrganizationProjectSetting'.
+			// It contains 'organizationId', 'tenantId', and auto-sync settings taken from 'this.projectSettingForm.value'.
+			const request: IOrganizationProjectSetting = {
+				organizationId,
+				tenantId,
+				...this.projectSettingForm.value
+			}
+
+			// Call the 'updateProjectSetting' method of the '_organizationProjectsService'
+			// to update project settings with 'projectId' and the 'request'
+			this._organizationProjectsService.updateProjectSetting(projectId, request).pipe(
+				tap((response: any) => {
+					if (response['status'] == HttpStatus.BAD_REQUEST) {
+						throw new Error(`${response['message']}`);
+					}
+				}),
+				tap(() => {
+					this._toastrService.success('NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_PROJECTS.AUTO_SYNC_SETTING', {
 						project: this.project.name
 					});
 				}),
