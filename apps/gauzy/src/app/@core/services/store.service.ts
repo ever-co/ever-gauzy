@@ -59,7 +59,8 @@ export interface PersistState
     componentLayout: any[]; //This would be a Map but since Maps can't be serialized/deserialized it is stored as an array
     themeName: string;
     windows: Partial<GuiDrag>[],
-    widgets: Partial<GuiDrag>[]
+    widgets: Partial<GuiDrag>[],
+	tenantId: string;
 }
 
 export function createInitialAppState(): AppState
@@ -84,8 +85,9 @@ export function createInitialPersistState(): PersistState
     const themeName = localStorage.getItem('themeName') || null;
     const widgets = JSON.parse(localStorage.getItem('_widgets'));
     const windows = JSON.parse(localStorage.getItem('_windows'));
+	const tenantId = localStorage.getItem('_tenantId') || null;
 
-    return {
+	return {
         token,
         refresh_token,
         userId,
@@ -95,7 +97,8 @@ export function createInitialPersistState(): PersistState
         componentLayout,
         themeName,
         widgets,
-        windows
+        windows,
+		tenantId
     } as PersistState;
 }
 
@@ -619,4 +622,15 @@ export class Store
             widgets: values
         })
     }
+
+	get tenantId(): string | null {
+		const { tenantId } = this.persistQuery.getValue();
+		return tenantId;
+	}
+
+	set tenantId(value: string) {
+		this.persistStore.update({
+			tenantId: value,
+		});
+	}
 }
