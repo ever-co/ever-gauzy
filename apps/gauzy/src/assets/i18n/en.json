@@ -459,7 +459,8 @@
 			"UPWORK_ID": "Upwork ID",
 			"LINKEDIN_ID": "LinkedIn ID",
 			"AUTO_SYNC_TASKS": "Auto-sync tasks",
-			"AUTO_SYNC_TASKS_BASED_ON_LABEL": "Is tasks Auto-sync based on Label?"
+			"AUTO_SYNC_TASKS_BASED_ON_LABEL": "Is tasks Auto-sync based on Label?",
+			"AUTO_SYNC_TAG": "Label"
 		},
 		"PLACEHOLDERS": {
 			"NAME": "Name",
@@ -649,7 +650,8 @@
 			"UPWORK_ID": "Upwork ID",
 			"LINKEDIN_ID": "LinkedIn ID",
 			"AUTO_SYNC_TASKS": "Auto Sync Tasks",
-			"AUTO_SYNC_TASKS_BASED_ON_LABEL": "Auto-sync Tasks On Label"
+			"AUTO_SYNC_TASKS_BASED_ON_LABEL": "Auto-sync Tasks On Label",
+			"AUTO_SYNC_TAG": "Select Auto-sync Label"
 		},
 		"RATES": {
 			"DEFAULT_RATE": "Default Rate",

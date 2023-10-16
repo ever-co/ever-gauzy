@@ -296,7 +296,6 @@
 							</div>
 						</div>
 					</div>
-					<ng-container [ngTemplateOutlet]="actionButtons"></ng-container>
 				</nb-tab>
 				<nb-tab
 					[tabTitle]="'ORGANIZATIONS_PAGE.DESCRIPTION' | translate"
@@ -608,7 +607,7 @@
 					<form [formGroup]="projectSettingForm">
 						<div class="fields">
 							<div class="row">
-								<div class="col-6">
+								<div class="col-4">
 									<div class="form-group">
 										<label for="isTasksAutoSync" class="label">
 											{{ 'FORM.LABELS.AUTO_SYNC_TASKS' | translate }}
@@ -625,7 +624,7 @@
 										</nb-toggle>
 									</div>
 								</div>
-								<div class="col-6">
+								<div class="col-4">
 									<div class="form-group">
 										<label for="isTasksAutoSyncOnLabel" class="label">
 											{{ 'FORM.LABELS.AUTO_SYNC_TASKS_BASED_ON_LABEL' | translate }}
@@ -640,6 +639,22 @@
 										>
 											{{ 'FORM.PLACEHOLDERS.AUTO_SYNC_TASKS_BASED_ON_LABEL' | translate }}
 										</nb-toggle>
+									</div>
+								</div>
+								<div class="col-4">
+									<div class="form-group">
+										<label for="syncTag" class="label">
+											{{ 'FORM.LABELS.AUTO_SYNC_TAG' | translate }}
+										</label>
+										<input
+											id="syncTag"
+											type="text"
+											nbInput
+											fullWidth
+											formControlName="syncTag"
+											[placeholder]="'FORM.PLACEHOLDERS.AUTO_SYNC_TAG' | translate"
+											(change)="changeSyncTag($event)"
+										/>
 									</div>
 								</div>
 							</div>

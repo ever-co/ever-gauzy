@@ -1,6 +1,8 @@
 import { IBasePerTenantAndOrganizationEntityModel } from './base-entity.model';
 import { IRelationalOrganizationProject } from './organization-projects.model';
 
+export const SYNC_TAG_GITHUB = 'GitHub';
+
 // Common input properties for GitHub app installation and OAuth app installation
 interface IGithubAppInstallInputCommon extends IBasePerTenantAndOrganizationEntityModel {
     provider?: string;
@@ -73,7 +75,8 @@ export enum GithubPropertyMapEnum {
     EXPIRES_IN = 'expires_in',
     REFRESH_TOKEN = 'refresh_token',
     REFRESH_TOKEN_EXPIRES_IN = 'refresh_token_expires_in',
-    TOKEN_TYPE = 'token_type'
+    TOKEN_TYPE = 'token_type',
+    SYNC_TAG_GITHUB = 'sync_tag_github'
 }
 
 /** */

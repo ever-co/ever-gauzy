@@ -1,7 +1,7 @@
 import { IOrganizationProjectSetting } from "@gauzy/contracts";
 import { ApiPropertyOptional } from "@nestjs/swagger";
 import { TenantOrganizationBaseDTO } from "../../core/dto";
-import { IsBoolean, IsNumber, IsOptional } from "class-validator";
+import { IsBoolean, IsNumber, IsOptional, IsString } from "class-validator";
 
 export class UpdateProjectSettingDTO extends TenantOrganizationBaseDTO implements IOrganizationProjectSetting {
 
@@ -22,4 +22,10 @@ export class UpdateProjectSettingDTO extends TenantOrganizationBaseDTO implement
     @IsOptional()
     @IsBoolean()
     readonly isTasksAutoSyncOnLabel: boolean;
+
+    // Auto-sync tasks label property
+    @ApiPropertyOptional({ type: String })
+    @IsOptional()
+    @IsString()
+    readonly syncTag: string;
 }

@@ -9,7 +9,8 @@ import {
 	IIntegrationTenant,
 	IOAuthAppInstallInput,
 	IntegrationEntity,
-	IntegrationEnum
+	IntegrationEnum,
+	SYNC_TAG_GITHUB
 } from '@gauzy/contracts';
 import { RequestContext } from 'core/context';
 import { IntegrationTenantUpdateOrCreateCommand } from 'integration-tenant/commands';
@@ -102,6 +103,10 @@ export class GithubService {
 						{
 							settingsName: GithubPropertyMapEnum.SETUP_ACTION,
 							settingsValue: setup_action
+						},
+						{
+							settingsName: GithubPropertyMapEnum.SYNC_TAG_GITHUB,
+							settingsValue: SYNC_TAG_GITHUB
 						}
 					].map((setting) => ({
 						...setting,

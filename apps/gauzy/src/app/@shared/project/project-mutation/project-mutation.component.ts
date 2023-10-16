@@ -1,5 +1,15 @@
-import { Component, EventEmitter, Input, OnInit, Output, TemplateRef, ViewChild } from '@angular/core';
-import { AbstractControl, FormBuilder, FormGroup, Validators } from '@angular/forms';
+import {
+	AfterViewInit,
+	ChangeDetectorRef,
+	Component,
+	EventEmitter,
+	Input,
+	OnInit,
+	Output,
+	TemplateRef,
+	ViewChild
+} from '@angular/core';
+import { AbstractControl, FormBuilder, FormControl, FormGroup, Validators } from '@angular/forms';
 import {
 	IEmployee,
 	IOrganization,
@@ -23,14 +33,14 @@ import {
 import { TranslateService } from '@ngx-translate/core';
 import { Router } from '@angular/router';
 import { uniq } from 'underscore';
-import { EMPTY } from 'rxjs';
+import { EMPTY, of, switchMap } from 'rxjs';
 import { catchError, debounceTime, filter, finalize, tap } from 'rxjs/operators';
 import { distinctUntilChange } from '@gauzy/common-angular';
 import { CKEditor4 } from 'ckeditor4-angular/ckeditor';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { environment } from '@env/environment';
 import { TranslationBaseComponent } from '../../language-base/translation-base.component';
 import { patterns } from '../../regex/regex-patterns.const';
-import { environment as ENV } from '../../../../environments/environment';
 import {
 	ErrorHandlingService,
 	OrganizationContactService,
@@ -51,7 +61,7 @@ import { ckEditorConfig } from "../../ckeditor.config";
 	styleUrls: ['./project-mutation.component.scss']
 })
 export class ProjectMutationComponent extends TranslationBaseComponent
-	implements OnInit {
+	implements AfterViewInit, OnInit {
 
 	public FormHelpers: typeof FormHelpers = FormHelpers;
 	public OrganizationProjectBudgetTypeEnum = OrganizationProjectBudgetTypeEnum;
@@ -84,7 +94,7 @@ export class ProjectMutationComponent extends TranslationBaseComponent
 			name: [null, Validators.required],
 			organizationContact: [],
 			billing: [ProjectBillingEnum.RATE],
-			currency: [ENV.DEFAULT_CURRENCY],
+			currency: [environment.DEFAULT_CURRENCY],
 			startDate: [],
 			endDate: [],
 			owner: [ProjectOwnerEnum.CLIENT],
@@ -99,18 +109,14 @@ export class ProjectMutationComponent extends TranslationBaseComponent
 				null,
 				Validators.compose([
 					Validators.pattern(new RegExp(patterns.websiteUrl))
-				]
-				)
+				])
 			],
 			openSourceProjectUrl: [
 				null,
 				Validators.compose([
 					Validators.pattern(new RegExp(patterns.websiteUrl))
-				]
-				)
-			],
-			isTasksAutoSync: [],
-			isTasksAutoSyncOnLabel: [],
+				])
+			]
 		}, {
 			validators: [
 				CompareDateValidator.validateDate('startDate', 'endDate')
@@ -123,10 +129,16 @@ export class ProjectMutationComponent extends TranslationBaseComponent
 	/*
 	* Project Setting Mutation Form
 	*/
-	public projectSettingForm: FormGroup = this._fb.group({
-		isTasksAutoSync: [],
-		isTasksAutoSyncOnLabel: [],
-	});
+
+	public projectSettingForm: FormGroup = ProjectMutationComponent.buildSettingForm(this._fb);
+	static buildSettingForm(fb: FormBuilder): FormGroup {
+		const form = fb.group({
+			isTasksAutoSync: [],
+			isTasksAutoSyncOnLabel: [],
+			syncTag: []
+		});
+		return form;
+	}
 
 	/**
 	 * Represents an integration tenant or a boolean value.
@@ -192,13 +204,38 @@ export class ProjectMutationComponent extends TranslationBaseComponent
 	}
 
 	/**
+	 * Lifecycle hook that is called after the component's view has been initialized.
+	 * It sets up an event listener for changes to the 'syncTag' form control.
+	 */
+	ngAfterViewInit(): void {
+		// Get a reference to the 'isTasksAutoSyncOnLabel' form control within the 'projectSettingForm'.
+		const isTasksAutoSyncOnLabelControl = <FormControl>this.projectSettingForm.get('isTasksAutoSyncOnLabel');
+		const syncTagControl = <FormControl>this.projectSettingForm.get('syncTag');
+
+		isTasksAutoSyncOnLabelControl.valueChanges
+			.pipe(
+				switchMap((value: boolean) => {
+					if (value) {
+						syncTagControl.enable();
+					} else {
+						syncTagControl.disable();
+					}
+					syncTagControl.updateValueAndValidity();
+					return of(value); // Emit the same value.
+				}),
+				untilDestroyed(this) // Automatically unsubscribe when the component is destroyed.
+			)
+			.subscribe();
+	}
+
+	/**
 	 * Load default organization currency
 	 */
 	private _loadDefaultCurrency() {
 		if (!this.organization) {
 			return;
 		}
-		const { currency = ENV.DEFAULT_CURRENCY } = this.organization;
+		const currency = this.organization.currency || environment.DEFAULT_CURRENCY;
 		if (currency) {
 			this.form.get('currency').setValue(currency);
 			this.form.get('currency').updateValueAndValidity();
@@ -298,10 +335,11 @@ export class ProjectMutationComponent extends TranslationBaseComponent
 		});
 		this.form.updateValueAndValidity();
 
-		/** */
+		/** Projct Integration Setting Patch Value*/
 		this.projectSettingForm.patchValue({
 			isTasksAutoSync: project.isTasksAutoSync || false,
 			isTasksAutoSyncOnLabel: project.isTasksAutoSyncOnLabel || false,
+			syncTag: project.syncTag || ''
 		});
 		this.projectSettingForm.updateValueAndValidity();
 	}
@@ -547,6 +585,14 @@ export class ProjectMutationComponent extends TranslationBaseComponent
 			this._errorHandler.handleError(error);
 		}
 	}
+
+	/**
+	 *
+	 */
+	public changeSyncTag() {
+		this.updateProjectAutoSyncSetting();
+	}
+
 
 	/**
 	 * Updates project auto-sync settings.

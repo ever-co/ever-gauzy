@@ -10,7 +10,7 @@ import {
 	JoinTable,
 } from 'typeorm';
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { IsBoolean, IsOptional, IsUUID } from 'class-validator';
+import { IsBoolean, IsOptional, IsString, IsUUID } from 'class-validator';
 import {
 	CurrenciesEnum,
 	IActivity,
@@ -149,6 +149,13 @@ export class OrganizationProject extends TenantOrganizationBaseEntity implements
 	@Index()
 	@Column({ default: true, nullable: true })
 	isTasksAutoSyncOnLabel?: boolean;
+
+	@ApiPropertyOptional({ type: () => String })
+	@IsOptional()
+	@IsString()
+	@Index()
+	@Column({ nullable: true })
+	syncTag?: string;
 
 	/*
 	|--------------------------------------------------------------------------
