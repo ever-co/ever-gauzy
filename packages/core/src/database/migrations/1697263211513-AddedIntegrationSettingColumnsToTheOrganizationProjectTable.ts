@@ -14,7 +14,7 @@ export class AddedIntegrationSettingColumnsToTheOrganizationProjectTable16972632
     public async up(queryRunner: QueryRunner): Promise<any> {
         console.log(chalk.yellow(`AddedIntegrationSettingColumnsToTheOrganizationProjectTable1697263211513 start running!`));
         if (['sqlite', 'better-sqlite3'].includes(queryRunner.connection.options.type)) {
-            // await this.sqliteUpQueryRunner(queryRunner);
+            await this.sqliteUpQueryRunner(queryRunner);
         } else {
             await this.postgresUpQueryRunner(queryRunner);
         }
