@@ -34,11 +34,13 @@
             </nb-card>
         </div>
         <div class="integrations-container">
-            <ng2-smart-table
-                [settings]="settingsSmartTable"
-                [source]="integrations$ | async"
-                style="cursor: pointer;"
-            ></ng2-smart-table>
+			<div class="table-scroll-container">
+				<ng2-smart-table
+					[settings]="settingsSmartTable"
+					[source]="integrations$ | async"
+					style="cursor: pointer;"
+				></ng2-smart-table>
+			</div>
         </div>
     </nb-card-body>
 </nb-card>

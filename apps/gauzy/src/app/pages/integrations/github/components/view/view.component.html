@@ -26,12 +26,14 @@
 					(onChanged)="selectRepository($event)"
 					[selected]="true"
 				></ngx-github-repository-selector>
-				<ng2-smart-table
-					[settings]="settingsSmartTable"
-					[source]="issues$ | async"
-					(userRowSelect)="selectIssues($event)"
-					style="cursor: pointer;"
-				></ng2-smart-table>
+				<div class="table-scroll-container">
+					<ng2-smart-table
+						[settings]="settingsSmartTable"
+						[source]="issues$ | async"
+						(userRowSelect)="selectIssues($event)"
+						style="cursor: pointer;"
+					></ng2-smart-table>
+				</div>
 			</div>
 		</ng-template>
 	</nb-card-body>
