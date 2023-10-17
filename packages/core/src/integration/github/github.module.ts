@@ -16,18 +16,17 @@ import { GitHubHooksController } from './github.hooks.controller';
 import { GithubHooksService } from './github.hooks.service';
 import { GitHubSyncController } from './github-sync.controller';
 import { GithubSyncService } from './github-sync.service';
-import { AutomationCommandHandlers } from './commands/handlers';
 
 @Module({
 	imports: [
 		HttpModule,
 		TenantModule,
 		UserModule,
-		CqrsModule,
 		forwardRef(() => OrganizationProjectModule),
 		forwardRef(() => IntegrationModule),
 		forwardRef(() => IntegrationTenantModule),
 		forwardRef(() => IntegrationSettingModule),
+		CqrsModule
 	],
 	controllers: [
 		GitHubAuthorizationController,
@@ -41,8 +40,7 @@ import { AutomationCommandHandlers } from './commands/handlers';
 		GithubSyncService,
 		GithubHooksService,
 		// Define middleware heres
-		GithubMiddleware,
-		...AutomationCommandHandlers
+		GithubMiddleware
 	],
 	exports: [],
 })

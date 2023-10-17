@@ -41,13 +41,13 @@ export class IntegrationMapSyncLabelHandler implements ICommandHandler<Integrati
 			try {
 				await this._tagService.findOneByIdString(integrationMap.gauzyId);
 				// Update the corresponding task with the new input data
-				await this._commandBus.execute(
+				return await this._commandBus.execute(
 					new TagUpdateCommand(integrationMap.gauzyId, entity)
 				);
 			} catch (error) {
 				console.log(`${IntegrationEntity.LABEL} Not Found for integration GauzyID %s: `, integrationMap.gauzyId);
 				// Create a corresponding tag with the new input data
-				await this._commandBus.execute(
+				return await this._commandBus.execute(
 					new TagCreateCommand({
 						id: integrationMap.gauzyId,
 						name,
@@ -59,10 +59,6 @@ export class IntegrationMapSyncLabelHandler implements ICommandHandler<Integrati
 					})
 				);
 			}
-			// Update the corresponding task with the new input data
-			return await this._commandBus.execute(
-				new TagUpdateCommand(integrationMap.gauzyId, entity)
-			);
 		} catch (error) {
 			const tag = await this._commandBus.execute(
 				new TagCreateCommand({

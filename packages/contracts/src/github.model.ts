@@ -46,6 +46,7 @@ export interface IGithubIssue {
     title: string;
     state: string;
     body: string;
+    labels: IGithubIssueLabel[];
     [x: string]: any; // Additional properties
 }
 
@@ -83,7 +84,7 @@ export enum GithubPropertyMapEnum {
     REFRESH_TOKEN = 'refresh_token',
     REFRESH_TOKEN_EXPIRES_IN = 'refresh_token_expires_in',
     TOKEN_TYPE = 'token_type',
-    SYNC_TAG_GITHUB = 'sync_tag_github'
+    SYNC_TAG = 'sync_tag'
 }
 /**
  * Represents a payload for GitHub issues, including organization and tenant information.
