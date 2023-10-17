@@ -209,6 +209,8 @@
   top: 1rem;
   @include nb-ltr(right, 2rem);
   @include nb-rtl(left, 2rem);
+  display: flex;
+  gap: 8px;
 
   &[nbButton].appearance-outline.status-primary {
     background-color: transparent;

@@ -4312,6 +4312,7 @@
 	"SETTINGS": {
 		"EMAIL_HISTORY": {
 			"EMAIL_ARCHIVED": "Correo electrónico archivado.",
+			"RESEND": "Reenviar",
 			"ARCHIVE": "Archivo",
 			"HEADER": "Historia del correo electrónico",
 			"FROM": "Desde:",

@@ -4234,6 +4234,7 @@
 	"SETTINGS": {
 		"EMAIL_HISTORY": {
 			"EMAIL_ARCHIVED": "Email Archived",
+			"RESEND": "לשלוח מחדש",
 			"ARCHIVE": "Archive",
 			"HEADER": "Email History",
 			"FROM": "From:",

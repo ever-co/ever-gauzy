@@ -4329,6 +4329,7 @@
 	"SETTINGS": {
 		"EMAIL_HISTORY": {
 			"EMAIL_ARCHIVED": "Email Archived",
+			"RESEND": "Resend",
 			"ARCHIVE": "Archive",
 			"HEADER": "Email History",
 			"FROM": "From:",

@@ -16,9 +16,11 @@ import {
 	IInviteTeamMemberModel,
 	IOrganizationTeam,
 	IOrganizationTeamJoinRequest,
-	EmailTemplateEnum
+	EmailTemplateEnum,
+	IResendEmailInput,
+	EmailStatusEnum
 } from '@gauzy/contracts';
-import { environment as env } from '@gauzy/config';
+import { ConfigService, environment as env } from '@gauzy/config';
 import { deepMerge, IAppIntegrationConfig } from '@gauzy/common';
 import { RequestContext } from '../core/context';
 import { EmailSendService } from './../email-send/email-send.service';
@@ -39,7 +41,8 @@ export class EmailService {
 		@InjectRepository(Organization)
 		private readonly organizationRepository: Repository<Organization>,
 
-		private readonly _emailSendService: EmailSendService
+		private readonly _emailSendService: EmailSendService,
+		private readonly configService: ConfigService
 	) { }
 
 	/**
@@ -935,6 +938,72 @@ export class EmailService {
 			}
 		}
 	}
+
+	async resendEmail(input: IResendEmailInput, languageCode: LanguagesEnum) {
+
+		const originUrl = this.configService.get('clientBaseUrl') as string;
+		const { id } = input;
+
+		const emailHistory: IEmailHistory = await this.emailHistoryRepository.findOne({
+			where: {
+				id
+			},
+			relations: {
+				emailTemplate: true,
+				organization: true,
+			}
+		});
+		if (!emailHistory) {
+			throw Error('Email History does not exist');
+		}
+		// Organization
+		const organization: IOrganization = emailHistory.organization;
+		const email: IEmailHistory['email'] = emailHistory.email;
+
+
+		const sendOptions = {
+			template: emailHistory.emailTemplate.name,
+			message: {
+				to: `${email}`
+			},
+			locals: {
+				locale: languageCode,
+				host: originUrl,
+				organizationId: organization.id,
+				tenantId: organization.tenantId,
+				organizationName: organization.name,
+				id: emailHistory.id,
+				name: emailHistory.name
+			}
+		};
+
+		const body = {
+			templateName: sendOptions.template,
+			email: sendOptions.message.to,
+			languageCode,
+			message: '',
+			organization
+		}
+
+		const isEmailBlocked = !!DISALLOW_EMAIL_SERVER_DOMAIN.find(server => body.email.includes(server));
+		if (!isEmailBlocked) {
+			try {
+				const instance = await this._emailSendService.getEmailInstance({ organizationId: organization.id, tenantId: emailHistory.tenantId });
+				const send = await instance.send(sendOptions);
+				body['message'] = send.originalMessage;
+
+				emailHistory.emailStatus = EmailStatusEnum.SENT;
+				return await this.emailHistoryRepository.save(emailHistory);
+			} catch (error) {
+				console.log(`Error while re-sending mail: %s`, error?.message);
+
+				emailHistory.emailStatus = EmailStatusEnum.FAILED;
+				await this.emailHistoryRepository.save(emailHistory);
+				throw new BadRequestException(`Error while re-sending mail: ${error?.message}`);
+			}
+		}
+	}
+
 
 	private async createEmailRecord(createEmailOptions: {
 		templateName: string;

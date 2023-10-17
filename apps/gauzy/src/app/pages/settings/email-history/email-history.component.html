@@ -41,7 +41,7 @@
 						*ngFor="let email of emails"
 					>
 						<div
-							class="email-list-item"
+							class="email-list-item w-100"
 							[ngClass]="{
 								selected: selectedEmail.id === email.id
 							}"
@@ -51,9 +51,9 @@
 									[name]="
 										email?.user?.name
 											? email?.user?.name
-											: '...'
+											:  ('SETTINGS.EMAIL_HISTORY.SYSTEM' | translate)
 									"
-									[src]="getUrl(email?.email)"
+									[src]="getUrl(email)"
 								></ngx-avatar>
 							</div>
 							<div class="date" [title]="email?.email">
@@ -130,17 +130,24 @@
 						}}</b>
 					</span>
 				</div>
+				<div class="email-history-archive">
+
 				<button
-					*ngIf="selectedEmail"
-					class="email-history-archive"
-					status="primary"
-					outline
-					nbButton
+				status="basic"
+				*ngIf="selectedEmail?.emailStatus"
+				outline
+				nbButton
 					size="small"
-					(click)="archive()"
+					(click)="resend()"
 				>
-					{{ 'SETTINGS.EMAIL_HISTORY.ARCHIVE' | translate }}
-				</button>
+					{{ 'SETTINGS.EMAIL_HISTORY.RESEND' | translate }}
+					</button>
+					
+					<button *ngIf="selectedEmail" status="primary" outline nbButton size="small" (click)="archive()">
+						{{ 'SETTINGS.EMAIL_HISTORY.ARCHIVE' | translate }}
+						</button>
+					</div>
+
 				<ng-container *ngIf="selectedEmail; else emailNotSelected">
 					<div class="custom-parent-email-content">
 						<div
