@@ -60,6 +60,12 @@ export interface IGithubIssueLabel {
     [x: string]: any; // Additional properties
 }
 
+// Represents a GitHub installation
+export interface IGithubInstallation {
+    id: number;
+    node_id: string;
+}
+
 // Response containing GitHub repositories
 export interface IGithubRepositoryResponse {
     total_count: number;

@@ -12,8 +12,19 @@ export class GitHubHooksController {
     ) { }
 
     /**
+     * Handles the 'installation.deleted' event.
      *
-     * @param context
+     * @param context - The context object containing information about the event.
+     */
+    @Hook(['installation.deleted'])
+    async installationDeleted(context: Context) {
+        console.log({ context });
+    }
+
+    /**
+     * Handles the 'issues.opened' event.
+     *
+     * @param context - The context object containing information about the event.
      */
     @Hook(['issues.opened'])
     async issuesOpened(context: Context) {
@@ -21,8 +32,9 @@ export class GitHubHooksController {
     }
 
     /**
+     * Handles the 'issues.edited' event.
      *
-     * @param context
+     * @param context - The context object containing information about the event.
      */
     @Hook(['issues.edited'])
     async issuesEdited(context: Context) {
