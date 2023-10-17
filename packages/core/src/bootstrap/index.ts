@@ -112,7 +112,9 @@ export async function bootstrap(
 			chalk.magenta(message)
 		);
 		// Send message to parent process (desktop app)
-		process.send(message);
+		if (process.send) {
+			process.send(message);
+		}
 		// Execute Seed For Demo Server
 		if (env.demo) {
 			service.executeDemoSeed();
