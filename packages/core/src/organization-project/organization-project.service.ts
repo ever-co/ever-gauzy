@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Brackets, In, IsNull, Repository, WhereExpressionBuilder } from 'typeorm';
 import { isNotEmpty } from '@gauzy/common';
-import { IEmployee, IOrganizationProject, IOrganizationProjectsFindInput, IPagination } from '@gauzy/contracts';
+import { IEmployee, IOrganization, IOrganizationProject, IOrganizationProjectsFindInput, IPagination } from '@gauzy/contracts';
 import { PaginationParams, TenantAwareCrudService } from './../core/crud';
 import { RequestContext } from '../core/context';
 import { OrganizationProject } from './organization-project.entity';
@@ -103,5 +103,33 @@ export class OrganizationProjectService extends TenantAwareCrudService<Organizat
 			}
 		}
 		return await super.paginate(options);
+	}
+
+	/**
+	 * Retrieves an organization project by its external repository ID.
+	 *
+	 * @param externalRepositoryId - The unique identifier for the organization project.
+	 * @param options - An object containing parameters for the query.
+	 *   - organizationId: The unique identifier for the organization.
+	 *   - tenantId: The unique identifier for the tenant (optional).
+	 * @returns A Promise that resolves to either an IOrganizationProject representing the retrieved project or false if an error occurs during the retrieval process.
+	 */
+	public async getProjectByRepository(
+		externalRepositoryId: IOrganizationProject['externalRepositoryId'], // Adjust the type to match your actual implementation
+		options: {
+			organizationId: IOrganization['id'];
+			tenantId: IOrganization['tenantId'];
+		}
+	): Promise<IOrganizationProject> {
+		const { organizationId } = options;
+		const tenantId = RequestContext.currentTenantId() || options.tenantId;
+
+		// Attempt to retrieve the organization project by the provided parameters.
+		const project = await this.organizationProjectRepository.findOneByOrFail({
+			organizationId,
+			tenantId,
+			externalRepositoryId
+		});
+		return project;
 	}
 }

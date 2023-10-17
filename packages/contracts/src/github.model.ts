@@ -1,3 +1,4 @@
+import { IIntegrationTenant } from 'integration.model';
 import { IBasePerTenantAndOrganizationEntityModel } from './base-entity.model';
 import { IRelationalOrganizationProject } from './organization-projects.model';
 
@@ -84,9 +85,27 @@ export enum GithubPropertyMapEnum {
     TOKEN_TYPE = 'token_type',
     SYNC_TAG_GITHUB = 'sync_tag_github'
 }
+/**
+ * Represents a payload for GitHub issues, including organization and tenant information.
+ */
+export interface IGithubRepositoryPayload {
+    repository: IGithubRepository;
+}
 
 /** */
-export interface IGithubSyncIssuePayload extends IBasePerTenantAndOrganizationEntityModel, IRelationalOrganizationProject {
-    issues: IGithubIssue[];
+export interface IGithubSyncIssuePayload extends IGithubRepositoryPayload, IBasePerTenantAndOrganizationEntityModel, IRelationalOrganizationProject {
+    issues: IGithubIssue | IGithubIssue[];
+}
+
+export interface IGithubAutomationBase extends IGithubRepositoryPayload {
+    integration: IIntegrationTenant;
     repository: IGithubRepository;
+}
+
+export interface IGithubAutomationIssuePayload extends IGithubAutomationBase {
+    issue: IGithubIssue;
+}
+
+export interface IGithubAutomationLabelPayload extends IGithubAutomationBase {
+    label: IGithubIssueLabel;
 }

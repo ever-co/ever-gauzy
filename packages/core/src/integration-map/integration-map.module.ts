@@ -10,7 +10,6 @@ import { CommandHandlers } from './commands/handlers';
 import { IntegrationMapController } from './integration-map.controller';
 import { IntegrationMapService } from './integration-map.service';
 import { IntegrationMap } from './integration-map.entity';
-import { AutomationCommandHandlers } from './Automation/handlers';
 
 @Module({
 	imports: [
@@ -30,7 +29,6 @@ import { AutomationCommandHandlers } from './Automation/handlers';
 	providers: [
 		IntegrationMapService,
 		...CommandHandlers,
-		...AutomationCommandHandlers
 	],
 	exports: [
 		TypeOrmModule,

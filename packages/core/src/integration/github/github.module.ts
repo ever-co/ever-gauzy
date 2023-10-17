@@ -16,6 +16,7 @@ import { GitHubHooksController } from './github.hooks.controller';
 import { GithubHooksService } from './github.hooks.service';
 import { GitHubSyncController } from './github-sync.controller';
 import { GithubSyncService } from './github-sync.service';
+import { AutomationCommandHandlers } from './commands/handlers';
 
 @Module({
 	imports: [
@@ -40,7 +41,8 @@ import { GithubSyncService } from './github-sync.service';
 		GithubSyncService,
 		GithubHooksService,
 		// Define middleware heres
-		GithubMiddleware
+		GithubMiddleware,
+		...AutomationCommandHandlers
 	],
 	exports: [],
 })
