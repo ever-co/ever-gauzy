@@ -1,4 +1,10 @@
-import { MiddlewareConsumer, Module, NestModule, RequestMethod, forwardRef } from '@nestjs/common';
+import {
+	MiddlewareConsumer,
+	Module,
+	NestModule,
+	RequestMethod,
+	forwardRef,
+} from '@nestjs/common';
 import { HttpModule } from '@nestjs/axios';
 import { CqrsModule } from '@nestjs/cqrs';
 import { TenantModule } from 'tenant/tenant.module';
@@ -20,8 +26,8 @@ import { GithubSyncService } from './github-sync.service';
 @Module({
 	imports: [
 		HttpModule,
-		TenantModule,
-		UserModule,
+		forwardRef(() => TenantModule),
+		forwardRef(() => UserModule),
 		CqrsModule,
 		forwardRef(() => OrganizationProjectModule),
 		forwardRef(() => IntegrationModule),
@@ -33,16 +39,16 @@ import { GithubSyncService } from './github-sync.service';
 		GitHubController,
 		GitHubHooksController,
 		GitHubIntegrationController,
-		GitHubSyncController
+		GitHubSyncController,
 	],
 	providers: [
 		GithubService,
 		GithubSyncService,
 		GithubHooksService,
 		// Define middleware heres
-		GithubMiddleware
+		GithubMiddleware,
 	],
-	exports: [],
+	exports: [GithubService],
 })
 export class GithubModule implements NestModule {
 	/**
@@ -51,21 +57,19 @@ export class GithubModule implements NestModule {
 	 */
 	configure(consumer: MiddlewareConsumer) {
 		// Apply middlewares to specific controllers
-		consumer
-			.apply(GithubMiddleware)
-			.forRoutes(
-				{
-					path: '/integration/github/:integrationId/metadata',
-					method: RequestMethod.GET
-				},
-				{
-					path: '/integration/github/:integrationId/repositories',
-					method: RequestMethod.GET
-				},
-				{
-					path: '/integration/github/:integrationId/:owner/:repo/issues',
-					method: RequestMethod.GET
-				}
-			); // Apply to specific routes and methods
+		consumer.apply(GithubMiddleware).forRoutes(
+			{
+				path: '/integration/github/:integrationId/metadata',
+				method: RequestMethod.GET,
+			},
+			{
+				path: '/integration/github/:integrationId/repositories',
+				method: RequestMethod.GET,
+			},
+			{
+				path: '/integration/github/:integrationId/:owner/:repo/issues',
+				method: RequestMethod.GET,
+			}
+		); // Apply to specific routes and methods
 	}
 }

@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { forwardRef, Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { CqrsModule } from '@nestjs/cqrs';
 import { RouterModule } from 'nest-router';
@@ -11,24 +11,18 @@ import { UserModule } from './../user/user.module';
 @Module({
 	imports: [
 		RouterModule.forRoutes([
-			{ path: '/integration-entity-setting-tied', module: IntegrationEntitySettingTiedModule }
+			{
+				path: '/integration-entity-setting-tied',
+				module: IntegrationEntitySettingTiedModule,
+			},
 		]),
-		TypeOrmModule.forFeature([
-			IntegrationEntitySettingTied
-		]),
-		TenantModule,
-		UserModule,
-		CqrsModule
+		TypeOrmModule.forFeature([IntegrationEntitySettingTied]),
+		forwardRef(() => TenantModule),
+		forwardRef(() => UserModule),
+		CqrsModule,
 	],
-	controllers: [
-		IntegrationEntitySettingTiedController
-	],
-	providers: [
-		IntegrationEntitySettingTiedService
-	],
-	exports: [
-		TypeOrmModule,
-		IntegrationEntitySettingTiedService
-	]
+	controllers: [IntegrationEntitySettingTiedController],
+	providers: [IntegrationEntitySettingTiedService],
+	exports: [TypeOrmModule, IntegrationEntitySettingTiedService],
 })
-export class IntegrationEntitySettingTiedModule { }
+export class IntegrationEntitySettingTiedModule {}

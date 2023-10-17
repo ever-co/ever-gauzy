@@ -15,25 +15,17 @@ import { IntegrationEntitySettingService } from './integration-entity-setting.se
 		RouterModule.forRoutes([
 			{
 				path: '/integration-entity-setting',
-				module: IntegrationEntitySettingModule
-			}
+				module: IntegrationEntitySettingModule,
+			},
 		]),
-		TypeOrmModule.forFeature([
-			IntegrationEntitySetting
-		]),
+		TypeOrmModule.forFeature([IntegrationEntitySetting]),
 		forwardRef(() => IntegrationTenantModule),
-		TenantModule,
-		UserModule,
-		CqrsModule
+		forwardRef(() => TenantModule),
+		forwardRef(() => UserModule),
+		CqrsModule,
 	],
 	controllers: [IntegrationEntitySettingController],
-	providers: [
-		IntegrationEntitySettingService,
-		...CommandHandlers
-	],
-	exports: [
-		TypeOrmModule,
-		IntegrationEntitySettingService
-	]
+	providers: [IntegrationEntitySettingService, ...CommandHandlers],
+	exports: [TypeOrmModule, IntegrationEntitySettingService],
 })
-export class IntegrationEntitySettingModule { }
+export class IntegrationEntitySettingModule {}

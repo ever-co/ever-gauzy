@@ -10,23 +10,15 @@ import { TimeSlotModule } from './../time-slot/time-slot.module';
 import { UserModule } from './../../user/user.module';
 
 @Module({
-	controllers: [
-		ScreenshotController
-	],
+	controllers: [ScreenshotController],
 	imports: [
-		TypeOrmModule.forFeature([ Screenshot ]),
-		TenantModule,
+		TypeOrmModule.forFeature([Screenshot]),
+		forwardRef(() => TenantModule),
 		forwardRef(() => TimeSlotModule),
 		forwardRef(() => UserModule),
-		CqrsModule
+		CqrsModule,
 	],
-	providers: [
-		ScreenshotService,
-		...CommandHandlers
-	],
-	exports: [
-		TypeOrmModule,
-		ScreenshotService
-	]
+	providers: [ScreenshotService, ...CommandHandlers],
+	exports: [TypeOrmModule, ScreenshotService],
 })
 export class ScreenshotModule {}

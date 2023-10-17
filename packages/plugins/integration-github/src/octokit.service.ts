@@ -1,7 +1,7 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import * as chalk from 'chalk';
 import { App } from 'octokit';
-import { ResponseHeaders as OctokitResponseHeaders } from "@octokit/types";
+import { ResponseHeaders as OctokitResponseHeaders } from '@octokit/types';
 import { parseConfig } from './probot.helpers';
 import { ModuleProviders, ProbotConfig } from './probot.types';
 
@@ -16,7 +16,6 @@ export interface OctokitResponse<T> {
 
 @Injectable()
 export class OctokitService {
-
 	private readonly logger = new Logger('OctokitService');
 	private readonly app: InstanceType<typeof App> | undefined;
 
@@ -34,12 +33,22 @@ export class OctokitService {
 					clientId: config.clientId,
 					clientSecret: config.clientSecret,
 				});
-				console.log(chalk.magenta(`Octokit App Configuration ${JSON.stringify(config)}`));
+				console.log(
+					chalk.magenta(
+						`Octokit App Configuration ${JSON.stringify(config)}`
+					)
+				);
 			} else {
-				console.error(chalk.red(`Octokit App initialization failed: Missing appId or privateKey.`));
+				console.error(
+					chalk.red(
+						`Octokit App initialization failed: Missing appId or privateKey.`
+					)
+				);
 			}
 		} catch (error) {
-			console.error(chalk.red(`Octokit App initialization failed: ${error.message}`));
+			console.error(
+				chalk.red(`Octokit App initialization failed: ${error.message}`)
+			);
 		}
 	}
 
@@ -58,23 +67,33 @@ export class OctokitService {
 	 * @returns {Promise<OctokitResponse<any>>} A promise that resolves with the GitHub metadata.
 	 * @throws {Error} If the request to fetch metadata fails.
 	 */
-	public async getInstallationMetadata(installation_id: number): Promise<OctokitResponse<any>> {
+	public async getInstallationMetadata(
+		installation_id: number
+	): Promise<OctokitResponse<any>> {
 		if (!this.app) {
 			throw new Error('Octokit instance is not available.');
 		}
 		try {
 			// Get an Octokit instance for the installation
-			const octokit = await this.app.getInstallationOctokit(installation_id);
+			const octokit = await this.app.getInstallationOctokit(
+				installation_id
+			);
 
 			// Send a request to the GitHub API to get installation metadata
-			return await octokit.request('GET /app/installations/{installation_id}', {
-				installation_id,
-				headers: {
-					'X-GitHub-Api-Version': GITHUB_API_VERSION
+			return await octokit.request(
+				'GET /app/installations/{installation_id}',
+				{
+					installation_id,
+					headers: {
+						'X-GitHub-Api-Version': GITHUB_API_VERSION,
+					},
 				}
-			});
+			);
 		} catch (error) {
-			this.logger.error('Failed to fetch GitHub installation metadata', error.message);
+			this.logger.error(
+				'Failed to fetch GitHub installation metadata',
+				error.message
+			);
 			throw new Error('Failed to fetch GitHub installation metadata');
 		}
 	}
@@ -86,23 +105,30 @@ export class OctokitService {
 	 * @returns {Promise<OctokitResponse<any>>} A promise that resolves with the GitHub repositories.
 	 * @throws {Error} If the request to fetch repositories fails.
 	 */
-	public async getRepositories(installation_id: number): Promise<OctokitResponse<any>> {
+	public async getRepositories(
+		installation_id: number
+	): Promise<OctokitResponse<any>> {
 		if (!this.app) {
 			throw new Error('Octokit instance is not available.');
 		}
 		try {
 			// Get an Octokit instance for the installation
-			const octokit = await this.app.getInstallationOctokit(installation_id);
+			const octokit = await this.app.getInstallationOctokit(
+				installation_id
+			);
 
 			// Send a request to the GitHub API to get repositories
 			return await octokit.request('GET /installation/repositories', {
 				installation_id,
 				headers: {
-					'X-GitHub-Api-Version': GITHUB_API_VERSION
-				}
+					'X-GitHub-Api-Version': GITHUB_API_VERSION,
+				},
 			});
 		} catch (error) {
-			this.logger.error('Failed to fetch GitHub installation repositories', error.message);
+			this.logger.error(
+				'Failed to fetch GitHub installation repositories',
+				error.message
+			);
 			throw new Error('Failed to fetch GitHub installation repositories');
 		}
 	}
@@ -117,31 +143,41 @@ export class OctokitService {
 	 * @returns {Promise<OctokitResponse<any>>} A promise that resolves to the response from the GitHub API.
 	 * @throws {Error} If the request to the GitHub API fails.
 	 */
-	public async getRepositoryIssues(installation_id: number, {
-		owner,
-		repo
-	}: {
-		owner: string;
-		repo: string;
-	}): Promise<OctokitResponse<any>> {
+	public async getRepositoryIssues(
+		installation_id: number,
+		{
+			owner,
+			repo,
+		}: {
+			owner: string;
+			repo: string;
+		}
+	): Promise<OctokitResponse<any>> {
 		if (!this.app) {
 			throw new Error('Octokit instance is not available.');
 		}
 		try {
 			// Get an Octokit instance for the installation
-			const octokit = await this.app.getInstallationOctokit(installation_id);
+			const octokit = await this.app.getInstallationOctokit(
+				installation_id
+			);
 
 			// Send a request to the GitHub API to get repository issues
 			return await octokit.request('GET /repos/{owner}/{repo}/issues', {
 				owner: owner,
 				repo: repo,
 				headers: {
-					'X-GitHub-Api-Version': GITHUB_API_VERSION
-				}
+					'X-GitHub-Api-Version': GITHUB_API_VERSION,
+				},
 			});
 		} catch (error) {
-			this.logger.error('Failed to fetch GitHub installation repository issues', error.message);
-			throw new Error('Failed to fetch GitHub installation repository issues');
+			this.logger.error(
+				'Failed to fetch GitHub installation repository issues',
+				error.message
+			);
+			throw new Error(
+				'Failed to fetch GitHub installation repository issues'
+			);
 		}
 	}
 
@@ -156,33 +192,46 @@ export class OctokitService {
 	 * @returns A promise that resolves to the response from the GitHub API.
 	 * @throws If the request to the GitHub API fails.
 	 */
-	public async getIssueByIssueNumber(installation_id: number, {
-		owner,
-		repo,
-		issue_number
-	}: {
-		owner: string;
-		repo: string;
-		issue_number: number
-	}): Promise<OctokitResponse<any>> {
+	public async getIssueByIssueNumber(
+		installation_id: number,
+		{
+			owner,
+			repo,
+			issue_number,
+		}: {
+			owner: string;
+			repo: string;
+			issue_number: number;
+		}
+	): Promise<OctokitResponse<any>> {
 		if (!this.app) {
 			throw new Error('Octokit instance is not available.');
 		}
 		try {
 			// Get an Octokit instance for the installation
-			const octokit = await this.app.getInstallationOctokit(installation_id);
+			const octokit = await this.app.getInstallationOctokit(
+				installation_id
+			);
 
-			return await octokit.request('GET /repos/{owner}/{repo}/issues/{issue_number}', {
-				owner: owner,
-				repo: repo,
-				issue_number: issue_number,
-				headers: {
-					'X-GitHub-Api-Version': GITHUB_API_VERSION
+			return await octokit.request(
+				'GET /repos/{owner}/{repo}/issues/{issue_number}',
+				{
+					owner: owner,
+					repo: repo,
+					issue_number: issue_number,
+					headers: {
+						'X-GitHub-Api-Version': GITHUB_API_VERSION,
+					},
 				}
-			});
+			);
 		} catch (error) {
-			this.logger.error('Failed to fetch GitHub repository issue', error.message);
-			throw new Error('Failed to fetch GitHub installation repository issues');
+			this.logger.error(
+				'Failed to fetch GitHub repository issue',
+				error.message
+			);
+			throw new Error(
+				'Failed to fetch GitHub installation repository issues'
+			);
 		}
 	}
 
@@ -199,33 +248,82 @@ export class OctokitService {
 	 * @returns A promise that resolves to the response from the GitHub API containing labels associated with the issue.
 	 * @throws {Error} If the request to the GitHub API fails or if the Octokit instance is unavailable.
 	 */
-	public async getLabelsByIssueNumber(installation_id: number, {
-		owner,
-		repo,
-		issue_number
-	}: {
-		owner: string;
-		repo: string;
-		issue_number: number
-	}): Promise<OctokitResponse<any>> {
+	public async getLabelsByIssueNumber(
+		installation_id: number,
+		{
+			owner,
+			repo,
+			issue_number,
+		}: {
+			owner: string;
+			repo: string;
+			issue_number: number;
+		}
+	): Promise<OctokitResponse<any>> {
 		if (!this.app) {
 			throw new Error('Octokit instance is not available.');
 		}
 		try {
 			// Get an Octokit instance for the installation
-			const octokit = await this.app.getInstallationOctokit(installation_id);
+			const octokit = await this.app.getInstallationOctokit(
+				installation_id
+			);
 
-			return await octokit.request('GET /repos/{owner}/{repo}/issues/{issue_number}/labels', {
+			return await octokit.request(
+				'GET /repos/{owner}/{repo}/issues/{issue_number}/labels',
+				{
+					owner: owner,
+					repo: repo,
+					issue_number: issue_number,
+					headers: {
+						'X-GitHub-Api-Version': GITHUB_API_VERSION,
+					},
+				}
+			);
+		} catch (error) {
+			this.logger.error(
+				'Failed to fetch GitHub repository issue',
+				error.message
+			);
+			throw new Error(
+				'Failed to fetch GitHub installation repository issues'
+			);
+		}
+	}
+
+	public async openIssue({
+		title,
+		body,
+		labels,
+		owner,
+		repo,
+		installationId,
+	}: any) {
+		if (!this.app) {
+			throw new Error('Octokit instance is not available.');
+		}
+
+		try {
+			// Get an Octokit instance for the installation
+			const octokit = await this.app.getInstallationOctokit(
+				installationId
+			);
+
+			console.log({ title, body, owner, repo, installationId });
+
+			return await octokit.request('POST /repos/{owner}/{repo}/issues', {
+				title,
+				body,
+				// labels,
 				owner: owner,
 				repo: repo,
-				issue_number: issue_number,
 				headers: {
-					'X-GitHub-Api-Version': GITHUB_API_VERSION
-				}
+					'X-GitHub-Api-Version': GITHUB_API_VERSION,
+				},
 			});
 		} catch (error) {
-			this.logger.error('Failed to fetch GitHub repository issue', error.message);
-			throw new Error('Failed to fetch GitHub installation repository issues');
+			this.logger.error('Failed to Open GitHub issue', error.message);
+			throw new Error('Failed to Open GitHub issue');
 		}
 	}
 }

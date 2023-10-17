@@ -13,28 +13,17 @@ import { TimeSlotModule } from './../time-slot/time-slot.module';
 import { UserModule } from './../../user/user.module';
 
 @Module({
-	controllers: [
-		TimeLogController
-	],
+	controllers: [TimeLogController],
 	imports: [
-		TypeOrmModule.forFeature([
-			TimeLog
-		]),
-		TenantModule,
+		TypeOrmModule.forFeature([TimeLog]),
 		forwardRef(() => UserModule),
 		forwardRef(() => EmployeeModule),
 		forwardRef(() => OrganizationProjectModule),
 		forwardRef(() => OrganizationContactModule),
 		forwardRef(() => TimeSlotModule),
-		CqrsModule
+		CqrsModule,
 	],
-	providers: [
-		TimeLogService,
-		...CommandHandlers
-	],
-	exports: [
-		TimeLogService,
-		TypeOrmModule
-	]
+	providers: [TimeLogService, ...CommandHandlers],
+	exports: [TimeLogService, TypeOrmModule],
 })
 export class TimeLogModule {}

@@ -1,4 +1,10 @@
-import { MiddlewareConsumer, Module, NestModule, RequestMethod, forwardRef } from '@nestjs/common';
+import {
+	MiddlewareConsumer,
+	Module,
+	NestModule,
+	RequestMethod,
+	forwardRef,
+} from '@nestjs/common';
 import { CqrsModule } from '@nestjs/cqrs';
 import { RouterModule } from 'nest-router';
 import { GauzyAIModule } from '@gauzy/integration-ai';
@@ -13,50 +19,43 @@ import { EmployeeJobPostController } from './../../employee-job/employee-job.con
 
 @Module({
 	imports: [
-		TenantModule,
-		UserModule,
+		forwardRef(() => TenantModule),
+		forwardRef(() => UserModule),
 		forwardRef(() => IntegrationModule),
 		IntegrationTenantModule,
 		CqrsModule,
-		GauzyAIModule.forRoot()
+		GauzyAIModule.forRoot(),
 	],
 	controllers: [IntegrationAIController],
-	providers: [
-		IntegrationAIService,
-		IntegrationAIMiddleware
-	]
+	providers: [IntegrationAIService, IntegrationAIMiddleware],
 })
 export class IntegrationAIModule implements NestModule {
 	configure(consumer: MiddlewareConsumer) {
 		// Apply middlewares to specific controllers
-		consumer
-			.apply(IntegrationAIMiddleware)
-			.forRoutes(
-				RouterModule.resolvePath(EmployeeJobPostController) // Apply to EmployeeJobPostController
-			)
-		consumer
-			.apply(IntegrationAIMiddleware)
-			.forRoutes(
-				{
-					path: '/employee/job-statistics',
-					method: RequestMethod.GET
-				},
-				{
-					path: '/employee/:id/job-search-status',
-					method: RequestMethod.PUT
-				},
-				{
-					path: '/job-preset',
-					method: RequestMethod.POST
-				},
-				{
-					path: '/job-preset',
-					method: RequestMethod.GET
-				},
-				{
-					path: '/job-preset/employee/:employeeId/criterion',
-					method: RequestMethod.POST
-				}
-			); // Apply to specific routes and methods
+		consumer.apply(IntegrationAIMiddleware).forRoutes(
+			RouterModule.resolvePath(EmployeeJobPostController) // Apply to EmployeeJobPostController
+		);
+		consumer.apply(IntegrationAIMiddleware).forRoutes(
+			{
+				path: '/employee/job-statistics',
+				method: RequestMethod.GET,
+			},
+			{
+				path: '/employee/:id/job-search-status',
+				method: RequestMethod.PUT,
+			},
+			{
+				path: '/job-preset',
+				method: RequestMethod.POST,
+			},
+			{
+				path: '/job-preset',
+				method: RequestMethod.GET,
+			},
+			{
+				path: '/job-preset/employee/:employeeId/criterion',
+				method: RequestMethod.POST,
+			}
+		); // Apply to specific routes and methods
 	}
 }

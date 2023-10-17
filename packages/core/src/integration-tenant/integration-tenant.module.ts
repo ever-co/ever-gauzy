@@ -16,26 +16,19 @@ import { TenantModule } from '../tenant/tenant.module';
 @Module({
 	imports: [
 		RouterModule.forRoutes([
-			{ path: '/integration-tenant', module: IntegrationTenantModule }
+			{ path: '/integration-tenant', module: IntegrationTenantModule },
 		]),
-		TypeOrmModule.forFeature([
-			IntegrationTenant
-		]),
-		TenantModule,
+		TypeOrmModule.forFeature([IntegrationTenant]),
 		RoleModule,
 		RolePermissionModule,
-		UserModule,
 		forwardRef(() => IntegrationSettingModule),
 		forwardRef(() => IntegrationEntitySettingModule),
-		CqrsModule
+		forwardRef(() => TenantModule),
+		forwardRef(() => UserModule),
+		CqrsModule,
 	],
-	exports: [
-		IntegrationTenantService
-	],
+	exports: [IntegrationTenantService],
 	controllers: [IntegrationTenantController],
-	providers: [
-		IntegrationTenantService,
-		...CommandHandlers
-	]
+	providers: [IntegrationTenantService, ...CommandHandlers],
 })
 export class IntegrationTenantModule {}

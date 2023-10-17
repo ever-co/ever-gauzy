@@ -11,6 +11,7 @@ import { TenantModule } from '../tenant/tenant.module';
 import { UserModule } from './../user/user.module';
 import { RoleModule } from './../role/role.module';
 import { EmployeeModule } from './../employee/employee.module';
+import { GithubModule } from './../integration/github/github.module';
 
 @Module({
 	imports: [
@@ -18,13 +19,14 @@ import { EmployeeModule } from './../employee/employee.module';
 		TypeOrmModule.forFeature([Task]),
 		forwardRef(() => TenantModule),
 		forwardRef(() => UserModule),
+		GithubModule,
 		RoleModule,
 		EmployeeModule,
 		OrganizationProjectModule,
-		CqrsModule
+		CqrsModule,
 	],
 	controllers: [TaskController],
 	providers: [TaskService, ...CommandHandlers],
 	exports: [TypeOrmModule, TaskService],
 })
-export class TaskModule { }
+export class TaskModule {}

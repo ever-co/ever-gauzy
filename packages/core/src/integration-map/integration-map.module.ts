@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { forwardRef, Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { CqrsModule } from '@nestjs/cqrs';
 import { RouterModule } from 'nest-router';
@@ -15,26 +15,21 @@ import { AutomationCommandHandlers } from './Automation/handlers';
 @Module({
 	imports: [
 		RouterModule.forRoutes([
-			{ path: '/integration-map', module: IntegrationMapModule }
+			{ path: '/integration-map', module: IntegrationMapModule },
 		]),
-		TypeOrmModule.forFeature([
-			IntegrationMap
-		]),
-		TenantModule,
-		UserModule,
-		TaskModule,
+		TypeOrmModule.forFeature([IntegrationMap]),
+		forwardRef(() => TenantModule),
+		forwardRef(() => UserModule),
+		forwardRef(() => TaskModule),
 		TagModule,
-		CqrsModule
+		CqrsModule,
 	],
 	controllers: [IntegrationMapController],
 	providers: [
 		IntegrationMapService,
 		...CommandHandlers,
-		...AutomationCommandHandlers
+		...AutomationCommandHandlers,
 	],
-	exports: [
-		TypeOrmModule,
-		IntegrationMapService
-	]
+	exports: [TypeOrmModule, IntegrationMapService],
 })
-export class IntegrationMapModule { }
+export class IntegrationMapModule {}
