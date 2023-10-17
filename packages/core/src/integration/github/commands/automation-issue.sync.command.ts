@@ -1,6 +1,6 @@
 import { IIntegrationMapSyncEntity, ITaskCreateInput, ITaskUpdateInput } from "@gauzy/contracts";
 
-export class AutomationSyncIssueCommand {
+export class AutomationIssueSyncCommand {
 
     constructor(
         public readonly input: IIntegrationMapSyncEntity<ITaskCreateInput | ITaskUpdateInput>

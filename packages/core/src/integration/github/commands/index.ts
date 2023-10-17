@@ -1,2 +1,2 @@
-export * from './automation-sync-issue.command';
-export * from './automation-sync-label.command';
+export * from './automation-issue.sync.command';
+export * from './automation-label.sync.command';

@@ -1,15 +1,15 @@
 import { ICommandHandler, CommandHandler } from '@nestjs/cqrs';
 import * as chalk from 'chalk';
-import { AutomationSyncLabelCommand } from '../automation-sync-label.command';
+import { AutomationLabelSyncCommand } from './../automation-label.sync.command';
 import { GithubSyncService } from './../../github-sync.service';
 
-@CommandHandler(AutomationSyncLabelCommand)
-export class AutomationSyncLabelHandler implements ICommandHandler<AutomationSyncLabelCommand> {
+@CommandHandler(AutomationLabelSyncCommand)
+export class AutomationLabelSyncHandler implements ICommandHandler<AutomationLabelSyncCommand> {
 	constructor(
 		private readonly _githubSyncService: GithubSyncService
 	) { }
 
-	async execute(command: AutomationSyncLabelCommand): Promise<void> {
+	async execute(command: AutomationLabelSyncCommand): Promise<void> {
 		try {
 			const { input } = command;
 			console.log(

@@ -1,7 +1,7 @@
-import { AutomationSyncIssueHandler } from './automation-issue.create.handler';
-import { AutomationSyncLabelHandler } from './automation-label.create.handler';
+import { AutomationIssueSyncHandler } from './automation-issue.sync.handler';
+import { AutomationLabelSyncHandler } from './automation-label.sync.handler';
 
 export const AutomationCommandHandlers = [
-    AutomationSyncIssueHandler,
-    AutomationSyncLabelHandler
+    AutomationIssueSyncHandler,
+    AutomationLabelSyncHandler
 ];

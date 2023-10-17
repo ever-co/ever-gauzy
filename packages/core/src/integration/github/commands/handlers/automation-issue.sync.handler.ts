@@ -1,16 +1,16 @@
 import { ICommandHandler, CommandHandler } from '@nestjs/cqrs';
 import * as chalk from 'chalk';
-import { AutomationSyncIssueCommand } from '../automation-sync-issue.command';
+import { AutomationIssueSyncCommand } from '../automation-issue.sync.command';
 import { GithubSyncService } from '../../github-sync.service';
 
-@CommandHandler(AutomationSyncIssueCommand)
-export class AutomationSyncIssueHandler implements ICommandHandler<AutomationSyncIssueCommand> {
+@CommandHandler(AutomationIssueSyncCommand)
+export class AutomationIssueSyncHandler implements ICommandHandler<AutomationIssueSyncCommand> {
 
 	constructor(
 		private readonly _githubSyncService: GithubSyncService
 	) { }
 
-	async execute(command: AutomationSyncIssueCommand): Promise<void> {
+	async execute(command: AutomationIssueSyncCommand): Promise<void> {
 		try {
 			const { input } = command;
 			console.log(

@@ -22,7 +22,7 @@ import { IntegrationEntitySetting } from 'core/entities/internal';
 import { IntegrationTenantService } from 'integration-tenant/integration-tenant.service';
 import { OrganizationProjectService } from 'organization-project/organization-project.service';
 import { IntegrationMapSyncIssueCommand, IntegrationMapSyncLabelCommand } from 'integration-map/commands';
-import { AutomationSyncIssueCommand } from './commands';
+import { AutomationIssueSyncCommand } from './commands';
 
 @Injectable()
 export class GithubSyncService {
@@ -289,7 +289,7 @@ export class GithubSyncService {
                                                 // }
                                                 /** */
                                                 return await this._commandBus.execute(
-                                                    new AutomationSyncIssueCommand({
+                                                    new AutomationIssueSyncCommand({
                                                         entity: {
                                                             title,
                                                             description: body,
