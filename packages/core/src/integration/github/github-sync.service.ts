@@ -238,15 +238,10 @@ export class GithubSyncService {
     ) {
         const { integration, repository, issue } = input;
         const { entitySettings } = integration;
-
         try {
-            const settings = arrayToObject(integration.settings, 'settingsName', 'settingsValue');
-            console.log(settings);
-
             /** */
             const tenantId = RequestContext.currentTenantId() || integration['tenantId'];
             const organizationId = integration['organizationId'];
-            console.log(issue);
 
             /** */
             const project: IOrganizationProject = await this._organizationProjectService.getProjectByRepository(repository.id, {
@@ -263,9 +258,7 @@ export class GithubSyncService {
                 if (!isContinueExecution) {
                     return;
                 }
-                console.log(Array.isArray(issue) ? issue : [issue]);
                 const issues: IGithubIssue[] = this._mapIssuePayload(Array.isArray(issue) ? issue : [issue]);
-                console.log(issues);
 
                 const projectId = project.id;
                 const integrationId = integration.id;

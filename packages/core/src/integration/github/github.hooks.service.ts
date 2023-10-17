@@ -5,6 +5,7 @@ import {
     GithubPropertyMapEnum,
     IGithubInstallation,
     IGithubIssue,
+    IGithubIssueLabel,
     IGithubRepository,
     IIntegrationSetting
 } from '@gauzy/contracts';
@@ -28,6 +29,7 @@ export class GithubHooksService {
      */
     async issuesOpened(context: Context) {
         try {
+            // Extract necessary data from the context
             const installation = context.payload['installation'] as IGithubInstallation;
             const issue = context.payload['issue'] as IGithubIssue;
             const repository = context.payload['repository'] as IGithubRepository;
@@ -46,12 +48,37 @@ export class GithubHooksService {
      */
     async issuesEdited(context: Context) {
         try {
+            // Extract necessary data from the context
             const installation = context.payload['installation'] as IGithubInstallation;
             const issue = context.payload['issue'] as IGithubIssue;
             const repository = context.payload['repository'] as IGithubRepository;
 
             /** */
             await this.syncAutomationIssue({ installation, issue, repository });
+        } catch (error) {
+            this.logger.error('Failed to sync in issues and labels', error.message);
+        }
+    }
+
+    /**
+     * Handles the 'issuesLabeled' event from GitHub.
+     *
+     * @param context - The GitHub webhook event context.
+     */
+    async issuesLabeled(context: Context) {
+        try {
+            // Extract necessary data from the context
+            const installation = context.payload['installation'] as IGithubInstallation;
+            const issue = context.payload['issue'] as IGithubIssue;
+            const repository = context.payload['repository'] as IGithubRepository;
+            const label = context.payload['label'] as IGithubIssueLabel;
+
+            // Perform actions related to the 'issuesLabeled' event
+            // For example, you can log the extracted data or trigger other actions here.
+            console.log('Installation:', installation);
+            console.log('Issue:', issue);
+            console.log('Repository:', repository);
+            console.log('Label:', label);
         } catch (error) {
             this.logger.error('Failed to sync in issues and labels', error.message);
         }
