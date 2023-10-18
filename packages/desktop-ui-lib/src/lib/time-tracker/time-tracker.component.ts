@@ -1023,6 +1023,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 			'timer_tracker_show',
 			(event, arg) =>
 				this._ngZone.run(async () => {
+					if(!this._store.user?.employeeId) return;
 					this._isOffline$.next(
 						arg.isOffline ? arg.isOffline : this._isOffline
 					);
@@ -1831,7 +1832,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 	 * Get last running/completed timer status
 	 */
 	async getTimerStatus(arg) {
-		if (this._isOffline) return;
+		if (this._isOffline || !arg?.organizationId || !arg?.tenantId) return;
 		try {
 			this.timerStatus = await this.timeTrackerService.getTimerStatus(
 				arg

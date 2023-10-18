@@ -25,6 +25,7 @@ export interface IOrganizationProjectSetting extends IBasePerTenantAndOrganizati
 	externalRepositoryId?: number;
 	isTasksAutoSync?: boolean;
 	isTasksAutoSyncOnLabel?: boolean;
+	syncTag?: string;
 }
 
 export interface IOrganizationProject extends IBaseEntityWithMembers, IRelationalImageAsset, IRelationalOrganizationContact, IOrganizationProjectSetting {

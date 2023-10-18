@@ -57,6 +57,7 @@ export class GithubWizardComponent implements AfterViewInit, OnInit, OnDestroy {
 	ngOnInit(): void {
 		this._activatedRoute.data
 			.pipe(
+				filter(({ integration }: Data) => !!integration),
 				// Use the 'tap' operator to perform side effects when data is emitted
 				tap(({ integration }: Data) => {
 					// Check if 'integration' data is present in the emitted data
@@ -237,20 +238,27 @@ export class GithubWizardComponent implements AfterViewInit, OnInit, OnDestroy {
 	}
 
 	/**
-	 * Handle the case when the popup window is closed.
+	 *  Handle the case when the popup window is closed.
 	 *
-	 * @param ms - Optional delay in milliseconds before redirecting (default: 200 milliseconds)
+	 * @param ms The delay in milliseconds before redirecting. Default is 200 milliseconds.
 	 */
-	private handleClosedPopupWindow(ms: number = 200) {
+	private handleClosedPopupWindow(ms: number = 200): void {
 		// Set isLoading to false to indicate that loading has completed
 		this.isLoading = false;
 
 		// Delay navigation by 'ms' milliseconds before redirecting
 		setTimeout(() => {
+			const data = this._activatedRoute.snapshot.data;
+			if (data['redirectTo']) {
+				console.log(data['redirectTo']);
+				this._router.navigate([data['redirectTo']]);
+				return;
+			}
 			// Navigate to a specific route, e.g., '/pages/integrations/new'
 			this._router.navigate(['/pages/integrations/new']);
 		}, ms); // Delay for 'ms' milliseconds before redirecting
 	}
+
 
 	/**
 	 * Angular lifecycle hook called when the component is destroyed.

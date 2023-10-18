@@ -7,5 +7,5 @@ export class TaskUpdateCommand implements ICommand {
 	constructor(
 		public readonly id: ITask['id'],
 		public readonly input: ITaskUpdateInput
-	) {}
+	) { }
 }

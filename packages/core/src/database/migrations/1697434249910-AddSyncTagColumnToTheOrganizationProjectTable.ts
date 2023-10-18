@@ -2,9 +2,9 @@
 import { MigrationInterface, QueryRunner } from "typeorm";
 import * as chalk from "chalk";
 
-export class AddedIntegrationSettingColumnsToTheOrganizationProjectTable1697263211513 implements MigrationInterface {
+export class AddSyncTagColumnToTheOrganizationProjectTable1697434249910 implements MigrationInterface {
 
-    name = 'AddedIntegrationSettingColumnsToTheOrganizationProjectTable1697263211513';
+    name = 'AddSyncTagColumnToTheOrganizationProjectTable1697434249910';
 
     /**
     * Up Migration
@@ -12,7 +12,7 @@ export class AddedIntegrationSettingColumnsToTheOrganizationProjectTable16972632
     * @param queryRunner
     */
     public async up(queryRunner: QueryRunner): Promise<any> {
-        console.log(chalk.yellow(`AddedIntegrationSettingColumnsToTheOrganizationProjectTable1697263211513 start running!`));
+        console.log(chalk.yellow(`AddSyncTagColumnToTheOrganizationProjectTable1697434249910 start running!`));
         if (['sqlite', 'better-sqlite3'].includes(queryRunner.connection.options.type)) {
             await this.sqliteUpQueryRunner(queryRunner);
         } else {
@@ -27,7 +27,7 @@ export class AddedIntegrationSettingColumnsToTheOrganizationProjectTable16972632
     */
     public async down(queryRunner: QueryRunner): Promise<any> {
         if (['sqlite', 'better-sqlite3'].includes(queryRunner.connection.options.type)) {
-            // await this.sqliteDownQueryRunner(queryRunner);
+            await this.sqliteDownQueryRunner(queryRunner);
         } else {
             await this.postgresDownQueryRunner(queryRunner);
         }
@@ -39,12 +39,8 @@ export class AddedIntegrationSettingColumnsToTheOrganizationProjectTable16972632
     * @param queryRunner
     */
     public async postgresUpQueryRunner(queryRunner: QueryRunner): Promise<any> {
-        await queryRunner.query(`ALTER TABLE "organization_project" ADD "externalRepositoryId" integer`);
-        await queryRunner.query(`ALTER TABLE "organization_project" ADD "isTasksAutoSync" boolean DEFAULT true`);
-        await queryRunner.query(`ALTER TABLE "organization_project" ADD "isTasksAutoSyncOnLabel" boolean DEFAULT true`);
-        await queryRunner.query(`CREATE INDEX "IDX_60f6ebb4ab539087ce5f4266ca" ON "organization_project" ("externalRepositoryId") `);
-        await queryRunner.query(`CREATE INDEX "IDX_75855b44250686f84b7c4bc1f1" ON "organization_project" ("isTasksAutoSync") `);
-        await queryRunner.query(`CREATE INDEX "IDX_c5c4366237dc2bb176c1503426" ON "organization_project" ("isTasksAutoSyncOnLabel") `);
+        await queryRunner.query(`ALTER TABLE "organization_project" ADD "syncTag" character varying`);
+        await queryRunner.query(`CREATE INDEX "IDX_3e128d30e9910ff920eee4ef37" ON "organization_project" ("syncTag") `);
     }
 
     /**
@@ -53,12 +49,8 @@ export class AddedIntegrationSettingColumnsToTheOrganizationProjectTable16972632
     * @param queryRunner
     */
     public async postgresDownQueryRunner(queryRunner: QueryRunner): Promise<any> {
-        await queryRunner.query(`DROP INDEX "public"."IDX_c5c4366237dc2bb176c1503426"`);
-        await queryRunner.query(`DROP INDEX "public"."IDX_75855b44250686f84b7c4bc1f1"`);
-        await queryRunner.query(`DROP INDEX "public"."IDX_60f6ebb4ab539087ce5f4266ca"`);
-        await queryRunner.query(`ALTER TABLE "organization_project" DROP COLUMN "isTasksAutoSyncOnLabel"`);
-        await queryRunner.query(`ALTER TABLE "organization_project" DROP COLUMN "isTasksAutoSync"`);
-        await queryRunner.query(`ALTER TABLE "organization_project" DROP COLUMN "externalRepositoryId"`);
+        await queryRunner.query(`DROP INDEX "public"."IDX_3e128d30e9910ff920eee4ef37"`);
+        await queryRunner.query(`ALTER TABLE "organization_project" DROP COLUMN "syncTag"`);
     }
 
     /**
@@ -75,7 +67,7 @@ export class AddedIntegrationSettingColumnsToTheOrganizationProjectTable16972632
         await queryRunner.query(`DROP INDEX "IDX_9d8afc1e1e64d4b7d48dd2229d"`);
         await queryRunner.query(`DROP INDEX "IDX_7cf84e8b5775f349f81a1f3cc4"`);
         await queryRunner.query(`DROP INDEX "IDX_063324fdceb51f7086e401ed2c"`);
-        await queryRunner.query(`CREATE TABLE "temporary_organization_project" ("id" varchar PRIMARY KEY NOT NULL, "createdAt" datetime NOT NULL DEFAULT (datetime('now')), "updatedAt" datetime NOT NULL DEFAULT (datetime('now')), "tenantId" varchar, "organizationId" varchar, "name" varchar NOT NULL, "startDate" datetime, "endDate" datetime, "billing" varchar, "currency" varchar, "public" boolean, "owner" varchar, "taskListType" varchar NOT NULL DEFAULT ('GRID'), "code" varchar, "description" varchar, "color" varchar, "billable" boolean, "billingFlat" boolean, "openSource" boolean, "projectUrl" varchar, "openSourceProjectUrl" varchar, "budget" integer, "budgetType" text DEFAULT ('cost'), "organizationContactId" varchar, "membersCount" integer DEFAULT (0), "imageUrl" varchar(500), "imageId" varchar, "isActive" boolean DEFAULT (1), "isArchived" boolean DEFAULT (0), "externalRepositoryId" integer, "isTasksAutoSync" boolean DEFAULT (1), "isTasksAutoSyncOnLabel" boolean DEFAULT (1), CONSTRAINT "FK_bc1e32c13683dbb16ada1c6da14" FOREIGN KEY ("organizationContactId") REFERENCES "organization_contact" ("id") ON DELETE SET NULL ON UPDATE CASCADE, CONSTRAINT "FK_9d8afc1e1e64d4b7d48dd2229d7" FOREIGN KEY ("organizationId") REFERENCES "organization" ("id") ON DELETE CASCADE ON UPDATE CASCADE, CONSTRAINT "FK_7cf84e8b5775f349f81a1f3cc44" FOREIGN KEY ("tenantId") REFERENCES "tenant" ("id") ON DELETE CASCADE ON UPDATE NO ACTION, CONSTRAINT "FK_063324fdceb51f7086e401ed2c9" FOREIGN KEY ("imageId") REFERENCES "image_asset" ("id") ON DELETE SET NULL ON UPDATE NO ACTION)`);
+        await queryRunner.query(`CREATE TABLE "temporary_organization_project" ("id" varchar PRIMARY KEY NOT NULL, "createdAt" datetime NOT NULL DEFAULT (datetime('now')), "updatedAt" datetime NOT NULL DEFAULT (datetime('now')), "tenantId" varchar, "organizationId" varchar, "name" varchar NOT NULL, "startDate" datetime, "endDate" datetime, "billing" varchar, "currency" varchar, "public" boolean, "owner" varchar, "taskListType" varchar NOT NULL DEFAULT ('GRID'), "code" varchar, "description" varchar, "color" varchar, "billable" boolean, "billingFlat" boolean, "openSource" boolean, "projectUrl" varchar, "openSourceProjectUrl" varchar, "budget" integer, "budgetType" text DEFAULT ('cost'), "organizationContactId" varchar, "membersCount" integer DEFAULT (0), "imageUrl" varchar(500), "imageId" varchar, "isActive" boolean DEFAULT (1), "isArchived" boolean DEFAULT (0), "externalRepositoryId" integer, "isTasksAutoSync" boolean DEFAULT (1), "isTasksAutoSyncOnLabel" boolean DEFAULT (1), "syncTag" varchar, CONSTRAINT "FK_bc1e32c13683dbb16ada1c6da14" FOREIGN KEY ("organizationContactId") REFERENCES "organization_contact" ("id") ON DELETE SET NULL ON UPDATE CASCADE, CONSTRAINT "FK_9d8afc1e1e64d4b7d48dd2229d7" FOREIGN KEY ("organizationId") REFERENCES "organization" ("id") ON DELETE CASCADE ON UPDATE CASCADE, CONSTRAINT "FK_7cf84e8b5775f349f81a1f3cc44" FOREIGN KEY ("tenantId") REFERENCES "tenant" ("id") ON DELETE CASCADE ON UPDATE NO ACTION, CONSTRAINT "FK_063324fdceb51f7086e401ed2c9" FOREIGN KEY ("imageId") REFERENCES "image_asset" ("id") ON DELETE SET NULL ON UPDATE NO ACTION)`);
         await queryRunner.query(`INSERT INTO "temporary_organization_project"("id", "createdAt", "updatedAt", "tenantId", "organizationId", "name", "startDate", "endDate", "billing", "currency", "public", "owner", "taskListType", "code", "description", "color", "billable", "billingFlat", "openSource", "projectUrl", "openSourceProjectUrl", "budget", "budgetType", "organizationContactId", "membersCount", "imageUrl", "imageId", "isActive", "isArchived") SELECT "id", "createdAt", "updatedAt", "tenantId", "organizationId", "name", "startDate", "endDate", "billing", "currency", "public", "owner", "taskListType", "code", "description", "color", "billable", "billingFlat", "openSource", "projectUrl", "openSourceProjectUrl", "budget", "budgetType", "organizationContactId", "membersCount", "imageUrl", "imageId", "isActive", "isArchived" FROM "organization_project"`);
         await queryRunner.query(`DROP TABLE "organization_project"`);
         await queryRunner.query(`ALTER TABLE "temporary_organization_project" RENAME TO "organization_project"`);
@@ -90,6 +82,7 @@ export class AddedIntegrationSettingColumnsToTheOrganizationProjectTable16972632
         await queryRunner.query(`CREATE INDEX "IDX_60f6ebb4ab539087ce5f4266ca" ON "organization_project" ("externalRepositoryId") `);
         await queryRunner.query(`CREATE INDEX "IDX_75855b44250686f84b7c4bc1f1" ON "organization_project" ("isTasksAutoSync") `);
         await queryRunner.query(`CREATE INDEX "IDX_c5c4366237dc2bb176c1503426" ON "organization_project" ("isTasksAutoSyncOnLabel") `);
+        await queryRunner.query(`CREATE INDEX "IDX_3e128d30e9910ff920eee4ef37" ON "organization_project" ("syncTag") `);
     }
 
     /**
@@ -98,6 +91,7 @@ export class AddedIntegrationSettingColumnsToTheOrganizationProjectTable16972632
     * @param queryRunner
     */
     public async sqliteDownQueryRunner(queryRunner: QueryRunner): Promise<any> {
+        await queryRunner.query(`DROP INDEX "IDX_3e128d30e9910ff920eee4ef37"`);
         await queryRunner.query(`DROP INDEX "IDX_c5c4366237dc2bb176c1503426"`);
         await queryRunner.query(`DROP INDEX "IDX_75855b44250686f84b7c4bc1f1"`);
         await queryRunner.query(`DROP INDEX "IDX_60f6ebb4ab539087ce5f4266ca"`);
