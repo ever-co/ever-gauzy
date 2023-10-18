@@ -1,6 +1,5 @@
 import {
 	AfterViewInit,
-	ChangeDetectorRef,
 	Component,
 	EventEmitter,
 	Input,
@@ -335,7 +334,7 @@ export class ProjectMutationComponent extends TranslationBaseComponent
 		});
 		this.form.updateValueAndValidity();
 
-		/** Projct Integration Setting Patch Value*/
+		/** Project Integration Setting Patch Value*/
 		this.projectSettingForm.patchValue({
 			isTasksAutoSync: project.isTasksAutoSync || false,
 			isTasksAutoSyncOnLabel: project.isTasksAutoSyncOnLabel || false,
