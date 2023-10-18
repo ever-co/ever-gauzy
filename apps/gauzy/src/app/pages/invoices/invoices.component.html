@@ -425,8 +425,8 @@
 				>
 					<div class="custom-content-body">
 						<nb-accordion class="mb-3">
-							<nb-accordion-item collapsed="false">
-								<nb-accordion-item-header>
+							<nb-accordion-item collapsed="true" [collapsed]="selectedInvoice ? 'false' : 'true'">
+								<nb-accordion-item-header class="nb-accordion-item-header">
 									{{
 										(!isEstimate
 											? 'INVOICES_PAGE.HEADER'
@@ -438,20 +438,17 @@
 											| translate
 											| lowercase
 									}}
-								</nb-accordion-item-header>
-								<nb-accordion-item-body>
-									<nb-list-item
-										*ngIf="disableButton"
-										class="history-list-select"
-									>
+									<div class="accordion-header-hint history-list-select">
 										{{
 											(!isEstimate
 												? 'INVOICES_PAGE.SELECT_INVOICE_TO_VIEW_HISTORY'
 												: 'INVOICES_PAGE.ESTIMATES.SELECT_ESTIMATE_TO_VIEW_HISTORY'
 											) | translate
 										}}
-									</nb-list-item>
-									<div class="row">
+									</div>
+								</nb-accordion-item-header>
+								<nb-accordion-item-body>
+									<div class="row comments-container">
 										<div class="col-6">
 											<ng-container
 												*ngIf="selectedInvoice"
@@ -542,23 +539,14 @@
 																		history.user
 																	"
 																></ngx-avatar>
-																<div
-																	class="history-date history-item"
-																>
-																	{{
-																		history.createdAt
-																			| dateTimeFormat
-																	}}
+																<div class="history-date history-item">
+																	{{ history.createdAt | dateTimeFormat }}
 																</div>
-																<div
-																	class="history-item"
-																>
-																	<span
-																		class="history-action"
-																		>{{
-																			history.action
-																		}}</span
-																	>
+																<div class="history-item history-title">
+																	<span>{{ history.title }}</span>
+																</div>
+																<div class="history-item history-comment">
+																	<span>{{ history.action }}</span>
 																</div>
 															</div>
 														</div>
@@ -611,7 +599,7 @@
 		</ng-template>
 		<ng-template #gridLayout>
 			<div class="grid">
-				<ga-card-grid 
+				<ga-card-grid
 					[totalItems]="pagination?.totalItems"
 					[settings]="settingsSmartTable"
 					[source]="invoices"
