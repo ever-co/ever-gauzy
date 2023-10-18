@@ -8,7 +8,7 @@ import {
     IGithubRepository,
     IIntegrationSetting
 } from '@gauzy/contracts';
-import { IntegrationSettingGetCommand } from 'integration-setting/commands';
+import { IntegrationSettingGetCommand, IntegrationSettingGetManyCommand } from 'integration-setting/commands';
 import { GithubSyncService } from './github-sync.service';
 
 @Injectable()
@@ -33,23 +33,49 @@ export class GithubHooksService {
         const repositories = context.payload['repositories'] as IGithubRepository[];
 
         try {
-            // Retrieve the integration setting associated with the GitHub installation
-            const setting: IIntegrationSetting = await this.getInstallationSetting(installation);
+            const installation_id = installation.id;
+            // Retrieve the integration settings associated with the GitHub installation.
+            const settings = await this._commandBus.execute(
+                new IntegrationSettingGetManyCommand({
+                    where: {
+                        settingsName: GithubPropertyMapEnum.INSTALLATION_ID,
+                        settingsValue: installation_id,
+                        isActive: true,
+                        isArchived: false,
+                        integration: {
+                            isActive: true,
+                            isArchived: false,
+                        }
+                    },
+                    relations: {
+                        integration: {
+                            settings: true,
+                            entitySettings: {
+                                tiedEntities: true
+                            }
+                        }
+                    }
+                })
+            );
+            return await Promise.all(
+                settings.map(
+                    async (setting: IIntegrationSetting) => {
+                        if (!setting || !setting.integration) {
+                            // No integration or setting found; no action needed.
+                            return;
+                        }
 
-            if (!setting || !setting.integration) {
-                // No integration or setting found; no action needed.
-                return;
-            }
+                        const integration = setting.integration;
 
-            const integration = setting.integration;
-
-            // Delete the GitHub integration associated with the installation and its repositories
-            await this._githubSyncService.installationDeleted({
-                installation,
-                integration,
-                repositories
-            });
-
+                        // Delete the GitHub integration associated with the installation and its repositories
+                        await this._githubSyncService.installationDeleted({
+                            installation,
+                            integration,
+                            repositories
+                        });
+                    }
+                )
+            );
         } catch (error) {
             // Handle errors
             this.logger.error(`Failed to delete GitHub integration for installation: ${installation?.id}`, error);
