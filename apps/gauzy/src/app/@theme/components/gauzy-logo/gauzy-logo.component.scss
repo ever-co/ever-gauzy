@@ -121,4 +121,10 @@ nb-accordion-item:first-child.collapsed nb-accordion-item-header.principal {
 
 .logo object {
 	max-width: 128px;
+	max-height: 22px;
+
+	img {
+		width: 128px;
+		height: 22px;
+	}
 }
