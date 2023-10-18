@@ -5,7 +5,6 @@ import {
     GithubPropertyMapEnum,
     IGithubInstallation,
     IGithubIssue,
-    IGithubIssueLabel,
     IGithubRepository,
     IIntegrationSetting
 } from '@gauzy/contracts';
@@ -21,6 +20,41 @@ export class GithubHooksService {
         private readonly _commandBus: CommandBus,
         private readonly _githubSyncService: GithubSyncService
     ) { }
+
+    /**
+     * Handles the 'installationDeleted' event by deleting a GitHub installation,
+     * its associated repositories, and the integration setting.
+     *
+     * @param context - The context object containing event information.
+     */
+    async installationDeleted(context: Context) {
+        // Extract necessary data from the context
+        const installation = context.payload['installation'] as IGithubInstallation;
+        const repositories = context.payload['repositories'] as IGithubRepository[];
+
+        try {
+            // Retrieve the integration setting associated with the GitHub installation
+            const setting: IIntegrationSetting = await this.getInstallationSetting(installation);
+
+            if (!setting || !setting.integration) {
+                // No integration or setting found; no action needed.
+                return;
+            }
+
+            const integration = setting.integration;
+
+            // Delete the GitHub integration associated with the installation and its repositories
+            await this._githubSyncService.deleteInstallation({
+                installation,
+                integration,
+                repositories
+            });
+
+        } catch (error) {
+            // Handle errors
+            this.logger.error(`Failed to delete GitHub integration for installation: ${installation?.id}`, error);
+        }
+    }
 
     /**
      * Handles the 'issues.opened' event from GitHub, syncs automation issues and labels.
@@ -71,14 +105,9 @@ export class GithubHooksService {
             const installation = context.payload['installation'] as IGithubInstallation;
             const issue = context.payload['issue'] as IGithubIssue;
             const repository = context.payload['repository'] as IGithubRepository;
-            const label = context.payload['label'] as IGithubIssueLabel;
 
-            // Perform actions related to the 'issuesLabeled' event
-            // For example, you can log the extracted data or trigger other actions here.
-            console.log('Installation:', installation);
-            console.log('Issue:', issue);
-            console.log('Repository:', repository);
-            console.log('Label:', label);
+            /** */
+            await this.syncAutomationIssue({ installation, issue, repository });
         } catch (error) {
             this.logger.error('Failed to sync in issues and labels', error.message);
         }
