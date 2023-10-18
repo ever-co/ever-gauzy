@@ -77,6 +77,20 @@ export type Env = Readonly<{
 	GAUZY_GITHUB_CLIENT_ID: string;
 	GAUZY_GITHUB_REDIRECT_URL: string;
 	GAUZY_GITHUB_POST_INSTALL_URL: string;
+
+	GAUZY_DESKTOP_LOGO_512X512: string;
+	PLATFORM_PRIVACY_URL: string;
+	PLATFORM_TOS_URL: string;
+
+	COMPANY_NAME: string;
+	COMPANY_SITE: string;
+	COMPANY_LINK: string,
+	COMPANY_SITE_LINK: string,
+	COMPANY_GITHUB_LINK: string,
+	COMPANY_GITLAB_LINK: string,
+	COMPANY_FACEBOOK_LINK: string,
+	COMPANY_TWITTER_LINK: string,
+	COMPANY_LINKEDIN_LINK: string,
 }>;
 
 export const env: Env = cleanEnv(
@@ -154,6 +168,49 @@ export const env: Env = cleanEnv(
 		// Set default platform logo
 		PLATFORM_LOGO_URL: str({
 			default: 'assets/images/logos/logo_Gauzy.svg',
+		}),
+
+		//Set default gauzy desktop logo 512x512 pixels
+		GAUZY_DESKTOP_LOGO_512X512: str({
+			default: 'assets/icons/icon_512x512.png',
+		}),
+
+		// Set default paltform privacy link
+		PLATFORM_PRIVACY_URL: str({
+			default: 'https://gauzy.co/privacy'
+		}),
+
+		// Set default paltform terms of services link
+		PLATFORM_TOS_URL: str({
+			default: 'https://gauzy.co/tos'
+		}),
+
+		COMPANY_NAME: str({
+			default: 'Ever Co. LTD'
+		}),
+		COMPANY_SITE: str({
+			default: 'Gauzy'
+		}),
+		COMPANY_LINK: str({
+			default: 'https://ever.co/'
+		}),
+		COMPANY_SITE_LINK: str({
+			default: 'https://gauzy.co'
+		}),
+		COMPANY_GITHUB_LINK: str({
+			default: 'https://github.com/ever-co'
+		}),
+		COMPANY_GITLAB_LINK: str({
+			default: 'https://gitlab.com/ever-co'
+		}),
+		COMPANY_FACEBOOK_LINK: str({
+			default: 'https://www.facebook.com/gauzyplatform'
+		}),
+		COMPANY_TWITTER_LINK: str({
+			default: 'https://twitter.com/gauzyplatform'
+		}),
+		COMPANY_LINKEDIN_LINK: str({
+			default: 'https://www.linkedin.com/company/ever-co'
 		}),
 	},
 	{ strict: true, dotEnvPath: __dirname + '/../.env' }

@@ -1,3 +1,5 @@
+import {env} from "../../../../.scripts/env";
+
 export interface Environment {
 	production: boolean;
 
@@ -79,4 +81,8 @@ export interface Environment {
 	GAUZY_GITHUB_CLIENT_ID: string;
 	GAUZY_GITHUB_REDIRECT_URL: string;
 	GAUZY_GITHUB_POST_INSTALL_URL: string;
+
+	GAUZY_DESKTOP_LOGO_512X512: string;
+	PLATFORM_PRIVACY_URL: string;
+	PLATFORM_TOS_URL: string;
 }
