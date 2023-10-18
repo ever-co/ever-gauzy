@@ -49,7 +49,7 @@ import { GithubSyncService } from './github-sync.service';
 		// Define middleware heres
 		GithubMiddleware,
 	],
-	exports: [GithubService],
+	exports: [GithubService, GithubSyncService],
 })
 export class GithubModule implements NestModule {
 	/**

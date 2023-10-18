@@ -18,14 +18,24 @@ import { IntegrationEntitySettingService } from './integration-entity-setting.se
 				module: IntegrationEntitySettingModule,
 			},
 		]),
-		TypeOrmModule.forFeature([IntegrationEntitySetting]),
+		TypeOrmModule.forFeature([
+			IntegrationEntitySetting
+		]),
 		forwardRef(() => IntegrationTenantModule),
 		forwardRef(() => TenantModule),
 		forwardRef(() => UserModule),
 		CqrsModule,
 	],
-	controllers: [IntegrationEntitySettingController],
-	providers: [IntegrationEntitySettingService, ...CommandHandlers],
-	exports: [TypeOrmModule, IntegrationEntitySettingService],
+	controllers: [
+		IntegrationEntitySettingController
+	],
+	providers: [
+		IntegrationEntitySettingService,
+		...CommandHandlers
+	],
+	exports: [
+		TypeOrmModule,
+		IntegrationEntitySettingService
+	],
 })
-export class IntegrationEntitySettingModule {}
+export class IntegrationEntitySettingModule { }

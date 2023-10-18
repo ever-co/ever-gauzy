@@ -17,8 +17,13 @@ import { IntegrationTenantModule } from './../integration-tenant/integration-ten
 
 @Module({
 	imports: [
-		RouterModule.forRoutes([{ path: '/tasks', module: TaskModule }]),
-		TypeOrmModule.forFeature([Task, IntegrationMap]),
+		RouterModule.forRoutes([
+			{ path: '/tasks', module: TaskModule }
+		]),
+		TypeOrmModule.forFeature([
+			Task,
+			IntegrationMap
+		]),
 		forwardRef(() => TenantModule),
 		forwardRef(() => UserModule),
 		GithubModule,
@@ -32,4 +37,4 @@ import { IntegrationTenantModule } from './../integration-tenant/integration-ten
 	providers: [TaskService, ...CommandHandlers],
 	exports: [TypeOrmModule, TaskService],
 })
-export class TaskModule {}
+export class TaskModule { }

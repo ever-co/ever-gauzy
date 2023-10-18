@@ -3,9 +3,9 @@ import { HttpException, HttpStatus, Logger } from '@nestjs/common';
 import { IntegrationEnum, ITask } from '@gauzy/contracts';
 import { RequestContext } from './../../../core/context';
 import { TaskCreateCommand } from './../task-create.command';
+import { GithubSyncService } from 'integration/github/github-sync.service';
 import { OrganizationProjectService } from './../../../organization-project/organization-project.service';
 import { TaskService } from '../../task.service';
-import { GithubService } from '../../../integration/github/github.service';
 import { IntegrationTenantService } from '../../../integration-tenant/integration-tenant.service';
 import { arrayToObject } from 'core/utils';
 
@@ -17,9 +17,9 @@ export class TaskCreateHandler implements ICommandHandler<TaskCreateCommand> {
 		private readonly _taskService: TaskService,
 		private readonly _organizationProjectService: OrganizationProjectService,
 
-		private readonly _githubService: GithubService,
+		private readonly _githubSyncService: GithubSyncService,
 		private readonly _integrationTenantService: IntegrationTenantService
-	) {}
+	) { }
 
 	public async execute(command: TaskCreateCommand): Promise<ITask> {
 		try {
@@ -68,7 +68,7 @@ export class TaskCreateHandler implements ICommandHandler<TaskCreateCommand> {
 				if (settings && settings.installation_id) {
 					const installationId = settings.installation_id;
 
-					this._githubService.openIssue({
+					this._githubSyncService.issuesOpened({
 						title: input.title,
 						body: input.description,
 						installationId,

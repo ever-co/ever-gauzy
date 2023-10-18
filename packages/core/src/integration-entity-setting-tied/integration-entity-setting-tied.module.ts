@@ -14,15 +14,24 @@ import { UserModule } from './../user/user.module';
 			{
 				path: '/integration-entity-setting-tied',
 				module: IntegrationEntitySettingTiedModule,
-			},
+			}
 		]),
-		TypeOrmModule.forFeature([IntegrationEntitySettingTied]),
+		TypeOrmModule.forFeature([
+			IntegrationEntitySettingTied
+		]),
 		forwardRef(() => TenantModule),
 		forwardRef(() => UserModule),
-		CqrsModule,
+		CqrsModule
 	],
-	controllers: [IntegrationEntitySettingTiedController],
-	providers: [IntegrationEntitySettingTiedService],
-	exports: [TypeOrmModule, IntegrationEntitySettingTiedService],
+	controllers: [
+		IntegrationEntitySettingTiedController
+	],
+	providers: [
+		IntegrationEntitySettingTiedService
+	],
+	exports: [
+		TypeOrmModule,
+		IntegrationEntitySettingTiedService
+	],
 })
-export class IntegrationEntitySettingTiedModule {}
+export class IntegrationEntitySettingTiedModule { }

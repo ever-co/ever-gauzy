@@ -1,12 +1,5 @@
-import {
-	BadRequestException,
-	HttpException,
-	HttpStatus,
-	Injectable,
-	Logger,
-} from '@nestjs/common';
+import { BadRequestException, HttpException, HttpStatus, Injectable, Logger } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
-import { OctokitService } from '@gauzy/integration-github';
 import { HttpService } from '@nestjs/axios';
 import { firstValueFrom, switchMap } from 'rxjs';
 import { environment } from '@gauzy/config';
@@ -17,16 +10,13 @@ import {
 	IOAuthAppInstallInput,
 	IntegrationEntity,
 	IntegrationEnum,
-	SYNC_TAG_GITHUB,
+	SYNC_TAG_GITHUB
 } from '@gauzy/contracts';
 import { RequestContext } from 'core/context';
 import { IntegrationTenantUpdateOrCreateCommand } from 'integration-tenant/commands';
 import { IntegrationService } from 'integration/integration.service';
 import { GITHUB_ACCESS_TOKEN_URL } from './github.config';
-import {
-	DEFAULT_ENTITY_SETTINGS,
-	ISSUE_TIED_ENTITIES,
-} from './github-entity-settings';
+import { DEFAULT_ENTITY_SETTINGS, ISSUE_TIED_ENTITIES, } from './github-entity-settings';
 const { github } = environment;
 
 @Injectable()
@@ -36,29 +26,8 @@ export class GithubService {
 	constructor(
 		private readonly _http: HttpService,
 		private readonly _commandBus: CommandBus,
-		private readonly _integrationService: IntegrationService,
-		private readonly _octokitService: OctokitService
-	) {}
-
-	async openIssue({
-		title,
-		body,
-		externalRepositoryId,
-		installationId,
-		labels,
-	}) {
-		await this._octokitService.openIssue({
-			title,
-			body,
-			repoId: externalRepositoryId,
-			installationId,
-			labels,
-		});
-	}
-
-	async editIssue({ issueNumber, title, body, owner, repo, installationId }) {
-		console.log({ issueNumber, title, body, owner, repo, installationId });
-	}
+		private readonly _integrationService: IntegrationService
+	) { }
 
 	/**
 	 * Adds a GitHub App installation by validating input data, fetching an access token, and creating integration tenant settings.
@@ -73,45 +42,38 @@ export class GithubService {
 		try {
 			// Validate the input data (You can use class-validator for validation)
 			if (!input || !input.installation_id || !input.setup_action) {
-				throw new HttpException(
-					'Invalid github input data',
-					HttpStatus.BAD_REQUEST
-				);
+				throw new HttpException('Invalid github input data', HttpStatus.BAD_REQUEST);
 			}
 
 			const tenantId = RequestContext.currentTenantId() || input.tenantId;
 			const { installation_id, setup_action, organizationId } = input;
 
 			/** Find the GitHub integration */
-			const integration = await this._integrationService.findOneByOptions(
-				{
-					where: {
-						provider: IntegrationEnum.GITHUB,
-					},
+			const integration = await this._integrationService.findOneByOptions({
+				where: {
+					provider: IntegrationEnum.GITHUB,
 				}
-			);
+			});
 
 			const tiedEntities = ISSUE_TIED_ENTITIES.map((entity) => ({
 				...entity,
 				organizationId,
-				tenantId,
+				tenantId
 			}));
 
-			const entitySettings = DEFAULT_ENTITY_SETTINGS.map(
-				(settingEntity) => {
-					if (settingEntity.entity === IntegrationEntity.ISSUE) {
-						return {
-							...settingEntity,
-							tiedEntities,
-						};
-					}
+			const entitySettings = DEFAULT_ENTITY_SETTINGS.map((settingEntity) => {
+				if (settingEntity.entity === IntegrationEntity.ISSUE) {
 					return {
 						...settingEntity,
-						organizationId,
-						tenantId,
+						tiedEntities,
 					};
 				}
-			);
+				return {
+					...settingEntity,
+					organizationId,
+					tenantId,
+				};
+			});
 
 			return await this._commandBus.execute(
 				new IntegrationTenantUpdateOrCreateCommand(
@@ -131,13 +93,11 @@ export class GithubService {
 						entitySettings: entitySettings,
 						settings: [
 							{
-								settingsName:
-									GithubPropertyMapEnum.INSTALLATION_ID,
+								settingsName: GithubPropertyMapEnum.INSTALLATION_ID,
 								settingsValue: installation_id,
 							},
 							{
-								settingsName:
-									GithubPropertyMapEnum.SETUP_ACTION,
+								settingsName: GithubPropertyMapEnum.SETUP_ACTION,
 								settingsValue: setup_action,
 							},
 							{
@@ -153,13 +113,8 @@ export class GithubService {
 				)
 			);
 		} catch (error) {
-			this.logger.error(
-				`Error while creating ${IntegrationEnum.GAUZY_AI} integration settings`,
-				error?.message
-			);
-			throw new Error(
-				`Failed to add ${IntegrationEnum.GAUZY_AI} App Installation`
-			);
+			this.logger.error(`Error while creating ${IntegrationEnum.GITHUB} integration settings`, error?.message);
+			throw new Error(`Failed to add ${IntegrationEnum.GITHUB} App Installation`);
 		}
 	}
 
@@ -170,119 +125,92 @@ export class GithubService {
 	 * @returns A promise that resolves with the integration tenant data.
 	 * @throws {HttpException} If input data is invalid or if any step of the process fails.
 	 */
-	async oAuthEndpointAuthorization(
-		input: IOAuthAppInstallInput
-	): Promise<IIntegrationTenant> {
+	async oAuthEndpointAuthorization(input: IOAuthAppInstallInput): Promise<IIntegrationTenant> {
 		try {
 			// Validate the input data (You can use class-validator for validation)
 			if (!input || !input.code) {
-				throw new HttpException(
-					'Invalid input data',
-					HttpStatus.BAD_REQUEST
-				);
+				throw new HttpException('Invalid input data', HttpStatus.BAD_REQUEST);
 			}
 
 			const tenantId = RequestContext.currentTenantId() || input.tenantId;
 			const { code, organizationId } = input;
 
 			/** Find the GitHub integration */
-			const integration = await this._integrationService.findOneByOptions(
-				{
-					where: {
-						provider: IntegrationEnum.GITHUB,
-					},
+			const integration = await this._integrationService.findOneByOptions({
+				where: {
+					provider: IntegrationEnum.GITHUB
 				}
-			);
+			});
 
 			const urlParams = new URLSearchParams();
 			urlParams.append('client_id', github.clientId);
 			urlParams.append('client_secret', github.clientSecret);
 			urlParams.append('code', code);
 
-			const tokens$ = this._http
-				.post(GITHUB_ACCESS_TOKEN_URL, urlParams, {
-					headers: {
-						accept: 'application/json',
-					},
-				})
-				.pipe(
-					switchMap(async ({ data }) => {
-						if (!data.error) {
-							// Token retrieval was successful, return the token data
-							return await this._commandBus.execute(
-								new IntegrationTenantUpdateOrCreateCommand(
-									{
-										name: IntegrationEnum.GITHUB,
-										integration: {
-											provider: IntegrationEnum.GITHUB,
-										},
-										tenantId,
-										organizationId,
+			const tokens$ = this._http.post(GITHUB_ACCESS_TOKEN_URL, urlParams, {
+				headers: {
+					accept: 'application/json',
+				},
+			}).pipe(
+				switchMap(async ({ data }) => {
+					if (!data.error) {
+						// Token retrieval was successful, return the token data
+						return await this._commandBus.execute(
+							new IntegrationTenantUpdateOrCreateCommand(
+								{
+									name: IntegrationEnum.GITHUB,
+									integration: {
+										provider: IntegrationEnum.GITHUB,
 									},
-									{
-										name: IntegrationEnum.GITHUB,
-										integration,
+									tenantId,
+									organizationId,
+								},
+								{
+									name: IntegrationEnum.GITHUB,
+									integration,
+									tenantId,
+									organizationId,
+									entitySettings: [],
+									settings: [
+										{
+											settingsName: GithubPropertyMapEnum.ACCESS_TOKEN,
+											settingsValue: data.access_token
+										},
+										{
+											settingsName: GithubPropertyMapEnum.EXPIRES_IN,
+											settingsValue: data.expires_in.toString()
+										},
+										{
+											settingsName: GithubPropertyMapEnum.REFRESH_TOKEN,
+											settingsValue: data.refresh_token
+										},
+										{
+											settingsName: GithubPropertyMapEnum.REFRESH_TOKEN_EXPIRES_IN,
+											settingsValue: data.refresh_token_expires_in.toString()
+										},
+										{
+											settingsName: GithubPropertyMapEnum.TOKEN_TYPE,
+											settingsValue: data.token_type
+										},
+									].map((setting) => ({
+										...setting,
 										tenantId,
 										organizationId,
-										entitySettings: [],
-										settings: [
-											{
-												settingsName:
-													GithubPropertyMapEnum.ACCESS_TOKEN,
-												settingsValue:
-													data.access_token,
-											},
-											{
-												settingsName:
-													GithubPropertyMapEnum.EXPIRES_IN,
-												settingsValue:
-													data.expires_in.toString(),
-											},
-											{
-												settingsName:
-													GithubPropertyMapEnum.REFRESH_TOKEN,
-												settingsValue:
-													data.refresh_token,
-											},
-											{
-												settingsName:
-													GithubPropertyMapEnum.REFRESH_TOKEN_EXPIRES_IN,
-												settingsValue:
-													data.refresh_token_expires_in.toString(),
-											},
-											{
-												settingsName:
-													GithubPropertyMapEnum.TOKEN_TYPE,
-												settingsValue: data.token_type,
-											},
-										].map((setting) => ({
-											...setting,
-											tenantId,
-											organizationId,
-										})),
-									}
-								)
-							);
-						} else {
-							// Token retrieval failed, Throw an error to handle the failure
-							throw new BadRequestException(
-								'Token retrieval failed',
-								data
-							);
-						}
-					})
-				);
+									})),
+								}
+							)
+						);
+					} else {
+						// Token retrieval failed, Throw an error to handle the failure
+						throw new BadRequestException('Token retrieval failed', data);
+					}
+				})
+			);
 			return await firstValueFrom(tokens$);
 		} catch (error) {
 			// Handle errors and return an appropriate error response
-			this.logger.error(
-				'Error while creating GitHub integration settings',
-				error.message
-			);
-			throw new HttpException(
-				`Failed to add GitHub App Installation: ${error.message}`,
-				HttpStatus.BAD_REQUEST
-			);
+			this.logger.error('Error while creating GitHub integration settings', error.message);
+			throw new HttpException(`Failed to add GitHub App Installation: ${error.message}`, HttpStatus.BAD_REQUEST);
 		}
 	}
 }

@@ -358,4 +358,23 @@ export class GithubSyncService {
             labels
         }));
     }
+
+    public async issuesOpened({
+        title,
+        body,
+        externalRepositoryId,
+        installationId,
+        labels,
+    }) {
+        await this._octokitService.openIssue(installationId, {
+            title,
+            body,
+            repoId: externalRepositoryId,
+            labels
+        });
+    }
+
+    async issuesEdited({ issueNumber, title, body, owner, repo, installationId }) {
+        console.log({ issueNumber, title, body, owner, repo, installationId });
+    }
 }

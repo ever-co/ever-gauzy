@@ -23,8 +23,16 @@ import { IntegrationMap } from './integration-map.entity';
 		TagModule,
 		CqrsModule,
 	],
-	controllers: [IntegrationMapController],
-	providers: [IntegrationMapService, ...CommandHandlers],
-	exports: [TypeOrmModule, IntegrationMapService],
+	controllers: [
+		IntegrationMapController
+	],
+	providers: [
+		IntegrationMapService,
+		...CommandHandlers
+	],
+	exports: [
+		TypeOrmModule,
+		IntegrationMapService
+	],
 })
-export class IntegrationMapModule {}
+export class IntegrationMapModule { }
