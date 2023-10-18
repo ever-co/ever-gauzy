@@ -33,6 +33,7 @@ import { GithubSyncService } from './github-sync.service';
 		forwardRef(() => IntegrationModule),
 		forwardRef(() => IntegrationTenantModule),
 		forwardRef(() => IntegrationSettingModule),
+		CqrsModule,
 	],
 	controllers: [
 		GitHubAuthorizationController,

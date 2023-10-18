@@ -476,10 +476,10 @@ export class TaskService extends TenantAwareCrudService<Task> {
 			query.andWhere(
 				new Brackets((qb: WhereExpressionBuilder) => {
 					qb.andWhere(`"${query.alias}"."organizationId" = :organizationId`, {
-						organizationId,
+						organizationId
 					});
 					qb.andWhere(`"${query.alias}"."tenantId" = :tenantId`, {
-						tenantId,
+						tenantId
 					});
 				})
 			);
@@ -487,7 +487,7 @@ export class TaskService extends TenantAwareCrudService<Task> {
 			// Filter by project (if provided)
 			if (isNotEmpty(projectId)) {
 				query.andWhere(`"${query.alias}"."projectId" = :projectId`, {
-					projectId,
+					projectId
 				});
 			} else {
 				query.andWhere(`"${query.alias}"."projectId" IS NULL`);
