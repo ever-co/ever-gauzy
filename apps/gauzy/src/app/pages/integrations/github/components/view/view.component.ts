@@ -156,6 +156,11 @@ export class GithubViewComponent extends TranslationBaseComponent implements Aft
 				title: this.getTranslation('INTEGRATIONS.SETTINGS'),
 				icon: 'settings-2-outline'
 			},
+			{
+				title: this.getTranslation('INTEGRATIONS.RE_INTEGRATE'),
+				icon: 'text-outline',
+				link: `pages/integrations/github/setup/wizard/regenerate`
+			},
 			// Add more menu items as needed
 		];
 	}
