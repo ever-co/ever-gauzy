@@ -457,7 +457,10 @@
 			"UPWORK_ORGANIZATION_ID": "Upwork Organization ID",
 			"UPWORK_ORGANIZATION_NAME": "Upwork Organization Name",
 			"UPWORK_ID": "Upwork ID",
-			"LINKEDIN_ID": "LinkedIn ID"
+			"LINKEDIN_ID": "LinkedIn ID",
+			"AUTO_SYNC_TASKS": "Auto-sync tasks",
+			"AUTO_SYNC_TASKS_BASED_ON_LABEL": "Is tasks Auto-sync based on Label?",
+			"AUTO_SYNC_TAG": "Label"
 		},
 		"PLACEHOLDERS": {
 			"NAME": "Name",
@@ -645,7 +648,10 @@
 			"UPWORK_ORGANIZATION_ID": "Upwork Organization ID",
 			"UPWORK_ORGANIZATION_NAME": "Upwork Organization Name",
 			"UPWORK_ID": "Upwork ID",
-			"LINKEDIN_ID": "LinkedIn ID"
+			"LINKEDIN_ID": "LinkedIn ID",
+			"AUTO_SYNC_TASKS": "Auto Sync Tasks",
+			"AUTO_SYNC_TASKS_BASED_ON_LABEL": "Auto-sync Tasks On Label",
+			"AUTO_SYNC_TAG": "Select Auto-sync Label"
 		},
 		"RATES": {
 			"DEFAULT_RATE": "Default Rate",
@@ -1820,6 +1826,7 @@
 		"ARCHIVED": "Archived",
 		"LOCATION": "Location",
 		"SETTINGS": "Settings",
+		"AUTOMATION": "Automations",
 		"REGISTER_AS_EMPLOYEE": "Register as Employee",
 		"TEAMS": "Teams",
 		"TEAM_NAME": "{{ name }} Team",
@@ -3601,7 +3608,8 @@
 				"REMOVE_PROJECT": "Project '{{ name }}' was removed",
 				"INVALID_PROJECT_NAME": "Please fill in the name of your project",
 				"VISIBILITY": "Now project is {{ name }} ",
-				"SYNC_REPOSITORY": "Repository '{{ repository }}' sync with '{{ project }}'"
+				"SYNC_REPOSITORY": "Repository '{{ repository }}' sync with '{{ project }}'",
+				"AUTO_SYNC_SETTING": "Auto Sync Setting for Project '{{ project }}' was saved"
 			},
 			"EDIT_ORGANIZATIONS_TEAM": {
 				"ADD_NEW_TEAM": "Team '{{ name }}' was added",

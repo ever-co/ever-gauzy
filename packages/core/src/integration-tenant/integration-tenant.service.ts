@@ -6,6 +6,7 @@ import {
 	IIntegrationEntitySetting,
 	IIntegrationSetting,
 	IIntegrationTenant,
+	IIntegrationTenantCreateInput,
 	IIntegrationTenantFindInput,
 	IntegrationEnum
 } from '@gauzy/contracts';
@@ -23,12 +24,12 @@ export class IntegrationTenantService extends TenantAwareCrudService<Integration
 	}
 
 	/**
-	 *
-	 * @param input
-	 * @returns
+	 * Create a new integration tenant with the provided input.
+	 * @param input The data for creating the integration tenant.
+	 * @returns A promise that resolves to the created integration tenant.
 	 */
 	async create(
-		input: IIntegrationTenant
+		input: IIntegrationTenantCreateInput
 	): Promise<IIntegrationTenant> {
 		try {
 			const tenantId = RequestContext.currentTenantId() || input.tenantId;
