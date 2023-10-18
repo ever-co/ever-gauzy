@@ -53,22 +53,24 @@ export class OctokitService {
 	/**
 	 * Get GitHub metadata for a specific installation.
 	 *
-	 * @param installation_id The installation ID for the GitHub App.
+	 * @param installationId The installation ID for the GitHub App.
 	 * @returns {Promise<OctokitResponse<any>>} A promise that resolves with the GitHub metadata.
 	 * @throws {Error} If the request to fetch metadata fails.
 	 */
-	public async getInstallationMetadata(installation_id: number): Promise<OctokitResponse<any>> {
+	public async getInstallationMetadata(installationId: number): Promise<OctokitResponse<any>> {
 		if (!this.app) {
 			throw new Error('Octokit instance is not available.');
 		}
 		try {
 			// Get an Octokit instance for the installation
-			const octokit = await this.app.getInstallationOctokit(installation_id);
-			const endpoint = `GET /app/installations/{installation_id}`;
+			const octokit = await this.app.getInstallationOctokit(installationId);
+
+			// Make the request to fetch installation metadata
+			const endpoint = `GET /app/installations/{installationId}`;
 
 			// Send a request to the GitHub API to get installation metadata
 			return await octokit.request(endpoint, {
-				installation_id,
+				installationId,
 				headers: {
 					'X-GitHub-Api-Version': GITHUB_API_VERSION,
 				},
@@ -82,24 +84,26 @@ export class OctokitService {
 	/**
 	 * Get GitHub repositories for a specific installation.
 	 *
-	 * @param installation_id The installation ID for the GitHub App.
+	 * @param installationId The installation ID for the GitHub App.
 	 * @returns {Promise<OctokitResponse<any>>} A promise that resolves with the GitHub repositories.
 	 * @throws {Error} If the request to fetch repositories fails.
 	 */
 	public async getRepositories(
-		installation_id: number
+		installationId: number
 	): Promise<OctokitResponse<any>> {
 		if (!this.app) {
 			throw new Error('Octokit instance is not available.');
 		}
 		try {
 			// Get an Octokit instance for the installation
-			const octokit = await this.app.getInstallationOctokit(installation_id);
+			const octokit = await this.app.getInstallationOctokit(installationId);
+
+			// Define the endpoint for fetching installation repositories
 			const endpoint = `GET /installation/repositories`;
 
 			// Send a request to the GitHub API to get repositories
 			return await octokit.request(endpoint, {
-				installation_id,
+				installationId,
 				headers: {
 					'X-GitHub-Api-Version': GITHUB_API_VERSION,
 				},
@@ -113,14 +117,14 @@ export class OctokitService {
 	/**
 	 * Fetch GitHub repository issues for a given installation, owner, and repository.
 	 *
-	 * @param {number} installation_id - The installation ID for the GitHub app.
+	 * @param {number} installationId - The installation ID for the GitHub app.
 	 * @param {Object} options - Options object with 'owner' and 'repo' properties.
 	 * @param {string} options.owner - The owner (username or organization) of the repository.
 	 * @param {string} options.repo - The name of the repository.
 	 * @returns {Promise<OctokitResponse<any>>} A promise that resolves to the response from the GitHub API.
 	 * @throws {Error} If the request to the GitHub API fails.
 	 */
-	public async getRepositoryIssues(installation_id: number, {
+	public async getRepositoryIssues(installationId: number, {
 		owner,
 		repo
 	}: {
@@ -132,13 +136,15 @@ export class OctokitService {
 		}
 		try {
 			// Get an Octokit instance for the installation
-			const octokit = await this.app.getInstallationOctokit(installation_id);
+			const octokit = await this.app.getInstallationOctokit(installationId);
+
+			// Define the endpoint for fetching repository issues
 			const endpoint = `GET /repos/{owner}/{repo}/issues`;
 
 			// Send a request to the GitHub API to get repository issues
 			return await octokit.request(endpoint, {
-				owner: owner,
-				repo: repo,
+				owner,
+				repo,
 				headers: {
 					'X-GitHub-Api-Version': GITHUB_API_VERSION,
 				},
@@ -152,7 +158,7 @@ export class OctokitService {
 	/**
 	 * Fetch a GitHub repository issue by issue number for a given installation, owner, and repository.
 	 *
-	 * @param installation_id - The installation ID for the GitHub app.
+	 * @param installationId - The installation ID for the GitHub app.
 	 * @param options - Options object with 'owner,' 'repo,' and 'issue_number' properties.
 	 * @param options.owner - The owner (username or organization) of the repository.
 	 * @param options.repo - The name of the repository.
@@ -160,7 +166,7 @@ export class OctokitService {
 	 * @returns A promise that resolves to the response from the GitHub API.
 	 * @throws If the request to the GitHub API fails.
 	 */
-	public async getIssueByIssueNumber(installation_id: number, {
+	public async getIssueByIssueNumber(installationId: number, {
 		owner,
 		repo,
 		issue_number
@@ -174,13 +180,15 @@ export class OctokitService {
 		}
 		try {
 			// Get an Octokit instance for the installation
-			const octokit = await this.app.getInstallationOctokit(installation_id);
+			const octokit = await this.app.getInstallationOctokit(installationId);
+
+			// Define the endpoint for fetching the issue by its number
 			const endpoint = `GET /repos/{owner}/{repo}/issues/{issue_number}`;
 
 			return await octokit.request(endpoint, {
-				owner: owner,
-				repo: repo,
-				issue_number: issue_number,
+				owner,
+				repo,
+				issue_number,
 				headers: {
 					'X-GitHub-Api-Version': GITHUB_API_VERSION,
 				},
@@ -197,14 +205,14 @@ export class OctokitService {
 	 * This function retrieves the labels assigned to a GitHub issue based on its unique issue number. It sends a request
 	 * to the GitHub API to fetch label information related to the specified issue in a GitHub repository.
 	 *
-	 * @param installation_id - The installation ID for the GitHub app.
+	 * @param installationId - The installation ID for the GitHub app.
 	 * @param owner - The owner (username or organization) of the GitHub repository.
 	 * @param repo - The name of the GitHub repository.
 	 * @param issue_number - The unique issue number identifying the GitHub issue.
 	 * @returns A promise that resolves to the response from the GitHub API containing labels associated with the issue.
 	 * @throws {Error} If the request to the GitHub API fails or if the Octokit instance is unavailable.
 	 */
-	public async getLabelsByIssueNumber(installation_id: number, {
+	public async getLabelsByIssueNumber(installationId: number, {
 		owner,
 		repo,
 		issue_number
@@ -218,13 +226,15 @@ export class OctokitService {
 		}
 		try {
 			// Get an Octokit instance for the installation
-			const octokit = await this.app.getInstallationOctokit(installation_id);
+			const octokit = await this.app.getInstallationOctokit(installationId);
+
+			// Define the endpoint for fetching issue labels
 			const endpoint = `GET /repos/{owner}/{repo}/issues/{issue_number}/labels`;
 
 			return await octokit.request(endpoint, {
-				owner: owner,
-				repo: repo,
-				issue_number: issue_number,
+				owner,
+				repo,
+				issue_number,
 				headers: {
 					'X-GitHub-Api-Version': GITHUB_API_VERSION,
 				},
@@ -235,35 +245,40 @@ export class OctokitService {
 		}
 	}
 
-	public async openIssue(installation_id: number, {
+	/**
+	 * Open a new issue on a GitHub repository.
+	 *
+	 * @param installationId - The GitHub installation ID.
+	 * @param owner - The owner of the repository.
+	 * @param repo - The repository name.
+	 * @param title - The title of the issue.
+	 * @param body - The body of the issue.
+	 * @param labels - An array of labels for the issue.
+	 * @returns A promise that resolves to the response from GitHub.
+	 */
+	public async openIssue(installationId: number, {
+		repo,
+		owner,
 		title,
 		body,
 		labels,
-		repoId
-	}: any): Promise<OctokitResponse<any>> {
+	}): Promise<OctokitResponse<any>> {
 		if (!this.app) {
 			throw new Error('Octokit instance is not available.');
 		}
 		try {
 			// Get an Octokit instance for the installation
-			const octokit = await this.app.getInstallationOctokit(installation_id);
+			const octokit = await this.app.getInstallationOctokit(installationId);
 
-			const repositories = await this.getRepositories(installation_id);
-			const repository = repositories.data.repositories.find(
-				(item) => item.id === repoId
-			);
-			if (!repository) {
-				return;
-			}
-			// Get an Octokit instance for the installation
+			// Define the endpoint for creating an issue
 			const endpoint = `POST /repos/{owner}/{repo}/issues`;
 
 			return await octokit.request(endpoint, {
 				title,
 				body,
 				labels,
-				owner: repository.owner.login,
-				repo: repository.name,
+				owner,
+				repo,
 				headers: {
 					'X-GitHub-Api-Version': GITHUB_API_VERSION,
 				},

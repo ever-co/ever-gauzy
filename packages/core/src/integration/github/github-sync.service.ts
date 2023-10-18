@@ -380,19 +380,37 @@ export class GithubSyncService {
         }));
     }
 
-    public async issuesOpened({
+    /**
+     * Open a new issue on a GitHub repository.
+     *
+     * @param installationId - The GitHub installation ID.
+     * @param repo - The repository name.
+     * @param owner - The owner of the repository.
+     * @param title - The title of the issue.
+     * @param body - The body of the issue.
+     * @param labels - An array of labels for the issue.
+     * @returns A promise that resolves to the response from GitHub.
+     */
+    public async openIssue(installationId: number, {
+        repo,
+        owner,
         title,
         body,
-        externalRepositoryId,
-        installation_id,
         labels,
     }) {
-        await this._octokitService.openIssue(installation_id, {
-            title,
-            body,
-            repoId: externalRepositoryId,
-            labels
-        });
+        try {
+            // Delegate the responsibility of opening the issue to the octokit service
+            await this._octokitService.openIssue(installationId, {
+                repo,
+                owner,
+                title,
+                body,
+                labels
+            });
+        } catch (error) {
+            // Handle errors and return an appropriate error response
+            this.logger.error('Error while opening an issue in GitHub', error.message);
+        }
     }
 
     async issuesEdited({ issueNumber, title, body, owner, repo, installationId }) {

@@ -1,18 +1,17 @@
 import { ICommandHandler, CommandHandler, CommandBus } from '@nestjs/cqrs';
 import { IntegrationEnum } from '@gauzy/contracts';
 import { RequestContext } from 'core/context';
-import { IntegrationTenantService } from 'integration-tenant/integration-tenant.service';
+import { arrayToObject } from 'core/utils';
+import { IntegrationTenantGetCommand } from 'integration-tenant/commands';
 import { GithubSyncService } from '../../github-sync.service';
 import { GithubTaskOpenedCommand } from '../task.opened.command';
-import { IntegrationTenantGetCommand } from 'integration-tenant/commands';
 
 @CommandHandler(GithubTaskOpenedCommand)
 export class GithubTaskOpenedCommandHandler implements ICommandHandler<GithubTaskOpenedCommand> {
 
 	constructor(
 		private readonly _commandBus: CommandBus,
-		private readonly _githubSyncService: GithubSyncService,
-		private readonly _integrationTenantService: IntegrationTenantService
+		private readonly _githubSyncService: GithubSyncService
 	) { }
 
 	/**
@@ -21,8 +20,8 @@ export class GithubTaskOpenedCommandHandler implements ICommandHandler<GithubTas
 	 * @param command - The `GithubTaskOpenedCommand` containing the task data to be processed.
 	 */
 	async execute(command: GithubTaskOpenedCommand) {
-		const { options } = command;
 		try {
+			const { task, options } = command;
 			const tenantId = RequestContext.currentTenantId() || options.tenantId;
 			const organizationId = options.organizationId;
 
@@ -45,14 +44,22 @@ export class GithubTaskOpenedCommandHandler implements ICommandHandler<GithubTas
 					}
 				})
 			);
-
 			if (!!integration && !!integration.settings) {
-
+				// Convert settings array to an object
+				const settings = arrayToObject(integration.settings, 'settingsName', 'settingsValue');
+				const installation_id = settings['installation_id'];
+				if (!!installation_id) {
+					const issue = {
+						title: task.title,
+						body: task.description,
+						labels: task.tags
+					};
+					console.log(issue);
+					// await this._githubSyncService.openIssue(installation_id, issue);
+				}
 			}
-
-			console.log({ integration });
 		} catch (error) {
-			console.log('Error while retrieving github integration: %s', options);
+			console.log('Error while retrieving github integration: %s', error?.message);
 		}
 	}
 }
