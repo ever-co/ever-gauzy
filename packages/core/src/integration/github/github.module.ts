@@ -5,7 +5,8 @@ import { TenantModule } from 'tenant/tenant.module';
 import { UserModule } from 'user/user.module';
 import { IntegrationModule } from 'integration/integration.module';
 import { IntegrationTenantModule } from 'integration-tenant/integration-tenant.module';
-import { IntegrationMapModule } from 'integration-map/integration-map.module';
+import { IntegrationSettingModule } from 'integration-setting/integration-setting.module';
+import { OrganizationProjectModule } from 'organization-project/organization-project.module';
 import { GitHubAuthorizationController } from './github-authorization.controller';
 import { GitHubIntegrationController } from './github-integration.controller';
 import { GitHubController } from './github.controller';
@@ -21,10 +22,11 @@ import { GithubSyncService } from './github-sync.service';
 		HttpModule,
 		TenantModule,
 		UserModule,
-		CqrsModule,
+		forwardRef(() => OrganizationProjectModule),
 		forwardRef(() => IntegrationModule),
 		forwardRef(() => IntegrationTenantModule),
-		forwardRef(() => IntegrationMapModule),
+		forwardRef(() => IntegrationSettingModule),
+		CqrsModule
 	],
 	controllers: [
 		GitHubAuthorizationController,

@@ -3,6 +3,7 @@ import { Probot } from 'probot';
 import SmeeClient from 'smee-client';
 import { Octokit } from '@octokit/rest';
 import { createAppAuth } from '@octokit/auth-app';
+import * as chalk from 'chalk';
 import { OctokitConfig, ProbotConfig } from './probot.types';
 
 const GITHUB_API_URL = 'https://api.github.com';
@@ -30,6 +31,7 @@ export const parseConfig = (config: ProbotConfig): Record<string, any> => ({
  */
 export const createProbot = (config: ProbotConfig): Probot => {
 	const parsedConfig = parseConfig(config);
+	console.log(chalk.magenta(`Probot Configuration ${JSON.stringify(parsedConfig)}`));
 	return new Probot({
 		...parsedConfig, // Spread the parsed configuration properties
 	});

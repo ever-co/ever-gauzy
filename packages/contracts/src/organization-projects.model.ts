@@ -21,7 +21,14 @@ export interface IRelationalOrganizationProject {
 	projectId?: IOrganizationProject['id'];
 }
 
-export interface IOrganizationProject extends IBaseEntityWithMembers, IRelationalImageAsset, IRelationalOrganizationContact {
+export interface IOrganizationProjectSetting extends IBasePerTenantAndOrganizationEntityModel {
+	externalRepositoryId?: number;
+	isTasksAutoSync?: boolean;
+	isTasksAutoSyncOnLabel?: boolean;
+	syncTag?: string;
+}
+
+export interface IOrganizationProject extends IBaseEntityWithMembers, IRelationalImageAsset, IRelationalOrganizationContact, IOrganizationProjectSetting {
 	name: string;
 	startDate?: Date;
 	endDate?: Date;
@@ -99,8 +106,9 @@ export interface IOrganizationProjectCreateInput extends IBasePerTenantAndOrgani
 	taskListType?: TaskListTypeEnum;
 }
 
-export interface IOrganizationProjectUpdateInput extends IOrganizationProjectCreateInput {
+export interface IOrganizationProjectUpdateInput extends IOrganizationProjectCreateInput, IOrganizationProjectSetting {
 	id?: IOrganizationContact['id'];
+
 }
 
 export interface IOrganizationProjectStoreState {

@@ -70,7 +70,7 @@ services:
             - ./.deploy/jitsu/server/data/logs:/home/eventnative/data/logs
             - ./.deploy/jitsu/server/data/logs/events:/home/eventnative/data/logs/events
             - /var/run/docker.sock:/var/run/docker.sock
-            - jitsu_data:/home/eventnative/data/airbyte
+            - jitsu_workspace:/home/eventnative/data/airbyte
         restart: always
         ports:
             - '8000:8000'
@@ -228,8 +228,14 @@ services:
             JITSU_SERVER_URL: ${JITSU_SERVER_URL:-}
             JITSU_SERVER_WRITE_KEY: ${JITSU_SERVER_WRITE_KEY:-}
             GAUZY_GITHUB_CLIENT_ID: ${GAUZY_GITHUB_CLIENT_ID:-}
+            GAUZY_GITHUB_CLIENT_SECRET: ${GAUZY_GITHUB_CLIENT_SECRET:-}
             GAUZY_GITHUB_WEBHOOK_URL: ${GAUZY_GITHUB_WEBHOOK_URL:-}
             GAUZY_GITHUB_WEBHOOK_SECRET: ${GAUZY_GITHUB_WEBHOOK_SECRET:-}
+            GAUZY_GITHUB_APP_PRIVATE_KEY: ${GAUZY_GITHUB_APP_PRIVATE_KEY:-}
+            GAUZY_GITHUB_APP_ID: ${GAUZY_GITHUB_APP_ID:-}
+            GAUZY_GITHUB_APP_NAME: ${GAUZY_GITHUB_APP_NAME:-}
+            GAUZY_GITHUB_CALLBACK_URL: ${GAUZY_GITHUB_CALLBACK_URL:-}
+            GAUZY_GITHUB_POST_INSTALL_URL: ${GAUZY_GITHUB_POST_INSTALL_URL:-}
 
         env_file:
             - .env.compose
@@ -360,7 +366,7 @@ volumes:
     minio_data: {}
     cube_data: {}
     certificates: {}
-    jitsu_data: {}
+    jitsu_workspace: {}
 
 networks:
     overlay:

@@ -9,10 +9,11 @@ import {
 	IIntegrationTenant,
 	IOAuthAppInstallInput,
 	IntegrationEntity,
-	IntegrationEnum
+	IntegrationEnum,
+	SYNC_TAG_GITHUB
 } from '@gauzy/contracts';
 import { RequestContext } from 'core/context';
-import { IntegrationTenantFirstOrCreateCommand } from 'integration-tenant/commands';
+import { IntegrationTenantUpdateOrCreateCommand } from 'integration-tenant/commands';
 import { IntegrationService } from 'integration/integration.service';
 import { GITHUB_ACCESS_TOKEN_URL } from './github.config';
 import { DEFAULT_ENTITY_SETTINGS, ISSUE_TIED_ENTITIES } from './github-entity-settings';
@@ -81,7 +82,7 @@ export class GithubService {
 			});
 
 			return await this._commandBus.execute(
-				new IntegrationTenantFirstOrCreateCommand({
+				new IntegrationTenantUpdateOrCreateCommand({
 					name: IntegrationEnum.GITHUB,
 					integration: {
 						provider: IntegrationEnum.GITHUB
@@ -102,6 +103,10 @@ export class GithubService {
 						{
 							settingsName: GithubPropertyMapEnum.SETUP_ACTION,
 							settingsValue: setup_action
+						},
+						{
+							settingsName: GithubPropertyMapEnum.SYNC_TAG,
+							settingsValue: SYNC_TAG_GITHUB
 						}
 					].map((setting) => ({
 						...setting,
@@ -154,7 +159,7 @@ export class GithubService {
 					if (!data.error) {
 						// Token retrieval was successful, return the token data
 						return await this._commandBus.execute(
-							new IntegrationTenantFirstOrCreateCommand({
+							new IntegrationTenantUpdateOrCreateCommand({
 								name: IntegrationEnum.GITHUB,
 								integration: {
 									provider: IntegrationEnum.GITHUB

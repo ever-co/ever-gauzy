@@ -1,4 +1,4 @@
-import { HttpException, HttpStatus } from '@nestjs/common';
+import { HttpException, HttpStatus, Logger } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { ITask, ITaskUpdateInput } from '@gauzy/contracts';
 import { RequestContext } from 'core/context';
@@ -7,6 +7,8 @@ import { TaskUpdateCommand } from '../task-update.command';
 
 @CommandHandler(TaskUpdateCommand)
 export class TaskUpdateHandler implements ICommandHandler<TaskUpdateCommand> {
+	private readonly logger = new Logger('TaskUpdateHandler');
+
 	constructor(
 		private readonly _taskService: TaskService
 	) { }
@@ -51,8 +53,9 @@ export class TaskUpdateHandler implements ICommandHandler<TaskUpdateCommand> {
 				id
 			});
 		} catch (error) {
-			console.error('Error while creating/updating task:', error?.message);
+			this.logger.error(`Error while updating task: ${error.message}`, error.message);
 			throw new HttpException({ message: error?.message, error }, HttpStatus.BAD_REQUEST);
 		}
 	}
+
 }
