@@ -477,6 +477,7 @@
 															type="text"
 															placeholder="Title"
 															fullWidth
+															formControlName="title"
 														/>
 													</div>
 													<div class="col px-0 mt-3">
@@ -611,7 +612,7 @@
 		</ng-template>
 		<ng-template #gridLayout>
 			<div class="grid">
-				<ga-card-grid 
+				<ga-card-grid
 					[totalItems]="pagination?.totalItems"
 					[settings]="settingsSmartTable"
 					[source]="invoices"
