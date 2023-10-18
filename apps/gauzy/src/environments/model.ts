@@ -11,6 +11,7 @@ export interface Environment {
 	DESKTOP_APP_DOWNLOAD_LINK_LINUX?: string;
 	MOBILE_APP_DOWNLOAD_LINK?: string;
 	EXTENSION_DOWNLOAD_LINK?: string;
+	PLATFORM_LOGO_URL?: string;
 
 	COMPANY_NAME: string;
 	COMPANY_SITE: string;
