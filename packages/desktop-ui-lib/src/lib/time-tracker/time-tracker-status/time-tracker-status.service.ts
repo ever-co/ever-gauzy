@@ -38,7 +38,10 @@ export class TimeTrackerStatusService {
 	) {
 		defer(() =>
 			of<boolean>(
-				!!this._store.token && !this._store.isOffline
+				!!this._store.token &&
+					!this._store.isOffline &&
+					!!this._store.user.employeeId &&
+					!!this._store.tenantId
 			).pipe(
 				switchMap((isEmployeeLoggedIn: boolean) =>
 					isEmployeeLoggedIn
@@ -88,6 +91,9 @@ export class TimeTrackerStatusService {
 	}
 
 	public status(): Promise<ITimerStatus> {
+		if (!this._store?.tenantId || !this._store?.organizationId) {
+			return;
+		}
 		const { tenantId, organizationId } = this._store;
 		return this._timeTrackerService.getTimerStatus({
 			tenantId,
