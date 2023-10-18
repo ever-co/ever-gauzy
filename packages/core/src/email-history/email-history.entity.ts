@@ -75,5 +75,5 @@ export class EmailHistory extends TenantOrganizationBaseEntity implements IEmail
 		enum: EmailStatusEnum,
 		default: null
 	})
-	emailStatus?: EmailStatusEnum;
+	status?: EmailStatusEnum;
 }

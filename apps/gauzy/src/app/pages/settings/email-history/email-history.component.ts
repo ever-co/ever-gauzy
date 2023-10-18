@@ -1,6 +1,7 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { NbDialogService } from '@nebular/theme';
 import {
+	EmailStatusEnum,
 	IEmailHistory,
 	IEmployee,
 	IOrganization,
@@ -41,6 +42,8 @@ export class EmailHistoryComponent extends TranslationBaseComponent
 	disableLoadMore: boolean = false;
 	totalNoPage: number;
 	nextDataLoading: boolean = false;
+	EmailStatusEnum: typeof EmailStatusEnum = EmailStatusEnum
+
 
 	organizationContacts: IOrganizationContact[] = [];
 	emails: IEmailHistory[] = [];

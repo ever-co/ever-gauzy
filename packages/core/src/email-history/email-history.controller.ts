@@ -110,7 +110,6 @@ export class EmailHistoryController {
 			'Invalid input, The response body may contain clues as to what went wrong',
 	})
 	@UseGuards(TenantPermissionGuard, PermissionGuard)
-	@Permissions(PermissionsEnum.ORG_INVITE_EDIT)
 	@Post('resend')
 	@UsePipes(new ValidationPipe())
 	async resendInvite(

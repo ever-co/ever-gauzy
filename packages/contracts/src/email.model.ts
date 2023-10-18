@@ -9,7 +9,7 @@ export interface IEmailHistory extends IBasePerTenantAndOrganizationEntityModel,
 	name: string;
 	content: string;
 	email: string;
-	emailStatus?: EmailStatusEnum;
+	status?: EmailStatusEnum;
 }
 
 export interface IEmailUpdateInput extends IBasePerTenantAndOrganizationEntityModel, IRelationalUser, Partial<IRelationalEmailTemplate> {
@@ -29,7 +29,7 @@ export interface IEmailFindInput extends IBasePerTenantAndOrganizationEntityMode
 	emailTemplateId?: string;
 	email?: string;
 	isArchived?: boolean;
-	emailStatus?: EmailStatusEnum;
+	status?: EmailStatusEnum;
 }
 
 export interface DisplayEmail {

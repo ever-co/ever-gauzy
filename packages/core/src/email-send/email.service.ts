@@ -941,9 +941,7 @@ export class EmailService {
 
 	async resendEmail(input: IResendEmailInput, languageCode: LanguagesEnum) {
 
-		const originUrl = this.configService.get('clientBaseUrl') as string;
 		const { id } = input;
-
 		const emailHistory: IEmailHistory = await this.emailHistoryRepository.findOne({
 			where: {
 				id
@@ -960,50 +958,33 @@ export class EmailService {
 		const organization: IOrganization = emailHistory.organization;
 		const email: IEmailHistory['email'] = emailHistory.email;
 
-
 		const sendOptions = {
 			template: emailHistory.emailTemplate.name,
 			message: {
-				to: `${email}`
-			},
-			locals: {
-				locale: languageCode,
-				host: originUrl,
-				organizationId: organization.id,
-				tenantId: organization.tenantId,
-				organizationName: organization.name,
-				id: emailHistory.id,
-				name: emailHistory.name
+				to: `${email}`,
+				subject: emailHistory.name,
+				html: emailHistory.content
 			}
 		};
 
-		const body = {
-			templateName: sendOptions.template,
-			email: sendOptions.message.to,
-			languageCode,
-			message: '',
-			organization
-		}
+		const isEmailBlocked = !!DISALLOW_EMAIL_SERVER_DOMAIN.find(server => sendOptions.message.to.includes(server));
 
-		const isEmailBlocked = !!DISALLOW_EMAIL_SERVER_DOMAIN.find(server => body.email.includes(server));
 		if (!isEmailBlocked) {
 			try {
 				const instance = await this._emailSendService.getEmailInstance({ organizationId: organization.id, tenantId: emailHistory.tenantId });
-				const send = await instance.send(sendOptions);
-				body['message'] = send.originalMessage;
+				await instance.send(sendOptions);
+				emailHistory.status = EmailStatusEnum.SENT;
 
-				emailHistory.emailStatus = EmailStatusEnum.SENT;
 				return await this.emailHistoryRepository.save(emailHistory);
 			} catch (error) {
 				console.log(`Error while re-sending mail: %s`, error?.message);
 
-				emailHistory.emailStatus = EmailStatusEnum.FAILED;
+				emailHistory.status = EmailStatusEnum.FAILED;
 				await this.emailHistoryRepository.save(emailHistory);
 				throw new BadRequestException(`Error while re-sending mail: ${error?.message}`);
 			}
 		}
 	}
-
 
 	private async createEmailRecord(createEmailOptions: {
 		templateName: string;

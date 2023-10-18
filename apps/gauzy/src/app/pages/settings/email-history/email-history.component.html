@@ -131,21 +131,16 @@
 					</span>
 				</div>
 				<div class="email-history-archive">
-
-				<button
-				status="basic"
-				*ngIf="selectedEmail?.emailStatus"
-				outline
-				nbButton
-					size="small"
-					(click)="resend()"
-				>
-					{{ 'SETTINGS.EMAIL_HISTORY.RESEND' | translate }}
+					<button status="basic" *ngIf="
+																	selectedEmail?.status &&
+																	selectedEmail?.status == EmailStatusEnum.FAILED
+																" outline nbButton size="small" (click)="resend()">
+						{{ 'SETTINGS.EMAIL_HISTORY.RESEND' | translate }}
 					</button>
-					
+
 					<button *ngIf="selectedEmail" status="primary" outline nbButton size="small" (click)="archive()">
 						{{ 'SETTINGS.EMAIL_HISTORY.ARCHIVE' | translate }}
-						</button>
+					</button>
 					</div>
 
 				<ng-container *ngIf="selectedEmail; else emailNotSelected">
