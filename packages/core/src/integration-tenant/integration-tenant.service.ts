@@ -8,7 +8,7 @@ import {
 	IIntegrationTenant,
 	IIntegrationTenantCreateInput,
 	IIntegrationTenantFindInput,
-	IntegrationEnum
+	IntegrationEnum,
 } from '@gauzy/contracts';
 import { RequestContext } from 'core/context';
 import { TenantAwareCrudService } from 'core/crud';
@@ -38,21 +38,23 @@ export class IntegrationTenantService extends TenantAwareCrudService<Integration
 			settings = settings.map((item: IIntegrationSetting) => ({
 				...item,
 				tenantId,
-				organizationId
+				organizationId,
 			}));
 
-			entitySettings = entitySettings.map((item: IIntegrationEntitySetting) => ({
-				...item,
-				tenantId,
-				organizationId
-			}));
+			entitySettings = entitySettings.map(
+				(item: IIntegrationEntitySetting) => ({
+					...item,
+					tenantId,
+					organizationId,
+				})
+			);
 
 			return await super.create({
 				...input,
 				tenantId,
 				organizationId,
 				settings,
-				entitySettings
+				entitySettings,
 			});
 		} catch (error) {
 			console.log('Error while creating integration tenant:', error);
@@ -65,7 +67,9 @@ export class IntegrationTenantService extends TenantAwareCrudService<Integration
 	 * @param input - The input options for finding the integration tenant.
 	 * @returns The integration tenant if found, or `false` if not found or an error occurs.
 	 */
-	public async getIntegrationByOptions(input: IIntegrationTenantFindInput): Promise<IIntegrationTenant | boolean> {
+	public async getIntegrationByOptions(
+		input: IIntegrationTenantFindInput
+	): Promise<IIntegrationTenant | boolean> {
 		try {
 			const tenantId = RequestContext.currentTenantId() || input.tenantId;
 			const { organizationId, name } = input;
@@ -76,14 +80,15 @@ export class IntegrationTenantService extends TenantAwareCrudService<Integration
 					organizationId,
 					name,
 					isActive: true,
-					isArchived: false
+					isArchived: false,
 				},
 				order: {
-					updatedAt: 'DESC'
+					updatedAt: 'DESC',
 				},
 				relations: {
-					integration: true
-				}
+					integration: true,
+					settings: true,
+				},
 			});
 			return integrationTenant || false;
 		} catch (error) {
@@ -105,14 +110,17 @@ export class IntegrationTenantService extends TenantAwareCrudService<Integration
 				where: {
 					organizationId,
 					tenantId,
-					name: IntegrationEnum.GAUZY_AI
+					name: IntegrationEnum.GAUZY_AI,
 				},
 				relations: {
-					settings: true
-				}
+					settings: true,
+				},
 			});
 		} catch (error) {
-			console.log('Error while getting integration settings: %s', error?.message);
+			console.log(
+				'Error while getting integration settings: %s',
+				error?.message
+			);
 			throw new BadRequestException(error?.message);
 		}
 	}

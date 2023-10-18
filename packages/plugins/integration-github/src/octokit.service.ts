@@ -295,8 +295,7 @@ export class OctokitService {
 		title,
 		body,
 		labels,
-		owner,
-		repo,
+		repoId,
 		installationId,
 	}: any) {
 		if (!this.app) {
@@ -309,14 +308,20 @@ export class OctokitService {
 				installationId
 			);
 
-			console.log({ title, body, owner, repo, installationId });
+			const repositories = await this.getRepositories(installationId);
+			const repository = repositories.data.repositories.find(
+				(item) => item.id === repoId
+			);
+			if (!repository) {
+				return;
+			}
 
 			return await octokit.request('POST /repos/{owner}/{repo}/issues', {
 				title,
 				body,
-				// labels,
-				owner: owner,
-				repo: repo,
+				labels,
+				owner: repository.owner.login,
+				repo: repository.name,
 				headers: {
 					'X-GitHub-Api-Version': GITHUB_API_VERSION,
 				},

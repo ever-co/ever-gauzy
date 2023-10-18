@@ -40,13 +40,19 @@ export class GithubService {
 		private readonly _octokitService: OctokitService
 	) {}
 
-	async openIssue({ title, body, owner, repo, installationId }) {
+	async openIssue({
+		title,
+		body,
+		externalRepositoryId,
+		installationId,
+		labels,
+	}) {
 		await this._octokitService.openIssue({
 			title,
 			body,
-			owner,
-			repo,
+			repoId: externalRepositoryId,
 			installationId,
+			labels,
 		});
 	}
 
@@ -135,8 +141,7 @@ export class GithubService {
 								settingsValue: setup_action,
 							},
 							{
-								settingsName:
-									GithubPropertyMapEnum.SYNC_TAG_GITHUB,
+								settingsName: GithubPropertyMapEnum.SYNC_TAG,
 								settingsValue: SYNC_TAG_GITHUB,
 							},
 						].map((setting) => ({

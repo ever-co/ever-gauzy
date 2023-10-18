@@ -13,6 +13,7 @@ import { GithubModule } from './../integration/github/github.module';
 import { Task } from './task.entity';
 import { TaskService } from './task.service';
 import { TaskController } from './task.controller';
+import { IntegrationTenantModule } from './../integration-tenant/integration-tenant.module';
 
 @Module({
 	imports: [
@@ -24,6 +25,7 @@ import { TaskController } from './task.controller';
 		RoleModule,
 		EmployeeModule,
 		OrganizationProjectModule,
+		IntegrationTenantModule,
 		CqrsModule,
 	],
 	controllers: [TaskController],

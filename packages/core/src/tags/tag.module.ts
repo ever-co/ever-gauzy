@@ -13,7 +13,7 @@ import { CommandHandlers } from './commands/handlers';
 @Module({
 	imports: [
 		RouterModule.forRoutes([{ path: '/tags', module: TagModule }]),
-		TypeOrmModule.forFeature([Tag]),
+		TypeOrmModule.forFeature([Tag, IntegrationMap]),
 		forwardRef(() => TenantModule),
 		forwardRef(() => UserModule),
 		CqrsModule,

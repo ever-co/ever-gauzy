@@ -1,11 +1,13 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { HttpException, HttpStatus, Logger } from '@nestjs/common';
-import { ITask } from '@gauzy/contracts';
+import { IntegrationEnum, ITask } from '@gauzy/contracts';
 import { RequestContext } from './../../../core/context';
 import { TaskCreateCommand } from './../task-create.command';
 import { OrganizationProjectService } from './../../../organization-project/organization-project.service';
 import { TaskService } from '../../task.service';
 import { GithubService } from '../../../integration/github/github.service';
+import { IntegrationTenantService } from '../../../integration-tenant/integration-tenant.service';
+import { arrayToObject } from 'core/utils';
 
 @CommandHandler(TaskCreateCommand)
 export class TaskCreateHandler implements ICommandHandler<TaskCreateCommand> {
@@ -15,7 +17,8 @@ export class TaskCreateHandler implements ICommandHandler<TaskCreateCommand> {
 		private readonly _taskService: TaskService,
 		private readonly _organizationProjectService: OrganizationProjectService,
 
-		private readonly _githubService: GithubService
+		private readonly _githubService: GithubService,
+		private readonly _integrationTenantService: IntegrationTenantService
 	) {}
 
 	public async execute(command: TaskCreateCommand): Promise<ITask> {
@@ -44,17 +47,38 @@ export class TaskCreateHandler implements ICommandHandler<TaskCreateCommand> {
 				}
 			);
 
-			console.log('project', project);
-
 			if (project && project.externalRepositoryId) {
-				this._githubService.openIssue({
-					title: input.title,
-					body: input.description,
-					owner: 'badalkhatri0924',
-					installationId: 42942950,
-					// repo: `${project.externalRepositoryId}`,
-					repo: 'badal-ever-testing-probot',
-				});
+				const integrationTenant =
+					await this._integrationTenantService.findOneByOptions({
+						where: {
+							tenantId,
+							organizationId,
+							name: IntegrationEnum.GITHUB,
+						},
+						relations: {
+							settings: true,
+						},
+					});
+				const settings = arrayToObject(
+					integrationTenant.settings,
+					'settingsName',
+					'settingsValue'
+				);
+				// Check for integration settings and installation ID
+				if (settings && settings.installation_id) {
+					const installationId = settings.installation_id;
+
+					this._githubService.openIssue({
+						title: input.title,
+						body: input.description,
+						installationId,
+						externalRepositoryId: project.externalRepositoryId,
+						labels:
+							input?.tags && input.tags.length
+								? input.tags.map((item) => item.name)
+								: [],
+					});
+				}
 			}
 
 			return await this._taskService.create({
