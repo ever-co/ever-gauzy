@@ -18,7 +18,7 @@ export class GitHubHooksController {
      */
     @Hook(['installation.deleted'])
     async installationDeleted(context: Context) {
-        console.log({ context });
+        await this._githubHooksService.installationDeleted(context);
     }
 
     /**

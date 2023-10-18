@@ -7,6 +7,7 @@ import {
     IGithubIssueLabel,
     IGithubRepository,
     IGithubSyncIssuePayload,
+    IGithubInstallationDeletedPayload,
     IIntegrationEntitySetting,
     IIntegrationEntitySettingTied,
     IIntegrationTenant,
@@ -340,6 +341,26 @@ export class GithubSyncService {
             }
         } catch (error) {
             this.logger.error(`Failed to fetch repository: ${repository.id} integration with specific project too sync issue: ${issue.id}`);
+        }
+    }
+
+    /**
+     * Deletes a GitHub installation and its associated integration.
+     *
+     * @param payload - An object containing the installation and its associated integration.
+     */
+    public async installationDeleted(payload: IGithubInstallationDeletedPayload) {
+        try {
+            // Extract the integration ID from the provided integration object
+            const integrationId = payload.integration.id;
+            // ToDo delete sync repository with specific project
+            // const repositories = payload.repositories;
+
+            // Delete the integration associated with the installation
+            await this._integrationTenantService.delete(integrationId);
+        } catch (error) {
+            // Handle errors
+            this.logger.error(`Failed to delete GitHub integration for installation: ${payload.installation?.id}`, error);
         }
     }
 
