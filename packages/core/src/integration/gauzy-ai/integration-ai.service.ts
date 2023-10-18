@@ -2,7 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 import { IIntegrationKeySecretPairInput, IIntegrationTenant, IntegrationEnum } from '@gauzy/contracts';
 import { RequestContext } from '../../core/context';
-import { IntegrationTenantFirstOrCreateCommand } from '../../integration-tenant/commands';
+import { IntegrationTenantUpdateOrCreateCommand } from '../../integration-tenant/commands';
 import { IntegrationService } from './../../integration/integration.service';
 
 @Injectable()
@@ -36,7 +36,7 @@ export class IntegrationAIService {
 
 			/** Execute the command to create the integration tenant settings */
 			return await this._commandBus.execute(
-				new IntegrationTenantFirstOrCreateCommand(
+				new IntegrationTenantUpdateOrCreateCommand(
 					{
 						name: IntegrationEnum.GAUZY_AI,
 						integration: {
