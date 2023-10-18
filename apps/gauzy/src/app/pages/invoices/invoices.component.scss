@@ -422,6 +422,10 @@ nb-tab {
   & .col-6:nth-child(1) {
     padding-top: 15px;
     color: var(--gauzy-text-color-2);
+
+    & textarea {
+      font-weight: 400;
+    }
   }
 
   & .col-6:nth-child(2) {
@@ -441,9 +445,8 @@ nb-tab {
 
       & .history-item.history-title {
         margin-top: 10px;
-        &.history-action::first-letter {
-          text-transform: capitalize;
-        }
+        text-transform: capitalize;
+        font-weight: bold;
       }
       & .history-item.history-comment {
         margin-top: 6px;
