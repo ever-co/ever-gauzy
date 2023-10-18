@@ -24,7 +24,7 @@ export class TaskCreateHandler implements ICommandHandler<TaskCreateCommand> {
 	public async execute(command: TaskCreateCommand): Promise<ITask> {
 		try {
 			const { input } = command;
-			let { organizationId, project } = input;
+			let { organizationId, project, tags = [] } = input;
 			const tenantId = RequestContext.currentTenantId() || input.tenantId;
 
 			/** If project found then use project name as a task prefix */
@@ -73,10 +73,9 @@ export class TaskCreateHandler implements ICommandHandler<TaskCreateCommand> {
 						body: input.description,
 						installationId,
 						externalRepositoryId: project.externalRepositoryId,
-						labels:
-							input?.tags && input.tags.length
-								? input.tags.map((item) => item.name)
-								: [],
+						labels: tags.length
+							? tags.map((item) => item.name)
+							: [],
 					});
 				}
 			}
