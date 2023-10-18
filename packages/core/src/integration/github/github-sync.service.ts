@@ -363,10 +363,10 @@ export class GithubSyncService {
         title,
         body,
         externalRepositoryId,
-        installationId,
+        installation_id,
         labels,
     }) {
-        await this._octokitService.openIssue(installationId, {
+        await this._octokitService.openIssue(installation_id, {
             title,
             body,
             repoId: externalRepositoryId,

@@ -13,6 +13,7 @@ import { IntegrationModule } from 'integration/integration.module';
 import { IntegrationTenantModule } from 'integration-tenant/integration-tenant.module';
 import { IntegrationSettingModule } from 'integration-setting/integration-setting.module';
 import { OrganizationProjectModule } from 'organization-project/organization-project.module';
+import { CommandHandlers } from './commands/handlers';
 import { GitHubAuthorizationController } from './github-authorization.controller';
 import { GitHubIntegrationController } from './github-integration.controller';
 import { GitHubController } from './github.controller';
@@ -28,12 +29,11 @@ import { GithubSyncService } from './github-sync.service';
 		HttpModule,
 		forwardRef(() => TenantModule),
 		forwardRef(() => UserModule),
-		CqrsModule,
 		forwardRef(() => OrganizationProjectModule),
 		forwardRef(() => IntegrationModule),
 		forwardRef(() => IntegrationTenantModule),
 		forwardRef(() => IntegrationSettingModule),
-		CqrsModule,
+		CqrsModule
 	],
 	controllers: [
 		GitHubAuthorizationController,
@@ -48,8 +48,10 @@ import { GithubSyncService } from './github-sync.service';
 		GithubHooksService,
 		// Define middleware heres
 		GithubMiddleware,
+		// Define handlers heres
+		...CommandHandlers
 	],
-	exports: [GithubService, GithubSyncService],
+	exports: [],
 })
 export class GithubModule implements NestModule {
 	/**
