@@ -6,11 +6,11 @@ import { IntegrationTenantService } from './../../../integration-tenant/integrat
 @CommandHandler(IntegrationEntitySettingTiedUpdateCommand)
 export class IntegrationEntitySettingTiedUpdateHandler
 	implements ICommandHandler<IntegrationEntitySettingTiedUpdateCommand> {
-	
+
 	constructor(
-		private readonly integrationEntitySettingTiedService: IntegrationEntitySettingTiedService,
+		private readonly _integrationEntitySettingTiedService: IntegrationEntitySettingTiedService,
 		private readonly _integrationTenantService: IntegrationTenantService
-	) {}
+	) { }
 
 	public async execute(
 		command: IntegrationEntitySettingTiedUpdateCommand
@@ -18,6 +18,6 @@ export class IntegrationEntitySettingTiedUpdateHandler
 		const { input, integrationId } = command;
 
 		await this._integrationTenantService.findOneByIdString(integrationId);
-		return await this.integrationEntitySettingTiedService.bulkUpdateOrCreate(input);
+		return await this._integrationEntitySettingTiedService.bulkUpdateOrCreate(input);
 	}
 }
