@@ -7,7 +7,7 @@ import {
     IGithubIssueLabel,
     IGithubRepository,
     IGithubSyncIssuePayload,
-    IGithubUninstallationPayload,
+    IGithubInstallationDeletedPayload,
     IIntegrationEntitySetting,
     IIntegrationEntitySettingTied,
     IIntegrationTenant,
@@ -349,7 +349,7 @@ export class GithubSyncService {
      *
      * @param payload - An object containing the installation and its associated integration.
      */
-    public async deleteInstallation(payload: IGithubUninstallationPayload) {
+    public async installationDeleted(payload: IGithubInstallationDeletedPayload) {
         try {
             // Extract the integration ID from the provided integration object
             const integrationId = payload.integration.id;

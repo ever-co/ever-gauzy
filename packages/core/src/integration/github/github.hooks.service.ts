@@ -22,7 +22,7 @@ export class GithubHooksService {
     ) { }
 
     /**
-     * Handles the 'installationDeleted' event by deleting a GitHub installation,
+     * Handles the 'installation.deleted' event by deleting a GitHub installation,
      * its associated repositories, and the integration setting.
      *
      * @param context - The context object containing event information.
@@ -44,7 +44,7 @@ export class GithubHooksService {
             const integration = setting.integration;
 
             // Delete the GitHub integration associated with the installation and its repositories
-            await this._githubSyncService.deleteInstallation({
+            await this._githubSyncService.installationDeleted({
                 installation,
                 integration,
                 repositories
@@ -68,7 +68,7 @@ export class GithubHooksService {
             const issue = context.payload['issue'] as IGithubIssue;
             const repository = context.payload['repository'] as IGithubRepository;
 
-            /** */
+            /** Synchronizes automation issues for a GitHub installation. */
             await this.syncAutomationIssue({ installation, issue, repository });
         } catch (error) {
             this.logger.error('Failed to sync in issues and labels', error.message);
@@ -87,7 +87,7 @@ export class GithubHooksService {
             const issue = context.payload['issue'] as IGithubIssue;
             const repository = context.payload['repository'] as IGithubRepository;
 
-            /** */
+            /** Synchronizes automation issues for a GitHub installation. */
             await this.syncAutomationIssue({ installation, issue, repository });
         } catch (error) {
             this.logger.error('Failed to sync in issues and labels', error.message);
@@ -106,7 +106,7 @@ export class GithubHooksService {
             const issue = context.payload['issue'] as IGithubIssue;
             const repository = context.payload['repository'] as IGithubRepository;
 
-            /** */
+            /** Synchronizes automation issues for a GitHub installation. */
             await this.syncAutomationIssue({ installation, issue, repository });
         } catch (error) {
             this.logger.error('Failed to sync in issues and labels', error.message);

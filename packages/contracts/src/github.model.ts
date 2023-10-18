@@ -107,11 +107,7 @@ export interface IGithubAutomationIssuePayload extends IGithubAutomationBase {
     issue: IGithubIssue;
 }
 
-export interface IGithubAutomationLabelPayload extends IGithubAutomationBase {
-    label: IGithubIssueLabel;
-}
-
-export interface IGithubUninstallationPayload extends Pick<IGithubAutomationBase, 'integration'> {
+export interface IGithubInstallationDeletedPayload extends Pick<IGithubAutomationBase, 'integration'> {
     installation: IGithubInstallation;
     repositories: IGithubRepository[];
 }
