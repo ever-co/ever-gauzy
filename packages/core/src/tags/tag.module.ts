@@ -1,5 +1,5 @@
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { forwardRef, Module } from '@nestjs/common';
+import { Module } from '@nestjs/common';
 import { RouterModule } from 'nest-router';
 import { CqrsModule } from '@nestjs/cqrs';
 import { UserModule } from '../user/user.module';
@@ -12,14 +12,22 @@ import { CommandHandlers } from './commands/handlers';
 
 @Module({
 	imports: [
-		RouterModule.forRoutes([{ path: '/tags', module: TagModule }]),
-		TypeOrmModule.forFeature([Tag, IntegrationMap]),
-		forwardRef(() => TenantModule),
-		forwardRef(() => UserModule),
-		CqrsModule,
+		RouterModule.forRoutes([
+			{
+				path: '/tags',
+				module: TagModule
+			}
+		]),
+		TypeOrmModule.forFeature([
+			Tag,
+			IntegrationMap
+		]),
+		TenantModule,
+		UserModule,
+		CqrsModule
 	],
 	controllers: [TagController],
 	providers: [TagService, ...CommandHandlers],
-	exports: [TagService],
+	exports: [TagService]
 })
-export class TagModule {}
+export class TagModule { }
