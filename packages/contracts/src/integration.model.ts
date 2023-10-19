@@ -1,9 +1,5 @@
-import {
-	IBaseEntityModel,
-	IBasePerTenantAndOrganizationEntityModel
-} from './base-entity.model';
+import { IBaseEntityModel, IBasePerTenantAndOrganizationEntityModel } from './base-entity.model';
 import { ITag } from './tag.model';
-import { IGithubRepository } from './github.model';
 
 export interface IRelationalIntegrationTenant {
 	integration?: IIntegrationTenant;
@@ -85,15 +81,6 @@ export interface IIntegrationFilter {
 	filter: string;
 }
 
-export interface IIntegrationMapSyncRepository extends IIntegrationSyncedRepositoryFindInput {
-	repository: IGithubRepository;
-}
-
-export interface IIntegrationSyncedRepositoryFindInput extends Partial<IIntegrationMapSyncBase> {
-	gauzyId?: IIntegrationMap['gauzyId'];
-	entity?: IntegrationEntity;
-}
-
 /** */
 export interface IIntegrationMapSyncBase extends IBasePerTenantAndOrganizationEntityModel, IRelationalIntegrationTenant {
 	sourceId: IIntegrationMap['sourceId'];
@@ -135,6 +122,7 @@ export enum IntegrationEntity {
 	NOTE = 'Note',
 	CLIENT = 'Client',
 	TASK = 'Task',
+	REPOSITORY = 'Repository',
 	ISSUE = 'Issue',
 	LABEL = 'Label',
 	ACTIVITY = 'Activity',
