@@ -37,9 +37,8 @@ export class AddedEmailStatusToEmailHistoryTable1697635735546 implements Migrati
    * @param queryRunner
    */
     public async postgresUpQueryRunner(queryRunner: QueryRunner): Promise<any> {
-        await queryRunner.query(`DROP INDEX "public"."IDX_191bc861200410c51746b91385"`);
-        await queryRunner.query(`ALTER TABLE "email_sent" RENAME COLUMN "emailStatus" TO "status"`);
-        await queryRunner.query(`ALTER TYPE "public"."email_sent_emailstatus_enum" RENAME TO "email_sent_status_enum"`);
+        await queryRunner.query(`CREATE TYPE "public"."email_sent_status_enum" AS ENUM('SENT', 'FAILED')`);
+        await queryRunner.query(`ALTER TABLE "email_sent" ADD "status" "public"."email_sent_status_enum"`);
         await queryRunner.query(`CREATE INDEX "IDX_5956ce758c01ebf8a539e8d4f0" ON "email_sent" ("status") `);
     }
 
@@ -50,9 +49,8 @@ export class AddedEmailStatusToEmailHistoryTable1697635735546 implements Migrati
     */
     public async postgresDownQueryRunner(queryRunner: QueryRunner): Promise<any> {
         await queryRunner.query(`DROP INDEX "public"."IDX_5956ce758c01ebf8a539e8d4f0"`);
-        await queryRunner.query(`ALTER TYPE "public"."email_sent_status_enum" RENAME TO "email_sent_emailstatus_enum"`);
-        await queryRunner.query(`ALTER TABLE "email_sent" RENAME COLUMN "status" TO "emailStatus"`);
-        await queryRunner.query(`CREATE INDEX "IDX_191bc861200410c51746b91385" ON "email_sent" ("emailStatus") `);
+        await queryRunner.query(`ALTER TABLE "email_sent" DROP COLUMN "status"`);
+        await queryRunner.query(`DROP TYPE "public"."email_sent_status_enum"`);
     }
 
     /**
