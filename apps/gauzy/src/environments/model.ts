@@ -1,5 +1,3 @@
-import {env} from "../../../../.scripts/env";
-
 export interface Environment {
 	production: boolean;
 

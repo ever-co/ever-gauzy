@@ -1,4 +1,5 @@
 import { InjectionToken } from '@angular/core';
+import { Environment } from '../../../environments/model';
 
 export const API_PREFIX = '/api';
 
@@ -9,4 +10,4 @@ export const DUMMY_PROFILE_IMAGE = 'https://dummyimage.com/330x300/8b72ff/ffffff
 
 export const BACKGROUND_SYNC_INTERVAL = 25000; // milliseconds
 
-export const GAUZY_ENV = new InjectionToken<number>('gauzyEnvironment');
+export const GAUZY_ENV = new InjectionToken<Environment>('gauzyEnvironment');

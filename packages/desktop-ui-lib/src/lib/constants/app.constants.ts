@@ -1,4 +1,5 @@
 import {InjectionToken, Injector} from '@angular/core';
+// @ts-ignore
 import { environment } from '@env/environment';
 
 export const API_PREFIX = '/api';
