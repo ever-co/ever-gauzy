@@ -175,12 +175,12 @@ export const env: Env = cleanEnv(
 			default: 'assets/icons/icon_512x512.png',
 		}),
 
-		// Set default paltform privacy link
+		// Set default platform privacy link
 		PLATFORM_PRIVACY_URL: str({
 			default: 'https://gauzy.co/privacy'
 		}),
 
-		// Set default paltform terms of services link
+		// Set default platform terms of services link
 		PLATFORM_TOS_URL: str({
 			default: 'https://gauzy.co/tos'
 		}),
