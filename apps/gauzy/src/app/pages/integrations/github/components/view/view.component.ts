@@ -107,7 +107,7 @@ export class GithubViewComponent extends TranslationBaseComponent implements Aft
 				// Extract project properties
 				const { id: projectId } = this.project = project;
 
-				return this._organizationProjectsService.getById(projectId).pipe(
+				return this._organizationProjectsService.getById(projectId, ['repository']).pipe(
 					catchError((error) => {
 						// Handle and log errors
 						this._errorHandlingService.handleError(error);

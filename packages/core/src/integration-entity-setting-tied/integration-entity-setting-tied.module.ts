@@ -1,4 +1,4 @@
-import { forwardRef, Module } from '@nestjs/common';
+import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { CqrsModule } from '@nestjs/cqrs';
 import { RouterModule } from 'nest-router';
@@ -11,16 +11,13 @@ import { UserModule } from './../user/user.module';
 @Module({
 	imports: [
 		RouterModule.forRoutes([
-			{
-				path: '/integration-entity-setting-tied',
-				module: IntegrationEntitySettingTiedModule,
-			}
+			{ path: '/integration-entity-setting-tied', module: IntegrationEntitySettingTiedModule, }
 		]),
 		TypeOrmModule.forFeature([
 			IntegrationEntitySettingTied
 		]),
-		forwardRef(() => TenantModule),
-		forwardRef(() => UserModule),
+		TenantModule,
+		UserModule,
 		CqrsModule
 	],
 	controllers: [
@@ -32,6 +29,6 @@ import { UserModule } from './../user/user.module';
 	exports: [
 		TypeOrmModule,
 		IntegrationEntitySettingTiedService
-	],
+	]
 })
 export class IntegrationEntitySettingTiedModule { }

@@ -122,7 +122,6 @@ export enum IntegrationEntity {
 	NOTE = 'Note',
 	CLIENT = 'Client',
 	TASK = 'Task',
-	REPOSITORY = 'Repository',
 	ISSUE = 'Issue',
 	LABEL = 'Label',
 	ACTIVITY = 'Activity',

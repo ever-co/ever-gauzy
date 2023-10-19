@@ -13,17 +13,14 @@ import { IntegrationEntitySettingService } from './integration-entity-setting.se
 @Module({
 	imports: [
 		RouterModule.forRoutes([
-			{
-				path: '/integration-entity-setting',
-				module: IntegrationEntitySettingModule,
-			},
+			{ path: '/integration-entity-setting', module: IntegrationEntitySettingModule }
 		]),
 		TypeOrmModule.forFeature([
 			IntegrationEntitySetting
 		]),
 		forwardRef(() => IntegrationTenantModule),
-		forwardRef(() => TenantModule),
-		forwardRef(() => UserModule),
+		TenantModule,
+		UserModule,
 		CqrsModule,
 	],
 	controllers: [
@@ -36,6 +33,6 @@ import { IntegrationEntitySettingService } from './integration-entity-setting.se
 	exports: [
 		TypeOrmModule,
 		IntegrationEntitySettingService
-	],
+	]
 })
 export class IntegrationEntitySettingModule { }

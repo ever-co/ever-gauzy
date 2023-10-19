@@ -1,4 +1,4 @@
-import { forwardRef, Module } from '@nestjs/common';
+import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { CqrsModule } from '@nestjs/cqrs';
 import { RouterModule } from 'nest-router';
@@ -19,11 +19,11 @@ import { IntegrationMap } from './integration-map.entity';
 		TypeOrmModule.forFeature([
 			IntegrationMap
 		]),
-		forwardRef(() => TenantModule),
-		forwardRef(() => UserModule),
-		forwardRef(() => TaskModule),
+		TenantModule,
+		UserModule,
+		TaskModule,
 		TagModule,
-		CqrsModule,
+		CqrsModule
 	],
 	controllers: [
 		IntegrationMapController
@@ -35,6 +35,6 @@ import { IntegrationMap } from './integration-map.entity';
 	exports: [
 		TypeOrmModule,
 		IntegrationMapService
-	],
+	]
 })
 export class IntegrationMapModule { }
