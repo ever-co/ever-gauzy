@@ -4415,6 +4415,6 @@
 	},
 	"NO_IMAGE": {
 		"ADD_DROP": "添加或删除图像",
-		"AVAILABLE": "图片无法提供"
+		"AVAILABLE": "图像不可用"
 	}
 }
