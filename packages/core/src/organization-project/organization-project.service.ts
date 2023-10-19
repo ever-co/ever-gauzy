@@ -118,15 +118,17 @@ export class OrganizationProjectService extends TenantAwareCrudService<Organizat
 			organizationId: IOrganizationGithubRepository['id'];
 			tenantId: IOrganizationGithubRepository['tenantId'];
 			integrationId: IOrganizationGithubRepository['integrationId'];
+			projectId?: IOrganizationProject['id'];
 		}
 	): Promise<IOrganizationProject[]> {
 		try {
 			const tenantId = RequestContext.currentTenantId() || options.tenantId;
-			const { organizationId, integrationId } = options;
+			const { organizationId, projectId, integrationId } = options;
 
 			// Attempt to retrieve the organization projects by the provided parameters.
 			const projects = await this.organizationProjectRepository.find({
 				where: {
+					...(projectId ? { id: projectId } : {}),
 					organizationId,
 					tenantId,
 					repository: {

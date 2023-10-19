@@ -14,10 +14,9 @@ export class TaskCreatedEventHandler implements IEventHandler<TaskCreatedEvent> 
     ) { }
 
     /**
-     * Event handler for the `TaskCreatedEvent` event, which responds to the creation of a new task.
+     * Handles a `TaskCreatedEvent` by processing the event's input and executing a command if a project ID is present.
      *
-     * @param event - The `TaskCreatedEvent` containing information about the newly created task.
-     * @returns A promise that resolves to the task after handling the event.
+     * @param event - The `TaskCreatedEvent` to handle.
      */
     async handle(event: TaskCreatedEvent) {
         try {
@@ -25,9 +24,18 @@ export class TaskCreatedEventHandler implements IEventHandler<TaskCreatedEvent> 
             const { organizationId, projectId } = input;
             const tenantId = RequestContext.currentTenantId() || input.tenantId;
 
-            await this._commandBus.execute(
-                new GithubTaskOpenedCommand(input, { tenantId, organizationId, projectId })
-            );
+            // If project found
+            if (projectId) {
+                // Prepare a payload for the command
+                const payload = {
+                    tenantId,
+                    organizationId,
+                    projectId
+                };
+                await this._commandBus.execute(
+                    new GithubTaskOpenedCommand(input, payload)
+                );
+            }
         } catch (error) {
             // Handle errors and return an appropriate error response
             this.logger.error('Error while created of a new task', error.message);

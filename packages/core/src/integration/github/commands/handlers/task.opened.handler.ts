@@ -1,17 +1,19 @@
 import { ICommandHandler, CommandHandler, CommandBus } from '@nestjs/cqrs';
-import { IntegrationEnum } from '@gauzy/contracts';
+import { IGithubIssueLabel, ITag, IntegrationEnum } from '@gauzy/contracts';
 import { RequestContext } from 'core/context';
 import { arrayToObject } from 'core/utils';
 import { IntegrationTenantGetCommand } from 'integration-tenant/commands';
 import { GithubSyncService } from '../../github-sync.service';
 import { GithubTaskOpenedCommand } from '../task.opened.command';
+import { OrganizationProjectService } from 'organization-project/organization-project.service';
 
 @CommandHandler(GithubTaskOpenedCommand)
 export class GithubTaskOpenedCommandHandler implements ICommandHandler<GithubTaskOpenedCommand> {
 
 	constructor(
 		private readonly _commandBus: CommandBus,
-		private readonly _githubSyncService: GithubSyncService
+		private readonly _githubSyncService: GithubSyncService,
+		private readonly _organizationProjectService: OrganizationProjectService
 	) { }
 
 	/**
@@ -23,8 +25,8 @@ export class GithubTaskOpenedCommandHandler implements ICommandHandler<GithubTas
 		try {
 			const { task, options } = command;
 			const tenantId = RequestContext.currentTenantId() || options.tenantId;
-			const organizationId = options.organizationId;
-
+			const { organizationId, projectId } = options;
+			/** */
 			const integration = await this._commandBus.execute(
 				new IntegrationTenantGetCommand({
 					where: {
@@ -49,17 +51,64 @@ export class GithubTaskOpenedCommandHandler implements ICommandHandler<GithubTas
 				const settings = arrayToObject(integration.settings, 'settingsName', 'settingsValue');
 				const installation_id = settings['installation_id'];
 				if (!!installation_id) {
-					const issue = {
-						title: task.title,
-						body: task.description,
-						labels: task.tags
-					};
-					console.log(issue);
-					// await this._githubSyncService.openIssue(installation_id, issue);
+					try {
+						/** */
+						const project = await this._organizationProjectService.findOneByIdString(projectId, {
+							where: {
+								organizationId,
+								tenantId
+							},
+							relations: {
+								repository: true
+							}
+						});
+						if (!!project && !!project.repository) {
+							const repository = project.repository;
+							const payload = {
+								repo: repository.name,
+								owner: repository.owner,
+								title: task.title,
+								body: task.description,
+								labels: this._mapIssueLabelPayload(task.tags),
+							};
+							try {
+								let isContinueExecution = true;
+								if (!!project.isTasksAutoSyncOnLabel) {
+									const sync_tag = settings['sync_tag'];
+									isContinueExecution = !!(payload.labels.find(
+										(label: IGithubIssueLabel) => label.name === sync_tag
+									));
+								}
+								if (!isContinueExecution) {
+									return;
+								}
+								const issue = await this._githubSyncService.openIssue(installation_id, payload);
+								console.log(issue);
+							} catch (error) {
+								console.log('Error while opening github issue: %s', error?.message);
+							}
+						}
+					} catch (error) {
+						console.log('Error while getting github repository issue: %s', error?.message);
+					}
 				}
 			}
 		} catch (error) {
 			console.log('Error while retrieving github integration: %s', error?.message);
 		}
+	}
+
+	/**
+	 * Map an array of tags to a simplified structure.
+	 *
+	 * @param tags - An array of ITag objects to be mapped.
+	 * @returns An array of objects with 'name', 'color', and 'description' properties.
+	 */
+	private _mapIssueLabelPayload(tags: ITag[]): any[] {
+		return tags.map(({ name, color, description }) => ({
+			name,
+			color,
+			description
+		}));
 	}
 }

@@ -47,7 +47,9 @@ export class TaskCreateHandler implements ICommandHandler<TaskCreateCommand> {
 			});
 
 			/** */
-			this._eventBus.publish(new TaskCreatedEvent(createdTask));
+			this._eventBus.publish(
+				new TaskCreatedEvent(createdTask)
+			);
 
 			return createdTask;
 		} catch (error) {

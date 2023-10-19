@@ -8,7 +8,7 @@ import {
 	IIntegrationTenant,
 	IIntegrationTenantCreateInput,
 	IIntegrationTenantFindInput,
-	IntegrationEnum,
+	IntegrationEnum
 } from '@gauzy/contracts';
 import { RequestContext } from 'core/context';
 import { TenantAwareCrudService } from 'core/crud';
@@ -38,7 +38,7 @@ export class IntegrationTenantService extends TenantAwareCrudService<Integration
 			settings = settings.map((item: IIntegrationSetting) => ({
 				...item,
 				tenantId,
-				organizationId,
+				organizationId
 			}));
 
 			entitySettings = entitySettings.map((item: IIntegrationEntitySetting) => ({
@@ -85,7 +85,7 @@ export class IntegrationTenantService extends TenantAwareCrudService<Integration
 				},
 				relations: {
 					integration: true
-				},
+				}
 			});
 			return integrationTenant || false;
 		} catch (error) {
