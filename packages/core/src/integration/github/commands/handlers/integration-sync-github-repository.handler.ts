@@ -47,7 +47,10 @@ export class IntegrationSyncGithubRepositoryCommandHandler implements ICommandHa
 				id: integrationRepository.id,
 				name: name,
 				fullName: full_name,
-				owner: owner.login
+				owner: owner.login,
+				integrationId,
+				organizationId,
+				tenantId
 			});
 		} catch (error) {
 			/**
