@@ -72,11 +72,12 @@ import { getAdjustDateRangeFutureAllowed } from '../../@theme/components/header/
 @Component({
 	selector: 'ngx-invoices',
 	templateUrl: './invoices.component.html',
-	styleUrls: ['invoices.component.scss']
+	styleUrls: ['invoices.component.scss'],
 })
-export class InvoicesComponent extends PaginationFilterBaseComponent
-	implements AfterViewInit, OnInit, OnDestroy {
-
+export class InvoicesComponent
+	extends PaginationFilterBaseComponent
+	implements AfterViewInit, OnInit, OnDestroy
+{
 	settingsSmartTable: object;
 	smartTableSource: ServerDataSource;
 	selectedInvoice: IInvoice;
@@ -103,8 +104,8 @@ export class InvoicesComponent extends PaginationFilterBaseComponent
 	private _refresh$: Subject<any> = new Subject();
 
 	/*
-	* getter setter for check estimate or invoice
-	*/
+	 * getter setter for check estimate or invoice
+	 */
 	private _isEstimate: boolean = false;
 	@Input() set isEstimate(val: boolean) {
 		this._isEstimate = val;
@@ -125,8 +126,8 @@ export class InvoicesComponent extends PaginationFilterBaseComponent
 	public popups: QueryList<NbPopoverDirective>;
 
 	/*
-	* Search Tab Form
-	*/
+	 * Search Tab Form
+	 */
 	public searchForm: FormGroup = InvoicesComponent.searchBuildForm(this.fb);
 	static searchBuildForm(fb: FormBuilder): FormGroup {
 		return fb.group({
@@ -137,24 +138,26 @@ export class InvoicesComponent extends PaginationFilterBaseComponent
 			totalValue: [],
 			currency: [],
 			status: [],
-			tags: []
+			tags: [],
 		});
 	}
 
 	/*
-	* History Tab Form
-	*/
+	 * History Tab Form
+	 */
 	public historyForm: FormGroup = InvoicesComponent.historyBuildForm(this.fb);
 	static historyBuildForm(fb: FormBuilder): FormGroup {
 		return fb.group({
-			comment: ['', Validators.required]
+			comment: ['', Validators.required],
+			title: ['', Validators.required],
 		});
 	}
 
 	/*
-	* Actions Buttons directive
-	*/
-	@ViewChild('actionButtons', { static : true }) actionButtons : TemplateRef<any>;
+	 * Actions Buttons directive
+	 */
+	@ViewChild('actionButtons', { static: true })
+	actionButtons: TemplateRef<any>;
 
 	constructor(
 		private readonly fb: FormBuilder,
@@ -195,7 +198,11 @@ export class InvoicesComponent extends PaginationFilterBaseComponent
 			.pipe(
 				distinctUntilChange(),
 				debounceTime(100),
-				filter(() => this.dataLayoutStyle === ComponentLayoutStyleEnum.CARDS_GRID),
+				filter(
+					() =>
+						this.dataLayoutStyle ===
+						ComponentLayoutStyleEnum.CARDS_GRID
+				),
 				tap(() => this._refresh$.next(true)),
 				tap(() => this.invoices$.next(true)),
 				untilDestroyed(this)
@@ -210,12 +217,15 @@ export class InvoicesComponent extends PaginationFilterBaseComponent
 			)
 			.subscribe();
 		const storeOrganization$ = this.store.selectedOrganization$;
-		const storeDateRange$ = this.dateRangePickerBuilderService.selectedDateRange$;
+		const storeDateRange$ =
+			this.dateRangePickerBuilderService.selectedDateRange$;
 		combineLatest([storeOrganization$, storeDateRange$])
 			.pipe(
 				debounceTime(300),
 				distinctUntilChange(),
-				filter(([organization, dateRange]) => !!organization && !!dateRange),
+				filter(
+					([organization, dateRange]) => !!organization && !!dateRange
+				),
 				tap(([organization, dateRange]) => {
 					this.organization = organization as IOrganization;
 					this.selectedDateRange = dateRange as IDateRangePicker;
@@ -225,12 +235,18 @@ export class InvoicesComponent extends PaginationFilterBaseComponent
 				untilDestroyed(this)
 			)
 			.subscribe();
-		this._refresh$.pipe(
-			filter(() => this.dataLayoutStyle === ComponentLayoutStyleEnum.CARDS_GRID),
-			tap(() => this.refreshPagination()),
-			tap(() => this.invoices = []),
-			untilDestroyed(this)
-		).subscribe();
+		this._refresh$
+			.pipe(
+				filter(
+					() =>
+						this.dataLayoutStyle ===
+						ComponentLayoutStyleEnum.CARDS_GRID
+				),
+				tap(() => this.refreshPagination()),
+				tap(() => (this.invoices = [])),
+				untilDestroyed(this)
+			)
+			.subscribe();
 	}
 
 	/*
@@ -246,16 +262,24 @@ export class InvoicesComponent extends PaginationFilterBaseComponent
 	}
 
 	setView() {
-		this.viewComponentName = this.isEstimate ? ComponentEnum.ESTIMATES : ComponentEnum.INVOICES;
+		this.viewComponentName = this.isEstimate
+			? ComponentEnum.ESTIMATES
+			: ComponentEnum.INVOICES;
 		this.store
 			.componentLayout$(this.viewComponentName)
 			.pipe(
 				distinctUntilChange(),
-				tap((componentLayout) => this.dataLayoutStyle = componentLayout),
+				tap(
+					(componentLayout) =>
+						(this.dataLayoutStyle = componentLayout)
+				),
 				tap(() => this.closeActionsPopover()),
 				tap(() => this.refreshPagination()),
-				filter((componentLayout) => componentLayout === ComponentLayoutStyleEnum.CARDS_GRID),
-				tap(() => this.invoices = []),
+				filter(
+					(componentLayout) =>
+						componentLayout === ComponentLayoutStyleEnum.CARDS_GRID
+				),
+				tap(() => (this.invoices = [])),
 				tap(() => this.invoices$.next(true)),
 				untilDestroyed(this)
 			)
@@ -267,53 +291,59 @@ export class InvoicesComponent extends PaginationFilterBaseComponent
 			{
 				title: this.getTranslation('INVOICES_PAGE.ACTION.DUPLICATE'),
 				icon: 'copy-outline',
-				permission: PermissionsEnum.INVOICES_EDIT
+				permission: PermissionsEnum.INVOICES_EDIT,
 			},
 			{
 				title: this.getTranslation('INVOICES_PAGE.ACTION.SEND'),
 				icon: 'upload-outline',
-				permission: PermissionsEnum.INVOICES_VIEW
+				permission: PermissionsEnum.INVOICES_VIEW,
 			},
 			{
 				title: this.getTranslation(
 					'INVOICES_PAGE.ACTION.CONVERT_TO_INVOICE'
 				),
 				icon: 'swap',
-				permission: PermissionsEnum.INVOICES_EDIT
+				permission: PermissionsEnum.INVOICES_EDIT,
 			},
 			{
 				title: this.getTranslation('INVOICES_PAGE.ACTION.EMAIL'),
 				icon: 'email-outline',
-				permission: PermissionsEnum.INVOICES_VIEW
+				permission: PermissionsEnum.INVOICES_VIEW,
 			},
 			{
 				title: this.getTranslation('INVOICES_PAGE.ACTION.DELETE'),
 				icon: 'archive-outline',
-				permission: PermissionsEnum.INVOICES_EDIT
+				permission: PermissionsEnum.INVOICES_EDIT,
 			},
 			{
 				title: this.getTranslation('INVOICES_PAGE.ACTION.NOTE'),
 				icon: 'book-open-outline',
-				permission: PermissionsEnum.INVOICES_EDIT
-			}
+				permission: PermissionsEnum.INVOICES_EDIT,
+			},
 		];
 
 		if (!this.isEstimate) {
 			this.contextMenus.push({
 				title: this.getTranslation('INVOICES_PAGE.ACTION.PAYMENTS'),
 				icon: 'clipboard-outline',
-				permission: PermissionsEnum.INVOICES_EDIT
+				permission: PermissionsEnum.INVOICES_EDIT,
 			});
 		}
 
 		const contextMenus = this.contextMenus.filter(
-			(item) => this.ngxPermissionsService.getPermission(item.permission) != null
-		)
+			(item) =>
+				this.ngxPermissionsService.getPermission(item.permission) !=
+				null
+		);
 		if (this.isEstimate) {
 			this.settingsContextMenu = contextMenus;
 		} else {
 			this.settingsContextMenu = contextMenus.filter(
-				(item) => item.title !== this.getTranslation('INVOICES_PAGE.ACTION.CONVERT_TO_INVOICE')
+				(item) =>
+					item.title !==
+					this.getTranslation(
+						'INVOICES_PAGE.ACTION.CONVERT_TO_INVOICE'
+					)
 			);
 		}
 		this.nbMenuService.onItemClick().pipe(first());
@@ -323,7 +353,7 @@ export class InvoicesComponent extends PaginationFilterBaseComponent
 		if (selectedItem) {
 			this.selectInvoice({
 				isSelected: true,
-				data: selectedItem
+				data: selectedItem,
 			});
 		}
 		this.nbMenuService
@@ -369,15 +399,18 @@ export class InvoicesComponent extends PaginationFilterBaseComponent
 		if (selectedItem) {
 			this.selectInvoice({
 				isSelected: true,
-				data: selectedItem
+				data: selectedItem,
 			});
 		}
 
 		const { id } = this.selectedInvoice;
 		if (this.isEstimate) {
-			this.router.navigate([ `/pages/accounting/invoices/estimates/edit`, id ]);
+			this.router.navigate([
+				`/pages/accounting/invoices/estimates/edit`,
+				id,
+			]);
 		} else {
-			this.router.navigate([ `/pages/accounting/invoices/edit`, id ]);
+			this.router.navigate([`/pages/accounting/invoices/edit`, id]);
 		}
 	}
 
@@ -386,7 +419,7 @@ export class InvoicesComponent extends PaginationFilterBaseComponent
 		if (selectedItem) {
 			this.selectInvoice({
 				isSelected: true,
-				data: selectedItem
+				data: selectedItem,
 			});
 		}
 		const { tenantId } = this.store.user;
@@ -397,7 +430,8 @@ export class InvoicesComponent extends PaginationFilterBaseComponent
 		const tax2: any = this.selectedInvoice.tax2;
 		const discountValue: any = this.selectedInvoice.discountValue;
 
-		const invoiceNumber = await this.invoicesService.getHighestInvoiceNumber(tenantId);
+		const invoiceNumber =
+			await this.invoicesService.getHighestInvoiceNumber(tenantId);
 		const createdInvoice = await this.invoicesService.add({
 			invoiceNumber: +invoiceNumber['max'] + 1,
 			invoiceDate: this.selectedInvoice.invoiceDate,
@@ -421,7 +455,9 @@ export class InvoicesComponent extends PaginationFilterBaseComponent
 			invoiceType: this.selectedInvoice.invoiceType,
 			tags: this.selectedInvoice.tags,
 			isEstimate: this.isEstimate,
-			status: status ? status.originalValue : InvoiceStatusTypesEnum.DRAFT
+			status: status
+				? status.originalValue
+				: InvoiceStatusTypesEnum.DRAFT,
 		});
 
 		const invoiceItems: IInvoiceItemCreateInput[] = [];
@@ -434,7 +470,7 @@ export class InvoicesComponent extends PaginationFilterBaseComponent
 				totalValue: item.totalValue,
 				invoiceId: createdInvoice.id,
 				tenantId,
-				organizationId
+				organizationId,
 			};
 			switch (this.selectedInvoice.invoiceType) {
 				case InvoiceTypeEnum.BY_EMPLOYEE_HOURS:
@@ -460,19 +496,26 @@ export class InvoicesComponent extends PaginationFilterBaseComponent
 			invoiceItems
 		);
 
-		const action = this.isEstimate ?
-						this.getTranslation('INVOICES_PAGE.INVOICES_DUPLICATE_ESTIMATE') :
-						this.getTranslation('INVOICES_PAGE.INVOICES_DUPLICATE_INVOICE');
+		const action = this.isEstimate
+			? this.getTranslation('INVOICES_PAGE.INVOICES_DUPLICATE_ESTIMATE')
+			: this.getTranslation('INVOICES_PAGE.INVOICES_DUPLICATE_INVOICE');
 
 		await this.createInvoiceHistory(action);
 
 		const { id } = createdInvoice;
 		if (this.isEstimate) {
-			this.toastrService.success('INVOICES_PAGE.INVOICES_DUPLICATE_ESTIMATE');
-			this.router.navigate([`/pages/accounting/invoices/estimates/edit`, id]);
+			this.toastrService.success(
+				'INVOICES_PAGE.INVOICES_DUPLICATE_ESTIMATE'
+			);
+			this.router.navigate([
+				`/pages/accounting/invoices/estimates/edit`,
+				id,
+			]);
 		} else {
-			this.toastrService.success('INVOICES_PAGE.INVOICES_DUPLICATE_INVOICE');
-			this.router.navigate([ `/pages/accounting/invoices/edit`, id ]);
+			this.toastrService.success(
+				'INVOICES_PAGE.INVOICES_DUPLICATE_INVOICE'
+			);
+			this.router.navigate([`/pages/accounting/invoices/edit`, id]);
 		}
 	}
 
@@ -480,14 +523,14 @@ export class InvoicesComponent extends PaginationFilterBaseComponent
 		if (selectedItem) {
 			this.selectInvoice({
 				isSelected: true,
-				data: selectedItem
+				data: selectedItem,
 			});
 		}
 		this.dialogService.open(InvoiceDownloadMutationComponent, {
 			context: {
 				invoice: this.selectedInvoice,
-				isEstimate: this.isEstimate
-			}
+				isEstimate: this.isEstimate,
+			},
 		});
 	}
 
@@ -495,7 +538,7 @@ export class InvoicesComponent extends PaginationFilterBaseComponent
 		if (selectedItem) {
 			this.selectInvoice({
 				isSelected: true,
-				data: selectedItem
+				data: selectedItem,
 			});
 		}
 		if (this.selectedInvoice.organizationContactId) {
@@ -503,11 +546,10 @@ export class InvoicesComponent extends PaginationFilterBaseComponent
 				.open(InvoiceSendMutationComponent, {
 					context: {
 						invoice: this.selectedInvoice,
-						isEstimate: this.isEstimate
-					}
+						isEstimate: this.isEstimate,
+					},
 				})
-				.onClose
-				.pipe(
+				.onClose.pipe(
 					tap(() => this._refresh$.next(true)),
 					tap(() => this.invoices$.next(true)),
 					untilDestroyed(this)
@@ -522,17 +564,19 @@ export class InvoicesComponent extends PaginationFilterBaseComponent
 		if (selectedItem) {
 			this.selectInvoice({
 				isSelected: true,
-				data: selectedItem
+				data: selectedItem,
 			});
 		}
 		const { id: invoiceId } = this.selectedInvoice;
 
 		await this.invoicesService.updateAction(invoiceId, {
 			isEstimate: false,
-			status: InvoiceStatusTypesEnum.DRAFT
+			status: InvoiceStatusTypesEnum.DRAFT,
 		});
 
-		const action = this.getTranslation('INVOICES_PAGE.ESTIMATES.CONVERTED_TO_INVOICE');
+		const action = this.getTranslation(
+			'INVOICES_PAGE.ESTIMATES.CONVERTED_TO_INVOICE'
+		);
 		await this.createInvoiceHistory(action);
 
 		this.toastrService.success('INVOICES_PAGE.ESTIMATES.ESTIMATE_CONVERT');
@@ -544,23 +588,27 @@ export class InvoicesComponent extends PaginationFilterBaseComponent
 		if (selectedItem) {
 			this.selectInvoice({
 				isSelected: true,
-				data: selectedItem
+				data: selectedItem,
 			});
 		}
-		const result = await firstValueFrom(this.dialogService
-			.open(DeleteConfirmationComponent)
-			.onClose);
+		const result = await firstValueFrom(
+			this.dialogService.open(DeleteConfirmationComponent).onClose
+		);
 
 		if (result) {
 			const { id } = this.selectedInvoice;
 			await this.invoicesService.delete(id);
 
 			if (this.isEstimate) {
-				this.toastrService.success('INVOICES_PAGE.INVOICES_DELETE_ESTIMATE');
+				this.toastrService.success(
+					'INVOICES_PAGE.INVOICES_DELETE_ESTIMATE'
+				);
 			} else {
-				this.toastrService.success('INVOICES_PAGE.INVOICES_DELETE_INVOICE');
+				this.toastrService.success(
+					'INVOICES_PAGE.INVOICES_DELETE_INVOICE'
+				);
 			}
-			this._refresh$.next(true)
+			this._refresh$.next(true);
 			this.invoices$.next(true);
 		}
 	}
@@ -568,9 +616,12 @@ export class InvoicesComponent extends PaginationFilterBaseComponent
 	view() {
 		const { id } = this.selectedInvoice;
 		if (this.isEstimate) {
-			this.router.navigate([ `/pages/accounting/invoices/estimates/view`, id ]);
+			this.router.navigate([
+				`/pages/accounting/invoices/estimates/view`,
+				id,
+			]);
 		} else {
-			this.router.navigate([ `/pages/accounting/invoices/view`, id ]);
+			this.router.navigate([`/pages/accounting/invoices/view`, id]);
 		}
 	}
 
@@ -578,18 +629,17 @@ export class InvoicesComponent extends PaginationFilterBaseComponent
 		if (selectedItem) {
 			this.selectInvoice({
 				isSelected: true,
-				data: selectedItem
+				data: selectedItem,
 			});
 		}
 		this.dialogService
 			.open(InvoiceEmailMutationComponent, {
 				context: {
 					invoice: this.selectedInvoice,
-					isEstimate: this.isEstimate
-				}
+					isEstimate: this.isEstimate,
+				},
 			})
-			.onClose
-			.pipe(
+			.onClose.pipe(
 				tap(() => this._refresh$.next(true)),
 				tap(() => this.invoices$.next(true)),
 				untilDestroyed(this)
@@ -599,18 +649,17 @@ export class InvoicesComponent extends PaginationFilterBaseComponent
 
 	payments() {
 		const { id } = this.selectedInvoice;
-		this.router.navigate([ `/pages/accounting/invoices/payments`, id ]);
+		this.router.navigate([`/pages/accounting/invoices/payments`, id]);
 	}
 
 	addInternalNote() {
 		this.dialogService
 			.open(AddInternalNoteComponent, {
 				context: {
-					invoice: this.selectedInvoice
-				}
+					invoice: this.selectedInvoice,
+				},
 			})
-			.onClose
-			.pipe(
+			.onClose.pipe(
 				tap(() => this._refresh$.next(true)),
 				tap(() => this.invoices$.next(true)),
 				untilDestroyed(this)
@@ -622,48 +671,71 @@ export class InvoicesComponent extends PaginationFilterBaseComponent
 		if (selectedItem) {
 			this.selectInvoice({
 				isSelected: true,
-				data: selectedItem
+				data: selectedItem,
 			});
 		}
 
 		let fileName: string;
-		const { invoiceNumber, invoiceDate, dueDate, status, totalValue, tax, tax2, discountValue, toContact, isEstimate } = this.selectedInvoice;
-		if (isEstimate) {
-			fileName = `${this.getTranslation('INVOICES_PAGE.ESTIMATE')}-${invoiceNumber}`;
-		} else {
-			fileName = `${this.getTranslation('INVOICES_PAGE.INVOICE')}-${invoiceNumber}`;
-		}
-
-		const data = [{
+		const {
 			invoiceNumber,
 			invoiceDate,
 			dueDate,
-			status: `${this.getTranslation(`INVOICES_PAGE.STATUSES.${status}`)}`,
+			status,
 			totalValue,
 			tax,
 			tax2,
 			discountValue,
-			contact: toContact.name
-		}];
+			toContact,
+			isEstimate,
+		} = this.selectedInvoice;
+		if (isEstimate) {
+			fileName = `${this.getTranslation(
+				'INVOICES_PAGE.ESTIMATE'
+			)}-${invoiceNumber}`;
+		} else {
+			fileName = `${this.getTranslation(
+				'INVOICES_PAGE.INVOICE'
+			)}-${invoiceNumber}`;
+		}
+
+		const data = [
+			{
+				invoiceNumber,
+				invoiceDate,
+				dueDate,
+				status: `${this.getTranslation(
+					`INVOICES_PAGE.STATUSES.${status}`
+				)}`,
+				totalValue,
+				tax,
+				tax2,
+				discountValue,
+				contact: toContact.name,
+			},
+		];
 
 		const headers = [
-			isEstimate ? this.getTranslation('INVOICES_PAGE.ESTIMATE_NUMBER') : this.getTranslation('INVOICES_PAGE.INVOICE_NUMBER'),
-			isEstimate ? this.getTranslation('INVOICES_PAGE.ESTIMATE_DATE') : this.getTranslation('INVOICES_PAGE.INVOICE_DATE'),
+			isEstimate
+				? this.getTranslation('INVOICES_PAGE.ESTIMATE_NUMBER')
+				: this.getTranslation('INVOICES_PAGE.INVOICE_NUMBER'),
+			isEstimate
+				? this.getTranslation('INVOICES_PAGE.ESTIMATE_DATE')
+				: this.getTranslation('INVOICES_PAGE.INVOICE_DATE'),
 			this.getTranslation('INVOICES_PAGE.DUE_DATE'),
 			this.getTranslation('INVOICES_PAGE.STATUS'),
 			this.getTranslation('INVOICES_PAGE.TOTAL_VALUE'),
 			this.getTranslation('INVOICES_PAGE.TAX'),
 			this.getTranslation('INVOICES_PAGE.TAX_2'),
 			this.getTranslation('INVOICES_PAGE.INVOICES_SELECT_DISCOUNT_VALUE'),
-			this.getTranslation('INVOICES_PAGE.CONTACT')
+			this.getTranslation('INVOICES_PAGE.CONTACT'),
 		].join(',');
 
 		generateCsv(data, headers, fileName);
 	}
 
 	/*
-	* Register Smart Table Source Config
-	*/
+	 * Register Smart Table Source Config
+	 */
 	setSmartTableSource() {
 		if (!this.organization) {
 			return;
@@ -672,7 +744,9 @@ export class InvoicesComponent extends PaginationFilterBaseComponent
 
 		const { tenantId } = this.store.user;
 		const { id: organizationId } = this.organization;
-		const { startDate, endDate } = getAdjustDateRangeFutureAllowed(this.selectedDateRange);
+		const { startDate, endDate } = getAdjustDateRangeFutureAllowed(
+			this.selectedDateRange
+		);
 
 		this.smartTableSource = new ServerDataSource(this.httpClient, {
 			endPoint: `${API_PREFIX}/invoices/pagination`,
@@ -690,34 +764,39 @@ export class InvoicesComponent extends PaginationFilterBaseComponent
 				'fromOrganization',
 				'toContact',
 				'historyRecords',
-				'historyRecords.user'
+				'historyRecords.user',
 			],
 			join: {
-				alias: "invoice",
+				alias: 'invoice',
 				leftJoin: {
 					toContact: 'invoice.toContact',
-					tags: 'invoice.tags'
+					tags: 'invoice.tags',
 				},
-				...(this.filters.join) ? this.filters.join : {}
+				...(this.filters.join ? this.filters.join : {}),
 			},
 			where: {
 				organizationId,
 				tenantId,
-				isEstimate: (this.isEstimate === true) ? 1 : 0,
-				isArchived: (this.includeArchived === true) ? 1 : 0,
+				isEstimate: this.isEstimate === true ? 1 : 0,
+				isArchived: this.includeArchived === true ? 1 : 0,
 				invoiceDate: {
 					startDate: toUTC(startDate).format('YYYY-MM-DD HH:mm:ss'),
-					endDate: toUTC(endDate).format('YYYY-MM-DD HH:mm:ss')
+					endDate: toUTC(endDate).format('YYYY-MM-DD HH:mm:ss'),
 				},
-				...(this.filters.where ? this.filters.where : {})
+				...(this.filters.where ? this.filters.where : {}),
 			},
 			resultMap: (invoice: IInvoice) => {
 				return Object.assign({}, invoice, {
-					organizationContactName: (invoice.toContact) ? invoice.toContact.name : null,
+					organizationContactName: invoice.toContact
+						? invoice.toContact.name
+						: null,
 					status: this.statusMapper(invoice.status),
 					tax: this.taxMapper(invoice.taxType, invoice.tax),
 					tax2: this.taxMapper(invoice.tax2Type, invoice.tax2),
-					discountValue: this.taxMapper(invoice.discountType, invoice.discountValue)
+					discountValue: this.taxMapper(
+						invoice.discountType,
+						invoice.discountValue
+					),
 				});
 			},
 			finalize: () => {
@@ -728,10 +807,10 @@ export class InvoicesComponent extends PaginationFilterBaseComponent
 				}
 				this.setPagination({
 					...this.getPagination(),
-					totalItems: this.smartTableSource.count()
+					totalItems: this.smartTableSource.count(),
 				});
 				this.loading = false;
-			}
+			},
 		});
 	}
 
@@ -743,21 +822,15 @@ export class InvoicesComponent extends PaginationFilterBaseComponent
 			this.setSmartTableSource();
 
 			const { activePage, itemsPerPage } = this.getPagination();
-			this.smartTableSource.setPaging(
-				activePage,
-				itemsPerPage,
-				false
-			);
-			if (
-				this.dataLayoutStyle === ComponentLayoutStyleEnum.CARDS_GRID
-			) {
+			this.smartTableSource.setPaging(activePage, itemsPerPage, false);
+			if (this.dataLayoutStyle === ComponentLayoutStyleEnum.CARDS_GRID) {
 				// Initiate GRID or TABLE view pagination
 				await this.smartTableSource.getElements();
 			}
 		} catch (error) {
 			this.toastrService.danger(
 				this.getTranslation('NOTES.INVOICE.INVOICE_ERROR', {
-					error: error.error.message || error.message
+					error: error.error.message || error.message,
 				}),
 				this.getTranslation('TOASTR.TITLE.ERROR')
 			);
@@ -765,18 +838,17 @@ export class InvoicesComponent extends PaginationFilterBaseComponent
 	}
 
 	async addComment(historyFormDirective) {
-		if(this.historyForm.invalid) {
+		if (this.historyForm.invalid) {
 			return;
-		};
-
-		const { comment } = this.historyForm.value;
+		}
+		const { comment, title } = this.historyForm.value;
 		const { id: invoiceId } = this.selectedInvoice;
 		if (comment) {
 			const action = comment;
-			await this.createInvoiceHistory(action);
+			await this.createInvoiceHistory(action, title);
 
 			historyFormDirective.resetForm();
-    		this.historyForm.reset();
+			this.historyForm.reset();
 
 			const invoice = await this.invoicesService.getById(invoiceId, [
 				'invoiceItems',
@@ -792,10 +864,10 @@ export class InvoicesComponent extends PaginationFilterBaseComponent
 				'fromOrganization',
 				'toContact',
 				'historyRecords',
-				'historyRecords.user'
+				'historyRecords.user',
 			]);
 
-			if(this.dataLayoutStyle === ComponentLayoutStyleEnum.TABLE) {
+			if (this.dataLayoutStyle === ComponentLayoutStyleEnum.TABLE) {
 				this.invoicesTable.grid.getRows().map((row) => {
 					if (row['data']['id'] === invoice.id) {
 						row['data'] = invoice;
@@ -816,7 +888,7 @@ export class InvoicesComponent extends PaginationFilterBaseComponent
 
 			this.selectInvoice({
 				isSelected: true,
-				data: invoice
+				data: invoice,
 			});
 		}
 	}
@@ -825,19 +897,19 @@ export class InvoicesComponent extends PaginationFilterBaseComponent
 		if (selectedItem) {
 			this.selectInvoice({
 				isSelected: true,
-				data: selectedItem
+				data: selectedItem,
 			});
 		}
 		this.dialogService.open(PublicLinkComponent, {
 			context: {
-				invoice: this.selectedInvoice
-			}
+				invoice: this.selectedInvoice,
+			},
 		});
 	}
 
 	async archive() {
 		await this.invoicesService.updateAction(this.selectedInvoice.id, {
-			isArchived: true
+			isArchived: true,
 		});
 		this._refresh$.next(true);
 		this.invoices$.next(true);
@@ -847,9 +919,9 @@ export class InvoicesComponent extends PaginationFilterBaseComponent
 		this.disableButton = !isSelected;
 		this.selectedInvoice = isSelected ? data : null;
 
-		if(isSelected){
+		if (isSelected) {
 			this.canBeSend = data.toContact ? isSelected : !isSelected;
-		}else{
+		} else {
 			this.canBeSend = isSelected;
 		}
 
@@ -861,7 +933,8 @@ export class InvoicesComponent extends PaginationFilterBaseComponent
 					id: h.id,
 					createdAt: new Date(h.createdAt).toString().slice(0, 24),
 					action: h.action,
-					user: h.user
+					title: h.title ?? '',
+					user: h.user,
 				};
 				histories.push(history);
 			});
@@ -880,54 +953,61 @@ export class InvoicesComponent extends PaginationFilterBaseComponent
 				'viewed',
 				'accepted',
 				'active',
-				'fully paid'
+				'fully paid',
 			].includes(value.toLowerCase())
 				? 'success'
 				: ['void', 'draft', 'partially paid'].includes(
-					value.toLowerCase()
-				)
-					? 'warning'
-					: 'danger';
+						value.toLowerCase()
+				  )
+				? 'warning'
+				: 'danger';
 		}
 		return {
 			originalValue: value,
-			text: this.getTranslation(`INVOICES_PAGE.STATUSES.${value.toUpperCase()}`),
-			class: badgeClass
+			text: this.getTranslation(
+				`INVOICES_PAGE.STATUSES.${value.toUpperCase()}`
+			),
+			class: badgeClass,
 		};
-	}
+	};
 
 	private taxMapper = (taxType: DiscountTaxTypeEnum, tax: number) => {
 		return {
 			originalValue: tax,
-			value: (DiscountTaxTypeEnum.PERCENT === taxType) ? `${tax}%` : `${tax}`
-		}
-	}
+			value:
+				DiscountTaxTypeEnum.PERCENT === taxType ? `${tax}%` : `${tax}`,
+		};
+	};
 
 	private _loadSmartTableSettings() {
 		const pagination: IPaginationBase = this.getPagination();
 		this.settingsSmartTable = {
 			pager: {
 				display: false,
-				perPage: pagination ? pagination.itemsPerPage : 10
+				perPage: pagination ? pagination.itemsPerPage : 10,
 			},
 			hideSubHeader: true,
 			actions: false,
 			mode: 'external',
 			editable: true,
-			noDataMessage: this.getTranslation(this.isEstimate
-				? 'SM_TABLE.NO_DATA.ESTIMATE'
-				: 'SM_TABLE.NO_DATA.INVOICE'),
+			noDataMessage: this.getTranslation(
+				this.isEstimate
+					? 'SM_TABLE.NO_DATA.ESTIMATE'
+					: 'SM_TABLE.NO_DATA.INVOICE'
+			),
 			columns: {
 				invoiceNumber: {
 					title: this.isEstimate
-						? this.getTranslation('INVOICES_PAGE.ESTIMATES.ESTIMATE_NUMBER')
+						? this.getTranslation(
+								'INVOICES_PAGE.ESTIMATES.ESTIMATE_NUMBER'
+						  )
 						: this.getTranslation('INVOICES_PAGE.INVOICE_NUMBER'),
 					type: 'custom',
 					sortDirection: 'asc',
 					width: '17%',
-					renderComponent: NotesWithTagsComponent
-				}
-			}
+					renderComponent: NotesWithTagsComponent,
+				},
+			},
 		};
 
 		if (
@@ -941,7 +1021,7 @@ export class InvoicesComponent extends PaginationFilterBaseComponent
 				type: 'custom',
 				width: '10%',
 				filter: false,
-				renderComponent: DateViewComponent
+				renderComponent: DateViewComponent,
 			};
 		}
 		if (this.columns.includes(InvoiceColumnsEnum.DUE_DATE)) {
@@ -950,7 +1030,7 @@ export class InvoicesComponent extends PaginationFilterBaseComponent
 				type: 'custom',
 				width: '10%',
 				filter: false,
-				renderComponent: DateViewComponent
+				renderComponent: DateViewComponent,
 			};
 		}
 		if (this.columns.includes(InvoiceColumnsEnum.TOTAL_VALUE)) {
@@ -959,7 +1039,7 @@ export class InvoicesComponent extends PaginationFilterBaseComponent
 				type: 'custom',
 				renderComponent: InvoiceEstimateTotalValueComponent,
 				filter: false,
-				width: '10%'
+				width: '10%',
 			};
 		}
 		if (this.columns.includes(InvoiceColumnsEnum.TAX)) {
@@ -972,7 +1052,7 @@ export class InvoicesComponent extends PaginationFilterBaseComponent
 					if (cell) {
 						return cell['value'];
 					}
-				}
+				},
 			};
 		}
 		if (this.columns.includes(InvoiceColumnsEnum.TAX_2)) {
@@ -985,7 +1065,7 @@ export class InvoicesComponent extends PaginationFilterBaseComponent
 					if (cell) {
 						return cell['value'];
 					}
-				}
+				},
 			};
 		}
 		if (this.columns.includes(InvoiceColumnsEnum.DISCOUNT)) {
@@ -1000,7 +1080,7 @@ export class InvoicesComponent extends PaginationFilterBaseComponent
 					if (cell) {
 						return cell['value'];
 					}
-				}
+				},
 			};
 		}
 		if (this.columns.includes(InvoiceColumnsEnum.CONTACT)) {
@@ -1020,17 +1100,17 @@ export class InvoicesComponent extends PaginationFilterBaseComponent
 					type: 'custom',
 					width: '12%',
 					renderComponent: InvoicePaidComponent,
-					filter: false
+					filter: false,
 				};
 			}
 		}
-    if (this.columns.includes(InvoiceColumnsEnum.STATUS)) {
+		if (this.columns.includes(InvoiceColumnsEnum.STATUS)) {
 			this.settingsSmartTable['columns']['status'] = {
 				title: this.getTranslation('INVOICES_PAGE.STATUS'),
 				type: 'custom',
 				width: '5%',
 				renderComponent: StatusBadgeComponent,
-				filter: false
+				filter: false,
 			};
 		}
 	}
@@ -1043,7 +1123,7 @@ export class InvoicesComponent extends PaginationFilterBaseComponent
 		) {
 			this.setPagination({
 				...this.getPagination(),
-				itemsPerPage: this.perPage
+				itemsPerPage: this.perPage,
 			});
 		}
 	}
@@ -1057,17 +1137,32 @@ export class InvoicesComponent extends PaginationFilterBaseComponent
 			currency,
 			status,
 			organizationContact,
-			tags = []
+			tags = [],
 		} = this.searchForm.value;
 
 		if (invoiceNumber) {
-			this.setFilter({ field: 'invoiceNumber', search: invoiceNumber }, false);
+			this.setFilter(
+				{ field: 'invoiceNumber', search: invoiceNumber },
+				false
+			);
 		}
 		if (invoiceDate) {
-			this.setFilter({ field: 'invoiceDate', search: moment(invoiceDate).format('YYYY-MM-DD') }, false);
+			this.setFilter(
+				{
+					field: 'invoiceDate',
+					search: moment(invoiceDate).format('YYYY-MM-DD'),
+				},
+				false
+			);
 		}
 		if (dueDate) {
-			this.setFilter({ field: 'dueDate', search: moment(dueDate).format('YYYY-MM-DD') }, false);
+			this.setFilter(
+				{
+					field: 'dueDate',
+					search: moment(dueDate).format('YYYY-MM-DD'),
+				},
+				false
+			);
 		}
 		if (totalValue) {
 			this.setFilter({ field: 'totalValue', search: totalValue }, false);
@@ -1079,7 +1174,10 @@ export class InvoicesComponent extends PaginationFilterBaseComponent
 			this.setFilter({ field: 'status', search: status }, false);
 		}
 		if (organizationContact) {
-			this.setFilter({ field: 'toContact', search: [organizationContact.id] }, false);
+			this.setFilter(
+				{ field: 'toContact', search: [organizationContact.id] },
+				false
+			);
 		}
 		if (isNotEmpty(tags)) {
 			const tagIds = [];
@@ -1097,7 +1195,7 @@ export class InvoicesComponent extends PaginationFilterBaseComponent
 
 	toggleIncludeArchived(event) {
 		this.includeArchived = event;
-		 this._refresh$.next(true);
+		this._refresh$.next(true);
 		this.invoices$.next(true);
 	}
 
@@ -1110,13 +1208,13 @@ export class InvoicesComponent extends PaginationFilterBaseComponent
 
 	selectedTagsEvent(currentTagSelection: ITag[]) {
 		this.searchForm.patchValue({
-			tags: currentTagSelection
+			tags: currentTagSelection,
 		});
 	}
 
 	async selectStatus($event) {
 		await this.invoicesService.updateAction(this.selectedInvoice.id, {
-			status: $event
+			status: $event,
 		});
 		this._refresh$.next(true);
 		this.invoices$.next(true);
@@ -1162,7 +1260,7 @@ export class InvoicesComponent extends PaginationFilterBaseComponent
 			.subscribe();
 	}
 
- 	onChangeTab(tab: NbTabComponent) {
+	onChangeTab(tab: NbTabComponent) {
 		this.nbTab$.next(tab.tabId);
 		this.closeActionsPopover();
 	}
@@ -1170,7 +1268,7 @@ export class InvoicesComponent extends PaginationFilterBaseComponent
 	private _clearItem() {
 		this.selectInvoice({
 			isSelected: false,
-			data: null
+			data: null,
 		});
 		this.deselectAll();
 	}
@@ -1193,29 +1291,30 @@ export class InvoicesComponent extends PaginationFilterBaseComponent
 	}
 
 	/*
-	* Create Invoice History Event
-	*/
-	async createInvoiceHistory(action: string) {
+	 * Create Invoice History Event
+	 */
+	async createInvoiceHistory(action: string, title?: string) {
 		const { tenantId, id: userId } = this.store.user;
 		const { id: organizationId } = this.organization;
 		const { id: invoiceId } = this.selectedInvoice;
 
 		await this.invoiceEstimateHistoryService.add({
 			action,
+			title: title ?? null,
 			invoice: this.selectedInvoice,
 			invoiceId,
 			user: this.store.user,
 			userId,
 			organization: this.organization,
 			organizationId,
-			tenantId
+			tenantId,
 		});
 	}
 
 	/*
 	 * On Changed Currency Event Emitter
 	 */
-	currencyChanged($event: ICurrency) { }
+	currencyChanged($event: ICurrency) {}
 
 	/**
 	 * On change number of item per page option
@@ -1225,7 +1324,7 @@ export class InvoicesComponent extends PaginationFilterBaseComponent
 		this.perPage = $event;
 		this.setPagination({
 			...this.getPagination(),
-			itemsPerPage: this.perPage
+			itemsPerPage: this.perPage,
 		});
 	}
 

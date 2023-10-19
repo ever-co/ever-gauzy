@@ -7,6 +7,7 @@ import {
 	ChangeDetectionStrategy,
 	NgZone,
 	AfterViewInit,
+	Inject,
 } from '@angular/core';
 import { from, tap } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
@@ -14,6 +15,8 @@ import { LanguagesEnum } from 'packages/contracts/dist';
 import { ElectronService } from '../electron/services';
 import { LanguageSelectorService } from '../language/language-selector.service';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { GAUZY_ENV } from '../constants';
+import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 
 export enum ServerStatus {
 	START = 'BUTTONS.START',
@@ -31,7 +34,7 @@ export class ServerDashboardComponent implements OnInit, AfterViewInit {
 	@ViewChild('logBox') logBox: ElementRef;
 	@ViewChild('logServer') logAccordion;
 	active_index: any;
-	gauzyIcon = './assets/images/logos/logo_Gauzy.svg';
+	gauzyIcon: SafeResourceUrl = './assets/images/logos/logo_Gauzy.svg';
 	running = false;
 	loading = false;
 	btn: any = {
@@ -51,7 +54,10 @@ export class ServerDashboardComponent implements OnInit, AfterViewInit {
 		private _cdr: ChangeDetectorRef,
 		private _languageSelectorService: LanguageSelectorService,
 		private _translateService: TranslateService,
-		private _ngZone: NgZone
+		private _ngZone: NgZone,
+		@Inject(GAUZY_ENV)
+		private readonly _environment: any,
+		private readonly _domSanitizer: DomSanitizer
 	) {
 		this.electronService.ipcRenderer.on('running_state', (event, arg) => {
 			this.loading = false;
@@ -90,6 +96,10 @@ export class ServerDashboardComponent implements OnInit, AfterViewInit {
 			this.logIsOpen = true;
 			this._cdr.detectChanges();
 		});
+
+		this.gauzyIcon = this._domSanitizer.bypassSecurityTrustResourceUrl(
+			this._environment.PLATFORM_LOGO_URL
+		);
 	}
 	ngAfterViewInit(): void {
 		this.electronService.ipcRenderer.on(

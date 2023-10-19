@@ -57,4 +57,5 @@ export class TaskUpdateHandler implements ICommandHandler<TaskUpdateCommand> {
 			throw new HttpException({ message: error?.message, error }, HttpStatus.BAD_REQUEST);
 		}
 	}
+
 }

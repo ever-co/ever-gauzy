@@ -12,20 +12,19 @@
 	</nb-card-header>
 	<nb-card-body>
 		<div class="row h-100">
-			<div class="col-md-3">
+			<div class="col-md-3 product-photo-container">
 				<div class="d-flex align-self-start">
 					<div class="product-container">
 						<ngx-product-gallery></ngx-product-gallery>
 					</div>
 				</div>
-				<div class="d-flex align-self-end footer-action">
+				<div class="d-flex align-self-end">
 					<nb-card-footer>
 						<button
 							(click)="onCancel()"
 							status="danger"
 							outline
 							nbButton
-							class="mr-2"
 						>
 							{{ 'BUTTONS.CANCEL' | translate }}
 						</button>
