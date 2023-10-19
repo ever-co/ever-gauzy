@@ -192,7 +192,7 @@ export const env: Env = cleanEnv(
 			default: 'Gauzy'
 		}),
 		COMPANY_LINK: str({
-			default: 'https://ever.co/'
+			default: 'https://ever.co'
 		}),
 		COMPANY_SITE_LINK: str({
 			default: 'https://gauzy.co'
