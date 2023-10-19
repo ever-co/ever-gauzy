@@ -1,12 +1,11 @@
-import { NgModule } from '@angular/core';
+import {Injector, NgModule} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import {
+	GAUZY_ENV,
 	ServerConnectionService,
 	Store,
 } from '..';
 import { Router } from '@angular/router';
-// @ts-ignore
-import { environment } from '@env/environment';
 
 @NgModule({
 	imports: [
@@ -18,8 +17,10 @@ export class DesktopUiLibModule {}
 export function serverConnectionFactory(
 	provider: ServerConnectionService,
 	store: Store,
-	router: Router
+	router: Router,
+	injector: Injector
 ) {
+	const environment: any = injector.get(GAUZY_ENV);
 	return () => {
 		return provider
 			.checkServerConnection(environment.API_BASE_URL)

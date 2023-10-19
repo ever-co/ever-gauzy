@@ -1,8 +1,7 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, Inject, OnDestroy, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { ServerConnectionService, Store } from '../services';
-// @ts-ignore
-import { environment } from '@env/environment';
+import { GAUZY_ENV } from '../constants';
 
 @Component({
 	styleUrls: ['./server-down.page.scss'],
@@ -15,29 +14,31 @@ export class ServerDownPage implements OnInit, OnDestroy {
 	constructor(
 		private store: Store,
 		private serverConnectionService: ServerConnectionService,
-		private readonly router: Router
+		private readonly router: Router,
+		@Inject(GAUZY_ENV)
+		private readonly environment: any
 	) {
 		this.noInternetLogo = environment['NO_INTERNET_LOGO'];
 	}
 
-	ngOnInit(): void {
-		this.checkConnection();
-	}
-
-	private async checkConnection() {
+	private checkConnection() {
 		this.interval = setInterval(async () => {
 			await this.serverConnectionService.checkServerConnection(
-				environment.API_BASE_URL
+				this.environment.API_BASE_URL
 			);
 			if (
 				Number(this.store.serverConnection) === 200 ||
 				this.store.userId
 			) {
 				clearInterval(this.interval);
-				this.router.navigate(['']);
+				await this.router.navigate(['']);
 			}
 		}, 5000);
 	}
 
-	ngOnDestroy(): void { }
+	ngOnInit(): void {
+		this.checkConnection();
+	}
+
+	ngOnDestroy(): void {}
 }
