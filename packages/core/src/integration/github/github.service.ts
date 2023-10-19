@@ -51,7 +51,7 @@ export class GithubService {
 			/** Find the GitHub integration */
 			const integration = await this._integrationService.findOneByOptions({
 				where: {
-					provider: IntegrationEnum.GITHUB,
+					provider: IntegrationEnum.GITHUB
 				}
 			});
 
@@ -65,13 +65,13 @@ export class GithubService {
 				if (settingEntity.entity === IntegrationEntity.ISSUE) {
 					return {
 						...settingEntity,
-						tiedEntities,
+						tiedEntities
 					};
 				}
 				return {
 					...settingEntity,
 					organizationId,
-					tenantId,
+					tenantId
 				};
 			});
 
@@ -83,7 +83,7 @@ export class GithubService {
 							provider: IntegrationEnum.GITHUB,
 						},
 						tenantId,
-						organizationId,
+						organizationId
 					},
 					{
 						name: IntegrationEnum.GITHUB,
@@ -103,11 +103,11 @@ export class GithubService {
 							{
 								settingsName: GithubPropertyMapEnum.SYNC_TAG,
 								settingsValue: SYNC_TAG_GITHUB,
-							},
+							}
 						].map((setting) => ({
 							...setting,
 							tenantId,
-							organizationId,
+							organizationId
 						})),
 					}
 				)
@@ -150,7 +150,7 @@ export class GithubService {
 			const tokens$ = this._http.post(GITHUB_ACCESS_TOKEN_URL, urlParams, {
 				headers: {
 					accept: 'application/json',
-				},
+				}
 			}).pipe(
 				switchMap(async ({ data }) => {
 					if (!data.error) {
@@ -163,7 +163,7 @@ export class GithubService {
 										provider: IntegrationEnum.GITHUB,
 									},
 									tenantId,
-									organizationId,
+									organizationId
 								},
 								{
 									name: IntegrationEnum.GITHUB,
@@ -191,11 +191,11 @@ export class GithubService {
 										{
 											settingsName: GithubPropertyMapEnum.TOKEN_TYPE,
 											settingsValue: data.token_type
-										},
+										}
 									].map((setting) => ({
 										...setting,
 										tenantId,
-										organizationId,
+										organizationId
 									})),
 								}
 							)

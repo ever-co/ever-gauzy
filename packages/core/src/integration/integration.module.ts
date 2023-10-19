@@ -18,27 +18,37 @@ import { IntegrationAIModule } from './gauzy-ai/integration-ai.module';
 	imports: [
 		RouterModule.forRoutes([
 			{
-				path: '/integration',
-				module: IntegrationModule,
+				path: '/integration', module: IntegrationModule,
 				children: [
 					{ path: '/hubstaff', module: HubstaffModule },
 					{ path: '/github', module: GithubModule },
 					{ path: '/gauzy-ai', module: IntegrationAIModule },
-					{ path: '/', module: IntegrationModule },
-				],
-			},
+					{ path: '/', module: IntegrationModule }
+				]
+			}
 		]),
-		TypeOrmModule.forFeature([Integration, IntegrationType]),
+		TypeOrmModule.forFeature([
+			Integration,
+			IntegrationType
+		]),
 		IntegrationTenantModule,
-		forwardRef(() => TenantModule),
-		forwardRef(() => UserModule),
+		TenantModule,
+		UserModule,
 		forwardRef(() => GithubModule),
 		forwardRef(() => HubstaffModule),
 		forwardRef(() => IntegrationAIModule),
-		CqrsModule,
+		CqrsModule
 	],
-	controllers: [IntegrationController],
-	providers: [IntegrationService, ...CommandHandlers],
-	exports: [TypeOrmModule, IntegrationService],
+	controllers: [
+		IntegrationController
+	],
+	providers: [
+		IntegrationService,
+		...CommandHandlers
+	],
+	exports: [
+		TypeOrmModule,
+		IntegrationService
+	]
 })
-export class IntegrationModule {}
+export class IntegrationModule { }

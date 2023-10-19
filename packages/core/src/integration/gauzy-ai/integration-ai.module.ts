@@ -1,10 +1,4 @@
-import {
-	MiddlewareConsumer,
-	Module,
-	NestModule,
-	RequestMethod,
-	forwardRef,
-} from '@nestjs/common';
+import { MiddlewareConsumer, Module, NestModule, RequestMethod, forwardRef } from '@nestjs/common';
 import { CqrsModule } from '@nestjs/cqrs';
 import { RouterModule } from 'nest-router';
 import { GauzyAIModule } from '@gauzy/integration-ai';
@@ -35,6 +29,7 @@ import { EmployeeJobPostController } from './../../employee-job/employee-job.con
 	]
 })
 export class IntegrationAIModule implements NestModule {
+
 	configure(consumer: MiddlewareConsumer) {
 		// Apply middlewares to specific controllers
 		consumer.apply(IntegrationAIMiddleware).forRoutes(

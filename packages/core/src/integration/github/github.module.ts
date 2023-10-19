@@ -1,10 +1,4 @@
-import {
-	MiddlewareConsumer,
-	Module,
-	NestModule,
-	RequestMethod,
-	forwardRef,
-} from '@nestjs/common';
+import { MiddlewareConsumer, Module, NestModule, RequestMethod, forwardRef } from '@nestjs/common';
 import { HttpModule } from '@nestjs/axios';
 import { CqrsModule } from '@nestjs/cqrs';
 import { TypeOrmModule } from '@nestjs/typeorm';
@@ -34,8 +28,8 @@ import { OrganizationGithubRepository } from './repository/github-repository.ent
 			OrganizationGithubRepository
 		]),
 		HttpModule,
-		forwardRef(() => TenantModule),
-		forwardRef(() => UserModule),
+		TenantModule,
+		UserModule,
 		forwardRef(() => OrganizationProjectModule),
 		forwardRef(() => IntegrationModule),
 		forwardRef(() => IntegrationTenantModule),
