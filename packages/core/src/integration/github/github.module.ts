@@ -7,6 +7,7 @@ import {
 } from '@nestjs/common';
 import { HttpModule } from '@nestjs/axios';
 import { CqrsModule } from '@nestjs/cqrs';
+import { TypeOrmModule } from '@nestjs/typeorm';
 import { TenantModule } from 'tenant/tenant.module';
 import { UserModule } from 'user/user.module';
 import { IntegrationModule } from 'integration/integration.module';
@@ -23,9 +24,15 @@ import { GitHubHooksController } from './github.hooks.controller';
 import { GithubHooksService } from './github.hooks.service';
 import { GitHubSyncController } from './github-sync.controller';
 import { GithubSyncService } from './github-sync.service';
+import { GitHubRepositoryController } from './repository/github-repository.controller';
+import { GithubRepositoryService } from './repository/github-repository.service';
+import { OrganizationGithubRepository } from './repository/github-repository.entity';
 
 @Module({
 	imports: [
+		TypeOrmModule.forFeature([
+			OrganizationGithubRepository
+		]),
 		HttpModule,
 		forwardRef(() => TenantModule),
 		forwardRef(() => UserModule),
@@ -41,11 +48,13 @@ import { GithubSyncService } from './github-sync.service';
 		GitHubHooksController,
 		GitHubIntegrationController,
 		GitHubSyncController,
+		GitHubRepositoryController
 	],
 	providers: [
 		GithubService,
 		GithubSyncService,
 		GithubHooksService,
+		GithubRepositoryService,
 		// Define middleware heres
 		GithubMiddleware,
 		// Define handlers heres

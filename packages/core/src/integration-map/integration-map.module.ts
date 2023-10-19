@@ -16,7 +16,9 @@ import { IntegrationMap } from './integration-map.entity';
 		RouterModule.forRoutes([
 			{ path: '/integration-map', module: IntegrationMapModule },
 		]),
-		TypeOrmModule.forFeature([IntegrationMap]),
+		TypeOrmModule.forFeature([
+			IntegrationMap
+		]),
 		forwardRef(() => TenantModule),
 		forwardRef(() => UserModule),
 		forwardRef(() => TaskModule),

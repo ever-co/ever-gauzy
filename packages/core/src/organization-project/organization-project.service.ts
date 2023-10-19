@@ -108,14 +108,14 @@ export class OrganizationProjectService extends TenantAwareCrudService<Organizat
 	/**
 	 * Retrieves an organization project by its external repository ID.
 	 *
-	 * @param externalRepositoryId - The unique identifier for the organization project.
+	 * @param repositoryId - The unique identifier for the organization project.
 	 * @param options - An object containing parameters for the query.
 	 *   - organizationId: The unique identifier for the organization.
 	 *   - tenantId: The unique identifier for the tenant (optional).
 	 * @returns A Promise that resolves to either an IOrganizationProject representing the retrieved project or false if an error occurs during the retrieval process.
 	 */
 	public async getProjectByRepository(
-		externalRepositoryId: IOrganizationProject['externalRepositoryId'], // Adjust the type to match your actual implementation
+		repositoryId: IOrganizationProject['repositoryId'], // Adjust the type to match your actual implementation
 		options: {
 			organizationId: IOrganization['id'];
 			tenantId: IOrganization['tenantId'];
@@ -128,7 +128,7 @@ export class OrganizationProjectService extends TenantAwareCrudService<Organizat
 		const project = await this.organizationProjectRepository.findOneByOrFail({
 			organizationId,
 			tenantId,
-			externalRepositoryId
+			repositoryId
 		});
 		return project;
 	}

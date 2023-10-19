@@ -4,7 +4,6 @@ export * from './integration-map.sync-issue.command';
 export * from './integration-map.sync-label.command';
 export * from './integration-map.sync-organization.command';
 export * from './integration-map.sync-project.command';
-export * from './integration-map.sync-repository.command';
 export * from './integration-map.sync-screenshot.command';
 export * from './integration-map.sync-task.command';
 export * from './integration-map.sync-time-log.command';
