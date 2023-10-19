@@ -5,13 +5,13 @@ import { AuthGuard } from './auth.guard';
 import { NoAuthGuard } from './no-auth.guard';
 import { Store } from '../services';
 import { AuthService, AuthStrategy } from './services';
-// @ts-ignore
-import { environment } from '@env/environment';
+import { GAUZY_ENV, injector } from '../constants';
 
 export * from './services';
 export * from './auth.guard';
 export * from './no-auth.guard';
 
+const environment = injector.get(GAUZY_ENV);
 const socialLinks = [
 	{
 		url: environment?.GOOGLE_AUTH_LINK,
@@ -43,25 +43,22 @@ const socialLinks = [
 	},
 ];
 
+const nbAuthModule = NbAuthModule.forRoot({
+	strategies: [AuthStrategy.setup({ name: 'email' })],
+	forms: {
+		login: { socialLinks },
+		register: { socialLinks },
+	},
+});
+
+
 @NgModule({
 	imports: [
 		CommonModule,
-		NbAuthModule.forRoot({
-			strategies: [AuthStrategy.setup({ name: 'email' })],
-			forms: {
-				login: { socialLinks },
-				register: { socialLinks },
-			},
-		}),
+		nbAuthModule
 	],
 	providers: [
-		...NbAuthModule.forRoot({
-			strategies: [AuthStrategy.setup({ name: 'email' })],
-			forms: {
-				login: { socialLinks },
-				register: { socialLinks },
-			},
-		}).providers,
+		...nbAuthModule.providers,
 		AuthGuard,
 		NoAuthGuard,
 		AuthStrategy,
