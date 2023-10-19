@@ -16,7 +16,8 @@ import {
     IOrganizationProject,
     ITag,
     IntegrationEntity,
-    TaskStatusEnum
+    TaskStatusEnum,
+    IGithubCreateIssuePayload
 } from '@gauzy/contracts';
 import { RequestContext } from 'core/context';
 import { arrayToObject } from 'core/utils';
@@ -392,39 +393,35 @@ export class GithubSyncService {
     }
 
     /**
-     * Open a new issue on a GitHub repository.
+     * Opens a new issue on a GitHub repository using the specified installation.
      *
      * @param installationId - The GitHub installation ID.
-     * @param repo - The repository name.
-     * @param owner - The owner of the repository.
-     * @param title - The title of the issue.
-     * @param body - The body of the issue.
-     * @param labels - An array of labels for the issue.
+     * @param data - An object containing issue details.
      * @returns A promise that resolves to the response from GitHub.
      */
-    public async openIssue(installationId: number, {
-        repo,
-        owner,
-        title,
-        body,
-        labels,
-    }) {
+    public async openIssue(installationId: number, data: IGithubCreateIssuePayload) {
         try {
-            // Delegate the responsibility of opening the issue to the octokit service
-            await this._octokitService.openIssue(installationId, {
-                repo,
-                owner,
-                title,
-                body,
-                labels
-            });
+            // Check if a valid installation ID is provided
+            if (!installationId) {
+                throw new HttpException('Invalid request parameter', HttpStatus.UNAUTHORIZED);
+            }
+
+            // Prepare the payload for opening the issue
+            const payload = {
+                repo: data.repo,
+                owner: data.owner,
+                title: data.title,
+                body: data.body,
+                labels: data.labels
+            };
+
+            // Create the installation issue using the octokit service
+            const issue = await this._octokitService.openIssue(installationId, payload);
+            return issue.data;
         } catch (error) {
             // Handle errors and return an appropriate error response
             this.logger.error('Error while opening an issue in GitHub', error.message);
+            throw new HttpException(`Error while opening an issue in GitHub: ${error.message}`, HttpStatus.INTERNAL_SERVER_ERROR);
         }
-    }
-
-    async issuesEdited({ issueNumber, title, body, owner, repo, installationId }) {
-        console.log({ issueNumber, title, body, owner, repo, installationId });
     }
 }
