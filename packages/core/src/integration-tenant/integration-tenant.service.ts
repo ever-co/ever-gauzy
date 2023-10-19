@@ -41,20 +41,18 @@ export class IntegrationTenantService extends TenantAwareCrudService<Integration
 				organizationId,
 			}));
 
-			entitySettings = entitySettings.map(
-				(item: IIntegrationEntitySetting) => ({
-					...item,
-					tenantId,
-					organizationId,
-				})
-			);
+			entitySettings = entitySettings.map((item: IIntegrationEntitySetting) => ({
+				...item,
+				tenantId,
+				organizationId
+			}));
 
 			return await super.create({
 				...input,
 				tenantId,
 				organizationId,
 				settings,
-				entitySettings,
+				entitySettings
 			});
 		} catch (error) {
 			console.log('Error while creating integration tenant:', error);
@@ -80,14 +78,13 @@ export class IntegrationTenantService extends TenantAwareCrudService<Integration
 					organizationId,
 					name,
 					isActive: true,
-					isArchived: false,
+					isArchived: false
 				},
 				order: {
-					updatedAt: 'DESC',
+					updatedAt: 'DESC'
 				},
 				relations: {
-					integration: true,
-					settings: true,
+					integration: true
 				},
 			});
 			return integrationTenant || false;
@@ -110,17 +107,14 @@ export class IntegrationTenantService extends TenantAwareCrudService<Integration
 				where: {
 					organizationId,
 					tenantId,
-					name: IntegrationEnum.GAUZY_AI,
+					name: IntegrationEnum.GAUZY_AI
 				},
 				relations: {
-					settings: true,
-				},
+					settings: true
+				}
 			});
 		} catch (error) {
-			console.log(
-				'Error while getting integration settings: %s',
-				error?.message
-			);
+			console.log('Error while getting integration settings: %s', error?.message);
 			throw new BadRequestException(error?.message);
 		}
 	}

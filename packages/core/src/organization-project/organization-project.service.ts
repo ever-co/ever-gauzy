@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Brackets, In, IsNull, Repository, WhereExpressionBuilder } from 'typeorm';
 import { isNotEmpty } from '@gauzy/common';
-import { IEmployee, IOrganization, IOrganizationProject, IOrganizationProjectsFindInput, IPagination } from '@gauzy/contracts';
+import { IEmployee, IOrganization, IOrganizationGithubRepository, IOrganizationProject, IOrganizationProjectsFindInput, IPagination } from '@gauzy/contracts';
 import { PaginationParams, TenantAwareCrudService } from './../core/crud';
 import { RequestContext } from '../core/context';
 import { OrganizationProject } from './organization-project.entity';
@@ -106,30 +106,44 @@ export class OrganizationProjectService extends TenantAwareCrudService<Organizat
 	}
 
 	/**
-	 * Retrieves an organization project by its external repository ID.
+	 * Get organization projects associated with a specific repository.
 	 *
-	 * @param repositoryId - The unique identifier for the organization project.
-	 * @param options - An object containing parameters for the query.
-	 *   - organizationId: The unique identifier for the organization.
-	 *   - tenantId: The unique identifier for the tenant (optional).
-	 * @returns A Promise that resolves to either an IOrganizationProject representing the retrieved project or false if an error occurs during the retrieval process.
+	 * @param repositoryId - The ID of the repository.
+	 * @param options - An object containing organization, tenant, and integration information.
+	 * @returns A Promise that resolves to an array of organization projects.
 	 */
-	public async getProjectByRepository(
-		repositoryId: IOrganizationProject['repositoryId'], // Adjust the type to match your actual implementation
+	public async getProjectsByRepository(
+		repositoryId: IOrganizationGithubRepository['repositoryId'],
 		options: {
-			organizationId: IOrganization['id'];
-			tenantId: IOrganization['tenantId'];
+			organizationId: IOrganizationGithubRepository['id'];
+			tenantId: IOrganizationGithubRepository['tenantId'];
+			integrationId: IOrganizationGithubRepository['integrationId'];
 		}
-	): Promise<IOrganizationProject> {
-		const { organizationId } = options;
-		const tenantId = RequestContext.currentTenantId() || options.tenantId;
+	): Promise<IOrganizationProject[]> {
+		try {
+			const tenantId = RequestContext.currentTenantId() || options.tenantId;
+			const { organizationId, integrationId } = options;
 
-		// Attempt to retrieve the organization project by the provided parameters.
-		const project = await this.organizationProjectRepository.findOneByOrFail({
-			organizationId,
-			tenantId,
-			repositoryId
-		});
-		return project;
+			// Attempt to retrieve the organization projects by the provided parameters.
+			const projects = await this.organizationProjectRepository.find({
+				where: {
+					organizationId,
+					tenantId,
+					repository: {
+						repositoryId,
+						integrationId,
+						organizationId,
+						tenantId,
+						isActive: true,
+						isArchived: false
+					},
+					isActive: true,
+					isArchived: false
+				}
+			});
+			return projects;
+		} catch (error) {
+			return [];
+		}
 	}
 }

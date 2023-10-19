@@ -24,7 +24,7 @@ import { IntegrationEntitySettingService } from './integration-entity-setting.se
 		forwardRef(() => IntegrationTenantModule),
 		TenantModule,
 		UserModule,
-		CqrsModule,
+		CqrsModule
 	],
 	controllers: [
 		IntegrationEntitySettingController

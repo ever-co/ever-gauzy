@@ -19,15 +19,20 @@ import { EmployeeJobPostController } from './../../employee-job/employee-job.con
 
 @Module({
 	imports: [
-		forwardRef(() => TenantModule),
-		forwardRef(() => UserModule),
-		forwardRef(() => IntegrationModule),
+		TenantModule,
+		UserModule,
 		IntegrationTenantModule,
-		CqrsModule,
 		GauzyAIModule.forRoot(),
+		forwardRef(() => IntegrationModule),
+		CqrsModule
 	],
-	controllers: [IntegrationAIController],
-	providers: [IntegrationAIService, IntegrationAIMiddleware],
+	controllers: [
+		IntegrationAIController
+	],
+	providers: [
+		IntegrationAIService,
+		IntegrationAIMiddleware
+	]
 })
 export class IntegrationAIModule implements NestModule {
 	configure(consumer: MiddlewareConsumer) {
@@ -38,23 +43,23 @@ export class IntegrationAIModule implements NestModule {
 		consumer.apply(IntegrationAIMiddleware).forRoutes(
 			{
 				path: '/employee/job-statistics',
-				method: RequestMethod.GET,
+				method: RequestMethod.GET
 			},
 			{
 				path: '/employee/:id/job-search-status',
-				method: RequestMethod.PUT,
+				method: RequestMethod.PUT
 			},
 			{
 				path: '/job-preset',
-				method: RequestMethod.POST,
+				method: RequestMethod.POST
 			},
 			{
 				path: '/job-preset',
-				method: RequestMethod.GET,
+				method: RequestMethod.GET
 			},
 			{
 				path: '/job-preset/employee/:employeeId/criterion',
-				method: RequestMethod.POST,
+				method: RequestMethod.POST
 			}
 		); // Apply to specific routes and methods
 	}
