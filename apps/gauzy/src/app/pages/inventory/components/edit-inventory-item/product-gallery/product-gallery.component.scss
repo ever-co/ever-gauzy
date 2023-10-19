@@ -8,13 +8,17 @@
 
 .featured-image {
   width: 100%;
-  height: 300px;
+  height: 180px;
   object-fit: cover;
   border-radius: var(--border-radius);
 }
 
-.image-container {
-  height: 300px;
+.image-container-notSelected {
+  height: 260px;
+}
+
+.image-container-selected {
+  height: 180px;
 }
 
 .gallery-sm-preview-item {
