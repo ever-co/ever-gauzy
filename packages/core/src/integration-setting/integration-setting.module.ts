@@ -1,4 +1,4 @@
-import { forwardRef, Module } from '@nestjs/common';
+import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { CqrsModule } from '@nestjs/cqrs';
 import { TenantModule } from '../tenant/tenant.module';
@@ -10,13 +10,23 @@ import { IntegrationSetting } from './integration-setting.entity';
 
 @Module({
 	imports: [
-		TypeOrmModule.forFeature([IntegrationSetting]),
-		forwardRef(() => TenantModule),
-		forwardRef(() => UserModule),
-		CqrsModule,
+		TypeOrmModule.forFeature([
+			IntegrationSetting
+		]),
+		TenantModule,
+		UserModule,
+		CqrsModule
 	],
-	controllers: [IntegrationSettingController],
-	providers: [IntegrationSettingService, ...CommandHandlers],
-	exports: [TypeOrmModule, IntegrationSettingService],
+	controllers: [
+		IntegrationSettingController
+	],
+	providers: [
+		IntegrationSettingService,
+		...CommandHandlers
+	],
+	exports: [
+		TypeOrmModule,
+		IntegrationSettingService
+	]
 })
-export class IntegrationSettingModule {}
+export class IntegrationSettingModule { }

@@ -14,7 +14,10 @@ import { IntegrationMap } from './integration-map.entity';
 @Module({
 	imports: [
 		RouterModule.forRoutes([
-			{ path: '/integration-map', module: IntegrationMapModule },
+			{
+				path: '/integration-map',
+				module: IntegrationMapModule
+			}
 		]),
 		TypeOrmModule.forFeature([
 			IntegrationMap

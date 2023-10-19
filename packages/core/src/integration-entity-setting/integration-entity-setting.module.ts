@@ -13,7 +13,10 @@ import { IntegrationEntitySettingService } from './integration-entity-setting.se
 @Module({
 	imports: [
 		RouterModule.forRoutes([
-			{ path: '/integration-entity-setting', module: IntegrationEntitySettingModule }
+			{
+				path: '/integration-entity-setting',
+				module: IntegrationEntitySettingModule
+			}
 		]),
 		TypeOrmModule.forFeature([
 			IntegrationEntitySetting
