@@ -4310,6 +4310,7 @@
 	"SETTINGS": {
 		"EMAIL_HISTORY": {
 			"EMAIL_ARCHIVED": "电子邮件已存档",
+			"RESEND": "重新发送",
 			"ARCHIVE": "存档",
 			"HEADER": "电子邮件历史",
 			"FROM": "从：",
