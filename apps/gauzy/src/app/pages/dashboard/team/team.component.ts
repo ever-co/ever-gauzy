@@ -8,7 +8,7 @@ import {
 	ITimeLog,
 	ReportGroupFilterEnum
 } from '@gauzy/contracts';
-import { debounceTime, tap } from 'rxjs';
+import { combineLatest, debounceTime, tap } from 'rxjs';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
 import { DateRangePickerBuilderService, OrganizationTeamsService, Store } from '../../../@core';
@@ -27,6 +27,7 @@ export class TeamComponent extends BaseSelectorFilterComponent implements OnInit
 	private _countsStatistics: any;
 	private _dailyLogs: any[] = [];
 	private _selectedEmployee: ISelectedEmployee;
+	private _selectedOrganizationTeam: IOrganizationTeam;
 
 	constructor(
 		private readonly _organizationTeamsService: OrganizationTeamsService,
@@ -42,6 +43,7 @@ export class TeamComponent extends BaseSelectorFilterComponent implements OnInit
 			isSelected: false
 		};
 		this._isLoading = false;
+		this._selectedOrganizationTeam = null;
 	}
 
 	private _isLoading: boolean;
@@ -132,10 +134,14 @@ export class TeamComponent extends BaseSelectorFilterComponent implements OnInit
 				untilDestroyed(this)
 			)
 			.subscribe();
-		this._store.selectedEmployee$
+		combineLatest([
+			this._store.selectedEmployee$,
+			this._store.selectedTeam$,
+		])
 			.pipe(
-				tap((employee: ISelectedEmployee) => {
+				tap(([employee, organizationTeam]) => {
 					this._selectedEmployee = employee;
+					this._selectedOrganizationTeam = organizationTeam;
 				}),
 				tap(() => this.subject$.next(true)),
 				untilDestroyed(this)
@@ -191,7 +197,11 @@ export class TeamComponent extends BaseSelectorFilterComponent implements OnInit
 		this._todayTeamsWorkers = this._teams
 			.map((team) => {
 				const isTeamMember = team.members.some((member) => member.employeeId === this._selectedEmployee.id);
-				if (!isTeamMember && this._selectedEmployee.id) {
+				if (
+					(!isTeamMember && this._selectedEmployee?.id) ||
+					(this._selectedOrganizationTeam.id &&
+						team.id !== this._selectedOrganizationTeam.id)
+				) {
 					return null;
 				}
 				const members = team.members.map((member) => {
