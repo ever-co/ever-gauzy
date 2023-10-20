@@ -205,12 +205,16 @@ export class TeamComponent extends BaseSelectorFilterComponent implements OnInit
 					return null;
 				}
 				const members = team.members.map((member) => {
-					const memberDailyLog = this._dailyLogs.filter(
-						(dailyLog) => dailyLog.employee.userId === member.employee.userId
-					)[0];
-					const logs = this._logs
-						.map((log) => (log.employee.userId === member.employee.userId ? log : null))
-						.filter((log) => !!log);
+					const [memberDailyLog] = this._dailyLogs.filter(
+						(dailyLog) =>
+							dailyLog.employee.userId === member.employee.userId
+					);
+					const logs = this._logs.filter(
+						(log) =>
+							!!log &&
+							log.employee.userId === member.employee.userId &&
+							log.organizationTeamId === team.id
+					);
 					const isWorkingToday = logs.length > 0;
 					const groupByTask = isWorkingToday ? this._groupBy('taskId', logs) : [];
 					const groupByProject = isWorkingToday ? this._groupBy('projectId', logs) : [];
@@ -224,6 +228,12 @@ export class TeamComponent extends BaseSelectorFilterComponent implements OnInit
 							}, 0)
 						};
 					});
+					const todayWorkDuration = (tasks || []).reduce(
+						(accumulator: number, task) => {
+							return accumulator + task?.duration || 0;
+						},
+						0
+					);
 					const proj = projectKeys.map((value: string) => {
 						return {
 							...groupByProject[value][0].project
@@ -233,7 +243,7 @@ export class TeamComponent extends BaseSelectorFilterComponent implements OnInit
 					return {
 						...member,
 						isRunningTimer: isWorkingToday ? logs.reverse()[0].isRunning : false,
-						todayWorkDuration: memberDailyLog ? memberDailyLog.sum : null,
+						todayWorkDuration,
 						isWorkingToday: isWorkingToday,
 						tasks: tasks,
 						projects: proj,
