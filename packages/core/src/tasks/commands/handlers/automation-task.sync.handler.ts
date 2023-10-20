@@ -1,6 +1,6 @@
 import { ICommandHandler, CommandHandler } from '@nestjs/cqrs';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { EntityNotFoundError, Repository } from 'typeorm';
 import {
 	IIntegrationMap,
 	IOrganization,
@@ -11,7 +11,7 @@ import {
 	IntegrationEntity
 } from '@gauzy/contracts';
 import { RequestContext } from 'core/context';
-import { IntegrationMap } from 'core/entities/internal';
+import { IntegrationMap, TaskStatus } from 'core/entities/internal';
 import { AutomationTaskSyncCommand } from './../automation-task.sync.command';
 import { TaskService } from './../../task.service';
 import { Task } from './../../task.entity';
@@ -20,7 +20,8 @@ import { Task } from './../../task.entity';
 export class AutomationTaskSyncHandler implements ICommandHandler<AutomationTaskSyncCommand> {
 
 	constructor(
-		@InjectRepository(Task) private readonly repository: Repository<Task>,
+		@InjectRepository(Task) private readonly taskRepository: Repository<Task>,
+		@InjectRepository(TaskStatus) private readonly taskStatusRepository: Repository<TaskStatus>,
 		@InjectRepository(IntegrationMap) private readonly integrationMapRepository: Repository<IntegrationMap>,
 		private readonly _taskService: TaskService
 	) { }
@@ -31,6 +32,25 @@ export class AutomationTaskSyncHandler implements ICommandHandler<AutomationTask
 			const { sourceId, integrationId, organizationId, entity } = input;
 			const { projectId } = entity;
 			const tenantId = RequestContext.currentTenantId() || input.tenantId;
+
+			try {
+				const taskStatus = await this.taskStatusRepository.findOneByOrFail({
+					tenantId,
+					organizationId,
+					projectId,
+					name: entity.status
+				});
+				entity.taskStatus = taskStatus;
+			} catch (error) {
+				// Handle the error more gracefully
+				if (error instanceof EntityNotFoundError) {
+					// Task status not found, handle this case
+					console.error('Task status not found for entity:', entity.status);
+				} else {
+					// Handle other errors
+					console.error('Error while retrieving task status:', error.message);
+				}
+			}
 
 			try {
 				// Check if an integration map already exists for the issue
@@ -108,7 +128,7 @@ export class AutomationTaskSyncHandler implements ICommandHandler<AutomationTask
 			const maxNumber = await this._taskService.getMaxTaskNumberByProject(options);
 
 			// Create a new task with the provided entity data
-			const newTask = this.repository.create({
+			const newTask = this.taskRepository.create({
 				...entity,
 				number: maxNumber + 1,
 				organizationId: options.organizationId,
@@ -116,7 +136,7 @@ export class AutomationTaskSyncHandler implements ICommandHandler<AutomationTask
 			});
 
 			// Save the new task
-			const createdTask = await this.repository.save(newTask);
+			const createdTask = await this.taskRepository.save(newTask);
 			return createdTask;
 		} catch (error) {
 			// Handle and log errors, and return a rejected promise or throw an exception.
@@ -143,10 +163,10 @@ export class AutomationTaskSyncHandler implements ICommandHandler<AutomationTask
 			}
 
 			// Update the existing task with the new entity data
-			this.repository.merge(existingTask, entity);
+			this.taskRepository.merge(existingTask, entity);
 
 			// Save the updated task
-			const updatedTask = await this.repository.save(existingTask);
+			const updatedTask = await this.taskRepository.save(existingTask);
 			return updatedTask;
 		} catch (error) {
 			// Handle and log errors, and return a rejected promise or throw an exception.

@@ -19,6 +19,7 @@ import {
 	IImageAsset,
 	IInvoiceItem,
 	IOrganizationContact,
+	IOrganizationGithubRepository,
 	IOrganizationProject,
 	IOrganizationSprint,
 	IOrganizationTeam,
@@ -43,6 +44,7 @@ import {
 	ImageAsset,
 	InvoiceItem,
 	OrganizationContact,
+	OrganizationGithubRepository,
 	OrganizationSprint,
 	OrganizationTeam,
 	Payment,
@@ -59,6 +61,7 @@ import {
 
 @Entity('organization_project')
 export class OrganizationProject extends TenantOrganizationBaseEntity implements IOrganizationProject {
+	deletedAt?: Date;
 
 	@Index()
 	@Column()
@@ -126,16 +129,6 @@ export class OrganizationProject extends TenantOrganizationBaseEntity implements
 	@Column({ length: 500, nullable: true })
 	imageUrl?: string;
 
-	/**
-	 * Project Integration Setting
-	 */
-	@ApiPropertyOptional({ type: () => Number })
-	@IsOptional()
-	@IsBoolean()
-	@Index()
-	@Column({ nullable: true })
-	externalRepositoryId?: number;
-
 	@ApiPropertyOptional({ type: () => Boolean })
 	@IsOptional()
 	@IsBoolean()
@@ -162,6 +155,27 @@ export class OrganizationProject extends TenantOrganizationBaseEntity implements
 	| @ManyToOne
 	|--------------------------------------------------------------------------
 	*/
+
+	/**
+	 * OrganizationGithubRepository
+	 */
+	@ManyToOne(() => OrganizationGithubRepository, (it) => it.projects, {
+		/** Indicates if relation column value can be nullable or not. */
+		nullable: true,
+
+		/** Database cascade action on delete. */
+		onDelete: 'SET NULL'
+	})
+	@JoinColumn()
+	repository?: IOrganizationGithubRepository;
+
+	@ApiPropertyOptional({ type: () => String })
+	@IsOptional()
+	@IsUUID()
+	@RelationId((it: OrganizationProject) => it.repository)
+	@Index()
+	@Column({ nullable: true })
+	repositoryId?: IOrganizationGithubRepository['id'];
 
 	/**
 	 * Organization Contact

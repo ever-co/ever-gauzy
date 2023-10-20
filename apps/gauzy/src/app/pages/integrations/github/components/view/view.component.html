@@ -30,7 +30,7 @@
 			</div>
 			<div class="issues-container">
 				<ngx-github-repository-selector
-					[sourceId]="(project$ | async)?.externalRepositoryId"
+					[sourceId]="(project$ | async)?.repository?.repositoryId"
 					[integration]="integration"
 					(onChanged)="selectRepository($event)"
 					[selected]="true"

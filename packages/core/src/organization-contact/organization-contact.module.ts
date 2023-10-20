@@ -14,18 +14,23 @@ import { UserModule } from './../user/user.module';
 @Module({
 	imports: [
 		RouterModule.forRoutes([
-			{ path: '/organization-contact', module: OrganizationContactModule }
+			{
+				path: '/organization-contact',
+				module: OrganizationContactModule,
+			}
 		]),
 		TypeOrmModule.forFeature([
 			OrganizationContact
 		]),
-		CqrsModule,
 		TenantModule,
-		OrganizationModule,
 		UserModule,
-		OrganizationProjectModule
+		OrganizationModule,
+		OrganizationProjectModule,
+		CqrsModule
 	],
-	controllers: [OrganizationContactController],
+	controllers: [
+		OrganizationContactController
+	],
 	providers: [
 		OrganizationContactService,
 		...CommandHandlers

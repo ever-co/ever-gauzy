@@ -4310,6 +4310,7 @@
 	"SETTINGS": {
 		"EMAIL_HISTORY": {
 			"EMAIL_ARCHIVED": "Email zarchiwizowany",
+			"RESEND": "Ponownie wysłać",
 			"ARCHIVE": "Archiwum",
 			"HEADER": "Historia wiadomości e-mail",
 			"FROM": "Z:",

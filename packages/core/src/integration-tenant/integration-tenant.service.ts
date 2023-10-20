@@ -65,7 +65,9 @@ export class IntegrationTenantService extends TenantAwareCrudService<Integration
 	 * @param input - The input options for finding the integration tenant.
 	 * @returns The integration tenant if found, or `false` if not found or an error occurs.
 	 */
-	public async getIntegrationByOptions(input: IIntegrationTenantFindInput): Promise<IIntegrationTenant | boolean> {
+	public async getIntegrationByOptions(
+		input: IIntegrationTenantFindInput
+	): Promise<IIntegrationTenant | boolean> {
 		try {
 			const tenantId = RequestContext.currentTenantId() || input.tenantId;
 			const { organizationId, name } = input;

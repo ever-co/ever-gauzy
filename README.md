@@ -12,7 +12,7 @@
 
 We released [Ever Teams](https://github.com/ever-co/ever-teams) platform for Work & Project Management.
 Please check <https://github.com/ever-co/ever-teams> and make it ⭐ on GitHub!
-It's built with React / ReactNative (Expo) stack and connects to headless Ever Gauzy Platform APIs.
+It's built with a React / ReactNative (Expo) stack and connects to headless [Ever Gauzy Platform APIs](https://api.gauzy.co/swg).
 
 ## 🌟 What is it
 
@@ -41,6 +41,7 @@ Main features:
 
 A more detailed list of the features available in the platform:
 
+- [Headless APIs](https://api.gauzy.co/swg)
 - Dashboard (provides an overview of different metrics, such as company income/expenses, employee bonuses, etc.)
 - Time Management / Time Tracking / Activity Tracking / Timesheets
 - Employees Management (register of company employees/contractors, rates of employees, etc.)

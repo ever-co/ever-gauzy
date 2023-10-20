@@ -4311,6 +4311,7 @@
 	"SETTINGS": {
 		"EMAIL_HISTORY": {
 			"EMAIL_ARCHIVED": "Email Archivé",
+			"RESEND": "Renvoyer",
 			"ARCHIVE": "Archiver",
 			"HEADER": "Histoire de l'email",
 			"FROM": "De:",

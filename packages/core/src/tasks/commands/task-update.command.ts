@@ -6,6 +6,7 @@ export class TaskUpdateCommand implements ICommand {
 
 	constructor(
 		public readonly id: ITask['id'],
-		public readonly input: ITaskUpdateInput
+		public readonly input: ITaskUpdateInput,
+		public readonly triggeredEvent: boolean = true // Enabled the "2 Way Sync Triggered Event" Synchronization
 	) { }
 }

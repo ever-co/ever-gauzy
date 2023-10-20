@@ -1,4 +1,4 @@
-import { IIntegrationTenant } from 'integration.model';
+import { IIntegrationTenant, IRelationalIntegrationTenant } from './integration.model';
 import { IBasePerTenantAndOrganizationEntityModel } from './base-entity.model';
 import { IRelationalOrganizationProject } from './organization-projects.model';
 
@@ -62,6 +62,15 @@ export interface IGithubIssueLabel {
     [x: string]: any; // Additional properties
 }
 
+export interface IGithubIssueCreateOrUpdatePayload {
+    repo: string;
+    owner: string;
+    issue_number?: number;
+    title: string;
+    body: string;
+    labels: Partial<IGithubIssueLabel[]>;
+}
+
 // Represents a GitHub installation
 export interface IGithubInstallation {
     id: number;
@@ -110,4 +119,15 @@ export interface IGithubAutomationIssuePayload extends IGithubAutomationBase {
 export interface IGithubInstallationDeletedPayload extends Pick<IGithubAutomationBase, 'integration'> {
     installation: IGithubInstallation;
     repositories: IGithubRepository[];
+}
+
+export interface IOrganizationGithubRepository extends IBasePerTenantAndOrganizationEntityModel, IRelationalIntegrationTenant {
+    repositoryId: number;
+    name: string;
+    fullName: string;
+    owner: string;
+}
+
+export interface IIntegrationMapSyncRepository extends IBasePerTenantAndOrganizationEntityModel, IRelationalIntegrationTenant {
+    repository: IGithubRepository;
 }
