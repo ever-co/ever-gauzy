@@ -243,37 +243,30 @@ export class GithubSyncService {
         const { integration, repository, issue } = input;
         const { entitySettings } = integration;
 
-        console.log(issue);
-
         try {
-            /** */
+            /** Extract necessary data from integration */
             const tenantId = integration['tenantId'];
             const organizationId = integration['organizationId'];
             const integrationId = integration['id'];
 
-            /** */
+            /** Get a list of projects for the repository */
             const projects: IOrganizationProject[] = await this._organizationProjectService.getProjectsByRepository(repository.id, {
                 organizationId,
                 tenantId,
                 integrationId
             });
 
+            /** Loop through the projects and synchronize issues */
             await Promise.all(
                 projects.map(async (project: IOrganizationProject) => {
-                    if (!!project && !!project.isTasksAutoSync) {
-                        let isContinueExecution = true;
-                        if (!!project.isTasksAutoSyncOnLabel) {
-                            isContinueExecution = !!(issue.labels.find(
-                                (label: IGithubIssueLabel) => label.name === project.syncTag
-                            ));
-                        }
-                        if (!isContinueExecution) {
-                            return;
-                        }
-                        const issues: IGithubIssue[] = this._mapIssuePayload(Array.isArray(issue) ? issue : [issue]);
+                    // Check if the issue should be synchronized for this project
+                    if (!!this.shouldSyncIssue(project, issue)) {
 
+                        const issues: IGithubIssue[] = this._mapIssuePayload(Array.isArray(issue) ? issue : [issue]);
                         const projectId = project.id;
+
                         const integrationId = integration.id;
+
                         // Synchronize data based on entity settings
                         await Promise.all(
                             entitySettings.map(async (entitySetting: IntegrationEntitySetting) => {
@@ -283,64 +276,46 @@ export class GithubSyncService {
                                         const issueSetting: IIntegrationEntitySetting = entitySetting;
                                         if (!!issueSetting.sync) {
                                             return await Promise.all(
-                                                issues.map(
-                                                    async ({ number: issue_number, title, state, body, labels }) => {
-                                                        /** Sync Github Issue Labels */
-                                                        let tags: ITag[] = [];
-                                                        try {
-                                                            // Check for label synchronization settings
-                                                            const labelSetting: IIntegrationEntitySetting = entitySetting.tiedEntities.find(
-                                                                ({ entity }: IIntegrationEntitySettingTied) => entity === IntegrationEntity.LABEL
+                                                issues.map(async ({ sourceId, title, state, body, labels }) => {
+                                                    // Initialize an array to store tags
+                                                    let tags: ITag[] = [];
+
+                                                    // Check for label synchronization settings
+                                                    try {
+                                                        const labelSetting: IIntegrationEntitySetting = entitySetting.tiedEntities.find(
+                                                            ({ entity }: IIntegrationEntitySettingTied) => entity === IntegrationEntity.LABEL
+                                                        );
+                                                        if (!!labelSetting && labelSetting.sync) {
+                                                            /** Sync GitHub Issue Labels */
+                                                            tags = await Promise.all(
+                                                                labels.map(
+                                                                    async (label: IGithubIssueLabel) => {
+                                                                        const { id: labelId, name, color, description } = label;
+                                                                        /** */
+                                                                        return await this._commandBus.execute(
+                                                                            new AutomationLabelSyncCommand({
+                                                                                entity: {
+                                                                                    name,
+                                                                                    color,
+                                                                                    description,
+                                                                                    isSystem: label.default
+                                                                                },
+                                                                                sourceId: labelId.toString(),
+                                                                                integrationId,
+                                                                                organizationId,
+                                                                                tenantId
+                                                                            }, IntegrationEntity.LABEL)
+                                                                        );
+                                                                    }
+                                                                )
                                                             );
-                                                            if (!!labelSetting && labelSetting.sync) {
-                                                                /** Sync Github Issue Labels */
-                                                                tags = await Promise.all(
-                                                                    labels.map(
-                                                                        async (label: IGithubIssueLabel) => {
-                                                                            const { id: labelId, name, color, description } = label;
-                                                                            /** */
-                                                                            return await this._commandBus.execute(
-                                                                                new AutomationLabelSyncCommand({
-                                                                                    entity: {
-                                                                                        name,
-                                                                                        color,
-                                                                                        description,
-                                                                                        isSystem: label.default
-                                                                                    },
-                                                                                    sourceId: labelId.toString(),
-                                                                                    integrationId,
-                                                                                    organizationId,
-                                                                                    tenantId
-                                                                                }, IntegrationEntity.LABEL)
-                                                                            );
-                                                                        }
-                                                                    )
-                                                                );
-                                                            }
-                                                        } catch (error) {
-                                                            console.error('Failed to fetch GitHub labels for the repository issue:', error.message);
                                                         }
+                                                    } catch (error) {
+                                                        console.error('Failed to fetch GitHub labels for the repository issue:', error.message);
+                                                    }
 
-                                                        console.log({
-                                                            entity: {
-                                                                title,
-                                                                description: body,
-                                                                status: state as TaskStatusEnum,
-                                                                public: repository.visibility === 'private' ? false : true,
-                                                                prefix: project ? project.name.substring(0, 3) : null,
-                                                                projectId,
-                                                                organizationId,
-                                                                tenantId,
-                                                                tags
-                                                            },
-                                                            sourceId: issue_number.toString(),
-                                                            integrationId,
-                                                            integration,
-                                                            organizationId,
-                                                            tenantId
-                                                        });
-
-                                                        /** */
+                                                    try {
+                                                        // Synchronize the issue as a task
                                                         return await this._commandBus.execute(
                                                             new AutomationTaskSyncCommand({
                                                                 entity: {
@@ -354,14 +329,17 @@ export class GithubSyncService {
                                                                     tenantId,
                                                                     tags
                                                                 },
-                                                                sourceId: issue_number.toString(),
+                                                                sourceId,
                                                                 integrationId,
                                                                 integration,
                                                                 organizationId,
                                                                 tenantId
                                                             }, IntegrationEntity.ISSUE)
                                                         );
+                                                    } catch (error) {
+                                                        this.logger.error(`Failed to sync automation github task: ${sourceId}`, error);
                                                     }
+                                                }
                                                 )
                                             );
                                         }
@@ -372,8 +350,27 @@ export class GithubSyncService {
                 })
             );
         } catch (error) {
-            this.logger.error(`Failed to fetch repository: ${repository.id} integration with specific project too sync issue: ${issue.id}`);
+            this.logger.error(`Failed to fetch repository: ${repository.id} integration with specific project too sync issue: ${issue.id}`, error);
         }
+    }
+
+    /**
+     * Determines whether an issue should be synchronized based on project settings.
+     *
+     * @param project - The project configuration.
+     * @param issue - The GitHub issue to be synchronized.
+     * @returns A boolean indicating whether the issue should be synchronized.
+     */
+    private shouldSyncIssue(project: IOrganizationProject, issue: IGithubIssue): boolean {
+        if (!project || !project.isTasksAutoSync) {
+            return false;
+        }
+
+        if (project.isTasksAutoSyncOnLabel) {
+            return !!issue.labels.find(label => label.name === project.syncTag);
+        }
+
+        return true;
     }
 
     /**
@@ -403,8 +400,8 @@ export class GithubSyncService {
      * @returns An array of mapped issue payload data.
      */
     private _mapIssuePayload(issues: IGithubIssue[]): any[] {
-        return issues.map(({ id, title, state, body, labels }) => ({
-            sourceId: id,
+        return issues.map(({ number, title, state, body, labels }) => ({
+            sourceId: number,
             title,
             state,
             body,
