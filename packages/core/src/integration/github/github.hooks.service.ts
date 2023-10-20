@@ -140,6 +140,25 @@ export class GithubHooksService {
     }
 
     /**
+     * Handles the 'issuesUnlabeled' event from GitHub.
+     *
+     * @param context - The GitHub webhook event context.
+     */
+    async issuesUnlabeled(context: Context) {
+        try {
+            // Extract necessary data from the context
+            const installation = context.payload['installation'] as IGithubInstallation;
+            const issue = context.payload['issue'] as IGithubIssue;
+            const repository = context.payload['repository'] as IGithubRepository;
+
+            /** Synchronizes automation issues for a GitHub installation. */
+            await this.syncAutomationIssue({ installation, issue, repository });
+        } catch (error) {
+            this.logger.error('Failed to sync in issues and labels', error.message);
+        }
+    }
+
+    /**
      * Synchronizes automation issues for a GitHub installation.
      *
      * @param param0 - An object containing installation, issue, and repository information.

@@ -2,7 +2,7 @@ import { forwardRef, Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { RouterModule } from 'nest-router';
 import { CqrsModule } from '@nestjs/cqrs';
-import { IntegrationMap } from 'core/entities/internal';
+import { IntegrationMap, TaskStatus } from 'core/entities/internal';
 import { OrganizationProjectModule } from './../organization-project/organization-project.module';
 import { CommandHandlers } from './commands/handlers';
 import { EventHandlers } from './events/handlers';
@@ -21,6 +21,7 @@ import { TaskController } from './task.controller';
 		]),
 		TypeOrmModule.forFeature([
 			Task,
+			TaskStatus,
 			IntegrationMap
 		]),
 		forwardRef(() => TenantModule),
