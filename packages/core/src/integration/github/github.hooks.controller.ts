@@ -50,4 +50,14 @@ export class GitHubHooksController {
     async issuesLabeled(context: Context) {
         await this._githubHooksService.issuesLabeled(context);
     }
+
+    /**
+     * Handles the 'issues.labeled' event.
+     *
+     * @param context - The context object containing information about the event.
+     */
+    @Hook(['issues.unlabeled'])
+    async issuesUnlabeled(context: Context) {
+        await this._githubHooksService.issuesUnlabeled(context);
+    }
 }

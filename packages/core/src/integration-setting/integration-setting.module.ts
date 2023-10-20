@@ -10,7 +10,9 @@ import { IntegrationSetting } from './integration-setting.entity';
 
 @Module({
 	imports: [
-		TypeOrmModule.forFeature([IntegrationSetting]),
+		TypeOrmModule.forFeature([
+			IntegrationSetting
+		]),
 		TenantModule,
 		UserModule,
 		CqrsModule

@@ -9,6 +9,14 @@ import {
 	ViewChild
 } from '@angular/core';
 import { AbstractControl, FormBuilder, FormControl, FormGroup, Validators } from '@angular/forms';
+import { EMPTY, of, switchMap } from 'rxjs';
+import { catchError, debounceTime, filter, finalize, tap } from 'rxjs/operators';
+import { CKEditor4 } from 'ckeditor4-angular/ckeditor';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { TranslateService } from '@ngx-translate/core';
+import { Router } from '@angular/router';
+import { uniq } from 'underscore';
+import { environment } from '@env/environment';
 import {
 	IEmployee,
 	IOrganization,
@@ -27,21 +35,16 @@ import {
 	IIntegrationTenant,
 	IGithubRepository,
 	IOrganizationProjectSetting,
-	HttpStatus
+	HttpStatus,
+	IIntegrationMapSyncRepository,
+	IOrganizationGithubRepository
 } from '@gauzy/contracts';
-import { TranslateService } from '@ngx-translate/core';
-import { Router } from '@angular/router';
-import { uniq } from 'underscore';
-import { EMPTY, of, switchMap } from 'rxjs';
-import { catchError, debounceTime, filter, finalize, tap } from 'rxjs/operators';
 import { distinctUntilChange } from '@gauzy/common-angular';
-import { CKEditor4 } from 'ckeditor4-angular/ckeditor';
-import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { environment } from '@env/environment';
 import { TranslationBaseComponent } from '../../language-base/translation-base.component';
 import { patterns } from '../../regex/regex-patterns.const';
 import {
 	ErrorHandlingService,
+	GithubService,
 	OrganizationContactService,
 	OrganizationProjectsService,
 	OrganizationTeamsService,
@@ -181,6 +184,7 @@ export class ProjectMutationComponent extends TranslationBaseComponent
 		private readonly _errorHandler: ErrorHandlingService,
 		private readonly _organizationTeamService: OrganizationTeamsService,
 		private readonly _organizationContactService: OrganizationContactService,
+		private readonly _githubService: GithubService,
 		private readonly _organizationProjectsService: OrganizationProjectsService,
 	) {
 		super(translateService);
@@ -547,16 +551,24 @@ export class ProjectMutationComponent extends TranslationBaseComponent
 
 			const { id: organizationId, tenantId } = this.organization;
 			const { id: projectId } = this.project;
-			const externalRepositoryId = repository.id;
+			const integrationId = this.integration['id'];
 
 			/** */
-			const request: IOrganizationProjectSetting = {
+			const request: IIntegrationMapSyncRepository = {
 				organizationId,
 				tenantId,
-				externalRepositoryId
+				integrationId,
+				repository
 			}
-
-			this._organizationProjectsService.updateProjectSetting(projectId, request).pipe(
+			// Fetch entity settings by integration ID and handle the result as an observable
+			this._githubService.syncGithubRepository(request).pipe(
+				switchMap(({ id: repositoryId }: IOrganizationGithubRepository) => {
+					return this._organizationProjectsService.updateProjectSetting(projectId, {
+						organizationId,
+						tenantId,
+						repositoryId
+					});
+				}),
 				tap((response: any) => {
 					if (response['status'] == HttpStatus.BAD_REQUEST) {
 						throw new Error(`${response['message']}`);
@@ -586,7 +598,8 @@ export class ProjectMutationComponent extends TranslationBaseComponent
 	}
 
 	/**
-	 *
+	 * Trigger a change in the synchronization tag for project auto-sync settings.
+	 * This function updates the project's auto-sync settings.
 	 */
 	public changeSyncTag() {
 		this.updateProjectAutoSyncSetting();

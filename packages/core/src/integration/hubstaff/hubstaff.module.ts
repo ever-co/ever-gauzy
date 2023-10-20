@@ -23,10 +23,10 @@ import { HubstaffAuthorizationController } from './hubstaff-authorization.contro
 	imports: [
 		HttpModule.register({ baseURL: HUBSTAFF_API_URL }),
 		TenantModule,
-		RoleModule,
-		RolePermissionModule,
 		UserModule,
+		RoleModule,
 		OrganizationModule,
+		RolePermissionModule,
 		OrganizationProjectModule,
 		forwardRef(() => IntegrationModule),
 		IntegrationTenantModule,
@@ -41,6 +41,8 @@ import { HubstaffAuthorizationController } from './hubstaff-authorization.contro
 		HubstaffAuthorizationController,
 		HubstaffController
 	],
-	providers: [HubstaffService]
+	providers: [
+		HubstaffService
+	]
 })
 export class HubstaffModule { }

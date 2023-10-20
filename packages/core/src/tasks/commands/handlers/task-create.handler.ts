@@ -1,16 +1,18 @@
-import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
+import { CommandHandler, EventBus, ICommandHandler } from '@nestjs/cqrs';
 import { HttpException, HttpStatus, Logger } from '@nestjs/common';
 import { ITask } from '@gauzy/contracts';
 import { RequestContext } from './../../../core/context';
-import { TaskCreateCommand } from './../task-create.command';
 import { OrganizationProjectService } from './../../../organization-project/organization-project.service';
+import { TaskCreatedEvent } from './../../events/task-created.event';
+import { TaskCreateCommand } from './../task-create.command';
 import { TaskService } from '../../task.service';
 
 @CommandHandler(TaskCreateCommand)
 export class TaskCreateHandler implements ICommandHandler<TaskCreateCommand> {
-	private readonly logger = new Logger('TaskCreateHandler');
+	private readonly logger = new Logger('TaskCreateCommand');
 
 	constructor(
+		private readonly _eventBus: EventBus,
 		private readonly _taskService: TaskService,
 		private readonly _organizationProjectService: OrganizationProjectService
 	) { }
@@ -36,13 +38,20 @@ export class TaskCreateHandler implements ICommandHandler<TaskCreateCommand> {
 				projectId,
 			});
 
-			return await this._taskService.create({
+			const createdTask = await this._taskService.create({
 				...input,
 				number: maxNumber + 1,
 				prefix: taskPrefix,
 				tenantId,
 				organizationId,
 			});
+
+			/** */
+			this._eventBus.publish(
+				new TaskCreatedEvent(createdTask)
+			);
+
+			return createdTask;
 		} catch (error) {
 			this.logger.error(`Error while creating task: ${error.message}`, error.message);
 			throw new HttpException({ message: error?.message, error }, HttpStatus.BAD_REQUEST);

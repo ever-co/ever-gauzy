@@ -79,6 +79,7 @@ import {
 	OrganizationDepartment,
 	OrganizationDocument,
 	OrganizationEmploymentType,
+	OrganizationGithubRepository,
 	OrganizationLanguage,
 	OrganizationPosition,
 	OrganizationProject,
@@ -119,6 +120,7 @@ import {
 	Skill,
 	Tag,
 	Task,
+	TaskEstimation,
 	TaskLinkedIssue,
 	TaskPriority,
 	TaskRelatedIssueTypes,
@@ -138,7 +140,6 @@ import {
 	Warehouse,
 	WarehouseProduct,
 	WarehouseProductVariant,
-	TaskEstimation,
 } from './internal';
 
 export const coreEntities = [
@@ -222,6 +223,7 @@ export const coreEntities = [
 	OrganizationDepartment,
 	OrganizationDocument,
 	OrganizationEmploymentType,
+	OrganizationGithubRepository,
 	OrganizationLanguage,
 	OrganizationPosition,
 	OrganizationProject,
@@ -262,6 +264,7 @@ export const coreEntities = [
 	Skill,
 	Tag,
 	Task,
+	TaskEstimation,
 	TaskLinkedIssue,
 	TaskPriority,
 	TaskRelatedIssueTypes,
@@ -280,6 +283,5 @@ export const coreEntities = [
 	UserOrganization,
 	Warehouse,
 	WarehouseProduct,
-	WarehouseProductVariant,
-	TaskEstimation,
+	WarehouseProductVariant
 ];
