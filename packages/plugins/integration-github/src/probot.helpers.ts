@@ -3,7 +3,7 @@ import { Probot } from 'probot';
 import SmeeClient from 'smee-client';
 import { Octokit } from '@octokit/rest';
 import { createAppAuth } from '@octokit/auth-app';
-import * as chalk from 'chalk';
+// import * as chalk from 'chalk';
 import { OctokitConfig, ProbotConfig } from './probot.types';
 
 const GITHUB_API_URL = 'https://api.github.com';
