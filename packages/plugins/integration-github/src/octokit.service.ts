@@ -33,7 +33,8 @@ export class OctokitService {
 					clientId: config.clientId,
 					clientSecret: config.clientSecret,
 				});
-				console.log(chalk.magenta(`Octokit App Configuration ${JSON.stringify(config)}`));
+				// console.log(chalk.magenta(`Octokit App Configuration ${JSON.stringify(config)}`));
+				console.log(chalk.green(`Octokit App successfully initialized.`));
 			} else {
 				console.error(chalk.red(`Octokit App initialization failed: Missing appId or privateKey.`));
 			}

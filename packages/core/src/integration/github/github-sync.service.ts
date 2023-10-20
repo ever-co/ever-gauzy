@@ -434,13 +434,28 @@ export class GithubSyncService {
                 body: data.body,
                 labels: data.labels
             };
-
+            console.log({ payload });
             // Create or update the installation issue using the octokit service
             if (data.issue_number) {
                 // Issue number is provided, update the existing issue
                 const issue_number = data.issue_number;
-                const issue = await this._octokitService.updateIssue(installationId, issue_number, payload);
-                return issue.data;
+
+                try {
+                    // Check if the issue exists
+                    await this._octokitService.getIssueByIssueNumber(installationId, {
+                        repo: payload.repo,
+                        owner: payload.owner,
+                        issue_number: issue_number
+                    });
+
+                    // Issue exists, update it
+                    const issue = await this._octokitService.updateIssue(installationId, issue_number, payload);
+                    return issue.data;
+                } catch (error) {
+                    // Issue doesn't exist, create a new one
+                    const issue = await this._octokitService.openIssue(installationId, payload);
+                    return issue.data;
+                }
             } else {
                 // Issue number is not provided, create a new issue
                 const issue = await this._octokitService.openIssue(installationId, payload);

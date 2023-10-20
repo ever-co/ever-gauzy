@@ -31,7 +31,7 @@ export const parseConfig = (config: ProbotConfig): Record<string, any> => ({
  */
 export const createProbot = (config: ProbotConfig): Probot => {
 	const parsedConfig = parseConfig(config);
-	console.log(chalk.magenta(`Probot Configuration ${JSON.stringify(parsedConfig)}`));
+	// console.log(chalk.magenta(`Probot Configuration ${JSON.stringify(parsedConfig)}`));
 	return new Probot({
 		...parsedConfig, // Spread the parsed configuration properties
 	});

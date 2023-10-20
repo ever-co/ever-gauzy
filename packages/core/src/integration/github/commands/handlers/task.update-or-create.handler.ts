@@ -1,11 +1,14 @@
 import { ICommandHandler, CommandHandler, CommandBus } from '@nestjs/cqrs';
+import { Logger } from '@nestjs/common';
 import {
 	IGithubIssueCreateOrUpdatePayload,
 	IGithubIssue,
 	IGithubIssueLabel,
 	ITag,
 	IntegrationEntity,
-	IntegrationEnum
+	IntegrationEnum,
+	IOrganizationProject,
+	IIntegrationTenant
 } from '@gauzy/contracts';
 import { RequestContext } from 'core/context';
 import { arrayToObject } from 'core/utils';
@@ -18,6 +21,7 @@ import { GithubTaskUpdateOrCreateCommand } from '../task.update-or-create.comman
 
 @CommandHandler(GithubTaskUpdateOrCreateCommand)
 export class GithubTaskUpdateOrCreateCommandHandler implements ICommandHandler<GithubTaskUpdateOrCreateCommand> {
+	private readonly logger = new Logger('GithubTaskUpdateOrCreateCommandHandler');
 
 	constructor(
 		private readonly _commandBus: CommandBus,
@@ -38,7 +42,7 @@ export class GithubTaskUpdateOrCreateCommandHandler implements ICommandHandler<G
 			const { organizationId, projectId } = options;
 
 			// Step 1: Get the GitHub integration for the organization
-			const integration = await this._commandBus.execute(
+			const integration: IIntegrationTenant = await this._commandBus.execute(
 				new IntegrationTenantGetCommand({
 					where: {
 						name: IntegrationEnum.GITHUB,
@@ -89,64 +93,73 @@ export class GithubTaskUpdateOrCreateCommandHandler implements ICommandHandler<G
 							owner: repository.owner,
 							title: task.title,
 							body: task.description,
-							labels: this._mapIssueLabelPayload(task.tags),
+							labels: this._mapIssueLabelPayload(task.tags || []),
 						};
 
+						const syncTag = settings['sync_tag'];
+						// Check if the issue should be synchronized for this project
 						// Step 7: Continue execution based on auto-sync label setting
-						let isContinueExecution = true;
-						if (!!project.isTasksAutoSyncOnLabel) {
-							const syncTag = settings['sync_tag'];
-							isContinueExecution = !!(
-								payload.labels.find(
-									(label: IGithubIssueLabel) => label.name === syncTag
-								)
-							);
-						}
-
-						// Step 8: If the condition allows, open the GitHub issue
-						if (!isContinueExecution) {
-							return;
-						}
-
-						try {
-							// Check if an integration map already exists for the issue
-							const integrationMap = await this._integrationMapService.findOneByWhereOptions({
-								entity: IntegrationEntity.ISSUE,
-								gauzyId: task.id,
-								integrationId,
-								organizationId,
-								tenantId,
-								isActive: true,
-								isArchived: false
-							});
-							payload.issue_number = parseInt(integrationMap.sourceId);
-
-							const issue = await this._githubSyncService.createOrUpdateIssue(installationId, payload);
-							console.log(issue, `Update An Issue: ${payload.issue_number}`);
-						} catch (error) {
-							// Step 9: Open the GitHub issue
-							const issue: IGithubIssue = await this._githubSyncService.createOrUpdateIssue(installationId, payload);
-							const issueNumber = issue.number;
-
-							console.log(issue, `Create An Issue: ${issueNumber}`);
-
-							// Step 10: Create a mapping between the task and the GitHub issue
-							return await this._commandBus.execute(
-								new IntegrationMapSyncEntityCommand({
+						if (!!this.shouldSyncIssue(project, payload.labels, syncTag)) {
+							try {
+								// Check if an integration map already exists for the issue
+								const integrationMap = await this._integrationMapService.findOneByWhereOptions({
+									entity: IntegrationEntity.ISSUE,
 									gauzyId: task.id,
 									integrationId,
-									sourceId: issueNumber.toString(),
-									entity: IntegrationEntity.ISSUE,
 									organizationId,
-								})
-							);
+									tenantId,
+									isActive: true,
+									isArchived: false
+								});
+								payload.issue_number = parseInt(integrationMap.sourceId);
+								const issue = await this._githubSyncService.createOrUpdateIssue(installationId, payload);
+								console.log(issue, `Update An Issue: ${payload.issue_number}`);
+							} catch (error) {
+								// Step 9: Open the GitHub issue
+								const issue: IGithubIssue = await this._githubSyncService.createOrUpdateIssue(installationId, payload);
+								const issueNumber = issue.number;
+								console.log(issue, `Create An Issue: ${issueNumber}`);
+
+								// Step 10: Create a mapping between the task and the GitHub issue
+								return await this._commandBus.execute(
+									new IntegrationMapSyncEntityCommand({
+										gauzyId: task.id,
+										integrationId,
+										sourceId: issueNumber.toString(),
+										entity: IntegrationEntity.ISSUE,
+										organizationId,
+									})
+								);
+							}
 						}
 					}
 				}
 			}
 		} catch (error) {
-			console.log('Error while retrieving GitHub integration: %s', error?.message);
+			// Handle errors gracefully, for example, log them
+			this.logger.error('Error in sync github issue and labels', error);
 		}
+	}
+
+	/**
+	 * Determines whether an issue should be synchronized based on project settings.
+	 *
+	 * @param project - The project configuration.
+	 * @param issue - The GitHub issue to be synchronized.
+	 * @returns A boolean indicating whether the issue should be synchronized.
+	 */
+	private shouldSyncIssue(
+		project: IOrganizationProject,
+		labels: IGithubIssueLabel[] = [],
+		syncTag: string
+	): boolean {
+		if (!project || !project.isTasksAutoSync) {
+			return false;
+		}
+		if (project.isTasksAutoSyncOnLabel) {
+			return !!labels.find((label) => label.name === syncTag);
+		}
+		return true;
 	}
 
 	/**
@@ -155,7 +168,7 @@ export class GithubTaskUpdateOrCreateCommandHandler implements ICommandHandler<G
 	 * @param tags - An array of ITag objects to be mapped.
 	 * @returns An array of objects with 'name', 'color', and 'description' properties.
 	 */
-	private _mapIssueLabelPayload(tags: ITag[]): any[] {
+	private _mapIssueLabelPayload(tags: ITag[] = []): any[] {
 		return tags.map(({ name, color, description, isSystem }) => ({
 			name,
 			color,
