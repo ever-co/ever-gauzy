@@ -228,7 +228,7 @@ export class TeamComponent extends BaseSelectorFilterComponent implements OnInit
 							}, 0)
 						};
 					});
-					const todayWorkDuration = (tasks || []).reduce(
+					const todayWorkDuration = tasks.reduce(
 						(accumulator: number, task) => {
 							return accumulator + task?.duration || 0;
 						},
