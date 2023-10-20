@@ -113,12 +113,12 @@ export class GithubTaskUpdateOrCreateCommandHandler implements ICommandHandler<G
 								});
 								payload.issue_number = parseInt(integrationMap.sourceId);
 								const issue = await this._githubSyncService.createOrUpdateIssue(installationId, payload);
-								console.log(issue, `Update An Issue: ${payload.issue_number}`);
+								console.log(`Update An Issue: ${issue.number}`);
 							} catch (error) {
 								// Step 9: Open the GitHub issue
 								const issue: IGithubIssue = await this._githubSyncService.createOrUpdateIssue(installationId, payload);
 								const issueNumber = issue.number;
-								console.log(issue, `Create An Issue: ${issueNumber}`);
+								console.log(`Create An Issue: ${issue.number}`);
 
 								// Step 10: Create a mapping between the task and the GitHub issue
 								return await this._commandBus.execute(

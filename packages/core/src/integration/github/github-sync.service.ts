@@ -434,7 +434,7 @@ export class GithubSyncService {
                 body: data.body,
                 labels: data.labels
             };
-            console.log({ payload });
+
             // Create or update the installation issue using the octokit service
             if (data.issue_number) {
                 // Issue number is provided, update the existing issue
