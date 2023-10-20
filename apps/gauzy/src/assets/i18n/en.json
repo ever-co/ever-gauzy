@@ -2844,7 +2844,7 @@
 		"INVOICES_PER_PAGE": "Invoices Per Page",
 		"ESTIMATES_PER_PAGE": "Estimates Per Page",
 		"APPLY_DISCOUNT_AFTER_TAX": "Apply discount after tax",
-		"SELECT_INVOICE_TO_VIEW_HISTORY": "Select an invoice to view it's history",
+		"SELECT_INVOICE_TO_VIEW_HISTORY": "Select an invoice to view its history",
 		"INVOICE_SENT_TO": "Invoice sent to '{{ name }}'",
 		"ESTIMATE_SENT_TO": "Estimate sent to '{{ name }}'",
 		"INVOICE": "Invoice",
@@ -2935,7 +2935,7 @@
 			"REJECTED": "Rejected",
 			"ACCEPTED_STATUS": "Accepted Status",
 			"ESTIMATE_CONVERT": "Estimate Converted",
-			"SELECT_ESTIMATE_TO_VIEW_HISTORY": "Select an estimate to view it's history",
+			"SELECT_ESTIMATE_TO_VIEW_HISTORY": "Select an estimate to view its history",
 			"ESTIMATE_ACCEPTED": "Estimate accepted",
 			"ESTIMATE_REJECTED": "Estimate rejected",
 			"ERROR": "An error occurred",
@@ -4443,6 +4443,6 @@
 	},
 	"NO_IMAGE": {
 		"ADD_DROP": "Add or Drop Image",
-		"AVAILABLE": "Image no available"
+		"AVAILABLE": "Image not available"
 	}
 }
