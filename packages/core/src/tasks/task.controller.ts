@@ -288,7 +288,9 @@ export class TaskController extends CrudController<Task> {
 		@Param('id', UUIDValidationPipe) id: ITask['id'],
 		@Body() entity: UpdateTaskDTO
 	): Promise<ITask> {
-		return await this.commandBus.execute(new TaskUpdateCommand(id, entity));
+		return await this.commandBus.execute(
+			new TaskUpdateCommand(id, entity)
+		);
 	}
 
 	@Permissions(PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ORG_TASK_DELETE)

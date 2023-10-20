@@ -17,7 +17,7 @@ import {
     ITag,
     IntegrationEntity,
     TaskStatusEnum,
-    IGithubCreateIssuePayload
+    IGithubIssueCreateOrUpdatePayload
 } from '@gauzy/contracts';
 import { RequestContext } from 'core/context';
 import { arrayToObject } from 'core/utils';
@@ -97,7 +97,7 @@ export class GithubSyncService {
                                 if (!!issueSetting.sync) {
                                     return await Promise.all(
                                         issues.map(
-                                            async ({ sourceId, number, title, state, body }) => {
+                                            async ({ number: issue_number, title, state, body }) => {
                                                 let labels: ITag[] = [];
                                                 /** */
                                                 try {
@@ -106,7 +106,6 @@ export class GithubSyncService {
                                                         ({ entity }: IIntegrationEntitySettingTied) => entity === IntegrationEntity.LABEL
                                                     );
                                                     if (!!labelSetting && labelSetting.sync) {
-                                                        const issue_number = number;
                                                         /** Sync Github Issue Labels */
                                                         labels = await this.syncGithubLabelsByIssueNumber({
                                                             organizationId,
@@ -132,7 +131,7 @@ export class GithubSyncService {
                                                             tenantId,
                                                             tags: labels
                                                         },
-                                                        sourceId,
+                                                        sourceId: issue_number.toString(),
                                                         integrationId,
                                                         organizationId,
                                                         tenantId
@@ -244,6 +243,8 @@ export class GithubSyncService {
         const { integration, repository, issue } = input;
         const { entitySettings } = integration;
 
+        console.log(issue);
+
         try {
             /** */
             const tenantId = integration['tenantId'];
@@ -283,7 +284,7 @@ export class GithubSyncService {
                                         if (!!issueSetting.sync) {
                                             return await Promise.all(
                                                 issues.map(
-                                                    async ({ sourceId, title, state, body, labels }) => {
+                                                    async ({ number: issue_number, title, state, body, labels }) => {
                                                         /** Sync Github Issue Labels */
                                                         let tags: ITag[] = [];
                                                         try {
@@ -320,6 +321,25 @@ export class GithubSyncService {
                                                             console.error('Failed to fetch GitHub labels for the repository issue:', error.message);
                                                         }
 
+                                                        console.log({
+                                                            entity: {
+                                                                title,
+                                                                description: body,
+                                                                status: state as TaskStatusEnum,
+                                                                public: repository.visibility === 'private' ? false : true,
+                                                                prefix: project ? project.name.substring(0, 3) : null,
+                                                                projectId,
+                                                                organizationId,
+                                                                tenantId,
+                                                                tags
+                                                            },
+                                                            sourceId: issue_number.toString(),
+                                                            integrationId,
+                                                            integration,
+                                                            organizationId,
+                                                            tenantId
+                                                        });
+
                                                         /** */
                                                         return await this._commandBus.execute(
                                                             new AutomationTaskSyncCommand({
@@ -334,7 +354,7 @@ export class GithubSyncService {
                                                                     tenantId,
                                                                     tags
                                                                 },
-                                                                sourceId,
+                                                                sourceId: issue_number.toString(),
                                                                 integrationId,
                                                                 integration,
                                                                 organizationId,
@@ -393,20 +413,23 @@ export class GithubSyncService {
     }
 
     /**
-     * Opens a new issue on a GitHub repository using the specified installation.
+     * Create or Update a GitHub issue on a repository using the specified installation ID.
      *
      * @param installationId - The GitHub installation ID.
-     * @param data - An object containing issue details.
+     * @param data - The data for the GitHub issue, including repo, owner, title, body, and labels.
      * @returns A promise that resolves to the response from GitHub.
      */
-    public async openIssue(installationId: number, data: IGithubCreateIssuePayload) {
+    public async createOrUpdateIssue(
+        installationId: number,
+        data: IGithubIssueCreateOrUpdatePayload
+    ): Promise<any> {
         try {
             // Check if a valid installation ID is provided
             if (!installationId) {
                 throw new HttpException('Invalid request parameter', HttpStatus.UNAUTHORIZED);
             }
 
-            // Prepare the payload for opening the issue
+            // Prepare the payload for opening or updating the issue
             const payload = {
                 repo: data.repo,
                 owner: data.owner,
@@ -415,13 +438,21 @@ export class GithubSyncService {
                 labels: data.labels
             };
 
-            // Create the installation issue using the octokit service
-            const issue = await this._octokitService.openIssue(installationId, payload);
-            return issue.data;
+            // Create or update the installation issue using the octokit service
+            if (data.issue_number) {
+                // Issue number is provided, update the existing issue
+                const issue_number = data.issue_number;
+                const issue = await this._octokitService.updateIssue(installationId, issue_number, payload);
+                return issue.data;
+            } else {
+                // Issue number is not provided, create a new issue
+                const issue = await this._octokitService.openIssue(installationId, payload);
+                return issue.data;
+            }
         } catch (error) {
             // Handle errors and return an appropriate error response
-            this.logger.error('Error while opening an issue in GitHub', error.message);
-            throw new HttpException(`Error while opening an issue in GitHub: ${error.message}`, HttpStatus.INTERNAL_SERVER_ERROR);
+            this.logger.error('Error while creating/updating an issue in GitHub', error.message);
+            throw new HttpException(`Error while creating/updating an issue in GitHub: ${error.message}`, HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 }

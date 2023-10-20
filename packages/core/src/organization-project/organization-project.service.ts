@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Brackets, In, IsNull, Repository, WhereExpressionBuilder } from 'typeorm';
 import { isNotEmpty } from '@gauzy/common';
-import { IEmployee, IOrganization, IOrganizationGithubRepository, IOrganizationProject, IOrganizationProjectsFindInput, IPagination } from '@gauzy/contracts';
+import { IEmployee, IOrganizationGithubRepository, IOrganizationProject, IOrganizationProjectsFindInput, IPagination } from '@gauzy/contracts';
 import { PaginationParams, TenantAwareCrudService } from './../core/crud';
 import { RequestContext } from '../core/context';
 import { OrganizationProject } from './organization-project.entity';

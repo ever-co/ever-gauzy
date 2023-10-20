@@ -2,23 +2,23 @@ import { HttpException, HttpStatus, Logger } from '@nestjs/common';
 import { CommandBus, EventsHandler, IEventHandler } from '@nestjs/cqrs';
 import { RequestContext } from 'core/context';
 import { GithubTaskUpdateOrCreateCommand } from 'integration/github/commands';
-import { TaskCreatedEvent } from '../task-created.event';
+import { TaskUpdatedEvent } from '../task-updated.event';
 
 // Handles event when new task created
-@EventsHandler(TaskCreatedEvent)
-export class TaskCreatedEventHandler implements IEventHandler<TaskCreatedEvent> {
-    private readonly logger = new Logger('TaskCreatedEvent');
+@EventsHandler(TaskUpdatedEvent)
+export class TaskUpdatedEventHandler implements IEventHandler<TaskUpdatedEvent> {
+    private readonly logger = new Logger('TaskUpdatedEvent');
 
     constructor(
         private readonly _commandBus: CommandBus
     ) { }
 
     /**
-     * Handles a `TaskCreatedEvent` by processing the event's input and executing a command if a project ID is present.
+     * Handles a `TaskUpdatedEvent` by processing the event's input and executing a command if a project ID is present.
      *
-     * @param event - The `TaskCreatedEvent` to handle.
+     * @param event - The `TaskUpdatedEvent` to handle.
      */
-    async handle(event: TaskCreatedEvent) {
+    async handle(event: TaskUpdatedEvent) {
         try {
             const { input } = event;
             const { organizationId, projectId } = input;
@@ -38,8 +38,8 @@ export class TaskCreatedEventHandler implements IEventHandler<TaskCreatedEvent> 
             }
         } catch (error) {
             // Handle errors and return an appropriate error response
-            this.logger.error('Error while created of a new task', error.message);
-            throw new HttpException(`Error while created of a new task: ${error.message}`, HttpStatus.INTERNAL_SERVER_ERROR);
+            this.logger.error('Error while updating of existing task', error.message);
+            throw new HttpException(`Error while updating of existing task: ${error.message}`, HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 }

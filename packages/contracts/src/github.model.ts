@@ -62,12 +62,13 @@ export interface IGithubIssueLabel {
     [x: string]: any; // Additional properties
 }
 
-export interface IGithubCreateIssuePayload {
+export interface IGithubIssueCreateOrUpdatePayload {
+    repo: string;
+    owner: string;
+    issue_number?: number;
     title: string;
     body: string;
     labels: Partial<IGithubIssueLabel[]>;
-    repo: string;
-    owner: string;
 }
 
 // Represents a GitHub installation

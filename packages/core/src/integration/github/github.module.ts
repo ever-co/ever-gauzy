@@ -7,6 +7,7 @@ import { UserModule } from 'user/user.module';
 import { IntegrationModule } from 'integration/integration.module';
 import { IntegrationTenantModule } from 'integration-tenant/integration-tenant.module';
 import { IntegrationSettingModule } from 'integration-setting/integration-setting.module';
+import { IntegrationMapModule } from 'integration-map/integration-map.module';
 import { OrganizationProjectModule } from 'organization-project/organization-project.module';
 import { CommandHandlers } from './commands/handlers';
 import { GitHubAuthorizationController } from './github-authorization.controller';
@@ -34,6 +35,7 @@ import { OrganizationGithubRepository } from './repository/github-repository.ent
 		forwardRef(() => IntegrationModule),
 		forwardRef(() => IntegrationTenantModule),
 		forwardRef(() => IntegrationSettingModule),
+		forwardRef(() => IntegrationMapModule),
 		CqrsModule
 	],
 	controllers: [

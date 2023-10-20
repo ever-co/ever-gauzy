@@ -156,50 +156,6 @@ export class OctokitService {
 	}
 
 	/**
-	 * Fetch a GitHub repository issue by issue number for a given installation, owner, and repository.
-	 *
-	 * @param installationId - The installation ID for the GitHub app.
-	 * @param options - Options object with 'owner,' 'repo,' and 'issue_number' properties.
-	 * @param options.owner - The owner (username or organization) of the repository.
-	 * @param options.repo - The name of the repository.
-	 * @param options.issue_number - The issue number to fetch.
-	 * @returns A promise that resolves to the response from the GitHub API.
-	 * @throws If the request to the GitHub API fails.
-	 */
-	public async getIssueByIssueNumber(installationId: number, {
-		owner,
-		repo,
-		issue_number
-	}: {
-		owner: string;
-		repo: string;
-		issue_number: number;
-	}): Promise<OctokitResponse<any>> {
-		if (!this.app) {
-			throw new Error('Octokit instance is not available.');
-		}
-		try {
-			// Get an Octokit instance for the installation
-			const octokit = await this.app.getInstallationOctokit(installationId);
-
-			// Define the endpoint for fetching the issue by its number
-			const endpoint = `GET /repos/{owner}/{repo}/issues/{issue_number}`;
-
-			return await octokit.request(endpoint, {
-				owner,
-				repo,
-				issue_number,
-				headers: {
-					'X-GitHub-Api-Version': GITHUB_API_VERSION,
-				},
-			});
-		} catch (error) {
-			this.logger.error('Failed to fetch GitHub repository issue', error.message);
-			throw new Error('Failed to fetch GitHub installation repository issues');
-		}
-	}
-
-	/**
 	 * Fetch labels associated with a GitHub issue using its issue number.
 	 *
 	 * This function retrieves the labels assigned to a GitHub issue based on its unique issue number. It sends a request
@@ -246,6 +202,50 @@ export class OctokitService {
 	}
 
 	/**
+	 * Fetch a GitHub repository issue by issue number for a given installation, owner, and repository.
+	 *
+	 * @param installationId - The installation ID for the GitHub app.
+	 * @param options - Options object with 'owner,' 'repo,' and 'issue_number' properties.
+	 * @param options.owner - The owner (username or organization) of the repository.
+	 * @param options.repo - The name of the repository.
+	 * @param options.issue_number - The issue number to fetch.
+	 * @returns A promise that resolves to the response from the GitHub API.
+	 * @throws If the request to the GitHub API fails.
+	 */
+	public async getIssueByIssueNumber(installationId: number, {
+		owner,
+		repo,
+		issue_number
+	}: {
+		owner: string;
+		repo: string;
+		issue_number: number;
+	}): Promise<OctokitResponse<any>> {
+		if (!this.app) {
+			throw new Error('Octokit instance is not available.');
+		}
+		try {
+			// Get an Octokit instance for the installation
+			const octokit = await this.app.getInstallationOctokit(installationId);
+
+			// Define the endpoint for fetching the issue by its number
+			const endpoint = `GET /repos/{owner}/{repo}/issues/{issue_number}`;
+
+			return await octokit.request(endpoint, {
+				owner,
+				repo,
+				issue_number,
+				headers: {
+					'X-GitHub-Api-Version': GITHUB_API_VERSION,
+				},
+			});
+		} catch (error) {
+			this.logger.error('Failed to fetch GitHub repository issue', error.message);
+			throw new Error('Failed to fetch GitHub installation repository issues');
+		}
+	}
+
+	/**
 	 * Open a new issue on a GitHub repository.
 	 *
 	 * @param installationId - The GitHub installation ID.
@@ -273,19 +273,76 @@ export class OctokitService {
 			// Define the endpoint for creating an issue
 			const endpoint = `POST /repos/{owner}/{repo}/issues`;
 
-			return await octokit.request(endpoint, {
+			// Prepare the request payload
+			const payload = {
+				owner,
+				repo,
 				title,
 				body,
 				labels,
-				owner,
-				repo,
 				headers: {
 					'X-GitHub-Api-Version': GITHUB_API_VERSION,
 				},
-			});
+			};
+
+			// Send the request to create the issue
+			return await octokit.request(endpoint, payload);
 		} catch (error) {
 			this.logger.error('Failed to Open GitHub issue', error.message);
 			throw new Error('Failed to Open GitHub issue');
+		}
+	}
+
+	/**
+	 * Update an existing issue on a GitHub repository.
+	 *
+	 * @param installationId - The GitHub installation ID.
+	 * @param issue_number - The issue number to be updated.
+	 * @param repo - The repository name.
+	 * @param owner - The owner of the repository.
+	 * @param title - The updated title of the issue.
+	 * @param body - The updated body of the issue.
+	 * @param labels - An array of updated labels for the issue.
+	 * @returns A promise that resolves to the response from GitHub.
+	 */
+	public async updateIssue(installationId: number, issue_number: number, {
+		repo,
+		owner,
+		title,
+		body,
+		labels,
+	}): Promise<OctokitResponse<any>> {
+		try {
+			// Ensure that the Octokit instance is available
+			if (!this.app) {
+				throw new Error('Octokit instance is not available.');
+			}
+
+			// Get an Octokit instance for the installation
+			const octokit = await this.app.getInstallationOctokit(installationId);
+
+			// Define the endpoint for updating an issue
+			const endpoint = `PATCH /repos/{owner}/{repo}/issues/{issue_number}`;
+
+			// Prepare the request payload
+			const payload = {
+				owner,
+				repo,
+				issue_number,
+				title,
+				body,
+				labels,
+				headers: {
+					'X-GitHub-Api-Version': GITHUB_API_VERSION,
+				},
+			};
+
+			// Send the request to update the issue
+			return await octokit.request(endpoint, payload);
+		} catch (error) {
+			// Handle errors and log the details
+			this.logger.error('Failed to update a GitHub issue', error.message);
+			throw new Error('Failed to update GitHub issue');
 		}
 	}
 }

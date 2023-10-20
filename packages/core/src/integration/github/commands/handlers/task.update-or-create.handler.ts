@@ -1,28 +1,37 @@
 import { ICommandHandler, CommandHandler, CommandBus } from '@nestjs/cqrs';
-import { IGithubCreateIssuePayload, IGithubIssueLabel, ITag, IntegrationEntity, IntegrationEnum } from '@gauzy/contracts';
+import {
+	IGithubIssueCreateOrUpdatePayload,
+	IGithubIssue,
+	IGithubIssueLabel,
+	ITag,
+	IntegrationEntity,
+	IntegrationEnum
+} from '@gauzy/contracts';
 import { RequestContext } from 'core/context';
 import { arrayToObject } from 'core/utils';
 import { OrganizationProjectService } from 'organization-project/organization-project.service';
 import { IntegrationTenantGetCommand } from 'integration-tenant/commands';
 import { IntegrationMapSyncEntityCommand } from 'integration-map/commands';
+import { IntegrationMapService } from 'integration-map/integration-map.service';
 import { GithubSyncService } from '../../github-sync.service';
-import { GithubTaskOpenedCommand } from '../task.opened.command';
+import { GithubTaskUpdateOrCreateCommand } from '../task.update-or-create.command';
 
-@CommandHandler(GithubTaskOpenedCommand)
-export class GithubTaskOpenedCommandHandler implements ICommandHandler<GithubTaskOpenedCommand> {
+@CommandHandler(GithubTaskUpdateOrCreateCommand)
+export class GithubTaskUpdateOrCreateCommandHandler implements ICommandHandler<GithubTaskUpdateOrCreateCommand> {
 
 	constructor(
 		private readonly _commandBus: CommandBus,
 		private readonly _githubSyncService: GithubSyncService,
-		private readonly _organizationProjectService: OrganizationProjectService
+		private readonly _organizationProjectService: OrganizationProjectService,
+		private readonly _integrationMapService: IntegrationMapService
 	) { }
 
 	/**
-	 * Command handler for the `GithubTaskOpenedCommand`, responsible for processing actions when a task is opened in Gauzy.
+	 * Command handler for the `GithubTaskUpdateOrCreateCommand`, responsible for processing actions when a task is opened in Gauzy.
 	 *
-	 * @param command - The `GithubTaskOpenedCommand` containing the task data to be processed.
+	 * @param command - The `GithubTaskUpdateOrCreateCommand` containing the task data to be processed.
 	 */
-	async execute(command: GithubTaskOpenedCommand) {
+	async execute(command: GithubTaskUpdateOrCreateCommand) {
 		try {
 			const { task, options } = command;
 			const tenantId = RequestContext.currentTenantId() || options.tenantId;
@@ -75,7 +84,7 @@ export class GithubTaskOpenedCommandHandler implements ICommandHandler<GithubTas
 						const repository = project.repository;
 
 						// Step 6: Prepare the payload for opening the GitHub issue
-						const payload: IGithubCreateIssuePayload = {
+						const payload: IGithubIssueCreateOrUpdatePayload = {
 							repo: repository.name,
 							owner: repository.owner,
 							title: task.title,
@@ -100,21 +109,37 @@ export class GithubTaskOpenedCommandHandler implements ICommandHandler<GithubTas
 						}
 
 						try {
+							// Check if an integration map already exists for the issue
+							const integrationMap = await this._integrationMapService.findOneByWhereOptions({
+								entity: IntegrationEntity.ISSUE,
+								gauzyId: task.id,
+								integrationId,
+								organizationId,
+								tenantId,
+								isActive: true,
+								isArchived: false
+							});
+							payload.issue_number = parseInt(integrationMap.sourceId);
+
+							const issue = await this._githubSyncService.createOrUpdateIssue(installationId, payload);
+							console.log(issue, `Update An Issue: ${payload.issue_number}`);
+						} catch (error) {
 							// Step 9: Open the GitHub issue
-							const issue = await this._githubSyncService.openIssue(installationId, payload);
+							const issue: IGithubIssue = await this._githubSyncService.createOrUpdateIssue(installationId, payload);
+							const issueNumber = issue.number;
+
+							console.log(issue, `Create An Issue: ${issueNumber}`);
 
 							// Step 10: Create a mapping between the task and the GitHub issue
 							return await this._commandBus.execute(
 								new IntegrationMapSyncEntityCommand({
 									gauzyId: task.id,
 									integrationId,
-									sourceId: issue.id,
+									sourceId: issueNumber.toString(),
 									entity: IntegrationEntity.ISSUE,
 									organizationId,
 								})
 							);
-						} catch (error) {
-							console.log('Error while opening a GitHub issue: %s', error?.message);
 						}
 					}
 				}
