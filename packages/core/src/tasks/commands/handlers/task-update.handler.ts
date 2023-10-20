@@ -16,8 +16,8 @@ export class TaskUpdateHandler implements ICommandHandler<TaskUpdateCommand> {
 	) { }
 
 	public async execute(command: TaskUpdateCommand): Promise<ITask> {
-		const { id, input } = command;
-		return await this.update(id, input);
+		const { id, input, triggeredEvent } = command;
+		return await this.update(id, input, triggeredEvent);
 	}
 
 	/**
@@ -27,7 +27,11 @@ export class TaskUpdateHandler implements ICommandHandler<TaskUpdateCommand> {
 	 * @param request
 	 * @returns
 	 */
-	public async update(id: string, request: ITaskUpdateInput): Promise<ITask> {
+	public async update(
+		id: ITask['id'],
+		request: ITaskUpdateInput,
+		triggeredEvent: boolean
+	): Promise<ITask> {
 		try {
 			const tenantId = RequestContext.currentTenantId() || request.tenantId;
 			const task = await this._taskService.findOneByIdString(id);
@@ -55,10 +59,10 @@ export class TaskUpdateHandler implements ICommandHandler<TaskUpdateCommand> {
 				id
 			});
 
-			/** */
-			this._eventBus.publish(
-				new TaskUpdatedEvent(updatedTask)
-			);
+			// The "2 Way Sync Triggered Event" for Synchronization
+			if (triggeredEvent) {
+				this._eventBus.publish(new TaskUpdatedEvent(updatedTask));
+			}
 
 			return updatedTask;
 		} catch (error) {

@@ -19,7 +19,7 @@ export class TaskCreateHandler implements ICommandHandler<TaskCreateCommand> {
 
 	public async execute(command: TaskCreateCommand): Promise<ITask> {
 		try {
-			const { input } = command;
+			const { input, triggeredEvent } = command;
 			let { organizationId, project } = input;
 			const tenantId = RequestContext.currentTenantId() || input.tenantId;
 
@@ -46,10 +46,10 @@ export class TaskCreateHandler implements ICommandHandler<TaskCreateCommand> {
 				organizationId,
 			});
 
-			/** */
-			this._eventBus.publish(
-				new TaskCreatedEvent(createdTask)
-			);
+			// The "2 Way Sync Triggered Event" for Synchronization
+			if (triggeredEvent) {
+				this._eventBus.publish(new TaskCreatedEvent(createdTask));
+			}
 
 			return createdTask;
 		} catch (error) {
