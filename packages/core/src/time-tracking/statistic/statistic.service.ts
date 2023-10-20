@@ -948,7 +948,7 @@ export class StatisticService {
 		) {
 			if (
 				isNotEmpty(organizationTeamId) ||
-				!RequestContext.hasPermission(
+				RequestContext.hasPermission(
 					PermissionsEnum.ORG_MEMBER_LAST_LOG_VIEW
 				)
 			) {
