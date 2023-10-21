@@ -17,11 +17,14 @@
 			</ngx-gauzy-button-action>
 		</div>
 		<div class="columns-header row align-items-center">
-			<div class="col-md-9 p-0 float-left text-truncate">
+			<div class="col-md-8 p-0 float-left text-truncate">
 				{{ 'SM_TABLE.PROVIDER' | translate }}
 			</div>
-			<div class="col-md-3 p-0 float-left text-truncate">
+			<div class="col-md-2 p-0 float-left text-truncate">
 				{{ 'SM_TABLE.LAST_SYNC' | translate }}
+			</div>
+			<div class="col-md-2 p-0 text-right text-truncate">
+				{{ 'SM_TABLE.STATUS' | translate }}
 			</div>
 		</div>
 	</nb-card-header>
@@ -49,12 +52,23 @@
 							width="100%"
 						/>
 					</div>
-					<div class="col-md-7 pl-3 float-left text-truncate">
+					<div class="col-md-6 pl-3 float-left text-truncate">
 						<div class="title">{{ integration?.name }}</div>
 						<div class="description">{{ integration?.description || 'Lorem Ipsum Lorem Ipsum' }}</div>
 					</div>
-					<div class="col-md-3 p-0 float-left text-truncate last-sync">
+					<div class="col-md-2 p-0 float-left text-truncate last-sync">
 						{{ (integration?.lastSyncedAt || integration?.updatedAt) | dateTimeFormat }}
+					</div>
+					<div class="col-md-2 p-0 text-right text-truncate">
+						<div
+							[ngClass]="{
+								'badge-success' : integration?.isActive,
+								'badge-danger' : !integration?.isActive
+							}"
+							class="badge"
+						>
+							{{(integration?.isActive ? 'PIPELINES_PAGE.ACTIVE' : 'PIPELINES_PAGE.INACTIVE') | translate }}
+						</div>
 					</div>
 				</nb-card-body>
 			</nb-card>

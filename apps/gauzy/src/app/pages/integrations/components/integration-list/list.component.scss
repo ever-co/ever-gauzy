@@ -71,8 +71,8 @@
 		background-color: nb-theme(gauzy-card-2);
 		border-radius: 8px;
 		margin-bottom: 10px;
-		@include nb-ltr(padding, 12px 24px 12px 16px);
-		@include nb-rtl(padding, 12px 16px 12px 24px);
+		@include nb-ltr(padding, 12px 30px 12px 24px);
+		@include nb-rtl(padding, 12px 24px 12px 30px);
 		font-size: 12px;
 		font-style: normal;
 		font-weight: 600;
