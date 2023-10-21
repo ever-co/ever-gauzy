@@ -6,7 +6,7 @@ import { Observable } from 'rxjs/internal/Observable';
 import { TranslateService } from '@ngx-translate/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { distinctUntilChange } from '@gauzy/common-angular';
-import { IIntegration, IIntegrationTenant, IOrganization, IPagination } from '@gauzy/contracts';
+import {ComponentLayoutStyleEnum, IIntegration, IIntegrationTenant, IOrganization, IPagination} from '@gauzy/contracts';
 import { ErrorHandlingService, IntegrationTenantService, Store } from './../../../../@core/services';
 import { TranslationBaseComponent } from './../../../../@shared/language-base';
 
@@ -24,6 +24,9 @@ export class IntegrationListComponent extends TranslationBaseComponent implement
 	public settingsSmartTable: object;
 	public organization: IOrganization;
 	public integrations$: Observable<IIntegrationTenant[]>;
+	public dummyIntegrations$: Observable<any[]>;
+	public disabled = true
+	public selectedIntegration = null;
 
 	constructor(
 		private readonly _titlecasePipe: TitleCasePipe,
@@ -33,6 +36,10 @@ export class IntegrationListComponent extends TranslationBaseComponent implement
 		private readonly _errorHandlingService: ErrorHandlingService,
 	) {
 		super(_translateService);
+		this.dummyIntegrations$ = new Observable((observer) => {
+			observer.next([ { "id": "6635d47c-f7a4-407f-9831-650e5a17e996", "createdAt": "2023-10-19T12:04:29.490Z", "updatedAt": "2023-10-19T12:04:29.490Z", "isActive": true, "isArchived": false, "tenantId": "e077012f-f040-44c8-9500-7ae5f594e136", "organizationId": "fa4eedb0-0ae5-4a93-9a0e-699ae2219449", "name": "Hubstaff", "lastSyncedAt": null, "integrationId": "5b53a1ea-b7e7-41d0-a602-3dc8d319b331", "integration": { "id": "5b53a1ea-b7e7-41d0-a602-3dc8d319b331", "createdAt": "2023-10-19T11:58:32.927Z", "updatedAt": "2023-10-19T11:58:32.927Z", "isActive": true, "isArchived": false, "name": "Hubstaff", "provider": "Hubstaff", "redirectUrl": "hubstaff", "imgSrc": "integrations\\hubstaff.svg", "isComingSoon": false, "isPaid": false, "version": null, "docUrl": null, "isFreeTrial": false, "freeTrialPeriod": null, "order": 1, "fullImgUrl": "http://localhost:3000/public/integrations/hubstaff.svg" } }, { "id": "222c8286-8d64-43f9-9074-90ae8368e917", "createdAt": "2023-10-20T11:57:16.726Z", "updatedAt": "2023-10-20T11:57:16.726Z", "isActive": true, "isArchived": false, "tenantId": "e077012f-f040-44c8-9500-7ae5f594e136", "organizationId": "fa4eedb0-0ae5-4a93-9a0e-699ae2219449", "name": "Github", "lastSyncedAt": null, "integrationId": "3b7eebd0-4319-47a9-8763-c594f4fd1524", "integration": { "id": "3b7eebd0-4319-47a9-8763-c594f4fd1524", "createdAt": "2023-10-19T11:58:32.927Z", "updatedAt": "2023-10-19T11:58:32.927Z", "isActive": true, "isArchived": false, "name": "Github", "provider": "Github", "redirectUrl": "github", "imgSrc": "integrations\\github.svg", "isComingSoon": false, "isPaid": false, "version": null, "docUrl": null, "isFreeTrial": false, "freeTrialPeriod": null, "order": 4, "fullImgUrl": "http://localhost:3000/public/integrations/github.svg" } } ]
+			)
+		})
 	}
 
 	ngOnInit(): void {
@@ -103,5 +110,30 @@ export class IntegrationListComponent extends TranslationBaseComponent implement
 				}
 			}
 		};
+	}
+
+	public delete(event): void {
+
+	}
+
+	public edit(event): void {
+
+	}
+
+	public add(): void {
+
+	}
+
+	public selectIntegration(integration): void {
+		if (
+			this.selectedIntegration &&
+			this.selectedIntegration === integration
+		) {
+			this.selectedIntegration = null;
+			this.disabled = true;
+			return;
+		}
+		this.selectedIntegration = integration;
+		this.disabled = false;
 	}
 }

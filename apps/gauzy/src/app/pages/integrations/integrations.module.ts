@@ -6,7 +6,8 @@ import {
 	NbSelectModule,
 	NbInputModule,
 	NbSpinnerModule,
-	NbButtonModule
+	NbButtonModule,
+	NbIconModule
 } from '@nebular/theme';
 import { IntegrationsRoutingModule } from './integrations-routing.module';
 import { IntegrationsComponent } from './integrations.component';
@@ -16,9 +17,11 @@ import { IntegrationLayoutComponent } from './layout/layout.component';
 import { IntegrationListComponent } from './components/integration-list/list.component';
 import { HeaderTitleModule } from '../../@shared/components/header-title/header-title.module';
 import { Ng2SmartTableModule } from 'ng2-smart-table';
+import { NgxPermissionsModule } from "ngx-permissions";
+import {GauzyButtonActionModule} from "../../@shared/gauzy-button-action/gauzy-button-action.module";
+import {TableComponentsModule} from "../../@shared";
 
 @NgModule({
-
 	imports: [
 		CommonModule,
 		NbButtonModule,
@@ -31,6 +34,10 @@ import { Ng2SmartTableModule } from 'ng2-smart-table';
 		SharedModule,
 		TranslateModule,
 		HeaderTitleModule,
+		NbIconModule,
+		NgxPermissionsModule.forChild(),
+		GauzyButtonActionModule,
+		TableComponentsModule,
 	],
 	declarations: [
 		IntegrationLayoutComponent,
@@ -38,4 +45,4 @@ import { Ng2SmartTableModule } from 'ng2-smart-table';
 		IntegrationsComponent,
 	],
 })
-export class IntegrationsModule { }
+export class IntegrationsModule {}
