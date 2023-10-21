@@ -1,11 +1,12 @@
 import { AfterViewInit, Component, OnInit } from '@angular/core';
+import { TitleCasePipe } from '@angular/common';
 import { EMPTY, catchError, map } from 'rxjs';
 import { debounceTime, switchMap } from 'rxjs/operators';
 import { Observable } from 'rxjs/internal/Observable';
 import { TranslateService } from '@ngx-translate/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { distinctUntilChange } from '@gauzy/common-angular';
-import { IIntegrationTenant, IOrganization, IPagination } from '@gauzy/contracts';
+import { IIntegration, IIntegrationTenant, IOrganization, IPagination } from '@gauzy/contracts';
 import { ErrorHandlingService, IntegrationTenantService, Store } from './../../../../@core/services';
 import { TranslationBaseComponent } from './../../../../@shared/language-base';
 
@@ -13,7 +14,10 @@ import { TranslationBaseComponent } from './../../../../@shared/language-base';
 @Component({
 	selector: 'ga-integration-list',
 	templateUrl: './list.component.html',
-	styleUrls: ['./list.component.scss']
+	styleUrls: ['./list.component.scss'],
+	providers: [
+		TitleCasePipe
+	]
 })
 export class IntegrationListComponent extends TranslationBaseComponent implements AfterViewInit, OnInit {
 
@@ -22,6 +26,7 @@ export class IntegrationListComponent extends TranslationBaseComponent implement
 	public integrations$: Observable<IIntegrationTenant[]>;
 
 	constructor(
+		private readonly _titlecasePipe: TitleCasePipe,
 		public readonly _translateService: TranslateService,
 		private readonly _store: Store,
 		private readonly _integrationTenantService: IntegrationTenantService,
@@ -79,6 +84,14 @@ export class IntegrationListComponent extends TranslationBaseComponent implement
 				name: {
 					title: this.getTranslation('SM_TABLE.NAME'), // Set column title based on translation
 					type: 'string' // Set column type to 'string'
+				},
+				integration: {
+					title: this.getTranslation('SM_TABLE.PROVIDER'), // Set column title based on translation
+					type: 'string', // Set column type to 'string'
+					valuePrepareFunction: (integration: IIntegration) => {
+						// Transform the column data using '_titlecasePipe.transform' (modify this function)
+						return this._titlecasePipe.transform(integration.provider);
+					}
 				},
 				lastSyncAt: {
 					title: this.getTranslation('SM_TABLE.LAST_SYNC'), // Set column title based on translation

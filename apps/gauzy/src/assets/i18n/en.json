@@ -296,7 +296,8 @@
 		"TIME_TRACKING": "Time Tracking",
 		"CREATED_AT": "Created At",
 		"SCREEN_CAPTURE": "Screen Capture",
-		"NUMBER": "Number"
+		"NUMBER": "Number",
+		"PROVIDER": "Provider"
 	},
 	"FORM": {
 		"USERNAME": "Username",
