@@ -1,5 +1,22 @@
-import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
-import { AbstractControl, FormBuilder, FormGroup, Validators } from '@angular/forms';
+import {
+	AfterViewInit,
+	Component,
+	EventEmitter,
+	Input,
+	OnInit,
+	Output,
+	TemplateRef,
+	ViewChild
+} from '@angular/core';
+import { AbstractControl, FormBuilder, FormControl, FormGroup, Validators } from '@angular/forms';
+import { EMPTY, of, switchMap } from 'rxjs';
+import { catchError, debounceTime, filter, finalize, tap } from 'rxjs/operators';
+import { CKEditor4 } from 'ckeditor4-angular/ckeditor';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { TranslateService } from '@ngx-translate/core';
+import { Router } from '@angular/router';
+import { uniq } from 'underscore';
+import { environment } from '@env/environment';
 import {
 	IEmployee,
 	IOrganization,
@@ -18,21 +35,16 @@ import {
 	IIntegrationTenant,
 	IGithubRepository,
 	IOrganizationProjectSetting,
-	HttpStatus
+	HttpStatus,
+	IIntegrationMapSyncRepository,
+	IOrganizationGithubRepository
 } from '@gauzy/contracts';
-import { TranslateService } from '@ngx-translate/core';
-import { Router } from '@angular/router';
-import { uniq } from 'underscore';
-import { EMPTY } from 'rxjs';
-import { catchError, debounceTime, filter, finalize, tap } from 'rxjs/operators';
 import { distinctUntilChange } from '@gauzy/common-angular';
-import { CKEditor4 } from 'ckeditor4-angular/ckeditor';
-import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslationBaseComponent } from '../../language-base/translation-base.component';
 import { patterns } from '../../regex/regex-patterns.const';
-import { environment as ENV } from '../../../../environments/environment';
 import {
 	ErrorHandlingService,
+	GithubService,
 	OrganizationContactService,
 	OrganizationProjectsService,
 	OrganizationTeamsService,
@@ -51,7 +63,7 @@ import { ckEditorConfig } from "../../ckeditor.config";
 	styleUrls: ['./project-mutation.component.scss']
 })
 export class ProjectMutationComponent extends TranslationBaseComponent
-	implements OnInit {
+	implements AfterViewInit, OnInit {
 
 	public FormHelpers: typeof FormHelpers = FormHelpers;
 	public OrganizationProjectBudgetTypeEnum = OrganizationProjectBudgetTypeEnum;
@@ -84,7 +96,7 @@ export class ProjectMutationComponent extends TranslationBaseComponent
 			name: [null, Validators.required],
 			organizationContact: [],
 			billing: [ProjectBillingEnum.RATE],
-			currency: [ENV.DEFAULT_CURRENCY],
+			currency: [environment.DEFAULT_CURRENCY],
 			startDate: [],
 			endDate: [],
 			owner: [ProjectOwnerEnum.CLIENT],
@@ -95,13 +107,17 @@ export class ProjectMutationComponent extends TranslationBaseComponent
 			budget: [],
 			budgetType: [OrganizationProjectBudgetTypeEnum.HOURS],
 			openSource: [],
-			projectUrl: [null, Validators.compose([
-				Validators.pattern(new RegExp(patterns.websiteUrl))
-			])
+			projectUrl: [
+				null,
+				Validators.compose([
+					Validators.pattern(new RegExp(patterns.websiteUrl))
+				])
 			],
-			openSourceProjectUrl: [null, Validators.compose([
-				Validators.pattern(new RegExp(patterns.websiteUrl))
-			])
+			openSourceProjectUrl: [
+				null,
+				Validators.compose([
+					Validators.pattern(new RegExp(patterns.websiteUrl))
+				])
 			]
 		}, {
 			validators: [
@@ -109,6 +125,20 @@ export class ProjectMutationComponent extends TranslationBaseComponent
 			]
 		});
 		form.get('teams').setValue([]);
+		return form;
+	}
+
+	/*
+	* Project Setting Mutation Form
+	*/
+
+	public projectSettingForm: FormGroup = ProjectMutationComponent.buildSettingForm(this._fb);
+	static buildSettingForm(fb: FormBuilder): FormGroup {
+		const form = fb.group({
+			isTasksAutoSync: [],
+			isTasksAutoSyncOnLabel: [],
+			syncTag: []
+		});
 		return form;
 	}
 
@@ -140,6 +170,11 @@ export class ProjectMutationComponent extends TranslationBaseComponent
 	@Output() canceled = new EventEmitter();
 	@Output() onSubmitted = new EventEmitter();
 
+	/*
+	 * Actions Buttons directive
+	 */
+	@ViewChild('actionButtons', { static: true }) actionButtons: TemplateRef<any>;
+
 	constructor(
 		private readonly _router: Router,
 		private readonly _fb: FormBuilder,
@@ -149,6 +184,7 @@ export class ProjectMutationComponent extends TranslationBaseComponent
 		private readonly _errorHandler: ErrorHandlingService,
 		private readonly _organizationTeamService: OrganizationTeamsService,
 		private readonly _organizationContactService: OrganizationContactService,
+		private readonly _githubService: GithubService,
 		private readonly _organizationProjectsService: OrganizationProjectsService,
 	) {
 		super(translateService);
@@ -171,13 +207,38 @@ export class ProjectMutationComponent extends TranslationBaseComponent
 	}
 
 	/**
+	 * Lifecycle hook that is called after the component's view has been initialized.
+	 * It sets up an event listener for changes to the 'syncTag' form control.
+	 */
+	ngAfterViewInit(): void {
+		// Get a reference to the 'isTasksAutoSyncOnLabel' form control within the 'projectSettingForm'.
+		const isTasksAutoSyncOnLabelControl = <FormControl>this.projectSettingForm.get('isTasksAutoSyncOnLabel');
+		const syncTagControl = <FormControl>this.projectSettingForm.get('syncTag');
+
+		isTasksAutoSyncOnLabelControl.valueChanges
+			.pipe(
+				switchMap((value: boolean) => {
+					if (value) {
+						syncTagControl.enable();
+					} else {
+						syncTagControl.disable();
+					}
+					syncTagControl.updateValueAndValidity();
+					return of(value); // Emit the same value.
+				}),
+				untilDestroyed(this) // Automatically unsubscribe when the component is destroyed.
+			)
+			.subscribe();
+	}
+
+	/**
 	 * Load default organization currency
 	 */
 	private _loadDefaultCurrency() {
 		if (!this.organization) {
 			return;
 		}
-		const { currency = ENV.DEFAULT_CURRENCY } = this.organization;
+		const currency = this.organization.currency || environment.DEFAULT_CURRENCY;
 		if (currency) {
 			this.form.get('currency').setValue(currency);
 			this.form.get('currency').updateValueAndValidity();
@@ -276,6 +337,14 @@ export class ProjectMutationComponent extends TranslationBaseComponent
 
 		});
 		this.form.updateValueAndValidity();
+
+		/** Project Integration Setting Patch Value*/
+		this.projectSettingForm.patchValue({
+			isTasksAutoSync: project.isTasksAutoSync || false,
+			isTasksAutoSyncOnLabel: project.isTasksAutoSyncOnLabel || false,
+			syncTag: project.syncTag || ''
+		});
+		this.projectSettingForm.updateValueAndValidity();
 	}
 
 	/**
@@ -482,16 +551,24 @@ export class ProjectMutationComponent extends TranslationBaseComponent
 
 			const { id: organizationId, tenantId } = this.organization;
 			const { id: projectId } = this.project;
-			const externalRepositoryId = repository.id;
+			const integrationId = this.integration['id'];
 
 			/** */
-			const request: IOrganizationProjectSetting = {
+			const request: IIntegrationMapSyncRepository = {
 				organizationId,
 				tenantId,
-				externalRepositoryId
+				integrationId,
+				repository
 			}
-
-			this._organizationProjectsService.updateProjectSetting(projectId, request).pipe(
+			// Fetch entity settings by integration ID and handle the result as an observable
+			this._githubService.syncGithubRepository(request).pipe(
+				switchMap(({ id: repositoryId }: IOrganizationGithubRepository) => {
+					return this._organizationProjectsService.updateProjectSetting(projectId, {
+						organizationId,
+						tenantId,
+						repositoryId
+					});
+				}),
 				tap((response: any) => {
 					if (response['status'] == HttpStatus.BAD_REQUEST) {
 						throw new Error(`${response['message']}`);
@@ -500,6 +577,74 @@ export class ProjectMutationComponent extends TranslationBaseComponent
 				tap(() => {
 					this._toastrService.success('NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_PROJECTS.SYNC_REPOSITORY', {
 						repository: repository.full_name,
+						project: this.project.name
+					});
+				}),
+				catchError((error) => {
+					this._errorHandler.handleError(error);
+					return EMPTY;
+				}),
+				// Execute the following code block when the observable completes or errors
+				finalize(() => {
+					// Set the 'loading' flag to false to indicate that data loading is complete
+					this.loading = false;
+				}),
+				// Automatically unsubscribe when the component is destroyed
+				untilDestroyed(this)
+			).subscribe();
+		} catch (error) {
+			this._errorHandler.handleError(error);
+		}
+	}
+
+	/**
+	 * Trigger a change in the synchronization tag for project auto-sync settings.
+	 * This function updates the project's auto-sync settings.
+	 */
+	public changeSyncTag() {
+		this.updateProjectAutoSyncSetting();
+	}
+
+
+	/**
+	 * Updates project auto-sync settings.
+	 * This method is typically invoked in response to user actions.
+	 */
+	public updateProjectAutoSyncSetting() {
+		// Check if the 'organization' or 'integration' properties are not available.
+		if (!this.organization || !this.integration) {
+			return; // Abort the method execution.
+		}
+
+		/**  */
+		try {
+			// Set the 'loading' property to 'false' to indicate that data loading is not in progress.
+			this.loading = false;
+
+			// Extract the 'organizationId' and 'tenantId' from the 'organization' property.
+			const { id: organizationId, tenantId } = this.organization;
+
+			// Extract the 'projectId' from the 'project' property.
+			const { id: projectId } = this.project;
+
+			// Create a 'request' object of type 'IOrganizationProjectSetting'.
+			// It contains 'organizationId', 'tenantId', and auto-sync settings taken from 'this.projectSettingForm.value'.
+			const request: IOrganizationProjectSetting = {
+				organizationId,
+				tenantId,
+				...this.projectSettingForm.value
+			}
+
+			// Call the 'updateProjectSetting' method of the '_organizationProjectsService'
+			// to update project settings with 'projectId' and the 'request'
+			this._organizationProjectsService.updateProjectSetting(projectId, request).pipe(
+				tap((response: any) => {
+					if (response['status'] == HttpStatus.BAD_REQUEST) {
+						throw new Error(`${response['message']}`);
+					}
+				}),
+				tap(() => {
+					this._toastrService.success('NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_PROJECTS.AUTO_SYNC_SETTING', {
 						project: this.project.name
 					});
 				}),

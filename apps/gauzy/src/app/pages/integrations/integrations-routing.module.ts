@@ -12,7 +12,7 @@ const routes: Routes = [
 				team: false,
 				employee: false,
 				date: false,
-				organization: false
+				organization: true
 			}
 		}
 	},

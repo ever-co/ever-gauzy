@@ -29,3 +29,5 @@ export * from './allow-screenshot-capture/allow-screenshot-capture.component';
 export * from './project-organization-grid/project-organization-grid.component';
 export * from './project-organization-grid-details/project-organization-grid-details.component';
 export * from './project-organization-employees/project-organization-employees.component';
+export * from './clickable-link/clickable-link.component';
+export * from './trust-html/trust-html.component';

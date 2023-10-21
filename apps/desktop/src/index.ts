@@ -229,6 +229,10 @@ eventErrorManager.onShowError(async (message: string) => {
 });
 
 async function startServer(value, restart = false) {
+	global.variableGlobal = {
+		API_BASE_URL: getApiBaseUrl(value),
+		IS_INTEGRATED_DESKTOP: value.isLocalServer
+	};
 	process.env.IS_ELECTRON = 'true';
 	if (value.db === 'sqlite') {
 		process.env.DB_PATH = sqlite3filename;
@@ -261,7 +265,10 @@ async function startServer(value, restart = false) {
 			setupWindow.webContents.send('setup-progress', {
 				msg: msgData,
 			});
-			if (!value.isSetup && !value.serverConfigConnected) {
+			if (
+				!value.isSetup &&
+				(!value.serverConfigConnected || value.isLocalServer)
+			) {
 				if (msgData.indexOf('Listening at http') > -1) {
 					try {
 						setupWindow.hide();
@@ -272,6 +279,7 @@ async function startServer(value, restart = false) {
 							{ ...environment, gauzyWindow: value.gauzyWindow },
 							pathWindow.gauzyWindow
 						);
+						gauzyWindow.show();
 					} catch (error) {
 						throw new AppError('MAINWININIT', error);
 					}
@@ -291,11 +299,6 @@ async function startServer(value, restart = false) {
 			console.log('log error--', msgData);
 		});
 	}
-
-	global.variableGlobal = {
-		API_BASE_URL: getApiBaseUrl(value),
-		IS_INTEGRATED_DESKTOP: value.isLocalServer
-	};
 
 	try {
 		const config: any = {
@@ -354,8 +357,10 @@ async function startServer(value, restart = false) {
 
 	notificationWindow = new ScreenCaptureNotification(pathWindow.screenshotWindow);
 	await notificationWindow.loadURL();
-	gauzyWindow.setVisibleOnAllWorkspaces(false);
-	gauzyWindow.show()
+	if (gauzyWindow) {
+		gauzyWindow.setVisibleOnAllWorkspaces(false);
+		gauzyWindow.show();
+	}
 	splashScreen.close();
 
 	TranslateService.onLanguageChange(() => {
@@ -530,7 +535,7 @@ app.on('ready', async () => {
 		);
 
 		if (configs && configs.isSetup) {
-			if (!configs.serverConfigConnected) {
+			if (!configs.serverConfigConnected && !configs?.isLocalServer) {
 				setupWindow = await createSetupWindow(
 					setupWindow,
 					false,

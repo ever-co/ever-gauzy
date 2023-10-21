@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Brackets, In, IsNull, Repository, WhereExpressionBuilder } from 'typeorm';
 import { isNotEmpty } from '@gauzy/common';
-import { IEmployee, IOrganizationProject, IOrganizationProjectsFindInput, IPagination } from '@gauzy/contracts';
+import { IEmployee, IOrganizationGithubRepository, IOrganizationProject, IOrganizationProjectsFindInput, IPagination } from '@gauzy/contracts';
 import { PaginationParams, TenantAwareCrudService } from './../core/crud';
 import { RequestContext } from '../core/context';
 import { OrganizationProject } from './organization-project.entity';
@@ -103,5 +103,49 @@ export class OrganizationProjectService extends TenantAwareCrudService<Organizat
 			}
 		}
 		return await super.paginate(options);
+	}
+
+	/**
+	 * Get organization projects associated with a specific repository.
+	 *
+	 * @param repositoryId - The ID of the repository.
+	 * @param options - An object containing organization, tenant, and integration information.
+	 * @returns A Promise that resolves to an array of organization projects.
+	 */
+	public async getProjectsByRepository(
+		repositoryId: IOrganizationGithubRepository['repositoryId'],
+		options: {
+			organizationId: IOrganizationGithubRepository['id'];
+			tenantId: IOrganizationGithubRepository['tenantId'];
+			integrationId: IOrganizationGithubRepository['integrationId'];
+			projectId?: IOrganizationProject['id'];
+		}
+	): Promise<IOrganizationProject[]> {
+		try {
+			const tenantId = RequestContext.currentTenantId() || options.tenantId;
+			const { organizationId, projectId, integrationId } = options;
+
+			// Attempt to retrieve the organization projects by the provided parameters.
+			const projects = await this.organizationProjectRepository.find({
+				where: {
+					...(projectId ? { id: projectId } : {}),
+					organizationId,
+					tenantId,
+					repository: {
+						repositoryId,
+						integrationId,
+						organizationId,
+						tenantId,
+						isActive: true,
+						isArchived: false
+					},
+					isActive: true,
+					isArchived: false
+				}
+			});
+			return projects;
+		} catch (error) {
+			return [];
+		}
 	}
 }

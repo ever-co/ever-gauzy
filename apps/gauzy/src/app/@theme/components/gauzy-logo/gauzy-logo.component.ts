@@ -6,7 +6,8 @@ import {
 	Output,
 	ChangeDetectorRef,
 	Input,
-	AfterViewInit
+	AfterViewInit,
+	Inject,
 } from '@angular/core';
 import { NbThemeService } from '@nebular/theme';
 import { untilDestroyed, UntilDestroy } from '@ngneat/until-destroy';
@@ -14,6 +15,9 @@ import { tap, debounceTime, filter } from 'rxjs/operators';
 import { distinctUntilChange } from '@gauzy/common-angular';
 import { FeatureEnum, IOrganization, PermissionsEnum } from '@gauzy/contracts';
 import { Store } from '../../../@core/services';
+import { GAUZY_ENV } from '../../../@core';
+import { Environment } from '../../../../environments/model';
+import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -25,6 +29,7 @@ export class GauzyLogoComponent implements AfterViewInit, OnInit, OnDestroy {
 	theme: string;
 	isCollapse: boolean = true;
 	organization: IOrganization;
+	logoUrl: SafeResourceUrl;
 
 	@Input() controlled: boolean = true;
 	@Input() isAccordion: boolean = true;
@@ -216,8 +221,15 @@ export class GauzyLogoComponent implements AfterViewInit, OnInit, OnDestroy {
 	constructor(
 		private readonly themeService: NbThemeService,
 		private readonly store: Store,
-		private readonly cd: ChangeDetectorRef
-	) { }
+		private readonly cd: ChangeDetectorRef,
+		@Inject(GAUZY_ENV)
+		private readonly environment: Environment,
+		private readonly domSanitizer: DomSanitizer
+	) {
+		this.logoUrl = this.domSanitizer.bypassSecurityTrustResourceUrl(
+			environment.PLATFORM_LOGO_URL
+		);
+	}
 
 	ngOnInit(): void {
 		this.store.selectedOrganization$

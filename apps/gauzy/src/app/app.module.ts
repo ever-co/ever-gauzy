@@ -63,6 +63,7 @@ import { NbEvaIconsModule } from '@nebular/eva-icons';
 import { CookieService } from 'ngx-cookie-service';
 import { NgxDaterangepickerMd } from 'ngx-daterangepicker-material';
 import { dayOfWeekAsString } from './@theme/components/header/selectors/date-range-picker';
+import { GAUZY_ENV } from "./@core";
 // TODO: we should use some internal function which returns version of Gauzy;
 const version = '0.1.0';
 
@@ -224,7 +225,7 @@ if (environment.SENTRY_DSN && environment.SENTRY_DSN === 'DOCKER_SENTRY_DSN') {
 		ColorPickerService,
 		CookieService,
 		{
-			provide: 'gauzyEnv',
+			provide: GAUZY_ENV,
 			useValue: environment,
 		},
 	],

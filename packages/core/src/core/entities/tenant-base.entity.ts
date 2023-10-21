@@ -4,9 +4,8 @@ import { IsString, IsOptional } from 'class-validator';
 import { IBasePerTenantEntityModel, ITenant } from '@gauzy/contracts';
 import { BaseEntity, Tenant } from '../entities/internal';
 
-export abstract class TenantBaseEntity
-	extends BaseEntity
-	implements IBasePerTenantEntityModel {
+export abstract class TenantBaseEntity extends BaseEntity implements IBasePerTenantEntityModel {
+
 	@ApiProperty({ type: () => Tenant, readOnly: true })
 	@ManyToOne(() => Tenant, {
 		nullable: true,

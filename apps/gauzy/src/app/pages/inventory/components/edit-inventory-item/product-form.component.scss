@@ -1,12 +1,6 @@
 @import 'gauzy/_gauzy-overrides';
 @import 'gauzy/_gauzy-cards';
 
-.footer-action {
-  position: absolute;
-  left: 0;
-  bottom: 0;
-}
-
 .d-bottom {
   display: flex;
   align-items: flex-end;
@@ -75,7 +69,10 @@ nb-card {
 }
 
 nb-card-footer {
-  justify-self: flex-end;
+  display: flex;
+  gap: 15px;
+  justify-content: center;
+  padding: 0 24px;
 }
 
 .card-container {
@@ -85,6 +82,15 @@ nb-card-footer {
 
 .product-container {
   width: 100%;
+}
+
+.product-photo-container {
+  position: relative;
+
+  & div:nth-child(2) {
+    position: absolute;
+    bottom: 0;
+  }
 }
 
 .product-photo {

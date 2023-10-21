@@ -23,11 +23,13 @@ import {
 	ElectronService,
 	LoggerService,
 	AboutModule,
+	GAUZY_ENV,
 } from '@gauzy/desktop-ui-lib';
 import { NbCardModule, NbButtonModule } from '@nebular/theme';
 import { RouterModule } from '@angular/router';
 import * as Sentry from '@sentry/angular';
 import { Router } from '@angular/router';
+import { environment } from '@env/environment';
 
 @NgModule({
 	declarations: [AppComponent],
@@ -73,6 +75,10 @@ import { Router } from '@angular/router';
 			useFactory: () => () => {},
 			deps: [Sentry.TraceService],
 			multi: true,
+		},
+		{
+			provide: GAUZY_ENV,
+			useValue: environment
 		},
 	],
 	bootstrap: [AppComponent],

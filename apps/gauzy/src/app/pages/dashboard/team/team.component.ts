@@ -8,7 +8,7 @@ import {
 	ITimeLog,
 	ReportGroupFilterEnum
 } from '@gauzy/contracts';
-import { debounceTime, tap } from 'rxjs';
+import { combineLatest, debounceTime, tap } from 'rxjs';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
 import { DateRangePickerBuilderService, OrganizationTeamsService, Store } from '../../../@core';
@@ -27,6 +27,7 @@ export class TeamComponent extends BaseSelectorFilterComponent implements OnInit
 	private _countsStatistics: any;
 	private _dailyLogs: any[] = [];
 	private _selectedEmployee: ISelectedEmployee;
+	private _selectedOrganizationTeam: IOrganizationTeam;
 
 	constructor(
 		private readonly _organizationTeamsService: OrganizationTeamsService,
@@ -42,6 +43,7 @@ export class TeamComponent extends BaseSelectorFilterComponent implements OnInit
 			isSelected: false
 		};
 		this._isLoading = false;
+		this._selectedOrganizationTeam = null;
 	}
 
 	private _isLoading: boolean;
@@ -132,10 +134,14 @@ export class TeamComponent extends BaseSelectorFilterComponent implements OnInit
 				untilDestroyed(this)
 			)
 			.subscribe();
-		this._store.selectedEmployee$
+		combineLatest([
+			this._store.selectedEmployee$,
+			this._store.selectedTeam$,
+		])
 			.pipe(
-				tap((employee: ISelectedEmployee) => {
+				tap(([employee, organizationTeam]) => {
 					this._selectedEmployee = employee;
+					this._selectedOrganizationTeam = organizationTeam;
 				}),
 				tap(() => this.subject$.next(true)),
 				untilDestroyed(this)
@@ -191,16 +197,24 @@ export class TeamComponent extends BaseSelectorFilterComponent implements OnInit
 		this._todayTeamsWorkers = this._teams
 			.map((team) => {
 				const isTeamMember = team.members.some((member) => member.employeeId === this._selectedEmployee.id);
-				if (!isTeamMember && this._selectedEmployee.id) {
+				if (
+					(!isTeamMember && this._selectedEmployee?.id) ||
+					(this._selectedOrganizationTeam.id &&
+						team.id !== this._selectedOrganizationTeam.id)
+				) {
 					return null;
 				}
 				const members = team.members.map((member) => {
-					const memberDailyLog = this._dailyLogs.filter(
-						(dailyLog) => dailyLog.employee.userId === member.employee.userId
-					)[0];
-					const logs = this._logs
-						.map((log) => (log.employee.userId === member.employee.userId ? log : null))
-						.filter((log) => !!log);
+					const [memberDailyLog] = this._dailyLogs.filter(
+						(dailyLog) =>
+							dailyLog.employee.userId === member.employee.userId
+					);
+					const logs = this._logs.filter(
+						(log) =>
+							!!log &&
+							log.employee.userId === member.employee.userId &&
+							log.organizationTeamId === team.id
+					);
 					const isWorkingToday = logs.length > 0;
 					const groupByTask = isWorkingToday ? this._groupBy('taskId', logs) : [];
 					const groupByProject = isWorkingToday ? this._groupBy('projectId', logs) : [];
@@ -214,6 +228,12 @@ export class TeamComponent extends BaseSelectorFilterComponent implements OnInit
 							}, 0)
 						};
 					});
+					const todayWorkDuration = tasks.reduce(
+						(accumulator: number, task) => {
+							return accumulator + task?.duration || 0;
+						},
+						0
+					);
 					const proj = projectKeys.map((value: string) => {
 						return {
 							...groupByProject[value][0].project
@@ -223,7 +243,7 @@ export class TeamComponent extends BaseSelectorFilterComponent implements OnInit
 					return {
 						...member,
 						isRunningTimer: isWorkingToday ? logs.reverse()[0].isRunning : false,
-						todayWorkDuration: memberDailyLog ? memberDailyLog.sum : null,
+						todayWorkDuration,
 						isWorkingToday: isWorkingToday,
 						tasks: tasks,
 						projects: proj,

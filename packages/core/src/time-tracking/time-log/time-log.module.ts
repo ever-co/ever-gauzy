@@ -33,8 +33,8 @@ import { UserModule } from './../../user/user.module';
 		...CommandHandlers
 	],
 	exports: [
-		TimeLogService,
-		TypeOrmModule
+		TypeOrmModule,
+		TimeLogService
 	]
 })
-export class TimeLogModule {}
+export class TimeLogModule { }

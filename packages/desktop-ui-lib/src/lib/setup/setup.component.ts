@@ -5,6 +5,7 @@ import {
 	ChangeDetectionStrategy,
 	ViewChild,
 	ElementRef,
+	Inject,
 } from '@angular/core';
 import { SetupService } from './setup.service';
 import { NbDialogService } from '@nebular/theme';
@@ -13,6 +14,8 @@ import { ElectronService, LoggerService } from '../electron/services';
 import { ErrorHandlerService, Store } from '../services';
 import { LanguageSelectorComponent } from '../language/language-selector.component';
 import { TranslateService } from '@ngx-translate/core';
+import { GAUZY_ENV } from '../constants';
+import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 
 @Component({
 	selector: 'ngx-setup',
@@ -33,7 +36,10 @@ export class SetupComponent implements OnInit {
 		private _errorHandlerService: ErrorHandlerService,
 		private _loggerServer: LoggerService,
 		private _translateService: TranslateService,
-		private _store: Store
+		private _store: Store,
+		@Inject(GAUZY_ENV)
+		private readonly _environment: any,
+		private readonly _domSanitizer: DomSanitizer
 	) {
 		electronService.ipcRenderer.on('setup-data', (event, arg) => {
 			this.desktopFeatures.gauzyPlatform = arg.gauzyWindow;
@@ -89,6 +95,10 @@ export class SetupComponent implements OnInit {
 		});
 
 		electronService.ipcRenderer.send('reset_permissions');
+
+		this.gauzyIcon = this._domSanitizer.bypassSecurityTrustResourceUrl(
+			this._environment.PLATFORM_LOGO_URL
+		);
 	}
 	appName: string = this.electronService.remote.app.getName();
 	loading: Boolean = false;
@@ -97,7 +107,7 @@ export class SetupComponent implements OnInit {
 	awCheck = false;
 	awAPI: String = 'http://localhost:5600';
 	buttonSave = false;
-	gauzyIcon =
+	gauzyIcon: SafeResourceUrl =
 		this.appName === 'gauzy-desktop-timer' ||
 		this.appName === 'gauzy-server'
 			? './assets/images/logos/logo_Gauzy.svg'
