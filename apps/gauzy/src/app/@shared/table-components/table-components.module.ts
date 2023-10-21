@@ -43,7 +43,7 @@ import { PhoneUrlComponent } from './phone-url/phone-url.component';
 import { AllowScreenshotCaptureComponent } from './allow-screenshot-capture/allow-screenshot-capture.component';
 import { NumberEditorComponent } from './editors/number-editor.component';
 import { ClickableLinkComponent } from './clickable-link/clickable-link.component';
-import { TrustHtmlLinkComponent } from './trust-ttml/trust-html.component';
+import { TrustHtmlLinkComponent } from './trust-html/trust-html.component';
 
 @NgModule({
 	imports: [
