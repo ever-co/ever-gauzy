@@ -1,6 +1,10 @@
 <nb-card class="card-scroll">
 	<nb-card-header>
-		<ngx-back-navigation class="float-left"></ngx-back-navigation>
+		<ngx-back-navigation
+			[haveLink]="true"
+			class="float-left"
+			(click)="navigateToIntegrations()"
+		></ngx-back-navigation>
 		<nb-actions class="float-left pt-2" size="small">
 			<nb-action class="toggle-layout p-0">
 				<h5>{{ 'INTEGRATIONS.GITHUB_PAGE.NAME' | translate }}</h5>

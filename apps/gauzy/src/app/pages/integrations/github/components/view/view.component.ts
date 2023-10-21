@@ -1,6 +1,6 @@
 import { AfterViewInit, Component, OnInit, ViewChild } from '@angular/core';
 import { TitleCasePipe } from '@angular/common';
-import { ActivatedRoute, Data } from '@angular/router';
+import { ActivatedRoute, Data, Router } from '@angular/router';
 import { EMPTY, debounceTime, finalize, firstValueFrom, of } from 'rxjs';
 import { Observable } from 'rxjs/internal/Observable';
 import { catchError, filter, map, switchMap, tap } from 'rxjs/operators';
@@ -72,6 +72,7 @@ export class GithubViewComponent extends TranslationBaseComponent implements Aft
 	}
 
 	constructor(
+		private readonly _router: Router,
 		public readonly _translateService: TranslateService,
 		private readonly _activatedRoute: ActivatedRoute,
 		private readonly _titlecasePipe: TitleCasePipe,
@@ -425,5 +426,12 @@ export class GithubViewComponent extends TranslationBaseComponent implements Aft
 			// Clear the 'selectedIssues' array
 			this.selectedIssues = [];
 		}
+	}
+
+	/**
+	 * Navigate to the create project page.
+	 */
+	navigateToIntegrations(): void {
+		this._router.navigate(['/pages/integrations/new']);
 	}
 }

@@ -1,4 +1,4 @@
-import { async, ComponentFixture, TestBed } from '@angular/core/testing';
+import { async, ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
 
 import { HubstaffComponent } from './hubstaff.component';
 
@@ -6,7 +6,7 @@ describe('HubstaffComponent', () => {
 	let component: HubstaffComponent;
 	let fixture: ComponentFixture<HubstaffComponent>;
 
-	beforeEach(async(() => {
+	beforeEach(waitForAsync(() => {
 		TestBed.configureTestingModule({
 			declarations: [HubstaffComponent],
 			teardown: { destroyAfterEach: false }
