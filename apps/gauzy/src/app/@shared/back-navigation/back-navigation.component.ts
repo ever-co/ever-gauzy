@@ -7,10 +7,14 @@ import { Location } from '@angular/common';
 	styleUrls: ['./back-navigation.component.scss']
 })
 export class BackNavigationComponent implements OnInit {
-	@Input() haveLink = false;
-	constructor(private location: Location) {}
 
-	ngOnInit() {}
+	@Input() haveLink = false;
+
+	constructor(
+		private readonly location: Location
+	) { }
+
+	ngOnInit() { }
 
 	goBack() {
 		if (!this.haveLink) this.location.back();
