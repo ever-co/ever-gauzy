@@ -81,16 +81,17 @@ export type Env = Readonly<{
 	GAUZY_DESKTOP_LOGO_512X512: string;
 	PLATFORM_PRIVACY_URL: string;
 	PLATFORM_TOS_URL: string;
+	NO_INTERNET_LOGO: string;
 
 	COMPANY_NAME: string;
 	COMPANY_SITE: string;
-	COMPANY_LINK: string,
-	COMPANY_SITE_LINK: string,
-	COMPANY_GITHUB_LINK: string,
-	COMPANY_GITLAB_LINK: string,
-	COMPANY_FACEBOOK_LINK: string,
-	COMPANY_TWITTER_LINK: string,
-	COMPANY_LINKEDIN_LINK: string,
+	COMPANY_LINK: string;
+	COMPANY_SITE_LINK: string;
+	COMPANY_GITHUB_LINK: string;
+	COMPANY_GITLAB_LINK: string;
+	COMPANY_FACEBOOK_LINK: string;
+	COMPANY_TWITTER_LINK: string;
+	COMPANY_LINKEDIN_LINK: string;
 }>;
 
 export const env: Env = cleanEnv(
@@ -212,6 +213,9 @@ export const env: Env = cleanEnv(
 		COMPANY_LINKEDIN_LINK: str({
 			default: 'https://www.linkedin.com/company/ever-co'
 		}),
+		NO_INTERNET_LOGO: str({
+			default: 'assets/images/logos/logo_Gauzy.svg'
+		})
 	},
 	{ strict: true, dotEnvPath: __dirname + '/../.env' }
 );

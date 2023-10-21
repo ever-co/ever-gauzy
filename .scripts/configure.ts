@@ -114,7 +114,7 @@ if (!env.IS_DOCKER) {
 		MICROSOFT_AUTH_LINK: API_BASE_URL + '/api/auth/microsoft',
 		AUTH0_AUTH_LINK: API_BASE_URL + '/api/auth/auth0',
 
-		NO_INTERNET_LOGO: 'assets/images/logos/logo_Gauzy.svg',
+		NO_INTERNET_LOGO: '${env.NO_INTERNET_LOGO}',
 
 		SENTRY_DSN: '${env.SENTRY_DSN}',
 		SENTRY_TRACES_SAMPLE_RATE: '${env.SENTRY_TRACES_SAMPLE_RATE}',
@@ -222,7 +222,7 @@ if (!env.IS_DOCKER) {
 		MICROSOFT_AUTH_LINK: API_BASE_URL + '/api/auth/microsoft',
 		AUTH0_AUTH_LINK: API_BASE_URL + '/api/auth/auth0',
 
-		NO_INTERNET_LOGO: 'assets/images/logos/logo_Gauzy.svg',
+		NO_INTERNET_LOGO: '${env.NO_INTERNET_LOGO}',
 
 		SENTRY_DSN: 'DOCKER_SENTRY_DSN',
 		SENTRY_TRACES_SAMPLE_RATE: 'DOCKER_SENTRY_TRACES_SAMPLE_RATE',
