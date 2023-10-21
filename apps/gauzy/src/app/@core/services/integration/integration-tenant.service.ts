@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs/internal/Observable';
-import { IIntegrationSyncedRepositoryFindInput, IIntegrationTenant, IPagination } from '@gauzy/contracts';
+import { IIntegrationTenantFindInput, IIntegrationTenant, IPagination } from '@gauzy/contracts';
 import { toParams } from '@gauzy/common-angular';
 import { API_PREFIX } from '../../constants';
 
@@ -22,7 +22,7 @@ export class IntegrationTenantService {
       * @returns An Observable of IPagination<IIntegrationTenant>.
       */
     getAll(
-        where: IIntegrationSyncedRepositoryFindInput,
+        where: IIntegrationTenantFindInput,
         relations: string[] = []
     ): Observable<IPagination<IIntegrationTenant>> {
         const url = `${API_PREFIX}/integration-tenant`;
