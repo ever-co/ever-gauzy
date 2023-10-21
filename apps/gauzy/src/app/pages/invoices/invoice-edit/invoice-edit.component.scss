@@ -26,11 +26,11 @@
   float: right;
 
   &-item {
-    border: solid 2px gray;
+    border: solid 2px var(--button-filled-info-disabled-border-color);
     border-radius: 5px;
-    margin: 20px 20px 0px 10px;
+    margin: 20px 20px 20px 10px;
     padding: 5px;
-    font-size: 18px;
+    font-size: 14px;
   }
 }
 
@@ -138,6 +138,7 @@ div.button-action {
 :host button.gray {
   background-color: rgba(126, 126, 143, 1);
   color: nb-theme(text-control-color);
+  border-color: var(--button-filled-basic-border-color);
   [nbButton].appearance-filled.status-basic {
     background-color: nb-theme(button-filled-basic-background-color);
     border-color: nb-theme(button-filled-basic-border-color);
