@@ -52,9 +52,9 @@ jobs:
               with:
                   script: |
                       const script = require('./.scripts/bump-version-electron.js')
-                      console.log(script.desktopTimer(false))
+                      script.desktopTimer(false).then(console.log)
               env:
-                  PROJECT_REPO: 'git@github.com:ever-co/ever-gauzy.git'
+                  PROJECT_REPO: 'https://github.com/ever-co/ever-gauzy.git'
                   DESKTOP_TIMER_APP_NAME: 'ever-gauzy-desktop-timer'
                   COMPANY_SITE_LINK: 'https://gauzy.co'
                   DESKTOP_TIMER_APP_DESCRIPTION: 'Gauzy Desktop Timer'
@@ -108,9 +108,9 @@ jobs:
               with:
                   script: |
                       const script = require('./.scripts/bump-version-electron.js')
-                      console.log(script.desktopTimer(false))
+                      script.desktopTimer(false).then(console.log)
               env:
-                  PROJECT_REPO: 'git@github.com:ever-co/ever-gauzy.git'
+                  PROJECT_REPO: 'https://github.com/ever-co/ever-gauzy.git'
                   DESKTOP_TIMER_APP_NAME: 'ever-gauzy-desktop-timer'
                   COMPANY_SITE_LINK: 'https://gauzy.co'
                   DESKTOP_TIMER_APP_DESCRIPTION: 'Gauzy Desktop Timer'
@@ -164,9 +164,9 @@ jobs:
               with:
                   script: |
                       const script = require('./.scripts/bump-version-electron.js')
-                      console.log(script.desktopTimer(false))
+                      script.desktopTimer(false).then(console.log)
               env:
-                  PROJECT_REPO: 'git@github.com:ever-co/ever-gauzy.git'
+                  PROJECT_REPO: 'https://github.com/ever-co/ever-gauzy.git'
                   DESKTOP_TIMER_APP_NAME: 'ever-gauzy-desktop-timer'
                   COMPANY_SITE_LINK: 'https://gauzy.co'
                   DESKTOP_TIMER_APP_DESCRIPTION: 'Gauzy Desktop Timer'
