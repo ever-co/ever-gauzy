@@ -147,4 +147,11 @@ export class GauzyAIAuthorizeComponent implements AfterViewInit, OnInit, OnDestr
 			console.log('Error while creating new integration for Gauzy AI', error);
 		}
 	}
+
+	/**
+	 * Navigate to the create project page.
+	 */
+	navigateToIntegrations(): void {
+		this._router.navigate(['/pages/integrations/new']);
+	}
 }
