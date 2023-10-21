@@ -1,22 +1,35 @@
 import { IInvoice, IInvoiceEstimateHistory } from '@gauzy/contracts';
 import { ApiProperty } from '@nestjs/swagger';
-import { IsString } from 'class-validator';
-import { Entity, Column, JoinColumn, ManyToOne, Index, RelationId } from 'typeorm';
+import { IsOptional, IsString } from 'class-validator';
+import {
+	Entity,
+	Column,
+	JoinColumn,
+	ManyToOne,
+	Index,
+	RelationId,
+} from 'typeorm';
 import {
 	Invoice,
 	TenantOrganizationBaseEntity,
-	User
+	User,
 } from '../core/entities/internal';
 
 @Entity('invoice_estimate_history')
 export class InvoiceEstimateHistory
 	extends TenantOrganizationBaseEntity
-	implements IInvoiceEstimateHistory {
-
+	implements IInvoiceEstimateHistory
+{
 	@ApiProperty({ type: () => String })
 	@IsString()
 	@Column()
 	action: string;
+
+	@IsOptional()
+	@ApiProperty({ type: () => String, required: false })
+	@IsString()
+	@Column({ nullable: true })
+	title?: string;
 
 	/*
     |--------------------------------------------------------------------------
@@ -25,7 +38,7 @@ export class InvoiceEstimateHistory
     */
 	@ApiProperty({ type: () => User })
 	@ManyToOne(() => User, {
-		onDelete: 'SET NULL'
+		onDelete: 'SET NULL',
 	})
 	@JoinColumn()
 	user: User;
@@ -39,7 +52,7 @@ export class InvoiceEstimateHistory
 
 	@ApiProperty({ type: () => Invoice })
 	@ManyToOne(() => Invoice, (invoice) => invoice.invoiceItems, {
-		onDelete: 'CASCADE'
+		onDelete: 'CASCADE',
 	})
 	invoice: IInvoice;
 

@@ -34,7 +34,7 @@ import {
 	ITimeLog
 } from '@gauzy/contracts';
 import {
-	IntegrationTenantFirstOrCreateCommand,
+	IntegrationTenantUpdateOrCreateCommand,
 	IntegrationTenantGetCommand
 } from '../integration-tenant/commands';
 import {
@@ -179,7 +179,7 @@ export class UpworkService {
 					}
 
 					await this.commandBus.execute(
-						new IntegrationTenantFirstOrCreateCommand({
+						new IntegrationTenantUpdateOrCreateCommand({
 							name: IntegrationEnum.UPWORK,
 							integration: {
 								provider: IntegrationEnum.UPWORK

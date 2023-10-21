@@ -2776,7 +2776,7 @@
 		"INVOICES_PER_PAGE": "Счета на странице",
 		"ESTIMATES_PER_PAGE": "Оценки на странице",
 		"APPLY_DISCOUNT_AFTER_TAX": "Применить скидку после налога",
-		"SELECT_INVOICE_TO_VIEW_HISTORY": "Выберите счет-фактуру для просмотра истории",
+		"SELECT_INVOICE_TO_VIEW_HISTORY": "Выберите счет, чтобы просмотреть его историю.",
 		"INVOICE_SENT_TO": "Счёт отправлен на '{{ name }}'",
 		"ESTIMATE_SENT_TO": "Оценить отправленное на '{{ name }}'",
 		"INVOICE": "Счет",
@@ -4235,6 +4235,7 @@
 	"SETTINGS": {
 		"EMAIL_HISTORY": {
 			"EMAIL_ARCHIVED": "Почта архивирована",
+			"RESEND": "Переслать",
 			"ARCHIVE": "Архивировать",
 			"HEADER": "История писем",
 			"FROM": "От:",

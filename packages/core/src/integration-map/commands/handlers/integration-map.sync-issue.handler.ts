@@ -23,7 +23,7 @@ export class IntegrationMapSyncIssueHandler implements ICommandHandler<Integrati
 	 * @returns A promise that resolves to the updated integration map.
 	 */
 	public async execute(command: IntegrationMapSyncIssueCommand): Promise<IIntegrationMap> {
-		const { request } = command;
+		const { triggeredEvent, request } = command;
 		const { sourceId, organizationId, integrationId, entity } = request;
 		const tenantId = RequestContext.currentTenantId() || request.tenantId;
 
@@ -39,17 +39,18 @@ export class IntegrationMapSyncIssueHandler implements ICommandHandler<Integrati
 			// Try to find the corresponding task
 			try {
 				await this._taskService.findOneByIdString(integrationMap.gauzyId);
+
 				// Update the corresponding task with the new input data
 				await this._commandBus.execute(
-					new TaskUpdateCommand(integrationMap.gauzyId, entity)
+					new TaskUpdateCommand(integrationMap.gauzyId, entity, triggeredEvent)
 				);
 			} catch (error) {
 				console.log(`${IntegrationEntity.TASK} Not Found for integration GauzyID %s: `, integrationMap.gauzyId);
 				// Create a corresponding task with the new input data
 				await this._commandBus.execute(
 					new TaskCreateCommand({
-						id: integrationMap.gauzyId,
-						...entity
+						...entity,
+						id: integrationMap.gauzyId
 					})
 				);
 			}
@@ -59,7 +60,7 @@ export class IntegrationMapSyncIssueHandler implements ICommandHandler<Integrati
 			// Handle errors and create a new task
 			// Create a new task with the provided entity data
 			const task = await this._commandBus.execute(
-				new TaskCreateCommand(entity)
+				new TaskCreateCommand(entity, triggeredEvent)
 			);
 
 			// Create a new integration map for the issue

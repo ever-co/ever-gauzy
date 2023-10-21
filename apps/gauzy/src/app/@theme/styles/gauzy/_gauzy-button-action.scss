@@ -1,0 +1,14 @@
+@media screen and (max-width: 1440px) {
+  ::ng-deep .transition {
+    background: var(--gauzy-card-1);
+    &.show {
+      position: relative;
+      z-index: 10;
+      background: var(--gauzy-card-1) !important;
+      box-shadow: var(--gauzy-shadow);
+    }
+    & .actions {
+      background: var(--gauzy-card-1) !important;
+    }
+  }
+}

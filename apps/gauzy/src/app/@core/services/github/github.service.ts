@@ -6,8 +6,10 @@ import {
     IGithubIssue,
     IGithubRepository,
     IGithubRepositoryResponse,
+    IIntegrationMapSyncRepository,
     IIntegrationTenant,
     IOrganization,
+    IOrganizationGithubRepository,
     IOrganizationProject
 } from '@gauzy/contracts';
 import { Observable, firstValueFrom } from 'rxjs';
@@ -129,5 +131,15 @@ export class GithubService {
             state,
             body
         }));
+    }
+
+    /**
+    * Synchronize a GitHub repository.
+    * @param input The synchronization input data.
+    * @returns An Observable of the synchronized IntegrationMap.
+    */
+    syncGithubRepository(input: IIntegrationMapSyncRepository): Observable<IOrganizationGithubRepository> {
+        const url = `${API_PREFIX}/integration/github/repository/sync`;
+        return this._http.post<IOrganizationGithubRepository>(url, input);
     }
 }

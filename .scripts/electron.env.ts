@@ -20,6 +20,7 @@ if (isProd) {
         SCREENSHOTS_ENGINE_METHOD: 'ScreenshotDesktopLib', // ElectronDesktopCapturer || ScreenshotDesktopLib
         SENTRY_DSN: '${env.SENTRY_DSN}',
 		SENTRY_TRACES_SAMPLE_RATE: '${env.SENTRY_TRACES_SAMPLE_RATE}',
+		PLATFORM_LOGO_URL: '${env.PLATFORM_LOGO_URL}'
     }
     `;
 	try {

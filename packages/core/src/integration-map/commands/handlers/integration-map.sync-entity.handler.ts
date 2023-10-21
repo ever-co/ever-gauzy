@@ -4,12 +4,11 @@ import { IntegrationMapService } from '../../integration-map.service';
 import { IntegrationMap } from '../../integration-map.entity';
 
 @CommandHandler(IntegrationMapSyncEntityCommand)
-export class IntegrationMapSyncEntityHandler
-	implements ICommandHandler<IntegrationMapSyncEntityCommand> {
-	
+export class IntegrationMapSyncEntityHandler implements ICommandHandler<IntegrationMapSyncEntityCommand> {
+
 	constructor(
 		private readonly _integrationMapService: IntegrationMapService
-	) {}
+	) { }
 
 	public async execute(
 		command: IntegrationMapSyncEntityCommand

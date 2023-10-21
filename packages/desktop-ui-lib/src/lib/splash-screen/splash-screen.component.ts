@@ -1,10 +1,12 @@
-import { Component, OnInit } from '@angular/core';
+import {Component, Inject, OnInit} from '@angular/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
 import { LanguagesEnum } from 'packages/contracts/dist';
 import { from, tap } from 'rxjs';
 import { ElectronService } from '../electron/services';
 import { LanguageSelectorService } from '../language/language-selector.service';
+import { GAUZY_ENV } from "../constants";
+import {DomSanitizer} from "@angular/platform-browser";
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -16,13 +18,16 @@ export class SplashScreenComponent implements OnInit {
 	private _application = {
 		name: 'gauzy-dev',
 		version: 'dev',
-		iconPath: ''
+		iconPath: null
 	};
 
 	constructor(
 		private readonly _electronService: ElectronService,
 		private readonly _languageSelectorService: LanguageSelectorService,
-		private readonly _translateService: TranslateService
+		private readonly _translateService: TranslateService,
+		@Inject(GAUZY_ENV)
+		private readonly _environment: any,
+		private readonly _domSanitizer: DomSanitizer
 	) {
 		this._application = {
 			name: _electronService.remote.app
@@ -33,7 +38,9 @@ export class SplashScreenComponent implements OnInit {
 					letter.toUpperCase()
 				),
 			version: _electronService.remote.app.getVersion(),
-			iconPath: './assets/images/logos/logo_Gauzy.svg'
+			iconPath: this._domSanitizer.bypassSecurityTrustResourceUrl(
+				this._environment.PLATFORM_LOGO_URL
+			),
 		};
 	}
 

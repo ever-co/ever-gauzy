@@ -17,7 +17,9 @@ import { UserModule } from './../../user/user.module';
 		ActivityController
 	],
 	imports: [
-		TypeOrmModule.forFeature([ Activity ]),
+		TypeOrmModule.forFeature([
+			Activity
+		]),
 		TenantModule,
 		UserModule,
 		EmployeeModule,
@@ -36,4 +38,4 @@ import { UserModule } from './../../user/user.module';
 		ActivityMapService
 	]
 })
-export class ActivityModule {}
+export class ActivityModule { }

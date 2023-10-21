@@ -33,6 +33,7 @@ export * from './lib/interceptors';
 export * from './lib/ngx-translate';
 export * from './lib/always-on/always-on.component';
 export * from './lib/always-on/always-on.module';
+export * from './lib/constants';
 
 
 

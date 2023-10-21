@@ -1,7 +1,7 @@
 import { AfterViewInit, Component, OnInit, ViewChild } from '@angular/core';
 import { TitleCasePipe } from '@angular/common';
-import { ActivatedRoute, Data } from '@angular/router';
-import { debounceTime, finalize, firstValueFrom, of } from 'rxjs';
+import { ActivatedRoute, Data, Router } from '@angular/router';
+import { EMPTY, debounceTime, finalize, firstValueFrom, of } from 'rxjs';
 import { Observable } from 'rxjs/internal/Observable';
 import { catchError, filter, map, switchMap, tap } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
@@ -12,12 +12,10 @@ import {
 	IEntitySettingToSync,
 	IGithubIssue,
 	IGithubRepository,
-	IIntegrationMap,
 	IIntegrationTenant,
 	IOrganization,
 	IOrganizationProject,
 	IUser,
-	IntegrationEntity,
 	IntegrationEnum
 } from '@gauzy/contracts';
 import { distinctUntilChange, parsedInt } from '@gauzy/common-angular';
@@ -27,12 +25,12 @@ import {
 	GithubService,
 	IntegrationEntitySettingService,
 	IntegrationEntitySettingServiceStoreService,
-	IntegrationMapService,
+	OrganizationProjectsService,
 	Store,
 	ToastrService
 } from './../../../../../@core/services';
 import { HashNumberPipe } from './../../../../../@shared/pipes';
-import { TagsOnlyComponent } from './../../../../../@shared/table-components';
+import { ClickableLinkComponent, TagsOnlyComponent, TrustHtmlLinkComponent } from './../../../../../@shared/table-components';
 import { GithubSettingsDialogComponent } from '../settings-dialog/settings-dialog.component';
 
 @UntilDestroy({ checkProperties: true })
@@ -50,9 +48,9 @@ export class GithubViewComponent extends TranslationBaseComponent implements Aft
 	public loading: boolean = false;
 	public user: IUser = this._store.user;
 	public organization: IOrganization = this._store.selectedOrganization;
-	public project: IOrganizationProject;
 	public repository: IGithubRepository;
-	public integrationMap$: Observable<IIntegrationMap | boolean>;
+	public project: IOrganizationProject;
+	public project$: Observable<IOrganizationProject>;
 	public integration$: Observable<IIntegrationTenant>;
 	public integration: IIntegrationTenant;
 	public contextMenuItems: NbMenuItem[] = [];
@@ -74,6 +72,7 @@ export class GithubViewComponent extends TranslationBaseComponent implements Aft
 	}
 
 	constructor(
+		private readonly _router: Router,
 		public readonly _translateService: TranslateService,
 		private readonly _activatedRoute: ActivatedRoute,
 		private readonly _titlecasePipe: TitleCasePipe,
@@ -84,9 +83,9 @@ export class GithubViewComponent extends TranslationBaseComponent implements Aft
 		private readonly _errorHandlingService: ErrorHandlingService,
 		private readonly _store: Store,
 		private readonly _githubService: GithubService,
-		private readonly _integrationMapService: IntegrationMapService,
 		private readonly _integrationEntitySettingService: IntegrationEntitySettingService,
 		private readonly _integrationEntitySettingServiceStoreService: IntegrationEntitySettingServiceStoreService,
+		private readonly _organizationProjectsService: OrganizationProjectsService
 	) {
 		super(_translateService);
 	}
@@ -97,33 +96,23 @@ export class GithubViewComponent extends TranslationBaseComponent implements Aft
 		this._getContextMenuItems();
 		this._getGithubIntegrationTenant();
 
-		this.integrationMap$ = this._store.selectedProject$.pipe(
+		this.project$ = this._store.selectedProject$.pipe(
 			debounceTime(100),
 			distinctUntilChange(),
 			filter((project: IOrganizationProject) => !!project),
 			switchMap((project: IOrganizationProject) => {
 				// Ensure there is a valid organization
 				if (!project.id) {
-					return of(false); // No valid organization, return false
+					return EMPTY; // No valid organization, return false
 				}
-				// Extract organization properties
-				const { id: organizationId, tenantId } = this.organization;
-				// Extract integration properties
-				const { id: integrationId } = this.integration;
 				// Extract project properties
 				const { id: projectId } = this.project = project;
 
-				return this._integrationMapService.getSyncedGithubRepository({
-					organizationId,
-					tenantId,
-					integrationId,
-					gauzyId: projectId,
-					entity: IntegrationEntity.PROJECT
-				}).pipe(
+				return this._organizationProjectsService.getById(projectId, ['repository']).pipe(
 					catchError((error) => {
 						// Handle and log errors
 						this._errorHandlingService.handleError(error);
-						return of(false);
+						return EMPTY;
 					}),
 					// Handle component lifecycle to avoid memory leaks
 					untilDestroyed(this),
@@ -167,6 +156,11 @@ export class GithubViewComponent extends TranslationBaseComponent implements Aft
 			{
 				title: this.getTranslation('INTEGRATIONS.SETTINGS'),
 				icon: 'settings-2-outline'
+			},
+			{
+				title: this.getTranslation('INTEGRATIONS.RE_INTEGRATE'),
+				icon: 'text-outline',
+				link: `pages/integrations/github/setup/wizard/regenerate`
 			},
 			// Add more menu items as needed
 		];
@@ -267,9 +261,13 @@ export class GithubViewComponent extends TranslationBaseComponent implements Aft
 			columns: {
 				number: {
 					title: this.getTranslation('SM_TABLE.NUMBER'), // Set column title based on translation
-					type: 'number', // Set column type to 'number'
-					valuePrepareFunction: (data: number) => {
-						return this._hashNumberPipe.transform(data);
+					type: 'custom', // Set column type to 'custom'
+					renderComponent: ClickableLinkComponent,
+					valuePrepareFunction: (number: IGithubIssue['number']) => {
+						return this._hashNumberPipe.transform(number);
+					},
+					onComponentInitFunction: (instance: any) => {
+						instance['href'] = 'html_url';
 					}
 				},
 				title: {
@@ -278,7 +276,8 @@ export class GithubViewComponent extends TranslationBaseComponent implements Aft
 				},
 				body: {
 					title: this.getTranslation('SM_TABLE.DESCRIPTION'), // Set column title based on translation
-					type: 'string' // Set column type to 'string'
+					type: 'custom', // Set column type to 'custom'
+					renderComponent: TrustHtmlLinkComponent
 				},
 				state: {
 					title: this.getTranslation('SM_TABLE.STATUS'), // Set column title based on translation
@@ -427,5 +426,12 @@ export class GithubViewComponent extends TranslationBaseComponent implements Aft
 			// Clear the 'selectedIssues' array
 			this.selectedIssues = [];
 		}
+	}
+
+	/**
+	 * Navigate to the create project page.
+	 */
+	navigateToIntegrations(): void {
+		this._router.navigate(['/pages/integrations/new']);
 	}
 }

@@ -11,6 +11,7 @@ export interface Environment {
 	DESKTOP_APP_DOWNLOAD_LINK_LINUX?: string;
 	MOBILE_APP_DOWNLOAD_LINK?: string;
 	EXTENSION_DOWNLOAD_LINK?: string;
+	PLATFORM_LOGO_URL?: string;
 
 	COMPANY_NAME: string;
 	COMPANY_SITE: string;
@@ -75,8 +76,11 @@ export interface Environment {
 
 	/** Github Integration */
 	GAUZY_GITHUB_APP_NAME: string;
-	GAUZY_GITHUB_APP_ID: string;
 	GAUZY_GITHUB_CLIENT_ID: string;
 	GAUZY_GITHUB_REDIRECT_URL: string;
 	GAUZY_GITHUB_POST_INSTALL_URL: string;
+
+	GAUZY_DESKTOP_LOGO_512X512: string;
+	PLATFORM_PRIVACY_URL: string;
+	PLATFORM_TOS_URL: string;
 }
