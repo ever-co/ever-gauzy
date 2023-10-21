@@ -10,7 +10,7 @@ import { IOrganizationProject } from './organization-projects.model';
 
 export interface IOrganizationTeam
 	extends IBasePerTenantAndOrganizationEntityModel,
-	IRelationalImageAsset {
+		IRelationalImageAsset {
 	name: string;
 	color?: string;
 	emoji?: string;
@@ -28,7 +28,7 @@ export interface IOrganizationTeam
 
 export interface IOrganizationTeamFindInput
 	extends IBasePerTenantAndOrganizationEntityModel,
-	IRelationalEmployee {
+		IRelationalEmployee {
 	name?: string;
 	prefix?: string;
 	public?: boolean;
@@ -37,7 +37,7 @@ export interface IOrganizationTeamFindInput
 
 export interface IOrganizationTeamCreateInput
 	extends IBasePerTenantAndOrganizationEntityModel,
-	IRelationalImageAsset {
+		IRelationalImageAsset {
 	name: string;
 	emoji?: string;
 	teamSize?: string;
@@ -60,6 +60,7 @@ export interface IOrganizationTeamUpdateInput
 
 export interface IOrganizationTeamStatisticInput extends ITimerStatusInput {
 	withLaskWorkedTask: boolean;
+	includeOrganizationTeamId?: boolean;
 }
 
 export interface IRelationalOrganizationTeam {

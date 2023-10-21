@@ -40,6 +40,7 @@
 		"REQUEST": "Request",
 		"HISTORY": "History",
 		"SYNC": "Sync",
+		"SYNCING": "Syncing...",
 		"UPDATE": "Update",
 		"AUTO_SYNC": "Auto sync",
 		"VIEW": "View",
@@ -457,7 +458,10 @@
 			"UPWORK_ORGANIZATION_ID": "Upwork Organization ID",
 			"UPWORK_ORGANIZATION_NAME": "Upwork Organization Name",
 			"UPWORK_ID": "Upwork ID",
-			"LINKEDIN_ID": "LinkedIn ID"
+			"LINKEDIN_ID": "LinkedIn ID",
+			"AUTO_SYNC_TASKS": "Auto-sync tasks",
+			"AUTO_SYNC_TASKS_BASED_ON_LABEL": "Is tasks Auto-sync based on Label?",
+			"AUTO_SYNC_TAG": "Label"
 		},
 		"PLACEHOLDERS": {
 			"NAME": "Name",
@@ -645,7 +649,10 @@
 			"UPWORK_ORGANIZATION_ID": "Upwork Organization ID",
 			"UPWORK_ORGANIZATION_NAME": "Upwork Organization Name",
 			"UPWORK_ID": "Upwork ID",
-			"LINKEDIN_ID": "LinkedIn ID"
+			"LINKEDIN_ID": "LinkedIn ID",
+			"AUTO_SYNC_TASKS": "Auto Sync Tasks",
+			"AUTO_SYNC_TASKS_BASED_ON_LABEL": "Auto-sync Tasks On Label",
+			"AUTO_SYNC_TAG": "Select Auto-sync Label"
 		},
 		"RATES": {
 			"DEFAULT_RATE": "Default Rate",
@@ -1220,7 +1227,7 @@
 			"NAME": "GitHub",
 			"SELECT_REPOSITORY": "Select repository",
 			"SEARCH_REPOSITORY": "Type to search repository",
-			"SYNCED_ISSUES": "{{repository}} issues & labels synced successfully"
+			"SYNCED_ISSUES": "'{{repository}}' issues & labels synced successfully"
 		},
 		"COMING_SOON": "Coming soon",
 		"RE_INTEGRATE": "Re-integrate",
@@ -1821,6 +1828,7 @@
 		"ARCHIVED": "Archived",
 		"LOCATION": "Location",
 		"SETTINGS": "Settings",
+		"AUTOMATION": "Automations",
 		"REGISTER_AS_EMPLOYEE": "Register as Employee",
 		"TEAMS": "Teams",
 		"TEAM_NAME": "{{ name }} Team",
@@ -2101,7 +2109,8 @@
 			"ORG_TASK_DELETE": "Delete Tasks",
 			"ORG_TASK_SETTING": "Task Settings",
 			"IMPORT_ADD": "Ability to import your data",
-			"EXPORT_ADD": "Ability to export your data"
+			"EXPORT_ADD": "Ability to export your data",
+			"ORG_MEMBER_LAST_LOG_VIEW": "View Last Log"
 		},
 		"BILLING": "Billing",
 		"BUDGET": "Budget",
@@ -2837,7 +2846,7 @@
 		"INVOICES_PER_PAGE": "Invoices Per Page",
 		"ESTIMATES_PER_PAGE": "Estimates Per Page",
 		"APPLY_DISCOUNT_AFTER_TAX": "Apply discount after tax",
-		"SELECT_INVOICE_TO_VIEW_HISTORY": "Select an invoice to view it's history",
+		"SELECT_INVOICE_TO_VIEW_HISTORY": "Select an invoice to view its history",
 		"INVOICE_SENT_TO": "Invoice sent to '{{ name }}'",
 		"ESTIMATE_SENT_TO": "Estimate sent to '{{ name }}'",
 		"INVOICE": "Invoice",
@@ -2928,7 +2937,7 @@
 			"REJECTED": "Rejected",
 			"ACCEPTED_STATUS": "Accepted Status",
 			"ESTIMATE_CONVERT": "Estimate Converted",
-			"SELECT_ESTIMATE_TO_VIEW_HISTORY": "Select an estimate to view it's history",
+			"SELECT_ESTIMATE_TO_VIEW_HISTORY": "Select an estimate to view its history",
 			"ESTIMATE_ACCEPTED": "Estimate accepted",
 			"ESTIMATE_REJECTED": "Estimate rejected",
 			"ERROR": "An error occurred",
@@ -3601,7 +3610,8 @@
 				"REMOVE_PROJECT": "Project '{{ name }}' was removed",
 				"INVALID_PROJECT_NAME": "Please fill in the name of your project",
 				"VISIBILITY": "Now project is {{ name }} ",
-				"SYNC_REPOSITORY": "Repository '{{ repository }}' sync with '{{ project }}'"
+				"SYNC_REPOSITORY": "Repository '{{ repository }}' sync with '{{ project }}'",
+				"AUTO_SYNC_SETTING": "Auto Sync Setting for Project '{{ project }}' was saved"
 			},
 			"EDIT_ORGANIZATIONS_TEAM": {
 				"ADD_NEW_TEAM": "Team '{{ name }}' was added",
@@ -4329,6 +4339,7 @@
 	"SETTINGS": {
 		"EMAIL_HISTORY": {
 			"EMAIL_ARCHIVED": "Email Archived",
+			"RESEND": "Resend",
 			"ARCHIVE": "Archive",
 			"HEADER": "Email History",
 			"FROM": "From:",
@@ -4434,6 +4445,6 @@
 	},
 	"NO_IMAGE": {
 		"ADD_DROP": "Add or Drop Image",
-		"AVAILABLE": "Image no available"
+		"AVAILABLE": "Image not available"
 	}
 }

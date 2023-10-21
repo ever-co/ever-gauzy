@@ -15,48 +15,47 @@ import { EmployeeJobPostController } from './../../employee-job/employee-job.con
 	imports: [
 		TenantModule,
 		UserModule,
-		forwardRef(() => IntegrationModule),
 		IntegrationTenantModule,
-		CqrsModule,
-		GauzyAIModule.forRoot()
+		GauzyAIModule.forRoot(),
+		forwardRef(() => IntegrationModule),
+		CqrsModule
 	],
-	controllers: [IntegrationAIController],
+	controllers: [
+		IntegrationAIController
+	],
 	providers: [
 		IntegrationAIService,
 		IntegrationAIMiddleware
 	]
 })
 export class IntegrationAIModule implements NestModule {
+
 	configure(consumer: MiddlewareConsumer) {
 		// Apply middlewares to specific controllers
-		consumer
-			.apply(IntegrationAIMiddleware)
-			.forRoutes(
-				RouterModule.resolvePath(EmployeeJobPostController) // Apply to EmployeeJobPostController
-			)
-		consumer
-			.apply(IntegrationAIMiddleware)
-			.forRoutes(
-				{
-					path: '/employee/job-statistics',
-					method: RequestMethod.GET
-				},
-				{
-					path: '/employee/:id/job-search-status',
-					method: RequestMethod.PUT
-				},
-				{
-					path: '/job-preset',
-					method: RequestMethod.POST
-				},
-				{
-					path: '/job-preset',
-					method: RequestMethod.GET
-				},
-				{
-					path: '/job-preset/employee/:employeeId/criterion',
-					method: RequestMethod.POST
-				}
-			); // Apply to specific routes and methods
+		consumer.apply(IntegrationAIMiddleware).forRoutes(
+			RouterModule.resolvePath(EmployeeJobPostController) // Apply to EmployeeJobPostController
+		);
+		consumer.apply(IntegrationAIMiddleware).forRoutes(
+			{
+				path: '/employee/job-statistics',
+				method: RequestMethod.GET
+			},
+			{
+				path: '/employee/:id/job-search-status',
+				method: RequestMethod.PUT
+			},
+			{
+				path: '/job-preset',
+				method: RequestMethod.POST
+			},
+			{
+				path: '/job-preset',
+				method: RequestMethod.GET
+			},
+			{
+				path: '/job-preset/employee/:employeeId/criterion',
+				method: RequestMethod.POST
+			}
+		); // Apply to specific routes and methods
 	}
 }

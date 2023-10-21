@@ -11,7 +11,10 @@ import { UserModule } from './../user/user.module';
 @Module({
 	imports: [
 		RouterModule.forRoutes([
-			{ path: '/integration-entity-setting-tied', module: IntegrationEntitySettingTiedModule }
+			{
+				path: '/integration-entity-setting-tied',
+				module: IntegrationEntitySettingTiedModule
+			}
 		]),
 		TypeOrmModule.forFeature([
 			IntegrationEntitySettingTied

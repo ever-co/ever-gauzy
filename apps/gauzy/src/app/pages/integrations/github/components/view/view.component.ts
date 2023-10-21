@@ -1,22 +1,21 @@
-import { AfterViewInit, Component, OnInit } from '@angular/core';
+import { AfterViewInit, Component, OnInit, ViewChild } from '@angular/core';
 import { TitleCasePipe } from '@angular/common';
 import { ActivatedRoute, Data } from '@angular/router';
-import { debounceTime, firstValueFrom, of } from 'rxjs';
+import { EMPTY, debounceTime, finalize, firstValueFrom, of } from 'rxjs';
 import { Observable } from 'rxjs/internal/Observable';
 import { catchError, filter, map, switchMap, tap } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
 import { NbDialogService, NbMenuItem, NbMenuService } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { Ng2SmartTableComponent } from 'ng2-smart-table';
 import {
 	IEntitySettingToSync,
 	IGithubIssue,
 	IGithubRepository,
-	IIntegrationMap,
 	IIntegrationTenant,
 	IOrganization,
 	IOrganizationProject,
 	IUser,
-	IntegrationEntity,
 	IntegrationEnum
 } from '@gauzy/contracts';
 import { distinctUntilChange, parsedInt } from '@gauzy/common-angular';
@@ -26,7 +25,7 @@ import {
 	GithubService,
 	IntegrationEntitySettingService,
 	IntegrationEntitySettingServiceStoreService,
-	IntegrationMapService,
+	OrganizationProjectsService,
 	Store,
 	ToastrService
 } from './../../../../../@core/services';
@@ -45,12 +44,13 @@ import { GithubSettingsDialogComponent } from '../settings-dialog/settings-dialo
 export class GithubViewComponent extends TranslationBaseComponent implements AfterViewInit, OnInit {
 	public parsedInt = parsedInt;
 
+	public syncing: boolean = false;
 	public loading: boolean = false;
 	public user: IUser = this._store.user;
 	public organization: IOrganization = this._store.selectedOrganization;
-	public project: IOrganizationProject;
 	public repository: IGithubRepository;
-	public integrationMap$: Observable<IIntegrationMap | boolean>;
+	public project: IOrganizationProject;
+	public project$: Observable<IOrganizationProject>;
 	public integration$: Observable<IIntegrationTenant>;
 	public integration: IIntegrationTenant;
 	public contextMenuItems: NbMenuItem[] = [];
@@ -58,6 +58,18 @@ export class GithubViewComponent extends TranslationBaseComponent implements Aft
 	public issues$: Observable<IGithubIssue[]>;
 	public issues: IGithubIssue[] = [];
 	public selectedIssues: IGithubIssue[] = [];
+
+	/**
+	 * Sets up a property 'issuesTable' to reference an instance of 'Ng2SmartTableComponent'
+	 * when the child component with the template reference variable 'issuesTable' is rendered.
+	 * This allows interaction with the child component from the parent component.
+	 */
+	private _issuesTable: Ng2SmartTableComponent;
+	@ViewChild('issuesTable') set content(content: Ng2SmartTableComponent) {
+		if (content) {
+			this._issuesTable = content;
+		}
+	}
 
 	constructor(
 		public readonly _translateService: TranslateService,
@@ -70,9 +82,9 @@ export class GithubViewComponent extends TranslationBaseComponent implements Aft
 		private readonly _errorHandlingService: ErrorHandlingService,
 		private readonly _store: Store,
 		private readonly _githubService: GithubService,
-		private readonly _integrationMapService: IntegrationMapService,
 		private readonly _integrationEntitySettingService: IntegrationEntitySettingService,
 		private readonly _integrationEntitySettingServiceStoreService: IntegrationEntitySettingServiceStoreService,
+		private readonly _organizationProjectsService: OrganizationProjectsService
 	) {
 		super(_translateService);
 	}
@@ -83,33 +95,23 @@ export class GithubViewComponent extends TranslationBaseComponent implements Aft
 		this._getContextMenuItems();
 		this._getGithubIntegrationTenant();
 
-		this.integrationMap$ = this._store.selectedProject$.pipe(
+		this.project$ = this._store.selectedProject$.pipe(
 			debounceTime(100),
 			distinctUntilChange(),
 			filter((project: IOrganizationProject) => !!project),
 			switchMap((project: IOrganizationProject) => {
 				// Ensure there is a valid organization
 				if (!project.id) {
-					return of(false); // No valid organization, return false
+					return EMPTY; // No valid organization, return false
 				}
-				// Extract organization properties
-				const { id: organizationId, tenantId } = this.organization;
-				// Extract integration properties
-				const { id: integrationId } = this.integration;
 				// Extract project properties
 				const { id: projectId } = this.project = project;
 
-				return this._integrationMapService.getSyncedGithubRepository({
-					organizationId,
-					tenantId,
-					integrationId,
-					gauzyId: projectId,
-					entity: IntegrationEntity.PROJECT
-				}).pipe(
+				return this._organizationProjectsService.getById(projectId, ['repository']).pipe(
 					catchError((error) => {
 						// Handle and log errors
 						this._errorHandlingService.handleError(error);
-						return of(false);
+						return EMPTY;
 					}),
 					// Handle component lifecycle to avoid memory leaks
 					untilDestroyed(this),
@@ -153,6 +155,11 @@ export class GithubViewComponent extends TranslationBaseComponent implements Aft
 			{
 				title: this.getTranslation('INTEGRATIONS.SETTINGS'),
 				icon: 'settings-2-outline'
+			},
+			{
+				title: this.getTranslation('INTEGRATIONS.RE_INTEGRATE'),
+				icon: 'text-outline',
+				link: `pages/integrations/github/setup/wizard/regenerate`
 			},
 			// Add more menu items as needed
 		];
@@ -349,6 +356,12 @@ export class GithubViewComponent extends TranslationBaseComponent implements Aft
 			if (!this.organization || !this.repository) {
 				return;
 			}
+			// Check if another synchronization is already in progress
+			if (this.syncing) {
+				return;
+			}
+
+			this.syncing = true;
 
 			const { id: organizationId, tenantId } = this.organization;
 			const { id: integrationId } = this.integration;
@@ -372,10 +385,11 @@ export class GithubViewComponent extends TranslationBaseComponent implements Aft
 				tap(() => {
 					this._toastrService.success(
 						this.getTranslation('INTEGRATIONS.GITHUB_PAGE.SYNCED_ISSUES', {
-							repository: this.repository.name
+							repository: this.repository.full_name
 						}),
 						this.getTranslation('TOASTR.TITLE.SUCCESS')
 					);
+					this.resetTableSelectedItems();
 				}),
 				catchError((error) => {
 					// Handle and log errors
@@ -383,6 +397,7 @@ export class GithubViewComponent extends TranslationBaseComponent implements Aft
 					this._errorHandlingService.handleError(error);
 					return of(null);
 				}),
+				finalize(() => this.syncing = false),
 				untilDestroyed(this) // Ensure subscription is cleaned up on component destroy
 			).subscribe();
 		} catch (error) {
@@ -391,6 +406,19 @@ export class GithubViewComponent extends TranslationBaseComponent implements Aft
 
 			// Optionally, you can provide error feedback to the user
 			this._errorHandlingService.handleError(error);
+		}
+	}
+
+	/**
+	 * Clears selected items in the table component and resets the 'selectedIssues' array.
+	 */
+	resetTableSelectedItems() {
+		if (this._issuesTable && this._issuesTable.grid) {
+			// Deselect all items in the table
+			this._issuesTable.grid.dataSet.deselectAll();
+
+			// Clear the 'selectedIssues' array
+			this.selectedIssues = [];
 		}
 	}
 }

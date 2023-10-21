@@ -93,15 +93,15 @@ if (!env.IS_DOCKER) {
 		MOBILE_APP_DOWNLOAD_LINK: '${env.MOBILE_APP_DOWNLOAD_LINK}',
 		EXTENSION_DOWNLOAD_LINK: '${env.EXTENSION_DOWNLOAD_LINK}',
 
-		COMPANY_NAME: 'Ever Co. LTD',
-		COMPANY_SITE: 'Gauzy',
-		COMPANY_LINK: 'https://ever.co/',
-		COMPANY_SITE_LINK: 'https://gauzy.co',
-		COMPANY_GITHUB_LINK: 'https://github.com/ever-co',
-		COMPANY_GITLAB_LINK: 'https://gitlab.com/ever-co',
-		COMPANY_FACEBOOK_LINK: 'https://www.facebook.com/gauzyplatform',
-		COMPANY_TWITTER_LINK: 'https://twitter.com/gauzyplatform',
-		COMPANY_LINKEDIN_LINK: 'https://www.linkedin.com/company/ever-co.',
+		COMPANY_NAME: '${env.COMPANY_NAME}',
+		COMPANY_SITE: '${env.COMPANY_SITE}',
+		COMPANY_LINK: '${env.COMPANY_LINK}',
+		COMPANY_SITE_LINK: '${env.COMPANY_SITE_LINK}',
+		COMPANY_GITHUB_LINK: '${env.COMPANY_GITHUB_LINK}',
+		COMPANY_GITLAB_LINK: '${env.COMPANY_GITLAB_LINK}',
+		COMPANY_FACEBOOK_LINK: '${env.COMPANY_FACEBOOK_LINK}',
+		COMPANY_TWITTER_LINK: '${env.COMPANY_TWITTER_LINK}',
+		COMPANY_LINKEDIN_LINK: '${env.COMPANY_LINKEDIN_LINK}',
 
 		CLOUDINARY_CLOUD_NAME: '${env.CLOUDINARY_CLOUD_NAME}',
 		CLOUDINARY_API_KEY: '${env.CLOUDINARY_API_KEY}',
@@ -153,10 +153,14 @@ if (!env.IS_DOCKER) {
 		JITSU_BROWSER_WRITE_KEY: '${env.JITSU_BROWSER_WRITE_KEY}',
 
 		GAUZY_GITHUB_APP_NAME: '${env.GAUZY_GITHUB_APP_NAME}',
-		GAUZY_GITHUB_APP_ID: '${env.GAUZY_GITHUB_APP_ID}',
 		GAUZY_GITHUB_CLIENT_ID: '${env.GAUZY_GITHUB_CLIENT_ID}',
 		GAUZY_GITHUB_REDIRECT_URL: '${env.GAUZY_GITHUB_REDIRECT_URL}',
 		GAUZY_GITHUB_POST_INSTALL_URL: '${env.GAUZY_GITHUB_POST_INSTALL_URL}',
+
+		PLATFORM_LOGO_URL: '${env.PLATFORM_LOGO_URL}',
+		GAUZY_DESKTOP_LOGO_512X512: '${env.GAUZY_DESKTOP_LOGO_512X512}',
+		PLATFORM_PRIVACY_URL: '${env.PLATFORM_PRIVACY_URL}',
+		PLATFORM_TOS_URL: '${env.PLATFORM_TOS_URL}'
 	};
 	`;
 } else {
@@ -197,15 +201,15 @@ if (!env.IS_DOCKER) {
 		MOBILE_APP_DOWNLOAD_LINK: '${env.MOBILE_APP_DOWNLOAD_LINK}',
 		EXTENSION_DOWNLOAD_LINK: '${env.EXTENSION_DOWNLOAD_LINK}',
 
-		COMPANY_NAME: 'Ever Co. LTD',
-		COMPANY_SITE: 'Gauzy',
-		COMPANY_LINK: 'https://ever.co/',
-		COMPANY_SITE_LINK: 'https://gauzy.co',
-		COMPANY_GITHUB_LINK: 'https://github.com/ever-co',
-		COMPANY_GITLAB_LINK: 'https://gitlab.com/ever-co',
-		COMPANY_FACEBOOK_LINK: 'https://www.facebook.com/gauzyplatform',
-		COMPANY_TWITTER_LINK: 'https://twitter.com/gauzyplatform',
-		COMPANY_LINKEDIN_LINK: 'https://www.linkedin.com/company/ever-co.',
+		COMPANY_NAME: '${env.COMPANY_NAME}',
+		COMPANY_SITE: '${env.COMPANY_SITE}',
+		COMPANY_LINK: '${env.COMPANY_LINK}',
+		COMPANY_SITE_LINK: '${env.COMPANY_SITE_LINK}',
+		COMPANY_GITHUB_LINK: '${env.COMPANY_GITHUB_LINK}',
+		COMPANY_GITLAB_LINK: '${env.COMPANY_GITLAB_LINK}',
+		COMPANY_FACEBOOK_LINK: '${env.COMPANY_FACEBOOK_LINK}',
+		COMPANY_TWITTER_LINK: '${env.COMPANY_TWITTER_LINK}',
+		COMPANY_LINKEDIN_LINK: '${env.COMPANY_LINKEDIN_LINK}',
 
 		CLOUDINARY_CLOUD_NAME: 'DOCKER_CLOUDINARY_CLOUD_NAME',
 		CLOUDINARY_API_KEY: 'DOCKER_CLOUDINARY_API_KEY',
@@ -260,10 +264,14 @@ if (!env.IS_DOCKER) {
 		JITSU_BROWSER_WRITE_KEY: 'DOCKER_JITSU_BROWSER_WRITE_KEY',
 
 		GAUZY_GITHUB_APP_NAME: 'DOCKER_GAUZY_GITHUB_APP_NAME',
-		GAUZY_GITHUB_APP_ID: 'DOCKER_GAUZY_GITHUB_APP_ID',
 		GAUZY_GITHUB_CLIENT_ID: 'DOCKER_GAUZY_GITHUB_CLIENT_ID',
 		GAUZY_GITHUB_REDIRECT_URL: 'DOCKER_GAUZY_GITHUB_REDIRECT_URL',
 		GAUZY_GITHUB_POST_INSTALL_URL: 'DOCKER_GAUZY_GITHUB_POST_INSTALL_URL',
+
+		PLATFORM_LOGO_URL: '${env.PLATFORM_LOGO_URL}',
+		GAUZY_DESKTOP_LOGO_512X512: '${env.GAUZY_DESKTOP_LOGO_512X512}',
+		PLATFORM_PRIVACY_URL: '${env.PLATFORM_PRIVACY_URL}',
+		PLATFORM_TOS_URL: '${env.PLATFORM_TOS_URL}'
 	};
 `;
 }
@@ -290,10 +298,10 @@ if (!isProd) {
 // we always want first to remove old generated files (one of them is not needed for current build)
 try {
 	unlinkSync(`./apps/gauzy/src/environments/environment.ts`);
-} catch {}
+} catch { }
 try {
 	unlinkSync(`./apps/gauzy/src/environments/environment.prod.ts`);
-} catch {}
+} catch { }
 
 const envFileDest: string = isProd ? 'environment.prod.ts' : 'environment.ts';
 const envFileDestOther: string = !isProd
@@ -314,7 +322,7 @@ writeFile(
 
 writeFile(
 	`./apps/gauzy/src/environments/${envFileDestOther}`,
-	'',
+	`export const environment = { production: ${!isProd} }`,
 	function (err) {
 		if (err) {
 			console.log(err);

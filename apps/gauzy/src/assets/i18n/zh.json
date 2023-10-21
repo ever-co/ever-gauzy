@@ -2083,7 +2083,8 @@
 			"ORG_TASK_VIEW": "查看任务",
 			"ORG_TASK_EDIT": "编辑任务",
 			"ORG_TASK_DELETE": "删除任务",
-			"ORG_TASK_SETTING": "任务设置"
+			"ORG_TASK_SETTING": "任务设置",
+			"ORG_MEMBER_LAST_LOG_VIEW": "查看最后日志"
 		},
 		"BILLING": "计费",
 		"BUDGET": "预算",
@@ -4309,6 +4310,7 @@
 	"SETTINGS": {
 		"EMAIL_HISTORY": {
 			"EMAIL_ARCHIVED": "电子邮件已存档",
+			"RESEND": "重新发送",
 			"ARCHIVE": "存档",
 			"HEADER": "电子邮件历史",
 			"FROM": "从：",
@@ -4414,6 +4416,6 @@
 	},
 	"NO_IMAGE": {
 		"ADD_DROP": "添加或删除图像",
-		"AVAILABLE": "图片无法提供"
+		"AVAILABLE": "图像不可用"
 	}
 }

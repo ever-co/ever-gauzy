@@ -2083,7 +2083,8 @@
 			"ORG_TASK_VIEW": "Taken bekijken",
 			"ORG_TASK_EDIT": "Taken bewerken",
 			"ORG_TASK_DELETE": "Taken verwijderen",
-			"ORG_TASK_SETTING": "Taakinstellingen"
+			"ORG_TASK_SETTING": "Taakinstellingen",
+			"ORG_MEMBER_LAST_LOG_VIEW": "Bekijk laatste logboek"
 		},
 		"BILLING": "Facturatie",
 		"BUDGET": "Budget",
@@ -4309,6 +4310,7 @@
 	"SETTINGS": {
 		"EMAIL_HISTORY": {
 			"EMAIL_ARCHIVED": "E-mail gearchiveerd",
+			"RESEND": "Opnieuw verzenden",
 			"ARCHIVE": "Archiveren",
 			"HEADER": "E-mailgeschiedenis",
 			"FROM": "Van:",

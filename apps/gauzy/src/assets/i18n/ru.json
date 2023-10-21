@@ -2042,7 +2042,8 @@
 			"ALLOW_MODIFY_TIME": "Разрешить изменять время",
 			"ALLOW_MANUAL_TIME": "Разрешить ручное время",
 			"DELETE_SCREENSHOTS": "Разрешить удаление скриншота",
-			"ORG_TASK_SETTING": "Параметры задачи"
+			"ORG_TASK_SETTING": "Параметры задачи",
+			"ORG_MEMBER_LAST_LOG_VIEW": "Посмотреть последний журнал"
 		},
 		"BILLING": "Биллинг",
 		"BUDGET": "Бюджет",
@@ -2775,7 +2776,7 @@
 		"INVOICES_PER_PAGE": "Счета на странице",
 		"ESTIMATES_PER_PAGE": "Оценки на странице",
 		"APPLY_DISCOUNT_AFTER_TAX": "Применить скидку после налога",
-		"SELECT_INVOICE_TO_VIEW_HISTORY": "Выберите счет-фактуру для просмотра истории",
+		"SELECT_INVOICE_TO_VIEW_HISTORY": "Выберите счет, чтобы просмотреть его историю.",
 		"INVOICE_SENT_TO": "Счёт отправлен на '{{ name }}'",
 		"ESTIMATE_SENT_TO": "Оценить отправленное на '{{ name }}'",
 		"INVOICE": "Счет",
@@ -4234,6 +4235,7 @@
 	"SETTINGS": {
 		"EMAIL_HISTORY": {
 			"EMAIL_ARCHIVED": "Почта архивирована",
+			"RESEND": "Переслать",
 			"ARCHIVE": "Архивировать",
 			"HEADER": "История писем",
 			"FROM": "От:",

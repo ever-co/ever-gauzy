@@ -39,6 +39,13 @@ const routes: Routes = [
 		]
 	},
 	{
+		path: 'setup/wizard/regenerate',
+		data: {
+			redirectTo: '/pages/integrations/github/setup/wizard'
+		},
+		component: GithubWizardComponent
+	},
+	{
 		path: 'setup/installation',
 		component: GithubInstallationComponent
 	},

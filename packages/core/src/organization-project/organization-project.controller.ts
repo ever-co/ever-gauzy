@@ -20,6 +20,7 @@ import {
 	IEditEntityByMemberInput,
 	IEmployee,
 	IOrganizationProject,
+	IOrganizationProjectSetting,
 	IPagination,
 	PermissionsEnum
 } from '@gauzy/contracts';
@@ -27,6 +28,7 @@ import { CrudController, PaginationParams } from './../core/crud';
 import {
 	OrganizationProjectCreateCommand,
 	OrganizationProjectEditByEmployeeCommand,
+	OrganizationProjectSettingUpdateCommand,
 	OrganizationProjectUpdateCommand
 } from './commands';
 import { OrganizationProject } from './organization-project.entity';
@@ -36,7 +38,12 @@ import { Permissions } from './../shared/decorators';
 import { CountQueryDTO, RelationsQueryDTO } from './../shared/dto';
 import { UUIDValidationPipe } from './../shared/pipes';
 import { TenantOrganizationBaseDTO } from './../core/dto';
-import { CreateOrganizationProjectDTO, UpdateOrganizationProjectDTO, UpdateTaskModeDTO } from './dto';
+import {
+	CreateOrganizationProjectDTO,
+	UpdateOrganizationProjectDTO,
+	UpdateProjectSettingDTO,
+	UpdateTaskModeDTO
+} from './dto';
 
 @ApiTags('OrganizationProject')
 @UseGuards(TenantPermissionGuard, PermissionGuard)
@@ -148,7 +155,26 @@ export class OrganizationProjectController extends CrudController<OrganizationPr
 		@Body() entity: UpdateTaskModeDTO
 	): Promise<IOrganizationProject> {
 		return await this.commandBus.execute(
-			new OrganizationProjectUpdateCommand({ id, ...entity })
+			new OrganizationProjectUpdateCommand({ ...entity, id })
+		);
+	}
+
+
+	/**
+	 * Update organization project settings by ID.
+	 *
+	 * @param id - The ID of the organization project to update settings for.
+	 * @param entity - An object containing the updated project settings.
+	 * @returns A promise that resolves to an `IOrganizationProject` object representing the updated project settings.
+	 */
+	@Put('/setting/:id')
+	@UsePipes(new ValidationPipe({ whitelist: true }))
+	async updateProjectSetting(
+		@Param('id', UUIDValidationPipe) id: IOrganizationProject['id'],
+		@Body() entity: UpdateProjectSettingDTO
+	): Promise<IOrganizationProjectSetting> {
+		return await this.commandBus.execute(
+			new OrganizationProjectSettingUpdateCommand(id, entity)
 		);
 	}
 

@@ -5,6 +5,7 @@ import { IInvoice } from './invoice.model';
 export interface IInvoiceEstimateHistory
 	extends IBasePerTenantAndOrganizationEntityModel {
 	action: string;
+	title?: string;
 	user: IUser;
 	userId: string;
 	invoice: IInvoice;
@@ -14,6 +15,7 @@ export interface IInvoiceEstimateHistory
 export interface IInvoiceEstimateHistoryFindInput
 	extends IBasePerTenantAndOrganizationEntityModel {
 	action?: string;
+	title?: string;
 	userId?: string;
 	invoiceId?: string;
 	organizationId?: string;

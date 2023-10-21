@@ -20,6 +20,7 @@ import { GithubInstallationComponent } from './components/installation/installat
 import { GithubViewComponent } from './components/view/view.component';
 import { GithubSettingsDialogComponent } from './components/settings-dialog/settings-dialog.component';
 import { RepositorySelectorModule } from '../../../@shared/integrations/github';
+import { DirectivesModule } from '../../../@shared/directives/directives.module';
 
 @NgModule({
 	declarations: [
@@ -42,6 +43,7 @@ import { RepositorySelectorModule } from '../../../@shared/integrations/github';
 		NgSelectModule,
 		GithubRoutingModule,
 		TranslateModule,
+		DirectivesModule,
 		BackNavigationModule,
 		RepositorySelectorModule
 	]

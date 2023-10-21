@@ -1,9 +1,5 @@
-import {
-	IBaseEntityModel,
-	IBasePerTenantAndOrganizationEntityModel
-} from './base-entity.model';
+import { IBaseEntityModel, IBasePerTenantAndOrganizationEntityModel } from './base-entity.model';
 import { ITag } from './tag.model';
-import { IGithubRepository } from './github.model';
 
 export interface IRelationIntegration {
 	integration?: IIntegration;
@@ -88,26 +84,16 @@ export interface IIntegrationFilter {
 	filter: string;
 }
 
-export interface IIntegrationMapSyncRepository extends IIntegrationSyncedRepositoryFindInput {
-	repository: IGithubRepository;
-}
-
-export interface IIntegrationSyncedRepositoryFindInput extends Partial<IIntegrationMapSyncBase> {
-	gauzyId?: IIntegrationMap['gauzyId'];
-	entity?: IntegrationEntity;
-}
-
 /** */
-export interface IIntegrationMapSyncBase extends IBasePerTenantAndOrganizationEntityModel {
-	integrationId: IIntegrationTenant['id'];
+export interface IIntegrationMapSyncBase extends IBasePerTenantAndOrganizationEntityModel, IRelationalIntegrationTenant {
 	sourceId: IIntegrationMap['sourceId'];
 }
 
-export interface IIntegrationMapSyncEntity<T> extends IBasePerTenantAndOrganizationEntityModel, IIntegrationMapSyncBase {
+export interface IIntegrationMapSyncEntity<T> extends IIntegrationMapSyncBase {
 	entity: T;
 }
 
-export interface IIntegrationMapSyncEntityInput extends IBasePerTenantAndOrganizationEntityModel, IIntegrationMapSyncBase {
+export interface IIntegrationMapSyncEntityInput extends IIntegrationMapSyncBase {
 	gauzyId: IIntegrationMap['gauzyId'];
 	entity: IntegrationEntity;
 }
@@ -118,7 +104,7 @@ export interface IIntegrationTenantCreateInput extends IBasePerTenantAndOrganiza
 	settings?: IIntegrationSetting[];
 }
 
-export interface IIntegrationTenantUpdateInput extends Pick<IIntegrationTenantCreateInput, 'entitySettings' | 'settings'> {
+export interface IIntegrationTenantUpdateInput extends IIntegrationTenantCreateInput {
 	id?: IIntegrationTenant['id'];
 }
 

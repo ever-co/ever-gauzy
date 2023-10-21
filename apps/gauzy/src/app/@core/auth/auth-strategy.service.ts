@@ -319,6 +319,9 @@ export class AuthStrategy extends NbAuthStrategy {
 				this.store.userId = user.id;
 				this.store.token = token;
 				this.store.refresh_token = refresh_token;
+				this.store.organizationId = user?.employee?.organizationId;
+				this.store.tenantId = user?.tenantId;
+				this.store.user = user;
 
 				this.electronAuthentication({ user, token });
 

@@ -2083,7 +2083,8 @@
 			"ORG_TASK_VIEW": "Ver tarefas",
 			"ORG_TASK_EDIT": "Editar Tarefas",
 			"ORG_TASK_DELETE": "Excluir tarefas",
-			"ORG_TASK_SETTING": "Configurações da tarefa"
+			"ORG_TASK_SETTING": "Configurações da tarefa",
+			"ORG_MEMBER_LAST_LOG_VIEW": "Ver último registro"
 		},
 		"BILLING": "Faturamento",
 		"BUDGET": "Orçamento",
@@ -4309,6 +4310,7 @@
 	"SETTINGS": {
 		"EMAIL_HISTORY": {
 			"EMAIL_ARCHIVED": "Email Arquivado",
+			"RESEND": "Reenviar",
 			"ARCHIVE": "Arquivo",
 			"HEADER": "História do Email",
 			"FROM": "De:",
