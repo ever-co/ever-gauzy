@@ -43,6 +43,7 @@ import { PhoneUrlComponent } from './phone-url/phone-url.component';
 import { AllowScreenshotCaptureComponent } from './allow-screenshot-capture/allow-screenshot-capture.component';
 import { NumberEditorComponent } from './editors/number-editor.component';
 import { ClickableLinkComponent } from './clickable-link/clickable-link.component';
+import { TrustHtmlLinkComponent } from './trust-ttml/trust-html.component';
 
 @NgModule({
 	imports: [
@@ -90,7 +91,8 @@ import { ClickableLinkComponent } from './clickable-link/clickable-link.componen
 		AllowScreenshotCaptureComponent,
 		// smart table field editor
 		NumberEditorComponent,
-		ClickableLinkComponent
+		ClickableLinkComponent,
+		TrustHtmlLinkComponent
 	],
 	exports: [
 		NotesWithTagsComponent,
@@ -110,7 +112,9 @@ import { ClickableLinkComponent } from './clickable-link/clickable-link.componen
 		PhoneUrlComponent,
 		CreateByComponent,
 		CreatedAtComponent,
-		DateViewComponent
+		DateViewComponent,
+		ClickableLinkComponent,
+		TrustHtmlLinkComponent
 	],
 	providers: []
 })

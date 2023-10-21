@@ -30,7 +30,7 @@ import {
 	ToastrService
 } from './../../../../../@core/services';
 import { HashNumberPipe } from './../../../../../@shared/pipes';
-import { ClickableLinkComponent, TagsOnlyComponent } from './../../../../../@shared/table-components';
+import { ClickableLinkComponent, TagsOnlyComponent, TrustHtmlLinkComponent } from './../../../../../@shared/table-components';
 import { GithubSettingsDialogComponent } from '../settings-dialog/settings-dialog.component';
 
 @UntilDestroy({ checkProperties: true })
@@ -260,7 +260,7 @@ export class GithubViewComponent extends TranslationBaseComponent implements Aft
 			columns: {
 				number: {
 					title: this.getTranslation('SM_TABLE.NUMBER'), // Set column title based on translation
-					type: 'custom', // Set column type to 'number'
+					type: 'custom', // Set column type to 'custom'
 					renderComponent: ClickableLinkComponent,
 					valuePrepareFunction: (number: IGithubIssue['number']) => {
 						return this._hashNumberPipe.transform(number);
@@ -275,7 +275,8 @@ export class GithubViewComponent extends TranslationBaseComponent implements Aft
 				},
 				body: {
 					title: this.getTranslation('SM_TABLE.DESCRIPTION'), // Set column title based on translation
-					type: 'string' // Set column type to 'string'
+					type: 'custom', // Set column type to 'custom'
+					renderComponent: TrustHtmlLinkComponent
 				},
 				state: {
 					title: this.getTranslation('SM_TABLE.STATUS'), // Set column title based on translation
