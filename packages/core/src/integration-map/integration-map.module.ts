@@ -14,7 +14,10 @@ import { IntegrationMap } from './integration-map.entity';
 @Module({
 	imports: [
 		RouterModule.forRoutes([
-			{ path: '/integration-map', module: IntegrationMapModule }
+			{
+				path: '/integration-map',
+				module: IntegrationMapModule
+			}
 		]),
 		TypeOrmModule.forFeature([
 			IntegrationMap
@@ -25,10 +28,12 @@ import { IntegrationMap } from './integration-map.entity';
 		TagModule,
 		CqrsModule
 	],
-	controllers: [IntegrationMapController],
+	controllers: [
+		IntegrationMapController
+	],
 	providers: [
 		IntegrationMapService,
-		...CommandHandlers,
+		...CommandHandlers
 	],
 	exports: [
 		TypeOrmModule,

@@ -1,12 +1,15 @@
 import { MiddlewareConsumer, Module, NestModule, RequestMethod, forwardRef } from '@nestjs/common';
 import { HttpModule } from '@nestjs/axios';
 import { CqrsModule } from '@nestjs/cqrs';
+import { TypeOrmModule } from '@nestjs/typeorm';
 import { TenantModule } from 'tenant/tenant.module';
 import { UserModule } from 'user/user.module';
 import { IntegrationModule } from 'integration/integration.module';
 import { IntegrationTenantModule } from 'integration-tenant/integration-tenant.module';
 import { IntegrationSettingModule } from 'integration-setting/integration-setting.module';
+import { IntegrationMapModule } from 'integration-map/integration-map.module';
 import { OrganizationProjectModule } from 'organization-project/organization-project.module';
+import { CommandHandlers } from './commands/handlers';
 import { GitHubAuthorizationController } from './github-authorization.controller';
 import { GitHubIntegrationController } from './github-integration.controller';
 import { GitHubController } from './github.controller';
@@ -16,9 +19,15 @@ import { GitHubHooksController } from './github.hooks.controller';
 import { GithubHooksService } from './github.hooks.service';
 import { GitHubSyncController } from './github-sync.controller';
 import { GithubSyncService } from './github-sync.service';
+import { GitHubRepositoryController } from './repository/github-repository.controller';
+import { GithubRepositoryService } from './repository/github-repository.service';
+import { OrganizationGithubRepository } from './repository/github-repository.entity';
 
 @Module({
 	imports: [
+		TypeOrmModule.forFeature([
+			OrganizationGithubRepository
+		]),
 		HttpModule,
 		TenantModule,
 		UserModule,
@@ -26,6 +35,7 @@ import { GithubSyncService } from './github-sync.service';
 		forwardRef(() => IntegrationModule),
 		forwardRef(() => IntegrationTenantModule),
 		forwardRef(() => IntegrationSettingModule),
+		forwardRef(() => IntegrationMapModule),
 		CqrsModule
 	],
 	controllers: [
@@ -33,14 +43,18 @@ import { GithubSyncService } from './github-sync.service';
 		GitHubController,
 		GitHubHooksController,
 		GitHubIntegrationController,
-		GitHubSyncController
+		GitHubSyncController,
+		GitHubRepositoryController
 	],
 	providers: [
 		GithubService,
 		GithubSyncService,
 		GithubHooksService,
+		GithubRepositoryService,
 		// Define middleware heres
-		GithubMiddleware
+		GithubMiddleware,
+		// Define handlers heres
+		...CommandHandlers
 	],
 	exports: [],
 })
@@ -51,21 +65,19 @@ export class GithubModule implements NestModule {
 	 */
 	configure(consumer: MiddlewareConsumer) {
 		// Apply middlewares to specific controllers
-		consumer
-			.apply(GithubMiddleware)
-			.forRoutes(
-				{
-					path: '/integration/github/:integrationId/metadata',
-					method: RequestMethod.GET
-				},
-				{
-					path: '/integration/github/:integrationId/repositories',
-					method: RequestMethod.GET
-				},
-				{
-					path: '/integration/github/:integrationId/:owner/:repo/issues',
-					method: RequestMethod.GET
-				}
-			); // Apply to specific routes and methods
+		consumer.apply(GithubMiddleware).forRoutes(
+			{
+				path: '/integration/github/:integrationId/metadata',
+				method: RequestMethod.GET,
+			},
+			{
+				path: '/integration/github/:integrationId/repositories',
+				method: RequestMethod.GET,
+			},
+			{
+				path: '/integration/github/:integrationId/:owner/:repo/issues',
+				method: RequestMethod.GET,
+			}
+		); // Apply to specific routes and methods
 	}
 }

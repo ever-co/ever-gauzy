@@ -1,6 +1,7 @@
 @import 'gauzy/_gauzy-table.scss';
 @import 'gauzy/_gauzy-overrides';
 @import 'gauzy/_gauzy-cards.scss';
+
 :host {
   .form-group {
     nb-select,
@@ -138,5 +139,29 @@
   @include input-appearance(42px, var(--gauzy-card-1));
   .selects {
     @include input-appearance(2rem, var(--gauzy-card-4));
+  }
+}
+
+nb-tabset {
+  // browse tab
+  nb-tab:nth-child(2) {
+    & div:nth-child(1) {
+      padding-right: 0;
+      --scrollbar-width: 0;
+    }
+  }
+  // search tab
+  nb-tab:nth-child(3) {
+    overflow-y: scroll;
+
+    & div:nth-child(1) {
+      margin-right: 0 !important;
+    }
+
+    & div:nth-child(2) {
+      padding-right: 0;
+      --scrollbar-width: 0;
+      min-height: 80%;
+    }
   }
 }

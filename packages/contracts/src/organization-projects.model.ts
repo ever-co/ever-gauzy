@@ -15,6 +15,7 @@ import { CurrenciesEnum } from './currency.model';
 import { ITimeLog } from './timesheet.model';
 import { IRelationalImageAsset } from './image-asset.model';
 import { IOrganizationTeam } from './organization-team.model';
+import { IOrganizationGithubRepository } from './github.model';
 
 export interface IRelationalOrganizationProject {
 	project?: IOrganizationProject;
@@ -22,7 +23,7 @@ export interface IRelationalOrganizationProject {
 }
 
 export interface IOrganizationProjectSetting extends IBasePerTenantAndOrganizationEntityModel {
-	externalRepositoryId?: number;
+	repositoryId?: IOrganizationGithubRepository['id'];
 	isTasksAutoSync?: boolean;
 	isTasksAutoSyncOnLabel?: boolean;
 	syncTag?: string;

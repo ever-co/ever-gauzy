@@ -26,7 +26,9 @@ import { IntegrationEntitySettingService } from './integration-entity-setting.se
 		UserModule,
 		CqrsModule
 	],
-	controllers: [IntegrationEntitySettingController],
+	controllers: [
+		IntegrationEntitySettingController
+	],
 	providers: [
 		IntegrationEntitySettingService,
 		...CommandHandlers

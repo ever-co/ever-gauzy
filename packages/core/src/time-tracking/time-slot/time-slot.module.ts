@@ -37,4 +37,4 @@ import { UserModule } from './../../user/user.module';
 		TypeOrmModule
 	]
 })
-export class TimeSlotModule {}
+export class TimeSlotModule { }

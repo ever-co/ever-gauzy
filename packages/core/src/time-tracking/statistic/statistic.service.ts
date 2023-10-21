@@ -938,8 +938,20 @@ export class StatisticService {
 		/*
 		 *  Get employees id of the organization or get current employee id
 		 */
-		if ((user && user.employeeId) && (onlyMe || !RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE))) {
-			if (isNotEmpty(organizationTeamId)) {
+		if (
+			user &&
+			user.employeeId &&
+			(onlyMe ||
+				!RequestContext.hasPermission(
+					PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
+				))
+		) {
+			if (
+				isNotEmpty(organizationTeamId) ||
+				RequestContext.hasPermission(
+					PermissionsEnum.ORG_MEMBER_LAST_LOG_VIEW
+				)
+			) {
 				employeeIds = [...employeeIds];
 			} else {
 				employeeIds = [user.employeeId];

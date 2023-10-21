@@ -51,7 +51,7 @@
 						</div>
 					</div>
 				</div>
-				<div class="col-1">
+				<div *ngIf="member?.isWorkingToday" class="col-1">
 					<nb-badge
 						[status]="progressStatus(member?.activity || 0)"
 						[text]="(member?.activity || 0) + '%'"
@@ -75,10 +75,10 @@
 				>
 				</nb-progress-bar>
 			</div>
-			<div class="col-3 text-right">
+			<div [class]="member?.isWorkingToday ? 'col-3 text-right' : 'col-4'">
 				{{member?.todayWorkDuration > 0 ? humanize(member?.todayWorkDuration) : ('ORGANIZATIONS_PAGE.NOT_WORKED'|translate)}}
 			</div>
-			<div class="col-1">
+			<div *ngIf="member?.isWorkingToday" class="col-1">
 				<nb-badge
 					[status]="progressStatus(member?.activity || 0)"
 					[text]="(member?.activity || 0) + '%'"

@@ -16,9 +16,11 @@ import {
 	IInviteTeamMemberModel,
 	IOrganizationTeam,
 	IOrganizationTeamJoinRequest,
-	EmailTemplateEnum
+	EmailTemplateEnum,
+	IResendEmailInput,
+	EmailStatusEnum
 } from '@gauzy/contracts';
-import { environment as env } from '@gauzy/config';
+import { ConfigService, environment as env } from '@gauzy/config';
 import { deepMerge, IAppIntegrationConfig } from '@gauzy/common';
 import { RequestContext } from '../core/context';
 import { EmailSendService } from './../email-send/email-send.service';
@@ -39,7 +41,8 @@ export class EmailService {
 		@InjectRepository(Organization)
 		private readonly organizationRepository: Repository<Organization>,
 
-		private readonly _emailSendService: EmailSendService
+		private readonly _emailSendService: EmailSendService,
+		private readonly configService: ConfigService
 	) { }
 
 	/**
@@ -932,6 +935,53 @@ export class EmailService {
 				console.error(error);
 			} finally {
 				await this.createEmailRecord(body);
+			}
+		}
+	}
+
+	async resendEmail(input: IResendEmailInput, languageCode: LanguagesEnum) {
+
+		const { id } = input;
+		const emailHistory: IEmailHistory = await this.emailHistoryRepository.findOne({
+			where: {
+				id
+			},
+			relations: {
+				emailTemplate: true,
+				organization: true,
+			}
+		});
+		if (!emailHistory) {
+			throw Error('Email History does not exist');
+		}
+		// Organization
+		const organization: IOrganization = emailHistory.organization;
+		const email: IEmailHistory['email'] = emailHistory.email;
+
+		const sendOptions = {
+			template: emailHistory.emailTemplate.name,
+			message: {
+				to: `${email}`,
+				subject: emailHistory.name,
+				html: emailHistory.content
+			}
+		};
+
+		const isEmailBlocked = !!DISALLOW_EMAIL_SERVER_DOMAIN.find(server => sendOptions.message.to.includes(server));
+
+		if (!isEmailBlocked) {
+			try {
+				const instance = await this._emailSendService.getEmailInstance({ organizationId: organization.id, tenantId: emailHistory.tenantId });
+				await instance.send(sendOptions);
+				emailHistory.status = EmailStatusEnum.SENT;
+
+				return await this.emailHistoryRepository.save(emailHistory);
+			} catch (error) {
+				console.log(`Error while re-sending mail: %s`, error?.message);
+
+				emailHistory.status = EmailStatusEnum.FAILED;
+				await this.emailHistoryRepository.save(emailHistory);
+				throw new BadRequestException(`Error while re-sending mail: ${error?.message}`);
 			}
 		}
 	}
