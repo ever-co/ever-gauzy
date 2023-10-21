@@ -250,7 +250,6 @@ export class GithubWizardComponent implements AfterViewInit, OnInit, OnDestroy {
 		setTimeout(() => {
 			const data = this._activatedRoute.snapshot.data;
 			if (data['redirectTo']) {
-				console.log(data['redirectTo']);
 				this._router.navigate([data['redirectTo']]);
 				return;
 			}

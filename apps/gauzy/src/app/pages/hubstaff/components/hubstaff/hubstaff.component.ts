@@ -1,7 +1,7 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { TitleCasePipe } from '@angular/common';
 import { TranslateService } from '@ngx-translate/core';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import {
 	switchMap,
 	tap,
@@ -39,6 +39,7 @@ export class HubstaffComponent extends TranslationBaseComponent implements OnIni
 	supportContextActions: NbMenuItem[];
 
 	constructor(
+		private readonly _router: Router,
 		public readonly _translateService: TranslateService,
 		private readonly _hubstaffService: HubstaffService,
 		private readonly _activatedRoute: ActivatedRoute,
@@ -47,7 +48,7 @@ export class HubstaffComponent extends TranslationBaseComponent implements OnIni
 		private readonly _dialogService: NbDialogService,
 		private readonly _store: Store,
 		private readonly _titlecasePipe: TitleCasePipe,
-		private readonly nbMenuService: NbMenuService
+		private readonly _nbMenuService: NbMenuService
 	) {
 		super(_translateService);
 	}
@@ -65,7 +66,7 @@ export class HubstaffComponent extends TranslationBaseComponent implements OnIni
 				untilDestroyed(this)
 			)
 			.subscribe();
-		this.nbMenuService
+		this._nbMenuService
 			.onItemClick()
 			.pipe(
 				map(({ item: { icon } }) => icon),
@@ -265,5 +266,12 @@ export class HubstaffComponent extends TranslationBaseComponent implements OnIni
 				icon: 'settings-2-outline'
 			}
 		];
+	}
+
+	/**
+	 * Navigate to the create project page.
+	 */
+	navigateToIntegrations(): void {
+		this._router.navigate(['/pages/integrations/new']);
 	}
 }

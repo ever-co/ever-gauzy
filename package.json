@@ -338,6 +338,7 @@
 		"ts-loader": "^8.0.4",
 		"ts-node": "^9.1.1",
 		"tsconfig-paths": "^3.9.0",
+		"simple-git": "^3.20.0",
 		"tslint": "^6.1.2",
 		"tslint-config-prettier": "^1.18.0",
 		"tslint-language-service": "^0.9.9",
