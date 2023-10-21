@@ -53,7 +53,7 @@
 						<div class="title">{{ integration?.name }}</div>
 						<div class="description">{{ integration?.description || 'Lorem Ipsum Lorem Ipsum' }}</div>
 					</div>
-					<div class="col-md-3 p-0 float-left text-truncate">
+					<div class="col-md-3 p-0 float-left text-truncate last-sync">
 						{{ (integration?.lastSyncedAt || integration?.updatedAt) | dateTimeFormat }}
 					</div>
 				</nb-card-body>
@@ -69,7 +69,7 @@
 	<ng-container *ngxPermissionsOnly="['ALL_ORG_EDIT']">
 		<div class="actions">
 			<button
-				(click)="edit(selectedItem)"
+				(click)="edit()"
 				[disabled]="disabled"
 				class="action primary"
 				nbButton
@@ -80,7 +80,7 @@
 				{{ 'BUTTONS.EDIT' | translate }}
 			</button>
 			<button
-				(click)="delete(selectedItem)"
+				(click)="delete()"
 				[disabled]="disabled"
 				[nbTooltip]="'BUTTONS.DELETE' | translate"
 				class="action"

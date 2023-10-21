@@ -112,11 +112,11 @@ export class IntegrationListComponent extends TranslationBaseComponent implement
 		};
 	}
 
-	public delete(event): void {
+	public delete(): void {
 
 	}
 
-	public edit(event): void {
+	public edit(): void {
 
 	}
 

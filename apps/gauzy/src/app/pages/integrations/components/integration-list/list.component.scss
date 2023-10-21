@@ -36,11 +36,12 @@
 
 				.title {
 					font-weight: 600;
-					color: var(--gauzy-color-text-1);
+					color: var(--gauzy-text-color-1);
 				}
 
 				.description {
 					font-size: 12px;
+					color: var(--gauzy-text-color-2);
 				}
 
 				&.selected {
@@ -60,6 +61,7 @@
 					width: 100%;
 					height: 48px;
 					object-fit: fill;
+					max-width: fit-content;
 				}
 			}
 		}
@@ -69,13 +71,17 @@
 		background-color: nb-theme(gauzy-card-2);
 		border-radius: 8px;
 		margin-bottom: 10px;
-		padding-top: 12px;
-		padding-bottom: 12px;
-		padding-left: 12px;
+		@include nb-ltr(padding, 12px 24px 12px 16px);
+		@include nb-rtl(padding, 12px 16px 12px 24px);
 		font-size: 12px;
 		font-style: normal;
 		font-weight: 600;
 		line-height: 15px;
 		letter-spacing: 0em;
+	}
+
+	.last-sync {
+		font-size: 12px;
+		color: var(--gauzy-text-color-1);
 	}
 }
