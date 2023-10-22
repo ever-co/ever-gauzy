@@ -27,7 +27,7 @@ export class IntegrationTenant extends TenantOrganizationBaseEntity implements I
 	})
 	@IsDateString()
 	@Index()
-	@Column({ nullable: true })
+	@Column({ nullable: true, default: () => 'CURRENT_TIMESTAMP' })
 	lastSyncedAt?: Date;
 
 	/*
