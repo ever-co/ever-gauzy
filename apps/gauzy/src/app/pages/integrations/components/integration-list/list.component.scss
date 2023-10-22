@@ -33,16 +33,8 @@
 					color: var(--gauzy-text-color-1);
 				}
 				.description {
-					font-size: 12px;
+					font-size: 13px;
 					color: var(--gauzy-text-color-2);
-				}
-				&.selected {
-					@include nb-ltr(border-left, 6px solid rgb(50 50 50 / 10%));
-					@include nb-rtl(
-						border-right,
-						6px solid rgb(50 50 50 / 10%)
-					);
-					background: rgba(50, 50, 50, 0.03);
 				}
 				&:hover {
 					background: rgba(50, 50, 50, 0.03);

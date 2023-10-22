@@ -95,11 +95,13 @@ export class GauzyLogoComponent implements AfterViewInit, OnInit, OnDestroy {
 		{
 			title: 'Integrations',
 			icon: 'fas fa-swatchbook',
-			link: '/pages/integrations/new',
+			link: '/pages/integrations',
 			pathMatch: 'prefix',
 			data: {
 				translationKey: 'MENU.INTEGRATIONS',
-				permissionKeys: [PermissionsEnum.INTEGRATION_VIEW],
+				permissionKeys: [
+					PermissionsEnum.INTEGRATION_VIEW
+				],
 				featureKey: FeatureEnum.FEATURE_APP_INTEGRATION
 			}
 		}

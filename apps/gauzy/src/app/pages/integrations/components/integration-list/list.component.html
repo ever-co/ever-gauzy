@@ -43,7 +43,7 @@
 							{{ integration?.name | replace : '_' : ' ' }}
 						</div>
 						<div class="description">
-							{{ integration?.description }}
+							{{ getProviderDescription(integration?.integration) }}
 						</div>
 					</div>
 					<div class="col-2 p-0 float-left text-truncate last-sync">
@@ -56,6 +56,16 @@
 					</div>
 					<div class="col-2 p-0 text-right">
 						<ng-container *ngxPermissionsOnly="['ALL_ORG_EDIT', 'INTEGRATION_VIEW']">
+							<button
+								(click)="viewIntegration(integration)"
+								class="action primary"
+								nbButton
+								size="small"
+								status="basic"
+							>
+								<nb-icon class="mr-1" icon="eye-outline"></nb-icon>
+								{{ 'BUTTONS.VIEW' | translate }}
+							</button>
 							<button
 								(click)="deleteIntegration(integration)"
 								[nbTooltip]="'BUTTONS.DELETE' | translate"

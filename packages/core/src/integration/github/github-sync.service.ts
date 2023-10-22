@@ -1,6 +1,7 @@
 
 import { HttpException, HttpStatus, Injectable, Logger } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
+import * as moment from 'moment';
 import { OctokitService } from '@gauzy/integration-github';
 import {
     IGithubAutomationIssuePayload,
@@ -88,7 +89,7 @@ export class GithubSyncService {
 
             try {
                 // Synchronize data based on entity settings
-                return await Promise.all(
+                const promises = await Promise.all(
                     entitySettings.map(async (entitySetting: IntegrationEntitySetting) => {
                         switch (entitySetting.entity) {
                             case IntegrationEntity.ISSUE:
@@ -118,11 +119,7 @@ export class GithubSyncService {
                                                 } catch (error) {
                                                     console.error('Failed to fetch GitHub labels for the repository issue:', error.message);
                                                 }
-
-                                                // Disable the "2 Way Sync Triggered Event" for manual synchronization
-                                                const triggeredEvent = false;
-
-                                                // Execute a command to initiate the synchronization process
+                                                /** */
                                                 return await this._commandBus.execute(
                                                     new IntegrationMapSyncIssueCommand({
                                                         entity: {
@@ -139,7 +136,7 @@ export class GithubSyncService {
                                                         integrationId,
                                                         organizationId,
                                                         tenantId
-                                                    }, triggeredEvent)
+                                                    })
                                                 );
                                             }
                                         )
@@ -148,6 +145,13 @@ export class GithubSyncService {
                         }
                     })
                 );
+
+                // Update Integration Last Synced Date
+                await this._integrationTenantService.update(integrationId, {
+                    lastSyncedAt: moment()
+                });
+
+                return promises;
             } catch (error) {
                 console.log('Error while syncing github issues: ', error.message);
                 return false;

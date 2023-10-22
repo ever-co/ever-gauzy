@@ -269,9 +269,9 @@ export class HubstaffComponent extends TranslationBaseComponent implements OnIni
 	}
 
 	/**
-	 * Navigate to the create project page.
+	 * Navigate to the "Integrations" page.
 	 */
 	navigateToIntegrations(): void {
-		this._router.navigate(['/pages/integrations/new']);
+		this._router.navigate(['/pages/integrations']);
 	}
 }

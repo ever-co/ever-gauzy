@@ -1203,7 +1203,8 @@
 			"CLIENT_ID": "Hubstaff Client ID",
 			"CLIENT_SECRET": "Hubstaff Client Secret",
 			"GRANT_PERMISSION": "Next you will be taken to Hubstaff to grant permission to Gauzy.",
-			"ENTER_CLIENT_SECRET": "Enter client secret to get access token."
+			"ENTER_CLIENT_SECRET": "Enter client secret to get access token.",
+			"DESCRIPTION": "Activate Hubstaff integration for enhanced workforce management."
 		},
 		"UPWORK_PAGE": {
 			"ACTIVITIES": "Activities",
@@ -1219,17 +1220,20 @@
 			"ONLY_CONTRACTS": "Only Contracts",
 			"CONTRACTS_RELATED_DATA": "Synced Contracts related entities",
 			"DATE_RANGE_PLACEHOLDER": "Choose date between",
-			"HOURLY": "Hourly"
+			"HOURLY": "Hourly",
+			"DESCRIPTION": "Activate Upwork integration for freelance workforce management."
 		},
 		"GAUZY_AI_PAGE": {
 			"API_KEY": "Gauzy AI key",
-			"API_SECRET": "Gauzy AI Secret"
+			"API_SECRET": "Gauzy AI Secret",
+			"DESCRIPTION": "Activate Gauzy AI integration for smarter job hunting."
 		},
 		"GITHUB_PAGE": {
 			"NAME": "GitHub",
 			"SELECT_REPOSITORY": "Select repository",
 			"SEARCH_REPOSITORY": "Type to search repository",
-			"SYNCED_ISSUES": "'{{repository}}' issues & labels synced successfully"
+			"SYNCED_ISSUES": "'{{repository}}' issues & labels synced successfully",
+			"DESCRIPTION": "Activate GitHub integration for project & repository sync."
 		},
 		"COMING_SOON": "Coming soon",
 		"RE_INTEGRATE": "Re-integrate",

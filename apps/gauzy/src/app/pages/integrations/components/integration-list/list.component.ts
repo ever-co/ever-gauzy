@@ -1,13 +1,13 @@
 import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
-import { EMPTY, catchError, map, tap } from 'rxjs';
+import { EMPTY, catchError, first, map, tap } from 'rxjs';
 import { debounceTime, filter, switchMap } from 'rxjs/operators';
 import { Observable } from 'rxjs/internal/Observable';
 import { NbDialogService, NbToastrService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { distinctUntilChange } from '@gauzy/common-angular';
-import { IIntegrationTenant, IOrganization, IPagination } from '@gauzy/contracts';
+import { IIntegration, IIntegrationTenant, IOrganization, IPagination } from '@gauzy/contracts';
 import { ErrorHandlingService, IntegrationTenantService, Store } from './../../../../@core/services';
 import { TranslationBaseComponent } from './../../../../@shared/language-base';
 import { DeleteConfirmationComponent } from 'apps/gauzy/src/app/@shared/user/forms';
@@ -23,6 +23,24 @@ export class IntegrationListComponent extends TranslationBaseComponent implement
 
 	public organization: IOrganization;
 	public integrations$: Observable<IIntegrationTenant[]>;
+
+	/**
+	 * Configuration for integrations.
+	 */
+	public providers: { [key: string]: any } = {
+		Github: {
+			description: this.getTranslation('INTEGRATIONS.GITHUB_PAGE.DESCRIPTION')
+		},
+		Gauzy_AI: {
+			description: this.getTranslation('INTEGRATIONS.GAUZY_AI_PAGE.DESCRIPTION')
+		},
+		Hubstaff: {
+			description: this.getTranslation('INTEGRATIONS.HUBSTAFF_PAGE.DESCRIPTION')
+		},
+		Upwork: {
+			description: this.getTranslation('INTEGRATIONS.UPWORK_PAGE.DESCRIPTION')
+		},
+	};
 
 	constructor(
 		private readonly _router: Router,
@@ -67,37 +85,65 @@ export class IntegrationListComponent extends TranslationBaseComponent implement
 	}
 
 	/**
+	 * Function to view an integration
 	 *
 	 * @param integration
 	 */
-	async view(integration: IIntegrationTenant) {
-		console.log(integration);
+	viewIntegration(integration: IIntegrationTenant) {
+		if (!integration) {
+			return;
+		}
+		this._router.navigate(['/pages/integrations', integration.integration?.redirectUrl, integration.id]);
 	}
 
 	/**
-	 * Function to delete an integration
+	 * Delete an integration after confirming with a dialog.
 	 *
-	 * @param integration
+	 * @param integration - The integration to be deleted.
 	 */
-	deleteIntegration(integration: IIntegrationTenant) {
-		// Open a confirmation dialog and get the result
-		const onClose$ = this._nbDialogService.open(DeleteConfirmationComponent).onClose;
-		onClose$
-			.pipe(
-				filter((result) => !!result), // Check if the result is true (confirmed)
-				switchMap(() => this._integrationTenantService.delete(integration.id)), // Perform the delete operation
-				tap(() => {
-					this._toastrService.success(this.getTranslation('INTEGRATIONS.MESSAGE.INTEGRATION_DELETED'), {
-						provider: integration?.integration?.provider
-					});
-				}),
-				untilDestroyed(this) // Automatically unsubscribe when the component is destroyed
-			)
-			.subscribe();
+	deleteIntegration(integration: IIntegrationTenant): void {
+		const confirmed$ = this.openConfirmationDialog();
+		confirmed$.pipe(
+			filter((isConfirmed) => isConfirmed),
+			switchMap(() => this._integrationTenantService.delete(integration.id)),
+			tap(() => this.showDeletionSuccessMessage(integration)),
+			untilDestroyed(this)
+		).subscribe();
 	}
 
 	/**
-	 * Navigate to the create project page.
+	 * Open a confirmation dialog to confirm the deletion.
+	 *
+	 * @returns An observable that emits a boolean value indicating whether the deletion is confirmed.
+	 */
+	private openConfirmationDialog(): Observable<boolean> {
+		const dialogRef = this._nbDialogService.open(DeleteConfirmationComponent);
+		return dialogRef.onClose.pipe(first());
+	}
+
+	/**
+	 * Show a success message after the integration is deleted.
+	 *
+	 * @param integration - The deleted integration.
+	 */
+	private showDeletionSuccessMessage(integration: IIntegrationTenant): void {
+		const successMessage = this.getTranslation('INTEGRATIONS.MESSAGE.INTEGRATION_DELETED', {
+			provider: integration?.integration?.provider
+		});
+		this._toastrService.success(successMessage);
+	}
+
+	/**
+	 * Get the description of an integration provider based on the integration object.
+	 * @param integration - The integration object containing provider information.
+	 * @returns The description of the integration provider, or undefined if the provider is missing or not found.
+	 */
+	getProviderDescription(integration: IIntegration): string | null {
+		return integration.provider ? this.providers[integration.provider]?.description : null;
+	}
+
+	/**
+	 * Navigate to the "New Integrations" page.
 	 */
 	navigateToNewIntegrations(): void {
 		this._router.navigate(['/pages/integrations/new']);
