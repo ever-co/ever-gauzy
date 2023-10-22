@@ -4,6 +4,7 @@
 		"ADD_EXISTING_USER": "Add Existing User",
 		"ADD_NEW": "Add New",
 		"ADD": "Add",
+		"ADD_INTEGRATION": "Add Integration",
 		"CREATE": "Create",
 		"REGISTER": "Register",
 		"LOGIN": "Log In",
@@ -284,7 +285,7 @@
 		"CURRENT_VALUE": "Current value",
 		"TARGET_VALUE": "Target value",
 		"LAST_UPDATED": "Last Updated",
-		"LAST_SYNC": "Last Sync",
+		"LAST_SYNC_DATE": "Last Sync Date",
 		"CREATED_BY": "Created By",
 		"NO_DATA_MESSAGE": "No Data",
 		"TAGS": "Tags",
@@ -1239,8 +1240,11 @@
 		"PAID": "Paid",
 		"INTEGRATION": "Integration",
 		"MESSAGE": {
-			"SETTINGS_UPDATED": "Updated settings for {{provider}} integration"
-		}
+			"SETTINGS_UPDATED": "Updated settings for '{{provider}}' integration",
+			"INTEGRATION_DELETED": "Integration '{{provider}}' deleted successfully"
+		},
+		"ENABLED": "Enabled",
+		"DISABLED": "Disabled"
 	},
 	"DASHBOARD_PAGE": {
 		"ACCOUNTING": "Accounting",

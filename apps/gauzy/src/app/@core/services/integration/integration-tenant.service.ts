@@ -4,15 +4,20 @@ import { Observable } from 'rxjs/internal/Observable';
 import { IIntegrationTenantFindInput, IIntegrationTenant, IPagination } from '@gauzy/contracts';
 import { toParams } from '@gauzy/common-angular';
 import { API_PREFIX } from '../../constants';
+import { CrudService } from '../crud/crud.service';
 
 @Injectable({
     providedIn: 'root'
 })
-export class IntegrationTenantService {
+export class IntegrationTenantService extends CrudService<IIntegrationTenant> {
+
+    static readonly API_URL = `${API_PREFIX}/integration-tenant`;
 
     constructor(
         private readonly _http: HttpClient
-    ) { }
+    ) {
+        super(_http, IntegrationTenantService.API_URL)
+    }
 
     /**
       * Get a list of IntegrationTenant entities based on specified criteria and optional relations.

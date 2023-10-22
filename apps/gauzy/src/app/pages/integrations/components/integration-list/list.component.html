@@ -10,18 +10,15 @@
 		<div class="gauzy-button-container">
 			<ngx-gauzy-button-action
 				[buttonTemplateVisible]="visibleButton"
-				[buttonTemplate]="actionButtons"
 				[hasLayoutSelector]="false"
-				[isDisable]="disabled"
-			>
-			</ngx-gauzy-button-action>
+			></ngx-gauzy-button-action>
 		</div>
 		<div class="columns-header row align-items-center">
-			<div class="col-md-8 p-0 float-left text-truncate">
-				{{ 'SM_TABLE.PROVIDER' | translate }}
+			<div class="col-md-6 p-0 float-left text-truncate">
+				{{ 'SM_TABLE.NAME' | translate }}
 			</div>
 			<div class="col-md-2 p-0 float-left text-truncate">
-				{{ 'SM_TABLE.LAST_SYNC' | translate }}
+				{{ 'SM_TABLE.LAST_SYNC_DATE' | translate }}
 			</div>
 			<div class="col-md-2 p-0 text-right text-truncate">
 				{{ 'SM_TABLE.STATUS' | translate }}
@@ -30,88 +27,62 @@
 	</nb-card-header>
 	<nb-card-body>
 		<div class="table-scroll-container">
-			<nb-card *ngFor="let integration of dummyIntegrations$ | async">
-				<nb-card-body
-					(click)="selectIntegration(integration)"
-					[ngClass]="{
-						selected:
-							!disabled &&
-							integration.id === selectedIntegration.id
-					}"
-					class="card-body-table"
-				>
-					<div class="col-md-2 p-0 float-left text-truncate">
+			<nb-card *ngFor="let integration of (integrations$ | async) as integrations">
+				<nb-card-body class="card-body-table">
+					<div class="col-2 p-0 float-left text-truncate">
 						<img
 							[alt]="[integration?.integration?.title]"
 							[src]="integration?.integration?.fullImgUrl"
-							[title]="
-								integration?.integration?.name
-									| replace : '_' : ' '
-							"
+							[title]=" integration?.integration?.name | replace : '_' : ' '"
 							height="100%"
 							width="100%"
 						/>
 					</div>
-					<div class="col-md-6 pl-3 float-left text-truncate">
-						<div class="title">{{ integration?.name }}</div>
-						<div class="description">{{ integration?.description || 'Lorem Ipsum Lorem Ipsum' }}</div>
-					</div>
-					<div class="col-md-2 p-0 float-left text-truncate last-sync">
-						{{ (integration?.lastSyncedAt || integration?.updatedAt) | dateTimeFormat }}
-					</div>
-					<div class="col-md-2 p-0 text-right text-truncate">
-						<div
-							[ngClass]="{
-								'badge-success' : integration?.isActive,
-								'badge-danger' : !integration?.isActive
-							}"
-							class="badge"
-						>
-							{{(integration?.isActive ? 'PIPELINES_PAGE.ACTIVE' : 'PIPELINES_PAGE.INACTIVE') | translate }}
+					<div class="col-4 pl-3 float-left text-truncate">
+						<div class="title">
+							{{ integration?.name | replace : '_' : ' ' }}
 						</div>
+						<div class="description">
+							{{ integration?.description }}
+						</div>
+					</div>
+					<div class="col-2 p-0 float-left text-truncate last-sync">
+						{{ (integration?.lastSyncedAt || integration?.updatedAt)  | dateTimeFormat }}
+					</div>
+					<div class="col-2 p-0 text-right text-truncate">
+						<div class="badge" [ngClass]="integration?.isActive ? 'badge-success': 'badge-danger'">
+							{{ (integration?.isActive ? 'INTEGRATIONS.ENABLED' : 'INTEGRATIONS.DISABLED') | translate }}
+						</div>
+					</div>
+					<div class="col-2 p-0 text-right">
+						<ng-container *ngxPermissionsOnly="['ALL_ORG_EDIT', 'INTEGRATION_VIEW']">
+							<button
+								(click)="deleteIntegration(integration)"
+								[nbTooltip]="'BUTTONS.DELETE' | translate"
+								class="action"
+								nbButton
+								size="small"
+								status="basic"
+							>
+								<nb-icon icon="trash-2-outline" status="danger"></nb-icon>
+							</button>
+						</ng-container>
 					</div>
 				</nb-card-body>
 			</nb-card>
 		</div>
 	</nb-card-body>
 </nb-card>
-<ng-template
-	#actionButtons
-	let-buttonSize="buttonSize"
-	let-selectedItem="selectedItem"
->
-	<ng-container *ngxPermissionsOnly="['ALL_ORG_EDIT']">
-		<div class="actions">
-			<button
-				(click)="edit()"
-				[disabled]="disabled"
-				class="action primary"
-				nbButton
-				size="small"
-				status="basic"
-			>
-				<nb-icon icon="edit-outline"></nb-icon>
-				{{ 'BUTTONS.EDIT' | translate }}
-			</button>
-			<button
-				(click)="delete()"
-				[disabled]="disabled"
-				[nbTooltip]="'BUTTONS.DELETE' | translate"
-				class="action"
-				nbButton
-				size="small"
-				status="basic"
-			>
-				<nb-icon icon="trash-2-outline" status="danger"></nb-icon>
-			</button>
-		</div>
-	</ng-container>
-</ng-template>
 <ng-template #visibleButton>
-	<ng-container *ngxPermissionsOnly="['ALL_ORG_EDIT']">
-		<button (click)="add()" nbButton size="small" status="success">
+	<ng-container *ngxPermissionsOnly="['ALL_ORG_EDIT', 'INTEGRATION_VIEW']">
+		<button
+			(click)="navigateToNewIntegrations()"
+			nbButton
+			size="small"
+			status="success"
+		>
 			<nb-icon icon="plus-outline"></nb-icon>
-			{{ 'BUTTONS.ADD' | translate }}
+			{{ 'BUTTONS.ADD_INTEGRATION' | translate }}
 		</button>
 	</ng-container>
 </ng-template>

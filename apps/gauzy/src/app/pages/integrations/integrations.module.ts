@@ -1,14 +1,15 @@
 import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
-
 import {
 	NbCardModule,
 	NbSelectModule,
 	NbInputModule,
 	NbSpinnerModule,
 	NbButtonModule,
-	NbIconModule
+	NbIconModule,
+	NbTooltipModule
 } from '@nebular/theme';
+import { NgxPermissionsModule } from "ngx-permissions";
 import { IntegrationsRoutingModule } from './integrations-routing.module';
 import { IntegrationsComponent } from './integrations.component';
 import { SharedModule } from '../../@shared/shared.module';
@@ -16,10 +17,8 @@ import { TranslateModule } from '../../@shared/translate/translate.module';
 import { IntegrationLayoutComponent } from './layout/layout.component';
 import { IntegrationListComponent } from './components/integration-list/list.component';
 import { HeaderTitleModule } from '../../@shared/components/header-title/header-title.module';
-import { Ng2SmartTableModule } from 'ng2-smart-table';
-import { NgxPermissionsModule } from "ngx-permissions";
-import {GauzyButtonActionModule} from "../../@shared/gauzy-button-action/gauzy-button-action.module";
-import {TableComponentsModule} from "../../@shared";
+import { GauzyButtonActionModule } from "../../@shared/gauzy-button-action/gauzy-button-action.module";
+import { TableComponentsModule } from "../../@shared/table-components";
 
 @NgModule({
 	imports: [
@@ -29,7 +28,7 @@ import {TableComponentsModule} from "../../@shared";
 		NbInputModule,
 		NbSelectModule,
 		NbSpinnerModule,
-		Ng2SmartTableModule,
+		NbTooltipModule,
 		IntegrationsRoutingModule,
 		SharedModule,
 		TranslateModule,
@@ -45,4 +44,4 @@ import {TableComponentsModule} from "../../@shared";
 		IntegrationsComponent,
 	],
 })
-export class IntegrationsModule {}
+export class IntegrationsModule { }

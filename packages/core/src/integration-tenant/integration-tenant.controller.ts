@@ -12,7 +12,7 @@ import {
 import { ApiTags } from '@nestjs/swagger';
 import { ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { IIntegrationTenant, IPagination, PermissionsEnum } from '@gauzy/contracts';
-import { PaginationParams } from 'core/crud';
+import { CrudController, PaginationParams } from 'core/crud';
 import { UUIDValidationPipe } from './../shared/pipes';
 import { Permissions } from './../shared/decorators';
 import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
@@ -25,10 +25,12 @@ import { IntegrationTenantQueryDTO } from './dto';
 @UseGuards(TenantPermissionGuard, PermissionGuard)
 @Permissions(PermissionsEnum.INTEGRATION_VIEW)
 @Controller()
-export class IntegrationTenantController {
+export class IntegrationTenantController extends CrudController<IntegrationTenant> {
 	constructor(
 		private readonly _integrationTenantService: IntegrationTenantService
-	) { }
+	) {
+		super(_integrationTenantService);
+	}
 
 	/**
 	 * Retrieve an integration tenant by specified options.
