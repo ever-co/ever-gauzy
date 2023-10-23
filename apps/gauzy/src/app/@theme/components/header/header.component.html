@@ -27,6 +27,7 @@
 				[nbContextMenu]="createContextMenu"
 				nbContextMenuTag="create-context-menu"
 				nbContextMenuPlacement="right"
+				(click)="contextMenu$()"
 			>
 				+ {{ 'BUTTONS.CREATE' | translate }}
 			</button>
