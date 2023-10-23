@@ -429,9 +429,9 @@ export class GithubViewComponent extends TranslationBaseComponent implements Aft
 	}
 
 	/**
-	 * Navigate to the create project page.
-	 */
+	 * Navigate to the "Integrations" page.
+	*/
 	navigateToIntegrations(): void {
-		this._router.navigate(['/pages/integrations/new']);
+		this._router.navigate(['/pages/integrations']);
 	}
 }

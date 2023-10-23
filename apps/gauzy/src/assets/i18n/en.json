@@ -4,6 +4,7 @@
 		"ADD_EXISTING_USER": "Add Existing User",
 		"ADD_NEW": "Add New",
 		"ADD": "Add",
+		"ADD_INTEGRATION": "Add Integration",
 		"CREATE": "Create",
 		"REGISTER": "Register",
 		"LOGIN": "Log In",
@@ -284,6 +285,7 @@
 		"CURRENT_VALUE": "Current value",
 		"TARGET_VALUE": "Target value",
 		"LAST_UPDATED": "Last Updated",
+		"LAST_SYNC_DATE": "Last Sync Date",
 		"CREATED_BY": "Created By",
 		"NO_DATA_MESSAGE": "No Data",
 		"TAGS": "Tags",
@@ -295,7 +297,8 @@
 		"TIME_TRACKING": "Time Tracking",
 		"CREATED_AT": "Created At",
 		"SCREEN_CAPTURE": "Screen Capture",
-		"NUMBER": "Number"
+		"NUMBER": "Number",
+		"PROVIDER": "Provider"
 	},
 	"FORM": {
 		"USERNAME": "Username",
@@ -1185,6 +1188,7 @@
 		}
 	},
 	"INTEGRATIONS": {
+		"TITLE": "Integrations",
 		"AVAILABLE_INTEGRATIONS": "Available Apps & Integrations",
 		"ADDED_UPWORK_TRANSACTION": "Added Upwork Transaction",
 		"TOTAL_UPWORK_TRANSACTIONS_SUCCEED": "Total expense transactions succeed: {{ totalExpenses }}. Total income transactions succeed: {{ totalIncomes }}",
@@ -1199,7 +1203,8 @@
 			"CLIENT_ID": "Hubstaff Client ID",
 			"CLIENT_SECRET": "Hubstaff Client Secret",
 			"GRANT_PERMISSION": "Next you will be taken to Hubstaff to grant permission to Gauzy.",
-			"ENTER_CLIENT_SECRET": "Enter client secret to get access token."
+			"ENTER_CLIENT_SECRET": "Enter client secret to get access token.",
+			"DESCRIPTION": "Activate Hubstaff integration for enhanced workforce management."
 		},
 		"UPWORK_PAGE": {
 			"ACTIVITIES": "Activities",
@@ -1215,17 +1220,20 @@
 			"ONLY_CONTRACTS": "Only Contracts",
 			"CONTRACTS_RELATED_DATA": "Synced Contracts related entities",
 			"DATE_RANGE_PLACEHOLDER": "Choose date between",
-			"HOURLY": "Hourly"
+			"HOURLY": "Hourly",
+			"DESCRIPTION": "Activate Upwork integration for freelance workforce management."
 		},
 		"GAUZY_AI_PAGE": {
 			"API_KEY": "Gauzy AI key",
-			"API_SECRET": "Gauzy AI Secret"
+			"API_SECRET": "Gauzy AI Secret",
+			"DESCRIPTION": "Activate Gauzy AI integration for smarter job hunting."
 		},
 		"GITHUB_PAGE": {
 			"NAME": "GitHub",
 			"SELECT_REPOSITORY": "Select repository",
 			"SEARCH_REPOSITORY": "Type to search repository",
-			"SYNCED_ISSUES": "'{{repository}}' issues & labels synced successfully"
+			"SYNCED_ISSUES": "'{{repository}}' issues & labels synced successfully",
+			"DESCRIPTION": "Activate GitHub integration for project & repository sync."
 		},
 		"COMING_SOON": "Coming soon",
 		"RE_INTEGRATE": "Re-integrate",
@@ -1236,8 +1244,12 @@
 		"PAID": "Paid",
 		"INTEGRATION": "Integration",
 		"MESSAGE": {
-			"SETTINGS_UPDATED": "Updated settings for {{provider}} integration"
-		}
+			"SETTINGS_UPDATED": "Updated settings for '{{provider}}' integration",
+			"INTEGRATION_DELETED": "Integration '{{provider}}' deleted successfully",
+			"NO_INTEGRATIONS": "You have not configured any integrations"
+		},
+		"ENABLED": "Enabled",
+		"DISABLED": "Disabled"
 	},
 	"DASHBOARD_PAGE": {
 		"ACCOUNTING": "Accounting",
