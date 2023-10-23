@@ -227,6 +227,7 @@ export class GithubViewComponent extends TranslationBaseComponent implements Aft
 			columns: {
 				number: {
 					title: this.getTranslation('SM_TABLE.NUMBER'), // Set column title based on translation
+					width: '5%',
 					type: 'custom', // Set column type to 'custom'
 					renderComponent: ClickableLinkComponent,
 					valuePrepareFunction: (number: IGithubIssue['number']) => {
@@ -238,15 +239,18 @@ export class GithubViewComponent extends TranslationBaseComponent implements Aft
 				},
 				title: {
 					title: this.getTranslation('SM_TABLE.TITLE'), // Set column title based on translation
+					width: '15%',
 					type: 'string' // Set column type to 'string'
 				},
 				body: {
 					title: this.getTranslation('SM_TABLE.DESCRIPTION'), // Set column title based on translation
+					width: '60%',
 					type: 'custom', // Set column type to 'custom'
 					renderComponent: TrustHtmlLinkComponent
 				},
 				state: {
 					title: this.getTranslation('SM_TABLE.STATUS'), // Set column title based on translation
+					width: '5%',
 					type: 'string', // Set column type to 'string'
 					valuePrepareFunction: (data: string) => {
 						// Transform the column data using '_titlecasePipe.transform' (modify this function)
@@ -254,10 +258,10 @@ export class GithubViewComponent extends TranslationBaseComponent implements Aft
 					}
 				},
 				labels: {
-					title: this.getTranslation('SM_TABLE.LABELS'),
-					type: 'custom',
+					title: this.getTranslation('SM_TABLE.LABELS'), // Set column labels based on translation
+					width: '15%',
+					type: 'custom', // Set column type to 'custom'
 					renderComponent: TagsOnlyComponent,
-					width: '10%'
 				}
 			}
 		};

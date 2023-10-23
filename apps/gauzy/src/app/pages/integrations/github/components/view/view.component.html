@@ -35,7 +35,9 @@
 	</nb-card-header>
 	<nb-card-body>
 		<nb-tabset>
-			<nb-tab [tabTitle]="'INTEGRATIONS.GITHUB_PAGE.TAB.AUTO_SYNC' | translate"></nb-tab>
+			<nb-tab [tabTitle]="'INTEGRATIONS.GITHUB_PAGE.TAB.AUTO_SYNC' | translate">
+
+			</nb-tab>
 			<nb-tab [tabTitle]="'INTEGRATIONS.GITHUB_PAGE.TAB.MANUAL_SYNC' | translate">
 				<ng-template [ngIf]="integration$ | async">
 					<nb-card>
@@ -96,8 +98,6 @@
 				</ng-template>
 			</nb-tab>
 		</nb-tabset>
-
-
 		<!-- <ng-template [ngIf]="integration$ | async">
 			<div class="mb-3">
 				<button
