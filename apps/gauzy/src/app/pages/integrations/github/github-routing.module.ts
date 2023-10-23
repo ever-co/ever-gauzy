@@ -33,7 +33,7 @@ const routes: Routes = [
 		]
 	},
 	{
-		path: 'setup/wizard/regenerate',
+		path: 'setup/wizard/reset',
 		data: {
 			redirectTo: '/pages/integrations/github/setup/wizard'
 		},

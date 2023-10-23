@@ -1,11 +1,11 @@
 import { AfterViewInit, Component, OnInit, ViewChild } from '@angular/core';
 import { TitleCasePipe } from '@angular/common';
 import { ActivatedRoute, Data, Router } from '@angular/router';
-import { EMPTY, debounceTime, finalize, firstValueFrom, of } from 'rxjs';
+import { EMPTY, debounceTime, finalize, first, firstValueFrom, of } from 'rxjs';
 import { Observable } from 'rxjs/internal/Observable';
 import { catchError, filter, map, switchMap, tap } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
-import { NbDialogService, NbMenuItem, NbMenuService } from '@nebular/theme';
+import { NbDialogService } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { Ng2SmartTableComponent } from 'ng2-smart-table';
 import {
@@ -41,7 +41,7 @@ import { GithubSettingsDialogComponent } from '../settings-dialog/settings-dialo
 		TitleCasePipe
 	]
 })
-export class GithubViewComponent extends TranslationBaseComponent implements AfterViewInit, OnInit {
+export class GithubViewComponent extends TranslationBaseComponent implements OnInit {
 	public parsedInt = parsedInt;
 
 	public syncing: boolean = false;
@@ -53,7 +53,6 @@ export class GithubViewComponent extends TranslationBaseComponent implements Aft
 	public project$: Observable<IOrganizationProject>;
 	public integration$: Observable<IIntegrationTenant>;
 	public integration: IIntegrationTenant;
-	public contextMenuItems: NbMenuItem[] = [];
 	public settingsSmartTable: object;
 	public issues$: Observable<IGithubIssue[]>;
 	public issues: IGithubIssue[] = [];
@@ -77,7 +76,6 @@ export class GithubViewComponent extends TranslationBaseComponent implements Aft
 		private readonly _activatedRoute: ActivatedRoute,
 		private readonly _titlecasePipe: TitleCasePipe,
 		private readonly _hashNumberPipe: HashNumberPipe,
-		private readonly _nbMenuService: NbMenuService,
 		private readonly _dialogService: NbDialogService,
 		private readonly _toastrService: ToastrService,
 		private readonly _errorHandlingService: ErrorHandlingService,
@@ -93,7 +91,6 @@ export class GithubViewComponent extends TranslationBaseComponent implements Aft
 	ngOnInit(): void {
 		this._loadSmartTableSettings();
 		this._applyTranslationOnSmartTable();
-		this._getContextMenuItems();
 		this._getGithubIntegrationTenant();
 
 		this.project$ = this._store.selectedProject$.pipe(
@@ -130,40 +127,6 @@ export class GithubViewComponent extends TranslationBaseComponent implements Aft
 			tap((integration: IIntegrationTenant) => this.integration = integration),
 			untilDestroyed(this) // Automatically unsubscribes when the component is destroyed
 		);
-	}
-
-	ngAfterViewInit(): void {
-		/** */
-		const onItemClick$ = this._nbMenuService.onItemClick();
-		onItemClick$
-			.pipe(
-				map(({ item: { icon } }) => icon),
-				tap((icon) => {
-					if (icon === 'settings-2-outline') {
-						this.setSettings();
-					}
-				}),
-				untilDestroyed(this)
-			)
-			.subscribe();
-	}
-
-	/**
-	 * Sets up context menu items.
-	 */
-	private _getContextMenuItems() {
-		this.contextMenuItems = [
-			{
-				title: this.getTranslation('INTEGRATIONS.SETTINGS'),
-				icon: 'settings-2-outline'
-			},
-			{
-				title: this.getTranslation('INTEGRATIONS.RE_INTEGRATE'),
-				icon: 'text-outline',
-				link: `pages/integrations/github/setup/wizard/regenerate`
-			},
-			// Add more menu items as needed
-		];
 	}
 
 	/**
@@ -299,23 +262,31 @@ export class GithubViewComponent extends TranslationBaseComponent implements Aft
 
 	/**
 	 * Open a dialog to set GitHub integration settings.
+	 *
+	 * @returns
 	 */
-	async setSettings() {
+	private openDialog(): Observable<boolean> {
+		// Open a dialog to configure GitHub settings
+		const dialogRef = this._dialogService.open(GithubSettingsDialogComponent, {
+			context: {
+				integration: this.integration // Pass the 'integration' object to the dialog component
+			}
+		});
+		// Return an Observable that emits a boolean when the dialog is closed
+		return dialogRef.onClose.pipe(first());
+	}
+
+	/**
+	 * Open a dialog to set GitHub integration settings.
+	 */
+	async openSettingModal() {
 		// Check if the 'integration' object is falsy and return early if it is
 		if (!this.integration) {
 			return;
 		}
 
-		// Open a dialog using the '_dialogService.open' method
-		const dialog = this._dialogService.open(GithubSettingsDialogComponent, {
-			context: {
-				integration: this.integration // Pass the 'integration' object to the dialog component
-			}
-		});
-
 		// Wait for the dialog to close and retrieve the data returned from the dialog
-		const data = await firstValueFrom(dialog.onClose);
-
+		const data = await firstValueFrom(this.openDialog());
 		if (data) {
 			// Extract the 'id' property from the 'integration' object
 			const { id: integrationId } = this.integration;
@@ -433,5 +404,12 @@ export class GithubViewComponent extends TranslationBaseComponent implements Aft
 	*/
 	navigateToIntegrations(): void {
 		this._router.navigate(['/pages/integrations']);
+	}
+
+	/**
+	 * Navigates to the 'Reset Integration' route within the GitHub integration setup wizard.
+	 */
+	navigateToResetIntegration(): void {
+		this._router.navigate(['/pages/integrations/github/setup/wizard/reset']);
 	}
 }

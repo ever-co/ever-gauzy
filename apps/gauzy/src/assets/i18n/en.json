@@ -5,6 +5,7 @@
 		"ADD_NEW": "Add New",
 		"ADD": "Add",
 		"ADD_INTEGRATION": "Add Integration",
+		"RESET_INTEGRATION": "Reset Integration",
 		"CREATE": "Create",
 		"REGISTER": "Register",
 		"LOGIN": "Log In",
@@ -1229,7 +1230,7 @@
 			"DESCRIPTION": "Activate Gauzy AI integration for smarter job hunting."
 		},
 		"GITHUB_PAGE": {
-			"NAME": "GitHub",
+			"TITLE": "GitHub Integration",
 			"SELECT_REPOSITORY": "Select repository",
 			"SEARCH_REPOSITORY": "Type to search repository",
 			"SYNCED_ISSUES": "'{{repository}}' issues & labels synced successfully",

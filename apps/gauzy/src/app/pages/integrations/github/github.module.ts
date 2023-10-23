@@ -4,8 +4,9 @@ import {
 	NbActionsModule,
 	NbButtonModule,
 	NbCardModule,
-	NbContextMenuModule,
+	NbDialogModule,
 	NbIconModule,
+	NbPopoverModule,
 	NbSpinnerModule,
 	NbToggleModule
 } from '@nebular/theme';
@@ -35,8 +36,9 @@ import { DirectivesModule } from '../../../@shared/directives/directives.module'
 		NbActionsModule,
 		NbButtonModule,
 		NbCardModule,
-		NbContextMenuModule,
 		NbIconModule,
+		NbDialogModule,
+		NbPopoverModule,
 		NbSpinnerModule,
 		NbToggleModule,
 		Ng2SmartTableModule,

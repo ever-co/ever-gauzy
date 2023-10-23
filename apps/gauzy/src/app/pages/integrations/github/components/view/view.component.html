@@ -1,19 +1,35 @@
 <nb-card class="card-scroll">
-	<nb-card-header>
-		<ngx-back-navigation
-			[haveLink]="true"
-			class="float-left"
-			(click)="navigateToIntegrations()"
-		></ngx-back-navigation>
-		<nb-actions class="float-left pt-2" size="small">
-			<nb-action class="toggle-layout p-0">
-				<h5>{{ 'INTEGRATIONS.GITHUB_PAGE.NAME' | translate }}</h5>
-				<nb-icon
-					icon="settings-2-outline"
-					[nbContextMenu]="contextMenuItems"
-				></nb-icon>
-			</nb-action>
-		</nb-actions>
+	<nb-card-header class="card-header-title">
+		<div class="card-header-title">
+			<h5>
+				<ngx-back-navigation
+					class="float-left"
+					[haveLink]="true"
+					(click)="navigateToIntegrations()"></ngx-back-navigation>
+				{{ 'INTEGRATIONS.GITHUB_PAGE.TITLE' | translate }}
+			</h5>
+		</div>
+		<div>
+			<div>
+				<button
+					nbButton
+					status="primary"
+					class="mr-2"
+					(click)="navigateToResetIntegration()"
+				>
+					<div class="sync-container">
+						<nb-icon class="sync" icon="sync-outline"></nb-icon>
+						{{ 'BUTTONS.RESET_INTEGRATION' | translate }}
+					</div>
+				</button>
+				<button
+					nbButton
+					(click)="openSettingModal()"
+				>
+					<nb-icon icon="settings-2-outline"></nb-icon>
+				</button>
+			</div>
+		</div>
 	</nb-card-header>
 	<nb-card-body>
 		<ng-template [ngIf]="integration$ | async">
