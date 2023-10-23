@@ -19,6 +19,7 @@ import { IntegrationListComponent } from './components/integration-list/list.com
 import { HeaderTitleModule } from '../../@shared/components/header-title/header-title.module';
 import { GauzyButtonActionModule } from "../../@shared/gauzy-button-action/gauzy-button-action.module";
 import { TableComponentsModule } from "../../@shared/table-components";
+import { NoDataMessageModule } from '../../@shared/no-data-message/no-data-message.module';
 
 @NgModule({
 	imports: [
@@ -37,6 +38,7 @@ import { TableComponentsModule } from "../../@shared/table-components";
 		NgxPermissionsModule.forChild(),
 		GauzyButtonActionModule,
 		TableComponentsModule,
+		NoDataMessageModule
 	],
 	declarations: [
 		IntegrationLayoutComponent,

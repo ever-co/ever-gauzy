@@ -1245,7 +1245,8 @@
 		"INTEGRATION": "Integration",
 		"MESSAGE": {
 			"SETTINGS_UPDATED": "Updated settings for '{{provider}}' integration",
-			"INTEGRATION_DELETED": "Integration '{{provider}}' deleted successfully"
+			"INTEGRATION_DELETED": "Integration '{{provider}}' deleted successfully",
+			"NO_INTEGRATIONS": "You have not configured any integrations"
 		},
 		"ENABLED": "Enabled",
 		"DISABLED": "Disabled"
