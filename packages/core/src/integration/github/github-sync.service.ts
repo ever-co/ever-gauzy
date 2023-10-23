@@ -119,7 +119,11 @@ export class GithubSyncService {
                                                 } catch (error) {
                                                     console.error('Failed to fetch GitHub labels for the repository issue:', error.message);
                                                 }
-                                                /** */
+
+                                                // Disable the "2 Way Sync Triggered Event" for manual synchronization
+                                                const triggeredEvent = false;
+
+                                                // Execute a command to initiate the synchronization process
                                                 return await this._commandBus.execute(
                                                     new IntegrationMapSyncIssueCommand({
                                                         entity: {
@@ -136,7 +140,7 @@ export class GithubSyncService {
                                                         integrationId,
                                                         organizationId,
                                                         tenantId
-                                                    })
+                                                    }, triggeredEvent)
                                                 );
                                             }
                                         )
