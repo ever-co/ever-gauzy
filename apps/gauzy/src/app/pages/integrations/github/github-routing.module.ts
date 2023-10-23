@@ -23,13 +23,7 @@ const routes: Routes = [
 				path: ':integrationId',
 				component: GithubViewComponent,
 				data: {
-					selectors: {
-						project: true,
-						team: true,
-						employee: false,
-						date: false,
-						organization: false,
-					}
+					selectors: false
 				}
 			},
 			{
