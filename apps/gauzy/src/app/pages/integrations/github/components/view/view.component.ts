@@ -1,7 +1,7 @@
 import { AfterViewInit, Component, OnInit, ViewChild } from '@angular/core';
 import { TitleCasePipe } from '@angular/common';
 import { ActivatedRoute, Data, Router } from '@angular/router';
-import { EMPTY, debounceTime, finalize, first, firstValueFrom, of } from 'rxjs';
+import { EMPTY, Subject, debounceTime, finalize, first, firstValueFrom, of } from 'rxjs';
 import { Observable } from 'rxjs/internal/Observable';
 import { catchError, filter, map, switchMap, tap } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
@@ -41,7 +41,7 @@ import { GithubSettingsDialogComponent } from '../settings-dialog/settings-dialo
 		TitleCasePipe
 	]
 })
-export class GithubViewComponent extends TranslationBaseComponent implements OnInit {
+export class GithubViewComponent extends TranslationBaseComponent implements AfterViewInit, OnInit {
 	public parsedInt = parsedInt;
 
 	public syncing: boolean = false;
@@ -57,6 +57,7 @@ export class GithubViewComponent extends TranslationBaseComponent implements OnI
 	public issues$: Observable<IGithubIssue[]>;
 	public issues: IGithubIssue[] = [];
 	public selectedIssues: IGithubIssue[] = [];
+	public selectedProject$: Subject<IOrganizationProject> = new Subject();
 
 	/**
 	 * Sets up a property 'issuesTable' to reference an instance of 'Ng2SmartTableComponent'
@@ -92,19 +93,21 @@ export class GithubViewComponent extends TranslationBaseComponent implements OnI
 		this._loadSmartTableSettings();
 		this._applyTranslationOnSmartTable();
 		this._getGithubIntegrationTenant();
+	}
 
-		this.project$ = this._store.selectedProject$.pipe(
+	ngAfterViewInit(): void {
+		this.project$ = this.selectedProject$.pipe(
 			debounceTime(100),
 			distinctUntilChange(),
-			filter((project: IOrganizationProject) => !!project),
-			switchMap((project: IOrganizationProject) => {
+			tap((project: IOrganizationProject) => this.project = project || null),
+			filter(() => !!this.project),
+			switchMap(() => {
+				// Extract project properties
+				const { id: projectId } = this.project;
 				// Ensure there is a valid organization
-				if (!project.id) {
+				if (!projectId) {
 					return EMPTY; // No valid organization, return false
 				}
-				// Extract project properties
-				const { id: projectId } = this.project = project;
-
 				return this._organizationProjectsService.getById(projectId, ['repository']).pipe(
 					catchError((error) => {
 						// Handle and log errors
@@ -329,31 +332,29 @@ export class GithubViewComponent extends TranslationBaseComponent implements OnI
 	 */
 	syncIssues() {
 		try {
-			// Check if there is a valid organization and integration
-			if (!this.organization || !this.repository) {
+			// Ensure there is a valid organization, repository, and project
+			if (!this.organization || !this.repository || !this.project) {
 				return;
 			}
-			// Check if another synchronization is already in progress
+
+			// Avoid running another synchronization if one is already in progress
 			if (this.syncing) {
 				return;
 			}
 
+			// Mark the synchronization as in progress
 			this.syncing = true;
 
 			const { id: organizationId, tenantId } = this.organization;
 			const { id: integrationId } = this.integration;
+			const { id: projectId } = this.project;
 
-			// Call the syncIssuesAndLabels method from the _githubService
-			// to initiate the synchronization process.
+			// Initiate the synchronization process by calling the _githubService
 			this._githubService.syncIssuesAndLabels(
 				integrationId,
 				this.repository,
 				{
-					...(this.project
-						? {
-							projectId: this.project.id
-						}
-						: {}),
+					projectId,
 					organizationId,
 					tenantId,
 					issues: this.selectedIssues

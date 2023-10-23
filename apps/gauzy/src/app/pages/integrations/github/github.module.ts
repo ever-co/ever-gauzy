@@ -1,13 +1,12 @@
 import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import {
-	NbActionsModule,
 	NbButtonModule,
 	NbCardModule,
 	NbDialogModule,
 	NbIconModule,
-	NbPopoverModule,
 	NbSpinnerModule,
+	NbTabsetModule,
 	NbToggleModule
 } from '@nebular/theme';
 import { Ng2SmartTableModule } from 'ng2-smart-table';
@@ -22,6 +21,7 @@ import { GithubViewComponent } from './components/view/view.component';
 import { GithubSettingsDialogComponent } from './components/settings-dialog/settings-dialog.component';
 import { RepositorySelectorModule } from '../../../@shared/integrations/github';
 import { DirectivesModule } from '../../../@shared/directives/directives.module';
+import { ProjectSelectModule } from '../../../@shared/project-select/project-select.module';
 
 @NgModule({
 	declarations: [
@@ -33,13 +33,12 @@ import { DirectivesModule } from '../../../@shared/directives/directives.module'
 	],
 	imports: [
 		CommonModule,
-		NbActionsModule,
 		NbButtonModule,
 		NbCardModule,
-		NbIconModule,
 		NbDialogModule,
-		NbPopoverModule,
+		NbIconModule,
 		NbSpinnerModule,
+		NbTabsetModule,
 		NbToggleModule,
 		Ng2SmartTableModule,
 		NgSelectModule,
@@ -47,7 +46,8 @@ import { DirectivesModule } from '../../../@shared/directives/directives.module'
 		TranslateModule,
 		DirectivesModule,
 		BackNavigationModule,
-		RepositorySelectorModule
+		RepositorySelectorModule,
+		ProjectSelectModule
 	]
 })
 export class GithubModule { }
