@@ -92,6 +92,31 @@ export type Env = Readonly<{
 	COMPANY_FACEBOOK_LINK: string;
 	COMPANY_TWITTER_LINK: string;
 	COMPANY_LINKEDIN_LINK: string;
+	PROJECT_REPO: string;
+	DESKTOP_TIMER_APP_NAME: string;
+	DESKTOP_TIMER_APP_DESCRIPTION: string;
+	DESKTOP_TIMER_APP_ID: string;
+	DESKTOP_TIMER_APP_REPO_NAME: string;
+	DESKTOP_TIMER_APP_REPO_OWNER: string;
+	DESKTOP_TIMER_APP_WELCOME_TITLE: string;
+	DESKTOP_TIMER_APP_WELCOME_CONTENT: string;
+	DESKTOP_TIMER_APP_I18N_FILES_URL: string;
+	DESKTOP_APP_NAME: string;
+	DESKTOP_APP_DESCRIPTION: string;
+	DESKTOP_APP_ID: string;
+	DESKTOP_APP_REPO_NAME: string;
+	DESKTOP_APP_REPO_OWNER: string;
+	DESKTOP_APP_WELCOME_TITLE: string;
+	DESKTOP_APP_WELCOME_CONTENT: string;
+	DESKTOP_APP_I18N_FILES_URL: string;
+	DESKTOP_SERVER_APP_NAME: string;
+	DESKTOP_SERVER_APP_DESCRIPTION: string;
+	DESKTOP_SERVER_APP_ID: string;
+	DESKTOP_SERVER_APP_REPO_NAME: string;
+	DESKTOP_SERVER_APP_REPO_OWNER: string;
+	DESKTOP_SERVER_APP_WELCOME_TITLE: string;
+	DESKTOP_SERVER_APP_WELCOME_CONTENT: string;
+	DESKTOP_SERVER_APP_I18N_FILES_URL: string;
 }>;
 
 export const env: Env = cleanEnv(
@@ -178,44 +203,95 @@ export const env: Env = cleanEnv(
 
 		// Set default platform privacy link
 		PLATFORM_PRIVACY_URL: str({
-			default: 'https://gauzy.co/privacy'
+			default: 'https://gauzy.co/privacy',
 		}),
 
 		// Set default platform terms of services link
 		PLATFORM_TOS_URL: str({
-			default: 'https://gauzy.co/tos'
+			default: 'https://gauzy.co/tos',
 		}),
 
 		COMPANY_NAME: str({
-			default: 'Ever Co. LTD'
+			default: 'Ever Co. LTD',
 		}),
 		COMPANY_SITE: str({
-			default: 'Gauzy'
+			default: 'Gauzy',
 		}),
 		COMPANY_LINK: str({
-			default: 'https://ever.co'
+			default: 'https://ever.co',
 		}),
 		COMPANY_SITE_LINK: str({
-			default: 'https://gauzy.co'
+			default: 'https://gauzy.co',
 		}),
 		COMPANY_GITHUB_LINK: str({
-			default: 'https://github.com/ever-co'
+			default: 'https://github.com/ever-co',
 		}),
 		COMPANY_GITLAB_LINK: str({
-			default: 'https://gitlab.com/ever-co'
+			default: 'https://gitlab.com/ever-co',
 		}),
 		COMPANY_FACEBOOK_LINK: str({
-			default: 'https://www.facebook.com/gauzyplatform'
+			default: 'https://www.facebook.com/gauzyplatform',
 		}),
 		COMPANY_TWITTER_LINK: str({
-			default: 'https://twitter.com/gauzyplatform'
+			default: 'https://twitter.com/gauzyplatform',
 		}),
 		COMPANY_LINKEDIN_LINK: str({
-			default: 'https://www.linkedin.com/company/ever-co'
+			default: 'https://www.linkedin.com/company/ever-co',
 		}),
 		NO_INTERNET_LOGO: str({
-			default: 'assets/images/logos/logo_Gauzy.svg'
-		})
+			default: 'assets/images/logos/logo_Gauzy.svg',
+		}),
+		PROJECT_REPO: str({
+			default: 'https://github.com/ever-co/ever-teams.git',
+		}),
+		DESKTOP_TIMER_APP_NAME: str({
+			default: 'gauzy-desktop-timer',
+		}),
+		DESKTOP_TIMER_APP_DESCRIPTION: str({
+			default: 'Gauzy Desktop Timer',
+		}),
+		DESKTOP_TIMER_APP_ID: str({
+			default: 'com.ever.gauzydesktoptimer',
+		}),
+		DESKTOP_TIMER_APP_REPO_NAME: str({
+			default: 'ever-gauzy-desktop-timer',
+		}),
+		DESKTOP_TIMER_APP_REPO_OWNER: str({ default: 'ever-co' }),
+		DESKTOP_TIMER_APP_WELCOME_TITLE: str({ default: '' }),
+		DESKTOP_TIMER_APP_WELCOME_CONTENT: str({ default: '' }),
+		DESKTOP_TIMER_APP_I18N_FILES_URL: str({ default: '' }),
+		DESKTOP_APP_NAME: str({
+			default: 'gauzy-desktop',
+		}),
+		DESKTOP_APP_DESCRIPTION: str({
+			default: 'Gauzy Desktop',
+		}),
+		DESKTOP_APP_ID: str({
+			default: 'com.ever.gauzydesktop',
+		}),
+		DESKTOP_APP_REPO_NAME: str({
+			default: 'ever-gauzy-desktop',
+		}),
+		DESKTOP_APP_REPO_OWNER: str({ default: 'ever-co' }),
+		DESKTOP_APP_WELCOME_TITLE: str({ default: '' }),
+		DESKTOP_APP_WELCOME_CONTENT: str({ default: '' }),
+		DESKTOP_APP_I18N_FILES_URL: str({ default: '' }),
+		DESKTOP_SERVER_APP_NAME: str({
+			default: 'gauzy-server',
+		}),
+		DESKTOP_SERVER_APP_DESCRIPTION: str({
+			default: 'Gauzy Server',
+		}),
+		DESKTOP_SERVER_APP_ID: str({
+			default: 'com.ever.gauzyserver',
+		}),
+		DESKTOP_SERVER_APP_REPO_NAME: str({
+			default: 'ever-gauzy-server',
+		}),
+		DESKTOP_SERVER_APP_REPO_OWNER: str({ default: 'ever-co' }),
+		DESKTOP_SERVER_APP_WELCOME_TITLE: str({ default: '' }),
+		DESKTOP_SERVER_APP_WELCOME_CONTENT: str({ default: '' }),
+		DESKTOP_SERVER_APP_I18N_FILES_URL: str({ default: '' }),
 	},
 	{ strict: true, dotEnvPath: __dirname + '/../.env' }
 );
