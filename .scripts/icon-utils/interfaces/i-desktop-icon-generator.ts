@@ -7,4 +7,6 @@ export interface IDesktopIconGenerator extends IIconGenerator {
 	generateWindowsIcon(originalImage: Jimp): Promise<void>;
 
 	generateMacIcon(originalImage: Jimp): Promise<void>;
+
+	generateTrayIcon(originalImage: Jimp): Promise<void>;
 }

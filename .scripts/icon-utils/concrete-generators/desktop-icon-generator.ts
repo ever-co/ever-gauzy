@@ -17,7 +17,7 @@ export class DesktopIconGenerator
 
 	private async updateLogoPath(): Promise<void> {
 		const source = path.join(this.destination, 'icon.png');
-		const destination = `apps/${this.desktop}/src/assets/icons/icon.png`;
+		const destination = `apps/${this.desktop}/src/assets/icons/desktop_logo_512x512.png`;
 		await new Promise((resolve, reject) =>
 			fs.copyFile(source, destination, (error) => {
 				if (error) {
@@ -28,7 +28,7 @@ export class DesktopIconGenerator
 					reject(error);
 				} else {
 					process.env.GAUZY_DESKTOP_LOGO_512X512 =
-						'assets/icons/icon.png';
+						'assets/icons/desktop_logo_512x512.png';
 					console.log(
 						'⛓ - desktop logo 512x512 icons generated successfully!'
 					);
@@ -89,6 +89,26 @@ export class DesktopIconGenerator
 		);
 	}
 
+	public async generateTrayIcon(originalImage: Jimp): Promise<void> {
+		const pngFilePath = path.join(
+			'apps',
+			this.desktop,
+			'src',
+			'assets',
+			'icons',
+			'icon.png'
+		);
+		await new Promise((resolve) =>
+			originalImage
+				.clone()
+				.resize(16, 16)
+				.write(pngFilePath, () => {
+					console.log('⛓ - tray icon generated successfully.');
+					resolve(true);
+				})
+		);
+	}
+
 	public async resizeAndConvert(filePath: string): Promise<void> {
 		const image = await Jimp.read(filePath);
 		const pngFilePath = path.join(this.destination, 'icon.png');
@@ -107,6 +127,7 @@ export class DesktopIconGenerator
 		await this.generateLinuxIcons(image);
 		await this.generateMacIcon(image);
 		await this.generateWindowsIcon(image);
+		await this.generateTrayIcon(image);
 	}
 
 	public async generate(): Promise<void> {
@@ -114,7 +135,7 @@ export class DesktopIconGenerator
 			const filePath = await this.downloadImage();
 			if (filePath) {
 				await this.resizeAndConvert(filePath);
-				this.remove(filePath);
+				await this.remove(filePath);
 			} else {
 				await IconFactory.generateDefaultIcons();
 			}

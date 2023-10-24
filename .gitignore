@@ -100,7 +100,12 @@ apps/desktop-timer/src/assets/images/logos/no_internet_logo.*
 apps/desktop/src/assets/images/logos/no_internet_logo.*
 apps/server/src/assets/images/logos/no_internet_logo.*
 
-# Generated desktop 512x512 icon
+# Generated desktop icon tray
 apps/desktop-timer/src/assets/icons/icon.png
 apps/desktop/src/assets/icons/icon.png
 apps/server/src/assets/icons/icon.png
+
+# Generated desktop 512x512 icon
+apps/desktop-timer/src/assets/icons/desktop_logo_512x512.png
+apps/desktop/src/assets/icons/desktop_logo_512x512.png
+apps/server/src/assets/icons/desktop_logo_512x512.png
