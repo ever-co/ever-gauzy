@@ -41,7 +41,7 @@ export class DesktopOsInactivityHandler {
 				this._windowFocus();
 				this._startedAt = new Date();
 				this._dialog = new DesktopDialog(
-					'Gauzy',
+					process.env.DESKTOP_TIMER_APP_DESCRIPTION,
 					TranslateService.instant('TIMER_TRACKER.DIALOG.STILL_WORKING'),
 					powerManager.window
 				);
@@ -79,7 +79,7 @@ export class DesktopOsInactivityHandler {
 					if (!this._inactivityResultAccepted) {
 						const dialog = new DialogAcknowledgeInactivity(
 							new DesktopDialog(
-								'Gauzy',
+								process.env.DESKTOP_TIMER_APP_DESCRIPTION,
 								TranslateService.instant('TIMER_TRACKER.DIALOG.INACTIVITY_HANDLER'),
 								powerManager.window
 							)
@@ -109,7 +109,7 @@ export class DesktopOsInactivityHandler {
 				if (!res)
 					this._notify.customNotification(
 						TranslateService.instant('TIMER_TRACKER.NATIVE_NOTIFICATION.STOPPED_DU_INACTIVITY'),
-						'Gauzy'
+						process.env.DESKTOP_TIMER_APP_DESCRIPTION,
 					);
 				this._inactivityResultAccepted = true;
 			}

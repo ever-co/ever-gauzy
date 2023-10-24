@@ -244,7 +244,7 @@ export class TrayIcon {
 				label: TranslateService.instant(
 					'BUTTONS.LOGOUT'
 				),
-				visible: app.getName() === 'gauzy-desktop-timer',
+				visible: app.getName() === process.env.DESKTOP_TIMER_APP_NAME,
 				async click() {
 					const appSetting = store.get('appSetting');
 					let isLogout = true;
@@ -274,7 +274,7 @@ export class TrayIcon {
 			Menu.getApplicationMenu().getMenuItemById('window-setting');
 
 		const openWindow = async () => {
-			if (app.getName() === 'gauzy-desktop-timer') {
+			if (app.getName() === process.env.DESKTOP_TIMER_APP_NAME) {
 				timeTrackerWindow.show();
 				timeTrackerWindow.webContents.send('auth_success_tray_init');
 			}
@@ -413,7 +413,7 @@ export class TrayIcon {
 			} else {
 				if (
 					!loginPageAlreadyShow &&
-					app.getName() !== 'gauzy-desktop-timer'
+					app.getName() !== process.env.DESKTOP_TIMER_APP_NAME
 				) {
 					const serverConfig = LocalStore.getStore('configs');
 					global.variableGlobal = {

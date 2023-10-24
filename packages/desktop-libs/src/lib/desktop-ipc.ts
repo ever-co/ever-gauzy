@@ -371,7 +371,7 @@ export function ipcTimer(
 		if (!notificationWindow) {
 			try {
 				notificationWindow = new ScreenCaptureNotification(
-					app.getName() !== 'gauzy-desktop-timer'
+					app.getName() !== process.env.DESKTOP_TIMER_APP_NAME
 						? windowPath.screenshotWindow
 						: windowPath.timeTrackerUi
 				);
@@ -494,7 +494,7 @@ export function ipcTimer(
 					message: TranslateService.instant(
 						'TIMER_TRACKER.NATIVE_NOTIFICATION.SCREENSHOT_REMOVED'
 					),
-					title: 'Gauzy',
+					title: process.env.DESKTOP_TIMER_APP_DESCRIPTION,
 				};
 				const notify = new NotificationDesktop();
 				await intervalService.remove(intervalId);
@@ -682,7 +682,7 @@ export function ipcTimer(
 					TranslateService.instant(
 						'TIMER_TRACKER.NATIVE_NOTIFICATION.SCREENSHOT_TAKEN'
 					),
-					'Gauzy'
+					process.env.DESKTOP_TIMER_APP_DESCRIPTION
 				);
 			} else if (appSetting.screenshotNotification) {
 				try {
@@ -813,7 +813,7 @@ export function ipcTimer(
 
 	ipcMain.on('navigate_to_login', async () => {
 		try {
-			if (timeTrackerWindow && app.getName() === 'gauzy-desktop-timer') {
+			if (timeTrackerWindow && app.getName() === process.env.DESKTOP_TIMER_APP_NAME) {
 				await timeTrackerWindow.loadURL(
 					loginPage(windowPath.timeTrackerUi)
 				);
@@ -1149,7 +1149,7 @@ export async function handleLogoutDialog(
 ): Promise<boolean> {
 	const dialog = new DialogStopTimerLogoutConfirmation(
 		new DesktopDialog(
-			'Gauzy Desktop Timer',
+			process.env.DESKTOP_TIMER_APP_DESCRIPTION,
 			TranslateService.instant('TIMER_TRACKER.DIALOG.WANT_LOGOUT'),
 			window
 		)

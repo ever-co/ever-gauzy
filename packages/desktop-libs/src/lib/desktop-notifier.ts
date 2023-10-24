@@ -36,7 +36,7 @@ export default class NotificationDesktop {
 
 	public timerActionNotification(isStart) {
 		const notification = new Notification({
-			title: 'Gauzy',
+			title: process.env.DESKTOP_TIMER_APP_DESCRIPTION,
 			body: TranslateService.instant(
 				isStart
 					? 'TIMER_TRACKER.START_TIMER'

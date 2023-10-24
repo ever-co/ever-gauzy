@@ -1,4 +1,4 @@
-import { Component, Input, OnInit, Output, EventEmitter } from '@angular/core';
+import { Component, Input, OnInit, Output, EventEmitter, Inject } from '@angular/core';
 import { FormGroup, FormControl, Validators } from '@angular/forms';
 import { TimeTrackerService } from '../time-tracker/time-tracker.service';
 import {
@@ -12,6 +12,7 @@ import { NbToastrService } from '@nebular/theme';
 import * as moment from 'moment';
 import { TranslateService } from '@ngx-translate/core';
 import { ColorAdapter } from '../utils';
+import { GAUZY_ENV } from '../constants';
 
 @Component({
 	selector: 'ngx-tasks',
@@ -64,7 +65,9 @@ export class TasksComponent implements OnInit {
 	constructor(
 		private timeTrackerService: TimeTrackerService,
 		private toastrService: NbToastrService,
-		private translate: TranslateService
+		private translate: TranslateService,
+		@Inject(GAUZY_ENV)
+		private readonly _environment: any,
 	) {
 		this.isSaving = false;
 	}
@@ -197,7 +200,7 @@ export class TasksComponent implements OnInit {
 			this.projects = this.projects.concat([project]);
 			this.toastrService.success(
 				this.translate.instant('TIMER_TRACKER.TOASTR.PROJECT_ADDED'),
-				'Gauzy'
+				this._environment.DESKTOP_TIMER_APP_DESCRIPTION,
 			);
 		} catch (error) {
 			this.toastrService.danger(error);

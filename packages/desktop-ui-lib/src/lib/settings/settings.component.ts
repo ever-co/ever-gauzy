@@ -1161,15 +1161,15 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 	}
 
 	public get isDesktopTimer(): boolean {
-		return this.appName === 'gauzy-desktop-timer';
+		return this.appName === this._environment.DESKTOP_TIMER_APP_NAME;
 	}
 
 	public get isDesktop(): boolean {
-		return this.appName === 'gauzy-desktop';
+		return this.appName === this._environment.DESKTOP_APP_NAME;
 	}
 
 	public get isServer(): boolean {
-		return this.appName === 'gauzy-server';
+		return this.appName === this._environment.DESKTOP_SERVER_APP_NAME;
 	}
 
 	public get selectedMenu$(): Observable<string> {
