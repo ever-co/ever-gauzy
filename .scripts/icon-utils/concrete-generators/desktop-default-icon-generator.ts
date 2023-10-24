@@ -27,6 +27,7 @@ export class DesktopDefaultIconGenerator implements IIconGeneratorBase {
 							error
 						);
 						reject(error);
+						return;
 					}
 					process.env.GAUZY_DESKTOP_LOGO_512X512 =
 						env.GAUZY_DESKTOP_LOGO_512X512;

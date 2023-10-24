@@ -27,6 +27,7 @@ export class PlatformLogoGenerator
 						err
 					);
 					reject(err);
+					return;
 				}
 				// load image from assets
 				process.env.PLATFORM_LOGO_URL = `assets/images/logos/platform_logo${extName}`;

@@ -27,6 +27,7 @@ export class NoInternetLogoGenerator
 						err
 					);
 					reject(err);
+					return;
 				}
 				// load image from assets
 				process.env.NO_INTERNET_LOGO = `assets/images/logos/no_internet_logo${extName}`;
