@@ -70,7 +70,7 @@
 		],
 		"mac": {
 			"category": "public.app-category.developer-tools",
-			"icon": "icon.png",
+			"icon": "icon.icns",
 			"target": [
 				"zip",
 				"dmg"
