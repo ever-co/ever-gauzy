@@ -30,6 +30,7 @@ export interface IGithubRepository {
     full_name: string;
     private: boolean;
     visibility: string;
+    open_issues_count: number;
     owner?: {
         id: number;
         login: string;
@@ -126,8 +127,18 @@ export interface IOrganizationGithubRepository extends IBasePerTenantAndOrganiza
     name: string;
     fullName: string;
     owner: string;
+    issuesCount: number;
+    hasSyncEnabled: boolean;
+    private: boolean;
+    status: string;
 }
 
 export interface IIntegrationMapSyncRepository extends IBasePerTenantAndOrganizationEntityModel, IRelationalIntegrationTenant {
     repository: IGithubRepository;
+}
+
+export enum IGithubIssueStatusEnum {
+    SYNCING = 'syncing',
+    STOPPED = 'stopped',
+    ERROR = 'error'
 }
