@@ -157,7 +157,9 @@
 		"PASTE": "Paste",
 		"FORWARD_PORTS": "Forward Ports",
 		"REPORT": "Report",
-		"IGNORE": "Ignore"
+		"IGNORE": "Ignore",
+		"ENABLE": "Enable",
+		"DISABLE": "Disable"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {
@@ -303,7 +305,8 @@
 		"PROVIDER": "Provider",
 		"GITHUB_REPOSITORY": "Github Repository",
 		"ISSUES_SYNC": "Issues in Sync",
-		"ISSUES_SYNC_COUNT": "{{ count }} Issues Auto Sync"
+		"ISSUES_SYNC_COUNT": "{{ count }} Issues Auto Sync",
+		"ENABLED_DISABLED_SYNC": "Enabled / Disabled Sync"
 	},
 	"FORM": {
 		"USERNAME": "Username",

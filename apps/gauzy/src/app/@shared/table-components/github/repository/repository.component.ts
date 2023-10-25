@@ -3,8 +3,8 @@ import { ViewCell } from 'ng2-smart-table';
 
 @Component({
 	selector: 'ngx-github-repository',
-	templateUrl: './github-repository.component.html',
-	styleUrls: ['./github-repository.component.scss']
+	templateUrl: './repository.component.html',
+	styleUrls: ['./repository.component.scss']
 })
 export class GithubRepositoryComponent implements OnInit, ViewCell {
 

@@ -36,7 +36,8 @@ import {
 	ProjectComponent,
 	GithubRepositoryComponent,
 	TagsOnlyComponent,
-	TrustHtmlLinkComponent
+	TrustHtmlLinkComponent,
+	GithubAutoSyncSwitchComponent
 } from './../../../../../@shared/table-components';
 import { GithubSettingsDialogComponent } from '../settings-dialog/settings-dialog.component';
 
@@ -333,6 +334,25 @@ export class GithubViewComponent extends TranslationBaseComponent implements Aft
 						return this.getTranslation('SM_TABLE.ISSUES_SYNC_COUNT', {
 							count: row.repository.issuesCount
 						})
+					}
+				},
+				hasSyncEnabled: {
+					title: this.getTranslation('SM_TABLE.ENABLED_DISABLED_SYNC'),
+					type: 'custom',
+					filter: false,
+					renderComponent: GithubAutoSyncSwitchComponent,
+					valuePrepareFunction: (i: any, row: IOrganizationProject) => {
+						return row.repository.hasSyncEnabled || false;
+					},
+					onComponentInitFunction: (instance: any) => {
+						instance.autoSyncChange.subscribe({
+							next: (hasSynced: boolean) => {
+								console.log(hasSynced)
+							},
+							error: (err: any) => {
+								console.warn(err);
+							}
+						});
 					}
 				},
 				status: {
