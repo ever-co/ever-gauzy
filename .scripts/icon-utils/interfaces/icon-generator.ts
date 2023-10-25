@@ -36,6 +36,11 @@ export abstract class IconGenerator {
 
 	public checkUrlValidity(urlString: string): boolean {
 		try {
+			if (!urlString) {
+				console.warn('⚠️ - path is invalid, its cannot be null');
+				return false;
+			}
+
 			const securedProtocol = urlString.indexOf('https://');
 			const localProtocol = urlString.indexOf('assets');
 
