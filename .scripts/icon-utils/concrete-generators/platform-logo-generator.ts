@@ -2,6 +2,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { IconGenerator } from '../interfaces/icon-generator';
 import { IIconGenerator } from '../interfaces/i-icon-generator';
+import { env } from '../../env';
 
 export class PlatformLogoGenerator
 	extends IconGenerator
@@ -9,8 +10,15 @@ export class PlatformLogoGenerator
 {
 	constructor() {
 		super();
-		this.imageUrl = process.env.PLATFORM_LOGO_URL;
-		this.destination = `apps/${this.desktop}/src/assets/images/logos`;
+		this.imageUrl = env.PLATFORM_LOGO_URL;
+		this.destination = path.join(
+			'apps',
+			this.desktop,
+			'src',
+			'assets',
+			'images',
+			'logos'
+		);
 	}
 
 	public async resizeAndConvert(filePath: string): Promise<void> {
@@ -30,9 +38,15 @@ export class PlatformLogoGenerator
 					return;
 				}
 				// load image from assets
-				process.env.PLATFORM_LOGO_URL = `assets/images/logos/platform_logo${extName}`;
+				process.env.PLATFORM_LOGO_URL = path.join(
+					'assets',
+					'images',
+					'logos',
+					`platform_logo${extName}`
+				);
+				// remove downloaded file
 				await this.remove(filePath);
-				console.log(`⛓- ${extName} renamed successfully.`);
+				console.log(`✔ ${extName} copied successfully.`);
 				resolve(true);
 			})
 		);

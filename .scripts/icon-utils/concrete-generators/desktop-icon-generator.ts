@@ -4,6 +4,7 @@ import * as path from 'path';
 import { IconGenerator } from '../interfaces/icon-generator';
 import { IDesktopIconGenerator } from '../interfaces/i-desktop-icon-generator';
 import { IconFactory } from '../icon-factory';
+import { env } from '../../env';
 
 export class DesktopIconGenerator
 	extends IconGenerator
@@ -11,26 +12,36 @@ export class DesktopIconGenerator
 {
 	constructor() {
 		super();
-		this.imageUrl = process.env.GAUZY_DESKTOP_LOGO_512X512;
-		this.destination = `apps/${this.desktop}/src/icons`;
+		this.imageUrl = env.GAUZY_DESKTOP_LOGO_512X512;
+		this.destination = path.join('apps', this.desktop, 'src', 'icons');
 	}
 
 	private async updateLogoPath(): Promise<void> {
 		const source = path.join(this.destination, 'icon.png');
-		const destination = `apps/${this.desktop}/src/assets/icons/desktop_logo_512x512.png`;
+		const destination = path.join(
+			'apps',
+			this.desktop,
+			'src',
+			'assets',
+			'icons',
+			'desktop_logo_512x512.png'
+		);
 		await new Promise((resolve, reject) =>
 			fs.copyFile(source, destination, (error) => {
 				if (error) {
 					console.error(
-						'An error occurred while generating the files:',
+						'ERROR: An error occurred while generating the files:',
 						error
 					);
 					reject(error);
 				} else {
-					process.env.GAUZY_DESKTOP_LOGO_512X512 =
-						'assets/icons/desktop_logo_512x512.png';
+					process.env.GAUZY_DESKTOP_LOGO_512X512 = path.join(
+						'assets',
+						'icons',
+						'desktop_logo_512x512.png'
+					);
 					console.log(
-						'⛓ - desktop logo 512x512 icons generated successfully!'
+						'✔ desktop logo 512x512 icons generated successfully.'
 					);
 					resolve(true);
 				}
@@ -43,7 +54,7 @@ export class DesktopIconGenerator
 		const linuxDestination = path.join(this.destination, 'linux');
 		if (!fs.existsSync(linuxDestination)) {
 			fs.mkdirSync(linuxDestination);
-			console.log('📁 - linux icons directory created!');
+			console.log('✔ linux icons directory created.');
 		}
 		for (const iconSize of linuxIconSizes) {
 			const linuxIconFilePath = path.join(
@@ -56,7 +67,7 @@ export class DesktopIconGenerator
 					.resize(iconSize, iconSize)
 					.write(linuxIconFilePath, () => {
 						console.log(
-							`⛓ - ${iconSize}x${iconSize} icon generated`
+							`✔ ${iconSize}x${iconSize} icon generated.`
 						);
 						resolve(true);
 					})
@@ -68,7 +79,7 @@ export class DesktopIconGenerator
 		const macIconFilePath = path.join(this.destination, 'icon.icns');
 		await new Promise((resolve) =>
 			originalImage.clone().write(macIconFilePath, () => {
-				console.log('⛓ - Image converted to ICNS format successfully.');
+				console.log('✔ image converted to ICNS format successfully.');
 				resolve(true);
 			})
 		);
@@ -82,7 +93,7 @@ export class DesktopIconGenerator
 				.resize(256, 256)
 				.write(windowsIconFilePath, () => {
 					console.log(
-						'⛓ - Image converted to ICO format successfully.'
+						'✔ image converted to ICO format successfully.'
 					);
 					resolve(true);
 				})
@@ -103,7 +114,7 @@ export class DesktopIconGenerator
 				.clone()
 				.resize(16, 16)
 				.write(pngFilePath, () => {
-					console.log('⛓ - tray icon generated successfully.');
+					console.log('✔ tray icon generated successfully.');
 					resolve(true);
 				})
 		);
@@ -118,7 +129,7 @@ export class DesktopIconGenerator
 				.resize(512, 512)
 				.write(pngFilePath, () => {
 					console.log(
-						'⛓ - Image converted to PNG format successfully.'
+						'✔ image converted to PNG format successfully.'
 					);
 					resolve(true);
 				})
@@ -141,7 +152,7 @@ export class DesktopIconGenerator
 			}
 			await this.updateLogoPath();
 		} catch (error) {
-			console.warn(error);
+			console.error(error);
 		}
 	}
 }

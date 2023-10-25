@@ -24,7 +24,7 @@ export abstract class IconGenerator {
 			fs.rm(filePath, (error) => {
 				if (error) {
 					console.error(
-						'An error occurred while removing the file:',
+						'ERROR: An error occurred while removing the file:',
 						error
 					);
 					reject(error);
@@ -37,7 +37,7 @@ export abstract class IconGenerator {
 	public checkUrlValidity(urlString: string): boolean {
 		try {
 			if (!urlString) {
-				console.warn('⚠️ - path is invalid, its cannot be null');
+				console.warn('WARNING: Path is invalid, its cannot be null.');
 				return false;
 			}
 
@@ -45,18 +45,18 @@ export abstract class IconGenerator {
 			const localProtocol = urlString.indexOf('assets');
 
 			if (localProtocol > -1 && localProtocol === Number(0)) {
-				console.log('⛓ - url is valid!');
+				console.log('✔ url is valid!');
 				this.downloadContext.strategy = new DownloadAssetStrategy();
 				return true;
 			}
 
 			if (securedProtocol > -1 && securedProtocol === Number(0)) {
 				const url = new URL(urlString);
-				console.log('⛓ - url is valid!');
+				console.log('✔ url is valid!');
 				this.downloadContext.strategy = new DownloadHttpsStrategy();
 				return !!url;
 			}
-			console.warn('⚠️ - only secured https url is allowed');
+			console.warn('WARNING: Only secured https url is allowed');
 			return false;
 		} catch (error) {
 			console.error(error);
@@ -67,7 +67,7 @@ export abstract class IconGenerator {
 	public async downloadImage(): Promise<string> {
 		if (!this.desktop) {
 			console.warn(
-				'A desktop application variant must be selected, process exit'
+				'WARNING: A desktop application variant must be selected, process exit.'
 			);
 			process.exit(0);
 		}

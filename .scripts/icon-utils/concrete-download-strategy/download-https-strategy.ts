@@ -10,14 +10,14 @@ export class DownloadHttpsStrategy implements IDownloadStrategy {
 	): Promise<string> {
 		if (!fs.existsSync(destination)) {
 			fs.mkdirSync(destination);
-			console.log('📁 - directory created!');
+			console.log('✔ directory created!');
 		}
 		const response = await fetch(imageUrl);
 		const buffer = await response.buffer();
 		const fileName = path.basename(imageUrl);
 		const filePath = path.join(destination, fileName);
 		fs.writeFileSync(filePath, buffer);
-		console.log(`⛓ - image ${fileName} downloaded successfully.`);
+		console.log(`✔ image ${fileName} downloaded successfully.`);
 		return filePath;
 	}
 }

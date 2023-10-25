@@ -20,7 +20,7 @@ export class DownloadAssetStrategy implements IDownloadStrategy {
 		if (this.checkImageExistence(filePath)) {
 			return filePath;
 		}
-		console.warn(`⚠️ - this asset ${filePath} do not exist`);
+		console.warn(`WARNING️: This asset ${filePath} do not exist.`);
 		return null;
 	}
 }
