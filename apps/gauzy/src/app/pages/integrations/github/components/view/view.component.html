@@ -5,7 +5,8 @@
 				<ngx-back-navigation
 					class="float-left"
 					[haveLink]="true"
-					(click)="navigateToIntegrations()"></ngx-back-navigation>
+					(click)="navigateToIntegrations()"
+				></ngx-back-navigation>
 				{{ 'INTEGRATIONS.GITHUB_PAGE.TITLE' | translate }}
 			</h5>
 		</div>
@@ -36,7 +37,59 @@
 	<nb-card-body>
 		<nb-tabset>
 			<nb-tab [tabTitle]="'INTEGRATIONS.GITHUB_PAGE.TAB.AUTO_SYNC' | translate">
-
+				<ng-template [ngIf]="integration$ | async">
+					<nb-card>
+						<nb-card-header>
+							<div class="row">
+								<div class="col-4">
+									<ngx-github-repository-selector
+										[sourceId]="(project$ | async)?.repository?.repositoryId"
+										[integration]="integration"
+										(onChanged)="selectRepository($event, false)"
+										[selected]="true"
+									></ngx-github-repository-selector>
+								</div>
+								<div class="sync-arrow-right">
+									<i class="fas fa-arrow-right"></i>
+								</div>
+								<div class="col-4">
+									<ga-project-selector
+										[placeholder]="'FORM.PLACEHOLDERS.SELECT_PROJECT' | translate"
+										[label]="'FORM.LABELS.PROJECT'"
+										[defaultSelected]="false"
+										[showAllOption]="false"
+										[skipGlobalChange]="true"
+										(onChanged)="selectedProject$.next($event)"
+									></ga-project-selector>
+								</div>
+								<div class="sync-process-button">
+									<button
+										[disabled]="(!project || !repository)"
+										nbButton
+										status="success"
+										class="mr-2"
+										size="small"
+										debounceClick
+										(throttledClick)="autoSyncIssues()"
+									>
+										{{ 'BUTTONS.AUTO_SYNC' | translate }}
+									</button>
+								</div>
+							</div>
+						</nb-card-header>
+						<nb-card-body>
+							<div class="issues-container">
+								<div class="table-scroll-container">
+									<ng2-smart-table
+										[settings]="settingsSmartTableProjects"
+										[source]="projects$ | async"
+										style="cursor: pointer;"
+									></ng2-smart-table>
+								</div>
+							</div>
+						</nb-card-body>
+					</nb-card>
+				</ng-template>
 			</nb-tab>
 			<nb-tab [tabTitle]="'INTEGRATIONS.GITHUB_PAGE.TAB.MANUAL_SYNC' | translate">
 				<ng-template [ngIf]="integration$ | async">
@@ -47,7 +100,7 @@
 									<ngx-github-repository-selector
 										[sourceId]="(project$ | async)?.repository?.repositoryId"
 										[integration]="integration"
-										(onChanged)="selectRepository($event)"
+										(onChanged)="selectRepository($event, true)"
 										[selected]="true"
 									></ngx-github-repository-selector>
 								</div>
@@ -72,7 +125,7 @@
 										class="mr-2"
 										size="small"
 										debounceClick
-										(throttledClick)="syncIssues()"
+										(throttledClick)="manualSyncIssues()"
 									>
 										<div class="sync-container">
 											<nb-icon class="sync" icon="sync-outline" [ngClass]="{ 'spin' : syncing }"></nb-icon>
@@ -86,7 +139,7 @@
 							<div class="issues-container">
 								<div class="table-scroll-container">
 									<ng2-smart-table
-										[settings]="settingsSmartTable"
+										[settings]="settingsSmartTableIssues"
 										[source]="issues$ | async"
 										(userRowSelect)="selectIssues($event)"
 										style="cursor: pointer;"
@@ -98,39 +151,5 @@
 				</ng-template>
 			</nb-tab>
 		</nb-tabset>
-		<!-- <ng-template [ngIf]="integration$ | async">
-			<div class="mb-3">
-				<button
-					[disabled]="selectedIssues.length == 0"
-					nbButton
-					status="primary"
-					class="mr-2"
-					size="small"
-					debounceClick
-					(throttledClick)="syncIssues()"
-				>
-					<div class="sync-container">
-						<nb-icon class="sync" icon="sync-outline" [ngClass]="{ 'spin' : syncing }"></nb-icon>
-						{{ (syncing ? 'BUTTONS.SYNCING' : 'BUTTONS.SYNC') | translate }}
-					</div>
-				</button>
-			</div>
-			<div class="issues-container">
-				<ngx-github-repository-selector
-					[sourceId]="(project$ | async)?.repository?.repositoryId"
-					[integration]="integration"
-					(onChanged)="selectRepository($event)"
-					[selected]="true"
-				></ngx-github-repository-selector>
-				<div class="table-scroll-container">
-					<ng2-smart-table
-						[settings]="settingsSmartTable"
-						[source]="issues$ | async"
-						(userRowSelect)="selectIssues($event)"
-						style="cursor: pointer;"
-					></ng2-smart-table>
-				</div>
-			</div>
-		</ng-template> -->
 	</nb-card-body>
 </nb-card>

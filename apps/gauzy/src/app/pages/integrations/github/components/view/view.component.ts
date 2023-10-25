@@ -14,6 +14,7 @@ import {
 	IGithubRepository,
 	IIntegrationTenant,
 	IOrganization,
+	IOrganizationGithubRepository,
 	IOrganizationProject,
 	IUser,
 	IntegrationEnum
@@ -30,7 +31,13 @@ import {
 	ToastrService
 } from './../../../../../@core/services';
 import { HashNumberPipe } from './../../../../../@shared/pipes';
-import { ClickableLinkComponent, TagsOnlyComponent, TrustHtmlLinkComponent } from './../../../../../@shared/table-components';
+import {
+	ClickableLinkComponent,
+	ProjectComponent,
+	GithubRepositoryComponent,
+	TagsOnlyComponent,
+	TrustHtmlLinkComponent
+} from './../../../../../@shared/table-components';
 import { GithubSettingsDialogComponent } from '../settings-dialog/settings-dialog.component';
 
 @UntilDestroy({ checkProperties: true })
@@ -44,18 +51,26 @@ import { GithubSettingsDialogComponent } from '../settings-dialog/settings-dialo
 export class GithubViewComponent extends TranslationBaseComponent implements AfterViewInit, OnInit {
 	public parsedInt = parsedInt;
 
+	public settingsSmartTableIssues: object;
+	public settingsSmartTableProjects: object;
 	public syncing: boolean = false;
 	public loading: boolean = false;
 	public user: IUser = this._store.user;
 	public organization: IOrganization = this._store.selectedOrganization;
 	public repository: IGithubRepository;
+
 	public project: IOrganizationProject;
 	public project$: Observable<IOrganizationProject>;
-	public integration$: Observable<IIntegrationTenant>;
+
+	public projects: IOrganizationProject[] = [];
+	public projects$: Observable<IOrganizationProject[]>;
+
 	public integration: IIntegrationTenant;
-	public settingsSmartTable: object;
+	public integration$: Observable<IIntegrationTenant>;
+
 	public issues$: Observable<IGithubIssue[]>;
 	public issues: IGithubIssue[] = [];
+
 	public selectedIssues: IGithubIssue[] = [];
 	public selectedProject$: Subject<IOrganizationProject> = new Subject();
 
@@ -93,6 +108,7 @@ export class GithubViewComponent extends TranslationBaseComponent implements Aft
 		this._loadSmartTableSettings();
 		this._applyTranslationOnSmartTable();
 		this._getGithubIntegrationTenant();
+		this._getGithubIntegrationProjects();
 	}
 
 	ngAfterViewInit(): void {
@@ -122,27 +138,49 @@ export class GithubViewComponent extends TranslationBaseComponent implements Aft
 	}
 
 	/**
-	 * Fetches and sets the GitHub integration data from the route's data property.
+	 * Fetches and sets the GitHub integration data from the ActivatedRoute data.
 	 */
 	private _getGithubIntegrationTenant() {
 		this.integration$ = this._activatedRoute.parent.data.pipe(
+			// Extract the 'integration' from the data
 			map(({ integration }: Data) => integration),
+			// Store the integration in the 'integration' property
 			tap((integration: IIntegrationTenant) => this.integration = integration),
-			untilDestroyed(this) // Automatically unsubscribes when the component is destroyed
+			// Automatically unsubscribe when the component is destroyed
+			untilDestroyed(this)
+		);
+	}
+
+	/**
+	 * Fetches and sets the GitHub integration projects from the ActivatedRoute data.
+	 */
+	private _getGithubIntegrationProjects(): void {
+		this.projects$ = this._activatedRoute.data.pipe(
+			// Extract the 'projects' from the data
+			map(({ projects }: Data) => projects),
+			// Store the projects in the 'projects' property
+			tap((projects: IOrganizationProject[]) => this.projects = projects),
+			// Automatically unsubscribe when the component is destroyed
+			untilDestroyed(this)
 		);
 	}
 
 	/**
 	 * Selects a GitHub repository and retrieves its associated issues.
+	 *
 	 * @param repository - The GitHub repository to select.
+	 * @param triggerIssue - A boolean indicating whether to trigger the issue retrieval (default: false).
 	 */
-	public selectRepository(repository: IGithubRepository): void {
-		this.selectedIssues = [];
+	public selectRepository(repository: IGithubRepository, triggerIssue: boolean = false): void {
 		this.repository = repository;
 
-		// If a repository is provided, call 'getRepositoryIssue' to fetch its issues.
-		// If no repository is provided, emit an empty array.
-		this.issues$ = repository ? this.getRepositoryIssue(repository) : of([]);
+		/** Trigger the issue retrieval */
+		if (triggerIssue) {
+			this.selectedIssues = [];
+			// If a repository is provided, call 'getRepositoryIssue' to fetch its issues.
+			// If no repository is provided, emit an empty array.
+			this.issues$ = repository ? this.getRepositoryIssue(repository) : of([]);
+		}
 	}
 
 	/**
@@ -215,7 +253,7 @@ export class GithubViewComponent extends TranslationBaseComponent implements Aft
  */
 	private _loadSmartTableSettings() {
 		// Define settings for the Smart Table
-		this.settingsSmartTable = {
+		this.settingsSmartTableIssues = {
 			selectedRowIndex: -1, // Initialize the selected row index
 			selectMode: 'multi', // Set select mode to 'multi' for multiple row selection
 			actions: {
@@ -262,6 +300,46 @@ export class GithubViewComponent extends TranslationBaseComponent implements Aft
 					width: '15%',
 					type: 'custom', // Set column type to 'custom'
 					renderComponent: TagsOnlyComponent,
+				}
+			}
+		};
+
+
+		// Define settings for the Smart Table
+		this.settingsSmartTableProjects = {
+			selectedRowIndex: -1, // Initialize the selected row index
+			actions: false,
+			columns: {
+				repository: {
+					title: this.getTranslation('SM_TABLE.GITHUB_REPOSITORY'), // Set column title based on translation
+					type: 'custom',
+					renderComponent: GithubRepositoryComponent,
+					filter: false
+				},
+				project: {
+					title: this.getTranslation('SM_TABLE.PROJECT'), // Set column title based on translation
+					type: 'custom',
+					renderComponent: ProjectComponent,
+					filter: false,
+					valuePrepareFunction: (i: any, row: IOrganizationProject) => ({
+						project: row
+					})
+				},
+				issuesCount: {
+					title: this.getTranslation('SM_TABLE.ISSUES_SYNC'), // Set column title based on translation
+					type: 'number',
+					filter: false,
+					valuePrepareFunction: (i: any, row: IOrganizationProject) => {
+						return this.getTranslation('SM_TABLE.ISSUES_SYNC_COUNT', {
+							count: row.repository.issuesCount
+						})
+					}
+				},
+				status: {
+					title: this.getTranslation('SM_TABLE.STATUS'), // Set column title based on translation
+					valuePrepareFunction: (repository: IOrganizationGithubRepository) => {
+						return repository.status;
+					}
 				}
 			}
 		};
@@ -325,16 +403,72 @@ export class GithubViewComponent extends TranslationBaseComponent implements Aft
 		}
 	}
 
-	/** */
-	selectIssues({ selected }) {
+	/**
+	 * Updates the selected issues based on the user's selection.
+	 * @param selected - An array of selected issues.
+	 */
+	selectIssues({ selected }: { selected: any[] }): void {
 		this.selectedIssues = selected;
 	}
 
 	/**
-	 * Sync GitHub issues and labels for the selected organization and integration.
-	 * It uses the selectedIssues property to determine which issues to sync.
+	 * Check if there is a valid organization, repository, and project.
+	 * If valid, log the organization, repository, and project to the console.
 	 */
-	syncIssues() {
+	autoSyncIssues(): void {
+		try {
+			// Ensure there is a valid organization, repository, and project
+			if (!this.organization || !this.repository || !this.project) {
+				return;
+			}
+
+			const { id: organizationId, tenantId } = this.organization;
+			const { id: integrationId } = this.integration;
+			const { id: projectId } = this.project;
+			console.log(this.repository);
+
+			// Initiate the synchronization process by calling the _githubService
+			this._githubService.autoSyncIssues(
+				integrationId,
+				this.repository,
+				{
+					projectId,
+					organizationId,
+					tenantId
+				},
+			).pipe(
+				tap(() => {
+					this._toastrService.success(
+						this.getTranslation('INTEGRATIONS.GITHUB_PAGE.SYNCED_ISSUES', {
+							repository: this.repository.full_name
+						}),
+						this.getTranslation('TOASTR.TITLE.SUCCESS')
+					);
+				}),
+				catchError((error) => {
+					// Handle and log errors
+					console.error('Error while syncing GitHub issues & labels automatically:', error.message);
+					this._errorHandlingService.handleError(error);
+					return of(null);
+				}),
+				finalize(() => this.syncing = false),
+				untilDestroyed(this) // Ensure subscription is cleaned up on component destroy
+			).subscribe();
+		} catch (error) {
+			// Handle errors (e.g., display an error message or log the error)
+			console.error('Error while syncing GitHub issues automatically:', error.message);
+
+			// Optionally, you can provide error feedback to the user
+			this._errorHandlingService.handleError(error);
+		}
+	}
+
+	/**
+	 * Initiates a manual synchronization process for GitHub issues.
+	 *
+	 * @returns
+	 */
+	manualSyncIssues(): void {
 		try {
 			// Ensure there is a valid organization, repository, and project
 			if (!this.organization || !this.repository || !this.project) {
@@ -354,7 +488,7 @@ export class GithubViewComponent extends TranslationBaseComponent implements Aft
 			const { id: projectId } = this.project;
 
 			// Initiate the synchronization process by calling the _githubService
-			this._githubService.syncIssuesAndLabels(
+			this._githubService.manualSyncIssues(
 				integrationId,
 				this.repository,
 				{

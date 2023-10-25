@@ -1,0 +1,22 @@
+@import 'themes';
+
+.repository-render {
+    width: 100%;
+    display: flex;
+    justify-content: flex-start;
+    gap: 10px;
+    img {
+        width: 28px;
+        height: 28px;
+        border-radius: nb-theme(border-radius);
+        box-shadow: var(--gauzy-shadow);
+        object-fit: cover;
+    }
+    .name {
+        color: var(--gauzy-text-color-1);
+        font-size: 14px;
+        font-weight: 600;
+        line-height: 17px;
+        letter-spacing: 0em;
+    }
+}

@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Brackets, In, IsNull, Repository, WhereExpressionBuilder } from 'typeorm';
+import { Brackets, In, IsNull, Not, Repository, SelectQueryBuilder, WhereExpressionBuilder } from 'typeorm';
 import { isNotEmpty } from '@gauzy/common';
 import { IEmployee, IOrganizationGithubRepository, IOrganizationProject, IOrganizationProjectsFindInput, IPagination } from '@gauzy/contracts';
 import { PaginationParams, TenantAwareCrudService } from './../core/crud';
@@ -147,5 +147,24 @@ export class OrganizationProjectService extends TenantAwareCrudService<Organizat
 		} catch (error) {
 			return [];
 		}
+	}
+
+	/**
+	 * Find all synchronized organization projects with the specified options.
+	 *
+	 * @param repository - The repository for the OrganizationProject entity.
+	 * @param options - Query and pagination options (optional).
+	 * @returns A paginated list of synchronized organization projects.
+	 */
+	async findSyncedProjects(options?: PaginationParams<OrganizationProject>): Promise<IPagination<OrganizationProject>> {
+		const whereConditions = {
+			...options?.where,
+			repositoryId: Not(IsNull())
+		};
+
+		return await this.pagination({
+			where: whereConditions,
+			...options
+		});
 	}
 }

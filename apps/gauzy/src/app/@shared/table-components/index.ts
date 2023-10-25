@@ -31,3 +31,4 @@ export * from './project-organization-grid-details/project-organization-grid-det
 export * from './project-organization-employees/project-organization-employees.component';
 export * from './clickable-link/clickable-link.component';
 export * from './trust-html/trust-html.component';
+export * from './github-repository/github-repository.component';

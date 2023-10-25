@@ -300,7 +300,10 @@
 		"CREATED_AT": "Created At",
 		"SCREEN_CAPTURE": "Screen Capture",
 		"NUMBER": "Number",
-		"PROVIDER": "Provider"
+		"PROVIDER": "Provider",
+		"GITHUB_REPOSITORY": "Github Repository",
+		"ISSUES_SYNC": "Issues in Sync",
+		"ISSUES_SYNC_COUNT": "{{ count }} Issues Auto Sync"
 	},
 	"FORM": {
 		"USERNAME": "Username",
