@@ -106,15 +106,23 @@ export class DesktopIconGenerator
 			this.desktop,
 			'src',
 			'assets',
-			'icons',
-			'icon.png'
+			'icons'
 		);
 		await new Promise((resolve) =>
 			originalImage
 				.clone()
 				.resize(16, 16)
-				.write(pngFilePath, () => {
+				.write(path.join(pngFilePath, 'icon.png'), () => {
 					console.log('✔ tray icon generated successfully.');
+					resolve(true);
+				})
+		);
+		await new Promise((resolve) =>
+			originalImage
+				.clone()
+				.resize(32, 32)
+				.write(path.join(pngFilePath, 'icon@2x.png'), () => {
+					console.log('✔ tray icon@2x generated successfully.');
 					resolve(true);
 				})
 		);

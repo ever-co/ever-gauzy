@@ -1,10 +1,10 @@
 {
-    "name": "black-rock-tracker",
-    "productName": "Black Rock Tracker",
+    "name": "gauzy-desktop-timer",
+    "productName": "Gauzy Desktop Timer",
     "version": "0.1.0",
-    "description": "Black Rock Tracker",
+    "description": "Gauzy Desktop Timer",
     "license": "AGPL-3.0",
-    "homepage": "https://blackrock.com",
+    "homepage": "https://gauzy.co",
     "repository": {
         "type": "git",
         "url": "https://github.com/ever-co/ever-gauzy.git"
@@ -27,9 +27,9 @@
         ]
     },
     "build": {
-        "appId": "com.ever.blackrocktracker",
+        "appId": "com.ever.gauzydesktoptimer",
         "artifactName": "${name}-${version}.${ext}",
-        "productName": "Black Rock Tracker",
+        "productName": "Gauzy Desktop Timer",
         "copyright": "Copyright © 2019-Present. Ever Co. LTD",
         "afterSign": "tools/notarize.js",
         "dmg": {
@@ -98,7 +98,7 @@
                 "deb",
                 "tar.gz"
             ],
-            "executableName": "black-rock-tracker",
+            "executableName": "gauzy-desktop-timer",
             "artifactName": "${name}-${version}.${ext}",
             "synopsis": "Desktop",
             "category": "Development"
