@@ -242,7 +242,7 @@ export const env: Env = cleanEnv(
 			default: 'assets/images/logos/logo_Gauzy.svg',
 		}),
 		PROJECT_REPO: str({
-			default: 'https://github.com/ever-co/ever-teams.git',
+			default: 'https://github.com/ever-co/ever-gauzy.git',
 		}),
 		DESKTOP_TIMER_APP_NAME: str({
 			default: 'gauzy-desktop-timer',
