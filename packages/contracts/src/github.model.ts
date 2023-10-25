@@ -137,7 +137,8 @@ export interface IIntegrationMapSyncRepository extends IBasePerTenantAndOrganiza
     repository: IGithubRepository;
 }
 
-export enum IGithubIssueStatusEnum {
+export enum GithubRepositoryStatusEnum {
+    PENDING = 'pending',
     SYNCING = 'syncing',
     STOPPED = 'stopped',
     ERROR = 'error'

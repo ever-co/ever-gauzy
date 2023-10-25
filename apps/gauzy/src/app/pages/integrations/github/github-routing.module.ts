@@ -2,7 +2,6 @@ import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
 import { IntegrationEnum } from '@gauzy/contracts';
 import { IntegrationResolver } from './../integration.resolver';
-import { SyncedProjectsResolver } from './synced-projects.resolver';
 import { GithubWizardComponent } from './components/wizard/wizard.component';
 import { GithubInstallationComponent } from './components/installation/installation.component';
 import { GithubComponent } from './github.component';
@@ -25,10 +24,7 @@ const routes: Routes = [
 				component: GithubViewComponent,
 				data: {
 					selectors: false
-				},
-				resolve: {
-					projects: SyncedProjectsResolver
-				},
+				}
 			},
 			{
 				path: 'setup/wizard',

@@ -1,7 +1,7 @@
 import { AfterViewInit, Component, OnInit, ViewChild } from '@angular/core';
 import { TitleCasePipe } from '@angular/common';
 import { ActivatedRoute, Data, Router } from '@angular/router';
-import { EMPTY, Subject, debounceTime, finalize, first, firstValueFrom, of } from 'rxjs';
+import { BehaviorSubject, EMPTY, Subject, debounceTime, finalize, first, firstValueFrom, of } from 'rxjs';
 import { Observable } from 'rxjs/internal/Observable';
 import { catchError, filter, map, switchMap, tap } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
@@ -9,6 +9,7 @@ import { NbDialogService } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { Ng2SmartTableComponent } from 'ng2-smart-table';
 import {
+	GithubRepositoryStatusEnum,
 	IEntitySettingToSync,
 	IGithubIssue,
 	IGithubRepository,
@@ -19,8 +20,7 @@ import {
 	IUser,
 	IntegrationEnum
 } from '@gauzy/contracts';
-import { distinctUntilChange, parsedInt } from '@gauzy/common-angular';
-import { TranslationBaseComponent } from './../../../../../@shared/language-base';
+import { distinctUntilChange } from '@gauzy/common-angular';
 import {
 	ErrorHandlingService,
 	GithubService,
@@ -30,6 +30,8 @@ import {
 	Store,
 	ToastrService
 } from './../../../../../@core/services';
+import { TranslationBaseComponent } from './../../../../../@shared/language-base';
+import { StatusBadgeComponent } from './../../../../../@shared/status-badge';
 import { HashNumberPipe } from './../../../../../@shared/pipes';
 import {
 	ClickableLinkComponent,
@@ -45,36 +47,28 @@ import { GithubSettingsDialogComponent } from '../settings-dialog/settings-dialo
 @Component({
 	styleUrls: ['./view.component.scss'],
 	templateUrl: './view.component.html',
-	providers: [
-		TitleCasePipe
-	]
+	providers: [TitleCasePipe]
 })
 export class GithubViewComponent extends TranslationBaseComponent implements AfterViewInit, OnInit {
-	public parsedInt = parsedInt;
 
-	public settingsSmartTableIssues: object;
-	public settingsSmartTableProjects: object;
-	public syncing: boolean = false;
-	public loading: boolean = false;
-	public user: IUser = this._store.user;
-	public organization: IOrganization = this._store.selectedOrganization;
-	public repository: IGithubRepository;
-
-	public project: IOrganizationProject;
-	public project$: Observable<IOrganizationProject>;
-
-	public projects: IOrganizationProject[] = [];
-	public projects$: Observable<IOrganizationProject[]>;
-
-	public integration: IIntegrationTenant;
-	public integration$: Observable<IIntegrationTenant>;
-
-	public issues$: Observable<IGithubIssue[]>;
-	public issues: IGithubIssue[] = [];
-
-	public selectedIssues: IGithubIssue[] = [];
-	public selectedProject$: Subject<IOrganizationProject> = new Subject();
-
+	public settingsSmartTableIssues: object; // Settings for the Smart Table used for issues
+	public settingsSmartTableProjects: object; // Settings for the Smart Table used for projects
+	public syncing: boolean = false; // Flag to indicate if data synchronization is in progress
+	public loading: boolean = false; // Flag to indicate if data loading is in progress
+	public user: IUser = this._store.user; // User object obtained from a service (likely a store)
+	public organization: IOrganization = this._store.selectedOrganization; // Selected organization object
+	public repository: IGithubRepository; // GitHub repository object
+	public project: IOrganizationProject; // Organization project object
+	public project$: Observable<IOrganizationProject>; // Observable for the organization project
+	public projects: IOrganizationProject[] = []; // Array of organization projects
+	public projects$: Observable<IOrganizationProject[]>; // Observable for an array of organization projects
+	public integration: IIntegrationTenant; // Integration object
+	public integration$: Observable<IIntegrationTenant>; // Observable for the integration
+	public issues$: Observable<IGithubIssue[]>; // Observable for an array of GitHub issues
+	public issues: IGithubIssue[] = []; // Array of GitHub issues
+	public selectedIssues: IGithubIssue[] = []; // Array of selected GitHub issues
+	public selectedProject$: Subject<IOrganizationProject> = new Subject(); // Subject for selected organization projects
+	public autoSyncClick$: BehaviorSubject<boolean> = new BehaviorSubject(true); // Subject for auto-sync click events
 	/**
 	 * Sets up a property 'issuesTable' to reference an instance of 'Ng2SmartTableComponent'
 	 * when the child component with the template reference variable 'issuesTable' is rendered.
@@ -156,13 +150,26 @@ export class GithubViewComponent extends TranslationBaseComponent implements Aft
 	 * Fetches and sets the GitHub integration projects from the ActivatedRoute data.
 	 */
 	private _getGithubIntegrationProjects(): void {
-		this.projects$ = this._activatedRoute.data.pipe(
-			// Extract the 'projects' from the data
-			map(({ projects }: Data) => projects),
-			// Store the projects in the 'projects' property
-			tap((projects: IOrganizationProject[]) => this.projects = projects),
-			// Automatically unsubscribe when the component is destroyed
-			untilDestroyed(this)
+		this.projects$ = this.autoSyncClick$.pipe(
+			filter(() => !!this.organization),
+			switchMap(() => {
+				// Extract project properties
+				const { id: organizationId, tenantId } = this.organization;
+				// Ensure there is a valid organization
+				if (!organizationId) {
+					return of([]); // No valid organization, return false
+				}
+				return this._organizationProjectsService.findSyncedProjects({ organizationId, tenantId }, ['repository']).pipe(
+					map(({ items }) => items),
+					catchError((error) => {
+						// Handle and log errors
+						this._errorHandlingService.handleError(error);
+						return EMPTY;
+					}),
+					// Handle component lifecycle to avoid memory leaks
+					untilDestroyed(this),
+				);
+			})
 		);
 	}
 
@@ -250,8 +257,8 @@ export class GithubViewComponent extends TranslationBaseComponent implements Aft
 	}
 
 	/**
- * Load Smart Table settings to configure the component.
- */
+	 * Load Smart Table settings to configure the component.
+	 */
 	private _loadSmartTableSettings() {
 		// Define settings for the Smart Table
 		this.settingsSmartTableIssues = {
@@ -357,8 +364,12 @@ export class GithubViewComponent extends TranslationBaseComponent implements Aft
 				},
 				status: {
 					title: this.getTranslation('SM_TABLE.STATUS'), // Set column title based on translation
-					valuePrepareFunction: (repository: IOrganizationGithubRepository) => {
-						return repository.status;
+					type: 'custom',
+					renderComponent: StatusBadgeComponent,
+					filter: false,
+					valuePrepareFunction: (i: any, row: IOrganizationProject) => {
+						// Transform the column data using '_titlecasePipe.transform' (modify this function)
+						return this.statusMapper(row.repository);
 					}
 				}
 			}
@@ -445,7 +456,6 @@ export class GithubViewComponent extends TranslationBaseComponent implements Aft
 			const { id: organizationId, tenantId } = this.organization;
 			const { id: integrationId } = this.integration;
 			const { id: projectId } = this.project;
-			console.log(this.repository);
 
 			// Initiate the synchronization process by calling the _githubService
 			this._githubService.autoSyncIssues(
@@ -464,6 +474,7 @@ export class GithubViewComponent extends TranslationBaseComponent implements Aft
 						}),
 						this.getTranslation('TOASTR.TITLE.SUCCESS')
 					);
+					this.autoSyncClick$.next(true);
 				}),
 				catchError((error) => {
 					// Handle and log errors
@@ -556,6 +567,37 @@ export class GithubViewComponent extends TranslationBaseComponent implements Aft
 			// Clear the 'selectedIssues' array
 			this.selectedIssues = [];
 		}
+	}
+
+	/**
+	 * Maps the status of a GitHub repository to a format including text representation, original status value, and CSS class.
+	 * @param row - An object representing a GitHub repository with a 'status' property.
+	 * @returns An object with 'text', 'value', and 'class' properties.
+	 */
+	statusMapper(row: IOrganizationGithubRepository): { text: string; value: string; class: string } {
+		let value: string = row.status;
+		let badgeClass: string;
+
+		switch (row.status) {
+			case GithubRepositoryStatusEnum.SYNCING:
+				badgeClass = 'success';
+				break;
+			case GithubRepositoryStatusEnum.ERROR:
+				badgeClass = 'danger';
+				break;
+			case GithubRepositoryStatusEnum.PENDING:
+				badgeClass = 'warning';
+				break;
+			default:
+				badgeClass = 'warning';
+				break;
+		}
+
+		return {
+			text: this._titlecasePipe.transform(row.status),
+			value: value,
+			class: badgeClass
+		};
 	}
 
 	/**

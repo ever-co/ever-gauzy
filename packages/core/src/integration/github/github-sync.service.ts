@@ -21,7 +21,8 @@ import {
     TaskStatusEnum,
     IGithubIssueCreateOrUpdatePayload,
     IOrganizationGithubRepository,
-    IIntegrationMap
+    IIntegrationMap,
+    GithubRepositoryStatusEnum
 } from '@gauzy/contracts';
 import { RequestContext } from 'core/context';
 import { arrayToObject } from 'core/utils';
@@ -63,9 +64,14 @@ export class GithubSyncService {
 
         try {
             const hasSyncEnabled: boolean = true;
+            input.repository['status'] = GithubRepositoryStatusEnum.SYNCING;
+
             /** */
             const repository: IOrganizationGithubRepository = await this._commandBus.execute(
-                new IntegrationSyncGithubRepositoryCommand(input, hasSyncEnabled)
+                new IntegrationSyncGithubRepositoryCommand(
+                    input,
+                    hasSyncEnabled
+                )
             );
 
             /** */
