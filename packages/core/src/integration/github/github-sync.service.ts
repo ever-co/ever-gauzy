@@ -37,6 +37,7 @@ import { AutomationTaskSyncCommand } from 'tasks/commands';
 import { AutomationLabelSyncCommand } from 'tags/commands';
 import { GithubRepositoryService } from './repository/github-repository.service';
 import { IntegrationSyncGithubRepositoryCommand } from './commands';
+import { isNotEmpty } from '@gauzy/common';
 
 @Injectable()
 export class GithubSyncService {
@@ -265,16 +266,25 @@ export class GithubSyncService {
                 // Get the labels associated with the GitHub issue
                 let labels = response.data;
 
+                // List of labels to check and create if missing
+                const labelsToCheck = [SYNC_TAG_GITHUB, SYNC_TAG_GAUZY];
+                const labelsToCreate = labelsToCheck.filter(
+                    (name) => !labels.find((label: IGithubIssueLabel) => label.name === name)
+                );
+
                 // Check if specific labels exist on a GitHub issue and create them if missing.
-                if (!labels.find((label: IGithubIssueLabel) => label.name === settings.sync_tag)) {
-                    // If the 'syncTag' does not exist, create it along with other labels
-                    const response = await this._octokitService.createLabelsForIssue(installation_id, {
-                        owner: owner.login,
-                        repo,
-                        issue_number,
-                        labels: [SYNC_TAG_GITHUB, SYNC_TAG_GAUZY]
-                    });
-                    labels = response.data;
+                if (isNotEmpty(labelsToCreate)) {
+                    try {
+                        const response = await this._octokitService.createLabelsForIssue(installation_id, {
+                            owner: owner.login,
+                            repo,
+                            issue_number,
+                            labels: labelsToCreate
+                        });
+                        labels = response.data;
+                    } catch (error) {
+                        console.log('Error while creating missing labels: ', error.message);
+                    }
                 }
 
                 /** Sync Labels From Here */
