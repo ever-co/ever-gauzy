@@ -45,7 +45,7 @@
 									<ngx-github-repository-selector
 										[sourceId]="(project$ | async)?.repository?.repositoryId"
 										[integration]="integration"
-										(onChanged)="selectRepository($event, false)"
+										(onChanged)="selectRepository($event)"
 										[selected]="true"
 									></ngx-github-repository-selector>
 								</div>
@@ -72,7 +72,8 @@
 										debounceClick
 										(throttledClick)="autoSyncIssues()"
 									>
-										{{ 'BUTTONS.AUTO_SYNC' | translate }}
+										<nb-icon class="sync" icon="sync-outline" [ngClass]="{ 'spin' : syncing }"></nb-icon>
+										{{ (syncing ? 'BUTTONS.AUTO_SYNCING' : 'BUTTONS.AUTO_SYNC') | translate }}
 									</button>
 								</div>
 							</div>
@@ -100,7 +101,7 @@
 									<ngx-github-repository-selector
 										[sourceId]="(project$ | async)?.repository?.repositoryId"
 										[integration]="integration"
-										(onChanged)="selectRepository($event, true)"
+										(onChanged)="selectRepository($event)"
 										[selected]="true"
 									></ngx-github-repository-selector>
 								</div>

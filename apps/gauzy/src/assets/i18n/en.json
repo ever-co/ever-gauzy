@@ -46,6 +46,7 @@
 		"SELECTED_TASKS": "Selected Tasks",
 		"UPDATE": "Update",
 		"AUTO_SYNC": "Auto sync",
+		"AUTO_SYNCING": "Auto syncing...",
 		"VIEW": "View",
 		"SEND": "Send",
 		"ARCHIVE": "Archive",

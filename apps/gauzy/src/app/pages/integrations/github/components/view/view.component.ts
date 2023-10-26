@@ -10,9 +10,11 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { Ng2SmartTableComponent } from 'ng2-smart-table';
 import {
 	GithubRepositoryStatusEnum,
+	HttpStatus,
 	IEntitySettingToSync,
 	IGithubIssue,
 	IGithubRepository,
+	IIntegrationMapSyncRepository,
 	IIntegrationTenant,
 	IOrganization,
 	IOrganizationGithubRepository,
@@ -102,8 +104,8 @@ export class GithubViewComponent extends TranslationBaseComponent implements Aft
 	ngOnInit(): void {
 		this._loadSmartTableSettings();
 		this._applyTranslationOnSmartTable();
-		this._getGithubIntegrationTenant();
-		this._getGithubIntegrationProjects();
+		this._getIntegrationTenant();
+		this._getIntegrationProjects();
 	}
 
 	ngAfterViewInit(): void {
@@ -135,7 +137,7 @@ export class GithubViewComponent extends TranslationBaseComponent implements Aft
 	/**
 	 * Fetches and sets the GitHub integration data from the ActivatedRoute data.
 	 */
-	private _getGithubIntegrationTenant() {
+	private _getIntegrationTenant() {
 		this.integration$ = this._activatedRoute.parent.data.pipe(
 			// Extract the 'integration' from the data
 			map(({ integration }: Data) => integration),
@@ -149,7 +151,7 @@ export class GithubViewComponent extends TranslationBaseComponent implements Aft
 	/**
 	 * Fetches and sets the GitHub integration projects from the ActivatedRoute data.
 	 */
-	private _getGithubIntegrationProjects(): void {
+	private _getIntegrationProjects(): void {
 		this.projects$ = this.autoSyncClick$.pipe(
 			filter(() => !!this.organization),
 			switchMap(() => {
@@ -179,16 +181,13 @@ export class GithubViewComponent extends TranslationBaseComponent implements Aft
 	 * @param repository - The GitHub repository to select.
 	 * @param triggerIssue - A boolean indicating whether to trigger the issue retrieval (default: false).
 	 */
-	public selectRepository(repository: IGithubRepository, triggerIssue: boolean = false): void {
+	public selectRepository(repository: IGithubRepository): void {
 		this.repository = repository;
 
-		/** Trigger the issue retrieval */
-		if (triggerIssue) {
-			this.selectedIssues = [];
-			// If a repository is provided, call 'getRepositoryIssue' to fetch its issues.
-			// If no repository is provided, emit an empty array.
-			this.issues$ = repository ? this.getRepositoryIssue(repository) : of([]);
-		}
+		this.selectedIssues = [];
+		// If a repository is provided, call 'getRepositoryIssue' to fetch its issues.
+		// If no repository is provided, emit an empty array.
+		this.issues$ = repository ? this.getRepositoryIssue(repository) : of([]);
 	}
 
 	/**
@@ -339,7 +338,7 @@ export class GithubViewComponent extends TranslationBaseComponent implements Aft
 					filter: false,
 					valuePrepareFunction: (i: any, row: IOrganizationProject) => {
 						return this.getTranslation('SM_TABLE.ISSUES_SYNC_COUNT', {
-							count: row.repository.issuesCount
+							count: row?.repository?.issuesCount
 						})
 					}
 				},
@@ -349,7 +348,7 @@ export class GithubViewComponent extends TranslationBaseComponent implements Aft
 					filter: false,
 					renderComponent: GithubAutoSyncSwitchComponent,
 					valuePrepareFunction: (i: any, row: IOrganizationProject) => {
-						return row.repository.hasSyncEnabled || false;
+						return row?.repository?.hasSyncEnabled || false;
 					},
 					onComponentInitFunction: (instance: any) => {
 						instance.autoSyncChange.subscribe({
@@ -453,38 +452,71 @@ export class GithubViewComponent extends TranslationBaseComponent implements Aft
 				return;
 			}
 
+			// Avoid running another synchronization if one is already in progress
+			if (this.syncing) {
+				return;
+			}
+
+			// Mark the synchronization as in progress
+			this.syncing = true;
+
 			const { id: organizationId, tenantId } = this.organization;
 			const { id: integrationId } = this.integration;
 			const { id: projectId } = this.project;
+			const repository = this.repository;
 
-			// Initiate the synchronization process by calling the _githubService
-			this._githubService.autoSyncIssues(
+			// Create a request object for syncing the GitHub repository
+			const repositorySyncRequest: IIntegrationMapSyncRepository = {
+				organizationId,
+				tenantId,
 				integrationId,
-				this.repository,
-				{
-					projectId,
-					organizationId,
-					tenantId
-				},
-			).pipe(
-				tap(() => {
-					this._toastrService.success(
-						this.getTranslation('INTEGRATIONS.GITHUB_PAGE.SYNCED_ISSUES', {
-							repository: this.repository.full_name
-						}),
-						this.getTranslation('TOASTR.TITLE.SUCCESS')
-					);
-					this.autoSyncClick$.next(true);
-				}),
-				catchError((error) => {
-					// Handle and log errors
-					console.error('Error while syncing GitHub issues & labels automatically:', error.message);
-					this._errorHandlingService.handleError(error);
-					return of(null);
-				}),
-				finalize(() => this.syncing = false),
-				untilDestroyed(this) // Ensure subscription is cleaned up on component destroy
-			).subscribe();
+				repository
+			};
+
+			// Synchronize the GitHub repository and update project settings
+			this._githubService.syncGithubRepository(repositorySyncRequest)
+				.pipe(
+					switchMap(({ id: repositoryId }: IOrganizationGithubRepository) =>
+						this._organizationProjectsService.updateProjectSetting(projectId, {
+							organizationId,
+							tenantId,
+							repositoryId
+						})
+					),
+					tap((response: any) => {
+						if (response['status'] == HttpStatus.BAD_REQUEST) {
+							throw new Error(`${response['message']}`);
+						}
+					}),
+					tap(() => this.autoSyncClick$.next(true)),
+					switchMap(() =>
+						this._githubService.autoSyncIssues(integrationId, this.repository, {
+							projectId,
+							organizationId,
+							tenantId
+						})
+					),
+					tap((process: boolean) => {
+						if (process) {
+							this._toastrService.success(
+								this.getTranslation('INTEGRATIONS.GITHUB_PAGE.SYNCED_ISSUES', {
+									repository: this.repository.full_name
+								}),
+								this.getTranslation('TOASTR.TITLE.SUCCESS')
+							);
+						}
+						this.autoSyncClick$.next(true);
+					}),
+					catchError((error) => {
+						this._errorHandlingService.handleError(error);
+						return EMPTY;
+					}),
+					// Execute the following code block when the observable completes or errors
+					finalize(() => this.syncing = false),
+					// Automatically unsubscribe when the component is destroyed
+					untilDestroyed(this)
+				)
+				.subscribe();
 		} catch (error) {
 			// Handle errors (e.g., display an error message or log the error)
 			console.error('Error while syncing GitHub issues automatically:', error.message);
@@ -529,14 +561,10 @@ export class GithubViewComponent extends TranslationBaseComponent implements Aft
 					issues: this.selectedIssues
 				},
 			).pipe(
-				tap(() => {
-					this._toastrService.success(
-						this.getTranslation('INTEGRATIONS.GITHUB_PAGE.SYNCED_ISSUES', {
-							repository: this.repository.full_name
-						}),
-						this.getTranslation('TOASTR.TITLE.SUCCESS')
-					);
-					this.resetTableSelectedItems();
+				tap((response: any) => {
+					if (response['status'] == HttpStatus.BAD_REQUEST) {
+						throw new Error(`${response['message']}`);
+					}
 				}),
 				catchError((error) => {
 					// Handle and log errors
@@ -544,8 +572,21 @@ export class GithubViewComponent extends TranslationBaseComponent implements Aft
 					this._errorHandlingService.handleError(error);
 					return of(null);
 				}),
+				tap((process: boolean) => {
+					if (process) {
+						this._toastrService.success(
+							this.getTranslation('INTEGRATIONS.GITHUB_PAGE.SYNCED_ISSUES', {
+								repository: this.repository.full_name
+							}),
+							this.getTranslation('TOASTR.TITLE.SUCCESS')
+						);
+					}
+					this.autoSyncClick$.next(true);
+				}),
+				// Execute the following code block when the observable completes or errors
 				finalize(() => this.syncing = false),
-				untilDestroyed(this) // Ensure subscription is cleaned up on component destroy
+				// Ensure subscription is cleaned up on component destroy
+				untilDestroyed(this)
 			).subscribe();
 		} catch (error) {
 			// Handle errors (e.g., display an error message or log the error)
