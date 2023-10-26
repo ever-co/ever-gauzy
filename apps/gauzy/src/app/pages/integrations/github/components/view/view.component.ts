@@ -20,7 +20,8 @@ import {
 	IOrganizationGithubRepository,
 	IOrganizationProject,
 	IUser,
-	IntegrationEnum
+	IntegrationEnum,
+	SYNC_TAG_GAUZY
 } from '@gauzy/contracts';
 import { distinctUntilChange } from '@gauzy/common-angular';
 import {
@@ -480,7 +481,8 @@ export class GithubViewComponent extends TranslationBaseComponent implements Aft
 						this._organizationProjectsService.updateProjectSetting(projectId, {
 							organizationId,
 							tenantId,
-							repositoryId
+							repositoryId,
+							syncTag: SYNC_TAG_GAUZY
 						})
 					),
 					tap((response: any) => {
@@ -549,48 +551,71 @@ export class GithubViewComponent extends TranslationBaseComponent implements Aft
 			const { id: organizationId, tenantId } = this.organization;
 			const { id: integrationId } = this.integration;
 			const { id: projectId } = this.project;
+			const repository = this.repository;
 
-			// Initiate the synchronization process by calling the _githubService
-			this._githubService.manualSyncIssues(
+			// Create a request object for syncing the GitHub repository
+			const repositorySyncRequest: IIntegrationMapSyncRepository = {
+				organizationId,
+				tenantId,
 				integrationId,
-				this.repository,
-				{
-					projectId,
-					organizationId,
-					tenantId,
-					issues: this.selectedIssues
-				},
-			).pipe(
-				tap((response: any) => {
-					if (response['status'] == HttpStatus.BAD_REQUEST) {
-						throw new Error(`${response['message']}`);
-					}
-				}),
-				catchError((error) => {
-					// Handle and log errors
-					console.error('Error while syncing GitHub issues & labels:', error.message);
-					this._errorHandlingService.handleError(error);
-					return of(null);
-				}),
-				tap((process: boolean) => {
-					if (process) {
-						this._toastrService.success(
-							this.getTranslation('INTEGRATIONS.GITHUB_PAGE.SYNCED_ISSUES', {
-								repository: this.repository.full_name
-							}),
-							this.getTranslation('TOASTR.TITLE.SUCCESS')
-						);
-					}
-					this.autoSyncClick$.next(true);
-				}),
-				// Execute the following code block when the observable completes or errors
-				finalize(() => this.syncing = false),
-				// Ensure subscription is cleaned up on component destroy
-				untilDestroyed(this)
-			).subscribe();
+				repository
+			};
+
+			// Synchronize the GitHub repository and update project settings
+			this._githubService.syncGithubRepository(repositorySyncRequest)
+				.pipe(
+					switchMap(({ id: repositoryId }: IOrganizationGithubRepository) =>
+						this._organizationProjectsService.updateProjectSetting(projectId, {
+							organizationId,
+							tenantId,
+							repositoryId,
+							syncTag: SYNC_TAG_GAUZY
+						})
+					),
+					switchMap(() =>
+						this._githubService.manualSyncIssues(
+							integrationId,
+							this.repository,
+							{
+								projectId,
+								organizationId,
+								tenantId,
+								issues: this.selectedIssues
+							},
+						)
+					),
+					tap((response: any) => {
+						if (response['status'] == HttpStatus.BAD_REQUEST) {
+							throw new Error(`${response['message']}`);
+						}
+					}),
+					tap((process: boolean) => {
+						if (process) {
+							this._toastrService.success(
+								this.getTranslation('INTEGRATIONS.GITHUB_PAGE.SYNCED_ISSUES', {
+									repository: this.repository.full_name
+								}),
+								this.getTranslation('TOASTR.TITLE.SUCCESS')
+							);
+						}
+						this.autoSyncClick$.next(true);
+						this.resetTableSelectedItems();
+					}),
+					catchError((error) => {
+						// Handle and log errors
+						console.error('Error while syncing GitHub issues & labels manually:', error.message);
+						this._errorHandlingService.handleError(error);
+						return EMPTY;
+					}),
+					// Execute the following code block when the observable completes or errors
+					finalize(() => this.syncing = false),
+					// Automatically unsubscribe when the component is destroyed
+					untilDestroyed(this)
+				)
+				.subscribe();
 		} catch (error) {
 			// Handle errors (e.g., display an error message or log the error)
-			console.error('Error while syncing GitHub issues & labels:', error.message);
+			console.error('Error while syncing GitHub issues & labels manually:', error.message);
 
 			// Optionally, you can provide error feedback to the user
 			this._errorHandlingService.handleError(error);

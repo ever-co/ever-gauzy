@@ -3,6 +3,7 @@ import { IBasePerTenantAndOrganizationEntityModel } from './base-entity.model';
 import { IRelationalOrganizationProject } from './organization-projects.model';
 
 export const SYNC_TAG_GITHUB = 'GitHub';
+export const SYNC_TAG_GAUZY = 'Gauzy';
 
 // Common input properties for GitHub app installation and OAuth app installation
 interface IGithubAppInstallInputCommon extends IBasePerTenantAndOrganizationEntityModel {
