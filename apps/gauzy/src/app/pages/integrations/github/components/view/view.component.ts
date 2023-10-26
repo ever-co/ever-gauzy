@@ -177,15 +177,27 @@ export class GithubViewComponent extends TranslationBaseComponent implements Aft
 	}
 
 	/**
-	 * Selects a GitHub repository and retrieves its associated issues.
+	 * Selects a GitHub repository.
 	 *
-	 * @param repository - The GitHub repository to select.
-	 * @param triggerIssue - A boolean indicating whether to trigger the issue retrieval (default: false).
+	 * @param repository The GitHub repository to select.
 	 */
-	public selectRepository(repository: IGithubRepository): void {
+	public selectAutoRepository(repository: IGithubRepository) {
+		// Set the 'repository' property to the provided 'repository' object.
+		this.repository = repository;
+	}
+
+	/**
+	 * Selects a GitHub repository manually and fetches its issues.
+	 *
+	 * @param repository The GitHub repository to select.
+	 */
+	public selectManualRepository(repository: IGithubRepository): void {
+		// Set the 'repository' property to the provided 'repository' object.
 		this.repository = repository;
 
+		// Initialize the 'selectedIssues' property with an empty array.
 		this.selectedIssues = [];
+
 		// If a repository is provided, call 'getRepositoryIssue' to fetch its issues.
 		// If no repository is provided, emit an empty array.
 		this.issues$ = repository ? this.getRepositoryIssue(repository) : of([]);

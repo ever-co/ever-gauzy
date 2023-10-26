@@ -43,9 +43,10 @@
 							<div class="row">
 								<div class="col-4">
 									<ngx-github-repository-selector
+										id="auto-repository"
 										[sourceId]="(project$ | async)?.repository?.repositoryId"
 										[integration]="integration"
-										(onChanged)="selectRepository($event)"
+										(onChanged)="selectAutoRepository($event)"
 										[selected]="true"
 									></ngx-github-repository-selector>
 								</div>
@@ -99,9 +100,10 @@
 							<div class="row">
 								<div class="col-4">
 									<ngx-github-repository-selector
+										id="manual-repository"
 										[sourceId]="(project$ | async)?.repository?.repositoryId"
 										[integration]="integration"
-										(onChanged)="selectRepository($event)"
+										(onChanged)="selectManualRepository($event)"
 										[selected]="true"
 									></ngx-github-repository-selector>
 								</div>

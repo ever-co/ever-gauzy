@@ -22,7 +22,9 @@ import {
     IGithubIssueCreateOrUpdatePayload,
     IOrganizationGithubRepository,
     IIntegrationMap,
-    GithubRepositoryStatusEnum
+    GithubRepositoryStatusEnum,
+    SYNC_TAG_GAUZY,
+    SYNC_TAG_GITHUB
 } from '@gauzy/contracts';
 import { RequestContext } from 'core/context';
 import { arrayToObject } from 'core/utils';
@@ -260,7 +262,21 @@ export class GithubSyncService {
                     repo,
                     issue_number
                 });
-                const labels = response.data;
+                // Get the labels associated with the GitHub issue
+                let labels = response.data;
+
+                // Check if specific labels exist on a GitHub issue and create them if missing.
+                if (!labels.find((label: IGithubIssueLabel) => label.name === settings.sync_tag)) {
+                    // If the 'syncTag' does not exist, create it along with other labels
+                    const response = await this._octokitService.createLabelsForIssue(installation_id, {
+                        owner: owner.login,
+                        repo,
+                        issue_number,
+                        labels: [SYNC_TAG_GITHUB, SYNC_TAG_GAUZY]
+                    });
+                    labels = response.data;
+                }
+
                 /** Sync Labels From Here */
                 return await Promise.all(
                     await labels.map(
@@ -324,7 +340,6 @@ export class GithubSyncService {
 
                     const issues: IGithubIssue[] = this._mapIssuePayload(Array.isArray(issue) ? issue : [issue]);
                     const projectId = project.id;
-
                     const integrationId = integration.id;
 
                     // Synchronize data based on entity settings
@@ -334,7 +349,6 @@ export class GithubSyncService {
                                 /** Issues Sync */
                                 const issueSetting: IIntegrationEntitySetting = entitySetting;
                                 if (!!issueSetting.sync) {
-
                                     for await (const { sourceId, title, state, body, labels } of issues) {
                                         // Initialize an array to store tags
                                         let tags: ITag[] = [];

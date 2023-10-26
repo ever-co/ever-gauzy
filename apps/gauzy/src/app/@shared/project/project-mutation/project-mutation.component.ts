@@ -37,7 +37,8 @@ import {
 	IOrganizationProjectSetting,
 	HttpStatus,
 	IIntegrationMapSyncRepository,
-	IOrganizationGithubRepository
+	IOrganizationGithubRepository,
+	SYNC_TAG_GAUZY
 } from '@gauzy/contracts';
 import { distinctUntilChange } from '@gauzy/common-angular';
 import { TranslationBaseComponent } from '../../language-base/translation-base.component';
@@ -566,7 +567,8 @@ export class ProjectMutationComponent extends TranslationBaseComponent
 					return this._organizationProjectsService.updateProjectSetting(projectId, {
 						organizationId,
 						tenantId,
-						repositoryId
+						repositoryId,
+						...(!this.projectSettingForm.get('syncTag').value ? { syncTag: SYNC_TAG_GAUZY } : {}),
 					});
 				}),
 				tap((response: any) => {
