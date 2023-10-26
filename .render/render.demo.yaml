@@ -23,9 +23,9 @@ services:
           - key: SENTRY_HTTP_TRACING_ENABLED
             value: false
           - key: API_BASE_URL
-            value: https://ever-gauzy-api.render.com
+            value: https://ever-gauzy-api.onrender.com
           - key: CLIENT_BASE_URL
-            value: https://ever-gauzy-webapp.render.com
+            value: https://ever-gauzy-webapp.onrender.com
           - key: EXPRESS_SESSION_SECRET
             value: gauzy
           - key: JWT_SECRET
@@ -54,9 +54,9 @@ services:
           - key: CLOUDINARY_CLOUD_NAME
             value: dv6ezkfxg
           - key: API_BASE_URL
-            value: https://ever-gauzy-api.render.com
+            value: https://ever-gauzy-api.onrender.com
           - key: CLIENT_BASE_URL
-            value: https://ever-gauzy-webapp.render.com
+            value: https://ever-gauzy-webapp.onrender.com
           - key: GOOGLE_MAPS_API_KEY
             value: AIzaSyCJmnKzgTSq5Pc93HXar5bZrdmANTwtSIo
           - key: GOOGLE_PLACE_AUTOCOMPLETE
