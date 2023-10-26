@@ -26,9 +26,9 @@ import {
     SYNC_TAG_GAUZY,
     SYNC_TAG_GITHUB
 } from '@gauzy/contracts';
+import { isNotEmpty } from '@gauzy/common';
 import { RequestContext } from 'core/context';
 import { arrayToObject } from 'core/utils';
-import { IntegrationEntitySetting } from 'core/entities/internal';
 import { IntegrationTenantService } from 'integration-tenant/integration-tenant.service';
 import { OrganizationProjectSettingUpdateCommand } from 'organization-project/commands';
 import { OrganizationProjectService } from 'organization-project/organization-project.service';
@@ -37,7 +37,6 @@ import { AutomationTaskSyncCommand } from 'tasks/commands';
 import { AutomationLabelSyncCommand } from 'tags/commands';
 import { GithubRepositoryService } from './repository/github-repository.service';
 import { IntegrationSyncGithubRepositoryCommand } from './commands';
-import { isNotEmpty } from '@gauzy/common';
 
 @Injectable()
 export class GithubSyncService {
