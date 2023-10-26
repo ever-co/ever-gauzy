@@ -5,6 +5,7 @@
 		"ADD_NEW": "Add New",
 		"ADD": "Add",
 		"ADD_INTEGRATION": "Add Integration",
+		"RESET_INTEGRATION": "Reset Integration",
 		"CREATE": "Create",
 		"REGISTER": "Register",
 		"LOGIN": "Log In",
@@ -42,8 +43,10 @@
 		"HISTORY": "History",
 		"SYNC": "Sync",
 		"SYNCING": "Syncing...",
+		"SELECTED_TASKS": "Selected Tasks",
 		"UPDATE": "Update",
 		"AUTO_SYNC": "Auto sync",
+		"AUTO_SYNCING": "Auto syncing...",
 		"VIEW": "View",
 		"SEND": "Send",
 		"ARCHIVE": "Archive",
@@ -155,7 +158,9 @@
 		"PASTE": "Paste",
 		"FORWARD_PORTS": "Forward Ports",
 		"REPORT": "Report",
-		"IGNORE": "Ignore"
+		"IGNORE": "Ignore",
+		"ENABLE": "Enable",
+		"DISABLE": "Disable"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {
@@ -298,7 +303,11 @@
 		"CREATED_AT": "Created At",
 		"SCREEN_CAPTURE": "Screen Capture",
 		"NUMBER": "Number",
-		"PROVIDER": "Provider"
+		"PROVIDER": "Provider",
+		"GITHUB_REPOSITORY": "Github Repository",
+		"ISSUES_SYNC": "Issues in Sync",
+		"ISSUES_SYNC_COUNT": "{{ count }} Issues Auto Sync",
+		"ENABLED_DISABLED_SYNC": "Enabled / Disabled Sync"
 	},
 	"FORM": {
 		"USERNAME": "Username",
@@ -463,7 +472,9 @@
 			"LINKEDIN_ID": "LinkedIn ID",
 			"AUTO_SYNC_TASKS": "Auto-sync tasks",
 			"AUTO_SYNC_TASKS_BASED_ON_LABEL": "Is tasks Auto-sync based on Label?",
-			"AUTO_SYNC_TAG": "Label"
+			"AUTO_SYNC_TAG": "Label",
+			"GITHUB_REPOSITORY": "Github Repository",
+			"PROJECT": "Project"
 		},
 		"PLACEHOLDERS": {
 			"NAME": "Name",
@@ -654,7 +665,8 @@
 			"LINKEDIN_ID": "LinkedIn ID",
 			"AUTO_SYNC_TASKS": "Auto Sync Tasks",
 			"AUTO_SYNC_TASKS_BASED_ON_LABEL": "Auto-sync Tasks On Label",
-			"AUTO_SYNC_TAG": "Select Auto-sync Label"
+			"AUTO_SYNC_TAG": "Select Auto-sync Label",
+			"SELECT_PROJECT": "Select Project"
 		},
 		"RATES": {
 			"DEFAULT_RATE": "Default Rate",
@@ -1229,11 +1241,15 @@
 			"DESCRIPTION": "Activate Gauzy AI integration for smarter job hunting."
 		},
 		"GITHUB_PAGE": {
-			"NAME": "GitHub",
+			"TITLE": "GitHub Integration",
 			"SELECT_REPOSITORY": "Select repository",
 			"SEARCH_REPOSITORY": "Type to search repository",
 			"SYNCED_ISSUES": "'{{repository}}' issues & labels synced successfully",
-			"DESCRIPTION": "Activate GitHub integration for project & repository sync."
+			"DESCRIPTION": "Activate GitHub integration for project & repository sync.",
+			"TAB": {
+				"AUTO_SYNC": "Auto sync",
+				"MANUAL_SYNC": "Manual sync"
+			}
 		},
 		"COMING_SOON": "Coming soon",
 		"RE_INTEGRATE": "Re-integrate",

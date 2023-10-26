@@ -3,6 +3,7 @@ import { IBasePerTenantAndOrganizationEntityModel } from './base-entity.model';
 import { IRelationalOrganizationProject } from './organization-projects.model';
 
 export const SYNC_TAG_GITHUB = 'GitHub';
+export const SYNC_TAG_GAUZY = 'Gauzy';
 
 // Common input properties for GitHub app installation and OAuth app installation
 interface IGithubAppInstallInputCommon extends IBasePerTenantAndOrganizationEntityModel {
@@ -30,6 +31,7 @@ export interface IGithubRepository {
     full_name: string;
     private: boolean;
     visibility: string;
+    open_issues_count: number;
     owner?: {
         id: number;
         login: string;
@@ -126,8 +128,19 @@ export interface IOrganizationGithubRepository extends IBasePerTenantAndOrganiza
     name: string;
     fullName: string;
     owner: string;
+    issuesCount: number;
+    hasSyncEnabled: boolean;
+    private: boolean;
+    status: string;
 }
 
 export interface IIntegrationMapSyncRepository extends IBasePerTenantAndOrganizationEntityModel, IRelationalIntegrationTenant {
     repository: IGithubRepository;
+}
+
+export enum GithubRepositoryStatusEnum {
+    PENDING = 'pending',
+    SYNCING = 'syncing',
+    STOPPED = 'stopped',
+    ERROR = 'error'
 }

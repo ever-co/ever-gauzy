@@ -29,6 +29,17 @@ export class RepositorySelectorComponent implements AfterViewInit, OnInit, OnDes
 	public repositories: IGithubRepository[] = [];
 	public repositories$: Observable<IGithubRepository[]>;
 
+	/*
+	* Getter & Setter for dynamic placeholder
+	*/
+	_placeholder: string;
+	get placeholder(): string {
+		return this._placeholder;
+	}
+	@Input() set placeholder(value: string) {
+		this._placeholder = value;
+	}
+
 	/** Getter & Setter */
 	private _selected: boolean = false;
 	get selected(): boolean {

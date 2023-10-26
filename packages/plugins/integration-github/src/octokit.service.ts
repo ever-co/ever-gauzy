@@ -203,6 +203,56 @@ export class OctokitService {
 	}
 
 	/**
+	 * Creates labels for a GitHub issue using an Octokit instance tied to a specific installation.
+	 *
+	 * @param installationId - The installation ID of the GitHub App.
+	 * @param options - Options object with 'owner,' 'repo,', 'issue_number' and 'labels' properties.
+	 * @param options.owner - The owner (username or organization) of the repository.
+	 * @param options.repo - The name of the repository.
+	 * @param options.issue_number - The issue number to fetch.
+	 * @param options.labels - The Labels to create.
+	 * @returns A promise that resolves to an OctokitResponse.
+	 * @throws An error if Octokit instance is not available or if the request fails.
+	 */
+	public async createLabelsForIssue(installationId: number, {
+		owner,
+		repo,
+		issue_number,
+		labels
+	}: {
+		owner: string;
+		repo: string;
+		issue_number: number;
+		labels: string[];
+	}): Promise<OctokitResponse<any>> {
+		if (!this.app) {
+			throw new Error('Octokit instance is not available.');
+		}
+		try {
+			// Get an Octokit instance for the installation
+			const octokit = await this.app.getInstallationOctokit(installationId);
+
+			// Define the endpoint for adding labels to the issue
+			const endpoint = `POST /repos/{owner}/{repo}/issues/{issue_number}/labels`;
+
+			// Use Octokit to make the request to add labels to the issue
+			return await octokit.request(endpoint, {
+				owner,
+				repo,
+				issue_number,
+				labels,
+				headers: {
+					'X-GitHub-Api-Version': GITHUB_API_VERSION,
+				},
+			});
+		} catch (error) {
+			// Handle any errors that occur during the process
+			this.logger.error('Failed to create GitHub issue labels', error.message);
+			throw new Error('Failed to create GitHub issue labels');
+		}
+	}
+
+	/**
 	 * Fetch a GitHub repository issue by issue number for a given installation, owner, and repository.
 	 *
 	 * @param installationId - The installation ID for the GitHub app.

@@ -133,43 +133,26 @@ export class AppComponent implements OnInit, AfterViewInit {
 				/**
 				 * Set Date Range Picker Default Unit
 				 */
-				tap(
-					({
-						datePicker,
-						dates,
-					}: {
-						datePicker: IDatePickerConfig;
-						dates: IDateRangePicker;
-						selectors: ISelectorVisibility;
-					}) => {
-						const datePickerConfig = Object.assign(
-							{},
-							DEFAULT_DATE_PICKER_CONFIG,
-							datePicker
-						);
-						if (isNotEmpty(dates)) {
-							this.dateRangePickerBuilderService.setDateRangePicker(
-								dates
-							);
-						}
-						this.dateRangePickerBuilderService.setDatePickerConfig(
-							datePickerConfig
-						);
+				tap(({ datePicker, dates }: {
+					datePicker: IDatePickerConfig;
+					dates: IDateRangePicker;
+					selectors: ISelectorVisibility;
+				}) => {
+					// Set Date Range Picker Default Unit
+					const datePickerConfig = Object.assign({}, DEFAULT_DATE_PICKER_CONFIG, datePicker);
+					if (isNotEmpty(dates)) {
+						this.dateRangePickerBuilderService.setDateRangePicker(dates);
 					}
-				),
-				tap(({ selectors }: { selectors: ISelectorVisibility }) => {
-					Object.entries(
-						Object.assign(
-							{},
-							DEFAULT_SELECTOR_VISIBILITY,
-							selectors
-						)
-					).forEach(([id, value]) => {
-						this.selectorBuilderService.setSelectorsVisibility(
-							id,
-							value as boolean
-						);
+					this.dateRangePickerBuilderService.setDatePickerConfig(datePickerConfig);
+				}),
+				// Set selectors' visibility
+				tap(({ selectors }: { selectors?: ISelectorVisibility }) => {
+					// Iterate through the visibility settings for selectors
+					Object.entries(Object.assign({}, DEFAULT_SELECTOR_VISIBILITY, selectors)).forEach(([id, value]) => {
+						// Set the visibility for each selector based on the provided or default value
+						this.selectorBuilderService.setSelectorsVisibility(id, typeof selectors === 'boolean' ? selectors : value);
 					});
+					// Retrieve and get the updated selectors' visibility
 					this.selectorBuilderService.getSelectorsVisibility();
 				}),
 				untilDestroyed(this)
