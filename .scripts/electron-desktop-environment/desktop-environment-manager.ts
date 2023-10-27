@@ -16,16 +16,6 @@ export class DesktopEnvironmentManager {
 		this.isProd = argv.environment === 'prod';
 		this.fileName = this.isProd ? 'environment.prod' : 'environment';
 		this.fileDir = path.join('apps', this.desktop, 'src', 'environments');
-		if (
-			fs.existsSync(path.join(this.fileDir, this.fileName.concat(`.ts`)))
-		) {
-			this._environment = require(path.join(
-				'..',
-				'..',
-				this.fileDir,
-				this.fileName
-			)).environment;
-		}
 	}
 
 	private static get instance(): DesktopEnvironmentManager {
@@ -35,22 +25,38 @@ export class DesktopEnvironmentManager {
 		return this._instance;
 	}
 
-	private _environment: any;
-
 	public static get environment(): any {
-		return this.instance._environment;
+		if (
+			fs.existsSync(
+				path.join(
+					this.instance.fileDir,
+					this.instance.fileName.concat(`.ts`)
+				)
+			)
+		) {
+			return require(path.join(
+				'..',
+				'..',
+				this.instance.fileDir,
+				this.instance.fileName
+			)).environment;
+		}
+		return null;
 	}
 
 	public static update(): void {
+		const environment = this.environment;
 		const filePath = path.join(
 			this.instance.fileDir,
 			this.instance.fileName.concat(`.ts`)
 		);
-		if (fs.existsSync(filePath)) {
+		if (fs.existsSync(filePath) && environment) {
 			fs.unlinkSync(filePath);
+			fs.writeFileSync(filePath, this.instance.content(environment));
+			console.log(`✔ environment ${filePath} updated.`);
+			return;
 		}
-		fs.writeFileSync(filePath, this.instance.content(this.environment));
-		console.log(`✔ environment ${filePath} updated.`);
+		console.log(`WARNING: file ${filePath} does not exists.`);
 	}
 
 	public static generate(): void {

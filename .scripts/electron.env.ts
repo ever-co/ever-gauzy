@@ -4,10 +4,6 @@
 
 import { DesktopEnvironmentManager } from './electron-desktop-environment/desktop-environment-manager';
 
-try {
-	DesktopEnvironmentManager.generate();
-} catch (error) {
-	throw error;
-}
+DesktopEnvironmentManager.generate();
 
 // we always want first to remove old generated files (one of them is not needed for current build)
