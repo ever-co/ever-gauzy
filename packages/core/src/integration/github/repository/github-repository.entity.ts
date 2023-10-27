@@ -1,6 +1,6 @@
 import { Column, Entity, Index, JoinColumn, ManyToOne, OneToMany, RelationId, } from 'typeorm';
-import { ApiProperty } from '@nestjs/swagger';
-import { IsUUID } from 'class-validator';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { IsBoolean, IsNotEmpty, IsNumber, IsOptional, IsString, IsUUID } from 'class-validator';
 import { IIntegrationTenant, IOrganizationGithubRepository, IOrganizationProject } from '@gauzy/contracts';
 import { IntegrationTenant, OrganizationProject, TenantOrganizationBaseEntity } from 'core/entities/internal';
 
@@ -8,24 +8,59 @@ import { IntegrationTenant, OrganizationProject, TenantOrganizationBaseEntity } 
 export class OrganizationGithubRepository extends TenantOrganizationBaseEntity implements IOrganizationGithubRepository {
 
     @ApiProperty({ type: () => Number })
+    @IsNotEmpty()
+    @IsNumber()
     @Index()
     @Column()
     repositoryId: number;
 
     @ApiProperty({ type: () => String })
+    @IsNotEmpty()
+    @IsString()
     @Index()
     @Column()
     name: string;
 
     @ApiProperty({ type: () => String })
+    @IsNotEmpty()
+    @IsString()
     @Index()
     @Column()
     fullName: string;
 
     @ApiProperty({ type: () => String })
+    @IsNotEmpty()
+    @IsString()
     @Index()
     @Column()
     owner: string;
+
+    @ApiPropertyOptional({ type: () => Number })
+    @IsNotEmpty()
+    @IsNumber()
+    @Index()
+    @Column({ nullable: true })
+    issuesCount: number;
+
+    @ApiPropertyOptional({ type: () => Boolean })
+    @IsOptional()
+    @IsBoolean()
+    @Index()
+    @Column({ nullable: true, default: false })
+    hasSyncEnabled: boolean;
+
+    @ApiPropertyOptional({ type: () => Boolean })
+    @IsOptional()
+    @IsBoolean()
+    @Index()
+    @Column({ nullable: true, default: false })
+    private: boolean;
+
+    @ApiPropertyOptional({ type: () => String })
+    @IsOptional()
+    @Index()
+    @Column({ nullable: true })
+    status: string;
 
     /*
     |--------------------------------------------------------------------------
@@ -33,9 +68,7 @@ export class OrganizationGithubRepository extends TenantOrganizationBaseEntity i
     |--------------------------------------------------------------------------
     */
 
-    /**
-     * Integration Tenant
-     */
+    /** What integration tenant sync to */
     @ApiProperty({ type: () => IntegrationTenant })
     @ManyToOne(() => IntegrationTenant, {
         /** Indicates if relation column value can be nullable or not. */
@@ -60,9 +93,7 @@ export class OrganizationGithubRepository extends TenantOrganizationBaseEntity i
     |--------------------------------------------------------------------------
     */
 
-    /**
-     * Repository Sync Organization Projects
-     */
+    /** Repository Sync Organization Projects */
     @OneToMany(() => OrganizationProject, (it) => it.repository)
     projects?: IOrganizationProject[];
 }

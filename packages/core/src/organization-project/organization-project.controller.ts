@@ -179,6 +179,19 @@ export class OrganizationProjectController extends CrudController<OrganizationPr
 	}
 
 	/**
+	 *
+	 * @param params
+	 * @returns
+	 */
+	@Get('synced')
+	@UsePipes(new ValidationPipe())
+	async findSyncedProjects(
+		@Query() params: PaginationParams<OrganizationProject>
+	): Promise<IPagination<IOrganizationProject>> {
+		return await this.organizationProjectService.findSyncedProjects(params);
+	}
+
+	/**
 	 * GET organization project count
 	 *
 	 * @param options

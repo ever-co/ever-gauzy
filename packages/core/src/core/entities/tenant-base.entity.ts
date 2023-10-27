@@ -21,5 +21,5 @@ export abstract class TenantBaseEntity extends BaseEntity implements IBasePerTen
 	@IsOptional()
 	@Index()
 	@Column({ nullable: true })
-	tenantId?: string;
+	tenantId?: ITenant['id'];
 }

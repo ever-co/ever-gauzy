@@ -22,17 +22,17 @@ export class ProjectComponent implements OnInit, ViewCell {
 
 	projects: IProject[] = [];
 
-	constructor() {}
+	constructor() { }
 
 	ngOnInit(): void {
 		this.init();
 	}
 
 	public async init() {
-		if (this.rowData.project) {
-			this.project.name = this.rowData.project.name;
-			this.project.count = this.rowData.project.membersCount;
-			this.project.imageUrl = this.rowData.project.imageUrl;
+		if (this.rowData?.project || this.value?.project) {
+			this.project.name = this.rowData?.project?.name || this.value?.project?.name;
+			this.project.count = this.rowData?.project?.membersCount || this.value?.project?.membersCount;
+			this.project.imageUrl = this.rowData?.project?.imageUrl || this.value?.project?.imageUrl;
 		} else if (this.rowData.projects) {
 			this.projects = this.rowData.projects.map((project: any) => {
 				return {

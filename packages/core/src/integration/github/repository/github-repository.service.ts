@@ -32,7 +32,7 @@ export class GithubRepositoryService extends TenantAwareCrudService<Organization
     ): Promise<IOrganizationGithubRepository> {
         try {
             return await this._commandBus.execute(
-                new IntegrationSyncGithubRepositoryCommand(input)
+                new IntegrationSyncGithubRepositoryCommand(input, false)
             );
         } catch (error) {
             // Handle errors and return an appropriate error response
