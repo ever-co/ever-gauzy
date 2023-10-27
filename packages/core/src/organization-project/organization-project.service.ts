@@ -112,7 +112,7 @@ export class OrganizationProjectService extends TenantAwareCrudService<Organizat
 	 * @param options - An object containing organization, tenant, and integration information.
 	 * @returns A Promise that resolves to an array of organization projects.
 	 */
-	public async getProjectsByRepository(
+	public async getProjectsByGithubRepository(
 		repositoryId: IOrganizationGithubRepository['repositoryId'],
 		options: {
 			organizationId: IOrganizationGithubRepository['id'];

@@ -69,6 +69,7 @@ export * from '../../integration-map/integration-map.entity';
 export * from '../../integration-setting/integration-setting.entity';
 export * from '../../integration-tenant/integration-tenant.entity';
 export * from '../../integration/github/repository/github-repository.entity';
+export * from '../../integration/github/repository/issue/github-repository-issue.entity';
 export * from '../../integration/integration-type.entity';
 export * from '../../integration/integration.entity';
 export * from '../../invite/invite.entity';

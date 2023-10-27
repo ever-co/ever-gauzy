@@ -134,6 +134,16 @@ export interface IOrganizationGithubRepository extends IBasePerTenantAndOrganiza
     status: string;
 }
 
+export interface IOrganizationGithubRepositoryFindInput extends Partial<IOrganizationGithubRepository> { }
+
+export interface IOrganizationGithubRepositoryIssue extends IBasePerTenantAndOrganizationEntityModel {
+    issueId: number;
+    issueNumber: number;
+    /** Issue Sync With Repository */
+    repository?: IOrganizationGithubRepository;
+    repositoryId?: IOrganizationGithubRepository['id'];
+}
+
 export interface IIntegrationMapSyncRepository extends IBasePerTenantAndOrganizationEntityModel, IRelationalIntegrationTenant {
     repository: IGithubRepository;
 }
