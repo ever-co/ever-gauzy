@@ -3,6 +3,7 @@ import { PlatformLogoGenerator } from './concrete-generators/platform-logo-gener
 import { DesktopIconGenerator } from './concrete-generators/desktop-icon-generator';
 import { DesktopDefaultIconGenerator } from './concrete-generators/desktop-default-icon-generator';
 import { NoInternetLogoGenerator } from './concrete-generators/no-internet-logo-generator';
+import { DesktopEnvironmentManager } from '../electron-desktop-environment/desktop-environment-manager';
 
 dotenv.config();
 
@@ -35,4 +36,6 @@ export class IconFactory {
 	await IconFactory.generateNoInternetLogo();
 	//Generate desktop icons from URL
 	await IconFactory.generateDesktopIcons();
+	// Update environment file
+	DesktopEnvironmentManager.update();
 })();

@@ -6,6 +6,7 @@ import { IDesktopIconGenerator } from '../interfaces/i-desktop-icon-generator';
 import { IconFactory } from '../icon-factory';
 import { env } from '../../env';
 import * as PngIco from 'png-to-ico';
+import { DesktopEnvironmentManager } from '../../electron-desktop-environment/desktop-environment-manager';
 
 export class DesktopIconGenerator
 	extends IconGenerator
@@ -36,11 +37,12 @@ export class DesktopIconGenerator
 					);
 					reject(error);
 				} else {
-					process.env.GAUZY_DESKTOP_LOGO_512X512 = path.join(
-						'assets',
-						'icons',
-						'desktop_logo_512x512.png'
-					);
+					DesktopEnvironmentManager.environment.GAUZY_DESKTOP_LOGO_512X512 =
+						path.join(
+							'assets',
+							'icons',
+							'desktop_logo_512x512.png'
+						);
 					console.log(
 						'✔ desktop logo 512x512 icons generated successfully.'
 					);

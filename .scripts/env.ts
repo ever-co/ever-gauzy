@@ -117,6 +117,10 @@ export type Env = Readonly<{
 	DESKTOP_SERVER_APP_WELCOME_TITLE: string;
 	DESKTOP_SERVER_APP_WELCOME_CONTENT: string;
 	DESKTOP_SERVER_APP_I18N_FILES_URL: string;
+	AWHost: string;
+	API_DEFAULT_PORT: number;
+	GAUZY_UI_DEFAULT_PORT: number;
+	SCREENSHOTS_ENGINE_METHOD: string;
 }>;
 
 export const env: Env = cleanEnv(
@@ -292,6 +296,10 @@ export const env: Env = cleanEnv(
 		DESKTOP_SERVER_APP_WELCOME_TITLE: str({ default: '' }),
 		DESKTOP_SERVER_APP_WELCOME_CONTENT: str({ default: '' }),
 		DESKTOP_SERVER_APP_I18N_FILES_URL: str({ default: '' }),
+		AWHost: str({default: 'http://localhost:5600'}),
+		API_DEFAULT_PORT: num({default: 3000}),
+		GAUZY_UI_DEFAULT_PORT: num({default: 5621}),
+		SCREENSHOTS_ENGINE_METHOD: str({default: 'ScreenshotDesktopLib'}),
 	},
 	{ strict: true, dotEnvPath: __dirname + '/../.env' }
 );

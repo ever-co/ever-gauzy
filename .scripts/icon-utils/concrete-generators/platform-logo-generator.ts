@@ -3,6 +3,7 @@ import * as path from 'path';
 import { IconGenerator } from '../interfaces/icon-generator';
 import { IIconGenerator } from '../interfaces/i-icon-generator';
 import { env } from '../../env';
+import { DesktopEnvironmentManager } from '../../electron-desktop-environment/desktop-environment-manager';
 
 export class PlatformLogoGenerator
 	extends IconGenerator
@@ -38,12 +39,13 @@ export class PlatformLogoGenerator
 					return;
 				}
 				// load image from assets
-				process.env.PLATFORM_LOGO_URL = path.join(
-					'assets',
-					'images',
-					'logos',
-					`platform_logo${extName}`
-				);
+				DesktopEnvironmentManager.environment.PLATFORM_LOGO_URL =
+					path.join(
+						'assets',
+						'images',
+						'logos',
+						`platform_logo${extName}`
+					);
 				// remove downloaded file
 				await this.remove(filePath);
 				console.log(`✔ ${extName} copied successfully.`);

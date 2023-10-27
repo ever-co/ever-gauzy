@@ -3,6 +3,7 @@ import { IIconGenerator } from '../interfaces/i-icon-generator';
 import * as path from 'path';
 import * as fs from 'fs';
 import { env } from '../../env';
+import { DesktopEnvironmentManager } from '../../electron-desktop-environment/desktop-environment-manager';
 
 export class NoInternetLogoGenerator
 	extends IconGenerator
@@ -38,12 +39,13 @@ export class NoInternetLogoGenerator
 					return;
 				}
 				// load image from assets
-				process.env.NO_INTERNET_LOGO = path.join(
-					'assets',
-					'images',
-					'logos',
-					`no_internet_logo${extName}`
-				);
+				DesktopEnvironmentManager.environment.NO_INTERNET_LOGO =
+					path.join(
+						'assets',
+						'images',
+						'logos',
+						`no_internet_logo${extName}`
+					);
 				// remove downloaded file
 				await this.remove(filePath);
 				console.log(`✔ ${extName} copied successfully.`);

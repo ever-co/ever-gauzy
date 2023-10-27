@@ -45,7 +45,8 @@ import { RouterModule } from '@angular/router';
 import { HTTP_INTERCEPTORS } from '@angular/common/http';
 import * as Sentry from "@sentry/angular";
 import { Router } from '@angular/router';
-import { environment } from '@env/environment';
+import { environment as gauzyEnvironment } from '@env/environment';
+import { environment } from '../environments/environment';
 
 @NgModule({
 	declarations: [AppComponent],
@@ -135,7 +136,10 @@ import { environment } from '@env/environment';
 		{ provide: DEFAULT_TIMEOUT, useValue: 80000 },
 		{
 			provide: GAUZY_ENV,
-			useValue: environment
+			useValue: {
+				...gauzyEnvironment,
+				...environment,
+			},
 		},
 	],
 	bootstrap: [AppComponent],
