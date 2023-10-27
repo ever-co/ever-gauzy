@@ -3,6 +3,9 @@ import { ThemeSelectorComponent } from '../theme-selector.component';
 import { NbThemeService } from '@nebular/theme';
 import { Store } from '../../../../../../../@core/services/store.service';
 import { SwitchThemeService } from './switch-theme.service';
+import { ActivatedRoute } from '@angular/router';
+import { filter, tap } from 'rxjs/operators';
+import { untilDestroyed } from '@ngneat/until-destroy';
 
 @Component({
 	selector: 'gauzy-switch-theme',
@@ -22,7 +25,8 @@ export class SwitchThemeComponent extends ThemeSelectorComponent {
 	constructor(
 		private readonly switchService: SwitchThemeService,
 		readonly themeService: NbThemeService,
-		readonly store: Store
+		readonly store: Store,
+		private readonly activatedRoute: ActivatedRoute
 	) {
 		super(themeService, store);
 		// Listerning event and switching to current OS color theme
@@ -46,6 +50,15 @@ export class SwitchThemeComponent extends ThemeSelectorComponent {
 			// lockdown
 			this.switchService.isAlreadyLoaded = true;
 		}
+
+		this.activatedRoute.queryParams
+			.pipe(
+				filter((query) => !!query.theme),
+				tap(({ theme }) => this.themeService.changeTheme(theme)),
+				untilDestroyed(this)
+			)
+			.subscribe();
+
 	}
 	/**
 	 * this method help to switch to opposite current theme

@@ -9,7 +9,7 @@
     </div>
     <div class="hr-div-strong"></div>
     <nb-alert
-      *ngIf="showMessages.error && errors?.length && !submitted"
+      *ngIf="showMessages?.error && errors?.length && !submitted"
       outline="danger"
       role="alert"
     >
@@ -19,7 +19,7 @@
       </ul>
     </nb-alert>
     <nb-alert
-      *ngIf="showMessages.success && messages?.length && !submitted"
+      *ngIf="showMessages?.success && messages?.length && !submitted"
       outline="success"
       role="alert"
     >
@@ -75,7 +75,7 @@
         </ng-container>
       </div>
 
-      <div class="form-control-group">
+      <div class="form-control-group" *ngIf="!emailPopulated">
         <label class="label" for="input-email">Email address:</label>
         <input
           nbInput
