@@ -5,6 +5,7 @@ import { IconGenerator } from '../interfaces/icon-generator';
 import { IDesktopIconGenerator } from '../interfaces/i-desktop-icon-generator';
 import { IconFactory } from '../icon-factory';
 import { env } from '../../env';
+import * as PngIco from 'png-to-ico';
 
 export class DesktopIconGenerator
 	extends IconGenerator
@@ -67,7 +68,7 @@ export class DesktopIconGenerator
 					.resize(iconSize, iconSize)
 					.write(linuxIconFilePath, () => {
 						console.log(
-							`✔ ${iconSize}x${iconSize} icon generated.`
+							`✔ linux ${iconSize}x${iconSize}.png icon generated.`
 						);
 						resolve(true);
 					})
@@ -79,28 +80,31 @@ export class DesktopIconGenerator
 		const macIconFilePath = path.join(this.destination, 'icon.icns');
 		await new Promise((resolve) =>
 			originalImage.clone().write(macIconFilePath, () => {
-				console.log('✔ image converted to ICNS format successfully.');
+				console.log('✔ macOS icon.icns generated.');
 				resolve(true);
 			})
 		);
 	}
 
 	public async generateWindowsIcon(originalImage: Jimp): Promise<void> {
-		const windowsIconFilePath = path.join(this.destination, 'icon.ico');
-		await new Promise((resolve) =>
-			originalImage
-				.clone()
-				.resize(256, 256)
-				.write(windowsIconFilePath, () => {
-					console.log(
-						'✔ image converted to ICO format successfully.'
-					);
-					resolve(true);
-				})
-		);
+		const ICON_SIZE = 256;
+		const png = `icon_${ICON_SIZE}x${ICON_SIZE}.png`;
+		const ico = 'icon.ico';
+		const windowsTempIconFilePath = path.join(this.destination, png);
+		const windowsIconFilePath = path.join(this.destination, ico);
+		await originalImage
+			.clone()
+			.resize(ICON_SIZE, Jimp.AUTO, Jimp.RESIZE_NEAREST_NEIGHBOR)
+			.writeAsync(windowsTempIconFilePath);
+		const buffer = await PngIco([windowsTempIconFilePath]);
+		fs.writeFileSync(windowsIconFilePath, buffer);
+		await this.remove(windowsTempIconFilePath, true);
+		console.log(`✔ window ${ico} generated.`);
 	}
 
 	public async generateTrayIcon(originalImage: Jimp): Promise<void> {
+		const REF_SIZE = 16;
+		const scales = [1, 1.25, 1.33, 1.4, 1.5, 1.8, 2, 2.5, 3, 4, 5];
 		const pngFilePath = path.join(
 			'apps',
 			this.desktop,
@@ -108,24 +112,22 @@ export class DesktopIconGenerator
 			'assets',
 			'icons'
 		);
-		await new Promise((resolve) =>
-			originalImage
-				.clone()
-				.resize(16, 16)
-				.write(path.join(pngFilePath, 'icon.png'), () => {
-					console.log('✔ tray icon generated successfully.');
-					resolve(true);
-				})
-		);
-		await new Promise((resolve) =>
-			originalImage
-				.clone()
-				.resize(32, 32)
-				.write(path.join(pngFilePath, 'icon@2x.png'), () => {
-					console.log('✔ tray icon@2x generated successfully.');
-					resolve(true);
-				})
-		);
+		for (const scale of scales) {
+			const size = REF_SIZE * scale;
+			const icon =
+				scale === scales[0] ? 'icon.png' : `icon@${scale}x.png`;
+			await new Promise((resolve) =>
+				originalImage
+					.clone()
+					.resize(size, size)
+					.write(path.join(pngFilePath, icon), () => {
+						console.log(
+							`✔ tray icon ${icon} generated successfully.`
+						);
+						resolve(true);
+					})
+			);
+		}
 	}
 
 	public async resizeAndConvert(filePath: string): Promise<void> {

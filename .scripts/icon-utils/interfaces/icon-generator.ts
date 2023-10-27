@@ -16,9 +16,11 @@ export abstract class IconGenerator {
 		this.downloadContext = new DownloadContext();
 	}
 
-	protected async remove(filePath: string): Promise<void> {
+	protected async remove(filePath: string, force = false): Promise<void> {
 		if (this.downloadContext.strategy instanceof DownloadAssetStrategy) {
-			return;
+			if (!force) {
+				return;
+			}
 		}
 		await new Promise((resolve, reject) =>
 			fs.rm(filePath, (error) => {
