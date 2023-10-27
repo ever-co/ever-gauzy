@@ -1,5 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
+import { Observable, firstValueFrom } from 'rxjs';
 import {
     IBasePerTenantAndOrganizationEntityModel,
     IGithubAppInstallInput,
@@ -12,7 +13,6 @@ import {
     IOrganizationGithubRepository,
     IOrganizationProject
 } from '@gauzy/contracts';
-import { Observable, firstValueFrom } from 'rxjs';
 import { toParams } from '@gauzy/common-angular';
 import { API_PREFIX } from '../../constants';
 
@@ -74,13 +74,49 @@ export class GithubService {
     }
 
     /**
+    * Synchronize a GitHub repository.
+    * @param input The synchronization input data.
+    * @returns An Observable of the synchronized IntegrationMap.
+    */
+    syncGithubRepository(input: IIntegrationMapSyncRepository): Observable<IOrganizationGithubRepository> {
+        const url = `${API_PREFIX}/integration/github/repository/sync`;
+        return this._http.post<IOrganizationGithubRepository>(url, input);
+    }
+
+    /**
+     * Auto-synchronize GitHub issues for a specific repository.
+     *
+     * @param integrationId - The ID of the integration tenant.
+     * @param repository - The GitHub repository to auto-sync issues for.
+     * @param options - Additional options for synchronization, including organization, tenant, and an optional project.
+     * @returns An Observable representing the result of the auto-synchronization.
+     */
+    public autoSyncIssues(
+        integrationId: IIntegrationTenant['id'],
+        repository: IGithubRepository,
+        options: {
+            organizationId: IOrganization['id'];
+            tenantId: IOrganization['tenantId'];
+            projectId?: IOrganizationProject['id'];
+        },
+    ): Observable<any> {
+        return this._http.post(`${API_PREFIX}/integration/github/${integrationId}/auto-sync/issues`, {
+            integrationId,
+            repository: this._mapRepositoryPayload(repository),
+            projectId: options.projectId,
+            organizationId: options.organizationId,
+            tenantId: options.tenantId
+        });
+    }
+
+    /**
      * Sync GitHub issues and labels for a given organization and integration.
      *
      * @param integrationId - The ID of the integration.
      * @param options - An object containing organizationId, tenantId, and issues.
      * @returns An observable that represents the HTTP POST request to sync issues and labels.
      */
-    public syncIssuesAndLabels(
+    public manualSyncIssues(
         integrationId: IIntegrationTenant['id'],
         repository: IGithubRepository,
         options: {
@@ -90,7 +126,8 @@ export class GithubService {
             projectId?: IOrganizationProject['id'];
         },
     ): Observable<any> {
-        return this._http.post(`${API_PREFIX}/integration/github/${integrationId}/sync-issues`, {
+        return this._http.post(`${API_PREFIX}/integration/github/${integrationId}/sync/issues`, {
+            integrationId,
             repository: this._mapRepositoryPayload(repository),
             issues: this._mapIssuePayload(options.issues),
             projectId: options.projectId,
@@ -106,14 +143,17 @@ export class GithubService {
      * @returns A custom payload object with selected properties.
      */
     private _mapRepositoryPayload(data: IGithubRepository): any {
-        const { id, name, owner, visibility } = data;
+        const { id, name, full_name, owner, visibility, open_issues_count } = data;
         return {
             id,
             name,
+            full_name,
             owner: {
                 login: owner.login
             },
-            visibility
+            visibility,
+            open_issues_count,
+            private: data.private
         };
     }
 
@@ -131,15 +171,5 @@ export class GithubService {
             state,
             body
         }));
-    }
-
-    /**
-    * Synchronize a GitHub repository.
-    * @param input The synchronization input data.
-    * @returns An Observable of the synchronized IntegrationMap.
-    */
-    syncGithubRepository(input: IIntegrationMapSyncRepository): Observable<IOrganizationGithubRepository> {
-        const url = `${API_PREFIX}/integration/github/repository/sync`;
-        return this._http.post<IOrganizationGithubRepository>(url, input);
     }
 }

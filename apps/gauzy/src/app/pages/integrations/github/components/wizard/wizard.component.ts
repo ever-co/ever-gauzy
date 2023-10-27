@@ -253,8 +253,8 @@ export class GithubWizardComponent implements AfterViewInit, OnInit, OnDestroy {
 				this._router.navigate([data['redirectTo']]);
 				return;
 			}
-			// Navigate to a specific route, e.g., '/pages/integrations/new'
-			this._router.navigate(['/pages/integrations/new']);
+			// Navigate to a specific route, e.g., '/pages/integrations'
+			this._router.navigate(['/pages/integrations']);
 		}, ms); // Delay for 'ms' milliseconds before redirecting
 	}
 

@@ -44,6 +44,8 @@ import { AllowScreenshotCaptureComponent } from './allow-screenshot-capture/allo
 import { NumberEditorComponent } from './editors/number-editor.component';
 import { ClickableLinkComponent } from './clickable-link/clickable-link.component';
 import { TrustHtmlLinkComponent } from './trust-html/trust-html.component';
+import { GithubAutoSyncSwitchComponent } from './github/auto-sync-switch/auto-sync-switch.component';
+import { GithubRepositoryComponent } from './github/repository/repository.component';
 
 @NgModule({
 	imports: [
@@ -92,7 +94,9 @@ import { TrustHtmlLinkComponent } from './trust-html/trust-html.component';
 		// smart table field editor
 		NumberEditorComponent,
 		ClickableLinkComponent,
-		TrustHtmlLinkComponent
+		TrustHtmlLinkComponent,
+		GithubRepositoryComponent,
+		GithubAutoSyncSwitchComponent
 	],
 	exports: [
 		NotesWithTagsComponent,
@@ -114,7 +118,9 @@ import { TrustHtmlLinkComponent } from './trust-html/trust-html.component';
 		CreatedAtComponent,
 		DateViewComponent,
 		ClickableLinkComponent,
-		TrustHtmlLinkComponent
+		TrustHtmlLinkComponent,
+		GithubRepositoryComponent,
+		GithubAutoSyncSwitchComponent
 	],
 	providers: []
 })

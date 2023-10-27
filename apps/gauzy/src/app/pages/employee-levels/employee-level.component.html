@@ -51,7 +51,7 @@
 				dataLayoutStyle === componentLayoutStyleEnum.CARDS_GRID
 			"
 		>
-			<ga-card-grid 
+			<ga-card-grid
 				[totalItems]="pagination?.totalItems"
 				[settings]="settingsSmartTable"
 				[source]="employeeLevels"
@@ -63,7 +63,7 @@
 			<div class="no-data">
 				<ngx-no-data-message
 					[message]="
-						'ORGANIZATIONS_PAGE.EMPLOYEE_LEVEL_NO_DATA_MESSAGE'
+						'ORGANIZATIONS_PAGE.EMPLOYEE_LEVEL_NO_DATA_MESSAGE' | translate
 					"
 				></ngx-no-data-message>
 			</div>

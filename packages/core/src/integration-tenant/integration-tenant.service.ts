@@ -78,7 +78,11 @@ export class IntegrationTenantService extends TenantAwareCrudService<Integration
 					organizationId,
 					name,
 					isActive: true,
-					isArchived: false
+					isArchived: false,
+					integration: {
+						isActive: true,
+						isArchived: false
+					}
 				},
 				order: {
 					updatedAt: 'DESC'
