@@ -1,5 +1,5 @@
-import { ITask } from "@gauzy/contracts";
 import { IEvent } from "@nestjs/cqrs";
+import { ITask } from "@gauzy/contracts";
 
 export class TaskUpdatedEvent implements IEvent {
 

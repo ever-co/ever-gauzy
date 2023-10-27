@@ -22,11 +22,14 @@ import { GithubSyncService } from './github-sync.service';
 import { GitHubRepositoryController } from './repository/github-repository.controller';
 import { GithubRepositoryService } from './repository/github-repository.service';
 import { OrganizationGithubRepository } from './repository/github-repository.entity';
+import { OrganizationGithubRepositoryIssue } from './repository/issue/github-repository-issue.entity';
+import { GithubRepositoryIssueService } from './repository/issue/github-repository-issue.service';
 
 @Module({
 	imports: [
 		TypeOrmModule.forFeature([
-			OrganizationGithubRepository
+			OrganizationGithubRepository,
+			OrganizationGithubRepositoryIssue
 		]),
 		HttpModule,
 		TenantModule,
@@ -51,6 +54,7 @@ import { OrganizationGithubRepository } from './repository/github-repository.ent
 		GithubSyncService,
 		GithubHooksService,
 		GithubRepositoryService,
+		GithubRepositoryIssueService,
 		// Define middleware heres
 		GithubMiddleware,
 		// Define handlers heres
