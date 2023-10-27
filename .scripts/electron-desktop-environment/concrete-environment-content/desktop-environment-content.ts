@@ -12,8 +12,6 @@ export class DesktopEnvironmentContent implements IContentGenerator {
 			DESKTOP_APP_WELCOME_TITLE: '${variable.DESKTOP_APP_WELCOME_TITLE}',
 			DESKTOP_APP_WELCOME_CONTENT: '${variable.DESKTOP_APP_WELCOME_CONTENT}',
 			DESKTOP_APP_I18N_FILES_URL: '${variable.DESKTOP_APP_I18N_FILES_URL}',
-			DESKTOP_TIMER_APP_NAME: '${variable.DESKTOP_APP_NAME}',
-			DESKTOP_TIMER_APP_DESCRIPTION: '${variable.DESKTOP_APP_DESCRIPTION}',
 		`;
 	}
 }
