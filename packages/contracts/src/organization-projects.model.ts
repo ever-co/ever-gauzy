@@ -61,6 +61,9 @@ export interface IOrganizationProject extends IBaseEntityWithMembers, IRelationa
 	budgetType?: OrganizationProjectBudgetTypeEnum;
 	membersCount?: number;
 	imageUrl?: string;
+	/** Project Sync With Repository */
+	repository?: IOrganizationGithubRepository;
+	repositoryId?: IOrganizationGithubRepository['id'];
 }
 
 export enum TaskListTypeEnum {

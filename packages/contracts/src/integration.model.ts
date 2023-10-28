@@ -1,6 +1,11 @@
 import { IBaseEntityModel, IBasePerTenantAndOrganizationEntityModel } from './base-entity.model';
 import { ITag } from './tag.model';
 
+export interface IRelationIntegration {
+	integration?: IIntegration;
+	integrationId?: IIntegration['id'];
+}
+
 export interface IRelationalIntegrationTenant {
 	integration?: IIntegrationTenant;
 	integrationId?: IIntegrationTenant['id'];
@@ -36,17 +41,15 @@ export interface IIntegrationViewModel {
 	isComingSoon?: boolean;
 }
 
-export interface IIntegrationTenant extends IBasePerTenantAndOrganizationEntityModel {
+export interface IIntegrationTenant extends IBasePerTenantAndOrganizationEntityModel, IRelationIntegration {
 	name: IntegrationEnum;
-	integration?: IIntegration;
-	integrationId?: IIntegration['id'];
+	lastSyncedAt?: Date;
 	entitySettings?: IIntegrationEntitySetting[];
 	settings?: IIntegrationSetting[];
 }
 
-export interface IIntegrationTenantFindInput extends IBasePerTenantAndOrganizationEntityModel {
+export interface IIntegrationTenantFindInput extends IBasePerTenantAndOrganizationEntityModel, IRelationIntegration {
 	name?: IntegrationEnum;
-	integrationId?: IIntegration['id'];
 }
 
 export interface IIntegration extends IBaseEntityModel {
@@ -83,7 +86,7 @@ export interface IIntegrationFilter {
 
 /** */
 export interface IIntegrationMapSyncBase extends IBasePerTenantAndOrganizationEntityModel, IRelationalIntegrationTenant {
-	sourceId: IIntegrationMap['sourceId'];
+	sourceId?: IIntegrationMap['sourceId'];
 }
 
 export interface IIntegrationMapSyncEntity<T> extends IIntegrationMapSyncBase {
@@ -95,9 +98,7 @@ export interface IIntegrationMapSyncEntityInput extends IIntegrationMapSyncBase 
 	entity: IntegrationEntity;
 }
 
-export interface IIntegrationTenantCreateInput extends IBasePerTenantAndOrganizationEntityModel {
-	integration?: IIntegration;
-	integrationId?: IIntegration['id'];
+export interface IIntegrationTenantCreateInput extends IBasePerTenantAndOrganizationEntityModel, IRelationIntegration {
 	name: IntegrationEnum;
 	entitySettings?: IIntegrationEntitySetting[];
 	settings?: IIntegrationSetting[];

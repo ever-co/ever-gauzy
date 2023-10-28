@@ -4,7 +4,7 @@ import { CommonModule } from '@angular/common';
 import { NbCardModule, NbButtonModule, NbIconModule, NbCheckboxModule } from '@nebular/theme';
 import { MomentModule } from 'ngx-moment';
 import { ViewRoutingModule } from './view-routing.module';
-import { ViewComponent } from './view/view.component';
+import { GithubViewComponent } from './view/view.component';
 import { EditTimeLogModalModule } from './../../../../@shared/timesheet';
 import { DialogsModule } from './../../../../@shared/dialogs';
 import { SharedModule } from './../../../../@shared/shared.module';
@@ -13,7 +13,7 @@ import { DateRangeTitleModule } from './../../../../@shared/components/date-rang
 import { GauzyButtonActionModule } from 'apps/gauzy/src/app/@shared/gauzy-button-action/gauzy-button-action.module';
 
 @NgModule({
-	declarations: [ViewComponent],
+	declarations: [GithubViewComponent],
 	imports: [
 		CommonModule,
 		ViewRoutingModule,
@@ -30,4 +30,4 @@ import { GauzyButtonActionModule } from 'apps/gauzy/src/app/@shared/gauzy-button
 		GauzyButtonActionModule
 	]
 })
-export class ViewModule {}
+export class ViewModule { }

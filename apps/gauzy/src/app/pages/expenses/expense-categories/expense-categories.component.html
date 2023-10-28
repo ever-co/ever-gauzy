@@ -54,14 +54,14 @@
 			<ng-template [ngIf]="!loading && expenseCategories?.length == 0">
 				<div class="no-data">
 					<ngx-no-data-message
-						[message]="'SM_TABLE.NO_DATA.EXPENSE_CATEGORY'"
+						[message]="'SM_TABLE.NO_DATA.EXPENSE_CATEGORY' | translate"
 					></ngx-no-data-message>
 				</div>
 			</ng-template>
 		</ng-template>
 		<ng-template #gridLayout>
 			<div class="grid">
-				<ga-card-grid 
+				<ga-card-grid
 					[totalItems]="pagination?.totalItems"
 					[settings]="settingsSmartTable"
 					[source]="expenseCategories"

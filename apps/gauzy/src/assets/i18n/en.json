@@ -4,6 +4,8 @@
 		"ADD_EXISTING_USER": "Add Existing User",
 		"ADD_NEW": "Add New",
 		"ADD": "Add",
+		"ADD_INTEGRATION": "Add Integration",
+		"RESET_INTEGRATION": "Reset Integration",
 		"CREATE": "Create",
 		"REGISTER": "Register",
 		"LOGIN": "Log In",
@@ -41,8 +43,10 @@
 		"HISTORY": "History",
 		"SYNC": "Sync",
 		"SYNCING": "Syncing...",
+		"SELECTED_TASKS": "Selected Tasks",
 		"UPDATE": "Update",
 		"AUTO_SYNC": "Auto sync",
+		"AUTO_SYNCING": "Auto syncing...",
 		"VIEW": "View",
 		"SEND": "Send",
 		"ARCHIVE": "Archive",
@@ -154,7 +158,9 @@
 		"PASTE": "Paste",
 		"FORWARD_PORTS": "Forward Ports",
 		"REPORT": "Report",
-		"IGNORE": "Ignore"
+		"IGNORE": "Ignore",
+		"ENABLE": "Enable",
+		"DISABLE": "Disable"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {
@@ -284,6 +290,7 @@
 		"CURRENT_VALUE": "Current value",
 		"TARGET_VALUE": "Target value",
 		"LAST_UPDATED": "Last Updated",
+		"LAST_SYNC_DATE": "Last Sync Date",
 		"CREATED_BY": "Created By",
 		"NO_DATA_MESSAGE": "No Data",
 		"TAGS": "Tags",
@@ -295,7 +302,12 @@
 		"TIME_TRACKING": "Time Tracking",
 		"CREATED_AT": "Created At",
 		"SCREEN_CAPTURE": "Screen Capture",
-		"NUMBER": "Number"
+		"NUMBER": "Number",
+		"PROVIDER": "Provider",
+		"GITHUB_REPOSITORY": "Github Repository",
+		"ISSUES_SYNC": "Issues in Sync",
+		"ISSUES_SYNC_COUNT": "{{ count }} Issues Auto Sync",
+		"ENABLED_DISABLED_SYNC": "Enabled / Disabled Sync"
 	},
 	"FORM": {
 		"USERNAME": "Username",
@@ -460,7 +472,9 @@
 			"LINKEDIN_ID": "LinkedIn ID",
 			"AUTO_SYNC_TASKS": "Auto-sync tasks",
 			"AUTO_SYNC_TASKS_BASED_ON_LABEL": "Is tasks Auto-sync based on Label?",
-			"AUTO_SYNC_TAG": "Label"
+			"AUTO_SYNC_TAG": "Label",
+			"GITHUB_REPOSITORY": "Github Repository",
+			"PROJECT": "Project"
 		},
 		"PLACEHOLDERS": {
 			"NAME": "Name",
@@ -651,7 +665,8 @@
 			"LINKEDIN_ID": "LinkedIn ID",
 			"AUTO_SYNC_TASKS": "Auto Sync Tasks",
 			"AUTO_SYNC_TASKS_BASED_ON_LABEL": "Auto-sync Tasks On Label",
-			"AUTO_SYNC_TAG": "Select Auto-sync Label"
+			"AUTO_SYNC_TAG": "Select Auto-sync Label",
+			"SELECT_PROJECT": "Select Project"
 		},
 		"RATES": {
 			"DEFAULT_RATE": "Default Rate",
@@ -1185,6 +1200,7 @@
 		}
 	},
 	"INTEGRATIONS": {
+		"TITLE": "Integrations",
 		"AVAILABLE_INTEGRATIONS": "Available Apps & Integrations",
 		"ADDED_UPWORK_TRANSACTION": "Added Upwork Transaction",
 		"TOTAL_UPWORK_TRANSACTIONS_SUCCEED": "Total expense transactions succeed: {{ totalExpenses }}. Total income transactions succeed: {{ totalIncomes }}",
@@ -1199,7 +1215,8 @@
 			"CLIENT_ID": "Hubstaff Client ID",
 			"CLIENT_SECRET": "Hubstaff Client Secret",
 			"GRANT_PERMISSION": "Next you will be taken to Hubstaff to grant permission to Gauzy.",
-			"ENTER_CLIENT_SECRET": "Enter client secret to get access token."
+			"ENTER_CLIENT_SECRET": "Enter client secret to get access token.",
+			"DESCRIPTION": "Activate Hubstaff integration for enhanced workforce management."
 		},
 		"UPWORK_PAGE": {
 			"ACTIVITIES": "Activities",
@@ -1215,17 +1232,24 @@
 			"ONLY_CONTRACTS": "Only Contracts",
 			"CONTRACTS_RELATED_DATA": "Synced Contracts related entities",
 			"DATE_RANGE_PLACEHOLDER": "Choose date between",
-			"HOURLY": "Hourly"
+			"HOURLY": "Hourly",
+			"DESCRIPTION": "Activate Upwork integration for freelance workforce management."
 		},
 		"GAUZY_AI_PAGE": {
 			"API_KEY": "Gauzy AI key",
-			"API_SECRET": "Gauzy AI Secret"
+			"API_SECRET": "Gauzy AI Secret",
+			"DESCRIPTION": "Activate Gauzy AI integration for smarter job hunting."
 		},
 		"GITHUB_PAGE": {
-			"NAME": "GitHub",
+			"TITLE": "GitHub Integration",
 			"SELECT_REPOSITORY": "Select repository",
 			"SEARCH_REPOSITORY": "Type to search repository",
-			"SYNCED_ISSUES": "'{{repository}}' issues & labels synced successfully"
+			"SYNCED_ISSUES": "'{{repository}}' issues & labels synced successfully",
+			"DESCRIPTION": "Activate GitHub integration for project & repository sync.",
+			"TAB": {
+				"AUTO_SYNC": "Auto sync",
+				"MANUAL_SYNC": "Manual sync"
+			}
 		},
 		"COMING_SOON": "Coming soon",
 		"RE_INTEGRATE": "Re-integrate",
@@ -1236,8 +1260,12 @@
 		"PAID": "Paid",
 		"INTEGRATION": "Integration",
 		"MESSAGE": {
-			"SETTINGS_UPDATED": "Updated settings for {{provider}} integration"
-		}
+			"SETTINGS_UPDATED": "Updated settings for '{{provider}}' integration",
+			"INTEGRATION_DELETED": "Integration '{{provider}}' deleted successfully",
+			"NO_INTEGRATIONS": "You have not configured any integrations"
+		},
+		"ENABLED": "Enabled",
+		"DISABLED": "Disabled"
 	},
 	"DASHBOARD_PAGE": {
 		"ACCOUNTING": "Accounting",
