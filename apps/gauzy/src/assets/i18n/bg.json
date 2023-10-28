@@ -2657,6 +2657,40 @@
 		"FAQ": "FAQ",
 		"HELP": "Помощ"
 	},
+	"QUICK_ACTIONS_MENU": {
+		"CREATE_INVOICE": "Създаване на фактура",
+		"CREATE_INCOME": "Създаване на приход",
+		"CREATE_EXPENSE": "Създаване на разход",
+		"CREATE_ESTIMATE": "Създаване на оценка",
+		"CREATE_PAYMENT": "Създаване на плащане",
+		"ADD_EMPLOYEE": "Добавяне на служител",
+		"ADD_INVENTORY": "Добавяне на инвентар",
+		"ADD_EQUIPMENT": "Добавяне на оборудване",
+		"ADD_VENDOR": "Добавяне на доставчик",
+		"ADD_DEPARTMENT": "Добавяне на отдел",
+		"CREATE_TEAM": "Създаване на екип",
+		"CREATE_TASK": "Създаване на задача",
+		"CREATE_PROJECT": "Създаване на проект",
+		"VIEW_TASKS": "Преглед на задачи",
+		"VIEW_TEAM_TASKS": "Преглед на задачи на екипа",
+		"CREATE_CANDIDATE": "Създаване на кандидат",
+		"CREATE_PROPOSAL": "Създаване на предложение",
+		"CREATE_CONTRACT": "Създаване на договор",
+		"CREATE_LEAD": "Създаване на клиент-потенциал",
+		"CREATE_CUSTOMER": "Създаване на клиент",
+		"CREATE_CLIENT": "Създаване на клиент",
+		"START_TIMER": "Стартиране на таймер",
+		"STOP_TIMER": "Спиране на таймер",
+		"TIME_LOG": "Запис на времето"
+	},
+	"QUICK_ACTIONS_GROUP": {
+		"ACCOUNTING": "Счетоводство",
+		"ORGANIZATION": "Организация",
+		"PROJECT_MANAGEMENT": "Управление на проекти",
+		"JOBS": "Работи",
+		"CONTACTS": "Контакти",
+		"TIME_TRACKING": "Следене на времето"
+	},
 	"PROFILE_PAGE": {
 		"FIRST_NAME": "Име",
 		"LAST_NAME": "Фамилия",
@@ -4179,7 +4213,8 @@
 	"DIALOG": {
 		"CONFIRM": "Потвърждение",
 		"ALERT": "Alert",
-		"DELETE_CONFIRM": "Alert"
+		"DELETE_CONFIRM": "Alert",
+		"QUICK_ACTIONS": "БЪРЗИ ДЕЙСТВИЯ"
 	},
 	"SETTINGS_FILE_STORAGE": {
 		"FILE_PROVIDER": "Доставчик на файлове",

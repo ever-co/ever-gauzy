@@ -5,12 +5,13 @@ import {
 	OnInit,
 	AfterViewInit
 } from '@angular/core';
-import { Router, NavigationEnd, ActivatedRoute } from '@angular/router';
+import { Router, NavigationEnd } from '@angular/router';
 import {
 	NbMenuService,
 	NbSidebarService,
 	NbThemeService,
 	NbMenuItem,
+	NbDialogService,
 } from '@nebular/theme';
 import { combineLatest, firstValueFrom, lastValueFrom, Subject } from 'rxjs';
 import { debounceTime, filter, tap } from 'rxjs/operators';
@@ -56,6 +57,7 @@ import { LayoutService } from '../../../@core/utils';
 import { TranslationBaseComponent } from '../../../@shared/language-base';
 import { ChangeDetectorRef } from '@angular/core';
 import { OrganizationTeamStore } from '../../../@core/services/organization-team-store.service';
+import { QuickActionsComponent } from '../../../@shared/dialogs/quick-actions/quick-actions.component';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -81,11 +83,13 @@ export class HeaderComponent
 
 	showDateSelector = true;
 	theme: string;
-	createContextMenu: NbMenuItem[];
+	// createContextMenu: NbMenuItem[];
+	createQuickActionsMenu: NbMenuItem[];
 	supportContextMenu: NbMenuItem[];
 	showExtraActions = false;
 	actions = {
 		START_TIMER: 'START_TIMER',
+		STOP_TIMER: 'STOP_TIMER',
 	};
 	timerDuration: string;
 	organization: IOrganization;
@@ -119,7 +123,7 @@ export class HeaderComponent
 		private readonly employeeStore: EmployeeStore,
 		private readonly selectorBuilderService: SelectorBuilderService,
 		private readonly cd: ChangeDetectorRef,
-		private readonly activatedRoute: ActivatedRoute
+		private readonly dialogService: NbDialogService
 	) {
 		super(translate);
 	}
@@ -234,36 +238,11 @@ export class HeaderComponent
 		this._loadContextMenus();
 	}
 
-	contextMenu$() {
-		// context menu parent
-		const parentElement = document.querySelector('nb-layout');
-		const contextMenuObserver$ = new MutationObserver(
-			(mutationsList, observer) => {
-				for (const mutation of mutationsList) {
-					if (
-						mutation.type === 'childList' &&
-						mutation.addedNodes.length
-					) {
-						const overlayPane =
-							parentElement.querySelector('.cdk-overlay-pane');
-						const contextMenu =
-							parentElement.querySelector('nb-context-menu');
-						if (overlayPane) {
-							// elements are ready to manipulate
-							(overlayPane as HTMLElement).style.height = '80%';
-							(contextMenu as HTMLElement).style.overflowY =
-								'scroll';
-							// Stop observing
-							contextMenuObserver$.disconnect();
-						}
-					}
-				}
-			}
-		);
-		// oberve for changes.
-		contextMenuObserver$.observe(parentElement, {
-			childList: true,
-			subtree: true,
+	openQuickActions() {
+		this.dialogService.open(QuickActionsComponent, {
+			context: {
+				items: this.createQuickActionsMenu,
+			},
 		});
 	}
 
@@ -530,200 +509,6 @@ export class HeaderComponent
 	}
 
 	private _loadContextMenus() {
-		this.createContextMenu = [
-			...(this.store.hasAnyPermission(PermissionsEnum.TIME_TRACKER)
-				? [
-						{
-							title: this.getTranslation('CONTEXT_MENU.TIMER'),
-							icon: 'clock-outline',
-							hidden: !this.isEmployee || this.isElectron,
-							data: {
-								action: this.actions.START_TIMER, //This opens the timer popup in the header, managed by menu.itemClick TOO: Start the timer also
-							},
-						},
-				  ]
-				: []),
-			// TODO: divider
-			...(this.store.hasAnyPermission(
-				PermissionsEnum.ORG_INCOMES_EDIT,
-				PermissionsEnum.ALL_ORG_EDIT
-			)
-				? [
-						{
-							title: this.getTranslation(
-								'CONTEXT_MENU.ADD_INCOME'
-							),
-							icon: 'plus-circle-outline',
-							link: 'pages/accounting/income',
-						},
-				  ]
-				: []),
-			...(this.store.hasAnyPermission(
-				PermissionsEnum.ORG_EXPENSES_EDIT,
-				PermissionsEnum.ALL_ORG_EDIT
-			)
-				? [
-						{
-							title: this.getTranslation(
-								'CONTEXT_MENU.ADD_EXPENSE'
-							),
-							icon: 'minus-circle-outline',
-							link: 'pages/accounting/expenses',
-						},
-				  ]
-				: []),
-			// TODO: divider
-			...(this.store.hasAnyPermission(
-				PermissionsEnum.INVOICES_EDIT,
-				PermissionsEnum.ALL_ORG_EDIT
-			)
-				? [
-						{
-							title: this.getTranslation('CONTEXT_MENU.INVOICE'),
-							icon: 'archive-outline',
-							link: 'pages/accounting/invoices/add',
-						},
-				  ]
-				: []),
-			...(this.store.hasAnyPermission(
-				PermissionsEnum.ESTIMATES_EDIT,
-				PermissionsEnum.ALL_ORG_EDIT
-			)
-				? [
-						{
-							title: this.getTranslation('CONTEXT_MENU.ESTIMATE'),
-							icon: 'file-outline',
-							link: 'pages/accounting/invoices/estimates/add',
-						},
-				  ]
-				: []),
-			...(this.store.hasAnyPermission(
-				PermissionsEnum.ORG_PAYMENT_ADD_EDIT,
-				PermissionsEnum.ALL_ORG_EDIT
-			)
-				? [
-						{
-							title: this.getTranslation('CONTEXT_MENU.PAYMENT'),
-							icon: 'clipboard-outline',
-							link: 'pages/accounting/payments',
-						},
-				  ]
-				: []),
-			...(this.store.hasAnyPermission(
-				PermissionsEnum.TIMESHEET_EDIT_TIME,
-				PermissionsEnum.ALL_ORG_EDIT
-			)
-				? [
-						{
-							title: this.getTranslation('CONTEXT_MENU.TIME_LOG'),
-							icon: 'clock-outline',
-							link: 'pages/employees/timesheets/daily',
-						},
-				  ]
-				: []),
-			...(this.store.hasAnyPermission(
-				PermissionsEnum.ORG_CANDIDATES_EDIT,
-				PermissionsEnum.ALL_ORG_EDIT
-			)
-				? [
-						{
-							title: this.getTranslation(
-								'CONTEXT_MENU.CANDIDATE'
-							),
-							icon: 'person-done-outline',
-							link: 'pages/employees/candidates',
-						},
-				  ]
-				: []),
-			...(this.store.hasAnyPermission(
-				PermissionsEnum.ORG_PROPOSALS_EDIT,
-				PermissionsEnum.ALL_ORG_EDIT
-			)
-				? [
-						{
-							title: this.getTranslation('CONTEXT_MENU.PROPOSAL'),
-							icon: 'paper-plane-outline',
-							link: 'pages/sales/proposals/register',
-						},
-				  ]
-				: []),
-			...(this.store.hasAnyPermission(
-				PermissionsEnum.ORG_CONTRACT_EDIT,
-				PermissionsEnum.ALL_ORG_EDIT
-			)
-				? [
-						{
-							title: this.getTranslation('CONTEXT_MENU.CONTRACT'),
-							icon: 'file-text-outline',
-							link: 'pages/integrations/upwork',
-						},
-				  ]
-				: []),
-			// TODO: divider
-			...(this.store.hasAnyPermission(
-				PermissionsEnum.ORG_TEAM_ADD,
-				PermissionsEnum.ALL_ORG_EDIT
-			)
-				? [
-						{
-							title: this.getTranslation('CONTEXT_MENU.TEAM'),
-							icon: 'people-outline',
-							link: `pages/organization/teams`,
-						},
-				  ]
-				: []),
-			...(this.store.hasAnyPermission(
-				PermissionsEnum.ORG_TASK_EDIT,
-				PermissionsEnum.ALL_ORG_EDIT
-			)
-				? [
-						{
-							title: this.getTranslation('CONTEXT_MENU.TASK'),
-							icon: 'calendar-outline',
-							link: 'pages/tasks/dashboard',
-						},
-				  ]
-				: []),
-			...(this.store.hasAnyPermission(
-				PermissionsEnum.ORG_CONTACT_EDIT,
-				PermissionsEnum.ALL_ORG_EDIT
-			)
-				? [
-						{
-							title: this.getTranslation('CONTEXT_MENU.CONTACT'),
-							icon: 'person-done-outline',
-							link: `pages/contacts`,
-						},
-				  ]
-				: []),
-			...(this.store.hasAnyPermission(
-				PermissionsEnum.ORG_PROJECT_ADD,
-				PermissionsEnum.ALL_ORG_EDIT
-			)
-				? [
-						{
-							title: this.getTranslation('CONTEXT_MENU.PROJECT'),
-							icon: 'color-palette-outline',
-							link: `pages/organization/projects/create`,
-						},
-				  ]
-				: []),
-			// TODO: divider
-			...(this.store.hasAnyPermission(
-				PermissionsEnum.ORG_EMPLOYEES_EDIT,
-				PermissionsEnum.ALL_ORG_EDIT
-			)
-				? [
-						{
-							title: this.getTranslation(
-								'CONTEXT_MENU.ADD_EMPLOYEE'
-							),
-							icon: 'people-outline',
-							link: 'pages/employees',
-						},
-				  ]
-				: []),
-		];
 		this.supportContextMenu = [
 			{
 				title: this.getTranslation('CONTEXT_MENU.CHAT'),
@@ -744,13 +529,555 @@ export class HeaderComponent
 				link: 'pages/about',
 			},
 		];
+		this.createQuickActionsMenu = [
+			// Divider (Accounting)
+			...(this.store.hasAnyPermission(
+				PermissionsEnum.INVOICES_EDIT,
+				PermissionsEnum.ALL_ORG_EDIT
+			)
+				? [
+						{
+							title: this.getTranslation(
+								'QUICK_ACTIONS_MENU.CREATE_INVOICE'
+							),
+							icon: 'file-text-outline',
+							link: 'pages/accounting/invoices/add',
+						},
+				  ]
+				: []),
+			...(this.store.hasAnyPermission(
+				PermissionsEnum.ORG_INCOMES_EDIT,
+				PermissionsEnum.ALL_ORG_EDIT
+			)
+				? [
+						{
+							title: this.getTranslation(
+								'QUICK_ACTIONS_MENU.CREATE_INCOME'
+							),
+							icon: 'plus-circle-outline',
+							link: 'pages/accounting/income',
+						},
+				  ]
+				: []),
+			...(this.store.hasAnyPermission(
+				PermissionsEnum.ORG_EXPENSES_EDIT,
+				PermissionsEnum.ALL_ORG_EDIT
+			)
+				? [
+						{
+							title: this.getTranslation(
+								'QUICK_ACTIONS_MENU.CREATE_EXPENSE'
+							),
+							icon: 'minus-circle-outline',
+							link: 'pages/accounting/expenses',
+						},
+				  ]
+				: []),
+
+			...(this.store.hasAnyPermission(
+				PermissionsEnum.ESTIMATES_EDIT,
+				PermissionsEnum.ALL_ORG_EDIT
+			)
+				? [
+						{
+							title: this.getTranslation(
+								'QUICK_ACTIONS_MENU.CREATE_ESTIMATE'
+							),
+							icon: 'file-outline',
+							link: 'pages/accounting/invoices/estimates/add',
+						},
+				  ]
+				: []),
+			...(this.store.hasAnyPermission(
+				PermissionsEnum.ORG_PAYMENT_ADD_EDIT,
+				PermissionsEnum.ALL_ORG_EDIT
+			)
+				? [
+						{
+							title: this.getTranslation(
+								'QUICK_ACTIONS_MENU.CREATE_PAYMENT'
+							),
+							icon: 'credit-card-outline',
+							link: 'pages/accounting/payments',
+						},
+				  ]
+				: []),
+			// Divider (Organization)
+			...(this.store.hasAnyPermission(
+				PermissionsEnum.ORG_EMPLOYEES_EDIT,
+				PermissionsEnum.ALL_ORG_EDIT
+			)
+				? [
+						{
+							title: this.getTranslation(
+								'QUICK_ACTIONS_MENU.ADD_EMPLOYEE'
+							),
+							icon: 'people-outline',
+							link: 'pages/employees',
+						},
+				  ]
+				: []),
+			...(this.store.hasAnyPermission(
+				PermissionsEnum.ORG_INVENTORY_PRODUCT_EDIT,
+				PermissionsEnum.ALL_ORG_EDIT
+			)
+				? [
+						{
+							title: this.getTranslation(
+								'QUICK_ACTIONS_MENU.ADD_INVENTORY'
+							),
+							icon: 'inbox-outline',
+							link: 'pages/organization/inventory/create',
+						},
+				  ]
+				: []),
+			...(this.store.hasAnyPermission(
+				PermissionsEnum.ORG_EQUIPMENT_EDIT,
+				PermissionsEnum.ALL_ORG_EDIT
+			)
+				? [
+						{
+							title: this.getTranslation(
+								'QUICK_ACTIONS_MENU.ADD_EQUIPMENT'
+							),
+							icon: 'pantone-outline',
+							link: 'pages/organization/equipment',
+						},
+				  ]
+				: []),
+			...(this.store.hasAnyPermission(PermissionsEnum.ALL_ORG_EDIT)
+				? [
+						{
+							title: this.getTranslation(
+								'QUICK_ACTIONS_MENU.ADD_VENDOR'
+							),
+							icon: 'car-outline',
+							link: 'pages/organization/vendors',
+						},
+				  ]
+				: []),
+			...(this.store.hasAnyPermission(PermissionsEnum.ALL_ORG_EDIT)
+				? [
+						{
+							title: this.getTranslation(
+								'QUICK_ACTIONS_MENU.ADD_DEPARTMENT'
+							),
+							icon: 'briefcase-outline',
+							link: 'pages/organization/departments',
+						},
+				  ]
+				: []),
+
+			// Divider (Project Management)
+			...(this.store.hasAnyPermission(
+				PermissionsEnum.ORG_TEAM_ADD,
+				PermissionsEnum.ALL_ORG_EDIT
+			)
+				? [
+						{
+							title: this.getTranslation(
+								'QUICK_ACTIONS_MENU.CREATE_TEAM'
+							),
+							icon: 'people-outline',
+							link: 'pages/organization/teams',
+						},
+				  ]
+				: []),
+			...(this.store.hasAnyPermission(
+				PermissionsEnum.ORG_TASK_EDIT,
+				PermissionsEnum.ALL_ORG_EDIT
+			)
+				? [
+						{
+							title: this.getTranslation(
+								'QUICK_ACTIONS_MENU.CREATE_TASK'
+							),
+							icon: 'archive-outline',
+							link: 'pages/tasks/dashboard',
+						},
+				  ]
+				: []),
+			...(this.store.hasAnyPermission(
+				PermissionsEnum.ORG_PROJECT_ADD,
+				PermissionsEnum.ALL_ORG_EDIT
+			)
+				? [
+						{
+							title: this.getTranslation(
+								'QUICK_ACTIONS_MENU.CREATE_PROJECT'
+							),
+							icon: 'color-palette-outline',
+							link: 'pages/organization/projects/create',
+						},
+				  ]
+				: []),
+			...(this.store.hasAnyPermission(
+				PermissionsEnum.ORG_TASK_VIEW,
+				PermissionsEnum.ALL_ORG_EDIT
+			)
+				? [
+						{
+							title: this.getTranslation(
+								'QUICK_ACTIONS_MENU.VIEW_TASKS'
+							),
+							icon: 'calendar-outline',
+							link: 'pages/tasks/dashboard',
+						},
+				  ]
+				: []),
+			...(this.store.hasAnyPermission(
+				PermissionsEnum.ORG_TASK_VIEW,
+				PermissionsEnum.ALL_ORG_EDIT
+			)
+				? [
+						{
+							title: this.getTranslation(
+								'QUICK_ACTIONS_MENU.VIEW_TEAM_TASKS'
+							),
+							icon: 'layers-outline',
+							link: 'pages/tasks/team',
+						},
+				  ]
+				: []),
+
+			// Divider (Jobs)
+			...(this.store.hasAnyPermission(
+				PermissionsEnum.ORG_CANDIDATES_EDIT,
+				PermissionsEnum.ALL_ORG_EDIT
+			)
+				? [
+						{
+							title: this.getTranslation(
+								'QUICK_ACTIONS_MENU.CREATE_CANDIDATE'
+							),
+							icon: 'person-add-outline',
+							link: 'pages/employees/candidates',
+						},
+				  ]
+				: []),
+			...(this.store.hasAnyPermission(
+				PermissionsEnum.ORG_PROPOSALS_EDIT,
+				PermissionsEnum.ALL_ORG_EDIT
+			)
+				? [
+						{
+							title: this.getTranslation(
+								'QUICK_ACTIONS_MENU.CREATE_PROPOSAL'
+							),
+							icon: 'paper-plane-outline',
+							link: 'pages/sales/proposals/register',
+						},
+				  ]
+				: []),
+			...(this.store.hasAnyPermission(
+				PermissionsEnum.ORG_CONTRACT_EDIT,
+				PermissionsEnum.ALL_ORG_EDIT
+			)
+				? [
+						{
+							title: this.getTranslation(
+								'QUICK_ACTIONS_MENU.CREATE_CONTRACT'
+							),
+							icon: 'file-text-outline',
+							link: 'pages/integrations/upwork',
+						},
+				  ]
+				: []),
+
+			// Divider (Contacts)
+			...(this.store.hasAnyPermission(
+				PermissionsEnum.ORG_CONTACT_EDIT,
+				PermissionsEnum.ALL_ORG_EDIT
+			)
+				? [
+						{
+							title: this.getTranslation(
+								'QUICK_ACTIONS_MENU.CREATE_LEAD'
+							),
+							icon: 'shield-outline',
+							link: 'pages/contacts/leads',
+						},
+				  ]
+				: []),
+			...(this.store.hasAnyPermission(
+				PermissionsEnum.ORG_CONTACT_EDIT,
+				PermissionsEnum.ALL_ORG_EDIT
+			)
+				? [
+						{
+							title: this.getTranslation(
+								'QUICK_ACTIONS_MENU.CREATE_CUSTOMER'
+							),
+							icon: 'person-done-outline',
+							link: 'pages/contacts/customers',
+						},
+				  ]
+				: []),
+			...(this.store.hasAnyPermission(
+				PermissionsEnum.ORG_CONTACT_EDIT,
+				PermissionsEnum.ALL_ORG_EDIT
+			)
+				? [
+						{
+							title: this.getTranslation(
+								'QUICK_ACTIONS_MENU.CREATE_CLIENT'
+							),
+							icon: 'person-outline',
+							link: 'pages/contacts/clients',
+						},
+				  ]
+				: []),
+			// Divider (Time Tracking)
+			...(this.store.hasAnyPermission(
+				PermissionsEnum.TIMESHEET_EDIT_TIME,
+				PermissionsEnum.ALL_ORG_EDIT
+			)
+				? [
+						{
+							title: this.getTranslation(
+								'QUICK_ACTIONS_MENU.TIME_LOG'
+							),
+							icon: 'clock-outline',
+							link: 'pages/employees/timesheets/daily',
+						},
+				  ]
+				: []),
+			...(this.store.hasAnyPermission(PermissionsEnum.TIME_TRACKER)
+				? [
+						{
+							title: this.getTranslation(
+								'QUICK_ACTIONS_MENU.START_TIMER'
+							),
+							icon: 'play-circle-outline',
+							hidden: !this.isEmployee || this.isElectron,
+							data: {
+								action: this.actions.START_TIMER, //This opens the timer popup in the header, managed by menu.itemClick TOO: Start the timer also
+							},
+						},
+				  ]
+				: []),
+			...(this.store.hasAnyPermission(PermissionsEnum.TIME_TRACKER)
+				? [
+						{
+							title: this.getTranslation(
+								'QUICK_ACTIONS_MENU.STOP_TIMER'
+							),
+							icon: 'pause-circle-outline',
+							hidden: !this.isEmployee || this.isElectron,
+							data: {
+								action: this.actions.STOP_TIMER,
+							},
+						},
+				  ]
+				: []),
+		];
+
+		// ** ** ** Start Temp Code ** ** **
+		{
+			// this.createContextMenu = [
+			// 	...(this.store.hasAnyPermission(PermissionsEnum.TIME_TRACKER)
+			// 		? [
+			// 				{
+			// 					title: this.getTranslation('CONTEXT_MENU.TIMER'),
+			// 					icon: 'clock-outline',
+			// 					hidden: !this.isEmployee || this.isElectron,
+			// 					data: {
+			// 						action: this.actions.START_TIMER, //This opens the timer popup in the header, managed by menu.itemClick TOO: Start the timer also
+			// 					},
+			// 				},
+			// 		  ]
+			// 		: []),
+			// 	// TODO: divider
+			// 	...(this.store.hasAnyPermission(
+			// 		PermissionsEnum.ORG_INCOMES_EDIT,
+			// 		PermissionsEnum.ALL_ORG_EDIT
+			// 	)
+			// 		? [
+			// 				{
+			// 					title: this.getTranslation(
+			// 						'CONTEXT_MENU.ADD_INCOME'
+			// 					),
+			// 					icon: 'plus-circle-outline',
+			// 					link: 'pages/accounting/income',
+			// 				},
+			// 		  ]
+			// 		: []),
+			// 	...(this.store.hasAnyPermission(
+			// 		PermissionsEnum.ORG_EXPENSES_EDIT,
+			// 		PermissionsEnum.ALL_ORG_EDIT
+			// 	)
+			// 		? [
+			// 				{
+			// 					title: this.getTranslation(
+			// 						'CONTEXT_MENU.ADD_EXPENSE'
+			// 					),
+			// 					icon: 'minus-circle-outline',
+			// 					link: 'pages/accounting/expenses',
+			// 				},
+			// 		  ]
+			// 		: []),
+			// 	// TODO: divider
+			// 	...(this.store.hasAnyPermission(
+			// 		PermissionsEnum.INVOICES_EDIT,
+			// 		PermissionsEnum.ALL_ORG_EDIT
+			// 	)
+			// 		? [
+			// 				{
+			// 					title: this.getTranslation('CONTEXT_MENU.INVOICE'),
+			// 					icon: 'archive-outline',
+			// 					link: 'pages/accounting/invoices/add',
+			// 				},
+			// 		  ]
+			// 		: []),
+			// 	...(this.store.hasAnyPermission(
+			// 		PermissionsEnum.ESTIMATES_EDIT,
+			// 		PermissionsEnum.ALL_ORG_EDIT
+			// 	)
+			// 		? [
+			// 				{
+			// 					title: this.getTranslation('CONTEXT_MENU.ESTIMATE'),
+			// 					icon: 'file-outline',
+			// 					link: 'pages/accounting/invoices/estimates/add',
+			// 				},
+			// 		  ]
+			// 		: []),
+			// 	...(this.store.hasAnyPermission(
+			// 		PermissionsEnum.ORG_PAYMENT_ADD_EDIT,
+			// 		PermissionsEnum.ALL_ORG_EDIT
+			// 	)
+			// 		? [
+			// 				{
+			// 					title: this.getTranslation('CONTEXT_MENU.PAYMENT'),
+			// 					icon: 'clipboard-outline',
+			// 					link: 'pages/accounting/payments',
+			// 				},
+			// 		  ]
+			// 		: []),
+			// 	...(this.store.hasAnyPermission(
+			// 		PermissionsEnum.TIMESHEET_EDIT_TIME,
+			// 		PermissionsEnum.ALL_ORG_EDIT
+			// 	)
+			// 		? [
+			// 				{
+			// 					title: this.getTranslation('CONTEXT_MENU.TIME_LOG'),
+			// 					icon: 'clock-outline',
+			// 					link: 'pages/employees/timesheets/daily',
+			// 				},
+			// 		  ]
+			// 		: []),
+			// 	...(this.store.hasAnyPermission(
+			// 		PermissionsEnum.ORG_CANDIDATES_EDIT,
+			// 		PermissionsEnum.ALL_ORG_EDIT
+			// 	)
+			// 		? [
+			// 				{
+			// 					title: this.getTranslation(
+			// 						'CONTEXT_MENU.CANDIDATE'
+			// 					),
+			// 					icon: 'person-done-outline',
+			// 					link: 'pages/employees/candidates',
+			// 				},
+			// 		  ]
+			// 		: []),
+			// 	...(this.store.hasAnyPermission(
+			// 		PermissionsEnum.ORG_PROPOSALS_EDIT,
+			// 		PermissionsEnum.ALL_ORG_EDIT
+			// 	)
+			// 		? [
+			// 				{
+			// 					title: this.getTranslation('CONTEXT_MENU.PROPOSAL'),
+			// 					icon: 'paper-plane-outline',
+			// 					link: 'pages/sales/proposals/register',
+			// 				},
+			// 		  ]
+			// 		: []),
+			// 	...(this.store.hasAnyPermission(
+			// 		PermissionsEnum.ORG_CONTRACT_EDIT,
+			// 		PermissionsEnum.ALL_ORG_EDIT
+			// 	)
+			// 		? [
+			// 				{
+			// 					title: this.getTranslation('CONTEXT_MENU.CONTRACT'),
+			// 					icon: 'file-text-outline',
+			// 					link: 'pages/integrations/upwork',
+			// 				},
+			// 		  ]
+			// 		: []),
+			// 	// TODO: divider
+			// 	...(this.store.hasAnyPermission(
+			// 		PermissionsEnum.ORG_TEAM_ADD,
+			// 		PermissionsEnum.ALL_ORG_EDIT
+			// 	)
+			// 		? [
+			// 				{
+			// 					title: this.getTranslation('CONTEXT_MENU.TEAM'),
+			// 					icon: 'people-outline',
+			// 					link: `pages/organization/teams`,
+			// 				},
+			// 		  ]
+			// 		: []),
+			// 	...(this.store.hasAnyPermission(
+			// 		PermissionsEnum.ORG_TASK_EDIT,
+			// 		PermissionsEnum.ALL_ORG_EDIT
+			// 	)
+			// 		? [
+			// 				{
+			// 					title: this.getTranslation('CONTEXT_MENU.TASK'),
+			// 					icon: 'calendar-outline',
+			// 					link: 'pages/tasks/dashboard',
+			// 				},
+			// 		  ]
+			// 		: []),
+			// 	...(this.store.hasAnyPermission(
+			// 		PermissionsEnum.ORG_CONTACT_EDIT,
+			// 		PermissionsEnum.ALL_ORG_EDIT
+			// 	)
+			// 		? [
+			// 				{
+			// 					title: this.getTranslation('CONTEXT_MENU.CONTACT'),
+			// 					icon: 'person-done-outline',
+			// 					link: `pages/contacts`,
+			// 				},
+			// 		  ]
+			// 		: []),
+			// 	...(this.store.hasAnyPermission(
+			// 		PermissionsEnum.ORG_PROJECT_ADD,
+			// 		PermissionsEnum.ALL_ORG_EDIT
+			// 	)
+			// 		? [
+			// 				{
+			// 					title: this.getTranslation('CONTEXT_MENU.PROJECT'),
+			// 					icon: 'color-palette-outline',
+			// 					link: `pages/organization/projects/create`,
+			// 				},
+			// 		  ]
+			// 		: []),
+			// 	// TODO: divider
+			// 	...(this.store.hasAnyPermission(
+			// 		PermissionsEnum.ORG_EMPLOYEES_EDIT,
+			// 		PermissionsEnum.ALL_ORG_EDIT
+			// 	)
+			// 		? [
+			// 				{
+			// 					title: this.getTranslation(
+			// 						'CONTEXT_MENU.ADD_EMPLOYEE'
+			// 					),
+			// 					icon: 'people-outline',
+			// 					link: 'pages/employees',
+			// 				},
+			// 		  ]
+			// 		: []),
+			// ];
+		}
+		// ** ** ** End Temp Code ** ** **
 	}
 
 	private _applyTranslationOnContextMenu() {
 		this.translate.onLangChange
 			.pipe(
 				tap(() => {
-					this.createContextMenu = [];
+					// this.createContextMenu = [];
+					this.createQuickActionsMenu = [];
 					this.supportContextMenu = [];
 					this._loadContextMenus();
 				}),

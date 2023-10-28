@@ -2706,6 +2706,40 @@
 		"FAQ": "Foire aux questions",
 		"HELP": "Aidez-moi"
 	},
+	"QUICK_ACTIONS_MENU": {
+		"CREATE_INVOICE": "Créer une facture",
+		"CREATE_INCOME": "Créer un revenu",
+		"CREATE_EXPENSE": "Créer une dépense",
+		"CREATE_ESTIMATE": "Créer une estimation",
+		"CREATE_PAYMENT": "Créer un paiement",
+		"ADD_EMPLOYEE": "Ajouter un employé",
+		"ADD_INVENTORY": "Ajouter un inventaire",
+		"ADD_EQUIPMENT": "Ajouter un équipement",
+		"ADD_VENDOR": "Ajouter un fournisseur",
+		"ADD_DEPARTMENT": "Ajouter un département",
+		"CREATE_TEAM": "Créer une équipe",
+		"CREATE_TASK": "Créer une tâche",
+		"CREATE_PROJECT": "Créer un projet",
+		"VIEW_TASKS": "Voir les tâches",
+		"VIEW_TEAM_TASKS": "Voir les tâches de l'équipe",
+		"CREATE_CANDIDATE": "Créer un candidat",
+		"CREATE_PROPOSAL": "Créer une proposition",
+		"CREATE_CONTRACT": "Créer un contrat",
+		"CREATE_LEAD": "Créer un prospect",
+		"CREATE_CUSTOMER": "Créer un client",
+		"CREATE_CLIENT": "Créer un client",
+		"START_TIMER": "Démarrer le chronomètre",
+		"STOP_TIMER": "Arrêter le chronomètre",
+		"TIME_LOG": "Journal du temps"
+	},
+	"QUICK_ACTIONS_GROUP": {
+		"ACCOUNTING": "Comptabilité",
+		"ORGANIZATION": "Organisation",
+		"PROJECT_MANAGEMENT": "Gestion de projet",
+		"JOBS": "Emplois",
+		"CONTACTS": "Contacts",
+		"TIME_TRACKING": "Suivi du temps"
+	},
 	"PROFILE_PAGE": {
 		"FIRST_NAME": "Prénom",
 		"LAST_NAME": "Nom de famille",
@@ -4236,7 +4270,8 @@
 	"DIALOG": {
 		"CONFIRM": "Confirmer",
 		"ALERT": "Alerte",
-		"DELETE_CONFIRM": "Alerte"
+		"DELETE_CONFIRM": "Alerte",
+		"QUICK_ACTIONS": "ACTIONS RAPIDES"
 	},
 	"SETTINGS_FILE_STORAGE": {
 		"FILE_PROVIDER": "Fournisseur de fichiers",

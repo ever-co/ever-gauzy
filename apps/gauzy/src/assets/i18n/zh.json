@@ -2705,6 +2705,40 @@
 		"FAQ": "常见问题解答.",
 		"HELP": "帮助"
 	},
+	"QUICK_ACTIONS_MENU": {
+		"CREATE_INVOICE": "创建发票",
+		"CREATE_INCOME": "创建收入",
+		"CREATE_EXPENSE": "创建支出",
+		"CREATE_ESTIMATE": "创建估算",
+		"CREATE_PAYMENT": "创建付款",
+		"ADD_EMPLOYEE": "添加员工",
+		"ADD_INVENTORY": "添加库存",
+		"ADD_EQUIPMENT": "添加设备",
+		"ADD_VENDOR": "添加供应商",
+		"ADD_DEPARTMENT": "添加部门",
+		"CREATE_TEAM": "创建团队",
+		"CREATE_TASK": "创建任务",
+		"CREATE_PROJECT": "创建项目",
+		"VIEW_TASKS": "查看任务",
+		"VIEW_TEAM_TASKS": "查看团队任务",
+		"CREATE_CANDIDATE": "创建候选人",
+		"CREATE_PROPOSAL": "创建提案",
+		"CREATE_CONTRACT": "创建合同",
+		"CREATE_LEAD": "创建潜在客户",
+		"CREATE_CUSTOMER": "创建客户",
+		"CREATE_CLIENT": "创建客户",
+		"START_TIMER": "开始计时器",
+		"STOP_TIMER": "停止计时器",
+		"TIME_LOG": "时间记录"
+	},
+	"QUICK_ACTIONS_GROUP": {
+		"ACCOUNTING": "会计",
+		"ORGANIZATION": "组织",
+		"PROJECT_MANAGEMENT": "项目管理",
+		"JOBS": "工作",
+		"CONTACTS": "联系人",
+		"TIME_TRACKING": "时间跟踪"
+	},
 	"PROFILE_PAGE": {
 		"FIRST_NAME": "名字 (Míngzì)",
 		"LAST_NAME": "姓氏",
@@ -4235,7 +4269,8 @@
 	"DIALOG": {
 		"CONFIRM": "确认",
 		"ALERT": "警告",
-		"DELETE_CONFIRM": "警告"
+		"DELETE_CONFIRM": "警告",
+		"QUICK_ACTIONS": "快速行动"
 	},
 	"SETTINGS_FILE_STORAGE": {
 		"FILE_PROVIDER": "文件提供者",

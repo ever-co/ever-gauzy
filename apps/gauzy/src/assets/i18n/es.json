@@ -2707,6 +2707,40 @@
 		"FAQ": "Preguntas frecuentes",
 		"HELP": "Ayuda"
 	},
+	"QUICK_ACTIONS_MENU": {
+		"CREATE_INVOICE": "Crear factura",
+		"CREATE_INCOME": "Crear ingreso",
+		"CREATE_EXPENSE": "Crear gasto",
+		"CREATE_ESTIMATE": "Crear estimación",
+		"CREATE_PAYMENT": "Crear pago",
+		"ADD_EMPLOYEE": "Agregar empleado",
+		"ADD_INVENTORY": "Agregar inventario",
+		"ADD_EQUIPMENT": "Agregar equipo",
+		"ADD_VENDOR": "Agregar proveedor",
+		"ADD_DEPARTMENT": "Agregar departamento",
+		"CREATE_TEAM": "Crear equipo",
+		"CREATE_TASK": "Crear tarea",
+		"CREATE_PROJECT": "Crear proyecto",
+		"VIEW_TASKS": "Ver tareas",
+		"VIEW_TEAM_TASKS": "Ver tareas del equipo",
+		"CREATE_CANDIDATE": "Crear candidato",
+		"CREATE_PROPOSAL": "Crear propuesta",
+		"CREATE_CONTRACT": "Crear contrato",
+		"CREATE_LEAD": "Crear cliente potencial",
+		"CREATE_CUSTOMER": "Crear cliente",
+		"CREATE_CLIENT": "Crear cliente",
+		"START_TIMER": "Iniciar temporizador",
+		"STOP_TIMER": "Detener temporizador",
+		"TIME_LOG": "Registro de tiempo"
+	},
+	"QUICK_ACTIONS_GROUP": {
+		"ACCOUNTING": "Contabilidad",
+		"ORGANIZATION": "Organización",
+		"PROJECT_MANAGEMENT": "Gestión de proyectos",
+		"JOBS": "Trabajos",
+		"CONTACTS": "Contactos",
+		"TIME_TRACKING": "Seguimiento del tiempo"
+	},
 	"PROFILE_PAGE": {
 		"FIRST_NAME": "Nombre",
 		"LAST_NAME": "Apellido",
@@ -4237,7 +4271,8 @@
 	"DIALOG": {
 		"CONFIRM": "Confirmar",
 		"ALERT": "Alerta",
-		"DELETE_CONFIRM": "Alerta"
+		"DELETE_CONFIRM": "Alerta",
+		"QUICK_ACTIONS": "acciones rapidas"
 	},
 	"SETTINGS_FILE_STORAGE": {
 		"FILE_PROVIDER": "Proveedor de archivos",

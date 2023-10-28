@@ -2705,6 +2705,40 @@
 		"FAQ": "Häufig gestellte Fragen",
 		"HELP": "Hilfe"
 	},
+	"QUICK_ACTIONS_MENU": {
+		"CREATE_INVOICE": "Rechnung erstellen",
+		"CREATE_INCOME": "Einnahme erstellen",
+		"CREATE_EXPENSE": "Ausgabe erstellen",
+		"CREATE_ESTIMATE": "Kostenvoranschlag erstellen",
+		"CREATE_PAYMENT": "Zahlung erstellen",
+		"ADD_EMPLOYEE": "Mitarbeiter hinzufügen",
+		"ADD_INVENTORY": "Inventar hinzufügen",
+		"ADD_EQUIPMENT": "Ausrüstung hinzufügen",
+		"ADD_VENDOR": "Lieferant hinzufügen",
+		"ADD_DEPARTMENT": "Abteilung hinzufügen",
+		"CREATE_TEAM": "Team erstellen",
+		"CREATE_TASK": "Aufgabe erstellen",
+		"CREATE_PROJECT": "Projekt erstellen",
+		"VIEW_TASKS": "Aufgaben anzeigen",
+		"VIEW_TEAM_TASKS": "Aufgaben des Teams anzeigen",
+		"CREATE_CANDIDATE": "Bewerber erstellen",
+		"CREATE_PROPOSAL": "Angebot erstellen",
+		"CREATE_CONTRACT": "Vertrag erstellen",
+		"CREATE_LEAD": "Interessent erstellen",
+		"CREATE_CUSTOMER": "Kunde erstellen",
+		"CREATE_CLIENT": "Kunde erstellen",
+		"START_TIMER": "Timer starten",
+		"STOP_TIMER": "Timer stoppen",
+		"TIME_LOG": "Zeiterfassung"
+	},
+	"QUICK_ACTIONS_GROUP": {
+		"ACCOUNTING": "Buchhaltung",
+		"ORGANIZATION": "Organisation",
+		"PROJECT_MANAGEMENT": "Projektmanagement",
+		"JOBS": "Jobs",
+		"CONTACTS": "Kontakte",
+		"TIME_TRACKING": "Zeiterfassung"
+	},
 	"PROFILE_PAGE": {
 		"FIRST_NAME": "Vorname",
 		"LAST_NAME": "Nachname",
@@ -4235,7 +4269,8 @@
 	"DIALOG": {
 		"CONFIRM": "Bestätigen",
 		"ALERT": "Alarm",
-		"DELETE_CONFIRM": "Alarm"
+		"DELETE_CONFIRM": "Alarm",
+		"QUICK_ACTIONS": "schnelle Aktionen"
 	},
 	"SETTINGS_FILE_STORAGE": {
 		"FILE_PROVIDER": "Dateianbieter",

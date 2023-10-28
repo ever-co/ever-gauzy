@@ -2657,6 +2657,40 @@
 		"FAQ": "ЧаВо",
 		"HELP": "Помогите"
 	},
+	"QUICK_ACTIONS_MENU": {
+		"CREATE_INVOICE": "Создать счет",
+		"CREATE_INCOME": "Создать доход",
+		"CREATE_EXPENSE": "Создать расход",
+		"CREATE_ESTIMATE": "Создать смету",
+		"CREATE_PAYMENT": "Создать платеж",
+		"ADD_EMPLOYEE": "Добавить сотрудника",
+		"ADD_INVENTORY": "Добавить инвентарь",
+		"ADD_EQUIPMENT": "Добавить оборудование",
+		"ADD_VENDOR": "Добавить поставщика",
+		"ADD_DEPARTMENT": "Добавить отдел",
+		"CREATE_TEAM": "Создать команду",
+		"CREATE_TASK": "Создать задачу",
+		"CREATE_PROJECT": "Создать проект",
+		"VIEW_TASKS": "Просмотр задач",
+		"VIEW_TEAM_TASKS": "Просмотр задач команды",
+		"CREATE_CANDIDATE": "Создать кандидата",
+		"CREATE_PROPOSAL": "Создать предложение",
+		"CREATE_CONTRACT": "Создать контракт",
+		"CREATE_LEAD": "Создать клиента",
+		"CREATE_CUSTOMER": "Создать клиента",
+		"CREATE_CLIENT": "Создать клиента",
+		"START_TIMER": "Начать таймер",
+		"STOP_TIMER": "Остановить таймер",
+		"TIME_LOG": "Журнал времени"
+	},
+	"QUICK_ACTIONS_GROUP": {
+		"ACCOUNTING": "Бухгалтерия",
+		"ORGANIZATION": "Организация",
+		"PROJECT_MANAGEMENT": "Управление проектами",
+		"JOBS": "Работа",
+		"CONTACTS": "Контакты",
+		"TIME_TRACKING": "Учет времени"
+	},
 	"PROFILE_PAGE": {
 		"FIRST_NAME": "Имя",
 		"LAST_NAME": "Фамилия",
@@ -4178,7 +4212,8 @@
 	"DIALOG": {
 		"CONFIRM": "Подтвердить",
 		"ALERT": "Оповещение",
-		"DELETE_CONFIRM": "Оповещение"
+		"DELETE_CONFIRM": "Оповещение",
+		"QUICK_ACTIONS": "Быстрые действия"
 	},
 	"SETTINGS_FILE_STORAGE": {
 		"FILE_PROVIDER": "Поставщик файлов",

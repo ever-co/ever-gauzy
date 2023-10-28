@@ -2705,6 +2705,40 @@
 		"FAQ": "Veelgestelde vragen",
 		"HELP": "Hulp"
 	},
+	"QUICK_ACTIONS_MENU": {
+		"CREATE_INVOICE": "Maak factuur",
+		"CREATE_INCOME": "Maak inkomsten",
+		"CREATE_EXPENSE": "Maak kosten",
+		"CREATE_ESTIMATE": "Maak schatting",
+		"CREATE_PAYMENT": "Maak betaling",
+		"ADD_EMPLOYEE": "Voeg medewerker toe",
+		"ADD_INVENTORY": "Voeg voorraad toe",
+		"ADD_EQUIPMENT": "Voeg apparatuur toe",
+		"ADD_VENDOR": "Voeg leverancier toe",
+		"ADD_DEPARTMENT": "Voeg afdeling toe",
+		"CREATE_TEAM": "Maak team",
+		"CREATE_TASK": "Maak taak",
+		"CREATE_PROJECT": "Maak project",
+		"VIEW_TASKS": "Bekijk taken",
+		"VIEW_TEAM_TASKS": "Bekijk taken van het team",
+		"CREATE_CANDIDATE": "Maak kandidaat",
+		"CREATE_PROPOSAL": "Maak voorstel",
+		"CREATE_CONTRACT": "Maak contract",
+		"CREATE_LEAD": "Maak lead",
+		"CREATE_CUSTOMER": "Maak klant",
+		"CREATE_CLIENT": "Maak klant",
+		"START_TIMER": "Start timer",
+		"STOP_TIMER": "Stop timer",
+		"TIME_LOG": "Tijdregistratie"
+	},
+	"QUICK_ACTIONS_GROUP": {
+		"ACCOUNTING": "Boekhouding",
+		"ORGANIZATION": "Organisatie",
+		"PROJECT_MANAGEMENT": "Projectbeheer",
+		"JOBS": "Banen",
+		"CONTACTS": "Contacten",
+		"TIME_TRACKING": "Tijdregistratie"
+	},
 	"PROFILE_PAGE": {
 		"FIRST_NAME": "Voornaam",
 		"LAST_NAME": "Achternaam",
@@ -4235,7 +4269,8 @@
 	"DIALOG": {
 		"CONFIRM": "Bevestigen",
 		"ALERT": "Waarschuwing",
-		"DELETE_CONFIRM": "Waarschuwing"
+		"DELETE_CONFIRM": "Waarschuwing",
+		"QUICK_ACTIONS": "Snelle acties"
 	},
 	"SETTINGS_FILE_STORAGE": {
 		"FILE_PROVIDER": "Bestandsaanbieder",
