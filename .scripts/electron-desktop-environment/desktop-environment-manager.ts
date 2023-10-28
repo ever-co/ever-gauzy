@@ -54,7 +54,7 @@ export class DesktopEnvironmentManager {
 			this.instance.fileDir,
 			this.instance.fileName.concat(`.ts`)
 		);
-		if (fs.existsSync(filePath) && environment) {
+		if (fs.existsSync(filePath)) {
 			fs.unlinkSync(filePath);
 			fs.writeFileSync(
 				filePath,
