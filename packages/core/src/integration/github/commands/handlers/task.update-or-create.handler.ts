@@ -167,10 +167,7 @@ export class GithubTaskUpdateOrCreateCommandHandler implements ICommandHandler<G
 		if (!project || !project.isTasksAutoSync) {
 			return false;
 		}
-		if (project.isTasksAutoSyncOnLabel) {
-			return !!labels.find((label) => label.name.trim() === syncTag.trim());
-		}
-		return true;
+		return !!labels.find((label) => label.name.trim() === syncTag.trim());
 	}
 
 	/**
