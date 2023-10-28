@@ -312,7 +312,7 @@ const getEnvApi = () => {
 
 const createTray = () => {
 	const iconNativePath = nativeImage.createFromPath(
-		path.join(__dirname, 'assets', 'icons', 'icon.png')
+		path.join(__dirname, 'assets', 'icons', 'tray', 'icon.png')
 	);
 	iconNativePath.resize({ width: 16, height: 16 });
 	tray = new Tray(iconNativePath);

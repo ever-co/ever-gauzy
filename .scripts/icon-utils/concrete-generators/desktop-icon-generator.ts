@@ -112,7 +112,8 @@ export class DesktopIconGenerator
 			this.desktop,
 			'src',
 			'assets',
-			'icons'
+			'icons',
+			'tray'
 		);
 		for (const scale of scales) {
 			const size = REF_SIZE * scale;

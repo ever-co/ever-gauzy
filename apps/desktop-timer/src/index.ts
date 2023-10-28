@@ -322,7 +322,7 @@ async function startServer(value, restart = false) {
 		settingsWindow,
 		{ ...environment },
 		pathWindow,
-		path.join(__dirname, 'assets', 'icons', 'icon.png'),
+		path.join(__dirname, 'assets', 'icons', 'tray', 'icon.png'),
 		gauzyWindow,
 		alwaysOn
 	);
@@ -349,7 +349,7 @@ async function startServer(value, restart = false) {
 			settingsWindow,
 			{ ...environment },
 			pathWindow,
-			path.join(__dirname, 'assets', 'icons', 'icon.png'),
+			path.join(__dirname, 'assets', 'icons', 'tray', 'icon.png'),
 			gauzyWindow,
 			alwaysOn
 		);
