@@ -229,7 +229,7 @@ export class GauzyLogoComponent implements AfterViewInit, OnInit, OnDestroy {
 		private readonly domSanitizer: DomSanitizer
 	) {
 		this.logoUrl = this.domSanitizer.bypassSecurityTrustResourceUrl(
-			environment.PLATFORM_LOGO_URL
+			environment.PLATFORM_LOGO
 		);
 	}
 

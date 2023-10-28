@@ -11,7 +11,7 @@ export class PlatformLogoGenerator
 {
 	constructor() {
 		super();
-		this.imageUrl = env.PLATFORM_LOGO_URL;
+		this.imageUrl = env.PLATFORM_LOGO;
 		this.destination = path.join(
 			'apps',
 			this.desktop,
@@ -39,7 +39,7 @@ export class PlatformLogoGenerator
 					return;
 				}
 				// load image from assets
-				DesktopEnvironmentManager.environment.PLATFORM_LOGO_URL =
+				DesktopEnvironmentManager.environment.PLATFORM_LOGO =
 					path.join(
 						'assets',
 						'images',

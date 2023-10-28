@@ -28,7 +28,7 @@ export type Env = Readonly<{
 	EXTENSION_DOWNLOAD_LINK: string;
 
 	// Platform logo url
-	PLATFORM_LOGO_URL: string
+	PLATFORM_LOGO: string
 
 	SENTRY_DSN: string;
 	SENTRY_TRACES_SAMPLE_RATE: string;
@@ -196,7 +196,7 @@ export const env: Env = cleanEnv(
 		GAUZY_GITHUB_POST_INSTALL_URL: str({ default: '' }),
 
 		// Set default platform logo
-		PLATFORM_LOGO_URL: str({
+		PLATFORM_LOGO: str({
 			default: 'assets/images/logos/logo_Gauzy.svg',
 		}),
 

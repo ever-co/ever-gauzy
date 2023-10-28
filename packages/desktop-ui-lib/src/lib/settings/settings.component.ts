@@ -487,7 +487,7 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 		this.companySite = this._environment.COMPANY_SITE;
 		this.companyLink = this._environment.COMPANY_LINK;
 		this.gauzyIcon = this._domSanitizer.bypassSecurityTrustResourceUrl(
-			this._environment.PLATFORM_LOGO_URL
+			this._environment.PLATFORM_LOGO
 		);
 	}
 

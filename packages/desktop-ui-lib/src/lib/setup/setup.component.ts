@@ -97,7 +97,7 @@ export class SetupComponent implements OnInit {
 		electronService.ipcRenderer.send('reset_permissions');
 
 		this.gauzyIcon = this._domSanitizer.bypassSecurityTrustResourceUrl(
-			this._environment.PLATFORM_LOGO_URL
+			this._environment.PLATFORM_LOGO
 		);
 	}
 	appName: string = this.electronService.remote.app.getName();
