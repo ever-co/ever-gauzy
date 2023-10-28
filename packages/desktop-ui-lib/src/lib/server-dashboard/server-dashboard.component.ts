@@ -98,7 +98,7 @@ export class ServerDashboardComponent implements OnInit, AfterViewInit {
 		});
 
 		this.gauzyIcon = this._domSanitizer.bypassSecurityTrustResourceUrl(
-			this._environment.PLATFORM_LOGO_URL
+			this._environment.PLATFORM_LOGO
 		);
 	}
 	ngAfterViewInit(): void {

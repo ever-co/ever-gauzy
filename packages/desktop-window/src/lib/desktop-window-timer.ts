@@ -48,7 +48,7 @@ const windowSetting = () => {
 		},
 		width: width,
 		height: height,
-		title: 'Time Tracker',
+		title: process.env.DESCRIPTION || 'Time Tracker',
 		maximizable: false,
 		show: false,
 

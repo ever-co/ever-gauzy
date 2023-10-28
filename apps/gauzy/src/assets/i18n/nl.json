@@ -4327,7 +4327,7 @@
 			}
 		}
 	},
-	"GAUZY_MAINTENANCE": "Gauzy @ Onderhoud",
+	"GAUZY_MAINTENANCE": "{{ companySite }} @ Onderhoud",
 	"LEGAL": {
 		"PRIVACY_POLICY": "Privacybeleid",
 		"TERMS_AND_CONDITIONS": "Algemene Voorwaarden"
