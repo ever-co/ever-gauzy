@@ -26,7 +26,7 @@ require('sqlite3');
 
 process.env = Object.assign(process.env, environment);
 
-app.setName(process.env.DESKTOP_SERVER_APP_NAME);
+app.setName(process.env.NAME);
 
 console.log('Node Modules Path', path.join(__dirname, 'node_modules'));
 
@@ -86,8 +86,8 @@ let isServerRun: boolean;
 let willQuit = false;
 
 const updater = new DesktopUpdater({
-	repository: process.env.DESKTOP_SERVER_APP_REPO_NAME,
-	owner: process.env.DESKTOP_SERVER_APP_REPO_OWNER,
+	repository: process.env.REPO_NAME,
+	owner: process.env.REPO_OWNER,
 	typeRelease: 'releases',
 });
 
@@ -112,8 +112,8 @@ const executableName = path.basename(process.execPath);
 const eventErrorManager = ErrorEventManager.instance;
 const report = new ErrorReport(
 	new ErrorReportRepository(
-		process.env.DESKTOP_SERVER_APP_REPO_OWNER,
-		process.env.DESKTOP_SERVER_APP_REPO_NAME
+		process.env.REPO_OWNER,
+		process.env.REPO_NAME
 	)
 );
 
@@ -121,7 +121,7 @@ const report = new ErrorReport(
 TranslateLoader.load(__dirname + '/assets/i18n/');
 /* Setting the app user model id for the app. */
 if (process.platform === 'win32') {
-	app.setAppUserModelId(process.env.DESKTOP_SERVER_APP_ID);
+	app.setAppUserModelId(process.env.APP_ID);
 }
 
 LocalStore.setFilePath({
@@ -616,7 +616,7 @@ app.on('before-quit', async (e) => {
 	if (isServerRun) {
 		const exitConfirmationDialog = new DialogStopServerExitConfirmation(
 			new DesktopDialog(
-				process.env.DESKTOP_SERVER_APP_DESCRIPTION,
+				process.env.DESCRIPTION,
 				TranslateService.instant('TIMER_TRACKER.DIALOG.EXIT'),
 				serverWindow
 			)

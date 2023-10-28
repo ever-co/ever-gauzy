@@ -76,7 +76,7 @@ const windowSetting = () => {
 		height: sizes.height,
 		x: 0,
 		y: 0,
-		title: process.env.DESKTOP_APP_DESCRIPTION ||  'Gauzy Desktop',
+		title: process.env.DESCRIPTION ||  'Gauzy Desktop',
 		show: false
 	};
 

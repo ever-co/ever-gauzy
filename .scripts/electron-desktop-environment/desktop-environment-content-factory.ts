@@ -1,11 +1,14 @@
 import { CommonEnvironmentContent } from './concrete-environment-content/common-environment-content';
-import { Env } from '../env';
 import { DesktopTimerEnvironmentContent } from './concrete-environment-content/desktop-timer-environment-content';
 import { DesktopEnvironmentContent } from './concrete-environment-content/desktop-environment-content';
 import { DesktopServerEnvironmentContent } from './concrete-environment-content/desktop-server-environment-content';
+import { IDesktopEnvironment } from './interfaces/i-desktop-environment';
 
 export class DesktopEnvironmentContentFactory {
-	public static generate(desktop: string, environment: Env) {
+	public static generate(
+		desktop: string,
+		environment: Partial<IDesktopEnvironment>
+	) {
 		const common = new CommonEnvironmentContent();
 		switch (desktop) {
 			case 'desktop-timer':

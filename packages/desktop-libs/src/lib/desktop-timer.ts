@@ -100,7 +100,7 @@ export default class TimerHandler {
 				const projectInfo = LocalStore.getStore('project');
 				const appSetting = LocalStore.getStore('appSetting');
 				await this.createQueue(
-					`sqlite-queue-${process.env.DESKTOP_TIMER_APP_NAME}`,
+					`sqlite-queue-${process.env.NAME}`,
 					{
 						type: 'update-duration-timer',
 						data: {

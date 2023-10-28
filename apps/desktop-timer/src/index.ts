@@ -23,7 +23,7 @@ require('sqlite3');
 
 process.env = Object.assign(process.env, environment);
 
-app.setName(process.env.DESKTOP_TIMER_APP_NAME);
+app.setName(process.env.NAME);
 
 console.log('Node Modules Path', path.join(__dirname, 'node_modules'));
 
@@ -90,14 +90,14 @@ const store = new Store();
 const args = process.argv.slice(1);
 const serverGauzy = null;
 const updater = new DesktopUpdater({
-	repository: process.env.DESKTOP_TIMER_APP_REPO_NAME,
-	owner: process.env.DESKTOP_TIMER_APP_REPO_OWNER,
+	repository: process.env.REPO_NAME,
+	owner: process.env.REPO_OWNER,
 	typeRelease: 'releases',
 });
 const report = new ErrorReport(
 	new ErrorReportRepository(
-		process.env.DESKTOP_TIMER_APP_REPO_OWNER,
-		process.env.DESKTOP_TIMER_APP_REPO_NAME
+		process.env.REPO_OWNER,
+		process.env.REPO_NAME
 	)
 );
 const eventErrorManager = ErrorEventManager.instance;
@@ -155,7 +155,7 @@ if (!gotTheLock) {
 TranslateLoader.load(__dirname + '/assets/i18n/');
 /* Setting the app user model id for the app. */
 if (process.platform === 'win32') {
-	app.setAppUserModelId(process.env.DESKTOP_TIMER_APP_ID);
+	app.setAppUserModelId(process.env.APP_ID);
 }
 
 /* Set unlimited listeners */
@@ -180,7 +180,7 @@ log.catchErrors({
 		dialog.show().then((result) => {
 			if (result.response === 1) {
 				submitIssue(
-					`https://github.com/${process.env.DESKTOP_TIMER_APP_REPO_OWNER}/${process.env.DESKTOP_TIMER_APP_REPO_NAME}/issues/new`,
+					`https://github.com/${process.env.REPO_OWNER}/${process.env.REPO_NAME}/issues/new`,
 					{
 						title: `Automatic error report for Desktop Timer App ${versions.app}`,
 						body:
@@ -669,7 +669,7 @@ app.on('before-quit', async (e) => {
 		e.preventDefault();
 		const exitConfirmationDialog = new DialogStopTimerExitConfirmation(
 			new DesktopDialog(
-				process.env.DESKTOP_TIMER_APP_DESCRIPTION,
+				process.env.DESCRIPTION,
 				TranslateService.instant('TIMER_TRACKER.DIALOG.EXIT'),
 				timeTrackerWindow
 			)

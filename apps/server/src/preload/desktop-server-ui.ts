@@ -23,10 +23,10 @@ const prepareServerUi = (): {
     let appName:string = '';
     switch (os.platform()) {
         case 'win32':
-			appName = `${process.env.DESKTOP_SERVER_APP_NAME}.exe`;
+			appName = `${process.env.NAME}.exe`;
             break;
         case 'darwin':
-			appName = process.env.DESKTOP_SERVER_APP_NAME;
+			appName = process.env.NAME;
             break;
         default:
             break;

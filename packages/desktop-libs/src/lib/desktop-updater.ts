@@ -43,7 +43,7 @@ export class DesktopUpdater {
 			const localUpdate = new LocalUpdate();
 			const dialog = new DialogLocalUpdate(
 				new DesktopDialog(
-					process.env.DESKTOP_TIMER_APP_DESCRIPTION,
+					process.env.DESCRIPTION,
 					TranslateService.instant('TIMER_TRACKER.DIALOG.SELECT_UPDATE_FILES'),
 					this._settingWindow
 				)
@@ -121,7 +121,7 @@ export class DesktopUpdater {
 			if (setting && !setting.automaticUpdate) return;
 			const dialog = new DialogConfirmUpgradeDownload(
 				new DesktopDialog(
-					process.env.DESKTOP_TIMER_APP_DESCRIPTION,
+					process.env.DESCRIPTION,
 					TranslateService.instant('TIMER_TRACKER.DIALOG.UPDATE_READY'),
 					this._gauzyWindow
 				)
@@ -145,7 +145,7 @@ export class DesktopUpdater {
 			if (setting && !setting.automaticUpdate) return;
 			const dialog = new DialogConfirmInstallDownload(
 				new DesktopDialog(
-					process.env.DESKTOP_TIMER_APP_DESCRIPTION,
+					process.env.DESCRIPTION,
 					TranslateService.instant(
 						'TIMER_TRACKER.DIALOG.READY_INSTALL'
 					),

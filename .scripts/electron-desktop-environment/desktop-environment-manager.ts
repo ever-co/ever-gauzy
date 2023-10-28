@@ -2,7 +2,8 @@ import { DesktopEnvironmentContentFactory } from './desktop-environment-content-
 import { argv } from 'yargs';
 import * as path from 'path';
 import * as fs from 'fs';
-import { env, Env } from '../env';
+import { env } from '../env';
+import { IDesktopEnvironment } from './interfaces/i-desktop-environment';
 
 export class DesktopEnvironmentManager {
 	private static _instance: DesktopEnvironmentManager;
@@ -45,14 +46,20 @@ export class DesktopEnvironmentManager {
 	}
 
 	public static update(): void {
-		const environment = this.environment;
+		const environment: IDesktopEnvironment = Object.assign(
+			{},
+			this.environment
+		);
 		const filePath = path.join(
 			this.instance.fileDir,
 			this.instance.fileName.concat(`.ts`)
 		);
 		if (fs.existsSync(filePath) && environment) {
 			fs.unlinkSync(filePath);
-			fs.writeFileSync(filePath, this.instance.content(environment));
+			fs.writeFileSync(
+				filePath,
+				this.instance.content(environment, this.instance.isProd)
+			);
 			console.log(`✔ environment ${filePath} updated.`);
 			return;
 		}
@@ -61,26 +68,26 @@ export class DesktopEnvironmentManager {
 
 	public static generate(): void {
 		const files = ['environment.prod.ts', 'environment.ts'];
+		const environment: Partial<IDesktopEnvironment> = Object.assign({}, env);
 		for (const file of files) {
+			const isProd = file === 'environment.prod.ts';
 			const filePath = path.join(this.instance.fileDir, file);
 			if (fs.existsSync(filePath)) {
 				fs.unlinkSync(filePath);
 			}
-			fs.writeFileSync(filePath, this.instance.content(env));
+			fs.writeFileSync(filePath, this.instance.content(environment, isProd));
 			console.log(
-				`✔ Generated desktop ${
-					file === 'environment.prod.ts'
-						? 'production'
-						: 'development'
-				} environment file: ${filePath}`
+				`✔ Generated desktop ${isProd} environment file: ${filePath}`
 			);
 		}
 	}
 
-	public content(variable: Env) {
+	public content(variable: Partial<IDesktopEnvironment>, isProd: boolean) {
 		return `export const environment = {
-			production: '${this.isProd}',
+			production: ${isProd},
 			${DesktopEnvironmentContentFactory.generate(this.desktop, variable)}
 		}`;
 	}
 }
+
+DesktopEnvironmentManager.update();

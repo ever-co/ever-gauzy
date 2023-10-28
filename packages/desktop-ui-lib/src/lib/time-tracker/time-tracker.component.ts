@@ -1437,7 +1437,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 						};
 						const notification = {
 							message: 'Idle time successfully deleted',
-							title: this._environment.DESKTOP_TIMER_APP_DESCRIPTION,
+							title: this._environment.DESCRIPTION,
 						};
 						const isReadyForDeletion =
 							!this._isOffline && payload.timeslotIds.length > 0;

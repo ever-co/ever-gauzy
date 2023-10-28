@@ -52,7 +52,7 @@ const windowSetting = () => {
 		},
 		width: 380,
 		height: 400,
-		title:  process.env.DESKTOP_SERVER_APP_DESCRIPTION || '',
+		title:  process.env.DESCRIPTION || '',
 		show: false,
 		center: true
 	};

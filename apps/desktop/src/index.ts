@@ -15,7 +15,7 @@ require('sqlite3');
 
 process.env = Object.assign(process.env, environment);
 
-app.setName(process.env.DESKTOP_APP_NAME);
+app.setName(process.env.NAME);
 
 console.log('Node Modules Path', path.join(__dirname, 'node_modules'));
 
@@ -99,14 +99,14 @@ const pathWindow = {
 };
 
 const updater = new DesktopUpdater({
-	repository: process.env.DESKTOP_APP_REPO_NAME,
-	owner: process.env.DESKTOP_APP_REPO_OWNER,
+	repository: process.env.REPO_NAME,
+	owner: process.env.REPO_OWNER,
 	typeRelease: 'releases',
 });
 const report = new ErrorReport(
 	new ErrorReportRepository(
-		process.env.DESKTOP_APP_REPO_OWNER,
-		process.env.DESKTOP_APP_REPO_NAME
+		process.env.REPO_OWNER,
+		process.env.REPO_NAME
 	)
 );
 const eventErrorManager = ErrorEventManager.instance;
@@ -135,7 +135,7 @@ if (!gotTheLock) {
 			gauzyWindow.focus();
 			dialog.showMessageBoxSync(gauzyWindow, {
 				type: 'warning',
-				title: process.env.DESKTOP_APP_DESCRIPTION,
+				title: process.env.DESCRIPTION,
 				message: 'You already have a running instance',
 			});
 		}
@@ -147,7 +147,7 @@ TranslateLoader.load(path.join(__dirname, 'ui', 'assets', 'i18n'));
 
 /* Setting the app user model id for the app. */
 if (process.platform === 'win32') {
-	app.setAppUserModelId(process.env.DESKTOP_APP_ID);
+	app.setAppUserModelId(process.env.APP_ID);
 }
 
 // Set unlimited listeners
@@ -174,7 +174,7 @@ log.catchErrors({
 		dialog.show().then((result) => {
 			if (result.response === 1) {
 				submitIssue(
-					`https://github.com/${process.env.DESKTOP_APP_REPO_OWNER}/${process.env.DESKTOP_APP_REPO_NAME}/issues/new`,
+					`https://github.com/${process.env.REPO_OWNER}/${process.env.REPO_NAME}/issues/new`,
 					{
 						title: `Automatic error report for Desktop App ${versions.app}`,
 						body:

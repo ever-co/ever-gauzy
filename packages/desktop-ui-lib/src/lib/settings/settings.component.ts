@@ -1161,15 +1161,15 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 	}
 
 	public get isDesktopTimer(): boolean {
-		return this.appName === this._environment.DESKTOP_TIMER_APP_NAME;
+		return this._environment.IS_DESKTOP_TIMER;
 	}
 
 	public get isDesktop(): boolean {
-		return this.appName === this._environment.DESKTOP_APP_NAME;
+		return this._environment.IS_DESKTOP;
 	}
 
 	public get isServer(): boolean {
-		return this.appName === this._environment.DESKTOP_SERVER_APP_NAME;
+		return this._environment.IS_SERVER;
 	}
 
 	public get selectedMenu$(): Observable<string> {

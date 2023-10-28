@@ -200,7 +200,7 @@ export class TasksComponent implements OnInit {
 			this.projects = this.projects.concat([project]);
 			this.toastrService.success(
 				this.translate.instant('TIMER_TRACKER.TOASTR.PROJECT_ADDED'),
-				this._environment.DESKTOP_TIMER_APP_DESCRIPTION,
+				this._environment.DESCRIPTION,
 			);
 		} catch (error) {
 			this.toastrService.danger(error);
