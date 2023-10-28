@@ -512,6 +512,10 @@
 						"production": {
 							"fileReplacements": [
 								{
+									"replace": "apps/desktop/src/environments/environment.ts",
+									"with": "apps/desktop/src/environments/environment.prod.ts"
+								},
+								{
 									"replace": "apps/gauzy/src/environments/environment.ts",
 									"with": "apps/gauzy/src/environments/environment.prod.ts"
 								}

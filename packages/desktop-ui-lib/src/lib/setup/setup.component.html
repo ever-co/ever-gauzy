@@ -47,8 +47,8 @@
 					<nb-step
 						[label]="labelTwo"
 						*ngIf="
-							appName !== 'gauzy-desktop-timer' &&
-							appName !== 'gauzy-server'
+							!isDesktopTimer &&
+							!isServer
 						"
 					>
 						<ng-template #labelTwo>{{
@@ -184,7 +184,7 @@
 					</nb-step>
 					<nb-step
 						label="CONNECTIVITY"
-						*ngIf="appName !== 'gauzy-server'"
+						*ngIf="!isServer"
 					>
 						<div class="row content-body">
 							<div class="col-12 text-center margin-content">
@@ -208,9 +208,7 @@
 									<!-- <nb-radio-group> -->
 									<div
 										class="col-4 pb-1 col-center"
-										*ngIf="
-											appName !== 'gauzy-desktop-timer'
-										"
+										*ngIf="!isDesktopTimer"
 									>
 										<nb-card class="card-small-item">
 											<nb-card-body>
@@ -616,7 +614,7 @@
 								<div class="row">
 									<div
 										class="col-6 col-center margin-form"
-										*ngIf="appName !== 'gauzy-server'"
+										*ngIf="!isServer"
 									>
 										<label class="integration-label">{{
 											'TIMER_TRACKER.SETUP.PORT'
@@ -634,7 +632,7 @@
 										/>
 									</div>
 									<ng-container
-										*ngIf="appName === 'gauzy-server'"
+										*ngIf="isServer"
 									>
 										<div class="col-4">
 											<label

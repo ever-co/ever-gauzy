@@ -165,7 +165,7 @@ export class AppMenu {
 							'TIMER_TRACKER.MENU.LEARN_MORE'
 						),
 						click() {
-							shell.openExternal('https://gauzy.co/');
+							shell.openExternal(process.env.COMPANY_SITE_LINK || 'https://gauzy.co/');
 						},
 					},
 					{
