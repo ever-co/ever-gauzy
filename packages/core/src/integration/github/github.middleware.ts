@@ -26,22 +26,28 @@ export class GithubMiddleware implements NestMiddleware {
 
             // Check if tenant and organization IDs are not empty
             if (isNotEmpty(tenantId) && isNotEmpty(organizationId)) {
-                // Fetch integration settings from the service
-                const { settings = [] } = await this._integrationTenantService.findOneByIdString(integrationId, {
-                    where: {
-                        tenantId,
-                        organizationId
-                    },
-                    relations: {
-                        settings: true
-                    }
-                });
-                /** */
-                request['integration'] = new Object({
-                    name: IntegrationEnum.GITHUB,
-                    // Convert settings array to an object
-                    settings: arrayToObject(settings, 'settingsName', 'settingsValue')
-                });
+                try {
+                    // Fetch integration settings from the service
+                    const { settings = [] } = await this._integrationTenantService.findOneByIdString(integrationId, {
+                        where: {
+                            tenantId,
+                            organizationId
+                        },
+                        relations: {
+                            settings: true
+                        }
+                    });
+                    /** Create an 'integration' object and assign properties to it. */
+                    request['integration'] = new Object({
+                        // Assign properties to the integration object
+                        id: integrationId,
+                        name: IntegrationEnum.GITHUB,
+                        // Convert the 'settings' array to an object using the 'settingsName' and 'settingsValue' properties
+                        settings: arrayToObject(settings, 'settingsName', 'settingsValue')
+                    });
+                } catch (error) {
+                    console.log(`Error while getting integration settings inside middleware: %s`, error?.message);
+                }
             }
         } catch (error) {
             console.log(`Error while getting integration (${IntegrationEnum.GITHUB}) tenant inside middleware: %s`, error?.message);

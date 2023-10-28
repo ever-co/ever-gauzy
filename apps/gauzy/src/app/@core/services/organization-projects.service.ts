@@ -115,4 +115,24 @@ export class OrganizationProjectsService {
 		const url = `${this.API_URL}/setting/${id}`;
 		return this._http.put<IOrganizationProject>(url, input);
 	}
+
+	/**
+	 * Retrieve a list of synchronized organization projects with Github Repositories.
+	 *
+	 * @param where - Criteria for filtering projects.
+	 * @param relations - An array of related entities to include in the response (optional).
+	 * @returns An observable containing the paginated list of synchronized organization projects.
+	 */
+	findSyncedProjects(
+		where: IOrganizationProjectsFindInput,
+		relations: string[] = []
+	): Observable<IPagination<IOrganizationProject>> {
+		// Construct the URL for the API endpoint
+		const url = `${this.API_URL}/synced`;
+
+		// Send an HTTP GET request to the specified URL with query parameters
+		return this._http.get<IPagination<IOrganizationProject>>(url, {
+			params: toParams({ where, relations })
+		});
+	}
 }

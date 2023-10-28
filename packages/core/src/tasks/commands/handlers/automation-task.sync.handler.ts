@@ -1,6 +1,6 @@
 import { ICommandHandler, CommandHandler } from '@nestjs/cqrs';
 import { InjectRepository } from '@nestjs/typeorm';
-import { EntityNotFoundError, Repository } from 'typeorm';
+import { Repository } from 'typeorm';
 import {
 	IIntegrationMap,
 	IOrganization,
@@ -33,24 +33,13 @@ export class AutomationTaskSyncHandler implements ICommandHandler<AutomationTask
 			const { projectId } = entity;
 			const tenantId = RequestContext.currentTenantId() || input.tenantId;
 
-			try {
-				const taskStatus = await this.taskStatusRepository.findOneByOrFail({
-					tenantId,
-					organizationId,
-					projectId,
-					name: entity.status
-				});
-				entity.taskStatus = taskStatus;
-			} catch (error) {
-				// Handle the error more gracefully
-				if (error instanceof EntityNotFoundError) {
-					// Task status not found, handle this case
-					console.error('Task status not found for entity:', entity.status);
-				} else {
-					// Handle other errors
-					console.error('Error while retrieving task status:', error.message);
-				}
-			}
+			const taskStatus = await this.taskStatusRepository.findOneBy({
+				tenantId,
+				organizationId,
+				projectId,
+				name: entity.status
+			});
+			entity.taskStatus = taskStatus;
 
 			try {
 				// Check if an integration map already exists for the issue

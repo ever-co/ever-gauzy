@@ -369,7 +369,31 @@
 		"yarn": ">=1.22.19"
 	},
 	"prettier": {
-		"singleQuote": true
+		"printWidth": 120,
+		"singleQuote": true,
+		"semi": true,
+		"useTabs": true,
+		"tabWidth": 4,
+		"arrowParens": "always",
+		"trailingComma": "none",
+		"quoteProps": "as-needed",
+		"trimTrailingWhitespace": true,
+		"overrides": [
+			{
+				"files": "*.scss",
+				"options": {
+					"useTabs": false,
+					"tabWidth": 2
+				}
+			},
+			{
+				"files": "*.yml",
+				"options": {
+					"useTabs": false,
+					"tabWidth": 2
+				}
+			}
+		]
 	},
 	"snyk": true,
 	"xplat": {

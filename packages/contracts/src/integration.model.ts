@@ -86,7 +86,7 @@ export interface IIntegrationFilter {
 
 /** */
 export interface IIntegrationMapSyncBase extends IBasePerTenantAndOrganizationEntityModel, IRelationalIntegrationTenant {
-	sourceId: IIntegrationMap['sourceId'];
+	sourceId?: IIntegrationMap['sourceId'];
 }
 
 export interface IIntegrationMapSyncEntity<T> extends IIntegrationMapSyncBase {

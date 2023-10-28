@@ -62,13 +62,7 @@ const routes: Routes = [
 			(m) => m.GithubModule
 		),
 		data: {
-			selectors: {
-				project: true,
-				team: true,
-				employee: false,
-				date: false,
-				organization: false,
-			}
+			selectors: false
 		}
 	}
 ];
