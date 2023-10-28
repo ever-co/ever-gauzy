@@ -4362,7 +4362,7 @@
 			}
 		}
 	},
-	"GAUZY_MAINTENANCE": "Gauzy @ Utrzymanie",
+	"GAUZY_MAINTENANCE": "{{ companySite }} @ Utrzymanie",
 	"LEGAL": {
 		"PRIVACY_POLICY": "Polityka prywatności",
 		"TERMS_AND_CONDITIONS": "Regulamin"

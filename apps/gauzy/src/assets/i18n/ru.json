@@ -4287,7 +4287,7 @@
 			}
 		}
 	},
-	"GAUZY_MAINTENANCE": "Обслуживание Gauzy @",
+	"GAUZY_MAINTENANCE": "{{ companySite }} @ Обслуживание",
 	"LEGAL": {
 		"PRIVACY_POLICY": "Политика конфиденциальности",
 		"TERMS_AND_CONDITIONS": "Условия использования"

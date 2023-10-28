@@ -5,6 +5,7 @@ import { Routes, RouterModule } from '@angular/router';
 import { ServerDownPage } from './server-down.page';
 import { NbSidebarModule, NbLayoutModule } from '@nebular/theme';
 import { ServerConnectionService, Store } from '../services';
+import {TranslateModule} from "@ngx-translate/core";
 
 export * from './server-down.page';
 
@@ -21,9 +22,10 @@ const routes: Routes = [
 		FormsModule,
 		NbSidebarModule,
 		NbLayoutModule,
-		RouterModule.forChild(routes)
+		RouterModule.forChild(routes),
+		TranslateModule,
 	],
 	declarations: [ServerDownPage],
-	providers: [Store, ServerConnectionService]
+	providers: [Store, ServerConnectionService],
 })
-export class ServerDownModule { }
+export class ServerDownModule {}
