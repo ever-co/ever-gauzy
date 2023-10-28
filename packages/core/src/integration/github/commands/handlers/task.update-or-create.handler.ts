@@ -16,6 +16,7 @@ import { OrganizationProjectService } from 'organization-project/organization-pr
 import { IntegrationTenantGetCommand } from 'integration-tenant/commands';
 import { IntegrationMapSyncEntityCommand } from 'integration-map/commands';
 import { IntegrationMapService } from 'integration-map/integration-map.service';
+import { GithubRepositoryIssueService } from './../../repository/issue/github-repository-issue.service';
 import { GithubSyncService } from '../../github-sync.service';
 import { GithubTaskUpdateOrCreateCommand } from '../task.update-or-create.command';
 
@@ -27,7 +28,8 @@ export class GithubTaskUpdateOrCreateCommandHandler implements ICommandHandler<G
 		private readonly _commandBus: CommandBus,
 		private readonly _githubSyncService: GithubSyncService,
 		private readonly _organizationProjectService: OrganizationProjectService,
-		private readonly _integrationMapService: IntegrationMapService
+		private readonly _integrationMapService: IntegrationMapService,
+		private readonly _githubRepositoryIssueService: GithubRepositoryIssueService
 	) { }
 
 	/**
@@ -111,23 +113,32 @@ export class GithubTaskUpdateOrCreateCommandHandler implements ICommandHandler<G
 									isActive: true,
 									isArchived: false
 								});
-								payload.issue_number = parseInt(integrationMap.sourceId);
-								const issue = await this._githubSyncService.createOrUpdateIssue(installationId, payload);
-								console.log(`Update An Issue: ${issue.number}`);
+								try {
+									/** */
+									const syncIssue = await this._githubRepositoryIssueService.findOneByWhereOptions({
+										organizationId,
+										tenantId,
+										repositoryId: repository.id,
+										issueId: parseInt(integrationMap.sourceId)
+									});
+									payload.issue_number = syncIssue.issueNumber;
+
+									await this._githubSyncService.createOrUpdateIssue(installationId, payload);
+								} catch (error) {
+									console.log('Error while getting synced issue', error?.message);
+								}
 							} catch (error) {
 								// Step 9: Open the GitHub issue
 								const issue: IGithubIssue = await this._githubSyncService.createOrUpdateIssue(installationId, payload);
-								const issueNumber = issue.number;
-								console.log(`Create An Issue: ${issue.number}`);
-
 								// Step 10: Create a mapping between the task and the GitHub issue
 								return await this._commandBus.execute(
 									new IntegrationMapSyncEntityCommand({
 										gauzyId: task.id,
 										integrationId,
-										sourceId: issueNumber.toString(),
+										sourceId: (issue.id).toString(),
 										entity: IntegrationEntity.ISSUE,
 										organizationId,
+										tenantId
 									})
 								);
 							}
@@ -156,10 +167,7 @@ export class GithubTaskUpdateOrCreateCommandHandler implements ICommandHandler<G
 		if (!project || !project.isTasksAutoSync) {
 			return false;
 		}
-		if (project.isTasksAutoSyncOnLabel) {
-			return !!labels.find((label) => label.name === syncTag);
-		}
-		return true;
+		return !!labels.find((label) => label.name.trim() === syncTag.trim());
 	}
 
 	/**

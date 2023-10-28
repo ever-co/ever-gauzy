@@ -3,6 +3,7 @@ import {
 	Component,
 	ElementRef,
 	forwardRef,
+	Inject,
 	NgZone,
 	OnInit,
 	TemplateRef,
@@ -82,6 +83,7 @@ import {
 import { TaskDurationComponent, TaskProgressComponent } from './task-render';
 import { TaskRenderCellComponent } from './task-render/task-render-cell/task-render-cell.component';
 import { TaskStatusComponent } from './task-render/task-status/task-status.component';
+import { GAUZY_ENV } from '../constants';
 
 enum TimerStartMode {
 	MANUAL = 'manual',
@@ -203,7 +205,9 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 		private _authStrategy: AuthStrategy,
 		private _languageSelectorService: LanguageSelectorService,
 		private _translateService: TranslateService,
-		private _alwaysOnService: AlwaysOnService
+		private _alwaysOnService: AlwaysOnService,
+		@Inject(GAUZY_ENV)
+		private readonly _environment: any,
 	) {
 		this.iconLibraries.registerFontPack('font-awesome', {
 			packClass: 'fas',
@@ -1433,7 +1437,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 						};
 						const notification = {
 							message: 'Idle time successfully deleted',
-							title: 'Gauzy',
+							title: this._environment.DESCRIPTION,
 						};
 						const isReadyForDeletion =
 							!this._isOffline && payload.timeslotIds.length > 0;

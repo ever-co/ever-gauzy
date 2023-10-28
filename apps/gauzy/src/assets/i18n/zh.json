@@ -4327,7 +4327,7 @@
 			}
 		}
 	},
-	"GAUZY_MAINTENANCE": "Gauzy维修",
+	"GAUZY_MAINTENANCE": "{{ companySite }} 正在维修",
 	"LEGAL": {
 		"PRIVACY_POLICY": "隐私政策",
 		"TERMS_AND_CONDITIONS": "条款与条件"

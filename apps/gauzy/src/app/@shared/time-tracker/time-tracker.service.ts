@@ -98,6 +98,7 @@ export class TimeTrackerService implements OnDestroy {
 		private http: HttpClient
 	) {
 		this._runWorker();
+
 		this.store.selectedOrganization$
 			.pipe(
 				filter((organization) => !!organization),
@@ -205,16 +206,13 @@ export class TimeTrackerService implements OnDestroy {
 		const todayStart = toUTC(moment().startOf('day')).format('YYYY-MM-DD HH:mm:ss');
 		const todayEnd = toUTC(moment().endOf('day')).format('YYYY-MM-DD HH:mm:ss');
 		return firstValueFrom(
-			this.http.get<ITimerStatus>(
-				`${API_PREFIX}/timesheet/timer/status`,
-				{
-					params: toParams({
-						...params,
-						todayStart,
-						todayEnd
-					}),
-				}
-			)
+			this.http.get<ITimerStatus>(`${API_PREFIX}/timesheet/timer/status`, {
+				params: toParams({
+					...params,
+					todayStart,
+					todayEnd
+				})
+			})
 		);
 	}
 
@@ -316,18 +314,20 @@ export class TimeTrackerService implements OnDestroy {
 
 	private _runWorker(): void {
 		if (typeof Worker !== 'undefined') {
-			// Initialize worker
-			this._worker = new Worker(new URL(environment.CLIENT_BASE_URL + '/assets/workers/time-tracker.js'), {
-				type: 'module'
-			});
-			// retrieve message post from time tracker worker
-			this._worker.onmessage = ({ data }) => {
-				this.currentSessionDuration = data.session;
-				this.duration = data.todayWorked;
-			};
+			try {
+				this._worker = new Worker(new URL(environment.CLIENT_BASE_URL + '/assets/workers/time-tracker.js'), {
+					type: 'module'
+				});
+
+				// retrieve message post from time tracker worker
+				this._worker.onmessage = ({ data }) => {
+					this.currentSessionDuration = data.session;
+					this.duration = data.todayWorked;
+				};
+			} catch (err) {
+				console.log('Invalid Time Tracker worker configuration', err.message);
+			}
 		} else {
-			// Web Workers are not supported in this environment.
-			// You should add a fallback so that your program still executes correctly.
 			console.log('Web worker does not supported on your browser');
 		}
 	}

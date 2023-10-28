@@ -1,7 +1,6 @@
 import { IDesktopUpdate } from '../../interfaces/i-desktop-update';
-import { CancellationToken } from 'builder-util-runtime';
 import DesktopNotification from '../../desktop-notifier';
-import { autoUpdater, UpdateInfo } from 'electron-updater';
+import { autoUpdater, UpdateInfo, CancellationToken } from 'electron-updater';
 import { app } from 'electron';
 import { TranslateService } from '../../translation';
 

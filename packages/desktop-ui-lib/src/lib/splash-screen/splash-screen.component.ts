@@ -39,7 +39,7 @@ export class SplashScreenComponent implements OnInit {
 				),
 			version: _electronService.remote.app.getVersion(),
 			iconPath: this._domSanitizer.bypassSecurityTrustResourceUrl(
-				this._environment.PLATFORM_LOGO_URL
+				this._environment.PLATFORM_LOGO
 			),
 		};
 	}

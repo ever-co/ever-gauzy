@@ -52,7 +52,7 @@ const windowSetting = () => {
 		},
 		width: 380,
 		height: 400,
-		title: '',
+		title:  process.env.DESCRIPTION || '',
 		show: false,
 		center: true
 	};

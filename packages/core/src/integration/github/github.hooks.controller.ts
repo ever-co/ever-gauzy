@@ -18,7 +18,9 @@ export class GitHubHooksController {
      */
     @Hook(['installation.deleted'])
     async installationDeleted(context: Context) {
-        await this._githubHooksService.installationDeleted(context);
+        if (!context.isBot) {
+            await this._githubHooksService.installationDeleted(context);
+        }
     }
 
     /**
@@ -28,7 +30,9 @@ export class GitHubHooksController {
      */
     @Hook(['issues.opened'])
     async issuesOpened(context: Context) {
-        await this._githubHooksService.issuesOpened(context);
+        if (!context.isBot) {
+            await this._githubHooksService.issuesOpened(context);
+        }
     }
 
     /**
@@ -38,7 +42,9 @@ export class GitHubHooksController {
      */
     @Hook(['issues.edited'])
     async issuesEdited(context: Context) {
-        await this._githubHooksService.issuesEdited(context);
+        if (!context.isBot) {
+            await this._githubHooksService.issuesEdited(context);
+        }
     }
 
     /**
@@ -48,7 +54,9 @@ export class GitHubHooksController {
      */
     @Hook(['issues.labeled'])
     async issuesLabeled(context: Context) {
-        await this._githubHooksService.issuesLabeled(context);
+        if (!context.isBot) {
+            await this._githubHooksService.issuesLabeled(context);
+        }
     }
 
     /**
@@ -58,6 +66,8 @@ export class GitHubHooksController {
      */
     @Hook(['issues.unlabeled'])
     async issuesUnlabeled(context: Context) {
-        await this._githubHooksService.issuesUnlabeled(context);
+        if (!context.isBot) {
+            await this._githubHooksService.issuesUnlabeled(context);
+        }
     }
 }
