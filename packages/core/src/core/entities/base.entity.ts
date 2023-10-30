@@ -47,7 +47,6 @@ export abstract class BaseEntity extends Model implements IBaseEntityModel {
 	@UpdateDateColumn()
 	updatedAt?: Date;
 
-
 	// Soft Delete
 	@ApiPropertyOptional({
 		type: 'string',
