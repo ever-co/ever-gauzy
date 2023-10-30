@@ -1123,7 +1123,8 @@ export class InvoiceAddComponent extends PaginationFilterBaseComponent implement
 
 	getNextMonth() {
 		const date = new Date();
-		if (this.organization.daysUntilDue !== null) {
+		const daysUntilDue = this.organization.daysUntilDue ? this.organization.daysUntilDue : null;
+		if (daysUntilDue) {
 			date.setDate(date.getDate() + this.organization.daysUntilDue);
 		} else {
 			date.setMonth(date.getMonth() + 1);
