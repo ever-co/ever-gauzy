@@ -102,7 +102,6 @@
 }
 
 .history-date {
-  color: nb-theme(text-basic-color);
   font-size: 12px;
 }
 
@@ -168,6 +167,17 @@ button {
   &.show-button {
     @include nb-rtl(transform, translateX(110%));
     @include nb-ltr(transform, translateX(-110%));
+  }
+}
+
+.nb-accordion-item-header {
+  position: relative;
+
+  & .accordion-header-hint {
+    position: absolute;
+    bottom: 0;
+    font-size: 10px;
+    color: var(--text-primary-disabled-color);
   }
 }
 
@@ -400,4 +410,61 @@ nb-tab {
 
 :host nb-accordion {
   @include dialog(var(--gauzy-card-1), var(--gauzy-card-1));
+}
+
+.comments-container {
+  margin-inline: 0;
+
+  & nb-list {
+    margin: 0;
+  }
+
+  & .col-6:nth-child(1) {
+    padding-top: 15px;
+    color: var(--gauzy-text-color-2);
+
+    & textarea {
+      font-weight: 400;
+    }
+  }
+
+  & .col-6:nth-child(2) {
+    background: var(--gauzy-card-1);
+    border-radius: var(--border-radius);
+    padding: 15px 6px 0 15px;
+    color: var(--gauzy-text-color-2);
+
+    & nb-list-item {
+      padding-left: 0;
+      position: relative;
+
+      & .history-item.history-date {
+        color: var(--text-hint-color);
+        margin-top: 3px;
+      }
+
+      & .history-item.history-title {
+        margin-top: 10px;
+        text-transform: capitalize;
+        font-weight: bold;
+      }
+      & .history-item.history-comment {
+        margin-top: 6px;
+        font-size: .85rem;
+        &.history-comment::first-letter {
+          text-transform: capitalize;
+        }
+      }
+    }
+
+    // border bottom
+    & nb-list-item::after {
+      content: "";
+      display: block;
+      width: 100%;
+      border-bottom: thin solid var(--accordion-header-border-color);
+      position: absolute;
+      bottom: 0;
+    }
+  }
 }

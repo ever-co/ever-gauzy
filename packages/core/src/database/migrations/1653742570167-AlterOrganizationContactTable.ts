@@ -5,7 +5,7 @@ export class AlterOrganizationContactTable1653742570167 implements MigrationInte
     name = 'AlterOrganizationContactTable1653742570167';
 
     public async up(queryRunner: QueryRunner): Promise<void> {
-        if (queryRunner.connection.options.type === 'sqlite') {
+        if (['sqlite', 'better-sqlite3'].includes(queryRunner.connection.options.type)) {
             await this.sqliteUpQueryRunner(queryRunner);
         } else {
             await this.postgresUpQueryRunner(queryRunner);
@@ -13,7 +13,7 @@ export class AlterOrganizationContactTable1653742570167 implements MigrationInte
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
-        if (queryRunner.connection.options.type === 'sqlite') {
+        if (['sqlite', 'better-sqlite3'].includes(queryRunner.connection.options.type)) {
             await this.sqliteDownQueryRunner(queryRunner);
         } else {
             await this.postgresDownQueryRunner(queryRunner);
@@ -22,8 +22,8 @@ export class AlterOrganizationContactTable1653742570167 implements MigrationInte
 
     /**
     * PostgresDB Up Migration
-    * 
-    * @param queryRunner 
+    *
+    * @param queryRunner
     */
     public async postgresUpQueryRunner(queryRunner: QueryRunner): Promise<any> {
         await queryRunner.query(`ALTER TABLE "organization_contact" DROP COLUMN "inviteStatus"`);
@@ -39,8 +39,8 @@ export class AlterOrganizationContactTable1653742570167 implements MigrationInte
 
     /**
     * PostgresDB Down Migration
-    * 
-    * @param queryRunner 
+    *
+    * @param queryRunner
     */
     public async postgresDownQueryRunner(queryRunner: QueryRunner): Promise<any> {
         await queryRunner.query(`ALTER TABLE "organization_contact" DROP COLUMN "budgetType"`);
@@ -56,8 +56,8 @@ export class AlterOrganizationContactTable1653742570167 implements MigrationInte
 
     /**
     * SqliteDB Up Migration
-    * 
-    * @param queryRunner 
+    *
+    * @param queryRunner
     */
     public async sqliteUpQueryRunner(queryRunner: QueryRunner): Promise<any> {
         await queryRunner.query(`DROP INDEX "IDX_a86d2e378b953cb39261f457d2"`);
@@ -88,8 +88,8 @@ export class AlterOrganizationContactTable1653742570167 implements MigrationInte
 
     /**
     * SqliteDB Down Migration
-    * 
-    * @param queryRunner 
+    *
+    * @param queryRunner
     */
     public async sqliteDownQueryRunner(queryRunner: QueryRunner): Promise<any> {
         await queryRunner.query(`DROP INDEX "IDX_e68c43e315ad3aaea4e99cf461"`);
@@ -103,7 +103,7 @@ export class AlterOrganizationContactTable1653742570167 implements MigrationInte
         await queryRunner.query(`CREATE INDEX "IDX_e68c43e315ad3aaea4e99cf461" ON "organization_contact" ("tenantId") `);
         await queryRunner.query(`CREATE INDEX "IDX_6200736cb4d3617b004e5b647f" ON "organization_contact" ("organizationId") `);
         await queryRunner.query(`CREATE INDEX "IDX_de33f92e042365d196d959e774" ON "organization_contact" ("name") `);
-        await queryRunner.query(`CREATE INDEX "IDX_a86d2e378b953cb39261f457d2" ON "organization_contact" ("contactId") `);        
+        await queryRunner.query(`CREATE INDEX "IDX_a86d2e378b953cb39261f457d2" ON "organization_contact" ("contactId") `);
         await queryRunner.query(`DROP INDEX "IDX_e68c43e315ad3aaea4e99cf461"`);
         await queryRunner.query(`DROP INDEX "IDX_6200736cb4d3617b004e5b647f"`);
         await queryRunner.query(`DROP INDEX "IDX_de33f92e042365d196d959e774"`);

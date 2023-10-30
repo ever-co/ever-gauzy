@@ -22,9 +22,9 @@ import { TenantModule } from '../tenant/tenant.module';
 			IntegrationTenant
 		]),
 		TenantModule,
+		UserModule,
 		RoleModule,
 		RolePermissionModule,
-		UserModule,
 		forwardRef(() => IntegrationSettingModule),
 		forwardRef(() => IntegrationEntitySettingModule),
 		CqrsModule
@@ -32,10 +32,12 @@ import { TenantModule } from '../tenant/tenant.module';
 	exports: [
 		IntegrationTenantService
 	],
-	controllers: [IntegrationTenantController],
+	controllers: [
+		IntegrationTenantController
+	],
 	providers: [
 		IntegrationTenantService,
 		...CommandHandlers
 	]
 })
-export class IntegrationTenantModule {}
+export class IntegrationTenantModule { }

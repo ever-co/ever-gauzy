@@ -27,6 +27,9 @@ export type Env = Readonly<{
 	MOBILE_APP_DOWNLOAD_LINK: string;
 	EXTENSION_DOWNLOAD_LINK: string;
 
+	// Platform logo url
+	PLATFORM_LOGO: string
+
 	SENTRY_DSN: string;
 	SENTRY_TRACES_SAMPLE_RATE: string;
 
@@ -66,15 +69,58 @@ export type Env = Readonly<{
 
 	FILE_PROVIDER: string;
 
-	// Jitsu Analytics
-	JITSU_BROWSER_HOST: string;
+	// Jitsu Browser Configurations
+	JITSU_BROWSER_URL: string;
 	JITSU_BROWSER_WRITE_KEY: string;
 
 	GAUZY_GITHUB_APP_NAME: string;
-	GAUZY_GITHUB_APP_ID: string;
 	GAUZY_GITHUB_CLIENT_ID: string;
 	GAUZY_GITHUB_REDIRECT_URL: string;
 	GAUZY_GITHUB_POST_INSTALL_URL: string;
+
+	GAUZY_DESKTOP_LOGO_512X512: string;
+	PLATFORM_PRIVACY_URL: string;
+	PLATFORM_TOS_URL: string;
+	NO_INTERNET_LOGO: string;
+
+	COMPANY_NAME: string;
+	COMPANY_SITE: string;
+	COMPANY_LINK: string;
+	COMPANY_SITE_LINK: string;
+	COMPANY_GITHUB_LINK: string;
+	COMPANY_GITLAB_LINK: string;
+	COMPANY_FACEBOOK_LINK: string;
+	COMPANY_TWITTER_LINK: string;
+	COMPANY_LINKEDIN_LINK: string;
+	PROJECT_REPO: string;
+	DESKTOP_TIMER_APP_NAME: string;
+	DESKTOP_TIMER_APP_DESCRIPTION: string;
+	DESKTOP_TIMER_APP_ID: string;
+	DESKTOP_TIMER_APP_REPO_NAME: string;
+	DESKTOP_TIMER_APP_REPO_OWNER: string;
+	DESKTOP_TIMER_APP_WELCOME_TITLE: string;
+	DESKTOP_TIMER_APP_WELCOME_CONTENT: string;
+	DESKTOP_TIMER_APP_I18N_FILES_URL: string;
+	DESKTOP_APP_NAME: string;
+	DESKTOP_APP_DESCRIPTION: string;
+	DESKTOP_APP_ID: string;
+	DESKTOP_APP_REPO_NAME: string;
+	DESKTOP_APP_REPO_OWNER: string;
+	DESKTOP_APP_WELCOME_TITLE: string;
+	DESKTOP_APP_WELCOME_CONTENT: string;
+	DESKTOP_APP_I18N_FILES_URL: string;
+	DESKTOP_SERVER_APP_NAME: string;
+	DESKTOP_SERVER_APP_DESCRIPTION: string;
+	DESKTOP_SERVER_APP_ID: string;
+	DESKTOP_SERVER_APP_REPO_NAME: string;
+	DESKTOP_SERVER_APP_REPO_OWNER: string;
+	DESKTOP_SERVER_APP_WELCOME_TITLE: string;
+	DESKTOP_SERVER_APP_WELCOME_CONTENT: string;
+	DESKTOP_SERVER_APP_I18N_FILES_URL: string;
+	AWHost: string;
+	API_DEFAULT_PORT: number;
+	GAUZY_UI_DEFAULT_PORT: number;
+	SCREENSHOTS_ENGINE_METHOD: string;
 }>;
 
 export const env: Env = cleanEnv(
@@ -141,14 +187,119 @@ export const env: Env = cleanEnv(
 
 		FILE_PROVIDER: str({ default: 'LOCAL' }),
 
-		JITSU_BROWSER_HOST: str({ default: '' }),
+		JITSU_BROWSER_URL: str({ default: '' }),
 		JITSU_BROWSER_WRITE_KEY: str({ default: '' }),
 
 		GAUZY_GITHUB_APP_NAME: str({ default: '' }),
-		GAUZY_GITHUB_APP_ID: str({ default: '' }),
 		GAUZY_GITHUB_CLIENT_ID: str({ default: '' }),
 		GAUZY_GITHUB_REDIRECT_URL: str({ default: '' }),
 		GAUZY_GITHUB_POST_INSTALL_URL: str({ default: '' }),
+
+		// Set default platform logo
+		PLATFORM_LOGO: str({
+			default: 'assets/images/logos/logo_Gauzy.svg',
+		}),
+
+		//Set default gauzy desktop logo 512x512 pixels
+		GAUZY_DESKTOP_LOGO_512X512: str({
+			default: 'assets/icons/icon_512x512.png',
+		}),
+
+		// Set default platform privacy link
+		PLATFORM_PRIVACY_URL: str({
+			default: 'https://gauzy.co/privacy',
+		}),
+
+		// Set default platform terms of services link
+		PLATFORM_TOS_URL: str({
+			default: 'https://gauzy.co/tos',
+		}),
+
+		COMPANY_NAME: str({
+			default: 'Ever Co. LTD',
+		}),
+		COMPANY_SITE: str({
+			default: 'Gauzy',
+		}),
+		COMPANY_LINK: str({
+			default: 'https://ever.co',
+		}),
+		COMPANY_SITE_LINK: str({
+			default: 'https://gauzy.co',
+		}),
+		COMPANY_GITHUB_LINK: str({
+			default: 'https://github.com/ever-co',
+		}),
+		COMPANY_GITLAB_LINK: str({
+			default: 'https://gitlab.com/ever-co',
+		}),
+		COMPANY_FACEBOOK_LINK: str({
+			default: 'https://www.facebook.com/gauzyplatform',
+		}),
+		COMPANY_TWITTER_LINK: str({
+			default: 'https://twitter.com/gauzyplatform',
+		}),
+		COMPANY_LINKEDIN_LINK: str({
+			default: 'https://www.linkedin.com/company/ever-co',
+		}),
+		NO_INTERNET_LOGO: str({
+			default: 'assets/images/logos/logo_Gauzy.svg',
+		}),
+		PROJECT_REPO: str({
+			default: 'https://github.com/ever-co/ever-gauzy.git',
+		}),
+		DESKTOP_TIMER_APP_NAME: str({
+			default: 'gauzy-desktop-timer',
+		}),
+		DESKTOP_TIMER_APP_DESCRIPTION: str({
+			default: 'Gauzy Desktop Timer',
+		}),
+		DESKTOP_TIMER_APP_ID: str({
+			default: 'com.ever.gauzydesktoptimer',
+		}),
+		DESKTOP_TIMER_APP_REPO_NAME: str({
+			default: 'ever-gauzy-desktop-timer',
+		}),
+		DESKTOP_TIMER_APP_REPO_OWNER: str({ default: 'ever-co' }),
+		DESKTOP_TIMER_APP_WELCOME_TITLE: str({ default: '' }),
+		DESKTOP_TIMER_APP_WELCOME_CONTENT: str({ default: '' }),
+		DESKTOP_TIMER_APP_I18N_FILES_URL: str({ default: '' }),
+		DESKTOP_APP_NAME: str({
+			default: 'gauzy-desktop',
+		}),
+		DESKTOP_APP_DESCRIPTION: str({
+			default: 'Gauzy Desktop',
+		}),
+		DESKTOP_APP_ID: str({
+			default: 'com.ever.gauzydesktop',
+		}),
+		DESKTOP_APP_REPO_NAME: str({
+			default: 'ever-gauzy-desktop',
+		}),
+		DESKTOP_APP_REPO_OWNER: str({ default: 'ever-co' }),
+		DESKTOP_APP_WELCOME_TITLE: str({ default: '' }),
+		DESKTOP_APP_WELCOME_CONTENT: str({ default: '' }),
+		DESKTOP_APP_I18N_FILES_URL: str({ default: '' }),
+		DESKTOP_SERVER_APP_NAME: str({
+			default: 'gauzy-server',
+		}),
+		DESKTOP_SERVER_APP_DESCRIPTION: str({
+			default: 'Gauzy Server',
+		}),
+		DESKTOP_SERVER_APP_ID: str({
+			default: 'com.ever.gauzyserver',
+		}),
+		DESKTOP_SERVER_APP_REPO_NAME: str({
+			default: 'ever-gauzy-server',
+		}),
+		DESKTOP_SERVER_APP_REPO_OWNER: str({ default: 'ever-co' }),
+		DESKTOP_SERVER_APP_WELCOME_TITLE: str({ default: '' }),
+		DESKTOP_SERVER_APP_WELCOME_CONTENT: str({ default: '' }),
+		DESKTOP_SERVER_APP_I18N_FILES_URL: str({ default: '' }),
+		AWHost: str({default: 'http://localhost:5600'}),
+		API_DEFAULT_PORT: num({default: 3000}),
+		GAUZY_UI_DEFAULT_PORT: num({default: 5621}),
+		SCREENSHOTS_ENGINE_METHOD: str({default: 'ScreenshotDesktopLib'}),
 	},
 	{ strict: true, dotEnvPath: __dirname + '/../.env' }
 );

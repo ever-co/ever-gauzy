@@ -20,14 +20,15 @@ export class IntegrationEntitySettingService extends TenantAwareCrudService<Inte
 	 * @param integrationId
 	 * @returns
 	 */
-	async getIntegrationEntitySettings(
-		integrationId: IIntegrationTenant['id']
-	) {
+	async getIntegrationEntitySettings(integrationId: IIntegrationTenant['id']) {
 		return await this.findAll({
 			where: {
 				integrationId
 			},
-			relations: ['integration', 'tiedEntities']
+			relations: {
+				integration: true,
+				tiedEntities: true
+			}
 		});
 	}
 

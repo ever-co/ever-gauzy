@@ -1,0 +1,702 @@
+<nb-card>
+	<nb-card-body>
+		<form [formGroup]="form">
+			<nb-tabset>
+				<nb-tab [tabTitle]="'ORGANIZATIONS_PAGE.MAIN' | translate" [tabIcon]="'person-outline'">
+					<div class="project-tab-container">
+						<div class="project-image-container">
+							<div class="project-image-photo">
+								<ngx-image-uploader
+									(changeHoverState)="hoverState = $event"
+									(uploadedImageAsset)="updateImageAsset($event)"
+									(uploadImageAssetError)="handleImageUploadError($event)"
+								></ngx-image-uploader>
+								<svg
+									*ngIf="form && form.get('imageUrl').value"
+									xmlns="http://www.w3.org/2000/svg"
+									xmlns:xlink="http://www.w3.org/1999/xlink"
+									width="68"
+									height="68"
+									viewBox="0 0 68 68"
+									[ngStyle]="{
+										opacity: hoverState ? '1' : '0.3'
+									}"
+								>
+									<defs>
+										<path
+											id="a"
+											d="M28.667 31.333a2 2 0 1 0-.002-4.001 2 2 0 0 0 .002 4.001m13.333 12H26.748l9.34-7.793c.328-.279.923-.277 1.244-.001l6.001 5.12V42c0 .736-.597 1.333-1.333 1.333M26 24.667h16c.736 0 1.333.597 1.333 1.333v11.152l-4.27-3.643c-1.32-1.122-3.386-1.122-4.694-.008l-9.702 8.096V26c0-.736.597-1.333 1.333-1.333M42 22H26c-2.205 0-4 1.795-4 4v16c0 2.205 1.795 4 4 4h16c2.205 0 4-1.795 4-4V26c0-2.205-1.795-4-4-4"
+										/>
+									</defs>
+									<g fill="none" fill-rule="evenodd">
+										<circle
+											cx="34"
+											cy="34"
+											r="34"
+											fill="#0091FF"
+											opacity=".3"
+										/>
+										<circle
+											cx="34"
+											cy="34"
+											r="26"
+											fill="#0091FF"
+											opacity=".9"
+										/>
+										<use
+											fill="#FFF"
+											fill-rule="nonzero"
+											xlink:href="#a"
+										/>
+									</g>
+								</svg>
+								<div
+									class="image-overlay"
+									[ngStyle]="{
+										opacity: hoverState ? '0.2' : '0'
+									}"
+								></div>
+
+								<img
+									*ngIf="form && form.get('imageUrl').value"
+									[src]="form.get('imageUrl').value"
+									alt="Contact Photo"
+									(mouseenter)="hoverState = true"
+									(mouseleave)="hoverState = false"
+								/>
+								<div
+									*ngIf="!form || !form.get('imageUrl').value"
+									class="image"
+								>
+									<span
+										><i class="fas fa-image"></i>Add or Drop
+										Image</span
+									>
+								</div>
+							</div>
+						</div>
+						<div class="project-form-container">
+							<div class="row">
+								<div class="form-group col-6">
+									<label for="name" class="label">{{
+										'FORM.PLACEHOLDERS.NAME' | translate
+									}}</label>
+									<input
+										type="text"
+										#name
+										nbInput
+										fullWidth
+										formControlName="name"
+										[placeholder]="
+											'FORM.PLACEHOLDERS.NAME' | translate
+										"
+										id="name"
+										[status]="
+											FormHelpers.isInvalidControl(
+												form,
+												'name'
+											)
+												? 'danger'
+												: 'basic'
+										"
+									/>
+									<p class="caption status-danger" *ngIf="FormHelpers.isInvalidControl(form, 'name')">
+										{{ 'FORM.ERROR.PROJECT_NAME' | translate }}
+									</p>
+								</div>
+								<div class="form-group col-6">
+									<label for="code" class="label">{{
+										'FORM.PLACEHOLDERS.CODE' | translate
+									}}</label>
+									<input
+										type="text"
+										#code
+										nbInput
+										fullWidth
+										formControlName="code"
+										[placeholder]="
+											'FORM.PLACEHOLDERS.CODE' | translate
+										"
+										id="code"
+									/>
+								</div>
+							</div>
+							<div class="row">
+								<div class="form-group col-12">
+									<label for="projectUrl" class="label">
+										{{
+											'FORM.LABELS.PROJECT_URL'
+												| translate
+										}}
+									</label>
+									<input
+										type="text"
+										nbInput
+										fullWidth
+										placeholder="{{
+											'FORM.PLACEHOLDERS.PROJECT_URL'
+												| translate
+										}}"
+										id="projectUrl"
+										formControlName="projectUrl"
+										[status]="
+											FormHelpers.isInvalidControl(
+												form,
+												'projectUrl'
+											)
+												? 'danger'
+												: 'basic'
+										"
+									/>
+									<div
+										class="caption status-danger position-absolute"
+										*ngIf="projectUrl.hasError('pattern')"
+									>
+										{{ 'FORM.ERROR.PROJECT_URL' | translate }}
+									</div>
+								</div>
+							</div>
+							<div class="row">
+								<div class="form-group col-6">
+									<label for="owner" class="label">{{
+										'FORM.PLACEHOLDERS.OWNER' | translate
+									}}</label>
+									<nb-select
+										fullWidth
+										placeholder="{{
+											'FORM.PLACEHOLDERS.OWNER'
+												| translate
+										}}"
+										formControlName="owner"
+										id="owner"
+										(selectedChange)="
+											changeProjectOwner($event)
+										"
+									>
+										<nb-option
+											*ngFor="let owner of owners"
+											[value]="owner"
+											>{{
+												'SM_TABLE.' + owner | translate
+											}}
+										</nb-option>
+									</nb-select>
+								</div>
+								<div class="form-group col-6">
+									<label
+										for="organizationContacts"
+										class="label"
+									>
+										{{ 'FORM.LABELS.CLIENTS' | translate }}
+									</label>
+									<ng-select
+										[addTag]="addNewOrganizationContact"
+										[items]="organizationContacts"
+										bindLabel="name"
+										[searchable]="true"
+										#organizationContact
+										formControlName="organizationContact"
+										placeholder="{{
+											'FORM.PLACEHOLDERS.CLIENTS'
+												| translate
+										}}"
+										appendTo="body"
+									>
+									</ng-select>
+								</div>
+							</div>
+							<div class="row">
+								<div class="form-group col-6">
+									<ga-employee-multi-select
+										[selectedEmployeeIds]=" selectedEmployeeIds"
+										(selectedChange)="onMembersSelected($event)"
+										(onLoadEmployees)="onLoadEmployees($event)"
+									></ga-employee-multi-select>
+								</div>
+								<div class="form-group col-6">
+									<ga-team-selector
+										formControlName="teams"
+										[skipGlobalChange]="true"
+										[multiple]="true"
+										[showAllOption]="false"
+										[placeholder]="'FORM.PLACEHOLDERS.ADD_REMOVE_TEAMS' | translate"
+										[defaultSelected]="false"
+										[label]="'FORM.PLACEHOLDERS.ADD_REMOVE_TEAMS' | translate"
+										(onChanged)="onTeamsSelected($event)"
+									></ga-team-selector>
+								</div>
+							</div>
+							<div class="row">
+								<div class="form-group col-6">
+									<div class="w-75">
+										<label
+											for="start-date-project"
+											class="label"
+											>{{
+												'FORM.PLACEHOLDERS.START_DATE_PROJECT'
+													| translate
+											}}</label
+										>
+										<input
+											[nbDatepicker]="startDate"
+											nbInput
+											fullWidth
+											formControlName="startDate"
+											placeholder="{{
+												'FORM.PLACEHOLDERS.START_DATE_PROJECT'
+													| translate
+											}}"
+											id="start-date-project"
+											[status]="
+												FormHelpers.isInvalidControl(
+													form,
+													'startDate'
+												)
+													? 'danger'
+													: 'basic'
+											"
+										/>
+										<nb-datepicker
+											#startDate
+										></nb-datepicker>
+									</div>
+								</div>
+								<div class="form-group col-6">
+									<div class="w-75">
+										<label
+											for="end-date-project"
+											class="label"
+											>{{
+												'FORM.PLACEHOLDERS.END_DATE_PROJECT'
+													| translate
+											}}</label
+										>
+										<input
+											[nbDatepicker]="endDate"
+											nbInput
+											fullWidth
+											formControlName="endDate"
+											placeholder="{{
+												'FORM.PLACEHOLDERS.END_DATE_PROJECT'
+													| translate
+											}}"
+											id="end-date-project"
+											[status]="
+												FormHelpers.isInvalidControl(
+													form,
+													'endDate'
+												)
+													? 'danger'
+													: 'basic'
+											"
+										/>
+										<nb-datepicker #endDate></nb-datepicker>
+									</div>
+								</div>
+							</div>
+						</div>
+					</div>
+				</nb-tab>
+				<nb-tab
+					[tabTitle]="'ORGANIZATIONS_PAGE.DESCRIPTION' | translate"
+				>
+					<div class="row">
+						<div class="col-8">
+							<label
+								for="description"
+								class="label"
+								[innerHtml]="
+									'FORM.PLACEHOLDERS.DESCRIPTION' | translate
+								"
+							></label>
+							<ckeditor
+								formControlName="description"
+								[config]="ckConfig"
+							></ckeditor>
+						</div>
+					</div>
+					<div class="row mt-3">
+						<div class="col-8">
+							<ga-tags-color-input
+								[selectedTags]="form.get('tags').value"
+								(selectedTagsEvent)="selectedTagsEvent($event)"
+								[isOrgLevel]="true"
+							>
+							</ga-tags-color-input>
+						</div>
+					</div>
+				</nb-tab>
+				<nb-tab [tabTitle]="'ORGANIZATIONS_PAGE.BILLING' | translate">
+					<div class="row">
+						<div class="form-group col-4">
+							<label for="billing" class="label">{{
+								'FORM.PLACEHOLDERS.BILLING' | translate
+							}}</label>
+							<nb-select
+								fullWidth
+								placeholder="{{
+									'FORM.PLACEHOLDERS.BILLING' | translate
+								}}"
+								formControlName="billing"
+								id="billing"
+							>
+								<nb-option
+									*ngFor="let billing of billings"
+									[value]="billing"
+								>
+									{{ 'SM_TABLE.' + billing | translate }}
+								</nb-option>
+							</nb-select>
+						</div>
+						<div class="col-4">
+							<ga-currency
+								formControlName="currency"
+								(optionChange)="currencyChanged($event)"
+							>
+							</ga-currency>
+						</div>
+					</div>
+				</nb-tab>
+				<nb-tab [tabTitle]="'ORGANIZATIONS_PAGE.BUDGET' | translate">
+					<div class="row">
+						<div class="form-group col-4">
+							<label class="label">{{
+								'FORM.PLACEHOLDERS.BUDGET_TYPE' | translate
+							}}</label>
+							<nb-select
+								fullWidth
+								[placeholder]="
+									'FORM.PLACEHOLDERS.BUDGET_TYPE' | translate
+								"
+								formControlName="budgetType"
+							>
+								<nb-option
+									*ngFor="
+										let budgetType of OrganizationProjectBudgetTypeEnum
+											| keyvalue
+									"
+									[value]="budgetType.value"
+								>
+									{{ budgetType.value | titlecase }}
+								</nb-option>
+							</nb-select>
+						</div>
+						<div
+							class="form-group col-4"
+							*ngIf="
+								form.controls.budgetType.value ===
+								OrganizationProjectBudgetTypeEnum.HOURS
+							"
+						>
+							<label class="label">{{
+								'FORM.PLACEHOLDERS.HOURS' | translate
+							}}</label>
+							<input
+								nbInput
+								type="number"
+								[min]="0"
+								fullWidth
+								formControlName="budget"
+								[placeholder]="
+									'FORM.PLACEHOLDERS.HOURS' | translate
+								"
+							/>
+						</div>
+						<div
+							class="form-group col-4"
+							*ngIf="
+								form.controls.budgetType.value ===
+								OrganizationProjectBudgetTypeEnum.COST
+							"
+						>
+							<label class="label">{{
+								'FORM.PLACEHOLDERS.COST' | translate
+							}}</label>
+							<input
+								nbInput
+								type="number"
+								[min]="0"
+								fullWidth
+								formControlName="budget"
+								[placeholder]="
+									'FORM.PLACEHOLDERS.COST' | translate
+								"
+							/>
+						</div>
+					</div>
+				</nb-tab>
+				<nb-tab
+					[tabTitle]="'ORGANIZATIONS_PAGE.OPEN_SOURCE' | translate"
+				>
+					<div class="row">
+						<div class="col-4 d-flex align-items-center">
+							<nb-toggle
+								class="project-toggle"
+								labelPosition="start"
+								status="basic"
+								[checked]="form.get('openSource').value"
+								(checkedChange)="toggleOpenSource($event)"
+								formControlName="openSource"
+							>
+								{{
+									'FORM.LABELS.IS_PROJECT_OPEN_SOURCE'
+										| translate
+								}}
+							</nb-toggle>
+						</div>
+						<div
+							*ngIf="form.get('openSource').value"
+							class="form-group col-4"
+						>
+							<label for="openSourceProjectUrl" class="label">
+								{{
+									'FORM.LABELS.OPEN_SOURCE_PROJECT_URL'
+										| translate
+								}}
+							</label>
+							<input
+								type="text"
+								nbInput
+								fullWidth
+								placeholder="https://github.com/..."
+								id="openSourceProjectUrl"
+								formControlName="openSourceProjectUrl"
+								[status]="
+									FormHelpers.isInvalidControl(
+										form,
+										'openSourceProjectUrl'
+									)
+										? 'danger'
+										: 'basic'
+								"
+							/>
+							<div
+								class="caption status-danger position-absolute"
+								*ngIf="openSourceProjectUrl.hasError('pattern')"
+							>
+								{{ 'FORM.ERROR.OPEN_SOURCE_PROJECT_URL' | translate }}
+							</div>
+						</div>
+					</div>
+				</nb-tab>
+				<nb-tab
+					*ngIf="
+						form.get('taskListType').value ==
+							TaskListTypeEnum.SPRINT && project
+					"
+					[tabTitle]="'ORGANIZATIONS_PAGE.SPRINTS' | translate"
+				>
+					<ngx-tasks-sprint-settings-view
+						[project]="project"
+					></ngx-tasks-sprint-settings-view>
+				</nb-tab>
+				<nb-tab
+					[tabTitle]="'ORGANIZATIONS_PAGE.SETTINGS' | translate"
+					[style.minHeight]="'330px'"
+				>
+					<div class="row">
+						<div class="form-group col-3">
+							<label for="color" class="label">{{
+								'FORM.PLACEHOLDERS.COLOR' | translate
+							}}</label>
+
+							<input
+								type="text"
+								nbInput
+								fullWidth
+								formControlName="color"
+								placeholder="{{
+									'FORM.PLACEHOLDERS.COLOR' | translate
+								}}"
+								id="color"
+								[colorPicker]="form.get('color').value"
+								[style.background-color]="
+									form.get('color').value + ' !important'
+								"
+								[style.color]="'#fff'"
+								autocomplete-off
+								[value]="form.get('color').value"
+								(colorPickerChange)="
+									form.get('color').setValue($event)
+								"
+							/>
+						</div>
+						<div class="form-group col-3">
+							<label for="owner" class="label">{{
+								'FORM.PLACEHOLDERS.TASK_VIEW_MODE' | translate
+							}}</label>
+							<nb-select
+								fullWidth
+								placeholder="{{
+									'FORM.PLACEHOLDERS.TASK_VIEW_MODE'
+										| translate
+								}}"
+								formControlName="taskListType"
+								id="taskListType"
+							>
+								<nb-option
+									*ngFor="let mode of taskViewModeTypes"
+									[value]="mode"
+									>{{ mode }}
+								</nb-option>
+							</nb-select>
+						</div>
+					</div>
+					<div class="row">
+						<div class="col-2 d-flex align-items-center">
+							<nb-toggle
+								#public
+								class="project-toggle"
+								labelPosition="start"
+								status="basic"
+								[checked]="form.get('public').value"
+								formControlName="public"
+								(checkedChange)="togglePublic($event)"
+								>{{
+									'FORM.PLACEHOLDERS.SWITCH_PROJECT_STATE'
+										| translate
+								}}</nb-toggle
+							>
+						</div>
+						<div class="col-2 d-flex align-items-center">
+							<nb-toggle
+								#billable
+								class="project-toggle"
+								labelPosition="start"
+								status="basic"
+								[checked]="form.get('billable').value"
+								formControlName="billable"
+								(checkedChange)="toggleBillable($event)"
+								>{{
+									'FORM.PLACEHOLDERS.BILLABLE' | translate
+								}}</nb-toggle
+							>
+						</div>
+					</div>
+				</nb-tab>
+				<nb-tab *ngIf="integration" [tabTitle]="'ORGANIZATIONS_PAGE.INTEGRATIONS' | translate">
+					<div class="setting-block block">
+						<div class="setting-row p-2">
+							<div class="row">
+								<div class="col-8">
+									<div class="h-12 w-12 flex-shrink-0">
+										<img
+											width="70px"
+											height="70px"
+											[src]="integration.integration.fullImgUrl"
+											[alt]="[integration.integration.title]"
+											[title]="integration.integration.name | replace: '_':' '"
+										/>
+									</div>
+								</div>
+								<div class="col-4">
+									<div class="h-12 w-12 flex-shrink-0">
+										<ngx-github-repository-selector
+											[sourceId]="project?.repository?.repositoryId"
+											[integration]="integration"
+											(onChanged)="selectRepository($event)"
+										></ngx-github-repository-selector>
+									</div>
+								</div>
+							</div>
+						</div>
+					</div>
+
+				</nb-tab>
+				<nb-tab *ngIf="integration" [tabTitle]="'ORGANIZATIONS_PAGE.AUTOMATION' | translate">
+					<form [formGroup]="projectSettingForm">
+						<div class="fields">
+							<div class="row">
+								<div class="col-4">
+									<div class="form-group">
+										<label for="isTasksAutoSync" class="label">
+											{{ 'FORM.LABELS.AUTO_SYNC_TASKS' | translate }}
+										</label>
+										<nb-toggle
+											id="isTasksAutoSync"
+											class="d-block"
+											formControlName="isTasksAutoSync"
+											status="primary"
+											labelPosition="start"
+											(change)="updateProjectAutoSyncSetting()"
+										>
+											{{ 'FORM.PLACEHOLDERS.AUTO_SYNC_TASKS' | translate }}
+										</nb-toggle>
+									</div>
+								</div>
+								<div class="col-4">
+									<div class="form-group">
+										<label for="isTasksAutoSyncOnLabel" class="label">
+											{{ 'FORM.LABELS.AUTO_SYNC_TASKS_BASED_ON_LABEL' | translate }}
+										</label>
+										<nb-toggle
+											id="isTasksAutoSyncOnLabel"
+											class="d-block"
+											formControlName="isTasksAutoSyncOnLabel"
+											status="primary"
+											labelPosition="start"
+											(change)="updateProjectAutoSyncSetting()"
+										>
+											{{ 'FORM.PLACEHOLDERS.AUTO_SYNC_TASKS_BASED_ON_LABEL' | translate }}
+										</nb-toggle>
+									</div>
+								</div>
+								<div class="col-4">
+									<div class="form-group">
+										<label for="syncTag" class="label">
+											{{ 'FORM.LABELS.AUTO_SYNC_TAG' | translate }}
+										</label>
+										<input
+											id="syncTag"
+											type="text"
+											nbInput
+											fullWidth
+											formControlName="syncTag"
+											[placeholder]="'FORM.PLACEHOLDERS.AUTO_SYNC_TAG' | translate"
+											(change)="changeSyncTag($event)"
+										/>
+									</div>
+								</div>
+							</div>
+						</div>
+					</form>
+				</nb-tab>
+			</nb-tabset>
+			<ng-container [ngTemplateOutlet]="actionButtons"></ng-container>
+		</form>
+	</nb-card-body>
+</nb-card>
+
+<ng-template #actionButtons >
+	<div class="form-group action-buttons">
+		<button
+			class="mr-3"
+			(click)="navigateToCancelProject()"
+			nbButton
+			status="basic"
+			outline
+		>
+			{{ 'BUTTONS.CANCEL' | translate }}
+		</button>
+		<button
+			class="mr-3"
+			nbButton
+			status="success"
+			[disabled]="form.invalid"
+			(click)="onSubmit()"
+		>
+			{{ 'BUTTONS.SAVE' | translate }}
+		</button>
+		<ng-template [ngIf]="project">
+			<button
+				*ngIf="form.get('taskListType').value === TaskListTypeEnum.SPRINT"
+				nbButton
+				class="float-right"
+				status="success"
+				(click)="openTasksSettings()"
+			>
+				{{ 'BUTTONS.MANAGE_SPRINTS' | translate }}
+			</button>
+		</ng-template>
+	</div>
+</ng-template>

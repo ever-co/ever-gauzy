@@ -3,7 +3,7 @@ import { NbAuthResult, NbAuthStrategy } from '@nebular/auth';
 import { ActivatedRoute } from '@angular/router';
 import { catchError, filter, map, switchMap } from 'rxjs/operators';
 import { Injectable } from '@angular/core';
-import { IUser, IAuthResponse } from '@gauzy/contracts';
+import { IUser, IAuthResponse, IUserLoginInput } from '@gauzy/contracts';
 import { distinctUntilChange, isNotEmpty } from '@gauzy/common-angular';
 import { NbAuthStrategyClass } from '@nebular/auth/auth.options';
 import { AuthService } from '../services/auth.service';
@@ -102,7 +102,7 @@ export class AuthStrategy extends NbAuthStrategy {
 	rememberMe(data?: any) {
 		const rememberMe = !!data.rememberMe;
 		if (rememberMe) {
-			this.cookieService.set('email', data.email);
+			this.cookieService.set('email', data.email?.trim());
 			this.cookieService.set('rememberMe', 'true');
 		} else {
 			this.cookieService.delete('rememberMe');
@@ -130,7 +130,7 @@ export class AuthStrategy extends NbAuthStrategy {
 				lastName: fullName
 					? fullName.split(' ').slice(-1).join(' ')
 					: null,
-				email,
+				email: email?.trim(),
 				tenant,
 				tags,
 			},
@@ -296,7 +296,8 @@ export class AuthStrategy extends NbAuthStrategy {
 		}
 	}
 
-	public login(loginInput): Observable<NbAuthResult> {
+	public login(loginInput: IUserLoginInput): Observable<NbAuthResult> {
+		loginInput.email = loginInput.email?.trim();
 		return this.authService.login(loginInput).pipe(
 			map((res: IAuthResponse) => {
 				let user, token, refresh_token;
@@ -318,6 +319,9 @@ export class AuthStrategy extends NbAuthStrategy {
 				this.store.userId = user.id;
 				this.store.token = token;
 				this.store.refresh_token = refresh_token;
+				this.store.organizationId = user?.employee?.organizationId;
+				this.store.tenantId = user?.tenantId;
+				this.store.user = user;
 
 				this.electronAuthentication({ user, token });
 

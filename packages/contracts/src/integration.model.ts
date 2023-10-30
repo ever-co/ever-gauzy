@@ -1,13 +1,10 @@
-import { IHubstaffScreenshotActivity, IHubstaffTimeSlotActivity } from './hubstaff.model';
-import { IActivity, ITimeLog } from './timesheet.model';
-import {
-	IBaseEntityModel,
-	IBasePerTenantAndOrganizationEntityModel
-} from './base-entity.model';
-import { IOrganizationProject } from './organization-projects.model';
-import { IOrganizationCreateInput, IOrganizationUpdateInput } from './organization.model';
-import { ITaskUpdateInput } from './task.model';
+import { IBaseEntityModel, IBasePerTenantAndOrganizationEntityModel } from './base-entity.model';
 import { ITag } from './tag.model';
+
+export interface IRelationIntegration {
+	integration?: IIntegration;
+	integrationId?: IIntegration['id'];
+}
 
 export interface IRelationalIntegrationTenant {
 	integration?: IIntegrationTenant;
@@ -44,17 +41,15 @@ export interface IIntegrationViewModel {
 	isComingSoon?: boolean;
 }
 
-export interface IIntegrationTenant extends IBasePerTenantAndOrganizationEntityModel {
+export interface IIntegrationTenant extends IBasePerTenantAndOrganizationEntityModel, IRelationIntegration {
 	name: IntegrationEnum;
-	integration?: IIntegration;
-	integrationId?: IIntegration['id'];
+	lastSyncedAt?: Date;
 	entitySettings?: IIntegrationEntitySetting[];
 	settings?: IIntegrationSetting[];
 }
 
-export interface IIntegrationTenantFindInput extends IBasePerTenantAndOrganizationEntityModel {
+export interface IIntegrationTenantFindInput extends IBasePerTenantAndOrganizationEntityModel, IRelationIntegration {
 	name?: IntegrationEnum;
-	integrationId?: IIntegration['id'];
 }
 
 export interface IIntegration extends IBaseEntityModel {
@@ -89,64 +84,27 @@ export interface IIntegrationFilter {
 	filter: string;
 }
 
-export interface IIntegrationMapSyncActivity extends IBasePerTenantAndOrganizationEntityModel {
-	activity: IActivity;
-	integrationId: string;
-	sourceId: string;
+/** */
+export interface IIntegrationMapSyncBase extends IBasePerTenantAndOrganizationEntityModel, IRelationalIntegrationTenant {
+	sourceId?: IIntegrationMap['sourceId'];
 }
 
-export interface IIntegrationMapSyncScreenshot extends IBasePerTenantAndOrganizationEntityModel {
-	screenshot: IHubstaffScreenshotActivity;
-	integrationId: string;
-	sourceId: string;
+export interface IIntegrationMapSyncEntity<T> extends IIntegrationMapSyncBase {
+	entity: T;
 }
 
-export interface IIntegrationMapSyncTimeLog extends IBasePerTenantAndOrganizationEntityModel {
-	timeLog: Partial<ITimeLog>;
-	integrationId: string;
-	sourceId: string;
+export interface IIntegrationMapSyncEntityInput extends IIntegrationMapSyncBase {
+	gauzyId: IIntegrationMap['gauzyId'];
+	entity: IntegrationEntity;
 }
 
-export interface IIntegrationMapSyncTimeSlot extends IBasePerTenantAndOrganizationEntityModel {
-	timeSlot: IHubstaffTimeSlotActivity;
-	integrationId: string;
-	sourceId: string;
-}
-
-export interface IIntegrationMapSyncTask extends IBasePerTenantAndOrganizationEntityModel {
-	taskInput: ITaskUpdateInput;
-	integrationId: string;
-	sourceId: string;
-}
-
-export interface IIntegrationMapSyncProject extends IBasePerTenantAndOrganizationEntityModel {
-	organizationProject: IOrganizationProject;
-	integrationId: string;
-	sourceId: string;
-}
-
-export interface IIntegrationMapSyncOrganization extends IBasePerTenantAndOrganizationEntityModel {
-	organizationInput: IOrganizationCreateInput | IOrganizationUpdateInput,
-	integrationId: string;
-	sourceId: string;
-}
-
-export interface IIntegrationMapSyncEntityInput extends IBasePerTenantAndOrganizationEntityModel {
-	integrationId: string;
-	sourceId: string;
-	gauzyId: string;
-	entity: string;
-}
-
-export interface IIntegrationTenantCreateInput extends IBasePerTenantAndOrganizationEntityModel {
-	integration?: IIntegration;
-	integrationId?: IIntegration['id'];
+export interface IIntegrationTenantCreateInput extends IBasePerTenantAndOrganizationEntityModel, IRelationIntegration {
 	name: IntegrationEnum;
 	entitySettings?: IIntegrationEntitySetting[];
 	settings?: IIntegrationSetting[];
 }
 
-export interface IIntegrationTenantUpdateInput extends Pick<IIntegrationTenantCreateInput, 'entitySettings' | 'settings'> {
+export interface IIntegrationTenantUpdateInput extends IIntegrationTenantCreateInput {
 	id?: IIntegrationTenant['id'];
 }
 
@@ -165,8 +123,8 @@ export enum IntegrationEntity {
 	NOTE = 'Note',
 	CLIENT = 'Client',
 	TASK = 'Task',
-	ISSUE = 'ISSUE',
-	LABEL = 'LABEL',
+	ISSUE = 'Issue',
+	LABEL = 'Label',
 	ACTIVITY = 'Activity',
 	USER = 'User',
 	EMPLOYEE = 'Employee',

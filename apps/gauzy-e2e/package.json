@@ -19,6 +19,7 @@
 	},
 	"dependencies": {
 		"@faker-js/faker": "8.0.0-alpha.0",
+		"dayjs": "^1.11.4",
 		"resolve": "^1.20.0"
 	},
 	"scripts": {
@@ -66,7 +67,6 @@
 		"cypress": "^9.4.1",
 		"cypress-cucumber-preprocessor": "^4.3.1",
 		"cypress-file-upload": "^5.0.8",
-		"dayjs": "^1.10.6",
 		"jasmine-core": "^3.6.0",
 		"jasmine-spec-reporter": "^6.0.0",
 		"jest": "^26.4.2",

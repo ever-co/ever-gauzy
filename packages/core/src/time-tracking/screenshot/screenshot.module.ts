@@ -14,7 +14,9 @@ import { UserModule } from './../../user/user.module';
 		ScreenshotController
 	],
 	imports: [
-		TypeOrmModule.forFeature([ Screenshot ]),
+		TypeOrmModule.forFeature([
+			Screenshot
+		]),
 		TenantModule,
 		forwardRef(() => TimeSlotModule),
 		forwardRef(() => UserModule),
@@ -29,4 +31,4 @@ import { UserModule } from './../../user/user.module';
 		ScreenshotService
 	]
 })
-export class ScreenshotModule {}
+export class ScreenshotModule { }

@@ -13,7 +13,9 @@ import * as path from 'path';
 require('module').globalPaths.push(path.join(__dirname, 'node_modules'));
 require('sqlite3');
 
-app.setName('gauzy-desktop');
+process.env = Object.assign(process.env, environment);
+
+app.setName(process.env.NAME);
 
 console.log('Node Modules Path', path.join(__dirname, 'node_modules'));
 
@@ -97,12 +99,15 @@ const pathWindow = {
 };
 
 const updater = new DesktopUpdater({
-	repository: 'ever-gauzy-desktop',
-	owner: 'ever-co',
+	repository: process.env.REPO_NAME,
+	owner: process.env.REPO_OWNER,
 	typeRelease: 'releases',
 });
 const report = new ErrorReport(
-	new ErrorReportRepository('ever-co', 'ever-gauzy-desktop')
+	new ErrorReportRepository(
+		process.env.REPO_OWNER,
+		process.env.REPO_NAME
+	)
 );
 const eventErrorManager = ErrorEventManager.instance;
 
@@ -130,7 +135,7 @@ if (!gotTheLock) {
 			gauzyWindow.focus();
 			dialog.showMessageBoxSync(gauzyWindow, {
 				type: 'warning',
-				title: 'Gauzy',
+				title: process.env.DESCRIPTION,
 				message: 'You already have a running instance',
 			});
 		}
@@ -142,7 +147,7 @@ TranslateLoader.load(path.join(__dirname, 'ui', 'assets', 'i18n'));
 
 /* Setting the app user model id for the app. */
 if (process.platform === 'win32') {
-	app.setAppUserModelId('com.ever.gauzydesktop');
+	app.setAppUserModelId(process.env.APP_ID);
 }
 
 // Set unlimited listeners
@@ -169,7 +174,7 @@ log.catchErrors({
 		dialog.show().then((result) => {
 			if (result.response === 1) {
 				submitIssue(
-					'https://github.com/ever-co/ever-gauzy-desktop/issues/new',
+					`https://github.com/${process.env.REPO_OWNER}/${process.env.REPO_NAME}/issues/new`,
 					{
 						title: `Automatic error report for Desktop App ${versions.app}`,
 						body:
@@ -229,11 +234,18 @@ eventErrorManager.onShowError(async (message: string) => {
 });
 
 async function startServer(value, restart = false) {
+	global.variableGlobal = {
+		API_BASE_URL: getApiBaseUrl(value),
+		IS_INTEGRATED_DESKTOP: value.isLocalServer
+	};
 	process.env.IS_ELECTRON = 'true';
 	if (value.db === 'sqlite') {
 		process.env.DB_PATH = sqlite3filename;
 		process.env.DB_TYPE = 'sqlite';
-	} else {
+	}else if(value.db === 'better-sqlite') {
+		process.env.DB_PATH = sqlite3filename;
+		process.env.DB_TYPE = 'better-sqlite3';
+	}else {
 		process.env.DB_TYPE = 'postgres';
 		process.env.DB_HOST = value['postgres']?.dbHost;
 		process.env.DB_PORT = value['postgres']?.dbPort;
@@ -258,7 +270,10 @@ async function startServer(value, restart = false) {
 			setupWindow.webContents.send('setup-progress', {
 				msg: msgData,
 			});
-			if (!value.isSetup && !value.serverConfigConnected) {
+			if (
+				!value.isSetup &&
+				(!value.serverConfigConnected || value.isLocalServer)
+			) {
 				if (msgData.indexOf('Listening at http') > -1) {
 					try {
 						setupWindow.hide();
@@ -269,6 +284,7 @@ async function startServer(value, restart = false) {
 							{ ...environment, gauzyWindow: value.gauzyWindow },
 							pathWindow.gauzyWindow
 						);
+						gauzyWindow.show();
 					} catch (error) {
 						throw new AppError('MAINWININIT', error);
 					}
@@ -288,11 +304,6 @@ async function startServer(value, restart = false) {
 			console.log('log error--', msgData);
 		});
 	}
-
-	global.variableGlobal = {
-		API_BASE_URL: getApiBaseUrl(value),
-		IS_INTEGRATED_DESKTOP: value.isLocalServer
-	};
 
 	try {
 		const config: any = {
@@ -344,15 +355,17 @@ async function startServer(value, restart = false) {
 		settingsWindow,
 		{ ...environment },
 		pathWindow,
-		path.join(__dirname, 'assets', 'icons', 'icon_16x16.png'),
+		path.join(__dirname, 'assets', 'icons', 'tray', 'icon.png'),
 		gauzyWindow,
 		alwaysOn
 	);
 
 	notificationWindow = new ScreenCaptureNotification(pathWindow.screenshotWindow);
 	await notificationWindow.loadURL();
-	gauzyWindow.setVisibleOnAllWorkspaces(false);
-	gauzyWindow.show()
+	if (gauzyWindow) {
+		gauzyWindow.setVisibleOnAllWorkspaces(false);
+		gauzyWindow.show();
+	}
 	splashScreen.close();
 
 	TranslateService.onLanguageChange(() => {
@@ -377,7 +390,7 @@ async function startServer(value, restart = false) {
 			settingsWindow,
 			{ ...environment },
 			pathWindow,
-			path.join(__dirname, 'assets', 'icons', 'icon_16x16.png'),
+			path.join(__dirname, 'assets', 'icons', 'tray', 'icon.png'),
 			gauzyWindow,
 			alwaysOn
 		);
@@ -462,7 +475,7 @@ app.on('ready', async () => {
 	splashScreen = new SplashScreen(pathWindow.timeTrackerUi);
 	await splashScreen.loadURL();
 	splashScreen.show();
-	if (provider.dialect === 'sqlite') {
+	if (['sqlite', 'better-sqlite'].includes(provider.dialect)) {
 		try {
 			const res = await knex.raw(`pragma journal_mode = WAL;`)
 			console.log(res);
@@ -527,7 +540,7 @@ app.on('ready', async () => {
 		);
 
 		if (configs && configs.isSetup) {
-			if (!configs.serverConfigConnected) {
+			if (!configs.serverConfigConnected && !configs?.isLocalServer) {
 				setupWindow = await createSetupWindow(
 					setupWindow,
 					false,
@@ -698,34 +711,12 @@ ipcMain.on('restart_and_update', () => {
 
 ipcMain.on('check_database_connection', async (event, arg) => {
 	try {
-		const provider = arg.db;
-		let databaseOptions;
-		if (provider === 'postgres') {
-			databaseOptions = {
-				client: 'pg',
-				connection: {
-					host: arg[provider].dbHost,
-					user: arg[provider].dbUsername,
-					password: arg[provider].dbPassword,
-					database: arg[provider].dbName,
-					port: arg[provider].dbPort
-				}
-			};
-		} else {
-			databaseOptions = {
-				client: 'sqlite',
-				connection: {
-					filename: sqlite3filename,
-				},
-			};
-		}
-		const dbConn = require('knex')(databaseOptions);
-		await dbConn.raw('select 1+1 as result');
+		const driver = await provider.check(arg);
 		event.sender.send('database_status', {
 			status: true,
 			message: TranslateService.instant(
 				'TIMER_TRACKER.DIALOG.CONNECTION_DRIVER',
-				{ driver: provider === 'postgres' ? 'PostgresSQL' : 'SQLite' }
+				{ driver }
 			)
 		});
 	} catch (error) {

@@ -1,0 +1,24 @@
+<nb-card [nbSpinner]="loading" nbSpinnerStatus="primary" nbSpinnerSize="large">
+	<nb-card-header class="main-header pb-0">
+        <div class="d-flex mb-5">
+            <ngx-back-navigation></ngx-back-navigation>
+            <h4>
+                {{ 'ORGANIZATIONS_PAGE.EDIT.EDIT_PROJECT' | translate }}
+            </h4>
+        </div>
+    </nb-card-header>
+	<nb-card-body class="custom-body-content">
+        <ng-template [ngxPermissionsOnly]="['ALL_ORG_EDIT', 'ORG_PROJECT_EDIT']">
+            <ga-project-mutation
+                [integration]="integration$ | async"
+                [project]="project$ | async"
+                (onSubmitted)="onSubmit($event)"
+            ></ga-project-mutation>
+        </ng-template>
+        <ng-template [ngxPermissionsExcept]="['ALL_ORG_EDIT', 'ORG_PROJECT_EDIT']">
+            <div >
+                <!-- Content to display if the user does not have 'canEditComponent' permission -->
+            </div>
+        </ng-template>
+    </nb-card-body>
+</nb-card>

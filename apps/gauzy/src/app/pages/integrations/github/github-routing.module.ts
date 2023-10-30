@@ -22,12 +22,22 @@ const routes: Routes = [
 			{
 				path: ':integrationId',
 				component: GithubViewComponent,
+				data: {
+					selectors: false
+				}
 			},
 			{
 				path: 'setup/wizard',
 				component: GithubWizardComponent,
 			}
 		]
+	},
+	{
+		path: 'setup/wizard/reset',
+		data: {
+			redirectTo: '/pages/integrations/github/setup/wizard'
+		},
+		component: GithubWizardComponent
 	},
 	{
 		path: 'setup/installation',

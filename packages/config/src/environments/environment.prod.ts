@@ -24,35 +24,55 @@ export const environment: IEnvironment = {
 	USER_PASSWORD_BCRYPT_SALT_ROUNDS: 12,
 
 	JWT_SECRET: process.env.JWT_SECRET || 'secretKey',
-	JWT_TOKEN_EXPIRATION_TIME: parseInt(process.env.JWT_TOKEN_EXPIRATION_TIME) || 86400 * 1, // default JWT token expire time (1 day)
+	JWT_TOKEN_EXPIRATION_TIME:
+		parseInt(process.env.JWT_TOKEN_EXPIRATION_TIME) || 86400 * 1, // default JWT token expire time (1 day)
 
-	JWT_REFRESH_TOKEN_SECRET: process.env.JWT_REFRESH_TOKEN_SECRET || 'refreshSecretKey',
-	JWT_REFRESH_TOKEN_EXPIRATION_TIME: parseInt(process.env.JWT_REFRESH_TOKEN_EXPIRATION_TIME) || 86400 * 7, // default JWT refresh token expire time (7 days)
+	JWT_REFRESH_TOKEN_SECRET:
+		process.env.JWT_REFRESH_TOKEN_SECRET || 'refreshSecretKey',
+	JWT_REFRESH_TOKEN_EXPIRATION_TIME:
+		parseInt(process.env.JWT_REFRESH_TOKEN_EXPIRATION_TIME) || 86400 * 7, // default JWT refresh token expire time (7 days)
 
 	/**
 	 * Email verification options
 	 */
-	JWT_VERIFICATION_TOKEN_SECRET: process.env.JWT_VERIFICATION_TOKEN_SECRET || 'verificationSecretKey',
-	JWT_VERIFICATION_TOKEN_EXPIRATION_TIME: parseInt(process.env.JWT_VERIFICATION_TOKEN_EXPIRATION_TIME) || 86400 * 7, // default verification expire token time (7 days)
+	JWT_VERIFICATION_TOKEN_SECRET:
+		process.env.JWT_VERIFICATION_TOKEN_SECRET || 'verificationSecretKey',
+	JWT_VERIFICATION_TOKEN_EXPIRATION_TIME:
+		parseInt(process.env.JWT_VERIFICATION_TOKEN_EXPIRATION_TIME) ||
+		86400 * 7, // default verification expire token time (7 days)
 
 	/**
 	 * Email Reset
 	 */
-	EMAIL_RESET_EXPIRATION_TIME: parseInt(process.env.EMAIL_RESET_EXPIRATION_TIME) || 1800, // default email reset expiration time (30 minutes)
+	EMAIL_RESET_EXPIRATION_TIME:
+		parseInt(process.env.EMAIL_RESET_EXPIRATION_TIME) || 1800, // default email reset expiration time (30 minutes)
 
 	/**
 	 * Password Less Authentication Configuration
 	 */
-	AUTHENTICATION_CODE_EXPIRATION_TIME: parseInt(process.env.AUTHENTICATION_CODE_EXPIRATION_TIME) || 86400 * 1, // default password less authentication code expire time (1 day)
+	AUTHENTICATION_CODE_EXPIRATION_TIME:
+		parseInt(process.env.AUTHENTICATION_CODE_EXPIRATION_TIME) || 86400 * 1, // default password less authentication code expire time (1 day)
 
 	/** Organization Team Join Request Configuration **/
-	TEAM_JOIN_REQUEST_EXPIRATION_TIME: parseInt(process.env.TEAM_JOIN_REQUEST_EXPIRATION_TIME) || 60 * 60 * 24, // default code expire time (1 day)
+	TEAM_JOIN_REQUEST_EXPIRATION_TIME:
+		parseInt(process.env.TEAM_JOIN_REQUEST_EXPIRATION_TIME) || 60 * 60 * 24, // default code expire time (1 day)
 
 	/**
 	 * Throttler (Rate Limiting) Options
 	 */
 	THROTTLE_TTL: parseInt(process.env.THROTTLE_TTL) || 60,
 	THROTTLE_LIMIT: parseInt(process.env.THROTTLE_LIMIT) || 300,
+
+	/**
+	 * Jitsu Server Configuration
+	 */
+	jitsu: {
+		serverHost: process.env.JITSU_SERVER_URL,
+		serverWriteKey: process.env.JITSU_SERVER_WRITE_KEY,
+		debug: process.env.JITSU_SERVER_DEBUG === 'true' ? true : false,
+		echoEvents:
+			process.env.JITSU_SERVER_ECHO_EVENTS === 'true' ? true : false,
+	},
 
 	fileSystem: {
 		name:
@@ -97,33 +117,48 @@ export const environment: IEnvironment = {
 		clientId: process.env.FACEBOOK_CLIENT_ID,
 		clientSecret: process.env.FACEBOOK_CLIENT_SECRET,
 		fbGraphVersion: process.env.FACEBOOK_GRAPH_VERSION,
-		oauthRedirectUri: process.env.FACEBOOK_CALLBACK_URL || `${process.env.API_BASE_URL}/api/auth/facebook/callback`,
+		oauthRedirectUri:
+			process.env.FACEBOOK_CALLBACK_URL ||
+			`${process.env.API_BASE_URL}/api/auth/facebook/callback`,
 		state: '{fbstate}',
 	},
 
 	googleConfig: {
 		clientId: process.env.GOOGLE_CLIENT_ID,
 		clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-		callbackUrl: process.env.GOOGLE_CALLBACK_URL || `${process.env.API_BASE_URL}/api/auth/google/callback`,
+		callbackUrl:
+			process.env.GOOGLE_CALLBACK_URL ||
+			`${process.env.API_BASE_URL}/api/auth/google/callback`,
 	},
 
 	github: {
 		/**Github OAuth Configuration */
 		clientId: process.env.GAUZY_GITHUB_CLIENT_ID,
 		clientSecret: process.env.GAUZY_GITHUB_CLIENT_SECRET,
-		callbackUrl: process.env.GAUZY_GITHUB_CALLBACK_URL || `${process.env.API_BASE_URL}/api/auth/github/callback`,
+		callbackUrl:
+			process.env.GAUZY_GITHUB_CALLBACK_URL ||
+			`${process.env.API_BASE_URL}/api/auth/github/callback`,
 
 		/** Github App Install Configuration  */
 		appId: process.env.GAUZY_GITHUB_APP_ID,
 		appName: process.env.GAUZY_GITHUB_APP_NAME,
-		appPrivateKey: process.env.GAUZY_GITHUB_APP_PRIVATE_KEY,
+		appPrivateKey: process.env.GAUZY_GITHUB_APP_PRIVATE_KEY
+			? Buffer.from(
+					process.env.GAUZY_GITHUB_APP_PRIVATE_KEY,
+					'base64'
+			  ).toString('ascii')
+			: '',
 
 		/** Github App Post Install Configuration */
-		postInstallUrl: process.env.GAUZY_GITHUB_POST_INSTALL_URL || `${process.env.CLIENT_BASE_URL}/#/pages/integrations/github/setup/installation`,
+		postInstallUrl:
+			process.env.GAUZY_GITHUB_POST_INSTALL_URL ||
+			`${process.env.CLIENT_BASE_URL}/#/pages/integrations/github/setup/installation`,
 
 		/** Github Webhook Configuration */
 		webhookSecret: process.env.GAUZY_GITHUB_WEBHOOK_SECRET,
-		webhookUrl: process.env.GAUZY_GITHUB_WEBHOOK_URL || `${process.env.API_BASE_URL}/api/integration/github/webhook`
+		webhookUrl:
+			process.env.GAUZY_GITHUB_WEBHOOK_URL ||
+			`${process.env.API_BASE_URL}/api/integration/github/webhook`,
 	},
 
 	microsoftConfig: {
@@ -131,19 +166,25 @@ export const environment: IEnvironment = {
 		clientSecret: process.env.MICROSOFT_CLIENT_SECRET,
 		resource: process.env.MICROSOFT_RESOURCE,
 		tenant: process.env.MICROSOFT_TENANT,
-		callbackUrl: process.env.MICROSOFT_CALLBACK_URL || `${process.env.API_BASE_URL}/api/auth/microsoft/callback`,
+		callbackUrl:
+			process.env.MICROSOFT_CALLBACK_URL ||
+			`${process.env.API_BASE_URL}/api/auth/microsoft/callback`,
 	},
 
 	linkedinConfig: {
 		clientId: process.env.LINKEDIN_CLIENT_ID,
 		clientSecret: process.env.LINKEDIN_CLIENT_SECRET,
-		callbackUrl: process.env.LINKEDIN_CALLBACK_URL || `${process.env.API_BASE_URL}/api/auth/linked/callback`,
+		callbackUrl:
+			process.env.LINKEDIN_CALLBACK_URL ||
+			`${process.env.API_BASE_URL}/api/auth/linked/callback`,
 	},
 
 	twitterConfig: {
 		clientId: process.env.TWITTER_CLIENT_ID,
 		clientSecret: process.env.TWITTER_CLIENT_SECRET,
-		callbackUrl: process.env.TWITTER_CALLBACK_URL || `${process.env.API_BASE_URL}/api/auth/twitter/callback`,
+		callbackUrl:
+			process.env.TWITTER_CALLBACK_URL ||
+			`${process.env.API_BASE_URL}/api/auth/twitter/callback`,
 	},
 
 	fiverrConfig: {
@@ -169,13 +210,18 @@ export const environment: IEnvironment = {
 		dsn: process.env.SENTRY_DSN,
 	},
 
-	defaultIntegratedUserPass: process.env.INTEGRATED_USER_DEFAULT_PASS || '123456',
+	defaultIntegratedUserPass:
+		process.env.INTEGRATED_USER_DEFAULT_PASS || '123456',
 
 	upwork: {
 		apiKey: process.env.UPWORK_API_KEY,
 		apiSecret: process.env.UPWORK_API_SECRET,
-		callbackUrl: process.env.UPWORK_REDIRECT_URL || `${process.env.API_BASE_URL}/api/integrations/upwork/callback`,
-		postInstallUrl: process.env.UPWORK_POST_INSTALL_URL || `${process.env.CLIENT_BASE_URL}/#/pages/integrations/upwork`,
+		callbackUrl:
+			process.env.UPWORK_REDIRECT_URL ||
+			`${process.env.API_BASE_URL}/api/integrations/upwork/callback`,
+		postInstallUrl:
+			process.env.UPWORK_POST_INSTALL_URL ||
+			`${process.env.CLIENT_BASE_URL}/#/pages/integrations/upwork`,
 	},
 
 	hubstaff: {
@@ -183,12 +229,15 @@ export const environment: IEnvironment = {
 		clientId: process.env.HUBSTAFF_CLIENT_ID,
 		clientSecret: process.env.HUBSTAFF_CLIENT_SECRET,
 		/** Hubstaff Integration Post Install URL */
-		postInstallUrl: process.env.HUBSTAFF_POST_INSTALL_URL || `${process.env.CLIENT_BASE_URL}/#/pages/integrations/hubstaff`,
+		postInstallUrl:
+			process.env.HUBSTAFF_POST_INSTALL_URL ||
+			`${process.env.CLIENT_BASE_URL}/#/pages/integrations/hubstaff`,
 	},
 
 	isElectron: process.env.IS_ELECTRON === 'true' ? true : false,
 	gauzyUserPath: process.env.GAUZY_USER_PATH,
-	allowSuperAdminRole: process.env.ALLOW_SUPER_ADMIN_ROLE === 'false' ? false : true,
+	allowSuperAdminRole:
+		process.env.ALLOW_SUPER_ADMIN_ROLE === 'false' ? false : true,
 
 	/**
 	 * Endpoint for Gauzy AI API (optional), e.g.: http://localhost:3005/graphql

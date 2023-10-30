@@ -1,18 +1,23 @@
-import { HttpException, HttpStatus } from '@nestjs/common';
-import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
+import { HttpException, HttpStatus, Logger } from '@nestjs/common';
+import { CommandHandler, EventBus, ICommandHandler } from '@nestjs/cqrs';
 import { ITask, ITaskUpdateInput } from '@gauzy/contracts';
+import { RequestContext } from 'core/context';
 import { TaskService } from '../../task.service';
 import { TaskUpdateCommand } from '../task-update.command';
+import { TaskUpdatedEvent } from './../../events/task-updated.event';
 
 @CommandHandler(TaskUpdateCommand)
 export class TaskUpdateHandler implements ICommandHandler<TaskUpdateCommand> {
+	private readonly logger = new Logger('TaskUpdateHandler');
+
 	constructor(
+		private readonly _eventBus: EventBus,
 		private readonly _taskService: TaskService
 	) { }
 
 	public async execute(command: TaskUpdateCommand): Promise<ITask> {
-		const { id, input } = command;
-		return await this.update(id, input);
+		const { id, input, triggeredEvent } = command;
+		return await this.update(id, input, triggeredEvent);
 	}
 
 	/**
@@ -22,35 +27,48 @@ export class TaskUpdateHandler implements ICommandHandler<TaskUpdateCommand> {
 	 * @param request
 	 * @returns
 	 */
-	public async update(id: string, request: ITaskUpdateInput): Promise<ITask> {
+	public async update(
+		id: ITask['id'],
+		request: ITaskUpdateInput,
+		triggeredEvent: boolean
+	): Promise<ITask> {
 		try {
+			const tenantId = RequestContext.currentTenantId() || request.tenantId;
 			const task = await this._taskService.findOneByIdString(id);
 
-			if (request.projectId) {
-				const { projectId } = request;
-				/**
-				 * If, project changed for task, just update latest task number
-				 */
-				if (projectId !== task.projectId) {
-					const { organizationId } = task;
-					const maxNumber = await this._taskService.getMaxTaskNumberByProject({
-						organizationId,
-						projectId,
-					});
-					await this._taskService.update(id, {
-						projectId,
-						number: maxNumber + 1,
-					});
-				}
+			if (request.projectId && request.projectId !== task.projectId) {
+				const { organizationId, projectId } = task;
+
+				// Get the maximum task number for the project
+				const maxNumber = await this._taskService.getMaxTaskNumberByProject({
+					tenantId,
+					organizationId,
+					projectId
+				});
+
+				// Update the task with the new project and task number
+				await this._taskService.update(id, {
+					projectId,
+					number: maxNumber + 1
+				});
 			}
 
-			return await this._taskService.create({
+			// Update the task with the provided data
+			const updatedTask = await this._taskService.create({
 				...request,
 				id
 			});
+
+			// The "2 Way Sync Triggered Event" for Synchronization
+			if (triggeredEvent) {
+				this._eventBus.publish(new TaskUpdatedEvent(updatedTask));
+			}
+
+			return updatedTask;
 		} catch (error) {
-			console.log('Error while updating task %s', error?.message);
+			this.logger.error(`Error while updating task: ${error.message}`, error.message);
 			throw new HttpException({ message: error?.message, error }, HttpStatus.BAD_REQUEST);
 		}
 	}
+
 }

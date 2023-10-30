@@ -28,7 +28,7 @@ import { TranslationBaseComponent } from './../../../../../@shared/language-base
 		'./view.component.scss'
 	]
 })
-export class ViewComponent extends TranslationBaseComponent
+export class GithubViewComponent extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
 
 	PermissionsEnum = PermissionsEnum;
@@ -145,5 +145,5 @@ export class ViewComponent extends TranslationBaseComponent
 		this.disable = true;
 	}
 
-	ngOnDestroy() {}
+	ngOnDestroy() { }
 }

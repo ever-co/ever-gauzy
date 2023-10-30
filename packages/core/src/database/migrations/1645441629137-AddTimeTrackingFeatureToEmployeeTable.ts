@@ -1,11 +1,11 @@
 import { MigrationInterface, QueryRunner } from "typeorm";
-    
+
 export class AddTimeTrackingFeatureToEmployeeTable1645441629137 implements MigrationInterface {
 
     name = 'AddTimeTrackingFeatureToEmployeeTable1645441629137';
 
     public async up(queryRunner: QueryRunner): Promise<void> {
-        if (queryRunner.connection.options.type === 'sqlite') {
+        if (['sqlite', 'better-sqlite3'].includes(queryRunner.connection.options.type)) {
             await this.sqliteUpQueryRunner(queryRunner);
         } else {
             await this.postgresUpQueryRunner(queryRunner);
@@ -13,7 +13,7 @@ export class AddTimeTrackingFeatureToEmployeeTable1645441629137 implements Migra
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
-        if (queryRunner.connection.options.type === 'sqlite') {
+        if (['sqlite', 'better-sqlite3'].includes(queryRunner.connection.options.type)) {
             await this.sqliteDownQueryRunner(queryRunner);
         } else {
             await this.postgresDownQueryRunner(queryRunner);
@@ -22,8 +22,8 @@ export class AddTimeTrackingFeatureToEmployeeTable1645441629137 implements Migra
 
     /**
     * PostgresDB Up Migration
-    * 
-    * @param queryRunner 
+    *
+    * @param queryRunner
     */
     public async postgresUpQueryRunner(queryRunner: QueryRunner): Promise<any> {
         await queryRunner.query(`ALTER TABLE "employee" ADD "isTrackingEnabled" boolean DEFAULT true`);
@@ -31,8 +31,8 @@ export class AddTimeTrackingFeatureToEmployeeTable1645441629137 implements Migra
 
     /**
     * PostgresDB Down Migration
-    * 
-    * @param queryRunner 
+    *
+    * @param queryRunner
     */
     public async postgresDownQueryRunner(queryRunner: QueryRunner): Promise<any> {
         await queryRunner.query(`ALTER TABLE "employee" DROP COLUMN "isTrackingEnabled"`);
@@ -41,8 +41,8 @@ export class AddTimeTrackingFeatureToEmployeeTable1645441629137 implements Migra
 
     /**
    * SqliteDB Up Migration
-   * 
-   * @param queryRunner 
+   *
+   * @param queryRunner
    */
     public async sqliteUpQueryRunner(queryRunner: QueryRunner): Promise<any> {
         await queryRunner.query(`DROP INDEX "IDX_5e719204dcafa8d6b2ecdeda13"`);
@@ -65,8 +65,8 @@ export class AddTimeTrackingFeatureToEmployeeTable1645441629137 implements Migra
 
     /**
      * SqliteDB Down Migration
-     * 
-     * @param queryRunner 
+     *
+     * @param queryRunner
      */
     public async sqliteDownQueryRunner(queryRunner: QueryRunner): Promise<any> {
         await queryRunner.query(`DROP INDEX "IDX_4b3303a6b7eb92d237a4379734"`);

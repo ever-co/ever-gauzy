@@ -1,1 +1,1 @@
-export * from './integration-remember-state-query.dto';
+export * from './integration-tenant-query.dto';

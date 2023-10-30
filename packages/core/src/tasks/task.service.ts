@@ -1,4 +1,4 @@
-import { Injectable, BadRequestException } from '@nestjs/common';
+import { Injectable, BadRequestException, HttpStatus, HttpException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import {
 	IsNull,
@@ -20,6 +20,7 @@ import { isUUID } from 'class-validator';
 import { PaginationParams, TenantAwareCrudService } from './../core/crud';
 import { RequestContext } from '../core/context';
 import { Task } from './task.entity';
+import { GetTaskByIdDTO } from './dto';
 
 @Injectable()
 export class TaskService extends TenantAwareCrudService<Task> {
@@ -28,6 +29,49 @@ export class TaskService extends TenantAwareCrudService<Task> {
 		private readonly taskRepository: Repository<Task>
 	) {
 		super(taskRepository);
+	}
+
+	/**
+	 *
+	 * @param id
+	 * @param relations
+	 * @returns
+	 */
+	async findById(id: ITask['id'], params: GetTaskByIdDTO): Promise<ITask> {
+		const task = await this.findOneByIdString(id, params);
+
+		if (params.includeRootEpic) {
+			task.rootEpic = await this.findParentUntilEpic(task.id);
+		}
+
+		return task;
+	}
+
+	async findParentUntilEpic(issueId: string): Promise<Task> {
+		// Define the recursive SQL query
+		const query = `
+			WITH RECURSIVE IssueHierarchy AS (SELECT *
+				FROM task
+				WHERE id = $1
+			UNION ALL
+				SELECT i.*
+				FROM task i
+						INNER JOIN IssueHierarchy ih ON i.id = ih."parentId")
+			SELECT *
+				FROM IssueHierarchy
+				WHERE "issueType" = 'Epic'
+			LIMIT 1;
+		`;
+
+		// Execute the raw SQL query with the issueId parameter
+		const result = await this.taskRepository.query(query, [issueId]);
+
+		// Check if any epic was found and return it, or return null
+		if (result.length > 0) {
+			return result[0];
+		} else {
+			return null;
+		}
 	}
 
 	/**
@@ -182,12 +226,12 @@ export class TaskService extends TenantAwareCrudService<Task> {
 			query.setFindOptions({
 				...(isNotEmpty(options) &&
 					isNotEmpty(options.where) && {
-						where: options.where,
-					}),
+					where: options.where,
+				}),
 				...(isNotEmpty(options) &&
 					isNotEmpty(options.relations) && {
-						relations: options.relations,
-					}),
+					relations: options.relations,
+				}),
 			});
 			query.andWhere(
 				new Brackets((qb: WhereExpressionBuilder) => {
@@ -419,40 +463,41 @@ export class TaskService extends TenantAwareCrudService<Task> {
 	 */
 	public async getMaxTaskNumberByProject(options: IGetTaskOptions) {
 		try {
-			const tenantId = RequestContext.currentTenantId();
+			// Extract necessary options
+			const tenantId = RequestContext.currentTenantId() || options.tenantId;
 			const { organizationId, projectId } = options;
 
 			const query = this.taskRepository.createQueryBuilder(this.alias);
-			query.select(
-				`COALESCE(MAX("${query.alias}"."number"), 0)`,
-				'maxTaskNumber'
-			);
+
+			// Build the query to get the maximum task number
+			query.select(`COALESCE(MAX("${query.alias}"."number"), 0)`, 'maxTaskNumber');
+
+			// Filter by organization and tenant
 			query.andWhere(
 				new Brackets((qb: WhereExpressionBuilder) => {
-					qb.andWhere(
-						`"${query.alias}"."organizationId" =:organizationId`,
-						{ organizationId }
-					);
-					qb.andWhere(`"${query.alias}"."tenantId" =:tenantId`, {
-						tenantId,
+					qb.andWhere(`"${query.alias}"."organizationId" = :organizationId`, {
+						organizationId
+					});
+					qb.andWhere(`"${query.alias}"."tenantId" = :tenantId`, {
+						tenantId
 					});
 				})
 			);
-			/**
-			 * GET maximum task number by project
-			 */
+
+			// Filter by project (if provided)
 			if (isNotEmpty(projectId)) {
 				query.andWhere(`"${query.alias}"."projectId" = :projectId`, {
-					projectId,
+					projectId
 				});
 			} else {
 				query.andWhere(`"${query.alias}"."projectId" IS NULL`);
 			}
 
+			// Execute the query and get the maximum task number
 			const { maxTaskNumber } = await query.getRawOne();
 			return maxTaskNumber;
 		} catch (error) {
-			throw new BadRequestException(error);
+			throw new HttpException({ message: error?.message, error }, HttpStatus.BAD_REQUEST);
 		}
 	}
 

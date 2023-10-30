@@ -2056,6 +2056,7 @@
 			"ORG_CONTACT_VIEW": "Kontakte anzeigen",
 			"ORG_TEAM_ADD": "Teams hinzufügen",
 			"ORG_TEAM_VIEW": "Teams anzeigen",
+			"ORG_TEAM_EDIT_ACTIVE_TASK": "Aktive Aufgaben bearbeiten",
 			"ORG_TEAM_EDIT": "Teams bearbeiten",
 			"ORG_TEAM_DELETE": "Lösche Teams",
 			"ORG_TEAM_JOIN_REQUEST_VIEW": "Ansicht Teams Beitrittsanfragen",
@@ -2082,7 +2083,8 @@
 			"ORG_TASK_VIEW": "Ansicht von Aufgaben",
 			"ORG_TASK_EDIT": "Aufgaben bearbeiten",
 			"ORG_TASK_DELETE": "Aufgaben löschen",
-			"ORG_TASK_SETTING": "Aufgabeeinstellungen"
+			"ORG_TASK_SETTING": "Aufgabeeinstellungen",
+			"ORG_MEMBER_LAST_LOG_VIEW": "Letztes Protokoll anzeigen"
 		},
 		"BILLING": "Rechnungsstellung",
 		"BUDGET": "Budget",
@@ -2817,7 +2819,7 @@
 		"INVOICES_PER_PAGE": "Rechnungen pro Seite",
 		"ESTIMATES_PER_PAGE": "Schätzungen pro Seite",
 		"APPLY_DISCOUNT_AFTER_TAX": "Rabatt nach Steuern anwenden",
-		"SELECT_INVOICE_TO_VIEW_HISTORY": "Wählen Sie eine Rechnung aus, um ihre Historie anzuzeigen.",
+		"SELECT_INVOICE_TO_VIEW_HISTORY": "Wählen Sie eine Rechnung aus, um deren Verlauf anzuzeigen.",
 		"INVOICE_SENT_TO": "Rechnung an '{{ name }}' gesendet",
 		"ESTIMATE_SENT_TO": "Schätzung an '{{ name }}' gesendet",
 		"INVOICE": "Rechnung",
@@ -2908,7 +2910,7 @@
 			"REJECTED": "Abgelehnt",
 			"ACCEPTED_STATUS": "Akzeptierter Status",
 			"ESTIMATE_CONVERT": "Schätzung umgerechnet.",
-			"SELECT_ESTIMATE_TO_VIEW_HISTORY": "Wählen Sie eine Schätzung aus, um die Historie anzuzeigen.",
+			"SELECT_ESTIMATE_TO_VIEW_HISTORY": "Wählen Sie eine Schätzung aus, um deren Verlauf anzuzeigen.",
 			"ESTIMATE_ACCEPTED": "Schätzung angenommen",
 			"ESTIMATE_REJECTED": "Schätzung abgelehnt",
 			"ERROR": "Es ist ein Fehler aufgetreten",
@@ -4308,6 +4310,7 @@
 	"SETTINGS": {
 		"EMAIL_HISTORY": {
 			"EMAIL_ARCHIVED": "E-Mail archiviert",
+			"RESEND": "Erneut senden",
 			"ARCHIVE": "Archiv",
 			"HEADER": "E-Mail Geschichte",
 			"FROM": "Von:",
@@ -4324,7 +4327,7 @@
 			}
 		}
 	},
-	"GAUZY_MAINTENANCE": "Gauzy @ Wartung",
+	"GAUZY_MAINTENANCE": "{{ companySite }} @ Wartung",
 	"LEGAL": {
 		"PRIVACY_POLICY": "Datenschutzerklärung",
 		"TERMS_AND_CONDITIONS": "Allgemeine Geschäftsbedingungen"
@@ -4356,7 +4359,8 @@
 			"EMAIL_REQUIRED": "E-Mail ist erforderlich!",
 			"EMAIL_REAL_REQUIRED": "Die E-Mail sollte die echte sein!",
 			"PASSWORD_REQUIRED": "Passwort wird benötigt!",
-			"PASSWORD_SHOULD_CONTAIN": "Das Passwort sollte aus {{ minLength }} bis {{ maxLength }} Zeichen bestehen!"
+			"PASSWORD_SHOULD_CONTAIN": "Das Passwort sollte aus {{ minLength }} bis {{ maxLength }} Zeichen bestehen!",
+			"PASSWORD_NO_SPACE_EDGES": "Passwörter dürfen nicht mit Leerzeichen beginnen oder enden."
 		},
 		"DEMO": {
 			"TITLE": "Automatisch in Demo-Konten einloggen",

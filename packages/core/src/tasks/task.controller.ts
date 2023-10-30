@@ -31,7 +31,12 @@ import { CrudController, PaginationParams } from './../core/crud';
 import { Task } from './task.entity';
 import { TaskService } from './task.service';
 import { TaskCreateCommand, TaskUpdateCommand } from './commands';
-import { CreateTaskDTO, TaskMaxNumberQueryDTO, UpdateTaskDTO } from './dto';
+import {
+	CreateTaskDTO,
+	GetTaskByIdDTO,
+	TaskMaxNumberQueryDTO,
+	UpdateTaskDTO,
+} from './dto';
 
 @ApiTags('Tasks')
 @UseGuards(TenantPermissionGuard, PermissionGuard)
@@ -173,6 +178,24 @@ export class TaskController extends CrudController<Task> {
 		return await this.taskService.findTeamTasks(params);
 	}
 
+	@ApiOperation({ summary: 'Find by id' })
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'Found one record' /*, type: T*/,
+	})
+	@ApiResponse({
+		status: HttpStatus.NOT_FOUND,
+		description: 'Record not found',
+	})
+	@Permissions(PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.ORG_TASK_VIEW)
+	@Get(':id')
+	async findById(
+		@Param('id', UUIDValidationPipe) id: Task['id'],
+		@Query() params: GetTaskByIdDTO
+	): Promise<Task> {
+		return this.taskService.findById(id, params);
+	}
+
 	/**
 	 * GET tasks by employee
 	 *
@@ -235,8 +258,12 @@ export class TaskController extends CrudController<Task> {
 	@Permissions(PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ORG_TASK_ADD)
 	@Post()
 	@UsePipes(new ValidationPipe({ whitelist: true }))
-	async create(@Body() entity: CreateTaskDTO): Promise<ITask> {
-		return await this.commandBus.execute(new TaskCreateCommand(entity));
+	async create(
+		@Body() entity: CreateTaskDTO
+	): Promise<ITask> {
+		return await this.commandBus.execute(
+			new TaskCreateCommand(entity)
+		);
 	}
 
 	@ApiOperation({ summary: 'Update an existing task' })
@@ -261,7 +288,9 @@ export class TaskController extends CrudController<Task> {
 		@Param('id', UUIDValidationPipe) id: ITask['id'],
 		@Body() entity: UpdateTaskDTO
 	): Promise<ITask> {
-		return await this.commandBus.execute(new TaskUpdateCommand(id, entity));
+		return await this.commandBus.execute(
+			new TaskUpdateCommand(id, entity)
+		);
 	}
 
 	@Permissions(PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ORG_TASK_DELETE)

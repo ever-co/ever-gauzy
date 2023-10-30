@@ -25,6 +25,13 @@ sed -i "s#DOCKER_DEFAULT_COUNTRY#$DEFAULT_COUNTRY#g" *.js
 sed -i "s#DOCKER_DEMO#$DEMO#g" *.js
 sed -i "s#DOCKER_WEB_HOST#$WEB_HOST#g" *.js
 sed -i "s#DOCKER_WEB_PORT#$WEB_PORT#g" *.js
+sed -i "s#DOCKER_GAUZY_GITHUB_CLIENT_ID#$GAUZY_GITHUB_CLIENT_ID#g" *.js
+sed -i "s#DOCKER_GAUZY_GITHUB_APP_NAME#$GAUZY_GITHUB_APP_NAME#g" *.js
+sed -i "s#DOCKER_GAUZY_GITHUB_REDIRECT_URL#$GAUZY_GITHUB_REDIRECT_URL#g" *.js
+sed -i "s#DOCKER_GAUZY_GITHUB_APP_ID#$GAUZY_GITHUB_APP_ID#g" *.js
+sed -i "s|DOCKER_GAUZY_GITHUB_POST_INSTALL_URL|$GAUZY_GITHUB_POST_INSTALL_URL|g" *.js
+sed -i "s#DOCKER_JITSU_BROWSER_URL#$JITSU_BROWSER_URL#g" *.js
+sed -i "s#DOCKER_JITSU_BROWSER_WRITE_KEY#$JITSU_BROWSER_WRITE_KEY#g" *.js
 
 # We may not need to use that env vars now in nginx.config, but we may want later.
 # Also we just need to copy nginx.conf to correct place anyway...

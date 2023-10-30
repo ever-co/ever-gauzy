@@ -8,7 +8,7 @@ export const createDefaultApprovalPolicyForOrg = async (
 	defaultData: {
 		orgs: IOrganization[];
 	}
-): Promise<void> => {
+): Promise<ApprovalPolicy[]> => {
 	const promises = [];
 
 	defaultData.orgs.forEach((org) => {
@@ -21,19 +21,20 @@ export const createDefaultApprovalPolicyForOrg = async (
 		promises.push(insertDefaultPolicy(dataSource, defaultApprovalPolicy));
 	});
 
-	await Promise.all(promises);
+	return await Promise.all(promises);
 };
 
 const insertDefaultPolicy = async (
 	dataSource: DataSource,
 	defaultPolicy: ApprovalPolicy
-): Promise<void> => {
+): Promise<ApprovalPolicy> => {
 	await dataSource
 		.createQueryBuilder()
 		.insert()
 		.into(ApprovalPolicy)
 		.values(defaultPolicy)
 		.execute();
+	return defaultPolicy
 };
 
 export const createRandomApprovalPolicyForOrg = async (

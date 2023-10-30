@@ -1,4 +1,4 @@
-<div class="{{ layout === 'CARDS_GRID' ? 'contacts-img' : '' }}">
+<div [ngClass]="layout === ComponentLayoutStyleEnum.CARDS_GRID ? 'contacts-img' : ''">
 	<div *ngIf="value?.imageUrl">
 		<img
 			height="30"
@@ -11,14 +11,25 @@
 	<div *ngIf="value?.name">{{ value?.name }}</div>
 </div>
 <div *ngIf="value?.level">{{ value?.level }}</div>
-<div class="tags {{ layout === 'CARDS_GRID' ? 'tags-right' : '' }} mt-2">
-	<nb-badge
-		*ngFor="let tag of (data | async)?.tags"
-		class="color"
-		position="centered"
-		[style.background]="background(tag?.color)"
-		[style.color]="backgroundContrast(tag.color)"
-		text="{{ tag.name }}"
-	>
-	</nb-badge>
+<div class="tags mt-2" [ngClass]="layout === 'CARDS_GRID' ? 'tags-right': ''">
+	<ng-template [ngIf]="(data | async)?.labels?.length > 0">
+		<nb-badge
+			*ngFor="let tag of (data | async)?.labels"
+			class="color"
+			position="centered"
+			[style.background]="background(tag?.color)"
+			[style.color]="backgroundContrast(tag.color)"
+			[text]="tag.name"
+		></nb-badge>
+	</ng-template>
+	<ng-template [ngIf]="(data | async)?.tags?.length > 0">
+		<nb-badge
+			*ngFor="let tag of (data | async)?.tags"
+			class="color"
+			position="centered"
+			[style.background]="background(tag?.color)"
+			[style.color]="backgroundContrast(tag.color)"
+			[text]="tag.name"
+		></nb-badge>
+	</ng-template>
 </div>

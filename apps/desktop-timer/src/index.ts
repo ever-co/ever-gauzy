@@ -21,7 +21,9 @@ import * as Sentry from '@sentry/electron';
 require('module').globalPaths.push(path.join(__dirname, 'node_modules'));
 require('sqlite3');
 
-app.setName('gauzy-desktop-timer');
+process.env = Object.assign(process.env, environment);
+
+app.setName(process.env.NAME);
 
 console.log('Node Modules Path', path.join(__dirname, 'node_modules'));
 
@@ -88,12 +90,15 @@ const store = new Store();
 const args = process.argv.slice(1);
 const serverGauzy = null;
 const updater = new DesktopUpdater({
-	repository: 'ever-gauzy-desktop-timer',
-	owner: 'ever-co',
+	repository: process.env.REPO_NAME,
+	owner: process.env.REPO_OWNER,
 	typeRelease: 'releases',
 });
 const report = new ErrorReport(
-	new ErrorReportRepository('ever-co', 'ever-gauzy-desktop-timer')
+	new ErrorReportRepository(
+		process.env.REPO_OWNER,
+		process.env.REPO_NAME
+	)
 );
 const eventErrorManager = ErrorEventManager.instance;
 args.some((val) => val === '--serve');
@@ -150,7 +155,7 @@ if (!gotTheLock) {
 TranslateLoader.load(__dirname + '/assets/i18n/');
 /* Setting the app user model id for the app. */
 if (process.platform === 'win32') {
-	app.setAppUserModelId('com.ever.gauzydesktoptimer');
+	app.setAppUserModelId(process.env.APP_ID);
 }
 
 /* Set unlimited listeners */
@@ -175,7 +180,7 @@ log.catchErrors({
 		dialog.show().then((result) => {
 			if (result.response === 1) {
 				submitIssue(
-					'https://github.com/ever-co/ever-gauzy-desktop-timer/issues/new',
+					`https://github.com/${process.env.REPO_OWNER}/${process.env.REPO_NAME}/issues/new`,
 					{
 						title: `Automatic error report for Desktop Timer App ${versions.app}`,
 						body:
@@ -317,7 +322,7 @@ async function startServer(value, restart = false) {
 		settingsWindow,
 		{ ...environment },
 		pathWindow,
-		path.join(__dirname, 'assets', 'icons', 'icon.png'),
+		path.join(__dirname, 'assets', 'icons', 'tray', 'icon.png'),
 		gauzyWindow,
 		alwaysOn
 	);
@@ -344,7 +349,7 @@ async function startServer(value, restart = false) {
 			settingsWindow,
 			{ ...environment },
 			pathWindow,
-			path.join(__dirname, 'assets', 'icons', 'icon.png'),
+			path.join(__dirname, 'assets', 'icons', 'tray', 'icon.png'),
 			gauzyWindow,
 			alwaysOn
 		);
@@ -392,7 +397,7 @@ app.on('ready', async () => {
 	if (!settings) {
 		launchAtStartup(true, false);
 	}
-	if (provider.dialect === 'sqlite') {
+	if (['sqlite', 'better-sqlite'].includes(provider.dialect)) {
 		try {
 			const res = await knex.raw(`pragma journal_mode = WAL;`);
 			console.log(res);
@@ -600,46 +605,13 @@ ipcMain.on('restart_and_update', () => {
 
 ipcMain.on('check_database_connection', async (event, arg) => {
 	try {
-		const provider = arg.db;
-		let databaseOptions;
-		if (provider === 'postgres' || provider === 'mysql') {
-			databaseOptions = {
-				client: provider === 'postgres' ? 'pg' : 'mysql',
-				connection: {
-					host: arg[provider].dbHost,
-					user: arg[provider].dbUsername,
-					password: arg[provider].dbPassword,
-					database: arg[provider].dbName,
-					port: arg[provider].dbPort,
-				},
-			};
-		} else {
-			databaseOptions = {
-				client: 'sqlite3',
-				connection: {
-					filename: sqlite3filename,
-				},
-			};
-		}
-		const dbConn = require('knex')(databaseOptions);
-		await dbConn.raw('select 1+1 as result');
+		const driver = await provider.check(arg);
 		event.sender.send('database_status', {
 			status: true,
-			message:
-				provider === 'postgres'
-					? TranslateService.instant(
-							'TIMER_TRACKER.DIALOG.CONNECTION_DRIVER',
-							{ driver: 'PostgresSQL' }
-					  )
-					: provider === 'mysql'
-					? TranslateService.instant(
-							'TIMER_TRACKER.DIALOG.CONNECTION_DRIVER',
-							{ driver: 'MySQL' }
-					  )
-					: TranslateService.instant(
-							'TIMER_TRACKER.DIALOG.CONNECTION_DRIVER',
-							{ driver: 'SQLite' }
-					  ),
+			message: TranslateService.instant(
+				'TIMER_TRACKER.DIALOG.CONNECTION_DRIVER',
+				{ driver }
+			),
 		});
 	} catch (error) {
 		event.sender.send('database_status', {
@@ -697,7 +669,7 @@ app.on('before-quit', async (e) => {
 		e.preventDefault();
 		const exitConfirmationDialog = new DialogStopTimerExitConfirmation(
 			new DesktopDialog(
-				'Gauzy Desktop Timer',
+				process.env.DESCRIPTION,
 				TranslateService.instant('TIMER_TRACKER.DIALOG.EXIT'),
 				timeTrackerWindow
 			)

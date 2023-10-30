@@ -252,24 +252,22 @@ export class AppComponent implements OnInit, AfterViewInit {
 		);
 
 		this._electronService.ipcRenderer.on('server_ping', (event, arg) => {
-			const pingHost = setInterval(() => {
-				this._ngZone.run(() => {
-					this._appService
-						.pingServer(arg)
-						.then((res) => {
-							console.log('server found');
+			this._ngZone.run(() => {
+				const pingHost = setInterval(async() => {
+					try {
+						await this._appService.pingServer(arg);
+						console.log('Server Found');
+						event.sender.send('server_is_ready');
+						clearInterval(pingHost);
+					} catch (error) {
+						console.log('ping status result', error.status);
+						if (this._store.userId) {
 							event.sender.send('server_is_ready');
 							clearInterval(pingHost);
-						})
-						.catch((e) => {
-							console.log('error', e.status);
-							if (this._store.userId) {
-								event.sender.send('server_is_ready');
-								clearInterval(pingHost);
-							}
-						});
-				}, 1000);
-			});
+						}
+					}
+				}, 3000);
+			})
 		});
 
 		this._electronService.ipcRenderer.on(
@@ -287,23 +285,21 @@ export class AppComponent implements OnInit, AfterViewInit {
 			'server_ping_restart',
 			(event, arg) => {
 				this._ngZone.run(() => {
-					const pingHost = setInterval(() => {
-						this._appService
-							.pingServer(arg)
-							.then((res) => {
-								console.log('server found');
+					const pingHost = setInterval(async() => {
+						try {
+							await this._appService.pingServer(arg);
+							console.log('Server Found');
+							event.sender.send('server_already_start');
+							clearInterval(pingHost);
+						} catch (error) {
+							console.log('ping status result', error.status);
+							if (this._store.userId) {
 								event.sender.send('server_already_start');
 								clearInterval(pingHost);
-							})
-							.catch((e) => {
-								console.log('error', e.status);
-								if (this._store.userId) {
-									event.sender.send('server_already_start');
-									clearInterval(pingHost);
-								}
-							});
+							}
+						}
 					}, 3000);
-				});
+				})
 			}
 		);
 	}

@@ -65,7 +65,7 @@ export class SeedDafaultGlobalIssueType1680622389221 implements MigrationInterfa
 					isSystem
 				];
 
-				if (queryRunner.connection.options.type === 'sqlite') {
+				if (['sqlite', 'better-sqlite3'].includes(queryRunner.connection.options.type)) {
 					const imageAssetId = uuidv4();
 					imageAsset.push(imageAssetId);
 
@@ -74,7 +74,7 @@ export class SeedDafaultGlobalIssueType1680622389221 implements MigrationInterfa
 							"name", "url", "storageProvider", "height", "width", "size", "id"
 						)
 						VALUES (
-							$1, $2, $3, $4, $5, $6, $7
+							?, ?, ?, ?, ?, ?, ?
 						);
 					`;
 					await queryRunner.connection.manager.query(insertQuery, imageAsset);
@@ -84,7 +84,7 @@ export class SeedDafaultGlobalIssueType1680622389221 implements MigrationInterfa
 						INSERT INTO "issue_type" (
 							"name", "value", "description", "icon", "color", "isSystem", "id", "imageId"
 						) VALUES (
-							$1, $2, $3, $4, $5, $6, $7, $8);
+							?, ?, ?, ?, ?, ?, ?, ?);
 						`, payload);
 				} else {
 					const insertQuery = `

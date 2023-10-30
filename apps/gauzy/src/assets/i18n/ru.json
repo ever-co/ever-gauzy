@@ -2019,6 +2019,7 @@
 			"ORG_CONTACT_VIEW": "Контакты",
 			"ORG_TEAM_ADD": "Добавить команды",
 			"ORG_TEAM_VIEW": "Посмотреть команды",
+			"ORG_TEAM_EDIT_ACTIVE_TASK": "Редактировать активные задачи",
 			"ORG_TEAM_EDIT": "Редактировать команды",
 			"ORG_TEAM_DELETE": "Удалить команды",
 			"ORG_TEAM_JOIN_REQUEST_VIEW": "Просмотр запросов на присоединение к командам",
@@ -2041,7 +2042,8 @@
 			"ALLOW_MODIFY_TIME": "Разрешить изменять время",
 			"ALLOW_MANUAL_TIME": "Разрешить ручное время",
 			"DELETE_SCREENSHOTS": "Разрешить удаление скриншота",
-			"ORG_TASK_SETTING": "Параметры задачи"
+			"ORG_TASK_SETTING": "Параметры задачи",
+			"ORG_MEMBER_LAST_LOG_VIEW": "Посмотреть последний журнал"
 		},
 		"BILLING": "Биллинг",
 		"BUDGET": "Бюджет",
@@ -2774,7 +2776,7 @@
 		"INVOICES_PER_PAGE": "Счета на странице",
 		"ESTIMATES_PER_PAGE": "Оценки на странице",
 		"APPLY_DISCOUNT_AFTER_TAX": "Применить скидку после налога",
-		"SELECT_INVOICE_TO_VIEW_HISTORY": "Выберите счет-фактуру для просмотра истории",
+		"SELECT_INVOICE_TO_VIEW_HISTORY": "Выберите счет, чтобы просмотреть его историю.",
 		"INVOICE_SENT_TO": "Счёт отправлен на '{{ name }}'",
 		"ESTIMATE_SENT_TO": "Оценить отправленное на '{{ name }}'",
 		"INVOICE": "Счет",
@@ -4233,6 +4235,7 @@
 	"SETTINGS": {
 		"EMAIL_HISTORY": {
 			"EMAIL_ARCHIVED": "Почта архивирована",
+			"RESEND": "Переслать",
 			"ARCHIVE": "Архивировать",
 			"HEADER": "История писем",
 			"FROM": "От:",
@@ -4249,7 +4252,7 @@
 			}
 		}
 	},
-	"GAUZY_MAINTENANCE": "Обслуживание Gauzy @",
+	"GAUZY_MAINTENANCE": "{{ companySite }} @ Обслуживание",
 	"LEGAL": {
 		"PRIVACY_POLICY": "Политика конфиденциальности",
 		"TERMS_AND_CONDITIONS": "Условия использования"
@@ -4281,7 +4284,8 @@
 			"EMAIL_REQUIRED": "Требуется адрес электронной почты!",
 			"EMAIL_REAL_REQUIRED": "Email должен быть реальным!",
 			"PASSWORD_REQUIRED": "Требуется пароль!",
-			"PASSWORD_SHOULD_CONTAIN": "Пароль должен содержать от {{ minLength }} до {{ maxLength }} символов!"
+			"PASSWORD_SHOULD_CONTAIN": "Пароль должен содержать от {{ minLength }} до {{ maxLength }} символов!",
+			"PASSWORD_NO_SPACE_EDGES": "Пароли не должны начинаться или заканчиваться пробелами."
 		},
 		"DEMO": {
 			"TITLE": "Автоматически входить в демо-аккаунты",

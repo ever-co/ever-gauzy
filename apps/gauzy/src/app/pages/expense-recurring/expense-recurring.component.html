@@ -69,7 +69,7 @@
 			<ng-template [ngIf]="!loading && expenses?.length == 0">
 				<div class="no-data">
 					<ngx-no-data-message
-						[message]="'ORGANIZATIONS_PAGE.EXPENSE_NO_DATA_MESSAGE'"
+						[message]="'ORGANIZATIONS_PAGE.EXPENSE_NO_DATA_MESSAGE' | translate"
 					></ngx-no-data-message>
 				</div>
 			</ng-template>

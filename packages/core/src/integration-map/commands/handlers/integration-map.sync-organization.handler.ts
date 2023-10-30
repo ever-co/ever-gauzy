@@ -25,26 +25,24 @@ export class IntegrationMapSyncOrganizationHandler
 		command: IntegrationMapSyncOrganizationCommand
 	) {
 		const { input } = command;
-		const { organizationInput, integrationId, sourceId, organizationId } = input;
+		const { integrationId, sourceId, organizationId, entity } = input;
 		const tenantId = RequestContext.currentTenantId();
 
 		try {
-			const organizationMap = await this._integrationMapService.findOneByOptions({
-				where: {
-					sourceId,
-					entity: IntegrationEntity.ORGANIZATION,
-					tenantId,
-					organizationId,
-					integrationId
-				}
+			const organizationMap = await this._integrationMapService.findOneByWhereOptions({
+				entity: IntegrationEntity.ORGANIZATION,
+				sourceId,
+				integrationId,
+				organizationId,
+				tenantId
 			});
 			await this._commandBus.execute(
-				new OrganizationUpdateCommand(organizationMap.gauzyId, organizationInput)
+				new OrganizationUpdateCommand(organizationMap.gauzyId, entity)
 			);
 			return organizationMap;
 		} catch (error) {
 			const organization = await this._commandBus.execute(
-				new OrganizationCreateCommand(organizationInput)
+				new OrganizationCreateCommand(entity)
 			);
 			return await this._commandBus.execute(
 				new IntegrationMapSyncEntityCommand({

@@ -57,12 +57,19 @@ export class Activity extends TenantOrganizationBaseEntity implements IActivity 
 	@Column({ nullable: true })
 	description?: string;
 
-	@ApiPropertyOptional({ type: () => options.type === 'sqlite' ? 'text' : 'json' })
+	@ApiPropertyOptional({
+		type: () =>
+			['sqlite', 'better-sqlite3'].includes(options.type)
+				? 'text'
+				: 'json',
+	})
 	@IsOptional()
 	@IsString()
 	@Column({
 		nullable: true,
-		type: options.type === 'sqlite' ? 'text' : 'json'
+		type: ['sqlite', 'better-sqlite3'].includes(options.type)
+			? 'text'
+			: 'json',
 	})
 	metaData?: string | IURLMetaData;
 
@@ -94,7 +101,7 @@ export class Activity extends TenantOrganizationBaseEntity implements IActivity 
 	@ApiPropertyOptional({
 		type: () => String,
 		enum: TimeLogSourceEnum,
-		default: TimeLogSourceEnum.WEB_TIMER
+		default: TimeLogSourceEnum.WEB_TIMER,
 	})
 	@IsOptional()
 	@IsEnum(TimeLogSourceEnum)

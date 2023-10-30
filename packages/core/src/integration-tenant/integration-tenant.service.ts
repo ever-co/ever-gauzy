@@ -6,6 +6,7 @@ import {
 	IIntegrationEntitySetting,
 	IIntegrationSetting,
 	IIntegrationTenant,
+	IIntegrationTenantCreateInput,
 	IIntegrationTenantFindInput,
 	IntegrationEnum
 } from '@gauzy/contracts';
@@ -23,12 +24,12 @@ export class IntegrationTenantService extends TenantAwareCrudService<Integration
 	}
 
 	/**
-	 *
-	 * @param input
-	 * @returns
+	 * Create a new integration tenant with the provided input.
+	 * @param input The data for creating the integration tenant.
+	 * @returns A promise that resolves to the created integration tenant.
 	 */
 	async create(
-		input: IIntegrationTenant
+		input: IIntegrationTenantCreateInput
 	): Promise<IIntegrationTenant> {
 		try {
 			const tenantId = RequestContext.currentTenantId() || input.tenantId;
@@ -60,26 +61,37 @@ export class IntegrationTenantService extends TenantAwareCrudService<Integration
 	}
 
 	/**
-	 * Check integration remember state.
-	 *
-	 * @param options - The options for checking integration remember state.
-	 * @returns The integration tenant if found, or `false` if not found or an error occurred.
+	 * Retrieve an integration tenant by specified options.
+	 * @param input - The input options for finding the integration tenant.
+	 * @returns The integration tenant if found, or `false` if not found or an error occurs.
 	 */
-	public async checkIntegrationRememberState(input: IIntegrationTenantFindInput): Promise<IIntegrationTenant | boolean> {
+	public async getIntegrationByOptions(
+		input: IIntegrationTenantFindInput
+	): Promise<IIntegrationTenant | boolean> {
 		try {
 			const tenantId = RequestContext.currentTenantId() || input.tenantId;
 			const { organizationId, name } = input;
 
-			return await this.findOneByOptions({
+			const integrationTenant = await this.findOneByOptions({
 				where: {
 					tenantId,
 					organizationId,
-					name
+					name,
+					isActive: true,
+					isArchived: false,
+					integration: {
+						isActive: true,
+						isArchived: false
+					}
 				},
 				order: {
 					updatedAt: 'DESC'
+				},
+				relations: {
+					integration: true
 				}
 			});
+			return integrationTenant || false;
 		} catch (error) {
 			return false;
 		}

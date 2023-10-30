@@ -47,7 +47,7 @@ export class GitHubIntegrationController {
             const installation_id = request['integration']['settings']['installation_id'];
             if (installation_id) {
                 // Get installation metadata
-                const metadata = await this._octokitService.getGithubInstallationMetadata(installation_id);
+                const metadata = await this._octokitService.getInstallationMetadata(installation_id);
                 return metadata.data;
             }
 
@@ -90,7 +90,7 @@ export class GitHubIntegrationController {
             const installation_id = request['integration']['settings']['installation_id'];
             if (installation_id) {
                 // Get installation repositories
-                const repositories = await this._octokitService.getGithubRepositories(installation_id);
+                const repositories = await this._octokitService.getRepositories(installation_id);
                 return repositories.data;
             }
 
@@ -137,7 +137,7 @@ export class GitHubIntegrationController {
             const installation_id = request['integration']['settings']['installation_id'];
             if (installation_id) {
                 // Get installation repositories
-                const issues = await this._octokitService.getGithubRepositoryIssues(installation_id, { owner, repo });
+                const issues = await this._octokitService.getRepositoryIssues(installation_id, { owner, repo });
                 return issues.data;
             }
 

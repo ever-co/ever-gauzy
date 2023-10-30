@@ -1,8 +1,9 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, Inject, OnDestroy, OnInit } from '@angular/core';
 import { Location } from '@angular/common';
 import { Store } from '../@core/services/store.service';
 import { ServerConnectionService } from '../@core/services/server-connection.service';
-import { environment } from '../../environments/environment';
+import { GAUZY_ENV } from '../@core';
+import { Environment } from '../../environments/model';
 
 @Component({
 	styleUrls: ['./server-down.page.scss'],
@@ -15,7 +16,9 @@ export class ServerDownPage implements OnInit, OnDestroy {
 	constructor(
 		private store: Store,
 		private location: Location,
-		private serverConnectionService: ServerConnectionService
+		private serverConnectionService: ServerConnectionService,
+		@Inject(GAUZY_ENV)
+		private environment: Environment
 	) {
 		this.noInternetLogo = environment['NO_INTERNET_LOGO'];
 	}
@@ -27,7 +30,7 @@ export class ServerDownPage implements OnInit, OnDestroy {
 	private async checkConnection() {
 		this.interval = setInterval(async () => {
 			await this.serverConnectionService.checkServerConnection(
-				environment.API_BASE_URL
+				this.environment.API_BASE_URL
 			);
 
 			if (Number(this.store.serverConnection) === 200) {
@@ -35,6 +38,10 @@ export class ServerDownPage implements OnInit, OnDestroy {
 				this.location.back();
 			}
 		}, 5000);
+	}
+
+	public get companySite(): string {
+		return this.environment.COMPANY_SITE;
 	}
 
 	ngOnDestroy(): void {}

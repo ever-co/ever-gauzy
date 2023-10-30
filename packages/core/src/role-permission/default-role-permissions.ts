@@ -85,10 +85,12 @@ export const DEFAULT_ROLE_PERMISSIONS = [
 			PermissionsEnum.ORG_PROJECT_DELETE,
 			PermissionsEnum.ORG_CONTACT_EDIT,
 			PermissionsEnum.ORG_CONTACT_VIEW,
+			/** Organization Team */
 			PermissionsEnum.ORG_TEAM_ADD,
 			PermissionsEnum.ORG_TEAM_VIEW,
 			PermissionsEnum.ORG_TEAM_EDIT,
 			PermissionsEnum.ORG_TEAM_DELETE,
+			PermissionsEnum.ORG_TEAM_EDIT_ACTIVE_TASK,
 			PermissionsEnum.ORG_TEAM_REMOVE_ACCOUNT_AS_MEMBER,
 			PermissionsEnum.ORG_TEAM_JOIN_REQUEST_VIEW,
 			PermissionsEnum.ORG_TEAM_JOIN_REQUEST_EDIT,
@@ -132,8 +134,9 @@ export const DEFAULT_ROLE_PERMISSIONS = [
 			PermissionsEnum.ALLOW_DELETE_TIME,
 			PermissionsEnum.ALLOW_MODIFY_TIME,
 			PermissionsEnum.ALLOW_MANUAL_TIME,
-			PermissionsEnum.DELETE_SCREENSHOTS
-		]
+			PermissionsEnum.DELETE_SCREENSHOTS,
+			PermissionsEnum.ORG_MEMBER_LAST_LOG_VIEW,
+		],
 	},
 	{
 		role: RolesEnum.ADMIN,
@@ -218,9 +221,11 @@ export const DEFAULT_ROLE_PERMISSIONS = [
 			PermissionsEnum.ORG_PROJECT_DELETE,
 			PermissionsEnum.ORG_CONTACT_EDIT,
 			PermissionsEnum.ORG_CONTACT_VIEW,
+			/** Organization Team */
 			PermissionsEnum.ORG_TEAM_ADD,
 			PermissionsEnum.ORG_TEAM_VIEW,
 			PermissionsEnum.ORG_TEAM_EDIT,
+			PermissionsEnum.ORG_TEAM_EDIT_ACTIVE_TASK,
 			PermissionsEnum.ORG_TEAM_DELETE,
 			PermissionsEnum.ORG_TEAM_REMOVE_ACCOUNT_AS_MEMBER,
 			PermissionsEnum.ORG_TEAM_JOIN_REQUEST_VIEW,
@@ -265,8 +270,9 @@ export const DEFAULT_ROLE_PERMISSIONS = [
 			PermissionsEnum.ALLOW_DELETE_TIME,
 			PermissionsEnum.ALLOW_MODIFY_TIME,
 			PermissionsEnum.ALLOW_MANUAL_TIME,
-			PermissionsEnum.DELETE_SCREENSHOTS
-		]
+			PermissionsEnum.DELETE_SCREENSHOTS,
+			PermissionsEnum.ORG_MEMBER_LAST_LOG_VIEW,
+		],
 	},
 	{
 		role: RolesEnum.DATA_ENTRY,
@@ -293,8 +299,8 @@ export const DEFAULT_ROLE_PERMISSIONS = [
 			PermissionsEnum.ORG_CANDIDATES_INTERVIEWERS_VIEW,
 			PermissionsEnum.ORG_INVENTORY_PRODUCT_EDIT,
 			PermissionsEnum.ORG_HELP_CENTER_EDIT,
-			PermissionsEnum.PROFILE_EDIT
-		]
+			PermissionsEnum.PROFILE_EDIT,
+		],
 	},
 	{
 		role: RolesEnum.EMPLOYEE,
@@ -329,10 +335,12 @@ export const DEFAULT_ROLE_PERMISSIONS = [
 			PermissionsEnum.ORG_CONTACT_VIEW,
 			PermissionsEnum.ORG_PROJECT_ADD,
 			PermissionsEnum.ORG_PROJECT_VIEW,
+			/** Organization Team */
 			PermissionsEnum.ORG_TEAM_ADD,
 			PermissionsEnum.ORG_TEAM_VIEW,
 			PermissionsEnum.ORG_TEAM_EDIT,
 			PermissionsEnum.ORG_TEAM_DELETE,
+			PermissionsEnum.ORG_TEAM_EDIT_ACTIVE_TASK,
 			PermissionsEnum.ORG_TEAM_REMOVE_ACCOUNT_AS_MEMBER,
 			PermissionsEnum.ORG_TEAM_JOIN_REQUEST_VIEW,
 			PermissionsEnum.ORG_TAGS_ADD,
@@ -360,27 +368,28 @@ export const DEFAULT_ROLE_PERMISSIONS = [
 			PermissionsEnum.ALLOW_DELETE_TIME,
 			PermissionsEnum.ALLOW_MODIFY_TIME,
 			PermissionsEnum.ALLOW_MANUAL_TIME,
-			PermissionsEnum.DELETE_SCREENSHOTS
-		]
+			PermissionsEnum.DELETE_SCREENSHOTS,
+			PermissionsEnum.ORG_MEMBER_LAST_LOG_VIEW,
+		],
 	},
 	{
 		role: RolesEnum.INTERVIEWER,
 		defaultEnabledPermissions: [
 			PermissionsEnum.ORG_CANDIDATES_INTERVIEW_EDIT,
 			PermissionsEnum.ORG_CANDIDATES_INTERVIEW_VIEW,
-			PermissionsEnum.ORG_CANDIDATES_DOCUMENTS_VIEW
-		]
+			PermissionsEnum.ORG_CANDIDATES_DOCUMENTS_VIEW,
+		],
 	},
 	{
 		role: RolesEnum.CANDIDATE,
-		defaultEnabledPermissions: []
+		defaultEnabledPermissions: [],
 	},
 	{
 		role: RolesEnum.MANAGER,
-		defaultEnabledPermissions: []
+		defaultEnabledPermissions: [],
 	},
 	{
 		role: RolesEnum.VIEWER,
-		defaultEnabledPermissions: []
-	}
+		defaultEnabledPermissions: [],
+	},
 ];

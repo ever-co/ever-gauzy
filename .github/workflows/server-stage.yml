@@ -2,8 +2,8 @@ name: Server Build Stage
 
 on:
     workflow_run:
-        workflows: ['Release Stage']
-        branches: [stage, temp]
+        workflows: ['Release Apps Stage']
+        branches: [stage-apps, temp]
         types:
             - completed
 

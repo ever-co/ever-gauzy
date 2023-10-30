@@ -154,7 +154,7 @@ import {
 	createDefaultEmployeeInviteSent,
 	createRandomEmployeeInviteSent,
 } from '../../invite/invite.seed';
-import { createRandomRequestApproval } from '../../request-approval/request-approval.seed';
+import { createDefaultRequestApprovalEmployee, createRandomRequestApproval } from '../../request-approval/request-approval.seed';
 import {
 	createDefaultEmployeeTimeOff,
 	createRandomEmployeeTimeOff,
@@ -1131,11 +1131,24 @@ export class SeedDataService {
 			updateDefaultGoalProgress(this.dataSource)
 		);
 
-		await this.tryExecute(
+		const approvalPolicies = await this.tryExecute(
 			'Default Approval Policies',
 			createDefaultApprovalPolicyForOrg(this.dataSource, {
 				orgs: this.organizations,
 			})
+		);
+
+
+		await this.tryExecute(
+			'Default Request Approval Employee',
+			createDefaultRequestApprovalEmployee(
+				this.dataSource,
+				{
+					employees: this.defaultEmployees,
+					orgs: this.organizations,
+					approvalPolicies
+				}
+			)
 		);
 
 		await this.tryExecute(

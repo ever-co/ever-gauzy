@@ -5,7 +5,7 @@ export class AlterTenantTable1659696180759 implements MigrationInterface {
     name = 'AlterTenantTable1659696180759';
 
     public async up(queryRunner: QueryRunner): Promise<any> {
-        if (queryRunner.connection.options.type === 'sqlite') {
+        if (['sqlite', 'better-sqlite3'].includes(queryRunner.connection.options.type)) {
             await this.sqliteUpQueryRunner(queryRunner);
         } else {
             await this.postgresUpQueryRunner(queryRunner);
@@ -13,7 +13,7 @@ export class AlterTenantTable1659696180759 implements MigrationInterface {
     }
 
     public async down(queryRunner: QueryRunner): Promise<any> {
-        if (queryRunner.connection.options.type === 'sqlite') {
+        if (['sqlite', 'better-sqlite3'].includes(queryRunner.connection.options.type)) {
             await this.sqliteDownQueryRunner(queryRunner);
         } else {
             await this.postgresDownQueryRunner(queryRunner);

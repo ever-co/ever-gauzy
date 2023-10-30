@@ -2056,6 +2056,7 @@
 			"ORG_CONTACT_VIEW": "查看联系人",
 			"ORG_TEAM_ADD": "添加团队",
 			"ORG_TEAM_VIEW": "查看团队",
+			"ORG_TEAM_EDIT_ACTIVE_TASK": "编辑活动任务",
 			"ORG_TEAM_EDIT": "编辑团队",
 			"ORG_TEAM_DELETE": "删除团队",
 			"ORG_TEAM_JOIN_REQUEST_VIEW": "查看团队加入请求",
@@ -2082,7 +2083,8 @@
 			"ORG_TASK_VIEW": "查看任务",
 			"ORG_TASK_EDIT": "编辑任务",
 			"ORG_TASK_DELETE": "删除任务",
-			"ORG_TASK_SETTING": "任务设置"
+			"ORG_TASK_SETTING": "任务设置",
+			"ORG_MEMBER_LAST_LOG_VIEW": "查看最后日志"
 		},
 		"BILLING": "计费",
 		"BUDGET": "预算",
@@ -4308,6 +4310,7 @@
 	"SETTINGS": {
 		"EMAIL_HISTORY": {
 			"EMAIL_ARCHIVED": "电子邮件已存档",
+			"RESEND": "重新发送",
 			"ARCHIVE": "存档",
 			"HEADER": "电子邮件历史",
 			"FROM": "从：",
@@ -4324,7 +4327,7 @@
 			}
 		}
 	},
-	"GAUZY_MAINTENANCE": "Gauzy维修",
+	"GAUZY_MAINTENANCE": "{{ companySite }} 正在维修",
 	"LEGAL": {
 		"PRIVACY_POLICY": "隐私政策",
 		"TERMS_AND_CONDITIONS": "条款与条件"
@@ -4356,7 +4359,8 @@
 			"EMAIL_REQUIRED": "电子邮件是必需的！",
 			"EMAIL_REAL_REQUIRED": "电子邮件应该是真实的！",
 			"PASSWORD_REQUIRED": "密码是必需的！",
-			"PASSWORD_SHOULD_CONTAIN": "密码应包含{{ minLength }}到{{ maxLength }}个字符！"
+			"PASSWORD_SHOULD_CONTAIN": "密码应包含{{ minLength }}到{{ maxLength }}个字符！",
+			"PASSWORD_NO_SPACE_EDGES": "密码不得以空格开头或结尾。"
 		},
 		"DEMO": {
 			"TITLE": "自动登录到演示账户。",
@@ -4412,6 +4416,6 @@
 	},
 	"NO_IMAGE": {
 		"ADD_DROP": "添加或删除图像",
-		"AVAILABLE": "图片无法提供"
+		"AVAILABLE": "图像不可用"
 	}
 }
