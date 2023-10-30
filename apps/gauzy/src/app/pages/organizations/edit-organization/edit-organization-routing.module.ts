@@ -10,8 +10,7 @@ import { EditOrganizationComponent } from './edit-organization.component';
 import { EmployeeCountResolver } from '../../../@core/resolvers';
 import { EditOrganizationTaskSettingResolver } from './edit-organization-task-setting.resolver';
 
-export function redirectTo()
-{
+export function redirectTo() {
     return '/pages/dashboard';
 }
 
@@ -42,7 +41,7 @@ const routes: Routes = [
                 path: 'main',
                 component: EditOrganizationMainComponent,
                 data: {
-                    relations: ['tags'],
+                    relations: ['tags', 'image'],
                     selectors: {
                         project: false,
                         employee: false,
@@ -54,7 +53,7 @@ const routes: Routes = [
                 path: 'location',
                 component: EditOrganizationLocationComponent,
                 data: {
-                    relations: ['contact'],
+                    relations: ['contact', 'image'],
                     selectors: {
                         project: false,
                         employee: false,
@@ -66,7 +65,7 @@ const routes: Routes = [
                 path: 'settings',
                 component: EditOrganizationOtherSettingsComponent,
                 data: {
-                    relations: ['accountingTemplates'],
+                    relations: ['accountingTemplates', 'image'],
                     selectors: {
                         project: false,
                         employee: false,

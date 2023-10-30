@@ -149,7 +149,8 @@ export class EditProfileFormComponent
 			const { id: userId } = this.selectedUser || this.user;
 			const user = await this.userService.getUserById(userId, [
 				'tags',
-				'role'
+				'role',
+				'image'
 			]);
 
 			this._patchForm({ ...user });

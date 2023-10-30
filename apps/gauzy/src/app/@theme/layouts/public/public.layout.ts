@@ -27,7 +27,7 @@ export class PublicLayoutComponent implements OnInit, AfterViewInit {
 		private readonly store: Store,
 		private readonly usersService: UsersService,
 		private readonly themeService: NbThemeService
-	) {}
+	) { }
 	@ViewChild(NbLayoutComponent) layout: NbLayoutComponent;
 
 	user: any;
@@ -61,6 +61,7 @@ export class PublicLayoutComponent implements OnInit, AfterViewInit {
 		if (!id) return;
 		this.user = await this.usersService.getMe([
 			'employee',
+			'image',
 			'role',
 			'role.rolePermissions',
 			'tenant'

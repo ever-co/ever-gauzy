@@ -48,8 +48,7 @@ import {
 })
 export class OrganizationsComponent
 	extends PaginationFilterBaseComponent
-	implements AfterViewInit, OnInit, OnDestroy
-{
+	implements AfterViewInit, OnInit, OnDestroy {
 	settingsSmartTable: object;
 	selectedOrganization: IOrganization;
 	smartTableSource = new LocalDataSource();
@@ -305,7 +304,7 @@ export class OrganizationsComponent
 	private async _loadSmartTable() {
 		try {
 			const { items } = await this.userOrganizationService.getAll(
-				['organization', 'organization.tags', 'organization.employees'],
+				['organization', 'organization.tags', 'organization.employees', 'organization.image'],
 				{ userId: this.store.userId, tenantId: this.user.tenantId }
 			);
 
@@ -380,5 +379,5 @@ export class OrganizationsComponent
 		}
 	}
 
-	ngOnDestroy() {}
+	ngOnDestroy() { }
 }

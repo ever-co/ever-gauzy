@@ -16,7 +16,7 @@ export class AppInitService {
 		private readonly router: Router,
 		private readonly store: Store,
 		private readonly ngxPermissionsService: NgxPermissionsService
-	) {}
+	) { }
 
 	async init() {
 		try {
@@ -24,6 +24,7 @@ export class AppInitService {
 			if (id) {
 				this.user = await this.usersService.getMe([
 					'employee',
+					'image',
 					'role',
 					'role.rolePermissions',
 					'tenant',

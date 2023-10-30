@@ -37,8 +37,7 @@ export class OnboardingCompleteComponent
 		const id = this.store.userId;
 		if (!id) return;
 
-		this.usersService
-			.getMe(['role', 'role.rolePermissions', 'tenant'])
+		this.usersService.getMe(['role', 'image', 'role.rolePermissions', 'tenant'])
 			.then((user: IUser) => {
 				//only enabled permissions assign to logged in user
 				const permissions = user.role.rolePermissions

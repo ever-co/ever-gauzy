@@ -951,6 +951,7 @@ export class PagesComponent extends TranslationBaseComponent
 		this.user = await this.usersService.getMe([
 			'employee',
 			'employee.contact',
+			'image',
 			'role',
 			'role.rolePermissions',
 			'tenant',

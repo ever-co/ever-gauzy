@@ -166,6 +166,7 @@ export class OrganizationComponent extends TranslationBaseComponent
 		if (!!this.organization.show_employees_count) {
 			this.employees$ = this.employeesService.getAllPublic({ organizationId }, [
 				'user',
+				'user.image',
 				'organizationPosition',
 				'skills'
 			]).pipe(
