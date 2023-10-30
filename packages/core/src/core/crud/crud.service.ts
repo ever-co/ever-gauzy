@@ -91,7 +91,6 @@ export abstract class CrudService<T extends BaseEntity>
 	 */
 	public async paginate(options?: FindManyOptions<T>): Promise<IPagination<T>> {
 		try {
-			console.time('Paginatation Query');
 			const [items, total] = await this.repository.findAndCount({
 				skip: options && options.skip ? (options.take * (options.skip - 1)) : 0,
 				take: options && options.take ? (options.take) : 10,
@@ -117,7 +116,6 @@ export abstract class CrudService<T extends BaseEntity>
 					} : {}
 				),
 			});
-			console.timeEnd('Paginatation Query');
 			return { items, total };
 		} catch (error) {
 			console.log(error);
