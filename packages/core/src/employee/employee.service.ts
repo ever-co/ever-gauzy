@@ -259,7 +259,6 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 							})
 						);
 					}
-
 					if ('allowScreenshotCapture' in where) {
 						qb.andWhere(
 							new Brackets((web: WhereExpressionBuilder) => {
