@@ -38,11 +38,7 @@ export class DesktopIconGenerator
 					reject(error);
 				} else {
 					DesktopEnvironmentManager.environment.GAUZY_DESKTOP_LOGO_512X512 =
-						path.join(
-							'assets',
-							'icons',
-							'desktop_logo_512x512.png'
-						);
+						'./assets/icons/desktop_logo_512x512.png';
 					console.log(
 						'✔ desktop logo 512x512 icons generated successfully.'
 					);
