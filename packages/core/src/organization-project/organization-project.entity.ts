@@ -181,9 +181,14 @@ export class OrganizationProject extends TenantOrganizationBaseEntity implements
 	 * Organization Contact
 	 */
 	@ManyToOne(() => OrganizationContact, (it) => it.projects, {
+		/** Indicates if relation column value can be nullable or not. */
 		nullable: true,
+
+		/** Database cascade action on update. */
 		onUpdate: 'CASCADE',
-		onDelete: 'SET NULL',
+
+		/** Database cascade action on delete. */
+		onDelete: 'SET NULL'
 	})
 	@JoinColumn()
 	organizationContact?: IOrganizationContact;
@@ -201,7 +206,7 @@ export class OrganizationProject extends TenantOrganizationBaseEntity implements
 		onDelete: 'SET NULL',
 
 		/** Eager relations are always loaded automatically when relation's owner entity is loaded using find* methods. */
-		eager: true,
+		eager: true
 	})
 	@JoinColumn()
 	image?: IImageAsset;

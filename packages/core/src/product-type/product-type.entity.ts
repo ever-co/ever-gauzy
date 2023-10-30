@@ -15,10 +15,10 @@ export class ProductType extends TranslatableBase {
 	icon: string;
 
 	/*
-    |--------------------------------------------------------------------------
-    | @OneToMany
-    |--------------------------------------------------------------------------
-    */
+	|--------------------------------------------------------------------------
+	| @OneToMany
+	|--------------------------------------------------------------------------
+	*/
 
 	/**
 	 * Product
@@ -32,7 +32,10 @@ export class ProductType extends TranslatableBase {
 	 */
 	@ApiProperty({ type: () => ProductTypeTranslation, isArray: true })
 	@OneToMany(() => ProductTypeTranslation, (productTypeTranslation) => productTypeTranslation.reference, {
+		/** Eager relations are always loaded automatically when relation's owner entity is loaded using find* methods. */
 		eager: true,
+
+		/** Database cascade actions. */
 		cascade: true
 	})
 	translations: ProductTypeTranslation[];

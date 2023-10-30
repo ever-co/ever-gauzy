@@ -438,13 +438,6 @@ export class TaskComponent extends PaginationFilterBaseComponent implements OnIn
 				'taskSize',
 				'taskPriority',
 			],
-			join: {
-				alias: 'task',
-				leftJoinAndSelect: {
-					members: 'task.members',
-					user: 'members.user',
-				},
-			},
 			where: {
 				organizationId,
 				tenantId,

@@ -237,8 +237,8 @@ export class CandidatesComponent extends PaginationFilterBaseComponent
 		}
 		this.router.navigate([
 			'/pages/employees/candidates/edit/' +
-				this.selectedCandidate.id +
-				'/profile'
+			this.selectedCandidate.id +
+			'/profile'
 		]);
 	}
 
@@ -324,13 +324,6 @@ export class CandidatesComponent extends PaginationFilterBaseComponent
 		this.sourceSmartTable = new ServerDataSource(this.http, {
 			endPoint: API_PREFIX + '/candidate/pagination',
 			relations: ['user', 'source', 'tags'],
-			join: {
-				alias: 'candidate',
-				leftJoin: {
-					user: 'candidate.user'
-				},
-				...(this.filters.join ? this.filters.join : {})
-			},
 			where: {
 				organizationId,
 				tenantId,
@@ -606,5 +599,5 @@ export class CandidatesComponent extends PaginationFilterBaseComponent
 		}
 	}
 
-	ngOnDestroy() {}
+	ngOnDestroy() { }
 }

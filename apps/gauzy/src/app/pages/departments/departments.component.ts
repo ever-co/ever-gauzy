@@ -53,8 +53,7 @@ import {
 })
 export class DepartmentsComponent
 	extends PaginationFilterBaseComponent
-	implements AfterViewInit, OnInit, OnDestroy
-{
+	implements AfterViewInit, OnInit, OnDestroy {
 	@ViewChild('addEditTemplate')
 	addEditTemplate: TemplateRef<any>;
 	addEditDialogRef: NbDialogRef<any>;
@@ -158,15 +157,15 @@ export class DepartmentsComponent
 			.subscribe();
 	}
 
-	ngOnDestroy() {}
+	ngOnDestroy() { }
 
-	ngAfterViewInit() {}
+	ngAfterViewInit() { }
 
 	selectDepartment(department: any) {
 		if (department.data) department = department.data;
 		const res =
 			this.selected.department &&
-			department.id === this.selected.department.id
+				department.id === this.selected.department.id
 				? { state: !this.selected.state }
 				: { state: true };
 		this.disableButton = !res.state;
@@ -294,9 +293,9 @@ export class DepartmentsComponent
 		if (input.name) {
 			this.selectedDepartment
 				? await this.organizationDepartmentsService.update(
-						this.selectedDepartment.id,
-						input
-				  )
+					this.selectedDepartment.id,
+					input
+				)
 				: await this.organizationDepartmentsService.create(input);
 
 			this.toastrService.success(
@@ -332,13 +331,6 @@ export class DepartmentsComponent
 		this.smartTableSource = new ServerDataSource(this.httpClient, {
 			endPoint: `${API_PREFIX}/organization-department/pagination`,
 			relations: ['members', 'members.user', 'tags'],
-			join: {
-				alias: 'organization_department',
-				leftJoin: {
-					tags: 'organization_department.tags'
-				},
-				...(this.filters.join ? this.filters.join : {})
-			},
 			where: {
 				...{ organizationId, tenantId },
 				...this.filters.where

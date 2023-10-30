@@ -49,10 +49,10 @@ export class Product extends TranslatableBase implements IProductTranslatable {
 	imageUrl: string;
 
 	/*
-    |--------------------------------------------------------------------------
-    | @ManyToOne
-    |--------------------------------------------------------------------------
-    */
+	|--------------------------------------------------------------------------
+	| @ManyToOne
+	|--------------------------------------------------------------------------
+	*/
 
 	/**
 	 * ImageAsset
@@ -106,17 +106,20 @@ export class Product extends TranslatableBase implements IProductTranslatable {
 	@Column({ nullable: true })
 	productCategoryId?: string;
 	/*
-    |--------------------------------------------------------------------------
-    | @OneToMany
-    |--------------------------------------------------------------------------
-    */
+	|--------------------------------------------------------------------------
+	| @OneToMany
+	|--------------------------------------------------------------------------
+	*/
 
 	/**
 	 * ProductTranslation
 	 */
 	@ApiProperty({ type: () => ProductTranslation, isArray: true })
 	@OneToMany(() => ProductTranslation, (productTranslation) => productTranslation.reference, {
+		/** Eager relations are always loaded automatically when relation's owner entity is loaded using find* methods. */
 		eager: true,
+
+		/** Database cascade actions. */
 		cascade: true
 	})
 	translations: ProductTranslation[];
@@ -158,10 +161,10 @@ export class Product extends TranslatableBase implements IProductTranslatable {
 	warehouses?: IWarehouse[];
 
 	/*
-    |--------------------------------------------------------------------------
-    | @ManyToMany
-    |--------------------------------------------------------------------------
-    */
+	|--------------------------------------------------------------------------
+	| @ManyToMany
+	|--------------------------------------------------------------------------
+	*/
 
 	/**
 	 * Tag

@@ -12,8 +12,7 @@ import {
 } from './../core/entities/internal';
 
 @Entity('image_asset')
-export class ImageAsset extends TenantOrganizationBaseEntity
-	implements IImageAsset {
+export class ImageAsset extends TenantOrganizationBaseEntity implements IImageAsset {
 
 	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()

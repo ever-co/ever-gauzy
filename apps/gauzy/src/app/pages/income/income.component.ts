@@ -507,13 +507,6 @@ export class IncomeComponent extends PaginationFilterBaseComponent
 				'organization',
 				'client'
 			],
-			join: {
-				alias: 'income',
-				leftJoin: {
-					tags: 'income.tags'
-				},
-				...(this.filters.join ? this.filters.join : {})
-			},
 			where: {
 				organizationId,
 				tenantId,

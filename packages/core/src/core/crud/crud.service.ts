@@ -91,12 +91,11 @@ export abstract class CrudService<T extends BaseEntity>
 	 */
 	public async paginate(options?: FindManyOptions<T>): Promise<IPagination<T>> {
 		try {
-			const query = this.repository.createQueryBuilder(this.alias);
-			query.setFindOptions({
+			console.time('Paginatation Query');
+			const [items, total] = await this.repository.findAndCount({
 				skip: options && options.skip ? (options.take * (options.skip - 1)) : 0,
-				take: options && options.take ? (options.take) : 10
-			});
-			query.setFindOptions({
+				take: options && options.take ? (options.take) : 10,
+
 				...(
 					(options && options.select) ? {
 						select: options.select
@@ -105,16 +104,6 @@ export abstract class CrudService<T extends BaseEntity>
 				...(
 					(options && options.relations) ? {
 						relations: options.relations
-					} : {}
-				),
-				/**
-				 * Specifies what relations should be loaded.
-				 *
-				 * @deprecated
-				 */
-				...(
-					(options && options.join) ? {
-						join: options.join
 					} : {}
 				),
 				...(
@@ -128,8 +117,7 @@ export abstract class CrudService<T extends BaseEntity>
 					} : {}
 				),
 			});
-			// console.log(options, moment().format('DD.MM.YYYY HH:mm:ss'));
-			const [items, total] = await query.getManyAndCount();
+			console.timeEnd('Paginatation Query');
 			return { items, total };
 		} catch (error) {
 			console.log(error);

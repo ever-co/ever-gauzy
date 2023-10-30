@@ -24,10 +24,10 @@ export class ProductOption
 	code: string;
 
 	/*
-    |--------------------------------------------------------------------------
-    | @ManyToOne 
-    |--------------------------------------------------------------------------
-    */
+	|--------------------------------------------------------------------------
+	| @ManyToOne
+	|--------------------------------------------------------------------------
+	*/
 
 	/**
 	 * ProductOptionGroup
@@ -45,14 +45,15 @@ export class ProductOption
 	groupId?: string;
 
 	/*
-    |--------------------------------------------------------------------------
-    | @OneToMany 
-    |--------------------------------------------------------------------------
-    */
+	|--------------------------------------------------------------------------
+	| @OneToMany
+	|--------------------------------------------------------------------------
+	*/
 
 	@ApiProperty({ type: () => ProductOptionTranslation, isArray: true })
-	@OneToMany(() => ProductOptionTranslation, (translation) => translation.reference, { 
-		eager: true 
+	@OneToMany(() => ProductOptionTranslation, (translation) => translation.reference, {
+		/** Eager relations are always loaded automatically when relation's owner entity is loaded using find* methods. */
+		eager: true,
 	})
 	translations: IProductOptionTranslation[];
 }

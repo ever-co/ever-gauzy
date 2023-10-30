@@ -397,12 +397,6 @@ export class TeamsComponent extends PaginationFilterBaseComponent
 					: {}),
 				...(this.filters.where ? this.filters.where : {})
 			},
-			join: {
-				alias: 'organization_team',
-				leftJoin: {
-					tags: 'organization_team.tags'
-				}
-			},
 			resultMap: (team: IOrganizationTeam) => {
 				return Object.assign({}, team, {
 					id: team.id,

@@ -419,20 +419,14 @@ export class ContactsComponent extends PaginationFilterBaseComponent implements 
 			this.smartTableSource = new ServerDataSource(this.http, {
 				endPoint: `${API_PREFIX}/organization-contact/pagination`,
 				relations: ['projects.members', 'members.user', 'tags', 'contact'],
-				join: {
-					alias: 'organization_contact',
-					leftJoin: {
-						members: 'organization_contact.members'
-					}
-				},
 				where: {
 					organizationId,
 					tenantId,
 					contactType: this.contactType,
 					...(this.selectedEmployeeId
 						? {
-								members: [this.selectedEmployeeId]
-						  }
+							members: [this.selectedEmployeeId]
+						}
 						: {}),
 					...(this.filters.where ? this.filters.where : {})
 				},
@@ -612,5 +606,5 @@ export class ContactsComponent extends PaginationFilterBaseComponent implements 
 		return find ? find.country : row.country;
 	}
 
-	ngOnDestroy(): void {}
+	ngOnDestroy(): void { }
 }

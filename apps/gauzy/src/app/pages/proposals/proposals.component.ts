@@ -457,16 +457,13 @@ export class ProposalsComponent extends PaginationFilterBaseComponent
 				'tags',
 				'organizationContact'
 			],
-			join: {
-				...(this.filters.join ? this.filters.join : {})
-			},
 			where: {
 				organizationId,
 				tenantId,
 				...(this.selectedEmployeeId
 					? {
-							employeeId: this.selectedEmployeeId
-					  }
+						employeeId: this.selectedEmployeeId
+					}
 					: {}),
 				valueDate: {
 					startDate: toUTC(startDate).format('YYYY-MM-DD HH:mm:ss'),

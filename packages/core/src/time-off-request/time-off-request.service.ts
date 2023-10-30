@@ -217,16 +217,16 @@ export class TimeOffRequestService extends TenantAwareCrudService<TimeOffRequest
 						isNotEmpty(where.isHoliday) &&
 						isNotEmpty(Boolean(JSON.parse(where.isHoliday)))
 					) {
-						qb.andWhere({ isHoliday : false });
+						qb.andWhere({ isHoliday: false });
 					}
 					if (isNotEmpty(where.includeArchived)) {
 						qb.andWhere({
-							isArchived : Boolean(JSON.parse(where.includeArchived))
+							isArchived: Boolean(JSON.parse(where.includeArchived))
 						});
 					}
 					if (isNotEmpty(where.status)) {
 						qb.andWhere({
-							status : where.status
+							status: where.status
 						});
 					}
 					qb.andWhere(
@@ -235,10 +235,10 @@ export class TimeOffRequestService extends TenantAwareCrudService<TimeOffRequest
 								const keywords: string[] = where.user.name.split(' ');
 								keywords.forEach((keyword: string, index: number) => {
 									web.orWhere(`LOWER("user"."firstName") like LOWER(:keyword_${index})`, {
-										[`keyword_${index}`]:`%${keyword}%`
+										[`keyword_${index}`]: `%${keyword}%`
 									});
 									web.orWhere(`LOWER("user"."lastName") like LOWER(:${index}_keyword)`, {
-										[`${index}_keyword`]:`%${keyword}%`
+										[`${index}_keyword`]: `%${keyword}%`
 									});
 								});
 							}
@@ -259,7 +259,7 @@ export class TimeOffRequestService extends TenantAwareCrudService<TimeOffRequest
 									}
 								});
 								web.andWhere(`LOWER("policy"."name") like LOWER(:name)`, {
-									name:`%${where.policy.name}%`
+									name: `%${where.policy.name}%`
 								});
 							}
 						})
