@@ -1,6 +1,8 @@
 import { BrowserWindow, Menu } from 'electron';
 import * as url from 'url';
 import * as remoteMain from '@electron/remote/main';
+const Store = require('electron-store');
+const store = new Store();
 
 export async function createAboutWindow(filePath) {
 	const mainWindowSettings: Electron.BrowserWindowConstructorOptions =
@@ -15,6 +17,7 @@ export async function createAboutWindow(filePath) {
 		hash: '/about'
 	});
 
+	window.setIcon(store.get('filePath').iconPath);
 	window.hide();
 	await window.loadURL(launchPath);
 	window.setMenu(null);

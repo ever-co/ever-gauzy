@@ -77,12 +77,9 @@ const windowSetting = () => {
 		x: 0,
 		y: 0,
 		title: process.env.DESCRIPTION ||  'Gauzy Desktop',
-		show: false
+		show: false,
+		icon: filesPath.iconPath
 	};
-
-	if (process.platform === 'linux') {
-		mainWindowSettings.icon = filesPath.iconPath;
-	}
 	return mainWindowSettings;
 };
 

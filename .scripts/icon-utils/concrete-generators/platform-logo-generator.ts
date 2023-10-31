@@ -39,13 +39,7 @@ export class PlatformLogoGenerator
 					return;
 				}
 				// load image from assets
-				DesktopEnvironmentManager.environment.PLATFORM_LOGO =
-					path.join(
-						'assets',
-						'images',
-						'logos',
-						`platform_logo${extName}`
-					);
+				DesktopEnvironmentManager.environment.PLATFORM_LOGO = `./assets/images/logos/platform_logo${extName}`;
 				// remove downloaded file
 				await this.remove(filePath);
 				console.log(`✔ ${extName} copied successfully.`);

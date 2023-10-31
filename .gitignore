@@ -109,3 +109,8 @@ apps/server/src/assets/icons/tray
 apps/desktop-timer/src/assets/icons/desktop_logo_512x512.png
 apps/desktop/src/assets/icons/desktop_logo_512x512.png
 apps/server/src/assets/icons/desktop_logo_512x512.png
+
+# Generated desktop icon menu
+apps/desktop-timer/src/assets/icons/menu
+apps/desktop/src/assets/icons/menu
+apps/server/src/assets/icons/menu
