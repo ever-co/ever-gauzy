@@ -17,7 +17,7 @@ export class AppMenu {
 		const isZoomEnabled = isZoomVisible;
 		this.menu = [
 			{
-				label: 'Gauzy',
+				label: process.env.DESCRIPTION || 'Gauzy',
 				submenu: [
 					{
 						id: 'gauzy-about',
