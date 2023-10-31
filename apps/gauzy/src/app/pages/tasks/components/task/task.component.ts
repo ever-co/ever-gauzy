@@ -426,6 +426,8 @@ export class TaskComponent extends PaginationFilterBaseComponent implements OnIn
 				? { endPoint: `${API_PREFIX}/tasks/me` }
 				: {}),
 			relations: [
+				'members',
+				'members.user',
 				'project',
 				'tags',
 				'teams',
