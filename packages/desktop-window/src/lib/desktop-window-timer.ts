@@ -51,12 +51,8 @@ const windowSetting = () => {
 		title: process.env.DESCRIPTION || 'Time Tracker',
 		maximizable: false,
 		show: false,
-
+		icon: filesPath.iconPath
 	};
-
-	if (process.platform === 'linux') {
-		mainWindowSettings.icon = filesPath.iconPath;
-	}
 
 	return mainWindowSettings;
 };
