@@ -246,16 +246,16 @@ export class EquipmentSharingComponent
 	/**
 	 * Show/Hide Equipment Sharing Approved Button
 	 *
-	 * @param equipement
+	 * @param equipment
 	 * @returns
 	 */
-	showApprovedButton(equipementSharing: IEquipmentSharing) {
-		if (equipementSharing) {
+	showApprovedButton(equipmentSharing: IEquipmentSharing) {
+		if (equipmentSharing) {
 			const statues: RequestApprovalStatusTypesEnum[] = [
 				RequestApprovalStatusTypesEnum.REFUSED,
 				RequestApprovalStatusTypesEnum.REQUESTED
 			];
-			return statues.includes(equipementSharing.status);
+			return statues.includes(equipmentSharing.status);
 		}
 		return false;
 	}
@@ -263,34 +263,34 @@ export class EquipmentSharingComponent
 	/**
 	 * Show/Hide Equipment Sharing Refuse Button
 	 *
-	 * @param equipement
+	 * @param equipment
 	 * @returns
 	 */
-	showRefuseButton(equipementSharing: IEquipmentSharing) {
-		if (equipementSharing) {
+	showRefuseButton(equipmentSharing: IEquipmentSharing) {
+		if (equipmentSharing) {
 			const statues: RequestApprovalStatusTypesEnum[] = [
 				RequestApprovalStatusTypesEnum.APPROVED,
 				RequestApprovalStatusTypesEnum.REQUESTED
 			];
-			return statues.includes(equipementSharing.status);
+			return statues.includes(equipmentSharing.status);
 		}
 		return false;
 	}
 
-	async approval(equipementSharing: IEquipmentSharing) {
+	async approval(equipmentSharing: IEquipmentSharing) {
 		if (!this.organization) {
 			return;
 		}
 		try {
-			if (this.showApprovedButton(equipementSharing)) {
+			if (this.showApprovedButton(equipmentSharing)) {
 				const request = await this.equipmentSharingService.approval(
-					equipementSharing.id
+					equipmentSharing.id
 				);
 				if (request) {
 					this.toastrService.success(
 						'EQUIPMENT_SHARING_PAGE.APPROVAL_SUCCESS',
 						{
-							name: equipementSharing.name
+							name: equipmentSharing.name
 						}
 					);
 				}
@@ -302,20 +302,20 @@ export class EquipmentSharingComponent
 		}
 	}
 
-	async refuse(equipementSharing: IEquipmentSharing) {
+	async refuse(equipmentSharing: IEquipmentSharing) {
 		if (!this.organization) {
 			return;
 		}
 		try {
-			if (this.showRefuseButton(equipementSharing)) {
+			if (this.showRefuseButton(equipmentSharing)) {
 				const request = await this.equipmentSharingService.refuse(
-					equipementSharing.id
+					equipmentSharing.id
 				);
 				if (request) {
 					this.toastrService.success(
 						'EQUIPMENT_SHARING_PAGE.APPROVAL_SUCCESS',
 						{
-							name: equipementSharing.name
+							name: equipmentSharing.name
 						}
 					);
 				}
