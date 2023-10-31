@@ -41,7 +41,7 @@ const routes: Routes = [
                 path: 'main',
                 component: EditOrganizationMainComponent,
                 data: {
-                    relations: ['tags', 'image'],
+                    relations: ['tags'],
                     selectors: {
                         project: false,
                         employee: false,
@@ -53,7 +53,7 @@ const routes: Routes = [
                 path: 'location',
                 component: EditOrganizationLocationComponent,
                 data: {
-                    relations: ['contact', 'image'],
+                    relations: ['contact'],
                     selectors: {
                         project: false,
                         employee: false,
@@ -65,7 +65,7 @@ const routes: Routes = [
                 path: 'settings',
                 component: EditOrganizationOtherSettingsComponent,
                 data: {
-                    relations: ['accountingTemplates', 'image'],
+                    relations: ['accountingTemplates'],
                     selectors: {
                         project: false,
                         employee: false,

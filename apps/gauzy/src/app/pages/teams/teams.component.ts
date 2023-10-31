@@ -383,8 +383,7 @@ export class TeamsComponent extends PaginationFilterBaseComponent
 				'members.role',
 				'members.employee.user',
 				'tags',
-				'projects',
-				'image'
+				'projects'
 			],
 			where: {
 				organizationId,
