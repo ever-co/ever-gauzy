@@ -260,7 +260,15 @@ export class ExpenseCategoriesComponent
 
 		this.smartTableSource = new ServerDataSource(this.httpClient, {
 			endPoint: `${API_PREFIX}/expense-categories/pagination`,
-			relations: ['tags'],
+			relations: [
+				'tags'
+			],
+			join: {
+				alias: 'expense_category',
+				leftJoin: {
+					tags: 'expense_category.tags'
+				}
+			},
 			where: {
 				organizationId,
 				tenantId,

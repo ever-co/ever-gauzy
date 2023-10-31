@@ -221,6 +221,14 @@ export class InvoicesReceivedComponent
 		this.smartTableSource = new ServerDataSource(this.httpClient, {
 			endPoint: `${API_PREFIX}/invoices/pagination`,
 			relations: ['payments', 'tags', 'toContact'],
+			join: {
+				alias: 'invoice',
+				leftJoin: {
+					tags: 'invoice.tags',
+					toContact: 'invoice.toContact'
+				},
+				...(this.filters.join) ? this.filters.join : {}
+			},
 			where: {
 				sentTo: organizationId,
 				tenantId,

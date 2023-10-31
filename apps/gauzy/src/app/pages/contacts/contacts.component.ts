@@ -419,6 +419,12 @@ export class ContactsComponent extends PaginationFilterBaseComponent implements 
 			this.smartTableSource = new ServerDataSource(this.http, {
 				endPoint: `${API_PREFIX}/organization-contact/pagination`,
 				relations: ['projects.members', 'members.user', 'tags', 'contact'],
+				join: {
+					alias: 'organization_contact',
+					leftJoin: {
+						members: 'organization_contact.members'
+					}
+				},
 				where: {
 					organizationId,
 					tenantId,

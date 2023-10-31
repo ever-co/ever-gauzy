@@ -331,9 +331,17 @@ export class DepartmentsComponent
 		this.smartTableSource = new ServerDataSource(this.httpClient, {
 			endPoint: `${API_PREFIX}/organization-department/pagination`,
 			relations: ['members', 'members.user', 'tags'],
+			join: {
+				alias: 'organization_department',
+				leftJoin: {
+					tags: 'organization_department.tags'
+				},
+				...(this.filters.join ? this.filters.join : {})
+			},
 			where: {
-				...{ organizationId, tenantId },
-				...this.filters.where
+				tenantId,
+				organizationId,
+				...(this.filters.where ? this.filters.where : {})
 			},
 			resultMap: (department: IOrganizationDepartment) => {
 				return department;

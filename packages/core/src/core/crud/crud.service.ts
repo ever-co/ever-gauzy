@@ -94,7 +94,16 @@ export abstract class CrudService<T extends BaseEntity>
 			const [items, total] = await this.repository.findAndCount({
 				skip: options && options.skip ? (options.take * (options.skip - 1)) : 0,
 				take: options && options.take ? (options.take) : 10,
-
+				/**
+				 * Specifies what relations should be loaded.
+				 *
+				 * @deprecated
+				 */
+				...(
+					(options && options.join) ? {
+						join: options.join
+					} : {}
+				),
 				...(
 					(options && options.select) ? {
 						select: options.select
