@@ -82,11 +82,7 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 				}
 			},
 			relations: {
-				...(withUser ? {
-					user: {
-						image: true
-					}
-				} : {})
+				...(withUser ? { user: true } : {})
 			}
 		});
 		query.where((qb: SelectQueryBuilder<Employee>) => {

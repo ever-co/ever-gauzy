@@ -68,7 +68,10 @@ export class IssueType extends TenantOrganizationBaseEntity implements IIssueTyp
 	 */
 	@ManyToOne(() => ImageAsset, {
 		/** Database cascade action on delete. */
-		onDelete: 'SET NULL'
+		onDelete: 'SET NULL',
+
+		/** Eager relations are always loaded automatically when relation's owner entity is loaded using find* methods. */
+		eager: true,
 	})
 	@JoinColumn()
 	image?: IImageAsset;
