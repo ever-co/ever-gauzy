@@ -163,14 +163,13 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 			query.innerJoin(`${query.alias}.user`, 'user');
 			query.leftJoin(`${query.alias}.tags`, 'tags');
 			query.innerJoin(`user.organizations`, 'organizations');
-			/**
-			 * Set skip/take options for pagination
-			 */
+
 			query.setFindOptions({
+				/**
+				 * Set skip/take options for pagination
+				 */
 				skip: options && options.skip ? options.take * (options.skip - 1) : 0,
-				take: options && options.take ? options.take : 10
-			});
-			query.setFindOptions({
+				take: options && options.take ? options.take : 10,
 				/**
 				 * Load selected table properties/fields for self & relational select.
 				 */

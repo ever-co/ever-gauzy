@@ -99,7 +99,6 @@ export class TimerService {
 				},
 			},
 			where: {
-				deletedAt: IsNull(),
 				...(source ? { source } : {}),
 				startedAt: Between(start, end),
 				stoppedAt: Not(IsNull()),
@@ -117,7 +116,6 @@ export class TimerService {
 		// Get today's last log (running or completed)
 		const lastLog = await this.timeLogRepository.findOne({
 			where: {
-				deletedAt: IsNull(),
 				...(source ? { source } : {}),
 				startedAt: Between(start, end),
 				stoppedAt: Not(IsNull()),
@@ -424,7 +422,6 @@ export class TimerService {
 		const { id: employeeId } = employee;
 		return await this.timeLogRepository.findOne({
 			where: {
-				deletedAt: IsNull(),
 				stoppedAt: Not(IsNull()),
 				employeeId,
 				tenantId,
@@ -496,7 +493,6 @@ export class TimerService {
 		 */
 		const lastLog = await this.timeLogRepository.findOne({
 			where: {
-				deletedAt: IsNull(),
 				startedAt: Not(IsNull()),
 				stoppedAt: Not(IsNull()),
 				employeeId,

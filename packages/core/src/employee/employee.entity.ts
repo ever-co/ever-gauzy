@@ -83,7 +83,6 @@ export class Employee extends TenantOrganizationBaseEntity implements IEmployee 
 	@Column({ nullable: true })
 	valueDate?: Date;
 
-
 	@ApiPropertyOptional({ type: () => String, maxLength: 200 })
 	@Column({ length: 200, nullable: true })
 	short_description?: string;

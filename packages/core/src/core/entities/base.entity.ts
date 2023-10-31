@@ -53,6 +53,7 @@ export abstract class BaseEntity extends Model implements IBaseEntityModel {
 		format: 'date-time',
 		example: '2018-11-21T06:20:32.232Z'
 	})
+	@IsOptional()
 	@IsDateString()
 	@DeleteDateColumn()
 	deletedAt?: Date;
