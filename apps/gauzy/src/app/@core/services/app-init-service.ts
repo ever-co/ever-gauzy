@@ -24,7 +24,6 @@ export class AppInitService {
 			if (id) {
 				this.user = await this.usersService.getMe([
 					'employee',
-					'image',
 					'role',
 					'role.rolePermissions',
 					'tenant',

@@ -113,7 +113,6 @@ export class OrganizationSelectorComponent
 		const { items = [] } = await this.userOrganizationService.getAll(
 			[
 				'organization',
-				'organization.image',
 				'organization.contact',
 				'organization.featureOrganizations',
 				'organization.featureOrganizations.feature'
