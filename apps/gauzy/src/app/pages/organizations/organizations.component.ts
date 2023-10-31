@@ -304,7 +304,7 @@ export class OrganizationsComponent
 	private async _loadSmartTable() {
 		try {
 			const { items } = await this.userOrganizationService.getAll(
-				['organization', 'organization.tags', 'organization.employees', 'organization.image'],
+				['organization', 'organization.tags', 'organization.employees'],
 				{ userId: this.store.userId, tenantId: this.user.tenantId }
 			);
 

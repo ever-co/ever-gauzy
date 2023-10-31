@@ -13,8 +13,7 @@ const routes: Routes = [
 				'skills',
 				'awards',
 				'languages',
-				'languages.language',
-				'image'
+				'languages.language'
 			]
 		},
 		resolve: {
