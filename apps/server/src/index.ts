@@ -125,7 +125,7 @@ if (process.platform === 'win32') {
 }
 
 LocalStore.setFilePath({
-	iconPath: path.join(__dirname, 'icons', 'icon.png'),
+	iconPath: path.join(__dirname, 'assets', 'icons', 'tray', 'icon.png'),
 });
 
 // Set unlimited listeners
