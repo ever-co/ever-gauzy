@@ -212,6 +212,14 @@ export class PaymentsComponent extends PaginationFilterBaseComponent
 				'project',
 				'tags'
 			],
+			join: {
+				alias: 'payment',
+				leftJoin: {
+					tags: 'payment.tags',
+					organizationContact: 'payment.organizationContact'
+				},
+				...(this.filters.join ? this.filters.join : {})
+			},
 			where: {
 				organizationId,
 				tenantId,

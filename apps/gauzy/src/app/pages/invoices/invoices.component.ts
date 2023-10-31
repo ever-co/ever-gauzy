@@ -764,6 +764,14 @@ export class InvoicesComponent extends PaginationFilterBaseComponent implements 
 				'historyRecords',
 				'historyRecords.user',
 			],
+			join: {
+				alias: 'invoice',
+				leftJoin: {
+					toContact: 'invoice.toContact',
+					tags: 'invoice.tags',
+				},
+				...(this.filters.join ? this.filters.join : {}),
+			},
 			where: {
 				organizationId,
 				tenantId,

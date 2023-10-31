@@ -385,6 +385,12 @@ export class TeamsComponent extends PaginationFilterBaseComponent
 				'tags',
 				'projects'
 			],
+			join: {
+				alias: 'organization_team',
+				leftJoin: {
+					tags: 'organization_team.tags'
+				}
+			},
 			where: {
 				organizationId,
 				tenantId,

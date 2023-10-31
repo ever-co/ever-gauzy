@@ -235,6 +235,12 @@ export class ProjectListComponent extends PaginationFilterBaseComponent implemen
 		this.smartTableSource = new ServerDataSource(this._httpClient, {
 			endPoint: `${API_PREFIX}/organization-projects/pagination`,
 			relations: ['organizationContact', 'organization', 'members', 'members.user', 'tags', 'teams'],
+			join: {
+				alias: 'organization_project',
+				leftJoin: {
+					tags: 'organization_project.tags'
+				}
+			},
 			where: {
 				organizationId,
 				tenantId,

@@ -457,6 +457,9 @@ export class ProposalsComponent extends PaginationFilterBaseComponent
 				'tags',
 				'organizationContact'
 			],
+			join: {
+				...(this.filters.join ? this.filters.join : {})
+			},
 			where: {
 				organizationId,
 				tenantId,

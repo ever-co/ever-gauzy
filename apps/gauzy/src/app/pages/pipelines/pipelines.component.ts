@@ -283,6 +283,13 @@ export class PipelinesComponent
 		this.smartTableSource = new ServerDataSource(this.httpClient, {
 			endPoint: `${API_PREFIX}/pipelines/pagination`,
 			relations: ['stages'],
+			join: {
+				alias: 'pipeline',
+				leftJoin: {
+					stages: 'pipeline.stages'
+				},
+				...(this.filters.join ? this.filters.join : {})
+			},
 			where: {
 				organizationId,
 				tenantId,
