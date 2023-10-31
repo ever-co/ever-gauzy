@@ -15,6 +15,7 @@ export class CommonEnvironmentContent implements IContentGenerator {
 			COMPANY_SITE_LINK: '${variable.COMPANY_SITE_LINK}',
 			GAUZY_DESKTOP_LOGO_512X512: '${variable.GAUZY_DESKTOP_LOGO_512X512}',
 			NO_INTERNET_LOGO: '${variable.NO_INTERNET_LOGO}',
+			I18N_FILES_URL: '${variable.I18N_FILES_URL}',
 		`;
 	}
 }
