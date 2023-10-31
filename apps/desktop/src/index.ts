@@ -119,7 +119,7 @@ let serverDesktop = null;
 let dialogErr = false;
 
 LocalStore.setFilePath({
-	iconPath: path.join(__dirname, 'icons', 'icon.png'),
+	iconPath: path.join(__dirname, 'assets', 'icons', 'menu', 'icon.png'),
 });
 
 // Instance detection
