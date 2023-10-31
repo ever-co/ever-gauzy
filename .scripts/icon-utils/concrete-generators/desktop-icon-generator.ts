@@ -38,11 +38,7 @@ export class DesktopIconGenerator
 					reject(error);
 				} else {
 					DesktopEnvironmentManager.environment.GAUZY_DESKTOP_LOGO_512X512 =
-						path.join(
-							'assets',
-							'icons',
-							'desktop_logo_512x512.png'
-						);
+						'./assets/icons/desktop_logo_512x512.png';
 					console.log(
 						'✔ desktop logo 512x512 icons generated successfully.'
 					);
@@ -133,6 +129,31 @@ export class DesktopIconGenerator
 		}
 	}
 
+	public async generateMenuIcon(originalImage: Jimp): Promise<void> {
+		const iconSizes = [ 512, 256, 192, 128, 96, 64, 48, 40, 32, 24, 20, 16];
+		// Remove 512x512 pixels for windows apps
+		if(process.platform === 'win32') {
+			iconSizes.shift();
+		}
+		const destination = path.join(
+			'apps',
+			this.desktop,
+			'src',
+			'assets',
+			'icons',
+			'menu'
+		);
+		for(const iconSize of iconSizes) {
+			const png = iconSize === iconSizes[0] ? 'icon.png' :`icon_${iconSize}x${iconSize}.png`;
+			const menuIconFilePath = path.join(destination, png);
+			await originalImage
+				.clone()
+				.resize(iconSize, Jimp.AUTO, Jimp.RESIZE_NEAREST_NEIGHBOR)
+				.writeAsync(menuIconFilePath);
+			console.log(`✔ menu ${png} generated.`);
+		}
+	}
+
 	public async resizeAndConvert(filePath: string): Promise<void> {
 		const image = await Jimp.read(filePath);
 		const pngFilePath = path.join(this.destination, 'icon.png');
@@ -152,6 +173,7 @@ export class DesktopIconGenerator
 		await this.generateMacIcon(image);
 		await this.generateWindowsIcon(image);
 		await this.generateTrayIcon(image);
+		await this.generateMenuIcon(image);
 	}
 
 	public async generate(): Promise<void> {

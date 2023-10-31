@@ -48,9 +48,6 @@ const windowSetting = () => {
 		maximizable: false,
 		show: false
 	};
-
-	if (process.platform === 'linux') {
-		mainWindowSettings.icon = filesPath.iconPath;
-	}
+	mainWindowSettings.icon = filesPath.iconPath;
 	return mainWindowSettings;
 };
