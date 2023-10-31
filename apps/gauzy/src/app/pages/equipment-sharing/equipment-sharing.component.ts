@@ -40,8 +40,7 @@ import { DateViewComponent } from '../../@shared/table-components';
 })
 export class EquipmentSharingComponent
 	extends PaginationFilterBaseComponent
-	implements OnInit, OnDestroy
-{
+	implements OnInit, OnDestroy {
 	loading: boolean = false;
 	disableButton: boolean = true;
 
@@ -110,8 +109,8 @@ export class EquipmentSharingComponent
 					this.selectedEmployeeId = user.employee
 						? user.employee.id
 						: employee
-						? employee.id
-						: null;
+							? employee.id
+							: null;
 				}),
 				tap(() => this._refresh$.next(true)),
 				tap(() => this.equipmentSharing$.next(true)),
@@ -141,7 +140,7 @@ export class EquipmentSharingComponent
 			.subscribe();
 	}
 
-	ngOnDestroy() {}
+	ngOnDestroy() { }
 
 	setView() {
 		this.viewComponentName = ComponentEnum.EQUIPMENT_SHARING;
@@ -158,6 +157,7 @@ export class EquipmentSharingComponent
 					(componentLayout) =>
 						componentLayout === ComponentLayoutStyleEnum.CARDS_GRID
 				),
+				tap(() => this.equipments = []),
 				tap(() => this.equipmentSharing$.next(true)),
 				untilDestroyed(this)
 			)
