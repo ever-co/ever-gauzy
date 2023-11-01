@@ -25,13 +25,12 @@ import { IntegrationAIModule } from './gauzy-ai/integration-ai.module';
 					{ path: '/gauzy-ai', module: IntegrationAIModule },
 					{ path: '/', module: IntegrationModule }
 				]
-			},
+			}
 		]),
 		TypeOrmModule.forFeature([
 			Integration,
 			IntegrationType
 		]),
-		TenantModule,
 		IntegrationTenantModule,
 		TenantModule,
 		UserModule,

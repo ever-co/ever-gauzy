@@ -3,12 +3,12 @@ import { Routes, RouterModule } from '@angular/router';
 import { PermissionsEnum } from '@gauzy/contracts';
 import { NgxPermissionsGuard } from 'ngx-permissions';
 import { ViewTimesheetResolver } from './view.resolver';
-import { ViewComponent } from './view/view.component';
+import { GithubViewComponent } from './view/view.component';
 
 const routes: Routes = [
 	{
 		path: '',
-		component: ViewComponent,
+		component: GithubViewComponent,
 		canActivate: [NgxPermissionsGuard],
 		data: {
 			permissions: {
@@ -32,4 +32,4 @@ const routes: Routes = [
 	imports: [RouterModule.forChild(routes)],
 	exports: [RouterModule]
 })
-export class ViewRoutingModule {}
+export class ViewRoutingModule { }

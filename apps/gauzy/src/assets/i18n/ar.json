@@ -2083,7 +2083,8 @@
 			"ORG_TASK_VIEW": "عرض المهام",
 			"ORG_TASK_EDIT": "تحرير المهام",
 			"ORG_TASK_DELETE": "حذف المهام",
-			"ORG_TASK_SETTING": "إعدادات المهام"
+			"ORG_TASK_SETTING": "إعدادات المهام",
+			"ORG_MEMBER_LAST_LOG_VIEW": "عرض السجل الأخير"
 		},
 		"BILLING": "الفوترة",
 		"BUDGET": "ميزانية",
@@ -4310,6 +4311,7 @@
 	"SETTINGS": {
 		"EMAIL_HISTORY": {
 			"EMAIL_ARCHIVED": "تم أرشفة البريد الإلكتروني.",
+			"RESEND": "إعادة إرسال",
 			"ARCHIVE": "أرشيف",
 			"HEADER": "سجل البريد الإلكتروني",
 			"FROM": "من:",
@@ -4326,7 +4328,7 @@
 			}
 		}
 	},
-	"GAUZY_MAINTENANCE": "جوزي @ الصيانة",
+	"GAUZY_MAINTENANCE": "{{ companySite }} @ الصيانة",
 	"LEGAL": {
 		"PRIVACY_POLICY": "سياسة الخصوصية",
 		"TERMS_AND_CONDITIONS": "الشروط والأحكام"

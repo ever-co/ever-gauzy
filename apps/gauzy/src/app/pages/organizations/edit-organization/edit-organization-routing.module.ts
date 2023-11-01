@@ -10,8 +10,7 @@ import { EditOrganizationComponent } from './edit-organization.component';
 import { EmployeeCountResolver } from '../../../@core/resolvers';
 import { EditOrganizationTaskSettingResolver } from './edit-organization-task-setting.resolver';
 
-export function redirectTo()
-{
+export function redirectTo() {
     return '/pages/dashboard';
 }
 

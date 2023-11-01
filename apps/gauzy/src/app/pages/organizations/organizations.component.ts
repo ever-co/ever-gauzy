@@ -48,8 +48,7 @@ import {
 })
 export class OrganizationsComponent
 	extends PaginationFilterBaseComponent
-	implements AfterViewInit, OnInit, OnDestroy
-{
+	implements AfterViewInit, OnInit, OnDestroy {
 	settingsSmartTable: object;
 	selectedOrganization: IOrganization;
 	smartTableSource = new LocalDataSource();
@@ -380,5 +379,5 @@ export class OrganizationsComponent
 		}
 	}
 
-	ngOnDestroy() {}
+	ngOnDestroy() { }
 }

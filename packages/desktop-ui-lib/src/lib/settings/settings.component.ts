@@ -6,7 +6,8 @@ import {
 	ElementRef,
 	NgZone,
 	AfterViewInit,
-	Optional
+	Optional,
+	Inject
 } from '@angular/core';
 import { TimeTrackerService } from '../time-tracker/time-tracker.service';
 import { NbDialogService, NbToastrService } from '@nebular/theme';
@@ -21,6 +22,8 @@ import { AuthStrategy } from '../auth';
 import { LanguagesEnum } from 'packages/contracts/dist';
 import { TranslateService } from '@ngx-translate/core';
 import { LanguageSelectorService } from '../language/language-selector.service';
+import { GAUZY_ENV } from '../constants';
+import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -60,7 +63,7 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 
 	appName: string = this.electronService.remote.app.getName();
 	menus = [];
-	gauzyIcon =
+	gauzyIcon: SafeResourceUrl =
 		this.isDesktopTimer || this.isServer
 			? './assets/images/logos/logo_Gauzy.svg'
 			: '../assets/images/logos/logo_Gauzy.svg';
@@ -410,6 +413,9 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 	delayOptions: number[] = [0.5, 1, 3, 24];
 	zones = TimeZoneManager.zones;
 	selectedZone: ZoneEnum = ZoneEnum.LOCAL;
+	companyName: string;
+	companyLink: string;
+	companySite: string;
 
 	private _loading$: BehaviorSubject<boolean>;
 	private _automaticUpdate$: BehaviorSubject<boolean>;
@@ -445,7 +451,10 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 		private _translateService: TranslateService,
 		private _languageSelectorService: LanguageSelectorService,
 		@Optional()
-		private _authStrategy: AuthStrategy
+		private _authStrategy: AuthStrategy,
+		@Inject(GAUZY_ENV)
+		private readonly _environment: any,
+		private readonly _domSanitizer: DomSanitizer
 	) {
 		this._loading$ = new BehaviorSubject(false);
 		this._automaticUpdate$ = new BehaviorSubject(false);
@@ -474,6 +483,12 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 		this._isHidden$ = new BehaviorSubject(true);
 		this._simpleScreenshotNotification$ = new BehaviorSubject(false);
 		this._isRestart$ = new BehaviorSubject(false);
+		this.companyName = this._environment.COMPANY_NAME;
+		this.companySite = this._environment.COMPANY_SITE;
+		this.companyLink = this._environment.COMPANY_LINK;
+		this.gauzyIcon = this._domSanitizer.bypassSecurityTrustResourceUrl(
+			this._environment.PLATFORM_LOGO
+		);
 	}
 
 	ngOnInit(): void {
@@ -1146,15 +1161,15 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 	}
 
 	public get isDesktopTimer(): boolean {
-		return this.appName === 'gauzy-desktop-timer';
+		return this._environment.IS_DESKTOP_TIMER;
 	}
 
 	public get isDesktop(): boolean {
-		return this.appName === 'gauzy-desktop';
+		return this._environment.IS_DESKTOP;
 	}
 
 	public get isServer(): boolean {
-		return this.appName === 'gauzy-server';
+		return this._environment.IS_SERVER;
 	}
 
 	public get selectedMenu$(): Observable<string> {

@@ -10,7 +10,8 @@ import {
 	HttpCode,
 	UsePipes,
 	ValidationPipe,
-	BadRequestException
+	BadRequestException,
+	Post
 } from '@nestjs/common';
 import {
 	ApiTags,
@@ -21,14 +22,17 @@ import {
 	ApiNotFoundResponse
 } from '@nestjs/swagger';
 import { UpdateResult } from 'typeorm';
-import { IEmailHistory, IPagination, PermissionsEnum } from '@gauzy/contracts';
+import { IEmailHistory, IPagination, LanguagesEnum, PermissionsEnum } from '@gauzy/contracts';
 import { EmailHistory } from './email-history.entity';
 import { EmailHistoryService } from './email-history.service';
-import { Permissions } from './../shared/decorators';
+import { LanguageDecorator, Permissions } from './../shared/decorators';
 import { UUIDValidationPipe } from './../shared/pipes';
 import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
 import { UpdateEmailHistoryDTO } from './dto';
 import { PaginationParams } from './../core/crud';
+import { ResendEmailHistoryDTO } from './dto/resend-email-history.dto';
+import { CommandBus } from '@nestjs/cqrs';
+import { EmailHistoryResendCommand } from './commands';
 
 @ApiTags('Email')
 @UseGuards(TenantPermissionGuard, PermissionGuard)
@@ -36,7 +40,8 @@ import { PaginationParams } from './../core/crud';
 @Controller()
 export class EmailHistoryController {
 	constructor(
-		private readonly _emailHistoryService: EmailHistoryService
+		private readonly _emailHistoryService: EmailHistoryService,
+		private readonly commandBus: CommandBus,
 	) { }
 
 	@ApiOperation({ summary: 'Find all sent emails under specific tenant.' })
@@ -91,5 +96,28 @@ export class EmailHistoryController {
 		} catch (error) {
 			throw new BadRequestException(error);
 		}
+	}
+
+
+	@ApiOperation({ summary: 'Resend Email.' })
+	@ApiResponse({
+		status: HttpStatus.CREATED,
+		description: 'The record has been successfully updated.',
+	})
+	@ApiResponse({
+		status: HttpStatus.BAD_REQUEST,
+		description:
+			'Invalid input, The response body may contain clues as to what went wrong',
+	})
+	@UseGuards(TenantPermissionGuard, PermissionGuard)
+	@Post('resend')
+	@UsePipes(new ValidationPipe())
+	async resendInvite(
+		@Body() entity: ResendEmailHistoryDTO,
+		@LanguageDecorator() languageCode: LanguagesEnum
+	): Promise<UpdateResult | IEmailHistory> {
+		return await this.commandBus.execute(
+			new EmailHistoryResendCommand(entity, languageCode)
+		);
 	}
 }

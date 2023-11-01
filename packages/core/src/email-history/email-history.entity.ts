@@ -1,7 +1,7 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Column, Entity, Index, ManyToOne, RelationId } from 'typeorm';
-import { IsOptional, IsUUID } from 'class-validator';
-import { IEmailHistory, IEmailTemplate, IUser } from '@gauzy/contracts';
+import { IsEnum, IsOptional, IsUUID } from 'class-validator';
+import { IEmailHistory, IEmailTemplate, IUser, EmailStatusEnum } from '@gauzy/contracts';
 import {
 	EmailTemplate,
 	TenantOrganizationBaseEntity,
@@ -64,4 +64,16 @@ export class EmailHistory extends TenantOrganizationBaseEntity implements IEmail
 	@Index()
 	@Column()
 	emailTemplateId: IEmailTemplate['id'];
+
+	@Index()
+	@ApiPropertyOptional({ type: () => String, enum: EmailStatusEnum })
+	@IsOptional()
+	@IsEnum(EmailStatusEnum)
+	@Column({
+		type: 'simple-enum',
+		nullable: true,
+		enum: EmailStatusEnum,
+		default: null
+	})
+	status?: EmailStatusEnum;
 }

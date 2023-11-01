@@ -1,24 +1,19 @@
 import { Component, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute, Data, Router } from '@angular/router';
-import { catchError, debounceTime, delay, of, switchMap } from 'rxjs';
 import { filter, map } from 'rxjs/operators';
 import { Observable } from 'rxjs/internal/Observable';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
 import {
-	IIntegrationMap,
 	IIntegrationTenant,
 	IOrganization,
 	IOrganizationProject,
-	IOrganizationProjectUpdateInput,
-	IntegrationEntity
+	IOrganizationProjectUpdateInput
 } from '@gauzy/contracts';
-import { distinctUntilChange } from '@gauzy/common-angular';
 import { ProjectMutationComponent } from './../../../../@shared/project';
 import { TranslationBaseComponent } from './../../../../@shared/language-base';
 import {
 	ErrorHandlingService,
-	IntegrationMapService,
 	OrganizationProjectsService,
 	Store,
 	ToastrService
@@ -36,7 +31,6 @@ export class ProjectEditMutationComponent extends TranslationBaseComponent imple
 	@ViewChild(ProjectMutationComponent, { static: false }) public _component: ProjectMutationComponent;
 
 	public loading: boolean;
-	public integrationMap$: Observable<IIntegrationMap | boolean>;
 	public integration$: Observable<IIntegrationTenant>;
 	public project$: Observable<IOrganizationProject>;
 	public project: IOrganizationProject;
@@ -50,7 +44,6 @@ export class ProjectEditMutationComponent extends TranslationBaseComponent imple
 		private readonly _organizationProjectsService: OrganizationProjectsService,
 		private readonly _toastrService: ToastrService,
 		private readonly _errorHandlingService: ErrorHandlingService,
-		private readonly _integrationMapService: IntegrationMapService
 	) {
 		super(translateService);
 	}
@@ -59,7 +52,6 @@ export class ProjectEditMutationComponent extends TranslationBaseComponent imple
 		// Call the following methods to initialize component properties
 		this._getEditProject();
 		this._getGithubIntegrationTenant();
-		this._getSyncedGithubRepository();
 	}
 
 	/**
@@ -83,46 +75,6 @@ export class ProjectEditMutationComponent extends TranslationBaseComponent imple
 		this.integration$ = this._activatedRoute.data.pipe(
 			map(({ integration }) => integration),
 			untilDestroyed(this) // Automatically unsubscribes when the component is destroyed
-		);
-	}
-
-	/**
-	 * Fetches and handles synchronized GitHub repository data.
-	 * This method is not provided in your code but is expected to be present.
-	 */
-	private _getSyncedGithubRepository() {
-		this.integrationMap$ = this._store.selectedOrganization$.pipe(
-			debounceTime(100),
-			distinctUntilChange(),
-			switchMap((organization: IOrganization) => {
-				// Ensure there is a valid organization
-				if (!organization) {
-					return of(false); // No valid organization, return false
-				}
-
-				// Extract organization properties
-				const { id: organizationId, tenantId } = this.organization;
-
-				return this._activatedRoute.data.pipe(
-					delay(1000), // Delay for loading effect
-					filter(({ integration, project }) => !!integration && !!project),
-					// Get the 'integration' and 'project' route parameter
-					switchMap(({ integration, project }) => this._integrationMapService.getSyncedGithubRepository({
-						organizationId,
-						tenantId,
-						integrationId: integration.id,
-						gauzyId: project.id,
-						entity: IntegrationEntity.PROJECT
-					})),
-					catchError((error) => {
-						// Handle and log errors
-						this._errorHandlingService.handleError(error);
-						return of(false);
-					}),
-					// Handle component lifecycle to avoid memory leaks
-					untilDestroyed(this),
-				);
-			})
 		);
 	}
 

@@ -1,4 +1,7 @@
-<div class="image-container">
+<div [ngClass]="{
+	'image-container-notSelected': !gallery?.length,
+	'image-container-selected': gallery?.length
+}">
 	<img
 		*ngIf="displayImageUrl"
 		class="featured-image"
@@ -100,7 +103,7 @@
 				<div class="interview-info">
 					<nb-icon
 						icon="checkmark-circle-2-outline"
-						status="sucess"
+						status="success"
 						class="icons"
 					></nb-icon>
 				</div>

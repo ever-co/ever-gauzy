@@ -13,7 +13,7 @@ import {
 	UpdateResult
 } from 'typeorm';
 import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
-import * as moment from 'moment';
+// import * as moment from 'moment';
 import { of as observableOf, throwError } from 'rxjs';
 import { mergeMap } from 'rxjs/operators';
 import { IPagination } from '@gauzy/contracts';
@@ -91,22 +91,9 @@ export abstract class CrudService<T extends BaseEntity>
 	 */
 	public async paginate(options?: FindManyOptions<T>): Promise<IPagination<T>> {
 		try {
-			const query = this.repository.createQueryBuilder(this.alias);
-			query.setFindOptions({
+			const [items, total] = await this.repository.findAndCount({
 				skip: options && options.skip ? (options.take * (options.skip - 1)) : 0,
-				take: options && options.take ? (options.take) : 10
-			});
-			query.setFindOptions({
-				...(
-					(options && options.select) ? {
-						select: options.select
-					} : {}
-				),
-				...(
-					(options && options.relations) ? {
-						relations: options.relations
-					} : {}
-				),
+				take: options && options.take ? (options.take) : 10,
 				/**
 				 * Specifies what relations should be loaded.
 				 *
@@ -115,6 +102,16 @@ export abstract class CrudService<T extends BaseEntity>
 				...(
 					(options && options.join) ? {
 						join: options.join
+					} : {}
+				),
+				...(
+					(options && options.select) ? {
+						select: options.select
+					} : {}
+				),
+				...(
+					(options && options.relations) ? {
+						relations: options.relations
 					} : {}
 				),
 				...(
@@ -128,8 +125,6 @@ export abstract class CrudService<T extends BaseEntity>
 					} : {}
 				),
 			});
-			console.log(options, moment().format('DD.MM.YYYY HH:mm:ss'));
-			const [items, total] = await query.getManyAndCount();
 			return { items, total };
 		} catch (error) {
 			console.log(error);

@@ -3,7 +3,7 @@ import { NbMenuItem } from '@nebular/theme';
 import { filter } from 'rxjs/operators';
 import { tap } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
-import { ActivatedRoute, Params } from '@angular/router';
+import { ActivatedRoute, Params, Router } from '@angular/router';
 import { IOrganization } from '@gauzy/contracts';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslationBaseComponent } from '../../../../@shared/language-base';
@@ -24,8 +24,9 @@ export class UpworkComponent
 	organization: IOrganization;
 
 	constructor(
+		private readonly _router: Router,
 		public readonly translateService: TranslateService,
-		private readonly _router: ActivatedRoute,
+		private readonly _activatedRoute: ActivatedRoute,
 		private readonly _upworkStore: UpworkStoreService,
 		private readonly _store: Store
 	) {
@@ -36,7 +37,7 @@ export class UpworkComponent
 		this._loadTabs();
 		this._applyTranslationOnTabsActions();
 
-		this._router.params
+		this._activatedRoute.params
 			.pipe(
 				tap(
 					(params: Params) => this.integrationId = params['id']
@@ -131,4 +132,11 @@ export class UpworkComponent
 	}
 
 	ngOnDestroy(): void { }
+
+	/**
+	 * Navigate to the "Integrations" page.
+	 */
+	navigateToIntegrations(): void {
+		this._router.navigate(['/pages/integrations']);
+	}
 }

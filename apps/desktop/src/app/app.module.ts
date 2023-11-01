@@ -37,13 +37,16 @@ import {
 	AuthService,
 	LanguageInterceptor,
 	Store,
-	AlwaysOnModule
+	AlwaysOnModule,
+	GAUZY_ENV
 } from '@gauzy/desktop-ui-lib';
 import { NbCardModule, NbButtonModule } from '@nebular/theme';
 import { RouterModule } from '@angular/router';
 import { HTTP_INTERCEPTORS } from '@angular/common/http';
 import * as Sentry from "@sentry/angular";
 import { Router } from '@angular/router';
+import { environment as gauzyEnvironment } from '@env/environment';
+import { environment } from '../environments/environment';
 
 @NgModule({
 	declarations: [AppComponent],
@@ -130,7 +133,14 @@ import { Router } from '@angular/router';
 			useClass: TimeoutInterceptor,
 			multi: true
 		},
-		{ provide: DEFAULT_TIMEOUT, useValue: 80000 }
+		{ provide: DEFAULT_TIMEOUT, useValue: 80000 },
+		{
+			provide: GAUZY_ENV,
+			useValue: {
+				...gauzyEnvironment,
+				...environment,
+			},
+		},
 	],
 	bootstrap: [AppComponent],
 })

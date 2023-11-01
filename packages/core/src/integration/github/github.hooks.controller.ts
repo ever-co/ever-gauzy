@@ -12,20 +12,62 @@ export class GitHubHooksController {
     ) { }
 
     /**
+     * Handles the 'installation.deleted' event.
      *
-     * @param context
+     * @param context - The context object containing information about the event.
      */
-    @Hook(['issues.opened'])
-    async issuesOpened(context: Context) {
-        await this._githubHooksService.issuesOpened(context);
+    @Hook(['installation.deleted'])
+    async installationDeleted(context: Context) {
+        if (!context.isBot) {
+            await this._githubHooksService.installationDeleted(context);
+        }
     }
 
     /**
+     * Handles the 'issues.opened' event.
      *
-     * @param context
+     * @param context - The context object containing information about the event.
+     */
+    @Hook(['issues.opened'])
+    async issuesOpened(context: Context) {
+        if (!context.isBot) {
+            await this._githubHooksService.issuesOpened(context);
+        }
+    }
+
+    /**
+     * Handles the 'issues.edited' event.
+     *
+     * @param context - The context object containing information about the event.
      */
     @Hook(['issues.edited'])
     async issuesEdited(context: Context) {
-        await this._githubHooksService.issuesEdited(context);
+        if (!context.isBot) {
+            await this._githubHooksService.issuesEdited(context);
+        }
+    }
+
+    /**
+     * Handles the 'issues.labeled' event.
+     *
+     * @param context - The context object containing information about the event.
+     */
+    @Hook(['issues.labeled'])
+    async issuesLabeled(context: Context) {
+        if (!context.isBot) {
+            await this._githubHooksService.issuesLabeled(context);
+        }
+    }
+
+    /**
+     * Handles the 'issues.labeled' event.
+     *
+     * @param context - The context object containing information about the event.
+     */
+    @Hook(['issues.unlabeled'])
+    async issuesUnlabeled(context: Context) {
+        if (!context.isBot) {
+            await this._githubHooksService.issuesUnlabeled(context);
+        }
     }
 }

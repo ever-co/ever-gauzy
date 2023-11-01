@@ -162,6 +162,7 @@ export enum PermissionsEnum {
 	ALLOW_MODIFY_TIME = 'ALLOW_MODIFY_TIME',
 	ALLOW_MANUAL_TIME = 'ALLOW_MANUAL_TIME',
 	DELETE_SCREENSHOTS = 'DELETE_SCREENSHOTS',
+	ORG_MEMBER_LAST_LOG_VIEW = 'ORG_MEMBER_LAST_LOG_VIEW',
 }
 
 export const PermissionGroups = {
@@ -270,6 +271,7 @@ export const PermissionGroups = {
 		PermissionsEnum.ALLOW_MANUAL_TIME,
 		PermissionsEnum.DELETE_SCREENSHOTS,
 		PermissionsEnum.ACCESS_DELETE_ACCOUNT,
+		PermissionsEnum.ORG_MEMBER_LAST_LOG_VIEW,
 	],
 
 	//Readonly permissions, are only enabled for Super Admin/Admin role

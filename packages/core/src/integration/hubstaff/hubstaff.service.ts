@@ -67,7 +67,7 @@ import {
 	IntegrationMapSyncTimeSlotCommand
 } from 'integration-map/commands';
 import { IntegrationTenantService } from 'integration-tenant/integration-tenant.service';
-import { IntegrationTenantFirstOrCreateCommand } from 'integration-tenant/commands';
+import { IntegrationTenantUpdateOrCreateCommand } from 'integration-tenant/commands';
 import { IntegrationService } from 'integration/integration.service';
 
 @Injectable()
@@ -201,27 +201,6 @@ export class HubstaffService {
 		urlParams.append('redirect_uri', redirect_uri);
 		urlParams.append('client_secret', client_secret);
 
-		const tiedEntities = PROJECT_TIED_ENTITIES.map((entity) => Object.assign(entity, {
-			organizationId,
-			tenantId
-		}))
-
-		const entitySettings = DEFAULT_ENTITY_SETTINGS.map(
-			(settingEntity) => {
-				return Object.assign(settingEntity, {
-					organizationId,
-					tenantId
-				});
-			}
-		).map((settingEntity) =>
-			settingEntity.entity === IntegrationEntity.PROJECT
-				? {
-					...settingEntity,
-					tiedEntities: tiedEntities
-				}
-				: settingEntity
-		) as IIntegrationEntitySetting[];
-
 		/** */
 		const integration = await this._integrationService.findOneByOptions({
 			where: {
@@ -229,13 +208,34 @@ export class HubstaffService {
 			}
 		});
 
+		const tiedEntities = PROJECT_TIED_ENTITIES.map(entity => ({
+			...entity,
+			organizationId,
+			tenantId
+		}));
+
+		const entitySettings = DEFAULT_ENTITY_SETTINGS.map((settingEntity) => {
+			if (settingEntity.entity === IntegrationEntity.PROJECT) {
+				return {
+					...settingEntity,
+					tiedEntities
+				};
+			}
+			return {
+				...settingEntity,
+				organizationId,
+				tenantId
+			};
+		}) as IIntegrationEntitySetting[];
+
+
 		const tokens$ = this._httpService.post(`${HUBSTAFF_AUTHORIZATION_URL}/access_tokens`, urlParams, {
 			headers: {
 				'Content-Type': 'application/x-www-form-urlencoded'
 			}
 		}).pipe(
 			switchMap(({ data }) => this._commandBus.execute(
-				new IntegrationTenantFirstOrCreateCommand({
+				new IntegrationTenantUpdateOrCreateCommand({
 					name: IntegrationEnum.HUBSTAFF,
 					integration: {
 						provider: IntegrationEnum.HUBSTAFF
@@ -504,6 +504,9 @@ export class HubstaffService {
 						if (!due_at) {
 							due_at = new Date(moment().add(2, 'week').format('YYYY-MM-DD HH:mm:ss'));
 						}
+
+						// Step 1: Execute a command to initiate the synchronization process
+						const triggeredEvent = false;
 						return await this._commandBus.execute(
 							new IntegrationMapSyncTaskCommand({
 								entity: {
@@ -520,7 +523,7 @@ export class HubstaffService {
 								integrationId,
 								organizationId,
 								tenantId
-							})
+							}, triggeredEvent)
 						);
 					}
 				)

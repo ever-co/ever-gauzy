@@ -1,5 +1,5 @@
 import { BrowserModule } from '@angular/platform-browser';
-import { NgModule, APP_INITIALIZER, ErrorHandler } from '@angular/core';
+import { NgModule, APP_INITIALIZER, ErrorHandler, Injector } from '@angular/core';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { AppComponent } from './app.component';
 import { AppRoutingModule } from './app-routing.module';
@@ -49,7 +49,8 @@ import {
 	HttpLoaderFactory,
 	LanguageInterceptor,
 	AlwaysOnModule,
-	UnauthorizedInterceptor
+	UnauthorizedInterceptor,
+	GAUZY_ENV
 } from '@gauzy/desktop-ui-lib';
 import { NbCardModule, NbButtonModule } from '@nebular/theme';
 import { NgSelectModule } from '@ng-select/ng-select';
@@ -57,6 +58,9 @@ import { AppModuleGuard } from './app.module.guards';
 import { Router } from '@angular/router';
 import { TranslateModule, TranslateLoader } from '@ngx-translate/core';
 import * as Sentry from '@sentry/angular';
+import { environment as gauzyEnvironment } from '@env/environment';
+import { environment } from '../environments/environment';
+
 
 @NgModule({
 	declarations: [AppComponent],
@@ -149,7 +153,7 @@ import * as Sentry from '@sentry/angular';
 		{
 			provide: APP_INITIALIZER,
 			useFactory: serverConnectionFactory,
-			deps: [ServerConnectionService, Store, Router],
+			deps: [ServerConnectionService, Store, Router, Injector],
 			multi: true
 		},
 		{
@@ -168,7 +172,14 @@ import * as Sentry from '@sentry/angular';
 			deps: [Sentry.TraceService],
 			multi: true
 		},
-		{ provide: DEFAULT_TIMEOUT, useValue: 80000 }
+		{ provide: DEFAULT_TIMEOUT, useValue: 80000 },
+		{
+			provide: GAUZY_ENV,
+			useValue: {
+				...gauzyEnvironment,
+				...environment,
+			},
+		}
 	],
 	bootstrap: [AppComponent],
 	exports: [],

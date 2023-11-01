@@ -1,5 +1,9 @@
+import { IIntegrationTenant, IRelationalIntegrationTenant } from './integration.model';
 import { IBasePerTenantAndOrganizationEntityModel } from './base-entity.model';
 import { IRelationalOrganizationProject } from './organization-projects.model';
+
+export const SYNC_TAG_GITHUB = 'GitHub';
+export const SYNC_TAG_GAUZY = 'Gauzy';
 
 // Common input properties for GitHub app installation and OAuth app installation
 interface IGithubAppInstallInputCommon extends IBasePerTenantAndOrganizationEntityModel {
@@ -27,6 +31,7 @@ export interface IGithubRepository {
     full_name: string;
     private: boolean;
     visibility: string;
+    open_issues_count: number;
     owner?: {
         id: number;
         login: string;
@@ -43,6 +48,7 @@ export interface IGithubIssue {
     title: string;
     state: string;
     body: string;
+    labels: IGithubIssueLabel[];
     [x: string]: any; // Additional properties
 }
 
@@ -56,6 +62,21 @@ export interface IGithubIssueLabel {
     default: boolean;
     description: string;
     [x: string]: any; // Additional properties
+}
+
+export interface IGithubIssueCreateOrUpdatePayload {
+    repo: string;
+    owner: string;
+    issue_number?: number;
+    title: string;
+    body: string;
+    labels: Partial<IGithubIssueLabel[]>;
+}
+
+// Represents a GitHub installation
+export interface IGithubInstallation {
+    id: number;
+    node_id: string;
 }
 
 // Response containing GitHub repositories
@@ -73,11 +94,63 @@ export enum GithubPropertyMapEnum {
     EXPIRES_IN = 'expires_in',
     REFRESH_TOKEN = 'refresh_token',
     REFRESH_TOKEN_EXPIRES_IN = 'refresh_token_expires_in',
-    TOKEN_TYPE = 'token_type'
+    TOKEN_TYPE = 'token_type',
+    SYNC_TAG = 'sync_tag'
+}
+/**
+ * Represents a payload for GitHub issues, including organization and tenant information.
+ */
+export interface IGithubRepositoryPayload {
+    repository: IGithubRepository;
 }
 
 /** */
-export interface IGithubSyncIssuePayload extends IBasePerTenantAndOrganizationEntityModel, IRelationalOrganizationProject {
-    issues: IGithubIssue[];
+export interface IGithubSyncIssuePayload extends IGithubRepositoryPayload, IBasePerTenantAndOrganizationEntityModel, IRelationalOrganizationProject {
+    issues: IGithubIssue | IGithubIssue[];
+}
+
+export interface IGithubAutomationBase extends IGithubRepositoryPayload {
+    integration: IIntegrationTenant;
     repository: IGithubRepository;
+}
+
+export interface IGithubAutomationIssuePayload extends IGithubAutomationBase {
+    issue: IGithubIssue;
+}
+
+export interface IGithubInstallationDeletedPayload extends Pick<IGithubAutomationBase, 'integration'> {
+    installation: IGithubInstallation;
+    repositories: IGithubRepository[];
+}
+
+export interface IOrganizationGithubRepository extends IBasePerTenantAndOrganizationEntityModel, IRelationalIntegrationTenant {
+    repositoryId: number;
+    name: string;
+    fullName: string;
+    owner: string;
+    issuesCount: number;
+    hasSyncEnabled: boolean;
+    private: boolean;
+    status: string;
+}
+
+export interface IOrganizationGithubRepositoryFindInput extends Partial<IOrganizationGithubRepository> { }
+
+export interface IOrganizationGithubRepositoryIssue extends IBasePerTenantAndOrganizationEntityModel {
+    issueId: number;
+    issueNumber: number;
+    /** Issue Sync With Repository */
+    repository?: IOrganizationGithubRepository;
+    repositoryId?: IOrganizationGithubRepository['id'];
+}
+
+export interface IIntegrationMapSyncRepository extends IBasePerTenantAndOrganizationEntityModel, IRelationalIntegrationTenant {
+    repository: IGithubRepository;
+}
+
+export enum GithubRepositoryStatusEnum {
+    PENDING = 'pending',
+    SYNCING = 'syncing',
+    STOPPED = 'stopped',
+    ERROR = 'error'
 }

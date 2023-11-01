@@ -4,7 +4,7 @@ import { Subject, of } from 'rxjs';
 import { catchError, finalize, map, tap } from 'rxjs/operators';
 import { Observable } from 'rxjs/internal/Observable';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { IGithubRepository, IGithubRepositoryResponse, IIntegrationTenant, IOrganization } from '@gauzy/contracts';
+import { HttpStatus, IGithubRepository, IGithubRepositoryResponse, IIntegrationTenant, IOrganization } from '@gauzy/contracts';
 import { ErrorHandlingService, GithubService, Store } from './../../../../@core/services';
 
 @UntilDestroy({ checkProperties: true })
@@ -28,6 +28,17 @@ export class RepositorySelectorComponent implements AfterViewInit, OnInit, OnDes
 	public organization: IOrganization = this._store.selectedOrganization;
 	public repositories: IGithubRepository[] = [];
 	public repositories$: Observable<IGithubRepository[]>;
+
+	/*
+	* Getter & Setter for dynamic placeholder
+	*/
+	_placeholder: string;
+	get placeholder(): string {
+		return this._placeholder;
+	}
+	@Input() set placeholder(value: string) {
+		this._placeholder = value;
+	}
 
 	/** Getter & Setter */
 	private _selected: boolean = false;
@@ -124,6 +135,11 @@ export class RepositorySelectorComponent implements AfterViewInit, OnInit, OnDes
 			organizationId,
 			tenantId
 		}).pipe(
+			tap((response: IGithubRepositoryResponse) => {
+				if (response['status'] == HttpStatus.INTERNAL_SERVER_ERROR) {
+					throw new Error(`${response['message']}`);
+				}
+			}),
 			map(({ repositories }: IGithubRepositoryResponse) => repositories),
 			// Update component state with fetched repositories
 			tap((repositories: IGithubRepository[]) => {

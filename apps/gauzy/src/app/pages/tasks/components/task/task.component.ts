@@ -17,6 +17,7 @@ import {
 } from '@gauzy/contracts';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { distinctUntilChange } from '@gauzy/common-angular';
+import { HashNumberPipe } from './../../../../@shared/pipes';
 import { DeleteConfirmationComponent } from '../../../../@shared/user/forms';
 import { MyTaskDialogComponent } from './../my-task-dialog/my-task-dialog.component';
 import { TeamTaskDialogComponent } from '../team-task-dialog/team-task-dialog.component';
@@ -57,10 +58,8 @@ import {
 	templateUrl: './task.component.html',
 	styleUrls: ['task.component.scss'],
 })
-export class TaskComponent
-	extends PaginationFilterBaseComponent
-	implements OnInit, OnDestroy
-{
+export class TaskComponent extends PaginationFilterBaseComponent implements OnInit, OnDestroy {
+
 	private _refresh$: Subject<boolean> = new Subject();
 	private _tasks: ITask[] = [];
 	settingsSmartTable: object;
@@ -96,7 +95,8 @@ export class TaskComponent
 		private readonly _store: Store,
 		private readonly route: ActivatedRoute,
 		private readonly httpClient: HttpClient,
-		private readonly _errorHandlingService: ErrorHandlingService
+		private readonly _errorHandlingService: ErrorHandlingService,
+		private readonly _hashNumberPipe: HashNumberPipe
 	) {
 		super(translateService);
 		this.initTasks();
@@ -182,6 +182,9 @@ export class TaskComponent
 					filterFunction: (prefix: string) => {
 						this.setFilter({ field: 'prefix', search: prefix });
 					},
+					valuePrepareFunction: (data: number) => {
+						return this._hashNumberPipe.transform(data);
+					}
 				},
 				description: {
 					title: this.getTranslation('TASKS_PAGE.TASKS_TITLE'),
@@ -423,6 +426,8 @@ export class TaskComponent
 				? { endPoint: `${API_PREFIX}/tasks/me` }
 				: {}),
 			relations: [
+				'members',
+				'members.user',
 				'project',
 				'tags',
 				'teams',
@@ -437,7 +442,7 @@ export class TaskComponent
 			],
 			join: {
 				alias: 'task',
-				leftJoinAndSelect: {
+				leftJoin: {
 					members: 'task.members',
 					user: 'members.user',
 				},
@@ -447,20 +452,20 @@ export class TaskComponent
 				tenantId,
 				...(this.selectedProject && this.selectedProject.id
 					? {
-							...(this.viewMode === TaskListTypeEnum.SPRINT
-								? {
-										organizationSprintId: null,
-								  }
-								: {}),
-							projectId: this.selectedProject.id,
-					  }
+						...(this.viewMode === TaskListTypeEnum.SPRINT
+							? {
+								organizationSprintId: null,
+							}
+							: {}),
+						projectId: this.selectedProject.id,
+					}
 					: {}),
 				...(this.selectedEmployeeId
 					? {
-							members: {
-								id: this.selectedEmployeeId,
-							},
-					  }
+						members: {
+							id: this.selectedEmployeeId,
+						},
+					}
 					: {}),
 				...(this.filters.where ? this.filters.where : {}),
 			},
@@ -473,7 +478,7 @@ export class TaskComponent
 			},
 			finalize: () => {
 				this.dataLayoutStyle ===
-				this.componentLayoutStyleEnum.CARDS_GRID
+					this.componentLayoutStyleEnum.CARDS_GRID
 					? this._tasks.push(...this.smartTableSource.getData())
 					: (this._tasks = this.smartTableSource.getData());
 				this.storeInstance.loadAllTasks(this._tasks);
@@ -760,5 +765,5 @@ export class TaskComponent
 		}
 	}
 
-	ngOnDestroy(): void {}
+	ngOnDestroy(): void { }
 }

@@ -76,13 +76,10 @@ const windowSetting = () => {
 		height: sizes.height,
 		x: 0,
 		y: 0,
-		title: 'Gauzy Desktop',
-		show: false
+		title: process.env.DESCRIPTION ||  'Gauzy Desktop',
+		show: false,
+		icon: filesPath.iconPath
 	};
-
-	if (process.platform === 'linux') {
-		mainWindowSettings.icon = filesPath.iconPath;
-	}
 	return mainWindowSettings;
 };
 

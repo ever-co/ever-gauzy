@@ -2084,7 +2084,8 @@
 			"ORG_TASK_VIEW": "Afficher les tâches",
 			"ORG_TASK_EDIT": "Modifier les tâches",
 			"ORG_TASK_DELETE": "Supprimer les tâches",
-			"ORG_TASK_SETTING": "Paramètres de tâche"
+			"ORG_TASK_SETTING": "Paramètres de tâche",
+			"ORG_MEMBER_LAST_LOG_VIEW": "Voir le dernier journal"
 		},
 		"BILLING": "Facturation",
 		"BUDGET": "Budget",
@@ -4311,6 +4312,7 @@
 	"SETTINGS": {
 		"EMAIL_HISTORY": {
 			"EMAIL_ARCHIVED": "Email Archivé",
+			"RESEND": "Renvoyer",
 			"ARCHIVE": "Archiver",
 			"HEADER": "Histoire de l'email",
 			"FROM": "De:",
@@ -4327,7 +4329,7 @@
 			}
 		}
 	},
-	"GAUZY_MAINTENANCE": "Gauzy @ Entretien.",
+	"GAUZY_MAINTENANCE": "{{ companySite }} @ Entretien.",
 	"LEGAL": {
 		"PRIVACY_POLICY": "Politique de confidentialité",
 		"TERMS_AND_CONDITIONS": "Conditions Générales"

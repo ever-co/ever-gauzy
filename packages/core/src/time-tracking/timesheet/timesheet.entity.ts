@@ -90,12 +90,6 @@ export class Timesheet extends TenantOrganizationBaseEntity
 	@Column({ default: TimesheetStatus.PENDING })
 	status: string;
 
-	@ApiPropertyOptional({ type: () => 'timestamptz' })
-	@IsOptional()
-	@IsDateString()
-	@Index()
-	@Column({ nullable: true })
-	deletedAt?: Date;
 
 	/*
 	|--------------------------------------------------------------------------

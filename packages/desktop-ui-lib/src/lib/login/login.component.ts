@@ -17,6 +17,8 @@ import { ElectronService } from '../electron/services';
 import { LanguageSelectorService } from '../language/language-selector.service';
 import { from, tap } from 'rxjs';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { GAUZY_ENV } from '../constants/app.constants';
+import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -35,7 +37,11 @@ export class NgxLoginComponent extends NbLoginComponent implements OnInit {
 		public readonly router: Router,
 		private _languageSelectorService: LanguageSelectorService,
 		private _ngZone: NgZone,
-		@Inject(NB_AUTH_OPTIONS) options
+		@Inject(NB_AUTH_OPTIONS)
+		options: any,
+		private readonly _domSanitizer: DomSanitizer,
+		@Inject(GAUZY_ENV)
+		private readonly _environment: any
 	) {
 		super(nbAuthService, options, cdr, router);
 	}
@@ -74,6 +80,12 @@ export class NgxLoginComponent extends NbLoginComponent implements OnInit {
 	public register(): void {
 		this.electronService.shell.openExternal(
 			'https://app.gauzy.co/#/auth/register'
+		);
+	}
+
+	public get logoUrl(): SafeResourceUrl {
+		return this._domSanitizer.bypassSecurityTrustResourceUrl(
+			this._environment.PLATFORM_LOGO
 		);
 	}
 }

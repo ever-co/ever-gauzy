@@ -10,11 +10,10 @@ import { TranslationBaseComponent } from '../language-base';
 	templateUrl: './no-data-message.component.html',
 	styleUrls: ['./no-data-message.component.scss']
 })
-export class NoDataMessageComponent extends TranslationBaseComponent implements 
-	OnInit {
-	
-	@Input()
-	message: string;
+export class NoDataMessageComponent extends TranslationBaseComponent implements OnInit {
+
+	@Input() title: string = this.getTranslation('SM_TABLE.NO_DATA_MESSAGE');
+	@Input() message: string;
 
 	constructor(
 		public readonly translateService: TranslateService
@@ -22,7 +21,5 @@ export class NoDataMessageComponent extends TranslationBaseComponent implements
 		super(translateService);
 	}
 
-	ngOnInit() {
-		
-	}
+	ngOnInit() { }
 }

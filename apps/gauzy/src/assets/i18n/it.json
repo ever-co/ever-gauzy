@@ -2083,7 +2083,8 @@
 			"ORG_TASK_VIEW": "Visualizza le attività",
 			"ORG_TASK_EDIT": "Modifica Compiti",
 			"ORG_TASK_DELETE": "Elimina compiti",
-			"ORG_TASK_SETTING": "Impostazioni attività"
+			"ORG_TASK_SETTING": "Impostazioni attività",
+			"ORG_MEMBER_LAST_LOG_VIEW": "Visualizza l'ultimo registro"
 		},
 		"BILLING": "Fatturazione",
 		"BUDGET": "Bilancio",
@@ -2818,7 +2819,7 @@
 		"INVOICES_PER_PAGE": "Fatture per pagina",
 		"ESTIMATES_PER_PAGE": "Stime per pagina",
 		"APPLY_DISCOUNT_AFTER_TAX": "Applicare lo sconto dopo le tasse",
-		"SELECT_INVOICE_TO_VIEW_HISTORY": "Seleziona una fattura per visualizzare la sua cronologia",
+		"SELECT_INVOICE_TO_VIEW_HISTORY": "seleziona una fattura per visualizzarne lo storico",
 		"INVOICE_SENT_TO": "Fattura inviata a '{{ name }}'",
 		"ESTIMATE_SENT_TO": "Preventivo inviato a '{{ name }}'",
 		"INVOICE": "Fattura",
@@ -2909,7 +2910,7 @@
 			"REJECTED": "Rifiutato",
 			"ACCEPTED_STATUS": "Stato accettato",
 			"ESTIMATE_CONVERT": "Stima Convertita",
-			"SELECT_ESTIMATE_TO_VIEW_HISTORY": "Seleziona un preventivo per visualizzarne la cronologia",
+			"SELECT_ESTIMATE_TO_VIEW_HISTORY": "Seleziona un preventivo per visualizzarne lo storico",
 			"ESTIMATE_ACCEPTED": "Stima accettata",
 			"ESTIMATE_REJECTED": "Preventivo respinto",
 			"ERROR": "Si è verificato un errore",
@@ -4310,6 +4311,7 @@
 	"SETTINGS": {
 		"EMAIL_HISTORY": {
 			"EMAIL_ARCHIVED": "Email archiviata",
+			"RESEND": "Riinvia",
 			"ARCHIVE": "Archivio",
 			"HEADER": "Cronologia delle email",
 			"FROM": "Da:",
@@ -4326,7 +4328,7 @@
 			}
 		}
 	},
-	"GAUZY_MAINTENANCE": "Gauzy @ Manutenzione",
+	"GAUZY_MAINTENANCE": "{{ companySite }} @ Manutenzione",
 	"LEGAL": {
 		"PRIVACY_POLICY": "Politica sulla privacy",
 		"TERMS_AND_CONDITIONS": "Termini e condizioni"

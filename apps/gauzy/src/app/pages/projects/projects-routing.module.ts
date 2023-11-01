@@ -81,7 +81,8 @@ const routes: Routes = [
 								'organization',
 								'members.user',
 								'tags',
-								'teams'
+								'teams',
+								'repository'
 							],
 						}
 					},

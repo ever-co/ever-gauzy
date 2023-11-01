@@ -1,6 +1,7 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { NbDialogService } from '@nebular/theme';
 import {
+	EmailStatusEnum,
 	IEmailHistory,
 	IEmployee,
 	IOrganization,
@@ -41,6 +42,8 @@ export class EmailHistoryComponent extends TranslationBaseComponent
 	disableLoadMore: boolean = false;
 	totalNoPage: number;
 	nextDataLoading: boolean = false;
+	EmailStatusEnum: typeof EmailStatusEnum = EmailStatusEnum
+
 
 	organizationContacts: IOrganizationContact[] = [];
 	emails: IEmailHistory[] = [];
@@ -208,6 +211,27 @@ export class EmailHistoryComponent extends TranslationBaseComponent
 		}
 	}
 
+	async resend() {
+		if (!this.selectedEmail) {
+			return;
+		}
+		try {
+			const { organizationId, tenantId } = this.selectedEmail;
+			await this.emailService.resend({
+				id: this.selectedEmail.id,
+				organizationId,
+				tenantId
+			});
+			this.toastrService.success(
+				this.getTranslation('SETTINGS.EMAIL_HISTORY.RESEND')
+			);
+		} catch (error) {
+			this.toastrService.danger(error);
+		} finally {
+			this.emails$.next(true);
+		}
+	}
+
 	getEmailDate(createdAt: string): string {
 		const date = createdAt.slice(0, 10);
 		const time = createdAt.slice(11, 19);
@@ -223,23 +247,24 @@ export class EmailHistoryComponent extends TranslationBaseComponent
 		this.emails$.next(true);
 	}
 
-	getUrl(email: string): string {
+	getUrl(email: IEmailHistory): string {
 		let employee: IEmployee;
 		let organizationContact: IOrganizationContact;
 
 		if (this.employees) {
-			employee = this.employees.find((e) => e.user.email === email);
+			employee = this.employees.find((e) => e.user.email === email.email);
 		}
 		if (this.organizationContacts) {
 			organizationContact = this.organizationContacts.find(
-				(oc) => oc.primaryEmail === email
+				(oc) => oc.primaryEmail === email.email
 			);
 		}
-
 		if (employee) {
 			return employee.user.imageUrl;
 		} else if (organizationContact) {
 			return organizationContact.imageUrl;
+		} else if (!email.user) {
+			return '../../../../assets/images/logos/ever.jpg';
 		} else {
 			return '../../../../assets/images/avatars/avatar-default.svg';
 		}

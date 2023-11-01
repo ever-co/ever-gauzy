@@ -1,0 +1,116 @@
+<nb-card
+	class="card-scroll"
+	[nbSpinner]="loading"
+	nbSpinnerStatus="primary"
+	nbSpinnerSize="large"
+>
+	<nb-card-header class="d-flex flex-column pb-0">
+		<div class="card-header-title">
+			<h4>
+				<ngx-header-title [allowEmployee]="false">
+					{{ 'INTEGRATIONS.TITLE' | translate }}
+				</ngx-header-title>
+			</h4>
+		</div>
+		<div class="gauzy-button-container">
+			<ngx-gauzy-button-action
+				[buttonTemplateVisible]="visibleButton"
+				[hasLayoutSelector]="false"
+			></ngx-gauzy-button-action>
+		</div>
+		<div class="columns-header row align-items-center">
+			<div class="col-md-6 p-0 float-left text-truncate">
+				{{ 'SM_TABLE.NAME' | translate }}
+			</div>
+			<div class="col-md-2 p-0 float-left text-truncate">
+				{{ 'SM_TABLE.LAST_SYNC_DATE' | translate }}
+			</div>
+			<div class="col-md-2 p-0 text-right text-truncate">
+				{{ 'SM_TABLE.STATUS' | translate }}
+			</div>
+		</div>
+	</nb-card-header>
+	<nb-card-body>
+		<div class="table-scroll-container">
+			<ng-container *ngIf="(integrations$ | async) as integrations">
+				<ng-template [ngIf]="integrations?.length > 0" [ngIfElse]="notFoundTemplate">
+					<ng-container *ngFor="let integration of integrations">
+						<nb-card>
+							<nb-card-body class="card-body-table">
+								<div class="col-2 p-0 float-left text-truncate">
+									<img
+										[alt]="[integration?.integration?.title]"
+										[src]="integration?.integration?.fullImgUrl"
+										[title]=" integration?.integration?.name | replace : '_' : ' '"
+										height="100%"
+										width="100%"
+									/>
+								</div>
+								<div class="col-4 pl-3 float-left text-truncate">
+									<div class="title">
+										{{ integration?.name | replace : '_' : ' ' }}
+									</div>
+									<div class="description">
+										{{ getProviderDescription(integration?.integration) }}
+									</div>
+								</div>
+								<div class="col-2 p-0 float-left text-truncate last-sync">
+									{{ (integration?.lastSyncedAt || integration?.updatedAt)  | dateTimeFormat }}
+								</div>
+								<div class="col-2 p-0 text-right text-truncate">
+									<div class="badge" [ngClass]="integration?.isActive ? 'badge-success': 'badge-danger'">
+										{{ (integration?.isActive ? 'INTEGRATIONS.ENABLED' : 'INTEGRATIONS.DISABLED') | translate }}
+									</div>
+								</div>
+								<div class="col-2 p-0 text-right">
+									<ng-container *ngxPermissionsOnly="['ALL_ORG_EDIT', 'INTEGRATION_VIEW']">
+										<button
+											(click)="viewIntegration(integration)"
+											class="action primary"
+											nbButton
+											size="small"
+											status="basic"
+										>
+											<nb-icon class="mr-1" icon="eye-outline"></nb-icon>
+											{{ 'BUTTONS.VIEW' | translate }}
+										</button>
+										<button
+											(click)="deleteIntegration(integration)"
+											[nbTooltip]="'BUTTONS.DELETE' | translate"
+											class="action"
+											nbButton
+											size="small"
+											status="basic"
+										>
+											<nb-icon icon="trash-2-outline" status="danger"></nb-icon>
+										</button>
+									</ng-container>
+								</div>
+							</nb-card-body>
+						</nb-card>
+					</ng-container>
+				</ng-template>
+				<ng-template #notFoundTemplate>
+					<div class="no-data">
+						<ngx-no-data-message
+							[title]="'INTEGRATIONS.MESSAGE.NO_INTEGRATIONS' | translate"
+						></ngx-no-data-message>
+					</div>
+				</ng-template>
+			</ng-container>
+		</div>
+	</nb-card-body>
+</nb-card>
+<ng-template #visibleButton>
+	<ng-container *ngxPermissionsOnly="['ALL_ORG_EDIT', 'INTEGRATION_VIEW']">
+		<button
+			(click)="navigateToNewIntegrations()"
+			nbButton
+			size="small"
+			status="success"
+		>
+			<nb-icon icon="plus-outline"></nb-icon>
+			{{ 'BUTTONS.ADD_INTEGRATION' | translate }}
+		</button>
+	</ng-container>
+</ng-template>

@@ -150,20 +150,16 @@ export class TimeOffRequestService extends TenantAwareCrudService<TimeOffRequest
 	 */
 	public async pagination(options: any) {
 		try {
-			const query = this.repository.createQueryBuilder('time_off_request');
-			query.setFindOptions({
-				skip: options && options.skip ? (options.take * (options.skip - 1)) : 0,
-				take: options && options.take ? (options.take) : 10
-			});
+			const query = this.repository.createQueryBuilder(this.alias);
+			// Set query options
 			if (isNotEmpty(options)) {
-				if (isNotEmpty(options.join)) {
-					query.setFindOptions({ join: options.join });
-				}
-				if (isNotEmpty(options.relations)) {
-					query.setFindOptions({
-						relations: options.relations
-					});
-				}
+				query.setFindOptions({
+					skip: options.skip ? options.take * (options.skip - 1) : 0,
+					take: options.take ? options.take : 10,
+
+					...(options.join ? { join: options.join } : {}),
+					...(options.relations ? { relations: options.relations } : {}),
+				});
 			}
 			query.where((qb: SelectQueryBuilder<TimeOffRequest>) => {
 				qb.andWhere(
@@ -217,16 +213,16 @@ export class TimeOffRequestService extends TenantAwareCrudService<TimeOffRequest
 						isNotEmpty(where.isHoliday) &&
 						isNotEmpty(Boolean(JSON.parse(where.isHoliday)))
 					) {
-						qb.andWhere({ isHoliday : false });
+						qb.andWhere({ isHoliday: false });
 					}
 					if (isNotEmpty(where.includeArchived)) {
 						qb.andWhere({
-							isArchived : Boolean(JSON.parse(where.includeArchived))
+							isArchived: Boolean(JSON.parse(where.includeArchived))
 						});
 					}
 					if (isNotEmpty(where.status)) {
 						qb.andWhere({
-							status : where.status
+							status: where.status
 						});
 					}
 					qb.andWhere(
@@ -235,10 +231,10 @@ export class TimeOffRequestService extends TenantAwareCrudService<TimeOffRequest
 								const keywords: string[] = where.user.name.split(' ');
 								keywords.forEach((keyword: string, index: number) => {
 									web.orWhere(`LOWER("user"."firstName") like LOWER(:keyword_${index})`, {
-										[`keyword_${index}`]:`%${keyword}%`
+										[`keyword_${index}`]: `%${keyword}%`
 									});
 									web.orWhere(`LOWER("user"."lastName") like LOWER(:${index}_keyword)`, {
-										[`${index}_keyword`]:`%${keyword}%`
+										[`${index}_keyword`]: `%${keyword}%`
 									});
 								});
 							}
@@ -259,7 +255,7 @@ export class TimeOffRequestService extends TenantAwareCrudService<TimeOffRequest
 									}
 								});
 								web.andWhere(`LOWER("policy"."name") like LOWER(:name)`, {
-									name:`%${where.policy.name}%`
+									name: `%${where.policy.name}%`
 								});
 							}
 						})

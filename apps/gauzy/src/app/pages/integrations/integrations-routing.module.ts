@@ -1,20 +1,41 @@
 import { NgModule } from '@angular/core';
 import { Routes, RouterModule } from '@angular/router';
+import { IntegrationLayoutComponent } from './layout/layout.component';
 import { IntegrationsComponent } from './integrations.component';
+import { IntegrationListComponent } from './components/integration-list/list.component';
 
 const routes: Routes = [
 	{
-		path: 'new',
-		component: IntegrationsComponent,
-		data: {
-			selectors: {
-				project: false,
-				team: false,
-				employee: false,
-				date: false,
-				organization: false
+		path: '',
+		component: IntegrationLayoutComponent,
+		children: [
+			{
+				path: '',
+				component: IntegrationListComponent,
+				data: {
+					selectors: {
+						project: false,
+						team: false,
+						employee: false,
+						date: false,
+						organization: true
+					}
+				}
+			},
+			{
+				path: 'new',
+				component: IntegrationsComponent,
+				data: {
+					selectors: {
+						project: false,
+						team: false,
+						employee: false,
+						date: false,
+						organization: false
+					}
+				}
 			}
-		}
+		]
 	},
 	/** Integrations List */
 	{
@@ -33,7 +54,10 @@ const routes: Routes = [
 		path: 'gauzy-ai',
 		loadChildren: () => import('./gauzy-ai/gauzy-ai.module').then(
 			(m) => m.GauzyAIModule
-		)
+		),
+		data: {
+			selectors: false
+		}
 	},
 	{
 		path: 'github',
@@ -41,13 +65,7 @@ const routes: Routes = [
 			(m) => m.GithubModule
 		),
 		data: {
-			selectors: {
-				project: true,
-				team: true,
-				employee: false,
-				date: false,
-				organization: false,
-			}
+			selectors: false
 		}
 	}
 ];

@@ -2,7 +2,7 @@
 	<nb-card-body>
 		<form [formGroup]="form">
 			<nb-tabset>
-				<nb-tab [tabTitle]="'ORGANIZATIONS_PAGE.MAIN' | translate">
+				<nb-tab [tabTitle]="'ORGANIZATIONS_PAGE.MAIN' | translate" [tabIcon]="'person-outline'">
 					<div class="project-tab-container">
 						<div class="project-image-container">
 							<div class="project-image-photo">
@@ -592,7 +592,7 @@
 								<div class="col-4">
 									<div class="h-12 w-12 flex-shrink-0">
 										<ngx-github-repository-selector
-											[sourceId]="parsedInt(integrationMap?.sourceId)"
+											[sourceId]="project?.repository?.repositoryId"
 											[integration]="integration"
 											(onChanged)="selectRepository($event)"
 										></ngx-github-repository-selector>
@@ -601,40 +601,102 @@
 							</div>
 						</div>
 					</div>
+
+				</nb-tab>
+				<nb-tab *ngIf="integration" [tabTitle]="'ORGANIZATIONS_PAGE.AUTOMATION' | translate">
+					<form [formGroup]="projectSettingForm">
+						<div class="fields">
+							<div class="row">
+								<div class="col-4">
+									<div class="form-group">
+										<label for="isTasksAutoSync" class="label">
+											{{ 'FORM.LABELS.AUTO_SYNC_TASKS' | translate }}
+										</label>
+										<nb-toggle
+											id="isTasksAutoSync"
+											class="d-block"
+											formControlName="isTasksAutoSync"
+											status="primary"
+											labelPosition="start"
+											(change)="updateProjectAutoSyncSetting()"
+										>
+											{{ 'FORM.PLACEHOLDERS.AUTO_SYNC_TASKS' | translate }}
+										</nb-toggle>
+									</div>
+								</div>
+								<div class="col-4">
+									<div class="form-group">
+										<label for="isTasksAutoSyncOnLabel" class="label">
+											{{ 'FORM.LABELS.AUTO_SYNC_TASKS_BASED_ON_LABEL' | translate }}
+										</label>
+										<nb-toggle
+											id="isTasksAutoSyncOnLabel"
+											class="d-block"
+											formControlName="isTasksAutoSyncOnLabel"
+											status="primary"
+											labelPosition="start"
+											(change)="updateProjectAutoSyncSetting()"
+										>
+											{{ 'FORM.PLACEHOLDERS.AUTO_SYNC_TASKS_BASED_ON_LABEL' | translate }}
+										</nb-toggle>
+									</div>
+								</div>
+								<div class="col-4">
+									<div class="form-group">
+										<label for="syncTag" class="label">
+											{{ 'FORM.LABELS.AUTO_SYNC_TAG' | translate }}
+										</label>
+										<input
+											id="syncTag"
+											type="text"
+											nbInput
+											fullWidth
+											formControlName="syncTag"
+											[placeholder]="'FORM.PLACEHOLDERS.AUTO_SYNC_TAG' | translate"
+											(change)="changeSyncTag($event)"
+										/>
+									</div>
+								</div>
+							</div>
+						</div>
+					</form>
 				</nb-tab>
 			</nb-tabset>
-			<div class="form-group action-buttons">
-				<button
-					class="mr-3"
-					(click)="navigateToCancelProject()"
-					nbButton
-					status="basic"
-					outline
-				>
-					{{ 'BUTTONS.CANCEL' | translate }}
-				</button>
-				<button
-					class="mr-3"
-					nbButton
-					status="success"
-					[disabled]="form.invalid"
-					(click)="onSubmit()"
-				>
-					{{ 'BUTTONS.SAVE' | translate }}
-				</button>
-				<button
-					*ngIf="
-						form.get('taskListType').value ===
-							TaskListTypeEnum.SPRINT && project
-					"
-					nbButton
-					class="float-right"
-					status="success"
-					(click)="openTasksSettings()"
-				>
-					{{ 'BUTTONS.MANAGE_SPRINTS' | translate }}
-				</button>
-			</div>
+			<ng-container [ngTemplateOutlet]="actionButtons"></ng-container>
 		</form>
 	</nb-card-body>
 </nb-card>
+
+<ng-template #actionButtons >
+	<div class="form-group action-buttons">
+		<button
+			class="mr-3"
+			(click)="navigateToCancelProject()"
+			nbButton
+			status="basic"
+			outline
+		>
+			{{ 'BUTTONS.CANCEL' | translate }}
+		</button>
+		<button
+			class="mr-3"
+			nbButton
+			status="success"
+			[disabled]="form.invalid"
+			(click)="onSubmit()"
+		>
+			{{ 'BUTTONS.SAVE' | translate }}
+		</button>
+		<ng-template [ngIf]="project">
+			<button
+				*ngIf="form.get('taskListType').value === TaskListTypeEnum.SPRINT"
+				nbButton
+				class="float-right"
+				status="success"
+				(click)="openTasksSettings()"
+			>
+				{{ 'BUTTONS.MANAGE_SPRINTS' | translate }}
+			</button>
+		</ng-template>
+	</div>
+</ng-template>

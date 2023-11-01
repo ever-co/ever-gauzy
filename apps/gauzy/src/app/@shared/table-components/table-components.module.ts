@@ -42,6 +42,10 @@ import { ProjectOrganizationEmployeesComponent } from './project-organization-em
 import { PhoneUrlComponent } from './phone-url/phone-url.component';
 import { AllowScreenshotCaptureComponent } from './allow-screenshot-capture/allow-screenshot-capture.component';
 import { NumberEditorComponent } from './editors/number-editor.component';
+import { ClickableLinkComponent } from './clickable-link/clickable-link.component';
+import { TrustHtmlLinkComponent } from './trust-html/trust-html.component';
+import { GithubAutoSyncSwitchComponent } from './github/auto-sync-switch/auto-sync-switch.component';
+import { GithubRepositoryComponent } from './github/repository/repository.component';
 
 @NgModule({
 	imports: [
@@ -88,7 +92,11 @@ import { NumberEditorComponent } from './editors/number-editor.component';
 		PhoneUrlComponent,
 		AllowScreenshotCaptureComponent,
 		// smart table field editor
-		NumberEditorComponent
+		NumberEditorComponent,
+		ClickableLinkComponent,
+		TrustHtmlLinkComponent,
+		GithubRepositoryComponent,
+		GithubAutoSyncSwitchComponent
 	],
 	exports: [
 		NotesWithTagsComponent,
@@ -108,7 +116,11 @@ import { NumberEditorComponent } from './editors/number-editor.component';
 		PhoneUrlComponent,
 		CreateByComponent,
 		CreatedAtComponent,
-		DateViewComponent
+		DateViewComponent,
+		ClickableLinkComponent,
+		TrustHtmlLinkComponent,
+		GithubRepositoryComponent,
+		GithubAutoSyncSwitchComponent
 	],
 	providers: []
 })

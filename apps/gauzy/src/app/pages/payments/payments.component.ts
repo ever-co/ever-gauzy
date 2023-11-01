@@ -126,8 +126,8 @@ export class PaymentsComponent extends PaginationFilterBaseComponent
 				distinctUntilChange(),
 				tap(
 					([organization]) =>
-						(this.currency =
-							organization.currency || ENV.DEFAULT_CURRENCY)
+					(this.currency =
+						organization.currency || ENV.DEFAULT_CURRENCY)
 				),
 				tap(([organization, dateRange, project]) => {
 					this.organization = organization;
@@ -148,11 +148,11 @@ export class PaymentsComponent extends PaginationFilterBaseComponent
 			)
 			.subscribe();
 		this._refresh$.pipe(
-				filter(() => this.dataLayoutStyle === ComponentLayoutStyleEnum.CARDS_GRID),
-				tap(() => this.refreshPagination()),
-				tap(() => this.payments = []),
-				untilDestroyed(this)
-			).subscribe();
+			filter(() => this.dataLayoutStyle === ComponentLayoutStyleEnum.CARDS_GRID),
+			tap(() => this.refreshPagination()),
+			tap(() => this.payments = []),
+			untilDestroyed(this)
+		).subscribe();
 	}
 
 	setView() {
@@ -257,8 +257,8 @@ export class PaymentsComponent extends PaginationFilterBaseComponent
 						recordedByName: recordedBy ? recordedBy.name : null,
 						paymentMethodEnum: paymentMethod
 							? this.getTranslation(
-									`INVOICES_PAGE.PAYMENTS.${paymentMethod}`
-							  )
+								`INVOICES_PAGE.PAYMENTS.${paymentMethod}`
+							)
 							: null,
 						organizationContactName: organizationContactName
 					});
@@ -320,7 +320,7 @@ export class PaymentsComponent extends PaginationFilterBaseComponent
 			const payment = await this.paymentService.add(result);
 			if (payment.invoice) {
 				const { invoice, amount, currency } = payment;
-				const action = this.getTranslation( 'INVOICES_PAGE.PAYMENTS.PAYMENT_AMOUNT_ADDED', {
+				const action = this.getTranslation('INVOICES_PAGE.PAYMENTS.PAYMENT_AMOUNT_ADDED', {
 					amount,
 					currency
 				});
@@ -581,5 +581,5 @@ export class PaymentsComponent extends PaginationFilterBaseComponent
 		});
 	}
 
-	ngOnDestroy() {}
+	ngOnDestroy() { }
 }
