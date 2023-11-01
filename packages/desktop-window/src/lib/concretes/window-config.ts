@@ -26,9 +26,7 @@ export class WindowConfig implements IWindowConfig {
 			title: '',
 			show: false,
 			center: true,
-			...(process.platform === 'linux' && {
-				icon: store.get('filePath').iconPath,
-			}),
+			icon: store.get('filePath').iconPath,
 			...options,
 		};
 	}

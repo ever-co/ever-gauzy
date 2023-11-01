@@ -314,12 +314,7 @@ export function ipcMainHandler(
 
 	ipcMain.handle('TAKE_SCREEN_CAPTURE', async (event, { quitApp }) => {
 		try {
-			await timerHandler.makeScreenshot(
-				null,
-				knex,
-				timeTrackerWindow,
-				quitApp
-			);
+			return await timerHandler.makeScreenshot(knex, quitApp);
 		} catch (error) {
 			throw new UIError('500', error, 'IPCTKSCAPTURE');
 		}

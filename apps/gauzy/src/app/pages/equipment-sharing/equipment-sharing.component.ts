@@ -157,6 +157,7 @@ export class EquipmentSharingComponent
 					(componentLayout) =>
 						componentLayout === ComponentLayoutStyleEnum.CARDS_GRID
 				),
+				tap(() => this.equipments = []),
 				tap(() => this.equipmentSharing$.next(true)),
 				untilDestroyed(this)
 			)
