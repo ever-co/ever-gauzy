@@ -42,3 +42,13 @@
 .centered {
 	justify-content: center;
 }
+
+.switch-theme {
+	position: absolute;
+	right: 0;
+	top: 0;
+}
+
+:host {
+	position: relative;
+}
