@@ -45,8 +45,7 @@ export class SwitchThemeComponent extends ThemeSelectorComponent {
 		if (!this.switchService.isAlreadyLoaded) {
 			this.ngOnInit();
 			// if there is a preferred theme in localStorage don't switch to OS theme
-			if (!this.switchService.hasAlreadyPreferredTheme)
-				this.getPreferColorOsScheme();
+			if (!this.switchService.hasAlreadyPreferredTheme) this.getPreferColorOsScheme();
 			// lockdown
 			this.switchService.isAlreadyLoaded = true;
 		}
@@ -54,11 +53,10 @@ export class SwitchThemeComponent extends ThemeSelectorComponent {
 		this.activatedRoute.queryParams
 			.pipe(
 				filter((query) => !!query.theme),
-				tap(({ theme }) => this.themeService.changeTheme(theme)),
+				tap(({ theme }) => this.handleThemeChange(theme)),
 				untilDestroyed(this)
 			)
 			.subscribe();
-
 	}
 	/**
 	 * this method help to switch to opposite current theme
@@ -77,6 +75,13 @@ export class SwitchThemeComponent extends ThemeSelectorComponent {
 		// If OS theme is light and the current theme is light too don't switched, else does switched.
 		if (window.matchMedia(this.LIGHT_OS_SCHEME).matches) {
 			if (this.isDark.state) this.switchTheme();
+		}
+	}
+	// Handle theme on theme change
+	private handleThemeChange(theme: string): void {
+		const isDarkTheme = this.isDark.state;
+		if ((theme === 'dark' && !isDarkTheme) || (theme === 'light' && isDarkTheme)) {
+			this.switchTheme();
 		}
 	}
 }
