@@ -94,6 +94,10 @@
   background: $register-background-light-color;
 }
 
+.hideGoBack {
+  visibility: hidden;
+}
+
 ::ng-deep ngx-register {
   width: 100%;
   display: flex;

@@ -13,6 +13,7 @@ import { map } from "rxjs";
 })
 export class NgxAuthComponent extends NbAuthComponent implements OnInit {
   isRegister: boolean = false;
+  hideGoBack = false;
 
   constructor (
     protected auth: NbAuthService,
@@ -24,6 +25,7 @@ export class NgxAuthComponent extends NbAuthComponent implements OnInit {
 
   updateRegisterClas (url: string) {
     this.isRegister = url === '/auth/register';
+    this.hideGoBack = !this.isRegister && url.startsWith('/auth/register');
   }
 
   ngOnInit () {
