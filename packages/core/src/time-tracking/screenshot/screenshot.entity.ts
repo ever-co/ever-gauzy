@@ -39,13 +39,6 @@ export class Screenshot extends TenantOrganizationBaseEntity
 	@Column({ nullable: true })
 	recordedAt?: Date;
 
-	@ApiPropertyOptional({ type: () => 'timestamptz' })
-	@IsOptional()
-	@IsDateString()
-	@Index()
-	@Column({ nullable: true })
-	deletedAt?: Date;
-
 	@ApiPropertyOptional({ type: () => String, enum: FileStorageProviderEnum })
 	@IsOptional()
 	@IsEnum(FileStorageProviderEnum)

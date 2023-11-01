@@ -23,10 +23,10 @@ const prepareServerUi = (): {
     let appName:string = '';
     switch (os.platform()) {
         case 'win32':
-            appName = 'gauzy-server.exe';
+			appName = `${process.env.NAME}.exe`;
             break;
         case 'darwin':
-            appName = 'gauzy-server';
+			appName = process.env.NAME;
             break;
         default:
             break;
@@ -36,5 +36,3 @@ const prepareServerUi = (): {
     };
 }
 runServerUI();
-
-

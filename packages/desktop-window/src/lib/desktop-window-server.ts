@@ -52,14 +52,12 @@ const windowSetting = () => {
 		},
 		width: 380,
 		height: 400,
-		title: '',
+		title:  process.env.DESCRIPTION || '',
 		show: false,
 		center: true
 	};
 
 	const filesPath = store.get('filePath');
-	if (process.platform === 'linux') {
-		mainWindowSettings.icon = filesPath.iconPath;
-	}
+	mainWindowSettings.icon = filesPath.iconPath;
 	return mainWindowSettings;
 };

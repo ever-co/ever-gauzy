@@ -17,7 +17,7 @@ export class AppMenu {
 		const isZoomEnabled = isZoomVisible;
 		this.menu = [
 			{
-				label: 'Gauzy',
+				label: process.env.DESCRIPTION || 'Gauzy',
 				submenu: [
 					{
 						id: 'gauzy-about',
@@ -165,7 +165,7 @@ export class AppMenu {
 							'TIMER_TRACKER.MENU.LEARN_MORE'
 						),
 						click() {
-							shell.openExternal('https://gauzy.co/');
+							shell.openExternal(process.env.COMPANY_SITE_LINK || 'https://gauzy.co/');
 						},
 					},
 					{

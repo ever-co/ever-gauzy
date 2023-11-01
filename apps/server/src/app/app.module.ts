@@ -29,7 +29,8 @@ import { NbCardModule, NbButtonModule } from '@nebular/theme';
 import { RouterModule } from '@angular/router';
 import * as Sentry from '@sentry/angular';
 import { Router } from '@angular/router';
-import { environment } from '@env/environment';
+import { environment as gauzyEnvironment } from '@env/environment';
+import  { environment } from '../environments/environment';
 
 @NgModule({
 	declarations: [AppComponent],
@@ -78,7 +79,10 @@ import { environment } from '@env/environment';
 		},
 		{
 			provide: GAUZY_ENV,
-			useValue: environment
+			useValue: {
+				...gauzyEnvironment,
+				...environment,
+			},
 		},
 	],
 	bootstrap: [AppComponent],

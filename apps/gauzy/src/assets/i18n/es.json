@@ -4329,7 +4329,7 @@
 			}
 		}
 	},
-	"GAUZY_MAINTENANCE": "Gauzy @ Mantenimiento.",
+	"GAUZY_MAINTENANCE": "{{ companySite }} @ Mantenimiento.",
 	"LEGAL": {
 		"PRIVACY_POLICY": "Política de privacidad",
 		"TERMS_AND_CONDITIONS": "Términos y condiciones"

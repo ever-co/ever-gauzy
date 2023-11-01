@@ -131,7 +131,6 @@ export class CreateTimeSlotHandler
 						web.andWhere(`"${qb.alias}"."source" = :source`, { source });
 						web.andWhere(`"${qb.alias}"."logType" = :logType`, { logType });
 						web.andWhere(`"${qb.alias}"."stoppedAt" IS NOT NULL`);
-						web.andWhere(`"${qb.alias}"."deletedAt" IS NULL`);
 					})
 				);
 				qb.addOrderBy(`"${qb.alias}"."createdAt"`, 'DESC');
@@ -162,7 +161,6 @@ export class CreateTimeSlotHandler
 							web.andWhere(`"${qb.alias}"."logType" = :logType`, { logType });
 							web.andWhere(`"${qb.alias}"."employeeId" = :employeeId`, { employeeId });
 							web.andWhere(`"${qb.alias}"."stoppedAt" IS NOT NULL`);
-							web.andWhere(`"${qb.alias}"."deletedAt" IS NULL`);
 						})
 					);
 					qb.andWhere(`"${qb.alias}"."id" IN (:...timeLogIds)`, {

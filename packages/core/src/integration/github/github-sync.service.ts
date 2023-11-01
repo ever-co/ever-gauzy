@@ -470,11 +470,9 @@ export class GithubSyncService {
         if (!project || !project.isTasksAutoSync) {
             return false;
         }
-
         if (project.isTasksAutoSyncOnLabel) {
-            return !!issue.labels.find(label => label.name === project.syncTag);
+            return !!issue.labels.find((label) => label.name.trim() === project.syncTag.trim());
         }
-
         return true;
     }
 

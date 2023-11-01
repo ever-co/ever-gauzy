@@ -84,12 +84,6 @@ export class TimeLog extends TenantOrganizationBaseEntity implements ITimeLog {
 	@Column({ update: false, nullable: true })
 	version?: string;
 
-	@ApiPropertyOptional({ type: () => 'timestamptz' })
-	@IsDateString()
-	@Index()
-	@Column({ nullable: true })
-	deletedAt?: Date;
-
 	/** Additional fields */
 	duration: number;
 	isEdited?: boolean;

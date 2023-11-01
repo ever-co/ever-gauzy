@@ -85,7 +85,7 @@ export class NgxLoginComponent extends NbLoginComponent implements OnInit {
 
 	public get logoUrl(): SafeResourceUrl {
 		return this._domSanitizer.bypassSecurityTrustResourceUrl(
-			this._environment.PLATFORM_LOGO_URL
+			this._environment.PLATFORM_LOGO
 		);
 	}
 }
