@@ -7,11 +7,12 @@ import {
 	UpdateDateColumn,
 	CreateDateColumn,
 	Column,
-	Index
+	Index,
+	DeleteDateColumn
 } from 'typeorm';
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { BaseEntityModel as IBaseEntityModel } from '@gauzy/contracts';
-import { IsBoolean, IsOptional } from 'class-validator';
+import { IsBoolean, IsDateString, IsOptional } from 'class-validator';
 
 export abstract class Model {
 	constructor(input?: any) {
@@ -45,6 +46,17 @@ export abstract class BaseEntity extends Model implements IBaseEntityModel {
 	})
 	@UpdateDateColumn()
 	updatedAt?: Date;
+
+	// Soft Delete
+	@ApiPropertyOptional({
+		type: 'string',
+		format: 'date-time',
+		example: '2018-11-21T06:20:32.232Z'
+	})
+	@IsOptional()
+	@IsDateString()
+	@DeleteDateColumn()
+	deletedAt?: Date;
 
 	// Indicates if record is active now
 	@ApiPropertyOptional({ type: Boolean, default: true })

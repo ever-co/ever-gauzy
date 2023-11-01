@@ -61,7 +61,6 @@ import {
 
 @Entity('organization_project')
 export class OrganizationProject extends TenantOrganizationBaseEntity implements IOrganizationProject {
-	deletedAt?: Date;
 
 	@Index()
 	@Column()

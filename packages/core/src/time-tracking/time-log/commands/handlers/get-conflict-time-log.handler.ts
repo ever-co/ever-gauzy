@@ -34,7 +34,6 @@ export class GetConflictTimeLogHandler
 			.where(`"${conflictQuery.alias}"."employeeId" = :employeeId`, { employeeId })
 			.andWhere(`"${conflictQuery.alias}"."tenantId" = :tenantId`, { tenantId })
 			.andWhere(`"${conflictQuery.alias}"."organizationId" = :organizationId`, { organizationId })
-			.andWhere(`"${conflictQuery.alias}"."deletedAt" IS null`)
 			.andWhere(
 				['sqlite', 'better-sqlite3'].includes(this.configService.dbConnectionOptions.type)
 					? `'${startedAt}' >= "${conflictQuery.alias}"."startedAt" and '${startedAt}' <= "${conflictQuery.alias}"."stoppedAt"`

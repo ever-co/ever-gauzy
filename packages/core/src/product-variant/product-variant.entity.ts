@@ -66,17 +66,20 @@ export class ProductVariant
 	enabled: boolean;
 
 	/*
-    |--------------------------------------------------------------------------
-    | @OneToOne 
-    |--------------------------------------------------------------------------
-    */
+	|--------------------------------------------------------------------------
+	| @OneToOne
+	|--------------------------------------------------------------------------
+	*/
 
 	/**
 	 * ProductVariantPrice
 	 */
-	@OneToOne(() => ProductVariantPrice, (variantPrice) => variantPrice.productVariant, { 
+	@OneToOne(() => ProductVariantPrice, (variantPrice) => variantPrice.productVariant, {
+		/** Eager relations are always loaded automatically when relation's owner entity is loaded using find* methods. */
 		eager: true,
-		onDelete: 'CASCADE' 
+
+		/** Database cascade action on delete. */
+		onDelete: 'CASCADE'
 	})
 	@JoinColumn()
 	price: IProductVariantPrice;
@@ -85,17 +88,20 @@ export class ProductVariant
 	 * ProductVariantSetting
 	 */
 	@OneToOne(() => ProductVariantSetting, (settings) => settings.productVariant, {
+		/** Eager relations are always loaded automatically when relation's owner entity is loaded using find* methods. */
 		eager: true,
-		onDelete: 'CASCADE' 
+
+		/** Database cascade action on delete. */
+		onDelete: 'CASCADE'
 	})
 	@JoinColumn()
 	setting: IProductVariantSetting;
 
 	/*
-    |--------------------------------------------------------------------------
-    | @ManyToOne 
-    |--------------------------------------------------------------------------
-    */
+	|--------------------------------------------------------------------------
+	| @ManyToOne
+	|--------------------------------------------------------------------------
+	*/
 
 	/**
 	 * Product
@@ -119,7 +125,8 @@ export class ProductVariant
 	 */
 	@ApiProperty({ type: () => ImageAsset })
 	@ManyToOne(() => ImageAsset, {
-		eager: true
+		/** Eager relations are always loaded automatically when relation's owner entity is loaded using find* methods. */
+		eager: true,
 	})
 	@JoinColumn()
 	image?: ImageAsset;
@@ -132,10 +139,10 @@ export class ProductVariant
 	imageId?: string;
 
 	/*
-    |--------------------------------------------------------------------------
-    | @OneToMany 
-    |--------------------------------------------------------------------------
-    */
+	|--------------------------------------------------------------------------
+	| @OneToMany
+	|--------------------------------------------------------------------------
+	*/
 
 	/**
 	 * ProductOption
@@ -147,10 +154,10 @@ export class ProductVariant
 	warehouseProductVariants?: IWarehouseProductVariant[];
 
 	/*
-    |--------------------------------------------------------------------------
-    | @ManyToMany 
-    |--------------------------------------------------------------------------
-    */
+	|--------------------------------------------------------------------------
+	| @ManyToMany
+	|--------------------------------------------------------------------------
+	*/
 
 	/**
 	 * ProductOption

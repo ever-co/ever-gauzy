@@ -70,7 +70,7 @@ export class ExpensesComponent extends PaginationFilterBaseComponent
 
 	organization: IOrganization;
 	expenses$: Subject<any> = this.subject$;
-	private _refresh$ :  Subject<any> = new Subject();
+	private _refresh$: Subject<any> = new Subject();
 
 	expensesTable: Ng2SmartTableComponent;
 	@ViewChild('expensesTable') set content(content: Ng2SmartTableComponent) {
@@ -146,11 +146,11 @@ export class ExpensesComponent extends PaginationFilterBaseComponent
 			)
 			.subscribe();
 		this._refresh$.pipe(
-				filter(() => this.dataLayoutStyle === ComponentLayoutStyleEnum.CARDS_GRID),
-				tap(() => this.refreshPagination()),
-				tap(() => this.expenses = []),
-				untilDestroyed(this)
-			).subscribe();
+			filter(() => this.dataLayoutStyle === ComponentLayoutStyleEnum.CARDS_GRID),
+			tap(() => this.refreshPagination()),
+			tap(() => this.expenses = []),
+			untilDestroyed(this)
+		).subscribe();
 
 	}
 
@@ -199,8 +199,8 @@ export class ExpensesComponent extends PaginationFilterBaseComponent
 			? [ExpenseStatusesEnum.PAID].includes(value)
 				? 'success'
 				: [ExpenseStatusesEnum.INVOICED].includes(value)
-				? 'warning'
-				: 'danger'
+					? 'warning'
+					: 'danger'
 			: null;
 		return {
 			text: this.replacePipe.transform(value, '_', ' '),
@@ -283,7 +283,7 @@ export class ExpensesComponent extends PaginationFilterBaseComponent
 					}
 				},
 				purpose: {
-					title:  this.getTranslation('POP_UPS.PURPOSE'),
+					title: this.getTranslation('POP_UPS.PURPOSE'),
 					type: 'string',
 					class: 'align-row',
 					filter: {
@@ -491,9 +491,6 @@ export class ExpensesComponent extends PaginationFilterBaseComponent
 				'project',
 				'organizationContact'
 			],
-			join: {
-				...(this.filters.join) ? this.filters.join : {}
-			},
 			where: {
 				organizationId,
 				tenantId,
@@ -519,7 +516,7 @@ export class ExpensesComponent extends PaginationFilterBaseComponent
 					categoryName: expense.category ? expense.category.name : null,
 					projectName: expense.project ? expense.project.name : null,
 					statuses: this.statusMapper(expense.status),
-					employee: { ... employeeMapper(expense) }
+					employee: { ...employeeMapper(expense) }
 				});
 			},
 			finalize: () => {
@@ -598,5 +595,5 @@ export class ExpensesComponent extends PaginationFilterBaseComponent
 		) ? (employee.fullName).trim() : ALL_EMPLOYEES_SELECTED.firstName;
 	}
 
-	ngOnDestroy() {}
+	ngOnDestroy() { }
 }
