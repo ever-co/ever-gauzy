@@ -7,9 +7,10 @@ import { IsEnum, IsOptional } from "class-validator";
  */
 export enum EmployeeRelationEnum {
     'user' = 'user',
+    'user.image' = 'user.image',
     'organizationEmploymentTypes' = 'organizationEmploymentTypes',
     'organizationPosition' = 'organizationPosition',
-	'skills' = 'skills',
+    'skills' = 'skills',
     'awards' = 'awards',
 }
 

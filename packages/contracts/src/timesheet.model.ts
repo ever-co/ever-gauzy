@@ -41,7 +41,6 @@ export interface ITimesheet extends IBasePerTenantAndOrganizationEntityModel {
 	lockedAt?: Date;
 	isBilled?: boolean;
 	status: string;
-	deletedAt?: Date;
 }
 
 export interface ITimesheetCreateInput

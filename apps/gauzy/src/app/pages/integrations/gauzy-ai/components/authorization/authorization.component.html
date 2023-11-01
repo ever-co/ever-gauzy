@@ -1,11 +1,15 @@
 <nb-card class="card-scroll">
-	<nb-card-header class="d-flex">
-		<ngx-back-navigation
-			(click)="navigateToIntegrations()"
-			[haveLink]="true"
-			class="float-left"
-		></ngx-back-navigation>
-		<h5>{{ 'MENU.GAUZY_AI' | translate }}</h5>
+	<nb-card-header class="card-header-title">
+		<div class="card-header-title">
+			<h5>
+				<ngx-back-navigation
+					class="float-left"
+					[haveLink]="true"
+					(click)="navigateToIntegrations()"
+				></ngx-back-navigation>
+				{{ 'MENU.GAUZY_AI' | translate }}
+			</h5>
+		</div>
 	</nb-card-header>
 	<nb-card-body>
 		<div class="col-xl-6 col-12">

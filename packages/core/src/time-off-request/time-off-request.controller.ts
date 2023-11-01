@@ -9,7 +9,8 @@ import {
 	Put,
 	Param,
 	HttpCode,
-	ValidationPipe
+	ValidationPipe,
+	UsePipes
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { CommandBus } from '@nestjs/cqrs';
@@ -44,12 +45,11 @@ export class TimeOffRequestController extends CrudController<TimeOffRequest> {
 	@UseGuards(PermissionGuard)
 	@Permissions(PermissionsEnum.ORG_TIME_OFF_VIEW)
 	@Get('pagination')
+	@UsePipes(new ValidationPipe({ transform: true }))
 	async pagination(
-		@Query(new ValidationPipe({
-			transform: true
-		})) options: PaginationParams<TimeOffRequest>
+		@Query() options: PaginationParams<TimeOffRequest>
 	): Promise<IPagination<ITimeOffRequest>> {
-		return this.timeOffRequestService.pagination(options);
+		return await this.timeOffRequestService.pagination(options);
 	}
 
 	/**
