@@ -24,11 +24,12 @@ export class NgxRegisterComponent extends NbRegisterComponent implements OnInit 
 	}
 
 	ngOnInit() {
-		this.route.queryParams.subscribe((params: Params) => {
-			if (params['email']) {
+		this.route.queryParams.subscribe(({ email }) => {
+			if (email) {
 				// Populate the email field based on query parameters
-				this.user.email = params['email'];
-				this.emailPopulated = true; // Set to true if email is populated
+				this.user.email = email;
+				// Detect changes
+				this.cd.detectChanges();
 			}
 		});
 	}
