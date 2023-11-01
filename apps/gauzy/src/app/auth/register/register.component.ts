@@ -1,12 +1,12 @@
-import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
-import { ActivatedRoute, Params, Router } from '@angular/router';
-import { NbAuthService, NbRegisterComponent } from '@nebular/auth';
+import { ChangeDetectorRef, Component, Inject, OnInit } from '@angular/core';
+import { ActivatedRoute, Router } from '@angular/router';
+import { NB_AUTH_OPTIONS, NbAuthOptions, NbAuthService, NbRegisterComponent } from '@nebular/auth';
 import { patterns } from '../../@shared/regex/regex-patterns.const';
 
 @Component({
 	selector: 'ngx-register',
 	templateUrl: './register.component.html',
-	styleUrls: ['./register.component.scss'],
+	styleUrls: ['./register.component.scss']
 })
 export class NgxRegisterComponent extends NbRegisterComponent implements OnInit {
 	showPassword: boolean = false;
@@ -15,12 +15,14 @@ export class NgxRegisterComponent extends NbRegisterComponent implements OnInit 
 	emailPopulated = false; // Initialize as false
 
 	constructor(
-		protected authService: NbAuthService,
-		protected cd: ChangeDetectorRef,
+		protected nbAuthService: NbAuthService,
+		protected cdr: ChangeDetectorRef,
 		protected router: Router,
-		public route: ActivatedRoute
+		protected route: ActivatedRoute,
+		@Inject(NB_AUTH_OPTIONS)
+		options: NbAuthOptions
 	) {
-		super(authService, {}, cd, router);
+		super(nbAuthService, options, cdr, router);
 	}
 
 	ngOnInit() {
@@ -28,10 +30,10 @@ export class NgxRegisterComponent extends NbRegisterComponent implements OnInit 
 			if (email) {
 				// Populate the email field based on query parameters
 				this.user.email = email;
+				this.emailPopulated = true;
 				// Detect changes
-				this.cd.detectChanges();
+				this.cdr.detectChanges();
 			}
 		});
 	}
-
 }
