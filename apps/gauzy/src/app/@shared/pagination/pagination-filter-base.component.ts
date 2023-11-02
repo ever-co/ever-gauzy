@@ -18,7 +18,9 @@ export interface IPaginationBase {
 })
 export class PaginationFilterBaseComponent extends TranslationBaseComponent implements AfterViewInit {
 
-	public firstPage: number = 1;
+	public activePage: number = 1;
+	public totalItems: number = 0;
+	public itemsPerPage: number = 10;
 	/**
 	 * Getter for minimum items per page
 	 * Can't be modified outside the class
@@ -29,9 +31,9 @@ export class PaginationFilterBaseComponent extends TranslationBaseComponent impl
 	}
 
 	private _pagination: IPaginationBase = {
-		totalItems: 0,
-		activePage: 1,
-		itemsPerPage: 10
+		totalItems: this.totalItems,
+		activePage: this.activePage,
+		itemsPerPage: this.itemsPerPage
 	};
 	public get pagination(): IPaginationBase {
 		return this._pagination;
