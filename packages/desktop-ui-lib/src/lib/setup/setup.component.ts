@@ -97,7 +97,7 @@ export class SetupComponent implements OnInit {
 		electronService.ipcRenderer.send('reset_permissions');
 
 		this.gauzyIcon = this._domSanitizer.bypassSecurityTrustResourceUrl(
-			this._environment.PLATFORM_LOGO_URL
+			this._environment.PLATFORM_LOGO
 		);
 	}
 	appName: string = this.electronService.remote.app.getName();
@@ -108,19 +108,18 @@ export class SetupComponent implements OnInit {
 	awAPI: String = 'http://localhost:5600';
 	buttonSave = false;
 	gauzyIcon: SafeResourceUrl =
-		this.appName === 'gauzy-desktop-timer' ||
-		this.appName === 'gauzy-server'
+		this.isDesktopTimer || this.isServer
 			? './assets/images/logos/logo_Gauzy.svg'
 			: '../assets/images/logos/logo_Gauzy.svg';
 	desktopFeatures: any = {
-		gauzyPlatform: this.appName === 'gauzy-desktop-timer' ? false : true,
-		timeTracking: this.appName === 'gauzy-server' ? false : true,
+		gauzyPlatform: !this.isDesktopTimer,
+		timeTracking: !this.isServer,
 	};
 
 	connectivity: any = {
-		integrated: this._isServer,
+		integrated: this.isServer,
 		custom: false,
-		live: !this._isServer,
+		live: !this.isServer,
 	};
 
 	thirdParty: any = {
@@ -137,7 +136,7 @@ export class SetupComponent implements OnInit {
 		integrated: {
 			port: '3000',
 			portUi: '4200',
-			host: '0.0.0.0'
+			host: '0.0.0.0',
 		},
 		custom: {
 			apiHost: '127.0.0.1',
@@ -202,14 +201,14 @@ export class SetupComponent implements OnInit {
 	};
 
 	runApp = false;
-	welcomeTitle = "TIMER_TRACKER.SETUP.TITLE";
-	welcomeLabel = "TIMER_TRACKER.SETUP.LABEL";
+	welcomeTitle = 'TIMER_TRACKER.SETUP.TITLE';
+	welcomeLabel = 'TIMER_TRACKER.SETUP.LABEL';
 
 	welcomeText() {
 		switch (this.appName) {
-			case 'gauzy-server':
-				this.welcomeTitle = "TIMER_TRACKER.SETUP.TITLE_SERVER";
-				this.welcomeLabel = "TIMER_TRACKER.SETUP.LABEL_SERVER"
+			case this._environment.DESKTOP_SERVER_APP_NAME:
+				this.welcomeTitle = 'TIMER_TRACKER.SETUP.TITLE_SERVER';
+				this.welcomeLabel = 'TIMER_TRACKER.SETUP.LABEL_SERVER';
 				break;
 
 			default:
@@ -319,8 +318,11 @@ export class SetupComponent implements OnInit {
 
 		try {
 			let isStarted = false;
-			if (this._isServer) {
-				this.electronService.ipcRenderer.send('start_server', gauzyConfig);
+			if (this.isServer) {
+				this.electronService.ipcRenderer.send(
+					'start_server',
+					gauzyConfig
+				);
 				isStarted = true;
 			} else {
 				isStarted = await this.electronService.ipcRenderer.invoke(
@@ -513,7 +515,15 @@ export class SetupComponent implements OnInit {
 		this.validation();
 	}
 
-	private get _isServer(): boolean {
-		return this.appName === 'gauzy-server';
+	public get isDesktopTimer(): boolean {
+		return this._environment.IS_DESKTOP_TIMER;
+	}
+
+	public get isDesktop(): boolean {
+		return this._environment.IS_DESKTOP;
+	}
+
+	public get isServer(): boolean {
+		return this._environment.IS_SERVER;
 	}
 }

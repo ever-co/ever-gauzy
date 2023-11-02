@@ -4327,7 +4327,7 @@
 			}
 		}
 	},
-	"GAUZY_MAINTENANCE": "Gauzy @ Wartung",
+	"GAUZY_MAINTENANCE": "{{ companySite }} @ Wartung",
 	"LEGAL": {
 		"PRIVACY_POLICY": "Datenschutzerklärung",
 		"TERMS_AND_CONDITIONS": "Allgemeine Geschäftsbedingungen"

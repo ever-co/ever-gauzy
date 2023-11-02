@@ -4327,7 +4327,7 @@
 			}
 		}
 	},
-	"GAUZY_MAINTENANCE": "جوزي @ الصيانة",
+	"GAUZY_MAINTENANCE": "{{ companySite }} @ الصيانة",
 	"LEGAL": {
 		"PRIVACY_POLICY": "سياسة الخصوصية",
 		"TERMS_AND_CONDITIONS": "الشروط والأحكام"

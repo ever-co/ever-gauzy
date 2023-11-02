@@ -22,7 +22,7 @@
 		"@electron/rebuild": "^3.2.10",
 		"@types/moment-duration-format": "^2.2.3",
 		"electron": "20.2.0",
-		"electron-builder": "^23.6.0",
+		"electron-builder": "^24.6.4",
 		"electron-installer-dmg": "^4.0.0",
 		"electron-packager": "^17.1.1",
 		"electron-reload": "~1.5.0",

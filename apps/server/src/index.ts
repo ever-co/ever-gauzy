@@ -17,13 +17,16 @@ import {
 	MenuItemConstructorOptions,
 	screen,
 } from 'electron';
+import { environment } from './environments/environment';
 
 // setup logger to catch all unhandled errors and submit as bug reports to our repo
 
 require('module').globalPaths.push(path.join(__dirname, 'node_modules'));
 require('sqlite3');
 
-app.setName('gauzy-server');
+process.env = Object.assign(process.env, environment);
+
+app.setName(process.env.NAME);
 
 console.log('Node Modules Path', path.join(__dirname, 'node_modules'));
 
@@ -83,8 +86,8 @@ let isServerRun: boolean;
 let willQuit = false;
 
 const updater = new DesktopUpdater({
-	repository: 'ever-gauzy-server',
-	owner: 'ever-co',
+	repository: process.env.REPO_NAME,
+	owner: process.env.REPO_OWNER,
 	typeRelease: 'releases',
 });
 
@@ -108,18 +111,21 @@ const executableName = path.basename(process.execPath);
 
 const eventErrorManager = ErrorEventManager.instance;
 const report = new ErrorReport(
-	new ErrorReportRepository('ever-co', 'ever-gauzy-server')
+	new ErrorReportRepository(
+		process.env.REPO_OWNER,
+		process.env.REPO_NAME
+	)
 );
 
 /* Load translations */
 TranslateLoader.load(__dirname + '/assets/i18n/');
 /* Setting the app user model id for the app. */
 if (process.platform === 'win32') {
-	app.setAppUserModelId('com.ever.gauzyserver');
+	app.setAppUserModelId(process.env.APP_ID);
 }
 
 LocalStore.setFilePath({
-	iconPath: path.join(__dirname, 'icons', 'icon.png'),
+	iconPath: path.join(__dirname, 'assets', 'icons', 'menu', 'icon.png'),
 });
 
 // Set unlimited listeners
@@ -306,7 +312,7 @@ const getEnvApi = () => {
 
 const createTray = () => {
 	const iconNativePath = nativeImage.createFromPath(
-		path.join(__dirname, 'assets', 'icons', 'icon.png')
+		path.join(__dirname, 'assets', 'icons', 'tray', 'icon.png')
 	);
 	iconNativePath.resize({ width: 16, height: 16 });
 	tray = new Tray(iconNativePath);
@@ -610,7 +616,7 @@ app.on('before-quit', async (e) => {
 	if (isServerRun) {
 		const exitConfirmationDialog = new DialogStopServerExitConfirmation(
 			new DesktopDialog(
-				'Gauzy Server',
+				process.env.DESCRIPTION,
 				TranslateService.instant('TIMER_TRACKER.DIALOG.EXIT'),
 				serverWindow
 			)

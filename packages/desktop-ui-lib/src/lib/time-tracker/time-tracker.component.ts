@@ -3,6 +3,7 @@ import {
 	Component,
 	ElementRef,
 	forwardRef,
+	Inject,
 	NgZone,
 	OnInit,
 	TemplateRef,
@@ -82,6 +83,7 @@ import {
 import { TaskDurationComponent, TaskProgressComponent } from './task-render';
 import { TaskRenderCellComponent } from './task-render/task-render-cell/task-render-cell.component';
 import { TaskStatusComponent } from './task-render/task-status/task-status.component';
+import { GAUZY_ENV } from '../constants';
 
 enum TimerStartMode {
 	MANUAL = 'manual',
@@ -203,7 +205,9 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 		private _authStrategy: AuthStrategy,
 		private _languageSelectorService: LanguageSelectorService,
 		private _translateService: TranslateService,
-		private _alwaysOnService: AlwaysOnService
+		private _alwaysOnService: AlwaysOnService,
+		@Inject(GAUZY_ENV)
+		private readonly _environment: any,
 	) {
 		this.iconLibraries.registerFontPack('font-awesome', {
 			packClass: 'fas',
@@ -682,31 +686,11 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 			}
 			asapScheduler.schedule(async () => {
 				try {
-					const promises: Promise<void>[] = [
-						this.electronService.ipcRenderer.invoke(
-							'UPDATE_SYNCED_TIMER',
-							{
-								lastTimer: timelog,
-								...lastTimer,
-							}
-						),
-						this.getTimerStatus(params),
-					];
-					if (this._startMode === TimerStartMode.MANUAL) {
-						const takeScreenCapturePromise =
-							this.electronService.ipcRenderer.invoke(
-								'TAKE_SCREEN_CAPTURE',
-								{
-									quitApp: this.quitApp,
-								}
-							);
-						promises.push(takeScreenCapturePromise);
-					}
-					const result = await Promise.allSettled(promises);
-					const size = result.length;
-					if (size === 3 && result[size - 1].status === 'rejected') {
-						await promises[size - 1];
-					}
+					await this.electronService.ipcRenderer.invoke('UPDATE_SYNCED_TIMER', {
+						lastTimer: timelog,
+						...lastTimer
+					});
+					await this.getTimerStatus(params);
 				} catch (error) {
 					this._errorHandlerService.handleError(error);
 				}
@@ -1433,7 +1417,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 						};
 						const notification = {
 							message: 'Idle time successfully deleted',
-							title: 'Gauzy',
+							title: this._environment.DESCRIPTION,
 						};
 						const isReadyForDeletion =
 							!this._isOffline && payload.timeslotIds.length > 0;
@@ -1765,6 +1749,12 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 				});
 			}
 			await this._toggle(timer, onClick);
+			if (this._startMode === TimerStartMode.MANUAL) {
+				const activities = await this.electronService.ipcRenderer.invoke('TAKE_SCREEN_CAPTURE', {
+					quitApp: this.quitApp
+				});
+				await this.sendActivities(activities);
+			}
 			await this.updateOrganizationTeamEmployee();
 			this.electronService.ipcRenderer.send('request_permission');
 		} catch (error) {
@@ -1778,13 +1768,24 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 	public async stopTimer(onClick = true, isEmergency = false): Promise<void> {
 		try {
 			const config = { quitApp: this.quitApp, isEmergency };
-			const timer = await this.electronService.ipcRenderer.invoke(
-				'STOP_TIMER',
-				config
-			);
-			await this._toggle(timer, onClick);
+			if (this._startMode === TimerStartMode.MANUAL) {
+				const activities = await this.electronService.ipcRenderer.invoke('TAKE_SCREEN_CAPTURE', config);
+				const timer = await this.electronService.ipcRenderer.invoke('STOP_TIMER', config);
+				await this.sendActivities(activities, () => this._toggle(timer, onClick));
+			} else {
+				const timer = await this.electronService.ipcRenderer.invoke('STOP_TIMER', config);
+				await this._toggle(timer, onClick);
+			}
 			this.electronService.ipcRenderer.send('update_tray_stop');
 			this._startMode = TimerStartMode.STOP;
+			if (this._isSpecialLogout) {
+				this._isSpecialLogout = false;
+				await this.logout();
+			}
+
+			if (this.quitApp) {
+				this.electronService.remote.app.quit();
+			}
 		} catch (error) {
 			console.log('[ERROR_STOP_TIMER]', error);
 		}
@@ -2367,7 +2368,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 		return afkTime;
 	}
 
-	public async sendActivities(arg): Promise<void> {
+	public async sendActivities(arg, callBack?: () => Promise<void>): Promise<void> {
 		if (this.isRemoteTimer) return;
 		// screenshot process
 		let screenshotImg = [];
@@ -2414,6 +2415,9 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 			const resActivities: any =
 				await this.timeTrackerService.pushToTimeSlot(paramActivity);
 			console.log('result of timeslot', resActivities);
+			if (callBack) {
+				await callBack();
+			}
 			const timeLogs = resActivities.timeLogs;
 			this.electronService.ipcRenderer.send('return_time_slot', {
 				timerId: arg.timerId,
@@ -2494,15 +2498,6 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 					}),
 				},
 			});
-		}
-
-		if (this._isSpecialLogout) {
-			this._isSpecialLogout = false;
-			await this.logout();
-		}
-
-		if (this.quitApp) {
-			this.electronService.remote.app.quit();
 		}
 	}
 

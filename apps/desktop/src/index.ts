@@ -13,7 +13,9 @@ import * as path from 'path';
 require('module').globalPaths.push(path.join(__dirname, 'node_modules'));
 require('sqlite3');
 
-app.setName('gauzy-desktop');
+process.env = Object.assign(process.env, environment);
+
+app.setName(process.env.NAME);
 
 console.log('Node Modules Path', path.join(__dirname, 'node_modules'));
 
@@ -97,12 +99,15 @@ const pathWindow = {
 };
 
 const updater = new DesktopUpdater({
-	repository: 'ever-gauzy-desktop',
-	owner: 'ever-co',
+	repository: process.env.REPO_NAME,
+	owner: process.env.REPO_OWNER,
 	typeRelease: 'releases',
 });
 const report = new ErrorReport(
-	new ErrorReportRepository('ever-co', 'ever-gauzy-desktop')
+	new ErrorReportRepository(
+		process.env.REPO_OWNER,
+		process.env.REPO_NAME
+	)
 );
 const eventErrorManager = ErrorEventManager.instance;
 
@@ -114,7 +119,7 @@ let serverDesktop = null;
 let dialogErr = false;
 
 LocalStore.setFilePath({
-	iconPath: path.join(__dirname, 'icons', 'icon.png'),
+	iconPath: path.join(__dirname, 'assets', 'icons', 'menu', 'icon.png'),
 });
 
 // Instance detection
@@ -130,7 +135,7 @@ if (!gotTheLock) {
 			gauzyWindow.focus();
 			dialog.showMessageBoxSync(gauzyWindow, {
 				type: 'warning',
-				title: 'Gauzy',
+				title: process.env.DESCRIPTION,
 				message: 'You already have a running instance',
 			});
 		}
@@ -142,7 +147,7 @@ TranslateLoader.load(path.join(__dirname, 'ui', 'assets', 'i18n'));
 
 /* Setting the app user model id for the app. */
 if (process.platform === 'win32') {
-	app.setAppUserModelId('com.ever.gauzydesktop');
+	app.setAppUserModelId(process.env.APP_ID);
 }
 
 // Set unlimited listeners
@@ -169,7 +174,7 @@ log.catchErrors({
 		dialog.show().then((result) => {
 			if (result.response === 1) {
 				submitIssue(
-					'https://github.com/ever-co/ever-gauzy-desktop/issues/new',
+					`https://github.com/${process.env.REPO_OWNER}/${process.env.REPO_NAME}/issues/new`,
 					{
 						title: `Automatic error report for Desktop App ${versions.app}`,
 						body:
@@ -350,7 +355,7 @@ async function startServer(value, restart = false) {
 		settingsWindow,
 		{ ...environment },
 		pathWindow,
-		path.join(__dirname, 'assets', 'icons', 'icon_16x16.png'),
+		path.join(__dirname, 'assets', 'icons', 'tray', 'icon.png'),
 		gauzyWindow,
 		alwaysOn
 	);
@@ -385,7 +390,7 @@ async function startServer(value, restart = false) {
 			settingsWindow,
 			{ ...environment },
 			pathWindow,
-			path.join(__dirname, 'assets', 'icons', 'icon_16x16.png'),
+			path.join(__dirname, 'assets', 'icons', 'tray', 'icon.png'),
 			gauzyWindow,
 			alwaysOn
 		);

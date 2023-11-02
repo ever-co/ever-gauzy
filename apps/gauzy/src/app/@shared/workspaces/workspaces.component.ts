@@ -58,6 +58,9 @@ export class WorkspacesComponent extends TranslationBaseComponent
 	}
 
 	getWorkspaces() {
+		if (!this.user.tenantId) {
+			return;
+		}
 		const { tenant } = this.user;
 		const workspace = {
 			id: tenant.id,

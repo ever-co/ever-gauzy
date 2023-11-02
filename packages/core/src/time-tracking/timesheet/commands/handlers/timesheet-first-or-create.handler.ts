@@ -19,7 +19,7 @@ export class TimesheetFirstOrCreateHandler
 		private readonly employeeRepository: Repository<Employee>,
 
 		private readonly commandBus: CommandBus
-	) {}
+	) { }
 
 	public async execute(
 		command: TimesheetFirstOrCreateCommand
@@ -73,7 +73,6 @@ export class TimesheetFirstOrCreateHandler
 						qb.andWhere(`"${query.alias}"."tenantId" = :tenantId`, { tenantId });
 						qb.andWhere(`"${query.alias}"."organizationId" = :organizationId`, { organizationId });
 						qb.andWhere(`"${query.alias}"."employeeId" = :employeeId`, { employeeId });
-						qb.andWhere(`"${query.alias}"."deletedAt" IS NULL`);
 					})
 				);
 			});

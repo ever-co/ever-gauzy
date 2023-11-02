@@ -487,7 +487,7 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 		this.companySite = this._environment.COMPANY_SITE;
 		this.companyLink = this._environment.COMPANY_LINK;
 		this.gauzyIcon = this._domSanitizer.bypassSecurityTrustResourceUrl(
-			this._environment.PLATFORM_LOGO_URL
+			this._environment.PLATFORM_LOGO
 		);
 	}
 
@@ -1161,15 +1161,15 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 	}
 
 	public get isDesktopTimer(): boolean {
-		return this.appName === 'gauzy-desktop-timer';
+		return this._environment.IS_DESKTOP_TIMER;
 	}
 
 	public get isDesktop(): boolean {
-		return this.appName === 'gauzy-desktop';
+		return this._environment.IS_DESKTOP;
 	}
 
 	public get isServer(): boolean {
-		return this.appName === 'gauzy-server';
+		return this._environment.IS_SERVER;
 	}
 
 	public get selectedMenu$(): Observable<string> {

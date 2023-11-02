@@ -50,8 +50,7 @@ import { InputFilterComponent } from '../../@shared/table-filters';
 })
 export class TimeOffComponent
 	extends PaginationFilterBaseComponent
-	implements OnInit, OnDestroy
-{
+	implements OnInit, OnDestroy {
 	settingsSmartTable: object;
 	selectedEmployeeId: string | null;
 	selectedDateRange: IDateRangePicker;
@@ -499,7 +498,7 @@ export class TimeOffComponent
 
 			this.sourceSmartTable = new ServerDataSource(this.httpClient, {
 				endPoint: `${API_PREFIX}/time-off-request/pagination`,
-				relations: ['policy', 'employees', 'employees.user'],
+				relations: ['policy', 'document', 'employees.user'],
 				join: {
 					alias: 'time_off_request',
 					leftJoin: {
@@ -510,18 +509,16 @@ export class TimeOffComponent
 					...(this.filters.join ? this.filters.join : {})
 				},
 				where: {
-					...{
-						organizationId,
-						tenantId,
-						isHoliday: !this.displayHolidays,
-						includeArchived: this.includeArchived,
-						startDate: toUTC(startDate).format('YYYY-MM-DD HH:mm'),
-						endDate: toUTC(endDate).format('YYYY-MM-DD HH:mm'),
-						...(this.selectedEmployeeId
-							? { employeeIds: [this.selectedEmployeeId] }
-							: {})
-					},
-					...this.filters.where
+					organizationId,
+					tenantId,
+					isHoliday: !this.displayHolidays,
+					includeArchived: this.includeArchived,
+					startDate: toUTC(startDate).format('YYYY-MM-DD HH:mm'),
+					endDate: toUTC(endDate).format('YYYY-MM-DD HH:mm'),
+					...(this.selectedEmployeeId
+						? { employeeIds: [this.selectedEmployeeId] }
+						: {}),
+					...(this.filters.where ? this.filters.where : {})
 				},
 				resultMap: (timeOff: ITimeOff) => {
 					return Object.assign(
@@ -588,11 +585,10 @@ export class TimeOffComponent
 			employeeImage = timeOff.employees[0].user.imageUrl;
 		}
 		if (timeOff.documentUrl) {
-			extendedDescription = `<a href=${
-				timeOff.documentUrl
-			} target="_blank">${this.getTranslation(
-				'TIME_OFF_PAGE.VIEW_REQUEST_DOCUMENT'
-			)}</a><br>${timeOff.description}`;
+			extendedDescription = `<a href=${timeOff.documentUrl
+				} target="_blank">${this.getTranslation(
+					'TIME_OFF_PAGE.VIEW_REQUEST_DOCUMENT'
+				)}</a><br>${timeOff.description}`;
 		} else {
 			extendedDescription = timeOff.description;
 		}
@@ -735,8 +731,8 @@ export class TimeOffComponent
 			)
 				? 'success'
 				: [StatusTypesEnum.REQUESTED].includes(value.toUpperCase())
-				? 'warning'
-				: 'danger';
+					? 'warning'
+					: 'danger';
 		}
 		return {
 			text: value,
@@ -744,5 +740,5 @@ export class TimeOffComponent
 		};
 	}
 
-	ngOnDestroy(): void {}
+	ngOnDestroy(): void { }
 }
