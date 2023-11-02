@@ -321,11 +321,12 @@ warn-container {
   position: relative;
 }
 
-.close-warn {
-  position: absolute;
-  right: calc(15px / 2);
-  top: calc(-15px / 2);
-  box-shadow: var(--gauzy-shadow);
+:host .close-warn {
+	position: absolute;
+	top: calc(-15px / 2);
+	box-shadow: var(--gauzy-shadow);
+	@include nb-rtl(left, calc(15px / 2));
+	@include nb-ltr(right, calc(15px / 2));
 }
 
 .restart-btn-container {
