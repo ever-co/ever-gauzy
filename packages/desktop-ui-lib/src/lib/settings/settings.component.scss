@@ -1,3 +1,5 @@
+@import 'themes';
+
 .center-card {
   text-align: center;
   cursor: pointer;
@@ -49,21 +51,23 @@
   margin: auto;
 }
 
-.warning-config {
-  text-align: right;
-  margin-bottom: 10px;
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--color-warning-default);
-  position: absolute;
-  right: 10px;
-  top: 30px;
+:host .warning-config {
+	@include nb-rtl(text-align, left);
+	@include nb-ltr(text-align, right);
+	margin-bottom: 10px;
+	font-size: 12px;
+	font-weight: 600;
+	color: var(--color-warning-default);
+	position: absolute;
+	@include nb-rtl(left, var(--sidebar-width));
+	@include nb-ltr(right, 10px);
+	top: 30px;
 
-  span {
-    background-color: var(--color-warning-transparent-300);
-    padding: 8px 12px;
-    border-radius: 8px;
-  }
+	span {
+		background-color: var(--color-warning-transparent-300);
+		padding: 8px 12px;
+		border-radius: 8px;
+	}
 }
 
 ::ng-deep body {
