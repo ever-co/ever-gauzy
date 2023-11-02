@@ -22,6 +22,7 @@ import { GithubSettingsDialogComponent } from './components/settings-dialog/sett
 import { RepositorySelectorModule } from '../../../@shared/integrations/github';
 import { DirectivesModule } from '../../../@shared/directives/directives.module';
 import { ProjectSelectModule } from '../../../@shared/project-select/project-select.module';
+import { PaginationModule } from '../../../@shared/pagination/pagination.module';
 
 @NgModule({
 	declarations: [
@@ -46,6 +47,7 @@ import { ProjectSelectModule } from '../../../@shared/project-select/project-sel
 		TranslateModule,
 		DirectivesModule,
 		BackNavigationModule,
+		PaginationModule,
 		RepositorySelectorModule,
 		ProjectSelectModule
 	]

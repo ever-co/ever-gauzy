@@ -16,15 +16,14 @@ export interface IPaginationBase {
 @Component({
 	template: ''
 })
-export class PaginationFilterBaseComponent extends TranslationBaseComponent
-	implements AfterViewInit {
+export class PaginationFilterBaseComponent extends TranslationBaseComponent implements AfterViewInit {
 
+	public firstPage: number = 1;
 	/**
 	 * Getter for minimum items per page
 	 * Can't be modified outside the class
 	 */
 	private _minItemPerPage: number = 10;
-
 	public get minItemPerPage() {
 		return this._minItemPerPage;
 	}
@@ -34,11 +33,9 @@ export class PaginationFilterBaseComponent extends TranslationBaseComponent
 		activePage: 1,
 		itemsPerPage: 10
 	};
-
 	public get pagination(): IPaginationBase {
 		return this._pagination;
 	}
-
 	protected set pagination(value: IPaginationBase) {
 		this._pagination = value;
 	}

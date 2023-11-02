@@ -1,0 +1,66 @@
+
+:host {
+    .job-detail {
+        letter-spacing: 0em;
+        text-align: left;
+        .job-header {
+            .job-date-created {
+                font-weight: 600;
+            }
+            .job-title {
+                font-size: 16px;
+                font-weight: 600;
+                text-decoration: none;
+                padding-top: 10px;
+                a {
+                    color: var(--text-basic-color);
+                    &:hover {
+                        text-decoration: none;
+                    }
+                }
+            }
+            // add provider color
+            .job-provider {
+                &.upwork {
+                    color: #14a800;
+                }
+                &.linkedin {
+                    color: #0a66c2;
+                }
+            }
+        }
+        .job-body {
+            margin-top: 20px;
+            .job-description {
+                font-size: 14px;
+                margin-top: 10px;
+                line-height: 17px
+            }
+        }
+        .job-footer {
+            .job-search-container, .job-category-container {
+                font-size: 14px;
+                display: block;
+                margin-top: 15px;
+            }
+            .badge {
+                margin-left: 10px;
+                margin-top: 5px;
+            }
+        }
+        /* CSS for fixed-width labels and badges */
+        span.label {
+            display: inline-block;
+            width: 110px;
+            margin-top: 10px;
+            color: var(--text-basic-color);
+        }
+        .badge {
+            color: var(--tag-filled-basic-text-color);
+            display: inline-block;
+            padding: 6px 4px !important;
+            background-color: var(--tag-filled-basic-background-color);
+            border-radius: 4px;
+        }
+    }
+}

@@ -1,0 +1,20 @@
+<div class="job-detail">
+	<div class="job-header">
+        <div class="job-title">
+			<a href="javascript:void(0)">
+				{{ rowData?.title }}
+                <ngx-clickable-link
+                    [href]="'html_url'"
+                    [rowData]="rowData"
+                    [value]="rowData?.number | hash"
+                ></ngx-clickable-link>
+			</a>
+		</div>
+	</div>
+	<div class="job-body">
+		<div class="job-description">
+            <!-- <ngx-security-trust-html [value]="rowData?.body"></ngx-security-trust-html> -->
+			<p [innerHTML]="rowData?.body | nl2br"></p>
+		</div>
+	</div>
+</div>

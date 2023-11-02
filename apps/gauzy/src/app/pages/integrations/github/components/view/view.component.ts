@@ -1,6 +1,7 @@
 import { AfterViewInit, Component, OnInit, ViewChild } from '@angular/core';
 import { TitleCasePipe } from '@angular/common';
 import { ActivatedRoute, Data, Router } from '@angular/router';
+import { HttpClient } from '@angular/common/http';
 import { BehaviorSubject, EMPTY, Subject, debounceTime, finalize, first, firstValueFrom, of } from 'rxjs';
 import { Observable } from 'rxjs/internal/Observable';
 import { catchError, filter, map, switchMap, tap } from 'rxjs/operators';
@@ -19,6 +20,7 @@ import {
 	IOrganization,
 	IOrganizationGithubRepository,
 	IOrganizationProject,
+	IPagination,
 	IUser,
 	IntegrationEnum,
 	SYNC_TAG_GAUZY
@@ -33,7 +35,8 @@ import {
 	Store,
 	ToastrService
 } from './../../../../../@core/services';
-import { TranslationBaseComponent } from './../../../../../@shared/language-base';
+import { ServerDataSource } from './../../../../../@core/utils/smart-table';
+import { IPaginationBase, PaginationFilterBaseComponent } from './../../../../../@shared/pagination/pagination-filter-base.component';
 import { StatusBadgeComponent } from './../../../../../@shared/status-badge';
 import { HashNumberPipe } from './../../../../../@shared/pipes';
 import {
@@ -45,6 +48,7 @@ import {
 	GithubAutoSyncSwitchComponent
 } from './../../../../../@shared/table-components';
 import { GithubSettingsDialogComponent } from '../settings-dialog/settings-dialog.component';
+import { API_PREFIX } from './../../../../../@core/constants/app.constants';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -52,8 +56,10 @@ import { GithubSettingsDialogComponent } from '../settings-dialog/settings-dialo
 	templateUrl: './view.component.html',
 	providers: [TitleCasePipe]
 })
-export class GithubViewComponent extends TranslationBaseComponent implements AfterViewInit, OnInit {
+export class GithubViewComponent extends PaginationFilterBaseComponent implements AfterViewInit, OnInit {
 
+	public page$: Observable<IPaginationBase>; // Observable for the organization project
+	public smartTableSource: ServerDataSource;
 	public settingsSmartTableIssues: object; // Settings for the Smart Table used for issues
 	public settingsSmartTableProjects: object; // Settings for the Smart Table used for projects
 	public syncing: boolean = false; // Flag to indicate if data synchronization is in progress
@@ -85,6 +91,7 @@ export class GithubViewComponent extends TranslationBaseComponent implements Aft
 	}
 
 	constructor(
+		private readonly _httpClient: HttpClient,
 		private readonly _router: Router,
 		public readonly _translateService: TranslateService,
 		private readonly _activatedRoute: ActivatedRoute,
@@ -198,9 +205,62 @@ export class GithubViewComponent extends TranslationBaseComponent implements Aft
 		// Initialize the 'selectedIssues' property with an empty array.
 		this.selectedIssues = [];
 
-		// If a repository is provided, call 'getRepositoryIssue' to fetch its issues.
-		// If no repository is provided, emit an empty array.
-		this.issues$ = repository ? this.getRepositoryIssue(repository) : of([]);
+		this.refreshPagination();
+
+		this.page$ = this.pagination$.pipe(
+			debounceTime(100),
+			distinctUntilChange(),
+			// If a repository is provided, call 'getRepositoryIssue' to fetch its issues.
+			tap(() => this.getRepositoryIssues()),
+			// Handle component lifecycle to avoid memory leaks
+			untilDestroyed(this)
+		);
+	}
+
+	private async getRepositoryIssues() {
+		if (!this.organization || !this.repository) {
+			return;
+		}
+		try {
+			this.loading = true;
+
+			/*
+			* Register Smart Table Source Config
+			*/
+			const repository = this.repository;
+			const owner = repository.owner['login'];
+			const repo = repository.name;
+
+			const { id: integrationId } = this.integration;
+			const { id: organizationId, tenantId } = this.organization;
+
+			/**
+			 * Initiate smart table source configuration
+			 */
+			this.smartTableSource = new ServerDataSource(this._httpClient, {
+				endPoint: `${API_PREFIX}/integration/github/${integrationId}/${owner}/${repo}/issues`,
+				dataKey: 'data',
+				where: {
+					organizationId,
+					tenantId,
+					...(this.filters.where ? this.filters.where : {})
+				},
+				finalize: () => {
+					this.setPagination({
+						...this.getPagination(),
+						totalItems: repository.open_issues_count
+					});
+					this.loading = false;
+				}
+			});
+			/**
+			 * Applied smart table pagination configuration
+			 */
+			const { activePage, itemsPerPage } = this.getPagination();
+			this.smartTableSource.setPaging(activePage, itemsPerPage, false);
+		} catch (error) {
+			console.log('Error while set smart table source configuration', error);
+		}
 	}
 
 	/**
@@ -209,48 +269,48 @@ export class GithubViewComponent extends TranslationBaseComponent implements Aft
 	 * @param repository
 	 * @returns
 	 */
-	private getRepositoryIssue(repository: IGithubRepository): Observable<IGithubIssue[]> {
-		// Ensure there is a valid organization
-		if (!this.organization) {
-			return of([]); // Return an empty observable if there is no organization
-		}
+	// private getRepositoryIssues(repository: IGithubRepository): Observable<IGithubIssue[]> {
+	// 	// Ensure there is a valid organization
+	// 	if (!this.organization) {
+	// 		return of([]); // Return an empty observable if there is no organization
+	// 	}
 
-		this.loading = true;
+	// 	this.loading = true;
 
-		const owner = repository.owner['login'];
-		const repo = repository.name;
+	// 	const owner = repository.owner['login'];
+	// 	const repo = repository.name;
 
-		// Extract organization properties
-		const { id: organizationId, tenantId } = this.organization;
+	// 	// Extract organization properties
+	// 	const { id: organizationId, tenantId } = this.organization;
 
-		return this._activatedRoute.parent.data.pipe(
-			filter(({ integration }: Data) => !!integration),
-			switchMap(() => this._activatedRoute.params.pipe(
-				filter(({ integrationId }) => integrationId)
-			)),
-			// Get the 'integrationId' route parameter
-			switchMap(({ integrationId }) => {
-				return this._githubService.getRepositoryIssues(integrationId, owner, repo, {
-					organizationId,
-					tenantId,
-				});
-			}),
-			// Update component state with fetched issues
-			tap((issues: IGithubIssue[]) => {
-				this.issues = issues;
-			}),
-			catchError((error) => {
-				// Handle and log errors
-				this._errorHandlingService.handleError(error);
-				return of([]);
-			}),
-			tap(() => {
-				this.loading = false;
-			}),
-			// Handle component lifecycle to avoid memory leaks
-			untilDestroyed(this),
-		);
-	}
+	// 	return this._activatedRoute.parent.data.pipe(
+	// 		filter(({ integration }: Data) => !!integration),
+	// 		switchMap(() => this._activatedRoute.params.pipe(
+	// 			filter(({ integrationId }) => integrationId)
+	// 		)),
+	// 		// Get the 'integrationId' route parameter
+	// 		switchMap(({ integrationId }) => {
+	// 			return this._githubService.getRepositoryIssues(integrationId, owner, repo, {
+	// 				organizationId,
+	// 				tenantId,
+	// 			});
+	// 		}),
+	// 		// Update component state with fetched issues
+	// 		tap((issues: IGithubIssue[]) => {
+	// 			this.issues = issues;
+	// 		}),
+	// 		catchError((error) => {
+	// 			// Handle and log errors
+	// 			this._errorHandlingService.handleError(error);
+	// 			return of([]);
+	// 		}),
+	// 		tap(() => {
+	// 			this.loading = false;
+	// 		}),
+	// 		// Handle component lifecycle to avoid memory leaks
+	// 		untilDestroyed(this),
+	// 	);
+	// }
 
 	/**
 	 * Apply translations to a Smart Table component when the language changes.
@@ -272,6 +332,8 @@ export class GithubViewComponent extends TranslationBaseComponent implements Aft
 	 * Load Smart Table settings to configure the component.
 	 */
 	private _loadSmartTableSettings() {
+		const pagination: IPaginationBase = this.getPagination();
+
 		// Define settings for the Smart Table
 		this.settingsSmartTableIssues = {
 			selectedRowIndex: -1, // Initialize the selected row index
@@ -281,6 +343,10 @@ export class GithubViewComponent extends TranslationBaseComponent implements Aft
 				edit: false, // Disable 'edit' action
 				delete: false, // Disable 'delete' action
 				select: true // Enable 'select' action
+			},
+			pager: {
+				display: false,
+				perPage: pagination ? pagination.itemsPerPage : 10
 			},
 			columns: {
 				number: {

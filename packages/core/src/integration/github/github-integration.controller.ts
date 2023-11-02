@@ -1,10 +1,12 @@
 import { Controller, Get, HttpException, HttpStatus, Logger, Param, Query, Req, UseGuards, UsePipes, ValidationPipe } from '@nestjs/common';
 import { Request } from 'express';
 import { OctokitResponse, OctokitService } from '@gauzy/integration-github';
-import { IGithubIssue, IGithubRepositoryResponse, PermissionsEnum } from '@gauzy/contracts';
+import { IGithubIssue, IGithubRepository, IGithubRepositoryResponse, PermissionsEnum } from '@gauzy/contracts';
 import { PermissionGuard, TenantPermissionGuard } from 'shared/guards';
 import { Permissions } from 'shared/decorators';
 import { TenantOrganizationBaseDTO } from 'core/dto';
+import { PaginationParams } from 'core/crud';
+import { OrganizationGithubRepositoryIssue } from './repository/issue/github-repository-issue.entity';
 
 @UseGuards(TenantPermissionGuard, PermissionGuard)
 @Permissions(PermissionsEnum.INTEGRATION_VIEW)
@@ -118,13 +120,13 @@ export class GitHubIntegrationController {
     @UsePipes(new ValidationPipe({ transform: true }))
     async getGithubRepositoryIssues(
         @Req() request: Request,
-        @Query() query: TenantOrganizationBaseDTO,
-        @Param('owner') owner: string,
-        @Param('repo') repo: string,
+        @Query() params: PaginationParams<OrganizationGithubRepositoryIssue>,
+        @Param('owner') owner: IGithubRepository['owner']['login'],
+        @Param('repo') repo: IGithubRepository['name'],
     ): Promise<OctokitResponse<IGithubIssue[]> | void> {
         try {
             // Validate the input data (You can use class-validator for validation)
-            if (!query || !query.organizationId) {
+            if (!params || !params.where.organizationId) {
                 throw new HttpException('Invalid query parameter', HttpStatus.BAD_REQUEST);
             }
 
@@ -136,9 +138,12 @@ export class GitHubIntegrationController {
 
             const installation_id = request['integration']['settings']['installation_id'];
             if (installation_id) {
+                const page = params.skip;
+                const per_page = params.take;
+
                 // Get installation repositories
-                const issues = await this._octokitService.getRepositoryIssues(installation_id, { owner, repo });
-                return issues.data;
+                const issues = await this._octokitService.getRepositoryIssues(installation_id, { owner, repo, page, per_page });
+                return issues;
             }
 
             throw new HttpException('Invalid request parameter', HttpStatus.UNAUTHORIZED);
