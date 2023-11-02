@@ -35,7 +35,6 @@ export class AppComponent implements OnInit, AfterViewInit {
 	) {}
 
 	ngOnInit(): void {
-		console.log('On Init');
 		const nebularLinkMedia = document.querySelector('link[media="print"]');
 		if (nebularLinkMedia)
 			this._renderer.setAttribute(nebularLinkMedia, 'media', 'all');
