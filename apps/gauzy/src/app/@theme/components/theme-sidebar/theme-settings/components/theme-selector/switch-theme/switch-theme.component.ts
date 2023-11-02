@@ -3,6 +3,9 @@ import { ThemeSelectorComponent } from '../theme-selector.component';
 import { NbThemeService } from '@nebular/theme';
 import { Store } from '../../../../../../../@core/services/store.service';
 import { SwitchThemeService } from './switch-theme.service';
+import { ActivatedRoute } from '@angular/router';
+import { filter, tap } from 'rxjs/operators';
+import { untilDestroyed } from '@ngneat/until-destroy';
 
 @Component({
 	selector: 'gauzy-switch-theme',
@@ -22,7 +25,8 @@ export class SwitchThemeComponent extends ThemeSelectorComponent {
 	constructor(
 		private readonly switchService: SwitchThemeService,
 		readonly themeService: NbThemeService,
-		readonly store: Store
+		readonly store: Store,
+		private readonly activatedRoute: ActivatedRoute
 	) {
 		super(themeService, store);
 		// Listerning event and switching to current OS color theme
@@ -41,11 +45,18 @@ export class SwitchThemeComponent extends ThemeSelectorComponent {
 		if (!this.switchService.isAlreadyLoaded) {
 			this.ngOnInit();
 			// if there is a preferred theme in localStorage don't switch to OS theme
-			if (!this.switchService.hasAlreadyPreferredTheme)
-				this.getPreferColorOsScheme();
+			if (!this.switchService.hasAlreadyPreferredTheme) this.getPreferColorOsScheme();
 			// lockdown
 			this.switchService.isAlreadyLoaded = true;
 		}
+
+		this.activatedRoute.queryParams
+			.pipe(
+				filter((query) => !!query.theme),
+				tap(({ theme }) => this.handleThemeChange(theme)),
+				untilDestroyed(this)
+			)
+			.subscribe();
 	}
 	/**
 	 * this method help to switch to opposite current theme
@@ -64,6 +75,13 @@ export class SwitchThemeComponent extends ThemeSelectorComponent {
 		// If OS theme is light and the current theme is light too don't switched, else does switched.
 		if (window.matchMedia(this.LIGHT_OS_SCHEME).matches) {
 			if (this.isDark.state) this.switchTheme();
+		}
+	}
+	// Handle theme on theme change
+	private handleThemeChange(theme: string): void {
+		const isDarkTheme = this.isDark.state;
+		if ((theme === 'dark' && !isDarkTheme) || (theme === 'light' && isDarkTheme)) {
+			this.switchTheme();
 		}
 	}
 }
