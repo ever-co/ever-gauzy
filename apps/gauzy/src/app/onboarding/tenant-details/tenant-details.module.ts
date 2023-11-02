@@ -7,6 +7,7 @@ import { TenantDetailsRoutingModule } from './tenant-details-routing.module';
 import { TenantDetailsComponent } from './tenant-details.component';
 import { TagsService } from '../../@core/services/tags.service';
 import { TranslateModule } from '../../@shared/translate/translate.module';
+import { ThemeSelectorModule } from '../../@theme/components/theme-sidebar/theme-settings/components/theme-selector/theme-selector.module';
 
 @NgModule({
 	imports: [
@@ -14,7 +15,8 @@ import { TranslateModule } from '../../@shared/translate/translate.module';
 		ThemeModule,
 		NbSpinnerModule,
 		OrganizationsStepFormModule,
-		TranslateModule
+		TranslateModule,
+		ThemeSelectorModule
 	],
 	providers: [TenantService, TagsService],
 	declarations: [TenantDetailsComponent]
