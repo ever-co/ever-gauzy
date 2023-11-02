@@ -1236,6 +1236,7 @@
 			"DESCRIPTION": "Activate Upwork integration for freelance workforce management."
 		},
 		"GAUZY_AI_PAGE": {
+			"TITLE": "Gauzy AI Integration",
 			"API_KEY": "Gauzy AI key",
 			"API_SECRET": "Gauzy AI Secret",
 			"DESCRIPTION": "Activate Gauzy AI integration for smarter job hunting."

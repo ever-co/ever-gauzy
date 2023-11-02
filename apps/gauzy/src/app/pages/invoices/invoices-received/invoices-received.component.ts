@@ -56,8 +56,7 @@ import { getAdjustDateRangeFutureAllowed } from '../../../@theme/components/head
 })
 export class InvoicesReceivedComponent
 	extends PaginationFilterBaseComponent
-	implements OnInit, OnDestroy
-{
+	implements OnInit, OnDestroy {
 	loading: boolean = false;
 	disableButton: boolean = true;
 	settingsSmartTable: object;
@@ -515,10 +514,10 @@ export class InvoicesReceivedComponent
 			].includes(value.toLowerCase())
 				? 'success'
 				: ['void', 'draft', 'partially paid'].includes(
-						value.toLowerCase()
-				  )
-				? 'warning'
-				: 'danger';
+					value.toLowerCase()
+				)
+					? 'warning'
+					: 'danger';
 		}
 		return {
 			originalValue: value,
@@ -569,5 +568,5 @@ export class InvoicesReceivedComponent
 		});
 	}
 
-	ngOnDestroy() {}
+	ngOnDestroy() { }
 }
