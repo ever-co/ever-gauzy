@@ -3,5 +3,5 @@
 	[checked]="autoSync$ | async"
 	(checkedChange)="onCheckedChange($event)"
 >
-	{{ ((autoSync$ | async) ? 'BUTTONS.DISABLE' : 'BUTTONS.ENABLE') | translate }}
+	{{ ((autoSync$ | async) ? 'BUTTONS.ENABLED' : 'BUTTONS.DISABLED') | translate }}
 </nb-toggle >

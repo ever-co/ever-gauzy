@@ -128,13 +128,8 @@ export class OctokitService {
 	public async getRepositoryIssues(installationId: number, {
 		owner,
 		repo,
-		page,
-		per_page
-	}: {
-		owner: string;
-		repo: string;
-		page?: number;
-		per_page?: number;
+		page = 1,
+		per_page = 100
 	}): Promise<OctokitResponse<any>> {
 		if (!this.app) {
 			throw new Error('Octokit instance is not available.');
