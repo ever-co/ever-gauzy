@@ -5,12 +5,14 @@ import {
     IBasePerTenantAndOrganizationEntityModel,
     IGithubAppInstallInput,
     IGithubIssue,
+    IGithubIssueFindInput,
     IGithubRepository,
     IGithubRepositoryResponse,
     IIntegrationMapSyncRepository,
     IIntegrationTenant,
     IOrganization,
     IOrganizationGithubRepository,
+    IOrganizationGithubRepositoryUpdateInput,
     IOrganizationProject
 } from '@gauzy/contracts';
 import { toParams } from '@gauzy/common-angular';
@@ -65,7 +67,7 @@ export class GithubService {
         integrationId: IIntegrationTenant['id'],
         owner: string,
         repo: string,
-        query: IBasePerTenantAndOrganizationEntityModel
+        query: IGithubIssueFindInput
     ): Observable<IGithubIssue[]> {
         const url = `${API_PREFIX}/integration/github/${integrationId}/${owner}/${repo}/issues`;
         const params = toParams(query);
@@ -81,6 +83,21 @@ export class GithubService {
     syncGithubRepository(input: IIntegrationMapSyncRepository): Observable<IOrganizationGithubRepository> {
         const url = `${API_PREFIX}/integration/github/repository/sync`;
         return this._http.post<IOrganizationGithubRepository>(url, input);
+    }
+
+    /**
+     * Update a GitHub repository's information.
+     *
+     * @param id - A string representing the unique identifier of the GitHub repository to be updated.
+     * @param input - An object containing the data to update the GitHub repository.
+     * @returns An Observable that emits the updated GitHub repository data.
+     */
+    updateGithubRepository(id: string, input: IOrganizationGithubRepositoryUpdateInput): Observable<IOrganizationGithubRepository> {
+        // Construct the URL for the API endpoint.
+        const url = `${API_PREFIX}/integration/github/repository/${id}`;
+
+        // Send an HTTP PUT request to update the GitHub repository using the provided input.
+        return this._http.put<IOrganizationGithubRepository>(url, input);
     }
 
     /**
@@ -126,7 +143,7 @@ export class GithubService {
             projectId?: IOrganizationProject['id'];
         },
     ): Observable<any> {
-        return this._http.post(`${API_PREFIX}/integration/github/${integrationId}/sync/issues`, {
+        return this._http.post(`${API_PREFIX}/integration/github/${integrationId}/manual-sync/issues`, {
             integrationId,
             repository: this._mapRepositoryPayload(repository),
             issues: this._mapIssuePayload(options.issues),
@@ -165,7 +182,7 @@ export class GithubService {
      */
     private _mapIssuePayload(data: IGithubIssue[]): any[] {
         return data.map(({ id, number, title, state, body }) => ({
-            sourceId: id,
+            id,
             number,
             title,
             state,

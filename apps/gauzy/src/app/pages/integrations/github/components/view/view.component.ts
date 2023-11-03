@@ -21,7 +21,8 @@ import {
 	IOrganizationProject,
 	IUser,
 	IntegrationEnum,
-	SYNC_TAG_GAUZY
+	SYNC_TAG_GAUZY,
+	TaskStatusEnum
 } from '@gauzy/contracts';
 import { distinctUntilChange } from '@gauzy/common-angular';
 import {
@@ -33,16 +34,15 @@ import {
 	Store,
 	ToastrService
 } from './../../../../../@core/services';
-import { TranslationBaseComponent } from './../../../../../@shared/language-base';
+import { IPaginationBase, PaginationFilterBaseComponent } from './../../../../../@shared/pagination/pagination-filter-base.component';
 import { StatusBadgeComponent } from './../../../../../@shared/status-badge';
 import { HashNumberPipe } from './../../../../../@shared/pipes';
 import {
 	ClickableLinkComponent,
 	ProjectComponent,
 	GithubRepositoryComponent,
-	TagsOnlyComponent,
-	TrustHtmlLinkComponent,
-	GithubAutoSyncSwitchComponent
+	GithubAutoSyncSwitchComponent,
+	GithubIssueTitleDescriptionComponent
 } from './../../../../../@shared/table-components';
 import { GithubSettingsDialogComponent } from '../settings-dialog/settings-dialog.component';
 
@@ -52,8 +52,9 @@ import { GithubSettingsDialogComponent } from '../settings-dialog/settings-dialo
 	templateUrl: './view.component.html',
 	providers: [TitleCasePipe]
 })
-export class GithubViewComponent extends TranslationBaseComponent implements AfterViewInit, OnInit {
+export class GithubViewComponent extends PaginationFilterBaseComponent implements AfterViewInit, OnInit {
 
+	public page$: Observable<IPaginationBase>; // Observable for the organization project
 	public settingsSmartTableIssues: object; // Settings for the Smart Table used for issues
 	public settingsSmartTableProjects: object; // Settings for the Smart Table used for projects
 	public syncing: boolean = false; // Flag to indicate if data synchronization is in progress
@@ -71,7 +72,7 @@ export class GithubViewComponent extends TranslationBaseComponent implements Aft
 	public issues: IGithubIssue[] = []; // Array of GitHub issues
 	public selectedIssues: IGithubIssue[] = []; // Array of selected GitHub issues
 	public selectedProject$: Subject<IOrganizationProject> = new Subject(); // Subject for selected organization projects
-	public autoSyncClick$: BehaviorSubject<boolean> = new BehaviorSubject(true); // Subject for auto-sync click events
+	public subject$: BehaviorSubject<boolean> = new BehaviorSubject(true);
 	/**
 	 * Sets up a property 'issuesTable' to reference an instance of 'Ng2SmartTableComponent'
 	 * when the child component with the template reference variable 'issuesTable' is rendered.
@@ -153,7 +154,7 @@ export class GithubViewComponent extends TranslationBaseComponent implements Aft
 	 * Fetches and sets the GitHub integration projects from the ActivatedRoute data.
 	 */
 	private _getIntegrationProjects(): void {
-		this.projects$ = this.autoSyncClick$.pipe(
+		this.projects$ = this.subject$.pipe(
 			filter(() => !!this.organization),
 			switchMap(() => {
 				// Extract project properties
@@ -162,7 +163,7 @@ export class GithubViewComponent extends TranslationBaseComponent implements Aft
 				if (!organizationId) {
 					return of([]); // No valid organization, return false
 				}
-				return this._organizationProjectsService.findSyncedProjects({ organizationId, tenantId }, ['repository']).pipe(
+				return this._organizationProjectsService.findSyncedProjects({ organizationId, tenantId }).pipe(
 					map(({ items }) => items),
 					catchError((error) => {
 						// Handle and log errors
@@ -187,7 +188,7 @@ export class GithubViewComponent extends TranslationBaseComponent implements Aft
 	}
 
 	/**
-	 * Selects a GitHub repository manually and fetches its issues.
+	 * Select a GitHub repository manually and fetch its issues.
 	 *
 	 * @param repository The GitHub repository to select.
 	 */
@@ -198,9 +199,20 @@ export class GithubViewComponent extends TranslationBaseComponent implements Aft
 		// Initialize the 'selectedIssues' property with an empty array.
 		this.selectedIssues = [];
 
-		// If a repository is provided, call 'getRepositoryIssue' to fetch its issues.
-		// If no repository is provided, emit an empty array.
-		this.issues$ = repository ? this.getRepositoryIssue(repository) : of([]);
+		// Refresh the pagination settings or configuration.
+		this.refreshPagination();
+
+		// Create an Observable `page$` by piping the `pagination$` Observable through a series of operators.
+		this.page$ = this.pagination$.pipe(
+			// Add a 100ms delay to the emitted values.
+			debounceTime(100),
+			// Ensure only distinct values are emitted.
+			distinctUntilChange(),
+			// Fetch and assign issues using 'getRepositoryIssue'.
+			tap(() => this.getRepositoryIssue()),
+			// Manage the component's lifecycle to avoid memory leaks.
+			untilDestroyed(this)
+		);
 	}
 
 	/**
@@ -209,47 +221,58 @@ export class GithubViewComponent extends TranslationBaseComponent implements Aft
 	 * @param repository
 	 * @returns
 	 */
-	private getRepositoryIssue(repository: IGithubRepository): Observable<IGithubIssue[]> {
+	private getRepositoryIssue(): Observable<IGithubIssue[]> {
 		// Ensure there is a valid organization
-		if (!this.organization) {
+		if (!this.organization || !this.repository) {
 			return of([]); // Return an empty observable if there is no organization
 		}
 
-		this.loading = true;
-
+		const repository = this.repository;
 		const owner = repository.owner['login'];
 		const repo = repository.name;
 
 		// Extract organization properties
 		const { id: organizationId, tenantId } = this.organization;
 
-		return this._activatedRoute.parent.data.pipe(
+		this.issues$ = this._activatedRoute.parent.data.pipe(
 			filter(({ integration }: Data) => !!integration),
 			switchMap(() => this._activatedRoute.params.pipe(
 				filter(({ integrationId }) => integrationId)
 			)),
+			tap(() => this.loading = true),
 			// Get the 'integrationId' route parameter
 			switchMap(({ integrationId }) => {
+				/**
+				 * Applied smart table pagination configuration
+				 */
+				const { activePage, itemsPerPage } = this.getPagination();
 				return this._githubService.getRepositoryIssues(integrationId, owner, repo, {
 					organizationId,
 					tenantId,
+					per_page: itemsPerPage,
+					page: activePage
 				});
 			}),
 			// Update component state with fetched issues
 			tap((issues: IGithubIssue[]) => {
 				this.issues = issues;
 			}),
+			tap(() => {
+				this.setPagination({
+					...this.getPagination(),
+					totalItems: repository.open_issues_count
+				});
+			}),
 			catchError((error) => {
 				// Handle and log errors
 				this._errorHandlingService.handleError(error);
 				return of([]);
 			}),
-			tap(() => {
-				this.loading = false;
-			}),
+			tap(() => this.loading = false),
 			// Handle component lifecycle to avoid memory leaks
 			untilDestroyed(this),
 		);
+		this.issues$.subscribe();
 	}
 
 	/**
@@ -272,6 +295,8 @@ export class GithubViewComponent extends TranslationBaseComponent implements Aft
 	 * Load Smart Table settings to configure the component.
 	 */
 	private _loadSmartTableSettings() {
+		const pagination: IPaginationBase = this.getPagination();
+
 		// Define settings for the Smart Table
 		this.settingsSmartTableIssues = {
 			selectedRowIndex: -1, // Initialize the selected row index
@@ -281,6 +306,10 @@ export class GithubViewComponent extends TranslationBaseComponent implements Aft
 				edit: false, // Disable 'edit' action
 				delete: false, // Disable 'delete' action
 				select: true // Enable 'select' action
+			},
+			pager: {
+				display: false,
+				perPage: pagination ? pagination.itemsPerPage : 10
 			},
 			columns: {
 				number: {
@@ -295,40 +324,32 @@ export class GithubViewComponent extends TranslationBaseComponent implements Aft
 						instance['href'] = 'html_url';
 					}
 				},
-				title: {
-					title: this.getTranslation('SM_TABLE.TITLE'), // Set column title based on translation
-					width: '15%',
-					type: 'string' // Set column type to 'string'
-				},
 				body: {
 					title: this.getTranslation('SM_TABLE.DESCRIPTION'), // Set column title based on translation
-					width: '60%',
+					width: '90%',
 					type: 'custom', // Set column type to 'custom'
-					renderComponent: TrustHtmlLinkComponent
+					renderComponent: GithubIssueTitleDescriptionComponent
 				},
 				state: {
 					title: this.getTranslation('SM_TABLE.STATUS'), // Set column title based on translation
 					width: '5%',
-					type: 'string', // Set column type to 'string'
-					valuePrepareFunction: (data: string) => {
-						// Transform the column data using '_titlecasePipe.transform' (modify this function)
-						return this._titlecasePipe.transform(data);
+					type: 'custom', // Set column type to 'custom'
+					renderComponent: StatusBadgeComponent,
+					valuePrepareFunction: (state: TaskStatusEnum) => {
+						return this.getIssueStatus(state);
 					}
 				},
-				labels: {
-					title: this.getTranslation('SM_TABLE.LABELS'), // Set column labels based on translation
-					width: '15%',
-					type: 'custom', // Set column type to 'custom'
-					renderComponent: TagsOnlyComponent,
-				}
 			}
 		};
-
 
 		// Define settings for the Smart Table
 		this.settingsSmartTableProjects = {
 			selectedRowIndex: -1, // Initialize the selected row index
 			actions: false,
+			pager: {
+				display: false,
+				perPage: pagination ? pagination.itemsPerPage : 10
+			},
 			columns: {
 				repository: {
 					title: this.getTranslation('SM_TABLE.GITHUB_REPOSITORY'), // Set column title based on translation
@@ -365,8 +386,8 @@ export class GithubViewComponent extends TranslationBaseComponent implements Aft
 					},
 					onComponentInitFunction: (instance: any) => {
 						instance.autoSyncChange.subscribe({
-							next: (hasSynced: boolean) => {
-								console.log(hasSynced)
+							next: (hasSyncEnabled: boolean) => {
+								this.updateGithubRepository(instance.rowData, hasSyncEnabled);
 							},
 							error: (err: any) => {
 								console.warn(err);
@@ -386,6 +407,55 @@ export class GithubViewComponent extends TranslationBaseComponent implements Aft
 				}
 			}
 		};
+	}
+
+	/**
+	 * Update a GitHub repository within the context of an organization project and handle various operations.
+	 * @param project - An object representing the organization project.
+	 * @param hasSyncEnabled - A boolean indicating whether sync is enabled.
+	 */
+	private updateGithubRepository(project: IOrganizationProject, hasSyncEnabled: boolean) {
+		const repository = project['repository'];
+		if (!repository) {
+			return;
+		}
+
+		const { organizationId, tenantId } = project;
+
+		// Update a GitHub repository using the _githubService and handle various operations.
+		this._githubService.updateGithubRepository(repository.id, {
+			hasSyncEnabled,
+			tenantId,
+			organizationId
+		}).pipe(
+			tap((response: any) => {
+				if (response['status'] == HttpStatus.BAD_REQUEST) {
+					throw new Error(`${response['message']}`);
+				}
+			}),
+			// Catch and handle errors
+			catchError((error) => {
+				// Handle and log errors using the _errorHandlingService
+				this._errorHandlingService.handleError(error);
+				// Return an empty observable to continue the stream
+				return EMPTY;
+			}),
+			// Perform side effects
+			tap(() => {
+				// Determine the success message based on whether hasSyncEnabled is true or false
+				const message = hasSyncEnabled ? 'INTEGRATIONS.GITHUB_PAGE.HAS_SYNCED_ENABLED' : 'INTEGRATIONS.GITHUB_PAGE.HAS_SYNCED_DISABLED';
+
+				// Display a success toast message using the _toastrService
+				this._toastrService.success(
+					this.getTranslation(message, { repository: repository.fullName }),
+					this.getTranslation('TOASTR.TITLE.SUCCESS')
+				);
+			}),
+			// Update the subject with a value of true
+			tap(() => this.subject$.next(true)),
+			// Handle component lifecycle to avoid memory leaks
+			untilDestroyed(this)
+		).subscribe();
 	}
 
 	/**
@@ -471,7 +541,7 @@ export class GithubViewComponent extends TranslationBaseComponent implements Aft
 			}
 
 			// Mark the synchronization as in progress
-			this.syncing = true;
+			this.syncing = this.loading = true;
 
 			const { id: organizationId, tenantId } = this.organization;
 			const { id: integrationId } = this.integration;
@@ -502,7 +572,7 @@ export class GithubViewComponent extends TranslationBaseComponent implements Aft
 							throw new Error(`${response['message']}`);
 						}
 					}),
-					tap(() => this.autoSyncClick$.next(true)),
+					tap(() => this.subject$.next(true)),
 					switchMap(() =>
 						this._githubService.autoSyncIssues(integrationId, this.repository, {
 							projectId,
@@ -519,14 +589,14 @@ export class GithubViewComponent extends TranslationBaseComponent implements Aft
 								this.getTranslation('TOASTR.TITLE.SUCCESS')
 							);
 						}
-						this.autoSyncClick$.next(true);
+						this.subject$.next(true);
 					}),
 					catchError((error) => {
 						this._errorHandlingService.handleError(error);
 						return EMPTY;
 					}),
 					// Execute the following code block when the observable completes or errors
-					finalize(() => this.syncing = false),
+					finalize(() => this.syncing = this.loading = false),
 					// Automatically unsubscribe when the component is destroyed
 					untilDestroyed(this)
 				)
@@ -558,7 +628,7 @@ export class GithubViewComponent extends TranslationBaseComponent implements Aft
 			}
 
 			// Mark the synchronization as in progress
-			this.syncing = true;
+			this.syncing = this.loading = true;
 
 			const { id: organizationId, tenantId } = this.organization;
 			const { id: integrationId } = this.integration;
@@ -610,7 +680,7 @@ export class GithubViewComponent extends TranslationBaseComponent implements Aft
 								this.getTranslation('TOASTR.TITLE.SUCCESS')
 							);
 						}
-						this.autoSyncClick$.next(true);
+						this.subject$.next(true);
 						this.resetTableSelectedItems();
 					}),
 					catchError((error) => {
@@ -620,7 +690,7 @@ export class GithubViewComponent extends TranslationBaseComponent implements Aft
 						return EMPTY;
 					}),
 					// Execute the following code block when the observable completes or errors
-					finalize(() => this.syncing = false),
+					finalize(() => this.syncing = this.loading = false),
 					// Automatically unsubscribe when the component is destroyed
 					untilDestroyed(this)
 				)
@@ -648,33 +718,67 @@ export class GithubViewComponent extends TranslationBaseComponent implements Aft
 	}
 
 	/**
-	 * Maps the status of a GitHub repository to a format including text representation, original status value, and CSS class.
-	 * @param row - An object representing a GitHub repository with a 'status' property.
-	 * @returns An object with 'text', 'value', and 'class' properties.
+	 * Map the status of a GitHub repository to an object with text, value, and class properties.
+	 * @param row - An object representing the GitHub repository.
+	 * @returns An object with text, value, and class properties that describe the status.
 	 */
 	statusMapper(row: IOrganizationGithubRepository): { text: string; value: string; class: string } {
-		let value: string = row.status;
+		// If sync is not enabled, return a warning status
+		if (!row.hasSyncEnabled) {
+			return {
+				text: this._titlecasePipe.transform(GithubRepositoryStatusEnum.DISABLED),
+				value: GithubRepositoryStatusEnum.DISABLED,
+				class: 'warning'
+			};
+		}
+
+		// Map status to badgeClass based on the status value
 		let badgeClass: string;
+		let value: string = row.status;
 
 		switch (row.status) {
 			case GithubRepositoryStatusEnum.SYNCING:
+				badgeClass = 'primary';
+				break;
+			case GithubRepositoryStatusEnum.SUCCESSFULLY:
 				badgeClass = 'success';
 				break;
 			case GithubRepositoryStatusEnum.ERROR:
 				badgeClass = 'danger';
-				break;
-			case GithubRepositoryStatusEnum.PENDING:
-				badgeClass = 'warning';
 				break;
 			default:
 				badgeClass = 'warning';
 				break;
 		}
 
+		// Return an object with the mapped status information
 		return {
-			text: this._titlecasePipe.transform(row.status),
+			text: this._titlecasePipe.transform(value),
 			value: value,
 			class: badgeClass
+		};
+	}
+
+	/**
+	 * Get job status text and class
+	 *
+	 * @param status
+	 */
+	getIssueStatus(state: TaskStatusEnum) {
+		let badgeClass: string, badgeText: string;
+		switch (state.toLowerCase()) {
+			case TaskStatusEnum.OPEN.toLowerCase():
+				badgeClass = 'success';
+				badgeText = this._titlecasePipe.transform(state);
+				break;
+			default:
+				badgeClass = 'default';
+				badgeText = state;
+				break;
+		}
+		return {
+			text: badgeText,
+			class: badgeClass,
 		};
 	}
 

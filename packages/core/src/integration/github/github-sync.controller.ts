@@ -34,11 +34,12 @@ export class GitHubSyncController {
      * @param body
      * @returns
      */
-    @Post('/sync/issues')
+    @Post('/manual-sync/issues')
     @HttpCode(HttpStatus.CREATED)
     @UsePipes(new ValidationPipe())
     async syncGithubIssuesAndLabels(
         @Param('integrationId') integrationId: IIntegrationTenant['id'],
+        @Req() request: Request,
         @Body() input: ProcessGithubIssueSyncDTO
     ) {
         try {
@@ -46,7 +47,7 @@ export class GitHubSyncController {
             if (!input || !input.organizationId) {
                 throw new HttpException('Invalid sync issues & labels request parameters', HttpStatus.BAD_REQUEST);
             }
-            return await this._githubSyncService.syncGithubIssues(integrationId, input);
+            return await this._githubSyncService.manualSyncGithubIssues(integrationId, input, request);
         } catch (error) {
             // Handle errors and return an appropriate error response
             this.logger.error('Error while github sync issues and labels', error.message);
