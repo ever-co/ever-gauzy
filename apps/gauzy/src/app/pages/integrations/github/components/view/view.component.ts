@@ -71,7 +71,7 @@ export class GithubViewComponent extends TranslationBaseComponent implements Aft
 	public issues: IGithubIssue[] = []; // Array of GitHub issues
 	public selectedIssues: IGithubIssue[] = []; // Array of selected GitHub issues
 	public selectedProject$: Subject<IOrganizationProject> = new Subject(); // Subject for selected organization projects
-	public autoSyncClick$: BehaviorSubject<boolean> = new BehaviorSubject(true); // Subject for auto-sync click events
+	public subject$: BehaviorSubject<boolean> = new BehaviorSubject(true);
 	/**
 	 * Sets up a property 'issuesTable' to reference an instance of 'Ng2SmartTableComponent'
 	 * when the child component with the template reference variable 'issuesTable' is rendered.
@@ -153,7 +153,7 @@ export class GithubViewComponent extends TranslationBaseComponent implements Aft
 	 * Fetches and sets the GitHub integration projects from the ActivatedRoute data.
 	 */
 	private _getIntegrationProjects(): void {
-		this.projects$ = this.autoSyncClick$.pipe(
+		this.projects$ = this.subject$.pipe(
 			filter(() => !!this.organization),
 			switchMap(() => {
 				// Extract project properties
@@ -365,8 +365,8 @@ export class GithubViewComponent extends TranslationBaseComponent implements Aft
 					},
 					onComponentInitFunction: (instance: any) => {
 						instance.autoSyncChange.subscribe({
-							next: (hasSynced: boolean) => {
-								console.log(hasSynced)
+							next: (hasSyncEnabled: boolean) => {
+								this.updateGithubRepository(instance.rowData, hasSyncEnabled);
 							},
 							error: (err: any) => {
 								console.warn(err);
@@ -386,6 +386,55 @@ export class GithubViewComponent extends TranslationBaseComponent implements Aft
 				}
 			}
 		};
+	}
+
+	/**
+	 * Update a GitHub repository within the context of an organization project and handle various operations.
+	 * @param project - An object representing the organization project.
+	 * @param hasSyncEnabled - A boolean indicating whether sync is enabled.
+	 */
+	private updateGithubRepository(project: IOrganizationProject, hasSyncEnabled: boolean) {
+		const repository = project['repository'];
+		if (!repository) {
+			return;
+		}
+
+		const { organizationId, tenantId } = project;
+
+		// Update a GitHub repository using the _githubService and handle various operations.
+		this._githubService.updateGithubRepository(repository.id, {
+			hasSyncEnabled,
+			tenantId,
+			organizationId
+		}).pipe(
+			tap((response: any) => {
+				if (response['status'] == HttpStatus.BAD_REQUEST) {
+					throw new Error(`${response['message']}`);
+				}
+			}),
+			// Catch and handle errors
+			catchError((error) => {
+				// Handle and log errors using the _errorHandlingService
+				this._errorHandlingService.handleError(error);
+				// Return an empty observable to continue the stream
+				return EMPTY;
+			}),
+			// Perform side effects
+			tap(() => {
+				// Determine the success message based on whether hasSyncEnabled is true or false
+				const message = hasSyncEnabled ? 'INTEGRATIONS.GITHUB_PAGE.HAS_SYNCED_ENABLED' : 'INTEGRATIONS.GITHUB_PAGE.HAS_SYNCED_DISABLED';
+
+				// Display a success toast message using the _toastrService
+				this._toastrService.success(
+					this.getTranslation(message, { repository: repository.fullName }),
+					this.getTranslation('TOASTR.TITLE.SUCCESS')
+				);
+			}),
+			// Update the subject with a value of true
+			tap(() => this.subject$.next(true)),
+			// Handle component lifecycle to avoid memory leaks
+			untilDestroyed(this)
+		).subscribe();
 	}
 
 	/**
@@ -483,7 +532,8 @@ export class GithubViewComponent extends TranslationBaseComponent implements Aft
 				organizationId,
 				tenantId,
 				integrationId,
-				repository
+				repository,
+				hasSyncEnabled: true
 			};
 
 			// Synchronize the GitHub repository and update project settings
@@ -502,7 +552,7 @@ export class GithubViewComponent extends TranslationBaseComponent implements Aft
 							throw new Error(`${response['message']}`);
 						}
 					}),
-					tap(() => this.autoSyncClick$.next(true)),
+					tap(() => this.subject$.next(true)),
 					switchMap(() =>
 						this._githubService.autoSyncIssues(integrationId, this.repository, {
 							projectId,
@@ -519,7 +569,7 @@ export class GithubViewComponent extends TranslationBaseComponent implements Aft
 								this.getTranslation('TOASTR.TITLE.SUCCESS')
 							);
 						}
-						this.autoSyncClick$.next(true);
+						this.subject$.next(true);
 					}),
 					catchError((error) => {
 						this._errorHandlingService.handleError(error);
@@ -570,7 +620,8 @@ export class GithubViewComponent extends TranslationBaseComponent implements Aft
 				organizationId,
 				tenantId,
 				integrationId,
-				repository
+				repository,
+				hasSyncEnabled: true
 			};
 
 			// Synchronize the GitHub repository and update project settings
@@ -610,7 +661,7 @@ export class GithubViewComponent extends TranslationBaseComponent implements Aft
 								this.getTranslation('TOASTR.TITLE.SUCCESS')
 							);
 						}
-						this.autoSyncClick$.next(true);
+						this.subject$.next(true);
 						this.resetTableSelectedItems();
 					}),
 					catchError((error) => {
@@ -648,32 +699,41 @@ export class GithubViewComponent extends TranslationBaseComponent implements Aft
 	}
 
 	/**
-	 * Maps the status of a GitHub repository to a format including text representation, original status value, and CSS class.
-	 * @param row - An object representing a GitHub repository with a 'status' property.
-	 * @returns An object with 'text', 'value', and 'class' properties.
+	 * Map the status of a GitHub repository to an object with text, value, and class properties.
+	 * @param row - An object representing the GitHub repository.
+	 * @returns An object with text, value, and class properties that describe the status.
 	 */
 	statusMapper(row: IOrganizationGithubRepository): { text: string; value: string; class: string } {
-		let value: string = row.status;
-		let badgeClass: string;
+		// If sync is not enabled, return a warning status
+		if (!row.hasSyncEnabled) {
+			return {
+				text: this._titlecasePipe.transform(GithubRepositoryStatusEnum.DISABLED),
+				value: GithubRepositoryStatusEnum.DISABLED,
+				class: 'warning'
+			};
+		}
 
+		// Map status to badgeClass based on the status value
+		let badgeClass: string;
 		switch (row.status) {
 			case GithubRepositoryStatusEnum.SYNCING:
+				badgeClass = 'primary';
+				break;
+			case GithubRepositoryStatusEnum.SUCCESSFULLY:
 				badgeClass = 'success';
 				break;
 			case GithubRepositoryStatusEnum.ERROR:
 				badgeClass = 'danger';
-				break;
-			case GithubRepositoryStatusEnum.PENDING:
-				badgeClass = 'warning';
 				break;
 			default:
 				badgeClass = 'warning';
 				break;
 		}
 
+		// Return an object with the mapped status information
 		return {
 			text: this._titlecasePipe.transform(row.status),
-			value: value,
+			value: row.status,
 			class: badgeClass
 		};
 	}

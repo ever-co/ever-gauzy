@@ -11,6 +11,7 @@ import {
     IIntegrationTenant,
     IOrganization,
     IOrganizationGithubRepository,
+    IOrganizationGithubRepositoryUpdateInput,
     IOrganizationProject
 } from '@gauzy/contracts';
 import { toParams } from '@gauzy/common-angular';
@@ -81,6 +82,21 @@ export class GithubService {
     syncGithubRepository(input: IIntegrationMapSyncRepository): Observable<IOrganizationGithubRepository> {
         const url = `${API_PREFIX}/integration/github/repository/sync`;
         return this._http.post<IOrganizationGithubRepository>(url, input);
+    }
+
+    /**
+     * Update a GitHub repository's information.
+     *
+     * @param id - A string representing the unique identifier of the GitHub repository to be updated.
+     * @param input - An object containing the data to update the GitHub repository.
+     * @returns An Observable that emits the updated GitHub repository data.
+     */
+    updateGithubRepository(id: string, input: IOrganizationGithubRepositoryUpdateInput): Observable<IOrganizationGithubRepository> {
+        // Construct the URL for the API endpoint.
+        const url = `${API_PREFIX}/integration/github/repository/${id}`;
+
+        // Send an HTTP PUT request to update the GitHub repository using the provided input.
+        return this._http.put<IOrganizationGithubRepository>(url, input);
     }
 
     /**

@@ -159,8 +159,8 @@
 		"FORWARD_PORTS": "Forward Ports",
 		"REPORT": "Report",
 		"IGNORE": "Ignore",
-		"ENABLE": "Enable",
-		"DISABLE": "Disable"
+		"ENABLED": "Enabled",
+		"DISABLED": "Disabled"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {
@@ -1246,6 +1246,8 @@
 			"SELECT_REPOSITORY": "Select repository",
 			"SEARCH_REPOSITORY": "Type to search repository",
 			"SYNCED_ISSUES": "'{{repository}}' issues & labels synced successfully",
+			"HAS_SYNCED_ENABLED": "'{{repository}}' sync successfully enabled",
+			"HAS_SYNCED_DISABLED": "'{{repository}}' sync successfully disabled",
 			"DESCRIPTION": "Activate GitHub integration for project & repository sync.",
 			"TAB": {
 				"AUTO_SYNC": "Auto sync",

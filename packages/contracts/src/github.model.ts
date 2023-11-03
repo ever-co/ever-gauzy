@@ -134,6 +134,8 @@ export interface IOrganizationGithubRepository extends IBasePerTenantAndOrganiza
     status: string;
 }
 
+export interface IOrganizationGithubRepositoryUpdateInput extends Partial<IOrganizationGithubRepository> { }
+
 export interface IOrganizationGithubRepositoryFindInput extends Partial<IOrganizationGithubRepository> { }
 
 export interface IOrganizationGithubRepositoryIssue extends IBasePerTenantAndOrganizationEntityModel {
@@ -146,11 +148,12 @@ export interface IOrganizationGithubRepositoryIssue extends IBasePerTenantAndOrg
 
 export interface IIntegrationMapSyncRepository extends IBasePerTenantAndOrganizationEntityModel, IRelationalIntegrationTenant {
     repository: IGithubRepository;
+    hasSyncEnabled?: boolean;
 }
 
 export enum GithubRepositoryStatusEnum {
-    PENDING = 'pending',
-    SYNCING = 'syncing',
-    STOPPED = 'stopped',
-    ERROR = 'error'
+    SYNCING = 'Syncing',
+    SUCCESSFULLY = 'Successfully',
+    ERROR = 'Error',
+    DISABLED = 'Disabled',
 }
