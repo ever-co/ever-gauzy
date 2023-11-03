@@ -1,7 +1,6 @@
 import { AfterViewInit, Component, OnInit, ViewChild } from '@angular/core';
 import { TitleCasePipe } from '@angular/common';
 import { ActivatedRoute, Data, Router } from '@angular/router';
-import { HttpClient } from '@angular/common/http';
 import { BehaviorSubject, EMPTY, Subject, debounceTime, finalize, first, firstValueFrom, of } from 'rxjs';
 import { Observable } from 'rxjs/internal/Observable';
 import { catchError, filter, map, switchMap, tap } from 'rxjs/operators';
@@ -34,7 +33,6 @@ import {
 	Store,
 	ToastrService
 } from './../../../../../@core/services';
-import { ServerDataSource } from './../../../../../@core/utils/smart-table';
 import { IPaginationBase, PaginationFilterBaseComponent } from './../../../../../@shared/pagination/pagination-filter-base.component';
 import { StatusBadgeComponent } from './../../../../../@shared/status-badge';
 import { HashNumberPipe } from './../../../../../@shared/pipes';
@@ -47,7 +45,6 @@ import {
 	GithubAutoSyncSwitchComponent
 } from './../../../../../@shared/table-components';
 import { GithubSettingsDialogComponent } from '../settings-dialog/settings-dialog.component';
-import { API_PREFIX } from './../../../../../@core/constants/app.constants';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -58,7 +55,6 @@ import { API_PREFIX } from './../../../../../@core/constants/app.constants';
 export class GithubViewComponent extends PaginationFilterBaseComponent implements AfterViewInit, OnInit {
 
 	public page$: Observable<IPaginationBase>; // Observable for the organization project
-	public smartTableSource: ServerDataSource;
 	public settingsSmartTableIssues: object; // Settings for the Smart Table used for issues
 	public settingsSmartTableProjects: object; // Settings for the Smart Table used for projects
 	public syncing: boolean = false; // Flag to indicate if data synchronization is in progress
@@ -90,7 +86,6 @@ export class GithubViewComponent extends PaginationFilterBaseComponent implement
 	}
 
 	constructor(
-		private readonly _httpClient: HttpClient,
 		private readonly _router: Router,
 		public readonly _translateService: TranslateService,
 		private readonly _activatedRoute: ActivatedRoute,
@@ -193,7 +188,7 @@ export class GithubViewComponent extends PaginationFilterBaseComponent implement
 	}
 
 	/**
-	 * Selects a GitHub repository manually and fetches its issues.
+	 * Select a GitHub repository manually and fetch its issues.
 	 *
 	 * @param repository The GitHub repository to select.
 	 */
@@ -204,14 +199,18 @@ export class GithubViewComponent extends PaginationFilterBaseComponent implement
 		// Initialize the 'selectedIssues' property with an empty array.
 		this.selectedIssues = [];
 
+		// Refresh the pagination settings or configuration.
 		this.refreshPagination();
 
+		// Create an Observable `page$` by piping the `pagination$` Observable through a series of operators.
 		this.page$ = this.pagination$.pipe(
+			// Add a 100ms delay to the emitted values.
 			debounceTime(100),
+			// Ensure only distinct values are emitted.
 			distinctUntilChange(),
-			// If a repository is provided, call 'getRepositoryIssue' to fetch its issues.
-			tap(() => this.getRepositoryIssues()),
-			// Handle component lifecycle to avoid memory leaks
+			// Fetch and assign issues using 'getRepositoryIssue'.
+			tap(() => this.getRepositoryIssue()),
+			// Manage the component's lifecycle to avoid memory leaks.
 			untilDestroyed(this)
 		);
 	}
@@ -219,52 +218,61 @@ export class GithubViewComponent extends PaginationFilterBaseComponent implement
 	/**
 	 * Fetches issues for a given repository.
 	 *
+	 * @param repository
 	 * @returns
 	 */
-	private async getRepositoryIssues() {
+	private getRepositoryIssue(): Observable<IGithubIssue[]> {
+		// Ensure there is a valid organization
 		if (!this.organization || !this.repository) {
-			return;
+			return of([]); // Return an empty observable if there is no organization
 		}
-		try {
-			this.loading = true;
 
-			/*
-			* Register Smart Table Source Config
-			*/
-			const repository = this.repository;
-			const owner = repository.owner['login'];
-			const repo = repository.name;
+		const repository = this.repository;
+		const owner = repository.owner['login'];
+		const repo = repository.name;
 
-			const { id: integrationId } = this.integration;
-			const { id: organizationId, tenantId } = this.organization;
+		// Extract organization properties
+		const { id: organizationId, tenantId } = this.organization;
 
-			/**
-			 * Initiate smart table source configuration
-			 */
-			this.smartTableSource = new ServerDataSource(this._httpClient, {
-				endPoint: `${API_PREFIX}/integration/github/${integrationId}/${owner}/${repo}/issues`,
-				dataKey: 'data',
-				where: {
+		this.issues$ = this._activatedRoute.parent.data.pipe(
+			filter(({ integration }: Data) => !!integration),
+			switchMap(() => this._activatedRoute.params.pipe(
+				filter(({ integrationId }) => integrationId)
+			)),
+			tap(() => this.loading = true),
+			// Get the 'integrationId' route parameter
+			switchMap(({ integrationId }) => {
+				/**
+				 * Applied smart table pagination configuration
+				 */
+				const { activePage, itemsPerPage } = this.getPagination();
+				return this._githubService.getRepositoryIssues(integrationId, owner, repo, {
 					organizationId,
 					tenantId,
-					...(this.filters.where ? this.filters.where : {})
-				},
-				finalize: () => {
-					this.setPagination({
-						...this.getPagination(),
-						totalItems: repository.open_issues_count
-					});
-					this.loading = false;
-				}
-			});
-			/**
-			 * Applied smart table pagination configuration
-			 */
-			const { activePage, itemsPerPage } = this.getPagination();
-			this.smartTableSource.setPaging(activePage, itemsPerPage, false);
-		} catch (error) {
-			console.log('Error while set smart table source configuration', error);
-		}
+					per_page: itemsPerPage,
+					page: activePage
+				});
+			}),
+			// Update component state with fetched issues
+			tap((issues: IGithubIssue[]) => {
+				this.issues = issues;
+			}),
+			tap(() => {
+				this.setPagination({
+					...this.getPagination(),
+					totalItems: repository.open_issues_count
+				});
+			}),
+			catchError((error) => {
+				// Handle and log errors
+				this._errorHandlingService.handleError(error);
+				return of([]);
+			}),
+			tap(() => this.loading = false),
+			// Handle component lifecycle to avoid memory leaks
+			untilDestroyed(this),
+		);
+		this.issues$.subscribe();
 	}
 
 	/**

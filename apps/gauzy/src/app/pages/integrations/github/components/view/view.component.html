@@ -98,7 +98,7 @@
 					</nb-card>
 				</ng-template>
 			</nb-tab>
-			<nb-tab [tabTitle]="'INTEGRATIONS.GITHUB_PAGE.TAB.MANUAL_SYNC' | translate">
+			<nb-tab [tabTitle]="'INTEGRATIONS.GITHUB_PAGE.TAB.MANUAL_SYNC' | translate" [active]="true">
 				<ng-template [ngIf]="integration$ | async">
 					<nb-card>
 						<nb-card-header>
@@ -147,7 +147,7 @@
 							<div class="table-scroll-container">
 								<ng2-smart-table
 									[settings]="settingsSmartTableIssues"
-									[source]="smartTableSource"
+									[source]="issues"
 									(userRowSelect)="selectIssues($event)"
 									style="cursor: pointer;"
 									#issuesTable

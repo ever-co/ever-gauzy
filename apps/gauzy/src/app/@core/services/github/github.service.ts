@@ -5,6 +5,7 @@ import {
     IBasePerTenantAndOrganizationEntityModel,
     IGithubAppInstallInput,
     IGithubIssue,
+    IGithubIssueFindInput,
     IGithubRepository,
     IGithubRepositoryResponse,
     IIntegrationMapSyncRepository,
@@ -66,7 +67,7 @@ export class GithubService {
         integrationId: IIntegrationTenant['id'],
         owner: string,
         repo: string,
-        query: IBasePerTenantAndOrganizationEntityModel
+        query: IGithubIssueFindInput
     ): Observable<IGithubIssue[]> {
         const url = `${API_PREFIX}/integration/github/${integrationId}/${owner}/${repo}/issues`;
         const params = toParams(query);

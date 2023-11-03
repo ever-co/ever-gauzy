@@ -74,7 +74,7 @@ export class PaginationFilterBaseComponent extends TranslationBaseComponent impl
 	protected refreshPagination() {
 		this.setPagination({
 			...this.getPagination(),
-			activePage: 1,
+			activePage: this.activePage,
 			itemsPerPage: this.minItemPerPage
 		});
 	}
