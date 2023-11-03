@@ -47,17 +47,19 @@ import { TrustHtmlLinkComponent } from './trust-html/trust-html.component';
 import { GithubAutoSyncSwitchComponent } from './github/auto-sync-switch/auto-sync-switch.component';
 import { GithubRepositoryComponent } from './github/repository/repository.component';
 import { GithubIssueTitleDescriptionComponent } from './github/issue-title-description/issue-title-description.component';
+import { StatusBadgeModule } from '../status-badge';
 
 @NgModule({
 	imports: [
 		CommonModule,
 		FormsModule,
-		NbIconModule,
-		NbTooltipModule,
 		NbBadgeModule,
+		NbIconModule,
+		NbToggleModule,
+		NbTooltipModule,
 		TranslateModule,
 		SharedModule,
-		NbToggleModule
+		StatusBadgeModule,
 	],
 	declarations: [
 		DateViewComponent,

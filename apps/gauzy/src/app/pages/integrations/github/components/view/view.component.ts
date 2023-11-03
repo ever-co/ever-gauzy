@@ -21,7 +21,8 @@ import {
 	IOrganizationProject,
 	IUser,
 	IntegrationEnum,
-	SYNC_TAG_GAUZY
+	SYNC_TAG_GAUZY,
+	TaskStatusEnum
 } from '@gauzy/contracts';
 import { distinctUntilChange } from '@gauzy/common-angular';
 import {
@@ -40,9 +41,8 @@ import {
 	ClickableLinkComponent,
 	ProjectComponent,
 	GithubRepositoryComponent,
-	TagsOnlyComponent,
-	TrustHtmlLinkComponent,
-	GithubAutoSyncSwitchComponent
+	GithubAutoSyncSwitchComponent,
+	GithubIssueTitleDescriptionComponent
 } from './../../../../../@shared/table-components';
 import { GithubSettingsDialogComponent } from '../settings-dialog/settings-dialog.component';
 
@@ -324,32 +324,21 @@ export class GithubViewComponent extends PaginationFilterBaseComponent implement
 						instance['href'] = 'html_url';
 					}
 				},
-				title: {
-					title: this.getTranslation('SM_TABLE.TITLE'), // Set column title based on translation
-					width: '15%',
-					type: 'string' // Set column type to 'string'
-				},
 				body: {
 					title: this.getTranslation('SM_TABLE.DESCRIPTION'), // Set column title based on translation
-					width: '60%',
+					width: '90%',
 					type: 'custom', // Set column type to 'custom'
-					renderComponent: TrustHtmlLinkComponent
+					renderComponent: GithubIssueTitleDescriptionComponent
 				},
 				state: {
 					title: this.getTranslation('SM_TABLE.STATUS'), // Set column title based on translation
 					width: '5%',
-					type: 'string', // Set column type to 'string'
-					valuePrepareFunction: (data: string) => {
-						// Transform the column data using '_titlecasePipe.transform' (modify this function)
-						return this._titlecasePipe.transform(data);
+					type: 'custom', // Set column type to 'custom'
+					renderComponent: StatusBadgeComponent,
+					valuePrepareFunction: (state: TaskStatusEnum) => {
+						return this.getIssueStatus(state);
 					}
 				},
-				labels: {
-					title: this.getTranslation('SM_TABLE.LABELS'), // Set column labels based on translation
-					width: '15%',
-					type: 'custom', // Set column type to 'custom'
-					renderComponent: TagsOnlyComponent,
-				}
 			}
 		};
 
@@ -764,6 +753,29 @@ export class GithubViewComponent extends PaginationFilterBaseComponent implement
 			text: this._titlecasePipe.transform(value),
 			value: value,
 			class: badgeClass
+		};
+	}
+
+	/**
+	 * Get job status text and class
+	 *
+	 * @param status
+	 */
+	getIssueStatus(state: TaskStatusEnum) {
+		let badgeClass: string, badgeText: string;
+		switch (state.toLowerCase()) {
+			case TaskStatusEnum.OPEN.toLowerCase():
+				badgeClass = 'success';
+				badgeText = this._titlecasePipe.transform(state);
+				break;
+			default:
+				badgeClass = 'default';
+				badgeText = state;
+				break;
+		}
+		return {
+			text: badgeText,
+			class: badgeClass,
 		};
 	}
 

@@ -18,4 +18,17 @@ export class GithubIssueTitleDescriptionComponent extends TranslationBaseCompone
 	) {
 		super(translateService);
 	}
+
+	/**
+	 *
+	 * @returns
+	 */
+	public openIssue() {
+		if (!this.rowData) {
+			return;
+		}
+		if (this.rowData?.html_url) {
+			window.open(this.rowData.html_url, '_blank');
+		}
+	}
 }
