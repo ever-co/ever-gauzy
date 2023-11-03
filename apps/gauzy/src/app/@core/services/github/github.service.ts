@@ -142,7 +142,7 @@ export class GithubService {
             projectId?: IOrganizationProject['id'];
         },
     ): Observable<any> {
-        return this._http.post(`${API_PREFIX}/integration/github/${integrationId}/sync/issues`, {
+        return this._http.post(`${API_PREFIX}/integration/github/${integrationId}/manual-sync/issues`, {
             integrationId,
             repository: this._mapRepositoryPayload(repository),
             issues: this._mapIssuePayload(options.issues),

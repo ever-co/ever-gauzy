@@ -711,6 +711,8 @@ export class GithubViewComponent extends TranslationBaseComponent implements Aft
 
 		// Map status to badgeClass based on the status value
 		let badgeClass: string;
+		let value: string = row.status;
+
 		switch (row.status) {
 			case GithubRepositoryStatusEnum.SYNCING:
 				badgeClass = 'primary';
@@ -728,8 +730,8 @@ export class GithubViewComponent extends TranslationBaseComponent implements Aft
 
 		// Return an object with the mapped status information
 		return {
-			text: this._titlecasePipe.transform(row.status),
-			value: row.status,
+			text: this._titlecasePipe.transform(value),
+			value: value,
 			class: badgeClass
 		};
 	}

@@ -92,7 +92,7 @@ export class GithubSyncService {
             }
             try {
                 // Attempt to synchronize GitHub issues using the syncGithubIssues method.
-                await this.syncGithubIssues(integrationId, input);
+                await this.syncingGithubIssues(integrationId, input);
 
                 // Update the status of the GitHub repository to "Success" (GithubRepositoryStatusEnum.SUCCESSFULLY).
                 await this._githubRepositoryService.update(repository.id, {
@@ -118,46 +118,66 @@ export class GithubSyncService {
     }
 
     /**
-     * Retrieves all issues from a GitHub repository using the GitHub API with pagination.
+     * Manually synchronize GitHub issues and handle errors.
      *
-     * @param installation_id - The installation ID for the GitHub App.
-     * @param owner - The owner (user or organization) of the GitHub repository.
-     * @param repo - The name of the GitHub repository.
-     * @returns A Promise that resolves to an array of GitHub issues.
+     * @param integrationId - The ID of the GitHub integration.
+     * @param input - Payload for GitHub issue synchronization.
+     * @param request - The HTTP request object.
+     * @returns `true` on successful synchronization, `false` on failure.
+     * @throws HttpException if synchronization encounters an error.
      */
-    async getRepositoryAllIssues(
-        installation_id: number,
-        owner: string,
-        repo: string
-    ): Promise<IGithubIssue[]> {
-        const per_page = 100; // Number of issues per page (GitHub API maximum is 100)
-        const issues: IGithubIssue[] = [];
-        let page = 1;
-        let hasMoreIssues = true;
-
-        // Use a while to simplify pagination
-        while (hasMoreIssues) {
-            try {
-                const response = await this._octokitService.getRepositoryIssues(installation_id, { owner, repo, page, per_page });
-                if (Array.isArray(response.data) && response.data.length > 0) {
-                    // Append the retrieved issues to the result array
-                    issues.push(...response.data);
-                    // Check if there are more issues on the next page
-                    hasMoreIssues = response.data.length === per_page;
-                } else {
-                    // No more issues to retrieve
-                    hasMoreIssues = false;
-                }
-                // Increment the page number for the next request
-                page++;
-            } catch (error) {
-                console.error('Error fetching issues:', error);
-                break; // Exit the loop on error
+    public async manualSyncGithubIssues(
+        integrationId: IIntegrationTenant['id'],
+        input: IGithubSyncIssuePayload,
+        request: Request
+    ): Promise<boolean> {
+        try {
+            // Check if the request contains integration settings
+            const settings = request['integration']?.settings;
+            if (!settings || !settings.installation_id) {
+                throw new HttpException('Invalid request parameter: Missing or unauthorized integration', HttpStatus.UNAUTHORIZED);
             }
-        }
-        return issues;
-    }
 
+            // Synchronize a GitHub repository based on the input data and store the result in 'repository'.
+            const repository: IOrganizationGithubRepository = await this._commandBus.execute(
+                new IntegrationSyncGithubRepositoryCommand(input)
+            );
+
+            // Update the organization project setting with the synchronized repository's ID.
+            await this._commandBus.execute(
+                new OrganizationProjectSettingUpdateCommand(input.projectId, {
+                    repositoryId: repository.id
+                })
+            );
+
+            try {
+                // Attempt to synchronize GitHub issues using the syncGithubIssues method.
+                await this.syncingGithubIssues(integrationId, input);
+
+                // Update the status of the GitHub repository to "Success" (GithubRepositoryStatusEnum.SUCCESSFULLY).
+                await this._githubRepositoryService.update(repository.id, {
+                    status: GithubRepositoryStatusEnum.SUCCESSFULLY
+                });
+
+                // Return true to indicate a successful synchronization.
+                return true;
+            } catch (error) {
+                // Handle the error by updating the status of the GitHub repository to "Error" (GithubRepositoryStatusEnum.ERROR).
+                await this._githubRepositoryService.update(repository.id, {
+                    status: GithubRepositoryStatusEnum.ERROR
+                });
+
+                // Return false to indicate that an error occurred during synchronization.
+                return false;
+            }
+        } catch (error) {
+            // Handle errors gracefully, for example, log them
+            this.logger.error('Error in sync GitHub issues and labels manually', error.message);
+
+            // Throw an HTTP exception to indicate manual synchronization failure.
+            throw new HttpException({ message: 'GitHub manual synchronization failed', error }, HttpStatus.BAD_REQUEST);
+        }
+    }
 
     /**
      * Synchronize GitHub issues and labels based on entity settings.
@@ -166,7 +186,7 @@ export class GithubSyncService {
      * @param input - The payload containing information required for synchronization.
      * @throws {HttpException} Throws an HTTP exception if synchronization fails.
      */
-    public async syncGithubIssues(
+    public async syncingGithubIssues(
         integrationId: IIntegrationTenant['id'],
         input: IGithubSyncIssuePayload
     ): Promise<IIntegrationMap[] | boolean> {
@@ -622,5 +642,46 @@ export class GithubSyncService {
             this.logger.error('Error while creating/updating an issue in GitHub', error.message);
             throw new HttpException(`Error while creating/updating an issue in GitHub: ${error.message}`, HttpStatus.INTERNAL_SERVER_ERROR);
         }
+    }
+
+    /**
+     * Retrieves all issues from a GitHub repository using the GitHub API with pagination.
+     *
+     * @param installation_id - The installation ID for the GitHub App.
+     * @param owner - The owner (user or organization) of the GitHub repository.
+     * @param repo - The name of the GitHub repository.
+     * @returns A Promise that resolves to an array of GitHub issues.
+     */
+    async getRepositoryAllIssues(
+        installation_id: number,
+        owner: string,
+        repo: string
+    ): Promise<IGithubIssue[]> {
+        const per_page = 100; // Number of issues per page (GitHub API maximum is 100)
+        const issues: IGithubIssue[] = [];
+        let page = 1;
+        let hasMoreIssues = true;
+
+        // Use a while to simplify pagination
+        while (hasMoreIssues) {
+            try {
+                const response = await this._octokitService.getRepositoryIssues(installation_id, { owner, repo, page, per_page });
+                if (Array.isArray(response.data) && response.data.length > 0) {
+                    // Append the retrieved issues to the result array
+                    issues.push(...response.data);
+                    // Check if there are more issues on the next page
+                    hasMoreIssues = response.data.length === per_page;
+                } else {
+                    // No more issues to retrieve
+                    hasMoreIssues = false;
+                }
+                // Increment the page number for the next request
+                page++;
+            } catch (error) {
+                console.error('Error fetching issues:', error);
+                break; // Exit the loop on error
+            }
+        }
+        return issues;
     }
 }
