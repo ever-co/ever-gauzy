@@ -33,3 +33,4 @@ export * from './clickable-link/clickable-link.component';
 export * from './trust-html/trust-html.component';
 export * from './github/repository/repository.component';
 export * from './github/auto-sync-switch/auto-sync-switch.component';
+export * from './github/issue-title-description/issue-title-description.component';

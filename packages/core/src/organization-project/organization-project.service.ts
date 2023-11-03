@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Brackets, In, IsNull, Not, Repository, WhereExpressionBuilder } from 'typeorm';
+import { Brackets, In, IsNull, Repository, SelectQueryBuilder, WhereExpressionBuilder } from 'typeorm';
 import { isNotEmpty } from '@gauzy/common';
 import { IEmployee, IOrganizationGithubRepository, IOrganizationProject, IOrganizationProjectsFindInput, IPagination } from '@gauzy/contracts';
 import { PaginationParams, TenantAwareCrudService } from './../core/crud';
@@ -150,21 +150,62 @@ export class OrganizationProjectService extends TenantAwareCrudService<Organizat
 	}
 
 	/**
-	 * Find all synchronized organization projects with the specified options.
+	 * Find synchronized organization projects with options and count their associated issues.
 	 *
-	 * @param repository - The repository for the OrganizationProject entity.
 	 * @param options - Query and pagination options (optional).
-	 * @returns A paginated list of synchronized organization projects.
+	 * @returns A paginated list of synchronized organization projects with associated issue counts.
 	 */
-	async findSyncedProjects(options?: PaginationParams<OrganizationProject>): Promise<IPagination<OrganizationProject>> {
-		const whereConditions = {
-			...options?.where,
-			repositoryId: Not(IsNull())
-		};
+	async findSyncedProjects(
+		options?: PaginationParams<OrganizationProject>
+	): Promise<IPagination<OrganizationProject>> {
+		// Create a query builder for the `OrganizationProject` entity
+		const query = this.repository.createQueryBuilder(this.alias);
 
-		return await this.paginate({
-			...options,
-			where: whereConditions,
+		// Set find options (skip, take, and relations)
+		query.skip((options && options.skip) ? (options.take * (options.skip - 1)) : 0);
+		query.take((options && options.take) ? (options.take) : 10);
+
+		// Join with the `Repository` entity and left join with `Issue` entity
+		query.innerJoinAndSelect(`${query.alias}.repository`, 'repository');
+		query.leftJoin('repository.issues', 'issue');
+
+		// Select and count issues, and group the result by project and repository
+		query.addSelect('COUNT(issue.id)', 'issueCount');
+		query.groupBy(`${query.alias}.id, repository.id`);
+
+		// Define where conditions for the query
+		query.where((qb: SelectQueryBuilder<OrganizationProject>) => {
+			const tenantId = RequestContext.currentTenantId();
+			qb.andWhere(`"${qb.alias}"."tenantId" = :tenantId`, {
+				tenantId
+			});
+			qb.andWhere(`"repository"."tenantId" = :tenantId`, {
+				tenantId
+			});
+			qb.andWhere(`"issue"."tenantId" = :tenantId`, {
+				tenantId
+			});
+
+			if (options?.where) {
+				for (const key of Object.keys(options.where)) {
+					qb.andWhere(`"${query.alias}"."${key}" = :${key}`, { [key]: options.where[key] });
+				}
+				for (const key of Object.keys(options.where)) {
+					qb.andWhere(`"repository"."${key}" = :${key}`, { [key]: options.where[key] });
+				}
+				for (const key of Object.keys(options.where)) {
+					qb.andWhere(`"issue"."${key}" = :${key}`, { [key]: options.where[key] });
+				}
+			}
+
+			qb.andWhere(`"${query.alias}"."repositoryId" IS NOT NULL`);
 		});
+
+		// Log the SQL query (for debugging)
+		// console.log(await query.getRawMany());
+
+		// Execute the query and return the paginated result
+		const [items, total] = await query.getManyAndCount();
+		return { items, total };
 	}
 }

@@ -40,6 +40,11 @@ export interface IGithubRepository {
     [x: string]: any; // Additional properties
 }
 
+export interface IGithubIssueFindInput extends IBasePerTenantAndOrganizationEntityModel {
+    page: number;
+    per_page: number;
+}
+
 // Represents a GitHub issue
 export interface IGithubIssue {
     id: number;

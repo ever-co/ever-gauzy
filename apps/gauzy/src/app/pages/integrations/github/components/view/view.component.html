@@ -39,8 +39,8 @@
 			</div>
 		</div>
 	</nb-card-header>
-	<nb-card-body>
-		<nb-tabset>
+	<nb-card-body class="p-0">
+		<nb-tabset class="mt-4">
 			<nb-tab [tabTitle]="'INTEGRATIONS.GITHUB_PAGE.TAB.AUTO_SYNC' | translate">
 				<ng-template [ngIf]="integration$ | async">
 					<nb-card>
@@ -98,7 +98,7 @@
 					</nb-card>
 				</ng-template>
 			</nb-tab>
-			<nb-tab [tabTitle]="'INTEGRATIONS.GITHUB_PAGE.TAB.MANUAL_SYNC' | translate">
+			<nb-tab [tabTitle]="'INTEGRATIONS.GITHUB_PAGE.TAB.MANUAL_SYNC' | translate" [active]="true">
 				<ng-template [ngIf]="integration$ | async">
 					<nb-card>
 						<nb-card-header>
@@ -144,17 +144,29 @@
 							</div>
 						</nb-card-header>
 						<nb-card-body>
-							<div class="issues-container">
-								<div class="table-scroll-container">
-									<ng2-smart-table
-										[settings]="settingsSmartTableIssues"
-										[source]="issues$ | async"
-										(userRowSelect)="selectIssues($event)"
-										style="cursor: pointer;"
-										#issuesTable
-									></ng2-smart-table>
-								</div>
+							<div class="table-scroll-container">
+								<ng2-smart-table
+									[settings]="settingsSmartTableIssues"
+									[source]="issues"
+									(userRowSelect)="selectIssues($event)"
+									style="cursor: pointer;"
+									#issuesTable
+								></ng2-smart-table>
 							</div>
+							<ng-container *ngIf="(page$ | async)">
+								<div class="pagination-container">
+									<ng-container *ngIf="pagination.totalItems > minItemPerPage">
+										<ga-pagination
+											(selectedOption)="onUpdateOption($event)"
+											(selectedPage)="onPageChange($event)"
+											[doEmit]="false"
+											[totalItems]="pagination?.totalItems"
+											[itemsPerPage]="pagination?.itemsPerPage"
+											[activePage]="pagination?.activePage"
+										></ga-pagination>
+									</ng-container>
+								</div>
+							</ng-container>
 						</nb-card-body>
 					</nb-card>
 				</ng-template>
