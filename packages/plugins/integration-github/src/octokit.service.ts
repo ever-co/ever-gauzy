@@ -127,10 +127,9 @@ export class OctokitService {
 	 */
 	public async getRepositoryIssues(installationId: number, {
 		owner,
-		repo
-	}: {
-		owner: string;
-		repo: string;
+		repo,
+		page = 1,
+		per_page = 100
 	}): Promise<OctokitResponse<any>> {
 		if (!this.app) {
 			throw new Error('Octokit instance is not available.');
@@ -146,6 +145,8 @@ export class OctokitService {
 			return await octokit.request(endpoint, {
 				owner,
 				repo,
+				page,
+				per_page,
 				headers: {
 					'X-GitHub-Api-Version': GITHUB_API_VERSION,
 				},

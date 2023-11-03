@@ -68,34 +68,46 @@ export class GithubSyncService {
         }
 
         try {
-            /** */
+            // Synchronize a GitHub repository based on the input data and store the result in 'repository'.
             const repository: IOrganizationGithubRepository = await this._commandBus.execute(
-                new IntegrationSyncGithubRepositoryCommand(
-                    input
-                )
+                new IntegrationSyncGithubRepositoryCommand(input)
             );
 
-            /** */
+            // Update the organization project setting with the synchronized repository's ID.
             await this._commandBus.execute(
                 new OrganizationProjectSettingUpdateCommand(input.projectId, {
                     repositoryId: repository.id
                 })
             );
-
             /** */
             const installation_id = settings['installation_id'];
             if (installation_id) {
                 /** */
                 const { name: repo, owner } = repository;
-                const issues = await this._octokitService.getRepositoryIssues(installation_id, { owner, repo });
-                input['issues'] = this._mapIssuePayload(Array.isArray(issues.data) ? issues.data : [issues.data]);
+
+                const issues = await this.getRepositoryAllIssues(settings.installation_id, owner, repo);
+                console.log(`Automatically syncing ${issues.length} issues`);
+
+                input.issues = this._mapIssuePayload(Array.isArray(issues) ? issues : [issues]);
             }
             try {
+                // Attempt to synchronize GitHub issues using the syncGithubIssues method.
                 await this.syncGithubIssues(integrationId, input);
-                await this._githubRepositoryService.update(repository.id, { status: GithubRepositoryStatusEnum.SUCCESSFULLY });
+
+                // Update the status of the GitHub repository to "Success" (GithubRepositoryStatusEnum.SUCCESSFULLY).
+                await this._githubRepositoryService.update(repository.id, {
+                    status: GithubRepositoryStatusEnum.SUCCESSFULLY
+                });
+
+                // Return true to indicate a successful synchronization.
                 return true;
             } catch (error) {
-                await this._githubRepositoryService.update(repository.id, { status: GithubRepositoryStatusEnum.ERROR });
+                // Handle the error by updating the status of the GitHub repository to "Error" (GithubRepositoryStatusEnum.ERROR).
+                await this._githubRepositoryService.update(repository.id, {
+                    status: GithubRepositoryStatusEnum.ERROR
+                });
+
+                // Return false to indicate that an error occurred during synchronization.
                 return false;
             }
         } catch (error) {
@@ -104,6 +116,48 @@ export class GithubSyncService {
             throw new HttpException({ message: 'GitHub automatic synchronization failed', error }, HttpStatus.BAD_REQUEST);
         }
     }
+
+    /**
+     * Retrieves all issues from a GitHub repository using the GitHub API with pagination.
+     *
+     * @param installation_id - The installation ID for the GitHub App.
+     * @param owner - The owner (user or organization) of the GitHub repository.
+     * @param repo - The name of the GitHub repository.
+     * @returns A Promise that resolves to an array of GitHub issues.
+     */
+    async getRepositoryAllIssues(
+        installation_id: number,
+        owner: string,
+        repo: string
+    ): Promise<IGithubIssue[]> {
+        const per_page = 100; // Number of issues per page (GitHub API maximum is 100)
+        const issues: IGithubIssue[] = [];
+        let page = 1;
+        let hasMoreIssues = true;
+
+        // Use a while to simplify pagination
+        while (hasMoreIssues) {
+            try {
+                const response = await this._octokitService.getRepositoryIssues(installation_id, { owner, repo, page, per_page });
+                if (Array.isArray(response.data) && response.data.length > 0) {
+                    // Append the retrieved issues to the result array
+                    issues.push(...response.data);
+                    // Check if there are more issues on the next page
+                    hasMoreIssues = response.data.length === per_page;
+                } else {
+                    // No more issues to retrieve
+                    hasMoreIssues = false;
+                }
+                // Increment the page number for the next request
+                page++;
+            } catch (error) {
+                console.error('Error fetching issues:', error);
+                break; // Exit the loop on error
+            }
+        }
+        return issues;
+    }
+
 
     /**
      * Synchronize GitHub issues and labels based on entity settings.
