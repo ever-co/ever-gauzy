@@ -169,7 +169,7 @@ export class GithubViewComponent extends PaginationFilterBaseComponent implement
 				if (!organizationId) {
 					return of([]); // No valid organization, return false
 				}
-				return this._organizationProjectsService.findSyncedProjects({ organizationId, tenantId }, ['repository']).pipe(
+				return this._organizationProjectsService.findSyncedProjects({ organizationId, tenantId }).pipe(
 					map(({ items }) => items),
 					catchError((error) => {
 						// Handle and log errors
