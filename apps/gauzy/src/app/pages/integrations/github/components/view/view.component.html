@@ -65,6 +65,7 @@
 										[defaultSelected]="false"
 										[showAllOption]="false"
 										[skipGlobalChange]="true"
+										[shortened]="true"
 										(onChanged)="selectedProject$.next($event)"
 									></ga-project-selector>
 								</div>
@@ -98,7 +99,7 @@
 					</nb-card>
 				</ng-template>
 			</nb-tab>
-			<nb-tab [tabTitle]="'INTEGRATIONS.GITHUB_PAGE.TAB.MANUAL_SYNC' | translate" [active]="true">
+			<nb-tab [tabTitle]="'INTEGRATIONS.GITHUB_PAGE.TAB.MANUAL_SYNC' | translate">
 				<ng-template [ngIf]="integration$ | async">
 					<nb-card>
 						<nb-card-header>
