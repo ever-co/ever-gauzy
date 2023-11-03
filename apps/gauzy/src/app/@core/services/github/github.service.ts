@@ -181,7 +181,7 @@ export class GithubService {
      */
     private _mapIssuePayload(data: IGithubIssue[]): any[] {
         return data.map(({ id, number, title, state, body }) => ({
-            sourceId: id,
+            id,
             number,
             title,
             state,

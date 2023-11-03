@@ -68,14 +68,12 @@ export class GithubSyncService {
         }
 
         try {
-            const hasSyncEnabled: boolean = true;
             input.repository['status'] = GithubRepositoryStatusEnum.SYNCING;
 
             /** */
             const repository: IOrganizationGithubRepository = await this._commandBus.execute(
                 new IntegrationSyncGithubRepositoryCommand(
-                    input,
-                    hasSyncEnabled
+                    input
                 )
             );
 
@@ -91,13 +89,12 @@ export class GithubSyncService {
             if (installation_id) {
                 /** */
                 const { name: repo, owner } = repository;
-                const response = await this._octokitService.getRepositoryIssues(installation_id, { owner, repo });
-                input['issues'] = response.data;
+                const issues = await this._octokitService.getRepositoryIssues(installation_id, { owner, repo });
+                input['issues'] = this._mapIssuePayload(Array.isArray(issues.data) ? issues.data : [issues.data]);
             }
-
             try {
                 await this.syncGithubIssues(integrationId, input);
-                await this._githubRepositoryService.update(repository.id, { status: GithubRepositoryStatusEnum.STOPPED });
+                await this._githubRepositoryService.update(repository.id, { status: GithubRepositoryStatusEnum.SUCCESSFULLY });
                 return true;
             } catch (error) {
                 await this._githubRepositoryService.update(repository.id, { status: GithubRepositoryStatusEnum.ERROR });
@@ -153,7 +150,7 @@ export class GithubSyncService {
                             const issueSetting: IIntegrationEntitySetting = entitySetting;
                             if (!!issueSetting.sync) {
                                 for await (const issue of issues) {
-                                    const { sourceId, number: issue_number, title, state, body } = issue;
+                                    const { id, number: issue_number, title, state, body } = issue;
 
                                     let tags: ITag[] = [];
                                     try {
@@ -175,7 +172,8 @@ export class GithubSyncService {
                                         console.error('Failed to fetch GitHub labels for the repository issue:', error.message);
                                     }
 
-                                    // Step 7:
+                                    // Step 7: Synchronized GitHub repository issue.
+                                    const repositoryId = repository.id;
                                     await this._commandBus.execute(
                                         new IntegrationSyncGithubRepositoryIssueCommand(
                                             {
@@ -183,7 +181,7 @@ export class GithubSyncService {
                                                 organizationId,
                                                 integrationId
                                             },
-                                            repository,
+                                            repositoryId,
                                             issue
                                         )
                                     );
@@ -202,7 +200,7 @@ export class GithubSyncService {
                                                 organizationId,
                                                 tenantId
                                             },
-                                            sourceId,
+                                            sourceId: id.toString(),
                                             integrationId,
                                             organizationId,
                                             tenantId
@@ -371,12 +369,12 @@ export class GithubSyncService {
                                 const issueSetting: IIntegrationEntitySetting = entitySetting;
                                 if (!!issueSetting.sync) {
                                     for await (const issue of issues) {
-                                        const { sourceId, title, state, body, labels = [] } = issue;
+                                        const { id, title, state, body, labels = [] } = issue;
 
                                         // Initialize an array to store tags
                                         let tags: ITag[] = [];
 
-                                        // // Check for label synchronization settings
+                                        // Check for label synchronization settings
                                         try {
                                             const labelSetting: IIntegrationEntitySetting = entitySetting.tiedEntities.find(
                                                 ({ entity }: IIntegrationEntitySettingTied) => entity === IntegrationEntity.LABEL
@@ -410,7 +408,9 @@ export class GithubSyncService {
                                             console.error('Failed to fetch GitHub labels for the repository issue:', error.message);
                                         }
 
+
                                         // Step 7: Synchronized GitHub repository issue.
+                                        const repositoryId = repository.id;
                                         await this._commandBus.execute(
                                             new IntegrationSyncGithubRepositoryIssueCommand(
                                                 {
@@ -418,7 +418,7 @@ export class GithubSyncService {
                                                     organizationId,
                                                     integrationId
                                                 },
-                                                repository,
+                                                repositoryId,
                                                 issue
                                             )
                                         );
@@ -438,7 +438,7 @@ export class GithubSyncService {
                                                         tenantId,
                                                         tags
                                                     },
-                                                    sourceId,
+                                                    sourceId: id.toString(),
                                                     integrationId,
                                                     integration,
                                                     organizationId,
@@ -446,7 +446,7 @@ export class GithubSyncService {
                                                 }, IntegrationEntity.ISSUE)
                                             );
                                         } catch (error) {
-                                            this.logger.error(`Failed to sync automation github task: ${sourceId}`, error);
+                                            this.logger.error(`Failed to sync automation github task: ${id}`, error);
                                         }
                                     }
                                 }
@@ -504,7 +504,7 @@ export class GithubSyncService {
      */
     private _mapIssuePayload(issues: IGithubIssue[]): any[] {
         return issues.map(({ id, number, title, state, body, labels }) => ({
-            sourceId: id,
+            id,
             number,
             title,
             state,

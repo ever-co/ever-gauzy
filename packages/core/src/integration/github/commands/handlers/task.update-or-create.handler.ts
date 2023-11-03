@@ -14,6 +14,7 @@ import { RequestContext } from 'core/context';
 import { arrayToObject } from 'core/utils';
 import { OrganizationProjectService } from 'organization-project/organization-project.service';
 import { IntegrationTenantGetCommand } from 'integration-tenant/commands';
+import { IntegrationSyncGithubRepositoryIssueCommand } from 'integration/github/repository/issue/commands';
 import { IntegrationMapSyncEntityCommand } from 'integration-map/commands';
 import { IntegrationMapService } from 'integration-map/integration-map.service';
 import { GithubRepositoryIssueService } from './../../repository/issue/github-repository-issue.service';
@@ -130,7 +131,22 @@ export class GithubTaskUpdateOrCreateCommandHandler implements ICommandHandler<G
 							} catch (error) {
 								// Step 9: Open the GitHub issue
 								const issue: IGithubIssue = await this._githubSyncService.createOrUpdateIssue(installationId, payload);
-								// Step 10: Create a mapping between the task and the GitHub issue
+
+								// Step 10: Synchronized GitHub repository issue.
+								const repositoryId = repository.repositoryId;
+								await this._commandBus.execute(
+									new IntegrationSyncGithubRepositoryIssueCommand(
+										{
+											tenantId,
+											organizationId,
+											integrationId
+										},
+										repositoryId,
+										issue
+									)
+								);
+
+								// Step 11: Create a mapping between the task and the GitHub issue
 								return await this._commandBus.execute(
 									new IntegrationMapSyncEntityCommand({
 										gauzyId: task.id,
