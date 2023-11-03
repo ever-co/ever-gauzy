@@ -342,11 +342,14 @@ export class GithubViewComponent extends PaginationFilterBaseComponent implement
 			}
 		};
 
-
 		// Define settings for the Smart Table
 		this.settingsSmartTableProjects = {
 			selectedRowIndex: -1, // Initialize the selected row index
 			actions: false,
+			pager: {
+				display: false,
+				perPage: pagination ? pagination.itemsPerPage : 10
+			},
 			columns: {
 				repository: {
 					title: this.getTranslation('SM_TABLE.GITHUB_REPOSITORY'), // Set column title based on translation
