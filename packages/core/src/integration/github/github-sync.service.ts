@@ -68,8 +68,6 @@ export class GithubSyncService {
         }
 
         try {
-            input.repository['status'] = GithubRepositoryStatusEnum.SYNCING;
-
             /** */
             const repository: IOrganizationGithubRepository = await this._commandBus.execute(
                 new IntegrationSyncGithubRepositoryCommand(

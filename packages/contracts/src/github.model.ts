@@ -148,7 +148,6 @@ export interface IOrganizationGithubRepositoryIssue extends IBasePerTenantAndOrg
 
 export interface IIntegrationMapSyncRepository extends IBasePerTenantAndOrganizationEntityModel, IRelationalIntegrationTenant {
     repository: IGithubRepository;
-    hasSyncEnabled?: boolean;
 }
 
 export enum GithubRepositoryStatusEnum {

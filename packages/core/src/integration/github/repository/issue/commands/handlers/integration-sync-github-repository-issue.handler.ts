@@ -41,7 +41,6 @@ export class IntegrationSyncGithubRepositoryIssueCommandHandler implements IComm
 				repositoryId
 			});
 
-			console.log(issue);
 			// Extract issue details
 			const { id, number } = issue;
 			/** */

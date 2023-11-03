@@ -215,7 +215,7 @@ export class GithubViewComponent extends TranslationBaseComponent implements Aft
 			return of([]); // Return an empty observable if there is no organization
 		}
 
-		this.loading = true;
+		// this.loading = true;
 
 		const owner = repository.owner['login'];
 		const repo = repository.name;
@@ -244,9 +244,7 @@ export class GithubViewComponent extends TranslationBaseComponent implements Aft
 				this._errorHandlingService.handleError(error);
 				return of([]);
 			}),
-			tap(() => {
-				this.loading = false;
-			}),
+			// tap(() => this.loading = false),
 			// Handle component lifecycle to avoid memory leaks
 			untilDestroyed(this),
 		);
@@ -520,7 +518,7 @@ export class GithubViewComponent extends TranslationBaseComponent implements Aft
 			}
 
 			// Mark the synchronization as in progress
-			this.syncing = true;
+			this.syncing = this.loading = true;
 
 			const { id: organizationId, tenantId } = this.organization;
 			const { id: integrationId } = this.integration;
@@ -532,8 +530,7 @@ export class GithubViewComponent extends TranslationBaseComponent implements Aft
 				organizationId,
 				tenantId,
 				integrationId,
-				repository,
-				hasSyncEnabled: true
+				repository
 			};
 
 			// Synchronize the GitHub repository and update project settings
@@ -576,7 +573,7 @@ export class GithubViewComponent extends TranslationBaseComponent implements Aft
 						return EMPTY;
 					}),
 					// Execute the following code block when the observable completes or errors
-					finalize(() => this.syncing = false),
+					finalize(() => this.syncing = this.loading = false),
 					// Automatically unsubscribe when the component is destroyed
 					untilDestroyed(this)
 				)
@@ -608,7 +605,7 @@ export class GithubViewComponent extends TranslationBaseComponent implements Aft
 			}
 
 			// Mark the synchronization as in progress
-			this.syncing = true;
+			this.syncing = this.loading = true;
 
 			const { id: organizationId, tenantId } = this.organization;
 			const { id: integrationId } = this.integration;
@@ -620,8 +617,7 @@ export class GithubViewComponent extends TranslationBaseComponent implements Aft
 				organizationId,
 				tenantId,
 				integrationId,
-				repository,
-				hasSyncEnabled: true
+				repository
 			};
 
 			// Synchronize the GitHub repository and update project settings
@@ -671,7 +667,7 @@ export class GithubViewComponent extends TranslationBaseComponent implements Aft
 						return EMPTY;
 					}),
 					// Execute the following code block when the observable completes or errors
-					finalize(() => this.syncing = false),
+					finalize(() => this.syncing = this.loading = false),
 					// Automatically unsubscribe when the component is destroyed
 					untilDestroyed(this)
 				)

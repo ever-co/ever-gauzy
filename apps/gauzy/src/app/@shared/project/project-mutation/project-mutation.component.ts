@@ -559,8 +559,7 @@ export class ProjectMutationComponent extends TranslationBaseComponent
 				organizationId,
 				tenantId,
 				integrationId,
-				repository,
-				hasSyncEnabled: true
+				repository
 			}
 			// Fetch entity settings by integration ID and handle the result as an observable
 			this._githubService.syncGithubRepository(request).pipe(
