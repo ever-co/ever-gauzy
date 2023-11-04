@@ -1245,6 +1245,7 @@
 		},
 		"GITHUB_PAGE": {
 			"TITLE": "GitHub Integration",
+			"AUTO_SYNC_TABLE_LABEL": "Syncing GitHub Repositories and Projects",
 			"SELECT_REPOSITORY": "Select repository",
 			"SEARCH_REPOSITORY": "Type to search repository",
 			"SYNCED_ISSUES": "'{{repository}}' issues & labels synced successfully",
