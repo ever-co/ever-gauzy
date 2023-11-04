@@ -19,13 +19,16 @@
 			></ngx-gauzy-button-action>
 		</div>
 		<div class="columns-header row align-items-center">
-			<div class="col-md-6 p-0 float-left text-truncate">
+			<div class="col-md-5 p-0 float-left text-truncate">
 				{{ 'SM_TABLE.NAME' | translate }}
 			</div>
 			<div class="col-md-2 p-0 float-left text-truncate">
 				{{ 'SM_TABLE.LAST_SYNC_DATE' | translate }}
 			</div>
-			<div class="col-md-2 p-0 text-right text-truncate">
+			<div class="col-md-2 p-0 float-left text-truncate">
+				{{ 'SM_TABLE.ENABLE_DISABLE_INTEGRATION' | translate }}
+			</div>
+			<div class="col-md-1 p-0 text-right text-truncate">
 				{{ 'SM_TABLE.STATUS' | translate }}
 			</div>
 		</div>
@@ -37,7 +40,7 @@
 					<ng-container *ngFor="let integration of integrations">
 						<nb-card>
 							<nb-card-body class="card-body-table">
-								<div class="col-2 p-0 float-left text-truncate">
+								<div class="col-1 p-0 float-left text-truncate">
 									<img
 										[alt]="[integration?.integration?.title]"
 										[src]="integration?.integration?.fullImgUrl"
@@ -57,7 +60,14 @@
 								<div class="col-2 p-0 float-left text-truncate last-sync">
 									{{ (integration?.lastSyncedAt || integration?.updatedAt)  | dateTimeFormat }}
 								</div>
-								<div class="col-2 p-0 text-right text-truncate">
+								<div class="col-2 p-0 float-left text-truncate">
+									<ngx-toggle-switch
+										[value]="integration?.isActive"
+										[label]="false"
+										(switched)="updateIntegrationTenant(integration, $event)"
+									></ngx-toggle-switch>
+								</div>
+								<div class="col-1 p-0 text-right text-truncate">
 									<div class="badge" [ngClass]="integration?.isActive ? 'badge-success': 'badge-danger'">
 										{{ (integration?.isActive ? 'INTEGRATIONS.ENABLED' : 'INTEGRATIONS.DISABLED') | translate }}
 									</div>
@@ -70,6 +80,7 @@
 											nbButton
 											size="small"
 											status="basic"
+											[disabled]="!integration.isActive"
 										>
 											<nb-icon class="mr-1" icon="eye-outline"></nb-icon>
 											{{ 'BUTTONS.VIEW' | translate }}

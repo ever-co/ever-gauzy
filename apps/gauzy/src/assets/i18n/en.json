@@ -307,7 +307,9 @@
 		"GITHUB_REPOSITORY": "Github Repository",
 		"ISSUES_SYNC": "Issues in Sync",
 		"ISSUES_SYNC_COUNT": "{{ count }} Issues Auto Sync",
-		"ENABLED_DISABLED_SYNC": "Enabled / Disabled Sync"
+		"ENABLED_DISABLED_SYNC": "Enabled / Disabled Sync",
+		"ENABLE_DISABLE_INTEGRATION": "Enable / Disable Integration",
+		"ACTIONS": "Actions"
 	},
 	"FORM": {
 		"USERNAME": "Username",
@@ -1265,7 +1267,9 @@
 		"MESSAGE": {
 			"SETTINGS_UPDATED": "Updated settings for '{{provider}}' integration",
 			"INTEGRATION_DELETED": "Integration '{{provider}}' deleted successfully",
-			"NO_INTEGRATIONS": "You have not configured any integrations"
+			"NO_INTEGRATIONS": "You have not configured any integrations",
+			"INTEGRATION_ENABLED": "'{{provider}}' integration successfully enabled",
+			"INTEGRATION_DISABLED": "'{{provider}}' integration successfully disabled"
 		},
 		"ENABLED": "Enabled",
 		"DISABLED": "Disabled"

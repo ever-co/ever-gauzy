@@ -31,6 +31,6 @@ export * from './project-organization-grid-details/project-organization-grid-det
 export * from './project-organization-employees/project-organization-employees.component';
 export * from './clickable-link/clickable-link.component';
 export * from './trust-html/trust-html.component';
+export * from './toggle-switch/toggle-switch.component';
 export * from './github/repository/repository.component';
-export * from './github/auto-sync-switch/auto-sync-switch.component';
 export * from './github/issue-title-description/issue-title-description.component';

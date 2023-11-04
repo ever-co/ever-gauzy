@@ -31,7 +31,13 @@ export class GithubMiddleware implements NestMiddleware {
                     const { settings = [] } = await this._integrationTenantService.findOneByIdString(integrationId, {
                         where: {
                             tenantId,
-                            organizationId
+                            organizationId,
+                            isActive: true,
+                            isArchived: false,
+                            integration: {
+                                isActive: true,
+                                isArchived: false,
+                            }
                         },
                         relations: {
                             settings: true
