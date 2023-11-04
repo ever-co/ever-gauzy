@@ -125,7 +125,7 @@
 
 			& .submit-btn {
 				@include submit-btn;
-				padding: 13px 59px;
+				padding: 12px 48px;
 			}
 		}
 
@@ -146,8 +146,9 @@
 
 		& .socials {
 			display: flex;
-			justify-content: space-evenly;
+			justify-content: flex-start;
 			width: 100%;
+			margin-left: -10px;
 		}
 	}
 
