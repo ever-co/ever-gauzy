@@ -7,8 +7,11 @@ import {
 	UseGuards,
 	UsePipes,
 	ValidationPipe,
-	InternalServerErrorException
+	InternalServerErrorException,
+	Put,
+	Body
 } from '@nestjs/common';
+import { CommandBus } from '@nestjs/cqrs';
 import { ApiTags } from '@nestjs/swagger';
 import { ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { IIntegrationTenant, IPagination, PermissionsEnum } from '@gauzy/contracts';
@@ -19,7 +22,8 @@ import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
 import { RelationsQueryDTO } from './../shared/dto';
 import { IntegrationTenant } from './integration-tenant.entity';
 import { IntegrationTenantService } from './integration-tenant.service';
-import { IntegrationTenantQueryDTO } from './dto';
+import { IntegrationTenantQueryDTO, UpdateIntegrationTenantDTO } from './dto';
+import { IntegrationTenantUpdateCommand } from './commands';
 
 @ApiTags('IntegrationTenant')
 @UseGuards(TenantPermissionGuard, PermissionGuard)
@@ -27,6 +31,7 @@ import { IntegrationTenantQueryDTO } from './dto';
 @Controller()
 export class IntegrationTenantController extends CrudController<IntegrationTenant> {
 	constructor(
+		private readonly _commandBus: CommandBus,
 		private readonly _integrationTenantService: IntegrationTenantService
 	) {
 		super(_integrationTenantService);
@@ -93,6 +98,30 @@ export class IntegrationTenantController extends CrudController<IntegrationTenan
 
 			// Throw an InternalServerErrorException with a generic error message
 			throw new InternalServerErrorException('An error occurred while fetching the IntegrationTenant entity');
+		}
+	}
+
+	/**
+	 * Update an integration tenant with the provided data.
+	 *
+	 * @param id - The identifier of the integration tenant to update.
+	 * @param input - The data to update the integration tenant with.
+	 * @returns A response, typically the updated integration tenant or an error response.
+	 */
+	@Put(':id')
+	@UsePipes(new ValidationPipe({ whitelist: true }))
+	async update(
+		@Param('id', UUIDValidationPipe) id: IIntegrationTenant['id'],
+		@Body() input: UpdateIntegrationTenantDTO
+	): Promise<IIntegrationTenant> {
+		try {
+			// Update the corresponding integration tenant with the new input data
+			return await this._commandBus.execute(
+				new IntegrationTenantUpdateCommand(id, input)
+			);
+		} catch (error) {
+			// Handle errors, e.g., return an error response.
+			throw new Error('Failed to update integration fields');
 		}
 	}
 }

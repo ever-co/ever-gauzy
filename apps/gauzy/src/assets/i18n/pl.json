@@ -4347,6 +4347,7 @@
 		"REMEMBER_ME_TITLE": "Zapamiętaj mnie",
 		"DO_NOT_HAVE_ACCOUNT_TITLE": "Nie masz konta?",
 		"FORGOT_PASSWORD_TITLE": "Zapomniałeś hasła?",
+		"OR_SIGN_IN_WITH": "Albo zaloguj się korzystając z",
 		"LABELS": {
 			"EMAIL": "Adres email:",
 			"PASSWORD": "Hasło:"

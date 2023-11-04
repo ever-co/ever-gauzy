@@ -2498,6 +2498,10 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 					}),
 				},
 			});
+			// Force stop
+			if (callBack) {
+				await callBack();
+			}
 		}
 	}
 

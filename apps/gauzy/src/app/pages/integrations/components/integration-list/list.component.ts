@@ -7,7 +7,7 @@ import { NbDialogService, NbToastrService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { distinctUntilChange } from '@gauzy/common-angular';
-import { IIntegration, IIntegrationTenant, IOrganization, IPagination } from '@gauzy/contracts';
+import { HttpStatus, IIntegration, IIntegrationTenant, IOrganization, IPagination } from '@gauzy/contracts';
 import { ErrorHandlingService, IntegrationTenantService, Store } from './../../../../@core/services';
 import { TranslationBaseComponent } from './../../../../@shared/language-base';
 import { DeleteConfirmationComponent } from './../../../../@shared/user/forms';
@@ -122,6 +122,58 @@ export class IntegrationListComponent extends TranslationBaseComponent implement
 			// Handle component lifecycle to avoid memory leaks
 			untilDestroyed(this),
 		);
+	}
+
+	/**
+	 * Update the state of an integration and handle various side effects.
+	 *
+	 * @param integration - The integration to update.
+	 * @param isActive - A boolean indicating whether the integration should be active.
+	 */
+	public updateIntegrationTenant(
+		integration: IIntegrationTenant,
+		isActive: boolean
+	) {
+		if (!integration) {
+			return; // If integration is missing, exit the function.
+		}
+
+		const { organizationId, tenantId } = integration;
+
+		// Update the integration using the _integrationTenantService.
+		this._integrationTenantService.update(integration.id, {
+			isActive: isActive,
+			isArchived: !isActive,
+			tenantId,
+			organizationId
+		}).pipe(
+			tap((response: any) => {
+				if (response['status'] == HttpStatus.BAD_REQUEST) {
+					throw new Error(`${response['message']}`);
+				}
+			}),
+			// Catch and handle errors
+			catchError((error) => {
+				// Handle and log errors using the _errorHandlingService
+				this._errorHandlingService.handleError(error);
+				// Return an empty observable to continue the stream
+				return EMPTY;
+			}),
+			tap(() => {
+				// Determine the success message based on whether 'isActive' is true or false.
+				const message = isActive ? 'INTEGRATIONS.MESSAGE.INTEGRATION_ENABLED' : 'INTEGRATIONS.MESSAGE.INTEGRATION_DISABLED';
+
+				// Display a success toast message using the _toastrService.
+				this._toastrService.success(
+					this.getTranslation(message, { provider: integration?.integration?.name }),
+					this.getTranslation('TOASTR.TITLE.SUCCESS')
+				);
+			}),
+			// Update the subject with a value of true
+			tap(() => this.subject$.next(true)),
+			// Handle component lifecycle to avoid memory leaks
+			untilDestroyed(this)
+		).subscribe();
 	}
 
 	/**

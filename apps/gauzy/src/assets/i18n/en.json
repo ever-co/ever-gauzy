@@ -307,7 +307,9 @@
 		"GITHUB_REPOSITORY": "Github Repository",
 		"ISSUES_SYNC": "Issues in Sync",
 		"ISSUES_SYNC_COUNT": "{{ count }} Issues Auto Sync",
-		"ENABLED_DISABLED_SYNC": "Enabled / Disabled Sync"
+		"ENABLED_DISABLED_SYNC": "Enabled / Disabled Sync",
+		"ENABLE_DISABLE_INTEGRATION": "Enable / Disable Integration",
+		"ACTIONS": "Actions"
 	},
 	"FORM": {
 		"USERNAME": "Username",
@@ -1265,7 +1267,9 @@
 		"MESSAGE": {
 			"SETTINGS_UPDATED": "Updated settings for '{{provider}}' integration",
 			"INTEGRATION_DELETED": "Integration '{{provider}}' deleted successfully",
-			"NO_INTEGRATIONS": "You have not configured any integrations"
+			"NO_INTEGRATIONS": "You have not configured any integrations",
+			"INTEGRATION_ENABLED": "'{{provider}}' integration successfully enabled",
+			"INTEGRATION_DISABLED": "'{{provider}}' integration successfully disabled"
 		},
 		"ENABLED": "Enabled",
 		"DISABLED": "Disabled"
@@ -3800,9 +3804,9 @@
 			"READY_FOR_ADVANCED_SETTINGS": "Are you ready for some advanced settings?",
 			"FINAL_STEP_GP": "This is the final step where you can get to the nitty-gritty of your Gauzy Platform.",
 			"PORT": "Port",
-			"PORT_API": "Port Api",
+			"PORT_API": "Port API",
 			"UI": "Ui",
-			"API_HOST": "Api Host",
+			"API_HOST": "API Host",
 			"HOST": "Host",
 			"DB_NAME": "Database Name",
 			"DB_PORT": "Database Port",
@@ -3853,14 +3857,14 @@
 			"ADVANCED_SETTINGS": "Advanced Settings",
 			"WARNING_STOP_TIMER": "Please Stop Timer if you want to change config",
 			"GENERAL": "General",
-			"API_CONFIG": "Api Configuration",
+			"API_CONFIG": "API Configuration",
 			"SERVER_ACCESS_CONFIG": "Server Access Configuration",
 			"API_SERVER_PORT": "API Server Port",
 			"UI_SERVER_PORT": "UI Server Port",
 			"SERVER_HOSTNAME": "Server Hostname/ IP Address",
 			"AUTO_START_STARTUP": "Auto Start On Startup",
 			"SERVER_TYPE": "Server Type",
-			"LOCAL_API_PORT": "Local Api Port",
+			"LOCAL_API_PORT": "Local API Port",
 			"UI_PORT": "UI Port",
 			"SERVER_URL": "Server URL",
 			"DB_CONFIG": "Database Configuration",
@@ -4405,6 +4409,7 @@
 		"REMEMBER_ME_TITLE": "Remember me",
 		"DO_NOT_HAVE_ACCOUNT_TITLE": "Don't have an account?",
 		"FORGOT_PASSWORD_TITLE": "Forgot Password?",
+		"OR_SIGN_IN_WITH": "Or Sign In with",
 		"LABELS": {
 			"EMAIL": "Email address:",
 			"PASSWORD": "Password:"

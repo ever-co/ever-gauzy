@@ -3,7 +3,7 @@ import { CommandBus, CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { IIntegrationTenant } from '@gauzy/contracts';
 import { IntegrationTenantService } from '../../integration-tenant.service';
 import { IntegrationTenantCreateCommand } from '../integration-tenant.create.command';
-import { IntegrationTenantUpdateOrCreateCommand } from '../integration-tenant-first-or-create.command';
+import { IntegrationTenantUpdateOrCreateCommand } from '../integration-tenant-update-or-create.command';
 import { IntegrationTenantUpdateCommand } from '../integration-tenant.update.command';
 
 @Injectable()

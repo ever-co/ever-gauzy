@@ -41,8 +41,8 @@ import {
 	ClickableLinkComponent,
 	ProjectComponent,
 	GithubRepositoryComponent,
-	GithubAutoSyncSwitchComponent,
-	GithubIssueTitleDescriptionComponent
+	GithubIssueTitleDescriptionComponent,
+	ToggleSwitchComponent
 } from './../../../../../@shared/table-components';
 import { GithubSettingsDialogComponent } from '../settings-dialog/settings-dialog.component';
 
@@ -380,12 +380,12 @@ export class GithubViewComponent extends PaginationFilterBaseComponent implement
 					title: this.getTranslation('SM_TABLE.ENABLED_DISABLED_SYNC'),
 					type: 'custom',
 					filter: false,
-					renderComponent: GithubAutoSyncSwitchComponent,
+					renderComponent: ToggleSwitchComponent,
 					valuePrepareFunction: (i: any, row: IOrganizationProject) => {
 						return row?.repository?.hasSyncEnabled || false;
 					},
 					onComponentInitFunction: (instance: any) => {
-						instance.autoSyncChange.subscribe({
+						instance.switched.subscribe({
 							next: (hasSyncEnabled: boolean) => {
 								this.updateGithubRepository(instance.rowData, hasSyncEnabled);
 							},

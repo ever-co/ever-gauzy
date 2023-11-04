@@ -72,16 +72,13 @@ export class IntegrationTenantService extends TenantAwareCrudService<Integration
 			const tenantId = RequestContext.currentTenantId() || input.tenantId;
 			const { organizationId, name } = input;
 
-			const integrationTenant = await this.findOneByOptions({
+			const integration = await this.findOneByOptions({
 				where: {
 					tenantId,
 					organizationId,
 					name,
-					isActive: true,
-					isArchived: false,
 					integration: {
-						isActive: true,
-						isArchived: false
+						name
 					}
 				},
 				order: {
@@ -91,7 +88,7 @@ export class IntegrationTenantService extends TenantAwareCrudService<Integration
 					integration: true
 				}
 			});
-			return integrationTenant || false;
+			return integration || false;
 		} catch (error) {
 			return false;
 		}
