@@ -128,7 +128,7 @@
 		</form>
 		<div class="hr-div-soft"></div>
 		<section *ngIf="socialLinks && socialLinks.length > 0" class="links" aria-label="Social sign in">
-			or enter with:
+			{{ 'LOGIN_PAGE.OR_SIGN_IN_WITH' | translate }}
 			<div class="socials">
 				<ng-container *ngFor="let socialLink of socialLinks">
 					<a *ngIf="socialLink.link" [routerLink]="socialLink.link" [attr.target]="socialLink.target"
