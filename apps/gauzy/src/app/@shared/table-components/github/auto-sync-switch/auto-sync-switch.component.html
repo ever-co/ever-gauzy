@@ -1,7 +1,0 @@
-<nb-toggle
-	status="primary"
-	[checked]="autoSync$ | async"
-	(checkedChange)="onCheckedChange($event)"
->
-	{{ ((autoSync$ | async) ? 'BUTTONS.ENABLED' : 'BUTTONS.DISABLED') | translate }}
-</nb-toggle >
