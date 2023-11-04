@@ -4272,6 +4272,7 @@
 		"REMEMBER_ME_TITLE": "Запомнить меня",
 		"DO_NOT_HAVE_ACCOUNT_TITLE": "У вас нет учетной записи?",
 		"FORGOT_PASSWORD_TITLE": "Забыли пароль?",
+		"OR_SIGN_IN_WITH": "Или войдите с",
 		"LABELS": {
 			"EMAIL": "Email адрес:",
 			"PASSWORD": "Пароль:"
