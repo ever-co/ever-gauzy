@@ -102,6 +102,12 @@ export enum GithubPropertyMapEnum {
     TOKEN_TYPE = 'token_type',
     SYNC_TAG = 'sync_tag'
 }
+
+export interface IGithubSyncIssuePayload extends IBasePerTenantAndOrganizationEntityModel, IRelationalOrganizationProject {
+    issues: IGithubIssue | IGithubIssue[];
+    repository: IOrganizationGithubRepository;
+}
+
 /**
  * Represents a payload for GitHub issues, including organization and tenant information.
  */
@@ -110,13 +116,8 @@ export interface IGithubRepositoryPayload {
 }
 
 /** */
-export interface IGithubSyncIssuePayload extends IGithubRepositoryPayload, IBasePerTenantAndOrganizationEntityModel, IRelationalOrganizationProject {
-    issues: IGithubIssue | IGithubIssue[];
-}
-
 export interface IGithubAutomationBase extends IGithubRepositoryPayload {
     integration: IIntegrationTenant;
-    repository: IGithubRepository;
 }
 
 export interface IGithubAutomationIssuePayload extends IGithubAutomationBase {

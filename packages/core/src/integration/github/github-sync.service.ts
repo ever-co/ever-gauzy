@@ -8,7 +8,6 @@ import {
     IGithubAutomationIssuePayload,
     IGithubIssue,
     IGithubIssueLabel,
-    IGithubRepository,
     IGithubSyncIssuePayload,
     IGithubInstallationDeletedPayload,
     IIntegrationEntitySetting,
@@ -30,13 +29,11 @@ import { isNotEmpty } from '@gauzy/common';
 import { RequestContext } from 'core/context';
 import { arrayToObject } from 'core/utils';
 import { IntegrationTenantService } from 'integration-tenant/integration-tenant.service';
-import { OrganizationProjectSettingUpdateCommand } from 'organization-project/commands';
 import { OrganizationProjectService } from 'organization-project/organization-project.service';
 import { IntegrationMapSyncIssueCommand, IntegrationMapSyncLabelCommand } from 'integration-map/commands';
 import { AutomationTaskSyncCommand } from 'tasks/commands';
 import { AutomationLabelSyncCommand } from 'tags/commands';
 import { GithubRepositoryService } from './repository/github-repository.service';
-import { IntegrationSyncGithubRepositoryCommand } from './commands';
 import { IntegrationSyncGithubRepositoryIssueCommand } from './repository/issue/commands';
 
 @Injectable()
@@ -68,29 +65,23 @@ export class GithubSyncService {
         }
 
         try {
-            // Synchronize a GitHub repository based on the input data and store the result in 'repository'.
-            const repository: IOrganizationGithubRepository = await this._commandBus.execute(
-                new IntegrationSyncGithubRepositoryCommand(input)
-            );
+            // Extract the 'repository' object from the input payload
+            const repository: IOrganizationGithubRepository = input.repository;
 
-            // Update the organization project setting with the synchronized repository's ID.
-            await this._commandBus.execute(
-                new OrganizationProjectSettingUpdateCommand(input.projectId, {
-                    repositoryId: repository.id
-                })
-            );
-            /** */
-            const installation_id = settings['installation_id'];
-            if (installation_id) {
-                /** */
+            try {
+                // Extract the 'installation_id' from the integration settings
+                const installation_id = settings['installation_id'];
+
+                // Extract repository details
                 const { name: repo, owner } = repository;
 
-                const issues = await this.getRepositoryAllIssues(settings.installation_id, owner, repo);
+                // Retrieve GitHub issues for the repository
+                const issues = await this.getRepositoryAllIssues(installation_id, owner, repo);
                 console.log(`Automatically syncing ${issues.length} issues`);
 
+                // Map the issues to the desired format using '_mapIssuePayload' method
                 input.issues = this._mapIssuePayload(Array.isArray(issues) ? issues : [issues]);
-            }
-            try {
+
                 // Attempt to synchronize GitHub issues using the syncGithubIssues method.
                 await this.syncingGithubIssues(integrationId, input);
 
@@ -138,17 +129,8 @@ export class GithubSyncService {
                 throw new HttpException('Invalid request parameter: Missing or unauthorized integration', HttpStatus.UNAUTHORIZED);
             }
 
-            // Synchronize a GitHub repository based on the input data and store the result in 'repository'.
-            const repository: IOrganizationGithubRepository = await this._commandBus.execute(
-                new IntegrationSyncGithubRepositoryCommand(input)
-            );
-
-            // Update the organization project setting with the synchronized repository's ID.
-            await this._commandBus.execute(
-                new OrganizationProjectSettingUpdateCommand(input.projectId, {
-                    repositoryId: repository.id
-                })
-            );
+            // Extract the 'repository' object from the input payload
+            const repository: IOrganizationGithubRepository = input.repository;
 
             try {
                 // Attempt to synchronize GitHub issues using the syncGithubIssues method.
@@ -192,6 +174,7 @@ export class GithubSyncService {
     ): Promise<IIntegrationMap[] | boolean> {
         try {
             const { organizationId, repository } = input;
+
             const tenantId = RequestContext.currentTenantId() || input.tenantId;
             const issues: IGithubIssue[] = Array.isArray(input.issues) ? input.issues : [input.issues];
 
@@ -244,8 +227,8 @@ export class GithubSyncService {
                                         console.error('Failed to fetch GitHub labels for the repository issue:', error.message);
                                     }
 
-                                    // Step 7: Synchronized GitHub repository issue.
-                                    const repositoryId = repository.id;
+                                    // Step 7: Synchronized GitHub Repository Issue.
+                                    const { repositoryId } = repository;
                                     await this._commandBus.execute(
                                         new IntegrationSyncGithubRepositoryIssueCommand(
                                             {
@@ -321,7 +304,7 @@ export class GithubSyncService {
         organizationId: IOrganization['id'],
         tenantId: IOrganization['tenantId'],
         integrationId: IIntegrationTenant['id'],
-        repository: IGithubRepository,
+        repository: IOrganizationGithubRepository,
         issue_number: IGithubIssue['number']
     }): Promise<ITag[]> {
         try {
@@ -342,7 +325,7 @@ export class GithubSyncService {
                 const installation_id = settings.installation_id;
                 /** Get Github Labels */
                 const response = await this._octokitService.getLabelsByIssueNumber(installation_id, {
-                    owner: owner.login,
+                    owner,
                     repo,
                     issue_number
                 });
@@ -359,7 +342,7 @@ export class GithubSyncService {
                 if (isNotEmpty(labelsToCreate)) {
                     try {
                         const response = await this._octokitService.createLabelsForIssue(installation_id, {
-                            owner: owner.login,
+                            owner,
                             repo,
                             issue_number,
                             labels: labelsToCreate
@@ -665,7 +648,13 @@ export class GithubSyncService {
         // Use a while to simplify pagination
         while (hasMoreIssues) {
             try {
-                const response = await this._octokitService.getRepositoryIssues(installation_id, { owner, repo, page, per_page });
+                // Fetch issues for the current page
+                const response = await this._octokitService.getRepositoryIssues(installation_id, {
+                    owner,
+                    repo,
+                    page,
+                    per_page
+                });
                 if (Array.isArray(response.data) && response.data.length > 0) {
                     // Append the retrieved issues to the result array
                     issues.push(...response.data);

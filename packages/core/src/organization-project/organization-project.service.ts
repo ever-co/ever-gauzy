@@ -137,7 +137,8 @@ export class OrganizationProjectService extends TenantAwareCrudService<Organizat
 						organizationId,
 						tenantId,
 						isActive: true,
-						isArchived: false
+						isArchived: false,
+						hasSyncEnabled: true
 					},
 					isActive: true,
 					isArchived: false

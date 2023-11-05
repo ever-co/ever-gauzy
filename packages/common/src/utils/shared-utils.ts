@@ -183,3 +183,11 @@ export function sluggable(string: string, replacement: any = '-'): string {
 		trim: true // trim leading and trailing replacement chars, defaults to `true`
 	}).replace(/[_]/g, replacement);
 }
+
+/**
+ * How To Make A Sleep Function In TypeScript?
+ *
+ * @param ms
+ * @returns
+ */
+export const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));

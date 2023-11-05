@@ -160,7 +160,8 @@
 		"REPORT": "Report",
 		"IGNORE": "Ignore",
 		"ENABLED": "Enabled",
-		"DISABLED": "Disabled"
+		"DISABLED": "Disabled",
+		"RESYNC": "Resync"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {
@@ -307,6 +308,7 @@
 		"GITHUB_REPOSITORY": "GitHub Repository",
 		"ISSUES_SYNC": "Issues in Sync",
 		"ISSUES_SYNC_COUNT": "{{ count }} Issues Auto Sync",
+		"RESYNC_ISSUES": "Resync Issues",
 		"ENABLED_DISABLED_SYNC": "Enabled / Disabled Sync",
 		"ENABLE_DISABLE_INTEGRATION": "Enable / Disable Integration",
 		"ACTIONS": "Actions"

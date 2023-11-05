@@ -3,9 +3,9 @@ import { TitleCasePipe } from '@angular/common';
 import { ActivatedRoute, Data, Router } from '@angular/router';
 import { BehaviorSubject, EMPTY, Subject, debounceTime, finalize, first, firstValueFrom, of } from 'rxjs';
 import { Observable } from 'rxjs/internal/Observable';
-import { catchError, filter, map, switchMap, tap } from 'rxjs/operators';
+import { catchError, filter, map, mergeMap, switchMap, tap } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
-import { NbDialogService } from '@nebular/theme';
+import { NbDialogService, NbTabComponent } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { Ng2SmartTableComponent } from 'ng2-smart-table';
 import {
@@ -42,9 +42,15 @@ import {
 	ProjectComponent,
 	GithubRepositoryComponent,
 	GithubIssueTitleDescriptionComponent,
-	ToggleSwitchComponent
+	ToggleSwitchComponent,
+	ResyncButtonComponent
 } from './../../../../../@shared/table-components';
 import { GithubSettingsDialogComponent } from '../settings-dialog/settings-dialog.component';
+
+export enum SyncTabsEnum {
+	AUTO_SYNC = 'AUTO_SYNC',
+	MANUAL_SYNC = 'MANUAL_SYNC',
+}
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -54,6 +60,8 @@ import { GithubSettingsDialogComponent } from '../settings-dialog/settings-dialo
 })
 export class GithubViewComponent extends PaginationFilterBaseComponent implements AfterViewInit, OnInit {
 
+	public syncTabsEnum: typeof SyncTabsEnum = SyncTabsEnum;
+	public nbTab$: Subject<string> = new BehaviorSubject(SyncTabsEnum.AUTO_SYNC);
 	public page$: Observable<IPaginationBase>; // Observable for the organization project
 	public settingsSmartTableIssues: object; // Settings for the Smart Table used for issues
 	public settingsSmartTableProjects: object; // Settings for the Smart Table used for projects
@@ -382,8 +390,8 @@ export class GithubViewComponent extends PaginationFilterBaseComponent implement
 				hasSyncEnabled: {
 					title: this.getTranslation('SM_TABLE.ENABLED_DISABLED_SYNC'),
 					type: 'custom',
-					filter: false,
 					renderComponent: ToggleSwitchComponent,
+					filter: false,
 					valuePrepareFunction: (i: any, row: IOrganizationProject) => {
 						return row?.repository?.hasSyncEnabled || false;
 					},
@@ -394,6 +402,23 @@ export class GithubViewComponent extends PaginationFilterBaseComponent implement
 							},
 							error: (err: any) => {
 								console.warn(err);
+							}
+						});
+					}
+				},
+				resync: {
+					title: this.getTranslation('SM_TABLE.RESYNC_ISSUES'),
+					type: 'custom',
+					renderComponent: ResyncButtonComponent,
+					filter: false,
+					onComponentInitFunction: (instance: any) => {
+						instance.clicked.subscribe({
+							next: (event: Event) => {
+								// this.reSyncIssues(instance.rowData).subscribe();
+							},
+							error: (error: any) => {
+								// Handle and log errors
+								this._errorHandlingService.handleError(error);
 							}
 						});
 					}
@@ -528,6 +553,13 @@ export class GithubViewComponent extends PaginationFilterBaseComponent implement
 	}
 
 	/**
+	 *
+	 */
+	onChangeTab(tab: NbTabComponent) {
+		this.nbTab$.next(tab.tabId);
+	}
+
+	/**
 	 * Check if there is a valid organization, repository, and project.
 	 * If valid, log the organization, repository, and project to the console.
 	 */
@@ -549,20 +581,22 @@ export class GithubViewComponent extends PaginationFilterBaseComponent implement
 			const { id: organizationId, tenantId } = this.organization;
 			const { id: integrationId } = this.integration;
 			const { id: projectId } = this.project;
-			const repository = this.repository;
 
 			// Create a request object for syncing the GitHub repository
 			const repositorySyncRequest: IIntegrationMapSyncRepository = {
 				organizationId,
 				tenantId,
 				integrationId,
-				repository
+				repository: this.repository
 			};
+
+			let repository: IOrganizationGithubRepository;
 
 			// Synchronize the GitHub repository and update project settings
 			this._githubService.syncGithubRepository(repositorySyncRequest)
 				.pipe(
-					switchMap(({ id: repositoryId }: IOrganizationGithubRepository) =>
+					tap((item: IOrganizationGithubRepository) => repository = item),
+					mergeMap(({ id: repositoryId }: IOrganizationGithubRepository) =>
 						this._organizationProjectsService.updateProjectSetting(projectId, {
 							organizationId,
 							tenantId,
@@ -575,13 +609,16 @@ export class GithubViewComponent extends PaginationFilterBaseComponent implement
 							throw new Error(`${response['message']}`);
 						}
 					}),
-					tap(() => this.subject$.next(true)),
-					switchMap(() =>
-						this._githubService.autoSyncIssues(integrationId, this.repository, {
-							projectId,
-							organizationId,
-							tenantId
-						})
+					mergeMap(() =>
+						this._githubService.autoSyncIssues(
+							integrationId,
+							repository,
+							{
+								projectId,
+								organizationId,
+								tenantId
+							}
+						)
 					),
 					tap((process: boolean) => {
 						if (process) {
@@ -636,20 +673,22 @@ export class GithubViewComponent extends PaginationFilterBaseComponent implement
 			const { id: organizationId, tenantId } = this.organization;
 			const { id: integrationId } = this.integration;
 			const { id: projectId } = this.project;
-			const repository = this.repository;
 
 			// Create a request object for syncing the GitHub repository
 			const repositorySyncRequest: IIntegrationMapSyncRepository = {
 				organizationId,
 				tenantId,
 				integrationId,
-				repository
+				repository: this.repository
 			};
+
+			let repository: IOrganizationGithubRepository;
 
 			// Synchronize the GitHub repository and update project settings
 			this._githubService.syncGithubRepository(repositorySyncRequest)
 				.pipe(
-					switchMap(({ id: repositoryId }: IOrganizationGithubRepository) =>
+					tap((item: IOrganizationGithubRepository) => repository = item),
+					mergeMap(({ id: repositoryId }: IOrganizationGithubRepository) =>
 						this._organizationProjectsService.updateProjectSetting(projectId, {
 							organizationId,
 							tenantId,
@@ -657,10 +696,10 @@ export class GithubViewComponent extends PaginationFilterBaseComponent implement
 							syncTag: SYNC_TAG_GAUZY
 						})
 					),
-					switchMap(() =>
+					mergeMap(() =>
 						this._githubService.manualSyncIssues(
 							integrationId,
-							this.repository,
+							repository,
 							{
 								projectId,
 								organizationId,
@@ -683,8 +722,8 @@ export class GithubViewComponent extends PaginationFilterBaseComponent implement
 								this.getTranslation('TOASTR.TITLE.SUCCESS')
 							);
 						}
-						this.subject$.next(true);
 						this.resetTableSelectedItems();
+						this.getRepositoryIssue();
 					}),
 					catchError((error) => {
 						// Handle and log errors
@@ -741,7 +780,7 @@ export class GithubViewComponent extends PaginationFilterBaseComponent implement
 
 		switch (row.status) {
 			case GithubRepositoryStatusEnum.SYNCING:
-				badgeClass = 'primary';
+				badgeClass = 'info';
 				break;
 			case GithubRepositoryStatusEnum.SUCCESSFULLY:
 				badgeClass = 'success';
