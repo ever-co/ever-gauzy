@@ -1,0 +1,14 @@
+<button
+    nbButton
+    status="primary"
+    class="mr-2"
+    size="tiny"
+    debounceClick
+    (throttledClick)="onClicked($event)"
+    [disabled]="!rowData?.repository?.hasSyncEnabled"
+>
+    <div class="sync-container">
+        <nb-icon class="sync" icon="sync-outline" [ngClass]="{ 'spin' : syncing }"></nb-icon>
+        {{ 'BUTTONS.RESYNC' | translate }}
+    </div>
+</button>

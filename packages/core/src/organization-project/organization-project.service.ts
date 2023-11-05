@@ -137,7 +137,8 @@ export class OrganizationProjectService extends TenantAwareCrudService<Organizat
 						organizationId,
 						tenantId,
 						isActive: true,
-						isArchived: false
+						isArchived: false,
+						hasSyncEnabled: true
 					},
 					isActive: true,
 					isArchived: false
@@ -182,9 +183,6 @@ export class OrganizationProjectService extends TenantAwareCrudService<Organizat
 			qb.andWhere(`"repository"."tenantId" = :tenantId`, {
 				tenantId
 			});
-			qb.andWhere(`"issue"."tenantId" = :tenantId`, {
-				tenantId
-			});
 
 			if (options?.where) {
 				for (const key of Object.keys(options.where)) {
@@ -192,9 +190,6 @@ export class OrganizationProjectService extends TenantAwareCrudService<Organizat
 				}
 				for (const key of Object.keys(options.where)) {
 					qb.andWhere(`"repository"."${key}" = :${key}`, { [key]: options.where[key] });
-				}
-				for (const key of Object.keys(options.where)) {
-					qb.andWhere(`"issue"."${key}" = :${key}`, { [key]: options.where[key] });
 				}
 			}
 

@@ -160,7 +160,8 @@
 		"REPORT": "Report",
 		"IGNORE": "Ignore",
 		"ENABLED": "Enabled",
-		"DISABLED": "Disabled"
+		"DISABLED": "Disabled",
+		"RESYNC": "Resync"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {
@@ -304,9 +305,10 @@
 		"SCREEN_CAPTURE": "Screen Capture",
 		"NUMBER": "Number",
 		"PROVIDER": "Provider",
-		"GITHUB_REPOSITORY": "Github Repository",
+		"GITHUB_REPOSITORY": "GitHub Repository",
 		"ISSUES_SYNC": "Issues in Sync",
 		"ISSUES_SYNC_COUNT": "{{ count }} Issues Auto Sync",
+		"RESYNC_ISSUES": "Resync Issues",
 		"ENABLED_DISABLED_SYNC": "Enabled / Disabled Sync",
 		"ENABLE_DISABLE_INTEGRATION": "Enable / Disable Integration",
 		"ACTIONS": "Actions"
@@ -427,7 +429,7 @@
 			"FACEBOOK": "Facebook",
 			"INSTAGRAM": "Instagram",
 			"TWITTER": "Twitter",
-			"GITHUB": "Github",
+			"GITHUB": "GitHub",
 			"GITLAB": "Gitlab",
 			"UPWORK": "Upwork",
 			"STACK_OVERFLOW": "Stackoverflow",
@@ -475,7 +477,7 @@
 			"AUTO_SYNC_TASKS": "Auto-sync tasks",
 			"AUTO_SYNC_TASKS_BASED_ON_LABEL": "Is tasks Auto-sync based on Label?",
 			"AUTO_SYNC_TAG": "Label",
-			"GITHUB_REPOSITORY": "Github Repository",
+			"GITHUB_REPOSITORY": "GitHub Repository",
 			"PROJECT": "Project"
 		},
 		"PLACEHOLDERS": {
@@ -581,7 +583,7 @@
 			"FACEBOOK": "Facebook",
 			"INSTAGRAM": "Instagram",
 			"TWITTER": "Twitter",
-			"GITHUB": "Github",
+			"GITHUB": "GitHub",
 			"GITLAB": "Gitlab",
 			"UPWORK": "Upwork",
 			"STACK_OVERFLOW": "Stackoverflow",
@@ -1245,6 +1247,7 @@
 		},
 		"GITHUB_PAGE": {
 			"TITLE": "GitHub Integration",
+			"AUTO_SYNC_TABLE_LABEL": "Syncing GitHub Repositories and Projects",
 			"SELECT_REPOSITORY": "Select repository",
 			"SEARCH_REPOSITORY": "Type to search repository",
 			"SYNCED_ISSUES": "'{{repository}}' issues & labels synced successfully",

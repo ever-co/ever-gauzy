@@ -110,7 +110,7 @@ export class GithubService {
      */
     public autoSyncIssues(
         integrationId: IIntegrationTenant['id'],
-        repository: IGithubRepository,
+        repository: IOrganizationGithubRepository,
         options: {
             organizationId: IOrganization['id'];
             tenantId: IOrganization['tenantId'];
@@ -119,7 +119,7 @@ export class GithubService {
     ): Observable<any> {
         return this._http.post(`${API_PREFIX}/integration/github/${integrationId}/auto-sync/issues`, {
             integrationId,
-            repository: this._mapRepositoryPayload(repository),
+            repository,
             projectId: options.projectId,
             organizationId: options.organizationId,
             tenantId: options.tenantId
@@ -135,7 +135,7 @@ export class GithubService {
      */
     public manualSyncIssues(
         integrationId: IIntegrationTenant['id'],
-        repository: IGithubRepository,
+        repository: IOrganizationGithubRepository,
         options: {
             organizationId: IOrganization['id'];
             tenantId: IOrganization['tenantId'];
@@ -145,7 +145,7 @@ export class GithubService {
     ): Observable<any> {
         return this._http.post(`${API_PREFIX}/integration/github/${integrationId}/manual-sync/issues`, {
             integrationId,
-            repository: this._mapRepositoryPayload(repository),
+            repository,
             issues: this._mapIssuePayload(options.issues),
             projectId: options.projectId,
             organizationId: options.organizationId,
