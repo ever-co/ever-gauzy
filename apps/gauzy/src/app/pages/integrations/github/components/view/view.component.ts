@@ -411,10 +411,10 @@ export class GithubViewComponent extends PaginationFilterBaseComponent implement
 					type: 'custom',
 					renderComponent: ResyncButtonComponent,
 					filter: false,
-					onComponentInitFunction: (instance: any) => {
+					onComponentInitFunction: (instance: ResyncButtonComponent) => {
 						instance.clicked.subscribe({
-							next: (event: Event) => {
-								// this.reSyncIssues(instance.rowData).subscribe();
+							next: () => {
+								this.resyncIssues(instance.rowData);
 							},
 							error: (error: any) => {
 								// Handle and log errors
@@ -743,6 +743,51 @@ export class GithubViewComponent extends PaginationFilterBaseComponent implement
 
 			// Optionally, you can provide error feedback to the user
 			this._errorHandlingService.handleError(error);
+		}
+	}
+
+	/**
+	 *
+	 * @param project
+	 */
+	resyncIssues(project: IOrganizationProject) {
+		try {
+			// Ensure there is a valid organization, and project
+			if (!this.organization || !project || !project.repository) {
+				return;
+			}
+
+			this.loading = true;
+
+			this.project = project;
+			const { repository } = project;
+
+			const { id: organizationId, tenantId } = this.organization;
+			const { id: integrationId } = this.integration;
+			const { id: projectId } = this.project;
+
+			this._githubService.autoSyncIssues(
+				integrationId,
+				repository,
+				{
+					projectId,
+					organizationId,
+					tenantId
+				}
+			).pipe(
+				catchError((error) => {
+					this._errorHandlingService.handleError(error);
+					return EMPTY;
+				}),
+				// Execute the following code block when the observable completes or errors
+				tap(() => {
+					this.loading = false;
+				}),
+				// Automatically unsubscribe when the component is destroyed
+				untilDestroyed(this)
+			).subscribe();;
+		} catch (error) {
+			console.log(error);
 		}
 	}
 

@@ -4,7 +4,7 @@ import { ViewCell } from 'ng2-smart-table';
 @Component({
 	selector: 'ngx-resync-button',
 	templateUrl: './resync-button.component.html',
-	styleUrls: []
+	styleUrls: [],
 })
 export class ResyncButtonComponent implements ViewCell {
 
@@ -38,38 +38,11 @@ export class ResyncButtonComponent implements ViewCell {
 	@Input() rowData: any;
 
 	/**
-	 * Associated getter/setter for managing a boolean value indicating synchronization status.
-	 */
-	private _syncing: boolean = false;
-
-	/**
-	 * Getter for retrieving the current synchronization status.
-	 *
-	 * @returns The current synchronization status (a boolean value).
-	 */
-	get syncing(): boolean {
-		return this._syncing;
-	}
-
-	/**
-	 * Setter for updating the synchronization status.
-	 * This setter is decorated with @Input, allowing external components to set and update the synchronization status.
-	 *
-	 * @param value - The new synchronization status (a boolean value).
-	 */
-	@Input() set syncing(value: boolean) {
-		// Update the synchronization status with the provided value.
-		this._syncing = value;
-	}
-
-	/**
 	 * An output property for emitting click events.
 	 *
 	 * This output property emits events of type Event when a click event occurs.
 	 */
 	@Output() clicked: EventEmitter<Event> = new EventEmitter();
-
-	constructor() { }
 
 	/**
 	 * Handle a click event, conditionally emitting it for further processing.
