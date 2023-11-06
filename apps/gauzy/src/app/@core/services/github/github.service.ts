@@ -181,12 +181,13 @@ export class GithubService {
      * @returns An array of mapped issue payload data.
      */
     private _mapIssuePayload(data: IGithubIssue[]): any[] {
-        return data.map(({ id, number, title, state, body }) => ({
+        return data.map(({ id, number, title, state, body, labels = [] }) => ({
             id,
             number,
             title,
             state,
-            body
+            body,
+            labels
         }));
     }
 }
