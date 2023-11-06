@@ -2148,6 +2148,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 			this.selectedTimeSlot = this.lastTimeSlot;
 			this._dialog = this.dialogService.open(dialog, {
 				context: this.dialogType[option.type].message,
+				backdropClass: 'backdrop-blur'
 			});
 			this._dialog.onClose.subscribe(async (selectedOption) => {
 				if (selectedOption) {
