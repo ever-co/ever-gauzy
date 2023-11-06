@@ -23,6 +23,7 @@
 		"start": "yarn nx serve desktop"
 	},
 	"devDependencies": {
+		"@electron/notarize": "^2.1.0",
 		"@electron/rebuild": "^3.2.10",
 		"@types/moment-duration-format": "^2.2.3",
 		"electron": "^30.0.1",
@@ -66,7 +67,6 @@
 		"auto-launch": "5.0.5",
 		"consolidate": "^0.16.0",
 		"electron-log": "^4.4.8",
-		"electron-notarize": "^1.2.2",
 		"electron-store": "^8.1.0",
 		"electron-updater": "^6.1.7",
 		"electron-util": "^0.18.1",
