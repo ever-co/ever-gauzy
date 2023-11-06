@@ -139,15 +139,22 @@ export class Activity extends TenantOrganizationBaseEntity implements IActivity 
 	employeeId?: IEmployee['id'];
 
 	/**
-	 * Organization Project Activity
+	 * Organization Project Relationship
 	 */
 	@ApiProperty({ type: () => OrganizationProject })
-	@ManyToOne(() => OrganizationProject, (project) => project.activities, {
+	@ManyToOne(() => OrganizationProject, (it) => it.activities, {
+		/** Indicates if the relation column value can be nullable or not. */
+		nullable: true,
+
+		/** Defines the database cascade action on delete. */
 		onDelete: 'SET NULL'
 	})
 	@JoinColumn()
 	project?: IOrganizationProject;
 
+	/**
+	 * Organization Project ID
+	 */
 	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()
 	@IsUUID()
