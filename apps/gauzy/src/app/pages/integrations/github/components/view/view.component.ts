@@ -775,14 +775,28 @@ export class GithubViewComponent extends PaginationFilterBaseComponent implement
 					tenantId
 				}
 			).pipe(
+				tap((response: any) => {
+					if (response['status'] == HttpStatus.BAD_REQUEST) {
+						throw new Error(`${response['message']}`);
+					}
+				}),
+				tap((process: boolean) => {
+					if (process) {
+						this._toastrService.success(
+							this.getTranslation('INTEGRATIONS.GITHUB_PAGE.SYNCED_ISSUES', {
+								repository: repository.fullName
+							}),
+							this.getTranslation('TOASTR.TITLE.SUCCESS')
+						);
+					}
+					this.subject$.next(true);
+				}),
 				catchError((error) => {
 					this._errorHandlingService.handleError(error);
 					return EMPTY;
 				}),
 				// Execute the following code block when the observable completes or errors
-				tap(() => {
-					this.loading = false;
-				}),
+				finalize(() => this.loading = false),
 				// Automatically unsubscribe when the component is destroyed
 				untilDestroyed(this)
 			).subscribe();;

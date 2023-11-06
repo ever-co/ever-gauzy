@@ -180,8 +180,13 @@ export class OrganizationProject extends TenantOrganizationBaseEntity implements
 	 * Organization Contact
 	 */
 	@ManyToOne(() => OrganizationContact, (it) => it.projects, {
+		/** Indicates if relation column value can be nullable or not. */
 		nullable: true,
+
+		/** Database cascade action on update. */
 		onUpdate: 'CASCADE',
+
+		/** Database cascade action on delete. */
 		onDelete: 'SET NULL',
 	})
 	@JoinColumn()

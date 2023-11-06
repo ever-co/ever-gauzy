@@ -234,6 +234,9 @@ export class IntegrationListComponent extends TranslationBaseComponent implement
 	 * @returns The description of the integration provider, or undefined if the provider is missing or not found.
 	 */
 	getProviderDescription(integration: IIntegration): string | null {
+		if (!integration) {
+			return;
+		}
 		return integration.provider ? this.providers[integration.provider]?.description : null;
 	}
 

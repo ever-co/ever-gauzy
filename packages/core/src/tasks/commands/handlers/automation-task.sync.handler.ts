@@ -7,8 +7,7 @@ import {
 	IOrganizationProject,
 	ITask,
 	ITaskCreateInput,
-	ITaskUpdateInput,
-	IntegrationEntity
+	ITaskUpdateInput
 } from '@gauzy/contracts';
 import { RequestContext } from 'core/context';
 import { IntegrationMap, TaskStatus } from 'core/entities/internal';
@@ -63,7 +62,6 @@ export class AutomationTaskSyncHandler implements ICommandHandler<AutomationTask
 						tenantId
 					});
 				} catch (error) {
-					console.log(`${IntegrationEntity.TASK} Not Found for integration GauzyID %s: `, integrationMap.gauzyId);
 					// Create a new task with the provided entity data
 					await this.createTask({
 						projectId,
