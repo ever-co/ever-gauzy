@@ -16,29 +16,28 @@ export interface IPaginationBase {
 @Component({
 	template: ''
 })
-export class PaginationFilterBaseComponent extends TranslationBaseComponent
-	implements AfterViewInit {
+export class PaginationFilterBaseComponent extends TranslationBaseComponent implements AfterViewInit {
 
+	public activePage: number = 1;
+	public totalItems: number = 0;
+	public itemsPerPage: number = 10;
 	/**
 	 * Getter for minimum items per page
 	 * Can't be modified outside the class
 	 */
 	private _minItemPerPage: number = 10;
-
 	public get minItemPerPage() {
 		return this._minItemPerPage;
 	}
 
 	private _pagination: IPaginationBase = {
-		totalItems: 0,
-		activePage: 1,
-		itemsPerPage: 10
+		totalItems: this.totalItems,
+		activePage: this.activePage,
+		itemsPerPage: this.itemsPerPage
 	};
-
 	public get pagination(): IPaginationBase {
 		return this._pagination;
 	}
-
 	protected set pagination(value: IPaginationBase) {
 		this._pagination = value;
 	}
@@ -75,7 +74,7 @@ export class PaginationFilterBaseComponent extends TranslationBaseComponent
 	protected refreshPagination() {
 		this.setPagination({
 			...this.getPagination(),
-			activePage: 1,
+			activePage: this.activePage,
 			itemsPerPage: this.minItemPerPage
 		});
 	}

@@ -15,8 +15,7 @@ import {
 @Entity('task_related_issue_type')
 export class TaskRelatedIssueTypes
 	extends TenantOrganizationBaseEntity
-	implements ITaskRelatedIssueType
-{
+	implements ITaskRelatedIssueType {
 	@ApiProperty({ type: () => String })
 	@IsNotEmpty()
 	@IsString()
@@ -56,13 +55,20 @@ export class TaskRelatedIssueTypes
 	*/
 
 	/**
-	 * Organization Project
+	 * Organization Project Relationship
 	 */
-	@ManyToOne(() => OrganizationProject, (project) => project.statuses, {
+	@ManyToOne(() => OrganizationProject, (it) => it.relatedIssueTypes, {
+		/** Indicates if the relation column value can be nullable or not. */
+		nullable: true,
+
+		/** Defines the database cascade action on delete. */
 		onDelete: 'CASCADE',
 	})
 	project?: IOrganizationProject;
 
+	/**
+	 * Organization Project ID
+	 */
 	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()
 	@IsUUID()
@@ -72,13 +78,20 @@ export class TaskRelatedIssueTypes
 	projectId?: IOrganizationProject['id'];
 
 	/**
-	 * Organization Team
+	 * Organization Team Relationship
 	 */
-	@ManyToOne(() => OrganizationTeam, (team) => team.statuses, {
+	@ManyToOne(() => OrganizationTeam, (it) => it.relatedIssueTypes, {
+		/** Indicates if the relation column value can be nullable or not. */
+		nullable: true,
+
+		/** Defines the database cascade action on delete. */
 		onDelete: 'CASCADE',
 	})
 	organizationTeam?: IOrganizationTeam;
 
+	/**
+	 * Organization Team ID
+	 */
 	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()
 	@IsUUID()

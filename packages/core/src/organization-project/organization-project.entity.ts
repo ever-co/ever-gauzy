@@ -156,18 +156,21 @@ export class OrganizationProject extends TenantOrganizationBaseEntity implements
 	*/
 
 	/**
-	 * OrganizationGithubRepository
+	 * OrganizationGithubRepository Relationship
 	 */
 	@ManyToOne(() => OrganizationGithubRepository, (it) => it.projects, {
-		/** Indicates if relation column value can be nullable or not. */
+		/** Indicates if the relation column value can be nullable or not. */
 		nullable: true,
 
-		/** Database cascade action on delete. */
+		/** Defines the database cascade action on delete. */
 		onDelete: 'SET NULL'
 	})
 	@JoinColumn()
 	repository?: IOrganizationGithubRepository;
 
+	/**
+	 * Repository ID
+	 */
 	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()
 	@IsUUID()
@@ -177,26 +180,40 @@ export class OrganizationProject extends TenantOrganizationBaseEntity implements
 	repositoryId?: IOrganizationGithubRepository['id'];
 
 	/**
-	 * Organization Contact
+	 * Organization Contact Relationship
 	 */
 	@ManyToOne(() => OrganizationContact, (it) => it.projects, {
+		/** Indicates if the relation column value can be nullable or not. */
 		nullable: true,
+
+		/** Defines the database action to perform on update. */
 		onUpdate: 'CASCADE',
-		onDelete: 'SET NULL',
+
+		/** Defines the database cascade action on delete. */
+		onDelete: 'SET NULL'
 	})
 	@JoinColumn()
 	organizationContact?: IOrganizationContact;
 
+	/**
+	 * Organization Contact ID
+	 */
+	@ApiPropertyOptional({ type: () => String })
+	@IsOptional()
+	@IsUUID()
 	@RelationId((it: OrganizationProject) => it.organizationContact)
 	@Index()
 	@Column({ nullable: true })
 	organizationContactId?: IOrganizationContact['id'];
 
 	/**
-	 * ImageAsset
+	 * ImageAsset Relationship
 	 */
 	@ManyToOne(() => ImageAsset, {
-		/** Database cascade action on delete. */
+		/** Indicates if the relation column value can be nullable or not. */
+		nullable: true,
+
+		/** Defines the database cascade action on delete. */
 		onDelete: 'SET NULL',
 
 		/** Eager relations are always loaded automatically when relation's owner entity is loaded using find* methods. */
@@ -205,6 +222,9 @@ export class OrganizationProject extends TenantOrganizationBaseEntity implements
 	@JoinColumn()
 	image?: IImageAsset;
 
+	/**
+	 * Image Asset ID
+	 */
 	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()
 	@IsUUID()
@@ -218,78 +238,77 @@ export class OrganizationProject extends TenantOrganizationBaseEntity implements
 	| @OneToMany
 	|--------------------------------------------------------------------------
 	*/
-	// Organization Tasks
-	@OneToMany(() => Task, (it) => it.project, {
-		onDelete: 'SET NULL',
-	})
+
+	/**
+	 * Organization Tasks Relationship
+	 */
+	@OneToMany(() => Task, (it) => it.project)
 	tasks?: ITask[];
 
+	/**
+	 * TimeLog Relationship
+	 */
 	@OneToMany(() => TimeLog, (it) => it.project)
 	timeLogs?: ITimeLog[];
 
-	// Organization Invoice Items
-	@OneToMany(() => InvoiceItem, (it) => it.project, {
-		onDelete: 'SET NULL',
-	})
+	/**
+	 * Organization Invoice Items Relationship
+	 */
+	@OneToMany(() => InvoiceItem, (it) => it.project)
 	invoiceItems?: IInvoiceItem[];
 
-	// Organization Sprints
-	@OneToMany(() => OrganizationSprint, (it) => it.project, {
-		onDelete: 'SET NULL',
-	})
+	/**
+	 * Organization Sprints Relationship
+	 */
+	@OneToMany(() => OrganizationSprint, (it) => it.project)
 	organizationSprints?: IOrganizationSprint[];
 
-	// Organization Payments
-	@OneToMany(() => Payment, (it) => it.project, {
-		onDelete: 'SET NULL',
-	})
+	/**
+	 * Organization Payments Relationship
+	 */
+	@OneToMany(() => Payment, (it) => it.project)
 	payments?: IPayment[];
 
 	/**
-	 * Expense
+	 * Expense Relationship
 	 */
-	@OneToMany(() => Expense, (it) => it.project, {
-		onDelete: 'SET NULL',
-	})
+	@OneToMany(() => Expense, (it) => it.project)
 	expenses?: IExpense[];
 
 	/**
-	 * Activity
+	 * Activity Relationship
 	 */
-	@OneToMany(() => Activity, (activity) => activity.project)
+	@OneToMany(() => Activity, (it) => it.project)
 	activities?: IActivity[];
 
 	/**
 	 * Project Statuses
 	 */
-	@OneToMany(() => TaskStatus, (status) => status.project)
+	@OneToMany(() => TaskStatus, (it) => it.project)
 	statuses?: ITaskStatus[];
 
 	/**
-	 * Project Related Issue Type
+	 * Project Related Issue Type Relationship
 	 */
-	@OneToMany(
-		() => TaskRelatedIssueTypes,
-		(relatedIssueType) => relatedIssueType.organizationTeam
-	)
+	@OneToMany(() => TaskRelatedIssueTypes, (it) => it.project)
 	relatedIssueTypes?: ITaskRelatedIssueType[];
 
 	/**
-	 * Project Priorities
+	 * Project Priorities Relationship
 	 */
-	@OneToMany(() => TaskPriority, (priority) => priority.project)
+	@OneToMany(() => TaskPriority, (it) => it.project)
 	priorities?: ITaskPriority[];
 
 	/**
-	 * Project Sizes
+	 * Project Sizes Relationship
 	 */
-	@OneToMany(() => TaskSize, (size) => size.project)
+	@OneToMany(() => TaskSize, (it) => it.project)
 	sizes?: ITaskSize[];
 
 	/**
-	 * Project Versions
+	 * Project Versions Relationship
 	 */
-	@OneToMany(() => TaskVersion, (version) => version.project)
+	@OneToMany(() => TaskVersion, (it) => it.project)
 	versions?: ITaskVersion[];
 
 	/*
@@ -299,10 +318,12 @@ export class OrganizationProject extends TenantOrganizationBaseEntity implements
 	*/
 
 	/**
-	 * Tags
+	 * Tags Relationship
 	 */
-	@ManyToMany(() => Tag, (tag) => tag.organizationProjects, {
+	@ManyToMany(() => Tag, (it) => it.organizationProjects, {
+		/** Defines the database action to perform on update. */
 		onUpdate: 'CASCADE',
+		/** Defines the database cascade action on delete. */
 		onDelete: 'CASCADE',
 	})
 	@JoinTable({
@@ -311,20 +332,24 @@ export class OrganizationProject extends TenantOrganizationBaseEntity implements
 	tags: ITag[];
 
 	/**
-	 * Project Members
+	 * Project Members Relationship
 	 */
-	@ManyToMany(() => Employee, (employee) => employee.projects, {
+	@ManyToMany(() => Employee, (it) => it.projects, {
+		/** Defines the database action to perform on update. */
 		onUpdate: 'CASCADE',
+		/** Defines the database cascade action on delete. */
 		onDelete: 'CASCADE',
 	})
 	members?: IEmployee[];
 
 	/**
-	 * Organization Teams
+	 * Organization Teams Relationship
 	 */
 	@ManyToMany(() => OrganizationTeam, (it) => it.projects, {
+		/** Defines the database action to perform on update. */
 		onUpdate: 'CASCADE',
-		onDelete: 'CASCADE'
+		/** Defines the database cascade action on delete. */
+		onDelete: 'CASCADE',
 	})
 	@JoinTable({
 		name: 'organization_project_team'

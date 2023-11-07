@@ -4271,6 +4271,7 @@
 		"REMEMBER_ME_TITLE": "Remember me",
 		"DO_NOT_HAVE_ACCOUNT_TITLE": "Don't have an account?",
 		"FORGOT_PASSWORD_TITLE": "Forgot Password?",
+		"OR_SIGN_IN_WITH": "או להתחבר עם",
 		"LABELS": {
 			"EMAIL": "Email address:",
 			"PASSWORD": "Password:"
