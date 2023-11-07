@@ -132,24 +132,30 @@ export class TimeLog extends TenantOrganizationBaseEntity implements ITimeLog {
 	timesheetId?: ITimesheet['id'];
 
 	/**
-	 * OrganizationProject
+	 * Organization Project Relationship
 	 */
 	@ApiPropertyOptional({ type: () => OrganizationProject })
 	@IsOptional()
 	@ManyToOne(() => OrganizationProject, (project) => project.timeLogs, {
+		/** Indicates if the relation column value can be nullable or not. */
 		nullable: true,
-		onDelete: 'SET NULL'
+
+		/** Defines the database cascade action on delete. */
+		onDelete: 'SET NULL',
 	})
 	@JoinColumn()
 	project?: IOrganizationProject;
 
+	/**
+	 * Organization Project ID
+	 */
 	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()
 	@IsUUID()
 	@RelationId((it: TimeLog) => it.project)
 	@Index()
 	@Column({ nullable: true })
-	projectId?: string;
+	projectId?: IOrganizationProject['id'];
 
 	/**
 	 * Task

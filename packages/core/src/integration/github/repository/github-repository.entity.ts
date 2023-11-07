@@ -94,10 +94,14 @@ export class OrganizationGithubRepository extends TenantOrganizationBaseEntity i
     */
 
     /** Repository Sync Organization Projects */
-    @OneToMany(() => OrganizationProject, (it) => it.repository)
+    @OneToMany(() => OrganizationProject, (it) => it.repository, {
+        cascade: true
+    })
     projects?: IOrganizationProject[];
 
     /** Repository Sync Organization Projects */
-    @OneToMany(() => OrganizationGithubRepositoryIssue, (it) => it.repository)
+    @OneToMany(() => OrganizationGithubRepositoryIssue, (it) => it.repository, {
+        cascade: true
+    })
     issues?: IOrganizationGithubRepositoryIssue[];
 }

@@ -34,3 +34,4 @@ export * from './trust-html/trust-html.component';
 export * from './toggle-switch/toggle-switch.component';
 export * from './github/repository/repository.component';
 export * from './github/issue-title-description/issue-title-description.component';
+export * from './github/resync-button/resync-button.component';

@@ -1,17 +1,16 @@
-import { AfterViewInit, Component, OnInit, ViewChild } from '@angular/core';
+import { AfterViewInit, Component, OnInit, QueryList, ViewChild, ViewChildren } from '@angular/core';
 import { TitleCasePipe } from '@angular/common';
 import { ActivatedRoute, Data, Router } from '@angular/router';
-import { BehaviorSubject, EMPTY, Subject, debounceTime, finalize, first, firstValueFrom, of } from 'rxjs';
+import { BehaviorSubject, EMPTY, Subject, debounceTime, finalize, of } from 'rxjs';
 import { Observable } from 'rxjs/internal/Observable';
-import { catchError, filter, map, switchMap, tap } from 'rxjs/operators';
+import { catchError, filter, map, mergeMap, switchMap, tap } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
-import { NbDialogService } from '@nebular/theme';
+import { NbPopoverDirective, NbTabComponent } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { Ng2SmartTableComponent } from 'ng2-smart-table';
 import {
 	GithubRepositoryStatusEnum,
 	HttpStatus,
-	IEntitySettingToSync,
 	IGithubIssue,
 	IGithubRepository,
 	IIntegrationMapSyncRepository,
@@ -20,7 +19,6 @@ import {
 	IOrganizationGithubRepository,
 	IOrganizationProject,
 	IUser,
-	IntegrationEnum,
 	SYNC_TAG_GAUZY,
 	TaskStatusEnum
 } from '@gauzy/contracts';
@@ -28,8 +26,6 @@ import { distinctUntilChange } from '@gauzy/common-angular';
 import {
 	ErrorHandlingService,
 	GithubService,
-	IntegrationEntitySettingService,
-	IntegrationEntitySettingServiceStoreService,
 	OrganizationProjectsService,
 	Store,
 	ToastrService
@@ -42,9 +38,14 @@ import {
 	ProjectComponent,
 	GithubRepositoryComponent,
 	GithubIssueTitleDescriptionComponent,
-	ToggleSwitchComponent
+	ToggleSwitchComponent,
+	ResyncButtonComponent
 } from './../../../../../@shared/table-components';
-import { GithubSettingsDialogComponent } from '../settings-dialog/settings-dialog.component';
+
+export enum SyncTabsEnum {
+	AUTO_SYNC = 'AUTO_SYNC',
+	MANUAL_SYNC = 'MANUAL_SYNC',
+}
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -54,6 +55,8 @@ import { GithubSettingsDialogComponent } from '../settings-dialog/settings-dialo
 })
 export class GithubViewComponent extends PaginationFilterBaseComponent implements AfterViewInit, OnInit {
 
+	public syncTabsEnum: typeof SyncTabsEnum = SyncTabsEnum;
+	public nbTab$: Subject<string> = new BehaviorSubject(SyncTabsEnum.AUTO_SYNC);
 	public page$: Observable<IPaginationBase>; // Observable for the organization project
 	public settingsSmartTableIssues: object; // Settings for the Smart Table used for issues
 	public settingsSmartTableProjects: object; // Settings for the Smart Table used for projects
@@ -85,19 +88,18 @@ export class GithubViewComponent extends PaginationFilterBaseComponent implement
 		}
 	}
 
+	@ViewChildren(NbPopoverDirective) public popups: QueryList<NbPopoverDirective>;
+
 	constructor(
 		private readonly _router: Router,
 		public readonly _translateService: TranslateService,
 		private readonly _activatedRoute: ActivatedRoute,
 		private readonly _titlecasePipe: TitleCasePipe,
 		private readonly _hashNumberPipe: HashNumberPipe,
-		private readonly _dialogService: NbDialogService,
 		private readonly _toastrService: ToastrService,
 		private readonly _errorHandlingService: ErrorHandlingService,
 		private readonly _store: Store,
 		private readonly _githubService: GithubService,
-		private readonly _integrationEntitySettingService: IntegrationEntitySettingService,
-		private readonly _integrationEntitySettingServiceStoreService: IntegrationEntitySettingServiceStoreService,
 		private readonly _organizationProjectsService: OrganizationProjectsService
 	) {
 		super(_translateService);
@@ -345,7 +347,10 @@ export class GithubViewComponent extends PaginationFilterBaseComponent implement
 		// Define settings for the Smart Table
 		this.settingsSmartTableProjects = {
 			selectedRowIndex: -1, // Initialize the selected row index
+			hideSubHeader: true,
 			actions: false,
+			mode: 'external',
+			editable: true,
 			pager: {
 				display: false,
 				perPage: pagination ? pagination.itemsPerPage : 10
@@ -379,8 +384,8 @@ export class GithubViewComponent extends PaginationFilterBaseComponent implement
 				hasSyncEnabled: {
 					title: this.getTranslation('SM_TABLE.ENABLED_DISABLED_SYNC'),
 					type: 'custom',
-					filter: false,
 					renderComponent: ToggleSwitchComponent,
+					filter: false,
 					valuePrepareFunction: (i: any, row: IOrganizationProject) => {
 						return row?.repository?.hasSyncEnabled || false;
 					},
@@ -391,6 +396,23 @@ export class GithubViewComponent extends PaginationFilterBaseComponent implement
 							},
 							error: (err: any) => {
 								console.warn(err);
+							}
+						});
+					}
+				},
+				resync: {
+					title: this.getTranslation('SM_TABLE.RESYNC_ISSUES'),
+					type: 'custom',
+					renderComponent: ResyncButtonComponent,
+					filter: false,
+					onComponentInitFunction: (instance: ResyncButtonComponent) => {
+						instance.clicked.subscribe({
+							next: () => {
+								this.resyncIssues(instance.rowData);
+							},
+							error: (error: any) => {
+								// Handle and log errors
+								this._errorHandlingService.handleError(error);
 							}
 						});
 					}
@@ -459,61 +481,16 @@ export class GithubViewComponent extends PaginationFilterBaseComponent implement
 	}
 
 	/**
-	 * Open a dialog to set GitHub integration settings.
-	 *
-	 * @returns
+	 * Opens a modal popover for integration settings if the 'integration' object is defined.
 	 */
-	private openDialog(): Observable<boolean> {
-		// Open a dialog to configure GitHub settings
-		const dialogRef = this._dialogService.open(GithubSettingsDialogComponent, {
-			context: {
-				integration: this.integration // Pass the 'integration' object to the dialog component
-			}
-		});
-		// Return an Observable that emits a boolean when the dialog is closed
-		return dialogRef.onClose.pipe(first());
-	}
-
-	/**
-	 * Open a dialog to set GitHub integration settings.
-	 */
-	async openSettingModal() {
+	openSettingModalPopover() {
 		// Check if the 'integration' object is falsy and return early if it is
 		if (!this.integration) {
 			return;
 		}
 
-		// Wait for the dialog to close and retrieve the data returned from the dialog
-		const data = await firstValueFrom(this.openDialog());
-		if (data) {
-			// Extract the 'id' property from the 'integration' object
-			const { id: integrationId } = this.integration;
-
-			// Use try-catch for better error handling
-			try {
-				// Retrieve the current settings from the service
-				const { currentValue: settings }: IEntitySettingToSync = this._integrationEntitySettingServiceStoreService.getEntitySettingsValue();
-
-				// Update entity settings if needed
-				await firstValueFrom(
-					this._integrationEntitySettingService.updateEntitySettings(
-						integrationId,
-						settings
-					)
-				);
-
-				this._toastrService.success(
-					this.getTranslation('INTEGRATIONS.MESSAGE.SETTINGS_UPDATED', { provider: IntegrationEnum.GITHUB }),
-					this.getTranslation('TOASTR.TITLE.SUCCESS')
-				);
-				// Optionally, you can provide feedback or handle success here
-			} catch (error) {
-				// Handle errors (e.g., display an error message or log the error)
-				console.error('Error updating entity settings:', error);
-				// Optionally, you can provide error feedback to the user
-				this._errorHandlingService.handleError(error);
-			}
-		}
+		// Open the modal popover (assuming `popups` is an array or collection of popovers)
+		this.popups.first.toggle();
 	}
 
 	/**
@@ -522,6 +499,13 @@ export class GithubViewComponent extends PaginationFilterBaseComponent implement
 	 */
 	selectIssues({ selected }: { selected: any[] }): void {
 		this.selectedIssues = selected;
+	}
+
+	/**
+	 *
+	 */
+	onChangeTab(tab: NbTabComponent) {
+		this.nbTab$.next(tab.tabId);
 	}
 
 	/**
@@ -546,20 +530,22 @@ export class GithubViewComponent extends PaginationFilterBaseComponent implement
 			const { id: organizationId, tenantId } = this.organization;
 			const { id: integrationId } = this.integration;
 			const { id: projectId } = this.project;
-			const repository = this.repository;
 
 			// Create a request object for syncing the GitHub repository
 			const repositorySyncRequest: IIntegrationMapSyncRepository = {
 				organizationId,
 				tenantId,
 				integrationId,
-				repository
+				repository: this.repository
 			};
+
+			let repository: IOrganizationGithubRepository;
 
 			// Synchronize the GitHub repository and update project settings
 			this._githubService.syncGithubRepository(repositorySyncRequest)
 				.pipe(
-					switchMap(({ id: repositoryId }: IOrganizationGithubRepository) =>
+					tap((item: IOrganizationGithubRepository) => repository = item),
+					mergeMap(({ id: repositoryId }: IOrganizationGithubRepository) =>
 						this._organizationProjectsService.updateProjectSetting(projectId, {
 							organizationId,
 							tenantId,
@@ -572,13 +558,16 @@ export class GithubViewComponent extends PaginationFilterBaseComponent implement
 							throw new Error(`${response['message']}`);
 						}
 					}),
-					tap(() => this.subject$.next(true)),
-					switchMap(() =>
-						this._githubService.autoSyncIssues(integrationId, this.repository, {
-							projectId,
-							organizationId,
-							tenantId
-						})
+					mergeMap(() =>
+						this._githubService.autoSyncIssues(
+							integrationId,
+							repository,
+							{
+								projectId,
+								organizationId,
+								tenantId
+							}
+						)
 					),
 					tap((process: boolean) => {
 						if (process) {
@@ -633,20 +622,22 @@ export class GithubViewComponent extends PaginationFilterBaseComponent implement
 			const { id: organizationId, tenantId } = this.organization;
 			const { id: integrationId } = this.integration;
 			const { id: projectId } = this.project;
-			const repository = this.repository;
 
 			// Create a request object for syncing the GitHub repository
 			const repositorySyncRequest: IIntegrationMapSyncRepository = {
 				organizationId,
 				tenantId,
 				integrationId,
-				repository
+				repository: this.repository
 			};
+
+			let repository: IOrganizationGithubRepository;
 
 			// Synchronize the GitHub repository and update project settings
 			this._githubService.syncGithubRepository(repositorySyncRequest)
 				.pipe(
-					switchMap(({ id: repositoryId }: IOrganizationGithubRepository) =>
+					tap((item: IOrganizationGithubRepository) => repository = item),
+					mergeMap(({ id: repositoryId }: IOrganizationGithubRepository) =>
 						this._organizationProjectsService.updateProjectSetting(projectId, {
 							organizationId,
 							tenantId,
@@ -654,10 +645,10 @@ export class GithubViewComponent extends PaginationFilterBaseComponent implement
 							syncTag: SYNC_TAG_GAUZY
 						})
 					),
-					switchMap(() =>
+					mergeMap(() =>
 						this._githubService.manualSyncIssues(
 							integrationId,
-							this.repository,
+							repository,
 							{
 								projectId,
 								organizationId,
@@ -680,8 +671,8 @@ export class GithubViewComponent extends PaginationFilterBaseComponent implement
 								this.getTranslation('TOASTR.TITLE.SUCCESS')
 							);
 						}
-						this.subject$.next(true);
 						this.resetTableSelectedItems();
+						this.getRepositoryIssue();
 					}),
 					catchError((error) => {
 						// Handle and log errors
@@ -701,6 +692,65 @@ export class GithubViewComponent extends PaginationFilterBaseComponent implement
 
 			// Optionally, you can provide error feedback to the user
 			this._errorHandlingService.handleError(error);
+		}
+	}
+
+	/**
+	 *
+	 * @param project
+	 */
+	resyncIssues(project: IOrganizationProject) {
+		try {
+			// Ensure there is a valid organization, and project
+			if (!this.organization || !project || !project.repository) {
+				return;
+			}
+
+			this.loading = true;
+
+			this.project = project;
+			const { repository } = project;
+
+			const { id: organizationId, tenantId } = this.organization;
+			const { id: integrationId } = this.integration;
+			const { id: projectId } = this.project;
+
+			this._githubService.autoSyncIssues(
+				integrationId,
+				repository,
+				{
+					projectId,
+					organizationId,
+					tenantId
+				}
+			).pipe(
+				tap((response: any) => {
+					if (response['status'] == HttpStatus.BAD_REQUEST) {
+						throw new Error(`${response['message']}`);
+					}
+				}),
+				tap((process: boolean) => {
+					if (process) {
+						this._toastrService.success(
+							this.getTranslation('INTEGRATIONS.GITHUB_PAGE.SYNCED_ISSUES', {
+								repository: repository.fullName
+							}),
+							this.getTranslation('TOASTR.TITLE.SUCCESS')
+						);
+					}
+					this.subject$.next(true);
+				}),
+				catchError((error) => {
+					this._errorHandlingService.handleError(error);
+					return EMPTY;
+				}),
+				// Execute the following code block when the observable completes or errors
+				finalize(() => this.loading = false),
+				// Automatically unsubscribe when the component is destroyed
+				untilDestroyed(this)
+			).subscribe();;
+		} catch (error) {
+			console.log(error);
 		}
 	}
 
@@ -738,7 +788,7 @@ export class GithubViewComponent extends PaginationFilterBaseComponent implement
 
 		switch (row.status) {
 			case GithubRepositoryStatusEnum.SYNCING:
-				badgeClass = 'primary';
+				badgeClass = 'info';
 				break;
 			case GithubRepositoryStatusEnum.SUCCESSFULLY:
 				badgeClass = 'success';

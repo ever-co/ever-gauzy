@@ -2,13 +2,13 @@
 import { HttpException, HttpStatus, Injectable, Logger } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 import * as moment from 'moment';
+import * as chalk from 'chalk';
 import { Request } from 'express';
 import { OctokitService } from '@gauzy/integration-github';
 import {
     IGithubAutomationIssuePayload,
     IGithubIssue,
     IGithubIssueLabel,
-    IGithubRepository,
     IGithubSyncIssuePayload,
     IGithubInstallationDeletedPayload,
     IIntegrationEntitySetting,
@@ -26,17 +26,15 @@ import {
     SYNC_TAG_GAUZY,
     SYNC_TAG_GITHUB
 } from '@gauzy/contracts';
-import { isNotEmpty } from '@gauzy/common';
+import { isNotEmpty, sleep } from '@gauzy/common';
 import { RequestContext } from 'core/context';
 import { arrayToObject } from 'core/utils';
 import { IntegrationTenantService } from 'integration-tenant/integration-tenant.service';
-import { OrganizationProjectSettingUpdateCommand } from 'organization-project/commands';
 import { OrganizationProjectService } from 'organization-project/organization-project.service';
 import { IntegrationMapSyncIssueCommand, IntegrationMapSyncLabelCommand } from 'integration-map/commands';
 import { AutomationTaskSyncCommand } from 'tasks/commands';
 import { AutomationLabelSyncCommand } from 'tags/commands';
 import { GithubRepositoryService } from './repository/github-repository.service';
-import { IntegrationSyncGithubRepositoryCommand } from './commands';
 import { IntegrationSyncGithubRepositoryIssueCommand } from './repository/issue/commands';
 
 @Injectable()
@@ -52,15 +50,18 @@ export class GithubSyncService {
     ) { }
 
     /**
-     * Initiates an automatic synchronization of GitHub issues.
-     * @param integrationId - The unique identifier of the GitHub integration.
-     * @param input - An object containing data needed for the synchronization.
+     * Automatically synchronize GitHub issues with a repository.
+     *
+     * @param {IIntegrationTenant['id']} integrationId - The ID of the integration tenant.
+     * @param {IGithubSyncIssuePayload} input - The payload containing GitHub repository details and issues.
+     * @param {Request} request - The HTTP request object.
+     * @returns {Promise<boolean>} A Promise that indicates whether the synchronization was successful.
      */
     public async autoSyncGithubIssues(
         integrationId: IIntegrationTenant['id'],
         input: IGithubSyncIssuePayload,
         request: Request
-    ) {
+    ): Promise<boolean> {
         // Check if the request contains integration settings
         const settings = request['integration']?.settings;
         if (!settings || !settings.installation_id) {
@@ -68,47 +69,49 @@ export class GithubSyncService {
         }
 
         try {
-            // Synchronize a GitHub repository based on the input data and store the result in 'repository'.
-            const repository: IOrganizationGithubRepository = await this._commandBus.execute(
-                new IntegrationSyncGithubRepositoryCommand(input)
-            );
+            // Extract the 'repository' object from the input payload
+            const repository: IOrganizationGithubRepository = input.repository;
 
-            // Update the organization project setting with the synchronized repository's ID.
-            await this._commandBus.execute(
-                new OrganizationProjectSettingUpdateCommand(input.projectId, {
-                    repositoryId: repository.id
-                })
-            );
-            /** */
-            const installation_id = settings['installation_id'];
-            if (installation_id) {
-                /** */
+            try {
+                // Extract the 'installation_id' from the integration settings
+                const installation_id = settings['installation_id'];
+
+                // Extract repository details
                 const { name: repo, owner } = repository;
 
-                const issues = await this.getRepositoryAllIssues(settings.installation_id, owner, repo);
-                console.log(`Automatically syncing ${issues.length} issues`);
+                // Retrieve GitHub issues for the repository
+                this.getRepositoryAllIssues(installation_id, owner, repo, (issues: IGithubIssue[]) => {
+                    console.log(chalk.magenta(`Automatically syncing ${issues.length} issues`));
 
-                input.issues = this._mapIssuePayload(Array.isArray(issues) ? issues : [issues]);
-            }
-            try {
-                // Attempt to synchronize GitHub issues using the syncGithubIssues method.
-                await this.syncingGithubIssues(integrationId, input);
+                    // Map the issues to the desired format using '_mapIssuePayload' method
+                    input.issues = this._mapIssuePayload(Array.isArray(issues) ? issues : [issues]);
 
-                // Update the status of the GitHub repository to "Success" (GithubRepositoryStatusEnum.SUCCESSFULLY).
-                await this._githubRepositoryService.update(repository.id, {
-                    status: GithubRepositoryStatusEnum.SUCCESSFULLY
+                    // Define a delay of 100 milliseconds
+                    const delay: number = 100;
+
+                    // Attempt to synchronize GitHub issues using the 'syncingGithubIssues' method
+                    this.syncingGithubIssues(integrationId, input, delay, async () => {
+                        // Update the status of the GitHub repository to "Success" (GithubRepositoryStatusEnum.SUCCESSFULLY).
+                        await this._githubRepositoryService.update(repository.id, {
+                            status: GithubRepositoryStatusEnum.SUCCESSFULLY
+                        });
+                    }, async () => {
+                        // Handle the error by updating the status of the GitHub repository to "Error" (GithubRepositoryStatusEnum.ERROR).
+                        await this._githubRepositoryService.update(repository.id, {
+                            status: GithubRepositoryStatusEnum.ERROR
+                        });
+                    });
                 });
 
-                // Return true to indicate a successful synchronization.
-                return true;
+                return true; // Return true to indicate a successful synchronization.
             } catch (error) {
+                console.log('Error while syncing github issues automatically: %s', error.message);
                 // Handle the error by updating the status of the GitHub repository to "Error" (GithubRepositoryStatusEnum.ERROR).
                 await this._githubRepositoryService.update(repository.id, {
                     status: GithubRepositoryStatusEnum.ERROR
                 });
 
-                // Return false to indicate that an error occurred during synchronization.
-                return false;
+                return false; // Return false to indicate that an error occurred during synchronization.
             }
         } catch (error) {
             // Handle errors gracefully, for example, log them
@@ -118,13 +121,12 @@ export class GithubSyncService {
     }
 
     /**
-     * Manually synchronize GitHub issues and handle errors.
+     * Manually synchronize GitHub issues with a repository.
      *
-     * @param integrationId - The ID of the GitHub integration.
-     * @param input - Payload for GitHub issue synchronization.
-     * @param request - The HTTP request object.
-     * @returns `true` on successful synchronization, `false` on failure.
-     * @throws HttpException if synchronization encounters an error.
+     * @param {IIntegrationTenant['id']} integrationId - The ID of the integration tenant.
+     * @param {IGithubSyncIssuePayload} input - The payload containing GitHub repository details and issues.
+     * @param {Request} request - The HTTP request object.
+     * @returns {Promise<boolean>} A Promise indicating whether the synchronization was successful.
      */
     public async manualSyncGithubIssues(
         integrationId: IIntegrationTenant['id'],
@@ -138,37 +140,29 @@ export class GithubSyncService {
                 throw new HttpException('Invalid request parameter: Missing or unauthorized integration', HttpStatus.UNAUTHORIZED);
             }
 
-            // Synchronize a GitHub repository based on the input data and store the result in 'repository'.
-            const repository: IOrganizationGithubRepository = await this._commandBus.execute(
-                new IntegrationSyncGithubRepositoryCommand(input)
-            );
-
-            // Update the organization project setting with the synchronized repository's ID.
-            await this._commandBus.execute(
-                new OrganizationProjectSettingUpdateCommand(input.projectId, {
-                    repositoryId: repository.id
-                })
-            );
+            // Extract the 'repository' object from the input payload
+            const repository: IOrganizationGithubRepository = input.repository;
 
             try {
+                // Set a delay of 0 milliseconds
+                const delay: number = 0;
+
                 // Attempt to synchronize GitHub issues using the syncGithubIssues method.
-                await this.syncingGithubIssues(integrationId, input);
+                await this.syncingGithubIssues(integrationId, input, delay);
 
                 // Update the status of the GitHub repository to "Success" (GithubRepositoryStatusEnum.SUCCESSFULLY).
                 await this._githubRepositoryService.update(repository.id, {
                     status: GithubRepositoryStatusEnum.SUCCESSFULLY
                 });
 
-                // Return true to indicate a successful synchronization.
-                return true;
+                return true; // Return true to indicate a successful synchronization.
             } catch (error) {
                 // Handle the error by updating the status of the GitHub repository to "Error" (GithubRepositoryStatusEnum.ERROR).
                 await this._githubRepositoryService.update(repository.id, {
                     status: GithubRepositoryStatusEnum.ERROR
                 });
 
-                // Return false to indicate that an error occurred during synchronization.
-                return false;
+                return false; // Return false to indicate that an error occurred during synchronization.
             }
         } catch (error) {
             // Handle errors gracefully, for example, log them
@@ -188,10 +182,14 @@ export class GithubSyncService {
      */
     public async syncingGithubIssues(
         integrationId: IIntegrationTenant['id'],
-        input: IGithubSyncIssuePayload
+        input: IGithubSyncIssuePayload,
+        delay: number = 100,
+        successCallback?: (success: boolean) => void,
+        errorCallback?: (error: boolean) => void,
     ): Promise<IIntegrationMap[] | boolean> {
         try {
             const { organizationId, repository } = input;
+
             const tenantId = RequestContext.currentTenantId() || input.tenantId;
             const issues: IGithubIssue[] = Array.isArray(input.issues) ? input.issues : [input.issues];
 
@@ -222,7 +220,8 @@ export class GithubSyncService {
                             const issueSetting: IIntegrationEntitySetting = entitySetting;
                             if (!!issueSetting.sync) {
                                 for await (const issue of issues) {
-                                    const { id, number: issue_number, title, state, body } = issue;
+                                    console.log(chalk.green(`Processing Issue Sync: %s`), issue.id);
+                                    const { id, title, state, body } = issue;
 
                                     let tags: ITag[] = [];
                                     try {
@@ -237,15 +236,15 @@ export class GithubSyncService {
                                                 tenantId,
                                                 integrationId,
                                                 repository,
-                                                issue_number
+                                                issue
                                             });
                                         }
                                     } catch (error) {
                                         console.error('Failed to fetch GitHub labels for the repository issue:', error.message);
                                     }
 
-                                    // Step 7: Synchronized GitHub repository issue.
-                                    const repositoryId = repository.id;
+                                    // Step 7: Synchronized GitHub Repository Issue.
+                                    const { repositoryId } = repository;
                                     await this._commandBus.execute(
                                         new IntegrationSyncGithubRepositoryIssueCommand(
                                             {
@@ -279,6 +278,9 @@ export class GithubSyncService {
                                         }, triggeredEvent)
                                     );
                                     integrationMaps.push(integrationMap);
+
+                                    /** 100ms Pause or Delay for sync new sync issue */
+                                    await sleep(delay);
                                 }
                             }
                             break;
@@ -290,10 +292,20 @@ export class GithubSyncService {
                     lastSyncedAt: moment()
                 });
 
+                // Call the success callback function if provided
+                if (successCallback) {
+                    successCallback(true);
+                }
+
                 // Step 10: Return integration mapping
                 return integrationMaps;
             } catch (error) {
                 console.log('Error while syncing github issues: ', error.message);
+                // Call the error callback function if provided
+                if (errorCallback) {
+                    errorCallback(false);
+                }
+
                 return false;
             }
         } catch (error) {
@@ -306,25 +318,28 @@ export class GithubSyncService {
     /**
      * Synchronize GitHub labels for a specific repository issue based on integration settings.
      *
+     * @param organizationId - The ID of the organization.
+     * @param tenantId - The ID of the organization's tenant.
      * @param integrationId - The ID of the GitHub integration.
      * @param repository - Information about the GitHub repository for which labels are synchronized.
-     * @param issue_number - The issue number for which labels are to be synchronized.
-     * @returns A promise that resolves to the result of the label synchronization process.
+     * @param issue - The GitHub issue for which labels are synchronized.
+     * @returns A promise that resolves to the result of the label synchronization process, which is an array of tags.
      */
     private async syncGithubLabelsByIssueNumber({
         organizationId,
         tenantId,
         integrationId,
         repository,
-        issue_number
+        issue
     }: {
         organizationId: IOrganization['id'],
         tenantId: IOrganization['tenantId'],
         integrationId: IIntegrationTenant['id'],
-        repository: IGithubRepository,
-        issue_number: IGithubIssue['number']
+        repository: IOrganizationGithubRepository,
+        issue: IGithubIssue
     }): Promise<ITag[]> {
         try {
+            // Retrieve integration settings
             const integration = await this._integrationTenantService.findOneByIdString(integrationId, {
                 where: {
                     isActive: true,
@@ -334,20 +349,16 @@ export class GithubSyncService {
                     settings: true
                 }
             });
+
             const settings = arrayToObject(integration.settings, 'settingsName', 'settingsValue');
             const { name: repo, owner } = repository;
 
             // Check for integration settings and installation ID
             if (settings && settings.installation_id) {
                 const installation_id = settings.installation_id;
-                /** Get Github Labels */
-                const response = await this._octokitService.getLabelsByIssueNumber(installation_id, {
-                    owner: owner.login,
-                    repo,
-                    issue_number
-                });
+
                 // Get the labels associated with the GitHub issue
-                let labels = response.data;
+                let labels = issue.labels;
 
                 // List of labels to check and create if missing
                 const labelsToCheck = [SYNC_TAG_GITHUB, SYNC_TAG_GAUZY];
@@ -358,10 +369,10 @@ export class GithubSyncService {
                 // Check if specific labels exist on a GitHub issue and create them if missing.
                 if (isNotEmpty(labelsToCreate)) {
                     try {
-                        const response = await this._octokitService.createLabelsForIssue(installation_id, {
-                            owner: owner.login,
+                        const response = await this._octokitService.addLabelsForIssue(installation_id, {
+                            owner,
                             repo,
-                            issue_number,
+                            issue_number: issue.number,
                             labels: labelsToCreate
                         });
                         labels = response.data;
@@ -370,12 +381,12 @@ export class GithubSyncService {
                     }
                 }
 
-                /** Sync Labels From Here */
+                // Sync labels and return an array of tags
                 return await Promise.all(
-                    await labels.map(
+                    labels.map(
                         async (label: IGithubIssueLabel) => {
                             const { id: sourceId, name, color, description } = label;
-                            /** */
+
                             return await this._commandBus.execute(
                                 new IntegrationMapSyncLabelCommand({
                                     entity: {
@@ -655,7 +666,8 @@ export class GithubSyncService {
     async getRepositoryAllIssues(
         installation_id: number,
         owner: string,
-        repo: string
+        repo: string,
+        callback?: (issues: IGithubIssue[]) => void
     ): Promise<IGithubIssue[]> {
         const per_page = 100; // Number of issues per page (GitHub API maximum is 100)
         const issues: IGithubIssue[] = [];
@@ -665,7 +677,13 @@ export class GithubSyncService {
         // Use a while to simplify pagination
         while (hasMoreIssues) {
             try {
-                const response = await this._octokitService.getRepositoryIssues(installation_id, { owner, repo, page, per_page });
+                // Fetch issues for the current page
+                const response = await this._octokitService.getRepositoryIssues(installation_id, {
+                    owner,
+                    repo,
+                    page,
+                    per_page
+                });
                 if (Array.isArray(response.data) && response.data.length > 0) {
                     // Append the retrieved issues to the result array
                     issues.push(...response.data);
@@ -682,6 +700,12 @@ export class GithubSyncService {
                 break; // Exit the loop on error
             }
         }
+
+        // Call the callback function if provided
+        if (callback) {
+            callback(issues);
+        }
+
         return issues;
     }
 }

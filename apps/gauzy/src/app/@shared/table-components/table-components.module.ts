@@ -5,7 +5,8 @@ import {
 	NbIconModule,
 	NbTooltipModule,
 	NbBadgeModule,
-	NbToggleModule
+	NbToggleModule,
+	NbButtonModule
 } from '@nebular/theme';
 import { DateViewComponent } from './date-view/date-view.component';
 import { IncomeExpenseAmountComponent } from './income-amount/income-amount.component';
@@ -47,6 +48,7 @@ import { TrustHtmlLinkComponent } from './trust-html/trust-html.component';
 import { ToggleSwitchComponent } from './toggle-switch/toggle-switch.component';
 import { GithubRepositoryComponent } from './github/repository/repository.component';
 import { GithubIssueTitleDescriptionComponent } from './github/issue-title-description/issue-title-description.component';
+import { ResyncButtonComponent } from './github/resync-button/resync-button.component';
 import { StatusBadgeModule } from '../status-badge';
 
 @NgModule({
@@ -54,6 +56,7 @@ import { StatusBadgeModule } from '../status-badge';
 		CommonModule,
 		FormsModule,
 		NbBadgeModule,
+		NbButtonModule,
 		NbIconModule,
 		NbToggleModule,
 		NbTooltipModule,
@@ -100,7 +103,8 @@ import { StatusBadgeModule } from '../status-badge';
 		TrustHtmlLinkComponent,
 		ToggleSwitchComponent,
 		GithubRepositoryComponent,
-		GithubIssueTitleDescriptionComponent
+		GithubIssueTitleDescriptionComponent,
+		ResyncButtonComponent
 	],
 	exports: [
 		NotesWithTagsComponent,
@@ -125,7 +129,8 @@ import { StatusBadgeModule } from '../status-badge';
 		TrustHtmlLinkComponent,
 		GithubRepositoryComponent,
 		ToggleSwitchComponent,
-		GithubIssueTitleDescriptionComponent
+		GithubIssueTitleDescriptionComponent,
+		ResyncButtonComponent
 	],
 	providers: []
 })

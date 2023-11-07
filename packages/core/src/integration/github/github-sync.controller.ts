@@ -30,9 +30,10 @@ export class GitHubSyncController {
     ) { }
 
     /**
+     * Handle an HTTP POST request to manually synchronize GitHub issues and labels.
      *
-     * @param body
-     * @returns
+     * @param body - The request body containing data for synchronization.
+     * @returns An HTTP response with the result of the synchronization.
      */
     @Post('/manual-sync/issues')
     @HttpCode(HttpStatus.CREATED)
@@ -47,6 +48,8 @@ export class GitHubSyncController {
             if (!input || !input.organizationId) {
                 throw new HttpException('Invalid sync issues & labels request parameters', HttpStatus.BAD_REQUEST);
             }
+
+            // Call a service method to perform manual synchronization of GitHub issues and labels
             return await this._githubSyncService.manualSyncGithubIssues(integrationId, input, request);
         } catch (error) {
             // Handle errors and return an appropriate error response
@@ -56,9 +59,10 @@ export class GitHubSyncController {
     }
 
     /**
+     * Handle an HTTP POST request to automatically synchronize GitHub issues.
      *
-     * @param body
-     * @returns
+     * @param body - The request body containing data for synchronization.
+     * @returns An HTTP response with the result of the synchronization.
      */
     @Post('/auto-sync/issues')
     @HttpCode(HttpStatus.CREATED)

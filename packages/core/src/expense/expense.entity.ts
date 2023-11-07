@@ -17,7 +17,8 @@ import {
 	IsOptional,
 	IsDate,
 	IsEnum,
-	IsBoolean
+	IsBoolean,
+	IsUUID
 } from 'class-validator';
 import {
 	IExpense,
@@ -127,7 +128,7 @@ export class Expense extends TenantOrganizationBaseEntity implements IExpense {
 	@Column({ nullable: true })
 	reference?: string;
 
-	@ApiPropertyOptional({ type: () => String, enum: ExpenseStatusesEnum})
+	@ApiPropertyOptional({ type: () => String, enum: ExpenseStatusesEnum })
 	@Column({
 		type: 'simple-enum',
 		nullable: true,
@@ -135,10 +136,10 @@ export class Expense extends TenantOrganizationBaseEntity implements IExpense {
 	})
 	status?: ExpenseStatusesEnum;
 	/*
-    |--------------------------------------------------------------------------
-    | @ManyToOne
-    |--------------------------------------------------------------------------
-    */
+	|--------------------------------------------------------------------------
+	| @ManyToOne
+	|--------------------------------------------------------------------------
+	*/
 
 	/**
 	 * Employee
@@ -194,20 +195,26 @@ export class Expense extends TenantOrganizationBaseEntity implements IExpense {
 	categoryId: string;
 
 	/**
-	 * OrganizationProject
+	 * Organization Project Relationship
 	 */
 	@ApiProperty({ type: () => OrganizationProject })
 	@ManyToOne(() => OrganizationProject, (project) => project.expenses, {
+		/** Indicates if the relation column value can be nullable or not. */
 		nullable: true,
-		onDelete: 'CASCADE'
+
+		/** Defines the database cascade action on delete. */
+		onDelete: 'CASCADE',
 	})
 	@JoinColumn()
 	project?: IOrganizationProject;
 
+	/**
+	 * Organization Project ID
+	 */
 	@ApiPropertyOptional({ type: () => String })
-	@RelationId((it: Expense) => it.project)
-	@IsString()
 	@IsOptional()
+	@IsUUID()
+	@RelationId((it: Expense) => it.project)
 	@Index()
 	@Column({ nullable: true })
 	projectId?: string;
@@ -232,10 +239,10 @@ export class Expense extends TenantOrganizationBaseEntity implements IExpense {
 	organizationContactId?: string;
 
 	/*
-    |--------------------------------------------------------------------------
-    | @ManyToOne
-    |--------------------------------------------------------------------------
-    */
+	|--------------------------------------------------------------------------
+	| @ManyToOne
+	|--------------------------------------------------------------------------
+	*/
 
 	/**
 	 * InvoiceItem
@@ -248,10 +255,10 @@ export class Expense extends TenantOrganizationBaseEntity implements IExpense {
 	invoiceItems?: InvoiceItem[];
 
 	/*
-    |--------------------------------------------------------------------------
-    | @ManyToMany
-    |--------------------------------------------------------------------------
-    */
+	|--------------------------------------------------------------------------
+	| @ManyToMany
+	|--------------------------------------------------------------------------
+	*/
 
 	/**
 	 * Tag
