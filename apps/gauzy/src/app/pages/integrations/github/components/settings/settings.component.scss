@@ -1,0 +1,42 @@
+@import 'gauzy/_gauzy-overrides';
+
+:host {
+	.popover-container {
+		display: flex;
+		flex-direction: column;
+		justify-items: flex-start;
+		align-items: flex-start;
+		padding: 12.5px 14px 12.5px 18px;
+		border-radius: $default-radius;
+		width: 250px;
+		.cursor {
+			cursor: pointer;
+		}
+		.title {
+			color: nb-theme(text-primary-color);
+			font-size: 16px;
+			font-weight: 600;
+			line-height: 16px;
+			letter-spacing: 0em;
+		}
+		.switcher-wrapper {
+			display: flex;
+			flex-direction: column;
+			nb-toggle {
+				display: flex;
+				::ng-deep .toggle-label {
+					display: flex;
+					justify-content: space-between;
+					flex-grow: 1;
+				}
+			}
+			.tied-entities-wrapper {
+				.tied-entity {
+					display: flex;
+					align-items: center;
+					justify-content: space-between;
+				}
+			}
+		}
+	}
+}
