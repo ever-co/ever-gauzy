@@ -43,54 +43,48 @@ const quickActionsCollection = {
 		'QUICK_ACTIONS_MENU.CREATE_INCOME',
 		'QUICK_ACTIONS_MENU.CREATE_EXPENSE',
 		'QUICK_ACTIONS_MENU.CREATE_ESTIMATE',
-		'QUICK_ACTIONS_MENU.CREATE_PAYMENT',
+		'QUICK_ACTIONS_MENU.CREATE_PAYMENT'
 	],
 	organization: [
 		'QUICK_ACTIONS_MENU.ADD_EMPLOYEE',
 		'QUICK_ACTIONS_MENU.ADD_INVENTORY',
 		'QUICK_ACTIONS_MENU.ADD_EQUIPMENT',
 		'QUICK_ACTIONS_MENU.ADD_VENDOR',
-		'QUICK_ACTIONS_MENU.ADD_DEPARTMENT',
+		'QUICK_ACTIONS_MENU.ADD_DEPARTMENT'
 	],
 	pm: [
 		'QUICK_ACTIONS_MENU.CREATE_TEAM',
 		'QUICK_ACTIONS_MENU.CREATE_TASK',
 		'QUICK_ACTIONS_MENU.CREATE_PROJECT',
 		'QUICK_ACTIONS_MENU.VIEW_TASKS',
-		'QUICK_ACTIONS_MENU.VIEW_TEAM_TASKS',
+		'QUICK_ACTIONS_MENU.VIEW_TEAM_TASKS'
 	],
 	jobs: [
 		'QUICK_ACTIONS_MENU.CREATE_CANDIDATE',
 		'QUICK_ACTIONS_MENU.CREATE_PROPOSAL',
-		'QUICK_ACTIONS_MENU.CREATE_CONTRACT',
+		'QUICK_ACTIONS_MENU.CREATE_CONTRACT'
 	],
 	contacts: [
 		'QUICK_ACTIONS_MENU.CREATE_LEAD',
 		'QUICK_ACTIONS_MENU.CREATE_CUSTOMER',
-		'QUICK_ACTIONS_MENU.CREATE_CLIENT',
+		'QUICK_ACTIONS_MENU.CREATE_CLIENT'
 	],
-	time_tracking: [
-		'QUICK_ACTIONS_MENU.START_TIMER',
-		'QUICK_ACTIONS_MENU.STOP_TIMER',
-		'QUICK_ACTIONS_MENU.TIME_LOG',
-	],
+	time_tracking: ['QUICK_ACTIONS_MENU.START_TIMER', 'QUICK_ACTIONS_MENU.STOP_TIMER', 'QUICK_ACTIONS_MENU.TIME_LOG']
 };
 
 @Component({
 	selector: 'ngx-quick-actions',
 	templateUrl: './quick-actions.component.html',
-	styleUrls: ['./quick-actions.component.scss'],
+	styleUrls: ['./quick-actions.component.scss']
 })
-export class QuickActionsComponent
-	extends TranslationBaseComponent
-	implements OnInit
-{
+export class QuickActionsComponent extends TranslationBaseComponent implements OnInit {
 	@Input() items: NbMenuItem[] = [];
+	@Input() shortcutDialog: string = '';
 
 	groupedQuickActions: GroupType[];
 	actions = {
 		START_TIMER: 'START_TIMER',
-		STOP_TIMER: 'STOP_TIMER',
+		STOP_TIMER: 'STOP_TIMER'
 	};
 
 	constructor(
@@ -109,25 +103,19 @@ export class QuickActionsComponent
 			.onItemClick()
 			.pipe()
 			.subscribe((e) => {
-				if (e.item.data && e.item.data.action) {
+				if (e.item.data?.action && !e.item.link) {
 					switch (e.item.data.action) {
 						case this.actions.START_TIMER:
-							this.timeTrackerService.setTimeLogType(
-								TimeLogType.TRACKED
-							);
+							if (this.timeTrackerService.running) return;
+							this.timeTrackerService.setTimeLogType(TimeLogType.TRACKED);
 							this.timeTrackerService.openAndStartTimer();
 							break;
 						case this.actions.STOP_TIMER:
-							this.timeTrackerService.setTimeLogType(
-								TimeLogType.RESUMED
-							);
-							this.timeTrackerService.turnOffTimer();
+							if (this.timeTrackerService.running) this.timeTrackerService.toggle();
+							break;
 					}
-					return;
 				}
-				if (e.item.link?.length && !e.item.data?.action) {
-					this.closeDialog();
-				}
+				this.closeDialog();
 			});
 	}
 
@@ -136,60 +124,51 @@ export class QuickActionsComponent
 	}
 
 	private isBelongToGroup(groupName: string, title: string) {
-		return quickActionsCollection[groupName]
-			.map((action) => this.getTranslation(action))
-			.includes(title);
+		return quickActionsCollection[groupName].map((action) => this.getTranslation(action)).includes(title);
 	}
 
 	private _groupQuickActions(items: any[]): GroupType[] {
 		const groupedActions: GroupQuickActionsType = {
 			accounting: {
 				groupTitle: 'QUICK_ACTIONS_GROUP.ACCOUNTING',
-				items: [],
+				items: []
 			},
 			time_tracking: {
 				groupTitle: 'QUICK_ACTIONS_GROUP.TIME_TRACKING',
-				items: [],
+				items: []
 			},
 			jobs: {
 				groupTitle: 'QUICK_ACTIONS_GROUP.JOBS',
-				items: [],
+				items: []
 			},
 			pm: {
 				groupTitle: 'QUICK_ACTIONS_GROUP.PROJECT_MANAGEMENT',
-				items: [],
+				items: []
 			},
 			contacts: {
 				groupTitle: 'QUICK_ACTIONS_GROUP.CONTACTS',
-				items: [],
+				items: []
 			},
 			organization: {
 				groupTitle: 'QUICK_ACTIONS_GROUP.ORGANIZATION',
-				items: [],
-			},
+				items: []
+			}
 		};
 		items.map((item) => {
-			if (this.isBelongToGroup('accounting', item.title))
-				groupedActions.accounting.items.push(item);
+			if (this.isBelongToGroup('accounting', item.title)) groupedActions.accounting.items.push(item);
 			if (this.isBelongToGroup('time_tracking', item.title)) {
 				groupedActions.time_tracking.items.push({
 					...item,
-					hidden: false,
+					hidden: false
 				});
 			}
-			if (this.isBelongToGroup('jobs', item.title))
-				groupedActions.jobs.items.push(item);
-			if (this.isBelongToGroup('pm', item.title))
-				groupedActions.pm.items.push(item);
-			if (this.isBelongToGroup('contacts', item.title))
-				groupedActions.contacts.items.push(item);
-			if (this.isBelongToGroup('organization', item.title))
-				groupedActions.organization.items.push(item);
+			if (this.isBelongToGroup('jobs', item.title)) groupedActions.jobs.items.push(item);
+			if (this.isBelongToGroup('pm', item.title)) groupedActions.pm.items.push(item);
+			if (this.isBelongToGroup('contacts', item.title)) groupedActions.contacts.items.push(item);
+			if (this.isBelongToGroup('organization', item.title)) groupedActions.organization.items.push(item);
 			return item;
 		});
-		const finalData = Object.values(groupedActions).sort(
-			(a, b) => b.items?.length - a.items?.length
-		);
+		const finalData = Object.values(groupedActions).sort((a, b) => b.items?.length - a.items?.length);
 		return finalData;
 	}
 }

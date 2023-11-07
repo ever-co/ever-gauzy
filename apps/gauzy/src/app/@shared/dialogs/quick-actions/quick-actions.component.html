@@ -1,15 +1,22 @@
 <nb-card>
-    <nb-card-header>
-        <h6>{{ "DIALOG.QUICK_ACTIONS" | translate }}</h6>
+    <nb-card-header >
+        <div>
+            <h6>
+                {{ "DIALOG.QUICK_ACTIONS" | translate }}
+            </h6>
+            <nb-tag status="basic" appearance="filled" size="tiny" [text]="shortcutDialog.split('+').join(' + ').toUpperCase()"></nb-tag>
+        </div>
         <span class="cancel" (click)="closeDialog()"><i class="fas fa-times"></i></span>
     </nb-card-header>
     <nb-card-body >
-        <div class="group-container" *ngFor="let group of groupedQuickActions">
-            <div class="group-content">
-                <p class="group-header">{{ group.groupTitle | translate }}</p>
-                <nb-menu [items]="group.items">
-                </nb-menu>
+        <ng-container *ngFor="let group of groupedQuickActions">
+            <div class="group-container" *ngIf="group.items?.length">
+                <div class="group-content">
+                    <p class="group-header">{{ group.groupTitle | translate }}</p>
+                    <nb-menu [items]="group.items">
+                    </nb-menu>
+                </div>
             </div>
-        </div>
+        </ng-container>
     </nb-card-body>
 </nb-card>

@@ -20,6 +20,8 @@ import {
 	NbCheckboxModule,
 	NbFormFieldModule,
 	NbMenuModule,
+	NbBadgeModule,
+	NbTagModule
 } from '@nebular/theme';
 import { TranslateModule } from '@ngx-translate/core';
 import { QuickActionsComponent } from './quick-actions/quick-actions.component';
@@ -45,9 +47,11 @@ const components = [AlertComponent, ConfirmComponent, PromptComponent];
 		TranslateModule,
 		NbFormFieldModule,
 		NbMenuModule,
+		NbBadgeModule,
+		NbTagModule
 	],
 	declarations: [...components, ...directives, QuickActionsComponent],
 	exports: [...directives],
-	providers: [],
+	providers: []
 })
 export class DialogsModule {}
