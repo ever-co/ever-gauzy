@@ -1,10 +1,11 @@
 import { Controller, Get, HttpException, HttpStatus, Logger, Param, Query, Req, UseGuards, UsePipes, ValidationPipe } from '@nestjs/common';
 import { Request } from 'express';
 import { OctokitResponse, OctokitService } from '@gauzy/integration-github';
-import { IGithubIssue, IGithubRepositoryResponse, PermissionsEnum } from '@gauzy/contracts';
+import { IGithubIssue, IGithubRepository, IGithubRepositoryResponse, PermissionsEnum } from '@gauzy/contracts';
 import { PermissionGuard, TenantPermissionGuard } from 'shared/guards';
 import { Permissions } from 'shared/decorators';
 import { TenantOrganizationBaseDTO } from 'core/dto';
+import { GithubIssuesQueryDTO } from './dto';
 
 @UseGuards(TenantPermissionGuard, PermissionGuard)
 @Permissions(PermissionsEnum.INTEGRATION_VIEW)
@@ -44,14 +45,10 @@ export class GitHubIntegrationController {
                 throw new HttpException('Invalid request parameter: Missing or unauthorized integration', HttpStatus.UNAUTHORIZED);
             }
 
-            const installation_id = request['integration']['settings']['installation_id'];
-            if (installation_id) {
-                // Get installation metadata
-                const metadata = await this._octokitService.getInstallationMetadata(installation_id);
-                return metadata.data;
-            }
-
-            throw new HttpException('Invalid query parameter', HttpStatus.BAD_REQUEST);
+            // Get installation metadata
+            const installation_id = settings['installation_id'];
+            const metadata = await this._octokitService.getInstallationMetadata(installation_id);
+            return metadata.data;
         } catch (error) {
             // Handle errors and return an appropriate error response
             this.logger.error('Error while retrieve github installation metadata', error.message);
@@ -87,14 +84,10 @@ export class GitHubIntegrationController {
                 throw new HttpException('Invalid request parameter: Missing or unauthorized integration', HttpStatus.UNAUTHORIZED);
             }
 
-            const installation_id = request['integration']['settings']['installation_id'];
-            if (installation_id) {
-                // Get installation repositories
-                const repositories = await this._octokitService.getRepositories(installation_id);
-                return repositories.data;
-            }
-
-            throw new HttpException('Invalid request parameter', HttpStatus.UNAUTHORIZED);
+            const installation_id = settings['installation_id'];
+            // Get installation repositories
+            const repositories = await this._octokitService.getRepositories(installation_id);
+            return repositories.data;
         } catch (error) {
             // Handle errors and return an appropriate error response
             this.logger.error('Error while retrieving GitHub installation repositories', error.message);
@@ -118,9 +111,9 @@ export class GitHubIntegrationController {
     @UsePipes(new ValidationPipe({ transform: true }))
     async getGithubRepositoryIssues(
         @Req() request: Request,
-        @Query() query: TenantOrganizationBaseDTO,
-        @Param('owner') owner: string,
-        @Param('repo') repo: string,
+        @Query() query: GithubIssuesQueryDTO,
+        @Param('owner') owner: IGithubRepository['owner']['login'],
+        @Param('repo') repo: IGithubRepository['name'],
     ): Promise<OctokitResponse<IGithubIssue[]> | void> {
         try {
             // Validate the input data (You can use class-validator for validation)
@@ -134,14 +127,13 @@ export class GitHubIntegrationController {
                 throw new HttpException('Invalid request parameter: Missing or unauthorized integration', HttpStatus.UNAUTHORIZED);
             }
 
-            const installation_id = request['integration']['settings']['installation_id'];
-            if (installation_id) {
-                // Get installation repositories
-                const issues = await this._octokitService.getRepositoryIssues(installation_id, { owner, repo });
-                return issues.data;
-            }
+            const installation_id = settings['installation_id'];
+            const page = query.page;
+            const per_page = query.per_page;
 
-            throw new HttpException('Invalid request parameter', HttpStatus.UNAUTHORIZED);
+            // Get installation repositories
+            const issues = await this._octokitService.getRepositoryIssues(installation_id, { owner, repo, page, per_page });
+            return issues.data;
         } catch (error) {
             // Handle errors and return an appropriate error response
             this.logger.error('Error while retrieving GitHub installation repository issues', error.message);

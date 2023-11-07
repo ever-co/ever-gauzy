@@ -4348,6 +4348,7 @@
 		"REMEMBER_ME_TITLE": "Lembre-se de mim.",
 		"DO_NOT_HAVE_ACCOUNT_TITLE": "Não tem uma conta?",
 		"FORGOT_PASSWORD_TITLE": "Esqueceu a senha?",
+		"OR_SIGN_IN_WITH": "Ou faça login com",
 		"LABELS": {
 			"EMAIL": "Endereço de email:",
 			"PASSWORD": "Senha:"

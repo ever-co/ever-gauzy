@@ -30,6 +30,7 @@ import {
 	User
 } from '../core/entities/internal';
 import { ColumnNumericTransformerPipe } from './../shared/pipes';
+import { IsOptional, IsUUID } from 'class-validator';
 
 @Entity('payment')
 export class Payment extends TenantOrganizationBaseEntity implements IPayment {
@@ -67,10 +68,10 @@ export class Payment extends TenantOrganizationBaseEntity implements IPayment {
 	overdue?: boolean;
 
 	/*
-    |--------------------------------------------------------------------------
-    | @ManyToOne
-    |--------------------------------------------------------------------------
-    */
+	|--------------------------------------------------------------------------
+	| @ManyToOne
+	|--------------------------------------------------------------------------
+	*/
 
 	/**
 	 * Employee
@@ -119,20 +120,29 @@ export class Payment extends TenantOrganizationBaseEntity implements IPayment {
 	recordedById?: string;
 
 	/**
-	 * OrganizationProject
+	 * Organization Project Relationship
 	 */
 	@ApiPropertyOptional({ type: () => OrganizationProject })
-	@ManyToOne(() => OrganizationProject, (project) => project.payments, {
-		onDelete: 'SET NULL'
+	@ManyToOne(() => OrganizationProject, (it) => it.payments, {
+		/** Indicates if the relation column value can be nullable or not. */
+		nullable: true,
+
+		/** Defines the database cascade action on delete. */
+		onDelete: 'SET NULL',
 	})
 	@JoinColumn()
 	project?: IOrganizationProject;
 
+	/**
+	 * Organization Project ID
+	 */
 	@ApiPropertyOptional({ type: () => String })
+	@IsOptional()
+	@IsUUID()
 	@RelationId((it: Payment) => it.project)
 	@Index()
 	@Column({ nullable: true })
-	projectId?: string;
+	projectId?: IOrganizationProject['id'];
 
 	/**
 	 * OrganizationContact
@@ -151,10 +161,10 @@ export class Payment extends TenantOrganizationBaseEntity implements IPayment {
 	organizationContactId?: string;
 
 	/*
-    |--------------------------------------------------------------------------
-    | @ManyToMany
-    |--------------------------------------------------------------------------
-    */
+	|--------------------------------------------------------------------------
+	| @ManyToMany
+	|--------------------------------------------------------------------------
+	*/
 	@ApiProperty({ type: () => Tag, isArray: true })
 	@ManyToMany(() => Tag, (tag) => tag.payments, {
 		onUpdate: 'CASCADE',

@@ -1,8 +1,8 @@
 import { Injectable } from '@angular/core';
-import { IBaseRelationsEntityModel, IIntegration, IIntegrationTenant, IIntegrationTenantFindInput } from '@gauzy/contracts';
 import { HttpClient } from '@angular/common/http';
 import { map } from 'rxjs/operators';
 import { Observable } from 'rxjs';
+import { IBaseRelationsEntityModel, IIntegration, IIntegrationTenant, IIntegrationTenantFindInput } from '@gauzy/contracts';
 import { toParams } from '@gauzy/common-angular';
 import { API_PREFIX } from '../constants/app.constants';
 

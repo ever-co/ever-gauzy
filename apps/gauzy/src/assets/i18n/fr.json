@@ -806,7 +806,7 @@
 		"TIME_OFF": "Congé",
 		"APPROVALS": "Approbations",
 		"HELP": "Aider",
-		"ABOUT": "À propos de",
+		"ABOUT": "À propos",
 		"CONTACTS": "Contacts",
 		"ADMIN": "Administreur",
 		"EMPLOYEE_LEVEL": "Niveau d'employé",
@@ -816,7 +816,7 @@
 		"ORGANIZATIONS": "Organisations",
 		"SETTINGS": "Paramètres",
 		"GENERAL": "Général",
-		"EMAIL_HISTORY": "Histoire des e-mails",
+		"EMAIL_HISTORY": "Historique des e-mails",
 		"USERS": "Utilisateurs",
 		"ROLES": "Rôles et Permissions",
 		"DANGER_ZONE": "Zone dangereuse",
@@ -3311,7 +3311,7 @@
 		}
 	},
 	"ABOUT_PAGE": {
-		"ABOUT": "À propos de"
+		"ABOUT": "À propos"
 	},
 	"FOOTER": {
 		"BY": "par",
@@ -3743,7 +3743,7 @@
 			"READY_FOR_ADVANCED_SETTINGS": "Êtes-vous prêt pour quelques paramètres avancés ?",
 			"FINAL_STEP_GP": "Ceci est la dernière étape où vous pouvez vous plonger dans les détails de votre plateforme Gauzy.",
 			"PORT": "Port",
-			"PORT_API": "Port Api",
+			"PORT_API": "Port API",
 			"UI": "Ui",
 			"API_HOST": "Hôte de l'API",
 			"HOST": "Hôte",
@@ -3803,7 +3803,7 @@
 			"SERVER_HOSTNAME": "Nom d'hôte/adresse IP du serveur",
 			"AUTO_START_STARTUP": "Démarrage automatique au démarrage",
 			"SERVER_TYPE": "Type de serveur",
-			"LOCAL_API_PORT": "Port Api local",
+			"LOCAL_API_PORT": "Port API local",
 			"UI_PORT": "UI Port",
 			"SERVER_URL": "URL du serveur",
 			"DB_CONFIG": "Configuration de la base de données",
@@ -4346,11 +4346,12 @@
 	"LOGIN_PAGE": {
 		"TITLE": "Connexion",
 		"SUB_TITLE": "Salut ! Connectez-vous avec votre adresse e-mail.",
-		"REMEMBER_ME_TITLE": "Souviens-toi de moi",
+		"REMEMBER_ME_TITLE": "Se souvenir de moi",
 		"DO_NOT_HAVE_ACCOUNT_TITLE": "Vous n'avez pas de compte ?",
 		"FORGOT_PASSWORD_TITLE": "Mot de passe oublié ?",
+		"OR_SIGN_IN_WITH": "Ou connectez-vous avec",
 		"LABELS": {
-			"EMAIL": "Adresse électronique:",
+			"EMAIL": "Adresse e-mail:",
 			"PASSWORD": "Mot de passe:"
 		},
 		"PLACEHOLDERS": {
@@ -4359,7 +4360,7 @@
 		},
 		"VALIDATION": {
 			"EMAIL_REQUIRED": "L'e-mail est requis !",
-			"EMAIL_REAL_REQUIRED": "L'email devrait être le vrai !",
+			"EMAIL_REAL_REQUIRED": "L'e-mail devrait être une vraie adresse !",
 			"PASSWORD_REQUIRED": "Le mot de passe est requis !",
 			"PASSWORD_SHOULD_CONTAIN": "Le mot de passe doit contenir de {{ minLength }} à {{ maxLength }} caractères!",
 			"PASSWORD_NO_SPACE_EDGES": "Les mots de passe ne doivent ni commencer ni se terminer par des espaces."
