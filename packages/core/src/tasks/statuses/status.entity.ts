@@ -50,13 +50,20 @@ export class TaskStatus extends TenantOrganizationBaseEntity implements ITaskSta
 	*/
 
 	/**
-	 * Organization Project
+	 * Organization Project Relationship
 	 */
-	@ManyToOne(() => OrganizationProject, (project) => project.statuses, {
+	@ManyToOne(() => OrganizationProject, (it) => it.statuses, {
+		/** Indicates if the relation column value can be nullable or not. */
+		nullable: true,
+
+		/** Defines the database cascade action on delete. */
 		onDelete: 'CASCADE',
 	})
 	project?: IOrganizationProject;
 
+	/**
+	 * Organization Project ID
+	 */
 	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()
 	@IsUUID()

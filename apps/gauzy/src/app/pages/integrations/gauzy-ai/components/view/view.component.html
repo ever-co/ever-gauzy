@@ -1,0 +1,33 @@
+<nb-card class="card-scroll">
+	<nb-card-header class="card-header-title">
+		<div class="card-header-title">
+			<h5>
+				<ngx-back-navigation
+					class="float-left"
+					[haveLink]="true"
+					(click)="navigateToIntegrations()"
+				></ngx-back-navigation>
+				{{ 'INTEGRATIONS.GAUZY_AI_PAGE.TITLE' | translate }}
+			</h5>
+		</div>
+		<div>
+			<div>
+				<button
+					nbButton
+					status="primary"
+					class="mr-2"
+					size="small"
+					(click)="navigateToResetIntegration()"
+				>
+					<div class="sync-container">
+						<nb-icon class="sync" icon="sync-outline"></nb-icon>
+						{{ 'BUTTONS.RESET_INTEGRATION' | translate }}
+					</div>
+				</button>
+			</div>
+		</div>
+	</nb-card-header>
+	<nb-card-body>
+		<ga-wip></ga-wip>
+	</nb-card-body>
+</nb-card>

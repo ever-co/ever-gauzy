@@ -11,7 +11,6 @@ export class DesktopEnvironmentContent implements IContentGenerator {
 			REPO_OWNER: '${variable.DESKTOP_APP_REPO_OWNER || variable.REPO_OWNER}',
 			WELCOME_TITLE: '${variable.DESKTOP_APP_WELCOME_TITLE || variable.WELCOME_TITLE || ''}',
 			WELCOME_CONTENT: '${variable.DESKTOP_APP_WELCOME_CONTENT || variable.WELCOME_CONTENT || ''}',
-			I18N_FILES_URL: '${variable.DESKTOP_APP_I18N_FILES_URL || variable.I18N_FILES_URL || ''}',
 			IS_DESKTOP_TIMER: ${false},
 			IS_DESKTOP: ${true},
 			IS_SERVER: ${false},

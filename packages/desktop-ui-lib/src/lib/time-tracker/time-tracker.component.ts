@@ -1750,7 +1750,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 			}
 			await this._toggle(timer, onClick);
 			if (this._startMode === TimerStartMode.MANUAL) {
-				const { activities } = await this.electronService.ipcRenderer.invoke('TAKE_SCREEN_CAPTURE', {
+				const activities = await this.electronService.ipcRenderer.invoke('TAKE_SCREEN_CAPTURE', {
 					quitApp: this.quitApp
 				});
 				await this.sendActivities(activities);
@@ -1769,7 +1769,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 		try {
 			const config = { quitApp: this.quitApp, isEmergency };
 			if (this._startMode === TimerStartMode.MANUAL) {
-				const { activities } = await this.electronService.ipcRenderer.invoke('TAKE_SCREEN_CAPTURE', config);
+				const activities = await this.electronService.ipcRenderer.invoke('TAKE_SCREEN_CAPTURE', config);
 				const timer = await this.electronService.ipcRenderer.invoke('STOP_TIMER', config);
 				await this.sendActivities(activities, () => this._toggle(timer, onClick));
 			} else {
@@ -2498,6 +2498,10 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 					}),
 				},
 			});
+			// Force stop
+			if (callBack) {
+				await callBack();
+			}
 		}
 	}
 

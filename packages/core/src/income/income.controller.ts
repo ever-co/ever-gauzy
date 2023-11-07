@@ -95,6 +95,7 @@ export class IncomeController extends CrudController<Income> {
 	async pagination(
 		@Query() params: PaginationParams<Income>
 	): Promise<IPagination<IIncome>> {
+		console.log(params);
 		return this.incomeService.pagination(params);
 	}
 
@@ -146,7 +147,7 @@ export class IncomeController extends CrudController<Income> {
 	})
 	@HttpCode(HttpStatus.CREATED)
 	@Post()
-	@UsePipes(new ValidationPipe({ transform : true, whitelist: true }))
+	@UsePipes(new ValidationPipe({ transform: true, whitelist: true }))
 	async create(
 		@Body() entity: CreateIncomeDTO
 	): Promise<IIncome> {
@@ -171,7 +172,7 @@ export class IncomeController extends CrudController<Income> {
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
 	@Put(':id')
-	@UsePipes(new ValidationPipe({ transform : true, whitelist: true }))
+	@UsePipes(new ValidationPipe({ transform: true, whitelist: true }))
 	async update(
 		@Param('id', UUIDValidationPipe) id: string,
 		@Body() entity: UpdateIncomeDTO
@@ -194,7 +195,7 @@ export class IncomeController extends CrudController<Income> {
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
 	@Delete(':id')
-	@UsePipes(new ValidationPipe({ transform : true, whitelist: true }))
+	@UsePipes(new ValidationPipe({ transform: true, whitelist: true }))
 	async delete(
 		@Param('id', UUIDValidationPipe) incomeId: string,
 		@Query() options: DeleteIncomeDTO

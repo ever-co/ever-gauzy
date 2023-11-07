@@ -1,20 +1,19 @@
 import { waitForAsync, ComponentFixture, TestBed } from '@angular/core/testing';
+import { GauzyAIAuthorizationComponent } from './authorization.component';
 
-import { GithubSettingsDialogComponent } from './settings-dialog.component';
-
-describe('GithubSettingsDialogComponent', () => {
-	let component: GithubSettingsDialogComponent;
-	let fixture: ComponentFixture<GithubSettingsDialogComponent>;
+describe('GauzyAIAuthorizationComponent', () => {
+	let component: GauzyAIAuthorizationComponent;
+	let fixture: ComponentFixture<GauzyAIAuthorizationComponent>;
 
 	beforeEach(waitForAsync(() => {
 		TestBed.configureTestingModule({
-			declarations: [GithubSettingsDialogComponent],
+			declarations: [GauzyAIAuthorizationComponent],
 			teardown: { destroyAfterEach: false }
 		}).compileComponents();
 	}));
 
 	beforeEach(() => {
-		fixture = TestBed.createComponent(GithubSettingsDialogComponent);
+		fixture = TestBed.createComponent(GauzyAIAuthorizationComponent);
 		component = fixture.componentInstance;
 		fixture.detectChanges();
 	});

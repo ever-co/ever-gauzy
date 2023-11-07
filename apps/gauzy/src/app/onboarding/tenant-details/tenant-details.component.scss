@@ -6,11 +6,18 @@
 	margin-bottom: 10px;
 }
 
+.switch-theme {
+	position: absolute;
+	right: 0;
+	top: 0;
+}
+
 :host {
 	display: flex;
 	justify-content: center;
 	align-items: center;
 	flex-direction: column;
+	position: relative;
 
 	.step-form {
 		min-width: 60%;

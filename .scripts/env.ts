@@ -100,7 +100,6 @@ export type Env = Readonly<{
 	DESKTOP_TIMER_APP_REPO_OWNER: string;
 	DESKTOP_TIMER_APP_WELCOME_TITLE: string;
 	DESKTOP_TIMER_APP_WELCOME_CONTENT: string;
-	DESKTOP_TIMER_APP_I18N_FILES_URL: string;
 	DESKTOP_APP_NAME: string;
 	DESKTOP_APP_DESCRIPTION: string;
 	DESKTOP_APP_ID: string;
@@ -108,7 +107,6 @@ export type Env = Readonly<{
 	DESKTOP_APP_REPO_OWNER: string;
 	DESKTOP_APP_WELCOME_TITLE: string;
 	DESKTOP_APP_WELCOME_CONTENT: string;
-	DESKTOP_APP_I18N_FILES_URL: string;
 	DESKTOP_SERVER_APP_NAME: string;
 	DESKTOP_SERVER_APP_DESCRIPTION: string;
 	DESKTOP_SERVER_APP_ID: string;
@@ -116,11 +114,11 @@ export type Env = Readonly<{
 	DESKTOP_SERVER_APP_REPO_OWNER: string;
 	DESKTOP_SERVER_APP_WELCOME_TITLE: string;
 	DESKTOP_SERVER_APP_WELCOME_CONTENT: string;
-	DESKTOP_SERVER_APP_I18N_FILES_URL: string;
 	AWHost: string;
 	API_DEFAULT_PORT: number;
 	GAUZY_UI_DEFAULT_PORT: number;
 	SCREENSHOTS_ENGINE_METHOD: string;
+	I18N_FILES_URL: string;
 }>;
 
 export const env: Env = cleanEnv(
@@ -263,7 +261,6 @@ export const env: Env = cleanEnv(
 		DESKTOP_TIMER_APP_REPO_OWNER: str({ default: 'ever-co' }),
 		DESKTOP_TIMER_APP_WELCOME_TITLE: str({ default: '' }),
 		DESKTOP_TIMER_APP_WELCOME_CONTENT: str({ default: '' }),
-		DESKTOP_TIMER_APP_I18N_FILES_URL: str({ default: '' }),
 		DESKTOP_APP_NAME: str({
 			default: 'gauzy-desktop',
 		}),
@@ -279,7 +276,6 @@ export const env: Env = cleanEnv(
 		DESKTOP_APP_REPO_OWNER: str({ default: 'ever-co' }),
 		DESKTOP_APP_WELCOME_TITLE: str({ default: '' }),
 		DESKTOP_APP_WELCOME_CONTENT: str({ default: '' }),
-		DESKTOP_APP_I18N_FILES_URL: str({ default: '' }),
 		DESKTOP_SERVER_APP_NAME: str({
 			default: 'gauzy-server',
 		}),
@@ -295,7 +291,7 @@ export const env: Env = cleanEnv(
 		DESKTOP_SERVER_APP_REPO_OWNER: str({ default: 'ever-co' }),
 		DESKTOP_SERVER_APP_WELCOME_TITLE: str({ default: '' }),
 		DESKTOP_SERVER_APP_WELCOME_CONTENT: str({ default: '' }),
-		DESKTOP_SERVER_APP_I18N_FILES_URL: str({ default: '' }),
+		I18N_FILES_URL: str({ default: '' }),
 		AWHost: str({default: 'http://localhost:5600'}),
 		API_DEFAULT_PORT: num({default: 3000}),
 		GAUZY_UI_DEFAULT_PORT: num({default: 5621}),

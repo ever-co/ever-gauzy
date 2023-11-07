@@ -50,9 +50,13 @@ export class TaskSize extends TenantOrganizationBaseEntity implements ITaskSize 
 	*/
 
 	/**
-	 * Organization Project
+	 * Organization Project Relationship
 	 */
-	@ManyToOne(() => OrganizationProject, (project) => project.sizes, {
+	@ManyToOne(() => OrganizationProject, (it) => it.sizes, {
+		/** Indicates if the relation column value can be nullable or not. */
+		nullable: true,
+
+		/** Defines the database cascade action on delete. */
 		onDelete: 'CASCADE',
 	})
 	project?: IOrganizationProject;
@@ -66,13 +70,20 @@ export class TaskSize extends TenantOrganizationBaseEntity implements ITaskSize 
 	projectId?: IOrganizationProject['id'];
 
 	/**
-	 * Organization Team
+	 * Organization Team Relationship
 	 */
-	@ManyToOne(() => OrganizationTeam, (team) => team.sizes, {
+	@ManyToOne(() => OrganizationTeam, (it) => it.sizes, {
+		/** Indicates if the relation column value can be nullable or not. */
+		nullable: true,
+
+		/** Defines the database cascade action on delete. */
 		onDelete: 'CASCADE',
 	})
 	organizationTeam?: IOrganizationTeam;
 
+	/**
+	 * Organization Team ID
+	 */
 	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()
 	@IsUUID()

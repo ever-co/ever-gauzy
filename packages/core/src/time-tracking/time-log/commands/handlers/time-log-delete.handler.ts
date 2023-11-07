@@ -15,7 +15,7 @@ export class TimeLogDeleteHandler
 		@InjectRepository(TimeLog)
 		private readonly timeLogRepository: Repository<TimeLog>,
 		private readonly commandBus: CommandBus
-	) {}
+	) { }
 
 	public async execute(
 		command: TimeLogDeleteCommand
@@ -55,10 +55,9 @@ export class TimeLogDeleteHandler
 				id: In(pluck(timeLogs, 'id'))
 			});
 		} else {
-			deleteResult = await this.timeLogRepository.update(
-				{ id: In(pluck(timeLogs, 'id')) },
-				{ deletedAt: new Date() }
-			);
+			deleteResult = await this.timeLogRepository.softDelete({
+				id: In(pluck(timeLogs, 'id'))
+			});
 		}
 
 		try {

@@ -16,7 +16,7 @@ export class AppInitService {
 		private readonly router: Router,
 		private readonly store: Store,
 		private readonly ngxPermissionsService: NgxPermissionsService
-	) {}
+	) { }
 
 	async init() {
 		try {

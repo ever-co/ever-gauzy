@@ -4382,6 +4382,7 @@
 		"REMEMBER_ME_TITLE": "记住我",
 		"DO_NOT_HAVE_ACCOUNT_TITLE": "没有账号吗？",
 		"FORGOT_PASSWORD_TITLE": "忘记密码？",
+		"OR_SIGN_IN_WITH": "或用以下方式登录",
 		"LABELS": {
 			"EMAIL": "邮箱地址：",
 			"PASSWORD": "密码："

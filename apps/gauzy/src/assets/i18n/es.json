@@ -4384,6 +4384,7 @@
 		"REMEMBER_ME_TITLE": "Recuérdame",
 		"DO_NOT_HAVE_ACCOUNT_TITLE": "¿No tienes una cuenta?",
 		"FORGOT_PASSWORD_TITLE": "¿Olvidaste tu contraseña?",
+		"OR_SIGN_IN_WITH": "O inicie sesión con",
 		"LABELS": {
 			"EMAIL": "Dirección de correo electrónico:",
 			"PASSWORD": "Contraseña:"

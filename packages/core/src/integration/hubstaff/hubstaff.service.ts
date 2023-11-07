@@ -504,6 +504,9 @@ export class HubstaffService {
 						if (!due_at) {
 							due_at = new Date(moment().add(2, 'week').format('YYYY-MM-DD HH:mm:ss'));
 						}
+
+						// Step 1: Execute a command to initiate the synchronization process
+						const triggeredEvent = false;
 						return await this._commandBus.execute(
 							new IntegrationMapSyncTaskCommand({
 								entity: {
@@ -520,7 +523,7 @@ export class HubstaffService {
 								integrationId,
 								organizationId,
 								tenantId
-							})
+							}, triggeredEvent)
 						);
 					}
 				)
