@@ -5,7 +5,8 @@ import {
 	NbIconModule,
 	NbTooltipModule,
 	NbBadgeModule,
-	NbToggleModule
+	NbToggleModule,
+	NbButtonModule
 } from '@nebular/theme';
 import { DateViewComponent } from './date-view/date-view.component';
 import { IncomeExpenseAmountComponent } from './income-amount/income-amount.component';
@@ -44,19 +45,24 @@ import { AllowScreenshotCaptureComponent } from './allow-screenshot-capture/allo
 import { NumberEditorComponent } from './editors/number-editor.component';
 import { ClickableLinkComponent } from './clickable-link/clickable-link.component';
 import { TrustHtmlLinkComponent } from './trust-html/trust-html.component';
-import { GithubAutoSyncSwitchComponent } from './github/auto-sync-switch/auto-sync-switch.component';
+import { ToggleSwitchComponent } from './toggle-switch/toggle-switch.component';
 import { GithubRepositoryComponent } from './github/repository/repository.component';
+import { GithubIssueTitleDescriptionComponent } from './github/issue-title-description/issue-title-description.component';
+import { ResyncButtonComponent } from './github/resync-button/resync-button.component';
+import { StatusBadgeModule } from '../status-badge';
 
 @NgModule({
 	imports: [
 		CommonModule,
 		FormsModule,
-		NbIconModule,
-		NbTooltipModule,
 		NbBadgeModule,
+		NbButtonModule,
+		NbIconModule,
+		NbToggleModule,
+		NbTooltipModule,
 		TranslateModule,
 		SharedModule,
-		NbToggleModule
+		StatusBadgeModule,
 	],
 	declarations: [
 		DateViewComponent,
@@ -95,8 +101,10 @@ import { GithubRepositoryComponent } from './github/repository/repository.compon
 		NumberEditorComponent,
 		ClickableLinkComponent,
 		TrustHtmlLinkComponent,
+		ToggleSwitchComponent,
 		GithubRepositoryComponent,
-		GithubAutoSyncSwitchComponent
+		GithubIssueTitleDescriptionComponent,
+		ResyncButtonComponent
 	],
 	exports: [
 		NotesWithTagsComponent,
@@ -120,7 +128,9 @@ import { GithubRepositoryComponent } from './github/repository/repository.compon
 		ClickableLinkComponent,
 		TrustHtmlLinkComponent,
 		GithubRepositoryComponent,
-		GithubAutoSyncSwitchComponent
+		ToggleSwitchComponent,
+		GithubIssueTitleDescriptionComponent,
+		ResyncButtonComponent
 	],
 	providers: []
 })

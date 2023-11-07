@@ -1,6 +1,6 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { FindManyOptions, IsNull, Not, Repository } from 'typeorm';
 import {
 	IBasePerTenantAndOrganizationEntityModel,
 	IIntegrationEntitySetting,
@@ -8,6 +8,7 @@ import {
 	IIntegrationTenant,
 	IIntegrationTenantCreateInput,
 	IIntegrationTenantFindInput,
+	IPagination,
 	IntegrationEnum
 } from '@gauzy/contracts';
 import { RequestContext } from 'core/context';
@@ -21,6 +22,26 @@ export class IntegrationTenantService extends TenantAwareCrudService<Integration
 		protected readonly repository: Repository<IntegrationTenant>
 	) {
 		super(repository);
+	}
+
+	/**
+	 * Find and return a paginated list of IntegrationTenant entities.
+	 *
+	 * @param options - Optional query and pagination options.
+	 * @returns A Promise that resolves to a paginated list of IntegrationTenant entities.
+	 */
+	public async findAll(options?: FindManyOptions<IntegrationTenant>): Promise<IPagination<IntegrationTenant>> {
+		// Define where conditions by merging provided options with a condition for non-null integrationId.
+		const whereConditions = {
+			...options?.where,
+			integrationId: Not(IsNull())
+		};
+
+		// Call the superclass's findAll method with merged options and where conditions.
+		return await super.findAll({
+			...options,
+			where: whereConditions,
+		});
 	}
 
 	/**
@@ -72,16 +93,13 @@ export class IntegrationTenantService extends TenantAwareCrudService<Integration
 			const tenantId = RequestContext.currentTenantId() || input.tenantId;
 			const { organizationId, name } = input;
 
-			const integrationTenant = await this.findOneByOptions({
+			const integration = await this.findOneByOptions({
 				where: {
 					tenantId,
 					organizationId,
 					name,
-					isActive: true,
-					isArchived: false,
 					integration: {
-						isActive: true,
-						isArchived: false
+						name
 					}
 				},
 				order: {
@@ -91,7 +109,7 @@ export class IntegrationTenantService extends TenantAwareCrudService<Integration
 					integration: true
 				}
 			});
-			return integrationTenant || false;
+			return integration || false;
 		} catch (error) {
 			return false;
 		}

@@ -363,6 +363,4 @@ export function sleep(ms: number) {
  * @param {string} value - The string to parse into an integer.
  * @returns {number} - The parsed integer value.
  */
-export function parsedInt(value: string) {
-	return parseInt(value, 10); // Using base 10 for decimal numbers, as a best practice.
-}
+export const parsedInt = (value: string) => parseInt(value, 10);

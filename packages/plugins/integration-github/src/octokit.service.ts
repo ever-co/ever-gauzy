@@ -127,10 +127,9 @@ export class OctokitService {
 	 */
 	public async getRepositoryIssues(installationId: number, {
 		owner,
-		repo
-	}: {
-		owner: string;
-		repo: string;
+		repo,
+		page = 1,
+		per_page = 100
 	}): Promise<OctokitResponse<any>> {
 		if (!this.app) {
 			throw new Error('Octokit instance is not available.');
@@ -146,6 +145,8 @@ export class OctokitService {
 			return await octokit.request(endpoint, {
 				owner,
 				repo,
+				page,
+				per_page,
 				headers: {
 					'X-GitHub-Api-Version': GITHUB_API_VERSION,
 				},
@@ -203,7 +204,7 @@ export class OctokitService {
 	}
 
 	/**
-	 * Creates labels for a GitHub issue using an Octokit instance tied to a specific installation.
+	 * Add labels for a GitHub issue using an Octokit instance tied to a specific installation.
 	 *
 	 * @param installationId - The installation ID of the GitHub App.
 	 * @param options - Options object with 'owner,' 'repo,', 'issue_number' and 'labels' properties.
@@ -214,7 +215,7 @@ export class OctokitService {
 	 * @returns A promise that resolves to an OctokitResponse.
 	 * @throws An error if Octokit instance is not available or if the request fails.
 	 */
-	public async createLabelsForIssue(installationId: number, {
+	public async addLabelsForIssue(installationId: number, {
 		owner,
 		repo,
 		issue_number,

@@ -6,6 +6,7 @@ import { OrganizationProject, OrganizationTeam, TenantOrganizationBaseEntity } f
 
 @Entity('task_version')
 export class TaskVersion extends TenantOrganizationBaseEntity implements ITaskVersion {
+
 	@ApiProperty({ type: () => String })
 	@IsNotEmpty()
 	@IsString()
@@ -45,13 +46,20 @@ export class TaskVersion extends TenantOrganizationBaseEntity implements ITaskVe
 	*/
 
 	/**
-	 * Organization Project
+	 * Organization Project Relationship
 	 */
-	@ManyToOne(() => OrganizationProject, (project) => project.versions, {
+	@ManyToOne(() => OrganizationProject, (it) => it.versions, {
+		/** Indicates if the relation column value can be nullable or not. */
+		nullable: true,
+
+		/** Defines the database cascade action on delete. */
 		onDelete: 'CASCADE'
 	})
 	project?: IOrganizationProject;
 
+	/**
+	 * Organization Project ID
+	 */
 	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()
 	@IsUUID()
@@ -61,13 +69,20 @@ export class TaskVersion extends TenantOrganizationBaseEntity implements ITaskVe
 	projectId?: IOrganizationProject['id'];
 
 	/**
-	 * Organization Team
+	 * Organization Team Relationship
 	 */
-	@ManyToOne(() => OrganizationTeam, (team) => team.versions, {
+	@ManyToOne(() => OrganizationTeam, (it) => it.versions, {
+		/** Indicates if the relation column value can be nullable or not. */
+		nullable: true,
+
+		/** Defines the database cascade action on delete. */
 		onDelete: 'CASCADE'
 	})
 	organizationTeam?: IOrganizationTeam;
 
+	/**
+	 * Organization Team ID
+	 */
 	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()
 	@IsUUID()
