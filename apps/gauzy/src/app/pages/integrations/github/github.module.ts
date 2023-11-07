@@ -19,7 +19,7 @@ import { GithubComponent } from './github.component';
 import { GithubWizardComponent } from './components/wizard/wizard.component';
 import { GithubInstallationComponent } from './components/installation/installation.component';
 import { GithubViewComponent } from './components/view/view.component';
-import { GithubSettingsComponent } from './components/settings/settings.component
+import { GithubSettingsComponent } from './components/settings/settings.component';
 import { RepositorySelectorModule } from '../../../@shared/integrations/github';
 import { DirectivesModule } from '../../../@shared/directives/directives.module';
 import { ProjectSelectModule } from '../../../@shared/project-select/project-select.module';

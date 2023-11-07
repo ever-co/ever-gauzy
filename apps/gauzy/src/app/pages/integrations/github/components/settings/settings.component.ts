@@ -23,8 +23,8 @@ import {
 	IntegrationEntitySettingService,
 	IntegrationEntitySettingServiceStoreService,
 	ToastrService
-} from '../../../../../@core/services';
-import { TranslationBaseComponent } from '../../../../../@shared/language-base/translation-base.component';
+} from './../../../../../@core/services';
+import { TranslationBaseComponent } from './../../../../../@shared/language-base/translation-base.component';
 
 @UntilDestroy()
 @Component({
