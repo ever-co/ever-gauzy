@@ -1,17 +1,16 @@
-import { AfterViewInit, Component, OnInit, ViewChild } from '@angular/core';
+import { AfterViewInit, Component, OnInit, QueryList, ViewChild, ViewChildren } from '@angular/core';
 import { TitleCasePipe } from '@angular/common';
 import { ActivatedRoute, Data, Router } from '@angular/router';
-import { BehaviorSubject, EMPTY, Subject, debounceTime, finalize, first, firstValueFrom, of } from 'rxjs';
+import { BehaviorSubject, EMPTY, Subject, debounceTime, finalize, of } from 'rxjs';
 import { Observable } from 'rxjs/internal/Observable';
 import { catchError, filter, map, mergeMap, switchMap, tap } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
-import { NbDialogService, NbTabComponent } from '@nebular/theme';
+import { NbPopoverDirective, NbTabComponent } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { Ng2SmartTableComponent } from 'ng2-smart-table';
 import {
 	GithubRepositoryStatusEnum,
 	HttpStatus,
-	IEntitySettingToSync,
 	IGithubIssue,
 	IGithubRepository,
 	IIntegrationMapSyncRepository,
@@ -20,7 +19,6 @@ import {
 	IOrganizationGithubRepository,
 	IOrganizationProject,
 	IUser,
-	IntegrationEnum,
 	SYNC_TAG_GAUZY,
 	TaskStatusEnum
 } from '@gauzy/contracts';
@@ -28,8 +26,6 @@ import { distinctUntilChange } from '@gauzy/common-angular';
 import {
 	ErrorHandlingService,
 	GithubService,
-	IntegrationEntitySettingService,
-	IntegrationEntitySettingServiceStoreService,
 	OrganizationProjectsService,
 	Store,
 	ToastrService
@@ -45,7 +41,6 @@ import {
 	ToggleSwitchComponent,
 	ResyncButtonComponent
 } from './../../../../../@shared/table-components';
-import { GithubSettingsDialogComponent } from '../settings-dialog/settings-dialog.component';
 
 export enum SyncTabsEnum {
 	AUTO_SYNC = 'AUTO_SYNC',
@@ -93,19 +88,18 @@ export class GithubViewComponent extends PaginationFilterBaseComponent implement
 		}
 	}
 
+	@ViewChildren(NbPopoverDirective) public popups: QueryList<NbPopoverDirective>;
+
 	constructor(
 		private readonly _router: Router,
 		public readonly _translateService: TranslateService,
 		private readonly _activatedRoute: ActivatedRoute,
 		private readonly _titlecasePipe: TitleCasePipe,
 		private readonly _hashNumberPipe: HashNumberPipe,
-		private readonly _dialogService: NbDialogService,
 		private readonly _toastrService: ToastrService,
 		private readonly _errorHandlingService: ErrorHandlingService,
 		private readonly _store: Store,
 		private readonly _githubService: GithubService,
-		private readonly _integrationEntitySettingService: IntegrationEntitySettingService,
-		private readonly _integrationEntitySettingServiceStoreService: IntegrationEntitySettingServiceStoreService,
 		private readonly _organizationProjectsService: OrganizationProjectsService
 	) {
 		super(_translateService);
@@ -487,61 +481,16 @@ export class GithubViewComponent extends PaginationFilterBaseComponent implement
 	}
 
 	/**
-	 * Open a dialog to set GitHub integration settings.
-	 *
-	 * @returns
+	 * Opens a modal popover for integration settings if the 'integration' object is defined.
 	 */
-	private openDialog(): Observable<boolean> {
-		// Open a dialog to configure GitHub settings
-		const dialogRef = this._dialogService.open(GithubSettingsDialogComponent, {
-			context: {
-				integration: this.integration // Pass the 'integration' object to the dialog component
-			}
-		});
-		// Return an Observable that emits a boolean when the dialog is closed
-		return dialogRef.onClose.pipe(first());
-	}
-
-	/**
-	 * Open a dialog to set GitHub integration settings.
-	 */
-	async openSettingModal() {
+	openSettingModalPopover() {
 		// Check if the 'integration' object is falsy and return early if it is
 		if (!this.integration) {
 			return;
 		}
 
-		// Wait for the dialog to close and retrieve the data returned from the dialog
-		const data = await firstValueFrom(this.openDialog());
-		if (data) {
-			// Extract the 'id' property from the 'integration' object
-			const { id: integrationId } = this.integration;
-
-			// Use try-catch for better error handling
-			try {
-				// Retrieve the current settings from the service
-				const { currentValue: settings }: IEntitySettingToSync = this._integrationEntitySettingServiceStoreService.getEntitySettingsValue();
-
-				// Update entity settings if needed
-				await firstValueFrom(
-					this._integrationEntitySettingService.updateEntitySettings(
-						integrationId,
-						settings
-					)
-				);
-
-				this._toastrService.success(
-					this.getTranslation('INTEGRATIONS.MESSAGE.SETTINGS_UPDATED', { provider: IntegrationEnum.GITHUB }),
-					this.getTranslation('TOASTR.TITLE.SUCCESS')
-				);
-				// Optionally, you can provide feedback or handle success here
-			} catch (error) {
-				// Handle errors (e.g., display an error message or log the error)
-				console.error('Error updating entity settings:', error);
-				// Optionally, you can provide error feedback to the user
-				this._errorHandlingService.handleError(error);
-			}
-		}
+		// Open the modal popover (assuming `popups` is an array or collection of popovers)
+		this.popups.first.toggle();
 	}
 
 	/**

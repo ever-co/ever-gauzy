@@ -1,0 +1,57 @@
+<nb-card
+	[nbSpinner]="loading"
+	nbSpinnerStatus="primary"
+	nbSpinnerSize="small"
+>
+	<div class="popover-container">
+		<div class="d-flex justify-content-end w-100">
+			<span (click)="cancel($event)" class="cursor">
+				<i class="fas fa-times"></i>
+			</span>
+		</div>
+		<div class="d-flex justify-content-start w-100 mb-2 mt-2">
+			<span class="title">
+				{{ 'INTEGRATIONS.SETTINGS' | translate }}
+			</span>
+		</div>
+		<div class="d-flex justify-content-start w-100">
+			<div class="switcher-wrapper" *ngIf="entitiesToSync$ | async as entitiesToSync">
+				<ng-container *ngFor="let entity of entitiesToSync.currentValue">
+					<nb-toggle
+						[(checked)]="entity.sync"
+						labelPosition="start"
+						status="basic"
+					>
+						{{ entity.entity }}
+					</nb-toggle>
+					<div class="tied-entities-wrapper">
+						<ng-container
+							*ngFor="let tiedEntity of entity.tiedEntities"
+						>
+							<div class="tied-entity">
+								<nb-toggle
+									[(checked)]="tiedEntity.sync"
+									[disabled]="!entity.sync"
+									labelPosition="start"
+									status="basic"
+								>
+									{{ tiedEntity.entity }}
+								</nb-toggle>
+							</div>
+						</ng-container>
+					</div>
+				</ng-container>
+			</div>
+		</div>
+		<div class="d-flex justify-content-end w-100">
+			<button
+				nbButton
+				status="primary"
+				class="mr-2"
+				(click)="saveIntegrationSettings()"
+			>
+				{{ 'BUTTONS.SAVE' | translate }}
+			</button>
+		</div>
+	</div>
+</nb-card>

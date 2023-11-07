@@ -32,7 +32,10 @@
 				<button
 					nbButton
 					size="small"
-					(click)="openSettingModal()"
+					[nbPopoverPlacement]="'bottom'"
+					[nbPopoverTrigger]="'noop'"
+					[nbPopover]="settingsPopover"
+					(click)="openSettingModalPopover()"
 				>
 					<nb-icon icon="settings-2-outline"></nb-icon>
 				</button>
@@ -200,3 +203,11 @@
 		</ng-template>
 	</nb-card-body>
 </nb-card>
+
+<!-- Integration Setting Popover -->
+<ng-template #settingsPopover>
+	<ngx-github-settings-dialog
+		[integration]="integration"
+		(canceled)="openSettingModalPopover()"
+	></ngx-github-settings-dialog>
+</ng-template>
