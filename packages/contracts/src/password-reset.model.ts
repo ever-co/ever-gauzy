@@ -1,19 +1,17 @@
-import { IBaseEntityModel } from './base-entity.model';
+import { IBasePerTenantEntityModel } from './base-entity.model';
 
-export interface IPasswordReset
-	extends IBaseEntityModel {
+export interface IPasswordReset extends IBasePerTenantEntityModel {
 	email: string;
 	token: string;
 	expired?: boolean;
 }
 
-export interface IPasswordResetFindInput
-	extends IBaseEntityModel {
+export interface IPasswordResetFindInput extends IBasePerTenantEntityModel {
 	email?: string;
 	token?: string;
 }
 
-export interface IChangePasswordRequest { 
+export interface IChangePasswordRequest {
 	token: string;
 	password: string;
 	confirmPassword: string;
