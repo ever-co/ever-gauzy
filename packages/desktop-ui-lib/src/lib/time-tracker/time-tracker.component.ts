@@ -476,7 +476,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 			} else {
 				result.push(current);
 			}
-			return result;
+			return result.filter(task => !!task?.id);
 		}, []);
 	}
 
@@ -854,6 +854,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 						}
 					} else {
 						tasks = [];
+						this.taskSelect = null;
 					}
 					this.tableData = tasks;
 					await this._sourceData.load(this.tableData);
@@ -1030,7 +1031,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 					}
 					const parallelizedTasks: Promise<void>[] = [
 						this.loadStatuses(),
-						this.getTeams(),
+						this.getTeams(arg),
 						this.getClient(arg),
 						this.getProjects(arg),
 						this.getTask(arg),
@@ -1794,13 +1795,18 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 	async getTask(arg) {
 		try {
 			const tasks = await this.timeTrackerService.getTasks(arg);
-			const statistics = !tasks.length
-				? []
-				: await this.timeTrackerService.getTasksStatistics({
-						...arg,
-						taskIds: tasks.map((res) => res.id),
-				  });
-			this._tasks$.next(this.merge(tasks, statistics));
+			if (tasks.length) {
+				const statistics = await this.timeTrackerService.getTasksStatistics({
+					...arg,
+					taskIds: tasks.map((task) => task.id)
+				});
+				this._tasks$.next(this.merge(tasks, statistics));
+				if (!this._tasks$.getValue().some((task) => task.id === this.taskSelect)) {
+					this.taskSelect = null;
+				}
+			} else {
+				this._tasks$.next([]);
+			}
 		} catch (error) {
 			this._tasks$.next([]);
 			console.log('ERROR', error);
@@ -1809,11 +1815,20 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 
 	async getProjects(arg) {
 		try {
-			const res = await this.timeTrackerService.getProjects(arg);
-			this._projects$.next(res || []);
+			const projects = await this.timeTrackerService.getProjects(arg);
+
+			// Check if the selected project is not in the response
+			if (!projects.some(project => project.id === this.projectSelect)) {
+				this.projectSelect = null;
+				this.argFromMain.projectId = null;
+			}
+
+			// Update the projects observable with the response (or an empty array if it's falsy)
+			this._projects$.next(projects || []);
 		} catch (error) {
+			// Handle errors by logging them and updating the projects observable with an empty array
+			console.error('ERROR', error);
 			this._projects$.next([]);
-			console.log('ERROR', error);
 		}
 	}
 
@@ -1871,8 +1886,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 				organizationContactId: this.organizationContactId,
 			});
 			this._tasks$.next([]);
-			this.projectSelect = null;
-			this.taskSelect = null;
+			this.teamSelect = null;
 			this.errors.client = false;
 		} else {
 			await this.getProjects(this.argFromMain);
@@ -1881,23 +1895,27 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 
 	public async setProject(item: string): Promise<void> {
 		try {
+			const parallelizedTasks: Promise<void>[] = [
+				this.getTeams({
+					...this.argFromMain,
+					projectId: item
+				}),
+				this.getTask({
+					...this.argFromMain,
+					projectId: item
+				})
+			];
 			this.projectSelect = item;
+			this.argFromMain.projectId = item;
 			this.electronService.ipcRenderer.send('update_project_on', {
-				projectId: this.projectSelect,
+				projectId: this.projectSelect
 			});
 			if (item) {
-				await this.getTask({
-					...this.argFromMain,
-					projectId: this.projectSelect,
-				});
-				this.taskSelect = null;
 				this.errors.project = false;
 			} else {
-				await this.getTask({
-					...this.argFromMain,
-				});
+				this.errorBind();
 			}
-			this.errorBind();
+			await Promise.allSettled(parallelizedTasks);
 		} catch (error) {
 			console.log('ERROR', error);
 		}
@@ -2806,9 +2824,14 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 		}
 	}
 
-	public async getTeams(): Promise<void> {
+	public async getTeams(arg?: any): Promise<void> {
 		try {
-			const teams = await this.timeTrackerService.getTeams();
+			const teams = await this.timeTrackerService.getTeams(arg);
+			// Check if the selected team is not in the response
+			if (!teams.some(team => team.id === this.teamSelect)) {
+				this.teamSelect = null;
+				this.argFromMain.organizationTeamId = null;
+			}
 			this._teams$.next(teams);
 		} catch (error) {
 			this._teams$.next([]);
@@ -2818,23 +2841,27 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 
 	public async setTeams(organizationTeamId: string): Promise<void> {
 		try {
+			const parallelizedTasks: Promise<void>[] = [
+				this.getProjects({
+					...this.argFromMain,
+					organizationTeamId
+				}),
+				this.getTask({
+					...this.argFromMain,
+					organizationTeamId
+				})
+			];
 			this.teamSelect = organizationTeamId;
 			this.electronService.ipcRenderer.send('update_project_on', {
-				organizationTeamId,
+				organizationTeamId
 			});
 			this.argFromMain.organizationTeamId = organizationTeamId;
 			if (organizationTeamId) {
-				await this.getProjects({
-					...this.argFromMain,
-					organizationTeamId,
-				});
-				this._tasks$.next([]);
-				this.projectSelect = null;
-				this.taskSelect = null;
 				this.errors.teams = false;
 			} else {
-				await this.getProjects(this.argFromMain);
+				this.errorBind();
 			}
+			await Promise.allSettled(parallelizedTasks);
 		} catch (error) {
 			console.log('ERROR', error);
 		}

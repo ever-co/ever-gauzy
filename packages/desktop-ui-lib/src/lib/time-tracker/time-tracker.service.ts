@@ -736,12 +736,18 @@ export class TimeTrackerService {
 		);
 	}
 
-	public async getTeams(): Promise<IOrganizationTeam[]> {
+	public async getTeams(values?: any): Promise<IOrganizationTeam[]> {
 		const params = {
 			where: {
 				organizationId: this._store.organizationId,
 				tenantId: this._store.tenantId,
+				...(values.projectId && {
+					projects: {
+						id: values.projectId
+					}
+				})
 			},
+			relations: ['projects']
 		};
 		let teams$ = this._teamsCacheService.getValue(params);
 		if (!teams$) {
