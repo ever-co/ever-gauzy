@@ -18,9 +18,10 @@ import {
 	IOrganizationTeamJoinRequest,
 	EmailTemplateEnum,
 	IResendEmailInput,
-	EmailStatusEnum
+	EmailStatusEnum,
+	ITenant
 } from '@gauzy/contracts';
-import { ConfigService, environment as env } from '@gauzy/config';
+import { environment as env } from '@gauzy/config';
 import { deepMerge, IAppIntegrationConfig } from '@gauzy/common';
 import { RequestContext } from '../core/context';
 import { EmailSendService } from './../email-send/email-send.service';
@@ -32,17 +33,10 @@ const DISALLOW_EMAIL_SERVER_DOMAIN: string[] = ['@example.com'];
 export class EmailService {
 
 	constructor(
-		@InjectRepository(EmailHistory)
-		private readonly emailHistoryRepository: Repository<EmailHistory>,
-
-		@InjectRepository(EmailTemplate)
-		private readonly emailTemplateRepository: Repository<EmailTemplate>,
-
-		@InjectRepository(Organization)
-		private readonly organizationRepository: Repository<Organization>,
-
-		private readonly _emailSendService: EmailSendService,
-		private readonly configService: ConfigService
+		@InjectRepository(EmailHistory) private readonly emailHistoryRepository: Repository<EmailHistory>,
+		@InjectRepository(EmailTemplate) private readonly emailTemplateRepository: Repository<EmailTemplate>,
+		@InjectRepository(Organization) private readonly organizationRepository: Repository<Organization>,
+		private readonly _emailSendService: EmailSendService
 	) { }
 
 	/**
@@ -623,43 +617,53 @@ export class EmailService {
 		}
 	}
 
-	// Create a Multi-tenant request Password Email Service
-	async multiTenantRequestPassword(
+	/**
+	 *
+	 * @param email
+	 * @param tenantUsersMap
+	 * @param languageCode
+	 * @param originUrl
+	 */
+	async multiTenantResetPassword(
 		email: string,
-		organizationUserMap: { url: string, organizationId: string }[],
+		tenants: { resetLink: string; tenant: ITenant; user: IUser }[],
 		languageCode: LanguagesEnum,
-		originUrl?: string
+		originUrl: string
 	) {
-		const multiTenantRequestPassword: { generatedUrl: string, organizationId: string, tenantId: string, name: string }[] = []
+		/** */
+		const resetLinks: {
+			resetLink: string,
+			tenantName: ITenant['name'],
+			tenantId: ITenant['id'],
+			userName: IUser['name']
+		}[] = [];
 
-		for await (const iterator of organizationUserMap) {
-			let organization: Organization;
-			if (iterator.organizationId) {
-				organization = await this.organizationRepository.findOneBy({
-					id: iterator.organizationId
-				});
-			}
-			const tenantId = (organization) ? organization.tenantId : RequestContext.currentTenantId();
+		/** */
+		for await (const { resetLink, tenant, user } of tenants) {
+			/** */
+			const tenantId = tenant ? tenant.id : RequestContext.currentTenantId();
 
-			multiTenantRequestPassword.push({
-				generatedUrl: iterator.url,
-				organizationId: iterator.organizationId,
-				tenantId,
-				name: (organization) ? organization.name : ''
+			/** */
+			resetLinks.push({
+				tenantName: tenant ? tenant.name : user.name,
+				userName: user.name,
+				resetLink,
+				tenantId
 			});
 		}
+
 		const sendOptions = {
 			template: EmailTemplateEnum.MULTI_TENANT_PASSWORD_RESET,
 			message: {
-				to: `${email}`,
-				subject: 'Forgotten Password test'
+				to: `${email}`
 			},
 			locals: {
 				locale: languageCode,
-				multiTenantRequestPassword,
 				host: originUrl || env.clientBaseUrl,
+				resetLinks: resetLinks
 			}
 		};
+
 		const body = {
 			templateName: sendOptions.template,
 			email: sendOptions.message.to,
@@ -668,7 +672,6 @@ export class EmailService {
 		}
 
 		const match = !!DISALLOW_EMAIL_SERVER_DOMAIN.find((server) => body.email.includes(server));
-
 		if (!match) {
 			try {
 				// TODO : Which Organization to prefer while sending email

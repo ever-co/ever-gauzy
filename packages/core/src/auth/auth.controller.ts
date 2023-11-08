@@ -252,7 +252,7 @@ export class AuthController {
 		@Headers('origin') origin: string,
 		@I18nLang() languageCode: LanguagesEnum,
 	): Promise<boolean | BadRequestException> {
-		return await this.authService.requestPassword(
+		return await this.authService.requestResetPassword(
 			body,
 			languageCode,
 			origin

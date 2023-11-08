@@ -22,6 +22,8 @@ import {
 	IUserLoginInput as IUserWorkspaceSigninInput,
 	IUserTokenInput,
 	IOrganizationTeam,
+	IOrganization,
+	ITenant,
 } from '@gauzy/contracts';
 import { environment } from '@gauzy/config';
 import { SocialAuthService } from '@gauzy/auth';
@@ -173,85 +175,74 @@ export class AuthService extends SocialAuthService {
 	}
 
 	/**
-	 * Request Reset Password
+	 * Request a password reset for one or more users.
 	 *
-	 * @param request
-	 * @param languageCode
-	 * @param originUrl
-	 * @returns
+	 * @param {IResetPasswordRequest} request - The request object containing user's email.
+	 * @param {LanguagesEnum} languageCode - The language code for email communication.
+	 * @param {string} [originUrl] - An optional origin URL for the reset request.
+	 * @returns {Promise<boolean | BadRequestException>} A Promise that resolves to a boolean indicating success or rejects with a BadRequestException in case of an error.
 	 */
-	async requestPassword(
+	async requestResetPassword(
 		request: IResetPasswordRequest,
 		languageCode: LanguagesEnum,
 		originUrl?: string
 	): Promise<boolean | BadRequestException> {
-		const { email } = request;
-
 		try {
-			await this.userRepository.findOneByOrFail({
-				email,
-				isActive: true,
-			});
-		} catch (error) {
-			throw new BadRequestException('Forgot password request failed!');
-		}
+			const { email } = request;
 
-		try {
-			const users = await this.userService.find({
-				where: {
-					email,
-					isActive: true,
-				},
-				relations: {
-					role: true,
-					employee: true,
-				},
-			});
+			/** Fetch users with specific criteria */
+			const users = await this.fetchUsers(email);
+			/** */
+			if (users.length === 0) {
+				throw new BadRequestException('Forgot password request failed!');
+			}
 
-			//Create a collection to store organizationId ,user and url
-			const organizationMap: { url: string; organizationId: string }[] =
-				[];
+			/** */
+			const tenantUsersMap: { resetLink: string; tenant: ITenant; user: IUser }[] = [];
 
-			/**
-			 * Create password reset request
-			 */
+			/** Send email based on the number of users */
 			for await (const user of users) {
+				const { email, tenantId } = user;
 				const token = await this.getJwtAccessToken(user);
-				if (token) {
-					await this.commandBus.execute(
-						new PasswordResetCreateCommand({
-							email: user.email,
-							token,
-						})
-					);
 
-					const { id: userId, tenantId } = user;
+				/** */
+				if (!!token && !!email) {
+					try {
+						/** */
+						const tenant = user.tenant;
 
-					const url = `${environment.clientBaseUrl}/#/auth/reset-password?token=${token}`;
-					const { organizationId } =
-						await this.userOrganizationService.findOneByOptions({
-							where: {
-								userId,
+						/** */
+						const request = await this.commandBus.execute(
+							new PasswordResetCreateCommand({
+								email,
 								tenantId,
-							},
-						});
-					organizationMap.push({ url, organizationId });
+								token
+							})
+						);
+						const resetLink = `${environment.clientBaseUrl}/#/auth/reset-password?token=${request.token}&tenantId=${tenantId}&email=${email}`;
+						tenantUsersMap.push({ resetLink, tenant, user });
+					} catch (error) {
+						throw new BadRequestException('Forgot password request failed!');
+					}
 				}
 			}
 
 			// If Only one user
 			if (users.length === 1) {
-				this.emailService.requestPassword(
-					users[0],
-					organizationMap[0].url,
-					languageCode,
-					organizationMap[0].organizationId,
-					originUrl
-				);
+				const [user] = users;
+				const [tenantUserMap] = tenantUsersMap;
+
+				// this.emailService.requestPassword(
+				// 	user,
+				// 	organizationMap[0].url,
+				// 	languageCode,
+				// 	organizationMap[0].organizationId,
+				// 	originUrl
+				// );
 			} else {
-				this.emailService.multiTenantRequestPassword(
+				this.emailService.multiTenantResetPassword(
 					email,
-					organizationMap,
+					tenantUsersMap,
 					languageCode,
 					originUrl
 				);
@@ -260,6 +251,26 @@ export class AuthService extends SocialAuthService {
 		} catch (error) {
 			throw new BadRequestException('Forgot password request failed!');
 		}
+	}
+
+	/**
+	 * Fetch users from the repository based on specific criteria.
+	 *
+	 * @param {string} email - The user's email address.
+	 * @returns {Promise<User[]>} A Promise that resolves to an array of User objects.
+	 */
+	async fetchUsers(email: IUserEmailInput['email']): Promise<IUser[]> {
+		return await this.userRepository.find({
+			where: {
+				email,
+				isActive: true,
+				isArchived: false,
+			},
+			relations: {
+				tenant: true,
+				role: true
+			},
+		});
 	}
 
 	/**
@@ -510,7 +521,10 @@ export class AuthService extends SocialAuthService {
 	 */
 	public async getJwtAccessToken(request: Partial<IUser>) {
 		try {
+			// Extract the user ID from the request
 			const userId = request.id;
+
+			// Retrieve the user's data from the userService
 			const user = await this.userService.findOneByIdString(userId, {
 				relations: {
 					employee: true,
@@ -522,13 +536,19 @@ export class AuthService extends SocialAuthService {
 					createdAt: 'DESC'
 				}
 			});
+
+			// Create a payload for the JWT token
 			const payload: JwtPayload = {
 				id: user.id,
 				tenantId: user.tenantId,
 				employeeId: user.employee ? user.employee.id : null
 			};
+
+			// Check if the user has a role
 			if (user.role) {
 				payload.role = user.role.name;
+
+				// Check if the role has rolePermissions
 				if (user.role.rolePermissions) {
 					payload.permissions = user.role.rolePermissions
 						.filter((rolePermission: IRolePermission) => rolePermission.enabled)
@@ -539,9 +559,14 @@ export class AuthService extends SocialAuthService {
 			} else {
 				payload.role = null;
 			}
+
+			// Generate an access token using the payload and a secret
 			const accessToken = sign(payload, environment.JWT_SECRET, {});
+
+			// Return the generated access token
 			return accessToken;
 		} catch (error) {
+			// Handle any errors that occur during the process
 			console.log('Error while getting jwt access token', error);
 		}
 	}
