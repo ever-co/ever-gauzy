@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { firstValueFrom } from 'rxjs';
+import { Observable, firstValueFrom } from 'rxjs';
 import {
 	IUser,
 	RolesEnum,
@@ -12,13 +12,12 @@ import {
 	IUserSigninWorkspaceResponse,
 	IUserLoginInput
 } from '@gauzy/contracts';
-import { Observable } from 'rxjs';
 import { toParams } from '@gauzy/common-angular';
 import { API_PREFIX } from '../constants/app.constants';
 
 @Injectable()
 export class AuthService {
-	constructor(private readonly http: HttpClient) {}
+	constructor(private readonly http: HttpClient) { }
 
 	isAuthenticated(): Promise<boolean> {
 		return firstValueFrom(
@@ -38,20 +37,34 @@ export class AuthService {
 	}
 
 	/**
-	 * Sign in to a different workspace.
-	 * @param input - IUserLoginInput containing email and password.
-	 * @returns Promise<IUserSigninWorkspaceResponse> representing the response from the server.
+	 * Sign in to workspaces with the provided input.
+	 *
+	 * @param input - The input containing user login information.
+	 * @returns An observable of the response for signing in to workspaces.
 	 */
-	signinWorkspaces(
-		input: IUserLoginInput
-	): Observable<IUserSigninWorkspaceResponse> {
+	findWorkspaces(input: IUserLoginInput): Observable<IUserSigninWorkspaceResponse> {
 		try {
-			return this.http.post<IUserSigninWorkspaceResponse>(
-				`${API_PREFIX}/auth/signin.workspaces`,
-				input
-			);
+			// Send a POST request to the server endpoint with the provided input
+			return this.http.post<IUserSigninWorkspaceResponse>(`${API_PREFIX}/auth/signin.email.password`, input);
 		} catch (error) {
-			console.log('Error while signin workspaces: %s', error?.message);
+			console.log('Error while signing in workspaces: %s', error?.message);
+			// Handle errors appropriately (e.g., log, throw, etc.)
+			throw error;
+		}
+	}
+
+	/**
+	 * Sign in to a specific tenant workspace using the provided input.
+	 *
+	 * @param input - The input containing user email and token.
+	 * @returns An observable of the response for signing in to the specific tenant workspace.
+	 */
+	signinWorkspaceByToken(input: IUserEmailInput & IUserTokenInput) {
+		try {
+			// Send a POST request to the server endpoint with the provided input
+			return this.http.post<IAuthResponse>(`${API_PREFIX}/auth/signin.workspace`, input);
+		} catch (error) {
+			console.log('Error while signing in specific tenant workspace: %s', error?.message);
 			// Handle errors appropriately (e.g., log, throw, etc.)
 			throw error;
 		}

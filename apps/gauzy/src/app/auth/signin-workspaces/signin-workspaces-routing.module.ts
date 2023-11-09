@@ -10,7 +10,7 @@ const routes: Routes = [
 		component: SignInWorkspacesLayoutComponent,
 		children: [
 			{
-				path: 'email',
+				path: '',
 				component: WorkspaceSigninWithEmailComponent
 			},
 			{

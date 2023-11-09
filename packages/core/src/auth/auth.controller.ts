@@ -215,7 +215,7 @@ export class AuthController {
 	@UsePipes(new ValidationPipe({ whitelist: true }))
 	async signinWorkspaceByToken(
 		@Body() input: WorkspaceSigninDTO
-	): Promise<any> {
+	): Promise<IAuthResponse | null> {
 		return await this.commandBus.execute(
 			new WorkspaceSigninVerifyTokenCommand(input)
 		);

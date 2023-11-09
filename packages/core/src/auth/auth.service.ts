@@ -107,19 +107,24 @@ export class AuthService extends SocialAuthService {
 	}
 
 	/**
-	 * Signs in users to workspaces.
-	 * @param param0 - IUserSigninWorkspaceInput containing email and password.
-	 * @returns IUserSigninWorkspaceResponse containing user details and confirmation status.
+	 * Authenticate a user by email and password and return user workspaces.
+	 *
+	 * @param email - The user's email.
+	 * @param password - The user's password.
+	 * @returns A promise that resolves to a response with user workspaces.
+	 * @throws UnauthorizedException if authentication fails.
 	 */
 	async signinWorkspacesByEmailPassword({ email, password }: IUserWorkspaceSigninInput): Promise<IUserSigninWorkspaceResponse> {
-		console.time('signin workspaces');
-		// Fetching users matching the query
+
+		/** Fetching users matching the query */
 		let users = await this.userService.find({
 			where: {
 				email,
 				isActive: true,
+				isArchived: false
 			},
 			relations: {
+				tenant: true,
 				employee: true
 			},
 			order: {
@@ -127,19 +132,37 @@ export class AuthService extends SocialAuthService {
 			}
 		});
 
-		// Filtering users based on password match
-		users = users.filter((user: IUser) => !!bcrypt.compareSync(password, user.hash) && (!user.employee || user.employee?.isActive));
+		if (users.length === 0) {
+			throw new UnauthorizedException();
+		}
 
-		// Creating an array of user objects with relevant data
-		const workspaces = users.map((user: IUser) => {
-			const payload: JwtPayload = {
-				userId: user.id,
-				email: user.email,
-				tenantId: user.tenant ? user.tenantId : null
-			};
-			const token = sign(payload, environment.JWT_SECRET, {
-				expiresIn: `${environment.JWT_TOKEN_EXPIRATION_TIME}s`
+		// Filter users based on password match
+		users = users.filter((user: IUser) =>
+			!!bcrypt.compareSync(password, user.hash) && (!user.employee || user.employee?.isActive)
+		);
+
+		/** */
+		const code = generateRandomAlphaNumericCode(ALPHA_NUMERIC_CODE_LENGTH);
+		const codeExpireAt = moment().add(environment.AUTHENTICATION_CODE_EXPIRATION_TIME, 'seconds').toDate();
+
+		/** */
+		for await (const user of users) {
+			const id = user.id;
+			/** */
+			await this.userRepository.update({
+				id,
+				email,
+				isActive: true,
+				isArchived: false
+			}, {
+				code,
+				codeExpireAt
 			});
+		}
+
+		// Create an array of user objects with relevant data
+		const workspaces = users.map((user: IUser) => {
+			/** */
 			return new Object({
 				user: new User({
 					name: user.name,
@@ -150,7 +173,7 @@ export class AuthService extends SocialAuthService {
 						logo: user.tenant?.logo || ''
 					})
 				}),
-				token
+				token: this.generateToken(user, code)
 			});
 		});
 
@@ -162,14 +185,30 @@ export class AuthService extends SocialAuthService {
 			total_workspaces: workspaces.length
 		};
 
-		console.timeEnd('signin workspaces');
-
 		if (workspaces.length > 0) {
 			return response;
 		} else {
 			console.log('Error while signin workspace: %s');
 			throw new UnauthorizedException();
 		}
+	}
+
+	/**
+	 * Generate a JWT token for the given user.
+	 *
+	 * @param user - The user object for which to generate the token.
+	 * @returns The JWT token as a string.
+	 */
+	private generateToken(user: IUser, code: string): string {
+		const payload: JwtPayload = {
+			userId: user.id,
+			email: user.email,
+			tenantId: user.tenant ? user.tenantId : null,
+			code
+		};
+		return sign(payload, environment.JWT_SECRET, {
+			expiresIn: `${environment.JWT_TOKEN_EXPIRATION_TIME}s`,
+		});
 	}
 
 	/**
@@ -628,7 +667,8 @@ export class AuthService extends SocialAuthService {
 					email,
 					code,
 					codeExpireAt: MoreThanOrEqual(new Date()),
-					isActive: true
+					isActive: true,
+					isArchived: false
 				},
 				relations: {
 					tenant: true,
@@ -712,7 +752,7 @@ export class AuthService extends SocialAuthService {
 	 * @param input - The user email and token input.
 	 * @returns An object containing user information and tokens.
 	 */
-	async workspaceSigninVerifyToken(input: IUserEmailInput & IUserTokenInput) {
+	async workspaceSigninVerifyToken(input: IUserEmailInput & IUserTokenInput): Promise<IAuthResponse | null> {
 		try {
 			const { email, token } = input;
 
@@ -728,18 +768,20 @@ export class AuthService extends SocialAuthService {
 				const { userId, tenantId, code } = payload;
 				const user = await this.userRepository.findOneOrFail({
 					where: {
-						email,
 						id: userId,
+						email,
 						tenantId,
 						code,
-						codeExpireAt: MoreThanOrEqual(new Date()),
-						isActive: true
+						// codeExpireAt: MoreThanOrEqual(new Date()),
+						isActive: true,
+						isArchived: false
 					},
 					relations: {
 						employee: true,
 						role: true
 					},
 				});
+				console.log({ user });
 
 				await this.userRepository.update({
 					email,
@@ -761,11 +803,11 @@ export class AuthService extends SocialAuthService {
 				const refresh_token = await this.getJwtRefreshToken(user);
 				await this.userService.setCurrentRefreshToken(refresh_token, user.id);
 
-				return new Object({
+				return {
 					user,
 					token: access_token,
 					refresh_token: refresh_token
-				});
+				};
 			}
 			throw new UnauthorizedException();
 		} catch (error) {
