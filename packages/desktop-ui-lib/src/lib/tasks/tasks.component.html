@@ -7,44 +7,33 @@
 			{{ "TIMER_TRACKER.ADD_TASK" | translate }}
 		</h5>
 	</nb-card-header>
-	<nb-card-body class="body row">
-		<div class="col-6">
-			<div class="row">
-				<div class="col-sm-6">
-					<div class="form-group">
-						<label class="label">{{
-							"CONTEXT_MENU.CLIENT" | translate
-						}}</label>
-						<ng-select
-							[addTagText]="
+	<nb-card-body>
+		<div class="body">
+			<div class="selector-container">
+				<div class="row">
+					<div class="col-sm-6">
+						<div class="form-group">
+							<label class="label">{{
+								"CONTEXT_MENU.CLIENT" | translate
+								}}</label>
+							<ng-select
+								[addTagText]="
 								'TIMER_TRACKER.ADD_CONTACT' | translate
 							"
-							[clearable]="true"
-							[items]="contacts"
-							[placeholder]="
+								[clearable]="true"
+								[items]="contacts"
+								[placeholder]="
 								'TIMER_TRACKER.SELECT_CLIENT' | translate
 							"
-							bindLabel="name"
-							bindValue="id"
-							formControlName="organizationContactId"
-						>
-							<ng-template
-								let-index="index"
-								let-item="item"
-								ng-option-tmp
+								bindLabel="name"
+								bindValue="id"
+								formControlName="organizationContactId"
 							>
-								<img
-									*ngIf="item.imageUrl"
-									[src]="item.imageUrl"
-									height="20px"
-									width="20px"
-								/>
-								<span>
-									{{ item?.name }}
-								</span>
-							</ng-template>
-							<ng-template let-item="item" ng-label-tmp>
-								<div class="selector-template">
+								<ng-template
+									let-index="index"
+									let-item="item"
+									ng-option-tmp
+								>
 									<img
 										*ngIf="item.imageUrl"
 										[src]="item.imageUrl"
@@ -52,49 +41,49 @@
 										width="20px"
 									/>
 									<span>
+									{{ item?.name }}
+								</span>
+								</ng-template>
+								<ng-template let-item="item" ng-label-tmp>
+									<div class="selector-template">
+										<img
+											*ngIf="item.imageUrl"
+											[src]="item.imageUrl"
+											height="20px"
+											width="20px"
+										/>
+										<span>
 										{{ item?.name }}
 									</span>
-								</div>
-							</ng-template>
-						</ng-select>
+									</div>
+								</ng-template>
+							</ng-select>
+						</div>
 					</div>
-				</div>
-				<div class="col-sm-6 pl-0">
-					<div class="form-group">
-						<label class="label">{{
-							"TASKS_PAGE.TASKS_PROJECT" | translate
-						}}</label>
-						<ng-select
-							[addTagText]="
+					<div class="col-sm-6">
+						<div class="form-group">
+							<label class="label">{{
+								"TASKS_PAGE.TASKS_PROJECT" | translate
+								}}</label>
+							<ng-select
+								[addTagText]="
 								'FORM.PLACEHOLDERS.ADD_PROJECT' | translate
 							"
-							[addTag]="hasProjectPermission ? addProject : null"
-							[clearable]="true"
-							[items]="projects"
-							[placeholder]="
+								[addTag]="hasProjectPermission ? addProject : null"
+								[clearable]="true"
+								[items]="projects"
+								[placeholder]="
 								'TASKS_PAGE.TASKS_PROJECT' | translate
 							"
-							bindLabel="name"
-							bindValue="id"
-							formControlName="projectId"
-						>
-							<ng-template
-								let-index="index"
-								let-item="item"
-								ng-option-tmp
+								bindLabel="name"
+								bindValue="id"
+								formControlName="projectId"
 							>
-								<img
-									*ngIf="item.imageUrl"
-									[src]="item.imageUrl"
-									height="20px"
-									width="20px"
-								/>
-								<span>
-									{{ item?.name }}
-								</span>
-							</ng-template>
-							<ng-template let-item="item" ng-label-tmp>
-								<div class="selector-template">
+								<ng-template
+									let-index="index"
+									let-item="item"
+									ng-option-tmp
+								>
 									<img
 										*ngIf="item.imageUrl"
 										[src]="item.imageUrl"
@@ -102,303 +91,316 @@
 										width="20px"
 									/>
 									<span>
+									{{ item?.name }}
+								</span>
+								</ng-template>
+								<ng-template let-item="item" ng-label-tmp>
+									<div class="selector-template">
+										<img
+											*ngIf="item.imageUrl"
+											[src]="item.imageUrl"
+											height="20px"
+											width="20px"
+										/>
+										<span>
 										{{ item?.name }}
 									</span>
-								</div>
-							</ng-template>
-						</ng-select>
+									</div>
+								</ng-template>
+							</ng-select>
+						</div>
 					</div>
 				</div>
-			</div>
-			<div class="row">
-				<div class="col-sm-12">
-					<div class="form-group">
-						<label class="label">{{
-							"TASKS_PAGE.TASKS_TITLE" | translate
-						}}</label>
-						<input
-							[placeholder]="'TASKS_PAGE.TASKS_TITLE' | translate"
-							class="name-input"
-							formControlName="title"
-							nbInput
-							type="text"
-						/>
+				<div class="row">
+					<div class="col-sm-12">
+						<div class="form-group">
+							<label class="label">{{
+								"TASKS_PAGE.TASKS_TITLE" | translate
+								}}</label>
+							<input
+								[placeholder]="'TASKS_PAGE.TASKS_TITLE' | translate"
+								class="name-input"
+								formControlName="title"
+								nbInput
+								type="text"
+							/>
+						</div>
 					</div>
 				</div>
-			</div>
-			<div class="row">
-				<div class="col-sm-6">
-					<div class="form-group">
-						<label>{{ "CONTEXT_MENU.TEAM" | translate }}</label>
-						<ng-select
-							[clearable]="true"
-							[items]="teams"
-							[placeholder]="
+				<div class="row">
+					<div class="col-sm-6">
+						<div class="form-group">
+							<label>{{ "CONTEXT_MENU.TEAM" | translate }}</label>
+							<ng-select
+								[clearable]="true"
+								[items]="teams"
+								[placeholder]="
 								'FORM.LABELS.SELECT_TEAM'
 									| translate
 									| titlecase
 							"
-							bindLabel="name"
-							bindValue="id"
-							formControlName="organizationTeamId"
-							nbTooltipStatus="warning"
-						>
-							<ng-template
-								let-index="index"
-								let-item="item"
-								ng-option-tmp
+								bindLabel="name"
+								bindValue="id"
+								formControlName="organizationTeamId"
+								nbTooltipStatus="warning"
 							>
-								<img
-									*ngIf="item?.logo"
-									[src]="item?.logo"
-									height="20px"
-									width="20px"
-								/>
-								<span class="text-container">
-									{{ item?.name }}
-								</span>
-							</ng-template>
-							<ng-template let-item="item" ng-label-tmp>
-								<div class="selector-template">
+								<ng-template
+									let-index="index"
+									let-item="item"
+									ng-option-tmp
+								>
 									<img
 										*ngIf="item?.logo"
 										[src]="item?.logo"
 										height="20px"
 										width="20px"
 									/>
-									<span
-										class="black-bold-text text-container"
-									>
+									<span class="text-container">
+									{{ item?.name }}
+								</span>
+								</ng-template>
+								<ng-template let-item="item" ng-label-tmp>
+									<div class="selector-template">
+										<img
+											*ngIf="item?.logo"
+											[src]="item?.logo"
+											height="20px"
+											width="20px"
+										/>
+										<span
+											class="black-bold-text text-container"
+										>
 										{{ item?.name }}
 									</span>
-								</div>
-							</ng-template>
-						</ng-select>
+									</div>
+								</ng-template>
+							</ng-select>
+						</div>
 					</div>
-				</div>
-				<div class="col-sm-6 pl-0">
-					<div class="form-group">
-						<label class="label">{{
-							"TASKS_PAGE.TASKS_STATUS" | translate
-						}}</label>
-						<ng-select
-							[clearable]="true"
-							[items]="taskStatuses"
-							[placeholder]="
+					<div class="col-sm-6">
+						<div class="form-group">
+							<label class="label">{{
+								"TASKS_PAGE.TASKS_STATUS" | translate
+								}}</label>
+							<ng-select
+								[clearable]="true"
+								[items]="taskStatuses"
+								[placeholder]="
 								'TASKS_PAGE.TASKS_STATUS' | translate
 							"
-							[searchable]="false"
-							bindLabel="name"
-							formControlName="taskStatus"
-						>
-							<ng-template
-								let-index="index"
-								let-item="item"
-								ng-option-tmp
+								[searchable]="false"
+								bindLabel="name"
+								formControlName="taskStatus"
 							>
-								<gauzy-task-badge-view
-									[taskBadge]="item"
-								></gauzy-task-badge-view>
-							</ng-template>
-							<ng-template let-item="item" ng-label-tmp>
-								<gauzy-task-badge-view
-									[taskBadge]="item"
-								></gauzy-task-badge-view>
-							</ng-template>
-						</ng-select>
+								<ng-template
+									let-index="index"
+									let-item="item"
+									ng-option-tmp
+								>
+									<gauzy-task-badge-view
+										[taskBadge]="item"
+									></gauzy-task-badge-view>
+								</ng-template>
+								<ng-template let-item="item" ng-label-tmp>
+									<gauzy-task-badge-view
+										[taskBadge]="item"
+									></gauzy-task-badge-view>
+								</ng-template>
+							</ng-select>
+						</div>
 					</div>
 				</div>
-			</div>
-			<div class="row">
-				<div class="col-sm-12">
-					<label class="label">
-						{{ "SM_TABLE.TAGS" | translate }}
-					</label>
-					<div class="form-group">
-						<ng-select
-							[clearable]="true"
-							[items]="tags"
-							[multiple]="true"
-							[placeholder]="'SM_TABLE.TAGS' | translate"
-							bindLabel="name"
-							formControlName="tags"
-						>
-							<ng-template
-								let-tag="item"
-								let-tag$="item$"
-								ng-option-tmp
+				<div class="row">
+					<div class="col-sm-12">
+						<label class="label">
+							{{ "SM_TABLE.TAGS" | translate }}
+						</label>
+						<div class="form-group">
+							<ng-select
+								[clearable]="true"
+								[items]="tags"
+								[multiple]="true"
+								[placeholder]="'SM_TABLE.TAGS' | translate"
+								bindLabel="name"
+								formControlName="tags"
 							>
-								<div class="d-flex align-items-center">
-									<ng-container *ngIf="multiple">
-										<input
-											[ngModel]="tag$.selected"
-											type="checkbox"
-										/>
-									</ng-container>
-									<nb-badge
-										[style.background]="
+								<ng-template
+									let-tag="item"
+									let-tag$="item$"
+									ng-option-tmp
+								>
+									<div class="d-flex align-items-center">
+										<ng-container *ngIf="multiple">
+											<input
+												[ngModel]="tag$.selected"
+												type="checkbox"
+											/>
+										</ng-container>
+										<nb-badge
+											[style.background]="
 											background(tag.color)
 										"
-										class="tag-color"
-									></nb-badge>
-									<span class="text">{{ tag.name }}</span>
-								</div>
-							</ng-template>
+											class="tag-color"
+										></nb-badge>
+										<span class="text">{{ tag.name }}</span>
+									</div>
+								</ng-template>
 
-							<ng-template
-								let-clear="clear"
-								let-tag="item"
-								ng-label-tmp
-							>
-								<nb-badge
-									(click)="clear(tag)"
-									[style.background]="background(tag.color)"
-									[style.color]="
+								<ng-template
+									let-clear="clear"
+									let-tag="item"
+									ng-label-tmp
+								>
+									<nb-badge
+										(click)="clear(tag)"
+										[style.background]="background(tag.color)"
+										[style.color]="
 										backgroundContrast(tag.color)
 									"
-									[text]="tag.name"
-									class="tag-color tag-label"
-								></nb-badge>
-							</ng-template>
-						</ng-select>
+										[text]="tag.name"
+										class="tag-color tag-label"
+									></nb-badge>
+								</ng-template>
+							</ng-select>
+						</div>
 					</div>
 				</div>
-			</div>
-			<div class="row">
-				<div class="col-sm-6">
-					<div class="form-group">
-						<label>{{
-							"TASKS_PAGE.TASK_PRIORITY" | translate
-						}}</label>
-						<ng-select
-							[clearable]="true"
-							[items]="taskPriorities"
-							[placeholder]="
+				<div class="row">
+					<div class="col-sm-6">
+						<div class="form-group">
+							<label>{{
+								"TASKS_PAGE.TASK_PRIORITY" | translate
+								}}</label>
+							<ng-select
+								[clearable]="true"
+								[items]="taskPriorities"
+								[placeholder]="
 								'TASKS_PAGE.TASK_PRIORITY' | translate
 							"
-							bindLabel="name"
-							formControlName="taskPriority"
-							nbTooltipStatus="warning"
-						>
-							<ng-template
-								let-index="index"
-								let-item="item"
-								ng-option-tmp
+								bindLabel="name"
+								formControlName="taskPriority"
+								nbTooltipStatus="warning"
 							>
-								<gauzy-task-badge-view
-									[taskBadge]="item"
-								></gauzy-task-badge-view>
-							</ng-template>
-							<ng-template let-item="item" ng-label-tmp>
-								<gauzy-task-badge-view
-									[taskBadge]="item"
-								></gauzy-task-badge-view>
-							</ng-template>
-						</ng-select>
+								<ng-template
+									let-index="index"
+									let-item="item"
+									ng-option-tmp
+								>
+									<gauzy-task-badge-view
+										[taskBadge]="item"
+									></gauzy-task-badge-view>
+								</ng-template>
+								<ng-template let-item="item" ng-label-tmp>
+									<gauzy-task-badge-view
+										[taskBadge]="item"
+									></gauzy-task-badge-view>
+								</ng-template>
+							</ng-select>
+						</div>
 					</div>
-				</div>
-				<div class="col-sm-6 pl-0">
-					<div class="form-group">
-						<label class="label">{{
-							"TASKS_PAGE.TASK_SIZE" | translate
-						}}</label>
-						<ng-select
-							[clearable]="true"
-							[items]="taskSizes"
-							[placeholder]="'TASKS_PAGE.TASK_SIZE' | translate"
-							[searchable]="false"
-							bindLabel="name"
-							formControlName="taskSize"
-						>
-							<ng-template
-								let-index="index"
-								let-item="item"
-								ng-option-tmp
+					<div class="col-sm-6">
+						<div class="form-group">
+							<label class="label">{{
+								"TASKS_PAGE.TASK_SIZE" | translate
+								}}</label>
+							<ng-select
+								[clearable]="true"
+								[items]="taskSizes"
+								[placeholder]="'TASKS_PAGE.TASK_SIZE' | translate"
+								[searchable]="false"
+								bindLabel="name"
+								formControlName="taskSize"
 							>
-								<gauzy-task-badge-view
-									[taskBadge]="item"
-								></gauzy-task-badge-view>
-							</ng-template>
-							<ng-template let-item="item" ng-label-tmp>
-								<gauzy-task-badge-view
-									[taskBadge]="item"
-								></gauzy-task-badge-view>
-							</ng-template>
-						</ng-select>
+								<ng-template
+									let-index="index"
+									let-item="item"
+									ng-option-tmp
+								>
+									<gauzy-task-badge-view
+										[taskBadge]="item"
+									></gauzy-task-badge-view>
+								</ng-template>
+								<ng-template let-item="item" ng-label-tmp>
+									<gauzy-task-badge-view
+										[taskBadge]="item"
+									></gauzy-task-badge-view>
+								</ng-template>
+							</ng-select>
+						</div>
 					</div>
 				</div>
-			</div>
-			<div class="row">
-				<div class="col-sm-6">
-					<div class="form-group">
-						<label class="label" for="dueDate">{{
-							"TASKS_PAGE.DUE_DATE" | translate
-						}}</label>
-						<input
-							[nbDatepicker]="taskDueDatePicker"
-							[placeholder]="'TASKS_PAGE.DUE_DATE' | translate"
-							formControlName="dueDate"
-							fullWidth
-							id="dueDate"
-							nbInput
-							type="text"
-						/>
-						<nb-datepicker #taskDueDatePicker></nb-datepicker>
+				<div class="row">
+					<div class="col-sm-6">
+						<div class="form-group">
+							<label class="label" for="dueDate">{{
+								"TASKS_PAGE.DUE_DATE" | translate
+								}}</label>
+							<input
+								[nbDatepicker]="taskDueDatePicker"
+								[placeholder]="'TASKS_PAGE.DUE_DATE' | translate"
+								formControlName="dueDate"
+								fullWidth
+								id="dueDate"
+								nbInput
+								type="text"
+							/>
+							<nb-datepicker #taskDueDatePicker></nb-datepicker>
+						</div>
 					</div>
-				</div>
-				<div class="col-sm-6 pl-0">
-					<label class="label" for="estimate">{{
-						"TASKS_PAGE.ESTIMATE" | translate
-					}}</label>
-					<div class="estimate-inputs">
-						<input
-							[min]="0"
-							[placeholder]="
+					<div class="col-sm-6">
+						<label class="label" for="estimate">{{
+							"TASKS_PAGE.ESTIMATE" | translate
+							}}</label>
+						<div class="estimate-inputs">
+							<input
+								[min]="0"
+								[placeholder]="
 								'TASKS_PAGE.ESTIMATE_DAYS' | translate
 							"
-							formControlName="estimateDays"
-							nbInput
-							type="number"
-						/>
+								formControlName="estimateDays"
+								nbInput
+								type="number"
+							/>
 
-						<input
-							[placeholder]="
+							<input
+								[placeholder]="
 								'TASKS_PAGE.ESTIMATE_HOURS' | translate
 							"
-							formControlName="estimateHours"
-							max="23"
-							min="0"
-							nbInput
-							type="number"
-						/>
+								formControlName="estimateHours"
+								max="23"
+								min="0"
+								nbInput
+								type="number"
+							/>
 
-						<input
-							[min]="0"
-							[placeholder]="
+							<input
+								[min]="0"
+								[placeholder]="
 								'TASKS_PAGE.ESTIMATE_MINUTES' | translate
 							"
-							formControlName="estimateMinutes"
-							max="59"
-							min="0"
-							nbInput
-							type="number"
-						/>
+								formControlName="estimateMinutes"
+								max="59"
+								min="0"
+								nbInput
+								type="number"
+							/>
+						</div>
 					</div>
 				</div>
 			</div>
-		</div>
-		<div class="col-6">
-			<div class="row">
-				<div class="col-sm-12">
-					<div class="form-group">
-						<label class="label">{{
-							"TASKS_PAGE.TASKS_DESCRIPTION" | translate
-						}}</label>
-						<ckeditor
-							[config]="editorConfig"
-							class="description"
-							formControlName="description"
-						></ckeditor>
+			<div>
+				<div class="row">
+					<div class="col-12">
+						<div class="form-group">
+							<label class="label">{{
+								"TASKS_PAGE.TASKS_DESCRIPTION" | translate
+								}}</label>
+							<ckeditor
+								[config]="editorConfig"
+								class="description"
+								formControlName="description"
+							></ckeditor>
+						</div>
 					</div>
 				</div>
 			</div>

@@ -7,6 +7,7 @@ export class CkEditorConfig {
 			height: '100%',
 			toolbar: [
 				{ name: 'document', items: ['Source'] },
+				{ name: 'basicstyles', items: ['Bold', 'Italic', 'Underline'] },
 				{
 					name: 'paragraph',
 					items: [
@@ -18,48 +19,13 @@ export class CkEditorConfig {
 						'BulletedList',
 						'Checkbox',
 						'Blockquote',
-						'Code',
-					],
+						'Code'
+					]
 				},
-				{ name: 'styles', items: ['Format', 'Link', 'Heading'] },
-				{ name: 'clipboard', groups: ['clipboard', 'undo'] },
-				{
-					name: 'editing',
-					groups: ['find', 'selection', 'spellchecker'],
-				},
-				{
-					name: 'basicstyles',
-					groups: [
-						'bold',
-						'italic',
-						'underline',
-						'strikethrough',
-						'removeformat',
-					],
-					items: ['Bold', 'Italic', 'Underline'],
-				},
-				{ name: 'links', groups: ['Link', 'Unlink'] },
-				{
-					name: 'paragraph',
-					groups: [
-						'list',
-						'indent',
-						'blocks',
-						'align',
-						'bidi',
-						'paragraph',
-					],
-				},
-				'/',
-				{ name: 'styles', groups: ['Styles'] },
-				{ name: 'colors', groups: ['TextColor', 'BGColor'] },
-				{ name: 'tools', groups: ['Maximize'] },
-				{ name: 'about', groups: ['About'] },
+				{ name: 'styles', items: ['Format', 'Link', 'Heading'] }
 			],
 			toolbarCanCollapse: true,
-			format_tags: 'p;h1;h2;pre',
-			removeButtons:
-				'Cut,Copy,Paste,Undo,Redo,Anchor,Underline,Subscript,Superscript',
+			format_tags: 'p;h1;h2;pre'
 		};
 	}
 }

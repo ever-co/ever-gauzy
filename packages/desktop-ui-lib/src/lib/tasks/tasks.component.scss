@@ -1,10 +1,37 @@
 @import 'gauzy/_gauzy-dialogs';
 
-.body {
-  width: 100%;
-  background-color: var(--gauzy-card-4);
-  border-radius: var(--border-radius);
-  padding: 0.75rem 1rem;
+:host {
+  nb-card {
+    width: 565px;
+    margin: auto;
+
+    nb-card-body {
+      background-color: var(--gauzy-card-2);
+      @include nb-rtl(padding, 0.5rem 1rem 0.5rem 0.3125rem);
+      @include nb-ltr(padding, 0.5rem 0.3125rem 0.5rem 1rem);
+
+      .body {
+        height: 70vh;
+        overflow: auto;
+        overflow-x: hidden;
+        @include nb-rtl(padding, 0 0 0 0.3125rem);
+        @include nb-ltr(padding, 0 0.3125rem 0 0);
+
+        .selector-container {
+          .col-sm-6,
+          .col-sm-12 {
+            padding-left: 0.5rem !important;
+            padding-right: 0.5rem !important;
+          }
+
+          .row {
+            margin-left: -0.5rem !important;
+            margin-right: -0.5rem !important;
+          }
+        }
+      }
+    }
+  }
 }
 
 .description {
@@ -25,6 +52,7 @@ h5 {
   padding: 0px 4px;
   border-radius: calc(var(--border-radius) / 2);
   color: var(--text-primary-color);
+  width: fit-content;
 }
 
 .estimate-inputs {
@@ -136,8 +164,9 @@ input {
     flex-wrap: initial;
     gap: 4px;
   }
+
   .cke_contents {
-    height: 425px !important;
+    height: 102px !important;
   }
 }
 

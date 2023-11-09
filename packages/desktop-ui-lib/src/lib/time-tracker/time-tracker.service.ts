@@ -748,7 +748,7 @@ export class TimeTrackerService {
 			where: {
 				organizationId: this._store.organizationId,
 				tenantId: this._store.tenantId,
-				...(values.projectId && {
+				...(values?.projectId && {
 					projects: {
 						id: values.projectId
 					}

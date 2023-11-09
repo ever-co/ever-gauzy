@@ -138,7 +138,7 @@ export class TasksComponent implements OnInit {
 		try {
 			this.teams = await this.timeTrackerService.getTeams();
 		} catch (error) {
-			console.error('[error]', 'while get contacts::' + error.message);
+			console.error('[error]', 'while get teams::' + error.message);
 		}
 	}
 

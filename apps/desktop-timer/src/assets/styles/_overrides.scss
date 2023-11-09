@@ -8,7 +8,7 @@
 }
 /*  Apply style on scrollbar for Chrome */
 *::-webkit-scrollbar {
-  width: nb-theme(scrollbar-width);
+  width: 6px;
   height: nb-theme(scrollbar-width);
 }
 

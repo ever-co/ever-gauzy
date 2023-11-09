@@ -2614,7 +2614,11 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 				context: {
 					employee: this.userData,
 					hasProjectPermission: this.hasProjectPermission$.getValue(),
-					selectedProject: this.selectedProject,
+					selected: {
+						projectId: this.projectSelect,
+						teamId: this.teamSelect,
+						contactId: this.organizationContactId
+					},
 					userData: this.argFromMain
 				},
 				backdropClass: 'backdrop-blur'
