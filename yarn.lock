@@ -11510,6 +11510,14 @@ cjs-module-lexer@^1.0.0:
   resolved "https://registry.yarnpkg.com/cjs-module-lexer/-/cjs-module-lexer-1.2.2.tgz#9f84ba3244a512f3a54e5277e8eef4c489864e40"
   integrity sha512-cOU9usZw8/dXIXKtwa8pM0OTJQuJkxMN6w30csNRUerHfeQ5R6U3kkU/FtJeIf3M202OHfY2U8ccInBG7/xogA==
 
+ckeditor4-angular@4.0.1:
+  version "4.0.1"
+  resolved "https://registry.yarnpkg.com/ckeditor4-angular/-/ckeditor4-angular-4.0.1.tgz#fb8e3cd815be2fa6ec3aaa20c9970ee5ce5c5247"
+  integrity sha512-oiPQ9pCBhXhLpja8TGRiVn9puQJ21em6A3+H9Z1uZ8gJRHCptPfdumCvjFqD76Pog8KymbvHl24GBee67nhqMw==
+  dependencies:
+    ckeditor4-integrations-common "^1.0.0"
+    tslib "^2.3.0"
+
 ckeditor4-angular@^3.1.0:
   version "3.2.2"
   resolved "https://registry.yarnpkg.com/ckeditor4-angular/-/ckeditor4-angular-3.2.2.tgz#83ee6ce3b93e341c6d1e5cd65041956180faef33"
