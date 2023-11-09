@@ -1,5 +1,8 @@
 <nb-card [formGroup]="form">
-	<nb-card-header class="d-flex">
+	<nb-card-header class="d-flex flex-column">
+		<span class="cancel"
+		><i (click)="close()" class="fas fa-times"></i
+		></span>
 		<h5>
 			{{ "TIMER_TRACKER.ADD_TASK" | translate }}
 		</h5>

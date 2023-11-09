@@ -84,6 +84,7 @@ import { TaskDurationComponent, TaskProgressComponent } from './task-render';
 import { TaskRenderCellComponent } from './task-render/task-render-cell/task-render-cell.component';
 import { TaskStatusComponent } from './task-render/task-status/task-status.component';
 import { GAUZY_ENV } from '../constants';
+import {TasksComponent} from "../tasks/tasks.component";
 
 enum TimerStartMode {
 	MANUAL = 'manual',
@@ -2605,9 +2606,29 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 
 	public addTask(): void {
 		this.isAddTask = !this._isOffline && this._hasTaskPermission;
+		if (!this.isAddTask) {
+			return;
+		}
+		this.dialogService
+			.open(TasksComponent, {
+				context: {
+					employee: this.userData,
+					hasProjectPermission: this.hasProjectPermission$.getValue(),
+					selectedProject: this.selectedProject,
+					userData: this.argFromMain
+				},
+				backdropClass: 'backdrop-blur'
+			})
+			.onClose.pipe(
+				tap(() => this.closeAddTask()),
+				filter((result) => !!result),
+				tap((result) => this.callbackNewTask(result)),
+				untilDestroyed(this)
+			)
+			.subscribe();
 	}
 
-	public closeAddTask(e): void {
+	public closeAddTask(): void {
 		this.isAddTask = false;
 		this.electronService.ipcRenderer.send('refresh-timer');
 	}

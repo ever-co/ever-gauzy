@@ -620,7 +620,7 @@
 				</nb-card>
 			</div>
 			<div *ngIf="isExpand$ | async" class="task-table">
-				<nb-card *ngIf="!isAddTask" class="max-width-search">
+				<nb-card class="max-width-search">
 					<nb-card-body>
 						<div class="row">
 							<div class="col-12 search">
@@ -640,7 +640,6 @@
 									"
 									class="mb-2"
 									nbButton
-									nbTooltipStatus="warning"
 									nbTooltipStatus="warning"
 									size="small"
 									status="success"
@@ -714,15 +713,6 @@
 						</div>
 					</nb-card-body>
 				</nb-card>
-				<ngx-tasks
-					(isAddTask)="closeAddTask($event)"
-					(newTaskCallback)="callbackNewTask($event)"
-					*ngIf="isAddTask"
-					[employee]="userData"
-					[hasProjectPermission]="hasProjectPermission$ | async"
-					[selectedProject]="selectedProject"
-					[userData]="argFromMain"
-				></ngx-tasks>
 			</div>
 		</div>
 	</nb-layout-column>

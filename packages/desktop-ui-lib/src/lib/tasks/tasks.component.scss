@@ -2,7 +2,6 @@
 
 .body {
   width: 550px;
-  width: 550px;
   background-color: var(--gauzy-card-4);
   border-radius: var(--border-radius);
   padding: 0.75rem 1rem;
@@ -152,11 +151,7 @@ input {
 
   nb-card-header,
   nb-card-footer {
-    padding: 1rem 0;
-  }
-
-  nb-card {
-    background-color: unset;
+    padding: 1rem;
   }
 
   nb-card-footer {

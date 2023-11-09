@@ -8,7 +8,7 @@ import {
 	IUserOrganization,
 	TaskStatusEnum,
 } from '@gauzy/contracts';
-import { NbToastrService } from '@nebular/theme';
+import {NbDialogRef, NbToastrService} from '@nebular/theme';
 import * as moment from 'moment';
 import { TranslateService } from '@ngx-translate/core';
 import { ColorAdapter } from '../utils';
@@ -68,6 +68,7 @@ export class TasksComponent implements OnInit {
 		private translate: TranslateService,
 		@Inject(GAUZY_ENV)
 		private readonly _environment: any,
+		private _dialogRef: NbDialogRef<TasksComponent>
 	) {
 		this.isSaving = false;
 	}
@@ -135,8 +136,8 @@ export class TasksComponent implements OnInit {
 		}
 	}
 
-	public close(): void {
-		this.isAddTask.emit(false);
+	public close(res?: any): void {
+		this._dialogRef.close(res);
 	}
 
 	public async save(): Promise<void> {
@@ -159,14 +160,13 @@ export class TasksComponent implements OnInit {
 				this.userData,
 				this.form.value
 			);
-			this.isAddTask.emit(false);
-			this.newTaskCallback.emit({
+			this.close({
 				isSuccess: true,
 				message: this.translate.instant('TOASTR.MESSAGE.CREATED'),
 			});
 		} catch (error) {
 			console.log(error);
-			this.newTaskCallback.emit({
+			this.close({
 				isSuccess: false,
 				message: error.message,
 			});
