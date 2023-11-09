@@ -762,8 +762,6 @@ export class AuthService extends SocialAuthService {
 			}
 
 			let payload: JwtPayload | string = this.verifyToken(token);
-			console.log({ payload });
-
 			if (typeof payload === 'object') {
 				const { userId, tenantId, code } = payload;
 				const user = await this.userRepository.findOneOrFail({
@@ -781,7 +779,6 @@ export class AuthService extends SocialAuthService {
 						role: true
 					},
 				});
-				console.log({ user });
 
 				await this.userRepository.update({
 					email,
