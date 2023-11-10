@@ -1,12 +1,6 @@
 <nb-layout>
 	<nb-layout-column class="top-space">
-		<button
-			(click)="expand()"
-			class="expand-icon"
-			ghost
-			nbButton
-			status="primary"
-		>
+		<button (click)="expand()" class="expand-icon" ghost nbButton status="primary">
 			<nb-icon [icon]="expandIcon"></nb-icon>
 		</button>
 		<div class="timer-window-container">
@@ -22,9 +16,7 @@
 						<div class="row mb-3">
 							<div class="col-12">
 								<ga-organization-selector
-									(organizationChange)="
-										selectOrganization($event)
-									"
+									(organizationChange)="selectOrganization($event)"
 									[disabled]="start$ | async"
 								>
 								</ga-organization-selector>
@@ -40,26 +32,18 @@
 								>
 									{{ timeRun$ | async }}
 								</div>
-								<div
-									class="mt-3 d-flex justify-content-between"
-								>
+								<div class="mt-3 d-flex justify-content-between">
 									<div class="work-duration-container">
 										<div class="work-today-duration">
 											{{ todayDuration$ | async }}
 										</div>
 										<div class="work-today">
-											{{
-												'TIMER_TRACKER.TODAY'
-													| translate
-											}}
+											{{ 'TIMER_TRACKER.TODAY' | translate }}
 										</div>
 									</div>
 									<div
 										[nbTooltipDisabled]="!(isOver$ | async)"
-										[nbTooltip]="
-											'TIMER_TRACKER.WEEKLY_LIMIT_EXCEEDED'
-												| translate
-										"
+										[nbTooltip]="'TIMER_TRACKER.WEEKLY_LIMIT_EXCEEDED' | translate"
 										[ngClass]="{ over: (isOver$ | async) }"
 										class="work-duration-container"
 										nbTooltipIcon="alert-triangle-outline"
@@ -69,62 +53,38 @@
 											<div>
 												{{ weeklyDuration$ | async }}
 											</div>
-											<small
-												*ngIf="
-													!noLimit(
-														weeklyLimit$ | async
-													);
-													else limitLess
-												"
-												>{{
-													'TIMER_TRACKER.OF_HRS'
-														| translate
-															: {
-																	limit:
-																		(weeklyLimit$
-																		| async)
-															  }
-												}}</small
-											>
+											<small *ngIf="!noLimit(weeklyLimit$ | async); else limitLess">{{
+												'TIMER_TRACKER.OF_HRS'
+													| translate
+														: {
+																limit: (weeklyLimit$ | async)
+														  }
+											}}</small>
 										</div>
 										<div class="work-weekly">
-											{{
-												'TIMESHEET.THIS_WEEK'
-													| translate
-											}}
+											{{ 'TIMESHEET.THIS_WEEK' | translate }}
 										</div>
 									</div>
 								</div>
-								<gauzy-time-tracker-status
-									class="status"
-								></gauzy-time-tracker-status>
+								<gauzy-time-tracker-status class="status"></gauzy-time-tracker-status>
 							</div>
-							<div
-								class="col-3 d-flex flex-column align-items-center"
-							>
+							<div class="col-3 d-flex flex-column align-items-center">
 								<div>
 									<button
 										(click)="toggleStart(true)"
 										*ngIf="!(start$ | async)"
-										[disabled]="
-											loading || !isTrackingEnabled
-										"
+										[disabled]="loading || !isTrackingEnabled"
 										class="button-ghost"
 										nbButton
 										status="success"
 									>
 										<nb-icon
-											[nbTooltipDisabled]="
-												isTrackingEnabled
-											"
+											[nbTooltipDisabled]="isTrackingEnabled"
 											[nbTooltipIcon]="{
 												icon: 'alert-triangle-outline',
 												pack: 'eva'
 											}"
-											[nbTooltip]="
-												'TIMER_TRACKER.TIME_TRACKER_DISABLED'
-													| translate
-											"
+											[nbTooltip]="'TIMER_TRACKER.TIME_TRACKER_DISABLED' | translate"
 											class="start-button"
 											icon="play"
 											nbTooltipPlacement="bottom"
@@ -141,125 +101,33 @@
 										nbButton
 										status="danger"
 									>
-										<nb-icon
-											class="start-button"
-											icon="pause"
-											pack="font-awesome"
-										>
-										</nb-icon>
+										<nb-icon class="start-button" icon="pause" pack="font-awesome"> </nb-icon>
 									</button>
 								</div>
 							</div>
 						</div>
-						<div *ngIf="(teams$ | async)?.length > 0" class="row">
-							<div class="col-12 form-group tp-padding">
-								<label>{{
-									'CONTEXT_MENU.TEAM' | translate
-								}}</label>
-								<ng-select
-									(clear)="refreshTimer()"
-									(ngModelChange)="setTeams($event)"
-									[(ngModel)]="teamSelect"
-									[class]="
-										errors?.teams ? 'error-border' : ''
-									"
-									[clearable]="true"
-									[disabled]="start$ | async"
-									[items]="teams$ | async"
-									[nbTooltipDisabled]="!(start$ | async)"
-									[nbTooltip]="
-										'TIMER_TRACKER.STOP_TIMER_CHANGE_TEAM'
-											| translate
-									"
-									[placeholder]="
-										'FORM.LABELS.SELECT_TEAM'
-											| translate
-											| titlecase
-									"
-									bindLabel="name"
-									bindValue="id"
-									nbTooltipStatus="warning"
-								>
-									<ng-template
-										let-index="index"
-										let-item="item"
-										ng-option-tmp
-									>
-										<img
-											*ngIf="item?.logo"
-											[src]="item?.logo"
-											height="20px"
-											width="20px"
-										/>
-										<span class="text-container">
-											{{ item?.name }}
-										</span>
-									</ng-template>
-									<ng-template let-item="item" ng-label-tmp>
-										<div class="selector-template">
-											<img
-												*ngIf="item?.logo"
-												[src]="item?.logo"
-												height="20px"
-												width="20px"
-											/>
-											<span
-												class="black-bold-text text-container"
-											>
-												{{ item?.name }}
-											</span>
-										</div>
-									</ng-template>
-								</ng-select>
-							</div>
-						</div>
 						<div class="row">
 							<div class="col-12 form-group tp-padding">
-								<label>{{
-									'CONTEXT_MENU.CLIENT' | translate
-								}}</label>
+								<label>{{ 'CONTEXT_MENU.CLIENT' | translate }}</label>
 								<ng-select
 									(clear)="refreshTimer()"
 									(ngModelChange)="setClient($event, dialog)"
 									[(ngModel)]="organizationContactId"
-									[addTagText]="
-										'TIMER_TRACKER.ADD_CONTACT' | translate
-									"
-									[addTag]="
-										(hasContactPermission$ | async)
-											? addContact
-											: null
-									"
-									[class]="
-										errors?.client ? 'error-border' : ''
-									"
+									[addTagText]="'TIMER_TRACKER.ADD_CONTACT' | translate"
+									[addTag]="(hasContactPermission$ | async) ? addContact : null"
+									[class]="errors?.client ? 'error-border' : ''"
 									[clearable]="true"
 									[disabled]="start$ | async"
 									[items]="organizationContacts$ | async"
 									[nbTooltipDisabled]="!(start$ | async)"
-									[nbTooltip]="
-										'TIMER_TRACKER.STOP_TIMER_CHANGE_CLIENT'
-											| translate
-									"
-									[placeholder]="
-										'TIMER_TRACKER.SELECT_CLIENT'
-											| translate
-									"
+									[nbTooltip]="'TIMER_TRACKER.STOP_TIMER_CHANGE_CLIENT' | translate"
+									[placeholder]="'TIMER_TRACKER.SELECT_CLIENT' | translate"
 									bindLabel="name"
 									bindValue="id"
 									nbTooltipStatus="warning"
 								>
-									<ng-template
-										let-index="index"
-										let-item="item"
-										ng-option-tmp
-									>
-										<img
-											*ngIf="item?.imageUrl"
-											[src]="item?.imageUrl"
-											height="20px"
-											width="20px"
-										/>
+									<ng-template let-index="index" let-item="item" ng-option-tmp>
+										<img *ngIf="item?.imageUrl" [src]="item?.imageUrl" height="20px" width="20px" />
 										<span class="text-container">
 											{{ item?.name }}
 										</span>
@@ -272,9 +140,7 @@
 												height="20px"
 												width="20px"
 											/>
-											<span
-												class="black-bold-text text-container"
-											>
+											<span class="black-bold-text text-container">
 												{{ item?.name }}
 											</span>
 										</div>
@@ -284,52 +150,26 @@
 						</div>
 						<div class="row">
 							<div class="col-12 form-group">
-								<label>{{
-									'CONTEXT_MENU.PROJECT' | translate
-								}}</label>
+								<label>{{ 'CONTEXT_MENU.PROJECT' | translate }}</label>
 								<ng-select
 									(clear)="refreshTimer()"
 									(ngModelChange)="setProject($event)"
 									[(ngModel)]="projectSelect"
-									[addTagText]="
-										'FORM.PLACEHOLDERS.ADD_PROJECT'
-											| translate
-									"
-									[addTag]="
-										(hasProjectPermission$ | async)
-											? addProject
-											: null
-									"
-									[class]="
-										errors?.project ? 'error-border' : ''
-									"
+									[addTagText]="'FORM.PLACEHOLDERS.ADD_PROJECT' | translate"
+									[addTag]="(hasProjectPermission$ | async) ? addProject : null"
+									[class]="errors?.project ? 'error-border' : ''"
 									[clearable]="true"
 									[disabled]="start$ | async"
 									[items]="projects$ | async"
 									[nbTooltipDisabled]="!(start$ | async)"
-									[nbTooltip]="
-										'TIMER_TRACKER.STOP_TIMER_CHANGE_PROJECT'
-											| translate
-									"
-									[placeholder]="
-										'TIMER_TRACKER.SELECT_PROJECT'
-											| translate
-									"
+									[nbTooltip]="'TIMER_TRACKER.STOP_TIMER_CHANGE_PROJECT' | translate"
+									[placeholder]="'TIMER_TRACKER.SELECT_PROJECT' | translate"
 									bindLabel="name"
 									bindValue="id"
 									nbTooltipStatus="warning"
 								>
-									<ng-template
-										let-index="index"
-										let-item="item"
-										ng-option-tmp
-									>
-										<img
-											*ngIf="item?.imageUrl"
-											[src]="item?.imageUrl"
-											height="20px"
-											width="20px"
-										/>
+									<ng-template let-index="index" let-item="item" ng-option-tmp>
+										<img *ngIf="item?.imageUrl" [src]="item?.imageUrl" height="20px" width="20px" />
 										<span class="text-container">
 											{{ item?.name }}
 										</span>
@@ -342,9 +182,42 @@
 												height="20px"
 												width="20px"
 											/>
-											<span
-												class="text-container black-bold-text"
-											>
+											<span class="text-container black-bold-text">
+												{{ item?.name }}
+											</span>
+										</div>
+									</ng-template>
+								</ng-select>
+							</div>
+						</div>
+						<div *ngIf="(teams$ | async)?.length > 0" class="row">
+							<div class="col-12 form-group tp-padding">
+								<label>{{ 'CONTEXT_MENU.TEAM' | translate }}</label>
+								<ng-select
+									(clear)="refreshTimer()"
+									(ngModelChange)="setTeams($event)"
+									[(ngModel)]="teamSelect"
+									[class]="errors?.teams ? 'error-border' : ''"
+									[clearable]="true"
+									[disabled]="start$ | async"
+									[items]="teams$ | async"
+									[nbTooltipDisabled]="!(start$ | async)"
+									[nbTooltip]="'TIMER_TRACKER.STOP_TIMER_CHANGE_TEAM' | translate"
+									[placeholder]="'FORM.LABELS.SELECT_TEAM' | translate | titlecase"
+									bindLabel="name"
+									bindValue="id"
+									nbTooltipStatus="warning"
+								>
+									<ng-template let-index="index" let-item="item" ng-option-tmp>
+										<img *ngIf="item?.logo" [src]="item?.logo" height="20px" width="20px" />
+										<span class="text-container">
+											{{ item?.name }}
+										</span>
+									</ng-template>
+									<ng-template let-item="item" ng-label-tmp>
+										<div class="selector-template">
+											<img *ngIf="item?.logo" [src]="item?.logo" height="20px" width="20px" />
+											<span class="black-bold-text text-container">
 												{{ item?.name }}
 											</span>
 										</div>
@@ -354,33 +227,20 @@
 						</div>
 						<div class="row">
 							<div *ngIf="!isExpand" class="col-12 form-group">
-								<label>{{
-									'CONTEXT_MENU.TASK' | translate
-								}}</label>
+								<label>{{ 'CONTEXT_MENU.TASK' | translate }}</label>
 								<ng-select
 									(clear)="refreshTimer()"
 									(ngModelChange)="setTask($event)"
 									[(ngModel)]="taskSelect"
-									[addTagText]="
-										'TIMER_TRACKER.ADD_TASK' | translate
-									"
-									[addTag]="
-										(hasTaskPermission$ | async)
-											? addNewTask
-											: null
-									"
+									[addTagText]="'TIMER_TRACKER.ADD_TASK' | translate"
+									[addTag]="(hasTaskPermission$ | async) ? addNewTask : null"
 									[class]="errors?.task ? 'error-border' : ''"
 									[clearable]="true"
 									[disabled]="start$ | async"
 									[items]="tasks$ | async"
 									[nbTooltipDisabled]="!(start$ | async)"
-									[nbTooltip]="
-										'TIMER_TRACKER.STOP_TIMER_CHANGE_TASK'
-											| translate
-									"
-									[placeholder]="
-										'TIMER_TRACKER.SELECT_TASK' | translate
-									"
+									[nbTooltip]="'TIMER_TRACKER.STOP_TIMER_CHANGE_TASK' | translate"
+									[placeholder]="'TIMER_TRACKER.SELECT_TASK' | translate"
 									bindLabel="title"
 									bindValue="id"
 									nbTooltipStatus="warning"
@@ -388,20 +248,12 @@
 									<ng-template let-item="item" ng-option-tmp>
 										<span class="text-container">
 											<span
-												*ngIf="
-													item?.taskNumber ||
-													(item?.number &&
-														item?.prefix)
-												"
+												*ngIf="item?.taskNumber || (item?.number && item?.prefix)"
 												class="gray-bold-text"
 											>
 												#{{
-													item?.taskNumber ||
-														item?.prefix
-															.concat('-')
-															.concat(
-																item?.number
-															) | uppercase
+													item?.taskNumber || item?.prefix.concat('-').concat(item?.number)
+														| uppercase
 												}}
 											</span>
 											<span class="black-bold-text">
@@ -413,20 +265,12 @@
 										<div class="selector-template">
 											<span class="text-container">
 												<span
-													*ngIf="
-														item?.taskNumber ||
-														(item?.number &&
-															item?.prefix)
-													"
+													*ngIf="item?.taskNumber || (item?.number && item?.prefix)"
 													class="gray-bold-text"
 												>
 													#{{
 														item?.taskNumber ||
-															item?.prefix
-																.concat('-')
-																.concat(
-																	item?.number
-																) | uppercase
+															item?.prefix.concat('-').concat(item?.number) | uppercase
 													}}
 												</span>
 												<span class="black-bold-text">
@@ -441,23 +285,16 @@
 						<div class="row">
 							<div
 								[nbTooltipDisabled]="!(start$ | async)"
-								[nbTooltip]="
-									'TIMER_TRACKER.STOP_TIMER_CHANGE_TASK'
-										| translate
-								"
+								[nbTooltip]="'TIMER_TRACKER.STOP_TIMER_CHANGE_TASK' | translate"
 								class="col-12 form-group"
 								nbTooltipStatus="warning"
 							>
-								<label>{{
-									'TIMER_TRACKER.DESCRIPTION' | translate
-								}}</label>
+								<label>{{ 'TIMER_TRACKER.DESCRIPTION' | translate }}</label>
 								<textarea
 									(ngModelChange)="descriptionChange($event)"
 									[(ngModel)]="note"
 									[disabled]="start$ | async"
-									[placeholder]="
-										'TIMER_TRACKER.DESCRIPTION' | translate
-									"
+									[placeholder]="'TIMER_TRACKER.DESCRIPTION' | translate"
 									[status]="errors?.note ? 'danger' : 'basic'"
 									fullWidth
 									nbInput
@@ -466,13 +303,7 @@
 							</div>
 						</div>
 						<div class="row">
-							<div
-								*ngIf="
-									(appSetting$ | async) &&
-									(appSetting$ | async)?.visibleAwOption
-								"
-								class="col-12"
-							>
+							<div *ngIf="(appSetting$ | async) && (appSetting$ | async)?.visibleAwOption" class="col-12">
 								<div class="row">
 									<div
 										[nbTooltipDisabled]="!(start$ | async)"
@@ -485,23 +316,13 @@
 											[checked]="aw$ | async"
 											[disabled]="start$ | async"
 										>
-											{{
-												'TIMER_TRACKER.ACTIVITY_WATCH_INTEGRATION'
-													| translate
-											}}
+											{{ 'TIMER_TRACKER.ACTIVITY_WATCH_INTEGRATION' | translate }}
 										</nb-toggle>
 									</div>
-									<div
-										*ngIf="aw$ | async"
-										class="col-4 text-right"
-									>
+									<div *ngIf="aw$ | async" class="col-4 text-right">
 										<nb-icon
 											[icon]="iconAw$ | async"
-											[nbTooltip]="
-												activityWatchLog$
-													| async
-													| translate
-											"
+											[nbTooltip]="activityWatchLog$ | async | translate"
 											[status]="statusIcon$ | async"
 										>
 										</nb-icon>
@@ -509,17 +330,12 @@
 								</div>
 							</div>
 							<div
-								*ngIf="
-									(appSetting$ | async) &&
-									(appSetting$ | async)?.visibleWakatimeOption
-								"
+								*ngIf="(appSetting$ | async) && (appSetting$ | async)?.visibleWakatimeOption"
 								class="col-12"
 							>
 								<div class="row">
 									<div class="col-8">
-										<nb-toggle [disabled]="true"
-											>Wakatime
-										</nb-toggle>
+										<nb-toggle [disabled]="true">Wakatime </nb-toggle>
 									</div>
 								</div>
 							</div>
@@ -529,44 +345,22 @@
 								<nb-card>
 									<nb-card-header class="p-0 mb-1">
 										<div
-											*ngIf="
-												(lastScreenCapture$ | async)
-													?.recordedAt
-											"
+											*ngIf="(lastScreenCapture$ | async)?.recordedAt"
 											class="screen-capture-label-left"
 										>
-											<span
-												>{{
-													'TIMER_TRACKER.LAST_CAPTURE_TAKEN'
-														| translate
-												}}
-											</span>
-											<span>{{
-												(lastScreenCapture$ | async)
-													?.recordedAt | humanize
-											}}</span>
+											<span>{{ 'TIMER_TRACKER.LAST_CAPTURE_TAKEN' | translate }} </span>
+											<span>{{ (lastScreenCapture$ | async)?.recordedAt | humanize }}</span>
 										</div>
 									</nb-card-header>
-									<nb-card-body
-										class="p-0 last-capture-container"
-									>
+									<nb-card-body class="p-0 last-capture-container">
 										<img
 											(error)="updateImageUrl($event)"
-											*ngIf="
-												(lastScreenCapture$ | async)
-													?.thumbUrl
-											"
-											[src]="
-												(lastScreenCapture$ | async)
-													?.thumbUrl
-											"
+											*ngIf="(lastScreenCapture$ | async)?.thumbUrl"
+											[src]="(lastScreenCapture$ | async)?.thumbUrl"
 											class="screen-capture-img"
 										/>
 										<nb-icon
-											*ngIf="
-												!(lastScreenCapture$ | async)
-													?.thumbUrl
-											"
+											*ngIf="!(lastScreenCapture$ | async)?.thumbUrl"
 											class="icon-img-size"
 											icon="image-outline"
 										>
@@ -576,36 +370,21 @@
 												<div class="col-8 img-button">
 													<div class="row">
 														<div class="col-6">
-															<button
-																(click)="
-																	showImage()
-																"
-																nbButton
-																status="basic"
-															>
-																<nb-icon
-																	icon="eye"
-																	pack="font-awesome"
-																></nb-icon>
+															<button (click)="showImage()" nbButton status="basic">
+																<nb-icon icon="eye" pack="font-awesome"></nb-icon>
 															</button>
 														</div>
 														<div class="col-6">
 															<button
 																(click)="
-																	open(
-																		dialog,
-																		{
-																			type: 'deleteLog'
-																		}
-																	)
+																	open(dialog, {
+																		type: 'deleteLog'
+																	})
 																"
 																nbButton
 																status="basic"
 															>
-																<nb-icon
-																	icon="trash-2"
-																	status="danger"
-																></nb-icon>
+																<nb-icon icon="trash-2" status="danger"></nb-icon>
 															</button>
 														</div>
 													</div>
@@ -620,16 +399,13 @@
 				</nb-card>
 			</div>
 			<div *ngIf="isExpand$ | async" class="task-table">
-				<nb-card *ngIf="!isAddTask" class="max-width-search">
+				<nb-card class="max-width-search">
 					<nb-card-body>
 						<div class="row">
 							<div class="col-12 search">
 								<button
 									(click)="addTask()"
-									[nbTooltipDisabled]="
-										(hasTaskPermission$ | async) &&
-										!(isOffline$ | async)
-									"
+									[nbTooltipDisabled]="(hasTaskPermission$ | async) && !(isOffline$ | async)"
 									[nbTooltip]="
 										(!(hasTaskPermission$ | async)
 											? 'TIMER_TRACKER.REQUEST_TASK_PERMISSION'
@@ -641,15 +417,10 @@
 									class="mb-2"
 									nbButton
 									nbTooltipStatus="warning"
-									nbTooltipStatus="warning"
 									size="small"
 									status="success"
 								>
-									<nb-icon
-										class="icon-task"
-										icon="plus"
-										pack="font-awesome"
-									></nb-icon>
+									<nb-icon class="icon-task" icon="plus" pack="font-awesome"></nb-icon>
 									{{ 'BUTTONS.ADD' | translate }}
 								</button>
 							</div>
@@ -657,19 +428,12 @@
 						<div class="row">
 							<div class="col-12 search">
 								<nb-form-field>
-									<nb-icon
-										icon="search-outline"
-										nbPrefix
-									></nb-icon>
+									<nb-icon icon="search-outline" nbPrefix></nb-icon>
 									<input
 										#search
-										(keydown.enter)="
-											onSearch(search?.value)
-										"
+										(keydown.enter)="onSearch(search?.value)"
 										[disabled]="start$ | async"
-										[placeholder]="
-											'TIMER_TRACKER.SEARCH' | translate
-										"
+										[placeholder]="'TIMER_TRACKER.SEARCH' | translate"
 										fullWidth
 										nbInput
 										type="text"
@@ -677,14 +441,8 @@
 								</nb-form-field>
 							</div>
 						</div>
-						<div
-							[ngClass]="{ 'disabled-table': (start$ | async) }"
-							class="row"
-						>
-							<div
-								*ngIf="tableData?.length > 0; else noTask"
-								class="col-12 custom-table"
-							>
+						<div [ngClass]="{ 'disabled-table': (start$ | async) }" class="row">
+							<div *ngIf="tableData?.length > 0; else noTask" class="col-12 custom-table">
 								<div class="table-scroll-container">
 									<ng2-smart-table
 										#taskTable
@@ -696,33 +454,18 @@
 									</ng2-smart-table>
 								</div>
 								<div class="pagination-container">
-									<ga-pagination
-										[source]="sourceData$ | async"
-									></ga-pagination>
+									<ga-pagination [source]="sourceData$ | async"></ga-pagination>
 								</div>
 							</div>
 							<ng-template #noTask>
 								<div class="no-data">
-									<ngx-no-data-message
-										[message]="
-											'SM_TABLE.NO_DATA.TASK' | translate
-										"
-									>
+									<ngx-no-data-message [message]="'SM_TABLE.NO_DATA.TASK' | translate">
 									</ngx-no-data-message>
 								</div>
 							</ng-template>
 						</div>
 					</nb-card-body>
 				</nb-card>
-				<ngx-tasks
-					(isAddTask)="closeAddTask($event)"
-					(newTaskCallback)="callbackNewTask($event)"
-					*ngIf="isAddTask"
-					[employee]="userData"
-					[hasProjectPermission]="hasProjectPermission$ | async"
-					[selectedProject]="selectedProject"
-					[userData]="argFromMain"
-				></ngx-tasks>
 			</div>
 		</div>
 	</nb-layout-column>
@@ -743,53 +486,32 @@
 			></nb-icon>
 			<span class="user-label pointed">{{ userData?.name }}</span>
 		</div>
-		<nb-icon
-			*ngIf="isRefresh$ | async"
-			class="icon ml-2 mr-2 sync spin"
-			icon="loader-outline"
-		></nb-icon>
+		<nb-icon *ngIf="isRefresh$ | async" class="icon ml-2 mr-2 sync spin" icon="loader-outline"></nb-icon>
 		<nb-icon
 			(click)="refreshTimer()"
 			*ngIf="!(isRefresh$ | async)"
 			[nbTooltip]="'TIMER_TRACKER.REFRESH' | translate"
-			class="icon ml-2 mr-2 pointed"
+			class="icon pointed"
 			icon="redo-alt"
 			pack="font-awesome"
 		>
 		</nb-icon>
 		<div
 			[nbTooltip]="
-				((isOffline$ | async)
-					? 'TIMER_TRACKER.SWITCHED_OFFLINE'
-					: 'TIMER_TRACKER.SWITCHED_ONLINE'
-				) | translate
+				((isOffline$ | async) ? 'TIMER_TRACKER.SWITCHED_OFFLINE' : 'TIMER_TRACKER.SWITCHED_ONLINE') | translate
 			"
 			[ngClass]="{ offline: isOffline$ | async }"
 			class="state-container"
 		>
-			<div
-				[ngClass]="{ offline: isOffline$ | async }"
-				class="state"
-			></div>
-			{{
-				((isOffline$ | async)
-					? 'TIMER_TRACKER.OFFLINE'
-					: 'TIMER_TRACKER.ONLINE'
-				) | translate
-			}}
+			<div [ngClass]="{ offline: isOffline$ | async }" class="state"></div>
+			{{ ((isOffline$ | async) ? 'TIMER_TRACKER.OFFLINE' : 'TIMER_TRACKER.ONLINE') | translate }}
 		</div>
 		<div
 			*ngIf="(inQueue$ | async)?.size === 0"
 			[nbTooltip]="'TIMER_TRACKER.SWITCHED_ONLINE' | translate"
 			class="sync-container"
 		>
-			<nb-icon
-				class="sync-check"
-				icon="check-circle"
-				pack="font-awesome"
-				size="tiny"
-				status="success"
-			></nb-icon>
+			<nb-icon class="sync-check" icon="check-circle" pack="font-awesome" size="tiny" status="success"></nb-icon>
 		</div>
 		<div *ngIf="(inQueue$ | async)?.size" class="sync-container">
 			<nb-badge
@@ -801,10 +523,8 @@
 			></nb-badge>
 			<nb-icon
 				[nbTooltip]="
-					((inQueue$ | async)?.inProgress
-						? 'TIMER_TRACKER.SYNCED_PROGRESS'
-						: 'TIMER_TRACKER.WAIT_SYNCED'
-					) | translate
+					((inQueue$ | async)?.inProgress ? 'TIMER_TRACKER.SYNCED_PROGRESS' : 'TIMER_TRACKER.WAIT_SYNCED')
+						| translate
 				"
 				[ngClass]="{ spin: (inQueue$ | async)?.inProgress }"
 				class="sync"
@@ -819,18 +539,12 @@
 <!-- dialog template -->
 <ng-template #dialog class="dialog-container" let-data let-ref="dialogRef">
 	<nb-card accent="danger" class="dialog">
-		<nb-card-header>{{
-			'TIMER_TRACKER.DIALOG.WARNING' | translate
-		}}</nb-card-header>
+		<nb-card-header>{{ 'TIMER_TRACKER.DIALOG.WARNING' | translate }}</nb-card-header>
 		<nb-card-body>{{ data | translate }}</nb-card-body>
 		<nb-card-footer>
 			<div class="row">
 				<div class="col-3">
-					<button
-						(click)="ref?.close(false)"
-						nbButton
-						status="primary"
-					>
+					<button (click)="ref?.close(false)" nbButton status="primary">
 						{{ 'BUTTONS.NO' | translate }}
 					</button>
 				</div>
