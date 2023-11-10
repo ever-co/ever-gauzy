@@ -6,7 +6,6 @@ import {
 	HttpInterceptor
 } from '@angular/common/http';
 import { Observable, combineLatest, switchMap, take, tap } from 'rxjs';
-import { filter } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { isNotEmpty } from '@gauzy/common-angular';
 import { RequestMethodEnum } from '@gauzy/contracts';
@@ -21,10 +20,10 @@ export class TenantInterceptor implements HttpInterceptor {
 	) { }
 
 	/**
-	 *
-	 * @param request
-	 * @param next
-	 * @returns
+	 * Intercept HTTP requests and modify them based on user and organization information.
+	 * @param request - The HttpRequest instance.
+	 * @param next - The HttpHandler instance.
+	 * @returns An Observable of HttpEvent<any>.
 	 */
 	intercept(
 		request: HttpRequest<any>,
@@ -35,25 +34,28 @@ export class TenantInterceptor implements HttpInterceptor {
 
 		/** */
 		return combineLatest([storeUser$, storeOrganization$]).pipe(
-			filter(([user]) => !!user),
-			take(1), // Take only the first emission to avoid multiple subscriptions
+			// Take only the first emission to avoid multiple subscriptions
+			take(1),
+			//
 			tap(([user, organization]) => {
-				// Bind tenantId for DELETE http method
-				const tenantId = user.tenantId;
+				if (!!user) {
+					// Bind tenantId for DELETE http method
+					const tenantId = user.tenantId;
 
-				// Clone the request to modify it
-				request = request.clone({
-					...(request.method === RequestMethodEnum.DELETE) ? {
-						setParams: {
-							tenantId,
-							...(isNotEmpty(organization) ? { organizationId: organization.id } : {}),
-						},
-					} : {},
-					setHeaders: {
-						'Tenant-Id': `${tenantId}`,
-						...(isNotEmpty(organization) ? { 'Organization-Id': organization.id } : {}),
-					},
-				});
+					// Clone the request to modify it
+					request = request.clone({
+						...(request.method === RequestMethodEnum.DELETE) ? {
+							setParams: {
+								tenantId,
+								...(isNotEmpty(organization) ? { organizationId: organization.id } : {}),
+							},
+						} : {},
+						setHeaders: {
+							'Tenant-Id': `${tenantId}`,
+							...(isNotEmpty(organization) ? { 'Organization-Id': `${organization.id}` } : {}),
+						}
+					});
+				}
 			}),
 			// Handle component lifecycle to avoid memory leaks
 			untilDestroyed(this),
