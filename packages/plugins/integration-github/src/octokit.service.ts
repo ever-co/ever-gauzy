@@ -83,6 +83,40 @@ export class OctokitService {
 	}
 
 	/**
+	 * Delete a GitHub installation using the provided installationId.
+	 *
+	 * @param {number} installationId - The ID of the GitHub installation to be deleted.
+	 * @returns {Promise<OctokitResponse<any>>} A Promise that resolves with the OctokitResponse representing the result of the deletion.
+	 * @throws {Error} If there is an issue with the Octokit instance or if an error occurs during the deletion process.
+	 */
+	public async deleteInstallation(installationId: number): Promise<OctokitResponse<any>> {
+		try {
+			// Check if the Octokit instance is available
+			if (!this.app) {
+				throw new Error('Octokit instance is not available.');
+			}
+
+			// Get an Octokit instance for the installation
+			const octokit = await this.app.getInstallationOctokit(installationId);
+
+			// Define the endpoint for deleting the installation
+			const endpoint = `DELETE /app/installations/{installationId}`;
+
+			// Send a request to the GitHub API to delete the installation
+			return await octokit.request(endpoint, {
+				installationId,
+				headers: {
+					'X-GitHub-Api-Version': GITHUB_API_VERSION,
+				},
+			});
+		} catch (error) {
+			// Handle errors, log the error message, and throw a new error
+			this.logger.error('Failed to fetch GitHub installation metadata', error.message);
+			throw new Error('Failed to fetch GitHub installation metadata');
+		}
+	}
+
+	/**
 	 * Get GitHub repositories for a specific installation.
 	 *
 	 * @param installationId The installation ID for the GitHub App.
