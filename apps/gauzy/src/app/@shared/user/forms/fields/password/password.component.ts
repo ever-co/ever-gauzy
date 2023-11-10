@@ -36,8 +36,8 @@ export class PasswordFormFieldComponent extends TranslationBaseComponent
 	showPassword: boolean = false;
 
 	//The internal data model for form control value access
-    private innerValue: any = '';
-    
+	private innerValue: any = '';
+
 	onChange = (_: any) => { }
 	onTouched = (_: any) => { }
 
@@ -45,13 +45,13 @@ export class PasswordFormFieldComponent extends TranslationBaseComponent
 	 * Getter & Setter accessor including call the onchange callback
 	 */
 	get value(): any {
-        return this.innerValue;
-    };
+		return this.innerValue;
+	};
 	set value(v: any) {
-        if (v !== this.innerValue) {
-            this.innerValue = v;
-        }
-    }
+		if (v !== this.innerValue) {
+			this.innerValue = v;
+		}
+	}
 
 	/*
 	* Getter & Setter accessor for dynamic form control
@@ -62,6 +62,17 @@ export class PasswordFormFieldComponent extends TranslationBaseComponent
 	}
 	@Input() set ctrl(value: FormControl) {
 		this._ctrl = value;
+	}
+
+	/*
+	* Getter & Setter for dynamic label
+	*/
+	_label: string;
+	get label(): string {
+		return this._label;
+	}
+	@Input() set label(value: string) {
+		this._label = value;
 	}
 
 	/*
@@ -123,7 +134,7 @@ export class PasswordFormFieldComponent extends TranslationBaseComponent
 	@Output() onInputChanged = new EventEmitter<string>();
 
 	// get reference to the input element
-    @ViewChild('input')  inputRef: ElementRef;
+	@ViewChild('input') inputRef: ElementRef;
 
 	constructor(
 		public readonly translateService: TranslateService
@@ -143,37 +154,37 @@ export class PasswordFormFieldComponent extends TranslationBaseComponent
 			.subscribe(() => {
 				// check condition if the form control is RESET
 				if (isEmpty(this.ctrl.value)) {
-                    this.innerValue = '';
-                    this.inputRef.nativeElement.value = '';
-                }
+					this.innerValue = '';
+					this.inputRef.nativeElement.value = '';
+				}
 				this.onInputChanged.emit(this.ctrl.value);
 			});
 	}
 
 
 	// event fired when input value is changed. later propagated up to the form control using the custom value accessor interface
-    onInputChange(e:Event, value:any) {
-        //set changed value
-        this.innerValue = value;
+	onInputChange(e: Event, value: any) {
+		//set changed value
+		this.innerValue = value;
 
-        // propagate value into form control using control value accessor interface
-        this.onChange(this.innerValue);
-    }
-
-	//from control value accessor interface
-    writeValue(value: any) {
-        this.innerValue = value;
-    }
+		// propagate value into form control using control value accessor interface
+		this.onChange(this.innerValue);
+	}
 
 	//from control value accessor interface
-    registerOnChange(fn: any) {
+	writeValue(value: any) {
+		this.innerValue = value;
+	}
+
+	//from control value accessor interface
+	registerOnChange(fn: any) {
 		this.onChange = fn;
-    }
+	}
 
 	//from control value accessor interface
-    registerOnTouched(fn: any) {
+	registerOnTouched(fn: any) {
 		this.onTouched = fn;
-    }
+	}
 
-	ngOnDestroy() {}
+	ngOnDestroy() { }
 }
