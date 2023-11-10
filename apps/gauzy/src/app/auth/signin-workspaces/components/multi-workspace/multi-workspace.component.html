@@ -1,48 +1,39 @@
+<link href="multi-workspace.component.scss" rel="stylesheet" />
 <div class="logo">
 	<ngx-gauzy-logo [isAccordion]="false"></ngx-gauzy-logo>
-	<h4>Welcome back! You look nice today.</h4>
+	<h4><strong>Welcome back!</strong> You look nice today!</h4>
 	<h6>The email associated with multiple workspaces, please select one to continue</h6>
 </div>
 <nb-card>
-	<nb-card-header class="text-center">
+	<nb-card-header class="text-start">
 		<span class="title">
-			Select Workspace <span class="sub-title">{{ confirmed_email }}</span>
+			Select Workspace for <span class="sub-title">{{ confirmed_email }}</span>
 		</span>
 	</nb-card-header>
 	<nb-card-body>
-		<nb-card>
-			<nb-list>
-				<nb-list-item *ngFor="let workspace of workspaces">
-					<div class="flot-left">
-						<nb-user
-							size="large"
-							[picture]="workspace?.user?.tenant?.logo"
-							[name]="workspace?.user?.tenant?.name"
-							[title]="workspace?.user?.name"
-						></nb-user>
+		<nb-list>
+			<nb-list-item (click)="continue(workspace)" *ngFor="let workspace of workspaces">
+				<div class="workspace-container">
+					<div class="workspace-image">
+						<img
+							[src]="workspace?.user?.tenant?.logo"
+						/>
 					</div>
-					<div class="flot-right">
-						<nb-radio-group [formControl]="control">
-							<nb-radio [value]="workspace"></nb-radio>
-						</nb-radio-group>
+					<div class="workspace-info">
+						<div class="workspace-name">{{ workspace?.user?.tenant?.name }}</div>
+						<div class="workspace-user">
+							<ngx-avatar
+								[name]="workspace?.user?.name"
+								[src]="workspace?.user?.imageUrl"
+								class="workspace"
+							></ngx-avatar>
+						</div>
 					</div>
-				</nb-list-item>
-			</nb-list>
-		</nb-card>
+				</div>
+				<div class="continue-icon">
+					<nb-icon [options]="{ animation: { type: 'shake' } }" icon="arrow-forward-outline"></nb-icon>
+				</div>
+			</nb-list-item>
+		</nb-list>
 	</nb-card-body>
-	<nb-card-footer>
-		<div class="row">
-			<div class="col-6 text-left"></div>
-			<div class="col-6 text-right">
-				<button
-					status="primary"
-					nbButton
-					type="button"
-					(click)="continue()"
-				>
-					{{ 'BUTTONS.CONTINUE' | translate }}
-				</button>
-			</div>
-		</div>
-	</nb-card-footer>
 </nb-card>

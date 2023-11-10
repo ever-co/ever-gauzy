@@ -1,26 +1,88 @@
 :host {
-	.logo {
-		display: flex;
-		align-items: center;
-		flex-direction: column;
-		justify-content: center;
-		margin-bottom: 32px;
-		h4 {
-			font-size: 20px;
-			margin-top: 20px;
-		}
-		h4, h6 {
-			font-weight: 600;
-		}
-		h6 {
-			font-size: 16px;
-		}
-	}
+  .logo {
+    display: flex;
+    align-items: center;
+    flex-direction: column;
+    justify-content: center;
+    margin-bottom: 32px;
+
+    h4 {
+      font-size: 30px;
+      margin-top: 32px;
+      color: var(--gauzy-text-color-1);
+      font-weight: 600;
+
+      strong {
+        color: var(--text-primary-active-color);
+      }
+    }
+
+    h6 {
+      font-size: 14px;
+      color: var(--gauzy-text-color-2);
+      font-weight: 500;
+    }
+  }
+
+  nb-card {
+    box-shadow: var(--gauzy-shadow);
+    background-color: var(--gauzy-card-2);
+
+    .title {
+      font-weight: 400;
+      color: var(--gauzy-text-color-1);
+
+      .sub-title {
+        font-weight: 600;
+      }
+    }
+
+    nb-card-body {
+      nb-list-item {
+        border-top: 1px solid var(--border-primary-color-1);
+        justify-content: space-between;
+        cursor: pointer;
+        padding-left: 0;
+
+        .workspace-container {
+          display: flex;
+          gap: 0.5rem;
+
+          .workspace-image {
+            width: 48px;
+            height: 48px;
+            border-radius: var(--border-radius);
+
+            img {
+              width: 100%;
+              height: 100%;
+              object-fit: cover;
+              border-radius: var(--border-radius);
+            }
+          }
+
+          .workspace-info {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            justify-content: space-between;
+
+            .workspace-name {
+              font-weight: 600;
+            }
+          }
+        }
+      }
+    }
+  }
 }
+
 ::ng-deep {
-	ngx-gauzy-logo {
-		object {
-			width: 216px;
-		}
-	}
+  ngx-gauzy-logo {
+    object {
+      max-width: unset !important;
+      max-height: unset !important;
+      height: 36px;
+    }
+  }
 }

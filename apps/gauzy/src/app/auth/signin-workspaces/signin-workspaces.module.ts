@@ -1,7 +1,17 @@
 import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
-import { NbButtonModule, NbCardModule, NbInputModule, NbLayoutModule, NbListModule, NbRadioModule, NbSpinnerModule, NbUserModule } from '@nebular/theme';
+import {
+	NbButtonModule,
+	NbCardModule,
+	NbIconModule,
+	NbInputModule,
+	NbLayoutModule,
+	NbListModule,
+	NbRadioModule,
+	NbSpinnerModule,
+	NbUserModule
+} from '@nebular/theme';
 import { ThemeModule } from '../../@theme/theme.module';
 import { ThemeSelectorModule } from '../../@theme/components/theme-sidebar/theme-settings/components/theme-selector/theme-selector.module';
 import { PasswordFormFieldModule } from '../../@shared/user/forms/fields/password';
@@ -10,6 +20,7 @@ import { SignInWorkspacesLayoutComponent } from './signin-workspaces.component';
 import { SignInWorkspacesLayoutRoutingModule } from './signin-workspaces-routing.module';
 import { MultiWorkspaceOnboardingComponent } from './components/multi-workspace/multi-workspace.component';
 import { WorkspaceSigninWithEmailComponent } from './components/signin-with-email/signin-with-email.component';
+import { SharedModule } from '../../@shared/shared.module';
 
 @NgModule({
 	imports: [
@@ -28,7 +39,9 @@ import { WorkspaceSigninWithEmailComponent } from './components/signin-with-emai
 		TranslateModule,
 		ThemeSelectorModule,
 		SignInWorkspacesLayoutRoutingModule,
-		PasswordFormFieldModule
+		PasswordFormFieldModule,
+		NbIconModule,
+		SharedModule
 	],
 	declarations: [
 		SignInWorkspacesLayoutComponent,
@@ -37,4 +50,4 @@ import { WorkspaceSigninWithEmailComponent } from './components/signin-with-emai
 	],
 	providers: []
 })
-export class SignInWorkspacesLayoutModule { }
+export class SignInWorkspacesLayoutModule {}

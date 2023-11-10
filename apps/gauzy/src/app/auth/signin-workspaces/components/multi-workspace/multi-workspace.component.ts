@@ -57,20 +57,19 @@ export class MultiWorkspaceOnboardingComponent extends TranslationBaseComponent 
 	/**
 	 * Continue the workspace sign-in process.
 	 */
-	continue() {
-		if (this.control.invalid) {
-			return; // Exit if the form is invalid
+	continue(workspace: any) {
+		if (!workspace) {
+			return; // Exit if the no workspace
 		}
 
-		// Extract workspace, email, and token from the form control and component state
-		const workspace = this.control.value;
+		// Extract workspace, email, and token from the parameter and component state
 		const email = this.confirmed_email;
 		const token = workspace.token;
 
 		// Send a request to sign in to the workspace using the authentication service
 		this._authService.signinWorkspaceByToken({ email, token }).pipe(
 			tap((response: any) => {
-				if (response['status'] == HttpStatus.UNAUTHORIZED) {
+				if (response['status'] === HttpStatus.UNAUTHORIZED) {
 					throw new Error(`${response['message']}`);
 				}
 			}),
@@ -83,9 +82,9 @@ export class MultiWorkspaceOnboardingComponent extends TranslationBaseComponent 
 			filter(({ user, token }: IAuthResponse) => !!user && !!token),
 			//
 			tap((response: IAuthResponse) => {
-				let user: IUser = response.user;
-				let token: string = response.token;
-				let refresh_token: string = response.refresh_token;
+				const user: IUser = response.user;
+				const token: string = response.token;
+				const refresh_token: string = response.refresh_token;
 
 				/** */
 				this._store.userId = user.id;
