@@ -74,8 +74,11 @@
 </ng-template>
 
 <ng-template #workspacesTemplate>
-	<ngx-multi-workspace-onboarding
-		[workspaces]="workspaces"
-		[confirmed_email]="confirmed_email"
-	></ngx-multi-workspace-onboarding>
+	<ng-container *ngIf="workspaces.length > 0">
+		<ngx-multi-workspace-onboarding
+			[workspaces]="workspaces"
+			[confirmed_email]="confirmed_email"
+			(selectedWorkspace)="signInWorkspace($event)"
+		></ngx-multi-workspace-onboarding>
+	</ng-container>
 </ng-template>

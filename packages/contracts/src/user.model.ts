@@ -102,8 +102,12 @@ export interface IUserCodeInput {
 
 export interface IUserLoginInput extends IUserEmailInput, IUserPasswordInput { }
 
+export interface IWorkspaceReponse extends IUserTokenInput {
+	user: IUser;
+}
+
 export interface IUserSigninWorkspaceResponse {
-	workspaces: IUser[];
+	workspaces: IWorkspaceReponse[];
 	confirmed_email: string;
 	show_popup: boolean;
 	total_workspaces: number;

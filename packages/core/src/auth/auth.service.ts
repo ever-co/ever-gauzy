@@ -22,6 +22,7 @@ import {
 	IUserLoginInput as IUserWorkspaceSigninInput,
 	IUserTokenInput,
 	IOrganizationTeam,
+	IWorkspaceReponse,
 } from '@gauzy/contracts';
 import { environment } from '@gauzy/config';
 import { SocialAuthService } from '@gauzy/auth';
@@ -161,25 +162,22 @@ export class AuthService extends SocialAuthService {
 		}
 
 		// Create an array of user objects with relevant data
-		const workspaces = users.map((user: IUser) => {
-			/** */
-			return new Object({
-				user: new User({
-					name: user.name,
-					imageUrl: user.imageUrl,
-					tenant: new Tenant({
-						id: user.tenant ? user.tenantId : null,
-						name: user.tenant?.name || '',
-						logo: user.tenant?.logo || ''
-					})
-				}),
-				token: this.generateToken(user, code)
-			});
-		});
+		const workspaces: IWorkspaceReponse[] = users.map((user: IUser) => ({
+			user: new User({
+				name: user.name,
+				imageUrl: user.imageUrl,
+				tenant: new Tenant({
+					id: user.tenant ? user.tenantId : null,
+					name: user.tenant?.name || '',
+					logo: user.tenant?.logo || ''
+				})
+			}),
+			token: this.generateToken(user, code)
+		}));
 
 		// Determining the response based on the number of matching users
 		const response: IUserSigninWorkspaceResponse = {
-			workspaces,
+			workspaces: workspaces,
 			confirmed_email: email,
 			show_popup: workspaces.length > 1,
 			total_workspaces: workspaces.length
@@ -676,7 +674,7 @@ export class AuthService extends SocialAuthService {
 				}
 			});
 
-			const workspaces: IUser[] = [];
+			const workspaces: IWorkspaceReponse[] = [];
 			// Create an array of user objects with relevant data
 			for await (const user of users) {
 				const userId = user.id;
@@ -694,7 +692,7 @@ export class AuthService extends SocialAuthService {
 					expiresIn: `${environment.JWT_TOKEN_EXPIRATION_TIME}s`
 				});
 
-				const workspace = new Object({
+				const workspace = {
 					user: new User({
 						email: user.email || '',
 						name: user.name || '',
@@ -706,7 +704,7 @@ export class AuthService extends SocialAuthService {
 						}),
 					}),
 					token
-				});
+				};
 
 				try {
 					if (includeTeams) {
