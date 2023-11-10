@@ -44,6 +44,16 @@
         cursor: pointer;
         padding-left: 0;
 
+        &:hover + nb-list-item {
+          border-top: unset;
+        }
+
+        &:hover {
+          background-color: var(--gauzy-background-transparent-1);
+          border-bottom: 1px solid var(--border-primary-color-1);
+          border-radius: var(--border-radius);
+        }
+
         .workspace-container {
           display: flex;
           gap: 0.5rem;
@@ -70,6 +80,18 @@
             .workspace-name {
               font-weight: 600;
             }
+          }
+        }
+
+        .continue-icon {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 4px;
+
+          .label-primary {
+            font-weight: 600;
+            color: var(--text-primary-color);
           }
         }
       }
