@@ -157,3 +157,28 @@
 
 	@include common;
 }
+
+:host-context(.workspace) {
+	$radius: var(--border-radius);
+	width: 100%;
+
+	.inner-wrapper {
+		width: fit-content;
+		padding: calc($radius / 4);
+		background-color: var(--color-primary-transparent-100);
+		border-radius: calc($radius / 2) !important;
+	}
+
+	@include common;
+
+	.image-container {
+		&,
+		img {
+			border-radius: calc($radius / 4) !important;
+		}
+	}
+
+	.names-wrapper {
+		display: none;
+	}
+}
