@@ -179,6 +179,9 @@
 	}
 
 	.names-wrapper {
-		display: none;
+		a.link-text {
+			text-decoration: none;
+			cursor: none;
+		}
 	}
 }

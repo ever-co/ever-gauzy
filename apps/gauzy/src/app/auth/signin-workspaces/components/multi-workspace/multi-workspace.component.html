@@ -1,4 +1,3 @@
-<link href="multi-workspace.component.scss" rel="stylesheet" />
 <div class="logo">
 	<ngx-gauzy-logo [isAccordion]="false"></ngx-gauzy-logo>
 	<h4><strong>Welcome back!</strong> You look nice today!</h4>
@@ -12,7 +11,7 @@
 	</nb-card-header>
 	<nb-card-body>
 		<nb-list>
-			<nb-list-item (click)="continue(workspace)" *ngFor="let workspace of workspaces">
+			<nb-list-item *ngFor="let workspace of workspaces" (click)="continue(workspace)">
 				<div class="workspace-container">
 					<div class="workspace-image">
 						<img
@@ -20,7 +19,9 @@
 						/>
 					</div>
 					<div class="workspace-info">
-						<div class="workspace-name">{{ workspace?.user?.tenant?.name }}</div>
+						<div class="workspace-name">
+							{{ workspace?.user?.tenant?.name }}
+						</div>
 						<div class="workspace-user">
 							<ngx-avatar
 								[name]="workspace?.user?.name"
@@ -31,7 +32,12 @@
 					</div>
 				</div>
 				<div class="continue-icon">
-					<nb-icon [options]="{ animation: { type: 'shake' } }" icon="arrow-forward-outline"></nb-icon>
+					<span class="p-2 text-primary">Open</span>
+					<nb-icon
+						icon="arrow-forward-outline"
+						[options]="{ animation: { type: 'shake' } }"
+					>
+					</nb-icon>
 				</div>
 			</nb-list-item>
 		</nb-list>
